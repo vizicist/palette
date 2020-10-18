@@ -1,0 +1,24 @@
+{
+    "params":{
+        "blur":{
+            "enabled":"true",
+            "value":"true"
+        },
+        "edge":{
+            "enabled":"true",
+            "value":"true"
+        },
+        "huerotate":{
+            "enabled":"true",
+            "value":"true"
+        },
+        "posterize":{
+            "enabled":"true",
+            "value":"true"
+        },
+        "trails":{
+            "enabled":"true",
+            "value":"true"
+        }
+    }
+}

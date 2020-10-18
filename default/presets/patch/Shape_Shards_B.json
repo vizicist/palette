@@ -1,0 +1,17 @@
+{
+    "params":{
+        "effect":{
+            "enabled":true,
+            "value":"Shape_Shards"
+        },
+        "sound":{
+            "enabled":true,
+            "value":"Shape_Shards_2"
+        },
+        "visual":{
+            "enabled":true,
+            "value":"Shape_Shards_2"
+        }
+    },
+    "parent":""
+}

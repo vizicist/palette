@@ -1,0 +1,21 @@
+{
+    "params":{
+        "patchA":{
+            "enabled":true,
+            "value":"Bold_Strokes_A"
+        },
+        "patchB":{
+            "enabled":true,
+            "value":"Bold_Strokes_B"
+        },
+        "patchC":{
+            "enabled":true,
+            "value":"Bold_Strokes_C"
+        },
+        "patchD":{
+            "enabled":true,
+            "value":"Bold_Strokes_D"
+        }
+    },
+    "parent":""
+}

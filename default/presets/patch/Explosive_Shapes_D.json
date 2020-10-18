@@ -1,0 +1,17 @@
+{
+    "params":{
+        "effect":{
+            "enabled":true,
+            "value":"Explosive_Shapes"
+        },
+        "sound":{
+            "enabled":true,
+            "value":"Explosive_Shapes_4"
+        },
+        "visual":{
+            "enabled":true,
+            "value":"Explosive_Shapes_4"
+        }
+    },
+    "parent":""
+}

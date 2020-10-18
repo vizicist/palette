@@ -1,0 +1,9 @@
+{
+  "palettecentral": "palette6",
+  "generatesound": "false",
+  "generatevisuals": "false",
+  "publishcursor": "true",
+  "logfile": "palette.log",
+  "debug": "gen,midi,morph,api",
+  "this line should not end with a comma": 0
+}

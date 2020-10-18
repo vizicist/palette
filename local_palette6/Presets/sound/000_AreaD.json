@@ -1,0 +1,129 @@
+{
+    "params":{
+        "arpeggio":{
+            "enabled":false,
+            "value":"false"
+        },
+        "controllerchan":{
+            "enabled":true,
+            "value":"     1"
+        },
+        "controllerstyle":{
+            "enabled":true,
+            "value":"modulationonly"
+        },
+        "controllerzmax":{
+            "enabled":true,
+            "value":" 0.300"
+        },
+        "controllerzmin":{
+            "enabled":true,
+            "value":" 0.050"
+        },
+        "cursorsprites":{
+            "enabled":true,
+            "value":"true"
+        },
+        "doquantize":{
+            "enabled":true,
+            "value":"true"
+        },
+        "fullrange":{
+            "enabled":true,
+            "value":"false"
+        },
+        "inputport":{
+            "enabled":true,
+            "value":""
+        },
+        "minbuttonarea":{
+            "enabled":true,
+            "value":" 0.500"
+        },
+        "minmove":{
+            "enabled":true,
+            "value":" 0.025"
+        },
+        "minmovedepth":{
+            "enabled":true,
+            "value":" 0.025"
+        },
+        "pitchmax":{
+            "enabled":true,
+            "value":"    84"
+        },
+        "pitchmin":{
+            "enabled":true,
+            "value":"    60"
+        },
+        "quantfactor":{
+            "enabled":true,
+            "value":" 1.000"
+        },
+        "quantfixed":{
+            "enabled":true,
+            "value":"false"
+        },
+        "regionchannel":{
+            "enabled":true,
+            "value":"     4"
+        },
+        "regionport":{
+            "enabled":true,
+            "value":"01. Internal MIDI"
+        },
+        "scale":{
+            "enabled":true,
+            "value":"newage"
+        },
+        "timefret1q":{
+            "enabled":true,
+            "value":" 1.000"
+        },
+        "timefret1y":{
+            "enabled":true,
+            "value":" 0.300"
+        },
+        "timefret2q":{
+            "enabled":true,
+            "value":" 0.500"
+        },
+        "timefret2y":{
+            "enabled":true,
+            "value":" 0.600"
+        },
+        "timefret3q":{
+            "enabled":true,
+            "value":" 0.250"
+        },
+        "timefret3y":{
+            "enabled":true,
+            "value":" 0.900"
+        },
+        "timefret4q":{
+            "enabled":true,
+            "value":" 0.125"
+        },
+        "timefret4y":{
+            "enabled":true,
+            "value":" 1.000"
+        },
+        "tonicchange":{
+            "enabled":true,
+            "value":" 29998"
+        },
+        "xcontroller":{
+            "enabled":true,
+            "value":"     1"
+        },
+        "ycontroller":{
+            "enabled":true,
+            "value":"     1"
+        },
+        "zcontroller":{
+            "enabled":true,
+            "value":"     1"
+        }
+    },
+    "parent":"Basic_Chaos_override"
+}

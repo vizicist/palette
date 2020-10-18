@@ -1,0 +1,16 @@
+{
+    "params":{
+        "effect":{
+            "enabled":1,
+            "value":"Dusty_Pools"
+        },
+        "sound":{
+            "enabled":1,
+            "value":"Dream_Puddles_2"
+        },
+        "visual":{
+            "enabled":1,
+            "value":"Dream_Puddles_2"
+        }
+    }
+}

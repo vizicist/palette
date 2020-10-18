@@ -1,0 +1,16 @@
+{
+    "params":{
+        "effect":{
+            "enabled":1,
+            "value":"Smooth_Breathing"
+        },
+        "sound":{
+            "enabled":1,
+            "value":"Smooth_Breathing_2"
+        },
+        "visual":{
+            "enabled":1,
+            "value":"Smooth_Breathing_2"
+        }
+    }
+}

@@ -1,0 +1,121 @@
+{
+    "params":{
+        "alphafinal":{
+            "enabled":1,
+            "value":" 0.000"
+        },
+        "alphainitial":{
+            "enabled":1,
+            "value":" 0.700"
+        },
+        "alphatime":{
+            "enabled":1,
+            "value":" 1.290"
+        },
+        "aspect":{
+            "enabled":1,
+            "value":" 1.000"
+        },
+        "bounce":{
+            "enabled":1,
+            "value":"false"
+        },
+        "filled":{
+            "enabled":1,
+            "value":"false"
+        },
+        "huefillfinal":{
+            "enabled":1,
+            "value":"86.400"
+        },
+        "huefillinitial":{
+            "enabled":1,
+            "value":"223.200"
+        },
+        "huefilltime":{
+            "enabled":1,
+            "value":" 2.008"
+        },
+        "huefinal":{
+            "enabled":1,
+            "value":"288.000"
+        },
+        "hueinitial":{
+            "enabled":1,
+            "value":"180.360"
+        },
+        "huetime":{
+            "enabled":1,
+            "value":" 2.003"
+        },
+        "lifetime":{
+            "enabled":1,
+            "value":"10.000"
+        },
+        "luminance":{
+            "enabled":1,
+            "value":" 0.500"
+        },
+        "mirror":{
+            "enabled":1,
+            "value":"none"
+        },
+        "movedir":{
+            "enabled":1,
+            "value":"left"
+        },
+        "noisevertex":{
+            "enabled":1,
+            "value":" 0.000"
+        },
+        "nsprites":{
+            "enabled":1,
+            "value":"   147"
+        },
+        "rotangdir":{
+            "enabled":1,
+            "value":"right"
+        },
+        "rotanginit":{
+            "enabled":1,
+            "value":"45.000"
+        },
+        "rotangspeed":{
+            "enabled":1,
+            "value":" 0.000"
+        },
+        "rotauto":{
+            "enabled":1,
+            "value":"false"
+        },
+        "saturation":{
+            "enabled":1,
+            "value":" 1.000"
+        },
+        "shape":{
+            "enabled":1,
+            "value":"square"
+        },
+        "sizefinal":{
+            "enabled":1,
+            "value":" 6.000"
+        },
+        "sizeinitial":{
+            "enabled":1,
+            "value":" 2.999"
+        },
+        "sizetime":{
+            "enabled":1,
+            "value":" 2.080"
+        },
+        "speed":{
+            "enabled":1,
+            "value":" 0.000"
+        },
+        "thickness":{
+            "enabled":1,
+            "value":" 2.560"
+        }
+    },
+    "parent":"Basic_Chaos_override"
+}

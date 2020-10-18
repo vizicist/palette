@@ -1,0 +1,16 @@
+{
+    "params":{
+        "effect":{
+            "enabled":1,
+            "value":"Basic_Chaos"
+        },
+        "sound":{
+            "enabled":1,
+            "value":"Basic_Chaos_1"
+        },
+        "visual":{
+            "enabled":1,
+            "value":"Basic_Chaos_1"
+        }
+    }
+}

@@ -1,0 +1,21 @@
+{
+    "params":{
+        "patchA":{
+            "enabled":true,
+            "value":"Explosive_Shapes_A"
+        },
+        "patchB":{
+            "enabled":true,
+            "value":"Explosive_Shapes_B"
+        },
+        "patchC":{
+            "enabled":true,
+            "value":"Explosive_Shapes_C"
+        },
+        "patchD":{
+            "enabled":true,
+            "value":"Explosive_Shapes_D"
+        }
+    },
+    "parent":""
+}

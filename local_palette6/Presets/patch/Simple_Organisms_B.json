@@ -1,0 +1,16 @@
+{
+    "params":{
+        "effect":{
+            "enabled":1,
+            "value":"Simple_Organisms"
+        },
+        "sound":{
+            "enabled":1,
+            "value":"Simple_Organisms_2"
+        },
+        "visual":{
+            "enabled":1,
+            "value":"Simple_Organisms_2"
+        }
+    }
+}

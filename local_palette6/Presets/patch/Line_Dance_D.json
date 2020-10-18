@@ -1,0 +1,17 @@
+{
+    "params":{
+        "effect":{
+            "enabled":true,
+            "value":"Line_Dance"
+        },
+        "sound":{
+            "enabled":true,
+            "value":"Line_Dance_4"
+        },
+        "visual":{
+            "enabled":true,
+            "value":"Line_Dance_4"
+        }
+    },
+    "parent":""
+}

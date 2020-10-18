@@ -1,0 +1,16 @@
+{
+    "params":{
+        "displace":{
+            "enabled":"true",
+            "value":"true"
+        },
+        "kaleid1":{
+            "enabled":"true",
+            "value":"true"
+        },
+        "trails":{
+            "enabled":"true",
+            "value":"true"
+        }
+    }
+}

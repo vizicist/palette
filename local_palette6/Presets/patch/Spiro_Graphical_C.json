@@ -1,0 +1,17 @@
+{
+    "params":{
+        "effect":{
+            "enabled":true,
+            "value":"Jazzy.1"
+        },
+        "sound":{
+            "enabled":true,
+            "value":"River_Contours_3"
+        },
+        "visual":{
+            "enabled":true,
+            "value":"Jazzy_C"
+        }
+    },
+    "parent":""
+}

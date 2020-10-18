@@ -1,0 +1,21 @@
+{
+    "params":{
+        "patchA":{
+            "enabled":true,
+            "value":"Endless_Colors_A"
+        },
+        "patchB":{
+            "enabled":true,
+            "value":"Endless_Colors_B"
+        },
+        "patchC":{
+            "enabled":true,
+            "value":"Endless_Colors_C"
+        },
+        "patchD":{
+            "enabled":true,
+            "value":"Endless_Colors_D"
+        }
+    },
+    "parent":""
+}

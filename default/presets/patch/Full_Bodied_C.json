@@ -1,0 +1,16 @@
+{
+    "params":{
+        "effect":{
+            "enabled":1,
+            "value":"Full_Bodied"
+        },
+        "sound":{
+            "enabled":1,
+            "value":"Full_Bodied_3"
+        },
+        "visual":{
+            "enabled":1,
+            "value":"Full_Bodied_3"
+        }
+    }
+}

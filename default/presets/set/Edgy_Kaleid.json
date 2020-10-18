@@ -1,0 +1,21 @@
+{
+    "params":{
+        "patchA":{
+            "enabled":true,
+            "value":"Edgy_Kaleid_A"
+        },
+        "patchB":{
+            "enabled":true,
+            "value":"Edgy_Kaleid_B"
+        },
+        "patchC":{
+            "enabled":true,
+            "value":"Edgy_Kaleid_C"
+        },
+        "patchD":{
+            "enabled":true,
+            "value":"Edgy_Kaleid_D"
+        }
+    },
+    "parent":""
+}

@@ -1,0 +1,20 @@
+{
+    "params":{
+        "patchA":{
+            "enabled":"true",
+            "value":"Shape_Shards_A"
+        },
+        "patchB":{
+            "enabled":"true",
+            "value":"Shape_Shards_B"
+        },
+        "patchC":{
+            "enabled":"true",
+            "value":"Shape_Shards_C"
+        },
+        "patchD":{
+            "enabled":"true",
+            "value":"Shape_Shards_D"
+        }
+    }
+}

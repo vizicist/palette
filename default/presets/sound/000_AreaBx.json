@@ -1,0 +1,129 @@
+{
+    "params":{
+        "arpeggio":{
+            "enabled":true,
+            "value":"false"
+        },
+        "controllerchan":{
+            "enabled":true,
+            "value":"     1"
+        },
+        "controllerstyle":{
+            "enabled":true,
+            "value":"modulationonly"
+        },
+        "controllerzmax":{
+            "enabled":false,
+            "value":" 0.300"
+        },
+        "controllerzmin":{
+            "enabled":false,
+            "value":" 0.050"
+        },
+        "cursorsprites":{
+            "enabled":false,
+            "value":"true"
+        },
+        "doquantize":{
+            "enabled":false,
+            "value":"true"
+        },
+        "fullrange":{
+            "enabled":false,
+            "value":"false"
+        },
+        "inputport":{
+            "enabled":false,
+            "value":""
+        },
+        "minbuttonarea":{
+            "enabled":false,
+            "value":" 0.500"
+        },
+        "minmove":{
+            "enabled":false,
+            "value":" 0.025"
+        },
+        "minmovedepth":{
+            "enabled":false,
+            "value":" 0.025"
+        },
+        "pitchmax":{
+            "enabled":false,
+            "value":"    80"
+        },
+        "pitchmin":{
+            "enabled":false,
+            "value":"    33"
+        },
+        "quantfactor":{
+            "enabled":false,
+            "value":" 1.000"
+        },
+        "quantfixed":{
+            "enabled":false,
+            "value":"false"
+        },
+        "regionchannel":{
+            "enabled":false,
+            "value":"     1"
+        },
+        "regionport":{
+            "enabled":false,
+            "value":""
+        },
+        "scale":{
+            "enabled":false,
+            "value":"newage"
+        },
+        "timefret1q":{
+            "enabled":false,
+            "value":" 1.000"
+        },
+        "timefret1y":{
+            "enabled":false,
+            "value":" 0.150"
+        },
+        "timefret2q":{
+            "enabled":false,
+            "value":" 0.500"
+        },
+        "timefret2y":{
+            "enabled":false,
+            "value":" 0.500"
+        },
+        "timefret3q":{
+            "enabled":false,
+            "value":" 0.250"
+        },
+        "timefret3y":{
+            "enabled":false,
+            "value":" 0.800"
+        },
+        "timefret4q":{
+            "enabled":false,
+            "value":" 0.125"
+        },
+        "timefret4y":{
+            "enabled":false,
+            "value":" 1.000"
+        },
+        "tonicchange":{
+            "enabled":false,
+            "value":" 30000"
+        },
+        "xcontroller":{
+            "enabled":false,
+            "value":"     3"
+        },
+        "ycontroller":{
+            "enabled":false,
+            "value":"     2"
+        },
+        "zcontroller":{
+            "enabled":false,
+            "value":"     1"
+        }
+    },
+    "parent":"Complex_Kaleid_override"
+}

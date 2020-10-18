@@ -1,0 +1,17 @@
+{
+    "params":{
+        "effect":{
+            "enabled":true,
+            "value":"Bold_Strokes"
+        },
+        "sound":{
+            "enabled":true,
+            "value":"Bold_Strokes_1"
+        },
+        "visual":{
+            "enabled":true,
+            "value":"Bold_Strokes_1"
+        }
+    },
+    "parent":""
+}
