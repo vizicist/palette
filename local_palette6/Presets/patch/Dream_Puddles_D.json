@@ -1,0 +1,17 @@
+{
+    "params":{
+        "effect":{
+            "enabled":true,
+            "value":"Infinite.1"
+        },
+        "sound":{
+            "enabled":true,
+            "value":"Dream_Puddles_4"
+        },
+        "visual":{
+            "enabled":true,
+            "value":"Dream_Puddles_4"
+        }
+    },
+    "parent":""
+}

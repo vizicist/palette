@@ -1,0 +1,20 @@
+{
+    "params":{
+        "patchA":{
+            "enabled":"true",
+            "value":"Spiro_Graphical_A"
+        },
+        "patchB":{
+            "enabled":"true",
+            "value":"Spiro_Graphical_B"
+        },
+        "patchC":{
+            "enabled":"true",
+            "value":"Spiro_Graphical_C"
+        },
+        "patchD":{
+            "enabled":"true",
+            "value":"Spiro_Graphical_D"
+        }
+    }
+}

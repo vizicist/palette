@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<avenue>
+  <versionInfo name="Resolume Avenue" majorVersion="4" minorVersion="6" microVersion="4"
+               revision="56521" id="0"/>
+  <settings>
+    <general lastOpenedDirectory1="C:\local\manifold3" lastOpenedDirectory2=""
+             appStartedFirstTime="0" recentCompositions="C:\Users\tjt\Documents\Resolume Avenue 4\compositions\PALETTEPRO.avc&#10;C:\Users\tjt\Documents\Resolume Avenue 4\compositions\PALETTEPRO2.avc&#10;C:\Users\tjt\Documents\Resolume Avenue 4\compositions\manifold3.avc&#10;C:\local\manifold3\bin\config\manifold3.avc&#10;C:\Users\tjt\Documents\Resolume Avenue 4\compositions\pcx.avc&#10;C:\Users\tjt\Documents\Resolume Avenue 4\compositions\viztest.avc&#10;C:\Users\tjt\Documents\Resolume Avenue 4\compositions\2016_A.avc&#10;\\Hippy\c\Users\tjt\Documents\Resolume Arena 4\compositions\pcx.avc&#10;C:\Users\tjt\Documents\Resolume Avenue 4\compositions\example.avc"
+             quitConfirmationEnabled="0" showClipTimeRemaining="0"/>
+    <captureDevices>
+      <settings ignoreSystemBlackMagicDevices="1"/>
+    </captureDevices>
+    <midi>
+      <settings enabled="1" midiMapFileName="" midiClockMode="1" octaveNumForMiddleC="0"
+                syncDeviceName="">
+        <inputDevices/>
+        <outputDevices/>
+        <controlSurfaces/>
+      </settings>
+    </midi>
+    <video>
+      <settings>
+        <previewEnabled value="1"/>
+        <showFPS value="1"/>
+        <defaults>
+          <playbackSettings/>
+        </defaults>
+        <pluginDirectories>
+          <directory path="C:\Program Files (x86)\Resolume Avenue 4.6.4\plugins\vfx"/>
+        </pluginDirectories>
+        <previewWindow x="0" y="0" w="0" h="0" saved="0" deviceId="none"/>
+      </settings>
+    </video>
+    <audio>
+      <settings>
+        <DEVICESETUP deviceType="Dummy" audioOutputDeviceName="Dummy Output Device"
+                     audioInputDeviceName="Dummy Input Device" audioDeviceRate="44100"
+                     audioDeviceOutChans="1111"/>
+        <defaults>
+          <playbackSettings>
+            <timelineMode value="2"/>
+          </playbackSettings>
+        </defaults>
+        <channels>
+          <masterOutputs value="-1"/>
+          <previewOutputs value="-1"/>
+        </channels>
+        <pluginDirectories>
+          <directory path="C:\Program Files (x86)\Resolume Avenue 4.6.4\plugins\afx"/>
+        </pluginDirectories>
+      </settings>
+    </audio>
+    <gui showAudioControls="1" showLayerPropertyPanel="1" showLayerTimelineControls="0"
+         showLayerTransitionControls="1" showBrowserPanel="1" browserInPreviewMode="0"
+         showHelp="1" propertyPanelLayout="2" changeFocusOnExternalTriggers="1"
+         scrollClipsAndLayers="1" defaultMappingModeType="2" useUniversalFont="0"
+         language="English">
+      <MainComponent>
+        <DeckAndPanelsComponent>
+          <Layout>
+            <Item index="0" minimumSize="91" maximumSize="192" preferredSize="91"/>
+            <Item index="1" minimumSize="3" maximumSize="3" preferredSize="3"/>
+            <Item index="2" minimumSize="350" maximumSize="4096" preferredSize="549"/>
+          </Layout>
+          <PanelsComponent>
+            <Layout>
+              <Item index="0" minimumSize="226" maximumSize="510" preferredSize="226"/>
+              <Item index="1" minimumSize="3" maximumSize="3" preferredSize="3"/>
+              <Item index="2" minimumSize="452" maximumSize="4096" preferredSize="509"/>
+              <Item index="3" minimumSize="3" maximumSize="3" preferredSize="3"/>
+              <Item index="4" minimumSize="226" maximumSize="4096" preferredSize="283"/>
+            </Layout>
+            <PropertiesPanelComponent>
+              <Layout>
+                <Item index="0" minimumSize="226" maximumSize="2048" preferredSize="253"/>
+                <Item index="1" minimumSize="3" maximumSize="3" preferredSize="3"/>
+                <Item index="2" minimumSize="226" maximumSize="2048" preferredSize="253"/>
+              </Layout>
+            </PropertiesPanelComponent>
+          </PanelsComponent>
+        </DeckAndPanelsComponent>
+      </MainComponent>
+    </gui>
+    <osc useBundles="1" mapFileName="">
+      <output enabled="0" useBundles="1" port="7001" hostAddress="127.0.0.1"/>
+      <input enabled="1" port="7000"/>
+    </osc>
+    <composition startupFileName="C:\Users\tjt\Documents\Resolume Avenue 4\compositions\PALETTEPRO.avc"
+                 defaultWidth="640" defaultHeight="480">
+      <settings>
+        <recordSettings>
+          <directory value="C:\Users\tjt\Documents\Resolume Avenue 4\recorded"/>
+        </recordSettings>
+      </settings>
+    </composition>
+    <fileLoader>
+      <settings autoLoadFiles="0">
+        <autoLoadDirectories>
+          <directory path="C:\Program Files (x86)\Resolume Avenue 4.1.7\foo"/>
+        </autoLoadDirectories>
+      </settings>
+    </fileLoader>
+  </settings>
+</avenue>

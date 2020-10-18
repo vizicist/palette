@@ -1,0 +1,16 @@
+{
+    "params":{
+        "effect":{
+            "enabled":1,
+            "value":"Deep_Triangles"
+        },
+        "sound":{
+            "enabled":1,
+            "value":"Deep_Triangles_1"
+        },
+        "visual":{
+            "enabled":1,
+            "value":"Deep_Triangles_1"
+        }
+    }
+}

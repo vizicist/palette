@@ -1,0 +1,20 @@
+{
+    "params":{
+        "patchA":{
+            "enabled":"true",
+            "value":"Perky_Trails_A"
+        },
+        "patchB":{
+            "enabled":"true",
+            "value":"Perky_Trails_B"
+        },
+        "patchC":{
+            "enabled":"true",
+            "value":"Perky_Trails_C"
+        },
+        "patchD":{
+            "enabled":"true",
+            "value":"Perky_Trails_D"
+        }
+    }
+}

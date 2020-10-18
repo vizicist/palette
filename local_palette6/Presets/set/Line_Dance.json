@@ -1,0 +1,20 @@
+{
+    "params":{
+        "patchA":{
+            "enabled":"true",
+            "value":"Line_Dance_A"
+        },
+        "patchB":{
+            "enabled":"true",
+            "value":"Line_Dance_B"
+        },
+        "patchC":{
+            "enabled":"true",
+            "value":"Line_Dance_C"
+        },
+        "patchD":{
+            "enabled":"true",
+            "value":"Line_Dance_D"
+        }
+    }
+}

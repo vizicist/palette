@@ -1,0 +1,17 @@
+{
+    "params":{
+        "effect":{
+            "enabled":true,
+            "value":"Clouds.2"
+        },
+        "sound":{
+            "enabled":true,
+            "value":"Simple_Organisms_4"
+        },
+        "visual":{
+            "enabled":true,
+            "value":"Simple_Organisms_4"
+        }
+    },
+    "parent":""
+}

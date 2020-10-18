@@ -1,0 +1,20 @@
+{
+    "params":{
+        "patchA":{
+            "enabled":"true",
+            "value":"Dream_Puddles_A"
+        },
+        "patchB":{
+            "enabled":"true",
+            "value":"Dream_Puddles_B"
+        },
+        "patchC":{
+            "enabled":"true",
+            "value":"Dream_Puddles_C"
+        },
+        "patchD":{
+            "enabled":"true",
+            "value":"Dream_Puddles_D"
+        }
+    }
+}

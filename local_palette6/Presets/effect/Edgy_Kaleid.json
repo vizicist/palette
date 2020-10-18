@@ -1,0 +1,12 @@
+{
+    "params":{
+        "edge":{
+            "enabled":"true",
+            "value":"true"
+        },
+        "kaleid2":{
+            "enabled":"true",
+            "value":"true"
+        }
+    }
+}

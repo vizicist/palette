@@ -1,0 +1,1 @@
+%PALETTE%\nats\nats-sub ">"

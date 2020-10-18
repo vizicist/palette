@@ -1,0 +1,20 @@
+{
+    "params":{
+        "patchA":{
+            "enabled":"true",
+            "value":"Organic_Growth_A"
+        },
+        "patchB":{
+            "enabled":"true",
+            "value":"Organic_Growth_B"
+        },
+        "patchC":{
+            "enabled":"true",
+            "value":"Organic_Growth_C"
+        },
+        "patchD":{
+            "enabled":"true",
+            "value":"Organic_Growth_D"
+        }
+    }
+}

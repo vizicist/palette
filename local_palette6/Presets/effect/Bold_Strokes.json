@@ -1,0 +1,16 @@
+{
+    "params":{
+        "blur":{
+            "enabled":"true",
+            "value":"true"
+        },
+        "fragment":{
+            "enabled":"true",
+            "value":"true"
+        },
+        "posterize":{
+            "enabled":"true",
+            "value":"true"
+        }
+    }
+}

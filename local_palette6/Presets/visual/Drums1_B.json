@@ -1,0 +1,121 @@
+{
+    "params":{
+        "alphafinal":{
+            "enabled":1,
+            "value":" 0.000"
+        },
+        "alphainitial":{
+            "enabled":1,
+            "value":" 0.700"
+        },
+        "alphatime":{
+            "enabled":1,
+            "value":" 2.297"
+        },
+        "aspect":{
+            "enabled":1,
+            "value":" 1.000"
+        },
+        "bounce":{
+            "enabled":1,
+            "value":"false"
+        },
+        "filled":{
+            "enabled":1,
+            "value":"true"
+        },
+        "huefillfinal":{
+            "enabled":1,
+            "value":"360.000"
+        },
+        "huefillinitial":{
+            "enabled":1,
+            "value":"360.000"
+        },
+        "huefilltime":{
+            "enabled":1,
+            "value":" 5.000"
+        },
+        "huefinal":{
+            "enabled":1,
+            "value":"360.000"
+        },
+        "hueinitial":{
+            "enabled":1,
+            "value":"360.000"
+        },
+        "huetime":{
+            "enabled":1,
+            "value":" 1.004"
+        },
+        "lifetime":{
+            "enabled":1,
+            "value":"10.000"
+        },
+        "luminance":{
+            "enabled":1,
+            "value":" 0.500"
+        },
+        "mirror":{
+            "enabled":1,
+            "value":"none"
+        },
+        "movedir":{
+            "enabled":1,
+            "value":"cursor"
+        },
+        "noisevertex":{
+            "enabled":1,
+            "value":" 0.000"
+        },
+        "nsprites":{
+            "enabled":1,
+            "value":"   129"
+        },
+        "rotangdir":{
+            "enabled":1,
+            "value":"left"
+        },
+        "rotanginit":{
+            "enabled":1,
+            "value":"90.000"
+        },
+        "rotangspeed":{
+            "enabled":1,
+            "value":"151.200"
+        },
+        "rotauto":{
+            "enabled":1,
+            "value":"true"
+        },
+        "saturation":{
+            "enabled":1,
+            "value":" 1.000"
+        },
+        "shape":{
+            "enabled":1,
+            "value":"line"
+        },
+        "sizefinal":{
+            "enabled":1,
+            "value":" 0.000"
+        },
+        "sizeinitial":{
+            "enabled":1,
+            "value":" 4.997"
+        },
+        "sizetime":{
+            "enabled":1,
+            "value":" 1.109"
+        },
+        "speed":{
+            "enabled":1,
+            "value":" 0.210"
+        },
+        "thickness":{
+            "enabled":1,
+            "value":"10.000"
+        }
+    },
+    "parent":"Drums1_override"
+}

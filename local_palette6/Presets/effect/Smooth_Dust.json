@@ -1,0 +1,12 @@
+{
+    "params":{
+        "fragment":{
+            "enabled":"true",
+            "value":"true"
+        },
+        "trails":{
+            "enabled":"true",
+            "value":"true"
+        }
+    }
+}

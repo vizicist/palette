@@ -1,0 +1,20 @@
+{
+    "params":{
+        "blur":{
+            "enabled":"true",
+            "value":"true"
+        },
+        "displace":{
+            "enabled":"true",
+            "value":"true"
+        },
+        "edge":{
+            "enabled":"true",
+            "value":"true"
+        },
+        "fragment":{
+            "enabled":"true",
+            "value":"true"
+        }
+    }
+}

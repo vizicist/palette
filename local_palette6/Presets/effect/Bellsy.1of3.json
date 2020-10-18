@@ -1,0 +1,12 @@
+{
+    "params":{
+        "edge":{
+            "enabled":"true",
+            "value":"true"
+        },
+        "fragment":{
+            "enabled":"true",
+            "value":"true"
+        }
+    }
+}

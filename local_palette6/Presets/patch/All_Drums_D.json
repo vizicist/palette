@@ -1,0 +1,16 @@
+{
+    "params":{
+        "effect":{
+            "enabled":1,
+            "value":"Drums.1"
+        },
+        "sound":{
+            "enabled":1,
+            "value":"Drums1_D"
+        },
+        "visual":{
+            "enabled":1,
+            "value":"Drums1_D"
+        }
+    }
+}
