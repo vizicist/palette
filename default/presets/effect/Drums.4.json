@@ -1,0 +1,28 @@
+{
+    "params":{
+        "blur":{
+            "enabled":"true",
+            "value":"true"
+        },
+        "edge":{
+            "enabled":"true",
+            "value":"true"
+        },
+        "fragment":{
+            "enabled":"true",
+            "value":"true"
+        },
+        "kaleid1":{
+            "enabled":"true",
+            "value":"true"
+        },
+        "posterize":{
+            "enabled":"true",
+            "value":"true"
+        },
+        "twisted":{
+            "enabled":"true",
+            "value":"true"
+        }
+    }
+}

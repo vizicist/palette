@@ -1,0 +1,17 @@
+{
+    "params":{
+        "blur":"false",
+        "displace":"false",
+        "edge":"false",
+        "fragment":"true",
+        "huerotate":"false",
+        "iterate":"false",
+        "kaleid1":"false",
+        "kaleid2":"false",
+        "mirror":"false",
+        "posterize":"true",
+        "quad":"false",
+        "trails":"false",
+        "twisted":"false"
+    }
+}

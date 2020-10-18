@@ -1,0 +1,17 @@
+{
+    "params":{
+        "effect":{
+            "enabled":true,
+            "value":"Plucky_Stuff"
+        },
+        "sound":{
+            "enabled":true,
+            "value":"Plucky_Stuff_4"
+        },
+        "visual":{
+            "enabled":true,
+            "value":"Plucky_Stuff_4"
+        }
+    },
+    "parent":""
+}

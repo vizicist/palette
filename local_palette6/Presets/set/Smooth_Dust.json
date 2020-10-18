@@ -1,0 +1,20 @@
+{
+    "params":{
+        "patchA":{
+            "enabled":"true",
+            "value":"Smooth_Dust_A"
+        },
+        "patchB":{
+            "enabled":"true",
+            "value":"Smooth_Dust_B"
+        },
+        "patchC":{
+            "enabled":"true",
+            "value":"Smooth_Dust_C"
+        },
+        "patchD":{
+            "enabled":"true",
+            "value":"Smooth_Dust_D"
+        }
+    }
+}

@@ -1,0 +1,121 @@
+{
+    "params":{
+        "alphafinal":{
+            "enabled":"",
+            "value":" 0.000"
+        },
+        "alphainitial":{
+            "enabled":"",
+            "value":" 0.200"
+        },
+        "alphatime":{
+            "enabled":"",
+            "value":" 2.000"
+        },
+        "aspect":{
+            "enabled":"",
+            "value":" 1.000"
+        },
+        "bounce":{
+            "enabled":"",
+            "value":"false"
+        },
+        "filled":{
+            "enabled":"",
+            "value":"true"
+        },
+        "huefillfinal":{
+            "enabled":"",
+            "value":" 0.000"
+        },
+        "huefillinitial":{
+            "enabled":"",
+            "value":"360.000"
+        },
+        "huefilltime":{
+            "enabled":"",
+            "value":" 5.000"
+        },
+        "huefinal":{
+            "enabled":"",
+            "value":"360.000"
+        },
+        "hueinitial":{
+            "enabled":"",
+            "value":" 0.000"
+        },
+        "huetime":{
+            "enabled":"",
+            "value":" 5.000"
+        },
+        "lifetime":{
+            "enabled":"",
+            "value":" 8.000"
+        },
+        "luminance":{
+            "enabled":"",
+            "value":" 0.500"
+        },
+        "mirror":{
+            "enabled":"",
+            "value":"none"
+        },
+        "movedir":{
+            "enabled":"",
+            "value":"cursor"
+        },
+        "noisevertex":{
+            "enabled":"",
+            "value":" 0.000"
+        },
+        "nsprites":{
+            "enabled":"",
+            "value":"   100"
+        },
+        "rotangdir":{
+            "enabled":"",
+            "value":"random"
+        },
+        "rotanginit":{
+            "enabled":"",
+            "value":" 0.000"
+        },
+        "rotangspeed":{
+            "enabled":"",
+            "value":" 0.000"
+        },
+        "rotauto":{
+            "enabled":"",
+            "value":"true"
+        },
+        "saturation":{
+            "enabled":"",
+            "value":" 1.000"
+        },
+        "shape":{
+            "enabled":"",
+            "value":"square"
+        },
+        "sizefinal":{
+            "enabled":"",
+            "value":" 0.400"
+        },
+        "sizeinitial":{
+            "enabled":"",
+            "value":" 1.000"
+        },
+        "sizetime":{
+            "enabled":"",
+            "value":" 2.000"
+        },
+        "speed":{
+            "enabled":"",
+            "value":" 0.100"
+        },
+        "thickness":{
+            "enabled":"",
+            "value":" 3.000"
+        }
+    },
+    "parent":""
+}

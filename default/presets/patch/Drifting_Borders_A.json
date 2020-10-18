@@ -1,0 +1,17 @@
+{
+    "params":{
+        "effect":{
+            "enabled":true,
+            "value":"Simple_Organisms"
+        },
+        "sound":{
+            "enabled":true,
+            "value":"Plucky_Stuff_1"
+        },
+        "visual":{
+            "enabled":true,
+            "value":"Plucky_Stuff_1"
+        }
+    },
+    "parent":""
+}

@@ -1,0 +1,17 @@
+{
+    "params":{
+        "effect":{
+            "enabled":true,
+            "value":"Perky_Trails"
+        },
+        "sound":{
+            "enabled":true,
+            "value":"River_Contours_3"
+        },
+        "visual":{
+            "enabled":true,
+            "value":"River_Contours_3"
+        }
+    },
+    "parent":""
+}

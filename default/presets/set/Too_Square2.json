@@ -1,0 +1,21 @@
+{
+    "params":{
+        "patchA":{
+            "enabled":true,
+            "value":"Too_Square_A"
+        },
+        "patchB":{
+            "enabled":true,
+            "value":"Too_Square_B"
+        },
+        "patchC":{
+            "enabled":true,
+            "value":"Too_Square_C"
+        },
+        "patchD":{
+            "enabled":true,
+            "value":"Too_Square_D"
+        }
+    },
+    "parent":""
+}

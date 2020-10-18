@@ -1,0 +1,8 @@
+{
+  "httpport": 4445,
+  "graphicbehaviour": "2018",
+  "tuio": 1,
+  "realtime": 1,
+  "tuioport": 3333,
+  "tuiohost": "*"
+}

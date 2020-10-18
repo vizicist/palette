@@ -1,0 +1,16 @@
+{
+    "params":{
+        "effect":{
+            "enabled":1,
+            "value":"Bellsy.1of3"
+        },
+        "sound":{
+            "enabled":1,
+            "value":"Bellsy_C"
+        },
+        "visual":{
+            "enabled":1,
+            "value":"Bellsy_C"
+        }
+    }
+}

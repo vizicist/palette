@@ -1,0 +1,16 @@
+{
+    "params":{
+        "effect":{
+            "enabled":1,
+            "value":"Edgy_Kaleid"
+        },
+        "sound":{
+            "enabled":1,
+            "value":"Edgy_Kaleid_3"
+        },
+        "visual":{
+            "enabled":1,
+            "value":"Edgy_Kaleid_3"
+        }
+    }
+}

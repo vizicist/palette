@@ -1,0 +1,16 @@
+{
+    "params":{
+        "effect":{
+            "enabled":1,
+            "value":"Endless_Colors"
+        },
+        "sound":{
+            "enabled":1,
+            "value":"Endless_Colors_1"
+        },
+        "visual":{
+            "enabled":1,
+            "value":"Endless_Colors_1"
+        }
+    }
+}

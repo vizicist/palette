@@ -1,0 +1,21 @@
+{
+    "params":{
+        "patchA":{
+            "enabled":true,
+            "value":"Basic_Chaos_A"
+        },
+        "patchB":{
+            "enabled":true,
+            "value":"Basic_Chaos_B"
+        },
+        "patchC":{
+            "enabled":true,
+            "value":"Basic_Chaos_C"
+        },
+        "patchD":{
+            "enabled":true,
+            "value":"Basic_Chaos_D"
+        }
+    },
+    "parent":""
+}

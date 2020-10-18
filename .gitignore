@@ -1,0 +1,41 @@
+CurrentSnapshot.*
+*.pyc
+python/dist
+params/gentle/snap/CurrentSnapshot.*
+# Binaries for programs and plugins
+build/windows/.vs
+source/windows/.vs
+source/windows/x64
+badffgl
+binaries_save_good
+gui/build
+*.ipch
+__debug_bin
+config_orig
+snap_save_all
+snap_other
+oldpatches
+snap_hmmm
+snap_save_feb_2020
+*.swp
+*.exe~
+*.so
+*.dylib
+
+# Test binary, build with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+*~
+debug
+python/build
+logs/palette.log
+*.pyc
+scripts/build
+scripts/dist
+*.spec
+ship/palette_win
+
+

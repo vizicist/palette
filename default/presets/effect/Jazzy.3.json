@@ -1,0 +1,16 @@
+{
+    "params":{
+        "edge":{
+            "enabled":"true",
+            "value":"true"
+        },
+        "fragment":{
+            "enabled":"true",
+            "value":"true"
+        },
+        "kaleid1":{
+            "enabled":"true",
+            "value":"true"
+        }
+    }
+}

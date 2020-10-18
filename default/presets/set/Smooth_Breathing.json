@@ -1,0 +1,20 @@
+{
+    "params":{
+        "patchA":{
+            "enabled":"true",
+            "value":"Smooth_Breathing_A"
+        },
+        "patchB":{
+            "enabled":"true",
+            "value":"Smooth_Breathing_B"
+        },
+        "patchC":{
+            "enabled":"true",
+            "value":"Smooth_Breathing_C"
+        },
+        "patchD":{
+            "enabled":"true",
+            "value":"Smooth_Breathing_D"
+        }
+    }
+}

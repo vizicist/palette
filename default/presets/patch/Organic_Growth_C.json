@@ -1,0 +1,16 @@
+{
+    "params":{
+        "effect":{
+            "enabled":1,
+            "value":"Organic_Growth"
+        },
+        "sound":{
+            "enabled":1,
+            "value":"Organic_Growth_3"
+        },
+        "visual":{
+            "enabled":1,
+            "value":"Organic_Growth_3"
+        }
+    }
+}

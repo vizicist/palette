@@ -1,0 +1,12 @@
+{
+    "params":{
+        "edge":{
+            "enabled":"true",
+            "value":"true"
+        },
+        "quad":{
+            "enabled":"true",
+            "value":"true"
+        }
+    }
+}

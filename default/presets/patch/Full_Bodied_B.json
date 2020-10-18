@@ -1,0 +1,17 @@
+{
+    "params":{
+        "effect":{
+            "enabled":true,
+            "value":"Full_Bodied"
+        },
+        "sound":{
+            "enabled":true,
+            "value":"Full_Bodied_2"
+        },
+        "visual":{
+            "enabled":true,
+            "value":"Full_Bodied_2"
+        }
+    },
+    "parent":""
+}

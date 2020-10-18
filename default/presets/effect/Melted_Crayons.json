@@ -1,0 +1,16 @@
+{
+    "params":{
+        "blur":{
+            "enabled":"true",
+            "value":"true"
+        },
+        "displace":{
+            "enabled":"true",
+            "value":"true"
+        },
+        "trails":{
+            "enabled":"true",
+            "value":"true"
+        }
+    }
+}

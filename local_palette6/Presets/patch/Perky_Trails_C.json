@@ -1,0 +1,17 @@
+{
+    "params":{
+        "effect":{
+            "enabled":true,
+            "value":"Perky_Trails"
+        },
+        "sound":{
+            "enabled":true,
+            "value":"Perky_Trails_3"
+        },
+        "visual":{
+            "enabled":true,
+            "value":"Perky_Trails_3"
+        }
+    },
+    "parent":""
+}

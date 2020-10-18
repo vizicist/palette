@@ -1,0 +1,12 @@
+{
+    "params":{
+        "displace":{
+            "enabled":"true",
+            "value":"true"
+        },
+        "fragment":{
+            "enabled":"true",
+            "value":"true"
+        }
+    }
+}

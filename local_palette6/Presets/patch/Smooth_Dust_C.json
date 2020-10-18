@@ -1,0 +1,16 @@
+{
+    "params":{
+        "effect":{
+            "enabled":1,
+            "value":"Smooth_Dust"
+        },
+        "sound":{
+            "enabled":1,
+            "value":"Smooth_Dust_3"
+        },
+        "visual":{
+            "enabled":1,
+            "value":"Smooth_Dust_3"
+        }
+    }
+}

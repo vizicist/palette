@@ -1,0 +1,33 @@
+{
+    "params":{
+        "alphafinal":"0.000",
+        "alphainitial":"0.200",
+        "alphatime":"2.000",
+        "aspect":"1.000",
+        "bounce":"false",
+        "filled":"true",
+        "huefillfinal":"0.000",
+        "huefillinitial":"360.000",
+        "huefilltime":"5.000",
+        "huefinal":"360.000",
+        "hueinitial":"0.000",
+        "huetime":"5.000",
+        "lifetime":"8.000",
+        "luminance":"0.500",
+        "mirrortype":"none",
+        "movedir":"cursor",
+        "noisevertex":"0.000",
+        "nsprites":"100",
+        "rotangdir":"random",
+        "rotanginit":"0.000",
+        "rotangspeed":"0.000",
+        "rotauto":"false",
+        "saturation":"1.000",
+        "shape":"square",
+        "sizefinal":"0.400",
+        "sizeinitial":"1.000",
+        "sizetime":"2.000",
+        "speed":"0.100",
+        "thickness":"3.000"
+    }
+}

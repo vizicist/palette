@@ -1,0 +1,20 @@
+{
+    "params":{
+        "patchA":{
+            "enabled":"true",
+            "value":"Ghost_Puddles_A"
+        },
+        "patchB":{
+            "enabled":"true",
+            "value":"Ghost_Puddles_B"
+        },
+        "patchC":{
+            "enabled":"true",
+            "value":"Ghost_Puddles_C"
+        },
+        "patchD":{
+            "enabled":"true",
+            "value":"Ghost_Puddles_D"
+        }
+    }
+}

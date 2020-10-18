@@ -1,0 +1,20 @@
+{
+    "params":{
+        "patchA":{
+            "enabled":"true",
+            "value":"Deep_Triangles_A"
+        },
+        "patchB":{
+            "enabled":"true",
+            "value":"Deep_Triangles_B"
+        },
+        "patchC":{
+            "enabled":"true",
+            "value":"Deep_Triangles_C"
+        },
+        "patchD":{
+            "enabled":"true",
+            "value":"Deep_Triangles_D"
+        }
+    }
+}

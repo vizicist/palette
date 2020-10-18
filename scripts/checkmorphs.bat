@@ -1,0 +1,1 @@
+bash checkmorphs.sh

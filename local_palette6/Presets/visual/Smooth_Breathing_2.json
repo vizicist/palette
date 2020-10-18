@@ -1,0 +1,121 @@
+{
+    "params":{
+        "alphafinal":{
+            "enabled":true,
+            "value":" 0.000"
+        },
+        "alphainitial":{
+            "enabled":true,
+            "value":" 1.000"
+        },
+        "alphatime":{
+            "enabled":true,
+            "value":" 5.680"
+        },
+        "aspect":{
+            "enabled":true,
+            "value":" 1.000"
+        },
+        "bounce":{
+            "enabled":true,
+            "value":"false"
+        },
+        "filled":{
+            "enabled":true,
+            "value":"false"
+        },
+        "huefillfinal":{
+            "enabled":true,
+            "value":"72.000"
+        },
+        "huefillinitial":{
+            "enabled":true,
+            "value":"144.000"
+        },
+        "huefilltime":{
+            "enabled":true,
+            "value":" 5.000"
+        },
+        "huefinal":{
+            "enabled":true,
+            "value":"360.000"
+        },
+        "hueinitial":{
+            "enabled":true,
+            "value":"36.000"
+        },
+        "huetime":{
+            "enabled":true,
+            "value":" 1.004"
+        },
+        "lifetime":{
+            "enabled":true,
+            "value":"10.000"
+        },
+        "luminance":{
+            "enabled":true,
+            "value":" 0.500"
+        },
+        "mirrortype":{
+            "enabled":true,
+            "value":"none"
+        },
+        "movedir":{
+            "enabled":true,
+            "value":"cursor"
+        },
+        "noisevertex":{
+            "enabled":true,
+            "value":" 0.000"
+        },
+        "nsprites":{
+            "enabled":true,
+            "value":"    48"
+        },
+        "rotangdir":{
+            "enabled":true,
+            "value":"random"
+        },
+        "rotanginit":{
+            "enabled":true,
+            "value":"45.000"
+        },
+        "rotangspeed":{
+            "enabled":true,
+            "value":"21.600"
+        },
+        "rotauto":{
+            "enabled":true,
+            "value":"true"
+        },
+        "saturation":{
+            "enabled":true,
+            "value":" 1.000"
+        },
+        "shape":{
+            "enabled":true,
+            "value":"circle"
+        },
+        "sizefinal":{
+            "enabled":true,
+            "value":" 1.100"
+        },
+        "sizeinitial":{
+            "enabled":true,
+            "value":" 1.009"
+        },
+        "sizetime":{
+            "enabled":true,
+            "value":" 1.090"
+        },
+        "speed":{
+            "enabled":true,
+            "value":" 0.100"
+        },
+        "thickness":{
+            "enabled":true,
+            "value":" 1.999"
+        }
+    },
+    "parent":"Smooth_Breathing_override"
+}
