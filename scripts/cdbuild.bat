@@ -1,1 +1,1 @@
-cd %PALETTESOURCE%\windows
+cd "%PALETTESOURCE%\windows"

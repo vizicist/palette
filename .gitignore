@@ -1,6 +1,7 @@
 CurrentSnapshot.*
 *.pyc
 python/dist
+windows/ship
 params/gentle/snap/CurrentSnapshot.*
 # Binaries for programs and plugins
 build/windows/.vs
