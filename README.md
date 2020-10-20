@@ -21,17 +21,19 @@ There are several ways of running Palette:
    that is running Palette in LOCAL mode.
 
    In LOCAL mode, input (local or remotely-generated) is processed
-   to generate MIDI (to a VST host) and OSC (to Resolume and the
-   Palette FFGL plugin).
+   to generate MIDI (typicall to a VST host) and OSC (typically
+   to Resolume and Palette's FFGL plugin running in it).
 
 ==================================================================
-How to install and run in REMOTE mode
+How to install
 ==================================================================
 
-- Download ship/palette_win.zip from this repo
-- Unzip it anywhere you like, it will produce a palette_win directory.
-- Set a PALETTE environment variable to the full path of this palette_win
-- Call %PALETTE%\bin\runall.bat
+- Download and execute ship/palette_setup_win.exe from this repo
+
+==================================================================
+How to run in REMOTE mode
+==================================================================
+- Execute C:\Program Files\Palette\bin\runall.bat
 
 ==================================================================
 IMPLEMENTATION DETAILS
@@ -107,10 +109,9 @@ Compiling on a brand new Windows machine for development
 	%USERPROFILE%\go\bin
 	%USERPROFILE%\go\src\github.com\vizicist\palette\scripts
 
-  and add these environment variables:
+  and add this environment variables:
 
 	PALETTESOURCE=%USERPROFILE%\go\src\github.com\vizicist\palette
-	PALETTE=%USERPROFILE%\go\src\github.com\vizicist\palette\ship\windows
 
 - in Visual Studio Code, in the "extensions marketplace" section on the left side,
     type in "go" and install the Go language support.
@@ -118,6 +119,4 @@ Compiling on a brand new Windows machine for development
 - to compile everything on Windows:
 
 	cd windows
-        buildall
-
-
+        build

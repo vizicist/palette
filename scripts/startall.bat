@@ -1,16 +1,21 @@
 @echo off
 
-call %PALETTE%\bin\killall.bat
+pushd %PALETTE%
 
-call %PALETTE%\bin\startpalette.bat
+call bin\killall.bat
+
+call bin\startpalette.bat
 rem give NATS, etc time to finish starting
 sleep 5
-call %PALETTE%\bin\startgui.bat
+call bin\startgui.bat
 
+rem If PALETTECONFIG is defined, then we assume we're doing bidule and/or resolume
 if "%PALETTECONFIG%" == "" goto getout
 sleep 2
-call %PALETTE%\bin\startbidule.bat
+call bin\startbidule.bat
 sleep 5
-call %PALETTE%\bin\startresolume.bat
+call bin\startresolume.bat
 
 :getout
+
+popd

@@ -1,1 +1,1 @@
-%PALETTE%\bin\pyinstalled\testcursor.exe %1 %2
+"%PALETTE%\bin\pyinstalled\testcursor.exe" %1 %2
