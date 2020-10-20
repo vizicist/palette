@@ -10,11 +10,11 @@ goto getout
 echo Calling killall
 call %PALETTESOURCE%\scripts\killall.bat
 
-set SHIPNAME=palette_win
-
-set ship=%PALETTESOURCE%\ship\%SHIPNAME%
+set ship=%PALETTESOURCE%\windows\ship
+set bin=%ship%\bin
 rm -fr %ship% > nul 2>&1
 mkdir %ship%
+mkdir %bin%
 
 echo ================ Upgrading Python
 python -m pip install --upgrade pip
@@ -28,14 +28,10 @@ msbuild /t:Build /p:Configuration=Release /p:Platform="x64" palette.sln
 msbuild /t:Build /p:Configuration=Debug /p:Platform="x64" palette.sln
 popd
 
-rem The popd for this is at the end of the file
-pushd %PALETTESOURCE%\cmd\palette
 
 echo ================ Creating palette.exe
 
-set bin=%ship%\bin
-mkdir %bin%
-
+pushd %PALETTESOURCE%\cmd\palette
 go build palette.go > gobuild.out 2>&1
 type nul > emptyfile
 fc gobuild.out emptyfile > nul
@@ -47,7 +43,8 @@ cat gobuild.out
 popd
 goto getout
 :continue1
-move palette.exe %bin%
+move palette.exe %bin%\palette.exe
+
 popd
 
 echo ================ Creating gui.exe
@@ -95,12 +92,11 @@ copy startresolume.bat %bin%
 copy startbidule.bat %bin%
 
 copy natsmon.bat %bin%
+
 popd
 
 echo ================ COPYING config
 mkdir %ship%\config
-mkdir %ship%\logs > nul 2>&1
-
 copy %PALETTESOURCE%\default\config\*.json %ship%\config
 copy %PALETTESOURCE%\default\config\*.conf %ship%\config
 
@@ -114,11 +110,13 @@ echo ================ COPYING presets
 mkdir %ship%\presets
 xcopy /e /y %PALETTESOURCE%\default\presets %ship%\presets > nul
 
-echo ================ CREATING %SHIPNAME%.zip
-pushd %PALETTESOURCE%\ship
-rm -f %SHIPNAME%.zip
-powershell Compress-Archive -Path %SHIPNAME% -CompressionLevel Fastest -DestinationPath %SHIPNAME%.zip
+echo ================ REMOVING UNUSED THINGS
+rm -fr %bin%\pyinstalled\tcl\tzdata
+rm -fr %bin%\pyinstalled\tcl\encoding
 
-popd
+echo ================ CREATING palette_setup_win.exe
+"c:\Program Files (x86)\Inno Setup 6\ISCC.exe" palette_win_setup.iss
+move Output\palette_*_win_setup.exe %PALETTESOURCE%\release
+rmdir Output
 
 :getout

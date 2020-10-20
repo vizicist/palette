@@ -1,1 +1,1 @@
-%PALETTE%\nats\nats-sub ">"
+"%PALETTE%\nats\nats-sub" ">"

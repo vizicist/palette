@@ -1,3 +1,3 @@
-pushd %PALETTESOURCE%\windows
-call buildall.bat
+pushd "%PALETTESOURCE%\windows"
+call build.bat
 popd
