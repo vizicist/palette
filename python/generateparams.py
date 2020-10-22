@@ -17,7 +17,7 @@ def openFile(dir,name):
 
 def generate(homedir, force):
 
-	s = os.path.join(homedir,"source/lib/palette")
+	s = os.path.join(homedir,"ffgl/lib/palette")
 	c = os.path.join(homedir,"default/config")
 
 	#########################################

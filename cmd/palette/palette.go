@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"log"
-	"os"
 	"os/signal"
 	"sync"
 	"syscall"
@@ -16,10 +15,8 @@ func main() {
 	signal.Ignore(syscall.SIGHUP)
 	signal.Ignore(syscall.SIGINT)
 
-	palette.SetRootPath(os.Getenv("PALETTE"))
-
-	palette.InitLogs(palette.ConfigValue("logfile"))
-	palette.InitDebug(palette.ConfigValue("debug"))
+	palette.InitLogs()
+	palette.InitDebug()
 
 	log.SetFlags(log.Ldate | log.Lmicroseconds)
 	log.Print("palette.go begins")

@@ -36,8 +36,6 @@ type DebugFlags struct {
 	Remote   bool
 }
 
-var rootPath string
-
 func setDebug(dtype string, b bool) error {
 	d := strings.ToLower(dtype)
 	switch d {
@@ -72,7 +70,8 @@ func setDebug(dtype string, b bool) error {
 }
 
 // InitDebug xxx
-func InitDebug(debug string) {
+func InitDebug() {
+	debug := ConfigValue("debug")
 	darr := strings.Split(debug, ",")
 	for _, d := range darr {
 		if d != "" {
@@ -83,20 +82,17 @@ func InitDebug(debug string) {
 }
 
 // InitLogs xxx
-func InitLogs(logfile string) {
-	if logfile != "" {
-		logpath := LogFilePath(logfile)
-		file, err := os.OpenFile(logpath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
-		if err != nil {
-			fmt.Printf("InitLogs: Unable to open logfile=%s logpath=%s err=%s", logfile, logpath, err)
-			return
-		}
-		log.Printf("Logs are being saved in %s\n", logpath)
-		log.SetOutput(file)
-	} else {
-		log.Printf("Logs are going to stdout, not being saved\n")
+func InitLogs() {
+	logfile := "palette.log"
+	logpath := LogFilePath(logfile)
+	file, err := os.OpenFile(logpath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+	if err != nil {
+		fmt.Printf("InitLogs: Unable to open logfile=%s logpath=%s err=%s", logfile, logpath, err)
+		return
 	}
-	log.Printf("This should be in the log file\n")
+	log.Printf("Logs are being saved in %s\n", logpath)
+	log.SetOutput(file)
+	log.Printf("This line should be the first line in the log file\n")
 }
 
 // fileExists checks if a file exists
@@ -113,87 +109,52 @@ func fileExists(filename string) bool {
 	return true
 }
 
-// SetRootPath xxx
-func SetRootPath(path string) {
-	rootPath = path
-}
+var palettePath string
 
-// RootPath is the root
-func RootPath() string {
-	if rootPath == "" {
-		log.Panicf("util.Rootdir: SetRootPath needs to be called")
+// PalettePath is the root
+func PalettePath() string {
+	if palettePath == "" {
+		palettePath = os.Getenv("PALETTE")
+		if palettePath == "" {
+			log.Panicf("PALETTE environment variable needs to be set.")
+		}
 	}
-	return rootPath
+	return palettePath
 }
 
 // BinFilePath xxx
 func BinFilePath(nm string) string {
-	return filepath.Join(RootPath(), "bin", nm)
+	return filepath.Join(PalettePath(), "bin", nm)
 }
 
 // ConfigFilePath xxx
 func ConfigFilePath(nm string) string {
-	config := os.Getenv("PALETTECONFIG")
-	if config != "" {
-		return filepath.Join(config, nm)
-	}
-	return filepath.Join(RootPath(), "config", nm)
+	return filepath.Join(PalettePath(), "config", nm)
 }
 
-// TemplateFilePath xxx
-func TemplateFilePath(nm string) string {
-	path := filepath.Join(RootPath(), "templates", nm)
-	return path
+// LocalPaletteDir xxx
+func LocalPaletteDir() string {
+	localapp := os.Getenv("LOCALAPPDATA")
+	if localapp == "" {
+		log.Printf("Expecting LOCALAPPDATA to be set.")
+		return ""
+	}
+	return filepath.Join(localapp, "Palette")
+}
+
+// LocalConfigFilePath xxx
+func LocalConfigFilePath(nm string) string {
+	localdir := LocalPaletteDir()
+	if localdir == "" {
+		return ""
+	}
+	return filepath.Join(localdir, "config", nm)
 }
 
 // LogFilePath xxx
 func LogFilePath(nm string) string {
-	path := filepath.Join(RootPath(), "logs", nm)
-	return path
-}
-
-// EngineDir xxx
-func EngineDir(engine string) string {
-	return filepath.Join(RootPath(), "engines", engine)
-}
-
-// EngineFilePath xxx
-func EngineFilePath(engine string, nm string) string {
-	return filepath.Join(EngineDir(engine), nm)
-}
-
-// VenueDir xxx
-func VenueDir(venue string) string {
-	return filepath.Join(RootPath(), "venues", venue)
-}
-
-// VenueFilePath xxx
-func VenueFilePath(venue string, nm string) string {
-	return filepath.Join(VenueDir(venue), nm)
-}
-
-// ISFFilePaths xxx
-func ISFFilePaths(venue string, nm string) (string, string) {
-	return filepath.Join(VenueDir(venue), "ISF", nm+".fs"),
-		filepath.Join(VenueDir(venue), nm+".vs")
-}
-
-// MidifileDir xxx
-func MidifileDir(venue string) string {
-	return filepath.Join(VenueDir(venue), "midifiles")
-}
-
-// MidifilePath xxx
-func MidifilePath(venue string, nm string) string {
-	if !strings.HasSuffix(nm, ".mid") {
-		nm += ".mid"
-	}
-	return filepath.Join(MidifileDir(venue), nm)
-}
-
-// RecordingsFilePath xxx
-func RecordingsFilePath(venue string, nm string) string {
-	return filepath.Join(VenueDir(venue), "recordings", nm)
+	localdir := LocalPaletteDir()
+	return filepath.Join(localdir, "logs", nm)
 }
 
 // StringMap takes a JSON string and returns a map of elements
@@ -409,10 +370,24 @@ func ConfigValue(nm string) string {
 		// Only do this once, perhaps should re-read if file has changed?
 		path := ConfigFilePath("settings.json")
 		var err error
-		configMap, err = ReadConfigFile(path)
+		configMap, err = ReadConfigFile(path) // make sure you're setting global configMap
 		if err != nil {
 			log.Printf("ReadConfigFile: path=%s err=%s", path, err)
 			return ""
+		}
+
+		// If it exists, merge local settings.json
+		localpath := LocalConfigFilePath("settings.json")
+		if localpath != "" && fileExists(localpath) {
+			localconfigMap, err := ReadConfigFile(localpath)
+			if err != nil {
+				log.Printf("ReadConfigFile: localpath=%s err=%s", localpath, err)
+			} else {
+				log.Printf("Merging settings from %s\n", localpath)
+				for k, v := range localconfigMap {
+					configMap[k] = v
+				}
+			}
 		}
 	}
 	val, ok := configMap[nm]

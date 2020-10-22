@@ -16,14 +16,14 @@ rm -fr %ship% > nul 2>&1
 mkdir %ship%
 mkdir %bin%
 
-echo ================ Upgrading Python
-python -m pip install --upgrade pip
-pip install codenamize pip install python-osc pip install asyncio-nats-client pyinstaller get-mac | grep -v "already satisfied"
+echo ================ NOT Upgrading Python
+rem python -m pip install --upgrade pip
+rem pip install codenamize pip install python-osc pip install asyncio-nats-client pyinstaller get-mac | grep -v "already satisfied"
 
 echo ================ COMPILING FFGL PLUGIN
 set MSBUILDCMD=C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\Common7\Tools\vsmsbuildcmd.bat
 call "%MSBUILDCMD%"
-pushd %PALETTESOURCE%\source\windows
+pushd %PALETTESOURCE%\ffgl\windows
 msbuild /t:Build /p:Configuration=Release /p:Platform="x64" palette.sln
 msbuild /t:Build /p:Configuration=Debug /p:Platform="x64" palette.sln
 popd
@@ -52,44 +52,36 @@ pushd %PALETTESOURCE%\python
 rm -fr dist
 pyinstaller gui.py > pyinstaller.out 2>&1
 pyinstaller testcursor.py > pyinstaller.out 2>&1
-pyinstaller oscsend.py > pyinstaller.out 2>&1
-pyinstaller osclisten.py > pyinstaller.out 2>&1
-pyinstaller startbidule.py > pyinstaller.out 2>&1
-pyinstaller startresolume.py > pyinstaller.out 2>&1
+pyinstaller osc.py > pyinstaller.out 2>&1
 rem merge them all into one
 move dist\gui dist\pyinstalled
 mv dist\testcursor\testcursor.exe dist\pyinstalled
-mv dist\oscsend\oscsend.exe dist\pyinstalled
-mv dist\osclisten\osclisten.exe dist\pyinstalled
-mv dist\startresolume\startresolume.exe dist\pyinstalled
-mv dist\startbidule\startbidule.exe dist\pyinstalled
+mv dist\osc\osc.exe dist\pyinstalled
 move dist\pyinstalled %bin%
 popd
 
 echo ================ COPYING FFGL PLUGIN
-pushd %PALETTESOURCE%\source\windows\x64\Debug
+pushd %PALETTESOURCE%\ffgl\windows\x64\Debug
 mkdir %ship%\ffgl
 copy *.* %ship%\ffgl
 popd
 
 echo ================ COPYING nats
-mkdir %ship%\nats
-copy %PALETTESOURCE%\nats\*.* %ship%\nats
+copy %PALETTESOURCE%\nats\nats-pub.exe %bin%
+copy %PALETTESOURCE%\nats\nats-sub.exe %bin%
 
 echo ================ COPYING scripts
 pushd %PALETTESOURCE%\scripts
 copy killall.bat %bin%
 copy killpalette.bat %bin%
 copy killgui.bat %bin%
-copy killresolume.bat %bin%
-copy killbidule.bat %bin%
 copy testcursor.bat %bin%
+copy osc.bat %bin%
+copy taillog.bat %bin%
 
 copy startall.bat %bin%
 copy startpalette.bat %bin%
 copy startgui.bat %bin%
-copy startresolume.bat %bin%
-copy startbidule.bat %bin%
 
 copy natsmon.bat %bin%
 
@@ -114,9 +106,6 @@ echo ================ REMOVING UNUSED THINGS
 rm -fr %bin%\pyinstalled\tcl\tzdata
 rm -fr %bin%\pyinstalled\tcl\encoding
 
-echo ================ CREATING palette_setup_win.exe
-"c:\Program Files (x86)\Inno Setup 6\ISCC.exe" palette_win_setup.iss
-move Output\palette_*_win_setup.exe %PALETTESOURCE%\release
-rmdir Output
+call buildsetup.bat
 
 :getout

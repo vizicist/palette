@@ -56,7 +56,7 @@ homedir = os.path.dirname(curdir)
 os.chdir(homedir)
 
 projdir = os.path.join("build","windows")
-srcdir = os.path.join("source","plugins","PluginTemplate")
+srcdir = os.path.join("ffgl","plugins","PluginTemplate")
 blddir = "binaries"
 
 print("projdir=%s srcdir=%s blddir=%s" % (projdir,srcdir,blddir))
@@ -75,7 +75,7 @@ if not os.path.isdir(srcdir):
     print("Error: "+srcdir+" doesn't exist!")
     sys.exit(1)
 
-tosrcdir = os.path.join("source","plugins",pluginname)
+tosrcdir = os.path.join("ffgl","plugins",pluginname)
 
 if force == False and os.path.exists(tosrcdir):
     print("The directory "+tosrcdir+" already exists!")
@@ -99,7 +99,7 @@ if not os.path.exists(tosrcdir):
 
 print("========== Generating FFGL plugin:%s id:%s" % (pluginname,id))
 
-tosrcdir = os.path.join("source","plugins",pluginname)
+tosrcdir = os.path.join("ffgl","plugins",pluginname)
 
 generate(pluginname, id,
         os.path.join(projdir,"PluginTemplate.vcxproj"),

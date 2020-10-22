@@ -168,46 +168,65 @@ def readJsonPath(path):
     f.close()
     return j
 
-global PaletteDir
-PaletteDir = os.environ.get("PALETTE")
-if PaletteDir == None:
-    print("PALETTE environment variable needs to be defined.")
-    exit()
-
-global ConfigDir
-d = os.environ.get("PALETTECONFIG")
-if d == None:
-    ConfigDir = os.path.join(PaletteDir, "config")
-else:
-    ConfigDir = d
-
-global PresetsDir
-d = os.environ.get("PALETTEPRESETS")
-if d == None:
-    PresetsDir = os.path.join(PaletteDir, "presets")
-else:
-    PresetsDir = d
-
-LocalJson = None
+SettingsJson = None
+LocalSettingsJson = None
 
 def ConfigValue(s):
-
-    global LocalJson
-    if LocalJson == None:
+    global SettingsJson
+    global LocalSettingsJson
+    if SettingsJson == None:
         path = configFilePath("settings.json")
-        print("Loading from ",path)
-        LocalJson = readJsonPath(configFilePath("settings.json"))
+        if not os.path.isfile(path):
+            print("No file? path=",path)
+            return ""
+        print("Loading",path)
+        SettingsJson = readJsonPath(path)
 
-    if s in LocalJson:
-        return LocalJson[s]
+    if LocalSettingsJson == None:
+        path = localconfigFilePath("settings.json")
+        if os.path.isfile(path):
+            print("Loading",path)
+            LocalSettingsJson = readJsonPath(path)
+
+    if LocalSettingsJson != None and s in LocalSettingsJson:
+        return LocalSettingsJson[s]
+    elif SettingsJson != None and s in SettingsJson:
+        return SettingsJson[s]
     else:
         return ""
 
-def configFilePath(nm):
-    return os.path.join(ConfigDir, nm)
+paletteDir = None
+def PaletteDir():
+    global paletteDir
+    if paletteDir == None:
+        paletteDir = os.environ.get("PALETTE")
+        if paletteDir == None:
+            print("PALETTE environment variable needs to be defined.")
+            exit()
+    return paletteDir
 
-def paramFilePath(section, nm, suffix=".json"):
-    return os.path.join(PresetsDir,section, nm+suffix)
+def configFilePath(nm):
+    return os.path.join(PaletteDir(), "config", nm)
+
+def localAppDataDir():
+    local = os.environ.get("LOCALAPPDATA")
+    if local == None:
+        print("Expecting LOCALAPPDATA to be set, assuming .")
+        local = "."
+    return os.path.join(local,"Palette")
+
+def PresetsDir():
+    d = localAppDataDir()
+    pdir = os.path.join(d, "presets")
+    if not os.path.isdir(pdir):
+        print("No presets directory?  path=",pdir)
+    return pdir
+
+def localconfigFilePath(nm):
+    return os.path.join(localAppDataDir(), "config", nm)
+
+def presetsFilePath(section, nm, suffix=".json"):
+    return os.path.join(PresetsDir(),section, nm+suffix)
 
 def SendCursorEvent(ddu,x,y,z):
     e = "{ \"region\": \"A\", \"event\": \"cursor." + ddu + "\", \"x\": \"%f\", \"y\": \"%f\", \"z\": \"%f\" }"  % (x,y,z)

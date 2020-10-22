@@ -421,6 +421,7 @@ func initialize() error {
 		m.fwVersionRelease = uint8(firmwareinfo.fw_version_release)
 		m.deviceID = int(firmwareinfo.device_id)
 
+		// Don't use DebugUtil.Morph, this always gets logged
 		log.Printf("Morph Opened and Started: idx=%d serial=%s firmware=%d.%d.%d suceeded\n",
 			m.idx, m.serialNum, m.fwVersionMajor, m.fwVersionMinor, m.fwVersionBuild)
 	}

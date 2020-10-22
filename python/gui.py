@@ -531,7 +531,7 @@ class ProGuiApp(tk.Tk):
             print("Unexpected snap value in readParamsFileIntoSnap")
             return
         # Read parameters from a json file (but NOT a snap file)
-        fpath = spaceutil.paramFilePath(paramstype, paramsname)
+        fpath = spaceutil.presetsFilePath(paramstype, paramsname)
         print("Reading ",fpath)
         f = open(fpath)
         j = json.load(f)
@@ -592,7 +592,7 @@ class ProGuiApp(tk.Tk):
     def readSnapParamsFile(self,paramsname):
         # print("\nREAD SNAP PARAMS FILE paramsname=",paramsname)
         # Read parameters from a json file
-        fpath = spaceutil.paramFilePath("snap", paramsname)
+        fpath = spaceutil.presetsFilePath("snap", paramsname)
         print("Reading ",fpath)
         try:
             f = open(fpath)
@@ -685,8 +685,8 @@ class ProGuiApp(tk.Tk):
         page.doLayout()
        
     def makeSelectorPage(self,parent,pagename,pagemaker):
-        path = os.path.join(spaceutil.PresetsDir, pagename)
-        vals = spaceutil.listOfJsonFiles(path,ignore="CurrentSnapshot")
+        path = os.path.join(spaceutil.PresetsDir(), pagename)
+        vals = spaceutil.listOfJsonFiles(path)
 
         # XXX - this PREVIOUS stuff actually works,
         # XXX - but doesn't properly highlight the previous selection
@@ -867,14 +867,14 @@ class ProGuiApp(tk.Tk):
         self.editPage["snap"].setChanged()
 
     def savePrevious(self):
-        frompath = spaceutil.paramFilePath("snap", "CurrentSnapshot")
-        topath = spaceutil.paramFilePath("snap", "CurrentSnapshot", ".previous")
+        frompath = CurrentSnapshotPath()
+        topath = frompath.replace(".json",".previous")
         spaceutil.copyFile(frompath,topath)
         # print("SAVE PREVIOUS Copying ",frompath," to ",topath)
 
     def restorePrevious(self):
-        frompath = spaceutil.paramFilePath("snap", "CurrentSnapshot", ".previous")
-        topath = spaceutil.paramFilePath("snap", "CurrentSnapshot")
+        frompath = spaceutil.presetsFilePath("snap", "CurrentSnapshot", ".previous")
+        topath = spaceutil.presetsFilePath("snap", "CurrentSnapshot")
         spaceutil.copyFile(frompath,topath)
         # print("RESTORING PREVIOUS Copying ",frompath," to ",topath)
 
@@ -927,8 +927,8 @@ class ProGuiApp(tk.Tk):
         return True
 
     def revertToBackup(self):
-        frompath = spaceutil.paramFilePath("snap", "CurrentSnapshot", ".backup")
-        topath = spaceutil.paramFilePath("snap", "CurrentSnapshot")
+        frompath = spaceutil.presetsFilePath("snap", "CurrentSnapshot", ".backup")
+        topath = spaceutil.presetsFilePath("snap", "CurrentSnapshot")
         spaceutil.copyFile(frompath,topath)
         print("Reverting Backup Copying ",frompath," to ",topath)
 
@@ -1113,7 +1113,7 @@ class ProGuiApp(tk.Tk):
         spaceutil.palette_api("global.audioOn",'{}')
 
     def recordingExists(self,name):
-        fname = os.path.join(spaceutil.PaletteDir, "recordings", name+".json")
+        fname = os.path.join(spaceutil.PaletteDir(), "recordings", name+".json")
         return os.path.exists(fname)
 
     def recordingNameNext(self):
@@ -1248,11 +1248,10 @@ class ProGuiApp(tk.Tk):
                 self.paramValueTypeOf[x] = self.allParamsJson[x]["type"]
 
         # The things here get ADDED to the ones already read in from paramenums.json
-        self.paramenums["sound"] = spaceutil.listOfJsonFiles(os.path.join(spaceutil.PresetsDir, "sound"))
-        self.paramenums["visual"] = spaceutil.listOfJsonFiles(os.path.join(spaceutil.PresetsDir, "visual"))
-        self.paramenums["effect"] = spaceutil.listOfJsonFiles(os.path.join(spaceutil.PresetsDir, "effect"))
-        self.paramenums["patch"] = spaceutil.listOfJsonFiles(os.path.join(spaceutil.PresetsDir, "patch"))
-        self.paramenums["sliders"] = spaceutil.listOfJsonFiles(os.path.join(spaceutil.PresetsDir, "sliders"))
+        self.paramenums["sound"] = spaceutil.listOfJsonFiles(os.path.join(spaceutil.PresetsDir(), "sound"))
+        self.paramenums["visual"] = spaceutil.listOfJsonFiles(os.path.join(spaceutil.PresetsDir(), "visual"))
+        self.paramenums["effect"] = spaceutil.listOfJsonFiles(os.path.join(spaceutil.PresetsDir(), "effect"))
+        self.paramenums["sliders"] = spaceutil.listOfJsonFiles(os.path.join(spaceutil.PresetsDir(), "sliders"))
 
         j = spaceutil.readJsonPath(spaceutil.configFilePath("Synths.json"))
 
@@ -1601,7 +1600,7 @@ class PagePlayback(tk.Frame):
 
     def updatePlaybackFiles(self):
 
-        recordingsDir = os.path.join(spaceutil.PaletteDir, "recordings")
+        recordingsDir = os.path.join(spaceutil.PaletteDir(), "recordings")
         files = spaceutil.listOfJsonFiles(recordingsDir, ignore="LastRecording")
         self.recordings = []
         for file in files:
@@ -1717,7 +1716,7 @@ class PageEditParams(tk.Frame):
         self.setParamsName(defname)
 
     def updateParamFiles(self):
-        files = spaceutil.listOfJsonFiles(os.path.join(spaceutil.ConfigDir, self.paramstype),ignore="CurrentSnapshot")
+        files = spaceutil.listOfJsonFiles(os.path.join(spaceutil.PresetsDir(), self.paramstype),ignore="CurrentSnapshot")
         self.paramFiles = files
         self.comboParamsname.configure(values=self.paramFiles)
 
@@ -2081,8 +2080,12 @@ class PageEditParams(tk.Frame):
             w = self.paramValueWidget[name]
             newjson["params"][name] = self.normalizeJsonValue(name,w.cget("text"))
 
-        fpath = spaceutil.paramFilePath(section,paramsname,suffix)
-        # print("Saving ",fpath)
+        if section == "snap" and paramsname == "CurrentSnapshot":
+            fpath = CurrentSnapshotPath()
+        else:
+            fpath = spaceutil.presetsFilePath(section,paramsname,suffix)
+            # print("Saving ",fpath)
+
         f = open(fpath,"w")
         f.write(json.dumps(newjson, sort_keys=True, indent=4, separators=(',',':')))
         # To avoid complaints from editors, add a final newline
@@ -2467,7 +2470,7 @@ class PagePerformSliders(tk.Frame):
         self.sliderParam[i] = newname
     
     def setSliders(self,slidersname):
-        j = spaceutil.readJsonPath(spaceutil.paramFilePath("sliders", slidersname))
+        j = spaceutil.readJsonPath(spaceutil.presetsFilePath("sliders", slidersname))
         # print("slidersname=",slidersname," j=",j)
         p = j["params"]
         for i in range(8):
@@ -2666,6 +2669,9 @@ def sliderIndexOfParam(paramname):
 
 def isTwoLine(text):
     return text.find(LineSep) >= 0 or text.find("\n") >= 0
+
+def CurrentSnapshotPath():
+    return spaceutil.localconfigFilePath("CurrentSnapshot.json")
 
 def initMain(app):
     app.mainLoop()

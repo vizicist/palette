@@ -1,0 +1,293 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\ffgl\lib\cJSON\cJSON.cpp" />
+    <ClCompile Include="..\..\ffgl\lib\ffgl\FFGL.cpp" />
+    <ClCompile Include="..\..\ffgl\lib\ffgl\FFGLFBO.cpp" />
+    <ClCompile Include="..\..\ffgl\lib\ffgl\FFGLPluginInfo.cpp" />
+    <ClCompile Include="..\..\ffgl\lib\ffgl\FFGLPluginInfoData.cpp" />
+    <ClCompile Include="..\..\ffgl\lib\ffgl\FFGLPluginManager.cpp" />
+    <ClCompile Include="..\..\ffgl\lib\ffgl\FFGLPluginSDK.cpp" />
+    <ClCompile Include="..\..\ffgl\lib\ffgl\FFGLShader.cpp" />
+    <ClCompile Include="..\..\ffgl\lib\ffgl\utilities\utilities.cpp" />
+    <ClCompile Include="..\..\ffgl\lib\glee\GLee.c" />
+    <ClCompile Include="..\..\ffgl\lib\nosuch\NosuchDebug.cpp" />
+    <ClCompile Include="..\..\ffgl\lib\nosuch\NosuchException.cpp" />
+    <ClCompile Include="..\..\ffgl\lib\nosuch\NosuchOscInput.cpp" />
+    <ClCompile Include="..\..\ffgl\lib\nosuch\NosuchOscUdpInput.cpp" />
+    <ClCompile Include="..\..\ffgl\lib\nosuch\NosuchUtil.cpp" />
+    <ClCompile Include="..\..\ffgl\lib\nosuch\sha1.c" />
+    <ClCompile Include="..\..\ffgl\lib\nosuch\UriCodec.cpp" />
+    <ClCompile Include="..\..\ffgl\lib\oscpack\ip\IpEndpointName.cpp" />
+    <ClCompile Include="..\..\ffgl\lib\oscpack\ip\win32\NetworkingUtils.cpp" />
+    <ClCompile Include="..\..\ffgl\lib\oscpack\ip\win32\UdpSocket.cpp" />
+    <ClCompile Include="..\..\ffgl\lib\oscpack\osc\OscOutboundPacketStream.cpp" />
+    <ClCompile Include="..\..\ffgl\lib\oscpack\osc\OscPrintReceivedElements.cpp" />
+    <ClCompile Include="..\..\ffgl\lib\oscpack\osc\OscReceivedElements.cpp" />
+    <ClCompile Include="..\..\ffgl\lib\oscpack\osc\OscTypes.cpp" />
+    <ClCompile Include="..\..\ffgl\lib\osc\src\OscBundle.cpp" />
+    <ClCompile Include="..\..\ffgl\lib\osc\src\OscMessage.cpp" />
+    <ClCompile Include="..\..\ffgl\lib\osc\src\OscSender.cpp" />
+    <ClCompile Include="..\..\ffgl\lib\palette\Palette.cpp" />
+    <ClCompile Include="..\..\ffgl\lib\palette\PaletteHost.cpp" />
+    <ClCompile Include="..\..\ffgl\lib\palette\PaletteOscInput.cpp" />
+    <ClCompile Include="..\..\ffgl\lib\palette\PaletteUtil.cpp" />
+    <ClCompile Include="..\..\ffgl\lib\palette\Region.cpp" />
+    <ClCompile Include="..\..\ffgl\lib\palette\Scheduler.cpp" />
+    <ClCompile Include="..\..\ffgl\lib\palette\Sprite.cpp" />
+    <ClCompile Include="..\..\ffgl\lib\palette\TrackedCursor.cpp" />
+    <ClCompile Include="..\..\ffgl\plugins\Palette\FFGLPalette.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\ffgl\lib\cJSON\cJSON.h" />
+    <ClInclude Include="..\..\ffgl\lib\ffgl\FFGL.h" />
+    <ClInclude Include="..\..\ffgl\lib\ffgl\FFGLFBO.h" />
+    <ClInclude Include="..\..\ffgl\lib\ffgl\FFGLLib.h" />
+    <ClInclude Include="..\..\ffgl\lib\ffgl\FFGLPluginInfo.h" />
+    <ClInclude Include="..\..\ffgl\lib\ffgl\FFGLPluginManager.h" />
+    <ClInclude Include="..\..\ffgl\lib\ffgl\FFGLPluginManager_inl.h" />
+    <ClInclude Include="..\..\ffgl\lib\ffgl\FFGLPluginSDK.h" />
+    <ClInclude Include="..\..\ffgl\lib\ffgl\FFGLShader.h" />
+    <ClInclude Include="..\..\ffgl\lib\ffgl\FreeFrame.h" />
+    <ClInclude Include="..\..\ffgl\lib\ffgl\utilities\utilities.h" />
+    <ClInclude Include="..\..\ffgl\lib\glee\GLee.h" />
+    <ClInclude Include="..\..\ffgl\lib\nosuch\NosuchColor.h" />
+    <ClInclude Include="..\..\ffgl\lib\nosuch\NosuchDebug.h" />
+    <ClInclude Include="..\..\ffgl\lib\nosuch\NosuchException.h" />
+    <ClInclude Include="..\..\ffgl\lib\nosuch\NosuchGraphics.h" />
+    <ClInclude Include="..\..\ffgl\lib\nosuch\NosuchOscInput.h" />
+    <ClInclude Include="..\..\ffgl\lib\nosuch\NosuchOscUdpInput.h" />
+    <ClInclude Include="..\..\ffgl\lib\nosuch\NosuchUtil.h" />
+    <ClInclude Include="..\..\ffgl\lib\nosuch\sha1.h" />
+    <ClInclude Include="..\..\ffgl\lib\oscpack\ip\IpEndpointName.h" />
+    <ClInclude Include="..\..\ffgl\lib\oscpack\ip\UdpSocket.h" />
+    <ClInclude Include="..\..\ffgl\lib\oscpack\osc\OscOutboundPacketStream.h" />
+    <ClInclude Include="..\..\ffgl\lib\oscpack\osc\OscPrintReceivedElements.h" />
+    <ClInclude Include="..\..\ffgl\lib\oscpack\osc\OscReceivedElements.h" />
+    <ClInclude Include="..\..\ffgl\lib\oscpack\osc\OscTypes.h" />
+    <ClInclude Include="..\..\ffgl\lib\palette\Palette.h" />
+    <ClInclude Include="..\..\ffgl\lib\palette\PaletteAll.h" />
+    <ClInclude Include="..\..\ffgl\lib\palette\PaletteHost.h" />
+    <ClInclude Include="..\..\ffgl\lib\palette\PaletteOscInput.h" />
+    <ClInclude Include="..\..\ffgl\lib\palette\PaletteUtil.h" />
+    <ClInclude Include="..\..\ffgl\lib\palette\Params.h" />
+    <ClInclude Include="..\..\ffgl\lib\palette\Region.h" />
+    <ClInclude Include="..\..\ffgl\lib\palette\RegionParams_declare.h" />
+    <ClInclude Include="..\..\ffgl\lib\palette\RegionParams_get.h" />
+    <ClInclude Include="..\..\ffgl\lib\palette\RegionParams_increment.h" />
+    <ClInclude Include="..\..\ffgl\lib\palette\RegionParams_init.h" />
+    <ClInclude Include="..\..\ffgl\lib\palette\RegionParams_issprite.h" />
+    <ClInclude Include="..\..\ffgl\lib\palette\RegionParams_list.h" />
+    <ClInclude Include="..\..\ffgl\lib\palette\RegionParams_set.h" />
+    <ClInclude Include="..\..\ffgl\lib\palette\RegionParams_toggle.h" />
+    <ClInclude Include="..\..\ffgl\lib\palette\RegionParams_types.h" />
+    <ClInclude Include="..\..\ffgl\lib\palette\RegionParams_typesdeclare.h" />
+    <ClInclude Include="..\..\ffgl\lib\palette\Scheduler.h" />
+    <ClInclude Include="..\..\ffgl\lib\palette\Sprite.h" />
+    <ClInclude Include="..\..\ffgl\lib\palette\TrackedCursor.h" />
+    <ClInclude Include="..\..\ffgl\lib\pthreads\pthread.h" />
+    <ClInclude Include="..\..\ffgl\plugins\Palette\FFGLPalette.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\config\Effects.json" />
+    <None Include="..\..\config\settings.json" />
+    <None Include="..\..\config\palette_1.json" />
+    <None Include="..\..\config\palette_2.json" />
+    <None Include="..\..\config\palette_3.json" />
+    <None Include="..\..\config\palette_4.json" />
+    <None Include="..\..\config\paramdefs.json" />
+    <None Include="..\..\config\paramenums.json" />
+    <None Include="generateparams.py" />
+    <None Include="postbuild.bat" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{C814EFA6-E0B5-4251-8F87-175164F2930B}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>Palette</ProjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.40219.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(PlatformTarget)\$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(PlatformTarget)\$(Configuration)\$(ProjectName)\</IntDir>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</LinkIncremental>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkIncremental>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(PlatformTarget)\$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(PlatformTarget)\$(Configuration)\$(ProjectName)\</IntDir>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkIncremental>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <OutDir>$(PlatformTarget)\$(Configuration)\</OutDir>
+    <IntDir>$(PlatformTarget)\$(Configuration)\$(ProjectName)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutDir>$(PlatformTarget)\$(Configuration)\</OutDir>
+    <IntDir>$(PlatformTarget)\$(Configuration)\$(ProjectName)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>FFGL_OVERRIDE_SETDLL;__WINDOWS_MM__;_CRT_SECURE_NO_WARNINGS;_WINSOCK_DEPRECATED_NO_WARNINGS;WIN32;_DEBUG;_WINDOWS;_USRDLL;AVFFGLADDSUBTRACT_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <AdditionalIncludeDirectories>..\..\ffgl\lib\ffgl\;..\..\ffgl\lib\ffgl\utilities\;..\..\ffgl\lib\porttime;..\..\ffgl\lib\pthreads;..\..\ffgl\lib\oscpack;..\..\ffgl\lib\osc\include;..\..\ffgl\lib\nosuch;..\..\ffgl\lib\cJSON;..\..\ffgl\lib\palette;..\..\ffgl\lib\morph;..\..\ffgl\lib\rtmidi;..\..\ffgl\plugins\Palette;c:\Program Files\Sensel\SenselLib\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ExceptionHandling>Async</ExceptionHandling>
+    </ClCompile>
+    <Link>
+      <ModuleDefinitionFile>palette.def</ModuleDefinitionFile>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ProgramDatabaseFile>$(TargetDir)$(TargetName).pdb</ProgramDatabaseFile>
+      <SubSystem>Windows</SubSystem>
+      <ImportLibrary>$(OutDir)$(ProjectName).lib</ImportLibrary>
+      <TargetMachine>MachineX86</TargetMachine>
+      <AdditionalDependencies>OpenGL32.lib;pthreadVC2.lib;winmm.lib;Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>x86\Debug</AdditionalLibraryDirectories>
+    </Link>
+    <CustomBuild>
+      <Message />
+    </CustomBuild>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>FFGL_OVERRIDE_SETDLL;__WINDOWS_MM__;_CRT_SECURE_NO_WARNINGS;_WINSOCK_DEPRECATED_NO_WARNINGS;WIN32;_DEBUG;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <AdditionalIncludeDirectories>..\..\ffgl\lib\ffgl\;..\..\ffgl\lib\ffgl\utilities\;..\..\ffgl\lib\porttime;..\..\ffgl\lib\pthreads;..\..\ffgl\lib\oscpack;..\..\ffgl\lib\osc\include;..\..\ffgl\lib\nosuch;..\..\ffgl\lib\cJSON;..\..\ffgl\lib\palette;..\..\ffgl\lib\morph;..\..\ffgl\lib\rtmidi;..\..\ffgl\plugins\Palette;c:\Program Files\Sensel\SenselLib\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ExceptionHandling>Async</ExceptionHandling>
+    </ClCompile>
+    <Link>
+      <ModuleDefinitionFile>palette.def</ModuleDefinitionFile>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ProgramDatabaseFile>$(TargetDir)$(TargetName).pdb</ProgramDatabaseFile>
+      <SubSystem>Windows</SubSystem>
+      <ImportLibrary>$(OutDir)$(ProjectName).lib</ImportLibrary>
+      <AdditionalLibraryDirectories>x64\Debug;..\..\SenselLib\x64</AdditionalLibraryDirectories>
+      <AdditionalDependencies>OpenGL32.lib;pthreadVC2.lib;winmm.lib;Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <PreBuildEvent />
+    <PostBuildEvent>
+      <Command>postbuild.bat</Command>
+    </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>prebuild.bat</Command>
+    </PreBuildEvent>
+    <CustomBuildStep>
+      <Message />
+    </CustomBuildStep>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;AVFFGLADDSUBTRACT_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <AdditionalIncludeDirectories>..\..\ffgl\lib\ffgl\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <ModuleDefinitionFile>palette.def</ModuleDefinitionFile>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+      <OptimizeReferences>true</OptimizeReferences>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <ImportLibrary>$(OutDir)$(ProjectName).lib</ImportLibrary>
+      <TargetMachine>MachineX86</TargetMachine>
+      <AdditionalDependencies>OpenGL32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <PreprocessorDefinitions>FFGL_OVERRIDE_SETDLL;_CRT_SECURE_NO_WARNINGS;_WINSOCK_DEPRECATED_NO_WARNINGS;WIN32;NDEBUG;_WINDOWS;_USRDLL;AVFFGLADDSUBTRACT_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <AdditionalIncludeDirectories>..\..\ffgl\lib\ffgl\;..\..\ffgl\lib\ffgl\utilities\;..\..\ffgl\lib\porttime;..\..\ffgl\lib\pthreads;..\..\ffgl\lib\oscpack;..\..\ffgl\lib\osc\include;..\..\ffgl\lib\nosuch;..\..\ffgl\lib\cJSON;..\..\ffgl\lib\palette;..\..\ffgl\lib\morph;..\..\ffgl\lib\rtmidi;..\..\ffgl\plugins\Palette;c:\Program Files\Sensel\SenselLib\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ExceptionHandling>Async</ExceptionHandling>
+    </ClCompile>
+    <Link>
+      <ModuleDefinitionFile>palette.def</ModuleDefinitionFile>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+      <OptimizeReferences>true</OptimizeReferences>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <ImportLibrary>$(OutDir)$(ProjectName).lib</ImportLibrary>
+      <AdditionalLibraryDirectories>x64\Release;C:\Program Files\Sensel\SenselLib\x64</AdditionalLibraryDirectories>
+      <AdditionalDependencies>OpenGL32.lib;pthreadVC2.lib;winmm.lib;Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

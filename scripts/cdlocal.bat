@@ -1,0 +1,1 @@
+cd %LOCALAPPDATA%\Palette
