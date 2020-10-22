@@ -67,11 +67,15 @@ Compiling on a brand new Windows machine for development
 
 - install git from https://gitforwindows.org
 
-- instal Go version 1.15 or later from https://golang.org/dl/
+- install Go version 1.15 or later from https://golang.org/dl/
 
-- install visual studio code from https://code.visualstudio.com/download
+- install Python 3.8.6 or later (BUT NOT FROM THE WINDOWS STORE!), in C:\Python38
 
-- install visual studio 2019 community edition from https://visualstudio.microsoft.com/downloads
+- install Visual Studio Code from https://code.visualstudio.com/download
+
+- install Inno Setup from https://jrsoftware.org/isinfo.php
+
+- install Visual Studio 2019 Community Edition from https://visualstudio.microsoft.com/downloads
 
 	- in the Workload tab, select "Desktop Development with C++"
 	- In the Individual components tab, select "Msbuild"
@@ -101,7 +105,7 @@ Compiling on a brand new Windows machine for development
 	go get github.com/nats-io/nuid
 	go get gopkg.in/mail.v2
 
-- in System Properties, add these directories to your PATH:
+- Make sure these directories are added to your PATH:
 
 	C:\Program Files\Git\bin
 	C:\Program Files\Git\usr\bin

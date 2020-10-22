@@ -1,6 +1,7 @@
 CurrentSnapshot.*
 *.pyc
 python/dist
+ffgl/windows/x64
 windows/ship
 params/gentle/snap/CurrentSnapshot.*
 # Binaries for programs and plugins
