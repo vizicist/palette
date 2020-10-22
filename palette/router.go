@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -100,12 +101,8 @@ func CallAPI(method string, args []string) {
 	log.Printf("CallAPI method=%s", method)
 }
 
-func configFile(nm string) string {
-	return fmt.Sprintf("%s/config/%s", RootPath(), nm)
-}
-
 func recordingsFile(nm string) string {
-	return fmt.Sprintf("%s/config/recordings/%s", RootPath(), nm)
+	return ConfigFilePath(filepath.Join("recordings", nm))
 }
 
 // TheRouter returns a pointer to the one-and-only Router
@@ -288,6 +285,9 @@ func StartRealtime() {
 func StartMIDI() {
 	r := TheRouter()
 	inputName := ConfigValue("midiinput")
+	if inputName == "" {
+		return
+	}
 	input := MIDI.getInput(inputName)
 	if input == nil {
 		log.Printf("There is no MIDI input named %s\n", inputName)
