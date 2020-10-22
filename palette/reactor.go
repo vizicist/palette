@@ -441,12 +441,17 @@ func (r *Reactor) generateSoundFromCursor(ce CursorStepEvent) {
 func (r *Reactor) advanceClickBy1() {
 
 	loop := r.loop
+
+	loop.stepsMutex.Lock()
+	defer loop.stepsMutex.Unlock()
+
 	stepnum := loop.currentStep
 	if DebugUtil.Advance {
 		if stepnum%20 == 0 {
 			log.Printf("advanceClickby1 start stepnum=%d\n", stepnum)
 		}
 	}
+
 	step := loop.steps[stepnum]
 	var removeIds []string
 	if step != nil && step.events != nil && len(step.events) > 0 {
@@ -562,8 +567,13 @@ func (r *Reactor) advanceClickBy1() {
 				for _, event := range step.events {
 					ce := event.cursorStepEvent
 					if ce.ID != id {
-						step.events[outn] = event
-						outn++
+						// step.events could be nil here before I added locking.
+						if step.events == nil {
+							log.Printf("Unexpected step.events == nil?")
+						} else {
+							step.events[outn] = event
+							outn++
+						}
 					}
 				}
 				step.events = step.events[:outn]
@@ -1025,6 +1035,10 @@ func (r *Reactor) ExecuteAPI(api string, args map[string]string, rawargs string)
 }
 
 func (r *Reactor) loopComb() {
+
+	r.loop.stepsMutex.Lock()
+	defer r.loop.stepsMutex.Unlock()
+
 	// Create a map of the UP cursor events, so we only do completed notes
 	upEvents := make(map[string]CursorStepEvent)
 	for _, step := range r.loop.steps {
@@ -1052,8 +1066,10 @@ func (r *Reactor) loopComb() {
 
 func (r *Reactor) loopQuant() {
 
-	// XXX - Need to make sure we have mutex for changing loop steps
+	r.loop.stepsMutex.Lock()
+	defer r.loop.stepsMutex.Unlock()
 
+	// XXX - Need to make sure we have mutex for changing loop steps
 	// XXX - DOES THIS EVEN WORK?
 
 	// Create a map of the UP cursor events, so we only do completed notes

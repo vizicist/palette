@@ -1086,6 +1086,7 @@ class ProGuiApp(tk.Tk):
     def resetAll(self):
 
         spaceutil.palette_api("global.audioOff",'{}')
+        spaceutil.palette_api("global.audioOn",'{}')
 
         self.resetLastAnything()
         self.sendANO()
@@ -1111,9 +1112,6 @@ class ProGuiApp(tk.Tk):
 
         self.padChooser.padGlobalOn = True
         self.padChooser.refreshColors()
-
-        time.sleep(1.0)
-        spaceutil.palette_api("global.audioOn",'{}')
 
     def recordingExists(self,name):
         fname = os.path.join(spaceutil.PaletteDir(), "recordings", name+".json")

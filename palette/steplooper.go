@@ -2,6 +2,7 @@ package palette
 
 import (
 	"log"
+	"sync"
 )
 
 // LoopEvent is what gets played back in a loop
@@ -19,11 +20,16 @@ type Step struct {
 type StepLoop struct {
 	currentStep Clicks
 	length      Clicks
+	stepsMutex  sync.RWMutex
 	steps       []*Step
 }
 
 // SetLength changesthe length of a loop
 func (loop *StepLoop) SetLength(nclicks Clicks) {
+
+	loop.stepsMutex.Lock()
+	defer loop.stepsMutex.Unlock()
+
 	if nclicks < loop.length {
 		loop.steps = loop.steps[:nclicks]
 		loop.length = nclicks
@@ -42,6 +48,10 @@ func (loop *StepLoop) SetLength(nclicks Clicks) {
 
 // Clear removes everything from Loop
 func (loop *StepLoop) Clear() {
+
+	loop.stepsMutex.Lock()
+	defer loop.stepsMutex.Unlock()
+
 	for i := range loop.steps {
 		loop.steps[i].events = nil
 	}
@@ -49,6 +59,10 @@ func (loop *StepLoop) Clear() {
 
 // ClearID removes all cursorStepEvents with a given id
 func (loop *StepLoop) ClearID(id string) {
+
+	loop.stepsMutex.Lock()
+	defer loop.stepsMutex.Unlock()
+
 	// log.Printf("START ClearID for id=%s\n", id)
 	for _, step := range loop.steps {
 		// This method of deleting things from an array without
@@ -102,6 +116,10 @@ func (loop *StepLoop) AddToStep(ce CursorStepEvent, stepnum Clicks) {
 func NewLoop(nclicks Clicks) *StepLoop {
 	loop := new(StepLoop)
 	loop.length = nclicks
+
+	loop.stepsMutex.Lock()
+	defer loop.stepsMutex.Unlock()
+
 	loop.steps = make([]*Step, nclicks)
 	for n := range loop.steps {
 		loop.steps[n] = new(Step)
