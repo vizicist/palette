@@ -34,12 +34,12 @@ ChangesEnvironment=yes
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Files]
-Source: "ship\config\*"; DestDir: "{app}\config"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "ship\bin\*"; DestDir: "{app}\bin"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "ship\ffgl\*"; DestDir: "{app}\ffgl"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "ship\nats\*"; DestDir: "{app}\nats"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "ship\presets\*"; DestDir: "{app}\presets"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "ship\config\*"; DestDir: "{app}\config"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "ship\presets\*"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\presets"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "config_readme.txt"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\config"; DestName: "readme.txt"; Flags: ignoreversion
+Source: "logs_readme.txt"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\logs"; DestName: "readme.txt"; Flags: ignoreversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
