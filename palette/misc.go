@@ -28,6 +28,7 @@ type DebugFlags struct {
 	Gen      bool
 	ISF      bool
 	Loop     bool
+	Config   bool
 	MIDI     bool
 	Morph    bool
 	NATS     bool
@@ -51,6 +52,8 @@ func setDebug(dtype string, b bool) error {
 		DebugUtil.ISF = b
 	case "loop":
 		DebugUtil.Loop = b
+	case "config":
+		DebugUtil.Config = b
 	case "midi":
 		DebugUtil.MIDI = b
 	case "morph":
