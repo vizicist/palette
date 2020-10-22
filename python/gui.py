@@ -532,7 +532,7 @@ class ProGuiApp(tk.Tk):
             return
         # Read parameters from a json file (but NOT a snap file)
         fpath = spaceutil.presetsFilePath(paramstype, paramsname)
-        print("Reading ",fpath)
+        print("Reading JSON:",fpath)
         f = open(fpath)
         j = json.load(f)
         paramvals = j["params"]
@@ -592,7 +592,10 @@ class ProGuiApp(tk.Tk):
     def readSnapParamsFile(self,paramsname):
         # print("\nREAD SNAP PARAMS FILE paramsname=",paramsname)
         # Read parameters from a json file
-        fpath = spaceutil.presetsFilePath("snap", paramsname)
+        if paramsname == "CurrentSnapshot":
+            fpath = spaceutil.localconfigFilePath(paramsname+".json")
+        else:
+            fpath = spaceutil.presetsFilePath("snap", paramsname)
         print("Reading ",fpath)
         try:
             f = open(fpath)
@@ -2086,6 +2089,7 @@ class PageEditParams(tk.Frame):
             fpath = spaceutil.presetsFilePath(section,paramsname,suffix)
             # print("Saving ",fpath)
 
+        print("Saving JSON:",fpath)
         f = open(fpath,"w")
         f.write(json.dumps(newjson, sort_keys=True, indent=4, separators=(',',':')))
         # To avoid complaints from editors, add a final newline
