@@ -9,6 +9,12 @@ import (
 	"github.com/nats-io/nuid"
 )
 
+// SubscribeCursorSubject xxx
+var SubscribeCursorSubject = "palette.cursorevent"
+
+// SubscribeMIDISubject xxx
+var SubscribeMIDISubject = "palette.midievent"
+
 // MyNuid xxx
 var MyNuid = nuid.Next()
 
@@ -34,9 +40,9 @@ func PublishCursorDeviceEvent(ce CursorDeviceEvent) error {
 		"\"event\": \"" + "cursor." + ce.DownDragUp + "\" }"
 
 	if DebugUtil.NATS {
-		log.Printf("Publishing palette.event %s\n", params)
+		log.Printf("Publishing %s %s\n", SubscribeCursorSubject, params)
 	}
-	err := TheVizNats.Publish("palette.event", params)
+	err := TheVizNats.Publish(SubscribeCursorSubject, params)
 	if err != nil {
 		return err
 	}
@@ -57,9 +63,9 @@ func PublishMidiDeviceEvent(me MidiDeviceEvent) error {
 		"\"data1\": \"" + fmt.Sprintf("%d", me.Data1) + "\", " +
 		"\"data2\": \"" + fmt.Sprintf("%d", me.Data2) + "\" }"
 	if DebugUtil.MIDI {
-		log.Printf("Publishing palette.event val=%s\n", params)
+		log.Printf("Publishing %s %s\n", SubscribeMIDISubject, params)
 	}
-	err := TheVizNats.Publish("palette.event", params)
+	err := TheVizNats.Publish(SubscribeMIDISubject, params)
 	if err != nil {
 		return err
 	}
