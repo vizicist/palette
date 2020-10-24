@@ -218,12 +218,23 @@ func StartNATSClient() {
 		})
 	}
 
-	log.Printf("StartNATS: subscribing to palette.event\n")
-	TheVizNats.Subscribe("palette.event", func(msg *nats.Msg) {
-		// These things aren't APIs they're evnts
-		data := string(msg.Data)
-		router.HandleEventMsg(data)
-	})
+	if ConfigBoolWithDefault("subscribecursor", false) {
+		log.Printf("StartNATS: subscribing to %s\n", SubscribeCursorSubject)
+		TheVizNats.Subscribe(SubscribeCursorSubject, func(msg *nats.Msg) {
+			data := string(msg.Data)
+			router.HandleCursorEventMsg(data)
+		})
+	}
+
+	if ConfigBoolWithDefault("subscribemidi", false) {
+		if ConfigBool("subscribemidi") {
+			log.Printf("StartNATS: subscribing to %s\n", SubscribeMIDISubject)
+			TheVizNats.Subscribe(SubscribeMIDISubject, func(msg *nats.Msg) {
+				data := string(msg.Data)
+				router.HandleMIDIEventMsg(data)
+			})
+		}
+	}
 }
 
 // TimeString returns time and clicks
@@ -322,17 +333,16 @@ func IngestRealtimeCommand(cmd Command) {
 
 }
 
-// HandleEventMsg xxx
-func (r *Router) HandleEventMsg(data string) {
+// HandleCursorEventMsg xxx
+func (r *Router) HandleCursorEventMsg(data string) {
 
 	args, err := StringMap(data)
-
 	if err != nil {
-		log.Printf("HandleEventMsg: err=%s\n", err)
+		log.Printf("HandleCursorEventMsg: err=%s\n", err)
 		return
 	}
 
-	api := "palette.event"
+	api := SubscribeCursorSubject
 
 	source := optionalStringArg("source", args, "unknown")
 	if source == MyNuid {
@@ -343,38 +353,34 @@ func (r *Router) HandleEventMsg(data string) {
 	}
 
 	if DebugUtil.Cursor {
-		log.Printf("Router.HandleEventMsg: data=%s\n", data)
+		log.Printf("Router.HandleCursorEventMsg: data=%s\n", data)
 	}
 
 	eventType, err := needStringArg("event", api, args)
 	if err != nil {
-		log.Printf("HandleEventMsg: err=%s\n", err)
+		log.Printf("HandleCursorEventMsg: err=%s\n", err)
 		return
 	}
 
-	if !strings.HasPrefix(eventType, "cursor.") {
-		log.Printf("HandleEventMsg: cannot handle event=%s\n", eventType)
-		return
-	}
 	downdragup := strings.TrimPrefix(eventType, "cursor.")
 
 	region := optionalStringArg("region", args, "")
 
 	x, err := needFloatArg("x", api, args)
 	if err != nil {
-		fmt.Printf("HandleEventMsg: err=%s\n", err)
+		fmt.Printf("HandleCursorEventMsg: err=%s\n", err)
 		return
 	}
 
 	y, err := needFloatArg("y", api, args)
 	if err != nil {
-		fmt.Printf("HandleEventMsg: err=%s\n", err)
+		fmt.Printf("HandleCursorEventMsg: err=%s\n", err)
 		return
 	}
 
 	z, err := needFloatArg("z", api, args)
 	if err != nil {
-		fmt.Printf("HandleEventMsg: err=%s\n", err)
+		fmt.Printf("HandleCursorEventMsg: err=%s\n", err)
 		return
 	}
 
@@ -394,6 +400,32 @@ func (r *Router) HandleEventMsg(data string) {
 		Area:       0.0,
 	}
 	r.routeCursorDeviceEvent(ce)
+	return
+}
+
+// HandleMIDIEventMsg xxx
+func (r *Router) HandleMIDIEventMsg(data string) {
+
+	args, err := StringMap(data)
+
+	if err != nil {
+		log.Printf("HandleMIDIEventMsg: err=%s\n", err)
+		return
+	}
+
+	source := optionalStringArg("source", args, "unknown")
+	if source == MyNuid {
+		// if DebugUtil.Cursor {
+		// 	log.Printf("Ignoring event from myself, source=%s\n", source)
+		// }
+		return
+	}
+
+	if DebugUtil.MIDI {
+		log.Printf("Router.HandleMIDIEventMsg: data=%s\n", data)
+	}
+
+	log.Printf("HandleMIDIEventMsg: NOT IMPLEMENTED YET\n")
 	return
 }
 

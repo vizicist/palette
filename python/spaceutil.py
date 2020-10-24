@@ -51,9 +51,9 @@ def palette_api(meth, params=None):
 
     return r1,r2
 
-def palette_event(params):
+def palette_cursorevent(params):
 
-    subject = "palette.event"
+    subject = "palette.cursorevent"
     global ApiLock
 
     if DebugApi:
@@ -231,7 +231,7 @@ def presetsFilePath(section, nm, suffix=".json"):
 def SendCursorEvent(ddu,x,y,z):
     e = "{ \"region\": \"A\", \"event\": \"cursor." + ddu + "\", \"x\": \"%f\", \"y\": \"%f\", \"z\": \"%f\" }"  % (x,y,z)
     print(e)
-    palette_event(e)
+    palette_cursorevent(e)
 
 def IgnoreKeyboardInterrupt():
     """

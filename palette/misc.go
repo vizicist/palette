@@ -276,7 +276,7 @@ func IsTrueValue(value string) (bool, error) {
 	case "off":
 		return false, nil
 	default:
-		return false, fmt.Errorf("invalid boolean value: %s", value)
+		return false, fmt.Errorf("IsTrueValue: invalid boolean value (%s), assuming false", value)
 	}
 }
 
@@ -359,6 +359,16 @@ func ConfigBool(nm string) bool {
 	if err != nil {
 		log.Printf("Config value of %s (%s) is invalid, assuming false", nm, v)
 		return false
+	}
+	return b
+}
+
+// ConfigBoolWithDefault xxx
+func ConfigBoolWithDefault(nm string, dflt bool) bool {
+	v := ConfigValue(nm)
+	b, err := IsTrueValue(v)
+	if err != nil {
+		return dflt
 	}
 	return b
 }
@@ -446,7 +456,11 @@ func needBoolArg(nm string, api string, args map[string]string) (bool, error) {
 	if !ok {
 		return false, fmt.Errorf("api/event=%s missing value for %s", api, nm)
 	}
-	return IsTrueValue(val) // includes error if bad value
+	b, err := IsTrueValue(val)
+	if err != nil {
+		return false, fmt.Errorf("api/event=%s bad value for %s", api, val)
+	}
+	return b, nil
 }
 
 func needRegionArg(api string, args map[string]string) (*Reactor, error) {
