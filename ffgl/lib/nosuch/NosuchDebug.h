@@ -31,7 +31,6 @@
 #include <string>
 
 extern int NosuchDebugLevel;
-extern bool NosuchDebugToConsole;
 extern bool NosuchDebugCursor;
 extern bool NosuchDebugToLog;
 extern bool NosuchDebugTimeTag;
