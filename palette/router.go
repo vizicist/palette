@@ -19,18 +19,6 @@ import (
 
 const debug bool = false
 
-// OSCEvent is an OSC message
-type OSCEvent struct {
-	Msg    *osc.Message
-	Source string
-}
-
-// Command is sent on the control channel of the Router
-type Command struct {
-	Action string // e.g. "addmidi"
-	Arg    interface{}
-}
-
 // Router takes events and routes them
 type Router struct {
 	reactors        map[string]*Reactor
@@ -62,6 +50,19 @@ type Router struct {
 	myHostname       string
 	generateVisuals  bool
 	generateSound    bool
+	remoteRegions    map[string]string
+}
+
+// OSCEvent is an OSC message
+type OSCEvent struct {
+	Msg    *osc.Message
+	Source string
+}
+
+// Command is sent on the control channel of the Router
+type Command struct {
+	Action string // e.g. "addmidi"
+	Arg    interface{}
 }
 
 // DeviceCursor purpose is to know when it
@@ -117,6 +118,7 @@ func TheRouter() *Router {
 		SetExternalScale(60%12, true) // Middle C
 
 		oneRouter.reactors = make(map[string]*Reactor)
+		oneRouter.remoteRegions = make(map[string]string)
 
 		freeframeClientA := osc.NewClient("127.0.0.1", 3334)
 		freeframeClientB := osc.NewClient("127.0.0.1", 3335)
@@ -222,7 +224,7 @@ func StartNATSClient() {
 		log.Printf("StartNATS: subscribing to %s\n", SubscribeCursorSubject)
 		TheVizNats.Subscribe(SubscribeCursorSubject, func(msg *nats.Msg) {
 			data := string(msg.Data)
-			router.HandleCursorEventMsg(data)
+			router.HandleSubscribedCursorEventMsg(data)
 		})
 	}
 
@@ -333,8 +335,8 @@ func IngestRealtimeCommand(cmd Command) {
 
 }
 
-// HandleCursorEventMsg xxx
-func (r *Router) HandleCursorEventMsg(data string) {
+// HandleSubscribedCursorEventMsg xxx
+func (r *Router) HandleSubscribedCursorEventMsg(data string) {
 
 	args, err := StringMap(data)
 	if err != nil {
@@ -385,7 +387,7 @@ func (r *Router) HandleCursorEventMsg(data string) {
 	}
 
 	if region == "" {
-		region = "A"
+		region = MyNuid
 	}
 
 	ce := CursorDeviceEvent{
@@ -1086,10 +1088,48 @@ func (r *Router) handleOSCAPI(msg *osc.Message, source string) {
 	return
 }
 
+// availableRegion - return the name of a region that hasn't been assigned to a remote yet
+func (r *Router) availableRegion() string {
+	var regionused [4]bool // initilized to false
+	for _, v := range r.remoteRegions {
+		i := strings.Index("ABCD", v)
+		if i >= 0 {
+			regionused[i] = true
+		}
+	}
+	for i, used := range regionused {
+		if !used {
+			return "ABCD"[i : i+1]
+		}
+	}
+	log.Printf("Router.availableRegion: No regions available\n")
+	return ""
+}
+
 func (r *Router) routeCursorDeviceEvent(e CursorDeviceEvent) {
-	reactor, ok := r.reactors[e.Region]
+	region := e.Region
+	switch region {
+	case "A":
+	case "B":
+	case "C":
+	case "D":
+	case "":
+		log.Printf("routeCursorDeviceEvent: region value is empty?  Assuming A\n")
+		region = "A"
+	default:
+		// All other values are assumed to be Nuids, and we dynamically map
+		// these values, as we seem them, to available regions.
+		reg, ok := r.remoteRegions[region]
+		if ok {
+			region = reg
+		} else {
+			region = r.availableRegion()
+		}
+
+	}
+	reactor, ok := r.reactors[region]
 	if !ok {
-		log.Printf("routeCursorDeviceEvent: no region named %s, unable to process ce=%+v\n", e.Region, e)
+		log.Printf("routeCursorDeviceEvent: no region named %s, unable to process ce=%+v\n", region, e)
 		return
 	}
 	reactor.handleCursorDeviceEvent(e)
