@@ -347,6 +347,8 @@ func (r *Router) handleSubscribedCursorInput(data string) {
 		return
 	}
 
+	log.Printf("HandleSubscribedCursor: data=%s\n", data)
+
 	api := SubscribeCursorSubject
 
 	source := optionalStringArg("source", args, "unknown")
