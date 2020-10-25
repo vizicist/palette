@@ -30,7 +30,7 @@ Sprite::Sprite() {
 }
 
 void
-Sprite::initState(int sidnum, std::string sidsource, NosuchVector& pos, double movedir, double depth, double rotanginit) {
+Sprite::initState(std::string cid, std::string cidsource, NosuchVector& pos, double movedir, double depth, double rotanginit) {
 
 	nsprites++;
 	Palette::lastsprite = Palette::now;
@@ -39,8 +39,8 @@ Sprite::initState(int sidnum, std::string sidsource, NosuchVector& pos, double m
 	state.pos = pos;
 	state.direction = movedir;
 	state.depth = depth;
-	state.sidnum = sidnum;
-	state.sidsource = sidsource;
+	state.cid = cid;
+	state.cidsource = cidsource;
 
 	state.born = Palette::now;
 	state.last_tm = Palette::now;
@@ -55,7 +55,7 @@ Sprite::initState(int sidnum, std::string sidsource, NosuchVector& pos, double m
 }
 
 Sprite::~Sprite() {
-	NosuchDebug(1,"Sprite destructor! s=%d sid=%d/%s",this,state.sidnum,state.sidsource.c_str());
+	NosuchDebug(1,"Sprite destructor! s=%d cid=%s/%s",this,state.cid.c_str(),state.cidsource.c_str());
 }
 
 double Sprite::degree2radian(double deg) {

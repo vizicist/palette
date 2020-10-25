@@ -128,8 +128,7 @@ public:
 
 	void ProcessOscMessage(std::string , const osc::ReceivedMessage& m);
 
-	void TouchCursorSid(int sidnum, std::string source);
-	void SetCursorSid(int sidnum, std::string source, NosuchVector point, double z, bool recordable = true );
+	void SetCursorCid(std::string cid, std::string source, NosuchVector point, double z, bool recordable = true );
 
 	static bool checkAddrPattern(const char *addr, char *patt);
 

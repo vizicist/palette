@@ -40,7 +40,8 @@
 using namespace std;
 
 int NosuchDebugLevel = 0;
-bool NosuchDebugToConsole = true;
+bool NosuchDebugToConsole = false;
+bool NosuchDebugCursor = false;
 bool NosuchDebugTimeTag = true;
 bool NosuchDebugToLog = true;
 bool NosuchDebugToLogWarned = false;

@@ -57,9 +57,11 @@ ffgl_setdll(std::string dllpath)
 
 	char* p = getenv("LOCALAPPDATA");
 	NosuchDebug("LOCALAPPDATA = %s\n", p);
-	NosuchDebugLogPath = "c:\\windows\\temp\\ffgl.log";
 	if ( p != NULL ) {
-		NosuchDebugLogPath = std::string(p) + "\\ffgl.log";
+		NosuchDebugLogPath = std::string(p) + "\\Palette\\logs\\ffgl.log";
+	}
+	else {
+		NosuchDebugLogPath = "c:\\windows\\temp\\ffgl.log"; // last resort
 	}
 	NosuchDebug("LogPath = %s\n", NosuchDebugLogPath.c_str());
 
@@ -158,15 +160,6 @@ cJSON* needArray(std::string who,cJSON *j,std::string nm) {
 
 cJSON* needObject(std::string who,cJSON *j,std::string nm) {
 	return needItem(who, j, nm, cJSON_Object);
-}
-
-void parseSidRange(std::string who, cJSON* j, int& sidmin, int& sidmax) {
-	std::string sid = needString(who, j, "sid");
-	const char* s = sid.c_str();
-	const char* p = strchr(s, '-');
-	if (!p || sscanf_s(s,"%d-%d",&sidmin,&sidmax) != 2 ) {
-		throw NosuchException("Bad format for sid, expecting ####-####");
-	}
 }
 
 void needParams(std::string meth, cJSON* params) {
@@ -283,7 +276,7 @@ void PaletteHost::StaticInitialization()
 	// Default debugging stuff
 	NosuchDebugLevel = 0;   // 0=minimal messages, 1=more, 2=extreme
 	NosuchDebugTimeTag = true;
-	NosuchDebugToConsole = true;
+	NosuchDebugToConsole = false;
 	NosuchDebugToLog = true;
 	NosuchAppName = "Palette";
 #ifdef DEBUG_TO_BUFFER
@@ -449,6 +442,9 @@ PaletteHost::LoadPaletteConfig(cJSON* c)
 	}
 	if ( (j=getNumber(c,"debugtoconsole")) != NULL ) {
 		NosuchDebugToConsole = j->valueint?TRUE:FALSE;
+	}
+	if ( (j=getNumber(c,"debugcursor")) != NULL ) {
+		NosuchDebugCursor = j->valueint?TRUE:FALSE;
 	}
 	if ( (j=getNumber(c,"debugtolog")) != NULL ) {
 		bool b = j->valueint?TRUE:FALSE;
@@ -1154,9 +1150,9 @@ xyz_adjust(double expand, bool switchyz, double& x, double& y, double& z) {
 }
 
 void
-PaletteHost::SetCursorSid(int sidnum, std::string sidsource, NosuchVector point, double z, bool recordable )
+PaletteHost::SetCursorCid(std::string cid, std::string cidsource, NosuchVector point, double z, bool recordable )
 {
-	_palette->region.setTrackedCursor(_palette,sidnum, sidsource, point, z);
+	_palette->region.setTrackedCursor(_palette,cid, cidsource, point, z);
 }
 
 void PaletteHost::ProcessOscMessage( std::string source, const osc::ReceivedMessage& m) {
@@ -1170,19 +1166,22 @@ void PaletteHost::ProcessOscMessage( std::string source, const osc::ReceivedMess
 
 		if (checkAddrPattern(addr, "/cursor")) {
 			std::string cmd = ArgAsString(m,0);
-			std::string id = ArgAsString(m,1); // it's of the form {sid}@{ipaddr}
-			int sidnum = atoi(id.c_str());
+			std::string cid = ArgAsString(m,1); // it's a long string, globally unique
 			double x = ArgAsFloat(m,2);
 			double y = ArgAsFloat(m,3);
 			double z = ArgAsFloat(m,4);
 
 			if (cmd == "down" || cmd == "drag") {
-				// NosuchDebug("GOT /cursor %s sid=%d x,y=%.4f,%.4f  z=%f",cmd.c_str(),sidnum,x,y,z);
-				SetCursorSid(sidnum, source, NosuchVector(x, y), z);
+				if (NosuchDebugCursor) {
+					NosuchDebug("GOT /cursor %s cid=%s x,y=%.4f,%.4f  z=%f", cmd.c_str(), cid.c_str(), x, y, z);
+				}
+				SetCursorCid(cid, source, NosuchVector(x, y), z);
 			}
 			else if (cmd == "up") {
-				// NosuchDebug("GOT /cursor %s sid=%d x,y=%.4f,%.4f",cmd.c_str(),sidnum,x,y);
-				_palette->region.doCursorUp(_palette,sidnum);
+				if (NosuchDebugCursor) {
+					NosuchDebug("GOT /cursor %s cid=%s x,y=%.4f,%.4f", cmd.c_str(), cid.c_str(), x, y);
+				}
+				_palette->region.doCursorUp(_palette, cid);
 			}
 			return;
 		}
@@ -1191,9 +1190,9 @@ void PaletteHost::ProcessOscMessage( std::string source, const osc::ReceivedMess
 			double y = ArgAsFloat(m,1);
 			y = 1.0 - y;
 			double z = ArgAsFloat(m,2);
-			std::string id = ArgAsString(m,3);
+			std::string cid = ArgAsString(m,3);
 			// NosuchDebug("GOT /spriteon x,y,z=%.4f,%.4f,%.4f id=%s\n",x,y,z,id.c_str());
-			palette()->region.instantiateSpriteAt(NosuchVector(x, y), z);
+			palette()->region.instantiateSpriteAt(cid,NosuchVector(x, y), z);
 
 			return;
 		}

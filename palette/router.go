@@ -568,15 +568,19 @@ func (r *Router) ExecuteAPILocal(api string, rawargs string) (result interface{}
 		msg.Append(int32(1))
 		r.plogueClient.Send(msg)
 		if DebugUtil.OSC {
-			log.Printf("plogClient %s msg=%v\n", TimeString(), msg)
+			log.Printf("Router.ExecuteAPI: audioOn sending msg=%v\n", msg)
 		}
 
 	case "audioOff":
+		log.Printf("Router.ExecuteAPI: audioOff is now ignored\n")
+
+	case "audioStop":
+		// In case we really need it
 		msg := osc.NewMessage("/play")
 		msg.Append(int32(0))
 		r.plogueClient.Send(msg)
 		if DebugUtil.OSC {
-			log.Printf("plogClient %s msg=%v\n", TimeString(), msg)
+			log.Printf("Router.ExecuteAPI: audioStop sending msg=%v\n", msg)
 		}
 
 	case "recordingStart":
@@ -1093,16 +1097,22 @@ func (r *Router) handleOSCAPI(msg *osc.Message, source string) {
 
 // availableRegion - return the name of a region that hasn't been assigned to a remote yet
 func (r *Router) availableRegion() string {
-	var regionused [4]bool // initilized to false
+
+	regionLetters := "ABCD"
+
+	nregions := len(regionLetters)
+	regionused := make([]bool, nregions)
 	for _, v := range r.remoteRegions {
-		i := strings.Index("ABCD", v)
+		i := strings.Index(regionLetters, v)
 		if i >= 0 {
 			regionused[i] = true
 		}
 	}
 	for i, used := range regionused {
 		if !used {
-			return "ABCD"[i : i+1]
+			avail := regionLetters[i : i+1]
+			log.Printf("Router.availableRegion: %s\n", avail)
+			return avail
 		}
 	}
 	log.Printf("Router.availableRegion: No regions available\n")
@@ -1111,7 +1121,7 @@ func (r *Router) availableRegion() string {
 
 func (r *Router) routeCursorDeviceEvent(e CursorDeviceEvent) {
 	region := e.Region
-	switch region {
+	switch e.Region {
 	case "A":
 	case "B":
 	case "C":
@@ -1121,14 +1131,17 @@ func (r *Router) routeCursorDeviceEvent(e CursorDeviceEvent) {
 		region = "A"
 	default:
 		// All other values are assumed to be Nuids, and we dynamically map
-		// these values, as we seem them, to available regions.
-		reg, ok := r.remoteRegions[region]
+		// these values, as we see them, to available regions.
+		reg, ok := r.remoteRegions[e.Region]
 		if ok {
 			region = reg
 		} else {
+			// Hasn't been seen yet, let's get an unused region
 			region = r.availableRegion()
+			r.remoteRegions[e.Region] = region
 		}
 	}
+
 	reactor, ok := r.reactors[region]
 	if !ok {
 		log.Printf("routeCursorDeviceEvent: no region named %s, unable to process ce=%+v\n", region, e)

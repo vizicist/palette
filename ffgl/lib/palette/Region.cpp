@@ -12,9 +12,6 @@ Region::Region() {
 
 	_spritelist = new SpriteList();
 
-	sid_low = 0;
-	sid_high = 0;
-
 	NosuchLockInit(&_region_mutex,"region");
 	_cursorlist_rwlock = PTHREAD_RWLOCK_INITIALIZER;
 	int rc = pthread_rwlock_init(&_cursorlist_rwlock, NULL);
@@ -45,30 +42,13 @@ void Region::initParams() {
 	onoff = 0;
 }
 
-void Region::touchCursor(int sidnum, std::string sidsource) {
-
-	// XXX - This locking doesn't work, but I think this
-	// really needs to be locked, in some way.
-	// if ( ! cursorlist_lock_write() ) {
-	// 	NosuchDebug("Region::touchCursor, unable to lock cursorlist");
-	// 	return;
-	// }
-
-	TrackedCursor* c = _getTrackedCursor(sidnum, sidsource);
-	if ( c != NULL ) {
-		c->touch();
-	}
-
-	// cursorlist_unlock();
-}
-
-TrackedCursor* Region::_getTrackedCursor(int sidnum, std::string sidsource) {
+TrackedCursor* Region::_getTrackedCursor(std::string cid, std::string cidsource) {
 	TrackedCursor* retc = NULL;
 
 	for ( std::list<TrackedCursor*>::iterator i = _cursors.begin(); i!=_cursors.end(); i++ ) {
 		TrackedCursor* c = *i;
 		NosuchAssert(c);
-		if (c->sidnum() == sidnum && c->sidsource() == sidsource) {
+		if (c->cid() == cid && c->cidsource() == cidsource) {
 			retc = c;
 			break;
 		}
@@ -90,7 +70,7 @@ double Region::_maxCursorDepth() {
 }
 
 void
-Region::setTrackedCursor(Palette* palette, int sidnum, std::string sidsource, NosuchVector pos, double z) {
+Region::setTrackedCursor(Palette* palette, std::string cid, std::string cidsource, NosuchVector pos, double z) {
 
 	if ( pos.x < x_min || pos.x > x_max || pos.y < y_min || pos.y > y_max ) {
 		NosuchDebug("Ignoring out-of-bounds cursor pos=%f,%f,%f\n",pos.x,pos.y);
@@ -102,14 +82,14 @@ Region::setTrackedCursor(Palette* palette, int sidnum, std::string sidsource, No
 		return;
 	}
 
-	TrackedCursor* c = _getTrackedCursor(sidnum,sidsource);
+	TrackedCursor* c = _getTrackedCursor(cid,cidsource);
 	if ( c != NULL ) {
 		c->settargetpos(pos);
 		c->set_target_depth(z);
 		// c->setarea(z);
 		palette->cursorDrag(c);
 	} else {
-		c = new TrackedCursor(palette, sidnum, sidsource, this, pos, z);
+		c = new TrackedCursor(palette, cid, cidsource, this, pos, z);
 		_cursors.push_back(c);
 		palette->cursorDown(c);
 	}
@@ -158,7 +138,7 @@ double scale_z(PaletteHost* ph, double z) {
 	return expz * p->params.zmultiply;
 }
 
-void Region::doCursorUp(Palette* palette, int sidnum) {
+void Region::doCursorUp(Palette* palette, std::string cid) {
 
 	if (!cursorlist_lock_write()) {
 		NosuchDebug("Region::doCursorUp, unable to lock cursorlist");
@@ -167,7 +147,7 @@ void Region::doCursorUp(Palette* palette, int sidnum) {
 	for (std::list<TrackedCursor*>::iterator i = _cursors.begin(); i != _cursors.end(); ) {
 		TrackedCursor* c = *i;
 		NosuchAssert(c);
-		if (c->sidnum() == sidnum) {
+		if (c->cid() == cid) {
 			// NosuchDebug("doCursorUp is deleting c=%lld",(long long)c);
 			palette->cursorUp(c);
 			i = _cursors.erase(i);
@@ -295,25 +275,22 @@ Region::instantiateSprite(TrackedCursor* c, bool throttle) {
 			return;
 		}
 		// NosuchDebug("Calling initState with movedir=%f", spriteMoveDir(c));
-		s->initState(c->sidnum(),c->sidsource(),pos,spriteMoveDir(c),c->curr_raw_depth,anginit);
+		s->initState(c->cid(),c->cidsource(),pos,spriteMoveDir(c),c->curr_raw_depth,anginit);
 		c->set_last_instantiate(tm);
 		_spritelist->add(s,params.nsprites);
 	}
 }
 
-static int InstantiateSid = 0;
-
 void
-Region::instantiateSpriteAt(NosuchVector pos, double z) {
+Region::instantiateSpriteAt(std::string cid, NosuchVector pos, double z) {
 
 	// std::string shape = params.shape;
 	Sprite* s = makeSprite(params.shape);
-	int sid = ++InstantiateSid;
 	std::string source = "instantiate_at";
 	if (s) {
 		s->params.initValues(this);
 		double anginit = s->params.rotanginit;
-		s->initState(sid, source, pos, spriteMoveDir(NULL), z, anginit);
+		s->initState(cid, source, pos, spriteMoveDir(NULL), z, anginit);
 		_spritelist->add(s, params.nsprites);
 	}
 }
@@ -428,7 +405,7 @@ void Region::deleteOldCursors(Palette* palette) {
 			// If the cursor hasn't been touched in a couple seconds, delete it
 			int too_idle = 10 * 1000;
 			if ( palette->now > (c->touched() + too_idle) ) {
-				NosuchDebug(1,"Killing cursor sid=%d\n", c->sidnum());
+				NosuchDebug(1,"Killing cursor cid=%s\n", c->cid());
 				palette->cursorUp(c);
 				i = _cursors.erase(i);
 				delete c;

@@ -15,7 +15,7 @@ public:
 	static bool initialized;
 	static void initialize();
 
-	TrackedCursor(Palette* palette_, int sidnum, std::string sidsource, Region* region_, NosuchVector pos_, double z);
+	TrackedCursor(Palette* palette_, std::string cid, std::string cidsource, Region* region_, NosuchVector pos_, double z);
 	~TrackedCursor();
 	double radian2degree(double r) {
 		return r * 360.0 / (2.0 * (double)M_PI);
@@ -26,8 +26,8 @@ public:
 	Palette* palette() { return _palette; }
 	int touched() { return _touched; }
 	void touch() { _touched = Scheduler::CurrentMilli; }
-	std::string sidsource() { return _sidsource; }
-	int sidnum() { return _sidnum; }
+	std::string cidsource() { return _cidsource; }
+	std::string cid() { return _cid; }
 	// double area() { return _area; }
 
 	double target_depth() { return _target_depth; }
@@ -53,13 +53,13 @@ public:
 	bool isRightSide() { return ( curr_raw_pos.x >= 0.5 ); }
 
 	std::string DebugString() {
-		return NosuchSnprintf("Cursor sid=%d/%s raw=%.3f,%.3f last_raw=%.3f,%.3f target=%.3f,%.3f raw_depth=%.3f target_depth=%.3f",
-			sidnum(),sidsource().c_str(), curr_raw_pos.x,curr_raw_pos.y, _last_raw_pos.x,_last_raw_pos.y,
+		return NosuchSnprintf("Cursor cid=%s/%s raw=%.3f,%.3f last_raw=%.3f,%.3f target=%.3f,%.3f raw_depth=%.3f target_depth=%.3f",
+			cid(),cidsource().c_str(), curr_raw_pos.x,curr_raw_pos.y, _last_raw_pos.x,_last_raw_pos.y,
 			_target_pos.x,_target_pos.y,curr_raw_depth,_target_depth);
 	}
 	std::string DebugBrief() {
-		return NosuchSnprintf("Cursor sid=%d/%s pos=%.3f,%.3f depth=%.3f",
-			sidnum(),sidsource().c_str(), curr_raw_pos.x,curr_raw_pos.y, curr_raw_depth);
+		return NosuchSnprintf("Cursor cid=%s/%s pos=%.3f,%.3f depth=%.3f",
+			cid(),cidsource().c_str(), curr_raw_pos.x,curr_raw_pos.y, curr_raw_depth);
 	}
 
 	NosuchVector curr_raw_pos;
@@ -82,8 +82,8 @@ private:
 	Region* _region;
 	Palette* _palette;
 	long _lastalive;
-	int _sidnum; // This is the raw sid, e.g. 4000
-	std::string _sidsource; // The hostname, or "sharedmem"
+	std::string _cid; // This is a long string, globally unique
+	std::string _cidsource; // The hostname, or "sharedmem"
 	// double _area;
 	NosuchVector _last_raw_pos;
 	NosuchVector _target_pos;

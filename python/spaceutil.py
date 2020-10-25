@@ -43,7 +43,7 @@ def palette_api(meth, params=None):
 
     r2 = ""
     palettecentral = ConfigValue("palettecentral")
-    if palettecentral != "":
+    if palettecentral != "" and palettecentral != platform.node():
         subject2 = "palette."+palettecentral+".api"
         r2,err = invoke_jsonrpc(subject2,meth,params)
         if err != None:
