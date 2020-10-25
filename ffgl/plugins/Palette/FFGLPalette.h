@@ -26,17 +26,16 @@ public:
 
 	static FFResult __stdcall CreateInstance(CFreeFrameGLPlugin** ppOutInstance)
 	{
-		// I've tried unsucessfully to retrieve the PALETTE environment variable with getenv(),
-		// but the FFGL plugin seems to crash at that point, perhaps it's missing a needed .dll.
-		// So, the location of the ffgl.json file is hardcoded to ../config/ffgl.json.
-		// I.e. the config and ffgl directories should have the same parent.
-		const char* palette = "..";
-		// char *e = _getenv("PALETTE");
-		// if ( e != NULL ) {
-		// 	palette = e;
-		// }
-		std::string rpath = NosuchSnprintf("%s\\config\\ffgl.json",palette);
-		std::string jsonpath = NosuchFullPath(rpath);
+		// The ffgl.json file is under %LOCALAPPDATA%
+		char* p = getenv("LOCALAPPDATA");
+		NosuchDebug("CreateInstance LOCALAPPDATA = %s\n", p);
+		std::string jsonpath;
+		if ( p != NULL ) {
+			jsonpath = std::string(p) + "\\Palette\\config\\ffgl.json";
+		}
+		else {
+			jsonpath = "c:\\windows\\temp\\ffgl.json"; // last resort
+		}
 		NosuchDebug("Palette.CreateInstance: PortOffset=%d jsonpath=%s", PaletteHost::PortOffset,jsonpath.c_str());
 		*ppOutInstance = new FFGLPalette(jsonpath);
         if (*ppOutInstance != NULL)
