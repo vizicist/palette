@@ -5,18 +5,18 @@ bool TrackedCursor::Debug = false;
 
 // std::vector<std::string> TrackedCursor::behaviourTypes;
 
-TrackedCursor::TrackedCursor(Palette* palette_, int sidnum, std::string sidsource, Region* region_, NosuchVector pos_, double z) {
+TrackedCursor::TrackedCursor(Palette* palette_, std::string cid, std::string cidsource, Region* region_, NosuchVector pos_, double z) {
 	// _area = area_;
 	_palette = palette_;
 	// _last_pitches.clear();
 	// _last_channel = -1;
 	// _last_click = -1;
-	_sidsource = sidsource;
-	_sidnum = sidnum;
+	_cidsource = cidsource;
+	_cid = cid;
 	_region = region_;
 
 	if ( Debug) {
-		NosuchDebug("NEW TrackedCursor region=%d sidnum=%d source=%s",_region,_sidnum,_sidsource.c_str());
+		NosuchDebug("NEW TrackedCursor region=%d cid=%s source=%s",_region, cid.c_str(),_cidsource.c_str());
 	}
 
 	curr_raw_pos = pos_;
@@ -29,7 +29,7 @@ TrackedCursor::TrackedCursor(Palette* palette_, int sidnum, std::string sidsourc
 	_last_raw_depth = z;
 	curr_raw_depth = z;
 	_target_depth = z;
-	NosuchDebug(2,"Cursor CONSTRUCTOR sid=%d/%s  pos_ = %.3f %.3f",_sidnum,_sidsource.c_str(),pos_.x,pos_.y);
+	NosuchDebug(2,"Cursor CONSTRUCTOR cid=%s/%s  pos_ = %.3f %.3f",_cid.c_str(),_cidsource.c_str(),pos_.x,pos_.y);
 	_start_time = Palette::now;
 	_last_tm = _start_time;
 	_last_instantiate = 0;
@@ -55,7 +55,7 @@ void TrackedCursor::initialize() {
 
 TrackedCursor::~TrackedCursor() {
 	if ( Debug ) {
-		NosuchDebug("TrackedCursor DESTRUCTOR!!  this=%llx _sid=%d/%s",(long long)this,_sidnum,_sidsource.c_str());
+		NosuchDebug("TrackedCursor DESTRUCTOR!!  this=%llx _cid=%s/%s",(long long)this,_cid.c_str(),_cidsource.c_str());
 	}
 }
 
