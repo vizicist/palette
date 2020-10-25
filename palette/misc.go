@@ -22,19 +22,20 @@ var DebugUtil = DebugFlags{}
 
 // DebugFlags xxx
 type DebugFlags struct {
-	Advance  bool
-	API      bool
-	Cursor   bool
-	Gen      bool
-	ISF      bool
-	Loop     bool
-	Config   bool
-	MIDI     bool
-	Morph    bool
-	NATS     bool
-	OSC      bool
-	Realtime bool
-	Remote   bool
+	Advance   bool
+	API       bool
+	Cursor    bool
+	GenVisual bool
+	GenSound  bool
+	ISF       bool
+	Loop      bool
+	Config    bool
+	MIDI      bool
+	Morph     bool
+	NATS      bool
+	OSC       bool
+	Realtime  bool
+	Remote    bool
 }
 
 func setDebug(dtype string, b bool) error {
@@ -46,8 +47,10 @@ func setDebug(dtype string, b bool) error {
 		DebugUtil.API = b
 	case "cursor":
 		DebugUtil.Cursor = b
-	case "gen":
-		DebugUtil.Gen = b
+	case "genSound":
+		DebugUtil.GenSound = b
+	case "genvisual":
+		DebugUtil.GenVisual = b
 	case "isf":
 		DebugUtil.ISF = b
 	case "loop":
@@ -114,8 +117,8 @@ func fileExists(filename string) bool {
 
 var palettePath string
 
-// PalettePath is the root
-func PalettePath() string {
+// RootPath is the value of environment variable PALETTE
+func RootPath() string {
 	if palettePath == "" {
 		palettePath = os.Getenv("PALETTE")
 		if palettePath == "" {
@@ -127,12 +130,12 @@ func PalettePath() string {
 
 // BinFilePath xxx
 func BinFilePath(nm string) string {
-	return filepath.Join(PalettePath(), "bin", nm)
+	return filepath.Join(RootPath(), "bin", nm)
 }
 
 // ConfigFilePath xxx
 func ConfigFilePath(nm string) string {
-	return filepath.Join(PalettePath(), "config", nm)
+	return filepath.Join(RootPath(), "config", nm)
 }
 
 // LocalPaletteDir xxx

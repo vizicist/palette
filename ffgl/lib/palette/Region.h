@@ -109,16 +109,12 @@ public:
 
 	RegionParams params;
 
-	int sid_low;
-	int sid_high;
-
 	void initParams();
-	void touchCursor(int sidnum, std::string sidsource);
-	void setTrackedCursor(Palette* palette, int sidnum, std::string sidsource, NosuchVector pos, double z);
+	void setTrackedCursor(Palette* palette, std::string cid, std::string cidsource, NosuchVector pos, double z);
 	double getMoveDir(std::string movedir);
 	Sprite* makeSprite(std::string shape);
 	void instantiateSprite(TrackedCursor* c, bool throttle);
-	void instantiateSpriteAt(NosuchVector pos, double z);
+	void instantiateSpriteAt(std::string cid, NosuchVector pos, double z);
 	double spriteMoveDir(TrackedCursor* c);
 	// these need to be thread-safe
 	void draw(PaletteHost* b);
@@ -139,13 +135,13 @@ public:
 	// void cursorDown(TrackedCursor* c);
 	// void cursorDrag(TrackedCursor* c);
 	// void cursorUp(TrackedCursor* c);
-	void doCursorUp(Palette* palette, int sidnum);
+	void doCursorUp(Palette* palette, std::string cid);
 	void clearCursors();
 
 private:
 
 	std::list<TrackedCursor*>& cursors() { return _cursors; }
-	TrackedCursor* _getTrackedCursor(int sidnum, std::string sidsource);
+	TrackedCursor* _getTrackedCursor(std::string cid, std::string cidsource);
 
 	std::list<TrackedCursor*> _cursors;
 

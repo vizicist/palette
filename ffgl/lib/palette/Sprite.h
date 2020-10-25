@@ -58,8 +58,8 @@ public:
 		killme = false;
 		rotangsofar = 0.0f;
 		stationary = false;
-		sidnum = 0;
-		sidsource = "nosuchsource";
+		cid = "nosuchcursor";
+		cidsource = "nosuchsource";
 		rotanginit = 0.0;
 		gravityForce = NosuchVector(0.0, 0.0);
 	}
@@ -76,8 +76,8 @@ public:
 	bool killme;
 	double rotangsofar;
 	bool stationary;
-	int sidnum;
-	std::string sidsource;
+	std::string cid;
+	std::string cidsource;
 	int seq;     // sprite sequence # (mostly for debugging)
 	int rotdir;  // -1, 0, 1
 	double rotanginit;
@@ -106,7 +106,7 @@ public:
 	// static std::vector<std::string> spriteShapes;
 	static double degree2radian(double deg);
 
-	void initState(int sidnum, std::string sidsource, NosuchVector& pos, double movedir, double depth, double rotanginit);
+	void initState(std::string cid, std::string cidsource, NosuchVector& pos, double movedir, double depth, double rotanginit);
 
 	// Screen space is 2.0x2.0, while cursor space is 1.0x1.0
 	void scaleCursorSpaceToScreenSpace(NosuchVector& pos) {
@@ -124,7 +124,6 @@ public:
 	SpriteState state;
 
 protected:
-	// Sprite(int sidnum, std::string sidsource, Region* r);
 	double vertexNoise();
 
 	static int NextSeq;
