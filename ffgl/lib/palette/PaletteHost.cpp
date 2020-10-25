@@ -301,13 +301,7 @@ PaletteHost::PaletteHost(std::string configfile)
 	_activityEnabled = FALSE;
 
 	// These are default values, which can be overridden by the config file.
-	_osc_input_port = DEFAULT_OSC_INPUT_PORT;
-	_osc_input_host = DEFAULT_OSC_INPUT_HOST;
-	_do_tuio = false;
 	_do_realtime = true;
-
-	_resolume_output_host = "127.0.0.1";  // This should always be the case
-	_resolume_output_port = DEFAULT_RESOLUME_PORT;
 
 	_daemon = NULL;
 
@@ -421,24 +415,8 @@ PaletteHost::LoadPaletteConfig(cJSON* c)
 {
 	cJSON *j;
 
-	if ((j=getNumber(c, "tuio")) != NULL) {
-		_do_tuio = (j->valueint != 0);
-	}
 	if ((j=getNumber(c, "realtime")) != NULL) {
 		_do_realtime = (j->valueint != 0);
-	}
-	if ( (j=getNumber(c,"tuioport")) != NULL ) {
-		_osc_input_port = j->valueint;
-	}
-	if ( (j=getString(c,"tuiohost")) != NULL ) {
-		_osc_input_host = j->valuestring;
-		NosuchDebug(1,"Setting tuiohost to %s",_osc_input_host.c_str());
-	}
-	if ( (j=getNumber(c,"resolumeport")) != NULL ) {
-		_resolume_output_port = j->valueint;
-	}
-	if ( (j=getNumber(c,"resolumeversion")) != NULL ) {
-		_resolume_version = j->valueint;
 	}
 	if ( (j=getNumber(c,"debugtoconsole")) != NULL ) {
 		NosuchDebugToConsole = j->valueint?TRUE:FALSE;
@@ -461,8 +439,8 @@ PaletteHost::LoadPaletteConfig(cJSON* c)
 }
 
 int PaletteHost::SendToResolume(osc::OutboundPacketStream& p) {
-	NosuchDebug(1,"SendToResolume host=%s port=%d",_resolume_output_host,_resolume_output_port);
-    return SendToUDPServer(_resolume_output_host,_resolume_output_port,p.Data(),(int)p.Size());
+	NosuchDebug(1,"SendToResolume host=%s port=%d",DEFAULT_RESOLUME_HOST,DEFAULT_RESOLUME_PORT);
+    return SendToUDPServer(DEFAULT_RESOLUME_HOST,DEFAULT_RESOLUME_PORT,p.Data(),(int)p.Size());
 }
 
 void
@@ -722,13 +700,11 @@ bool PaletteHost::initStuff() {
 
 		_palette->now = MillisecondsSoFar();
 
-		int osc_input_port = _osc_input_port + PortOffset;
-
+		int osc_input_port = BASE_OSC_INPUT_PORT + PortOffset;
 		NosuchDebug("PaletteDaemon will be listening for osc on port %d.",
 			osc_input_port);
 
-		_daemon = new PaletteDaemon(this,
-			_do_tuio?osc_input_port:-1,_osc_input_host);
+		_daemon = new PaletteDaemon(this, osc_input_port, DEFAULT_OSC_INPUT_HOST);
 
 	} catch (NosuchException& e) {
 		NosuchDebug("NosuchException: %s",e.message());
@@ -1212,19 +1188,6 @@ void PaletteHost::ProcessOscMessage( std::string source, const osc::ReceivedMess
 			}
 			std::string ret = RespondToJson(meth.c_str(),c_params,"54321");
 			cJSON_Delete(c_params);
-			return;
-		}
-		if (checkAddrPattern(addr,"/tuio/25Dcur")) {
-			NosuchDebug("ProcessOscMessage doesn't handle tuio anymore!");
-			return;
-		} else if (checkAddrPattern(addr, "/tuio/25Dblb")) {
-			NosuchDebug("ProcessOscMessage doesn't handle tuio anymore!");
-			return;
-		} else if (checkAddrPattern(addr,"/tuio/2Dcur")) {
-			NosuchDebug("ProcessOscMessage doesn't handle tuio anymore!");
-			return;
-		} else if (checkAddrPattern(addr,"/tuio/2Dobj")) {
-			NosuchDebug("ProcessOscMessage doesn't handle tuio anymore!");
 			return;
 		}
 
