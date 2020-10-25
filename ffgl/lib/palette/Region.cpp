@@ -378,10 +378,10 @@ void Region::advanceCursorsTo(int tm) {
 		}
 	}
 	catch (NosuchException& e) {
-		NosuchDebug("NosuchException in GraphicBehaviour2018::advanceto : %s", e.message());
+		NosuchDebug("NosuchException in advanceCursorsTo : %s", e.message());
 	}
 	catch (...) {
-		NosuchDebug("UNKNOWN Exception in GraphicBehaviour2018::advanceto!");
+		NosuchDebug("UNKNOWN Exception in advanceCursorsTo");
 	}
 
 	cursorlist_unlock();

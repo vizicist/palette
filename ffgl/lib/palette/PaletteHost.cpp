@@ -276,7 +276,6 @@ void PaletteHost::StaticInitialization()
 	// Default debugging stuff
 	NosuchDebugLevel = 0;   // 0=minimal messages, 1=more, 2=extreme
 	NosuchDebugTimeTag = true;
-	NosuchDebugToConsole = false;
 	NosuchDebugToLog = true;
 	NosuchAppName = "Palette";
 #ifdef DEBUG_TO_BUFFER
@@ -299,9 +298,6 @@ PaletteHost::PaletteHost(std::string configfile)
 	_lastActivity = -1;
 	_time0 = timeGetTime();
 	_activityEnabled = FALSE;
-
-	// These are default values, which can be overridden by the config file.
-	_do_realtime = true;
 
 	_daemon = NULL;
 
@@ -361,14 +357,7 @@ PaletteHost::PaletteHost(std::string configfile)
 
 	LoadPaletteConfig(_configJson);
 
-	if (_do_realtime) {
-		// NosuchDebug("Starting scheduler");
-		_scheduler = new Scheduler(this);
-	}
-	else {
-		// NosuchDebug("NOT Starting scheduler");
-		_scheduler = NULL;
-	}
+	_scheduler = new Scheduler(this);
 }
 
 PaletteHost::~PaletteHost()
@@ -415,23 +404,8 @@ PaletteHost::LoadPaletteConfig(cJSON* c)
 {
 	cJSON *j;
 
-	if ((j=getNumber(c, "realtime")) != NULL) {
-		_do_realtime = (j->valueint != 0);
-	}
-	if ( (j=getNumber(c,"debugtoconsole")) != NULL ) {
-		NosuchDebugToConsole = j->valueint?TRUE:FALSE;
-	}
 	if ( (j=getNumber(c,"debugcursor")) != NULL ) {
 		NosuchDebugCursor = j->valueint?TRUE:FALSE;
-	}
-	if ( (j=getNumber(c,"debugtolog")) != NULL ) {
-		bool b = j->valueint?TRUE:FALSE;
-		// If we're turning debugtolog off, put a final
-		// message out so we know that!
-		if ( NosuchDebugToLog && !b ) {
-			NosuchDebug("ALERT: NosuchDebugToLog is being set to false!");
-		}
-		NosuchDebugToLog = b;
 	}
 	if ( (j=getNumber(c,"debugautoflush")) != NULL ) {
 		NosuchDebugAutoFlush = j->valueint?TRUE:FALSE;

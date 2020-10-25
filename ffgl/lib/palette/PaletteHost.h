@@ -218,7 +218,6 @@ private:
 	bool _dotest;
 	bool _activityEnabled;
 	std::map<std::string, cJSON*> _patchJson;
-	bool _do_realtime;
 	std::string _configFile;
 	cJSON* _configJson;
 

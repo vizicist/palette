@@ -40,7 +40,6 @@
 using namespace std;
 
 int NosuchDebugLevel = 0;
-bool NosuchDebugToConsole = false;
 bool NosuchDebugCursor = false;
 bool NosuchDebugTimeTag = true;
 bool NosuchDebugToLog = true;
@@ -185,9 +184,6 @@ RealNosuchDebug(int level, char const *fmt, va_list args)
 		strcat_s(msg,msgsize,"\n");
 	}
 
-	if ( NosuchDebugToConsole ) {
-		OutputDebugStringA(msg);
-	}
 	if ( NosuchDebugToLog ) {
 		DebugLog.push_back(msg);
 		if ( NosuchDebugAutoFlush )
