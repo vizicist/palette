@@ -32,7 +32,6 @@ func PublishCursorDeviceEvent(ce CursorDeviceEvent) error {
 		"\"source\": \"" + MyNuid + "\", " +
 		"\"millisecs\": \"" + fmt.Sprintf("%d", dt.Milliseconds()) + "\", " +
 		"\"cursor\": \"" + fmt.Sprintf("%d", ce.CursorID) + "\", " +
-		"\"region\": \"" + ce.Region + "\", " +
 		"\"x\": \"" + fmt.Sprintf("%f", ce.X) + "\", " +
 		"\"y\": \"" + fmt.Sprintf("%f", ce.Y) + "\", " +
 		"\"z\": \"" + fmt.Sprintf("%f", ce.Z) + "\", " +
