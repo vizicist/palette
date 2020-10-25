@@ -69,7 +69,8 @@ typedef struct PointMem {
 } PointMem;
 
 #define DEFAULT_RESOLUME_PORT 7000
-#define DEFAULT_OSC_INPUT_PORT 3333
+#define DEFAULT_RESOLUME_HOST "127.0.0.1"
+#define BASE_OSC_INPUT_PORT 3333
 #define DEFAULT_OSC_INPUT_HOST "127.0.0.1"
 
 class PaletteDaemon {
@@ -217,16 +218,9 @@ private:
 	bool _dotest;
 	bool _activityEnabled;
 	std::map<std::string, cJSON*> _patchJson;
-	int _osc_input_port;
-	std::string _osc_input_host;
-	bool _do_tuio;
 	bool _do_realtime;
 	std::string _configFile;
 	cJSON* _configJson;
-
-	int _resolume_output_port;  // This is the port we're sending output TO
-	int _resolume_version;		// 4 or 6 (haven't tested 5)
-	std::string _resolume_output_host;
 
 	int SendToResolume(osc::OutboundPacketStream& p);
 
