@@ -224,7 +224,7 @@ func StartNATSClient() {
 		log.Printf("StartNATS: subscribing to %s\n", SubscribeCursorSubject)
 		TheVizNats.Subscribe(SubscribeCursorSubject, func(msg *nats.Msg) {
 			data := string(msg.Data)
-			router.HandleSubscribedCursorEventMsg(data)
+			router.handleSubscribedCursorInput(data)
 		})
 	}
 
@@ -335,12 +335,15 @@ func IngestRealtimeCommand(cmd Command) {
 
 }
 
-// HandleSubscribedCursorEventMsg xxx
-func (r *Router) HandleSubscribedCursorEventMsg(data string) {
+func (r *Router) handleDeviceCursorInput(e CursorDeviceEvent) {
+	r.routeCursorDeviceEvent(e)
+}
+
+func (r *Router) handleSubscribedCursorInput(data string) {
 
 	args, err := StringMap(data)
 	if err != nil {
-		log.Printf("HandleCursorEventMsg: err=%s\n", err)
+		log.Printf("HandleSubscribedCursor: err=%s\n", err)
 		return
 	}
 
@@ -355,12 +358,12 @@ func (r *Router) HandleSubscribedCursorEventMsg(data string) {
 	}
 
 	if DebugUtil.Cursor {
-		log.Printf("Router.HandleCursorEventMsg: data=%s\n", data)
+		log.Printf("Router.HandleSubscribedCursor: data=%s\n", data)
 	}
 
 	eventType, err := needStringArg("event", api, args)
 	if err != nil {
-		log.Printf("HandleCursorEventMsg: err=%s\n", err)
+		log.Printf("HandleSubscribedCursor: err=%s\n", err)
 		return
 	}
 
@@ -370,24 +373,24 @@ func (r *Router) HandleSubscribedCursorEventMsg(data string) {
 
 	x, err := needFloatArg("x", api, args)
 	if err != nil {
-		fmt.Printf("HandleCursorEventMsg: err=%s\n", err)
+		log.Printf("HandleSubscribedCursor: err=%s\n", err)
 		return
 	}
 
 	y, err := needFloatArg("y", api, args)
 	if err != nil {
-		fmt.Printf("HandleCursorEventMsg: err=%s\n", err)
+		log.Printf("HandleSubscribedCursor: err=%s\n", err)
 		return
 	}
 
 	z, err := needFloatArg("z", api, args)
 	if err != nil {
-		fmt.Printf("HandleCursorEventMsg: err=%s\n", err)
+		log.Printf("HandleSubscribedCursor: err=%s\n", err)
 		return
 	}
 
 	if region == "" {
-		region = MyNuid
+		region = source
 	}
 
 	ce := CursorDeviceEvent{
@@ -1125,7 +1128,6 @@ func (r *Router) routeCursorDeviceEvent(e CursorDeviceEvent) {
 		} else {
 			region = r.availableRegion()
 		}
-
 	}
 	reactor, ok := r.reactors[region]
 	if !ok {
