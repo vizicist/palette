@@ -1,7 +1,7 @@
 c:/windows/system32/taskkill /F /IM palette.exe > nul 2>&1
 set logdir=%LOCALAPPDATA%\Palette\logs
-rm -fr "%logdir%"
-mkdir "%logdir%"
+rm -fr "%logdir%" > nul 2>&1
+mkdir "%logdir%" > nul 2>&1
 echo > "%logdir%\palette.log"
 echo > "%logdir%\palette.stdout"
 echo > "%logdir%\palette.stderr"
