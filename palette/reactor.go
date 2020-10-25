@@ -235,7 +235,7 @@ func (r *Reactor) generateVisualsFromCursor(ce CursorStepEvent) {
 	msg.Append(float32(ce.X))
 	msg.Append(float32(ce.Y))
 	msg.Append(float32(ce.Z))
-	if DebugUtil.Gen {
+	if DebugUtil.GenVisual {
 		log.Printf("Reactor.generateVisuals: click=%d stepnum=%d OSC message = %+v\n", currentClick, r.loop.currentStep, msg)
 	}
 	r.toFreeFramePluginForLayer(msg)
@@ -379,7 +379,7 @@ func (r *Reactor) generateSoundFromCursor(ce CursorStepEvent) {
 	if !TheRouter().generateSound {
 		return
 	}
-	if DebugUtil.Gen {
+	if DebugUtil.GenSound {
 		log.Printf("Reactor.generateSound: pad=%s activeNotes=%d ce=%+v\n", r.padName, len(r.activeNotes), ce)
 	}
 	a := r.getActiveNote(ce.ID)
