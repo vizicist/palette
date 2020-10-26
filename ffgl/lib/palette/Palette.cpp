@@ -68,19 +68,7 @@ Palette::Palette(PaletteHost* b) {
 Palette::~Palette() {
 }
 
-void Palette::cursorDown(TrackedCursor* c) {
-	if ( _paletteHost ) {
-		_paletteHost->_lastActivity = now;
-	}
-}
-
-void Palette::cursorDrag(TrackedCursor* c) {
-	if ( _paletteHost ) {
-		_paletteHost->_lastActivity = now;
-	}
-}
-
-void Palette::cursorUp(TrackedCursor* c) {
+void Palette::setLastActivity() {
 	if ( _paletteHost ) {
 		_paletteHost->_lastActivity = now;
 	}

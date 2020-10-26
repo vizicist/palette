@@ -54,12 +54,12 @@ public:
 
 	std::string DebugString() {
 		return NosuchSnprintf("Cursor cid=%s/%s raw=%.3f,%.3f last_raw=%.3f,%.3f target=%.3f,%.3f raw_depth=%.3f target_depth=%.3f",
-			cid(),cidsource().c_str(), curr_raw_pos.x,curr_raw_pos.y, _last_raw_pos.x,_last_raw_pos.y,
+			cid().c_str(),cidsource().c_str(), curr_raw_pos.x,curr_raw_pos.y, _last_raw_pos.x,_last_raw_pos.y,
 			_target_pos.x,_target_pos.y,curr_raw_depth,_target_depth);
 	}
 	std::string DebugBrief() {
 		return NosuchSnprintf("Cursor cid=%s/%s pos=%.3f,%.3f depth=%.3f",
-			cid(),cidsource().c_str(), curr_raw_pos.x,curr_raw_pos.y, curr_raw_depth);
+			cid().c_str(),cidsource().c_str(), curr_raw_pos.x,curr_raw_pos.y, curr_raw_depth);
 	}
 
 	NosuchVector curr_raw_pos;
