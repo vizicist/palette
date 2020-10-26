@@ -253,11 +253,17 @@ func (m *MIDIIO) loadSynths(filename string) {
 	var synths synths
 	json.Unmarshal(bytes, &synths)
 
+	synthoutput := ConfigBool("generatesound")
+
 	for i := range synths.Synths {
 		nm := synths.Synths[i].Name
 		port := synths.Synths[i].Port
 		channel := synths.Synths[i].Channel
-		m.synthOutputs[nm] = m.makeSynthOutput(port, channel)
+		if synthoutput {
+			m.synthOutputs[nm] = m.makeSynthOutput(port, channel)
+		} else {
+			m.synthOutputs[nm] = nil
+		}
 	}
 }
 
