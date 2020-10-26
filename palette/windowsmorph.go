@@ -335,7 +335,7 @@ func (m oneMorph) readFrames(callback CursorDeviceCallbackFunc, forceFactor floa
 			}
 			region, ok := MorphDefs[m.serialNum]
 			if !ok {
-				region = MyNuid // default for unrecognized Morphs
+				region = MyNUID() // default for unrecognized Morphs
 			}
 
 			if region == "QUAD" {

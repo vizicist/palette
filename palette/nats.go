@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/nats-io/nats.go"
-	"github.com/nats-io/nuid"
 )
 
 // SubscribeCursorSubject xxx
@@ -14,9 +13,6 @@ var SubscribeCursorSubject = "palette.cursorevent"
 
 // SubscribeMIDISubject xxx
 var SubscribeMIDISubject = "palette.midievent"
-
-// MyNuid xxx
-var MyNuid = nuid.Next()
 
 // LocalDeviceSubject xxx
 func LocalDeviceSubject(device string) string {
@@ -29,7 +25,7 @@ var time0 = time.Now()
 func PublishCursorDeviceEvent(ce CursorDeviceEvent) error {
 	dt := time.Now().Sub(time0)
 	params := "{ " +
-		"\"source\": \"" + MyNuid + "\", " +
+		"\"source\": \"" + MyNUID() + "\", " +
 		"\"millisecs\": \"" + fmt.Sprintf("%d", dt.Milliseconds()) + "\", " +
 		"\"cursor\": \"" + fmt.Sprintf("%d", ce.CursorID) + "\", " +
 		"\"x\": \"" + fmt.Sprintf("%f", ce.X) + "\", " +
@@ -55,7 +51,7 @@ func PublishMidiDeviceEvent(me MidiDeviceEvent) error {
 	// and use our own, so the timestamps are consistent with
 	// the ones on Cursor events
 	params := "{ " +
-		"\"source\": \"" + MyNuid + "\", " +
+		"\"source\": \"" + MyNUID() + "\", " +
 		// "\"timestamp\": \"" + fmt.Sprintf("%d", me.Timestamp) + "\", " +
 		"\"millisecs\": \"" + fmt.Sprintf("%d", dt.Milliseconds()) + "\", " +
 		"\"status\": \"" + fmt.Sprintf("%d", me.Status) + "\", " +
@@ -200,7 +196,7 @@ func setupConnOptions(opts []nats.Option) []nats.Option {
 }
 
 func handleDiscover(msg *nats.Msg) {
-	response := fmt.Sprintf("%s", MyNuid)
+	response := fmt.Sprintf("%s", MyNUID())
 	if DebugUtil.API {
 		log.Printf("handleDiscover: data=%s reply=%s response=%s\n", string(msg.Data), msg.Reply, response)
 	}
