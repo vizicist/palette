@@ -23,14 +23,15 @@ if len(sys.argv) > 2:
 else:
         dt = 0.1
 
+cid = "0"
 for n in range(ntimes):
         x = random.random()
         y = random.random()
         z = random.random()
-        spaceutil.SendCursorEvent("down",x,y,z)
+        spaceutil.SendCursorEvent(cid,"down",x,y,z)
         time.sleep(dt)
         x = random.random()
         y = random.random()
         z = random.random()
-        spaceutil.SendCursorEvent("up",x,y,z)
+        spaceutil.SendCursorEvent(cid,"up",x,y,z)
         time.sleep(dt)
