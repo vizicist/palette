@@ -352,7 +352,7 @@ func (r *Router) handleSubscribedCursorInput(data string) {
 	api := SubscribeCursorSubject
 
 	source := optionalStringArg("source", args, "unknown")
-	if source == MyNuid {
+	if source == MyNUID() {
 		// if DebugUtil.Cursor {
 		// 	log.Printf("Ignoring event from myself, source=%s\n", source)
 		// }
@@ -368,8 +368,14 @@ func (r *Router) handleSubscribedCursorInput(data string) {
 		log.Printf("HandleSubscribedCursor: err=%s\n", err)
 		return
 	}
-
-	downdragup := strings.TrimPrefix(eventType, "cursor.")
+	switch eventType {
+	case "down":
+	case "drag":
+	case "up":
+	default:
+		log.Printf("handleSubscribedCursorInput: Unexpected cursorevent type: %s\n", eventType)
+		return
+	}
 
 	region := optionalStringArg("region", args, "")
 
@@ -400,7 +406,7 @@ func (r *Router) handleSubscribedCursorInput(data string) {
 		Region:     region,
 		CursorID:   0,
 		Timestamp:  int64(CurrentMilli),
-		DownDragUp: downdragup,
+		DownDragUp: eventType,
 		X:          x,
 		Y:          y,
 		Z:          z,
@@ -421,7 +427,7 @@ func (r *Router) HandleMIDIEventMsg(data string) {
 	}
 
 	source := optionalStringArg("source", args, "unknown")
-	if source == MyNuid {
+	if source == MyNUID() {
 		// if DebugUtil.Cursor {
 		// 	log.Printf("Ignoring event from myself, source=%s\n", source)
 		// }
