@@ -82,9 +82,7 @@ public:
 
 	Region region;
 
-	void cursorDown(TrackedCursor* c);
-	void cursorDrag(TrackedCursor* c);
-	void cursorUp(TrackedCursor* c);
+	void setLastActivity();
 
 	std::map<std::string, Bank*> banks;
 	std::string currentBank;

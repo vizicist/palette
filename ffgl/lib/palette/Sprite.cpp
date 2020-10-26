@@ -386,8 +386,12 @@ SpriteList::add(Sprite* s, int limit)
 	lock_write();
 	sprites.push_back(s);
 	NosuchAssert(limit >= 1);
+	if (NosuchDebugSprite) {
+		NosuchDebug("SpriteList.add: cid=%s", s->state.cid.c_str());
+	}
 	while ((int)sprites.size() > limit) {
 		Sprite* ps = sprites.front();
+		NosuchDebug("SpriteList.add: over limit, popping cid=%s", ps->state.cid.c_str());
 		sprites.pop_front();
 		delete ps;
 	}
@@ -416,8 +420,10 @@ SpriteList::clear() {
 	for (std::list<Sprite*>::iterator i = sprites.begin(); i != sprites.end(); ) {
 		Sprite* s = *i;
 		NosuchAssert(s);
+		if (NosuchDebugSprite) {
+			NosuchDebug("SpriteList.clear: deleting Sprite cid=%s",s->state.cid.c_str());
+		}
 		i = sprites.erase(i);
-		// NosuchDebug("Should be deleting Sprite s=%d",(int)s);
 		delete s;
 	}
 	unlock();
@@ -489,6 +495,9 @@ SpriteList::advanceTo(int tm, int gravity) {
 		}
 		s->advanceTo(tm,force);
 		if ( s->state.killme ) {
+			if (NosuchDebugSprite) {
+				NosuchDebug("SpriteList.clear: killme, deleting Sprite cid=%s",s->state.cid.c_str());
+			}
 			i = sprites.erase(i);
 			// NosuchDebug("Should be deleting Sprite s=%d",(int)s);
 			delete s;

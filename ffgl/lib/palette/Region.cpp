@@ -87,11 +87,14 @@ Region::setTrackedCursor(Palette* palette, std::string cid, std::string cidsourc
 		c->settargetpos(pos);
 		c->set_target_depth(z);
 		// c->setarea(z);
-		palette->cursorDrag(c);
+		palette->setLastActivity();
 	} else {
 		c = new TrackedCursor(palette, cid, cidsource, this, pos, z);
+		if (NosuchDebugCursor) {
+			NosuchDebug("Region.setTrackedCursor: new TrackedCursor cid=%s", cid.c_str());
+		}
 		_cursors.push_back(c);
-		palette->cursorDown(c);
+		palette->setLastActivity();
 	}
 	c->touch();
 
@@ -144,17 +147,24 @@ void Region::doCursorUp(Palette* palette, std::string cid) {
 		NosuchDebug("Region::doCursorUp, unable to lock cursorlist");
 		return;
 	}
+	bool found = false;
 	for (std::list<TrackedCursor*>::iterator i = _cursors.begin(); i != _cursors.end(); ) {
 		TrackedCursor* c = *i;
 		NosuchAssert(c);
 		if (c->cid() == cid) {
-			// NosuchDebug("doCursorUp is deleting c=%lld",(long long)c);
-			palette->cursorUp(c);
+			found = true;
+			palette->setLastActivity();
+			if (NosuchDebugCursor) {
+				NosuchDebug("Region.doCursorUp: deleting cid=%s",cid.c_str());
+			}
 			i = _cursors.erase(i);
 			delete c;
 			break;
 		}
 		i++;
+	}
+	if (!found) {
+		NosuchDebug("Region.doCursorUp: didn't find cursor cid=%s", cid.c_str());
 	}
 	// NosuchDebug("End of doCursorUp, _cursors.size = %d",_cursors.size());
 	cursorlist_unlock();
@@ -170,6 +180,9 @@ void Region::clearCursors() {
 	for (std::list<TrackedCursor*>::iterator i = _cursors.begin(); i != _cursors.end(); ) {
 		TrackedCursor* c = *i;
 		NosuchAssert(c);
+		if (NosuchDebugCursor) {
+			NosuchDebug("Region.clearCursor: deleting cid=%s",c->cid().c_str());
+		}
 		i = _cursors.erase(i);
 		delete c;
 	}
@@ -181,22 +194,23 @@ double
 Region::spriteMoveDir(TrackedCursor* c)
 {
 	double dir;
-	if ( params.movedir == "cursor" ) {
+	if (params.movedir == "cursor") {
 		if (c != NULL) {
 			dir = c->curr_degrees;
 		}
 		else {
-			double f = ((double)(rand()))/ RAND_MAX;
+			double f = ((double)(rand())) / RAND_MAX;
 			dir = f * 360.0f;
 		}
 		// NosuchDebug("Region::spriteMoveDir cursor! dir=%f", dir);
 		// NosuchDebug("spriteMoveDir cursor degrees = %f",c->curr_degrees);
 		// not sure why I have to reverse it - the cursor values are probably reversed
 		dir -= 90.0;
-		if ( dir < 0.0 ) {
+		if (dir < 0.0) {
 			dir += 360.0;
 		}
-	} else {
+	}
+	else {
 		dir = getMoveDir(params.movedir);
 		// NosuchDebug("Region::spriteMoveDir movedir=%s dir=%f", params.movedir.c_str(), dir);
 	}
@@ -246,17 +260,22 @@ Region::instantiateSprite(TrackedCursor* c, bool throttle) {
 	int tm = Palette::now;
 	int dt = tm - c->last_instantiate();
 
-	if ( throttle && (dt < SPRITE_THROTTLE_MS_PER_CURSOR ) ) {
-		// NosuchDebug("THROTTLE is avoiding making a new sprite at tm=%d",tm);
+	if (NosuchDebugSprite) {
+		NosuchDebug("instantiateSprite: tm=%d dt=%d last_instantiate=%d", tm, dt, c->last_instantiate());
+	}
+	if (throttle && (dt < SPRITE_THROTTLE_MS_PER_CURSOR)) {
+		if (NosuchDebugSprite) {
+			NosuchDebug("THROTTLE is avoiding making a new sprite at tm=%d", tm);
+		}
 		return;
 	}
 
 	Sprite* s = makeSprite(params.shape);
-	if ( s ) {
+	if (s) {
 		s->params.initValues(this);
 		double anginit = s->params.rotanginit;
 		if (s->params.rotauto) {
-			anginit = - c->curr_degrees;
+			anginit = -c->curr_degrees;
 		}
 		NosuchVector pos;
 		std::string placement = params.placement;
@@ -271,12 +290,15 @@ Region::instantiateSprite(TrackedCursor* c, bool throttle) {
 			pos.y = 0.5;
 		}
 		else {
-			NosuchDebug("Unexpected value for placement: %s",params.placement.c_str());
+			NosuchDebug("Unexpected value for placement: %s", params.placement.c_str());
 			return;
 		}
 		// NosuchDebug("Calling initState with movedir=%f", spriteMoveDir(c));
-		s->initState(c->cid(),c->cidsource(),pos,spriteMoveDir(c),c->curr_raw_depth,anginit);
+		s->initState(c->cid(), c->cidsource(), pos, spriteMoveDir(c), c->curr_raw_depth, anginit);
 		c->set_last_instantiate(tm);
+		if ( NosuchDebugSprite ) {
+			NosuchDebug("Region.instantiateSprite: cid=%s", c->cid().c_str());
+		}
 		_spritelist->add(s,params.nsprites);
 	}
 }
@@ -291,6 +313,9 @@ Region::instantiateSpriteAt(std::string cid, NosuchVector pos, double z) {
 		s->params.initValues(this);
 		double anginit = s->params.rotanginit;
 		s->initState(cid, source, pos, spriteMoveDir(NULL), z, anginit);
+		if ( NosuchDebugSprite ) {
+			NosuchDebug("Region.instantiateSpriteAt: cid=%s pos=%f,%f", cid.c_str(),pos.x,pos.y);
+		}
 		_spritelist->add(s, params.nsprites);
 	}
 }
@@ -361,6 +386,12 @@ void Region::advanceCursorsTo(int tm) {
 
 	try {
 		CATCH_NULL_POINTERS;
+		if (NosuchDebugCursor) {
+			int sz = (int)cursors().size();
+			if (sz > 0) {
+				NosuchDebug("Region.advanceCursorsTo: tm=%d cursors size=%d", tm, cursors().size());
+			}
+		}
 		for (std::list<TrackedCursor*>::iterator i = cursors().begin(); i != cursors().end(); i++) {
 			TrackedCursor* c = *i;
 
@@ -405,8 +436,10 @@ void Region::deleteOldCursors(Palette* palette) {
 			// If the cursor hasn't been touched in a couple seconds, delete it
 			int too_idle = 10 * 1000;
 			if ( palette->now > (c->touched() + too_idle) ) {
-				NosuchDebug(1,"Killing cursor cid=%s\n", c->cid());
-				palette->cursorUp(c);
+				palette->setLastActivity();
+				if (NosuchDebugCursor) {
+					NosuchDebug("Region.deleteOldCursors: deleting cid=%s\n", c->cid().c_str());
+				}
 				i = _cursors.erase(i);
 				delete c;
 				break;

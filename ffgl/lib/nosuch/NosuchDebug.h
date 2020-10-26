@@ -32,6 +32,7 @@
 
 extern int NosuchDebugLevel;
 extern bool NosuchDebugCursor;
+extern bool NosuchDebugSprite;
 extern bool NosuchDebugToLog;
 extern bool NosuchDebugTimeTag;
 extern bool NosuchDebugAutoFlush;

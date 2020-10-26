@@ -115,17 +115,17 @@ func fileExists(filename string) bool {
 	return true
 }
 
-var palettePath string
+var paletteRoot string
 
 // RootPath is the value of environment variable PALETTE
 func RootPath() string {
-	if palettePath == "" {
-		palettePath = os.Getenv("PALETTE")
-		if palettePath == "" {
+	if paletteRoot == "" {
+		paletteRoot = os.Getenv("PALETTE")
+		if paletteRoot == "" {
 			log.Panicf("PALETTE environment variable needs to be set.")
 		}
 	}
-	return palettePath
+	return paletteRoot
 }
 
 // BinFilePath xxx
