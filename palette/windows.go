@@ -67,6 +67,7 @@ func LoadMorphs() error {
 			log.Printf("Setting Morph serial=%s pad=%s\n", serialnum, padname)
 		}
 		MorphDefs[serialnum] = padname
+		TheRouter().setRegionForSource(serialnum, padname)
 	}
 	return nil
 }

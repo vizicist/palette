@@ -113,13 +113,13 @@ func (r *Reactor) handleCursorDeviceEvent(e CursorDeviceEvent) {
 		log.Printf("Reactor.handleCursorDeviceEvent: pad=%s e=%+v\n", r.padName, e)
 	}
 
-	id := fmt.Sprintf("%s.%s.%d", e.Source, e.Region, e.CursorID)
+	id := e.Cid
 
 	r.deviceCursorsMutex.Lock()
 
 	tc, ok := r.deviceCursors[id]
 	if !ok {
-		// Create a new TuioCursor
+		// new DeviceCursor
 		tc = &DeviceCursor{}
 		r.deviceCursors[id] = tc
 	}
@@ -150,10 +150,7 @@ func (r *Reactor) handleCursorDeviceEvent(e CursorDeviceEvent) {
 
 // checkDelay is the Duration that has to pass
 // before we decide a cursor is no longer present,
-// resulting in a cursor UP event.  This used to be
-// quite low, since TUIO sent "alive" messages quite often.
-// But since cursor events are now down/drag/up,
-// this is a long longer.
+// resulting in a cursor UP event.
 const checkDelay time.Duration = 2 * time.Second
 
 func (r *Reactor) checkCursorUp() {
@@ -962,33 +959,6 @@ func (r *Reactor) ExecuteAPI(api string, args map[string]string, rawargs string)
 
 	known := true
 	switch api {
-
-	case "cursor":
-		x, err := needFloatArg("x", api, args)
-		if err != nil {
-			return "", err
-		}
-		y, err := needFloatArg("y", api, args)
-		if err != nil {
-			return "", err
-		}
-		z, err := needFloatArg("z", api, args)
-		if err != nil {
-			return "", err
-		}
-		event, err := needStringArg("event", api, args)
-		if err != nil {
-			return "", err
-		}
-		ce := CursorDeviceEvent{
-			Source:     "api",
-			X:          x,
-			Y:          y,
-			Z:          z,
-			Region:     r.padName,
-			DownDragUp: event,
-		}
-		r.handleCursorDeviceEvent(ce)
 
 	case "loop_recording":
 		v, err := needBoolArg("onoff", api, args)

@@ -313,8 +313,8 @@ Region::instantiateSpriteAt(std::string cid, NosuchVector pos, double z) {
 		s->params.initValues(this);
 		double anginit = s->params.rotanginit;
 		s->initState(cid, source, pos, spriteMoveDir(NULL), z, anginit);
-		if ( NosuchDebugSprite ) {
-			NosuchDebug("Region.instantiateSpriteAt: cid=%s pos=%f,%f", cid.c_str(),pos.x,pos.y);
+		if (NosuchDebugSprite) {
+			NosuchDebug("Region.instantiateSpriteAt: cid=%s pos=%f,%f", cid.c_str(), pos.x, pos.y);
 		}
 		_spritelist->add(s, params.nsprites);
 	}
@@ -322,31 +322,31 @@ Region::instantiateSpriteAt(std::string cid, NosuchVector pos, double z) {
 
 bool Region::cursorlist_lock_read() {
 	int e = pthread_rwlock_rdlock(&_cursorlist_rwlock);
-	if ( e != 0 ) {
-		NosuchDebug("_cursorlist_rwlock for read failed!? e=%d",e);
+	if (e != 0) {
+		NosuchDebug("_cursorlist_rwlock for read failed!? e=%d", e);
 		return false;
 	}
-	NosuchDebug(2,"_cursorlist_rwlock for read succeeded");
+	NosuchDebug(2, "_cursorlist_rwlock for read succeeded");
 	return true;
 }
 
 bool Region::cursorlist_lock_write() {
 	int e = pthread_rwlock_wrlock(&_cursorlist_rwlock);
-	if ( e != 0 ) {
-		NosuchDebug("_cursorlist_rwlock for write failed!? e=%d",e);
+	if (e != 0) {
+		NosuchDebug("_cursorlist_rwlock for write failed!? e=%d", e);
 		return false;
 	}
-	NosuchDebug(2,"_cursorlist_rwlock for write succeeded");
+	NosuchDebug(2, "_cursorlist_rwlock for write succeeded");
 	return true;
 }
 
 void Region::cursorlist_unlock() {
 	int e = pthread_rwlock_unlock(&_cursorlist_rwlock);
-	if ( e != 0 ) {
-		NosuchDebug("_cursorlist_rwlock unlock failed!? e=%d",e);
+	if (e != 0) {
+		NosuchDebug("_cursorlist_rwlock unlock failed!? e=%d", e);
 		return;
 	}
-	NosuchDebug(2,"_cursorlist_rwlock unlock succeeded");
+	NosuchDebug(2, "_cursorlist_rwlock unlock succeeded");
 }
 
 void Region::draw(PaletteHost* b) {
@@ -362,12 +362,12 @@ void Region::clear() {
 }
 
 void Region::advanceTo(int tm) {
-	
+
 	_spritelist->advanceTo(tm, params.gravity);
-	
-	if ( last_tm > 0 ) {
+
+	if (last_tm > 0) {
 		int dt = leftover_tm + tm - last_tm;
-		if ( dt > fire_period ) {
+		if (dt > fire_period) {
 			// NosuchDebug("Region %d calling behave->periodicFire now=%d",this->id,Palette::now);
 			advanceCursorsTo(tm);
 			dt -= fire_period;
@@ -389,7 +389,7 @@ void Region::advanceCursorsTo(int tm) {
 		if (NosuchDebugCursor) {
 			int sz = (int)cursors().size();
 			if (sz > 0) {
-				NosuchDebug("Region.advanceCursorsTo: tm=%d cursors size=%d", tm, cursors().size());
+				NosuchDebug("Region.advanceCursorsTo: tm=%d cursors.size=%d  sprites.size=%d", tm, cursors().size(), _spritelist->size());
 			}
 		}
 		for (std::list<TrackedCursor*>::iterator i = cursors().begin(); i != cursors().end(); i++) {
@@ -400,7 +400,6 @@ void Region::advanceCursorsTo(int tm) {
 
 			std::string behave = c->curr_behaviour;
 			if (behave == "" || behave == "instantiate") {
-				// NosuchDebug("advanceTo gl_frame=%d instantiating",paletteHost()->gl_frame);
 				instantiateSprite(c, true);
 			}
 			else if (behave == "move") {

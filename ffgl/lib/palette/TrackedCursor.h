@@ -2,7 +2,7 @@
 #define _CURSOR_H
 
 // Don't instantiate a cursor's sprites more often than this number of milliseconds
-#define SPRITE_THROTTLE_MS_PER_CURSOR 5
+#define SPRITE_THROTTLE_MS_PER_CURSOR 100
 
 class Palette;
 class Region;
