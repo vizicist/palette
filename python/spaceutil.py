@@ -28,6 +28,20 @@ PadLayer = {
 DebugApi = False
 DebugOsc = False
 DebugOscFull = False
+MyNuid = ""
+
+def MyNUID():
+    global MyNuid
+    if MyNuid != "":
+        return MyNuid
+    path = localconfigFilePath("nuid.json")
+    if not os.path.isfile(path):
+        print("Missing nuid.json file? path=",path)
+        return "MissingNUIDFile"
+    nuidjson = readJsonPath(path)
+    if "nuid" in nuidjson:
+        return nuidjson["nuid"]
+    return "NoNUIDInNUIDFile"
 
 def boolValueOfString(v):
     return True if (v!=0 and v!="0" and v!="off" and v!="false" and v!="False") else False
@@ -228,8 +242,9 @@ def localconfigFilePath(nm):
 def presetsFilePath(section, nm, suffix=".json"):
     return os.path.join(PresetsDir(),section, nm+suffix)
 
-def SendCursorEvent(ddu,x,y,z):
-    e = "{ \"region\": \"A\", \"event\": \"cursor." + ddu + "\", \"x\": \"%f\", \"y\": \"%f\", \"z\": \"%f\" }"  % (x,y,z)
+def SendCursorEvent(cid,ddu,x,y,z):
+    fullcid = MyNUID() + "." + str(cid)
+    e = "{ \"cid\": \"" + fullcid+ "\", \"event\": \"" + ddu + "\", \"x\": \"%f\", \"y\": \"%f\", \"z\": \"%f\" }"  % (x,y,z)
     print(e)
     palette_cursorevent(e)
 

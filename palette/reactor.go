@@ -755,6 +755,9 @@ func (r *Reactor) sendNoteOff(a *ActiveNote) {
 }
 
 func (r *Reactor) sendANO() {
+	if !TheRouter().generateSound {
+		return
+	}
 	synth := r.params.ParamStringValue("sound.synth", defaultSynth)
 	if DebugUtil.MIDI {
 		log.Printf("MIDI.SendANO: synth=%s\n", synth)
