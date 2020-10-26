@@ -28,29 +28,30 @@ type Router struct {
 	MIDINumDown     int
 	MIDIOctaveShift int
 	// MIDISetScale      bool
-	MIDIThru         string // "", "A", "B", "C", "D"
-	MIDIThruScadjust bool
-	UseExternalScale bool // if true, scadjust uses "external" Scale
-	MIDIQuantized    bool
-	killme           bool // set to true if Router should be stopped
-	lastClick        Clicks
-	control          chan Command
-	time             time.Time
-	time0            time.Time
-	killPlayback     bool
-	recordingOn      bool
-	recordingFile    *os.File
-	recordingBegun   time.Time
-	resolumeClient   *osc.Client
-	guiClient        *osc.Client
-	plogueClient     *osc.Client
-	publishCursor    bool // e.g. "nats"
-	paletteHost      string
-	isPaletteHost    bool
-	myHostname       string
-	generateVisuals  bool
-	generateSound    bool
-	regionForSource  map[string]string
+	MIDIThru               string // "", "A", "B", "C", "D"
+	MIDIThruScadjust       bool
+	UseExternalScale       bool // if true, scadjust uses "external" Scale
+	MIDIQuantized          bool
+	killme                 bool // set to true if Router should be stopped
+	lastClick              Clicks
+	control                chan Command
+	time                   time.Time
+	time0                  time.Time
+	killPlayback           bool
+	recordingOn            bool
+	recordingFile          *os.File
+	recordingBegun         time.Time
+	resolumeClient         *osc.Client
+	guiClient              *osc.Client
+	plogueClient           *osc.Client
+	publishCursor          bool // e.g. "nats"
+	paletteHost            string
+	isPaletteHost          bool
+	myHostname             string
+	generateVisuals        bool
+	generateSound          bool
+	regionForSource        map[string]string // for all known Morph serial#'s
+	regionAssignedToSource map[string]string
 }
 
 // OSCEvent is an OSC message
@@ -119,6 +120,7 @@ func TheRouter() *Router {
 
 		oneRouter.reactors = make(map[string]*Reactor)
 		oneRouter.regionForSource = make(map[string]string)
+		oneRouter.regionAssignedToSource = make(map[string]string)
 
 		freeframeClientA := osc.NewClient("127.0.0.1", 3334)
 		freeframeClientB := osc.NewClient("127.0.0.1", 3335)
@@ -1107,22 +1109,23 @@ func (r *Router) handleOSCAPI(msg *osc.Message, source string) {
 }
 
 // availableRegion - return the name of a region that hasn't been assigned to a remote yet
-func (r *Router) availableRegion() string {
+func (r *Router) assignRegion(source string) string {
 
 	regionLetters := "ABCD"
 
 	nregions := len(regionLetters)
-	regionused := make([]bool, nregions)
-	for _, v := range r.regionForSource {
+	regionAssigned := make([]bool, nregions)
+	for _, v := range r.regionAssignedToSource {
 		i := strings.Index(regionLetters, v)
 		if i >= 0 {
-			regionused[i] = true
+			regionAssigned[i] = true
 		}
 	}
-	for i, used := range regionused {
+	for i, used := range regionAssigned {
 		if !used {
 			avail := regionLetters[i : i+1]
 			log.Printf("Router.availableRegion: %s\n", avail)
+			r.regionAssignedToSource[source] = avail
 			return avail
 		}
 	}
@@ -1145,7 +1148,7 @@ func (r *Router) regionForCursor(e CursorDeviceEvent) string {
 	}
 
 	// Hasn't been seen yet, let's get an available region
-	reg = r.availableRegion()
+	reg = r.assignRegion(source)
 	r.setRegionForSource(source, reg)
 
 	return reg
