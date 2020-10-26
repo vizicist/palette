@@ -50,7 +50,7 @@ type Router struct {
 	myHostname       string
 	generateVisuals  bool
 	generateSound    bool
-	remoteRegions    map[string]string
+	regionForSource  map[string]string
 }
 
 // OSCEvent is an OSC message
@@ -118,7 +118,7 @@ func TheRouter() *Router {
 		SetExternalScale(60%12, true) // Middle C
 
 		oneRouter.reactors = make(map[string]*Reactor)
-		oneRouter.remoteRegions = make(map[string]string)
+		oneRouter.regionForSource = make(map[string]string)
 
 		freeframeClientA := osc.NewClient("127.0.0.1", 3334)
 		freeframeClientB := osc.NewClient("127.0.0.1", 3335)
@@ -351,11 +351,20 @@ func (r *Router) handleSubscribedCursorInput(data string) {
 
 	api := SubscribeCursorSubject
 
-	source := optionalStringArg("source", args, "unknown")
+	cid, err := needStringArg("cid", api, args)
+	if err != nil {
+		log.Printf("HandleSubscribedCursor: err=%s\n", err)
+		return
+	}
+
+	words := strings.SplitN(cid, ".", 2)
+	if len(words) != 2 {
+		log.Printf("HandleSubscribedCursor: wrong format cid=%s\n", cid)
+		return
+	}
+	source := words[0]
 	if source == MyNUID() {
-		// if DebugUtil.Cursor {
-		// 	log.Printf("Ignoring event from myself, source=%s\n", source)
-		// }
+		log.Printf("Ignoring cursorevent from myself, source=%s\n", source)
 		return
 	}
 
@@ -377,7 +386,7 @@ func (r *Router) handleSubscribedCursorInput(data string) {
 		return
 	}
 
-	region := optionalStringArg("region", args, "")
+	// region := optionalStringArg("region", args, "")
 
 	x, err := needFloatArg("x", api, args)
 	if err != nil {
@@ -397,14 +406,8 @@ func (r *Router) handleSubscribedCursorInput(data string) {
 		return
 	}
 
-	if region == "" {
-		region = source
-	}
-
 	ce := CursorDeviceEvent{
-		Source:     source,
-		Region:     region,
-		CursorID:   0,
+		Cid:        cid,
 		Timestamp:  int64(CurrentMilli),
 		DownDragUp: eventType,
 		X:          x,
@@ -1110,7 +1113,7 @@ func (r *Router) availableRegion() string {
 
 	nregions := len(regionLetters)
 	regionused := make([]bool, nregions)
-	for _, v := range r.remoteRegions {
+	for _, v := range r.regionForSource {
 		i := strings.Index(regionLetters, v)
 		if i >= 0 {
 			regionused[i] = true
@@ -1127,28 +1130,33 @@ func (r *Router) availableRegion() string {
 	return ""
 }
 
-func (r *Router) routeCursorDeviceEvent(e CursorDeviceEvent) {
-	region := e.Region
-	switch e.Region {
-	case "A":
-	case "B":
-	case "C":
-	case "D":
-	case "":
-		log.Printf("routeCursorDeviceEvent: region value is empty?  Assuming A\n")
-		region = "A"
-	default:
-		// All other values are assumed to be Nuids, and we dynamically map
-		// these values, as we see them, to available regions.
-		reg, ok := r.remoteRegions[e.Region]
-		if ok {
-			region = reg
-		} else {
-			// Hasn't been seen yet, let's get an unused region
-			region = r.availableRegion()
-			r.remoteRegions[e.Region] = region
-		}
+func (r *Router) regionForCursor(e CursorDeviceEvent) string {
+	words := strings.SplitN(e.Cid, ".", 2)
+	if len(words) != 2 {
+		log.Printf("Router.regionForCursore: invalid e.Cid=%s\n", e.Cid)
+		return "A"
 	}
+	source := words[0]
+
+	// See if we've already assigned a region to this source
+	reg, ok := r.regionForSource[source]
+	if ok {
+		return reg
+	}
+
+	// Hasn't been seen yet, let's get an available region
+	reg = r.availableRegion()
+	r.setRegionForSource(source, reg)
+
+	return reg
+}
+
+func (r *Router) setRegionForSource(source string, region string) {
+	r.regionForSource[source] = region
+}
+
+func (r *Router) routeCursorDeviceEvent(e CursorDeviceEvent) {
+	region := r.regionForCursor(e)
 
 	reactor, ok := r.reactors[region]
 	if !ok {

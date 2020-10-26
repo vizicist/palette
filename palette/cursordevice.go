@@ -13,9 +13,7 @@ type CursorDevice interface {
 
 // CursorDeviceEvent is a single CursorDevice event
 type CursorDeviceEvent struct {
-	Source     string // e.g. Morph serial# or IP address
-	Region     string // A, B, C, ...
-	CursorID   int    // 0,1,... within Source.Region
+	Cid        string // of the form {source}.{cursorname}
 	Timestamp  int64  // milliseconds
 	DownDragUp string // "down", "drag", "up"
 	X          float32
