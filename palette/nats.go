@@ -24,15 +24,15 @@ var time0 = time.Now()
 // PublishCursorDeviceEvent xxx
 func PublishCursorDeviceEvent(ce CursorDeviceEvent) error {
 	dt := time.Now().Sub(time0)
+	fullcid := fmt.Sprintf("%s.%d", MyNUID(), ce.CursorID)
 	params := "{ " +
-		"\"source\": \"" + MyNUID() + "\", " +
+		"\"cid\": \"" + fullcid + "\", " +
+		"\"event\": \"" + ce.DownDragUp + "\", " +
 		"\"millisecs\": \"" + fmt.Sprintf("%d", dt.Milliseconds()) + "\", " +
-		"\"cursor\": \"" + fmt.Sprintf("%d", ce.CursorID) + "\", " +
 		"\"x\": \"" + fmt.Sprintf("%f", ce.X) + "\", " +
 		"\"y\": \"" + fmt.Sprintf("%f", ce.Y) + "\", " +
 		"\"z\": \"" + fmt.Sprintf("%f", ce.Z) + "\", " +
-		"\"area\": \"" + fmt.Sprintf("%f", ce.Area) + "\", " +
-		"\"event\": \"" + "cursor." + ce.DownDragUp + "\" }"
+		"\"area\": \"" + fmt.Sprintf("%f", ce.Area) + "\" }"
 
 	if DebugUtil.NATS {
 		log.Printf("Publishing %s %s\n", SubscribeCursorSubject, params)
