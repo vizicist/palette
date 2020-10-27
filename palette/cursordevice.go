@@ -56,5 +56,5 @@ type CursorDeviceCallbackFunc func(e CursorDeviceEvent)
 
 // StartCursorInput xxx
 func StartCursorInput() {
-	go RealStartCursorInput(TheRouter().handleDeviceCursorInput)
+	go RealStartCursorInput(TheRouter().HandleDeviceCursorInput)
 }
