@@ -63,7 +63,9 @@ func (loop *StepLoop) ClearID(id string) {
 	loop.stepsMutex.Lock()
 	defer loop.stepsMutex.Unlock()
 
-	// log.Printf("START ClearID for id=%s\n", id)
+	if DebugUtil.Cursor {
+		log.Printf("StepLoop.ClearID: START ClearID for id=%s\n", id)
+	}
 	for _, step := range loop.steps {
 		// This method of deleting things from an array without
 		// allocating a new array is found on this page:
@@ -83,6 +85,9 @@ func (loop *StepLoop) ClearID(id string) {
 
 // AddToStep adds a StepItem to the loop at the current step
 func (loop *StepLoop) AddToStep(ce CursorStepEvent, stepnum Clicks) {
+	if DebugUtil.Cursor {
+		log.Printf("StepLoop.AddToStep: stepnum=%d cid=%s\n", stepnum, ce.ID)
+	}
 	step := loop.steps[stepnum]
 	le := &LoopEvent{cursorStepEvent: ce}
 
