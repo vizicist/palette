@@ -1,4 +1,4 @@
-package palette
+package engine
 
 // SynthDef is the port and channel for a given synth
 type SynthDef struct {
