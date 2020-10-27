@@ -450,14 +450,21 @@ func (r *Reactor) advanceClickBy1() {
 	}
 
 	step := loop.steps[stepnum]
-	var removeIds []string
+	if DebugUtil.Cursor && len(step.events) != 0 {
+		log.Printf("Reactor.advanceClickBy1: START stepnum=%d len(events)=%d\n", stepnum, len(step.events))
+	}
+
+	var removeCids []string
 	if step != nil && step.events != nil && len(step.events) > 0 {
 		for _, event := range step.events {
 
 			ce := event.cursorStepEvent
+			if DebugUtil.Cursor {
+				log.Printf("Reactor.advanceClickBy1: stepnum=%d ce.ID=%s\n", stepnum, ce.ID)
+			}
 
 			if DebugUtil.Advance {
-				log.Printf("Reactor.advanceClicksBy1: pad=%s stepnum=%d ce=%+v\n", r.padName, stepnum, ce)
+				log.Printf("Reactor.advanceClickBy1: pad=%s stepnum=%d ce=%+v\n", r.padName, stepnum, ce)
 			}
 
 			ac := r.getActiveStepCursor(ce)
@@ -498,20 +505,25 @@ func (r *Reactor) advanceClickBy1() {
 				// log.Printf("up!\n")
 			}
 
+			if DebugUtil.Cursor {
+				log.Printf("StepLoop.advanceClickBy1: checking removal ce stepnum=%d ddu=%s cid=%s\n", stepnum, ce.Downdragup, ce.ID)
+			}
 			// See if this cursor should be removed
 			if ce.Downdragup == "up" &&
 				(ce.LoopsLeft < 0 || (ac.maxz > 0.0 && ac.maxz < minz) || (ac.maxz < 0.0 && ac.downEvent.Z < minz)) {
 
 				if DebugUtil.Cursor {
-					log.Printf("Reactor.advanceClickBy1: removing ce=%+v\n", ce)
+					log.Printf("Reactor.advanceClickBy1: delete remove removeCids ce=%+v\n", ce)
 				}
-				removeIds = append(removeIds, ce.ID)
+				removeCids = append(removeCids, ce.ID)
 				// NOTE: playit should still be left true for this UP event
 			} else {
 				// Don't play any events in this step with an id that we're getting ready to remove
-				for _, toremove := range removeIds {
-					if ce.ID == toremove {
-						// log.Printf("NOT playing id in removeIds! step=%d event=%d ce=%v\n", stepnum, eventnum, ce)
+				for _, cid := range removeCids {
+					if ce.ID == cid {
+						if DebugUtil.Cursor {
+							log.Printf("Reactor.advanceClickBy1: NOT playing cid=%s in removeCids step=%d ce=%+v\n", ce.ID, stepnum, ce)
+						}
 						playit = false
 					}
 				}
@@ -529,8 +541,8 @@ func (r *Reactor) advanceClickBy1() {
 				// for each incoming cursor event.  One is unquantized,
 				// and one is time-quantized
 
-				if DebugUtil.Realtime {
-					log.Printf("Reactor.advanceClickBy1: stepnum=%d ce=%+v\n", stepnum, ce)
+				if DebugUtil.Cursor {
+					log.Printf("Reactor.advanceClickBy1: PLAYIT stepnum=%d ce=%+v\n", stepnum, ce)
 				}
 				if ce.Quantized {
 					// MIDI stuff
@@ -557,23 +569,35 @@ func (r *Reactor) advanceClickBy1() {
 			}
 		}
 	}
-	if len(removeIds) > 0 {
-		for _, id := range removeIds {
+	if len(removeCids) > 0 {
+		for _, removeID := range removeCids {
 			for _, step := range loop.steps {
-				outn := 0
+				// We want to delete all events from this step that have removeId
+
+				// This method of deleting things from an array without
+				// allocating a new array is found on this page:
+				// https://vbauerster.github.io/2017/04/removing-items-from-a-slice-while-iterating-in-go/
+				// log.Printf("Before deleting id=%s  events=%v\n", id, step.events)
+				newevents := step.events[:0]
 				for _, event := range step.events {
-					ce := event.cursorStepEvent
-					if ce.ID != id {
-						// step.events could be nil here before I added locking.
-						if step.events == nil {
-							log.Printf("Unexpected step.events == nil?")
-						} else {
-							step.events[outn] = event
-							outn++
+					if event.cursorStepEvent.ID != removeID {
+						// Include this event
+						newevents = append(newevents, event)
+						if DebugUtil.Cursor {
+							log.Printf("Reactor.advanceClickBy1: re-including step event=%+v\n", event.cursorStepEvent)
+						}
+					} else {
+						if DebugUtil.Cursor {
+							log.Printf("Reactor.advanceClickBy1: deleting step event=%+v\n", event.cursorStepEvent)
 						}
 					}
 				}
-				step.events = step.events[:outn]
+				step.events = newevents
+				// log.Printf("After deleting id=%s  events=%v\n", id, step.events)
+				if DebugUtil.Cursor && len(step.events) > 0 {
+					log.Printf("Reactor.advanceClickBy1: after deleting id=%s len(events)=%d\n", removeID, len(step.events))
+				}
+
 			}
 		}
 	}
@@ -1044,6 +1068,8 @@ func (r *Reactor) loopQuant() {
 
 	// XXX - Need to make sure we have mutex for changing loop steps
 	// XXX - DOES THIS EVEN WORK?
+
+	log.Printf("DOES LOOPQUANT WORK????\n")
 
 	// Create a map of the UP cursor events, so we only do completed notes
 	// Create a map of the DOWN events so we know how much to shift that cursor.

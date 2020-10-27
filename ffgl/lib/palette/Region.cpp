@@ -148,9 +148,15 @@ void Region::doCursorUp(Palette* palette, std::string cid) {
 		return;
 	}
 	bool found = false;
+	if (NosuchDebugCursor) {
+		NosuchDebug("Region.doCursorUp cid=%s\n", cid.c_str());
+	}
 	for (std::list<TrackedCursor*>::iterator i = _cursors.begin(); i != _cursors.end(); ) {
 		TrackedCursor* c = *i;
 		NosuchAssert(c);
+		if (NosuchDebugCursor) {
+			NosuchDebug("Region.doCursorUp TrackedCursor loop c->cid=%s\n", c->cid().c_str());
+		}
 		if (c->cid() == cid) {
 			found = true;
 			palette->setLastActivity();
@@ -166,7 +172,9 @@ void Region::doCursorUp(Palette* palette, std::string cid) {
 	if (!found) {
 		NosuchDebug("Region.doCursorUp: didn't find cursor cid=%s", cid.c_str());
 	}
-	// NosuchDebug("End of doCursorUp, _cursors.size = %d",_cursors.size());
+	if (NosuchDebugCursor) {
+		NosuchDebug("End of doCursorUp, _cursors.size = %d", _cursors.size());
+	}
 	cursorlist_unlock();
 }
 
