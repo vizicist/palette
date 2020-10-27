@@ -87,8 +87,7 @@ NosuchOscUdpInput::Check()
 
     // NosuchDebug("OscCheck!");
 	long tm0 = timeGetTime();
-	// int toomany = 200;
-	int toomany = 10;
+	int toomany = 20;
 	unsigned long toolong = tm0 + 1000;   // Stop processing if it takes longer than this
     for ( int cnt=0; cnt<toomany; cnt++ ) {
 		if ( timeGetTime() >= toolong ) {
@@ -116,6 +115,7 @@ NosuchOscUdpInput::Check()
 
 		ProcessReceivedPacket(inet_ntoa(sin.sin_addr),p);
     }
+    NosuchDebug("NosuchOscUdpInput.Check: quiting early, too many packets (%d)\n", toomany);
 }
 
 void

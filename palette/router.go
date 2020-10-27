@@ -52,6 +52,7 @@ type Router struct {
 	generateSound          bool
 	regionForSource        map[string]string // for all known Morph serial#'s
 	regionAssignedToSource map[string]string
+	inputMutex             sync.RWMutex
 }
 
 // OSCEvent is an OSC message
@@ -95,8 +96,8 @@ type PlaybackEvent struct {
 var onceRouter sync.Once
 var oneRouter Router
 
-// Executor xxx
-type Executor func(api string, rawargs string) (result interface{}, err error)
+// APIExecutorFunc xxx
+type APIExecutorFunc func(api string, rawargs string) (result interface{}, err error)
 
 // CallAPI calls an API in the Palette Freeframe plugin running in Resolume
 func CallAPI(method string, args []string) {
@@ -208,7 +209,7 @@ func StartNATSClient() {
 
 	TheVizNats.Subscribe(localapi, func(msg *nats.Msg) {
 		data := string(msg.Data)
-		response := router.HandleAPI(router.ExecuteAPILocal, data)
+		response := router.HandleAPIInput(router.ExecuteAPILocal, data)
 		msg.Respond([]byte(response))
 	})
 
@@ -217,7 +218,7 @@ func StartNATSClient() {
 		log.Printf("StartNATS: subscribing to %s\n", remoteapi)
 		TheVizNats.Subscribe(remoteapi, func(msg *nats.Msg) {
 			data := string(msg.Data)
-			response := router.HandleAPI(router.ExecuteAPIHost, data)
+			response := router.HandleAPIInput(router.ExecuteAPIHost, data)
 			msg.Respond([]byte(response))
 		})
 	}
@@ -226,7 +227,7 @@ func StartNATSClient() {
 		log.Printf("StartNATS: subscribing to %s\n", SubscribeCursorSubject)
 		TheVizNats.Subscribe(SubscribeCursorSubject, func(msg *nats.Msg) {
 			data := string(msg.Data)
-			router.handleSubscribedCursorInput(data)
+			router.HandleSubscribedCursorInput(data)
 		})
 	}
 
@@ -235,7 +236,7 @@ func StartNATSClient() {
 			log.Printf("StartNATS: subscribing to %s\n", SubscribeMIDISubject)
 			TheVizNats.Subscribe(SubscribeMIDISubject, func(msg *nats.Msg) {
 				data := string(msg.Data)
-				router.HandleMIDIEventMsg(data)
+				router.HandleSubscribedMidiInput(data)
 			})
 		}
 	}
@@ -331,17 +332,38 @@ func StartMIDI() {
 	}
 }
 
-// IngestRealtimeCommand sends a RealtimeCommand to the Realtime
-func IngestRealtimeCommand(cmd Command) {
-	TheRouter().control <- cmd
-
+// ListenForever listens for things on its input channels
+func ListenForever() {
+	r := TheRouter()
+	for r.killme == false {
+		select {
+		case msg := <-r.OSCInput:
+			// log.Printf("received OSCInput - now=%v\n", time.Now())
+			r.HandleOSCInput(msg)
+		case event := <-r.MIDIInput:
+			// log.Printf("received MIDIInput - now=%v\n", time.Now())
+			r.HandleDeviceMIDIInput(event)
+		default:
+			// log.Printf("Sleeping 1 ms - now=%v\n", time.Now())
+			time.Sleep(time.Millisecond)
+		}
+	}
+	log.Printf("Router is being killed\n")
 }
 
-func (r *Router) handleDeviceCursorInput(e CursorDeviceEvent) {
+// HandleDeviceCursorInput xxx
+func (r *Router) HandleDeviceCursorInput(e CursorDeviceEvent) {
+	r.inputMutex.Lock()
+	defer r.inputMutex.Unlock()
+
 	r.routeCursorDeviceEvent(e)
 }
 
-func (r *Router) handleSubscribedCursorInput(data string) {
+// HandleSubscribedCursorInput xxx
+func (r *Router) HandleSubscribedCursorInput(data string) {
+
+	r.inputMutex.Lock()
+	defer r.inputMutex.Unlock()
 
 	args, err := StringMap(data)
 	if err != nil {
@@ -349,7 +371,9 @@ func (r *Router) handleSubscribedCursorInput(data string) {
 		return
 	}
 
-	log.Printf("HandleSubscribedCursor: data=%s\n", data)
+	if DebugUtil.Cursor {
+		log.Printf("HandleSubscribedCursor: data=%s\n", data)
+	}
 
 	api := SubscribeCursorSubject
 
@@ -421,8 +445,11 @@ func (r *Router) handleSubscribedCursorInput(data string) {
 	return
 }
 
-// HandleMIDIEventMsg xxx
-func (r *Router) HandleMIDIEventMsg(data string) {
+// HandleSubscribedMidiInput xxx
+func (r *Router) HandleSubscribedMidiInput(data string) {
+
+	r.inputMutex.Lock()
+	defer r.inputMutex.Unlock()
 
 	args, err := StringMap(data)
 
@@ -447,8 +474,29 @@ func (r *Router) HandleMIDIEventMsg(data string) {
 	return
 }
 
-// HandleAPI xxx
-func (r *Router) HandleAPI(executor Executor, data string) (response string) {
+// HandleDeviceMIDIInput xxx
+func (r *Router) HandleDeviceMIDIInput(e portmidi.Event) {
+
+	r.inputMutex.Lock()
+	defer r.inputMutex.Unlock()
+
+	// log.Printf("handleMIDI e=%s\n", e)
+	switch r.MIDIThru {
+	case "":
+		// do nothing
+	case "setscale":
+		r.handleMIDISetScale(e)
+	case "A", "B", "C", "D":
+		reactor := r.reactors[r.MIDIThru]
+		reactor.PassThruMIDI(e, r.MIDIThruScadjust, r.UseExternalScale)
+	}
+}
+
+// HandleAPIInput xxx
+func (r *Router) HandleAPIInput(executor APIExecutorFunc, data string) (response string) {
+
+	r.inputMutex.Lock()
+	defer r.inputMutex.Unlock()
 
 	smap, err := StringMap(data)
 
@@ -483,6 +531,23 @@ func (r *Router) HandleAPI(executor Executor, data string) (response string) {
 		response = ResultResponse(result)
 	}
 	return
+}
+
+// HandleOSCInput xxx
+func (r *Router) HandleOSCInput(e OSCEvent) {
+
+	r.inputMutex.Lock()
+	defer r.inputMutex.Unlock()
+
+	// log.Printf("handleOSC time=%v\n", r.time)
+	if e.Msg.Address == "/api" {
+		r.handleOSCAPI(e.Msg, e.Source)
+	} else if e.Msg.Address == "/quit" {
+		log.Printf("Router received QUIT message!\n")
+		r.killme = true
+	} else {
+		log.Printf("Unrecognized OSC message %v from %v\n", e.Msg, e.Source)
+	}
 }
 
 // ExecuteAPILocal xxx
@@ -808,6 +873,11 @@ func (r *Router) ExecuteAPIHost(api string, rawargs string) (result interface{},
 }
 
 func (r *Router) advanceClickTo(toClick Clicks) {
+
+	// Don't let input get handled while we're advancing
+	r.inputMutex.Lock()
+	defer r.inputMutex.Unlock()
+
 	// log.Printf("advanceClickTo r.lastClick=%d toClick=%d\n", r.lastClick, toClick)
 	for clk := r.lastClick; clk < toClick; clk++ {
 		for _, reactor := range r.reactors {
@@ -899,7 +969,8 @@ func (r *Router) recordingPlayback(events []*PlaybackEvent) error {
 
 	r.notifyGUI("start")
 
-	playbackBegun := r.Time()
+	playbackBegun := time.Now()
+
 	for _, pe := range events {
 		if r.killPlayback {
 			log.Printf("killPlayback!\n")
@@ -1005,38 +1076,6 @@ func (r *Router) recordingLoad(name string) ([]*PlaybackEvent, error) {
 	return events, nil
 }
 
-// ListenForever listens for things on its input channels
-func ListenForever() {
-	r := TheRouter()
-	for r.killme == false {
-		select {
-		case msg := <-r.OSCInput:
-			// log.Printf("received OSCInput - now=%v\n", time.Now())
-			r.handleOSC(msg)
-		case event := <-r.MIDIInput:
-			// log.Printf("received MIDIInput - now=%v\n", time.Now())
-			r.handleMIDI(event)
-		default:
-			// log.Printf("Sleeping 1 ms - now=%v\n", time.Now())
-			time.Sleep(time.Millisecond)
-		}
-	}
-	log.Printf("Router is being killed\n")
-}
-
-//		case bool, int32, int64, float32, float64, string:
-func (r *Router) handleOSC(e OSCEvent) {
-	// log.Printf("handleOSC time=%v\n", r.time)
-	if e.Msg.Address == "/api" {
-		r.handleOSCAPI(e.Msg, e.Source)
-	} else if e.Msg.Address == "/quit" {
-		log.Printf("Router received QUIT message!\n")
-		r.killme = true
-	} else {
-		log.Printf("Unrecognized OSC message %v from %v\n", e.Msg, e.Source)
-	}
-}
-
 func (r *Router) handleMIDISetScale(e portmidi.Event) {
 	status := e.Status & 0xf0
 	pitch := int(e.Data1)
@@ -1063,20 +1102,6 @@ func (r *Router) handleMIDISetScale(e portmidi.Event) {
 		r.MIDINumDown--
 	}
 	// log.Printf("handleMIDIScale end numdown=%d\n", r.MIDINumDown)
-}
-
-func (r *Router) handleMIDI(e portmidi.Event) {
-
-	// log.Printf("handleMIDI e=%s\n", e)
-	switch r.MIDIThru {
-	case "":
-		// do nothing
-	case "setscale":
-		r.handleMIDISetScale(e)
-	case "A", "B", "C", "D":
-		reactor := r.reactors[r.MIDIThru]
-		reactor.PassThruMIDI(e, r.MIDIThruScadjust, r.UseExternalScale)
-	}
 }
 
 // No error return because it's OSC
@@ -1124,12 +1149,16 @@ func (r *Router) assignRegion(source string) string {
 	for i, used := range regionAssigned {
 		if !used {
 			avail := regionLetters[i : i+1]
-			log.Printf("Router.availableRegion: %s\n", avail)
+			if DebugUtil.Cursor {
+				log.Printf("Router.assignRegion: %s is assigned to source=%s\n", avail, source)
+			}
 			r.regionAssignedToSource[source] = avail
 			return avail
 		}
 	}
-	log.Printf("Router.availableRegion: No regions available\n")
+	if DebugUtil.Cursor {
+		log.Printf("Router.assignRegion: No regions available\n")
+	}
 	return ""
 }
 
@@ -1173,11 +1202,6 @@ func (r *Router) routeCursorDeviceEvent(e CursorDeviceEvent) {
 			log.Printf("Router.routeCursorDeviceEvent: NATS publishing err=%s\n", err)
 		}
 	}
-}
-
-// Time returns the current time
-func (r *Router) Time() time.Time {
-	return time.Now()
 }
 
 func argAsInt(msg *osc.Message, index int) (i int, err error) {
