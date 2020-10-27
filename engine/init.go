@@ -1,4 +1,4 @@
-package palette
+package engine
 
 func init() {
 	InitScales()

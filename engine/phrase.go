@@ -1,4 +1,4 @@
-package palette
+package engine
 
 import (
 	"fmt"

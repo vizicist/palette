@@ -1,4 +1,4 @@
-package palette
+package engine
 
 // CursorDown etc match values in sensel.h
 const (

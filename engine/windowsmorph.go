@@ -1,6 +1,6 @@
 // +build windows
 
-package palette
+package engine
 
 // #cgo LDFLAGS: -L. "${SRCDIR}/../SenselLib/x64/LibSensel.dll"
 /*
