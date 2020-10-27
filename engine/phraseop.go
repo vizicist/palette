@@ -1,4 +1,4 @@
-package palette
+package engine
 
 // Copy returns a copy of a Phrase
 func (p *Phrase) Copy() *Phrase {

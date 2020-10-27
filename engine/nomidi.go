@@ -1,6 +1,6 @@
 // +build !windows
 
-package palette
+package engine
 
 import (
 	"fmt"

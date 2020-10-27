@@ -246,7 +246,7 @@ class ProGuiApp(tk.Tk):
 
         self.currentPad = "A"
 
-        self.winfo_toplevel().title("Space Palette Pro")
+        self.winfo_toplevel().title("Palette")
 
         self.escapeCount = 0
         self.lastEscape = time.time()
@@ -658,7 +658,7 @@ class ProGuiApp(tk.Tk):
     def makeStartupFrame(self,container):
         f = tk.Frame(container,
             highlightbackground=ColorBg, highlightcolor=ColorAqua, highlightthickness=3)
-        self.startupLabel = ttk.Label(f, text="               Space Palette Pro is Loading...", style='Header.TLabel',
+        self.startupLabel = ttk.Label(f, text="               Palette is Loading...", style='Header.TLabel',
             foreground=ColorText, background=ColorBg, relief="flat", justify=tk.CENTER, font=largestFont)
         self.startupLabel.pack(side=tk.TOP,fill=tk.BOTH,expand=True)
         return f

@@ -1,6 +1,6 @@
 // +build osc
 
-package palette
+package engine
 
 import (
 	"encoding/json"
