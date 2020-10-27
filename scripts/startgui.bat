@@ -1,6 +1,6 @@
 call "%PALETTE%\bin\killgui.bat"
 set logdir=%LOCALAPPDATA%\Palette\logs
-mkdir "%logdir%"
+mkdir "%logdir%" > nul 2>&1
 echo > "%logdir%\gui.log"
 echo > "%logdir%\gui.stdout"
 echo > "%logdir%\gui.stderr"

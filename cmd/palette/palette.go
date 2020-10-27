@@ -7,7 +7,7 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/vizicist/palette/palette"
+	"github.com/vizicist/palette/engine"
 )
 
 func main() {
@@ -15,30 +15,30 @@ func main() {
 	signal.Ignore(syscall.SIGHUP)
 	signal.Ignore(syscall.SIGINT)
 
-	palette.InitLogs()
-	palette.InitDebug()
+	engine.InitLogs()
+	engine.InitDebug()
 
 	log.SetFlags(log.Ldate | log.Lmicroseconds)
-	log.Print("palette.go begins")
+	log.Print("Palette is started")
 
 	flag.Parse()
 
-	palette.InitMIDI()
+	engine.InitMIDI()
 
-	go palette.StartNATSServer()
+	go engine.StartNATSServer()
 
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		palette.ListenForever()
+		engine.ListenForever()
 	}()
 
-	go palette.StartOSC("127.0.0.1:3333")
-	go palette.StartNATSClient()
-	go palette.StartMIDI()
-	go palette.StartRealtime()
-	go palette.StartCursorInput()
+	go engine.StartOSC("127.0.0.1:3333")
+	go engine.StartNATSClient()
+	go engine.StartMIDI()
+	go engine.StartRealtime()
+	go engine.StartCursorInput()
 
 	wg.Wait()
 	log.Printf("After wg.Wait()\n")
