@@ -22,10 +22,10 @@ rem pip install codenamize pip install python-osc pip install asyncio-nats-clien
 
 echo ================ COMPILING FFGL PLUGIN
 set MSBUILDCMD=C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\Common7\Tools\vsmsbuildcmd.bat
-call "%MSBUILDCMD%"
+call "%MSBUILDCMD%" > nul
 pushd %PALETTESOURCE%\ffgl\windows
-msbuild /t:Build /p:Configuration=Release /p:Platform="x64" palette.sln
-msbuild /t:Build /p:Configuration=Debug /p:Platform="x64" palette.sln
+msbuild /t:Build /p:Configuration=Release /p:Platform="x64" palette.sln > nul
+msbuild /t:Build /p:Configuration=Debug /p:Platform="x64" palette.sln > nul
 popd
 
 
