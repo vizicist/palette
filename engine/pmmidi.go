@@ -245,6 +245,10 @@ func (m *MIDIIO) makeSynthOutput(port string, channel int) *synthOutput {
 	return &synthOutput{port: port, deviceID: devid, stream: stream, channel: channel}
 }
 
+func (m *MIDIIO) makeFakeSynthOutput(port string, channel int) *synthOutput {
+	return &synthOutput{port: port, deviceID: -1, stream: nil, channel: channel}
+}
+
 func (m *MIDIIO) loadSynths(filename string) {
 	bytes, err := ioutil.ReadFile(filename)
 	if err != nil {
@@ -262,7 +266,7 @@ func (m *MIDIIO) loadSynths(filename string) {
 		if synthoutput {
 			m.synthOutputs[nm] = m.makeSynthOutput(port, channel)
 		} else {
-			m.synthOutputs[nm] = nil
+			m.synthOutputs[nm] = m.makeFakeSynthOutput(port, channel)
 		}
 	}
 }
