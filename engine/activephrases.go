@@ -58,7 +58,6 @@ func (a *ActivePhrase) sendNoteOffs(due Clicks, debug bool, callbacks []*NoteOut
 	ntoff := a.pendingNoteOffs.firstnote
 	for ; ntoff != nil && ntoff.EndOf() < due; ntoff = ntoff.next {
 
-		log.Printf("calling mididevice.SendNote for ntoff pitch=%d\n", ntoff.Pitch)
 		MIDI.SendNote(ntoff)
 
 		// Remove it from the notesDown phrase
@@ -86,7 +85,6 @@ func (mgr *ActivePhrasesManager) StartPhrase(p *Phrase, cid string) {
 	}
 	active.nextnote = p.firstnote // might be nil
 	mgr.activePhrases[cid] = active
-	log.Printf("Calling active.start()\n")
 	active.start()
 }
 
@@ -105,7 +103,6 @@ func (mgr *ActivePhrasesManager) StopPhrase(cid string, active *ActivePhrase, fo
 		}
 	}
 
-	log.Printf("ActivePhrasesManager.StopPhrase: caling active.sendNoteOffs\n")
 	readyToDelete := active.sendNoteOffs(MaxClicks, DebugUtil.MIDI, mgr.outputCallbacks)
 	if readyToDelete || forceDelete {
 		delete(mgr.activePhrases, cid)
@@ -175,7 +172,6 @@ func (mgr *ActivePhrasesManager) AdvanceByOneClick() {
 			case NOTE:
 				nd := n.Copy()
 				nd.TypeOf = NOTEON
-				log.Printf("ActivePhrasesManager: CALLING SendNote for NOTEON pitch=%d\n", nd.Pitch)
 				MIDI.SendNote(nd)
 				nd.TypeOf = NOTEOFF
 				nd.Clicks = n.EndOf()
@@ -190,7 +186,6 @@ func (mgr *ActivePhrasesManager) AdvanceByOneClick() {
 		// Send whatever NOTEOFFs are due to be sent, and if everything has
 		// been processed, delete it from the activePhrases
 		if a.sendNoteOffs(a.clickSoFar, DebugUtil.MIDI, mgr.outputCallbacks) {
-			log.Printf("ActivePhrasesManager: calling delete for cid=%s\n", cid)
 			delete(mgr.activePhrases, cid)
 		}
 		a.clickSoFar++

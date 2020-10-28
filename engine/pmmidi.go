@@ -37,11 +37,6 @@ type synthOutput struct {
 	channel  int // 0-15 for MIDI channels 1-16
 }
 
-// MIDIEvent is a single MIDI input event
-// type MIDIEvent struct {
-// 	portmidi.Event
-// }
-
 // MIDI is a pointer to
 var MIDI *MIDIIO
 
@@ -182,12 +177,14 @@ func (m *MIDIIO) SendNote(n *Note) {
 	SendEvent(s, []portmidi.Event{e})
 }
 
+/*
 // Send writes to a MIDI output
 func Send(out *synthOutput, b1 int64, b2 int64, b3 int64) {
 	if err := out.stream.WriteShort(b1, b2, b3); err != nil {
 		log.Fatal(err)
 	}
 }
+*/
 
 // SendEvent sends one or more MIDI Events
 func SendEvent(out *synthOutput, events []portmidi.Event) {
