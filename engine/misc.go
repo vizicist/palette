@@ -138,6 +138,12 @@ func ConfigFilePath(nm string) string {
 	return filepath.Join(RootPath(), "config", nm)
 }
 
+// MIDIFilePath xxx
+func MIDIFilePath(nm string) string {
+	localdir := LocalPaletteDir()
+	return filepath.Join(localdir, "midifiles", nm)
+}
+
 // LocalPaletteDir xxx
 func LocalPaletteDir() string {
 	localapp := os.Getenv("LOCALAPPDATA")

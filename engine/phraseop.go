@@ -44,6 +44,23 @@ func (p *Phrase) CutTime(fromclick, toclick Clicks) *Phrase {
 	return newp
 }
 
+// CutSound creates a new Phrase with notes for a given sound
+func (p *Phrase) CutSound(sound string) *Phrase {
+
+	p.RLock()
+	defer p.RUnlock()
+
+	newp := NewPhrase()
+	for n := p.firstnote; n != nil; n = n.next {
+		if n.Sound == sound {
+			newp.CopyAndAppend(n)
+		}
+	}
+	newp.ResetLengthNoLock()
+
+	return newp
+}
+
 // AdjustTimes returns a new Phrase shifted by shift Clicks
 func (p *Phrase) AdjustTimes(shift Clicks) *Phrase {
 
