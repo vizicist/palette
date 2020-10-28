@@ -7,6 +7,10 @@
 #include <ctime>   // for time
 #include <sys/stat.h>
 
+// to get M_PI
+#define _USE_MATH_DEFINES
+#include <math.h>
+
 #include "PaletteAll.h"
 #include "FFGLLib.h"
 #include "FFGLPalette.h"

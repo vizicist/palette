@@ -25,7 +25,7 @@ var time0 = time.Now()
 func PublishCursorDeviceEvent(ce CursorDeviceEvent) error {
 	dt := time.Now().Sub(time0)
 	params := "{ " +
-		"\"cid\": \"" + ce.Cid + "\", " +
+		"\"source\": \"" + ce.Source + "\", " +
 		"\"event\": \"" + ce.DownDragUp + "\", " +
 		"\"millisecs\": \"" + fmt.Sprintf("%d", dt.Milliseconds()) + "\", " +
 		"\"x\": \"" + fmt.Sprintf("%f", ce.X) + "\", " +

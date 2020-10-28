@@ -363,7 +363,7 @@ func (m oneMorph) readFrames(callback CursorDeviceCallbackFunc, forceFactor floa
 			}
 			fullcid := fmt.Sprintf("%s.%d", m.serialNum, cid)
 			ev := CursorDeviceEvent{
-				Cid:        fullcid,
+				Source:     fullcid,
 				Timestamp:  0,
 				DownDragUp: ddu,
 				X:          xNorm,
