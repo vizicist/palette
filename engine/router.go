@@ -45,7 +45,7 @@ type Router struct {
 	guiClient              *osc.Client
 	plogueClient           *osc.Client
 	publishCursor          bool // e.g. "nats"
-	paletteHost            string
+	paletteCentral         string
 	isPaletteHost          bool
 	myHostname             string
 	generateVisuals        bool
@@ -141,7 +141,7 @@ func TheRouter() *Router {
 		oneRouter.recordingOn = false
 		oneRouter.MIDIOctaveShift = 0
 
-		oneRouter.paletteHost = ConfigValue("palettehost")
+		oneRouter.paletteCentral = ConfigValue("palettecentral")
 
 		oneRouter.myHostname = ConfigValue("hostname")
 		if oneRouter.myHostname == "" {
@@ -152,7 +152,7 @@ func TheRouter() *Router {
 			}
 			oneRouter.myHostname = hostname
 		}
-		if oneRouter.paletteHost == oneRouter.myHostname {
+		if oneRouter.paletteCentral == oneRouter.myHostname {
 			oneRouter.isPaletteHost = true
 		} else {
 			oneRouter.isPaletteHost = false
@@ -209,19 +209,21 @@ func StartNATSClient() {
 
 	TheVizNats.Subscribe(localapi, func(msg *nats.Msg) {
 		data := string(msg.Data)
-		response := router.HandleAPIInput(router.ExecuteAPILocal, data)
+		response := router.HandleAPIInput(router.ExecuteAPI, data)
 		msg.Respond([]byte(response))
 	})
 
-	if router.isPaletteHost {
-		remoteapi := fmt.Sprintf("palette.%s.api", router.paletteHost)
-		log.Printf("StartNATS: subscribing to %s\n", remoteapi)
-		TheVizNats.Subscribe(remoteapi, func(msg *nats.Msg) {
-			data := string(msg.Data)
-			response := router.HandleAPIInput(router.ExecuteAPIHost, data)
-			msg.Respond([]byte(response))
-		})
-	}
+	/*
+		if router.isPaletteHost {
+			remoteapi := fmt.Sprintf("palette.%s.api", router.paletteCentral)
+			log.Printf("StartNATS: subscribing to %s\n", remoteapi)
+			TheVizNats.Subscribe(remoteapi, func(msg *nats.Msg) {
+				data := string(msg.Data)
+				response := router.HandleAPIInput(router.ExecuteAPIHost, data)
+				msg.Respond([]byte(response))
+			})
+		}
+	*/
 
 	if ConfigBoolWithDefault("subscribecursor", false) {
 		log.Printf("StartNATS: subscribing to %s\n", SubscribeCursorSubject)
@@ -550,8 +552,8 @@ func (r *Router) HandleOSCInput(e OSCEvent) {
 	}
 }
 
-// ExecuteAPILocal xxx
-func (r *Router) ExecuteAPILocal(api string, rawargs string) (result interface{}, err error) {
+// ExecuteAPI xxx
+func (r *Router) ExecuteAPI(api string, rawargs string) (result interface{}, err error) {
 
 	args, err := StringMap(rawargs)
 	if err != nil {
@@ -743,6 +745,7 @@ func (r *Router) ExecuteAPILocal(api string, rawargs string) (result interface{}
 	return result, err
 }
 
+/*
 // ExecuteAPIHost xxx
 func (r *Router) ExecuteAPIHost(api string, rawargs string) (result interface{}, err error) {
 
@@ -901,6 +904,7 @@ func (r *Router) ExecuteAPIHost(api string, rawargs string) (result interface{},
 
 	return result, err
 }
+*/
 
 func (r *Router) advanceClickTo(toClick Clicks) {
 
@@ -1156,7 +1160,7 @@ func (r *Router) handleOSCAPI(msg *osc.Message, source string) {
 	if DebugUtil.API {
 		log.Printf("Router.handleOSCAPI api=%s rawargs=%s\n", api, rawargs)
 	}
-	_, err = r.ExecuteAPILocal(api, rawargs)
+	_, err = r.ExecuteAPI(api, rawargs)
 	if err != nil {
 		log.Printf("Router.handleOSCAPI: err=%s", err)
 	}
