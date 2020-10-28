@@ -92,6 +92,10 @@ mkdir %ship%\config
 copy %PALETTESOURCE%\default\config\*.json %ship%\config
 copy %PALETTESOURCE%\default\config\*.conf %ship%\config
 
+echo ================ COPYING midifiles
+mkdir %ship%\midifiles
+copy %PALETTESOURCE%\default\midifiles\*.* %ship%\midifiles
+
 echo ================ COPYING windows-specific things
 copy %PALETTESOURCE%\windows\pthreadvc2.dll %ship%\ffgl
 copy %PALETTESOURCE%\windows\msvcp140d.dll %ship%\ffgl

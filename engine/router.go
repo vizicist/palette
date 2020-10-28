@@ -584,6 +584,36 @@ func (r *Router) ExecuteAPILocal(api string, rawargs string) (result interface{}
 
 	switch apisuffix {
 
+	case "midi_midifile":
+		filename, err := needStringArg("file", api, args)
+		if err != nil {
+			break
+		}
+		midipath := filepath.Join(MIDIFilePath(filename))
+		mf, err := NewMIDIFile(midipath)
+		if err != nil {
+			break
+		}
+		p := mf.Phrase()
+		// Cut it up into 4 channels for the 4 Reactors
+
+		p1 := p.CutSound("channel1")
+		if p1.NumNotes() > 0 {
+			r.reactors["A"].StartPhrase(p1, "midiplaych1")
+		}
+		p2 := p.CutSound("channel2")
+		if p2.NumNotes() > 0 {
+			r.reactors["B"].StartPhrase(p2, "midiplaych2")
+		}
+		p3 := p.CutSound("channel3")
+		if p3.NumNotes() > 0 {
+			r.reactors["C"].StartPhrase(p3, "midiplaych3")
+		}
+		p4 := p.CutSound("channel4")
+		if p4.NumNotes() > 0 {
+			r.reactors["D"].StartPhrase(p4, "midiplaych4")
+		}
+
 	case "echo":
 		value, ok := args["value"]
 		if !ok {
@@ -884,7 +914,7 @@ func (r *Router) advanceClickTo(toClick Clicks) {
 			if (clk % oneBeat) == 0 {
 				reactor.checkCursorUp()
 			}
-			reactor.advanceClickBy1()
+			reactor.AdvanceByOneClick()
 		}
 	}
 	r.lastClick = toClick
