@@ -27,11 +27,10 @@ cid = "0"
 for n in range(ntimes):
         x = random.random()
         y = random.random()
-        z = random.random()
+        z = random.random() / 4.0
         spaceutil.SendCursorEvent(cid,"down",x,y,z)
         time.sleep(dt)
         x = random.random()
         y = random.random()
-        z = random.random()
-        spaceutil.SendCursorEvent(cid,"up",x,y,z)
+        spaceutil.SendCursorEvent(cid,"up",x,y,0.0)
         time.sleep(dt)

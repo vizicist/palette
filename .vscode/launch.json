@@ -22,6 +22,15 @@
             "program": "C:/Users/tjt/go/src/github.com/vizicist/palette/python/gui.py",
             "env": {},
             "args": []
+        },
+        {
+            "name": "Launch guiremote.py",
+            "type": "python",
+            "request": "launch",
+            "mode": "auto",
+            "program": "C:/Users/tjt/go/src/github.com/vizicist/palette/python/guiremote.py",
+            "env": {},
+            "args": []
         }
     ]
 }

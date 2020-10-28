@@ -67,12 +67,12 @@ type Reactor struct {
 	activeNotesMutex               sync.RWMutex
 	activeCursors                  map[string]*ActiveStepCursor
 	activeCursorsMutex             sync.RWMutex
-	permSidMutex                   sync.RWMutex
-	incomingIDToPermSidQuantized   map[string]string // map incoming ids to permSids in the steploop
-	incomingIDToPermSidUnquantized map[string]string // map incoming ids to permSids in the steploop
-	permSidDownClick               map[string]Clicks // map permSids to quantized stepnum of the down event
-	permSidDownQuant               map[string]Clicks // map permSids to quantize value of the "down" event
-	permSidDragOK                  map[string]bool
+	permInstanceIDMutex            sync.RWMutex
+	incomingIDToPermSidQuantized   map[string]string // map incoming ids to permInstanceIDs in the steploop
+	incomingIDToPermSidUnquantized map[string]string // map incoming ids to permInstanceIDs in the steploop
+	permInstanceIDDownClick        map[string]Clicks // map permInstanceIDs to quantized stepnum of the down event
+	permInstanceIDDownQuant        map[string]Clicks // map permInstanceIDs to quantize value of the "down" event
+	permInstanceIDDragOK           map[string]bool
 	deviceCursors                  map[string]*DeviceCursor
 	deviceCursorsMutex             sync.RWMutex
 
@@ -94,9 +94,9 @@ func NewReactor(pad string, resolumeLayer int, freeframeClient *osc.Client, reso
 		activeCursors:                  make(map[string]*ActiveStepCursor),
 		incomingIDToPermSidQuantized:   make(map[string]string),
 		incomingIDToPermSidUnquantized: make(map[string]string),
-		permSidDownClick:               make(map[string]Clicks),
-		permSidDownQuant:               make(map[string]Clicks),
-		permSidDragOK:                  make(map[string]bool),
+		permInstanceIDDownClick:        make(map[string]Clicks),
+		permInstanceIDDownQuant:        make(map[string]Clicks),
+		permInstanceIDDragOK:           make(map[string]bool),
 		fadeLoop:                       0.5,
 		loop:                           NewLoop(oneBeat * 4),
 		deviceCursors:                  make(map[string]*DeviceCursor),
@@ -116,7 +116,7 @@ func (r *Reactor) handleCursorDeviceEvent(e CursorDeviceEvent) {
 		log.Printf("Reactor.handleCursorDeviceEvent: pad=%s e=%+v\n", r.padName, e)
 	}
 
-	id := e.Cid
+	id := e.Source
 
 	r.deviceCursorsMutex.Lock()
 
@@ -621,10 +621,10 @@ func (r *Reactor) executeIncomingCursor(ce CursorStepEvent) {
 	// so that all of that id's CursorEvents (from down through UP)
 	// in the steps of the loop will have a unique id.
 
-	r.permSidMutex.RLock()
-	permSidQuantized, ok1 := r.incomingIDToPermSidQuantized[ce.ID]
-	permSidUnquantized, ok2 := r.incomingIDToPermSidUnquantized[ce.ID]
-	r.permSidMutex.RUnlock()
+	r.permInstanceIDMutex.RLock()
+	permInstanceIDQuantized, ok1 := r.incomingIDToPermSidQuantized[ce.ID]
+	permInstanceIDUnquantized, ok2 := r.incomingIDToPermSidUnquantized[ce.ID]
+	r.permInstanceIDMutex.RUnlock()
 
 	if (!ok1 || !ok2) && ce.Downdragup != "down" {
 		log.Printf("Reactor.executeIncomingCursor: drag or up event didn't find ce.ID=%s in incomingIDToPermSid*\n", ce.ID)
@@ -639,41 +639,41 @@ func (r *Reactor) executeIncomingCursor(ce CursorStepEvent) {
 		// any drag and UP things (which aren't quantized)
 		// aren't added before or on that step.
 
-		r.permSidMutex.Lock()
+		r.permInstanceIDMutex.Lock()
 
-		permSidQuantized = fmt.Sprintf("%s#%d", ce.ID, uniqueIndex)
+		permInstanceIDQuantized = fmt.Sprintf("%s#%d", ce.ID, uniqueIndex)
 		uniqueIndex++
-		permSidUnquantized = fmt.Sprintf("%s#%d", ce.ID, uniqueIndex)
+		permInstanceIDUnquantized = fmt.Sprintf("%s#%d", ce.ID, uniqueIndex)
 		uniqueIndex++
 
-		r.incomingIDToPermSidQuantized[ce.ID] = permSidQuantized
-		r.incomingIDToPermSidUnquantized[ce.ID] = permSidUnquantized
+		r.incomingIDToPermSidQuantized[ce.ID] = permInstanceIDQuantized
+		r.incomingIDToPermSidUnquantized[ce.ID] = permInstanceIDUnquantized
 
-		r.permSidDownClick[permSidQuantized] = r.nextQuant(currentClick, q)
-		r.permSidDownQuant[permSidQuantized] = q
-		r.permSidDragOK[permSidQuantized] = false
+		r.permInstanceIDDownClick[permInstanceIDQuantized] = r.nextQuant(currentClick, q)
+		r.permInstanceIDDownQuant[permInstanceIDQuantized] = q
+		r.permInstanceIDDragOK[permInstanceIDQuantized] = false
 
-		r.permSidMutex.Unlock()
+		r.permInstanceIDMutex.Unlock()
 	}
 
 	// We don't want to quantize drag events, but we also don't want them to do anything
 	// before the down event (which is quantized), so we only turn on DragOK when we see
 	// a drag event come in shortly after the down event.
 
-	if r.permSidDragOK[permSidQuantized] == false && ce.Downdragup == "drag" {
-		if currentClick <= r.permSidDownClick[permSidQuantized] {
+	if r.permInstanceIDDragOK[permInstanceIDQuantized] == false && ce.Downdragup == "drag" {
+		if currentClick <= r.permInstanceIDDownClick[permInstanceIDQuantized] {
 			return
 		}
-		r.permSidDragOK[permSidQuantized] = true
+		r.permInstanceIDDragOK[permInstanceIDQuantized] = true
 	}
 
-	ce.ID = permSidQuantized
+	ce.ID = permInstanceIDQuantized
 	ce.Fresh = true
 	ce.Quantized = true
 
 	// Make a separate CursorEvent for the unquantized event
 	ceUnquantized := CursorStepEvent{
-		ID:         permSidUnquantized,
+		ID:         permInstanceIDUnquantized,
 		X:          ce.X,
 		Y:          ce.Y,
 		Z:          ce.Z,
@@ -686,7 +686,7 @@ func (r *Reactor) executeIncomingCursor(ce CursorStepEvent) {
 	if ce.Downdragup == "up" {
 		// The up event always has a Y value of 0 (someday this may, change, but for now...)
 		// So, use the quantize value of the down event
-		downQuant := r.permSidDownQuant[permSidQuantized]
+		downQuant := r.permInstanceIDDownQuant[permInstanceIDQuantized]
 		quantizedStepnum = r.nextQuant(r.loop.currentStep, downQuant)
 		for quantizedStepnum >= r.loop.length {
 			quantizedStepnum -= r.loop.length

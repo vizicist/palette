@@ -250,7 +250,7 @@ def presetsFilePath(section, nm, suffix=".json"):
 def SendCursorEvent(cid,ddu,x,y,z):
     fullcid = MyNUID() + "." + str(cid)
     e = "{ \"cid\": \"" + fullcid+ "\", \"event\": \"" + ddu + "\", \"x\": \"%f\", \"y\": \"%f\", \"z\": \"%f\" }"  % (x,y,z)
-    print(e)
+    # print(e)
     palette_cursorevent(e)
 
 def IgnoreKeyboardInterrupt():

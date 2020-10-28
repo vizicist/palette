@@ -377,7 +377,7 @@ func (r *Router) HandleSubscribedCursorInput(data string) {
 
 	api := SubscribeCursorSubject
 
-	cid, err := needStringArg("cid", api, args)
+	cid, err := needStringArg("source", api, args)
 	if err != nil {
 		log.Printf("HandleSubscribedCursor: err=%s\n", err)
 		return
@@ -433,7 +433,7 @@ func (r *Router) HandleSubscribedCursorInput(data string) {
 	}
 
 	ce := CursorDeviceEvent{
-		Cid:        cid,
+		Source:     cid,
 		Timestamp:  int64(CurrentMilli),
 		DownDragUp: eventType,
 		X:          x,
@@ -460,9 +460,9 @@ func (r *Router) HandleSubscribedMidiInput(data string) {
 
 	source := optionalStringArg("source", args, "unknown")
 	if source == MyNUID() {
-		// if DebugUtil.Cursor {
-		// 	log.Printf("Ignoring event from myself, source=%s\n", source)
-		// }
+		if DebugUtil.MIDI {
+			log.Printf("Ignoring midievent from myself, source=%s\n", source)
+		}
 		return
 	}
 
@@ -1193,9 +1193,9 @@ func (r *Router) assignRegion(source string) string {
 }
 
 func (r *Router) regionForCursor(e CursorDeviceEvent) string {
-	words := strings.SplitN(e.Cid, ".", 2)
+	words := strings.SplitN(e.Source, ".", 2)
 	if len(words) != 2 {
-		log.Printf("Router.regionForCursore: invalid e.Cid=%s\n", e.Cid)
+		log.Printf("Router.regionForCursore: invalid e.Source=%s\n", e.Source)
 		return "A"
 	}
 	source := words[0]

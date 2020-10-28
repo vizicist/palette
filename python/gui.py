@@ -498,6 +498,7 @@ class ProGuiApp(tk.Tk):
         else:
             pg.performButton["recording"].grid_forget()
 
+        global pageSizeOfSelect, pageSizeOfControl
         if self.advancedLevel == 0:
             pageSizeOfControl = pageSizeOfControlNormal
             pageSizeOfSelect = pageSizeOfSelectNormal

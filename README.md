@@ -1,18 +1,18 @@
 THIS DOCUMENT IS UNDER CONSTRUCTION
 
-Palette - a visual music instrument
+Palette - an engine for visual music instruments
 
 Palette is the engine used in the Space Palette Pro,
 an instrument that lets you fingerpaint sound and visuals
 using your fingers as 3D cursors on Sensel Morph pads.
 
-It consists of:
+Palette consists of:
 
-   1) A realtime engine that accepts 3D Cursor and MIDI input
+   1) A realtime engine that accepts as input 3D cursors and MIDI,
       and generates as output MIDI (for softsynths) and OSC (for Resolume).
 
-   2) A GUI that lets you control sound and visual presets for the
-      musical and graphical reactions to your finger gestures.
+   2) A GUI that lets you control the presets and parameters of
+      the musical and graphical output.
 
 There are several ways of running Palette:
 
@@ -33,13 +33,13 @@ How to install
 ==================================================================
 How to run in REMOTE mode
 ==================================================================
-- Execute C:\Program Files\Palette\bin\runall.bat
+- Execute C:\Program Files\Palette\bin\startremote.bat
 
 ==================================================================
 IMPLEMENTATION DETAILS
 ==================================================================
 
-palette.exe ======================================
+bin\palette.exe ======================================
 
 	A Go-based executable that
 
@@ -51,15 +51,14 @@ palette.exe ======================================
 	3) Starts a realtime engine for looping and control of
 	   sound (MIDI) and visuals (OSC to Resolume and a FFGL plugin).
 
-gui.exe ==========================================
+bin\gui.exe ==========================================
 
 	A python-based executable that provides a graphical interface
 	to select presets and edit their parameters.
 
-palette.dll ======================================
+ffgl\palette.dll ======================================
 
 	A C/C++-based FFGL plugin with an OSC interface for visual output
-
 
 ==================================================================
 Compiling on a brand new Windows machine for development
@@ -123,4 +122,4 @@ Compiling on a brand new Windows machine for development
 - to compile everything on Windows:
 
 	cd windows
-        build
+        build        # or buildinstall to build and then install the result
