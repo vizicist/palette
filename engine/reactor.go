@@ -75,6 +75,8 @@ type Reactor struct {
 	permSidDragOK                  map[string]bool
 	deviceCursors                  map[string]*DeviceCursor
 	deviceCursorsMutex             sync.RWMutex
+
+	activePhrasesManager *ActivePhrasesManager
 }
 
 // NewReactor makes a new Reactor
@@ -98,6 +100,7 @@ func NewReactor(pad string, resolumeLayer int, freeframeClient *osc.Client, reso
 		fadeLoop:                       0.5,
 		loop:                           NewLoop(oneBeat * 4),
 		deviceCursors:                  make(map[string]*DeviceCursor),
+		activePhrasesManager:           NewActivePhrasesManager(),
 	}
 	return r
 }
@@ -434,8 +437,15 @@ func (r *Reactor) generateSoundFromCursor(ce CursorStepEvent) {
 	}
 }
 
-// AdvanceClickBy1 advances time by 1 click in a StepLoop
-func (r *Reactor) advanceClickBy1() {
+// StartPhrase xxx
+func (r *Reactor) StartPhrase(p *Phrase, cid string) {
+	r.activePhrasesManager.StartPhrase(p, "midiplaycid")
+}
+
+// AdvanceByOneClick advances time by 1 click in a StepLoop
+func (r *Reactor) AdvanceByOneClick() {
+
+	r.activePhrasesManager.AdvanceByOneClick()
 
 	loop := r.loop
 
@@ -450,18 +460,12 @@ func (r *Reactor) advanceClickBy1() {
 	}
 
 	step := loop.steps[stepnum]
-	if DebugUtil.Cursor && len(step.events) != 0 {
-		log.Printf("Reactor.advanceClickBy1: START stepnum=%d len(events)=%d\n", stepnum, len(step.events))
-	}
 
 	var removeCids []string
 	if step != nil && step.events != nil && len(step.events) > 0 {
 		for _, event := range step.events {
 
 			ce := event.cursorStepEvent
-			if DebugUtil.Cursor {
-				log.Printf("Reactor.advanceClickBy1: stepnum=%d ce.ID=%s\n", stepnum, ce.ID)
-			}
 
 			if DebugUtil.Advance {
 				log.Printf("Reactor.advanceClickBy1: pad=%s stepnum=%d ce=%+v\n", r.padName, stepnum, ce)
@@ -505,25 +509,16 @@ func (r *Reactor) advanceClickBy1() {
 				// log.Printf("up!\n")
 			}
 
-			if DebugUtil.Cursor {
-				log.Printf("StepLoop.advanceClickBy1: checking removal ce stepnum=%d ddu=%s cid=%s\n", stepnum, ce.Downdragup, ce.ID)
-			}
 			// See if this cursor should be removed
 			if ce.Downdragup == "up" &&
 				(ce.LoopsLeft < 0 || (ac.maxz > 0.0 && ac.maxz < minz) || (ac.maxz < 0.0 && ac.downEvent.Z < minz)) {
 
-				if DebugUtil.Cursor {
-					log.Printf("Reactor.advanceClickBy1: delete remove removeCids ce=%+v\n", ce)
-				}
 				removeCids = append(removeCids, ce.ID)
 				// NOTE: playit should still be left true for this UP event
 			} else {
 				// Don't play any events in this step with an id that we're getting ready to remove
 				for _, cid := range removeCids {
 					if ce.ID == cid {
-						if DebugUtil.Cursor {
-							log.Printf("Reactor.advanceClickBy1: NOT playing cid=%s in removeCids step=%d ce=%+v\n", ce.ID, stepnum, ce)
-						}
 						playit = false
 					}
 				}
@@ -541,9 +536,6 @@ func (r *Reactor) advanceClickBy1() {
 				// for each incoming cursor event.  One is unquantized,
 				// and one is time-quantized
 
-				if DebugUtil.Cursor {
-					log.Printf("Reactor.advanceClickBy1: PLAYIT stepnum=%d ce=%+v\n", stepnum, ce)
-				}
 				if ce.Quantized {
 					// MIDI stuff
 					if ce.Downdragup == "drag" {
@@ -583,21 +575,9 @@ func (r *Reactor) advanceClickBy1() {
 					if event.cursorStepEvent.ID != removeID {
 						// Include this event
 						newevents = append(newevents, event)
-						if DebugUtil.Cursor {
-							log.Printf("Reactor.advanceClickBy1: re-including step event=%+v\n", event.cursorStepEvent)
-						}
-					} else {
-						if DebugUtil.Cursor {
-							log.Printf("Reactor.advanceClickBy1: deleting step event=%+v\n", event.cursorStepEvent)
-						}
 					}
 				}
 				step.events = newevents
-				// log.Printf("After deleting id=%s  events=%v\n", id, step.events)
-				if DebugUtil.Cursor && len(step.events) > 0 {
-					log.Printf("Reactor.advanceClickBy1: after deleting id=%s len(events)=%d\n", removeID, len(step.events))
-				}
-
 			}
 		}
 	}

@@ -1,5 +1,23 @@
 { "synths" : [
 	{"name": "default", "port":"01. Internal MIDI", "channel":1},
+
+	{"name": "channel1", "port":"01. Internal MIDI", "channel":1},
+	{"name": "channel2", "port":"01. Internal MIDI", "channel":2},
+	{"name": "channel3", "port":"01. Internal MIDI", "channel":3},
+	{"name": "channel4", "port":"01. Internal MIDI", "channel":4},
+	{"name": "channel5", "port":"01. Internal MIDI", "channel":5},
+	{"name": "channel6", "port":"01. Internal MIDI", "channel":6},
+	{"name": "channel7", "port":"01. Internal MIDI", "channel":7},
+	{"name": "channel8", "port":"01. Internal MIDI", "channel":8},
+	{"name": "channel9", "port":"01. Internal MIDI", "channel":9},
+	{"name": "channel10", "port":"01. Internal MIDI", "channel":10},
+	{"name": "channel11", "port":"01. Internal MIDI", "channel":11},
+	{"name": "channel12", "port":"01. Internal MIDI", "channel":12},
+	{"name": "channel13", "port":"01. Internal MIDI", "channel":13},
+	{"name": "channel14", "port":"01. Internal MIDI", "channel":14},
+	{"name": "channel15", "port":"01. Internal MIDI", "channel":15},
+	{"name": "channel16", "port":"01. Internal MIDI", "channel":16},
+
 	{"name": "default01", "port":"01. Internal MIDI", "channel":1},
 	{"name": "default02", "port":"02. Internal MIDI", "channel":1},
 	{"name": "default03", "port":"03. Internal MIDI", "channel":1},
