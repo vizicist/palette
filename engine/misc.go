@@ -471,16 +471,3 @@ func needBoolArg(nm string, api string, args map[string]string) (bool, error) {
 	}
 	return b, nil
 }
-
-func needRegionArg(api string, args map[string]string) (*Reactor, error) {
-	nm := "region"
-	v, ok := args[nm]
-	if !ok {
-		return nil, fmt.Errorf("api/event=%s missing value for %s", api, nm)
-	}
-	reactor, ok := TheRouter().reactors[v]
-	if !ok {
-		return nil, fmt.Errorf("api/event=%s there is no region named %s", api, v)
-	}
-	return reactor, nil
-}
