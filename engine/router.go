@@ -30,8 +30,8 @@ type Router struct {
 	// MIDISetScale      bool
 	MIDIThru               string // "", "A", "B", "C", "D"
 	MIDIThruScadjust       bool
-	UseExternalScale       bool // if true, scadjust uses "external" Scale
 	MIDIQuantized          bool
+	useExternalScale       bool // if true, scadjust uses "external" Scale
 	killme                 bool // set to true if Router should be stopped
 	lastClick              Clicks
 	control                chan Command
@@ -165,7 +165,7 @@ func TheRouter() *Router {
 		// oneRouter.MIDISetScale = false
 		oneRouter.MIDIThru = ""
 		oneRouter.MIDIThruScadjust = false
-		oneRouter.UseExternalScale = false
+		oneRouter.useExternalScale = false
 		oneRouter.MIDIQuantized = false
 
 		go oneRouter.notifyGUI("restart")
@@ -212,18 +212,6 @@ func StartNATSClient() {
 		response := router.HandleAPIInput(router.ExecuteAPI, data)
 		msg.Respond([]byte(response))
 	})
-
-	/*
-		if router.isPaletteHost {
-			remoteapi := fmt.Sprintf("palette.%s.api", router.paletteCentral)
-			log.Printf("StartNATS: subscribing to %s\n", remoteapi)
-			TheVizNats.Subscribe(remoteapi, func(msg *nats.Msg) {
-				data := string(msg.Data)
-				response := router.HandleAPIInput(router.ExecuteAPIHost, data)
-				msg.Respond([]byte(response))
-			})
-		}
-	*/
 
 	if ConfigBoolWithDefault("subscribecursor", false) {
 		log.Printf("StartNATS: subscribing to %s\n", SubscribeCursorSubject)
@@ -414,8 +402,6 @@ func (r *Router) HandleSubscribedCursorInput(data string) {
 		return
 	}
 
-	// region := optionalStringArg("region", args, "")
-
 	x, err := needFloatArg("x", api, args)
 	if err != nil {
 		log.Printf("HandleSubscribedCursor: err=%s\n", err)
@@ -490,7 +476,7 @@ func (r *Router) HandleDeviceMIDIInput(e portmidi.Event) {
 		r.handleMIDISetScale(e)
 	case "A", "B", "C", "D":
 		reactor := r.reactors[r.MIDIThru]
-		reactor.PassThruMIDI(e, r.MIDIThruScadjust, r.UseExternalScale)
+		reactor.PassThruMIDI(e, r.MIDIThruScadjust, r.useExternalScale)
 	}
 }
 
@@ -525,7 +511,6 @@ func (r *Router) HandleAPIInput(executor APIExecutorFunc, data string) (response
 	if DebugUtil.API {
 		log.Printf("Router.HandleAPI: api=%s args=%s\n", api, rawargs)
 	}
-	// result, err := r.ExecuteAPI(api, rawargs)
 	result, err := executor(api, rawargs)
 	if err != nil {
 		response = ErrorResponse(err)
@@ -572,7 +557,7 @@ func (r *Router) ExecuteAPI(api string, rawargs string) (result interface{}, err
 	apisuffix := words[1]
 
 	if apiprefix == "region" {
-		reactor, err := needRegionArg(api, args)
+		reactor, err := r.getRegionForSource(api, args)
 		if err != nil {
 			return nil, err
 		}
@@ -653,7 +638,7 @@ func (r *Router) ExecuteAPI(api string, rawargs string) (result interface{}, err
 	case "useexternalscale":
 		v, err := needBoolArg("onoff", api, args)
 		if err == nil {
-			r.UseExternalScale = v
+			r.useExternalScale = v
 		}
 
 	case "clearexternalscale":
@@ -744,167 +729,6 @@ func (r *Router) ExecuteAPI(api string, rawargs string) (result interface{}, err
 
 	return result, err
 }
-
-/*
-// ExecuteAPIHost xxx
-func (r *Router) ExecuteAPIHost(api string, rawargs string) (result interface{}, err error) {
-
-	args, err := StringMap(rawargs)
-	if err != nil {
-		response := ErrorResponse(fmt.Errorf("Router.ExecuteAPI: Unable to interpret value - %s", rawargs))
-		log.Printf("Router.ExecuteAPI: bad rawargs value = %s\n", rawargs)
-		return response, nil
-	}
-
-	result = "0" // most APIs just return 0, so pre-populate it
-
-	words := strings.SplitN(api, ".", 2)
-	if len(words) != 2 {
-		return nil, fmt.Errorf("Router.ExecuteAPI: api=%s is badly formatted, needs a dot", api)
-	}
-	apiprefix := words[0]
-	apisuffix := words[1]
-
-	if apiprefix == "region" {
-		reactor, err := needRegionArg(api, args)
-		if err != nil {
-			return nil, err
-		}
-		return reactor.ExecuteAPI(apisuffix, args, rawargs)
-	}
-
-	// Everything else should be "global", eventually I'll factor this
-	if apiprefix != "global" {
-		return nil, fmt.Errorf("ExecuteAPI: api=%s unknown apiprefix=%s", api, apiprefix)
-	}
-
-	switch apisuffix {
-
-	case "echo":
-		value, ok := args["value"]
-		if !ok {
-			value = "ECHO!"
-		}
-		result = value
-
-	case "debug":
-		s, err := needStringArg("debug", api, args)
-		if err == nil {
-			b, err := needBoolArg("onoff", api, args)
-			if err == nil {
-				setDebug(s, b)
-			}
-		}
-
-	case "set_transpose":
-		v, err := needIntArg("value", api, args)
-		if err == nil {
-			TransposePitch = v
-		}
-
-	case "midi_thru":
-		v, err := needStringArg("thru", api, args)
-		if err == nil {
-			r.MIDIThru = v
-		}
-
-	case "midi_thruscadjust":
-		v, err := needBoolArg("onoff", api, args)
-		if err == nil {
-			r.MIDIThruScadjust = v
-		}
-
-	case "useexternalscale":
-		v, err := needBoolArg("onoff", api, args)
-		if err == nil {
-			r.UseExternalScale = v
-		}
-
-	case "clearexternalscale":
-		// log.Printf("router is clearing external scale\n")
-		ClearExternalScale()
-		r.MIDINumDown = 0
-
-	case "midi_quantized":
-		v, err := needBoolArg("quantized", api, args)
-		if err == nil {
-			r.MIDIQuantized = v
-		}
-
-	case "set_tempo_factor":
-		v, err := needFloatArg("value", api, args)
-		if err == nil {
-			ChangeClicksPerSecond(float64(v))
-		}
-
-	case "audioOn":
-		msg := osc.NewMessage("/play")
-		msg.Append(int32(1))
-		r.plogueClient.Send(msg)
-		if DebugUtil.OSC {
-			log.Printf("plogClient %s msg=%v\n", TimeString(), msg)
-		}
-
-	case "audioOff":
-		msg := osc.NewMessage("/play")
-		msg.Append(int32(0))
-		r.plogueClient.Send(msg)
-		if DebugUtil.OSC {
-			log.Printf("plogClient %s msg=%v\n", TimeString(), msg)
-		}
-
-	case "recordingStart":
-		r.recordingOn = true
-		if r.recordingFile != nil {
-			log.Printf("Hey, recordingFile wasn't nil?\n")
-			r.recordingFile.Close()
-		}
-		r.recordingFile, err = os.Create(recordingsFile("LastRecording.json"))
-		if err != nil {
-			return nil, err
-		}
-		r.recordingBegun = time.Now()
-		if r.recordingOn {
-			r.recordEvent("global", "*", "start", "{}")
-		}
-	case "recordingSave":
-		name, err := needStringArg("name", api, args)
-		if err == nil {
-			err = r.recordingSave(name)
-		}
-
-	case "recordingStop":
-		if r.recordingOn {
-			r.recordEvent("global", "*", "stop", "{}")
-		}
-		if r.recordingFile != nil {
-			r.recordingFile.Close()
-			r.recordingFile = nil
-		}
-		r.recordingOn = false
-
-	case "recordingPlay":
-		name, err := needStringArg("name", api, args)
-		if err == nil {
-			events, err := r.recordingLoad(name)
-			if err == nil {
-				r.sendANO()
-				go r.recordingPlayback(events)
-			}
-		}
-
-	case "recordingPlaybackStop":
-		r.recordingPlaybackStop()
-
-	default:
-		log.Printf("Router.ExecuteAPI api=%s is not recognized\n", api)
-		err = fmt.Errorf("Router.ExecuteAPI unrecognized api=%s", api)
-		result = ""
-	}
-
-	return result, err
-}
-*/
 
 func (r *Router) advanceClickTo(toClick Clicks) {
 
@@ -998,6 +822,8 @@ func (r *Router) notifyGUI(eventName string) {
 
 func (r *Router) recordingPlayback(events []*PlaybackEvent) error {
 
+	// XXX - WARNING, this code hasn't been exercised in a LONG time,
+	// XXX - someday it'll probably be resurrected.
 	log.Printf("recordingPlay, #events = %d\n", len(events))
 	r.killPlayback = false
 
@@ -1165,6 +991,30 @@ func (r *Router) handleOSCAPI(msg *osc.Message, source string) {
 		log.Printf("Router.handleOSCAPI: err=%s", err)
 	}
 	return
+}
+
+// getRegionForSource - NOTE, this removes the "source" argument from the map,
+// partially to avoid (at least initially) letting Reactor APIs know
+// what source is calling them.  I.e. all source-depdendent behaviour is
+// determined in Router.
+func (r *Router) getRegionForSource(api string, args map[string]string) (*Reactor, error) {
+	nm := "source"
+	source, ok := args[nm]
+	if !ok {
+		return nil, fmt.Errorf("api/event=%s missing value for %s", api, nm)
+	}
+
+	delete(args, "source") // see comment above
+
+	assigned, ok := r.regionAssignedToSource[source]
+	if !ok {
+		return nil, fmt.Errorf("api=%s no region assigned to source=%s", api, source)
+	}
+	reactor, ok := TheRouter().reactors[assigned]
+	if !ok {
+		return nil, fmt.Errorf("api/event=%s there is no region named %s", api, assigned)
+	}
+	return reactor, nil
 }
 
 // availableRegion - return the name of a region that hasn't been assigned to a remote yet
