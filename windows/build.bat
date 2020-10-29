@@ -7,8 +7,8 @@ goto getout
 
 :keepgoing
 
-echo Calling killall
-call %PALETTESOURCE%\scripts\killall.bat
+echo ================ Killing currently-running things
+call %PALETTESOURCE%\scripts\palettestop.bat
 
 set ship=%PALETTESOURCE%\windows\ship
 set bin=%ship%\bin
@@ -16,11 +16,11 @@ rm -fr %ship% > nul 2>&1
 mkdir %ship%
 mkdir %bin%
 
-echo ================ NOT Upgrading Python
+echo ================ NOT Upgrading Python - takes too long
 rem python -m pip install --upgrade pip
 rem pip install codenamize pip install python-osc pip install asyncio-nats-client pyinstaller get-mac | grep -v "already satisfied"
 
-echo ================ COMPILING FFGL PLUGIN
+echo ================ Compiling FFGL plugin
 set MSBUILDCMD=C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\Common7\Tools\vsmsbuildcmd.bat
 call "%MSBUILDCMD%" > nul
 pushd %PALETTESOURCE%\ffgl\windows
@@ -43,7 +43,7 @@ cat gobuild.out
 popd
 goto getout
 :continue1
-move palette.exe %bin%\palette.exe
+move palette.exe %bin%\palette.exe > nul
 
 popd
 
@@ -54,61 +54,54 @@ pyinstaller gui.py > pyinstaller.out 2>&1
 pyinstaller testcursor.py > pyinstaller.out 2>&1
 pyinstaller osc.py > pyinstaller.out 2>&1
 rem merge them all into one
-move dist\gui dist\pyinstalled
-mv dist\testcursor\testcursor.exe dist\pyinstalled
-mv dist\osc\osc.exe dist\pyinstalled
-move dist\pyinstalled %bin%
+move dist\gui dist\pyinstalled >nul
+move dist\testcursor\testcursor.exe dist\pyinstalled >nul
+move dist\osc\osc.exe dist\pyinstalled >nul
+move dist\pyinstalled %bin% >nul
 popd
 
-echo ================ COPYING FFGL PLUGIN
+echo ================ Copying FFGL PLUGIN
 pushd %PALETTESOURCE%\ffgl\windows\x64\Debug
 mkdir %ship%\ffgl
-copy *.* %ship%\ffgl
+copy *.* %ship%\ffgl > nul
 popd
 
-echo ================ COPYING nats
-copy %PALETTESOURCE%\nats\nats-pub.exe %bin%
-copy %PALETTESOURCE%\nats\nats-sub.exe %bin%
+echo ================ Copying NATS
+copy %PALETTESOURCE%\nats\nats-pub.exe %bin% >nul
+copy %PALETTESOURCE%\nats\nats-sub.exe %bin% >nul
 
-echo ================ COPYING scripts
+echo ================ Copying scripts
 pushd %PALETTESOURCE%\scripts
-copy killall.bat %bin%
-copy killpalette.bat %bin%
-copy killgui.bat %bin%
-copy testcursor.bat %bin%
-copy osc.bat %bin%
-copy taillog.bat %bin%
-
-copy startall.bat %bin%
-copy startpalette.bat %bin%
-copy startgui.bat %bin%
-
-copy natsmon.bat %bin%
+copy stoppalette.bat %bin% >nul
+copy startpalette.bat %bin% >nul
+copy testcursor.bat %bin% >nul
+copy osc.bat %bin% >nul
+copy taillog.bat %bin% >nul
+copy natsmon.bat %bin% >nul
 
 popd
 
-echo ================ COPYING config
+echo ================ Copying config
 mkdir %ship%\config
-copy %PALETTESOURCE%\default\config\*.json %ship%\config
-copy %PALETTESOURCE%\default\config\*.conf %ship%\config
+copy %PALETTESOURCE%\default\config\*.json %ship%\config >nul
+copy %PALETTESOURCE%\default\config\*.conf %ship%\config >nul
 
-echo ================ COPYING midifiles
+echo ================ Copying midifiles
 mkdir %ship%\midifiles
-copy %PALETTESOURCE%\default\midifiles\*.* %ship%\midifiles
+copy %PALETTESOURCE%\default\midifiles\*.* %ship%\midifiles >nul
 
-echo ================ COPYING windows-specific things
-copy %PALETTESOURCE%\windows\pthreadvc2.dll %ship%\ffgl
-copy %PALETTESOURCE%\windows\msvcp140d.dll %ship%\ffgl
-copy %PALETTESOURCE%\SenselLib\x64\LibSensel.dll %bin%
-copy %PALETTESOURCE%\SenselLib\x64\LibSenselDecompress.dll %bin%
+echo ================ Copying windows-specific things
+copy %PALETTESOURCE%\windows\pthreadvc2.dll %ship%\ffgl >nul
+copy %PALETTESOURCE%\windows\msvcp140d.dll %ship%\ffgl >nul
+copy %PALETTESOURCE%\SenselLib\x64\LibSensel.dll %bin% >nul
+copy %PALETTESOURCE%\SenselLib\x64\LibSenselDecompress.dll %bin% >nul
 
-echo ================ COPYING presets
+echo ================ Copying presets
 mkdir %ship%\presets
 xcopy /e /y %PALETTESOURCE%\default\presets %ship%\presets > nul
 
-echo ================ REMOVING UNUSED THINGS
+echo ================ Removing unused things
 rm -fr %bin%\pyinstalled\tcl\tzdata
-rm -fr %bin%\pyinstalled\tcl\encoding
 
 call buildsetup.bat
 
