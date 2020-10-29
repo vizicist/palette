@@ -1,1 +1,0 @@
-python startmorph.py -l
