@@ -62,19 +62,19 @@ type Reactor struct {
 	// params                         map[string]interface{}
 	params *ParamValues
 
-	paramsMutex                    sync.RWMutex
-	activeNotes                    map[string]*ActiveNote
-	activeNotesMutex               sync.RWMutex
-	activeCursors                  map[string]*ActiveStepCursor
-	activeCursorsMutex             sync.RWMutex
-	permInstanceIDMutex            sync.RWMutex
-	incomingIDToPermSidQuantized   map[string]string // map incoming ids to permInstanceIDs in the steploop
-	incomingIDToPermSidUnquantized map[string]string // map incoming ids to permInstanceIDs in the steploop
-	permInstanceIDDownClick        map[string]Clicks // map permInstanceIDs to quantized stepnum of the down event
-	permInstanceIDDownQuant        map[string]Clicks // map permInstanceIDs to quantize value of the "down" event
-	permInstanceIDDragOK           map[string]bool
-	deviceCursors                  map[string]*DeviceCursor
-	deviceCursorsMutex             sync.RWMutex
+	paramsMutex               sync.RWMutex
+	activeNotes               map[string]*ActiveNote
+	activeNotesMutex          sync.RWMutex
+	activeCursors             map[string]*ActiveStepCursor
+	activeCursorsMutex        sync.RWMutex
+	permInstanceIDMutex       sync.RWMutex
+	permInstanceIDQuantized   map[string]string // map incoming IDs to permInstanceIDs in the steploop
+	permInstanceIDUnquantized map[string]string // map incoming IDs to permInstanceIDs in the steploop
+	permInstanceIDDownClick   map[string]Clicks // map permInstanceIDs to quantized stepnum of the down event
+	permInstanceIDDownQuant   map[string]Clicks // map permInstanceIDs to quantize value of the "down" event
+	permInstanceIDDragOK      map[string]bool
+	deviceCursors             map[string]*DeviceCursor
+	deviceCursorsMutex        sync.RWMutex
 
 	activePhrasesManager *ActivePhrasesManager
 }
@@ -89,18 +89,18 @@ func NewReactor(pad string, resolumeLayer int, freeframeClient *osc.Client, reso
 		guiClient:       guiClient,
 		// tempoFactor:         1.0,
 		// params:                         make(map[string]interface{}),
-		params:                         NewParamValues(),
-		activeNotes:                    make(map[string]*ActiveNote),
-		activeCursors:                  make(map[string]*ActiveStepCursor),
-		incomingIDToPermSidQuantized:   make(map[string]string),
-		incomingIDToPermSidUnquantized: make(map[string]string),
-		permInstanceIDDownClick:        make(map[string]Clicks),
-		permInstanceIDDownQuant:        make(map[string]Clicks),
-		permInstanceIDDragOK:           make(map[string]bool),
-		fadeLoop:                       0.5,
-		loop:                           NewLoop(oneBeat * 4),
-		deviceCursors:                  make(map[string]*DeviceCursor),
-		activePhrasesManager:           NewActivePhrasesManager(),
+		params:                    NewParamValues(),
+		activeNotes:               make(map[string]*ActiveNote),
+		activeCursors:             make(map[string]*ActiveStepCursor),
+		permInstanceIDQuantized:   make(map[string]string),
+		permInstanceIDUnquantized: make(map[string]string),
+		permInstanceIDDownClick:   make(map[string]Clicks),
+		permInstanceIDDownQuant:   make(map[string]Clicks),
+		permInstanceIDDragOK:      make(map[string]bool),
+		fadeLoop:                  0.5,
+		loop:                      NewLoop(oneBeat * 4),
+		deviceCursors:             make(map[string]*DeviceCursor),
+		activePhrasesManager:      NewActivePhrasesManager(),
 	}
 	return r
 }
@@ -622,8 +622,8 @@ func (r *Reactor) executeIncomingCursor(ce CursorStepEvent) {
 	// in the steps of the loop will have a unique id.
 
 	r.permInstanceIDMutex.RLock()
-	permInstanceIDQuantized, ok1 := r.incomingIDToPermSidQuantized[ce.ID]
-	permInstanceIDUnquantized, ok2 := r.incomingIDToPermSidUnquantized[ce.ID]
+	permInstanceIDQuantized, ok1 := r.permInstanceIDQuantized[ce.ID]
+	permInstanceIDUnquantized, ok2 := r.permInstanceIDUnquantized[ce.ID]
 	r.permInstanceIDMutex.RUnlock()
 
 	if (!ok1 || !ok2) && ce.Downdragup != "down" {
@@ -646,8 +646,8 @@ func (r *Reactor) executeIncomingCursor(ce CursorStepEvent) {
 		permInstanceIDUnquantized = fmt.Sprintf("%s#%d", ce.ID, uniqueIndex)
 		uniqueIndex++
 
-		r.incomingIDToPermSidQuantized[ce.ID] = permInstanceIDQuantized
-		r.incomingIDToPermSidUnquantized[ce.ID] = permInstanceIDUnquantized
+		r.permInstanceIDQuantized[ce.ID] = permInstanceIDQuantized
+		r.permInstanceIDUnquantized[ce.ID] = permInstanceIDUnquantized
 
 		r.permInstanceIDDownClick[permInstanceIDQuantized] = r.nextQuant(currentClick, q)
 		r.permInstanceIDDownQuant[permInstanceIDQuantized] = q
@@ -805,7 +805,7 @@ func (r *Reactor) cursorToPitch(ce CursorStepEvent) uint8 {
 	p1 := int(ce.X * float32(dp))
 	p := uint8(pitchmin + p1%dp)
 	var scaleName string
-	if TheRouter().UseExternalScale {
+	if TheRouter().useExternalScale {
 		scaleName = "external"
 	} else {
 		scaleName = r.params.ParamStringValue("misc.scale", "newage")
@@ -935,9 +935,6 @@ func (r *Reactor) handleSetParam(apiprefix, apisuffix string, args map[string]st
 func (r *Reactor) ExecuteAPI(api string, args map[string]string, rawargs string) (result string, err error) {
 
 	// log.Printf("ExecuteAPI: api=%s args=%s\n", api, rawargs)
-
-	// Remove the region value that signifies a per-pad API
-	delete(args, "region")
 
 	dot := strings.Index(api, ".")
 	var apiprefix string
