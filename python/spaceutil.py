@@ -48,27 +48,15 @@ def boolValueOfString(v):
 
 ApiLock = threading.Lock()
 
-def palette_api(meth, params=None):
-    r1 = palette_api_local(meth,params)
-    r2 = palette_api_central(meth,params)
-    return r1,r2
-
-def palette_api_local(meth, params=None):
-    subject = "palette."+platform.node()+".api"
+def palette_api_central(meth, params=None):
+    palettecentral = ConfigValue("palettecentral")
+    if palettecentral == "":
+        palettecentral = platform.node()
+    subject = "palette."+palettecentral+".api"
     r1,err = invoke_jsonrpc(subject,meth,params)
     if err != None:
         print("API of ",meth," returned err=",err)
     return r1
-
-def palette_api_central(meth, params=None):
-    r2 = ""
-    palettecentral = ConfigValue("palettecentral")
-    if palettecentral != "" and palettecentral != platform.node():
-        subject2 = "palette."+palettecentral+".api"
-        r2,err = invoke_jsonrpc(subject2,meth,params)
-        if err != None:
-            print("palettecentral API of ",meth," returned err=",err)
-    return r2
 
 def palette_cursorevent(params):
 
