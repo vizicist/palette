@@ -52,8 +52,8 @@ Source: "logs_readme.txt"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\logs"; DestNam
 
 [Icons]
 Name: "{group}\{cm:ProgramOnTheWeb,{#MyAppName}}"; Filename: "{#MyAppURL}"
-Name: "{group}\Start Palette"; Filename: "{app}\bin\startpalette.bat"
-Name: "{group}\Start GUI"; Filename: "{app}\bin\startgui.bat"
+Name: "{group}\Start Palette"; Filename: "{app}\bin\palettestart.bat"
+Name: "{group}\Stop Palette"; Filename: "{app}\bin\palettestop.bat"
 
 [Registry]
 Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; \
