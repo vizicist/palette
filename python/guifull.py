@@ -14,7 +14,7 @@ import signal
 from subprocess import call, Popen
 from codenamize import codenamize
 
-import spaceutil
+import palette
 
 signal.signal(signal.SIGINT,signal.SIG_IGN)
 
@@ -50,10 +50,10 @@ global performButtonPadx, performButtonPady
 global selectButtonPadx, selectButtonPady
 
 def MyNUID():
-    return spaceutil.MyNUID()
+    return palette.MyNUID()
 
 def palette_api(meth, params=None):
-    return spaceutil.palette_api_central(meth,params)
+    return palette.palette_api_central(meth,params)
 
 def SourceArg(pad):
     return "\"source\": \""+ MyNUID() + "." + pad + "\""
@@ -541,7 +541,7 @@ class ProGuiApp(tk.Tk):
             print("Unexpected snap value in readParamsFileIntoSnap")
             return
         # Read parameters from a json file (but NOT a snap file)
-        fpath = spaceutil.presetsFilePath(paramstype, paramsname)
+        fpath = palette.presetsFilePath(paramstype, paramsname)
         print("Reading JSON:",fpath)
         f = open(fpath)
         j = json.load(f)
@@ -603,9 +603,9 @@ class ProGuiApp(tk.Tk):
         # print("\nREAD SNAP PARAMS FILE paramsname=",paramsname)
         # Read parameters from a json file
         if paramsname == "CurrentSnapshot":
-            fpath = spaceutil.localconfigFilePath(paramsname+".json")
+            fpath = palette.localconfigFilePath(paramsname+".json")
         else:
-            fpath = spaceutil.presetsFilePath("snap", paramsname)
+            fpath = palette.presetsFilePath("snap", paramsname)
         print("Reading ",fpath)
         try:
             f = open(fpath)
@@ -698,8 +698,8 @@ class ProGuiApp(tk.Tk):
         page.doLayout()
        
     def makeSelectorPage(self,parent,pagename,pagemaker):
-        path = os.path.join(spaceutil.PresetsDir(), pagename)
-        vals = spaceutil.listOfJsonFiles(path)
+        path = os.path.join(palette.PresetsDir(), pagename)
+        vals = palette.listOfJsonFiles(path)
 
         # XXX - this PREVIOUS stuff actually works,
         # XXX - but doesn't properly highlight the previous selection
@@ -882,13 +882,13 @@ class ProGuiApp(tk.Tk):
     def savePrevious(self):
         frompath = CurrentSnapshotPath()
         topath = frompath.replace(".json",".previous")
-        spaceutil.copyFile(frompath,topath)
+        palette.copyFile(frompath,topath)
         # print("SAVE PREVIOUS Copying ",frompath," to ",topath)
 
     def restorePrevious(self):
-        frompath = spaceutil.presetsFilePath("snap", "CurrentSnapshot", ".previous")
-        topath = spaceutil.presetsFilePath("snap", "CurrentSnapshot")
-        spaceutil.copyFile(frompath,topath)
+        frompath = palette.presetsFilePath("snap", "CurrentSnapshot", ".previous")
+        topath = palette.presetsFilePath("snap", "CurrentSnapshot")
+        palette.copyFile(frompath,topath)
         # print("RESTORING PREVIOUS Copying ",frompath," to ",topath)
 
     def selectorLoadAndSend(self,valtype,val,buttoni):
@@ -940,9 +940,9 @@ class ProGuiApp(tk.Tk):
         return True
 
     def revertToBackup(self):
-        frompath = spaceutil.presetsFilePath("snap", "CurrentSnapshot", ".backup")
-        topath = spaceutil.presetsFilePath("snap", "CurrentSnapshot")
-        spaceutil.copyFile(frompath,topath)
+        frompath = palette.presetsFilePath("snap", "CurrentSnapshot", ".backup")
+        topath = palette.presetsFilePath("snap", "CurrentSnapshot")
+        palette.copyFile(frompath,topath)
         print("Reverting Backup Copying ",frompath," to ",topath)
 
     def nextValue(self,arr,v):
@@ -1044,8 +1044,8 @@ class ProGuiApp(tk.Tk):
 
         # elif name == "configname":
         #     config = self.globalPerformVal["configname"]["value"]
-        #     spaceutil.setConfigName(config)
-        #     print("CONFIGNAME setting to ",spaceutil.getConfigName())
+        #     palette.setConfigName(config)
+        #     print("CONFIGNAME setting to ",palette.getConfigName())
 
         elif name == "tempo":
             val = self.globalPerformVal["tempo"]["value"]
@@ -1132,7 +1132,7 @@ class ProGuiApp(tk.Tk):
         self.padChooser.refreshColors()
 
     def recordingExists(self,name):
-        fname = os.path.join(spaceutil.PaletteDir(), "recordings", name+".json")
+        fname = os.path.join(palette.PaletteDir(), "recordings", name+".json")
         return os.path.exists(fname)
 
     def recordingNameNext(self):
@@ -1225,12 +1225,12 @@ class ProGuiApp(tk.Tk):
     def readParamDefs(self):
 
         # We assume the return of readJsonPath is an OrderedDict
-        self.newParamsJson = spaceutil.readJsonPath(spaceutil.configFilePath("paramdefs.json"))
+        self.newParamsJson = palette.readJsonPath(palette.configFilePath("paramdefs.json"))
 
         self.allParamsJson = self.convertParamdefsToParams(self.newParamsJson)
 
-        self.paramenums = spaceutil.readJsonPath(spaceutil.configFilePath("paramenums.json"))
-        self.allEffectsJson = spaceutil.readJsonPath(spaceutil.configFilePath("effects.json"))
+        self.paramenums = palette.readJsonPath(palette.configFilePath("paramenums.json"))
+        self.allEffectsJson = palette.readJsonPath(palette.configFilePath("effects.json"))
         self.paramValueTypeOf = {}
         self.paramsOfType = {}
         self.paramTypeOf = {}
@@ -1267,12 +1267,12 @@ class ProGuiApp(tk.Tk):
                 self.paramValueTypeOf[x] = self.allParamsJson[x]["type"]
 
         # The things here get ADDED to the ones already read in from paramenums.json
-        self.paramenums["sound"] = spaceutil.listOfJsonFiles(os.path.join(spaceutil.PresetsDir(), "sound"))
-        self.paramenums["visual"] = spaceutil.listOfJsonFiles(os.path.join(spaceutil.PresetsDir(), "visual"))
-        self.paramenums["effect"] = spaceutil.listOfJsonFiles(os.path.join(spaceutil.PresetsDir(), "effect"))
-        self.paramenums["sliders"] = spaceutil.listOfJsonFiles(os.path.join(spaceutil.PresetsDir(), "sliders"))
+        self.paramenums["sound"] = palette.listOfJsonFiles(os.path.join(palette.PresetsDir(), "sound"))
+        self.paramenums["visual"] = palette.listOfJsonFiles(os.path.join(palette.PresetsDir(), "visual"))
+        self.paramenums["effect"] = palette.listOfJsonFiles(os.path.join(palette.PresetsDir(), "effect"))
+        self.paramenums["sliders"] = palette.listOfJsonFiles(os.path.join(palette.PresetsDir(), "sliders"))
 
-        j = spaceutil.readJsonPath(spaceutil.configFilePath("Synths.json"))
+        j = palette.readJsonPath(palette.configFilePath("Synths.json"))
 
         self.paramenums["synth"] = []
         names = []
@@ -1302,7 +1302,7 @@ class ProGuiApp(tk.Tk):
                 "init": newparamsjson[name]["init"],
                 "comment": newparamsjson[name]["comment"]
                 }
-        # allparamsjson = spaceutil.readJsonPath(spaceutil.configFilePath("Params.json"))
+        # allparamsjson = palette.readJsonPath(palette.configFilePath("Params.json"))
         return allparamsjson
 
     def sendPadOneEffectVal(self,pad,name,val):
@@ -1315,7 +1315,7 @@ class ProGuiApp(tk.Tk):
                 v = float(val)
             self.sendPadOneEffectParam(pad,name[0:i],name[i+1:],v)
         else:
-            onoff = spaceutil.boolValueOfString(val)
+            onoff = palette.boolValueOfString(val)
             self.sendPadOneEffectOnOff(pad,name,onoff)
 
 class PadChooser(tk.Frame):
@@ -1619,8 +1619,8 @@ class PagePlayback(tk.Frame):
 
     def updatePlaybackFiles(self):
 
-        recordingsDir = os.path.join(spaceutil.PaletteDir(), "recordings")
-        files = spaceutil.listOfJsonFiles(recordingsDir, ignore="LastRecording")
+        recordingsDir = os.path.join(palette.PaletteDir(), "recordings")
+        files = palette.listOfJsonFiles(recordingsDir, ignore="LastRecording")
         self.recordings = []
         for file in files:
             # from time import gmtime, strftime
@@ -1735,7 +1735,7 @@ class PageEditParams(tk.Frame):
         self.setParamsName(defname)
 
     def updateParamFiles(self):
-        files = spaceutil.listOfJsonFiles(os.path.join(spaceutil.PresetsDir(), self.paramstype),ignore="CurrentSnapshot")
+        files = palette.listOfJsonFiles(os.path.join(palette.PresetsDir(), self.paramstype),ignore="CurrentSnapshot")
         self.paramFiles = files
         self.comboParamsname.configure(values=self.paramFiles)
 
@@ -1933,7 +1933,7 @@ class PageEditParams(tk.Frame):
             if s == "":
                 v = False
             else:
-                v = spaceutil.boolValueOfString(s)
+                v = palette.boolValueOfString(s)
         elif t == "int":
             if s == "":
                 v = 0
@@ -2102,7 +2102,7 @@ class PageEditParams(tk.Frame):
         if section == "snap" and paramsname == "CurrentSnapshot":
             fpath = CurrentSnapshotPath()
         else:
-            fpath = spaceutil.presetsFilePath(section,paramsname,suffix)
+            fpath = palette.presetsFilePath(section,paramsname,suffix)
             # print("Saving ",fpath)
 
         print("Saving JSON:",fpath)
@@ -2116,7 +2116,7 @@ class PageEditParams(tk.Frame):
     def normalizeJsonValue(self,name,v):
         t = self.controller.paramValueTypeOf[name]
         if t == "bool":
-            return "true" if spaceutil.boolValueOfString(v) else "false"
+            return "true" if palette.boolValueOfString(v) else "false"
         if t == "int":
             v = int(v)
             mn = int(self.params[name]["min"])
@@ -2490,7 +2490,7 @@ class PagePerformSliders(tk.Frame):
         self.sliderParam[i] = newname
     
     def setSliders(self,slidersname):
-        j = spaceutil.readJsonPath(spaceutil.presetsFilePath("sliders", slidersname))
+        j = palette.readJsonPath(palette.presetsFilePath("sliders", slidersname))
         # print("slidersname=",slidersname," j=",j)
         p = j["params"]
         for i in range(8):
@@ -2691,14 +2691,14 @@ def isTwoLine(text):
     return text.find(LineSep) >= 0 or text.find("\n") >= 0
 
 def CurrentSnapshotPath():
-    return spaceutil.localconfigFilePath("CurrentSnapshot.json")
+    return palette.localconfigFilePath("CurrentSnapshot.json")
 
 def initMain(app):
     app.mainLoop()
 
 if __name__ == "__main__":
 
-    gui_size = spaceutil.ConfigValue("gui_size")
+    gui_size = palette.ConfigValue("gui_size")
     if gui_size == "":
         gui_size = "small"   # default
 
