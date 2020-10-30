@@ -49,6 +49,15 @@ global pageSizeOfControl, pageSizeOfSelect
 global performButtonPadx, performButtonPady
 global selectButtonPadx, selectButtonPady
 
+def MyNUID():
+    return spaceutil.MyNUID()
+
+def palette_api(meth, params=None):
+    return spaceutil.palette_api_central(meth,params)
+
+def SourceArg(pad):
+    return "\"source\": \""+ MyNUID() + "." + pad + "\""
+
 def setFontSizes(fontFactor):
     global patchFont, patchTwoLineFont, sliderFont, largestFont, hugeFont, comboFont, largerFont, largeFont, performFont, mediumFont, padLabelFont
     f = 'Helvetica'
@@ -793,8 +802,8 @@ class ProGuiApp(tk.Tk):
         # if paramType == "effect":
         #     self.sendPadOneEffectVal(pad,paramname,val)
         # else:
-        spaceutil.palette_api("region."+paramType+".set_param",
-            "{ \"region\": \""+ pad + "\"" + \
+        palette_api("region."+paramType+".set_param",
+            "{ " + SourceArg(pad) + \
             ", \"param\": \"" + paramname + "\"" + \
             ", \"value\": \"" + str(val) + "\"" + \
             "}")
@@ -947,6 +956,10 @@ class ProGuiApp(tk.Tk):
 
     def sendPadPerformVal(self,pad,name):
         # print("sendPadPerformVal pad=",pad," name=",name)
+
+        # Prepare the first (source) argument of the API calls.
+        sourceArg = SourceArg(pad)
+
         if name == "loopingonoff":
             val = self.perpadPerformVal["loopingonoff"][pad]["value"]
             reconoff = False
@@ -963,47 +976,51 @@ class ProGuiApp(tk.Tk):
                 print("Unrecognized value of loopingonoff - %s\n" % val)
                 return
 
-            spaceutil.palette_api("region.loop_recording",
-                '{ "region": "'+pad+'", "onoff": "'+str(reconoff)+'" }')
-            spaceutil.palette_api("region.loop_playing",
-                '{ "region": "'+pad+'", "onoff": "'+str(playonoff)+'" }')
+            palette_api("region.loop_recording",
+                "{ " + sourceArg + \
+                ", \"onoff\": \""+str(reconoff)+"\" }")
+            palette_api("region.loop_playing",
+                "{ " + sourceArg + \
+                ", \"onoff\": \""+str(playonoff)+"\" }")
 
         elif name == "loopinglength":
             v = self.perpadPerformVal["loopinglength"][pad]["value"]
-            spaceutil.palette_api("region.loop_length",
-                "{ \"region\": \""+pad+"\", \"length\": "+str(v)+" }")
+            palette_api("region.loop_length",
+                "{ " + sourceArg + \
+                ", \"length\": "+str(v)+" }")
 
         elif name == "loopingfade":
             fade = self.perpadPerformVal["loopingfade"][pad]["value"]
-            spaceutil.palette_api("region.loop_fade",
-                "{ \"region\": \""+pad+"\", \"fade\": "+str(fade)+" }")
+            palette_api("region.loop_fade",
+                "{ " + sourceArg + \
+                ", \"fade\": "+str(fade)+" }")
 
         elif name == "quant":
             val = self.perpadPerformVal["quant"][pad]["value"]
-            spaceutil.palette_api("region.set_param",
-                "{ \"region\": \""+ pad + "\"" + \
+            palette_api("region.set_param",
+                "{ " + sourceArg + \
                 ", \"param\": \"" + "misc.quant" + "\"" + \
                 ", \"value\": \"" + str(val) + "\"" + \
                 "}")
         elif name == "scale":
             val = self.perpadPerformVal["scale"][pad]["value"]
-            spaceutil.palette_api("region.set_param",
-                "{ \"region\": \""+ pad + "\"" + \
+            palette_api("region.set_param",
+                "{ " + sourceArg + \
                 ", \"param\": \"" + "misc.scale" + "\"" + \
                 ", \"value\": \"" + str(val) + "\"" + \
                 "}")
         elif name == "vol":
             val = self.perpadPerformVal["vol"][pad]["value"]
             # NOTE: "voltype" here rather than "vol" - should make consistent someday
-            spaceutil.palette_api("region.set_param",
-                "{ \"region\": \""+ pad + "\"" + \
+            palette_api("region.set_param",
+                "{ " + sourceArg + \
                 ", \"param\": \"" + "misc.vol" + "\"" + \
                 ", \"value\": \"" + str(val) + "\"" + \
                 "}")
         elif name == "comb":
             val = 1.0
-            spaceutil.palette_api("region.loop_comb",
-                "{ \"region\": \""+ pad + "\"" + \
+            palette_api("region.loop_comb",
+                "{ " + sourceArg + \
                 ", \"value\": \"" + str(val) + "\"" + \
                 "}")
 
@@ -1011,19 +1028,19 @@ class ProGuiApp(tk.Tk):
 
         if name == "midithru":
             thru = self.globalPerformVal["midithru"]["value"]
-            spaceutil.palette_api("global.midi_thru", "{ \"thru\": \""+str(thru)+"\" }")
+            palette_api("global.midi_thru", "{ \"thru\": \""+str(thru)+"\" }")
 
         elif name == "midithruscadjust":
             onoff = self.globalPerformVal["midithruscadjust"]["value"]
-            spaceutil.palette_api("global.midi_thruscadjust", "{ \"onoff\": \""+str(onoff)+"\" }")
+            palette_api("global.midi_thruscadjust", "{ \"onoff\": \""+str(onoff)+"\" }")
 
         elif name == "useexternalscale":
             onoff = self.globalPerformVal["useexternalscale"]["value"]
-            spaceutil.palette_api("global.useexternalscale", "{ \"onoff\": \""+str(onoff)+"\" }")
+            palette_api("global.useexternalscale", "{ \"onoff\": \""+str(onoff)+"\" }")
 
         elif name == "midiquantized":
             quantized = self.globalPerformVal["midiquantized"]["value"]
-            spaceutil.palette_api("global.midi_quantized", "{ \"quantized\": \""+str(quantized)+"\" }")
+            palette_api("global.midi_quantized", "{ \"quantized\": \""+str(quantized)+"\" }")
 
         # elif name == "configname":
         #     config = self.globalPerformVal["configname"]["value"]
@@ -1032,18 +1049,18 @@ class ProGuiApp(tk.Tk):
 
         elif name == "tempo":
             val = self.globalPerformVal["tempo"]["value"]
-            spaceutil.palette_api("global.set_tempo_factor", '{ "value": '+str(val)+' }')
+            palette_api("global.set_tempo_factor", "{ \"value\": "+str(val)+" }")
 
         elif name == "transpose":
             val = self.globalPerformVal["transpose"]["value"]
-            spaceutil.palette_api("global.set_transpose", '{ "value": '+str(val)+' }')
+            palette_api("global.set_transpose", "{ \"value\": "+str(val)+" }")
 
     def clearPadLoop(self,pad):
-        spaceutil.palette_api("region.loop_clear", '{ "region": "'+str(pad)+'" }')
+        palette_api("region.loop_clear", "{ " + SourceArg(pad) + " }")
         self.padChooser.highlightPadBorder(pad,False)
 
     def combPadLoop(self,pad):
-        spaceutil.palette_api("region.loop_comb", '{ "region": "'+str(pad)+'" }')
+        palette_api("region.loop_comb", "{ " + SourceArg(pad) + " }")
 
     def combLoop(self):
         self.resetLastAnything()
@@ -1086,8 +1103,8 @@ class ProGuiApp(tk.Tk):
 
     def resetAll(self):
 
-        spaceutil.palette_api("global.audioOff",'{}')
-        spaceutil.palette_api("global.audioOn",'{}')
+        # palette_api("global.audioOff",'{}')
+        palette_api("global.audioOn",'{}')
 
         self.resetLastAnything()
         self.sendANO()
@@ -1135,7 +1152,7 @@ class ProGuiApp(tk.Tk):
     def recordingStart(self):
         self.recordingOn = True
         self.recordingTimeStart = time.monotonic()
-        spaceutil.palette_api("global.recordingStart",'{}')
+        palette_api("global.recordingStart",'{}')
         self.recordingTimeLeft = self.recordingTime
         global RecMode
         RecMode = True
@@ -1144,11 +1161,11 @@ class ProGuiApp(tk.Tk):
 
     def recordingStop(self):
         self.recordingOn = False
-        spaceutil.palette_api("global.recordingStop",'{}')
+        palette_api("global.recordingStop",'{}')
         self.sendANO()
  
     def playbackStop(self):
-        spaceutil.palette_api("global.recordingPlaybackStop",'{}')
+        palette_api("global.recordingPlaybackStop",'{}')
         self.sendANO()
  
     def recordingsShow(self,onoff):
@@ -1164,18 +1181,18 @@ class ProGuiApp(tk.Tk):
         print("recordingTest unimplemented")
 
     def clearExternalScale(self):
-        spaceutil.palette_api("global.clearexternalscale",'{ }')
+        palette_api("global.clearexternalscale",'{ }')
 
     def sendANOAll(self):
         for pad in self.PadNames:
-            spaceutil.palette_api("region.ANO", "{ \"region\": \""+ pad + "\" }")
+            palette_api("region.ANO", "{ " + SourceArg(pad) + " }")
 
     def sendANO(self,pad=None):
         # print("sendANO called!")
         if pad == None:
             self.sendANOAll()
         else:
-            spaceutil.palette_api("region.ANO", "{ \"region\": \""+ pad + "\" }")
+            palette_api("region.ANO", "{ " + SourceArg(pad) + " }")
 
     def sendSnap(self):
         for pad in self.PadNames:
@@ -1183,7 +1200,7 @@ class ProGuiApp(tk.Tk):
 
     def paramListJson(self,paramtype,pad):
         # The presence of a region value signifies a per-pad API
-        paramlist = "\"region\" : \"" + str(pad) + "\""
+        paramlist = SourceArg(pad)
         sep = ", "
         for name in self.allParamsJson:
             j = self.allParamsJson[name]
@@ -1199,7 +1216,7 @@ class ProGuiApp(tk.Tk):
         for pt in ["sound","visual","effect"]:
             paramlistjson = self.paramListJson(pt,pad)
             if paramtype == None or paramtype == pt:
-                spaceutil.palette_api("region."+pt+".set_params", paramlistjson)
+                palette_api("region."+pt+".set_params", paramlistjson)
 
         if paramtype == None:
             for name in PerPadPerformLabels:
@@ -1661,7 +1678,7 @@ class PagePlayback(tk.Frame):
         self.isPlayingRow = row
         self.recordingsPlayButton[row].config(text="STOP")
         name = self.recordings[row+self.rowOffset][0]
-        spaceutil.palette_api("global.recordingPlay",'{ "name": "'+name+'" }')
+        palette_api("global.recordingPlay",'{ "name": "'+name+'" }')
 
     def scrollNotify(self,sfy,tag):
         newoffset = int((len(self.recordings)-recordingsDisplayRows) * sfy)
@@ -2395,7 +2412,7 @@ class PagePerformRecordingSave(tk.Frame):
 
     def recordingCallback(self,name):
         if name == "save":
-            spaceutil.palette_api("global.recordingSave",'{ "name": "'+self.controller.recordingName+'" }')
+            palette_api("global.recordingSave",'{ "name": "'+self.controller.recordingName+'" }')
             self.controller.recordingsPage.updatePlaybackFiles()
             self.controller.recordingsPage.updatePlaybackView()
             self.controller.setPerformMessage("")
