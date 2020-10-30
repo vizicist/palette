@@ -742,7 +742,7 @@ class ProGuiApp(tk.Tk):
             palette_api("region.loop_recording",
                 '{ "source": "'+MyNUID()+'", "onoff": "'+str(reconoff)+'" }')
             palette_api("region.loop_playing",
-                '{ "source": "'+pad+'", "onoff": "'+str(playonoff)+'" }')
+                '{ "source": "'+MyNUID()+'", "onoff": "'+str(playonoff)+'" }')
 
         elif name == "loopinglength":
             v = self.perpadPerformVal["loopinglength"][pad]["value"]
