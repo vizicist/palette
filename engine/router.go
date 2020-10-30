@@ -998,21 +998,28 @@ func (r *Router) handleOSCAPI(msg *osc.Message, source string) {
 // what source is calling them.  I.e. all source-depdendent behaviour is
 // determined in Router.
 func (r *Router) getRegionForSource(api string, args map[string]string) (*Reactor, error) {
-	nm := "source"
-	source, ok := args[nm]
+	fullsource, ok := args["source"]
 	if !ok {
-		return nil, fmt.Errorf("api/event=%s missing value for %s", api, nm)
+		return nil, fmt.Errorf("api/event=%s missing value for source", api)
 	}
-
 	delete(args, "source") // see comment above
-
-	assigned, ok := r.regionAssignedToSource[source]
-	if !ok {
-		return nil, fmt.Errorf("api=%s no region assigned to source=%s", api, source)
+	words := strings.SplitN(fullsource, ".", 2)
+	source := words[0]
+	var region string
+	if len(words) > 1 {
+		// For the moment, we just accept whatever region name is
+		// appended to the nuid.  Someday might to only do this if
+		// we're on palettecentral
+		region = words[1]
+	} else {
+		region, ok = r.regionAssignedToSource[fullsource]
+		if !ok {
+			return nil, fmt.Errorf("api=%s no region assigned to source=%s", api, source)
+		}
 	}
-	reactor, ok := TheRouter().reactors[assigned]
+	reactor, ok := TheRouter().reactors[region]
 	if !ok {
-		return nil, fmt.Errorf("api/event=%s there is no region named %s", api, assigned)
+		return nil, fmt.Errorf("api/event=%s there is no region named %s", api, region)
 	}
 	return reactor, nil
 }

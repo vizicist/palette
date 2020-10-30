@@ -1,4 +1,4 @@
 @echo off
-call stoppalette
-call stopbidule
-call stopresolume
+call palettestop
+call palettestopbidule
+call palettestopresolume
