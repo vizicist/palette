@@ -61,13 +61,13 @@ func LoadMorphs() error {
 	}
 	toplevel := f.(map[string]interface{})
 
-	for serialnum, padinfo := range toplevel {
-		padname := padinfo.(string)
+	for serialnum, regioninfo := range toplevel {
+		regionname := regioninfo.(string)
 		if DebugUtil.Morph {
-			log.Printf("Setting Morph serial=%s pad=%s\n", serialnum, padname)
+			log.Printf("Setting Morph serial=%s region=%s\n", serialnum, regionname)
 		}
-		MorphDefs[serialnum] = padname
-		TheRouter().setRegionForSource(serialnum, padname)
+		MorphDefs[serialnum] = regionname
+		TheRouter().setRegionForMorph(serialnum, regionname)
 	}
 	return nil
 }

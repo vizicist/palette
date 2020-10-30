@@ -50,7 +50,7 @@ type Router struct {
 	myHostname             string
 	generateVisuals        bool
 	generateSound          bool
-	regionForSource        map[string]string // for all known Morph serial#'s
+	regionForMorph         map[string]string // for all known Morph serial#'s
 	regionAssignedToSource map[string]string
 	inputMutex             sync.RWMutex
 }
@@ -120,7 +120,7 @@ func TheRouter() *Router {
 		SetExternalScale(60%12, true) // Middle C
 
 		oneRouter.reactors = make(map[string]*Reactor)
-		oneRouter.regionForSource = make(map[string]string)
+		oneRouter.regionForMorph = make(map[string]string)
 		oneRouter.regionAssignedToSource = make(map[string]string)
 
 		freeframeClientA := osc.NewClient("127.0.0.1", 3334)
@@ -557,7 +557,7 @@ func (r *Router) ExecuteAPI(api string, rawargs string) (result interface{}, err
 	apisuffix := words[1]
 
 	if apiprefix == "region" {
-		reactor, err := r.getRegionForSource(api, args)
+		reactor, err := r.getReactorForSource(api, args)
 		if err != nil {
 			return nil, err
 		}
@@ -993,30 +993,17 @@ func (r *Router) handleOSCAPI(msg *osc.Message, source string) {
 	return
 }
 
-// getRegionForSource - NOTE, this removes the "source" argument from the map,
+// getReactorForSource - NOTE, this removes the "source" argument from the map,
 // partially to avoid (at least initially) letting Reactor APIs know
 // what source is calling them.  I.e. all source-depdendent behaviour is
 // determined in Router.
-func (r *Router) getRegionForSource(api string, args map[string]string) (*Reactor, error) {
-	fullsource, ok := args["source"]
+func (r *Router) getReactorForSource(api string, args map[string]string) (*Reactor, error) {
+	source, ok := args["source"]
 	if !ok {
 		return nil, fmt.Errorf("api/event=%s missing value for source", api)
 	}
 	delete(args, "source") // see comment above
-	words := strings.SplitN(fullsource, ".", 2)
-	source := words[0]
-	var region string
-	if len(words) > 1 {
-		// For the moment, we just accept whatever region name is
-		// appended to the nuid.  Someday might to only do this if
-		// we're on palettecentral
-		region = words[1]
-	} else {
-		region, ok = r.regionAssignedToSource[fullsource]
-		if !ok {
-			return nil, fmt.Errorf("api=%s no region assigned to source=%s", api, source)
-		}
-	}
+	region := r.getRegionForSource(source)
 	reactor, ok := TheRouter().reactors[region]
 	if !ok {
 		return nil, fmt.Errorf("api/event=%s there is no region named %s", api, region)
@@ -1053,33 +1040,66 @@ func (r *Router) assignRegion(source string) string {
 	return ""
 }
 
-func (r *Router) regionForCursor(e CursorDeviceEvent) string {
-	words := strings.SplitN(e.Source, ".", 2)
+func (r *Router) getRegionForSource(fullsource string) string {
+
+	if fullsource[:2] == "SM" {
+		// Anyting starting with SM is a Sensel Morph serial#
+		return r.getRegionForMorph(fullsource)
+	}
+	return r.getRegionForNUID(fullsource)
+}
+
+func (r *Router) setRegionForMorph(serialnum string, regionname string) {
+	r.regionForMorph[serialnum] = regionname
+}
+
+func (r *Router) getRegionForMorph(fullsource string) string {
+	words := strings.SplitN(fullsource, ".", 2)
 	if len(words) != 2 {
-		log.Printf("Router.regionForCursore: invalid e.Source=%s\n", e.Source)
+		log.Printf("Router.getRegionForMorph: assuing A for invalid source=%s\n", fullsource)
 		return "A"
 	}
 	source := words[0]
 
 	// See if we've already assigned a region to this source
-	reg, ok := r.regionForSource[source]
+	region, ok := r.regionForMorph[source]
 	if ok {
-		return reg
+		return region
 	}
 
 	// Hasn't been seen yet, let's get an available region
-	reg = r.assignRegion(source)
-	r.setRegionForSource(source, reg)
+	region = r.assignRegion(source)
+	r.regionAssignedToSource[source] = region
 
-	return reg
+	return region
 }
 
-func (r *Router) setRegionForSource(source string, region string) {
-	r.regionForSource[source] = region
+func (r *Router) getRegionForNUID(fullsource string) string {
+
+	words := strings.SplitN(fullsource, ".", 2)
+	if len(words) > 1 {
+		// For the moment, we just accept whatever region name is
+		// appended to the nuid.  Someday might to only do this if
+		// we're on palettecentral
+		return words[1]
+	}
+
+	nuid := words[0]
+	// See if we've already assigned a region to this source
+	region, ok := r.regionAssignedToSource[nuid]
+	if ok {
+		return region
+	}
+
+	// Hasn't been seen yet, let's get an available region
+	region = r.assignRegion(fullsource)
+	r.regionAssignedToSource[fullsource] = region
+
+	return region
 }
 
 func (r *Router) routeCursorDeviceEvent(e CursorDeviceEvent) {
-	region := r.regionForCursor(e)
+	region := r.getRegionForSource(e.Source)
 
 	reactor, ok := r.reactors[region]
 	if !ok {
