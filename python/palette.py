@@ -18,9 +18,6 @@ except ImportError:
 import threading
 import platform
 
-guiOscPort = 3943
-resolumeOscPort = 7000
-
 PadLayer = {
         "A":"1", "B":"2", "C":"3", "D":"4"
 }

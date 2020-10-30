@@ -1,6 +1,6 @@
 
 c:/windows/system32/taskkill /F /IM palette.exe > nul 2>&1
-c:/windows/system32/taskkill /F /IM gui.exe > nul 2>&1
+c:/windows/system32/taskkill /F /IM palettegui.exe > nul 2>&1
 
 set logdir=%LOCALAPPDATA%\Palette\logs
 
@@ -15,4 +15,4 @@ sleep 4
 echo > "%logdir%\gui.log"
 echo > "%logdir%\gui.stdout"
 echo > "%logdir%\gui.stderr"
-start /b "" "%PALETTE%\bin\pyinstalled\gui.exe" > "%logdir%\gui.stdout" 2> "%logdir%\gui.stderr"
+start /b "" "%PALETTE%\bin\pyinstalled\palettegui.exe" > "%logdir%\gui.stdout" 2> "%logdir%\gui.stderr"
