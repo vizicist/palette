@@ -66,6 +66,7 @@ SenselDeviceList sensellist;
 void
 SenselInit()
 {
+	printf("HI FROM SENSELINIT!\n");
 	if ( ! senselLoaded ) {
 		senselGetDeviceList(&sensellist);
 		senselLoaded = 1;
@@ -308,7 +309,7 @@ func (m oneMorph) readFrames(callback CursorDeviceCallbackFunc, forceFactor floa
 			var contact C.struct_goSenselContact
 			status = C.SenselGetContact(C.uchar(m.idx), C.uchar(n), &contact)
 			if status != C.SENSEL_OK {
-				log.Printf("Morph: SenselGetContact of idx=%d n=%d returned %d\n", m.idx, n, status)
+				log.Printf("Morph: SenselGetContact of morph_idx=%d n=%d returned %d\n", m.idx, n, status)
 				continue
 			}
 			xNorm := float32(contact.x_pos) / m.width
@@ -316,10 +317,6 @@ func (m oneMorph) readFrames(callback CursorDeviceCallbackFunc, forceFactor floa
 			zNorm := float32(contact.total_force) / morphMaxForce
 			zNorm *= forceFactor
 			area := float32(contact.area)
-			if DebugUtil.Morph {
-				log.Printf("Morph: id=%d idx=%d contact#=%d state=%d xNorm=%f yNorm=%f zNorm=%f area=%f\n",
-					contact.id, m.idx, n, contact.state, xNorm, yNorm, zNorm, area)
-			}
 			var ddu string
 			switch contact.state {
 			case CursorDown:
@@ -362,6 +359,11 @@ func (m oneMorph) readFrames(callback CursorDeviceCallbackFunc, forceFactor floa
 				yNorm *= 2.0
 			}
 			cid := fmt.Sprintf("%d", contact.id)
+
+			if DebugUtil.Morph {
+				log.Printf("Morph: contact_id=%d morph_idx=%d n=%d state=%d xNorm=%f yNorm=%f zNorm=%f\n",
+					contact.id, m.idx, n, contact.state, xNorm, yNorm, zNorm)
+			}
 
 			ev := CursorDeviceEvent{
 				NUID:       MyNUID(),

@@ -114,11 +114,7 @@ func (r *Reactor) Time() time.Time {
 
 func (r *Reactor) handleCursorDeviceEvent(e CursorDeviceEvent) {
 
-	if DebugUtil.Cursor {
-		log.Printf("Reactor.handleCursorDeviceEvent: pad=%s e=%+v\n", r.padName, e)
-	}
-
-	id := e.NUID
+	id := e.NUID + "." + e.CID
 
 	r.deviceCursorsMutex.Lock()
 
@@ -135,13 +131,18 @@ func (r *Reactor) handleCursorDeviceEvent(e CursorDeviceEvent) {
 		e.DownDragUp = "down"
 		tc.downed = true
 	}
-	r.executeIncomingCursor(CursorStepEvent{
+	cse := CursorStepEvent{
 		ID:         id,
 		X:          e.X,
 		Y:          e.Y,
 		Z:          e.Z,
 		Downdragup: e.DownDragUp,
-	})
+	}
+	if DebugUtil.Cursor {
+		log.Printf("Reactor.handleCursorDeviceEvent: pad=%s e=%+v cse=%+v\n", r.padName, e, cse)
+	}
+
+	r.executeIncomingCursor(cse)
 
 	if e.DownDragUp == "up" {
 		if DebugUtil.Cursor {

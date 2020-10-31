@@ -579,6 +579,9 @@ func (r *Router) ExecuteAPI(api string, rawargs string) (result interface{}, err
 		region := optionalStringArg("region", args, "")
 		if region == "" {
 			region = r.getRegionForNUID(nuid)
+		} else {
+			// Remove it from the args given to ExecuteAPI
+			delete(args, "region")
 		}
 		reactor, ok := TheRouter().reactors[region]
 		if !ok {
