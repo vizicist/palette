@@ -23,8 +23,6 @@ PadLayer = {
 }
 
 DebugApi = False
-DebugOsc = False
-DebugOscFull = False
 MyNuid = ""
 
 def MyNUID():
@@ -233,8 +231,7 @@ def presetsFilePath(section, nm, suffix=".json"):
     return os.path.join(PresetsDir(),section, nm+suffix)
 
 def SendCursorEvent(cid,ddu,x,y,z):
-    source = MyNUID() + "." + str(cid)
-    e = "{ \"source\": \"" + source+ "\", \"event\": \"" + ddu + "\", \"x\": \"%f\", \"y\": \"%f\", \"z\": \"%f\" }"  % (x,y,z)
+    e = "{ \"nuid\": \"" + MyNUID() + "\", \"cid\": \"" + str(cid) + "\", \"event\": \"" + ddu + "\", \"x\": \"%f\", \"y\": \"%f\", \"z\": \"%f\" }"  % (x,y,z)
     palette_cursorevent(e)
 
 def IgnoreKeyboardInterrupt():

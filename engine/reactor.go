@@ -102,6 +102,8 @@ func NewReactor(pad string, resolumeLayer int, freeframeClient *osc.Client, reso
 		deviceCursors:             make(map[string]*DeviceCursor),
 		activePhrasesManager:      NewActivePhrasesManager(),
 	}
+	r.params.SetDefaultValues()
+	log.Printf("NewReactor: pad=%s resolumeLayer=%d\n", pad, resolumeLayer)
 	return r
 }
 
@@ -116,7 +118,7 @@ func (r *Reactor) handleCursorDeviceEvent(e CursorDeviceEvent) {
 		log.Printf("Reactor.handleCursorDeviceEvent: pad=%s e=%+v\n", r.padName, e)
 	}
 
-	id := e.Source
+	id := e.NUID
 
 	r.deviceCursorsMutex.Lock()
 
@@ -187,11 +189,6 @@ func (r *Reactor) getActiveNote(id string) *ActiveNote {
 	return a
 }
 
-func (r *Reactor) setDefaultParameters() {
-	// Set all the parameter defaults
-	r.params.SetDefaultValues()
-}
-
 func (r *Reactor) getActiveStepCursor(ce CursorStepEvent) *ActiveStepCursor {
 	sid := ce.ID
 	r.activeCursorsMutex.RLock()
@@ -236,7 +233,7 @@ func (r *Reactor) generateVisualsFromCursor(ce CursorStepEvent) {
 	msg.Append(float32(ce.Y))
 	msg.Append(float32(ce.Z))
 	if DebugUtil.GenVisual {
-		log.Printf("Reactor.generateVisuals: click=%d stepnum=%d OSC message = %+v\n", currentClick, r.loop.currentStep, msg)
+		log.Printf("Reactor.generateVisuals: pad=%s click=%d stepnum=%d OSC message = %+v\n", r.padName, currentClick, r.loop.currentStep, msg)
 	}
 	r.toFreeFramePluginForLayer(msg)
 }
@@ -294,7 +291,7 @@ func (r *Reactor) generateSpriteFromNote(a *ActiveNote) {
 }
 
 func (r *Reactor) notifyGUI(ce CursorStepEvent, wasFresh bool) {
-	// send an OSC message to Resolume
+	// send an OSC message to GUI
 	msg := osc.NewMessage("/notify")
 	msg.Append(ce.Downdragup)
 	msg.Append(ce.ID)
@@ -304,7 +301,7 @@ func (r *Reactor) notifyGUI(ce CursorStepEvent, wasFresh bool) {
 	msg.Append(int32(r.resolumeLayer))
 	msg.Append(wasFresh)
 	r.guiClient.Send(msg)
-	if DebugUtil.OSC {
+	if DebugUtil.Notify {
 		log.Printf("Reactor.notifyGUI: msg=%v\n", msg)
 	}
 }
@@ -312,7 +309,7 @@ func (r *Reactor) notifyGUI(ce CursorStepEvent, wasFresh bool) {
 func (r *Reactor) toFreeFramePluginForLayer(msg *osc.Message) {
 	r.freeframeClient.Send(msg)
 	if DebugUtil.OSC {
-		log.Printf("Reactor.toFreeFramePluginForLayer: msg=%v\n", msg)
+		log.Printf("Reactor.toFreeFramePlugin: layer=%d msg=%v\n", r.resolumeLayer, msg)
 	}
 }
 

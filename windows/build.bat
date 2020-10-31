@@ -8,7 +8,7 @@ goto getout
 :keepgoing
 
 echo ================ Killing currently-running things
-call %PALETTESOURCE%\scripts\palettestop.bat
+call %PALETTESOURCE%\scripts\palettestopall.bat
 
 set ship=%PALETTESOURCE%\windows\ship
 set bin=%ship%\bin
@@ -77,8 +77,10 @@ copy %PALETTESOURCE%\nats\nats-sub.exe %bin% >nul
 
 echo ================ Copying scripts
 pushd %PALETTESOURCE%\scripts
-copy palettestop.bat %bin% >nul
 copy palettestart.bat %bin% >nul
+copy palettestop.bat %bin% >nul
+copy palettestartall.bat %bin% >nul
+copy palettestopall.bat %bin% >nul
 copy testcursor.bat %bin% >nul
 copy osc.bat %bin% >nul
 copy taillog.bat %bin% >nul
