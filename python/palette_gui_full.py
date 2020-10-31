@@ -1195,8 +1195,12 @@ class ProGuiApp(tk.Tk):
             palette_api("region.ANO", "{ " + SourceArg(pad) + " }")
 
     def sendSnap(self):
-        for pad in self.PadNames:
-            self.sendSnapPad(pad)
+        # Should only do this for the pads that are enabled
+        if self.padChooser.padGlobalOn:
+            for pad in self.PadNames:
+                self.sendSnapPad(pad)
+        else:
+            self.sendSnapPad(self.currentPad)
 
     def paramListJson(self,paramtype,pad):
         # The presence of a region value signifies a per-pad API
