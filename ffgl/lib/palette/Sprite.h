@@ -59,7 +59,6 @@ public:
 		rotangsofar = 0.0f;
 		stationary = false;
 		cid = "nosuchcursor";
-		cidsource = "nosuchsource";
 		rotanginit = 0.0;
 		gravityForce = NosuchVector(0.0, 0.0);
 	}
@@ -77,7 +76,6 @@ public:
 	double rotangsofar;
 	bool stationary;
 	std::string cid;
-	std::string cidsource;
 	int seq;     // sprite sequence # (mostly for debugging)
 	int rotdir;  // -1, 0, 1
 	double rotanginit;

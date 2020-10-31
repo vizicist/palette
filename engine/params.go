@@ -335,7 +335,7 @@ func (vals *ParamValues) ParamStringValue(name string, def string) string {
 func (vals *ParamValues) ParamIntValue(name string) int {
 	param := vals.paramValue(name)
 	if param == nil {
-		log.Printf("**** No existing float int for param name=%s ??\n", name)
+		log.Printf("**** No existing int value for param name=%s ??\n", name)
 		return 0
 	}
 	return param.(paramValInt).value
