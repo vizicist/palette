@@ -25,7 +25,7 @@ var time0 = time.Now()
 func PublishCursorDeviceEvent(ce CursorDeviceEvent) error {
 	dt := time.Now().Sub(time0)
 	params := "{ " +
-		"\"source\": \"" + ce.Source + "\", " +
+		"\"nuid\": \"" + ce.NUID + "\", " +
 		"\"event\": \"" + ce.DownDragUp + "\", " +
 		"\"millisecs\": \"" + fmt.Sprintf("%d", dt.Milliseconds()) + "\", " +
 		"\"x\": \"" + fmt.Sprintf("%f", ce.X) + "\", " +
@@ -50,7 +50,7 @@ func PublishMidiDeviceEvent(me MidiDeviceEvent) error {
 	// and use our own, so the timestamps are consistent with
 	// the ones on Cursor events
 	params := "{ " +
-		"\"source\": \"" + MyNUID() + "\", " +
+		"\"nuid\": \"" + MyNUID() + "\", " +
 		// "\"timestamp\": \"" + fmt.Sprintf("%d", me.Timestamp) + "\", " +
 		"\"millisecs\": \"" + fmt.Sprintf("%d", dt.Milliseconds()) + "\", " +
 		"\"status\": \"" + fmt.Sprintf("%d", me.Status) + "\", " +

@@ -414,6 +414,9 @@ PaletteHost::LoadPaletteConfig(cJSON* c)
 	if ( (j=getNumber(c,"debugsprite")) != NULL ) {
 		NosuchDebugSprite = j->valueint?TRUE:FALSE;
 	}
+	if ( (j=getNumber(c,"debugsprite")) != NULL ) {
+		NosuchDebugSprite = j->valueint?TRUE:FALSE;
+	}
 	if ( (j=getNumber(c,"debugautoflush")) != NULL ) {
 		NosuchDebugAutoFlush = j->valueint?TRUE:FALSE;
 	}

@@ -13,7 +13,9 @@ type CursorDevice interface {
 
 // CursorDeviceEvent is a single CursorDevice event
 type CursorDeviceEvent struct {
-	Source     string // of the form {nuid}.{cursorname}
+	NUID       string
+	Region     string
+	CID        string
 	Timestamp  int64  // milliseconds
 	DownDragUp string // "down", "drag", "up"
 	X          float32
@@ -24,9 +26,7 @@ type CursorDeviceEvent struct {
 
 // CursorStepEvent is a down, drag, or up event inside a loop step
 type CursorStepEvent struct {
-	// Source     string
-	// Region     string
-	ID         string // globally unique of the form {nuid}.{cursorID}[.#{instancenum}]
+	ID         string // globally unique of the form {nuid}.{CID}[.#{instancenum}]
 	X          float32
 	Y          float32
 	Z          float32

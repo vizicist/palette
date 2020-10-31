@@ -40,7 +40,6 @@ Sprite::initState(std::string cid, std::string cidsource, NosuchVector& pos, dou
 	state.direction = movedir;
 	state.depth = depth;
 	state.cid = cid;
-	state.cidsource = cidsource;
 
 	state.born = Palette::now;
 	state.last_tm = Palette::now;
@@ -55,7 +54,7 @@ Sprite::initState(std::string cid, std::string cidsource, NosuchVector& pos, dou
 }
 
 Sprite::~Sprite() {
-	NosuchDebug(1,"Sprite destructor! s=%d cid=%s/%s",this,state.cid.c_str(),state.cidsource.c_str());
+	NosuchDebug(1, "Sprite destructor! s=%d cid=%s", this, state.cid.c_str());
 }
 
 double Sprite::degree2radian(double deg) {
@@ -221,6 +220,9 @@ void Sprite::drawAt(PaletteHost* app, double x,double y, double scalex, double s
 	// 	state.seq,params.rotanginit,state.rotangsofar,degrees);
 	// NosuchDebug("Sprite::drawAt degrees=%.4f  w,h=%f,%f\n",degrees,w,h);
 	// NosuchDebug("Sprite::drawAt s=%d degrees=%.4f",(int)this,degrees);
+	if (NosuchDebugSprite) {
+		NosuchDebug("Sprite.drawAt: calling drawShape cid=%s x=%.6f y=%.6f", this->state.cid.c_str(), this->state.pos.x, this->state.pos.y);
+	}
 	app->rotate(degrees);
 	drawShape(app,xdir,ydir);
 	app->popMatrix();
@@ -391,7 +393,9 @@ SpriteList::add(Sprite* s, int limit)
 	}
 	while ((int)sprites.size() > limit) {
 		Sprite* ps = sprites.front();
-		NosuchDebug("SpriteList.add: over limit, popping cid=%s", ps->state.cid.c_str());
+		if (NosuchDebugSprite) {
+			NosuchDebug("SpriteList.add: over limit, popping cid=%s", ps->state.cid.c_str());
+		}
 		sprites.pop_front();
 		delete ps;
 	}

@@ -1,5 +1,5 @@
 echo on
-call palettestart
+call palettestartfull
 sleep 5
 call palettestartbidule
 call palettestartresolume

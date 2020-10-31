@@ -34,6 +34,7 @@ type DebugFlags struct {
 	Morph     bool
 	NATS      bool
 	OSC       bool
+	Notify    bool
 	Realtime  bool
 	Remote    bool
 }
@@ -47,7 +48,12 @@ func setDebug(dtype string, b bool) error {
 		DebugUtil.API = b
 	case "cursor":
 		DebugUtil.Cursor = b
-	case "genSound":
+	case "notify":
+		DebugUtil.Notify = b
+	case "gen":
+		DebugUtil.GenSound = b
+		DebugUtil.GenVisual = b
+	case "gensound":
 		DebugUtil.GenSound = b
 	case "genvisual":
 		DebugUtil.GenVisual = b

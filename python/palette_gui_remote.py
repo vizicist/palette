@@ -598,7 +598,7 @@ class ProGuiApp(tk.Tk):
         #     self.sendPadOneEffectVal(pad,paramname,val)
         # else:
         palette_api("region."+paramType+".set_param",
-            "{ \"source\": \""+ MyNUID() + "\"" + \
+            "{ \"nuid\": \""+ MyNUID() + "\"" + \
             ", \"param\": \"" + paramname + "\"" + \
             ", \"value\": \"" + str(val) + "\"" + \
             "}")
@@ -740,31 +740,31 @@ class ProGuiApp(tk.Tk):
                 return
 
             palette_api("region.loop_recording",
-                '{ "source": "'+MyNUID()+'", "onoff": "'+str(reconoff)+'" }')
+                '{ "nuid": "'+MyNUID()+'", "onoff": "'+str(reconoff)+'" }')
             palette_api("region.loop_playing",
-                '{ "source": "'+MyNUID()+'", "onoff": "'+str(playonoff)+'" }')
+                '{ "nuid": "'+MyNUID()+'", "onoff": "'+str(playonoff)+'" }')
 
         elif name == "loopinglength":
             v = self.perpadPerformVal["loopinglength"][pad]["value"]
             palette_api("region.loop_length",
-                "{ \"source\": \""+MyNUID()+"\", \"length\": "+str(v)+" }")
+                "{ \"nuid\": \""+MyNUID()+"\", \"length\": "+str(v)+" }")
 
         elif name == "loopingfade":
             fade = self.perpadPerformVal["loopingfade"][pad]["value"]
             palette_api("region.loop_fade",
-                "{ \"source\": \""+MyNUID()+"\", \"fade\": "+str(fade)+" }")
+                "{ \"nuid\": \""+MyNUID()+"\", \"fade\": "+str(fade)+" }")
 
         elif name == "quant":
             val = self.perpadPerformVal["quant"][pad]["value"]
             palette_api("region.set_param",
-                "{ \"source\": \""+ MyNUID() + "\"" + \
+                "{ \"nuid\": \""+ MyNUID() + "\"" + \
                 ", \"param\": \"" + "misc.quant" + "\"" + \
                 ", \"value\": \"" + str(val) + "\"" + \
                 "}")
         elif name == "scale":
             val = self.perpadPerformVal["scale"][pad]["value"]
             palette_api("region.set_param",
-                "{ \"source\": \""+ MyNUID() + "\"" + \
+                "{ \"nuid\": \""+ MyNUID() + "\"" + \
                 ", \"param\": \"" + "misc.scale" + "\"" + \
                 ", \"value\": \"" + str(val) + "\"" + \
                 "}")
@@ -772,14 +772,14 @@ class ProGuiApp(tk.Tk):
             val = self.perpadPerformVal["vol"][pad]["value"]
             # NOTE: "voltype" here rather than "vol" - should make consistent someday
             palette_api("region.set_param",
-                "{ \"source\": \""+ MyNUID() + "\"" + \
+                "{ \"nuid\": \""+ MyNUID() + "\"" + \
                 ", \"param\": \"" + "misc.vol" + "\"" + \
                 ", \"value\": \"" + str(val) + "\"" + \
                 "}")
         elif name == "comb":
             val = 1.0
             palette_api("region.loop_comb",
-                "{ \"source\": \""+ MyNUID() + "\"" + \
+                "{ \"nuid\": \""+ MyNUID() + "\"" + \
                 ", \"value\": \"" + str(val) + "\"" + \
                 "}")
 
@@ -815,10 +815,10 @@ class ProGuiApp(tk.Tk):
             palette_api("global.set_transpose", '{ "value": '+str(val)+' }')
 
     def clearPadLoop(self,pad):
-        palette_api("region.loop_clear", '{ "source": "'+MyNUID()+'" }')
+        palette_api("region.loop_clear", '{ "nuid": "'+MyNUID()+'" }')
 
     def combPadLoop(self,pad):
-        palette_api("region.loop_comb", '{ "source": "'+MyNUID()+'" }')
+        palette_api("region.loop_comb", '{ "nuid": "'+MyNUID()+'" }')
 
     def combLoop(self):
         self.resetLastAnything()
@@ -873,14 +873,14 @@ class ProGuiApp(tk.Tk):
         palette_api("global.clearexternalscale",'{ }')
 
     def sendANO(self):
-        palette_api("region.ANO", "{ \"source\": \""+ MyNUID() + "\" }")
+        palette_api("region.ANO", "{ \"nuid\": \""+ MyNUID() + "\" }")
 
     def sendSnap(self):
         self.sendSnapPad(PadName)
 
     def paramListJson(self,paramtype,pad):
         # The presence of a region value signifies a per-pad API
-        paramlist = "\"source\" : \"" + MyNUID() + "\""
+        paramlist = "\"nuid\" : \"" + MyNUID() + "\""
         sep = ", "
         for name in self.allParamsJson:
             j = self.allParamsJson[name]

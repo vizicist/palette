@@ -28,31 +28,32 @@ type Router struct {
 	MIDINumDown     int
 	MIDIOctaveShift int
 	// MIDISetScale      bool
-	MIDIThru               string // "", "A", "B", "C", "D"
-	MIDIThruScadjust       bool
-	MIDIQuantized          bool
-	useExternalScale       bool // if true, scadjust uses "external" Scale
-	killme                 bool // set to true if Router should be stopped
-	lastClick              Clicks
-	control                chan Command
-	time                   time.Time
-	time0                  time.Time
-	killPlayback           bool
-	recordingOn            bool
-	recordingFile          *os.File
-	recordingBegun         time.Time
-	resolumeClient         *osc.Client
-	guiClient              *osc.Client
-	plogueClient           *osc.Client
-	publishCursor          bool // e.g. "nats"
-	paletteCentral         string
-	isPaletteHost          bool
-	myHostname             string
-	generateVisuals        bool
-	generateSound          bool
-	regionForMorph         map[string]string // for all known Morph serial#'s
-	regionAssignedToSource map[string]string
-	inputMutex             sync.RWMutex
+	MIDIThru             string // "", "A", "B", "C", "D"
+	MIDIThruScadjust     bool
+	MIDIQuantized        bool
+	useExternalScale     bool // if true, scadjust uses "external" Scale
+	killme               bool // set to true if Router should be stopped
+	lastClick            Clicks
+	control              chan Command
+	time                 time.Time
+	time0                time.Time
+	killPlayback         bool
+	recordingOn          bool
+	recordingFile        *os.File
+	recordingBegun       time.Time
+	resolumeClient       *osc.Client
+	guiClient            *osc.Client
+	plogueClient         *osc.Client
+	publishCursor        bool // e.g. "nats"
+	paletteCentral       string
+	isPaletteHost        bool
+	myHostname           string
+	generateVisuals      bool
+	generateSound        bool
+	regionForMorph       map[string]string // for all known Morph serial#'s
+	regionAssignedToNUID map[string]string
+	regionAssignedMutex  sync.RWMutex // covers both regionForMorph and regionAssignedToNUID
+	inputMutex           sync.RWMutex
 }
 
 // OSCEvent is an OSC message
@@ -121,7 +122,7 @@ func TheRouter() *Router {
 
 		oneRouter.reactors = make(map[string]*Reactor)
 		oneRouter.regionForMorph = make(map[string]string)
-		oneRouter.regionAssignedToSource = make(map[string]string)
+		oneRouter.regionAssignedToNUID = make(map[string]string)
 
 		freeframeClientA := osc.NewClient("127.0.0.1", 3334)
 		freeframeClientB := osc.NewClient("127.0.0.1", 3335)
@@ -367,21 +368,26 @@ func (r *Router) HandleSubscribedCursorInput(data string) {
 
 	api := SubscribeCursorSubject
 
-	cid, err := needStringArg("source", api, args)
+	nuid, err := needStringArg("nuid", api, args)
+	if err != nil {
+		log.Printf("HandleSubscribedCursor: err=%s\n", err)
+		return
+	}
+	if nuid == MyNUID() {
+		log.Printf("Ignoring cursorevent from myself, nuid=%s\n", nuid)
+		return
+	}
+
+	cid, err := needStringArg("cid", api, args)
 	if err != nil {
 		log.Printf("HandleSubscribedCursor: err=%s\n", err)
 		return
 	}
 
-	words := strings.SplitN(cid, ".", 2)
-	if len(words) != 2 {
-		log.Printf("HandleSubscribedCursor: wrong format cid=%s\n", cid)
-		return
-	}
-	source := words[0]
-	if source == MyNUID() {
-		log.Printf("Ignoring cursorevent from myself, source=%s\n", source)
-		return
+	region, ok := args["region"]
+	if !ok {
+		// If no "region" argument, use one assigned to NUID
+		region = r.getRegionForNUID(nuid)
 	}
 
 	if DebugUtil.Cursor {
@@ -421,7 +427,9 @@ func (r *Router) HandleSubscribedCursorInput(data string) {
 	}
 
 	ce := CursorDeviceEvent{
-		Source:     cid,
+		NUID:       nuid,
+		Region:     region,
+		CID:        cid,
 		Timestamp:  int64(CurrentMilli),
 		DownDragUp: eventType,
 		X:          x,
@@ -446,10 +454,14 @@ func (r *Router) HandleSubscribedMidiInput(data string) {
 		return
 	}
 
-	source := optionalStringArg("source", args, "unknown")
-	if source == MyNUID() {
+	nuid, err := needStringArg("nuid", "HandleSubscribedMidiInput", args)
+	if err != nil {
+		log.Printf("HandleMIDIEventMsg: err=%s\n", err)
+		return
+	}
+	if nuid == MyNUID() {
 		if DebugUtil.MIDI {
-			log.Printf("Ignoring midievent from myself, source=%s\n", source)
+			log.Printf("Ignoring midievent from myself, nuid=%s\n", nuid)
 		}
 		return
 	}
@@ -556,10 +568,21 @@ func (r *Router) ExecuteAPI(api string, rawargs string) (result interface{}, err
 	apiprefix := words[0]
 	apisuffix := words[1]
 
+	nuid, err := needStringArg("nuid", api, args)
+	if err != nil {
+		return nil, err
+	}
+	delete(args, "nuid") // see comment above
+
 	if apiprefix == "region" {
-		reactor, err := r.getReactorForSource(api, args)
-		if err != nil {
-			return nil, err
+
+		region := optionalStringArg("region", args, "")
+		if region == "" {
+			region = r.getRegionForNUID(nuid)
+		}
+		reactor, ok := TheRouter().reactors[region]
+		if !ok {
+			return nil, fmt.Errorf("api/event=%s there is no region named %s", api, region)
 		}
 		return reactor.ExecuteAPI(apisuffix, args, rawargs)
 	}
@@ -670,7 +693,7 @@ func (r *Router) ExecuteAPI(api string, rawargs string) (result interface{}, err
 		log.Printf("Router.ExecuteAPI: audioOff is now ignored\n")
 
 	case "audioStop":
-		// In case we really need it
+		// In case we really need it.
 		msg := osc.NewMessage("/play")
 		msg.Append(int32(0))
 		r.plogueClient.Send(msg)
@@ -816,7 +839,7 @@ func (r *Router) notifyGUI(eventName string) {
 	msg.Append(eventName)
 	r.guiClient.Send(msg)
 	if DebugUtil.OSC {
-		log.Printf("toGUI %s msg=%v\n", TimeString(), msg)
+		log.Printf("Router.notifyGUI: msg=%v\n", msg)
 	}
 }
 
@@ -993,17 +1016,17 @@ func (r *Router) handleOSCAPI(msg *osc.Message, source string) {
 	return
 }
 
-// getReactorForSource - NOTE, this removes the "source" argument from the map,
-// partially to avoid (at least initially) letting Reactor APIs know
-// what source is calling them.  I.e. all source-depdendent behaviour is
+// OLDgetReactorForNUID - NOTE, this removes the "nuid" argument from the map,
+// partially to avoid (at least until there's a reason for) letting Reactor APIs
+// know what source is calling them.  I.e. all source-depdendent behaviour is
 // determined in Router.
-func (r *Router) getReactorForSource(api string, args map[string]string) (*Reactor, error) {
-	source, ok := args["source"]
+func (r *Router) OLDgetReactorForNUID(api string, args map[string]string) (*Reactor, error) {
+	nuid, ok := args["nuid"]
 	if !ok {
-		return nil, fmt.Errorf("api/event=%s missing value for source", api)
+		return nil, fmt.Errorf("api/event=%s missing value for nuid", api)
 	}
-	delete(args, "source") // see comment above
-	region := r.getRegionForSource(source)
+	delete(args, "nuid") // see comment above
+	region := r.getRegionForNUID(nuid)
 	reactor, ok := TheRouter().reactors[region]
 	if !ok {
 		return nil, fmt.Errorf("api/event=%s there is no region named %s", api, region)
@@ -1012,25 +1035,25 @@ func (r *Router) getReactorForSource(api string, args map[string]string) (*React
 }
 
 // availableRegion - return the name of a region that hasn't been assigned to a remote yet
-func (r *Router) assignRegion(source string) string {
+// It is assumed that we have a mutex on r.regionAssignedToSource
+func (r *Router) availableRegion(source string) string {
 
 	regionLetters := "ABCD"
 
 	nregions := len(regionLetters)
-	regionAssigned := make([]bool, nregions)
-	for _, v := range r.regionAssignedToSource {
+	alreadyAssigned := make([]bool, nregions)
+	for _, v := range r.regionAssignedToNUID {
 		i := strings.Index(regionLetters, v)
 		if i >= 0 {
-			regionAssigned[i] = true
+			alreadyAssigned[i] = true
 		}
 	}
-	for i, used := range regionAssigned {
+	for i, used := range alreadyAssigned {
 		if !used {
 			avail := regionLetters[i : i+1]
 			if DebugUtil.Cursor {
 				log.Printf("Router.assignRegion: %s is assigned to source=%s\n", avail, source)
 			}
-			r.regionAssignedToSource[source] = avail
 			return avail
 		}
 	}
@@ -1040,70 +1063,60 @@ func (r *Router) assignRegion(source string) string {
 	return ""
 }
 
+/*
 func (r *Router) getRegionForSource(fullsource string) string {
 
+	r.regionAssignedMutex.Lock()
+	defer r.regionAssignedMutex.Unlock()
+
+	// A couple different types of source strings.
+	// Anyting starting with SM is a Sensel Morph serial#
 	if fullsource[:2] == "SM" {
-		// Anyting starting with SM is a Sensel Morph serial#
 		return r.getRegionForMorph(fullsource)
 	}
 	return r.getRegionForNUID(fullsource)
 }
+*/
 
-func (r *Router) setRegionForMorph(serialnum string, regionname string) {
-	r.regionForMorph[serialnum] = regionname
+// This is used only at startup to pre-seed the
+// Regions for known Morphs (e.g for Space Palette Pro).
+func (r *Router) setRegionForMorph(serialnum string, region string) {
+
+	r.regionAssignedMutex.Lock()
+	defer r.regionAssignedMutex.Unlock()
+
+	log.Printf("setRegionForMorph: ASSIGNING region=%s to serialnum=%s\n", region, serialnum)
+	r.regionForMorph[serialnum] = region
 }
 
-func (r *Router) getRegionForMorph(fullsource string) string {
-	words := strings.SplitN(fullsource, ".", 2)
-	if len(words) != 2 {
-		log.Printf("Router.getRegionForMorph: assuing A for invalid source=%s\n", fullsource)
-		return "A"
-	}
-	source := words[0]
+func (r *Router) assignRegionForMorph(serialnum string, region string) {
+	r.regionForMorph[serialnum] = region
+}
+
+// Assumes we have the r.regionAssignedMutex
+func (r *Router) getRegionForNUID(nuid string) string {
 
 	// See if we've already assigned a region to this source
-	region, ok := r.regionForMorph[source]
+	region, ok := r.regionAssignedToNUID[nuid]
 	if ok {
 		return region
 	}
 
 	// Hasn't been seen yet, let's get an available region
-	region = r.assignRegion(source)
-	r.regionAssignedToSource[source] = region
-
-	return region
-}
-
-func (r *Router) getRegionForNUID(fullsource string) string {
-
-	words := strings.SplitN(fullsource, ".", 2)
-	if len(words) > 1 {
-		// For the moment, we just accept whatever region name is
-		// appended to the nuid.  Someday might to only do this if
-		// we're on palettecentral
-		return words[1]
-	}
-
-	nuid := words[0]
-	// See if we've already assigned a region to this source
-	region, ok := r.regionAssignedToSource[nuid]
-	if ok {
-		return region
-	}
-
-	// Hasn't been seen yet, let's get an available region
-	region = r.assignRegion(fullsource)
-	r.regionAssignedToSource[fullsource] = region
+	region = r.availableRegion(nuid)
+	log.Printf("getRegionForNUID: ASSIGNING region=%s to nuid=%s\n", region, nuid)
+	r.regionAssignedToNUID[nuid] = region
 
 	return region
 }
 
 func (r *Router) routeCursorDeviceEvent(e CursorDeviceEvent) {
-	region := r.getRegionForSource(e.Source)
 
-	reactor, ok := r.reactors[region]
+	// region := r.getRegionForNUID(e.NUID)
+
+	reactor, ok := r.reactors[e.Region]
 	if !ok {
-		log.Printf("routeCursorDeviceEvent: no region named %s, unable to process ce=%+v\n", region, e)
+		log.Printf("routeCursorDeviceEvent: no region named %s, unable to process ce=%+v\n", e.Region, e)
 		return
 	}
 	reactor.handleCursorDeviceEvent(e)

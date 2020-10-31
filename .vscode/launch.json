@@ -18,7 +18,6 @@
             "name": "Launch palette_gui_full.py",
             "type": "python",
             "request": "launch",
-            "mode": "auto",
             "program": "C:/Users/tjt/go/src/github.com/vizicist/palette/python/palette_gui_full.py",
             "env": {},
             "args": []
@@ -27,7 +26,6 @@
             "name": "Launch palette_gui_remote.py",
             "type": "python",
             "request": "launch",
-            "mode": "auto",
             "program": "C:/Users/tjt/go/src/github.com/vizicist/palette/python/palette_gui_remote.py",
             "env": {},
             "args": []

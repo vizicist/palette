@@ -56,7 +56,7 @@ def palette_api(meth, params=None):
     return palette.palette_api_central(meth,params)
 
 def SourceArg(pad):
-    return "\"source\": \""+ MyNUID() + "." + pad + "\""
+    return "\"nuid\": \""+ MyNUID() + "\", \"region\": \"" + pad + "\""
 
 def setFontSizes(fontFactor):
     global patchFont, patchTwoLineFont, sliderFont, largestFont, hugeFont, comboFont, largerFont, largeFont, performFont, mediumFont, padLabelFont

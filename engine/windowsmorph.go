@@ -311,7 +311,6 @@ func (m oneMorph) readFrames(callback CursorDeviceCallbackFunc, forceFactor floa
 				log.Printf("Morph: SenselGetContact of idx=%d n=%d returned %d\n", m.idx, n, status)
 				continue
 			}
-			cid := contact.id
 			xNorm := float32(contact.x_pos) / m.width
 			yNorm := float32(contact.y_pos) / m.height
 			zNorm := float32(contact.total_force) / morphMaxForce
@@ -319,7 +318,7 @@ func (m oneMorph) readFrames(callback CursorDeviceCallbackFunc, forceFactor floa
 			area := float32(contact.area)
 			if DebugUtil.Morph {
 				log.Printf("Morph: id=%d idx=%d contact#=%d state=%d xNorm=%f yNorm=%f zNorm=%f area=%f\n",
-					cid, m.idx, n, contact.state, xNorm, yNorm, zNorm, area)
+					contact.id, m.idx, n, contact.state, xNorm, yNorm, zNorm, area)
 			}
 			var ddu string
 			switch contact.state {
@@ -333,9 +332,10 @@ func (m oneMorph) readFrames(callback CursorDeviceCallbackFunc, forceFactor floa
 				log.Printf("Morph: Invalid value for contact.state - %d\n", contact.state)
 				continue
 			}
+
 			region, ok := MorphDefs[m.serialNum]
 			if !ok {
-				region = MyNUID() // default for unrecognized Morphs
+				region = "unassigned"
 			}
 
 			if region == "QUAD" {
@@ -361,9 +361,12 @@ func (m oneMorph) readFrames(callback CursorDeviceCallbackFunc, forceFactor floa
 				xNorm *= 2.0
 				yNorm *= 2.0
 			}
-			fullcid := fmt.Sprintf("%s.%d", m.serialNum, cid)
+			cid := fmt.Sprintf("%d", contact.id)
+
 			ev := CursorDeviceEvent{
-				Source:     fullcid,
+				NUID:       MyNUID(),
+				Region:     region,
+				CID:        cid,
 				Timestamp:  0,
 				DownDragUp: ddu,
 				X:          xNorm,
