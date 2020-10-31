@@ -1110,21 +1110,21 @@ func (r *Router) getRegionForNUID(nuid string) string {
 	return region
 }
 
+// If we publish a CursorDeviceEvent, we don't handle it locally
 func (r *Router) routeCursorDeviceEvent(e CursorDeviceEvent) {
 
-	// region := r.getRegionForNUID(e.NUID)
-
-	reactor, ok := r.reactors[e.Region]
-	if !ok {
-		log.Printf("routeCursorDeviceEvent: no region named %s, unable to process ce=%+v\n", e.Region, e)
-		return
-	}
-	reactor.handleCursorDeviceEvent(e)
 	if r.publishCursor {
 		err := PublishCursorDeviceEvent(e)
 		if err != nil {
 			log.Printf("Router.routeCursorDeviceEvent: NATS publishing err=%s\n", err)
 		}
+	} else {
+		reactor, ok := r.reactors[e.Region]
+		if !ok {
+			log.Printf("routeCursorDeviceEvent: no region named %s, unable to process ce=%+v\n", e.Region, e)
+			return
+		}
+		reactor.handleCursorDeviceEvent(e)
 	}
 }
 

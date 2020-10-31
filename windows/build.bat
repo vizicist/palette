@@ -7,9 +7,6 @@ goto getout
 
 :keepgoing
 
-echo ================ Killing currently-running things
-call %PALETTESOURCE%\scripts\palettestopall.bat
-
 set ship=%PALETTESOURCE%\windows\ship
 set bin=%ship%\bin
 rm -fr %ship% > nul 2>&1
