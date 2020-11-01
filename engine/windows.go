@@ -49,10 +49,13 @@ func LoadMorphs() error {
 
 	MorphDefs = make(map[string]string)
 
-	path := ConfigFilePath("morphs.json")
+	// If you have more than one morph, or
+	// want the region assignment to NOT be
+	// automatice, put them in here.
+	path := LocalConfigFilePath("morphs.json")
 	bytes, err := ioutil.ReadFile(path)
 	if err != nil {
-		return fmt.Errorf("unable to read %s, err=%s", path, err)
+		return nil // It's okay if file isn't present
 	}
 	var f interface{}
 	err = json.Unmarshal(bytes, &f)

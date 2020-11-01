@@ -44,10 +44,7 @@ def boolValueOfString(v):
 ApiLock = threading.Lock()
 
 def palette_api_central(meth, params=None):
-    palettecentral = ConfigValue("palettecentral")
-    if palettecentral == "":
-        palettecentral = platform.node()
-    subject = "palette."+palettecentral+".api"
+    subject = "palette.central.api"
     r1,err = invoke_jsonrpc(subject,meth,params)
     if err != None:
         print("API of ",meth," returned err=",err)

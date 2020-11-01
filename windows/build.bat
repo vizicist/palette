@@ -26,21 +26,21 @@ msbuild /t:Build /p:Configuration=Debug /p:Platform="x64" palette.sln > nul
 popd
 
 
-echo ================ Creating palette.exe
+echo ================ Creating palette_engine.exe
 
-pushd %PALETTESOURCE%\cmd\palette
-go build palette.go > gobuild.out 2>&1
+pushd %PALETTESOURCE%\cmd\palette_engine
+go build palette_engine.go > gobuild.out 2>&1
 type nul > emptyfile
 fc gobuild.out emptyfile > nul
 if errorlevel 1 goto notempty
 goto continue1
 :notempty
-echo Error in building palette.exe
+echo Error in building palette_engine.exe
 cat gobuild.out
 popd
 goto getout
 :continue1
-move palette.exe %bin%\palette.exe > nul
+move palette_engine.exe %bin%\palette_engine.exe > nul
 
 popd
 
