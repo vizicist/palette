@@ -5,17 +5,17 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Launch palette.go",
+            "name": "Launch Engine",
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "C:/Users/tjt/go/src/github.com/vizicist/palette/cmd/palette/palette.go",
+            "program": "C:/Users/tjt/go/src/github.com/vizicist/palette/cmd/palette_engine/palette_engine.go",
             "env": {
                 "Path": "${env:Path};${workspaceFolder};%{env:PALETTE}"             },
             "args": []
         },
         {
-            "name": "Launch palette_gui_full.py",
+            "name": "Launch GUI Full",
             "type": "python",
             "request": "launch",
             "program": "C:/Users/tjt/go/src/github.com/vizicist/palette/python/palette_gui_full.py",
@@ -23,7 +23,7 @@
             "args": []
         },
         {
-            "name": "Launch palette_gui_remote.py",
+            "name": "Launch GUI Remote",
             "type": "python",
             "request": "launch",
             "program": "C:/Users/tjt/go/src/github.com/vizicist/palette/python/palette_gui_remote.py",
