@@ -66,7 +66,6 @@ SenselDeviceList sensellist;
 void
 SenselInit()
 {
-	printf("HI FROM SENSELINIT!\n");
 	if ( ! senselLoaded ) {
 		senselGetDeviceList(&sensellist);
 		senselLoaded = 1;

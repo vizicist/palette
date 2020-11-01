@@ -8,16 +8,14 @@ import (
 	"github.com/nats-io/nats.go"
 )
 
-// SubscribeCursorSubject xxx
-var SubscribeCursorSubject = "palette.cursorevent"
+// PaletteAPISubject xxx
+var PaletteAPISubject = "palette.central.api"
 
-// SubscribeMIDISubject xxx
-var SubscribeMIDISubject = "palette.midievent"
+// CursorEventSubject xxx
+var CursorEventSubject = "palette.cursorevent"
 
-// LocalDeviceSubject xxx
-func LocalDeviceSubject(device string) string {
-	return fmt.Sprintf("localdevice.event.%s", device)
-}
+// MIDIEventSubject xxx
+var MIDIEventSubject = "palette.midievent"
 
 var time0 = time.Now()
 
@@ -35,9 +33,9 @@ func PublishCursorDeviceEvent(ce CursorDeviceEvent) error {
 		"\"area\": \"" + fmt.Sprintf("%f", ce.Area) + "\" }"
 
 	if DebugUtil.NATS {
-		log.Printf("Publishing %s %s\n", SubscribeCursorSubject, params)
+		log.Printf("Publishing %s %s\n", CursorEventSubject, params)
 	}
-	err := TheVizNats.Publish(SubscribeCursorSubject, params)
+	err := TheVizNats.Publish(CursorEventSubject, params)
 	if err != nil {
 		return err
 	}
@@ -58,9 +56,9 @@ func PublishMidiDeviceEvent(me MidiDeviceEvent) error {
 		"\"data1\": \"" + fmt.Sprintf("%d", me.Data1) + "\", " +
 		"\"data2\": \"" + fmt.Sprintf("%d", me.Data2) + "\" }"
 	if DebugUtil.MIDI {
-		log.Printf("Publishing %s %s\n", SubscribeMIDISubject, params)
+		log.Printf("Publishing %s %s\n", MIDIEventSubject, params)
 	}
-	err := TheVizNats.Publish(SubscribeMIDISubject, params)
+	err := TheVizNats.Publish(MIDIEventSubject, params)
 	if err != nil {
 		return err
 	}

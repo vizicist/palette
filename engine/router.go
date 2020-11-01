@@ -45,8 +45,7 @@ type Router struct {
 	guiClient            *osc.Client
 	plogueClient         *osc.Client
 	publishCursor        bool // e.g. "nats"
-	paletteCentral       string
-	isPaletteHost        bool
+	isCentral            bool
 	myHostname           string
 	generateVisuals      bool
 	generateSound        bool
@@ -142,7 +141,7 @@ func TheRouter() *Router {
 		oneRouter.recordingOn = false
 		oneRouter.MIDIOctaveShift = 0
 
-		oneRouter.paletteCentral = ConfigValue("palettecentral")
+		oneRouter.isCentral = ConfigBool("palettecentral")
 
 		oneRouter.myHostname = ConfigValue("hostname")
 		if oneRouter.myHostname == "" {
@@ -152,11 +151,6 @@ func TheRouter() *Router {
 				hostname = "unknown"
 			}
 			oneRouter.myHostname = hostname
-		}
-		if oneRouter.paletteCentral == oneRouter.myHostname {
-			oneRouter.isPaletteHost = true
-		} else {
-			oneRouter.isPaletteHost = false
 		}
 
 		oneRouter.publishCursor = ConfigBool("publishcursor")
@@ -215,8 +209,8 @@ func StartNATSClient() {
 	})
 
 	if ConfigBoolWithDefault("subscribecursor", false) {
-		log.Printf("StartNATS: subscribing to %s\n", SubscribeCursorSubject)
-		TheVizNats.Subscribe(SubscribeCursorSubject, func(msg *nats.Msg) {
+		log.Printf("StartNATS: subscribing to %s\n", CursorEventSubject)
+		TheVizNats.Subscribe(CursorEventSubject, func(msg *nats.Msg) {
 			data := string(msg.Data)
 			router.HandleSubscribedCursorInput(data)
 		})
@@ -224,8 +218,8 @@ func StartNATSClient() {
 
 	if ConfigBoolWithDefault("subscribemidi", false) {
 		if ConfigBool("subscribemidi") {
-			log.Printf("StartNATS: subscribing to %s\n", SubscribeMIDISubject)
-			TheVizNats.Subscribe(SubscribeMIDISubject, func(msg *nats.Msg) {
+			log.Printf("StartNATS: subscribing to %s\n", MIDIEventSubject)
+			TheVizNats.Subscribe(MIDIEventSubject, func(msg *nats.Msg) {
 				data := string(msg.Data)
 				router.HandleSubscribedMidiInput(data)
 			})
@@ -351,7 +345,7 @@ func (r *Router) HandleDeviceCursorInput(e CursorDeviceEvent) {
 // CursorDeviceEventFromArgs xxx
 func (r *Router) CursorDeviceEventFromArgs(args map[string]string, autoAssignRegion bool) (*CursorDeviceEvent, error) {
 
-	api := SubscribeCursorSubject
+	api := CursorEventSubject
 
 	nuid, err := needStringArg("nuid", api, args)
 	if err != nil {

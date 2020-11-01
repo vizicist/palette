@@ -39,7 +39,7 @@ How to run in REMOTE mode
 IMPLEMENTATION DETAILS
 ==================================================================
 
-bin\palette.exe ======================================
+bin\palette_engine.exe ======================================
 
 	A Go-based executable that
 
@@ -51,7 +51,7 @@ bin\palette.exe ======================================
 	3) Starts a realtime engine for looping and control of
 	   sound (MIDI) and visuals (OSC to Resolume and a FFGL plugin).
 
-bin\gui.exe ==========================================
+bin\palette_gui_*.exe ==================================
 
 	A python-based executable that provides a graphical interface
 	to select presets and edit their parameters.

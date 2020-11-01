@@ -95,7 +95,7 @@ func InitDebug() {
 
 // InitLogs xxx
 func InitLogs() {
-	logfile := "palette.log"
+	logfile := "engine.log"
 	logpath := LogFilePath(logfile)
 	file, err := os.OpenFile(logpath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
 	if err != nil {
@@ -104,7 +104,7 @@ func InitLogs() {
 	}
 	log.Printf("Logs are being saved in %s\n", logpath)
 	log.SetOutput(file)
-	log.Printf("This line should be the first line in the log file\n")
+	log.Printf("====================== Palette Engine is starting\n")
 }
 
 // fileExists checks if a file exists
