@@ -349,7 +349,7 @@ func (r *Router) HandleDeviceCursorInput(e CursorDeviceEvent) {
 }
 
 // CursorDeviceEventFromArgs xxx
-func (r *Router) CursorDeviceEventFromArgs(args map[string]string) (*CursorDeviceEvent, error) {
+func (r *Router) CursorDeviceEventFromArgs(args map[string]string, autoAssignRegion bool) (*CursorDeviceEvent, error) {
 
 	api := SubscribeCursorSubject
 
@@ -362,10 +362,12 @@ func (r *Router) CursorDeviceEventFromArgs(args map[string]string) (*CursorDevic
 
 	region, ok := args["region"]
 	if !ok {
-		log.Printf("Hmmm, no region argument, should I used getRegionForNUID?")
-		region = "UNASSIGNED"
 		// If no "region" argument, use one assigned to NUID
-		// region = r.getRegionForNUID(nuid)
+		if autoAssignRegion {
+			region = r.getRegionForNUID(nuid)
+		} else {
+			region = "UNASSIGNED"
+		}
 	}
 
 	eventType, err := needStringArg("event", api, args)
@@ -421,7 +423,7 @@ func (r *Router) HandleSubscribedCursorInput(data string) {
 		return
 	}
 
-	ce, err := r.CursorDeviceEventFromArgs(args)
+	ce, err := r.CursorDeviceEventFromArgs(args, true)
 	if err != nil {
 		log.Printf("HandleSubscribedCursor: err=%s\n", err)
 		return
@@ -1011,7 +1013,7 @@ func (r *Router) handleOSCCursorEvent(msg *osc.Message) {
 	// Add the required nuid argument, which OSC input doesn't provide
 	newrawargs := "{ \"nuid\": \"" + MyNUID() + "\", " + rawargs[1:]
 	args, err := StringMap(newrawargs)
-	ce, err := r.CursorDeviceEventFromArgs(args)
+	ce, err := r.CursorDeviceEventFromArgs(args, false)
 	if err != nil {
 		log.Printf("Router.handleOSCCursorEent: err=%s\n", err)
 		return
