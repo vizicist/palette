@@ -1,9 +1,9 @@
 import sys
 
-import spaceutil
+import palette
 
 if len(sys.argv) > 1:
     p = sys.argv[1]
 else:
     p = "debug"
-print(spaceutil.ConfigValue(p))
+print(palette.ConfigValue(p))

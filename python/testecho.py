@@ -1,4 +1,4 @@
-import spaceutil
+import palette
 
-r = spaceutil.palette_api("global.echo","{ \"value\": \"plugh\" }" )
+r = palette.palette_api("global.echo","{ \"value\": \"plugh\" }" )
 print("r=",r)

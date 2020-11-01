@@ -329,10 +329,8 @@ func ListenForever() {
 	for r.killme == false {
 		select {
 		case msg := <-r.OSCInput:
-			// log.Printf("received OSCInput - now=%v\n", time.Now())
 			r.HandleOSCInput(msg)
 		case event := <-r.MIDIInput:
-			// log.Printf("received MIDIInput - now=%v\n", time.Now())
 			r.HandleDeviceMIDIInput(event)
 		default:
 			// log.Printf("Sleeping 1 ms - now=%v\n", time.Now())
@@ -350,6 +348,67 @@ func (r *Router) HandleDeviceCursorInput(e CursorDeviceEvent) {
 	r.routeCursorDeviceEvent(e)
 }
 
+// CursorDeviceEventFromArgs xxx
+func (r *Router) CursorDeviceEventFromArgs(args map[string]string) (*CursorDeviceEvent, error) {
+
+	api := SubscribeCursorSubject
+
+	nuid, err := needStringArg("nuid", api, args)
+	if err != nil {
+		return nil, err
+	}
+
+	cid := optionalStringArg("cid", args, "UnspecifiedCID")
+
+	region, ok := args["region"]
+	if !ok {
+		log.Printf("Hmmm, no region argument, should I used getRegionForNUID?")
+		region = "UNASSIGNED"
+		// If no "region" argument, use one assigned to NUID
+		// region = r.getRegionForNUID(nuid)
+	}
+
+	eventType, err := needStringArg("event", api, args)
+	if err != nil {
+		return nil, err
+	}
+	switch eventType {
+	case "down":
+	case "drag":
+	case "up":
+	default:
+		return nil, fmt.Errorf("handleSubscribedCursorInput: Unexpected cursorevent type: %s", eventType)
+	}
+
+	x, err := needFloatArg("x", api, args)
+	if err != nil {
+		return nil, err
+	}
+
+	y, err := needFloatArg("y", api, args)
+	if err != nil {
+		return nil, err
+	}
+
+	z, err := needFloatArg("z", api, args)
+	if err != nil {
+		return nil, err
+	}
+
+	ce := &CursorDeviceEvent{
+		NUID:       nuid,
+		Region:     region,
+		CID:        cid,
+		Timestamp:  int64(CurrentMilli),
+		DownDragUp: eventType,
+		X:          x,
+		Y:          y,
+		Z:          z,
+		Area:       0.0,
+	}
+	return ce, nil
+}
+
 // HandleSubscribedCursorInput xxx
 func (r *Router) HandleSubscribedCursorInput(data string) {
 
@@ -362,82 +421,16 @@ func (r *Router) HandleSubscribedCursorInput(data string) {
 		return
 	}
 
-	if DebugUtil.Cursor {
-		log.Printf("HandleSubscribedCursor: data=%s\n", data)
-	}
-
-	api := SubscribeCursorSubject
-
-	nuid, err := needStringArg("nuid", api, args)
+	ce, err := r.CursorDeviceEventFromArgs(args)
 	if err != nil {
 		log.Printf("HandleSubscribedCursor: err=%s\n", err)
 		return
 	}
-	if nuid == MyNUID() {
-		log.Printf("Ignoring cursorevent from myself, nuid=%s\n", nuid)
+	if ce.NUID == MyNUID() {
+		log.Printf("HandleSubscribedCursorInput: Ignoring cursorevent from myself, nuid=%s\n", ce.NUID)
 		return
 	}
-
-	cid, err := needStringArg("cid", api, args)
-	if err != nil {
-		log.Printf("HandleSubscribedCursor: err=%s\n", err)
-		return
-	}
-
-	region, ok := args["region"]
-	if !ok {
-		// If no "region" argument, use one assigned to NUID
-		region = r.getRegionForNUID(nuid)
-	}
-
-	if DebugUtil.Cursor {
-		log.Printf("Router.HandleSubscribedCursor: data=%s\n", data)
-	}
-
-	eventType, err := needStringArg("event", api, args)
-	if err != nil {
-		log.Printf("HandleSubscribedCursor: err=%s\n", err)
-		return
-	}
-	switch eventType {
-	case "down":
-	case "drag":
-	case "up":
-	default:
-		log.Printf("handleSubscribedCursorInput: Unexpected cursorevent type: %s\n", eventType)
-		return
-	}
-
-	x, err := needFloatArg("x", api, args)
-	if err != nil {
-		log.Printf("HandleSubscribedCursor: err=%s\n", err)
-		return
-	}
-
-	y, err := needFloatArg("y", api, args)
-	if err != nil {
-		log.Printf("HandleSubscribedCursor: err=%s\n", err)
-		return
-	}
-
-	z, err := needFloatArg("z", api, args)
-	if err != nil {
-		log.Printf("HandleSubscribedCursor: err=%s\n", err)
-		return
-	}
-
-	ce := CursorDeviceEvent{
-		NUID:       nuid,
-		Region:     region,
-		CID:        cid,
-		Timestamp:  int64(CurrentMilli),
-		DownDragUp: eventType,
-		X:          x,
-		Y:          y,
-		Z:          z,
-		Area:       0.0,
-	}
-	r.routeCursorDeviceEvent(ce)
+	r.routeCursorDeviceEvent(*ce)
 	return
 }
 
@@ -480,7 +473,9 @@ func (r *Router) HandleDeviceMIDIInput(e portmidi.Event) {
 	r.inputMutex.Lock()
 	defer r.inputMutex.Unlock()
 
-	// log.Printf("handleMIDI e=%s\n", e)
+	if DebugUtil.MIDI {
+		log.Printf("Router.ListenForever: MIDIInput event=%+v\n", e)
+	}
 	switch r.MIDIThru {
 	case "":
 		// do nothing
@@ -538,14 +533,18 @@ func (r *Router) HandleOSCInput(e OSCEvent) {
 	r.inputMutex.Lock()
 	defer r.inputMutex.Unlock()
 
-	// log.Printf("handleOSC time=%v\n", r.time)
+	if DebugUtil.OSC {
+		log.Printf("Router.HandleOSCInput: msg=%s\n", e.Msg.String())
+	}
 	if e.Msg.Address == "/api" {
-		r.handleOSCAPI(e.Msg, e.Source)
+		r.handleOSCAPI(e.Msg)
+	} else if e.Msg.Address == "/cursorevent" {
+		r.handleOSCCursorEvent(e.Msg)
 	} else if e.Msg.Address == "/quit" {
 		log.Printf("Router received QUIT message!\n")
 		r.killme = true
 	} else {
-		log.Printf("Unrecognized OSC message %v from %v\n", e.Msg, e.Source)
+		log.Printf("Router.HandleOSCInput: Unrecognized OSC message source=%s msg=%s\n", e.Source, e.Msg)
 	}
 }
 
@@ -990,8 +989,38 @@ func (r *Router) handleMIDISetScale(e portmidi.Event) {
 	// log.Printf("handleMIDIScale end numdown=%d\n", r.MIDINumDown)
 }
 
+func (r *Router) handleOSCCursorEvent(msg *osc.Message) {
+
+	tags, _ := msg.TypeTags()
+	_ = tags
+	nargs := msg.CountArguments()
+	if nargs < 1 {
+		log.Printf("Router.handleOSCCursorEent: too few arguments\n")
+		return
+	}
+	rawargs, err := argAsString(msg, 0)
+	if err != nil {
+		log.Printf("Router.handleOSCCursorEent: err=%s\n", err)
+		return
+	}
+	if len(rawargs) == 0 || rawargs[0] != '{' {
+		log.Printf("Router.handleOSCCursorEent: first char of args must be curly brace\n")
+		return
+	}
+
+	// Add the required nuid argument, which OSC input doesn't provide
+	newrawargs := "{ \"nuid\": \"" + MyNUID() + "\", " + rawargs[1:]
+	args, err := StringMap(newrawargs)
+	ce, err := r.CursorDeviceEventFromArgs(args)
+	if err != nil {
+		log.Printf("Router.handleOSCCursorEent: err=%s\n", err)
+		return
+	}
+	r.routeCursorDeviceEvent(*ce)
+}
+
 // No error return because it's OSC
-func (r *Router) handleOSCAPI(msg *osc.Message, source string) {
+func (r *Router) handleOSCAPI(msg *osc.Message) {
 	tags, _ := msg.TypeTags()
 	_ = tags
 	nargs := msg.CountArguments()
@@ -1009,10 +1038,16 @@ func (r *Router) handleOSCAPI(msg *osc.Message, source string) {
 		log.Printf("Router.handleOSCAPI: err=%s\n", err)
 		return
 	}
-	if DebugUtil.API {
-		log.Printf("Router.handleOSCAPI api=%s rawargs=%s\n", api, rawargs)
+	if len(rawargs) == 0 || rawargs[0] != '{' {
+		log.Printf("Router.handleOSCAPI: first char of args must be curly brace\n")
+		return
 	}
-	_, err = r.ExecuteAPI(api, rawargs)
+	newrawargs := "{ \"nuid\": \"" + MyNUID() + "\", " + rawargs[1:]
+	// Add the required nuid argument
+	if DebugUtil.API {
+		log.Printf("Router.handleOSCAPI api=%s rawargs=%s\n", api, newrawargs)
+	}
+	_, err = r.ExecuteAPI(api, newrawargs)
 	if err != nil {
 		log.Printf("Router.handleOSCAPI: err=%s", err)
 	}

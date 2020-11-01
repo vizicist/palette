@@ -1,6 +1,6 @@
 import sys
 
-import spaceutil
+import palette
 
 if len(sys.argv) != 6:
     print("Usage: cursorevent {cid} {down|drag|up} {x} {y} {z}")
@@ -15,4 +15,4 @@ x = float(sys.argv[3])
 y = float(sys.argv[4])
 z = float(sys.argv[5])
 
-spaceutil.SendCursorEvent(cid,ddu,x,y,z)
+palette.SendCursorEvent(cid,ddu,x,y,z)

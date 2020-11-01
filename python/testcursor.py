@@ -1,17 +1,7 @@
-import glob
-import os
 import sys
 import time
-import traceback
-import json
-import collections
 import random
-from subprocess import call, Popen
-
-from pythonosc import udp_client
-from urllib import parse, request
-
-import spaceutil
+import palette
 
 if len(sys.argv) > 1:
         ntimes = int(sys.argv[1])
@@ -25,12 +15,7 @@ else:
 
 cid = "0"
 for n in range(ntimes):
-        x = random.random()
-        y = random.random()
-        z = random.random() / 4.0
-        spaceutil.SendCursorEvent(cid,"down",x,y,z)
+        palette.SendCursorEvent(cid,"down",random.random(),random.random(),random.random()/4.0)
         time.sleep(dt)
-        x = random.random()
-        y = random.random()
-        spaceutil.SendCursorEvent(cid,"up",x,y,0.0)
+        palette.SendCursorEvent(cid,"up",random.random(),random.random(),0.0)
         time.sleep(dt)
