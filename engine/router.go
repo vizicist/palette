@@ -45,7 +45,6 @@ type Router struct {
 	guiClient            *osc.Client
 	plogueClient         *osc.Client
 	publishCursor        bool // e.g. "nats"
-	isCentral            bool
 	myHostname           string
 	generateVisuals      bool
 	generateSound        bool
@@ -141,8 +140,6 @@ func TheRouter() *Router {
 		oneRouter.recordingOn = false
 		oneRouter.MIDIOctaveShift = 0
 
-		oneRouter.isCentral = ConfigBool("palettecentral")
-
 		oneRouter.myHostname = ConfigValue("hostname")
 		if oneRouter.myHostname == "" {
 			hostname, err := os.Hostname()
@@ -198,15 +195,14 @@ func StartNATSClient() {
 	// Hand all NATS messages to HandleAPI
 	router := TheRouter()
 
-	localapi := fmt.Sprintf("palette.%s.api", router.myHostname)
-
-	log.Printf("StartNATS: subscribing to %s\n", localapi)
-
-	TheVizNats.Subscribe(localapi, func(msg *nats.Msg) {
-		data := string(msg.Data)
-		response := router.HandleAPIInput(router.ExecuteAPI, data)
-		msg.Respond([]byte(response))
-	})
+	if ConfigBoolWithDefault("subscribeapi", false) {
+		log.Printf("StartNATS: Subscribing to %s\n", PaletteAPISubject)
+		TheVizNats.Subscribe(PaletteAPISubject, func(msg *nats.Msg) {
+			data := string(msg.Data)
+			response := router.HandleAPIInput(router.ExecuteAPI, data)
+			msg.Respond([]byte(response))
+		})
+	}
 
 	if ConfigBoolWithDefault("subscribecursor", false) {
 		log.Printf("StartNATS: subscribing to %s\n", CursorEventSubject)
