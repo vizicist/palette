@@ -255,7 +255,7 @@ class ProGuiApp(tk.Tk):
 
         self.currentPad = "A"
 
-        self.winfo_toplevel().title("Palette")
+        self.winfo_toplevel().title("Palette Pro")
 
         self.escapeCount = 0
         self.lastEscape = time.time()
