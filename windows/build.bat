@@ -74,10 +74,8 @@ copy %PALETTESOURCE%\nats\nats-sub.exe %bin% >nul
 
 echo ================ Copying scripts
 pushd %PALETTESOURCE%\scripts
-copy palettestart.bat %bin% >nul
-copy palettestop.bat %bin% >nul
-copy palettestartall.bat %bin% >nul
-copy palettestopall.bat %bin% >nul
+copy palettestart*.bat %bin% >nul
+copy palettestop*.bat %bin% >nul
 copy testcursor.bat %bin% >nul
 copy osc.bat %bin% >nul
 copy taillog.bat %bin% >nul
