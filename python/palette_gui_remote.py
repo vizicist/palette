@@ -214,7 +214,7 @@ class ProGuiApp(tk.Tk):
         self.activeCursors = {}
         self.activeTime = {}
         self.editMode = False
-        self.showAllPages = True
+        self.showAllPages = False
         self.showSliders = True
         self.showPadFeedback = True
         self.showCursorFeedback = False
@@ -843,9 +843,9 @@ class ProGuiApp(tk.Tk):
                 self.showSliders = False
                 PerPadPerformLabels["scale"] = SimpleScales
             elif level == 1:
-                self.showAllPages = True
+                self.showAllPages = False
                 self.showSliders = False
-                PerPadPerformLabels["scale"] = PerformScales
+                PerPadPerformLabels["scale"] = SimpleScales
 
     def resetAll(self):
 
@@ -1047,7 +1047,7 @@ class PerformHeader(tk.Frame):
         self.titleFrame.pack(side=tk.TOP, fill=tk.X, expand=True)
 
         self.pageButton = {}
-        self.performHeaderLabel("Perform")
+        self.performHeaderLabel("Control")
         self.headerButton("main","Main")
         # self.headerButton("sliders1","Sliders1")
         # self.headerButton("sliders2","Sliders2")
@@ -1612,14 +1612,14 @@ class PagePerformMain(tk.Frame):
         self.makePerformButton("vol")
         self.makePerformButton("tempo")
         self.makePerformButton("Comb_Notes", self.controller.combLoop)
-        self.makePerformButton("TBD")
+        self.makePerformButton("scale")
         self.makePerformButton("Notes_Off", self.controller.sendANO)
 
-        self.makePerformButton("scale")
-        self.makePerformButton("useexternalscale")
-        self.makePerformButton("midithru")
-        self.makePerformButton("midithruscadjust")
-        self.makePerformButton("midiquantized")
+        ### self.makePerformButton("useexternalscale")
+        ### self.makePerformButton("midithru")
+        ### self.makePerformButton("midithruscadjust")
+        ### self.makePerformButton("midiquantized")
+
         # self.makePerformButton("configname")
 
         self.advancedButtons = {
@@ -1979,15 +1979,14 @@ if __name__ == "__main__":
         fontFactor = 0.5
         thumbFactor = 0.1
 
-        selectDisplayRows = 7
-        paramDisplayRows = 11
+        selectDisplayRows = 10
+        paramDisplayRows = 16
         selectDisplayPerRow = 4
 
-        # 0.85 total
         pageSizeOfSelectNormal = 0.68
         pageSizeOfControlNormal = 1.0 - pageSizeOfSelectNormal
-        # 0.85 total
-        pageSizeOfSelectAdvanced = 0.55
+
+        pageSizeOfSelectAdvanced = 0.75
         pageSizeOfControlAdvanced = 1.0 - pageSizeOfSelectAdvanced
 
         performButtonPadx = 6

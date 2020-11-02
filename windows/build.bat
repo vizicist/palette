@@ -76,6 +76,7 @@ echo ================ Copying scripts
 pushd %PALETTESOURCE%\scripts
 copy palettestart*.bat %bin% >nul
 copy palettestop*.bat %bin% >nul
+copy palettetasks.bat %bin% >nul
 copy testcursor.bat %bin% >nul
 copy osc.bat %bin% >nul
 copy taillog.bat %bin% >nul
