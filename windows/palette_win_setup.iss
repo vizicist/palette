@@ -43,8 +43,7 @@ Source: "ship\config\paramdefs.json"; DestDir: "{app}\config"; Flags: ignorevers
 Source: "ship\config\paramenums.json"; DestDir: "{app}\config"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "ship\config\settings.json"; DestDir: "{app}\config"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "ship\midifiles\*"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\midifiles"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "ship\presets\*"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\presets"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "ship\config\morphs.json"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\config"; Flags: ignoreversion
+Source: "ship\presets\*"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\presets"; Flags: comparetimestamp ignoreversion recursesubdirs createallsubdirs
 Source: "ship\config\ffgl.json"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\config"; Flags: ignoreversion
 Source: "config_readme.txt"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\config"; DestName: "readme.txt"; Flags: ignoreversion
 Source: "logs_readme.txt"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\logs"; DestName: "readme.txt"; Flags: ignoreversion
