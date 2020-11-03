@@ -28,10 +28,6 @@ There are several ways of running Palette:
 
 - Download and execute ship/palette_setup_win.exe from this repo
 
-# How to run in REMOTE mode
-
-- Execute C:\Program Files\Palette\bin\startremote.bat
-
 # Implementation details
 
 ## bin\palette_engine.exe
