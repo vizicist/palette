@@ -93,11 +93,13 @@ There are several ways of running Palette:
 
 - go get a few packages:
 
+'''
 	go get github.com/hypebeast/go-osc/osc
 	go get github.com/nats-io/nats-server/server
 	go get github.com/nats-io/nats.go
 	go get github.com/nats-io/nuid
 	go get gopkg.in/mail.v2
+'''
 
 - Make sure these directories are added to your PATH:
 
