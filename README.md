@@ -26,7 +26,7 @@ There are several ways of running Palette:
 
 # How to install
 
-- Download and execute ship/palette_setup_win.exe from this repo
+- Download and execute release/palette_#.#_win_setup.exe from this repo
 
 # Implementation details
 
