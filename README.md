@@ -1,6 +1,6 @@
 THIS DOCUMENT IS UNDER CONSTRUCTION
 
-Palette - an engine for visual music instruments
+= Palette - an engine for visual music instruments
 
 Palette is the engine used in the Space Palette Pro,
 an instrument that lets you fingerpaint sound and visuals
