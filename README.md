@@ -78,11 +78,14 @@ There are several ways of running Palette:
 
  https://sourceforge.net/projects/mingw-w64/files/Toolchains%20targetting%20Win32/Personal%20Builds/mingw-builds/installer/mingw-w64-install.exe
 
+
+```
  *** USE THESE SETTINGS WHEN INSTALLING mingw64 ***
  Version: 8.1.0
  Architecture: x86_64
  Threads: posix
  Exception: sjlj
+```
 
 - set up the repos as follows
 
@@ -113,7 +116,7 @@ go get gopkg.in/mail.v2
  %USERPROFILE%\go\src\github.com\vizicist\palette\scripts
 ```
 
-  and add this environment variables:
+  and add this environment variable:
 
 ```
  PALETTESOURCE=%USERPROFILE%\go\src\github.com\vizicist\palette
