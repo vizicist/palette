@@ -116,7 +116,7 @@ go get gopkg.in/mail.v2
  %USERPROFILE%\go\src\github.com\vizicist\palette\scripts
 ```
 
-  and add this environment variable:
+- Add this environment variable:
 
 ```
  PALETTESOURCE=%USERPROFILE%\go\src\github.com\vizicist\palette
