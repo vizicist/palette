@@ -86,37 +86,41 @@ There are several ways of running Palette:
 
 - set up the repos as follows
 
-	mkdir %USERPROFILE%\go\src\github.com\vizicist
-	cd %USERPROFILE%\go\src\github.com\vizicist
-	git clone https://github.com/vizicist/palette.git
-	git clone https://github.com/vizicist/portmidi.git
+```
+mkdir %USERPROFILE%\go\src\github.com\vizicist
+cd %USERPROFILE%\go\src\github.com\vizicist
+git clone https://github.com/vizicist/palette.git
+git clone https://github.com/vizicist/portmidi.git
+```
 
 - go get a few packages:
 
-'''
-	go get github.com/hypebeast/go-osc/osc
-	go get github.com/nats-io/nats-server/server
-	go get github.com/nats-io/nats.go
-	go get github.com/nats-io/nuid
-	go get gopkg.in/mail.v2
-'''
+```
+go get github.com/hypebeast/go-osc/osc
+go get github.com/nats-io/nats-server/server
+go get github.com/nats-io/nats.go
+go get github.com/nats-io/nuid
+go get gopkg.in/mail.v2
+```
 
 - Make sure these directories are added to your PATH:
 
-	C:\Program Files\Git\bin
-	C:\Program Files\Git\usr\bin
-	C:\Program Files\mingw-w64\x86_64-8.1.0-posix-sjlj-rt_v6-rev0\mingw64\bin
-	%USERPROFILE%\go\bin
-	%USERPROFILE%\go\src\github.com\vizicist\palette\scripts
+ C:\Program Files\Git\bin
+ C:\Program Files\Git\usr\bin
+ C:\Program Files\mingw-w64\x86_64-8.1.0-posix-sjlj-rt_v6-rev0\mingw64\bin
+ %USERPROFILE%\go\bin
+ %USERPROFILE%\go\src\github.com\vizicist\palette\scripts
 
   and add this environment variables:
 
-	PALETTESOURCE=%USERPROFILE%\go\src\github.com\vizicist\palette
+ PALETTESOURCE=%USERPROFILE%\go\src\github.com\vizicist\palette
 
 - in Visual Studio Code, in the "extensions marketplace" section on the left side,
     type in "go" and install the Go language support.
 
 - to compile everything and put the resulting installer in the release directory:
 
-	cd windows
-        build
+```
+cd windows
+build
+```
