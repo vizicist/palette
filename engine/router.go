@@ -281,33 +281,40 @@ func StartRealtime() {
 // StartMIDI listens for MIDI events and sends them to the MIDIInput chan
 func StartMIDI() {
 	r := TheRouter()
-	inputName := ConfigValue("midiinput")
-	if inputName == "" {
+	midiinput := ConfigValue("midiinput")
+	if midiinput == "" {
 		return
 	}
-	input := MIDI.getInput(inputName)
-	if input == nil {
-		log.Printf("There is no MIDI input named %s\n", inputName)
-		return
+	words := strings.Split(midiinput, ",")
+	var inputs []*midiInput
+	for _, word := range words {
+		input := MIDI.getInput(word)
+		if input == nil {
+			log.Printf("There is no MIDI input named %s\n", midiinput)
+		} else {
+			inputs = append(inputs, input)
+		}
 	}
 	r.MIDINumDown = 0
-	log.Printf("Successfully opened MIDI input device %s\n", inputName)
+	log.Printf("Successfully opened MIDI input device %s\n", midiinput)
 	for {
-		hasinput, err := input.Poll()
-		if err != nil {
-			log.Printf("ERROR in Poll?  err=%v\n", err)
-		} else if hasinput {
-			event, err := input.ReadEvent()
+		for _, input := range inputs {
+			hasinput, err := input.Poll()
 			if err != nil {
-				log.Printf("ERROR in Read?  err = %v\n", err)
-				// we may have lost some NOTEOFF's so reset our count
-				r.MIDINumDown = 0
+				log.Printf("StartMIDI: ERROR in Poll? err=%v\n", err)
+			} else if hasinput {
+				event, err := input.ReadEvent()
+				if err != nil {
+					log.Printf("ERROR in Read?  err = %v\n", err)
+					// we may have lost some NOTEOFF's so reset our count
+					r.MIDINumDown = 0
+				} else {
+					// log.Printf("MIDI input ReadEvent = %+v\n", event)
+					r.MIDIInput <- event
+				}
 			} else {
-				// log.Printf("MIDI input ReadEvent = %+v\n", event)
-				r.MIDIInput <- event
+				// log.Printf("No input time=%v\n", time.Now())
 			}
-		} else {
-			// log.Printf("No input time=%v\n", time.Now())
 		}
 		time.Sleep(2 * time.Millisecond)
 	}
