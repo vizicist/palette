@@ -24,20 +24,15 @@ There are several ways of running Palette:
    to generate MIDI (typicall to a VST host) and OSC (typically
    to Resolume and Palette's FFGL plugin running in it).
 
-==================================================================
-How to install
-==================================================================
+==== How to install
 
 - Download and execute ship/palette_setup_win.exe from this repo
 
-==================================================================
-How to run in REMOTE mode
-==================================================================
+==== How to run in REMOTE mode
+
 - Execute C:\Program Files\Palette\bin\startremote.bat
 
-==================================================================
-IMPLEMENTATION DETAILS
-==================================================================
+==== Implementation details
 
 bin\palette_engine.exe ======================================
 
@@ -60,9 +55,9 @@ ffgl\palette.dll ======================================
 
 	A C/C++-based FFGL plugin with an OSC interface for visual output
 
-==================================================================
-Compiling on a brand new Windows machine for development
-==================================================================
+==== Configuring a Windows development machine
+
+- Please send email to me@timthompson.com if these instructions don't work for you.
 
 - install git from https://gitforwindows.org
 
@@ -119,7 +114,7 @@ Compiling on a brand new Windows machine for development
 - in Visual Studio Code, in the "extensions marketplace" section on the left side,
     type in "go" and install the Go language support.
 
-- to compile everything on Windows:
+- to compile everything and put the resulting installer in the release directory:
 
 	cd windows
-        build        # or buildinstall to build and then install the result
+        build
