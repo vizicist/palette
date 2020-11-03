@@ -57,7 +57,7 @@ There are several ways of running Palette:
 
 # Configuring a Windows development machine
 
-- Please send email to me@timthompson.com if these instructions don't work for you.
+- Please send email to me@timthompson.com if these instructions don't work for you.  They should be largely correct but I'll be surprised if they work perfectly until someone else has tried them.
 
 - install git from https://gitforwindows.org
 
@@ -76,13 +76,13 @@ There are several ways of running Palette:
 
 - install mingw64 using this installer:
 
-        https://sourceforge.net/projects/mingw-w64/files/Toolchains%20targetting%20Win32/Personal%20Builds/mingw-builds/installer/mingw-w64-install.exe
+ https://sourceforge.net/projects/mingw-w64/files/Toolchains%20targetting%20Win32/Personal%20Builds/mingw-builds/installer/mingw-w64-install.exe
 
-        *** USE THESE SETTINGS WHEN INSTALLING mingw64 ***
-        Version: 8.1.0
-        Architecture: x86_64
-        Threads: posix
-        Exception: sjlj
+ *** USE THESE SETTINGS WHEN INSTALLING mingw64 ***
+ Version: 8.1.0
+ Architecture: x86_64
+ Threads: posix
+ Exception: sjlj
 
 - set up the repos as follows
 
@@ -105,15 +105,19 @@ go get gopkg.in/mail.v2
 
 - Make sure these directories are added to your PATH:
 
+```
  C:\Program Files\Git\bin
  C:\Program Files\Git\usr\bin
  C:\Program Files\mingw-w64\x86_64-8.1.0-posix-sjlj-rt_v6-rev0\mingw64\bin
  %USERPROFILE%\go\bin
  %USERPROFILE%\go\src\github.com\vizicist\palette\scripts
+```
 
   and add this environment variables:
 
+```
  PALETTESOURCE=%USERPROFILE%\go\src\github.com\vizicist\palette
+```
 
 - in Visual Studio Code, in the "extensions marketplace" section on the left side,
     type in "go" and install the Go language support.
