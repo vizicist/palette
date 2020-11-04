@@ -59,7 +59,7 @@ There are several ways of running Palette:
 
 - install Go version 1.15 or later from https://golang.org/dl/
 
-- install Python 3.8.6 or later (BUT NOT FROM THE WINDOWS STORE!), in C:\Python38
+- install Python 3.8.6 or later (BUT NOT FROM THE WINDOWS STORE!), and install it in C:\Python38
 
 - install Visual Studio Code from https://code.visualstudio.com/download
 
@@ -118,8 +118,8 @@ go get gopkg.in/mail.v2
  PALETTESOURCE=%USERPROFILE%\go\src\github.com\vizicist\palette
 ```
 
-- in Visual Studio Code, in the "extensions marketplace" section on the left side,
-    type in "go" and install the Go language support.
+- in Visual Studio Code, click on the "extensions marketplace" icon (four little squares) on the left side.
+  In the "Search Extensions" field, enter "go", and install the Go language support.
 
 - to compile everything, use a newly-created "cmd" window (so that the changes to PATH and the environment variable are reflected) and enter these lines:
 
