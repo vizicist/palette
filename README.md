@@ -83,7 +83,7 @@ There are several ways of running Palette:
  Exception: sjlj
 ```
 
-- set up the repos by entering these lines in a "cmd" window:
+- set up the repos by entering these lines in a new "cmd" window (so that changes to environment variables from the installed packages are reflected):
 
 ```
 mkdir %USERPROFILE%\go\src\github.com\vizicist
