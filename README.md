@@ -83,7 +83,7 @@ There are several ways of running Palette:
  Exception: sjlj
 ```
 
-- set up the repos as follows
+- set up the repos by entering these lines in a "cmd" window:
 
 ```
 mkdir %USERPROFILE%\go\src\github.com\vizicist
@@ -92,7 +92,7 @@ git clone https://github.com/vizicist/palette.git
 git clone https://github.com/vizicist/portmidi.git
 ```
 
-- go get a few packages:
+- go get a few packages by entering these lines in the "cmd" window:
 
 ```
 go get github.com/hypebeast/go-osc/osc
@@ -102,7 +102,7 @@ go get github.com/nats-io/nuid
 go get gopkg.in/mail.v2
 ```
 
-- Make sure these directories are added to your PATH:
+- Make sure these directories are added to your PATH variable in System Properties.
 
 ```
  C:\Program Files\Git\bin
@@ -112,7 +112,7 @@ go get gopkg.in/mail.v2
  %USERPROFILE%\go\src\github.com\vizicist\palette\scripts
 ```
 
-- Add this environment variable in your System Properties:
+- Add a new environment variable in your System Properties:
 
 ```
  PALETTESOURCE=%USERPROFILE%\go\src\github.com\vizicist\palette
@@ -121,9 +121,10 @@ go get gopkg.in/mail.v2
 - in Visual Studio Code, in the "extensions marketplace" section on the left side,
     type in "go" and install the Go language support.
 
-- to compile everything and put the resulting installer in the release directory:
+- to compile everything, enter these lines in the "cmd" window.
 
 ```
 cd windows
 build
 ```
+The result of this should be an installer executable in the release directory.
