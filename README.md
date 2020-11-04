@@ -121,10 +121,10 @@ go get gopkg.in/mail.v2
 - in Visual Studio Code, in the "extensions marketplace" section on the left side,
     type in "go" and install the Go language support.
 
-- to compile everything, enter these lines in the "cmd" window.
+- to compile everything, use a newly-created "cmd" window (so that the changes to PATH and the environment variable are reflected) and enter these lines:
 
 ```
-cd windows
+cd %PALETTESOURCE%\windows
 build
 ```
 The result of this should be an installer executable in the release directory.
