@@ -22,7 +22,7 @@ PadLayer = {
         "A":"1", "B":"2", "C":"3", "D":"4"
 }
 
-DebugApi = False
+DebugApi = True
 MyNuid = ""
 
 def MyNUID():
@@ -43,22 +43,24 @@ def boolValueOfString(v):
 
 ApiLock = threading.Lock()
 
-def palette_api_central(meth, params=None):
+def palette_api(meth, params=None):
+    sep = ""
+    if params != "":
+        sep = ","
+    fullparams = "{ \"nuid\": \""+ MyNUID() + "\"" + sep + params + "}"
     subject = "palette.central.api"
-    r1,err = invoke_jsonrpc(subject,meth,params)
+    r1,err = invoke_jsonrpc(subject,meth,fullparams)
     if err != None:
         print("API of ",meth," returned err=",err)
     return r1
 
-def palette_cursorevent(params):
-
-    subject = "palette.cursorevent"
-    global ApiLock
+def palette_publish(subject,params):
 
     if DebugApi:
         print("invoke_event: params=",params)
 
     # Acquire lock before sending
+    global ApiLock
     ApiLock.acquire()
     try:
         loop = asyncio.new_event_loop()
@@ -229,7 +231,20 @@ def presetsFilePath(section, nm, suffix=".json"):
 
 def SendCursorEvent(cid,ddu,x,y,z):
     e = "{ \"nuid\": \"" + MyNUID() + "\", \"cid\": \"" + str(cid) + "\", \"event\": \"" + ddu + "\", \"x\": \"%f\", \"y\": \"%f\", \"z\": \"%f\" }"  % (x,y,z)
-    palette_cursorevent(e)
+    palette_publish("palette.cursorevent",e)
+
+def SendMIDIEvent(device,msg):
+    bytestr = ""
+    for b in msg.bytes():
+        bytestr += ("%02x" % b)
+
+    e = ("{ \"nuid\": \"%s\", " + \
+        "\"device\": \"%s\", " + \
+        "\"event\": \"%s\", " + \
+        "\"bytes\": \"%s\" }") % \
+            (MyNUID(), device, msg.type, bytestr)
+
+    palette_publish("palette.midievent",e)
 
 def IgnoreKeyboardInterrupt():
     """

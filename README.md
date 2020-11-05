@@ -55,22 +55,22 @@ There are several ways of running Palette:
 
 - Please send email to me@timthompson.com if these instructions don't work for you.  They should be largely correct but I'll be surprised if they work perfectly until someone else has tried them.
 
-- install git from https://gitforwindows.org
+- Install git from https://gitforwindows.org
 
-- install Go version 1.15 or later from https://golang.org/dl/
+- Install Go version 1.15 or later from https://golang.org/dl/
 
-- install Python 3.8.6 or later (BUT NOT FROM THE WINDOWS STORE!), and install it in C:\Python38
+- Install Python 3.8.6 or later (BUT NOT FROM THE WINDOWS STORE!), and install it in C:\Python38
 
-- install Visual Studio Code from https://code.visualstudio.com/download
+- Install Visual Studio Code from https://code.visualstudio.com/download
 
-- install Inno Setup from https://jrsoftware.org/isinfo.php
+- Install Inno Setup from https://jrsoftware.org/isinfo.php
 
-- install Visual Studio 2019 Community Edition from https://visualstudio.microsoft.com/downloads
+- Install Visual Studio 2019 Community Edition from https://visualstudio.microsoft.com/downloads
 
 	- in the Workload tab, select "Desktop Development with C++"
 	- In the Individual components tab, select "Msbuild"
 
-- install mingw64 using this installer:
+- Install mingw64 using this installer:
 
  https://sourceforge.net/projects/mingw-w64/files/Toolchains%20targetting%20Win32/Personal%20Builds/mingw-builds/installer/mingw-w64-install.exe
 
@@ -83,7 +83,7 @@ There are several ways of running Palette:
  Exception: sjlj
 ```
 
-- set up the repos by entering these lines in a new "cmd" window (so that changes to environment variables from the installed packages are reflected):
+- Set up the repos by entering these lines in a new "cmd" window (so that changes to environment variables from the installed packages are reflected):
 
 ```
 mkdir %USERPROFILE%\go\src\github.com\vizicist
@@ -92,7 +92,7 @@ git clone https://github.com/vizicist/palette.git
 git clone https://github.com/vizicist/portmidi.git
 ```
 
-- go get a few packages by entering these lines in the "cmd" window:
+- Install a few Go packages by entering these lines in the "cmd" window:
 
 ```
 go get github.com/hypebeast/go-osc/osc
@@ -118,10 +118,10 @@ go get gopkg.in/mail.v2
  PALETTESOURCE=%USERPROFILE%\go\src\github.com\vizicist\palette
 ```
 
-- in Visual Studio Code, click on the "extensions marketplace" icon (four little squares) on the left side.
+- In Visual Studio Code, click on the "extensions marketplace" icon (four little squares) on the left side.
   In the "Search Extensions" field, enter "go", and install the Go language support.
 
-- to compile everything, use a newly-created "cmd" window (so that the changes to PATH and the environment variable are reflected) and enter these lines:
+- To compile everything, use a newly-created "cmd" window (so that the changes to PATH and the environment variable are reflected) and enter these lines:
 
 ```
 cd %PALETTESOURCE%\windows
