@@ -1,14 +1,11 @@
 package engine
 
-// CursorDown etc match values in sensel.h
-const (
-	CursorDown = 1
-	CursorDrag = 2
-	CursorUp   = 3
-)
-
-// CursorDevice xxx
-type CursorDevice interface {
+// MidiDeviceEvent is a single MIDI event
+type MidiDeviceEvent struct {
+	Timestamp int64 // milliseconds
+	Status    int64
+	Data1     int64
+	Data2     int64
 }
 
 // CursorDeviceEvent is a single CursorDevice event

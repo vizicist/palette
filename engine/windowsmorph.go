@@ -285,6 +285,13 @@ func StartMorph(callback CursorDeviceCallbackFunc, forceFactor float32) {
 	}
 }
 
+// CursorDown etc match values in sensel.h
+const (
+	CursorDown = 1
+	CursorDrag = 2
+	CursorUp   = 3
+)
+
 func (m oneMorph) readFrames(callback CursorDeviceCallbackFunc, forceFactor float32) {
 	status := C.SenselReadSensor(C.uchar(m.idx))
 	if status != C.SENSEL_OK {

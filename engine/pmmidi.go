@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"log"
+	"strings"
 
 	"github.com/vizicist/portmidi"
 )
@@ -270,8 +271,13 @@ func (m *MIDIIO) loadSynths(filename string) {
 
 func (m *MIDIIO) loadInputs(dev string) {
 	// Should load this from settings.json file
-	devid, stream := m.getInputStream(dev)
-	if stream != nil {
-		m.midiInputs[dev] = &midiInput{deviceID: devid, stream: stream}
+	words := strings.Split(dev, ",")
+	for _, nm := range words {
+		devid, stream := m.getInputStream(nm)
+		if stream != nil {
+			m.midiInputs[nm] = &midiInput{deviceID: devid, stream: stream}
+		} else {
+			log.Printf("MIDIIO.loadInputs: Unable to open %s\n", nm)
+		}
 	}
 }
