@@ -42,10 +42,10 @@ func PublishCursorDeviceEvent(ce CursorDeviceEvent) error {
 	return nil
 }
 
-// PublishMidiDeviceEvent xxx
-func PublishMidiDeviceEvent(me MidiDeviceEvent) error {
+// PublishMIDIDeviceEvent xxx
+func PublishMIDIDeviceEvent(me MIDIDeviceEvent) error {
 	dt := time.Now().Sub(time0)
-	// NOTE: we ignore the Timestamp on the MidiDeviceEvent
+	// NOTE: we ignore the Timestamp on the MIDIDeviceEvent
 	// and use our own, so the timestamps are consistent with
 	// the ones on Cursor events
 	params := "{ " +

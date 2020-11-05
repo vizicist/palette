@@ -49,14 +49,17 @@ global pageSizeOfControl, pageSizeOfSelect
 global performButtonPadx, performButtonPady
 global selectButtonPadx, selectButtonPady
 
+def palette_region_api(pad, meth, params=""):
+    regionparams = "\"region\": \"" + pad + "\""
+    if params != "":
+        regionparams += (", " + params)
+    return palette.palette_api("region."+meth,regionparams)
+
+def palette_global_api(meth, params=""):
+    return palette.palette_api("global."+meth,params)
+
 def MyNUID():
     return palette.MyNUID()
-
-def palette_api(meth, params=None):
-    return palette.palette_api_central(meth,params)
-
-def SourceArg(pad):
-    return "\"nuid\": \""+ MyNUID() + "\", \"region\": \"" + pad + "\""
 
 def setFontSizes(fontFactor):
     global patchFont, patchTwoLineFont, sliderFont, largestFont, hugeFont, comboFont, largerFont, largeFont, performFont, mediumFont, padLabelFont
@@ -802,11 +805,9 @@ class ProGuiApp(tk.Tk):
         # if paramType == "effect":
         #     self.sendPadOneEffectVal(pad,paramname,val)
         # else:
-        palette_api("region."+paramType+".set_param",
-            "{ " + SourceArg(pad) + \
-            ", \"param\": \"" + paramname + "\"" + \
-            ", \"value\": \"" + str(val) + "\"" + \
-            "}")
+        palette_region_api(pad,paramType+".set_param",
+            "\"param\": \"" + paramname + "\"" + \
+            ", \"value\": \"" + str(val) + "\"")
 
     def sendParams(self,params,paramstype):
         page = self.editPage[paramstype]
@@ -957,9 +958,6 @@ class ProGuiApp(tk.Tk):
     def sendPadPerformVal(self,pad,name):
         # print("sendPadPerformVal pad=",pad," name=",name)
 
-        # Prepare the first (source) argument of the API calls.
-        sourceArg = SourceArg(pad)
-
         if name == "loopingonoff":
             val = self.perpadPerformVal["loopingonoff"][pad]["value"]
             reconoff = False
@@ -976,91 +974,78 @@ class ProGuiApp(tk.Tk):
                 print("Unrecognized value of loopingonoff - %s\n" % val)
                 return
 
-            palette_api("region.loop_recording",
-                "{ " + sourceArg + \
-                ", \"onoff\": \""+str(reconoff)+"\" }")
-            palette_api("region.loop_playing",
-                "{ " + sourceArg + \
-                ", \"onoff\": \""+str(playonoff)+"\" }")
+            palette_region_api(pad,"loop_recording",
+                "\"onoff\": \""+str(reconoff)+"\"")
+            palette_region_api(pad,"loop_playing",
+                "\"onoff\": \""+str(playonoff)+"\"")
 
         elif name == "loopinglength":
             v = self.perpadPerformVal["loopinglength"][pad]["value"]
-            palette_api("region.loop_length",
-                "{ " + sourceArg + \
-                ", \"length\": "+str(v)+" }")
+            palette_region_api(pad,"loop_length",
+                "\"length\": "+str(v))
 
         elif name == "loopingfade":
             fade = self.perpadPerformVal["loopingfade"][pad]["value"]
-            palette_api("region.loop_fade",
-                "{ " + sourceArg + \
-                ", \"fade\": "+str(fade)+" }")
+            palette_region_api(pad,"loop_fade",
+                "\"fade\": "+str(fade))
 
         elif name == "quant":
             val = self.perpadPerformVal["quant"][pad]["value"]
-            palette_api("region.set_param",
-                "{ " + sourceArg + \
-                ", \"param\": \"" + "misc.quant" + "\"" + \
-                ", \"value\": \"" + str(val) + "\"" + \
-                "}")
+            palette_region_api(pad,"set_param",
+                "\"param\": \"" + "misc.quant" + "\"" + \
+                ", \"value\": \"" + str(val) + "\"")
         elif name == "scale":
             val = self.perpadPerformVal["scale"][pad]["value"]
-            palette_api("region.set_param",
-                "{ " + sourceArg + \
-                ", \"param\": \"" + "misc.scale" + "\"" + \
-                ", \"value\": \"" + str(val) + "\"" + \
-                "}")
+            palette_region_api(pad,"set_param",
+                "\"param\": \"" + "misc.scale" + "\"" + \
+                ", \"value\": \"" + str(val) + "\"")
         elif name == "vol":
             val = self.perpadPerformVal["vol"][pad]["value"]
             # NOTE: "voltype" here rather than "vol" - should make consistent someday
-            palette_api("region.set_param",
-                "{ " + sourceArg + \
-                ", \"param\": \"" + "misc.vol" + "\"" + \
-                ", \"value\": \"" + str(val) + "\"" + \
-                "}")
+            palette_region_api(pad,"set_param",
+                "\"param\": \"" + "misc.vol" + "\"" + \
+                ", \"value\": \"" + str(val) + "\"")
         elif name == "comb":
             val = 1.0
-            palette_api("region.loop_comb",
-                "{ " + sourceArg + \
-                ", \"value\": \"" + str(val) + "\"" + \
-                "}")
-
-    def sendGlobalPerformVal(self,name):
-
-        if name == "midithru":
-            thru = self.globalPerformVal["midithru"]["value"]
-            palette_api("global.midi_thru", "{ \"thru\": \""+str(thru)+"\" }")
+            palette_region_api(pad,"loop_comb",
+                "\"value\": \"" + str(val) + "\"")
+        elif name == "midithru":
+            thru = self.perpadPerformVal["midithru"]["value"]
+            palette_region_api(pad,"midi_thru", "\"thru\": \""+str(thru)+"\"")
 
         elif name == "midithruscadjust":
-            onoff = self.globalPerformVal["midithruscadjust"]["value"]
-            palette_api("global.midi_thruscadjust", "{ \"onoff\": \""+str(onoff)+"\" }")
+            onoff = self.perpadPerformVal["midithruscadjust"]["value"]
+            palette_region_api(pad,"midi_thruscadjust", "\"onoff\": \""+str(onoff)+"\"")
 
         elif name == "useexternalscale":
-            onoff = self.globalPerformVal["useexternalscale"]["value"]
-            palette_api("global.useexternalscale", "{ \"onoff\": \""+str(onoff)+"\" }")
+            onoff = self.perpadPerformVal["useexternalscale"]["value"]
+            palette_region_api(pad,"useexternalscale", "\"onoff\": \""+str(onoff)+"\"")
 
         elif name == "midiquantized":
-            quantized = self.globalPerformVal["midiquantized"]["value"]
-            palette_api("global.midi_quantized", "{ \"quantized\": \""+str(quantized)+"\" }")
+            quantized = self.perpadPerformVal["midiquantized"]["value"]
+            palette_region_api(pad,"midi_quantized", "\"quantized\": \""+str(quantized)+"\" }")
+ 
+    def sendGlobalPerformVal(self,name):
 
-        # elif name == "configname":
+        if name == "tempo":
+            val = self.globalPerformVal["tempo"]["value"]
+            palette_global_api("set_tempo_factor", "{ \"value\": "+str(val)+" }")
+
+        elif name == "transpose":
+            val = self.globalPerformVal["transpose"]["value"]
+            palette_global_api("set_transpose", "{ \"value\": "+str(val)+" }")
+
+       # elif name == "configname":
         #     config = self.globalPerformVal["configname"]["value"]
         #     palette.setConfigName(config)
         #     print("CONFIGNAME setting to ",palette.getConfigName())
 
-        elif name == "tempo":
-            val = self.globalPerformVal["tempo"]["value"]
-            palette_api("global.set_tempo_factor", "{ \"value\": "+str(val)+" }")
-
-        elif name == "transpose":
-            val = self.globalPerformVal["transpose"]["value"]
-            palette_api("global.set_transpose", "{ \"value\": "+str(val)+" }")
-
     def clearPadLoop(self,pad):
-        palette_api("region.loop_clear", "{ " + SourceArg(pad) + " }")
+        palette_region_api(pad,"loop_clear")
         self.padChooser.highlightPadBorder(pad,False)
 
     def combPadLoop(self,pad):
-        palette_api("region.loop_comb", "{ " + SourceArg(pad) + " }")
+        palette_region_api(pad,"loop_comb")
 
     def combLoop(self):
         self.resetLastAnything()
@@ -1103,8 +1088,8 @@ class ProGuiApp(tk.Tk):
 
     def resetAll(self):
 
-        # palette_api("global.audioOff",'{}')
-        palette_api("global.audioOn",'{}')
+        # palette_global_api("audioOff")
+        palette_global_api("audioOn")
 
         self.resetLastAnything()
         self.sendANO()
@@ -1152,7 +1137,7 @@ class ProGuiApp(tk.Tk):
     def recordingStart(self):
         self.recordingOn = True
         self.recordingTimeStart = time.monotonic()
-        palette_api("global.recordingStart",'{}')
+        palette_global_api("recordingStart")
         self.recordingTimeLeft = self.recordingTime
         global RecMode
         RecMode = True
@@ -1161,11 +1146,11 @@ class ProGuiApp(tk.Tk):
 
     def recordingStop(self):
         self.recordingOn = False
-        palette_api("global.recordingStop",'{}')
+        palette_global_api("recordingStop")
         self.sendANO()
  
     def playbackStop(self):
-        palette_api("global.recordingPlaybackStop",'{}')
+        palette_global_api("recordingPlaybackStop")
         self.sendANO()
  
     def recordingsShow(self,onoff):
@@ -1181,18 +1166,18 @@ class ProGuiApp(tk.Tk):
         print("recordingTest unimplemented")
 
     def clearExternalScale(self):
-        palette_api("global.clearexternalscale",'{ }')
+        palette_global_api("clearexternalscale")
 
     def sendANOAll(self):
         for pad in self.PadNames:
-            palette_api("region.ANO", "{ " + SourceArg(pad) + " }")
+            palette_region_api(pad,"ANO")
 
     def sendANO(self,pad=None):
         # print("sendANO called!")
         if pad == None:
             self.sendANOAll()
         else:
-            palette_api("region.ANO", "{ " + SourceArg(pad) + " }")
+            palette_region_api(pad,"ANO")
 
     def sendSnap(self):
         # Should only do this for the pads that are enabled
@@ -1204,8 +1189,8 @@ class ProGuiApp(tk.Tk):
 
     def paramListJson(self,paramtype,pad):
         # The presence of a region value signifies a per-pad API
-        paramlist = SourceArg(pad)
-        sep = ", "
+        paramlist = ""
+        sep = ""
         for name in self.allParamsJson:
             j = self.allParamsJson[name]
             if j["paramtype"] == paramtype:
@@ -1220,7 +1205,7 @@ class ProGuiApp(tk.Tk):
         for pt in ["sound","visual","effect"]:
             paramlistjson = self.paramListJson(pt,pad)
             if paramtype == None or paramtype == pt:
-                palette_api("region."+pt+".set_params", paramlistjson)
+                palette_region_api(pad,pt+".set_params", paramlistjson)
 
         if paramtype == None:
             for name in PerPadPerformLabels:
@@ -1682,7 +1667,7 @@ class PagePlayback(tk.Frame):
         self.isPlayingRow = row
         self.recordingsPlayButton[row].config(text="STOP")
         name = self.recordings[row+self.rowOffset][0]
-        palette_api("global.recordingPlay",'{ "name": "'+name+'" }')
+        palette_global_api("recordingPlay",'"name": "'+name+'"')
 
     def scrollNotify(self,sfy,tag):
         newoffset = int((len(self.recordings)-recordingsDisplayRows) * sfy)
@@ -2416,7 +2401,7 @@ class PagePerformRecordingSave(tk.Frame):
 
     def recordingCallback(self,name):
         if name == "save":
-            palette_api("global.recordingSave",'{ "name": "'+self.controller.recordingName+'" }')
+            palette_global_api("recordingSave",'"name": "'+self.controller.recordingName+'"')
             self.controller.recordingsPage.updatePlaybackFiles()
             self.controller.recordingsPage.updatePlaybackView()
             self.controller.setPerformMessage("")

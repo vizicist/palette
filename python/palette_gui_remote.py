@@ -51,11 +51,13 @@ global pageSizeOfControl, pageSizeOfSelect
 global performButtonPadx, performButtonPady
 global selectButtonPadx, selectButtonPady
 
-def MyNUID():
-    return palette.MyNUID()
+def palette_region_api(meth, params=""):
+    # DO NOT add the region parameter,
+    # because a gui_remote's region is assigned centrally.
+    return palette.palette_api("region."+meth,params)
 
-def palette_api(meth, params=None):
-    return palette.palette_api_central(meth,params)
+def palette_global_api(meth, params=""):
+    return palette.palette_api("global."+meth,params)
 
 def setFontSizes(fontFactor):
     global patchFont, patchTwoLineFont, sliderFont, largestFont, hugeFont, comboFont, largerFont, largeFont, performFont, mediumFont, padLabelFont
@@ -69,7 +71,7 @@ def setFontSizes(fontFactor):
     comboFont = (f, int(20*fontFactor))
     largerFont = (f, int(20*fontFactor))
     largeFont = (f, int(16*fontFactor))
-    performFont = (f, int(17*fontFactor))
+    performFont = (f, int(12*fontFactor))
     mediumFont = (f, int(12*fontFactor))
     padLabelFont = (f, int(16*fontFactor))
 
@@ -160,30 +162,21 @@ PerPadPerformLabels["loopingonoff"] = [
     {"label":"Looping_REC+PLAY", "value":"recplay"},
     {"label":"Looping_PLAY ONLY", "value":"play"},
 ]
-GlobalPerformLabels["transpose"] = [
-    {"label":"Transpose_0",  "value":0},
-    {"label":"Transpose_3",  "value":3},
-    {"label":"Transpose_-2",  "value":-2},
-    {"label":"Transpose_5",  "value":5},
+PerPadPerformLabels["midithru"] = [
+    {"label":"MIDI Input_Disabled",  "value":"disabled"},
+    {"label":"MIDI Input_Set Scale",  "value":"setscale"},
+    {"label":"MIDI Input_Thru",  "value":"thru"},
+    {"label":"MIDI Input_Thru Scadjust", "value":"thruscadjust"},
 ]
-
-GlobalPerformLabels["midithru"] = [
-    {"label":"MIDI Thru_Disabled",  "value":""},
-    {"label":"MIDI Thru_Set Scale",  "value":"setscale"},
-    {"label":"MIDI Thru_Pad A", "value":"A"},
-    {"label":"MIDI Thru_Pad B", "value":"B"},
-    {"label":"MIDI Thru_Pad C", "value":"C"},
-    {"label":"MIDI Thru_Pad D", "value":"D"},
-]
-GlobalPerformLabels["midithruscadjust"] = [
-    {"label":"MIDI Thru_No Scadjust",  "value":False},
-    {"label":"MIDI Thru_Scadjust",  "value":True},
-]
-GlobalPerformLabels["useexternalscale"] = [
+# PerPadPerformLabels["midithruscadjust"] = [
+#     {"label":"MIDI Thru_No Scadjust",  "value":False},
+#     {"label":"MIDI Thru_Scadjust",  "value":True},
+# ]
+PerPadPerformLabels["useexternalscale"] = [
     {"label":"External Scale_Off",  "value":False},
     {"label":"External Scale_On",  "value":True},
 ]
-GlobalPerformLabels["midiquantized"] = [
+PerPadPerformLabels["midiquantized"] = [
     {"label":"MIDI Thru_Unquantized",  "value":False},
     {"label":"MIDI Thru_Quantized",  "value":True},
 ]
@@ -196,6 +189,13 @@ GlobalPerformLabels["tempo"] = [
     {"label":"Tempo_Faster", "value":2.0},
     {"label":"Tempo_Fastest", "value":4.0},
 ]
+GlobalPerformLabels["transpose"] = [
+    {"label":"Transpose_0",  "value":0},
+    {"label":"Transpose_3",  "value":3},
+    {"label":"Transpose_-2",  "value":-2},
+    {"label":"Transpose_5",  "value":5},
+]
+
 
 class ProGuiApp(tk.Tk):
     def __init__(self,width,height):
@@ -597,11 +597,9 @@ class ProGuiApp(tk.Tk):
         # if paramType == "effect":
         #     self.sendPadOneEffectVal(pad,paramname,val)
         # else:
-        palette_api("region."+paramType+".set_param",
-            "{ \"nuid\": \""+ MyNUID() + "\"" + \
-            ", \"param\": \"" + paramname + "\"" + \
-            ", \"value\": \"" + str(val) + "\"" + \
-            "}")
+        palette_region_api(paramType+".set_param",
+            "\"param\": \"" + paramname + "\"" + \
+            ", \"value\": \"" + str(val) + "\"" )
 
     def sendParams(self,params,paramstype):
         page = self.editPage[paramstype]
@@ -739,86 +737,73 @@ class ProGuiApp(tk.Tk):
                 print("Unrecognized value of loopingonoff - %s\n" % val)
                 return
 
-            palette_api("region.loop_recording",
-                '{ "nuid": "'+MyNUID()+'", "onoff": "'+str(reconoff)+'" }')
-            palette_api("region.loop_playing",
-                '{ "nuid": "'+MyNUID()+'", "onoff": "'+str(playonoff)+'" }')
+            palette_region_api("loop_recording", '"onoff": "'+str(reconoff)+'"')
+            palette_region_api("loop_playing", '"onoff": "'+str(playonoff)+'"')
 
         elif name == "loopinglength":
             v = self.perpadPerformVal["loopinglength"][pad]["value"]
-            palette_api("region.loop_length",
-                "{ \"nuid\": \""+MyNUID()+"\", \"length\": "+str(v)+" }")
+            palette_region_api("loop_length", '"length": "'+str(v)+'"')
 
         elif name == "loopingfade":
             fade = self.perpadPerformVal["loopingfade"][pad]["value"]
-            palette_api("region.loop_fade",
-                "{ \"nuid\": \""+MyNUID()+"\", \"fade\": "+str(fade)+" }")
+            palette_region_api("loop_fade", '"fadelength": "'+str(fade)+'"')
 
         elif name == "quant":
             val = self.perpadPerformVal["quant"][pad]["value"]
-            palette_api("region.set_param",
-                "{ \"nuid\": \""+ MyNUID() + "\"" + \
-                ", \"param\": \"" + "misc.quant" + "\"" + \
-                ", \"value\": \"" + str(val) + "\"" + \
-                "}")
+            palette_region_api("set_param",
+                "\"param\": \"" + "misc.quant" + "\"" + \
+                ", \"value\": \"" + str(val) + "\"")
         elif name == "scale":
             val = self.perpadPerformVal["scale"][pad]["value"]
-            palette_api("region.set_param",
-                "{ \"nuid\": \""+ MyNUID() + "\"" + \
-                ", \"param\": \"" + "misc.scale" + "\"" + \
-                ", \"value\": \"" + str(val) + "\"" + \
-                "}")
+            palette_region_api("set_param",
+                "\"param\": \"" + "misc.scale" + "\"" + \
+                ", \"value\": \"" + str(val) + "\"")
         elif name == "vol":
             val = self.perpadPerformVal["vol"][pad]["value"]
             # NOTE: "voltype" here rather than "vol" - should make consistent someday
-            palette_api("region.set_param",
-                "{ \"nuid\": \""+ MyNUID() + "\"" + \
-                ", \"param\": \"" + "misc.vol" + "\"" + \
-                ", \"value\": \"" + str(val) + "\"" + \
-                "}")
+            palette_region_api("set_param",
+                "\"param\": \"" + "misc.vol" + "\"" + \
+                ", \"value\": \"" + str(val) + "\"")
         elif name == "comb":
             val = 1.0
-            palette_api("region.loop_comb",
-                "{ \"nuid\": \""+ MyNUID() + "\"" + \
-                ", \"value\": \"" + str(val) + "\"" + \
-                "}")
+            palette_region_api("loop_comb",
+                "\"value\": \"" + str(val) + "\"")
+        elif name == "midithru":
+            thru = self.perpadPerformVal["midithru"][pad]["value"]
+            palette_region_api("midi_thru", "\"thru\": \"" + str(thru) + "\"")
+
+        elif name == "midithruscadjust":
+            onoff = self.perpadPerformVal["midithruscadjust"][pad]["value"]
+            palette_region_api("midi_thruscadjust", "\"onoff\": \"" + str(onoff) + "\"")
+
+        elif name == "useexternalscale":
+            onoff = self.perpadPerformVal["useexternalscale"][pad]["value"]
+            palette_region_api("useextenralscale", "\"onoff\": \"" + str(onoff) + "\"")
+
+        elif name == "midiquantized":
+            quantized = self.perpadPerformVal["midiquantized"][pad]["value"]
+            palette_region_api("midi_quantized", "\"quantized\": \"" + str(quantized) + "\"")
 
     def sendGlobalPerformVal(self,name):
 
-        if name == "midithru":
-            thru = self.globalPerformVal["midithru"]["value"]
-            palette_api("global.midi_thru", "{ \"thru\": \""+str(thru)+"\" }")
+        if name == "tempo":
+            val = self.globalPerformVal["tempo"]["value"]
+            palette_global_api("set_tempo_factor", "\"value\": \""+str(val) + "\"")
 
-        elif name == "midithruscadjust":
-            onoff = self.globalPerformVal["midithruscadjust"]["value"]
-            palette_api("global.midi_thruscadjust", "{ \"onoff\": \""+str(onoff)+"\" }")
-
-        elif name == "useexternalscale":
-            onoff = self.globalPerformVal["useexternalscale"]["value"]
-            palette_api("global.useexternalscale", "{ \"onoff\": \""+str(onoff)+"\" }")
-
-        elif name == "midiquantized":
-            quantized = self.globalPerformVal["midiquantized"]["value"]
-            palette_api("global.midi_quantized", "{ \"quantized\": \""+str(quantized)+"\" }")
+        elif name == "transpose":
+            val = self.globalPerformVal["transpose"]["value"]
+            palette_global_api("set_transpose", "\"value\": \""+str(val) + "\"")
 
         # elif name == "configname":
         #     config = self.globalPerformVal["configname"]["value"]
         #     palette.setConfigName(config)
         #     print("CONFIGNAME setting to ",palette.getConfigName())
 
-        elif name == "tempo":
-            val = self.globalPerformVal["tempo"]["value"]
-            palette_api("global.set_tempo_factor", '{ "value": '+str(val)+' }')
-
-        elif name == "transpose":
-            val = self.globalPerformVal["transpose"]["value"]
-            palette_api("global.set_transpose", '{ "value": '+str(val)+' }')
-
     def clearPadLoop(self,pad):
-        palette_api("region.loop_clear", '{ "nuid": "'+MyNUID()+'" }')
+        palette_region_api("loop_clear", "")
 
     def combPadLoop(self,pad):
-        palette_api("region.loop_comb", '{ "nuid": "'+MyNUID()+'" }')
+        palette_region_api("loop_comb", "")
 
     def combLoop(self):
         self.resetLastAnything()
@@ -849,8 +834,8 @@ class ProGuiApp(tk.Tk):
 
     def resetAll(self):
 
-        # palette_api("global.audioOff",'{}')
-        palette_api("global.audioOn",'{}')
+        # palette_global_api("audioOff")
+        palette_global_api("global.audioOn")
 
         self.resetLastAnything()
         self.sendANO()
@@ -870,18 +855,17 @@ class ProGuiApp(tk.Tk):
         self.performPage["main"].updatePerformButtonLabels(PadName)
 
     def clearExternalScale(self):
-        palette_api("global.clearexternalscale",'{ }')
+        palette_region_api("clearexternalscale")
 
     def sendANO(self):
-        palette_api("region.ANO", "{ \"nuid\": \""+ MyNUID() + "\" }")
+        palette_region_api("ANO")
 
     def sendSnap(self):
         self.sendSnapPad(PadName)
 
     def paramListJson(self,paramtype,pad):
-        # The presence of a region value signifies a per-pad API
-        paramlist = "\"nuid\" : \"" + MyNUID() + "\""
-        sep = ", "
+        paramlist = ""
+        sep = ""
         for name in self.allParamsJson:
             j = self.allParamsJson[name]
             if j["paramtype"] == paramtype:
@@ -890,13 +874,13 @@ class ProGuiApp(tk.Tk):
                 paramlist = paramlist + sep + "\"" + name + "\" : \"" + str(v) + "\""
                 sep = ", "
 
-        return "{ " + paramlist + " }"
+        return paramlist
 
     def sendSnapPad(self,pad,paramtype=None):
         for pt in ["sound","visual","effect"]:
             paramlistjson = self.paramListJson(pt,pad)
             if paramtype == None or paramtype == pt:
-                palette_api("region."+pt+".set_params", paramlistjson)
+                palette_region_api(pt+".set_params", paramlistjson)
 
         if paramtype == None:
             for name in PerPadPerformLabels:
@@ -1611,12 +1595,12 @@ class PagePerformMain(tk.Frame):
         self.makePerformButton("quant")
         self.makePerformButton("vol")
         self.makePerformButton("tempo")
-        self.makePerformButton("Comb_Notes", self.controller.combLoop)
         self.makePerformButton("scale")
+        self.makePerformButton("midithru")
         self.makePerformButton("Notes_Off", self.controller.sendANO)
 
+        ### self.makePerformButton("Comb_Notes", self.controller.combLoop)
         ### self.makePerformButton("useexternalscale")
-        ### self.makePerformButton("midithru")
         ### self.makePerformButton("midithruscadjust")
         ### self.makePerformButton("midiquantized")
 
@@ -1631,7 +1615,7 @@ class PagePerformMain(tk.Frame):
         }
 
     def updatePerformButtonLabels(self,pad):
-        performButtonsPerRow = 6
+        performButtonsPerRow = 8
         col = 0
         row = 0
         for name in self.buttonNames:
