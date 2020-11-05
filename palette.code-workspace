@@ -5,6 +5,10 @@
 		}
 	],
 	"settings": {
-		"git.ignoreLimitWarning": true
+		"git.ignoreLimitWarning": true,
+		"files.associations": {
+			"system_error": "cpp",
+			"xlocale": "cpp"
+		}
 	}
 }

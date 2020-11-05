@@ -50,7 +50,7 @@ public:
 		if ( false ) { }
 #include "RegionParams_set.h"
 		else {
-			if (nm != "source" && nm != "region") {
+			if (nm != "source" && nm != "region" && nm != "nuid") {
 				NosuchDebug("RegionParams::Set unrecognized param name - %s",nm.c_str());
 			}
 		}

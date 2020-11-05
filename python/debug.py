@@ -18,4 +18,4 @@ if len(sys.argv) != 3:
 
 dtype = sys.argv[1]
 onoff = sys.argv[2]
-palette.palette_api("global.debug","{ \"debug\": \""+dtype+"\", \"onoff\": \""+onoff+"\" }" )
+palette.palette_api("global.debug","\"debug\": \""+dtype+"\", \"onoff\": \""+onoff+"\"" )
