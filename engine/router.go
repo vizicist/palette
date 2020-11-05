@@ -219,7 +219,7 @@ func StartNATSClient() {
 			log.Printf("StartNATS: subscribing to %s\n", MIDIEventSubject)
 			TheVizNats.Subscribe(MIDIEventSubject, func(msg *nats.Msg) {
 				data := string(msg.Data)
-				router.HandleSubscribedMidiInput(data)
+				router.HandleSubscribedMIDIInput(data)
 			})
 		}
 	}
@@ -328,7 +328,7 @@ func ListenForever() {
 		case msg := <-r.OSCInput:
 			r.HandleOSCInput(msg)
 		case event := <-r.MIDIInput:
-			r.HandleDeviceMIDIInput(event)
+			r.HandleMIDIDeviceInput(event)
 		default:
 			// log.Printf("Sleeping 1 ms - now=%v\n", time.Now())
 			time.Sleep(time.Millisecond)
@@ -433,8 +433,8 @@ func (r *Router) HandleSubscribedCursorInput(data string) {
 	return
 }
 
-// HandleSubscribedMidiInput xxx
-func (r *Router) HandleSubscribedMidiInput(data string) {
+// HandleSubscribedMIDIInput xxx
+func (r *Router) HandleSubscribedMIDIInput(data string) {
 
 	r.inputMutex.Lock()
 	defer r.inputMutex.Unlock()
@@ -446,7 +446,7 @@ func (r *Router) HandleSubscribedMidiInput(data string) {
 		return
 	}
 
-	nuid, err := needStringArg("nuid", "HandleSubscribedMidiInput", args)
+	nuid, err := needStringArg("nuid", "HandleSubscribedMIDIInput", args)
 	if err != nil {
 		log.Printf("HandleMIDIEventMsg: err=%s\n", err)
 		return
@@ -466,20 +466,20 @@ func (r *Router) HandleSubscribedMidiInput(data string) {
 	return
 }
 
-// HandleDeviceMIDIInput xxx
-func (r *Router) HandleDeviceMIDIInput(e portmidi.Event) {
+// HandleMIDIDeviceInput xxx
+func (r *Router) HandleMIDIDeviceInput(e portmidi.Event) {
 
 	r.inputMutex.Lock()
 	defer r.inputMutex.Unlock()
 
 	if r.publishMIDI {
-		me := MidiDeviceEvent{
+		me := MIDIDeviceEvent{
 			Timestamp: int64(e.Timestamp),
 			Status:    e.Status,
 			Data1:     e.Data1,
 			Data2:     e.Data2,
 		}
-		err := PublishMidiDeviceEvent(me)
+		err := PublishMIDIDeviceEvent(me)
 		if err != nil {
 			log.Printf("Router.HandleDevieMIDIInput: me=%+v err=%s\n", me, err)
 		}

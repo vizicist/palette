@@ -13,9 +13,9 @@ rm -fr %ship% > nul 2>&1
 mkdir %ship%
 mkdir %bin%
 
-echo ================ NOT Upgrading Python - takes too long
-rem python -m pip install --upgrade pip
-rem pip install codenamize pip install python-osc pip install asyncio-nats-client pyinstaller get-mac | grep -v "already satisfied"
+echo ================ Upgrading Python
+python -m pip install --upgrade pip
+pip install codenamize pip install python-osc pip install asyncio-nats-client pyinstaller get-mac mido | grep -v "already satisfied"
 
 echo ================ Compiling FFGL plugin
 set MSBUILDCMD=C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\Common7\Tools\vsmsbuildcmd.bat

@@ -1,7 +1,7 @@
 package engine
 
-// MidiDeviceEvent is a single MIDI event
-type MidiDeviceEvent struct {
+// MIDIDeviceEvent is a single MIDI event
+type MIDIDeviceEvent struct {
 	Timestamp int64 // milliseconds
 	Status    int64
 	Data1     int64
