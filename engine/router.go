@@ -44,7 +44,8 @@ type Router struct {
 	resolumeClient       *osc.Client
 	guiClient            *osc.Client
 	plogueClient         *osc.Client
-	publishCursor        bool // e.g. "nats"
+	publishCursor        bool
+	publishMIDI          bool
 	myHostname           string
 	generateVisuals      bool
 	generateSound        bool
@@ -151,6 +152,7 @@ func TheRouter() *Router {
 		}
 
 		oneRouter.publishCursor = ConfigBool("publishcursor")
+		oneRouter.publishMIDI = ConfigBool("publishmidi")
 		oneRouter.generateVisuals = ConfigBool("generatevisuals")
 		oneRouter.generateSound = ConfigBool("generatesound")
 
@@ -286,34 +288,32 @@ func StartMIDI() {
 		return
 	}
 	words := strings.Split(midiinput, ",")
-	var inputs []*midiInput
-	for _, word := range words {
-		input := MIDI.getInput(word)
-		if input == nil {
-			log.Printf("There is no MIDI input named %s\n", midiinput)
+	inputs := make(map[string]*midiInput)
+	for _, input := range words {
+		i := MIDI.getInput(input)
+		if i == nil {
+			log.Printf("StartMIDI: There is no input named %s\n", input)
 		} else {
-			inputs = append(inputs, input)
+			inputs[input] = i
 		}
 	}
 	r.MIDINumDown = 0
 	log.Printf("Successfully opened MIDI input device %s\n", midiinput)
 	for {
-		for _, input := range inputs {
+		for nm, input := range inputs {
 			hasinput, err := input.Poll()
 			if err != nil {
-				log.Printf("StartMIDI: ERROR in Poll? err=%v\n", err)
+				log.Printf("StartMIDI: Poll of input=%s err=%v\n", nm, err)
 			} else if hasinput {
 				event, err := input.ReadEvent()
 				if err != nil {
-					log.Printf("ERROR in Read?  err = %v\n", err)
+					log.Printf("StartMIDI: ReadEvent of input=%s err=%s\n", nm, err)
 					// we may have lost some NOTEOFF's so reset our count
 					r.MIDINumDown = 0
 				} else {
-					// log.Printf("MIDI input ReadEvent = %+v\n", event)
+					log.Printf("StartMIDI: input=%s event=%+v\n", nm, event)
 					r.MIDIInput <- event
 				}
-			} else {
-				// log.Printf("No input time=%v\n", time.Now())
 			}
 		}
 		time.Sleep(2 * time.Millisecond)
@@ -471,6 +471,19 @@ func (r *Router) HandleDeviceMIDIInput(e portmidi.Event) {
 
 	r.inputMutex.Lock()
 	defer r.inputMutex.Unlock()
+
+	if r.publishMIDI {
+		me := MidiDeviceEvent{
+			Timestamp: int64(e.Timestamp),
+			Status:    e.Status,
+			Data1:     e.Data1,
+			Data2:     e.Data2,
+		}
+		err := PublishMidiDeviceEvent(me)
+		if err != nil {
+			log.Printf("Router.HandleDevieMIDIInput: me=%+v err=%s\n", me, err)
+		}
+	}
 
 	if DebugUtil.MIDI {
 		log.Printf("Router.ListenForever: MIDIInput event=%+v\n", e)
