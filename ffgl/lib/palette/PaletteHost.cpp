@@ -1164,7 +1164,9 @@ void PaletteHost::ProcessOscMessage( std::string source, const osc::ReceivedMess
 		if (checkAddrPattern(addr, "/api")) {
 			std::string meth = ArgAsString(m,0);
 			std::string params = ArgAsString(m,1);
-			NosuchDebug("/api !! meth=%s params=%s\n", meth.c_str(), params.c_str());
+			if (NosuchDebugAPI) {
+				NosuchDebug("/api !! meth=%s params=%s\n", meth.c_str(), params.c_str());
+			}
 			cJSON *c_params = cJSON_Parse(params.c_str());
 			if (c_params == NULL) {
 				NosuchDebug("ProcessOscMessage can't parse params=%s\n", params.c_str());
