@@ -2,6 +2,7 @@
   "generatesound": "false",
   "generatevisuals": "false",
   "publishcursor": "true",
+  "publishmidi": "true",
   "debug": "",
   "this line should not end with a comma": 0
 }
