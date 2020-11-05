@@ -1029,11 +1029,11 @@ class ProGuiApp(tk.Tk):
 
         if name == "tempo":
             val = self.globalPerformVal["tempo"]["value"]
-            palette_global_api("set_tempo_factor", "{ \"value\": "+str(val)+" }")
+            palette_global_api("set_tempo_factor", "\"value\": "+str(val))
 
         elif name == "transpose":
             val = self.globalPerformVal["transpose"]["value"]
-            palette_global_api("set_transpose", "{ \"value\": "+str(val)+" }")
+            palette_global_api("set_transpose", "\"value\": "+str(val))
 
        # elif name == "configname":
         #     config = self.globalPerformVal["configname"]["value"]

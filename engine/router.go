@@ -1135,7 +1135,7 @@ func (r *Router) setRegionForMorph(serialnum string, region string) {
 	r.regionAssignedMutex.Lock()
 	defer r.regionAssignedMutex.Unlock()
 
-	log.Printf("setRegionForMorph: ASSIGNING region=%s to serialnum=%s\n", region, serialnum)
+	log.Printf("setRegionForMorph: Assigning region=%s to serialnum=%s\n", region, serialnum)
 	r.regionForMorph[serialnum] = region
 }
 
@@ -1154,7 +1154,7 @@ func (r *Router) getRegionForNUID(nuid string) string {
 
 	// Hasn't been seen yet, let's get an available region
 	region = r.availableRegion(nuid)
-	log.Printf("getRegionForNUID: ASSIGNING region=%s to nuid=%s\n", region, nuid)
+	log.Printf("getRegionForNUID: Assigning region=%s to nuid=%s\n", region, nuid)
 	r.regionAssignedToNUID[nuid] = region
 
 	return region
