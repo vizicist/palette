@@ -1199,7 +1199,7 @@ class ProGuiApp(tk.Tk):
                 paramlist = paramlist + sep + "\"" + name + "\" : \"" + str(v) + "\""
                 sep = ", "
 
-        return "{ " + paramlist + " }"
+        return paramlist
 
     def sendSnapPad(self,pad,paramtype=None):
         for pt in ["sound","visual","effect"]:

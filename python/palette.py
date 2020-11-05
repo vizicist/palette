@@ -38,6 +38,10 @@ def MyNUID():
         return nuidjson["nuid"]
     return "NoNUIDInNUIDFile"
 
+def FakeNUID(nuid):
+    global MyNuid
+    MyNuid = nuid
+
 def boolValueOfString(v):
     return True if (v!=0 and v!="0" and v!="off" and v!="false" and v!="False") else False
 
