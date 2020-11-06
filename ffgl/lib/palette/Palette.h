@@ -31,12 +31,6 @@ public:
 	std::vector<std::string> effectlist;
 };
 
-class Bank {
-public:
-	Bank() { }
-	std::map<std::string, Patch*> patches;
-};
-
 class Palette {
 
 public:
@@ -83,22 +77,6 @@ public:
 	Region region;
 
 	void setLastActivity();
-
-	std::map<std::string, Bank*> banks;
-	std::string currentBank;
-	std::string currentPatch;
-
-	bool externalnotedown[12];
-
-	int ExternalNumDown() {
-		int ndown = 0;
-		for (int i = 0; i < 12; i++) {
-			if (externalnotedown[i]) {
-				ndown++;
-			}
-		}
-		return ndown;
-	}
 
 private:
 

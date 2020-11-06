@@ -10,27 +10,14 @@ type Scale struct {
 // Scales maps a name to a Scale
 var Scales map[string]*Scale
 
-// GetScale xxx
-func GetScale(name string) *Scale {
+// GlobalScale xxx
+func GlobalScale(name string) *Scale {
 	s, ok := Scales[name]
 	if !ok {
 		log.Printf("No scale named %s, assuming newage\n", name)
 		s = Scales["newage"]
 	}
 	return s
-}
-
-// ClearExternalScale xxx
-func ClearExternalScale() {
-	Scales["external"] = makeScale()
-}
-
-// SetExternalScale xxx
-func SetExternalScale(pitch int, on bool) {
-	s := Scales["external"]
-	for p := pitch; p < 128; p += 12 {
-		s.hasNote[p] = on
-	}
 }
 
 // InitScales xxx
@@ -56,8 +43,6 @@ func InitScales() {
 	Scales["melminor"] = makeScale(0, 2, 3, 5, 7, 9, 11)
 	Scales["chromatic"] = makeScale(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
 	Scales["fifths"] = makeScale(0, 7)
-
-	Scales["external"] = makeScale()
 }
 
 func makeScale(pitches ...int) *Scale {

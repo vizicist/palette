@@ -44,12 +44,6 @@ Palette::Palette(PaletteHost* b) {
 
 	NosuchLockInit(&_palette_mutex,"palette");
 	_paletteHost = b;
-	currentBank = "bank1";
-	currentPatch = "1";
-
-	for (int i = 0; i < 12; i++) {
-		externalnotedown[i] = false;
-	}
 
 	now = 0;  // Don't use Pt_Time(), it may not have been started yet
 	NosuchDebug(1,"Palette constructor, setting now to %d",now);

@@ -71,7 +71,7 @@ def setFontSizes(fontFactor):
     comboFont = (f, int(20*fontFactor))
     largerFont = (f, int(20*fontFactor))
     largeFont = (f, int(16*fontFactor))
-    performFont = (f, int(12*fontFactor))
+    performFont = (f, int(14*fontFactor))
     mediumFont = (f, int(12*fontFactor))
     padLabelFont = (f, int(16*fontFactor))
 
@@ -168,10 +168,6 @@ PerPadPerformLabels["midithru"] = [
     {"label":"MIDI Input_Thru",  "value":"thru"},
     {"label":"MIDI Input_Thru Scadjust", "value":"thruscadjust"},
 ]
-# PerPadPerformLabels["midithruscadjust"] = [
-#     {"label":"MIDI Thru_No Scadjust",  "value":False},
-#     {"label":"MIDI Thru_Scadjust",  "value":True},
-# ]
 PerPadPerformLabels["useexternalscale"] = [
     {"label":"External Scale_Off",  "value":False},
     {"label":"External Scale_On",  "value":True},
@@ -758,41 +754,40 @@ class ProGuiApp(tk.Tk):
             palette_region_api("set_param",
                 "\"param\": \"" + "misc.scale" + "\"" + \
                 ", \"value\": \"" + str(val) + "\"")
+
         elif name == "vol":
             val = self.perpadPerformVal["vol"][pad]["value"]
             # NOTE: "voltype" here rather than "vol" - should make consistent someday
             palette_region_api("set_param",
                 "\"param\": \"" + "misc.vol" + "\"" + \
                 ", \"value\": \"" + str(val) + "\"")
+
         elif name == "comb":
             val = 1.0
             palette_region_api("loop_comb",
                 "\"value\": \"" + str(val) + "\"")
+
         elif name == "midithru":
             thru = self.perpadPerformVal["midithru"][pad]["value"]
             palette_region_api("midi_thru", "\"thru\": \"" + str(thru) + "\"")
 
-        elif name == "midithruscadjust":
-            onoff = self.perpadPerformVal["midithruscadjust"][pad]["value"]
-            palette_region_api("midi_thruscadjust", "\"onoff\": \"" + str(onoff) + "\"")
-
         elif name == "useexternalscale":
             onoff = self.perpadPerformVal["useexternalscale"][pad]["value"]
-            palette_region_api("useextenralscale", "\"onoff\": \"" + str(onoff) + "\"")
+            palette_region_api("useexternalscale", "\"onoff\": \"" + str(onoff) + "\"")
 
         elif name == "midiquantized":
             quantized = self.perpadPerformVal["midiquantized"][pad]["value"]
             palette_region_api("midi_quantized", "\"quantized\": \"" + str(quantized) + "\"")
+
+        elif name == "transpose":
+            val = self.globalPerformVal["transpose"][pad]["value"]
+            palette_region_api("set_transpose", "\"value\": \""+str(val) + "\"")
 
     def sendGlobalPerformVal(self,name):
 
         if name == "tempo":
             val = self.globalPerformVal["tempo"]["value"]
             palette_global_api("set_tempo_factor", "\"value\": \""+str(val) + "\"")
-
-        elif name == "transpose":
-            val = self.globalPerformVal["transpose"]["value"]
-            palette_global_api("set_transpose", "\"value\": \""+str(val) + "\"")
 
         # elif name == "configname":
         #     config = self.globalPerformVal["configname"]["value"]
@@ -835,7 +830,7 @@ class ProGuiApp(tk.Tk):
     def resetAll(self):
 
         # palette_global_api("audioOff")
-        palette_global_api("global.audioOn")
+        palette_global_api("audioOn")
 
         self.resetLastAnything()
         self.sendANO()
@@ -1590,32 +1585,31 @@ class PagePerformMain(tk.Frame):
         self.makePerformButton("loopingfade")
         self.makePerformButton("Loop_Clear", self.controller.clearLoop)
         self.makePerformButton("transpose")
-        self.makePerformButton("Reset_All", self.controller.resetAll)
+        self.makePerformButton("useexternalscale")
+        self.makePerformButton("Notes_Off", self.controller.sendANO)
 
         self.makePerformButton("quant")
         self.makePerformButton("vol")
-        self.makePerformButton("tempo")
         self.makePerformButton("scale")
         self.makePerformButton("midithru")
-        self.makePerformButton("Notes_Off", self.controller.sendANO)
+        # self.makePerformButton("midiquantized")
+        self.makePerformButton("Reset_All", self.controller.resetAll)
 
         ### self.makePerformButton("Comb_Notes", self.controller.combLoop)
         ### self.makePerformButton("useexternalscale")
-        ### self.makePerformButton("midithruscadjust")
         ### self.makePerformButton("midiquantized")
 
         # self.makePerformButton("configname")
 
         self.advancedButtons = {
             "recording", "quant", "vol", "scale", "tempo", "Comb_Notes",
-            "midithru", "midithruscadjust", "midiquantized",
-            "Notes_Off", "All Notes_Off",
+            "midithru", "midiquantized", "Notes_Off", "All Notes_Off",
             "useexternalscale",
             # "configname"
         }
 
     def updatePerformButtonLabels(self,pad):
-        performButtonsPerRow = 8
+        performButtonsPerRow = 7
         col = 0
         row = 0
         for name in self.buttonNames:
