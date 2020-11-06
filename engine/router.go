@@ -21,18 +21,12 @@ const debug bool = false
 
 // Router takes events and routes them
 type Router struct {
-	reactors        map[string]*Reactor
-	inputs          []*osc.Client
-	OSCInput        chan OSCEvent
-	MIDIInput       chan portmidi.Event
-	MIDINumDown     int
-	MIDIOctaveShift int
-	// MIDISetScale      bool
-	MIDIThru             string // "", "A", "B", "C", "D"
-	MIDIThruScadjust     bool
-	MIDIQuantized        bool
-	useExternalScale     bool // if true, scadjust uses "external" Scale
-	killme               bool // set to true if Router should be stopped
+	reactors  map[string]*Reactor
+	inputs    []*osc.Client
+	OSCInput  chan OSCEvent
+	MIDIInput chan portmidi.Event
+
+	killme               bool // true if Router should be stopped
 	lastClick            Clicks
 	control              chan Command
 	time                 time.Time
@@ -116,9 +110,6 @@ func TheRouter() *Router {
 		LoadParamDefs()
 		LoadEffectsJSON()
 
-		ClearExternalScale()
-		SetExternalScale(60%12, true) // Middle C
-
 		oneRouter.reactors = make(map[string]*Reactor)
 		oneRouter.regionForMorph = make(map[string]string)
 		oneRouter.regionAssignedToNUID = make(map[string]string)
@@ -139,7 +130,6 @@ func TheRouter() *Router {
 		oneRouter.OSCInput = make(chan OSCEvent)
 		oneRouter.MIDIInput = make(chan portmidi.Event)
 		oneRouter.recordingOn = false
-		oneRouter.MIDIOctaveShift = 0
 
 		oneRouter.myHostname = ConfigValue("hostname")
 		if oneRouter.myHostname == "" {
@@ -155,12 +145,6 @@ func TheRouter() *Router {
 		oneRouter.publishMIDI = ConfigBool("publishmidi")
 		oneRouter.generateVisuals = ConfigBool("generatevisuals")
 		oneRouter.generateSound = ConfigBool("generatesound")
-
-		// oneRouter.MIDISetScale = false
-		oneRouter.MIDIThru = ""
-		oneRouter.MIDIThruScadjust = false
-		oneRouter.useExternalScale = false
-		oneRouter.MIDIQuantized = false
 
 		go oneRouter.notifyGUI("restart")
 	})
@@ -297,7 +281,6 @@ func StartMIDI() {
 			inputs[input] = i
 		}
 	}
-	r.MIDINumDown = 0
 	log.Printf("Successfully opened MIDI input device %s\n", midiinput)
 	for {
 		for nm, input := range inputs {
@@ -309,9 +292,11 @@ func StartMIDI() {
 				if err != nil {
 					log.Printf("StartMIDI: ReadEvent of input=%s err=%s\n", nm, err)
 					// we may have lost some NOTEOFF's so reset our count
-					r.MIDINumDown = 0
+					// r.MIDINumDown = 0
 				} else {
-					log.Printf("StartMIDI: input=%s event=%+v\n", nm, event)
+					if DebugUtil.MIDI {
+						log.Printf("StartMIDI: input=%s event=%+v\n", nm, event)
+					}
 					r.MIDIInput <- event
 				}
 			}
@@ -320,15 +305,29 @@ func StartMIDI() {
 	}
 }
 
-// ListenForever listens for things on its input channels
-func ListenForever() {
+// ListenForLocalDeviceInputsForever listens for local device inputs (OSC, MIDI)
+func ListenForLocalDeviceInputsForever() {
 	r := TheRouter()
 	for r.killme == false {
 		select {
 		case msg := <-r.OSCInput:
 			r.HandleOSCInput(msg)
 		case event := <-r.MIDIInput:
-			r.HandleMIDIDeviceInput(event)
+			if r.publishMIDI {
+				me := MIDIDeviceEvent{
+					Timestamp: int64(event.Timestamp),
+					Status:    event.Status,
+					Data1:     event.Data1,
+					Data2:     event.Data2,
+				}
+				err := PublishMIDIDeviceEvent(me)
+				if err != nil {
+					log.Printf("Router.HandleDevieMIDIInput: me=%+v err=%s\n", me, err)
+				}
+			}
+			// Hard-coded to pad A until I decide how to do it
+			reactor := r.reactors["A"]
+			reactor.HandleMIDIDeviceInput(event)
 		default:
 			// log.Printf("Sleeping 1 ms - now=%v\n", time.Now())
 			time.Sleep(time.Millisecond)
@@ -464,39 +463,6 @@ func (r *Router) HandleSubscribedMIDIInput(data string) {
 
 	log.Printf("HandleMIDIEventMsg: NOT IMPLEMENTED YET\n")
 	return
-}
-
-// HandleMIDIDeviceInput xxx
-func (r *Router) HandleMIDIDeviceInput(e portmidi.Event) {
-
-	r.inputMutex.Lock()
-	defer r.inputMutex.Unlock()
-
-	if r.publishMIDI {
-		me := MIDIDeviceEvent{
-			Timestamp: int64(e.Timestamp),
-			Status:    e.Status,
-			Data1:     e.Data1,
-			Data2:     e.Data2,
-		}
-		err := PublishMIDIDeviceEvent(me)
-		if err != nil {
-			log.Printf("Router.HandleDevieMIDIInput: me=%+v err=%s\n", me, err)
-		}
-	}
-
-	if DebugUtil.MIDI {
-		log.Printf("Router.ListenForever: MIDIInput event=%+v\n", e)
-	}
-	switch r.MIDIThru {
-	case "":
-		// do nothing
-	case "setscale":
-		r.handleMIDISetScale(e)
-	case "A", "B", "C", "D":
-		reactor := r.reactors[r.MIDIThru]
-		reactor.PassThruMIDI(e, r.MIDIThruScadjust, r.useExternalScale)
-	}
 }
 
 // HandleAPIInput xxx
@@ -652,41 +618,6 @@ func (r *Router) ExecuteAPI(api string, rawargs string) (result interface{}, err
 			if err == nil {
 				setDebug(s, b)
 			}
-		}
-
-	case "set_transpose":
-		v, err := needIntArg("value", api, args)
-		if err == nil {
-			TransposePitch = v
-		}
-
-	case "midi_thru":
-		v, err := needStringArg("thru", api, args)
-		if err == nil {
-			r.MIDIThru = v
-		}
-
-	case "midi_thruscadjust":
-		v, err := needBoolArg("onoff", api, args)
-		if err == nil {
-			r.MIDIThruScadjust = v
-		}
-
-	case "useexternalscale":
-		v, err := needBoolArg("onoff", api, args)
-		if err == nil {
-			r.useExternalScale = v
-		}
-
-	case "clearexternalscale":
-		// log.Printf("router is clearing external scale\n")
-		ClearExternalScale()
-		r.MIDINumDown = 0
-
-	case "midi_quantized":
-		v, err := needBoolArg("quantized", api, args)
-		if err == nil {
-			r.MIDIQuantized = v
 		}
 
 	case "set_tempo_factor":
@@ -971,34 +902,6 @@ func (r *Router) recordingLoad(name string) ([]*PlaybackEvent, error) {
 	}
 	log.Printf("Number of playback events is %d, lines is %d\n", len(events), nlines)
 	return events, nil
-}
-
-func (r *Router) handleMIDISetScale(e portmidi.Event) {
-	status := e.Status & 0xf0
-	pitch := int(e.Data1)
-	// log.Printf("handleMIDIScale numdown=%d e=%s\n", r.MIDINumDown, e)
-	if status == 0x90 {
-		// If there are no notes held down (i.e. this is the first), clear the scale
-		if r.MIDINumDown < 0 {
-			// this can happen when there's a Read error that misses a NOTEON
-			r.MIDINumDown = 0
-		}
-		if r.MIDINumDown == 0 {
-			ClearExternalScale()
-		}
-		SetExternalScale(pitch%12, true)
-		r.MIDINumDown++
-		if pitch < 60 {
-			r.MIDIOctaveShift = -1
-		} else if pitch > 72 {
-			r.MIDIOctaveShift = 1
-		} else {
-			r.MIDIOctaveShift = 0
-		}
-	} else if status == 0x80 {
-		r.MIDINumDown--
-	}
-	// log.Printf("handleMIDIScale end numdown=%d\n", r.MIDINumDown)
 }
 
 func (r *Router) handleOSCCursorEvent(msg *osc.Message) {
