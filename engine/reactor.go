@@ -33,9 +33,6 @@ var oneBeat Clicks
 // TempoFactor xxx
 var TempoFactor = float64(1.0)
 
-// TransposePitch xxx
-var TransposePitch = 0 // can be negative
-
 // ActiveNote is a currently active MIDI note
 type ActiveNote struct {
 	id     int
@@ -77,6 +74,16 @@ type Reactor struct {
 	deviceCursorsMutex        sync.RWMutex
 
 	activePhrasesManager *ActivePhrasesManager
+
+	// Things moved over from Router
+	MIDINumDown      int
+	MIDIOctaveShift  int
+	MIDIThru         string // "disabled", "thru", etc
+	MIDIQuantized    bool
+	useExternalScale bool // if true, scadjust uses "external" Scale
+	TransposePitch   int
+	midiInputMutex   sync.RWMutex
+	externalScale    *Scale
 }
 
 // NewReactor makes a new Reactor
@@ -101,8 +108,17 @@ func NewReactor(pad string, resolumeLayer int, freeframeClient *osc.Client, reso
 		loop:                      NewLoop(oneBeat * 4),
 		deviceCursors:             make(map[string]*DeviceCursor),
 		activePhrasesManager:      NewActivePhrasesManager(),
+
+		MIDIOctaveShift:  0,
+		MIDIThru:         "",
+		useExternalScale: false,
+		MIDIQuantized:    false,
+		TransposePitch:   0,
 	}
 	r.params.SetDefaultValues()
+	r.ClearExternalScale()
+	r.SetExternalScale(60%12, true) // Middle C
+
 	log.Printf("NewReactor: pad=%s resolumeLayer=%d\n", pad, resolumeLayer)
 	return r
 }
@@ -321,8 +337,89 @@ func (r *Reactor) toResolume(msg *osc.Message) {
 	}
 }
 
+// ClearExternalScale xxx
+func (r *Reactor) ClearExternalScale() {
+	r.externalScale = makeScale()
+}
+
+// SetExternalScale xxx
+func (r *Reactor) SetExternalScale(pitch int, on bool) {
+	s := r.externalScale
+	log.Printf("Reactor.SetExternalScale start\n")
+	for p := pitch; p < 128; p += 12 {
+		log.Printf("   setting hasNote for p=%d\n", p)
+		s.hasNote[p] = on
+	}
+}
+
+func (r *Reactor) handleMIDISetScaleNote(e portmidi.Event) {
+	status := e.Status & 0xf0
+	pitch := int(e.Data1)
+	// log.Printf("handleMIDIScale numdown=%d e=%s\n", r.MIDINumDown, e)
+	if status == 0x90 {
+		// If there are no notes held down (i.e. this is the first), clear the scale
+		if r.MIDINumDown < 0 {
+			// this can happen when there's a Read error that misses a NOTEON
+			r.MIDINumDown = 0
+		}
+		if r.MIDINumDown == 0 {
+			r.ClearExternalScale()
+		}
+		r.SetExternalScale(pitch%12, true)
+		r.MIDINumDown++
+		if pitch < 60 {
+			r.MIDIOctaveShift = -1
+		} else if pitch > 72 {
+			r.MIDIOctaveShift = 1
+		} else {
+			r.MIDIOctaveShift = 0
+		}
+	} else if status == 0x80 {
+		r.MIDINumDown--
+	}
+	// log.Printf("handleMIDIScale end numdown=%d\n", r.MIDINumDown)
+}
+
+// HandleMIDIDeviceInput xxx
+func (r *Reactor) HandleMIDIDeviceInput(e portmidi.Event) {
+
+	r.midiInputMutex.Lock()
+	defer r.midiInputMutex.Unlock()
+
+	if DebugUtil.MIDI {
+		log.Printf("Router.HandleMIDIDeviceInput: MIDIInput event=%+v\n", e)
+	}
+	switch r.MIDIThru {
+	case "":
+		// do nothing
+	case "disabled":
+		// do nothing
+	case "setscale":
+		r.handleMIDISetScaleNote(e)
+	case "thru":
+		r.PassThruMIDI(e, false)
+	case "thruscadjust":
+		r.PassThruMIDI(e, true)
+	default:
+		log.Printf("Router.HandleMIDIDeviceInput: unknown MIDIThru value=%s\n", r.MIDIThru)
+	}
+}
+
+// getScale xxx
+func (r *Reactor) getScale() *Scale {
+	var scaleName string
+	var scale *Scale
+	if r.useExternalScale {
+		scale = r.externalScale
+	} else {
+		scaleName = r.params.ParamStringValue("misc.scale", "newage")
+		scale = GlobalScale(scaleName)
+	}
+	return scale
+}
+
 // PassThruMIDI xxx
-func (r *Reactor) PassThruMIDI(e portmidi.Event, scadjust bool, useexternalscale bool) {
+func (r *Reactor) PassThruMIDI(e portmidi.Event, scadjust bool) {
 
 	// log.Printf("Reactor.PassThruMIDI e=%+v\n", e)
 
@@ -337,15 +434,8 @@ func (r *Reactor) PassThruMIDI(e portmidi.Event, scadjust bool, useexternalscale
 	synth := r.params.ParamStringValue("sound.synth", defaultSynth)
 	var n *Note
 	if (status == 0x90 || status == 0x80) && scadjust == true {
-		var scaleName string
-		if useexternalscale {
-			scaleName = "external"
-		} else {
-			scaleName = r.params.ParamStringValue("misc.scale", "newage")
-
-		}
-		s := GetScale(scaleName)
-		pitch = s.ClosestTo(pitch)
+		scale := r.getScale()
+		pitch = scale.ClosestTo(pitch)
 	}
 	switch status {
 	case 0x90:
@@ -789,7 +879,7 @@ func (r *Reactor) paramIntValue(paramname string) int {
 
 func (r *Reactor) cursorToNoteOn(ce CursorStepEvent) *Note {
 	pitch := r.cursorToPitch(ce)
-	pitch = uint8(int(pitch) + TransposePitch)
+	pitch = uint8(int(pitch) + r.TransposePitch)
 	velocity := r.cursorToVelocity(ce)
 	synth := r.params.ParamStringValue("sound.synth", defaultSynth)
 	// log.Printf("cursorToNoteOn x=%.5f y=%.5f z=%.5f pitch=%d velocity=%d\n", ce.x, ce.y, ce.z, pitch, velocity)
@@ -802,15 +892,9 @@ func (r *Reactor) cursorToPitch(ce CursorStepEvent) uint8 {
 	dp := pitchmax - pitchmin + 1
 	p1 := int(ce.X * float32(dp))
 	p := uint8(pitchmin + p1%dp)
-	var scaleName string
-	if TheRouter().useExternalScale {
-		scaleName = "external"
-	} else {
-		scaleName = r.params.ParamStringValue("misc.scale", "newage")
-	}
-	s := GetScale(scaleName)
-	p = s.ClosestTo(p)
-	pnew := p + uint8(12*TheRouter().MIDIOctaveShift)
+	scale := r.getScale()
+	p = scale.ClosestTo(p)
+	pnew := p + uint8(12*r.MIDIOctaveShift)
 	if pnew < 0 {
 		p = pnew + 12
 	} else if pnew > 127 {
@@ -994,6 +1078,35 @@ func (r *Reactor) ExecuteAPI(api string, args map[string]string, rawargs string)
 
 	case "ANO":
 		r.sendANO()
+
+	case "midi_thru":
+		v, err := needStringArg("thru", api, args)
+		if err == nil {
+			r.MIDIThru = v
+		}
+
+	case "useexternalscale":
+		v, err := needBoolArg("onoff", api, args)
+		if err == nil {
+			r.useExternalScale = v
+		}
+
+	case "clearexternalscale":
+		// log.Printf("router is clearing external scale\n")
+		r.ClearExternalScale()
+		r.MIDINumDown = 0
+
+	case "midi_quantized":
+		v, err := needBoolArg("quantized", api, args)
+		if err == nil {
+			r.MIDIQuantized = v
+		}
+
+	case "set_transpose":
+		v, err := needIntArg("value", api, args)
+		if err == nil {
+			r.TransposePitch = v
+		}
 
 	default:
 		known = false
