@@ -325,9 +325,10 @@ func ListenForLocalDeviceInputsForever() {
 					log.Printf("Router.HandleDevieMIDIInput: me=%+v err=%s\n", me, err)
 				}
 			}
-			// Hard-coded to pad A until I decide how to do it
-			reactor := r.reactors["A"]
-			reactor.HandleMIDIDeviceInput(event)
+			// XXX - All Pads??  I guess
+			for _, reactor := range r.reactors {
+				reactor.HandleMIDIDeviceInput(event)
+			}
 		default:
 			// log.Printf("Sleeping 1 ms - now=%v\n", time.Now())
 			time.Sleep(time.Millisecond)

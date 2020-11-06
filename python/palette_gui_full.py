@@ -1008,7 +1008,6 @@ class ProGuiApp(tk.Tk):
 
         elif name == "midithru":
             thru = self.perpadPerformVal["midithru"][pad]["value"]
-            print("CALLING midi_thru with thru=",thru)
             palette_region_api(pad,"midi_thru", "\"thru\": \""+str(thru)+"\"")
 
         elif name == "useexternalscale":
