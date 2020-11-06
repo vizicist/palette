@@ -345,9 +345,7 @@ func (r *Reactor) ClearExternalScale() {
 // SetExternalScale xxx
 func (r *Reactor) SetExternalScale(pitch int, on bool) {
 	s := r.externalScale
-	log.Printf("Reactor.SetExternalScale start\n")
 	for p := pitch; p < 128; p += 12 {
-		log.Printf("   setting hasNote for p=%d\n", p)
 		s.hasNote[p] = on
 	}
 }
@@ -355,7 +353,6 @@ func (r *Reactor) SetExternalScale(pitch int, on bool) {
 func (r *Reactor) handleMIDISetScaleNote(e portmidi.Event) {
 	status := e.Status & 0xf0
 	pitch := int(e.Data1)
-	// log.Printf("handleMIDIScale numdown=%d e=%s\n", r.MIDINumDown, e)
 	if status == 0x90 {
 		// If there are no notes held down (i.e. this is the first), clear the scale
 		if r.MIDINumDown < 0 {
@@ -377,7 +374,6 @@ func (r *Reactor) handleMIDISetScaleNote(e portmidi.Event) {
 	} else if status == 0x80 {
 		r.MIDINumDown--
 	}
-	// log.Printf("handleMIDIScale end numdown=%d\n", r.MIDINumDown)
 }
 
 // HandleMIDIDeviceInput xxx
