@@ -30,5 +30,5 @@ func main() {
 	go engine.StartRealtime()
 	go engine.StartCursorInput()
 
-	engine.ListenForever() // never returns
+	engine.ListenForLocalDeviceInputsForever() // never returns
 }

@@ -161,30 +161,23 @@ PerPadPerformLabels["loopingonoff"] = [
     {"label":"Looping_REC+PLAY", "value":"recplay"},
     {"label":"Looping_PLAY ONLY", "value":"play"},
 ]
-GlobalPerformLabels["transpose"] = [
+PerPadPerformLabels["transpose"] = [
     {"label":"Transpose_0",  "value":0},
     {"label":"Transpose_3",  "value":3},
     {"label":"Transpose_-2",  "value":-2},
     {"label":"Transpose_5",  "value":5},
 ]
-
-GlobalPerformLabels["midithru"] = [
-    {"label":"MIDI Thru_Disabled",  "value":""},
-    {"label":"MIDI Thru_Set Scale",  "value":"setscale"},
-    {"label":"MIDI Thru_Pad A", "value":"A"},
-    {"label":"MIDI Thru_Pad B", "value":"B"},
-    {"label":"MIDI Thru_Pad C", "value":"C"},
-    {"label":"MIDI Thru_Pad D", "value":"D"},
+PerPadPerformLabels["midithru"] = [
+    {"label":"MIDI Input_Disabled",  "value":"disabled"},
+    {"label":"MIDI Input_Set Scale",  "value":"setscale"},
+    {"label":"MIDI Input_Thru", "value":"thru"},
+    {"label":"MIDI Input_Thru Scadjust", "value":"thruscadjust"},
 ]
-GlobalPerformLabels["midithruscadjust"] = [
-    {"label":"MIDI Thru_No Scadjust",  "value":False},
-    {"label":"MIDI Thru_Scadjust",  "value":True},
-]
-GlobalPerformLabels["useexternalscale"] = [
+PerPadPerformLabels["useexternalscale"] = [
     {"label":"External Scale_Off",  "value":False},
     {"label":"External Scale_On",  "value":True},
 ]
-GlobalPerformLabels["midiquantized"] = [
+PerPadPerformLabels["midiquantized"] = [
     {"label":"MIDI Thru_Unquantized",  "value":False},
     {"label":"MIDI Thru_Quantized",  "value":True},
 ]
@@ -994,46 +987,47 @@ class ProGuiApp(tk.Tk):
             palette_region_api(pad,"set_param",
                 "\"param\": \"" + "misc.quant" + "\"" + \
                 ", \"value\": \"" + str(val) + "\"")
+
         elif name == "scale":
             val = self.perpadPerformVal["scale"][pad]["value"]
             palette_region_api(pad,"set_param",
                 "\"param\": \"" + "misc.scale" + "\"" + \
                 ", \"value\": \"" + str(val) + "\"")
+
         elif name == "vol":
             val = self.perpadPerformVal["vol"][pad]["value"]
             # NOTE: "voltype" here rather than "vol" - should make consistent someday
             palette_region_api(pad,"set_param",
                 "\"param\": \"" + "misc.vol" + "\"" + \
                 ", \"value\": \"" + str(val) + "\"")
+
         elif name == "comb":
             val = 1.0
             palette_region_api(pad,"loop_comb",
                 "\"value\": \"" + str(val) + "\"")
+
         elif name == "midithru":
-            thru = self.perpadPerformVal["midithru"]["value"]
+            thru = self.perpadPerformVal["midithru"][pad]["value"]
+            print("CALLING midi_thru with thru=",thru)
             palette_region_api(pad,"midi_thru", "\"thru\": \""+str(thru)+"\"")
 
-        elif name == "midithruscadjust":
-            onoff = self.perpadPerformVal["midithruscadjust"]["value"]
-            palette_region_api(pad,"midi_thruscadjust", "\"onoff\": \""+str(onoff)+"\"")
-
         elif name == "useexternalscale":
-            onoff = self.perpadPerformVal["useexternalscale"]["value"]
+            onoff = self.perpadPerformVal["useexternalscale"][pad]["value"]
             palette_region_api(pad,"useexternalscale", "\"onoff\": \""+str(onoff)+"\"")
 
         elif name == "midiquantized":
-            quantized = self.perpadPerformVal["midiquantized"]["value"]
+            quantized = self.perpadPerformVal["midiquantized"][pad]["value"]
             palette_region_api(pad,"midi_quantized", "\"quantized\": \""+str(quantized)+"\" }")
  
+        elif name == "transpose":
+            val = self.perpadPerformVal["transpose"][pad]["value"]
+            palette_region_api(pad,"set_transpose", "\"value\": "+str(val))
+
     def sendGlobalPerformVal(self,name):
 
         if name == "tempo":
             val = self.globalPerformVal["tempo"]["value"]
             palette_global_api("set_tempo_factor", "\"value\": "+str(val))
-
-        elif name == "transpose":
-            val = self.globalPerformVal["transpose"]["value"]
-            palette_global_api("set_transpose", "\"value\": "+str(val))
 
        # elif name == "configname":
         #     config = self.globalPerformVal["configname"]["value"]
@@ -1166,7 +1160,8 @@ class ProGuiApp(tk.Tk):
         print("recordingTest unimplemented")
 
     def clearExternalScale(self):
-        palette_global_api("clearexternalscale")
+        for pad in self.PadNames:
+            palette_region_api(pad,"clearexternalscale")
 
     def sendANOAll(self):
         for pad in self.PadNames:
@@ -2215,14 +2210,13 @@ class PagePerformMain(tk.Frame):
         self.makePerformButton("scale")
         self.makePerformButton("useexternalscale")
         self.makePerformButton("midithru")
-        self.makePerformButton("midithruscadjust")
-        self.makePerformButton("midiquantized")
+        # self.makePerformButton("midiquantized")
         self.makePerformButton("All Notes_Off", self.controller.sendANOAll)
         # self.makePerformButton("configname")
 
         self.advancedButtons = {
             "recording", "quant", "vol", "scale", "tempo", "Comb_Notes",
-            "midithru", "midithruscadjust", "midiquantized",
+            "midithru", "midiquantized",
             "Notes_Off", "All Notes_Off",
             "useexternalscale",
             # "configname"
