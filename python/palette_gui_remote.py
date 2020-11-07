@@ -1591,7 +1591,10 @@ class PagePerformMain(tk.Frame):
         self.makePerformButton("quant")
         self.makePerformButton("vol")
         self.makePerformButton("scale")
-        self.makePerformButton("midithru")
+        self.makePerformButton("TBD1")
+        self.makePerformButton("TBD2")
+        self.makePerformButton("TBD3")
+        # self.makePerformButton("midithru")
         # self.makePerformButton("midiquantized")
         self.makePerformButton("Reset_All", self.controller.resetAll)
 
