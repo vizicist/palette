@@ -210,7 +210,7 @@ class ProGuiApp(tk.Tk):
         self.activeCursors = {}
         self.activeTime = {}
         self.editMode = False
-        self.showAllPages = False
+        self.showAllPages = True
         self.showSliders = True
         self.showPadFeedback = True
         self.showCursorFeedback = False
@@ -819,11 +819,11 @@ class ProGuiApp(tk.Tk):
             print("setAdvanced, level is ",self.advancedLevel)
             self.escapeCount = 0
             if level == 0:
-                self.showAllPages = False
+                self.showAllPages = True
                 self.showSliders = False
                 PerPadPerformLabels["scale"] = SimpleScales
             elif level == 1:
-                self.showAllPages = False
+                self.showAllPages = True
                 self.showSliders = False
                 PerPadPerformLabels["scale"] = SimpleScales
 
@@ -1591,9 +1591,9 @@ class PagePerformMain(tk.Frame):
         self.makePerformButton("quant")
         self.makePerformButton("vol")
         self.makePerformButton("scale")
-        self.makePerformButton("TBD1")
-        self.makePerformButton("TBD2")
-        self.makePerformButton("TBD3")
+        self.makePerformButton("TBD1_ ")
+        self.makePerformButton("TBD2_ ")
+        self.makePerformButton("TBD3_ ")
         # self.makePerformButton("midithru")
         # self.makePerformButton("midiquantized")
         self.makePerformButton("Reset_All", self.controller.resetAll)
