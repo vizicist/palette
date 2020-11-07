@@ -2680,62 +2680,27 @@ def initMain(app):
 
 if __name__ == "__main__":
 
-    gui_size = palette.ConfigValue("gui_size")
-    if gui_size == "":
-        gui_size = "small"   # default
+    # print("small size")
+    GuiWidth = 720 ; GuiHeight = 1024
+    fontFactor = 0.8
+    thumbFactor = 0.1
 
-    if gui_size == "small":
-        # print("small size")
-        GuiWidth = 540 ; GuiHeight = 600
-        fontFactor = 0.5
-        thumbFactor = 0.1
+    selectDisplayRows = 11
+    paramDisplayRows = 17
+    recordingsDisplayRows = 5
+    selectDisplayPerRow = 4
 
-        selectDisplayRows = 7
-        paramDisplayRows = 11
-        recordingsDisplayRows = 5
-        selectDisplayPerRow = 4
+    pageSizeOfPadChooser = 0.15
+    pageSizeOfControlNormal = 0.21
+    pageSizeOfSelectNormal = 0.64
+    pageSizeOfControlAdvanced = 0.21
+    pageSizeOfSelectAdvanced = 0.64
 
-        pageSizeOfPadChooser = 0.15
-        # 0.85 total
-        pageSizeOfControlNormal = 0.17
-        pageSizeOfSelectNormal = 0.68
-        # 0.85 total
-        pageSizeOfControlAdvanced = 0.30
-        pageSizeOfSelectAdvanced = 0.55
+    performButtonPadx = 6
+    performButtonPady = 4
 
-        performButtonPadx = 6
-        performButtonPady = 4
-
-        selectButtonPadx = 5
-        selectButtonPady = 3
-
-    elif gui_size == "max":
-        # print("max size")
-        GuiWidth = 800 ; GuiHeight = 1280
-        fontFactor = 1.0
-        thumbFactor = 0.1
-        paramDisplayRows = 20
-        recordingsDisplayRows = 13
-        selectDisplayRows = 13
-        selectDisplayPerRow = 4
-
-        pageSizeOfPadChooser = 0.15
-        # 0.85 total
-        pageSizeOfControlNormal = 0.17
-        pageSizeOfSelectNormal = 0.68
-        # 0.85 total
-        pageSizeOfControlAdvanced = 0.27
-        pageSizeOfSelectAdvanced = 0.58
-
-        performButtonPadx = 8
-        performButtonPady = 5
-
-        selectButtonPadx = 10
-        selectButtonPady = 5
-
-    else:
-        print("INVALID VALUE OF gui_size in config: ",gui_size)
-        GuiWidth = 400 ; GuiHeight = 600
+    selectButtonPadx = 5
+    selectButtonPady = 3
 
     setFontSizes(fontFactor)
 
