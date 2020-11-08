@@ -234,21 +234,33 @@ def presetsFilePath(section, nm, suffix=".json"):
     return os.path.join(PresetsDir(),section, nm+suffix)
 
 def SendCursorEvent(cid,ddu,x,y,z):
-    e = "{ \"nuid\": \"" + MyNUID() + "\", \"cid\": \"" + str(cid) + "\", \"event\": \"" + ddu + "\", \"x\": \"%f\", \"y\": \"%f\", \"z\": \"%f\" }"  % (x,y,z)
+    e = ("{ \"nuid\": \"" + MyNUID() + "\", " + \
+        "\"cid\": \"" + str(cid) + "\", " + \
+        "\"event\": \"" + ddu + "\", " + \
+        "\"x\": \"%f\", \"y\": \"%f\", \"z\": \"%f\" }")  % (x,y,z)
     palette_publish("palette.cursorevent",e)
 
-def SendMIDIEvent(device,msg):
+def SendMIDIEvent(device,timesofar,msg):
     bytestr = ""
     for b in msg.bytes():
         bytestr += ("%02x" % b)
 
     e = ("{ \"nuid\": \"%s\", " + \
-        "\"device\": \"%s\", " + \
         "\"event\": \"%s\", " + \
+        "\"device\": \"%s\", " + \
+        "\"time\": \"%f\", " + \
         "\"bytes\": \"%s\" }") % \
-            (MyNUID(), device, msg.type, bytestr)
+            (MyNUID(), msg.type, device, timesofar, bytestr)
 
     palette_publish("palette.midievent",e)
+
+def SendMIDITimeReset():
+    e = ("{ \"nuid\": \"%s\", " + \
+        "\"event\": \"time_reset\" }") % \
+            (MyNUID())
+
+    palette_publish("palette.midievent",e)
+
 
 def IgnoreKeyboardInterrupt():
     """
