@@ -15,6 +15,14 @@
             "args": []
         },
         {
+            "name": "Launch midifile",
+            "type": "python",
+            "request": "launch",
+            "program": "C:/Users/tjt/go/src/github.com/vizicist/palette/python/palette_midifile.py",
+            "env": {},
+            "args": ["cdef.mid","debug"]
+        },
+        {
             "name": "Launch GUI Full",
             "type": "python",
             "request": "launch",
