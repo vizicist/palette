@@ -2,6 +2,7 @@ package engine
 
 import (
 	"bufio"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"log"
@@ -451,19 +452,92 @@ func (r *Router) HandleSubscribedMIDIInput(data string) {
 		log.Printf("HandleMIDIEventMsg: err=%s\n", err)
 		return
 	}
-	if nuid == MyNUID() {
-		if DebugUtil.MIDI {
-			log.Printf("Ignoring midievent from myself, nuid=%s\n", nuid)
-		}
+
+	event, err := needStringArg("event", "HandleSubscribedMIDIInput", args)
+	if err != nil {
+		log.Printf("HandleMIDIEventMsg: err=%s\n", err)
 		return
 	}
 
-	if DebugUtil.MIDI {
-		log.Printf("Router.HandleMIDIEventMsg: data=%s\n", data)
+	region := optionalStringArg("region", args, "")
+	if region == "" {
+		region = r.getRegionForNUID(nuid)
+	} else {
+		// Remove it from the args given to ExecuteAPI
+		delete(args, "region")
 	}
 
-	log.Printf("HandleMIDIEventMsg: NOT IMPLEMENTED YET\n")
-	return
+	reactor, ok := TheRouter().reactors[region]
+	if !ok {
+		log.Printf("HandleSubscribedMIDIInput: there is no region named %s\n", region)
+		return
+	}
+
+	// This one is unique to Palette
+	if event == "time_reset" {
+		reactor.HandleMIDITimeReset()
+		return
+	}
+
+	// All other events are MIDI messages
+	bytes, err := needStringArg("bytes", "HandleSubscribedMIDIInput", args)
+	if err != nil {
+		log.Printf("HandleMIDIEventMsg: err=%s\n", err)
+		return
+	}
+
+	var timestamp int64
+	s := optionalStringArg("time", args, "")
+	if s != "" {
+		f, err := strconv.ParseFloat(s, 64)
+		if err != nil {
+			log.Printf("HandleSubscribedMIDIInput: unable to parse time value, err=%s\n", err)
+			return
+		}
+		timestamp = int64(f * 1000.0)
+	}
+
+	// We expect the string to start with 0x
+	if len(bytes) < 2 || bytes[0:2] != "0x" {
+		log.Printf("HandleSubscribedMIDIInput: invalid bytes value - %s\n", bytes)
+		return
+	}
+	hexstring := bytes[2:]
+	src := []byte(hexstring)
+	bytearr := make([]byte, hex.DecodedLen(len(src)))
+	nbytes, err := hex.Decode(bytearr, src)
+	if err != nil {
+		log.Printf("HandleSubscribedMIDIInput: hex.Decode error bytes=%s err=%s\n", bytes, err)
+		return
+	}
+	status := 0
+	data1 := 0
+	data2 := 0
+	switch nbytes {
+	case 0:
+		log.Printf("HandleSubscribedMIDIInput: unable to handle midi bytes len=%d\n", nbytes)
+		return
+	case 1:
+		log.Printf("HandleSubscribedMIDIInput: unable to handle midi bytes len=%d\n", nbytes)
+		return
+	case 2:
+		log.Printf("HandleSubscribedMIDIInput: unable to handle midi bytes len=%d\n", nbytes)
+		return
+	case 3:
+		status = int(bytearr[0])
+		data1 = int(bytearr[1])
+		data2 = int(bytearr[2])
+	default:
+		log.Printf("HandleSubscribedMIDIInput: unable to handle midi bytes len=%d\n", nbytes)
+		return
+	}
+	me := portmidi.Event{
+		Timestamp: portmidi.Timestamp(timestamp),
+		Status:    int64(status),
+		Data1:     int64(data1),
+		Data2:     int64(data2),
+	}
+	reactor.HandleMIDIDeviceInput(me)
 }
 
 // HandleAPIInput xxx

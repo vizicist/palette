@@ -376,6 +376,11 @@ func (r *Reactor) handleMIDISetScaleNote(e portmidi.Event) {
 	}
 }
 
+// HandleMIDITimeReset xxx
+func (r *Reactor) HandleMIDITimeReset() {
+	log.Printf("HandleMIDITimeReset!! needs implementation\n")
+}
+
 // HandleMIDIDeviceInput xxx
 func (r *Reactor) HandleMIDIDeviceInput(e portmidi.Event) {
 

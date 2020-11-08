@@ -241,7 +241,7 @@ def SendCursorEvent(cid,ddu,x,y,z):
     palette_publish("palette.cursorevent",e)
 
 def SendMIDIEvent(device,timesofar,msg):
-    bytestr = ""
+    bytestr = "0x"
     for b in msg.bytes():
         bytestr += ("%02x" % b)
 
