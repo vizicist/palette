@@ -17,6 +17,9 @@ var CursorEventSubject = "palette.cursorevent"
 // MIDIEventSubject xxx
 var MIDIEventSubject = "palette.midievent"
 
+// SpriteEventSubject xxx
+var SpriteEventSubject = "palette.spriteevent"
+
 var time0 = time.Now()
 
 // PublishCursorDeviceEvent xxx
