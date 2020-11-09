@@ -1145,7 +1145,7 @@ void PaletteHost::ProcessOscMessage( std::string source, const osc::ReceivedMess
 			}
 			return;
 		}
-		if (checkAddrPattern(addr, "/spriteon")) {
+		if (checkAddrPattern(addr, "/spriteon") || checkAddrPattern(addr,"/sprite") ) {
 			double x = ArgAsFloat(m,0);
 			double y = ArgAsFloat(m,1);
 			y = 1.0 - y;
