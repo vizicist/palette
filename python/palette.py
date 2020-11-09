@@ -240,6 +240,13 @@ def SendCursorEvent(cid,ddu,x,y,z):
         "\"x\": \"%f\", \"y\": \"%f\", \"z\": \"%f\" }")  % (x,y,z)
     palette_publish("palette.cursorevent",e)
 
+def SendSpriteEvent(cid,x,y,z):
+    e = ("{ \"nuid\": \"" + MyNUID() + "\", " + \
+        "\"cid\": \"" + str(cid) + "\", " + \
+        "\"event\": \"" + "sprite" + "\", " + \
+        "\"x\": \"%f\", \"y\": \"%f\", \"z\": \"%f\" }")  % (x,y,z)
+    palette_publish("palette.spriteevent",e)
+
 def SendMIDIEvent(device,timesofar,msg):
     bytestr = "0x"
     for b in msg.bytes():
@@ -260,7 +267,6 @@ def SendMIDITimeReset():
             (MyNUID())
 
     palette_publish("palette.midievent",e)
-
 
 def IgnoreKeyboardInterrupt():
     """

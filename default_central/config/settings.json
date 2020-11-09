@@ -5,6 +5,7 @@
   "subscribecursor": "true",
   "subscribemidi": "true",
   "subscribeapi": "true",
+  "subscribesprite": "true",
   "debug": "",
   "this line should not end with a comma": 0
 }
