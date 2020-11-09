@@ -238,6 +238,19 @@ func (r *Reactor) clearGraphics() {
 	r.toFreeFramePluginForLayer(osc.NewMessage("/clear"))
 }
 
+func (r *Reactor) generateSprite(id string, x, y, z float32) {
+	if !TheRouter().generateVisuals {
+		return
+	}
+	// send an OSC message to Resolume
+	msg := osc.NewMessage("/sprite")
+	msg.Append(x)
+	msg.Append(y)
+	msg.Append(z)
+	msg.Append(id)
+	r.toFreeFramePluginForLayer(msg)
+}
+
 func (r *Reactor) generateVisualsFromCursor(ce CursorStepEvent) {
 	if !TheRouter().generateVisuals {
 		return
@@ -258,19 +271,12 @@ func (r *Reactor) generateVisualsFromCursor(ce CursorStepEvent) {
 func (r *Reactor) generateSpriteFromNote(a *ActiveNote) {
 
 	n := a.noteOn
-	// log.Printf("handleMIDIScale numdown=%d e=%s\n", r.MIDINumDown, e)
-	var oscaddr string
-	switch n.TypeOf {
-	case NOTEON:
-		oscaddr = "/spriteon"
-		// noteon
-	case NOTEOFF:
-		oscaddr = "/spriteoff"
-	default:
+	if n.TypeOf != NOTEON {
 		return
 	}
 
 	// send an OSC message to Resolume
+	oscaddr := "/sprite"
 
 	// The first argument is a relative pitch amoun (0.0 to 1.0) within its range
 	pitchmin := uint8(r.params.ParamIntValue("sound.pitchmin"))

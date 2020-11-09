@@ -200,13 +200,18 @@ func StartNATSClient() {
 	}
 
 	if ConfigBoolWithDefault("subscribemidi", false) {
-		if ConfigBool("subscribemidi") {
-			log.Printf("StartNATS: subscribing to %s\n", MIDIEventSubject)
-			TheVizNats.Subscribe(MIDIEventSubject, func(msg *nats.Msg) {
-				data := string(msg.Data)
-				router.HandleSubscribedMIDIInput(data)
-			})
-		}
+		log.Printf("StartNATS: subscribing to %s\n", MIDIEventSubject)
+		TheVizNats.Subscribe(MIDIEventSubject, func(msg *nats.Msg) {
+			data := string(msg.Data)
+			router.HandleSubscribedMIDIInput(data)
+		})
+	}
+	if ConfigBoolWithDefault("subscribesprite", false) {
+		log.Printf("StartNATS: subscribing to %s\n", SpriteEventSubject)
+		TheVizNats.Subscribe(SpriteEventSubject, func(msg *nats.Msg) {
+			data := string(msg.Data)
+			router.HandleSubscribedSprite(data)
+		})
 	}
 }
 
@@ -380,17 +385,7 @@ func (r *Router) CursorDeviceEventFromArgs(args map[string]string, autoAssignReg
 		return nil, fmt.Errorf("handleSubscribedCursorInput: Unexpected cursorevent type: %s", eventType)
 	}
 
-	x, err := needFloatArg("x", api, args)
-	if err != nil {
-		return nil, err
-	}
-
-	y, err := needFloatArg("y", api, args)
-	if err != nil {
-		return nil, err
-	}
-
-	z, err := needFloatArg("z", api, args)
+	x, y, z, err := r.getXYZ("cursorevent", args)
 	if err != nil {
 		return nil, err
 	}
@@ -434,32 +429,19 @@ func (r *Router) HandleSubscribedCursorInput(data string) {
 	return
 }
 
-// HandleSubscribedMIDIInput xxx
-func (r *Router) HandleSubscribedMIDIInput(data string) {
+func (r *Router) preprocessSubscribedMsg(args map[string]string) (nuid, event, region string, reactor *Reactor, err error) {
 
-	r.inputMutex.Lock()
-	defer r.inputMutex.Unlock()
-
-	args, err := StringMap(data)
-
+	nuid, err = needStringArg("nuid", "HandleSubscribedMIDIInput", args)
 	if err != nil {
-		log.Printf("HandleMIDIEventMsg: err=%s\n", err)
-		return
+		return nuid, event, region, reactor, err
 	}
 
-	nuid, err := needStringArg("nuid", "HandleSubscribedMIDIInput", args)
+	event, err = needStringArg("event", "HandleSubscribedMIDIInput", args)
 	if err != nil {
-		log.Printf("HandleMIDIEventMsg: err=%s\n", err)
-		return
+		return nuid, event, region, reactor, err
 	}
 
-	event, err := needStringArg("event", "HandleSubscribedMIDIInput", args)
-	if err != nil {
-		log.Printf("HandleMIDIEventMsg: err=%s\n", err)
-		return
-	}
-
-	region := optionalStringArg("region", args, "")
+	region = optionalStringArg("region", args, "")
 	if region == "" {
 		region = r.getRegionForNUID(nuid)
 	} else {
@@ -469,7 +451,28 @@ func (r *Router) HandleSubscribedMIDIInput(data string) {
 
 	reactor, ok := TheRouter().reactors[region]
 	if !ok {
-		log.Printf("HandleSubscribedMIDIInput: there is no region named %s\n", region)
+		err = fmt.Errorf("there is no region named %s", region)
+		return nuid, event, region, reactor, err
+	}
+	return nuid, event, region, reactor, nil
+}
+
+// HandleSubscribedMIDIInput xxx
+func (r *Router) HandleSubscribedMIDIInput(data string) {
+
+	r.inputMutex.Lock()
+	defer r.inputMutex.Unlock()
+
+	args, err := StringMap(data)
+
+	if err != nil {
+		log.Printf("HandleSubscribedMIDIInput: err=%s\n", err)
+		return
+	}
+
+	_, event, _, reactor, err := r.preprocessSubscribedMsg(args)
+	if err != nil {
+		log.Printf("HandleSubscribedMIDIInput: err=%s\n", err)
 		return
 	}
 
@@ -482,7 +485,7 @@ func (r *Router) HandleSubscribedMIDIInput(data string) {
 	// All other events are MIDI messages
 	bytes, err := needStringArg("bytes", "HandleSubscribedMIDIInput", args)
 	if err != nil {
-		log.Printf("HandleMIDIEventMsg: err=%s\n", err)
+		log.Printf("HandleSubscribedMIDIInput: err=%s\n", err)
 		return
 	}
 
@@ -538,6 +541,48 @@ func (r *Router) HandleSubscribedMIDIInput(data string) {
 		Data2:     int64(data2),
 	}
 	reactor.HandleMIDIDeviceInput(me)
+}
+
+// HandleSubscribedSprite xxx
+func (r *Router) HandleSubscribedSprite(data string) {
+
+	r.inputMutex.Lock()
+	defer r.inputMutex.Unlock()
+
+	args, err := StringMap(data)
+
+	if err != nil {
+		log.Printf("HandleSubscribedSprite: err=%s\n", err)
+		return
+	}
+
+	_, _, _, reactor, err := r.preprocessSubscribedMsg(args)
+	if err != nil {
+		log.Printf("HandleSubscribedMIDIInput: err=%s\n", err)
+		return
+	}
+
+	x, y, z, err := r.getXYZ("spriteevent", args)
+	reactor.generateSprite("dummy", x, y, z)
+}
+
+func (r *Router) getXYZ(api string, args map[string]string) (x, y, z float32, err error) {
+
+	x, err = needFloatArg("x", api, args)
+	if err != nil {
+		return x, y, z, err
+	}
+
+	y, err = needFloatArg("y", api, args)
+	if err != nil {
+		return x, y, z, err
+	}
+
+	z, err = needFloatArg("z", api, args)
+	if err != nil {
+		return x, y, z, err
+	}
+	return x, y, z, err
 }
 
 // HandleAPIInput xxx

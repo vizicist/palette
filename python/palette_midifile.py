@@ -14,7 +14,17 @@ def doNote2Cursor(args,timesofar,msg):
         cursorevent = "down"
     x = timesofar * args.timefactor
     y = msg.note / 128.0
+    cid = "one"
     palette.SendCursorEvent(cid,cursorevent,x,y,0.5)
+
+def doNote2Sprite(args,timesofar,msg):
+    if msg.type != "note_on":
+        return
+    x = timesofar * args.xfactor
+    x = x % 1.0
+    y = msg.note / 128.0
+    cid = "one"
+    palette.SendSpriteEvent(cid,x,y,0.5)
 
 def doNote2MIDI(args,timesofar,msg):
     palette.SendMIDIEvent(args.device,timesofar,msg)
@@ -41,14 +51,13 @@ if __name__=="__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", "--id", help="TBD")
     parser.add_argument("-t", "--timefactor", type=float, help="Playback time factor", default=1.0)
+    parser.add_argument("-x", "--xfactor", type=float, help="X delta for placements", default=1.0)
     parser.add_argument("-v", "--verbosity", action="count", default=0)
     parser.add_argument("-d", "--device", default="palette_midifile")
     parser.add_argument("midifile")
     parser.add_argument("generate")
 
     args = parser.parse_args()
-
-    cid = "one"
 
     mid = mido.MidiFile(os.path.join('../default/midifiles/',args.midifile))
 
@@ -57,6 +66,8 @@ if __name__=="__main__":
     elif args.generate == "midi":
         dofunc = doNote2MIDI
         palette.SendMIDITimeReset()
+    elif args.generate == "sprite":
+        dofunc = doNote2Sprite
     elif args.generate == "debug":
         dofunc = doNote2Debug
     else:
