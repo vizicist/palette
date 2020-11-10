@@ -55,11 +55,13 @@ There are several ways of running Palette:
 
 - Please send email to me@timthompson.com if these instructions don't work for you.  They should be largely correct but I'll be surprised if they work perfectly until someone else has tried them.
 
+- When given a choice between 64-bit and 32-bin installations, choose 64-bit.
+
 - Install git from https://gitforwindows.org
 
 - Install Go version 1.15 or later from https://golang.org/dl/
 
-- Install Python 3.8.6 or later (BUT NOT FROM THE WINDOWS STORE!), and install it in C:\Python38
+- Install Python 3.8.6 or later (BUT NOT FROM THE WINDOWS STORE!), and select the option for adding it to your PATH.
 
 - Install Visual Studio Code from https://code.visualstudio.com/download
 
@@ -83,7 +85,7 @@ There are several ways of running Palette:
  Exception: sjlj
 ```
 
-- Set up the repos by entering these lines in a new "cmd" window (so that changes to environment variables from the installed packages are reflected):
+- Open a new "cmd" window (so that changes to environment variables from the installed packages are reflected) and clone the repos by entering these lines
 
 ```
 mkdir %USERPROFILE%\go\src\github.com\vizicist
@@ -127,4 +129,7 @@ go get gopkg.in/mail.v2
 cd %PALETTESOURCE%\windows
 build
 ```
-The result of this should be an installer executable in the release directory.
+The result of this should be an installer executable in the release directory, which you should execute to install Palette.
+After that, the Windows Start menu should have a Palette folder under P, where you'll find entries for "Start Palette" and "Stop Palette".
+If you select "Start Palette", it will start palette_engine.exe and palette_gui_remote.exe, the later of which should pop up a
+GUI window with lots of buttons.  Congratulations, you've now compiled and installed Palette from scratch.
