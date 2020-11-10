@@ -25,9 +25,14 @@ var time0 = time.Now()
 // PublishCursorDeviceEvent xxx
 func PublishCursorDeviceEvent(ce CursorDeviceEvent) error {
 	dt := time.Now().Sub(time0)
+	regionvalue := ""
+	if ce.Region != "" {
+		regionvalue = "\"region\": \"" + ce.Region + "\", "
+	}
 	params := "{ " +
 		"\"nuid\": \"" + ce.NUID + "\", " +
 		"\"cid\": \"" + ce.CID + "\", " +
+		regionvalue +
 		"\"event\": \"" + ce.DownDragUp + "\", " +
 		"\"millisecs\": \"" + fmt.Sprintf("%d", dt.Milliseconds()) + "\", " +
 		"\"x\": \"" + fmt.Sprintf("%f", ce.X) + "\", " +
