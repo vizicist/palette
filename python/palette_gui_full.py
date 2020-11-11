@@ -168,10 +168,10 @@ PerPadPerformLabels["transpose"] = [
     {"label":"Transpose_5",  "value":5},
 ]
 PerPadPerformLabels["midithru"] = [
-    {"label":"MIDI Input_Disabled",  "value":"disabled"},
-    {"label":"MIDI Input_Set Scale",  "value":"setscale"},
     {"label":"MIDI Input_Thru", "value":"thru"},
+    {"label":"MIDI Input_Set Scale",  "value":"setscale"},
     {"label":"MIDI Input_Thru Scadjust", "value":"thruscadjust"},
+    {"label":"MIDI Input_Disabled",  "value":"disabled"},
 ]
 PerPadPerformLabels["useexternalscale"] = [
     {"label":"External Scale_Off",  "value":False},
