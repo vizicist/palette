@@ -1081,8 +1081,7 @@ class ProGuiApp(tk.Tk):
 
     def resetAll(self):
 
-        # palette_global_api("audioOff")
-        palette_global_api("audioOn")
+        palette_global_api("audio_reset")
 
         self.resetLastAnything()
         self.sendANO()

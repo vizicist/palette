@@ -163,10 +163,10 @@ PerPadPerformLabels["loopingonoff"] = [
     {"label":"Looping_PLAY ONLY", "value":"play"},
 ]
 PerPadPerformLabels["midithru"] = [
-    {"label":"MIDI Input_Disabled",  "value":"disabled"},
-    {"label":"MIDI Input_Set Scale",  "value":"setscale"},
     {"label":"MIDI Input_Thru",  "value":"thru"},
+    {"label":"MIDI Input_Set Scale",  "value":"setscale"},
     {"label":"MIDI Input_Thru Scadjust", "value":"thruscadjust"},
+    {"label":"MIDI Input_Disabled",  "value":"disabled"},
 ]
 PerPadPerformLabels["useexternalscale"] = [
     {"label":"External Scale_Off",  "value":False},
@@ -829,8 +829,7 @@ class ProGuiApp(tk.Tk):
 
     def resetAll(self):
 
-        # palette_global_api("audioOff")
-        palette_global_api("audioOn")
+        palette_global_api("audio_reset")
 
         self.resetLastAnything()
         self.sendANO()
