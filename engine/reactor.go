@@ -110,7 +110,7 @@ func NewReactor(pad string, resolumeLayer int, freeframeClient *osc.Client, reso
 		activePhrasesManager:      NewActivePhrasesManager(),
 
 		MIDIOctaveShift:  0,
-		MIDIThru:         "",
+		MIDIThru:         "thru",
 		useExternalScale: false,
 		MIDIQuantized:    false,
 		TransposePitch:   0,
