@@ -476,9 +476,16 @@ func (r *Router) HandleSubscribedMIDIInput(data string) {
 		return
 	}
 
-	// This one is unique to Palette
-	if event == "time_reset" {
+	// Some events are unique to Palette
+	switch event {
+	case "palette_time_reset":
+		log.Printf("HandleSubscribeMIDIInput: palette_time_reset, sending ANO\n")
 		reactor.HandleMIDITimeReset()
+		reactor.sendANO()
+		return
+	case "palette_audio_reset":
+		log.Printf("HandleSubscribeMIDIInput: palette_audio_reset!!\n")
+		TheRouter().audioReset()
 		return
 	}
 
@@ -646,6 +653,15 @@ func (r *Router) HandleOSCInput(e OSCEvent) {
 	} else {
 		log.Printf("Router.HandleOSCInput: Unrecognized OSC message source=%s msg=%s\n", e.Source, e.Msg)
 	}
+}
+
+func (r *Router) audioReset() {
+	msg := osc.NewMessage("/play")
+	msg.Append(int32(0))
+	r.plogueClient.Send(msg)
+	msg = osc.NewMessage("/play")
+	msg.Append(int32(1))
+	r.plogueClient.Send(msg)
 }
 
 // ExecuteAPI xxx

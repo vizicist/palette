@@ -263,9 +263,14 @@ def SendMIDIEvent(device,timesofar,msg):
 
 def SendMIDITimeReset():
     e = ("{ \"nuid\": \"%s\", " + \
-        "\"event\": \"time_reset\" }") % \
+        "\"event\": \"palette_time_reset\" }") % \
             (MyNUID())
+    palette_publish("palette.midievent",e)
 
+def SendMIDIAudioReset():
+    e = ("{ \"nuid\": \"%s\", " + \
+        "\"event\": \"palette_audio_reset\" }") % \
+            (MyNUID())
     palette_publish("palette.midievent",e)
 
 def IgnoreKeyboardInterrupt():
