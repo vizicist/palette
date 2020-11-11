@@ -855,10 +855,14 @@ func (r *Reactor) sendANO() {
 		return
 	}
 	synth := r.params.ParamStringValue("sound.synth", defaultSynth)
-	if DebugUtil.MIDI {
-		log.Printf("MIDI.SendANO: synth=%s\n", synth)
+	if synth != "" {
+		if DebugUtil.MIDI {
+			log.Printf("MIDI.SendANO: synth=%s\n", synth)
+		}
+		MIDI.SendANO(synth)
+	} else {
+		log.Printf("MIDI.SendANO: pad=%s synth is empty?\n", r.padName)
 	}
-	MIDI.SendANO(synth)
 }
 
 /*
