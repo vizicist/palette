@@ -158,7 +158,12 @@ func (m *MIDIIO) SendNote(n *Note) {
 	}
 	switch n.TypeOf {
 	case NOTEON:
-		e.Status |= 0x90
+		if n.Velocity == 0 {
+			log.Printf("MIDIIO.SendNote: NOTEON with velocity==0 is a NOTEOFF\n")
+			e.Status |= 0x80
+		} else {
+			e.Status |= 0x90
+		}
 	case NOTEOFF:
 		e.Status |= 0x80
 	case CONTROLLER:
