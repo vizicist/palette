@@ -338,7 +338,7 @@ func (m oneMorph) readFrames(callback CursorDeviceCallbackFunc, forceFactor floa
 
 			region, ok := MorphDefs[m.serialNum]
 			if !ok {
-				region = "unassigned"
+				region = ""
 			}
 
 			if region == "QUAD" {
