@@ -656,9 +656,12 @@ func (r *Router) HandleOSCInput(e OSCEvent) {
 }
 
 func (r *Router) audioReset() {
+	log.Printf("Router.audioReset!!\n")
 	msg := osc.NewMessage("/play")
 	msg.Append(int32(0))
 	r.plogueClient.Send(msg)
+	// Give Plogue time to react
+	time.Sleep(400 * time.Millisecond)
 	msg = osc.NewMessage("/play")
 	msg.Append(int32(1))
 	r.plogueClient.Send(msg)
@@ -764,25 +767,8 @@ func (r *Router) ExecuteAPI(api string, rawargs string) (result interface{}, err
 			ChangeClicksPerSecond(float64(v))
 		}
 
-	case "audioOn":
-		msg := osc.NewMessage("/play")
-		msg.Append(int32(1))
-		r.plogueClient.Send(msg)
-		if DebugUtil.OSC {
-			log.Printf("Router.ExecuteAPI: audioOn sending msg=%v\n", msg)
-		}
-
-	case "audioOff":
-		log.Printf("Router.ExecuteAPI: audioOff is now ignored\n")
-
-	case "audioStop":
-		// In case we really need it.
-		msg := osc.NewMessage("/play")
-		msg.Append(int32(0))
-		r.plogueClient.Send(msg)
-		if DebugUtil.OSC {
-			log.Printf("Router.ExecuteAPI: audioStop sending msg=%v\n", msg)
-		}
+	case "audio_reset":
+		r.audioReset()
 
 	case "recordingStart":
 		r.recordingOn = true
