@@ -431,12 +431,12 @@ func (r *Router) HandleSubscribedCursorInput(data string) {
 
 func (r *Router) preprocessSubscribedMsg(args map[string]string) (nuid, event, region string, reactor *Reactor, err error) {
 
-	nuid, err = needStringArg("nuid", "HandleSubscribedMIDIInput", args)
+	nuid, err = needStringArg("nuid", "preprocessSubscribedMsg", args)
 	if err != nil {
 		return nuid, event, region, reactor, err
 	}
 
-	event, err = needStringArg("event", "HandleSubscribedMIDIInput", args)
+	event, err = needStringArg("event", "preprocessSubscribedMsg", args)
 	if err != nil {
 		return nuid, event, region, reactor, err
 	}
@@ -558,7 +558,7 @@ func (r *Router) HandleSubscribedSprite(data string) {
 
 	_, _, _, reactor, err := r.preprocessSubscribedMsg(args)
 	if err != nil {
-		log.Printf("HandleSubscribedMIDIInput: err=%s\n", err)
+		log.Printf("HandleSubscribedSprite: err=%s\n", err)
 		return
 	}
 
@@ -638,6 +638,8 @@ func (r *Router) HandleOSCInput(e OSCEvent) {
 		r.handleOSCAPI(e.Msg)
 	} else if e.Msg.Address == "/cursorevent" {
 		r.handleOSCCursorEvent(e.Msg)
+	} else if e.Msg.Address == "/cursorevent" {
+		r.handleOSCSpriteEvent(e.Msg)
 	} else if e.Msg.Address == "/quit" {
 		log.Printf("Router received QUIT message!\n")
 		r.killme = true
@@ -1030,16 +1032,16 @@ func (r *Router) handleOSCCursorEvent(msg *osc.Message) {
 	_ = tags
 	nargs := msg.CountArguments()
 	if nargs < 1 {
-		log.Printf("Router.handleOSCCursorEent: too few arguments\n")
+		log.Printf("Router.handleOSCCursorEvent: too few arguments\n")
 		return
 	}
 	rawargs, err := argAsString(msg, 0)
 	if err != nil {
-		log.Printf("Router.handleOSCCursorEent: err=%s\n", err)
+		log.Printf("Router.handleOSCCursorEvent: err=%s\n", err)
 		return
 	}
 	if len(rawargs) == 0 || rawargs[0] != '{' {
-		log.Printf("Router.handleOSCCursorEent: first char of args must be curly brace\n")
+		log.Printf("Router.handleOSCCursorEvent: first char of args must be curly brace\n")
 		return
 	}
 
@@ -1048,10 +1050,45 @@ func (r *Router) handleOSCCursorEvent(msg *osc.Message) {
 	args, err := StringMap(newrawargs)
 	ce, err := r.CursorDeviceEventFromArgs(args, false)
 	if err != nil {
-		log.Printf("Router.handleOSCCursorEent: err=%s\n", err)
+		log.Printf("Router.handleOSCCursorEvent: err=%s\n", err)
 		return
 	}
 	r.routeCursorDeviceEvent(*ce)
+}
+
+func (r *Router) handleOSCSpriteEvent(msg *osc.Message) {
+
+	tags, _ := msg.TypeTags()
+	_ = tags
+	nargs := msg.CountArguments()
+	if nargs < 1 {
+		log.Printf("Router.handleOSCSpriteEvent: too few arguments\n")
+		return
+	}
+	rawargs, err := argAsString(msg, 0)
+	if err != nil {
+		log.Printf("Router.handleOSCSpriteEvent: err=%s\n", err)
+		return
+	}
+	if len(rawargs) == 0 || rawargs[0] != '{' {
+		log.Printf("Router.handleOSCSpriteEvent: first char of args must be curly brace\n")
+		return
+	}
+
+	// Add the required nuid argument, which OSC input doesn't provide
+	newrawargs := "{ \"nuid\": \"" + MyNUID() + "\", " + rawargs[1:]
+	args, err := StringMap(newrawargs)
+	_ = args
+	_ = err
+	log.Printf("Should be handling Sprite event: %s\n", newrawargs)
+	/*
+		ce, err := r.SpriteDeviceEventFromArgs(args, false)
+		if err != nil {
+			log.Printf("Router.handleOSCSpriteEvent: err=%s\n", err)
+			return
+		}
+		r.routeSpriteDeviceEvent(*ce)
+	*/
 }
 
 // No error return because it's OSC
