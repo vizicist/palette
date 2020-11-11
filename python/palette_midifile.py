@@ -49,7 +49,7 @@ def process_midifile(args,mid,notefunc):
     timesofar = 0.0
     for msg in mid:
         if msg.type == "note_on" and msg.velocity == 0:
-            msg.type == "note_off"
+            msg = mido.Message('note_off', note=msg.note, velocity=msg.velocity, time=msg.time)
         timesofar += msg.time
         tosleep = msg.time * float(args.timefactor)
         time.sleep(tosleep)
@@ -77,11 +77,12 @@ if __name__=="__main__":
     if args.generate == "cursor":
         dofunc = doNote2Cursor
     elif args.generate == "midi":
-        dofunc = doNote2MIDI
         palette.SendMIDITimeReset()
+        dofunc = doNote2MIDI
     elif args.generate == "sprite":
         dofunc = doNote2Sprite
-    elif args.generate == "spritemidi":
+    elif args.generate == "pianoroll" or args.generate == "spritemidi" or args.generate == "midisprite":
+        palette.SendMIDITimeReset()
         dofunc = doNote2SpriteMIDI
     elif args.generate == "debug":
         dofunc = doNote2Debug
