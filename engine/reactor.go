@@ -238,6 +238,13 @@ func (r *Reactor) clearGraphics() {
 	r.toFreeFramePluginForLayer(osc.NewMessage("/clear"))
 }
 
+func (r *Reactor) publishSprite(id string, x, y, z float32) {
+	err := PublishSpriteEvent(x, y, z)
+	if err != nil {
+		log.Printf("publishSprite: err=%s\n", err)
+	}
+}
+
 func (r *Reactor) generateSprite(id string, x, y, z float32) {
 	if !TheRouter().generateVisuals {
 		return
