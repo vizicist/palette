@@ -14,7 +14,6 @@ else:
         dt = 0.1
 
 cid = "0"
-palette.FakeNUID(palette.MyNUID()+"_test")
 for n in range(ntimes):
         palette.SendCursorEvent(cid,"down",random.random(),random.random(),random.random()/4.0)
         time.sleep(dt)
