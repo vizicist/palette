@@ -4,7 +4,7 @@
 #include "environment.iss"
 
 #define MyAppName "Palette"
-#define MyAppVersion "0.7"
+#define MyAppVersion "0.75"
 #define MyAppPublisher "Nosuch Media"
 #define MyAppURL "https://github.com/vizicist/palette"
 
