@@ -421,10 +421,12 @@ func (r *Router) HandleSubscribedCursorInput(data string) {
 		log.Printf("HandleSubscribedCursor: err=%s\n", err)
 		return
 	}
-	if ce.NUID == MyNUID() {
-		log.Printf("HandleSubscribedCursorInput: Ignoring cursorevent from myself, nuid=%s\n", ce.NUID)
-		return
-	}
+	/*
+		if ce.NUID == MyNUID() {
+			log.Printf("HandleSubscribedCursorInput: Ignoring cursorevent from myself, nuid=%s\n", ce.NUID)
+			return
+		}
+	*/
 	r.routeCursorDeviceEvent(*ce)
 	return
 }

@@ -14,7 +14,6 @@ else:
         dt = 0.1
 
 cid = "0"
-palette.FakeNUID(palette.MyNUID()+"_test")
 for n in range(ntimes):
     x = random.random()
     y = random.random()
