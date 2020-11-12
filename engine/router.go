@@ -438,7 +438,7 @@ func (r *Router) preprocessSubscribedMsg(args map[string]string) (nuid, event, r
 		return nuid, event, region, reactor, err
 	}
 
-	event, err = needStringArg("event", "preprocessSubscribedMsg", args)
+	event = optionalStringArg("event", args, "")
 	if err != nil {
 		return nuid, event, region, reactor, err
 	}
@@ -647,7 +647,7 @@ func (r *Router) HandleOSCInput(e OSCEvent) {
 		r.handleOSCAPI(e.Msg)
 	} else if e.Msg.Address == "/cursorevent" {
 		r.handleOSCCursorEvent(e.Msg)
-	} else if e.Msg.Address == "/cursorevent" {
+	} else if e.Msg.Address == "/spriteevent" {
 		r.handleOSCSpriteEvent(e.Msg)
 	} else if e.Msg.Address == "/quit" {
 		log.Printf("Router received QUIT message!\n")
@@ -1082,17 +1082,21 @@ func (r *Router) handleOSCSpriteEvent(msg *osc.Message) {
 	// Add the required nuid argument, which OSC input doesn't provide
 	newrawargs := "{ \"nuid\": \"" + MyNUID() + "\", " + rawargs[1:]
 	args, err := StringMap(newrawargs)
-	_ = args
-	_ = err
-	log.Printf("Should be handling Sprite event: %s\n", newrawargs)
-	/*
-		ce, err := r.SpriteDeviceEventFromArgs(args, false)
-		if err != nil {
-			log.Printf("Router.handleOSCSpriteEvent: err=%s\n", err)
-			return
-		}
-		r.routeSpriteDeviceEvent(*ce)
-	*/
+	if err != nil {
+		log.Printf("Router.handleOSCSpriteEvent: Unable to process args=%s\n", newrawargs)
+		return
+	}
+	_, _, _, reactor, err := r.preprocessSubscribedMsg(args)
+	if err != nil {
+		log.Printf("Router.handleOSCSpriteEvent: err=%s\n", err)
+		return
+	}
+	x, y, z, err := r.getXYZ("cursorevent", args)
+	if err != nil {
+		log.Printf("Router.handleOSCSpriteEvent: err=%s\n", err)
+		return
+	}
+	reactor.publishSprite("dummy", x, y, z)
 }
 
 // No error return because it's OSC
