@@ -73,6 +73,23 @@ func PublishMIDIDeviceEvent(me MIDIDeviceEvent) error {
 	return nil
 }
 
+// PublishSpriteEvent xxx
+func PublishSpriteEvent(x, y, z float32) error {
+	params := "{ " +
+		"\"nuid\": \"" + MyNUID() + "\", " +
+		"\"x\": \"" + fmt.Sprintf("%f", x) + "\", " +
+		"\"y\": \"" + fmt.Sprintf("%f", y) + "\", " +
+		"\"z\": \"" + fmt.Sprintf("%f", z) + "\" }"
+
+	log.Printf("Publishing %s %s\n", SpriteEventSubject, params)
+
+	err := TheVizNats.Publish(SpriteEventSubject, params)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // VizNats xxx
 type VizNats struct {
 	natsConn *nats.Conn
