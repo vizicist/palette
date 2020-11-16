@@ -30,9 +30,7 @@ There are several ways of running Palette:
 
 # Other documentation
 
-# Implementation details
+* <a href=docs/implementation.md>Implementation details</a>
 
-<a href=docs/implementation.md>Implementation details</a>
-
-<a href=docs/building.md>Configuring a build/development environment on Windows</a>
+* <a href=docs/building.md>Configuring a build/development environment on Windows</a>
 
