@@ -1,10 +1,10 @@
-# Initializing a Palette build and development environment.
+## Initializing a Palette build and development environment.
 
-- Please send email to me@timthompson.com if these instructions don't work for you.
+* Please send email to me@timthompson.com if these instructions don't work for you.
 
-- When given a choice between 64-bit and 32-bin installations, choose 64-bit.
+* When given a choice between 64-bit and 32-bin installations, choose 64-bit.
 
-- Install git from https://gitforwindows.org
+* Install git from https://gitforwindows.org
 
 - Install Go version 1.15 or later from https://golang.org/dl/
 
