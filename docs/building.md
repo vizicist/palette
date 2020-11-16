@@ -1,10 +1,10 @@
 ## Initializing a Palette build and development environment.
 
-* Please send email to me@timthompson.com if these instructions don't work for you.
+- Please send email to me@timthompson.com if these instructions don't work for you.
 
-* When given a choice between 64-bit and 32-bin installations, choose 64-bit.
+- When given a choice between 64-bit and 32-bin installations, choose 64-bit.
 
-* Install git from https://gitforwindows.org
+- Install git from https://gitforwindows.org
 
 - Install Go version 1.15 or later from https://golang.org/dl/
 
@@ -76,7 +76,8 @@ go get gopkg.in/mail.v2
 cd %PALETTESOURCE%\windows
 build
 ```
-The result of this should be an installer executable in the release directory, which you should execute to install Palette.
+
+- The result of this should be an installer executable in the release directory, which you should execute to install Palette.
 After that, the Windows Start menu should have a Palette folder under P, where you'll find entries for "Start Palette" and "Stop Palette".
 If you select "Start Palette", it will start palette_engine.exe and palette_gui_remote.exe, the later of which should pop up a
 GUI window with lots of buttons.  Congratulations, you've now compiled and installed Palette from scratch.
