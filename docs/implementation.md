@@ -1,4 +1,4 @@
-# Implementation details
+The 3 pieces of the Palette are:
 
 ## bin\palette_engine.exe
 
