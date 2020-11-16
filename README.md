@@ -1,6 +1,4 @@
-THIS DOCUMENT IS UNDER CONSTRUCTION
-
-# Palette - an engine for visual music instruments
+# Palette - a system for visual music instruments
 
 Palette is the engine used in the Space Palette Pro,
 an instrument that lets you fingerpaint sound and visuals
@@ -14,122 +12,27 @@ Palette consists of:
    2) A GUI that lets you control the presets and parameters of
       the musical and graphical output.
 
+   3) A Freeframe plugin that runs inside Resolume.
+
 There are several ways of running Palette:
 
-   In REMOTE mode, all input (from the GUI and 3D Cursor input) is
-   broadcast to the internet, to be received by a remote host
-   that is running Palette in LOCAL mode.
+   In REMOTE mode, Resolume is not required - all input (from the
+   GUI and 3D Cursor input) is broadcast to the internet,
+   to be received by a remote host.
 
-   In LOCAL mode, input (local or remotely-generated) is processed
-   to generate MIDI (typicall to a VST host) and OSC (typically
-   to Resolume and Palette's FFGL plugin running in it).
+   In LOCAL mode, input (both local or remotely-generated) is processed
+   to generate MIDI (typically sent to a VST host) and OSC (typically
+   sent to Resolume and Palette's FFGL plugin running inside it).
 
-# How to install
+# How to install on Windows
 
-- Download and execute release/palette_#.#_win_setup.exe from this repo
+- Download and execute the latest release/palette_#.#_win_setup.exe from this repo
+
+# Other documentation
 
 # Implementation details
 
-## bin\palette_engine.exe
+<a href=docs/implementation.md>Implementation details</a>
 
-	A Go-based executable that
+<a href=docs/building.md>Configuring a build/development environment on Windows</a>
 
-	1) Starts a NATS server for inter-process
-	   API and event communication both locally and to the internet,
-
-	2) Monitors Morph and MIDI devices for input,
-
-	3) Starts a realtime engine for looping and control of
-	   sound (MIDI) and visuals (OSC to Resolume and a FFGL plugin).
-
-## bin\palette_gui_*.exe
-
-	A python-based executable that provides a graphical interface
-	to select presets and edit their parameters.
-
-## ffgl\palette.dll
-
-	A C/C++-based FFGL plugin with an OSC interface for visual output
-
-# Configuring a Windows development machine
-
-- Please send email to me@timthompson.com if these instructions don't work for you.  They should be largely correct but I'll be surprised if they work perfectly until someone else has tried them.
-
-- When given a choice between 64-bit and 32-bin installations, choose 64-bit.
-
-- Install git from https://gitforwindows.org
-
-- Install Go version 1.15 or later from https://golang.org/dl/
-
-- Install Python 3.8.6 or later (BUT NOT FROM THE WINDOWS STORE!), and select the option for adding it to your PATH.
-
-- Install Visual Studio Code from https://code.visualstudio.com/download
-
-- Install Inno Setup from https://jrsoftware.org/isinfo.php
-
-- Install Visual Studio 2019 Community Edition from https://visualstudio.microsoft.com/downloads
-
-	- in the Workload tab, select "Desktop Development with C++"
-	- In the Individual components tab, select "Msbuild"
-
-- Install mingw64 using this installer:
-
- https://sourceforge.net/projects/mingw-w64/files/Toolchains%20targetting%20Win32/Personal%20Builds/mingw-builds/installer/mingw-w64-install.exe
-
-
-```
- *** USE THESE SETTINGS WHEN INSTALLING mingw64 ***
- Version: 8.1.0
- Architecture: x86_64
- Threads: posix
- Exception: sjlj
-```
-
-- Open a new "cmd" window (so that changes to environment variables from the installed packages are reflected) and clone the repos by entering these lines
-
-```
-mkdir %USERPROFILE%\go\src\github.com\vizicist
-cd %USERPROFILE%\go\src\github.com\vizicist
-git clone https://github.com/vizicist/palette.git
-git clone https://github.com/vizicist/portmidi.git
-```
-
-- Install a few Go packages by entering these lines in the "cmd" window:
-
-```
-go get github.com/hypebeast/go-osc/osc
-go get github.com/nats-io/nats-server/server
-go get github.com/nats-io/nats.go
-go get github.com/nats-io/nuid
-go get gopkg.in/mail.v2
-```
-
-- Make sure these directories are added to your PATH variable in System Properties.
-
-```
- C:\Program Files\Git\bin
- C:\Program Files\Git\usr\bin
- C:\Program Files\mingw-w64\x86_64-8.1.0-posix-sjlj-rt_v6-rev0\mingw64\bin
- %USERPROFILE%\go\bin
- %USERPROFILE%\go\src\github.com\vizicist\palette\scripts
-```
-
-- Add a new environment variable in your System Properties:
-
-```
- PALETTESOURCE=%USERPROFILE%\go\src\github.com\vizicist\palette
-```
-
-- In Visual Studio Code, click on the "extensions marketplace" icon (four little squares) on the left side.
-  In the "Search Extensions" field, enter "go", and install the Go language support.
-
-- To compile everything, use a newly-created "cmd" window (so that the changes to PATH and the environment variable are reflected) and enter these lines:
-
-```
-cd %PALETTESOURCE%\windows
-build
-```
-The result of this should be an installer executable in the release directory, which you should execute to install Palette.
-After that, the Windows Start menu should have a Palette folder under P, where you'll find entries for "Start Palette" and "Stop Palette".
-If you select "Start Palette", it will start palette_engine.exe and palette_gui_remote.exe, the later of which should pop up a
-GUI window with lots of buttons.  Congratulations, you've now compiled and installed Palette from scratch.
