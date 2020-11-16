@@ -69,6 +69,7 @@ go get gopkg.in/mail.v2
 
 - In Visual Studio Code, click on the "extensions marketplace" icon (four little squares) on the left side.
   In the "Search Extensions" field, enter "go", and install the Go language support.
+  Other pieces of the Go toolchain will be offered to you automatically within VSCode.
 
 - To compile everything, use a newly-created "cmd" window (so that the changes to PATH and the environment variable are reflected) and enter these lines:
 
@@ -77,7 +78,10 @@ cd %PALETTESOURCE%\windows
 build
 ```
 
-- The result of this should be an installer executable in the release directory, which you should execute to install Palette.
-After that, the Windows Start menu should have a Palette folder under P, where you'll find entries for "Start Palette" and "Stop Palette".
-If you select "Start Palette", it will start palette_engine.exe and palette_gui_remote.exe, the later of which should pop up a
-GUI window with lots of buttons.  Congratulations, you've now compiled and installed Palette from scratch.
+- The result of this should be an installer executable in the release directory,
+which you should execute to install Palette.
+After that, the Windows Start menu should have a Palette folder under P,
+where you'll find entries for "Start Palette" and "Stop Palette".
+If you select "Start Palette", it will start palette_engine.exe and palette_gui_remote.exe,
+the later of which should pop up a GUI window with lots of buttons.
+Congratulations, you've now compiled and installed Palette from scratch.

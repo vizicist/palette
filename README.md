@@ -1,6 +1,6 @@
 # Palette - a system for visual music instruments
 
-Palette is the engine used in the Space Palette Pro,
+Palette is the software used in the Space Palette Pro,
 an instrument that lets you fingerpaint sound and visuals
 using your fingers as 3D cursors on Sensel Morph pads.
 
@@ -16,13 +16,14 @@ Palette consists of:
 
 There are several ways of running Palette:
 
-In REMOTE mode, Resolume is not required - all input (from the
-GUI and 3D Cursor input) is broadcast to the internet,
-to be received by a remote host.
+Normally, input from the Sensel Morph is processed
+to generate MIDI (sent to a VST host)
+and OSC (sent to Resolume and Palette's FFGL plugin running inside it).
 
-In LOCAL mode, input (both local or remotely-generated) is processed
-to generate MIDI (typically sent to a VST host) and OSC (typically
-sent to Resolume and Palette's FFGL plugin running inside it).
+Optionally, Palette can run in <i>remote</a> mode, where you can remotely control
+a Space Palette Pro running elsewhere in the network.
+This allows you to collaborate and perform with other people in a
+coordinated visual music environment.
 
 # Installing on Windows
 
@@ -34,7 +35,7 @@ sent to Resolume and Palette's FFGL plugin running inside it).
 
 # Other documentation
 
-* <a href=docs/implementation.md>Implementation details</a>
+- <a href=docs/implementation.md>Implementation details</a>
 
-* <a href=docs/building.md>Configuring a build/development environment on Windows</a>
+- <a href=docs/building.md>Configuring a build/development environment on Windows</a>
 
