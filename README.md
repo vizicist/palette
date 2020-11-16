@@ -20,7 +20,7 @@ Normally, input from the Sensel Morph is processed
 to generate MIDI (sent to a VST host)
 and OSC (sent to Resolume and Palette's FFGL plugin running inside it).
 
-Optionally, Palette can run in <i>remote</a> mode, where you can remotely control
+Optionally, Palette can run in <b>remote</b> mode, where you can remotely control
 a Space Palette Pro running elsewhere in the network.
 This allows you to collaborate and perform with other people in a
 coordinated visual music environment.
@@ -29,13 +29,12 @@ coordinated visual music environment.
 
 - Download and execute the latest release/palette_#.#_win_setup.exe from this repo
 
-# Using with Resolume and a Sensel Morph
-
-- After installing Palette, you can use it as a visual instrument in <a href=https://resolume.com>Resolume 6</a> by using the <a href=https://sensel.com>Sensel Morph</a> to fingerpaint.
-
 # Other documentation
+
+- <a href=docs/using.md>How to use Palette as a visual instrument in Resolume with the Sensel Morph</a>
 
 - <a href=docs/implementation.md>Implementation details</a>
 
 - <a href=docs/building.md>Configuring a build/development environment on Windows</a>
+
 
