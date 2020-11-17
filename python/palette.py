@@ -48,12 +48,12 @@ def boolValueOfString(v):
 ApiLock = threading.Lock()
 
 def palette_api(meth, params=None):
-    sep = ""
-    if params != "":
-        sep = ","
-    fullparams = "{ \"nuid\": \""+ MyNUID() + "\"" + sep + params + "}"
-    subject = "palette.central.api"
-    r1,err = invoke_jsonrpc(subject,meth,fullparams)
+    # sep = ""
+    # if params != "":
+    #     sep = ","
+    # fullparams = "{ \"nuid\": \""+ MyNUID() + "\"" + sep + params + "}"
+    fullparams = "{ " + params + "}"
+    r1,err = invoke_jsonrpc("palette.api",meth,fullparams)
     if err != None:
         print("API of ",meth," returned err=",err)
     return r1
@@ -99,7 +99,7 @@ def invoke_jsonrpc(subject, api, params):
         if params == None:
             params = "{}"
         escaped = params.replace("\"","\\\"")
-        req = "{ \"api\": \"%s\", \"params\": \"%s\"}" % (api,escaped)
+        req = "{ \"api\": \"%s\", \"nuid\": \"%s\", \"params\": \"%s\"}" % (api,MyNUID(),escaped)
         if DebugApi:
             print("SENDING subject=",subject," req=",req)
 
@@ -234,44 +234,47 @@ def presetsFilePath(section, nm, suffix=".json"):
     return os.path.join(PresetsDir(),section, nm+suffix)
 
 def SendCursorEvent(cid,ddu,x,y,z):
+    event = "cursor_" + ddu
     e = ("{ \"nuid\": \"" + MyNUID() + "\", " + \
         "\"cid\": \"" + str(cid) + "\", " + \
-        "\"event\": \"" + ddu + "\", " + \
+        "\"event\": \"" + event + "\", " + \
         "\"x\": \"%f\", \"y\": \"%f\", \"z\": \"%f\" }")  % (x,y,z)
-    palette_publish("palette.cursorevent",e)
+    palette_publish("palette.event",e)
 
 def SendSpriteEvent(cid,x,y,z):
+    event = "sprite"
     e = ("{ \"nuid\": \"" + MyNUID() + "\", " + \
         "\"cid\": \"" + str(cid) + "\", " + \
-        "\"event\": \"" + "sprite" + "\", " + \
+        "\"event\": \"" + event + "\", " + \
         "\"x\": \"%f\", \"y\": \"%f\", \"z\": \"%f\" }")  % (x,y,z)
-    palette_publish("palette.spriteevent",e)
+    palette_publish("palette.event",e)
 
 def SendMIDIEvent(device,timesofar,msg):
     bytestr = "0x"
     for b in msg.bytes():
         bytestr += ("%02x" % b)
 
+    event = "midi_" + msg.type
     e = ("{ \"nuid\": \"%s\", " + \
         "\"event\": \"%s\", " + \
         "\"device\": \"%s\", " + \
         "\"time\": \"%f\", " + \
         "\"bytes\": \"%s\" }") % \
-            (MyNUID(), msg.type, device, timesofar, bytestr)
+            (MyNUID(), event, device, timesofar, bytestr)
 
-    palette_publish("palette.midievent",e)
+    palette_publish("palette.event",e)
 
 def SendMIDITimeReset():
     e = ("{ \"nuid\": \"%s\", " + \
-        "\"event\": \"palette_time_reset\" }") % \
+        "\"event\": \"midi_time_reset\" }") % \
             (MyNUID())
-    palette_publish("palette.midievent",e)
+    palette_publish("palette.event",e)
 
 def SendMIDIAudioReset():
     e = ("{ \"nuid\": \"%s\", " + \
-        "\"event\": \"palette_audio_reset\" }") % \
+        "\"event\": \"midi_audio_reset\" }") % \
             (MyNUID())
-    palette_publish("palette.midievent",e)
+    palette_publish("palette.event",e)
 
 def IgnoreKeyboardInterrupt():
     """

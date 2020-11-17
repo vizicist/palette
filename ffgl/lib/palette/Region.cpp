@@ -394,12 +394,14 @@ void Region::advanceCursorsTo(int tm) {
 
 	try {
 		CATCH_NULL_POINTERS;
+		/*
 		if (NosuchDebugCursor) {
 			int sz = (int)cursors().size();
 			if (sz > 0) {
 				NosuchDebug("Region.advanceCursorsTo: tm=%d cursors.size=%d  sprites.size=%d", tm, cursors().size(), _spritelist->size());
 			}
 		}
+		*/
 		for (std::list<TrackedCursor*>::iterator i = cursors().begin(); i != cursors().end(); i++) {
 			TrackedCursor* c = *i;
 

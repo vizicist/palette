@@ -2675,6 +2675,7 @@ def CurrentSnapshotPath():
     return palette.localconfigFilePath("CurrentSnapshot.json")
 
 def initMain(app):
+    app.iconbitmap(palette.configFilePath("palette.ico"))
     app.mainLoop()
 
 if __name__ == "__main__":

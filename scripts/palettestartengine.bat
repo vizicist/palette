@@ -1,3 +1,5 @@
+@echo off
+
 set logdir=%LOCALAPPDATA%\Palette\logs
 
 echo > "%logdir%\engine.log"

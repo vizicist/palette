@@ -47,7 +47,7 @@ type Router struct {
 	regionForMorph       map[string]string // for all known Morph serial#'s
 	regionAssignedToNUID map[string]string
 	regionAssignedMutex  sync.RWMutex // covers both regionForMorph and regionAssignedToNUID
-	inputMutex           sync.RWMutex
+	eventMutex           sync.RWMutex
 }
 
 // OSCEvent is an OSC message
@@ -92,7 +92,7 @@ var onceRouter sync.Once
 var oneRouter Router
 
 // APIExecutorFunc xxx
-type APIExecutorFunc func(api string, rawargs string) (result interface{}, err error)
+type APIExecutorFunc func(api string, nuid string, rawargs string) (result interface{}, err error)
 
 // CallAPI calls an API in the Palette Freeframe plugin running in Resolume
 func CallAPI(method string, args []string) {
@@ -182,37 +182,25 @@ func StartNATSClient() {
 	// Hand all NATS messages to HandleAPI
 	router := TheRouter()
 
-	if ConfigBoolWithDefault("subscribeapi", false) {
-		log.Printf("StartNATS: Subscribing to %s\n", PaletteAPISubject)
-		TheVizNats.Subscribe(PaletteAPISubject, func(msg *nats.Msg) {
-			data := string(msg.Data)
-			response := router.HandleAPIInput(router.ExecuteAPI, data)
-			msg.Respond([]byte(response))
-		})
-	}
+	log.Printf("StartNATS: Subscribing to %s\n", PaletteAPISubject)
+	TheVizNats.Subscribe(PaletteAPISubject, func(msg *nats.Msg) {
+		data := string(msg.Data)
+		response := router.HandleAPIInput(router.ExecuteAPI, data)
+		msg.Respond([]byte(response))
+	})
 
-	if ConfigBoolWithDefault("subscribecursor", false) {
-		log.Printf("StartNATS: subscribing to %s\n", CursorEventSubject)
-		TheVizNats.Subscribe(CursorEventSubject, func(msg *nats.Msg) {
-			data := string(msg.Data)
-			router.HandleSubscribedCursorInput(data)
-		})
-	}
-
-	if ConfigBoolWithDefault("subscribemidi", false) {
-		log.Printf("StartNATS: subscribing to %s\n", MIDIEventSubject)
-		TheVizNats.Subscribe(MIDIEventSubject, func(msg *nats.Msg) {
-			data := string(msg.Data)
-			router.HandleSubscribedMIDIInput(data)
-		})
-	}
-	if ConfigBoolWithDefault("subscribesprite", false) {
-		log.Printf("StartNATS: subscribing to %s\n", SpriteEventSubject)
-		TheVizNats.Subscribe(SpriteEventSubject, func(msg *nats.Msg) {
-			data := string(msg.Data)
-			router.HandleSubscribedSprite(data)
-		})
-	}
+	log.Printf("StartNATS: subscribing to %s\n", PaletteEventSubject)
+	TheVizNats.Subscribe(PaletteEventSubject, func(msg *nats.Msg) {
+		data := string(msg.Data)
+		args, err := StringMap(data)
+		if err != nil {
+			log.Printf("HandleSubscribedEvent: err=%s\n", err)
+		}
+		err = router.HandleSubscribedEventArgs(args)
+		if err != nil {
+			log.Printf("HandleSubscribedEvent: err=%s\n", err)
+		}
+	})
 }
 
 // TimeString returns time and clicks
@@ -343,236 +331,171 @@ func ListenForLocalDeviceInputsForever() {
 	log.Printf("Router is being killed\n")
 }
 
-// HandleDeviceCursorInput xxx
-func (r *Router) HandleDeviceCursorInput(e CursorDeviceEvent) {
-	r.inputMutex.Lock()
-	defer r.inputMutex.Unlock()
+// HandleSubscribedEventArgs xxx
+func (r *Router) HandleSubscribedEventArgs(args map[string]string) error {
 
-	r.routeCursorDeviceEvent(e)
-}
+	r.eventMutex.Lock()
+	defer r.eventMutex.Unlock()
 
-// CursorDeviceEventFromArgs xxx
-func (r *Router) CursorDeviceEventFromArgs(args map[string]string, autoAssignRegion bool) (*CursorDeviceEvent, error) {
+	// All Events should have nuid and event values
 
-	api := CursorEventSubject
-
-	nuid, err := needStringArg("nuid", api, args)
+	nuid, err := needStringArg("nuid", "HandleSubscribeEvent", args)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	cid := optionalStringArg("cid", args, "UnspecifiedCID")
-
-	region, ok := args["region"]
-	if !ok {
-		// If no "region" argument, use one assigned to NUID
-		if autoAssignRegion {
-			region = r.getRegionForNUID(nuid)
-		} else {
-			region = "UNASSIGNED"
-		}
+	// Ignore anything from myself
+	if nuid == MyNUID() {
+		return nil
 	}
 
-	eventType, err := needStringArg("event", api, args)
+	event, err := needStringArg("event", "HandleSubscribeEvent", args)
 	if err != nil {
-		return nil, err
-	}
-	switch eventType {
-	case "down":
-	case "drag":
-	case "up":
-	default:
-		return nil, fmt.Errorf("handleSubscribedCursorInput: Unexpected cursorevent type: %s", eventType)
+		return err
 	}
 
-	x, y, z, err := r.getXYZ("cursorevent", args)
-	if err != nil {
-		return nil, err
-	}
+	// If no "region" argument, use one assigned to NUID
 
-	ce := &CursorDeviceEvent{
-		NUID:       nuid,
-		Region:     region,
-		CID:        cid,
-		Timestamp:  int64(CurrentMilli),
-		DownDragUp: eventType,
-		X:          x,
-		Y:          y,
-		Z:          z,
-		Area:       0.0,
-	}
-	return ce, nil
-}
-
-// HandleSubscribedCursorInput xxx
-func (r *Router) HandleSubscribedCursorInput(data string) {
-
-	r.inputMutex.Lock()
-	defer r.inputMutex.Unlock()
-
-	args, err := StringMap(data)
-	if err != nil {
-		log.Printf("HandleSubscribedCursor: err=%s\n", err)
-		return
-	}
-
-	ce, err := r.CursorDeviceEventFromArgs(args, true)
-	if err != nil {
-		log.Printf("HandleSubscribedCursor: err=%s\n", err)
-		return
-	}
-	/*
-		if ce.NUID == MyNUID() {
-			log.Printf("HandleSubscribedCursorInput: Ignoring cursorevent from myself, nuid=%s\n", ce.NUID)
-			return
-		}
-	*/
-	r.routeCursorDeviceEvent(*ce)
-	return
-}
-
-func (r *Router) preprocessSubscribedMsg(args map[string]string) (nuid, event, region string, reactor *Reactor, err error) {
-
-	nuid, err = needStringArg("nuid", "preprocessSubscribedMsg", args)
-	if err != nil {
-		return nuid, event, region, reactor, err
-	}
-
-	event = optionalStringArg("event", args, "")
-	if err != nil {
-		return nuid, event, region, reactor, err
-	}
-
-	region = optionalStringArg("region", args, "")
+	region := optionalStringArg("region", args, "")
 	if region == "" {
 		region = r.getRegionForNUID(nuid)
 	} else {
-		// Remove it from the args given to ExecuteAPI
+		// Remove it from the args
 		delete(args, "region")
 	}
 
-	reactor, ok := TheRouter().reactors[region]
+	reactor, ok := r.reactors[region]
 	if !ok {
-		err = fmt.Errorf("there is no region named %s", region)
-		return nuid, event, region, reactor, err
+		return fmt.Errorf("there is no region named %s", region)
 	}
-	return nuid, event, region, reactor, nil
+
+	eventWords := strings.SplitN(event, "_", 2)
+	subEvent := ""
+	mainEvent := event
+	if len(eventWords) > 1 {
+		mainEvent = eventWords[0]
+		subEvent = eventWords[1]
+	}
+
+	switch mainEvent {
+
+	case "cursor":
+
+		cid := optionalStringArg("cid", args, "UnspecifiedCID")
+
+		switch subEvent {
+		case "down":
+		case "drag":
+		case "up":
+		default:
+			return fmt.Errorf("handleSubscribedEvent: Unexpected cursor event type: %s", subEvent)
+		}
+
+		x, y, z, err := r.getXYZ("handleSubscribedEvent", args)
+		if err != nil {
+			return err
+		}
+
+		ce := CursorDeviceEvent{
+			NUID:       nuid,
+			Region:     region,
+			CID:        cid,
+			Timestamp:  int64(CurrentMilli),
+			DownDragUp: subEvent,
+			X:          x,
+			Y:          y,
+			Z:          z,
+			Area:       0.0,
+		}
+
+		r.routeCursorDeviceEvent(ce)
+
+	case "sprite":
+
+		api := "event.sprite"
+		x, y, z, err := r.getXYZ(api, args)
+		if err != nil {
+			return nil
+		}
+		reactor.generateSprite("dummy", x, y, z)
+
+	case "midi":
+
+		switch subEvent {
+		case "time_reset":
+			log.Printf("HandleSubscribeMIDIInput: palette_time_reset, sending ANO\n")
+			reactor.HandleMIDITimeReset()
+			reactor.sendANO()
+
+		case "audio_reset":
+			log.Printf("HandleSubscribeMIDIInput: palette_audio_reset!!\n")
+			r.audioReset()
+
+		default:
+			bytes, err := needStringArg("bytes", "HandleMIDIEvent", args)
+			if err != nil {
+				return err
+			}
+			me, err := r.makeMIDIEvent(subEvent, bytes, args)
+			if err != nil {
+				return err
+			}
+			reactor.HandleMIDIDeviceInput(*me)
+		}
+	}
+
+	return nil
 }
 
-// HandleSubscribedMIDIInput xxx
-func (r *Router) HandleSubscribedMIDIInput(data string) {
-
-	r.inputMutex.Lock()
-	defer r.inputMutex.Unlock()
-
-	args, err := StringMap(data)
-
-	if err != nil {
-		log.Printf("HandleSubscribedMIDIInput: err=%s\n", err)
-		return
-	}
-
-	_, event, _, reactor, err := r.preprocessSubscribedMsg(args)
-	if err != nil {
-		log.Printf("HandleSubscribedMIDIInput: err=%s\n", err)
-		return
-	}
-
-	// Some events are unique to Palette
-	switch event {
-	case "palette_time_reset":
-		log.Printf("HandleSubscribeMIDIInput: palette_time_reset, sending ANO\n")
-		reactor.HandleMIDITimeReset()
-		reactor.sendANO()
-		return
-	case "palette_audio_reset":
-		log.Printf("HandleSubscribeMIDIInput: palette_audio_reset!!\n")
-		TheRouter().audioReset()
-		return
-	}
-
-	// All other events are MIDI messages
-	bytes, err := needStringArg("bytes", "HandleSubscribedMIDIInput", args)
-	if err != nil {
-		log.Printf("HandleSubscribedMIDIInput: err=%s\n", err)
-		return
-	}
+// makeMIDIEvent xxx
+func (r *Router) makeMIDIEvent(subEvent string, bytes string, args map[string]string) (*portmidi.Event, error) {
 
 	var timestamp int64
 	s := optionalStringArg("time", args, "")
 	if s != "" {
 		f, err := strconv.ParseFloat(s, 64)
 		if err != nil {
-			log.Printf("HandleSubscribedMIDIInput: unable to parse time value, err=%s\n", err)
-			return
+			return nil, fmt.Errorf("makeMIDIEvent: unable to parse time value (%s)", s)
 		}
 		timestamp = int64(f * 1000.0)
 	}
 
 	// We expect the string to start with 0x
 	if len(bytes) < 2 || bytes[0:2] != "0x" {
-		log.Printf("HandleSubscribedMIDIInput: invalid bytes value - %s\n", bytes)
-		return
+		return nil, fmt.Errorf("makeMIDIEvent: invalid bytes value - %s", bytes)
 	}
 	hexstring := bytes[2:]
 	src := []byte(hexstring)
 	bytearr := make([]byte, hex.DecodedLen(len(src)))
 	nbytes, err := hex.Decode(bytearr, src)
 	if err != nil {
-		log.Printf("HandleSubscribedMIDIInput: hex.Decode error bytes=%s err=%s\n", bytes, err)
-		return
+		return nil, fmt.Errorf("makeMIDIEvent: unable to decode hex bytes = %s", bytes)
 	}
 	status := 0
 	data1 := 0
 	data2 := 0
 	switch nbytes {
 	case 0:
-		log.Printf("HandleSubscribedMIDIInput: unable to handle midi bytes len=%d\n", nbytes)
-		return
+		return nil, fmt.Errorf("makeMIDIEvent: unable to handle midi bytes len=%d", nbytes)
 	case 1:
-		log.Printf("HandleSubscribedMIDIInput: unable to handle midi bytes len=%d\n", nbytes)
-		return
+		return nil, fmt.Errorf("makeMIDIEvent: unable to handle midi bytes len=%d", nbytes)
 	case 2:
-		log.Printf("HandleSubscribedMIDIInput: unable to handle midi bytes len=%d\n", nbytes)
-		return
+		return nil, fmt.Errorf("makeMIDIEvent: unable to handle midi bytes len=%d", nbytes)
 	case 3:
 		status = int(bytearr[0])
 		data1 = int(bytearr[1])
 		data2 = int(bytearr[2])
 	default:
-		log.Printf("HandleSubscribedMIDIInput: unable to handle midi bytes len=%d\n", nbytes)
-		return
+		return nil, fmt.Errorf("makeMIDIEvent: unable to handle midi bytes len=%d", nbytes)
 	}
-	me := portmidi.Event{
+
+	me := &portmidi.Event{
 		Timestamp: portmidi.Timestamp(timestamp),
 		Status:    int64(status),
 		Data1:     int64(data1),
 		Data2:     int64(data2),
 	}
-	reactor.HandleMIDIDeviceInput(me)
-}
-
-// HandleSubscribedSprite xxx
-func (r *Router) HandleSubscribedSprite(data string) {
-
-	r.inputMutex.Lock()
-	defer r.inputMutex.Unlock()
-
-	args, err := StringMap(data)
-
-	if err != nil {
-		log.Printf("HandleSubscribedSprite: err=%s\n", err)
-		return
-	}
-
-	_, _, _, reactor, err := r.preprocessSubscribedMsg(args)
-	if err != nil {
-		log.Printf("HandleSubscribedSprite: err=%s\n", err)
-		return
-	}
-
-	x, y, z, err := r.getXYZ("spriteevent", args)
-	reactor.generateSprite("dummy", x, y, z)
+	return me, nil
 }
 
 func (r *Router) getXYZ(api string, args map[string]string) (x, y, z float32, err error) {
@@ -597,8 +520,8 @@ func (r *Router) getXYZ(api string, args map[string]string) (x, y, z float32, er
 // HandleAPIInput xxx
 func (r *Router) HandleAPIInput(executor APIExecutorFunc, data string) (response string) {
 
-	r.inputMutex.Lock()
-	defer r.inputMutex.Unlock()
+	r.eventMutex.Lock()
+	defer r.eventMutex.Unlock()
 
 	smap, err := StringMap(data)
 
@@ -617,6 +540,11 @@ func (r *Router) HandleAPIInput(executor APIExecutorFunc, data string) (response
 		response = ErrorResponse(fmt.Errorf("Missing api parameter"))
 		return
 	}
+	nuid, ok := smap["nuid"]
+	if !ok {
+		response = ErrorResponse(fmt.Errorf("Missing nuid parameter"))
+		return
+	}
 	rawargs, ok := smap["params"]
 	if !ok {
 		response = ErrorResponse(fmt.Errorf("Missing params parameter"))
@@ -625,7 +553,7 @@ func (r *Router) HandleAPIInput(executor APIExecutorFunc, data string) (response
 	if DebugUtil.API {
 		log.Printf("Router.HandleAPI: api=%s args=%s\n", api, rawargs)
 	}
-	result, err := executor(api, rawargs)
+	result, err := executor(api, nuid, rawargs)
 	if err != nil {
 		response = ErrorResponse(err)
 	} else {
@@ -637,28 +565,27 @@ func (r *Router) HandleAPIInput(executor APIExecutorFunc, data string) (response
 // HandleOSCInput xxx
 func (r *Router) HandleOSCInput(e OSCEvent) {
 
-	r.inputMutex.Lock()
-	defer r.inputMutex.Unlock()
+	r.eventMutex.Lock()
+	defer r.eventMutex.Unlock()
 
 	if DebugUtil.OSC {
 		log.Printf("Router.HandleOSCInput: msg=%s\n", e.Msg.String())
 	}
-	if e.Msg.Address == "/api" {
-		r.handleOSCAPI(e.Msg)
-	} else if e.Msg.Address == "/cursorevent" {
-		r.handleOSCCursorEvent(e.Msg)
-	} else if e.Msg.Address == "/spriteevent" {
-		r.handleOSCSpriteEvent(e.Msg)
-	} else if e.Msg.Address == "/quit" {
-		log.Printf("Router received QUIT message!\n")
-		r.killme = true
-	} else {
+	switch e.Msg.Address {
+
+	case "/api":
+		log.Printf("OSC /api is not implemented\n")
+		// r.handleOSCAPI(e.Msg)
+
+	case "/event":
+		r.handleOSCEvent(e.Msg)
+
+	default:
 		log.Printf("Router.HandleOSCInput: Unrecognized OSC message source=%s msg=%s\n", e.Source, e.Msg)
 	}
 }
 
 func (r *Router) audioReset() {
-	log.Printf("Router.audioReset!!\n")
 	msg := osc.NewMessage("/play")
 	msg.Append(int32(0))
 	r.plogueClient.Send(msg)
@@ -670,7 +597,7 @@ func (r *Router) audioReset() {
 }
 
 // ExecuteAPI xxx
-func (r *Router) ExecuteAPI(api string, rawargs string) (result interface{}, err error) {
+func (r *Router) ExecuteAPI(api string, nuid string, rawargs string) (result interface{}, err error) {
 
 	args, err := StringMap(rawargs)
 	if err != nil {
@@ -688,12 +615,6 @@ func (r *Router) ExecuteAPI(api string, rawargs string) (result interface{}, err
 	apiprefix := words[0]
 	apisuffix := words[1]
 
-	nuid, err := needStringArg("nuid", api, args)
-	if err != nil {
-		return nil, err
-	}
-	delete(args, "nuid") // see comment above
-
 	if apiprefix == "region" {
 
 		region := optionalStringArg("region", args, "")
@@ -703,7 +624,7 @@ func (r *Router) ExecuteAPI(api string, rawargs string) (result interface{}, err
 			// Remove it from the args given to ExecuteAPI
 			delete(args, "region")
 		}
-		reactor, ok := TheRouter().reactors[region]
+		reactor, ok := r.reactors[region]
 		if !ok {
 			return nil, fmt.Errorf("api/event=%s there is no region named %s", api, region)
 		}
@@ -826,11 +747,10 @@ func (r *Router) ExecuteAPI(api string, rawargs string) (result interface{}, err
 
 func (r *Router) advanceClickTo(toClick Clicks) {
 
-	// Don't let input get handled while we're advancing
-	r.inputMutex.Lock()
-	defer r.inputMutex.Unlock()
+	// Don't let events get handled while we're advancing
+	r.eventMutex.Lock()
+	defer r.eventMutex.Unlock()
 
-	// log.Printf("advanceClickTo r.lastClick=%d toClick=%d\n", r.lastClick, toClick)
 	for clk := r.lastClick; clk < toClick; clk++ {
 		for _, reactor := range r.reactors {
 			if (clk % oneBeat) == 0 {
@@ -906,6 +826,9 @@ func (r *Router) sendANO() {
 }
 
 func (r *Router) notifyGUI(eventName string) {
+	if !ConfigBool("notifygui") {
+		return
+	}
 	msg := osc.NewMessage("/notify")
 	msg.Append(eventName)
 	r.guiClient.Send(msg)
@@ -1030,7 +953,7 @@ func (r *Router) recordingLoad(name string) ([]*PlaybackEvent, error) {
 	return events, nil
 }
 
-func (r *Router) handleOSCCursorEvent(msg *osc.Message) {
+func (r *Router) handleOSCEvent(msg *osc.Message) {
 
 	tags, _ := msg.TypeTags()
 	_ = tags
@@ -1052,12 +975,12 @@ func (r *Router) handleOSCCursorEvent(msg *osc.Message) {
 	// Add the required nuid argument, which OSC input doesn't provide
 	newrawargs := "{ \"nuid\": \"" + MyNUID() + "\", " + rawargs[1:]
 	args, err := StringMap(newrawargs)
-	ce, err := r.CursorDeviceEventFromArgs(args, false)
+
+	err = r.HandleSubscribedEventArgs(args)
 	if err != nil {
 		log.Printf("Router.handleOSCCursorEvent: err=%s\n", err)
 		return
 	}
-	r.routeCursorDeviceEvent(*ce)
 }
 
 func (r *Router) handleOSCSpriteEvent(msg *osc.Message) {
@@ -1086,17 +1009,12 @@ func (r *Router) handleOSCSpriteEvent(msg *osc.Message) {
 		log.Printf("Router.handleOSCSpriteEvent: Unable to process args=%s\n", newrawargs)
 		return
 	}
-	_, _, _, reactor, err := r.preprocessSubscribedMsg(args)
+
+	err = r.HandleSubscribedEventArgs(args)
 	if err != nil {
 		log.Printf("Router.handleOSCSpriteEvent: err=%s\n", err)
 		return
 	}
-	x, y, z, err := r.getXYZ("cursorevent", args)
-	if err != nil {
-		log.Printf("Router.handleOSCSpriteEvent: err=%s\n", err)
-		return
-	}
-	reactor.publishSprite("dummy", x, y, z)
 }
 
 // No error return because it's OSC
@@ -1122,12 +1040,7 @@ func (r *Router) handleOSCAPI(msg *osc.Message) {
 		log.Printf("Router.handleOSCAPI: first char of args must be curly brace\n")
 		return
 	}
-	newrawargs := "{ \"nuid\": \"" + MyNUID() + "\", " + rawargs[1:]
-	// Add the required nuid argument
-	if DebugUtil.API {
-		log.Printf("Router.handleOSCAPI api=%s rawargs=%s\n", api, newrawargs)
-	}
-	_, err = r.ExecuteAPI(api, newrawargs)
+	_, err = r.ExecuteAPI(api, MyNUID(), rawargs)
 	if err != nil {
 		log.Printf("Router.handleOSCAPI: err=%s", err)
 	}
@@ -1231,19 +1144,22 @@ func (r *Router) getRegionForNUID(nuid string) string {
 // If we publish a CursorDeviceEvent, we don't handle it locally
 func (r *Router) routeCursorDeviceEvent(e CursorDeviceEvent) {
 
+	r.eventMutex.Lock()
+	defer r.eventMutex.Unlock()
+
 	if r.publishCursor {
 		err := PublishCursorDeviceEvent(e)
 		if err != nil {
 			log.Printf("Router.routeCursorDeviceEvent: NATS publishing err=%s\n", err)
 		}
-	} else {
-		reactor, ok := r.reactors[e.Region]
-		if !ok {
-			log.Printf("routeCursorDeviceEvent: no region named %s, unable to process ce=%+v\n", e.Region, e)
-			return
-		}
-		reactor.handleCursorDeviceEvent(e)
 	}
+
+	reactor, ok := r.reactors[e.Region]
+	if !ok {
+		log.Printf("routeCursorDeviceEvent: no region named %s, unable to process ce=%+v\n", e.Region, e)
+		return
+	}
+	reactor.handleCursorDeviceEvent(e)
 }
 
 func argAsInt(msg *osc.Message, index int) (i int, err error) {

@@ -1,4 +1,5 @@
 @echo off
+
 rem Provide an argument of "full" to 
 if "%1" == "" goto remote
 set guitype=%1

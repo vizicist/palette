@@ -265,9 +265,6 @@ var allMorphs []oneMorph
 
 // StartMorph xxx
 func StartMorph(callback CursorDeviceCallbackFunc, forceFactor float32) {
-	if DebugUtil.Morph {
-		log.Printf("Morph: initializing...\n")
-	}
 	err := initialize()
 	if err != nil {
 		log.Printf("Morph.Initialize: err=%s\n", err)
@@ -338,7 +335,7 @@ func (m oneMorph) readFrames(callback CursorDeviceCallbackFunc, forceFactor floa
 
 			region, ok := MorphDefs[m.serialNum]
 			if !ok {
-				region = ""
+				region = "A"
 			}
 
 			if region == "QUAD" {

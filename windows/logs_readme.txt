@@ -1,1 +1,0 @@
-Palette logfiles go here.

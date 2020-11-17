@@ -1,4 +1,4 @@
 {
-  "debugsprite": 0,
-  "debugcursor": 0
+  "debugsprite": "false",
+  "debugcursor": "false"
 }
