@@ -7,7 +7,7 @@ goto getout
 
 :keepgoing
 
-set ship=%PALETTESOURCE%\windows\ship
+set ship=%PALETTESOURCE%\build\windows\ship
 set bin=%ship%\bin
 rm -fr %ship% > nul 2>&1
 mkdir %ship%
@@ -47,8 +47,8 @@ popd
 echo ================ Creating palette_gui_*.exe
 pushd %PALETTESOURCE%\python
 rm -fr dist
-pyinstaller palette_gui_full.py > pyinstaller.out 2>&1
-pyinstaller palette_gui_remote.py > pyinstaller.out 2>&1
+pyinstaller -i ..\default\config\palette.ico palette_gui_full.py > pyinstaller.out 2>&1
+pyinstaller -i ..\default\config\palette.ico palette_gui_remote.py > pyinstaller.out 2>&1
 pyinstaller testcursor.py > pyinstaller.out 2>&1
 pyinstaller osc.py > pyinstaller.out 2>&1
 
@@ -65,12 +65,13 @@ popd
 echo ================ Copying FFGL PLUGIN
 pushd %PALETTESOURCE%\ffgl\windows\x64\Debug
 mkdir %ship%\ffgl
-copy *.* %ship%\ffgl > nul
+copy Palette_*.* %ship%\ffgl > nul
 popd
 
-echo ================ Copying NATS
-copy %PALETTESOURCE%\nats\nats-pub.exe %bin% >nul
-copy %PALETTESOURCE%\nats\nats-sub.exe %bin% >nul
+echo ================ Copying binaries
+copy %PALETTESOURCE%\binaries\nats\nats-pub.exe %bin% >nul
+copy %PALETTESOURCE%\binaries\nats\nats-sub.exe %bin% >nul
+copy %PALETTESOURCE%\binaries\nircmdc.exe %bin% >nul
 
 echo ================ Copying scripts
 pushd %PALETTESOURCE%\scripts
@@ -88,14 +89,16 @@ echo ================ Copying config
 mkdir %ship%\config
 copy %PALETTESOURCE%\default\config\*.json %ship%\config >nul
 copy %PALETTESOURCE%\default\config\*.conf %ship%\config >nul
+copy %PALETTESOURCE%\default\config\Palette_*.avc %ship%\config >nul
+copy %PALETTESOURCE%\default\config\palette.ico %ship%\config >nul
 
 echo ================ Copying midifiles
 mkdir %ship%\midifiles
 copy %PALETTESOURCE%\default\midifiles\*.* %ship%\midifiles >nul
 
 echo ================ Copying windows-specific things
-copy %PALETTESOURCE%\windows\pthreadvc2.dll %ship%\ffgl >nul
-copy %PALETTESOURCE%\windows\msvcp140d.dll %ship%\ffgl >nul
+copy %PALETTESOURCE%\build\windows\pthreadvc2.dll %ship%\ffgl >nul
+copy %PALETTESOURCE%\build\windows\msvcp140d.dll %ship%\ffgl >nul
 copy %PALETTESOURCE%\SenselLib\x64\LibSensel.dll %bin% >nul
 copy %PALETTESOURCE%\SenselLib\x64\LibSenselDecompress.dll %bin% >nul
 

@@ -74,7 +74,7 @@ go get gopkg.in/mail.v2
 - To compile everything, use a newly-created "cmd" window (so that the changes to PATH and the environment variable are reflected) and enter these lines:
 
 ```
-cd %PALETTESOURCE%\windows
+cd %PALETTESOURCE%\build\windows
 build
 ```
 

@@ -133,6 +133,7 @@ func (r *Reactor) handleCursorDeviceEvent(e CursorDeviceEvent) {
 	id := e.NUID + "." + e.CID
 
 	r.deviceCursorsMutex.Lock()
+	defer r.deviceCursorsMutex.Unlock()
 
 	tc, ok := r.deviceCursors[id]
 	if !ok {
@@ -166,8 +167,6 @@ func (r *Reactor) handleCursorDeviceEvent(e CursorDeviceEvent) {
 		}
 		delete(r.deviceCursors, id)
 	}
-
-	r.deviceCursorsMutex.Unlock()
 }
 
 // checkDelay is the Duration that has to pass
@@ -179,6 +178,7 @@ func (r *Reactor) checkCursorUp() {
 	now := r.Time()
 
 	r.deviceCursorsMutex.Lock()
+	defer r.deviceCursorsMutex.Unlock()
 	for id, c := range r.deviceCursors {
 		elapsed := now.Sub(c.lastTouch)
 		if elapsed > checkDelay {
@@ -189,7 +189,6 @@ func (r *Reactor) checkCursorUp() {
 			delete(r.deviceCursors, id)
 		}
 	}
-	r.deviceCursorsMutex.Unlock()
 }
 
 func (r *Reactor) getActiveNote(id string) *ActiveNote {
@@ -321,6 +320,9 @@ func (r *Reactor) generateSpriteFromNote(a *ActiveNote) {
 }
 
 func (r *Reactor) notifyGUI(ce CursorStepEvent, wasFresh bool) {
+	if !ConfigBool("notifygui") {
+		return
+	}
 	// send an OSC message to GUI
 	msg := osc.NewMessage("/notify")
 	msg.Append(ce.Downdragup)

@@ -2,7 +2,7 @@ import time
 import random
 import palette
 
-for n in range(1000):
+for n in range(10):
     x = random.random()
     y = random.random()
     z = random.random() / 4.0
