@@ -4,7 +4,7 @@
 #include "environment.iss"
 
 #define MyAppName "Palette"
-#define MyAppVersion "0.75"
+#define MyAppVersion "0.8"
 #define MyAppPublisher "Nosuch Media"
 #define MyAppURL "https://github.com/vizicist/palette"
 
@@ -42,17 +42,22 @@ Source: "ship\config\natsleaf.conf"; DestDir: "{app}\config"; Flags: ignoreversi
 Source: "ship\config\paramdefs.json"; DestDir: "{app}\config"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "ship\config\paramenums.json"; DestDir: "{app}\config"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "ship\config\settings.json"; DestDir: "{app}\config"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "ship\config\Palette_*.avc"; DestDir: "{app}\config"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "ship\config\palette.ico"; DestDir: "{app}\config"; Flags: ignoreversion recursesubdirs createallsubdirs
+; NOTE - these go in LOCALAPPDATA
+Source: "ship\config\ffgl.json"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\config"; Flags: ignoreversion
+Source: "ship\config\local_settings.json"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\config"; DestName: "settings.json"; Flags: ignoreversion
 Source: "ship\midifiles\*"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\midifiles"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "ship\presets\*"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\presets"; Flags: comparetimestamp ignoreversion recursesubdirs createallsubdirs
-Source: "ship\config\ffgl.json"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\config"; Flags: ignoreversion
-Source: "config_readme.txt"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\config"; DestName: "readme.txt"; Flags: ignoreversion
 Source: "logs_readme.txt"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\logs"; DestName: "readme.txt"; Flags: ignoreversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
 Name: "{group}\{cm:ProgramOnTheWeb,{#MyAppName}}"; Filename: "{#MyAppURL}"
-Name: "{group}\Start Palette"; Filename: "{app}\bin\palettestart.bat"
-Name: "{group}\Stop Palette"; Filename: "{app}\bin\palettestop.bat"
+Name: "{group}\Start Palette"; Filename: "{app}\bin\palettestart.bat"; Flags: runminimized
+Name: "{group}\Stop Palette"; Filename: "{app}\bin\palettestop.bat"; Flags: runminimized
+Name: "{group}\Start Resolume 6"; Filename: "{app}\bin\palettestartresolume.bat"; Flags: runminimized
+Name: "{group}\Stop Resolume 6"; Filename: "{app}\bin\palettestopresolume.bat"; Flags: runminimized
 
 [Registry]
 Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; \

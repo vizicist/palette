@@ -367,9 +367,12 @@ func ReadConfigFile(path string) (map[string]string, error) {
 	return pmap, nil
 }
 
-// ConfigBool xxx
+// ConfigBool returns bool value of nm, or false if nm not set
 func ConfigBool(nm string) bool {
 	v := ConfigValue(nm)
+	if v == "" {
+		return false
+	}
 	b, err := IsTrueValue(v)
 	if err != nil {
 		log.Printf("Config value of %s (%s) is invalid, assuming false", nm, v)

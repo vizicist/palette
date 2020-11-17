@@ -31,7 +31,7 @@ std::string ffgl_name() {
 	if (PaletteHost::PortOffset == 0) {
 		nm = "Palette";
 	} else {
-		nm = NosuchSnprintf("Palette%d", PaletteHost::PortOffset);
+		nm = NosuchSnprintf("Palette_%d", PaletteHost::PortOffset);
 	}
 	return nm.c_str();
 }
@@ -57,7 +57,7 @@ FFGLPalette::FFGLPalette(std::string configfile) : CFreeFrameGLPlugin(), Palette
 
 FFResult FFGLPalette::InitGL(const FFGLViewportStruct *vp)
 {
-	NosuchDebug("FFGLPalette::InitGL! vp->x,y,width,height=%d %d %d %d",vp->x,vp->y,vp->width,vp->height);
+	NosuchDebug("Palette.InitGL: width,height=%d %d",vp->width,vp->height);
 	return FF_SUCCESS;
 }
 

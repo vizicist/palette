@@ -70,7 +70,7 @@ NosuchOscUdpInput::Listen() {
         return OscSocketError("unable to getsockname after bind");
     }
     // *myport = ntohs(sin2.sin_port);
-    NosuchDebug("LISTENING for OSC on UDP port %d@%s",_myport,_myhost);
+    NosuchDebug(1, "Listening for OSC on UDP port %d@%s",_myport,_myhost);
     _s = s;
     return 0;
 }
