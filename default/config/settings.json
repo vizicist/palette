@@ -1,6 +1,6 @@
 {
   "generatesound": "false",
-  "generatevisuals": "false",
+  "generatevisuals": "true",
   "publishcursor": "true",
   "publishmidi": "true",
   "debug": "",

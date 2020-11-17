@@ -60,14 +60,13 @@ ffgl_setdll(std::string dllpath)
 	NosuchCurrentDir = dir;
 
 	char* p = getenv("LOCALAPPDATA");
-	NosuchDebug("LOCALAPPDATA = %s\n", p);
 	if ( p != NULL ) {
 		NosuchDebugLogPath = std::string(p) + "\\Palette\\logs\\ffgl.log";
 	}
 	else {
 		NosuchDebugLogPath = "c:\\windows\\temp\\ffgl.log"; // last resort
 	}
-	NosuchDebug("LogPath = %s\n", NosuchDebugLogPath.c_str());
+	// NosuchDebug("LogPath = %s\n", NosuchDebugLogPath.c_str());
 
 	struct _stat statbuff;
 	int e = _stat(NosuchCurrentDir.c_str(),&statbuff);
@@ -76,7 +75,6 @@ ffgl_setdll(std::string dllpath)
 		return FALSE;
 	}
 
-	NosuchDebug("Setting NosuchCurrentDir = %s",NosuchCurrentDir.c_str());
 	return TRUE;
 }
 }
@@ -336,7 +334,7 @@ PaletteHost::PaletteHost(std::string configfile)
 		return;
 	}
 
-	NosuchDebug("Loading config=%s\n",_configFile.c_str());
+	// NosuchDebug("Loading config=%s\n",_configFile.c_str());
 	std::string line;
 	std::string jstr;
 	while ( getline(f,line) ) {
@@ -398,9 +396,15 @@ static cJSON *
 getString(cJSON *json,char *name)
 {
 	cJSON *j = cJSON_GetObjectItem(json,name);
-	if ( j && j->type == cJSON_String )
+	if ( j && j->type == cJSON_String && j->valuestring != NULL )
 		return j;
 	return NULL;
+}
+
+static bool
+istrue(std::string s)
+{
+	return(s == "true" || s == "True" || s == "1");
 }
 
 void
@@ -408,17 +412,17 @@ PaletteHost::LoadPaletteConfig(cJSON* c)
 {
 	cJSON *j;
 
-	if ( (j=getNumber(c,"debugcursor")) != NULL ) {
-		NosuchDebugCursor = j->valueint?TRUE:FALSE;
+	if ( (j=getString(c,"debugcursor")) != NULL ) {
+		NosuchDebugCursor = istrue(j->valuestring);
 	}
 	if ( (j=getNumber(c,"debugsprite")) != NULL ) {
-		NosuchDebugSprite = j->valueint?TRUE:FALSE;
+		NosuchDebugSprite = istrue(j->valuestring);
 	}
 	if ( (j=getNumber(c,"debugsprite")) != NULL ) {
-		NosuchDebugSprite = j->valueint?TRUE:FALSE;
+		NosuchDebugSprite = istrue(j->valuestring);
 	}
 	if ( (j=getNumber(c,"debugautoflush")) != NULL ) {
-		NosuchDebugAutoFlush = j->valueint?TRUE:FALSE;
+		NosuchDebugAutoFlush = istrue(j->valuestring);
 	}
 }
 
@@ -639,12 +643,6 @@ PaletteHost::test_draw()
 	}
 }
 
-static bool
-istrue(std::string s)
-{
-	return(s == "true" || s == "True" || s == "1");
-}
-
 // Return everything after the '=' (and whitespace)
 std::string
 everything_after_char(std::string line, char lookfor = '=')
@@ -685,8 +683,7 @@ bool PaletteHost::initStuff() {
 		_palette->now = MillisecondsSoFar();
 
 		int osc_input_port = BASE_OSC_INPUT_PORT + PortOffset;
-		NosuchDebug("PaletteDaemon will be listening for osc on port %d.",
-			osc_input_port);
+		NosuchDebug("Palette: listening for OSC on port %d",osc_input_port);
 
 		_daemon = new PaletteDaemon(this, osc_input_port, DEFAULT_OSC_INPUT_HOST);
 

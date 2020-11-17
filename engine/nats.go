@@ -9,16 +9,10 @@ import (
 )
 
 // PaletteAPISubject xxx
-var PaletteAPISubject = "palette.central.api"
+var PaletteAPISubject = "palette.api"
 
-// CursorEventSubject xxx
-var CursorEventSubject = "palette.cursorevent"
-
-// MIDIEventSubject xxx
-var MIDIEventSubject = "palette.midievent"
-
-// SpriteEventSubject xxx
-var SpriteEventSubject = "palette.spriteevent"
+// PaletteEventSubject xxx
+var PaletteEventSubject = "palette.event"
 
 var time0 = time.Now()
 
@@ -29,11 +23,12 @@ func PublishCursorDeviceEvent(ce CursorDeviceEvent) error {
 	if ce.Region != "" {
 		regionvalue = "\"region\": \"" + ce.Region + "\", "
 	}
+	event := "cursor_" + ce.DownDragUp
 	params := "{ " +
 		"\"nuid\": \"" + ce.NUID + "\", " +
 		"\"cid\": \"" + ce.CID + "\", " +
 		regionvalue +
-		"\"event\": \"" + ce.DownDragUp + "\", " +
+		"\"event\": \"" + event + "\", " +
 		"\"millisecs\": \"" + fmt.Sprintf("%d", dt.Milliseconds()) + "\", " +
 		"\"x\": \"" + fmt.Sprintf("%f", ce.X) + "\", " +
 		"\"y\": \"" + fmt.Sprintf("%f", ce.Y) + "\", " +
@@ -41,9 +36,9 @@ func PublishCursorDeviceEvent(ce CursorDeviceEvent) error {
 		"\"area\": \"" + fmt.Sprintf("%f", ce.Area) + "\" }"
 
 	if DebugUtil.NATS {
-		log.Printf("Publishing %s %s\n", CursorEventSubject, params)
+		log.Printf("Publishing %s %s\n", PaletteEventSubject, params)
 	}
-	err := TheVizNats.Publish(CursorEventSubject, params)
+	err := TheVizNats.Publish(PaletteEventSubject, params)
 	if err != nil {
 		return err
 	}
@@ -58,15 +53,17 @@ func PublishMIDIDeviceEvent(me MIDIDeviceEvent) error {
 	// the ones on Cursor events
 	params := "{ " +
 		"\"nuid\": \"" + MyNUID() + "\", " +
+		"\"event\": \"" + "midi" + "\", " +
 		// "\"timestamp\": \"" + fmt.Sprintf("%d", me.Timestamp) + "\", " +
 		"\"millisecs\": \"" + fmt.Sprintf("%d", dt.Milliseconds()) + "\", " +
 		"\"status\": \"" + fmt.Sprintf("%d", me.Status) + "\", " +
 		"\"data1\": \"" + fmt.Sprintf("%d", me.Data1) + "\", " +
 		"\"data2\": \"" + fmt.Sprintf("%d", me.Data2) + "\" }"
+
 	if DebugUtil.MIDI {
-		log.Printf("Publishing %s %s\n", MIDIEventSubject, params)
+		log.Printf("Publishing %s %s\n", PaletteEventSubject, params)
 	}
-	err := TheVizNats.Publish(MIDIEventSubject, params)
+	err := TheVizNats.Publish(PaletteEventSubject, params)
 	if err != nil {
 		return err
 	}
@@ -81,9 +78,9 @@ func PublishSpriteEvent(x, y, z float32) error {
 		"\"y\": \"" + fmt.Sprintf("%f", y) + "\", " +
 		"\"z\": \"" + fmt.Sprintf("%f", z) + "\" }"
 
-	log.Printf("Publishing %s %s\n", SpriteEventSubject, params)
+	log.Printf("Publishing %s %s\n", PaletteEventSubject, params)
 
-	err := TheVizNats.Publish(SpriteEventSubject, params)
+	err := TheVizNats.Publish(PaletteEventSubject, params)
 	if err != nil {
 		return err
 	}

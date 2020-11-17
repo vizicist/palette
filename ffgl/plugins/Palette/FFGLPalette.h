@@ -28,7 +28,6 @@ public:
 	{
 		// The ffgl.json file is under %LOCALAPPDATA%
 		char* p = getenv("LOCALAPPDATA");
-		NosuchDebug("CreateInstance LOCALAPPDATA = %s\n", p);
 		std::string jsonpath;
 		if ( p != NULL ) {
 			jsonpath = std::string(p) + "\\Palette\\config\\ffgl.json";
@@ -36,7 +35,7 @@ public:
 		else {
 			jsonpath = "c:\\windows\\temp\\ffgl.json"; // last resort
 		}
-		NosuchDebug("Palette.CreateInstance: PortOffset=%d jsonpath=%s", PaletteHost::PortOffset,jsonpath.c_str());
+		NosuchDebug("Palette: PortOffset=%d config=%s", PaletteHost::PortOffset,jsonpath.c_str());
 		*ppOutInstance = new FFGLPalette(jsonpath);
         if (*ppOutInstance != NULL)
             return FF_SUCCESS;
