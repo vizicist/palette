@@ -11,7 +11,7 @@
 
 - Quit and restart Resolume.
 
-- Use Composition->Open to open: <pre>C:\Program Files\Palette\config\Palette_1_Layer.avc</pre>
+- Use <i>Composition->Open</i> to open: <pre>C:\Program Files\Palette\config\Palette_1_Layer.avc</pre>
 
 - That composition contains a single layer with a <b>Palette_1</b> plugin followed by a dozen or more other FFGL plugins.
 
@@ -30,6 +30,7 @@ Alternatively, you can open a cmd window and execute "palettestart".  You should
 - If it's not working, see below for debugging hints.
 ## Debugging hints if you don't see any visual output
 
+
 - If for some reason Resolume crashes at startup,
 you can look in this file: <pre>%LOCALAPPDATA%\Palette\logs\ffgl.log</pre>
 for clues as to the reason.  If you can't resolve the issue, you should uninstall Palette.
@@ -42,8 +43,9 @@ you should find these entries in Resolume's Sources tab, under Generators:
   - Palette_3
   - Palette_4
 
-- After you activate the plugin (by clicking on its cell in the layer),
-working okay, this log file: <pre>%LOCALAPPDATA%\Palette\logs\ffgl.log</pre>
+- Make sure that you've clicked on the Palette_1 cell (the first one) in the layer to activate it.
+
+- After you activate the plugin, this log file: <pre>%LOCALAPPDATA%\Palette\logs\ffgl.log</pre>
 should contain this line at the end: <pre>Palette: listening for OSC on port 3334</pre>
 
 - In this logfile: <pre>%LOCALAPPDATA%\Palette\logs\engine.log</pre>
