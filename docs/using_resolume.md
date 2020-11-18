@@ -15,13 +15,14 @@
 
 - That composition contains a single layer with a <b>Palette_1</b> plugin followed by a dozen or more other FFGL plugins.
 
-- Click on the Palette_1 cell (the first one) in the layer to activate it.
+- Click on the <b>Palette_1</b> cell (the first one) in the layer to activate it.
 
 - Make sure the Sensel Morph is plugged in.
 
 - Start the Palette software by invoking
 "Start Palette" in the Palette folder of the Windows Start menu.
 Alternatively, you can open a cmd window and execute "palettestart".  You should see a window pop up with a GUI for selecting Palette presets.
+If you don't see the GUI, it may be hiding behind other windows.
 
 - You should now be able to finger paint on the Morph and see something visual in the Resolume output.
 
