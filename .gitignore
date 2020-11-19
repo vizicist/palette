@@ -1,6 +1,7 @@
 CurrentSnapshot.*
 *.pyc
 python/dist
+build/windows/ship
 ffgl/windows/x64
 ffgl/windows/.vs
 windows/ship

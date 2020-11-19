@@ -235,7 +235,7 @@
     </Link>
     <PreBuildEvent />
     <PostBuildEvent>
-      <Command>postbuild.bat</Command>
+      <Command>postbuild_debug.bat</Command>
     </PostBuildEvent>
     <PreBuildEvent>
       <Command>prebuild.bat</Command>
@@ -286,6 +286,12 @@
       <AdditionalLibraryDirectories>x64\Release;C:\Program Files\Sensel\SenselLib\x64</AdditionalLibraryDirectories>
       <AdditionalDependencies>OpenGL32.lib;pthreadVC2.lib;winmm.lib;Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PreBuildEvent>
+      <Command>prebuild.bat</Command>
+    </PreBuildEvent>
+    <PostBuildEvent>
+      <Command>postbuild_release.bat</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
