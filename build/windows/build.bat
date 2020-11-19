@@ -21,8 +21,8 @@ echo ================ Compiling FFGL plugin
 set MSBUILDCMD=C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\Common7\Tools\vsmsbuildcmd.bat
 call "%MSBUILDCMD%" > nul
 pushd %PALETTESOURCE%\ffgl\windows
-msbuild /t:Build /p:Configuration=Release /p:Platform="x64" palette.sln > nul
 msbuild /t:Build /p:Configuration=Debug /p:Platform="x64" palette.sln > nul
+msbuild /t:Build /p:Configuration=Release /p:Platform="x64" palette.sln > nul
 popd
 
 
@@ -62,8 +62,8 @@ move dist\osc\osc.exe dist\pyinstalled >nul
 move dist\pyinstalled %bin% >nul
 popd
 
-echo ================ Copying FFGL PLUGIN
-pushd %PALETTESOURCE%\ffgl\windows\x64\Debug
+echo ================ Copying FFGL plugin
+pushd %PALETTESOURCE%\ffgl\windows\x64\Release
 mkdir %ship%\ffgl
 copy Palette_*.* %ship%\ffgl > nul
 popd
@@ -98,7 +98,6 @@ copy %PALETTESOURCE%\default\midifiles\*.* %ship%\midifiles >nul
 
 echo ================ Copying windows-specific things
 copy %PALETTESOURCE%\build\windows\pthreadvc2.dll %ship%\ffgl >nul
-copy %PALETTESOURCE%\build\windows\msvcp140d.dll %ship%\ffgl >nul
 copy %PALETTESOURCE%\SenselLib\x64\LibSensel.dll %bin% >nul
 copy %PALETTESOURCE%\SenselLib\x64\LibSenselDecompress.dll %bin% >nul
 
