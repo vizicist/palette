@@ -297,9 +297,7 @@ PaletteHost::PaletteHost(std::string configfile)
 	_configFile = configfile;
 	_configJson = NULL;
 	_dotest = FALSE;
-	_lastActivity = -1;
 	_time0 = timeGetTime();
-	_activityEnabled = FALSE;
 
 	_daemon = NULL;
 
@@ -946,11 +944,6 @@ std::string PaletteHost::ExecuteJson(std::string meth, cJSON *params, const char
 			return error_json(-32000,"Expecting string type in value argument to echo",id);
 		}
 		return jsonStringResult(c_value->valuestring,id);
-	}
-	if (meth == "activity_set") {
-		bool onoff = needBool(meth, params, "onoff");
-		_activityEnabled = onoff;
-		return jsonIntResult(0,id);
 	}
 	if (meth == "tempo_default") {
 		Scheduler::ChangeClicksPerSecond(DEFAULT_CLICKS_PER_SECOND);

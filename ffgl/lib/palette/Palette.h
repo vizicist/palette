@@ -76,8 +76,6 @@ public:
 
 	Region region;
 
-	void setLastActivity();
-
 private:
 
 	PaletteHost* _paletteHost;

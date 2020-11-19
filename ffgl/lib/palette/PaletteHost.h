@@ -125,8 +125,6 @@ public:
 	std::string ExecuteJson(std::string meth, cJSON *params, const char *id);
 	std::string ExecuteJsonAndCatchExceptions(std::string meth, cJSON *params, const char *id);
 
-	int _lastActivity;
-
 	void ProcessOscMessage(std::string , const osc::ReceivedMessage& m);
 
 	void SetCursorCid(std::string cid, std::string source, NosuchVector point, double z, bool recordable = true );

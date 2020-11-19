@@ -62,12 +62,6 @@ Palette::Palette(PaletteHost* b) {
 Palette::~Palette() {
 }
 
-void Palette::setLastActivity() {
-	if ( _paletteHost ) {
-		_paletteHost->_lastActivity = now;
-	}
-}
-
 static void writestr(std::ofstream& out, std::string s) {
 	const char* p = s.c_str();
 	out.write(p,s.size());
