@@ -1,8 +1,11 @@
 ## Using Palette with Resolume 6 and the Sensel Morph
 
-- These instructions assume that you are on Windows, have a licensed copy of Resolume, and have a Sensel Morph.
+- These instructions assume that you:
+  - are running Windows 10
+  - have Resolume Avenue (or Arena) 6
+  - and have a Sensel Morph.
 
-- Download and execute the latest installer from the
+- First, download and execute the latest installer from the
 <a href=https://github.com/vizicist/palette/tree/main/release>release directory</a>.
 
 - In Resolume's <i>Preferences->Video</i> section, add this to the list of FreeFrame (FFGL) plugin directories: <pre>C:\Program Files\Palette\ffgl</pre>
@@ -19,9 +22,13 @@
 
 - Make sure the Sensel Morph is plugged in.
 
-- Start the Palette software by invoking
-"Start Palette" in the Palette folder of the Windows Start menu.
-Alternatively, you can open a cmd window and execute "palettestart".  You should see a window pop up with a GUI for selecting Palette presets.
+- Start the Palette software by invoking the
+<b>Start Palette</b> app, found in the Palette folder of the Windows Start menu.
+
+- You can also start Palette by opening a cmd window and executing <b>palettestart</b>.
+
+- After starting Palette, you should see a window
+pop up with a GUI for selecting Palette presets.
 If you don't see the GUI, it may be hiding behind other windows.
 
 - You should now be able to finger paint on the Morph and see something visual in the Resolume output.
@@ -32,7 +39,7 @@ If you don't see the GUI, it may be hiding behind other windows.
 
 ## Debugging hints if you don't see any visual output
 
-- Make sure that you've clicked on the Palette_1 cell (the first one) in the layer to activate it.  This is the most common mistake, for me.
+- Make sure that you've clicked on the <b>Palette_1</b> cell (the first one) in the layer to activate it.  This is the most common mistake, for me.
 Every time you start Resolume manually, you need to do this.  If you want to eliminate the need for this, use can use this script: <pre>C:\Program Files\Palette\bin\palettestartresolume.bat</pre>
 
 - If for some reason Resolume crashes at startup,
