@@ -29,8 +29,11 @@ If you don't see the GUI, it may be hiding behind other windows.
 - Use the GUI to select different Snapshot presets.  The Sound, Visual, and Effect tabs at the top of the GUI let you independently select presets for those things.
 
 - If it's not working, see below for debugging hints.
+
 ## Debugging hints if you don't see any visual output
 
+- Make sure that you've clicked on the Palette_1 cell (the first one) in the layer to activate it.  This is the most common mistake, for me.
+Every time you start Resolume manually, you need to do this.  If you want to eliminate the need for this, use can use this script: <pre>C:\Program Files\Palette\bin\palettestartresolume.bat</pre>
 
 - If for some reason Resolume crashes at startup,
 you can look in this file: <pre>%LOCALAPPDATA%\Palette\logs\ffgl.log</pre>
@@ -44,7 +47,7 @@ you should find these entries in Resolume's Sources tab, under Generators:
   - Palette_3
   - Palette_4
 
-- Make sure that you've clicked on the Palette_1 cell (the first one) in the layer to activate it.
+- If you don't see those plugins in the (alphabetical) list of Generators, look at the Resolume log file in this directory: <pre>%APPDATA%\Resolume Avenue</pre>
 
 - After you activate the plugin, this log file: <pre>%LOCALAPPDATA%\Palette\logs\ffgl.log</pre>
 should contain this line at the end: <pre>Palette: listening for OSC on port 3334</pre>
