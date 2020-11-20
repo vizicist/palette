@@ -19,30 +19,30 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\ffgl\lib\ffgl\FFGL.cpp" />
-    <ClCompile Include="..\..\ffgl\lib\ffgl\FFGLFBO.cpp" />
-    <ClCompile Include="..\..\ffgl\lib\ffgl\FFGLPluginInfo.cpp" />
-    <ClCompile Include="..\..\ffgl\lib\ffgl\FFGLPluginInfoData.cpp" />
-    <ClCompile Include="..\..\ffgl\lib\ffgl\FFGLPluginManager.cpp" />
-    <ClCompile Include="..\..\ffgl\lib\ffgl\FFGLPluginSDK.cpp" />
-    <ClCompile Include="..\..\ffgl\lib\ffgl\FFGLShader.cpp" />
-    <ClCompile Include="..\..\ffgl\lib\ffgl\utilities\utilities.cpp" />
-    <ClCompile Include="..\..\ffgl\lib\glee\GLee.c" />
-    <ClCompile Include="..\..\ffgl\plugins\{PLUGINNAME}\FFGL{PLUGINNAME}.cpp" />
+    <ClCompile Include="..\..\ffgl6\lib\ffgl\FFGL.cpp" />
+    <ClCompile Include="..\..\ffgl6\lib\ffgl\FFGLFBO.cpp" />
+    <ClCompile Include="..\..\ffgl6\lib\ffgl\FFGLPluginInfo.cpp" />
+    <ClCompile Include="..\..\ffgl6\lib\ffgl\FFGLPluginInfoData.cpp" />
+    <ClCompile Include="..\..\ffgl6\lib\ffgl\FFGLPluginManager.cpp" />
+    <ClCompile Include="..\..\ffgl6\lib\ffgl\FFGLPluginSDK.cpp" />
+    <ClCompile Include="..\..\ffgl6\lib\ffgl\FFGLShader.cpp" />
+    <ClCompile Include="..\..\ffgl6\lib\ffgl\utilities\utilities.cpp" />
+    <ClCompile Include="..\..\ffgl6\lib\glee\GLee.c" />
+    <ClCompile Include="..\..\ffgl6\plugins\{PLUGINNAME}\FFGL{PLUGINNAME}.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\ffgl\lib\ffgl\FFGL.h" />
-    <ClInclude Include="..\..\ffgl\lib\ffgl\FFGLFBO.h" />
-    <ClInclude Include="..\..\ffgl\lib\ffgl\FFGLLib.h" />
-    <ClInclude Include="..\..\ffgl\lib\ffgl\FFGLPluginInfo.h" />
-    <ClInclude Include="..\..\ffgl\lib\ffgl\FFGLPluginManager.h" />
-    <ClInclude Include="..\..\ffgl\lib\ffgl\FFGLPluginManager_inl.h" />
-    <ClInclude Include="..\..\ffgl\lib\ffgl\FFGLPluginSDK.h" />
-    <ClInclude Include="..\..\ffgl\lib\ffgl\FFGLShader.h" />
-    <ClInclude Include="..\..\ffgl\lib\ffgl\FreeFrame.h" />
-    <ClInclude Include="..\..\ffgl\lib\ffgl\utilities\utilities.h" />
-    <ClInclude Include="..\..\ffgl\lib\glee\GLee.h" />
-    <ClInclude Include="..\..\ffgl\plugins\{PLUGINNAME}\FFGL{PLUGINNAME}.h" />
+    <ClInclude Include="..\..\ffgl6\lib\ffgl\FFGL.h" />
+    <ClInclude Include="..\..\ffgl6\lib\ffgl\FFGLFBO.h" />
+    <ClInclude Include="..\..\ffgl6\lib\ffgl\FFGLLib.h" />
+    <ClInclude Include="..\..\ffgl6\lib\ffgl\FFGLPluginInfo.h" />
+    <ClInclude Include="..\..\ffgl6\lib\ffgl\FFGLPluginManager.h" />
+    <ClInclude Include="..\..\ffgl6\lib\ffgl\FFGLPluginManager_inl.h" />
+    <ClInclude Include="..\..\ffgl6\lib\ffgl\FFGLPluginSDK.h" />
+    <ClInclude Include="..\..\ffgl6\lib\ffgl\FFGLShader.h" />
+    <ClInclude Include="..\..\ffgl6\lib\ffgl\FreeFrame.h" />
+    <ClInclude Include="..\..\ffgl6\lib\ffgl\utilities\utilities.h" />
+    <ClInclude Include="..\..\ffgl6\lib\glee\GLee.h" />
+    <ClInclude Include="..\..\ffgl6\plugins\{PLUGINNAME}\FFGL{PLUGINNAME}.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{6858F0CB-DE74-406F-B56A-CC5514CAA952}</ProjectGuid>
@@ -120,7 +120,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <AdditionalIncludeDirectories>..\..\ffgl\lib\ffgl\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\ffgl6\lib\ffgl\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <ModuleDefinitionFile>palette.def</ModuleDefinitionFile>
@@ -142,7 +142,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <AdditionalIncludeDirectories>..\..\ffgl\lib\ffgl\;..\..\ffgl\lib\ffgl\utilities\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\ffgl6\lib\ffgl\;..\..\ffgl6\lib\ffgl\utilities\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <ModuleDefinitionFile>palette.def</ModuleDefinitionFile>
@@ -150,7 +150,7 @@
       <ProgramDatabaseFile>$(TargetDir)$(TargetName).pdb</ProgramDatabaseFile>
       <SubSystem>Windows</SubSystem>
       <ImportLibrary>$(OutDir)$(ProjectName).lib</ImportLibrary>
-      <AdditionalLibraryDirectories>..\..\..\ffgl\common\opengl\lib</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\..\ffgl6\common\opengl\lib</AdditionalLibraryDirectories>
       <AdditionalDependencies>OpenGL32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -162,7 +162,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <AdditionalIncludeDirectories>..\..\ffgl\lib\ffgl\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\ffgl6\lib\ffgl\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <ModuleDefinitionFile>palette.def</ModuleDefinitionFile>
@@ -183,7 +183,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <AdditionalIncludeDirectories>..\..\ffgl\lib\ffgl\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\ffgl6\lib\ffgl\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <ModuleDefinitionFile>palette.def</ModuleDefinitionFile>
@@ -192,7 +192,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <ImportLibrary>$(OutDir)$(ProjectName).lib</ImportLibrary>
-      <AdditionalLibraryDirectories>..\..\..\ffgl\common\opengl\lib</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\..\ffgl6\common\opengl\lib</AdditionalLibraryDirectories>
       <AdditionalDependencies>OpenGL32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
