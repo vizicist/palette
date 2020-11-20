@@ -8,7 +8,7 @@
 - First, download and execute the latest installer from the
 <a href=https://github.com/vizicist/palette/tree/main/release>release directory</a>.
 
-- In Resolume's <i>Preferences->Video</i> section, add this to the list of FreeFrame (FFGL) plugin directories: <pre>C:\Program Files\Palette\ffgl</pre>
+- In Resolume's <i>Preferences->Video</i> section, add this directory to the list of FreeFrame (FFGL) plugin directories.  The directory name <b>ffgl6</b> indicates that it's for Resolume 6: <pre>C:\Program Files\Palette\ffgl6</pre>
 
 - In <i>Preferences->OSC</i>, enable "OSC Input" with an incoming port of 7000.
 
@@ -44,7 +44,8 @@ Every time you start Resolume manually, you need to do this.  If you want to eli
 
 - If for some reason Resolume crashes at startup,
 you can look in this file: <pre>%LOCALAPPDATA%\Palette\logs\ffgl.log</pre>
-for clues as to the reason.  If you can't resolve the issue, you should uninstall Palette.
+for clues as to the reason.  If you can't resolve the issue,
+you should either remove the ffgl6 directory from the <i>Preferences->Video</i> section or just uninstall Palette.
 
 - To verify that the plugin is being recognized by Resolume,
 you should find these entries in Resolume's Sources tab, under Generators:
@@ -72,3 +73,4 @@ you should see lines like these: <pre>2020/11/17 12:36:16 ======================
 2020/11/17 12:36:17.533556 StartNATS: subscribing to palette.event
 </pre>
 
+- In this logfile: <pre>%LOCALAPPDATA%\Palette\logs\engine.log</pre>
