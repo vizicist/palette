@@ -17,15 +17,6 @@ echo ================ Upgrading Python
 python -m pip install --upgrade pip | grep -v "already.*up-to-date"
 pip install codenamize pip install python-osc pip install asyncio-nats-client pyinstaller get-mac mido | grep -v "already satisfied"
 
-echo ================ Compiling FFGL plugin
-set MSBUILDCMD=C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\Common7\Tools\vsmsbuildcmd.bat
-call "%MSBUILDCMD%" > nul
-pushd %PALETTESOURCE%\ffgl\windows
-msbuild /t:Build /p:Configuration=Debug /p:Platform="x64" palette.sln > nul
-msbuild /t:Build /p:Configuration=Release /p:Platform="x64" palette.sln > nul
-popd
-
-
 echo ================ Creating palette_engine.exe
 
 pushd %PALETTESOURCE%\cmd\palette_engine
@@ -62,10 +53,19 @@ move dist\osc\osc.exe dist\pyinstalled >nul
 move dist\pyinstalled %bin% >nul
 popd
 
-echo ================ Copying FFGL plugin
+echo ================ Compiling FFGL6 plugin
+set MSBUILDCMD=C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\Common7\Tools\vsmsbuildcmd.bat
+call "%MSBUILDCMD%" > nul
+pushd %PALETTESOURCE%\ffgl\windows
+msbuild /t:Build /p:Configuration=Debug /p:Platform="x64" palette.sln > nul
+msbuild /t:Build /p:Configuration=Release /p:Platform="x64" palette.sln > nul
+popd
+
+echo ================ Copying FFGL6 plugin
 pushd %PALETTESOURCE%\ffgl\windows\x64\Release
-mkdir %ship%\ffgl
-copy Palette_*.* %ship%\ffgl > nul
+mkdir %ship%\ffgl6
+copy Palette_*.* %ship%\ffgl6 > nul
+copy %PALETTESOURCE%\build\windows\pthreadvc2.dll %ship%\ffgl6 >nul
 popd
 
 echo ================ Copying binaries
@@ -97,7 +97,6 @@ mkdir %ship%\midifiles
 copy %PALETTESOURCE%\default\midifiles\*.* %ship%\midifiles >nul
 
 echo ================ Copying windows-specific things
-copy %PALETTESOURCE%\build\windows\pthreadvc2.dll %ship%\ffgl >nul
 copy %PALETTESOURCE%\SenselLib\x64\LibSensel.dll %bin% >nul
 copy %PALETTESOURCE%\SenselLib\x64\LibSenselDecompress.dll %bin% >nul
 

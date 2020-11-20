@@ -214,7 +214,6 @@ protected:
 private:
 	Timestamp _time0;
 	bool _dotest;
-	bool _activityEnabled;
 	std::map<std::string, cJSON*> _patchJson;
 	std::string _configFile;
 	cJSON* _configJson;
