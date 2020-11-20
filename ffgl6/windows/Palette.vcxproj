@@ -19,92 +19,92 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\ffgl\lib\cJSON\cJSON.cpp" />
-    <ClCompile Include="..\..\ffgl\lib\ffgl\FFGL.cpp" />
-    <ClCompile Include="..\..\ffgl\lib\ffgl\FFGLFBO.cpp" />
-    <ClCompile Include="..\..\ffgl\lib\ffgl\FFGLPluginInfo.cpp" />
-    <ClCompile Include="..\..\ffgl\lib\ffgl\FFGLPluginInfoData.cpp" />
-    <ClCompile Include="..\..\ffgl\lib\ffgl\FFGLPluginManager.cpp" />
-    <ClCompile Include="..\..\ffgl\lib\ffgl\FFGLPluginSDK.cpp" />
-    <ClCompile Include="..\..\ffgl\lib\ffgl\FFGLShader.cpp" />
-    <ClCompile Include="..\..\ffgl\lib\ffgl\utilities\utilities.cpp" />
-    <ClCompile Include="..\..\ffgl\lib\glee\GLee.c" />
-    <ClCompile Include="..\..\ffgl\lib\nosuch\NosuchDebug.cpp" />
-    <ClCompile Include="..\..\ffgl\lib\nosuch\NosuchException.cpp" />
-    <ClCompile Include="..\..\ffgl\lib\nosuch\NosuchOscInput.cpp" />
-    <ClCompile Include="..\..\ffgl\lib\nosuch\NosuchOscUdpInput.cpp" />
-    <ClCompile Include="..\..\ffgl\lib\nosuch\NosuchUtil.cpp" />
-    <ClCompile Include="..\..\ffgl\lib\nosuch\sha1.c" />
-    <ClCompile Include="..\..\ffgl\lib\nosuch\UriCodec.cpp" />
-    <ClCompile Include="..\..\ffgl\lib\oscpack\ip\IpEndpointName.cpp" />
-    <ClCompile Include="..\..\ffgl\lib\oscpack\ip\win32\NetworkingUtils.cpp" />
-    <ClCompile Include="..\..\ffgl\lib\oscpack\ip\win32\UdpSocket.cpp" />
-    <ClCompile Include="..\..\ffgl\lib\oscpack\osc\OscOutboundPacketStream.cpp" />
-    <ClCompile Include="..\..\ffgl\lib\oscpack\osc\OscPrintReceivedElements.cpp" />
-    <ClCompile Include="..\..\ffgl\lib\oscpack\osc\OscReceivedElements.cpp" />
-    <ClCompile Include="..\..\ffgl\lib\oscpack\osc\OscTypes.cpp" />
-    <ClCompile Include="..\..\ffgl\lib\osc\src\OscBundle.cpp" />
-    <ClCompile Include="..\..\ffgl\lib\osc\src\OscMessage.cpp" />
-    <ClCompile Include="..\..\ffgl\lib\osc\src\OscSender.cpp" />
-    <ClCompile Include="..\..\ffgl\lib\palette\Palette.cpp" />
-    <ClCompile Include="..\..\ffgl\lib\palette\PaletteHost.cpp" />
-    <ClCompile Include="..\..\ffgl\lib\palette\PaletteOscInput.cpp" />
-    <ClCompile Include="..\..\ffgl\lib\palette\PaletteUtil.cpp" />
-    <ClCompile Include="..\..\ffgl\lib\palette\Region.cpp" />
-    <ClCompile Include="..\..\ffgl\lib\palette\Scheduler.cpp" />
-    <ClCompile Include="..\..\ffgl\lib\palette\Sprite.cpp" />
-    <ClCompile Include="..\..\ffgl\lib\palette\TrackedCursor.cpp" />
-    <ClCompile Include="..\..\ffgl\plugins\Palette\FFGLPalette.cpp" />
+    <ClCompile Include="..\..\ffgl6\lib\cJSON\cJSON.cpp" />
+    <ClCompile Include="..\..\ffgl6\lib\ffgl\FFGL.cpp" />
+    <ClCompile Include="..\..\ffgl6\lib\ffgl\FFGLFBO.cpp" />
+    <ClCompile Include="..\..\ffgl6\lib\ffgl\FFGLPluginInfo.cpp" />
+    <ClCompile Include="..\..\ffgl6\lib\ffgl\FFGLPluginInfoData.cpp" />
+    <ClCompile Include="..\..\ffgl6\lib\ffgl\FFGLPluginManager.cpp" />
+    <ClCompile Include="..\..\ffgl6\lib\ffgl\FFGLPluginSDK.cpp" />
+    <ClCompile Include="..\..\ffgl6\lib\ffgl\FFGLShader.cpp" />
+    <ClCompile Include="..\..\ffgl6\lib\ffgl\utilities\utilities.cpp" />
+    <ClCompile Include="..\..\ffgl6\lib\glee\GLee.c" />
+    <ClCompile Include="..\..\ffgl6\lib\nosuch\NosuchDebug.cpp" />
+    <ClCompile Include="..\..\ffgl6\lib\nosuch\NosuchException.cpp" />
+    <ClCompile Include="..\..\ffgl6\lib\nosuch\NosuchOscInput.cpp" />
+    <ClCompile Include="..\..\ffgl6\lib\nosuch\NosuchOscUdpInput.cpp" />
+    <ClCompile Include="..\..\ffgl6\lib\nosuch\NosuchUtil.cpp" />
+    <ClCompile Include="..\..\ffgl6\lib\nosuch\sha1.c" />
+    <ClCompile Include="..\..\ffgl6\lib\nosuch\UriCodec.cpp" />
+    <ClCompile Include="..\..\ffgl6\lib\oscpack\ip\IpEndpointName.cpp" />
+    <ClCompile Include="..\..\ffgl6\lib\oscpack\ip\win32\NetworkingUtils.cpp" />
+    <ClCompile Include="..\..\ffgl6\lib\oscpack\ip\win32\UdpSocket.cpp" />
+    <ClCompile Include="..\..\ffgl6\lib\oscpack\osc\OscOutboundPacketStream.cpp" />
+    <ClCompile Include="..\..\ffgl6\lib\oscpack\osc\OscPrintReceivedElements.cpp" />
+    <ClCompile Include="..\..\ffgl6\lib\oscpack\osc\OscReceivedElements.cpp" />
+    <ClCompile Include="..\..\ffgl6\lib\oscpack\osc\OscTypes.cpp" />
+    <ClCompile Include="..\..\ffgl6\lib\osc\src\OscBundle.cpp" />
+    <ClCompile Include="..\..\ffgl6\lib\osc\src\OscMessage.cpp" />
+    <ClCompile Include="..\..\ffgl6\lib\osc\src\OscSender.cpp" />
+    <ClCompile Include="..\..\ffgl6\lib\palette\Palette.cpp" />
+    <ClCompile Include="..\..\ffgl6\lib\palette\PaletteHost.cpp" />
+    <ClCompile Include="..\..\ffgl6\lib\palette\PaletteOscInput.cpp" />
+    <ClCompile Include="..\..\ffgl6\lib\palette\PaletteUtil.cpp" />
+    <ClCompile Include="..\..\ffgl6\lib\palette\Region.cpp" />
+    <ClCompile Include="..\..\ffgl6\lib\palette\Scheduler.cpp" />
+    <ClCompile Include="..\..\ffgl6\lib\palette\Sprite.cpp" />
+    <ClCompile Include="..\..\ffgl6\lib\palette\TrackedCursor.cpp" />
+    <ClCompile Include="..\..\ffgl6\plugins\Palette\FFGLPalette.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\ffgl\lib\cJSON\cJSON.h" />
-    <ClInclude Include="..\..\ffgl\lib\ffgl\FFGL.h" />
-    <ClInclude Include="..\..\ffgl\lib\ffgl\FFGLFBO.h" />
-    <ClInclude Include="..\..\ffgl\lib\ffgl\FFGLLib.h" />
-    <ClInclude Include="..\..\ffgl\lib\ffgl\FFGLPluginInfo.h" />
-    <ClInclude Include="..\..\ffgl\lib\ffgl\FFGLPluginManager.h" />
-    <ClInclude Include="..\..\ffgl\lib\ffgl\FFGLPluginManager_inl.h" />
-    <ClInclude Include="..\..\ffgl\lib\ffgl\FFGLPluginSDK.h" />
-    <ClInclude Include="..\..\ffgl\lib\ffgl\FFGLShader.h" />
-    <ClInclude Include="..\..\ffgl\lib\ffgl\FreeFrame.h" />
-    <ClInclude Include="..\..\ffgl\lib\ffgl\utilities\utilities.h" />
-    <ClInclude Include="..\..\ffgl\lib\glee\GLee.h" />
-    <ClInclude Include="..\..\ffgl\lib\nosuch\NosuchColor.h" />
-    <ClInclude Include="..\..\ffgl\lib\nosuch\NosuchDebug.h" />
-    <ClInclude Include="..\..\ffgl\lib\nosuch\NosuchException.h" />
-    <ClInclude Include="..\..\ffgl\lib\nosuch\NosuchGraphics.h" />
-    <ClInclude Include="..\..\ffgl\lib\nosuch\NosuchOscInput.h" />
-    <ClInclude Include="..\..\ffgl\lib\nosuch\NosuchOscUdpInput.h" />
-    <ClInclude Include="..\..\ffgl\lib\nosuch\NosuchUtil.h" />
-    <ClInclude Include="..\..\ffgl\lib\nosuch\sha1.h" />
-    <ClInclude Include="..\..\ffgl\lib\oscpack\ip\IpEndpointName.h" />
-    <ClInclude Include="..\..\ffgl\lib\oscpack\ip\UdpSocket.h" />
-    <ClInclude Include="..\..\ffgl\lib\oscpack\osc\OscOutboundPacketStream.h" />
-    <ClInclude Include="..\..\ffgl\lib\oscpack\osc\OscPrintReceivedElements.h" />
-    <ClInclude Include="..\..\ffgl\lib\oscpack\osc\OscReceivedElements.h" />
-    <ClInclude Include="..\..\ffgl\lib\oscpack\osc\OscTypes.h" />
-    <ClInclude Include="..\..\ffgl\lib\palette\Palette.h" />
-    <ClInclude Include="..\..\ffgl\lib\palette\PaletteAll.h" />
-    <ClInclude Include="..\..\ffgl\lib\palette\PaletteHost.h" />
-    <ClInclude Include="..\..\ffgl\lib\palette\PaletteOscInput.h" />
-    <ClInclude Include="..\..\ffgl\lib\palette\PaletteUtil.h" />
-    <ClInclude Include="..\..\ffgl\lib\palette\Params.h" />
-    <ClInclude Include="..\..\ffgl\lib\palette\Region.h" />
-    <ClInclude Include="..\..\ffgl\lib\palette\RegionParams_declare.h" />
-    <ClInclude Include="..\..\ffgl\lib\palette\RegionParams_get.h" />
-    <ClInclude Include="..\..\ffgl\lib\palette\RegionParams_increment.h" />
-    <ClInclude Include="..\..\ffgl\lib\palette\RegionParams_init.h" />
-    <ClInclude Include="..\..\ffgl\lib\palette\RegionParams_issprite.h" />
-    <ClInclude Include="..\..\ffgl\lib\palette\RegionParams_list.h" />
-    <ClInclude Include="..\..\ffgl\lib\palette\RegionParams_set.h" />
-    <ClInclude Include="..\..\ffgl\lib\palette\RegionParams_toggle.h" />
-    <ClInclude Include="..\..\ffgl\lib\palette\RegionParams_types.h" />
-    <ClInclude Include="..\..\ffgl\lib\palette\RegionParams_typesdeclare.h" />
-    <ClInclude Include="..\..\ffgl\lib\palette\Scheduler.h" />
-    <ClInclude Include="..\..\ffgl\lib\palette\Sprite.h" />
-    <ClInclude Include="..\..\ffgl\lib\palette\TrackedCursor.h" />
-    <ClInclude Include="..\..\ffgl\lib\pthreads\pthread.h" />
-    <ClInclude Include="..\..\ffgl\plugins\Palette\FFGLPalette.h" />
+    <ClInclude Include="..\..\ffgl6\lib\cJSON\cJSON.h" />
+    <ClInclude Include="..\..\ffgl6\lib\ffgl\FFGL.h" />
+    <ClInclude Include="..\..\ffgl6\lib\ffgl\FFGLFBO.h" />
+    <ClInclude Include="..\..\ffgl6\lib\ffgl\FFGLLib.h" />
+    <ClInclude Include="..\..\ffgl6\lib\ffgl\FFGLPluginInfo.h" />
+    <ClInclude Include="..\..\ffgl6\lib\ffgl\FFGLPluginManager.h" />
+    <ClInclude Include="..\..\ffgl6\lib\ffgl\FFGLPluginManager_inl.h" />
+    <ClInclude Include="..\..\ffgl6\lib\ffgl\FFGLPluginSDK.h" />
+    <ClInclude Include="..\..\ffgl6\lib\ffgl\FFGLShader.h" />
+    <ClInclude Include="..\..\ffgl6\lib\ffgl\FreeFrame.h" />
+    <ClInclude Include="..\..\ffgl6\lib\ffgl\utilities\utilities.h" />
+    <ClInclude Include="..\..\ffgl6\lib\glee\GLee.h" />
+    <ClInclude Include="..\..\ffgl6\lib\nosuch\NosuchColor.h" />
+    <ClInclude Include="..\..\ffgl6\lib\nosuch\NosuchDebug.h" />
+    <ClInclude Include="..\..\ffgl6\lib\nosuch\NosuchException.h" />
+    <ClInclude Include="..\..\ffgl6\lib\nosuch\NosuchGraphics.h" />
+    <ClInclude Include="..\..\ffgl6\lib\nosuch\NosuchOscInput.h" />
+    <ClInclude Include="..\..\ffgl6\lib\nosuch\NosuchOscUdpInput.h" />
+    <ClInclude Include="..\..\ffgl6\lib\nosuch\NosuchUtil.h" />
+    <ClInclude Include="..\..\ffgl6\lib\nosuch\sha1.h" />
+    <ClInclude Include="..\..\ffgl6\lib\oscpack\ip\IpEndpointName.h" />
+    <ClInclude Include="..\..\ffgl6\lib\oscpack\ip\UdpSocket.h" />
+    <ClInclude Include="..\..\ffgl6\lib\oscpack\osc\OscOutboundPacketStream.h" />
+    <ClInclude Include="..\..\ffgl6\lib\oscpack\osc\OscPrintReceivedElements.h" />
+    <ClInclude Include="..\..\ffgl6\lib\oscpack\osc\OscReceivedElements.h" />
+    <ClInclude Include="..\..\ffgl6\lib\oscpack\osc\OscTypes.h" />
+    <ClInclude Include="..\..\ffgl6\lib\palette\Palette.h" />
+    <ClInclude Include="..\..\ffgl6\lib\palette\PaletteAll.h" />
+    <ClInclude Include="..\..\ffgl6\lib\palette\PaletteHost.h" />
+    <ClInclude Include="..\..\ffgl6\lib\palette\PaletteOscInput.h" />
+    <ClInclude Include="..\..\ffgl6\lib\palette\PaletteUtil.h" />
+    <ClInclude Include="..\..\ffgl6\lib\palette\Params.h" />
+    <ClInclude Include="..\..\ffgl6\lib\palette\Region.h" />
+    <ClInclude Include="..\..\ffgl6\lib\palette\RegionParams_declare.h" />
+    <ClInclude Include="..\..\ffgl6\lib\palette\RegionParams_get.h" />
+    <ClInclude Include="..\..\ffgl6\lib\palette\RegionParams_increment.h" />
+    <ClInclude Include="..\..\ffgl6\lib\palette\RegionParams_init.h" />
+    <ClInclude Include="..\..\ffgl6\lib\palette\RegionParams_issprite.h" />
+    <ClInclude Include="..\..\ffgl6\lib\palette\RegionParams_list.h" />
+    <ClInclude Include="..\..\ffgl6\lib\palette\RegionParams_set.h" />
+    <ClInclude Include="..\..\ffgl6\lib\palette\RegionParams_toggle.h" />
+    <ClInclude Include="..\..\ffgl6\lib\palette\RegionParams_types.h" />
+    <ClInclude Include="..\..\ffgl6\lib\palette\RegionParams_typesdeclare.h" />
+    <ClInclude Include="..\..\ffgl6\lib\palette\Scheduler.h" />
+    <ClInclude Include="..\..\ffgl6\lib\palette\Sprite.h" />
+    <ClInclude Include="..\..\ffgl6\lib\palette\TrackedCursor.h" />
+    <ClInclude Include="..\..\ffgl6\lib\pthreads\pthread.h" />
+    <ClInclude Include="..\..\ffgl6\plugins\Palette\FFGLPalette.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\config\Effects.json" />
@@ -194,7 +194,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <AdditionalIncludeDirectories>..\..\ffgl\lib\ffgl\;..\..\ffgl\lib\ffgl\utilities\;..\..\ffgl\lib\porttime;..\..\ffgl\lib\pthreads;..\..\ffgl\lib\oscpack;..\..\ffgl\lib\osc\include;..\..\ffgl\lib\nosuch;..\..\ffgl\lib\cJSON;..\..\ffgl\lib\palette;..\..\ffgl\lib\morph;..\..\ffgl\lib\rtmidi;..\..\ffgl\plugins\Palette;c:\Program Files\Sensel\SenselLib\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\ffgl6\lib\ffgl\;..\..\ffgl6\lib\ffgl\utilities\;..\..\ffgl6\lib\porttime;..\..\ffgl6\lib\pthreads;..\..\ffgl6\lib\oscpack;..\..\ffgl6\lib\osc\include;..\..\ffgl6\lib\nosuch;..\..\ffgl6\lib\cJSON;..\..\ffgl6\lib\palette;..\..\ffgl6\lib\morph;..\..\ffgl6\lib\rtmidi;..\..\ffgl6\plugins\Palette;c:\Program Files\Sensel\SenselLib\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ExceptionHandling>Async</ExceptionHandling>
     </ClCompile>
     <Link>
@@ -221,7 +221,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <AdditionalIncludeDirectories>..\..\ffgl\lib\ffgl\;..\..\ffgl\lib\ffgl\utilities\;..\..\ffgl\lib\porttime;..\..\ffgl\lib\pthreads;..\..\ffgl\lib\oscpack;..\..\ffgl\lib\osc\include;..\..\ffgl\lib\nosuch;..\..\ffgl\lib\cJSON;..\..\ffgl\lib\palette;..\..\ffgl\lib\morph;..\..\ffgl\lib\rtmidi;..\..\ffgl\plugins\Palette;c:\Program Files\Sensel\SenselLib\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\ffgl6\lib\ffgl\;..\..\ffgl6\lib\ffgl\utilities\;..\..\ffgl6\lib\porttime;..\..\ffgl6\lib\pthreads;..\..\ffgl6\lib\oscpack;..\..\ffgl6\lib\osc\include;..\..\ffgl6\lib\nosuch;..\..\ffgl6\lib\cJSON;..\..\ffgl6\lib\palette;..\..\ffgl6\lib\morph;..\..\ffgl6\lib\rtmidi;..\..\ffgl6\plugins\Palette;c:\Program Files\Sensel\SenselLib\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ExceptionHandling>Async</ExceptionHandling>
     </ClCompile>
     <Link>
@@ -252,7 +252,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <AdditionalIncludeDirectories>..\..\ffgl\lib\ffgl\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\ffgl6\lib\ffgl\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <ModuleDefinitionFile>palette.def</ModuleDefinitionFile>
@@ -273,7 +273,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <AdditionalIncludeDirectories>..\..\ffgl\lib\ffgl\;..\..\ffgl\lib\ffgl\utilities\;..\..\ffgl\lib\porttime;..\..\ffgl\lib\pthreads;..\..\ffgl\lib\oscpack;..\..\ffgl\lib\osc\include;..\..\ffgl\lib\nosuch;..\..\ffgl\lib\cJSON;..\..\ffgl\lib\palette;..\..\ffgl\lib\morph;..\..\ffgl\lib\rtmidi;..\..\ffgl\plugins\Palette;c:\Program Files\Sensel\SenselLib\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\ffgl6\lib\ffgl\;..\..\ffgl6\lib\ffgl\utilities\;..\..\ffgl6\lib\porttime;..\..\ffgl6\lib\pthreads;..\..\ffgl6\lib\oscpack;..\..\ffgl6\lib\osc\include;..\..\ffgl6\lib\nosuch;..\..\ffgl6\lib\cJSON;..\..\ffgl6\lib\palette;..\..\ffgl6\lib\morph;..\..\ffgl6\lib\rtmidi;..\..\ffgl6\plugins\Palette;c:\Program Files\Sensel\SenselLib\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ExceptionHandling>Async</ExceptionHandling>
     </ClCompile>
     <Link>
