@@ -87,14 +87,12 @@ Region::setTrackedCursor(Palette* palette, std::string cid, std::string cidsourc
 		c->settargetpos(pos);
 		c->set_target_depth(z);
 		// c->setarea(z);
-		palette->setLastActivity();
 	} else {
 		c = new TrackedCursor(palette, cid, cidsource, this, pos, z);
 		if (NosuchDebugCursor) {
 			NosuchDebug("Region.setTrackedCursor: new TrackedCursor cid=%s", cid.c_str());
 		}
 		_cursors.push_back(c);
-		palette->setLastActivity();
 	}
 	c->touch();
 
@@ -159,7 +157,6 @@ void Region::doCursorUp(Palette* palette, std::string cid) {
 		}
 		if (c->cid() == cid) {
 			found = true;
-			palette->setLastActivity();
 			if (NosuchDebugCursor) {
 				NosuchDebug("Region.doCursorUp: deleting cid=%s",cid.c_str());
 			}
@@ -445,7 +442,6 @@ void Region::deleteOldCursors(Palette* palette) {
 			// If the cursor hasn't been touched in a couple seconds, delete it
 			int too_idle = 10 * 1000;
 			if ( palette->now > (c->touched() + too_idle) ) {
-				palette->setLastActivity();
 				if (NosuchDebugCursor) {
 					NosuchDebug("Region.deleteOldCursors: deleting cid=%s\n", c->cid().c_str());
 				}
