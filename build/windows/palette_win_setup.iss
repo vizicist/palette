@@ -36,6 +36,7 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 [Files]
 Source: "ship\bin\*"; DestDir: "{app}\bin"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "ship\ffgl6\*"; DestDir: "{app}\ffgl6"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "ship\ffgl7\*"; DestDir: "{app}\ffgl7"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "ship\config\Synths.json"; DestDir: "{app}\config"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "ship\config\Effects.json"; DestDir: "{app}\config"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "ship\config\natsleaf.conf"; DestDir: "{app}\config"; Flags: ignoreversion recursesubdirs createallsubdirs

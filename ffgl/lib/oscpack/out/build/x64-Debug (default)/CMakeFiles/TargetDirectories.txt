@@ -1,9 +1,0 @@
-C:/Users/tjt/go/src/github.com/vizicist/palettepro3/source/lib/oscpack/out/build/x64-Debug (default)/CMakeFiles/rebuild_cache.dir
-C:/Users/tjt/go/src/github.com/vizicist/palettepro3/source/lib/oscpack/out/build/x64-Debug (default)/CMakeFiles/oscpack.dir
-C:/Users/tjt/go/src/github.com/vizicist/palettepro3/source/lib/oscpack/out/build/x64-Debug (default)/CMakeFiles/OscSendTests.dir
-C:/Users/tjt/go/src/github.com/vizicist/palettepro3/source/lib/oscpack/out/build/x64-Debug (default)/CMakeFiles/OscUnitTests.dir
-C:/Users/tjt/go/src/github.com/vizicist/palettepro3/source/lib/oscpack/out/build/x64-Debug (default)/CMakeFiles/SimpleSend.dir
-C:/Users/tjt/go/src/github.com/vizicist/palettepro3/source/lib/oscpack/out/build/x64-Debug (default)/CMakeFiles/OscReceiveTest.dir
-C:/Users/tjt/go/src/github.com/vizicist/palettepro3/source/lib/oscpack/out/build/x64-Debug (default)/CMakeFiles/OscDump.dir
-C:/Users/tjt/go/src/github.com/vizicist/palettepro3/source/lib/oscpack/out/build/x64-Debug (default)/CMakeFiles/SimpleReceive.dir
-C:/Users/tjt/go/src/github.com/vizicist/palettepro3/source/lib/oscpack/out/build/x64-Debug (default)/CMakeFiles/edit_cache.dir

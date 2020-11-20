@@ -1,1 +1,0 @@
-python ../../python/generateparams.py

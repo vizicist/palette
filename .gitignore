@@ -4,6 +4,8 @@ python/dist
 build/windows/ship
 ffgl/windows/x64
 ffgl/windows/.vs
+ffgl6/windows/x64
+ffgl6/windows/.vs
 windows/ship
 params/gentle/snap/CurrentSnapshot.*
 # Binaries for programs and plugins

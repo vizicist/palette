@@ -56,19 +56,33 @@ popd
 echo ================ Compiling FFGL6 plugin
 set MSBUILDCMD=C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\Common7\Tools\vsmsbuildcmd.bat
 call "%MSBUILDCMD%" > nul
-pushd %PALETTESOURCE%\ffgl\windows
+pushd %PALETTESOURCE%\ffgl6\windows
 msbuild /t:Build /p:Configuration=Debug /p:Platform="x64" palette.sln > nul
 msbuild /t:Build /p:Configuration=Release /p:Platform="x64" palette.sln > nul
 popd
 
 echo ================ Copying FFGL6 plugin
-pushd %PALETTESOURCE%\ffgl\windows\x64\Release
+pushd %PALETTESOURCE%\ffgl6\windows\x64\Release
 mkdir %ship%\ffgl6
 copy Palette_*.* %ship%\ffgl6 > nul
-copy %PALETTESOURCE%\build\windows\pthreadvc2.dll %ship%\ffgl6 >nul
+popd
+
+echo ================ Compiling FFGL7 plugin
+set MSBUILDCMD=C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\Common7\Tools\vsmsbuildcmd.bat
+call "%MSBUILDCMD%" > nul
+pushd %PALETTESOURCE%\ffgl7\build\windows
+msbuild /t:Build /p:Configuration=Debug /p:Platform="x64" FFGLPlugins.sln > nul
+msbuild /t:Build /p:Configuration=Release /p:Platform="x64" FFGLPlugins.sln > nul
+popd
+
+echo ================ Copying FFGL7 plugin
+pushd %PALETTESOURCE%\ffgl7\binaries\x64\Release
+mkdir %ship%\ffgl7
+copy Palette_*.* %ship%\ffgl7 > nul
 popd
 
 echo ================ Copying binaries
+copy %PALETTESOURCE%\build\windows\pthreadvc2.dll %ship%\bin >nul
 copy %PALETTESOURCE%\binaries\nats\nats-pub.exe %bin% >nul
 copy %PALETTESOURCE%\binaries\nats\nats-sub.exe %bin% >nul
 copy %PALETTESOURCE%\binaries\nircmdc.exe %bin% >nul
