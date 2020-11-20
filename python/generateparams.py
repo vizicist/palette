@@ -15,9 +15,8 @@ import json
 def openFile(dir,name):
 	return open(os.path.join(dir,name),"w")
 
-def generate(homedir, force):
+def generate(homedir, force, sourcedir):
 
-	s = os.path.join(homedir,"ffgl/lib/palette")
 	c = os.path.join(homedir,"default/config")
 
 	#########################################
@@ -30,7 +29,7 @@ def generate(homedir, force):
 	# if generated file is more recent than the definitions, do nothing
 	jsonmtime = os.path.getmtime(jsonfile)
 	enummtime = os.path.getmtime(enumfile)
-	outputmtime = os.path.getmtime(os.path.join(s,"SpriteParams_declare.h"))
+	outputmtime = os.path.getmtime(os.path.join(sourcedir,"SpriteParams_declare.h"))
 
 	jsonupdated = outputmtime < jsonmtime 
 	enumupdated = outputmtime < enummtime
@@ -39,12 +38,12 @@ def generate(homedir, force):
 		return
 
 	if force:
-            print("Generateparams: updating source files because of -f argument")
+            print("Generateparams: update forced due to -f argument")
 	else:
 		if enumupdated:
-                    print("Generateparams: updating source files because of change in %s" % (enumfile))
+                    print("Generateparams: update due to change in %s" % (enumfile))
 		if jsonupdated:
-                    print("Generateparams: updating source files because of change in %s" % (jsonfile))
+                    print("Generateparams: update due to change in %s" % (jsonfile))
 
 	try:
 		f = open(jsonfile)
@@ -52,17 +51,17 @@ def generate(homedir, force):
 		print("Unable to open "+jsonfile)
 		sys.exit(1)
 
-	out_rp_declare = openFile(s,"RegionParams_declare.h")
-	out_rp_get = openFile(s,"RegionParams_get.h")
-	out_rp_increment = openFile(s,"RegionParams_increment.h")
-	out_rp_init = openFile(s,"RegionParams_init.h")
-	out_rp_issprite = openFile(s,"RegionParams_issprite.h")
-	out_rp_list = openFile(s,"RegionParams_list.h")
-	out_rp_set = openFile(s,"RegionParams_set.h")
-	out_rp_toggle = openFile(s,"RegionParams_toggle.h")
+	out_rp_declare = openFile(sourcedir,"RegionParams_declare.h")
+	out_rp_get = openFile(sourcedir,"RegionParams_get.h")
+	out_rp_increment = openFile(sourcedir,"RegionParams_increment.h")
+	out_rp_init = openFile(sourcedir,"RegionParams_init.h")
+	out_rp_issprite = openFile(sourcedir,"RegionParams_issprite.h")
+	out_rp_list = openFile(sourcedir,"RegionParams_list.h")
+	out_rp_set = openFile(sourcedir,"RegionParams_set.h")
+	out_rp_toggle = openFile(sourcedir,"RegionParams_toggle.h")
 
-	out_sp_declare = openFile(s,"SpriteParams_declare.h")
-	out_sp_init = openFile(s,"SpriteParams_init.h")
+	out_sp_declare = openFile(sourcedir,"SpriteParams_declare.h")
+	out_sp_init = openFile(sourcedir,"SpriteParams_init.h")
 
 	j = json.load(f)
 
@@ -139,8 +138,8 @@ def generate(homedir, force):
 		print("Unable to open "+enumfile)
 		sys.exit(1)
 
-	out_rp_types = openFile(s,"RegionParams_types.h")
-	out_rp_typesdeclare = openFile(s,"RegionParams_typesdeclare.h")
+	out_rp_types = openFile(sourcedir,"RegionParams_types.h")
+	out_rp_typesdeclare = openFile(sourcedir,"RegionParams_typesdeclare.h")
 	enumj = json.load(enumf)
 
 	for name in enumj:
@@ -168,12 +167,16 @@ if __name__ == "__main__":
 
     homedir = os.getenv("PALETTESOURCE")
 
-    print("Generateparams: checking "+homedir)
-
     force = False
-    if len(sys.argv) > 1 and sys.argv[1] == "-f":
-        force = True
+    sourcedir = os.path.join(homedir,"ffgl6/lib/palette")
+    if len(sys.argv) > 1:
+        for a in sys.argv[1:]:
+            if a == "-f":
+                force = True
+            if a == "-7":
+                sourcedir = os.path.join(homedir,"ffgl7/source/lib/palette")
 
-    generate(homedir,force)
+    print("Generateparams: checking source in: "+sourcedir)
+    generate(homedir,force,sourcedir)
 
     sys.exit(0)
