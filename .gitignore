@@ -6,6 +6,9 @@ ffgl/windows/x64
 ffgl/windows/.vs
 ffgl6/windows/x64
 ffgl6/windows/.vs
+ffgl7/build/windows/x64
+ffgl7/build/windows/.vs
+ffgl7/binaries
 windows/ship
 params/gentle/snap/CurrentSnapshot.*
 # Binaries for programs and plugins
