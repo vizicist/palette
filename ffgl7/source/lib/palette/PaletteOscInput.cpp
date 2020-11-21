@@ -1,14 +1,12 @@
+#if 0
+
 #include <string>
 #include <sstream>
 #include <intrin.h>
 #include <float.h>
 
-#include "NosuchUtil.h"
-#include "NosuchGraphics.h"
-#include "NosuchOscInput.h"
-#include "PaletteHost.h"
+#include "PaletteAll.h"
 #include "PaletteOscInput.h"
-// #include "NosuchOscTcpInput.h"
 #include "NosuchOscUdpInput.h"
 
 PaletteOscInput::PaletteOscInput(PaletteHost* server, const char* host, int port) : NosuchOscMessageProcessor() {
@@ -82,3 +80,4 @@ PaletteOscInput::Listen() {
 	}
 	return 0;
 }
+#endif

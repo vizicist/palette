@@ -1,7 +1,10 @@
 @echo off
 
 call palettestopresolume.bat
-start /b "" "C:\\Program Files\\Resolume Avenue 6\\Avenue.exe"
+
+rem give it time to start so it closes the log file
+timeout /t 1 > nul
+start /b "" "C:\\Program Files\\Resolume Avenue\\Avenue.exe" > "%LOCALAPPDATA%\Palette\logs\resolume.log" 2>&1
 
 rem give it time to start before sending it OSC
 timeout /t 4 > nul
