@@ -1,3 +1,8 @@
+
+typedef long long int64_t;
+typedef unsigned long long uint64_t;
+#define PALETTE_HACK
+
 #include "NosuchUtil.h"
 #include "NosuchException.h"
 #include "NosuchGraphics.h"

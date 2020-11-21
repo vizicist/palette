@@ -94,6 +94,7 @@ copy palettestop*.bat %bin% >nul
 copy palettetasks.bat %bin% >nul
 copy testcursor.bat %bin% >nul
 copy osc.bat %bin% >nul
+copy ipaddress.bat %bin% >nul
 copy taillog.bat %bin% >nul
 copy natsmon.bat %bin% >nul
 

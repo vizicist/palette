@@ -1,9 +1,6 @@
 #include <cstdlib> // for srand, rand
 
-#include "NosuchUtil.h"
 #include "PaletteAll.h"
-
-// std::vector<std::string> Sprite::spriteShapes;
 
 bool Sprite::initialized = false;
 long nsprites = 0;
