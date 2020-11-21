@@ -588,6 +588,8 @@ FFMixed plugMain( FFUInt32 functionCode, FFMixed inputValue, FFInstanceID instan
 	// typecast DWORD into pointer to a CFFGLPlugin
 	pPlugObj = (CFFGLPlugin*)instanceID;
 
+	// Get the DLL name
+
 	switch( functionCode )
 	{
 	case FF_GET_INFO:

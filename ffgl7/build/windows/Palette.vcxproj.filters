@@ -104,6 +104,30 @@
       <Filter>lib\ffgl</Filter>
     </ClCompile>
     <ClCompile Include="..\..\source\plugins\Palette\FFGLPalette.cpp" />
+    <ClCompile Include="..\..\source\lib\nosuch\NosuchUtil.cpp">
+      <Filter>lib\nosuch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\lib\nosuch\NosuchDebug.cpp">
+      <Filter>lib\nosuch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\lib\nosuch\NosuchException.cpp">
+      <Filter>lib\nosuch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\lib\palette\Palette.cpp">
+      <Filter>lib\palette</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\lib\palette\PaletteHost.cpp">
+      <Filter>lib\palette</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\lib\palette\PaletteOscInput.cpp">
+      <Filter>lib\palette</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\lib\palette\PaletteUtil.cpp">
+      <Filter>lib\palette</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\lib\cJSON\cJSON.cpp">
+      <Filter>lib\cJSON</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\source\lib\FFGLSDK.h">
@@ -212,6 +236,9 @@
       <Filter>lib\ffgl</Filter>
     </ClInclude>
     <ClInclude Include="..\..\source\plugins\Palette\FFGLPalette.h" />
+    <ClInclude Include="..\..\source\lib\pthreads\pthread.h">
+      <Filter>lib\pthreads</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="lib">
@@ -225,6 +252,18 @@
     </Filter>
     <Filter Include="lib\ffglquickstart">
       <UniqueIdentifier>{61c0cc5e-7bb7-4e9b-824a-5d72e34bfd4f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="lib\nosuch">
+      <UniqueIdentifier>{86086cf5-e384-4805-9873-cd85dc32ddd2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="lib\palette">
+      <UniqueIdentifier>{71f17e21-5707-4c69-aff6-8efe32fc92e4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="lib\cJSON">
+      <UniqueIdentifier>{ce215fe8-b6e1-4cca-9f44-0438f1c45c93}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="lib\pthreads">
+      <UniqueIdentifier>{c4b534f2-1282-40ad-ba9c-3180e53b67bc}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
