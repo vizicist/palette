@@ -1,3 +1,4 @@
+
 #include "PaletteUtil.h"
 #include "NosuchDebug.h"
 
@@ -23,3 +24,4 @@ string2bool(std::string s) {
 		return false;
 	}
 }
+

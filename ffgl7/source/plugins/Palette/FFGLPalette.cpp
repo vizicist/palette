@@ -1,4 +1,5 @@
 #include "FFGLPalette.h"
+#include "PaletteHost.h"
 #include <math.h>//floor
 using namespace ffglex;
 
@@ -17,14 +18,14 @@ enum ParamType : FFUInt32
 
 static CFFGLPluginInfo PluginInfo(
 	PluginFactory< FFGLPalette >,// Create method
-	"RS01",                        // Plugin unique ID
-	"Palette",            // Plugin name
+	"PL03",                        // Plugin unique ID
+	"Palette3",            // Plugin name
 	2,                             // API major version number
 	1,                             // API minor version number
 	1,                             // Plugin major version number
 	000,                           // Plugin minor version number
 	FF_SOURCE,                     // Plugin type
-	"Palette instrument plugin",// Plugin description
+	"Palette instrument plugin v0.90 #3",// Plugin description
 	"by Tim Thompson"        // About
 );
 
@@ -55,6 +56,27 @@ void main()
 }
 )";
 
+#if 0
+std::string ffgl_name()
+{
+	static std::string nm;
+	if( PaletteHost::PortOffset == 0 )
+	{
+		nm = "Palette";
+	}
+	else
+	{
+		nm = NosuchSnprintf( "Palette_%d", PaletteHost::PortOffset );
+	}
+	return nm.c_str();
+}
+
+CFFGLPluginInfo& ffgl_plugininfo()
+{
+	return PluginInfo;
+}
+#endif
+
 FFGLPalette::FFGLPalette() :
 	rgbLeftLocation( -1 ),
 	rgbRightLocation( -1 )
@@ -79,6 +101,7 @@ FFGLPalette::FFGLPalette() :
 }
 FFResult FFGLPalette::InitGL( const FFGLViewportStruct* vp )
 {
+	NosuchDebug( "HI From FFGLPalette.cpp");
 	if( !shader.Compile( vertexShaderCode, fragmentShaderCode ) )
 	{
 		DeInitGL();

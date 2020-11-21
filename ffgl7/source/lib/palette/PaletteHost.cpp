@@ -1,3 +1,4 @@
+#if 0
 
 #include <iostream>
 #include <sstream>
@@ -11,10 +12,15 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
+#define OLDGRAPHICS
+
 #include "PaletteAll.h"
 #include "FFGLLib.h"
 #include "FFGLPalette.h"
+
+#if 0
 #include "osc/OscOutboundPacketStream.h"
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Plugin information
@@ -173,6 +179,7 @@ void needParams(std::string meth, cJSON* params) {
 PaletteDaemon::PaletteDaemon(PaletteHost* mf, int osc_input_port, std::string osc_input_host)
 {
 	NosuchDebug(2,"PaletteDaemon CONSTRUCTOR!");
+#if 0
 
 	_paletteHost = mf;
 	_network_thread_created = false;
@@ -225,10 +232,14 @@ PaletteDaemon::PaletteDaemon(PaletteHost* mf, int osc_input_port, std::string os
 		_morphs = NULL;
 	}
 #endif
+
+#endif
+
 }
 
 PaletteDaemon::~PaletteDaemon()
 {
+#if 0
 	NosuchDebug(1,"PaletteDaemon DESTRUCTOR starts!");
 	daemon_shutting_down = true;
 	if ( _network_thread_created ) {
@@ -245,10 +256,12 @@ PaletteDaemon::~PaletteDaemon()
 	}
 
 	NosuchDebug(1,"PaletteDaemon DESTRUCTOR ends!");
+#endif
 }
 
 void *PaletteDaemon::run(void *arg)
 {
+#if 0
 	NosuchDebugSetThreadName(pthread_self().p, "PaletteDaemon");
 	int textcount = 0;
 	while (daemon_shutting_down == false ) {
@@ -263,6 +276,7 @@ void *PaletteDaemon::run(void *arg)
 #endif
 		Sleep(1);
 	}
+#endif
 	return NULL;
 }
 
@@ -424,10 +438,12 @@ PaletteHost::LoadPaletteConfig(cJSON* c)
 	}
 }
 
+#if 0
 int PaletteHost::SendToResolume(osc::OutboundPacketStream& p) {
 	NosuchDebug(1,"SendToResolume host=%s port=%d",DEFAULT_RESOLUME_HOST,DEFAULT_RESOLUME_PORT);
     return SendToUDPServer(DEFAULT_RESOLUME_HOST,DEFAULT_RESOLUME_PORT,p.Data(),(int)p.Size());
 }
+#endif
 
 void
 PaletteHost::RunEveryMillisecondOrSo() {
@@ -471,17 +487,24 @@ void PaletteHost::strokeWeight(double w) {
 	glLineWidth((GLfloat)w);
 }
 void PaletteHost::rotate(double degrees) {
+#ifdef OLD_GRAPHICS
 	glRotated(-degrees,0.0f,0.0f,1.0f);
+#endif
 }
 void PaletteHost::translate(double x, double y) {
+#ifdef OLD_GRAPHICS
 	glTranslated(x,y,0.0f);
+#endif
 }
 void PaletteHost::scale(double x, double y) {
+#ifdef OLD_GRAPHICS
 	glScaled(x,y,1.0f);
 	// NosuchDebug("SCALE xy= %f %f",x,y);
+#endif
 }
 void PaletteHost::quad(double x0, double y0, double x1, double y1, double x2, double y2, double x3, double y3) {
 	NosuchDebug(2,"   Drawing quad = %.3f %.3f, %.3f %.3f, %.3f %.3f, %.3f %.3f",x0,y0,x1,y1,x2,y2,x3,y3);
+#ifdef OLD_GRAPHICS
 	if ( m_filled ) {
 		glBegin(GL_QUADS);
 		NosuchColor c = m_fill_color;
@@ -505,9 +528,11 @@ void PaletteHost::quad(double x0, double y0, double x1, double y1, double x2, do
 	if ( ! m_filled && ! m_stroked ) {
 		NosuchDebug("Hey, quad() called when both m_filled and m_stroked are off!?");
 	}
+#endif
 }
 void PaletteHost::triangle(double x0, double y0, double x1, double y1, double x2, double y2) {
 	NosuchDebug(2,"Drawing triangle xy0=%.3f,%.3f xy1=%.3f,%.3f xy2=%.3f,%.3f",x0,y0,x1,y1,x2,y2);
+#ifdef OLD_GRAPHICS
 	if ( m_filled ) {
 		NosuchColor c = m_fill_color;
 		glColor4d(c.r()/255.0f, c.g()/255.0f, c.b()/255.0f, m_fill_alpha);
@@ -531,10 +556,12 @@ void PaletteHost::triangle(double x0, double y0, double x1, double y1, double x2
 	if ( ! m_filled && ! m_stroked ) {
 		NosuchDebug("Hey, triangle() called when both m_filled and m_stroked are off!?");
 	}
+#endif
 }
 
 void PaletteHost::line(double x0, double y0, double x1, double y1) {
-	// NosuchDebug("Drawing line xy0=%.3f,%.3f xy1=%.3f,%.3f",x0,y0,x1,y1);
+	NosuchDebug(2,"Drawing line xy0=%.3f,%.3f xy1=%.3f,%.3f",x0,y0,x1,y1);
+#ifdef OLD_GRAPHICS
 	if ( m_stroked ) {
 		NosuchColor c = m_stroke_color;
 		glColor4d(c.r()/255.0f, c.g()/255.0f, c.b()/255.0f, m_stroke_alpha);
@@ -546,6 +573,7 @@ void PaletteHost::line(double x0, double y0, double x1, double y1) {
 	} else {
 		NosuchDebug("Hey, line() called when m_stroked is off!?");
 	}
+#endif
 }
 
 static double degree2radian(double deg) {
@@ -554,6 +582,7 @@ static double degree2radian(double deg) {
 
 void PaletteHost::ellipse(double x0, double y0, double w, double h, double fromang, double toang) {
 	NosuchDebug(2,"Drawing ellipse xy0=%.3f,%.3f wh=%.3f,%.3f",x0,y0,w,h);
+#ifdef OLD_GRAPHICS
 	if ( m_filled ) {
 		NosuchColor c = m_fill_color;
 		glColor4d(c.r()/255.0f, c.g()/255.0f, c.b()/255.0f, m_fill_alpha);
@@ -585,9 +614,12 @@ void PaletteHost::ellipse(double x0, double y0, double w, double h, double froma
 	if ( ! m_filled && ! m_stroked ) {
 		NosuchDebug("Hey, ellipse() called when both m_filled and m_stroked are off!?");
 	}
+#endif
 }
 
 void PaletteHost::polygon(PointMem* points, int npoints) {
+	NosuchDebug( 2, "Drawing polygon" );
+#ifdef OLD_GRAPHICS
 	if ( m_filled ) {
 		NosuchColor c = m_fill_color;
 		glColor4d(c.r()/255.0f, c.g()/255.0f, c.b()/255.0f, m_fill_alpha);
@@ -613,14 +645,19 @@ void PaletteHost::polygon(PointMem* points, int npoints) {
 	if ( ! m_filled && ! m_stroked ) {
 		NosuchDebug("Hey, ellipse() called when both m_filled and m_stroked are off!?");
 	}
+#endif
 }
 
 void PaletteHost::popMatrix() {
+#ifdef OLD_GRAPHICS
 	glPopMatrix();
+#endif
 }
 
 void PaletteHost::pushMatrix() {
+#ifdef OLD_GRAPHICS
 	glPushMatrix();
+#endif
 }
 
 #define RANDONE (((double)rand())/RAND_MAX)
@@ -629,6 +666,7 @@ void PaletteHost::pushMatrix() {
 void
 PaletteHost::test_draw()
 {
+#ifdef OLD_GRAPHICS
 	for ( int i=0; i<1000; i++ ) {
 		glColor4d(RANDONE,RANDONE,RANDONE,RANDONE);
 		glBegin(GL_QUADS);
@@ -639,6 +677,7 @@ PaletteHost::test_draw()
 		glVertex2d(RANDB,RANDB);
 		glEnd();
 	}
+#endif
 }
 
 // Return everything after the '=' (and whitespace)
@@ -714,6 +753,7 @@ DWORD PaletteHost::PaletteHostProcessOpenGL(ProcessOpenGLStruct *pGL)
 		return FF_SUCCESS;
 	}
 
+#if 0
 	if ( ! initialized ) {
 		// NosuchDebug("PaletteHost calling initStuff()");
 		if ( ! initStuff() ) {
@@ -759,6 +799,7 @@ DWORD PaletteHost::PaletteHostProcessOpenGL(ProcessOpenGLStruct *pGL)
 		//get the max s,t that correspond to the 
 		//width,height of the used portion of the allocated texture space
 		FFGLTexCoords maxCoords = GetMaxGLTexCoords(Texture);
+#ifdef OLD_GRAPHICS
 		glColor4f(1.0, 1.0, 1.0, 1.0);
 		glBegin(GL_QUADS);
 		glTexCoord2d(0.0, 0.0);					glVertex2f(-1,-1);
@@ -766,6 +807,7 @@ DWORD PaletteHost::PaletteHostProcessOpenGL(ProcessOpenGLStruct *pGL)
 		glTexCoord2d(maxCoords.s, maxCoords.t); glVertex2f(1,1);
 		glTexCoord2d(maxCoords.s, 0.0);			glVertex2f(1,-1);
 		glEnd();
+#endif
 		
 		//unbind the texture
 		glBindTexture(GL_TEXTURE_2D, 0);
@@ -838,7 +880,11 @@ DWORD PaletteHost::PaletteHostProcessOpenGL(ProcessOpenGLStruct *pGL)
 	glDisable(GL_TEXTURE_2D);
 	
 	//restore default color
+#ifdef OLD_GRAPHICS
 	glColor4d(1.f,1.f,1.f,1.f);
+#endif
+
+#endif
 	
 	return FF_SUCCESS;
 }
@@ -1022,6 +1068,7 @@ PaletteHost::checkAddrPattern(const char *addr, char *patt)
 	return ( strncmp(addr,patt,strlen(patt)) == 0 );
 }
 
+#if 0
 int
 ArgAsInt32(const osc::ReceivedMessage& m, unsigned int n)
 {
@@ -1104,8 +1151,10 @@ PaletteHost::SetCursorCid(std::string cid, std::string cidsource, NosuchVector p
 {
 	_palette->region.setTrackedCursor(_palette,cid, cidsource, point, z);
 }
+#endif
 
 void PaletteHost::ProcessOscMessage( std::string source, const osc::ReceivedMessage& m) {
+#if 0
 	static int Nprocessed = 0;
 	try{
 	    const char *types = m.TypeTags();
@@ -1186,6 +1235,7 @@ void PaletteHost::ProcessOscMessage( std::string source, const osc::ReceivedMess
 		// This doesn't seem to work - it doesn't seem to catch other exceptions...
 		NosuchDebug("ProcessOscMessage, some other kind of exception occured during !?");
 	}
+	#endif
 }
 
 std::string PaletteHost::RespondToJson(std::string method, cJSON *params, const char *id) {
@@ -1225,3 +1275,4 @@ std::string PaletteHost::RespondToJson(std::string method, cJSON *params, const 
 	return result;
 }
 
+#endif

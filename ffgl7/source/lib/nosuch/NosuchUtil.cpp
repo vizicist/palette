@@ -47,22 +47,6 @@ using namespace std;
 #include <sys/types.h>
 #include <sys/timeb.h>
 
-static Milliseconds Time0 = 0;
-
-Milliseconds MillisecondsSoFar() {
-	if (Time0 == 0) {
-		Time0 = timeGetTime();
-	}
-	return timeGetTime() - Time0;
-}
-
-void NosuchPrintTime(const char *prefix) {
-	Milliseconds milli = MillisecondsSoFar();
-	long secs = milli / 1000;
-	milli -= secs * 1000;
-	NosuchDebug("%s: time= %ld.%03u\n",prefix,secs,milli);
-}
-
 std::vector<std::string> NosuchSplitOnAnyChar(std::string s, std::string sepchars)
 {
 	std::vector<std::string> result;
@@ -222,15 +206,6 @@ SendToSLIPServer(std::string shost, int port, const char *data, int leng)
     return 0;
 }
 
-
-#if 0
-unsigned char *
-createimageofsize(CvSize sz) {
-    size_t totalPixels = sz.width * sz.height * 3;
-    return (unsigned char *) malloc(totalPixels);
-}
-#endif
-
 #if 0
 int
 RegisterWithNthServer(char *serverhost, int serverport, char *myhost, int myport)
@@ -252,6 +227,7 @@ UnRegisterWithNthServer(char *serverhost, int serverport, char *myhost, int mypo
       << "localhost" << myport << osc::EndMessage;
     return SendToNthServer(serverhost,serverport,p.Data(),(int)p.Size());
 }
+#endif
 
 int
 OscSocketError(char *s)
@@ -260,7 +236,6 @@ OscSocketError(char *s)
     NosuchDebug("NSPlugin socket error: %s e=%d",s,e);
     return e;
 }
-#endif
 
 #if 0
 CvScalar
@@ -293,6 +268,7 @@ HLStoRGB(float hue, float lum, float sat)
     // NosuchDebug("HLStoRGB hue=%lf rgb=%lf,%lf,%lf",hue,r,g,b);
     return CV_RGB(r,g,b);
 }
+#endif
 
 void
 RGBtoHLS(float r, float g, float b, float* hue, float* lum, float* sat)
@@ -351,7 +327,6 @@ ToRGB1(float rm1, float rm2, float rh)
     }
     return(rm1 * 255);
 }
-#endif
 
 float
 angleNormalize(float a)
@@ -364,6 +339,7 @@ angleNormalize(float a)
     }
     return a;
 }
+
 
 // base64 code below was found at http://stackoverflow.com/questions/342409/how-do-i-base64-encode-decode-in-c
 
@@ -484,6 +460,7 @@ std::string NosuchToUpper(std::string s) {
 	return r;
 }
 
+#if 0
 void NosuchLockInit(pthread_mutex_t* mutex, char *tag) {
 
 	*mutex = PTHREAD_ERRORCHECK_MUTEX_INITIALIZER;
@@ -514,6 +491,7 @@ int NosuchTryLock(pthread_mutex_t* mutex, char *tag) {
 	// NosuchDebug("NosuchTryLock pthread=%d tag=%s mutex=%d",(int)pthread_self().p,tag,(int)mutex);
 	return pthread_mutex_trylock(mutex);
 }
+#endif
 
 std::string ToNarrow( const wchar_t *s, char dfault, const std::locale& loc ) {
   std::ostringstream stm;

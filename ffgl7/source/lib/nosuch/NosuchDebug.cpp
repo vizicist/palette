@@ -1,3 +1,4 @@
+
 /*
 	Copyright (c) 2011-2012 Tim Thompson <me@timthompson.com>
 
@@ -71,6 +72,22 @@ bool DebugInitialized = FALSE;
 HANDLE dMutex;
 
 std::map<void*, std::string> DebugThreadMap;
+
+static Milliseconds Time0 = 0;
+
+Milliseconds MillisecondsSoFar() {
+	if (Time0 == 0) {
+		Time0 = timeGetTime();
+	}
+	return timeGetTime() - Time0;
+}
+
+void NosuchPrintTime(const char *prefix) {
+	Milliseconds milli = MillisecondsSoFar();
+	long secs = milli / 1000;
+	milli -= secs * 1000;
+	NosuchDebug("%s: time= %ld.%03u\n",prefix,secs,milli);
+}
 
 std::string
 NosuchSnprintf(const char *fmt, ...)
@@ -160,6 +177,7 @@ RealNosuchDebug(int level, char const *fmt, va_list args)
 		pmsg += nchars;
 		msgsize -= nchars;
 	}
+#if 0
 	if ( NosuchDebugTimeTag ) {
 		int nchars;
 		long tm;
@@ -177,6 +195,7 @@ RealNosuchDebug(int level, char const *fmt, va_list args)
 		pmsg += nchars;
 		msgsize -= nchars;
 	}
+#endif
 
     // va_start(args, fmt);
     vsprintf_s(pmsg,msgsize,fmt,args);
@@ -287,3 +306,4 @@ NosuchForwardSlash(std::string filepath) {
 	}
 	return filepath;
 }
+
