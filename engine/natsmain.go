@@ -20,8 +20,12 @@ func StartNATSServer() {
 	// Create a FlagSet and sets the usage
 	fs := flag.NewFlagSet(exe, flag.ExitOnError)
 
+	natsconf := ConfigValue("natsconf")
+	if natsconf == "" {
+		natsconf = "natsalone.conf"
+	}
 	// Configure the options from the flags/config file
-	conf := ConfigFilePath("natsleaf.conf")
+	conf := ConfigFilePath(natsconf)
 	args := []string{"-c", conf}
 
 	opts, err := server.ConfigureOptions(fs, args,
