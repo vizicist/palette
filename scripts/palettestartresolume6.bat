@@ -1,6 +1,6 @@
 @echo off
 
-call palettestopresolume.bat
+call palettestopresolume6.bat
 start /b "" "C:\\Program Files\\Resolume Avenue 6\\Avenue.exe"
 
 rem give it time to start before sending it OSC

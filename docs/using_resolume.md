@@ -33,7 +33,11 @@ If you don't see the GUI, it may be hiding behind other windows.
 
 - You should now be able to finger paint on the Morph and see something visual in the Resolume output.
 
-- Use the GUI to select different Snapshot presets.  The Sound, Visual, and Effect tabs at the top of the GUI let you independently select presets for those things.
+- Use the GUI to select different Snapshot presets.
+
+- To access and edit the parameters of the presets, click on the Preset button at the very top.
+You should then be able to access the pages for Sound, Visual, and Effect presets.  
+tabs at the top of the GUI let you independently select presets for those things.
 
 - If it's not working, see below for debugging hints.
 

@@ -28,7 +28,7 @@ static CFFGLPluginInfo PluginInfo (
 
 std::string ffgl_name() {
 	static std::string nm;
-	if (PaletteHost::PortOffset == 0) {
+	if (PaletteHost::PortOffset == 1) {
 		nm = "Palette";
 	} else {
 		nm = NosuchSnprintf("Palette_%d", PaletteHost::PortOffset);
