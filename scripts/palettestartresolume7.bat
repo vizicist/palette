@@ -1,6 +1,6 @@
 @echo off
 
-call palettestopresolume.bat
+call palettestopresolume7.bat
 
 rem give it time to start so it closes the log file
 timeout /t 1 > nul
