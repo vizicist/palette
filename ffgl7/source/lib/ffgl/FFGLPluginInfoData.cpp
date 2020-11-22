@@ -5,6 +5,7 @@
 //
 
 #include "FFGLPluginInfo.h"
+#include "NosuchDebug.h"
 
 //////////////////////////////////////////////////////////////////
 // Information about the plugin
@@ -46,32 +47,30 @@ BOOL APIENTRY DllMain( HANDLE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 	char dllpath[ MAX_PATH ];
 	GetModuleFileNameA( (HMODULE)hModule, dllpath, MAX_PATH );
 
-#if 0
 	if( ul_reason_for_call == DLL_PROCESS_ATTACH )
 	{
 		// Initialize once for each new process.
 		// Return FALSE if we fail to load DLL.
 		if( !ffgl_setdll( std::string( dllpath ) ) )
 		{
-			printf( "ffgl_setdll failed" );
+			NosuchDebug("DllMain: ffgl_setdll failed" );
 			return FALSE;
 		}
 		std::string s = ffgl_name();
 		ffgl_setid( ffgl_plugininfo(), s );
-		printf( "DLLPROCESS_ATTACH dll=%s", dllpath );
+		NosuchDebug( "DllMain: DLLPROCESS_ATTACH dll=%s", dllpath );
 	}
 	if( ul_reason_for_call == DLL_PROCESS_DETACH )
 	{
-		printf( "DLLPROCESS_DETACH dll=%s", dllpath );
+		NosuchDebug( "DllMain: DLLPROCESS_DETACH dll=%s", dllpath );
 	}
 	if( ul_reason_for_call == DLL_THREAD_ATTACH )
 	{
-		printf( "DLLTHREAD_ATTACH dll=%s", dllpath );
+		NosuchDebug( "DllMain: DLLTHREAD_ATTACH dll=%s", dllpath );
 	}
 	if( ul_reason_for_call == DLL_THREAD_DETACH )
 	{
-		printf( "DLLTHREAD_DETACH dll=%s", dllpath );
+		NosuchDebug( "DllMain: DLLTHREAD_DETACH dll=%s", dllpath );
 	}
-#endif
 	return TRUE;
 }

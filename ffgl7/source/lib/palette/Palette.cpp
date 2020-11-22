@@ -1,5 +1,3 @@
-#if 0
-
 #include <iostream>
 #include <fstream>
 
@@ -186,15 +184,6 @@ int Palette::draw() {
 
 #include "NosuchColor.h"
 
-#if 0
-static void
-normalize(NosuchVector* v)
-{
-	v->x = (v->x * 2.0) - 1.0;
-	v->y = (v->y * 2.0) - 1.0;
-}
-#endif
-
 void Palette::LoadParamPush(cJSON* sound, cJSON* visual) {
 
 	_paletteHost->lock_paletteHost();
@@ -204,5 +193,3 @@ void Palette::LoadParamPush(cJSON* sound, cJSON* visual) {
 		throw NosuchException("loadParamPushReal, unable to load!?");
 	}
 }
-
-#endif

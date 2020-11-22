@@ -56,7 +56,6 @@ void main()
 }
 )";
 
-#if 0
 std::string ffgl_name()
 {
 	static std::string nm;
@@ -75,7 +74,6 @@ CFFGLPluginInfo& ffgl_plugininfo()
 {
 	return PluginInfo;
 }
-#endif
 
 FFGLPalette::FFGLPalette() :
 	rgbLeftLocation( -1 ),

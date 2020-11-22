@@ -6,7 +6,7 @@ int
 OscSocketError(char *s)
 {
     int e = WSAGetLastError();
-    NosuchDebug("NSosc socket error: %s e=%d",s,e);
+    NosuchDebug("OscSocketError: %s e=%d",s,e);
     return e;
 }
 
