@@ -61,8 +61,8 @@ msbuild /t:Build /p:Configuration=Debug /p:Platform="x64" palette.sln > nul
 popd
 
 echo ================ Copying FFGL6 plugin
-pushd %PALETTESOURCE%\ffgl6\windows\x64\Debug
 mkdir %ship%\ffgl6
+pushd %PALETTESOURCE%\ffgl6\windows\x64\Debug
 copy Palette*.dll %ship%\ffgl6 > nul
 copy %PALETTESOURCE%\build\windows\pthreadvc2.dll %ship%\ffgl6 >nul
 popd
@@ -75,9 +75,9 @@ msbuild /t:Build /p:Configuration=Debug /p:Platform="x64" FFGLPlugins.sln > nul
 popd
 
 echo ================ Copying FFGL7 plugin
-pushd %PALETTESOURCE%\ffgl7\binaries\x64\Debug
 mkdir %ship%\ffgl7
-copy Palette*.* %ship%\ffgl7 > nul
+pushd %PALETTESOURCE%\ffgl7\binaries\x64\Debug
+copy Palette*.dll %ship%\ffgl7 > nul
 copy %PALETTESOURCE%\build\windows\pthreadvc2.dll %ship%\ffgl7 >nul
 popd
 
@@ -103,7 +103,7 @@ echo ================ Copying config
 mkdir %ship%\config
 copy %PALETTESOURCE%\default\config\*.json %ship%\config >nul
 copy %PALETTESOURCE%\default\config\*.conf %ship%\config >nul
-copy %PALETTESOURCE%\default\config\Palette_*.avc %ship%\config >nul
+copy %PALETTESOURCE%\default\config\Palette*.avc %ship%\config >nul
 copy %PALETTESOURCE%\default\config\palette.ico %ship%\config >nul
 
 echo ================ Copying midifiles
