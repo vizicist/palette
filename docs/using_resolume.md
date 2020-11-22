@@ -16,9 +16,9 @@
 
 - Quit and restart Resolume so that it reads the added FFGL directory.
 
-- Use <i>Composition->Open</i> to open: <pre>C:\Program Files\Palette\config\Palette_1_Layer.avc</pre>
+- Use <i>Composition->Open</i> to open: <pre>C:\Program Files\Palette\config\PaletteA.avc</pre>
 
-- That composition contains a single layer with a <b>Palette</b> plugin followed by a dozen or more other FFGL plugins.
+- That composition contains a single layer with a <b>Palette</b> plugin followed by a dozen or so other FFGL plugins.
 
 - Click on the <b>Palette</b> cell (the first one) in the layer to activate it.
 
@@ -43,7 +43,8 @@ If you don't see the GUI, it may be hiding behind other windows.
 cell (the first one) in the layer to activate it.
 This is the most common mistake.
 Every time you start Resolume manually, you need to do this.
-If you want to eliminate the need for this, use can use this script: <pre>C:\Program Files\Palette\bin\palettestartall.bat</pre> An alternative way of starting the Palette software is to open a cmd window and execute <b>palettestart</b>.
+If you want to eliminate the need for this, use can use this script: <pre>C:\Program Files\Palette\bin\palettestartall.bat</pre>
+That script will start the Palette software, start Resolume
 
 - If for some reason Resolume crashes at startup,
 you can look in this file: <pre>%LOCALAPPDATA%\Palette\logs\ffgl.log</pre>

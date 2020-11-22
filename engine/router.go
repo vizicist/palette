@@ -22,10 +22,11 @@ const debug bool = false
 
 // Router takes events and routes them
 type Router struct {
-	reactors  map[string]*Reactor
-	inputs    []*osc.Client
-	OSCInput  chan OSCEvent
-	MIDIInput chan portmidi.Event
+	regionLetters string
+	reactors      map[string]*Reactor
+	inputs        []*osc.Client
+	OSCInput      chan OSCEvent
+	MIDIInput     chan portmidi.Event
 
 	killme               bool // true if Router should be stopped
 	lastClick            Clicks
@@ -107,6 +108,8 @@ func recordingsFile(nm string) string {
 func TheRouter() *Router {
 	onceRouter.Do(func() {
 
+		oneRouter.regionLetters = "ABCD"
+
 		LoadParamEnums()
 		LoadParamDefs()
 		LoadEffectsJSON()
@@ -115,19 +118,18 @@ func TheRouter() *Router {
 		oneRouter.regionForMorph = make(map[string]string)
 		oneRouter.regionAssignedToNUID = make(map[string]string)
 
-		freeframeClientA := osc.NewClient("127.0.0.1", 3334)
-		freeframeClientB := osc.NewClient("127.0.0.1", 3335)
-		freeframeClientC := osc.NewClient("127.0.0.1", 3336)
-		freeframeClientD := osc.NewClient("127.0.0.1", 3337)
-
 		oneRouter.resolumeClient = osc.NewClient("127.0.0.1", 7000)
 		oneRouter.guiClient = osc.NewClient("127.0.0.1", 3943)
 		oneRouter.plogueClient = osc.NewClient("127.0.0.1", 3210)
 
-		oneRouter.reactors["A"] = NewReactor("A", 1, freeframeClientA, oneRouter.resolumeClient, oneRouter.guiClient)
-		oneRouter.reactors["B"] = NewReactor("B", 2, freeframeClientB, oneRouter.resolumeClient, oneRouter.guiClient)
-		oneRouter.reactors["C"] = NewReactor("C", 3, freeframeClientC, oneRouter.resolumeClient, oneRouter.guiClient)
-		oneRouter.reactors["D"] = NewReactor("D", 4, freeframeClientD, oneRouter.resolumeClient, oneRouter.guiClient)
+		for i, c := range oneRouter.regionLetters {
+			resolumeLayer := 1 + i
+			resolumePort := 3334 + i
+			ch := string(c)
+			freeframeClient := osc.NewClient("127.0.0.1", resolumePort)
+			oneRouter.reactors[ch] = NewReactor(ch, resolumeLayer, freeframeClient, oneRouter.resolumeClient, oneRouter.guiClient)
+		}
+
 		oneRouter.OSCInput = make(chan OSCEvent)
 		oneRouter.MIDIInput = make(chan portmidi.Event)
 		oneRouter.recordingOn = false
@@ -1069,19 +1071,17 @@ func (r *Router) OLDgetReactorForNUID(api string, args map[string]string) (*Reac
 // It is assumed that we have a mutex on r.regionAssignedToSource
 func (r *Router) availableRegion(source string) string {
 
-	regionLetters := "ABCD"
-
-	nregions := len(regionLetters)
+	nregions := len(r.regionLetters)
 	alreadyAssigned := make([]bool, nregions)
 	for _, v := range r.regionAssignedToNUID {
-		i := strings.Index(regionLetters, v)
+		i := strings.Index(r.regionLetters, v)
 		if i >= 0 {
 			alreadyAssigned[i] = true
 		}
 	}
 	for i, used := range alreadyAssigned {
 		if !used {
-			avail := regionLetters[i : i+1]
+			avail := r.regionLetters[i : i+1]
 			if DebugUtil.Cursor {
 				log.Printf("Router.assignRegion: %s is assigned to source=%s\n", avail, source)
 			}
