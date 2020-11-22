@@ -8,24 +8,24 @@
 - First, download and execute the latest installer from the
 <a href=https://github.com/vizicist/palette/tree/main/release>release directory</a>.
 
+- If the installer asks you to reboot Windows, please do so.  Sorry.  This should only happen the first time you install Palette.
+
 - In Resolume's <i>Preferences->Video</i> section, add this directory to the list of FreeFrame (FFGL) plugin directories.  The directory name <b>ffgl6</b> indicates that it's for Resolume 6: <pre>C:\Program Files\Palette\ffgl6</pre>
 
 - In <i>Preferences->OSC</i>, enable "OSC Input" with an incoming port of 7000.
 
-- Quit and restart Resolume.
+- Quit and restart Resolume so that it reads the added FFGL directory.
 
 - Use <i>Composition->Open</i> to open: <pre>C:\Program Files\Palette\config\Palette_1_Layer.avc</pre>
 
-- That composition contains a single layer with a <b>Palette_1</b> plugin followed by a dozen or more other FFGL plugins.
+- That composition contains a single layer with a <b>Palette</b> plugin followed by a dozen or more other FFGL plugins.
 
-- Click on the <b>Palette_1</b> cell (the first one) in the layer to activate it.
+- Click on the <b>Palette</b> cell (the first one) in the layer to activate it.
 
 - Make sure the Sensel Morph is plugged in.
 
 - Start the Palette software by invoking the
 <b>Start Palette</b> app, found in the Palette folder of the Windows Start menu.
-
-- You can also start Palette by opening a cmd window and executing <b>palettestart</b>.
 
 - After starting Palette, you should see a window
 pop up with a GUI for selecting Palette presets.
@@ -39,8 +39,11 @@ If you don't see the GUI, it may be hiding behind other windows.
 
 ## Debugging hints if you don't see any visual output
 
-- Make sure that you've clicked on the <b>Palette_1</b> cell (the first one) in the layer to activate it.  This is the most common mistake, for me.
-Every time you start Resolume manually, you need to do this.  If you want to eliminate the need for this, use can use this script: <pre>C:\Program Files\Palette\bin\palettestartresolume.bat</pre>
+- Make sure that you've clicked on the <b>Palette</b>
+cell (the first one) in the layer to activate it.
+This is the most common mistake.
+Every time you start Resolume manually, you need to do this.
+If you want to eliminate the need for this, use can use this script: <pre>C:\Program Files\Palette\bin\palettestartall.bat</pre> An alternative way of starting the Palette software is to open a cmd window and execute <b>palettestart</b>.
 
 - If for some reason Resolume crashes at startup,
 you can look in this file: <pre>%LOCALAPPDATA%\Palette\logs\ffgl.log</pre>
@@ -48,14 +51,7 @@ for clues as to the reason.  If you can't resolve the issue,
 you should either remove the ffgl6 directory from the <i>Preferences->Video</i> section or just uninstall Palette.
 
 - To verify that the plugin is being recognized by Resolume,
-you should find these entries in Resolume's Sources tab, under Generators:
-
-  - Palette_1
-  - Palette_2
-  - Palette_3
-  - Palette_4
-
-- If you don't see those plugins in the (alphabetical) list of Generators, look at the Resolume log file in this directory: <pre>%APPDATA%\Resolume Avenue</pre>
+you should find an entry for <b>Palette</b> in Resolume's Sources tab, in the alphabetical list under <b>Generators</b>.  If you don't see this, look at the Resolume log file in this directory: <pre>%APPDATA%\Resolume Avenue</pre>
 
 - After you activate the plugin, this log file: <pre>%LOCALAPPDATA%\Palette\logs\ffgl.log</pre>
 should contain this line at the end: <pre>Palette: listening for OSC on port 3334</pre>

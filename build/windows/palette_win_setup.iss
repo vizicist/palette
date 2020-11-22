@@ -65,8 +65,8 @@ Filename: {tmp}\VC_redist.x64.exe; Parameters: "/install /quiet /norestart"; Sta
 Name: "{group}\{cm:ProgramOnTheWeb,{#MyAppName}}"; Filename: "{#MyAppURL}"
 Name: "{group}\Start Palette"; Filename: "{app}\bin\palettestart.bat"; Flags: runminimized
 Name: "{group}\Stop Palette"; Filename: "{app}\bin\palettestop.bat"; Flags: runminimized
-Name: "{group}\Start Resolume 6"; Filename: "{app}\bin\palettestartresolume.bat"; Flags: runminimized
-Name: "{group}\Stop Resolume 6"; Filename: "{app}\bin\palettestopresolume.bat"; Flags: runminimized
+Name: "{group}\Start Palette and Resolume 6"; Filename: "{app}\bin\palettestartall.bat"; Flags: runminimized
+Name: "{group}\Stop Palette and Resolume 6"; Filename: "{app}\bin\palettestopall.bat"; Flags: runminimized
 
 [Registry]
 Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; \

@@ -63,7 +63,7 @@ popd
 echo ================ Copying FFGL6 plugin
 pushd %PALETTESOURCE%\ffgl6\windows\x64\Debug
 mkdir %ship%\ffgl6
-copy Palette_*.* %ship%\ffgl6 > nul
+copy Palette*.dll %ship%\ffgl6 > nul
 copy %PALETTESOURCE%\build\windows\pthreadvc2.dll %ship%\ffgl6 >nul
 popd
 
@@ -77,7 +77,7 @@ popd
 echo ================ Copying FFGL7 plugin
 pushd %PALETTESOURCE%\ffgl7\binaries\x64\Debug
 mkdir %ship%\ffgl7
-copy Palette_*.* %ship%\ffgl7 > nul
+copy Palette*.* %ship%\ffgl7 > nul
 copy %PALETTESOURCE%\build\windows\pthreadvc2.dll %ship%\ffgl7 >nul
 popd
 
