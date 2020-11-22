@@ -48,11 +48,28 @@
     <ClCompile Include="..\..\source\lib\glsdk_0_5_2\glload\source\gl_load.c" />
     <ClCompile Include="..\..\source\lib\nosuch\NosuchDebug.cpp" />
     <ClCompile Include="..\..\source\lib\nosuch\NosuchException.cpp" />
+    <ClCompile Include="..\..\source\lib\nosuch\NosuchOscInput.cpp" />
+    <ClCompile Include="..\..\source\lib\nosuch\NosuchOscUdpInput.cpp" />
     <ClCompile Include="..\..\source\lib\nosuch\NosuchUtil.cpp" />
+    <ClCompile Include="..\..\source\lib\nosuch\UriCodec.cpp" />
+    <ClCompile Include="..\..\source\lib\oscpack\ip\IpEndpointName.cpp" />
+    <ClCompile Include="..\..\source\lib\oscpack\ip\win32\NetworkingUtils.cpp" />
+    <ClCompile Include="..\..\source\lib\oscpack\ip\win32\UdpSocket.cpp" />
+    <ClCompile Include="..\..\source\lib\oscpack\osc\OscOutboundPacketStream.cpp" />
+    <ClCompile Include="..\..\source\lib\oscpack\osc\OscPrintReceivedElements.cpp" />
+    <ClCompile Include="..\..\source\lib\oscpack\osc\OscReceivedElements.cpp" />
+    <ClCompile Include="..\..\source\lib\oscpack\osc\OscTypes.cpp" />
+    <ClCompile Include="..\..\source\lib\osc\src\OscBundle.cpp" />
+    <ClCompile Include="..\..\source\lib\osc\src\OscMessage.cpp" />
+    <ClCompile Include="..\..\source\lib\osc\src\OscSender.cpp" />
     <ClCompile Include="..\..\source\lib\palette\Palette.cpp" />
     <ClCompile Include="..\..\source\lib\palette\PaletteHost.cpp" />
     <ClCompile Include="..\..\source\lib\palette\PaletteOscInput.cpp" />
     <ClCompile Include="..\..\source\lib\palette\PaletteUtil.cpp" />
+    <ClCompile Include="..\..\source\lib\palette\Region.cpp" />
+    <ClCompile Include="..\..\source\lib\palette\Scheduler.cpp" />
+    <ClCompile Include="..\..\source\lib\palette\Sprite.cpp" />
+    <ClCompile Include="..\..\source\lib\palette\TrackedCursor.cpp" />
     <ClCompile Include="..\..\source\plugins\Palette\FFGLPalette.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -155,7 +172,8 @@
       <ProgramDatabaseFile>$(TargetDir)$(TargetName).pdb</ProgramDatabaseFile>
       <SubSystem>Windows</SubSystem>
       <ImportLibrary>$(OutDir)$(ProjectName).lib</ImportLibrary>
-      <AdditionalLibraryDirectories>..\..\..\source\common\opengl\lib</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>
+      </AdditionalLibraryDirectories>
       <AdditionalDependencies>OpenGL32.lib;pthreadVC2.lib;winmm.lib;Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>

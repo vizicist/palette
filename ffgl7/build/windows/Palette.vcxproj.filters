@@ -128,6 +128,57 @@
     <ClCompile Include="..\..\source\lib\cJSON\cJSON.cpp">
       <Filter>lib\cJSON</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\source\lib\palette\TrackedCursor.cpp">
+      <Filter>lib\palette</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\lib\palette\Sprite.cpp">
+      <Filter>lib\palette</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\lib\palette\Scheduler.cpp">
+      <Filter>lib\palette</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\lib\palette\Region.cpp">
+      <Filter>lib\palette</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\lib\osc\src\OscBundle.cpp">
+      <Filter>lib\osc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\lib\osc\src\OscMessage.cpp">
+      <Filter>lib\osc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\lib\osc\src\OscSender.cpp">
+      <Filter>lib\osc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\lib\oscpack\ip\IpEndpointName.cpp">
+      <Filter>lib\oscpack</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\lib\oscpack\ip\win32\NetworkingUtils.cpp">
+      <Filter>lib\oscpack</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\lib\oscpack\ip\win32\UdpSocket.cpp">
+      <Filter>lib\oscpack</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\lib\oscpack\osc\OscOutboundPacketStream.cpp">
+      <Filter>lib\oscpack</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\lib\oscpack\osc\OscPrintReceivedElements.cpp">
+      <Filter>lib\oscpack</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\lib\oscpack\osc\OscReceivedElements.cpp">
+      <Filter>lib\oscpack</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\lib\oscpack\osc\OscTypes.cpp">
+      <Filter>lib\oscpack</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\lib\nosuch\NosuchOscInput.cpp">
+      <Filter>lib\nosuch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\lib\nosuch\NosuchOscUdpInput.cpp">
+      <Filter>lib\nosuch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\lib\nosuch\UriCodec.cpp">
+      <Filter>lib\nosuch</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\source\lib\FFGLSDK.h">
@@ -264,6 +315,12 @@
     </Filter>
     <Filter Include="lib\pthreads">
       <UniqueIdentifier>{c4b534f2-1282-40ad-ba9c-3180e53b67bc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="lib\osc">
+      <UniqueIdentifier>{61b9116a-caad-41c8-9d8d-6765bbdd3f79}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="lib\oscpack">
+      <UniqueIdentifier>{d6faf9a1-ee6d-4223-a729-d50cc7e168ef}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

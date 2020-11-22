@@ -1,5 +1,3 @@
-#if 0
-
 #include <iostream>
 #include <sstream>
 #include <fstream>
@@ -17,10 +15,7 @@
 #include "PaletteAll.h"
 #include "FFGLLib.h"
 #include "FFGLPalette.h"
-
-#if 0
 #include "osc/OscOutboundPacketStream.h"
-#endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Plugin information
@@ -179,7 +174,6 @@ void needParams(std::string meth, cJSON* params) {
 PaletteDaemon::PaletteDaemon(PaletteHost* mf, int osc_input_port, std::string osc_input_host)
 {
 	NosuchDebug(2,"PaletteDaemon CONSTRUCTOR!");
-#if 0
 
 	_paletteHost = mf;
 	_network_thread_created = false;
@@ -233,13 +227,10 @@ PaletteDaemon::PaletteDaemon(PaletteHost* mf, int osc_input_port, std::string os
 	}
 #endif
 
-#endif
-
 }
 
 PaletteDaemon::~PaletteDaemon()
 {
-#if 0
 	NosuchDebug(1,"PaletteDaemon DESTRUCTOR starts!");
 	daemon_shutting_down = true;
 	if ( _network_thread_created ) {
@@ -256,12 +247,10 @@ PaletteDaemon::~PaletteDaemon()
 	}
 
 	NosuchDebug(1,"PaletteDaemon DESTRUCTOR ends!");
-#endif
 }
 
 void *PaletteDaemon::run(void *arg)
 {
-#if 0
 	NosuchDebugSetThreadName(pthread_self().p, "PaletteDaemon");
 	int textcount = 0;
 	while (daemon_shutting_down == false ) {
@@ -276,7 +265,6 @@ void *PaletteDaemon::run(void *arg)
 #endif
 		Sleep(1);
 	}
-#endif
 	return NULL;
 }
 
@@ -438,12 +426,10 @@ PaletteHost::LoadPaletteConfig(cJSON* c)
 	}
 }
 
-#if 0
 int PaletteHost::SendToResolume(osc::OutboundPacketStream& p) {
 	NosuchDebug(1,"SendToResolume host=%s port=%d",DEFAULT_RESOLUME_HOST,DEFAULT_RESOLUME_PORT);
     return SendToUDPServer(DEFAULT_RESOLUME_HOST,DEFAULT_RESOLUME_PORT,p.Data(),(int)p.Size());
 }
-#endif
 
 void
 PaletteHost::RunEveryMillisecondOrSo() {
@@ -753,7 +739,6 @@ DWORD PaletteHost::PaletteHostProcessOpenGL(ProcessOpenGLStruct *pGL)
 		return FF_SUCCESS;
 	}
 
-#if 0
 	if ( ! initialized ) {
 		// NosuchDebug("PaletteHost calling initStuff()");
 		if ( ! initStuff() ) {
@@ -813,7 +798,7 @@ DWORD PaletteHost::PaletteHostProcessOpenGL(ProcessOpenGLStruct *pGL)
 		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 
-#if 0
+#ifdef DRAW_LINE_SHOW_ALIVE
 	// Draw line just to show we're alive
 	glColor4d(0.0, 0.0, 1.0, 1.0);
 	glBegin(GL_LINES); 
@@ -884,8 +869,6 @@ DWORD PaletteHost::PaletteHostProcessOpenGL(ProcessOpenGLStruct *pGL)
 	glColor4d(1.f,1.f,1.f,1.f);
 #endif
 
-#endif
-	
 	return FF_SUCCESS;
 }
 
@@ -957,30 +940,6 @@ std::string PaletteHost::ExecuteJson(std::string meth, cJSON *params, const char
 
 	static std::string errstr;  // So errstr.c_str() stays around, but I'm not sure that's now needed
 
-	if ( meth == "debug_tail" ) {
-#if 0
-		cJSON *c_amount = cJSON_GetObjectItem(params,"amount");
-		if ( ! c_amount ) {
-			return error_json(-32000,"Missing amount argument",id);
-		}
-		if ( c_amount->type != cJSON_String ) {
-			return error_json(-32000,"Expecting string type in amount argument to get",id);
-		}
-#endif
-#ifdef DEBUG_DUMP_BUFFER
-		std::string s = NosuchDebugDumpBuffer();
-		std::string s2 = NosuchEscapeHtml(s);
-		std::string result = 
-			"{\"jsonrpc\": \"2.0\", \"result\": \""
-			+ s2
-			+ "\", \"id\": \""
-			+ id
-			+ "\"}";
-		return(result);
-#else
-		return error_json(-32000,"DEBUG_DUMP_BUFFER not defined",id);
-#endif
-	}
 	if ( meth == "_echo" || meth == "echo" ) {
 		cJSON *c_value = cJSON_GetObjectItem(params,"value");
 		if ( ! c_value ) {
@@ -1068,7 +1027,6 @@ PaletteHost::checkAddrPattern(const char *addr, char *patt)
 	return ( strncmp(addr,patt,strlen(patt)) == 0 );
 }
 
-#if 0
 int
 ArgAsInt32(const osc::ReceivedMessage& m, unsigned int n)
 {
@@ -1151,10 +1109,8 @@ PaletteHost::SetCursorCid(std::string cid, std::string cidsource, NosuchVector p
 {
 	_palette->region.setTrackedCursor(_palette,cid, cidsource, point, z);
 }
-#endif
 
 void PaletteHost::ProcessOscMessage( std::string source, const osc::ReceivedMessage& m) {
-#if 0
 	static int Nprocessed = 0;
 	try{
 	    const char *types = m.TypeTags();
@@ -1235,7 +1191,6 @@ void PaletteHost::ProcessOscMessage( std::string source, const osc::ReceivedMess
 		// This doesn't seem to work - it doesn't seem to catch other exceptions...
 		NosuchDebug("ProcessOscMessage, some other kind of exception occured during !?");
 	}
-	#endif
 }
 
 std::string PaletteHost::RespondToJson(std::string method, cJSON *params, const char *id) {
@@ -1274,5 +1229,3 @@ std::string PaletteHost::RespondToJson(std::string method, cJSON *params, const 
 
 	return result;
 }
-
-#endif

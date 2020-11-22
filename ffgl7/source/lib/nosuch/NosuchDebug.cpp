@@ -177,7 +177,6 @@ RealNosuchDebug(int level, char const *fmt, va_list args)
 		pmsg += nchars;
 		msgsize -= nchars;
 	}
-#if 0
 	if ( NosuchDebugTimeTag ) {
 		int nchars;
 		long tm;
@@ -195,7 +194,6 @@ RealNosuchDebug(int level, char const *fmt, va_list args)
 		pmsg += nchars;
 		msgsize -= nchars;
 	}
-#endif
 
     // va_start(args, fmt);
     vsprintf_s(pmsg,msgsize,fmt,args);
@@ -278,7 +276,7 @@ NosuchErrorOutput(const char *fmt, ...)
 
 	OutputDebugStringA(msg);
 
-#if 0
+#ifdef THIS_DOES_NOT_WORK
 	// Why doesn't this work?
 	// Trying to force it into the debug output
     va_list args2;
