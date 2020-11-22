@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Composition name="Composition" uniqueId="1499333061498" numDecks="1" currentDeckIndex="0" numLayers="1" numColumns="3" compositionIsRelative="0">
 	<versionInfo name="Resolume Avenue" majorVersion="6" minorVersion="1" microVersion="5" revision="68161"/>
-	<CompositionInfo name="Palette_1_Layer" description="" width="1920" height="1080">
+	<CompositionInfo name="PaletteA" description="" width="1920" height="1080">
 		<DeckInfo name="AV" id="1499337861242" closed="0"/>
 	</CompositionInfo>
 	<Params name="Params">
-		<Param name="Name" default="" value="Palette_1_Layer"/>
+		<Param name="Name" default="" value="PaletteA"/>
 		<ParamChoice name="Beat Snap" default="1" value="5" storeChoices="0"/>
 		<Param name="KeyboardShortcutPreset" default="" value="Default"/>
 		<Param name="MidiShortcutPreset" default="" value="Default"/>
@@ -41,7 +41,7 @@
 	</VideoTrack>
 	<Layer uniqueId="1543118500944" layerIndex="0">
 		<Params name="Params">
-			<Param name="Name" default="Layer #" value="Layer Palette1"/>
+			<Param name="Name" default="Layer #" value="Layer PaletteA"/>
 		</Params>
 		<Params name="Dashboard">
 			<ParamRange name="Link 1" altName="Hue" default="0" value="0"/>
@@ -142,12 +142,12 @@
 		<ColumnAttributes index="0" name="Palette"/>
 		<Clip name="Clip" uniqueId="1543118500945" layerIndex="0" columnIndex="0">
 			<Params name="Params">
-				<Param storage="3" name="Name" default="SpaceManifold" value="Palette_1"/>
+				<Param storage="3" name="Name" default="SpaceManifold" value="PaletteA"/>
 				<ParamChoice storage="3" name="TransportType" default="0" value="0" storeChoices="0"/>
 			</Params>
 			<Transport name="Transport">
 				<Params name="Params">
-					<ParamRange name="Position" default="0" value="4168.3606000000154381">
+					<ParamRange name="Position" default="0" value="305.1673999999978264">
 						<BehaviourDouble name="BehaviourDouble">
 							<PhaseSourceTimeline name="PhaseSourceTimeline" globalSpeedEnabled="1">
 								<Params name="Params">
@@ -169,6 +169,7 @@
 			</Transport>
 			<ClipView name="ClipView">
 				<FoldParams name="FoldParams">
+					<FoldState component="//palette/" folded="0"/>
 					<FoldState component="//spacepalette1/" folded="0"/>
 					<FoldState component="/groupedcomponent/spacepalette1/" folded="1"/>
 				</FoldParams>
@@ -190,7 +191,7 @@
 						<View name="View" folded="1"/>
 						<RenderPass name="Twisted" type="Twisted" uniqueId="A122" baseType="Effect" dwType="Effect">
 							<Params name="Params">
-								<ParamRange name="Twirl" default="0.60000002384185791016" value="0.32145019714119549281">
+								<ParamRange name="Twirl" default="0.60000002384185791016" value="0.59777071009485871489">
 									<ValueRange name="startStop" min="0.24728260869565216185" max="0.68206521739130432369"/>
 									<BehaviourDouble name="BehaviourDouble">
 										<PhaseSourceTimeline name="PhaseSourceTimeline" globalSpeedEnabled="0">
@@ -204,7 +205,7 @@
 										</PhaseSourceTimeline>
 									</BehaviourDouble>
 								</ParamRange>
-								<ParamRange name="Radius" default="0.25" value="0.10000000149011611938"/>
+								<ParamRange name="Radius" default="0.25" value="0.31000000238418579102"/>
 							</Params>
 						</RenderPass>
 						<ChoosableMixer name="Mixer">
@@ -218,7 +219,7 @@
 						<View name="View" folded="1"/>
 						<RenderPass name="HueRotate" type="HueRotate" uniqueId="A128" baseType="Effect" dwType="Effect">
 							<Params name="Params">
-								<ParamRange name="Hue Rotate" default="0" value="0.19312195508814933298">
+								<ParamRange name="Hue Rotate" default="0" value="0.74366653434228746633">
 									<BehaviourDouble name="BehaviourDouble">
 										<PhaseSourceTimeline name="PhaseSourceTimeline" globalSpeedEnabled="0">
 											<Params name="Params">
@@ -245,7 +246,7 @@
 						<RenderPass name="Kaleidoscope" type="FFGLEffect" uniqueId="sy02" baseType="Effect" dwType="Effect">
 							<Params name="Params">
 								<ParamRange name="Zoom" default="0.5" value="0.57999998331069946289"/>
-								<ParamRange name="Input Rotation" default="0" value="0.10279823572990910707">
+								<ParamRange name="Input Rotation" default="0" value="0.39585145907863727999">
 									<BehaviourDouble name="BehaviourDouble">
 										<PhaseSourceTimeline name="PhaseSourceTimeline" globalSpeedEnabled="0">
 											<Params name="Params">
@@ -342,6 +343,9 @@
 						</ChoosableMixer>
 					</RenderPass>
 					<RenderPass storage="0" name="Posterize" type="DryWetEffect" uniqueId="A109" baseType="DryWetEffect" index="6">
+						<Params name="Params">
+							<Param name="Bypassed" default="0" value="1"/>
+						</Params>
 						<View name="View" folded="1"/>
 						<RenderPass name="Posterize" type="Posterize" uniqueId="A109" baseType="Effect" dwType="Effect">
 							<Params name="Params">
@@ -388,7 +392,7 @@
 								<ParamRange name="BlendMode" default="0" value="0.2508591070000000256"/>
 								<ParamRange name="GRotateX" default="0.5" value="0.39862543000000000282"/>
 								<ParamRange name="GRotateY" default="0.5" value="0.44329896899999998716"/>
-								<ParamRange name="GRotateZ" default="0.5" value="0.45164964808989055411">
+								<ParamRange name="GRotateZ" default="0.5" value="0.47114583955056010822">
 									<ValueRange name="startStop" min="0.35393258426966289765" max="0.64325842696629209616"/>
 									<BehaviourDouble name="BehaviourDouble">
 										<PhaseSourceTimeline name="PhaseSourceTimeline" globalSpeedEnabled="0">
@@ -411,8 +415,8 @@
 						<View name="View" folded="1"/>
 						<RenderPass name="Edge Detection" type="FFGLEffect" uniqueId="MEDG" baseType="Effect" dwType="Effect">
 							<Params name="Params">
-								<ParamRange name="Mode" default="1" value="0.81999999284744262695"/>
-								<ParamRange name="Multiplier" default="0.20000000298023223877" value="1"/>
+								<ParamRange name="Mode" default="1" value="0.92000001668930053711"/>
+								<ParamRange name="Multiplier" default="0.20000000298023223877" value="0.23999999463558197021"/>
 							</Params>
 							<FFGLPlugin name="FFGLPlugin" uniqueId="MEDG" fileName="C:\Program Files\Resolume Avenue 6\plugins\vfx\FFGLEdgeDetection.dll"/>
 						</RenderPass>
@@ -433,7 +437,7 @@
 							<Params name="Params">
 								<ParamRange name="Angles" default="0.30000001192092895508" value="0.63999998569488525391"/>
 								<ParamRange name="Zoom" default="0.5" value="1"/>
-								<ParamRange name="Input Rotation" default="0" value="0.11358661373034452391">
+								<ParamRange name="Input Rotation" default="0" value="0.43739492665122065018">
 									<BehaviourDouble name="BehaviourDouble">
 										<PhaseSourceTimeline name="PhaseSourceTimeline" globalSpeedEnabled="0">
 											<Params name="Params">
@@ -464,7 +468,7 @@
 							<Params name="Params">
 								<ParamRange name="X" default="0" value="0.5"/>
 								<ParamRange name="Y" default="0" value="0.5"/>
-								<ParamRange name="In / Out" default="1" value="0.97164399424666036964">
+								<ParamRange name="In / Out" default="1" value="0.74156900744969600492">
 									<BehaviourDouble name="BehaviourDouble">
 										<PhaseSourceTimeline name="PhaseSourceTimeline" globalSpeedEnabled="0">
 											<Params name="Params">
@@ -510,8 +514,8 @@
 				<PrimarySource>
 					<VideoSource storage="0" name="VideoSource" width="1920" height="1080" type="GeneratorVideoSource">
 						<RenderPass name="RenderPassChain" type="RenderPassChain" uniqueId="RenderPassChain" baseType="RenderPassChain"/>
-						<RenderPass name="Palette_1" type="FFGLGenerator" uniqueId="VZPF" baseType="Generator">
-							<FFGLPlugin name="FFGLPlugin" uniqueId="VZPF" fileName="C:\Program Files\Palette\ffgl\Palette_1.dll"/>
+						<RenderPass name="Palette" type="FFGLGenerator" uniqueId="VZPM" baseType="Generator">
+							<FFGLPlugin name="FFGLPlugin" uniqueId="VZPM" fileName="C:\Program Files\Palette\ffgl6\Palette.dll"/>
 						</RenderPass>
 					</VideoSource>
 				</PrimarySource>
