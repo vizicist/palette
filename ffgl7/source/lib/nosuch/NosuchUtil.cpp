@@ -206,70 +206,6 @@ SendToSLIPServer(std::string shost, int port, const char *data, int leng)
     return 0;
 }
 
-#if 0
-int
-RegisterWithNthServer(char *serverhost, int serverport, char *myhost, int myport)
-{
-    char buffer[1024];
-    // NosuchDebug("RegisterWithServer, serverport=%d myport=%d",serverport, myport);
-    osc::OutboundPacketStream p( buffer, sizeof(buffer) );
-    p << osc::BeginMessage( "/registerclient" )
-      << "localhost" << myport << osc::EndMessage;
-    return SendToNthServer(serverhost,serverport,p.Data(),(int)p.Size());
-}
-
-int
-UnRegisterWithNthServer(char *serverhost, int serverport, char *myhost, int myport)
-{
-    char buffer[1024];
-    osc::OutboundPacketStream p( buffer, sizeof(buffer) );
-    p << osc::BeginMessage( "/unregisterclient" )
-      << "localhost" << myport << osc::EndMessage;
-    return SendToNthServer(serverhost,serverport,p.Data(),(int)p.Size());
-}
-#endif
-
-int
-OscSocketError(char *s)
-{
-    int e = WSAGetLastError();
-    NosuchDebug("NSPlugin socket error: %s e=%d",s,e);
-    return e;
-}
-
-#if 0
-CvScalar
-randomRGB() {
-    float h = (float)((360.0 * rand()) / (float) RAND_MAX) ;
-    return HLStoRGB(h,0.5,1.0);
-}
-
-CvScalar
-HLStoRGB(float hue, float lum, float sat)
-{
-    float r;
-    float g;
-    float b;
-
-    if ( sat == 0 ) {
-        r = g = b = lum * 255;
-    } else {
-        float rm2;
-        if ( lum <= 0.5 ) {
-            rm2 = lum + lum * sat;
-        } else {
-            rm2 = lum + sat - lum * sat;
-        }
-        float rm1 = 2 * lum - rm2;
-        r = ToRGB1(rm1, rm2, hue + 120);
-        g = ToRGB1(rm1, rm2, hue);
-        b = ToRGB1(rm1, rm2, hue - 120);
-    }
-    // NosuchDebug("HLStoRGB hue=%lf rgb=%lf,%lf,%lf",hue,r,g,b);
-    return CV_RGB(r,g,b);
-}
-#endif
-
 void
 RGBtoHLS(float r, float g, float b, float* hue, float* lum, float* sat)
 {
@@ -460,7 +396,6 @@ std::string NosuchToUpper(std::string s) {
 	return r;
 }
 
-#if 0
 void NosuchLockInit(pthread_mutex_t* mutex, char *tag) {
 
 	*mutex = PTHREAD_ERRORCHECK_MUTEX_INITIALIZER;
@@ -491,7 +426,6 @@ int NosuchTryLock(pthread_mutex_t* mutex, char *tag) {
 	// NosuchDebug("NosuchTryLock pthread=%d tag=%s mutex=%d",(int)pthread_self().p,tag,(int)mutex);
 	return pthread_mutex_trylock(mutex);
 }
-#endif
 
 std::string ToNarrow( const wchar_t *s, char dfault, const std::locale& loc ) {
   std::ostringstream stm;

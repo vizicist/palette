@@ -1,5 +1,3 @@
-#if 0
-
 #include <string>
 #include <sstream>
 #include <intrin.h>
@@ -80,4 +78,3 @@ PaletteOscInput::Listen() {
 	}
 	return 0;
 }
-#endif
