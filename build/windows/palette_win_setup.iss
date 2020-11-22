@@ -4,7 +4,7 @@
 #include "environment.iss"
 
 #define MyAppName "Palette"
-#define MyAppVersion "0.94"
+#define MyAppVersion "0.95"
 #define MyAppPublisher "Nosuch Media"
 #define MyAppURL "https://github.com/vizicist/palette"
 
@@ -39,11 +39,11 @@ Source: "ship\ffgl6\*"; DestDir: "{app}\ffgl6"; Flags: ignoreversion recursesubd
 Source: "ship\ffgl7\*"; DestDir: "{app}\ffgl7"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "ship\config\Synths.json"; DestDir: "{app}\config"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "ship\config\Effects.json"; DestDir: "{app}\config"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "ship\config\natsleaf.conf"; DestDir: "{app}\config"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "ship\config\nats*.conf"; DestDir: "{app}\config"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "ship\config\paramdefs.json"; DestDir: "{app}\config"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "ship\config\paramenums.json"; DestDir: "{app}\config"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "ship\config\settings.json"; DestDir: "{app}\config"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "ship\config\Palette_*.avc"; DestDir: "{app}\config"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "ship\config\Palette*.avc"; DestDir: "{app}\config"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "ship\config\palette.ico"; DestDir: "{app}\config"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE - these go in LOCALAPPDATA
 Source: "ship\config\ffgl.json"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\config"; Flags: ignoreversion

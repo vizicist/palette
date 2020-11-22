@@ -1,8 +1,10 @@
 {
   "generatesound": "false",
   "generatevisuals": "true",
-  "publishcursor": "true",
-  "publishmidi": "true",
+  "publishcursor": "false",
+  "publishmidi": "false",
+  "publishparams": "false",
+  "natsconf": "natsalone.conf",
   "debug": "",
   "this line should not end with a comma": 0
 }
