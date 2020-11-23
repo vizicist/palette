@@ -35,10 +35,11 @@ If you don't see the GUI, it may be hiding behind other windows.
 
 - Use the GUI to select different Snapshot presets.
 
-- To access and edit the parameters of the presets,
-click on the Preset button at the very top.
-You should then be able to access the pages for
-Visual, and Effect presets.  
+- To edit the presets, click on the Preset button at the very top of the GUI.
+This will reveal the pages you can click on for Visual and Effect presets.
+If you click a second time on the Visual and Effect buttons,
+you will be able to access the individual parameters
+of a preset and save it has a new preset.
 
 - If it's not working, see below for debugging hints.
 
