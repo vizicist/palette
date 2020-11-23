@@ -37,6 +37,7 @@ If you don't see the GUI, it may be hiding behind other windows.
 
 - To edit the presets, click on the Preset button at the very top of the GUI.
 This will reveal the pages you can click on for Visual and Effect presets.
+A Snapshot contains both visual and effect settings, but the Visual and Effect presets let you control these things independently.
 If you click a second time on the Visual and Effect buttons,
 you will be able to access the individual parameters
 of a preset and save it has a new preset.
