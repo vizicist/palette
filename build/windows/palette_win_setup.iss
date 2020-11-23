@@ -4,7 +4,7 @@
 #include "environment.iss"
 
 #define MyAppName "Palette"
-#define MyAppVersion "0.9"
+#define MyAppVersion "0.95"
 #define MyAppPublisher "Nosuch Media"
 #define MyAppURL "https://github.com/vizicist/palette"
 
@@ -35,14 +35,15 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Files]
 Source: "ship\bin\*"; DestDir: "{app}\bin"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "ship\ffgl\*"; DestDir: "{app}\ffgl"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "ship\ffgl6\*"; DestDir: "{app}\ffgl6"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "ship\ffgl7\*"; DestDir: "{app}\ffgl7"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "ship\config\Synths.json"; DestDir: "{app}\config"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "ship\config\Effects.json"; DestDir: "{app}\config"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "ship\config\natsleaf.conf"; DestDir: "{app}\config"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "ship\config\nats*.conf"; DestDir: "{app}\config"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "ship\config\paramdefs.json"; DestDir: "{app}\config"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "ship\config\paramenums.json"; DestDir: "{app}\config"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "ship\config\settings.json"; DestDir: "{app}\config"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "ship\config\Palette_*.avc"; DestDir: "{app}\config"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "ship\config\Palette*.avc"; DestDir: "{app}\config"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "ship\config\palette.ico"; DestDir: "{app}\config"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE - these go in LOCALAPPDATA
 Source: "ship\config\ffgl.json"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\config"; Flags: ignoreversion
@@ -52,12 +53,20 @@ Source: "ship\presets\*"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\presets"; Flags
 Source: "logs_readme.txt"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\logs"; DestName: "readme.txt"; Flags: ignoreversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
+; This specifies the Visual C++ Windows Runtime Redistributable to also install because
+; it is required by Xojo apps made with 2016r1 or later.
+[Files]
+Source: "VC_redist.x64.exe"; DestDir: {tmp}
+
+[Run]
+Filename: {tmp}\VC_redist.x64.exe; Parameters: "/install /quiet /norestart"; StatusMsg: "Installing 64-bit Windows Universal runtime..."; Flags: waituntilterminated
+
 [Icons]
 Name: "{group}\{cm:ProgramOnTheWeb,{#MyAppName}}"; Filename: "{#MyAppURL}"
 Name: "{group}\Start Palette"; Filename: "{app}\bin\palettestart.bat"; Flags: runminimized
 Name: "{group}\Stop Palette"; Filename: "{app}\bin\palettestop.bat"; Flags: runminimized
-Name: "{group}\Start Resolume 6"; Filename: "{app}\bin\palettestartresolume.bat"; Flags: runminimized
-Name: "{group}\Stop Resolume 6"; Filename: "{app}\bin\palettestopresolume.bat"; Flags: runminimized
+Name: "{group}\Start Palette and Resolume 6"; Filename: "{app}\bin\palettestartall.bat"; Flags: runminimized
+Name: "{group}\Stop Palette and Resolume 6"; Filename: "{app}\bin\palettestopall.bat"; Flags: runminimized
 
 [Registry]
 Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; \
@@ -67,12 +76,12 @@ Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environmen
 procedure CurStepChanged(CurStep: TSetupStep);
 begin
     if CurStep = ssPostInstall 
-     then EnvAddPath(ExpandConstant('{app}') +'\ffgl'); EnvAddPath(ExpandConstant('{app}') +'\bin');
+     then EnvAddPath(ExpandConstant('{app}') +'\ffgl6'); EnvAddPath(ExpandConstant('{app}') +'\bin');
 end;
 
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 begin
     if CurUninstallStep = usPostUninstall
-    then EnvRemovePath(ExpandConstant('{app}') +'\ffgl'); EnvRemovePath(ExpandConstant('{app}') +'\bin');
+    then EnvRemovePath(ExpandConstant('{app}') +'\ffgl6'); EnvRemovePath(ExpandConstant('{app}') +'\bin');
 end;
 
