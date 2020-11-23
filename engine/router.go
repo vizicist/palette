@@ -346,10 +346,12 @@ func (r *Router) HandleSubscribedEventArgs(args map[string]string) error {
 		return err
 	}
 
-	// Ignore anything from myself
-	if nuid == MyNUID() {
-		return nil
-	}
+	/*
+		// Ignore anything from myself
+		if nuid == MyNUID() {
+			return nil
+		}
+	*/
 
 	event, err := needStringArg("event", "HandleSubscribeEvent", args)
 	if err != nil {
@@ -383,6 +385,11 @@ func (r *Router) HandleSubscribedEventArgs(args map[string]string) error {
 
 	case "cursor":
 
+		// If we're publishing cursor events, we ignore ones from ourself
+		if r.publishCursor && nuid == MyNUID() {
+			return nil
+		}
+
 		cid := optionalStringArg("cid", args, "UnspecifiedCID")
 
 		switch subEvent {
@@ -410,7 +417,14 @@ func (r *Router) HandleSubscribedEventArgs(args map[string]string) error {
 			Area:       0.0,
 		}
 
-		r.routeCursorDeviceEvent(ce)
+		if r.publishCursor {
+			err := PublishCursorDeviceEvent(ce)
+			if err != nil {
+				log.Printf("Router.routeCursorDeviceEvent: NATS publishing err=%s\n", err)
+			}
+		}
+
+		reactor.handleCursorDeviceEvent(ce)
 
 	case "sprite":
 
@@ -422,6 +436,11 @@ func (r *Router) HandleSubscribedEventArgs(args map[string]string) error {
 		reactor.generateSprite("dummy", x, y, z)
 
 	case "midi":
+
+		// If we're publishing midi events, we ignore ones from ourself
+		if r.publishMIDI && nuid == MyNUID() {
+			return nil
+		}
 
 		switch subEvent {
 		case "time_reset":
@@ -447,6 +466,26 @@ func (r *Router) HandleSubscribedEventArgs(args map[string]string) error {
 	}
 
 	return nil
+}
+
+func (r *Router) handleCursorDeviceInput(e CursorDeviceEvent) {
+
+	r.eventMutex.Lock()
+	defer r.eventMutex.Unlock()
+
+	if r.publishCursor {
+		err := PublishCursorDeviceEvent(e)
+		if err != nil {
+			log.Printf("Router.routeCursorDeviceEvent: NATS publishing err=%s\n", err)
+		}
+	}
+
+	reactor, ok := r.reactors[e.Region]
+	if !ok {
+		log.Printf("routeCursorDeviceEvent: no region named %s, unable to process ce=%+v\n", e.Region, e)
+		return
+	}
+	reactor.handleCursorDeviceEvent(e)
 }
 
 // makeMIDIEvent xxx
@@ -1139,27 +1178,6 @@ func (r *Router) getRegionForNUID(nuid string) string {
 	r.regionAssignedToNUID[nuid] = region
 
 	return region
-}
-
-// If we publish a CursorDeviceEvent, we don't handle it locally
-func (r *Router) routeCursorDeviceEvent(e CursorDeviceEvent) {
-
-	r.eventMutex.Lock()
-	defer r.eventMutex.Unlock()
-
-	if r.publishCursor {
-		err := PublishCursorDeviceEvent(e)
-		if err != nil {
-			log.Printf("Router.routeCursorDeviceEvent: NATS publishing err=%s\n", err)
-		}
-	}
-
-	reactor, ok := r.reactors[e.Region]
-	if !ok {
-		log.Printf("routeCursorDeviceEvent: no region named %s, unable to process ce=%+v\n", e.Region, e)
-		return
-	}
-	reactor.handleCursorDeviceEvent(e)
 }
 
 func argAsInt(msg *osc.Message, index int) (i int, err error) {
