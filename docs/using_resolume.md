@@ -35,9 +35,10 @@ If you don't see the GUI, it may be hiding behind other windows.
 
 - Use the GUI to select different Snapshot presets.
 
-- To access and edit the parameters of the presets, click on the Preset button at the very top.
-You should then be able to access the pages for Sound, Visual, and Effect presets.  
-tabs at the top of the GUI let you independently select presets for those things.
+- To access and edit the parameters of the presets,
+click on the Preset button at the very top.
+You should then be able to access the pages for
+Visual, and Effect presets.  
 
 - If it's not working, see below for debugging hints.
 
@@ -48,7 +49,7 @@ cell (the first one) in the layer to activate it.
 This is the most common mistake.
 Every time you start Resolume manually, you need to do this.
 If you want to eliminate the need for this, use can use this script: <pre>C:\Program Files\Palette\bin\palettestartall.bat</pre>
-That script will start the Palette software, start Resolume
+That script will start the Palette software and start Resolume.
 
 - If for some reason Resolume crashes at startup,
 you can look in this file: <pre>%LOCALAPPDATA%\Palette\logs\ffgl.log</pre>
