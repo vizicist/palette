@@ -1,5 +1,6 @@
 #pragma once
 #include "../ffgl/FFGL.h"//For OpenGL
+#include "../ffglex/FFGLShader.h"
 #include <string>
 
 namespace ffglex
@@ -22,6 +23,8 @@ public:
 	void Release();                       //Release the gpu resources this quad has loaded into vram. Call this before destruction if you've previously initialised us.
 
 private:
+	ffglex::FFGLShader shader;
+
 	GLuint vaoID;
 	GLuint vboID;
 };

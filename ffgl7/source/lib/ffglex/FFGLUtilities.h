@@ -21,12 +21,14 @@ struct GlVertexTextured
 	float x, y, z;
 };
 
+/*
 static GlVertex g_QuadVertices[] = {
 	{ -1.0f, -1.0f, 1.0f },
 	{ 1.0f, -1.0f, 1.0f },
 	{ 1.0f, 1.0f, 1.0f },
 	{ -1.0f, 1.0f, 1.0f }
 };
+*/
 static const GlVertexTextured TEXTURED_QUAD_VERTICES[] = {
 	{ 0.0f, 1.0f, -1.0f, 1.0f, 0.0f }, //Top-left
 	{ 1.0f, 1.0f, 1.0f, 1.0f, 0.0f },  //Top-right
