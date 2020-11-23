@@ -33,11 +33,14 @@ static const char vertexShaderCode[] = R"(#version 410 core
 layout( location = 0 ) in vec4 vPosition;
 layout( location = 1 ) in vec2 vUV;
 
+uniform vec2 vScale;
+uniform vec2 vTranslate;
+
 out vec2 uv;
 
 void main()
 {
-	gl_Position = vPosition;
+	gl_Position = vec4((vPosition.x*vScale.x)+vTranslate.x,(vPosition.y*vScale.y)+vTranslate.y,vPosition.z,vPosition.a);
 	uv = vUV;
 }
 )";
@@ -131,6 +134,18 @@ FFResult FFGLPalette::ProcessOpenGL( ProcessOpenGLStruct* pGL )
 	glUniform4f( rgbLeftLocation, rgba1.red, rgba1.green, rgba1.blue, rgba1.alpha );
 	glUniform4f( rgbRightLocation, rgba2[ 0 ], rgba2[ 1 ], rgba2[ 2 ], rgba2[ 3 ] );
 
+	GLfloat xscale = random( 0.2f, 0.5f );
+	GLfloat yscale = random( 0.2f, 0.5f );
+	shader.Set( "vScale", xscale, yscale );
+	GLfloat xtranslate = 0.8f;
+	GLfloat ytranslate = 0.8f;
+	shader.Set( "vTranslate", xtranslate, ytranslate );
+
+	quad.Draw();
+
+	xtranslate = 0.0f;
+	ytranslate = 0.0f;
+	shader.Set( "vTranslate", xtranslate, ytranslate );
 	quad.Draw();
 
 	return FF_SUCCESS;

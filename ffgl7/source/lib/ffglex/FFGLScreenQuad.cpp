@@ -6,6 +6,17 @@
 
 namespace ffglex
 {
+	
+GlVertexTextured P_TEXTURED_QUAD_VERTICES[] = {
+	{ 0.0f, 1.0f, -0.5f, 0.5f, 0.0f }, //Top-left
+	{ 1.0f, 1.0f,  0.5f, 0.5f, 0.0f },  //Top-right
+	{ 0.0f, 0.0f, -0.5f, -0.5f, 0.0f },//Bottom left
+
+	{ 0.0f, 0.0f, -1.0f, -1.0f, 0.0f },//Bottom left
+	{ 1.0f, 1.0f, 1.0f, 1.0f, 0.0f },  //Top right
+	{ 1.0f, 0.0f, 1.0f, -1.0f, 0.0f }, //Bottom right
+};
+
 FFGLScreenQuad::FFGLScreenQuad() :
 	vaoID( 0 ),
 	vboID( 0 )
@@ -40,10 +51,11 @@ bool FFGLScreenQuad::Initialise( bool flipV )
 	//help us restore the state after we're done.
 	ScopedVAOBinding vaoBinding( vaoID );
 	ScopedVBOBinding vboBinding( vboID );
+
 	if( flipV )
-		glBufferData( GL_ARRAY_BUFFER, sizeof( FLIPPED_TEXTURED_QUAD_VERTICES ), FLIPPED_TEXTURED_QUAD_VERTICES, GL_STATIC_DRAW );
+		glBufferData( GL_ARRAY_BUFFER, sizeof( FLIPPED_TEXTURED_QUAD_VERTICES ), FLIPPED_TEXTURED_QUAD_VERTICES, GL_DYNAMIC_DRAW );
 	else
-		glBufferData( GL_ARRAY_BUFFER, sizeof( TEXTURED_QUAD_VERTICES ), TEXTURED_QUAD_VERTICES, GL_STATIC_DRAW );
+		glBufferData( GL_ARRAY_BUFFER, sizeof( P_TEXTURED_QUAD_VERTICES ), P_TEXTURED_QUAD_VERTICES, GL_DYNAMIC_DRAW );
 
 	glEnableVertexAttribArray( 0 );
 	glVertexAttribPointer( 0, 3, GL_FLOAT, false, sizeof( TEXTURED_QUAD_VERTICES[ 0 ] ), (char*)NULL + 2 * sizeof( float ) );
