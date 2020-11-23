@@ -25,6 +25,35 @@ PadLayer = {
 DebugApi = False
 MyNuid = ""
 
+def localconfigFilePath(nm):
+    return os.path.join(localAppDataDir(), "config", nm)
+
+def configFilePath(nm):
+    return os.path.join(PaletteDir(), "config", nm)
+
+def localAppDataDir():
+    local = os.environ.get("LOCALAPPDATA")
+    if local == None:
+        print("Expecting LOCALAPPDATA to be set, assuming .")
+        local = "."
+    return os.path.join(local,"Palette")
+
+def PresetsDir():
+    d = localAppDataDir()
+    pdir = os.path.join(d, "presets")
+    if not os.path.isdir(pdir):
+        print("No presets directory?  path=",pdir)
+    return pdir
+
+def presetsFilePath(section, nm, suffix=".json"):
+    return os.path.join(PresetsDir(),section, nm+suffix)
+
+def readJsonPath(path):
+    f = open(path)
+    j = json.load(f, object_pairs_hook=collections.OrderedDict)
+    f.close()
+    return j
+
 def MyNUID():
     global MyNuid
     if MyNuid != "":
@@ -46,12 +75,9 @@ def boolValueOfString(v):
     return True if (v!=0 and v!="0" and v!="off" and v!="false" and v!="False") else False
 
 ApiLock = threading.Lock()
+PythonNUID = MyNUID() + "_python"
 
 def palette_api(meth, params=None):
-    # sep = ""
-    # if params != "":
-    #     sep = ","
-    # fullparams = "{ \"nuid\": \""+ MyNUID() + "\"" + sep + params + "}"
     fullparams = "{ " + params + "}"
     r1,err = invoke_jsonrpc("palette.api",meth,fullparams)
     if err != None:
@@ -167,12 +193,6 @@ def copyFile(frompath,topath):
     ffrom.close()
     fto.close()
 
-def readJsonPath(path):
-    f = open(path)
-    j = json.load(f, object_pairs_hook=collections.OrderedDict)
-    f.close()
-    return j
-
 SettingsJson = None
 LocalSettingsJson = None
 
@@ -210,32 +230,10 @@ def PaletteDir():
             exit()
     return paletteDir
 
-def configFilePath(nm):
-    return os.path.join(PaletteDir(), "config", nm)
-
-def localAppDataDir():
-    local = os.environ.get("LOCALAPPDATA")
-    if local == None:
-        print("Expecting LOCALAPPDATA to be set, assuming .")
-        local = "."
-    return os.path.join(local,"Palette")
-
-def PresetsDir():
-    d = localAppDataDir()
-    pdir = os.path.join(d, "presets")
-    if not os.path.isdir(pdir):
-        print("No presets directory?  path=",pdir)
-    return pdir
-
-def localconfigFilePath(nm):
-    return os.path.join(localAppDataDir(), "config", nm)
-
-def presetsFilePath(section, nm, suffix=".json"):
-    return os.path.join(PresetsDir(),section, nm+suffix)
 
 def SendCursorEvent(cid,ddu,x,y,z):
     event = "cursor_" + ddu
-    e = ("{ \"nuid\": \"" + MyNUID() + "\", " + \
+    e = ("{ \"nuid\": \"" + PythonNUID + "\", " + \
         "\"cid\": \"" + str(cid) + "\", " + \
         "\"event\": \"" + event + "\", " + \
         "\"x\": \"%f\", \"y\": \"%f\", \"z\": \"%f\" }")  % (x,y,z)
@@ -243,7 +241,7 @@ def SendCursorEvent(cid,ddu,x,y,z):
 
 def SendSpriteEvent(cid,x,y,z):
     event = "sprite"
-    e = ("{ \"nuid\": \"" + MyNUID() + "\", " + \
+    e = ("{ \"nuid\": \"" + PythonNUID + "\", " + \
         "\"cid\": \"" + str(cid) + "\", " + \
         "\"event\": \"" + event + "\", " + \
         "\"x\": \"%f\", \"y\": \"%f\", \"z\": \"%f\" }")  % (x,y,z)
@@ -260,20 +258,20 @@ def SendMIDIEvent(device,timesofar,msg):
         "\"device\": \"%s\", " + \
         "\"time\": \"%f\", " + \
         "\"bytes\": \"%s\" }") % \
-            (MyNUID(), event, device, timesofar, bytestr)
+            (PythonNUID, event, device, timesofar, bytestr)
 
     palette_publish("palette.event",e)
 
 def SendMIDITimeReset():
     e = ("{ \"nuid\": \"%s\", " + \
         "\"event\": \"midi_time_reset\" }") % \
-            (MyNUID())
+            (PythonNUID)
     palette_publish("palette.event",e)
 
 def SendMIDIAudioReset():
     e = ("{ \"nuid\": \"%s\", " + \
         "\"event\": \"midi_audio_reset\" }") % \
-            (MyNUID())
+            (PythonNUID)
     palette_publish("palette.event",e)
 
 def IgnoreKeyboardInterrupt():
