@@ -1,1 +1,1 @@
-tasklist | grep palette_
+tasklist | findstr palette_

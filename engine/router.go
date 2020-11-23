@@ -22,10 +22,11 @@ const debug bool = false
 
 // Router takes events and routes them
 type Router struct {
-	reactors  map[string]*Reactor
-	inputs    []*osc.Client
-	OSCInput  chan OSCEvent
-	MIDIInput chan portmidi.Event
+	regionLetters string
+	reactors      map[string]*Reactor
+	inputs        []*osc.Client
+	OSCInput      chan OSCEvent
+	MIDIInput     chan portmidi.Event
 
 	killme               bool // true if Router should be stopped
 	lastClick            Clicks
@@ -107,6 +108,8 @@ func recordingsFile(nm string) string {
 func TheRouter() *Router {
 	onceRouter.Do(func() {
 
+		oneRouter.regionLetters = "ABCD"
+
 		LoadParamEnums()
 		LoadParamDefs()
 		LoadEffectsJSON()
@@ -115,19 +118,18 @@ func TheRouter() *Router {
 		oneRouter.regionForMorph = make(map[string]string)
 		oneRouter.regionAssignedToNUID = make(map[string]string)
 
-		freeframeClientA := osc.NewClient("127.0.0.1", 3334)
-		freeframeClientB := osc.NewClient("127.0.0.1", 3335)
-		freeframeClientC := osc.NewClient("127.0.0.1", 3336)
-		freeframeClientD := osc.NewClient("127.0.0.1", 3337)
-
 		oneRouter.resolumeClient = osc.NewClient("127.0.0.1", 7000)
 		oneRouter.guiClient = osc.NewClient("127.0.0.1", 3943)
 		oneRouter.plogueClient = osc.NewClient("127.0.0.1", 3210)
 
-		oneRouter.reactors["A"] = NewReactor("A", 1, freeframeClientA, oneRouter.resolumeClient, oneRouter.guiClient)
-		oneRouter.reactors["B"] = NewReactor("B", 2, freeframeClientB, oneRouter.resolumeClient, oneRouter.guiClient)
-		oneRouter.reactors["C"] = NewReactor("C", 3, freeframeClientC, oneRouter.resolumeClient, oneRouter.guiClient)
-		oneRouter.reactors["D"] = NewReactor("D", 4, freeframeClientD, oneRouter.resolumeClient, oneRouter.guiClient)
+		for i, c := range oneRouter.regionLetters {
+			resolumeLayer := 1 + i
+			resolumePort := 3334 + i
+			ch := string(c)
+			freeframeClient := osc.NewClient("127.0.0.1", resolumePort)
+			oneRouter.reactors[ch] = NewReactor(ch, resolumeLayer, freeframeClient, oneRouter.resolumeClient, oneRouter.guiClient)
+		}
+
 		oneRouter.OSCInput = make(chan OSCEvent)
 		oneRouter.MIDIInput = make(chan portmidi.Event)
 		oneRouter.recordingOn = false
@@ -344,10 +346,12 @@ func (r *Router) HandleSubscribedEventArgs(args map[string]string) error {
 		return err
 	}
 
-	// Ignore anything from myself
-	if nuid == MyNUID() {
-		return nil
-	}
+	/*
+		// Ignore anything from myself
+		if nuid == MyNUID() {
+			return nil
+		}
+	*/
 
 	event, err := needStringArg("event", "HandleSubscribeEvent", args)
 	if err != nil {
@@ -381,6 +385,11 @@ func (r *Router) HandleSubscribedEventArgs(args map[string]string) error {
 
 	case "cursor":
 
+		// If we're publishing cursor events, we ignore ones from ourself
+		if r.publishCursor && nuid == MyNUID() {
+			return nil
+		}
+
 		cid := optionalStringArg("cid", args, "UnspecifiedCID")
 
 		switch subEvent {
@@ -408,7 +417,14 @@ func (r *Router) HandleSubscribedEventArgs(args map[string]string) error {
 			Area:       0.0,
 		}
 
-		r.routeCursorDeviceEvent(ce)
+		if r.publishCursor {
+			err := PublishCursorDeviceEvent(ce)
+			if err != nil {
+				log.Printf("Router.routeCursorDeviceEvent: NATS publishing err=%s\n", err)
+			}
+		}
+
+		reactor.handleCursorDeviceEvent(ce)
 
 	case "sprite":
 
@@ -420,6 +436,11 @@ func (r *Router) HandleSubscribedEventArgs(args map[string]string) error {
 		reactor.generateSprite("dummy", x, y, z)
 
 	case "midi":
+
+		// If we're publishing midi events, we ignore ones from ourself
+		if r.publishMIDI && nuid == MyNUID() {
+			return nil
+		}
 
 		switch subEvent {
 		case "time_reset":
@@ -445,6 +466,26 @@ func (r *Router) HandleSubscribedEventArgs(args map[string]string) error {
 	}
 
 	return nil
+}
+
+func (r *Router) handleCursorDeviceInput(e CursorDeviceEvent) {
+
+	r.eventMutex.Lock()
+	defer r.eventMutex.Unlock()
+
+	if r.publishCursor {
+		err := PublishCursorDeviceEvent(e)
+		if err != nil {
+			log.Printf("Router.routeCursorDeviceEvent: NATS publishing err=%s\n", err)
+		}
+	}
+
+	reactor, ok := r.reactors[e.Region]
+	if !ok {
+		log.Printf("routeCursorDeviceEvent: no region named %s, unable to process ce=%+v\n", e.Region, e)
+		return
+	}
+	reactor.handleCursorDeviceEvent(e)
 }
 
 // makeMIDIEvent xxx
@@ -1069,19 +1110,17 @@ func (r *Router) OLDgetReactorForNUID(api string, args map[string]string) (*Reac
 // It is assumed that we have a mutex on r.regionAssignedToSource
 func (r *Router) availableRegion(source string) string {
 
-	regionLetters := "ABCD"
-
-	nregions := len(regionLetters)
+	nregions := len(r.regionLetters)
 	alreadyAssigned := make([]bool, nregions)
 	for _, v := range r.regionAssignedToNUID {
-		i := strings.Index(regionLetters, v)
+		i := strings.Index(r.regionLetters, v)
 		if i >= 0 {
 			alreadyAssigned[i] = true
 		}
 	}
 	for i, used := range alreadyAssigned {
 		if !used {
-			avail := regionLetters[i : i+1]
+			avail := r.regionLetters[i : i+1]
 			if DebugUtil.Cursor {
 				log.Printf("Router.assignRegion: %s is assigned to source=%s\n", avail, source)
 			}
@@ -1139,27 +1178,6 @@ func (r *Router) getRegionForNUID(nuid string) string {
 	r.regionAssignedToNUID[nuid] = region
 
 	return region
-}
-
-// If we publish a CursorDeviceEvent, we don't handle it locally
-func (r *Router) routeCursorDeviceEvent(e CursorDeviceEvent) {
-
-	r.eventMutex.Lock()
-	defer r.eventMutex.Unlock()
-
-	if r.publishCursor {
-		err := PublishCursorDeviceEvent(e)
-		if err != nil {
-			log.Printf("Router.routeCursorDeviceEvent: NATS publishing err=%s\n", err)
-		}
-	}
-
-	reactor, ok := r.reactors[e.Region]
-	if !ok {
-		log.Printf("routeCursorDeviceEvent: no region named %s, unable to process ce=%+v\n", e.Region, e)
-		return
-	}
-	reactor.handleCursorDeviceEvent(e)
 }
 
 func argAsInt(msg *osc.Message, index int) (i int, err error) {

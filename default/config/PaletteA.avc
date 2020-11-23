@@ -1,0 +1,526 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Composition name="Composition" uniqueId="1499333061498" numDecks="1" currentDeckIndex="0" numLayers="1" numColumns="3" compositionIsRelative="0">
+	<versionInfo name="Resolume Avenue" majorVersion="6" minorVersion="1" microVersion="5" revision="68161"/>
+	<CompositionInfo name="PaletteA" description="" width="1920" height="1080">
+		<DeckInfo name="AV" id="1499337861242" closed="0"/>
+	</CompositionInfo>
+	<Params name="Params">
+		<Param name="Name" default="" value="PaletteA"/>
+		<ParamChoice name="Beat Snap" default="1" value="5" storeChoices="0"/>
+		<Param name="KeyboardShortcutPreset" default="" value="Default"/>
+		<Param name="MidiShortcutPreset" default="" value="Default"/>
+		<Param name="OscShortcutPreset" default="" value="OutputAllMessages"/>
+		<Param name="DmxShortcutPreset" default="" value="Default"/>
+	</Params>
+	<Params name="Dashboard">
+		<ParamRange name="Link 5" default="0" value="0.85599999999999998312"/>
+	</Params>
+	<CompositionView name="CompositionView">
+		<FoldParams name="FoldParams"/>
+	</CompositionView>
+	<AudioTrack name="AudioTrack">
+		<AudioEffectChain name="AudioEffectChain"/>
+	</AudioTrack>
+	<VideoTrack name="VideoTrack">
+		<Params name="Params">
+			<ParamRange storage="3" name="Width" default="1920" value="1920"/>
+			<ParamRange storage="3" name="Height" default="1080" value="1080"/>
+		</Params>
+		<RenderPass name="RenderPassChain" type="RenderPassChain" uniqueId="RenderPassChain" baseType="RenderPassChain">
+			<RenderPass name="Transform" type="TransformEffect" uniqueId="17122039101699797593" baseType="Effect" index="0">
+				<View name="View" folded="1" bCanBeDisabled="0" bCanBeRemoved="0"/>
+			</RenderPass>
+			<RenderPass storage="0" name="BrightnessContrast" type="DryWetEffect" uniqueId="A102" baseType="DryWetEffect" index="1">
+				<RenderPass name="BrightnessContrast" type="BrightnessContrast" uniqueId="A102" baseType="Effect" dwType="Effect"/>
+				<ChoosableMixer name="Mixer">
+					<RenderPass name="Alpha" type="Alpha" uniqueId="A006" baseType="Mixer"/>
+				</ChoosableMixer>
+			</RenderPass>
+		</RenderPass>
+		<ChoosableMixer name="Blend"/>
+	</VideoTrack>
+	<Layer uniqueId="1543118500944" layerIndex="0">
+		<Params name="Params">
+			<Param name="Name" default="Layer #" value="Layer PaletteA"/>
+		</Params>
+		<Params name="Dashboard">
+			<ParamRange name="Link 1" altName="Hue" default="0" value="0"/>
+		</Params>
+		<ClipTransition name="ClipTransition"/>
+		<LayerView name="LayerView">
+			<FoldParams name="FoldParams">
+				<FoldState component="/layerproperties/dashboard/" folded="0"/>
+			</FoldParams>
+		</LayerView>
+		<AudioTrack name="AudioTrack">
+			<AudioEffectChain name="AudioEffectChain"/>
+		</AudioTrack>
+		<VideoTrack name="VideoTrack">
+			<Params name="Params">
+				<ParamRange name="Opacity" default="1" value="0.46808510638297873285"/>
+				<ParamRange storage="3" name="Width" default="1920" value="1920"/>
+				<ParamRange storage="3" name="Height" default="1080" value="1080"/>
+			</Params>
+			<RenderPass name="RenderPassChain" type="RenderPassChain" uniqueId="RenderPassChain" baseType="RenderPassChain">
+				<RenderPass name="Transform" type="TransformEffect" uniqueId="17122039101699797593" baseType="Effect" index="0">
+					<View name="View" bCanBeDisabled="0" bCanBeRemoved="0"/>
+				</RenderPass>
+				<RenderPass storage="0" name="HueRotate" type="DryWetEffect" uniqueId="A128" baseType="DryWetEffect" index="1">
+					<RenderPass name="HueRotate" type="HueRotate" uniqueId="A128" baseType="Effect" dwType="Effect">
+						<Params name="Params">
+							<ParamRange name="Hue Rotate" default="0" value="0">
+								<BehaviourDouble name="BehaviourDouble">
+									<PhaseSourceDashboardLink name="PhaseSourceDashboardLink" canSetLinkedParam="0" linkId="/link1"/>
+								</BehaviourDouble>
+							</ParamRange>
+						</Params>
+					</RenderPass>
+					<ChoosableMixer name="Mixer">
+						<RenderPass name="Alpha" type="Alpha" uniqueId="A006" baseType="Mixer"/>
+					</ChoosableMixer>
+				</RenderPass>
+			</RenderPass>
+			<ChoosableMixer name="Blend">
+				<Params name="Params">
+					<ParamChoice storage="3" name="Blend Mode" default="67464114" value="67464114" storeChoices="0"/>
+				</Params>
+				<RenderPass name="Add" type="Add" uniqueId="A005" baseType="Mixer">
+					<Params name="Params">
+						<ParamRange name="Opacity" default="1" value="0.46808511018753051758"/>
+					</Params>
+				</RenderPass>
+			</ChoosableMixer>
+			<ChoosableMixer name="Transition">
+				<RenderPass name="Alpha" type="Alpha" uniqueId="A006" baseType="Mixer"/>
+			</ChoosableMixer>
+		</VideoTrack>
+	</Layer>
+	<Column uniqueId="1499337861293" columnIndex="0">
+		<Params name="Params">
+			<Param name="Name" default="Column #" value="Palette"/>
+		</Params>
+	</Column>
+	<Column uniqueId="1529895939656" columnIndex="1"/>
+	<Column uniqueId="1571349190088" columnIndex="2"/>
+	<CrossFader name="CrossFader">
+		<AudioTrack name="AudioTrack">
+			<AudioEffectChain name="AudioEffectChain"/>
+		</AudioTrack>
+		<VideoTrack name="VideoTrack">
+			<Params name="Params">
+				<ParamRange storage="3" name="Width" default="1920" value="1920"/>
+				<ParamRange storage="3" name="Height" default="1080" value="1080"/>
+			</Params>
+			<RenderPass name="RenderPassChain" type="RenderPassChain" uniqueId="RenderPassChain" baseType="RenderPassChain">
+				<RenderPass name="Transform" type="TransformEffect" uniqueId="17122039101699797593" baseType="Effect" index="0">
+					<View name="View" bCanBeDisabled="0" bCanBeRemoved="0"/>
+				</RenderPass>
+			</RenderPass>
+			<ChoosableMixer name="Blend">
+				<Params name="Params">
+					<ParamChoice name="Blend Mode" default="0" value="67464115" storeChoices="0"/>
+				</Params>
+				<RenderPass name="Alpha" type="Alpha" uniqueId="A006" baseType="Mixer"/>
+			</ChoosableMixer>
+			<ChoosableMixer name="Blend mode">
+				<Params name="Params">
+					<ParamChoice name="Blend Mode" default="0" value="67464115" storeChoices="0"/>
+				</Params>
+				<RenderPass name="Alpha" type="Alpha" uniqueId="A006" baseType="Mixer"/>
+			</ChoosableMixer>
+		</VideoTrack>
+	</CrossFader>
+	<TempoController name="TempoController">
+		<Params name="Params">
+			<ParamRange name="Tempo" default="120" value="128"/>
+		</Params>
+	</TempoController>
+	<Deck name="Deck" uniqueId="1499337861242" closed="0" numLayersWithContent="1" numColumnsWithContent="1" numLayers="1" numColumns="3" deckIndex="0">
+		<Params name="Params">
+			<Param name="Name" default="empty" value="AV"/>
+		</Params>
+		<ColumnAttributes index="0" name="Palette"/>
+		<Clip name="Clip" uniqueId="1543118500945" layerIndex="0" columnIndex="0">
+			<Params name="Params">
+				<Param storage="3" name="Name" default="SpaceManifold" value="PaletteA"/>
+				<ParamChoice storage="3" name="TransportType" default="0" value="0" storeChoices="0"/>
+			</Params>
+			<Transport name="Transport">
+				<Params name="Params">
+					<ParamRange name="Position" default="0" value="305.1673999999978264">
+						<BehaviourDouble name="BehaviourDouble">
+							<PhaseSourceTimeline name="PhaseSourceTimeline" globalSpeedEnabled="1">
+								<Params name="Params">
+									<ParamRange storage="3" name="Beats" default="8" value="8"/>
+									<ParamRange storage="3" name="BPM" default="96" value="96"/>
+									<ParamRange storage="3" name="Speed" default="1" value="1"/>
+									<ParamChoice storage="3" name="Syncmode" default="0" value="0" storeChoices="0"/>
+									<ParamChoice storage="3" name="PlayDirection" default="1" value="1" storeChoices="0"/>
+									<ParamChoice storage="3" name="PlayMode" default="0" value="0" storeChoices="0"/>
+									<ParamChoice storage="3" name="PlayModeAway" default="0" value="0" storeChoices="0"/>
+									<Param storage="3" name="Finished" default="0" value="0"/>
+								</Params>
+								<ParamBasedDuration name="ParamBasedDuration"/>
+								<Beats_double name="Beats_double" mode="0" numDetectedBeats="-1" numManualBeats="8" detectedTempo="-1" manualTempo="96" detected="0"/>
+							</PhaseSourceTimeline>
+						</BehaviourDouble>
+					</ParamRange>
+				</Params>
+			</Transport>
+			<ClipView name="ClipView">
+				<FoldParams name="FoldParams">
+					<FoldState component="//palette/" folded="0"/>
+					<FoldState component="//spacepalette1/" folded="0"/>
+					<FoldState component="/groupedcomponent/spacepalette1/" folded="1"/>
+				</FoldParams>
+			</ClipView>
+			<VideoTrack name="VideoTrack" manualDuration="0">
+				<Params name="Params">
+					<ParamRange storage="3" name="Width" default="1920" value="1920"/>
+					<ParamRange storage="3" name="Height" default="1080" value="1080"/>
+					<Param storage="3" name="RScale" default="1" value="1"/>
+					<Param storage="3" name="GScale" default="1" value="1"/>
+					<Param storage="3" name="BScale" default="1" value="1"/>
+					<Param storage="3" name="AScale" default="1" value="1"/>
+				</Params>
+				<RenderPass name="RenderPassChain" type="RenderPassChain" uniqueId="RenderPassChain" baseType="RenderPassChain">
+					<RenderPass storage="0" name="Twisted" type="DryWetEffect" uniqueId="A122" baseType="DryWetEffect" index="0">
+						<Params name="Params">
+							<Param name="Bypassed" default="0" value="1"/>
+						</Params>
+						<View name="View" folded="1"/>
+						<RenderPass name="Twisted" type="Twisted" uniqueId="A122" baseType="Effect" dwType="Effect">
+							<Params name="Params">
+								<ParamRange name="Twirl" default="0.60000002384185791016" value="0.59777071009485871489">
+									<ValueRange name="startStop" min="0.24728260869565216185" max="0.68206521739130432369"/>
+									<BehaviourDouble name="BehaviourDouble">
+										<PhaseSourceTimeline name="PhaseSourceTimeline" globalSpeedEnabled="0">
+											<Params name="Params">
+												<ParamRange name="Speed" default="1" value="0.19666276010681138509"/>
+												<ParamChoice name="PlayDirection" default="1" value="0" storeChoices="0"/>
+												<ParamChoice name="PlayMode" default="0" value="1" storeChoices="0"/>
+											</Params>
+											<AdaptiveDuration name="AdaptiveDuration"/>
+											<Beats_double name="Beats_double" mode="0" numDetectedBeats="-1" numManualBeats="4" detectedTempo="-1" manualTempo="120" detected="0"/>
+										</PhaseSourceTimeline>
+									</BehaviourDouble>
+								</ParamRange>
+								<ParamRange name="Radius" default="0.25" value="0.31000000238418579102"/>
+							</Params>
+						</RenderPass>
+						<ChoosableMixer name="Mixer">
+							<RenderPass name="Alpha" type="Alpha" uniqueId="A006" baseType="Mixer"/>
+						</ChoosableMixer>
+					</RenderPass>
+					<RenderPass storage="0" name="HueRotate" type="DryWetEffect" uniqueId="A128" baseType="DryWetEffect" index="1">
+						<Params name="Params">
+							<Param name="Bypassed" default="0" value="1"/>
+						</Params>
+						<View name="View" folded="1"/>
+						<RenderPass name="HueRotate" type="HueRotate" uniqueId="A128" baseType="Effect" dwType="Effect">
+							<Params name="Params">
+								<ParamRange name="Hue Rotate" default="0" value="0.74366653434228746633">
+									<BehaviourDouble name="BehaviourDouble">
+										<PhaseSourceTimeline name="PhaseSourceTimeline" globalSpeedEnabled="0">
+											<Params name="Params">
+												<ParamRange name="Speed" default="1" value="0.10531978589942728175"/>
+											</Params>
+											<AdaptiveDuration name="AdaptiveDuration"/>
+											<Beats_double name="Beats_double" mode="0" numDetectedBeats="-1" numManualBeats="4" detectedTempo="-1" manualTempo="120" detected="0"/>
+										</PhaseSourceTimeline>
+									</BehaviourDouble>
+								</ParamRange>
+								<ParamRange name="Sat. Scale" default="0.5" value="0.81733746130030959787"/>
+							</Params>
+						</RenderPass>
+						<ChoosableMixer name="Mixer">
+							<RenderPass name="Alpha" type="Alpha" uniqueId="A006" baseType="Mixer"/>
+						</ChoosableMixer>
+					</RenderPass>
+					<RenderPass storage="0" name="Kaleidoscope" type="DryWetEffect" uniqueId="sy02" baseType="DryWetEffect" index="2">
+						<Params name="Params">
+							<Param name="Bypassed" default="0" value="1"/>
+							<ParamRange name="Opacity" default="1" value="0.5"/>
+						</Params>
+						<View name="View" folded="1"/>
+						<RenderPass name="Kaleidoscope" type="FFGLEffect" uniqueId="sy02" baseType="Effect" dwType="Effect">
+							<Params name="Params">
+								<ParamRange name="Zoom" default="0.5" value="0.57999998331069946289"/>
+								<ParamRange name="Input Rotation" default="0" value="0.39585145907863727999">
+									<BehaviourDouble name="BehaviourDouble">
+										<PhaseSourceTimeline name="PhaseSourceTimeline" globalSpeedEnabled="0">
+											<Params name="Params">
+												<ParamRange name="Speed" default="1" value="0.056061405203624320448"/>
+											</Params>
+											<AdaptiveDuration name="AdaptiveDuration"/>
+											<Beats_double name="Beats_double" mode="0" numDetectedBeats="-1" numManualBeats="4" detectedTempo="-1" manualTempo="120" detected="0"/>
+										</PhaseSourceTimeline>
+									</BehaviourDouble>
+								</ParamRange>
+							</Params>
+							<FFGLPlugin name="FFGLPlugin" uniqueId="sy02" fileName="C:\Program Files\Resolume Avenue 6\plugins\vfx\SyzGL_Kaleidoscope.dll"/>
+						</RenderPass>
+						<ChoosableMixer name="Mixer">
+							<Params name="Params">
+								<ParamChoice name="Blend Mode" default="67464115" value="67464114" storeChoices="0"/>
+							</Params>
+							<RenderPass name="Add" type="Add" uniqueId="A005" baseType="Mixer">
+								<Params name="Params">
+									<ParamRange name="Opacity" default="1" value="0.5"/>
+								</Params>
+							</RenderPass>
+						</ChoosableMixer>
+					</RenderPass>
+					<RenderPass storage="0" name="Blur" type="DryWetEffect" uniqueId="A140" baseType="DryWetEffect" index="3">
+						<Params name="Params">
+							<Param name="Bypassed" default="0" value="1"/>
+						</Params>
+						<View name="View" folded="1"/>
+						<RenderPass name="Blur" type="Blur" uniqueId="A140" baseType="Effect" dwType="Effect">
+							<Params name="Params">
+								<ParamRange name="Blur X Distance" default="0.050000000745058059692" value="0.10000000149011611938"/>
+								<ParamRange name="Blur Y Distance" default="0.050000000745058059692" value="0.079999998211860656738"/>
+								<ParamRange name="Quality" default="0.15000000596046447754" value="0.28000000119209289551"/>
+								<ParamRange name="Gaussian" default="0.20000000298023223877" value="0.17000000178813934326"/>
+							</Params>
+						</RenderPass>
+						<ChoosableMixer name="Mixer">
+							<RenderPass name="Alpha" type="Alpha" uniqueId="A006" baseType="Mixer"/>
+						</ChoosableMixer>
+					</RenderPass>
+					<RenderPass storage="0" name="MirrorQuad" type="DryWetEffect" uniqueId="A180" baseType="DryWetEffect" index="4">
+						<Params name="Params">
+							<Param name="Bypassed" default="0" value="1"/>
+						</Params>
+						<View name="View" folded="1"/>
+						<RenderPass name="MirrorQuad" type="MirrorQuad" uniqueId="A180" baseType="Effect" dwType="Effect"/>
+						<ChoosableMixer name="Mixer">
+							<RenderPass name="Alpha" type="Alpha" uniqueId="A006" baseType="Mixer"/>
+						</ChoosableMixer>
+					</RenderPass>
+					<RenderPass storage="0" name="Fragment" type="DryWetEffect" uniqueId="sy08" baseType="DryWetEffect" index="5">
+						<Params name="Params">
+							<Param name="Bypassed" default="0" value="1"/>
+						</Params>
+						<View name="View" folded="1"/>
+						<RenderPass name="Fragment" type="FFGLEffect" uniqueId="sy08" baseType="Effect" dwType="Effect">
+							<Params name="Params">
+								<ParamRange name="Distance" default="0.33000001311302185059" value="0.019662921348314606196">
+									<ValueRange name="startStop" min="0" max="0.064606741573033713011"/>
+									<BehaviourDouble name="BehaviourDouble">
+										<PhaseSourceTimeline name="PhaseSourceTimeline" globalSpeedEnabled="0">
+											<Params name="Params">
+												<ParamRange name="Speed" default="1" value="1.0000000773490644868"/>
+												<ParamChoice name="PlayDirection" default="1" value="2" storeChoices="0"/>
+											</Params>
+											<AdaptiveDuration name="AdaptiveDuration"/>
+											<Beats_double name="Beats_double" mode="0" numDetectedBeats="-1" numManualBeats="4" detectedTempo="-1" manualTempo="120" detected="0"/>
+										</PhaseSourceTimeline>
+									</BehaviourDouble>
+								</ParamRange>
+								<ParamRange name="Rotation" default="0" value="0">
+									<BehaviourDouble name="BehaviourDouble">
+										<PhaseSourceTimeline name="PhaseSourceTimeline" globalSpeedEnabled="0">
+											<Params name="Params">
+												<ParamChoice name="PlayDirection" default="1" value="2" storeChoices="0"/>
+											</Params>
+											<AdaptiveDuration name="AdaptiveDuration"/>
+											<Beats_double name="Beats_double" mode="0" numDetectedBeats="-1" numManualBeats="4" detectedTempo="-1" manualTempo="120" detected="0"/>
+										</PhaseSourceTimeline>
+									</BehaviourDouble>
+								</ParamRange>
+								<ParamRange name="FragScale" default="0.5" value="1"/>
+								<ParamRange name="CompositeOpacity" default="0.5" value="0.70999999999999996447"/>
+								<Param name="Black BG" default="1" value="0"/>
+							</Params>
+							<FFGLPlugin name="FFGLPlugin" uniqueId="sy08" fileName="C:\Program Files\Resolume Avenue 6\plugins\vfx\SyzGL_Fragment.dll"/>
+						</RenderPass>
+						<ChoosableMixer name="Mixer">
+							<Params name="Params">
+								<ParamChoice name="Blend Mode" default="67464115" value="67464114" storeChoices="0"/>
+							</Params>
+							<RenderPass name="Add" type="Add" uniqueId="A005" baseType="Mixer"/>
+						</ChoosableMixer>
+					</RenderPass>
+					<RenderPass storage="0" name="Posterize" type="DryWetEffect" uniqueId="A109" baseType="DryWetEffect" index="6">
+						<Params name="Params">
+							<Param name="Bypassed" default="0" value="1"/>
+						</Params>
+						<View name="View" folded="1"/>
+						<RenderPass name="Posterize" type="Posterize" uniqueId="A109" baseType="Effect" dwType="Effect">
+							<Params name="Params">
+								<ParamRange name="Posterize" default="0.5" value="0.18999999761581420898"/>
+							</Params>
+						</RenderPass>
+						<ChoosableMixer name="Mixer">
+							<RenderPass name="Alpha" type="Alpha" uniqueId="A006" baseType="Mixer"/>
+						</ChoosableMixer>
+					</RenderPass>
+					<RenderPass storage="0" name="Displace" type="DryWetEffect" uniqueId="A131" baseType="DryWetEffect" index="7">
+						<Params name="Params">
+							<Param name="Bypassed" default="0" value="1"/>
+						</Params>
+						<View name="View" folded="1"/>
+						<RenderPass name="Displace" type="Displace" uniqueId="A131" baseType="Effect" dwType="Effect">
+							<Params name="Params">
+								<ParamRange name="X factor" default="0.5" value="0.75999999046325683594"/>
+								<ParamRange name="Y factor" default="0.5" value="0.23999999463558197021"/>
+							</Params>
+						</RenderPass>
+						<ChoosableMixer name="Mixer">
+							<RenderPass name="Alpha" type="Alpha" uniqueId="A006" baseType="Mixer"/>
+						</ChoosableMixer>
+					</RenderPass>
+					<RenderPass storage="0" name="Iterate" type="DryWetEffect" uniqueId="sy13" baseType="DryWetEffect" index="8">
+						<Params name="Params">
+							<Param name="Bypassed" default="0" value="1"/>
+						</Params>
+						<View name="View" folded="1"/>
+						<RenderPass name="Iterate" type="FFGLEffect" uniqueId="sy13" baseType="Effect" dwType="Effect">
+							<Params name="Params">
+								<ParamRange name="Iterations" default="0.30000001192092895508" value="0.33333333300000000943"/>
+								<ParamRange name="StartOpacity" default="1" value="0.24742268000000000594"/>
+								<ParamRange name="TranslateZ" default="0.5" value="0.81099656399999997536"/>
+								<ParamRange name="RotateX " default="0.5" value="0.34020618600000002152"/>
+								<ParamRange name="RotateY " default="0.5" value="0.58762886599999997195"/>
+								<ParamRange name="RotateZ " default="0.5" value="0.59793814400000000475"/>
+								<ParamRange name="DOpacityChange" default="0.5" value="0.42955326500000001744"/>
+								<ParamRange name="DTranslateZ" default="0.5" value="0.48797250899999999874"/>
+								<ParamRange name="DRotateX " default="0.5" value="0.25773195900000001046"/>
+								<ParamRange name="DRotateY " default="0.5" value="0.61512027499999999414"/>
+								<ParamRange name="DRotateZ " default="0.5" value="0.36426116800000002405"/>
+								<ParamRange name="BlendMode" default="0" value="0.2508591070000000256"/>
+								<ParamRange name="GRotateX" default="0.5" value="0.39862543000000000282"/>
+								<ParamRange name="GRotateY" default="0.5" value="0.44329896899999998716"/>
+								<ParamRange name="GRotateZ" default="0.5" value="0.47114583955056010822">
+									<ValueRange name="startStop" min="0.35393258426966289765" max="0.64325842696629209616"/>
+									<BehaviourDouble name="BehaviourDouble">
+										<PhaseSourceTimeline name="PhaseSourceTimeline" globalSpeedEnabled="0">
+											<AdaptiveDuration name="AdaptiveDuration"/>
+											<Beats_double name="Beats_double" mode="0" numDetectedBeats="-1" numManualBeats="4" detectedTempo="-1" manualTempo="120" detected="0"/>
+										</PhaseSourceTimeline>
+									</BehaviourDouble>
+								</ParamRange>
+							</Params>
+							<FFGLPlugin name="FFGLPlugin" uniqueId="sy13" fileName="C:\Program Files\Resolume Avenue 6\plugins\vfx\SyzGL_Iterate.dll"/>
+						</RenderPass>
+						<ChoosableMixer name="Mixer">
+							<Params name="Params">
+								<ParamChoice name="Blend Mode" default="67464115" value="67464114" storeChoices="0"/>
+							</Params>
+							<RenderPass name="Add" type="Add" uniqueId="A005" baseType="Mixer"/>
+						</ChoosableMixer>
+					</RenderPass>
+					<RenderPass storage="0" name="Edge Detection" type="DryWetEffect" uniqueId="MEDG" baseType="DryWetEffect" index="9">
+						<View name="View" folded="1"/>
+						<RenderPass name="Edge Detection" type="FFGLEffect" uniqueId="MEDG" baseType="Effect" dwType="Effect">
+							<Params name="Params">
+								<ParamRange name="Mode" default="1" value="0.92000001668930053711"/>
+								<ParamRange name="Multiplier" default="0.20000000298023223877" value="0.23999999463558197021"/>
+							</Params>
+							<FFGLPlugin name="FFGLPlugin" uniqueId="MEDG" fileName="C:\Program Files\Resolume Avenue 6\plugins\vfx\FFGLEdgeDetection.dll"/>
+						</RenderPass>
+						<ChoosableMixer name="Mixer">
+							<RenderPass name="Alpha" type="Alpha" uniqueId="A006" baseType="Mixer">
+								<Params name="Params">
+									<ParamRange name="Opacity" default="1" value="0.1015625"/>
+								</Params>
+							</RenderPass>
+						</ChoosableMixer>
+					</RenderPass>
+					<RenderPass storage="0" name="Kaleidoscope" type="DryWetEffect" uniqueId="sy02" baseType="DryWetEffect" index="10">
+						<Params name="Params">
+							<Param name="Bypassed" default="0" value="1"/>
+						</Params>
+						<View name="View" folded="1"/>
+						<RenderPass name="Kaleidoscope" type="FFGLEffect" uniqueId="sy02" baseType="Effect" dwType="Effect">
+							<Params name="Params">
+								<ParamRange name="Angles" default="0.30000001192092895508" value="0.63999998569488525391"/>
+								<ParamRange name="Zoom" default="0.5" value="1"/>
+								<ParamRange name="Input Rotation" default="0" value="0.43739492665122065018">
+									<BehaviourDouble name="BehaviourDouble">
+										<PhaseSourceTimeline name="PhaseSourceTimeline" globalSpeedEnabled="0">
+											<Params name="Params">
+												<ParamRange name="Speed" default="1" value="0.0619448877972493539"/>
+											</Params>
+											<AdaptiveDuration name="AdaptiveDuration"/>
+											<Beats_double name="Beats_double" mode="0" numDetectedBeats="-1" numManualBeats="4" detectedTempo="-1" manualTempo="120" detected="0"/>
+										</PhaseSourceTimeline>
+									</BehaviourDouble>
+								</ParamRange>
+							</Params>
+							<FFGLPlugin name="FFGLPlugin" uniqueId="sy02" fileName="C:\Program Files\Resolume Avenue 6\plugins\vfx\SyzGL_Kaleidoscope.dll"/>
+						</RenderPass>
+						<ChoosableMixer name="Mixer">
+							<Params name="Params">
+								<ParamChoice name="Blend Mode" default="67464115" value="67464114" storeChoices="0"/>
+							</Params>
+							<RenderPass name="Add" type="Add" uniqueId="A005" baseType="Mixer"/>
+						</ChoosableMixer>
+					</RenderPass>
+					<RenderPass storage="0" name="Mirror" type="DryWetEffect" uniqueId="A108" baseType="DryWetEffect" index="11">
+						<Params name="Params">
+							<Param name="Bypassed" default="0" value="1"/>
+							<ParamRange name="Opacity" default="1" value="0.5"/>
+						</Params>
+						<View name="View" folded="1"/>
+						<RenderPass name="Mirror" type="Mirror" uniqueId="A108" baseType="Effect" dwType="Effect">
+							<Params name="Params">
+								<ParamRange name="X" default="0" value="0.5"/>
+								<ParamRange name="Y" default="0" value="0.5"/>
+								<ParamRange name="In / Out" default="1" value="0.74156900744969600492">
+									<BehaviourDouble name="BehaviourDouble">
+										<PhaseSourceTimeline name="PhaseSourceTimeline" globalSpeedEnabled="0">
+											<Params name="Params">
+												<ParamRange name="Speed" default="1" value="0.52988971346014612784"/>
+											</Params>
+											<AdaptiveDuration name="AdaptiveDuration"/>
+											<Beats_double name="Beats_double" mode="0" numDetectedBeats="-1" numManualBeats="4" detectedTempo="-1" manualTempo="120" detected="0"/>
+										</PhaseSourceTimeline>
+									</BehaviourDouble>
+								</ParamRange>
+							</Params>
+						</RenderPass>
+						<ChoosableMixer name="Mixer">
+							<Params name="Params">
+								<ParamChoice name="Blend Mode" default="67464115" value="67464114" storeChoices="0"/>
+							</Params>
+							<RenderPass name="Add" type="Add" uniqueId="A005" baseType="Mixer">
+								<Params name="Params">
+									<ParamRange name="Opacity" default="1" value="0.5"/>
+								</Params>
+							</RenderPass>
+						</ChoosableMixer>
+					</RenderPass>
+					<RenderPass storage="0" name="Trails" type="DryWetEffect" uniqueId="A111" baseType="DryWetEffect" index="12">
+						<RenderPass name="Trails" type="Trails" uniqueId="A111" baseType="Effect" dwType="Effect">
+							<Params name="Params">
+								<ParamRange name="Feedback" default="0.89999997615814208984" value="0.75"/>
+							</Params>
+						</RenderPass>
+						<ChoosableMixer name="Mixer">
+							<RenderPass name="Alpha" type="Alpha" uniqueId="A006" baseType="Mixer">
+								<Params name="Params">
+									<ParamRange name="Opacity" default="1" value="0.99356913183279749191"/>
+								</Params>
+							</RenderPass>
+						</ChoosableMixer>
+					</RenderPass>
+					<RenderPass storage="0" name="Transform" type="TransformEffect" uniqueId="17122039101699797593" baseType="Effect" index="13">
+						<View name="View" folded="1" bCanBeDisabled="0" bCanBeRemoved="0"/>
+					</RenderPass>
+				</RenderPass>
+				<ChoosableMixer name="Blend"/>
+				<PrimarySource>
+					<VideoSource storage="0" name="VideoSource" width="1920" height="1080" type="GeneratorVideoSource">
+						<RenderPass name="RenderPassChain" type="RenderPassChain" uniqueId="RenderPassChain" baseType="RenderPassChain"/>
+						<RenderPass name="Palette" type="FFGLGenerator" uniqueId="VZPM" baseType="Generator">
+							<FFGLPlugin name="FFGLPlugin" uniqueId="VZPM" fileName="C:\Program Files\Palette\ffgl6\Palette.dll"/>
+						</RenderPass>
+					</VideoSource>
+				</PrimarySource>
+			</VideoTrack>
+		</Clip>
+	</Deck>
+</Composition>
+
