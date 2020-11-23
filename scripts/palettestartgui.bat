@@ -1,11 +1,11 @@
 @echo off
 
 rem Provide an argument of "full" to 
-if "%1" == "" goto remote
+if "%1" == "" goto defaultgui
 set guitype=%1
 goto keepgoing
-:remote
-set guitype=remote
+:defaultgui
+set guitype=viz
 :keepgoing
 
 set logdir=%LOCALAPPDATA%\Palette\logs

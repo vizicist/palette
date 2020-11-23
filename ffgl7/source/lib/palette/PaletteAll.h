@@ -1,0 +1,16 @@
+
+typedef long long int64_t;
+typedef unsigned long long uint64_t;
+#define PALETTE_HACK
+
+#include "NosuchUtil.h"
+#include "NosuchException.h"
+#include "NosuchGraphics.h"
+#include "PaletteUtil.h"
+#include "PaletteHost.h"
+#include "Params.h"
+#include "Region.h"
+#include "Palette.h"
+#include "Sprite.h"
+#include "TrackedCursor.h"
+#include "Scheduler.h"
