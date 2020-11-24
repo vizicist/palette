@@ -223,7 +223,10 @@ void Sprite::drawAt(PaletteHost* app, double x,double y, double scalex, double s
 		NosuchDebug("Sprite.drawAt: calling drawShape cid=%s x=%.6f y=%.6f", this->state.cid.c_str(), this->state.pos.x, this->state.pos.y);
 	}
 	app->rotate(degrees);
-	drawShape(app,xdir,ydir);
+
+	app->drawshape();
+	// drawShape(app,xdir,ydir);
+
 	app->popMatrix();
 }
 
@@ -540,7 +543,7 @@ void SpriteSquare::drawShape(PaletteHost* app, int xdir, int ydir) {
 	double x3 = halfw + noise_x3 * halfw;
 	double y3 = -halfh + noise_y3 * halfh;
 	NosuchDebug(2,"drawing Square halfw=%.3f halfh=%.3f",halfw,halfh);
-	app->quad( x0,y0, x1,y1, x2,y2, x3, y3);
+	app->drawQuad( x0,y0, x1,y1, x2,y2, x3, y3);
 }
 
 SpriteTriangle::SpriteTriangle() {
@@ -567,7 +570,7 @@ void SpriteTriangle::drawShape(PaletteHost* app, int xdir, int ydir) {
 	NosuchVector p3 = p1;
 	p3 = p3.rotate(Sprite::degree2radian(-120));
 	
-	app->triangle(p1.x+noise_x0*sz,p1.y+noise_y0*sz,
+	app->drawTriangle(p1.x+noise_x0*sz,p1.y+noise_y0*sz,
 			     p2.x+noise_x1*sz,p2.y+noise_y1*sz,
 			     p3.x+noise_x2*sz,p3.y+noise_y2*sz);
 }
@@ -591,7 +594,7 @@ void SpriteLine::drawShape(PaletteHost* app, int xdir, int ydir) {
 	double y0 =  0.0f;
 	double x1 =  0.2f;
 	double y1 =  0.0f;
-	app->line(x0 + noise_x0, y0 + noise_y0, x1 + noise_x1, y1 + noise_y1);
+	app->drawLine(x0 + noise_x0, y0 + noise_y0, x1 + noise_x1, y1 + noise_y1);
 }
 
 SpriteCircle::SpriteCircle() {
@@ -599,7 +602,7 @@ SpriteCircle::SpriteCircle() {
 
 void SpriteCircle::drawShape(PaletteHost* app, int xdir, int ydir) {
 	// NosuchDebug("SpriteCircle drawing");
-	app->ellipse(0, 0, 0.2f, 0.2f);
+	app->drawEllipse(0, 0, 0.2f, 0.2f);
 }
 
 SpriteArc::SpriteArc() {
@@ -607,7 +610,7 @@ SpriteArc::SpriteArc() {
 
 void SpriteArc::drawShape(PaletteHost* app, int xdir, int ydir) {
 	// NosuchDebug("SpriteCircle drawing");
-	app->ellipse(0, 0, 0.2f, 0.2f, 0.0, 180.0);
+	app->drawEllipse(0, 0, 0.2f, 0.2f, 0.0, 180.0);
 }
 
 static void

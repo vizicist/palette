@@ -1,3 +1,4 @@
+#define _CRT_SECURE_NO_WARNINGS
 //
 // Copyright (c) 2004 - InfoMus Lab - DIST - University of Genova
 //

@@ -113,6 +113,7 @@ public:
 	
 	DWORD PaletteHostProcessOpenGL(ProcessOpenGLStruct *pGL);
 	DWORD PaletteHostPoke();
+	DWORD NewProcessOpenGL();
 
 	FFResult InitGL( const FFGLViewportStruct* vp );
 	FFResult DeInitGL();
@@ -160,17 +161,19 @@ public:
 	void noStroke();
 	void strokeWeight(double w);
 	void background(int);
-	void rect(double x, double y, double width, double height);
 	void pushMatrix();
 	void popMatrix();
 	void translate(double x, double y);
 	void scale(double x, double y);
 	void rotate(double degrees);
-	void line(double x0, double y0, double x1, double y1);
-	void triangle(double x0, double y0, double x1, double y1, double x2, double y2);
-	void quad(double x0, double y0, double x1, double y1, double x2, double y2, double x3, double y3);
-	void ellipse(double x0, double y0, double w, double h, double fromang=0.0f, double toang=360.0f);
-	void polygon(PointMem* p, int npoints);
+
+	void drawLine(double x0, double y0, double x1, double y1);
+	void drawTriangle(double x0, double y0, double x1, double y1, double x2, double y2);
+	void drawQuad(double x0, double y0, double x1, double y1, double x2, double y2, double x3, double y3);
+	void drawEllipse(double x0, double y0, double w, double h, double fromang=0.0f, double toang=360.0f);
+	void drawPolygon(PointMem* p, int npoints);
+
+	void drawshape();
 
 	///////////////////////////////////////////////////
 	// Factory method
@@ -188,8 +191,6 @@ public:
 
 	static void ErrorPopup(const char* msg);
 	void RunEveryMillisecondOrSo();
-
-	static int PortOffset;  // applied to http and osc ports
 
 	// NEW STUFF
 
@@ -239,7 +240,9 @@ protected:
 	static bool StaticInitialized;
 	static void StaticInitialization();
 
-	void test_draw();
+	std::string m_oscport;
+	void SetOscPort( std::string oscport );
+	std::string GetOscPort( );
 
 private:
 	Timestamp _time0;
