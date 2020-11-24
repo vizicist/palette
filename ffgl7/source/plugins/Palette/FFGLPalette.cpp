@@ -5,6 +5,7 @@ using namespace ffglex;
 
 enum ParamType : FFUInt32
 {
+#if 0
 	PT_RED1,
 	PT_GREEN1,
 	PT_BLUE1,
@@ -14,6 +15,7 @@ enum ParamType : FFUInt32
 	PT_SAT2,
 	PT_BRI2,
 	PT_ALP2,
+#endif
 
 	PT_TJT,
 };
@@ -94,6 +96,7 @@ FFGLPalette::FFGLPalette(std::string configfile) :
 
 	hsba2.hue = 0.5f;
 	// Parameters
+#if 0
 	SetParamInfof( PT_RED1, "Red 1", FF_TYPE_RED );
 	SetParamInfof( PT_GREEN1, "Green 1", FF_TYPE_GREEN );
 	SetParamInfof( PT_BLUE1, "Blue 1", FF_TYPE_BLUE );
@@ -103,6 +106,7 @@ FFGLPalette::FFGLPalette(std::string configfile) :
 	SetParamInfof( PT_SAT2, "Saturation 2", FF_TYPE_SATURATION );
 	SetParamInfof( PT_BRI2, "Brightness 2", FF_TYPE_BRIGHTNESS );
 	SetParamInfof( PT_ALP2, "Alpha 2", FF_TYPE_ALPHA );
+#endif
 
 	SetParamInfof( PT_TJT, "OSC Port", FF_TYPE_TEXT );
 
@@ -117,6 +121,11 @@ FFResult FFGLPalette::InitGL( const FFGLViewportStruct* vp )
 		return FF_FAIL;
 	}
 	if( !quad.Initialise() )
+	{
+		DeInitGL();
+		return FF_FAIL;
+	}
+	if( !triangle.Initialise() )
 	{
 		DeInitGL();
 		return FF_FAIL;
@@ -155,12 +164,20 @@ FFResult FFGLPalette::ProcessOpenGL( ProcessOpenGLStruct* pGL )
 #endif
 
 	float rgba2[ 4 ];
-	float hue2 = ( hsba2.hue == 1.0f ) ? 0.0f : hsba2.hue;
+	// float hue2 = ( hsba2.hue == 1.0f ) ? 0.0f : hsba2.hue;
+	float hue2 = 0.5f;
+	hsba2.sat  = 1.0f;
+	hsba2.bri  = 1.0f;
+	hsba2.alpha  = 1.0f;
 	HSVtoRGB( hue2, hsba2.sat, hsba2.bri, rgba2[ 0 ], rgba2[ 1 ], rgba2[ 2 ] );
 	rgba2[ 3 ] = hsba2.alpha;
 
 	//FFGL requires us to leave the context in a default state on return, so use this scoped binding to help us do that.
 	ScopedShaderBinding shaderBinding( shader.GetGLID() );
+	rgba1.red = 1.0f;
+	rgba1.green = 1.0f;
+	rgba1.blue = 0.0f;
+	rgba1.alpha = 1.0f;
 	glUniform4f( rgbLeftLocation, rgba1.red, rgba1.green, rgba1.blue, rgba1.alpha );
 	glUniform4f( rgbRightLocation, rgba2[ 0 ], rgba2[ 1 ], rgba2[ 2 ], rgba2[ 3 ] );
 
@@ -176,7 +193,7 @@ FFResult FFGLPalette::ProcessOpenGL( ProcessOpenGLStruct* pGL )
 	xtranslate = 0.0f;
 	ytranslate = 0.0f;
 	shader.Set( "vTranslate", xtranslate, ytranslate );
-	quad.Draw();
+	triangle.Draw();
 
 	return FF_SUCCESS;
 #endif
@@ -185,6 +202,7 @@ FFResult FFGLPalette::DeInitGL()
 {
 	shader.FreeGLResources();
 	quad.Release();
+	triangle.Release();
 	rgbLeftLocation  = -1;
 	rgbRightLocation = -1;
 
@@ -205,6 +223,7 @@ char* FFGLPalette::GetTextParameter( unsigned int index )
 
 FFResult FFGLPalette::SetFloatParameter( unsigned int dwIndex, float value )
 {
+#if 0
 	switch( dwIndex )
 	{
 	case PT_RED1:
@@ -236,12 +255,14 @@ FFResult FFGLPalette::SetFloatParameter( unsigned int dwIndex, float value )
 	default:
 		return FF_FAIL;
 	}
+#endif
 
 	return FF_SUCCESS;
 }
 
 float FFGLPalette::GetFloatParameter( unsigned int index )
 {
+#if 0
 	switch( index )
 	{
 	case PT_RED1:
@@ -262,6 +283,7 @@ float FFGLPalette::GetFloatParameter( unsigned int index )
 	case PT_ALP2:
 		return hsba2.alpha;
 	}
+#endif
 
 	return 0.0f;
 }
