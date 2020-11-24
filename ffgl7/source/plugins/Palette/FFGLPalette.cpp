@@ -5,18 +5,6 @@ using namespace ffglex;
 
 enum ParamType : FFUInt32
 {
-#if 0
-	PT_RED1,
-	PT_GREEN1,
-	PT_BLUE1,
-	PT_ALP1,
-
-	PT_HUE2,
-	PT_SAT2,
-	PT_BRI2,
-	PT_ALP2,
-#endif
-
 	PT_TJT,
 };
 
@@ -95,19 +83,8 @@ FFGLPalette::FFGLPalette(std::string configfile) :
 	SetMaxInputs( 0 );
 
 	hsba2.hue = 0.5f;
+
 	// Parameters
-#if 0
-	SetParamInfof( PT_RED1, "Red 1", FF_TYPE_RED );
-	SetParamInfof( PT_GREEN1, "Green 1", FF_TYPE_GREEN );
-	SetParamInfof( PT_BLUE1, "Blue 1", FF_TYPE_BLUE );
-	SetParamInfof( PT_ALP1, "Alpha 1", FF_TYPE_ALPHA );
-
-	SetParamInfof( PT_HUE2, "Hue 2", FF_TYPE_HUE );
-	SetParamInfof( PT_SAT2, "Saturation 2", FF_TYPE_SATURATION );
-	SetParamInfof( PT_BRI2, "Brightness 2", FF_TYPE_BRIGHTNESS );
-	SetParamInfof( PT_ALP2, "Alpha 2", FF_TYPE_ALPHA );
-#endif
-
 	SetParamInfof( PT_TJT, "OSC Port", FF_TYPE_TEXT );
 
 	FFGLLog::LogToHost( "Created Palette" );
@@ -150,21 +127,19 @@ FFResult FFGLPalette::ProcessOpenGL( ProcessOpenGLStruct* pGL )
 		PaletteFFThreadNameSet = true;
 	}
 
-#define REALPALETTE 0
-#if REALPALETTE
-	return PaletteHostProcessOpenGL( pGL );
-#else
+	DWORD f = PaletteHostProcessOpenGL( pGL );
+	if( f == FF_FAIL )
+	{
+		return f;
+	}
 
-#if 0
 	const char* port = GetTextParameter( PT_TJT );
 	if( port != NULL && *port != 0 )
 	{
-		NosuchDebug( "port=%s\n", port );
+		// NosuchDebug( "port=%s\n", port );
 	}
-#endif
 
 	float rgba2[ 4 ];
-	// float hue2 = ( hsba2.hue == 1.0f ) ? 0.0f : hsba2.hue;
 	float hue2 = 0.5f;
 	hsba2.sat  = 1.0f;
 	hsba2.bri  = 1.0f;
@@ -196,7 +171,6 @@ FFResult FFGLPalette::ProcessOpenGL( ProcessOpenGLStruct* pGL )
 	triangle.Draw();
 
 	return FF_SUCCESS;
-#endif
 }
 FFResult FFGLPalette::DeInitGL()
 {
@@ -212,78 +186,35 @@ FFResult FFGLPalette::DeInitGL()
 FFResult FFGLPalette::SetTextParameter( unsigned int index, const char* value )
 {
 	NosuchDebug( "SetTextParameter index=%d value=%s\n", index, value );
+	// There's only one, this will eventually be a switch
+	oscport = std::string( value );
 	return FF_SUCCESS;
 }
 
 char* FFGLPalette::GetTextParameter( unsigned int index )
 {
-	static const char* tjt = "FOOBAR";
-	return (char*)tjt;
+	// There's only one, this will eventually be a switch
+	return (char*)(oscport.c_str());
 }
 
 FFResult FFGLPalette::SetFloatParameter( unsigned int dwIndex, float value )
 {
-#if 0
 	switch( dwIndex )
 	{
-	case PT_RED1:
-		rgba1.red = value;
-		break;
-	case PT_GREEN1:
-		rgba1.green = value;
-		break;
-	case PT_BLUE1:
-		rgba1.blue = value;
-		break;
-	case PT_ALP1:
-		rgba1.alpha = value;
-		break;
-
-	case PT_HUE2:
-		hsba2.hue = value;
-		break;
-	case PT_SAT2:
-		hsba2.sat = value;
-		break;
-	case PT_BRI2:
-		hsba2.bri = value;
-		break;
-	case PT_ALP2:
-		hsba2.alpha = value;
-		break;
-
+	// There would be some cases here, if we had float parameters
 	default:
 		return FF_FAIL;
 	}
-#endif
 
 	return FF_SUCCESS;
 }
 
 float FFGLPalette::GetFloatParameter( unsigned int index )
 {
-#if 0
 	switch( index )
 	{
-	case PT_RED1:
-		return rgba1.red;
-	case PT_GREEN1:
-		return rgba1.green;
-	case PT_BLUE1:
-		return rgba1.blue;
-	case PT_ALP1:
-		return rgba1.alpha;
-
-	case PT_HUE2:
-		return hsba2.hue;
-	case PT_SAT2:
-		return hsba2.sat;
-	case PT_BRI2:
-		return hsba2.bri;
-	case PT_ALP2:
-		return hsba2.alpha;
+	// There would be some cases here, if we had float parameters
 	}
-#endif
 
 	return 0.0f;
 }
