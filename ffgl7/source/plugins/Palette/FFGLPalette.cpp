@@ -5,7 +5,7 @@ using namespace ffglex;
 
 enum ParamType : FFUInt32
 {
-	PT_TJT,
+	PT_OSC_PORT,
 };
 
 static CFFGLPluginInfo PluginInfo(
@@ -54,16 +54,7 @@ void main()
 
 std::string ffgl_name()
 {
-	static std::string nm;
-	if( PaletteHost::PortOffset == 0 )
-	{
-		nm = "Palette";
-	}
-	else
-	{
-		nm = NosuchSnprintf( "Palette_%d", PaletteHost::PortOffset );
-	}
-	return nm.c_str();
+	return "Palette";
 }
 
 CFFGLPluginInfo& ffgl_plugininfo()
@@ -74,45 +65,19 @@ CFFGLPluginInfo& ffgl_plugininfo()
 
 FFGLPalette::FFGLPalette(std::string configfile) :
 	CFFGLPlugin(),
-	PaletteHost( configfile ),
-	rgbLeftLocation( -1 ),
-	rgbRightLocation( -1 )
+	PaletteHost( configfile )
 {
 	// Input properties
 	SetMinInputs( 0 );
 	SetMaxInputs( 0 );
 
-	hsba2.hue = 0.5f;
-
 	// Parameters
-	SetParamInfof( PT_TJT, "OSC Port", FF_TYPE_TEXT );
+	SetParamInfof( PT_OSC_PORT, "OSC Port", FF_TYPE_TEXT );
 
 	FFGLLog::LogToHost( "Created Palette" );
 }
 FFResult FFGLPalette::InitGL( const FFGLViewportStruct* vp )
 {
-	NosuchDebug( "HI From FFGLPalette.cpp");
-	if( !shader.Compile( vertexShaderCode, fragmentShaderCode ) )
-	{
-		DeInitGL();
-		return FF_FAIL;
-	}
-	if( !quad.Initialise() )
-	{
-		DeInitGL();
-		return FF_FAIL;
-	}
-	if( !triangle.Initialise() )
-	{
-		DeInitGL();
-		return FF_FAIL;
-	}
-
-	//FFGL requires us to leave the context in a default state on return, so use this scoped binding to help us do that.
-	ScopedShaderBinding shaderBinding( shader.GetGLID() );
-	rgbLeftLocation  = shader.FindUniform( "RGBALeft" );
-	rgbRightLocation = shader.FindUniform( "RGBARight" );
-
 	PaletteHost::InitGL( vp );
 
 	//Use base-class init as success result so that it retains the viewport.
@@ -128,96 +93,45 @@ FFResult FFGLPalette::ProcessOpenGL( ProcessOpenGLStruct* pGL )
 		NosuchDebugSetThreadName( pthread_self().p, "ProcessOpenGL" );
 		PaletteFFThreadNameSet = true;
 	}
-
-	DWORD f = PaletteHostProcessOpenGL( pGL );
-	if( f == FF_FAIL )
-	{
-		return f;
-	}
-
-	const char* port = GetTextParameter( PT_TJT );
-	if( port != NULL && *port != 0 )
-	{
-		// NosuchDebug( "port=%s\n", port );
-	}
-
-	float rgba2[ 4 ];
-	float hue2 = 0.5f;
-	hsba2.sat  = 1.0f;
-	hsba2.bri  = 1.0f;
-	hsba2.alpha  = 1.0f;
-	HSVtoRGB( hue2, hsba2.sat, hsba2.bri, rgba2[ 0 ], rgba2[ 1 ], rgba2[ 2 ] );
-	rgba2[ 3 ] = hsba2.alpha;
-
-	//FFGL requires us to leave the context in a default state on return, so use this scoped binding to help us do that.
-	ScopedShaderBinding shaderBinding( shader.GetGLID() );
-	rgba1.red = 1.0f;
-	rgba1.green = 1.0f;
-	rgba1.blue = 0.0f;
-	rgba1.alpha = 1.0f;
-	glUniform4f( rgbLeftLocation, rgba1.red, rgba1.green, rgba1.blue, rgba1.alpha );
-	glUniform4f( rgbRightLocation, rgba2[ 0 ], rgba2[ 1 ], rgba2[ 2 ], rgba2[ 3 ] );
-
-	GLfloat xscale = random( 0.2f, 0.5f );
-	GLfloat yscale = random( 0.2f, 0.5f );
-	shader.Set( "vScale", xscale, yscale );
-	GLfloat xtranslate = 0.8f;
-	GLfloat ytranslate = 0.8f;
-	shader.Set( "vTranslate", xtranslate, ytranslate );
-
-	quad.Draw();
-
-	xtranslate = 0.0f;
-	ytranslate = 0.0f;
-	shader.Set( "vTranslate", xtranslate, ytranslate );
-	triangle.Draw();
-
-	return FF_SUCCESS;
+	return PaletteHostProcessOpenGL( pGL );
 }
 FFResult FFGLPalette::DeInitGL()
 {
-	shader.FreeGLResources();
-	quad.Release();
-	triangle.Release();
-	rgbLeftLocation  = -1;
-	rgbRightLocation = -1;
-
 	PaletteHost::DeInitGL( );
 	return FF_SUCCESS;
 }
 
 FFResult FFGLPalette::SetTextParameter( unsigned int index, const char* value )
 {
-	NosuchDebug( "SetTextParameter index=%d value=%s\n", index, value );
-	// There's only one, this will eventually be a switch
-	oscport = std::string( value );
-	return FF_SUCCESS;
+	switch( index )
+	{
+	case PT_OSC_PORT:
+		SetOscPort(std::string( value ));
+		return FF_SUCCESS;
+	}
+	NosuchDebug( "SetTextParameter FAILS?" );
+	return FF_FAIL;
 }
 
 char* FFGLPalette::GetTextParameter( unsigned int index )
 {
-	// There's only one, this will eventually be a switch
-	return (char*)(oscport.c_str());
+	static std::string value;
+	switch( index )
+	{
+	case PT_OSC_PORT:
+		value = GetOscPort();
+		return (char *)(value.c_str());
+	}
+	NosuchDebug( "GetTextParameter returns NULL?" );
+	return NULL;
 }
 
 FFResult FFGLPalette::SetFloatParameter( unsigned int dwIndex, float value )
 {
-	switch( dwIndex )
-	{
-	// There would be some cases here, if we had float parameters
-	default:
-		return FF_FAIL;
-	}
-
-	return FF_SUCCESS;
+	return FF_FAIL;
 }
 
 float FFGLPalette::GetFloatParameter( unsigned int index )
 {
-	switch( index )
-	{
-	// There would be some cases here, if we had float parameters
-	}
-
 	return 0.0f;
 }
