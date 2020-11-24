@@ -113,6 +113,8 @@ FFResult FFGLPalette::InitGL( const FFGLViewportStruct* vp )
 	rgbLeftLocation  = shader.FindUniform( "RGBALeft" );
 	rgbRightLocation = shader.FindUniform( "RGBARight" );
 
+	PaletteHost::InitGL( vp );
+
 	//Use base-class init as success result so that it retains the viewport.
 	return CFFGLPlugin::InitGL( vp );
 }
@@ -180,6 +182,7 @@ FFResult FFGLPalette::DeInitGL()
 	rgbLeftLocation  = -1;
 	rgbRightLocation = -1;
 
+	PaletteHost::DeInitGL( );
 	return FF_SUCCESS;
 }
 
