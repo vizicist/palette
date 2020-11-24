@@ -23,7 +23,10 @@
 
 bool PaletteHost::StaticInitialized = false;
 void* PaletteHost::ThreadPointer = NULL;
-int PaletteHost::PortOffset = 0;
+
+// Palette.dll is the same as Palette_1.dll or PaletteA.dll, for the moment.
+// Eventually, the port offset should be an FFGL parameter.
+int PaletteHost::PortOffset = 1;
 
 extern "C"
 {

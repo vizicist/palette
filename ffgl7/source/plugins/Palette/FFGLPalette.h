@@ -1,10 +1,13 @@
 #pragma once
 #include <FFGLSDK.h>
+#include "FFGLPluginSDK.h"
+#include "PaletteHost.h"
 
-class FFGLPalette : public CFFGLPlugin
+class FFGLPalette : public PaletteHost, public CFFGLPlugin
 {
 public:
-	FFGLPalette();
+	FFGLPalette(std::string configfile);
+	~FFGLPalette() { }
 
 	//CFFGLPlugin
 	FFResult InitGL( const FFGLViewportStruct* vp ) override;
@@ -14,6 +17,29 @@ public:
 	FFResult SetFloatParameter( unsigned int dwIndex, float value ) override;
 
 	float GetFloatParameter( unsigned int index ) override;
+	///////////////////////////////////////////////////
+	// Factory method
+	///////////////////////////////////////////////////
+
+	static FFResult __stdcall CreateInstance( CFFGLPlugin** ppOutInstance )
+	{
+		// The ffgl.json file is under %LOCALAPPDATA%
+		char* p = getenv( "LOCALAPPDATA" );
+		std::string jsonpath;
+		if( p != NULL )
+		{
+			jsonpath = std::string( p ) + "\\Palette\\config\\ffgl.json";
+		}
+		else
+		{
+			jsonpath = "c:\\windows\\temp\\ffgl.json";// last resort
+		}
+		NosuchDebug( "Palette: PortOffset=%d config=%s", PaletteHost::PortOffset, jsonpath.c_str() );
+		*ppOutInstance = new FFGLPalette( jsonpath );
+		if( *ppOutInstance != NULL )
+			return FF_SUCCESS;
+		return FF_FAIL;
+	}
 
 private:
 	struct RGBA
