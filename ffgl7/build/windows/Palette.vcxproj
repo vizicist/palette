@@ -21,6 +21,7 @@
     <ClCompile Include="..\..\source\lib\ffglex\FFGLScopedTextureBinding.cpp" />
     <ClCompile Include="..\..\source\lib\ffglex\FFGLScopedVAOBinding.cpp" />
     <ClCompile Include="..\..\source\lib\ffglex\FFGLScreenQuad.cpp" />
+    <ClCompile Include="..\..\source\lib\ffglex\FFGLScreenTriangle.cpp" />
     <ClCompile Include="..\..\source\lib\ffglex\FFGLShader.cpp" />
     <ClCompile Include="..\..\source\lib\ffglex\FFGLUtilities.cpp" />
     <ClCompile Include="..\..\source\lib\ffglquickstart\FFGLAudio.cpp" />
@@ -82,6 +83,7 @@
     <ClInclude Include="..\..\source\lib\ffglex\FFGLScopedTextureBinding.h" />
     <ClInclude Include="..\..\source\lib\ffglex\FFGLScopedVAOBinding.h" />
     <ClInclude Include="..\..\source\lib\ffglex\FFGLScreenQuad.h" />
+    <ClInclude Include="..\..\source\lib\ffglex\FFGLScreenTriangle.h" />
     <ClInclude Include="..\..\source\lib\ffglex\FFGLShader.h" />
     <ClInclude Include="..\..\source\lib\ffglex\FFGLUtilities.h" />
     <ClInclude Include="..\..\source\lib\ffglquickstart\FFGLAudio.h" />

@@ -179,6 +179,9 @@
     <ClCompile Include="..\..\source\lib\nosuch\UriCodec.cpp">
       <Filter>lib\nosuch</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\source\lib\ffglex\FFGLScreenTriangle.cpp">
+      <Filter>lib\ffglex</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\source\lib\FFGLSDK.h">
@@ -289,6 +292,9 @@
     <ClInclude Include="..\..\source\plugins\Palette\FFGLPalette.h" />
     <ClInclude Include="..\..\source\lib\pthreads\pthread.h">
       <Filter>lib\pthreads</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\lib\ffglex\FFGLScreenTriangle.h">
+      <Filter>lib\ffglex</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
