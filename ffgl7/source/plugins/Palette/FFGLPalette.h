@@ -17,6 +17,10 @@ public:
 	FFResult SetFloatParameter( unsigned int dwIndex, float value ) override;
 
 	float GetFloatParameter( unsigned int index ) override;
+
+	FFResult SetTextParameter( unsigned int index, const char* value ) override;
+	char* GetTextParameter( unsigned int index ) override;
+
 	///////////////////////////////////////////////////
 	// Factory method
 	///////////////////////////////////////////////////
