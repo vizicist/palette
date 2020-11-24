@@ -68,4 +68,6 @@ private:
 	ffglex::FFGLScreenTriangle triangle;//!< Utility to help us render a full screen quad.
 	GLint rgbLeftLocation;
 	GLint rgbRightLocation;
+
+	std::string oscport;
 };
