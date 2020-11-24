@@ -34,10 +34,9 @@ FFGLScreenQuad::~FFGLScreenQuad()
  * This function needs to be called using an active OpenGL context, for example in your plugin's
  * InitGL function.
  *
- * @param flipV: When this is true the quad's uvs will be flipped on the y axis.
  * @return: Whether or not initialising this quad succeeded.
  */
-bool FFGLScreenQuad::Initialise( bool flipV )
+bool FFGLScreenQuad::Initialise( )
 {
 	glGenVertexArrays( 1, &vaoID );
 	glGenBuffers( 1, &vboID );
@@ -52,10 +51,7 @@ bool FFGLScreenQuad::Initialise( bool flipV )
 	ScopedVAOBinding vaoBinding( vaoID );
 	ScopedVBOBinding vboBinding( vboID );
 
-	if( flipV )
-		glBufferData( GL_ARRAY_BUFFER, sizeof( FLIPPED_TEXTURED_QUAD_VERTICES ), FLIPPED_TEXTURED_QUAD_VERTICES, GL_DYNAMIC_DRAW );
-	else
-		glBufferData( GL_ARRAY_BUFFER, sizeof( P_TEXTURED_QUAD_VERTICES ), P_TEXTURED_QUAD_VERTICES, GL_DYNAMIC_DRAW );
+	glBufferData( GL_ARRAY_BUFFER, sizeof( P_TEXTURED_QUAD_VERTICES ), P_TEXTURED_QUAD_VERTICES, GL_DYNAMIC_DRAW );
 
 	glEnableVertexAttribArray( 0 );
 	glVertexAttribPointer( 0, 3, GL_FLOAT, false, sizeof( TEXTURED_QUAD_VERTICES[ 0 ] ), (char*)NULL + 2 * sizeof( float ) );

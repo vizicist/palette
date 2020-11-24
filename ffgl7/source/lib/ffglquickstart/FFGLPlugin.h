@@ -7,6 +7,7 @@
 #include "../ffgl/FFGLLib.h"
 #include "../ffglex/FFGLShader.h"
 #include "../ffglex/FFGLScreenQuad.h"
+#include "../ffglex/FFGLScreenTriangle.h"
 #include "../ffglex/FFGLUtilities.h"
 #include "../ffglex/FFGLScopedShaderBinding.h"
 #include "FFGLUtils.h"
