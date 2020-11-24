@@ -17,7 +17,8 @@ enum ParamType : FFUInt32
 };
 
 static CFFGLPluginInfo PluginInfo(
-	PluginFactory< FFGLPalette >,// Create method
+	// PluginFactory< FFGLPalette >,// Create method
+	FFGLPalette::CreateInstance,         // Create method
 	"PL03",                        // Plugin unique ID
 	"Palette3",            // Plugin name
 	2,                             // API major version number
@@ -78,7 +79,10 @@ CFFGLPluginInfo& ffgl_plugininfo()
 	return PluginInfo;
 }
 
-FFGLPalette::FFGLPalette() :
+
+FFGLPalette::FFGLPalette(std::string configfile) :
+	CFFGLPlugin(),
+	PaletteHost( configfile ),
 	rgbLeftLocation( -1 ),
 	rgbRightLocation( -1 )
 {
@@ -122,8 +126,21 @@ FFResult FFGLPalette::InitGL( const FFGLViewportStruct* vp )
 	//Use base-class init as success result so that it retains the viewport.
 	return CFFGLPlugin::InitGL( vp );
 }
+
+bool PaletteFFThreadNameSet = false;
+
 FFResult FFGLPalette::ProcessOpenGL( ProcessOpenGLStruct* pGL )
 {
+	if( !PaletteFFThreadNameSet )
+	{
+		NosuchDebugSetThreadName( pthread_self().p, "ProcessOpenGL" );
+		PaletteFFThreadNameSet = true;
+	}
+
+#define REALPALETTE
+#ifdef REALPALETTE
+	return PaletteHostProcessOpenGL( pGL );
+#else
 	float rgba2[ 4 ];
 	float hue2 = ( hsba2.hue == 1.0f ) ? 0.0f : hsba2.hue;
 	HSVtoRGB( hue2, hsba2.sat, hsba2.bri, rgba2[ 0 ], rgba2[ 1 ], rgba2[ 2 ] );
@@ -149,6 +166,7 @@ FFResult FFGLPalette::ProcessOpenGL( ProcessOpenGLStruct* pGL )
 	quad.Draw();
 
 	return FF_SUCCESS;
+#endif
 }
 FFResult FFGLPalette::DeInitGL()
 {
