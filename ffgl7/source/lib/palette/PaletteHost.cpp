@@ -13,9 +13,40 @@
 #define OLDGRAPHICS
 
 #include "PaletteAll.h"
+#include "FFGLSDK.h"
 #include "FFGLLib.h"
 #include "FFGLPalette.h"
 #include "osc/OscOutboundPacketStream.h"
+
+static const char vertexShaderCode[] = R"(#version 410 core
+layout( location = 0 ) in vec4 vPosition;
+layout( location = 1 ) in vec2 vUV;
+
+uniform vec2 vScale;
+uniform vec2 vTranslate;
+
+out vec2 uv;
+
+void main()
+{
+	gl_Position = vec4((vPosition.x*vScale.x)+vTranslate.x,(vPosition.y*vScale.y)+vTranslate.y,vPosition.z,vPosition.a);
+	uv = vUV;
+}
+)";
+
+static const char fragmentShaderCode[] = R"(#version 410 core
+uniform vec4 RGBALeft;
+uniform vec4 RGBARight;
+
+in vec2 uv;
+
+out vec4 fragColor;
+
+void main()
+{
+	fragColor = mix( RGBALeft, RGBARight, uv.x );
+}
+)";
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Plugin information
@@ -363,6 +394,9 @@ PaletteHost::PaletteHost(std::string configfile)
 	LoadPaletteConfig(_configJson);
 
 	_scheduler = new Scheduler(this);
+
+	m_rgbLeftLocation = -1;
+	m_rgbRightLocation = -1;
 }
 
 PaletteHost::~PaletteHost()
@@ -688,6 +722,45 @@ everything_after_char(std::string line, char lookfor = '=')
 		len--;
 	}
 	return std::string(q,len);
+}
+
+FFResult PaletteHost::InitGL( const FFGLViewportStruct* vp)
+{
+	NosuchDebug( "HI From PaletteHost::InitGL" );
+	if( !m_shader.Compile( vertexShaderCode, fragmentShaderCode ) )
+	{
+		DeInitGL();
+		return FF_FAIL;
+	}
+	if( !m_quad.Initialise() )
+	{
+		DeInitGL();
+		return FF_FAIL;
+	}
+	if( !m_triangle.Initialise() )
+	{
+		DeInitGL();
+		return FF_FAIL;
+	}
+
+	//FFGL requires us to leave the context in a default state on return, so use this scoped binding to help us do that.
+	ffglex::ScopedShaderBinding shaderBinding( m_shader.GetGLID() );
+	m_rgbLeftLocation  = m_shader.FindUniform( "RGBALeft" );
+	m_rgbRightLocation = m_shader.FindUniform( "RGBARight" );
+
+	return FF_SUCCESS;
+}
+
+FFResult PaletteHost::DeInitGL()
+{
+	NosuchDebug( "HI From PaletteHost::DeInitGL" );
+	m_shader.FreeGLResources();
+	m_quad.Release();
+	m_triangle.Release();
+	m_rgbLeftLocation  = -1;
+	m_rgbRightLocation = -1;
+
+	return FF_SUCCESS;
 }
 
 bool PaletteHost::initStuff() {
@@ -1149,7 +1222,7 @@ void PaletteHost::ProcessOscMessage( std::string source, const osc::ReceivedMess
 			y = 1.0 - y;
 			double z = ArgAsFloat(m,2);
 			std::string cid = ArgAsString(m,3);
-			// NosuchDebug("GOT /spriteon x,y,z=%.4f,%.4f,%.4f id=%s\n",x,y,z,id.c_str());
+			NosuchDebug("GOT /spriteon x,y,z=%.4f,%.4f,%.4f id=%s\n",x,y,z,cid.c_str());
 			palette()->region.instantiateSpriteAt(cid,NosuchVector(x, y), z);
 
 			return;

@@ -173,8 +173,10 @@ void Sprite::drawAt(PaletteHost* app, double x,double y, double scalex, double s
 
 	// handle justification
 	std::string j = params.justification;
-	// NosuchDebug("Sprite::drawAt s=%lld drawAt j=%s xy= %.4lf %.4lf width=%lf size=%lf depth=%lf\n",
-	// 	(long long)this,j.c_str(),x,y,width(),state.size,state.depth);
+
+	NosuchDebug("Sprite::drawAt s=%lld drawAt j=%s xy= %.4lf %.4lf width=%lf size=%lf depth=%lf\n",
+		(long long)this,j.c_str(),x,y,width(),state.size,state.depth);
+
 	if (j == "center") {
 		// do nothing
 	} else if ( j == "left" ) {
