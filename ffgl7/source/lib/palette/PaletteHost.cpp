@@ -18,6 +18,8 @@
 #include "FFGLPalette.h"
 #include "osc/OscOutboundPacketStream.h"
 
+using namespace ffglex;
+
 static const char vertexShaderCode[] = R"(#version 410 core
 layout( location = 0 ) in vec4 vPosition;
 layout( location = 1 ) in vec2 vUV;
@@ -55,10 +57,6 @@ void main()
 bool PaletteHost::StaticInitialized = false;
 void* PaletteHost::ThreadPointer = NULL;
 
-// Palette.dll is the same as Palette_1.dll or PaletteA.dll, for the moment.
-// Eventually, the port offset should be an FFGL parameter.
-int PaletteHost::PortOffset = 1;
-
 extern "C"
 {
 
@@ -75,42 +73,35 @@ ffgl_setdll(std::string dllpath)
 
 	if ( suffix != ".dll" ) {
 		NosuchDebug("Hey! dll name (%s) isn't of the form *.dll!?",dllpath.c_str());
-		return FALSE;
+		return false;
 	}
 
 	std::string dir = dllpath.substr(0,lastslash);
 	std::string prefix = dllpath.substr(lastslash+1,lastdot-lastslash-1);
 
-	// If there's a trailing underscore and a number in the name (e.g. Palette_2.dll)
-	// then use the number as the port offset
-	size_t lastunder = dllpath.find_last_of("_");
-	
-	if (lastunder != dllpath.npos) {
-		int n = atoi(dllpath.substr(lastunder + 1).c_str());
-		NosuchDebug("Setting PortOffset to %d for dll=%s",n,dllpath.c_str());
-		PaletteHost::PortOffset = n;
-		NosuchDebugTag = n;	// used as an additional tag on debug output
-	}
-
 	NosuchCurrentDir = dir;
 
-	char* p = getenv("LOCALAPPDATA");
-	if ( p != NULL ) {
-		NosuchDebugLogPath = std::string(p) + "\\Palette\\logs\\ffgl.log";
-	}
-	else {
+	char* pValue;
+	size_t len;
+	errno_t err = _dupenv_s( &pValue, &len, "LOCALAPPDATA" );
+	if( err || pValue == NULL) {
 		NosuchDebugLogPath = "c:\\windows\\temp\\ffgl.log"; // last resort
 	}
-	// NosuchDebug("LogPath = %s\n", NosuchDebugLogPath.c_str());
+	else {
+		NosuchDebugLogPath = std::string(pValue) + "\\Palette\\config\\ffgl.json";
+		free( pValue );
+	}
+
+	NosuchDebug("Palette: log=%s\n", NosuchDebugLogPath.c_str());
 
 	struct _stat statbuff;
 	int e = _stat(NosuchCurrentDir.c_str(),&statbuff);
 	if ( ! (e == 0 && (statbuff.st_mode | _S_IFDIR) != 0) ) {
 		NosuchDebug("Hey! No directory %s!?",NosuchCurrentDir.c_str());
-		return FALSE;
+		return false;
 	}
 
-	return TRUE;
+	return true;
 }
 }
 
@@ -332,7 +323,6 @@ PaletteHost::PaletteHost(std::string configfile)
 
 	_configFile = configfile;
 	_configJson = NULL;
-	_dotest = FALSE;
 	_time0 = timeGetTime();
 
 	_daemon = NULL;
@@ -397,6 +387,8 @@ PaletteHost::PaletteHost(std::string configfile)
 
 	m_rgbLeftLocation = -1;
 	m_rgbRightLocation = -1;
+
+	m_oscport   = "";
 }
 
 PaletteHost::~PaletteHost()
@@ -480,12 +472,6 @@ PaletteHost::RunEveryMillisecondOrSo() {
 //  Methods
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void PaletteHost::rect(double x, double y, double w, double h) {
-	// if ( w != 2.0f || h != 2.0f ) {
-	// 	NosuchDebug("Drawing rect xy = %.3f %.3f  wh = %.3f %.3f",x,y,w,h);
-	// }
-	quad(x,y, x+w,y,  x+w,y+h,  x,y+h);
-}
 void PaletteHost::fill(NosuchColor c, double alpha) {
 	m_filled = true;
 	m_fill_color = c;
@@ -525,7 +511,7 @@ void PaletteHost::scale(double x, double y) {
 	// NosuchDebug("SCALE xy= %f %f",x,y);
 #endif
 }
-void PaletteHost::quad(double x0, double y0, double x1, double y1, double x2, double y2, double x3, double y3) {
+void PaletteHost::drawQuad(double x0, double y0, double x1, double y1, double x2, double y2, double x3, double y3) {
 	NosuchDebug(2,"   Drawing quad = %.3f %.3f, %.3f %.3f, %.3f %.3f, %.3f %.3f",x0,y0,x1,y1,x2,y2,x3,y3);
 #ifdef OLD_GRAPHICS
 	if ( m_filled ) {
@@ -553,7 +539,7 @@ void PaletteHost::quad(double x0, double y0, double x1, double y1, double x2, do
 	}
 #endif
 }
-void PaletteHost::triangle(double x0, double y0, double x1, double y1, double x2, double y2) {
+void PaletteHost::drawTriangle(double x0, double y0, double x1, double y1, double x2, double y2) {
 	NosuchDebug(2,"Drawing triangle xy0=%.3f,%.3f xy1=%.3f,%.3f xy2=%.3f,%.3f",x0,y0,x1,y1,x2,y2);
 #ifdef OLD_GRAPHICS
 	if ( m_filled ) {
@@ -582,7 +568,7 @@ void PaletteHost::triangle(double x0, double y0, double x1, double y1, double x2
 #endif
 }
 
-void PaletteHost::line(double x0, double y0, double x1, double y1) {
+void PaletteHost::drawLine(double x0, double y0, double x1, double y1) {
 	NosuchDebug(2,"Drawing line xy0=%.3f,%.3f xy1=%.3f,%.3f",x0,y0,x1,y1);
 #ifdef OLD_GRAPHICS
 	if ( m_stroked ) {
@@ -603,7 +589,7 @@ static double degree2radian(double deg) {
 	return 2.0f * (double)M_PI * deg / 360.0f;
 }
 
-void PaletteHost::ellipse(double x0, double y0, double w, double h, double fromang, double toang) {
+void PaletteHost::drawEllipse(double x0, double y0, double w, double h, double fromang, double toang) {
 	NosuchDebug(2,"Drawing ellipse xy0=%.3f,%.3f wh=%.3f,%.3f",x0,y0,w,h);
 #ifdef OLD_GRAPHICS
 	if ( m_filled ) {
@@ -640,7 +626,7 @@ void PaletteHost::ellipse(double x0, double y0, double w, double h, double froma
 #endif
 }
 
-void PaletteHost::polygon(PointMem* points, int npoints) {
+void PaletteHost::drawPolygon(PointMem* points, int npoints) {
 	NosuchDebug( 2, "Drawing polygon" );
 #ifdef OLD_GRAPHICS
 	if ( m_filled ) {
@@ -685,44 +671,6 @@ void PaletteHost::pushMatrix() {
 
 #define RANDONE (((double)rand())/RAND_MAX)
 #define RANDB ((((double)rand())/RAND_MAX)*2.0f-1.0f)
-
-void
-PaletteHost::test_draw()
-{
-#ifdef OLD_GRAPHICS
-	for ( int i=0; i<1000; i++ ) {
-		glColor4d(RANDONE,RANDONE,RANDONE,RANDONE);
-		glBegin(GL_QUADS);
-		glVertex2d(RANDB,RANDB);
-		glVertex2d(RANDB,RANDB);
-		glVertex2d(RANDB,RANDB);
-		glVertex2d(RANDB,RANDB);
-		glVertex2d(RANDB,RANDB);
-		glEnd();
-	}
-#endif
-}
-
-// Return everything after the '=' (and whitespace)
-std::string
-everything_after_char(std::string line, char lookfor = '=')
-{
-	const char *p = line.c_str();
-	const char *q = strchr(p,lookfor);
-	if ( q == NULL ) {
-		NosuchDebug("Invalid format (no =): %s",p);
-		return "";
-	}
-	q++;
-	while ( *q != 0 && isspace(*q) ) {
-		q++;
-	}
-	size_t len = strlen(q);
-	if ( q[len-1] == '\r' ) {
-		len--;
-	}
-	return std::string(q,len);
-}
 
 FFResult PaletteHost::InitGL( const FFGLViewportStruct* vp)
 {
@@ -780,11 +728,7 @@ bool PaletteHost::initStuff() {
 		}
 
 		_palette->now = MillisecondsSoFar();
-
-		int osc_input_port = BASE_OSC_INPUT_PORT + PortOffset;
-		NosuchDebug("Palette: listening for OSC on port %d",osc_input_port);
-
-		_daemon = new PaletteDaemon(this, osc_input_port, DEFAULT_OSC_INPUT_HOST);
+		_daemon = NULL;
 
 	} catch (NosuchException& e) {
 		NosuchDebug("NosuchException: %s",e.message());
@@ -883,6 +827,8 @@ DWORD PaletteHost::PaletteHostProcessOpenGL(ProcessOpenGLStruct *pGL)
 	glEnd(); 
 #endif
 
+	// NewProcessOpenGL();
+
 	lock_paletteHost();
 
 	bool gotexception = false;
@@ -908,9 +854,6 @@ DWORD PaletteHost::PaletteHostProcessOpenGL(ProcessOpenGLStruct *pGL)
 			}
 			int r = _palette->draw();
 
-			if ( _dotest ) {
-				test_draw();
-			}
 			_palette->advanceTo(tm);
 			if ( r > 0 ) {
 				NosuchDebug("Palette::draw returned failure? (r=%d)\n",r);
@@ -944,6 +887,78 @@ DWORD PaletteHost::PaletteHostProcessOpenGL(ProcessOpenGLStruct *pGL)
 #ifdef OLD_GRAPHICS
 	glColor4d(1.f,1.f,1.f,1.f);
 #endif
+
+	return FF_SUCCESS;
+}
+
+std::string PaletteHost::GetOscPort()
+{
+	return m_oscport;
+}
+
+void PaletteHost::SetOscPort( std::string oscport )
+{
+	if( oscport == m_oscport )
+	{
+		NosuchDebug( "PaletteHost::SetOscPort: no change, doing nothing\n" );
+		return;
+	}
+	if ( oscport == "" ) {
+		NosuchDebug( "PaletteHost::SetOscPort: empty value doing nothing\n" );
+		return;
+	}
+	if( _daemon != NULL ) {
+		NosuchDebug( "PaletteHost::SetOscPort: deleting old _daemon\n" );
+		delete _daemon;
+		_daemon = NULL;
+	}
+	int port      = atoi( oscport.c_str() );
+	NosuchDebug( "PaletteHost::SetOscPort: a new PaletteDaemon is listening on port=%d\n", port );
+	_daemon = new PaletteDaemon(this, port, DEFAULT_OSC_INPUT_HOST);
+	m_oscport = oscport;
+}
+
+void PaletteHost::drawshape()
+{
+	NewProcessOpenGL();
+}
+
+DWORD PaletteHost::NewProcessOpenGL()
+{
+	float rgba2[ 4 ];
+
+	hsba2.hue = 0.5f;
+	hsba2.sat   = 1.0f;
+	hsba2.bri   = 1.0f;
+	hsba2.alpha = 1.0f;
+
+	HSVtoRGB( hsba2.hue, hsba2.sat, hsba2.bri, rgba2[ 0 ], rgba2[ 1 ], rgba2[ 2 ] );
+	rgba2[ 3 ] = hsba2.alpha;
+
+	//FFGL requires us to leave the context in a default state on return, so use this scoped binding to help us do that.
+	ffglex::ScopedShaderBinding shaderBinding( m_shader.GetGLID() );
+
+	rgba1.red   = 1.0f;
+	rgba1.green = 1.0f;
+	rgba1.blue  = 0.0f;
+	rgba1.alpha = 1.0f;
+
+	glUniform4f( m_rgbLeftLocation, rgba1.red, rgba1.green, rgba1.blue, rgba1.alpha );
+	glUniform4f( m_rgbRightLocation, rgba2[ 0 ], rgba2[ 1 ], rgba2[ 2 ], rgba2[ 3 ] );
+
+	GLfloat xscale = random( 0.2f, 0.5f );
+	GLfloat yscale = random( 0.2f, 0.5f );
+	m_shader.Set( "vScale", xscale, yscale );
+	GLfloat xtranslate = 0.8f;
+	GLfloat ytranslate = 0.8f;
+	m_shader.Set( "vTranslate", xtranslate, ytranslate );
+
+	m_quad.Draw();
+
+	xtranslate = 0.0f;
+	ytranslate = 0.0f;
+	m_shader.Set( "vTranslate", xtranslate, ytranslate );
+	m_triangle.Draw();
 
 	return FF_SUCCESS;
 }

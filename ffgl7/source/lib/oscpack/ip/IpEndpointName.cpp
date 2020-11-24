@@ -1,3 +1,4 @@
+#define _CRT_SECURE_NO_WARNINGS
 /*
 	oscpack -- Open Sound Control (OSC) packet manipulation library
     http://www.rossbencina.com/code/oscpack
