@@ -14,6 +14,8 @@ enum ParamType : FFUInt32
 	PT_SAT2,
 	PT_BRI2,
 	PT_ALP2,
+
+	PT_TJT,
 };
 
 static CFFGLPluginInfo PluginInfo(
@@ -102,6 +104,8 @@ FFGLPalette::FFGLPalette(std::string configfile) :
 	SetParamInfof( PT_BRI2, "Brightness 2", FF_TYPE_BRIGHTNESS );
 	SetParamInfof( PT_ALP2, "Alpha 2", FF_TYPE_ALPHA );
 
+	SetParamInfof( PT_TJT, "OSC Port", FF_TYPE_TEXT );
+
 	FFGLLog::LogToHost( "Created Palette" );
 }
 FFResult FFGLPalette::InitGL( const FFGLViewportStruct* vp )
@@ -137,10 +141,19 @@ FFResult FFGLPalette::ProcessOpenGL( ProcessOpenGLStruct* pGL )
 		PaletteFFThreadNameSet = true;
 	}
 
-#define REALPALETTE
-#ifdef REALPALETTE
+#define REALPALETTE 0
+#if REALPALETTE
 	return PaletteHostProcessOpenGL( pGL );
 #else
+
+#if 0
+	const char* port = GetTextParameter( PT_TJT );
+	if( port != NULL && *port != 0 )
+	{
+		NosuchDebug( "port=%s\n", port );
+	}
+#endif
+
 	float rgba2[ 4 ];
 	float hue2 = ( hsba2.hue == 1.0f ) ? 0.0f : hsba2.hue;
 	HSVtoRGB( hue2, hsba2.sat, hsba2.bri, rgba2[ 0 ], rgba2[ 1 ], rgba2[ 2 ] );
@@ -176,6 +189,18 @@ FFResult FFGLPalette::DeInitGL()
 	rgbRightLocation = -1;
 
 	return FF_SUCCESS;
+}
+
+FFResult FFGLPalette::SetTextParameter( unsigned int index, const char* value )
+{
+	NosuchDebug( "SetTextParameter index=%d value=%s\n", index, value );
+	return FF_SUCCESS;
+}
+
+char* FFGLPalette::GetTextParameter( unsigned int index )
+{
+	static const char* tjt = "FOOBAR";
+	return (char*)tjt;
 }
 
 FFResult FFGLPalette::SetFloatParameter( unsigned int dwIndex, float value )
