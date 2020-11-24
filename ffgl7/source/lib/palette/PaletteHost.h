@@ -53,6 +53,8 @@ typedef struct ProcessOpenGLStructTag {
 #include "cJSON.h"
 #include "Scheduler.h"
 
+#include <FFGLSDK.h>
+#include "FFGLPluginSDK.h"
 #include "FFGL.h"
 
 class PaletteHost;
@@ -111,6 +113,9 @@ public:
 	
 	DWORD PaletteHostProcessOpenGL(ProcessOpenGLStruct *pGL);
 	DWORD PaletteHostPoke();
+
+	FFResult InitGL( const FFGLViewportStruct* vp );
+	FFResult DeInitGL();
 
 	bool initStuff();
 	void lock_paletteHost();
@@ -185,6 +190,31 @@ public:
 	void RunEveryMillisecondOrSo();
 
 	static int PortOffset;  // applied to http and osc ports
+
+	// NEW STUFF
+
+	struct RGBA
+	{
+		float red   = 1.0f;
+		float green = 1.0f;
+		float blue  = 0.0f;
+		float alpha = 1.0f;
+	};
+	struct HSBA
+	{
+		float hue   = 0.0f;
+		float sat   = 1.0f;
+		float bri   = 1.0f;
+		float alpha = 1.0f;
+	};
+	RGBA rgba1;
+	HSBA hsba2;
+
+	ffglex::FFGLShader m_shader;  //!< Utility to help us compile and link some shaders into a program.
+	ffglex::FFGLScreenQuad m_quad;//!< Utility to help us render a full screen quad.
+	ffglex::FFGLScreenTriangle m_triangle;//!< Utility to help us render a full screen quad.
+	GLint m_rgbLeftLocation;
+	GLint m_rgbRightLocation;
 
 protected:	
 
