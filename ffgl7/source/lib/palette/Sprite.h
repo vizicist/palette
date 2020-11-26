@@ -119,6 +119,7 @@ public:
 
 	SpriteParams params;
 	SpriteState state;
+	SpriteDrawer* drawFunc;
 
 protected:
 	double vertexNoise();
