@@ -40,9 +40,6 @@
     <ClCompile Include="..\..\source\lib\ffglex\FFGLScopedVAOBinding.cpp">
       <Filter>lib\ffglex</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\source\lib\ffglex\FFGLScreenQuad.cpp">
-      <Filter>lib\ffglex</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\source\lib\ffglex\FFGLShader.cpp">
       <Filter>lib\ffglex</Filter>
     </ClCompile>
@@ -179,8 +176,17 @@
     <ClCompile Include="..\..\source\lib\nosuch\UriCodec.cpp">
       <Filter>lib\nosuch</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\source\lib\ffglex\FFGLScreenTriangle.cpp">
+    <ClCompile Include="..\..\source\lib\palette\DrawQuad.cpp">
+      <Filter>lib\palette</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\lib\palette\DrawTriangle.cpp">
+      <Filter>lib\palette</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\lib\ffglex\FFGLScreenQuad.cpp">
       <Filter>lib\ffglex</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\lib\palette\PaletteDrawer.cpp">
+      <Filter>lib\palette</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -221,9 +227,6 @@
       <Filter>lib\ffglex</Filter>
     </ClInclude>
     <ClInclude Include="..\..\source\lib\ffglex\FFGLScopedVAOBinding.h">
-      <Filter>lib\ffglex</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\source\lib\ffglex\FFGLScreenQuad.h">
       <Filter>lib\ffglex</Filter>
     </ClInclude>
     <ClInclude Include="..\..\source\lib\ffglex\FFGLShader.h">
@@ -293,8 +296,71 @@
     <ClInclude Include="..\..\source\lib\pthreads\pthread.h">
       <Filter>lib\pthreads</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\source\lib\ffglex\FFGLScreenTriangle.h">
+    <ClInclude Include="..\..\source\lib\palette\DrawQuad.h">
+      <Filter>lib\palette</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\lib\palette\DrawTriangle.h">
+      <Filter>lib\palette</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\lib\palette\DrawUtil.h">
+      <Filter>lib\palette</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\lib\ffglex\FFGLScreenQuad.h">
       <Filter>lib\ffglex</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\lib\nosuch\NosuchColor.h">
+      <Filter>lib\nosuch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\lib\palette\PaletteDrawer.h">
+      <Filter>lib\palette</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\lib\palette\Palette.h">
+      <Filter>lib\palette</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\lib\palette\PaletteHost.h">
+      <Filter>lib\palette</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\lib\palette\PaletteOscInput.h">
+      <Filter>lib\palette</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\lib\palette\PaletteUtil.h">
+      <Filter>lib\palette</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\lib\palette\Params.h">
+      <Filter>lib\palette</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\lib\palette\Region.h">
+      <Filter>lib\palette</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\lib\palette\Scheduler.h">
+      <Filter>lib\palette</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\lib\palette\TrackedCursor.h">
+      <Filter>lib\palette</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\lib\palette\Sprite.h">
+      <Filter>lib\palette</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\lib\palette\PaletteAll.h">
+      <Filter>lib\palette</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\lib\nosuch\NosuchDebug.h">
+      <Filter>lib\nosuch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\lib\nosuch\NosuchException.h">
+      <Filter>lib\nosuch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\lib\nosuch\NosuchGraphics.h">
+      <Filter>lib\nosuch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\lib\nosuch\NosuchOscInput.h">
+      <Filter>lib\nosuch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\lib\nosuch\NosuchOscUdpInput.h">
+      <Filter>lib\nosuch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\lib\nosuch\NosuchUtil.h">
+      <Filter>lib\nosuch</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
