@@ -130,15 +130,6 @@ double Region::getMoveDir(std::string movedirtype) {
 	throw NosuchException("Unrecognized movedirtype value %s",movedirtype.c_str());
 }
 
-double scale_z(PaletteHost* ph, double z) {
-	// We want the z value to be scaled exponentially toward 1.0,
-	// i.e. raw z of .5 should result in a scale_z value of .75
-	Palette* p = ph->palette();
-	double expz = 1.0f - pow((1.0-z),p->params.zexponential);
-	// NosuchDebug("scale_z z=%f expz=%f",z,expz);
-	return expz * p->params.zmultiply;
-}
-
 void Region::doCursorUp(Palette* palette, std::string cid) {
 
 	if (!cursorlist_lock_write()) {
@@ -354,7 +345,7 @@ void Region::cursorlist_unlock() {
 	NosuchDebug(2, "_cursorlist_rwlock unlock succeeded");
 }
 
-void Region::draw(PaletteHost* b) {
+void Region::draw(PaletteDrawer* b) {
 	// if ( _spritelist->size() > 0 ) {
 	//	NosuchDebug("Region::draw size=%d Region=%lld\n", _spritelist->size(),(long long)this);
 	// }

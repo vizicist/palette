@@ -1,11 +1,10 @@
-#include "FFGLScreenTriangle.h"
+#include "DrawTriangle.h"
 #include <assert.h>
-#include "FFGLScopedVAOBinding.h"
-#include "FFGLScopedBufferBinding.h"
-#include "FFGLUtilities.h"
+#include "ffglex/FFGLScopedVAOBinding.h"
+#include "ffglex/FFGLScopedBufferBinding.h"
+#include "ffglex/FFGLUtilities.h"
 
-namespace ffglex
-{
+#include "DrawUtil.h"
 	
 GlVertexTextured P_TEXTURED_TRIANGLE_VERTICES[] = {
 	{ 0.0f, 1.0f, -0.5f, -0.5f, 0.0f }, //Bottom left
@@ -13,12 +12,12 @@ GlVertexTextured P_TEXTURED_TRIANGLE_VERTICES[] = {
 	{ 0.0f, 0.0f, 0.5f, -0.5f, 0.0f },//Bottom right
 };
 
-FFGLScreenTriangle::FFGLScreenTriangle() :
+DrawTriangle::DrawTriangle() :
 	vaoID( 0 ),
 	vboID( 0 )
 {
 }
-FFGLScreenTriangle::~FFGLScreenTriangle()
+DrawTriangle::~DrawTriangle()
 {
 	//If any of these assertions hit you forgot to release this triangle's gl resources.
 	assert( vaoID == 0 );
@@ -32,7 +31,7 @@ FFGLScreenTriangle::~FFGLScreenTriangle()
  *
  * @return: Whether or not initialising this triangle succeeded.
  */
-bool FFGLScreenTriangle::Initialise( )
+bool DrawTriangle::Initialise( )
 {
 	glGenVertexArrays( 1, &vaoID );
 	glGenBuffers( 1, &vboID );
@@ -44,8 +43,8 @@ bool FFGLScreenTriangle::Initialise( )
 
 	//FFGL requires us to leave the context in a default state, so use these scoped bindings to
 	//help us restore the state after we're done.
-	ScopedVAOBinding vaoBinding( vaoID );
-	ScopedVBOBinding vboBinding( vboID );
+	ffglex::ScopedVAOBinding vaoBinding( vaoID );
+	ffglex::ScopedVBOBinding vboBinding( vboID );
 
 	glBufferData( GL_ARRAY_BUFFER, sizeof( P_TEXTURED_TRIANGLE_VERTICES ), P_TEXTURED_TRIANGLE_VERTICES, GL_DYNAMIC_DRAW );
 
@@ -64,24 +63,22 @@ bool FFGLScreenTriangle::Initialise( )
  * Draw the triangle. Depending on your vertex shader this will apply your fragment shader in the area where the triangle ends up.
  * You need to have successfully initialised this triangle before rendering it.
  */
-void FFGLScreenTriangle::Draw()
+void DrawTriangle::Draw()
 {
 	if( vaoID == 0 || vboID == 0 )
 		return;
 
 	//Scoped binding to make sure we dont keep the vao bind after we're done rendering.
-	ScopedVAOBinding vaoBinding( vaoID );
+	ffglex::ScopedVAOBinding vaoBinding( vaoID );
 	glDrawArrays( GL_TRIANGLES, 0, 3 );
 }
 /**
  * Release the gpu resources this triangle has loaded into vram. Call this before destruction if you've previously initialised us.
  */
-void FFGLScreenTriangle::Release()
+void DrawTriangle::Release()
 {
 	glDeleteBuffers( 1, &vboID );
 	vboID = 0;
 	glDeleteVertexArrays( 1, &vaoID );
 	vaoID = 0;
 }
-
-}//End namespace ffglex

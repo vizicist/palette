@@ -1,4 +1,3 @@
-#include <iostream>
 #include <sstream>
 #include <fstream>
 #include <strstream>
@@ -10,17 +9,11 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
-#define OLDGRAPHICS
-
 #include "PaletteAll.h"
-#include "FFGLSDK.h"
-#include "FFGLLib.h"
-#include "FFGLPalette.h"
-#include "osc/OscOutboundPacketStream.h"
 
 using namespace ffglex;
 
-static const char vertexShaderCode[] = R"(#version 410 core
+static const char vertexShaderGradient[] = R"(#version 410 core
 layout( location = 0 ) in vec4 vPosition;
 layout( location = 1 ) in vec2 vUV;
 
@@ -36,7 +29,7 @@ void main()
 }
 )";
 
-static const char fragmentShaderCode[] = R"(#version 410 core
+static const char fragmentShaderGradient[] = R"(#version 410 core
 uniform vec4 RGBALeft;
 uniform vec4 RGBARight;
 
@@ -88,7 +81,7 @@ ffgl_setdll(std::string dllpath)
 		NosuchDebugLogPath = "c:\\windows\\temp\\ffgl.log"; // last resort
 	}
 	else {
-		NosuchDebugLogPath = std::string(pValue) + "\\Palette\\config\\ffgl.json";
+		NosuchDebugLogPath = std::string(pValue) + "\\Palette\\logs\\ffgl.log";
 		free( pValue );
 	}
 
@@ -319,6 +312,8 @@ PaletteHost::PaletteHost(std::string configfile)
 {
 	NosuchDebugSetThreadName(pthread_self().p,"PaletteHost");
 
+	_palette = new Palette(this);
+
 	NosuchDebug(1,"=== PaletteHost is being constructed.");
 
 	_configFile = configfile;
@@ -329,7 +324,6 @@ PaletteHost::PaletteHost(std::string configfile)
 
 	initialized = false;
 	gl_shutting_down = false;
-	gl_frame = 0;
 
 	width = 1.0f;
 	height = 1.0f;
@@ -342,9 +336,6 @@ PaletteHost::PaletteHost(std::string configfile)
 
 	NosuchLockInit(&palette_mutex,"palette");
 
-	m_filled = false;
-	m_stroked = false;
-	
 	disabled = false;
 	disable_on_exception = false;
 
@@ -374,9 +365,6 @@ PaletteHost::PaletteHost(std::string configfile)
 	if ( ! _configJson ) {
 		std::string msg = NosuchSnprintf("Unable to parse json for config!?  json= %s\n",jstr.c_str());
 		NosuchDebug(msg.c_str());
-		if ( NosuchErrorPopup != NULL ) {
-			NosuchErrorPopup(msg.c_str());
-		}
 		return;
 	}
 
@@ -406,10 +394,6 @@ PaletteHost::~PaletteHost()
 		_daemon = NULL;
 	}
 	NosuchDebug(1,"PaletteHost destructor end");
-}
-
-void PaletteHost::ErrorPopup(const char* msg) {
-		MessageBoxA(NULL,msg,"Palette",MB_OK);
 }
 
 static cJSON *
@@ -472,250 +456,17 @@ PaletteHost::RunEveryMillisecondOrSo() {
 //  Methods
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void PaletteHost::fill(NosuchColor c, double alpha) {
-	m_filled = true;
-	m_fill_color = c;
-	m_fill_alpha = alpha;
-}
-void PaletteHost::stroke(NosuchColor c, double alpha) {
-	// glColor4d(c.r()/255.0f, c.g()/255.0f, c.b()/255.0f, alpha);
-	m_stroked = true;
-	m_stroke_color = c;
-	m_stroke_alpha = alpha;
-}
-void PaletteHost::noStroke() {
-	m_stroked = false;
-}
-void PaletteHost::noFill() {
-	m_filled = false;
-}
-void PaletteHost::background(int b) {
-	NosuchDebug("PaletteHost::background!");
-}
-void PaletteHost::strokeWeight(double w) {
-	glLineWidth((GLfloat)w);
-}
-void PaletteHost::rotate(double degrees) {
-#ifdef OLD_GRAPHICS
-	glRotated(-degrees,0.0f,0.0f,1.0f);
-#endif
-}
-void PaletteHost::translate(double x, double y) {
-#ifdef OLD_GRAPHICS
-	glTranslated(x,y,0.0f);
-#endif
-}
-void PaletteHost::scale(double x, double y) {
-#ifdef OLD_GRAPHICS
-	glScaled(x,y,1.0f);
-	// NosuchDebug("SCALE xy= %f %f",x,y);
-#endif
-}
-void PaletteHost::drawQuad(double x0, double y0, double x1, double y1, double x2, double y2, double x3, double y3) {
-	NosuchDebug(2,"   Drawing quad = %.3f %.3f, %.3f %.3f, %.3f %.3f, %.3f %.3f",x0,y0,x1,y1,x2,y2,x3,y3);
-#ifdef OLD_GRAPHICS
-	if ( m_filled ) {
-		glBegin(GL_QUADS);
-		NosuchColor c = m_fill_color;
-		glColor4d(c.r()/255.0f, c.g()/255.0f, c.b()/255.0f, m_fill_alpha);
-		glVertex2d( x0, y0); 
-		glVertex2d( x1, y1); 
-		glVertex2d( x2, y2); 
-		glVertex2d( x3, y3); 
-		glEnd();
-	}
-	if ( m_stroked ) {
-		NosuchColor c = m_stroke_color;
-		glColor4d(c.r()/255.0f, c.g()/255.0f, c.b()/255.0f, m_stroke_alpha);
-		glBegin(GL_LINE_LOOP); 
-		glVertex2d( x0, y0); 
-		glVertex2d( x1, y1); 
-		glVertex2d( x2, y2); 
-		glVertex2d( x3, y3); 
-		glEnd();
-	}
-	if ( ! m_filled && ! m_stroked ) {
-		NosuchDebug("Hey, quad() called when both m_filled and m_stroked are off!?");
-	}
-#endif
-}
-void PaletteHost::drawTriangle(double x0, double y0, double x1, double y1, double x2, double y2) {
-	NosuchDebug(2,"Drawing triangle xy0=%.3f,%.3f xy1=%.3f,%.3f xy2=%.3f,%.3f",x0,y0,x1,y1,x2,y2);
-#ifdef OLD_GRAPHICS
-	if ( m_filled ) {
-		NosuchColor c = m_fill_color;
-		glColor4d(c.r()/255.0f, c.g()/255.0f, c.b()/255.0f, m_fill_alpha);
-		NosuchDebug(2,"   fill_color=%d %d %d alpha=%.3f",c.r(),c.g(),c.b(),m_fill_alpha);
-		glBegin(GL_TRIANGLE_STRIP); 
-		glVertex3d( x0, y0, 0.0f );
-		glVertex3d( x1, y1, 0.0f );
-		glVertex3d( x2, y2, 0.0f );
-		glEnd();
-	}
-	if ( m_stroked ) {
-		NosuchColor c = m_stroke_color;
-		glColor4d(c.r()/255.0f, c.g()/255.0f, c.b()/255.0f, m_stroke_alpha);
-		NosuchDebug(2,"   stroke_color=%d %d %d alpha=%.3f",c.r(),c.g(),c.b(),m_stroke_alpha);
-		glBegin(GL_LINE_LOOP); 
-		glVertex2d( x0, y0); 
-		glVertex2d( x1, y1);
-		glVertex2d( x2, y2);
-		glEnd();
-	}
-	if ( ! m_filled && ! m_stroked ) {
-		NosuchDebug("Hey, triangle() called when both m_filled and m_stroked are off!?");
-	}
-#endif
-}
-
-void PaletteHost::drawLine(double x0, double y0, double x1, double y1) {
-	NosuchDebug(2,"Drawing line xy0=%.3f,%.3f xy1=%.3f,%.3f",x0,y0,x1,y1);
-#ifdef OLD_GRAPHICS
-	if ( m_stroked ) {
-		NosuchColor c = m_stroke_color;
-		glColor4d(c.r()/255.0f, c.g()/255.0f, c.b()/255.0f, m_stroke_alpha);
-		// NosuchDebug(2,"   stroke_color=%d %d %d alpha=%.3f",c.r(),c.g(),c.b(),m_stroke_alpha);
-		glBegin(GL_LINES); 
-		glVertex2d( x0, y0); 
-		glVertex2d( x1, y1);
-		glEnd();
-	} else {
-		NosuchDebug("Hey, line() called when m_stroked is off!?");
-	}
-#endif
-}
-
 static double degree2radian(double deg) {
 	return 2.0f * (double)M_PI * deg / 360.0f;
-}
-
-void PaletteHost::drawEllipse(double x0, double y0, double w, double h, double fromang, double toang) {
-	NosuchDebug(2,"Drawing ellipse xy0=%.3f,%.3f wh=%.3f,%.3f",x0,y0,w,h);
-#ifdef OLD_GRAPHICS
-	if ( m_filled ) {
-		NosuchColor c = m_fill_color;
-		glColor4d(c.r()/255.0f, c.g()/255.0f, c.b()/255.0f, m_fill_alpha);
-		NosuchDebug(2,"   fill_color=%d %d %d alpha=%.3f",c.r(),c.g(),c.b(),m_fill_alpha);
-		glBegin(GL_TRIANGLE_FAN);
-		double radius = w;
-		glVertex2d(x0, y0);
-		for ( double degree=fromang; degree <= toang; degree+=5.0f ) {
-			glVertex2d(x0 + sin(degree2radian(degree)) * radius, y0 + cos(degree2radian(degree)) * radius);
-		}
-		glEnd();
-	}
-	if ( m_stroked ) {
-		NosuchColor c = m_stroke_color;
-		glColor4d(c.r()/255.0f, c.g()/255.0f, c.b()/255.0f, m_stroke_alpha);
-		NosuchDebug(2,"   stroke_color=%d %d %d alpha=%.3f",c.r(),c.g(),c.b(),m_stroke_alpha);
-		if (fromang == 0.0 && toang == 360.0) {
-			glBegin(GL_LINE_LOOP);
-		} else {
-			glBegin(GL_LINES);
-		}
-		double radius = w;
-		for ( double degree=fromang; degree <= toang; degree+=5.0f ) {
-			glVertex2d(x0 + sin(degree2radian(degree)) * radius, y0 + cos(degree2radian(degree)) * radius);
-		}
-		glEnd();
-	}
-
-	if ( ! m_filled && ! m_stroked ) {
-		NosuchDebug("Hey, ellipse() called when both m_filled and m_stroked are off!?");
-	}
-#endif
-}
-
-void PaletteHost::drawPolygon(PointMem* points, int npoints) {
-	NosuchDebug( 2, "Drawing polygon" );
-#ifdef OLD_GRAPHICS
-	if ( m_filled ) {
-		NosuchColor c = m_fill_color;
-		glColor4d(c.r()/255.0f, c.g()/255.0f, c.b()/255.0f, m_fill_alpha);
-		glBegin(GL_TRIANGLE_FAN);
-		glVertex2d(0.0, 0.0);
-		for ( int pn=0; pn<npoints; pn++ ) {
-			PointMem* p = &points[pn];
-			glVertex2d(p->x,p->y);
-		}
-		glEnd();
-	}
-	if ( m_stroked ) {
-		NosuchColor c = m_stroke_color;
-		glColor4d(c.r()/255.0f, c.g()/255.0f, c.b()/255.0f, m_stroke_alpha);
-		glBegin(GL_LINE_LOOP);
-		for ( int pn=0; pn<npoints; pn++ ) {
-			PointMem* p = &points[pn];
-			glVertex2d(p->x,p->y);
-		}
-		glEnd();
-	}
-
-	if ( ! m_filled && ! m_stroked ) {
-		NosuchDebug("Hey, ellipse() called when both m_filled and m_stroked are off!?");
-	}
-#endif
-}
-
-void PaletteHost::popMatrix() {
-#ifdef OLD_GRAPHICS
-	glPopMatrix();
-#endif
-}
-
-void PaletteHost::pushMatrix() {
-#ifdef OLD_GRAPHICS
-	glPushMatrix();
-#endif
 }
 
 #define RANDONE (((double)rand())/RAND_MAX)
 #define RANDB ((((double)rand())/RAND_MAX)*2.0f-1.0f)
 
-FFResult PaletteHost::InitGL( const FFGLViewportStruct* vp)
-{
-	NosuchDebug( "HI From PaletteHost::InitGL" );
-	if( !m_shader.Compile( vertexShaderCode, fragmentShaderCode ) )
-	{
-		DeInitGL();
-		return FF_FAIL;
-	}
-	if( !m_quad.Initialise() )
-	{
-		DeInitGL();
-		return FF_FAIL;
-	}
-	if( !m_triangle.Initialise() )
-	{
-		DeInitGL();
-		return FF_FAIL;
-	}
-
-	//FFGL requires us to leave the context in a default state on return, so use this scoped binding to help us do that.
-	ffglex::ScopedShaderBinding shaderBinding( m_shader.GetGLID() );
-	m_rgbLeftLocation  = m_shader.FindUniform( "RGBALeft" );
-	m_rgbRightLocation = m_shader.FindUniform( "RGBARight" );
-
-	return FF_SUCCESS;
-}
-
-FFResult PaletteHost::DeInitGL()
-{
-	NosuchDebug( "HI From PaletteHost::DeInitGL" );
-	m_shader.FreeGLResources();
-	m_quad.Release();
-	m_triangle.Release();
-	m_rgbLeftLocation  = -1;
-	m_rgbRightLocation = -1;
-
-	return FF_SUCCESS;
-}
-
 bool PaletteHost::initStuff() {
 
 	bool r = true;
 	try {
-		_palette = new Palette(this);
 
 		// static initializations
 		RegionParams::Initialize();
@@ -750,7 +501,6 @@ DWORD PaletteHost::PaletteHostPoke()
 
 DWORD PaletteHost::PaletteHostProcessOpenGL(ProcessOpenGLStruct *pGL)
 {
-	gl_frame++;
 	// NosuchDebug("PaletteHostProcessOpenGL");
 	if ( gl_shutting_down ) {
 		return FF_SUCCESS;
@@ -784,50 +534,6 @@ DWORD PaletteHost::PaletteHostProcessOpenGL(ProcessOpenGLStruct *pGL)
 		// NosuchDebug("####### After signaling now=%d",Palette::now);
 	}
 	NosuchUnlock(&json_mutex,"json");
-
-	bool passthru = FALSE;
-	if ( passthru == TRUE && pGL != NULL ) {
-		if (pGL->numInputTextures<1)
-			return FF_FAIL;
-
-		if (pGL->inputTextures[0]==NULL)
-			return FF_FAIL;
-  
-		FFGLTextureStruct &Texture = *(pGL->inputTextures[0]);
-
-		//bind the texture handle
-		glBindTexture(GL_TEXTURE_2D, Texture.Handle);
-
-		 //enable texturemapping
-		glEnable(GL_TEXTURE_2D);
-		
-		//get the max s,t that correspond to the 
-		//width,height of the used portion of the allocated texture space
-		FFGLTexCoords maxCoords = GetMaxGLTexCoords(Texture);
-#ifdef OLD_GRAPHICS
-		glColor4f(1.0, 1.0, 1.0, 1.0);
-		glBegin(GL_QUADS);
-		glTexCoord2d(0.0, 0.0);					glVertex2f(-1,-1);
-		glTexCoord2d(0.0, maxCoords.t);			glVertex2f(-1,1);
-		glTexCoord2d(maxCoords.s, maxCoords.t); glVertex2f(1,1);
-		glTexCoord2d(maxCoords.s, 0.0);			glVertex2f(1,-1);
-		glEnd();
-#endif
-		
-		//unbind the texture
-		glBindTexture(GL_TEXTURE_2D, 0);
-	}
-
-#ifdef DRAW_LINE_SHOW_ALIVE
-	// Draw line just to show we're alive
-	glColor4d(0.0, 0.0, 1.0, 1.0);
-	glBegin(GL_LINES); 
-	glVertex2d( -0.5, -0.5); 
-	glVertex2d( 0.5, 0.5); 
-	glEnd(); 
-#endif
-
-	// NewProcessOpenGL();
 
 	lock_paletteHost();
 
@@ -891,6 +597,15 @@ DWORD PaletteHost::PaletteHostProcessOpenGL(ProcessOpenGLStruct *pGL)
 	return FF_SUCCESS;
 }
 
+FFResult PaletteHost::InitGL( const FFGLViewportStruct* vp )
+{
+	return _palette->InitGL(vp);
+}
+FFResult PaletteHost::DeInitGL()
+{
+	return _palette->DeInitGL();
+}
+
 std::string PaletteHost::GetOscPort()
 {
 	return m_oscport;
@@ -916,51 +631,6 @@ void PaletteHost::SetOscPort( std::string oscport )
 	NosuchDebug( "PaletteHost::SetOscPort: a new PaletteDaemon is listening on port=%d\n", port );
 	_daemon = new PaletteDaemon(this, port, DEFAULT_OSC_INPUT_HOST);
 	m_oscport = oscport;
-}
-
-void PaletteHost::drawshape()
-{
-	NewProcessOpenGL();
-}
-
-DWORD PaletteHost::NewProcessOpenGL()
-{
-	float rgba2[ 4 ];
-
-	hsba2.hue = 0.5f;
-	hsba2.sat   = 1.0f;
-	hsba2.bri   = 1.0f;
-	hsba2.alpha = 1.0f;
-
-	HSVtoRGB( hsba2.hue, hsba2.sat, hsba2.bri, rgba2[ 0 ], rgba2[ 1 ], rgba2[ 2 ] );
-	rgba2[ 3 ] = hsba2.alpha;
-
-	//FFGL requires us to leave the context in a default state on return, so use this scoped binding to help us do that.
-	ffglex::ScopedShaderBinding shaderBinding( m_shader.GetGLID() );
-
-	rgba1.red   = 1.0f;
-	rgba1.green = 1.0f;
-	rgba1.blue  = 0.0f;
-	rgba1.alpha = 1.0f;
-
-	glUniform4f( m_rgbLeftLocation, rgba1.red, rgba1.green, rgba1.blue, rgba1.alpha );
-	glUniform4f( m_rgbRightLocation, rgba2[ 0 ], rgba2[ 1 ], rgba2[ 2 ], rgba2[ 3 ] );
-
-	GLfloat xscale = random( 0.2f, 0.5f );
-	GLfloat yscale = random( 0.2f, 0.5f );
-	m_shader.Set( "vScale", xscale, yscale );
-	GLfloat xtranslate = 0.8f;
-	GLfloat ytranslate = 0.8f;
-	m_shader.Set( "vTranslate", xtranslate, ytranslate );
-
-	m_quad.Draw();
-
-	xtranslate = 0.0f;
-	ytranslate = 0.0f;
-	m_shader.Set( "vTranslate", xtranslate, ytranslate );
-	m_triangle.Draw();
-
-	return FF_SUCCESS;
 }
 
 void PaletteHost::lock_paletteHost() {
@@ -1170,29 +840,6 @@ ArgAsString(const osc::ReceivedMessage& m, unsigned n)
 	for ( unsigned i=0; i<n; i++ )
 		arg++;
 	return std::string(arg->AsString());
-}
-
-static void
-xyz_adjust(double expand, bool switchyz, double& x, double& y, double& z) {
-	if ( switchyz ) {
-		double t = y;
-		y = z;
-		z = t;
-		z = 1.0 - z;
-	}
-	// The values we get from the Palette don't go all the way to
-	// 0.0 or 1.0, so we expand
-	// the range a bit so people can draw all the way to the edges.
-	x = ((x - 0.5f) * expand) + 0.5f;
-	y = ((y - 0.5f) * expand) + 0.5f;
-	if (x < 0.0)
-		x = 0.0f;
-	else if (x > 1.0)
-		x = 1.0f;
-	if (y < 0.0)
-		y = 0.0f;
-	else if (y > 1.0)
-		y = 1.0f;
 }
 
 void
