@@ -1,17 +1,27 @@
-#include "FFGLScreenQuad.h"
+#include "DrawQuad.h"
 #include <assert.h>
-#include "FFGLScopedVAOBinding.h"
-#include "FFGLScopedBufferBinding.h"
-#include "FFGLUtilities.h"
+#include "ffglex/FFGLScopedVAOBinding.h"
+#include "ffglex/FFGLScopedBufferBinding.h"
+#include "ffglex/FFGLUtilities.h"
 
-namespace ffglex
-{
-FFGLScreenQuad::FFGLScreenQuad() :
+#include "DrawUtil.h"
+
+GlVertexTextured P_TEXTURED_QUAD_VERTICES[] = {
+	{ 0.0f, 1.0f, -1.0f, 1.0f, 0.0f }, //Top-left
+	{ 1.0f, 1.0f,  1.0f, 1.0f, 0.0f },  //Top-right
+	{ 0.0f, 0.0f, -1.0f, -1.0f, 0.0f },//Bottom left
+
+	{ 0.0f, 0.0f, -1.0f, -1.0f, 0.0f },//Bottom left
+	{ 1.0f, 1.0f, 1.0f, 1.0f, 0.0f },  //Top right
+	{ 1.0f, 0.0f, 1.0f, -1.0f, 0.0f }, //Bottom right
+};
+
+DrawQuad::DrawQuad() :
 	vaoID( 0 ),
 	vboID( 0 )
 {
 }
-FFGLScreenQuad::~FFGLScreenQuad()
+DrawQuad::~DrawQuad()
 {
 	//If any of these assertions hit you forgot to release this quad's gl resources.
 	assert( vaoID == 0 );
@@ -23,10 +33,9 @@ FFGLScreenQuad::~FFGLScreenQuad()
  * This function needs to be called using an active OpenGL context, for example in your plugin's
  * InitGL function.
  *
- * @param flipV: When this is true the quad's uvs will be flipped on the y axis.
  * @return: Whether or not initialising this quad succeeded.
  */
-bool FFGLScreenQuad::Initialise( bool flipV )
+bool DrawQuad::Initialise( )
 {
 	glGenVertexArrays( 1, &vaoID );
 	glGenBuffers( 1, &vboID );
@@ -38,17 +47,15 @@ bool FFGLScreenQuad::Initialise( bool flipV )
 
 	//FFGL requires us to leave the context in a default state, so use these scoped bindings to
 	//help us restore the state after we're done.
-	ScopedVAOBinding vaoBinding( vaoID );
-	ScopedVBOBinding vboBinding( vboID );
-	if( flipV )
-		glBufferData( GL_ARRAY_BUFFER, sizeof( FLIPPED_TEXTURED_QUAD_VERTICES ), FLIPPED_TEXTURED_QUAD_VERTICES, GL_STATIC_DRAW );
-	else
-		glBufferData( GL_ARRAY_BUFFER, sizeof( TEXTURED_QUAD_VERTICES ), TEXTURED_QUAD_VERTICES, GL_STATIC_DRAW );
+	ffglex::ScopedVAOBinding vaoBinding( vaoID );
+	ffglex::ScopedVBOBinding vboBinding( vboID );
+
+	glBufferData( GL_ARRAY_BUFFER, sizeof( P_TEXTURED_QUAD_VERTICES ), P_TEXTURED_QUAD_VERTICES, GL_DYNAMIC_DRAW );
 
 	glEnableVertexAttribArray( 0 );
-	glVertexAttribPointer( 0, 3, GL_FLOAT, false, sizeof( TEXTURED_QUAD_VERTICES[ 0 ] ), (char*)NULL + 2 * sizeof( float ) );
+	glVertexAttribPointer( 0, 3, GL_FLOAT, false, sizeof( P_TEXTURED_QUAD_VERTICES[ 0 ] ), (char*)NULL + 2 * sizeof( float ) );
 	glEnableVertexAttribArray( 1 );
-	glVertexAttribPointer( 1, 2, GL_FLOAT, false, sizeof( TEXTURED_QUAD_VERTICES[ 0 ] ), (char*)NULL + 0 * sizeof( float ) );
+	glVertexAttribPointer( 1, 2, GL_FLOAT, false, sizeof( P_TEXTURED_QUAD_VERTICES[ 0 ] ), (char*)NULL + 0 * sizeof( float ) );
 
 	//The array enablements are part of the vao binding and not the global context state so we dont have to disable those here.
 
@@ -58,24 +65,29 @@ bool FFGLScreenQuad::Initialise( bool flipV )
  * Draw the quad. Depending on your vertex shader this will apply your fragment shader in the area where the quad ends up.
  * You need to have successfully initialised this quad before rendering it.
  */
-void FFGLScreenQuad::Draw()
+void DrawQuad::Draw()
 {
 	if( vaoID == 0 || vboID == 0 )
 		return;
 
 	//Scoped binding to make sure we dont keep the vao bind after we're done rendering.
-	ScopedVAOBinding vaoBinding( vaoID );
+
+	ffglex::ScopedVAOBinding vaoBinding( vaoID );
+	ffglex::ScopedVBOBinding vboBinding( vboID );
+
+	float df                      = ffglex::random( 0.2f, 0.9f );
+	P_TEXTURED_QUAD_VERTICES[ 0 ] = { 0.0f, 1.0f, -df, df, 0.0f };
+	glBufferData( GL_ARRAY_BUFFER, sizeof( P_TEXTURED_QUAD_VERTICES ), P_TEXTURED_QUAD_VERTICES, GL_DYNAMIC_DRAW );
+
 	glDrawArrays( GL_TRIANGLES, 0, 6 );
 }
 /**
  * Release the gpu resources this quad has loaded into vram. Call this before destruction if you've previously initialised us.
  */
-void FFGLScreenQuad::Release()
+void DrawQuad::Release()
 {
 	glDeleteBuffers( 1, &vboID );
 	vboID = 0;
 	glDeleteVertexArrays( 1, &vaoID );
 	vaoID = 0;
 }
-
-}//End namespace ffglex

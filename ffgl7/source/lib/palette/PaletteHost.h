@@ -6,69 +6,13 @@
 // #include <gl/gl.h>
 #endif
 
-#define FFGL_ALREADY_DEFINED
-#ifndef FFGL_ALREADY_DEFINED
-
-#define FF_SUCCESS					0
-#define FF_FAIL					0xFFFFFFFF
-
-// The following typedefs are in FFGL.h, but I don't want to pull that entire file in... 
-
-//FFGLViewportStruct (for InstantiateGL)
-typedef struct FFGLViewportStructTag
-{
-  GLuint x,y,width,height;
-} FFGLViewportStruct;
-
-//FFGLTextureStruct (for ProcessOpenGLStruct)
-typedef struct FFGLTextureStructTag
-{
-  DWORD Width, Height;
-  DWORD HardwareWidth, HardwareHeight;
-  GLuint Handle; //the actual texture handle, from glGenTextures()
-} FFGLTextureStruct;
-
-// ProcessOpenGLStruct
-// ProcessOpenGLStruct
-typedef struct ProcessOpenGLStructTag {
-  DWORD numInputTextures;
-  FFGLTextureStruct **inputTextures;
-  
-  //if the host calls ProcessOpenGL with a framebuffer object actively bound
-  //(as is the case when the host is capturing the plugins output to an offscreen texture)
-  //the host must provide the GL handle to its EXT_framebuffer_object
-  //so that the plugin can restore that binding if the plugin
-  //makes use of its own FBO's for intermediate rendering
-  GLuint HostFBO; 
-} ProcessOpenGLStruct;
-
-#endif
-
-#include "osc/OscOutboundPacketStream.h"
-#include "NosuchOscInput.h"
-#include "PaletteOscInput.h"
-#include "NosuchOscInput.h"
-#include "NosuchColor.h"
-#include "NosuchGraphics.h"
-#include "cJSON.h"
-#include "Scheduler.h"
-
-#include <FFGLSDK.h>
-#include "FFGLPluginSDK.h"
-#include "FFGL.h"
-
 class PaletteHost;
 class Palette;
 class PaletteHttp;
 class TrackedCursor;
 class GraphicBehaviour;
 class AllMorphs;
-
-typedef struct PointMem {
-	float x;
-	float y;
-	float z;
-} PointMem;
+class PaletteOscInput;
 
 #define DEFAULT_RESOLUME_PORT 7000
 #define DEFAULT_RESOLUME_HOST "127.0.0.1"
@@ -113,7 +57,6 @@ public:
 	
 	DWORD PaletteHostProcessOpenGL(ProcessOpenGLStruct *pGL);
 	DWORD PaletteHostPoke();
-	DWORD NewProcessOpenGL();
 
 	FFResult InitGL( const FFGLViewportStruct* vp );
 	FFResult DeInitGL();
@@ -148,32 +91,7 @@ public:
 	double width;
 	double height;
 
-	bool m_filled;
-	NosuchColor m_fill_color;
-	double m_fill_alpha;
-	bool m_stroked;
-	NosuchColor m_stroke_color;
-	double m_stroke_alpha;
-
-	void fill(NosuchColor c, double alpha);
-	void noFill();
-	void stroke(NosuchColor c, double alpha);
-	void noStroke();
-	void strokeWeight(double w);
-	void background(int);
-	void pushMatrix();
-	void popMatrix();
-	void translate(double x, double y);
-	void scale(double x, double y);
-	void rotate(double degrees);
-
-	void drawLine(double x0, double y0, double x1, double y1);
-	void drawTriangle(double x0, double y0, double x1, double y1, double x2, double y2);
-	void drawQuad(double x0, double y0, double x1, double y1, double x2, double y2, double x3, double y3);
-	void drawEllipse(double x0, double y0, double w, double h, double fromang=0.0f, double toang=360.0f);
-	void drawPolygon(PointMem* p, int npoints);
-
-	void drawshape();
+	PaletteDrawer* _drawer;
 
 	///////////////////////////////////////////////////
 	// Factory method
@@ -186,10 +104,9 @@ public:
 	}
 
 	Palette* palette() { return _palette; }
+	void SetOscPort( std::string oscport );
+	std::string GetOscPort( );
 
-	int gl_frame;
-
-	static void ErrorPopup(const char* msg);
 	void RunEveryMillisecondOrSo();
 
 	// NEW STUFF
@@ -211,9 +128,9 @@ public:
 	RGBA rgba1;
 	HSBA hsba2;
 
-	ffglex::FFGLShader m_shader;  //!< Utility to help us compile and link some shaders into a program.
-	ffglex::FFGLScreenQuad m_quad;//!< Utility to help us render a full screen quad.
-	ffglex::FFGLScreenTriangle m_triangle;//!< Utility to help us render a full screen quad.
+	ffglex::FFGLShader m_shader_gradient;  //!< Utility to help us compile and link some shaders into a program.
+	DrawQuad m_quad;//!< Utility to help us render a full screen quad.
+	DrawTriangle m_triangle;//!< Utility to help us render a full screen quad.
 	GLint m_rgbLeftLocation;
 	GLint m_rgbRightLocation;
 
@@ -241,8 +158,6 @@ protected:
 	static void StaticInitialization();
 
 	std::string m_oscport;
-	void SetOscPort( std::string oscport );
-	std::string GetOscPort( );
 
 private:
 	Timestamp _time0;

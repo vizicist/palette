@@ -56,9 +56,14 @@ public:
 	// NON-STATIC STUFF
 
 	PaletteParams params;
+	PaletteDrawer* p;
 
 	PaletteHost* paletteHost() { return _paletteHost; }
-	Scheduler* scheduler() { return _paletteHost->scheduler(); }
+	
+	FFResult InitGL( const FFGLViewportStruct* vp );
+	FFResult DeInitGL();
+
+	// Scheduler* scheduler() { return _paletteHost->scheduler(); }
 
 	void LockPalette() {
 		NosuchLock(&_palette_mutex,"palette");
@@ -79,6 +84,7 @@ public:
 private:
 
 	PaletteHost* _paletteHost;
+	PaletteDrawer* _drawer;
 	pthread_mutex_t _palette_mutex;
 
 	int _frames;

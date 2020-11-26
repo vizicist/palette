@@ -1,8 +1,4 @@
-#ifndef _NSOSCUDP
-#define _NSOSCUDP
-
-#include "NosuchOscInput.h"
-#include "winsock.h"
+#pragma once
 
 class NosuchOscUdpInput : public NosuchOscInput {
 
@@ -21,5 +17,3 @@ private:
 	const char *_myhost;
 	NosuchOscMessageProcessor* _processor;
 };
-
-#endif
