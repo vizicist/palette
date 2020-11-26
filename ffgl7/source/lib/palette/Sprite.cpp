@@ -58,22 +58,16 @@ double Sprite::degree2radian(double deg) {
 	return 2.0f * (double)M_PI * deg / 360.0f;
 }
 
-void Sprite::draw(PaletteDrawer* ph) {
+void Sprite::draw(PaletteDrawer* drawer) {
 	if (state.depth < params.zmin ) {
 		state.depth = params.zmin;
 	}
-	double scaled_z = ph->scale_z(state.depth);
-	draw(ph,scaled_z);
-}
-
-void Sprite::draw(PaletteDrawer* app, double scaled_z) {
+	double scaled_z = drawer->scale_z(state.depth);
 
 	if ( ! state.visible ) {
 		NosuchDebug("Sprite.draw NOT DRAWING, !visible");
 		return;
 	}
-	// double hue = state.hueoffset + params.hueinitial;
-	// double huefill = state.hueoffset + params.huefill;
 	
 	NosuchColor color = NosuchColor(state.hue, params.luminance, params.saturation);
 	NosuchColor colorfill = NosuchColor(state.huefill, params.luminance, params.saturation);
@@ -84,17 +78,17 @@ void Sprite::draw(PaletteDrawer* app, double scaled_z) {
 	}
 	
 	if ( params.filled ) {
-		app->fill(colorfill, state.alpha);
+		drawer->fill(colorfill, state.alpha);
 	} else {
-		app->noFill();
+		drawer->noFill();
 	}
-	app->stroke(color, state.alpha);
+	drawer->stroke(color, state.alpha);
 	if ( state.size < 0.001f ) {
 		state.killme = true;
 		return;
 	}
 	double thickness = params.thickness;
-	app->strokeWeight(thickness);
+	drawer->strokeWeight(thickness);
 	double aspect = params.aspect;
 	
 	double scalex = state.size * scaled_z;
@@ -110,48 +104,48 @@ void Sprite::draw(PaletteDrawer* app, double scaled_z) {
 	int xdir;
 	int ydir;
 	if ( params.mirrortype == "four" ) {
-		x = 2.0f * state.pos.x * app->width() - 1.0f;
-		y = 2.0f * state.pos.y * app->height() - 1.0f;
+		x = 2.0f * state.pos.x * drawer->width() - 1.0f;
+		y = 2.0f * state.pos.y * drawer->height() - 1.0f;
 		xdir = 1;
 		ydir = 1;
-		drawAt(app,x,y,scalex,scaley,xdir,ydir);
+		drawAt(drawer,x,y,scalex,scaley,xdir,ydir);
 		ydir = -1;
-		drawAt(app,x,-y,scalex,scaley,xdir,ydir);
+		drawAt(drawer,x,-y,scalex,scaley,xdir,ydir);
 		xdir = -1;
-		drawAt(app,-x,y,scalex,scaley,xdir,ydir);
+		drawAt(drawer,-x,y,scalex,scaley,xdir,ydir);
 		ydir = 1;
-		drawAt(app,-x,-y,scalex,scaley,xdir,ydir);
+		drawAt(drawer,-x,-y,scalex,scaley,xdir,ydir);
 	} else if ( params.mirrortype == "vertical" ) {
-		x = 2.0f * state.pos.x * app->width() - 1.0f;
-		y = state.pos.y * app->height();
+		x = 2.0f * state.pos.x * drawer->width() - 1.0f;
+		y = state.pos.y * drawer->height();
 		xdir = 1;
 		ydir = 1;
-		drawAt(app,x,y,scalex,scaley,xdir,ydir);
-		// y = (1.0f-state.pos.y) * app->height();
-		y = (-state.pos.y) * app->height();
+		drawAt(drawer,x,y,scalex,scaley,xdir,ydir);
+		// y = (1.0f-state.pos.y) * drawer->height();
+		y = (-state.pos.y) * drawer->height();
 		ydir = -1;
-		drawAt(app,x,y,scalex,scaley,xdir,ydir);
+		drawAt(drawer,x,y,scalex,scaley,xdir,ydir);
 	} else if ( params.mirrortype == "horizontal" ) {
-		x = state.pos.x * app->width();
-		y = 2.0f * state.pos.y * app->height() - 1.0f;
+		x = state.pos.x * drawer->width();
+		y = 2.0f * state.pos.y * drawer->height() - 1.0f;
 		xdir = 1;
 		ydir = 1;
-		drawAt(app,x,y,scalex,scaley,xdir,ydir);
-		// x = (1.0f-state.pos.x) * app->width();
-		x = (-state.pos.x) * app->width();
+		drawAt(drawer,x,y,scalex,scaley,xdir,ydir);
+		// x = (1.0f-state.pos.x) * drawer->width();
+		x = (-state.pos.x) * drawer->width();
 		xdir = -1;
-		drawAt(app,x,y,scalex,scaley,xdir,ydir);
+		drawAt(drawer,x,y,scalex,scaley,xdir,ydir);
 	} else {
-		x = 2.0f * state.pos.x * app->width() - 1.0f;
-		y = 2.0f * state.pos.y * app->height() - 1.0f;
+		x = 2.0f * state.pos.x * drawer->width() - 1.0f;
+		y = 2.0f * state.pos.y * drawer->height() - 1.0f;
 		xdir = 1;
 		ydir = 1;
-		drawAt(app,x,y,scalex,scaley,xdir,ydir);
+		drawAt(drawer,x,y,scalex,scaley,xdir,ydir);
 	}
 }
 	
-void Sprite::drawAt(PaletteDrawer* app, double x,double y, double scalex, double scaley, int xdir, int ydir) {
-	app->pushMatrix();
+void Sprite::drawAt(PaletteDrawer* drawer, double x,double y, double scalex, double scaley, int xdir, int ydir) {
+	drawer->pushMatrix();
 	double dx = x;
 	double dy = y;
 
@@ -191,12 +185,11 @@ void Sprite::drawAt(PaletteDrawer* app, double x,double y, double scalex, double
 
 	double degrees = state.rotanginit + state.rotangsofar;
 
-	app->translate(dx,dy);
-	app->scale(scalex,scaley);
-	app->rotate(degrees);
-
-	drawShape(app,xdir,ydir);
-	app->popMatrix();
+	drawer->translate(dx,dy);
+	drawer->scale(scalex,scaley);
+	drawer->rotate(degrees);
+	drawer->drawSprite(this,xdir,ydir);
+	drawer->popMatrix();
 }
 
 NosuchVector Sprite::deltaInDirection(double dt, double dir, double speed) {
@@ -375,7 +368,7 @@ SpriteList::add(Sprite* s, int limit)
 }
 
 void
-SpriteList::draw(PaletteDrawer* b) {
+SpriteList::draw(PaletteDrawer* drawer) {
 	lock_read();
 	if (sprites.size() > 0) {
 		// NosuchDebug("Spritelist::draw sprites.size=%d", (int)sprites.size());
@@ -384,7 +377,7 @@ SpriteList::draw(PaletteDrawer* b) {
 		Sprite* s = *i;
 		NosuchAssert(s);
 		// NosuchDebug("   Spritelist::draw s=%lld  born=%d",(long long)s,s->state.born);
-		s->draw(b);
+		s->draw(drawer);
 	}
 	unlock();
 }
@@ -487,7 +480,7 @@ SpriteSquare::SpriteSquare() {
 	noise_initialized = false;
 }
 
-void SpriteSquare::drawShape(PaletteDrawer* app, int xdir, int ydir) {
+void SpriteSquare::drawShape(PaletteDrawer* drawer, int xdir, int ydir) {
 	double halfw = 0.25f;
 	double halfh = 0.25f;
 
@@ -512,14 +505,14 @@ void SpriteSquare::drawShape(PaletteDrawer* app, int xdir, int ydir) {
 	double x3 = halfw + noise_x3 * halfw;
 	double y3 = -halfh + noise_y3 * halfh;
 	NosuchDebug(2,"drawing Square halfw=%.3f halfh=%.3f",halfw,halfh);
-	app->drawQuad( x0,y0, x1,y1, x2,y2, x3, y3);
+	drawer->drawQuad( x0,y0, x1,y1, x2,y2, x3, y3);
 }
 
 SpriteTriangle::SpriteTriangle() {
 	noise_initialized = false;
 }
 	
-void SpriteTriangle::drawShape(PaletteDrawer* app, int xdir, int ydir) {
+void SpriteTriangle::drawShape(PaletteDrawer* drawer, int xdir, int ydir) {
 
 	if (!noise_initialized) {
 		noise_x0 = vertexNoise();
@@ -539,7 +532,7 @@ void SpriteTriangle::drawShape(PaletteDrawer* app, int xdir, int ydir) {
 	NosuchVector p3 = p1;
 	p3 = p3.rotate(Sprite::degree2radian(-120));
 	
-	app->drawTriangle(p1.x+noise_x0*sz,p1.y+noise_y0*sz,
+	drawer->drawTriangle(p1.x+noise_x0*sz,p1.y+noise_y0*sz,
 			     p2.x+noise_x1*sz,p2.y+noise_y1*sz,
 			     p3.x+noise_x2*sz,p3.y+noise_y2*sz);
 }

@@ -62,12 +62,18 @@ PaletteDrawer::PaletteDrawer(PaletteParams *params)
 
 	m_filled = false;
 	m_stroked = false;
+	m_fill_alpha = 1.0;
+	m_stroke_alpha = 1.0;
+	m_stroke_color = NosuchColor( 255, 255, 0 );
 
 	m_rgbLeftLocation = -1;
 	m_rgbRightLocation = -1;
 
 	m_width              = 1.0;
 	m_height              = 1.0;
+
+	m_rgba1 = { 1.0f, 1.0f, 0.0f, 1.0f };
+	m_hsba2 = { 0.0f, 1.0f, 1.0f, 1.0f };
 }
 
 PaletteDrawer::~PaletteDrawer()
@@ -126,6 +132,14 @@ double PaletteDrawer::scale_z(double z) {
 	return expz * m_params->zmultiply;
 }
 
+void PaletteDrawer::drawSetup()
+{
+}
+
+void PaletteDrawer::drawSprite(Sprite* s, int xdir, int ydir)
+{
+	s->drawShape( this, xdir, ydir );
+}
 
 void PaletteDrawer::drawQuad(double x0, double y0, double x1, double y1, double x2, double y2, double x3, double y3) {
 	NosuchDebug("PaletteDrawer.drawQuad: %.3f %.3f, %.3f %.3f, %.3f %.3f, %.3f %.3f",x0,y0,x1,y1,x2,y2,x3,y3);

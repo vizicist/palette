@@ -18,6 +18,8 @@ typedef struct PointMem {
 #define BASE_OSC_INPUT_PORT 3333
 #define DEFAULT_OSC_INPUT_HOST "127.0.0.1"
 
+typedef void (*SpriteDrawer)( PaletteDrawer* drawer, int xdir, int ydir );
+
 class PaletteDrawer {
 
 public:
@@ -44,6 +46,9 @@ public:
 	void scale(double x, double y);
 	void rotate(double degrees);
 
+	void drawSprite( Sprite* s, int xdir, int ydir );
+	void drawSetup();
+
 	void drawLine(double x0, double y0, double x1, double y1);
 	void drawTriangle(double x0, double y0, double x1, double y1, double x2, double y2);
 	void drawQuad(double x0, double y0, double x1, double y1, double x2, double y2, double x3, double y3);
@@ -54,10 +59,8 @@ private:
 
 	PaletteParams *m_params;
 	
-	// GRAPHICS ROUTINES
 	double m_width;
 	double m_height;
-
 	bool m_filled;
 	NosuchColor m_fill_color;
 	double m_fill_alpha;
@@ -69,20 +72,20 @@ private:
 
 	struct RGBA
 	{
-		float red   = 1.0f;
-		float green = 1.0f;
-		float blue  = 0.0f;
-		float alpha = 1.0f;
+		float red;
+		float green;
+		float blue;
+		float alpha;
 	};
 	struct HSBA
 	{
-		float hue   = 0.0f;
-		float sat   = 1.0f;
-		float bri   = 1.0f;
-		float alpha = 1.0f;
+		float hue;
+		float sat;
+		float bri;
+		float alpha;
 	};
-	RGBA rgba1;
-	HSBA hsba2;
+	RGBA m_rgba1;
+	HSBA m_hsba2;
 
 	ffglex::FFGLShader m_shader_gradient;  //!< Utility to help us compile and link some shaders into a program.
 	DrawQuad m_quad;//!< Utility to help us render a full screen quad.
