@@ -80,6 +80,7 @@ echo ================ Copying FFGL7 plugin
 mkdir %ship%\ffgl7
 pushd %PALETTESOURCE%\ffgl7\binaries\x64\Debug
 copy Palette*.dll %ship%\ffgl7 > nul
+copy Palette*.pdb %ship%\ffgl7 > nul
 copy %PALETTESOURCE%\build\windows\pthreadvc2.dll %ship%\ffgl7 >nul
 popd
 

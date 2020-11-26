@@ -1,9 +1,8 @@
 #pragma once
-#include <FFGLSDK.h>
-#include "FFGLPluginSDK.h"
-#include "PaletteHost.h"
 
-class FFGLPalette : public PaletteHost, public CFFGLPlugin
+// class FFGLPalette : public PaletteHost, public CFFGLPlugin
+
+class FFGLPalette : public CFFGLPlugin
 {
 public:
 	FFGLPalette(std::string configfile);
@@ -17,6 +16,8 @@ public:
 	float GetFloatParameter( unsigned int index ) override;
 	FFResult SetTextParameter( unsigned int index, const char* value ) override;
 	char* GetTextParameter( unsigned int index ) override;
+
+	PaletteHost* paletteHost;
 
 	///////////////////////////////////////////////////
 	// Factory method

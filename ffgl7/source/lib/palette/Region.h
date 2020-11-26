@@ -8,6 +8,7 @@ class SpriteList;
 class Sprite;
 class Palette;
 class PaletteHost;
+class PaletteDrawer;
 class TrackedCursor;
 class GraphicBehaviour;
 
@@ -117,7 +118,7 @@ public:
 	void instantiateSpriteAt(std::string cid, NosuchVector pos, double z);
 	double spriteMoveDir(TrackedCursor* c);
 	// these need to be thread-safe
-	void draw(PaletteHost* b);
+	void draw(PaletteDrawer* b);
 	void advanceTo(int tm);
 	void clear();
 	void deleteOldCursors(Palette* palette);
@@ -126,7 +127,7 @@ public:
 	bool cursorlist_lock_write();
 	void cursorlist_unlock();
 
-	Scheduler* scheduler();
+	// Scheduler* scheduler();
 
 	double _maxCursorDepth();
 	size_t NumCursors() { return _cursors.size(); }

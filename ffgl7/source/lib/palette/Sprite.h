@@ -27,7 +27,7 @@ public:
 	void lock_read();
 	void lock_write();
 	void unlock();
-	void draw(PaletteHost* b);
+	void draw(PaletteDrawer* b);
 	void clear();
 	void advanceTo(int tm, int gravity);
 	void computeForce(std::list<Sprite*> &sprites, int gravity);
@@ -89,8 +89,7 @@ public:
 	Sprite();
 	virtual ~Sprite();
 
-	virtual void drawShape(PaletteHost* app, int xdir, int ydir) = 0;
-	virtual bool fixedScale() { return false; }
+	virtual void drawShape(PaletteDrawer* app, int xdir, int ydir) = 0;
 	virtual void startAccumulate(TrackedCursor* c) { };
 	virtual void accumulate(TrackedCursor* c) { }
 
@@ -112,8 +111,8 @@ public:
 		state.pos.y *= 2.0f;
 	}
 
-	void draw(PaletteHost* app);
-	void drawAt(PaletteHost* app, double x,double y, double w, double h, int xdir, int ydir);
+	void draw(PaletteDrawer* app);
+	void drawAt(PaletteDrawer* app, double x,double y, double w, double h, int xdir, int ydir);
 	NosuchVector deltaInDirection(double dt, double dir, double speed);
 	int rotangdirOf(std::string s);
 	void advanceTo(int tm, NosuchVector force);
@@ -127,14 +126,14 @@ protected:
 	static int NextSeq;
 
 private:
-	void draw(PaletteHost* app, double scaled_z);
+	void draw(PaletteDrawer* app, double scaled_z);
 };
 
 class SpriteSquare : public Sprite {
 
 public:
 	SpriteSquare();
-	void drawShape(PaletteHost* app, int xdir, int ydir);
+	void drawShape(PaletteDrawer* app, int xdir, int ydir);
 
 private:
 	bool noise_initialized;
@@ -152,7 +151,7 @@ class SpriteTriangle : public Sprite {
 
 public:
 	SpriteTriangle();
-	void drawShape(PaletteHost* app, int xdir, int ydir);
+	void drawShape(PaletteDrawer* app, int xdir, int ydir);
 
 private:
 	bool noise_initialized;
@@ -168,21 +167,21 @@ class SpriteCircle : public Sprite {
 
 public:
 	SpriteCircle();
-	void drawShape(PaletteHost* app, int xdir, int ydir);
+	void drawShape(PaletteDrawer* app, int xdir, int ydir);
 };
 
 class SpriteArc : public Sprite {
 
 public:
 	SpriteArc();
-	void drawShape(PaletteHost* app, int xdir, int ydir);
+	void drawShape(PaletteDrawer* app, int xdir, int ydir);
 };
 
 class SpriteLine : public Sprite {
 
 public:
 	SpriteLine();
-	void drawShape(PaletteHost* app, int xdir, int ydir);
+	void drawShape(PaletteDrawer* app, int xdir, int ydir);
 
 private:
 	bool noise_initialized;

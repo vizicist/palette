@@ -50,9 +50,6 @@ bool NosuchDebugToLogWarned = false;
 bool NosuchDebugAutoFlush = true;
 std::string NosuchAppName = "Nosuch App";
 
-typedef void (*ErrorPopupFuncType)(const char* msg); 
-ErrorPopupFuncType NosuchErrorPopup = NULL;
-
 int NosuchDebugTag = 0;
 std::string NosuchDebugPrefix = "";
 // std::string NosuchDebugLogFile = "ffgl.log";
@@ -268,10 +265,6 @@ NosuchErrorOutput(const char *fmt, ...)
 	char *p = strchr(msg,'\0');
 	if ( p != NULL && p != msg && *(p-1) != '\n' ) {
 		strcat_s(msg,sizeof(msg),"\n");
-	}
-
-	if ( NosuchErrorPopup != NULL ) {
-		NosuchErrorPopup(msg);
 	}
 
 	OutputDebugStringA(msg);

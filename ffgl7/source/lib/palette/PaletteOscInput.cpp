@@ -4,8 +4,6 @@
 #include <float.h>
 
 #include "PaletteAll.h"
-#include "PaletteOscInput.h"
-#include "NosuchOscUdpInput.h"
 
 PaletteOscInput::PaletteOscInput(PaletteHost* server, const char* host, int port) : NosuchOscMessageProcessor() {
 

@@ -44,9 +44,10 @@ Palette::Palette(PaletteHost* b) {
 
 	NosuchLockInit(&_palette_mutex,"palette");
 	_paletteHost = b;
+	_drawer      = new PaletteDrawer( &params );
 
 	now = 0;  // Don't use Pt_Time(), it may not have been started yet
-	NosuchDebug(1,"Palette constructor, setting now to %d",now);
+	NosuchDebug("Palette constructor");
 
 	_frames = 0;
 	_frames_last = now;
@@ -61,6 +62,19 @@ Palette::Palette(PaletteHost* b) {
 
 Palette::~Palette() {
 }
+
+FFResult Palette::InitGL( const FFGLViewportStruct* vp)
+{
+	return _drawer->InitGL( vp );
+}
+
+FFResult Palette::DeInitGL()
+{
+	NosuchDebug( "HI From PaletteHost::DeInitGL" );
+	_drawer->DeInitGL();
+	return FF_SUCCESS;
+}
+
 
 static void writestr(std::ofstream& out, std::string s) {
 	const char* p = s.c_str();
@@ -177,7 +191,7 @@ int Palette::draw() {
 	// pthread_t thr = pthread_self ();
 	// NosuchDebug("Palette::draw start thr=%d,%d",(int)(thr.p),thr.x);
 
-	region.draw(_paletteHost);
+	region.draw(_drawer);
 
 	return 0;
 }

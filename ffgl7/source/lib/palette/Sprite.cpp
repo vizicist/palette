@@ -58,21 +58,15 @@ double Sprite::degree2radian(double deg) {
 	return 2.0f * (double)M_PI * deg / 360.0f;
 }
 
-void Sprite::draw(PaletteHost* ph) {
+void Sprite::draw(PaletteDrawer* ph) {
 	if (state.depth < params.zmin ) {
 		state.depth = params.zmin;
 	}
-	double scaled_z = scale_z(ph,state.depth);
+	double scaled_z = ph->scale_z(state.depth);
 	draw(ph,scaled_z);
 }
 
-#if 0
-void Sprite::draw(PaletteHost* app) {
-	draw(app,1.0);
-}
-#endif
-
-void Sprite::draw(PaletteHost* app, double scaled_z) {
+void Sprite::draw(PaletteDrawer* app, double scaled_z) {
 
 	if ( ! state.visible ) {
 		NosuchDebug("Sprite.draw NOT DRAWING, !visible");
@@ -103,20 +97,10 @@ void Sprite::draw(PaletteHost* app, double scaled_z) {
 	app->strokeWeight(thickness);
 	double aspect = params.aspect;
 	
-	// double scaled_z = region->scale_z(state.depth);
-
 	double scalex = state.size * scaled_z;
 	double scaley = state.size * scaled_z;
 	
 	scalex *= aspect;
-	// scaley *= (1.0f/aspect);
-	
-	// double w = app->width * scalex;
-	// double h = app->height * scaley;
-	
-	// if (w < 0 || h < 0) {
-	// 	NosuchDebug("Hey, wh < 0?  w=%f h=%f\n",w,h);
-	// }
 
 	double x;
 	double y;
@@ -126,8 +110,8 @@ void Sprite::draw(PaletteHost* app, double scaled_z) {
 	int xdir;
 	int ydir;
 	if ( params.mirrortype == "four" ) {
-		x = 2.0f * state.pos.x * app->width - 1.0f;
-		y = 2.0f * state.pos.y * app->height - 1.0f;
+		x = 2.0f * state.pos.x * app->width() - 1.0f;
+		y = 2.0f * state.pos.y * app->height() - 1.0f;
 		xdir = 1;
 		ydir = 1;
 		drawAt(app,x,y,scalex,scaley,xdir,ydir);
@@ -138,35 +122,35 @@ void Sprite::draw(PaletteHost* app, double scaled_z) {
 		ydir = 1;
 		drawAt(app,-x,-y,scalex,scaley,xdir,ydir);
 	} else if ( params.mirrortype == "vertical" ) {
-		x = 2.0f * state.pos.x * app->width - 1.0f;
-		y = state.pos.y * app->height;
+		x = 2.0f * state.pos.x * app->width() - 1.0f;
+		y = state.pos.y * app->height();
 		xdir = 1;
 		ydir = 1;
 		drawAt(app,x,y,scalex,scaley,xdir,ydir);
-		// y = (1.0f-state.pos.y) * app->height;
-		y = (-state.pos.y) * app->height;
+		// y = (1.0f-state.pos.y) * app->height();
+		y = (-state.pos.y) * app->height();
 		ydir = -1;
 		drawAt(app,x,y,scalex,scaley,xdir,ydir);
 	} else if ( params.mirrortype == "horizontal" ) {
-		x = state.pos.x * app->width;
-		y = 2.0f * state.pos.y * app->height - 1.0f;
+		x = state.pos.x * app->width();
+		y = 2.0f * state.pos.y * app->height() - 1.0f;
 		xdir = 1;
 		ydir = 1;
 		drawAt(app,x,y,scalex,scaley,xdir,ydir);
-		// x = (1.0f-state.pos.x) * app->width;
-		x = (-state.pos.x) * app->width;
+		// x = (1.0f-state.pos.x) * app->width();
+		x = (-state.pos.x) * app->width();
 		xdir = -1;
 		drawAt(app,x,y,scalex,scaley,xdir,ydir);
 	} else {
-		x = 2.0f * state.pos.x * app->width - 1.0f;
-		y = 2.0f * state.pos.y * app->height - 1.0f;
+		x = 2.0f * state.pos.x * app->width() - 1.0f;
+		y = 2.0f * state.pos.y * app->height() - 1.0f;
 		xdir = 1;
 		ydir = 1;
 		drawAt(app,x,y,scalex,scaley,xdir,ydir);
 	}
 }
 	
-void Sprite::drawAt(PaletteHost* app, double x,double y, double scalex, double scaley, int xdir, int ydir) {
+void Sprite::drawAt(PaletteDrawer* app, double x,double y, double scalex, double scaley, int xdir, int ydir) {
 	app->pushMatrix();
 	double dx = x;
 	double dy = y;
@@ -174,7 +158,7 @@ void Sprite::drawAt(PaletteHost* app, double x,double y, double scalex, double s
 	// handle justification
 	std::string j = params.justification;
 
-	NosuchDebug("Sprite::drawAt s=%lld drawAt j=%s xy= %.4lf %.4lf width=%lf size=%lf depth=%lf\n",
+	NosuchDebug("Sprite::drawAt s=%lld drawAt j=%s xy= %f %f width=%f size=%f depth=%f\n",
 		(long long)this,j.c_str(),x,y,width(),state.size,state.depth);
 
 	if (j == "center") {
@@ -205,28 +189,13 @@ void Sprite::drawAt(PaletteHost* app, double x,double y, double scalex, double s
 
 	// NosuchDebug("    Sprite::drawAt left width=%f dx is now %f\n", width(), dx);
 
-	app->translate(dx,dy);
-
-	if ( fixedScale() ) {
-		app->scale(1.0,1.0);
-	} else {
-		app->scale(scalex,scaley);
-	}
-	// double degrees = params.rotanginit + state.rotangsofar;
 	double degrees = state.rotanginit + state.rotangsofar;
 
-	// NosuchDebug("SpriteDraw seq=%d anginit=%.3f sofar=%.3f degrees=%f",
-	// 	state.seq,params.rotanginit,state.rotangsofar,degrees);
-	// NosuchDebug("Sprite::drawAt degrees=%.4f  w,h=%f,%f\n",degrees,w,h);
-	// NosuchDebug("Sprite::drawAt s=%d degrees=%.4f",(int)this,degrees);
-	if (NosuchDebugSprite) {
-		NosuchDebug("Sprite.drawAt: calling drawShape cid=%s x=%.6f y=%.6f", this->state.cid.c_str(), this->state.pos.x, this->state.pos.y);
-	}
+	app->translate(dx,dy);
+	app->scale(scalex,scaley);
 	app->rotate(degrees);
 
-	app->drawshape();
-	// drawShape(app,xdir,ydir);
-
+	drawShape(app,xdir,ydir);
 	app->popMatrix();
 }
 
@@ -406,7 +375,7 @@ SpriteList::add(Sprite* s, int limit)
 }
 
 void
-SpriteList::draw(PaletteHost* b) {
+SpriteList::draw(PaletteDrawer* b) {
 	lock_read();
 	if (sprites.size() > 0) {
 		// NosuchDebug("Spritelist::draw sprites.size=%d", (int)sprites.size());
@@ -518,7 +487,7 @@ SpriteSquare::SpriteSquare() {
 	noise_initialized = false;
 }
 
-void SpriteSquare::drawShape(PaletteHost* app, int xdir, int ydir) {
+void SpriteSquare::drawShape(PaletteDrawer* app, int xdir, int ydir) {
 	double halfw = 0.25f;
 	double halfh = 0.25f;
 
@@ -550,7 +519,7 @@ SpriteTriangle::SpriteTriangle() {
 	noise_initialized = false;
 }
 	
-void SpriteTriangle::drawShape(PaletteHost* app, int xdir, int ydir) {
+void SpriteTriangle::drawShape(PaletteDrawer* app, int xdir, int ydir) {
 
 	if (!noise_initialized) {
 		noise_x0 = vertexNoise();
@@ -579,7 +548,7 @@ SpriteLine::SpriteLine() {
 	noise_initialized = false;
 }
 
-void SpriteLine::drawShape(PaletteHost* app, int xdir, int ydir) {
+void SpriteLine::drawShape(PaletteDrawer* app, int xdir, int ydir) {
 	if (!noise_initialized) {
 		noise_x0 = vertexNoise();
 		noise_y0 = vertexNoise();
@@ -600,7 +569,7 @@ void SpriteLine::drawShape(PaletteHost* app, int xdir, int ydir) {
 SpriteCircle::SpriteCircle() {
 }
 
-void SpriteCircle::drawShape(PaletteHost* app, int xdir, int ydir) {
+void SpriteCircle::drawShape(PaletteDrawer* app, int xdir, int ydir) {
 	// NosuchDebug("SpriteCircle drawing");
 	app->drawEllipse(0, 0, 0.2f, 0.2f);
 }
@@ -608,7 +577,7 @@ void SpriteCircle::drawShape(PaletteHost* app, int xdir, int ydir) {
 SpriteArc::SpriteArc() {
 }
 
-void SpriteArc::drawShape(PaletteHost* app, int xdir, int ydir) {
+void SpriteArc::drawShape(PaletteDrawer* app, int xdir, int ydir) {
 	// NosuchDebug("SpriteCircle drawing");
 	app->drawEllipse(0, 0, 0.2f, 0.2f, 0.0, 180.0);
 }
