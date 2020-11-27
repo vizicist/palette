@@ -302,9 +302,6 @@
     <ClInclude Include="..\..\source\lib\palette\DrawTriangle.h">
       <Filter>lib\palette</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\source\lib\palette\DrawUtil.h">
-      <Filter>lib\palette</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\source\lib\ffglex\FFGLScreenQuad.h">
       <Filter>lib\ffglex</Filter>
     </ClInclude>

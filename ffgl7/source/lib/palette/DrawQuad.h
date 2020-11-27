@@ -1,7 +1,11 @@
 #pragma once
-#include "../ffgl/FFGL.h"//For OpenGL
-#include "../ffglex/FFGLShader.h"
-#include <string>
+// #include "../ffgl/FFGL.h"//For OpenGL
+// #include "../ffglex/FFGLShader.h"
+// #include <string>
+#include "ffglex/FFGLScopedVAOBinding.h"
+#include "ffglex/FFGLScopedBufferBinding.h"
+#include "ffglex/FFGLUtilities.h"
+#include "ffglex/FFGLShader.h"
 
 class DrawQuad
 {
@@ -17,6 +21,7 @@ public:
 
 private:
 	ffglex::FFGLShader shader;
+	ffglex::GlVertexTextured vertices[ 6 ];
 
 	GLuint vaoID;
 	GLuint vboID;

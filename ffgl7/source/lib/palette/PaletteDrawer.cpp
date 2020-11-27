@@ -168,8 +168,6 @@ void PaletteDrawer::EndDrawing()
 void PaletteDrawer::drawQuad(float x0, float y0, float x1, float y1, float x2, float y2, float x3, float y3) {
 	NosuchDebug("PaletteDrawer.drawQuad: %.3f %.3f, %.3f %.3f, %.3f %.3f, %.3f %.3f",x0,y0,x1,y1,x2,y2,x3,y3);
 
-	//FFGL requires us to leave the context in a default state on return, so use this scoped binding to help us do that.
-
 	NosuchColor c1 = m_fill_color;
 	RGBA rgba1{
 		c1.r() / 255.0f,
@@ -187,40 +185,7 @@ void PaletteDrawer::drawQuad(float x0, float y0, float x1, float y1, float x2, f
 	glUniform4f( m_rgbLeftLocation, rgba1.red, rgba1.green, rgba1.blue, rgba1.alpha );
 	glUniform4f( m_rgbRightLocation, rgba2.red, rgba2.green, rgba2.blue, rgba2.alpha );
 
-	GLfloat xscale = 0.5f;
-	GLfloat yscale = 0.5f;
-	m_shader_gradient.Set( "vScale", xscale, yscale );
-	GLfloat xtranslate = 0.0f;
-	GLfloat ytranslate = 0.0f;
-	m_shader_gradient.Set( "vTranslate", xtranslate, ytranslate );
-
 	m_quad.Draw(x0,y0,x1,y1,x2,y2,x3,y3);
-
-#ifdef OLD_GRAPHICS
-	if ( m_filled ) {
-		glBegin(GL_QUADS);
-		NosuchColor c = m_fill_color;
-		glColor4d(c.r()/255.0f, c.g()/255.0f, c.b()/255.0f, m_fill_alpha);
-		glVertex2d( x0, y0); 
-		glVertex2d( x1, y1); 
-		glVertex2d( x2, y2); 
-		glVertex2d( x3, y3); 
-		glEnd();
-	}
-	if ( m_stroked ) {
-		NosuchColor c = m_stroke_color;
-		glColor4d(c.r()/255.0f, c.g()/255.0f, c.b()/255.0f, m_stroke_alpha);
-		glBegin(GL_LINE_LOOP); 
-		glVertex2d( x0, y0); 
-		glVertex2d( x1, y1); 
-		glVertex2d( x2, y2); 
-		glVertex2d( x3, y3); 
-		glEnd();
-	}
-	if ( ! m_filled && ! m_stroked ) {
-		NosuchDebug("Hey, quad() called when both m_filled and m_stroked are off!?");
-	}
-#endif
 }
 void PaletteDrawer::drawTriangle(double x0, double y0, double x1, double y1, double x2, double y2) {
 	NosuchDebug(2,"Drawing triangle xy0=%.3f,%.3f xy1=%.3f,%.3f xy2=%.3f,%.3f",x0,y0,x1,y1,x2,y2);
