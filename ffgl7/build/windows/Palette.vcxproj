@@ -134,6 +134,10 @@
     <ClInclude Include="..\..\source\lib\pthreads\pthread.h" />
     <ClInclude Include="..\..\source\plugins\Palette\FFGLPalette.h" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\..\default\config\paramdefs.json" />
+    <None Include="..\..\..\default\config\paramenums.json" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{76D28E77-F48E-4379-8F3B-AE61CD2E7DB4}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
@@ -186,7 +190,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <AdditionalIncludeDirectories>..\..\source\lib\;..\..\source\lib\ffgl\utilities\;..\..\source\lib\ffgl;..\..\source\lib\palette;..\..\source\lib\nosuch;..\..\source\lib\oscpack;..\..\source\lib\osc\include;..\..\source\lib\cJSON;..\..\source\lib\pthreads;..\..\source\plugins\palette;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\source\lib\;..\..\source\lib\ffgl\utilities\;..\..\source\lib\glm;..\..\source\lib\ffgl;..\..\source\lib\palette;..\..\source\lib\nosuch;..\..\source\lib\oscpack;..\..\source\lib\osc\include;..\..\source\lib\cJSON;..\..\source\lib\pthreads;..\..\source\plugins\palette;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ExceptionHandling>Async</ExceptionHandling>
     </ClCompile>
     <Link>

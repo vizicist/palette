@@ -11,10 +11,7 @@
 #include <math.h>
 
 #include "PaletteAll.h"
-#include "FFGLSDK.h"
-#include "FFGLLib.h"
-#include "osc/OscOutboundPacketStream.h"
-#include "cJSON.h"
+#include <glm/gtc/type_ptr.hpp>
 
 using namespace ffglex;
 
@@ -24,12 +21,13 @@ layout( location = 1 ) in vec2 vUV;
 
 uniform vec2 vScale;
 uniform vec2 vTranslate;
+uniform mat4 vMatrix;
 
 out vec2 uv;
 
 void main()
 {
-	gl_Position = vec4((vPosition.x*vScale.x)+vTranslate.x,(vPosition.y*vScale.y)+vTranslate.y,vPosition.z,vPosition.a);
+	gl_Position = vMatrix * vec4((vPosition.x*vScale.x)+vTranslate.x,(vPosition.y*vScale.y)+vTranslate.y,vPosition.z,vPosition.a);
 	uv = vUV;
 }
 )";
@@ -52,7 +50,9 @@ void main()
 //  Plugin information
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-PaletteDrawer::PaletteDrawer(PaletteParams *params)
+PaletteDrawer::PaletteDrawer(PaletteParams *params) :
+	m_matrix(1.0f),
+	m_matrix_identity(1.0f)
 {
 	srand((unsigned)time(NULL));
 
@@ -69,13 +69,42 @@ PaletteDrawer::PaletteDrawer(PaletteParams *params)
 
 	m_rgbLeftLocation = -1;
 	m_rgbRightLocation = -1;
+	m_matrixLocation   = -1;
 
 	m_width              = 1.0;
 	m_height              = 1.0;
 
 	m_rgba1 = { 1.0f, 1.0f, 0.0f, 1.0f };
 	m_hsba2 = { 0.0f, 1.0f, 1.0f, 1.0f };
+
+	resetMatrix();
 }
+
+void
+PaletteDrawer::resetMatrix()
+{
+#if 0
+	GLfloat matrix[16] = {
+		1.0, 0.0, 0.0, 0.0,
+		0.0, 1.0, 0.0, 0.0,
+		0.0, 0.0, 1.0, 0.0,
+		0.0, 0.0, 0.0, 1.0
+	};
+	setMatrix( matrix );
+#endif
+	m_matrix = m_matrix_identity;
+}
+
+#if 0
+void
+PaletteDrawer::setMatrix(GLfloat matrix[16]) {
+	// XXX - there's got to be a better way of doing this
+	for( int i = 0; i < 16; i++ )
+	{
+		m_matrix[ i ] = matrix[ i ];
+	}
+}
+#endif
 
 PaletteDrawer::~PaletteDrawer()
 {
@@ -106,7 +135,9 @@ void PaletteDrawer::background(int b) {
 void PaletteDrawer::strokeWeight(double w) {
 	glLineWidth((GLfloat)w);
 }
-void PaletteDrawer::rotate(double degrees) {
+void PaletteDrawer::rotate(float degrees) {
+	float radians = DEGREE2RADIAN( degrees );
+	m_matrix = glm::rotate( m_matrix, radians, glm::vec3(0.0f,0.0f,1.0f));
 #ifdef OLD_GRAPHICS
 	glRotated(-degrees,0.0f,0.0f,1.0f);
 #endif
@@ -163,7 +194,7 @@ void PaletteDrawer::EndDrawing()
 }
 
 void PaletteDrawer::drawQuad(float x0, float y0, float x1, float y1, float x2, float y2, float x3, float y3) {
-	NosuchDebug("PaletteDrawer.drawQuad: %.3f %.3f, %.3f %.3f, %.3f %.3f, %.3f %.3f",x0,y0,x1,y1,x2,y2,x3,y3);
+	NosuchDebug(1,"PaletteDrawer.drawQuad: %.3f %.3f, %.3f %.3f, %.3f %.3f, %.3f %.3f",x0,y0,x1,y1,x2,y2,x3,y3);
 
 	NosuchColor c1 = m_fill_color;
 	RGBA rgba1{
@@ -181,53 +212,17 @@ void PaletteDrawer::drawQuad(float x0, float y0, float x1, float y1, float x2, f
 
 	glUniform4f( m_rgbLeftLocation, rgba1.red, rgba1.green, rgba1.blue, rgba1.alpha );
 	glUniform4f( m_rgbRightLocation, rgba2.red, rgba2.green, rgba2.blue, rgba2.alpha );
+	const GLfloat* p = glm::value_ptr( m_matrix );
+	glUniformMatrix4fv( m_matrixLocation, 1, GL_FALSE, p );
 
 	m_quad.Draw(x0,y0,x1,y1,x2,y2,x3,y3);
 }
 void PaletteDrawer::drawTriangle(double x0, double y0, double x1, double y1, double x2, double y2) {
-	NosuchDebug(2,"Drawing triangle xy0=%.3f,%.3f xy1=%.3f,%.3f xy2=%.3f,%.3f",x0,y0,x1,y1,x2,y2);
-#ifdef OLD_GRAPHICS
-	if ( m_filled ) {
-		NosuchColor c = m_fill_color;
-		glColor4d(c.r()/255.0f, c.g()/255.0f, c.b()/255.0f, m_fill_alpha);
-		NosuchDebug(2,"   fill_color=%d %d %d alpha=%.3f",c.r(),c.g(),c.b(),m_fill_alpha);
-		glBegin(GL_TRIANGLE_STRIP); 
-		glVertex3d( x0, y0, 0.0f );
-		glVertex3d( x1, y1, 0.0f );
-		glVertex3d( x2, y2, 0.0f );
-		glEnd();
-	}
-	if ( m_stroked ) {
-		NosuchColor c = m_stroke_color;
-		glColor4d(c.r()/255.0f, c.g()/255.0f, c.b()/255.0f, m_stroke_alpha);
-		NosuchDebug(2,"   stroke_color=%d %d %d alpha=%.3f",c.r(),c.g(),c.b(),m_stroke_alpha);
-		glBegin(GL_LINE_LOOP); 
-		glVertex2d( x0, y0); 
-		glVertex2d( x1, y1);
-		glVertex2d( x2, y2);
-		glEnd();
-	}
-	if ( ! m_filled && ! m_stroked ) {
-		NosuchDebug("Hey, triangle() called when both m_filled and m_stroked are off!?");
-	}
-#endif
+	NosuchDebug("Drawing triangle xy0=%.3f,%.3f xy1=%.3f,%.3f xy2=%.3f,%.3f",x0,y0,x1,y1,x2,y2);
 }
 
 void PaletteDrawer::drawLine(double x0, double y0, double x1, double y1) {
-	NosuchDebug(2,"Drawing line xy0=%.3f,%.3f xy1=%.3f,%.3f",x0,y0,x1,y1);
-#ifdef OLD_GRAPHICS
-	if ( m_stroked ) {
-		NosuchColor c = m_stroke_color;
-		glColor4d(c.r()/255.0f, c.g()/255.0f, c.b()/255.0f, m_stroke_alpha);
-		// NosuchDebug(2,"   stroke_color=%d %d %d alpha=%.3f",c.r(),c.g(),c.b(),m_stroke_alpha);
-		glBegin(GL_LINES); 
-		glVertex2d( x0, y0); 
-		glVertex2d( x1, y1);
-		glEnd();
-	} else {
-		NosuchDebug("Hey, line() called when m_stroked is off!?");
-	}
-#endif
+	NosuchDebug("Drawing line xy0=%.3f,%.3f xy1=%.3f,%.3f",x0,y0,x1,y1);
 }
 
 static double degree2radian(double deg) {
@@ -302,29 +297,18 @@ void PaletteDrawer::drawPolygon(PointMem* points, int npoints) {
 #endif
 }
 
-void PaletteDrawer::popMatrix() {
-#ifdef OLD_GRAPHICS
-	glPopMatrix();
-#endif
-}
-
-void PaletteDrawer::pushMatrix() {
-#ifdef OLD_GRAPHICS
-	glPushMatrix();
-#endif
-}
-
 #define RANDONE (((double)rand())/RAND_MAX)
 #define RANDB ((((double)rand())/RAND_MAX)*2.0f-1.0f)
 
 FFResult PaletteDrawer::InitGL( const FFGLViewportStruct* vp)
 {
-	NosuchDebug( "HI From PaletteDrawer::InitGL" );
 	if( !m_shader_gradient.Compile( vertexShaderGradient, fragmentShaderGradient ) )
 	{
+		NosuchDebug( "Error in compiling m_shader_gradient!" );
 		DeInitGL();
 		return FF_FAIL;
 	}
+	NosuchDebug( "HI From PaletteDrawer::InitGL, shader compiled okay" );
 	if( !m_quad.Initialise() )
 	{
 		DeInitGL();
@@ -340,6 +324,7 @@ FFResult PaletteDrawer::InitGL( const FFGLViewportStruct* vp)
 	ffglex::ScopedShaderBinding shaderBinding( m_shader_gradient.GetGLID() );
 	m_rgbLeftLocation  = m_shader_gradient.FindUniform( "RGBALeft" );
 	m_rgbRightLocation = m_shader_gradient.FindUniform( "RGBARight" );
+	m_matrixLocation = m_shader_gradient.FindUniform( "vMatrix" );
 
 	return FF_SUCCESS;
 }

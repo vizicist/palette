@@ -6,7 +6,9 @@
 #include "winsock.h"
 #include "FFGLPluginSDK.h"
 #include "FFGL.h"
+#include "FFGLSDK.h"
 #include "FFGLLog.h"
+#include "glm/glm.hpp"
 
 #include "mmsystem.h"
 #include "cJSON.h"

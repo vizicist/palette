@@ -391,5 +391,16 @@
     <Filter Include="lib\oscpack">
       <UniqueIdentifier>{d6faf9a1-ee6d-4223-a729-d50cc7e168ef}</UniqueIdentifier>
     </Filter>
+    <Filter Include="config">
+      <UniqueIdentifier>{9202b88d-88bd-4b08-a2cd-410c6d139fac}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\..\default\config\paramdefs.json">
+      <Filter>config</Filter>
+    </None>
+    <None Include="..\..\..\default\config\paramenums.json">
+      <Filter>config</Filter>
+    </None>
   </ItemGroup>
 </Project>

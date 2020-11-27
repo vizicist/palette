@@ -884,7 +884,7 @@ void PaletteHost::ProcessOscMessage( std::string source, const osc::ReceivedMess
 			y = 1.0 - y;
 			double z = ArgAsFloat(m,2);
 			std::string cid = ArgAsString(m,3);
-			NosuchDebug("GOT /spriteon x,y,z=%.4f,%.4f,%.4f id=%s\n",x,y,z,cid.c_str());
+			NosuchDebug(1,"GOT /spriteon x,y,z=%.4f,%.4f,%.4f id=%s\n",x,y,z,cid.c_str());
 			palette()->region.instantiateSpriteAt(cid,NosuchVector(x, y), z);
 
 			return;

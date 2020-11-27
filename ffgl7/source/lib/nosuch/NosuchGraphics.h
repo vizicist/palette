@@ -1,8 +1,8 @@
 #ifndef NOSUCHGRAPHICS_H
 #define NOSUCHGRAPHICS_H
 
-#define RADIAN2DEGREE(r) ((r) * 360.0 / (2.0 * (double)M_PI))
-#define DEGREE2RADIAN(d) (((d) * 2.0 * (double)M_PI) / 360.0 )
+#define RADIAN2DEGREE(r) ((r) * 360.0f / (2.0f * (float)M_PI))
+#define DEGREE2RADIAN(d) (((d) * 2.0f * (float)M_PI) / 360.0f )
 
 // #define CHECK_VECTOR
 #ifdef CHECK_VECTOR

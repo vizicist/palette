@@ -40,8 +40,8 @@ Sprite::initState(std::string cid, std::string cidsource, NosuchVector& pos, dou
 
 	state.born = Palette::now;
 	state.last_tm = Palette::now;
-	state.hue = params.hueinitial;
-	state.huefill = params.huefillinitial;
+	state.hue1 = params.hue1initial;
+	state.hue2 = params.hue2initial;
 	state.alpha = params.alphainitial;
 	state.size = params.sizeinitial;
 	state.seq = NextSeq++;
@@ -82,8 +82,8 @@ void Sprite::draw(PaletteDrawer* drawer) {
 	}
 	double scaled_z = drawer->scale_z(state.depth);
 
-	NosuchColor color = NosuchColor(state.hue, params.luminance, params.saturation);
-	NosuchColor colorfill = NosuchColor(state.huefill, params.luminance, params.saturation);
+	NosuchColor color = NosuchColor(state.hue1, params.luminance, params.saturation);
+	NosuchColor colorfill = NosuchColor(state.hue2, params.luminance, params.saturation);
 	
 	if ( params.filled ) {
 		drawer->fill(colorfill, state.alpha);
@@ -151,14 +151,14 @@ void Sprite::draw(PaletteDrawer* drawer) {
 }
 	
 void Sprite::drawAt(PaletteDrawer* drawer, double x,double y, double scalex, double scaley, int xdir, int ydir) {
-	drawer->pushMatrix();
+	drawer->resetMatrix();
 	double dx = x;
 	double dy = y;
 
 	// handle justification
 	std::string j = params.justification;
 
-	NosuchDebug("Sprite::drawAt s=%lld drawAt j=%s xy= %f %f width=%f size=%f depth=%f\n",
+	NosuchDebug(1,"Sprite::drawAt s=%lld drawAt j=%s xy= %f %f width=%f size=%f depth=%f\n",
 		(long long)this,j.c_str(),x,y,width(),state.size,state.depth);
 
 	if (j == "center") {
@@ -195,9 +195,8 @@ void Sprite::drawAt(PaletteDrawer* drawer, double x,double y, double scalex, dou
 	// drawer->translate(dx,dy);
 	shader->Set( "vScale", float(scalex), float(scaley) );
 	// drawer->scale(scalex,scaley);
-	drawer->rotate(degrees);
+	drawer->rotate(float(degrees));
 	drawShape( drawer, xdir, ydir );
-	drawer->popMatrix();
 }
 
 NosuchVector Sprite::deltaInDirection(double dt, double dir, double speed) {
@@ -253,8 +252,8 @@ void Sprite::advanceTo(int now, NosuchVector force) {
 		return;
 	}
 	
-	state.hue = envelopeValue(params.hueinitial,params.huefinal,params.huetime,state.born,now);
-	state.huefill = envelopeValue(params.huefillinitial,params.huefillfinal,params.huefilltime,state.born,now);
+	state.hue1 = envelopeValue(params.hue1initial,params.hue1final,params.hue1time,state.born,now);
+	state.hue2 = envelopeValue(params.hue2initial,params.hue2final,params.hue2time,state.born,now);
 
 	// state.hueoffset = fmod((state.hueoffset + params.cyclehue), 360.0);
 
