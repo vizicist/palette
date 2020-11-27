@@ -29,29 +29,29 @@ public:
 	FFResult InitGL( const FFGLViewportStruct* vp );
 	FFResult DeInitGL();
 
-	double scale_z( double z );
+	float scale_z( float z );
 
 	ffglex::FFGLShader* BeginDrawingWithShader(std::string shaderName);
 	void EndDrawing();
 
-	double width() { return m_width; }
-	double height() { return m_height; }
+	float width() { return m_width; }
+	float height() { return m_height; }
 
-	void fill(NosuchColor c, double alpha);
+	void fill(NosuchColor c, float alpha);
 	void noFill();
-	void stroke(NosuchColor c, double alpha);
-	void strokeWeight(double w);
+	void stroke(NosuchColor c, float alpha);
+	void strokeWeight(float w);
 	void background(int);
 	void resetMatrix();
 	// void setMatrix(GLfloat matrix[16]);
-	void translate(double x, double y);
-	void scale(double x, double y);
-	void rotate(float degrees);
+	void translate(float x, float y);
+	void scale(float x, float y);
+	void rotate(float radians);
 
-	void drawLine(double x0, double y0, double x1, double y1);
-	void drawTriangle(double x0, double y0, double x1, double y1, double x2, double y2);
+	void drawLine(float x0, float y0, float x1, float y1);
+	void drawTriangle(float x0, float y0, float x1, float y1, float x2, float y2);
 	void drawQuad(float x0, float y0, float x1, float y1, float x2, float y2, float x3, float y3);
-	void drawEllipse(double x0, double y0, double w, double h, double fromang=0.0f, double toang=360.0f);
+	void drawEllipse(float x0, float y0, float w, float h, float fromang=0.0f, float toang=360.0f);
 	void drawPolygon(PointMem* p, int npoints);
 
 private:
@@ -59,14 +59,14 @@ private:
 	PaletteParams *m_params;
 	bool m_isdrawing;
 	
-	double m_width;
-	double m_height;
+	float m_width;
+	float m_height;
 	bool m_filled;
 	NosuchColor m_fill_color;
-	double m_fill_alpha;
+	float m_fill_alpha;
 	bool m_stroked;
 	NosuchColor m_stroke_color;
-	double m_stroke_alpha;
+	float m_stroke_alpha;
 
 	// NEW STUFF
 
