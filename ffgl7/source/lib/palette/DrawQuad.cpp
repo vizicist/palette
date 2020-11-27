@@ -4,23 +4,12 @@
 #include "ffglex/FFGLScopedBufferBinding.h"
 #include "ffglex/FFGLUtilities.h"
 
-#include "DrawUtil.h"
-
-GlVertexTextured P_TEXTURED_QUAD_VERTICES[] = {
-	{ 0.0f, 1.0f, -1.0f, 1.0f, 0.0f }, //Top-left
-	{ 1.0f, 1.0f,  1.0f, 1.0f, 0.0f },  //Top-right
-	{ 0.0f, 0.0f, -1.0f, -1.0f, 0.0f },//Bottom left
-
-	{ 0.0f, 0.0f, -1.0f, -1.0f, 0.0f },//Bottom left
-	{ 1.0f, 1.0f, 1.0f, 1.0f, 0.0f },  //Top right
-	{ 1.0f, 0.0f, 1.0f, -1.0f, 0.0f }, //Bottom right
-};
-
 DrawQuad::DrawQuad() :
 	vaoID( 0 ),
 	vboID( 0 )
 {
 }
+
 DrawQuad::~DrawQuad()
 {
 	//If any of these assertions hit you forgot to release this quad's gl resources.
@@ -50,12 +39,12 @@ bool DrawQuad::Initialise( )
 	ffglex::ScopedVAOBinding vaoBinding( vaoID );
 	ffglex::ScopedVBOBinding vboBinding( vboID );
 
-	glBufferData( GL_ARRAY_BUFFER, sizeof( P_TEXTURED_QUAD_VERTICES ), P_TEXTURED_QUAD_VERTICES, GL_DYNAMIC_DRAW );
+	glBufferData( GL_ARRAY_BUFFER, sizeof( vertices ), vertices, GL_DYNAMIC_DRAW );
 
 	glEnableVertexAttribArray( 0 );
-	glVertexAttribPointer( 0, 3, GL_FLOAT, false, sizeof( P_TEXTURED_QUAD_VERTICES[ 0 ] ), (char*)NULL + 2 * sizeof( float ) );
+	glVertexAttribPointer( 0, 3, GL_FLOAT, false, sizeof( vertices[ 0 ] ), (char*)NULL + 2 * sizeof( float ) );
 	glEnableVertexAttribArray( 1 );
-	glVertexAttribPointer( 1, 2, GL_FLOAT, false, sizeof( P_TEXTURED_QUAD_VERTICES[ 0 ] ), (char*)NULL + 0 * sizeof( float ) );
+	glVertexAttribPointer( 1, 2, GL_FLOAT, false, sizeof( vertices[ 0 ] ), (char*)NULL + 0 * sizeof( float ) );
 
 	//The array enablements are part of the vao binding and not the global context state so we dont have to disable those here.
 
@@ -75,27 +64,15 @@ void DrawQuad::Draw(float x0, float y0, float x1, float y1, float x2, float y2, 
 	ffglex::ScopedVAOBinding vaoBinding( vaoID );
 	ffglex::ScopedVBOBinding vboBinding( vboID );
 
-	P_TEXTURED_QUAD_VERTICES[0] = { 0.0f, 1.0f, x0, y0, 0.0f };//Top-left
-	P_TEXTURED_QUAD_VERTICES[1] = { 1.0f, 1.0f, x1, y1, 0.0f };//Top-right
-	P_TEXTURED_QUAD_VERTICES[2] = { 0.0f, 0.0f, x3, y3, 0.0f };//Bottom left
+	vertices[0] = { 0.0f, 1.0f, x0, y0, 0.0f };//Top-left
+	vertices[1] = { 1.0f, 1.0f, x1, y1, 0.0f };//Top-right
+	vertices[2] = { 0.0f, 0.0f, x3, y3, 0.0f };//Bottom left
 
-	P_TEXTURED_QUAD_VERTICES[3] = { 0.0f, 0.0f, x3, y3, 0.0f };//Bottom left
-	P_TEXTURED_QUAD_VERTICES[4] = { 1.0f, 1.0f, x1, y1, 0.0f };//Top right
-	P_TEXTURED_QUAD_VERTICES[5] = { 1.0f, 0.0f, x2, y2, 0.0f };//Bottom right
+	vertices[3] = { 0.0f, 0.0f, x3, y3, 0.0f };//Bottom left
+	vertices[4] = { 1.0f, 1.0f, x1, y1, 0.0f };//Top right
+	vertices[5] = { 1.0f, 0.0f, x2, y2, 0.0f };//Bottom right
 
-#if 0
-GlVertexTextured P_TEXTURED_QUAD_VERTICES2[] = {
-	{ 0.0f, 1.0f, -1.0f, 1.0f, 0.0f }, //Top-left
-	{ 1.0f, 1.0f,  1.0f, 1.0f, 0.0f },  //Top-right
-	{ 0.0f, 0.0f, -1.0f, -1.0f, 0.0f },//Bottom left
-
-	{ 0.0f, 0.0f, -1.0f, -1.0f, 0.0f },//Bottom left
-	{ 1.0f, 1.0f, 1.0f, 1.0f, 0.0f },  //Top right
-	{ 1.0f, 0.0f, 1.0f, -1.0f, 0.0f }, //Bottom right
-};
-#endif
-
-	glBufferData( GL_ARRAY_BUFFER, sizeof( P_TEXTURED_QUAD_VERTICES ), P_TEXTURED_QUAD_VERTICES, GL_DYNAMIC_DRAW );
+	glBufferData( GL_ARRAY_BUFFER, sizeof( vertices ), vertices, GL_DYNAMIC_DRAW );
 
 	glDrawArrays( GL_TRIANGLES, 0, 6 );
 }

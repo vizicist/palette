@@ -191,8 +191,10 @@ void Sprite::drawAt(PaletteDrawer* drawer, double x,double y, double scalex, dou
 
 	double degrees = state.rotanginit + state.rotangsofar;
 
-	drawer->translate(dx,dy);
-	drawer->scale(scalex,scaley);
+	shader->Set( "vTranslate", dx, dy );
+	// drawer->translate(dx,dy);
+	shader->Set( "vScale", scalex, scaley );
+	// drawer->scale(scalex,scaley);
 	drawer->rotate(degrees);
 	drawShape( drawer, xdir, ydir );
 	drawer->popMatrix();

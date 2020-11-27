@@ -1,2 +1,6 @@
-call osc send 3333 /cursorevent "{ \"event\": \"down\", \"x\": 0.5, \"y\": 0.5, \"z\": 0.5 }"
-call osc send 3333 /cursorevent "{ \"event\": \"up\", \"x\": 0.5, \"y\": 0.5, \"z\": 0.5 }"
+:loop
+echo on
+call osc send 3334@127.0.0.1 /sprite 0.5 0.5 0.5 tjt 
+echo on
+call osc send 3334@127.0.0.1 /sprite 0.5 0.5 0.5 tjt 
+goto loop:
