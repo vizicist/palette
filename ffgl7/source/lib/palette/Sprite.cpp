@@ -6,12 +6,12 @@ bool Sprite::initialized = false;
 long nsprites = 0;
 int Sprite::NextSeq = 0;
 
-#define RANDDOUBLE (((double)rand())/RAND_MAX)
+#define RANDFLOAT ((rand())/RAND_MAX)
 
 float Sprite::vertexNoise()
 {
 	if ( params.noisevertex > 0.0f ) {
-		return (float)(params.noisevertex * RANDDOUBLE * ((rand()%2)==0?1:-1));
+		return (float)(params.noisevertex * RANDFLOAT * ((rand()%2)==0?1:-1));
 	} else {
 		return 0.0f;
 	}
@@ -27,7 +27,7 @@ Sprite::Sprite() {
 }
 
 void
-Sprite::initState(std::string cid, std::string cidsource, NosuchVector& pos, double movedir, double depth, double rotanginit) {
+Sprite::initState(std::string cid, std::string cidsource, NosuchVector& pos, float movedir, float depth, float rotanginit) {
 
 	nsprites++;
 	Palette::lastsprite = Palette::now;
@@ -54,8 +54,8 @@ Sprite::~Sprite() {
 	NosuchDebug(1, "Sprite destructor! s=%d cid=%s", this, state.cid.c_str());
 }
 
-double Sprite::degree2radian(double deg) {
-	return 2.0f * (double)M_PI * deg / 360.0f;
+float Sprite::degree2radian(float deg) {
+	return 2.0f * float(M_PI) * deg / 360.0f;
 }
 
 void Sprite::draw(PaletteDrawer* drawer) {
@@ -80,7 +80,7 @@ void Sprite::draw(PaletteDrawer* drawer) {
 	if (state.depth < params.zmin ) {
 		state.depth = params.zmin;
 	}
-	double scaled_z = drawer->scale_z(state.depth);
+	float scaled_z = drawer->scale_z(state.depth);
 
 	NosuchColor color = NosuchColor(state.hue1, params.luminance, params.saturation);
 	NosuchColor colorfill = NosuchColor(state.hue2, params.luminance, params.saturation);
@@ -91,17 +91,17 @@ void Sprite::draw(PaletteDrawer* drawer) {
 		drawer->noFill();
 	}
 	drawer->stroke(color, state.alpha);
-	double thickness = params.thickness;
+	float thickness = params.thickness;
 	drawer->strokeWeight(thickness);
-	double aspect = params.aspect;
+	float aspect = params.aspect;
 	
-	double scalex = state.size * scaled_z;
-	double scaley = state.size * scaled_z;
+	float scalex = state.size * scaled_z;
+	float scaley = state.size * scaled_z;
 	
 	scalex *= aspect;
 
-	double x;
-	double y;
+	float x;
+	float y;
 	// NOTE!  The x,y coming in here is scaled to ((0,0),(1,1))
 	//        while the x,y computed and given to the drawAt method
 	//        is scaled to ((-1,-1),(1,1))
@@ -150,10 +150,10 @@ void Sprite::draw(PaletteDrawer* drawer) {
 	drawer->EndDrawing();
 }
 	
-void Sprite::drawAt(PaletteDrawer* drawer, double x,double y, double scalex, double scaley, int xdir, int ydir) {
+void Sprite::drawAt(PaletteDrawer* drawer, float x,float y, float scalex, float scaley, int xdir, int ydir) {
 	drawer->resetMatrix();
-	double dx = x;
-	double dy = y;
+	float dx = x;
+	float dy = y;
 
 	// handle justification
 	std::string j = params.justification;
@@ -189,18 +189,19 @@ void Sprite::drawAt(PaletteDrawer* drawer, double x,double y, double scalex, dou
 
 	// NosuchDebug("    Sprite::drawAt left width=%f dx is now %f\n", width(), dx);
 
-	double degrees = state.rotanginit + state.rotangsofar;
+	float degrees = state.rotanginit + state.rotangsofar;
 
 	shader->Set( "vTranslate", float(dx), float(dy) );
-	// drawer->translate(dx,dy);
+	drawer->translate(dx,dy);
+
 	shader->Set( "vScale", float(scalex), float(scaley) );
 	// drawer->scale(scalex,scaley);
-	drawer->rotate(float(degrees));
+	drawer->rotate(degree2radian(degrees));
 	drawShape( drawer, xdir, ydir );
 }
 
-NosuchVector Sprite::deltaInDirection(double dt, double dir, double speed) {
-	NosuchVector delta( (double) cos(degree2radian(dir)), (double) sin(degree2radian(dir)));
+NosuchVector Sprite::deltaInDirection(float dt, float dir, float speed) {
+	NosuchVector delta( cos(degree2radian(dir)), sin(degree2radian(dir)));
 	delta = delta.normalize();
 	speed /= 2.0;	// slow things down
 	delta = delta.mult((dt / 1000.0f) * speed);
@@ -222,10 +223,10 @@ int Sprite::rotangdirOf(std::string s) {
 	return dir;
 }
 
-double
-envelopeValue(double initial, double final, double duration, double born, double now) {
-	double dt = now - born;
-	double dur = duration * 1000.0;
+float
+envelopeValue(float initial, float final, float duration, float born, float now) {
+	float dt = now - born;
+	float dur = duration * 1000.0f;
 	if ( dt >= dur )
 		return final;
 	if ( dt <= 0 )
@@ -236,8 +237,8 @@ envelopeValue(double initial, double final, double duration, double born, double
 void Sprite::advanceTo(int now, NosuchVector force) {
 
 	// _params->advanceTo(tm);
-	state.alpha = envelopeValue(params.alphainitial,params.alphafinal,params.alphatime,state.born,now);
-	state.size = envelopeValue(params.sizeinitial,params.sizefinal,params.sizetime,state.born,now);
+	state.alpha = envelopeValue(params.alphainitial,params.alphafinal,params.alphatime,float(state.born),float(now));
+	state.size = envelopeValue(params.sizeinitial,params.sizefinal,params.sizetime,float(state.born),float(now));
 	
 	int dnow = (now - state.born);
 	// NosuchDebug("Sprite::advanceTo this=%lld now=%d born=%d dnow=%d alpha=%f size=%f last_tm=%d",(long long)this,now,state.born,dnow,state.alpha,state.size,state.last_tm);
@@ -245,15 +246,15 @@ void Sprite::advanceTo(int now, NosuchVector force) {
 		// NosuchDebug("Lifetime of Sprite %lld exceeded, setting killme",(long long)this);
 		state.killme = true;
 	}
-	double dt = (double)(now - state.last_tm);
+	float dt = float(now - state.last_tm);
 	state.last_tm = now;
 	
 	if ( ! state.visible ) {
 		return;
 	}
 	
-	state.hue1 = envelopeValue(params.hue1initial,params.hue1final,params.hue1time,state.born,now);
-	state.hue2 = envelopeValue(params.hue2initial,params.hue2final,params.hue2time,state.born,now);
+	state.hue1 = envelopeValue(params.hue1initial,params.hue1final,params.hue1time,float(state.born),float(now));
+	state.hue2 = envelopeValue(params.hue2initial,params.hue2final,params.hue2time,float(state.born),float(now));
 
 	// state.hueoffset = fmod((state.hueoffset + params.cyclehue), 360.0);
 
@@ -263,7 +264,7 @@ void Sprite::advanceTo(int now, NosuchVector force) {
 	}
 
 	if ( params.rotangspeed != 0.0 ) {
-		state.rotangsofar = fmod((state.rotangsofar + state.rotdir * (dt/1000.0) * params.rotangspeed) , 360.0);
+		state.rotangsofar = float(fmod((state.rotangsofar + state.rotdir * (dt/1000.0) * params.rotangspeed) , 360.0));
 	}
 	// if (params.rotauto) {
 		// state.rotangsofar = curr_degrees;
@@ -279,7 +280,7 @@ void Sprite::advanceTo(int now, NosuchVector force) {
 	
 	if ( params.speed != 0.0 ) {
 		
-		double dir = state.direction;
+		float dir = state.direction;
 		
 		NosuchVector delta = deltaInDirection(dt,dir,params.speed);
 		
@@ -289,31 +290,30 @@ void Sprite::advanceTo(int now, NosuchVector force) {
 		if ( params.bounce ) { 
 			
 			if ( npos.x > 1.0f ) {
-				dir = fmod(( dir + 180 ) , 360);
+				dir = float(fmod(( dir + 180 ) , 360));
 				delta = deltaInDirection(dt,dir,params.speed);
 				npos = state.pos.add(delta);
 			}
 			if ( npos.x < 0.0f ) {
-				dir = fmod(( dir + 180 ) , 360);
+				dir = float(fmod(( dir + 180 ) , 360));
 				delta = deltaInDirection(dt,dir,params.speed);
 				npos = state.pos.add(delta);
 			}
 			if ( npos.y > 1.0f ) {
-				dir = fmod(( dir + 180 ) , 360);
+				dir = float(fmod(( dir + 180 ) , 360));
 				delta = deltaInDirection(dt,dir,params.speed);
 				npos = state.pos.add(delta);
 			}
 			if ( npos.y < 0.0f ) {
-				dir = fmod(( dir + 180 ) , 360);
+				dir = float(fmod(( dir + 180 ) , 360));
 				delta = deltaInDirection(dt,dir,params.speed);
 				npos = state.pos.add(delta);
 			}
-state.direction = dir;
-		}
- else {
- if (npos.x > 1.0f || npos.x < 0.0f || npos.y > 1.0f || npos.y < 0.0f) {
-	 state.killme = true;
- }
+			state.direction = dir;
+		} else {
+			 if (npos.x > 1.0f || npos.x < 0.0f || npos.y > 1.0f || npos.y < 0.0f) {
+				 state.killme = true;
+			 }
 		}
 
 		state.pos = npos;
@@ -405,7 +405,7 @@ SpriteList::clear() {
 void
 SpriteList::computeForce(std::list<Sprite*>& sprites, int gravity) {
 
-	double gravityFactor = gravity / 5.0;
+	float gravityFactor = gravity / 5.0f;
 	if (sprites.size() > 0) {
 		// NosuchDebug("computerForce nsprites = %d\n", sprites.size());
 	}
@@ -417,27 +417,27 @@ SpriteList::computeForce(std::list<Sprite*>& sprites, int gravity) {
 		float force = 0.0;
 		for (; ni != sprites.end(); ni++) {
 			Sprite* ns = *ni;
-			double dx = ns->state.pos.x - s->state.pos.x;
-			double dy = ns->state.pos.y - s->state.pos.y;
-			double dist = sqrt( (dx*dx) + (dy*dy) );
+			float dx = ns->state.pos.x - s->state.pos.x;
+			float dy = ns->state.pos.y - s->state.pos.y;
+			float dist = sqrt( (dx*dx) + (dy*dy) );
 			if (dist < 0.0001) {
-				dist = 0.0001; // so no divide by 0
+				dist = 0.0001f; // so no divide by 0
 			}
-			double gf = gravityFactor / (dist * 1.0e7);
+			float gf = float(gravityFactor / (dist * 1.0e7));
 
 			// For real gravity, I think only the sign of dx and dy
 			// should be used.  However, using dx and dy here
 			// somehow produces a fluid behaviour that's very nice.
 			// Not sure why, too lazy to investigate further at this point.
 
-			double xforce = dx * gf;
-			double yforce = dy * gf;
+			float xforce = dx * gf;
+			float yforce = dy * gf;
 #if 0
-			double xforce = gf;
+			float xforce = gf;
 			if (dx < 0.0) {
 				xforce = -xforce;
 			}
-			double yforce = gf;
+			float yforce = gf;
 			if (dy < 0.0) {
 				yforce = -yforce;
 			}
@@ -553,12 +553,12 @@ void SpriteLine::drawShape(PaletteDrawer* app, int xdir, int ydir) {
 		noise_initialized = true;
 	}
 	// NosuchDebug("SpriteLine::drawShape wh=%f %f\n",w,h);
-	double halfw = 0.2f;
-	double halfh = 0.2f;
-	double x0 = -0.2f;
-	double y0 =  0.0f;
-	double x1 =  0.2f;
-	double y1 =  0.0f;
+	float halfw = 0.2f;
+	float halfh = 0.2f;
+	float x0 = -0.2f;
+	float y0 =  0.0f;
+	float x1 =  0.2f;
+	float y1 =  0.0f;
 	app->drawLine(x0 + noise_x0, y0 + noise_y0, x1 + noise_x1, y1 + noise_y1);
 }
 
@@ -581,6 +581,6 @@ void SpriteArc::drawShape(PaletteDrawer* app, int xdir, int ydir) {
 static void
 normalize(NosuchVector* v)
 {
-	v->x = (v->x * 2.0) - 1.0;
-	v->y = (v->y * 2.0) - 1.0;
+	v->x = (v->x * 2.0f) - 1.0f;
+	v->y = (v->y * 2.0f) - 1.0f;
 }

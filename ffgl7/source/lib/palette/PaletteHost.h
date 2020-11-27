@@ -76,7 +76,7 @@ public:
 
 	void ProcessOscMessage(std::string , const osc::ReceivedMessage& m);
 
-	void SetCursorCid(std::string cid, std::string source, NosuchVector point, double z, bool recordable = true );
+	void SetCursorCid(std::string cid, std::string source, NosuchVector point, float z, bool recordable = true );
 
 	static bool checkAddrPattern(const char *addr, char *patt);
 
@@ -88,8 +88,8 @@ public:
 	std::string jsonConfigResult(std::string name, const char *id);
 
 	// GRAPHICS ROUTINES
-	double width;
-	double height;
+	float width;
+	float height;
 
 	PaletteDrawer* _drawer;
 
