@@ -191,9 +191,9 @@ void Sprite::drawAt(PaletteDrawer* drawer, double x,double y, double scalex, dou
 
 	double degrees = state.rotanginit + state.rotangsofar;
 
-	shader->Set( "vTranslate", dx, dy );
+	shader->Set( "vTranslate", float(dx), float(dy) );
 	// drawer->translate(dx,dy);
-	shader->Set( "vScale", scalex, scaley );
+	shader->Set( "vScale", float(scalex), float(scaley) );
 	// drawer->scale(scalex,scaley);
 	drawer->rotate(degrees);
 	drawShape( drawer, xdir, ydir );
