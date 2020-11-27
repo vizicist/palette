@@ -40,7 +40,6 @@ public:
 	void fill(NosuchColor c, double alpha);
 	void noFill();
 	void stroke(NosuchColor c, double alpha);
-	void noStroke();
 	void strokeWeight(double w);
 	void background(int);
 	void pushMatrix();

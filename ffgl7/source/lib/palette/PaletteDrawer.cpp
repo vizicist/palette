@@ -97,9 +97,6 @@ void PaletteDrawer::stroke(NosuchColor c, double alpha) {
 	m_stroke_color = c;
 	m_stroke_alpha = alpha;
 }
-void PaletteDrawer::noStroke() {
-	m_stroked = false;
-}
 void PaletteDrawer::noFill() {
 	m_filled = false;
 }
