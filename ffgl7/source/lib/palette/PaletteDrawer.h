@@ -31,6 +31,9 @@ public:
 
 	double scale_z( double z );
 
+	ffglex::FFGLShader* BeginDrawingWithShader(std::string shaderName);
+	void EndDrawing();
+
 	double width() { return m_width; }
 	double height() { return m_height; }
 
@@ -46,18 +49,16 @@ public:
 	void scale(double x, double y);
 	void rotate(double degrees);
 
-	void drawSprite( Sprite* s, int xdir, int ydir );
-	void drawSetup();
-
 	void drawLine(double x0, double y0, double x1, double y1);
 	void drawTriangle(double x0, double y0, double x1, double y1, double x2, double y2);
-	void drawQuad(double x0, double y0, double x1, double y1, double x2, double y2, double x3, double y3);
+	void drawQuad(float x0, float y0, float x1, float y1, float x2, float y2, float x3, float y3);
 	void drawEllipse(double x0, double y0, double w, double h, double fromang=0.0f, double toang=360.0f);
 	void drawPolygon(PointMem* p, int npoints);
 
 private:
 
 	PaletteParams *m_params;
+	bool m_isdrawing;
 	
 	double m_width;
 	double m_height;
