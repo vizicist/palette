@@ -120,7 +120,6 @@
     <ClInclude Include="..\..\source\lib\nosuch\NosuchUtil.h" />
     <ClInclude Include="..\..\source\lib\palette\DrawQuad.h" />
     <ClInclude Include="..\..\source\lib\palette\DrawTriangle.h" />
-    <ClInclude Include="..\..\source\lib\palette\DrawUtil.h" />
     <ClInclude Include="..\..\source\lib\palette\Palette.h" />
     <ClInclude Include="..\..\source\lib\palette\PaletteAll.h" />
     <ClInclude Include="..\..\source\lib\palette\PaletteDrawer.h" />

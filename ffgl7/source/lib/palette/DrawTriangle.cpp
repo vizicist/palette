@@ -4,9 +4,7 @@
 #include "ffglex/FFGLScopedBufferBinding.h"
 #include "ffglex/FFGLUtilities.h"
 
-#include "DrawUtil.h"
-	
-GlVertexTextured P_TEXTURED_TRIANGLE_VERTICES[] = {
+ffglex::GlVertexTextured P_TEXTURED_TRIANGLE_VERTICES[] = {
 	{ 0.0f, 1.0f, -0.5f, -0.5f, 0.0f }, //Bottom left
 	{ 1.0f, 1.0f,  0.0f, 0.5f, 0.0f },  //Top
 	{ 0.0f, 0.0f, 0.5f, -0.5f, 0.0f },//Bottom right
