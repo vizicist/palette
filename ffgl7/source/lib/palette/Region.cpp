@@ -346,10 +346,9 @@ void Region::cursorlist_unlock() {
 }
 
 void Region::draw(PaletteDrawer* b) {
-	// if ( _spritelist->size() > 0 ) {
-	//	NosuchDebug("Region::draw size=%d Region=%lld\n", _spritelist->size(),(long long)this);
-	// }
+	_spritelist->lock_read();
 	_spritelist->draw(b);
+	_spritelist->unlock();
 }
 
 void Region::clear() {

@@ -1,5 +1,5 @@
 alphafinal = 0.0;
-alphainitial = 0.5;
+alphainitial = 1.0;
 alphatime = 2.0;
 aspect = 1.0;
 bounce = false;

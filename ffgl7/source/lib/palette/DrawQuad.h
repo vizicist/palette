@@ -12,8 +12,8 @@ public:
 	~DrawQuad();
 
 	bool Initialise( );//Allow this utility to load the data it requires to do it's rendering into it's buffers.
-	void Draw();                          //Draw the quad. Depending on your vertex shader this will apply your fragment shader in the area where the quad ends up.
-	void Release();                       //Release the gpu resources this quad has loaded into vram. Call this before destruction if you've previously initialised us.
+	void Draw(float x0, float y0, float x1, float y1, float x2, float y2, float x3, float y3);                          
+	void Release(); //Release the gpu resources this quad has loaded into vram. Call this before destruction if you've previously initialised us.
 
 private:
 	ffglex::FFGLShader shader;

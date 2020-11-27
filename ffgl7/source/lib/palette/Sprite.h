@@ -93,8 +93,6 @@ public:
 	virtual void startAccumulate(TrackedCursor* c) { };
 	virtual void accumulate(TrackedCursor* c) { }
 
-	// virtual double width() { return 1.0; }
-	// virtual double height() { return 1.0; }
 	virtual double width() { return state.size * state.depth; }
 	virtual double height() { return state.size * state.depth; }
 
@@ -120,9 +118,10 @@ public:
 	SpriteParams params;
 	SpriteState state;
 	SpriteDrawer* drawFunc;
+	ffglex::FFGLShader* shader;
 
 protected:
-	double vertexNoise();
+	float vertexNoise();
 
 	static int NextSeq;
 
@@ -138,14 +137,14 @@ public:
 
 private:
 	bool noise_initialized;
-	double noise_x0;
-	double noise_y0;
-	double noise_x1;
-	double noise_y1;
-	double noise_x2;
-	double noise_y2;
-	double noise_x3;
-	double noise_y3;
+	float noise_x0;
+	float noise_y0;
+	float noise_x1;
+	float noise_y1;
+	float noise_x2;
+	float noise_y2;
+	float noise_x3;
+	float noise_y3;
 };
 
 class SpriteTriangle : public Sprite {
@@ -156,12 +155,12 @@ public:
 
 private:
 	bool noise_initialized;
-	double noise_x0;
-	double noise_y0;
-	double noise_x1;
-	double noise_y1;
-	double noise_x2;
-	double noise_y2;
+	float noise_x0;
+	float noise_y0;
+	float noise_x1;
+	float noise_y1;
+	float noise_x2;
+	float noise_y2;
 };
 
 class SpriteCircle : public Sprite {
@@ -186,10 +185,10 @@ public:
 
 private:
 	bool noise_initialized;
-	double noise_x0;
-	double noise_y0;
-	double noise_x1;
-	double noise_y1;
+	float noise_x0;
+	float noise_y0;
+	float noise_x1;
+	float noise_y1;
 };
 
 #endif

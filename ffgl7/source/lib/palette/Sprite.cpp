@@ -8,10 +8,10 @@ int Sprite::NextSeq = 0;
 
 #define RANDDOUBLE (((double)rand())/RAND_MAX)
 
-double Sprite::vertexNoise()
+float Sprite::vertexNoise()
 {
 	if ( params.noisevertex > 0.0f ) {
-		return params.noisevertex * RANDDOUBLE * ((rand()%2)==0?1:-1);
+		return (float)(params.noisevertex * RANDDOUBLE * ((rand()%2)==0?1:-1));
 	} else {
 		return 0.0f;
 	}
@@ -59,23 +59,31 @@ double Sprite::degree2radian(double deg) {
 }
 
 void Sprite::draw(PaletteDrawer* drawer) {
-	if (state.depth < params.zmin ) {
-		state.depth = params.zmin;
-	}
-	double scaled_z = drawer->scale_z(state.depth);
 
 	if ( ! state.visible ) {
 		NosuchDebug("Sprite.draw NOT DRAWING, !visible");
 		return;
 	}
 	
-	NosuchColor color = NosuchColor(state.hue, params.luminance, params.saturation);
-	NosuchColor colorfill = NosuchColor(state.huefill, params.luminance, params.saturation);
-	
-	if ( state.alpha <= 0.0f || state.size <= 0.0 ) {
+	if ( state.alpha <= 0.0f || state.size < 0.001f ) {
 		state.killme = true;
 		return;
 	}
+
+	shader = drawer->BeginDrawingWithShader("gradient");
+	if( shader == NULL )
+	{
+		NosuchDebug( "No gradient shader?  Unable to draw Sprite.");
+		return;
+	}
+
+	if (state.depth < params.zmin ) {
+		state.depth = params.zmin;
+	}
+	double scaled_z = drawer->scale_z(state.depth);
+
+	NosuchColor color = NosuchColor(state.hue, params.luminance, params.saturation);
+	NosuchColor colorfill = NosuchColor(state.huefill, params.luminance, params.saturation);
 	
 	if ( params.filled ) {
 		drawer->fill(colorfill, state.alpha);
@@ -83,10 +91,6 @@ void Sprite::draw(PaletteDrawer* drawer) {
 		drawer->noFill();
 	}
 	drawer->stroke(color, state.alpha);
-	if ( state.size < 0.001f ) {
-		state.killme = true;
-		return;
-	}
 	double thickness = params.thickness;
 	drawer->strokeWeight(thickness);
 	double aspect = params.aspect;
@@ -142,6 +146,8 @@ void Sprite::draw(PaletteDrawer* drawer) {
 		ydir = 1;
 		drawAt(drawer,x,y,scalex,scaley,xdir,ydir);
 	}
+
+	drawer->EndDrawing();
 }
 	
 void Sprite::drawAt(PaletteDrawer* drawer, double x,double y, double scalex, double scaley, int xdir, int ydir) {
@@ -188,7 +194,7 @@ void Sprite::drawAt(PaletteDrawer* drawer, double x,double y, double scalex, dou
 	drawer->translate(dx,dy);
 	drawer->scale(scalex,scaley);
 	drawer->rotate(degrees);
-	drawer->drawSprite(this,xdir,ydir);
+	drawShape( drawer, xdir, ydir );
 	drawer->popMatrix();
 }
 
@@ -369,7 +375,6 @@ SpriteList::add(Sprite* s, int limit)
 
 void
 SpriteList::draw(PaletteDrawer* drawer) {
-	lock_read();
 	if (sprites.size() > 0) {
 		// NosuchDebug("Spritelist::draw sprites.size=%d", (int)sprites.size());
 	}
@@ -379,7 +384,6 @@ SpriteList::draw(PaletteDrawer* drawer) {
 		// NosuchDebug("   Spritelist::draw s=%lld  born=%d",(long long)s,s->state.born);
 		s->draw(drawer);
 	}
-	unlock();
 }
 
 void
@@ -481,8 +485,8 @@ SpriteSquare::SpriteSquare() {
 }
 
 void SpriteSquare::drawShape(PaletteDrawer* drawer, int xdir, int ydir) {
-	double halfw = 0.25f;
-	double halfh = 0.25f;
+	float halfw = 0.25f;
+	float halfh = 0.25f;
 
 	if (!noise_initialized) {
 		noise_x0 = vertexNoise();
@@ -496,14 +500,14 @@ void SpriteSquare::drawShape(PaletteDrawer* drawer, int xdir, int ydir) {
 		noise_initialized = true;
 	}
 
-	double x0 = - halfw + noise_x0 * halfw;
-	double y0 = - halfh + noise_y0 * halfh;
-	double x1 = -halfw + noise_x1 * halfw;
-	double y1 = halfh + noise_y1 * halfh;
-	double x2 = halfw + noise_x2 * halfw;
-	double y2 = halfh + noise_y2 * halfh;
-	double x3 = halfw + noise_x3 * halfw;
-	double y3 = -halfh + noise_y3 * halfh;
+	float x0 = - halfw + noise_x0 * halfw;
+	float y0 = - halfh + noise_y0 * halfh;
+	float x1 = -halfw + noise_x1 * halfw;
+	float y1 = halfh + noise_y1 * halfh;
+	float x2 = halfw + noise_x2 * halfw;
+	float y2 = halfh + noise_y2 * halfh;
+	float x3 = halfw + noise_x3 * halfw;
+	float y3 = -halfh + noise_y3 * halfh;
 	NosuchDebug(2,"drawing Square halfw=%.3f halfh=%.3f",halfw,halfh);
 	drawer->drawQuad( x0,y0, x1,y1, x2,y2, x3, y3);
 }
@@ -523,9 +527,7 @@ void SpriteTriangle::drawShape(PaletteDrawer* drawer, int xdir, int ydir) {
 		noise_y2 = vertexNoise();
 		noise_initialized = true;
 	}
-	// double halfw = w / 2.0f;
-	// double halfh = h / 2.0f;
-	double sz = 0.2f;
+	float sz = 0.2f;
 	NosuchVector p1 = NosuchVector(sz,0.0f);
 	NosuchVector p2 = p1;
 	p2 = p2.rotate(Sprite::degree2radian(120));

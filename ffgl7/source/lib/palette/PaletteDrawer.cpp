@@ -60,6 +60,7 @@ PaletteDrawer::PaletteDrawer(PaletteParams *params)
 
 	m_params = params;
 
+	m_isdrawing = false;
 	m_filled = false;
 	m_stroked = false;
 	m_fill_alpha = 1.0;
@@ -132,20 +133,42 @@ double PaletteDrawer::scale_z(double z) {
 	return expz * m_params->zmultiply;
 }
 
-void PaletteDrawer::drawSetup()
+ffglex::FFGLShader* PaletteDrawer::BeginDrawingWithShader(std::string shaderName)
 {
+	ffglex::FFGLShader* shader;
+	if( m_isdrawing )
+	{
+		NosuchDebug( "Warning, BeginDrawingWithShader called when isDrawing" );
+		return NULL;
+	}
+	if( shaderName == "gradient" )
+	{
+		shader = &m_shader_gradient;
+	}
+	else
+	{
+		shader = &m_shader_gradient;
+	}
+	glUseProgram(shader->GetGLID());
+	m_isdrawing = true;
+	return shader;
 }
 
-void PaletteDrawer::drawSprite(Sprite* s, int xdir, int ydir)
+void PaletteDrawer::EndDrawing()
 {
-	s->drawShape( this, xdir, ydir );
+	if( ! m_isdrawing )
+	{
+		NosuchDebug( "Warning, EndDrawing called when !isDrawing" );
+		return;
+	}
+	glUseProgram( 0 );
+	m_isdrawing = false;
 }
 
-void PaletteDrawer::drawQuad(double x0, double y0, double x1, double y1, double x2, double y2, double x3, double y3) {
+void PaletteDrawer::drawQuad(float x0, float y0, float x1, float y1, float x2, float y2, float x3, float y3) {
 	NosuchDebug("PaletteDrawer.drawQuad: %.3f %.3f, %.3f %.3f, %.3f %.3f, %.3f %.3f",x0,y0,x1,y1,x2,y2,x3,y3);
 
 	//FFGL requires us to leave the context in a default state on return, so use this scoped binding to help us do that.
-	ffglex::ScopedShaderBinding shaderBinding( m_shader_gradient.GetGLID() );
 
 	NosuchColor c1 = m_fill_color;
 	RGBA rgba1{
@@ -171,7 +194,7 @@ void PaletteDrawer::drawQuad(double x0, double y0, double x1, double y1, double 
 	GLfloat ytranslate = 0.0f;
 	m_shader_gradient.Set( "vTranslate", xtranslate, ytranslate );
 
-	m_quad.Draw();
+	m_quad.Draw(x0,y0,x1,y1,x2,y2,x3,y3);
 
 #ifdef OLD_GRAPHICS
 	if ( m_filled ) {

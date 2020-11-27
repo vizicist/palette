@@ -203,6 +203,9 @@
     <PostBuildEvent>
       <Command>postbuild_debug.bat</Command>
     </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>prebuild.bat</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>

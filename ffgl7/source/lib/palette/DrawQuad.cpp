@@ -65,7 +65,7 @@ bool DrawQuad::Initialise( )
  * Draw the quad. Depending on your vertex shader this will apply your fragment shader in the area where the quad ends up.
  * You need to have successfully initialised this quad before rendering it.
  */
-void DrawQuad::Draw()
+void DrawQuad::Draw(float x0, float y0, float x1, float y1, float x2, float y2, float x3, float y3)
 {
 	if( vaoID == 0 || vboID == 0 )
 		return;
@@ -75,8 +75,26 @@ void DrawQuad::Draw()
 	ffglex::ScopedVAOBinding vaoBinding( vaoID );
 	ffglex::ScopedVBOBinding vboBinding( vboID );
 
-	float df                      = ffglex::random( 0.2f, 0.9f );
-	P_TEXTURED_QUAD_VERTICES[ 0 ] = { 0.0f, 1.0f, -df, df, 0.0f };
+	P_TEXTURED_QUAD_VERTICES[0] = { 0.0f, 1.0f, x0, y0, 0.0f };//Top-left
+	P_TEXTURED_QUAD_VERTICES[1] = { 1.0f, 1.0f, x1, y1, 0.0f };//Top-right
+	P_TEXTURED_QUAD_VERTICES[2] = { 0.0f, 0.0f, x3, y3, 0.0f };//Bottom left
+
+	P_TEXTURED_QUAD_VERTICES[3] = { 0.0f, 0.0f, x3, y3, 0.0f };//Bottom left
+	P_TEXTURED_QUAD_VERTICES[4] = { 1.0f, 1.0f, x1, y1, 0.0f };//Top right
+	P_TEXTURED_QUAD_VERTICES[5] = { 1.0f, 0.0f, x2, y2, 0.0f };//Bottom right
+
+#if 0
+GlVertexTextured P_TEXTURED_QUAD_VERTICES2[] = {
+	{ 0.0f, 1.0f, -1.0f, 1.0f, 0.0f }, //Top-left
+	{ 1.0f, 1.0f,  1.0f, 1.0f, 0.0f },  //Top-right
+	{ 0.0f, 0.0f, -1.0f, -1.0f, 0.0f },//Bottom left
+
+	{ 0.0f, 0.0f, -1.0f, -1.0f, 0.0f },//Bottom left
+	{ 1.0f, 1.0f, 1.0f, 1.0f, 0.0f },  //Top right
+	{ 1.0f, 0.0f, 1.0f, -1.0f, 0.0f }, //Bottom right
+};
+#endif
+
 	glBufferData( GL_ARRAY_BUFFER, sizeof( P_TEXTURED_QUAD_VERTICES ), P_TEXTURED_QUAD_VERTICES, GL_DYNAMIC_DRAW );
 
 	glDrawArrays( GL_TRIANGLES, 0, 6 );
