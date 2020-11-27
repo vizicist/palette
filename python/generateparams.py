@@ -15,7 +15,7 @@ import json
 def openFile(dir,name):
 	return open(os.path.join(dir,name),"w")
 
-def generate(homedir, force, sourcedir):
+def generate(homedir, force, sourcedir, floatType):
 
 	c = os.path.join(homedir,"default/config")
 
@@ -81,27 +81,33 @@ def generate(homedir, force, sourcedir):
 		if typ == "string":
 			init = "\"" + init + "\""
 		
-		types={"bool":"BOOL","int":"INT","double":"DBL","string":"STR"}
-		rtypes={"bool":"bool","int":"int","double":"double","string":"std::string"}
+		types={"bool":"BOOL","int":"INT",floatType:"DBL","string":"STR"}
+		rtypes={"bool":"bool","int":"int",floatType:floatType,"string":"std::string"}
 		captype = types[typ]
 		realtype = rtypes[typ]
 
 		is_region_param = (paramtype == "region" or paramtype == "sprite" or paramtype == "visual" or paramtype == "NO_MORE_SOUND_PARAMS_sound")
+
+		
+		if realtype == "float" and floatType == "float":
+			fsuffix = "f"
+		else:
+			fsuffix = ""
 
 		if is_region_param:
 
 			out_rp_declare.write("%s %s;\n"%(realtype,basename))
 			out_rp_get.write("GET_%s_PARAM(%s);\n"%(captype,basename))
 
-			out_rp_init.write("%s = %s;\n"%(basename,init))
+			out_rp_init.write("%s = %s%s;\n"%(basename,init,fsuffix))
 			out_rp_list.write("\"%s\",\n"%basename)
 			out_rp_set.write("SET_%s_PARAM(%s);\n"%(captype,basename))
 
 			if typ == "bool":
 				out_rp_increment.write("INC_%s_PARAM(%s);\n"%(captype,basename))
 				out_rp_toggle.write("TOGGLE_PARAM(%s);\n"%basename)
-			elif typ == "int" or typ == "double":
-				out_rp_increment.write("INC_%s_PARAM(%s,%s,%s);\n"%(captype,basename,mn,mx))
+			elif typ == "int" or typ == floatType:
+				out_rp_increment.write("INC_%s_PARAM(%s,%s%s,%s%s);\n"%(captype,basename,mn,fsuffix,mx,fsuffix))
 			elif typ == "string":
 				if mn == "None":
 					out_rp_increment.write("INC_NO_PARAM(%s);\n"%(basename))
@@ -169,14 +175,17 @@ if __name__ == "__main__":
 
     force = False
     sourcedir = os.path.join(homedir,"ffgl6/lib/palette")
+    ftype = "double"
     if len(sys.argv) > 1:
         for a in sys.argv[1:]:
             if a == "-f":
                 force = True
             if a == "-7":
                 sourcedir = os.path.join(homedir,"ffgl7/source/lib/palette")
+            if a == "-float":
+                ftype = "float"
 
     print("Generateparams: checking source in: "+sourcedir)
-    generate(homedir,force,sourcedir)
+    generate(homedir,force,sourcedir,ftype)
 
     sys.exit(0)

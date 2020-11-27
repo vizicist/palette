@@ -16,7 +16,7 @@ class GraphicBehaviour;
 #define MAX_REGION_ID 22
 #define PORT_NEEDS_LOOKUP -99
 
-double scale_z(PaletteHost* ph,double z);
+float scale_z(PaletteHost* ph,float z);
 
 #define DECLARE_TYPES(t) extern std::vector<std::string> RegionParams_##t##Types;
 #include "RegionParams_typesdeclare.h"
@@ -44,6 +44,7 @@ public:
 		bool stringval = false;
 
 #define SET_DBL_PARAM(name) else if ( nm == #name ) name = string2double(val)
+#define SET_FLT_PARAM(name) else if ( nm == #name ) name = float(string2double(val))
 #define SET_INT_PARAM(name) else if ( nm == #name ) name = string2int(val)
 #define SET_BOOL_PARAM(name) else if ( nm == #name ) name = string2bool(val)
 #define SET_STR_PARAM(name) else if ( nm == #name ) (name = val),(stringval=true)
@@ -58,12 +59,13 @@ public:
 
 		// To abide by the limits for each value, we rely on the code in Increment()
 		if ( ! stringval ) {
-			Increment(nm,0.0);
+			Increment(nm,0.0f);
 		}
 	}
-	void Increment(std::string nm, double amount) {
+	void Increment(std::string nm, float amount) {
 
 #define INC_DBL_PARAM(name,mn,mx) else if (nm==#name)name=adjust(name,amount,mn,mx)
+#define INC_FLT_PARAM(name,mn,mx) else if (nm==#name)name=adjust(name,amount,mn,mx)
 #define INC_INT_PARAM(name,mn,mx) else if (nm==#name)name=adjust(name,amount,mn,mx)
 #define INC_STR_PARAM(name,vals) else if (nm==#name)name=Params::adjust(name,amount,RegionParams_ ## vals ## Types)
 #define INC_BOOL_PARAM(name) else if (nm==#name)name=adjust(name,amount)
@@ -82,6 +84,7 @@ public:
 	std::string Get(std::string nm) {
 
 #define GET_DBL_PARAM(name) else if(nm==#name)return DoubleString(name)
+#define GET_FLT_PARAM(name) else if(nm==#name)return FloatString(name)
 #define GET_INT_PARAM(name) else if(nm==#name)return IntString(name)
 #define GET_BOOL_PARAM(name) else if(nm==#name)return BoolString(name)
 #define GET_STR_PARAM(name) else if(nm==#name)return name
@@ -111,7 +114,7 @@ public:
 	RegionParams params;
 
 	void initParams();
-	void setTrackedCursor(Palette* palette, std::string cid, std::string cidsource, NosuchVector pos, double z);
+	void setTrackedCursor(Palette* palette, std::string cid, std::string cidsource, NosuchVector pos, float z);
 	double getMoveDir(std::string movedir);
 	Sprite* makeSprite(std::string shape);
 	void instantiateSprite(TrackedCursor* c, bool throttle);

@@ -171,8 +171,8 @@ bool needBool(std::string who,cJSON *j,std::string nm) {
 	throw NosuchException("Unexpected type for %s item in %s, expecting %s",nm.c_str(),who.c_str(),jsonType(c->type));
 }
 
-double needDouble(std::string who,cJSON *j,std::string nm) {
-	return needItem(who, j, nm, cJSON_Number)->valuedouble;
+float needFloat(std::string who,cJSON *j,std::string nm) {
+	return float(needItem(who, j, nm, cJSON_Number)->valuedouble);
 }
 
 cJSON* needArray(std::string who,cJSON *j,std::string nm) {
@@ -716,7 +716,7 @@ std::string PaletteHost::ExecuteJson(std::string meth, cJSON *params, const char
 		return jsonIntResult(0,id);
 	}
 	if (meth == "tempo_set") {
-		double cps = needDouble(meth, params, "clickspersecond");
+		float cps = needFloat(meth, params, "clickspersecond");
 		Scheduler::ChangeClicksPerSecond((click_t)(cps));
 		return jsonIntResult(0,id);
 	}
@@ -724,7 +724,7 @@ std::string PaletteHost::ExecuteJson(std::string meth, cJSON *params, const char
 		return jsonIntResult((int)(Scheduler::ClicksPerSecond),id);
 	}
 	if (meth == "tempo_adjust") {
-		double factor = needDouble(meth, params, "factor");
+		float factor = needFloat(meth, params, "factor");
 		Scheduler::ChangeClicksPerSecond((int)(click_t)(factor*Scheduler::ClicksPerSecond));
 		return jsonIntResult(0,id);
 	}
@@ -843,7 +843,7 @@ ArgAsString(const osc::ReceivedMessage& m, unsigned n)
 }
 
 void
-PaletteHost::SetCursorCid(std::string cid, std::string cidsource, NosuchVector point, double z, bool recordable )
+PaletteHost::SetCursorCid(std::string cid, std::string cidsource, NosuchVector point, float z, bool recordable )
 {
 	_palette->region.setTrackedCursor(_palette,cid, cidsource, point, z);
 }
@@ -860,9 +860,9 @@ void PaletteHost::ProcessOscMessage( std::string source, const osc::ReceivedMess
 		if (checkAddrPattern(addr, "/cursor")) {
 			std::string cmd = ArgAsString(m,0);
 			std::string cid = ArgAsString(m,1); // it's a long string, globally unique
-			double x = ArgAsFloat(m,2);
-			double y = ArgAsFloat(m,3);
-			double z = ArgAsFloat(m,4);
+			float x = ArgAsFloat(m,2);
+			float y = ArgAsFloat(m,3);
+			float z = ArgAsFloat(m,4);
 
 			if (cmd == "down" || cmd == "drag") {
 				if (NosuchDebugCursor) {
@@ -879,10 +879,9 @@ void PaletteHost::ProcessOscMessage( std::string source, const osc::ReceivedMess
 			return;
 		}
 		if (checkAddrPattern(addr, "/spriteon") || checkAddrPattern(addr,"/sprite") ) {
-			double x = ArgAsFloat(m,0);
-			double y = ArgAsFloat(m,1);
-			y = 1.0 - y;
-			double z = ArgAsFloat(m,2);
+			float x = ArgAsFloat(m,0);
+			float y = ArgAsFloat(m,1);
+			float z = ArgAsFloat(m,2);
 			std::string cid = ArgAsString(m,3);
 			NosuchDebug(1,"GOT /spriteon x,y,z=%.4f,%.4f,%.4f id=%s\n",x,y,z,cid.c_str());
 			palette()->region.instantiateSpriteAt(cid,NosuchVector(x, y), z);

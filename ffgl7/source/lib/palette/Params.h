@@ -3,11 +3,12 @@
 
 #define IntString(x) NosuchSnprintf("%d",x)
 #define DoubleString(x) NosuchSnprintf("%f",x)
+#define FloatString(x) NosuchSnprintf("%f",x)
 #define BoolString(x) NosuchSnprintf("%s",x?"on":"off")
 
 class Params {
 public:
-	double adjust(double v, double amount, double vmin, double vmax) {
+	float adjust(float v, float amount, float vmin, float vmax) {
 		v += amount*(vmax-vmin);
 		if ( v < vmin )
 			v = vmin;
@@ -15,7 +16,7 @@ public:
 			v = vmax;
 		return v;
 	}
-	int adjust(int v, double amount, int vmin, int vmax) {
+	int adjust(int v, float amount, int vmin, int vmax) {
 		int incamount = (int)(amount*(vmax-vmin));
 		if ( incamount != 0 ) {
 			incamount = (amount>0.0) ? 1 : -1;
@@ -27,7 +28,7 @@ public:
 			v = vmax;
 		return v;
 	}
-	bool adjust(bool v, double amount) {
+	bool adjust(bool v, float amount) {
 		if ( amount > 0.0 ) {
 			return true;
 		}
@@ -37,7 +38,7 @@ public:
 		// if amount is 0.0, no change.
 		return v;
 	}
-	std::string adjust(std::string v, double amount, std::vector<std::string>& vals) {
+	std::string adjust(std::string v, float amount, std::vector<std::string>& vals) {
 		// Find the existing value
 		size_t existing = 0;
 		size_t sz = vals.size();

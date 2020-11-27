@@ -70,7 +70,7 @@ double Region::_maxCursorDepth() {
 }
 
 void
-Region::setTrackedCursor(Palette* palette, std::string cid, std::string cidsource, NosuchVector pos, double z) {
+Region::setTrackedCursor(Palette* palette, std::string cid, std::string cidsource, NosuchVector pos, float z) {
 
 	if ( pos.x < x_min || pos.x > x_max || pos.y < y_min || pos.y > y_max ) {
 		NosuchDebug("Ignoring out-of-bounds cursor pos=%f,%f,%f\n",pos.x,pos.y);

@@ -1,33 +1,16 @@
 #ifndef NOSUCHGRAPHICS_H
 #define NOSUCHGRAPHICS_H
 
-#define RADIAN2DEGREE(r) ((r) * 360.0f / (2.0f * (float)M_PI))
-#define DEGREE2RADIAN(d) (((d) * 2.0f * (float)M_PI) / 360.0f )
-
-// #define CHECK_VECTOR
-#ifdef CHECK_VECTOR
-void checkVector(NosuchVector v) {
-	if ( _isnan(v.x) || _isnan(v.y) ) {
-		NosuchDebug("checkVector found NaN!");
-	}
-	if ( v.x > 10.0 || v.y > 10.0 ) {
-		NosuchDebug("checkVector found > 10.0!");
-	}
-}
-#else
-#define checkVector(v)
-#endif
-
 class NosuchVector {
 public:
 	NosuchVector() {
 		// set(FLT_MAX,FLT_MAX,FLT_MAX);
 		set(0.0,0.0);
 	}
-	NosuchVector(double xx, double yy) {
+	NosuchVector(float xx, float yy) {
 		set(xx,yy);
 	};
-	void set(double xx, double yy) {
+	void set(float xx, float yy) {
 		x = xx;
 		y = yy;
 	}
@@ -43,34 +26,34 @@ public:
 	NosuchVector add(NosuchVector v) {
 		return NosuchVector(x+v.x,y+v.y);
 	}
-	double mag() {
+	float mag() {
 		return sqrt( (x*x) + (y*y) );
 	}
 	NosuchVector normalize() {
-		double leng = mag();
+		float leng = mag();
 		return NosuchVector(x/leng, y/leng);
 	}
-	NosuchVector mult(double m) {
+	NosuchVector mult(float m) {
 		return NosuchVector(x*m,y*m);
 	}
-	NosuchVector rotate(double radians, NosuchVector about = NosuchVector(0.0f,0.0f) ) {
-		double c, s;
+	NosuchVector rotate(float radians, NosuchVector about = NosuchVector(0.0f,0.0f) ) {
+		float c, s;
 		c = cos(radians);
 		s = sin(radians);
 		x -= about.x;
 		y -= about.y;
-		double newx = x * c - y * s;
-		double newy = x * s + y * c;
+		float newx = x * c - y * s;
+		float newy = x * s + y * c;
 		newx += about.x;
 		newy += about.y;
 		return NosuchVector(newx,newy);
 	}
-	double heading() {
+	float heading() {
         return -atan2(-y, x);
 	}
 
-	double x;
-	double y;
+	float x;
+	float y;
 };
 
 #endif

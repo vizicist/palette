@@ -63,22 +63,22 @@ public:
 		gravityForce = NosuchVector(0.0, 0.0);
 	}
 	bool visible;
-	double direction;
-	double hue1;
-	double hue2;
+	float direction;
+	float hue1;
+	float hue2;
 	NosuchVector pos;
-	double depth;
-	double size;
-	double alpha;
+	float depth;
+	float size;
+	float alpha;
 	int born;
 	int last_tm;
 	bool killme;
-	double rotangsofar;
+	float rotangsofar;
 	bool stationary;
 	std::string cid;
 	int seq;     // sprite sequence # (mostly for debugging)
 	int rotdir;  // -1, 0, 1
-	double rotanginit;
+	float rotanginit;
 	NosuchVector gravityForce;
 };
 
@@ -93,15 +93,15 @@ public:
 	virtual void startAccumulate(TrackedCursor* c) { };
 	virtual void accumulate(TrackedCursor* c) { }
 
-	virtual double width() { return state.size * state.depth; }
-	virtual double height() { return state.size * state.depth; }
+	virtual float width() { return float(state.size * state.depth); }
+	virtual float height() { return float(state.size * state.depth); }
 
 	static bool initialized;
 	static void initialize();
 	// static std::vector<std::string> spriteShapes;
-	static double degree2radian(double deg);
+	static float degree2radian(float deg);
 
-	void initState(std::string cid, std::string cidsource, NosuchVector& pos, double movedir, double depth, double rotanginit);
+	void initState(std::string cid, std::string cidsource, NosuchVector& pos, float movedir, float depth, float rotanginit);
 
 	// Screen space is 2.0x2.0, while cursor space is 1.0x1.0
 	void scaleCursorSpaceToScreenSpace(NosuchVector& pos) {
@@ -110,8 +110,8 @@ public:
 	}
 
 	void draw(PaletteDrawer* app);
-	void drawAt(PaletteDrawer* app, double x,double y, double w, double h, int xdir, int ydir);
-	NosuchVector deltaInDirection(double dt, double dir, double speed);
+	void drawAt(PaletteDrawer* app, float x,float y, float w, float h, int xdir, int ydir);
+	NosuchVector deltaInDirection(float dt, float dir, float speed);
 	int rotangdirOf(std::string s);
 	void advanceTo(int tm, NosuchVector force);
 
@@ -126,7 +126,7 @@ protected:
 	static int NextSeq;
 
 private:
-	void draw(PaletteDrawer* app, double scaled_z);
+	void draw(PaletteDrawer* app, float scaled_z);
 };
 
 class SpriteSquare : public Sprite {
