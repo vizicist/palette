@@ -47,8 +47,8 @@ public:
 	SpriteState() {
 		visible = false;
 		direction = 0.0;
-		hue = 0.0f;
-		huefill = 0.0f;
+		hue1 = 0.0f;
+		hue2 = 0.0f;
 		pos = NosuchVector(0.0f,0.0f);
 		depth = 0.0;
 		size = 0.5;
@@ -64,8 +64,8 @@ public:
 	}
 	bool visible;
 	double direction;
-	double hue;
-	double huefill;
+	double hue1;
+	double hue2;
 	NosuchVector pos;
 	double depth;
 	double size;

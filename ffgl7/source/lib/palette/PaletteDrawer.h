@@ -42,11 +42,11 @@ public:
 	void stroke(NosuchColor c, double alpha);
 	void strokeWeight(double w);
 	void background(int);
-	void pushMatrix();
-	void popMatrix();
+	void resetMatrix();
+	// void setMatrix(GLfloat matrix[16]);
 	void translate(double x, double y);
 	void scale(double x, double y);
-	void rotate(double degrees);
+	void rotate(float degrees);
 
 	void drawLine(double x0, double y0, double x1, double y1);
 	void drawTriangle(double x0, double y0, double x1, double y1, double x2, double y2);
@@ -86,10 +86,14 @@ private:
 	};
 	RGBA m_rgba1;
 	HSBA m_hsba2;
+	// GLfloat m_matrix[16];
+	glm::mat4 m_matrix;
+	glm::mat4 m_matrix_identity;
 
 	ffglex::FFGLShader m_shader_gradient;  //!< Utility to help us compile and link some shaders into a program.
 	DrawQuad m_quad;//!< Utility to help us render a full screen quad.
 	DrawTriangle m_triangle;//!< Utility to help us render a full screen quad.
 	GLint m_rgbLeftLocation;
 	GLint m_rgbRightLocation;
+	GLint m_matrixLocation;
 };

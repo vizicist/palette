@@ -2,6 +2,7 @@
 #include <string>
 #include <sstream>
 #include "../ffgl/FFGL.h"//For OpenGL
+#include "NosuchDebug.h"
 
 namespace ffglex
 {
@@ -197,6 +198,7 @@ void Log( const Args&... args )
 	std::ostringstream oss;
 	VariadicMessageBuilder( oss, args... );
 	Log( oss.str() );
+	NosuchDebug( oss.str().c_str() );
 }
 
 }//End namespace ffglex
