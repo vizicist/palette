@@ -115,12 +115,12 @@ PaletteDrawer::~PaletteDrawer()
 //  Methods
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void PaletteDrawer::fill(NosuchColor c, double alpha) {
+void PaletteDrawer::fill(NosuchColor c, float alpha) {
 	m_filled = true;
 	m_fill_color = c;
 	m_fill_alpha = alpha;
 }
-void PaletteDrawer::stroke(NosuchColor c, double alpha) {
+void PaletteDrawer::stroke(NosuchColor c, float alpha) {
 	// glColor4d(c.r()/255.0f, c.g()/255.0f, c.b()/255.0f, alpha);
 	m_stroked = true;
 	m_stroke_color = c;
@@ -132,33 +132,23 @@ void PaletteDrawer::noFill() {
 void PaletteDrawer::background(int b) {
 	NosuchDebug("PaletteDrawer::background!");
 }
-void PaletteDrawer::strokeWeight(double w) {
+void PaletteDrawer::strokeWeight(float w) {
 	glLineWidth((GLfloat)w);
 }
-void PaletteDrawer::rotate(float degrees) {
-	float radians = DEGREE2RADIAN( degrees );
+void PaletteDrawer::rotate(float radians) {
 	m_matrix = glm::rotate( m_matrix, radians, glm::vec3(0.0f,0.0f,1.0f));
-#ifdef OLD_GRAPHICS
-	glRotated(-degrees,0.0f,0.0f,1.0f);
-#endif
 }
-void PaletteDrawer::translate(double x, double y) {
-#ifdef OLD_GRAPHICS
-	glTranslated(x,y,0.0f);
-#endif
+void PaletteDrawer::translate(float x, float y) {
+	m_matrix = glm::translate( m_matrix, glm::vec3(x,y,0.0f));
 }
-void PaletteDrawer::scale(double x, double y) {
-#ifdef OLD_GRAPHICS
-	glScaled(x,y,1.0f);
-	// NosuchDebug("SCALE xy= %f %f",x,y);
-#endif
+void PaletteDrawer::scale(float x, float y) {
 }
 
-double PaletteDrawer::scale_z(double z) {
+float PaletteDrawer::scale_z(float z) {
 	// We want the z value to be scaled exponentially toward 1.0,
 	// i.e. raw z of .5 should result in a scale_z value of .75
 	double expz = 1.0f - pow((1.0-z),m_params->zexponential);
-	return expz * m_params->zmultiply;
+	return float(expz * m_params->zmultiply);
 }
 
 ffglex::FFGLShader* PaletteDrawer::BeginDrawingWithShader(std::string shaderName)
@@ -217,19 +207,19 @@ void PaletteDrawer::drawQuad(float x0, float y0, float x1, float y1, float x2, f
 
 	m_quad.Draw(x0,y0,x1,y1,x2,y2,x3,y3);
 }
-void PaletteDrawer::drawTriangle(double x0, double y0, double x1, double y1, double x2, double y2) {
+void PaletteDrawer::drawTriangle(float x0, float y0, float x1, float y1, float x2, float y2) {
 	NosuchDebug("Drawing triangle xy0=%.3f,%.3f xy1=%.3f,%.3f xy2=%.3f,%.3f",x0,y0,x1,y1,x2,y2);
 }
 
-void PaletteDrawer::drawLine(double x0, double y0, double x1, double y1) {
+void PaletteDrawer::drawLine(float x0, float y0, float x1, float y1) {
 	NosuchDebug("Drawing line xy0=%.3f,%.3f xy1=%.3f,%.3f",x0,y0,x1,y1);
 }
 
-static double degree2radian(double deg) {
-	return 2.0f * (double)M_PI * deg / 360.0f;
+static float degree2radian(float deg) {
+	return 2.0f * (float)M_PI * deg / 360.0f;
 }
 
-void PaletteDrawer::drawEllipse(double x0, double y0, double w, double h, double fromang, double toang) {
+void PaletteDrawer::drawEllipse(float x0, float y0, float w, float h, float fromang, float toang) {
 	NosuchDebug(2,"Drawing ellipse xy0=%.3f,%.3f wh=%.3f,%.3f",x0,y0,w,h);
 #ifdef OLD_GRAPHICS
 	if ( m_filled ) {
@@ -297,8 +287,8 @@ void PaletteDrawer::drawPolygon(PointMem* points, int npoints) {
 #endif
 }
 
-#define RANDONE (((double)rand())/RAND_MAX)
-#define RANDB ((((double)rand())/RAND_MAX)*2.0f-1.0f)
+#define RANDONE (((float)rand())/RAND_MAX)
+#define RANDB ((((float)rand())/RAND_MAX)*2.0f-1.0f)
 
 FFResult PaletteDrawer::InitGL( const FFGLViewportStruct* vp)
 {
