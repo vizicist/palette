@@ -76,7 +76,7 @@ public:
 
 	void ProcessOscMessage(std::string , const osc::ReceivedMessage& m);
 
-	void SetCursorCid(std::string cid, std::string source, NosuchVector point, float z, bool recordable = true );
+	void SetCursorCid( std::string cid, std::string source, glm::vec2 point, float z, bool recordable = true );
 
 	static bool checkAddrPattern(const char *addr, char *patt);
 
@@ -110,29 +110,6 @@ public:
 	void RunEveryMillisecondOrSo();
 
 	// NEW STUFF
-
-	struct RGBA
-	{
-		float red   = 1.0f;
-		float green = 1.0f;
-		float blue  = 0.0f;
-		float alpha = 1.0f;
-	};
-	struct HSBA
-	{
-		float hue   = 0.0f;
-		float sat   = 1.0f;
-		float bri   = 1.0f;
-		float alpha = 1.0f;
-	};
-	RGBA rgba1;
-	HSBA hsba2;
-
-	ffglex::FFGLShader m_shader_gradient;  //!< Utility to help us compile and link some shaders into a program.
-	DrawQuad m_quad;//!< Utility to help us render a full screen quad.
-	DrawTriangle m_triangle;//!< Utility to help us render a full screen quad.
-	GLint m_rgbLeftLocation;
-	GLint m_rgbRightLocation;
 
 protected:	
 

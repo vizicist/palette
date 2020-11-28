@@ -56,13 +56,13 @@ TrackedCursor* Region::_getTrackedCursor(std::string cid, std::string cidsource)
 	return retc;
 }
 
-double Region::_maxCursorDepth() {
+float Region::_maxCursorDepth() {
 	// We assume the cursorlist is locked
-	double maxval = 0;
+	float maxval = 0;
 	for ( std::list<TrackedCursor*>::iterator i = _cursors.begin(); i!=_cursors.end(); i++ ) {
 		TrackedCursor* c = *i;
 		NosuchAssert(c);
-		double d = c->curr_raw_depth;
+		float d = c->curr_raw_depth;
 		if ( d > maxval )
 			maxval = d;
 	}
@@ -70,7 +70,7 @@ double Region::_maxCursorDepth() {
 }
 
 void
-Region::setTrackedCursor(Palette* palette, std::string cid, std::string cidsource, NosuchVector pos, float z) {
+Region::setTrackedCursor(Palette* palette, std::string cid, std::string cidsource, glm::vec2 pos, float z) {
 
 	if ( pos.x < x_min || pos.x > x_max || pos.y < y_min || pos.y > y_max ) {
 		NosuchDebug("Ignoring out-of-bounds cursor pos=%f,%f,%f\n",pos.x,pos.y);
@@ -101,7 +101,7 @@ Region::setTrackedCursor(Palette* palette, std::string cid, std::string cidsourc
 	return;
 }
 
-double Region::getMoveDir(std::string movedirtype) {
+float Region::getMoveDir(std::string movedirtype) {
 	if ( movedirtype == "left" ) {
 		return 180.0f;
 	}
@@ -115,14 +115,14 @@ double Region::getMoveDir(std::string movedirtype) {
 		return 90.0f;
 	}
 	if ( movedirtype == "random" || movedirtype == "cursor" ) {
-		double f = ((double)(rand()))/ RAND_MAX;
+		float f = float(rand())/ RAND_MAX;
 		return f * 360.0f;
 	}
 	if ( movedirtype == "random90" ) {
 		return 90.0f * (rand() % 4);
 	}
 	if ( movedirtype == "updown" ) {
-		return 90.0f + 180.0 * (rand() % 2);
+		return 90.0f + 180.0f * (rand() % 2);
 	}
 	if ( movedirtype == "leftright" ) {
 		return 180.0f * (rand() % 2);
@@ -186,16 +186,16 @@ void Region::clearCursors() {
 	cursorlist_unlock();
 }
 
-double
+float
 Region::spriteMoveDir(TrackedCursor* c)
 {
-	double dir;
+	float dir;
 	if (params.movedir == "cursor") {
 		if (c != NULL) {
 			dir = c->curr_degrees;
 		}
 		else {
-			double f = ((double)(rand())) / RAND_MAX;
+			float f = float(rand()) / RAND_MAX;
 			dir = f * 360.0f;
 		}
 		// NosuchDebug("Region::spriteMoveDir cursor! dir=%f", dir);
@@ -269,18 +269,18 @@ Region::instantiateSprite(TrackedCursor* c, bool throttle) {
 	Sprite* s = makeSprite(params.shape);
 	if (s) {
 		s->params.initValues(this);
-		double anginit = s->params.rotanginit;
+		float anginit = s->params.rotanginit;
 		if (s->params.rotauto) {
 			anginit = -c->curr_degrees;
 		}
-		NosuchVector pos;
+		glm::vec2 pos;
 		std::string placement = params.placement;
 		if (placement == "cursor" || placement == "") {
 			pos = c->curr_raw_pos;
 		}
-		else if (params.placement == "random") {
-			pos.x = (double)rand() / RAND_MAX;
-			pos.y = (double)rand() / RAND_MAX;
+		else if( params.placement == "random" )
+		{
+			pos = glm::vec2( (float)rand() / RAND_MAX, (float)rand() / RAND_MAX );
 		}
 		else if (params.placement == "linear") {
 			pos.y = 0.5;
@@ -300,14 +300,14 @@ Region::instantiateSprite(TrackedCursor* c, bool throttle) {
 }
 
 void
-Region::instantiateSpriteAt(std::string cid, NosuchVector pos, double z) {
+Region::instantiateSpriteAt(std::string cid, glm::vec2 pos, float z) {
 
 	// std::string shape = params.shape;
 	Sprite* s = makeSprite(params.shape);
 	std::string source = "instantiate_at";
 	if (s) {
 		s->params.initValues(this);
-		double anginit = s->params.rotanginit;
+		float anginit = s->params.rotanginit;
 		s->initState(cid, source, pos, spriteMoveDir(NULL), z, anginit);
 		if (NosuchDebugSprite) {
 			NosuchDebug("Region.instantiateSpriteAt: cid=%s pos=%f,%f", cid.c_str(), pos.x, pos.y);
