@@ -100,102 +100,86 @@ void Sprite::draw(PaletteDrawer* drawer) {
 	
 	scalex *= aspect;
 
-	float x;
-	float y;
-	// NOTE!  The x,y coming in here is scaled to ((0,0),(1,1))
-	//        while the x,y computed and given to the drawAt method
-	//        is scaled to ((-1,-1),(1,1))
 	int xdir;
 	int ydir;
+
+	glm::vec2 pos = state.pos;
+
+	float x = state.pos[ 0 ];
+	float y = state.pos[ 1 ];
+	xdir = 1;
+	ydir = 1;
 	if ( params.mirrortype == "four" ) {
-		x = 2.0f * state.pos.x * drawer->width() - 1.0f;
-		y = 2.0f * state.pos.y * drawer->height() - 1.0f;
-		xdir = 1;
-		ydir = 1;
 		drawAt(drawer,x,y,scalex,scaley,xdir,ydir);
 		ydir = -1;
-		drawAt(drawer,x,-y,scalex,scaley,xdir,ydir);
+		drawAt(drawer,x,1.0f-y,scalex,scaley,xdir,ydir);
 		xdir = -1;
-		drawAt(drawer,-x,y,scalex,scaley,xdir,ydir);
+		drawAt(drawer,1.0f-x,y,scalex,scaley,xdir,ydir);
 		ydir = 1;
-		drawAt(drawer,-x,-y,scalex,scaley,xdir,ydir);
+		drawAt(drawer,1.0f-x,1.0f-y,scalex,scaley,xdir,ydir);
 	} else if ( params.mirrortype == "vertical" ) {
-		x = 2.0f * state.pos.x * drawer->width() - 1.0f;
-		y = state.pos.y * drawer->height();
-		xdir = 1;
-		ydir = 1;
 		drawAt(drawer,x,y,scalex,scaley,xdir,ydir);
-		y = (-state.pos.y) * drawer->height();
 		ydir = -1;
-		drawAt(drawer,x,y,scalex,scaley,xdir,ydir);
+		drawAt(drawer,x,1.0f-y,scalex,scaley,xdir,ydir);
 	} else if ( params.mirrortype == "horizontal" ) {
-		x = state.pos.x * drawer->width();
-		y = 2.0f * state.pos.y * drawer->height() - 1.0f;
-		xdir = 1;
-		ydir = 1;
 		drawAt(drawer,x,y,scalex,scaley,xdir,ydir);
-		// x = (1.0f-state.pos.x) * drawer->width();
-		x = (-state.pos.x) * drawer->width();
 		xdir = -1;
-		drawAt(drawer,x,y,scalex,scaley,xdir,ydir);
+		drawAt(drawer,1.0f-x,y,scalex,scaley,xdir,ydir);
 	} else {
-		x = 2.0f * state.pos.x * drawer->width() - 1.0f;
-		y = 2.0f * state.pos.y * drawer->height() - 1.0f;
-		xdir = 1;
-		ydir = 1;
 		drawAt(drawer,x,y,scalex,scaley,xdir,ydir);
 	}
 
 	drawer->EndDrawing();
 }
 	
-void Sprite::drawAt(PaletteDrawer* drawer, float x,float y, float scalex, float scaley, int xdir, int ydir) {
+void Sprite::drawAt(PaletteDrawer* drawer, float x, float y, float scalex, float scaley, int xdir, int ydir) {
 	drawer->resetMatrix();
-	float dx = x;
-	float dy = y;
 
 	// handle justification
 	std::string j = params.justification;
 
+	glm::vec2 pos( x, y );
+
 	NosuchDebug("Sprite::drawAt s=%lld drawAt j=%s xy= %f %f width=%f size=%f depth=%f\n",
-		(long long)this,j.c_str(),x,y,width(),state.size,state.depth);
+		(long long)this,j.c_str(),pos[0],pos[1],width(),state.size,state.depth);
+
+	float halfWidth = width() / 2.0f;
+	float halfHeight = height() / 2.0f;
 
 	if (j == "center") {
 		// do nothing
 	} else if ( j == "left" ) {
-		dx += width()/2.0f;
+		pos += glm::vec2( halfWidth,0.0f );
 	} else if ( j == "right" ) {
-		dx -= width()/2.0f;
+		pos += glm::vec2( -halfWidth,0.0f );
 	} else if ( j == "top" ) {
-		dy += height()/2.0f;
+		pos += glm::vec2( 0.0f, halfHeight );
 	} else if ( j == "bottom" ) {
-		dy -= height()/2.0f;
+		pos += glm::vec2( 0.0f, -halfHeight );
 	} else if ( j == "topleft" ) {
-		dx += width()/2.0f;
-		dy += height()/2.0f;
+		pos += glm::vec2( halfWidth, halfHeight );
 	} else if ( j == "topright" ) {
-		dx -= width()/2.0f;
-		dy += height()/2.0f;
+		pos += glm::vec2( -halfWidth, halfHeight );
 	} else if ( j == "bottomleft" ) {
-		dx += width()/2.0f;
-		dy -= height()/2.0f;
+		pos += glm::vec2( halfWidth, -halfHeight );
 	} else if ( j == "bottomright" ) {
-		dx -= width()/2.0f;
-		dy -= height()/2.0f;
+		pos += glm::vec2( -halfWidth, -halfHeight );
 	} else {
 		NosuchDebug("Sprite::drawAt: Unknown justification value - %s\n", params.justification.c_str());
 	}
 
-	// NosuchDebug("    Sprite::drawAt left width=%f dx is now %f\n", width(), dx);
-
 	float degrees = state.rotanginit + state.rotangsofar;
 
-	shader->Set( "vTranslate", float(dx), float(dy) );
-	drawer->translate(dx,dy);
+	// XXX - I'm not sure why I have to do this - there's an extra translate/scale somewhere
+	// XXX - in the rendering or assumptions, and this is needed to negate it.
+	// XXX - Eventually both should be removed.
+	drawer->translate(-1.0,-1.0);
+	drawer->scale(2.0,2.0);
 
-	shader->Set( "vScale", float(scalex), float(scaley) );
-	// drawer->scale(scalex,scaley);
+	drawer->translate(pos.x,pos.y);
+	drawer->scale(scalex,scaley);
 	drawer->rotate(degree2radian(degrees));
+
 	drawShape( drawer, xdir, ydir );
 }
 
@@ -584,13 +568,6 @@ SpriteArc::SpriteArc() {
 }
 
 void SpriteArc::drawShape(PaletteDrawer* app, int xdir, int ydir) {
-	// NosuchDebug("SpriteCircle drawing");
+	// NosuchDebug("SpriteArc drawing");
 	app->drawEllipse(0, 0, 0.2f, 0.2f, 0.0, 180.0);
-}
-
-static void
-normalize(glm::vec2* v)
-{
-	v->x = (v->x * 2.0f) - 1.0f;
-	v->y = (v->y * 2.0f) - 1.0f;
 }
