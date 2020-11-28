@@ -373,9 +373,6 @@ PaletteHost::PaletteHost(std::string configfile)
 
 	_scheduler = new Scheduler(this);
 
-	m_rgbLeftLocation = -1;
-	m_rgbRightLocation = -1;
-
 	m_oscport   = "";
 }
 
@@ -843,7 +840,7 @@ ArgAsString(const osc::ReceivedMessage& m, unsigned n)
 }
 
 void
-PaletteHost::SetCursorCid(std::string cid, std::string cidsource, NosuchVector point, float z, bool recordable )
+PaletteHost::SetCursorCid(std::string cid, std::string cidsource, glm::vec2 point, float z, bool recordable )
 {
 	_palette->region.setTrackedCursor(_palette,cid, cidsource, point, z);
 }
@@ -868,7 +865,7 @@ void PaletteHost::ProcessOscMessage( std::string source, const osc::ReceivedMess
 				if (NosuchDebugCursor) {
 					NosuchDebug("GOT /cursor %s cid=%s x,y=%.4f,%.4f  z=%f", cmd.c_str(), cid.c_str(), x, y, z);
 				}
-				SetCursorCid(cid, source, NosuchVector(x, y), z);
+				SetCursorCid(cid, source, glm::vec2(x, y), z);
 			}
 			else if (cmd == "up") {
 				if (NosuchDebugCursor) {
@@ -884,7 +881,7 @@ void PaletteHost::ProcessOscMessage( std::string source, const osc::ReceivedMess
 			float z = ArgAsFloat(m,2);
 			std::string cid = ArgAsString(m,3);
 			NosuchDebug(1,"GOT /spriteon x,y,z=%.4f,%.4f,%.4f id=%s\n",x,y,z,cid.c_str());
-			palette()->region.instantiateSpriteAt(cid,NosuchVector(x, y), z);
+			palette()->region.instantiateSpriteAt(cid,glm::vec2(x, y), z);
 
 			return;
 		}

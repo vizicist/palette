@@ -15,10 +15,10 @@ public:
 	static bool initialized;
 	static void initialize();
 
-	TrackedCursor(Palette* palette_, std::string cid, std::string cidsource, Region* region_, NosuchVector pos_, double z);
+	TrackedCursor(Palette* palette_, std::string cid, std::string cidsource, Region* region_, glm::vec2 pos_, float z);
 	~TrackedCursor();
-	double radian2degree(double r) {
-		return r * 360.0 / (2.0 * (double)M_PI);
+	float radian2degree(float r) {
+		return r * 360.0f / (2.0f * (float)M_PI);
 	}
 	bool rotauto() { return _region->params.rotauto; }
 
@@ -28,27 +28,26 @@ public:
 	void touch() { _touched = Scheduler::CurrentMilli; }
 	std::string cidsource() { return _cidsource; }
 	std::string cid() { return _cid; }
-	// double area() { return _area; }
 
-	double target_depth() { return _target_depth; }
-	void set_target_depth(double d) { _target_depth = d; }
-	// void setarea(double v) { _area = v; }
+	float target_depth() { return _target_depth; }
+	void set_target_depth(float d) { _target_depth = d; }
+	// void setarea(float v) { _area = v; }
 
-	void settargetpos(NosuchVector p) {
+	void settargetpos(glm::vec2 p) {
 		// _prev_pos = _pos;
 		_target_pos = p;
 	}
-	// NosuchVector previous_pos() { return _prev_pos; }
+	// glm::vec2 previous_pos() { return _prev_pos; }
 
 	// Manipulation of cursor-related things for graphics
 	void advanceTo(int tm);
 
-	double target_degrees() { return _target_degrees; }
+	float target_degrees() { return _target_degrees; }
 
 	// Manipulation of cursor-related things for music
 
-	double last_raw_depth() { return _last_raw_depth; }
-	void set_last_raw_depth(double f) { _last_raw_depth = f; }
+	float last_raw_depth() { return _last_raw_depth; }
+	void set_last_raw_depth(float f) { _last_raw_depth = f; }
 
 	bool isRightSide() { return ( curr_raw_pos.x >= 0.5 ); }
 
@@ -62,11 +61,11 @@ public:
 			cid().c_str(),cidsource().c_str(), curr_raw_pos.x,curr_raw_pos.y, curr_raw_depth);
 	}
 
-	NosuchVector curr_raw_pos;
-	double curr_raw_depth;
+	glm::vec2 curr_raw_pos;
+	float curr_raw_depth;
 	std::string curr_behaviour;
 
-	double curr_degrees;
+	float curr_degrees;
 
 	void set_last_instantiate(int tm) { _last_instantiate = tm; }
 	int last_instantiate() { return _last_instantiate; }
@@ -84,16 +83,16 @@ private:
 	long _lastalive;
 	std::string _cid; // This is a long string, globally unique
 	std::string _cidsource; // The hostname, or "sharedmem"
-	// double _area;
-	NosuchVector _last_raw_pos;
-	NosuchVector _target_pos;
-	// NosuchVector _prev_pos;
-	double _target_depth;
-	double _last_raw_depth;
-	double _smooth_degrees_factor;
+	// float _area;
+	glm::vec2 _last_raw_pos;
+	glm::vec2 _target_pos;
+	// glm::vec2 _prev_pos;
+	float _target_depth;
+	float _last_raw_depth;
+	float _smooth_degrees_factor;
 
 	// Graphical stuff
-	double _target_degrees;
+	float _target_degrees;
 
 	bool _g_firstdir;
 };

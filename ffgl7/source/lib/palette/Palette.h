@@ -1,5 +1,4 @@
-#ifndef _PALETTE_H
-#define _PALETTE_H
+#pragma once
 
 class PaletteParams {
 public:
@@ -91,5 +90,3 @@ private:
 	int _frames_last;
 
 };
-
-#endif

@@ -347,9 +347,6 @@
     <ClInclude Include="..\..\source\lib\nosuch\NosuchException.h">
       <Filter>lib\nosuch</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\source\lib\nosuch\NosuchGraphics.h">
-      <Filter>lib\nosuch</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\source\lib\nosuch\NosuchOscInput.h">
       <Filter>lib\nosuch</Filter>
     </ClInclude>

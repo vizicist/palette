@@ -49,7 +49,7 @@ public:
 		direction = 0.0;
 		hue1 = 0.0f;
 		hue2 = 0.0f;
-		pos = NosuchVector(0.0f,0.0f);
+		pos = glm::vec2(0.0f,0.0f);
 		depth = 0.0;
 		size = 0.5;
 		alpha = 1.0;
@@ -60,13 +60,13 @@ public:
 		stationary = false;
 		cid = "nosuchcursor";
 		rotanginit = 0.0;
-		gravityForce = NosuchVector(0.0, 0.0);
+		gravityForce = glm::vec2(0.0, 0.0);
 	}
 	bool visible;
 	float direction;
 	float hue1;
 	float hue2;
-	NosuchVector pos;
+	glm::vec2 pos;
 	float depth;
 	float size;
 	float alpha;
@@ -79,7 +79,7 @@ public:
 	int seq;     // sprite sequence # (mostly for debugging)
 	int rotdir;  // -1, 0, 1
 	float rotanginit;
-	NosuchVector gravityForce;
+	glm::vec2 gravityForce;
 };
 
 class Sprite {
@@ -101,19 +101,19 @@ public:
 	// static std::vector<std::string> spriteShapes;
 	static float degree2radian(float deg);
 
-	void initState(std::string cid, std::string cidsource, NosuchVector& pos, float movedir, float depth, float rotanginit);
+	void initState(std::string cid, std::string cidsource, glm::vec2& pos, float movedir, float depth, float rotanginit);
 
 	// Screen space is 2.0x2.0, while cursor space is 1.0x1.0
-	void scaleCursorSpaceToScreenSpace(NosuchVector& pos) {
+	void scaleCursorSpaceToScreenSpace(glm::vec2& pos) {
 		state.pos.x *= 2.0f;
 		state.pos.y *= 2.0f;
 	}
 
 	void draw(PaletteDrawer* app);
 	void drawAt(PaletteDrawer* app, float x,float y, float w, float h, int xdir, int ydir);
-	NosuchVector deltaInDirection(float dt, float dir, float speed);
+	glm::vec2 deltaInDirection(float dt, float dir, float speed);
 	int rotangdirOf(std::string s);
-	void advanceTo(int tm, NosuchVector force);
+	void advanceTo(int tm, glm::vec2 force);
 
 	SpriteParams params;
 	SpriteState state;
@@ -161,6 +161,7 @@ private:
 	float noise_y1;
 	float noise_x2;
 	float noise_y2;
+	glm::vec2 rotate( glm::vec2, float, glm::vec2 );
 };
 
 class SpriteCircle : public Sprite {

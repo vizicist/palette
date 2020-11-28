@@ -5,6 +5,7 @@
 
 int string2int(std::string s);
 float string2double(std::string s);
+float string2float(std::string s);
 bool string2bool(std::string s);
 
 #endif
