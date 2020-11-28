@@ -20,6 +20,8 @@ typedef struct PointMem {
 
 typedef void (*SpriteDrawer)( PaletteDrawer* drawer, int xdir, int ydir );
 
+// The coordinate space used is (0,0) to (1,1), lower-left to upper-right
+
 class PaletteDrawer {
 
 public:
@@ -33,9 +35,6 @@ public:
 
 	ffglex::FFGLShader* BeginDrawingWithShader(std::string shaderName);
 	void EndDrawing();
-
-	float width() { return m_width; }
-	float height() { return m_height; }
 
 	void fill(NosuchColor c, float alpha);
 	void noFill();
