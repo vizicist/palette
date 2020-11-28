@@ -27,7 +27,7 @@ Sprite::Sprite() {
 }
 
 void
-Sprite::initState(std::string cid, std::string cidsource, NosuchVector& pos, float movedir, float depth, float rotanginit) {
+Sprite::initState(std::string cid, std::string cidsource, glm::vec2& pos, float movedir, float depth, float rotanginit) {
 
 	nsprites++;
 	Palette::lastsprite = Palette::now;
@@ -125,7 +125,6 @@ void Sprite::draw(PaletteDrawer* drawer) {
 		xdir = 1;
 		ydir = 1;
 		drawAt(drawer,x,y,scalex,scaley,xdir,ydir);
-		// y = (1.0f-state.pos.y) * drawer->height();
 		y = (-state.pos.y) * drawer->height();
 		ydir = -1;
 		drawAt(drawer,x,y,scalex,scaley,xdir,ydir);
@@ -158,7 +157,7 @@ void Sprite::drawAt(PaletteDrawer* drawer, float x,float y, float scalex, float 
 	// handle justification
 	std::string j = params.justification;
 
-	NosuchDebug(1,"Sprite::drawAt s=%lld drawAt j=%s xy= %f %f width=%f size=%f depth=%f\n",
+	NosuchDebug("Sprite::drawAt s=%lld drawAt j=%s xy= %f %f width=%f size=%f depth=%f\n",
 		(long long)this,j.c_str(),x,y,width(),state.size,state.depth);
 
 	if (j == "center") {
@@ -200,11 +199,11 @@ void Sprite::drawAt(PaletteDrawer* drawer, float x,float y, float scalex, float 
 	drawShape( drawer, xdir, ydir );
 }
 
-NosuchVector Sprite::deltaInDirection(float dt, float dir, float speed) {
-	NosuchVector delta( cos(degree2radian(dir)), sin(degree2radian(dir)));
-	delta = delta.normalize();
+glm::vec2 Sprite::deltaInDirection(float dt, float dir, float speed) {
+	glm::vec2 delta( cos(degree2radian(dir)), sin(degree2radian(dir)));
+	delta = glm::normalize( delta );
 	speed /= 2.0;	// slow things down
-	delta = delta.mult((dt / 1000.0f) * speed);
+	delta = delta * ((dt / 1000.0f) * speed);
 	return delta;
 }
 
@@ -234,7 +233,7 @@ envelopeValue(float initial, float final, float duration, float born, float now)
 	return initial + (final-initial) * ((now-born)/(dur));
 }
 
-void Sprite::advanceTo(int now, NosuchVector force) {
+void Sprite::advanceTo(int now, glm::vec2 force) {
 
 	// _params->advanceTo(tm);
 	state.alpha = envelopeValue(params.alphainitial,params.alphafinal,params.alphatime,float(state.born),float(now));
@@ -282,9 +281,9 @@ void Sprite::advanceTo(int now, NosuchVector force) {
 		
 		float dir = state.direction;
 		
-		NosuchVector delta = deltaInDirection(dt,dir,params.speed);
+		glm::vec2 delta = deltaInDirection(dt,dir,params.speed);
 		
-		NosuchVector npos = state.pos.add(delta);
+		glm::vec2 npos = state.pos + delta;
 		// NosuchDebug("sprite advance dt=%f dir=%f speed=%f delta=%f,%f npos=%f,%f",
 		// 	dt, dir, params.speed, delta.x, delta.y, npos.x, npos.y);
 		if ( params.bounce ) { 
@@ -292,22 +291,22 @@ void Sprite::advanceTo(int now, NosuchVector force) {
 			if ( npos.x > 1.0f ) {
 				dir = float(fmod(( dir + 180 ) , 360));
 				delta = deltaInDirection(dt,dir,params.speed);
-				npos = state.pos.add(delta);
+				npos = state.pos + delta;
 			}
 			if ( npos.x < 0.0f ) {
 				dir = float(fmod(( dir + 180 ) , 360));
 				delta = deltaInDirection(dt,dir,params.speed);
-				npos = state.pos.add(delta);
+				npos = state.pos + delta;
 			}
 			if ( npos.y > 1.0f ) {
 				dir = float(fmod(( dir + 180 ) , 360));
 				delta = deltaInDirection(dt,dir,params.speed);
-				npos = state.pos.add(delta);
+				npos = state.pos + delta;
 			}
 			if ( npos.y < 0.0f ) {
 				dir = float(fmod(( dir + 180 ) , 360));
 				delta = deltaInDirection(dt,dir,params.speed);
-				npos = state.pos.add(delta);
+				npos = state.pos + delta;
 			}
 			state.direction = dir;
 		} else {
@@ -459,12 +458,12 @@ SpriteList::advanceTo(int tm, int gravity) {
 	for ( std::list<Sprite*>::iterator i = sprites.begin(); i!=sprites.end(); ) {
 		Sprite* s = *i;
 		NosuchAssert(s);
-		NosuchVector force;
+		glm::vec2 force;
 		if (gravity > 0) {
 			force = s->state.gravityForce;
 		}
 		else {
-			force = NosuchVector(0, 0);
+			force = glm::vec2(0, 0);
 		}
 		s->advanceTo(tm,force);
 		if ( s->state.killme ) {
@@ -516,7 +515,20 @@ void SpriteSquare::drawShape(PaletteDrawer* drawer, int xdir, int ydir) {
 SpriteTriangle::SpriteTriangle() {
 	noise_initialized = false;
 }
-	
+
+glm::vec2 SpriteTriangle::rotate(glm::vec2 point, float radians, glm::vec2 about = glm::vec2(0.0f,0.0f) ) {
+	float c, s;
+	c = cos(radians);
+	s = sin(radians);
+	point -= about;
+	glm::vec2 newpoint = glm::vec2{
+		point[ 0 ] * c - point[ 1 ] * s,
+		point[ 0 ] * s + point[ 1 ] * c
+	};
+	glm::vec2 finalpoint = newpoint + about;
+	return finalpoint;
+}
+
 void SpriteTriangle::drawShape(PaletteDrawer* drawer, int xdir, int ydir) {
 
 	if (!noise_initialized) {
@@ -529,11 +541,9 @@ void SpriteTriangle::drawShape(PaletteDrawer* drawer, int xdir, int ydir) {
 		noise_initialized = true;
 	}
 	float sz = 0.2f;
-	NosuchVector p1 = NosuchVector(sz,0.0f);
-	NosuchVector p2 = p1;
-	p2 = p2.rotate(Sprite::degree2radian(120));
-	NosuchVector p3 = p1;
-	p3 = p3.rotate(Sprite::degree2radian(-120));
+	glm::vec2 p1 = glm::vec2(sz,0.0f);
+	glm::vec2 p2 = rotate(p1, Sprite::degree2radian( 120), glm::vec2(0.0,0.0));
+	glm::vec2 p3 = rotate(p1, Sprite::degree2radian(-120), glm::vec2(0.0,0.0));
 	
 	drawer->drawTriangle(p1.x+noise_x0*sz,p1.y+noise_y0*sz,
 			     p2.x+noise_x1*sz,p2.y+noise_y1*sz,
@@ -579,7 +589,7 @@ void SpriteArc::drawShape(PaletteDrawer* app, int xdir, int ydir) {
 }
 
 static void
-normalize(NosuchVector* v)
+normalize(glm::vec2* v)
 {
 	v->x = (v->x * 2.0f) - 1.0f;
 	v->y = (v->y * 2.0f) - 1.0f;

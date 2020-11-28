@@ -8,7 +8,7 @@ string2int(std::string s) {
 }
 
 float
-string2double(std::string s) {
+string2float(std::string s) {
 	return (float) atof(s.c_str());
 }
 
