@@ -114,7 +114,6 @@
     <ClInclude Include="..\..\source\lib\nosuch\NosuchColor.h" />
     <ClInclude Include="..\..\source\lib\nosuch\NosuchDebug.h" />
     <ClInclude Include="..\..\source\lib\nosuch\NosuchException.h" />
-    <ClInclude Include="..\..\source\lib\nosuch\NosuchGraphics.h" />
     <ClInclude Include="..\..\source\lib\nosuch\NosuchOscInput.h" />
     <ClInclude Include="..\..\source\lib\nosuch\NosuchOscUdpInput.h" />
     <ClInclude Include="..\..\source\lib\nosuch\NosuchUtil.h" />

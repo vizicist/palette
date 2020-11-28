@@ -1,5 +1,4 @@
-#ifndef NOSUCHCOLOR_H
-#define NOSUCHCOLOR_H
+#pragma once
 
 class NosuchColor {
 	
@@ -126,5 +125,3 @@ private:
 	double _saturation;  // 0.0 to 1.0
 
 };
-
-#endif

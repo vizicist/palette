@@ -43,8 +43,8 @@ public:
 	void Set(std::string nm, std::string val) {
 		bool stringval = false;
 
-#define SET_DBL_PARAM(name) else if ( nm == #name ) name = string2double(val)
-#define SET_FLT_PARAM(name) else if ( nm == #name ) name = float(string2double(val))
+#define SET_DBL_PARAM(name) else if ( nm == #name ) name = string2float(val)
+#define SET_FLT_PARAM(name) else if ( nm == #name ) name = float(string2float(val))
 #define SET_INT_PARAM(name) else if ( nm == #name ) name = string2int(val)
 #define SET_BOOL_PARAM(name) else if ( nm == #name ) name = string2bool(val)
 #define SET_STR_PARAM(name) else if ( nm == #name ) (name = val),(stringval=true)
@@ -114,12 +114,12 @@ public:
 	RegionParams params;
 
 	void initParams();
-	void setTrackedCursor(Palette* palette, std::string cid, std::string cidsource, NosuchVector pos, float z);
-	double getMoveDir(std::string movedir);
+	void setTrackedCursor(Palette* palette, std::string cid, std::string cidsource, glm::vec2 pos, float z);
+	float getMoveDir(std::string movedir);
 	Sprite* makeSprite(std::string shape);
 	void instantiateSprite(TrackedCursor* c, bool throttle);
-	void instantiateSpriteAt(std::string cid, NosuchVector pos, double z);
-	double spriteMoveDir(TrackedCursor* c);
+	void instantiateSpriteAt(std::string cid, glm::vec2 pos, float z);
+	float spriteMoveDir(TrackedCursor* c);
 	// these need to be thread-safe
 	void draw(PaletteDrawer* b);
 	void advanceTo(int tm);
@@ -132,7 +132,7 @@ public:
 
 	// Scheduler* scheduler();
 
-	double _maxCursorDepth();
+	float _maxCursorDepth();
 	size_t NumCursors() { return _cursors.size(); }
 
 	void advanceCursorsTo(int tm);
@@ -168,10 +168,10 @@ private:
 	int leftover_tm;
 	int fire_period;
 	// This can be adjusted to ignore things close to the edges of each area, to ignore spurious events
-	double x_min;
-	double y_min;
-	double x_max;
-	double y_max;
+	float x_min;
+	float y_min;
+	float x_max;
+	float y_max;
 };
 
 #endif

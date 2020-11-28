@@ -1,13 +1,5 @@
-/*
- *  Created by Tim Thompson on 1/31/09.
- *  Copyright 2009 __MyCompanyName__. All rights reserved.
- *
- */
+#pragma once
 
-#ifndef PALETTE_OSC_INPUT
-#define PALETTE_OSC_INPUT
-
-// class NosuchOscTcpInput;
 class NosuchOscUdpInput;
 class PaletteHost;
 
@@ -26,5 +18,3 @@ private:
 	// NosuchOscTcpInput* _tcp;
 	NosuchOscUdpInput* _udp;
 };
-
-#endif
