@@ -1,7 +1,7 @@
 INC_DBL_PARAM(alphafinal,0.0f,1.0f);
 INC_DBL_PARAM(alphainitial,0.0f,1.0f);
 INC_DBL_PARAM(alphatime,0.01f,10.0f);
-INC_DBL_PARAM(aspect,1.0f,10.0f);
+INC_DBL_PARAM(aspect,0.1f,10.0f);
 INC_BOOL_PARAM(bounce);
 INC_BOOL_PARAM(filled);
 INC_INT_PARAM(gravity,0,10);
@@ -16,7 +16,8 @@ INC_DBL_PARAM(lifetime,0.01f,10.0f);
 INC_DBL_PARAM(luminance,0.0f,1.0f);
 INC_STR_PARAM(mirrortype,mirror);
 INC_STR_PARAM(movedir,movedir);
-INC_DBL_PARAM(noisevertex,0.0f,1.0f);
+INC_DBL_PARAM(noisevertexx,0.0f,1.0f);
+INC_DBL_PARAM(noisevertexy,0.0f,1.0f);
 INC_STR_PARAM(placement,placement);
 INC_STR_PARAM(spritesource,spritesource);
 INC_STR_PARAM(rotangdir,rotangdir);

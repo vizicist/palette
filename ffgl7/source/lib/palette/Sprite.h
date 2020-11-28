@@ -1,6 +1,8 @@
 #ifndef _SPRITE_H
 #define _SPRITE_H
 
+class SpriteDrawer;
+
 // Note - this Params class is different from PaletteParams and RegionParams because
 // it doesn't need the Set/Increment/Toggle methods.
 
@@ -117,11 +119,10 @@ public:
 
 	SpriteParams params;
 	SpriteState state;
-	SpriteDrawer* drawFunc;
 	ffglex::FFGLShader* shader;
 
 protected:
-	float vertexNoise();
+	glm::vec2 vertexNoise();
 
 	static int NextSeq;
 
@@ -137,14 +138,10 @@ public:
 
 private:
 	bool noise_initialized;
-	float noise_x0;
-	float noise_y0;
-	float noise_x1;
-	float noise_y1;
-	float noise_x2;
-	float noise_y2;
-	float noise_x3;
-	float noise_y3;
+	glm::vec2 noise_0;
+	glm::vec2 noise_1;
+	glm::vec2 noise_2;
+	glm::vec2 noise_3;
 };
 
 class SpriteTriangle : public Sprite {
@@ -155,12 +152,9 @@ public:
 
 private:
 	bool noise_initialized;
-	float noise_x0;
-	float noise_y0;
-	float noise_x1;
-	float noise_y1;
-	float noise_x2;
-	float noise_y2;
+	glm::vec2 noise_0;
+	glm::vec2 noise_1;
+	glm::vec2 noise_2;
 	glm::vec2 rotate( glm::vec2, float, glm::vec2 );
 };
 
@@ -186,10 +180,8 @@ public:
 
 private:
 	bool noise_initialized;
-	float noise_x0;
-	float noise_y0;
-	float noise_x1;
-	float noise_y1;
+	glm::vec2 noise_0;
+	glm::vec2 noise_1;
 };
 
 #endif

@@ -16,6 +16,10 @@ public:
 		sethls(h,l,s);
 	}
 
+	float R() { return float(_red)/ 255.0f; }
+	float G() { return float(_green)/ 255.0f; }
+	float B() { return float(_blue)/ 255.0f; }
+
 	void setrgb(int r,int g,int b) {
 		_red = r;
 		_green = g;
