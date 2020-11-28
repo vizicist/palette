@@ -57,8 +57,6 @@ PaletteDrawer::PaletteDrawer(PaletteParams *params) :
 {
 	srand((unsigned)time(NULL));
 
-	NosuchDebug("PaletteDrawer constructor!");
-
 	m_params = params;
 
 	m_isdrawing = false;
@@ -102,7 +100,7 @@ PaletteDrawer::resetMatrix()
 
 PaletteDrawer::~PaletteDrawer()
 {
-	NosuchDebug("PaletteDrawer destructor called");
+	NosuchDebug(1,"PaletteDrawer destructor called");
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -350,7 +348,6 @@ FFResult PaletteDrawer::InitGL( const FFGLViewportStruct* vp)
 
 FFResult PaletteDrawer::DeInitGL()
 {
-	NosuchDebug( "HI From PaletteDrawer::DeInitGL" );
 	m_shader_gradient.FreeGLResources();
 
 	releaseBuffers();
