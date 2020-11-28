@@ -19,15 +19,14 @@ static const char vertexShaderGradient[] = R"(#version 410 core
 layout( location = 0 ) in vec4 vPosition;
 layout( location = 1 ) in vec2 vUV;
 
-uniform vec2 vScale;
-uniform vec2 vTranslate;
+// uniform vec2 vTranslate;
 uniform mat4 vMatrix;
 
 out vec2 uv;
 
 void main()
 {
-	gl_Position = vMatrix * vec4((vPosition.x*vScale.x)+vTranslate.x,(vPosition.y*vScale.y)+vTranslate.y,vPosition.z,vPosition.a);
+	gl_Position = vMatrix * vPosition;
 	uv = vUV;
 }
 )";
@@ -83,28 +82,8 @@ PaletteDrawer::PaletteDrawer(PaletteParams *params) :
 void
 PaletteDrawer::resetMatrix()
 {
-#if 0
-	GLfloat matrix[16] = {
-		1.0, 0.0, 0.0, 0.0,
-		0.0, 1.0, 0.0, 0.0,
-		0.0, 0.0, 1.0, 0.0,
-		0.0, 0.0, 0.0, 1.0
-	};
-	setMatrix( matrix );
-#endif
 	m_matrix = m_matrix_identity;
 }
-
-#if 0
-void
-PaletteDrawer::setMatrix(GLfloat matrix[16]) {
-	// XXX - there's got to be a better way of doing this
-	for( int i = 0; i < 16; i++ )
-	{
-		m_matrix[ i ] = matrix[ i ];
-	}
-}
-#endif
 
 PaletteDrawer::~PaletteDrawer()
 {
@@ -142,6 +121,7 @@ void PaletteDrawer::translate(float x, float y) {
 	m_matrix = glm::translate( m_matrix, glm::vec3(x,y,0.0f));
 }
 void PaletteDrawer::scale(float x, float y) {
+	m_matrix = glm::scale( m_matrix, glm::vec3(x, y, 1.0f ));
 }
 
 float PaletteDrawer::scale_z(float z) {

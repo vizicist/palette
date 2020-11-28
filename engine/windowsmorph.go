@@ -368,6 +368,21 @@ func (m oneMorph) readFrames(callback CursorDeviceCallbackFunc, forceFactor floa
 					contact.id, m.idx, n, contact.state, xNorm, yNorm, zNorm)
 			}
 
+			// make the coordinate space match OpenGL and Freeframe
+			yNorm = 1.0 - yNorm
+
+			// Make sure we don't send anyting out of bounds
+			if yNorm < 0.0 {
+				yNorm = 0.0
+			} else if yNorm > 1.0 {
+				yNorm = 1.0
+			}
+			if xNorm < 0.0 {
+				xNorm = 0.0
+			} else if xNorm > 1.0 {
+				xNorm = 1.0
+			}
+
 			ev := CursorDeviceEvent{
 				NUID:       MyNUID(),
 				Region:     region,

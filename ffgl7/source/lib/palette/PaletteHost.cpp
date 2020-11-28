@@ -13,36 +13,6 @@
 
 using namespace ffglex;
 
-static const char vertexShaderGradient[] = R"(#version 410 core
-layout( location = 0 ) in vec4 vPosition;
-layout( location = 1 ) in vec2 vUV;
-
-uniform vec2 vScale;
-uniform vec2 vTranslate;
-
-out vec2 uv;
-
-void main()
-{
-	gl_Position = vec4((vPosition.x*vScale.x)+vTranslate.x,(vPosition.y*vScale.y)+vTranslate.y,vPosition.z,vPosition.a);
-	uv = vUV;
-}
-)";
-
-static const char fragmentShaderGradient[] = R"(#version 410 core
-uniform vec4 RGBALeft;
-uniform vec4 RGBARight;
-
-in vec2 uv;
-
-out vec4 fragColor;
-
-void main()
-{
-	fragColor = mix( RGBALeft, RGBARight, uv.x );
-}
-)";
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Plugin information
 ////////////////////////////////////////////////////////////////////////////////////////////////////
