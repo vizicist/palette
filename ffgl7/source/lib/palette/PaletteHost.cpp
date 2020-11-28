@@ -219,8 +219,14 @@ PaletteDaemon::PaletteDaemon(PaletteHost* mf, int osc_input_port, std::string os
 
 PaletteDaemon::~PaletteDaemon()
 {
-	NosuchDebug("PaletteDaemon DESTRUCTOR starts!");
+	NosuchDebug(1,"PaletteDaemon DESTRUCTOR starts!");
 	daemon_shutting_down = true;
+	NosuchDebug(1,"PaletteDaemon waiting to shut down!");
+	while( daemon_stopped == false )
+	{
+		Sleep( 1 );
+	}
+	NosuchDebug(1,"PaletteDaemon is shut down!");
 	if ( _network_thread_created ) {
 		// pthread_detach(_network_thread);
 		pthread_join(_network_thread,NULL);
@@ -241,6 +247,7 @@ void *PaletteDaemon::run(void *arg)
 {
 	NosuchDebugSetThreadName(pthread_self().p, "PaletteDaemon");
 	int textcount = 0;
+	daemon_stopped = false;
 	while (daemon_shutting_down == false ) {
 		_paletteHost->RunEveryMillisecondOrSo();
 		if ( _oscinput ) {
@@ -253,6 +260,8 @@ void *PaletteDaemon::run(void *arg)
 #endif
 		Sleep(1);
 	}
+	NosuchDebug(1,"PaletteDaemon is stopping!!" );
+	daemon_stopped = true;
 	return NULL;
 }
 
@@ -348,10 +357,11 @@ PaletteHost::PaletteHost(std::string configfile)
 
 PaletteHost::~PaletteHost()
 {
-	NosuchDebug("PaletteHost destructor called");
+	NosuchDebug(1,"PaletteHost destructor called");
 	gl_shutting_down = true;
 	if (_scheduler) {
 		scheduler()->Stop();
+		NosuchDebug(1,"PaletteHost deleting _scheduler");
 		delete _scheduler;
 		_scheduler = NULL;
 	}
@@ -360,7 +370,7 @@ PaletteHost::~PaletteHost()
 		delete _daemon;
 		_daemon = NULL;
 	}
-	NosuchDebug("PaletteHost destructor end");
+	NosuchDebug(1,"PaletteHost destructor end");
 }
 
 static cJSON *
@@ -443,7 +453,6 @@ bool PaletteHost::initStuff() {
 		}
 
 		_palette->now = MillisecondsSoFar();
-		_daemon = NULL;
 
 	} catch (NosuchException& e) {
 		NosuchDebug("NosuchException: %s",e.message());
@@ -565,9 +574,21 @@ FFResult PaletteHost::InitGL( const FFGLViewportStruct* vp )
 {
 	return _palette->InitGL(vp);
 }
+
 FFResult PaletteHost::DeInitGL()
 {
-	return _palette->DeInitGL();
+	FFResult r = _palette->DeInitGL();
+
+	if( _daemon )
+	{
+		delete _daemon;
+		_daemon = NULL;
+	}
+
+	delete _palette;
+	_palette = NULL;
+
+	return r;
 }
 
 std::string PaletteHost::GetOscPort()
@@ -579,7 +600,10 @@ void PaletteHost::SetOscPort( std::string oscport )
 {
 	if( oscport == m_oscport )
 	{
-		NosuchDebug( "PaletteHost::SetOscPort: no change, doing nothing\n" );
+		if( oscport != "" )
+		{
+			NosuchDebug( "PaletteHost::SetOscPort: no change, doing nothing\n" );
+		}
 		return;
 	}
 	if ( oscport == "" ) {
@@ -592,7 +616,7 @@ void PaletteHost::SetOscPort( std::string oscport )
 		_daemon = NULL;
 	}
 	int port      = atoi( oscport.c_str() );
-	NosuchDebug( "PaletteHost::SetOscPort: a new PaletteDaemon is listening on port=%d\n", port );
+	NosuchDebug( "PaletteHost::SetOscPort: PaletteDaemon is listening on port=%d\n", port );
 	_daemon = new PaletteDaemon(this, port, DEFAULT_OSC_INPUT_HOST);
 	m_oscport = oscport;
 }

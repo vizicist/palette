@@ -50,7 +50,7 @@ FFGLPalette::FFGLPalette(std::string configfile) :
 }
 FFResult FFGLPalette::InitGL( const FFGLViewportStruct* vp )
 {
-	NosuchDebug( "FFGLPalette.InitGL: x,y=%d,%d w,h=%d,%d", vp->x, vp->y, vp->width, vp->height );
+	NosuchDebug( "Palette.InitGL: x,y=%d,%d w,h=%d,%d", vp->x, vp->y, vp->width, vp->height );
 	paletteHost->InitGL( vp );
 
 	//Use base-class init as success result so that it retains the viewport.
@@ -71,6 +71,7 @@ FFResult FFGLPalette::ProcessOpenGL( ProcessOpenGLStruct* pGL )
 FFResult FFGLPalette::DeInitGL()
 {
 	paletteHost->DeInitGL( );
+	delete paletteHost;
 	return FF_SUCCESS;
 }
 

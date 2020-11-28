@@ -47,7 +47,6 @@ Palette::Palette(PaletteHost* b) {
 	_drawer      = new PaletteDrawer( &params );
 
 	now = 0;  // Don't use Pt_Time(), it may not have been started yet
-	NosuchDebug("Palette constructor");
 
 	_frames = 0;
 	_frames_last = now;
@@ -70,7 +69,6 @@ FFResult Palette::InitGL( const FFGLViewportStruct* vp)
 
 FFResult Palette::DeInitGL()
 {
-	NosuchDebug( "HI From PaletteHost::DeInitGL" );
 	_drawer->DeInitGL();
 	return FF_SUCCESS;
 }
