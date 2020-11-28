@@ -29,7 +29,7 @@ Region::Region() {
 }
 
 Region::~Region() {
-	NosuchDebug("Region DESTRUCTOR!");
+	NosuchDebug(1,"Region DESTRUCTOR!");
 }
 
 void Region::initParams() {

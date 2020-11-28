@@ -58,19 +58,19 @@ BOOL APIENTRY DllMain( HANDLE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 		}
 		std::string s = ffgl_name();
 		ffgl_setid( ffgl_plugininfo(), s );
-		NosuchDebug( "DllMain: DLLPROCESS_ATTACH dll=%s", dllpath );
+		NosuchDebug(1, "DllMain: DLLPROCESS_ATTACH dll=%s", dllpath );
 	}
 	if( ul_reason_for_call == DLL_PROCESS_DETACH )
 	{
-		NosuchDebug( "DllMain: DLLPROCESS_DETACH dll=%s", dllpath );
+		NosuchDebug(1, "DllMain: DLLPROCESS_DETACH dll=%s", dllpath );
 	}
 	if( ul_reason_for_call == DLL_THREAD_ATTACH )
 	{
-		NosuchDebug( "DllMain: DLLTHREAD_ATTACH dll=%s", dllpath );
+		NosuchDebug(1, "DllMain: DLLTHREAD_ATTACH dll=%s", dllpath );
 	}
 	if( ul_reason_for_call == DLL_THREAD_DETACH )
 	{
-		NosuchDebug( "DllMain: DLLTHREAD_DETACH dll=%s", dllpath );
+		NosuchDebug(1, "DllMain: DLLTHREAD_DETACH dll=%s", dllpath );
 	}
 	return TRUE;
 }

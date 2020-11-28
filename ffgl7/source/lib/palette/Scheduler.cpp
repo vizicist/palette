@@ -26,7 +26,7 @@ Scheduler::Scheduler(PaletteHost* p) {
 }
 
 Scheduler::~Scheduler() {
-	NosuchDebug("Scheduler destructor!");
+	NosuchDebug(1,"Scheduler destructor!");
 }
 
 void Scheduler::RunEveryMillisecondOrSo(Timestamp timestamp) {
