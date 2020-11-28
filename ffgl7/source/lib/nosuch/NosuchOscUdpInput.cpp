@@ -19,7 +19,7 @@ NosuchOscUdpInput::NosuchOscUdpInput(const char *host, int port, NosuchOscMessag
 }
 
 NosuchOscUdpInput::~NosuchOscUdpInput() {
-	NosuchDebug("NosuchOscUdpInput destructor");
+	NosuchDebug(1,"NosuchOscUdpInput destructor");
 	if ( _s != INVALID_SOCKET ) {
 		NosuchDebug("HEY!  _info._s is still set in NSosc destructor!?");
 	}
@@ -63,7 +63,14 @@ NosuchOscUdpInput::Listen() {
     }
     if (bind(s, (LPSOCKADDR)&sin, sizeof (sin)) < 0) {
         int e = WSAGetLastError();
-        NosuchDebug("NSosc socket bind error: host=%s port=%d e=%d",_myhost,_myport,e);
+		if( e == WSAEADDRINUSE )
+		{
+			NosuchDebug("Palette: host=%s port=%d is already in use.",_myhost,_myport);
+		}
+		else
+		{
+			NosuchDebug("Palette: socket bind error: host=%s port=%d e=%d",_myhost,_myport,e);
+        }
         return e;
         // return OscSocketError("unable to bind socket");
     }
@@ -71,7 +78,7 @@ NosuchOscUdpInput::Listen() {
         return OscSocketError("unable to getsockname after bind");
     }
     // *myport = ntohs(sin2.sin_port);
-    NosuchDebug("Listening for OSC on UDP port %d@%s",_myport,_myhost);
+    NosuchDebug(1,"Listening for OSC on UDP port %d@%s",_myport,_myhost);
     _s = s;
     return 0;
 }

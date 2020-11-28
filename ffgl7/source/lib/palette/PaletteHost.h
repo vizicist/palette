@@ -27,6 +27,7 @@ public:
 private:
 	bool _network_thread_created;
 	bool daemon_shutting_down;
+	bool daemon_stopped;
 	pthread_t _network_thread;
 	PaletteHost* _paletteHost;
 	PaletteOscInput* _oscinput;
