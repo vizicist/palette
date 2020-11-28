@@ -19,7 +19,7 @@ NosuchOscUdpInput::NosuchOscUdpInput(const char *host, int port, NosuchOscMessag
 }
 
 NosuchOscUdpInput::~NosuchOscUdpInput() {
-	NosuchDebug(2,"NosuchOscUdpInput destructor");
+	NosuchDebug("NosuchOscUdpInput destructor");
 	if ( _s != INVALID_SOCKET ) {
 		NosuchDebug("HEY!  _info._s is still set in NSosc destructor!?");
 	}

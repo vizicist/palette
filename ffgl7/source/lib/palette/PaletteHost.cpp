@@ -219,7 +219,7 @@ PaletteDaemon::PaletteDaemon(PaletteHost* mf, int osc_input_port, std::string os
 
 PaletteDaemon::~PaletteDaemon()
 {
-	NosuchDebug(1,"PaletteDaemon DESTRUCTOR starts!");
+	NosuchDebug("PaletteDaemon DESTRUCTOR starts!");
 	daemon_shutting_down = true;
 	if ( _network_thread_created ) {
 		// pthread_detach(_network_thread);
@@ -348,7 +348,7 @@ PaletteHost::PaletteHost(std::string configfile)
 
 PaletteHost::~PaletteHost()
 {
-	NosuchDebug(1,"PaletteHost destructor called");
+	NosuchDebug("PaletteHost destructor called");
 	gl_shutting_down = true;
 	if (_scheduler) {
 		scheduler()->Stop();
@@ -360,7 +360,7 @@ PaletteHost::~PaletteHost()
 		delete _daemon;
 		_daemon = NULL;
 	}
-	NosuchDebug(1,"PaletteHost destructor end");
+	NosuchDebug("PaletteHost destructor end");
 }
 
 static cJSON *
@@ -426,9 +426,6 @@ PaletteHost::RunEveryMillisecondOrSo() {
 static double degree2radian(double deg) {
 	return 2.0f * (double)M_PI * deg / 360.0f;
 }
-
-#define RANDONE (((double)rand())/RAND_MAX)
-#define RANDB ((((double)rand())/RAND_MAX)*2.0f-1.0f)
 
 bool PaletteHost::initStuff() {
 

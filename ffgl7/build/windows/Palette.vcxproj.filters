@@ -176,12 +176,6 @@
     <ClCompile Include="..\..\source\lib\nosuch\UriCodec.cpp">
       <Filter>lib\nosuch</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\source\lib\palette\DrawQuad.cpp">
-      <Filter>lib\palette</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\source\lib\palette\DrawTriangle.cpp">
-      <Filter>lib\palette</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\source\lib\ffglex\FFGLScreenQuad.cpp">
       <Filter>lib\ffglex</Filter>
     </ClCompile>
@@ -295,12 +289,6 @@
     <ClInclude Include="..\..\source\plugins\Palette\FFGLPalette.h" />
     <ClInclude Include="..\..\source\lib\pthreads\pthread.h">
       <Filter>lib\pthreads</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\source\lib\palette\DrawQuad.h">
-      <Filter>lib\palette</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\source\lib\palette\DrawTriangle.h">
-      <Filter>lib\palette</Filter>
     </ClInclude>
     <ClInclude Include="..\..\source\lib\ffglex\FFGLScreenQuad.h">
       <Filter>lib\ffglex</Filter>

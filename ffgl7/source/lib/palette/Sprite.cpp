@@ -6,15 +6,19 @@ bool Sprite::initialized = false;
 long nsprites = 0;
 int Sprite::NextSeq = 0;
 
-#define RANDFLOAT ((rand())/RAND_MAX)
-
-float Sprite::vertexNoise()
+glm::vec2 Sprite::vertexNoise()
 {
-	if ( params.noisevertex > 0.0f ) {
-		return (float)(params.noisevertex * RANDFLOAT * ((rand()%2)==0?1:-1));
-	} else {
-		return 0.0f;
+	float x = 0.0f;
+	float y = 0.0f;
+	if ( params.noisevertexx > 0.0f ) {
+		x = (float)(params.noisevertexx * RANDFLOAT * ((rand()%2)==0?1:-1));
+		NosuchDebug( "noise x=%f\n", x );
 	}
+	if ( params.noisevertexy > 0.0f ) {
+		y = (float)(params.noisevertexy * RANDFLOAT * ((rand()%2)==0?1:-1));
+		NosuchDebug( "noise y=%f\n", y );
+	}
+	return glm::vec2(x,y);
 }
 
 void Sprite::initialize() {
@@ -81,34 +85,25 @@ void Sprite::draw(PaletteDrawer* drawer) {
 		state.depth = params.zmin;
 	}
 	float scaled_z = drawer->scale_z(state.depth);
-
-	NosuchColor color = NosuchColor(state.hue1, params.luminance, params.saturation);
-	NosuchColor colorfill = NosuchColor(state.hue2, params.luminance, params.saturation);
 	
-	if ( params.filled ) {
-		drawer->fill(colorfill, state.alpha);
-	} else {
-		drawer->noFill();
-	}
-	drawer->stroke(color, state.alpha);
+	// XXX - this should move into PaletteDrawer, I suspect
 	float thickness = params.thickness;
 	drawer->strokeWeight(thickness);
+
 	float aspect = params.aspect;
 	
 	float scalex = state.size * scaled_z;
 	float scaley = state.size * scaled_z;
-	
+
 	scalex *= aspect;
 
-	int xdir;
-	int ydir;
+	// These control flipping of the drawing orientation
+	int xdir = 1;
+	int ydir = 1;
 
-	glm::vec2 pos = state.pos;
+	float x = state.pos.x;
+	float y = state.pos.y;
 
-	float x = state.pos[ 0 ];
-	float y = state.pos[ 1 ];
-	xdir = 1;
-	ydir = 1;
 	if ( params.mirrortype == "four" ) {
 		drawAt(drawer,x,y,scalex,scaley,xdir,ydir);
 		ydir = -1;
@@ -140,8 +135,8 @@ void Sprite::drawAt(PaletteDrawer* drawer, float x, float y, float scalex, float
 
 	glm::vec2 pos( x, y );
 
-	NosuchDebug("Sprite::drawAt s=%lld drawAt j=%s xy= %f %f width=%f size=%f depth=%f\n",
-		(long long)this,j.c_str(),pos[0],pos[1],width(),state.size,state.depth);
+	NosuchDebug(1,"Sprite::drawAt s=%lld drawAt j=%s xy= %f %f width=%f size=%f depth=%f\n",
+		(long long)this,j.c_str(),pos.x,pos.y,width(),state.size,state.depth);
 
 	float halfWidth = width() / 2.0f;
 	float halfHeight = height() / 2.0f;
@@ -153,17 +148,17 @@ void Sprite::drawAt(PaletteDrawer* drawer, float x, float y, float scalex, float
 	} else if ( j == "right" ) {
 		pos += glm::vec2( -halfWidth,0.0f );
 	} else if ( j == "top" ) {
-		pos += glm::vec2( 0.0f, halfHeight );
-	} else if ( j == "bottom" ) {
 		pos += glm::vec2( 0.0f, -halfHeight );
+	} else if ( j == "bottom" ) {
+		pos += glm::vec2( 0.0f, halfHeight );
 	} else if ( j == "topleft" ) {
-		pos += glm::vec2( halfWidth, halfHeight );
-	} else if ( j == "topright" ) {
-		pos += glm::vec2( -halfWidth, halfHeight );
-	} else if ( j == "bottomleft" ) {
 		pos += glm::vec2( halfWidth, -halfHeight );
-	} else if ( j == "bottomright" ) {
+	} else if ( j == "topright" ) {
 		pos += glm::vec2( -halfWidth, -halfHeight );
+	} else if ( j == "bottomleft" ) {
+		pos += glm::vec2( halfWidth, halfHeight );
+	} else if ( j == "bottomright" ) {
+		pos += glm::vec2( -halfWidth, halfHeight );
 	} else {
 		NosuchDebug("Sprite::drawAt: Unknown justification value - %s\n", params.justification.c_str());
 	}
@@ -473,27 +468,23 @@ void SpriteSquare::drawShape(PaletteDrawer* drawer, int xdir, int ydir) {
 	float halfh = 0.25f;
 
 	if (!noise_initialized) {
-		noise_x0 = vertexNoise();
-		noise_y0 = vertexNoise();
-		noise_x1 = vertexNoise();
-		noise_y1 = vertexNoise();
-		noise_x2 = vertexNoise();
-		noise_y2 = vertexNoise();
-		noise_x3 = vertexNoise();
-		noise_y3 = vertexNoise();
+		noise_0 = vertexNoise();
+		noise_1 = vertexNoise();
+		noise_2 = vertexNoise();
+		noise_3 = vertexNoise();
 		noise_initialized = true;
 	}
 
-	float x0 = - halfw + noise_x0 * halfw;
-	float y0 = - halfh + noise_y0 * halfh;
-	float x1 = -halfw + noise_x1 * halfw;
-	float y1 = halfh + noise_y1 * halfh;
-	float x2 = halfw + noise_x2 * halfw;
-	float y2 = halfh + noise_y2 * halfh;
-	float x3 = halfw + noise_x3 * halfw;
-	float y3 = -halfh + noise_y3 * halfh;
+	float x0 = -halfw + noise_0.x * halfw;
+	float y0 = -halfh + noise_0.y * halfh;
+	float x1 = -halfw + noise_1.x * halfw;
+	float y1 = halfh + noise_1.y * halfh;
+	float x2 = halfw + noise_2.x * halfw;
+	float y2 = halfh + noise_2.y * halfh;
+	float x3 = halfw + noise_3.x * halfw;
+	float y3 = -halfh + noise_3.y * halfh;
 	NosuchDebug(2,"drawing Square halfw=%.3f halfh=%.3f",halfw,halfh);
-	drawer->drawQuad( x0,y0, x1,y1, x2,y2, x3, y3);
+	drawer->drawQuad( params, state, x0,y0, x1,y1, x2,y2, x3, y3);
 }
 
 SpriteTriangle::SpriteTriangle() {
@@ -516,22 +507,19 @@ glm::vec2 SpriteTriangle::rotate(glm::vec2 point, float radians, glm::vec2 about
 void SpriteTriangle::drawShape(PaletteDrawer* drawer, int xdir, int ydir) {
 
 	if (!noise_initialized) {
-		noise_x0 = vertexNoise();
-		noise_y0 = vertexNoise();
-		noise_x1 = vertexNoise();
-		noise_y1 = vertexNoise();
-		noise_x2 = vertexNoise();
-		noise_y2 = vertexNoise();
+		noise_0 = vertexNoise();
+		noise_1 = vertexNoise();
+		noise_2 = vertexNoise();
 		noise_initialized = true;
 	}
 	float sz = 0.2f;
-	glm::vec2 p1 = glm::vec2(sz,0.0f);
+	glm::vec2 p1 = glm::vec2(0.0f,sz);
 	glm::vec2 p2 = rotate(p1, Sprite::degree2radian( 120), glm::vec2(0.0,0.0));
 	glm::vec2 p3 = rotate(p1, Sprite::degree2radian(-120), glm::vec2(0.0,0.0));
 	
-	drawer->drawTriangle(p1.x+noise_x0*sz,p1.y+noise_y0*sz,
-			     p2.x+noise_x1*sz,p2.y+noise_y1*sz,
-			     p3.x+noise_x2*sz,p3.y+noise_y2*sz);
+	drawer->drawTriangle(params, state, p1.x+noise_0.x*sz,p1.y+noise_0.y*sz,
+			     p2.x+noise_2.x*sz,p2.y+noise_1.y*sz,
+			     p3.x+noise_2.x*sz,p3.y+noise_2.y*sz);
 }
 
 SpriteLine::SpriteLine() {
@@ -540,10 +528,8 @@ SpriteLine::SpriteLine() {
 
 void SpriteLine::drawShape(PaletteDrawer* app, int xdir, int ydir) {
 	if (!noise_initialized) {
-		noise_x0 = vertexNoise();
-		noise_y0 = vertexNoise();
-		noise_x1 = vertexNoise();
-		noise_y1 = vertexNoise();
+		noise_0 = vertexNoise();
+		noise_1 = vertexNoise();
 		noise_initialized = true;
 	}
 	// NosuchDebug("SpriteLine::drawShape wh=%f %f\n",w,h);
@@ -553,21 +539,19 @@ void SpriteLine::drawShape(PaletteDrawer* app, int xdir, int ydir) {
 	float y0 =  0.0f;
 	float x1 =  0.2f;
 	float y1 =  0.0f;
-	app->drawLine(x0 + noise_x0, y0 + noise_y0, x1 + noise_x1, y1 + noise_y1);
+	app->drawLine(params, state, x0 + noise_0.x, y0 + noise_0.y, x1 + noise_1.x, y1 + noise_1.y);
 }
 
 SpriteCircle::SpriteCircle() {
 }
 
-void SpriteCircle::drawShape(PaletteDrawer* app, int xdir, int ydir) {
-	// NosuchDebug("SpriteCircle drawing");
-	app->drawEllipse(0, 0, 0.2f, 0.2f);
+void SpriteCircle::drawShape(PaletteDrawer* drawer, int xdir, int ydir) {
+	drawer->drawEllipse(params, state, 0, 0, 0.2f, 0.2f);
 }
 
 SpriteArc::SpriteArc() {
 }
 
-void SpriteArc::drawShape(PaletteDrawer* app, int xdir, int ydir) {
-	// NosuchDebug("SpriteArc drawing");
-	app->drawEllipse(0, 0, 0.2f, 0.2f, 0.0, 180.0);
+void SpriteArc::drawShape(PaletteDrawer* drawer, int xdir, int ydir) {
+	drawer->drawEllipse(params, state, 0, 0, 0.2f, 0.2f, 0.0, 180.0);
 }
