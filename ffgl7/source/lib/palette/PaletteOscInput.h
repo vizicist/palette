@@ -15,6 +15,5 @@ public:
 
 private:
 	PaletteHost* _server;
-	// NosuchOscTcpInput* _tcp;
 	NosuchOscUdpInput* _udp;
 };
