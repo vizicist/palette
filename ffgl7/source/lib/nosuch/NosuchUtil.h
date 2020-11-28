@@ -26,6 +26,8 @@
 #define FALSE 0
 #endif
 
+#define RANDFLOAT (float(rand())/RAND_MAX)
+
 #define SLIP_END 192
 #define SLIP_ESC 219
 #define SLIP_ESC2 221

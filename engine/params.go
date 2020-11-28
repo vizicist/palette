@@ -265,7 +265,7 @@ func LoadParamDefs() error {
 		}
 
 		switch valuetype {
-		case "double":
+		case "double", "float":
 			fmin, err := ParseFloat32(min, "min")
 			if err != nil {
 				return err

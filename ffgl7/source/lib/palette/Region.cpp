@@ -115,8 +115,7 @@ float Region::getMoveDir(std::string movedirtype) {
 		return 90.0f;
 	}
 	if ( movedirtype == "random" || movedirtype == "cursor" ) {
-		float f = float(rand())/ RAND_MAX;
-		return f * 360.0f;
+		return 360.0f * RANDFLOAT;
 	}
 	if ( movedirtype == "random90" ) {
 		return 90.0f * (rand() % 4);
@@ -195,8 +194,7 @@ Region::spriteMoveDir(TrackedCursor* c)
 			dir = c->curr_degrees;
 		}
 		else {
-			float f = float(rand()) / RAND_MAX;
-			dir = f * 360.0f;
+			dir = 360.0f * RANDFLOAT;
 		}
 		// NosuchDebug("Region::spriteMoveDir cursor! dir=%f", dir);
 		// NosuchDebug("spriteMoveDir cursor degrees = %f",c->curr_degrees);
@@ -280,7 +278,7 @@ Region::instantiateSprite(TrackedCursor* c, bool throttle) {
 		}
 		else if( params.placement == "random" )
 		{
-			pos = glm::vec2( (float)rand() / RAND_MAX, (float)rand() / RAND_MAX );
+			pos = glm::vec2( RANDFLOAT, RANDFLOAT );
 		}
 		else if (params.placement == "linear") {
 			pos.y = 0.5;

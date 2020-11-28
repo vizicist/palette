@@ -55,20 +55,6 @@ move dist\osc\osc.exe dist\pyinstalled >nul
 move dist\pyinstalled %bin% >nul
 popd
 
-echo ================ Compiling FFGL6 plugin
-set MSBUILDCMD=C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\Common7\Tools\vsmsbuildcmd.bat
-call "%MSBUILDCMD%" > nul
-pushd %PALETTESOURCE%\ffgl6\windows
-msbuild /t:Build /p:Configuration=Debug /p:Platform="x64" palette.sln > nul
-popd
-
-echo ================ Copying FFGL6 plugin
-mkdir %ship%\ffgl6
-pushd %PALETTESOURCE%\ffgl6\windows\x64\Debug
-copy Palette*.dll %ship%\ffgl6 > nul
-copy %PALETTESOURCE%\build\windows\pthreadvc2.dll %ship%\ffgl6 >nul
-popd
-
 echo ================ Compiling FFGL7 plugin
 set MSBUILDCMD=C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\Common7\Tools\vsmsbuildcmd.bat
 call "%MSBUILDCMD%" > nul

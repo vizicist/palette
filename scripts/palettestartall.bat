@@ -1,3 +1,3 @@
 @echo off
 call palettestart
-call palettestartresolume6
+call palettestartresolume

@@ -817,7 +817,7 @@ class ProGuiApp(tk.Tk):
             print("setAdvanced, level is ",self.advancedLevel)
             self.escapeCount = 0
             if level == 0:
-                self.showAllPages = False
+                self.showAllPages = True
                 self.showSliders = False
                 PerPadPerformLabels["scale"] = SimpleScales
             elif level == 1:
@@ -1237,7 +1237,7 @@ class PageEditParams(tk.Frame):
             if amount == 3:
                 v = v + (dv/10)
             newval = v
-        elif t == "double":
+        elif t == "double" or t == "float":
             v = float(widg.cget("text"))
             dv = float(mx) - float(mn)
             if amount == -3:
@@ -1308,7 +1308,7 @@ class PageEditParams(tk.Frame):
                 v = 0
             else:
                 v = int(s)
-        elif t == "double":
+        elif t == "double" or t == "float":
             if s == "":
                 v = 0.0
             else:
@@ -1331,7 +1331,7 @@ class PageEditParams(tk.Frame):
         # print("CHANGE VALUE LABEL EDIT OK!")
         widg = self.paramValueWidget[name]
         t = self.controller.paramValueTypeOf[name]
-        if t == "double":
+        if t == "double" or t == "float":
             try:
                 s = self.normalizeJsonValue(name,v)
             except:
@@ -1491,7 +1491,7 @@ class PageEditParams(tk.Frame):
             mx = int(self.params[name]["max"])
             v = mn if v < mn else mx if v > mx else v
             return ("%6d" % (int(float(v)))).strip()
-        if t == "double":
+        if t == "double" or t == "float":
             v = float(v)
             mn = float(self.params[name]["min"])
             mx = float(self.params[name]["max"])

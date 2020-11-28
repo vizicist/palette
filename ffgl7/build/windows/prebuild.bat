@@ -1,1 +1,1 @@
-python ../../../python/generateparams.py -7
+python ../../../python/generateparams.py
