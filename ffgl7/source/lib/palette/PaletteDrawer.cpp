@@ -182,9 +182,8 @@ bool PaletteDrawer::prepareToDraw( SpriteParams& params, SpriteState& state )
 
 	return true;
 }
-void PaletteDrawer::drawQuad(SpriteParams& params, SpriteState& state, float x0, float y0, float x1, float y1, float x2, float y2, float x3, float y3) {
 
-	// NosuchDebug( "drawQuad xy0 %f %f xy1 %f %f xy2 %f %f xy3 %f %f", x0, y0, x1, y1, x2, y2, x3, y3 );
+void PaletteDrawer::drawQuad(SpriteParams& params, SpriteState& state, float x0, float y0, float x1, float y1, float x2, float y2, float x3, float y3) {
 
 	if( ! prepareToDraw( params, state ) )
 	{
@@ -197,6 +196,8 @@ void PaletteDrawer::drawQuad(SpriteParams& params, SpriteState& state, float x0,
 
 	if( params.filled )
 	{
+		int nvertices = 6;
+
 		vertices[0] = { 0.0f, 1.0f, x0, y0, 0.0f };//Top-left
 		vertices[1] = { 1.0f, 1.0f, x1, y1, 0.0f };//Top-right
 		vertices[2] = { 0.0f, 0.0f, x3, y3, 0.0f };//Bottom left
@@ -205,17 +206,18 @@ void PaletteDrawer::drawQuad(SpriteParams& params, SpriteState& state, float x0,
 		vertices[4] = { 1.0f, 1.0f, x1, y1, 0.0f };//Top right
 		vertices[5] = { 1.0f, 0.0f, x2, y2, 0.0f };//Bottom right
 
-		glBufferData( GL_ARRAY_BUFFER, sizeof( vertices ), vertices, GL_DYNAMIC_DRAW );
-		glDrawArrays( GL_TRIANGLES, 0, 6 );
+		glBufferSubData( GL_ARRAY_BUFFER, 0, nvertices * sizeof( vertices[0] ), vertices);
+		glDrawArrays( GL_TRIANGLES, 0, nvertices );
 	}
 	else {
+		int nvertices = 4;
 		vertices[0] = { 0.0f, 1.0f, x0, y0, 0.0f };//Top-left
 		vertices[1] = { 1.0f, 1.0f, x1, y1, 0.0f };//Top-right
 		vertices[2] = { 0.0f, 0.0f, x2, y2, 0.0f };//Bottom-right
 		vertices[3] = { 0.0f, 0.0f, x3, y3, 0.0f };//Bottom-left
 
-		glBufferData( GL_ARRAY_BUFFER, sizeof( vertices ), vertices, GL_DYNAMIC_DRAW );
-		glDrawArrays( GL_LINE_LOOP, 0, 4 );
+		glBufferSubData( GL_ARRAY_BUFFER, 0, nvertices * sizeof ( vertices[0] ), vertices);
+		glDrawArrays( GL_LINE_LOOP, 0, nvertices );
 	}
 }
 
@@ -230,23 +232,17 @@ void PaletteDrawer::drawTriangle(SpriteParams& params, SpriteState& state, float
 	ffglex::ScopedVAOBinding vaoBinding( vaoID );
 	ffglex::ScopedVBOBinding vboBinding( vboID );
 
+	int nvertices = 3;
 	vertices[0] = { 0.0f, 1.0f, x0, y0, 0.0f };
 	vertices[1] = { 1.0f, 1.0f, x1, y1, 0.0f };
 	vertices[2] = { 0.0f, 0.0f, x2, y2, 0.0f };
-	glBufferData( GL_ARRAY_BUFFER, sizeof( vertices ), vertices, GL_DYNAMIC_DRAW );
 
-	if( params.filled )
-	{
-		glDrawArrays( GL_TRIANGLES, 0, 3 );
-	}
-	else {
-		glDrawArrays( GL_LINE_LOOP, 0, 3 );
-	}
-
+	glBufferSubData( GL_ARRAY_BUFFER, 0, nvertices * sizeof( vertices[0] ), vertices);
+	glDrawArrays( params.filled ? GL_TRIANGLES : GL_LINE_LOOP, 0, nvertices );
 }
 
 void PaletteDrawer::drawLine(SpriteParams& params, SpriteState& state, float x0, float y0, float x1, float y1) {
-	// NosuchDebug("Drawing line xy0=%.3f,%.3f xy1=%.3f,%.3f",x0,y0,x1,y1);
+
 	if( ! prepareToDraw( params, state ) )
 	{
 		return;
@@ -256,10 +252,11 @@ void PaletteDrawer::drawLine(SpriteParams& params, SpriteState& state, float x0,
 	ffglex::ScopedVAOBinding vaoBinding( vaoID );
 	ffglex::ScopedVBOBinding vboBinding( vboID );
 
+	int nvertices = 2;
 	vertices[0] = { 0.0f, 1.0f, x0, y0, 0.0f };
 	vertices[1] = { 1.0f, 1.0f, x1, y1, 0.0f };
-	glBufferData( GL_ARRAY_BUFFER, sizeof( vertices ), vertices, GL_DYNAMIC_DRAW );
 
+	glBufferSubData( GL_ARRAY_BUFFER, 0, nvertices * sizeof( vertices[0] ), vertices);
 	glDrawArrays( GL_LINES, 0, 2 );
 }
 
@@ -269,33 +266,36 @@ static float degree2radian(float deg) {
 
 void PaletteDrawer::drawEllipse(SpriteParams& params, SpriteState& state, float x0, float y0, float w, float h, float fromang, float toang) {
 	NosuchDebug(2,"Drawing ellipse xy0=%.3f,%.3f wh=%.3f,%.3f",x0,y0,w,h);
-#ifdef OLD_GRAPHICS
-	if ( m_filled ) {
-		glBegin(GL_TRIANGLE_FAN);
-		double radius = w;
-		glVertex2d(x0, y0);
-		for ( double degree=fromang; degree <= toang; degree+=5.0f ) {
-			glVertex2d(x0 + sin(degree2radian(degree)) * radius, y0 + cos(degree2radian(degree)) * radius);
-		}
-		glEnd();
+
+	if( ! prepareToDraw( params, state ) )
+	{
+		return;
 	}
-	if ( m_stroked ) {
-		if (fromang == 0.0 && toang == 360.0) {
-			glBegin(GL_LINE_LOOP);
-		} else {
-			glBegin(GL_LINES);
-		}
-		double radius = w;
-		for ( double degree=fromang; degree <= toang; degree+=5.0f ) {
-			glVertex2d(x0 + sin(degree2radian(degree)) * radius, y0 + cos(degree2radian(degree)) * radius);
-		}
-		glEnd();
+	//Scoped binding to make sure we dont keep the vao bind after we're done rendering.
+	ffglex::ScopedVAOBinding vaoBinding( vaoID );
+	ffglex::ScopedVBOBinding vboBinding( vboID );
+
+	float radius = w;
+
+	int nvertices = MAX_VERTICES;
+
+	for( int n=0; n<nvertices; n++ ) {
+		float delta  = float( n ) / ( nvertices - 1 );
+		float degree = fromang + delta * toang;
+		float x = x0 + sin( degree2radian( degree ) ) * radius;
+		float y = y0 + cos( degree2radian( degree ) ) * radius;
+		vertices[n] = { 0.0f , 1.0f, x, y, 0.0f};
 	}
 
-	if ( ! m_filled && ! m_stroked ) {
-		NosuchDebug("Hey, ellipse() called when both m_filled and m_stroked are off!?");
+	if( params.filled ) {
+		glBufferSubData( GL_ARRAY_BUFFER, 0, nvertices * sizeof( vertices[0] ), vertices);
+		glDrawArrays( GL_TRIANGLE_FAN, 0, nvertices );
 	}
-#endif
+	else
+	{
+		glBufferSubData( GL_ARRAY_BUFFER, 0, nvertices * sizeof( vertices[0] ), vertices);
+		glDrawArrays( GL_LINE_LOOP, 0, nvertices );
+	}
 }
 
 void PaletteDrawer::drawPolygon(PointMem* points, int npoints) {
