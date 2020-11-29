@@ -929,7 +929,7 @@ class ProGuiApp(tk.Tk):
         self.paramenums["effect"] = palette.listOfJsonFiles(os.path.join(palette.PresetsDir(), "effect"))
         self.paramenums["sliders"] = palette.listOfJsonFiles(os.path.join(palette.PresetsDir(), "sliders"))
 
-        j = palette.readJsonPath(palette.configFilePath("Synths.json"))
+        j = palette.readJsonPath(palette.configFilePath("synths.json"))
 
         self.paramenums["synth"] = []
         names = []

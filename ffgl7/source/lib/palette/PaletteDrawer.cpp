@@ -173,9 +173,6 @@ bool PaletteDrawer::prepareToDraw( SpriteParams& params, SpriteState& state )
 	NosuchColor c1( state.hue1, params.luminance, params.saturation );
 	NosuchColor c2( state.hue2, params.luminance, params.saturation );
 
-	float screenAspect  = float( m_vp.height ) / float( m_vp.width );
-	m_matrix = glm::scale( m_matrix, glm::vec3(screenAspect, 1.0f, 1.0f ));
-
 	glUniform4f( m_rgbLeftLocation, c1.R(), c1.G(), c1.B(), state.alpha );
 	glUniform4f( m_rgbRightLocation, c2.R(), c2.G(), c2.B(), state.alpha );
 	glUniformMatrix4fv( m_matrixLocation, 1, GL_FALSE, glm::value_ptr(m_matrix) );
@@ -193,6 +190,9 @@ void PaletteDrawer::drawQuad(SpriteParams& params, SpriteState& state, float x0,
 	//Scoped binding to make sure we dont keep the vao bind after we're done rendering.
 	ffglex::ScopedVAOBinding vaoBinding( vaoID );
 	ffglex::ScopedVBOBinding vboBinding( vboID );
+
+	float screenAspect  = float( m_vp.height ) / float( m_vp.width );
+	m_matrix = glm::scale( m_matrix, glm::vec3(screenAspect, 1.0f, 1.0f ));
 
 	if( params.filled )
 	{
@@ -265,7 +265,6 @@ static float degree2radian(float deg) {
 }
 
 void PaletteDrawer::drawEllipse(SpriteParams& params, SpriteState& state, float x0, float y0, float w, float h, float fromang, float toang) {
-	NosuchDebug(2,"Drawing ellipse xy0=%.3f,%.3f wh=%.3f,%.3f",x0,y0,w,h);
 
 	if( ! prepareToDraw( params, state ) )
 	{
