@@ -1257,12 +1257,12 @@ func (r *Reactor) sendEffectParam(name string, value string) {
 	}
 }
 
-// getEffectMap returns the Effects.json map for a given effect
+// getEffectMap returns the effects.json map for a given effect
 // and map type ("on", "off", or "params")
 func (r *Reactor) getEffectMap(effectName string, mapType string) map[string]interface{} {
 	effects, ok := EffectsJSON["effects"]
 	if !ok {
-		log.Printf("No effects value in Effects.json?")
+		log.Printf("No effects value in effects.json?")
 		return nil
 	}
 	effectsmap := effects.(map[string]interface{})
