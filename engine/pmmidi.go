@@ -80,7 +80,7 @@ func InitMIDI() {
 			numInputs++
 		}
 	}
-	m.loadSynths(ConfigFilePath("Synths.json"))
+	m.loadSynths(ConfigFilePath("synths.json"))
 	midiInput := ConfigValue("midiinput")
 	if midiInput != "" {
 		m.loadInputs(midiInput)

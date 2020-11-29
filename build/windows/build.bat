@@ -15,7 +15,7 @@ mkdir %bin%
 
 echo ================ Upgrading Python
 python -m pip install --upgrade pip | grep -v "already.*up-to-date"
-pip install codenamize pip install python-osc pip install asyncio-nats-client pyinstaller get-mac mido | grep -v "already satisfied"
+pip install codenamize pip install python-osc pip install asyncio-nats-client pyinstaller get-mac mido pyperclip | grep -v "already satisfied"
 
 echo ================ Creating palette_engine.exe
 

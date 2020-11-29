@@ -39,7 +39,8 @@
         "angles": "/composition/layers/{layernum}/clips/{clipnum}/video/effects/kaleidoscope/effect/angles",
         "rotation": "/composition/layers/{layernum}/clips/{clipnum}/video/effects/kaleidoscope/effect/rotation",
         "zoom": "/composition/layers/{layernum}/clips/{clipnum}/video/effects/kaleidoscope/effect/zoom",
-        "inputrotation": "/composition/layers/{layernum}/clips/{clipnum}/video/effects/kaleidoscope/effect/inputrotation"
+        "inputrotation": "/composition/layers/{layernum}/clips/{clipnum}/video/effects/kaleidoscope/effect/inputrotation",
+        "opacity": "/composition/layers/{layernum}/clips/{clipnum}/video/effects/kaleidoscope/opacity"
       }
     },
     "blur": {
@@ -142,7 +143,8 @@
         "angles": "/composition/layers/{layernum}/clips/{clipnum}/video/effects/kaleidoscope2/effect/angles",
         "rotation": "/composition/layers/{layernum}/clips/{clipnum}/video/effects/kaleidoscope2/effect/rotation",
         "zoom": "/composition/layers/{layernum}/clips/{clipnum}/video/effects/kaleidoscope2/effect/zoom",
-        "inputrotation": "/composition/layers/{layernum}/clips/{clipnum}/video/effects/kaleidoscope2/effect/inputrotation"
+        "inputrotation": "/composition/layers/{layernum}/clips/{clipnum}/video/effects/kaleidoscope2/effect/inputrotation",
+        "opacity": "/composition/layers/{layernum}/clips/{clipnum}/video/effects/kaleidoscope/opacity"
       }
     },
     "mirror": {
