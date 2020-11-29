@@ -13,6 +13,7 @@ import traceback
 import json
 import collections
 import signal
+import pyperclip
 from subprocess import call, Popen
 from codenamize import codenamize
 
@@ -187,6 +188,10 @@ GlobalPerformLabels["transpose"] = [
     {"label":"Transpose_5",  "value":5},
 ]
 
+global TopContainer
+TopContainer = None
+global TopApp
+TopApp = None
 
 class ProGuiApp(tk.Tk):
     def __init__(self,width,height):
@@ -222,6 +227,10 @@ class ProGuiApp(tk.Tk):
             self.globalPerformVal[s] = {}
 
         self.topContainer = tk.Frame(self, background=ColorBg)
+        global TopContainer
+        TopContainer = self.topContainer
+        global TopApp
+        TopApp = self
 
         self.selectFrame = self.makeSelectFrame(self.topContainer)
         self.performContainer = tk.Frame(self.topContainer,
@@ -247,6 +256,15 @@ class ProGuiApp(tk.Tk):
         self.selectPerformPage("main")
         self.selectEditPage("snap")
         self.resetVisibility()
+
+        self.topContainer.bind_all("<MouseWheel>", self.scrollWheel)
+
+    def scrollWheel(self,event):
+        if self.editMode:
+            scrollbar = self.editPage[self.currentPageName].scrollbar
+        else:
+            scrollbar = self.selectorPage[self.currentPageName].scrollbar
+        scrollbar.scrollWheel(event)
 
     def mainLoop(self):
         doneLoading = False
@@ -420,7 +438,7 @@ class ProGuiApp(tk.Tk):
                         self.performPage[self.currentPerformPageName].sliderNameChanged(v,i)
 
         snappage.setChanged()
-        snappage.saveJson("snap","CurrentSnapshot")
+        snappage.saveJsonInPath(CurrentSnapshotPath())
         f.close()
 
     def changePadParamValue(self,pad,paramstype,paramname,v):
@@ -650,18 +668,18 @@ class ProGuiApp(tk.Tk):
                 self.performPage[self.currentPerformPageName].sliderNameChanged(newval,i)
 
         # print("SAVING CURRENTSNAPSHOT!!")
-        self.editPage["snap"].saveJson("snap","CurrentSnapshot")
+        self.editPage["snap"].saveJsonInPath(CurrentSnapshotPath())
         self.editPage["snap"].setChanged()
 
     def savePrevious(self):
         frompath = CurrentSnapshotPath()
-        topath = frompath.replace(".json",".previous")
+        topath = CurrentSnapshotPreviousPath()
         palette.copyFile(frompath,topath)
         # print("SAVE PREVIOUS Copying ",frompath," to ",topath)
 
     def restorePrevious(self):
-        frompath = palette.presetsFilePath("snap", "CurrentSnapshot", ".previous")
-        topath = palette.presetsFilePath("snap", "CurrentSnapshot")
+        frompath = CurrentSnapshotPreviousPath()
+        topath = CurrentSnapshotPath()
         palette.copyFile(frompath,topath)
         # print("RESTORING PREVIOUS Copying ",frompath," to ",topath)
 
@@ -693,14 +711,14 @@ class ProGuiApp(tk.Tk):
     def loadSnap(self,snapname):
         snappage = self.editPage["snap"]
         snappage.startEditing(snapname,doLift=False)
-        snappage.saveJson("snap","CurrentSnapshot")
-        snappage.saveJson("snap","CurrentSnapshot",".backup")
+        snappage.saveJsonInPath(CurrentSnapshotPath())
+        snappage.saveJsonInPath(CurrentSnapshotBackupPath())
         snappage.lift()
         return True
 
     def revertToBackup(self):
-        frompath = palette.presetsFilePath("snap", "CurrentSnapshot", ".backup")
-        topath = palette.presetsFilePath("snap", "CurrentSnapshot")
+        frompath = CurrentSnapshotBackupPath()
+        topath = CurrentSnapshotPath()
         palette.copyFile(frompath,topath)
         print("Reverting Backup Copying ",frompath," to ",topath)
 
@@ -927,7 +945,7 @@ class ProGuiApp(tk.Tk):
         self.paramenums["effect"] = palette.listOfJsonFiles(os.path.join(palette.PresetsDir(), "effect"))
         self.paramenums["sliders"] = palette.listOfJsonFiles(os.path.join(palette.PresetsDir(), "sliders"))
 
-        j = palette.readJsonPath(palette.configFilePath("Synths.json"))
+        j = palette.readJsonPath(palette.configFilePath("synths.json"))
 
         self.paramenums["synth"] = []
         names = []
@@ -1173,6 +1191,9 @@ class PageEditParams(tk.Frame):
         self.cancelButton = ttk.Label(f, text="Cancel", style='Button.TLabel')
         self.cancelButton.bind("<Button-1>", lambda event:self.saveCancelCallback())
 
+        self.copyButton = ttk.Label(f, text="Copy", style='Button.TLabel')
+        self.copyButton.bind("<Button-1>", lambda event:self.saveCopyCallback())
+
         return f
 
     def scrollNotify(self,sfy,tag):
@@ -1411,19 +1432,32 @@ class PageEditParams(tk.Frame):
         self.startEditing(name,doSend=doSend)
         # After loading on the snap page, we return to CurrentSnapshot
         if name != "CurrentSnapshot":
-            self.saveJson("snap","CurrentSnapshot")
-            self.saveJson("snap","CurrentSnapshot",".beforeload")
+            self.saveJsonInPath(CurrentSnapshotPath())
+            self.saveJsonInPath(CurrentSnapshotPreviousPath())
             self.startEditing("CurrentSnapshot")
+
+    def forgetAll(self):
+        self.comboParamsname.pack_forget()
+        self.okButton.pack_forget()
+        self.cancelButton.pack_forget()
+        self.copyButton.pack_forget()
 
     def saveCallback(self):
         self.comboParamsname.pack(side=tk.LEFT, padx=10)
         self.okButton.pack(side=tk.LEFT, padx=10)
         self.cancelButton.pack(side=tk.LEFT, padx=10)
+        self.copyButton.pack(side=tk.LEFT, padx=10)
 
     def saveCancelCallback(self):
-        self.comboParamsname.pack_forget()
-        self.okButton.pack_forget()
-        self.cancelButton.pack_forget()
+        self.forgetAll()
+
+    def saveCopyCallback(self):
+        j = self.jsonParamDump()
+        j["paramsname"] = self.paramsnameVar.get()
+        j["paramstype"] = self.paramstype 
+        s = json.dumps(j, sort_keys=True, indent=4, separators=(',',':'))
+        pyperclip.copy(s)
+        self.forgetAll()
 
     def saveOkCallback(self):
         name = self.paramsnameVar.get()
@@ -1459,20 +1493,23 @@ class PageEditParams(tk.Frame):
             self.clearChanged()
 
     def saveJson(self,section,paramsname,suffix=".json"):
+        if section == "snap" and paramsname == "CurrentSnapshot":
+            print("HEY!  use saveJsonInPath!")
+            return
+        fpath = palette.presetsFilePath(section,paramsname,suffix)
+        self.saveJsonInPath(fpath)
 
+    def jsonParamDump(self):
         newjson = {}
         newjson["params"] = {}
         for name in self.params:
             newjson["params"][name] = {}
             w = self.paramValueWidget[name]
             newjson["params"][name] = self.normalizeJsonValue(name,w.cget("text"))
+        return newjson
 
-        if section == "snap" and paramsname == "CurrentSnapshot":
-            fpath = CurrentSnapshotPath()
-        else:
-            fpath = palette.presetsFilePath(section,paramsname,suffix)
-            # print("Saving ",fpath)
-
+    def saveJsonInPath(self,fpath):
+        newjson = self.jsonParamDump()
         print("Saving JSON:",fpath)
         f = open(fpath,"w")
         f.write(json.dumps(newjson, sort_keys=True, indent=4, separators=(',',':')))
@@ -1514,7 +1551,7 @@ class ScrollBar(tk.Frame):
         self.scroll.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
         self.scroll.bind("<Button-1>", self.scrollClick)
         self.scroll.bind("<B1-Motion>", self.scrollClick)
-        self.scroll.bind("<MouseWheel>", self.scrollWheel)
+        # self.scroll.bind("<MouseWheel>", self.scrollWheel)
 
         self.thumb = tk.Canvas(self.scroll, background=ColorThumb, highlightthickness=0)
         self.thumb.place(in_=self.scroll, relx=0, rely=0.0, relwidth=1, relheight=thumbFactor )
@@ -1529,12 +1566,12 @@ class ScrollBar(tk.Frame):
 
     def scrollWheel(self,event):
         if event.delta > 0:
-            amount = 30
+            amount = 60
         else:
-            amount = -30
+            amount = -60
         # self.valuesDisplayOffset = (self.valuesDisplayOffset + amount) % nparams
         # self.updateParamView()
-        print("scrollWheel event=",event," amount=",amount)
+        # print("scrollWheel event=",event," amount=",amount)
         self.scrollMove(self.thumb.winfo_y() + amount)
 
     def thumbClick(self,event):
@@ -1940,6 +1977,12 @@ def isTwoLine(text):
 
 def CurrentSnapshotPath():
     return palette.localconfigFilePath("CurrentSnapshot.json")
+
+def CurrentSnapshotBackupPath():
+    return palette.localconfigFilePath("CurrentSnapshot.backup")
+
+def CurrentSnapshotPreviousPath():
+    return palette.localconfigFilePath("CurrentSnapshot.previous")
 
 def initMain(app):
     app.iconbitmap(palette.configFilePath("palette.ico"))

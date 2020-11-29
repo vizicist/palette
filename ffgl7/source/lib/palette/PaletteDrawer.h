@@ -31,9 +31,6 @@ public:
 	void initBuffers();
 	void releaseBuffers();
 
-	float ScreenWidth() { return float(m_vp.width); }
-	float ScreenHeight() { return float(m_vp.height); }
-
 	float scale_z( float z );
 
 	ffglex::FFGLShader* BeginDrawingWithShader(std::string shaderName);
