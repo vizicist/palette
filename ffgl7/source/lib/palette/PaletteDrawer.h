@@ -59,17 +59,17 @@ private:
 	PaletteParams *m_params;
 	bool m_isdrawing;
 	
-	bool m_filled;
-
 	glm::mat4 m_matrix;
 	glm::mat4 m_matrix_identity;
 
-	ffglex::GlVertexTextured vertices[ 6 ];
+#define MAX_VERTICES 72
+	ffglex::GlVertexTextured vertices[ MAX_VERTICES ];
 
 	GLuint vaoID;
 	GLuint vboID;
 
 	ffglex::FFGLShader m_shader_gradient;  //!< Utility to help us compile and link some shaders into a program.
+
 	GLint m_rgbLeftLocation;
 	GLint m_rgbRightLocation;
 	GLint m_matrixLocation;
