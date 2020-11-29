@@ -324,6 +324,14 @@ class ProGuiApp(tk.Tk):
                 self.selectorLoadAndSend(self.currentPageName,self.selectorValue,self.selectorButtonIndex)
                 self.resetLastAnything()
     
+            if self.selectorAction == "PASTE":
+                print("PASTE ACTION!!")
+                print("selectorValue = ",self.selectorValue)
+                self.selectorAction = ""
+                # print("selectorAction=LOAD loading selectorValue=",self.selectorValue)
+                self.selectorPasteAndSend(self.currentPageName,self.selectorValue)
+                self.resetLastAnything()
+    
     def resetLastAnything(self):
         self.lastAnything = time.time()
 
@@ -404,6 +412,10 @@ class ProGuiApp(tk.Tk):
         print("Reading JSON:",fpath)
         f = open(fpath)
         j = json.load(f)
+        self.readParamsJsonIntoSnap(paramstype,paramsname,j)
+        f.close()
+
+    def readParamsJsonIntoSnap(self,paramstype,paramsname,j):
         paramvals = j["params"]
         if paramstype == "snap":
             print("Unexpected value in readParamsFileIntoSnap")
@@ -439,7 +451,6 @@ class ProGuiApp(tk.Tk):
 
         snappage.setChanged()
         snappage.saveJsonInPath(CurrentSnapshotPath())
-        f.close()
 
     def changePadParamValue(self,pad,paramstype,paramname,v):
         snappage = self.editPage["snap"]
@@ -466,8 +477,11 @@ class ProGuiApp(tk.Tk):
             print("No such file?  fpath=",fpath)
             return
         j = json.load(f)
-        snappage = self.editPage["snap"]
+        self.loadSnapJson(j)
+        f.close()
 
+    def loadSnapJson(self,j):
+        snappage = self.editPage["snap"]
         for name in self.allParamsJson:
             allj = self.allParamsJson[name]
             (_,base) = padOfParam(name)
@@ -480,8 +494,6 @@ class ProGuiApp(tk.Tk):
         for name in j["params"]:
             v = j["params"][name]
             snappage.changeValueLabel(name,v)
-
-        f.close()
 
     def makeSelectFrame(self,container):
 
@@ -705,6 +717,34 @@ class ProGuiApp(tk.Tk):
             # we want to set the values in the editing page
             self.readParamsFileIntoSnap(valtype,val)
 
+            if valtype != "sliders":
+                self.sendSnapPad(PadName,valtype)
+
+    def selectorPasteAndSend(self,valtype,val):
+        print("PasteAndSend!")
+        j = json.loads(val)
+        print("j=",j)
+
+        if "paramsname" in j:
+            paramsname = j["paramsname"]
+        else:
+            paramsname = "NoValue"
+
+        if "paramstype" in j:
+            paramstype = j["paramstype"]
+        else:
+            paramstype = "NoValue"
+
+        if paramstype != valtype:
+            # XXX - this error will be common, need a visible message
+            print("Mismatched paramstype in JSON!")
+            return
+
+        if valtype == "snap":
+            self.loadSnapJson(j)
+            self.sendSnap()
+        else:
+            self.readParamsJsonIntoSnap(valtype,paramsname,j)
             if valtype != "sliders":
                 self.sendSnapPad(PadName,valtype)
 
@@ -1170,6 +1210,14 @@ class PageEditParams(tk.Frame):
     def makeButtonArea(self):
         f = tk.Frame(self, background=ColorBg)
 
+        self.copyButton = ttk.Label(f, text="Copy", style='Button.TLabel')
+        self.copyButton.bind("<Button-1>", lambda event:self.saveCopyCallback())
+        self.copyButton.pack(side=tk.LEFT, padx=5)
+
+        self.pasteButton = ttk.Label(f, text="Paste", style='Button.TLabel')
+        self.pasteButton.bind("<Button-1>", lambda event:self.savePasteCallback())
+        self.pasteButton.pack(side=tk.LEFT, padx=5)
+
         b = ttk.Label(f, text="Save", style='Button.TLabel')
         b.bind("<Button-1>", lambda event:self.saveCallback())
         b.pack(side=tk.LEFT, pady=5, padx=5)
@@ -1190,9 +1238,6 @@ class PageEditParams(tk.Frame):
 
         self.cancelButton = ttk.Label(f, text="Cancel", style='Button.TLabel')
         self.cancelButton.bind("<Button-1>", lambda event:self.saveCancelCallback())
-
-        self.copyButton = ttk.Label(f, text="Copy", style='Button.TLabel')
-        self.copyButton.bind("<Button-1>", lambda event:self.saveCopyCallback())
 
         return f
 
@@ -1440,13 +1485,11 @@ class PageEditParams(tk.Frame):
         self.comboParamsname.pack_forget()
         self.okButton.pack_forget()
         self.cancelButton.pack_forget()
-        self.copyButton.pack_forget()
 
     def saveCallback(self):
         self.comboParamsname.pack(side=tk.LEFT, padx=10)
         self.okButton.pack(side=tk.LEFT, padx=10)
         self.cancelButton.pack(side=tk.LEFT, padx=10)
-        self.copyButton.pack(side=tk.LEFT, padx=10)
 
     def saveCancelCallback(self):
         self.forgetAll()
@@ -1458,6 +1501,12 @@ class PageEditParams(tk.Frame):
         s = json.dumps(j, sort_keys=True, indent=4, separators=(',',':'))
         pyperclip.copy(s)
         self.forgetAll()
+
+    def savePasteCallback(self):
+        s = pyperclip.paste()
+        print("Paste!  s=",s)
+        self.controller.selectorValue = s
+        self.controller.selectorAction = "PASTE"
 
     def saveOkCallback(self):
         name = self.paramsnameVar.get()
