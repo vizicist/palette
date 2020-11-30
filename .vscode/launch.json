@@ -39,6 +39,14 @@
             "args": []
         },
         {
+            "name": "Launch migratehue",
+            "type": "python",
+            "request": "launch",
+            "program": "${env:USERPROFILE}/go/src/github.com/vizicist/palette/python/migratehue.py",
+            "env": {},
+            "args": []
+        },
+        {
             "name": "Launch GUI Viz",
             "type": "python",
             "request": "launch",

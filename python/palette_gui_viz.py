@@ -318,17 +318,12 @@ class ProGuiApp(tk.Tk):
                 self.performPage["main"].updatePerformButtonLabels(PadName)
     
             if self.selectorAction == "LOAD":
-                # print("selectorAction = ",self.selectorAction, " self.selectorValue=",self.selectorValue," currentPageName=",self.currentPageName)
                 self.selectorAction = ""
-                # print("selectorAction=LOAD loading selectorValue=",self.selectorValue)
                 self.selectorLoadAndSend(self.currentPageName,self.selectorValue,self.selectorButtonIndex)
                 self.resetLastAnything()
     
             if self.selectorAction == "PASTE":
-                print("PASTE ACTION!!")
-                print("selectorValue = ",self.selectorValue)
                 self.selectorAction = ""
-                # print("selectorAction=LOAD loading selectorValue=",self.selectorValue)
                 self.selectorPasteAndSend(self.currentPageName,self.selectorValue)
                 self.resetLastAnything()
     
@@ -704,7 +699,6 @@ class ProGuiApp(tk.Tk):
             else:
                 self.savePrevious()
                 ("Should be highlighting buttoni=",buttoni)
-            # print("Loading and sending snapshot: "+val)
             self.loadSnap(val)
             self.sendSnap()
         else:
@@ -721,10 +715,7 @@ class ProGuiApp(tk.Tk):
                 self.sendSnapPad(PadName,valtype)
 
     def selectorPasteAndSend(self,valtype,val):
-        print("PasteAndSend!")
         j = json.loads(val)
-        print("j=",j)
-
         if "paramsname" in j:
             paramsname = j["paramsname"]
         else:
@@ -1420,12 +1411,13 @@ class PageEditParams(tk.Frame):
         return
 
     def setParamsName(self,name):
-        try:
-            n = self.paramFiles.index(name)
-            self.comboParamsname.current(n)
-        except:
-            pass
         self.paramsname = name
+        if name != "CurrentSnapshot":
+            try:
+                n = self.paramFiles.index(name)
+                self.comboParamsname.current(n)
+            except:
+                pass
 
     def startEditing(self,name,doLift=True,clearChange=True,doSend=False):
 
@@ -1504,7 +1496,6 @@ class PageEditParams(tk.Frame):
 
     def savePasteCallback(self):
         s = pyperclip.paste()
-        print("Paste!  s=",s)
         self.controller.selectorValue = s
         self.controller.selectorAction = "PASTE"
 

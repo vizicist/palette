@@ -143,17 +143,13 @@ def invoke_jsonrpc(subject, api, params):
         return None, "No result from calling api=%s params=%s\n" % (api,params)
 
     resultstr = result.data.decode()
-    # print("invoke_jsonrpc: resultstr=",resultstr)
     resultjson = json.loads(resultstr)
-    # print("invoke_jsonrpc: resultjson=",resultjson)
 
     err = None
     if "error" in resultjson:
-        # print("ERROR: %s\n" % (resultjson["error"]))
         err = resultjson["error"]
     res = None
     if "result" in resultjson:
-        # print("RESULT: %s\n" % (resultjson["result"]))
         res = resultjson["result"]
 
     return (res,err)
