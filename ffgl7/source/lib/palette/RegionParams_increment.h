@@ -1,7 +1,7 @@
 INC_DBL_PARAM(alphafinal,0.0f,1.0f);
 INC_DBL_PARAM(alphainitial,0.0f,1.0f);
 INC_DBL_PARAM(alphatime,0.01f,10.0f);
-INC_DBL_PARAM(aspect,0.1f,10.0f);
+INC_DBL_PARAM(aspect,0.0f,1.0f);
 INC_BOOL_PARAM(bounce);
 INC_BOOL_PARAM(filled);
 INC_INT_PARAM(gravity,0,10);

@@ -165,13 +165,6 @@ public:
 	void drawShape(PaletteDrawer* app, int xdir, int ydir);
 };
 
-class SpriteArc : public Sprite {
-
-public:
-	SpriteArc();
-	void drawShape(PaletteDrawer* app, int xdir, int ydir);
-};
-
 class SpriteLine : public Sprite {
 
 public:

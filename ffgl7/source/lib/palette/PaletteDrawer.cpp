@@ -180,6 +180,22 @@ bool PaletteDrawer::prepareToDraw( SpriteParams& params, SpriteState& state )
 	return true;
 }
 
+float PaletteDrawer::finalAspect( float aspect )
+{
+	// 0.0 aspect is finalaspect 0.1
+	// 0.5 aspect is finalaspect 0.5
+	// 1.0 aspect is finalaspect 10.0
+	float finalaspect = 1.0;
+	if( aspect <= 0.5f )
+	{
+		finalaspect = 0.05f + aspect * 0.9f;
+	}
+	else
+	{
+		finalaspect = 0.5f + ( aspect - 0.5f )*19.0f;
+	}
+	return finalaspect;
+}
 void PaletteDrawer::drawQuad(SpriteParams& params, SpriteState& state, float x0, float y0, float x1, float y1, float x2, float y2, float x3, float y3) {
 
 	if( ! prepareToDraw( params, state ) )
@@ -193,6 +209,15 @@ void PaletteDrawer::drawQuad(SpriteParams& params, SpriteState& state, float x0,
 
 	float screenAspect  = float( m_vp.height ) / float( m_vp.width );
 	m_matrix = glm::scale( m_matrix, glm::vec3(screenAspect, 1.0f, 1.0f ));
+
+	float finalaspect = finalAspect( params.aspect );
+	if ( finalaspect != 1.0f )
+	{
+		x0 *= finalaspect;
+		x1 *= finalaspect;
+		x2 *= finalaspect;
+		x3 *= finalaspect;
+	}
 
 	if( params.filled )
 	{
@@ -232,6 +257,17 @@ void PaletteDrawer::drawTriangle(SpriteParams& params, SpriteState& state, float
 	ffglex::ScopedVAOBinding vaoBinding( vaoID );
 	ffglex::ScopedVBOBinding vboBinding( vboID );
 
+	float screenAspect  = float( m_vp.height ) / float( m_vp.width );
+	m_matrix = glm::scale( m_matrix, glm::vec3(screenAspect, 1.0f, 1.0f ));
+
+	float finalaspect = finalAspect( params.aspect );
+	if ( finalaspect != 1.0f )
+	{
+		x0 *= finalaspect;
+		x1 *= finalaspect;
+		x2 *= finalaspect;
+	}
+
 	int nvertices = 3;
 	vertices[0] = { 0.0f, 1.0f, x0, y0, 0.0f };
 	vertices[1] = { 1.0f, 1.0f, x1, y1, 0.0f };
@@ -264,7 +300,7 @@ static float degree2radian(float deg) {
 	return 2.0f * (float)M_PI * deg / 360.0f;
 }
 
-void PaletteDrawer::drawEllipse(SpriteParams& params, SpriteState& state, float x0, float y0, float w, float h, float fromang, float toang) {
+void PaletteDrawer::drawEllipse(SpriteParams& params, SpriteState& state, float x0, float y0, float radius, float fromang, float toang) {
 
 	if( ! prepareToDraw( params, state ) )
 	{
@@ -273,8 +309,6 @@ void PaletteDrawer::drawEllipse(SpriteParams& params, SpriteState& state, float 
 	//Scoped binding to make sure we dont keep the vao bind after we're done rendering.
 	ffglex::ScopedVAOBinding vaoBinding( vaoID );
 	ffglex::ScopedVBOBinding vboBinding( vboID );
-
-	float radius = w;
 
 	int nvertices = MAX_VERTICES;
 
