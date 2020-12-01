@@ -229,9 +229,6 @@ Region::makeSprite(std::string shape) {
 	else if (shape == "line") {
 		s = new SpriteLine();
 	}
-	else if (shape == "arc") {
-		s = new SpriteArc();
-	}
 	else if (shape == "nothing") {
 		//
 	}

@@ -95,7 +95,6 @@ void Sprite::draw(PaletteDrawer* drawer) {
 	float scalex = state.size * scaled_z;
 	float scaley = state.size * scaled_z;
 
-	scalex *= aspect;
 
 	// These control flipping of the drawing orientation
 	int xdir = 1;
@@ -464,8 +463,8 @@ SpriteSquare::SpriteSquare() {
 }
 
 void SpriteSquare::drawShape(PaletteDrawer* drawer, int xdir, int ydir) {
-	float halfw = 0.25f;
-	float halfh = 0.25f;
+	float halfw = 0.125;
+	float halfh = 0.125;
 
 	if (!noise_initialized) {
 		noise_0 = vertexNoise();
@@ -533,8 +532,8 @@ void SpriteLine::drawShape(PaletteDrawer* app, int xdir, int ydir) {
 		noise_initialized = true;
 	}
 	// NosuchDebug("SpriteLine::drawShape wh=%f %f\n",w,h);
-	float halfw = 0.2f;
-	float halfh = 0.2f;
+	float halfw = 0.25f;
+	float halfh = 0.25f;
 	float x0 = -0.2f;
 	float y0 =  0.0f;
 	float x1 =  0.2f;
@@ -546,12 +545,5 @@ SpriteCircle::SpriteCircle() {
 }
 
 void SpriteCircle::drawShape(PaletteDrawer* drawer, int xdir, int ydir) {
-	drawer->drawEllipse(params, state, 0, 0, 0.2f, 0.2f);
-}
-
-SpriteArc::SpriteArc() {
-}
-
-void SpriteArc::drawShape(PaletteDrawer* drawer, int xdir, int ydir) {
-	drawer->drawEllipse(params, state, 0, 0, 0.2f, 0.2f, 0.0, 180.0);
+	drawer->drawEllipse(params, state, 0, 0, 0.125, 0.0, 360.0);
 }
