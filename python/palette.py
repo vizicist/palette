@@ -29,7 +29,13 @@ def localconfigFilePath(nm):
     return os.path.join(localAppDataDir(), "config", nm)
 
 def configFilePath(nm):
-    return os.path.join(PaletteDir(), "config", nm)
+    # If PALETTESOURCE is defined, we use
+    ps = os.environ.get("PALETTESOURCE")
+    if ps != "":
+        print("Using PALETTESOURCE to get configFilePath")
+        return os.path.join(ps, "default", "config", nm)
+    else:
+        return os.path.join(PaletteDir(), "config", nm)
 
 def localAppDataDir():
     local = os.environ.get("LOCALAPPDATA")

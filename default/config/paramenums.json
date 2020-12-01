@@ -5,7 +5,7 @@
 	"quant": [ "none", "frets", "fixed", "pressure" ],
 	"vol": [ "fixed", "pressure" ],
   "sliderModify": [ "scale", "replace" ],
-  "shape": [ "nothing", "line", "triangle", "square", "arc", "circle" ],
+  "shape": [ "line", "triangle", "square", "circle" ],
   "movedir": [ "cursor", "left", "right", "up", "down", "random", "random90", "updown", "leftright" ],
   "rotangdir": [ "right", "left", "random" ],
   "mirror": [ "none", "vertical", "horizontal", "four" ],
