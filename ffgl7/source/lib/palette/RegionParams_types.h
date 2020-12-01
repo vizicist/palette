@@ -46,11 +46,9 @@ RegionParams_InitializeTypes() {
 	RegionParams_sliderModifyTypes.push_back("scale");
 	RegionParams_sliderModifyTypes.push_back("replace");
 
-	RegionParams_shapeTypes.push_back("nothing");
 	RegionParams_shapeTypes.push_back("line");
 	RegionParams_shapeTypes.push_back("triangle");
 	RegionParams_shapeTypes.push_back("square");
-	RegionParams_shapeTypes.push_back("arc");
 	RegionParams_shapeTypes.push_back("circle");
 
 	RegionParams_movedirTypes.push_back("cursor");
