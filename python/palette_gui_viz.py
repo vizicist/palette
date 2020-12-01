@@ -749,7 +749,6 @@ class ProGuiApp(tk.Tk):
                         f = float(max)
                     except:
                         f = 0.5
-                    print("f=",f)
                     if random.random() <= f:
                         v = "true"
                     else:
@@ -761,6 +760,12 @@ class ProGuiApp(tk.Tk):
                     enum = j["min"]
                     if enum in self.paramenums:
                         enums = self.paramenums[enum]
+                    if max != min:  # implies that randmax was used
+                        if max in enums:
+                            v = max
+                        else:
+                            print("Hey, randmax=",max," isn't a valid enum value for name=",name)
+                    else:
                         i = random.randint(0,len(enums)-1)
                         v = enums[i]
 
