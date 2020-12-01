@@ -14,6 +14,7 @@ import json
 import collections
 import signal
 import pyperclip
+import random
 from subprocess import call, Popen
 from codenamize import codenamize
 
@@ -317,15 +318,26 @@ class ProGuiApp(tk.Tk):
                 self.selectPerformPage("main")
                 self.performPage["main"].updatePerformButtonLabels(PadName)
     
+            reset = True
+
             if self.selectorAction == "LOAD":
-                self.selectorAction = ""
                 self.selectorLoadAndSend(self.currentPageName,self.selectorValue,self.selectorButtonIndex)
-                self.resetLastAnything()
     
-            if self.selectorAction == "PASTE":
-                self.selectorAction = ""
-                self.selectorPasteAndSend(self.currentPageName,self.selectorValue)
+            elif self.selectorAction == "IMPORT":
+                self.selectorImportAndSend(self.currentPageName,self.selectorValue)
+
+            elif self.selectorAction == "INIT":
+                self.selectorApply("init",self.currentPageName,self.selectorValue)
+
+            elif self.selectorAction == "RAND":
+                self.selectorApply("rand",self.currentPageName,self.selectorValue)
+
+            else:
+                reset = False
+
+            if reset:
                 self.resetLastAnything()
+            self.selectorAction = ""
     
     def resetLastAnything(self):
         self.lastAnything = time.time()
@@ -423,7 +435,7 @@ class ProGuiApp(tk.Tk):
         editpage = self.editPage[paramstype]
         for name in self.allParamsJson:
             allj = self.allParamsJson[name]
-            if allj["paramtype"] != paramstype:
+            if allj["paramstype"] != paramstype:
                 continue
             (_,base) = padOfParam(name)
             if base in paramvals:
@@ -480,8 +492,8 @@ class ProGuiApp(tk.Tk):
         for name in self.allParamsJson:
             allj = self.allParamsJson[name]
             (_,base) = padOfParam(name)
-            paramType = allj["paramtype"]
-            if paramType != "sliders":
+            paramsType = allj["paramstype"]
+            if paramsType != "sliders":
                 fullname = PadName + "_" + base
                 if not fullname in j["params"]:
                     j["params"][fullname] = allj["init"]
@@ -593,7 +605,7 @@ class ProGuiApp(tk.Tk):
 
     def sliderCallback(self,param,val,modify):
         # print("CONTROLLER sliderCallback param=",param," val=",val," modify=",modify)
-        if self.allParamsJson[param]["type"] == "string":
+        if self.allParamsJson[param]["valuetype"] == "string":
             print("NOT YET IMPLEMENTED!  STRING slider")
             return
         mn = float(self.allParamsJson[param]["min"])
@@ -657,8 +669,8 @@ class ProGuiApp(tk.Tk):
         if self.currentPageName == "snap":
             if pad:
                 # Change the value on the other (per-param-type) editing page
-                ptype = self.allParamsJson[baseparam]["paramtype"]
-                self.editPage[ptype].changeValueLabel(baseparam,newval)
+                paramstype = self.allParamsJson[baseparam]["paramstype"]
+                self.editPage[paramstype].changeValueLabel(baseparam,newval)
                 # we still send the changed parameter out to the appropriate pad
                 self.sendPadParamValue(pad,baseparam,newval)
         else:
@@ -690,8 +702,77 @@ class ProGuiApp(tk.Tk):
         palette.copyFile(frompath,topath)
         # print("RESTORING PREVIOUS Copying ",frompath," to ",topath)
 
-    def selectorLoadAndSend(self,valtype,val,buttoni):
-        if valtype == "snap":
+    def selectorApply(self,apply,paramstype,val):
+        if paramstype == "snap" or paramstype == "sliders":
+            print("selectorApply not yet implemented on snap or sliders")
+        else:
+            self.applyToAllParams(apply,paramstype,val)
+            self.sendSnapPad(PadName,paramstype)
+
+    def applyToAllParams(self,apply,paramstype,val):
+        snappage = self.editPage["snap"]
+        editpage = self.editPage[paramstype]
+        # loop through all the parameters of a given type
+        for name in self.allParamsJson:
+            j = self.allParamsJson[name]
+            if j["paramstype"] != paramstype:
+                continue
+            valuetype = j["valuetype"]
+            (_,base) = padOfParam(name)
+            v = ""
+            min = j["min"]
+            max = j["max"]
+            if "randmin" in j:
+                min = j["randmin"]
+            if "randmax" in j:
+                max = j["randmax"]
+
+            if valuetype == "float":
+                if apply == "init":
+                    v = j["init"]
+                elif apply == "rand":
+                    r = float(min) + (random.random() * (float(max)-float(min)))
+                    v = "%f" % r
+            elif valuetype == "int":
+                if apply == "init":
+                    v = j["init"]
+                elif apply == "rand":
+                    r = int(min) + int(random.random() * (int(max)-int(min)))
+                    v = "%d" % r
+            elif valuetype == "bool":
+                if apply == "init":
+                    v = j["init"]
+                elif apply == "rand":
+                    # if the max value of a bool is a float number,
+                    # it's the probability of being true.
+                    try:
+                        f = float(max)
+                    except:
+                        f = 0.5
+                    print("f=",f)
+                    if random.random() <= f:
+                        v = "true"
+                    else:
+                        v = "false"
+            elif valuetype == "string":
+                if apply == "init":
+                    v = j["init"]
+                elif apply == "rand":
+                    enum = j["min"]
+                    if enum in self.paramenums:
+                        enums = self.paramenums[enum]
+                        i = random.randint(0,len(enums)-1)
+                        v = enums[i]
+
+            if v != "":
+                editpage.changeValueLabel(base,v)
+                self.changePadParamValue(PadName,paramstype,name,v)
+
+        snappage.setChanged()
+        snappage.saveJsonInPath(CurrentSnapshotPath())
+
+    def selectorLoadAndSend(self,paramstype,val,buttoni):
+        if paramstype == "snap":
             if val == "PREVIOUS":
                 self.restorePrevious()
                 val = "CurrentSnapshot"
@@ -703,18 +784,18 @@ class ProGuiApp(tk.Tk):
             self.sendSnap()
         else:
             # if we've selected a slider preset
-            if self.showSliders and valtype == "sliders":
+            if self.showSliders and paramstype == "sliders":
                 if self.currentPerformPageName[0:7] == "sliders":
                     self.performPage[self.currentPerformPageName].setSliders(val)
 
             # even for sliders (which aren't in the snap settings),
             # we want to set the values in the editing page
-            self.readParamsFileIntoSnap(valtype,val)
+            self.readParamsFileIntoSnap(paramstype,val)
 
-            if valtype != "sliders":
-                self.sendSnapPad(PadName,valtype)
+            if paramstype != "sliders":
+                self.sendSnapPad(PadName,paramstype)
 
-    def selectorPasteAndSend(self,valtype,val):
+    def selectorImportAndSend(self,paramstype,val):
         j = json.loads(val)
         if "paramsname" in j:
             paramsname = j["paramsname"]
@@ -722,22 +803,22 @@ class ProGuiApp(tk.Tk):
             paramsname = "NoValue"
 
         if "paramstype" in j:
-            paramstype = j["paramstype"]
+            jparamstype = j["paramstype"]
         else:
-            paramstype = "NoValue"
+            jparamstype = "NoValue"
 
-        if paramstype != valtype:
+        if jparamstype != paramstype:
             # XXX - this error will be common, need a visible message
             print("Mismatched paramstype in JSON!")
             return
 
-        if valtype == "snap":
+        if paramstype == "snap":
             self.loadSnapJson(j)
             self.sendSnap()
         else:
-            self.readParamsJsonIntoSnap(valtype,paramsname,j)
-            if valtype != "sliders":
-                self.sendSnapPad(PadName,valtype)
+            self.readParamsJsonIntoSnap(paramstype,paramsname,j)
+            if paramstype != "sliders":
+                self.sendSnapPad(PadName,paramstype)
 
     def loadSnap(self,snapname):
         snappage = self.editPage["snap"]
@@ -904,12 +985,12 @@ class ProGuiApp(tk.Tk):
     def sendSnap(self):
         self.sendSnapPad(PadName)
 
-    def paramListJson(self,paramtype,pad):
+    def paramListJson(self,paramstype,pad):
         paramlist = ""
         sep = ""
         for name in self.allParamsJson:
             j = self.allParamsJson[name]
-            if j["paramtype"] == paramtype:
+            if j["paramstype"] == paramstype:
                 paramname = pad + "_" + name
                 v = self.editPage["snap"].getValue(paramname)
                 paramlist = paramlist + sep + "\"" + name + "\" : \"" + str(v) + "\""
@@ -917,13 +998,13 @@ class ProGuiApp(tk.Tk):
 
         return paramlist
 
-    def sendSnapPad(self,pad,paramtype=None):
+    def sendSnapPad(self,pad,paramstype=None):
         for pt in ["sound","visual","effect"]:
             paramlistjson = self.paramListJson(pt,pad)
-            if paramtype == None or paramtype == pt:
+            if paramstype == None or paramstype == pt:
                 palette_region_api(pt+".set_params", paramlistjson)
 
-        if paramtype == None:
+        if paramstype == None:
             for name in PerPadPerformLabels:
                 self.sendPadPerformVal(pad,name)
 
@@ -940,7 +1021,7 @@ class ProGuiApp(tk.Tk):
         self.paramsOfType = {}
         self.paramTypeOf = {}
         for name in self.allParamsJson:
-            self.paramValueTypeOf[name] = self.allParamsJson[name]["type"]
+            self.paramValueTypeOf[name] = self.allParamsJson[name]["valuetype"]
 
         # Construct lists of the parameters, pulled from Params.json
         for t in PageNames:
@@ -950,31 +1031,32 @@ class ProGuiApp(tk.Tk):
         for x in sorted(self.allParamsJson.keys()):
             self.allParamNames.append(x)
             self.allParamsJson[x]["name"] = x
-            t = self.allParamsJson[x]["paramtype"]
+            t = self.allParamsJson[x]["paramstype"]
             if t != "channel" and t != "misc":
                 self.paramsOfType[t][x] = self.allParamsJson[x]
-                self.paramTypeOf[x] = self.allParamsJson[x]["paramtype"]
+                self.paramTypeOf[x] = self.allParamsJson[x]["paramstype"]
 
         # Create all the parameters for the "snap" settings by
         # duplicating all the parameters for each pad (A,B,C,D).
         for x in self.allParamNames:
-            paramType = self.allParamsJson[x]["paramtype"]
+            paramType = self.allParamsJson[x]["paramstype"]
             if paramType == "sliders":
                 continue
             padParamName = PadName + "_" + x
-            self.paramValueTypeOf[padParamName] = self.allParamsJson[x]["type"]
+            self.paramValueTypeOf[padParamName] = self.allParamsJson[x]["valuetype"]
             self.paramsOfType["snap"][padParamName] = self.allParamsJson[x]
 
         for x in self.allParamNames:
-            paramType = self.allParamsJson[x]["paramtype"]
+            paramType = self.allParamsJson[x]["paramstype"]
             if paramType == "sliders":
-                self.paramValueTypeOf[x] = self.allParamsJson[x]["type"]
+                self.paramValueTypeOf[x] = self.allParamsJson[x]["valuetype"]
 
         # The things here get ADDED to the ones already read in from paramenums.json
-        self.paramenums["sound"] = palette.listOfJsonFiles(os.path.join(palette.PresetsDir(), "sound"))
-        self.paramenums["visual"] = palette.listOfJsonFiles(os.path.join(palette.PresetsDir(), "visual"))
-        self.paramenums["effect"] = palette.listOfJsonFiles(os.path.join(palette.PresetsDir(), "effect"))
-        self.paramenums["sliders"] = palette.listOfJsonFiles(os.path.join(palette.PresetsDir(), "sliders"))
+        for pt in {"sound", "visual", "effect", "sliders"}:
+            if pt in self.paramenums:
+                print("WARNING! pt=",pt," is already in paramenums.json!")
+            else:
+                self.paramenums[pt] = palette.listOfJsonFiles(os.path.join(palette.PresetsDir(), pt))
 
         j = palette.readJsonPath(palette.configFilePath("synths.json"))
 
@@ -987,6 +1069,7 @@ class ProGuiApp(tk.Tk):
 
         self.paramenums["sliderParam"] = self.allParamNames
 
+    # XXX - Someday, convert all the code to eliminate this.
     def convertParamdefsToParams(self,newparamsjson):
         # This silliness is to avoid needing to convert all the other
         # code that assumes the structure that was in the old Params.json file.
@@ -996,16 +1079,24 @@ class ProGuiApp(tk.Tk):
             if len(parts) != 2:
                 print("Unable to handle param name: ",name)
                 continue
-            paramtype = parts[0]
+            paramstype = parts[0]
             parambasename = parts[1]
             allparamsjson[parambasename] = {
-                "type": newparamsjson[name]["valuetype"],
-                "min": newparamsjson[name]["min"],
-                "max": newparamsjson[name]["max"],
-                "paramtype": paramtype,
-                "init": newparamsjson[name]["init"],
-                "comment": newparamsjson[name]["comment"]
-                }
+                "paramstype": paramstype
+            }
+            for pn in newparamsjson[name]:
+                allparamsjson[parambasename][pn] = newparamsjson[name][pn]
+
+            # allparamsjson[parambasename] = {
+            #     "valuetype": newparamsjson[name]["valuetype"],
+            #     "min": newparamsjson[name]["min"],
+            #     "max": newparamsjson[name]["max"],
+            #     "randmin": newparamsjson[name]["randmin"],
+            #     "randmax": newparamsjson[name]["randmax"],
+            #     "init": newparamsjson[name]["init"],
+            #     "comment": newparamsjson[name]["comment"]
+            #     }
+
         # allparamsjson = palette.readJsonPath(palette.configFilePath("Params.json"))
         return allparamsjson
 
@@ -1201,13 +1292,25 @@ class PageEditParams(tk.Frame):
     def makeButtonArea(self):
         f = tk.Frame(self, background=ColorBg)
 
-        self.copyButton = ttk.Label(f, text="Copy", style='Button.TLabel')
-        self.copyButton.bind("<Button-1>", lambda event:self.saveCopyCallback())
-        self.copyButton.pack(side=tk.LEFT, padx=5)
+        self.initButton = ttk.Label(f, text="Init", style='Button.TLabel')
+        self.initButton.bind("<Button-1>", lambda event:self.initCallback())
+        self.initButton.bind("<ButtonRelease-1>", lambda event:self.initRelease())
+        self.initButton.pack(side=tk.LEFT, padx=5)
 
-        self.pasteButton = ttk.Label(f, text="Paste", style='Button.TLabel')
-        self.pasteButton.bind("<Button-1>", lambda event:self.savePasteCallback())
-        self.pasteButton.pack(side=tk.LEFT, padx=5)
+        self.randButton = ttk.Label(f, text="Rand", style='Button.TLabel')
+        self.randButton.bind("<Button-1>", lambda event:self.randCallback())
+        self.randButton.bind("<ButtonRelease-1>", lambda event:self.randRelease())
+        self.randButton.pack(side=tk.LEFT, padx=5)
+
+        self.importButton = ttk.Label(f, text="Import", style='Button.TLabel')
+        self.importButton.bind("<Button-1>", lambda event:self.saveImportCallback())
+        self.importButton.bind("<ButtonRelease-1>", lambda event:self.saveImportRelease())
+        self.importButton.pack(side=tk.LEFT, padx=5)
+
+        self.exportButton = ttk.Label(f, text="Export", style='Button.TLabel')
+        self.exportButton.bind("<Button-1>", lambda event:self.saveExportCallback())
+        self.exportButton.bind("<ButtonRelease-1>", lambda event:self.saveExportRelease())
+        self.exportButton.pack(side=tk.LEFT, padx=5)
 
         b = ttk.Label(f, text="Save", style='Button.TLabel')
         b.bind("<Button-1>", lambda event:self.saveCallback())
@@ -1433,7 +1536,7 @@ class PageEditParams(tk.Frame):
                 snapv = snappage.getValue(p)
                 (_,baseparam) = padOfParam(p)
                 # if it's a pad parameter for the current pad
-                ptype = self.controller.allParamsJson[baseparam]["paramtype"]
+                ptype = self.controller.allParamsJson[baseparam]["paramstype"]
                 # if it's a parameter for the current page
                 if ptype == self.paramstype:
                     # get the value from the CurrentSnapshot
@@ -1486,18 +1589,61 @@ class PageEditParams(tk.Frame):
     def saveCancelCallback(self):
         self.forgetAll()
 
-    def saveCopyCallback(self):
+    def randCallback(self):
+        s = pyperclip.paste()
+        self.controller.selectorValue = s
+        self.controller.selectorAction = "RAND"
+        self.forgetAll()
+        s = 'ButtonHigh.TLabel'
+        self.randButton.config(style=s)
+
+    def randRelease(self):
+        s = 'Button.TLabel'
+        self.randButton.config(style=s)
+
+    def initCallback(self):
+        s = pyperclip.paste()
+        self.controller.selectorValue = s
+        self.controller.selectorAction = "INIT"
+        self.forgetAll()
+        s = 'ButtonHigh.TLabel'
+        self.initButton.config(style=s)
+
+    def initRelease(self):
+        s = 'Button.TLabel'
+        self.initButton.config(style=s)
+
+    def saveExportCallback(self):
         j = self.jsonParamDump()
         j["paramsname"] = self.paramsnameVar.get()
         j["paramstype"] = self.paramstype 
         s = json.dumps(j, sort_keys=True, indent=4, separators=(',',':'))
         pyperclip.copy(s)
         self.forgetAll()
+        s = 'ButtonHigh.TLabel'
+        self.exportButton.config(style=s)
 
-    def savePasteCallback(self):
+    def saveExportRelease(self):
+        s = 'Button.TLabel'
+        self.exportButton.config(style=s)
+
+    def saveImportCallback(self):
         s = pyperclip.paste()
+        if s == "":
+            print("Nothing in copy/paste buffer")
+            return
+        if s[0] != "{":
+            print("Bad format in copy buffer, expecting Json")
+            return
         self.controller.selectorValue = s
-        self.controller.selectorAction = "PASTE"
+        self.controller.selectorAction = "IMPORT"
+        self.forgetAll()
+        s = 'ButtonHigh.TLabel'
+        self.importButton.config(style=s)
+
+    def saveImportRelease(self):
+        s = 'Button.TLabel'
+        self.importButton.config(style=s)
 
     def saveOkCallback(self):
         name = self.paramsnameVar.get()
@@ -1920,6 +2066,7 @@ def makeStyles(app):
     s.configure('Disabled.TLabel', foreground='red', background=ColorButton, relief="flat", justify=tk.CENTER, font=mediumFont)
     s.configure('Edit.TLabel', font=largestFont, foreground=ColorText, background=ColorBg)
     s.configure('Button.TLabel', font=largestFont, foreground=ColorText, background=ColorButton)
+    s.configure('ButtonHigh.TLabel', font=largestFont, foreground=ColorText, background=ColorHigh)
     s.configure('Red.TLabel', foreground='red', justify=tk.CENTER, background=ColorBg)
     s.configure('Bright.TLabel', foreground=ColorBright, justify=tk.CENTER, background=ColorBg)
     s.configure('TinyBright.TLabel', foreground=ColorBright, justify=tk.CENTER, background=ColorBg, font=mediumFont)
