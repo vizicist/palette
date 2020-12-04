@@ -4,170 +4,179 @@
   "effects": {
     "twisted": {
       "on": {
-        "addr": "/composition/layers/{layernum}/clips/{clipnum}/video/effects/twisted/bypassed",
+        "addr": "/twisted/bypassed",
         "arg": 0
       },
       "off": {
-        "addr": "/composition/layers/{layernum}/clips/{clipnum}/video/effects/twisted/bypassed",
+        "addr": "/twisted/bypassed",
         "arg": 1
       },
       "params": {
-        "twirl": "/composition/layers/{layernum}/clips/{clipnum}/video/effects/twisted/effect/twirl",
-        "radius": "/composition/layers/{layernum}/clips/{clipnum}/video/effects/twisted/effect/radius"
+        "twirl": "/twisted/effect/twirl",
+        "radius": "/twisted/effect/radius"
       }
     },
     "huerotate": {
       "on": {
-        "addr": "/composition/layers/{layernum}/clips/{clipnum}/video/effects/huerotate/bypassed",
+        "addr": "/huerotate/bypassed",
         "arg": 0
       },
       "off": {
-        "addr": "/composition/layers/{layernum}/clips/{clipnum}/video/effects/huerotate/bypassed",
-        "arg": 1
-      }
-    },
-    "kaleid1": {
-      "on": {
-        "addr": "/composition/layers/{layernum}/clips/{clipnum}/video/effects/kaleidoscope/bypassed",
-        "arg": 0
-      },
-      "off": {
-        "addr": "/composition/layers/{layernum}/clips/{clipnum}/video/effects/kaleidoscope/bypassed",
+        "addr": "/huerotate/bypassed",
         "arg": 1
       },
       "params": {
-        "angles": "/composition/layers/{layernum}/clips/{clipnum}/video/effects/kaleidoscope/effect/angles",
-        "rotation": "/composition/layers/{layernum}/clips/{clipnum}/video/effects/kaleidoscope/effect/rotation",
-        "zoom": "/composition/layers/{layernum}/clips/{clipnum}/video/effects/kaleidoscope/effect/zoom",
-        "inputrotation": "/composition/layers/{layernum}/clips/{clipnum}/video/effects/kaleidoscope/effect/inputrotation",
-        "opacity": "/composition/layers/{layernum}/clips/{clipnum}/video/effects/kaleidoscope/opacity"
+        "huescale": "{effects}/huerotate/effect/huescale",
+        "satscale": "/huerotate/effect/sat.scale",
+        "huerotate": "/huerotate/effect/huerotate"
+      }
+    },
+    "kaleid": {
+      "on": {
+        "addr": "/kaleidoscope/bypassed",
+        "arg": 0
+      },
+      "off": {
+        "addr": "/kaleidoscope/bypassed",
+        "arg": 1
+      },
+      "params": {
+        "angles": "/kaleidoscope/effect/angles",
+        "rotation": "/kaleidoscope/effect/rotation",
+        "zoom": "/kaleidoscope/effect/zoom",
+        "inputrotation": "/kaleidoscope/effect/inputrotation",
+        "opacity": "/kaleidoscope/opacity"
       }
     },
     "blur": {
       "on": {
-        "addr": "/composition/layers/{layernum}/clips/{clipnum}/video/effects/blur/bypassed",
+        "addr": "/blur/bypassed",
         "arg": 0
       },
       "off": {
-        "addr": "/composition/layers/{layernum}/clips/{clipnum}/video/effects/blur/bypassed",
+        "addr": "/blur/bypassed",
         "arg": 1
       },
       "params": {
-        "blurxdistance": "/composition/layers/{layernum}/clips/{clipnum}/video/effects/blur/effect/blurxdistance",
-        "blurydistance": "/composition/layers/{layernum}/clips/{clipnum}/video/effects/blur/effect/blurydistance",
-        "quality": "/composition/layers/{layernum}/clips/{clipnum}/video/effects/blur/effect/quality",
-        "gaussian": "/composition/layers/{layernum}/clips/{clipnum}/video/effects/blur/effect/gaussian"
+        "blurxdistance": "/blur/effect/blurxdistance",
+        "blurydistance": "/blur/effect/blurydistance",
+        "quality": "/blur/effect/quality",
+        "gaussian": "/blur/effect/gaussian"
       }
     },
     "quad": {
       "on": {
-        "addr": "/composition/layers/{layernum}/clips/{clipnum}/video/effects/mirrorquad/bypassed",
+        "addr": "/mirrorquad/bypassed",
         "arg": 0
       },
       "off": {
-        "addr": "/composition/layers/{layernum}/clips/{clipnum}/video/effects/mirrorquad/bypassed",
+        "addr": "/mirrorquad/bypassed",
         "arg": 1
+      },
+      "params": {
+        "flipx": "/mirrorquad/effect/flipx",
+        "flipy": "/mirrorquad/effect/flipy"
       }
     },
     "fragment": {
       "on": {
-        "addr": "/composition/layers/{layernum}/clips/{clipnum}/video/effects/fragment/bypassed",
+        "addr": "/fragment/bypassed",
         "arg": 0
       },
       "off": {
-        "addr": "/composition/layers/{layernum}/clips/{clipnum}/video/effects/fragment/bypassed",
+        "addr": "/fragment/bypassed",
         "arg": 1
+      },
+      "params": {
+        "fragments": "/fragment/effect/fragments",
+        "distance": "/fragment/effect/distance",
+        "rotation": "/fragment/effect/rotation",
+        "fragrotationx": "/fragment/effect/fragrotationx",
+        "fragrotationy": "/fragment/effect/fragrotationy",
+        "fragrotationz": "/fragment/effect/fragrotationz",
+        "fragscale": "/fragment/effect/fragscale"
       }
     },
     "posterize": {
       "on": {
-        "addr": "/composition/layers/{layernum}/clips/{clipnum}/video/effects/posterize/bypassed",
+        "addr": "/posterize/bypassed",
         "arg": 0
       },
       "off": {
-        "addr": "/composition/layers/{layernum}/clips/{clipnum}/video/effects/posterize/bypassed",
+        "addr": "/posterize/bypassed",
         "arg": 1
       },
       "params": {
-        "posterize": "/composition/layers/{layernum}/clips/{clipnum}/video/effects/posterize/effect/posterize"
+        "posterize": "/posterize/effect/posterize"
       }
     },
     "displace": {
       "on": {
-        "addr": "/composition/layers/{layernum}/clips/{clipnum}/video/effects/displace/bypassed",
+        "addr": "/displace/bypassed",
         "arg": 0
       },
       "off": {
-        "addr": "/composition/layers/{layernum}/clips/{clipnum}/video/effects/displace/bypassed",
+        "addr": "/displace/bypassed",
         "arg": 1
       },
       "params": {
-        "xfactor": "/composition/layers/{layernum}/clips/{clipnum}/video/effects/displace/effect/xfactor",
-        "yfactor": "/composition/layers/{layernum}/clips/{clipnum}/video/effects/displace/effect/yfactor"
+        "xfactor": "/displace/effect/xfactor",
+        "yfactor": "/displace/effect/yfactor",
+        "threshold": "/displace/effect/threshold"
       }
     },
     "iterate": {
       "on": {
-        "addr": "/composition/layers/{layernum}/clips/{clipnum}/video/effects/iterate/bypassed",
+        "addr": "/iterate/bypassed",
         "arg": 0
       },
       "off": {
-        "addr": "/composition/layers/{layernum}/clips/{clipnum}/video/effects/iterate/bypassed",
+        "addr": "/iterate/bypassed",
         "arg": 1
       }
     },
     "edge": {
       "on": {
-        "addr": "/composition/layers/{layernum}/clips/{clipnum}/video/effects/edgedetection/bypassed",
+        "addr": "/edgedetection/bypassed",
         "arg": 0
       },
       "off": {
-        "addr": "/composition/layers/{layernum}/clips/{clipnum}/video/effects/edgedetection/bypassed",
+        "addr": "/edgedetection/bypassed",
         "arg": 1
       },
       "params": {
-        "mode": "/composition/layers/{layernum}/clips/{clipnum}/video/effects/edgedetection/effect/mode",
-        "multiplier": "/composition/layers/{layernum}/clips/{clipnum}/video/effects/edgedetection/effect/multiplier"
-      }
-    },
-    "kaleid2": {
-      "on": {
-        "addr": "/composition/layers/{layernum}/clips/{clipnum}/video/effects/kaleidoscope2/bypassed",
-        "arg": 0
-      },
-      "off": {
-        "addr": "/composition/layers/{layernum}/clips/{clipnum}/video/effects/kaleidoscope2/bypassed",
-        "arg": 1
-      },
-      "params": {
-        "angles": "/composition/layers/{layernum}/clips/{clipnum}/video/effects/kaleidoscope2/effect/angles",
-        "rotation": "/composition/layers/{layernum}/clips/{clipnum}/video/effects/kaleidoscope2/effect/rotation",
-        "zoom": "/composition/layers/{layernum}/clips/{clipnum}/video/effects/kaleidoscope2/effect/zoom",
-        "inputrotation": "/composition/layers/{layernum}/clips/{clipnum}/video/effects/kaleidoscope2/effect/inputrotation",
-        "opacity": "/composition/layers/{layernum}/clips/{clipnum}/video/effects/kaleidoscope/opacity"
+        "mode": "/edgedetection/effect/mode",
+        "multiplier": "/edgedetection/effect/multiplier"
       }
     },
     "mirror": {
       "on": {
-        "addr": "/composition/layers/{layernum}/clips/{clipnum}/video/effects/mirror/bypassed",
+        "addr": "/mirror/bypassed",
         "arg": 0
       },
       "off": {
-        "addr": "/composition/layers/{layernum}/clips/{clipnum}/video/effects/mirror/bypassed",
+        "addr": "/mirror/bypassed",
         "arg": 1
+      },
+      "params": {
+        "x": "/mirror/effect/x",
+        "y": "/mirror/effect/y",
+        "in/out": "/mirror/effect/in/out",
+        "flipx": "/mirror/effect/flipx",
+        "flipy": "/mirror/effect/flipy"
       }
     },
     "trails": {
       "on": {
-        "addr": "/composition/layers/{layernum}/clips/{clipnum}/video/effects/trails/bypassed",
+        "addr": "/trails/bypassed",
         "arg": 0
       },
       "off": {
-        "addr": "/composition/layers/{layernum}/clips/{clipnum}/video/effects/trails/bypassed",
+        "addr": "/trails/bypassed",
         "arg": 1
       },
       "params": {
-        "feedback": "/composition/layers/{layernum}/clips/{clipnum}/video/effects/trails/effect/feedback"
+        "feedback": "/trails/effect/feedback"
       }
     }
   }

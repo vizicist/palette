@@ -738,7 +738,7 @@ class ProGuiApp(tk.Tk):
                 if apply == "init":
                     v = j["init"]
                 elif apply == "rand":
-                    r = int(min) + int(random.random() * (int(max)-int(min)))
+                    r = int(min) + int(random.random() * (int(max)-int(min)+1))
                     v = "%d" % r
             elif valuetype == "bool":
                 if apply == "init":
@@ -1789,6 +1789,7 @@ class ScrollBar(tk.Frame):
 
         # The value of fy is from 0.0 t0 (1.0-thumbFactor)
         sfy = fy / (1.0-thumbFactor)
+        sfy = 1.0 - sfy
 
         # print("scrollMove, calling thumbPlace and scrollNotify fy=",fy," sfy=",sfy)
         self.thumbPlace(fy)
