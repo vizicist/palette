@@ -44,18 +44,25 @@ Source: "ship\config\paramenums.json"; DestDir: "{app}\config"; Flags: ignorever
 Source: "ship\config\settings.json"; DestDir: "{app}\config"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "ship\config\Palette*.avc"; DestDir: "{app}\config"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "ship\config\palette.ico"; DestDir: "{app}\config"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "ship\presets\*"; DestDir: "{app}\presets"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE - these go in LOCALAPPDATA
 Source: "ship\config\ffgl.json"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\config"; Flags: ignoreversion
 Source: "ship\config\local_settings.json"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\config"; DestName: "settings.json"; Flags: ignoreversion
 Source: "ship\midifiles\*"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\midifiles"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "ship\presets\*"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\presets"; Flags: comparetimestamp ignoreversion recursesubdirs createallsubdirs
 Source: "logs_readme.txt"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\logs"; DestName: "readme.txt"; Flags: ignoreversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
-; This specifies the Visual C++ Windows Runtime Redistributable to also install because
-; it is required by Xojo apps made with 2016r1 or later.
+; This specifies the Visual C++ Windows Runtime Redistributable to install
 [Files]
 Source: "VC_redist.x64.exe"; DestDir: {tmp}
+
+; This presets directory is where locally-saved presets go
+[Dirs]
+Name: "{%LOCALAPPDATA}\{#MyAppName}\presets"
+Name: "{%LOCALAPPDATA}\{#MyAppName}\presets\visual"
+Name: "{%LOCALAPPDATA}\{#MyAppName}\presets\effect"
+Name: "{%LOCALAPPDATA}\{#MyAppName}\presets\snap"
+Name: "{%LOCALAPPDATA}\{#MyAppName}\presets\sound"
 
 [Run]
 Filename: {tmp}\VC_redist.x64.exe; Parameters: "/install /quiet /norestart"; StatusMsg: "Installing 64-bit Windows Universal runtime..."; Flags: waituntilterminated

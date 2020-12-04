@@ -415,7 +415,9 @@ class ProGuiApp(tk.Tk):
             print("Unexpected snap value in readParamsFileIntoSnap")
             return
         # Read parameters from a json file (but NOT a snap file)
+
         fpath = palette.presetsFilePath(paramstype, paramsname)
+
         print("Reading JSON:",fpath)
         f = open(fpath)
         j = json.load(f)
@@ -538,8 +540,7 @@ class ProGuiApp(tk.Tk):
         page.doLayout()
        
     def makeSelectorPage(self,parent,pagename,pagemaker):
-        path = os.path.join(palette.PresetsDir(), pagename)
-        vals = palette.listOfJsonFiles(path)
+        vals = palette.presetsListAll(pagename)
 
         # XXX - this PREVIOUS stuff actually works,
         # XXX - but doesn't properly highlight the previous selection
@@ -1061,7 +1062,7 @@ class ProGuiApp(tk.Tk):
             if pt in self.paramenums:
                 print("WARNING! pt=",pt," is already in paramenums.json!")
             else:
-                self.paramenums[pt] = palette.listOfJsonFiles(os.path.join(palette.PresetsDir(), pt))
+                self.paramenums[pt] = palette.presetsListAll(pt)
 
         j = palette.readJsonPath(palette.configFilePath("synths.json"))
 
@@ -1249,7 +1250,7 @@ class PageEditParams(tk.Frame):
         self.setParamsName(defname)
 
     def updateParamFiles(self):
-        files = palette.listOfJsonFiles(os.path.join(palette.PresetsDir(), self.paramstype),ignore="CurrentSnapshot")
+        files = palette.presetsListAll(self.paramstype)
         self.paramFiles = files
         self.comboParamsname.configure(values=self.paramFiles)
 
@@ -1687,7 +1688,9 @@ class PageEditParams(tk.Frame):
         if section == "snap" and paramsname == "CurrentSnapshot":
             print("HEY!  use saveJsonInPath!")
             return
-        fpath = palette.presetsFilePath(section,paramsname,suffix)
+        # Note: saving always happens in the localPresetsFilePath,
+        # even if the original one was loaded from a different directory
+        fpath = palette.localPresetsFilePath(section,paramsname,suffix)
         self.saveJsonInPath(fpath)
 
     def jsonParamDump(self):
@@ -1941,7 +1944,8 @@ class PagePerformSliders(tk.Frame):
             self.sliderLabel1[i] = ttk.Label(self.valsframe,width=8,style='Slider.TLabel')
 
     def scrollNotify(self,sfy,tag):
-        v = 1.0 - sfy
+        # v = 1.0 - sfy
+        v = sfy
         val = v * v * v
         # print("val=",val)
         self.sliderValueChanged(val,tag)
