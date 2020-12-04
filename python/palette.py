@@ -71,8 +71,6 @@ def presetsListAll(section):
 
 # This one always returns the local (first) directory in the presetspath
 def localPresetsFilePath(section, nm, suffix=".json"):
-    if nm[0] == ".":
-        nm = nm[1:]
     presetspath = presetsPath()
     paths = presetspath.split(";")
     localdir = paths[0]
@@ -83,8 +81,6 @@ def localPresetsFilePath(section, nm, suffix=".json"):
 
 # Look through all the directories in presetspath to find file
 def presetsFilePath(section, nm, suffix=".json"):
-    if nm[0] == ".":
-        nm = nm[1:]
     presetspath = presetsPath()
     paths = presetspath.split(";")
     # the local presets directory is the first one in the path
