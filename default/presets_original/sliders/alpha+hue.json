@@ -1,0 +1,20 @@
+{
+    "params":{
+        "slider1modify":"replace",
+        "slider1param":"alphainitial",
+        "slider2modify":"replace",
+        "slider2param":"alphafinal",
+        "slider3modify":"replace",
+        "slider3param":"alphatime",
+        "slider4modify":"replace",
+        "slider4param":"hueinitial",
+        "slider5modify":"replace",
+        "slider5param":"huefinal",
+        "slider6modify":"replace",
+        "slider6param":"huetime",
+        "slider7modify":"replace",
+        "slider7param":"thickness",
+        "slider8modify":"replace",
+        "slider8param":"movedir"
+    }
+}

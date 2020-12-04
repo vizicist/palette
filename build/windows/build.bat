@@ -85,6 +85,7 @@ copy osc.bat %bin% >nul
 copy ipaddress.bat %bin% >nul
 copy taillog.bat %bin% >nul
 copy natsmon.bat %bin% >nul
+copy delay.bat %bin% >nul
 
 popd
 
