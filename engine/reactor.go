@@ -1280,9 +1280,12 @@ func (r *Reactor) getEffectMap(effectName string, mapType string) map[string]int
 	return mapValue.(map[string]interface{})
 }
 
-func (r *Reactor) replaceLayerAndClipNums(addr string, layerNum int, clipNum int) string {
-	addr = strings.Replace(addr, "{layernum}", strconv.Itoa(layerNum), 1)
-	addr = strings.Replace(addr, "{clipnum}", strconv.Itoa(clipNum), 1)
+func (r *Reactor) addLayerAndClipNums(addr string, layerNum int, clipNum int) string {
+	if addr[0] != '/' {
+		log.Printf("WARNING, addr in effects.json doesn't start with / : %s", addr)
+		addr = "/" + addr
+	}
+	addr = fmt.Sprintf("/composition/layers/%d/clips/%d/video/effects%s", layerNum, clipNum, addr)
 	return addr
 }
 
@@ -1298,7 +1301,7 @@ func (r *Reactor) sendPadOneEffectParam(effectName string, paramName string, val
 		return
 	}
 	addr := oneParam.(string)
-	addr = r.replaceLayerAndClipNums(addr, r.resolumeLayer, 1)
+	addr = r.addLayerAndClipNums(addr, r.resolumeLayer, 1)
 
 	// log.Printf("sendPadOneEffectParam effect=%s param=%s value=%f\n", effectName, paramName, value)
 	msg := osc.NewMessage(addr)
@@ -1329,7 +1332,7 @@ func (r *Reactor) sendPadOneEffectOnOff(effectName string, onoff bool) {
 		return
 	}
 	addr := onoffAddr.(string)
-	addr = r.replaceLayerAndClipNums(addr, r.resolumeLayer, 1)
+	addr = r.addLayerAndClipNums(addr, r.resolumeLayer, 1)
 	onoffValue := int(onoffArg.(float64))
 
 	msg := osc.NewMessage(addr)
