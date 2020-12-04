@@ -141,6 +141,11 @@ func BinFilePath(nm string) string {
 
 // ConfigFilePath xxx
 func ConfigFilePath(nm string) string {
+	// If PALETTESOURCE is defined, we use it
+	ps := os.Getenv("PALETTESOURCE")
+	if ps != "" {
+		return filepath.Join(ps, "default", "config", nm)
+	}
 	return filepath.Join(RootPath(), "config", nm)
 }
 
