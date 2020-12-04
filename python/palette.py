@@ -23,6 +23,7 @@ PadLayer = {
 }
 
 DebugApi = False
+Verbose = False
 MyNuid = ""
 
 def localconfigFilePath(nm):
@@ -32,7 +33,8 @@ def configFilePath(nm):
     # If PALETTESOURCE is defined, we use
     ps = os.environ.get("PALETTESOURCE")
     if ps != "":
-        print("Using PALETTESOURCE to get configFilePath")
+        if Verbose:
+            print("Using PALETTESOURCE to get configFilePath")
         return os.path.join(ps, "default", "config", nm)
     else:
         return os.path.join(PaletteDir(), "config", nm)
@@ -44,15 +46,55 @@ def localAppDataDir():
         local = "."
     return os.path.join(local,"Palette")
 
-def PresetsDir():
-    d = localAppDataDir()
-    pdir = os.path.join(d, "presets")
-    if not os.path.isdir(pdir):
-        print("No presets directory?  path=",pdir)
-    return pdir
+def presetsPath():
+    p = ConfigValue("presetspath")
+    p = p.replace("%PALETTE%",PaletteDir())
+    p = p.replace("%LOCALAPPDATA%",os.environ.get("LOCALAPPDATA"))
+    return p
 
+# Combine presets in the presetsPath list
+def presetsListAll(section):
+    presetspath = presetsPath()
+    paths = presetspath.split(";")
+    allvals = []
+    for dir in paths:
+        sectiondir = os.path.join(dir,section)
+        if os.path.isdir(sectiondir):
+            vals = listOfJsonFiles(sectiondir)
+            for v in vals:
+                if not v in allvals:
+                    allvals.append(v)
+    sortvals = []
+    for v in sorted(allvals):
+        sortvals.append(v)
+    return sortvals
+
+# This one always returns the local (first) directory in the presetspath
+def localPresetsFilePath(section, nm, suffix=".json"):
+    if nm[0] == ".":
+        nm = nm[1:]
+    presetspath = presetsPath()
+    paths = presetspath.split(";")
+    localdir = paths[0]
+    if not os.path.isdir(localdir):
+        print("No presets directory?  dir=",localdir)
+        localdir = "."
+    return os.path.join(localdir,section, nm+suffix)
+
+# Look through all the directories in presetspath to find file
 def presetsFilePath(section, nm, suffix=".json"):
-    return os.path.join(PresetsDir(),section, nm+suffix)
+    if nm[0] == ".":
+        nm = nm[1:]
+    presetspath = presetsPath()
+    paths = presetspath.split(";")
+    # the local presets directory is the first one in the path
+    finalpath = "."
+    for dir in paths:
+        if os.path.isdir(dir):
+            finalpath = os.path.join(dir,section, nm+suffix)
+            if os.path.exists(finalpath):
+                break
+    return finalpath
 
 def readJsonPath(path):
     f = open(path)
@@ -206,13 +248,15 @@ def ConfigValue(s):
         if not os.path.isfile(path):
             print("No file? path=",path)
             return ""
-        print("Loading",path)
+        if Verbose:
+            print("Loading ",path)
         SettingsJson = readJsonPath(path)
 
     if LocalSettingsJson == None:
         path = localconfigFilePath("settings.json")
         if os.path.isfile(path):
-            print("Loading",path)
+            if Verbose:
+                print("Loading ",path)
             LocalSettingsJson = readJsonPath(path)
 
     if LocalSettingsJson != None and s in LocalSettingsJson:
