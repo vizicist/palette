@@ -73,6 +73,7 @@
 "effect.trails": {"valuetype": "bool", "min": "false", "max": "true", "randmax": "0.2", "init": "false", "comment": "#" },
 "effect.trails:feedback": {"valuetype": "float", "min": "0.0", "max": "1.0", "randmin":"0.5", "randmax":"0.70", "init": "0.70", "comment": "#" },
 
+
 "misc.quant": {"valuetype":"string", "min":"quant", "max":"quant", "init":"frets", "comment":"# Quantization style" },
 "misc.scale": {"valuetype":"string", "min":"scale", "max":"scale", "init":"newage", "comment":"# Quantization style" },
 "misc.vol": {"valuetype":"string", "min":"vol", "max":"vol", "init":"pressure", "comment":"# Velocity style" },
