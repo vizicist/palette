@@ -33,8 +33,7 @@ def configFilePath(nm):
     # If PALETTESOURCE is defined, we use
     ps = os.environ.get("PALETTESOURCE")
     if ps != "":
-        if Verbose:
-            print("Using PALETTESOURCE to get configFilePath")
+        print("Using PALETTESOURCE to get configFilePath")
         return os.path.join(ps, "default", "config", nm)
     else:
         return os.path.join(PaletteDir(), "config", nm)

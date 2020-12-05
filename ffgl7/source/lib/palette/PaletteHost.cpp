@@ -742,10 +742,6 @@ std::string PaletteHost::ExecuteJson(std::string meth, cJSON *params, const char
 		}
 		return jsonIntResult(0, id);
 	}
-	if (meth == "push_effects") {
-		std::string effects = needString(meth,params,"effects");
-		return jsonIntResult(0,id);
-	}
 	if (meth == "debug") {
 		needParams(meth, params);
 		std::string action = needString(meth, params, "action", "");

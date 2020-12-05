@@ -18,18 +18,6 @@ public:
 	double depth2d;
 };
 
-class Patch {
-public:
-	Patch(std::string b, std::string l, std::string e, int c) {
-		label = l;
-		effects = e;
-		effectlist = NosuchSplitOnAnyChar(effects, ", ;");
-	}
-	std::string label;
-	std::string effects;
-	std::vector<std::string> effectlist;
-};
-
 class Palette {
 
 public:

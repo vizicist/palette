@@ -144,6 +144,7 @@ func ConfigFilePath(nm string) string {
 	// If PALETTESOURCE is defined, we use it
 	ps := os.Getenv("PALETTESOURCE")
 	if ps != "" {
+		log.Printf("Using PALETTESOURCE to get %s\n", nm)
 		return filepath.Join(ps, "default", "config", nm)
 	}
 	return filepath.Join(RootPath(), "config", nm)
