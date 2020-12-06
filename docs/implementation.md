@@ -12,7 +12,7 @@ A Go-based executable that
 - Starts a realtime engine for looping and control of
    sound (MIDI) and visuals (OSC to Resolume and a FFGL plugin).
 
-### bin\palette_gui_*.exe
+### bin\palette_gui.exe
 
 - A python-based executable that provides a graphical interface
 to select presets and edit their parameters.
