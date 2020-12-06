@@ -18,7 +18,7 @@
             "name": "Launch GUI",
             "type": "python",
             "request": "launch",
-            "program": "${env:USERPROFILE}/go/src/github.com/vizicist/palette/python/palette_gui_viz.py",
+            "program": "${env:USERPROFILE}/go/src/github.com/vizicist/palette/python/palette_gui.py",
             "env": {},
             "args": []
         }

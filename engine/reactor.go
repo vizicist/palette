@@ -347,7 +347,7 @@ func (r *Reactor) toFreeFramePluginForLayer(msg *osc.Message) {
 
 func (r *Reactor) toResolume(msg *osc.Message) {
 	r.resolumeClient.Send(msg)
-	if DebugUtil.OSC {
+	if DebugUtil.OSC || DebugUtil.Resolume {
 		log.Printf("Reactor.toResolume: msg=%v\n", msg)
 	}
 }
@@ -1257,40 +1257,63 @@ func (r *Reactor) sendEffectParam(name string, value string) {
 	}
 }
 
-// getEffectMap returns the effects.json map for a given effect
+// getEffectMap returns the resolume.json map for a given effect
 // and map type ("on", "off", or "params")
-func (r *Reactor) getEffectMap(effectName string, mapType string) map[string]interface{} {
-	effects, ok := EffectsJSON["effects"]
-	if !ok {
-		log.Printf("No effects value in effects.json?")
-		return nil
+func (r *Reactor) getEffectMap(effectName string, mapType string) (map[string]interface{}, string, int, error) {
+	if effectName[1] != '-' {
+		err := fmt.Errorf("No dash in effect, name=%s", effectName)
+		return nil, "", 0, err
 	}
-	effectsmap := effects.(map[string]interface{})
-	oneEffect, ok := effectsmap[effectName]
+	effects, ok := ResolumeJSON["effects"]
 	if !ok {
-		log.Printf("No effects value for effect=%s\n", effectName)
-		return nil
+		err := fmt.Errorf("No effects value in resolume.json?")
+		return nil, "", 0, err
+	}
+	realEffectName := effectName[2:]
+
+	n, err := strconv.Atoi(effectName[0:1])
+	if err != nil {
+		return nil, "", 0, fmt.Errorf("Bad format of effectName=%s", effectName)
+	}
+	effnum := int(n)
+
+	effectsmap := effects.(map[string]interface{})
+	oneEffect, ok := effectsmap[realEffectName]
+	if !ok {
+		err := fmt.Errorf("No effects value for effect=%s", effectName)
+		return nil, "", 0, err
 	}
 	oneEffectMap := oneEffect.(map[string]interface{})
 	mapValue, ok := oneEffectMap[mapType]
 	if !ok {
-		log.Printf("No params value for effect=%s\n", effectName)
-		return nil
+		err := fmt.Errorf("No params value for effect=%s", effectName)
+		return nil, "", 0, err
 	}
-	return mapValue.(map[string]interface{})
+	return mapValue.(map[string]interface{}), realEffectName, effnum, nil
 }
 
 func (r *Reactor) addLayerAndClipNums(addr string, layerNum int, clipNum int) string {
 	if addr[0] != '/' {
-		log.Printf("WARNING, addr in effects.json doesn't start with / : %s", addr)
+		log.Printf("WARNING, addr in resolume.json doesn't start with / : %s", addr)
 		addr = "/" + addr
 	}
 	addr = fmt.Sprintf("/composition/layers/%d/clips/%d/video/effects%s", layerNum, clipNum, addr)
 	return addr
 }
 
+func (r *Reactor) resolumeEffectNameOf(name string, num int) string {
+	if num == 1 {
+		return name
+	}
+	return fmt.Sprintf("%s%d", name, num)
+}
+
 func (r *Reactor) sendPadOneEffectParam(effectName string, paramName string, value float64) {
-	paramsMap := r.getEffectMap(effectName, "params")
+	paramsMap, realEffectName, realEffectNum, err := r.getEffectMap(effectName, "params")
+	if err != nil {
+		log.Printf("sendPadOneEffectParam: err=%s\n", err)
+		return
+	}
 	if paramsMap == nil {
 		log.Printf("No params value for effect=%s\n", effectName)
 		return
@@ -1301,12 +1324,24 @@ func (r *Reactor) sendPadOneEffectParam(effectName string, paramName string, val
 		return
 	}
 	addr := oneParam.(string)
+
+	resEffectName := r.resolumeEffectNameOf(realEffectName, realEffectNum)
+	addr = strings.Replace(addr, realEffectName, resEffectName, 1)
+
 	addr = r.addLayerAndClipNums(addr, r.resolumeLayer, 1)
 
 	// log.Printf("sendPadOneEffectParam effect=%s param=%s value=%f\n", effectName, paramName, value)
 	msg := osc.NewMessage(addr)
 	msg.Append(float32(value))
 	r.toResolume(msg)
+}
+
+func (r *Reactor) addEffectNum(addr string, effect string, num int) string {
+	if num == 1 {
+		return addr
+	}
+	// e.g. "blur" becomes "blur2"
+	return strings.Replace(addr, effect, fmt.Sprintf("%s%d", effect, num), 1)
 }
 
 func (r *Reactor) sendPadOneEffectOnOff(effectName string, onoff bool) {
@@ -1316,11 +1351,17 @@ func (r *Reactor) sendPadOneEffectOnOff(effectName string, onoff bool) {
 	} else {
 		mapType = "off"
 	}
-	onoffMap := r.getEffectMap(effectName, mapType)
+
+	onoffMap, realEffectName, realEffectNum, err := r.getEffectMap(effectName, mapType)
+	if err != nil {
+		log.Printf("SendPadOneEffectOnOff: err=%s\n", err)
+		return
+	}
 	if onoffMap == nil {
 		log.Printf("No %s value for effect=%s\n", mapType, effectName)
 		return
 	}
+
 	onoffAddr, ok := onoffMap["addr"]
 	if !ok {
 		log.Printf("No addr value in onoff for effect=%s\n", effectName)
@@ -1332,6 +1373,7 @@ func (r *Reactor) sendPadOneEffectOnOff(effectName string, onoff bool) {
 		return
 	}
 	addr := onoffAddr.(string)
+	addr = r.addEffectNum(addr, realEffectName, realEffectNum)
 	addr = r.addLayerAndClipNums(addr, r.resolumeLayer, 1)
 	onoffValue := int(onoffArg.(float64))
 
