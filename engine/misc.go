@@ -34,6 +34,7 @@ type DebugFlags struct {
 	Morph     bool
 	NATS      bool
 	OSC       bool
+	Resolume  bool
 	Notify    bool
 	Realtime  bool
 	Remote    bool
@@ -71,6 +72,8 @@ func setDebug(dtype string, b bool) error {
 		DebugUtil.NATS = b
 	case "osc":
 		DebugUtil.OSC = b
+	case "resolume":
+		DebugUtil.Resolume = b
 	case "realtime":
 		DebugUtil.Realtime = b
 	case "remote":
@@ -468,7 +471,7 @@ func needIntArg(nm string, api string, args map[string]string) (int, error) {
 	if !ok {
 		return 0, fmt.Errorf("api/event=%s missing value for %s", api, nm)
 	}
-	v, err := strconv.ParseInt(val, 0, 32)
+	v, err := strconv.Atoi(val)
 	if err != nil {
 		return 0, fmt.Errorf("api/event=%s bad value for %s", api, nm)
 	}

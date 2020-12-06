@@ -100,21 +100,57 @@ func (vals *ParamValues) SetParamValueWithString(name, value string, callback Pa
 	return vals.realSetParamValueWithString(name, value, callback, true)
 }
 
+func (vals *ParamValues) paramDefOf(origname string) (ParamDef, error) {
+
+	realParamName := origname
+	if strings.HasPrefix(origname, "effect.") {
+
+		// We expect effect param names to be of the form
+		// effect.{#}-{base} or effect.{#}-{base}:{param}
+
+		restof := origname[len("effect."):]
+		if len(restof) > 1 && restof[1] != '-' {
+			restof = "1-" + restof
+		}
+		var base string
+		var effnum int
+		n := strings.Index(restof, ":")
+		withoutcolon := restof
+		if n > 0 {
+			withoutcolon = restof[0:n]
+		}
+		// If it's a name like effect.mirror:x
+		n, err := fmt.Sscanf(withoutcolon, "%d-%s", &effnum, &base)
+		toreplace := withoutcolon
+		if err != nil {
+			return ParamDef{}, fmt.Errorf("ParamValues.SetParamValueWithString err=%s", err)
+		}
+		realParamName = strings.Replace(origname, toreplace, base, 1)
+	}
+	return ParamDefs[realParamName], nil
+}
+
 // realSetParamValueWithString xxx
-func (vals *ParamValues) realSetParamValueWithString(name, value string, callback ParamCallback, lockit bool) error {
+func (vals *ParamValues) realSetParamValueWithString(origname, value string, callback ParamCallback, lockit bool) (err error) {
+
 	// log.Printf("realSetParamValueWithString: %s %s\n", name, value)
-	if name == "pad" {
+	if origname == "pad" {
 		return fmt.Errorf("ParamValues.SetParamValueWithString rejects setting of pad value")
 	}
-	def := ParamDefs[name]
+
+	def, err := vals.paramDefOf(origname)
+	if err != nil {
+		return err
+	}
+
 	var paramVal ParamValue
 	switch d := def.typedParamDef.(type) {
 	case paramDefInt:
-		v64, err := strconv.ParseInt(value, 10, 32)
+		valint, err := strconv.Atoi(value)
 		if err != nil {
 			return err
 		}
-		paramVal = paramValInt{def: d, value: int(v64)}
+		paramVal = paramValInt{def: d, value: valint}
 	case paramDefBool:
 		v, err := strconv.ParseBool(value)
 		if err != nil {
@@ -125,19 +161,19 @@ func (vals *ParamValues) realSetParamValueWithString(name, value string, callbac
 		paramVal = paramValString{def: d, value: value}
 	case paramDefFloat:
 		var v float32
-		v, err := ParseFloat32(value, name)
+		v, err := ParseFloat32(value, origname)
 		if err != nil {
 			return err
 		}
 		paramVal = paramValFloat{def: d, value: float32(v)}
 	default:
-		log.Printf("SetParamValueWithString: unknown type of ParamDef for name=%s", name)
-		return fmt.Errorf("SetParamValueWithString: unknown type of ParamDef for name=%s", name)
+		log.Printf("SetParamValueWithString: unknown type of ParamDef for name=%s", origname)
+		return fmt.Errorf("SetParamValueWithString: unknown type of ParamDef for name=%s", origname)
 	}
 
 	// Perhaps the callback should be inside the Lock?
 	if callback != nil {
-		err := callback(name, value)
+		err := callback(origname, value)
 		if err != nil {
 			return err
 		}
@@ -146,7 +182,7 @@ func (vals *ParamValues) realSetParamValueWithString(name, value string, callbac
 	if lockit {
 		vals.mutex.Lock()
 	}
-	vals.values[name] = paramVal
+	vals.values[origname] = paramVal
 	if lockit {
 		vals.mutex.Unlock()
 	}
@@ -156,24 +192,23 @@ func (vals *ParamValues) realSetParamValueWithString(name, value string, callbac
 // ParamEnums contains the lists of enumerated values for string parameters
 var ParamEnums map[string][]string
 
-// EffectsJSON is an unmarshalled version of the effects.json file
-var EffectsJSON map[string]interface{}
+// ResolumeJSON is an unmarshalled version of the resolume.json file
+var ResolumeJSON map[string]interface{}
 
-// LoadEffectsJSON returns an unmarshalled version of the effects.json file
-func LoadEffectsJSON() {
-	path := ConfigFilePath("effects.json")
+// LoadResolumeJSON returns an unmarshalled version of the resolume.json file
+func LoadResolumeJSON() error {
+	path := ConfigFilePath("resolume.json")
 	bytes, err := ioutil.ReadFile(path)
 	if err != nil {
-		log.Printf("Unable to read effects.json, err=%s\n", err)
-		return
+		return fmt.Errorf("unable to read resolume.json, err=%s", err)
 	}
 	var f interface{}
 	err = json.Unmarshal(bytes, &f)
 	if err != nil {
-		log.Printf("Unable to Unmarshal %s\n", path)
-		return
+		return fmt.Errorf("unable to Unmarshal %s", path)
 	}
-	EffectsJSON = f.(map[string]interface{})
+	ResolumeJSON = f.(map[string]interface{})
+	return nil
 }
 
 // ParseFloat32 xxx
@@ -187,7 +222,7 @@ func ParseFloat32(s string, name string) (float32, error) {
 
 // ParseInt xxx
 func ParseInt(s string, name string) (int, error) {
-	f, err := strconv.ParseInt(s, 10, 32)
+	f, err := strconv.Atoi(s)
 	if err != nil {
 		return 0, fmt.Errorf("parseInt of parameter '%s' (%s) fails", name, s)
 	}
@@ -204,21 +239,19 @@ func ParseBool(s string, name string) (bool, error) {
 }
 
 // LoadParamEnums initializes the list of enumerated parameter values
-func LoadParamEnums() {
+func LoadParamEnums() error {
 
 	ParamEnums = make(map[string][]string)
 
 	path := ConfigFilePath("paramenums.json")
 	bytes, err := ioutil.ReadFile(path)
 	if err != nil {
-		log.Printf("LoadParamEnums: err=%s\n", err)
-		return
+		return fmt.Errorf("loadParamEnums: unable to read path=%s", path)
 	}
 	var f interface{}
 	err = json.Unmarshal(bytes, &f)
 	if err != nil {
-		log.Printf("LoadParamEnums: unable to Unmarshal %s\n", path)
-		return
+		return fmt.Errorf("loadParamEnums: unable to Unmarshal path=%s", path)
 	}
 	toplevel := f.(map[string]interface{})
 
@@ -229,6 +262,7 @@ func LoadParamEnums() {
 		}
 		ParamEnums[enumName] = enums
 	}
+	return nil
 }
 
 // LoadParamDefs initializes the list of parameters
@@ -298,7 +332,7 @@ func LoadParamDefs() error {
 
 		case "string":
 			// A bit of a hack - the "min" value of a
-			// string parameter definition (in paramdefs.json)
+			// string parameter definition
 			// is actually an "enum" type name
 			enumName := min
 			values := ParamEnums[enumName]
