@@ -110,9 +110,21 @@ func TheRouter() *Router {
 
 		oneRouter.regionLetters = "ABCD"
 
-		LoadParamEnums()
-		LoadParamDefs()
-		LoadEffectsJSON()
+		err := LoadParamEnums()
+		if err != nil {
+			log.Printf("LoadParamEnums: err=%s\n", err)
+			// might be fatal, but try to continue
+		}
+		err = LoadParamDefs()
+		if err != nil {
+			log.Printf("LoadParamDefs: err=%s\n", err)
+			// might be fatal, but try to continue
+		}
+		err = LoadResolumeJSON()
+		if err != nil {
+			log.Printf("LoadResolumeJSON: err=%s\n", err)
+			// might be fatal, but try to continue
+		}
 
 		oneRouter.reactors = make(map[string]*Reactor)
 		oneRouter.regionForMorph = make(map[string]string)
