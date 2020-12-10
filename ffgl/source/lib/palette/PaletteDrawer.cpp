@@ -196,6 +196,7 @@ float PaletteDrawer::finalAspect( float aspect )
 	}
 	return finalaspect;
 }
+
 void PaletteDrawer::drawQuad(SpriteParams& params, SpriteState& state, float x0, float y0, float x1, float y1, float x2, float y2, float x3, float y3) {
 
 	if( ! prepareToDraw( params, state ) )
@@ -310,6 +311,11 @@ void PaletteDrawer::drawEllipse(SpriteParams& params, SpriteState& state, float 
 	ffglex::ScopedVAOBinding vaoBinding( vaoID );
 	ffglex::ScopedVBOBinding vboBinding( vboID );
 
+	float screenAspect  = float( m_vp.height ) / float( m_vp.width );
+	m_matrix = glm::scale( m_matrix, glm::vec3(screenAspect, 1.0f, 1.0f ));
+
+	float finalaspect = finalAspect( params.aspect );
+
 	int nvertices = MAX_VERTICES;
 
 	for( int n=0; n<nvertices; n++ ) {
@@ -317,6 +323,10 @@ void PaletteDrawer::drawEllipse(SpriteParams& params, SpriteState& state, float 
 		float degree = fromang + delta * toang;
 		float x = x0 + sin( degree2radian( degree ) ) * radius;
 		float y = y0 + cos( degree2radian( degree ) ) * radius;
+		if( finalaspect != 1.0f )
+		{
+			x *= finalaspect;
+		}
 		vertices[n] = { 0.0f , 1.0f, x, y, 0.0f};
 	}
 

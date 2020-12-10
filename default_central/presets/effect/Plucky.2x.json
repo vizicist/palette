@@ -1,6 +1,6 @@
 {
     "params":{
-        "edge":{
+        "edgedetection":{
             "enabled":"true",
             "value":"true"
         },

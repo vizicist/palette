@@ -64,7 +64,7 @@
         "gaussian": "/blur/effect/gaussian"
       }
     },
-    "quad": {
+    "mirrorquad": {
       "on": {
         "addr": "/mirrorquad/bypassed",
         "arg": 0
@@ -135,7 +135,7 @@
         "arg": 1
       }
     },
-    "edge": {
+    "edgedetection": {
       "on": {
         "addr": "/edgedetection/bypassed",
         "arg": 0

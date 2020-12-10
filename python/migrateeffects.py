@@ -16,11 +16,11 @@ def changeeffects(paramfile):
 "huerotate",
 "kaleid",
 "blur",
-"quad",
+"mirrorquad",
 "fragment",
 "posterize",
 "displace",
-"edge",
+"edgedetection",
 "mirror",
 "trails"
     }
@@ -48,9 +48,9 @@ def changeeffects(paramfile):
 "blur:gaussian",
 "blur:quality",
 
-"quad",
-"quad:flipx",
-"quad:flipy",
+"mirrorquad",
+"mirrorquad:flipx",
+"mirrorquad:flipy",
 
 "fragment",
 "fragment:fragments",
@@ -69,9 +69,9 @@ def changeeffects(paramfile):
 "displace:yfactor",
 "displace:threshold",
 
-"edge",
-"edge:mode",
-"edge:multiplier",
+"edgedetection",
+"edgedetection:mode",
+"edgedetection:multiplier",
 
 "mirror",
 "mirror:x",

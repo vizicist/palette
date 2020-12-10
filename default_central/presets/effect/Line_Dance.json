@@ -1,10 +1,10 @@
 {
     "params":{
-        "edge":{
+        "edgedetection":{
             "enabled":"true",
             "value":"true"
         },
-        "quad":{
+        "mirrorquad":{
             "enabled":"true",
             "value":"true"
         }
