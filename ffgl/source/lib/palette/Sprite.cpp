@@ -90,11 +90,8 @@ void Sprite::draw(PaletteDrawer* drawer) {
 	float thickness = params.thickness;
 	drawer->strokeWeight(thickness);
 
-	float aspect = params.aspect;
-	
 	float scalex = state.size * scaled_z;
 	float scaley = state.size * scaled_z;
-
 
 	// These control flipping of the drawing orientation
 	int xdir = 1;

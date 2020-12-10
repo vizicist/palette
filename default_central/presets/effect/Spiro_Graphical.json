@@ -8,7 +8,7 @@
             "enabled":true,
             "value":"false"
         },
-        "edge":{
+        "edgedetection":{
             "enabled":true,
             "value":"true"
         },
@@ -40,7 +40,7 @@
             "enabled":true,
             "value":"false"
         },
-        "quad":{
+        "mirrorquad":{
             "enabled":true,
             "value":"false"
         },
