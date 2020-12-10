@@ -4,7 +4,7 @@
 #include "environment.iss"
 
 #define MyAppName "Palette"
-#define MyAppVersion "4.02"
+#define MyAppVersion "4.03"
 #define MyAppPublisher "Nosuch Media"
 #define MyAppURL "https://github.com/vizicist/palette"
 
@@ -35,7 +35,7 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Files]
 Source: "ship\bin\*"; DestDir: "{app}\bin"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "ship\ffgl7\*"; DestDir: "{app}\ffgl7"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "ship\ffgl\*"; DestDir: "{app}\ffgl"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "ship\config\synths.json"; DestDir: "{app}\config"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "ship\config\resolume.json"; DestDir: "{app}\config"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "ship\config\nats*.conf"; DestDir: "{app}\config"; Flags: ignoreversion recursesubdirs createallsubdirs
@@ -83,12 +83,12 @@ Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environmen
 procedure CurStepChanged(CurStep: TSetupStep);
 begin
     if CurStep = ssPostInstall 
-     then EnvAddPath(ExpandConstant('{app}') +'\ffgl7'); EnvAddPath(ExpandConstant('{app}') +'\bin');
+     then EnvAddPath(ExpandConstant('{app}') +'\ffgl'); EnvAddPath(ExpandConstant('{app}') +'\bin');
 end;
 
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 begin
     if CurUninstallStep = usPostUninstall
-    then EnvRemovePath(ExpandConstant('{app}') +'\ffgl7'); EnvRemovePath(ExpandConstant('{app}') +'\bin');
+    then EnvRemovePath(ExpandConstant('{app}') +'\ffgl'); EnvRemovePath(ExpandConstant('{app}') +'\bin');
 end;
 

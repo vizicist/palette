@@ -10,7 +10,7 @@
 
 - If the installer asks you to reboot Windows, please do so.  Sorry.  This should only happen the first time you install Palette.
 
-- In Resolume's <i>Preferences->Video</i> section, add this directory to the list of FreeFrame (FFGL) plugin directories.  The directory name <b>ffgl7</b> indicates that it's for Resolume 7: <pre>C:\Program Files\Palette\ffgl7</pre>
+- In Resolume's <i>Preferences->Video</i> section, add this directory to the list of FreeFrame (FFGL) plugin directories: <pre>C:\Program Files\Palette\ffgl</pre>
 
 - In <i>Preferences->OSC</i>, enable "OSC Input" with an incoming port of 7000.
 
@@ -56,7 +56,7 @@ That script will start the Palette software and start Resolume.
 - If for some reason Resolume crashes at startup,
 you can look in this file: <pre>%LOCALAPPDATA%\Palette\logs\ffgl.log</pre>
 for clues as to the reason.  If you can't resolve the issue,
-you should either remove the ffgl7 directory from the <i>Preferences->Video</i> section or just uninstall Palette.
+you should either remove the ffgl directory from the <i>Preferences->Video</i> section or just uninstall Palette.
 
 - To verify that the plugin is being recognized by Resolume,
 you should find an entry for <b>Palette</b> in Resolume's Sources tab, in the alphabetical list under <b>Generators</b>.  If you don't see this, look at the Resolume log file in this directory: <pre>%APPDATA%\Resolume Avenue</pre>

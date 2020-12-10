@@ -3,7 +3,7 @@ import glob
 import sys
 import os
 
-def changeparam(paramfile,paramname,oldval,newval):
+def changeparam(paramfile,paramname,paramnewname):
     f = open(paramfile)
     params = json.load(f)
     f.close()
@@ -11,14 +11,13 @@ def changeparam(paramfile,paramname,oldval,newval):
     for ch in {"A","B","C","D"}:
         chname = ch + "_" + paramname
         if chname in params["params"]:
-            if params["params"][chname] == oldval:
-                print("Changing chname=",chname)
-                params["params"][chname] = str(newval)
+            params["params"][paramnewname] = params["params"][chname]
+            del params["params"][chname]
 
     if paramname in params["params"]:
-        if params["params"][paramname] == oldval:
-            print("Changing parmname=",paramname)
-            params["params"][paramname] = str(newval)
+        print("Changing parmname=",paramname)
+        params["params"][paramnewname] = params["params"][paramname]
+        del params["params"][paramname]
 
     print("Writing ",paramfile)
     f = open(paramfile,"w")
@@ -31,12 +30,11 @@ if len(sys.argv) < 4:
     sys.exit(1)
 
 paramdir = sys.argv[1]
-paramname = sys.argv[2]
-oldval = sys.argv[3]
-newval = sys.argv[4]
+oldname = sys.argv[2]
+newname = sys.argv[3]
 
 files = glob.glob(os.path.join(paramdir,'*.json'))
 for s in files:
     print("file = ",s)
-    changeparam(s,paramname,oldval,newval)
+    changeparam(s,oldname,newname)
 
