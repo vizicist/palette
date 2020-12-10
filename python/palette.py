@@ -49,6 +49,13 @@ def presetsPath():
     p = ConfigValue("presetspath")
     p = p.replace("%PALETTE%",PaletteDir())
     p = p.replace("%LOCALAPPDATA%",os.environ.get("LOCALAPPDATA"))
+
+    # If PALETTESOURCE is defined, add the default/presets directory
+    # to the presetsPath so that any editing/creation of 
+    ps = os.environ.get("PALETTESOURCE")
+    if ps != "":
+        p = os.path.join(ps,"default","presets") + ";" + p
+
     return p
 
 # Combine presets in the presetsPath list
@@ -68,7 +75,9 @@ def presetsListAll(section):
         sortvals.append(v)
     return sortvals
 
-# This one always returns the local (first) directory in the presetspath
+# This one always returns the local (first) directory in the presetspath,
+# which is either the user's LOCALAPPDATA version or (if PALETTESOURCE is
+# defined) the PALETTESOURCE version.
 def localPresetsFilePath(section, nm, suffix=".json"):
     presetspath = presetsPath()
     paths = presetspath.split(";")

@@ -2,13 +2,9 @@ CurrentSnapshot.*
 *.pyc
 python/dist
 build/windows/ship
-ffgl/windows/x64
-ffgl/windows/.vs
-ffgl6/windows/x64
-ffgl6/windows/.vs
-ffgl7/build/windows/x64
-ffgl7/build/windows/.vs
-ffgl7/binaries
+ffgl/build/windows/x64
+ffgl/build/windows/.vs
+ffgl/binaries
 windows/ship
 params/gentle/snap/CurrentSnapshot.*
 # Binaries for programs and plugins
@@ -46,5 +42,4 @@ scripts/build
 scripts/dist
 *.spec
 ship/palette_win
-
-
+default/presets_old
