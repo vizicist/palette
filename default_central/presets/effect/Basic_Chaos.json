@@ -2,7 +2,7 @@
     "params":{
         "blur":"false",
         "displace":"false",
-        "edge":"false",
+        "edgedetection":"false",
         "fragment":"true",
         "huerotate":"false",
         "iterate":"false",
@@ -10,7 +10,7 @@
         "kaleid2":"false",
         "mirror":"false",
         "posterize":"true",
-        "quad":"false",
+        "mirrorquad":"false",
         "trails":"false",
         "twisted":"false"
     }

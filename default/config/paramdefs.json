@@ -38,9 +38,9 @@
 "effect.blur:gaussian": {"valuetype": "float", "min": "0.0", "max": "1.0",  "init": "0.17", "comment": "#" },
 "effect.blur:quality": {"valuetype": "float", "min": "0.0", "max": "1.0",  "init": "0.28", "comment": "#" },
 
-"effect.quad": {"valuetype": "bool", "min": "false", "max": "true", "randmax": "0.05", "init": "false", "comment": "#" },
-"effect.quad:flipx": {"valuetype": "int", "min": "0", "max": "1",  "init": "0", "comment": "#" },
-"effect.quad:flipy": {"valuetype": "int", "min": "0", "max": "1",  "init": "0", "comment": "#" },
+"effect.mirrorquad": {"valuetype": "bool", "min": "false", "max": "true", "randmax": "0.05", "init": "false", "comment": "#" },
+"effect.mirrorquad:flipx": {"valuetype": "int", "min": "0", "max": "1",  "init": "0", "comment": "#" },
+"effect.mirrorquad:flipy": {"valuetype": "int", "min": "0", "max": "1",  "init": "0", "comment": "#" },
 
 "effect.fragment": {"valuetype": "bool", "min": "false", "max": "true", "randmax": "0.1", "init": "false", "comment": "#" },
 "effect.fragment:fragments": {"valuetype": "float", "min": "0.0", "max": "1.0",  "init": "0.3", "comment": "#" },
@@ -59,9 +59,9 @@
 "effect.displace:yfactor": {"valuetype": "float", "min": "0.0", "max": "1.0",  "init": "0.24", "comment": "#" },
 "effect.displace:threshold": {"valuetype": "float", "min": "0.0", "max": "1.0",  "randmin": "0.0", "randmax": "0.4", "init": "0.0", "comment": "#" },
 
-"effect.edge": {"valuetype": "bool", "min": "false", "max": "true", "randmax": "0.2", "init": "false", "comment": "#" },
-"effect.edge:mode": {"valuetype": "float", "min": "0.0", "max": "1.0",  "init": "0.92", "comment": "#" },
-"effect.edge:multiplier": {"valuetype": "float", "min": "0.0", "max": "1.0",  "randmin": "0.2", "randmax": "1.0", "init": "1.0", "comment": "#" },
+"effect.edgedetection": {"valuetype": "bool", "min": "false", "max": "true", "randmax": "0.2", "init": "false", "comment": "#" },
+"effect.edgedetection:mode": {"valuetype": "float", "min": "0.0", "max": "1.0",  "init": "0.92", "comment": "#" },
+"effect.edgedetection:multiplier": {"valuetype": "float", "min": "0.0", "max": "1.0",  "randmin": "0.2", "randmax": "1.0", "init": "1.0", "comment": "#" },
 
 "effect.mirror": {"valuetype": "bool", "min": "false", "max": "true", "randmax": "0.05", "init": "false", "comment": "#" },
 "effect.mirror:x": {"valuetype": "float", "min": "0.0", "max": "1.0", "randmin":"0.5", "randmax":"0.5", "init": "0.5", "comment": "#" },
