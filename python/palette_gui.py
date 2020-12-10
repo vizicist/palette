@@ -1316,15 +1316,16 @@ class PageEditParams(tk.Frame):
     def makeButtonArea(self):
         f = tk.Frame(self, background=ColorBg)
 
-        self.initButton = ttk.Label(f, text="Init", style='Button.TLabel')
-        self.initButton.bind("<Button-1>", lambda event:self.initCallback())
-        self.initButton.bind("<ButtonRelease-1>", lambda event:self.initRelease())
-        self.initButton.pack(side=tk.LEFT, padx=5)
+        if self.paramstype != "snap":
+            self.initButton = ttk.Label(f, text="Init", style='Button.TLabel')
+            self.initButton.bind("<Button-1>", lambda event:self.initCallback())
+            self.initButton.bind("<ButtonRelease-1>", lambda event:self.initRelease())
+            self.initButton.pack(side=tk.LEFT, padx=5)
 
-        self.randButton = ttk.Label(f, text="Rand", style='Button.TLabel')
-        self.randButton.bind("<Button-1>", lambda event:self.randCallback())
-        self.randButton.bind("<ButtonRelease-1>", lambda event:self.randRelease())
-        self.randButton.pack(side=tk.LEFT, padx=5)
+            self.randButton = ttk.Label(f, text="Rand", style='Button.TLabel')
+            self.randButton.bind("<Button-1>", lambda event:self.randCallback())
+            self.randButton.bind("<ButtonRelease-1>", lambda event:self.randRelease())
+            self.randButton.pack(side=tk.LEFT, padx=5)
 
         self.importButton = ttk.Label(f, text="Import", style='Button.TLabel')
         self.importButton.bind("<Button-1>", lambda event:self.saveImportCallback())

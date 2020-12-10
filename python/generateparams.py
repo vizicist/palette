@@ -174,7 +174,7 @@ if __name__ == "__main__":
     homedir = os.getenv("PALETTESOURCE")
 
     force = False
-    sourcedir = os.path.join(homedir,"ffgl7/source/lib/palette")
+    sourcedir = os.path.join(homedir,"ffgl/source/lib/palette")
     ftype = "float"
     if len(sys.argv) > 1:
         for a in sys.argv[1:]:

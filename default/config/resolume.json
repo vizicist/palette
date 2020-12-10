@@ -31,7 +31,7 @@
         "huerotate": "/huerotate/effect/huerotate"
       }
     },
-    "kaleid": {
+    "kaleidoscope": {
       "on": {
         "addr": "/kaleidoscope/bypassed",
         "arg": 0
