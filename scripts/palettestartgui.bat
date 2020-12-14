@@ -1,5 +1,7 @@
 @echo off
 
+c:/windows/system32/taskkill /F /IM palette_gui.exe > nul 2>&1
+
 set logdir=%LOCALAPPDATA%\Palette\logs
 
 echo > "%logdir%\gui.log"

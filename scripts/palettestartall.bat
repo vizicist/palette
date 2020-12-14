@@ -1,3 +1,4 @@
 @echo off
-call palettestart
+call palettestartengine
+call palettestartgui
 call palettestartresolume
