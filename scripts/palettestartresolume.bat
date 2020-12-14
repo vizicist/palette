@@ -14,25 +14,19 @@ if exist "C:\\Program Files\\Resolume Avenue\\Avenue.exe" (
 )
 
 rem give it time to start before sending it OSC
-call delay 8
+call delay 4
 
 set osc="%PALETTE%\bin\pyinstalled\osc.exe"
 for /f %%i in ('ipaddress') do set addr=%%i
 set port=7000
 
-echo Sending OSC to activate Resolume
-%osc% send %port%@%addr% /composition/layers/1/clips/1/connect 1
-%osc% send %port%@%addr% /composition/layers/2/clips/1/connect 1
-%osc% send %port%@%addr% /composition/layers/3/clips/1/connect 1
-%osc% send %port%@%addr% /composition/layers/4/clips/1/connect 1
-
-rem another try in case Resolume takes longer to start
-call delay 16
-
-echo Sending OSC to activate Resolume again
-%osc% send %port%@%addr% /composition/layers/1/clips/1/connect 1
-%osc% send %port%@%addr% /composition/layers/2/clips/1/connect 1
-%osc% send %port%@%addr% /composition/layers/3/clips/1/connect 1
-%osc% send %port%@%addr% /composition/layers/4/clips/1/connect 1
+for %%g in (a,b,c,d,e,f,g,h,i) do (
+	call delay 3
+	echo Sending OSC to activate Resolume
+	%osc% send %port%@%addr% /composition/layers/1/clips/1/connect 1
+	%osc% send %port%@%addr% /composition/layers/2/clips/1/connect 1
+	%osc% send %port%@%addr% /composition/layers/3/clips/1/connect 1
+	%osc% send %port%@%addr% /composition/layers/4/clips/1/connect 1
+)
 
 :getout
