@@ -29,7 +29,7 @@ def localconfigFilePath(nm):
 def configFilePath(nm):
     # If PALETTESOURCE is defined, we use
     ps = os.environ.get("PALETTESOURCE")
-    if ps != "":
+    if ps != None:
         global PaletteSourceLogged
         if not PaletteSourceLogged:
             PaletteSourceLogged = True
@@ -48,12 +48,15 @@ def localAppDataDir():
 def presetsPath():
     p = ConfigValue("presetspath")
     p = p.replace("%PALETTE%",PaletteDir())
-    p = p.replace("%LOCALAPPDATA%",os.environ.get("LOCALAPPDATA"))
+    lad = os.environ.get("LOCALAPPDATA")
+    if lad != None:
+        p = p.replace("%LOCALAPPDATA%",lad)
 
     # If PALETTESOURCE is defined, add the default/presets directory
-    # to the presetsPath so that any editing/creation of 
+    # to the presetsPath ,so that any editing/creation of presets
+    # will be saved there (to be used in the default installation).
     ps = os.environ.get("PALETTESOURCE")
-    if ps != "":
+    if ps != None:
         p = os.path.join(ps,"default","presets") + ";" + p
 
     return p
