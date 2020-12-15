@@ -61,9 +61,9 @@ Source: "ship\midifiles\*"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\midifiles"; F
 Source: "logs_readme.txt"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\logs"; DestName: "readme.txt"; Flags: ignoreversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
-; This specifies the Visual C++ Windows Runtime Redistributable to install
+; This specifies the Visual C++ Windows Runtime Redistributable to install, it's put in {app}\bin to help debug things.
 [Files]
-Source: "VC_redist.x64.exe"; DestDir: {tmp}
+Source: "VC_redist.x64.exe"; DestDir: {app}\bin
 
 ; This presets directory is where locally-saved presets go
 [Dirs]
@@ -74,8 +74,9 @@ Name: "{%LOCALAPPDATA}\{#MyAppName}\presets\snap"
 Name: "{%LOCALAPPDATA}\{#MyAppName}\presets\sound"
 
 [Run]
-Filename: {tmp}\VC_redist.x64.exe; Parameters: "/install /quiet /norestart"; StatusMsg: "Installing 64-bit Windows Universal runtime..."; Flags: waituntilterminated
+Filename: {app}\bin\VC_redist.x64.exe; Parameters: "/install"; StatusMsg: "Installing 64-bit Windows Universal runtime..."; Flags: waituntilterminated
 Filename: taskkill.exe; Parameters: "/F /IM palette_engine.exe"; StatusMsg: "Making sure palette_engine is not running..."; Flags: waituntilterminated
+Filename: taskkill.exe; Parameters: "/F /IM palette_gui.exe"; StatusMsg: "Making sure palette_gui is not running..."; Flags: waituntilterminated
 
 [Icons]
 Name: "{group}\{cm:ProgramOnTheWeb,{#MyAppName}}"; Filename: "{#MyAppURL}"
