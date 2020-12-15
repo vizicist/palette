@@ -2,7 +2,7 @@
 #include <string>
 #include <sstream>
 #include "../ffgl/FFGL.h"//For OpenGL
-#include "NosuchDebug.h"
+#include "nosuch/NosuchDebug.h"
 
 namespace ffglex
 {
