@@ -25,6 +25,7 @@ PadLayer = {
 DebugApi = False
 Verbose = False
 MyNuid = ""
+PaletteSourceLogged = False
 
 def localconfigFilePath(nm):
     return os.path.join(localAppDataDir(), "config", nm)
@@ -33,7 +34,10 @@ def configFilePath(nm):
     # If PALETTESOURCE is defined, we use
     ps = os.environ.get("PALETTESOURCE")
     if ps != "":
-        print("Using PALETTESOURCE to get configFilePath")
+        global PaletteSourceLogged
+        if not PaletteSourceLogged:
+            PaletteSourceLogged = True
+            print("Using PALETTESOURCE=",ps," to get config files")
         return os.path.join(ps, "default", "config", nm)
     else:
         return os.path.join(PaletteDir(), "config", nm)
