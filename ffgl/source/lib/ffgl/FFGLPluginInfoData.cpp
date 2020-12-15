@@ -5,7 +5,7 @@
 //
 
 #include "FFGLPluginInfo.h"
-#include "NosuchDebug.h"
+#include "nosuch/NosuchDebug.h"
 
 //////////////////////////////////////////////////////////////////
 // Information about the plugin
