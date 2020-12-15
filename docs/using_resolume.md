@@ -5,44 +5,54 @@
   - have Resolume Avenue (or Arena) 7
   - and have a Sensel Morph.
 
+## One-time installation steps
+
 - First, download and execute the latest installer from the
 <a href=https://github.com/vizicist/palette/tree/main/release>release directory</a>.
 
-- If the installer asks you to reboot Windows, please do so.  Sorry.  This should only happen the first time you install Palette.
+- If the installer asks you to reboot Windows, please do so.
+
+- Start Resolume
 
 - In Resolume's <i>Preferences->Video</i> section, add this directory to the list of FreeFrame (FFGL) plugin directories: <pre>C:\Program Files\Palette\ffgl</pre>
 
-- In <i>Preferences->OSC</i>, enable "OSC Input" with an incoming port of 7000.
+- In Resolume's <i>Preferences->OSC</i>, enable "OSC Input" with an incoming port of 7000.
 
-- Quit and restart Resolume so that it reads the added FFGL directory.
+- Use Resolume's <i>Composition->Open</i> to open: <pre>C:\Program Files\Palette\config\PaletteA.avc</pre>
+  That composition contains a single layer with a <b>Palette</b> plugin followed by several dozen FFGL plugins.
+  Don't worry if there's a big yellow X in the layer, it should go away the next time Resolume starts.
 
-- Use <i>Composition->Open</i> to open: <pre>C:\Program Files\Palette\config\PaletteA.avc</pre>
+- Quit Resolume.
 
-- That composition contains a single layer with a <b>Palette</b> plugin followed by a dozen or so other FFGL plugins.
-
-- Click on the <b>Palette</b> cell (the first one) in the layer to activate it.
+## Every time you want to start the Palette
 
 - Make sure the Sensel Morph is plugged in.
 
-- Start the Palette software by invoking the
-<b>Start Palette</b> app, found in the Palette folder of the Windows Start menu.
+- Invoke <b>Start Palette and Resolume</b> found in the Palette folder of the Windows Start menu.
+The Palette software will be started, along with Resolume.
 
-- After starting Palette, you should see a window
-pop up with a GUI for selecting Palette presets.
-If you don't see the GUI, it may be hiding behind other windows.
+- If you want to start the Palette software and Resolume independently, you can use <b>Start Palette</b>.
+In that case, you'll need to manually activate the Palette clip inside Resolume.  This is done automatically
+if you use <b>Start Palette and Resolume</b>.
 
-- You should now be able to finger paint on the Morph and see something visual in the Resolume output.
+- You should now be able to finger paint on the Morph and see results in the Resolume output.
 
-- Use the GUI to select different Snapshot presets.
+- Use the Palette GUI to select different presets for your finger painting.
+If you don't see the GUI, it may be hiding behind other windows (e.g. Resolume).
 
-- To edit the presets, click on the Preset button at the very top of the GUI.
-This will reveal the pages you can click on for Visual and Effect presets.
-A Snapshot contains both visual and effect settings, but the Visual and Effect presets let you control these things independently.
-If you click a second time on the Visual and Effect buttons,
+- To get more control and edit the presets, click on the Preset button at the very top of the GUI.
+This will reveal the buttons to access separate pages for Snapshot, Visual, and Effect presets.
+A Snapshot preset contains both visual and effect settings, and the Visual and Effect
+presets let you control these things independently.
+If you click a second time on any of these three buttons,
 you will be able to access the individual parameters
 of a preset and save it has a new preset.
 
 - If it's not working, see below for debugging hints.
+
+## Stopping the Palette
+
+- Use <b>Stop Palette</b> or <b>Stop Palette and Resolume</b> from the Palette folder of the Windows Start menu.
 
 ## Debugging hints if you don't see any visual output
 
