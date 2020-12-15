@@ -74,7 +74,7 @@ Name: "{%LOCALAPPDATA}\{#MyAppName}\presets\snap"
 Name: "{%LOCALAPPDATA}\{#MyAppName}\presets\sound"
 
 [Run]
-Filename: {app}\bin\VC_redist.x64.exe; Parameters: "/install"; StatusMsg: "Installing 64-bit Windows Universal runtime..."; Flags: waituntilterminated
+Filename: {app}\bin\VC_redist.x64.exe; Parameters: "/install /quiet"; StatusMsg: "Installing 64-bit Windows Universal runtime..."; Flags: waituntilterminated
 Filename: taskkill.exe; Parameters: "/F /IM palette_engine.exe"; StatusMsg: "Making sure palette_engine is not running..."; Flags: waituntilterminated
 Filename: taskkill.exe; Parameters: "/F /IM palette_gui.exe"; StatusMsg: "Making sure palette_gui is not running..."; Flags: waituntilterminated
 
