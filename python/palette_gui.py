@@ -468,10 +468,11 @@ class ProGuiApp(tk.Tk):
 
     def changePadParamValue(self,pad,paramstype,paramname,v):
         snappage = self.editPage["snap"]
-        if self.paramIsPerPad(paramname):
-            snapParamName = pad + "_" + paramname
-        else:
-            snapParamName = paramname
+        # if self.paramIsPerPad(paramname):
+        #     snapParamName = pad + "_" + paramname
+        # else:
+        #     snapParamName = paramname
+        snapParamName = paramname
 
         if paramstype != "sliders":
             snappage.changeValueLabel(snapParamName,v)
@@ -501,7 +502,8 @@ class ProGuiApp(tk.Tk):
             (_,base) = padOfParam(name)
             paramsType = allj["paramstype"]
             if paramsType != "sliders":
-                fullname = PadName + "_" + base
+                # fullname = PadName + "_" + base
+                fullname = base
                 if not fullname in j["params"]:
                     j["params"][fullname] = allj["init"]
 
@@ -622,7 +624,8 @@ class ProGuiApp(tk.Tk):
     def sendSliderParamValue(self,pad,paramname,val):
         self.sendPadParamValue(pad,paramname,val)
 
-        snapparam = pad + "_" + paramname
+        # snapparam = pad + "_" + paramname
+        snapparam = paramname
         self.editPage["snap"].changeValueLabel(snapparam,val)
 
         for pg in {"sound","visual","effect"}:
@@ -646,7 +649,8 @@ class ProGuiApp(tk.Tk):
             if pad == None:
                 pad = PadName
             else:
-                fullparam = PadName + "_" + baseparam
+                # fullparam = PadName + "_" + baseparam
+                fullparam = baseparam
             if not baseparam in self.paramTypeOf:
                 print("param ",baseparam," isn't in paramTypeOf?")
                 continue
@@ -682,7 +686,8 @@ class ProGuiApp(tk.Tk):
         else:
             # change the corresponding value on the snap page
             if self.currentPageName != "sliders":
-                fullparamname = PadName + "_" + paramname
+                # fullparamname = PadName + "_" + paramname
+                fullparamname = paramname
                 self.editPage["snap"].changeValueLabel(fullparamname,newval)
                 self.editPage["snap"].setChanged()
                 self.sendPadParamValue(PadName,paramname,newval)
@@ -1002,7 +1007,8 @@ class ProGuiApp(tk.Tk):
         for name in self.allParamsJson:
             j = self.allParamsJson[name]
             if j["paramstype"] == paramstype:
-                paramname = pad + "_" + name
+                # paramname = pad + "_" + name
+                paramname = name
                 v = self.editPage["snap"].getValue(paramname)
                 paramlist = paramlist + sep + "\"" + name + "\" : \"" + str(v) + "\""
                 sep = ", "
@@ -1071,7 +1077,9 @@ class ProGuiApp(tk.Tk):
             paramType = self.allParamsJson[x]["paramstype"]
             if paramType == "sliders":
                 continue
-            padParamName = PadName + "_" + x
+            # We no longer prepend A_, B_, C_, D_
+            # padParamName = PadName + "_" + x
+            padParamName = x
             self.paramValueTypeOf[padParamName] = self.allParamsJson[x]["valuetype"]
             self.paramsOfType["snap"][padParamName] = self.allParamsJson[x]
 
@@ -2248,15 +2256,15 @@ if __name__ == "__main__":
 
     if gui_size == "small":
         # print("small size")
-        GuiWidth = 355 ; GuiHeight = 490
-        fontFactor = 0.4
+        GuiWidth = 400 ; GuiHeight = 550
+        fontFactor = 0.45
         thumbFactor = 0.1
 
-        selectDisplayRows = 12
-        paramDisplayRows = 21
+        selectDisplayRows = 13
+        paramDisplayRows = 23
         selectDisplayPerRow = 4
 
-        pageSizeOfSelectNormal = 0.915
+        pageSizeOfSelectNormal = 0.912
         pageSizeOfControlNormal = 1.0 - pageSizeOfSelectNormal
 
         pageSizeOfSelectAdvanced = 0.86
