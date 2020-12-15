@@ -33,6 +33,15 @@ ChangesEnvironment=yes
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
+[InstallDelete]
+; Delete ALL default presets in {app} of an existing installation, to control the default set of presets.
+; This should be okay because any saved/edited presets (even of the default presets) are saved in
+; the %LOCALAPPDATA% directory, and we don't delete those.
+Type: files; Name:"{app}\presets\snap\*.json"
+Type: files; Name:"{app}\presets\sound\*.json"
+Type: files; Name:"{app}\presets\effect\*.json"
+Type: files; Name:"{app}\presets\visual\*.json"
+
 [Files]
 Source: "ship\bin\*"; DestDir: "{app}\bin"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "ship\ffgl\*"; DestDir: "{app}\ffgl"; Flags: ignoreversion recursesubdirs createallsubdirs

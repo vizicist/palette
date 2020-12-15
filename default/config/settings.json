@@ -3,9 +3,8 @@
   "generatevisuals": "true",
   "publishcursor": "false",
   "publishmidi": "false",
-  "publishparams": "false",
   "natsconf": "natsalone.conf",
   "presetspath": "%LOCALAPPDATA%\\Palette\\presets;%PALETTE%\\presets",
-  "debug": "gen,resolume",
+  "debug": "",
   "this line should not end with a comma": 0
 }

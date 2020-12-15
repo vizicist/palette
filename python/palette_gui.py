@@ -25,17 +25,22 @@ signal.signal(signal.SIGINT,signal.SIG_IGN)
 RecMode = False
 StartupMode = True
 
-ColorBg = '#bbbbbb'
+# ColorBg = '#bbbbbb'
 ColorWhite = '#ffffff'
-ColorText = '#000000'  # black
+ColorBlack = '#000000'
+
+ColorBg = '#000000'
+ColorText = '#ffffff'
 ColorComboText = '#000000'    # black
-ColorButton = '#888888'  
-ColorScrollbar = '#888888'  
+# ColorButton = '#888888'  
+ColorButton = '#333333'  
+ColorScrollbar = '#333333'  
 ColorThumb = '#00ffff'  
 
 ColorRed = '#ff0000'
 ColorBlue = '#0000ff'
 ColorGreen = '#00ff00'
+# ColorHigh = '#006666'
 ColorHigh = '#006666'
 ColorBright = '#00ffff'
 ColorAqua = '#00ffff'
@@ -75,7 +80,7 @@ def setFontSizes(fontFactor):
     comboFont = (f, int(20*fontFactor))
     largerFont = (f, int(20*fontFactor))
     largeFont = (f, int(16*fontFactor))
-    performFont = (f, int(14*fontFactor))
+    performFont = (f, int(18*fontFactor))
     mediumFont = (f, int(12*fontFactor))
     padLabelFont = (f, int(16*fontFactor))
 
@@ -953,7 +958,7 @@ class ProGuiApp(tk.Tk):
             print("setAdvanced, level is ",self.advancedLevel)
             self.escapeCount = 0
             if level == 0:
-                self.showAllPages = True
+                self.showAllPages = False
                 self.showSliders = False
                 PerPadPerformLabels["scale"] = SimpleScales
             elif level == 1:
@@ -1149,14 +1154,12 @@ class SelectHeader(tk.Frame):
 
         self.pageButton = {}
 
-        self.makeSelectHeaderLabel("Preset")
-        for i in PageNames:
-            self.makeHeaderButton(i,PageNames[i])
-
-    def makeSelectHeaderLabel(self,text):
-        self.headerButton = ttk.Button(self.titleFrame, text=text, style='Header.TLabel',
+        self.headerButton = ttk.Button(self.titleFrame, text="Preset", style='Header.TLabel',
             command=lambda : self.controller.togglePageButons())
         self.headerButton.pack(side=tk.LEFT)
+
+        for i in PageNames:
+            self.makeHeaderButton(i,PageNames[i])
 
     def spacer(self,height):
         spacer = tk.Canvas(self, background=ColorBg, highlightthickness=0, height=height)
@@ -1187,7 +1190,7 @@ class PerformHeader(tk.Frame):
         self.titleFrame.pack(side=tk.TOP, fill=tk.X, expand=True)
 
         self.pageButton = {}
-        self.performHeaderLabel("Control")
+        # self.performHeaderLabel("Control")
         self.headerButton("main","Main")
         # self.headerButton("sliders1","Sliders1")
         # self.headerButton("sliders2","Sliders2")
@@ -1256,10 +1259,10 @@ class PageEditParams(tk.Frame):
 
         # f = tk.Frame(self, background=ColorBg)
         self.paramsFrame = self.makeParamsArea(self)
-        self.paramsFrame.pack(side=tk.LEFT, pady=5)
+        self.paramsFrame.pack(side=tk.LEFT, pady=0)
 
         self.scrollbar = ScrollBar(parent=self, notify=self)
-        self.scrollbar.pack(side=tk.LEFT, fill=tk.Y, expand=True, pady=5, padx=5)
+        self.scrollbar.pack(side=tk.LEFT, fill=tk.Y, expand=True, pady=10, padx=5)
 
         self.updateParamFiles()
         self.updateParamView()
@@ -1294,10 +1297,10 @@ class PageEditParams(tk.Frame):
 
             # print("MakeParamsArea paramstype=",self.paramstype," Param=",name)
             self.paramRowName.append(name)
-            self.paramLabelWidget[name] = ttk.Label(f, width=12, text=name, style='ParamName.TLabel')
+            self.paramLabelWidget[name] = ttk.Label(f, width=22, text=name, style='ParamName.TLabel')
             self.paramLabelWidget[name].config()
 
-            self.paramValueWidget[name] = ttk.Label(f, width=12, anchor=tk.E, style='ParamValue.TLabel')
+            self.paramValueWidget[name] = ttk.Label(f, width=10, anchor=tk.E, style='ParamValue.TLabel')
             self.paramValueWidget[name].bind("<Button-1>", lambda event,nm=name: self.valueClicked(nm))
 
         # The widgets for << < . . > >> are static, in the displayed rows
@@ -1320,26 +1323,26 @@ class PageEditParams(tk.Frame):
             self.initButton = ttk.Label(f, text="Init", style='Button.TLabel')
             self.initButton.bind("<Button-1>", lambda event:self.initCallback())
             self.initButton.bind("<ButtonRelease-1>", lambda event:self.initRelease())
-            self.initButton.pack(side=tk.LEFT, padx=5)
+            self.initButton.pack(side=tk.LEFT, padx=2)
 
-            self.randButton = ttk.Label(f, text="Rand", style='Button.TLabel')
+            self.randButton = ttk.Label(f, text="Rnd", style='Button.TLabel')
             self.randButton.bind("<Button-1>", lambda event:self.randCallback())
             self.randButton.bind("<ButtonRelease-1>", lambda event:self.randRelease())
-            self.randButton.pack(side=tk.LEFT, padx=5)
+            self.randButton.pack(side=tk.LEFT, padx=2)
 
-        self.importButton = ttk.Label(f, text="Import", style='Button.TLabel')
+        self.importButton = ttk.Label(f, text="Imp", style='Button.TLabel')
         self.importButton.bind("<Button-1>", lambda event:self.saveImportCallback())
         self.importButton.bind("<ButtonRelease-1>", lambda event:self.saveImportRelease())
-        self.importButton.pack(side=tk.LEFT, padx=5)
+        self.importButton.pack(side=tk.LEFT, padx=2)
 
-        self.exportButton = ttk.Label(f, text="Export", style='Button.TLabel')
+        self.exportButton = ttk.Label(f, text="Exp", style='Button.TLabel')
         self.exportButton.bind("<Button-1>", lambda event:self.saveExportCallback())
         self.exportButton.bind("<ButtonRelease-1>", lambda event:self.saveExportRelease())
-        self.exportButton.pack(side=tk.LEFT, padx=5)
+        self.exportButton.pack(side=tk.LEFT, padx=2)
 
         b = ttk.Label(f, text="Save", style='Button.TLabel')
         b.bind("<Button-1>", lambda event:self.saveCallback())
-        b.pack(side=tk.LEFT, pady=5, padx=5)
+        b.pack(side=tk.LEFT, pady=5, padx=2)
 
         # The following things don't get placed initially,
         # they're revealed when the Save button is pressed.
@@ -1371,7 +1374,7 @@ class PageEditParams(tk.Frame):
         for r in range(0,paramDisplayRows):
             self.paramAdjustFrame[r].grid_forget()
 
-        px = 10
+        px = 0
         row = 0
         # print("updateParamView valuesDisplayOffset=",self.valuesDisplayOffset)
         for name in self.params:
@@ -1380,7 +1383,7 @@ class PageEditParams(tk.Frame):
             if showme:
                 self.paramLabelWidget[name].grid(row=showrow, column=0, sticky=tk.W)
                 self.paramValueWidget[name].grid(row=showrow, column=1, padx=px)
-                self.paramAdjustFrame[showrow].grid(row=showrow,column=2,sticky=tk.W,padx=px,pady=2)
+                self.paramAdjustFrame[showrow].grid(row=showrow,column=2,sticky=tk.W,padx=px,pady=0)
             else:
                 self.paramLabelWidget[name].grid_forget()
                 self.paramValueWidget[name].grid_forget()
@@ -1607,9 +1610,9 @@ class PageEditParams(tk.Frame):
         self.cancelButton.pack_forget()
 
     def saveCallback(self):
-        self.comboParamsname.pack(side=tk.LEFT, padx=10)
-        self.okButton.pack(side=tk.LEFT, padx=10)
-        self.cancelButton.pack(side=tk.LEFT, padx=10)
+        self.comboParamsname.pack(side=tk.LEFT, padx=0)
+        self.okButton.pack(side=tk.LEFT, padx=2)
+        self.cancelButton.pack(side=tk.LEFT, padx=2)
 
     def saveCancelCallback(self):
         self.forgetAll()
@@ -1799,6 +1802,7 @@ class ScrollBar(tk.Frame):
     def scrollWheel(self,event):
         scrollHeight = self.scroll.winfo_height()
         dy = int(scrollHeight * thumbFactor)
+        dy = dy * 4
         if event.delta > 0:
             amount = -dy
         else:
@@ -1810,6 +1814,7 @@ class ScrollBar(tk.Frame):
         scrollHeight = self.scroll.winfo_height()
 
         # print("scrollMove dy=",dy,"  currentY=",self.currentY,"  scrollHeight=",scrollHeight)
+        dy = dy / 16  # scale it down
         newy = self.currentY + dy
         if newy < 0.0:
             newy = 0.0
@@ -1824,10 +1829,9 @@ class ScrollBar(tk.Frame):
 
         fy = self.currentY / scrollHeight
 
-        # the end values are magnetic
-        if fy < 0.1:
+        if fy < 0.0:
             fy = 0.0
-        elif fy > 0.9:
+        elif fy > 1.0:
             fy = 1.0
 
         thumbHalfHeight = thumbFactor / 2.0
@@ -1853,7 +1857,7 @@ class PagePerformMain(tk.Frame):
         self.config(background=ColorBg)
 
         self.frame = tk.Frame(self, background=ColorBg)
-        self.frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True, pady=15)
+        self.frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True, pady=5)
 
         self.performButton = {}
         self.buttonNames = []
@@ -2046,7 +2050,7 @@ class PageSelector(tk.Frame):
         self.valsframe.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, pady=10)
 
         self.scrollbar = ScrollBar(parent=self, notify=self)
-        self.scrollbar.pack(side=tk.LEFT, fill=tk.Y, expand=True, pady=5, padx=5)
+        self.scrollbar.pack(side=tk.LEFT, fill=tk.Y, expand=True, pady=11, padx=5)
 
         self.doLayout()
 
@@ -2124,8 +2128,10 @@ def makeStyles(app):
     s.configure('Enabled.TLabel', foreground='green', background=ColorHigh, relief="flat", justify=tk.CENTER, font=mediumFont)
     s.configure('Disabled.TLabel', foreground='red', background=ColorButton, relief="flat", justify=tk.CENTER, font=mediumFont)
     s.configure('Edit.TLabel', font=largestFont, foreground=ColorText, background=ColorBg)
-    s.configure('Button.TLabel', font=largestFont, foreground=ColorText, background=ColorButton)
-    s.configure('ButtonHigh.TLabel', font=largestFont, foreground=ColorText, background=ColorHigh)
+
+    s.configure('Button.TLabel', font=largerFont, foreground=ColorText, background=ColorButton)
+    s.configure('ButtonHigh.TLabel', font=largerFont, foreground=ColorText, background=ColorHigh)
+
     s.configure('Red.TLabel', foreground='red', justify=tk.CENTER, background=ColorBg)
     s.configure('Bright.TLabel', foreground=ColorBright, justify=tk.CENTER, background=ColorBg)
     s.configure('TinyBright.TLabel', foreground=ColorBright, justify=tk.CENTER, background=ColorBg, font=mediumFont)
@@ -2135,9 +2141,9 @@ def makeStyles(app):
 
     s.configure('PLAY.TLabel', font=largestFont, foreground=ColorText, background=ColorButton, justify=tk.LEFT)
 
-    s.configure('ParamName.TLabel', font=largestFont, foreground=ColorText, justify=tk.LEFT)
-    s.configure('ParamValue.TLabel', foreground=ColorText, borderwidth=2, justify=tk.RIGHT, background=ColorBg)
-    s.configure('ParamAdjust.TLabel', foreground=ColorText, borderwidth=2, anchor=tk.CENTER, background=ColorButton, font=largerFont)
+    s.configure('ParamName.TLabel', font=largerFont, foreground=ColorText, justify=tk.LEFT)
+    s.configure('ParamValue.TLabel', foreground=ColorText, borderwidth=2, justify=tk.RIGHT, background=ColorBg, font=largerFont)
+    s.configure('ParamAdjust.TLabel', foreground=ColorText, borderwidth=2, anchor=tk.CENTER, background=ColorButton, font=largeFont)
 
     s.configure('HeaderEnabled.TLabel', background=ColorHigh, relief="flat", justify=tk.CENTER, font=largestFont)
     s.configure('HeaderDisabled.TLabel', background=ColorButton, relief="flat", justify=tk.CENTER, font=largestFont)
@@ -2147,7 +2153,7 @@ def makeStyles(app):
 
     s.configure('PerformMessage.TLabel', background=ColorBg, foreground=ColorRed, relief="flat", justify=tk.CENTER, align=tk.CENTER, font=performFont)
 
-    s.configure('Header.TLabel', background=ColorButton, foreground=ColorBright, relief="flat", justify=tk.CENTER, align=tk.CENTER, font=largestFont)
+    s.configure('Header.TLabel', background=ColorButton, foreground=ColorWhite, relief="flat", justify=tk.CENTER, align=tk.CENTER, font=largestFont)
     s.configure('PerformHeader.TLabel', background=ColorButton, foreground=ColorBright, relief="flat", justify=tk.CENTER, align=tk.CENTER, font=performFont)
 
     s.configure('ScrollButton.TLabel', foreground=ColorText, font=largestFont, background=ColorScrollbar, anchor=tk.CENTER)
@@ -2242,15 +2248,15 @@ if __name__ == "__main__":
 
     if gui_size == "small":
         # print("small size")
-        GuiWidth = 540 ; GuiHeight = 620
-        fontFactor = 0.5
+        GuiWidth = 355 ; GuiHeight = 490
+        fontFactor = 0.4
         thumbFactor = 0.1
 
         selectDisplayRows = 12
-        paramDisplayRows = 20
+        paramDisplayRows = 21
         selectDisplayPerRow = 4
 
-        pageSizeOfSelectNormal = 0.86
+        pageSizeOfSelectNormal = 0.915
         pageSizeOfControlNormal = 1.0 - pageSizeOfSelectNormal
 
         pageSizeOfSelectAdvanced = 0.86

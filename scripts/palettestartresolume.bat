@@ -1,13 +1,17 @@
 @echo off
 
-call palettestopresolume.bat
-
 rem give it time to start so it closes the log file
 call delay 1
 if exist "C:\\Program Files\\Resolume Avenue\\Avenue.exe" (
+
+	c:/windows/system32/taskkill /F /IM Avenue.exe >nul 2>&1
 	start /b "" "C:\\Program Files\\Resolume Avenue\\Avenue.exe" > "%LOCALAPPDATA%\Palette\logs\resolume.log" 2>&1
+
 ) else if exist "C:\\Program Files\\Resolume Arena\\Arena.exe" (
+
+	c:/windows/system32/taskkill /F /IM Arena.exe >nul 2>&1
 	start /b "" "C:\\Program Files\\Resolume Arena\\Arena.exe" > "%LOCALAPPDATA%\Palette\logs\resolume.log" 2>&1
+
 ) else (
 	echo No Resolume Avenue 7 or Arena 7 found!
 	goto getout:
