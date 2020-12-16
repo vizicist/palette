@@ -200,7 +200,7 @@ global TopApp
 TopApp = None
 
 class ProGuiApp(tk.Tk):
-    def __init__(self,width,height):
+    def __init__(self):
         tk.Tk.__init__(self)
 
         self.readParamDefs()
@@ -2256,7 +2256,7 @@ if __name__ == "__main__":
 
     if gui_size == "small":
         # print("small size")
-        GuiWidth = 400 ; GuiHeight = 550
+        GuiWidth = 460 ; GuiHeight = 560
         fontFactor = 0.45
         thumbFactor = 0.1
 
@@ -2305,7 +2305,7 @@ if __name__ == "__main__":
     setFontSizes(fontFactor)
 
     global app
-    app = ProGuiApp(GuiWidth,GuiHeight)
+    app = ProGuiApp()
 
     makeStyles(app)
 
