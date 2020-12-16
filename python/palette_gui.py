@@ -2256,8 +2256,8 @@ if __name__ == "__main__":
 
     if gui_size == "small":
         # print("small size")
-        GuiWidth = 460 ; GuiHeight = 560
-        fontFactor = 0.45
+        GuiWidth = 520 ; GuiHeight = 560
+        fontFactor = 0.5
         thumbFactor = 0.1
 
         selectDisplayRows = 13
