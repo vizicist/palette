@@ -102,3 +102,18 @@ begin
     then EnvRemovePath(ExpandConstant('{app}') +'\ffgl'); EnvRemovePath(ExpandConstant('{app}') +'\bin');
 end;
 
+function PrepareToInstall(var NeedsRestart: Boolean): String;
+var
+  ResultCode: integer;
+begin
+
+  // Kill running palette things so we can install over them
+  Exec('>', 'taskkill.exe /IM palette_engine.exe /T /F', '', SW_HIDE,
+     ewWaitUntilTerminated, ResultCode);
+  Exec('>', 'taskkill.exe /IM palette_gui.exe /T /F', '', SW_HIDE,
+     ewWaitUntilTerminated, ResultCode);
+
+  // Proceed Setup
+
+end;
+
