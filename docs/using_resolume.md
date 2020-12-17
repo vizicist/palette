@@ -40,13 +40,24 @@ if you use <b>Start Palette and Resolume</b>.
 - Use the Palette GUI to select different presets for your finger painting.
 If you don't see the GUI, it may be hiding behind other windows (e.g. Resolume).
 
-- Now, have fun finger painting and exploring the presets.
+- Now, have fun finger painting and exploring the presets.  Take advantage of the fact
+that finger pressure on the Morph affects the size of the visuals you are painting.
+The Morph is extremely sensitive with a large dynamic range.
 
 - If it's not working, see the section below on debugging hints.
 
+## Looping
+
+- The buttons at the bottom of the GUI let you turn on Looping, which will loop your
+gestures on the Morph.  You can control the length of the loops and how quickly they fade out.
+
+- Beware, if you leave looping on, you may get confused about what's going on, since you'll be seeing
+the results of your live gestures as well as the looped gestures.
+
 ## Editing the presets
 
-- To get more control and edit the presets, click on the <b>Preset</b> button at the very top of the GUI.
+- To get more control and edit the presets, click on the <b>Preset</b> button
+at the very top of the GUI.
 This will reveal the buttons to access separate pages for Snapshot, Visual, and Effect presets.
 A Snapshot preset contains both visual and effect settings, and the Visual and Effect
 presets let you control these things independently.
