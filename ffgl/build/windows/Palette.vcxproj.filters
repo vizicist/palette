@@ -107,9 +107,6 @@
     <ClCompile Include="..\..\source\lib\nosuch\NosuchDebug.cpp">
       <Filter>lib\nosuch</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\source\lib\nosuch\NosuchException.cpp">
-      <Filter>lib\nosuch</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\source\lib\palette\Palette.cpp">
       <Filter>lib\palette</Filter>
     </ClCompile>
@@ -332,9 +329,6 @@
     <ClInclude Include="..\..\source\lib\nosuch\NosuchDebug.h">
       <Filter>lib\nosuch</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\source\lib\nosuch\NosuchException.h">
-      <Filter>lib\nosuch</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\source\lib\nosuch\NosuchOscInput.h">
       <Filter>lib\nosuch</Filter>
     </ClInclude>
@@ -342,6 +336,9 @@
       <Filter>lib\nosuch</Filter>
     </ClInclude>
     <ClInclude Include="..\..\source\lib\nosuch\NosuchUtil.h">
+      <Filter>lib\nosuch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\lib\nosuch\NosuchException.h">
       <Filter>lib\nosuch</Filter>
     </ClInclude>
   </ItemGroup>

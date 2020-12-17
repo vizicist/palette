@@ -47,7 +47,6 @@
     <ClCompile Include="..\..\source\lib\ffgl\FFGLThumbnailInfo.cpp" />
     <ClCompile Include="..\..\source\lib\glsdk_0_5_2\glload\source\gl_load.c" />
     <ClCompile Include="..\..\source\lib\nosuch\NosuchDebug.cpp" />
-    <ClCompile Include="..\..\source\lib\nosuch\NosuchException.cpp" />
     <ClCompile Include="..\..\source\lib\nosuch\NosuchOscInput.cpp" />
     <ClCompile Include="..\..\source\lib\nosuch\NosuchOscUdpInput.cpp" />
     <ClCompile Include="..\..\source\lib\nosuch\NosuchUtil.cpp" />
@@ -185,8 +184,8 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <AdditionalIncludeDirectories>..\..\source\lib\;..\..\source\lib\ffgl\utilities\;..\..\source\lib\glm;..\..\source\lib\ffgl;..\..\source\lib\palette;..\..\source\lib\nosuch;..\..\source\lib\oscpack;..\..\source\lib\osc\include;..\..\source\lib\cJSON;..\..\source\lib\pthreads;..\..\source\plugins\palette;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <ExceptionHandling>Async</ExceptionHandling>
+      <AdditionalIncludeDirectories>..\..\source\lib\;..\..\source\lib\ffgl\utilities\;..\..\source\lib\glm;..\..\source\lib\ffgl;..\..\source\lib\palette;..\..\source\lib\nosuch;..\..\source\lib\oscpack;..\..\source\lib\osc\include;..\..\source\lib\cJSON;..\..\source\lib\pthreads\Pre-built.2\include;..\..\source\plugins\palette;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ExceptionHandling>Sync</ExceptionHandling>
     </ClCompile>
     <Link>
       <ModuleDefinitionFile>FFGLPlugins.def</ModuleDefinitionFile>
@@ -213,7 +212,8 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <AdditionalIncludeDirectories>..\..\source\lib\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\source\lib\;..\..\source\lib\ffgl\utilities\;..\..\source\lib\glm;..\..\source\lib\ffgl;..\..\source\lib\palette;..\..\source\lib\nosuch;..\..\source\lib\oscpack;..\..\source\lib\osc\include;..\..\source\lib\cJSON;..\..\source\lib\pthreads\Pre-built.2\include;..\..\source\plugins\palette;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ExceptionHandling>Sync</ExceptionHandling>
     </ClCompile>
     <Link>
       <ModuleDefinitionFile>FFGLPlugins.def</ModuleDefinitionFile>
@@ -223,7 +223,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <ImportLibrary>$(OutDir)$(ProjectName).lib</ImportLibrary>
       <AdditionalLibraryDirectories>..\..\..\source\common\opengl\lib</AdditionalLibraryDirectories>
-      <AdditionalDependencies>OpenGL32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>OpenGL32.lib;pthreadVC2.lib;winmm.lib;Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
       <Command>prebuild.bat</Command>

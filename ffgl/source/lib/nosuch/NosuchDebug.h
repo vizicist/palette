@@ -28,4 +28,4 @@ void NosuchErrorOutput(const char *fmt, ...);
 std::string NosuchFullPath(std::string file);
 std::string NosuchForwardSlash(std::string filepath);
 
-#define NosuchAssert(expr) if(!(expr)){ throw NosuchException("NosuchAssert (%s) failed at %s:%d",#expr,__FILE__,__LINE__);}
+#define NosuchAssert(expr) if(!(expr)){ throw std::runtime_error("NosuchAssert exception!\n");}
