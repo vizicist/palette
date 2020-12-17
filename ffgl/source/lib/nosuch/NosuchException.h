@@ -5,25 +5,27 @@
 #include <windows.h>
 #include "NosuchUtil.h"
 
-class NosuchException {
-	char *_msg;
-public:
-	NosuchException( const char *fmt, ...);
-	const char *message() { return _msg; }
+class NosuchException : public std::exception {
 };
-
-#define SEH_STUFF_ONLY_USABLE_WHEN_COMPILING_FOR_SEH
-
-#ifdef SEH_STUFF_ONLY_USABLE_WHEN_COMPILING_FOR_SEH
-
-void SEH_To_Cplusplus ( unsigned int u, EXCEPTION_POINTERS *exp );
-
-// register the translator so that all hardware exceptions
-// will generate a C++ NosuchException
-#define CATCH_NULL_POINTERS _set_se_translator( SEH_To_Cplusplus );
-
-#else
-
-#define CATCH_NULL_POINTERS
-
-#endif
+class NosuchBadValueException : public NosuchException {
+};
+class NosuchUnableToLoadException : public NosuchException {
+};
+class NosuchMissingItemException : public NosuchException {
+};
+class NosuchMissingValueException : public NosuchException {
+};
+class NosuchNoParametersException : public NosuchException {
+};
+class NosuchUnexpectedTypeException : public NosuchException {
+};
+class NosuchNotEnoughArgumentsException : public NosuchException {
+};
+class NosuchBadTypeOfArgumentException : public NosuchException {
+};
+class NosuchArrayIsEmptyException : public NosuchException {
+};
+class NosuchUnrecognizedTypeException : public NosuchException {
+};
+class NosuchMiscException : public NosuchException {
+};

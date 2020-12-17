@@ -1,10 +1,12 @@
 #pragma once
 
 #include <string>
-#include <pthread.h>
 #include "NosuchDebug.h"
 #include <stdlib.h>
 #include <vector>
+
+#define HAVE_STRUCT_TIMESPEC
+#include <pthread.h>
 
 #ifdef WIN32
 #define _USE_MATH_DEFINES

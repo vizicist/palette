@@ -129,7 +129,7 @@ std::string jsonValueString(cJSON* j) {
 		val = j->valuestring;
 		break;
 	default:
-		throw NosuchException("jsonValueString not prepared to handle type=%d",j->type);
+		throw NosuchBadValueException();
 	}
 	return val;
 }
@@ -202,6 +202,6 @@ void Palette::LoadParamPush(cJSON* sound, cJSON* visual) {
 	std::string r = loadParamPushReal(sound, visual);
 	_paletteHost->unlock_paletteHost();
 	if (r != "") {
-		throw NosuchException("loadParamPushReal, unable to load!?");
+		throw NosuchUnableToLoadException();
 	}
 }

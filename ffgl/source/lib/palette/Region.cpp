@@ -126,7 +126,8 @@ float Region::getMoveDir(std::string movedirtype) {
 	if ( movedirtype == "leftright" ) {
 		return 180.0f * (rand() % 2);
 	}
-	throw NosuchException("Unrecognized movedirtype value %s",movedirtype.c_str());
+	// throw NosuchException("Unrecognized movedirtype value %s",movedirtype.c_str());
+	throw NosuchBadValueException();
 }
 
 void Region::doCursorUp(Palette* palette, std::string cid) {
@@ -156,10 +157,10 @@ void Region::doCursorUp(Palette* palette, std::string cid) {
 		}
 		i++;
 	}
-	if (!found) {
-		NosuchDebug("Region.doCursorUp: didn't find cursor cid=%s", cid.c_str());
-	}
 	if (NosuchDebugCursor) {
+		if (!found) {
+			NosuchDebug("Region.doCursorUp: didn't find cursor cid=%s", cid.c_str());
+		}
 		NosuchDebug("End of doCursorUp, _cursors.size = %d", _cursors.size());
 	}
 	cursorlist_unlock();
@@ -233,7 +234,7 @@ Region::makeSprite(std::string shape) {
 		//
 	}
 	else {
-		throw NosuchException("Unrecognized type of shape: %s", shape.c_str());
+		throw NosuchUnrecognizedTypeException();
 	}
 	return s;
 }
@@ -375,7 +376,6 @@ void Region::advanceCursorsTo(int tm) {
 	}
 
 	try {
-		CATCH_NULL_POINTERS;
 		/*
 		if (NosuchDebugCursor) {
 			int sz = (int)cursors().size();
@@ -399,8 +399,8 @@ void Region::advanceCursorsTo(int tm) {
 			}
 		}
 	}
-	catch (NosuchException& e) {
-		NosuchDebug("NosuchException in advanceCursorsTo : %s", e.message());
+	catch (std::exception&) {
+		NosuchDebug("NosuchException in advanceCursorsTo");
 	}
 	catch (...) {
 		NosuchDebug("UNKNOWN Exception in advanceCursorsTo");
@@ -420,7 +420,6 @@ void Region::deleteOldCursors(Palette* palette) {
 
 	TrackedCursor* deleteCursor = NULL;
 	try {
-		CATCH_NULL_POINTERS;
 		for (std::list<TrackedCursor*>::iterator i = _cursors.begin(); i != _cursors.end(); ) {
 			TrackedCursor* c = *i;
 			NosuchAssert(c);
@@ -437,8 +436,8 @@ void Region::deleteOldCursors(Palette* palette) {
 			i++;
 		}
 	}
-	catch (NosuchException& e) {
-		NosuchDebug("NosuchException in deleteOldCursors : %s", e.message());
+	catch (std::exception&) {
+		NosuchDebug("NosuchException in deleteOldCursors");
 	}
 	catch (...) {
 		NosuchDebug("UNKNOWN Exception in deleteOldCursors");
