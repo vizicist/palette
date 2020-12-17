@@ -24,7 +24,7 @@
 
 - Quit Resolume.
 
-## Every time you want to start the Palette
+## Starting the Palette
 
 - Make sure the Sensel Morph is plugged in.
 
@@ -40,36 +40,47 @@ if you use <b>Start Palette and Resolume</b>.
 - Use the Palette GUI to select different presets for your finger painting.
 If you don't see the GUI, it may be hiding behind other windows (e.g. Resolume).
 
-- To get more control and edit the presets, click on the Preset button at the very top of the GUI.
+- Now, have fun finger painting and exploring the presets.
+
+- If it's not working, see the section below on debugging hints.
+
+## Editing the presets
+
+- To get more control and edit the presets, click on the <b>Preset</b> button at the very top of the GUI.
 This will reveal the buttons to access separate pages for Snapshot, Visual, and Effect presets.
 A Snapshot preset contains both visual and effect settings, and the Visual and Effect
 presets let you control these things independently.
-If you click a second time on any of these three buttons,
-you will be able to access the individual parameters
-of a preset and save it has a new preset.
 
-- If it's not working, see below for debugging hints.
+- Clicking the buttons at the top of the page for Snapshot, Visual, and Effect will toggle
+between 1) seeing the page of named presets and 2) seeing the list of parameters which you can 
+then edit.  When editing, you'll also see buttons that allow you to save it, either with the same
+name or as a newly named preset.  Any presets that you edit (newly named or not) will be saved
+in a local directory that will (should) not be overwritten by newer versions of Palette.
+
+- When editing parameters, the <b>Rnd</b> button will randomize many of the parameters.
+When using this on Visual parameters, it can be useful to set the Effect preset to <b>None</b>,
+so you can clearly see what's being created.  Likewise, when randomizing the Effect parameters,
+make sure the Visual settings are showing something clearly visible.  It will sometimes be the
+case that randomized parameters will produce no output.
 
 ## Stopping the Palette
 
 - Use <b>Stop Palette</b> or <b>Stop Palette and Resolume</b> from the Palette folder of the Windows Start menu.
 
-## Debugging hints if you don't see any visual output
+## Debugging hints
 
-- Make sure that you've clicked on the <b>Palette</b>
-cell (the first one) in the layer to activate it.
-This is the most common mistake.
-Every time you start Resolume manually, you need to do this.
-If you want to eliminate the need for this, use can use this script: <pre>C:\Program Files\Palette\bin\palettestartall.bat</pre>
-That script will start the Palette software and start Resolume.
+- If you start Resolume manually, make sure that you've clicked on the <b>Palette</b>
+cell (the first one) in the Resolume layer to activate it. Every time you start Resolume manually, you need to do this.
+Using <b>Start Palette and Resolume</b> eliminates the need for this, and is equivalent to invoking this script: <pre>C:\Program Files\Palette\bin\palettestartall.bat</pre>
+
+- To verify that the plugin is being recognized by Resolume,
+you should find an entry for <b>Palette</b> in Resolume's Sources tab, in the alphabetical list under <b>Generators</b>.
+If you don't see this, look for clues in the Resolume log file in this directory: <pre>%APPDATA%\Resolume Avenue</pre>
 
 - If for some reason Resolume crashes at startup,
 you can look in this file: <pre>%LOCALAPPDATA%\Palette\logs\ffgl.log</pre>
 for clues as to the reason.  If you can't resolve the issue,
-you should either remove the ffgl directory from the <i>Preferences->Video</i> section or just uninstall Palette.
-
-- To verify that the plugin is being recognized by Resolume,
-you should find an entry for <b>Palette</b> in Resolume's Sources tab, in the alphabetical list under <b>Generators</b>.  If you don't see this, look at the Resolume log file in this directory: <pre>%APPDATA%\Resolume Avenue</pre>
+you should either remove the ffgl directory from Resolume's <i>Preferences->Video</i> section or just uninstall Palette.
 
 - After you activate the plugin, this log file: <pre>%LOCALAPPDATA%\Palette\logs\ffgl.log</pre>
 should contain this line at the end: <pre>Palette: listening for OSC on port 3334</pre>
@@ -86,5 +97,3 @@ you should see lines like these: <pre>2020/11/17 12:36:16 ======================
 2020/11/17 12:36:17.533556 StartNATS: Subscribing to palette.api
 2020/11/17 12:36:17.533556 StartNATS: subscribing to palette.event
 </pre>
-
-- In this logfile: <pre>%LOCALAPPDATA%\Palette\logs\engine.log</pre>
