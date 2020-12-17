@@ -43,7 +43,8 @@ public:
 		size_t existing = 0;
 		size_t sz = vals.size();
 		if ( sz == 0 ) {
-			throw NosuchException("vals array is empty!?");
+			// throw NosuchException("vals array is empty!?");
+			throw NosuchArrayIsEmptyException();
 		}
 		// Even if amount is 0.0, we want to make sure v is one of the valid values
 		for ( size_t ei=0; ei<sz; ei++ ) {

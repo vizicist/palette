@@ -4,7 +4,6 @@
 #include <fstream>
 
 #include "NosuchUtil.h"
-#include "pthread.h"
 
 #include <list>
 #include <map>
@@ -149,16 +148,7 @@ RealNosuchDebug(int level, char const *fmt, va_list args)
 		int nchars;
 		long tm;
 		tm = MillisecondsSoFar();
-		void* thisthread = pthread_self().p;
-		auto f = DebugThreadMap.find(thisthread);
-		std::string threadname;
-		if (f != DebugThreadMap.end()) {
-			threadname = f->second;
-		}
-		else {
-			threadname = NosuchSnprintf("T%lld", (long long)thisthread);
-		}
-		nchars = _snprintf_s(pmsg, msgsize, _TRUNCATE, "[%.3f,%s,%d] ", tm / 1000.0f, threadname.c_str(), NosuchDebugTag);
+		nchars = _snprintf_s(pmsg, msgsize, _TRUNCATE, "[%.3f,%d] ", tm / 1000.0f, NosuchDebugTag);
 		pmsg += nchars;
 		msgsize -= nchars;
 	}
