@@ -66,6 +66,7 @@ NosuchOscUdpInput::Listen() {
 		if( e == WSAEADDRINUSE )
 		{
 			NosuchDebug("Palette: host=%s port=%d is already in use.",_myhost,_myport);
+            throw std::exception("Palette: host ");
 		}
 		else
 		{

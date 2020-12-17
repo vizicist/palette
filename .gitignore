@@ -5,6 +5,7 @@ build/windows/ship
 ffgl/build/windows/x64
 ffgl/build/windows/.vs
 ffgl/binaries
+ffgl/source/lib/oldpthreads
 windows/ship
 params/gentle/snap/CurrentSnapshot.*
 # Binaries for programs and plugins

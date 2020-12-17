@@ -91,10 +91,12 @@ const char* jsonType(int t) {
 cJSON* needItem(std::string who, cJSON* j, std::string nm, int type) {
 	cJSON *c = cJSON_GetObjectItem(j,nm.c_str());
 	if ( ! c ) {
-		throw NosuchException("Missing %s item in %s",nm.c_str(),who.c_str());
+		// throw NosuchException("Missing %s item in %s",nm.c_str(),who.c_str());
+		throw NosuchMissingItemException();
 	}
 	if ( c->type != type ) {
-		throw NosuchException("Unexpected type for %s item in %s, expecting %s",nm.c_str(),who.c_str(),jsonType(type));
+		// throw NosuchException("Unexpected type for %s item in %s, expecting %s",nm.c_str(),who.c_str(),jsonType(type));
+		throw NosuchUnexpectedTypeException();
 	}
 	return c;
 }
@@ -104,7 +106,8 @@ std::string needString(std::string who,cJSON *j,std::string nm, std::string dflt
 	cJSON *c = cJSON_GetObjectItem(j,nm.c_str());
 	if (c) {
 		if ( c->type != cJSON_String ) {
-			throw NosuchException("Unexpected type for %s item in %s, expecting string", nm.c_str(), who.c_str());
+			// throw NosuchException("Unexpected type for %s item in %s, expecting string", nm.c_str(), who.c_str());
+			throw NosuchUnexpectedTypeException();
 		}
 		return c->valuestring;
 	}
@@ -117,7 +120,8 @@ int needNumber(std::string who,cJSON *j,std::string nm, int dflt = 0) {
 	cJSON *c = cJSON_GetObjectItem(j,nm.c_str());
 	if (c) {
 		if ( c->type != cJSON_Number ) {
-			throw NosuchException("Unexpected type for %s in %s, expecting number", nm.c_str(), who.c_str());
+			// throw NosuchException("Unexpected type for %s in %s, expecting number", nm.c_str(), who.c_str());
+			throw NosuchUnexpectedTypeException();
 		}
 		return c->valueint;
 	}
@@ -129,7 +133,8 @@ int needNumber(std::string who,cJSON *j,std::string nm, int dflt = 0) {
 bool needBool(std::string who,cJSON *j,std::string nm) {
 	cJSON *c = cJSON_GetObjectItem(j,nm.c_str());
 	if (!c) {
-		throw NosuchException("%s: Missing value for '%s'", who.c_str(), nm.c_str());
+		// throw NosuchException("%s: Missing value for '%s'", who.c_str(), nm.c_str());
+		throw NosuchMissingValueException();
 	}
 	if ( c->type == cJSON_Number ) {
 		return (c->valueint != 0);
@@ -138,7 +143,7 @@ bool needBool(std::string who,cJSON *j,std::string nm) {
 		std::string v = c->valuestring;
 		return (v=="1" || v=="true" || v=="True" || v=="on" || v=="On");
 	}
-	throw NosuchException("Unexpected type for %s item in %s, expecting %s",nm.c_str(),who.c_str(),jsonType(c->type));
+	throw NosuchUnexpectedTypeException();
 }
 
 float needFloat(std::string who,cJSON *j,std::string nm) {
@@ -155,7 +160,7 @@ cJSON* needObject(std::string who,cJSON *j,std::string nm) {
 
 void needParams(std::string meth, cJSON* params) {
 	if(params==NULL) {
-		throw NosuchException("No parameters on %s method?",meth.c_str());
+		throw NosuchNoParametersException();
 	}
 }
 
@@ -454,8 +459,8 @@ bool PaletteHost::initStuff() {
 
 		_palette->now = MillisecondsSoFar();
 
-	} catch (NosuchException& e) {
-		NosuchDebug("NosuchException: %s",e.message());
+	} catch (std::exception&) {
+		NosuchDebug("NosuchException in PaletteHost::initStuff!");
 		r = false;
 	} catch (...) {
 		// Does this really work?  Not sure
@@ -512,8 +517,6 @@ DWORD PaletteHost::PaletteHostProcessOpenGL(ProcessOpenGLStruct *pGL)
 
 	bool gotexception = false;
 	try {
-		CATCH_NULL_POINTERS;
-
 		int tm = _palette->now;
 		int begintm = _palette->now;
 		int endtm = MillisecondsSoFar();
@@ -540,8 +543,8 @@ DWORD PaletteHost::PaletteHostProcessOpenGL(ProcessOpenGLStruct *pGL)
 				break;
 			}
 		}
-	} catch (NosuchException& e ) {
-		NosuchDebug("NosuchException in Palette::draw : %s",e.message());
+	} catch (std::exception&) {
+		NosuchDebug("NosuchException in Palette::draw");
 		gotexception = true;
 	} catch (...) {
 		NosuchDebug("UNKNOWN Exception in Palette::draw!");
@@ -671,15 +674,13 @@ std::string PaletteHost::jsonConfigResult(std::string name, const char *id) {
 std::string PaletteHost::ExecuteJsonAndCatchExceptions(std::string meth, cJSON *params, const char *id) {
 	std::string r;
 	try {
-		CATCH_NULL_POINTERS;
-
 		r = ExecuteJson(meth,params,id);
-	} catch (NosuchException& e) {
-		std::string s = NosuchSnprintf("NosuchException in ProcessJson!! - %s",e.message());
+	} catch (std::exception&) {
+		std::string s = "Exception in ProcessJson!!";
 		r = error_json(-32000,s.c_str(),id);
 	} catch (...) {
 		// This doesn't seem to work - it doesn't seem to catch other exceptions...
-		std::string s = NosuchSnprintf("Some other kind of exception occured in ProcessJson!?");
+		std::string s = "Some other kind of exception occured in ProcessJson!?";
 		r = error_json(-32000,s.c_str(),id);
 	}
 	return r;
@@ -746,7 +747,7 @@ std::string PaletteHost::ExecuteJson(std::string meth, cJSON *params, const char
 		needParams(meth, params);
 		std::string action = needString(meth, params, "action", "");
 		if (action == "") {
-			throw NosuchException("debug method - needs action parameter");
+			throw NosuchMiscException();
 		}
 		else if (action == "scheduler_on") {
 			Scheduler::Debug = true;
@@ -757,7 +758,7 @@ std::string PaletteHost::ExecuteJson(std::string meth, cJSON *params, const char
 			NosuchDebug("Schedule debugging is OFF");
 		}
 		else {
-			throw NosuchException("debug method - unrecognize action: %s",action.c_str());
+			throw NosuchMiscException();
 		}
 		return jsonIntResult(0, id);
 	}
@@ -779,11 +780,13 @@ ArgAsInt32(const osc::ReceivedMessage& m, unsigned int n)
 	const char *types = m.TypeTags();
 	if ( n >= strlen(types) )  {
 		DebugOscMessage("ArgAsInt32 ",m);
-		throw NosuchException("Attempt to get argument n=%d, but not that many arguments on addr=%s\n",n,m.AddressPattern());
+		// throw NosuchException("Attempt to get argument n=%d, but not that many arguments on addr=%s\n",n,m.AddressPattern());
+		throw NosuchNotEnoughArgumentsException();
 	}
 	if ( types[n] != 'i' ) {
 		DebugOscMessage("ArgAsInt32 ",m);
-		throw NosuchException("Expected argument n=%d to be an int(i), but it is (%c)\n",n,types[n]);
+		// throw NosuchException("Expected argument n=%d to be an int(i), but it is (%c)\n",n,types[n]);
+		throw NosuchBadTypeOfArgumentException();
 	}
 	for ( unsigned i=0; i<n; i++ )
 		arg++;
@@ -797,11 +800,13 @@ ArgAsFloat(const osc::ReceivedMessage& m, unsigned int n)
 	const char *types = m.TypeTags();
 	if ( n >= strlen(types) )  {
 		DebugOscMessage("ArgAsFloat ",m);
-		throw NosuchException("Attempt to get argument n=%d, but not that many arguments on addr=%s\n",n,m.AddressPattern());
+		// throw NosuchException("Attempt to get argument n=%d, but not that many arguments on addr=%s\n",n,m.AddressPattern());
+		throw NosuchNotEnoughArgumentsException();
 	}
 	if ( types[n] != 'f' ) {
 		DebugOscMessage("ArgAsFloat ",m);
-		throw NosuchException("Expected argument n=%d to be a double(f), but it is (%c)\n",n,types[n]);
+		// throw NosuchException("Expected argument n=%d to be a double(f), but it is (%c)\n",n,types[n]);
+		throw NosuchBadTypeOfArgumentException();
 	}
 	for ( unsigned i=0; i<n; i++ )
 		arg++;
@@ -815,11 +820,13 @@ ArgAsString(const osc::ReceivedMessage& m, unsigned n)
 	const char *types = m.TypeTags();
 	if ( n < 0 || n >= strlen(types) )  {
 		DebugOscMessage("ArgAsString ",m);
-		throw NosuchException("Attempt to get argument n=%d, but not that many arguments on addr=%s\n",n,m.AddressPattern());
+		// throw NosuchException("Attempt to get argument n=%d, but not that many arguments on addr=%s\n",n,m.AddressPattern());
+		throw NosuchNotEnoughArgumentsException();
 	}
 	if ( types[n] != 's' ) {
 		DebugOscMessage("ArgAsString ",m);
-		throw NosuchException("Expected argument n=%d to be a string(s), but it is (%c)\n",n,types[n]);
+		// throw NosuchException("Expected argument n=%d to be a string(s), but it is (%c)\n",n,types[n]);
+		throw NosuchBadTypeOfArgumentException();
 	}
 	for ( unsigned i=0; i<n; i++ )
 		arg++;
@@ -906,8 +913,8 @@ void PaletteHost::ProcessOscMessage( std::string source, const osc::ReceivedMess
 		// any parsing errors such as unexpected argument types, or 
 		// missing arguments get thrown as exceptions.
 		NosuchDebug("ProcessOscMessage error while parsing message: %s : %s",m.AddressPattern(),e.what());
-	} catch (NosuchException& e) {
-		NosuchDebug("ProcessOscMessage, NosuchException: %s",e.message());
+	} catch (std::exception&) {
+		NosuchDebug("ProcessOscMessage, NosuchException");
 	} catch (...) {
 		// This doesn't seem to work - it doesn't seem to catch other exceptions...
 		NosuchDebug("ProcessOscMessage, some other kind of exception occured during !?");
