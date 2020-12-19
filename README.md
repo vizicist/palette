@@ -5,12 +5,12 @@ an instrument that lets you fingerpaint sound and visuals
 using your fingers as 3D cursors on Sensel Morph pads.  The Palette software consists of:
 
 * A realtime engine that accepts 3D cursors and MIDI as input,
-      and generates MIDI (for sounds) and OSC (for visuals in Resolume).
+      and generates MIDI (for sounds) and OSC (for visuals in Resolume 7).
 
 * A GUI that lets you control the presets and parameters of
       the musical and graphical output.
 
-* A Freeframe plugin that runs inside Resolume.
+* A Freeframe plugin that runs inside Resolume 7.
 
 # Documentation
 
