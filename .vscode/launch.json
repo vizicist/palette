@@ -15,22 +15,6 @@
             "args": []
         },
         {
-            "name": "Launch migrateeffects",
-            "type": "python",
-            "request": "launch",
-            "program": "${env:USERPROFILE}/go/src/github.com/vizicist/palette/python/migrateeffects.py",
-            "env": {},
-            "args": []
-        },
-        {
-            "name": "Launch changeparamval",
-            "type": "python",
-            "request": "launch",
-            "program": "${env:USERPROFILE}/go/src/github.com/vizicist/palette/python/changeparamval.py",
-            "env": {},
-            "args": ["default\\presets\\visual", "aspect", "1.000", "1.000"]
-        },
-        {
             "name": "Launch GUI",
             "type": "python",
             "request": "launch",

@@ -3,16 +3,15 @@ package main
 import (
 	"flag"
 	"log"
-	"os/signal"
-	"syscall"
 
 	"github.com/vizicist/palette/engine"
+	"github.com/vizicist/palette/gui"
 )
 
 func main() {
 
-	signal.Ignore(syscall.SIGHUP)
-	signal.Ignore(syscall.SIGINT)
+	// signal.Ignore(syscall.SIGHUP)
+	// signal.Ignore(syscall.SIGINT)
 
 	engine.InitLogs()
 	engine.InitDebug()
@@ -30,5 +29,11 @@ func main() {
 	go engine.StartRealtime()
 	go engine.StartCursorInput()
 
-	engine.ListenForLocalDeviceInputsForever() // never returns
+	go engine.ListenForLocalDeviceInputsForever() // never returns
+
+	gui.Run()
+
+	// block forever
+	// select {}
+
 }

@@ -483,7 +483,8 @@ func (p *Phrase) InsertNoLock(note *Note) *Phrase {
 	}
 
 	if p.lastnote == nil {
-		log.Fatalln("Expected lastnote to be nil when firstnote is nil!?")
+		log.Printf("Expected lastnote to be nil when firstnote is nil!?")
+		return p
 	}
 
 	// If it's after or equal to the last note, just append it

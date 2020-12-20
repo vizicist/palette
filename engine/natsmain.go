@@ -6,7 +6,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/nats-io/nats-server/server"
+	"github.com/nats-io/nats-server/v2/server"
 	"github.com/nats-io/nuid"
 )
 
@@ -34,9 +34,6 @@ func StartNATSServer() {
 		server.PrintTLSHelpAndDie)
 	if err != nil {
 		server.PrintAndDie(fmt.Sprintf("%s: %s", exe, err))
-	} else if opts.CheckConfig {
-		fmt.Fprintf(os.Stderr, "%s: configuration file %s is valid\n", exe, opts.ConfigFile)
-		os.Exit(0)
 	}
 
 	// Create the server with appropriate options.
