@@ -160,8 +160,9 @@ func ConfigFilePath(nm string) string {
 
 // MIDIFilePath xxx
 func MIDIFilePath(nm string) string {
-	localdir := LocalPaletteDir()
-	return filepath.Join(localdir, "midifiles", nm)
+	dir := LocalPaletteDir()
+	// XXX - if it's not here, it should also search in $PALETTE/midifiles
+	return filepath.Join(dir, "midifiles", nm)
 }
 
 // LocalPaletteDir xxx
@@ -493,4 +494,15 @@ func needBoolArg(nm string, api string, args map[string]string) (bool, error) {
 		return false, fmt.Errorf("api/event=%s bad value for %s", api, val)
 	}
 	return b, nil
+}
+
+// VenueMidifiles xxx
+func VenueMidifiles(venue string) ([]string, error) {
+	mdir := filepath.Join(LocalPaletteDir(), "midifiles")
+	midifiles := make([]string, 0)
+	err := filepath.Walk(mdir, func(path string, info os.FileInfo, err error) error {
+		midifiles = append(midifiles, filepath.Base(path))
+		return nil
+	})
+	return midifiles, err
 }

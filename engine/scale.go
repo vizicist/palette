@@ -55,8 +55,8 @@ func makeScale(pitches ...int) *Scale {
 	return s
 }
 
-// ClosestTo xxx
-func (s *Scale) ClosestTo(pitch uint8) uint8 {
+// ClosestToOriginal xxx
+func (s *Scale) ClosestToOriginal(pitch uint8) uint8 {
 	closestpitch := 0
 	closestdelta := 9999
 	for i := 0; i < 128; i++ {
@@ -73,4 +73,25 @@ func (s *Scale) ClosestTo(pitch uint8) uint8 {
 		}
 	}
 	return uint8(closestpitch)
+}
+
+// ClosestTo xxx
+// New version, faster
+func (s *Scale) ClosestTo(pitch uint8) uint8 {
+	p := int(pitch)
+	if s.hasNote[p] {
+		return pitch
+	}
+	for i := 1; i < 128; i++ {
+		pBelow := p - i
+		if pBelow >= 0 && s.hasNote[pBelow] {
+			return uint8(pBelow)
+		}
+		pAbove := p + i
+		if pAbove <= 127 && s.hasNote[pAbove] {
+			return uint8(pAbove)
+		}
+	}
+	// scale is empty!
+	return pitch
 }
