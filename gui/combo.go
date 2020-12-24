@@ -1,6 +1,8 @@
 package gui
 
 import (
+	"strings"
+
 	"github.com/micaelAlastor/nanovgo"
 )
 
@@ -27,6 +29,9 @@ type VizCombo struct {
 
 // NewCombo xxx
 func NewCombo(name, label string, x, y, labelw, valuew, h float32, style Style, cb VizComboCallback) *VizCombo {
+	if !strings.HasPrefix(name, "combo.") {
+		name = "combo." + name
+	}
 	return &VizCombo{
 		name:       name,
 		label:      label,

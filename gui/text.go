@@ -1,6 +1,8 @@
 package gui
 
 import (
+	"strings"
+
 	"github.com/micaelAlastor/nanovgo"
 )
 
@@ -15,6 +17,9 @@ type VizText struct {
 
 // NewText xxx
 func NewText(name, text string, x, y, w, h float32, style Style) *VizText {
+	if !strings.HasPrefix(name, "text.") {
+		name = "text." + name
+	}
 	return &VizText{
 		name:  name,
 		text:  text,

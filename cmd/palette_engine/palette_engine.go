@@ -29,11 +29,8 @@ func main() {
 	go engine.StartRealtime()
 	go engine.StartCursorInput()
 
-	go engine.ListenForLocalDeviceInputsForever() // never returns
+	go engine.ListenForLocalDeviceInputsForever()
 
-	gui.Run()
-
-	// block forever
-	// select {}
-
+	// GUI must run in the main thread, not in a goroutine
+	gui.Run() // this never returns
 }
