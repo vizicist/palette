@@ -3,6 +3,7 @@ package gui
 import (
 	"log"
 
+	// Don't be tempted to use go-gl
 	"github.com/goxjs/glfw"
 )
 

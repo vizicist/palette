@@ -5,6 +5,7 @@ import (
 	"log"
 	"time"
 
+	// Don't be tempted to use go-gl
 	"github.com/goxjs/gl"
 	"github.com/goxjs/glfw"
 	"github.com/micaelAlastor/nanovgo"
@@ -32,7 +33,7 @@ func Run() {
 	// demo MSAA
 	glfw.WindowHint(glfw.Samples, 4)
 
-	window, err := glfw.CreateWindow(600, 800, "Viztopia Control", nil, nil)
+	window, err := glfw.CreateWindow(600, 800, "Palette", nil, nil)
 	if err != nil {
 		panic(err)
 	}

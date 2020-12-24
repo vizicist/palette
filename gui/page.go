@@ -1,6 +1,8 @@
 package gui
 
 import (
+	"image"
+	"log"
 	"math"
 
 	"github.com/micaelAlastor/nanovgo"
@@ -12,11 +14,13 @@ var currentPage string
 type VizPage struct {
 	style         Style
 	ctx           *nanovgo.Context
+	origin        image.Point
 	width         float32
 	height        float32
-	objects       []Obj
+	objects       map[string]Obj
 	localSettings map[string]string
 	focused       Obj
+	visible       bool
 }
 
 // NewPage xxx
@@ -27,7 +31,7 @@ func NewPage(ctx *nanovgo.Context, width, height float32) *VizPage {
 		ctx:           ctx,
 		width:         width,
 		height:        height,
-		objects:       make([]Obj, 0),
+		objects:       make(map[string]Obj),
 		localSettings: make(map[string]string),
 	}
 	pg.style = pg.defaultStyle()
@@ -38,6 +42,12 @@ func NewPage(ctx *nanovgo.Context, width, height float32) *VizPage {
 
 // Do xxx
 func (pg *VizPage) Do() {
+	pg.Draw()
+}
+
+// Draw xxx
+func (pg *VizPage) Draw() {
+
 	pg.ctx.Save()
 	defer pg.ctx.Restore()
 
@@ -72,7 +82,13 @@ func (pg *VizPage) Do() {
 
 // AddObject xxx
 func (pg *VizPage) AddObject(o Obj) {
-	pg.objects = append(pg.objects, o)
+	name := o.Name()
+	_, ok := pg.objects[name]
+	if ok {
+		log.Printf("There's already an object named %s on that page\n", name)
+	} else {
+		pg.objects[name] = o
+	}
 }
 
 // SetFocus xxx

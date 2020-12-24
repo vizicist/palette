@@ -7,7 +7,7 @@ import (
 )
 
 // VizButtonCallback xxx
-type VizButtonCallback func(string)
+type VizButtonCallback func(updown string)
 
 // VizButton xxx
 type VizButton struct {
@@ -23,6 +23,9 @@ type VizButton struct {
 
 // NewButton xxx
 func NewButton(name string, text string, x, y, w, h float32, style Style, cb VizButtonCallback) *VizButton {
+	if !strings.HasPrefix(name, "button.") {
+		name = "button." + name
+	}
 	return &VizButton{
 		name:      name,
 		text:      text,
@@ -61,7 +64,7 @@ func (b *VizButton) HandleInput(mx, my float32, mdown bool) {
 				Page[CurrentPageName].SetFocus(b)
 				b.isPressed = true
 				if !b.waitForUp {
-					b.callback(b.name)
+					b.callback("down")
 				}
 			}
 		}
@@ -70,7 +73,7 @@ func (b *VizButton) HandleInput(mx, my float32, mdown bool) {
 			Page[CurrentPageName].SetFocus(nil)
 			b.isPressed = false
 			if b.waitForUp {
-				b.callback(b.name)
+				b.callback("up")
 			}
 		}
 	}

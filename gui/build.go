@@ -85,23 +85,35 @@ func (pg *VizPage) addPageHeader() {
 	bw := 12 * pg.style.charWidth
 
 	b := NewButton("status", "Status", x, y, bw, bh, pg.style,
-		func(text string) { SwitchToPage(text) })
+		func(updown string) {
+			if updown == "down" {
+				SwitchToPage("status")
+			}
+		})
 
-	b.SetWaitForUp(true)
+	// b.SetWaitForUp(true)
 	pg.AddObject(b)
 
 	x += bw + pg.style.charWidth
 
 	b = NewButton("misc", "Misc", x, y, bw, bh, pg.style,
-		func(text string) { SwitchToPage(text) })
-	b.SetWaitForUp(true)
+		func(updown string) {
+			if updown == "down" {
+				SwitchToPage("misc")
+			}
+		})
+	// b.SetWaitForUp(true)
 	pg.AddObject(b)
 
 	x += bw + pg.style.charWidth
 
 	b = NewButton("venues", "Venues", x, y, bw, bh, pg.style,
-		func(text string) { SwitchToPage(text) })
-	b.SetWaitForUp(true)
+		func(updown string) {
+			if updown == "down" {
+				SwitchToPage("venues")
+			}
+		})
+	// b.SetWaitForUp(true)
 	pg.AddObject(b)
 
 }
@@ -110,7 +122,7 @@ func (pg *VizPage) venueAPI(venue string, api string) {
 	log.Printf(fmt.Sprintf("venueAPI venue=%s, api=%s\n", venue, api))
 }
 
-func (pg *VizPage) addButtons(x, y float32) {
+func (pg *VizPage) addStatusButtons(x, y float32) {
 	bh := float32(2.5) * pg.style.lineHeight
 	bw := 12 * pg.style.charWidth
 
@@ -186,7 +198,7 @@ func StatusPage(ctx *nanovgo.Context, width, height float32) *VizPage {
 
 	x = float32(pg.style.charWidth)
 	y = float32(0.2 * height)
-	pg.addButtons(x, y)
+	pg.addStatusButtons(x, y)
 
 	return pg
 }
