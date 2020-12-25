@@ -1,6 +1,7 @@
 package gui
 
 import (
+	"image"
 	"strings"
 
 	"github.com/micaelAlastor/nanovgo"
@@ -11,6 +12,7 @@ type VizComboCallback func(c *VizCombo, choice int)
 
 // VizCombo xxx
 type VizCombo struct {
+	VizWind
 	name                  string
 	label                 string
 	wasPressed            bool
@@ -53,8 +55,10 @@ func (c *VizCombo) Name() string {
 	return c.name
 }
 
-func (c *VizCombo) getMouseLocation(mx, my int) (invalue bool, inpopup bool, choice int) {
+func (c *VizCombo) getMouseLocation(pos image.Point) (invalue bool, inpopup bool, choice int) {
 
+	mx := pos.X
+	my := pos.Y
 	valuex0 := c.x + c.labelw
 	valuex1 := c.x + c.labelw + c.valuew
 	invalue = mx >= valuex0 && mx <= valuex1 && my >= c.y && my <= (c.y+c.h)
@@ -73,19 +77,19 @@ func (c *VizCombo) getMouseLocation(mx, my int) (invalue bool, inpopup bool, cho
 }
 
 // HandleMouseInput xxx
-func (c *VizCombo) HandleMouseInput(mx, my int, mdown bool) {
+func (c *VizCombo) HandleMouseInput(pos image.Point, down bool) {
 	if c.isPopped {
-		c.handleWhenPopped(mx, my, mdown)
+		c.handleWhenPopped(pos, down)
 	} else {
-		c.handleWhenUnpopped(mx, my, mdown)
+		c.handleWhenUnpopped(pos, down)
 	}
 }
 
-func (c *VizCombo) handleWhenUnpopped(mx, my int, mdown bool) {
-	switch {
-	case mdown == true:
+func (c *VizCombo) handleWhenUnpopped(pos image.Point, down bool) {
+	switch down {
+	case true:
 		// inside the combo line?
-		invalue, _, _ := c.getMouseLocation(mx, my)
+		invalue, _, _ := c.getMouseLocation(pos)
 		if invalue {
 			if c.wasPressed == false {
 				c.wasPressed = true
@@ -93,25 +97,25 @@ func (c *VizCombo) handleWhenUnpopped(mx, my int, mdown bool) {
 				c.isPopped = true
 			}
 		}
-	case mdown == false:
+	case false:
 		c.wasPressed = false
 	}
 }
 
-func (c *VizCombo) handleWhenPopped(mx, my int, mdown bool) {
-	switch {
-	case mdown == true:
+func (c *VizCombo) handleWhenPopped(pos image.Point, down bool) {
+	switch down {
+	case true:
 		// inside the combo line?
 		if c.wasPressed == false {
 			// invalue, _, _ := c.getMouseLocation(mx, my)
 			// fmt.Printf("Mouse down, invalue=%v\n", invalue)
 			c.wasPressed = true
 		}
-	case mdown == false:
+	case false:
 		switch {
 		case c.wasPressed == true:
 			// The mouse has just been let up
-			invalue, inpopup, choice := c.getMouseLocation(mx, my)
+			invalue, inpopup, choice := c.getMouseLocation(pos)
 			switch {
 			case invalue == true:
 				// Do nothing, stay popped, though perhaps we should unpop

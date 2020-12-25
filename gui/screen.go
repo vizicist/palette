@@ -15,8 +15,7 @@ import (
 type VizScreen struct {
 	width           int
 	height          int
-	mouseX          int
-	mouseY          int
+	mousePos        image.Point
 	ctx             *nanovgo.Context
 	wind            map[string]*VizWind
 	mouseButtonDown []bool
@@ -67,46 +66,58 @@ func (screen *VizScreen) AddWind(name string, rect image.Rectangle) (*VizWind, e
 	// Use lineHeight and charWidth to make it
 	// easier to do placement relative to window size
 	w := &VizWind{
-		style:         Style{},
+		Style:         Style{},
 		ctx:           screen.ctx,
 		rect:          rect,
-		objects:       make(map[string]Obj),
+		Objects:       make(map[string]Obj),
 		localSettings: make(map[string]string),
 		focused:       nil,
-		visible:       false,
+		Visible:       false,
 	}
 	screen.wind[name] = w
-	w.style = w.defaultStyle()
+	w.Style = w.defaultStyle()
 	// w := float32(wind.Width())
 	// h := float32(wind.Height())
 	// wind.style.fontSize = 18.0 * float32(math.Min(float64(w/600.0), float64(h/800.0)))
 	// default fontSize is 18.  should it be scaled here?
-	w.style.fontSize = 18.0
+	w.Style.fontSize = 18.0
 	return w, nil
 }
 
-// Mousebutton xxx
+// WindowUnder xxx
+func (screen *VizScreen) WindowUnder(pos image.Point) *VizWind {
+	for _, w := range screen.wind {
+		if pos.In(w.rect) {
+			return w
+		}
+	}
+	return nil
+}
+
+// Mousebutton is a callback from glfw
 func (screen *VizScreen) Mousebutton(w *glfw.Window, button glfw.MouseButton, action glfw.Action, mods glfw.ModifierKey) {
 	if button < 0 || int(button) >= len(screen.mouseButtonDown) {
 		log.Printf("mousebutton: unexpected button=%d\n", button)
 		return
 	}
+	down := false
 	if action == 1 {
-		screen.mouseButtonDown[button] = true
-	} else {
-		screen.mouseButtonDown[button] = false
+		down = true
 	}
-	log.Printf("Mousebutton %d %d\n", button, action)
+	screen.mouseButtonDown[button] = down
+	wind := screen.WindowUnder(screen.mousePos)
+	if wind != nil {
+		wind.HandleMouseInput(screen.mousePos, down)
+	}
 }
 
-// Mousepos xxx
+// Mousepos is a callabck from glfw
 func (screen *VizScreen) Mousepos(w *glfw.Window, xpos float64, ypos float64, xdelta float64, ydelta float64) {
 	// All palette.gui coordinates are integer, but some glfw platforms may support
 	// sub-pixel cursor positions.
 	if math.Mod(xpos, 1.0) != 0.0 || math.Mod(ypos, 1.0) != 0.0 {
 		log.Printf("Mousepos: we're getting sub-pixel mouse coordinates!\n")
 	}
-	screen.mouseX = int(xpos)
-	screen.mouseY = int(ypos)
-	log.Printf("Mousepos: %d %d\n", screen.mouseX, screen.mouseY)
+	screen.mousePos = image.Point{X: int(xpos), Y: int(ypos)}
+	log.Printf("Mousepos: %v\n", screen.mousePos)
 }

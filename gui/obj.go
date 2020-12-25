@@ -1,10 +1,15 @@
 package gui
 
-import "github.com/micaelAlastor/nanovgo"
+import (
+	"image"
+
+	"github.com/micaelAlastor/nanovgo"
+)
 
 // Obj xxx
 type Obj interface {
-	HandleMouseInput(mx, my int, mdown bool)
+	HandleMouseInput(pos image.Point, down bool)
 	Draw(ctx *nanovgo.Context)
 	Name() string
+	Rect() image.Rectangle
 }
