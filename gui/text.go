@@ -9,6 +9,7 @@ import (
 
 // VizText xxx
 type VizText struct {
+	VizWind
 	name  string
 	text  string
 	style Style
@@ -34,7 +35,7 @@ func (t *VizText) Name() string {
 }
 
 // HandleMouseInput xxx
-func (t *VizText) HandleMouseInput(mx, my int, mdown bool) {
+func (t *VizText) HandleMouseInput(pos image.Point, down bool) {
 }
 
 // Draw xxx

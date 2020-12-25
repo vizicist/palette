@@ -38,8 +38,8 @@ func (wind *VizWind) defaultStyle() Style {
 		textColor:   black,
 		strokeColor: black,
 		fillColor:   white,
-		lineHeight:  int(wind.Height() / 48.0),
-		charWidth:   int(wind.Width() / 80.0),
+		lineHeight:  int(wind.Rect().Dy() / 48.0),
+		charWidth:   int(wind.Rect().Dx() / 80.0),
 	}
 	return s
 }
@@ -80,18 +80,18 @@ func SwitchToWind(name string) {
 */
 
 func (wind *VizWind) addHeaderButtons() {
+
 	x0 := wind.rect.Min.X + 10
 	y0 := wind.rect.Min.Y + 10
 
-	b := wind.NewButton("status", "Status12345", image.Point{X: x0, Y: y0}, wind.style,
+	b := wind.NewButton("status", "Status12345", image.Point{X: x0, Y: y0}, wind.Style,
 		func(updown string) {
 			if updown == "down" {
-				log.Printf("status button down\n")
+				log.Printf("Status button was pressed\n")
 				// SwitchToWind("status")
 			}
 		})
 
-	// b.SetWaitForUp(true)
 	wind.AddObject(b)
 
 	/*
@@ -105,7 +105,6 @@ func (wind *VizWind) addHeaderButtons() {
 					SwitchToWind("misc")
 				}
 			})
-		// b.SetWaitForUp(true)
 		wind.AddObject(b)
 
 		x0 += buttonDx
@@ -117,7 +116,6 @@ func (wind *VizWind) addHeaderButtons() {
 					SwitchToWind("venues")
 				}
 			})
-		// b.SetWaitForUp(true)
 		wind.AddObject(b)
 	*/
 
@@ -220,12 +218,12 @@ func (wind *VizWind) localsettingCallback(c *VizCombo, choice int) {
 
 func (wind *VizWind) addSettings(x, y int) {
 
-	labelw := wind.Width() / 4
-	valuew := wind.Height() / 2
-	h := wind.style.lineHeight
+	labelw := wind.Rect().Dx() / 4
+	valuew := wind.Rect().Dx() / 2
+	h := wind.Style.lineHeight
 
 	midiCombo := NewCombo("midiinput", "MIDI Input",
-		x, y, labelw, valuew, h, wind.style, wind.localsettingCallback)
+		x, y, labelw, valuew, h, wind.Style, wind.localsettingCallback)
 	midiCombo.addValue("microKEY2 Air")
 	midiCombo.addValue("01. Internal MIDI")
 	midiCombo.addValue("02. Internal MIDI")
@@ -233,10 +231,10 @@ func (wind *VizWind) addSettings(x, y int) {
 	midiCombo.addValue("04. Internal MIDI")
 	wind.AddObject(midiCombo)
 
-	y += wind.style.lineHeight
+	y += wind.Style.lineHeight
 
 	midiFileCombo := NewCombo("midifile", "MIDI File",
-		x, y, labelw, valuew, h, wind.style, wind.localsettingCallback)
+		x, y, labelw, valuew, h, wind.Style, wind.localsettingCallback)
 
 	log.Printf("")
 	venue := "PhotonSalon1"
@@ -253,11 +251,11 @@ func (wind *VizWind) addSettings(x, y int) {
 
 func (wind *VizWind) addLogArea(nloglines int, x, y int) *VizWind {
 
-	w := wind.Width()
-	h := wind.style.lineHeight
+	w := wind.Rect().Dx()
+	h := wind.Style.lineHeight
 
-	wind.AddObject(NewText("log", "Message Log:", image.Rect(x, y, x+w-10*wind.style.charWidth, y+h), wind.style))
-	y += wind.style.lineHeight
+	wind.AddObject(NewText("log", "Message Log:", image.Rect(x, y, x+w-10*wind.Style.charWidth, y+h), wind.Style))
+	y += wind.Style.lineHeight
 	// It might be better to re-use
 	// the Texts if they've already been created.
 	newlogTexts := make([]*VizText, 0)
@@ -268,10 +266,10 @@ func (wind *VizWind) addLogArea(nloglines int, x, y int) *VizWind {
 			t = logTexts[n].text
 		}
 		nm := fmt.Sprintf("line%d", n)
-		txt := NewText(nm, t, image.Rect(x, y, x+w, y+h), wind.style)
+		txt := NewText(nm, t, image.Rect(x, y, x+w, y+h), wind.Style)
 		newlogTexts = append(newlogTexts, txt)
 		wind.AddObject(txt)
-		y += wind.style.lineHeight
+		y += wind.Style.lineHeight
 	}
 	logTexts = newlogTexts
 	return wind
@@ -282,7 +280,7 @@ func BuildMiscWind(wind *VizWind, rect image.Rectangle) *VizWind {
 	// wind.addWindHeader()
 	x := rect.Min.X + 200
 	y := rect.Min.Y + 200
-	wind.AddObject(NewText("misc", "This is the Misc Wind", image.Rect(x, y, x+200, y+200), wind.style))
+	wind.AddObject(NewText("misc", "This is the Misc Wind", image.Rect(x, y, x+200, y+200), wind.Style))
 	return wind
 }
 
@@ -291,7 +289,7 @@ func BuildVenuesWind(wind *VizWind, rect image.Rectangle) *VizWind {
 	wind.addHeaderButtons()
 	x := rect.Min.X + 200
 	y := rect.Max.Y - 200
-	wind.AddObject(NewText("misc", "This is the Venues Wind", image.Rect(x, y, x+200, y+200), wind.style))
+	wind.AddObject(NewText("misc", "This is the Venues Wind", image.Rect(x, y, x+200, y+200), wind.Style))
 	return wind
 }
 
