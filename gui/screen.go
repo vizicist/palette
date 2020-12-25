@@ -1,24 +1,16 @@
 package gui
 
 import (
+	"fmt"
 	"image"
 	"log"
+	"math"
 
+	// Don't be tempted to use go-gl
+	"github.com/goxjs/glfw"
 	"github.com/micaelAlastor/nanovgo"
 )
 
-// VizWind xxx
-type VizWind struct {
-	style         Style
-	ctx           *nanovgo.Context
-	rect          image.Rectangle
-	objects       map[string]Obj
-	localSettings map[string]string
-	focused       Obj
-	visible       bool
-}
-
-/*
 // VizScreen xxx
 type VizScreen struct {
 	width           int
@@ -92,89 +84,29 @@ func (screen *VizScreen) AddWind(name string, rect image.Rectangle) (*VizWind, e
 	w.style.fontSize = 18.0
 	return w, nil
 }
-*/
 
-// Width xxx
-func (wind *VizWind) Width() int {
-	return wind.rect.Max.X - wind.rect.Min.X
-}
-
-// Height xxx
-func (wind *VizWind) Height() int {
-	return wind.rect.Max.Y - wind.rect.Min.Y
-}
-
-// Do xxx
-func (wind *VizWind) Do() {
-	wind.Draw()
-}
-
-// Draw xxx
-func (wind *VizWind) Draw() {
-
-	wind.ctx.Save()
-	defer wind.ctx.Restore()
-
-	wind.ctx.Save()
-	wind.ctx.BeginPath()
-	x := wind.rect.Min.X
-	y := wind.rect.Min.Y
-	w := wind.Width()
-	h := wind.Height()
-	cornerRadius := float32(4.0)
-	wind.ctx.RoundedRect(float32(x), float32(y), float32(w), float32(h), cornerRadius-0.5)
-	wind.ctx.SetStrokeWidth(3.0)
-	wind.ctx.Stroke()
-	wind.ctx.Restore()
-
-	wind.ctx.SetTextLetterSpacing(0)
-
-	/*
-		for _, o := range wind.objects {
-			switch {
-			case wind.focused != nil && o == wind.focused:
-				// if ButtonDown[0] {
-				// 	log.Printf("Calling FOCUSED HandleMouseInput mdown=true of %s\n", o.Name())
-				// }
-				o.HandleMouseInput(MouseX, MouseY, ButtonDown[0])
-			case wind.focused == nil:
-				// if ButtonDown[0] {
-				// 	log.Printf("Calling unfocused HandleMouseInput mdown=true of %s\n", o.Name())
-				// }
-				o.HandleMouseInput(MouseX, MouseY, ButtonDown[0])
-			}
-		}
-	*/
-	var focusobj Obj
-	for _, o := range wind.objects {
-		if o == wind.focused {
-			focusobj = o
-		} else {
-			o.Draw(wind.ctx)
-		}
+// Mousebutton xxx
+func (screen *VizScreen) Mousebutton(w *glfw.Window, button glfw.MouseButton, action glfw.Action, mods glfw.ModifierKey) {
+	if button < 0 || int(button) >= len(screen.mouseButtonDown) {
+		log.Printf("mousebutton: unexpected button=%d\n", button)
+		return
 	}
-	if focusobj != nil {
-		focusobj.Draw(wind.ctx)
-	}
-}
-
-// AddObject xxx
-func (wind *VizWind) AddObject(o Obj) {
-	name := o.Name()
-	_, ok := wind.objects[name]
-	if ok {
-		log.Printf("There's already an object named %s in that VizWind\n", name)
+	if action == 1 {
+		screen.mouseButtonDown[button] = true
 	} else {
-		wind.objects[name] = o
+		screen.mouseButtonDown[button] = false
 	}
+	log.Printf("Mousebutton %d %d\n", button, action)
 }
 
-// SetFocus xxx
-func (wind *VizWind) SetFocus(o Obj) {
-	wind.focused = o
-}
-
-// Focus xxx
-func (wind *VizWind) Focus() Obj {
-	return wind.focused
+// Mousepos xxx
+func (screen *VizScreen) Mousepos(w *glfw.Window, xpos float64, ypos float64, xdelta float64, ydelta float64) {
+	// All palette.gui coordinates are integer, but some glfw platforms may support
+	// sub-pixel cursor positions.
+	if math.Mod(xpos, 1.0) != 0.0 || math.Mod(ypos, 1.0) != 0.0 {
+		log.Printf("Mousepos: we're getting sub-pixel mouse coordinates!\n")
+	}
+	screen.mouseX = int(xpos)
+	screen.mouseY = int(ypos)
+	log.Printf("Mousepos: %d %d\n", screen.mouseX, screen.mouseY)
 }

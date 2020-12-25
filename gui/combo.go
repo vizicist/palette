@@ -16,19 +16,19 @@ type VizCombo struct {
 	wasPressed            bool
 	isPopped              bool
 	style                 Style
-	x, y                  float32
-	labelw, valuew, h     float32
+	x, y                  int
+	labelw, valuew, h     int
 	col                   nanovgo.Color
 	choices               []string
 	choice                int
 	callback              VizComboCallback
 	waitingForUp          bool
 	recomputeChoicesWidth bool
-	choicesWidth          float32
+	choicesWidth          int
 }
 
 // NewCombo xxx
-func NewCombo(name, label string, x, y, labelw, valuew, h float32, style Style, cb VizComboCallback) *VizCombo {
+func NewCombo(name, label string, x, y, labelw, valuew, h int, style Style, cb VizComboCallback) *VizCombo {
 	if !strings.HasPrefix(name, "combo.") {
 		name = "combo." + name
 	}
@@ -53,7 +53,7 @@ func (c *VizCombo) Name() string {
 	return c.name
 }
 
-func (c *VizCombo) getMouseLocation(mx, my float32) (invalue bool, inpopup bool, choice int) {
+func (c *VizCombo) getMouseLocation(mx, my int) (invalue bool, inpopup bool, choice int) {
 
 	valuex0 := c.x + c.labelw
 	valuex1 := c.x + c.labelw + c.valuew
@@ -61,7 +61,7 @@ func (c *VizCombo) getMouseLocation(mx, my float32) (invalue bool, inpopup bool,
 
 	lh := c.style.lineHeight
 	y0 := c.y + lh
-	y1 := c.y + lh*float32(1+len(c.choices))
+	y1 := c.y + lh*(1+len(c.choices))
 	inpopup = mx >= valuex0 && mx <= valuex1 && my >= y0 && my <= y1
 
 	if !inpopup {
@@ -72,8 +72,8 @@ func (c *VizCombo) getMouseLocation(mx, my float32) (invalue bool, inpopup bool,
 	return invalue, inpopup, choice
 }
 
-// HandleInput xxx
-func (c *VizCombo) HandleInput(mx, my float32, mdown bool) {
+// HandleMouseInput xxx
+func (c *VizCombo) HandleMouseInput(mx, my int, mdown bool) {
 	if c.isPopped {
 		c.handleWhenPopped(mx, my, mdown)
 	} else {
@@ -81,7 +81,7 @@ func (c *VizCombo) HandleInput(mx, my float32, mdown bool) {
 	}
 }
 
-func (c *VizCombo) handleWhenUnpopped(mx, my float32, mdown bool) {
+func (c *VizCombo) handleWhenUnpopped(mx, my int, mdown bool) {
 	switch {
 	case mdown == true:
 		// inside the combo line?
@@ -89,7 +89,7 @@ func (c *VizCombo) handleWhenUnpopped(mx, my float32, mdown bool) {
 		if invalue {
 			if c.wasPressed == false {
 				c.wasPressed = true
-				Page[CurrentPageName].SetFocus(c)
+				// Wind[CurrentWindName].SetFocus(c)
 				c.isPopped = true
 			}
 		}
@@ -98,7 +98,7 @@ func (c *VizCombo) handleWhenUnpopped(mx, my float32, mdown bool) {
 	}
 }
 
-func (c *VizCombo) handleWhenPopped(mx, my float32, mdown bool) {
+func (c *VizCombo) handleWhenPopped(mx, my int, mdown bool) {
 	switch {
 	case mdown == true:
 		// inside the combo line?
@@ -121,10 +121,10 @@ func (c *VizCombo) handleWhenPopped(mx, my float32, mdown bool) {
 					c.callback(c, choice)
 				}
 				c.isPopped = false
-				Page[CurrentPageName].SetFocus(nil)
+				// Wind[CurrentWindName].SetFocus(nil)
 			default:
 				c.isPopped = false
-				Page[CurrentPageName].SetFocus(nil)
+				// Wind[CurrentWindName].SetFocus(nil)
 			}
 			c.wasPressed = false
 		}
@@ -147,44 +147,45 @@ func (c *VizCombo) Draw(ctx *nanovgo.Context) {
 
 	// ctx.Text uses FillColor for the text
 	ctx.SetFillColor(c.style.textColor)
-	ctx.Text(c.x, y, c.label)
-	ctx.Text(c.x+c.labelw, y, choice)
+	ctx.Text(float32(c.x), float32(y), c.label)
+	ctx.Text(float32(c.x+c.labelw), float32(y), choice)
 
 	if c.recomputeChoicesWidth {
-		maxcx := float32(0)
+		maxcx := 0
 		for _, s := range c.choices {
-			if cx, _ := ctx.TextBounds(0, 0, s); cx > maxcx {
-				maxcx = cx
+			if cx, _ := ctx.TextBounds(0, 0, s); cx > float32(maxcx) {
+				maxcx = int(cx)
 			}
 		}
 		c.choicesWidth = maxcx
 		c.recomputeChoicesWidth = false
 	}
 
-	drawIcon(ctx, IconDOWN, c.x+c.labelw+c.valuew, y+0.5*c.style.lineHeight)
+	midy := y + (c.style.lineHeight / 2)
+	drawIcon(ctx, IconDOWN, c.x+c.labelw+c.valuew, midy)
 
 	if c.isPopped {
 		ctx.Save()
 		ctx.BeginPath()
-		ctx.Rect(c.x+c.labelw, c.y+c.style.lineHeight,
-			float32(c.valuew), float32(len(c.choices))*c.style.lineHeight)
+		ctx.Rect(float32(c.x+c.labelw), float32(c.y+c.style.lineHeight),
+			float32(c.valuew), float32(len(c.choices)*c.style.lineHeight))
 		ctx.SetFillColor(nanovgo.RGBA(255, 255, 225, 255))
 		ctx.Fill()
 		ctx.Restore()
 		// Draw the popped-up list of choices
 		y = c.y + c.style.lineHeight
 		for _, choice := range c.choices {
-			ctx.Text(c.x+c.labelw, y, choice)
+			ctx.Text(float32(c.x+c.labelw), float32(y), choice)
 			y += c.style.lineHeight
 		}
 	}
 }
 
-func drawIcon(ctx *nanovgo.Context, icon int, x, y float32) {
+func drawIcon(ctx *nanovgo.Context, icon int, x, y int) {
 	ctx.Save()
 	ctx.SetFontFace("icons")
 	ctx.SetTextAlign(nanovgo.AlignLeft | nanovgo.AlignMiddle)
-	ctx.Text(x, y, cpToUTF8(icon))
+	ctx.Text(float32(x), float32(y), cpToUTF8(icon))
 	ctx.Restore()
 }
 
