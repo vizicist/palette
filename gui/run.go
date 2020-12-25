@@ -37,10 +37,6 @@ func Run() {
 	if err != nil {
 		panic(err)
 	}
-	window.SetKeyCallback(key)
-
-	window.SetMouseButtonCallback(Mousebutton)
-	window.SetMouseMovementCallback(Mousepos)
 
 	window.MakeContextCurrent()
 
@@ -51,14 +47,17 @@ func Run() {
 		panic(err)
 	}
 
+	screen := NewScreen(ctx)
+
+	window.SetKeyCallback(key)
+	window.SetMouseButtonCallback(screen.Mousebutton)
+	window.SetMouseMovementCallback(screen.Mousepos)
+
 	glfw.SwapInterval(0)
 
 	frametime, _ := time.ParseDuration("33ms") // 30fps
 	tm := time.Now()
 	previousTime := tm
-
-	winWidth := 0
-	winHeight := 0
 
 	err = LoadFonts(ctx)
 	if err != nil {
@@ -72,14 +71,17 @@ func Run() {
 		fbWidth, fbHeight := window.GetFramebufferSize()
 		newWidth, newHeight := window.GetSize()
 
-		if newWidth != winWidth || newHeight != winHeight {
-			winWidth = newWidth
-			winHeight = newHeight
-			log.Printf("New winwidth,winheight = %d,%d\n", winWidth, winHeight)
-			BuildPages(ctx, float32(winWidth), float32(winHeight))
+		if newWidth != screen.width || newHeight != screen.height {
+			screen.Resize(newWidth, newHeight)
+			if len(screen.wind) == 0 {
+				err := BuildInitialScreen(screen)
+				if err != nil {
+					log.Printf("BuildInitialScreen: err=%s\n", err)
+				}
+			}
 		}
 
-		pixelRatio := float32(fbWidth) / float32(winWidth)
+		pixelRatio := float32(fbWidth) / float32(screen.width)
 		gl.Viewport(0, 0, fbWidth, fbHeight)
 
 		// background color
@@ -91,9 +93,9 @@ func Run() {
 		gl.Enable(gl.CULL_FACE)
 		gl.Disable(gl.DEPTH_TEST)
 
-		ctx.BeginFrame(winWidth, winHeight, pixelRatio)
+		ctx.BeginFrame(screen.width, screen.height, pixelRatio)
 
-		Page[CurrentPageName].Do()
+		screen.Do()
 
 		ctx.EndFrame()
 

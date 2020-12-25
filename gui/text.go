@@ -1,6 +1,7 @@
 package gui
 
 import (
+	"image"
 	"strings"
 
 	"github.com/micaelAlastor/nanovgo"
@@ -11,12 +12,11 @@ type VizText struct {
 	name  string
 	text  string
 	style Style
-	x, y  float32
-	w, h  float32
+	rect  image.Rectangle
 }
 
 // NewText xxx
-func NewText(name, text string, x, y, w, h float32, style Style) *VizText {
+func NewText(name, text string, rect image.Rectangle, style Style) *VizText {
 	if !strings.HasPrefix(name, "text.") {
 		name = "text." + name
 	}
@@ -24,10 +24,7 @@ func NewText(name, text string, x, y, w, h float32, style Style) *VizText {
 		name:  name,
 		text:  text,
 		style: style,
-		x:     x,
-		y:     y,
-		w:     w,
-		h:     h,
+		rect:  rect,
 	}
 }
 
@@ -36,8 +33,8 @@ func (t *VizText) Name() string {
 	return t.name
 }
 
-// HandleInput xxx
-func (t *VizText) HandleInput(mx, my float32, mdown bool) {
+// HandleMouseInput xxx
+func (t *VizText) HandleMouseInput(mx, my int, mdown bool) {
 }
 
 // Draw xxx
@@ -45,5 +42,5 @@ func (t *VizText) Draw(ctx *nanovgo.Context) {
 	t.style.Do(ctx)
 	ctx.SetFillColor(t.style.textColor)
 	ctx.SetTextAlign(nanovgo.AlignLeft | nanovgo.AlignTop)
-	ctx.Text(t.x, t.y, t.text)
+	ctx.Text(float32(t.rect.Min.X), float32(t.rect.Min.Y), t.text)
 }

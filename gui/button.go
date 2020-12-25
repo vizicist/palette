@@ -1,6 +1,8 @@
 package gui
 
 import (
+	"image"
+	"log"
 	"strings"
 
 	"github.com/micaelAlastor/nanovgo"
@@ -15,26 +17,25 @@ type VizButton struct {
 	isPressed bool
 	text      string
 	style     Style
-	x, y      float32
-	w, h      float32
+	rect      image.Rectangle
 	callback  VizButtonCallback
 	waitForUp bool
 }
 
 // NewButton xxx
-func NewButton(name string, text string, x, y, w, h float32, style Style, cb VizButtonCallback) *VizButton {
+func (wind *VizWind) NewButton(name string, text string, pos image.Point, style Style, cb VizButtonCallback) *VizButton {
 	if !strings.HasPrefix(name, "button.") {
 		name = "button." + name
 	}
+	w := len(text) * wind.style.charWidth
+	h := wind.style.lineHeight
+	rect := image.Rect(pos.X, pos.Y, pos.X+w, pos.Y+h)
 	return &VizButton{
 		name:      name,
 		text:      text,
 		style:     style,
 		isPressed: false,
-		x:         x,
-		y:         y,
-		w:         w,
-		h:         h,
+		rect:      rect,
 		callback:  cb,
 		waitForUp: false,
 	}
@@ -50,33 +51,38 @@ func (b *VizButton) Name() string {
 	return b.name
 }
 
-// HandleInput xxx
-func (b *VizButton) HandleInput(mx, my float32, mdown bool) {
-	focusObj := Page[CurrentPageName].Focus()
-	switch {
-	case mdown == true:
-		if b.isPressed && focusObj == b {
-			// Mouse is already pressed and we have the focus
-		}
-		if mx >= b.x && mx <= (b.x+b.w) && my >= b.y && my <= (b.y+b.h) {
-			// The mouse is inside the button
-			if b.isPressed == false {
-				Page[CurrentPageName].SetFocus(b)
-				b.isPressed = true
-				if !b.waitForUp {
-					b.callback("down")
+// HandleMouseInput xxx
+func (b *VizButton) HandleMouseInput(mx, my int, mdown bool) {
+	if false {
+		log.Printf("HandleMouseInput %d,%d %v\n", mx, my, mdown)
+	}
+	/*
+		focusObj := Wind[CurrentWindName].Focus()
+		switch {
+		case mdown == true:
+			if b.isPressed && focusObj == b {
+				// Mouse is already pressed and we have the focus
+			}
+			if mx >= b.rect.Min.X && mx <= b.rect.Max.X && my >= b.rect.Min.Y && my <= b.rect.Max.Y {
+				// The mouse is inside the button
+				if b.isPressed == false {
+					Wind[CurrentWindName].SetFocus(b)
+					b.isPressed = true
+					if !b.waitForUp {
+						b.callback("down")
+					}
+				}
+			}
+		case mdown == false:
+			if b.isPressed == true {
+				Wind[CurrentWindName].SetFocus(nil)
+				b.isPressed = false
+				if b.waitForUp {
+					b.callback("up")
 				}
 			}
 		}
-	case mdown == false:
-		if b.isPressed == true {
-			Page[CurrentPageName].SetFocus(nil)
-			b.isPressed = false
-			if b.waitForUp {
-				b.callback("up")
-			}
-		}
-	}
+	*/
 }
 
 // Draw xxx
@@ -89,27 +95,30 @@ func (b *VizButton) Draw(ctx *nanovgo.Context) {
 	b.style.Do(ctx)
 
 	ctx.BeginPath()
-	ctx.RoundedRect(b.x+1, b.y+1, b.w-2, b.h-2, cornerRadius-1)
+	w := float32(b.rect.Max.X - b.rect.Min.X)
+	h := float32(b.rect.Max.Y - b.rect.Min.Y)
+	ctx.RoundedRect(float32(b.rect.Min.X+1), float32(b.rect.Min.Y+1), w-2, h-2, cornerRadius-1)
 	ctx.Fill()
 
 	ctx.BeginPath()
-	ctx.RoundedRect(b.x+0.5, b.y+0.5, b.w-1, b.h-1, cornerRadius-0.5)
+	ctx.RoundedRect(float32(b.rect.Min.X), float32(b.rect.Min.Y), w, h, cornerRadius-1)
 	ctx.Stroke()
 
 	ctx.SetTextAlign(nanovgo.AlignCenter | nanovgo.AlignMiddle)
 	// Text uses the fill color, but we want it to be the strokeColor
 	ctx.SetFillColor(b.style.textColor)
 	pos := strings.Index(b.text, "\n")
+	midx := float32((b.rect.Min.X + b.rect.Max.X) / 2)
+	midy := float32((b.rect.Min.Y + b.rect.Max.Y) / 2)
 	if pos >= 0 {
 		// 2 lines
 		line1 := b.text[:pos]
 		line2 := b.text[pos+1:]
-		halfHeight := b.style.lineHeight / 2.0
-		midy := b.y + 0.5*b.h + 1
-		ctx.Text(b.x+b.w*0.5, midy-halfHeight, line1)
-		ctx.Text(b.x+b.w*0.5, midy+halfHeight, line2)
+		halfHeight := float32(b.style.lineHeight) / 2.0
+		ctx.Text(midx, midy-halfHeight, line1)
+		ctx.Text(midx, midy+halfHeight, line2)
 	} else {
-		ctx.Text(b.x+b.w*0.5, b.y+0.5*b.h+1, b.text)
+		ctx.Text(midx, midy, b.text)
 	}
 }
 

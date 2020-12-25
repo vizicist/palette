@@ -2,6 +2,7 @@ package gui
 
 import (
 	"fmt"
+	"image"
 	"log"
 	"strings"
 
@@ -9,13 +10,11 @@ import (
 	"github.com/vizicist/palette/engine"
 )
 
-// Page xxx
-var Page map[string]*VizPage = make(map[string]*VizPage)
+// Wind xxx
+// var Wind map[string]*VizWind = make(map[string]*VizWind)
 
-// CurrentPageName is the name of the active page.
-// Since Pages get rebuilt if the window size changes,
-// we keep track of the name, not the VizPage
-var CurrentPageName string
+// CurrentWindName is the name of the active page.
+var CurrentWindName string
 
 var red = nanovgo.RGBA(255, 0, 0, 255)
 var black = nanovgo.RGBA(0, 0, 0, 255)
@@ -28,19 +27,19 @@ type Style struct {
 	textColor   nanovgo.Color
 	strokeColor nanovgo.Color
 	fillColor   nanovgo.Color
-	charWidth   float32
-	lineHeight  float32
+	charWidth   int
+	lineHeight  int
 }
 
-func (pg *VizPage) defaultStyle() Style {
+func (wind *VizWind) defaultStyle() Style {
 	s := Style{
 		fontSize:    18.0,
 		fontFace:    "lucida",
 		textColor:   black,
 		strokeColor: black,
 		fillColor:   white,
-		lineHeight:  pg.height / 48.0,
-		charWidth:   pg.width / 80.0,
+		lineHeight:  int(wind.Height() / 48.0),
+		charWidth:   int(wind.Width() / 80.0),
 	}
 	return s
 }
@@ -67,102 +66,110 @@ const (
 	// IconTRASH        = 0xE729
 )
 
-// SwitchToPage xxx
-func SwitchToPage(name string) {
-	pg, ok := Page[name]
+/*
+// SwitchToWind xxx
+func SwitchToWind(name string) {
+	wind, ok := Wind[name]
 	if !ok {
 		log.Printf("No page named: %s\n", name)
 	} else {
-		CurrentPageName = name
-		pg.SetFocus(nil)
+		CurrentWindName = name
+		wind.SetFocus(nil)
 	}
 }
+*/
 
-func (pg *VizPage) addPageHeader() {
-	x := float32(10.0)
-	y := float32(10.0)
-	bh := float32(1.5) * pg.style.lineHeight
-	bw := 12 * pg.style.charWidth
+func (wind *VizWind) addHeaderButtons() {
+	x0 := wind.rect.Min.X + 10
+	y0 := wind.rect.Min.Y + 10
 
-	b := NewButton("status", "Status", x, y, bw, bh, pg.style,
+	b := wind.NewButton("status", "Status12345", image.Point{X: x0, Y: y0}, wind.style,
 		func(updown string) {
 			if updown == "down" {
-				SwitchToPage("status")
+				log.Printf("status button down\n")
+				// SwitchToWind("status")
 			}
 		})
 
 	// b.SetWaitForUp(true)
-	pg.AddObject(b)
+	wind.AddObject(b)
 
-	x += bw + pg.style.charWidth
+	/*
+		buttonDx := 14 * wind.style.charWidth
+		x0 += buttonDx
+		x1 += buttonDx
 
-	b = NewButton("misc", "Misc", x, y, bw, bh, pg.style,
-		func(updown string) {
-			if updown == "down" {
-				SwitchToPage("misc")
-			}
-		})
-	// b.SetWaitForUp(true)
-	pg.AddObject(b)
+		b = NewButton("misc", "Misc", image.Rect(x0, y0, x1, y1), wind.style,
+			func(updown string) {
+				if updown == "down" {
+					SwitchToWind("misc")
+				}
+			})
+		// b.SetWaitForUp(true)
+		wind.AddObject(b)
 
-	x += bw + pg.style.charWidth
+		x0 += buttonDx
+		x1 += buttonDx
 
-	b = NewButton("venues", "Venues", x, y, bw, bh, pg.style,
-		func(updown string) {
-			if updown == "down" {
-				SwitchToPage("venues")
-			}
-		})
-	// b.SetWaitForUp(true)
-	pg.AddObject(b)
+		b = NewButton("venues", "Venues", image.Rect(x0, y0, x1, y1), wind.style,
+			func(updown string) {
+				if updown == "down" {
+					SwitchToWind("venues")
+				}
+			})
+		// b.SetWaitForUp(true)
+		wind.AddObject(b)
+	*/
 
 }
 
-func (pg *VizPage) venueAPI(venue string, api string) {
+func (wind *VizWind) venueAPI(venue string, api string) {
 	log.Printf(fmt.Sprintf("venueAPI venue=%s, api=%s\n", venue, api))
 }
 
-func (pg *VizPage) addStatusButtons(x, y float32) {
-	bh := float32(2.5) * pg.style.lineHeight
-	bw := 12 * pg.style.charWidth
+func (wind *VizWind) addStatusButtons(x, y int) {
+	/*
+		bh := int(2.5 * float32(wind.style.lineHeight))
+		bw := 12 * wind.style.charWidth
 
-	venue := "PhotonSalon1"
+		venue := "PhotonSalon1"
 
-	b := NewButton("startvenue", "Start\nVenue", x, y, bw, bh, pg.style,
-		func(text string) { pg.venueAPI(venue, "start") })
-	pg.AddObject(b)
+			b := NewButton("startvenue", "Start\nVenue", x, y, bw, bh, wind.style,
+				func(text string) { wind.venueAPI(venue, "start") })
+			wind.AddObject(b)
 
-	x += bw + pg.style.charWidth
+			x += bw + wind.style.charWidth
 
-	b = NewButton("stopvenue", "Stop\nVenue", x, y, bw, bh, pg.style,
-		func(text string) { pg.venueAPI(venue, "stop") })
-	pg.AddObject(b)
+			b = NewButton("stopvenue", "Stop\nVenue", x, y, bw, bh, wind.style,
+				func(text string) { wind.venueAPI(venue, "stop") })
+			wind.AddObject(b)
 
-	x += bw + pg.style.charWidth
+			x += bw + wind.style.charWidth
 
-	b = NewButton("recordon", "Record\nOn", x, y, bw, bh, pg.style,
-		func(name string) { pg.venueAPI(venue, "recording.start") })
-	pg.AddObject(b)
+			b = NewButton("recordon", "Record\nOn", x, y, bw, bh, wind.style,
+				func(name string) { wind.venueAPI(venue, "recording.start") })
+			wind.AddObject(b)
 
-	x += bw + pg.style.charWidth
+			x += bw + wind.style.charWidth
 
-	b = NewButton("recordoff", "Record\nOff", x, y, bw, bh, pg.style,
-		func(name string) { pg.venueAPI(venue, "recording.stop") })
-	pg.AddObject(b)
+			b = NewButton("recordoff", "Record\nOff", x, y, bw, bh, wind.style,
+				func(name string) { wind.venueAPI(venue, "recording.stop") })
+			wind.AddObject(b)
 
-	x += bw + pg.style.charWidth
+			x += bw + wind.style.charWidth
 
-	b = NewButton("recordplayback", "Record\nPlayback", x, y, bw, bh, pg.style,
-		func(name string) { pg.venueAPI(venue, "recording.playback") })
-	pg.AddObject(b)
+			b = NewButton("recordplayback", "Record\nPlayback", x, y, bw, bh, wind.style,
+				func(name string) { wind.venueAPI(venue, "recording.playback") })
+			wind.AddObject(b)
 
-	x += bw + pg.style.charWidth
+			x += bw + wind.style.charWidth
 
-	b = NewButton("playmidifile", "Play\nMIDIFile", x, y, bw, bh, pg.style,
-		func(name string) {
-			log.Printf("playmidifile button name=%s\n", name)
-		})
-	pg.AddObject(b)
+			b = NewButton("playmidifile", "Play\nMIDIFile", x, y, bw, bh, wind.style,
+				func(name string) {
+					log.Printf("playmidifile button name=%s\n", name)
+				})
+			wind.AddObject(b)
+	*/
 }
 
 // var logLines []string
@@ -181,54 +188,55 @@ func VizLog(s string) {
 	logTexts[logLines-1].text = s
 }
 
-// StatusPage xxx
-func StatusPage(ctx *nanovgo.Context, width, height float32) *VizPage {
+// BuildStatusWind xxx
+func BuildStatusWind(wind *VizWind) {
 
-	pg := NewPage(ctx, width, height)
-	pg.addPageHeader()
+	wind.addHeaderButtons()
 
-	nloglines := 6
-	x := float32(pg.style.charWidth)
-	y := float32(height - float32(nloglines+2)*pg.style.lineHeight)
-	pg.addLogArea(nloglines, x, y)
+	/*
+		nloglines := 6
+		x := wind.style.charWidth
+		y := wind.Height()/2 - (nloglines+2)*wind.style.lineHeight
+		wind.addLogArea(nloglines, x, y)
+	*/
 
-	x = float32(pg.style.charWidth)
-	y = float32(0.4 * height)
-	pg.addSettings(x, y)
+	/*
+		x = wind.style.charWidth
+		y = int(0.4 * float32(wind.Height()))
+		wind.addSettings(x, y)
 
-	x = float32(pg.style.charWidth)
-	y = float32(0.2 * height)
-	pg.addStatusButtons(x, y)
-
-	return pg
+		x = wind.style.charWidth
+		y = int(0.2 * float32(wind.Height()))
+		wind.addStatusButtons(x, y)
+	*/
 }
 
-func (pg *VizPage) localsettingCallback(c *VizCombo, choice int) {
+func (wind *VizWind) localsettingCallback(c *VizCombo, choice int) {
 	c.choice = choice
 	val := c.choices[c.choice]
-	pg.localSettings[c.Name()] = val
+	wind.localSettings[c.Name()] = val
 	log.Printf("localsettingCallback choice=%d\n", choice)
 }
 
-func (pg *VizPage) addSettings(x, y float32) {
+func (wind *VizWind) addSettings(x, y int) {
 
-	labelw := pg.width / 4.0
-	valuew := pg.width / 2.0
-	h := pg.style.lineHeight
+	labelw := wind.Width() / 4
+	valuew := wind.Height() / 2
+	h := wind.style.lineHeight
 
 	midiCombo := NewCombo("midiinput", "MIDI Input",
-		x, y, labelw, valuew, h, pg.style, pg.localsettingCallback)
+		x, y, labelw, valuew, h, wind.style, wind.localsettingCallback)
 	midiCombo.addValue("microKEY2 Air")
 	midiCombo.addValue("01. Internal MIDI")
 	midiCombo.addValue("02. Internal MIDI")
 	midiCombo.addValue("03. Internal MIDI")
 	midiCombo.addValue("04. Internal MIDI")
-	pg.AddObject(midiCombo)
+	wind.AddObject(midiCombo)
 
-	y += pg.style.lineHeight
+	y += wind.style.lineHeight
 
 	midiFileCombo := NewCombo("midifile", "MIDI File",
-		x, y, labelw, valuew, h, pg.style, pg.localsettingCallback)
+		x, y, labelw, valuew, h, wind.style, wind.localsettingCallback)
 
 	log.Printf("")
 	venue := "PhotonSalon1"
@@ -240,16 +248,16 @@ func (pg *VizPage) addSettings(x, y float32) {
 			midiFileCombo.addValue(nm)
 		}
 	}
-	pg.AddObject(midiFileCombo)
+	wind.AddObject(midiFileCombo)
 }
 
-func (pg *VizPage) addLogArea(nloglines int, x, y float32) *VizPage {
+func (wind *VizWind) addLogArea(nloglines int, x, y int) *VizWind {
 
-	w := pg.width
-	h := pg.style.lineHeight
+	w := wind.Width()
+	h := wind.style.lineHeight
 
-	pg.AddObject(NewText("log", "Message Log:", x, y, w-10*pg.style.charWidth, h, pg.style))
-	y += pg.style.lineHeight
+	wind.AddObject(NewText("log", "Message Log:", image.Rect(x, y, x+w-10*wind.style.charWidth, y+h), wind.style))
+	y += wind.style.lineHeight
 	// It might be better to re-use
 	// the Texts if they've already been created.
 	newlogTexts := make([]*VizText, 0)
@@ -260,39 +268,60 @@ func (pg *VizPage) addLogArea(nloglines int, x, y float32) *VizPage {
 			t = logTexts[n].text
 		}
 		nm := fmt.Sprintf("line%d", n)
-		txt := NewText(nm, t, x, y, w, h, pg.style)
+		txt := NewText(nm, t, image.Rect(x, y, x+w, y+h), wind.style)
 		newlogTexts = append(newlogTexts, txt)
-		pg.AddObject(txt)
-		y += pg.style.lineHeight
+		wind.AddObject(txt)
+		y += wind.style.lineHeight
 	}
 	logTexts = newlogTexts
-	return pg
+	return wind
 }
 
-// MiscPage xxx
-func MiscPage(ctx *nanovgo.Context, width, height float32) *VizPage {
-	pg := NewPage(ctx, width, height)
-	pg.addPageHeader()
-	x := float32(10.0)
-	y := float32(height - 200)
-	pg.AddObject(NewText("misc", "This is the Misc Page", x, y, 100, 100, pg.style))
-	return pg
+// BuildMiscWind xxx
+func BuildMiscWind(wind *VizWind, rect image.Rectangle) *VizWind {
+	// wind.addWindHeader()
+	x := rect.Min.X + 200
+	y := rect.Min.Y + 200
+	wind.AddObject(NewText("misc", "This is the Misc Wind", image.Rect(x, y, x+200, y+200), wind.style))
+	return wind
 }
 
-// VenuesPage xxx
-func VenuesPage(ctx *nanovgo.Context, width, height float32) *VizPage {
-	pg := NewPage(ctx, width, height)
-	pg.addPageHeader()
-	x := float32(10.0)
-	y := float32(height - 200)
-	pg.AddObject(NewText("misc", "This is the Venues Page", x, y, 100, 100, pg.style))
-	return pg
+// BuildVenuesWind xxx
+func BuildVenuesWind(wind *VizWind, rect image.Rectangle) *VizWind {
+	wind.addHeaderButtons()
+	x := rect.Min.X + 200
+	y := rect.Max.Y - 200
+	wind.AddObject(NewText("misc", "This is the Venues Wind", image.Rect(x, y, x+200, y+200), wind.style))
+	return wind
 }
 
-// BuildPages xxx
-func BuildPages(ctx *nanovgo.Context, width, height float32) {
-	Page["status"] = StatusPage(ctx, width, height)
-	Page["misc"] = MiscPage(ctx, width, height)
-	Page["venues"] = VenuesPage(ctx, width, height)
-	SwitchToPage("status")
+// BuildInitialScreen xxx
+func BuildInitialScreen(screen *VizScreen) error {
+
+	halfheight := screen.height / 2
+
+	srect := image.Rect(100, 100, screen.width-100, halfheight-20)
+	w, err := screen.AddWind("status", srect)
+	if err != nil {
+		return err
+	}
+
+	BuildStatusWind(w)
+
+	srect = image.Rect(100, halfheight, screen.width-100, screen.height-100)
+	w, err = screen.AddWind("status2", srect)
+	if err != nil {
+		return err
+	}
+
+	BuildStatusWind(w)
+
+	// Wind["venues"] = VenuesWind(ctx, rect)
+	//
+	// mrect := image.Rect(rect.Min.X, rect.Min.Y, rect.Max.X, rect.Max.Y)
+	// Wind["misc"] = MiscWind(ctx, mrect)
+
+	// SwitchToWind("status")
+
+	return nil
 }
