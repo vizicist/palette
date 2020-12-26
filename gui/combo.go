@@ -1,18 +1,14 @@
 package gui
 
-import (
-	"image"
-	"strings"
-
-	"github.com/micaelAlastor/nanovgo"
-)
+/*
 
 // VizComboCallback xxx
 type VizComboCallback func(c *VizCombo, choice int)
 
+
 // VizCombo xxx
 type VizCombo struct {
-	VizWind
+	VizObjData
 	name                  string
 	label                 string
 	wasPressed            bool
@@ -201,3 +197,5 @@ func (c *VizCombo) addValue(s string) {
 	c.choices = append(c.choices, s)
 	c.recomputeChoicesWidth = true
 }
+
+*/

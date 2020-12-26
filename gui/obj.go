@@ -6,10 +6,21 @@ import (
 	"github.com/micaelAlastor/nanovgo"
 )
 
-// Obj xxx
-type Obj interface {
+// VizObj xxx
+type VizObj interface {
 	HandleMouseInput(pos image.Point, down bool)
 	Draw(ctx *nanovgo.Context)
-	Name() string
 	Rect() image.Rectangle
+	Style() Style
+	Resize(image.Rectangle)
+	Objects() map[string]VizObj
+	AddObject(name string, o VizObj)
+}
+
+// VizObjData xxx
+type VizObjData struct {
+	parent  VizObj
+	style   Style
+	rect    image.Rectangle
+	objects map[string]VizObj
 }

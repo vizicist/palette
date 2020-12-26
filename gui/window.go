@@ -3,36 +3,45 @@ package gui
 import (
 	"image"
 	"log"
-	"strings"
 
 	"github.com/micaelAlastor/nanovgo"
 )
 
-// VizWind xxx
-type VizWind struct {
-	Style         Style
-	ctx           *nanovgo.Context
-	rect          image.Rectangle
-	Objects       map[string]Obj
-	localSettings map[string]string
-	focused       Obj
-	Visible       bool
+// VizContainer xxx
+type VizContainer struct {
+	VizObjData
+	// Objects map[string]Obj
+	hasBorder bool
 }
 
 // Rect xxx
-func (wind *VizWind) Rect() image.Rectangle {
+func (wind *VizObjData) Rect() image.Rectangle {
 	return wind.rect
 }
 
-// Do xxx
-func (wind *VizWind) Do() {
-	wind.Draw()
+/*
+// Draw xxx
+func (wind *VizObjData) Draw(ctx *nanovgo.Context) {
+	for o := range wind.Objects {
+		o.Draw(ctx)
+	}
+}
+*/
+
+// Objects xxx
+func (o *VizContainer) Objects() map[string]VizObj {
+	return o.objects
+}
+
+// Style xxx
+func (o *VizContainer) Style() Style {
+	return o.style
 }
 
 // HandleMouseInput xxx
-func (wind *VizWind) HandleMouseInput(pos image.Point, down bool) {
-	// log.Printf("VizWind.HandleMouseInput: pos=%+v\n", pos)
-	for _, o := range wind.Objects {
+func (o *VizContainer) HandleMouseInput(pos image.Point, down bool) {
+	// log.Printf("VizObjData.HandleMouseInput: pos=%+v\n", pos)
+	for _, o := range o.Objects() {
 		if pos.In(o.Rect()) {
 			o.HandleMouseInput(pos, down)
 		}
@@ -40,97 +49,67 @@ func (wind *VizWind) HandleMouseInput(pos image.Point, down bool) {
 	}
 }
 
-// NewSubWind xxx
-func (wind *VizWind) NewSubWind(r image.Rectangle) *VizWind {
-	return &VizWind{
-		Style:         wind.Style,
-		ctx:           wind.ctx,
-		rect:          r,
-		Objects:       make(map[string]Obj),
-		localSettings: make(map[string]string),
-		focused:       nil,
-		Visible:       false,
+// AddObject xxx
+func (o *VizContainer) AddObject(name string, newo VizObj) {
+	objs := o.Objects()
+	objs[name] = newo
+}
+
+// NewContainer xxx
+func NewContainer(parent VizObj) *VizContainer {
+	return &VizContainer{
+		VizObjData: VizObjData{
+			parent:  parent,
+			style:   parent.Style(),
+			rect:    image.Rectangle{},
+			objects: map[string]VizObj{},
+		},
+		hasBorder: true,
 	}
 }
 
-// NewButton xxx
-func (wind *VizWind) NewButton(name string, text string, pos image.Point, style Style, cb VizButtonCallback) *VizButton {
-	if !strings.HasPrefix(name, "button.") {
-		name = "button." + name
-	}
-	w := len(text) * wind.Style.charWidth
-	h := wind.Style.lineHeight
-	r := image.Rect(pos.X, pos.Y, pos.X+w, pos.Y+h)
-	bwind := wind.NewSubWind(r)
-	return &VizButton{
-		VizWind:   *bwind,
-		name:      name,
-		isPressed: false,
-		text:      text,
-		style:     wind.Style,
-		callback:  cb,
+// Resize xxx
+func (o *VizContainer) Resize(rect image.Rectangle) {
+	o.style = o.style.SetSize(rect)
+	o.rect = rect
+	for _, oo := range o.Objects() {
+		oo.Resize(rect)
 	}
 }
 
 // Draw xxx
-func (wind *VizWind) Draw() {
+func (o *VizContainer) Draw(ctx *nanovgo.Context) {
 
-	wind.ctx.Save()
-	defer wind.ctx.Restore()
-
-	wind.ctx.Save()
-	wind.ctx.BeginPath()
-	r := wind.Rect()
-	x := r.Min.X
-	y := r.Min.Y
-	w := r.Dx()
-	h := r.Dy()
-	cornerRadius := float32(4.0)
-	wind.ctx.RoundedRect(float32(x), float32(y), float32(w), float32(h), cornerRadius-0.5)
-	wind.ctx.SetStrokeWidth(3.0)
-	wind.ctx.Stroke()
-	wind.ctx.Restore()
-
-	wind.ctx.SetTextLetterSpacing(0)
+	if o.hasBorder {
+		ctx.Save()
+		ctx.BeginPath()
+		r := o.Rect()
+		x := r.Min.X
+		y := r.Min.Y
+		w := r.Dx()
+		h := r.Dy()
+		cornerRadius := float32(4.0)
+		ctx.RoundedRect(float32(x), float32(y), float32(w), float32(h), cornerRadius-0.5)
+		ctx.SetStrokeWidth(3.0)
+		ctx.Stroke()
+		ctx.Restore()
+	}
 
 	/*
-		for _, o := range wind.objects {
-			switch {
-			case wind.focused != nil && o == wind.focused:
-				// if ButtonDown[0] {
-				// 	log.Printf("Calling FOCUSED HandleMouseInput mdown=true of %s\n", o.Name())
-				// }
-				o.HandleMouseInput(MouseX, MouseY, ButtonDown[0])
-			case wind.focused == nil:
-				// if ButtonDown[0] {
-				// 	log.Printf("Calling unfocused HandleMouseInput mdown=true of %s\n", o.Name())
-				// }
-				o.HandleMouseInput(MouseX, MouseY, ButtonDown[0])
-			}
-		}
+		ctx.SetTextLetterSpacing(0)
 	*/
-	for _, o := range wind.Objects {
-		o.Draw(wind.ctx)
+
+	for _, oo := range o.Objects() {
+		oo.Draw(ctx)
 	}
 }
 
 // AddObject xxx
-func (wind *VizWind) AddObject(o Obj) {
-	name := o.Name()
-	_, ok := wind.Objects[name]
+func (wind *VizObjData) AddObject(name string, o VizObj) {
+	_, ok := wind.objects[name]
 	if ok {
-		log.Printf("There's already an object named %s in that VizWind\n", name)
+		log.Printf("There's already an object named %s in that VizObjData\n", name)
 	} else {
-		wind.Objects[name] = o
+		wind.objects[name] = o
 	}
-}
-
-// SetFocus xxx
-func (wind *VizWind) SetFocus(o Obj) {
-	wind.focused = o
-}
-
-// Focus xxx
-func (wind *VizWind) Focus() Obj {
-	return wind.focused
 }
