@@ -16,12 +16,13 @@ type VizScreen struct {
 	mousePos        image.Point
 	mouseButtonDown []bool
 	ctx             *nanovgo.Context
+	status          *VizStatus
 }
 
 // NewScreen xxx
-func NewScreen(ctx *nanovgo.Context) *VizScreen {
+func NewScreen(name string, ctx *nanovgo.Context) *VizScreen {
 
-	s := Style{
+	style := Style{
 		fontSize:    18.0,
 		fontFace:    "lucida",
 		textColor:   black,
@@ -29,10 +30,10 @@ func NewScreen(ctx *nanovgo.Context) *VizScreen {
 		fillColor:   white,
 	}
 
-	return &VizScreen{
+	screen := &VizScreen{
 		VizObjData: VizObjData{
-			parent:  nil,
-			style:   s,
+			name:    name,
+			style:   style,
 			rect:    image.Rectangle{},
 			objects: make(map[string]VizObj),
 		},
@@ -40,16 +41,18 @@ func NewScreen(ctx *nanovgo.Context) *VizScreen {
 		mouseButtonDown: make([]bool, 3),
 		ctx:             ctx,
 	}
+
+	// Initialize it to contain a Status tool
+	// just to test APIs etc
+	screen.status = NewStatus("status")
+	AddObject(screen.objects, screen.status)
+
+	return screen
 }
 
 // Objects xxx
 func (screen *VizScreen) Objects() map[string]VizObj {
 	return screen.objects
-}
-
-// Style xxx
-func (screen *VizScreen) Style() Style {
-	return screen.style
 }
 
 // Draw xxx
@@ -61,77 +64,25 @@ func (screen *VizScreen) Draw(ctx *nanovgo.Context) {
 
 // HandleMouseInput xxx
 func (screen *VizScreen) HandleMouseInput(pos image.Point, mdown bool) {
-	for nm, o := range screen.objects {
-		log.Printf("HEY: Should be resizing wind=%s\n", nm)
+	for _, o := range screen.objects {
 		o.HandleMouseInput(pos, mdown)
 	}
-}
-
-// SetSize xxx
-func (style Style) SetSize(rect image.Rectangle) Style {
-	w := rect.Max.X
-	h := rect.Max.Y
-	if w <= 0 || h <= 0 {
-		log.Printf("Style.Resize: bad dimensions? %d,%d\n", w, h)
-		return style
-	}
-	style.lineHeight = h / 48.0
-	style.charWidth = w / 80.0
-	return style
 }
 
 // Resize xxx
 func (screen *VizScreen) Resize(rect image.Rectangle) {
 	screen.style = screen.style.SetSize(rect)
 	screen.rect = rect
-	for nm, o := range screen.objects {
-		log.Printf("HEY: Should be resizing wind=%s\n", nm)
-		o.Resize(rect)
-	}
-}
 
-/*
-// AddWind xxx
-func (screen *VizScreen) AddWind(name string, rect image.Rectangle) (*VizObjData, error) {
-	// XXX - lock?
-	objs := screen.Objects()
-	_, ok := objs[name]
-	if ok {
-		err := fmt.Errorf("AddWind: there's already a VizObjData with the name: %s", name)
-		return nil, err
-	}
-	log.Printf("AddWind %s %+v\n", name, rect)
-	// Use lineHeight and charWidth to make it
-	// easier to do placement relative to window size
-	w := screen.top.NewSubWind(rect)
-	/ *
-		w := &VizObjData{
-			Parent:        nil,
-			Style:         Style{},
-			ctx:           screen.ctx,
-			rect:          rect,
-			Objects:       make(map[string]Obj),
-		}
-	* /
-	screen.top.Objects()[name] = w
-	w.Style = w.defaultStyle()
-	// w := float32(wind.Width())
-	// h := float32(wind.Height())
-	// wind.style.fontSize = 18.0 * float32(math.Min(float64(w/600.0), float64(h/800.0)))
-	// default fontSize is 18.  should it be scaled here?
-	w.Style.fontSize = 18.0
-	return w, nil
-}
-*/
+	nrect := rect.Inset(10)
+	screen.status.Resize(nrect)
 
-// WindowUnder xxx
-func (screen *VizScreen) WindowUnder(pos image.Point) VizObj {
-	for _, o := range screen.objects {
-		if pos.In(o.Rect()) {
-			return o
+	/*
+		for nm, o := range screen.objects {
+			log.Printf("VizScreen: resizing wind=%s rect=%v\n", nm, rect)
+			o.Resize(rect)
 		}
-	}
-	return nil
+	*/
 }
 
 // Mousebutton is a callback from glfw
@@ -145,7 +96,7 @@ func (screen *VizScreen) Mousebutton(w *glfw.Window, button glfw.MouseButton, ac
 		down = true
 	}
 	screen.mouseButtonDown[button] = down
-	wind := screen.WindowUnder(screen.mousePos)
+	wind := ObjectUnder(screen.objects, screen.mousePos)
 	if wind != nil {
 		wind.HandleMouseInput(screen.mousePos, down)
 	}
@@ -159,5 +110,5 @@ func (screen *VizScreen) Mousepos(w *glfw.Window, xpos float64, ypos float64, xd
 		log.Printf("Mousepos: we're getting sub-pixel mouse coordinates!\n")
 	}
 	screen.mousePos = image.Point{X: int(xpos), Y: int(ypos)}
-	log.Printf("Mousepos: %v\n", screen.mousePos)
+	// log.Printf("Mousepos: %v\n", screen.mousePos)
 }

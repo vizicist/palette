@@ -48,11 +48,7 @@ func Run() {
 		panic(err)
 	}
 
-	screen := NewScreen(ctx)
-
-	glfwWindow.SetKeyCallback(key)
-	glfwWindow.SetMouseButtonCallback(screen.Mousebutton)
-	glfwWindow.SetMouseMovementCallback(screen.Mousepos)
+	var screen *VizScreen
 
 	glfw.SwapInterval(0)
 
@@ -72,16 +68,18 @@ func Run() {
 		fbWidth, fbHeight := glfwWindow.GetFramebufferSize()
 		newWidth, newHeight := glfwWindow.GetSize()
 
-		if len(screen.Objects()) == 0 {
-			screen.AddObject("root", NewContainer(screen))
-			BuildInitialScreen(screen)
+		if screen == nil {
+			screen = NewScreen("root", ctx)
+			glfwWindow.SetKeyCallback(key)
+			glfwWindow.SetMouseButtonCallback(screen.Mousebutton)
+			glfwWindow.SetMouseMovementCallback(screen.Mousepos)
 		}
-		root := screen.Objects()["root"]
-		if newWidth != root.Rect().Dx() || newHeight != root.Rect().Dy() {
+
+		if newWidth != screen.Rect().Dx() || newHeight != screen.Rect().Dy() {
 			screen.Resize(image.Rect(0, 0, newWidth, newHeight))
 		}
 
-		pixelRatio := float32(fbWidth) / float32(root.Rect().Dx())
+		pixelRatio := float32(fbWidth) / float32(screen.Rect().Dx())
 		gl.Viewport(0, 0, fbWidth, fbHeight)
 
 		// background color

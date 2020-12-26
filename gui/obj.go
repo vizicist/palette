@@ -11,16 +11,26 @@ type VizObj interface {
 	HandleMouseInput(pos image.Point, down bool)
 	Draw(ctx *nanovgo.Context)
 	Rect() image.Rectangle
-	Style() Style
+	// Style() Style
+	Name() string
 	Resize(image.Rectangle)
 	Objects() map[string]VizObj
-	AddObject(name string, o VizObj)
 }
 
 // VizObjData xxx
 type VizObjData struct {
-	parent  VizObj
+	name    string
 	style   Style
 	rect    image.Rectangle
 	objects map[string]VizObj
+}
+
+// ObjectUnder xxx
+func ObjectUnder(objects map[string]VizObj, pos image.Point) VizObj {
+	for _, o := range objects {
+		if pos.In(o.Rect()) {
+			return o
+		}
+	}
+	return nil
 }

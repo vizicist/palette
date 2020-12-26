@@ -22,11 +22,11 @@ type VizButton struct {
 }
 
 // NewButton xxx
-func NewButton(parent VizObj, text string, pos image.Point, cb VizButtonCallback) *VizButton {
+func NewButton(name string, text string, cb VizButtonCallback) *VizButton {
 	return &VizButton{
 		VizObjData: VizObjData{
-			parent:  parent,
-			style:   parent.Style(),
+			name:    name,
+			style:   DefaultStyle,
 			rect:    image.Rectangle{},
 			objects: map[string]VizObj{},
 		},
@@ -47,10 +47,12 @@ func (b *VizButton) Objects() map[string]VizObj {
 	return b.Objects()
 }
 
+/*
 // Style xxx
 func (b *VizButton) Style() Style {
 	return b.style
 }
+*/
 
 // Resize xxx
 func (b *VizButton) Resize(r image.Rectangle) {
@@ -117,8 +119,4 @@ func (b *VizButton) Draw(ctx *nanovgo.Context) {
 	} else {
 		ctx.Text(midx, midy, b.text)
 	}
-}
-
-func isBlack(col nanovgo.Color) bool {
-	return col.R == 0.0 && col.G == 0.0 && col.B == 0.0 && col.A == 0.0
 }
