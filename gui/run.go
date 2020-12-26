@@ -2,6 +2,7 @@ package gui
 
 import (
 	"fmt"
+	"image"
 	"log"
 	"time"
 
@@ -33,12 +34,12 @@ func Run() {
 	// demo MSAA
 	glfw.WindowHint(glfw.Samples, 4)
 
-	window, err := glfw.CreateWindow(600, 800, "Palette", nil, nil)
+	glfwWindow, err := glfw.CreateWindow(600, 800, "Palette", nil, nil)
 	if err != nil {
 		panic(err)
 	}
 
-	window.MakeContextCurrent()
+	glfwWindow.MakeContextCurrent()
 
 	ctx, err := nanovgo.NewContext(0 /*nanovgo.AntiAlias | nanovgo.StencilStrokes | nanovgo.Debug*/)
 	defer ctx.Delete()
@@ -49,9 +50,9 @@ func Run() {
 
 	screen := NewScreen(ctx)
 
-	window.SetKeyCallback(key)
-	window.SetMouseButtonCallback(screen.Mousebutton)
-	window.SetMouseMovementCallback(screen.Mousepos)
+	glfwWindow.SetKeyCallback(key)
+	glfwWindow.SetMouseButtonCallback(screen.Mousebutton)
+	glfwWindow.SetMouseMovementCallback(screen.Mousepos)
 
 	glfw.SwapInterval(0)
 
@@ -64,24 +65,23 @@ func Run() {
 		log.Printf("gui.Run: err=%s\n", err)
 	}
 
-	for !window.ShouldClose() {
+	for !glfwWindow.ShouldClose() {
 
 		// t, _ := fps.UpdateGraph()
 
-		fbWidth, fbHeight := window.GetFramebufferSize()
-		newWidth, newHeight := window.GetSize()
+		fbWidth, fbHeight := glfwWindow.GetFramebufferSize()
+		newWidth, newHeight := glfwWindow.GetSize()
 
-		if newWidth != screen.width || newHeight != screen.height {
-			screen.Resize(newWidth, newHeight)
-			if len(screen.wind) == 0 {
-				err := BuildInitialScreen(screen)
-				if err != nil {
-					log.Printf("BuildInitialScreen: err=%s\n", err)
-				}
-			}
+		if len(screen.Objects()) == 0 {
+			screen.AddObject("root", NewContainer(screen))
+			BuildInitialScreen(screen)
+		}
+		root := screen.Objects()["root"]
+		if newWidth != root.Rect().Dx() || newHeight != root.Rect().Dy() {
+			screen.Resize(image.Rect(0, 0, newWidth, newHeight))
 		}
 
-		pixelRatio := float32(fbWidth) / float32(screen.width)
+		pixelRatio := float32(fbWidth) / float32(root.Rect().Dx())
 		gl.Viewport(0, 0, fbWidth, fbHeight)
 
 		// background color
@@ -93,14 +93,14 @@ func Run() {
 		gl.Enable(gl.CULL_FACE)
 		gl.Disable(gl.DEPTH_TEST)
 
-		ctx.BeginFrame(screen.width, screen.height, pixelRatio)
+		ctx.BeginFrame(screen.Rect().Dx(), screen.Rect().Dy(), pixelRatio)
 
-		screen.Do()
+		screen.Draw(ctx)
 
 		ctx.EndFrame()
 
 		gl.Enable(gl.DEPTH_TEST)
-		window.SwapBuffers()
+		glfwWindow.SwapBuffers()
 		glfw.PollEvents()
 
 		previousTime = tm

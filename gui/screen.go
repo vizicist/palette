@@ -1,7 +1,6 @@
 package gui
 
 import (
-	"fmt"
 	"image"
 	"log"
 	"math"
@@ -13,68 +12,108 @@ import (
 
 // VizScreen xxx
 type VizScreen struct {
-	width           int
-	height          int
+	VizObjData
 	mousePos        image.Point
-	ctx             *nanovgo.Context
-	wind            map[string]*VizWind
 	mouseButtonDown []bool
+	ctx             *nanovgo.Context
 }
 
 // NewScreen xxx
 func NewScreen(ctx *nanovgo.Context) *VizScreen {
+
+	s := Style{
+		fontSize:    18.0,
+		fontFace:    "lucida",
+		textColor:   black,
+		strokeColor: black,
+		fillColor:   white,
+	}
+
 	return &VizScreen{
-		width:           0,
-		height:          0,
+		VizObjData: VizObjData{
+			parent:  nil,
+			style:   s,
+			rect:    image.Rectangle{},
+			objects: make(map[string]VizObj),
+		},
+		mousePos:        image.Point{},
 		mouseButtonDown: make([]bool, 3),
 		ctx:             ctx,
-		wind:            make(map[string]*VizWind),
 	}
 }
 
-// Do xxx
-func (screen *VizScreen) Do() {
-	for _, w := range screen.wind {
-		// log.Printf("VizScreen.Do: wind=%s\n", nm)
-		w.Do()
+// Objects xxx
+func (screen *VizScreen) Objects() map[string]VizObj {
+	return screen.objects
+}
+
+// Style xxx
+func (screen *VizScreen) Style() Style {
+	return screen.style
+}
+
+// Draw xxx
+func (screen *VizScreen) Draw(ctx *nanovgo.Context) {
+	for _, o := range screen.objects {
+		o.Draw(ctx)
 	}
+}
+
+// HandleMouseInput xxx
+func (screen *VizScreen) HandleMouseInput(pos image.Point, mdown bool) {
+	for nm, o := range screen.objects {
+		log.Printf("HEY: Should be resizing wind=%s\n", nm)
+		o.HandleMouseInput(pos, mdown)
+	}
+}
+
+// SetSize xxx
+func (style Style) SetSize(rect image.Rectangle) Style {
+	w := rect.Max.X
+	h := rect.Max.Y
+	if w <= 0 || h <= 0 {
+		log.Printf("Style.Resize: bad dimensions? %d,%d\n", w, h)
+		return style
+	}
+	style.lineHeight = h / 48.0
+	style.charWidth = w / 80.0
+	return style
 }
 
 // Resize xxx
-func (screen *VizScreen) Resize(w, h int) {
-	if w <= 0 || h <= 0 {
-		log.Printf("VizScreen.Resize: bad dimensions? %d,%d\n", w, h)
-		return
-	}
-	screen.width = w
-	screen.height = h
-	log.Printf("VizScreen.Resize = %d,%d\n", w, h)
-	for nm := range screen.wind {
+func (screen *VizScreen) Resize(rect image.Rectangle) {
+	screen.style = screen.style.SetSize(rect)
+	screen.rect = rect
+	for nm, o := range screen.objects {
 		log.Printf("HEY: Should be resizing wind=%s\n", nm)
+		o.Resize(rect)
 	}
 }
 
+/*
 // AddWind xxx
-func (screen *VizScreen) AddWind(name string, rect image.Rectangle) (*VizWind, error) {
+func (screen *VizScreen) AddWind(name string, rect image.Rectangle) (*VizObjData, error) {
 	// XXX - lock?
-	_, ok := screen.wind[name]
+	objs := screen.Objects()
+	_, ok := objs[name]
 	if ok {
-		err := fmt.Errorf("AddWind: there's already a VizWind with the name: %s", name)
+		err := fmt.Errorf("AddWind: there's already a VizObjData with the name: %s", name)
 		return nil, err
 	}
 	log.Printf("AddWind %s %+v\n", name, rect)
 	// Use lineHeight and charWidth to make it
 	// easier to do placement relative to window size
-	w := &VizWind{
-		Style:         Style{},
-		ctx:           screen.ctx,
-		rect:          rect,
-		Objects:       make(map[string]Obj),
-		localSettings: make(map[string]string),
-		focused:       nil,
-		Visible:       false,
-	}
-	screen.wind[name] = w
+	w := screen.top.NewSubWind(rect)
+	/ *
+		w := &VizObjData{
+			Parent:        nil,
+			Style:         Style{},
+			ctx:           screen.ctx,
+			rect:          rect,
+			Objects:       make(map[string]Obj),
+		}
+	* /
+	screen.top.Objects()[name] = w
 	w.Style = w.defaultStyle()
 	// w := float32(wind.Width())
 	// h := float32(wind.Height())
@@ -83,12 +122,13 @@ func (screen *VizScreen) AddWind(name string, rect image.Rectangle) (*VizWind, e
 	w.Style.fontSize = 18.0
 	return w, nil
 }
+*/
 
 // WindowUnder xxx
-func (screen *VizScreen) WindowUnder(pos image.Point) *VizWind {
-	for _, w := range screen.wind {
-		if pos.In(w.rect) {
-			return w
+func (screen *VizScreen) WindowUnder(pos image.Point) VizObj {
+	for _, o := range screen.objects {
+		if pos.In(o.Rect()) {
+			return o
 		}
 	}
 	return nil

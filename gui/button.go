@@ -13,18 +13,52 @@ type VizButtonCallback func(updown string)
 
 // VizButton xxx
 type VizButton struct {
-	VizWind
+	VizObjData
 	name      string
 	isPressed bool
 	text      string
-	style     Style
 	// Rect      image.Rectangle
 	callback VizButtonCallback
+}
+
+// NewButton xxx
+func NewButton(parent VizObj, text string, pos image.Point, cb VizButtonCallback) *VizButton {
+	return &VizButton{
+		VizObjData: VizObjData{
+			parent:  parent,
+			style:   parent.Style(),
+			rect:    image.Rectangle{},
+			objects: map[string]VizObj{},
+		},
+		name:      "",
+		isPressed: false,
+		text:      text,
+		callback:  cb,
+	}
 }
 
 // Name xxx
 func (b *VizButton) Name() string {
 	return b.name
+}
+
+// Objects xxx
+func (b *VizButton) Objects() map[string]VizObj {
+	return b.Objects()
+}
+
+// Style xxx
+func (b *VizButton) Style() Style {
+	return b.style
+}
+
+// Resize xxx
+func (b *VizButton) Resize(r image.Rectangle) {
+	b.style = b.style.SetSize(r)
+	w := len(b.text) * b.style.charWidth
+	h := b.style.lineHeight
+	nr := image.Rect(r.Min.X, r.Min.Y, r.Min.X+w, r.Min.Y+h)
+	b.VizObjData.rect = nr
 }
 
 // HandleMouseInput xxx
@@ -48,6 +82,9 @@ func (b *VizButton) HandleMouseInput(pos image.Point, mdown bool) {
 // Draw xxx
 func (b *VizButton) Draw(ctx *nanovgo.Context) {
 	var cornerRadius float32 = 4.0
+
+	ctx.Save()
+	defer ctx.Restore()
 
 	/*
 		bg := nanovgo.LinearGradient(b.x, b.y, b.x, b.y+b.h, nanovgo.RGBA(255, 255, 255, alpha), nanovgo.RGBA(0, 0, 0, alpha))
