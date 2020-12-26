@@ -33,10 +33,12 @@ func (o *VizContainer) Objects() map[string]VizObj {
 	return o.objects
 }
 
+/*
 // Style xxx
 func (o *VizContainer) Style() Style {
 	return o.style
 }
+*/
 
 // HandleMouseInput xxx
 func (o *VizContainer) HandleMouseInput(pos image.Point, down bool) {
@@ -49,18 +51,11 @@ func (o *VizContainer) HandleMouseInput(pos image.Point, down bool) {
 	}
 }
 
-// AddObject xxx
-func (o *VizContainer) AddObject(name string, newo VizObj) {
-	objs := o.Objects()
-	objs[name] = newo
-}
-
 // NewContainer xxx
-func NewContainer(parent VizObj) *VizContainer {
+func NewContainer() *VizContainer {
 	return &VizContainer{
 		VizObjData: VizObjData{
-			parent:  parent,
-			style:   parent.Style(),
+			style:   DefaultStyle,
 			rect:    image.Rectangle{},
 			objects: map[string]VizObj{},
 		},
@@ -105,11 +100,12 @@ func (o *VizContainer) Draw(ctx *nanovgo.Context) {
 }
 
 // AddObject xxx
-func (wind *VizObjData) AddObject(name string, o VizObj) {
-	_, ok := wind.objects[name]
+func AddObject(objects map[string]VizObj, o VizObj) {
+	name := o.Name()
+	_, ok := objects[name]
 	if ok {
 		log.Printf("There's already an object named %s in that VizObjData\n", name)
 	} else {
-		wind.objects[name] = o
+		objects[name] = o
 	}
 }

@@ -2,16 +2,14 @@ package gui
 
 import (
 	"fmt"
-	"image"
 	"log"
 	"strings"
-
-	"github.com/micaelAlastor/nanovgo"
 )
 
 // CurrentWindName is the name of the active page.
 var CurrentWindName string
 
+/*
 var red = nanovgo.RGBA(255, 0, 0, 255)
 var black = nanovgo.RGBA(0, 0, 0, 255)
 var white = nanovgo.RGBA(255, 255, 255, 255)
@@ -27,6 +25,17 @@ type Style struct {
 	lineHeight  int
 }
 
+// DefaultStyle is for initializing Style values
+var DefaultStyle Style = Style{
+	fontSize:    12.0,
+	fontFace:    "lucida",
+	textColor:   black,
+	strokeColor: black,
+	fillColor:   white,
+	charWidth:   0, // filled in by SetSize
+	lineHeight:  0, // filled in by SetSize
+}
+
 // Do xxx
 func (style Style) Do(ctx *nanovgo.Context) {
 	ctx.SetFillColor(style.fillColor)
@@ -34,6 +43,7 @@ func (style Style) Do(ctx *nanovgo.Context) {
 	ctx.SetFontFace(style.fontFace)
 	ctx.SetFontSize(style.fontSize)
 }
+*/
 
 // IconSEARCH, etc
 const (
@@ -127,25 +137,6 @@ func VizLog(s string) {
 	logTexts[logLines-1].text = s
 }
 
-// BuildStatusWind xxx
-func BuildStatusWind(container *VizContainer) {
-
-	x0 := container.Rect().Min.X + 10
-	y0 := container.Rect().Min.Y + 10
-
-	b := NewButton(container, "Status12345", image.Point{X: x0, Y: y0},
-		func(updown string) {
-			if updown == "down" {
-				log.Printf("Status button was pressed\n")
-				// SwitchToWind("status")
-			}
-		})
-
-	// b.Place(image.Point{X: x0, Y: y0})
-
-	container.AddObject("status", b)
-}
-
 func (wind *VizObjData) addSettings(x, y int) {
 
 	/*
@@ -208,25 +199,4 @@ func (wind *VizObjData) addLogArea(nloglines int, x, y int) {
 		logTexts = newlogTexts
 		return wind
 	*/
-}
-
-// BuildInitialScreen xxx
-func BuildInitialScreen(screen *VizScreen) {
-
-	newc := NewContainer(screen)
-	screen.AddObject("status", newc)
-
-	BuildStatusWind(newc)
-
-	newc = NewContainer(screen)
-	screen.AddObject("status2", newc)
-
-	BuildStatusWind(newc)
-
-	// Wind["venues"] = VenuesWind(ctx, rect)
-	//
-	// mrect := image.Rect(rect.Min.X, rect.Min.Y, rect.Max.X, rect.Max.Y)
-	// Wind["misc"] = MiscWind(ctx, mrect)
-
-	// SwitchToWind("status")
 }
