@@ -73,12 +73,13 @@ func (c *VizCombo) getMouseLocation(pos image.Point) (invalue bool, inpopup bool
 }
 
 // HandleMouseInput xxx
-func (c *VizCombo) HandleMouseInput(pos image.Point, down bool) {
+func (c *VizCombo) HandleMouseInput(pos image.Point, down bool) bool {
 	if c.isPopped {
 		c.handleWhenPopped(pos, down)
 	} else {
 		c.handleWhenUnpopped(pos, down)
 	}
+	return true
 }
 
 func (c *VizCombo) handleWhenUnpopped(pos image.Point, down bool) {

@@ -56,7 +56,8 @@ func (b *VizButton) Style() Style {
 
 // Resize xxx
 func (b *VizButton) Resize(r image.Rectangle) {
-	b.style = b.style.SetSize(r)
+	fontHeight := r.Dy() / 24
+	b.style = b.style.SetFontSizeByHeight(fontHeight)
 	w := len(b.text) * b.style.charWidth
 	h := b.style.lineHeight
 	nr := image.Rect(r.Min.X, r.Min.Y, r.Min.X+w, r.Min.Y+h)
@@ -64,8 +65,11 @@ func (b *VizButton) Resize(r image.Rectangle) {
 }
 
 // HandleMouseInput xxx
-func (b *VizButton) HandleMouseInput(pos image.Point, mdown bool) {
-	log.Printf("VizButton.HandleMouseInput, b.isPressed=%v\n", b.isPressed)
+func (b *VizButton) HandleMouseInput(pos image.Point, mdown bool) bool {
+	if !pos.In(b.rect) {
+		log.Printf("VizButton.HandleMouseInput: pos not in rect!\n")
+		return false
+	}
 	switch mdown {
 	case true:
 		// The mouse is inside the button
@@ -79,6 +83,7 @@ func (b *VizButton) HandleMouseInput(pos image.Point, mdown bool) {
 			b.callback("up")
 		}
 	}
+	return true
 }
 
 // Draw xxx

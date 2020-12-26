@@ -1,7 +1,6 @@
 package gui
 
 import (
-	"image"
 	"log"
 
 	"github.com/micaelAlastor/nanovgo"
@@ -41,16 +40,16 @@ func (style Style) Do(ctx *nanovgo.Context) {
 	ctx.SetFontSize(style.fontSize)
 }
 
-// SetSize xxx
-func (style Style) SetSize(rect image.Rectangle) Style {
+// SetFontSizeByHeight xxx
+func (style Style) SetFontSizeByHeight(height int) Style {
 
-	w := rect.Max.X
-	h := rect.Max.Y
-	if w <= 0 || h <= 0 {
-		log.Printf("Style.Resize: bad dimensions? %d,%d\n", w, h)
+	if height <= 0 {
+		log.Printf("Style.Resize: bad height = %d\n", height)
 		return style
 	}
-	style.lineHeight = h / 48.0
-	style.charWidth = w / 80.0
+	fh := float32(height)
+	style.fontSize = fh
+	style.lineHeight = int(fh * 1.5)
+	style.charWidth = int(fh / 1.5)
 	return style
 }

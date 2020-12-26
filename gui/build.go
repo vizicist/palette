@@ -9,42 +9,6 @@ import (
 // CurrentWindName is the name of the active page.
 var CurrentWindName string
 
-/*
-var red = nanovgo.RGBA(255, 0, 0, 255)
-var black = nanovgo.RGBA(0, 0, 0, 255)
-var white = nanovgo.RGBA(255, 255, 255, 255)
-
-// Style xxx
-type Style struct {
-	fontSize    float32
-	fontFace    string
-	textColor   nanovgo.Color
-	strokeColor nanovgo.Color
-	fillColor   nanovgo.Color
-	charWidth   int
-	lineHeight  int
-}
-
-// DefaultStyle is for initializing Style values
-var DefaultStyle Style = Style{
-	fontSize:    12.0,
-	fontFace:    "lucida",
-	textColor:   black,
-	strokeColor: black,
-	fillColor:   white,
-	charWidth:   0, // filled in by SetSize
-	lineHeight:  0, // filled in by SetSize
-}
-
-// Do xxx
-func (style Style) Do(ctx *nanovgo.Context) {
-	ctx.SetFillColor(style.fillColor)
-	ctx.SetStrokeColor(style.strokeColor)
-	ctx.SetFontFace(style.fontFace)
-	ctx.SetFontSize(style.fontSize)
-}
-*/
-
 // IconSEARCH, etc
 const (
 	IconDOWN  = 0x25BE
@@ -58,19 +22,6 @@ const (
 	// IconLOGIN        = 0xE740
 	// IconTRASH        = 0xE729
 )
-
-/*
-// SwitchToWind xxx
-func SwitchToWind(name string) {
-	wind, ok := Wind[name]
-	if !ok {
-		log.Printf("No page named: %s\n", name)
-	} else {
-		CurrentWindName = name
-		wind.SetFocus(nil)
-	}
-}
-*/
 
 func (wind *VizObjData) venueAPI(venue string, api string) {
 	log.Printf(fmt.Sprintf("venueAPI venue=%s, api=%s\n", venue, api))

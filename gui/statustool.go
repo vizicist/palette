@@ -26,10 +26,7 @@ func NewStatus(name string) *VizStatus {
 
 	status.b1 = NewButton("status", "StatusLabel",
 		func(updown string) {
-			if updown == "down" {
-				log.Printf("Status button was pressed\n")
-				// SwitchToWind("status")
-			}
+			log.Printf("Status button: %s\n", updown)
 		})
 
 	AddObject(status.objects, status.b1)
@@ -56,7 +53,12 @@ func (status *VizStatus) Style() Style {
 
 // Resize xxx
 func (status *VizStatus) Resize(r image.Rectangle) {
-	status.style = status.style.SetSize(r)
+	// 24 lines of text
+	h := int(r.Dy() / 24.0)
+	if h < 0 {
+		h = 1
+	}
+	status.style = status.style.SetFontSizeByHeight(h)
 	status.rect = r
 
 	b1r := r.Inset(5)
@@ -64,13 +66,16 @@ func (status *VizStatus) Resize(r image.Rectangle) {
 }
 
 // HandleMouseInput xxx
-func (status *VizStatus) HandleMouseInput(pos image.Point, mdown bool) {
+func (status *VizStatus) HandleMouseInput(pos image.Point, mdown bool) bool {
 	o := ObjectUnder(status.objects, pos)
+	handled := false
 	if o != nil {
 		o.HandleMouseInput(pos, mdown)
+		handled = true
 	} else {
-		log.Printf("VizStatus: No object under pos=%v\n", pos)
+		handled = false
 	}
+	return handled
 }
 
 // Draw xxx

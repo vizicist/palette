@@ -30,7 +30,8 @@ func (t *VizText) Name() string {
 }
 
 // HandleMouseInput xxx
-func (t *VizText) HandleMouseInput(pos image.Point, down bool) {
+func (t *VizText) HandleMouseInput(pos image.Point, down bool) bool {
+	return false
 }
 
 // Draw xxx
