@@ -41,14 +41,17 @@ func (o *VizContainer) Style() Style {
 */
 
 // HandleMouseInput xxx
-func (o *VizContainer) HandleMouseInput(pos image.Point, down bool) {
+func (o *VizContainer) HandleMouseInput(pos image.Point, down bool) bool {
 	// log.Printf("VizObjData.HandleMouseInput: pos=%+v\n", pos)
 	for _, o := range o.Objects() {
 		if pos.In(o.Rect()) {
-			o.HandleMouseInput(pos, down)
+			b := o.HandleMouseInput(pos, down)
+			if b {
+				return true
+			}
 		}
-
 	}
+	return false
 }
 
 // NewContainer xxx
@@ -65,7 +68,7 @@ func NewContainer() *VizContainer {
 
 // Resize xxx
 func (o *VizContainer) Resize(rect image.Rectangle) {
-	o.style = o.style.SetSize(rect)
+	o.style = o.style.SetFontSizeByHeight(20)
 	o.rect = rect
 	for _, oo := range o.Objects() {
 		oo.Resize(rect)

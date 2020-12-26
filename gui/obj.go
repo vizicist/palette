@@ -8,7 +8,7 @@ import (
 
 // VizObj xxx
 type VizObj interface {
-	HandleMouseInput(pos image.Point, down bool)
+	HandleMouseInput(pos image.Point, down bool) bool
 	Draw(ctx *nanovgo.Context)
 	Rect() image.Rectangle
 	// Style() Style

@@ -71,7 +71,7 @@ func (screen *VizScreen) HandleMouseInput(pos image.Point, mdown bool) {
 
 // Resize xxx
 func (screen *VizScreen) Resize(rect image.Rectangle) {
-	screen.style = screen.style.SetSize(rect)
+	screen.style = screen.style.SetFontSizeByHeight(20)
 	screen.rect = rect
 
 	nrect := rect.Inset(10)
