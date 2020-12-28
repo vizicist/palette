@@ -23,58 +23,12 @@ const (
 	// IconTRASH        = 0xE729
 )
 
-func (wind *VizObjData) venueAPI(venue string, api string) {
+func (wind *WindowData) venueAPI(venue string, api string) {
 	log.Printf(fmt.Sprintf("venueAPI venue=%s, api=%s\n", venue, api))
 }
 
-func (wind *VizObjData) addStatusButtons(x, y int) {
-	/*
-		bh := int(2.5 * float32(wind.style.lineHeight))
-		bw := 12 * wind.style.charWidth
-
-		venue := "PhotonSalon1"
-
-			b := NewButton("startvenue", "Start\nVenue", x, y, bw, bh, wind.style,
-				func(text string) { wind.venueAPI(venue, "start") })
-			wind.AddObject(b)
-
-			x += bw + wind.style.charWidth
-
-			b = NewButton("stopvenue", "Stop\nVenue", x, y, bw, bh, wind.style,
-				func(text string) { wind.venueAPI(venue, "stop") })
-			wind.AddObject(b)
-
-			x += bw + wind.style.charWidth
-
-			b = NewButton("recordon", "Record\nOn", x, y, bw, bh, wind.style,
-				func(name string) { wind.venueAPI(venue, "recording.start") })
-			wind.AddObject(b)
-
-			x += bw + wind.style.charWidth
-
-			b = NewButton("recordoff", "Record\nOff", x, y, bw, bh, wind.style,
-				func(name string) { wind.venueAPI(venue, "recording.stop") })
-			wind.AddObject(b)
-
-			x += bw + wind.style.charWidth
-
-			b = NewButton("recordplayback", "Record\nPlayback", x, y, bw, bh, wind.style,
-				func(name string) { wind.venueAPI(venue, "recording.playback") })
-			wind.AddObject(b)
-
-			x += bw + wind.style.charWidth
-
-			b = NewButton("playmidifile", "Play\nMIDIFile", x, y, bw, bh, wind.style,
-				func(name string) {
-					log.Printf("playmidifile button name=%s\n", name)
-				})
-			wind.AddObject(b)
-	*/
-}
-
-// var logLines []string
 var logLines = 6
-var logTexts []*VizText
+var logTexts []*Text
 
 // VizLog xxx
 func VizLog(s string) {
@@ -88,7 +42,7 @@ func VizLog(s string) {
 	logTexts[logLines-1].text = s
 }
 
-func (wind *VizObjData) addSettings(x, y int) {
+func (wind *WindowData) addSettings(x, y int) {
 
 	/*
 		labelw := wind.Rect().Dx() / 4
@@ -123,7 +77,7 @@ func (wind *VizObjData) addSettings(x, y int) {
 	*/
 }
 
-func (wind *VizObjData) addLogArea(nloglines int, x, y int) {
+func (wind *WindowData) addLogArea(nloglines int, x, y int) {
 	/*
 
 		w := wind.Rect().Dx()
@@ -134,7 +88,7 @@ func (wind *VizObjData) addLogArea(nloglines int, x, y int) {
 		y += wind.Style.lineHeight
 		// It might be better to re-use
 		// the Texts if they've already been created.
-		newlogTexts := make([]*VizText, 0)
+		newlogTexts := make([]*Text, 0)
 		for n := 0; n < nloglines; n++ {
 			// if there's existing logTexts, use their text
 			var t string

@@ -2,11 +2,12 @@ package gui
 
 import (
 	"fmt"
-	"image"
+	"image/color"
 	"log"
 	"time"
 
 	// Don't be tempted to use go-gl
+
 	"github.com/goxjs/gl"
 	"github.com/goxjs/glfw"
 	"github.com/micaelAlastor/nanovgo"
@@ -48,7 +49,7 @@ func Run() {
 		panic(err)
 	}
 
-	var screen *VizScreen
+	var screen *Screen
 
 	glfw.SwapInterval(0)
 
@@ -61,6 +62,8 @@ func Run() {
 		log.Printf("gui.Run: err=%s\n", err)
 	}
 
+	framenum := 0
+
 	for !glfwWindow.ShouldClose() {
 
 		// t, _ := fps.UpdateGraph()
@@ -71,15 +74,16 @@ func Run() {
 		if screen == nil {
 			screen = NewScreen("root", ctx)
 			glfwWindow.SetKeyCallback(key)
-			glfwWindow.SetMouseButtonCallback(screen.Mousebutton)
-			glfwWindow.SetMouseMovementCallback(screen.Mousepos)
+			glfwWindow.SetMouseButtonCallback(screen.callbackForMousebutton)
+			glfwWindow.SetMouseMovementCallback(screen.callbackForMousepos)
 		}
 
-		if newWidth != screen.Rect().Dx() || newHeight != screen.Rect().Dy() {
-			screen.Resize(image.Rect(0, 0, newWidth, newHeight))
+		if newWidth != screen.rect.Dx() || newHeight != screen.rect.Dy() {
+
+			screen.Resizex(newWidth, newHeight)
 		}
 
-		pixelRatio := float32(fbWidth) / float32(screen.Rect().Dx())
+		pixelRatio := float32(fbWidth) / float32(screen.rect.Dx())
 		gl.Viewport(0, 0, fbWidth, fbHeight)
 
 		// background color
@@ -91,9 +95,46 @@ func Run() {
 		gl.Enable(gl.CULL_FACE)
 		gl.Disable(gl.DEPTH_TEST)
 
-		ctx.BeginFrame(screen.Rect().Dx(), screen.Rect().Dy(), pixelRatio)
+		ctx.BeginFrame(screen.rect.Dx(), screen.rect.Dy(), pixelRatio)
 
-		screen.Draw(ctx)
+		screen.CheckMouseInput()
+
+		w := 40
+		h := 40
+		imagecolor := color.RGBA{100, 200, 200, 0xff} // cyan
+		if (framenum/100)%2 == 0 {
+			imagecolor = color.RGBA{200, 0, 0, 0xff}
+		}
+
+		for x := 0; x < w; x++ {
+			for y := 0; y < h; y++ {
+				screen.goimage.Set(x, y, imagecolor)
+			}
+		}
+
+		screen.ggctx.Push()
+		screen.ggctx.SetLineWidth(3.0)
+		screen.ggctx.SetRGBA(0, 0, 1.0, 1.0)
+		screen.ggctx.DrawLine(0, 0, 100, 100)
+		screen.ggctx.Stroke()
+		screen.ggctx.Pop()
+		// im := screen.ggctx.Image()
+
+		// screen.imageHandle = ctx.CreateImageFromGoImage(0, screen.goimage)
+		ctx.UpdateImage(screen.imageHandle, screen.goimage.Pix)
+
+		img := nanovgo.ImagePattern(0, 0, float32(fbWidth), float32(fbHeight), 0.0, screen.imageHandle, 1.0)
+
+		ctx.Save()
+		ctx.BeginPath()
+		ctx.Circle(50, 50, 100)
+		ctx.SetFillPaint(img)
+		ctx.Fill()
+		ctx.Stroke()
+
+		// screen.Draw(ctx)
+
+		ctx.Restore()
 
 		ctx.EndFrame()
 
@@ -109,6 +150,8 @@ func Run() {
 			// log.Printf("Sleeping for %s\n", tosleep)
 			time.Sleep(tosleep)
 		}
+
+		framenum++
 	}
 	log.Printf("End of gui.Run()\n")
 }
