@@ -1,6 +1,7 @@
 package gui
 
 import (
+	"fmt"
 	"image"
 	"log"
 	"math"
@@ -10,6 +11,7 @@ import (
 	"github.com/fogleman/gg"
 	"github.com/goxjs/glfw"
 	"github.com/micaelAlastor/nanovgo"
+	"github.com/vizicist/palette/engine"
 )
 
 // MouseEvent represents mouse data independent of glfw
@@ -38,7 +40,7 @@ type Screen struct {
 }
 
 // NewScreen xxx
-func NewScreen(name string, ctx *nanovgo.Context) *Screen {
+func NewScreen(name string) (*Screen, error) {
 
 	style := Style{
 		fontSize:    18.0,
@@ -46,6 +48,11 @@ func NewScreen(name string, ctx *nanovgo.Context) *Screen {
 		textColor:   black,
 		strokeColor: black,
 		fillColor:   white,
+	}
+
+	ctx, err := nanovgo.NewContext(0 /*nanovgo.AntiAlias | nanovgo.StencilStrokes | nanovgo.Debug*/)
+	if err != nil {
+		return nil, fmt.Errorf("NewScreen: Unable to create nanovgo.NewContext")
 	}
 
 	screen := &Screen{
@@ -68,7 +75,7 @@ func NewScreen(name string, ctx *nanovgo.Context) *Screen {
 	screen.console = NewConsole("console")
 	AddObject(screen.objects, screen.console)
 
-	return screen
+	return screen, nil
 }
 
 // Objects xxx
@@ -77,10 +84,33 @@ func (screen *Screen) Objects() map[string]Window {
 }
 
 // Draw xxx
-func (screen *Screen) Draw(ctx *nanovgo.Context) {
-	for _, o := range screen.objects {
-		o.Draw(ctx)
-	}
+func (screen *Screen) Draw() {
+
+	screen.ggctx.Push()
+	screen.ggctx.SetLineWidth(3.0)
+	screen.ggctx.SetRGBA(0, 0, 1.0, 1.0)
+	screen.ggctx.DrawLine(0, 0, 500, 500)
+	screen.ggctx.Stroke()
+	screen.ggctx.Pop()
+
+	screen.ctx.UpdateImage(screen.imageHandle, screen.goimage.Pix)
+
+	w := float32(screen.rect.Dx())
+	h := float32(screen.rect.Dy())
+	img := nanovgo.ImagePattern(0, 0, w, h, 0.0, screen.imageHandle, 1.0)
+
+	screen.ctx.Save()
+	screen.ctx.BeginPath()
+	screen.ctx.Rect(0, 0, w, h)
+	screen.ctx.SetFillPaint(img)
+	screen.ctx.Fill()
+	screen.ctx.Stroke()
+
+	/*
+		for _, o := range screen.objects {
+			o.Draw(screen.ctx)
+		}
+	*/
 }
 
 // CheckMouseInput xxx
@@ -122,8 +152,8 @@ func (screen *Screen) CheckMouseInput() {
 	}
 }
 
-// Resizex xxx
-func (screen *Screen) Resizex(newWidth, newHeight int) {
+// BuildScreenImage xxx
+func (screen *Screen) BuildScreenImage(newWidth, newHeight int) {
 
 	// This goimage is created once, and only changes if the screen size changes.
 	screen.goimage = image.NewRGBA(image.Rect(0, 0, newWidth, newHeight))
@@ -179,4 +209,25 @@ func (screen *Screen) callbackForMousepos(w *glfw.Window, xpos float64, ypos flo
 		log.Printf("Mousepos: we're getting sub-pixel mouse coordinates!\n")
 	}
 	screen.glfwMousePos = image.Point{X: int(xpos), Y: int(ypos)}
+}
+
+// LoadFonts xxx
+func LoadFonts(ctx *nanovgo.Context) error {
+	fonts := map[string]string{
+		"icons":  "entypo.ttf",
+		"lucida": "lucon.ttf",
+	}
+	hadErr := false
+	for name, filename := range fonts {
+		path := engine.ConfigFilePath(filename)
+		f := ctx.CreateFont(name, path)
+		if f == -1 {
+			log.Printf("LoadFonts: could not add font name=%s path=%s", name, path)
+			hadErr = true
+		}
+	}
+	if hadErr {
+		return fmt.Errorf("LoadFonts: unable to load all fonts")
+	}
+	return nil
 }
