@@ -28,7 +28,6 @@ func Run() {
 	}
 	defer glfw.Terminate()
 
-	// demo MSAA
 	glfw.WindowHint(glfw.Samples, 4)
 
 	glfwWindow, err := glfw.CreateWindow(600, 800, "Palette", nil, nil)
@@ -60,24 +59,14 @@ func Run() {
 		newWidth, newHeight := glfwWindow.GetSize()
 
 		if screen == nil {
-
-			screen, err = NewScreen("root")
+			screen, err = NewScreen(glfwWindow)
 			if err != nil {
 				log.Printf("NewScreen: err=%s\n", err)
 			}
-
-			err = LoadFonts(screen.ctx)
-			if err != nil {
-				log.Printf("gui.Run: err=%s\n", err)
-			}
-
-			glfwWindow.SetKeyCallback(key)
-			glfwWindow.SetMouseButtonCallback(screen.callbackForMousebutton)
-			glfwWindow.SetMouseMovementCallback(screen.callbackForMousepos)
 		}
 
 		if newWidth != screen.rect.Dx() || newHeight != screen.rect.Dy() {
-			screen.BuildScreenImage(newWidth, newHeight)
+			screen.BuildScreen(newWidth, newHeight)
 		}
 
 		pixelRatio := float32(fbWidth) / float32(screen.rect.Dx())
@@ -92,15 +81,15 @@ func Run() {
 		gl.Enable(gl.CULL_FACE)
 		gl.Disable(gl.DEPTH_TEST)
 
-		screen.ctx.BeginFrame(screen.rect.Dx(), screen.rect.Dy(), pixelRatio)
+		screen.nanoctx.BeginFrame(screen.rect.Dx(), screen.rect.Dy(), pixelRatio)
 
 		screen.CheckMouseInput()
 
 		screen.Draw()
 
-		screen.ctx.Restore()
+		screen.nanoctx.Restore()
 
-		screen.ctx.EndFrame()
+		screen.nanoctx.EndFrame()
 
 		gl.Enable(gl.DEPTH_TEST)
 		glfwWindow.SwapBuffers()
@@ -118,13 +107,4 @@ func Run() {
 		framenum++
 	}
 	log.Printf("End of gui.Run()\n")
-}
-
-func key(w *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {
-	// log.Printf("key=%d is ignored\n", key)
-	/*
-		if key == glfw.KeyEscape && action == glfw.Press {
-			w.SetShouldClose(true)
-		}
-	*/
 }
