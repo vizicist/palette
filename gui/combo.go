@@ -8,7 +8,7 @@ type VizComboCallback func(c *VizCombo, choice int)
 
 // VizCombo xxx
 type VizCombo struct {
-	VizObjData
+	WindowData
 	name                  string
 	label                 string
 	wasPressed            bool

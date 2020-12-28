@@ -8,27 +8,27 @@ import (
 	"github.com/micaelAlastor/nanovgo"
 )
 
-// VizButtonCallback xxx
-type VizButtonCallback func(updown string)
+// ButtonCallback xxx
+type ButtonCallback func(updown string)
 
-// VizButton xxx
-type VizButton struct {
-	VizObjData
+// Button xxx
+type Button struct {
+	WindowData
 	name      string
 	isPressed bool
 	text      string
 	// Rect      image.Rectangle
-	callback VizButtonCallback
+	callback ButtonCallback
 }
 
 // NewButton xxx
-func NewButton(name string, text string, cb VizButtonCallback) *VizButton {
-	return &VizButton{
-		VizObjData: VizObjData{
+func NewButton(name string, text string, cb ButtonCallback) *Button {
+	return &Button{
+		WindowData: WindowData{
 			name:    name,
 			style:   DefaultStyle,
 			rect:    image.Rectangle{},
-			objects: map[string]VizObj{},
+			objects: map[string]Window{},
 		},
 		name:      "",
 		isPressed: false,
@@ -38,36 +38,34 @@ func NewButton(name string, text string, cb VizButtonCallback) *VizButton {
 }
 
 // Name xxx
-func (b *VizButton) Name() string {
+func (b *Button) Name() string {
 	return b.name
 }
 
 // Objects xxx
-func (b *VizButton) Objects() map[string]VizObj {
+func (b *Button) Objects() map[string]Window {
 	return b.Objects()
 }
 
-/*
-// Style xxx
-func (b *VizButton) Style() Style {
-	return b.style
+// Rect xxx
+func (b *Button) Rect() image.Rectangle {
+	return b.rect
 }
-*/
 
 // Resize xxx
-func (b *VizButton) Resize(r image.Rectangle) {
+func (b *Button) Resize(r image.Rectangle) {
 	fontHeight := r.Dy() / 24
 	b.style = b.style.SetFontSizeByHeight(fontHeight)
 	w := len(b.text) * b.style.charWidth
 	h := b.style.lineHeight
 	nr := image.Rect(r.Min.X, r.Min.Y, r.Min.X+w, r.Min.Y+h)
-	b.VizObjData.rect = nr
+	b.WindowData.rect = nr
 }
 
 // HandleMouseInput xxx
-func (b *VizButton) HandleMouseInput(pos image.Point, mdown bool) bool {
+func (b *Button) HandleMouseInput(pos image.Point, button int, mdown bool) bool {
 	if !pos.In(b.rect) {
-		log.Printf("VizButton.HandleMouseInput: pos not in rect!\n")
+		log.Printf("Button.HandleMouseInput: pos not in rect!\n")
 		return false
 	}
 	switch mdown {
@@ -87,7 +85,7 @@ func (b *VizButton) HandleMouseInput(pos image.Point, mdown bool) bool {
 }
 
 // Draw xxx
-func (b *VizButton) Draw(ctx *nanovgo.Context) {
+func (b *Button) Draw(ctx *nanovgo.Context) {
 	var cornerRadius float32 = 4.0
 
 	ctx.Save()
@@ -99,21 +97,21 @@ func (b *VizButton) Draw(ctx *nanovgo.Context) {
 	b.style.Do(ctx)
 
 	ctx.BeginPath()
-	w := float32(b.Rect().Max.X - b.Rect().Min.X)
-	h := float32(b.Rect().Max.Y - b.Rect().Min.Y)
-	ctx.RoundedRect(float32(b.Rect().Min.X+1), float32(b.Rect().Min.Y+1), w-2, h-2, cornerRadius-1)
+	w := float32(b.rect.Max.X - b.rect.Min.X)
+	h := float32(b.rect.Max.Y - b.rect.Min.Y)
+	ctx.RoundedRect(float32(b.rect.Min.X+1), float32(b.rect.Min.Y+1), w-2, h-2, cornerRadius-1)
 	ctx.Fill()
 
 	ctx.BeginPath()
-	ctx.RoundedRect(float32(b.Rect().Min.X), float32(b.Rect().Min.Y), w, h, cornerRadius-1)
+	ctx.RoundedRect(float32(b.rect.Min.X), float32(b.rect.Min.Y), w, h, cornerRadius-1)
 	ctx.Stroke()
 
 	ctx.SetTextAlign(nanovgo.AlignCenter | nanovgo.AlignMiddle)
 	// Text uses the fill color, but we want it to be the strokeColor
 	ctx.SetFillColor(b.style.textColor)
 	pos := strings.Index(b.text, "\n")
-	midx := float32((b.Rect().Min.X + b.Rect().Max.X) / 2)
-	midy := float32((b.Rect().Min.Y + b.Rect().Max.Y) / 2)
+	midx := float32((b.rect.Min.X + b.rect.Max.X) / 2)
+	midy := float32((b.rect.Min.Y + b.rect.Max.Y) / 2)
 	if pos >= 0 {
 		// 2 lines
 		line1 := b.text[:pos]

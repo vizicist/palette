@@ -6,9 +6,9 @@ import (
 	"github.com/micaelAlastor/nanovgo"
 )
 
-// VizText xxx
-type VizText struct {
-	VizObjData
+// Text xxx
+type Text struct {
+	WindowData
 	name  string
 	text  string
 	style Style
@@ -16,8 +16,8 @@ type VizText struct {
 }
 
 // NewText xxx
-func NewText(text string, rect image.Rectangle, style Style) *VizText {
-	return &VizText{
+func NewText(text string, rect image.Rectangle, style Style) *Text {
+	return &Text{
 		text:  text,
 		style: style,
 		rect:  rect,
@@ -25,17 +25,17 @@ func NewText(text string, rect image.Rectangle, style Style) *VizText {
 }
 
 // Name xxx
-func (t *VizText) Name() string {
+func (t *Text) Name() string {
 	return t.name
 }
 
 // HandleMouseInput xxx
-func (t *VizText) HandleMouseInput(pos image.Point, down bool) bool {
+func (t *Text) HandleMouseInput(pos image.Point, button int, down bool) bool {
 	return false
 }
 
 // Draw xxx
-func (t *VizText) Draw(ctx *nanovgo.Context) {
+func (t *Text) Draw(ctx *nanovgo.Context) {
 	t.style.Do(ctx)
 	ctx.SetFillColor(t.style.textColor)
 	ctx.SetTextAlign(nanovgo.AlignLeft | nanovgo.AlignTop)
