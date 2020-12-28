@@ -22,66 +22,94 @@ type MouseEvent struct {
 	modifier int
 }
 
+// RootWindow xxx
+type RootWindow struct {
+	WindowData
+	console *Console
+}
+
+// NewRootWindow xxx
+func NewRootWindow(name string) (*RootWindow, error) {
+	w := &RootWindow{
+		WindowData: WindowData{
+			name:    name,
+			style:   Style{},
+			rect:    image.Rectangle{},
+			objects: make(map[string]Window),
+		},
+		console: nil,
+	}
+
+	return w, nil
+}
+
 // Screen xxx
 type Screen struct {
-	WindowData
-	ctx             *nanovgo.Context
-	console         *Console
+	rootWindow *RootWindow
+
+	rect            image.Rectangle
 	menubytes       []byte
 	menushown       bool
 	mouseButtonDown [3]bool
+	// style           Style
 
 	mouseMutex   sync.Mutex
 	mouseEvents  []MouseEvent
 	glfwMousePos image.Point
 	ggctx        *gg.Context
-	goimage      *image.RGBA
+	image        *image.RGBA
 	imageHandle  int // nanovgo image handle
+
+	nanoctx *nanovgo.Context
 }
 
 // NewScreen xxx
-func NewScreen(name string) (*Screen, error) {
+func NewScreen(glfwWindow *glfw.Window) (*Screen, error) {
 
-	style := Style{
-		fontSize:    18.0,
-		fontFace:    "lucida",
-		textColor:   black,
-		strokeColor: black,
-		fillColor:   white,
-	}
+	style := DefaultStyle
 
 	ctx, err := nanovgo.NewContext(0 /*nanovgo.AntiAlias | nanovgo.StencilStrokes | nanovgo.Debug*/)
 	if err != nil {
-		return nil, fmt.Errorf("NewScreen: Unable to create nanovgo.NewContext")
+		return nil, fmt.Errorf("NewScreen: Unable to create nanovgo.NewContext, err=%s", err)
 	}
 
-	screen := &Screen{
-		WindowData: WindowData{
-			name:    name,
-			style:   style,
-			rect:    image.Rectangle{},
-			objects: make(map[string]Window),
-		},
+	root, err := NewRootWindow("root")
+	if err != nil {
+		return nil, err
+	}
+	root.style = style
 
-		ctx:          ctx,
+	screen := &Screen{
+		rootWindow: root,
+		rect:       image.Rectangle{},
+		// objects:    make(map[string]Window),
+
+		// style:        style,
+		nanoctx:      ctx,
 		menubytes:    make([]byte, 0),
 		menushown:    false,
 		mouseEvents:  make([]MouseEvent, 0),
 		glfwMousePos: image.Point{0, 0},
 	}
 
-	// Initialize it to contain a Console tool
-	// just to test APIs etc
-	screen.console = NewConsole("console")
-	AddObject(screen.objects, screen.console)
+	err = LoadFonts(screen.nanoctx)
+	if err != nil {
+		return nil, err
+	}
+
+	glfwWindow.SetKeyCallback(key)
+	glfwWindow.SetMouseButtonCallback(screen.callbackForMousebutton)
+	glfwWindow.SetMouseMovementCallback(screen.callbackForMousepos)
 
 	return screen, nil
 }
 
+/*
 // Objects xxx
 func (screen *Screen) Objects() map[string]Window {
 	return screen.objects
 }
+*/
 
 // Draw xxx
 func (screen *Screen) Draw() {
@@ -93,24 +121,24 @@ func (screen *Screen) Draw() {
 	screen.ggctx.Stroke()
 	screen.ggctx.Pop()
 
-	screen.ctx.UpdateImage(screen.imageHandle, screen.goimage.Pix)
+	screen.nanoctx.UpdateImage(screen.imageHandle, screen.image.Pix)
 
 	w := float32(screen.rect.Dx())
 	h := float32(screen.rect.Dy())
 	img := nanovgo.ImagePattern(0, 0, w, h, 0.0, screen.imageHandle, 1.0)
 
-	screen.ctx.Save()
-	screen.ctx.BeginPath()
-	screen.ctx.Rect(0, 0, w, h)
-	screen.ctx.SetFillPaint(img)
-	screen.ctx.Fill()
-	screen.ctx.Stroke()
+	screen.nanoctx.Save()
+	screen.nanoctx.BeginPath()
+	screen.nanoctx.Rect(0, 0, w, h)
+	screen.nanoctx.SetFillPaint(img)
+	screen.nanoctx.Fill()
+	screen.nanoctx.Stroke()
 
-	/*
-		for _, o := range screen.objects {
-			o.Draw(screen.ctx)
-		}
-	*/
+	screen.rootWindow.style.Do(screen.nanoctx)
+
+	for _, o := range screen.rootWindow.objects {
+		o.Draw(screen.nanoctx)
+	}
 }
 
 // CheckMouseInput xxx
@@ -129,7 +157,7 @@ func (screen *Screen) CheckMouseInput() {
 
 	screen.mouseButtonDown[int(event.button)] = event.down
 
-	o := ObjectUnder(screen.objects, event.pos)
+	o := ObjectUnder(screen.rootWindow.objects, event.pos)
 	handled := false
 	if o != nil {
 		handled = o.HandleMouseInput(event.pos, int(event.button), event.down)
@@ -152,22 +180,29 @@ func (screen *Screen) CheckMouseInput() {
 	}
 }
 
-// BuildScreenImage xxx
-func (screen *Screen) BuildScreenImage(newWidth, newHeight int) {
+// BuildScreen xxx
+func (screen *Screen) BuildScreen(newWidth, newHeight int) {
 
 	// This goimage is created once, and only changes if the screen size changes.
-	screen.goimage = image.NewRGBA(image.Rect(0, 0, newWidth, newHeight))
-	screen.ggctx = gg.NewContextForRGBA(screen.goimage)
+	screen.image = image.NewRGBA(image.Rect(0, 0, newWidth, newHeight))
+	screen.ggctx = gg.NewContextForRGBA(screen.image)
 
 	// This imageHandle is for the OpenGL texture, used by nanovgo.
-	screen.imageHandle = screen.ctx.CreateImageFromGoImage(0, screen.goimage)
+	screen.imageHandle = screen.nanoctx.CreateImageFromGoImage(0, screen.image)
 
 	// XXX - default font height should be configurable
-	screen.style = screen.style.SetFontSizeByHeight(20)
+	// screen.style = screen.style.SetFontSizeByHeight(20)
 	screen.rect = image.Rect(0, 0, newWidth, newHeight)
 
 	nrect := screen.rect.Inset(10)
-	screen.console.Resize(nrect)
+
+	// XXX - should I avoid creating a
+	if screen.rootWindow.console == nil {
+		screen.rootWindow.console = NewConsole("root")
+		AddObject(screen.rootWindow.objects, screen.rootWindow.console)
+	}
+
+	screen.rootWindow.console.Resize(nrect)
 
 	/*
 		for nm, o := range screen.objects {
@@ -230,4 +265,13 @@ func LoadFonts(ctx *nanovgo.Context) error {
 		return fmt.Errorf("LoadFonts: unable to load all fonts")
 	}
 	return nil
+}
+
+func key(w *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {
+	// log.Printf("key=%d is ignored\n", key)
+	/*
+		if key == glfw.KeyEscape && action == glfw.Press {
+			w.SetShouldClose(true)
+		}
+	*/
 }
