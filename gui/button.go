@@ -89,32 +89,36 @@ func (b *Button) Draw(ctx *gg.Context) {
 	ctx.Push()
 	defer ctx.Pop()
 
+	var cornerRadius float64 = 4.0
+	//  := nanovgo.LinearGradient(b.x, b.y, b.x, b.y+b.h, nanovgo.RGBA(255, 255, 255, alpha), nanovgo.RGBA(0, 0, 0, alpha))
+	b.style.Do(ctx)
+
+	w := float64(b.rect.Max.X - b.rect.Min.X)
+	h := float64(b.rect.Max.Y - b.rect.Min.Y)
+	ctx.DrawRoundedRectangle(float64(b.rect.Min.X+1), float64(b.rect.Min.Y+1), w-2, h-2, cornerRadius-1)
+	ctx.Fill()
+
+	ctx.DrawRoundedRectangle(float64(b.rect.Min.X), float64(b.rect.Min.Y), w, h, cornerRadius-1)
+	ctx.Stroke()
+
+	ctx.SetFillStyle(gg.NewSolidPattern(b.style.textColor))
+	ctx.SetStrokeStyle(gg.NewSolidPattern(b.style.textColor))
+	ctx.Scale(4.0, 4.0)
+	x := float64(b.rect.Min.X)
+	y := float64(b.rect.Min.Y)
+	ctx.DrawString(b.text, x, y)
 	/*
-		var cornerRadius float32 = 4.0
-		//  := nanovgo.LinearGradient(b.x, b.y, b.x, b.y+b.h, nanovgo.RGBA(255, 255, 255, alpha), nanovgo.RGBA(0, 0, 0, alpha))
-		b.style.Do(ctx)
-
-		ctx.BeginPath()
-		w := float32(b.rect.Max.X - b.rect.Min.X)
-		h := float32(b.rect.Max.Y - b.rect.Min.Y)
-		ctx.RoundedRect(float32(b.rect.Min.X+1), float32(b.rect.Min.Y+1), w-2, h-2, cornerRadius-1)
-		ctx.Fill()
-
-		ctx.BeginPath()
-		ctx.RoundedRect(float32(b.rect.Min.X), float32(b.rect.Min.Y), w, h, cornerRadius-1)
-		ctx.Stroke()
-
 		ctx.SetTextAlign(nanovgo.AlignCenter | nanovgo.AlignMiddle)
 		// Text uses the fill color, but we want it to be the strokeColor
 		ctx.SetFillColor(b.style.textColor)
 		pos := strings.Index(b.text, "\n")
-		midx := float32((b.rect.Min.X + b.rect.Max.X) / 2)
-		midy := float32((b.rect.Min.Y + b.rect.Max.Y) / 2)
+		midx := float64((b.rect.Min.X + b.rect.Max.X) / 2)
+		midy := float64((b.rect.Min.Y + b.rect.Max.Y) / 2)
 		if pos >= 0 {
 			// 2 lines
 			line1 := b.text[:pos]
 			line2 := b.text[pos+1:]
-			halfHeight := float32(b.style.lineHeight) / 2.0
+			halfHeight := float64(b.style.lineHeight) / 2.0
 			ctx.Text(midx, midy-halfHeight, line1)
 			ctx.Text(midx, midy+halfHeight, line2)
 		} else {

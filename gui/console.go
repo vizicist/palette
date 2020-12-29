@@ -96,5 +96,5 @@ func (console *Console) Draw(ctx *gg.Context) {
 	ctx.DrawRoundedRectangle(float64(console.rect.Min.X), float64(console.rect.Min.Y), w, h, cornerRadius-1)
 	ctx.Stroke()
 
-	// console.b1.Draw(ctx)
+	console.b1.Draw(ctx)
 }

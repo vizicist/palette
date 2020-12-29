@@ -51,16 +51,15 @@ type Screen struct {
 	menubytes       []byte
 	menushown       bool
 	mouseButtonDown [3]bool
-	// style           Style
+	mouseMutex      sync.Mutex
+	mouseEvents     []MouseEvent
+	glfwMousePos    image.Point
 
-	mouseMutex   sync.Mutex
-	mouseEvents  []MouseEvent
-	glfwMousePos image.Point
-	ggctx        *gg.Context
-	image        *image.RGBA
-	imageHandle  int // nanovgo image handle
+	ggctx *gg.Context
+	image *image.RGBA
 
-	nanoctx *nanovgo.Context
+	nanoctx     *nanovgo.Context
+	imageHandle int // nanovgo image handle
 }
 
 // NewScreen xxx
@@ -80,11 +79,8 @@ func NewScreen(glfwWindow *glfw.Window, width, height int) (*Screen, error) {
 	root.style = style
 
 	screen := &Screen{
-		rootWindow: root,
-		rect:       image.Rectangle{},
-		// objects:    make(map[string]Window),
-
-		// style:        style,
+		rootWindow:   root,
+		rect:         image.Rectangle{},
 		nanoctx:      ctx,
 		menubytes:    make([]byte, 0),
 		menushown:    false,
