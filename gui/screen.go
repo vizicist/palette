@@ -43,7 +43,7 @@ func NewRootWindow(name string) (*RootWindow, error) {
 	return w, nil
 }
 
-// Screen xxx
+// Screen is the final output, managed by nanovgo
 type Screen struct {
 	rootWindow *RootWindow
 
@@ -64,7 +64,7 @@ type Screen struct {
 }
 
 // NewScreen xxx
-func NewScreen(glfwWindow *glfw.Window) (*Screen, error) {
+func NewScreen(glfwWindow *glfw.Window, width, height int) (*Screen, error) {
 
 	style := DefaultStyle
 
@@ -104,12 +104,37 @@ func NewScreen(glfwWindow *glfw.Window) (*Screen, error) {
 	return screen, nil
 }
 
-/*
-// Objects xxx
-func (screen *Screen) Objects() map[string]Window {
-	return screen.objects
+// BuildScreen xxx
+func (screen *Screen) BuildScreen(newWidth, newHeight int) {
+
+	// This goimage is created once, and only changes if the screen size changes.
+	screen.image = image.NewRGBA(image.Rect(0, 0, newWidth, newHeight))
+	screen.ggctx = gg.NewContextForRGBA(screen.image)
+
+	// This imageHandle is for the OpenGL texture, used by nanovgo.
+	screen.imageHandle = screen.nanoctx.CreateImageFromGoImage(0, screen.image)
+
+	// XXX - default font height should be configurable
+	// screen.style = screen.style.SetFontSizeByHeight(20)
+	screen.rect = image.Rect(0, 0, newWidth, newHeight)
+
+	nrect := screen.rect.Inset(10)
+
+	// XXX - should I avoid creating a
+	if screen.rootWindow.console == nil {
+		screen.rootWindow.console = NewConsole("root")
+		AddObject(screen.rootWindow.objects, screen.rootWindow.console)
+	}
+
+	screen.rootWindow.console.Resize(nrect)
+
+	/*
+		for nm, o := range screen.objects {
+			log.Printf("Screen: resizing wind=%s rect=%v\n", nm, rect)
+			o.Resize(rect)
+		}
+	*/
 }
-*/
 
 // Draw xxx
 func (screen *Screen) Draw() {
@@ -134,10 +159,10 @@ func (screen *Screen) Draw() {
 	screen.nanoctx.Fill()
 	screen.nanoctx.Stroke()
 
-	screen.rootWindow.style.Do(screen.nanoctx)
+	screen.rootWindow.style.Do(screen.ggctx)
 
 	for _, o := range screen.rootWindow.objects {
-		o.Draw(screen.nanoctx)
+		o.Draw(screen.ggctx)
 	}
 }
 
@@ -178,38 +203,6 @@ func (screen *Screen) CheckMouseInput() {
 			}
 		}
 	}
-}
-
-// BuildScreen xxx
-func (screen *Screen) BuildScreen(newWidth, newHeight int) {
-
-	// This goimage is created once, and only changes if the screen size changes.
-	screen.image = image.NewRGBA(image.Rect(0, 0, newWidth, newHeight))
-	screen.ggctx = gg.NewContextForRGBA(screen.image)
-
-	// This imageHandle is for the OpenGL texture, used by nanovgo.
-	screen.imageHandle = screen.nanoctx.CreateImageFromGoImage(0, screen.image)
-
-	// XXX - default font height should be configurable
-	// screen.style = screen.style.SetFontSizeByHeight(20)
-	screen.rect = image.Rect(0, 0, newWidth, newHeight)
-
-	nrect := screen.rect.Inset(10)
-
-	// XXX - should I avoid creating a
-	if screen.rootWindow.console == nil {
-		screen.rootWindow.console = NewConsole("root")
-		AddObject(screen.rootWindow.objects, screen.rootWindow.console)
-	}
-
-	screen.rootWindow.console.Resize(nrect)
-
-	/*
-		for nm, o := range screen.objects {
-			log.Printf("Screen: resizing wind=%s rect=%v\n", nm, rect)
-			o.Resize(rect)
-		}
-	*/
 }
 
 // callbackForMousebutton is a callback from glfw

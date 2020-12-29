@@ -3,9 +3,8 @@ package gui
 import (
 	"image"
 	"log"
-	"strings"
 
-	"github.com/micaelAlastor/nanovgo"
+	"github.com/fogleman/gg"
 )
 
 // ButtonCallback xxx
@@ -85,41 +84,41 @@ func (b *Button) HandleMouseInput(pos image.Point, button int, mdown bool) bool 
 }
 
 // Draw xxx
-func (b *Button) Draw(ctx *nanovgo.Context) {
-	var cornerRadius float32 = 4.0
+func (b *Button) Draw(ctx *gg.Context) {
 
-	ctx.Save()
-	defer ctx.Restore()
+	ctx.Push()
+	defer ctx.Pop()
 
 	/*
-		bg := nanovgo.LinearGradient(b.x, b.y, b.x, b.y+b.h, nanovgo.RGBA(255, 255, 255, alpha), nanovgo.RGBA(0, 0, 0, alpha))
+		var cornerRadius float32 = 4.0
+		//  := nanovgo.LinearGradient(b.x, b.y, b.x, b.y+b.h, nanovgo.RGBA(255, 255, 255, alpha), nanovgo.RGBA(0, 0, 0, alpha))
+		b.style.Do(ctx)
+
+		ctx.BeginPath()
+		w := float32(b.rect.Max.X - b.rect.Min.X)
+		h := float32(b.rect.Max.Y - b.rect.Min.Y)
+		ctx.RoundedRect(float32(b.rect.Min.X+1), float32(b.rect.Min.Y+1), w-2, h-2, cornerRadius-1)
+		ctx.Fill()
+
+		ctx.BeginPath()
+		ctx.RoundedRect(float32(b.rect.Min.X), float32(b.rect.Min.Y), w, h, cornerRadius-1)
+		ctx.Stroke()
+
+		ctx.SetTextAlign(nanovgo.AlignCenter | nanovgo.AlignMiddle)
+		// Text uses the fill color, but we want it to be the strokeColor
+		ctx.SetFillColor(b.style.textColor)
+		pos := strings.Index(b.text, "\n")
+		midx := float32((b.rect.Min.X + b.rect.Max.X) / 2)
+		midy := float32((b.rect.Min.Y + b.rect.Max.Y) / 2)
+		if pos >= 0 {
+			// 2 lines
+			line1 := b.text[:pos]
+			line2 := b.text[pos+1:]
+			halfHeight := float32(b.style.lineHeight) / 2.0
+			ctx.Text(midx, midy-halfHeight, line1)
+			ctx.Text(midx, midy+halfHeight, line2)
+		} else {
+			ctx.Text(midx, midy, b.text)
+		}
 	*/
-	b.style.Do(ctx)
-
-	ctx.BeginPath()
-	w := float32(b.rect.Max.X - b.rect.Min.X)
-	h := float32(b.rect.Max.Y - b.rect.Min.Y)
-	ctx.RoundedRect(float32(b.rect.Min.X+1), float32(b.rect.Min.Y+1), w-2, h-2, cornerRadius-1)
-	ctx.Fill()
-
-	ctx.BeginPath()
-	ctx.RoundedRect(float32(b.rect.Min.X), float32(b.rect.Min.Y), w, h, cornerRadius-1)
-	ctx.Stroke()
-
-	ctx.SetTextAlign(nanovgo.AlignCenter | nanovgo.AlignMiddle)
-	// Text uses the fill color, but we want it to be the strokeColor
-	ctx.SetFillColor(b.style.textColor)
-	pos := strings.Index(b.text, "\n")
-	midx := float32((b.rect.Min.X + b.rect.Max.X) / 2)
-	midy := float32((b.rect.Min.Y + b.rect.Max.Y) / 2)
-	if pos >= 0 {
-		// 2 lines
-		line1 := b.text[:pos]
-		line2 := b.text[pos+1:]
-		halfHeight := float32(b.style.lineHeight) / 2.0
-		ctx.Text(midx, midy-halfHeight, line1)
-		ctx.Text(midx, midy+halfHeight, line2)
-	} else {
-		ctx.Text(midx, midy, b.text)
-	}
 }

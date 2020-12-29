@@ -18,7 +18,7 @@ require (
 	github.com/nats-io/nuid v1.0.1
 	github.com/vizicist/portmidi v0.0.0-20200724003934-fc4b6f410ee5
 	golang.org/x/crypto v0.0.0-20201217014255-9d1352758620 // indirect
-	golang.org/x/image v0.0.0-20201208152932-35266b937fa6 // indirect
+	golang.org/x/image v0.0.0-20201208152932-35266b937fa6
 	golang.org/x/sys v0.0.0-20201218084310-7d0127a74742 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/mail.v2 v2.3.1
