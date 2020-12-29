@@ -1,22 +1,25 @@
 package gui
 
 import (
+	"image/color"
 	"log"
 
-	"github.com/micaelAlastor/nanovgo"
+	"github.com/fogleman/gg"
+	"golang.org/x/image/font"
+	"golang.org/x/image/font/basicfont"
 )
 
-var red = nanovgo.RGBA(255, 0, 0, 255)
-var black = nanovgo.RGBA(0, 0, 0, 255)
-var white = nanovgo.RGBA(255, 255, 255, 255)
+var red = color.RGBA{255, 0, 0, 255}
+var black = color.RGBA{0, 0, 0, 255}
+var white = color.RGBA{255, 255, 255, 255}
 
 // Style xxx
 type Style struct {
 	fontSize    float32
-	fontFace    string
-	textColor   nanovgo.Color
-	strokeColor nanovgo.Color
-	fillColor   nanovgo.Color
+	fontFace    font.Face
+	textColor   color.RGBA
+	strokeColor color.RGBA
+	fillColor   color.RGBA
 	charWidth   int
 	lineHeight  int
 }
@@ -24,7 +27,7 @@ type Style struct {
 // DefaultStyle is for initializing Style values
 var DefaultStyle Style = Style{
 	fontSize:    12.0,
-	fontFace:    "lucida",
+	fontFace:    basicfont.Face7x13,
 	textColor:   black,
 	strokeColor: black,
 	fillColor:   white,
@@ -33,11 +36,13 @@ var DefaultStyle Style = Style{
 }
 
 // Do xxx
-func (style Style) Do(ctx *nanovgo.Context) {
-	ctx.SetFillColor(style.fillColor)
-	ctx.SetStrokeColor(style.strokeColor)
+func (style Style) Do(ctx *gg.Context) {
+
+	ctx.SetFillStyle(gg.NewSolidPattern(style.fillColor))
+	ctx.SetStrokeStyle(gg.NewSolidPattern(style.strokeColor))
+
 	ctx.SetFontFace(style.fontFace)
-	ctx.SetFontSize(style.fontSize)
+	// ctx.SetFontSize(style.fontSize)
 }
 
 // SetFontSizeByHeight xxx

@@ -59,7 +59,7 @@ func Run() {
 		newWidth, newHeight := glfwWindow.GetSize()
 
 		if screen == nil {
-			screen, err = NewScreen(glfwWindow)
+			screen, err = NewScreen(glfwWindow, newWidth, newHeight)
 			if err != nil {
 				log.Printf("NewScreen: err=%s\n", err)
 			}

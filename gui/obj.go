@@ -4,13 +4,13 @@ import (
 	"image"
 	"log"
 
-	"github.com/micaelAlastor/nanovgo"
+	"github.com/fogleman/gg"
 )
 
 // Window xxx
 type Window interface {
 	HandleMouseInput(pos image.Point, button int, down bool) bool
-	Draw(ctx *nanovgo.Context)
+	Draw(ctx *gg.Context)
 	Rect() image.Rectangle
 	// Style() Style
 	Name() string

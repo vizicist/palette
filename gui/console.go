@@ -4,7 +4,7 @@ import (
 	"image"
 	"log"
 
-	"github.com/micaelAlastor/nanovgo"
+	"github.com/fogleman/gg"
 )
 
 // Console is a window that has a couple of buttons
@@ -77,25 +77,24 @@ func (console *Console) HandleMouseInput(pos image.Point, button int, mdown bool
 }
 
 // Draw xxx
-func (console *Console) Draw(ctx *nanovgo.Context) {
+func (console *Console) Draw(ctx *gg.Context) {
 
-	var cornerRadius float32 = 4.0
-
-	ctx.Save()
-	defer ctx.Restore()
+	ctx.Push()
+	defer ctx.Pop()
 
 	console.style.Do(ctx)
 
-	ctx.SetStrokeWidth(3.0)
-	ctx.BeginPath()
-	w := float32(console.rect.Max.X - console.rect.Min.X)
-	h := float32(console.rect.Max.Y - console.rect.Min.Y)
-	ctx.RoundedRect(float32(console.rect.Min.X+1), float32(console.rect.Min.Y+1), w-2, h-2, cornerRadius-1)
+	var cornerRadius float64 = 4.0
+	// ctx.SetStrokeWidth(3.0)
+	// ctx.BeginPath()
+	w := float64(console.rect.Max.X - console.rect.Min.X)
+	h := float64(console.rect.Max.Y - console.rect.Min.Y)
+	ctx.DrawRoundedRectangle(float64(console.rect.Min.X+1), float64(console.rect.Min.Y+1), w-2, h-2, cornerRadius-1)
 	ctx.Fill()
 
-	ctx.BeginPath()
-	ctx.RoundedRect(float32(console.rect.Min.X), float32(console.rect.Min.Y), w, h, cornerRadius-1)
+	// ctx.BeginPath()
+	ctx.DrawRoundedRectangle(float64(console.rect.Min.X), float64(console.rect.Min.Y), w, h, cornerRadius-1)
 	ctx.Stroke()
 
-	console.b1.Draw(ctx)
+	// console.b1.Draw(ctx)
 }

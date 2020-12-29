@@ -3,7 +3,7 @@ package gui
 import (
 	"image"
 
-	"github.com/micaelAlastor/nanovgo"
+	"github.com/fogleman/gg"
 )
 
 // Text xxx
@@ -35,9 +35,7 @@ func (t *Text) HandleMouseInput(pos image.Point, button int, down bool) bool {
 }
 
 // Draw xxx
-func (t *Text) Draw(ctx *nanovgo.Context) {
+func (t *Text) Draw(ctx *gg.Context) {
 	t.style.Do(ctx)
-	ctx.SetFillColor(t.style.textColor)
-	ctx.SetTextAlign(nanovgo.AlignLeft | nanovgo.AlignTop)
-	ctx.Text(float32(t.rect.Min.X), float32(t.rect.Min.Y), t.text)
+	ctx.DrawString(t.text, float64(t.rect.Min.X), float64(t.rect.Min.Y))
 }
