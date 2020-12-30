@@ -3,6 +3,8 @@ package main
 import (
 	"flag"
 	"log"
+	"os"
+	"runtime/pprof"
 
 	"github.com/vizicist/palette/engine"
 	"github.com/vizicist/palette/gui"
@@ -20,17 +22,27 @@ func main() {
 
 	flag.Parse()
 
-	engine.InitMIDI()
+	f, err := os.Create("cpu.prof")
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	go engine.StartNATSServer()
-	go engine.StartOSC("127.0.0.1:3333")
-	go engine.StartNATSClient()
-	go engine.StartMIDI()
-	go engine.StartRealtime()
-	go engine.StartCursorInput()
+	err = pprof.StartCPUProfile(f)
+	defer pprof.StopCPUProfile()
 
-	go engine.ListenForLocalDeviceInputsForever()
+	/*
+		engine.InitMIDI()
 
-	// GUI must run in the main thread, not in a goroutine
+		go engine.StartNATSServer()
+		go engine.StartOSC("127.0.0.1:3333")
+		go engine.StartNATSClient()
+		go engine.StartMIDI()
+		go engine.StartRealtime()
+		go engine.StartCursorInput()
+
+		go engine.ListenForLocalDeviceInputsForever()
+
+		// GUI must run in the main thread, not in a goroutine
+	*/
 	gui.Run() // this never returns
 }
