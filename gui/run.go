@@ -66,7 +66,7 @@ func Run() {
 		}
 
 		if newWidth != screen.rect.Dx() || newHeight != screen.rect.Dy() {
-			screen.BuildScreen(newWidth, newHeight)
+			screen.Resize(newWidth, newHeight)
 		}
 
 		pixelRatio := float32(fbWidth) / float32(screen.rect.Dx())

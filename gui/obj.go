@@ -11,25 +11,33 @@ import (
 type Window interface {
 	HandleMouseInput(pos image.Point, button int, down bool) bool
 	Draw(ctx *gg.Context)
-	Rect() image.Rectangle
-	// Style() Style
-	Name() string
 	Resize(image.Rectangle)
-	Objects() map[string]Window
+	Data() WindowData
 }
 
 // WindowData xxx
 type WindowData struct {
-	name    string
-	style   Style
+	// name    string
+	style   *Style
 	rect    image.Rectangle
 	objects map[string]Window
+}
+
+// ToWindow xxx
+func ToWindow(ww interface{}) Window {
+	w, ok := ww.(Window)
+	if !ok {
+		log.Printf("ToWindow: isn't a Window?")
+		return nil
+	}
+	return w
 }
 
 // ObjectUnder xxx
 func ObjectUnder(objects map[string]Window, pos image.Point) Window {
 	for _, o := range objects {
-		if pos.In(o.Rect()) {
+		if pos.In(o.Data().rect) {
+
 			return o
 		}
 	}
@@ -37,8 +45,7 @@ func ObjectUnder(objects map[string]Window, pos image.Point) Window {
 }
 
 // AddObject xxx
-func AddObject(objects map[string]Window, o Window) {
-	name := o.Name()
+func AddObject(objects map[string]Window, name string, o Window) {
 	_, ok := objects[name]
 	if ok {
 		log.Printf("There's already an object named %s in that WindowData\n", name)

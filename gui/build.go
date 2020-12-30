@@ -1,11 +1,5 @@
 package gui
 
-import (
-	"fmt"
-	"log"
-	"strings"
-)
-
 // CurrentWindName is the name of the active page.
 var CurrentWindName string
 
@@ -23,6 +17,7 @@ const (
 	// IconTRASH        = 0xE729
 )
 
+/*
 func (wind *WindowData) venueAPI(venue string, api string) {
 	log.Printf(fmt.Sprintf("venueAPI venue=%s, api=%s\n", venue, api))
 }
@@ -44,7 +39,6 @@ func VizLog(s string) {
 
 func (wind *WindowData) addSettings(x, y int) {
 
-	/*
 		labelw := wind.Rect().Dx() / 4
 		valuew := wind.Rect().Dx() / 2
 		h := wind.Style.lineHeight
@@ -74,11 +68,10 @@ func (wind *WindowData) addSettings(x, y int) {
 			}
 		}
 		wind.AddObject(midiFileCombo)
-	*/
-}
+*/
 
+/*
 func (wind *WindowData) addLogArea(nloglines int, x, y int) {
-	/*
 
 		w := wind.Rect().Dx()
 		h := wind.Style.lineHeight
@@ -103,5 +96,5 @@ func (wind *WindowData) addLogArea(nloglines int, x, y int) {
 		}
 		logTexts = newlogTexts
 		return wind
-	*/
 }
+*/

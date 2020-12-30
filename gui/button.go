@@ -3,8 +3,10 @@ package gui
 import (
 	"image"
 	"log"
+	"strings"
 
 	"github.com/fogleman/gg"
+	"golang.org/x/image/font"
 )
 
 // ButtonCallback xxx
@@ -13,52 +15,76 @@ type ButtonCallback func(updown string)
 // Button xxx
 type Button struct {
 	WindowData
-	name      string
 	isPressed bool
-	text      string
-	// Rect      image.Rectangle
-	callback ButtonCallback
+	label     string
+	callback  ButtonCallback
 }
 
 // NewButton xxx
-func NewButton(name string, text string, cb ButtonCallback) *Button {
+func NewButton(style *Style, text string, cb ButtonCallback) *Button {
 	return &Button{
 		WindowData: WindowData{
-			name:    name,
-			style:   DefaultStyle,
+			style:   style,
 			rect:    image.Rectangle{},
 			objects: map[string]Window{},
 		},
-		name:      "",
 		isPressed: false,
-		text:      text,
+		label:     text,
 		callback:  cb,
 	}
 }
 
-// Name xxx
-func (b *Button) Name() string {
-	return b.name
-}
-
-// Objects xxx
-func (b *Button) Objects() map[string]Window {
-	return b.Objects()
-}
-
-// Rect xxx
-func (b *Button) Rect() image.Rectangle {
-	return b.rect
+// Data xxx
+func (b *Button) Data() WindowData {
+	return b.WindowData
 }
 
 // Resize xxx
-func (b *Button) Resize(r image.Rectangle) {
-	fontHeight := r.Dy() / 24
-	b.style = b.style.SetFontSizeByHeight(fontHeight)
-	w := len(b.text) * b.style.charWidth
-	h := b.style.lineHeight
-	nr := image.Rect(r.Min.X, r.Min.Y, r.Min.X+w, r.Min.Y+h)
-	b.WindowData.rect = nr
+func (b *Button) Resize(rect image.Rectangle) {
+
+	desiredHeight := rect.Dy() * (1 + strings.Count(b.label, "\n"))
+
+	if desiredHeight != b.style.fontHeight {
+		b.style = NewStyle("regular", desiredHeight)
+	}
+
+	// Get the real bounds needed for this label
+	brect, _ := font.BoundString(b.style.fontFace, b.label)
+	w := brect.Max.Sub(brect.Min).X.Round()
+	h := brect.Max.Sub(brect.Min).Y.Round()
+
+	b.WindowData.rect = image.Rect(rect.Min.X, rect.Min.Y, rect.Min.X+w, rect.Min.Y+h)
+}
+
+// Draw xxx
+func (b *Button) Draw(ctx *gg.Context) {
+
+	ctx.Push()
+	defer ctx.Pop()
+
+	var cornerRadius float64 = 4.0
+	b.style.SetForDrawing(ctx)
+
+	// interior
+	w := float64(b.rect.Max.X - b.rect.Min.X)
+	h := float64(b.rect.Max.Y - b.rect.Min.Y)
+	ctx.DrawRoundedRectangle(float64(b.rect.Min.X+1), float64(b.rect.Min.Y+1), w-2, h-2, cornerRadius-1)
+	ctx.Fill()
+
+	// outline
+	ctx.DrawRoundedRectangle(float64(b.rect.Min.X), float64(b.rect.Min.Y), w, h, cornerRadius-1)
+	ctx.Stroke()
+
+	// label
+	b.style.SetForText(ctx)
+
+	textx := float64(b.rect.Min.X)
+	// XXX - why Max + Dy/2?  Shouldn't it be Min.Y + Dy/2?
+	texty := float64(b.rect.Max.Y) + float64(b.rect.Dy())/2.0
+	brect, _ := font.BoundString(b.style.fontFace, b.label)
+	// XXX - hmmmmmm
+	texty += float64(brect.Min.Y.Round())
+	ctx.DrawString(b.label, textx, texty)
 }
 
 // HandleMouseInput xxx
@@ -81,48 +107,4 @@ func (b *Button) HandleMouseInput(pos image.Point, button int, mdown bool) bool 
 		}
 	}
 	return true
-}
-
-// Draw xxx
-func (b *Button) Draw(ctx *gg.Context) {
-
-	ctx.Push()
-	defer ctx.Pop()
-
-	var cornerRadius float64 = 4.0
-	//  := nanovgo.LinearGradient(b.x, b.y, b.x, b.y+b.h, nanovgo.RGBA(255, 255, 255, alpha), nanovgo.RGBA(0, 0, 0, alpha))
-	b.style.Do(ctx)
-
-	w := float64(b.rect.Max.X - b.rect.Min.X)
-	h := float64(b.rect.Max.Y - b.rect.Min.Y)
-	ctx.DrawRoundedRectangle(float64(b.rect.Min.X+1), float64(b.rect.Min.Y+1), w-2, h-2, cornerRadius-1)
-	ctx.Fill()
-
-	ctx.DrawRoundedRectangle(float64(b.rect.Min.X), float64(b.rect.Min.Y), w, h, cornerRadius-1)
-	ctx.Stroke()
-
-	ctx.SetFillStyle(gg.NewSolidPattern(b.style.textColor))
-	ctx.SetStrokeStyle(gg.NewSolidPattern(b.style.textColor))
-	ctx.Scale(4.0, 4.0)
-	x := float64(b.rect.Min.X)
-	y := float64(b.rect.Min.Y)
-	ctx.DrawString(b.text, x, y)
-	/*
-		ctx.SetTextAlign(nanovgo.AlignCenter | nanovgo.AlignMiddle)
-		// Text uses the fill color, but we want it to be the strokeColor
-		ctx.SetFillColor(b.style.textColor)
-		pos := strings.Index(b.text, "\n")
-		midx := float64((b.rect.Min.X + b.rect.Max.X) / 2)
-		midy := float64((b.rect.Min.Y + b.rect.Max.Y) / 2)
-		if pos >= 0 {
-			// 2 lines
-			line1 := b.text[:pos]
-			line2 := b.text[pos+1:]
-			halfHeight := float64(b.style.lineHeight) / 2.0
-			ctx.Text(midx, midy-halfHeight, line1)
-			ctx.Text(midx, midy+halfHeight, line2)
-		} else {
-			ctx.Text(midx, midy, b.text)
-		}
-	*/
 }

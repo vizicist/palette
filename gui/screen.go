@@ -22,30 +22,9 @@ type MouseEvent struct {
 	modifier int
 }
 
-// RootWindow xxx
-type RootWindow struct {
-	WindowData
-	console *Console
-}
-
-// NewRootWindow xxx
-func NewRootWindow(name string) (*RootWindow, error) {
-	w := &RootWindow{
-		WindowData: WindowData{
-			name:    name,
-			style:   Style{},
-			rect:    image.Rectangle{},
-			objects: make(map[string]Window),
-		},
-		console: nil,
-	}
-
-	return w, nil
-}
-
 // Screen is the final output, managed by nanovgo
 type Screen struct {
-	rootWindow *RootWindow
+	rootWindow *Root
 
 	rect            image.Rectangle
 	menubytes       []byte
@@ -65,21 +44,13 @@ type Screen struct {
 // NewScreen xxx
 func NewScreen(glfwWindow *glfw.Window, width, height int) (*Screen, error) {
 
-	style := DefaultStyle
-
 	ctx, err := nanovgo.NewContext(0 /*nanovgo.AntiAlias | nanovgo.StencilStrokes | nanovgo.Debug*/)
 	if err != nil {
 		return nil, fmt.Errorf("NewScreen: Unable to create nanovgo.NewContext, err=%s", err)
 	}
 
-	root, err := NewRootWindow("root")
-	if err != nil {
-		return nil, err
-	}
-	root.style = style
-
 	screen := &Screen{
-		rootWindow:   root,
+		rootWindow:   nil,
 		rect:         image.Rectangle{},
 		nanoctx:      ctx,
 		menubytes:    make([]byte, 0),
@@ -97,11 +68,23 @@ func NewScreen(glfwWindow *glfw.Window, width, height int) (*Screen, error) {
 	glfwWindow.SetMouseButtonCallback(screen.callbackForMousebutton)
 	glfwWindow.SetMouseMovementCallback(screen.callbackForMousepos)
 
+	// Add initial contents of RootWindow
+	root, err := NewRoot(NewStyle("regular", 32))
+	if err != nil {
+		return nil, err
+	}
+
+	root.console = NewConsole(NewStyle("mono", 32))
+	screen.rootWindow = root
+	AddObject(root.objects, "console", root.console)
+
+	screen.Resize(width, height)
+
 	return screen, nil
 }
 
-// BuildScreen xxx
-func (screen *Screen) BuildScreen(newWidth, newHeight int) {
+// Resize xxx
+func (screen *Screen) Resize(newWidth, newHeight int) {
 
 	// This goimage is created once, and only changes if the screen size changes.
 	screen.image = image.NewRGBA(image.Rect(0, 0, newWidth, newHeight))
@@ -116,20 +99,8 @@ func (screen *Screen) BuildScreen(newWidth, newHeight int) {
 
 	nrect := screen.rect.Inset(10)
 
-	// XXX - should I avoid creating a
-	if screen.rootWindow.console == nil {
-		screen.rootWindow.console = NewConsole("root")
-		AddObject(screen.rootWindow.objects, screen.rootWindow.console)
-	}
+	screen.rootWindow.Resize(nrect)
 
-	screen.rootWindow.console.Resize(nrect)
-
-	/*
-		for nm, o := range screen.objects {
-			log.Printf("Screen: resizing wind=%s rect=%v\n", nm, rect)
-			o.Resize(rect)
-		}
-	*/
 }
 
 // Draw xxx
@@ -155,7 +126,7 @@ func (screen *Screen) Draw() {
 	screen.nanoctx.Fill()
 	screen.nanoctx.Stroke()
 
-	screen.rootWindow.style.Do(screen.ggctx)
+	screen.rootWindow.style.SetForDrawing(screen.ggctx)
 
 	for _, o := range screen.rootWindow.objects {
 		o.Draw(screen.ggctx)
