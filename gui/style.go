@@ -26,7 +26,9 @@ type Style struct {
 }
 
 // NewStyle xxx
-func NewStyle(fontname string, fontHeight int) *Style {
+func NewStyle(fontName string, fontHeight int) *Style {
+
+	log.Printf("NewStyle: fontName=%s Height=%d\n", fontName, fontHeight)
 
 	if fontHeight <= 0 {
 		log.Printf("NewStyle: invalid fontHeight, using 12\n")
@@ -36,17 +38,17 @@ func NewStyle(fontname string, fontHeight int) *Style {
 	var f *truetype.Font
 	var err error
 
-	switch fontname {
+	switch fontName {
 	case "mono":
 		f, err = truetype.Parse(gomono.TTF)
 	case "regular":
 		f, err = truetype.Parse(goregular.TTF)
 	default:
-		log.Printf("NewStyle: unrecognized fontname=%s, using regular\n", fontname)
+		log.Printf("NewStyle: unrecognized fontname=%s, using regular\n", fontName)
 		f, err = truetype.Parse(goregular.TTF)
 	}
 	if err != nil {
-		log.Printf("truetype.Parse: unable to parse TTF for fontname=%s\n", fontname)
+		log.Printf("truetype.Parse: unable to parse TTF for fontname=%s\n", fontName)
 		return nil
 	}
 	face := truetype.NewFace(f, &truetype.Options{Size: float64(fontHeight)})

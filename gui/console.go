@@ -33,8 +33,8 @@ func NewConsole(style *Style) *Console {
 	AddObject(console.objects, "clear", console.b1)
 	AddObject(console.objects, "text", console.t1)
 
-	for n := 1; n < 5; n++ {
-		s := fmt.Sprintf("Line # %d", n)
+	for n := 1; n < 12; n++ {
+		s := fmt.Sprintf("This is a long content Line # %d", n)
 		console.t1.AddLine(s)
 	}
 
@@ -88,9 +88,6 @@ func (console *Console) HandleMouseInput(pos image.Point, button int, mdown bool
 // Draw xxx
 func (console *Console) Draw(ctx *gg.Context) {
 
-	ctx.Push()
-	defer ctx.Pop()
-
 	console.style.SetForDrawing(ctx)
 
 	var cornerRadius float64 = 4.0
@@ -103,6 +100,5 @@ func (console *Console) Draw(ctx *gg.Context) {
 	ctx.Stroke()
 
 	console.b1.Draw(ctx)
-
 	console.t1.Draw(ctx)
 }

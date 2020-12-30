@@ -17,7 +17,6 @@ type Window interface {
 
 // WindowData xxx
 type WindowData struct {
-	// name    string
 	style   *Style
 	rect    image.Rectangle
 	objects map[string]Window

@@ -53,14 +53,11 @@ func (b *Button) Resize(rect image.Rectangle) {
 	w := brect.Max.Sub(brect.Min).X.Round()
 	h := brect.Max.Sub(brect.Min).Y.Round()
 
-	b.WindowData.rect = image.Rect(rect.Min.X, rect.Min.Y, rect.Min.X+w, rect.Min.Y+h)
+	b.rect = image.Rect(rect.Min.X, rect.Min.Y, rect.Min.X+w, rect.Min.Y+h)
 }
 
 // Draw xxx
 func (b *Button) Draw(ctx *gg.Context) {
-
-	ctx.Push()
-	defer ctx.Pop()
 
 	var cornerRadius float64 = 4.0
 	b.style.SetForDrawing(ctx)

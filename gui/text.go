@@ -48,17 +48,14 @@ func (st *ScrollingText) Resize(rect image.Rectangle) {
 	desiredHeight := rect.Dy() / st.nlines
 
 	if desiredHeight != st.style.fontHeight {
-		st.style = NewStyle("regular", desiredHeight)
+		st.style = NewStyle("mono", desiredHeight)
 	}
 
-	st.WindowData.rect = rect
+	st.rect = rect
 }
 
 // Draw xxx
 func (st *ScrollingText) Draw(ctx *gg.Context) {
-
-	ctx.Push()
-	defer ctx.Pop()
 
 	var cornerRadius float64 = 4.0
 	st.style.SetForDrawing(ctx)
