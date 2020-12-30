@@ -1,6 +1,7 @@
 package gui
 
 import (
+	"fmt"
 	"image"
 	"log"
 
@@ -11,56 +12,64 @@ import (
 type Console struct {
 	WindowData
 	b1 *Button
+	t1 *ScrollingText
 }
 
 // NewConsole xxx
-func NewConsole(name string) *Console {
+func NewConsole(style *Style) *Console {
 	console := &Console{
 		WindowData: WindowData{
-			name:    name,
-			style:   DefaultStyle,
+			style:   style,
 			rect:    image.Rectangle{},
 			objects: map[string]Window{},
 		},
 	}
-
-	console.b1 = NewButton("clear", "Clear",
+	console.b1 = NewButton(style, "ClearLongButton",
 		func(updown string) {
 			log.Printf("Clear button: %s\n", updown)
 		})
+	console.t1 = NewScrollingText(style, 10)
 
-	AddObject(console.objects, console.b1)
+	AddObject(console.objects, "clear", console.b1)
+	AddObject(console.objects, "text", console.t1)
+
+	for n := 1; n < 5; n++ {
+		s := fmt.Sprintf("Line # %d", n)
+		console.t1.AddLine(s)
+	}
 
 	return console
 }
 
-// Name xxx
-func (console *Console) Name() string {
-	return console.name
-}
-
-// Rect xxx
-func (console *Console) Rect() image.Rectangle {
-	return console.rect
-}
-
-// Objects xxx
-func (console *Console) Objects() map[string]Window {
-	return console.Objects()
+// Data xxx
+func (console *Console) Data() WindowData {
+	return console.WindowData
 }
 
 // Resize xxx
 func (console *Console) Resize(r image.Rectangle) {
+
 	// 24 lines of text
 	h := int(r.Dy() / 24.0)
 	if h < 0 {
 		h = 1
 	}
-	console.style = console.style.SetFontSizeByHeight(h)
+	console.style = NewStyle("mono", h)
 	console.rect = r
 
-	b1r := r.Inset(5)
+	// Clear button positioning
+	bpos := image.Point{r.Min.X + 5, r.Min.Y + 5}
+	bw := 200
+	bh := 20
+
+	b1r := image.Rect(bpos.X, bpos.Y, bpos.X+bw, bpos.Y+bh)
 	console.b1.Resize(b1r)
+
+	// Text starts half-way down
+	tpos := image.Point{r.Min.X, r.Min.Y + r.Dy()/2}
+	t1r := image.Rect(tpos.X, tpos.Y, r.Max.X, r.Max.Y)
+	t1r = t1r.Inset(5)
+	console.t1.Resize(t1r)
 }
 
 // HandleMouseInput xxx
@@ -82,19 +91,18 @@ func (console *Console) Draw(ctx *gg.Context) {
 	ctx.Push()
 	defer ctx.Pop()
 
-	console.style.Do(ctx)
+	console.style.SetForDrawing(ctx)
 
 	var cornerRadius float64 = 4.0
-	// ctx.SetStrokeWidth(3.0)
-	// ctx.BeginPath()
 	w := float64(console.rect.Max.X - console.rect.Min.X)
 	h := float64(console.rect.Max.Y - console.rect.Min.Y)
 	ctx.DrawRoundedRectangle(float64(console.rect.Min.X+1), float64(console.rect.Min.Y+1), w-2, h-2, cornerRadius-1)
 	ctx.Fill()
 
-	// ctx.BeginPath()
 	ctx.DrawRoundedRectangle(float64(console.rect.Min.X), float64(console.rect.Min.Y), w, h, cornerRadius-1)
 	ctx.Stroke()
 
 	console.b1.Draw(ctx)
+
+	console.t1.Draw(ctx)
 }

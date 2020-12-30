@@ -5,8 +5,11 @@ import (
 	"log"
 
 	"github.com/fogleman/gg"
+	"github.com/golang/freetype/truetype"
 	"golang.org/x/image/font"
-	"golang.org/x/image/font/basicfont"
+
+	"golang.org/x/image/font/gofont/gomono"
+	"golang.org/x/image/font/gofont/goregular"
 )
 
 var red = color.RGBA{255, 0, 0, 255}
@@ -15,46 +18,58 @@ var white = color.RGBA{255, 255, 255, 255}
 
 // Style xxx
 type Style struct {
-	fontSize    float32
+	fontHeight  int
 	fontFace    font.Face
 	textColor   color.RGBA
 	strokeColor color.RGBA
 	fillColor   color.RGBA
-	charWidth   int
-	lineHeight  int
 }
 
-// DefaultStyle is for initializing Style values
-var DefaultStyle Style = Style{
-	fontSize:    12.0,
-	fontFace:    basicfont.Face7x13,
-	textColor:   black,
-	strokeColor: black,
-	fillColor:   white,
-	charWidth:   0, // filled in by SetSize
-	lineHeight:  0, // filled in by SetSize
+// NewStyle xxx
+func NewStyle(fontname string, fontHeight int) *Style {
+
+	if fontHeight <= 0 {
+		log.Printf("NewStyle: invalid fontHeight, using 12\n")
+		fontHeight = 12
+	}
+
+	var f *truetype.Font
+	var err error
+
+	switch fontname {
+	case "mono":
+		f, err = truetype.Parse(gomono.TTF)
+	case "regular":
+		f, err = truetype.Parse(goregular.TTF)
+	default:
+		log.Printf("NewStyle: unrecognized fontname=%s, using regular\n", fontname)
+		f, err = truetype.Parse(goregular.TTF)
+	}
+	if err != nil {
+		log.Printf("truetype.Parse: unable to parse TTF for fontname=%s\n", fontname)
+		return nil
+	}
+	face := truetype.NewFace(f, &truetype.Options{Size: float64(fontHeight)})
+
+	return &Style{
+		fontFace:    face,
+		fontHeight:  fontHeight, // originally requested height
+		textColor:   black,
+		strokeColor: black,
+		fillColor:   white,
+	}
 }
 
-// Do xxx
-func (style Style) Do(ctx *gg.Context) {
-
+// SetForDrawing xxx
+func (style *Style) SetForDrawing(ctx *gg.Context) {
 	ctx.SetFillStyle(gg.NewSolidPattern(style.fillColor))
 	ctx.SetStrokeStyle(gg.NewSolidPattern(style.strokeColor))
-
 	ctx.SetFontFace(style.fontFace)
-	// ctx.SetFontSize(style.fontSize)
 }
 
-// SetFontSizeByHeight xxx
-func (style Style) SetFontSizeByHeight(height int) Style {
-
-	if height <= 0 {
-		log.Printf("Style.Resize: bad height = %d\n", height)
-		return style
-	}
-	fh := float32(height)
-	style.fontSize = fh
-	style.lineHeight = int(fh * 1.5)
-	style.charWidth = int(fh / 1.5)
-	return style
+// SetForText xxx
+func (style *Style) SetForText(ctx *gg.Context) {
+	ctx.SetFillStyle(gg.NewSolidPattern(style.textColor))
+	ctx.SetStrokeStyle(gg.NewSolidPattern(style.textColor))
+	ctx.SetFontFace(style.fontFace)
 }
