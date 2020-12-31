@@ -22,27 +22,33 @@ func main() {
 
 	flag.Parse()
 
-	f, err := os.Create("cpu.prof")
-	if err != nil {
-		log.Fatal(err)
+	profile := false
+	if profile {
+		f, err := os.Create("cpu.prof")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		err = pprof.StartCPUProfile(f)
+		defer pprof.StopCPUProfile()
 	}
 
-	err = pprof.StartCPUProfile(f)
-	defer pprof.StopCPUProfile()
+	engine.InitMIDI()
 
-	/*
-		engine.InitMIDI()
+	go engine.StartNATSServer()
+	go engine.StartOSC("127.0.0.1:3333")
+	go engine.StartNATSClient()
+	go engine.StartMIDI()
+	go engine.StartRealtime()
+	go engine.StartCursorInput()
 
-		go engine.StartNATSServer()
-		go engine.StartOSC("127.0.0.1:3333")
-		go engine.StartNATSClient()
-		go engine.StartMIDI()
-		go engine.StartRealtime()
-		go engine.StartCursorInput()
+	go engine.ListenForLocalDeviceInputsForever()
 
-		go engine.ListenForLocalDeviceInputsForever()
-
+	useGoGui := false
+	if useGoGui {
 		// GUI must run in the main thread, not in a goroutine
-	*/
-	gui.Run() // this never returns
+		gui.Run() // this never returns
+	} else {
+		select {} // pause forever
+	}
 }

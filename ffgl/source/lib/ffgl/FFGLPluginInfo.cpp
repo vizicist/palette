@@ -90,8 +90,6 @@ CFFGLPluginInfo::~CFFGLPluginInfo()
 
 const PluginInfoStruct* CFFGLPluginInfo::GetPluginInfo() const
 {
-	strcpy( (char*)(m_PluginInfo.PluginName), "Palette" );
-	memcpy( (char*)(m_PluginInfo.PluginUniqueID), "PLTA", 4 );
 	return &m_PluginInfo;
 }
 

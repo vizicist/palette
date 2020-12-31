@@ -178,7 +178,7 @@ void Plugin::SendDefaultParams( ffglex::FFGLShader& shader )
 char* Plugin::GetParameterDisplay( unsigned int index )
 {
 	bool inRange = 0 <= index && index < params.size();
-	bool valid   = params[ index ]->GetType() != FF_TYPE_TEXT && params[ index ]->GetType() != FF_TYPE_FILE;
+	bool valid = inRange==false ? false : params[index]->GetType() != FF_TYPE_TEXT && params[index]->GetType() != FF_TYPE_FILE;
 	if( inRange && valid )
 	{
 		static char displayValueBuffer[ 16 ];
