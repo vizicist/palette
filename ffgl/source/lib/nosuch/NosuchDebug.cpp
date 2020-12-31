@@ -18,20 +18,10 @@ bool NosuchDebugTimeTag = true;
 bool NosuchDebugToLog = true;
 bool NosuchDebugToLogWarned = false;
 bool NosuchDebugAutoFlush = true;
-std::string NosuchAppName = "Nosuch App";
 
 int NosuchDebugTag = 0;
 std::string NosuchDebugPrefix = "";
-// std::string NosuchDebugLogFile = "ffgl.log";
-// std::string NosuchDebugLogDir = ".";
 std::string NosuchDebugLogPath;
-std::string NosuchCurrentDir = ".";
-
-#ifdef DEBUG_TO_BUFFER
-bool NosuchDebugToBuffer = true;
-size_t NosuchDebugBufferSize = 8;
-static std::list<std::string> DebugBuffer;
-#endif
 
 std::list<std::string> DebugLog;
 bool DebugInitialized = FALSE;
@@ -167,21 +157,6 @@ RealNosuchDebug(int level, char const *fmt, va_list args)
 			RealDebugDumpLog();
 	}
 
-#ifdef DEBUG_TO_BUFFER
-	if ( NosuchDebugToBuffer ) {
-		// We want the entries in the DebugBuffer to be single lines,
-		// so that someone can request a specific number of lines.
-		std::istringstream iss(msg);
-		std::string line;
-		while (std::getline(iss, line)) {
-			DebugBuffer.push_back(line+"\n");
-		}
-		while ( DebugBuffer.size() >= NosuchDebugBufferSize ) {
-			DebugBuffer.pop_front();
-		}
-	}
-#endif
-
     // va_end(args);
 
 	ReleaseMutex(dMutex);
@@ -239,23 +214,3 @@ NosuchErrorOutput(const char *fmt, ...)
     va_end(args2);
 #endif
 }
-
-std::string
-NosuchFullPath(std::string filepath)
-{
-	if ( filepath == "." ) {
-		return NosuchCurrentDir;
-	} else {
-		return NosuchCurrentDir + "/" + filepath;
-	}
-}
-
-std::string
-NosuchForwardSlash(std::string filepath) {
-	size_t i;
-	while ( (i=filepath.find("\\")) != filepath.npos ) {
-		filepath.replace(i,1,"/");
-	}
-	return filepath;
-}
-

@@ -55,12 +55,12 @@ echo ================ Compiling FFGL plugin
 set MSBUILDCMD=C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\Common7\Tools\vsmsbuildcmd.bat
 call "%MSBUILDCMD%" > nul
 pushd %PALETTESOURCE%\ffgl\build\windows
-msbuild /t:Build /p:Configuration=Release /p:Platform="x64" FFGLPlugins.sln > nul
+msbuild /t:Build /p:Configuration=Debug /p:Platform="x64" FFGLPlugins.sln > nul
 popd
 
 echo ================ Copying FFGL plugin
 mkdir %ship%\ffgl
-pushd %PALETTESOURCE%\ffgl\binaries\x64\Release
+pushd %PALETTESOURCE%\ffgl\binaries\x64\Debug
 copy Palette*.dll %ship%\ffgl > nul
 copy Palette*.pdb %ship%\ffgl > nul
 copy %PALETTESOURCE%\build\windows\pthreadvc2.dll %ship%\ffgl >nul

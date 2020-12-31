@@ -2,16 +2,20 @@
 #include <string>
 #include <FFGLSDK.h>
 
-class PaletteEffect : public ffglqs::Plugin
+class FFGLPaletteEffect : public ffglqs::Plugin
 {
 public:
-	PaletteEffect();
-	~PaletteEffect();
+	FFGLPaletteEffect();
+	~FFGLPaletteEffect();
 
 	//CFFGLPlugin
 	FFResult InitGL( const FFGLViewportStruct* vp ) override;
 	FFResult ProcessOpenGL( ProcessOpenGLStruct* pGL ) override;
 	FFResult DeInitGL() override;
+	FFResult SetTextParameter( unsigned int index, const char* value ) override;
+	char* GetTextParameter( unsigned int index ) override;
+
+	PaletteHost* paletteHost;
 
 private:
 	ffglex::FFGLShader shader;  //!< Utility to help us compile and link some shaders into a program.

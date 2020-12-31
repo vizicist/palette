@@ -151,7 +151,6 @@ private:
 	FPCREATEINSTANCEGL* m_pCreateInstance;
 };
 
-#ifdef TRY_WITHOUT
 /**
  * This utility function can be used as factory function in your CFFGLPluginInfo structure.
  * This way you dont need to specify a factory function in each plugin you make but you can just
@@ -165,6 +164,5 @@ FFResult __stdcall PluginFactory( CFFGLPlugin** ppOutInstance )
 		return FF_SUCCESS;
 	return FF_FAIL;
 }
-#endif
 
 #endif

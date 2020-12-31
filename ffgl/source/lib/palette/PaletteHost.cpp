@@ -20,54 +20,6 @@ using namespace ffglex;
 bool PaletteHost::StaticInitialized = false;
 void* PaletteHost::ThreadPointer = NULL;
 
-extern "C"
-{
-
-bool
-ffgl_setdll(std::string dllpath)
-{
-	NosuchDebugSetThreadName(pthread_self().p,"FFGLDLL");
-
-	dllpath = NosuchToLower(dllpath);
-
-	size_t lastslash = dllpath.find_last_of("/\\");
-	size_t lastdot = dllpath.find_last_of(".");
-	std::string suffix = (lastdot==dllpath.npos?"":dllpath.substr(lastdot));
-
-	if ( suffix != ".dll" ) {
-		NosuchDebug("Hey! dll name (%s) isn't of the form *.dll!?",dllpath.c_str());
-		return false;
-	}
-
-	std::string dir = dllpath.substr(0,lastslash);
-	std::string prefix = dllpath.substr(lastslash+1,lastdot-lastslash-1);
-
-	NosuchCurrentDir = dir;
-
-	char* pValue;
-	size_t len;
-	errno_t err = _dupenv_s( &pValue, &len, "LOCALAPPDATA" );
-	if( err || pValue == NULL) {
-		NosuchDebugLogPath = "c:\\windows\\temp\\ffgl.log"; // last resort
-	}
-	else {
-		NosuchDebugLogPath = std::string(pValue) + "\\Palette\\logs\\ffgl.log";
-		free( pValue );
-	}
-
-	NosuchDebug("Palette: log=%s\n", NosuchDebugLogPath.c_str());
-
-	struct _stat statbuff;
-	int e = _stat(NosuchCurrentDir.c_str(),&statbuff);
-	if ( ! (e == 0 && (statbuff.st_mode | _S_IFDIR) != 0) ) {
-		NosuchDebug("Hey! No directory %s!?",NosuchCurrentDir.c_str());
-		return false;
-	}
-
-	return true;
-}
-}
-
 void *daemon_threadfunc(void *arg)
 {
 	PaletteDaemon* b = (PaletteDaemon*)arg;
@@ -283,10 +235,6 @@ void PaletteHost::StaticInitialization()
 	NosuchDebugLevel = 0;   // 0=minimal messages, 1=more, 2=extreme
 	NosuchDebugTimeTag = true;
 	NosuchDebugToLog = true;
-	NosuchAppName = "Palette";
-#ifdef DEBUG_TO_BUFFER
-	NosuchDebugToBuffer = true;
-#endif
 	NosuchDebugAutoFlush = true;
 	
 	NosuchDebug(1,"=== PaletteHost Static Initialization!");

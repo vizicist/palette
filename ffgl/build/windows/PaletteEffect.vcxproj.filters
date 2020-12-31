@@ -106,7 +106,61 @@
     <ClInclude Include="..\..\source\lib\ffgl\FFGLLog.h">
       <Filter>lib\ffgl</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\source\plugins\PaletteEffect\PaletteEffect.h" />
+    <ClInclude Include="..\..\source\lib\nosuch\NosuchColor.h">
+      <Filter>lib\nosuch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\lib\nosuch\NosuchDebug.h">
+      <Filter>lib\nosuch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\lib\nosuch\NosuchException.h">
+      <Filter>lib\nosuch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\lib\nosuch\NosuchOscInput.h">
+      <Filter>lib\nosuch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\lib\nosuch\NosuchOscUdpInput.h">
+      <Filter>lib\nosuch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\lib\nosuch\NosuchUtil.h">
+      <Filter>lib\nosuch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\lib\palette\Palette.h">
+      <Filter>lib\palette</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\lib\palette\PaletteAll.h">
+      <Filter>lib\palette</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\lib\palette\PaletteDrawer.h">
+      <Filter>lib\palette</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\lib\palette\PaletteHost.h">
+      <Filter>lib\palette</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\lib\palette\PaletteOscInput.h">
+      <Filter>lib\palette</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\lib\palette\PaletteUtil.h">
+      <Filter>lib\palette</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\lib\palette\Params.h">
+      <Filter>lib\palette</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\lib\palette\Region.h">
+      <Filter>lib\palette</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\lib\palette\Scheduler.h">
+      <Filter>lib\palette</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\lib\palette\Sprite.h">
+      <Filter>lib\palette</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\lib\palette\TrackedCursor.h">
+      <Filter>lib\palette</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\lib\pthreads\pthread.h">
+      <Filter>lib\pthreads</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\plugins\PaletteEffect\FFGLPaletteEffect.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\source\lib\ffgl\FFGL.cpp">
@@ -211,7 +265,82 @@
     <ClCompile Include="..\..\source\lib\ffgl\FFGLLog.cpp">
       <Filter>lib\ffgl</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\source\plugins\PaletteEffect\PaletteEffect.cpp" />
+    <ClCompile Include="..\..\source\lib\nosuch\NosuchDebug.cpp">
+      <Filter>lib\nosuch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\lib\nosuch\NosuchOscInput.cpp">
+      <Filter>lib\nosuch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\lib\nosuch\NosuchOscUdpInput.cpp">
+      <Filter>lib\nosuch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\lib\nosuch\NosuchUtil.cpp">
+      <Filter>lib\nosuch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\lib\nosuch\UriCodec.cpp">
+      <Filter>lib\nosuch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\lib\osc\src\OscBundle.cpp">
+      <Filter>lib\osc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\lib\osc\src\OscMessage.cpp">
+      <Filter>lib\osc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\lib\osc\src\OscSender.cpp">
+      <Filter>lib\osc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\lib\oscpack\ip\IpEndpointName.cpp">
+      <Filter>lib\oscpack</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\lib\oscpack\ip\win32\NetworkingUtils.cpp">
+      <Filter>lib\oscpack</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\lib\oscpack\ip\win32\UdpSocket.cpp">
+      <Filter>lib\oscpack</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\lib\oscpack\osc\OscOutboundPacketStream.cpp">
+      <Filter>lib\oscpack</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\lib\oscpack\osc\OscPrintReceivedElements.cpp">
+      <Filter>lib\oscpack</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\lib\oscpack\osc\OscReceivedElements.cpp">
+      <Filter>lib\oscpack</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\lib\oscpack\osc\OscTypes.cpp">
+      <Filter>lib\oscpack</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\lib\palette\Palette.cpp">
+      <Filter>lib\palette</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\lib\palette\PaletteDrawer.cpp">
+      <Filter>lib\palette</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\lib\palette\PaletteHost.cpp">
+      <Filter>lib\palette</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\lib\palette\PaletteOscInput.cpp">
+      <Filter>lib\palette</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\lib\palette\PaletteUtil.cpp">
+      <Filter>lib\palette</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\lib\palette\Region.cpp">
+      <Filter>lib\palette</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\lib\palette\Scheduler.cpp">
+      <Filter>lib\palette</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\lib\palette\Sprite.cpp">
+      <Filter>lib\palette</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\lib\palette\TrackedCursor.cpp">
+      <Filter>lib\palette</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\lib\cJSON\cJSON.cpp">
+      <Filter>lib\cJSON</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\plugins\PaletteEffect\FFGLPaletteEffect.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="lib">
@@ -225,6 +354,24 @@
     </Filter>
     <Filter Include="lib\ffglquickstart">
       <UniqueIdentifier>{44eb9986-e7cd-4b25-8715-dbdbbc920b4c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="lib\nosuch">
+      <UniqueIdentifier>{e9f7556f-5fb9-43e1-bd43-5edb311980eb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="lib\osc">
+      <UniqueIdentifier>{ee05599c-2174-4435-82b0-484db4ddcab7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="lib\oscpack">
+      <UniqueIdentifier>{fd7f03e9-7ab9-4688-a312-ace71d657a6d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="lib\palette">
+      <UniqueIdentifier>{a3c62d6e-0608-4648-9095-cb2855a30055}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="lib\pthreads">
+      <UniqueIdentifier>{eb3ce686-f5aa-4996-8666-881310490158}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="lib\cJSON">
+      <UniqueIdentifier>{aa7e73cf-7902-486e-806a-d69a1da903c6}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

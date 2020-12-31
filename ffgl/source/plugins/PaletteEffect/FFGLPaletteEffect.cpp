@@ -1,17 +1,29 @@
-#include "PaletteEffect.h"
+#include "PaletteAll.h"
+#include "FFGLPaletteEffect.h"
+
+#include <math.h> // floor
 using namespace ffglex;
 
+enum ParamType : FFUInt32
+{
+	PT_RGB_R,
+	PT_RGB_G,
+	PT_RGB_B,
+	PT_OSC_PORT,
+};
+
 static CFFGLPluginInfo PluginInfo(
-	PluginFactory< PaletteEffect >,// Create method
-	"RE01",                      // Plugin unique ID of maximum length 4.
-	"PaletteEffect",            // Plugin name
+	PluginFactory< FFGLPaletteEffect >,// Create method
+	// FFGLPaletteEffect::CreateInstance,
+	"PLTE",                      // Plugin unique ID of maximum length 4.
+	"Palette Effect",            // Plugin name
 	2,                           // API major version number
 	1,                           // API minor version number
 	1,                           // Plugin major version number
 	0,                           // Plugin minor version number
 	FF_EFFECT,                   // Plugin type
-	"Palette Effect",  // Plugin description
-	"by Tim Thompson"      // About
+	"Palette effect, see github.com/vizicist/palette",  // Plugin description
+	"by Tim Thompson, me@timthompson.com"      // About
 );
 
 static const char _vertexShaderCode[] = R"(#version 410 core
@@ -53,23 +65,43 @@ void main()
 }
 )";
 
-PaletteEffect::PaletteEffect()
+FFGLPaletteEffect::FFGLPaletteEffect()
 {
+	std::string jsonpath;
+
+	char* pValue;
+	size_t len;
+	errno_t err = _dupenv_s(&pValue, &len, "LOCALAPPDATA");
+
+	if( err || pValue == NULL) {
+		jsonpath = "c:\\windows\\temp\\ffgl.json";// last resort
+		// NosuchDebug( "No value for LOCALAPPDATA? using jsonpath=%s\n", jsonpath.c_str() );
+	}
+	else {
+		jsonpath = std::string( pValue ) + "\\Palette\\config\\ffgl.json";
+		free( pValue );
+	}
+	// NosuchDebug( "Palette: config=%s", jsonpath.c_str() );
+
+	paletteHost = new PaletteHost(jsonpath);
+
 	// Input properties
 	SetMinInputs( 1 );
 	SetMaxInputs( 1 );
 
 	//We declare that this plugin has a Brightness parameter which is a RGB param.
 	//The name here must match the one you declared in your fragment shader.
+	SetParamInfof( PT_OSC_PORT, "OSC Port", FF_TYPE_TEXT );
 	AddRGBColorParam( "Brightness" );
+	// AddParam(ffglqs::Param::Create("OSC Port", FF_TYPE_TEXT, "3334"));
 
-	FFGLLog::LogToHost( "Created PaletteEffect effect" );
+	FFGLLog::LogToHost( "Created FFGLPaletteEffect effect" );
 }
-PaletteEffect::~PaletteEffect()
+FFGLPaletteEffect::~FFGLPaletteEffect()
 {
 }
 
-FFResult PaletteEffect::InitGL( const FFGLViewportStruct* vp )
+FFResult FFGLPaletteEffect::InitGL( const FFGLViewportStruct* vp )
 {
 	if( !shader.Compile( _vertexShaderCode, _fragmentShaderCode ) )
 	{
@@ -85,7 +117,7 @@ FFResult PaletteEffect::InitGL( const FFGLViewportStruct* vp )
 	//Use base-class init as success result so that it retains the viewport.
 	return CFFGLPlugin::InitGL( vp );
 }
-FFResult PaletteEffect::ProcessOpenGL( ProcessOpenGLStruct* pGL )
+FFResult FFGLPaletteEffect::ProcessOpenGL( ProcessOpenGLStruct* pGL )
 {
 	if( pGL->numInputTextures < 1 )
 		return FF_FAIL;
@@ -108,16 +140,42 @@ FFResult PaletteEffect::ProcessOpenGL( ProcessOpenGLStruct* pGL )
 	shader.Set( "MaxUV", maxCoords.s, maxCoords.t );
 
 	//This takes care of sending all the parameter that the plugin registered to the shader.
-	SendParams( shader );
+	ffglqs::Plugin::SendParams( shader );
 
 	quad.Draw();
 
 	return FF_SUCCESS;
 }
-FFResult PaletteEffect::DeInitGL()
+FFResult FFGLPaletteEffect::DeInitGL()
 {
 	shader.FreeGLResources();
 	quad.Release();
 
 	return FF_SUCCESS;
 }
+
+FFResult FFGLPaletteEffect::SetTextParameter(unsigned int index, const char* value)
+{
+	switch (index)
+	{
+	case PT_OSC_PORT:
+		paletteHost->SetOscPort(std::string(value));
+		return FF_SUCCESS;
+	}
+	NosuchDebug("SetTextParameter FAILS?");
+	return FF_FAIL;
+}
+
+char* FFGLPaletteEffect::GetTextParameter(unsigned int index)
+{
+	static std::string value;
+	switch (index)
+	{
+	case PT_OSC_PORT:
+		value = paletteHost->GetOscPort();
+		return (char*)(value.c_str());
+	}
+	NosuchDebug("GetTextParameter returns NULL?");
+	return NULL;
+}
+

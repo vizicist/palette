@@ -11,6 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\source\lib\cJSON\cJSON.cpp" />
     <ClCompile Include="..\..\source\lib\ffglex\FFGLFBO.cpp" />
     <ClCompile Include="..\..\source\lib\ffglex\FFGLScopedBufferBinding.cpp" />
     <ClCompile Include="..\..\source\lib\ffglex\FFGLScopedFBOBinding.cpp" />
@@ -45,7 +46,31 @@
     <ClCompile Include="..\..\source\lib\ffgl\FFGLPluginSDK.cpp" />
     <ClCompile Include="..\..\source\lib\ffgl\FFGLThumbnailInfo.cpp" />
     <ClCompile Include="..\..\source\lib\glsdk_0_5_2\glload\source\gl_load.c" />
-    <ClCompile Include="..\..\source\plugins\PaletteEffect\PaletteEffect.cpp" />
+    <ClCompile Include="..\..\source\lib\nosuch\NosuchDebug.cpp" />
+    <ClCompile Include="..\..\source\lib\nosuch\NosuchOscInput.cpp" />
+    <ClCompile Include="..\..\source\lib\nosuch\NosuchOscUdpInput.cpp" />
+    <ClCompile Include="..\..\source\lib\nosuch\NosuchUtil.cpp" />
+    <ClCompile Include="..\..\source\lib\nosuch\UriCodec.cpp" />
+    <ClCompile Include="..\..\source\lib\oscpack\ip\IpEndpointName.cpp" />
+    <ClCompile Include="..\..\source\lib\oscpack\ip\win32\NetworkingUtils.cpp" />
+    <ClCompile Include="..\..\source\lib\oscpack\ip\win32\UdpSocket.cpp" />
+    <ClCompile Include="..\..\source\lib\oscpack\osc\OscOutboundPacketStream.cpp" />
+    <ClCompile Include="..\..\source\lib\oscpack\osc\OscPrintReceivedElements.cpp" />
+    <ClCompile Include="..\..\source\lib\oscpack\osc\OscReceivedElements.cpp" />
+    <ClCompile Include="..\..\source\lib\oscpack\osc\OscTypes.cpp" />
+    <ClCompile Include="..\..\source\lib\osc\src\OscBundle.cpp" />
+    <ClCompile Include="..\..\source\lib\osc\src\OscMessage.cpp" />
+    <ClCompile Include="..\..\source\lib\osc\src\OscSender.cpp" />
+    <ClCompile Include="..\..\source\lib\palette\Palette.cpp" />
+    <ClCompile Include="..\..\source\lib\palette\PaletteDrawer.cpp" />
+    <ClCompile Include="..\..\source\lib\palette\PaletteHost.cpp" />
+    <ClCompile Include="..\..\source\lib\palette\PaletteOscInput.cpp" />
+    <ClCompile Include="..\..\source\lib\palette\PaletteUtil.cpp" />
+    <ClCompile Include="..\..\source\lib\palette\Region.cpp" />
+    <ClCompile Include="..\..\source\lib\palette\Scheduler.cpp" />
+    <ClCompile Include="..\..\source\lib\palette\Sprite.cpp" />
+    <ClCompile Include="..\..\source\lib\palette\TrackedCursor.cpp" />
+    <ClCompile Include="..\..\source\plugins\PaletteEffect\FFGLPaletteEffect.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\source\lib\ffglex\FFGLFBO.h" />
@@ -83,7 +108,25 @@
     <ClInclude Include="..\..\source\lib\ffgl\FFGLPluginManager.h" />
     <ClInclude Include="..\..\source\lib\ffgl\FFGLPluginSDK.h" />
     <ClInclude Include="..\..\source\lib\ffgl\FFGLThumbnailInfo.h" />
-    <ClInclude Include="..\..\source\plugins\PaletteEffect\PaletteEffect.h" />
+    <ClInclude Include="..\..\source\lib\nosuch\NosuchColor.h" />
+    <ClInclude Include="..\..\source\lib\nosuch\NosuchDebug.h" />
+    <ClInclude Include="..\..\source\lib\nosuch\NosuchException.h" />
+    <ClInclude Include="..\..\source\lib\nosuch\NosuchOscInput.h" />
+    <ClInclude Include="..\..\source\lib\nosuch\NosuchOscUdpInput.h" />
+    <ClInclude Include="..\..\source\lib\nosuch\NosuchUtil.h" />
+    <ClInclude Include="..\..\source\lib\palette\Palette.h" />
+    <ClInclude Include="..\..\source\lib\palette\PaletteAll.h" />
+    <ClInclude Include="..\..\source\lib\palette\PaletteDrawer.h" />
+    <ClInclude Include="..\..\source\lib\palette\PaletteHost.h" />
+    <ClInclude Include="..\..\source\lib\palette\PaletteOscInput.h" />
+    <ClInclude Include="..\..\source\lib\palette\PaletteUtil.h" />
+    <ClInclude Include="..\..\source\lib\palette\Params.h" />
+    <ClInclude Include="..\..\source\lib\palette\Region.h" />
+    <ClInclude Include="..\..\source\lib\palette\Scheduler.h" />
+    <ClInclude Include="..\..\source\lib\palette\Sprite.h" />
+    <ClInclude Include="..\..\source\lib\palette\TrackedCursor.h" />
+    <ClInclude Include="..\..\source\lib\pthreads\pthread.h" />
+    <ClInclude Include="..\..\source\plugins\PaletteEffect\FFGLPaletteEffect.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{21DC8703-F1A4-4EC6-920A-D338C48431FC}</ProjectGuid>
@@ -137,7 +180,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <AdditionalIncludeDirectories>..\..\source\lib\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\source\lib\;..\..\source\lib\ffgl\utilities\;..\..\source\lib\glm;..\..\source\lib\ffgl;..\..\source\lib\palette;..\..\source\lib\nosuch;..\..\source\lib\oscpack;..\..\source\lib\osc\include;..\..\source\lib\cJSON;..\..\source\lib\pthreads\Pre-built.2\include;..\..\source\plugins\palette;..\..\source\lib\ffglquickstart;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <ModuleDefinitionFile>FFGLPlugins.def</ModuleDefinitionFile>
@@ -146,7 +189,7 @@
       <SubSystem>Windows</SubSystem>
       <ImportLibrary>$(OutDir)$(ProjectName).lib</ImportLibrary>
       <AdditionalLibraryDirectories>..\..\..\source\common\opengl\lib</AdditionalLibraryDirectories>
-      <AdditionalDependencies>OpenGL32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>OpenGL32.lib;pthreadVC2.lib;winmm.lib;Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -157,7 +200,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <AdditionalIncludeDirectories>..\..\source\lib\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\source\lib\;..\..\source\lib\ffgl\utilities\;..\..\source\lib\glm;..\..\source\lib\ffgl;..\..\source\lib\palette;..\..\source\lib\nosuch;..\..\source\lib\oscpack;..\..\source\lib\osc\include;..\..\source\lib\cJSON;..\..\source\lib\pthreads\Pre-built.2\include;..\..\source\plugins\palette;..\..\source\lib\ffglquickstart;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <ModuleDefinitionFile>FFGLPlugins.def</ModuleDefinitionFile>
@@ -167,8 +210,11 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <ImportLibrary>$(OutDir)$(ProjectName).lib</ImportLibrary>
       <AdditionalLibraryDirectories>..\..\..\source\common\opengl\lib</AdditionalLibraryDirectories>
-      <AdditionalDependencies>OpenGL32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>OpenGL32.lib;pthreadVC2.lib;winmm.lib;Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PreBuildEvent>
+      <Command>prebuild.bat</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

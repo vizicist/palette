@@ -12,27 +12,16 @@ enum ParamType : FFUInt32
 static CFFGLPluginInfo PluginInfo(
 	// PluginFactory< FFGLPalette >,// Create method
 	FFGLPalette::CreateInstance,         // Create method
-	"PL03",                        // Plugin unique ID
-	"Palette3",            // Plugin name
+	"PLTA",                        // Plugin unique ID
+	"Palette",            // Plugin name
 	2,                             // API major version number
 	1,                             // API minor version number
 	1,                             // Plugin major version number
 	000,                           // Plugin minor version number
 	FF_SOURCE,                     // Plugin type
-	"Palette instrument plugin v0.90 #3",// Plugin description
-	"by Tim Thompson"        // About
+	"Palette instrument, see github.com/vizicist/palette",// Plugin description
+	"by Tim Thompson, me@timthompson.com"        // About
 );
-
-std::string ffgl_name()
-{
-	return "Palette";
-}
-
-CFFGLPluginInfo& ffgl_plugininfo()
-{
-	return PluginInfo;
-}
-
 
 FFGLPalette::FFGLPalette(std::string configfile) :
 	CFFGLPlugin()

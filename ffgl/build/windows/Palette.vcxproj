@@ -198,7 +198,8 @@
       <AdditionalDependencies>OpenGL32.lib;pthreadVC2.lib;winmm.lib;Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>postbuild_debug.bat</Command>
+      <Command>
+      </Command>
     </PostBuildEvent>
     <PreBuildEvent>
       <Command>prebuild.bat</Command>
@@ -229,7 +230,8 @@
       <Command>prebuild.bat</Command>
     </PreBuildEvent>
     <PostBuildEvent>
-      <Command>postbuild_release.bat</Command>
+      <Command>
+      </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
