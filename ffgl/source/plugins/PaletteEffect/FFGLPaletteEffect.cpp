@@ -6,9 +6,9 @@ using namespace ffglex;
 
 enum ParamType : FFUInt32
 {
-	PT_RGB_R,
-	PT_RGB_G,
-	PT_RGB_B,
+	PT_BRIGHTNESS_R,
+	PT_BRIGHTNESS_G,
+	PT_BRIGHTNESS_B,
 	PT_OSC_PORT,
 };
 
@@ -43,7 +43,7 @@ void main()
 
 static const char _fragmentShaderCode[] = R"(#version 410 core
 uniform sampler2D InputTexture;
-uniform vec3 Brightness;
+uniform  vec3 Brightness;
 
 in vec2 uv;
 
@@ -105,6 +105,7 @@ FFResult FFGLPaletteEffect::InitGL( const FFGLViewportStruct* vp )
 {
 	if( !shader.Compile( _vertexShaderCode, _fragmentShaderCode ) )
 	{
+		NosuchDebug("FFGLPaletteEffect: unable to compile shader\n");
 		DeInitGL();
 		return FF_FAIL;
 	}
@@ -114,11 +115,23 @@ FFResult FFGLPaletteEffect::InitGL( const FFGLViewportStruct* vp )
 		return FF_FAIL;
 	}
 
+	paletteHost->InitGL(vp);
+
 	//Use base-class init as success result so that it retains the viewport.
 	return CFFGLPlugin::InitGL( vp );
 }
+
+bool PaletteFFThreadNameSet = false;
+
 FFResult FFGLPaletteEffect::ProcessOpenGL( ProcessOpenGLStruct* pGL )
 {
+
+	if( !PaletteFFThreadNameSet )
+	{
+		NosuchDebugSetThreadName( pthread_self().p, "ProcessOpenGL" );
+		PaletteFFThreadNameSet = true;
+	}
+
 	if( pGL->numInputTextures < 1 )
 		return FF_FAIL;
 
@@ -150,6 +163,9 @@ FFResult FFGLPaletteEffect::DeInitGL()
 {
 	shader.FreeGLResources();
 	quad.Release();
+
+	paletteHost->DeInitGL();
+	delete paletteHost;
 
 	return FF_SUCCESS;
 }

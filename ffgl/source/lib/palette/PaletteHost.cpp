@@ -142,36 +142,6 @@ PaletteDaemon::PaletteDaemon(PaletteHost* mf, int osc_input_port, std::string os
 		_network_thread_created = true;
 		// NosuchDebug("PaletteDaemon is running");
 	}
-
-	_morphs = NULL;
-
-#ifdef EMBEDDED_MORPH_SUPPORT
-	std::map<std::string, std::string> serialmap;
-
-	float morphforce = 0.5f;
-	std::string morphopt = "SM01172912315:13000,SM01172912292:14000,SM01172912306:11000,SM01172912176:12000";
-	std::vector<std::string> morphspecs = NosuchSplitOnString(morphopt, ",", false);
-	for (auto& x : morphspecs) {
-		NosuchDebug("x=%s", x.c_str());
-		std::vector<std::string> words = NosuchSplitOnString(x, ":", false);
-		if (words.size() != 2) {
-			NosuchDebug("Bad format of morph option: %s", x.c_str());
-		}
-		else {
-			serialmap.insert(std::pair<std::string, std::string>(words[0], words[1]));
-		}
-	}
-
-	_morphs = new AllMorphs(serialmap);
-	if (_morphs->init()) {
-		NosuchDebug("Morph successfully initialized");
-	}
-	else {
-		NosuchDebug("Morph NOT initialized!");
-		_morphs = NULL;
-	}
-#endif
-
 }
 
 PaletteDaemon::~PaletteDaemon()
@@ -207,14 +177,16 @@ void *PaletteDaemon::run(void *arg)
 	daemon_stopped = false;
 	while (daemon_shutting_down == false ) {
 		_paletteHost->RunEveryMillisecondOrSo();
+		// BOGUS, really should have a lock around this
+		if ( daemon_shutting_down ) {
+			break;
+		}
 		if ( _oscinput ) {
 			_oscinput->Check();
 		}
-#ifdef EMBEDDED_MORPH_SUPPORT
-		if (_morphs) {
-			_morphs->poll();
+		if ( daemon_shutting_down ) {
+			break;
 		}
-#endif
 		Sleep(1);
 	}
 	NosuchDebug(1,"PaletteDaemon is stopping!!" );

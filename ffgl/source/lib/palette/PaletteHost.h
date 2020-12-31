@@ -11,7 +11,6 @@ class Palette;
 class PaletteHttp;
 class TrackedCursor;
 class GraphicBehaviour;
-class AllMorphs;
 class PaletteOscInput;
 
 #define DEFAULT_RESOLUME_PORT 7000
@@ -31,7 +30,6 @@ private:
 	pthread_t _network_thread;
 	PaletteHost* _paletteHost;
 	PaletteOscInput* _oscinput;
-	AllMorphs* _morphs;
 };
 
 class Effect {
