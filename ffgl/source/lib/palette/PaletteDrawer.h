@@ -4,7 +4,6 @@ class Palette;
 class PaletteHttp;
 class TrackedCursor;
 class GraphicBehaviour;
-class AllMorphs;
 class PaletteParams;
 
 typedef struct PointMem {
