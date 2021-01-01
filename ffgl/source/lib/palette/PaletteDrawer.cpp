@@ -15,7 +15,7 @@
 
 using namespace ffglex;
 
-static const char vertexShaderGradient[] = R"(#version 410 core
+static const char vertexShaderPalette[] = R"(#version 410 core
 layout( location = 0 ) in vec4 vPosition;
 layout( location = 1 ) in vec2 vUV;
 
@@ -31,9 +31,35 @@ void main()
 }
 )";
 
-static const char fragmentShaderGradient[] = R"(#version 410 core
+static const char fragmentShaderPalette[] = R"(#version 410 core
 uniform vec4 RGBALeft;
 uniform vec4 RGBARight;
+uniform sampler2D InputTexture;
+
+in vec2 uv;
+
+out vec4 fragColor;
+
+void main()
+{
+	vec4 color = texture( InputTexture, uv );
+	//The InputTexture contains premultiplied colors, so we need to unpremultiply first to apply our effect on straight colors.
+	if( color.a > 0.0 )
+		color.rgb /= color.a;
+
+	// color.rgb += Brightness * 2. - 1.;
+
+	//The plugin has to output premultiplied colors, this is how we're premultiplying our straight color while also
+	//ensuring we aren't going out of the LDR the video engine is working in.
+	color.rgb = clamp( color.rgb * color.a, vec3( 0.0 ), vec3( color.a ) );
+	fragColor = color;
+}
+)";
+
+static const char originalfragmentShaderPalette[] = R"(#version 410 core
+uniform vec4 RGBALeft;
+uniform vec4 RGBARight;
+uniform sampler2D InputTexture;
 
 in vec2 uv;
 
@@ -44,6 +70,7 @@ void main()
 	fragColor = mix( RGBALeft, RGBARight, uv.x );
 }
 )";
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Plugin information
@@ -64,6 +91,7 @@ PaletteDrawer::PaletteDrawer(PaletteParams *params) :
 	m_rgbLeftLocation = -1;
 	m_rgbRightLocation = -1;
 	m_matrixLocation   = -1;
+	m_inputTextureLocation   = -1;
 
 	resetMatrix();
 }
@@ -130,7 +158,7 @@ float PaletteDrawer::scale_z(float z) {
 	return float(expz * m_params->zmultiply);
 }
 
-ffglex::FFGLShader* PaletteDrawer::BeginDrawingWithShader(std::string shaderName)
+ffglex::FFGLShader* PaletteDrawer::BeginDrawingWithShader()
 {
 	ffglex::FFGLShader* shader;
 	if( m_isdrawing )
@@ -138,14 +166,7 @@ ffglex::FFGLShader* PaletteDrawer::BeginDrawingWithShader(std::string shaderName
 		NosuchDebug( "Warning, BeginDrawingWithShader called when isDrawing" );
 		return NULL;
 	}
-	if( shaderName == "gradient" )
-	{
-		shader = &m_shader_gradient;
-	}
-	else
-	{
-		shader = &m_shader_gradient;
-	}
+	shader = &m_shader_gradient;
 	glUseProgram(shader->GetGLID());
 	m_isdrawing = true;
 	return shader;
@@ -176,6 +197,8 @@ bool PaletteDrawer::prepareToDraw( SpriteParams& params, SpriteState& state )
 	glUniform4f( m_rgbLeftLocation, c1.R(), c1.G(), c1.B(), state.alpha );
 	glUniform4f( m_rgbRightLocation, c2.R(), c2.G(), c2.B(), state.alpha );
 	glUniformMatrix4fv( m_matrixLocation, 1, GL_FALSE, glm::value_ptr(m_matrix) );
+
+	glUniform1i(m_inputTextureLocation, 0);
 
 	return true;
 }
@@ -372,7 +395,7 @@ FFResult PaletteDrawer::InitGL( const FFGLViewportStruct* vp)
 {
 	m_vp = *vp;
 
-	if( !m_shader_gradient.Compile( vertexShaderGradient, fragmentShaderGradient ) )
+	if( !m_shader_gradient.Compile( vertexShaderPalette, fragmentShaderPalette ) )
 	{
 		NosuchDebug( "Error in compiling m_shader_gradient!" );
 		DeInitGL();
@@ -385,6 +408,7 @@ FFResult PaletteDrawer::InitGL( const FFGLViewportStruct* vp)
 	m_rgbLeftLocation  = m_shader_gradient.FindUniform( "RGBALeft" );
 	m_rgbRightLocation = m_shader_gradient.FindUniform( "RGBARight" );
 	m_matrixLocation = m_shader_gradient.FindUniform( "vMatrix" );
+	m_inputTextureLocation = m_shader_gradient.FindUniform( "inputTexture" );
 
 	return FF_SUCCESS;
 }
