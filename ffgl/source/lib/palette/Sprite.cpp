@@ -74,7 +74,7 @@ void Sprite::draw(PaletteDrawer* drawer) {
 		return;
 	}
 
-	shader = drawer->BeginDrawingWithShader("gradient");
+	shader = drawer->BeginDrawingWithShader();
 	if( shader == NULL )
 	{
 		NosuchDebug( "No gradient shader?  Unable to draw Sprite.");

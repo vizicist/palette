@@ -32,7 +32,7 @@ public:
 
 	float scale_z( float z );
 
-	ffglex::FFGLShader* BeginDrawingWithShader(std::string shaderName);
+	ffglex::FFGLShader* BeginDrawingWithShader();
 	bool prepareToDraw( SpriteParams& params, SpriteState& state );
 	void EndDrawing();
 
@@ -71,4 +71,5 @@ private:
 	GLint m_rgbLeftLocation;
 	GLint m_rgbRightLocation;
 	GLint m_matrixLocation;
+	GLint m_inputTextureLocation;
 };

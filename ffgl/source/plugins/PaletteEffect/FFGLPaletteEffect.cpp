@@ -56,7 +56,7 @@ void main()
 	if( color.a > 0.0 )
 		color.rgb /= color.a;
 
-	color.rgb += Brightness * 2. - 1.;
+	// color.rgb += Brightness * 2. - 1.;
 
 	//The plugin has to output premultiplied colors, this is how we're premultiplying our straight color while also
 	//ensuring we aren't going out of the LDR the video engine is working in.
@@ -155,9 +155,10 @@ FFResult FFGLPaletteEffect::ProcessOpenGL( ProcessOpenGLStruct* pGL )
 	//This takes care of sending all the parameter that the plugin registered to the shader.
 	ffglqs::Plugin::SendParams( shader );
 
-	quad.Draw();
-
-	return FF_SUCCESS;
+	// quad.Draw();
+	
+	return paletteHost->PaletteHostProcessOpenGL(pGL);
+	// return FF_SUCCESS;
 }
 FFResult FFGLPaletteEffect::DeInitGL()
 {
