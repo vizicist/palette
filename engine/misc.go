@@ -144,8 +144,8 @@ func BinFilePath(nm string) string {
 
 var paletteSourceLogged = false
 
-// ConfigFilePath xxx
-func ConfigFilePath(nm string) string {
+// PaletteDir xxx
+func PalettePath(name string) string {
 	// If PALETTESOURCE is defined, we use it
 	ps := os.Getenv("PALETTESOURCE")
 	if ps != "" {
@@ -153,9 +153,15 @@ func ConfigFilePath(nm string) string {
 			paletteSourceLogged = true
 			log.Printf("Using PALETTESOURCE=%s to get config files\n", ps)
 		}
-		return filepath.Join(ps, "default", "config", nm)
+		d := filepath.Join(ps, "default", name)
+		return d
 	}
-	return filepath.Join(RootPath(), "config", nm)
+	return filepath.Join(RootPath(), name)
+}
+
+// ConfigFilePath xxx
+func ConfigFilePath(nm string) string {
+	return filepath.Join(PalettePath("config"), nm)
 }
 
 // MIDIFilePath xxx

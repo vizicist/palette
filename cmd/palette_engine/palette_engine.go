@@ -6,6 +6,7 @@ import (
 	"os"
 	"runtime/pprof"
 
+	"github.com/vizicist/palette/egui"
 	"github.com/vizicist/palette/engine"
 	"github.com/vizicist/palette/gui"
 )
@@ -44,11 +45,18 @@ func main() {
 
 	go engine.ListenForLocalDeviceInputsForever()
 
-	useGoGui := false
-	if useGoGui {
-		// GUI must run in the main thread, not in a goroutine
+	// NOTE: GUI must run in the main thread, not in a goroutine
+	useGui := "ebitendemo"
+	switch useGui {
+	case "ebitendemo":
+		egui.RunDemo() // this never returns
+	case "ebiten":
+		egui.Run(engine.RootPath()) // this never returns
+	case "gui":
 		gui.Run() // this never returns
-	} else {
+	case "":
 		select {} // pause forever
 	}
+	log.Printf("GUI has exited!\n")
+	select {} // pause forever
 }

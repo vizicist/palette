@@ -10,16 +10,7 @@ import (
 
 	"github.com/goxjs/gl"
 	"github.com/goxjs/glfw"
-	"github.com/nats-io/nats.go"
 )
-
-func midiHandler(msg *nats.Msg) {
-	log.Printf("midiHandler: " + msg.Subject + " " + string(msg.Data))
-}
-
-func cursorHandler(msg *nats.Msg) {
-	log.Printf("cursorHandler: " + msg.Subject + " " + string(msg.Data))
-}
 
 // RunContext xxx
 type RunContext struct {
