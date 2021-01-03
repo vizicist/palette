@@ -1,4 +1,4 @@
-package gui
+package egui
 
 import (
 	"github.com/blizzy78/ebitenui/widget"
