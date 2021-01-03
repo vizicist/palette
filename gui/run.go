@@ -1,181 +1,134 @@
 package gui
 
 import (
-	"image/color"
-	_ "image/png" // see ebitenutil/loadimage.go
+	"image"
 	"log"
-	"path/filepath"
+	"math"
+	"time"
 
-	"github.com/blizzy78/ebitenui"
-	"github.com/blizzy78/ebitenui/image"
-	"github.com/blizzy78/ebitenui/widget"
-	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
-	"github.com/vizicist/palette/engine"
+	// Don't be tempted to use go-gl
+
+	"github.com/goxjs/gl"
+	"github.com/goxjs/glfw"
 )
 
-/*
-type game struct {
-	ui *ebitenui.UI
+// RunContext xxx
+type RunContext struct {
+	screen       *Screen
+	glfwMousePos image.Point
 }
-*/
 
 // Run xxx
-func Run(rootPath string) {
-	// load images for button states: idle, hover, and pressed
-	buttonImage, err := loadButtonImage()
+func Run() {
+
+	err := glfw.Init(gl.ContextWatcher)
 	if err != nil {
-		log.Println(err)
+		panic(err)
+	}
+	defer glfw.Terminate()
+
+	glfw.WindowHint(glfw.Samples, 4)
+
+	glfwWindow, err := glfw.CreateWindow(600, 800, "Palette", nil, nil)
+	if err != nil {
+		panic(err)
+	}
+
+	glfwWindow.MakeContextCurrent()
+
+	if err != nil {
+		panic(err)
+	}
+
+	glfw.SwapInterval(0)
+
+	frametime, _ := time.ParseDuration("33ms") // 30fps
+	tm := time.Now()
+	previousTime := tm
+
+	framenum := 0
+
+	runcontext := &RunContext{
+		screen:       nil,
+		glfwMousePos: image.Point{},
+	}
+
+	glfwWindow.SetKeyCallback(runcontext.gotKey)
+	glfwWindow.SetMouseButtonCallback(runcontext.gotMouseButton)
+	glfwWindow.SetMouseMovementCallback(runcontext.gotMousePos)
+
+	for !glfwWindow.ShouldClose() {
+
+		fbWidth, fbHeight := glfwWindow.GetFramebufferSize()
+		newWidth, newHeight := glfwWindow.GetSize()
+
+		if runcontext.screen == nil {
+			runcontext.screen, err = NewScreen(newWidth, newHeight)
+			if err != nil {
+				log.Printf("NewScreen: err=%s\n", err)
+			}
+		}
+
+		if newWidth != runcontext.screen.rect.Dx() || newHeight != runcontext.screen.rect.Dy() {
+			runcontext.screen.Resize(newWidth, newHeight)
+		}
+
+		gl.Viewport(0, 0, fbWidth, fbHeight)
+
+		// background color
+		gl.ClearColor(0.8, 0.8, 0.8, 1)
+
+		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT | gl.STENCIL_BUFFER_BIT)
+		gl.Enable(gl.BLEND)
+		gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+		gl.Enable(gl.CULL_FACE)
+		gl.Disable(gl.DEPTH_TEST)
+
+		runcontext.screen.DoOneFrame(fbWidth, fbHeight)
+
+		gl.Enable(gl.DEPTH_TEST)
+		glfwWindow.SwapBuffers()
+		glfw.PollEvents()
+
+		previousTime = tm
+		tm = time.Now()
+		dt := tm.Sub(previousTime)
+		if dt < frametime {
+			tosleep := frametime - dt
+			time.Sleep(tosleep)
+		}
+
+		framenum++
+	}
+	log.Printf("End of gui.Run()\n")
+}
+
+func (runcontext *RunContext) gotMouseButton(w *glfw.Window, button glfw.MouseButton, action glfw.Action, mods glfw.ModifierKey) {
+	if button < 0 || int(button) >= len(runcontext.screen.mouseButtonDown) {
+		log.Printf("mousebutton: unexpected value button=%d\n", button)
 		return
 	}
-
-	// load button text font
-	face, err := loadFont(fontPath("NotoSans-Regular.ttf"), 20)
-	if err != nil {
-		log.Println(err)
-		return
+	down := false
+	if action == 1 {
+		down = true
 	}
-
-	defer face.Close()
-
-	// construct a new container that serves as the root of the UI hierarchy
-	rootContainer := widget.NewContainer(
-		// the container will use a plain color as its background
-		widget.ContainerOpts.BackgroundImage(image.NewNineSliceColor(color.RGBA{0x13, 0x1a, 0x22, 0xff})),
-
-		// the container will use an anchor layout to layout its single child widget
-		widget.ContainerOpts.Layout(widget.NewAnchorLayout()),
-	)
-
-	// construct a button
-	button := widget.NewButton(
-		// set general widget options
-		widget.ButtonOpts.WidgetOpts(
-			// instruct the container's anchor layout to center the button both horizontally and vertically
-			widget.WidgetOpts.LayoutData(widget.AnchorLayoutData{
-				HorizontalPosition: widget.AnchorLayoutPositionCenter,
-				VerticalPosition:   widget.AnchorLayoutPositionCenter,
-			}),
-		),
-
-		// specify the images to use
-		widget.ButtonOpts.Image(buttonImage),
-
-		// specify the button's text, the font face, and the color
-		widget.ButtonOpts.Text("Hello, World!", face, &widget.ButtonTextColor{
-			Idle: color.RGBA{0xdf, 0xf4, 0xff, 0xff},
-		}),
-
-		// specify that the button's text needs some padding for correct display
-		widget.ButtonOpts.TextPadding(widget.Insets{
-			Left:  30,
-			Right: 30,
-		}),
-
-		// add a handler that reacts to clicking the button
-		widget.ButtonOpts.ClickedHandler(func(args *widget.ButtonClickedEventArgs) {
-			println("button clicked")
-		}),
-	)
-
-	// add the button as a child of the container
-	rootContainer.AddChild(button)
-
-	// construct the UI
-	ui := ebitenui.UI{
-		Container: rootContainer,
-	}
-
-	// Ebiten setup
-	ebiten.SetWindowSize(400, 400)
-	ebiten.SetWindowTitle("Ebiten UI Scaffold")
-
-	game := game{
-		ui: &ui,
-	}
-
-	// run Ebiten main loop
-	if err := ebiten.RunGame(&game); err != nil {
-		log.Println(err)
-	}
+	runcontext.screen.QueueMouseEvent(MouseEvent{
+		pos:      runcontext.glfwMousePos,
+		button:   int(button),
+		down:     down,
+		modifier: int(mods),
+	})
 }
 
-/*
-// Layout implements Game.
-func (g *game) Layout(outsideWidth int, outsideHeight int) (int, int) {
-	return outsideWidth, outsideHeight
-}
-
-// Update implements Game.
-func (g *game) Update() error {
-	// update the UI
-	g.ui.Update()
-	return nil
-}
-
-// Draw implements Ebiten's Draw method.
-func (g *game) Draw(screen *ebiten.Image) {
-	// draw the UI onto the screen
-	g.ui.Draw(screen)
-}
-*/
-
-func graphicPath(fname string) string {
-	return filepath.Join(engine.PalettePath("graphics"), fname)
-}
-
-func fontPath(fname string) string {
-	return filepath.Join(engine.PalettePath("fonts"), fname)
-}
-
-func loadButtonImage() (*widget.ButtonImage, error) {
-	idle, err := loadNineSlice(graphicPath("button-idle.png"), [3]int{25, 12, 25}, [3]int{21, 0, 20})
-	if err != nil {
-		return nil, err
+func (runcontext *RunContext) gotMousePos(w *glfw.Window, xpos float64, ypos float64, xdelta float64, ydelta float64) {
+	// All palette.gui coordinates are integer, but some glfw platforms may support
+	// sub-pixel cursor positions.
+	if math.Mod(xpos, 1.0) != 0.0 || math.Mod(ypos, 1.0) != 0.0 {
+		log.Printf("Mousepos: we're getting sub-pixel mouse coordinates!\n")
 	}
-
-	hover, err := loadNineSlice(graphicPath("button-hover.png"), [3]int{25, 12, 25}, [3]int{21, 0, 20})
-	if err != nil {
-		return nil, err
-	}
-
-	pressed, err := loadNineSlice(graphicPath("button-pressed.png"), [3]int{25, 12, 25}, [3]int{21, 0, 20})
-	if err != nil {
-		return nil, err
-	}
-
-	return &widget.ButtonImage{
-		Idle:    idle,
-		Hover:   hover,
-		Pressed: pressed,
-	}, nil
+	runcontext.glfwMousePos = image.Point{X: int(xpos), Y: int(ypos)}
 }
 
-func loadNineSlice(path string, w [3]int, h [3]int) (*image.NineSlice, error) {
-	i, _, err := ebitenutil.NewImageFromFile(path)
-	if err != nil {
-		return nil, err
-	}
-
-	return image.NewNineSlice(i, w, h), nil
+func (runcontext *RunContext) gotKey(w *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {
+	log.Printf("key=%d is ignored\n", key)
 }
-
-/*
-func loadFont(path string, size float64) (font.Face, error) {
-	fontData, err := ioutil.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
-
-	ttfFont, err := truetype.Parse(fontData)
-	if err != nil {
-		return nil, err
-	}
-
-	return truetype.NewFace(ttfFont, &truetype.Options{
-		Size:    size,
-		DPI:     72,
-		Hinting: font.HintingFull,
-	}), nil
-}
-*/

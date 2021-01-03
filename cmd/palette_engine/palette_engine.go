@@ -46,14 +46,14 @@ func main() {
 	go engine.ListenForLocalDeviceInputsForever()
 
 	// NOTE: GUI must run in the main thread, not in a goroutine
-	useGui := "demo"
+	useGui := "ebitendemo"
 	switch useGui {
-	case "demo":
-		gui.RunDemo() // this never returns
+	case "ebitendemo":
+		egui.RunDemo() // this never returns
+	case "ebiten":
+		egui.Run(engine.RootPath()) // this never returns
 	case "gui":
-		gui.Run(engine.RootPath()) // this never returns
-	case "egui":
-		egui.Run() // this never returns
+		gui.Run() // this never returns
 	case "":
 		select {} // pause forever
 	}
