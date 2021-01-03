@@ -1,4 +1,4 @@
-package egui
+package gui
 
 import (
 	"io/ioutil"
