@@ -1,4 +1,4 @@
-package egui
+package gui
 
 import (
 	"log"
@@ -102,7 +102,11 @@ func createUI() (*ebitenui.UI, func(), error) {
 	rootContainer.AddChild(urlContainer)
 
 	urlContainer.AddChild(widget.NewText(
-		widget.TextOpts.Text("github.com/blizzy78/ebitenui", res.text.smallFace, res.text.disabledColor)))
+		widget.TextOpts.Text("github.com/blizzy78/ebitenui", res.text.smallFace, res.text.disabledColor)),
+	)
+
+	urlContainer.AddChild(widget.NewText(
+		widget.TextOpts.Text("Version 4.08", res.text.smallFace, res.text.disabledColor)))
 
 	ui = &ebitenui.UI{
 		Container: rootContainer,
