@@ -2,17 +2,14 @@ module github.com/vizicist/palette
 
 go 1.15
 
-replace github.com/blizzy78/ebitenui => ../ebitenui
-
 require (
-	github.com/blizzy78/ebitenui v0.0.0-00010101000000-000000000000
 	github.com/fogleman/gg v1.3.0
 	github.com/go-gl/gl v0.0.0-20190320180904-bf2b1f2f34d7 // indirect
+	github.com/go-gl/glfw/v3.3/glfw v0.0.0-20201108214237-06ea97f0c265 // indirect
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
 	github.com/gopherjs/gopherjs v0.0.0-20200217142428-fce0ec30dd00 // indirect
 	github.com/goxjs/gl v0.0.0-20171128034433-dc8f4a9a3c9c
 	github.com/goxjs/glfw v0.0.0-20191126052801-d2efb5f20838
-	github.com/hajimehoshi/ebiten/v2 v2.0.2
 	github.com/hypebeast/go-osc v0.0.0-20200115085105-85fee7fed692
 	github.com/micaelAlastor/nanovgo v0.0.0-20180823143346-d6e8631f65e3
 	github.com/nats-io/jwt v1.2.2 // indirect
@@ -22,7 +19,7 @@ require (
 	github.com/vizicist/portmidi v0.0.0-20200724003934-fc4b6f410ee5
 	golang.org/x/crypto v0.0.0-20201217014255-9d1352758620 // indirect
 	golang.org/x/image v0.0.0-20201208152932-35266b937fa6
-	golang.org/x/text v0.3.0
+	golang.org/x/sys v0.0.0-20201218084310-7d0127a74742 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/mail.v2 v2.3.1
 	honnef.co/go/js/console v0.0.0-20150119023344-105276c43558 // indirect
