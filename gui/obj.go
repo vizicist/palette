@@ -3,14 +3,12 @@ package gui
 import (
 	"image"
 	"log"
-
-	"github.com/fogleman/gg"
 )
 
 // Window xxx
 type Window interface {
 	HandleMouseInput(pos image.Point, button int, down bool) bool
-	Draw(ctx *gg.Context)
+	Draw(*Screen)
 	Resize(image.Rectangle)
 	Data() WindowData
 }

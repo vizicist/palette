@@ -2,10 +2,10 @@ package gui
 
 import (
 	"image"
+	"image/color"
 	"log"
 
-	"github.com/fogleman/gg"
-	"golang.org/x/image/font"
+	"github.com/hajimehoshi/ebiten/v2/text"
 )
 
 // TextCallback xxx
@@ -55,42 +55,27 @@ func (st *ScrollingText) Resize(rect image.Rectangle) {
 }
 
 // Draw xxx
-func (st *ScrollingText) Draw(ctx *gg.Context) {
+func (st *ScrollingText) Draw(screen *Screen) {
 
-	var cornerRadius float64 = 4.0
-	st.style.SetForDrawing(ctx)
+	color := color.RGBA{0xff, 0xff, 0, 0xff}
+	screen.DrawRect(st.rect, color)
 
-	// interior
-	w := float64(st.rect.Max.X - st.rect.Min.X)
-	h := float64(st.rect.Max.Y - st.rect.Min.Y)
-	ctx.DrawRoundedRectangle(float64(st.rect.Min.X+1), float64(st.rect.Min.Y+1), w-2, h-2, cornerRadius-1)
-	ctx.Fill()
-
-	// outline
-	ctx.DrawRoundedRectangle(float64(st.rect.Min.X), float64(st.rect.Min.Y), w, h, cornerRadius-1)
-	ctx.Stroke()
-
-	// text lines
-	st.style.SetForText(ctx)
-
-	texty := float64(st.rect.Min.Y)
+	texty := st.rect.Min.Y
 
 	for _, line := range st.lines {
 
-		textx := float64(st.rect.Min.X)
+		textx := st.rect.Min.X
 
-		brect, _ := font.BoundString(st.style.fontFace, line)
-		bminy := brect.Min.Y.Round()
-		bmaxy := brect.Max.Y.Round()
+		brect := text.BoundString(st.style.fontFace, line)
+		bminy := brect.Min.Y
+		bmaxy := brect.Max.Y
 		if bminy < 0 {
 			bmaxy -= bminy
 			bminy = 0
 		}
-		texty += float64(bminy)
-		texty += float64(bmaxy)
-		ctx.DrawString(line, textx, texty)
-
-		// texty := float64(b.rect.Min.Y)
+		texty += bminy
+		texty += bmaxy
+		text.Draw(screen.eimage, line, st.style.fontFace, textx, texty, color)
 	}
 }
 

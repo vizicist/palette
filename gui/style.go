@@ -19,10 +19,10 @@ var white = color.RGBA{255, 255, 255, 255}
 // Style xxx
 type Style struct {
 	fontHeight  int
-	fontFace    font.Face
 	textColor   color.RGBA
 	strokeColor color.RGBA
 	fillColor   color.RGBA
+	fontFace    font.Face
 }
 
 // NewStyle xxx
@@ -54,8 +54,8 @@ func NewStyle(fontName string, fontHeight int) *Style {
 	face := truetype.NewFace(f, &truetype.Options{Size: float64(fontHeight)})
 
 	return &Style{
-		fontFace:    face,
 		fontHeight:  fontHeight, // originally requested height
+		fontFace:    face,
 		textColor:   black,
 		strokeColor: black,
 		fillColor:   white,

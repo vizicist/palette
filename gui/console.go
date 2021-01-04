@@ -3,9 +3,8 @@ package gui
 import (
 	"fmt"
 	"image"
+	"image/color"
 	"log"
-
-	"github.com/fogleman/gg"
 )
 
 // Console is a window that has a couple of buttons
@@ -86,19 +85,15 @@ func (console *Console) HandleMouseInput(pos image.Point, button int, mdown bool
 }
 
 // Draw xxx
-func (console *Console) Draw(ctx *gg.Context) {
+func (console *Console) Draw(screen *Screen) {
 
-	console.style.SetForDrawing(ctx)
+	/*
+		console.style.SetForDrawing(ctx)
+	*/
+	green := color.RGBA{0, 0xff, 0, 0xff}
 
-	var cornerRadius float64 = 4.0
-	w := float64(console.rect.Max.X - console.rect.Min.X)
-	h := float64(console.rect.Max.Y - console.rect.Min.Y)
-	ctx.DrawRoundedRectangle(float64(console.rect.Min.X+1), float64(console.rect.Min.Y+1), w-2, h-2, cornerRadius-1)
-	ctx.Fill()
+	screen.DrawRect(console.rect, green)
 
-	ctx.DrawRoundedRectangle(float64(console.rect.Min.X), float64(console.rect.Min.Y), w, h, cornerRadius-1)
-	ctx.Stroke()
-
-	console.b1.Draw(ctx)
-	console.t1.Draw(ctx)
+	console.b1.Draw(screen)
+	console.t1.Draw(screen)
 }
