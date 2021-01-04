@@ -95,9 +95,6 @@ func (g *Gui) Update() (err error) {
 			return fmt.Errorf("egui.update: unable to create screen!?")
 		}
 	}
-	// if ebiten.IsDrawingSkipped() {
-	// 	return na
-	// }
 	// ebitenutil.DebugPrint(screen, "Hello, World!")
 	return nil
 }
