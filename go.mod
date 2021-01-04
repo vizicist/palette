@@ -10,6 +10,7 @@ require (
 	github.com/gopherjs/gopherjs v0.0.0-20200217142428-fce0ec30dd00 // indirect
 	github.com/goxjs/gl v0.0.0-20171128034433-dc8f4a9a3c9c
 	github.com/goxjs/glfw v0.0.0-20191126052801-d2efb5f20838
+	github.com/hajimehoshi/ebiten/v2 v2.0.2
 	github.com/hypebeast/go-osc v0.0.0-20200115085105-85fee7fed692
 	github.com/micaelAlastor/nanovgo v0.0.0-20180823143346-d6e8631f65e3
 	github.com/nats-io/jwt v1.2.2 // indirect
