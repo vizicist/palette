@@ -1,15 +1,15 @@
 package gui
 
 import (
-	"fmt"
 	"image"
+	"image/color"
 	"log"
 	"sync"
 
 	// Don't be tempted to use go-gl
 	"github.com/fogleman/gg"
-	"github.com/micaelAlastor/nanovgo"
-	"github.com/vizicist/palette/engine"
+	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
 
 // MouseEvent represents mouse data independent of how it's received
@@ -31,34 +31,38 @@ type Screen struct {
 	mouseMutex      sync.Mutex
 	mouseEvents     []MouseEvent
 
-	ggctx *gg.Context
-	image *image.RGBA
+	eimage *ebiten.Image
+	ggctx  *gg.Context
+	image  *image.RGBA
 
-	nanoctx     *nanovgo.Context
+	// nanoctx     *nanovgo.Context
 	imageHandle int // nanovgo image handle
 }
 
 // NewScreen xxx
 func NewScreen(width, height int) (*Screen, error) {
 
-	ctx, err := nanovgo.NewContext(0 /*nanovgo.AntiAlias | nanovgo.StencilStrokes | nanovgo.Debug*/)
-	if err != nil {
-		return nil, fmt.Errorf("NewScreen: Unable to create nanovgo.NewContext, err=%s", err)
-	}
+	// ctx, err := nanovgo.NewContext(0 /*nanovgo.AntiAlias | nanovgo.StencilStrokes | nanovgo.Debug*/)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("NewScreen: Unable to create nanovgo.NewContext, err=%s", err)
+	// }
+	// */
 
 	screen := &Screen{
-		root:        nil,
-		rect:        image.Rectangle{},
-		nanoctx:     ctx,
+		root: nil,
+		rect: image.Rectangle{},
+		// nnanoctx:     ctx,
 		menubytes:   make([]byte, 0),
 		menushown:   false,
 		mouseEvents: make([]MouseEvent, 0),
 	}
 
-	err = LoadFonts(screen.nanoctx)
-	if err != nil {
-		return nil, err
-	}
+	/*
+		err = LoadFonts(screen.nanoctx)
+		if err != nil {
+			return nil, err
+		}
+	*/
 
 	// Add initial contents of RootWindow
 	root, err := NewRoot(NewStyle("regular", 32))
@@ -87,7 +91,9 @@ func (screen *Screen) Resize(newWidth, newHeight int) {
 	screen.image = image.NewRGBA(screen.rect)
 	screen.ggctx = gg.NewContextForRGBA(screen.image)
 
-	screen.imageHandle = screen.nanoctx.CreateImageFromGoImage(0, screen.image)
+	/*
+		screen.imageHandle = screen.nanoctx.CreateImageFromGoImage(0, screen.image)
+	*/
 
 	nrect := screen.rect.Inset(10)
 
@@ -98,41 +104,50 @@ func (screen *Screen) Resize(newWidth, newHeight int) {
 // DoOneFrame xxx
 func (screen *Screen) DoOneFrame(fbWidth, fbHeight int) {
 
-	pixelRatio := float32(fbWidth) / float32(screen.rect.Dx())
+	/*
+		pixelRatio := float32(fbWidth) / float32(screen.rect.Dx())
 
-	screen.nanoctx.BeginFrame(screen.rect.Dx(), screen.rect.Dy(), pixelRatio)
+		screen.nanoctx.BeginFrame(screen.rect.Dx(), screen.rect.Dy(), pixelRatio)
 
-	screen.CheckMouseInput()
+		screen.CheckMouseInput()
 
-	screen.Draw()
+		screen.Draw()
 
-	screen.nanoctx.EndFrame()
+		screen.nanoctx.EndFrame()
+	*/
+}
+
+// SetImage xxx
+func (screen *Screen) SetImage(eimage *ebiten.Image) {
+	screen.eimage = eimage
+}
+
+// DrawRect xxx
+func (screen *Screen) DrawRect(rect image.Rectangle, color color.RGBA) {
+	x0 := float64(rect.Min.X)
+	y0 := float64(rect.Min.Y)
+	x1 := float64(rect.Max.X)
+	y1 := float64(rect.Max.Y)
+	ebitenutil.DrawLine(screen.eimage, x0, y0, x1, y0, color)
+	ebitenutil.DrawLine(screen.eimage, x1, y0, x1, y1, color)
+	ebitenutil.DrawLine(screen.eimage, x1, y1, x0, y1, color)
+	ebitenutil.DrawLine(screen.eimage, x0, y1, x0, y0, color)
 }
 
 // Draw xxx
 func (screen *Screen) Draw() {
 
-	// At some point, use of nanovgo should go away,
-	// since the only thing it's used for is blasting
-	// the screen.image to a display.
+	// black := color.RGBA{0x0, 0x0, 0x0, 0xff}
+	// background := color.RGBA{0xfa, 0xf8, 0xef, 0xff}
+	// white := color.RGBA{0xff, 0xff, 0xff, 0xff}
+	red := color.RGBA{0xff, 0x0, 0x0, 0xff}
 
-	screen.nanoctx.UpdateImage(screen.imageHandle, screen.image.Pix)
-
-	w := float32(screen.rect.Dx())
-	h := float32(screen.rect.Dy())
-	img := nanovgo.ImagePattern(0, 0, w, h, 0.0, screen.imageHandle, 1.0)
-	screen.nanoctx.Save()
-	screen.nanoctx.BeginPath()
-	screen.nanoctx.Rect(0, 0, w, h)
-	screen.nanoctx.SetFillPaint(img)
-	screen.nanoctx.Fill()
-	screen.nanoctx.Stroke()
-	screen.nanoctx.Restore()
+	screen.DrawRect(screen.rect, red)
 
 	for _, o := range screen.root.objects {
-		screen.ggctx.Push()
-		o.Draw(screen.ggctx)
-		screen.ggctx.Pop()
+		// screen.ggctx.Push()
+		o.Draw(screen)
+		// screen.ggctx.Pop()
 	}
 }
 
@@ -174,6 +189,7 @@ func (screen *Screen) CheckMouseInput() {
 	}
 }
 
+/*
 // LoadFonts xxx
 func LoadFonts(ctx *nanovgo.Context) error {
 	fonts := map[string]string{
@@ -202,3 +218,4 @@ func (screen *Screen) QueueMouseEvent(event MouseEvent) {
 	screen.mouseMutex.Unlock()
 
 }
+*/

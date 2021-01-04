@@ -2,11 +2,11 @@ package gui
 
 import (
 	"image"
+	"image/color"
 	"log"
 	"strings"
 
-	"github.com/fogleman/gg"
-	"golang.org/x/image/font"
+	"github.com/hajimehoshi/ebiten/v2/text"
 )
 
 // ButtonCallback xxx
@@ -49,39 +49,28 @@ func (b *Button) Resize(rect image.Rectangle) {
 	}
 
 	// Get the real bounds needed for this label
-	brect, _ := font.BoundString(b.style.fontFace, b.label)
-	w := brect.Max.Sub(brect.Min).X.Round()
-	h := brect.Max.Sub(brect.Min).Y.Round()
-
+	brect := text.BoundString(b.style.fontFace, b.label)
+	w := brect.Max.Sub(brect.Min).X
+	h := brect.Max.Sub(brect.Min).Y
 	b.rect = image.Rect(rect.Min.X, rect.Min.Y, rect.Min.X+w, rect.Min.Y+h)
 }
 
 // Draw xxx
-func (b *Button) Draw(ctx *gg.Context) {
+func (b *Button) Draw(screen *Screen) {
 
-	var cornerRadius float64 = 4.0
-	b.style.SetForDrawing(ctx)
+	color := color.RGBA{0, 0, 0xff, 0xff}
 
-	// interior
-	w := float64(b.rect.Max.X - b.rect.Min.X)
-	h := float64(b.rect.Max.Y - b.rect.Min.Y)
-	ctx.DrawRoundedRectangle(float64(b.rect.Min.X+1), float64(b.rect.Min.Y+1), w-2, h-2, cornerRadius-1)
-	ctx.Fill()
+	screen.DrawRect(b.rect, color)
 
-	// outline
-	ctx.DrawRoundedRectangle(float64(b.rect.Min.X), float64(b.rect.Min.Y), w, h, cornerRadius-1)
-	ctx.Stroke()
-
-	// label
-	b.style.SetForText(ctx)
-
-	textx := float64(b.rect.Min.X)
+	// This is bogus stuff
+	textx := b.rect.Min.X
 	// XXX - why Max + Dy/2?  Shouldn't it be Min.Y + Dy/2?
-	texty := float64(b.rect.Max.Y) + float64(b.rect.Dy())/2.0
-	brect, _ := font.BoundString(b.style.fontFace, b.label)
-	// XXX - hmmmmmm
-	texty += float64(brect.Min.Y.Round())
-	ctx.DrawString(b.label, textx, texty)
+	texty := b.rect.Max.Y + b.rect.Dy()/2.0
+	brect := text.BoundString(b.style.fontFace, b.label)
+	texty += brect.Min.Y
+
+	// XXX - this should call something in Screen
+	text.Draw(screen.eimage, b.label, b.style.fontFace, textx, texty, color)
 }
 
 // HandleMouseInput xxx
