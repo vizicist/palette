@@ -4,7 +4,6 @@ import (
 	"image/color"
 	"log"
 
-	"github.com/fogleman/gg"
 	"github.com/golang/freetype/truetype"
 	"golang.org/x/image/font"
 
@@ -60,18 +59,4 @@ func NewStyle(fontName string, fontHeight int) *Style {
 		strokeColor: black,
 		fillColor:   white,
 	}
-}
-
-// SetForDrawing xxx
-func (style *Style) SetForDrawing(ctx *gg.Context) {
-	ctx.SetFillStyle(gg.NewSolidPattern(style.fillColor))
-	ctx.SetStrokeStyle(gg.NewSolidPattern(style.strokeColor))
-	ctx.SetFontFace(style.fontFace)
-}
-
-// SetForText xxx
-func (style *Style) SetForText(ctx *gg.Context) {
-	ctx.SetFillStyle(gg.NewSolidPattern(style.textColor))
-	ctx.SetStrokeStyle(gg.NewSolidPattern(style.textColor))
-	ctx.SetFontFace(style.fontFace)
 }
