@@ -14,7 +14,7 @@ type Root struct {
 }
 
 // NewRoot xxx
-func NewRoot(style *Style) (*Root, error) {
+func NewRoot(style *Style) *Root {
 	w := &Root{
 		WindowData: WindowData{
 			style:   style,
@@ -23,7 +23,7 @@ func NewRoot(style *Style) (*Root, error) {
 		},
 		console: nil,
 	}
-	return w, nil
+	return w
 }
 
 // Data xxx

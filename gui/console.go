@@ -87,9 +87,6 @@ func (console *Console) HandleMouseInput(pos image.Point, button int, mdown bool
 // Draw xxx
 func (console *Console) Draw(screen *Screen) {
 
-	/*
-		console.style.SetForDrawing(ctx)
-	*/
 	green := color.RGBA{0, 0xff, 0, 0xff}
 
 	screen.DrawRect(console.rect, green)
