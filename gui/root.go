@@ -3,7 +3,6 @@ package gui
 import (
 	"image"
 	"log"
-	// Don't be tempted to use go-gl
 )
 
 // Root xxx
@@ -11,6 +10,7 @@ type Root struct {
 	WindowData
 	console  *Console
 	console2 *Console
+	menu     *Menu // popup menu
 }
 
 // NewRoot xxx
@@ -34,21 +34,48 @@ func (root *Root) Data() WindowData {
 // Resize xxx
 func (root *Root) Resize(r image.Rectangle) {
 	root.rect = r
-	midy := (r.Min.Y + r.Max.Y) / 2
+	// midy := (r.Min.Y + r.Max.Y) / 2
 
-	r1 := image.Rect(r.Min.X, r.Min.Y, r.Max.X, midy-5)
+	r1 := r.Inset(20)
+	r1.Min.Y = (r.Min.Y + r.Max.Y) / 2
 	root.console.Resize(r1)
 
-	r2 := image.Rect(r.Min.X, midy+5, r.Max.X, r.Max.Y)
-	root.console2.Resize(r2)
+	if root.menu != nil {
+		r1 := r.Inset(40)
+		r1.Max.Y = (r.Min.Y + r.Max.Y) / 2
+		root.menu.Resize(r1)
+	}
+}
+
+// Draw xxx
+func (root *Root) Draw(screen *Screen) {
+	for _, o := range root.objects {
+		o.Draw(screen)
+	}
 }
 
 // HandleMouseInput xxx
-func (root *Root) HandleMouseInput(pos image.Point, button int, mdown bool) bool {
-	if !pos.In(root.rect) {
-		log.Printf("RootWindow.HandleMouseInput: pos not in rect!\n")
-		return false
+func (root *Root) HandleMouseInput(pos image.Point, button int, mdown bool) (rval bool) {
+	o := ObjectUnder(root.objects, pos)
+	if o != nil {
+		// XXX - If a menu is up, and this object isn't that menu,
+		// then shut the menu
+		if root.menu != nil && o != root.menu {
+			RemoveObject(root.objects, "menu", root.menu)
+		}
+		rval = o.HandleMouseInput(pos, button, mdown)
+	} else {
+		if root.menu != nil {
+			log.Printf("Removing old menu object before adding new one\n")
+			RemoveObject(root.objects, "menu", root.menu)
+		}
+		root.menu = NewMenu(root.style)
+		root.menu.AddItem("item1")
+		root.menu.AddItem("item2")
+		AddObject(root.objects, "menu", root.menu)
+		mrect := image.Rect(pos.X, pos.Y, pos.X+200, pos.Y+200)
+		root.menu.Resize(mrect)
+		rval = true
 	}
-	log.Printf("Hey, RootWindow.HandleMousInput needs work!\n")
-	return true
+	return rval
 }

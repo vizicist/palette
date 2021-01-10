@@ -1,10 +1,12 @@
 package gui
 
 import (
+	"image"
 	"image/color"
 	"log"
 
 	"github.com/golang/freetype/truetype"
+	"github.com/hajimehoshi/ebiten/v2/text"
 	"golang.org/x/image/font"
 
 	"golang.org/x/image/font/gofont/gomono"
@@ -51,12 +53,26 @@ func NewStyle(fontName string, fontHeight int) *Style {
 		return nil
 	}
 	face := truetype.NewFace(f, &truetype.Options{Size: float64(fontHeight)})
+	// fontRect := text.BoundString(face, "fghijklMNQ")
+	// log.Printf("fontRect=%+v\n", fontRect)
+	fontRect := text.BoundString(face, "fghijklMNQ")
+	realHeight := fontRect.Max.Y - fontRect.Min.Y
 
 	return &Style{
-		fontHeight:  fontHeight, // originally requested height
+		fontHeight:  realHeight,
 		fontFace:    face,
 		textColor:   black,
 		strokeColor: black,
 		fillColor:   white,
 	}
+}
+
+// TextHeight xxx
+func (style *Style) TextHeight() int {
+	return style.fontHeight
+}
+
+// BoundString xxx
+func (style *Style) BoundString(s string) image.Rectangle {
+	return text.BoundString(style.fontFace, s)
 }

@@ -16,25 +16,15 @@ type Window interface {
 // WindowData xxx
 type WindowData struct {
 	style   *Style
-	rect    image.Rectangle
+	rect    image.Rectangle // relative to the parent Window
 	objects map[string]Window
-}
-
-// ToWindow xxx
-func ToWindow(ww interface{}) Window {
-	w, ok := ww.(Window)
-	if !ok {
-		log.Printf("ToWindow: isn't a Window?")
-		return nil
-	}
-	return w
+	isMenu  bool
 }
 
 // ObjectUnder xxx
 func ObjectUnder(objects map[string]Window, pos image.Point) Window {
 	for _, o := range objects {
 		if pos.In(o.Data().rect) {
-
 			return o
 		}
 	}
@@ -48,5 +38,18 @@ func AddObject(objects map[string]Window, name string, o Window) {
 		log.Printf("There's already an object named %s in that WindowData\n", name)
 	} else {
 		objects[name] = o
+	}
+}
+
+// RemoveObject xxx
+func RemoveObject(objects map[string]Window, name string, o Window) {
+	oo, ok := objects[name]
+	if ok {
+		if oo != o {
+			log.Printf("RemoveObject: Unexpected menu object for %s\n", name)
+		}
+		delete(objects, name)
+	} else {
+		log.Printf("RemoveObject: no object named %s\n", name)
 	}
 }
