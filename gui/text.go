@@ -4,8 +4,6 @@ import (
 	"image"
 	"image/color"
 	"log"
-
-	"github.com/hajimehoshi/ebiten/v2/text"
 )
 
 // TextCallback xxx
@@ -20,11 +18,7 @@ type ScrollingText struct {
 }
 
 // NewScrollingText xxx
-func NewScrollingText(style *Style, nlines int) *ScrollingText {
-	if nlines <= 0 {
-		log.Printf("NewScrollingText: invalid nlines, assuming 1\n")
-		nlines = 1
-	}
+func NewScrollingText(style *Style) *ScrollingText {
 	return &ScrollingText{
 		WindowData: WindowData{
 			style:   style,
@@ -32,8 +26,8 @@ func NewScrollingText(style *Style, nlines int) *ScrollingText {
 			objects: map[string]Window{},
 		},
 		isPressed: false,
-		nlines:    nlines,
-		lines:     make([]string, nlines),
+		nlines:    0,
+		lines:     make([]string, 0),
 	}
 }
 
@@ -45,11 +39,18 @@ func (st *ScrollingText) Data() WindowData {
 // Resize xxx
 func (st *ScrollingText) Resize(rect image.Rectangle) {
 
-	desiredHeight := rect.Dy() / st.nlines
+	textHeight := st.style.TextHeight()
+	// See how many lines we can fit in the rect
+	st.nlines = rect.Dy() / textHeight
+	st.lines = make([]string, st.nlines)
 
-	if desiredHeight != st.style.fontHeight {
-		st.style = NewStyle("mono", desiredHeight)
-	}
+	// Adjust the rect so we're exactly that height
+	rect.Max.Y = rect.Min.Y + st.nlines*textHeight
+
+	// desiredHeight := rect.Dy() / st.nlines
+	// if textHeight != st.style.fontHeight {
+	// 	st.style = NewStyle("mono", desiredHeight)
+	// }
 
 	st.rect = rect
 }
@@ -60,13 +61,14 @@ func (st *ScrollingText) Draw(screen *Screen) {
 	color := color.RGBA{0xff, 0xff, 0, 0xff}
 	screen.DrawRect(st.rect, color)
 
-	texty := st.rect.Min.Y
+	textHeight := st.style.TextHeight()
 
-	for _, line := range st.lines {
+	textx := st.rect.Min.X
+	for n, line := range st.lines {
 
-		textx := st.rect.Min.X
+		texty := st.rect.Min.Y + n*textHeight
 
-		brect := text.BoundString(st.style.fontFace, line)
+		brect := st.style.BoundString(line)
 		bminy := brect.Min.Y
 		bmaxy := brect.Max.Y
 		if bminy < 0 {
@@ -75,7 +77,7 @@ func (st *ScrollingText) Draw(screen *Screen) {
 		}
 		texty += bminy
 		texty += bmaxy
-		text.Draw(screen.eimage, line, st.style.fontFace, textx, texty, color)
+		screen.drawText(line, st.style.fontFace, textx, texty, color)
 	}
 }
 

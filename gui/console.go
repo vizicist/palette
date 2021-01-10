@@ -1,10 +1,10 @@
 package gui
 
 import (
-	"fmt"
 	"image"
 	"image/color"
 	"log"
+	"strings"
 )
 
 // Console is a window that has a couple of buttons
@@ -16,6 +16,7 @@ type Console struct {
 
 // NewConsole xxx
 func NewConsole(style *Style) *Console {
+
 	console := &Console{
 		WindowData: WindowData{
 			style:   style,
@@ -27,17 +28,19 @@ func NewConsole(style *Style) *Console {
 		func(updown string) {
 			log.Printf("Clear button: %s\n", updown)
 		})
-	console.t1 = NewScrollingText(style, 10)
+	console.t1 = NewScrollingText(style)
 
 	AddObject(console.objects, "clear", console.b1)
 	AddObject(console.objects, "text", console.t1)
 
-	for n := 1; n < 12; n++ {
-		s := fmt.Sprintf("This is a long content Line # %d", n)
-		console.t1.AddLine(s)
-	}
-
 	return console
+}
+
+// AddLine xxx
+func (console *Console) AddLine(s string) {
+	if strings.HasSuffix(s, "\n") {
+	}
+	console.t1.AddLine(s)
 }
 
 // Data xxx
@@ -46,28 +49,26 @@ func (console *Console) Data() WindowData {
 }
 
 // Resize xxx
-func (console *Console) Resize(r image.Rectangle) {
+func (console *Console) Resize(rect image.Rectangle) {
 
-	// 24 lines of text
-	h := int(r.Dy() / 24.0)
-	if h < 0 {
-		h = 1
-	}
-	console.style = NewStyle("mono", h)
-	console.rect = r
+	console.rect = rect
 
-	// Clear button positioning
-	bpos := image.Point{r.Min.X + 5, r.Min.Y + 5}
-	bw := 200
-	bh := 20
+	textHeight := console.style.TextHeight()
+	// See how many lines we can fit in the rect
+	nlines := rect.Dy() / textHeight
 
-	b1r := image.Rect(bpos.X, bpos.Y, bpos.X+bw, bpos.Y+bh)
+	// position of Clear button
+	buttonWidth := 200
+	buttonHeight := textHeight
+	b1r := image.Rect(rect.Min.X, rect.Min.Y, rect.Min.X+buttonWidth, rect.Min.Y+buttonHeight)
 	console.b1.Resize(b1r)
 
-	// Text starts half-way down
-	tpos := image.Point{r.Min.X, r.Min.Y + r.Dy()/2}
-	t1r := image.Rect(tpos.X, tpos.Y, r.Max.X, r.Max.Y)
-	t1r = t1r.Inset(5)
+	// position of ScrollableTextx
+	y0 := rect.Min.Y + textHeight
+	// Round the height down so exactly that many lines will fit
+	y1 := rect.Min.Y + nlines*textHeight
+	t1r := image.Rect(rect.Min.X, y0, rect.Max.X, y1)
+	// t1r = t1r.Inset(5)
 	console.t1.Resize(t1r)
 }
 

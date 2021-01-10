@@ -5,8 +5,6 @@ import (
 	"image/color"
 	"log"
 	"strings"
-
-	"github.com/hajimehoshi/ebiten/v2/text"
 )
 
 // ButtonCallback xxx
@@ -49,7 +47,7 @@ func (b *Button) Resize(rect image.Rectangle) {
 	}
 
 	// Get the real bounds needed for this label
-	brect := text.BoundString(b.style.fontFace, b.label)
+	brect := b.style.BoundString(b.label)
 	w := brect.Max.Sub(brect.Min).X
 	h := brect.Max.Sub(brect.Min).Y
 	b.rect = image.Rect(rect.Min.X, rect.Min.Y, rect.Min.X+w, rect.Min.Y+h)
@@ -66,11 +64,11 @@ func (b *Button) Draw(screen *Screen) {
 	textx := b.rect.Min.X
 	// XXX - why Max + Dy/2?  Shouldn't it be Min.Y + Dy/2?
 	texty := b.rect.Max.Y + b.rect.Dy()/2.0
-	brect := text.BoundString(b.style.fontFace, b.label)
+	brect := b.style.BoundString(b.label)
 	texty += brect.Min.Y
 
 	// XXX - this should call something in Screen
-	text.Draw(screen.eimage, b.label, b.style.fontFace, textx, texty, color)
+	screen.drawText(b.label, b.style.fontFace, textx, texty, color)
 }
 
 // HandleMouseInput xxx

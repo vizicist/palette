@@ -3,17 +3,20 @@ package main
 import (
 	"flag"
 	"log"
+	"math/rand"
 	"os"
 	"runtime/pprof"
+	"time"
 
 	"github.com/vizicist/palette/engine"
 	"github.com/vizicist/palette/gui"
 )
 
-func main() {
+func init() {
+	rand.Seed(time.Now().UnixNano())
+}
 
-	// signal.Ignore(syscall.SIGHUP)
-	// signal.Ignore(syscall.SIGINT)
+func main() {
 
 	engine.InitLogs()
 	engine.InitDebug()
@@ -44,12 +47,12 @@ func main() {
 
 	go engine.ListenForLocalDeviceInputsForever()
 
-	doGui := true
+	doGui := engine.ConfigBoolWithDefault("gui", false)
 	switch doGui {
 	case true:
 		gui.Run() // this never returns
+		log.Printf("GUI has exited!?\n")
 	case false:
 		select {} // pause forever
 	}
-	log.Printf("GUI has exited!?\n")
 }
