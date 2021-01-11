@@ -77,7 +77,7 @@ func (st *ScrollingText) Draw() {
 }
 
 // HandleMouseInput xxx
-func (st *ScrollingText) HandleMouseInput(pos image.Point, button int, mdown bool) bool {
+func (st *ScrollingText) HandleMouseInput(pos image.Point, button int, event MouseEvent) bool {
 	if !pos.In(st.rect) {
 		log.Printf("Text.HandleMouseInput: pos not in rect!\n")
 		return false

@@ -1,6 +1,7 @@
 package gui
 
 import (
+	"fmt"
 	"image"
 	"image/color"
 	"log"
@@ -77,11 +78,15 @@ func (menu *Menu) Draw() {
 }
 
 // HandleMouseInput xxx
-func (menu *Menu) HandleMouseInput(pos image.Point, button int, mdown bool) bool {
+func (menu *Menu) HandleMouseInput(pos image.Point, button int, event MouseEvent) bool {
 	for _, item := range menu.items {
 		if pos.Y < item.posY {
-			if mdown {
+			switch event {
+			case MouseDown:
 				item.callback(item.label)
+			case MouseDrag:
+				menu.screen.log(fmt.Sprintf("Menu drag, item=%s", item.label))
+			case MouseUp:
 			}
 			break
 		}

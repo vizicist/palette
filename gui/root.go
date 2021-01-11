@@ -1,7 +1,6 @@
 package gui
 
 import (
-	"fmt"
 	"image"
 	"log"
 )
@@ -62,33 +61,34 @@ func (root *Root) Draw() {
 }
 
 // HandleMouseInput xxx
-func (root *Root) HandleMouseInput(pos image.Point, button int, mdown bool) (rval bool) {
+func (root *Root) HandleMouseInput(pos image.Point, button int, event MouseEvent) bool {
+
 	o := ObjectUnder(root.objects, pos)
 	if o != nil {
 		// If a menu is up, and it's not this object, shut the menu
 		if root.menu != nil && o != root.menu {
 			RemoveObject(root.objects, "menu", root.menu)
 		}
-		rval = o.HandleMouseInput(pos, button, mdown)
-	} else {
-		// If it's a mouse click out in the open, nothing under it...
+		return o.HandleMouseInput(pos, button, event)
+	}
+
+	// If it's a mouse event out in the open, nothing under it...
+	// Ignore Drag and Up, but pop up the RootMenu on Down
+	if event == MouseDown {
 		if root.menu != nil {
 			log.Printf("Removing old menu object before adding new one\n")
 			RemoveObject(root.objects, "menu", root.menu)
 			root.menu = nil
 		} else {
 			// No popup menu, create one on mousedown
-			if mdown {
+			if event == MouseDown {
 				root.menu = NewRootMenu(root)
 				AddObject(root.objects, "menu", root.menu)
-				mrect := image.Rect(pos.X, pos.Y, pos.X+200, pos.Y+200)
-				root.menu.Resize(mrect)
-				root.log(fmt.Sprintf("NewMenu: pos=%v\n", pos))
+				root.menu.Resize(image.Rect(pos.X, pos.Y, pos.X+200, pos.Y+200))
 			}
 		}
-		rval = true
 	}
-	return rval
+	return true
 }
 
 func (root *Root) log(s string) {

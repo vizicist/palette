@@ -7,7 +7,7 @@ import (
 
 // Window xxx
 type Window interface {
-	HandleMouseInput(pos image.Point, button int, down bool) bool
+	HandleMouseInput(pos image.Point, button int, me MouseEvent) bool
 	Draw()
 	Resize(image.Rectangle) image.Rectangle
 	Data() WindowData
@@ -17,10 +17,20 @@ type Window interface {
 type WindowData struct {
 	screen  *Screen
 	style   *Style
-	rect    image.Rectangle // relative to the parent Window
+	rect    image.Rectangle // in Screen coordinates, not relative
 	objects map[string]Window
 	isMenu  bool
 }
+
+// A MouseEvent represents down/drag/up
+type MouseEvent int
+
+// MouseEvent
+const (
+	MouseUp   MouseEvent = 0
+	MouseDown MouseEvent = 1
+	MouseDrag MouseEvent = 2
+)
 
 // ObjectUnder xxx
 func ObjectUnder(objects map[string]Window, pos image.Point) Window {
