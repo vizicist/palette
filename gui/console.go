@@ -82,11 +82,11 @@ func (console *Console) Resize(rect image.Rectangle) image.Rectangle {
 }
 
 // HandleMouseInput xxx
-func (console *Console) HandleMouseInput(pos image.Point, button int, mdown bool) bool {
+func (console *Console) HandleMouseInput(pos image.Point, button int, event MouseEvent) bool {
 	o := ObjectUnder(console.objects, pos)
 	handled := false
 	if o != nil {
-		o.HandleMouseInput(pos, button, mdown)
+		o.HandleMouseInput(pos, button, event)
 		handled = true
 	} else {
 		handled = false

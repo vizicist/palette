@@ -73,19 +73,19 @@ func (b *Button) Draw() {
 }
 
 // HandleMouseInput xxx
-func (b *Button) HandleMouseInput(pos image.Point, button int, mdown bool) bool {
+func (b *Button) HandleMouseInput(pos image.Point, button int, event MouseEvent) bool {
 	if !pos.In(b.rect) {
 		log.Printf("Button.HandleMouseInput: pos not in rect!\n")
 		return false
 	}
-	switch mdown {
-	case true:
+	switch event {
+	case MouseDown:
 		// The mouse is inside the button
 		if b.isPressed == false {
 			b.isPressed = true
 			b.callback("down")
 		}
-	case false:
+	case MouseUp:
 		if b.isPressed == true {
 			b.isPressed = false
 			b.callback("up")

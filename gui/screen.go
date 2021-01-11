@@ -23,6 +23,7 @@ type Screen struct {
 	eimage    *ebiten.Image
 	time0     time.Time
 	lastprint time.Time
+	cursorPos image.Point
 }
 
 // Run displays and runs the Gui and never returns
@@ -62,7 +63,15 @@ func (screen *Screen) Layout(outsideWidth, outsideHeight int) (int, int) {
 // Update satisfies the ebiten.Game interface
 func (screen *Screen) Update() (err error) {
 
-	// This is essentially a map from 0,1,2 to the ebiten values
+	x, y := ebiten.CursorPosition()
+	newPos := image.Point{x, y}
+
+	// Ignore updates outside the screen
+	if !newPos.In(screen.rect) {
+		return nil
+	}
+
+	// This array is a map from 0,1,2 to the ebiten values
 	butts := []ebiten.MouseButton{
 		ebiten.MouseButtonLeft,
 		ebiten.MouseButtonRight,
@@ -70,20 +79,18 @@ func (screen *Screen) Update() (err error) {
 	}
 
 	for n, eb := range butts {
-
-		buttNum := -1
-		isPressed := false
 		switch {
 		case inpututil.IsMouseButtonJustPressed(eb):
-			buttNum = n
-			isPressed = true
+			screen.root.HandleMouseInput(newPos, n, MouseDown)
 		case inpututil.IsMouseButtonJustReleased(eb):
-			buttNum = n
-		}
-		if buttNum >= 0 {
-			x, y := ebiten.CursorPosition()
-			pos := image.Point{x, y}
-			screen.HandleMouseInput(pos, buttNum, isPressed)
+			screen.root.HandleMouseInput(newPos, n, MouseUp)
+		default:
+			// Drag events only happen when position changes
+			if newPos.X != screen.cursorPos.X || newPos.Y != screen.cursorPos.Y {
+				screen.cursorPos = newPos
+				screen.root.HandleMouseInput(newPos, n, MouseDrag)
+			}
+
 		}
 	}
 	return nil
@@ -105,8 +112,8 @@ func (screen *Screen) Resize(newWidth, newHeight int) {
 }
 
 // HandleMouseInput xxx
-func (screen *Screen) HandleMouseInput(pos image.Point, button int, down bool) {
-	screen.root.HandleMouseInput(pos, button, down)
+func (screen *Screen) HandleMouseInput(pos image.Point, button int, event MouseEvent) {
+	screen.root.HandleMouseInput(pos, button, event)
 }
 
 // drawRect xxx
