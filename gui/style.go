@@ -29,8 +29,6 @@ type Style struct {
 // NewStyle xxx
 func NewStyle(fontName string, fontHeight int) *Style {
 
-	log.Printf("NewStyle: fontName=%s Height=%d\n", fontName, fontHeight)
-
 	if fontHeight <= 0 {
 		log.Printf("NewStyle: invalid fontHeight, using 12\n")
 		fontHeight = 12
@@ -53,8 +51,6 @@ func NewStyle(fontName string, fontHeight int) *Style {
 		return nil
 	}
 	face := truetype.NewFace(f, &truetype.Options{Size: float64(fontHeight)})
-	// fontRect := text.BoundString(face, "fghijklMNQ")
-	// log.Printf("fontRect=%+v\n", fontRect)
 	fontRect := text.BoundString(face, "fghijklMNQ")
 	realHeight := fontRect.Max.Y - fontRect.Min.Y
 

@@ -1,29 +1,35 @@
 package gui
 
 import (
+	"fmt"
 	"image"
 	"log"
 )
 
-// Root xxx
+// Root is the top-most Window
 type Root struct {
 	WindowData
-	console  *Console
-	console2 *Console
-	menu     *Menu // popup menu
+	console *Console
+	menu    *Menu // popup menu
 }
 
 // NewRoot xxx
-func NewRoot(style *Style) *Root {
-	w := &Root{
+func NewRoot(screen *Screen) *Root {
+	root := &Root{
 		WindowData: WindowData{
-			style:   style,
+			screen:  screen,
+			style:   screen.style,
 			rect:    image.Rectangle{},
 			objects: make(map[string]Window),
 		},
 		console: nil,
 	}
-	return w
+
+	// Add initial contents of RootWindow, for testing
+	root.console = NewConsole(root)
+	AddObject(root.objects, "console1", root.console)
+
+	return root
 }
 
 // Data xxx
@@ -32,7 +38,7 @@ func (root *Root) Data() WindowData {
 }
 
 // Resize xxx
-func (root *Root) Resize(r image.Rectangle) {
+func (root *Root) Resize(r image.Rectangle) image.Rectangle {
 	root.rect = r
 	// midy := (r.Min.Y + r.Max.Y) / 2
 
@@ -45,12 +51,13 @@ func (root *Root) Resize(r image.Rectangle) {
 		r1.Max.Y = (r.Min.Y + r.Max.Y) / 2
 		root.menu.Resize(r1)
 	}
+	return root.rect
 }
 
 // Draw xxx
-func (root *Root) Draw(screen *Screen) {
+func (root *Root) Draw() {
 	for _, o := range root.objects {
-		o.Draw(screen)
+		o.Draw()
 	}
 }
 
@@ -58,24 +65,32 @@ func (root *Root) Draw(screen *Screen) {
 func (root *Root) HandleMouseInput(pos image.Point, button int, mdown bool) (rval bool) {
 	o := ObjectUnder(root.objects, pos)
 	if o != nil {
-		// XXX - If a menu is up, and this object isn't that menu,
-		// then shut the menu
+		// If a menu is up, and it's not this object, shut the menu
 		if root.menu != nil && o != root.menu {
 			RemoveObject(root.objects, "menu", root.menu)
 		}
 		rval = o.HandleMouseInput(pos, button, mdown)
 	} else {
+		// If it's a mouse click out in the open, nothing under it...
 		if root.menu != nil {
 			log.Printf("Removing old menu object before adding new one\n")
 			RemoveObject(root.objects, "menu", root.menu)
+			root.menu = nil
+		} else {
+			// No popup menu, create one on mousedown
+			if mdown {
+				root.menu = NewRootMenu(root)
+				AddObject(root.objects, "menu", root.menu)
+				mrect := image.Rect(pos.X, pos.Y, pos.X+200, pos.Y+200)
+				root.menu.Resize(mrect)
+				root.log(fmt.Sprintf("NewMenu: pos=%v\n", pos))
+			}
 		}
-		root.menu = NewMenu(root.style)
-		root.menu.AddItem("item1")
-		root.menu.AddItem("item2")
-		AddObject(root.objects, "menu", root.menu)
-		mrect := image.Rect(pos.X, pos.Y, pos.X+200, pos.Y+200)
-		root.menu.Resize(mrect)
 		rval = true
 	}
 	return rval
+}
+
+func (root *Root) log(s string) {
+	root.console.AddLine(s)
 }

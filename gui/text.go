@@ -13,20 +13,19 @@ type TextCallback func(updown string)
 type ScrollingText struct {
 	WindowData
 	isPressed bool
-	nlines    int
 	lines     []string
 }
 
 // NewScrollingText xxx
-func NewScrollingText(style *Style) *ScrollingText {
+func NewScrollingText(parent Window) *ScrollingText {
 	return &ScrollingText{
 		WindowData: WindowData{
-			style:   style,
+			screen:  parent.Data().screen,
+			style:   parent.Data().style,
 			rect:    image.Rectangle{},
 			objects: map[string]Window{},
 		},
 		isPressed: false,
-		nlines:    0,
 		lines:     make([]string, 0),
 	}
 }
@@ -37,29 +36,25 @@ func (st *ScrollingText) Data() WindowData {
 }
 
 // Resize xxx
-func (st *ScrollingText) Resize(rect image.Rectangle) {
+func (st *ScrollingText) Resize(rect image.Rectangle) image.Rectangle {
 
 	textHeight := st.style.TextHeight()
 	// See how many lines we can fit in the rect
-	st.nlines = rect.Dy() / textHeight
-	st.lines = make([]string, st.nlines)
+	nlines := rect.Dy() / textHeight
+	st.lines = make([]string, nlines)
 
 	// Adjust the rect so we're exactly that height
-	rect.Max.Y = rect.Min.Y + st.nlines*textHeight
-
-	// desiredHeight := rect.Dy() / st.nlines
-	// if textHeight != st.style.fontHeight {
-	// 	st.style = NewStyle("mono", desiredHeight)
-	// }
+	rect.Max.Y = rect.Min.Y + nlines*textHeight
 
 	st.rect = rect
+	return st.rect
 }
 
 // Draw xxx
-func (st *ScrollingText) Draw(screen *Screen) {
+func (st *ScrollingText) Draw() {
 
 	color := color.RGBA{0xff, 0xff, 0, 0xff}
-	screen.DrawRect(st.rect, color)
+	st.screen.drawRect(st.rect, color)
 
 	textHeight := st.style.TextHeight()
 
@@ -77,7 +72,7 @@ func (st *ScrollingText) Draw(screen *Screen) {
 		}
 		texty += bminy
 		texty += bmaxy
-		screen.drawText(line, st.style.fontFace, textx, texty, color)
+		st.screen.drawText(line, st.style.fontFace, textx, texty, color)
 	}
 }
 
@@ -94,8 +89,14 @@ func (st *ScrollingText) HandleMouseInput(pos image.Point, button int, mdown boo
 // AddLine xxx
 func (st *ScrollingText) AddLine(newline string) {
 	// XXX - this can be done better
-	for n := 1; n < st.nlines; n++ {
+	for n := 1; n < len(st.lines); n++ {
 		st.lines[n-1] = st.lines[n]
 	}
-	st.lines[st.nlines-1] = newline
+	st.lines[len(st.lines)-1] = newline
+}
+
+func (st *ScrollingText) clear() {
+	for n := 0; n < len(st.lines); n++ {
+		st.lines[n] = ""
+	}
 }
