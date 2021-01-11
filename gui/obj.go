@@ -8,13 +8,14 @@ import (
 // Window xxx
 type Window interface {
 	HandleMouseInput(pos image.Point, button int, down bool) bool
-	Draw(*Screen)
-	Resize(image.Rectangle)
+	Draw()
+	Resize(image.Rectangle) image.Rectangle
 	Data() WindowData
 }
 
 // WindowData xxx
 type WindowData struct {
+	screen  *Screen
 	style   *Style
 	rect    image.Rectangle // relative to the parent Window
 	objects map[string]Window

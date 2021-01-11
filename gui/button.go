@@ -14,15 +14,18 @@ type ButtonCallback func(updown string)
 type Button struct {
 	WindowData
 	isPressed bool
-	label     string
 	callback  ButtonCallback
+	label     string
+	labelX    int
+	labelY    int
 }
 
 // NewButton xxx
-func NewButton(style *Style, text string, cb ButtonCallback) *Button {
+func NewButton(parent Window, text string, cb ButtonCallback) *Button {
 	return &Button{
 		WindowData: WindowData{
-			style:   style,
+			screen:  parent.Data().screen,
+			style:   parent.Data().style,
 			rect:    image.Rectangle{},
 			objects: map[string]Window{},
 		},
@@ -38,7 +41,7 @@ func (b *Button) Data() WindowData {
 }
 
 // Resize xxx
-func (b *Button) Resize(rect image.Rectangle) {
+func (b *Button) Resize(rect image.Rectangle) image.Rectangle {
 
 	desiredHeight := rect.Dy() * (1 + strings.Count(b.label, "\n"))
 
@@ -51,24 +54,22 @@ func (b *Button) Resize(rect image.Rectangle) {
 	w := brect.Max.Sub(brect.Min).X
 	h := brect.Max.Sub(brect.Min).Y
 	b.rect = image.Rect(rect.Min.X, rect.Min.Y, rect.Min.X+w, rect.Min.Y+h)
+
+	b.labelX = b.rect.Min.X
+	b.labelY = b.rect.Min.Y
+	b.labelY -= brect.Min.Y
+
+	return b.rect
 }
 
 // Draw xxx
-func (b *Button) Draw(screen *Screen) {
+func (b *Button) Draw() {
 
 	color := color.RGBA{0, 0, 0xff, 0xff}
 
-	screen.DrawRect(b.rect, color)
+	b.screen.drawRect(b.rect, color)
 
-	// This is bogus stuff
-	textx := b.rect.Min.X
-	// XXX - why Max + Dy/2?  Shouldn't it be Min.Y + Dy/2?
-	texty := b.rect.Max.Y + b.rect.Dy()/2.0
-	brect := b.style.BoundString(b.label)
-	texty += brect.Min.Y
-
-	// XXX - this should call something in Screen
-	screen.drawText(b.label, b.style.fontFace, textx, texty, color)
+	b.screen.drawText(b.label, b.style.fontFace, b.labelX, b.labelY, color)
 }
 
 // HandleMouseInput xxx

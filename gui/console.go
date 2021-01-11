@@ -15,20 +15,22 @@ type Console struct {
 }
 
 // NewConsole xxx
-func NewConsole(style *Style) *Console {
+func NewConsole(parent Window) *Console {
 
 	console := &Console{
 		WindowData: WindowData{
-			style:   style,
+			screen:  parent.Data().screen,
+			style:   parent.Data().style,
 			rect:    image.Rectangle{},
 			objects: map[string]Window{},
 		},
 	}
-	console.b1 = NewButton(style, "ClearLongButton",
+	console.b1 = NewButton(console, "Clear",
 		func(updown string) {
 			log.Printf("Clear button: %s\n", updown)
+			console.clear()
 		})
-	console.t1 = NewScrollingText(style)
+	console.t1 = NewScrollingText(console)
 
 	AddObject(console.objects, "clear", console.b1)
 	AddObject(console.objects, "text", console.t1)
@@ -36,9 +38,14 @@ func NewConsole(style *Style) *Console {
 	return console
 }
 
+func (console *Console) clear() {
+	console.t1.clear()
+}
+
 // AddLine xxx
 func (console *Console) AddLine(s string) {
 	if strings.HasSuffix(s, "\n") {
+		// XXX - remove it?
 	}
 	console.t1.AddLine(s)
 }
@@ -49,7 +56,7 @@ func (console *Console) Data() WindowData {
 }
 
 // Resize xxx
-func (console *Console) Resize(rect image.Rectangle) {
+func (console *Console) Resize(rect image.Rectangle) image.Rectangle {
 
 	console.rect = rect
 
@@ -70,6 +77,8 @@ func (console *Console) Resize(rect image.Rectangle) {
 	t1r := image.Rect(rect.Min.X, y0, rect.Max.X, y1)
 	// t1r = t1r.Inset(5)
 	console.t1.Resize(t1r)
+
+	return console.rect
 }
 
 // HandleMouseInput xxx
@@ -86,12 +95,12 @@ func (console *Console) HandleMouseInput(pos image.Point, button int, mdown bool
 }
 
 // Draw xxx
-func (console *Console) Draw(screen *Screen) {
+func (console *Console) Draw() {
 
 	green := color.RGBA{0, 0xff, 0, 0xff}
 
-	screen.DrawRect(console.rect, green)
+	console.screen.drawRect(console.rect, green)
 
-	console.b1.Draw(screen)
-	console.t1.Draw(screen)
+	console.b1.Draw()
+	console.t1.Draw()
 }
