@@ -31,8 +31,8 @@ func NewScrollingText(parent Window) *ScrollingText {
 }
 
 // Data xxx
-func (st *ScrollingText) Data() WindowData {
-	return st.WindowData
+func (st *ScrollingText) Data() *WindowData {
+	return &st.WindowData
 }
 
 // Resize xxx

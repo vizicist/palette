@@ -1,6 +1,7 @@
 package gui
 
 import (
+	"fmt"
 	"image"
 	"log"
 )
@@ -26,14 +27,14 @@ func NewRoot(screen *Screen) *Root {
 
 	// Add initial contents of RootWindow, for testing
 	root.console = NewConsole(root)
-	AddObject(root.objects, "console1", root.console)
+	AddObject(root, "console1", root.console)
 
 	return root
 }
 
 // Data xxx
-func (root *Root) Data() WindowData {
-	return root.WindowData
+func (root *Root) Data() *WindowData {
+	return &root.WindowData
 }
 
 // Resize xxx
@@ -63,7 +64,12 @@ func (root *Root) Draw() {
 // HandleMouseInput xxx
 func (root *Root) HandleMouseInput(pos image.Point, button int, event MouseEvent) bool {
 
-	o := ObjectUnder(root.objects, pos)
+	if !pos.In(root.rect) {
+		root.screen.log(fmt.Sprintf("pos=%v not under Root", pos))
+		return true
+	}
+
+	o := ObjectUnder(root, pos)
 	if o != nil {
 		// If a menu is up, and it's not this object, shut the menu
 		if root.menu != nil && o != root.menu {
@@ -83,7 +89,7 @@ func (root *Root) HandleMouseInput(pos image.Point, button int, event MouseEvent
 			// No popup menu, create one on mousedown
 			if event == MouseDown {
 				root.menu = NewRootMenu(root)
-				AddObject(root.objects, "menu", root.menu)
+				AddObject(root, "menu", root.menu)
 				root.menu.Resize(image.Rect(pos.X, pos.Y, pos.X+200, pos.Y+200))
 			}
 		}

@@ -32,8 +32,8 @@ func NewConsole(parent Window) *Console {
 		})
 	console.t1 = NewScrollingText(console)
 
-	AddObject(console.objects, "clear", console.b1)
-	AddObject(console.objects, "text", console.t1)
+	AddObject(console, "clear", console.b1)
+	AddObject(console, "text", console.t1)
 
 	return console
 }
@@ -51,8 +51,8 @@ func (console *Console) AddLine(s string) {
 }
 
 // Data xxx
-func (console *Console) Data() WindowData {
-	return console.WindowData
+func (console *Console) Data() *WindowData {
+	return &console.WindowData
 }
 
 // Resize xxx
@@ -83,7 +83,7 @@ func (console *Console) Resize(rect image.Rectangle) image.Rectangle {
 
 // HandleMouseInput xxx
 func (console *Console) HandleMouseInput(pos image.Point, button int, event MouseEvent) bool {
-	o := ObjectUnder(console.objects, pos)
+	o := ObjectUnder(console, pos)
 	handled := false
 	if o != nil {
 		o.HandleMouseInput(pos, button, event)

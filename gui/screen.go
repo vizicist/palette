@@ -1,6 +1,7 @@
 package gui
 
 import (
+	"fmt"
 	"image"
 	"image/color"
 	"log"
@@ -49,15 +50,15 @@ func Run() {
 }
 
 // Layout satisfies the ebiten.Game interface
-func (screen *Screen) Layout(outsideWidth, outsideHeight int) (int, int) {
+func (screen *Screen) Layout(width, height int) (int, int) {
 	if screen == nil {
 		log.Printf("Screen.Layout: Hey, screen shouldn't be nil!\n")
-		return outsideWidth, outsideHeight
+		return width, height
 	}
-	if screen.rect.Dx() != outsideWidth || screen.rect.Dy() != outsideHeight {
-		screen.Resize(outsideWidth, outsideHeight)
+	if screen.rect.Dx() != width || screen.rect.Dy() != height {
+		screen.Resize(width, height)
 	}
-	return outsideWidth, outsideHeight
+	return width, height
 }
 
 // Update satisfies the ebiten.Game interface
@@ -107,8 +108,7 @@ func (screen *Screen) Draw(eimage *ebiten.Image) {
 // Resize xxx
 func (screen *Screen) Resize(newWidth, newHeight int) {
 	screen.rect = image.Rect(0, 0, newWidth, newHeight)
-	nrect := screen.rect.Inset(10)
-	screen.root.Resize(nrect)
+	screen.root.Resize(screen.rect)
 }
 
 // HandleMouseInput xxx
@@ -144,6 +144,10 @@ func (screen *Screen) drawFilledRect(rect image.Rectangle, clr color.Color) {
 	ebitenutil.DrawRect(screen.eimage, float64(rect.Min.X), float64(rect.Min.Y), float64(w), float64(h), clr)
 }
 
-func (screen *Screen) log(s string) {
-	screen.root.log(s)
+// func (screen *Screen) log(s string) {
+// 	screen.root.log(s)
+// }
+
+func (screen *Screen) log(format string, args ...interface{}) {
+	screen.root.log(fmt.Sprintf(format, args...))
 }
