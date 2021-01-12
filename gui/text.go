@@ -38,13 +38,13 @@ func (st *ScrollingText) Data() WindowData {
 // Resize xxx
 func (st *ScrollingText) Resize(rect image.Rectangle) image.Rectangle {
 
-	textHeight := st.style.TextHeight()
+	rowHeight := st.style.TextHeight()
 	// See how many lines we can fit in the rect
-	nlines := rect.Dy() / textHeight
+	nlines := rect.Dy() / rowHeight
 	st.lines = make([]string, nlines)
 
 	// Adjust the rect so we're exactly that height
-	rect.Max.Y = rect.Min.Y + nlines*textHeight
+	rect.Max.Y = rect.Min.Y + nlines*rowHeight
 
 	st.rect = rect
 	return st.rect
@@ -58,7 +58,7 @@ func (st *ScrollingText) Draw() {
 
 	textHeight := st.style.TextHeight()
 
-	textx := st.rect.Min.X
+	textx := st.rect.Min.X + 2
 	for n, line := range st.lines {
 
 		texty := st.rect.Min.Y + n*textHeight

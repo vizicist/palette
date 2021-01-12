@@ -4,7 +4,6 @@ import (
 	"image"
 	"image/color"
 	"log"
-	"strings"
 )
 
 // ButtonCallback xxx
@@ -36,59 +35,54 @@ func NewButton(parent Window, text string, cb ButtonCallback) *Button {
 }
 
 // Data xxx
-func (b *Button) Data() WindowData {
-	return b.WindowData
+func (button *Button) Data() WindowData {
+	return button.WindowData
 }
 
 // Resize xxx
-func (b *Button) Resize(rect image.Rectangle) image.Rectangle {
-
-	desiredHeight := rect.Dy() * (1 + strings.Count(b.label, "\n"))
-
-	if desiredHeight != b.style.fontHeight {
-		b.style = NewStyle("regular", desiredHeight)
-	}
+func (button *Button) Resize(rect image.Rectangle) image.Rectangle {
 
 	// Get the real bounds needed for this label
-	brect := b.style.BoundString(b.label)
-	w := brect.Max.Sub(brect.Min).X
-	h := brect.Max.Sub(brect.Min).Y
-	b.rect = image.Rect(rect.Min.X, rect.Min.Y, rect.Min.X+w, rect.Min.Y+h)
+	brect := button.style.BoundString(button.label)
+	// extra 6 for embossing of button
+	w := brect.Max.Sub(brect.Min).X + 6
+	h := brect.Max.Sub(brect.Min).Y + 6
+	button.rect = image.Rect(rect.Min.X, rect.Min.Y, rect.Min.X+w, rect.Min.Y+h)
 
-	b.labelX = b.rect.Min.X
-	b.labelY = b.rect.Min.Y
-	b.labelY -= brect.Min.Y
+	button.labelX = button.rect.Min.X + 3
+	button.labelY = button.rect.Min.Y + 3
+	button.labelY -= brect.Min.Y
 
-	return b.rect
+	return button.rect
 }
 
 // Draw xxx
-func (b *Button) Draw() {
+func (button *Button) Draw() {
 
-	color := color.RGBA{0, 0, 0xff, 0xff}
+	color := color.RGBA{0xff, 0xff, 0xff, 0xff}
 
-	b.screen.drawRect(b.rect, color)
+	button.screen.drawRect(button.rect, color)
 
-	b.screen.drawText(b.label, b.style.fontFace, b.labelX, b.labelY, color)
+	button.screen.drawText(button.label, button.style.fontFace, button.labelX, button.labelY, color)
 }
 
 // HandleMouseInput xxx
-func (b *Button) HandleMouseInput(pos image.Point, button int, event MouseEvent) bool {
-	if !pos.In(b.rect) {
+func (button *Button) HandleMouseInput(pos image.Point, buttnum int, event MouseEvent) bool {
+	if !pos.In(button.rect) {
 		log.Printf("Button.HandleMouseInput: pos not in rect!\n")
 		return false
 	}
 	switch event {
 	case MouseDown:
 		// The mouse is inside the button
-		if b.isPressed == false {
-			b.isPressed = true
-			b.callback("down")
+		if button.isPressed == false {
+			button.isPressed = true
+			button.callback("down")
 		}
 	case MouseUp:
-		if b.isPressed == true {
-			b.isPressed = false
-			b.callback("up")
+		if button.isPressed == true {
+			button.isPressed = false
+			button.callback("up")
 		}
 	}
 	return true

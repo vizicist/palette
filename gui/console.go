@@ -60,23 +60,23 @@ func (console *Console) Resize(rect image.Rectangle) image.Rectangle {
 
 	console.rect = rect
 
-	textHeight := console.style.TextHeight()
-	// See how many lines we can fit in the rect
-	nlines := rect.Dy() / textHeight
+	rowHeight := console.style.TextHeight() + 2
+	// See how many rows we can fit in the rect ()
+	nrows := rect.Dy() / rowHeight
 
-	// position of Clear button
-	buttonWidth := 200
-	buttonHeight := textHeight
-	b1r := image.Rect(rect.Min.X, rect.Min.Y, rect.Min.X+buttonWidth, rect.Min.Y+buttonHeight)
-	console.b1.Resize(b1r)
+	// handle Clear button
+	// In Resize, the rect.Max values get recomputed to fit the button
+	r := image.Rect(rect.Min.X+2, rect.Min.Y+2, rect.Max.X, rect.Max.Y)
+	console.b1.Resize(r)
 
-	// position of ScrollableTextx
-	y0 := rect.Min.Y + textHeight
-	// Round the height down so exactly that many lines will fit
-	y1 := rect.Min.Y + nlines*textHeight
-	t1r := image.Rect(rect.Min.X, y0, rect.Max.X, y1)
-	// t1r = t1r.Inset(5)
-	console.t1.Resize(t1r)
+	// handle ScrollingText Window
+	y0 := rect.Min.Y + rowHeight + 4
+	y1 := rect.Min.Y + nrows*rowHeight
+	tr := image.Rect(rect.Min.X+2, y0, rect.Max.X, y1)
+	console.t1.Resize(tr)
+
+	// Adjust console's oveall size from the ScrollingText Window
+	console.rect.Max.Y = console.t1.rect.Max.Y
 
 	return console.rect
 }

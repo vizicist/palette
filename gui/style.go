@@ -3,12 +3,14 @@ package gui
 import (
 	"image"
 	"image/color"
+	"io/ioutil"
 	"log"
 
 	"github.com/golang/freetype/truetype"
 	"github.com/hajimehoshi/ebiten/v2/text"
 	"golang.org/x/image/font"
 
+	"github.com/vizicist/palette/engine"
 	"golang.org/x/image/font/gofont/gomono"
 	"golang.org/x/image/font/gofont/goregular"
 )
@@ -38,14 +40,29 @@ func NewStyle(fontName string, fontHeight int) *Style {
 	var err error
 
 	switch fontName {
-	case "mono":
-		f, err = truetype.Parse(gomono.TTF)
+
+	case "fixed":
+		fontfile := engine.ConfigFilePath("consola.ttf")
+		b, err := ioutil.ReadFile(fontfile)
+		if err != nil {
+			log.Println(err)
+			f, _ = truetype.Parse(gomono.TTF) // last resort
+		} else {
+			f, err = truetype.Parse(b)
+			if err != nil {
+				log.Println(err)
+				f, _ = truetype.Parse(gomono.TTF) // last resort
+			}
+		}
+
 	case "regular":
 		f, err = truetype.Parse(goregular.TTF)
+
 	default:
 		log.Printf("NewStyle: unrecognized fontname=%s, using regular\n", fontName)
 		f, err = truetype.Parse(goregular.TTF)
 	}
+
 	if err != nil {
 		log.Printf("truetype.Parse: unable to parse TTF for fontname=%s\n", fontName)
 		return nil
