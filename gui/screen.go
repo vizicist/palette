@@ -35,7 +35,7 @@ func Run() {
 
 	screen := &Screen{
 		root:      nil,
-		style:     NewStyle("regular", 32),
+		style:     NewStyle("fixed", 16),
 		rect:      image.Rectangle{},
 		eimage:    &ebiten.Image{},
 		time0:     time.Now(),
@@ -117,15 +117,15 @@ func (screen *Screen) HandleMouseInput(pos image.Point, button int, event MouseE
 }
 
 // drawRect xxx
-func (screen *Screen) drawRect(rect image.Rectangle, color color.RGBA) {
+func (screen *Screen) drawRect(rect image.Rectangle, clr color.RGBA) {
 	x0 := rect.Min.X
 	y0 := rect.Min.Y
 	x1 := rect.Max.X
 	y1 := rect.Max.Y
-	screen.drawLine(x0, y0, x1, y0, color)
-	screen.drawLine(x1, y0, x1, y1, color)
-	screen.drawLine(x1, y1, x0, y1, color)
-	screen.drawLine(x0, y1, x0, y0, color)
+	screen.drawLine(x0, y0, x1, y0, clr)
+	screen.drawLine(x1, y0, x1, y1, clr)
+	screen.drawLine(x1, y1, x0, y1, clr)
+	screen.drawLine(x0, y1, x0, y0, clr)
 }
 
 // drawLine xxx
@@ -134,8 +134,14 @@ func (screen *Screen) drawLine(x0, y0, x1, y1 int, color color.RGBA) {
 		float64(x0), float64(y0), float64(x1), float64(y1), color)
 }
 
-func (screen *Screen) drawText(s string, face font.Face, x int, y int, color color.Color) {
-	text.Draw(screen.eimage, s, face, x, y, color)
+func (screen *Screen) drawText(s string, face font.Face, x int, y int, clr color.Color) {
+	text.Draw(screen.eimage, s, face, x, y, clr)
+}
+
+func (screen *Screen) drawFilledRect(rect image.Rectangle, clr color.Color) {
+	w := rect.Max.X - rect.Min.X
+	h := rect.Max.Y - rect.Min.Y
+	ebitenutil.DrawRect(screen.eimage, float64(rect.Min.X), float64(rect.Min.Y), float64(w), float64(h), clr)
 }
 
 func (screen *Screen) log(s string) {
