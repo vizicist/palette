@@ -12,7 +12,6 @@ import (
 
 	"github.com/vizicist/palette/engine"
 	"golang.org/x/image/font/gofont/gomono"
-	"golang.org/x/image/font/gofont/goregular"
 )
 
 var red = color.RGBA{255, 0, 0, 255}
@@ -44,28 +43,26 @@ func NewStyle(fontName string, fontHeight int) *Style {
 	case "fixed":
 		fontfile := engine.ConfigFilePath("consola.ttf")
 		b, err := ioutil.ReadFile(fontfile)
-		if err != nil {
-			log.Println(err)
-			f, _ = truetype.Parse(gomono.TTF) // last resort
-		} else {
+		if err == nil {
 			f, err = truetype.Parse(b)
-			if err != nil {
-				log.Println(err)
-				f, _ = truetype.Parse(gomono.TTF) // last resort
-			}
 		}
 
 	case "regular":
-		f, err = truetype.Parse(goregular.TTF)
+		// This font sucks
+		// f, err = truetype.Parse(goregular.TTF)
+		fontfile := engine.ConfigFilePath("times.ttf")
+		b, err := ioutil.ReadFile(fontfile)
+		if err == nil {
+			f, err = truetype.Parse(b)
+		}
 
 	default:
-		log.Printf("NewStyle: unrecognized fontname=%s, using regular\n", fontName)
-		f, err = truetype.Parse(goregular.TTF)
+		log.Printf("NewStyle: unrecognized fontname=%s, using gomono\n", fontName)
 	}
 
 	if err != nil {
-		log.Printf("truetype.Parse: unable to parse TTF for fontname=%s\n", fontName)
-		return nil
+		log.Printf("NewStyle: unable to get font=%s, resorting to gomono\n", fontName)
+		f, _ = truetype.Parse(gomono.TTF) // last resort
 	}
 	face := truetype.NewFace(f, &truetype.Options{Size: float64(fontHeight)})
 	fontRect := text.BoundString(face, "fghijklMNQ")

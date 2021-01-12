@@ -35,8 +35,8 @@ func NewButton(parent Window, text string, cb ButtonCallback) *Button {
 }
 
 // Data xxx
-func (button *Button) Data() WindowData {
-	return button.WindowData
+func (button *Button) Data() *WindowData {
+	return &button.WindowData
 }
 
 // Resize xxx
