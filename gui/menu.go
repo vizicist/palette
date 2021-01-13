@@ -5,9 +5,6 @@ import (
 	"image/color"
 )
 
-// MenuCallback xxx
-type MenuCallback func(item string)
-
 // Menu xxx
 type Menu struct {
 	WindowData
@@ -17,14 +14,37 @@ type Menu struct {
 	rowHeight    int
 	handleHeight int
 	isTransient  bool
+	pickedWindow Window
 }
+
+type (
+	// MenuCallbackMouse ...
+	MenuCallbackMouse func(item string)
+	// MenuCallbackPick ...
+	MenuCallbackPick func(item string, w Window)
+	// MenuCallbackSweep ...
+	MenuCallbackSweep func(item string, r image.Rectangle)
+)
+
+// CallbackStyle xxx
+type callbackStyle int
+
+const (
+	mouseCallbackStyle = iota
+	pickCallbackStyle
+	sweepCallbackStyle
+)
 
 // MenuItem xxx
 type MenuItem struct {
-	label    string
-	posX     int
-	posY     int
-	callback MenuCallback
+	label string
+	posX  int
+	posY  int
+	// Only one of these three callbacks should be set, typically
+	callbackMouse MenuCallbackMouse
+	callbackPick  MenuCallbackPick
+	callbackSweep MenuCallbackSweep
+	callbackStyle callbackStyle
 }
 
 // NewMenu xxx
@@ -117,47 +137,87 @@ func (menu *Menu) Draw() {
 
 // HandleMouseInput xxx
 func (menu *Menu) HandleMouseInput(pos image.Point, button int, event MouseEvent) bool {
+	if pos.Y <= menu.rect.Min.Y+menu.handleHeight {
+		menu.itemSelected = -1
+		return true
+	}
+	// Find out which item the mouse is in
 	for n, item := range menu.items {
 		if pos.Y < item.posY {
-			switch event {
-			case MouseDown:
-				menu.itemSelected = n
-				// menu.screen.log(fmt.Sprintf("down itemSelected=%d", n))
-				item.callback(item.label)
-			case MouseDrag:
-				menu.itemSelected = n
-				// menu.screen.log(fmt.Sprintf("drag itemSelected=%d", n))
-			case MouseUp:
-				menu.itemSelected = -1
-			}
+			menu.itemSelected = n
 			break
+		}
+	}
+
+	// No callbackups until MouseUp
+	if event == MouseUp {
+
+		item := menu.items[menu.itemSelected]
+
+		switch item.callbackStyle {
+
+		case mouseCallbackStyle:
+			item.callbackMouse(item.label)
+			menu.itemSelected = -1
+
+		case pickCallbackStyle:
+			w := menu.screen.root
+			// Grab the mouse and wait for a MouseUp
+			menu.screen.log("Waiting for pick")
+			menu.pickedWindow = nil
+			menu.screen.setMouseHandler(func(pos image.Point, button int, event MouseEvent) bool {
+				if event == MouseDown {
+					menu.pickedWindow = ObjectUnder(menu.screen.root, pos)
+					menu.screen.log("mousedown, pos=%v pickedwindow=%v", pos, menu.pickedWindow)
+				}
+				if event == MouseUp {
+					menu.screen.log("mouseup, RELEASING pos=%v pickedwindow=%v", pos, menu.pickedWindow)
+					menu.screen.setDefaultMouseHandler()
+				}
+				return true
+			})
+			item.callbackPick(item.label, w)
+			menu.itemSelected = -1
+
+		case sweepCallbackStyle:
+			r := image.Rect(0, 0, 100, 100) // fake
+			item.callbackSweep(item.label, r)
+			menu.itemSelected = -1
 		}
 	}
 	return true
 }
 
-// AddItem xxx
-func (menu *Menu) AddItem(s string, cb MenuCallback) {
-	menu.items = append(menu.items, MenuItem{label: s, callback: cb})
+// HandleMouseInputDuringPick xxx
+func (menu *Menu) HandleMouseInputDuringPick(pos image.Point, button int, event MouseEvent) bool {
+	return true
 }
 
-// NewRootMenu xxx
-func NewRootMenu(parent Window) *Menu {
-	menu := NewMenu(parent)
-	menu.AddItem("Move", func(name string) {
-		menu.screen.log("Move callback, parent=%T", parent)
+// HandleMouseInputDuringSweep xxx
+func (menu *Menu) HandleMouseInputDuringSweep(pos image.Point, button int, event MouseEvent) bool {
+	return true
+}
+
+func (menu *Menu) addMouseItem(s string, cb MenuCallbackMouse) {
+	menu.items = append(menu.items, MenuItem{
+		label:         s,
+		callbackMouse: cb,
+		callbackStyle: mouseCallbackStyle,
 	})
-	menu.AddItem("Resize", func(name string) {
-		menu.screen.log("Resize callback")
+}
+
+func (menu *Menu) addPickItem(s string, cb MenuCallbackPick) {
+	menu.items = append(menu.items, MenuItem{
+		label:         s,
+		callbackPick:  cb,
+		callbackStyle: pickCallbackStyle,
 	})
-	menu.AddItem("Delete", func(name string) {
-		menu.screen.log("Delete callback")
+}
+
+func (menu *Menu) addSweepItem(s string, cb MenuCallbackSweep) {
+	menu.items = append(menu.items, MenuItem{
+		label:         s,
+		callbackSweep: cb,
+		callbackStyle: sweepCallbackStyle,
 	})
-	menu.AddItem("Tools->", func(name string) {
-		menu.screen.log("Tools callback")
-	})
-	menu.AddItem("Misc ->", func(name string) {
-		menu.screen.log("Misc callback")
-	})
-	return menu
 }

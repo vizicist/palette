@@ -1,9 +1,7 @@
 package gui
 
 import (
-	"fmt"
 	"image"
-	"log"
 )
 
 // Root is the top-most Window
@@ -56,8 +54,11 @@ func (root *Root) Resize(r image.Rectangle) image.Rectangle {
 
 // Draw xxx
 func (root *Root) Draw() {
-	for _, o := range root.objects {
-		o.Draw()
+	data := root.Data()
+	// Draw windows in reverse order so more recent ones are on top.
+	for _, name := range data.order {
+		w := data.objects[name]
+		w.Draw()
 	}
 }
 
@@ -65,7 +66,7 @@ func (root *Root) Draw() {
 func (root *Root) HandleMouseInput(pos image.Point, button int, event MouseEvent) bool {
 
 	if !pos.In(root.rect) {
-		root.screen.log(fmt.Sprintf("pos=%v not under Root", pos))
+		root.screen.log("pos=%v not under Root", pos)
 		return true
 	}
 
@@ -73,7 +74,8 @@ func (root *Root) HandleMouseInput(pos image.Point, button int, event MouseEvent
 	if o != nil {
 		// If a menu is up, and it's not this object, shut the menu
 		if root.menu != nil && o != root.menu {
-			RemoveObject(root.objects, "menu", root.menu)
+			RemoveObject(root, "menu")
+			root.menu = nil
 		}
 		return o.HandleMouseInput(pos, button, event)
 	}
@@ -82,8 +84,7 @@ func (root *Root) HandleMouseInput(pos image.Point, button int, event MouseEvent
 	// Ignore Drag and Up, but pop up the RootMenu on Down
 	if event == MouseDown {
 		if root.menu != nil {
-			log.Printf("Removing old menu object before adding new one\n")
-			RemoveObject(root.objects, "menu", root.menu)
+			RemoveObject(root, "menu")
 			root.menu = nil
 		} else {
 			// No popup menu, create one on mousedown

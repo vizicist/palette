@@ -14,6 +14,7 @@ type ScrollingText struct {
 	WindowData
 	isPressed bool
 	lines     []string
+	rowHeight int
 }
 
 // NewScrollingText xxx
@@ -38,13 +39,13 @@ func (st *ScrollingText) Data() *WindowData {
 // Resize xxx
 func (st *ScrollingText) Resize(rect image.Rectangle) image.Rectangle {
 
-	rowHeight := st.style.TextHeight()
+	st.rowHeight = st.style.TextHeight()
 	// See how many lines we can fit in the rect
-	nlines := rect.Dy() / rowHeight
+	nlines := rect.Dy() / st.rowHeight
 	st.lines = make([]string, nlines)
 
 	// Adjust the rect so we're exactly that height
-	rect.Max.Y = rect.Min.Y + nlines*rowHeight
+	rect.Max.Y = rect.Min.Y + nlines*st.rowHeight
 
 	st.rect = rect
 	return st.rect

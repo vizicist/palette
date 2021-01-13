@@ -36,7 +36,9 @@ const (
 // ObjectUnder xxx
 func ObjectUnder(o Window, pos image.Point) Window {
 	windata := o.Data()
-	for _, name := range windata.order {
+	// Check in reverse order
+	for n := len(windata.order) - 1; n >= 0; n-- {
+		name := windata.order[n]
 		w, ok := windata.objects[name]
 		if !ok {
 			log.Printf("ObjectUnder: no entry in object for %s\n", name)
@@ -68,14 +70,24 @@ func AddObject(parent Window, name string, o Window) {
 }
 
 // RemoveObject xxx
-func RemoveObject(objects map[string]Window, name string, o Window) {
-	oo, ok := objects[name]
-	if ok {
-		if oo != o {
-			log.Printf("RemoveObject: Unexpected menu object for %s\n", name)
-		}
-		delete(objects, name)
-	} else {
+func RemoveObject(parent Window, name string) {
+
+	windata := parent.Data()
+	_, ok := windata.objects[name]
+	if !ok {
 		log.Printf("RemoveObject: no object named %s\n", name)
+		return
+	}
+
+	delete(windata.objects, name)
+	// find and delete it in order
+	for n, nm := range windata.order {
+		if nm == name {
+			copy(windata.order[n:], windata.order[n+1:])
+			newlen := len(windata.order) - 1
+			windata.order[newlen] = ""
+			windata.order = windata.order[:newlen]
+			break
+		}
 	}
 }
