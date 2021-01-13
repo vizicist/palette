@@ -18,14 +18,18 @@ import (
 // Screen contains the rootWindow.
 // Screen and Style should be the only things calling ebiten.
 type Screen struct {
-	root      *Root
-	style     *Style
-	rect      image.Rectangle
-	eimage    *ebiten.Image
-	time0     time.Time
-	lastprint time.Time
-	cursorPos image.Point
+	root         *Root
+	style        *Style
+	rect         image.Rectangle
+	eimage       *ebiten.Image
+	time0        time.Time
+	lastprint    time.Time
+	cursorPos    image.Point
+	mouseHandler MouseHandler
 }
+
+// MouseHandler xxx
+type MouseHandler func(image.Point, int, MouseEvent) bool
 
 // Run displays and runs the Gui and never returns
 func Run() {
@@ -35,15 +39,18 @@ func Run() {
 	ebiten.SetWindowTitle("Palette GUI (ebiten)")
 
 	screen := &Screen{
-		root:      nil,
-		style:     NewStyle("fixed", 16),
-		rect:      image.Rectangle{},
-		eimage:    &ebiten.Image{},
-		time0:     time.Now(),
-		lastprint: time.Now(),
+		root:         nil,
+		style:        NewStyle("fixed", 16),
+		rect:         image.Rectangle{},
+		eimage:       &ebiten.Image{},
+		time0:        time.Now(),
+		lastprint:    time.Now(),
+		mouseHandler: nil,
 	}
 	screen.root = NewRoot(screen)
+	screen.mouseHandler = screen.root.HandleMouseInput
 
+	// This is it!  RunGame runs forever
 	if err := ebiten.RunGame(screen); err != nil {
 		log.Fatal(err)
 	}
@@ -56,7 +63,8 @@ func (screen *Screen) Layout(width, height int) (int, int) {
 		return width, height
 	}
 	if screen.rect.Dx() != width || screen.rect.Dy() != height {
-		screen.Resize(width, height)
+		screen.rect = image.Rect(0, 0, width, height)
+		screen.root.Resize(screen.rect)
 	}
 	return width, height
 }
@@ -79,19 +87,19 @@ func (screen *Screen) Update() (err error) {
 		ebiten.MouseButtonMiddle,
 	}
 
+	handler := screen.mouseHandler
 	for n, eb := range butts {
 		switch {
 		case inpututil.IsMouseButtonJustPressed(eb):
-			screen.root.HandleMouseInput(newPos, n, MouseDown)
+			handler(newPos, n, MouseDown)
 		case inpututil.IsMouseButtonJustReleased(eb):
-			screen.root.HandleMouseInput(newPos, n, MouseUp)
+			handler(newPos, n, MouseUp)
 		default:
 			// Drag events only happen when position changes
 			if newPos.X != screen.cursorPos.X || newPos.Y != screen.cursorPos.Y {
 				screen.cursorPos = newPos
-				screen.root.HandleMouseInput(newPos, n, MouseDrag)
+				handler(newPos, n, MouseDrag)
 			}
-
 		}
 	}
 	return nil
@@ -105,15 +113,13 @@ func (screen *Screen) Draw(eimage *ebiten.Image) {
 	screen.root.Draw()
 }
 
-// Resize xxx
-func (screen *Screen) Resize(newWidth, newHeight int) {
-	screen.rect = image.Rect(0, 0, newWidth, newHeight)
-	screen.root.Resize(screen.rect)
+func (screen *Screen) setMouseHandler(handler MouseHandler) {
+	// take over all mouse handling until releaseMouse is called
+	screen.mouseHandler = handler
 }
-
-// HandleMouseInput xxx
-func (screen *Screen) HandleMouseInput(pos image.Point, button int, event MouseEvent) {
-	screen.root.HandleMouseInput(pos, button, event)
+func (screen *Screen) setDefaultMouseHandler() {
+	// give it back to the root window
+	screen.mouseHandler = screen.root.HandleMouseInput
 }
 
 // drawRect xxx
