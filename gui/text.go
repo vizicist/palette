@@ -19,16 +19,13 @@ type ScrollingText struct {
 
 // NewScrollingText xxx
 func NewScrollingText(parent Window) *ScrollingText {
-	return &ScrollingText{
-		WindowData: WindowData{
-			screen:  parent.Data().screen,
-			style:   parent.Data().style,
-			rect:    image.Rectangle{},
-			objects: map[string]Window{},
-		},
-		isPressed: false,
-		lines:     make([]string, 0),
+	st := &ScrollingText{
+		WindowData: NewWindowData(parent),
+		isPressed:  false,
+		lines:      make([]string, 0),
 	}
+	go st.Run()
+	return st
 }
 
 // Data xxx
@@ -55,7 +52,7 @@ func (st *ScrollingText) Resize(rect image.Rectangle) image.Rectangle {
 func (st *ScrollingText) Draw() {
 
 	color := color.RGBA{0xff, 0xff, 0, 0xff}
-	st.screen.drawRect(st.rect, color)
+	st.screen.drawRect(st.rect, white)
 
 	textHeight := st.style.TextHeight()
 
@@ -77,14 +74,16 @@ func (st *ScrollingText) Draw() {
 	}
 }
 
-// HandleMouseInput xxx
-func (st *ScrollingText) HandleMouseInput(pos image.Point, button int, event MouseEvent) bool {
-	if !pos.In(st.rect) {
-		log.Printf("Text.HandleMouseInput: pos not in rect!\n")
-		return false
+// Run xxx
+func (st *ScrollingText) Run() {
+	for {
+		me := <-st.mouseChan
+		st.screen.log("ScrollingText.Run: me=%v", me)
+		if !me.pos.In(st.rect) {
+			log.Printf("Text.HandleMouseInput: pos not in rect!\n")
+			continue
+		}
 	}
-	// Should it be highlighting for copying ?
-	return true
 }
 
 // AddLine xxx

@@ -17,6 +17,7 @@ import (
 var red = color.RGBA{255, 0, 0, 255}
 var black = color.RGBA{0, 0, 0, 255}
 var white = color.RGBA{255, 255, 255, 255}
+var green = color.RGBA{0, 0xff, 0, 0xff}
 
 // Style xxx
 type Style struct {

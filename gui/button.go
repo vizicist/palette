@@ -3,7 +3,6 @@ package gui
 import (
 	"image"
 	"image/color"
-	"log"
 )
 
 // ButtonCallback xxx
@@ -21,17 +20,14 @@ type Button struct {
 
 // NewButton xxx
 func NewButton(parent Window, text string, cb ButtonCallback) *Button {
-	return &Button{
-		WindowData: WindowData{
-			screen:  parent.Data().screen,
-			style:   parent.Data().style,
-			rect:    image.Rectangle{},
-			objects: map[string]Window{},
-		},
-		isPressed: false,
-		label:     text,
-		callback:  cb,
+	b := &Button{
+		WindowData: NewWindowData(parent),
+		isPressed:  false,
+		label:      text,
+		callback:   cb,
 	}
+	go b.Run()
+	return b
 }
 
 // Data xxx
@@ -66,24 +62,26 @@ func (button *Button) Draw() {
 	button.screen.drawText(button.label, button.style.fontFace, button.labelX, button.labelY, color)
 }
 
-// HandleMouseInput xxx
-func (button *Button) HandleMouseInput(pos image.Point, buttnum int, event MouseEvent) bool {
-	if !pos.In(button.rect) {
-		log.Printf("Button.HandleMouseInput: pos not in rect!\n")
-		return false
-	}
-	switch event {
-	case MouseDown:
-		// The mouse is inside the button
-		if button.isPressed == false {
-			button.isPressed = true
-			button.callback("down")
+// Run xxx
+func (button *Button) Run() {
+	for {
+		me := <-button.mouseChan
+		button.screen.log("Button.Run: me=%v", me)
+		if !me.pos.In(button.rect) {
+			continue
 		}
-	case MouseUp:
-		if button.isPressed == true {
-			button.isPressed = false
-			button.callback("up")
+		switch me.ddu {
+		case MouseDown:
+			// The mouse is inside the button
+			if button.isPressed == false {
+				button.isPressed = true
+				button.callback("down")
+			}
+		case MouseUp:
+			if button.isPressed == true {
+				button.isPressed = false
+				button.callback("up")
+			}
 		}
 	}
-	return true
 }

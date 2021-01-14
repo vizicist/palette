@@ -25,11 +25,22 @@ type Screen struct {
 	time0        time.Time
 	lastprint    time.Time
 	cursorPos    image.Point
-	mouseHandler MouseHandler
+	cursorStyle  cursorStyle
+	mouseHandler chan MouseEvent
+	foreColor    color.RGBA
+	backColor    color.RGBA
 }
 
 // MouseHandler xxx
 type MouseHandler func(image.Point, int, MouseEvent) bool
+
+type cursorStyle int
+
+const (
+	normalCursorStyle = iota
+	pickCursorStyle
+	sweepCursorStyle
+)
 
 // Run displays and runs the Gui and never returns
 func Run() {
@@ -46,9 +57,10 @@ func Run() {
 		time0:        time.Now(),
 		lastprint:    time.Now(),
 		mouseHandler: nil,
+		foreColor:    white,
+		backColor:    black,
 	}
 	screen.root = NewRoot(screen)
-	screen.mouseHandler = screen.root.HandleMouseInput
 
 	// This is it!  RunGame runs forever
 	if err := ebiten.RunGame(screen); err != nil {
@@ -87,18 +99,24 @@ func (screen *Screen) Update() (err error) {
 		ebiten.MouseButtonMiddle,
 	}
 
-	handler := screen.mouseHandler
+	// screen.log("Update: checking mouse now=%v", time.Now())
+
+	// Do we really need to check all 3 mouse buttons?
+	// Will more than 1 button ever be used?  Not sure.
 	for n, eb := range butts {
 		switch {
 		case inpututil.IsMouseButtonJustPressed(eb):
-			handler(newPos, n, MouseDown)
+			me := MouseEvent{newPos, n, MouseDown}
+			screen.root.mouseChan <- me
 		case inpututil.IsMouseButtonJustReleased(eb):
-			handler(newPos, n, MouseUp)
+			me := MouseEvent{newPos, n, MouseUp}
+			screen.root.mouseChan <- me
 		default:
 			// Drag events only happen when position changes
 			if newPos.X != screen.cursorPos.X || newPos.Y != screen.cursorPos.Y {
 				screen.cursorPos = newPos
-				handler(newPos, n, MouseDrag)
+				me := MouseEvent{newPos, n, MouseDrag}
+				screen.root.mouseChan <- me
 			}
 		}
 	}
@@ -108,12 +126,37 @@ func (screen *Screen) Update() (err error) {
 // Draw satisfies the ebiten.Game interface
 func (screen *Screen) Draw(eimage *ebiten.Image) {
 	screen.eimage = eimage
-	// red border, will be removed eventually
-	screen.drawRect(screen.rect, color.RGBA{0xff, 0x0, 0x0, 0xff})
 	screen.root.Draw()
+
+	pos := screen.cursorPos
+	switch screen.cursorStyle {
+	case normalCursorStyle:
+	case pickCursorStyle:
+		// Draw a cross at the cursor position
+		delta := 10
+		screen.drawLine(pos.X-delta, pos.Y, pos.X+delta, pos.Y, screen.foreColor)
+		screen.drawLine(pos.X, pos.Y-delta, pos.X, pos.Y+delta, screen.foreColor)
+	case sweepCursorStyle:
+		// Draw a cross at the cursor position
+		delta := 10
+		screen.drawLine(pos.X-delta, pos.Y-delta, pos.X+delta, pos.Y-delta, screen.foreColor)
+		screen.drawLine(pos.X-delta, pos.Y-delta, pos.X-delta, pos.Y+delta, screen.foreColor)
+	}
+
 }
 
-func (screen *Screen) setMouseHandler(handler MouseHandler) {
+func (screen *Screen) setCursorStyle(style cursorStyle) {
+	screen.cursorStyle = style
+	if style == normalCursorStyle {
+		ebiten.SetCursorMode(ebiten.CursorModeVisible)
+	} else {
+		// We draw it ourselves
+		ebiten.SetCursorMode(ebiten.CursorModeHidden)
+	}
+}
+
+/*
+func (screen *Screen) spawnMouseHandler(handler MouseHandler) {
 	// take over all mouse handling until releaseMouse is called
 	screen.mouseHandler = handler
 }
@@ -121,6 +164,7 @@ func (screen *Screen) setDefaultMouseHandler() {
 	// give it back to the root window
 	screen.mouseHandler = screen.root.HandleMouseInput
 }
+*/
 
 // drawRect xxx
 func (screen *Screen) drawRect(rect image.Rectangle, clr color.RGBA) {
