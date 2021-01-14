@@ -2,7 +2,6 @@ package gui
 
 import (
 	"image"
-	"image/color"
 	"log"
 	"strings"
 )
@@ -18,12 +17,7 @@ type Console struct {
 func NewConsole(parent Window) *Console {
 
 	console := &Console{
-		WindowData: WindowData{
-			screen:  parent.Data().screen,
-			style:   parent.Data().style,
-			rect:    image.Rectangle{},
-			objects: map[string]Window{},
-		},
+		WindowData: NewWindowData(parent),
 	}
 	console.b1 = NewButton(console, "Clear",
 		func(updown string) {
@@ -34,6 +28,8 @@ func NewConsole(parent Window) *Console {
 
 	AddObject(console, "clear", console.b1)
 	AddObject(console, "text", console.t1)
+
+	go console.Run()
 
 	return console
 }
@@ -81,23 +77,20 @@ func (console *Console) Resize(rect image.Rectangle) image.Rectangle {
 	return console.rect
 }
 
-// HandleMouseInput xxx
-func (console *Console) HandleMouseInput(pos image.Point, button int, event MouseEvent) bool {
-	o := ObjectUnder(console, pos)
-	handled := false
-	if o != nil {
-		o.HandleMouseInput(pos, button, event)
-		handled = true
-	} else {
-		handled = false
+// Run xxx
+func (console *Console) Run() {
+	for {
+		me := <-console.mouseChan
+		console.screen.log("Console.Run: me=%v", me)
+		o := ObjectUnder(console, me.pos)
+		if o != nil {
+			o.Data().mouseChan <- me
+		}
 	}
-	return handled
 }
 
 // Draw xxx
 func (console *Console) Draw() {
-
-	green := color.RGBA{0, 0xff, 0, 0xff}
 
 	console.screen.drawRect(console.rect, green)
 

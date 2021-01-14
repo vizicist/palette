@@ -3,6 +3,7 @@ package gui
 import (
 	"image"
 	"image/color"
+	"runtime"
 )
 
 // Menu xxx
@@ -15,52 +16,34 @@ type Menu struct {
 	handleHeight int
 	isTransient  bool
 	pickedWindow Window
+	sweepBegin   image.Point
+	sweepEnd     image.Point
+	resizeState  int
+	resizeChan   chan MouseEvent
 }
 
-type (
-	// MenuCallbackMouse ...
-	MenuCallbackMouse func(item string)
-	// MenuCallbackPick ...
-	MenuCallbackPick func(item string, w Window)
-	// MenuCallbackSweep ...
-	MenuCallbackSweep func(item string, r image.Rectangle)
-)
-
-// CallbackStyle xxx
-type callbackStyle int
-
-const (
-	mouseCallbackStyle = iota
-	pickCallbackStyle
-	sweepCallbackStyle
-)
+// MenuCallback xxx
+type MenuCallback func(item string)
 
 // MenuItem xxx
 type MenuItem struct {
-	label string
-	posX  int
-	posY  int
-	// Only one of these three callbacks should be set, typically
-	callbackMouse MenuCallbackMouse
-	callbackPick  MenuCallbackPick
-	callbackSweep MenuCallbackSweep
-	callbackStyle callbackStyle
+	label    string
+	posX     int
+	posY     int
+	callback MenuCallback
 }
 
 // NewMenu xxx
 func NewMenu(parent Window) *Menu {
-	return &Menu{
-		WindowData: WindowData{
-			screen:  parent.Data().screen,
-			style:   parent.Data().style,
-			rect:    image.Rectangle{},
-			objects: map[string]Window{},
-		},
+	m := &Menu{
+		WindowData:   NewWindowData(parent),
 		isPressed:    false,
 		items:        make([]MenuItem, 0),
 		itemSelected: -1,
 		isTransient:  true,
 	}
+	go m.Run()
+	return m
 }
 
 // Data xxx
@@ -111,10 +94,6 @@ func (menu *Menu) Draw() {
 	menu.screen.drawLine(midx-1, menu.rect.Min.Y, menu.rect.Max.X, liney, white)
 	menu.screen.drawLine(midx-1, liney, menu.rect.Max.X, menu.rect.Min.Y, white)
 
-	white := color.RGBA{0xff, 0xff, 0xff, 0xff}
-	black := color.RGBA{0x00, 0x00, 0x00, 0xff}
-	// green := color.RGBA{0x00, 0xff, 0x00, 0xff}
-	// red := color.RGBA{0xff, 0x00, 0x00, 0xff}
 	nitems := len(menu.items)
 	liney0 := menu.rect.Min.Y + menu.handleHeight + menu.rowHeight/4 - 4
 	for n, item := range menu.items {
@@ -135,89 +114,56 @@ func (menu *Menu) Draw() {
 	}
 }
 
-// HandleMouseInput xxx
-func (menu *Menu) HandleMouseInput(pos image.Point, button int, event MouseEvent) bool {
-	if pos.Y <= menu.rect.Min.Y+menu.handleHeight {
-		menu.itemSelected = -1
-		return true
-	}
-	// Find out which item the mouse is in
-	for n, item := range menu.items {
-		if pos.Y < item.posY {
-			menu.itemSelected = n
-			break
+// Run xxx
+func (menu *Menu) Run() {
+
+	for {
+		me := <-menu.mouseChan
+		menu.screen.log("Menu.Run: me=%v", me)
+		menu.screen.log("# of goroutines: %d", runtime.NumGoroutine())
+		if me.pos.Y <= menu.rect.Min.Y+menu.handleHeight {
+			menu.screen.log("Menu.Run: deselecting item")
+			menu.itemSelected = -1
+			continue
+		}
+		// Find out which item the mouse is in
+		for n, item := range menu.items {
+			if me.pos.Y < item.posY {
+				menu.itemSelected = n
+				menu.screen.log("Menu.Run: selected %d", n)
+				break
+			}
+		}
+
+		// No callbackups until MouseUp
+		if me.ddu == MouseUp {
+			item := menu.items[menu.itemSelected]
+			menu.screen.log("Calling callback for %s", item.label)
+			item.callback(item.label)
+			menu.itemSelected = -1
 		}
 	}
+}
 
-	// No callbackups until MouseUp
+/*
+func (menu *Menu) mouseHandlerForPick(pos image.Point, button int, event MouseEvent) bool {
+	item := menu.items[menu.itemSelected]
+	if event == MouseDown {
+		w := ObjectUnder(menu.screen.root, pos)
+		menu.screen.log("mousedown, pos=%v pickedwindow=%v", pos, menu.pickedWindow)
+		item.callbackPick(item.label, w)
+	}
 	if event == MouseUp {
-
-		item := menu.items[menu.itemSelected]
-
-		switch item.callbackStyle {
-
-		case mouseCallbackStyle:
-			item.callbackMouse(item.label)
-			menu.itemSelected = -1
-
-		case pickCallbackStyle:
-			w := menu.screen.root
-			// Grab the mouse and wait for a MouseUp
-			menu.screen.log("Waiting for pick")
-			menu.pickedWindow = nil
-			menu.screen.setMouseHandler(func(pos image.Point, button int, event MouseEvent) bool {
-				if event == MouseDown {
-					menu.pickedWindow = ObjectUnder(menu.screen.root, pos)
-					menu.screen.log("mousedown, pos=%v pickedwindow=%v", pos, menu.pickedWindow)
-				}
-				if event == MouseUp {
-					menu.screen.log("mouseup, RELEASING pos=%v pickedwindow=%v", pos, menu.pickedWindow)
-					menu.screen.setDefaultMouseHandler()
-				}
-				return true
-			})
-			item.callbackPick(item.label, w)
-			menu.itemSelected = -1
-
-		case sweepCallbackStyle:
-			r := image.Rect(0, 0, 100, 100) // fake
-			item.callbackSweep(item.label, r)
-			menu.itemSelected = -1
-		}
+		menu.screen.log("mouseup, RELEASING pos=%v pickedwindow=%v", pos, menu.pickedWindow)
+		menu.screen.setDefaultMouseHandler()
 	}
 	return true
 }
+*/
 
-// HandleMouseInputDuringPick xxx
-func (menu *Menu) HandleMouseInputDuringPick(pos image.Point, button int, event MouseEvent) bool {
-	return true
-}
-
-// HandleMouseInputDuringSweep xxx
-func (menu *Menu) HandleMouseInputDuringSweep(pos image.Point, button int, event MouseEvent) bool {
-	return true
-}
-
-func (menu *Menu) addMouseItem(s string, cb MenuCallbackMouse) {
+func (menu *Menu) addItem(s string, cb MenuCallback) {
 	menu.items = append(menu.items, MenuItem{
-		label:         s,
-		callbackMouse: cb,
-		callbackStyle: mouseCallbackStyle,
-	})
-}
-
-func (menu *Menu) addPickItem(s string, cb MenuCallbackPick) {
-	menu.items = append(menu.items, MenuItem{
-		label:         s,
-		callbackPick:  cb,
-		callbackStyle: pickCallbackStyle,
-	})
-}
-
-func (menu *Menu) addSweepItem(s string, cb MenuCallbackSweep) {
-	menu.items = append(menu.items, MenuItem{
-		label:         s,
-		callbackSweep: cb,
-		callbackStyle: sweepCallbackStyle,
+		label:    s,
+		callback: cb,
 	})
 }

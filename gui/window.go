@@ -7,7 +7,7 @@ import (
 
 // Window xxx
 type Window interface {
-	HandleMouseInput(pos image.Point, button int, me MouseEvent) bool
+	Run()
 	Draw()
 	Resize(image.Rectangle) image.Rectangle
 	Data() *WindowData
@@ -15,22 +15,41 @@ type Window interface {
 
 // WindowData xxx
 type WindowData struct {
-	screen  *Screen
-	style   *Style
-	rect    image.Rectangle // in Screen coordinates, not relative
-	objects map[string]Window
-	order   []string // display order
-	isMenu  bool
+	mouseChan chan MouseEvent // unbuffered?
+	screen    *Screen
+	style     *Style
+	rect      image.Rectangle // in Screen coordinates, not relative
+	objects   map[string]Window
+	order     []string // display order
+	isMenu    bool
+}
+
+// NewWindowData xxx
+func NewWindowData(parent Window) WindowData {
+	return WindowData{
+		screen:    parent.Data().screen,
+		style:     parent.Data().style,
+		rect:      image.Rectangle{},
+		objects:   map[string]Window{},
+		mouseChan: make(chan MouseEvent), // XXX - unbuffered?
+	}
 }
 
 // A MouseEvent represents down/drag/up
-type MouseEvent int
+type MouseEvent struct {
+	pos     image.Point
+	buttNum int
+	ddu     DownDragUp
+}
 
-// MouseEvent
+// DownDragUp xxx
+type DownDragUp int
+
+// MouseUp xxx
 const (
-	MouseUp   MouseEvent = 0
-	MouseDown MouseEvent = 1
-	MouseDrag MouseEvent = 2
+	MouseUp DownDragUp = iota
+	MouseDown
+	MouseDrag
 )
 
 // ObjectUnder xxx
