@@ -39,17 +39,17 @@ func (button *Button) Data() *WindowData {
 func (button *Button) Resize(rect image.Rectangle) image.Rectangle {
 
 	// Get the real bounds needed for this label
-	brect := button.style.BoundString(button.label)
+	brect := button.Style.BoundString(button.label)
 	// extra 6 for embossing of button
 	w := brect.Max.Sub(brect.Min).X + 6
 	h := brect.Max.Sub(brect.Min).Y + 6
-	button.rect = image.Rect(rect.Min.X, rect.Min.Y, rect.Min.X+w, rect.Min.Y+h)
+	button.Rect = image.Rect(rect.Min.X, rect.Min.Y, rect.Min.X+w, rect.Min.Y+h)
 
-	button.labelX = button.rect.Min.X + 3
-	button.labelY = button.rect.Min.Y + 3
+	button.labelX = button.Rect.Min.X + 3
+	button.labelY = button.Rect.Min.Y + 3
 	button.labelY -= brect.Min.Y
 
-	return button.rect
+	return button.Rect
 }
 
 // Draw xxx
@@ -57,20 +57,20 @@ func (button *Button) Draw() {
 
 	color := color.RGBA{0xff, 0xff, 0xff, 0xff}
 
-	button.screen.drawRect(button.rect, color)
+	button.Screen.DrawRect(button.Rect, color)
 
-	button.screen.drawText(button.label, button.style.fontFace, button.labelX, button.labelY, color)
+	button.Screen.drawText(button.label, button.Style.fontFace, button.labelX, button.labelY, color)
 }
 
 // Run xxx
 func (button *Button) Run() {
 	for {
-		me := <-button.mouseChan
-		button.screen.log("Button.Run: me=%v", me)
-		if !me.pos.In(button.rect) {
+		me := <-button.MouseChan
+		button.Screen.Log("Button.Run: me=%v", me)
+		if !me.Pos.In(button.Rect) {
 			continue
 		}
-		switch me.ddu {
+		switch me.Ddu {
 		case MouseDown:
 			// The mouse is inside the button
 			if button.isPressed == false {

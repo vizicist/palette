@@ -36,7 +36,7 @@ func (st *ScrollingText) Data() *WindowData {
 // Resize xxx
 func (st *ScrollingText) Resize(rect image.Rectangle) image.Rectangle {
 
-	st.rowHeight = st.style.TextHeight()
+	st.rowHeight = st.Style.TextHeight()
 	// See how many lines we can fit in the rect
 	nlines := rect.Dy() / st.rowHeight
 	st.lines = make([]string, nlines)
@@ -44,24 +44,24 @@ func (st *ScrollingText) Resize(rect image.Rectangle) image.Rectangle {
 	// Adjust the rect so we're exactly that height
 	rect.Max.Y = rect.Min.Y + nlines*st.rowHeight
 
-	st.rect = rect
-	return st.rect
+	st.Rect = rect
+	return st.Rect
 }
 
 // Draw xxx
 func (st *ScrollingText) Draw() {
 
 	color := color.RGBA{0xff, 0xff, 0, 0xff}
-	st.screen.drawRect(st.rect, white)
+	st.Screen.DrawRect(st.Rect, white)
 
-	textHeight := st.style.TextHeight()
+	textHeight := st.Style.TextHeight()
 
-	textx := st.rect.Min.X + 2
+	textx := st.Rect.Min.X + 2
 	for n, line := range st.lines {
 
-		texty := st.rect.Min.Y + n*textHeight
+		texty := st.Rect.Min.Y + n*textHeight
 
-		brect := st.style.BoundString(line)
+		brect := st.Style.BoundString(line)
 		bminy := brect.Min.Y
 		bmaxy := brect.Max.Y
 		if bminy < 0 {
@@ -70,16 +70,16 @@ func (st *ScrollingText) Draw() {
 		}
 		texty += bminy
 		texty += bmaxy
-		st.screen.drawText(line, st.style.fontFace, textx, texty, color)
+		st.Screen.drawText(line, st.Style.fontFace, textx, texty, color)
 	}
 }
 
 // Run xxx
 func (st *ScrollingText) Run() {
 	for {
-		me := <-st.mouseChan
-		st.screen.log("ScrollingText.Run: me=%v", me)
-		if !me.pos.In(st.rect) {
+		me := <-st.MouseChan
+		st.Screen.Log("ScrollingText.Run: me=%v", me)
+		if !me.Pos.In(st.Rect) {
 			log.Printf("Text.HandleMouseInput: pos not in rect!\n")
 			continue
 		}
@@ -95,7 +95,8 @@ func (st *ScrollingText) AddLine(newline string) {
 	st.lines[len(st.lines)-1] = newline
 }
 
-func (st *ScrollingText) clear() {
+// Clear clears all text
+func (st *ScrollingText) Clear() {
 	for n := 0; n < len(st.lines); n++ {
 		st.lines[n] = ""
 	}

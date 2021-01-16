@@ -15,10 +15,12 @@ type Window interface {
 
 // WindowData xxx
 type WindowData struct {
-	mouseChan chan MouseEvent // unbuffered?
-	screen    *Screen
-	style     *Style
-	rect      image.Rectangle // in Screen coordinates, not relative
+	MouseChan chan MouseMsg // unbuffered?
+	KeyChan   chan KeyMsg   // unbuffered?
+	CmdChan   chan CmdMsg   // unbuffered?
+	Screen    *Screen
+	Style     *Style
+	Rect      image.Rectangle // in Screen coordinates, not relative
 	objects   map[string]Window
 	order     []string // display order
 	isMenu    bool
@@ -27,19 +29,30 @@ type WindowData struct {
 // NewWindowData xxx
 func NewWindowData(parent Window) WindowData {
 	return WindowData{
-		screen:    parent.Data().screen,
-		style:     parent.Data().style,
-		rect:      image.Rectangle{},
+		Screen:    parent.Data().Screen,
+		Style:     parent.Data().Style,
+		Rect:      image.Rectangle{},
 		objects:   map[string]Window{},
-		mouseChan: make(chan MouseEvent), // XXX - unbuffered?
+		MouseChan: make(chan MouseMsg), // XXX - unbuffered?
+		KeyChan:   make(chan KeyMsg),   // XXX - unbuffered?
+		CmdChan:   make(chan CmdMsg),   // XXX - unbuffered?
 	}
 }
 
-// A MouseEvent represents down/drag/up
-type MouseEvent struct {
-	pos     image.Point
-	buttNum int
-	ddu     DownDragUp
+// MouseMsg is a single mouse event (ddu means down/drag/up)
+type MouseMsg struct {
+	Pos     image.Point
+	ButtNum int
+	Ddu     DownDragUp
+}
+
+// KeyMsg is for keyboard events
+type KeyMsg int
+
+// CmdMsg is for misc apis
+type CmdMsg struct {
+	api  string
+	args map[string]string
 }
 
 // DownDragUp xxx
@@ -67,15 +80,15 @@ func ObjectUnder(o Window, pos image.Point) Window {
 			log.Printf("ObjectUnder: objects entry for %s is nul?\n", name)
 			return nil
 		}
-		if pos.In(w.Data().rect) {
+		if pos.In(w.Data().Rect) {
 			return w
 		}
 	}
 	return nil
 }
 
-// AddObject xxx
-func AddObject(parent Window, name string, o Window) {
+// AddWindow xxx
+func AddWindow(parent Window, name string, o Window) {
 	windata := parent.Data()
 	objects := windata.objects
 	_, ok := objects[name]
@@ -88,8 +101,8 @@ func AddObject(parent Window, name string, o Window) {
 	}
 }
 
-// RemoveObject xxx
-func RemoveObject(parent Window, name string) {
+// RemoveWindow xxx
+func RemoveWindow(parent Window, name string) {
 
 	windata := parent.Data()
 	_, ok := windata.objects[name]
@@ -99,12 +112,12 @@ func RemoveObject(parent Window, name string) {
 	}
 
 	delete(windata.objects, name)
-	// find and delete it in order
+	// find and delete it in the .order array
 	for n, nm := range windata.order {
 		if nm == name {
 			copy(windata.order[n:], windata.order[n+1:])
 			newlen := len(windata.order) - 1
-			windata.order[newlen] = ""
+			windata.order[newlen] = "" // XXX does this do anything?
 			windata.order = windata.order[:newlen]
 			break
 		}
