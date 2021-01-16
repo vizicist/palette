@@ -15,10 +15,10 @@ import (
 )
 
 // Screen satisfies the ebiten.Game interface.
-// Screen contains the rootWindow.
+// Screen contains the pageWindow.
 // Screen and Style should be the only things calling ebiten.
 type Screen struct {
-	root         *Root
+	page         *Page
 	style        *Style
 	rect         image.Rectangle
 	eimage       *ebiten.Image
@@ -26,13 +26,13 @@ type Screen struct {
 	lastprint    time.Time
 	cursorPos    image.Point
 	cursorStyle  cursorStyle
-	mouseHandler chan MouseEvent
+	mouseHandler chan MouseMsg
 	foreColor    color.RGBA
 	backColor    color.RGBA
 }
 
 // MouseHandler xxx
-type MouseHandler func(image.Point, int, MouseEvent) bool
+type MouseHandler func(image.Point, int, MouseMsg) bool
 
 type cursorStyle int
 
@@ -50,7 +50,7 @@ func Run() {
 	ebiten.SetWindowTitle("Palette GUI (ebiten)")
 
 	screen := &Screen{
-		root:         nil,
+		page:         nil,
 		style:        NewStyle("fixed", 16),
 		rect:         image.Rectangle{},
 		eimage:       &ebiten.Image{},
@@ -60,7 +60,7 @@ func Run() {
 		foreColor:    white,
 		backColor:    black,
 	}
-	screen.root = NewRoot(screen)
+	screen.page = NewPageWindow(screen)
 
 	// This is it!  RunGame runs forever
 	if err := ebiten.RunGame(screen); err != nil {
@@ -76,7 +76,7 @@ func (screen *Screen) Layout(width, height int) (int, int) {
 	}
 	if screen.rect.Dx() != width || screen.rect.Dy() != height {
 		screen.rect = image.Rect(0, 0, width, height)
-		screen.root.Resize(screen.rect)
+		screen.page.Resize(screen.rect)
 	}
 	return width, height
 }
@@ -106,17 +106,17 @@ func (screen *Screen) Update() (err error) {
 	for n, eb := range butts {
 		switch {
 		case inpututil.IsMouseButtonJustPressed(eb):
-			me := MouseEvent{newPos, n, MouseDown}
-			screen.root.mouseChan <- me
+			me := MouseMsg{newPos, n, MouseDown}
+			screen.page.MouseChan <- me
 		case inpututil.IsMouseButtonJustReleased(eb):
-			me := MouseEvent{newPos, n, MouseUp}
-			screen.root.mouseChan <- me
+			me := MouseMsg{newPos, n, MouseUp}
+			screen.page.MouseChan <- me
 		default:
 			// Drag events only happen when position changes
 			if newPos.X != screen.cursorPos.X || newPos.Y != screen.cursorPos.Y {
 				screen.cursorPos = newPos
-				me := MouseEvent{newPos, n, MouseDrag}
-				screen.root.mouseChan <- me
+				me := MouseMsg{newPos, n, MouseDrag}
+				screen.page.MouseChan <- me
 			}
 		}
 	}
@@ -126,7 +126,7 @@ func (screen *Screen) Update() (err error) {
 // Draw satisfies the ebiten.Game interface
 func (screen *Screen) Draw(eimage *ebiten.Image) {
 	screen.eimage = eimage
-	screen.root.Draw()
+	screen.page.Draw()
 
 	pos := screen.cursorPos
 	switch screen.cursorStyle {
@@ -161,13 +161,13 @@ func (screen *Screen) spawnMouseHandler(handler MouseHandler) {
 	screen.mouseHandler = handler
 }
 func (screen *Screen) setDefaultMouseHandler() {
-	// give it back to the root window
-	screen.mouseHandler = screen.root.HandleMouseInput
+	// give it back to the page window
+	screen.mouseHandler = screen.page.HandleMouseInput
 }
 */
 
-// drawRect xxx
-func (screen *Screen) drawRect(rect image.Rectangle, clr color.RGBA) {
+// DrawRect xxx
+func (screen *Screen) DrawRect(rect image.Rectangle, clr color.RGBA) {
 	x0 := rect.Min.X
 	y0 := rect.Min.Y
 	x1 := rect.Max.X
@@ -195,9 +195,10 @@ func (screen *Screen) drawFilledRect(rect image.Rectangle, clr color.Color) {
 }
 
 // func (screen *Screen) log(s string) {
-// 	screen.root.log(s)
+// 	screen.page.log(s)
 // }
 
-func (screen *Screen) log(format string, args ...interface{}) {
-	screen.root.log(fmt.Sprintf(format, args...))
+// Log xxx
+func (screen *Screen) Log(format string, args ...interface{}) {
+	screen.page.log(fmt.Sprintf(format, args...))
 }

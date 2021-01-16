@@ -2,6 +2,7 @@ package gui
 
 import (
 	"image"
+	"image/color"
 	"log"
 	"strings"
 )
@@ -26,8 +27,8 @@ func NewConsole(parent Window) *Console {
 		})
 	console.t1 = NewScrollingText(console)
 
-	AddObject(console, "clear", console.b1)
-	AddObject(console, "text", console.t1)
+	AddWindow(console, "clear", console.b1)
+	AddWindow(console, "text", console.t1)
 
 	go console.Run()
 
@@ -35,7 +36,7 @@ func NewConsole(parent Window) *Console {
 }
 
 func (console *Console) clear() {
-	console.t1.clear()
+	console.t1.Clear()
 }
 
 // AddLine xxx
@@ -54,9 +55,9 @@ func (console *Console) Data() *WindowData {
 // Resize xxx
 func (console *Console) Resize(rect image.Rectangle) image.Rectangle {
 
-	console.rect = rect
+	console.Rect = rect
 
-	rowHeight := console.style.TextHeight() + 2
+	rowHeight := console.Style.TextHeight() + 2
 	// See how many rows we can fit in the rect ()
 	nrows := rect.Dy() / rowHeight
 
@@ -72,19 +73,19 @@ func (console *Console) Resize(rect image.Rectangle) image.Rectangle {
 	console.t1.Resize(tr)
 
 	// Adjust console's oveall size from the ScrollingText Window
-	console.rect.Max.Y = console.t1.rect.Max.Y
+	console.Rect.Max.Y = console.t1.Rect.Max.Y
 
-	return console.rect
+	return console.Rect
 }
 
 // Run xxx
 func (console *Console) Run() {
 	for {
-		me := <-console.mouseChan
-		console.screen.log("Console.Run: me=%v", me)
-		o := ObjectUnder(console, me.pos)
+		me := <-console.MouseChan
+		console.Screen.Log("Console.Run: me=%v", me)
+		o := ObjectUnder(console, me.Pos)
 		if o != nil {
-			o.Data().mouseChan <- me
+			o.Data().MouseChan <- me
 		}
 	}
 }
@@ -92,7 +93,8 @@ func (console *Console) Run() {
 // Draw xxx
 func (console *Console) Draw() {
 
-	console.screen.drawRect(console.rect, green)
+	green := color.RGBA{0, 0xff, 0, 0xff}
+	console.Screen.DrawRect(console.Rect, green)
 
 	console.b1.Draw()
 	console.t1.Draw()
