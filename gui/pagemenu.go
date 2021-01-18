@@ -39,7 +39,7 @@ func (menu *Menu) startNewConsole() {
 	menu.OutChan <- SetCursorStyleCmd{sweepCursorStyle}
 	// Take over the mouse to sweep out the console area
 
-	newInput := GrabWindowInput(menu)
+	newInput := PushWindowInput(menu)
 	go menu.sweepConsoleWindow(newInput)
 
 	/*
@@ -63,7 +63,7 @@ func (menu *Menu) sweepConsoleWindow(input chan WinInput) {
 					log.Printf("!!!!!!!!!!!!!!!!!!sweepWindow: MouseDrag pos=%v\n", t.Pos)
 				case MouseUp:
 					log.Printf("!!!!!!!!!!!!!!!!!!sweepWindow: MouseUp pos=%v\n", t.Pos)
-					ReleaseWindowInput(menu)
+					PopWindowInput(menu)
 				}
 			}
 

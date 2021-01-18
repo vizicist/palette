@@ -27,8 +27,8 @@ func NewConsole(parent Window) *Console {
 		})
 	console.t1 = NewScrollingText(console)
 
-	AddWindow(console, "clear", console.b1)
-	AddWindow(console, "text", console.t1)
+	AddWindow(console, console.b1, "clear")
+	AddWindow(console, console.t1, "text")
 
 	go console.Run()
 
@@ -84,7 +84,7 @@ func (console *Console) Run() {
 		me := <-console.InChan
 		log.Printf("Console.Run: me from InChan=%v", me)
 		/*
-			o := ObjectUnder(console, me.Pos)
+			o := WindowUnder(console, me.Pos)
 			if o != nil {
 				o.Data().MouseChan <- me
 			}

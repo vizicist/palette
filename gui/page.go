@@ -20,10 +20,10 @@ func NewPageWindow(screen *Screen) *Page {
 	page := &Page{
 		WindowData: WindowData{ //
 			InChan:  make(chan WinInput, 10),
-			OutChan: screen.screenChan,
+			OutChan: screen.cmdChan,
 			Style:   screen.style,
 			Rect:    image.Rectangle{},
-			objects: map[string]Window{},
+			windows: make(map[Window]string),
 		},
 		// console: nil,
 	}
@@ -69,14 +69,8 @@ func (page *Page) Resize(r image.Rectangle) image.Rectangle {
 // Draw xxx
 func (page *Page) Draw() {
 	data := page.Data()
-	// Draw windows in reverse order so more recent ones are on top.
-	for n, name := range data.order {
-		if name == "" {
-			log.Printf("Hey, name %d in data.order is empty?", n)
-		} else {
-			w := data.objects[name]
-			w.Draw()
-		}
+	for _, win := range data.order {
+		win.Draw()
 	}
 }
 
@@ -106,28 +100,33 @@ func (page *Page) Run() {
 				// log.Printf("page got MouseCmd = %v\n", me)
 
 				if !pos.In(page.Rect) {
-					log.Printf("pos=%v not under Page", pos)
+					log.Printf("Page.Run: pos=%v not under Page!?", pos)
 					continue
 				}
 
-				o := ObjectUnder(page, pos)
+				o := WindowUnder(page, pos)
 				if o != nil {
-					log.Printf("Sending me to o.Data().InChan\n")
 					o.Data().InChan <- me
+					continue
 				}
 
+				// nothing underneath the mouse
 				if me.Ddu == MouseDown {
-					// If it's a mouse down out in the open, nothing under it...
-					// Ignore Drag and Up, but pop up the PageMenu on Down
-					log.Printf("GOT MOUSEDOWN in page!\n")
-					menuName := "main"
+					// pop up the PageMenu on Down
+					menuName := "pagemenu"
 					if page.menu != nil {
-						log.Printf("\nOut in open, with existing menu!\n")
-						RemoveWindow(page, menuName)
+
+						// Tell the existing pagemenu to close itself, because we
+						// only want one on the page
+						msg := CloseYourselfCmd{}
+						page.menu.InChan <- msg
+
+						// Remove the existing pagemenu window
+						RemoveWindow(page, page.menu)
 						page.menu = nil
 					} else {
 						page.menu = NewPageMenu(page)
-						AddWindow(page, menuName, page.menu)
+						AddWindow(page, page.menu, menuName)
 						page.menu.Resize(image.Rect(pos.X, pos.Y, pos.X+200, pos.Y+200))
 					}
 				}

@@ -4,7 +4,7 @@ import (
 	"image"
 	"image/color"
 	"log"
-	"runtime"
+	"time"
 )
 
 // Menu xxx
@@ -88,16 +88,15 @@ func (menu *Menu) Draw() {
 	liney := menu.Rect.Min.Y + menu.handleHeight
 
 	// Draw the bar at the top of the menu
-	menu.OutChan <- DrawLineCmd{menu.Rect.Min.X, liney, menu.Rect.Max.X, liney, white}
+	menu.OutChan <- DrawLineCmd{image.Point{menu.Rect.Min.X, liney}, image.Point{menu.Rect.Max.X, liney}, white}
 
 	midx := menu.Rect.Max.X - menu.Rect.Dx()/4
 
-	menu.OutChan <- DrawLineCmd{midx, menu.Rect.Min.Y, midx, liney, white}
-
+	// Draw the X at the right side of the handle area
+	menu.OutChan <- DrawLineCmd{image.Point{midx, menu.Rect.Min.Y}, image.Point{midx, liney}, white}
 	// the midx-1 is just so the X looks a little nicer
-
-	menu.OutChan <- DrawLineCmd{midx - 1, menu.Rect.Min.Y, menu.Rect.Max.X, liney, white}
-	menu.OutChan <- DrawLineCmd{midx - 1, liney, menu.Rect.Max.X, menu.Rect.Min.Y, white}
+	menu.OutChan <- DrawLineCmd{image.Point{midx - 1, menu.Rect.Min.Y}, image.Point{menu.Rect.Max.X, liney}, white}
+	menu.OutChan <- DrawLineCmd{image.Point{midx - 1, liney}, image.Point{menu.Rect.Max.X, menu.Rect.Min.Y}, white}
 
 	nitems := len(menu.items)
 	liney0 := menu.Rect.Min.Y + menu.handleHeight + menu.rowHeight/4 - 4
@@ -115,7 +114,7 @@ func (menu *Menu) Draw() {
 
 		menu.OutChan <- DrawTextCmd{item.label, menu.Style.fontFace, image.Point{item.posX, item.posY}, fore}
 		if n != menu.itemSelected && n < (nitems-1) {
-			menu.OutChan <- DrawLineCmd{menu.Rect.Min.X, liney, menu.Rect.Max.X, liney, fore}
+			menu.OutChan <- DrawLineCmd{image.Point{menu.Rect.Min.X, liney}, image.Point{menu.Rect.Max.X, liney}, fore}
 		}
 	}
 }
@@ -123,39 +122,50 @@ func (menu *Menu) Draw() {
 // Run xxx
 func (menu *Menu) Run() {
 
+RunLoop:
 	for {
-		i := <-menu.InChan
-		me := i.(MouseCmd)
+		select {
 
-		log.Printf("Menu.Run: MouseCmd=%v", me)
+		case cmd := <-menu.InChan:
 
-		log.Printf("# of goroutines: %d", runtime.NumGoroutine())
+			switch c := cmd.(type) {
 
-		if me.Pos.Y <= menu.Rect.Min.Y+menu.handleHeight {
-			log.Printf("Menu.Run: deselecting item")
-			menu.itemSelected = -1
-			continue
-		}
-		// Find out which item the mouse is in
-		for n, item := range menu.items {
-			if me.Pos.Y < item.posY {
-				menu.itemSelected = n
-				break
+			case CloseYourselfCmd:
+				break RunLoop
+
+			case MouseCmd:
+				me := c
+				if me.Pos.Y <= menu.Rect.Min.Y+menu.handleHeight {
+					menu.itemSelected = -1
+					continue RunLoop
+				}
+				// Find out which item the mouse is in
+				for n, item := range menu.items {
+					if me.Pos.Y < item.posY {
+						menu.itemSelected = n
+						break
+					}
+				}
+
+				// No callbackups until MouseUp
+				if me.Ddu == MouseUp {
+					item := menu.items[menu.itemSelected]
+					item.callback(item.label)
+					menu.itemSelected = -1
+
+					msg := CloseMeCmd{W: menu}
+					menu.OutChan <- msg
+
+					break
+				}
 			}
-		}
-
-		// No callbackups until MouseUp
-		if me.Ddu == MouseUp {
-			item := menu.items[menu.itemSelected]
-			log.Printf("Calling callback for %s", item.label)
-			item.callback(item.label)
-			menu.itemSelected = -1
-			break
+		default:
+			time.Sleep(time.Millisecond)
 		}
 	}
 	// We're done with this menu, so tell window system to delete us
-	msg := KillWindowCmd{W: menu}
-	menu.OutChan <- msg
+	log.Printf("menu.Run: Exit, calling CloseWindow\n")
+	CloseWindow(menu)
 }
 
 func (menu *Menu) addItem(s string, cb MenuCallback) {

@@ -23,8 +23,8 @@ type WindowData struct {
 	// MouseChan chan MouseCmd  // unbuffered?
 	Style      *Style
 	Rect       image.Rectangle // in Screen coordinates, not relative
-	objects    map[string]Window
-	order      []string // display order
+	windows    map[Window]string
+	order      []Window // display order
 	isMenu     bool
 	inputStack []chan WinInput
 }
@@ -36,7 +36,7 @@ func NewWindowData(parent Window) WindowData {
 		OutChan:    parent.Data().OutChan,
 		Style:      parent.Data().Style,
 		Rect:       image.Rectangle{},
-		objects:    map[string]Window{},
+		windows:    make(map[Window]string),
 		inputStack: make([]chan WinInput, 0),
 	}
 }
@@ -70,19 +70,23 @@ type RedrawCmd struct {
 	Rect image.Rectangle
 }
 
+// CloseYourselfCmd xxx
+type CloseYourselfCmd struct {
+}
+
 ////////////////////////////////////////////
 // These are the standard WinOutput commands
 ////////////////////////////////////////////
 
-// KillWindowCmd xxx
-type KillWindowCmd struct {
+// CloseMeCmd xxx
+type CloseMeCmd struct {
 	W Window
 }
 
 // DrawLineCmd xxx
 type DrawLineCmd struct {
-	X0, Y0, X1, Y1 int
-	Color          color.RGBA
+	XY0, XY1 image.Point
+	Color    color.RGBA
 }
 
 // DrawRectCmd xxx
@@ -120,19 +124,14 @@ const (
 	MouseDrag
 )
 
-// ObjectUnder xxx
-func ObjectUnder(o Window, pos image.Point) Window {
+// WindowUnder xxx
+func WindowUnder(o Window, pos image.Point) Window {
 	windata := o.Data()
 	// Check in reverse order
 	for n := len(windata.order) - 1; n >= 0; n-- {
-		name := windata.order[n]
-		w, ok := windata.objects[name]
-		if !ok {
-			log.Printf("ObjectUnder: no entry in object for %s\n", name)
-			return nil
-		}
+		w := windata.order[n]
 		if w == nil {
-			log.Printf("ObjectUnder: objects entry for %s is nul?\n", name)
+			log.Printf("WindowUnder: value %d is nil?\n", n)
 			return nil
 		}
 		if pos.In(w.Data().Rect) {
@@ -143,44 +142,43 @@ func ObjectUnder(o Window, pos image.Point) Window {
 }
 
 // AddWindow xxx
-func AddWindow(parent Window, name string, o Window) {
+func AddWindow(parent Window, o Window, name string) {
 	windata := parent.Data()
-	objects := windata.objects
-	_, ok := objects[name]
+	_, ok := windata.windows[o]
 	if ok {
-		log.Printf("There's already an object named %s in that Window\n", name)
-	} else {
-		objects[name] = o
-		// add it to the end of the display order
-		windata.order = append(windata.order, name)
+		log.Printf("There's already a window %v in that Window\n", o)
+		return
 	}
+	windata.windows[o] = name
+	// add it to the end of the display order
+	windata.order = append(windata.order, o)
 }
 
 // RemoveWindow xxx
-func RemoveWindow(parent Window, name string) {
+func RemoveWindow(parent Window, w Window) {
 
 	windata := parent.Data()
-	_, ok := windata.objects[name]
+	_, ok := windata.windows[w]
 	if !ok {
-		log.Printf("RemoveObject: no object named %s\n", name)
+		log.Printf("RemoveWindow: no window w=%v\n", w)
 		return
 	}
 
-	delete(windata.objects, name)
+	delete(windata.windows, w)
 	// find and delete it in the .order array
-	for n, nm := range windata.order {
-		if nm == name {
+	for n, win := range windata.order {
+		if w == win {
 			copy(windata.order[n:], windata.order[n+1:])
 			newlen := len(windata.order) - 1
-			windata.order[newlen] = "" // XXX does this do anything?
+			windata.order[newlen] = nil // XXX does this do anything?
 			windata.order = windata.order[:newlen]
 			break
 		}
 	}
 }
 
-// GrabWindowInput xxx
-func GrabWindowInput(w Window) chan WinInput {
+// PushWindowInput xxx
+func PushWindowInput(w Window) chan WinInput {
 	windata := w.Data()
 	// Save the current Input
 	newInput := make(chan WinInput)
@@ -189,8 +187,8 @@ func GrabWindowInput(w Window) chan WinInput {
 	return newInput
 }
 
-// ReleaseWindowInput xxx
-func ReleaseWindowInput(w Window) {
+// PopWindowInput xxx
+func PopWindowInput(w Window) {
 	windata := w.Data()
 	stackSize := len(windata.inputStack)
 	if stackSize == 0 {
@@ -201,4 +199,12 @@ func ReleaseWindowInput(w Window) {
 	// pop off the tail of the array
 	windata.InChan = windata.inputStack[stackSize-1]
 	windata.inputStack = windata.inputStack[:stackSize-1]
+}
+
+// CloseWindow xxx
+func CloseWindow(w Window) {
+	log.Printf("CloseWindow: w=%v\n", w)
+	windata := w.Data()
+	close(windata.InChan)
+	log.Printf("CloseWindow: after closing InChan\n")
 }
