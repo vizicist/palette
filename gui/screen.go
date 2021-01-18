@@ -17,7 +17,7 @@ import (
 // Screen contains the pageWindow.
 // Screen and Style should be the only things calling ebiten.
 type Screen struct {
-	screenChan   chan WinOutput
+	cmdChan      chan WinOutput
 	page         *Page
 	style        *Style
 	rect         image.Rectangle
@@ -50,7 +50,7 @@ func Run() {
 	ebiten.SetWindowTitle("Palette GUI (ebiten)")
 
 	screen := &Screen{
-		screenChan:   make(chan WinOutput),
+		cmdChan:      make(chan WinOutput),
 		page:         nil,
 		style:        NewStyle("fixed", 16),
 		rect:         image.Rectangle{},
@@ -63,7 +63,7 @@ func Run() {
 	}
 	screen.page = NewPageWindow(screen)
 
-	go screen.listen()
+	go screen.runCmds()
 
 	// This is it!  RunGame runs forever
 	if err := ebiten.RunGame(screen); err != nil {
@@ -71,21 +71,29 @@ func Run() {
 	}
 }
 
-func (screen *Screen) listen() {
+func (screen *Screen) runCmds() {
+
 	for {
 		select {
 
-		case cmd := <-screen.screenChan:
+		case cmd := <-screen.cmdChan:
 
 			switch c := cmd.(type) {
 			case DrawLineCmd:
-				screen.drawLine(c.X0, c.Y0, c.X1, c.Y1, c.Color)
+				screen.drawLine(c.XY0, c.XY1, c.Color)
 			case DrawRectCmd:
 				screen.drawRect(c.Rect, c.Color)
 			case DrawFilledRectCmd:
-				screen.drawRect(c.Rect, c.Color)
+				screen.drawFilledRect(c.Rect, c.Color)
 			case DrawTextCmd:
 				screen.drawText(c.Text, c.Face, c.Pos, c.Color)
+			case CloseMeCmd:
+				log.Printf("!!!!! Got CloseMeCmd c=%v", c)
+				if c.W == screen.page.menu {
+					log.Print("CloseMeCmd is Clearing page.menu\n")
+					screen.page.menu = nil
+				}
+				RemoveWindow(screen.page, c.W)
 			}
 
 		default:
@@ -126,23 +134,17 @@ func (screen *Screen) Update() (err error) {
 		ebiten.MouseButtonMiddle,
 	}
 
-	// screen.log("Update: checking mouse now=%v", time.Now())
-
 	// Do we really need to check all 3 mouse buttons?
 	// Will more than 1 button ever be used?  Not sure.
 	for n, eb := range butts {
 		switch {
 		case inpututil.IsMouseButtonJustPressed(eb):
 			me := MouseCmd{newPos, n, MouseDown}
-			log.Printf("Before sending to page.InChan\n")
 			screen.page.InChan <- me
-			log.Printf("After sending to page.InChan\n")
-			// screen.page.MouseChan <- me
 
 		case inpututil.IsMouseButtonJustReleased(eb):
 			me := MouseCmd{newPos, n, MouseUp}
 			screen.page.InChan <- me
-			// screen.page.MouseChan <- me
 
 		default:
 			// Drag events only happen when position changes
@@ -150,7 +152,6 @@ func (screen *Screen) Update() (err error) {
 				screen.cursorPos = newPos
 				me := MouseCmd{newPos, n, MouseDrag}
 				screen.page.InChan <- me
-				// screen.page.MouseChan <- me
 			}
 		}
 	}
@@ -168,13 +169,13 @@ func (screen *Screen) Draw(eimage *ebiten.Image) {
 	case pickCursorStyle:
 		// Draw a cross at the cursor position
 		delta := 10
-		screen.drawLine(pos.X-delta, pos.Y, pos.X+delta, pos.Y, screen.foreColor)
-		screen.drawLine(pos.X, pos.Y-delta, pos.X, pos.Y+delta, screen.foreColor)
+		screen.drawLine(image.Point{pos.X - delta, pos.Y}, image.Point{pos.X + delta, pos.Y}, screen.foreColor)
+		screen.drawLine(image.Point{pos.X, pos.Y - delta}, image.Point{pos.X, pos.Y + delta}, screen.foreColor)
 	case sweepCursorStyle:
 		// Draw a cross at the cursor position
 		delta := 10
-		screen.drawLine(pos.X-delta, pos.Y-delta, pos.X+delta, pos.Y-delta, screen.foreColor)
-		screen.drawLine(pos.X-delta, pos.Y-delta, pos.X-delta, pos.Y+delta, screen.foreColor)
+		screen.drawLine(image.Point{pos.X - delta, pos.Y - delta}, image.Point{pos.X + delta, pos.Y - delta}, screen.foreColor)
+		screen.drawLine(image.Point{pos.X - delta, pos.Y - delta}, image.Point{pos.X - delta, pos.Y + delta}, screen.foreColor)
 	}
 
 }
@@ -195,16 +196,16 @@ func (screen *Screen) drawRect(rect image.Rectangle, clr color.RGBA) {
 	y0 := rect.Min.Y
 	x1 := rect.Max.X
 	y1 := rect.Max.Y
-	screen.drawLine(x0, y0, x1, y0, clr)
-	screen.drawLine(x1, y0, x1, y1, clr)
-	screen.drawLine(x1, y1, x0, y1, clr)
-	screen.drawLine(x0, y1, x0, y0, clr)
+	screen.drawLine(image.Point{x0, y0}, image.Point{x1, y0}, clr)
+	screen.drawLine(image.Point{x1, y0}, image.Point{x1, y1}, clr)
+	screen.drawLine(image.Point{x1, y1}, image.Point{x0, y1}, clr)
+	screen.drawLine(image.Point{x0, y1}, image.Point{x0, y0}, clr)
 }
 
 // drawLine xxx
-func (screen *Screen) drawLine(x0, y0, x1, y1 int, color color.RGBA) {
+func (screen *Screen) drawLine(xy0, xy1 image.Point, color color.RGBA) {
 	ebitenutil.DrawLine(screen.eimage,
-		float64(x0), float64(y0), float64(x1), float64(y1), color)
+		float64(xy0.X), float64(xy0.Y), float64(xy1.X), float64(xy1.Y), color)
 }
 
 func (screen *Screen) drawText(s string, face font.Face, pos image.Point, clr color.Color) {
