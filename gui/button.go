@@ -28,6 +28,7 @@ func NewButton(parent Window, text string, cb ButtonCallback) *Button {
 		label:      text,
 		callback:   cb,
 	}
+	log.Printf("NewButton: go b.Run()\n")
 	go b.Run()
 	return b
 }

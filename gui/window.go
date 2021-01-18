@@ -158,11 +158,12 @@ func AddWindow(parent Window, o Window, name string) {
 func RemoveWindow(parent Window, w Window) {
 
 	windata := parent.Data()
-	_, ok := windata.windows[w]
+	name, ok := windata.windows[w]
 	if !ok {
 		log.Printf("RemoveWindow: no window w=%v\n", w)
 		return
 	}
+	log.Printf("RemoveWindow: name=%s w=%v\n", name, w)
 
 	delete(windata.windows, w)
 	// find and delete it in the .order array
@@ -203,8 +204,15 @@ func PopWindowInput(w Window) {
 
 // CloseWindow xxx
 func CloseWindow(w Window) {
-	log.Printf("CloseWindow: w=%v\n", w)
 	windata := w.Data()
-	close(windata.InChan)
-	log.Printf("CloseWindow: after closing InChan\n")
+	for len(windata.inputStack) > 0 {
+		log.Printf("CloseWindow: inputStack isn't empty?\n")
+		PopWindowInput(w)
+	}
+	if windata.InChan == nil {
+		log.Printf("CloseWindow: InChan is nil?\n")
+	} else {
+		close(windata.InChan)
+		windata.InChan = nil
+	}
 }

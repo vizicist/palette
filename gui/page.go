@@ -34,6 +34,7 @@ func NewPageWindow(screen *Screen) *Page {
 	// page.console = NewConsole(page)
 	// AddWindow(page, "console1", page.console)
 
+	log.Printf("NewPageWindow: go page.Run()\n")
 	go page.Run()
 
 	return page
@@ -116,16 +117,13 @@ func (page *Page) Run() {
 					menuName := "pagemenu"
 					if page.menu != nil {
 
-						// Tell the existing pagemenu to close itself, because we
-						// only want one on the page
-						msg := CloseYourselfCmd{}
-						page.menu.InChan <- msg
-
-						// Remove the existing pagemenu window
-						RemoveWindow(page, page.menu)
+						// We only want one page.menu on the screen at a time.
+						log.Printf("page.Run: sending CloseMe for page.menu = %v\n", page.menu)
+						page.OutChan <- CloseMeCmd{W: page.menu}
 						page.menu = nil
 					} else {
 						page.menu = NewPageMenu(page)
+						log.Printf("page.Run: New page.menu = %v\n", page.menu)
 						AddWindow(page, page.menu, menuName)
 						page.menu.Resize(image.Rect(pos.X, pos.Y, pos.X+200, pos.Y+200))
 					}

@@ -42,6 +42,7 @@ func NewMenu(parent Window) *Menu {
 		itemSelected: -1,
 		isTransient:  true,
 	}
+	log.Printf("NewMenu: go m.Run()\n")
 	go m.Run()
 	return m
 }
@@ -153,19 +154,21 @@ RunLoop:
 					item.callback(item.label)
 					menu.itemSelected = -1
 
-					msg := CloseMeCmd{W: menu}
-					menu.OutChan <- msg
+					// tell parent to close me
+					menu.OutChan <- CloseMeCmd{W: menu}
 
-					break
+					// wait for CloseYourselfCmd to come back
+					continue RunLoop
 				}
 			}
 		default:
 			time.Sleep(time.Millisecond)
 		}
 	}
-	// We're done with this menu, so tell window system to delete us
-	log.Printf("menu.Run: Exit, calling CloseWindow\n")
+
+	log.Printf("menu.Run: before CloseWindow\n")
 	CloseWindow(menu)
+	log.Printf("menu.Run: FINAL RETURN!\n")
 }
 
 func (menu *Menu) addItem(s string, cb MenuCallback) {

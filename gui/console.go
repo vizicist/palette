@@ -30,6 +30,7 @@ func NewConsole(parent Window) *Console {
 	AddWindow(console, console.b1, "clear")
 	AddWindow(console, console.t1, "text")
 
+	log.Printf("NewConsole: go m.Run()\n")
 	go console.Run()
 
 	return console

@@ -40,19 +40,18 @@ func (menu *Menu) startNewConsole() {
 	// Take over the mouse to sweep out the console area
 
 	newInput := PushWindowInput(menu)
+
+	log.Printf("startNewConsole: go menu.sweep...()\n")
+
 	go menu.sweepConsoleWindow(newInput)
 
-	/*
-		menu.Screen.spawnMouseHandler(menu.mouseHandlerForResize)
-		go menu.runResize()
-	*/
 }
 
 func (menu *Menu) sweepConsoleWindow(input chan WinInput) {
 	for {
 		select {
 
-		case inCmd := <-menu.InChan:
+		case inCmd := <-input:
 
 			switch t := inCmd.(type) {
 			case MouseCmd:
@@ -73,13 +72,3 @@ func (menu *Menu) sweepConsoleWindow(input chan WinInput) {
 	}
 
 }
-
-/*
-func (menu *Menu) mouseHandlerForResize(pos image.Point, button int, event MouseEvent) bool {
-	return true
-}
-
-func (menu *Menu) mouseHandlerForResize(pos image.Point, button int, event MouseEvent) bool {
-	return true
-}
-*/
