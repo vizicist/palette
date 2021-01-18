@@ -24,6 +24,7 @@ func NewScrollingText(parent Window) *ScrollingText {
 		isPressed:  false,
 		lines:      make([]string, 0),
 	}
+	log.Printf("NewScrollingText: go st.Run()\n")
 	go st.Run()
 	return st
 }

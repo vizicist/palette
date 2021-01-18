@@ -63,6 +63,7 @@ func Run() {
 	}
 	screen.page = NewPageWindow(screen)
 
+	log.Printf("Run: go screen.runCmds()\n")
 	go screen.runCmds()
 
 	// This is it!  RunGame runs forever
@@ -88,12 +89,13 @@ func (screen *Screen) runCmds() {
 			case DrawTextCmd:
 				screen.drawText(c.Text, c.Face, c.Pos, c.Color)
 			case CloseMeCmd:
-				log.Printf("!!!!! Got CloseMeCmd c=%v", c)
 				if c.W == screen.page.menu {
-					log.Print("CloseMeCmd is Clearing page.menu\n")
 					screen.page.menu = nil
 				}
+				log.Printf("screen.Run: CloseMeCmd on c.W=%v\n", c.W)
 				RemoveWindow(screen.page, c.W)
+				c.W.Data().InChan <- CloseYourselfCmd{}
+
 			}
 
 		default:
@@ -139,19 +141,16 @@ func (screen *Screen) Update() (err error) {
 	for n, eb := range butts {
 		switch {
 		case inpututil.IsMouseButtonJustPressed(eb):
-			me := MouseCmd{newPos, n, MouseDown}
-			screen.page.InChan <- me
+			screen.page.InChan <- MouseCmd{newPos, n, MouseDown}
 
 		case inpututil.IsMouseButtonJustReleased(eb):
-			me := MouseCmd{newPos, n, MouseUp}
-			screen.page.InChan <- me
+			screen.page.InChan <- MouseCmd{newPos, n, MouseUp}
 
 		default:
 			// Drag events only happen when position changes
 			if newPos.X != screen.cursorPos.X || newPos.Y != screen.cursorPos.Y {
 				screen.cursorPos = newPos
-				me := MouseCmd{newPos, n, MouseDrag}
-				screen.page.InChan <- me
+				screen.page.InChan <- MouseCmd{newPos, n, MouseDrag}
 			}
 		}
 	}
