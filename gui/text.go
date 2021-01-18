@@ -51,8 +51,9 @@ func (st *ScrollingText) Resize(rect image.Rectangle) image.Rectangle {
 // Draw xxx
 func (st *ScrollingText) Draw() {
 
-	color := color.RGBA{0xff, 0xff, 0, 0xff}
-	st.Screen.DrawRect(st.Rect, white)
+	clr := color.RGBA{0xff, 0xff, 0, 0xff}
+
+	st.OutChan <- DrawRectCmd{st.Rect, white}
 
 	textHeight := st.Style.TextHeight()
 
@@ -70,15 +71,16 @@ func (st *ScrollingText) Draw() {
 		}
 		texty += bminy
 		texty += bmaxy
-		st.Screen.drawText(line, st.Style.fontFace, textx, texty, color)
+		st.OutChan <- DrawTextCmd{line, st.Style.fontFace, image.Point{textx, texty}, clr}
 	}
 }
 
 // Run xxx
 func (st *ScrollingText) Run() {
 	for {
-		me := <-st.MouseChan
-		st.Screen.Log("ScrollingText.Run: me=%v", me)
+		t := <-st.InChan
+		me := t.(MouseCmd)
+		log.Printf("ScrollingText.Run: me=%v", me)
 		if !me.Pos.In(st.Rect) {
 			log.Printf("Text.HandleMouseInput: pos not in rect!\n")
 			continue

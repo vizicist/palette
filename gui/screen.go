@@ -1,7 +1,6 @@
 package gui
 
 import (
-	"fmt"
 	"image"
 	"image/color"
 	"log"
@@ -18,6 +17,7 @@ import (
 // Screen contains the pageWindow.
 // Screen and Style should be the only things calling ebiten.
 type Screen struct {
+	screenChan   chan WinOutput
 	page         *Page
 	style        *Style
 	rect         image.Rectangle
@@ -26,13 +26,13 @@ type Screen struct {
 	lastprint    time.Time
 	cursorPos    image.Point
 	cursorStyle  cursorStyle
-	mouseHandler chan MouseMsg
+	mouseHandler chan MouseCmd
 	foreColor    color.RGBA
 	backColor    color.RGBA
 }
 
 // MouseHandler xxx
-type MouseHandler func(image.Point, int, MouseMsg) bool
+type MouseHandler func(image.Point, int, MouseCmd) bool
 
 type cursorStyle int
 
@@ -50,6 +50,7 @@ func Run() {
 	ebiten.SetWindowTitle("Palette GUI (ebiten)")
 
 	screen := &Screen{
+		screenChan:   make(chan WinOutput),
 		page:         nil,
 		style:        NewStyle("fixed", 16),
 		rect:         image.Rectangle{},
@@ -62,10 +63,36 @@ func Run() {
 	}
 	screen.page = NewPageWindow(screen)
 
+	go screen.listen()
+
 	// This is it!  RunGame runs forever
 	if err := ebiten.RunGame(screen); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func (screen *Screen) listen() {
+	for {
+		select {
+
+		case cmd := <-screen.screenChan:
+
+			switch c := cmd.(type) {
+			case DrawLineCmd:
+				screen.drawLine(c.X0, c.Y0, c.X1, c.Y1, c.Color)
+			case DrawRectCmd:
+				screen.drawRect(c.Rect, c.Color)
+			case DrawFilledRectCmd:
+				screen.drawRect(c.Rect, c.Color)
+			case DrawTextCmd:
+				screen.drawText(c.Text, c.Face, c.Pos, c.Color)
+			}
+
+		default:
+			time.Sleep(time.Millisecond)
+		}
+	}
+
 }
 
 // Layout satisfies the ebiten.Game interface
@@ -106,17 +133,24 @@ func (screen *Screen) Update() (err error) {
 	for n, eb := range butts {
 		switch {
 		case inpututil.IsMouseButtonJustPressed(eb):
-			me := MouseMsg{newPos, n, MouseDown}
-			screen.page.MouseChan <- me
+			me := MouseCmd{newPos, n, MouseDown}
+			log.Printf("Before sending to page.InChan\n")
+			screen.page.InChan <- me
+			log.Printf("After sending to page.InChan\n")
+			// screen.page.MouseChan <- me
+
 		case inpututil.IsMouseButtonJustReleased(eb):
-			me := MouseMsg{newPos, n, MouseUp}
-			screen.page.MouseChan <- me
+			me := MouseCmd{newPos, n, MouseUp}
+			screen.page.InChan <- me
+			// screen.page.MouseChan <- me
+
 		default:
 			// Drag events only happen when position changes
 			if newPos.X != screen.cursorPos.X || newPos.Y != screen.cursorPos.Y {
 				screen.cursorPos = newPos
-				me := MouseMsg{newPos, n, MouseDrag}
-				screen.page.MouseChan <- me
+				me := MouseCmd{newPos, n, MouseDrag}
+				screen.page.InChan <- me
+				// screen.page.MouseChan <- me
 			}
 		}
 	}
@@ -155,19 +189,8 @@ func (screen *Screen) setCursorStyle(style cursorStyle) {
 	}
 }
 
-/*
-func (screen *Screen) spawnMouseHandler(handler MouseHandler) {
-	// take over all mouse handling until releaseMouse is called
-	screen.mouseHandler = handler
-}
-func (screen *Screen) setDefaultMouseHandler() {
-	// give it back to the page window
-	screen.mouseHandler = screen.page.HandleMouseInput
-}
-*/
-
-// DrawRect xxx
-func (screen *Screen) DrawRect(rect image.Rectangle, clr color.RGBA) {
+// drawRect xxx
+func (screen *Screen) drawRect(rect image.Rectangle, clr color.RGBA) {
 	x0 := rect.Min.X
 	y0 := rect.Min.Y
 	x1 := rect.Max.X
@@ -184,21 +207,12 @@ func (screen *Screen) drawLine(x0, y0, x1, y1 int, color color.RGBA) {
 		float64(x0), float64(y0), float64(x1), float64(y1), color)
 }
 
-func (screen *Screen) drawText(s string, face font.Face, x int, y int, clr color.Color) {
-	text.Draw(screen.eimage, s, face, x, y, clr)
+func (screen *Screen) drawText(s string, face font.Face, pos image.Point, clr color.Color) {
+	text.Draw(screen.eimage, s, face, pos.X, pos.Y, clr)
 }
 
 func (screen *Screen) drawFilledRect(rect image.Rectangle, clr color.Color) {
 	w := rect.Max.X - rect.Min.X
 	h := rect.Max.Y - rect.Min.Y
 	ebitenutil.DrawRect(screen.eimage, float64(rect.Min.X), float64(rect.Min.Y), float64(w), float64(h), clr)
-}
-
-// func (screen *Screen) log(s string) {
-// 	screen.page.log(s)
-// }
-
-// Log xxx
-func (screen *Screen) Log(format string, args ...interface{}) {
-	screen.page.log(fmt.Sprintf(format, args...))
 }

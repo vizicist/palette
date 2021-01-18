@@ -81,12 +81,14 @@ func (console *Console) Resize(rect image.Rectangle) image.Rectangle {
 // Run xxx
 func (console *Console) Run() {
 	for {
-		me := <-console.MouseChan
-		console.Screen.Log("Console.Run: me=%v", me)
-		o := ObjectUnder(console, me.Pos)
-		if o != nil {
-			o.Data().MouseChan <- me
-		}
+		me := <-console.InChan
+		log.Printf("Console.Run: me from InChan=%v", me)
+		/*
+			o := ObjectUnder(console, me.Pos)
+			if o != nil {
+				o.Data().MouseChan <- me
+			}
+		*/
 	}
 }
 
@@ -94,7 +96,7 @@ func (console *Console) Run() {
 func (console *Console) Draw() {
 
 	green := color.RGBA{0, 0xff, 0, 0xff}
-	console.Screen.DrawRect(console.Rect, green)
+	console.OutChan <- DrawRectCmd{console.Rect, green}
 
 	console.b1.Draw()
 	console.t1.Draw()
