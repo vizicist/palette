@@ -3,6 +3,8 @@ package gui
 import (
 	"image"
 	"image/color"
+	"log"
+	"time"
 )
 
 // ButtonCallback xxx
@@ -54,34 +56,55 @@ func (button *Button) Resize(rect image.Rectangle) image.Rectangle {
 
 // Draw xxx
 func (button *Button) Draw() {
-
-	color := color.RGBA{0xff, 0xff, 0xff, 0xff}
-
-	button.Screen.DrawRect(button.Rect, color)
-
-	button.Screen.drawText(button.label, button.Style.fontFace, button.labelX, button.labelY, color)
+	clr := color.RGBA{0xff, 0xff, 0xff, 0xff}
+	button.OutChan <- DrawRectCmd{button.Rect, clr}
+	button.OutChan <- DrawTextCmd{button.label, button.Style.fontFace, image.Point{button.labelX, button.labelY}, clr}
 }
 
 // Run xxx
 func (button *Button) Run() {
 	for {
-		me := <-button.MouseChan
-		button.Screen.Log("Button.Run: me=%v", me)
-		if !me.Pos.In(button.Rect) {
-			continue
-		}
-		switch me.Ddu {
-		case MouseDown:
-			// The mouse is inside the button
-			if button.isPressed == false {
-				button.isPressed = true
-				button.callback("down")
-			}
-		case MouseUp:
-			if button.isPressed == true {
-				button.isPressed = false
-				button.callback("up")
-			}
+
+		select {
+
+		case inCmd := <-button.InChan:
+
+			log.Printf("button.inCmd = %v", inCmd)
+
+			/*
+				switch t := inCmd.(type) {
+				case ResizeCmd:
+					button.Screen.Log("button.ResizeCmd=%v", t)
+				case RedrawCmd:
+					button.Screen.Log("button.RedrawCmd=%v", t)
+				}
+			*/
+
+			/*
+				case me := <-button.MouseChan:
+					button.Screen.Log("Button.Run: me=%v", me)
+					if !me.Pos.In(button.Rect) {
+						continue
+					}
+					switch me.Ddu {
+					case MouseDown:
+						// The mouse is inside the button
+						if button.isPressed == false {
+							button.isPressed = true
+							button.callback("down")
+						}
+					case MouseUp:
+						if button.isPressed == true {
+							button.isPressed = false
+							button.callback("up")
+						}
+					}
+			*/
+
+		default:
+			log.Printf("Hey, default in button!\n")
+			time.Sleep(time.Millisecond)
+
 		}
 	}
 }

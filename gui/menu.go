@@ -3,6 +3,7 @@ package gui
 import (
 	"image"
 	"image/color"
+	"log"
 	"runtime"
 )
 
@@ -19,7 +20,6 @@ type Menu struct {
 	sweepBegin   image.Point
 	sweepEnd     image.Point
 	resizeState  int
-	resizeChan   chan MouseMsg
 }
 
 // MenuCallback xxx
@@ -82,17 +82,22 @@ func (menu *Menu) Resize(rect image.Rectangle) image.Rectangle {
 // Draw xxx
 func (menu *Menu) Draw() {
 
-	menu.Screen.drawFilledRect(menu.Rect, color.RGBA{0, 0, 0, 0xff})
-	menu.Screen.DrawRect(menu.Rect, color.RGBA{0xff, 0xff, 0xff, 0xff})
+	menu.OutChan <- DrawFilledRectCmd{menu.Rect, color.RGBA{0, 0, 0, 0xff}}
+	menu.OutChan <- DrawRectCmd{menu.Rect, color.RGBA{0xff, 0xff, 0xff, 0xff}}
+
 	liney := menu.Rect.Min.Y + menu.handleHeight
 
 	// Draw the bar at the top of the menu
-	menu.Screen.drawLine(menu.Rect.Min.X, liney, menu.Rect.Max.X, liney, white)
+	menu.OutChan <- DrawLineCmd{menu.Rect.Min.X, liney, menu.Rect.Max.X, liney, white}
+
 	midx := menu.Rect.Max.X - menu.Rect.Dx()/4
-	menu.Screen.drawLine(midx, menu.Rect.Min.Y, midx, liney, white)
+
+	menu.OutChan <- DrawLineCmd{midx, menu.Rect.Min.Y, midx, liney, white}
+
 	// the midx-1 is just so the X looks a little nicer
-	menu.Screen.drawLine(midx-1, menu.Rect.Min.Y, menu.Rect.Max.X, liney, white)
-	menu.Screen.drawLine(midx-1, liney, menu.Rect.Max.X, menu.Rect.Min.Y, white)
+
+	menu.OutChan <- DrawLineCmd{midx - 1, menu.Rect.Min.Y, menu.Rect.Max.X, liney, white}
+	menu.OutChan <- DrawLineCmd{midx - 1, liney, menu.Rect.Max.X, menu.Rect.Min.Y, white}
 
 	nitems := len(menu.items)
 	liney0 := menu.Rect.Min.Y + menu.handleHeight + menu.rowHeight/4 - 4
@@ -104,12 +109,13 @@ func (menu *Menu) Draw() {
 			fore = black
 			back = white
 			itemRect := image.Rect(menu.Rect.Min.X+1, liney-menu.rowHeight, menu.Rect.Max.X-1, liney)
-			menu.Screen.drawFilledRect(itemRect, back)
+
+			menu.OutChan <- DrawFilledRectCmd{itemRect, back}
 		}
 
-		menu.Screen.drawText(item.label, menu.Style.fontFace, item.posX, item.posY, fore)
+		menu.OutChan <- DrawTextCmd{item.label, menu.Style.fontFace, image.Point{item.posX, item.posY}, fore}
 		if n != menu.itemSelected && n < (nitems-1) {
-			menu.Screen.drawLine(menu.Rect.Min.X, liney, menu.Rect.Max.X, liney, fore)
+			menu.OutChan <- DrawLineCmd{menu.Rect.Min.X, liney, menu.Rect.Max.X, liney, fore}
 		}
 	}
 }
@@ -118,11 +124,15 @@ func (menu *Menu) Draw() {
 func (menu *Menu) Run() {
 
 	for {
-		me := <-menu.MouseChan
-		menu.Screen.Log("Menu.Run: me=%v", me)
-		menu.Screen.Log("# of goroutines: %d", runtime.NumGoroutine())
+		i := <-menu.InChan
+		me := i.(MouseCmd)
+
+		log.Printf("Menu.Run: MouseCmd=%v", me)
+
+		log.Printf("# of goroutines: %d", runtime.NumGoroutine())
+
 		if me.Pos.Y <= menu.Rect.Min.Y+menu.handleHeight {
-			menu.Screen.Log("Menu.Run: deselecting item")
+			log.Printf("Menu.Run: deselecting item")
 			menu.itemSelected = -1
 			continue
 		}
@@ -130,7 +140,6 @@ func (menu *Menu) Run() {
 		for n, item := range menu.items {
 			if me.Pos.Y < item.posY {
 				menu.itemSelected = n
-				menu.Screen.Log("Menu.Run: selected %d", n)
 				break
 			}
 		}
@@ -138,11 +147,15 @@ func (menu *Menu) Run() {
 		// No callbackups until MouseUp
 		if me.Ddu == MouseUp {
 			item := menu.items[menu.itemSelected]
-			menu.Screen.Log("Calling callback for %s", item.label)
+			log.Printf("Calling callback for %s", item.label)
 			item.callback(item.label)
 			menu.itemSelected = -1
+			break
 		}
 	}
+	// We're done with this menu, so tell window system to delete us
+	msg := KillWindowCmd{W: menu}
+	menu.OutChan <- msg
 }
 
 func (menu *Menu) addItem(s string, cb MenuCallback) {
