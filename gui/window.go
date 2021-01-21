@@ -1,6 +1,7 @@
 package gui
 
 import (
+	"fmt"
 	"image"
 	"image/color"
 	"log"
@@ -10,43 +11,45 @@ import (
 
 // Window xxx
 type Window interface {
-	Run()
-	Draw()
-	Resize(image.Rectangle) image.Rectangle
+	// ReadFromUpstream()
 	Data() *WindowData
+	DoDownstream(DownstreamCmd)
+	DoUpstream(Window, UpstreamCmd)
 }
 
 // WindowData xxx
 type WindowData struct {
-	InChan  chan WinInput  // unbuffered?
-	OutChan chan WinOutput // unbuffered?
-	// MouseChan chan MouseCmd  // unbuffered?
-	Style      *Style
-	Rect       image.Rectangle // in Screen coordinates, not relative
-	windows    map[Window]string
-	order      []Window // display order
-	isMenu     bool
-	inputStack []chan WinInput
+	parent Window
+	Style  *Style
+	Rect   image.Rectangle // in Screen coordinates, not relative
+
+	children   map[string]Window
+	windowName map[Window]string
+
+	order []string // display order
+}
+
+// DownstreamCmd xxx
+type DownstreamCmd interface {
+}
+
+// UpstreamCmd xxx
+type UpstreamCmd interface {
 }
 
 // NewWindowData xxx
 func NewWindowData(parent Window) WindowData {
 	return WindowData{
-		InChan:     make(chan WinInput),
-		OutChan:    parent.Data().OutChan,
-		Style:      parent.Data().Style,
+		parent: parent,
+		// fromUpstream:    fromUpstream,
+		// toUpstream:      toUpstream,
+		Style:      NewStyle("fixed", 16),
 		Rect:       image.Rectangle{},
-		windows:    make(map[Window]string),
-		inputStack: make([]chan WinInput, 0),
+		children:   make(map[string]Window),
+		windowName: make(map[Window]string),
+		// childWaitGroup: &sync.WaitGroup{},
+		order: make([]string, 0),
 	}
-}
-
-// WinInput xxx
-type WinInput interface {
-}
-
-// WinOutput xxx
-type WinOutput interface {
 }
 
 ////////////////////////////////////////////
@@ -74,6 +77,15 @@ type RedrawCmd struct {
 type CloseYourselfCmd struct {
 }
 
+// ClearCmd xxx
+type ClearCmd struct {
+}
+
+// AddLineCmd xxx
+type AddLineCmd struct {
+	line string
+}
+
 ////////////////////////////////////////////
 // These are the standard WinOutput commands
 ////////////////////////////////////////////
@@ -83,10 +95,20 @@ type CloseMeCmd struct {
 	W Window
 }
 
+// Stringer xxx
+func (c CloseMeCmd) Stringer() string {
+	return fmt.Sprintf("CloseMeCmd w=%v", c.W)
+}
+
 // DrawLineCmd xxx
 type DrawLineCmd struct {
 	XY0, XY1 image.Point
 	Color    color.RGBA
+}
+
+// Stringer xxx
+func (c DrawLineCmd) Stringer() string {
+	return fmt.Sprintf("DrawLineCmd XY0=%v XY1=%v color=%v", c.XY0, c.XY1, c.Color)
 }
 
 // DrawRectCmd xxx
@@ -95,10 +117,20 @@ type DrawRectCmd struct {
 	Color color.RGBA
 }
 
+// Stringer xxx
+func (c DrawRectCmd) Stringer() string {
+	return fmt.Sprintf("DrawRectCmd rect=%v color=%v", c.Rect, c.Color)
+}
+
 // DrawFilledRectCmd xxx
 type DrawFilledRectCmd struct {
 	Rect  image.Rectangle
 	Color color.RGBA
+}
+
+// Stringer xxx
+func (c DrawFilledRectCmd) Stringer() string {
+	return fmt.Sprintf("DrawFilledRectCmd rect=%v color=%v", c.Rect, c.Color)
 }
 
 // DrawTextCmd xxx
@@ -107,6 +139,11 @@ type DrawTextCmd struct {
 	Face  font.Face
 	Pos   image.Point
 	Color color.RGBA
+}
+
+// Stringer xxx
+func (c DrawTextCmd) Stringer() string {
+	return fmt.Sprintf("DrawTextCmd Pos=%v Text=%v", c.Pos, c.Text)
 }
 
 // SetCursorStyleCmd xxx
@@ -125,94 +162,75 @@ const (
 )
 
 // WindowUnder xxx
-func WindowUnder(o Window, pos image.Point) Window {
+func WindowUnder(o Window, pos image.Point) (Window, string) {
+
 	windata := o.Data()
+
 	// Check in reverse order
 	for n := len(windata.order) - 1; n >= 0; n-- {
-		w := windata.order[n]
-		if w == nil {
-			log.Printf("WindowUnder: value %d is nil?\n", n)
-			return nil
-		}
-		if pos.In(w.Data().Rect) {
-			return w
+		name := windata.order[n]
+
+		child := windata.children[name]
+		childRect := WindowRect(child)
+
+		if pos.In(childRect) {
+			return windata.children[name], name
 		}
 	}
-	return nil
+	return nil, ""
 }
 
-// AddWindow xxx
-func AddWindow(parent Window, o Window, name string) {
-	windata := parent.Data()
-	_, ok := windata.windows[o]
+// AddChild xxx
+func AddChild(parent Window, name string, child Window) {
+
+	parentData := parent.Data()
+	_, ok := parentData.children[name]
 	if ok {
-		log.Printf("There's already a window %v in that Window\n", o)
+		log.Printf("AddChild: there's already a child named %s\n", name)
 		return
 	}
-	windata.windows[o] = name
+
 	// add it to the end of the display order
-	windata.order = append(windata.order, o)
+	parentData.order = append(parentData.order, name)
+
+	parentData.children[name] = child
+	parentData.windowName[child] = name
 }
 
-// RemoveWindow xxx
-func RemoveWindow(parent Window, w Window) {
+// RemoveChild xxx
+func RemoveChild(parent Window, w Window) {
 
 	windata := parent.Data()
-	name, ok := windata.windows[w]
+	name, ok := windata.windowName[w]
 	if !ok {
 		log.Printf("RemoveWindow: no window w=%v\n", w)
 		return
 	}
-	log.Printf("RemoveWindow: name=%s w=%v\n", name, w)
 
-	delete(windata.windows, w)
+	delete(windata.windowName, w)
+	delete(windata.children, name)
+
 	// find and delete it in the .order array
 	for n, win := range windata.order {
-		if w == win {
+		if name == win {
 			copy(windata.order[n:], windata.order[n+1:])
 			newlen := len(windata.order) - 1
-			windata.order[newlen] = nil // XXX does this do anything?
+			windata.order[newlen] = "" // XXX does this do anything?
 			windata.order = windata.order[:newlen]
 			break
 		}
 	}
 }
 
-// PushWindowInput xxx
-func PushWindowInput(w Window) chan WinInput {
-	windata := w.Data()
-	// Save the current Input
-	newInput := make(chan WinInput)
-	windata.inputStack = append(windata.inputStack, newInput)
-	windata.InChan = newInput
-	return newInput
+// RedrawChildren xxx
+func RedrawChildren(w Window) {
+	for _, name := range w.Data().order {
+		w := w.Data().children[name]
+		w.DoDownstream(RedrawCmd{})
+	}
 }
 
-// PopWindowInput xxx
-func PopWindowInput(w Window) {
-	windata := w.Data()
-	stackSize := len(windata.inputStack)
-	if stackSize == 0 {
-		log.Printf("menu.PopInput: no input to pop!?\n")
-		return
-	}
-	close(windata.InChan)
-	// pop off the tail of the array
-	windata.InChan = windata.inputStack[stackSize-1]
-	windata.inputStack = windata.inputStack[:stackSize-1]
-}
-
-// CloseWindow xxx
-func CloseWindow(w Window) {
-	windata := w.Data()
-	for len(windata.inputStack) > 0 {
-		log.Printf("CloseWindow: inputStack isn't empty?\n")
-		PopWindowInput(w)
-	}
-	if windata.InChan == nil {
-		log.Printf("CloseWindow: InChan is nil?\n")
-	} else {
-		close(windata.InChan)
-		windata.InChan = nil
-	}
+// WindowRect w
+func WindowRect(w Window) image.Rectangle {
+	return w.Data().Rect
 }

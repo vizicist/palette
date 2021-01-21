@@ -17,18 +17,17 @@ import (
 // Screen contains the pageWindow.
 // Screen and Style should be the only things calling ebiten.
 type Screen struct {
-	cmdChan      chan WinOutput
-	page         *Page
-	style        *Style
-	rect         image.Rectangle
-	eimage       *ebiten.Image
-	time0        time.Time
-	lastprint    time.Time
-	cursorPos    image.Point
-	cursorStyle  cursorStyle
-	mouseHandler chan MouseCmd
-	foreColor    color.RGBA
-	backColor    color.RGBA
+	WindowData
+	page        Window
+	style       *Style
+	rect        image.Rectangle
+	eimage      *ebiten.Image
+	time0       time.Time
+	lastprint   time.Time
+	cursorPos   image.Point
+	cursorStyle cursorStyle
+	foreColor   color.RGBA
+	backColor   color.RGBA
 }
 
 // MouseHandler xxx
@@ -50,21 +49,17 @@ func Run() {
 	ebiten.SetWindowTitle("Palette GUI (ebiten)")
 
 	screen := &Screen{
-		cmdChan:      make(chan WinOutput),
-		page:         nil,
-		style:        NewStyle("fixed", 16),
-		rect:         image.Rectangle{},
-		eimage:       &ebiten.Image{},
-		time0:        time.Now(),
-		lastprint:    time.Now(),
-		mouseHandler: nil,
-		foreColor:    white,
-		backColor:    black,
+		page:      nil,
+		style:     NewStyle("fixed", 16),
+		rect:      image.Rectangle{},
+		eimage:    &ebiten.Image{},
+		time0:     time.Now(),
+		lastprint: time.Now(),
+		foreColor: white,
+		backColor: black,
 	}
-	screen.page = NewPageWindow(screen)
 
-	log.Printf("Run: go screen.runCmds()\n")
-	go screen.runCmds()
+	screen.page = NewPageWindow(screen)
 
 	// This is it!  RunGame runs forever
 	if err := ebiten.RunGame(screen); err != nil {
@@ -72,37 +67,36 @@ func Run() {
 	}
 }
 
-func (screen *Screen) runCmds() {
+// Data xxx
+func (screen *Screen) Data() *WindowData {
+	return &screen.WindowData
+}
 
-	for {
-		select {
+// DoDownstream xxx
+func (screen *Screen) DoDownstream(t DownstreamCmd) {
+}
 
-		case cmd := <-screen.cmdChan:
+// DoUpstream xxx
+func (screen *Screen) DoUpstream(w Window, t UpstreamCmd) {
 
-			switch c := cmd.(type) {
-			case DrawLineCmd:
-				screen.drawLine(c.XY0, c.XY1, c.Color)
-			case DrawRectCmd:
-				screen.drawRect(c.Rect, c.Color)
-			case DrawFilledRectCmd:
-				screen.drawFilledRect(c.Rect, c.Color)
-			case DrawTextCmd:
-				screen.drawText(c.Text, c.Face, c.Pos, c.Color)
-			case CloseMeCmd:
-				if c.W == screen.page.menu {
-					screen.page.menu = nil
-				}
-				log.Printf("screen.Run: CloseMeCmd on c.W=%v\n", c.W)
-				RemoveWindow(screen.page, c.W)
-				c.W.Data().InChan <- CloseYourselfCmd{}
-
-			}
-
-		default:
-			time.Sleep(time.Millisecond)
-		}
+	switch cmd := t.(type) {
+	case DrawLineCmd:
+		// log.Printf("screen.runCmds: %s\n", c.Stringer())
+		screen.drawLine(cmd.XY0, cmd.XY1, cmd.Color)
+	case DrawRectCmd:
+		// log.Printf("screen.runCmds: %s\n", cmd.Stringer())
+		screen.drawRect(cmd.Rect, cmd.Color)
+	case DrawFilledRectCmd:
+		// log.Printf("screen.runCmds: %s\n", cmd.Stringer())
+		screen.drawFilledRect(cmd.Rect, cmd.Color)
+	case DrawTextCmd:
+		// log.Printf("screen.runCmds: %s\n", cmd.Stringer())
+		screen.drawText(cmd.Text, cmd.Face, cmd.Pos, cmd.Color)
+	case CloseMeCmd:
+		log.Printf("screen.runCmds: SHOULD NOT BE GETTING CloseMeCmd!?\n")
+	default:
+		log.Printf("screen.runCmds: UNRECOGNIZED cmd=%v\n", cmd)
 	}
-
 }
 
 // Layout satisfies the ebiten.Game interface
@@ -113,7 +107,8 @@ func (screen *Screen) Layout(width, height int) (int, int) {
 	}
 	if screen.rect.Dx() != width || screen.rect.Dy() != height {
 		screen.rect = image.Rect(0, 0, width, height)
-		screen.page.Resize(screen.rect)
+		log.Printf("Screen.Layout! new size=%v\n", screen.rect)
+		screen.page.DoDownstream(ResizeCmd{screen.rect})
 	}
 	return width, height
 }
@@ -121,6 +116,7 @@ func (screen *Screen) Layout(width, height int) (int, int) {
 // Update satisfies the ebiten.Game interface
 func (screen *Screen) Update() (err error) {
 
+	// log.Printf("Screen.Update! -------------------\n")
 	x, y := ebiten.CursorPosition()
 	newPos := image.Point{x, y}
 
@@ -138,19 +134,23 @@ func (screen *Screen) Update() (err error) {
 
 	// Do we really need to check all 3 mouse buttons?
 	// Will more than 1 button ever be used?  Not sure.
+	// pageinput := screen.page.Data().fromUpstream
 	for n, eb := range butts {
 		switch {
 		case inpututil.IsMouseButtonJustPressed(eb):
-			screen.page.InChan <- MouseCmd{newPos, n, MouseDown}
+			screen.page.DoDownstream(MouseCmd{newPos, n, MouseDown})
+			// pageinput <- MouseCmd{newPos, n, MouseDown}
 
 		case inpututil.IsMouseButtonJustReleased(eb):
-			screen.page.InChan <- MouseCmd{newPos, n, MouseUp}
+			screen.page.DoDownstream(MouseCmd{newPos, n, MouseUp})
+			// pageinput <- MouseCmd{newPos, n, MouseUp}
 
 		default:
 			// Drag events only happen when position changes
 			if newPos.X != screen.cursorPos.X || newPos.Y != screen.cursorPos.Y {
 				screen.cursorPos = newPos
-				screen.page.InChan <- MouseCmd{newPos, n, MouseDrag}
+				screen.page.DoDownstream(MouseCmd{newPos, n, MouseDrag})
+				// pageinput <- MouseCmd{newPos, n, MouseDrag}
 			}
 		}
 	}
@@ -159,8 +159,16 @@ func (screen *Screen) Update() (err error) {
 
 // Draw satisfies the ebiten.Game interface
 func (screen *Screen) Draw(eimage *ebiten.Image) {
+	// log.Printf("Screen.Draw! ================================\n")
 	screen.eimage = eimage
-	screen.page.Draw()
+
+	screen.drawRect(screen.rect, screen.foreColor)
+	screen.drawRect(screen.rect.Inset(20), screen.foreColor)
+	screen.drawRect(screen.rect.Inset(200), screen.foreColor)
+
+	screen.page.DoDownstream(RedrawCmd{})
+
+	screen.page.DoDownstream(DrawRectCmd{screen.rect.Inset(250), color.RGBA{0xff, 0xff, 0x00, 0xff}})
 
 	pos := screen.cursorPos
 	switch screen.cursorStyle {

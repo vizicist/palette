@@ -3,39 +3,29 @@ package gui
 import (
 	"image"
 	"log"
-	"time"
 )
 
 // Page is the top-most Window
 type Page struct {
 	WindowData
 	// console *Console
-	menu *Menu // popup menu
+	// pagemenu Window // popup menu
 }
 
 // NewPageWindow xxx
-func NewPageWindow(screen *Screen) *Page {
-	// Normally, Windows use NewWindowData(), but
-	// the top-level page Window is special.
+func NewPageWindow(parent Window) Window {
 	page := &Page{
-		WindowData: WindowData{ //
-			InChan:  make(chan WinInput, 10),
-			OutChan: screen.cmdChan,
-			Style:   screen.style,
-			Rect:    image.Rectangle{},
-			windows: make(map[Window]string),
-		},
-		// console: nil,
+		WindowData: NewWindowData(parent),
 	}
 
 	// Add initial contents of PageWindow, may go away once
 	// windows are persistent
-
 	// page.console = NewConsole(page)
-	// AddWindow(page, "console1", page.console)
+	// AddChild(page, "console1", page.console)
 
 	log.Printf("NewPageWindow: go page.Run()\n")
-	go page.Run()
+	// go page.readFromUpstream(page.fromUpstream)
+	// go page.readFromChildren()
 
 	return page
 }
@@ -45,8 +35,34 @@ func (page *Page) Data() *WindowData {
 	return &page.WindowData
 }
 
-// Resize xxx
-func (page *Page) Resize(r image.Rectangle) image.Rectangle {
+// DoDownstream xxx
+func (page *Page) DoDownstream(t DownstreamCmd) {
+
+	switch cmd := t.(type) {
+
+	case ResizeCmd:
+		page.resize(cmd.Rect)
+
+	case RedrawCmd:
+		RedrawChildren(page)
+
+	case MouseCmd:
+		page.mouseHandler(cmd)
+	}
+}
+
+// DoUpstream xxx
+func (page *Page) DoUpstream(w Window, t UpstreamCmd) {
+
+	switch cmd := t.(type) {
+	case CloseMeCmd:
+		RemoveChild(page, cmd.W)
+	default:
+		page.parent.DoUpstream(w, t)
+	}
+}
+
+func (page *Page) resize(r image.Rectangle) image.Rectangle {
 	page.Rect = r
 	// midy := (r.Min.Y + r.Max.Y) / 2
 
@@ -67,78 +83,34 @@ func (page *Page) Resize(r image.Rectangle) image.Rectangle {
 	return page.Rect
 }
 
-// Draw xxx
-func (page *Page) Draw() {
-	data := page.Data()
-	for _, win := range data.order {
-		win.Draw()
+func (page *Page) mouseHandler(cmd MouseCmd) {
+
+	pos := cmd.Pos
+
+	if !pos.In(page.Rect) {
+		log.Printf("Page.Run: pos=%v not under Page!?", pos)
+		return
 	}
-}
 
-// Run xxx
-func (page *Page) Run() {
+	o, _ := WindowUnder(page, pos)
+	if o != nil {
+		o.DoDownstream(cmd)
+		return
+	}
 
-	for {
-
-		// log.Printf("page.Run: top of loop, page.Input=%v\n", page.InChan)
-
-		select {
-
-		case inCmd := <-page.InChan:
-
-			switch t := inCmd.(type) {
-
-			case ResizeCmd:
-				log.Printf("page.ResizeCmd=%v", t)
-
-			case RedrawCmd:
-				log.Printf("page.RedrawCmd=%v", t)
-
-			case MouseCmd:
-				me := t
-				pos := me.Pos
-
-				// log.Printf("page got MouseCmd = %v\n", me)
-
-				if !pos.In(page.Rect) {
-					log.Printf("Page.Run: pos=%v not under Page!?", pos)
-					continue
-				}
-
-				o := WindowUnder(page, pos)
-				if o != nil {
-					o.Data().InChan <- me
-					continue
-				}
-
-				// nothing underneath the mouse
-				if me.Ddu == MouseDown {
-					// pop up the PageMenu on Down
-					menuName := "pagemenu"
-					if page.menu != nil {
-
-						// We only want one page.menu on the screen at a time.
-						log.Printf("page.Run: sending CloseMe for page.menu = %v\n", page.menu)
-						page.OutChan <- CloseMeCmd{W: page.menu}
-						page.menu = nil
-					} else {
-						page.menu = NewPageMenu(page)
-						log.Printf("page.Run: New page.menu = %v\n", page.menu)
-						AddWindow(page, page.menu, menuName)
-						page.menu.Resize(image.Rect(pos.X, pos.Y, pos.X+200, pos.Y+200))
-					}
-				}
-			}
-
-		default:
-			// log.Printf("Select default!\n")
-			time.Sleep(time.Millisecond)
+	// nothing underneath the mouse
+	if cmd.Ddu == MouseDown {
+		// pop up the PageMenu on Down
+		menuName := "pagemenu"
+		child, ok := page.children[menuName]
+		if ok {
+			// We only want one pagemenu on the screen at a time.
+			RemoveChild(page, child)
+		} else {
+			pagemenu := NewPageMenu(page)
+			// page.pagemenu = pagemenu
+			AddChild(page, menuName, pagemenu)
+			pagemenu.DoDownstream(ResizeCmd{image.Rect(pos.X, pos.Y, pos.X+200, pos.Y+200)})
 		}
 	}
-}
-
-func (page *Page) log(s string) {
-	// log.Printf("Page.log: %s\n", s)
-	log.Printf("%s\n", s)
-	// page.console.AddLine(s)
 }
