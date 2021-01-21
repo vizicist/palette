@@ -18,20 +18,24 @@ type ScrollingText struct {
 }
 
 // NewScrollingText xxx
-func NewScrollingText(parent Window) *ScrollingText {
+func NewScrollingText(parent Window) Window {
 	st := &ScrollingText{
 		WindowData: NewWindowData(parent),
 		isPressed:  false,
 		lines:      make([]string, 0),
 	}
 	log.Printf("NewScrollingText: go st.Run()\n")
-	go st.Run()
+	// go st.readFromUpstream()
 	return st
 }
 
 // Data xxx
 func (st *ScrollingText) Data() *WindowData {
 	return &st.WindowData
+}
+
+// DoUpstream xxx
+func (st *ScrollingText) DoUpstream(w Window, cmd UpstreamCmd) {
 }
 
 // Resize xxx
@@ -54,7 +58,7 @@ func (st *ScrollingText) Draw() {
 
 	clr := color.RGBA{0xff, 0xff, 0, 0xff}
 
-	st.OutChan <- DrawRectCmd{st.Rect, white}
+	st.parent.DoUpstream(st, DrawRectCmd{st.Rect, white})
 
 	textHeight := st.Style.TextHeight()
 
@@ -72,19 +76,26 @@ func (st *ScrollingText) Draw() {
 		}
 		texty += bminy
 		texty += bmaxy
-		st.OutChan <- DrawTextCmd{line, st.Style.fontFace, image.Point{textx, texty}, clr}
+		st.parent.DoUpstream(st, DrawTextCmd{line, st.Style.fontFace, image.Point{textx, texty}, clr})
 	}
 }
 
-// Run xxx
-func (st *ScrollingText) Run() {
-	for {
-		t := <-st.InChan
-		me := t.(MouseCmd)
-		log.Printf("ScrollingText.Run: me=%v", me)
-		if !me.Pos.In(st.Rect) {
+// DoDownstream xxx
+func (st *ScrollingText) DoDownstream(c DownstreamCmd) {
+
+	log.Printf("ScrollingText.Run: cmd = %v", c)
+
+	switch cmd := c.(type) {
+	case ResizeCmd:
+		log.Printf("ScrollingText: ResizeCmd\n")
+	case RedrawCmd:
+		log.Printf("ScrollingText: RedrawCmd\n")
+	case ClearCmd:
+		log.Printf("ScrollingText: Clear\n")
+	case MouseCmd:
+		log.Printf("ScrollingText.MouseCmd: cmd=%v", cmd)
+		if !cmd.Pos.In(st.Rect) {
 			log.Printf("Text.HandleMouseInput: pos not in rect!\n")
-			continue
 		}
 	}
 }

@@ -2,35 +2,28 @@ package gui
 
 import (
 	"image"
-	"image/color"
 	"log"
-	"time"
 )
-
-// ButtonCallback xxx
-type ButtonCallback func(updown string)
 
 // Button xxx
 type Button struct {
 	WindowData
 	isPressed bool
-	callback  ButtonCallback
 	label     string
 	labelX    int
 	labelY    int
 }
 
 // NewButton xxx
-func NewButton(parent Window, text string, cb ButtonCallback) *Button {
-	b := &Button{
+func NewButton(parent Window, text string) Window {
+	w := &Button{
 		WindowData: NewWindowData(parent),
 		isPressed:  false,
 		label:      text,
-		callback:   cb,
 	}
-	log.Printf("NewButton: go b.Run()\n")
-	go b.Run()
-	return b
+	log.Printf("NewButton: go w.Run()\n")
+	// go w.readFromUpstream()
+	return w
 }
 
 // Data xxx
@@ -57,55 +50,49 @@ func (button *Button) Resize(rect image.Rectangle) image.Rectangle {
 
 // Draw xxx
 func (button *Button) Draw() {
-	clr := color.RGBA{0xff, 0xff, 0xff, 0xff}
-	button.OutChan <- DrawRectCmd{button.Rect, clr}
-	button.OutChan <- DrawTextCmd{button.label, button.Style.fontFace, image.Point{button.labelX, button.labelY}, clr}
+	log.Printf("Button.Draw\n")
+	// clr := color.RGBA{0xff, 0xff, 0xff, 0xff}
+	// button.toUpstream <- DrawRectCmd{button.Rect, clr}
+	// button.toUpstream <- DrawTextCmd{button.label, button.Style.fontFace, image.Point{button.labelX, button.labelY}, clr}
 }
 
-// Run xxx
-func (button *Button) Run() {
-	for {
+// DoUpstream xxx
+func (button *Button) DoUpstream(w Window, cmd UpstreamCmd) {
+}
 
-		select {
+// DoDownstream xxx
+func (button *Button) DoDownstream(cmd DownstreamCmd) {
 
-		case inCmd := <-button.InChan:
+	log.Printf("Button.DoDownstream: cmd = %v", cmd)
 
-			log.Printf("button.inCmd = %v", inCmd)
-
-			/*
-				switch t := inCmd.(type) {
-				case ResizeCmd:
-					button.Screen.Log("button.ResizeCmd=%v", t)
-				case RedrawCmd:
-					button.Screen.Log("button.RedrawCmd=%v", t)
-				}
-			*/
-
-			/*
-				case me := <-button.MouseChan:
-					button.Screen.Log("Button.Run: me=%v", me)
-					if !me.Pos.In(button.Rect) {
-						continue
-					}
-					switch me.Ddu {
-					case MouseDown:
-						// The mouse is inside the button
-						if button.isPressed == false {
-							button.isPressed = true
-							button.callback("down")
-						}
-					case MouseUp:
-						if button.isPressed == true {
-							button.isPressed = false
-							button.callback("up")
-						}
-					}
-			*/
-
-		default:
-			log.Printf("Hey, default in button!\n")
-			time.Sleep(time.Millisecond)
-
+	/*
+		switch t := inCmd.(type) {
+		case ResizeCmd:
+			button.Screen.Log("button.ResizeCmd=%v", t)
+		case RedrawCmd:
+			button.Screen.Log("button.RedrawCmd=%v", t)
 		}
-	}
+	*/
+
+	/*
+		case me := <-button.MouseChan:
+			button.Screen.Log("Button.Run: me=%v", me)
+			if !me.Pos.In(button.Rect) {
+				continue
+			}
+			switch me.Ddu {
+			case MouseDown:
+				// The mouse is inside the button
+				if button.isPressed == false {
+					button.isPressed = true
+					button.callback("down")
+				}
+			case MouseUp:
+				if button.isPressed == true {
+					button.isPressed = false
+					button.callback("up")
+				}
+			}
+	*/
+
 }

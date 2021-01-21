@@ -4,7 +4,6 @@ import (
 	"image"
 	"image/color"
 	"log"
-	"time"
 )
 
 // Menu xxx
@@ -34,16 +33,14 @@ type MenuItem struct {
 }
 
 // NewMenu xxx
-func NewMenu(parent Window) *Menu {
+func NewMenu(parent Window, items []MenuItem) Window {
 	m := &Menu{
 		WindowData:   NewWindowData(parent),
 		isPressed:    false,
-		items:        make([]MenuItem, 0),
+		items:        items,
 		itemSelected: -1,
 		isTransient:  true,
 	}
-	log.Printf("NewMenu: go m.Run()\n")
-	go m.Run()
 	return m
 }
 
@@ -52,8 +49,12 @@ func (menu *Menu) Data() *WindowData {
 	return &menu.WindowData
 }
 
+// DoUpstream xxx
+func (menu *Menu) DoUpstream(w Window, cmd UpstreamCmd) {
+}
+
 // Resize xxx
-func (menu *Menu) Resize(rect image.Rectangle) image.Rectangle {
+func (menu *Menu) resize(rect image.Rectangle) image.Rectangle {
 
 	// Recompute all the y positions in the items
 	menu.rowHeight = menu.Style.TextHeight() + 6
@@ -80,24 +81,29 @@ func (menu *Menu) Resize(rect image.Rectangle) image.Rectangle {
 	return menu.Rect
 }
 
-// Draw xxx
-func (menu *Menu) Draw() {
+// Upstream xxx
+func (menu *Menu) Upstream(cmd UpstreamCmd) {
+	menu.parent.DoUpstream(menu, cmd)
+}
 
-	menu.OutChan <- DrawFilledRectCmd{menu.Rect, color.RGBA{0, 0, 0, 0xff}}
-	menu.OutChan <- DrawRectCmd{menu.Rect, color.RGBA{0xff, 0xff, 0xff, 0xff}}
+// Draw xxx
+func (menu *Menu) redraw() {
+
+	menu.Upstream(DrawRectCmd{menu.Rect, color.RGBA{0xff, 0xff, 0xff, 0xff}})
+	menu.Upstream(DrawFilledRectCmd{menu.Rect.Inset(4), color.RGBA{0, 0, 0, 0xff}})
 
 	liney := menu.Rect.Min.Y + menu.handleHeight
 
 	// Draw the bar at the top of the menu
-	menu.OutChan <- DrawLineCmd{image.Point{menu.Rect.Min.X, liney}, image.Point{menu.Rect.Max.X, liney}, white}
+	menu.Upstream(DrawLineCmd{image.Point{menu.Rect.Min.X, liney}, image.Point{menu.Rect.Max.X, liney}, white})
 
 	midx := menu.Rect.Max.X - menu.Rect.Dx()/4
 
 	// Draw the X at the right side of the handle area
-	menu.OutChan <- DrawLineCmd{image.Point{midx, menu.Rect.Min.Y}, image.Point{midx, liney}, white}
+	menu.Upstream(DrawLineCmd{image.Point{midx, menu.Rect.Min.Y}, image.Point{midx, liney}, white})
 	// the midx-1 is just so the X looks a little nicer
-	menu.OutChan <- DrawLineCmd{image.Point{midx - 1, menu.Rect.Min.Y}, image.Point{menu.Rect.Max.X, liney}, white}
-	menu.OutChan <- DrawLineCmd{image.Point{midx - 1, liney}, image.Point{menu.Rect.Max.X, menu.Rect.Min.Y}, white}
+	menu.Upstream(DrawLineCmd{image.Point{midx - 1, menu.Rect.Min.Y}, image.Point{menu.Rect.Max.X, liney}, white})
+	menu.Upstream(DrawLineCmd{image.Point{midx - 1, liney}, image.Point{menu.Rect.Max.X, menu.Rect.Min.Y}, white})
 
 	nitems := len(menu.items)
 	liney0 := menu.Rect.Min.Y + menu.handleHeight + menu.rowHeight/4 - 4
@@ -110,65 +116,61 @@ func (menu *Menu) Draw() {
 			back = white
 			itemRect := image.Rect(menu.Rect.Min.X+1, liney-menu.rowHeight, menu.Rect.Max.X-1, liney)
 
-			menu.OutChan <- DrawFilledRectCmd{itemRect, back}
+			menu.Upstream(DrawFilledRectCmd{itemRect, back})
 		}
 
-		menu.OutChan <- DrawTextCmd{item.label, menu.Style.fontFace, image.Point{item.posX, item.posY}, fore}
+		menu.Upstream(DrawTextCmd{item.label, menu.Style.fontFace, image.Point{item.posX, item.posY}, fore})
 		if n != menu.itemSelected && n < (nitems-1) {
-			menu.OutChan <- DrawLineCmd{image.Point{menu.Rect.Min.X, liney}, image.Point{menu.Rect.Max.X, liney}, fore}
+			menu.Upstream(DrawLineCmd{image.Point{menu.Rect.Min.X, liney}, image.Point{menu.Rect.Max.X, liney}, fore})
 		}
 	}
 }
 
-// Run xxx
-func (menu *Menu) Run() {
-
-RunLoop:
-	for {
-		select {
-
-		case cmd := <-menu.InChan:
-
-			switch c := cmd.(type) {
-
-			case CloseYourselfCmd:
-				break RunLoop
-
-			case MouseCmd:
-				me := c
-				if me.Pos.Y <= menu.Rect.Min.Y+menu.handleHeight {
-					menu.itemSelected = -1
-					continue RunLoop
-				}
-				// Find out which item the mouse is in
-				for n, item := range menu.items {
-					if me.Pos.Y < item.posY {
-						menu.itemSelected = n
-						break
-					}
-				}
-
-				// No callbackups until MouseUp
-				if me.Ddu == MouseUp {
-					item := menu.items[menu.itemSelected]
-					item.callback(item.label)
-					menu.itemSelected = -1
-
-					// tell parent to close me
-					menu.OutChan <- CloseMeCmd{W: menu}
-
-					// wait for CloseYourselfCmd to come back
-					continue RunLoop
-				}
-			}
-		default:
-			time.Sleep(time.Millisecond)
+func (menu *Menu) mouseHandler(cmd MouseCmd) (didCallback bool) {
+	me := cmd
+	if me.Pos.Y <= menu.Rect.Min.Y+menu.handleHeight {
+		menu.itemSelected = -1
+		return false
+	}
+	// Find out which item the mouse is in
+	for n, item := range menu.items {
+		if me.Pos.Y < item.posY {
+			menu.itemSelected = n
+			break
 		}
 	}
 
-	log.Printf("menu.Run: before CloseWindow\n")
-	CloseWindow(menu)
-	log.Printf("menu.Run: FINAL RETURN!\n")
+	// No callbackups until MouseUp
+	if me.Ddu == MouseUp {
+		item := menu.items[menu.itemSelected]
+		item.callback(item.label)
+		menu.itemSelected = -1
+
+		return true
+	}
+	return false
+}
+
+// DoDownstream xxx
+func (menu *Menu) DoDownstream(t DownstreamCmd) {
+
+	switch cmd := t.(type) {
+
+	case CloseYourselfCmd:
+		log.Printf("menu.DoDownstream: CloseYourselfCmd\n")
+
+	case ResizeCmd:
+		menu.resize(cmd.Rect)
+
+	case RedrawCmd:
+		menu.redraw()
+
+	case MouseCmd:
+		didCallback := menu.mouseHandler(cmd)
+		if didCallback {
+			menu.parent.DoUpstream(menu, CloseMeCmd{W: menu})
+		}
+	}
 }
 
 func (menu *Menu) addItem(s string, cb MenuCallback) {

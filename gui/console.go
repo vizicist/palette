@@ -3,49 +3,56 @@ package gui
 import (
 	"image"
 	"image/color"
-	"log"
 	"strings"
 )
 
 // Console is a window that has a couple of buttons
 type Console struct {
 	WindowData
-	b1 *Button
-	t1 *ScrollingText
+	b1 Window
+	t1 Window
 }
 
 // NewConsole xxx
-func NewConsole(parent Window) *Console {
+func NewConsole(parent Window) Window {
 
 	console := &Console{
 		WindowData: NewWindowData(parent),
 	}
-	console.b1 = NewButton(console, "Clear",
-		func(updown string) {
-			log.Printf("Clear button: %s\n", updown)
-			console.clear()
-		})
-	console.t1 = NewScrollingText(console)
 
-	AddWindow(console, console.b1, "clear")
-	AddWindow(console, console.t1, "text")
-
-	log.Printf("NewConsole: go m.Run()\n")
-	go console.Run()
+	AddChild(console, "b1", NewButton(console, "Clear"))
+	AddChild(console, "t1", NewScrollingText(console))
 
 	return console
 }
 
-func (console *Console) clear() {
-	console.t1.Clear()
+// DoUpstream xxx
+func (console *Console) DoUpstream(w Window, cmd UpstreamCmd) {
 }
+
+// DoDownstream xxx
+func (console *Console) DoDownstream(t DownstreamCmd) {
+	switch cmd := t.(type) {
+	case MouseCmd:
+		o, _ := WindowUnder(console, cmd.Pos)
+		if o != nil {
+			o.DoDownstream(cmd)
+		}
+	}
+}
+
+/*
+func (console *Console) clear() {
+	console.t1.DoUpstream(ClearCmd{})
+}
+*/
 
 // AddLine xxx
 func (console *Console) AddLine(s string) {
 	if strings.HasSuffix(s, "\n") {
 		// XXX - remove it?
 	}
-	console.t1.AddLine(s)
+	console.t1.DoDownstream(AddLineCmd{s})
 }
 
 // Data xxx
@@ -64,41 +71,24 @@ func (console *Console) Resize(rect image.Rectangle) image.Rectangle {
 
 	// handle Clear button
 	// In Resize, the rect.Max values get recomputed to fit the button
-	r := image.Rect(rect.Min.X+2, rect.Min.Y+2, rect.Max.X, rect.Max.Y)
-	console.b1.Resize(r)
+	console.b1.DoDownstream(ResizeCmd{image.Rect(rect.Min.X+2, rect.Min.Y+2, rect.Max.X, rect.Max.Y)})
 
 	// handle ScrollingText Window
 	y0 := rect.Min.Y + rowHeight + 4
 	y1 := rect.Min.Y + nrows*rowHeight
-	tr := image.Rect(rect.Min.X+2, y0, rect.Max.X, y1)
-	console.t1.Resize(tr)
+	console.t1.DoDownstream(ResizeCmd{image.Rect(rect.Min.X+2, y0, rect.Max.X, y1)})
 
 	// Adjust console's oveall size from the ScrollingText Window
-	console.Rect.Max.Y = console.t1.Rect.Max.Y
+	r := WindowRect(console.t1)
+	console.Rect.Max.Y = r.Max.Y
 
 	return console.Rect
-}
-
-// Run xxx
-func (console *Console) Run() {
-	for {
-		me := <-console.InChan
-		log.Printf("Console.Run: me from InChan=%v", me)
-		/*
-			o := WindowUnder(console, me.Pos)
-			if o != nil {
-				o.Data().MouseChan <- me
-			}
-		*/
-	}
 }
 
 // Draw xxx
 func (console *Console) Draw() {
 
 	green := color.RGBA{0, 0xff, 0, 0xff}
-	console.OutChan <- DrawRectCmd{console.Rect, green}
-
-	console.b1.Draw()
-	console.t1.Draw()
+	console.DoDownstream(DrawRectCmd{console.Rect, green})
+	RedrawChildren(console)
 }
