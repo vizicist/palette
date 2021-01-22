@@ -72,9 +72,9 @@ func NewStyle(fontName string, fontHeight int) *Style {
 	return &Style{
 		fontHeight:  realHeight,
 		fontFace:    face,
-		textColor:   black,
-		strokeColor: black,
-		fillColor:   white,
+		textColor:   white,
+		strokeColor: white,
+		fillColor:   black,
 	}
 }
 

@@ -74,6 +74,7 @@ func (screen *Screen) Data() *WindowData {
 
 // DoDownstream xxx
 func (screen *Screen) DoDownstream(t DownstreamCmd) {
+	log.Printf("Screen.DoDownstream: why is this being called\n")
 }
 
 // DoUpstream xxx
@@ -81,17 +82,19 @@ func (screen *Screen) DoUpstream(w Window, t UpstreamCmd) {
 
 	switch cmd := t.(type) {
 	case DrawLineCmd:
-		// log.Printf("screen.runCmds: %s\n", c.Stringer())
 		screen.drawLine(cmd.XY0, cmd.XY1, cmd.Color)
 	case DrawRectCmd:
-		// log.Printf("screen.runCmds: %s\n", cmd.Stringer())
 		screen.drawRect(cmd.Rect, cmd.Color)
 	case DrawFilledRectCmd:
-		// log.Printf("screen.runCmds: %s\n", cmd.Stringer())
 		screen.drawFilledRect(cmd.Rect, cmd.Color)
 	case DrawTextCmd:
-		// log.Printf("screen.runCmds: %s\n", cmd.Stringer())
 		screen.drawText(cmd.Text, cmd.Face, cmd.Pos, cmd.Color)
+	case ShowCursorCmd:
+		if cmd.show {
+			ebiten.SetCursorMode(ebiten.CursorModeVisible)
+		} else {
+			ebiten.SetCursorMode(ebiten.CursorModeHidden)
+		}
 	case CloseMeCmd:
 		log.Printf("screen.runCmds: SHOULD NOT BE GETTING CloseMeCmd!?\n")
 	default:
@@ -139,18 +142,15 @@ func (screen *Screen) Update() (err error) {
 		switch {
 		case inpututil.IsMouseButtonJustPressed(eb):
 			screen.page.DoDownstream(MouseCmd{newPos, n, MouseDown})
-			// pageinput <- MouseCmd{newPos, n, MouseDown}
 
 		case inpututil.IsMouseButtonJustReleased(eb):
 			screen.page.DoDownstream(MouseCmd{newPos, n, MouseUp})
-			// pageinput <- MouseCmd{newPos, n, MouseUp}
 
 		default:
 			// Drag events only happen when position changes
 			if newPos.X != screen.cursorPos.X || newPos.Y != screen.cursorPos.Y {
 				screen.cursorPos = newPos
 				screen.page.DoDownstream(MouseCmd{newPos, n, MouseDrag})
-				// pageinput <- MouseCmd{newPos, n, MouseDrag}
 			}
 		}
 	}
@@ -159,42 +159,30 @@ func (screen *Screen) Update() (err error) {
 
 // Draw satisfies the ebiten.Game interface
 func (screen *Screen) Draw(eimage *ebiten.Image) {
-	// log.Printf("Screen.Draw! ================================\n")
+
 	screen.eimage = eimage
 
-	screen.drawRect(screen.rect, screen.foreColor)
-	screen.drawRect(screen.rect.Inset(20), screen.foreColor)
-	screen.drawRect(screen.rect.Inset(200), screen.foreColor)
+	screen.drawRect(screen.rect, white) // XXX - will eventually be removed
 
 	screen.page.DoDownstream(RedrawCmd{})
 
-	screen.page.DoDownstream(DrawRectCmd{screen.rect.Inset(250), color.RGBA{0xff, 0xff, 0x00, 0xff}})
+	/*
+		pos := screen.cursorPos
+		switch screen.cursorStyle {
+		case normalCursorStyle:
+		case pickCursorStyle:
+			// Draw a cross at the cursor position
+			delta := 10
+			screen.drawLine(image.Point{pos.X - delta, pos.Y}, image.Point{pos.X + delta, pos.Y}, screen.foreColor)
+			screen.drawLine(image.Point{pos.X, pos.Y - delta}, image.Point{pos.X, pos.Y + delta}, screen.foreColor)
+		case sweepCursorStyle:
+			// Draw a cross at the cursor position
+			delta := 10
+			screen.drawLine(image.Point{pos.X - delta, pos.Y - delta}, image.Point{pos.X + delta, pos.Y - delta}, screen.foreColor)
+			screen.drawLine(image.Point{pos.X - delta, pos.Y - delta}, image.Point{pos.X - delta, pos.Y + delta}, screen.foreColor)
+		}
+	*/
 
-	pos := screen.cursorPos
-	switch screen.cursorStyle {
-	case normalCursorStyle:
-	case pickCursorStyle:
-		// Draw a cross at the cursor position
-		delta := 10
-		screen.drawLine(image.Point{pos.X - delta, pos.Y}, image.Point{pos.X + delta, pos.Y}, screen.foreColor)
-		screen.drawLine(image.Point{pos.X, pos.Y - delta}, image.Point{pos.X, pos.Y + delta}, screen.foreColor)
-	case sweepCursorStyle:
-		// Draw a cross at the cursor position
-		delta := 10
-		screen.drawLine(image.Point{pos.X - delta, pos.Y - delta}, image.Point{pos.X + delta, pos.Y - delta}, screen.foreColor)
-		screen.drawLine(image.Point{pos.X - delta, pos.Y - delta}, image.Point{pos.X - delta, pos.Y + delta}, screen.foreColor)
-	}
-
-}
-
-func (screen *Screen) setCursorStyle(style cursorStyle) {
-	screen.cursorStyle = style
-	if style == normalCursorStyle {
-		ebiten.SetCursorMode(ebiten.CursorModeVisible)
-	} else {
-		// We draw it ourselves
-		ebiten.SetCursorMode(ebiten.CursorModeHidden)
-	}
 }
 
 // drawRect xxx

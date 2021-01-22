@@ -31,8 +31,7 @@ func (button *Button) Data() *WindowData {
 	return &button.WindowData
 }
 
-// Resize xxx
-func (button *Button) Resize(rect image.Rectangle) image.Rectangle {
+func (button *Button) resize(rect image.Rectangle) image.Rectangle {
 
 	// Get the real bounds needed for this label
 	brect := button.Style.BoundString(button.label)
@@ -48,51 +47,44 @@ func (button *Button) Resize(rect image.Rectangle) image.Rectangle {
 	return button.Rect
 }
 
-// Draw xxx
-func (button *Button) Draw() {
-	log.Printf("Button.Draw\n")
-	// clr := color.RGBA{0xff, 0xff, 0xff, 0xff}
-	// button.toUpstream <- DrawRectCmd{button.Rect, clr}
-	// button.toUpstream <- DrawTextCmd{button.label, button.Style.fontFace, image.Point{button.labelX, button.labelY}, clr}
+func (button *Button) redraw() {
+	button.DoUpstream(button, DrawRectCmd{button.Rect, button.Style.strokeColor})
+	button.DoUpstream(button, DrawTextCmd{button.label, button.Style.fontFace, image.Point{button.labelX, button.labelY}, button.Style.textColor})
 }
 
 // DoUpstream xxx
 func (button *Button) DoUpstream(w Window, cmd UpstreamCmd) {
+	button.parent.DoUpstream(button, cmd)
 }
 
 // DoDownstream xxx
-func (button *Button) DoDownstream(cmd DownstreamCmd) {
+func (button *Button) DoDownstream(t DownstreamCmd) {
 
-	log.Printf("Button.DoDownstream: cmd = %v", cmd)
-
-	/*
-		switch t := inCmd.(type) {
-		case ResizeCmd:
-			button.Screen.Log("button.ResizeCmd=%v", t)
-		case RedrawCmd:
-			button.Screen.Log("button.RedrawCmd=%v", t)
+	switch cmd := t.(type) {
+	case ResizeCmd:
+		button.resize(cmd.Rect)
+	case RedrawCmd:
+		button.redraw()
+	case MouseCmd:
+		if !cmd.Pos.In(button.Rect) {
+			log.Printf("button: pos not in Rect?\n")
+			return
 		}
-	*/
-
-	/*
-		case me := <-button.MouseChan:
-			button.Screen.Log("Button.Run: me=%v", me)
-			if !me.Pos.In(button.Rect) {
-				continue
+		switch cmd.Ddu {
+		case MouseDown:
+			// The mouse is inside the button
+			if button.isPressed == false {
+				button.isPressed = true
+				log.Printf("Should be calling button down\n")
+				// button.callback("down")
 			}
-			switch me.Ddu {
-			case MouseDown:
-				// The mouse is inside the button
-				if button.isPressed == false {
-					button.isPressed = true
-					button.callback("down")
-				}
-			case MouseUp:
-				if button.isPressed == true {
-					button.isPressed = false
-					button.callback("up")
-				}
+		case MouseUp:
+			if button.isPressed == true {
+				button.isPressed = false
+				log.Printf("Should be calling button up\n")
+				// button.callback("up")
 			}
-	*/
+		}
 
+	}
 }

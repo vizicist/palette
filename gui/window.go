@@ -11,7 +11,6 @@ import (
 
 // Window xxx
 type Window interface {
-	// ReadFromUpstream()
 	Data() *WindowData
 	DoDownstream(DownstreamCmd)
 	DoUpstream(Window, UpstreamCmd)
@@ -95,6 +94,15 @@ type CloseMeCmd struct {
 	W Window
 }
 
+// SweepCallback xxx
+type SweepCallback func(name string)
+
+// StartSweepCmd xxx
+type StartSweepCmd struct {
+	callback SweepCallback
+	toolName string
+}
+
 // Stringer xxx
 func (c CloseMeCmd) Stringer() string {
 	return fmt.Sprintf("CloseMeCmd w=%v", c.W)
@@ -146,9 +154,9 @@ func (c DrawTextCmd) Stringer() string {
 	return fmt.Sprintf("DrawTextCmd Pos=%v Text=%v", c.Pos, c.Text)
 }
 
-// SetCursorStyleCmd xxx
-type SetCursorStyleCmd struct {
-	CursorStyle cursorStyle
+// ShowCursorCmd xxx
+type ShowCursorCmd struct {
+	show bool
 }
 
 // DownDragUp xxx
@@ -162,32 +170,32 @@ const (
 )
 
 // WindowUnder xxx
-func WindowUnder(o Window, pos image.Point) (Window, string) {
+func WindowUnder(parent Window, pos image.Point) (Window, string) {
 
-	windata := o.Data()
+	parentData := parent.Data()
 
 	// Check in reverse order
-	for n := len(windata.order) - 1; n >= 0; n-- {
-		name := windata.order[n]
+	for n := len(parentData.order) - 1; n >= 0; n-- {
+		name := parentData.order[n]
 
-		child := windata.children[name]
-		childRect := WindowRect(child)
+		child := parentData.children[name]
+		childRect := child.Data().Rect
 
 		if pos.In(childRect) {
-			return windata.children[name], name
+			return parentData.children[name], name
 		}
 	}
 	return nil, ""
 }
 
 // AddChild xxx
-func AddChild(parent Window, name string, child Window) {
+func AddChild(parent Window, name string, child Window) Window {
 
 	parentData := parent.Data()
 	_, ok := parentData.children[name]
 	if ok {
 		log.Printf("AddChild: there's already a child named %s\n", name)
-		return
+		return nil
 	}
 
 	// add it to the end of the display order
@@ -195,6 +203,7 @@ func AddChild(parent Window, name string, child Window) {
 
 	parentData.children[name] = child
 	parentData.windowName[child] = name
+	return child
 }
 
 // RemoveChild xxx
@@ -228,9 +237,4 @@ func RedrawChildren(w Window) {
 		w := w.Data().children[name]
 		w.DoDownstream(RedrawCmd{})
 	}
-}
-
-// WindowRect w
-func WindowRect(w Window) image.Rectangle {
-	return w.Data().Rect
 }
