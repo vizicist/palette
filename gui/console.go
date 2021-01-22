@@ -3,14 +3,15 @@ package gui
 import (
 	"image"
 	"image/color"
+	"log"
 	"strings"
 )
 
 // Console is a window that has a couple of buttons
 type Console struct {
 	WindowData
-	b1 Window
-	t1 Window
+	clearButton Window
+	textArea    Window
 }
 
 // NewConsole xxx
@@ -20,14 +21,15 @@ func NewConsole(parent Window) Window {
 		WindowData: NewWindowData(parent),
 	}
 
-	AddChild(console, "b1", NewButton(console, "Clear"))
-	AddChild(console, "t1", NewScrollingText(console))
+	console.clearButton = AddChild(console, "clearButton", NewButton(console, "Clear"))
+	console.textArea = AddChild(console, "textArea", NewScrollingText(console))
 
 	return console
 }
 
 // DoUpstream xxx
 func (console *Console) DoUpstream(w Window, cmd UpstreamCmd) {
+	console.parent.DoUpstream(console, cmd)
 }
 
 // DoDownstream xxx
@@ -38,21 +40,23 @@ func (console *Console) DoDownstream(t DownstreamCmd) {
 		if o != nil {
 			o.DoDownstream(cmd)
 		}
+	case ResizeCmd:
+		console.resize(cmd.Rect)
+	case RedrawCmd:
+		console.redraw()
+	case CloseYourselfCmd:
+		log.Printf("console: CloseYourself\n")
+	default:
+		log.Printf("Unhandled cmd=%v\n", cmd)
 	}
 }
-
-/*
-func (console *Console) clear() {
-	console.t1.DoUpstream(ClearCmd{})
-}
-*/
 
 // AddLine xxx
 func (console *Console) AddLine(s string) {
 	if strings.HasSuffix(s, "\n") {
 		// XXX - remove it?
 	}
-	console.t1.DoDownstream(AddLineCmd{s})
+	console.children["textArea"].DoDownstream(AddLineCmd{s})
 }
 
 // Data xxx
@@ -61,7 +65,7 @@ func (console *Console) Data() *WindowData {
 }
 
 // Resize xxx
-func (console *Console) Resize(rect image.Rectangle) image.Rectangle {
+func (console *Console) resize(rect image.Rectangle) image.Rectangle {
 
 	console.Rect = rect
 
@@ -71,24 +75,24 @@ func (console *Console) Resize(rect image.Rectangle) image.Rectangle {
 
 	// handle Clear button
 	// In Resize, the rect.Max values get recomputed to fit the button
-	console.b1.DoDownstream(ResizeCmd{image.Rect(rect.Min.X+2, rect.Min.Y+2, rect.Max.X, rect.Max.Y)})
+	console.clearButton.DoDownstream(ResizeCmd{image.Rect(rect.Min.X+2, rect.Min.Y+2, rect.Max.X, rect.Max.Y)})
 
 	// handle ScrollingText Window
 	y0 := rect.Min.Y + rowHeight + 4
 	y1 := rect.Min.Y + nrows*rowHeight
-	console.t1.DoDownstream(ResizeCmd{image.Rect(rect.Min.X+2, y0, rect.Max.X, y1)})
+	console.textArea.DoDownstream(ResizeCmd{image.Rect(rect.Min.X+2, y0, rect.Max.X, y1)})
 
 	// Adjust console's oveall size from the ScrollingText Window
-	r := WindowRect(console.t1)
+	r := console.textArea.Data().Rect
 	console.Rect.Max.Y = r.Max.Y
 
 	return console.Rect
 }
 
 // Draw xxx
-func (console *Console) Draw() {
+func (console *Console) redraw() {
 
 	green := color.RGBA{0, 0xff, 0, 0xff}
-	console.DoDownstream(DrawRectCmd{console.Rect, green})
+	console.DoUpstream(console, DrawRectCmd{console.Rect, green})
 	RedrawChildren(console)
 }

@@ -19,7 +19,7 @@ func NewPageMenu(parent Window) Window {
 
 		{label: "New Console", callback: func(name string) {
 			log.Printf("New Console menu item")
-			log.Printf("startNewConsole:  NEEDS WORK!!!\n")
+			parent.DoUpstream(nil, StartSweepCmd{callback: PageToolCallback, toolName: name})
 			// menu.startNewConsole()
 		}},
 
@@ -43,11 +43,15 @@ func NewPageMenu(parent Window) Window {
 	return menu
 }
 
+// PageToolCallback xxx
+func PageToolCallback(name string) {
+	log.Printf("PageToolCallback!\n")
+}
+
 func (menu *Menu) startNewConsole() {
 
 	log.Printf("startNewConsole: start\n")
 
-	// menu.DoUpstreamCmd(SetCursorStyleCmd{sweepCursorStyle})
 	// Take over the mouse to sweep out the console area
 
 	// newInput := PushWindowInput(menu)

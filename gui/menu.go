@@ -51,6 +51,7 @@ func (menu *Menu) Data() *WindowData {
 
 // DoUpstream xxx
 func (menu *Menu) DoUpstream(w Window, cmd UpstreamCmd) {
+	menu.parent.DoUpstream(menu, cmd)
 }
 
 // Resize xxx
@@ -145,7 +146,6 @@ func (menu *Menu) mouseHandler(cmd MouseCmd) (didCallback bool) {
 		item := menu.items[menu.itemSelected]
 		item.callback(item.label)
 		menu.itemSelected = -1
-
 		return true
 	}
 	return false

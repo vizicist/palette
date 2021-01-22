@@ -24,8 +24,6 @@ func NewScrollingText(parent Window) Window {
 		isPressed:  false,
 		lines:      make([]string, 0),
 	}
-	log.Printf("NewScrollingText: go st.Run()\n")
-	// go st.readFromUpstream()
 	return st
 }
 
@@ -36,10 +34,10 @@ func (st *ScrollingText) Data() *WindowData {
 
 // DoUpstream xxx
 func (st *ScrollingText) DoUpstream(w Window, cmd UpstreamCmd) {
+	st.parent.DoUpstream(st, cmd)
 }
 
-// Resize xxx
-func (st *ScrollingText) Resize(rect image.Rectangle) image.Rectangle {
+func (st *ScrollingText) resize(rect image.Rectangle) image.Rectangle {
 
 	st.rowHeight = st.Style.TextHeight()
 	// See how many lines we can fit in the rect
@@ -53,8 +51,7 @@ func (st *ScrollingText) Resize(rect image.Rectangle) image.Rectangle {
 	return st.Rect
 }
 
-// Draw xxx
-func (st *ScrollingText) Draw() {
+func (st *ScrollingText) redraw() {
 
 	clr := color.RGBA{0xff, 0xff, 0, 0xff}
 
@@ -83,20 +80,16 @@ func (st *ScrollingText) Draw() {
 // DoDownstream xxx
 func (st *ScrollingText) DoDownstream(c DownstreamCmd) {
 
-	log.Printf("ScrollingText.Run: cmd = %v", c)
-
 	switch cmd := c.(type) {
 	case ResizeCmd:
-		log.Printf("ScrollingText: ResizeCmd\n")
+		st.Rect = cmd.Rect
 	case RedrawCmd:
-		log.Printf("ScrollingText: RedrawCmd\n")
+		st.redraw()
 	case ClearCmd:
 		log.Printf("ScrollingText: Clear\n")
 	case MouseCmd:
-		log.Printf("ScrollingText.MouseCmd: cmd=%v", cmd)
-		if !cmd.Pos.In(st.Rect) {
-			log.Printf("Text.HandleMouseInput: pos not in rect!\n")
-		}
+	default:
+		log.Printf("ScrollingText: didn't handle cmd=%v\n", cmd)
 	}
 }
 
