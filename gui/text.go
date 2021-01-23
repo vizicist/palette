@@ -2,7 +2,6 @@ package gui
 
 import (
 	"image"
-	"image/color"
 	"log"
 )
 
@@ -18,7 +17,7 @@ type ScrollingText struct {
 }
 
 // NewScrollingText xxx
-func NewScrollingText(parent Window) Window {
+func NewScrollingText(parent Window) *ScrollingText {
 	st := &ScrollingText{
 		WindowData: NewWindowData(parent),
 		isPressed:  false,
@@ -32,12 +31,12 @@ func (st *ScrollingText) Data() *WindowData {
 	return &st.WindowData
 }
 
-// DoUpstream xxx
-func (st *ScrollingText) DoUpstream(w Window, cmd UpstreamCmd) {
-	st.parent.DoUpstream(st, cmd)
+// DoSync xxx
+func (st *ScrollingText) DoSync(from Window, cmd string, arg interface{}) (result interface{}, err error) {
+	return NoSyncInterface("ScrollingText")
 }
 
-func (st *ScrollingText) resize(rect image.Rectangle) image.Rectangle {
+func (st *ScrollingText) resize(rect image.Rectangle) {
 
 	st.rowHeight = st.Style.TextHeight()
 	// See how many lines we can fit in the rect
@@ -48,14 +47,11 @@ func (st *ScrollingText) resize(rect image.Rectangle) image.Rectangle {
 	rect.Max.Y = rect.Min.Y + nlines*st.rowHeight
 
 	st.Rect = rect
-	return st.Rect
 }
 
 func (st *ScrollingText) redraw() {
 
-	clr := color.RGBA{0xff, 0xff, 0, 0xff}
-
-	st.parent.DoUpstream(st, DrawRectCmd{st.Rect, white})
+	DoUpstream(st, "drawrect", st.Rect)
 
 	textHeight := st.Style.TextHeight()
 
@@ -73,23 +69,24 @@ func (st *ScrollingText) redraw() {
 		}
 		texty += bminy
 		texty += bmaxy
-		st.parent.DoUpstream(st, DrawTextCmd{line, st.Style.fontFace, image.Point{textx, texty}, clr})
+		DoUpstream(st, "drawtext", DrawTextCmd{line, st.Style.fontFace, image.Point{textx, texty}})
 	}
 }
 
-// DoDownstream xxx
-func (st *ScrollingText) DoDownstream(c DownstreamCmd) {
+// Do xxx
+func (st *ScrollingText) Do(from Window, cmd string, arg interface{}) {
 
-	switch cmd := c.(type) {
-	case ResizeCmd:
-		st.Rect = cmd.Rect
-	case RedrawCmd:
+	switch cmd {
+	case "resize":
+		st.resize(ToRect(arg))
+	case "redraw":
 		st.redraw()
-	case ClearCmd:
-		log.Printf("ScrollingText: Clear\n")
-	case MouseCmd:
+	case "clear":
+		log.Printf("ScrollingText: Clear needs work!\n")
+	case "mouse":
+		// ignore
 	default:
-		log.Printf("ScrollingText: didn't handle cmd=%v\n", cmd)
+		log.Printf("ScrollingText: didn't handle cmd=%s\n", cmd)
 	}
 }
 

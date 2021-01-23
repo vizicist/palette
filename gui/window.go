@@ -1,19 +1,15 @@
 package gui
 
 import (
-	"fmt"
 	"image"
-	"image/color"
 	"log"
-
-	"golang.org/x/image/font"
 )
 
 // Window xxx
 type Window interface {
 	Data() *WindowData
-	DoDownstream(DownstreamCmd)
-	DoUpstream(Window, UpstreamCmd)
+	Do(from Window, cmd string, arg interface{})
+	DoSync(from Window, cmd string, arg interface{}) (result interface{}, err error)
 }
 
 // WindowData xxx
@@ -26,14 +22,6 @@ type WindowData struct {
 	windowName map[Window]string
 
 	order []string // display order
-}
-
-// DownstreamCmd xxx
-type DownstreamCmd interface {
-}
-
-// UpstreamCmd xxx
-type UpstreamCmd interface {
 }
 
 // NewWindowData xxx
@@ -50,124 +38,6 @@ func NewWindowData(parent Window) WindowData {
 		order: make([]string, 0),
 	}
 }
-
-////////////////////////////////////////////
-// These are the standard WinInput commands
-////////////////////////////////////////////
-
-// MouseCmd xxx
-type MouseCmd struct {
-	Pos     image.Point
-	ButtNum int
-	Ddu     DownDragUp
-}
-
-// ResizeCmd xxx
-type ResizeCmd struct {
-	Rect image.Rectangle
-}
-
-// RedrawCmd xxx
-type RedrawCmd struct {
-	Rect image.Rectangle
-}
-
-// CloseYourselfCmd xxx
-type CloseYourselfCmd struct {
-}
-
-// ClearCmd xxx
-type ClearCmd struct {
-}
-
-// AddLineCmd xxx
-type AddLineCmd struct {
-	line string
-}
-
-////////////////////////////////////////////
-// These are the standard WinOutput commands
-////////////////////////////////////////////
-
-// CloseMeCmd xxx
-type CloseMeCmd struct {
-	W Window
-}
-
-// SweepCallback xxx
-type SweepCallback func(name string)
-
-// StartSweepCmd xxx
-type StartSweepCmd struct {
-	callback SweepCallback
-	toolName string
-}
-
-// Stringer xxx
-func (c CloseMeCmd) Stringer() string {
-	return fmt.Sprintf("CloseMeCmd w=%v", c.W)
-}
-
-// DrawLineCmd xxx
-type DrawLineCmd struct {
-	XY0, XY1 image.Point
-	Color    color.RGBA
-}
-
-// Stringer xxx
-func (c DrawLineCmd) Stringer() string {
-	return fmt.Sprintf("DrawLineCmd XY0=%v XY1=%v color=%v", c.XY0, c.XY1, c.Color)
-}
-
-// DrawRectCmd xxx
-type DrawRectCmd struct {
-	Rect  image.Rectangle
-	Color color.RGBA
-}
-
-// Stringer xxx
-func (c DrawRectCmd) Stringer() string {
-	return fmt.Sprintf("DrawRectCmd rect=%v color=%v", c.Rect, c.Color)
-}
-
-// DrawFilledRectCmd xxx
-type DrawFilledRectCmd struct {
-	Rect  image.Rectangle
-	Color color.RGBA
-}
-
-// Stringer xxx
-func (c DrawFilledRectCmd) Stringer() string {
-	return fmt.Sprintf("DrawFilledRectCmd rect=%v color=%v", c.Rect, c.Color)
-}
-
-// DrawTextCmd xxx
-type DrawTextCmd struct {
-	Text  string
-	Face  font.Face
-	Pos   image.Point
-	Color color.RGBA
-}
-
-// Stringer xxx
-func (c DrawTextCmd) Stringer() string {
-	return fmt.Sprintf("DrawTextCmd Pos=%v Text=%v", c.Pos, c.Text)
-}
-
-// ShowCursorCmd xxx
-type ShowCursorCmd struct {
-	show bool
-}
-
-// DownDragUp xxx
-type DownDragUp int
-
-// MouseUp xxx
-const (
-	MouseUp DownDragUp = iota
-	MouseDown
-	MouseDrag
-)
 
 // WindowUnder xxx
 func WindowUnder(parent Window, pos image.Point) (Window, string) {
@@ -233,8 +103,17 @@ func RemoveChild(parent Window, w Window) {
 
 // RedrawChildren xxx
 func RedrawChildren(w Window) {
-	for _, name := range w.Data().order {
-		w := w.Data().children[name]
-		w.DoDownstream(RedrawCmd{})
+	if w == nil {
+		log.Printf("RedrawChildren: w==nil?\n")
+		return
 	}
+	for _, name := range w.Data().order {
+		child := w.Data().children[name]
+		child.Do(w, "redraw", nil)
+	}
+}
+
+// DoUpstream xxx
+func DoUpstream(w Window, cmd string, arg interface{}) {
+	w.Data().parent.Do(w, cmd, arg)
 }

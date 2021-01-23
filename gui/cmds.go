@@ -1,0 +1,164 @@
+package gui
+
+import (
+	"image"
+	"image/color"
+	"log"
+
+	"golang.org/x/image/font"
+)
+
+// Cmd xxx
+type Cmd struct {
+	name string
+	arg  interface{}
+}
+
+// UpstreamCmd xxx
+type UpstreamCmd interface {
+}
+
+////////////////////////////////////////////
+// These are the standard Downstream commands
+////////////////////////////////////////////
+
+// MouseCmd xxx
+type MouseCmd struct {
+	Pos     image.Point
+	ButtNum int
+	Ddu     DownDragUp
+}
+
+// CloseYourselfCmd xxx
+type CloseYourselfCmd struct {
+}
+
+// ClearCmd xxx
+type ClearCmd struct {
+}
+
+// AddLineCmd xxx
+type AddLineCmd struct {
+	line string
+}
+
+////////////////////////////////////////////
+// These are the standard Upstream commands
+////////////////////////////////////////////
+
+// ButtonCallbackCmd xxx
+type ButtonCallbackCmd struct {
+	W    Window
+	name string
+}
+
+// SweepCallback xxx
+type SweepCallback func(name string)
+
+// StartSweepCmd xxx
+type StartSweepCmd struct {
+	callback SweepCallback
+	toolName string
+}
+
+// DrawLineCmd xxx
+type DrawLineCmd struct {
+	XY0, XY1 image.Point
+}
+
+// DrawTextCmd xxx
+type DrawTextCmd struct {
+	Text string
+	Face font.Face
+	Pos  image.Point
+}
+
+// DownDragUp xxx
+type DownDragUp int
+
+// MouseUp xxx
+const (
+	MouseUp DownDragUp = iota
+	MouseDown
+	MouseDrag
+)
+
+// ToRect xxx
+func ToRect(arg interface{}) image.Rectangle {
+	r, ok := arg.(image.Rectangle)
+	if !ok {
+		log.Printf("Unable to convert interface to Rect!\n")
+		r = image.Rect(0, 0, 0, 0)
+	}
+	return r
+}
+
+// ToDrawLine xxx
+func ToDrawLine(arg interface{}) DrawLineCmd {
+	r, ok := arg.(DrawLineCmd)
+	if !ok {
+		log.Printf("Unable to convert interface to DrawLineCmd!\n")
+		r = DrawLineCmd{}
+	}
+	return r
+}
+
+// ToDrawText xxx
+func ToDrawText(arg interface{}) DrawTextCmd {
+	r, ok := arg.(DrawTextCmd)
+	if !ok {
+		log.Printf("Unable to convert interface to DrawTextCmd!\n")
+		r = DrawTextCmd{}
+	}
+	return r
+}
+
+// ToMouse xxx
+func ToMouse(arg interface{}) MouseCmd {
+	r, ok := arg.(MouseCmd)
+	if !ok {
+		log.Printf("Unable to convert interface to MouseCmd!\n")
+		r = MouseCmd{}
+	}
+	return r
+}
+
+// ToColor xxx
+func ToColor(arg interface{}) color.RGBA {
+	r, ok := arg.(color.RGBA)
+	if !ok {
+		log.Printf("Unable to convert interface to Color!\n")
+		r = color.RGBA{0x00, 0x00, 0x00, 0xff}
+	}
+	return r
+}
+
+// ToBool xxx
+func ToBool(arg interface{}) bool {
+	r, ok := arg.(bool)
+	if !ok {
+		log.Printf("Unable to convert interface to bool!\n")
+		r = false
+	}
+	return r
+}
+
+// ToString xxx
+func ToString(arg interface{}) string {
+	r, ok := arg.(string)
+	if !ok {
+		log.Printf("Unable to convert interface to string!\n")
+		r = ""
+	}
+	return r
+}
+
+// ToWindow xxx
+func ToWindow(arg interface{}) Window {
+	r, ok := arg.(Window)
+	if !ok {
+		log.Printf("Unable to convert interface to Window!\n")
+		r = nil
+	}
+	return r
+}
