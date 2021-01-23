@@ -113,6 +113,16 @@ func RedrawChildren(w Window) {
 	}
 }
 
+// FindChild xxx
+func FindChild(parent Window, name string) Window {
+	for nm, w := range parent.Data().children {
+		if nm == name {
+			return w
+		}
+	}
+	return nil
+}
+
 // DoUpstream xxx
 func DoUpstream(w Window, cmd string, arg interface{}) {
 	w.Data().parent.Do(w, cmd, arg)

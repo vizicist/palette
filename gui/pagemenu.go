@@ -2,7 +2,6 @@ package gui
 
 import (
 	"log"
-	"runtime"
 )
 
 // NewPageMenu xxx
@@ -10,36 +9,14 @@ func NewPageMenu(parent Window) *Menu {
 
 	menu := NewMenu(parent)
 	menu.items = []MenuItem{
-		{label: "About", callback: func(name string) {
-			log.Printf("This is the Palette Window System.")
-			log.Printf("# of goroutines: %d", runtime.NumGoroutine())
-		}},
-
-		{label: "Move", callback: func(name string) {
-			log.Printf("Move callback")
-		}},
-
-		{label: "New Console", callback: func(name string) {
-			log.Printf("New Console menu item")
-			DoUpstream(menu, "startsweep", StartSweepCmd{callback: PageToolCallback, toolName: name})
-			// DoUpstream(menu, "startsweep", StartSweepCmd{callback: PageToolCallback, toolName: name})
-		}},
-
-		{label: "Delete", callback: func(name string) {
-			log.Printf("Delete callback")
-		}},
-
-		{label: "Tools ->", callback: func(name string) {
-			log.Printf("Tools callback")
-		}},
-
-		{label: "Misc  ->", callback: func(name string) {
-			log.Printf("Misc callback")
-		}},
-
-		{label: "Window ->", callback: func(name string) {
-			log.Printf("Misc callback")
-		}}}
+		{label: "About", target: parent, cmd: "about"},
+		{label: "Move", target: parent, cmd: "move"},
+		{label: "New Console", target: parent, cmd: "sweeptool", arg: "console"},
+		{label: "Delete", target: parent, cmd: "delete"},
+		{label: "Tools  ->", target: parent, cmd: "toolsmenu"},
+		{label: "Misc   ->", target: parent, cmd: "miscmenu"},
+		{label: "Window ->", target: parent, cmd: "windowmenu"},
+	}
 	return menu
 }
 

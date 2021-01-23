@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"image"
 	"log"
+	"runtime"
 )
 
 // Page is the top-most Window
@@ -12,6 +13,7 @@ type Page struct {
 	lastPos    image.Point
 	sweepState int // 0: not sweeping, 1: looking for point 1, 2: looking for point 2
 	sweepRect  image.Rectangle
+	sweepTool  string
 }
 
 // NewPageWindow xxx
@@ -35,7 +37,13 @@ func (page *Page) DoSync(from Window, cmd string, arg interface{}) (result inter
 // Do xxx
 func (page *Page) Do(from Window, cmd string, arg interface{}) {
 
+	// XXX - should be checking to verify that the from Window
+	// is allowed to do the particular commands invoked.
 	switch cmd {
+	case "about":
+		log.Printf("This is the Palette Window System\n")
+		log.Printf("# of goroutines: %d\n", runtime.NumGoroutine())
+
 	case "resize":
 		page.resize(ToRect(arg))
 
@@ -54,6 +62,9 @@ func (page *Page) Do(from Window, cmd string, arg interface{}) {
 	case "mouse":
 		mouse := ToMouse(arg)
 		page.lastPos = mouse.Pos
+
+		page.log(fmt.Sprintf("mouse = %v", mouse))
+
 		if page.sweepState > 0 {
 			page.sweepHandler(mouse)
 		} else {
@@ -63,14 +74,38 @@ func (page *Page) Do(from Window, cmd string, arg interface{}) {
 	case "closeme":
 		RemoveChild(page, ToWindow(arg))
 
-	case "startsweep":
+	case "sweeptool":
 		page.sweepState = 1
 		page.sweepRect.Min = page.lastPos
 		page.sweepRect.Max = page.lastPos
+		page.sweepTool = ToString(arg)
 		DoUpstream(page, "showcursor", false)
 
 	default:
 		DoUpstream(page, cmd, arg)
+	}
+}
+
+// AddTool xxx
+func (page *Page) AddTool(toolName string, instanceName string, rect image.Rectangle) Window {
+	var tool Window
+	switch toolName {
+	case "console":
+		tool = NewConsole(page)
+	default:
+		log.Printf("Unknown tool name: %s\n", toolName)
+	}
+	w := AddChild(page, instanceName, tool)
+	if w != nil {
+		w.Do(page, "resize", page.sweepRect)
+	}
+	return w
+}
+
+func (page *Page) log(s string) {
+	w := FindChild(page, "console")
+	if w != nil {
+		w.Do(page, "addline", s)
 	}
 }
 
@@ -170,9 +205,21 @@ func (page *Page) sweepHandler(cmd MouseCmd) {
 		page.sweepState = 0
 		DoUpstream(page, "showcursor", true)
 
-		console := NewConsole(page)
-		AddChild(page, "console", console)
-		console.Do(page, "resize", page.sweepRect)
+		consoleInstance := "console"
+
+		// If there's already a console window, close it
+		w := FindChild(page, consoleInstance)
+		if w != nil {
+			w.Do(page, "closeyourself", nil)
+			RemoveChild(page, w)
+		}
+
+		page.AddTool("console", consoleInstance, page.sweepRect)
+		/*
+			console := NewConsole(page)
+			AddChild(page, consoleName, console)
+			console.Do(page, "resize", page.sweepRect)
+		*/
 	}
 }
 

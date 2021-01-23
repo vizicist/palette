@@ -53,10 +53,10 @@ func (console *Console) Do(from Window, cmd string, arg interface{}) {
 		// Clear is the only button
 		log.Printf("console: buttondown of %s\n", ToString(arg))
 		console.textArea.Clear()
-		console.textArea.AddLine("This is after clear")
-		console.textArea.AddLine("second line after clear")
 	case "buttonup":
 		log.Printf("console: buttonup of %s\n", ToString(arg))
+	case "addline":
+		console.textArea.Do(console, cmd, arg)
 	default:
 		console.parent.Do(console, cmd, arg)
 	}
@@ -80,9 +80,7 @@ func (console *Console) resize(rect image.Rectangle) {
 
 	console.Rect = rect
 
-	rowHeight := console.Style.TextHeight() + 2
-	// See how many rows we can fit in the rect ()
-	// nrows := rect.Dy() / rowHeight
+	rowHeight := console.Style.RowHeight()
 
 	// handle Clear button
 	// In Resize, the rect.Max values get recomputed to fit the button
@@ -90,7 +88,6 @@ func (console *Console) resize(rect image.Rectangle) {
 
 	// handle ScrollingText Window
 	y0 := rect.Min.Y + rowHeight + 4
-	// y1 := rect.Min.Y + nrows*rowHeight
 	console.textArea.Do(console, "resize", image.Rect(rect.Min.X+2, y0, rect.Max.X-2, console.Rect.Max.Y))
 
 	// Adjust console's oveall size from the ScrollingText Window
@@ -99,6 +96,7 @@ func (console *Console) resize(rect image.Rectangle) {
 
 // Draw xxx
 func (console *Console) redraw() {
+	DoUpstream(console, "setcolor", white)
 	DoUpstream(console, "drawrect", console.Rect)
 	RedrawChildren(console)
 }

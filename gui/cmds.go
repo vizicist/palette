@@ -52,15 +52,6 @@ type ButtonCallbackCmd struct {
 	name string
 }
 
-// SweepCallback xxx
-type SweepCallback func(name string)
-
-// StartSweepCmd xxx
-type StartSweepCmd struct {
-	callback SweepCallback
-	toolName string
-}
-
 // DrawLineCmd xxx
 type DrawLineCmd struct {
 	XY0, XY1 image.Point
@@ -71,6 +62,13 @@ type DrawTextCmd struct {
 	Text string
 	Face font.Face
 	Pos  image.Point
+}
+
+// SweepCallbackCmd xxx
+type SweepCallbackCmd struct {
+	callbackWindow Window
+	callbackCmd    string
+	callbackArg    interface{}
 }
 
 // DownDragUp xxx
@@ -119,6 +117,16 @@ func ToMouse(arg interface{}) MouseCmd {
 	if !ok {
 		log.Printf("Unable to convert interface to MouseCmd!\n")
 		r = MouseCmd{}
+	}
+	return r
+}
+
+// ToSweepCallbackCmd xxx
+func ToSweepCallbackCmd(arg interface{}) SweepCallbackCmd {
+	r, ok := arg.(SweepCallbackCmd)
+	if !ok {
+		log.Printf("Unable to convert interface to SweepCallbackCmd!\n")
+		r = SweepCallbackCmd{}
 	}
 	return r
 }
