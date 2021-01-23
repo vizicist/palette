@@ -83,6 +83,11 @@ func (style *Style) TextHeight() int {
 	return style.fontHeight
 }
 
+// RowHeight xxx
+func (style *Style) RowHeight() int {
+	return style.fontHeight + 2
+}
+
 // BoundString xxx
 func (style *Style) BoundString(s string) image.Rectangle {
 	return text.BoundString(style.fontFace, s)

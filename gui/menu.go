@@ -26,10 +26,12 @@ type MenuCallback func(item string)
 
 // MenuItem xxx
 type MenuItem struct {
-	label    string
-	posX     int
-	posY     int
-	callback MenuCallback
+	label  string
+	posX   int
+	posY   int
+	target Window
+	cmd    string
+	arg    interface{}
 }
 
 // NewMenu xxx
@@ -58,6 +60,7 @@ func (menu *Menu) SetItems(items []MenuItem) {
 func (menu *Menu) resize(rect image.Rectangle) {
 
 	// Recompute all the y positions in the items
+	// DO NOT use Style.RowHeight, we want wider spacing
 	menu.rowHeight = menu.Style.TextHeight() + 6
 	menu.handleHeight = 9
 	menu.Rect = rect
@@ -143,16 +146,23 @@ func (menu *Menu) mouseHandler(cmd MouseCmd) (didCallback bool) {
 	// No callbackups until MouseUp
 	if me.Ddu == MouseUp {
 		item := menu.items[menu.itemSelected]
-		item.callback(item.label)
+		w := item.target
+		if w == nil {
+			log.Printf("HEY! item.callbackWindow is nil?\n")
+			return false
+		}
+		w.Do(menu, item.cmd, item.arg)
 		menu.itemSelected = -1
 		return true
 	}
 	return false
 }
 
+/*
 func (menu *Menu) callback(item MenuItem) {
 	item.callback(item.label)
 }
+*/
 
 // Do xxx
 func (menu *Menu) Do(from Window, cmd string, arg interface{}) {
@@ -182,9 +192,15 @@ func (menu *Menu) DoSync(w Window, cmd string, arg interface{}) (result interfac
 	return NoSyncInterface("Menu")
 }
 
+/*
 func (menu *Menu) addItem(s string, cb MenuCallback) {
 	menu.items = append(menu.items, MenuItem{
-		label:    s,
-		callback: cb,
+		label:  s,
+		posX:   0,
+		posY:   0,
+		target: nil,
+		cmd:    "",
+		arg:    nil,
 	})
 }
+*/
