@@ -15,14 +15,12 @@ type Button struct {
 }
 
 // NewButton xxx
-func NewButton(parent Window, text string) Window {
+func NewButton(parent Window, text string) *Button {
 	w := &Button{
 		WindowData: NewWindowData(parent),
 		isPressed:  false,
 		label:      text,
 	}
-	log.Printf("NewButton: go w.Run()\n")
-	// go w.readFromUpstream()
 	return w
 }
 
@@ -31,7 +29,7 @@ func (button *Button) Data() *WindowData {
 	return &button.WindowData
 }
 
-func (button *Button) resize(rect image.Rectangle) image.Rectangle {
+func (button *Button) resize(rect image.Rectangle) {
 
 	// Get the real bounds needed for this label
 	brect := button.Style.BoundString(button.label)
@@ -43,48 +41,45 @@ func (button *Button) resize(rect image.Rectangle) image.Rectangle {
 	button.labelX = button.Rect.Min.X + 3
 	button.labelY = button.Rect.Min.Y + 3
 	button.labelY -= brect.Min.Y
-
-	return button.Rect
 }
 
 func (button *Button) redraw() {
-	button.DoUpstream(button, DrawRectCmd{button.Rect, button.Style.strokeColor})
-	button.DoUpstream(button, DrawTextCmd{button.label, button.Style.fontFace, image.Point{button.labelX, button.labelY}, button.Style.textColor})
+	DoUpstream(button, "drawrect", button.Rect)
+	DoUpstream(button, "drawtext", DrawTextCmd{button.label, button.Style.fontFace, image.Point{button.labelX, button.labelY}})
 }
 
-// DoUpstream xxx
-func (button *Button) DoUpstream(w Window, cmd UpstreamCmd) {
-	button.parent.DoUpstream(button, cmd)
-}
+// Do xxx
+func (button *Button) Do(from Window, cmd string, arg interface{}) {
 
-// DoDownstream xxx
-func (button *Button) DoDownstream(t DownstreamCmd) {
-
-	switch cmd := t.(type) {
-	case ResizeCmd:
-		button.resize(cmd.Rect)
-	case RedrawCmd:
+	switch cmd {
+	case "resize":
+		button.resize(ToRect(arg))
+	case "redraw":
 		button.redraw()
-	case MouseCmd:
-		if !cmd.Pos.In(button.Rect) {
+	case "mouse":
+		mouse := ToMouse(arg)
+		if !mouse.Pos.In(button.Rect) {
 			log.Printf("button: pos not in Rect?\n")
 			return
 		}
-		switch cmd.Ddu {
+		switch mouse.Ddu {
 		case MouseDown:
 			// The mouse is inside the button
 			if button.isPressed == false {
 				button.isPressed = true
-				log.Printf("Should be calling button down\n")
-				// button.callback("down")
+				DoUpstream(button, "buttondown", button.label)
 			}
 		case MouseUp:
 			if button.isPressed == true {
 				button.isPressed = false
-				log.Printf("Should be calling button up\n")
-				// button.callback("up")
+				DoUpstream(button, "buttonup", button.label)
 			}
 		}
 
 	}
+}
+
+// DoSync xxx
+func (button *Button) DoSync(w Window, cmd string, arg interface{}) (result interface{}, err error) {
+	return NoSyncInterface("Button")
 }

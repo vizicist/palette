@@ -6,8 +6,10 @@ import (
 )
 
 // NewPageMenu xxx
-func NewPageMenu(parent Window) Window {
-	items := []MenuItem{
+func NewPageMenu(parent Window) *Menu {
+
+	menu := NewMenu(parent)
+	menu.items = []MenuItem{
 		{label: "About", callback: func(name string) {
 			log.Printf("This is the Palette Window System.")
 			log.Printf("# of goroutines: %d", runtime.NumGoroutine())
@@ -19,8 +21,8 @@ func NewPageMenu(parent Window) Window {
 
 		{label: "New Console", callback: func(name string) {
 			log.Printf("New Console menu item")
-			parent.DoUpstream(nil, StartSweepCmd{callback: PageToolCallback, toolName: name})
-			// menu.startNewConsole()
+			DoUpstream(menu, "startsweep", StartSweepCmd{callback: PageToolCallback, toolName: name})
+			// DoUpstream(menu, "startsweep", StartSweepCmd{callback: PageToolCallback, toolName: name})
 		}},
 
 		{label: "Delete", callback: func(name string) {
@@ -38,8 +40,6 @@ func NewPageMenu(parent Window) Window {
 		{label: "Window ->", callback: func(name string) {
 			log.Printf("Misc callback")
 		}}}
-
-	menu := NewMenu(parent, items)
 	return menu
 }
 

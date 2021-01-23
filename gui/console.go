@@ -2,7 +2,6 @@ package gui
 
 import (
 	"image"
-	"image/color"
 	"log"
 	"strings"
 )
@@ -11,43 +10,55 @@ import (
 type Console struct {
 	WindowData
 	clearButton Window
-	textArea    Window
+	textArea    *ScrollingText
 }
 
 // NewConsole xxx
-func NewConsole(parent Window) Window {
+func NewConsole(parent Window) *Console {
 
 	console := &Console{
 		WindowData: NewWindowData(parent),
 	}
 
-	console.clearButton = AddChild(console, "clearButton", NewButton(console, "Clear"))
-	console.textArea = AddChild(console, "textArea", NewScrollingText(console))
+	console.clearButton = NewButton(console, "Clear")
+	console.textArea = NewScrollingText(console)
+
+	AddChild(console, "textArea", console.textArea)
+	AddChild(console, "clearButton", console.clearButton)
 
 	return console
 }
 
-// DoUpstream xxx
-func (console *Console) DoUpstream(w Window, cmd UpstreamCmd) {
-	console.parent.DoUpstream(console, cmd)
+// DoSync xxx
+func (console *Console) DoSync(from Window, cmd string, arg interface{}) (result interface{}, err error) {
+	return NoSyncInterface("Console")
 }
 
-// DoDownstream xxx
-func (console *Console) DoDownstream(t DownstreamCmd) {
-	switch cmd := t.(type) {
-	case MouseCmd:
-		o, _ := WindowUnder(console, cmd.Pos)
+// Do xxx
+func (console *Console) Do(from Window, cmd string, arg interface{}) {
+	switch cmd {
+	case "mouse":
+		mouse := ToMouse(arg)
+		o, _ := WindowUnder(console, mouse.Pos)
 		if o != nil {
-			o.DoDownstream(cmd)
+			o.Do(console, cmd, arg)
 		}
-	case ResizeCmd:
-		console.resize(cmd.Rect)
-	case RedrawCmd:
+	case "resize":
+		console.resize(ToRect(arg))
+	case "redraw":
 		console.redraw()
-	case CloseYourselfCmd:
-		log.Printf("console: CloseYourself\n")
+	case "closeyourself":
+		log.Printf("console: CloseYourself needs work?\n")
+	case "buttondown":
+		// Clear is the only button
+		log.Printf("console: buttondown of %s\n", ToString(arg))
+		console.textArea.Clear()
+		console.textArea.AddLine("This is after clear")
+		console.textArea.AddLine("second line after clear")
+	case "buttonup":
+		log.Printf("console: buttonup of %s\n", ToString(arg))
 	default:
-		log.Printf("Unhandled cmd=%v\n", cmd)
+		console.parent.Do(console, cmd, arg)
 	}
 }
 
@@ -56,7 +67,7 @@ func (console *Console) AddLine(s string) {
 	if strings.HasSuffix(s, "\n") {
 		// XXX - remove it?
 	}
-	console.children["textArea"].DoDownstream(AddLineCmd{s})
+	console.children["textArea"].Do(console, "addline", AddLineCmd{s})
 }
 
 // Data xxx
@@ -65,34 +76,29 @@ func (console *Console) Data() *WindowData {
 }
 
 // Resize xxx
-func (console *Console) resize(rect image.Rectangle) image.Rectangle {
+func (console *Console) resize(rect image.Rectangle) {
 
 	console.Rect = rect
 
 	rowHeight := console.Style.TextHeight() + 2
 	// See how many rows we can fit in the rect ()
-	nrows := rect.Dy() / rowHeight
+	// nrows := rect.Dy() / rowHeight
 
 	// handle Clear button
 	// In Resize, the rect.Max values get recomputed to fit the button
-	console.clearButton.DoDownstream(ResizeCmd{image.Rect(rect.Min.X+2, rect.Min.Y+2, rect.Max.X, rect.Max.Y)})
+	console.clearButton.Do(console, "resize", image.Rect(rect.Min.X+2, rect.Min.Y+2, rect.Max.X, rect.Max.Y))
 
 	// handle ScrollingText Window
 	y0 := rect.Min.Y + rowHeight + 4
-	y1 := rect.Min.Y + nrows*rowHeight
-	console.textArea.DoDownstream(ResizeCmd{image.Rect(rect.Min.X+2, y0, rect.Max.X, y1)})
+	// y1 := rect.Min.Y + nrows*rowHeight
+	console.textArea.Do(console, "resize", image.Rect(rect.Min.X+2, y0, rect.Max.X-2, console.Rect.Max.Y))
 
 	// Adjust console's oveall size from the ScrollingText Window
-	r := console.textArea.Data().Rect
-	console.Rect.Max.Y = r.Max.Y
-
-	return console.Rect
+	console.Rect.Max.Y = console.textArea.Rect.Max.Y + 2
 }
 
 // Draw xxx
 func (console *Console) redraw() {
-
-	green := color.RGBA{0, 0xff, 0, 0xff}
-	console.DoUpstream(console, DrawRectCmd{console.Rect, green})
+	DoUpstream(console, "drawrect", console.Rect)
 	RedrawChildren(console)
 }

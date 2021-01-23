@@ -72,33 +72,37 @@ func (screen *Screen) Data() *WindowData {
 	return &screen.WindowData
 }
 
-// DoDownstream xxx
-func (screen *Screen) DoDownstream(t DownstreamCmd) {
-	log.Printf("Screen.DoDownstream: why is this being called\n")
+// DoSync xxx
+func (screen *Screen) DoSync(from Window, cmd string, arg interface{}) (result interface{}, err error) {
+	return NoSyncInterface("Screen")
 }
 
-// DoUpstream xxx
-func (screen *Screen) DoUpstream(w Window, t UpstreamCmd) {
+// Do xxx
+func (screen *Screen) Do(from Window, cmd string, arg interface{}) {
 
-	switch cmd := t.(type) {
-	case DrawLineCmd:
-		screen.drawLine(cmd.XY0, cmd.XY1, cmd.Color)
-	case DrawRectCmd:
-		screen.drawRect(cmd.Rect, cmd.Color)
-	case DrawFilledRectCmd:
-		screen.drawFilledRect(cmd.Rect, cmd.Color)
-	case DrawTextCmd:
-		screen.drawText(cmd.Text, cmd.Face, cmd.Pos, cmd.Color)
-	case ShowCursorCmd:
-		if cmd.show {
+	switch cmd {
+	case "drawline":
+		dl := ToDrawLine(arg)
+		screen.drawLine(dl.XY0, dl.XY1)
+	case "drawrect":
+		screen.drawRect(ToRect(arg))
+	case "drawfilledrect":
+		screen.drawFilledRect(ToRect(arg))
+	case "drawtext":
+		t := ToDrawText(arg)
+		screen.drawText(t.Text, t.Face, t.Pos)
+	case "setcolor":
+		screen.foreColor = ToColor(arg)
+	case "showcursor":
+		if ToBool(arg) {
 			ebiten.SetCursorMode(ebiten.CursorModeVisible)
 		} else {
 			ebiten.SetCursorMode(ebiten.CursorModeHidden)
 		}
-	case CloseMeCmd:
+	case "closeme":
 		log.Printf("screen.runCmds: SHOULD NOT BE GETTING CloseMeCmd!?\n")
 	default:
-		log.Printf("screen.runCmds: UNRECOGNIZED cmd=%v\n", cmd)
+		log.Printf("screen.runCmds: UNRECOGNIZED cmd=%s\n", cmd)
 	}
 }
 
@@ -111,7 +115,7 @@ func (screen *Screen) Layout(width, height int) (int, int) {
 	if screen.rect.Dx() != width || screen.rect.Dy() != height {
 		screen.rect = image.Rect(0, 0, width, height)
 		log.Printf("Screen.Layout! new size=%v\n", screen.rect)
-		screen.page.DoDownstream(ResizeCmd{screen.rect})
+		screen.page.Do(screen, "resize", screen.rect)
 	}
 	return width, height
 }
@@ -141,16 +145,16 @@ func (screen *Screen) Update() (err error) {
 	for n, eb := range butts {
 		switch {
 		case inpututil.IsMouseButtonJustPressed(eb):
-			screen.page.DoDownstream(MouseCmd{newPos, n, MouseDown})
+			screen.page.Do(screen, "mouse", MouseCmd{newPos, n, MouseDown})
 
 		case inpututil.IsMouseButtonJustReleased(eb):
-			screen.page.DoDownstream(MouseCmd{newPos, n, MouseUp})
+			screen.page.Do(screen, "mouse", MouseCmd{newPos, n, MouseUp})
 
 		default:
 			// Drag events only happen when position changes
 			if newPos.X != screen.cursorPos.X || newPos.Y != screen.cursorPos.Y {
 				screen.cursorPos = newPos
-				screen.page.DoDownstream(MouseCmd{newPos, n, MouseDrag})
+				screen.page.Do(screen, "mouse", MouseCmd{newPos, n, MouseDrag})
 			}
 		}
 	}
@@ -162,9 +166,7 @@ func (screen *Screen) Draw(eimage *ebiten.Image) {
 
 	screen.eimage = eimage
 
-	screen.drawRect(screen.rect, white) // XXX - will eventually be removed
-
-	screen.page.DoDownstream(RedrawCmd{})
+	screen.page.Do(screen, "redraw", nil)
 
 	/*
 		pos := screen.cursorPos
@@ -186,29 +188,29 @@ func (screen *Screen) Draw(eimage *ebiten.Image) {
 }
 
 // drawRect xxx
-func (screen *Screen) drawRect(rect image.Rectangle, clr color.RGBA) {
+func (screen *Screen) drawRect(rect image.Rectangle) {
 	x0 := rect.Min.X
 	y0 := rect.Min.Y
 	x1 := rect.Max.X
 	y1 := rect.Max.Y
-	screen.drawLine(image.Point{x0, y0}, image.Point{x1, y0}, clr)
-	screen.drawLine(image.Point{x1, y0}, image.Point{x1, y1}, clr)
-	screen.drawLine(image.Point{x1, y1}, image.Point{x0, y1}, clr)
-	screen.drawLine(image.Point{x0, y1}, image.Point{x0, y0}, clr)
+	screen.drawLine(image.Point{x0, y0}, image.Point{x1, y0})
+	screen.drawLine(image.Point{x1, y0}, image.Point{x1, y1})
+	screen.drawLine(image.Point{x1, y1}, image.Point{x0, y1})
+	screen.drawLine(image.Point{x0, y1}, image.Point{x0, y0})
 }
 
 // drawLine xxx
-func (screen *Screen) drawLine(xy0, xy1 image.Point, color color.RGBA) {
+func (screen *Screen) drawLine(xy0, xy1 image.Point) {
 	ebitenutil.DrawLine(screen.eimage,
-		float64(xy0.X), float64(xy0.Y), float64(xy1.X), float64(xy1.Y), color)
+		float64(xy0.X), float64(xy0.Y), float64(xy1.X), float64(xy1.Y), screen.foreColor)
 }
 
-func (screen *Screen) drawText(s string, face font.Face, pos image.Point, clr color.Color) {
-	text.Draw(screen.eimage, s, face, pos.X, pos.Y, clr)
+func (screen *Screen) drawText(s string, face font.Face, pos image.Point) {
+	text.Draw(screen.eimage, s, face, pos.X, pos.Y, screen.foreColor)
 }
 
-func (screen *Screen) drawFilledRect(rect image.Rectangle, clr color.Color) {
+func (screen *Screen) drawFilledRect(rect image.Rectangle) {
 	w := rect.Max.X - rect.Min.X
 	h := rect.Max.Y - rect.Min.Y
-	ebitenutil.DrawRect(screen.eimage, float64(rect.Min.X), float64(rect.Min.Y), float64(w), float64(h), clr)
+	ebitenutil.DrawRect(screen.eimage, float64(rect.Min.X), float64(rect.Min.Y), float64(w), float64(h), screen.foreColor)
 }

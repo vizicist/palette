@@ -33,11 +33,11 @@ type MenuItem struct {
 }
 
 // NewMenu xxx
-func NewMenu(parent Window, items []MenuItem) Window {
+func NewMenu(parent Window) *Menu {
 	m := &Menu{
 		WindowData:   NewWindowData(parent),
 		isPressed:    false,
-		items:        items,
+		items:        make([]MenuItem, 0),
 		itemSelected: -1,
 		isTransient:  true,
 	}
@@ -49,13 +49,13 @@ func (menu *Menu) Data() *WindowData {
 	return &menu.WindowData
 }
 
-// DoUpstream xxx
-func (menu *Menu) DoUpstream(w Window, cmd UpstreamCmd) {
-	menu.parent.DoUpstream(menu, cmd)
+// SetItems xxx
+func (menu *Menu) SetItems(items []MenuItem) {
+	menu.items = items
 }
 
 // Resize xxx
-func (menu *Menu) resize(rect image.Rectangle) image.Rectangle {
+func (menu *Menu) resize(rect image.Rectangle) {
 
 	// Recompute all the y positions in the items
 	menu.rowHeight = menu.Style.TextHeight() + 6
@@ -79,32 +79,29 @@ func (menu *Menu) resize(rect image.Rectangle) image.Rectangle {
 	// Adjust the rect so we're exactly the right height
 	menu.Rect.Max.Y = rect.Min.Y + len(menu.items)*menu.rowHeight + menu.handleHeight + 2
 	menu.Rect.Max.X = menu.Rect.Min.X + 12 + maxX
-	return menu.Rect
-}
-
-// Upstream xxx
-func (menu *Menu) Upstream(cmd UpstreamCmd) {
-	menu.parent.DoUpstream(menu, cmd)
 }
 
 // Draw xxx
 func (menu *Menu) redraw() {
 
-	menu.Upstream(DrawRectCmd{menu.Rect, color.RGBA{0xff, 0xff, 0xff, 0xff}})
-	menu.Upstream(DrawFilledRectCmd{menu.Rect.Inset(4), color.RGBA{0, 0, 0, 0xff}})
+	DoUpstream(menu, "setcolor", color.RGBA{0x00, 0x00, 0x00, 0xff})
+	DoUpstream(menu, "drawfilledrect", menu.Rect.Inset(1))
+
+	DoUpstream(menu, "setcolor", color.RGBA{0xff, 0xff, 0xff, 0xff})
+	DoUpstream(menu, "drawrect", menu.Rect)
 
 	liney := menu.Rect.Min.Y + menu.handleHeight
 
 	// Draw the bar at the top of the menu
-	menu.Upstream(DrawLineCmd{image.Point{menu.Rect.Min.X, liney}, image.Point{menu.Rect.Max.X, liney}, white})
+	DoUpstream(menu, "drawline", DrawLineCmd{image.Point{menu.Rect.Min.X, liney}, image.Point{menu.Rect.Max.X, liney}})
 
 	midx := menu.Rect.Max.X - menu.Rect.Dx()/4
 
 	// Draw the X at the right side of the handle area
-	menu.Upstream(DrawLineCmd{image.Point{midx, menu.Rect.Min.Y}, image.Point{midx, liney}, white})
+	DoUpstream(menu, "drawline", DrawLineCmd{image.Point{midx, menu.Rect.Min.Y}, image.Point{midx, liney}})
 	// the midx-1 is just so the X looks a little nicer
-	menu.Upstream(DrawLineCmd{image.Point{midx - 1, menu.Rect.Min.Y}, image.Point{menu.Rect.Max.X, liney}, white})
-	menu.Upstream(DrawLineCmd{image.Point{midx - 1, liney}, image.Point{menu.Rect.Max.X, menu.Rect.Min.Y}, white})
+	DoUpstream(menu, "drawline", DrawLineCmd{image.Point{midx - 1, menu.Rect.Min.Y}, image.Point{menu.Rect.Max.X, liney}})
+	DoUpstream(menu, "drawline", DrawLineCmd{image.Point{midx - 1, liney}, image.Point{menu.Rect.Max.X, menu.Rect.Min.Y}})
 
 	nitems := len(menu.items)
 	liney0 := menu.Rect.Min.Y + menu.handleHeight + menu.rowHeight/4 - 4
@@ -117,12 +114,14 @@ func (menu *Menu) redraw() {
 			back = white
 			itemRect := image.Rect(menu.Rect.Min.X+1, liney-menu.rowHeight, menu.Rect.Max.X-1, liney)
 
-			menu.Upstream(DrawFilledRectCmd{itemRect, back})
+			DoUpstream(menu, "setcolor", back)
+			DoUpstream(menu, "drawfilledrect", itemRect)
 		}
 
-		menu.Upstream(DrawTextCmd{item.label, menu.Style.fontFace, image.Point{item.posX, item.posY}, fore})
+		DoUpstream(menu, "setcolor", fore)
+		DoUpstream(menu, "drawtext", DrawTextCmd{item.label, menu.Style.fontFace, image.Point{item.posX, item.posY}})
 		if n != menu.itemSelected && n < (nitems-1) {
-			menu.Upstream(DrawLineCmd{image.Point{menu.Rect.Min.X, liney}, image.Point{menu.Rect.Max.X, liney}, fore})
+			DoUpstream(menu, "drawline", DrawLineCmd{image.Point{menu.Rect.Min.X, liney}, image.Point{menu.Rect.Max.X, liney}})
 		}
 	}
 }
@@ -151,26 +150,36 @@ func (menu *Menu) mouseHandler(cmd MouseCmd) (didCallback bool) {
 	return false
 }
 
-// DoDownstream xxx
-func (menu *Menu) DoDownstream(t DownstreamCmd) {
+func (menu *Menu) callback(item MenuItem) {
+	item.callback(item.label)
+}
 
-	switch cmd := t.(type) {
+// Do xxx
+func (menu *Menu) Do(from Window, cmd string, arg interface{}) {
 
-	case CloseYourselfCmd:
-		log.Printf("menu.DoDownstream: CloseYourselfCmd\n")
+	switch cmd {
 
-	case ResizeCmd:
-		menu.resize(cmd.Rect)
+	case "closeyourself":
+		log.Printf("menu.Do: closeyourself needs work!\n")
 
-	case RedrawCmd:
+	case "resize":
+		menu.resize(ToRect(arg))
+
+	case "redraw":
 		menu.redraw()
 
-	case MouseCmd:
-		didCallback := menu.mouseHandler(cmd)
+	case "mouse":
+		mouse := ToMouse(arg)
+		didCallback := menu.mouseHandler(mouse)
 		if didCallback {
-			menu.parent.DoUpstream(menu, CloseMeCmd{W: menu})
+			DoUpstream(menu, "closeme", menu)
 		}
 	}
+}
+
+// DoSync xxx
+func (menu *Menu) DoSync(w Window, cmd string, arg interface{}) (result interface{}, err error) {
+	return NoSyncInterface("Menu")
 }
 
 func (menu *Menu) addItem(s string, cb MenuCallback) {

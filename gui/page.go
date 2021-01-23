@@ -1,6 +1,7 @@
 package gui
 
 import (
+	"fmt"
 	"image"
 	"log"
 )
@@ -14,7 +15,7 @@ type Page struct {
 }
 
 // NewPageWindow xxx
-func NewPageWindow(parent Window) Window {
+func NewPageWindow(parent Window) *Page {
 	page := &Page{
 		WindowData: NewWindowData(parent),
 	}
@@ -26,74 +27,71 @@ func (page *Page) Data() *WindowData {
 	return &page.WindowData
 }
 
-// DoDownstream xxx
-func (page *Page) DoDownstream(t DownstreamCmd) {
+// DoSync xxx
+func (page *Page) DoSync(from Window, cmd string, arg interface{}) (result interface{}, err error) {
+	return nil, fmt.Errorf("Page has no DoSync commands")
+}
 
-	switch cmd := t.(type) {
+// Do xxx
+func (page *Page) Do(from Window, cmd string, arg interface{}) {
 
-	case ResizeCmd:
-		page.resize(cmd.Rect)
+	switch cmd {
+	case "resize":
+		page.resize(ToRect(arg))
 
-	case RedrawCmd:
+	case "redraw":
 		RedrawChildren(page)
 
-		// If we're sweeping, draw it
+		// If we're sweeping, draw the sweep cursor or rectangle
 		switch page.sweepState {
 		case 1:
 			page.drawSweepCursor(page.sweepRect.Min)
 		case 2:
-			// waiting for the MouseUp
-			page.parent.DoUpstream(page, DrawRectCmd{page.sweepRect, page.Style.strokeColor})
+			// waiting for the MouseUp, draw the rectangle
+			DoUpstream(page, "drawrect", page.sweepRect)
 		}
 
-	case MouseCmd:
-		page.lastPos = cmd.Pos
+	case "mouse":
+		mouse := ToMouse(arg)
+		page.lastPos = mouse.Pos
 		if page.sweepState > 0 {
-			page.sweepHandler(cmd)
+			page.sweepHandler(mouse)
 		} else {
-			page.mouseHandler(cmd)
+			page.mouseHandler(mouse)
 		}
+
+	case "closeme":
+		RemoveChild(page, ToWindow(arg))
+
+	case "startsweep":
+		page.sweepState = 1
+		page.sweepRect.Min = page.lastPos
+		page.sweepRect.Max = page.lastPos
+		DoUpstream(page, "showcursor", false)
+
+	default:
+		DoUpstream(page, cmd, arg)
 	}
 }
 
 func (page *Page) drawSweepCursor(pos image.Point) {
 	// waiting for the Mousedown, we draw the cursor
-	page.parent.DoUpstream(page, DrawLineCmd{
+	DoUpstream(page, "drawline", DrawLineCmd{
 		XY0: pos, XY1: pos.Add(image.Point{20, 0}),
-		Color: page.Style.strokeColor,
 	})
-	page.parent.DoUpstream(page, DrawLineCmd{
+	DoUpstream(page, "drawline", DrawLineCmd{
 		XY0: pos, XY1: pos.Add(image.Point{0, 20}),
-		Color: page.Style.strokeColor,
 	})
 	pos = pos.Add(image.Point{10, 10})
-	page.parent.DoUpstream(page, DrawLineCmd{
+	DoUpstream(page, "drawline", DrawLineCmd{
 		XY0: pos, XY1: pos.Add(image.Point{10, 0}),
-		Color: page.Style.strokeColor,
 	})
-	page.parent.DoUpstream(page, DrawLineCmd{
+	DoUpstream(page, "drawline", DrawLineCmd{
 		XY0: pos, XY1: pos.Add(image.Point{0, 10}),
-		Color: page.Style.strokeColor,
 	})
 }
 
-// DoUpstream xxx
-func (page *Page) DoUpstream(w Window, t UpstreamCmd) {
-
-	switch cmd := t.(type) {
-	case CloseMeCmd:
-		RemoveChild(page, cmd.W)
-	case StartSweepCmd:
-		page.sweepState = 1
-		page.sweepRect.Min = page.lastPos
-		page.sweepRect.Max = page.lastPos
-		page.parent.DoUpstream(page, ShowCursorCmd{show: false})
-	default:
-		page.parent.DoUpstream(w, t)
-	}
-}
-
-func (page *Page) resize(r image.Rectangle) image.Rectangle {
+func (page *Page) resize(r image.Rectangle) {
 	page.Rect = r
 	// midy := (r.Min.Y + r.Max.Y) / 2
 
@@ -111,7 +109,6 @@ func (page *Page) resize(r image.Rectangle) image.Rectangle {
 			page.menu.Resize(r1)
 		}
 	*/
-	return page.Rect
 }
 
 func (page *Page) mouseHandler(cmd MouseCmd) {
@@ -125,7 +122,7 @@ func (page *Page) mouseHandler(cmd MouseCmd) {
 
 	o, _ := WindowUnder(page, pos)
 	if o != nil {
-		o.DoDownstream(cmd)
+		o.Do(page, "mouse", cmd)
 		return
 	}
 
@@ -141,7 +138,7 @@ func (page *Page) mouseHandler(cmd MouseCmd) {
 			pagemenu := NewPageMenu(page)
 			// page.pagemenu = pagemenu
 			AddChild(page, menuName, pagemenu)
-			pagemenu.DoDownstream(ResizeCmd{image.Rect(pos.X, pos.Y, pos.X+200, pos.Y+200)})
+			pagemenu.Do(page, "resize", image.Rect(pos.X, pos.Y, pos.X+200, pos.Y+200))
 		}
 	}
 }
@@ -171,10 +168,15 @@ func (page *Page) sweepHandler(cmd MouseCmd) {
 			log.Printf("MouseUp final sweepRect=%v\n", page.sweepRect)
 		}
 		page.sweepState = 0
-		page.parent.DoUpstream(page, ShowCursorCmd{show: true})
+		DoUpstream(page, "showcursor", true)
 
 		console := NewConsole(page)
 		AddChild(page, "console", console)
-		console.DoDownstream(ResizeCmd{page.sweepRect})
+		console.Do(page, "resize", page.sweepRect)
 	}
+}
+
+// NoSyncInterface xxx
+func NoSyncInterface(name string) (result interface{}, err error) {
+	return nil, fmt.Errorf("DoSync() in %s has no commands", name)
 }
