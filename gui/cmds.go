@@ -33,24 +33,9 @@ type MouseCmd struct {
 type CloseYourselfCmd struct {
 }
 
-// ClearCmd xxx
-type ClearCmd struct {
-}
-
-// AddLineCmd xxx
-type AddLineCmd struct {
-	line string
-}
-
 ////////////////////////////////////////////
 // These are the standard Upstream commands
 ////////////////////////////////////////////
-
-// ButtonCallbackCmd xxx
-type ButtonCallbackCmd struct {
-	W    Window
-	name string
-}
 
 // DrawLineCmd xxx
 type DrawLineCmd struct {
@@ -117,16 +102,6 @@ func ToMouse(arg interface{}) MouseCmd {
 	if !ok {
 		log.Printf("Unable to convert interface to MouseCmd!\n")
 		r = MouseCmd{}
-	}
-	return r
-}
-
-// ToSweepCallbackCmd xxx
-func ToSweepCallbackCmd(arg interface{}) SweepCallbackCmd {
-	r, ok := arg.(SweepCallbackCmd)
-	if !ok {
-		log.Printf("Unable to convert interface to SweepCallbackCmd!\n")
-		r = SweepCallbackCmd{}
 	}
 	return r
 }
