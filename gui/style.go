@@ -14,10 +14,10 @@ import (
 	"golang.org/x/image/font/gofont/gomono"
 )
 
-var red = color.RGBA{255, 0, 0, 255}
-var black = color.RGBA{0, 0, 0, 255}
-var white = color.RGBA{255, 255, 255, 255}
-var green = color.RGBA{0, 0xff, 0, 0xff}
+var redColor = color.RGBA{255, 0, 0, 255}
+var backColor = color.RGBA{0, 0, 0, 255}
+var foreColor = color.RGBA{255, 255, 255, 255}
+var greenColor = color.RGBA{0, 0xff, 0, 0xff}
 
 // Style xxx
 type Style struct {
@@ -72,9 +72,9 @@ func NewStyle(fontName string, fontHeight int) *Style {
 	return &Style{
 		fontHeight:  realHeight,
 		fontFace:    face,
-		textColor:   white,
-		strokeColor: white,
-		fillColor:   black,
+		textColor:   foreColor,
+		strokeColor: foreColor,
+		fillColor:   backColor,
 	}
 }
 

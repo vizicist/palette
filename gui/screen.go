@@ -30,9 +30,6 @@ type Screen struct {
 	backColor   color.RGBA
 }
 
-// MouseHandler xxx
-// type MouseHandler func(image.Point, int, MouseCmd) bool
-
 type cursorStyle int
 
 const (
@@ -55,8 +52,8 @@ func Run() {
 		eimage:    &ebiten.Image{},
 		time0:     time.Now(),
 		lastprint: time.Now(),
-		foreColor: white,
-		backColor: black,
+		foreColor: foreColor,
+		backColor: backColor,
 	}
 
 	screen.page = NewPageWindow(screen)
@@ -162,28 +159,8 @@ func (screen *Screen) Update() (err error) {
 
 // Draw satisfies the ebiten.Game interface
 func (screen *Screen) Draw(eimage *ebiten.Image) {
-
 	screen.eimage = eimage
-
 	screen.page.Do(screen, "redraw", nil)
-
-	/*
-		pos := screen.cursorPos
-		switch screen.cursorStyle {
-		case normalCursorStyle:
-		case pickCursorStyle:
-			// Draw a cross at the cursor position
-			delta := 10
-			screen.drawLine(image.Point{pos.X - delta, pos.Y}, image.Point{pos.X + delta, pos.Y}, screen.foreColor)
-			screen.drawLine(image.Point{pos.X, pos.Y - delta}, image.Point{pos.X, pos.Y + delta}, screen.foreColor)
-		case sweepCursorStyle:
-			// Draw a cross at the cursor position
-			delta := 10
-			screen.drawLine(image.Point{pos.X - delta, pos.Y - delta}, image.Point{pos.X + delta, pos.Y - delta}, screen.foreColor)
-			screen.drawLine(image.Point{pos.X - delta, pos.Y - delta}, image.Point{pos.X - delta, pos.Y + delta}, screen.foreColor)
-		}
-	*/
-
 }
 
 // drawRect xxx

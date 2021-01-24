@@ -26,6 +26,7 @@ type Page struct {
 	sweepTool    string
 	pickAction   string
 	pickWindow   Window
+	toolIndex    int
 }
 
 // NewPageWindow xxx
@@ -120,14 +121,15 @@ func (page *Page) Do(from Window, cmd string, arg interface{}) {
 }
 
 // AddTool xxx
-func (page *Page) AddTool(toolName string, instanceName string, rect image.Rectangle) Window {
+func (page *Page) AddTool(name string, rect image.Rectangle) Window {
 
-	tool := page.NewTool(toolName)
+	tool := page.NewTool(name)
 	if tool == nil {
-		page.log("Unable to create a new Tool named %s\n", toolName)
+		page.log("Unable to create a new Tool named %s\n", name)
 		return nil
 	}
-	w := AddChild(page, instanceName, tool)
+	page.toolIndex++ // reserve 0 for zero value
+	w := AddChild(page, fmt.Sprintf("%s:%d", name, page.toolIndex), tool)
 	if w != nil {
 		w.Do(page, "resize", page.sweepRect())
 	}
@@ -168,10 +170,10 @@ func (page *Page) NewConsoleTool(arg string) Window {
 }
 
 func (page *Page) log(format string, v ...interface{}) {
-	w := FindChild(page, "console")
-	if w != nil {
-		s := fmt.Sprintf(format, v...)
-		w.Do(page, "addline", s)
+	for nm, w := range page.children {
+		if strings.HasPrefix(nm, "console") {
+			w.Do(page, "addline", fmt.Sprintf(format, v...))
+		}
 	}
 }
 
@@ -211,22 +213,7 @@ func (page *Page) drawPickCursor() {
 
 func (page *Page) resize(r image.Rectangle) {
 	page.Rect = r
-	// midy := (r.Min.Y + r.Max.Y) / 2
-
-	/*
-		r1 := r.Inset(20)
-		r1.Min.Y = (r.Min.Y + r.Max.Y) / 2
-		page.console.Resize(r1)
-	*/
-
 	page.log("Page.Resize: should be doing menus (and other things)?")
-	/*
-		if page.menu != nil {
-			r1 := r.Inset(40)
-			r1.Max.Y = (r.Min.Y + r.Max.Y) / 2
-			page.menu.Resize(r1)
-		}
-	*/
 }
 
 func (page *Page) defaultHandler(cmd MouseCmd) {
@@ -254,7 +241,6 @@ func (page *Page) defaultHandler(cmd MouseCmd) {
 			RemoveChild(page, child)
 		} else {
 			pagemenu := NewPageMenu(page)
-			// page.pagemenu = pagemenu
 			AddChild(page, menuName, pagemenu)
 			pagemenu.Do(page, "resize", image.Rect(pos.X, pos.Y, pos.X+200, pos.Y+200))
 		}
@@ -285,17 +271,7 @@ func (page *Page) sweepHandler(cmd MouseCmd) {
 			w.Do(page, "resize", page.sweepRect())
 
 		case "addtool":
-			if page.sweepArg == "console" {
-				consoleInstance := "console"
-				// If there's already a console window, close it
-				w := FindChild(page, consoleInstance)
-				if w != nil {
-					w.Do(page, "closeyourself", nil)
-					RemoveChild(page, w)
-				}
-			}
-
-			page.AddTool("console", page.sweepArg, page.sweepRect())
+			page.AddTool(page.sweepArg, page.sweepRect())
 		}
 	}
 }

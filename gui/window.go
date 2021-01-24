@@ -20,6 +20,7 @@ type WindowData struct {
 
 	children   map[string]Window
 	windowName map[Window]string
+	seq        int // sequence number for window names
 
 	order []string // display order
 }
@@ -82,6 +83,9 @@ func AddChild(parent Window, name string, child Window) Window {
 // RemoveChild xxx
 func RemoveChild(parent Window, w Window) {
 
+	if w == nil {
+		log.Printf("RemoveChild: w==nil?\n")
+	}
 	windata := parent.Data()
 	name, ok := windata.windowName[w]
 	if !ok {
@@ -114,16 +118,6 @@ func RedrawChildren(w Window) {
 		child := w.Data().children[name]
 		child.Do(w, "redraw", nil)
 	}
-}
-
-// FindChild xxx
-func FindChild(parent Window, name string) Window {
-	for nm, w := range parent.Data().children {
-		if nm == name {
-			return w
-		}
-	}
-	return nil
 }
 
 // DoUpstream xxx

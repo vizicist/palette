@@ -3,7 +3,6 @@ package gui
 import (
 	"image"
 	"log"
-	"strings"
 )
 
 // Console is a window that has a couple of buttons
@@ -51,23 +50,14 @@ func (console *Console) Do(from Window, cmd string, arg interface{}) {
 		log.Printf("console: CloseYourself needs work?\n")
 	case "buttondown":
 		// Clear is the only button
-		log.Printf("console: buttondown of %s\n", ToString(arg))
 		console.textArea.Clear()
 	case "buttonup":
-		log.Printf("console: buttonup of %s\n", ToString(arg))
+		//
 	case "addline":
 		console.textArea.Do(console, cmd, arg)
 	default:
 		console.parent.Do(console, cmd, arg)
 	}
-}
-
-// AddLine xxx
-func (console *Console) AddLine(s string) {
-	if strings.HasSuffix(s, "\n") {
-		// XXX - remove it?
-	}
-	console.children["textArea"].Do(console, "addline", AddLineCmd{s})
 }
 
 // Data xxx
@@ -96,7 +86,9 @@ func (console *Console) resize(rect image.Rectangle) {
 
 // Draw xxx
 func (console *Console) redraw() {
-	DoUpstream(console, "setcolor", white)
+	DoUpstream(console, "setcolor", backColor)
+	DoUpstream(console, "drawfilledrect", console.Rect.Inset(1))
+	DoUpstream(console, "setcolor", foreColor)
 	DoUpstream(console, "drawrect", console.Rect)
 	RedrawChildren(console)
 }

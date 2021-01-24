@@ -49,6 +49,7 @@ func (st *ScrollingText) resize(rect image.Rectangle) {
 
 func (st *ScrollingText) redraw() {
 
+	DoUpstream(st, "setcolor", foreColor)
 	DoUpstream(st, "drawrect", st.Rect)
 
 	textx := st.Rect.Min.X + 2
