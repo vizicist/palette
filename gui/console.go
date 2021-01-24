@@ -22,8 +22,10 @@ func NewConsole(parent Window) *Console {
 	console.clearButton = NewButton(console, "Clear")
 	console.textArea = NewScrollingText(console)
 
-	AddChild(console, "textArea", console.textArea)
-	AddChild(console, "clearButton", console.clearButton)
+	SetAttValue(console, "islogger", "true")
+
+	AddChild(console, console.textArea)
+	AddChild(console, console.clearButton)
 
 	return console
 }
@@ -38,7 +40,7 @@ func (console *Console) Do(from Window, cmd string, arg interface{}) {
 	switch cmd {
 	case "mouse":
 		mouse := ToMouse(arg)
-		o, _ := WindowUnder(console, mouse.Pos)
+		o := WindowUnder(console, mouse.Pos)
 		if o != nil {
 			o.Do(console, cmd, arg)
 		}

@@ -12,17 +12,21 @@ type Window interface {
 	DoSync(from Window, cmd string, arg interface{}) (result interface{}, err error)
 }
 
+// WindowID xxx
+type WindowID int
+
 // WindowData xxx
 type WindowData struct {
 	parent Window
 	Style  *Style
 	Rect   image.Rectangle // in Screen coordinates, not relative
 
-	children   map[string]Window
-	windowName map[Window]string
-	seq        int // sequence number for window names
+	children   map[WindowID]Window
+	windowName map[Window]WindowID
+	lastID     WindowID // sequence number for window names
 
-	order []string // display order
+	order []WindowID // display order
+	att   map[string]string
 }
 
 // NewWindowData xxx
@@ -36,15 +40,16 @@ func NewWindowData(parent Window) WindowData {
 		// toUpstream:      toUpstream,
 		Style:      NewStyle("fixed", 16),
 		Rect:       image.Rectangle{},
-		children:   make(map[string]Window),
-		windowName: make(map[Window]string),
+		children:   make(map[WindowID]Window),
+		windowName: make(map[Window]WindowID),
 		// childWaitGroup: &sync.WaitGroup{},
-		order: make([]string, 0),
+		order: make([]WindowID, 0),
+		att:   make(map[string]string),
 	}
 }
 
 // WindowUnder xxx
-func WindowUnder(parent Window, pos image.Point) (Window, string) {
+func WindowUnder(parent Window, pos image.Point) Window {
 
 	parentData := parent.Data()
 
@@ -56,27 +61,29 @@ func WindowUnder(parent Window, pos image.Point) (Window, string) {
 		childRect := child.Data().Rect
 
 		if pos.In(childRect) {
-			return parentData.children[name], name
+			return parentData.children[name]
 		}
 	}
-	return nil, ""
+	return nil
 }
 
 // AddChild xxx
-func AddChild(parent Window, name string, child Window) Window {
+func AddChild(w Window, child Window) Window {
 
-	parentData := parent.Data()
-	_, ok := parentData.children[name]
+	wdata := w.Data()
+	wdata.lastID++
+	wid := wdata.lastID
+	_, ok := wdata.children[wid]
 	if ok {
-		log.Printf("AddChild: there's already a child named %s\n", name)
+		log.Printf("AddChild: there's already a child with id=%d ??\n", wid)
 		return nil
 	}
 
 	// add it to the end of the display order
-	parentData.order = append(parentData.order, name)
+	wdata.order = append(wdata.order, wid)
 
-	parentData.children[name] = child
-	parentData.windowName[child] = name
+	wdata.children[wid] = child
+	wdata.windowName[child] = wid
 	return child
 }
 
@@ -101,7 +108,6 @@ func RemoveChild(parent Window, w Window) {
 		if name == win {
 			copy(windata.order[n:], windata.order[n+1:])
 			newlen := len(windata.order) - 1
-			windata.order[newlen] = "" // XXX does this do anything?
 			windata.order = windata.order[:newlen]
 			break
 		}
@@ -118,6 +124,16 @@ func RedrawChildren(w Window) {
 		child := w.Data().children[name]
 		child.Do(w, "redraw", nil)
 	}
+}
+
+// GetAttValue xxx
+func GetAttValue(w Window, name string) string {
+	return w.Data().att[name]
+}
+
+// SetAttValue xxx
+func SetAttValue(w Window, name string, val string) {
+	w.Data().att[name] = val
 }
 
 // DoUpstream xxx

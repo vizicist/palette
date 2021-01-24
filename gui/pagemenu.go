@@ -12,7 +12,7 @@ func NewPageMenu(parent Window) *Menu {
 		{label: "About", target: parent, cmd: "about"},
 		{label: "New Console", target: parent, cmd: "sweeptool", arg: "console"},
 		{label: "Resize", target: parent, cmd: "picktool", arg: "resize"},
-		{label: "Delete", target: parent, cmd: "delete"},
+		{label: "Delete", target: parent, cmd: "picktool", arg: "delete"},
 		{label: "Tools  ->", target: parent, cmd: "toolsmenu"},
 		{label: "Misc   ->", target: parent, cmd: "miscmenu"},
 		{label: "Window ->", target: parent, cmd: "windowmenu"},
