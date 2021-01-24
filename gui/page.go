@@ -3,6 +3,7 @@ package gui
 import (
 	"fmt"
 	"image"
+	"log"
 	"reflect"
 	"runtime"
 	"strings"
@@ -17,16 +18,13 @@ type CursorDrawer func()
 // Page is the top-most Window
 type Page struct {
 	WindowData
-	lastPos      image.Point
-	mouseHandler MouseHandler
-	cursorDrawer CursorDrawer
-	sweepStart   image.Point
-	sweepAction  string
-	sweepArg     string
-	sweepTool    string
-	pickAction   string
-	pickWindow   Window
-	toolIndex    int
+	lastPos       image.Point
+	mouseHandler  MouseHandler
+	cursorDrawer  CursorDrawer
+	dragStart     image.Point // used for resize, move, etc
+	targetWindow  Window      // used for resize, move, delete, etc
+	currentAction string
+	sweepToolName string
 }
 
 // NewPageWindow xxx
@@ -97,14 +95,19 @@ func (page *Page) Do(from Window, cmd string, arg interface{}) {
 
 	case "sweeptool":
 		page.startSweep("addtool")
-		page.sweepArg = ToString(arg)
-		DoUpstream(page, "showcursor", false)
+		page.sweepToolName = ToString(arg)
+		page.showCursor(false)
 
 	case "picktool":
 		page.mouseHandler = page.pickHandler
 		page.cursorDrawer = page.drawPickCursor
-		page.pickAction = ToString(arg)
-		DoUpstream(page, "showcursor", false)
+		page.currentAction = ToString(arg)
+		page.showCursor(false)
+
+	case "movetool":
+		page.cursorDrawer = page.drawPickCursor
+		page.mouseHandler = page.moveHandler
+		page.showCursor(false)
 
 	default:
 		if page.parent == nil {
@@ -123,7 +126,6 @@ func (page *Page) AddTool(name string, rect image.Rectangle) Window {
 		page.log("Unable to create a new Tool named %s\n", name)
 		return nil
 	}
-	page.toolIndex++ // reserve 0 for zero value
 	w := AddChild(page, tool)
 	if w != nil {
 		w.Do(page, "resize", page.sweepRect())
@@ -228,6 +230,12 @@ func (page *Page) defaultHandler(cmd MouseCmd) {
 
 	// nothing underneath the mouse
 	if cmd.Ddu == MouseDown {
+		// Remove any transient windows (i.e. popup menus)
+		for _, w := range page.children {
+			if GetAttValue(w, "istransient") == "true" {
+				RemoveChild(page, w)
+			}
+		}
 		// pop up the PageMenu on Down,
 		rect := image.Rect(pos.X, pos.Y, pos.X+200, pos.Y+200)
 		AddChild(page, NewPageMenu(page)).Do(page, "resize", rect)
@@ -236,7 +244,7 @@ func (page *Page) defaultHandler(cmd MouseCmd) {
 
 func (page *Page) sweepRect() image.Rectangle {
 	r := image.Rectangle{}
-	r.Min = page.sweepStart
+	r.Min = page.dragStart
 	r.Max = page.lastPos
 	return r
 }
@@ -245,56 +253,81 @@ func (page *Page) sweepHandler(cmd MouseCmd) {
 
 	switch cmd.Ddu {
 	case MouseDown:
-		page.sweepStart = cmd.Pos
+		page.dragStart = cmd.Pos
 		page.cursorDrawer = page.drawSweepRect
 	case MouseDrag:
 		// do nothing
 	case MouseUp:
-		page.resetHandlers()
-
-		switch page.sweepAction {
+		switch page.currentAction {
 		case "resize":
-			w := page.pickWindow
+			w := page.targetWindow
 			w.Do(page, "resize", page.sweepRect())
 
 		case "addtool":
-			page.AddTool(page.sweepArg, page.sweepRect())
+			page.AddTool(page.sweepToolName, page.sweepRect())
 		}
+		page.resetHandlers()
 	}
 }
 
 func (page *Page) resetHandlers() {
 	page.mouseHandler = page.defaultHandler
 	page.cursorDrawer = nil
-	DoUpstream(page, "showcursor", true)
+	page.targetWindow = nil
+	page.showCursor(true)
+}
+
+func (page *Page) showCursor(b bool) {
+	DoUpstream(page, "showcursor", b)
 }
 
 func (page *Page) startSweep(action string) {
 	page.mouseHandler = page.sweepHandler
 	page.cursorDrawer = page.drawSweepCursor
-	page.sweepAction = action
-	page.sweepStart = page.lastPos
+	page.currentAction = action
+	page.dragStart = page.lastPos
 }
 
+// This Handler waits until MouseUp
 func (page *Page) pickHandler(cmd MouseCmd) {
 
 	switch cmd.Ddu {
 	case MouseDown:
+		page.targetWindow = nil // to make it clear until we get MouseUp
 	case MouseDrag:
 	case MouseUp:
-		page.resetHandlers()
 		w := WindowUnder(page, page.lastPos)
+		page.targetWindow = w
 		if w != nil {
-			page.pickWindow = w
-			switch page.pickAction {
+			switch page.currentAction {
 			case "resize":
 				page.startSweep("resize")
 			case "delete":
 				RemoveChild(page, w)
 			default:
-				page.log("Unrecognized pickAction=%s\n", page.pickAction)
+				page.log("Unrecognized currentAction=%s\n", page.currentAction)
 			}
 		}
+		page.resetHandlers()
+	}
+}
+
+// This Handler starts doing things on MouseDown
+func (page *Page) moveHandler(cmd MouseCmd) {
+
+	switch cmd.Ddu {
+	case MouseDrag:
+		if page.targetWindow != nil {
+			dpos := page.lastPos.Sub(page.dragStart)
+			MoveWindow(page, page.targetWindow, dpos)
+			page.dragStart = page.lastPos
+		}
+	case MouseUp:
+		page.resetHandlers()
+	case MouseDown:
+		log.Printf("moveHandler cmd=%v\n", cmd)
+		page.targetWindow = WindowUnder(page, page.lastPos)
+		page.dragStart = page.lastPos
 	}
 }
 

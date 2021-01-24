@@ -14,7 +14,6 @@ type Menu struct {
 	itemSelected int
 	rowHeight    int
 	handleHeight int
-	isTransient  bool
 	pickedWindow Window
 	sweepBegin   image.Point
 	sweepEnd     image.Point
@@ -41,8 +40,9 @@ func NewMenu(parent Window) *Menu {
 		isPressed:    false,
 		items:        make([]MenuItem, 0),
 		itemSelected: -1,
-		isTransient:  true,
 	}
+	SetAttValue(m, "istransient", "true")
+
 	return m
 }
 
@@ -133,6 +133,10 @@ func (menu *Menu) mouseHandler(cmd MouseCmd) (didCallback bool) {
 	me := cmd
 	if me.Pos.Y <= menu.Rect.Min.Y+menu.handleHeight {
 		menu.itemSelected = -1
+		if me.Ddu == MouseDown {
+			DoUpstream(menu, "startmove", menu)
+			return true
+		}
 		return false
 	}
 	// Find out which item the mouse is in
