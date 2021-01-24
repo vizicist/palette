@@ -85,7 +85,7 @@ func (page *Page) Do(from Window, cmd string, arg interface{}) {
 	case "toolsmenu":
 		page.log("toolsmenu start")
 		toolsmenu := NewToolsMenu(page)
-		AddChild(page, "toolsmenu", toolsmenu)
+		AddChild(page, toolsmenu)
 		pos := page.lastPos
 		toolsmenu.Do(page, "resize", image.Rect(pos.X, pos.Y, pos.X+200, pos.Y+200))
 
@@ -104,11 +104,6 @@ func (page *Page) Do(from Window, cmd string, arg interface{}) {
 		page.mouseHandler = page.pickHandler
 		page.cursorDrawer = page.drawPickCursor
 		page.pickAction = ToString(arg)
-		switch page.pickAction {
-		case "resize":
-		default:
-			page.log("Unrecognized pickAction=%s\n", page.pickAction)
-		}
 		DoUpstream(page, "showcursor", false)
 
 	default:
@@ -129,7 +124,7 @@ func (page *Page) AddTool(name string, rect image.Rectangle) Window {
 		return nil
 	}
 	page.toolIndex++ // reserve 0 for zero value
-	w := AddChild(page, fmt.Sprintf("%s:%d", name, page.toolIndex), tool)
+	w := AddChild(page, tool)
 	if w != nil {
 		w.Do(page, "resize", page.sweepRect())
 	}
@@ -170,8 +165,8 @@ func (page *Page) NewConsoleTool(arg string) Window {
 }
 
 func (page *Page) log(format string, v ...interface{}) {
-	for nm, w := range page.children {
-		if strings.HasPrefix(nm, "console") {
+	for _, w := range page.children {
+		if GetAttValue(w, "islogger") == "true" {
 			w.Do(page, "addline", fmt.Sprintf(format, v...))
 		}
 	}
@@ -225,7 +220,7 @@ func (page *Page) defaultHandler(cmd MouseCmd) {
 		return
 	}
 
-	o, _ := WindowUnder(page, pos)
+	o := WindowUnder(page, pos)
 	if o != nil {
 		o.Do(page, "mouse", cmd)
 		return
@@ -233,17 +228,9 @@ func (page *Page) defaultHandler(cmd MouseCmd) {
 
 	// nothing underneath the mouse
 	if cmd.Ddu == MouseDown {
-		// pop up the PageMenu on Down
-		menuName := "pagemenu"
-		child, ok := page.children[menuName]
-		if ok {
-			// We only want one pagemenu on the screen at a time.
-			RemoveChild(page, child)
-		} else {
-			pagemenu := NewPageMenu(page)
-			AddChild(page, menuName, pagemenu)
-			pagemenu.Do(page, "resize", image.Rect(pos.X, pos.Y, pos.X+200, pos.Y+200))
-		}
+		// pop up the PageMenu on Down,
+		rect := image.Rect(pos.X, pos.Y, pos.X+200, pos.Y+200)
+		AddChild(page, NewPageMenu(page)).Do(page, "resize", rect)
 	}
 }
 
@@ -296,12 +283,14 @@ func (page *Page) pickHandler(cmd MouseCmd) {
 	case MouseDrag:
 	case MouseUp:
 		page.resetHandlers()
-		w, _ := WindowUnder(page, page.lastPos)
+		w := WindowUnder(page, page.lastPos)
 		if w != nil {
 			page.pickWindow = w
 			switch page.pickAction {
 			case "resize":
 				page.startSweep("resize")
+			case "delete":
+				RemoveChild(page, w)
 			default:
 				page.log("Unrecognized pickAction=%s\n", page.pickAction)
 			}
