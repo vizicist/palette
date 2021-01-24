@@ -114,6 +114,11 @@ func RemoveChild(parent Window, w Window) {
 	}
 }
 
+// MoveWindow xxx
+func MoveWindow(parent Window, child Window, delta image.Point) {
+	child.Do(parent, "resize", child.Data().Rect.Add(delta))
+}
+
 // RedrawChildren xxx
 func RedrawChildren(w Window) {
 	if w == nil {
