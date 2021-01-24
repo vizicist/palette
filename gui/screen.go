@@ -31,7 +31,7 @@ type Screen struct {
 }
 
 // MouseHandler xxx
-type MouseHandler func(image.Point, int, MouseCmd) bool
+// type MouseHandler func(image.Point, int, MouseCmd) bool
 
 type cursorStyle int
 
@@ -114,7 +114,6 @@ func (screen *Screen) Layout(width, height int) (int, int) {
 	}
 	if screen.rect.Dx() != width || screen.rect.Dy() != height {
 		screen.rect = image.Rect(0, 0, width, height)
-		log.Printf("Screen.Layout! new size=%v\n", screen.rect)
 		screen.page.Do(screen, "resize", screen.rect)
 	}
 	return width, height
