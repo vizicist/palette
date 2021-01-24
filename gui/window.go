@@ -26,6 +26,9 @@ type WindowData struct {
 
 // NewWindowData xxx
 func NewWindowData(parent Window) WindowData {
+	if parent == nil {
+		log.Printf("NewWindowData: parent is nil!?\n")
+	}
 	return WindowData{
 		parent: parent,
 		// fromUpstream:    fromUpstream,
@@ -125,5 +128,10 @@ func FindChild(parent Window, name string) Window {
 
 // DoUpstream xxx
 func DoUpstream(w Window, cmd string, arg interface{}) {
-	w.Data().parent.Do(w, cmd, arg)
+	p := w.Data().parent
+	if p == nil {
+		log.Printf("Hey, no parent?\n")
+	} else {
+		p.Do(w, cmd, arg)
+	}
 }

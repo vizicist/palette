@@ -10,12 +10,24 @@ func NewPageMenu(parent Window) *Menu {
 	menu := NewMenu(parent)
 	menu.items = []MenuItem{
 		{label: "About", target: parent, cmd: "about"},
-		{label: "Move", target: parent, cmd: "move"},
 		{label: "New Console", target: parent, cmd: "sweeptool", arg: "console"},
+		{label: "Resize", target: parent, cmd: "picktool", arg: "resize"},
 		{label: "Delete", target: parent, cmd: "delete"},
 		{label: "Tools  ->", target: parent, cmd: "toolsmenu"},
 		{label: "Misc   ->", target: parent, cmd: "miscmenu"},
 		{label: "Window ->", target: parent, cmd: "windowmenu"},
+	}
+	return menu
+}
+
+// NewToolsMenu xxx
+func NewToolsMenu(parent Window) *Menu {
+
+	menu := NewMenu(parent)
+	menu.items = []MenuItem{
+		{label: "About", target: parent, cmd: "about"},
+		{label: "Console", target: parent, cmd: "sweeptool", arg: "console"},
+		{label: "Console2", target: parent, cmd: "sweeptool", arg: "console"},
 	}
 	return menu
 }
