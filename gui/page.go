@@ -297,18 +297,20 @@ func (page *Page) pickHandler(cmd MouseCmd) {
 	case MouseDrag:
 	case MouseUp:
 		w := WindowUnder(page, page.lastPos)
-		page.targetWindow = w
-		if w != nil {
-			switch page.currentAction {
-			case "resize":
-				page.startSweep("resize")
-			case "delete":
-				RemoveChild(page, w)
-			default:
-				page.log("Unrecognized currentAction=%s\n", page.currentAction)
-			}
+		if w == nil {
+			page.resetHandlers()
+			break
 		}
-		page.resetHandlers()
+		page.targetWindow = w
+		switch page.currentAction {
+		case "resize":
+			page.startSweep("resize")
+		case "delete":
+			RemoveChild(page, w)
+			page.resetHandlers()
+		default:
+			page.log("Unrecognized currentAction=%s\n", page.currentAction)
+		}
 	}
 }
 

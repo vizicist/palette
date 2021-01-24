@@ -21,9 +21,9 @@ type WindowData struct {
 	Style  *Style
 	Rect   image.Rectangle // in Screen coordinates, not relative
 
-	children   map[WindowID]Window
-	windowName map[Window]WindowID
-	lastID     WindowID // sequence number for window names
+	children    map[WindowID]Window
+	windowName  map[Window]WindowID
+	lastChildID WindowID // for unique child window IDs
 
 	order []WindowID // display order
 	att   map[string]string
@@ -35,16 +35,13 @@ func NewWindowData(parent Window) WindowData {
 		log.Printf("NewWindowData: parent is nil!?\n")
 	}
 	return WindowData{
-		parent: parent,
-		// fromUpstream:    fromUpstream,
-		// toUpstream:      toUpstream,
+		parent:     parent,
 		Style:      NewStyle("fixed", 16),
 		Rect:       image.Rectangle{},
 		children:   make(map[WindowID]Window),
 		windowName: make(map[Window]WindowID),
-		// childWaitGroup: &sync.WaitGroup{},
-		order: make([]WindowID, 0),
-		att:   make(map[string]string),
+		order:      make([]WindowID, 0),
+		att:        make(map[string]string),
 	}
 }
 
@@ -71,8 +68,8 @@ func WindowUnder(parent Window, pos image.Point) Window {
 func AddChild(w Window, child Window) Window {
 
 	wdata := w.Data()
-	wdata.lastID++
-	wid := wdata.lastID
+	wdata.lastChildID++
+	wid := wdata.lastChildID
 	_, ok := wdata.children[wid]
 	if ok {
 		log.Printf("AddChild: there's already a child with id=%d ??\n", wid)
