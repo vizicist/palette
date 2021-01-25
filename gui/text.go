@@ -8,11 +8,14 @@ import (
 // TextCallback xxx
 type TextCallback func(updown string)
 
+var defaultBufferSize = 4
+
 // ScrollingText xxx
 type ScrollingText struct {
 	WindowData
 	isPressed bool
-	lines     []string
+	buffer    []string
+	nlines    int
 }
 
 // NewScrollingText xxx
@@ -20,7 +23,7 @@ func NewScrollingText(parent Window) *ScrollingText {
 	st := &ScrollingText{
 		WindowData: NewWindowData(parent),
 		isPressed:  false,
-		lines:      make([]string, 0),
+		buffer:     make([]string, defaultBufferSize),
 	}
 	return st
 }
@@ -38,11 +41,16 @@ func (st *ScrollingText) DoSync(from Window, cmd string, arg interface{}) (resul
 func (st *ScrollingText) resize(rect image.Rectangle) {
 
 	// See how many lines we can fit in the rect
-	nlines := rect.Dy() / st.Style.RowHeight()
-	st.lines = make([]string, nlines)
+	st.nlines = rect.Dy() / st.Style.RowHeight()
+	// in case the buffer isn't big enough
+	if st.nlines > len(st.buffer) {
+		newbuffer := make([]string, st.nlines)
+		copy(newbuffer, st.buffer)
+		st.buffer = newbuffer
+	}
 
 	// Adjust the rect so we're exactly that height
-	rect.Max.Y = rect.Min.Y + nlines*st.Style.RowHeight()
+	rect.Max.Y = rect.Min.Y + st.nlines*st.Style.RowHeight()
 
 	st.Rect = rect
 }
@@ -54,25 +62,14 @@ func (st *ScrollingText) redraw() {
 
 	textx := st.Rect.Min.X + 2
 
-	for n, line := range st.lines {
-
-		// assumes the area is erased, initially
+	for n := 0; n < st.nlines; n++ {
+		// assumes the area is erased, so we don't erase blank lines
+		line := st.buffer[n]
 		if line == "" {
 			continue
 		}
-		texty := st.Rect.Min.Y + (n+1)*st.Style.RowHeight() - 4
-
-		/*
-			brect := st.Style.BoundString(line)
-			bminy := brect.Min.Y
-			bmaxy := brect.Max.Y
-			if bminy < 0 {
-				bmaxy -= bminy
-				bminy = 0
-			}
-			texty += bminy
-			texty += bmaxy
-		*/
+		// rownum 0 is the bottom
+		texty := st.Rect.Max.Y - n*st.Style.RowHeight() - 4
 		DoUpstream(st, "drawtext", DrawTextCmd{line, st.Style.fontFace, image.Point{textx, texty}})
 	}
 }
@@ -97,17 +94,14 @@ func (st *ScrollingText) Do(from Window, cmd string, arg interface{}) {
 }
 
 // AddLine xxx
-func (st *ScrollingText) AddLine(newline string) {
-	// XXX - this can be done better
-	for n := 1; n < len(st.lines); n++ {
-		st.lines[n-1] = st.lines[n]
-	}
-	st.lines[len(st.lines)-1] = newline
+func (st *ScrollingText) AddLine(line string) {
+	// prepend it to the beginning of st.lines
+	st.buffer = append([]string{line}, st.buffer...)
 }
 
 // Clear clears all text
 func (st *ScrollingText) Clear() {
-	for n := 0; n < len(st.lines); n++ {
-		st.lines[n] = ""
+	for n := 0; n < len(st.buffer); n++ {
+		st.buffer[n] = ""
 	}
 }

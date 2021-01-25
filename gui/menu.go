@@ -4,6 +4,7 @@ import (
 	"image"
 	"image/color"
 	"log"
+	"strings"
 )
 
 // Menu xxx
@@ -14,6 +15,7 @@ type Menu struct {
 	itemSelected int
 	rowHeight    int
 	handleHeight int
+	handleMidx   int
 	pickedWindow Window
 	sweepBegin   image.Point
 	sweepEnd     image.Point
@@ -63,9 +65,8 @@ func (menu *Menu) resize(rect image.Rectangle) {
 	// DO NOT use Style.RowHeight, we want wider spacing
 	menu.rowHeight = menu.Style.TextHeight() + 6
 	menu.handleHeight = 9
-	menu.Rect = rect
 
-	textx := menu.Rect.Min.X + 6
+	textx := rect.Min.X + 6
 	maxX := -1
 	for n, item := range menu.items {
 		brect := menu.Style.BoundString(item.label)
@@ -75,13 +76,18 @@ func (menu *Menu) resize(rect image.Rectangle) {
 		// do not use Y info from brect,
 		// the vertical placement of items should
 		// be independent of the labels
-		texty := menu.Rect.Min.Y + 6 + menu.handleHeight + n*menu.rowHeight + (menu.rowHeight / 2)
+		texty := rect.Min.Y + 6 + menu.handleHeight + n*menu.rowHeight + (menu.rowHeight / 2)
 		menu.items[n].posX = textx
 		menu.items[n].posY = texty
 	}
 	// Adjust the rect so we're exactly the right height
-	menu.Rect.Max.Y = rect.Min.Y + len(menu.items)*menu.rowHeight + menu.handleHeight + 2
-	menu.Rect.Max.X = menu.Rect.Min.X + 12 + maxX
+	rect.Max.Y = rect.Min.Y + len(menu.items)*menu.rowHeight + menu.handleHeight + 2
+	rect.Max.X = rect.Min.X + 12 + maxX
+
+	// this depends on the width after we've adjusted
+	menu.handleMidx = rect.Max.X - rect.Dx()/4
+
+	menu.Rect = rect
 }
 
 // Draw xxx
@@ -98,7 +104,7 @@ func (menu *Menu) redraw() {
 	// Draw the bar at the top of the menu
 	DoUpstream(menu, "drawline", DrawLineCmd{image.Point{menu.Rect.Min.X, liney}, image.Point{menu.Rect.Max.X, liney}})
 
-	midx := menu.Rect.Max.X - menu.Rect.Dx()/4
+	midx := menu.handleMidx
 
 	// Draw the X at the right side of the handle area
 	DoUpstream(menu, "drawline", DrawLineCmd{image.Point{midx, menu.Rect.Min.Y}, image.Point{midx, liney}})
@@ -129,16 +135,22 @@ func (menu *Menu) redraw() {
 	}
 }
 
-func (menu *Menu) mouseHandler(cmd MouseCmd) (didCallback bool) {
+func (menu *Menu) mouseHandler(cmd MouseCmd) (removeMenu bool) {
 	me := cmd
+	// If it's in the handle area...
 	if me.Pos.Y <= menu.Rect.Min.Y+menu.handleHeight {
 		menu.itemSelected = -1
 		if me.Ddu == MouseDown {
-			DoUpstream(menu, "startmove", menu)
-			return true
+			if me.Pos.X > menu.handleMidx {
+				// Clicked in the X, remove the menu
+				return true
+			}
+			DoUpstream(menu, "movemenu", menu)
+			return false
 		}
 		return false
 	}
+
 	// Find out which item the mouse is in
 	for n, item := range menu.items {
 		if me.Pos.Y < item.posY {
@@ -153,11 +165,12 @@ func (menu *Menu) mouseHandler(cmd MouseCmd) (didCallback bool) {
 		w := item.target
 		if w == nil {
 			log.Printf("HEY! item.callbackWindow is nil?\n")
-			return false
+			return true
 		}
 		w.Do(menu, item.cmd, item.arg)
 		menu.itemSelected = -1
-		return true
+		// If we're invoking a sub-menu, don't delete parent yet
+		return !strings.HasSuffix(item.label, "->")
 	}
 	return false
 }
@@ -184,8 +197,7 @@ func (menu *Menu) Do(from Window, cmd string, arg interface{}) {
 
 	case "mouse":
 		mouse := ToMouse(arg)
-		didCallback := menu.mouseHandler(mouse)
-		if didCallback {
+		if menu.mouseHandler(mouse) {
 			DoUpstream(menu, "closeme", menu)
 		}
 	}

@@ -76,6 +76,16 @@ func ToRect(arg interface{}) image.Rectangle {
 	return r
 }
 
+// ToMenu xxx
+func ToMenu(arg interface{}) *Menu {
+	r, ok := arg.(*Menu)
+	if !ok {
+		log.Printf("Unable to convert interface to Menu!\n")
+		r = nil
+	}
+	return r
+}
+
 // ToDrawLine xxx
 func ToDrawLine(arg interface{}) DrawLineCmd {
 	r, ok := arg.(DrawLineCmd)
