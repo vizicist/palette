@@ -3,7 +3,6 @@ package gui
 import (
 	"fmt"
 	"image"
-	"log"
 	"reflect"
 	"runtime"
 	"strings"
@@ -59,8 +58,13 @@ func (page *Page) Do(from Window, cmd string, arg interface{}) {
 	// XXX - should be checking to verify that the from Window
 	// is allowed to do the particular commands invoked.
 	switch cmd {
+
 	case "about":
 		page.log("This is the Palette Window System\n")
+		page.log("# of goroutines: %d\n", runtime.NumGoroutine())
+
+	case "about2":
+		page.log("This is the Palette Window System 2\n")
 		page.log("# of goroutines: %d\n", runtime.NumGoroutine())
 
 	case "resize":
@@ -78,11 +82,21 @@ func (page *Page) Do(from Window, cmd string, arg interface{}) {
 		page.mouseHandler(mouse)
 
 	case "closeme":
-		RemoveChild(page, ToWindow(arg))
+		w := ToWindow(arg)
+		menu := ToMenu(w)
+		if menu != nil {
+			// For menus, we want to close parent menus (if transient)
+			pmenu := ToMenu(menu.parentMenu)
+			if pmenu != nil && GetAttValue(pmenu, "istransient") == "true" {
+				pmenu.Do(menu, "closeme", menu)
+				RemoveChild(page, pmenu)
+			}
+		}
+		RemoveChild(page, w)
 
 	case "toolsmenu":
 		page.log("toolsmenu start")
-		SetAttValue(from, "istransient", "false")
+		// SetAttValue(from, "istransient", "false")
 		toolsmenu := NewToolsMenu(page, from)
 		AddChild(page, toolsmenu)
 		// Place it just to the right of the window that spawned it
@@ -98,6 +112,7 @@ func (page *Page) Do(from Window, cmd string, arg interface{}) {
 
 	case "sweeptool":
 		page.startSweep("addtool")
+		page.cursorDrawer = page.drawSweepCursor
 		page.sweepToolName = ToString(arg)
 		page.showCursor(false)
 
@@ -113,7 +128,6 @@ func (page *Page) Do(from Window, cmd string, arg interface{}) {
 		page.showCursor(false)
 
 	case "movemenu":
-		log.Printf("movemenu start!\n")
 		page.mouseHandler = page.moveHandler
 		page.cursorDrawer = page.drawPickCursor
 		page.dragStart = page.lastPos
@@ -191,6 +205,7 @@ func (page *Page) drawSweepRect() {
 
 func (page *Page) drawSweepCursor() {
 	pos := page.lastPos
+	DoUpstream(page, "setcolor", foreColor)
 	DoUpstream(page, "drawline", DrawLineCmd{
 		XY0: pos, XY1: pos.Add(image.Point{20, 0}),
 	})
@@ -209,6 +224,7 @@ func (page *Page) drawSweepCursor() {
 func (page *Page) drawPickCursor() {
 	sz := 10
 	pos := page.lastPos
+	DoUpstream(page, "setcolor", foreColor)
 	DoUpstream(page, "drawline", DrawLineCmd{
 		XY0: pos.Add(image.Point{-sz, 0}),
 		XY1: pos.Add(image.Point{sz, 0}),
@@ -276,7 +292,6 @@ func (page *Page) sweepHandler(cmd MouseCmd) {
 		case "resize":
 			w := page.targetWindow
 			w.Do(page, "resize", page.sweepRect())
-
 		case "addtool":
 			page.AddTool(page.sweepToolName, page.sweepRect())
 		}
@@ -348,7 +363,6 @@ func (page *Page) moveHandler(cmd MouseCmd) {
 		page.resetHandlers()
 
 	case MouseDown:
-		log.Printf("moveHandler cmd=%v\n", cmd)
 		page.targetWindow = WindowUnder(page, page.lastPos)
 		page.dragStart = page.lastPos
 	}

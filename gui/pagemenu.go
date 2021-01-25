@@ -3,10 +3,9 @@ package gui
 // NewPageMenu xxx
 func NewPageMenu(parent Window) *Menu {
 
-	menu := NewMenu(parent)
+	menu := NewMenu(parent, nil)
 	menu.items = []MenuItem{
 		{label: "About", target: parent, cmd: "about"},
-		{label: "New Console", target: parent, cmd: "sweeptool", arg: "console"},
 		{label: "Resize", target: parent, cmd: "picktool", arg: "resize"},
 		{label: "Move", target: parent, cmd: "movetool", arg: "move"},
 		{label: "Delete", target: parent, cmd: "picktool", arg: "delete"},
@@ -18,14 +17,12 @@ func NewPageMenu(parent Window) *Menu {
 }
 
 // NewToolsMenu xxx
-func NewToolsMenu(parent Window, parentMenu *Menu) *Menu {
+func NewToolsMenu(parent Window, parentMenu Window) *Menu {
 
 	menu := NewMenu(parent, parentMenu)
 	menu.parentMenu = parentMenu
 	menu.items = []MenuItem{
-		{label: "About", target: parent, cmd: "about"},
 		{label: "Console", target: parent, cmd: "sweeptool", arg: "console"},
-		{label: "Console2", target: parent, cmd: "sweeptool", arg: "console"},
 	}
 	return menu
 }
