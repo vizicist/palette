@@ -137,7 +137,6 @@ func (screen *Screen) Update() (err error) {
 
 	// Do we really need to check all 3 mouse buttons?
 	// Will more than 1 button ever be used?  Not sure.
-	// pageinput := screen.page.Data().fromUpstream
 	for n, eb := range butts {
 		switch {
 		case inpututil.IsMouseButtonJustPressed(eb):
