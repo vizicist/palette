@@ -37,7 +37,7 @@ type MenuItem struct {
 }
 
 // NewMenu xxx
-func NewMenu(parent Window, parentMenu *Menu) *Menu {
+func NewMenu(parent Window, parentMenu Window) *Menu {
 	m := &Menu{
 		WindowData:   NewWindowData(parent),
 		isPressed:    false,
@@ -139,12 +139,14 @@ func (menu *Menu) redraw() {
 
 func (menu *Menu) mouseHandler(cmd MouseCmd) (removeMenu bool) {
 	me := cmd
+	istransient := (GetAttValue(menu, "istransient") == "true")
 	// If it's in the handle area...
 	if me.Pos.Y <= menu.Rect.Min.Y+menu.handleHeight {
 		menu.itemSelected = -1
 		if me.Ddu == MouseDown {
 			if me.Pos.X > menu.handleMidx {
-				// Clicked in the X, remove the menu
+				// Clicked in the X, remove the menu no matter what
+				DoUpstream(menu, "closeme", menu)
 				return true
 			}
 			DoUpstream(menu, "movemenu", menu)
@@ -167,11 +169,18 @@ func (menu *Menu) mouseHandler(cmd MouseCmd) (removeMenu bool) {
 		w := item.target
 		if w == nil {
 			log.Printf("HEY! item.callbackWindow is nil?\n")
-			return true
+			if istransient {
+				DoUpstream(menu, "closeme", menu)
+			}
+			return istransient
 		}
 		w.Do(menu, item.cmd, item.arg)
 		menu.itemSelected = -1
 		// If we're invoking a sub-menu, don't delete parent yet
+		issubmenu := strings.HasSuffix(item.label, "->")
+		if !issubmenu && istransient {
+			DoUpstream(menu, "closeme", menu)
+		}
 		return !strings.HasSuffix(item.label, "->")
 	}
 	return false
@@ -200,7 +209,12 @@ func (menu *Menu) Do(from Window, cmd string, arg interface{}) {
 	case "mouse":
 		mouse := ToMouse(arg)
 		if menu.mouseHandler(mouse) {
-			DoUpstream(menu, "closeme", menu)
+			/*
+				// XXX if it's in the X, we need to close no matter what
+				if GetAttValue(menu, "istransient") == "true" {
+					DoUpstream(menu, "closeme", menu)
+				}
+			*/
 		}
 	}
 }
