@@ -20,7 +20,7 @@ func NewPageMenu(parent Window) *Menu {
 // NewToolsMenu xxx
 func NewToolsMenu(parent Window, parentMenu *Menu) *Menu {
 
-	menu := NewMenu(parent)
+	menu := NewMenu(parent, parentMenu)
 	menu.parentMenu = parentMenu
 	menu.items = []MenuItem{
 		{label: "About", target: parent, cmd: "about"},
