@@ -20,6 +20,7 @@ type Menu struct {
 	sweepBegin   image.Point
 	sweepEnd     image.Point
 	resizeState  int
+	parentMenu   Window
 }
 
 // MenuCallback xxx
@@ -36,12 +37,13 @@ type MenuItem struct {
 }
 
 // NewMenu xxx
-func NewMenu(parent Window) *Menu {
+func NewMenu(parent Window, parentMenu *Menu) *Menu {
 	m := &Menu{
 		WindowData:   NewWindowData(parent),
 		isPressed:    false,
 		items:        make([]MenuItem, 0),
 		itemSelected: -1,
+		parentMenu:   parentMenu,
 	}
 	SetAttValue(m, "istransient", "true")
 
