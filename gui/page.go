@@ -83,7 +83,7 @@ func (page *Page) Do(from Window, cmd string, arg interface{}) {
 	case "toolsmenu":
 		page.log("toolsmenu start")
 		SetAttValue(from, "istransient", "false")
-		toolsmenu := NewToolsMenu(page)
+		toolsmenu := NewToolsMenu(page, from)
 		AddChild(page, toolsmenu)
 		// Place it just to the right of the window that spawned it
 		rect := WindowRect(from)
