@@ -48,7 +48,6 @@ func (st *ScrollingText) resize(rect image.Rectangle) {
 		copy(newbuffer, st.buffer)
 		st.buffer = newbuffer
 	}
-
 	// Adjust the rect so we're exactly that height
 	rect.Max.Y = rect.Min.Y + st.nlines*st.Style.RowHeight()
 

@@ -86,7 +86,8 @@ func (page *Page) Do(from Window, cmd string, arg interface{}) {
 		toolsmenu := NewToolsMenu(page)
 		AddChild(page, toolsmenu)
 		// Place it just to the right of the window that spawned it
-		pos := image.Point{from.Data().Rect.Max.X + 2, page.lastPos.Y}
+		rect := WindowRect(from)
+		pos := image.Point{rect.Max.X + 2, page.lastPos.Y}
 		toolsmenu.Do(page, "resize", image.Rect(pos.X, pos.Y, pos.X+200, pos.Y+200))
 
 	case "miscmenu":
@@ -234,6 +235,9 @@ func (page *Page) defaultHandler(cmd MouseCmd) {
 
 	o := WindowUnder(page, pos)
 	if o != nil {
+		if cmd.Ddu == MouseDown {
+			WindowRaise(page, o)
+		}
 		o.Do(page, "mouse", cmd)
 		return
 	}
