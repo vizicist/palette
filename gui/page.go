@@ -82,9 +82,11 @@ func (page *Page) Do(from Window, cmd string, arg interface{}) {
 
 	case "toolsmenu":
 		page.log("toolsmenu start")
+		SetAttValue(from, "istransient", "false")
 		toolsmenu := NewToolsMenu(page)
 		AddChild(page, toolsmenu)
-		pos := page.lastPos
+		// Place it just to the right of the window that spawned it
+		pos := image.Point{from.Data().Rect.Max.X + 2, page.lastPos.Y}
 		toolsmenu.Do(page, "resize", image.Rect(pos.X, pos.Y, pos.X+200, pos.Y+200))
 
 	case "miscmenu":
@@ -105,8 +107,16 @@ func (page *Page) Do(from Window, cmd string, arg interface{}) {
 		page.showCursor(false)
 
 	case "movetool":
-		page.cursorDrawer = page.drawPickCursor
 		page.mouseHandler = page.moveHandler
+		page.cursorDrawer = page.drawPickCursor
+		page.showCursor(false)
+
+	case "movemenu":
+		log.Printf("movemenu start!\n")
+		page.mouseHandler = page.moveHandler
+		page.cursorDrawer = page.drawPickCursor
+		page.dragStart = page.lastPos
+		page.targetWindow = ToMenu(arg)
 		page.showCursor(false)
 
 	default:
@@ -318,14 +328,21 @@ func (page *Page) pickHandler(cmd MouseCmd) {
 func (page *Page) moveHandler(cmd MouseCmd) {
 
 	switch cmd.Ddu {
+
 	case MouseDrag:
 		if page.targetWindow != nil {
 			dpos := page.lastPos.Sub(page.dragStart)
 			MoveWindow(page, page.targetWindow, dpos)
 			page.dragStart = page.lastPos
 		}
+
 	case MouseUp:
+		// When we move a menu, we want it to be permanent
+		if page.targetWindow != nil {
+			SetAttValue(page.targetWindow, "istransient", "false")
+		}
 		page.resetHandlers()
+
 	case MouseDown:
 		log.Printf("moveHandler cmd=%v\n", cmd)
 		page.targetWindow = WindowUnder(page, page.lastPos)
