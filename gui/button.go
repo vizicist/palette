@@ -9,19 +9,29 @@ import (
 type Button struct {
 	WindowData
 	isPressed bool
+	labelOrig string
 	label     string
 	labelX    int
 	labelY    int
+	noRoom    bool
 }
 
 // NewButton xxx
-func NewButton(parent Window, text string) *Button {
-	w := &Button{
+func NewButton(parent Window, label string) *Button {
+	b := &Button{
 		WindowData: NewWindowData(parent),
 		isPressed:  false,
-		label:      text,
+		labelOrig:  label,
+		label:      label,
 	}
-	return w
+	b.MinRect = image.Rectangle{
+		Min: image.Point{0, 0},
+		Max: image.Point{
+			X: b.Style.TextWidth(label) + 6,
+			Y: b.Style.TextHeight() + 6,
+		},
+	}
+	return b
 }
 
 // Data xxx
@@ -30,21 +40,22 @@ func (button *Button) Data() *WindowData {
 }
 
 func (button *Button) resize(rect image.Rectangle) {
-
-	// Get the real bounds needed for this label
-	brect := button.Style.BoundString(button.label)
-	// extra 6 for embossing of button
-	w := brect.Max.Sub(brect.Min).X + 6
-	h := brect.Max.Sub(brect.Min).Y + 6
-	button.Rect = image.Rect(rect.Min.X, rect.Min.Y, rect.Min.X+w, rect.Min.Y+h)
-
-	button.labelX = button.Rect.Min.X + 3
-	button.labelY = button.Rect.Min.Y + 3
-	button.labelY -= brect.Min.Y
+	button.Rect = rect
+	if button.Rect.Dx() < button.MinRect.Dx() || button.Rect.Dy() < button.MinRect.Dy() {
+		nchars := button.Rect.Dx() / button.Style.CharWidth()
+		if len(button.labelOrig) > nchars {
+			button.label = button.labelOrig[:nchars]
+		}
+	} else {
+		button.label = button.labelOrig
+	}
 }
 
 func (button *Button) redraw() {
+	DoUpstream(button, "setcolor", foreColor)
 	DoUpstream(button, "drawrect", button.Rect)
+	button.labelX = button.Rect.Min.X + 3
+	button.labelY = button.Rect.Min.Y + button.Style.TextHeight()
 	DoUpstream(button, "drawtext", DrawTextCmd{button.label, button.Style.fontFace, image.Point{button.labelX, button.labelY}})
 }
 

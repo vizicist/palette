@@ -140,9 +140,11 @@ func (menu *Menu) redraw() {
 func (menu *Menu) mouseHandler(cmd MouseCmd) (removeMenu bool) {
 	me := cmd
 	istransient := (GetAttValue(menu, "istransient") == "true")
+
+	menu.itemSelected = -1
+
 	// If it's in the handle area...
 	if me.Pos.Y <= menu.Rect.Min.Y+menu.handleHeight {
-		menu.itemSelected = -1
 		if me.Ddu == MouseDown {
 			if me.Pos.X > menu.handleMidx {
 				// Clicked in the X, remove the menu no matter what
@@ -161,6 +163,10 @@ func (menu *Menu) mouseHandler(cmd MouseCmd) (removeMenu bool) {
 			menu.itemSelected = n
 			break
 		}
+	}
+
+	if menu.itemSelected < 0 {
+		return false
 	}
 
 	// No callbackups until MouseUp
@@ -185,12 +191,6 @@ func (menu *Menu) mouseHandler(cmd MouseCmd) (removeMenu bool) {
 	}
 	return false
 }
-
-/*
-func (menu *Menu) callback(item MenuItem) {
-	item.callback(item.label)
-}
-*/
 
 // Do xxx
 func (menu *Menu) Do(from Window, cmd string, arg interface{}) {

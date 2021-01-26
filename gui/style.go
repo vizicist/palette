@@ -22,6 +22,7 @@ var greenColor = color.RGBA{0, 0xff, 0, 0xff}
 // Style xxx
 type Style struct {
 	fontHeight  int
+	charWidth   int
 	textColor   color.RGBA
 	strokeColor color.RGBA
 	fillColor   color.RGBA
@@ -67,10 +68,11 @@ func NewStyle(fontName string, fontHeight int) *Style {
 	}
 	face := truetype.NewFace(f, &truetype.Options{Size: float64(fontHeight)})
 	fontRect := text.BoundString(face, "fghijklMNQ")
-	realHeight := fontRect.Max.Y - fontRect.Min.Y
+	charRect := text.BoundString(face, "Q")
 
 	return &Style{
-		fontHeight:  realHeight,
+		fontHeight:  fontRect.Max.Y - fontRect.Min.Y,
+		charWidth:   charRect.Max.X - charRect.Min.X,
 		fontFace:    face,
 		textColor:   foreColor,
 		strokeColor: foreColor,
@@ -78,12 +80,30 @@ func NewStyle(fontName string, fontHeight int) *Style {
 	}
 }
 
+// TextFitRect xxx
+func (style *Style) TextFitRect(s string) image.Rectangle {
+	width := len(s) * style.CharWidth()
+	height := style.TextHeight()
+	pos := image.Point{0, 0}
+	return image.Rectangle{Min: pos, Max: pos.Add(image.Point{width, height})}
+}
+
 // TextHeight xxx
 func (style *Style) TextHeight() int {
 	return style.fontHeight
 }
 
-// RowHeight xxx
+// TextWidth xxx
+func (style *Style) TextWidth(s string) int {
+	return style.charWidth * len(s)
+}
+
+// CharWidth is a single character's width
+func (style *Style) CharWidth() int {
+	return style.charWidth
+}
+
+// RowHeight is the height of text rows (e.g. in ScrollingTextArea)
 func (style *Style) RowHeight() int {
 	return style.fontHeight + 2
 }

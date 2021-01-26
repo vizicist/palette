@@ -60,11 +60,7 @@ func (page *Page) Do(from Window, cmd string, arg interface{}) {
 	switch cmd {
 
 	case "about":
-		page.log("This is the Palette Window System\n")
-		page.log("# of goroutines: %d\n", runtime.NumGoroutine())
-
-	case "about2":
-		page.log("This is the Palette Window System 2\n")
+		page.log("Palette Window System - version 0.1\n")
 		page.log("# of goroutines: %d\n", runtime.NumGoroutine())
 
 	case "resize":
@@ -84,7 +80,7 @@ func (page *Page) Do(from Window, cmd string, arg interface{}) {
 	case "closeme":
 		w := ToWindow(arg)
 		menu := ToMenu(w)
-		if menu != nil {
+		if menu != nil && menu.parentMenu != nil {
 			// For menus, we want to close parent menus (if transient)
 			pmenu := ToMenu(menu.parentMenu)
 			if pmenu != nil && GetAttValue(pmenu, "istransient") == "true" {
@@ -95,7 +91,6 @@ func (page *Page) Do(from Window, cmd string, arg interface{}) {
 		RemoveChild(page, w)
 
 	case "toolsmenu":
-		page.log("toolsmenu start")
 		// SetAttValue(from, "istransient", "false")
 		toolsmenu := NewToolsMenu(page, from)
 		AddChild(page, toolsmenu)
@@ -105,10 +100,8 @@ func (page *Page) Do(from Window, cmd string, arg interface{}) {
 		toolsmenu.Do(page, "resize", image.Rect(pos.X, pos.Y, pos.X+200, pos.Y+200))
 
 	case "miscmenu":
-		page.log("miscmenu start")
 
 	case "windowmenu":
-		page.log("windowmenu start")
 
 	case "sweeptool":
 		page.startSweep("addtool")

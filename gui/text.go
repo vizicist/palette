@@ -3,6 +3,7 @@ package gui
 import (
 	"image"
 	"log"
+	"strings"
 )
 
 // TextCallback xxx
@@ -10,12 +11,13 @@ type TextCallback func(updown string)
 
 var defaultBufferSize = 4
 
-// ScrollingText xxx
+// ScrollingText assumes a fixed-width font
 type ScrollingText struct {
 	WindowData
 	isPressed bool
 	buffer    []string
-	nlines    int
+	nlines    int // number of lines actually displayed
+	nchars    int // number of characters in a single line
 }
 
 // NewScrollingText xxx
@@ -40,8 +42,10 @@ func (st *ScrollingText) DoSync(from Window, cmd string, arg interface{}) (resul
 
 func (st *ScrollingText) resize(rect image.Rectangle) {
 
-	// See how many lines we can fit in the rect
+	// See how many lines and chars we can fit in the rect
 	st.nlines = rect.Dy() / st.Style.RowHeight()
+	st.nchars = rect.Dx() / st.Style.CharWidth()
+
 	// in case the buffer isn't big enough
 	if st.nlines > len(st.buffer) {
 		newbuffer := make([]string, st.nlines)
@@ -59,17 +63,49 @@ func (st *ScrollingText) redraw() {
 	DoUpstream(st, "setcolor", foreColor)
 	DoUpstream(st, "drawrect", st.Rect)
 
-	textx := st.Rect.Min.X + 2
+	if st.nchars == 0 || st.nlines == 0 {
+		// window is too small
+		return
+	}
+
+	textx := st.Rect.Min.X + 3
+
+	// If a line is longer than st.nchars, we break it up.
+	// The linestack we create will be at least st.nlines long,
+	// but may be being longer, even though we only use st.nlines of them.
+	linestack := make([]string, 0)
 
 	for n := 0; n < st.nlines; n++ {
-		// assumes the area is erased, so we don't erase blank lines
-		line := st.buffer[n]
-		if line == "" {
-			continue
+
+		// Lines in st.buffer are guaranteed to not have a trailing newline,
+		// but they can have embedded newlines, so break them up.
+		lines := strings.Split(st.buffer[n], "\n")
+
+		// go through them in reverse order
+		for n := len(lines) - 1; n >= 0; n-- {
+			line := lines[n]
+
+			for len(line) > st.nchars {
+				// Figure out where the last line split should be,
+				// so we can pull off the last part.
+				i := (len(line) / st.nchars) * st.nchars
+				if i == len(line) { // it's an exact multiple of st.nchars
+					i = i - st.nchars
+				}
+				linestack = append(linestack, line[i:])
+				line = line[:i]
+			}
+			linestack = append(linestack, line)
 		}
-		// rownum 0 is the bottom
-		texty := st.Rect.Max.Y - n*st.Style.RowHeight() - 4
-		DoUpstream(st, "drawtext", DrawTextCmd{line, st.Style.fontFace, image.Point{textx, texty}})
+	}
+
+	for n := 0; n < st.nlines; n++ {
+		line := linestack[n]
+		if line != "" {
+			// rownum 0 is the bottom
+			texty := st.Rect.Max.Y - n*st.Style.RowHeight() - 4
+			DoUpstream(st, "drawtext", DrawTextCmd{line, st.Style.fontFace, image.Point{textx, texty}})
+		}
 	}
 }
 
@@ -94,6 +130,10 @@ func (st *ScrollingText) Do(from Window, cmd string, arg interface{}) {
 
 // AddLine xxx
 func (st *ScrollingText) AddLine(line string) {
+	// remove final newline if there is one, but leave interior ones
+	if strings.HasSuffix(line, "\n") {
+		line = line[:len(line)-1]
+	}
 	// prepend it to the beginning of st.lines
 	st.buffer = append([]string{line}, st.buffer...)
 }
