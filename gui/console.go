@@ -8,7 +8,7 @@ import (
 // Console is a window that has a couple of buttons
 type Console struct {
 	WindowData
-	clearButton Window
+	clearButton *Button
 	textArea    *ScrollingText
 }
 
@@ -19,7 +19,7 @@ func NewConsole(parent Window) *Console {
 		WindowData: NewWindowData(parent),
 	}
 
-	console.clearButton = NewButton(console, "Clear")
+	console.clearButton = NewButton(console, "This is gyXOQ a long BUTTON")
 	console.textArea = NewScrollingText(console)
 
 	SetAttValue(console, "islogger", "true")
@@ -72,14 +72,17 @@ func (console *Console) resize(rect image.Rectangle) {
 
 	console.Rect = rect
 
-	rowHeight := console.Style.RowHeight()
+	// rowHeight := console.Style.RowHeight()
 
-	// handle Clear button
-	// In Resize, the rect.Max values get recomputed to fit the button
-	console.clearButton.Do(console, "resize", image.Rect(rect.Min.X+2, rect.Min.Y+2, rect.Max.X, rect.Max.Y))
+	// Clear button
+	r := console.clearButton.MinRect // minimum good size
+	r.Max.X = rect.Dx() / 2
+	r = r.Add(rect.Min).Add(image.Point{2, 2})
+	console.clearButton.Do(console, "resize", r)
 
 	// handle ScrollingText Window
-	y0 := rect.Min.Y + rowHeight + 4
+	// y0 := rect.Min.Y + rowHeight + 4
+	y0 := console.clearButton.Rect.Max.Y + 2
 	console.textArea.Do(console, "resize", image.Rect(rect.Min.X+2, y0, rect.Max.X-2, console.Rect.Max.Y))
 
 	// Adjust console's oveall size from the ScrollingText Window

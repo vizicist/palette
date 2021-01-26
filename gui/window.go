@@ -17,16 +17,17 @@ type WindowID int
 
 // WindowData xxx
 type WindowData struct {
-	parent Window
-	Style  *Style
-	Rect   image.Rectangle // in Screen coordinates, not relative (yet)
+	parent  Window
+	Style   *Style
+	Rect    image.Rectangle // in Screen coordinates, not relative (yet)
+	MinRect image.Rectangle // Min is always 0,0
 
 	children    map[WindowID]Window
 	childID     map[Window]WindowID
-	lastChildID WindowID // for unique child window IDs
+	lastChildID WindowID // to generate unique child window IDs
+	order       []Window // display order of child windows
 
-	order []Window // display order
-	att   map[string]string
+	att map[string]string
 }
 
 // NewWindowData xxx
