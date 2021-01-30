@@ -1,15 +1,17 @@
 package gui
 
 import (
+	"fmt"
 	"image"
 	"log"
+	"strings"
 )
 
-// Window xxx
+// Window is the external (and networkable) interface
+// to a Window instance.
 type Window interface {
-	Data() *WindowData
-	Do(from Window, cmd string, arg interface{})
-	DoSync(from Window, cmd string, arg interface{}) (result interface{}, err error)
+	data() *WindowData // local only
+	Do(from Window, cmd string, arg interface{}) (interface{}, error)
 }
 
 // WindowID xxx
@@ -17,10 +19,10 @@ type WindowID int
 
 // WindowData xxx
 type WindowData struct {
-	parent  Window
-	Style   *Style
 	Rect    image.Rectangle // in Screen coordinates, not relative (yet)
-	MinRect image.Rectangle // Min is always 0,0
+	parent  Window
+	style   *Style
+	minRect image.Rectangle // Min is always 0,0
 
 	children    map[WindowID]Window
 	childID     map[Window]WindowID
@@ -37,7 +39,7 @@ func NewWindowData(parent Window) WindowData {
 	}
 	return WindowData{
 		parent:   parent,
-		Style:    NewStyle("fixed", 16),
+		style:    NewStyle("fixed", 16),
 		Rect:     image.Rectangle{},
 		children: make(map[WindowID]Window),
 		childID:  make(map[Window]WindowID),
@@ -49,11 +51,11 @@ func NewWindowData(parent Window) WindowData {
 // WindowUnder xxx
 func WindowUnder(parent Window, pos image.Point) Window {
 
-	parentData := parent.Data()
+	parentData := parent.data()
 	// Check in reverse order
 	for n := len(parentData.order) - 1; n >= 0; n-- {
 		w := parentData.order[n]
-		if pos.In(w.Data().Rect) {
+		if pos.In(w.data().Rect) {
 			return w
 		}
 	}
@@ -63,7 +65,7 @@ func WindowUnder(parent Window, pos image.Point) Window {
 // AddChild xxx
 func AddChild(parent Window, child Window) Window {
 
-	parentData := parent.Data()
+	parentData := parent.data()
 	parentData.lastChildID++
 	wid := parentData.lastChildID
 	_, ok := parentData.children[wid]
@@ -86,7 +88,7 @@ func RemoveChild(parent Window, child Window) {
 	if child == nil {
 		log.Printf("RemoveChild: child=nil?\n")
 	}
-	windata := parent.Data()
+	windata := parent.data()
 	wid, ok := windata.childID[child]
 	if !ok {
 		log.Printf("RemoveWindow: no window child=%v\n", child)
@@ -109,7 +111,7 @@ func RemoveChild(parent Window, child Window) {
 
 // MoveWindow xxx
 func MoveWindow(parent Window, child Window, delta image.Point) {
-	child.Do(parent, "resize", child.Data().Rect.Add(delta))
+	child.Do(parent, "resize", child.data().Rect.Add(delta))
 }
 
 // RedrawChildren xxx
@@ -118,24 +120,24 @@ func RedrawChildren(parent Window) {
 		log.Printf("RedrawChildren: parent==nil?\n")
 		return
 	}
-	for _, w := range parent.Data().order {
+	for _, w := range parent.data().order {
 		w.Do(parent, "redraw", nil)
 	}
 }
 
 // GetAttValue xxx
 func GetAttValue(w Window, name string) string {
-	return w.Data().att[name]
+	return w.data().att[name]
 }
 
 // SetAttValue xxx
 func SetAttValue(w Window, name string, val string) {
-	w.Data().att[name] = val
+	w.data().att[name] = val
 }
 
 // DoUpstream xxx
 func DoUpstream(w Window, cmd string, arg interface{}) {
-	p := w.Data().parent
+	p := w.data().parent
 	if p == nil {
 		log.Printf("Hey, no parent?\n")
 	} else {
@@ -145,30 +147,45 @@ func DoUpstream(w Window, cmd string, arg interface{}) {
 
 // WindowRect xxx
 func WindowRect(w Window) image.Rectangle {
-	return w.Data().Rect
+	return w.data().Rect
 }
 
 // WindowRaise moves w to the top of the order
 func WindowRaise(parent Window, raise Window) {
-	data := parent.Data()
-	orderLen := len(data.order)
+	pdata := parent.data()
+	orderLen := len(pdata.order)
 
 	// Quick check for common case when it's the top Window
-	if data.order[orderLen-1] == raise {
+	if pdata.order[orderLen-1] == raise {
 		return
 	}
 
 	shifting := false
-	for n, w := range data.order {
+	for n, w := range pdata.order {
 		if w == raise {
 			shifting = true
 		}
 		if shifting {
 			if n == (orderLen - 1) {
-				data.order[n] = raise
+				pdata.order[n] = raise
 			} else {
-				data.order[n] = data.order[n+1]
+				pdata.order[n] = pdata.order[n+1]
 			}
 		}
 	}
+}
+
+// Point - should I start using this to make code more compact?
+func Point(x, y int) image.Point {
+	return image.Point{X: x, Y: y}
+}
+
+// WindowType xxx
+func WindowType(w Window) string {
+	t := fmt.Sprintf("%T", w)
+	i := strings.LastIndex(t, ".")
+	if i >= 0 {
+		t = t[i+1:]
+	}
+	return t
 }

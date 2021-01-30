@@ -1,6 +1,7 @@
 package gui
 
 import (
+	"fmt"
 	"image"
 	"image/color"
 	"log"
@@ -10,8 +11,9 @@ import (
 // Menu xxx
 type Menu struct {
 	WindowData
+	items []MenuItem
+	// end of things that should be in dumpstate
 	isPressed    bool
-	items        []MenuItem
 	itemSelected int
 	rowHeight    int
 	handleHeight int
@@ -36,8 +38,8 @@ type MenuItem struct {
 	arg    interface{}
 }
 
-// NewMenu xxx
-func NewMenu(parent Window, parentMenu Window) *Menu {
+// NewMenuWindow xxx
+func NewMenuWindow(parent Window, parentMenu Window) Window {
 	m := &Menu{
 		WindowData:   NewWindowData(parent),
 		isPressed:    false,
@@ -51,7 +53,7 @@ func NewMenu(parent Window, parentMenu Window) *Menu {
 }
 
 // Data xxx
-func (menu *Menu) Data() *WindowData {
+func (menu *Menu) data() *WindowData {
 	return &menu.WindowData
 }
 
@@ -65,13 +67,13 @@ func (menu *Menu) resize(rect image.Rectangle) {
 
 	// Recompute all the y positions in the items
 	// DO NOT use Style.RowHeight, we want wider spacing
-	menu.rowHeight = menu.Style.TextHeight() + 6
+	menu.rowHeight = menu.style.TextHeight() + 6
 	menu.handleHeight = 9
 
 	textx := rect.Min.X + 6
 	maxX := -1
 	for n, item := range menu.items {
-		brect := menu.Style.BoundString(item.label)
+		brect := menu.style.BoundString(item.label)
 		if brect.Max.X > maxX {
 			maxX = brect.Max.X
 		}
@@ -130,7 +132,7 @@ func (menu *Menu) redraw() {
 		}
 
 		DoUpstream(menu, "setcolor", fore)
-		DoUpstream(menu, "drawtext", DrawTextCmd{item.label, menu.Style.fontFace, image.Point{item.posX, item.posY}})
+		DoUpstream(menu, "drawtext", DrawTextCmd{item.label, menu.style.fontFace, image.Point{item.posX, item.posY}})
 		if n != menu.itemSelected && n < (nitems-1) {
 			DoUpstream(menu, "drawline", DrawLineCmd{image.Point{menu.Rect.Min.X, liney}, image.Point{menu.Rect.Max.X, liney}})
 		}
@@ -193,7 +195,7 @@ func (menu *Menu) mouseHandler(cmd MouseCmd) (removeMenu bool) {
 }
 
 // Do xxx
-func (menu *Menu) Do(from Window, cmd string, arg interface{}) {
+func (menu *Menu) Do(from Window, cmd string, arg interface{}) (interface{}, error) {
 
 	switch cmd {
 
@@ -206,6 +208,16 @@ func (menu *Menu) Do(from Window, cmd string, arg interface{}) {
 	case "redraw":
 		menu.redraw()
 
+	case "dumpstate":
+		s := fmt.Sprintf("{\n\"items\": [\n")
+		sep := ""
+		for _, item := range menu.items {
+			s += fmt.Sprintf("%s{ \"label\": \"%s\", \"cmd\": \"%s\" }", sep, item.label, item.cmd)
+			sep = ",\n"
+		}
+		s += "\n]\n}"
+		return s, nil
+
 	case "mouse":
 		mouse := ToMouse(arg)
 		if menu.mouseHandler(mouse) {
@@ -217,22 +229,5 @@ func (menu *Menu) Do(from Window, cmd string, arg interface{}) {
 			*/
 		}
 	}
+	return nil, nil
 }
-
-// DoSync xxx
-func (menu *Menu) DoSync(w Window, cmd string, arg interface{}) (result interface{}, err error) {
-	return NoSyncInterface("Menu")
-}
-
-/*
-func (menu *Menu) addItem(s string, cb MenuCallback) {
-	menu.items = append(menu.items, MenuItem{
-		label:  s,
-		posX:   0,
-		posY:   0,
-		target: nil,
-		cmd:    "",
-		arg:    nil,
-	})
-}
-*/

@@ -56,7 +56,7 @@ func Run() {
 		backColor: backColor,
 	}
 
-	screen.page = NewPageWindow(screen)
+	screen.page = NewPage(screen, "home")
 
 	// This is it!  RunGame runs forever
 	if err := ebiten.RunGame(screen); err != nil {
@@ -65,17 +65,12 @@ func Run() {
 }
 
 // Data xxx
-func (screen *Screen) Data() *WindowData {
+func (screen *Screen) data() *WindowData {
 	return &screen.WindowData
 }
 
-// DoSync xxx
-func (screen *Screen) DoSync(from Window, cmd string, arg interface{}) (result interface{}, err error) {
-	return NoSyncInterface("Screen")
-}
-
 // Do xxx
-func (screen *Screen) Do(from Window, cmd string, arg interface{}) {
+func (screen *Screen) Do(from Window, cmd string, arg interface{}) (interface{}, error) {
 
 	switch cmd {
 	case "drawline":
@@ -101,6 +96,7 @@ func (screen *Screen) Do(from Window, cmd string, arg interface{}) {
 	default:
 		log.Printf("screen.runCmds: UNRECOGNIZED cmd=%s\n", cmd)
 	}
+	return nil, nil
 }
 
 // Layout satisfies the ebiten.Game interface
