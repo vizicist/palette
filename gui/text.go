@@ -113,6 +113,16 @@ func (st *ScrollingText) Do(from Window, cmd string, arg interface{}) (interface
 		st.resize(ToRect(arg))
 	case "redraw":
 		st.redraw()
+	case "restore":
+		state := arg.(map[string]interface{})
+		buff := state["buffer"]
+		arr := buff.([]interface{})
+		newbuff := make([]string, len(arr))
+		for n, i := range arr {
+			newbuff[n] = ToString(i)
+		}
+		st.Buffer = newbuff
+
 	case "dumpstate":
 		in := strings.Repeat(" ", 12)
 		s := fmt.Sprintf("{\n%s\"buffer\": [\n", in)

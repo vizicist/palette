@@ -176,12 +176,19 @@ func (menu *Menu) mouseHandler(cmd MouseCmd) (removeMenu bool) {
 		item := menu.items[menu.itemSelected]
 		w := item.target
 		if w == nil {
-			log.Printf("HEY! item.callbackWindow is nil?\n")
-			if istransient {
-				DoUpstream(menu, "closeme", menu)
-			}
-			return istransient
+			log.Printf("HEY! item.target is nil?  Assuming menu.parent!\n")
+			log.Printf("Menus need to dump their target\n")
+			w = menu.parent
 		}
+
+		/*
+				if istransient {
+					DoUpstream(menu, "closeme", menu)
+				}
+				return istransient
+			}
+		*/
+
 		w.Do(menu, item.cmd, item.arg)
 		menu.itemSelected = -1
 		// If we're invoking a sub-menu, don't delete parent yet
@@ -208,11 +215,27 @@ func (menu *Menu) Do(from Window, cmd string, arg interface{}) (interface{}, err
 	case "redraw":
 		menu.redraw()
 
+	case "restore":
+		state := arg.(map[string]interface{})
+		items := state["items"].([]interface{})
+		newitems := make([]MenuItem, len(items))
+		for n, i := range items {
+			item := i.(map[string]interface{})
+			label := ToString(item["label"])
+			cmd := ToString(item["cmd"])
+			arg := ToString(item["arg"])
+			newitems[n] = MenuItem{label: label, cmd: cmd, arg: arg}
+		}
+		menu.items = newitems
+
 	case "dumpstate":
 		s := fmt.Sprintf("{\n\"items\": [\n")
 		sep := ""
 		for _, item := range menu.items {
-			s += fmt.Sprintf("%s{ \"label\": \"%s\", \"cmd\": \"%s\" }", sep, item.label, item.cmd)
+			argstr := ToString(item.arg)
+			targetWid := GetWindowID(menu.parent, item.target)
+			s += fmt.Sprintf("%s{ \"label\": \"%s\", \"cmd\": \"%s\", \"arg\": \"%s\", \"target\": \"%s\" }",
+				sep, item.label, item.cmd, argstr, targetWid)
 			sep = ",\n"
 		}
 		s += "\n]\n}"
@@ -230,4 +253,14 @@ func (menu *Menu) Do(from Window, cmd string, arg interface{}) (interface{}, err
 		}
 	}
 	return nil, nil
+}
+
+// GetWindowID xxx
+func GetWindowID(parent Window, w Window) string {
+	for wid, child := range parent.data().children {
+		if child == w {
+			return fmt.Sprintf("%d", wid)
+		}
+	}
+	return "0"
 }
