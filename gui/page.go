@@ -60,8 +60,8 @@ func (page *Page) Do(from Window, cmd string, arg interface{}) (interface{}, err
 	switch cmd {
 
 	case "about":
-		log.Printf("Palette Window System - version 0.1\n")
-		log.Printf("# of goroutines: %d\n", runtime.NumGoroutine())
+		page.log("Palette Window System - version 0.1\n")
+		page.log("# of goroutines: %d\n", runtime.NumGoroutine())
 
 	case "restore":
 		fname := ToString(arg)
@@ -252,14 +252,15 @@ func (page *Page) restoreState(s string) error {
 	children := dat["children"].([]interface{})
 	for _, ch := range children {
 		childmap := ch.(map[string]interface{})
-		wid := childmap["wid"].(string)
+		// wid := childmap["wid"].(string)
 		childType := childmap["type"].(string)
 		rstr := childmap["rect"].(string)
 		childRect := StringRect(rstr)
-		log.Printf("wid=%s tool=%s rect=%v\n", wid, childType, childRect)
 		childState := childmap["state"].(interface{})
-		log.Printf("childState=%v\n", childState)
+		// Create the window
 		childW := page.AddTool(childType, childRect)
+		// restore state
+		childW.Do(page, "restore", childState)
 		SetAttValue(childW, "istransient", "false")
 		childW.Do(page, "resize", childRect)
 	}

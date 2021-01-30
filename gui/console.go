@@ -49,6 +49,14 @@ func (console *Console) Do(from Window, cmd string, arg interface{}) (interface{
 		console.resize(ToRect(arg))
 	case "redraw":
 		console.redraw()
+	case "restore":
+		log.Printf("Console: restore arg=%v\n", arg)
+		_, err := console.TextArea.Do(console, "restore", arg)
+		if err != nil {
+			log.Printf("Console: restore err=%s\n", err)
+			return nil, err
+		}
+
 	case "dumpstate":
 		// in := string.Repeat(" ",12)
 		s, err := console.TextArea.Do(console, "dumpstate", nil)
