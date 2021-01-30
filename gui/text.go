@@ -1,6 +1,7 @@
 package gui
 
 import (
+	"fmt"
 	"image"
 	"log"
 	"strings"
@@ -9,13 +10,13 @@ import (
 // TextCallback xxx
 type TextCallback func(updown string)
 
-var defaultBufferSize = 4
+var defaultBufferSize = 128
 
 // ScrollingText assumes a fixed-width font
 type ScrollingText struct {
 	WindowData
 	isPressed bool
-	buffer    []string
+	Buffer    []string
 	nlines    int // number of lines actually displayed
 	nchars    int // number of characters in a single line
 }
@@ -25,35 +26,30 @@ func NewScrollingText(parent Window) *ScrollingText {
 	st := &ScrollingText{
 		WindowData: NewWindowData(parent),
 		isPressed:  false,
-		buffer:     make([]string, defaultBufferSize),
+		Buffer:     make([]string, defaultBufferSize),
 	}
 	return st
 }
 
 // Data xxx
-func (st *ScrollingText) Data() *WindowData {
+func (st *ScrollingText) data() *WindowData {
 	return &st.WindowData
-}
-
-// DoSync xxx
-func (st *ScrollingText) DoSync(from Window, cmd string, arg interface{}) (result interface{}, err error) {
-	return NoSyncInterface("ScrollingText")
 }
 
 func (st *ScrollingText) resize(rect image.Rectangle) {
 
 	// See how many lines and chars we can fit in the rect
-	st.nlines = rect.Dy() / st.Style.RowHeight()
-	st.nchars = rect.Dx() / st.Style.CharWidth()
+	st.nlines = rect.Dy() / st.style.RowHeight()
+	st.nchars = rect.Dx() / st.style.CharWidth()
 
 	// in case the buffer isn't big enough
-	if st.nlines > len(st.buffer) {
+	if st.nlines > len(st.Buffer) {
 		newbuffer := make([]string, st.nlines)
-		copy(newbuffer, st.buffer)
-		st.buffer = newbuffer
+		copy(newbuffer, st.Buffer)
+		st.Buffer = newbuffer
 	}
 	// Adjust the rect so we're exactly that height
-	rect.Max.Y = rect.Min.Y + st.nlines*st.Style.RowHeight()
+	rect.Max.Y = rect.Min.Y + st.nlines*st.style.RowHeight()
 
 	st.Rect = rect
 }
@@ -79,7 +75,7 @@ func (st *ScrollingText) redraw() {
 
 		// Lines in st.buffer are guaranteed to not have a trailing newline,
 		// but they can have embedded newlines, so break them up.
-		lines := strings.Split(st.buffer[n], "\n")
+		lines := strings.Split(st.Buffer[n], "\n")
 
 		// go through them in reverse order
 		for n := len(lines) - 1; n >= 0; n-- {
@@ -103,20 +99,31 @@ func (st *ScrollingText) redraw() {
 		line := linestack[n]
 		if line != "" {
 			// rownum 0 is the bottom
-			texty := st.Rect.Max.Y - n*st.Style.RowHeight() - 4
-			DoUpstream(st, "drawtext", DrawTextCmd{line, st.Style.fontFace, image.Point{textx, texty}})
+			texty := st.Rect.Max.Y - n*st.style.RowHeight() - 4
+			DoUpstream(st, "drawtext", DrawTextCmd{line, st.style.fontFace, image.Point{textx, texty}})
 		}
 	}
 }
 
 // Do xxx
-func (st *ScrollingText) Do(from Window, cmd string, arg interface{}) {
+func (st *ScrollingText) Do(from Window, cmd string, arg interface{}) (interface{}, error) {
 
 	switch cmd {
 	case "resize":
 		st.resize(ToRect(arg))
 	case "redraw":
 		st.redraw()
+	case "dumpstate":
+		in := strings.Repeat(" ", 12)
+		s := fmt.Sprintf("{\n%s\"buffer\": [\n", in)
+		sep := ""
+		for _, line := range st.Buffer {
+			s += fmt.Sprintf("%s%s%s\"%s\"", sep, in, in, line)
+			sep = ",\n"
+		}
+		s += fmt.Sprintf("\n%s]\n}", in)
+		return s, nil
+
 	case "clear":
 		log.Printf("ScrollingText: Clear needs work!\n")
 	case "mouse":
@@ -126,6 +133,7 @@ func (st *ScrollingText) Do(from Window, cmd string, arg interface{}) {
 	default:
 		log.Printf("ScrollingText: didn't handle cmd=%s\n", cmd)
 	}
+	return nil, nil
 }
 
 // AddLine xxx
@@ -135,12 +143,12 @@ func (st *ScrollingText) AddLine(line string) {
 		line = line[:len(line)-1]
 	}
 	// prepend it to the beginning of st.lines
-	st.buffer = append([]string{line}, st.buffer...)
+	st.Buffer = append([]string{line}, st.Buffer...)
 }
 
 // Clear clears all text
 func (st *ScrollingText) Clear() {
-	for n := 0; n < len(st.buffer); n++ {
-		st.buffer[n] = ""
+	for n := 0; n < len(st.Buffer); n++ {
+		st.Buffer[n] = ""
 	}
 }

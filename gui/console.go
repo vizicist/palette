@@ -9,7 +9,9 @@ import (
 type Console struct {
 	WindowData
 	clearButton *Button
-	textArea    *ScrollingText
+	testButton  *Button
+	threeButton *Button
+	TextArea    *ScrollingText
 }
 
 // NewConsole xxx
@@ -19,24 +21,23 @@ func NewConsole(parent Window) *Console {
 		WindowData: NewWindowData(parent),
 	}
 
-	console.clearButton = NewButton(console, "This is gyXOQ a long BUTTON")
-	console.textArea = NewScrollingText(console)
+	console.clearButton = NewButton(console, "Clear")
+	console.testButton = NewButton(console, "Test")
+	console.threeButton = NewButton(console, "Three")
+	console.TextArea = NewScrollingText(console)
 
 	SetAttValue(console, "islogger", "true")
 
-	AddChild(console, console.textArea)
+	AddChild(console, console.TextArea)
 	AddChild(console, console.clearButton)
+	AddChild(console, console.testButton)
+	AddChild(console, console.threeButton)
 
 	return console
 }
 
-// DoSync xxx
-func (console *Console) DoSync(from Window, cmd string, arg interface{}) (result interface{}, err error) {
-	return NoSyncInterface("Console")
-}
-
 // Do xxx
-func (console *Console) Do(from Window, cmd string, arg interface{}) {
+func (console *Console) Do(from Window, cmd string, arg interface{}) (interface{}, error) {
 	switch cmd {
 	case "mouse":
 		mouse := ToMouse(arg)
@@ -48,22 +49,38 @@ func (console *Console) Do(from Window, cmd string, arg interface{}) {
 		console.resize(ToRect(arg))
 	case "redraw":
 		console.redraw()
+	case "dumpstate":
+		// in := string.Repeat(" ",12)
+		s, err := console.TextArea.Do(console, "dumpstate", nil)
+		if err != nil {
+			return nil, err
+		}
+		return s, nil
 	case "closeyourself":
 		log.Printf("console: CloseYourself needs work?\n")
 	case "buttondown":
 		// Clear is the only button
-		console.textArea.Clear()
+		switch from {
+		case console.testButton:
+			log.Printf("Test!\n")
+		case console.threeButton:
+			log.Printf("Three!\n")
+		case console.clearButton:
+			log.Printf("Clear!\n")
+			console.TextArea.Clear()
+		}
 	case "buttonup":
 		//
 	case "addline":
-		console.textArea.Do(console, cmd, arg)
+		console.TextArea.Do(console, cmd, arg)
 	default:
 		console.parent.Do(console, cmd, arg)
 	}
+	return nil, nil
 }
 
 // Data xxx
-func (console *Console) Data() *WindowData {
+func (console *Console) data() *WindowData {
 	return &console.WindowData
 }
 
@@ -72,21 +89,29 @@ func (console *Console) resize(rect image.Rectangle) {
 
 	console.Rect = rect
 
-	// rowHeight := console.Style.RowHeight()
+	buttWidth := rect.Dx() / 4
+	// buttHeight := console.clearButton.MinRect.Max.Y
 
 	// Clear button
-	r := console.clearButton.MinRect // minimum good size
-	r.Max.X = rect.Dx() / 2
+	r := console.clearButton.minRect // minimum good size
+	r.Max.X = buttWidth              // force width
 	r = r.Add(rect.Min).Add(image.Point{2, 2})
 	console.clearButton.Do(console, "resize", r)
 
+	// Test button
+	r = r.Add(image.Point{buttWidth + 2, 0})
+	console.testButton.Do(console, "resize", r)
+
+	// Three button
+	r = r.Add(image.Point{buttWidth + 2, 0})
+	console.threeButton.Do(console, "resize", r)
+
 	// handle ScrollingText Window
-	// y0 := rect.Min.Y + rowHeight + 4
 	y0 := console.clearButton.Rect.Max.Y + 2
-	console.textArea.Do(console, "resize", image.Rect(rect.Min.X+2, y0, rect.Max.X-2, console.Rect.Max.Y))
+	console.TextArea.Do(console, "resize", image.Rect(rect.Min.X+2, y0, rect.Max.X-2, console.Rect.Max.Y))
 
 	// Adjust console's oveall size from the ScrollingText Window
-	console.Rect.Max.Y = console.textArea.Rect.Max.Y + 2
+	console.Rect.Max.Y = console.TextArea.Rect.Max.Y + 2
 }
 
 // Draw xxx

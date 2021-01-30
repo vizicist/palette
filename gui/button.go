@@ -24,26 +24,28 @@ func NewButton(parent Window, label string) *Button {
 		labelOrig:  label,
 		label:      label,
 	}
-	b.MinRect = image.Rectangle{
+	b.minRect = image.Rectangle{
 		Min: image.Point{0, 0},
 		Max: image.Point{
-			X: b.Style.TextWidth(label) + 6,
-			Y: b.Style.TextHeight() + 6,
+			X: b.style.TextWidth(label) + 6,
+			Y: b.style.TextHeight() + 6,
 		},
 	}
 	return b
 }
 
 // Data xxx
-func (button *Button) Data() *WindowData {
+func (button *Button) data() *WindowData {
 	return &button.WindowData
 }
 
 func (button *Button) resize(rect image.Rectangle) {
 	button.Rect = rect
-	if button.Rect.Dx() < button.MinRect.Dx() || button.Rect.Dy() < button.MinRect.Dy() {
-		nchars := button.Rect.Dx() / button.Style.CharWidth()
-		if len(button.labelOrig) > nchars {
+	if button.Rect.Dx() < button.minRect.Dx() || button.Rect.Dy() < button.minRect.Dy() {
+		nchars := button.Rect.Dx() / button.style.CharWidth()
+		if nchars <= 0 {
+			button.label = ""
+		} else if len(button.labelOrig) > nchars {
 			button.label = button.labelOrig[:nchars]
 		}
 	} else {
@@ -55,12 +57,12 @@ func (button *Button) redraw() {
 	DoUpstream(button, "setcolor", foreColor)
 	DoUpstream(button, "drawrect", button.Rect)
 	button.labelX = button.Rect.Min.X + 3
-	button.labelY = button.Rect.Min.Y + button.Style.TextHeight()
-	DoUpstream(button, "drawtext", DrawTextCmd{button.label, button.Style.fontFace, image.Point{button.labelX, button.labelY}})
+	button.labelY = button.Rect.Min.Y + button.style.TextHeight()
+	DoUpstream(button, "drawtext", DrawTextCmd{button.label, button.style.fontFace, image.Point{button.labelX, button.labelY}})
 }
 
 // Do xxx
-func (button *Button) Do(from Window, cmd string, arg interface{}) {
+func (button *Button) Do(from Window, cmd string, arg interface{}) (interface{}, error) {
 
 	switch cmd {
 	case "resize":
@@ -71,7 +73,7 @@ func (button *Button) Do(from Window, cmd string, arg interface{}) {
 		mouse := ToMouse(arg)
 		if !mouse.Pos.In(button.Rect) {
 			log.Printf("button: pos not in Rect?\n")
-			return
+			break
 		}
 		switch mouse.Ddu {
 		case MouseDown:
@@ -88,9 +90,5 @@ func (button *Button) Do(from Window, cmd string, arg interface{}) {
 		}
 
 	}
-}
-
-// DoSync xxx
-func (button *Button) DoSync(w Window, cmd string, arg interface{}) (result interface{}, err error) {
-	return NoSyncInterface("Button")
+	return nil, nil
 }

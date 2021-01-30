@@ -1,8 +1,11 @@
 package gui
 
 import (
+	"encoding/json"
 	"fmt"
 	"image"
+	"io/ioutil"
+	"log"
 	"reflect"
 	"runtime"
 	"strings"
@@ -17,6 +20,7 @@ type CursorDrawer func()
 // Page is the top-most Window
 type Page struct {
 	WindowData
+	pageName      string
 	lastPos       image.Point
 	mouseHandler  MouseHandler
 	cursorDrawer  CursorDrawer
@@ -26,33 +30,29 @@ type Page struct {
 	sweepToolName string
 }
 
-// NewPageWindow xxx
-func NewPageWindow(parent Window) *Page {
+// NewPage xxx
+func NewPage(parent Window, name string) *Page {
 	page := &Page{
 		WindowData: NewWindowData(parent),
+		pageName:   name,
 	}
 	page.mouseHandler = page.defaultHandler
 	return page
 }
 
 // Data xxx
-func (page *Page) Data() *WindowData {
+func (page *Page) data() *WindowData {
 	if page.parent == nil {
-		page.log("Hey, parent is nil?\n")
+		log.Printf("Hey, parent is nil?\n")
 	}
 	return &page.WindowData
 }
 
-// DoSync xxx
-func (page *Page) DoSync(from Window, cmd string, arg interface{}) (result interface{}, err error) {
-	return nil, fmt.Errorf("Page has no DoSync commands")
-}
-
 // Do xxx
-func (page *Page) Do(from Window, cmd string, arg interface{}) {
+func (page *Page) Do(from Window, cmd string, arg interface{}) (interface{}, error) {
 
 	if page.parent == nil {
-		page.log("Hey, parent is nil?\n")
+		log.Printf("Hey, parent is nil?\n")
 	}
 
 	// XXX - should be checking to verify that the from Window
@@ -60,8 +60,39 @@ func (page *Page) Do(from Window, cmd string, arg interface{}) {
 	switch cmd {
 
 	case "about":
-		page.log("Palette Window System - version 0.1\n")
-		page.log("# of goroutines: %d\n", runtime.NumGoroutine())
+		log.Printf("Palette Window System - version 0.1\n")
+		log.Printf("# of goroutines: %d\n", runtime.NumGoroutine())
+
+	case "restore":
+		fname := ToString(arg)
+		bytes, err := ioutil.ReadFile(fname)
+		if err != nil {
+			return nil, err
+		}
+		err = page.restoreState(string(bytes))
+		if err != nil {
+			return nil, err
+		}
+
+	case "dumptofile":
+		fname := ToString(arg)
+		output, err := page.Do(from, "dumpstate", fname)
+		if err != nil {
+			return nil, err
+		}
+		s := ToString(output)
+		ps := toPrettyJSON(s)
+		err = ioutil.WriteFile(fname, []byte(ps), 0644)
+		if err != nil {
+			return nil, err
+		}
+
+	case "dumpstate":
+		jdata, err := page.dumpState()
+		if err != nil {
+			return nil, err
+		}
+		return jdata, nil
 
 	case "resize":
 		page.resize(ToRect(arg))
@@ -129,11 +160,139 @@ func (page *Page) Do(from Window, cmd string, arg interface{}) {
 
 	default:
 		if page.parent == nil {
-			page.log("Hey, parent is nil?\n")
+			log.Printf("Hey, parent is nil?\n")
 		}
 
 		DoUpstream(page, cmd, arg)
 	}
+	return nil, nil
+}
+
+// toPrettyJSON looks for {} and [] at the beginning/end of lines
+// to control indenting
+func toPrettyJSON(s string) string {
+	// Make sure it ends in \n
+	if s[len(s)-1] != '\n' {
+		s = s + "\n"
+	}
+	from := 0
+	indentSize := 4
+	indent := 0
+	r := ""
+	slen := len(s)
+	for from < slen {
+		newlinePos := from + strings.Index(s[from:], "\n")
+		line := s[from : newlinePos+1]
+
+		// ignore initial whitespace, we're going to handle it
+		for line[0] == ' ' {
+			line = line[1:]
+		}
+
+		// See if we should un-indent before adding the line
+		firstChar := line[0]
+		if firstChar == '}' || firstChar == ']' {
+			indent -= indentSize
+			if indent < 0 {
+				indent = 0
+			}
+		}
+
+		// Add line with current indent
+		r += strings.Repeat(" ", indent) + line
+
+		// See if we should indent the next line more
+		lastChar := s[newlinePos-1]
+		if lastChar == '{' || lastChar == '[' {
+			indent += indentSize
+		}
+
+		from = newlinePos + 1
+	}
+	return r
+}
+
+// RectString xxx
+func RectString(r image.Rectangle) string {
+	return fmt.Sprintf("%d,%d,%d,%d", r.Min.X, r.Min.Y, r.Max.X, r.Max.Y)
+}
+
+// StringRect xxx
+func StringRect(s string) (r image.Rectangle) {
+	n, err := fmt.Sscanf(s, "%d,%d,%d,%d", &r.Min.X, &r.Min.Y, &r.Max.X, &r.Max.Y)
+	if err != nil {
+		log.Printf("Bad Rect format: %s\n", s)
+		return image.Rectangle{}
+	}
+	if n != 4 {
+		log.Printf("Bad Rect format: %s\n", s)
+		return image.Rectangle{}
+	}
+	return r
+}
+
+func (page *Page) restoreState(s string) error {
+
+	// clear this page of all children
+	for _, w := range page.children {
+		if GetAttValue(w, "istransient") != "true" {
+			RemoveChild(page, w)
+		}
+	}
+
+	var dat map[string]interface{}
+	if err := json.Unmarshal([]byte(s), &dat); err != nil {
+		return err
+	}
+
+	name := dat["page"].(string)
+	rectString := dat["rect"].(string)
+	log.Printf("restore name=%s rectString=%s\n", name, rectString)
+
+	children := dat["children"].([]interface{})
+	for _, ch := range children {
+		childmap := ch.(map[string]interface{})
+		wid := childmap["wid"].(string)
+		childType := childmap["type"].(string)
+		rstr := childmap["rect"].(string)
+		childRect := StringRect(rstr)
+		log.Printf("wid=%s tool=%s rect=%v\n", wid, childType, childRect)
+		childState := childmap["state"].(interface{})
+		log.Printf("childState=%v\n", childState)
+		childW := page.AddTool(childType, childRect)
+		SetAttValue(childW, "istransient", "false")
+		childW.Do(page, "resize", childRect)
+	}
+
+	return nil
+}
+
+func (page *Page) dumpState() (string, error) {
+
+	s := "{\n"
+	s += fmt.Sprintf("\"page\": \"%s\",\n", page.pageName)
+	s += fmt.Sprintf("\"rect\": \"%s\",\n", RectString(page.Rect))
+	s += fmt.Sprintf("\"children\": [\n") // start children array
+	sep := ""
+	for wid, child := range page.children {
+		state, err := child.Do(page, "dumpstate", nil)
+		if err != nil {
+			log.Printf("Page.dumpState: child=%d wintype=%s err=%s\n", wid, WindowType(child), err)
+			continue
+		}
+		s += fmt.Sprintf("%s{\n", sep)
+		s += fmt.Sprintf("\"wid\": \"%d\",\n", wid)
+		s += fmt.Sprintf("\"type\": \"%s\",\n", WindowType(child))
+		s += fmt.Sprintf("\"rect\": \"%s\",\n", RectString(child.data().Rect))
+		s += fmt.Sprintf("\"state\": %s\n", state)
+		s += fmt.Sprintf("}\n")
+		sep = ",\n"
+	}
+	s += fmt.Sprintf("]\n") // end of children array
+
+	s += "}\n"
+
+	return s, nil
 }
 
 // AddTool xxx
@@ -141,7 +300,7 @@ func (page *Page) AddTool(name string, rect image.Rectangle) Window {
 
 	tool := page.NewTool(name)
 	if tool == nil {
-		page.log("Unable to create a new Tool named %s\n", name)
+		log.Printf("Unable to create a new Tool named %s\n", name)
 		return nil
 	}
 	w := AddChild(page, tool)
@@ -156,31 +315,37 @@ func (page *Page) NewTool(name string) Window {
 	// var t Page
 	// methodName := "New" + name
 	capName := strings.ToUpper(string(name[0])) + name[1:]
-	methodName := "New" + capName + "Tool"
+	methodName := "New" + capName + "Window"
 	toolArgs := make([]reflect.Value, 0)
 	toolArgs = append(toolArgs, reflect.ValueOf("foo"))
 	method := reflect.ValueOf(page).MethodByName(methodName)
 	if !method.IsValid() {
-		page.log("NewTool: no method in Page named %s\n", methodName)
+		log.Printf("NewTool: no method in Page named %s\n", methodName)
 		return nil
 	}
 	retval := method.Call(toolArgs)
 	if len(retval) == 0 {
-		page.log("NewTool: method %s didn't return anything!?\n", methodName)
+		log.Printf("NewTool: method %s didn't return anything!?\n", methodName)
 		return nil
 	}
 	ret := retval[0].Interface()
 	tool, ok := ret.(Window)
 	if !ok {
-		page.log("NewTool: method %s didn't return a Window!\n", methodName)
+		log.Printf("NewTool: method %s didn't return a Window!\n", methodName)
 		return nil
 	}
 	return tool
 }
 
-// NewConsoleTool xxx
-func (page *Page) NewConsoleTool(arg string) Window {
+// NewConsoleWindow xxx
+func (page *Page) NewConsoleWindow(arg string) Window {
 	w := NewConsole(page)
+	return w
+}
+
+// NewMenuWindow xxx
+func (page *Page) NewMenuWindow(arg string) Window {
+	w := NewMenuWindow(page, nil)
 	return w
 }
 
@@ -230,7 +395,7 @@ func (page *Page) drawPickCursor() {
 
 func (page *Page) resize(r image.Rectangle) {
 	page.Rect = r
-	page.log("Page.Resize: should be doing menus (and other things)?")
+	log.Printf("Page.Resize: should be doing menus (and other things)?")
 }
 
 func (page *Page) defaultHandler(cmd MouseCmd) {
@@ -238,7 +403,7 @@ func (page *Page) defaultHandler(cmd MouseCmd) {
 	pos := cmd.Pos
 
 	if !pos.In(page.Rect) {
-		page.log("Page.Run: pos=%v not under Page!?", pos)
+		log.Printf("Page.Run: pos=%v not under Page!?", pos)
 		return
 	}
 
@@ -331,7 +496,7 @@ func (page *Page) pickHandler(cmd MouseCmd) {
 			RemoveChild(page, w)
 			page.resetHandlers()
 		default:
-			page.log("Unrecognized currentAction=%s\n", page.currentAction)
+			log.Printf("Unrecognized currentAction=%s\n", page.currentAction)
 		}
 	}
 }
@@ -359,9 +524,4 @@ func (page *Page) moveHandler(cmd MouseCmd) {
 		page.targetWindow = WindowUnder(page, page.lastPos)
 		page.dragStart = page.lastPos
 	}
-}
-
-// NoSyncInterface xxx
-func NoSyncInterface(name string) (result interface{}, err error) {
-	return nil, fmt.Errorf("DoSync() in %s has no commands", name)
 }
