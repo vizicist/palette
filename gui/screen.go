@@ -38,6 +38,9 @@ const (
 	sweepCursorStyle
 )
 
+// CurrentPage xxx
+var CurrentPage *Page
+
 // Run displays and runs the Gui and never returns
 func Run() {
 
@@ -52,11 +55,12 @@ func Run() {
 		eimage:    &ebiten.Image{},
 		time0:     time.Now(),
 		lastprint: time.Now(),
-		foreColor: foreColor,
-		backColor: backColor,
+		foreColor: ForeColor,
+		backColor: BackColor,
 	}
 
 	screen.page = NewPage(screen, "home")
+	CurrentPage = screen.page.(*Page)
 
 	// This is it!  RunGame runs forever
 	if err := ebiten.RunGame(screen); err != nil {
@@ -65,7 +69,7 @@ func Run() {
 }
 
 // Data xxx
-func (screen *Screen) data() *WindowData {
+func (screen *Screen) Data() *WindowData {
 	return &screen.WindowData
 }
 

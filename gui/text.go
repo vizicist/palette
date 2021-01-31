@@ -32,7 +32,7 @@ func NewScrollingText(parent Window) Window {
 }
 
 // Data xxx
-func (st *ScrollingText) data() *WindowData {
+func (st *ScrollingText) Data() *WindowData {
 	return &st.WindowData
 }
 
@@ -56,7 +56,7 @@ func (st *ScrollingText) resize(rect image.Rectangle) {
 
 func (st *ScrollingText) redraw() {
 
-	DoUpstream(st, "setcolor", foreColor)
+	DoUpstream(st, "setcolor", ForeColor)
 	DoUpstream(st, "drawrect", st.Rect)
 
 	if st.nchars == 0 || st.nlines == 0 {

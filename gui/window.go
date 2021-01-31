@@ -10,7 +10,7 @@ import (
 // Window is the external (and networkable) interface
 // to a Window instance.
 type Window interface {
-	data() *WindowData // local only
+	Data() *WindowData // local only
 	Do(from Window, cmd string, arg interface{}) (interface{}, error)
 }
 
@@ -20,9 +20,9 @@ type WindowID int
 // WindowData xxx
 type WindowData struct {
 	Rect    image.Rectangle // in Screen coordinates, not relative (yet)
-	parent  Window
+	Parent  Window
+	MinRect image.Rectangle // Min is always 0,0
 	style   *Style
-	minRect image.Rectangle // Min is always 0,0
 
 	children    map[WindowID]Window
 	childID     map[Window]WindowID
@@ -38,7 +38,7 @@ func NewWindowData(parent Window) WindowData {
 		log.Printf("NewWindowData: parent is nil!?\n")
 	}
 	return WindowData{
-		parent:   parent,
+		Parent:   parent,
 		style:    NewStyle("fixed", 16),
 		Rect:     image.Rectangle{},
 		children: make(map[WindowID]Window),
@@ -51,11 +51,11 @@ func NewWindowData(parent Window) WindowData {
 // WindowUnder xxx
 func WindowUnder(parent Window, pos image.Point) Window {
 
-	parentData := parent.data()
+	parentData := parent.Data()
 	// Check in reverse order
 	for n := len(parentData.order) - 1; n >= 0; n-- {
 		w := parentData.order[n]
-		if pos.In(w.data().Rect) {
+		if pos.In(w.Data().Rect) {
 			return w
 		}
 	}
@@ -65,7 +65,7 @@ func WindowUnder(parent Window, pos image.Point) Window {
 // AddChild xxx
 func AddChild(parent Window, child Window) Window {
 
-	parentData := parent.data()
+	parentData := parent.Data()
 	parentData.lastChildID++
 	wid := parentData.lastChildID
 	_, ok := parentData.children[wid]
@@ -88,7 +88,7 @@ func RemoveChild(parent Window, child Window) {
 	if child == nil {
 		log.Printf("RemoveChild: child=nil?\n")
 	}
-	windata := parent.data()
+	windata := parent.Data()
 	wid, ok := windata.childID[child]
 	if !ok {
 		log.Printf("RemoveWindow: no window child=%v\n", child)
@@ -111,7 +111,7 @@ func RemoveChild(parent Window, child Window) {
 
 // MoveWindow xxx
 func MoveWindow(parent Window, child Window, delta image.Point) {
-	child.Do(parent, "resize", child.data().Rect.Add(delta))
+	child.Do(parent, "resize", child.Data().Rect.Add(delta))
 }
 
 // RedrawChildren xxx
@@ -120,24 +120,24 @@ func RedrawChildren(parent Window) {
 		log.Printf("RedrawChildren: parent==nil?\n")
 		return
 	}
-	for _, w := range parent.data().order {
+	for _, w := range parent.Data().order {
 		w.Do(parent, "redraw", nil)
 	}
 }
 
 // GetAttValue xxx
 func GetAttValue(w Window, name string) string {
-	return w.data().att[name]
+	return w.Data().att[name]
 }
 
 // SetAttValue xxx
 func SetAttValue(w Window, name string, val string) {
-	w.data().att[name] = val
+	w.Data().att[name] = val
 }
 
 // DoUpstream xxx
 func DoUpstream(w Window, cmd string, arg interface{}) {
-	p := w.data().parent
+	p := w.Data().Parent
 	if p == nil {
 		log.Printf("Hey, no parent?\n")
 	} else {
@@ -147,12 +147,12 @@ func DoUpstream(w Window, cmd string, arg interface{}) {
 
 // WindowRect xxx
 func WindowRect(w Window) image.Rectangle {
-	return w.data().Rect
+	return w.Data().Rect
 }
 
 // WindowRaise moves w to the top of the order
 func WindowRaise(parent Window, raise Window) {
-	pdata := parent.data()
+	pdata := parent.Data()
 	orderLen := len(pdata.order)
 
 	// Quick check for common case when it's the top Window
@@ -188,4 +188,16 @@ func WindowType(w Window) string {
 		t = t[i+1:]
 	}
 	return t
+}
+
+// ToolMaker xxx
+type ToolMaker func(Window) Window
+
+// Tools xxx
+var Tools = make(map[string]ToolMaker)
+
+// AddToolType xxx
+func AddToolType(name string, newfunc ToolMaker) {
+	log.Printf("AddToolType name=%s\n", name)
+	Tools[name] = newfunc
 }

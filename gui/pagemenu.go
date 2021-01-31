@@ -25,7 +25,7 @@ func NewToolsMenu(parent Window, parentMenu Window) *Menu {
 	menu := NewMenuWindow(parent, parentMenu).(*Menu)
 	menu.parentMenu = parentMenu
 	menu.items = []MenuItem{
-		{label: "Console", target: parent, cmd: "sweeptool", arg: "console"},
+		{label: "Console", target: parent, cmd: "sweeptool", arg: "Console"},
 	}
 	return menu
 }

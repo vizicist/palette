@@ -41,8 +41,8 @@ func NewPage(parent Window, name string) *Page {
 }
 
 // Data xxx
-func (page *Page) data() *WindowData {
-	if page.parent == nil {
+func (page *Page) Data() *WindowData {
+	if page.Parent == nil {
 		log.Printf("Hey, parent is nil?\n")
 	}
 	return &page.WindowData
@@ -51,7 +51,7 @@ func (page *Page) data() *WindowData {
 // Do xxx
 func (page *Page) Do(from Window, cmd string, arg interface{}) (interface{}, error) {
 
-	if page.parent == nil {
+	if page.Parent == nil {
 		log.Printf("Hey, parent is nil?\n")
 	}
 
@@ -159,7 +159,7 @@ func (page *Page) Do(from Window, cmd string, arg interface{}) (interface{}, err
 		page.showCursor(false)
 
 	default:
-		if page.parent == nil {
+		if page.Parent == nil {
 			log.Printf("Hey, parent is nil?\n")
 		}
 
@@ -259,6 +259,10 @@ func (page *Page) restoreState(s string) error {
 		childState := childmap["state"].(interface{})
 		// Create the window
 		childW := page.AddTool(childType, childRect)
+		if childW == nil {
+			log.Printf("Hey, AddTool fails for childType=%s\n", childType)
+			continue
+		}
 		// restore state
 		childW.Do(page, "restore", childState)
 		SetAttValue(childW, "istransient", "false")
@@ -284,7 +288,7 @@ func (page *Page) dumpState() (string, error) {
 		s += fmt.Sprintf("%s{\n", sep)
 		s += fmt.Sprintf("\"wid\": \"%d\",\n", wid)
 		s += fmt.Sprintf("\"type\": \"%s\",\n", WindowType(child))
-		s += fmt.Sprintf("\"rect\": \"%s\",\n", RectString(child.data().Rect))
+		s += fmt.Sprintf("\"rect\": \"%s\",\n", RectString(child.Data().Rect))
 		s += fmt.Sprintf("\"state\": %s\n", state)
 		s += fmt.Sprintf("}\n")
 		sep = ",\n"
@@ -313,6 +317,14 @@ func (page *Page) AddTool(name string, rect image.Rectangle) Window {
 
 // NewTool xxx
 func (page *Page) NewTool(name string) Window {
+
+	maker, ok := Tools[name]
+	if ok {
+		w := maker(page)
+		log.Printf("w=%v\n", w)
+		return w
+	}
+
 	// var t Page
 	capName := strings.ToUpper(string(name[0])) + name[1:]
 	methodName := "New" + capName + "Window"
@@ -364,7 +376,7 @@ func (page *Page) drawSweepRect() {
 
 func (page *Page) drawSweepCursor() {
 	pos := page.lastPos
-	DoUpstream(page, "setcolor", foreColor)
+	DoUpstream(page, "setcolor", ForeColor)
 	DoUpstream(page, "drawline", DrawLineCmd{
 		XY0: pos, XY1: pos.Add(image.Point{20, 0}),
 	})
@@ -383,7 +395,7 @@ func (page *Page) drawSweepCursor() {
 func (page *Page) drawPickCursor() {
 	sz := 10
 	pos := page.lastPos
-	DoUpstream(page, "setcolor", foreColor)
+	DoUpstream(page, "setcolor", ForeColor)
 	DoUpstream(page, "drawline", DrawLineCmd{
 		XY0: pos.Add(image.Point{-sz, 0}),
 		XY1: pos.Add(image.Point{sz, 0}),

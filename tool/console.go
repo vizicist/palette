@@ -84,26 +84,26 @@ func (console *Console) Do(from gui.Window, cmd string, arg interface{}) (interf
 	case "addline":
 		console.TextArea.Do(console, cmd, arg)
 	default:
-		console.data().parent.Do(console, cmd, arg)
+		console.Data().Parent.Do(console, cmd, arg)
 	}
 	return nil, nil
 }
 
 // Data xxx
-func (console *Console) data() *gui.WindowData {
+func (console *Console) Data() *gui.WindowData {
 	return &console.WindowData
 }
 
 // Resize xxx
 func (console *Console) resize(rect image.Rectangle) {
 
-	console.data().Rect = rect
+	console.Data().Rect = rect
 
 	buttWidth := rect.Dx() / 4
 	// buttHeight := console.clearButton.MinRect.Max.Y
 
 	// Clear button
-	r := console.clearButton.data().minRect // minimum good size
+	r := console.clearButton.Data().MinRect // minimum good size
 	r.Max.X = buttWidth                     // force width
 	r = r.Add(rect.Min).Add(image.Point{2, 2})
 	console.clearButton.Do(console, "resize", r)
@@ -117,18 +117,18 @@ func (console *Console) resize(rect image.Rectangle) {
 	console.threeButton.Do(console, "resize", r)
 
 	// handle ScrollingText Window
-	y0 := console.clearButton.data().Rect.Max.Y + 2
-	console.TextArea.Do(console, "resize", image.Rect(rect.Min.X+2, y0, rect.Max.X-2, console.data().Rect.Max.Y))
+	y0 := console.clearButton.Data().Rect.Max.Y + 2
+	console.TextArea.Do(console, "resize", image.Rect(rect.Min.X+2, y0, rect.Max.X-2, console.Data().Rect.Max.Y))
 
 	// Adjust console's oveall size from the ScrollingText Window
-	console.data().Rect.Max.Y = console.TextArea.data().Rect.Max.Y + 2
+	console.Data().Rect.Max.Y = console.TextArea.Data().Rect.Max.Y + 2
 }
 
 // Draw xxx
 func (console *Console) redraw() {
-	gui.DoUpstream(console, "setcolor", gui.backColor)
-	gui.DoUpstream(console, "drawfilledrect", console.data().Rect.Inset(1))
-	gui.DoUpstream(console, "setcolor", gui.foreColor)
-	gui.DoUpstream(console, "drawrect", console.data().Rect)
+	gui.DoUpstream(console, "setcolor", gui.BackColor)
+	gui.DoUpstream(console, "drawfilledrect", console.Data().Rect.Inset(1))
+	gui.DoUpstream(console, "setcolor", gui.ForeColor)
+	gui.DoUpstream(console, "drawrect", console.Data().Rect)
 	gui.RedrawChildren(console)
 }
