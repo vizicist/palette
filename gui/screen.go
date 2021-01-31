@@ -17,7 +17,6 @@ import (
 // Screen contains the pageWindow.
 // Screen and Style should be the only things calling ebiten.
 type Screen struct {
-	WindowData
 	page        Window
 	style       *Style
 	rect        image.Rectangle
@@ -41,16 +40,24 @@ const (
 // CurrentPage xxx
 var CurrentPage *Page
 
-// Run displays and runs the Gui and never returns
+// Run runs the Gui and never returns
 func Run() {
 
-	ebiten.SetWindowSize(600, 800)
+	// The user of palette.win can/should add custom tool types,
+	// but we want to make sure that the standard ones are ours.
+	// AddToolType("Menu", NewMenu)
+	AddToolType("PageMenu", NewPageMenu)
+	AddToolType("ToolsMenu", NewToolsMenu)
+
+	minRect := image.Rect(0, 0, 640, 480)
+	style := NewStyle("fixed", 16)
+
+	ebiten.SetWindowSize(minRect.Max.X, minRect.Max.Y)
 	ebiten.SetWindowResizable(true)
 	ebiten.SetWindowTitle("Palette GUI (ebiten)")
 
 	screen := &Screen{
 		page:      nil,
-		style:     NewStyle("fixed", 16),
 		rect:      image.Rectangle{},
 		eimage:    &ebiten.Image{},
 		time0:     time.Now(),
@@ -59,6 +66,9 @@ func Run() {
 		backColor: BackColor,
 	}
 
+	wd := NewWindowData(nil, minRect, style)
+	WinMap[screen] = wd
+
 	screen.page = NewPage(screen, "home")
 	CurrentPage = screen.page.(*Page)
 
@@ -66,11 +76,6 @@ func Run() {
 	if err := ebiten.RunGame(screen); err != nil {
 		log.Fatal(err)
 	}
-}
-
-// Data xxx
-func (screen *Screen) Data() *WindowData {
-	return &screen.WindowData
 }
 
 // Do xxx

@@ -36,6 +36,11 @@ type Style struct {
 	fontFace    font.Face
 }
 
+// DefaultStyle xxx
+func DefaultStyle() *Style {
+	return NewStyle("fixed", 16)
+}
+
 // NewStyle xxx
 func NewStyle(fontName string, fontHeight int) *Style {
 

@@ -7,7 +7,6 @@ import (
 
 // Button xxx
 type Button struct {
-	WindowData
 	isPressed bool
 	labelOrig string
 	label     string
@@ -17,61 +16,52 @@ type Button struct {
 }
 
 // NewButton xxx
-func NewButton(parent Window, label string) Window {
+func NewButton(label string, style *Style) (Window, image.Rectangle) {
 	b := &Button{
-		WindowData: NewWindowData(parent),
-		isPressed:  false,
-		labelOrig:  label,
-		label:      label,
+		isPressed: false,
+		labelOrig: label,
+		label:     label,
 	}
-	b.MinRect = image.Rectangle{
+	minRect := image.Rectangle{
 		Min: image.Point{0, 0},
 		Max: image.Point{
-			X: b.style.TextWidth(label) + 6,
-			Y: b.style.TextHeight() + 6,
+			X: style.TextWidth(label) + 6,
+			Y: style.TextHeight() + 6,
 		},
 	}
-	return b
-}
-
-// Data xxx
-func (button *Button) Data() *WindowData {
-	return &button.WindowData
-}
-
-func (button *Button) resize(rect image.Rectangle) {
-	button.Rect = rect
-	if button.Rect.Dx() < button.MinRect.Dx() || button.Rect.Dy() < button.MinRect.Dy() {
-		nchars := button.Rect.Dx() / button.style.CharWidth()
-		if nchars <= 0 {
-			button.label = ""
-		} else if len(button.labelOrig) > nchars {
-			button.label = button.labelOrig[:nchars]
-		}
-	} else {
-		button.label = button.labelOrig
-	}
-}
-
-func (button *Button) redraw() {
-	DoUpstream(button, "setcolor", ForeColor)
-	DoUpstream(button, "drawrect", button.Rect)
-	button.labelX = button.Rect.Min.X + 3
-	button.labelY = button.Rect.Min.Y + button.style.TextHeight()
-	DoUpstream(button, "drawtext", DrawTextCmd{button.label, button.style.fontFace, image.Point{button.labelX, button.labelY}})
+	return b, minRect
 }
 
 // Do xxx
 func (button *Button) Do(from Window, cmd string, arg interface{}) (interface{}, error) {
 
+	wd := WinData(button)
 	switch cmd {
+
 	case "resize":
-		button.resize(ToRect(arg))
+		toRect := ToRect(arg)
+		if toRect.Dx() < wd.minRect.Dx() || toRect.Dy() < wd.minRect.Dy() {
+			nchars := toRect.Dx() / wd.style.CharWidth()
+			if nchars <= 0 {
+				button.label = ""
+			} else if len(button.labelOrig) > nchars {
+				button.label = button.labelOrig[:nchars]
+			}
+		} else {
+			button.label = button.labelOrig
+		}
+
 	case "redraw":
-		button.redraw()
+		DoUpstream(button, "setcolor", ForeColor)
+		DoUpstream(button, "drawrect", wd.rect)
+		rect := WinRect(button)
+		button.labelX = rect.Min.X + 3
+		button.labelY = rect.Min.Y + wd.style.TextHeight()
+		DoUpstream(button, "drawtext", DrawTextCmd{button.label, wd.style.fontFace, image.Point{button.labelX, button.labelY}})
+
 	case "mouse":
 		mouse := ToMouse(arg)
-		if !mouse.Pos.In(button.Rect) {
+		if !mouse.Pos.In(wd.rect) {
 			log.Printf("button: pos not in Rect?\n")
 			break
 		}

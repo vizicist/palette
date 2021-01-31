@@ -10,7 +10,7 @@ import (
 // Window is the external (and networkable) interface
 // to a Window instance.
 type Window interface {
-	Data() *WindowData // local only
+	// Data() *WindowData // local only
 	Do(from Window, cmd string, arg interface{}) (interface{}, error)
 }
 
@@ -19,9 +19,9 @@ type WindowID int
 
 // WindowData xxx
 type WindowData struct {
-	Rect    image.Rectangle // in Screen coordinates, not relative (yet)
-	Parent  Window
-	MinRect image.Rectangle // Min is always 0,0
+	rect    image.Rectangle // in Screen coordinates, not relative (yet)
+	parent  Window
+	minRect image.Rectangle // Min is always 0,0
 	style   *Style
 
 	children    map[WindowID]Window
@@ -32,15 +32,27 @@ type WindowData struct {
 	att map[string]string
 }
 
+// WinMap xxx
+var WinMap = make(map[Window]*WindowData)
+
+// ToolMaker xxx
+type ToolMaker func(style *Style) (w Window, minRect image.Rectangle)
+
+// Tools xxx
+var Tools = make(map[string]ToolMaker)
+
 // NewWindowData xxx
-func NewWindowData(parent Window) WindowData {
+func NewWindowData(parent Window, minRect image.Rectangle, style *Style) *WindowData {
 	if parent == nil {
 		log.Printf("NewWindowData: parent is nil!?\n")
 	}
-	return WindowData{
-		Parent:   parent,
-		style:    NewStyle("fixed", 16),
-		Rect:     image.Rectangle{},
+	return &WindowData{
+
+		parent:  parent,
+		style:   style,
+		minRect: minRect,
+
+		rect:     image.Rectangle{},
 		children: make(map[WindowID]Window),
 		childID:  make(map[Window]WindowID),
 		order:    make([]Window, 0),
@@ -51,11 +63,11 @@ func NewWindowData(parent Window) WindowData {
 // WindowUnder xxx
 func WindowUnder(parent Window, pos image.Point) Window {
 
-	parentData := parent.Data()
+	parentData := WinData(parent)
 	// Check in reverse order
 	for n := len(parentData.order) - 1; n >= 0; n-- {
 		w := parentData.order[n]
-		if pos.In(w.Data().Rect) {
+		if pos.In(WinRect(w)) {
 			return w
 		}
 	}
@@ -65,7 +77,7 @@ func WindowUnder(parent Window, pos image.Point) Window {
 // AddChild xxx
 func AddChild(parent Window, child Window) Window {
 
-	parentData := parent.Data()
+	parentData := WinData(parent)
 	parentData.lastChildID++
 	wid := parentData.lastChildID
 	_, ok := parentData.children[wid]
@@ -88,22 +100,25 @@ func RemoveChild(parent Window, child Window) {
 	if child == nil {
 		log.Printf("RemoveChild: child=nil?\n")
 	}
-	windata := parent.Data()
-	wid, ok := windata.childID[child]
+	parentData := WinData(parent)
+	if parentData == nil {
+		log.Printf("RemoveChild: no WinData for parent=%v\n", parent)
+	}
+	wid, ok := parentData.childID[child]
 	if !ok {
 		log.Printf("RemoveWindow: no window child=%v\n", child)
 		return
 	}
 
-	delete(windata.childID, child)
-	delete(windata.children, wid)
+	delete(parentData.childID, child)
+	delete(parentData.children, wid)
 
 	// find and delete it in the .order array
-	for n, w := range windata.order {
+	for n, w := range parentData.order {
 		if w == child {
-			copy(windata.order[n:], windata.order[n+1:])
-			newlen := len(windata.order) - 1
-			windata.order = windata.order[:newlen]
+			copy(parentData.order[n:], parentData.order[n+1:])
+			newlen := len(parentData.order) - 1
+			parentData.order = parentData.order[:newlen]
 			break
 		}
 	}
@@ -111,7 +126,7 @@ func RemoveChild(parent Window, child Window) {
 
 // MoveWindow xxx
 func MoveWindow(parent Window, child Window, delta image.Point) {
-	child.Do(parent, "resize", child.Data().Rect.Add(delta))
+	child.Do(parent, "resize", WinRect(child).Add(delta))
 }
 
 // RedrawChildren xxx
@@ -120,39 +135,59 @@ func RedrawChildren(parent Window) {
 		log.Printf("RedrawChildren: parent==nil?\n")
 		return
 	}
-	for _, w := range parent.Data().order {
+	wd := WinData(parent)
+	if wd == nil {
+		log.Printf("RedrawChildren: No WinData for parent=%v\n", parent)
+		return
+	}
+	for _, w := range wd.order {
 		w.Do(parent, "redraw", nil)
 	}
 }
 
 // GetAttValue xxx
 func GetAttValue(w Window, name string) string {
-	return w.Data().att[name]
+	wd := WinData(w)
+	if wd == nil {
+		log.Printf("GetAttValue: no WinData for w=%v\n", w)
+		return ""
+	}
+	return wd.att[name]
 }
 
 // SetAttValue xxx
 func SetAttValue(w Window, name string, val string) {
-	w.Data().att[name] = val
+	wd := WinData(w)
+	if wd == nil {
+		log.Printf("SetAttValue: no WinData for w=%v\n", w)
+		return
+	}
+	wd.att[name] = val
 }
 
 // DoUpstream xxx
 func DoUpstream(w Window, cmd string, arg interface{}) {
-	p := w.Data().Parent
-	if p == nil {
-		log.Printf("Hey, no parent?\n")
+	wd := WinData(w)
+	if wd == nil {
+		log.Printf("DoUpstream: no WinData for w=%v\n", w)
 	} else {
-		p.Do(w, cmd, arg)
+		p := wd.parent
+		if p == nil {
+			log.Printf("DoUpstream: no parent for w=%v\n", w)
+		} else {
+			p.Do(w, cmd, arg)
+		}
 	}
 }
 
 // WindowRect xxx
 func WindowRect(w Window) image.Rectangle {
-	return w.Data().Rect
+	return WinData(w).rect
 }
 
 // WindowRaise moves w to the top of the order
 func WindowRaise(parent Window, raise Window) {
-	pdata := parent.Data()
+	pdata := WinData(parent)
 	orderLen := len(pdata.order)
 
 	// Quick check for common case when it's the top Window
@@ -190,14 +225,55 @@ func WindowType(w Window) string {
 	return t
 }
 
-// ToolMaker xxx
-type ToolMaker func(Window) Window
-
-// Tools xxx
-var Tools = make(map[string]ToolMaker)
-
 // AddToolType xxx
 func AddToolType(name string, newfunc ToolMaker) {
 	log.Printf("AddToolType name=%s\n", name)
 	Tools[name] = newfunc
+}
+
+// WinData xxx
+func WinData(w Window) *WindowData {
+	wd, ok := WinMap[w]
+	if !ok {
+		log.Printf("WinData: no entry in WinMap for w=%v\n", w)
+		return nil
+	}
+	return wd
+}
+
+// WinRect xxx
+func WinRect(w Window) (r image.Rectangle) {
+	if wd := WinData(w); wd != nil {
+		r = wd.rect
+	}
+	return r
+}
+
+// WinMinRect xxx
+func WinMinRect(w Window) (r image.Rectangle) {
+	if wd := WinData(w); wd != nil {
+		r = wd.minRect
+	}
+	return r
+}
+
+// WinParent xxx
+func WinParent(w Window) Window {
+	if wd := WinData(w); wd != nil {
+		return wd.parent
+	}
+	return nil
+}
+
+// WinStyle xxx
+func WinStyle(w Window) *Style {
+	wd := WinData(w)
+	if wd.style != nil {
+		return wd.style // Window has its own style
+	}
+	if wd.parent == nil {
+		log.Printf("WinStye: using DefaultStyle because no parent for w=%v\n", wd)
+		return DefaultStyle()
+	}
+	return WinStyle(wd.parent) // use the parent's style
 }
