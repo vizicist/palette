@@ -17,7 +17,7 @@ type Button struct {
 }
 
 // NewButton xxx
-func NewButton(parent Window, label string) *Button {
+func NewButton(parent Window, label string) Window {
 	b := &Button{
 		WindowData: NewWindowData(parent),
 		isPressed:  false,

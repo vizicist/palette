@@ -314,7 +314,6 @@ func (page *Page) AddTool(name string, rect image.Rectangle) Window {
 // NewTool xxx
 func (page *Page) NewTool(name string) Window {
 	// var t Page
-	// methodName := "New" + name
 	capName := strings.ToUpper(string(name[0])) + name[1:]
 	methodName := "New" + capName + "Window"
 	toolArgs := make([]reflect.Value, 0)
@@ -340,8 +339,9 @@ func (page *Page) NewTool(name string) Window {
 
 // NewConsoleWindow xxx
 func (page *Page) NewConsoleWindow(arg string) Window {
-	w := NewConsole(page)
-	return w
+	// w := NewConsole(page)
+	// return w
+	return nil
 }
 
 // NewMenuWindow xxx
