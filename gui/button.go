@@ -24,7 +24,7 @@ func NewButton(parent Window, label string) Window {
 		labelOrig:  label,
 		label:      label,
 	}
-	b.minRect = image.Rectangle{
+	b.MinRect = image.Rectangle{
 		Min: image.Point{0, 0},
 		Max: image.Point{
 			X: b.style.TextWidth(label) + 6,
@@ -35,13 +35,13 @@ func NewButton(parent Window, label string) Window {
 }
 
 // Data xxx
-func (button *Button) data() *WindowData {
+func (button *Button) Data() *WindowData {
 	return &button.WindowData
 }
 
 func (button *Button) resize(rect image.Rectangle) {
 	button.Rect = rect
-	if button.Rect.Dx() < button.minRect.Dx() || button.Rect.Dy() < button.minRect.Dy() {
+	if button.Rect.Dx() < button.MinRect.Dx() || button.Rect.Dy() < button.MinRect.Dy() {
 		nchars := button.Rect.Dx() / button.style.CharWidth()
 		if nchars <= 0 {
 			button.label = ""
@@ -54,7 +54,7 @@ func (button *Button) resize(rect image.Rectangle) {
 }
 
 func (button *Button) redraw() {
-	DoUpstream(button, "setcolor", foreColor)
+	DoUpstream(button, "setcolor", ForeColor)
 	DoUpstream(button, "drawrect", button.Rect)
 	button.labelX = button.Rect.Min.X + 3
 	button.labelY = button.Rect.Min.Y + button.style.TextHeight()

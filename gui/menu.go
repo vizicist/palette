@@ -53,7 +53,7 @@ func NewMenuWindow(parent Window, parentMenu Window) Window {
 }
 
 // Data xxx
-func (menu *Menu) data() *WindowData {
+func (menu *Menu) Data() *WindowData {
 	return &menu.WindowData
 }
 
@@ -119,12 +119,12 @@ func (menu *Menu) redraw() {
 	nitems := len(menu.items)
 	liney0 := menu.Rect.Min.Y + menu.handleHeight + menu.rowHeight/4 - 4
 	for n, item := range menu.items {
-		fore := foreColor
-		back := backColor
+		fore := ForeColor
+		back := BackColor
 		liney := liney0 + (n+1)*menu.rowHeight
 		if n == menu.itemSelected {
-			fore = backColor
-			back = foreColor
+			fore = BackColor
+			back = ForeColor
 			itemRect := image.Rect(menu.Rect.Min.X+1, liney-menu.rowHeight, menu.Rect.Max.X-1, liney)
 
 			DoUpstream(menu, "setcolor", back)
@@ -178,7 +178,7 @@ func (menu *Menu) mouseHandler(cmd MouseCmd) (removeMenu bool) {
 		if w == nil {
 			log.Printf("HEY! item.target is nil?  Assuming menu.parent!\n")
 			log.Printf("Menus need to dump their target\n")
-			w = menu.parent
+			w = menu.Parent
 		}
 
 		/*
@@ -233,7 +233,7 @@ func (menu *Menu) Do(from Window, cmd string, arg interface{}) (interface{}, err
 		sep := ""
 		for _, item := range menu.items {
 			argstr := ToString(item.arg)
-			targetWid := GetWindowID(menu.parent, item.target)
+			targetWid := GetWindowID(menu.Parent, item.target)
 			s += fmt.Sprintf("%s{ \"label\": \"%s\", \"cmd\": \"%s\", \"arg\": \"%s\", \"target\": \"%s\" }",
 				sep, item.label, item.cmd, argstr, targetWid)
 			sep = ",\n"
@@ -257,7 +257,7 @@ func (menu *Menu) Do(from Window, cmd string, arg interface{}) (interface{}, err
 
 // GetWindowID xxx
 func GetWindowID(parent Window, w Window) string {
-	for wid, child := range parent.data().children {
+	for wid, child := range parent.Data().children {
 		if child == w {
 			return fmt.Sprintf("%d", wid)
 		}
