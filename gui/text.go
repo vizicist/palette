@@ -14,7 +14,6 @@ var defaultBufferSize = 128
 
 // ScrollingText assumes a fixed-width font
 type ScrollingText struct {
-	WindowData
 	isPressed bool
 	Buffer    []string
 	nlines    int // number of lines actually displayed
@@ -22,25 +21,20 @@ type ScrollingText struct {
 }
 
 // NewScrollingText xxx
-func NewScrollingText(parent Window) Window {
+func NewScrollingText(style *Style) (w Window, minRect image.Rectangle) {
 	st := &ScrollingText{
-		WindowData: NewWindowData(parent),
-		isPressed:  false,
-		Buffer:     make([]string, defaultBufferSize),
+		isPressed: false,
+		Buffer:    make([]string, defaultBufferSize),
 	}
-	return st
-}
-
-// Data xxx
-func (st *ScrollingText) Data() *WindowData {
-	return &st.WindowData
+	return st, minRect
 }
 
 func (st *ScrollingText) resize(rect image.Rectangle) {
 
+	style := WinStyle(st)
 	// See how many lines and chars we can fit in the rect
-	st.nlines = rect.Dy() / st.style.RowHeight()
-	st.nchars = rect.Dx() / st.style.CharWidth()
+	st.nlines = rect.Dy() / style.RowHeight()
+	st.nchars = rect.Dx() / style.CharWidth()
 
 	// in case the buffer isn't big enough
 	if st.nlines > len(st.Buffer) {
@@ -49,22 +43,25 @@ func (st *ScrollingText) resize(rect image.Rectangle) {
 		st.Buffer = newbuffer
 	}
 	// Adjust the rect so we're exactly that height
-	rect.Max.Y = rect.Min.Y + st.nlines*st.style.RowHeight()
+	rect.Max.Y = rect.Min.Y + st.nlines*style.RowHeight()
 
-	st.Rect = rect
+	// st.rect = rect
 }
 
 func (st *ScrollingText) redraw() {
 
+	rect := WinRect(st)
+	style := WinStyle(st)
+
 	DoUpstream(st, "setcolor", ForeColor)
-	DoUpstream(st, "drawrect", st.Rect)
+	DoUpstream(st, "drawrect", rect)
 
 	if st.nchars == 0 || st.nlines == 0 {
 		// window is too small
 		return
 	}
 
-	textx := st.Rect.Min.X + 3
+	textx := rect.Min.X + 3
 
 	// If a line is longer than st.nchars, we break it up.
 	// The linestack we create will be at least st.nlines long,
@@ -99,8 +96,8 @@ func (st *ScrollingText) redraw() {
 		line := linestack[n]
 		if line != "" {
 			// rownum 0 is the bottom
-			texty := st.Rect.Max.Y - n*st.style.RowHeight() - 4
-			DoUpstream(st, "drawtext", DrawTextCmd{line, st.style.fontFace, image.Point{textx, texty}})
+			texty := rect.Max.Y - n*style.RowHeight() - 4
+			DoUpstream(st, "drawtext", DrawTextCmd{line, style.fontFace, image.Point{textx, texty}})
 		}
 	}
 }
