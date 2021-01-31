@@ -1,52 +1,54 @@
-package gui
+package tool
 
 import (
 	"image"
 	"log"
+
+	"github.com/vizicist/palette/gui"
 )
 
 // Console is a window that has a couple of buttons
 type Console struct {
-	WindowData
-	clearButton *Button
-	testButton  *Button
-	threeButton *Button
-	TextArea    *ScrollingText
+	gui.WindowData
+	clearButton gui.Window
+	testButton  gui.Window
+	threeButton gui.Window
+	TextArea    gui.Window
 }
 
 // NewConsole xxx
-func NewConsole(parent Window) *Console {
+func NewConsole(parent gui.Window) gui.Window {
 
 	console := &Console{
-		WindowData: NewWindowData(parent),
+		WindowData: gui.NewWindowData(parent),
 	}
 
-	console.clearButton = NewButton(console, "Clear")
-	console.testButton = NewButton(console, "Test")
-	console.threeButton = NewButton(console, "Three")
-	console.TextArea = NewScrollingText(console)
+	console.clearButton = gui.NewButton(console, "Clear")
+	console.testButton = gui.NewButton(console, "Test")
+	console.threeButton = gui.NewButton(console, "Three")
+	console.TextArea = gui.NewScrollingText(console)
 
-	SetAttValue(console, "islogger", "true")
+	gui.SetAttValue(console, "islogger", "true")
 
-	AddChild(console, console.TextArea)
-	AddChild(console, console.clearButton)
-	AddChild(console, console.testButton)
-	AddChild(console, console.threeButton)
+	gui.AddChild(console, console.TextArea)
+	gui.AddChild(console, console.clearButton)
+	gui.AddChild(console, console.testButton)
+	gui.AddChild(console, console.threeButton)
 
 	return console
 }
 
 // Do xxx
-func (console *Console) Do(from Window, cmd string, arg interface{}) (interface{}, error) {
+func (console *Console) Do(from gui.Window, cmd string, arg interface{}) (interface{}, error) {
 	switch cmd {
 	case "mouse":
-		mouse := ToMouse(arg)
-		o := WindowUnder(console, mouse.Pos)
+		mouse := gui.ToMouse(arg)
+		o := gui.WindowUnder(console, mouse.Pos)
 		if o != nil {
 			o.Do(console, cmd, arg)
 		}
 	case "resize":
-		console.resize(ToRect(arg))
+		console.resize(gui.ToRect(arg))
 	case "redraw":
 		console.redraw()
 	case "restore":
@@ -75,34 +77,34 @@ func (console *Console) Do(from Window, cmd string, arg interface{}) (interface{
 			log.Printf("Three!\n")
 		case console.clearButton:
 			log.Printf("Clear!\n")
-			console.TextArea.Clear()
+			console.TextArea.Do(console, "clear", nil)
 		}
 	case "buttonup":
 		//
 	case "addline":
 		console.TextArea.Do(console, cmd, arg)
 	default:
-		console.parent.Do(console, cmd, arg)
+		console.data().parent.Do(console, cmd, arg)
 	}
 	return nil, nil
 }
 
 // Data xxx
-func (console *Console) data() *WindowData {
+func (console *Console) data() *gui.WindowData {
 	return &console.WindowData
 }
 
 // Resize xxx
 func (console *Console) resize(rect image.Rectangle) {
 
-	console.Rect = rect
+	console.data().Rect = rect
 
 	buttWidth := rect.Dx() / 4
 	// buttHeight := console.clearButton.MinRect.Max.Y
 
 	// Clear button
-	r := console.clearButton.minRect // minimum good size
-	r.Max.X = buttWidth              // force width
+	r := console.clearButton.data().minRect // minimum good size
+	r.Max.X = buttWidth                     // force width
 	r = r.Add(rect.Min).Add(image.Point{2, 2})
 	console.clearButton.Do(console, "resize", r)
 
@@ -115,18 +117,18 @@ func (console *Console) resize(rect image.Rectangle) {
 	console.threeButton.Do(console, "resize", r)
 
 	// handle ScrollingText Window
-	y0 := console.clearButton.Rect.Max.Y + 2
-	console.TextArea.Do(console, "resize", image.Rect(rect.Min.X+2, y0, rect.Max.X-2, console.Rect.Max.Y))
+	y0 := console.clearButton.data().Rect.Max.Y + 2
+	console.TextArea.Do(console, "resize", image.Rect(rect.Min.X+2, y0, rect.Max.X-2, console.data().Rect.Max.Y))
 
 	// Adjust console's oveall size from the ScrollingText Window
-	console.Rect.Max.Y = console.TextArea.Rect.Max.Y + 2
+	console.data().Rect.Max.Y = console.TextArea.data().Rect.Max.Y + 2
 }
 
 // Draw xxx
 func (console *Console) redraw() {
-	DoUpstream(console, "setcolor", backColor)
-	DoUpstream(console, "drawfilledrect", console.Rect.Inset(1))
-	DoUpstream(console, "setcolor", foreColor)
-	DoUpstream(console, "drawrect", console.Rect)
-	RedrawChildren(console)
+	gui.DoUpstream(console, "setcolor", gui.backColor)
+	gui.DoUpstream(console, "drawfilledrect", console.data().Rect.Inset(1))
+	gui.DoUpstream(console, "setcolor", gui.foreColor)
+	gui.DoUpstream(console, "drawrect", console.data().Rect)
+	gui.RedrawChildren(console)
 }

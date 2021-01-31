@@ -22,7 +22,7 @@ type ScrollingText struct {
 }
 
 // NewScrollingText xxx
-func NewScrollingText(parent Window) *ScrollingText {
+func NewScrollingText(parent Window) Window {
 	st := &ScrollingText{
 		WindowData: NewWindowData(parent),
 		isPressed:  false,
@@ -135,7 +135,9 @@ func (st *ScrollingText) Do(from Window, cmd string, arg interface{}) (interface
 		return s, nil
 
 	case "clear":
-		log.Printf("ScrollingText: Clear needs work!\n")
+		for n := range st.Buffer {
+			st.Buffer[n] = ""
+		}
 	case "mouse":
 		// ignore
 	case "addline":
