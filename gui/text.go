@@ -14,6 +14,7 @@ var defaultBufferSize = 128
 
 // ScrollingText assumes a fixed-width font
 type ScrollingText struct {
+	data      WindowDatax
 	isPressed bool
 	Buffer    []string
 	nlines    int // number of lines actually displayed
@@ -21,12 +22,17 @@ type ScrollingText struct {
 }
 
 // NewScrollingText xxx
-func NewScrollingText(style *Style) (w Window, minRect image.Rectangle) {
+func NewScrollingText(style *Style) ToolData {
 	st := &ScrollingText{
 		isPressed: false,
 		Buffer:    make([]string, defaultBufferSize),
 	}
-	return st, minRect
+	return ToolData{st, image.Point{}} //
+}
+
+// Data xxx
+func (st *ScrollingText) Data() *WindowDatax {
+	return &st.data
 }
 
 func (st *ScrollingText) resize(rect image.Rectangle) {

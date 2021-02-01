@@ -10,8 +10,8 @@ import (
 
 // Menu xxx
 type Menu struct {
-	items []MenuItem
-	// end of things that should be in dumpstate
+	data         WindowDatax
+	items        []MenuItem
 	isPressed    bool
 	itemSelected int
 	rowHeight    int
@@ -38,16 +38,32 @@ type MenuItem struct {
 }
 
 // NewMenu xxx
-func NewMenu(style *Style, items []MenuItem) (w Window, minRect image.Rectangle) {
-	m := &Menu{
+func NewMenu(style *Style, items []MenuItem) ToolData {
+
+	menu := &Menu{
 		isPressed:    false,
 		items:        items,
 		itemSelected: -1,
 	}
+
+	// DO NOT use Style.RowHeight, we want wider row spacing
+	menu.rowHeight = style.TextHeight() + 6
+	menu.handleHeight = 9
+	minSize := image.Point{
+		X: 12 + menu.maxX(style, menu.items),
+		Y: len(menu.items)*menu.rowHeight + menu.handleHeight + 2,
+	}
+
 	// SetAttValue(m, "istransient", "true")
-	minRect = m.minSize(style, m.items)
-	return m, minRect
+	return ToolData{W: menu, MinSize: minSize}
 }
+
+// Data xxx
+func (menu *Menu) Data() *WindowDatax {
+	return &menu.data
+}
+
+//////////////////////// End of Window interface methods
 
 // SetItems xxx
 func (menu *Menu) SetItems(items []MenuItem) {
@@ -59,13 +75,8 @@ func (menu *Menu) SetItems(items []MenuItem) {
 func (menu *Menu) resize(rect image.Rectangle) {
 
 	style := WinStyle(menu)
-
 	// Recompute all the y positions in the items
-	// DO NOT use Style.RowHeight, we want wider spacing
-	menu.rowHeight = style.TextHeight() + 6
-	menu.handleHeight = 9
 
-	textx := rect.Min.X + 6
 	maxX := -1
 	for n, item := range menu.items {
 		brect := style.BoundString(item.label)
@@ -75,52 +86,23 @@ func (menu *Menu) resize(rect image.Rectangle) {
 		// do not use Y info from brect,
 		// the vertical placement of items should
 		// be independent of the labels
-		texty := rect.Min.Y + 6 + menu.handleHeight + n*menu.rowHeight + (menu.rowHeight / 2)
-		menu.items[n].posX = textx
-		menu.items[n].posY = texty
+		menu.items[n].posX = 6
+		menu.items[n].posY = 6 + menu.handleHeight + n*menu.rowHeight + (menu.rowHeight / 2)
 	}
-	// Adjust the rect so we're exactly the right height
-	rect.Max.Y = rect.Min.Y + len(menu.items)*menu.rowHeight + menu.handleHeight + 2
-	rect.Max.X = rect.Min.X + 12 + maxX
-
 	// this depends on the width after we've adjusted
 	menu.handleMidx = rect.Max.X - rect.Dx()/4
-
-	// return rect
 }
 
 // minSize computes the minimum size of the menu
-func (menu *Menu) minSize(style *Style, items []MenuItem) image.Rectangle {
-
-	rect := image.Rectangle{}
-
-	// Recompute all the y positions in the items
-	// DO NOT use Style.RowHeight, we want wider spacing
-	menu.rowHeight = style.TextHeight() + 6
-	menu.handleHeight = 9
-
-	textx := rect.Min.X + 6
+func (menu *Menu) maxX(style *Style, items []MenuItem) int {
 	maxX := -1
-	for n, item := range menu.items {
+	for _, item := range items {
 		brect := style.BoundString(item.label)
 		if brect.Max.X > maxX {
 			maxX = brect.Max.X
 		}
-		// do not use Y info from brect,
-		// the vertical placement of items should
-		// be independent of the labels
-		texty := rect.Min.Y + 6 + menu.handleHeight + n*menu.rowHeight + (menu.rowHeight / 2)
-		menu.items[n].posX = textx
-		menu.items[n].posY = texty
 	}
-	// Adjust the rect so we're exactly the right height
-	rect.Max.Y = rect.Min.Y + len(menu.items)*menu.rowHeight + menu.handleHeight + 2
-	rect.Max.X = rect.Min.X + 12 + maxX
-
-	// this depends on the width after we've adjusted
-	menu.handleMidx = rect.Max.X - rect.Dx()/4
-
-	return rect
+	return maxX
 }
 
 // Draw xxx
@@ -164,29 +146,28 @@ func (menu *Menu) redraw() {
 		}
 
 		DoUpstream(menu, "setcolor", fore)
-		DoUpstream(menu, "drawtext", DrawTextCmd{item.label, style.fontFace, image.Point{item.posX, item.posY}})
+		DoUpstream(menu, "drawtext", DrawTextCmd{item.label, style.fontFace, rect.Min.Add(image.Point{item.posX, item.posY})})
 		if n != menu.itemSelected && n < (nitems-1) {
 			DoUpstream(menu, "drawline", DrawLineCmd{image.Point{rect.Min.X, liney}, image.Point{rect.Max.X, liney}})
 		}
 	}
 }
 
-func (menu *Menu) mouseHandler(cmd MouseCmd) (removeMenu bool) {
+func (menu *Menu) mouseHandler(mouse MouseCmd) (removeMenu bool) {
 	rect := WinRect(menu)
-	me := cmd
 	istransient := (GetAttValue(menu, "istransient") == "true")
 
 	menu.itemSelected = -1
 
 	// If it's in the handle area...
-	if me.Pos.Y <= rect.Min.Y+menu.handleHeight {
-		if me.Ddu == MouseDown {
-			if me.Pos.X > menu.handleMidx {
+	if mouse.Pos.Y <= rect.Min.Y+menu.handleHeight {
+		if mouse.Ddu == MouseDown {
+			if mouse.Pos.X > menu.handleMidx {
 				// Clicked in the X, remove the menu no matter what
 				DoUpstream(menu, "closeme", menu)
 				return true
 			}
-			DoUpstream(menu, "movemenu", menu)
+			DoUpstream(menu, "movetool", menu)
 			return false
 		}
 		return false
@@ -194,7 +175,7 @@ func (menu *Menu) mouseHandler(cmd MouseCmd) (removeMenu bool) {
 
 	// Find out which item the mouse is in
 	for n, item := range menu.items {
-		if me.Pos.Y < item.posY {
+		if mouse.Pos.Y < rect.Min.Y+item.posY {
 			menu.itemSelected = n
 			break
 		}
@@ -206,7 +187,7 @@ func (menu *Menu) mouseHandler(cmd MouseCmd) (removeMenu bool) {
 
 	parent := WinParent(menu)
 	// No callbackups until MouseUp
-	if me.Ddu == MouseUp {
+	if mouse.Ddu == MouseUp {
 		item := menu.items[menu.itemSelected]
 		w := parent
 		/*
@@ -285,7 +266,7 @@ func (menu *Menu) Do(from Window, cmd string, arg interface{}) (interface{}, err
 
 // GetWindowID xxx
 func GetWindowID(parent Window, w Window) string {
-	for wid, child := range WinData(parent).children {
+	for wid, child := range WinData(parent).childWindow {
 		if child == w {
 			return fmt.Sprintf("%d", wid)
 		}
