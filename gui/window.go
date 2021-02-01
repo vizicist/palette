@@ -10,21 +10,23 @@ import (
 // Window is the external (and networkable) interface
 // to a Window instance.
 type Window interface {
-	// Data() *WindowData // local only
+	Data() *WindowDatax // local only
 	Do(from Window, cmd string, arg interface{}) (interface{}, error)
 }
 
 // WindowID xxx
 type WindowID int
 
-// WindowData xxx
-type WindowData struct {
-	rect    image.Rectangle // in Screen coordinates, not relative (yet)
-	parent  Window
-	minRect image.Rectangle // Min is always 0,0
-	style   *Style
+// WindowDatax doesn't export any of its fields
+type WindowDatax struct {
+	rect        image.Rectangle // in Screen coordinates, not relative (yet)
+	parent      Window
+	minSize     image.Point
+	style       *Style
+	initialized bool
 
-	children    map[WindowID]Window
+	childData   map[Window]*WindowDatax
+	childWindow map[WindowID]Window
 	childID     map[Window]WindowID
 	lastChildID WindowID // to generate unique child window IDs
 	order       []Window // display order of child windows
@@ -32,31 +34,45 @@ type WindowData struct {
 	att map[string]string
 }
 
+// ToolData fields are exported
+type ToolData struct {
+	W       Window
+	MinSize image.Point
+}
+
 // WinMap xxx
-var WinMap = make(map[Window]*WindowData)
+// var WinMap = make(map[Window]*WindowData)
 
 // ToolMaker xxx
-type ToolMaker func(style *Style) (w Window, minRect image.Rectangle)
+type ToolMaker func(style *Style) ToolData
 
 // Tools xxx
 var Tools = make(map[string]ToolMaker)
 
-// NewWindowData xxx
-func NewWindowData(parent Window, minRect image.Rectangle, style *Style) *WindowData {
-	if parent == nil {
-		log.Printf("NewWindowData: parent is nil!?\n")
+// WinToolInit xxx
+func WinToolInit(parent Window, td ToolData) {
+	wd := td.W.Data()
+	if wd.initialized == false {
+		log.Printf("Initializing data for td.W=%p\n", td.W)
+		*wd = NewWindowData(parent, td.MinSize)
 	}
-	return &WindowData{
+}
 
-		parent:  parent,
-		style:   style,
-		minRect: minRect,
+// NewWindowData xxx
+func NewWindowData(parent Window, minSize image.Point) WindowDatax {
+	return WindowDatax{
 
-		rect:     image.Rectangle{},
-		children: make(map[WindowID]Window),
-		childID:  make(map[Window]WindowID),
-		order:    make([]Window, 0),
-		att:      make(map[string]string),
+		parent:      parent,
+		style:       nil, // uses parent's
+		minSize:     minSize,
+		rect:        image.Rectangle{},
+		initialized: true,
+
+		childData:   make(map[Window]*WindowDatax),
+		childWindow: make(map[WindowID]Window),
+		childID:     make(map[Window]WindowID),
+		order:       make([]Window, 0),
+		att:         make(map[string]string),
 	}
 }
 
@@ -75,23 +91,63 @@ func WindowUnder(parent Window, pos image.Point) Window {
 }
 
 // AddChild xxx
-func AddChild(parent Window, child Window) Window {
+func AddChild(parent Window, td ToolData) Window {
 
-	parentData := WinData(parent)
-	parentData.lastChildID++
-	wid := parentData.lastChildID
-	_, ok := parentData.children[wid]
+	child := td.W
+	if child.Data().initialized == false {
+		log.Printf("child.Data is nill, needs initializing\n")
+		*child.Data() = NewWindowData(parent, td.MinSize)
+	}
+
+	wd := parent.Data()
+	log.Printf("AddChild: start, parent wd=%p\n", wd)
+
+	wd.lastChildID++
+	wid := wd.lastChildID
+	_, ok := wd.childWindow[wid]
 	if ok {
 		log.Printf("AddChild: there's already a child with id=%d ??\n", wid)
 		return nil
 	}
 
 	// add it to the end of the display order
-	parentData.order = append(parentData.order, child)
+	wd.order = append(wd.order, child)
 
-	parentData.children[wid] = child
-	parentData.childID[child] = wid
+	wd.childWindow[wid] = child
+	wd.childID[child] = wid
+	wd.childData[child] = child.Data()
+	log.Printf("AddChild: child=%p wd.childData[child]=%p\n", child, wd.childData[child])
+
 	return child
+}
+
+// WinChildData xxx
+func WinChildData(parent Window, child Window) *WindowDatax {
+	wd, ok := parent.Data().childData[child]
+	if !ok {
+		log.Printf("WinChildData: no child?\n")
+		return nil
+	}
+	return wd
+}
+
+// WinChildData2 xxx
+func WinChildData2(child Window) *WindowDatax {
+	cd := child.Data()
+	if cd == nil {
+		log.Printf("Hey!\n")
+	}
+	parent := cd.parent
+	pd := parent.Data()
+	if pd == nil {
+		log.Printf("Hey!\n")
+	}
+	wd, ok := pd.childData[child]
+	if !ok {
+		log.Printf("WinChildData: no child?\n")
+		return nil
+	}
+	return wd
 }
 
 // RemoveChild xxx
@@ -111,7 +167,7 @@ func RemoveChild(parent Window, child Window) {
 	}
 
 	delete(parentData.childID, child)
-	delete(parentData.children, wid)
+	delete(parentData.childWindow, wid)
 
 	// find and delete it in the .order array
 	for n, w := range parentData.order {
@@ -232,13 +288,8 @@ func AddToolType(name string, newfunc ToolMaker) {
 }
 
 // WinData xxx
-func WinData(w Window) *WindowData {
-	wd, ok := WinMap[w]
-	if !ok {
-		log.Printf("WinData: no entry in WinMap for w=%v\n", w)
-		return nil
-	}
-	return wd
+func WinData(w Window) *WindowDatax {
+	return w.Data()
 }
 
 // WinRect xxx
@@ -249,10 +300,10 @@ func WinRect(w Window) (r image.Rectangle) {
 	return r
 }
 
-// WinMinRect xxx
-func WinMinRect(w Window) (r image.Rectangle) {
+// WinMinSize xxx
+func WinMinSize(w Window) (r image.Point) {
 	if wd := WinData(w); wd != nil {
-		r = wd.minRect
+		r = wd.minSize
 	}
 	return r
 }

@@ -7,6 +7,7 @@ import (
 
 // Button xxx
 type Button struct {
+	data      WindowDatax
 	isPressed bool
 	labelOrig string
 	label     string
@@ -16,20 +17,22 @@ type Button struct {
 }
 
 // NewButton xxx
-func NewButton(label string, style *Style) (Window, image.Rectangle) {
+func NewButton(label string, style *Style) ToolData {
 	b := &Button{
 		isPressed: false,
 		labelOrig: label,
 		label:     label,
 	}
-	minRect := image.Rectangle{
-		Min: image.Point{0, 0},
-		Max: image.Point{
-			X: style.TextWidth(label) + 6,
-			Y: style.TextHeight() + 6,
-		},
+	minSize := image.Point{
+		X: style.TextWidth(label) + 6,
+		Y: style.TextHeight() + 6,
 	}
-	return b, minRect
+	return ToolData{b, minSize}
+}
+
+// Data xxx
+func (button *Button) Data() *WindowDatax {
+	return &button.data
 }
 
 // Do xxx
@@ -40,7 +43,7 @@ func (button *Button) Do(from Window, cmd string, arg interface{}) (interface{},
 
 	case "resize":
 		toRect := ToRect(arg)
-		if toRect.Dx() < wd.minRect.Dx() || toRect.Dy() < wd.minRect.Dy() {
+		if toRect.Dx() < wd.minSize.X || toRect.Dy() < wd.minSize.Y {
 			nchars := toRect.Dx() / wd.style.CharWidth()
 			if nchars <= 0 {
 				button.label = ""

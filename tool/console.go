@@ -9,6 +9,7 @@ import (
 
 // Console is a window that has a couple of buttons
 type Console struct {
+	data        *gui.WindowDatax
 	clearButton gui.Window
 	testButton  gui.Window
 	threeButton gui.Window
@@ -16,23 +17,28 @@ type Console struct {
 }
 
 // NewConsole xxx
-func NewConsole(style *gui.Style) (w gui.Window, minRect image.Rectangle) {
+func NewConsole(style *gui.Style) gui.ToolData {
 
 	console := &Console{}
 
-	console.clearButton, _ = gui.NewButton("Clear", style)
-	console.testButton, _ = gui.NewButton("Test", style)
-	console.threeButton, _ = gui.NewButton("Three", style)
-	console.TextArea, _ = gui.NewScrollingText(style)
+	// console.clearButton, mn = gui.NewButton("Clear", style)
+	// gui.AddChild(console, console.clearButton, mn)
+	console.clearButton = gui.AddChild(console, gui.NewButton("Clear", style))
+
+	console.testButton = gui.AddChild(console, gui.NewButton("Test", style))
+
+	console.threeButton = gui.AddChild(console, gui.NewButton("Three", style))
+
+	console.TextArea = gui.AddChild(console, gui.NewScrollingText(style))
 
 	gui.SetAttValue(console, "islogger", "true")
 
-	gui.AddChild(console, console.TextArea)
-	gui.AddChild(console, console.clearButton)
-	gui.AddChild(console, console.testButton)
-	gui.AddChild(console, console.threeButton)
+	return gui.ToolData{W: console, MinSize: image.Point{}}
+}
 
-	return console, minRect
+// Data xxx
+func (console *Console) Data() *gui.WindowDatax {
+	return console.data
 }
 
 // Do xxx
@@ -92,10 +98,14 @@ func (console *Console) resize(rect image.Rectangle) {
 
 	buttWidth := rect.Dx() / 4
 
+	pos := rect.Min.Add(image.Point{2, 2})
+
 	// Clear button
-	r := gui.WinMinRect(console.clearButton) // minimum good size
-	r.Max.X = buttWidth                      // force width
-	r = r.Add(rect.Min).Add(image.Point{2, 2})
+	r := image.Rectangle{
+		Min: pos,
+		Max: pos.Add(gui.WinMinSize(console.clearButton)),
+	}
+	r.Max.X = buttWidth // force width
 	console.clearButton.Do(console, "resize", r)
 
 	// Test button

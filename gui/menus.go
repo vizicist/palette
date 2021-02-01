@@ -1,9 +1,7 @@
 package gui
 
-import "image"
-
 // NewPageMenu xxx
-func NewPageMenu(style *Style) (w Window, minRect image.Rectangle) {
+func NewPageMenu(style *Style) ToolData {
 
 	items := []MenuItem{
 		{label: "About", cmd: "about"},
@@ -16,16 +14,13 @@ func NewPageMenu(style *Style) (w Window, minRect image.Rectangle) {
 		{label: "Misc   ->", cmd: "miscmenu"},
 		{label: "Window ->", cmd: "windowmenu"},
 	}
-	w, minRect = NewMenu(style, items)
-	return w, minRect
+	return NewMenu(style, items)
 }
 
 // NewToolsMenu xxx
-func NewToolsMenu(style *Style) (w Window, minRect image.Rectangle) {
-
+func NewToolsMenu(style *Style) ToolData {
 	items := []MenuItem{
 		{label: "Console", cmd: "sweeptool", arg: "Console"},
 	}
-	w, minRect = NewMenu(style, items)
-	return w, minRect
+	return NewMenu(style, items)
 }

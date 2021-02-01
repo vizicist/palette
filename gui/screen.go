@@ -17,7 +17,8 @@ import (
 // Screen contains the pageWindow.
 // Screen and Style should be the only things calling ebiten.
 type Screen struct {
-	page        Window
+	data        WindowDatax
+	currentPage Window
 	style       *Style
 	rect        image.Rectangle
 	eimage      *ebiten.Image
@@ -49,33 +50,40 @@ func Run() {
 	AddToolType("PageMenu", NewPageMenu)
 	AddToolType("ToolsMenu", NewToolsMenu)
 
-	minRect := image.Rect(0, 0, 640, 480)
+	minSize := image.Point{640, 480}
+	rect := image.Rect(0, 0, 640, 480)
 	style := NewStyle("fixed", 16)
 
-	ebiten.SetWindowSize(minRect.Max.X, minRect.Max.Y)
+	ebiten.SetWindowSize(minSize.X, minSize.Y)
 	ebiten.SetWindowResizable(true)
 	ebiten.SetWindowTitle("Palette GUI (ebiten)")
 
 	screen := &Screen{
-		page:      nil,
-		rect:      image.Rectangle{},
+		data:      NewWindowData(nil, minSize),
+		rect:      rect,
 		eimage:    &ebiten.Image{},
 		time0:     time.Now(),
 		lastprint: time.Now(),
 		foreColor: ForeColor,
 		backColor: BackColor,
 	}
+	// The Screen is the only Window whose parent is nil
+	screen.data.style = style
 
-	wd := NewWindowData(nil, minRect, style)
-	WinMap[screen] = wd
+	pg := NewPage("home")
+	screen.currentPage = AddChild(screen, pg)
 
-	screen.page = NewPage(screen, "home")
-	CurrentPage = screen.page.(*Page)
+	screen.currentPage.Do(screen, "resize", rect)
 
 	// This is it!  RunGame runs forever
 	if err := ebiten.RunGame(screen); err != nil {
 		log.Fatal(err)
 	}
+}
+
+// Data xxx
+func (screen *Screen) Data() *WindowDatax {
+	return &screen.data
 }
 
 // Do xxx
@@ -116,7 +124,7 @@ func (screen *Screen) Layout(width, height int) (int, int) {
 	}
 	if screen.rect.Dx() != width || screen.rect.Dy() != height {
 		screen.rect = image.Rect(0, 0, width, height)
-		screen.page.Do(screen, "resize", screen.rect)
+		screen.currentPage.Do(screen, "resize", screen.rect)
 	}
 	return width, height
 }
@@ -145,16 +153,16 @@ func (screen *Screen) Update() (err error) {
 	for n, eb := range butts {
 		switch {
 		case inpututil.IsMouseButtonJustPressed(eb):
-			screen.page.Do(screen, "mouse", MouseCmd{newPos, n, MouseDown})
+			screen.currentPage.Do(screen, "mouse", MouseCmd{newPos, n, MouseDown})
 
 		case inpututil.IsMouseButtonJustReleased(eb):
-			screen.page.Do(screen, "mouse", MouseCmd{newPos, n, MouseUp})
+			screen.currentPage.Do(screen, "mouse", MouseCmd{newPos, n, MouseUp})
 
 		default:
 			// Drag events only happen when position changes
 			if newPos.X != screen.cursorPos.X || newPos.Y != screen.cursorPos.Y {
 				screen.cursorPos = newPos
-				screen.page.Do(screen, "mouse", MouseCmd{newPos, n, MouseDrag})
+				screen.currentPage.Do(screen, "mouse", MouseCmd{newPos, n, MouseDrag})
 			}
 		}
 	}
@@ -164,7 +172,7 @@ func (screen *Screen) Update() (err error) {
 // Draw satisfies the ebiten.Game interface
 func (screen *Screen) Draw(eimage *ebiten.Image) {
 	screen.eimage = eimage
-	screen.page.Do(screen, "redraw", nil)
+	screen.currentPage.Do(screen, "redraw", nil)
 }
 
 // drawRect xxx
