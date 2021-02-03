@@ -10,7 +10,7 @@ import (
 
 // Menu xxx
 type Menu struct {
-	data         WindowDatax
+	ctx          *WinContext
 	items        []MenuItem
 	isPressed    bool
 	itemSelected int
@@ -38,14 +38,16 @@ type MenuItem struct {
 }
 
 // NewMenu xxx
-func NewMenu(style *Style, items []MenuItem) ToolData {
+func NewMenu(parent Window, items []MenuItem) ToolData {
 
 	menu := &Menu{
+		ctx:          NewWindowContext(parent),
 		isPressed:    false,
 		items:        items,
 		itemSelected: -1,
 	}
 
+	style := WinStyle(menu)
 	// DO NOT use Style.RowHeight, we want wider row spacing
 	menu.rowHeight = style.TextHeight() + 6
 	menu.handleHeight = 9
@@ -58,9 +60,9 @@ func NewMenu(style *Style, items []MenuItem) ToolData {
 	return ToolData{W: menu, MinSize: minSize}
 }
 
-// Data xxx
-func (menu *Menu) Data() *WindowDatax {
-	return &menu.data
+// Context xxx
+func (menu *Menu) Context() *WinContext {
+	return menu.ctx
 }
 
 //////////////////////// End of Window interface methods
@@ -72,7 +74,7 @@ func (menu *Menu) SetItems(items []MenuItem) {
 
 // This only pays attention to rect.Min
 // and computes the posX,posY of each menu item
-func (menu *Menu) resize(rect image.Rectangle) {
+func (menu *Menu) resize(size image.Point) {
 
 	style := WinStyle(menu)
 	// Recompute all the y positions in the items
@@ -90,7 +92,7 @@ func (menu *Menu) resize(rect image.Rectangle) {
 		menu.items[n].posY = 6 + menu.handleHeight + n*menu.rowHeight + (menu.rowHeight / 2)
 	}
 	// this depends on the width after we've adjusted
-	menu.handleMidx = rect.Max.X - rect.Dx()/4
+	menu.handleMidx = size.X - size.X/4
 }
 
 // minSize computes the minimum size of the menu
@@ -108,7 +110,8 @@ func (menu *Menu) maxX(style *Style, items []MenuItem) int {
 // Draw xxx
 func (menu *Menu) redraw() {
 
-	rect := WinRect(menu)
+	currSize := WinCurrSize(menu)
+	rect := image.Rect(0, 0, currSize.X, currSize.Y)
 	style := WinStyle(menu)
 
 	DoUpstream(menu, "setcolor", color.RGBA{0x00, 0x00, 0x00, 0xff})
@@ -154,13 +157,13 @@ func (menu *Menu) redraw() {
 }
 
 func (menu *Menu) mouseHandler(mouse MouseCmd) (removeMenu bool) {
-	rect := WinRect(menu)
+
 	istransient := (GetAttValue(menu, "istransient") == "true")
 
 	menu.itemSelected = -1
 
 	// If it's in the handle area...
-	if mouse.Pos.Y <= rect.Min.Y+menu.handleHeight {
+	if mouse.Pos.Y <= menu.handleHeight {
 		if mouse.Ddu == MouseDown {
 			if mouse.Pos.X > menu.handleMidx {
 				// Clicked in the X, remove the menu no matter what
@@ -175,7 +178,7 @@ func (menu *Menu) mouseHandler(mouse MouseCmd) (removeMenu bool) {
 
 	// Find out which item the mouse is in
 	for n, item := range menu.items {
-		if mouse.Pos.Y < rect.Min.Y+item.posY {
+		if mouse.Pos.Y < item.posY {
 			menu.itemSelected = n
 			break
 		}
@@ -197,7 +200,7 @@ func (menu *Menu) mouseHandler(mouse MouseCmd) (removeMenu bool) {
 				return istransient
 			}
 		*/
-		w.Do(menu, item.cmd, item.arg)
+		w.Do(item.cmd, item.arg)
 		menu.itemSelected = -1
 		// If we're invoking a sub-menu, don't delete parent yet
 		issubmenu := strings.HasSuffix(item.label, "->")
@@ -210,7 +213,7 @@ func (menu *Menu) mouseHandler(mouse MouseCmd) (removeMenu bool) {
 }
 
 // Do xxx
-func (menu *Menu) Do(from Window, cmd string, arg interface{}) (interface{}, error) {
+func (menu *Menu) Do(cmd string, arg interface{}) (interface{}, error) {
 
 	switch cmd {
 
@@ -218,7 +221,7 @@ func (menu *Menu) Do(from Window, cmd string, arg interface{}) (interface{}, err
 		log.Printf("menu.Do: closeyourself needs work!\n")
 
 	case "resize":
-		menu.resize(ToRect(arg))
+		menu.resize(ToPoint(arg))
 
 	case "redraw":
 		menu.redraw()
@@ -253,12 +256,7 @@ func (menu *Menu) Do(from Window, cmd string, arg interface{}) (interface{}, err
 	case "mouse":
 		mouse := ToMouse(arg)
 		if menu.mouseHandler(mouse) {
-			/*
-				// XXX if it's in the X, we need to close no matter what
-				if GetAttValue(menu, "istransient") == "true" {
-					DoUpstream(menu, "closeme", menu)
-				}
-			*/
+			log.Printf("mouseHandler return true, ignored?\n")
 		}
 	}
 	return nil, nil
@@ -266,7 +264,8 @@ func (menu *Menu) Do(from Window, cmd string, arg interface{}) (interface{}, err
 
 // GetWindowID xxx
 func GetWindowID(parent Window, w Window) string {
-	for wid, child := range WinData(parent).childWindow {
+	pc := parent.Context()
+	for wid, child := range pc.childWindow {
 		if child == w {
 			return fmt.Sprintf("%d", wid)
 		}

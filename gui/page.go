@@ -18,7 +18,7 @@ type CursorDrawer func()
 
 // Page is the top-most Window
 type Page struct {
-	data          WindowDatax
+	ctx           *WinContext
 	pageName      string
 	lastPos       image.Point
 	mouseHandler  MouseHandler
@@ -30,8 +30,9 @@ type Page struct {
 }
 
 // NewPage xxx
-func NewPage(name string) ToolData {
+func NewPage(parent Window, name string) ToolData {
 	page := &Page{
+		ctx:      NewWindowContext(parent),
 		pageName: name,
 	}
 	page.mouseHandler = page.defaultHandler
@@ -39,13 +40,13 @@ func NewPage(name string) ToolData {
 	return ToolData{W: page, MinSize: image.Point{640, 480}}
 }
 
-// Data xxx
-func (page *Page) Data() *WindowDatax {
-	return &page.data
+// Context xxx
+func (page *Page) Context() *WinContext {
+	return page.ctx
 }
 
 // Do xxx
-func (page *Page) Do(from Window, cmd string, arg interface{}) (interface{}, error) {
+func (page *Page) Do(cmd string, arg interface{}) (interface{}, error) {
 
 	// XXX - should be checking to verify that the from Window
 	// is allowed to do the particular commands invoked.
@@ -68,7 +69,7 @@ func (page *Page) Do(from Window, cmd string, arg interface{}) (interface{}, err
 
 	case "dumptofile":
 		fname := ToString(arg)
-		output, err := page.Do(from, "dumpstate", fname)
+		output, err := page.Do("dumpstate", fname)
 		if err != nil {
 			return nil, err
 		}
@@ -87,7 +88,7 @@ func (page *Page) Do(from Window, cmd string, arg interface{}) (interface{}, err
 		return jdata, nil
 
 	case "resize":
-		page.resize(ToRect(arg))
+		page.resize()
 
 	case "redraw":
 		RedrawChildren(page)
@@ -107,18 +108,15 @@ func (page *Page) Do(from Window, cmd string, arg interface{}) (interface{}, err
 			// For menus, we want to close parent menus (if transient)
 			pmenu := ToMenu(menu.parentMenu)
 			if pmenu != nil && GetAttValue(pmenu, "istransient") == "true" {
-				pmenu.Do(menu, "closeme", menu)
+				pmenu.Do("closeme", menu)
 				RemoveChild(page, pmenu)
 			}
 		}
 		RemoveChild(page, w)
 
 	case "toolsmenu":
-
-		rect := WindowRect(from)
-		pos := image.Point{rect.Max.X + 2, page.lastPos.Y}
-		childRect := image.Rect(pos.X, pos.Y, pos.X+200, pos.Y+200)
-		page.AddTool("ToolsMenu", childRect)
+		pos := image.Point{page.lastPos.X + 100, page.lastPos.Y}
+		page.AddTool("ToolsMenu", pos)
 
 	case "miscmenu":
 
@@ -198,25 +196,44 @@ func RectString(r image.Rectangle) string {
 	return fmt.Sprintf("%d,%d,%d,%d", r.Min.X, r.Min.Y, r.Max.X, r.Max.Y)
 }
 
+// PointString xxx
+func PointString(p image.Point) string {
+	return fmt.Sprintf("%d,%d", p.X, p.Y)
+}
+
 // StringRect xxx
 func StringRect(s string) (r image.Rectangle) {
 	n, err := fmt.Sscanf(s, "%d,%d,%d,%d", &r.Min.X, &r.Min.Y, &r.Max.X, &r.Max.Y)
 	if err != nil {
-		log.Printf("Bad Rect format: %s\n", s)
+		log.Printf("StringRect: Bad format: %s\n", s)
 		return image.Rectangle{}
 	}
 	if n != 4 {
-		log.Printf("Bad Rect format: %s\n", s)
+		log.Printf("StringRect: Bad format: %s\n", s)
 		return image.Rectangle{}
 	}
 	return r
 }
 
+// StringPoint xxx
+func StringPoint(s string) (p image.Point) {
+	n, err := fmt.Sscanf(s, "%d,%d", &p.X, &p.Y)
+	if err != nil {
+		log.Printf("StringPoint: Bad format: %s\n", s)
+		return image.Point{}
+	}
+	if n != 4 {
+		log.Printf("StringPoint: Bad format: %s\n", s)
+		return image.Point{}
+	}
+	return p
+}
+
 func (page *Page) restoreState(s string) error {
 
 	// clear this page of all children
-	wd := WinData(page)
-	for _, w := range wd.childWindow {
+	wc := page.Context()
+	for _, w := range wc.childWindow {
 		if GetAttValue(w, "istransient") != "true" {
 			RemoveChild(page, w)
 		}
@@ -228,27 +245,27 @@ func (page *Page) restoreState(s string) error {
 	}
 
 	name := dat["page"].(string)
-	rectString := dat["rect"].(string)
-	log.Printf("restore name=%s rectString=%s\n", name, rectString)
+	sizeString := dat["size"].(string)
+	log.Printf("restore name=%s sizeString=%s\n", name, sizeString)
 
 	children := dat["children"].([]interface{})
 	for _, ch := range children {
 		childmap := ch.(map[string]interface{})
 		// wid := childmap["wid"].(string)
 		childType := childmap["type"].(string)
-		rstr := childmap["rect"].(string)
-		childRect := StringRect(rstr)
+		posStr := childmap["pos"].(string)
+		childPos := StringPoint(posStr)
 		childState := childmap["state"].(interface{})
 		// Create the window
-		childW := page.AddTool(childType, childRect)
-		if childW == nil {
-			log.Printf("Hey, AddTool fails for childType=%s\n", childType)
+		childW, err := page.AddTool(childType, childPos)
+		if err != nil {
+			log.Printf("Page.restoreState: AddTool fails for childType=%s, err=%s\n", childType, err)
 			continue
 		}
 		// restore state
-		childW.Do(page, "restore", childState)
+		childW.Do("restore", childState)
 		SetAttValue(childW, "istransient", "false")
-		childW.Do(page, "resize", childRect)
+		// childW.Do("resize", childRect)
 	}
 
 	return nil
@@ -256,14 +273,14 @@ func (page *Page) restoreState(s string) error {
 
 func (page *Page) dumpState() (string, error) {
 
-	wd := WinData(page)
+	wc := page.Context()
 	s := "{\n"
 	s += fmt.Sprintf("\"page\": \"%s\",\n", page.pageName)
-	s += fmt.Sprintf("\"rect\": \"%s\",\n", RectString(wd.rect))
+	s += fmt.Sprintf("\"size\": \"%s\",\n", PointString(WinCurrSize(page)))
 	s += fmt.Sprintf("\"children\": [\n") // start children array
 	sep := ""
-	for wid, child := range wd.childWindow {
-		state, err := child.Do(page, "dumpstate", nil)
+	for wid, child := range wc.childWindow {
+		state, err := child.Do("dumpstate", nil)
 		if err != nil {
 			log.Printf("Page.dumpState: child=%d wintype=%s err=%s\n", wid, WindowType(child), err)
 			continue
@@ -271,7 +288,7 @@ func (page *Page) dumpState() (string, error) {
 		s += fmt.Sprintf("%s{\n", sep)
 		s += fmt.Sprintf("\"wid\": \"%d\",\n", wid)
 		s += fmt.Sprintf("\"type\": \"%s\",\n", WindowType(child))
-		s += fmt.Sprintf("\"rect\": \"%s\",\n", RectString(WinRect(child)))
+		s += fmt.Sprintf("\"pos\": \"%s\",\n", PointString(WinChildPos(page, child)))
 		s += fmt.Sprintf("\"state\": %s\n", state)
 		s += fmt.Sprintf("}\n")
 		sep = ",\n"
@@ -283,62 +300,39 @@ func (page *Page) dumpState() (string, error) {
 	return s, nil
 }
 
-// AddTool xxx
-func (page *Page) AddTool(name string, rect image.Rectangle) Window {
-
-	style := WinStyle(page)
-
+// MakeTool xxx
+func (page *Page) MakeTool(name string) (ToolData, error) {
+	// style := WinStyle(page)
 	maker, ok := Tools[name]
 	if !ok {
-		log.Printf("NewTool: There is no registered Tool named %s\n", name)
-		return nil
+		return ToolData{}, fmt.Errorf("MakeTool: There is no registered Tool named %s", name)
 	}
-	td := maker(style)
+	td := maker(page)
 	if td.W == nil {
-		log.Printf("NewTool: maker for Tool %s returns nil\n", name)
-		return nil
+		return ToolData{}, fmt.Errorf("MakeTool: maker for Tool %s returns nil Window?", name)
 	}
-	tool := AddChild(page, td)
-	tool.Do(page, "resize", rect)
-
-	return tool
+	return td, nil
 }
 
-// AddToolAt xxx
-func (page *Page) AddToolAt(name string, pos image.Point) Window {
+// AddTool xxx
+func (page *Page) AddTool(name string, pos image.Point) (Window, error) {
 
-	style := WinStyle(page)
-
-	maker, ok := Tools[name]
-	if !ok {
-		log.Printf("NewTool: There is no registered Tool named %s\n", name)
-		return nil
+	td, err := page.MakeTool(name)
+	if err != nil {
+		return nil, err
 	}
-	td := maker(style)
-	if td.W == nil {
-		log.Printf("NewTool: maker for Tool %s returns nil\n", name)
-		return nil
-	}
-	// wd := td.W.Data()
-	rect := image.Rectangle{Min: pos, Max: pos.Add(td.MinSize)}
 
-	// wd := WinChildData(page, td.W)
-	wd := td.W.Data()
-	WinToolInit(page, td)
-	wd.rect = rect
-
-	log.Printf("wd = %v\n", wd)
-	tool := AddChild(page, td)
-	tool.Do(page, "resize", rect)
-
-	return tool
+	child := AddChild(page, td)
+	WinSetChildPos(page, child, pos)
+	WinSetChildSize(child, td.MinSize)
+	return child, nil
 }
 
 func (page *Page) log(format string, v ...interface{}) {
-	wd := WinData(page)
-	for _, w := range wd.childWindow {
+	wc := page.Context()
+	for _, w := range wc.childWindow {
 		if GetAttValue(w, "islogger") == "true" {
-			w.Do(page, "addline", fmt.Sprintf(format, v...))
+			w.Do("addline", fmt.Sprintf(format, v...))
 		}
 	}
 }
@@ -379,42 +373,41 @@ func (page *Page) drawPickCursor() {
 	})
 }
 
-func (page *Page) resize(r image.Rectangle) {
-	wd := WinChildData(page.data.parent, page)
-	wd.rect = r
+func (page *Page) resize() {
+	size := WinCurrSize(page)
+	WinSetMySize(page, size)
 	log.Printf("Page.Resize: should be doing menus (and other things)?")
 }
 
 func (page *Page) defaultHandler(cmd MouseCmd) {
 
-	wd := WinData(page)
 	pos := cmd.Pos
 
-	if !pos.In(wd.rect) {
-		log.Printf("Page.Run: pos=%v not under Page!?", pos)
-		return
-	}
-
 	o := WindowUnder(page, pos)
-	log.Printf("defaultHandler: mouse pos=%v o=%v\n", cmd.Pos, o)
 	if o != nil {
 		if cmd.Ddu == MouseDown {
 			WindowRaise(page, o)
 		}
-		o.Do(page, "mouse", cmd)
+		// Adjust mouse coordinates so they're relative to the child
+		childPos := WinChildPos(page, o)
+		mouse := ToMouse(cmd)
+		mouse.Pos = mouse.Pos.Sub(childPos)
+		cmd = mouse
+		o.Do("mouse", cmd)
 		return
 	}
 
 	// nothing underneath the mouse
 	if cmd.Ddu == MouseDown {
+		wc := page.Context()
 		// Remove any transient windows (i.e. popup menus)
-		for _, w := range wd.childWindow {
+		for _, w := range wc.childWindow {
 			if GetAttValue(w, "istransient") == "true" {
 				RemoveChild(page, w)
 			}
 		}
-		// pop up the PageMenu on Down,
-		page.AddToolAt("PageMenu", pos)
+		// pop up the PageMenu on Down
+		page.AddTool("PageMenu", pos)
 	}
 }
 
@@ -438,17 +431,22 @@ func (page *Page) sweepHandler(cmd MouseCmd) {
 		case "resize":
 			w := page.targetWindow
 			r := page.sweepRect()
-			WinData(w).rect = r
-			w.Do(page, "resize", r)
+			sz := image.Point{r.Dx(), r.Dy()}
+			WinSetChildSize(w, sz)
 		case "addtool":
-			page.AddTool(page.sweepToolName, page.sweepRect())
+			r := page.sweepRect()
+			child, err := page.AddTool(page.sweepToolName, r.Min)
+			if err != nil {
+				log.Printf("AddTool: err=%s\n", err)
+			} else {
+				WinSetChildSize(child, r.Max.Sub(r.Min))
+			}
 		}
 		page.resetHandlers()
 	}
 }
 
 func (page *Page) resetHandlers() {
-	log.Printf("resetHandlers\n")
 	page.mouseHandler = page.defaultHandler
 	page.cursorDrawer = nil
 	page.targetWindow = nil

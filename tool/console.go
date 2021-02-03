@@ -9,7 +9,7 @@ import (
 
 // Console is a window that has a couple of buttons
 type Console struct {
-	data        *gui.WindowDatax
+	ctx         *gui.WinContext
 	clearButton gui.Window
 	testButton  gui.Window
 	threeButton gui.Window
@@ -17,46 +17,46 @@ type Console struct {
 }
 
 // NewConsole xxx
-func NewConsole(style *gui.Style) gui.ToolData {
+func NewConsole(parent gui.Window) gui.ToolData {
 
-	console := &Console{}
+	console := &Console{
+		ctx: gui.NewWindowContext(parent),
+	}
 
-	// console.clearButton, mn = gui.NewButton("Clear", style)
-	// gui.AddChild(console, console.clearButton, mn)
-	console.clearButton = gui.AddChild(console, gui.NewButton("Clear", style))
+	console.clearButton = gui.AddChild(console, gui.NewButton(console, "Clear"))
 
-	console.testButton = gui.AddChild(console, gui.NewButton("Test", style))
+	console.testButton = gui.AddChild(console, gui.NewButton(console, "Test"))
 
-	console.threeButton = gui.AddChild(console, gui.NewButton("Three", style))
+	console.threeButton = gui.AddChild(console, gui.NewButton(console, "Three"))
 
-	console.TextArea = gui.AddChild(console, gui.NewScrollingText(style))
+	console.TextArea = gui.AddChild(console, gui.NewScrollingText(console))
 
 	gui.SetAttValue(console, "islogger", "true")
 
 	return gui.ToolData{W: console, MinSize: image.Point{}}
 }
 
-// Data xxx
-func (console *Console) Data() *gui.WindowDatax {
-	return console.data
+// Context xxx
+func (console *Console) Context() *gui.WinContext {
+	return console.ctx
 }
 
 // Do xxx
-func (console *Console) Do(from gui.Window, cmd string, arg interface{}) (interface{}, error) {
+func (console *Console) Do(cmd string, arg interface{}) (interface{}, error) {
 	switch cmd {
 	case "mouse":
 		mouse := gui.ToMouse(arg)
 		o := gui.WindowUnder(console, mouse.Pos)
 		if o != nil {
-			o.Do(console, cmd, arg)
+			o.Do(cmd, arg)
 		}
 	case "resize":
-		console.resize(gui.ToRect(arg))
+		console.resize()
 	case "redraw":
 		console.redraw()
 	case "restore":
 		log.Printf("Console: restore arg=%v\n", arg)
-		_, err := console.TextArea.Do(console, "restore", arg)
+		_, err := console.TextArea.Do("restore", arg)
 		if err != nil {
 			log.Printf("Console: restore err=%s\n", err)
 			return nil, err
@@ -64,7 +64,7 @@ func (console *Console) Do(from gui.Window, cmd string, arg interface{}) (interf
 
 	case "dumpstate":
 		// in := string.Repeat(" ",12)
-		s, err := console.TextArea.Do(console, "dumpstate", nil)
+		s, err := console.TextArea.Do("dumpstate", nil)
 		if err != nil {
 			return nil, err
 		}
@@ -73,63 +73,58 @@ func (console *Console) Do(from gui.Window, cmd string, arg interface{}) (interf
 		log.Printf("console: CloseYourself needs work?\n")
 	case "buttondown":
 		// Clear is the only button
-		switch from {
+		bw := gui.ToWindow(arg)
+		switch bw {
 		case console.testButton:
 			log.Printf("Test!\n")
 		case console.threeButton:
 			log.Printf("Three!\n")
 		case console.clearButton:
 			log.Printf("Clear!\n")
-			console.TextArea.Do(console, "clear", nil)
+			console.TextArea.Do("clear", nil)
 		}
 	case "buttonup":
 		//
 	case "addline":
-		console.TextArea.Do(console, cmd, arg)
+		console.TextArea.Do(cmd, arg)
 	default:
 		gui.DoUpstream(console, cmd, arg)
-		// console.Data().Parent.Do(console, cmd, arg)
 	}
 	return nil, nil
 }
 
 // Resize xxx
-func (console *Console) resize(rect image.Rectangle) {
+func (console *Console) resize() {
 
-	buttWidth := rect.Dx() / 4
+	size := gui.WinCurrSize(console)
+	buttWidth := size.X / 4
+	buttHeight := gui.WinMinSize(console.clearButton).Y
+	buttSize := image.Point{buttWidth, buttHeight}
 
-	pos := rect.Min.Add(image.Point{2, 2})
+	pos := image.Point{2, 2}
 
-	// Clear button
-	r := image.Rectangle{
-		Min: pos,
-		Max: pos.Add(gui.WinMinSize(console.clearButton)),
+	// layout and resize all the buttons
+	for _, w := range []gui.Window{console.clearButton, console.testButton, console.threeButton} {
+		gui.WinSetChildPos(console, w, pos)
+		gui.WinSetChildSize(w, buttSize)
+		// Advance the horizontal position of the next button
+		pos = pos.Add(image.Point{buttWidth, 0})
 	}
-	r.Max.X = buttWidth // force width
-	console.clearButton.Do(console, "resize", r)
-
-	// Test button
-	r = r.Add(image.Point{buttWidth + 2, 0})
-	console.testButton.Do(console, "resize", r)
-
-	// Three button
-	r = r.Add(image.Point{buttWidth + 2, 0})
-	console.threeButton.Do(console, "resize", r)
 
 	// handle ScrollingText Window
-	y0 := gui.WinRect(console.clearButton).Max.Y + 2
-	console.TextArea.Do(console, "resize", image.Rect(rect.Min.X+2, y0, rect.Max.X-2, gui.WinRect(console).Max.Y))
-
-	// Adjust console's oveall size from the ScrollingText Window
-	log.Printf("Hey, Console.resize wants to adjust Rect.Max.Y\n")
-	// console.Data().Rect.Max.Y = console.TextArea.Data().Rect.Max.Y + 2
+	y0 := buttHeight + 4
+	gui.WinSetChildPos(console, console.TextArea, image.Point{2, y0})
+	areaSize := image.Point{size.X - 2, size.Y - y0 - 2}
+	gui.WinSetChildSize(console.TextArea, areaSize)
 }
 
 // Draw xxx
 func (console *Console) redraw() {
+	size := gui.WinCurrSize(console)
+	rect := image.Rect(0, 0, size.X, size.Y)
 	gui.DoUpstream(console, "setcolor", gui.BackColor)
-	gui.DoUpstream(console, "drawfilledrect", gui.WinRect(console).Inset(1))
+	gui.DoUpstream(console, "drawfilledrect", rect.Inset(1))
 	gui.DoUpstream(console, "setcolor", gui.ForeColor)
-	gui.DoUpstream(console, "drawrect", gui.WinRect(console))
+	gui.DoUpstream(console, "drawrect", rect)
 	gui.RedrawChildren(console)
 }

@@ -14,7 +14,7 @@ var defaultBufferSize = 128
 
 // ScrollingText assumes a fixed-width font
 type ScrollingText struct {
-	data      WindowDatax
+	ctx       *WinContext
 	isPressed bool
 	Buffer    []string
 	nlines    int // number of lines actually displayed
@@ -22,25 +22,26 @@ type ScrollingText struct {
 }
 
 // NewScrollingText xxx
-func NewScrollingText(style *Style) ToolData {
+func NewScrollingText(parent Window) ToolData {
 	st := &ScrollingText{
+		ctx:       NewWindowContext(parent),
 		isPressed: false,
 		Buffer:    make([]string, defaultBufferSize),
 	}
 	return ToolData{st, image.Point{}} //
 }
 
-// Data xxx
-func (st *ScrollingText) Data() *WindowDatax {
-	return &st.data
+// Context xxx
+func (st *ScrollingText) Context() *WinContext {
+	return st.ctx
 }
 
-func (st *ScrollingText) resize(rect image.Rectangle) {
+func (st *ScrollingText) resize(size image.Point) {
 
 	style := WinStyle(st)
 	// See how many lines and chars we can fit in the rect
-	st.nlines = rect.Dy() / style.RowHeight()
-	st.nchars = rect.Dx() / style.CharWidth()
+	st.nlines = size.Y / style.RowHeight()
+	st.nchars = size.X / style.CharWidth()
 
 	// in case the buffer isn't big enough
 	if st.nlines > len(st.Buffer) {
@@ -48,15 +49,14 @@ func (st *ScrollingText) resize(rect image.Rectangle) {
 		copy(newbuffer, st.Buffer)
 		st.Buffer = newbuffer
 	}
-	// Adjust the rect so we're exactly that height
-	rect.Max.Y = rect.Min.Y + st.nlines*style.RowHeight()
-
-	// st.rect = rect
+	// Adjust our size so we're exactly that height
+	WinSetMySize(st, image.Point{size.X, st.nlines * style.RowHeight()})
 }
 
 func (st *ScrollingText) redraw() {
 
-	rect := WinRect(st)
+	sz := WinCurrSize(st)
+	rect := image.Rect(0, 0, sz.X, sz.Y)
 	style := WinStyle(st)
 
 	DoUpstream(st, "setcolor", ForeColor)
@@ -109,11 +109,11 @@ func (st *ScrollingText) redraw() {
 }
 
 // Do xxx
-func (st *ScrollingText) Do(from Window, cmd string, arg interface{}) (interface{}, error) {
+func (st *ScrollingText) Do(cmd string, arg interface{}) (interface{}, error) {
 
 	switch cmd {
 	case "resize":
-		st.resize(ToRect(arg))
+		st.resize(ToPoint(arg))
 	case "redraw":
 		st.redraw()
 	case "restore":

@@ -10,24 +10,31 @@ import (
 // Window is the external (and networkable) interface
 // to a Window instance.
 type Window interface {
-	Data() *WindowDatax // local only
-	Do(from Window, cmd string, arg interface{}) (interface{}, error)
+	Context() *WinContext
+	Do(cmd string, arg interface{}) (interface{}, error)
 }
 
 // WindowID xxx
 type WindowID int
 
-// WindowDatax doesn't export any of its fields
-type WindowDatax struct {
-	rect        image.Rectangle // in Screen coordinates, not relative (yet)
+// ToolMaker xxx
+type ToolMaker func(parent Window) ToolData
+
+// Tools xxx
+var Tools = make(map[string]ToolMaker)
+
+// WinContext doesn't export any of its fields
+type WinContext struct {
 	parent      Window
 	minSize     image.Point
+	currSz      image.Point
 	style       *Style
 	initialized bool
 
-	childData   map[Window]*WindowDatax
+	childData   map[Window]*WinContext
 	childWindow map[WindowID]Window
 	childID     map[Window]WindowID
+	childPos    map[Window]image.Point
 	lastChildID WindowID // to generate unique child window IDs
 	order       []Window // display order of child windows
 
@@ -40,37 +47,20 @@ type ToolData struct {
 	MinSize image.Point
 }
 
-// WinMap xxx
-// var WinMap = make(map[Window]*WindowData)
-
-// ToolMaker xxx
-type ToolMaker func(style *Style) ToolData
-
-// Tools xxx
-var Tools = make(map[string]ToolMaker)
-
-// WinToolInit xxx
-func WinToolInit(parent Window, td ToolData) {
-	wd := td.W.Data()
-	if wd.initialized == false {
-		log.Printf("Initializing data for td.W=%p\n", td.W)
-		*wd = NewWindowData(parent, td.MinSize)
-	}
-}
-
-// NewWindowData xxx
-func NewWindowData(parent Window, minSize image.Point) WindowDatax {
-	return WindowDatax{
+// NewWindowContext xxx
+func NewWindowContext(parent Window) *WinContext {
+	return &WinContext{
 
 		parent:      parent,
 		style:       nil, // uses parent's
-		minSize:     minSize,
-		rect:        image.Rectangle{},
+		minSize:     image.Point{},
+		currSz:      image.Point{},
 		initialized: true,
 
-		childData:   make(map[Window]*WindowDatax),
+		childData:   make(map[Window]*WinContext),
 		childWindow: make(map[WindowID]Window),
 		childID:     make(map[Window]WindowID),
+		childPos:    make(map[Window]image.Point),
 		order:       make([]Window, 0),
 		att:         make(map[string]string),
 	}
@@ -78,12 +68,12 @@ func NewWindowData(parent Window, minSize image.Point) WindowDatax {
 
 // WindowUnder xxx
 func WindowUnder(parent Window, pos image.Point) Window {
-
-	parentData := WinData(parent)
+	pc := parent.Context()
 	// Check in reverse order
-	for n := len(parentData.order) - 1; n >= 0; n-- {
-		w := parentData.order[n]
-		if pos.In(WinRect(w)) {
+	for n := len(pc.order) - 1; n >= 0; n-- {
+		w := pc.order[n]
+		r := WinChildRect(parent, w)
+		if pos.In(r) {
 			return w
 		}
 	}
@@ -94,55 +84,42 @@ func WindowUnder(parent Window, pos image.Point) Window {
 func AddChild(parent Window, td ToolData) Window {
 
 	child := td.W
-	if child.Data().initialized == false {
-		log.Printf("child.Data is nill, needs initializing\n")
-		*child.Data() = NewWindowData(parent, td.MinSize)
+	cc := child.Context()
+	if cc.initialized == false {
+		log.Printf("AddChild: child.Context not initialized!\n")
+		return nil
+	}
+	pc := parent.Context()
+	if pc.initialized == false {
+		log.Printf("AddChild: parent.Data not initialized!?\n")
+		return nil
 	}
 
-	wd := parent.Data()
-	log.Printf("AddChild: start, parent wd=%p\n", wd)
+	log.Printf("AddChild: start, pc=%p\n", pc)
 
-	wd.lastChildID++
-	wid := wd.lastChildID
-	_, ok := wd.childWindow[wid]
+	pc.lastChildID++
+	wid := pc.lastChildID
+	_, ok := pc.childWindow[wid]
 	if ok {
 		log.Printf("AddChild: there's already a child with id=%d ??\n", wid)
 		return nil
 	}
 
 	// add it to the end of the display order
-	wd.order = append(wd.order, child)
+	pc.order = append(pc.order, child)
 
-	wd.childWindow[wid] = child
-	wd.childID[child] = wid
-	wd.childData[child] = child.Data()
-	log.Printf("AddChild: child=%p wd.childData[child]=%p\n", child, wd.childData[child])
+	pc.childWindow[wid] = child
+	pc.childID[child] = wid
+	pc.childData[child] = child.Context()
+	pc.childPos[child] = image.Point{0, 0}
+	log.Printf("AddChild: child=%p wd.childData[child]=%p\n", child, pc.childData[child])
 
 	return child
 }
 
 // WinChildData xxx
-func WinChildData(parent Window, child Window) *WindowDatax {
-	wd, ok := parent.Data().childData[child]
-	if !ok {
-		log.Printf("WinChildData: no child?\n")
-		return nil
-	}
-	return wd
-}
-
-// WinChildData2 xxx
-func WinChildData2(child Window) *WindowDatax {
-	cd := child.Data()
-	if cd == nil {
-		log.Printf("Hey!\n")
-	}
-	parent := cd.parent
-	pd := parent.Data()
-	if pd == nil {
-		log.Printf("Hey!\n")
-	}
-	wd, ok := pd.childData[child]
+func WinChildData(parent Window, child Window) *WinContext {
+	wd, ok := parent.Context().childData[child]
 	if !ok {
 		log.Printf("WinChildData: no child?\n")
 		return nil
@@ -156,25 +133,26 @@ func RemoveChild(parent Window, child Window) {
 	if child == nil {
 		log.Printf("RemoveChild: child=nil?\n")
 	}
-	parentData := WinData(parent)
-	if parentData == nil {
+	pc := parent.Context()
+	if pc == nil {
 		log.Printf("RemoveChild: no WinData for parent=%v\n", parent)
+		return
 	}
-	wid, ok := parentData.childID[child]
+	wid, ok := pc.childID[child]
 	if !ok {
 		log.Printf("RemoveWindow: no window child=%v\n", child)
 		return
 	}
 
-	delete(parentData.childID, child)
-	delete(parentData.childWindow, wid)
+	delete(pc.childID, child)
+	delete(pc.childWindow, wid)
 
 	// find and delete it in the .order array
-	for n, w := range parentData.order {
+	for n, w := range pc.order {
 		if w == child {
-			copy(parentData.order[n:], parentData.order[n+1:])
-			newlen := len(parentData.order) - 1
-			parentData.order = parentData.order[:newlen]
+			copy(pc.order[n:], pc.order[n+1:])
+			newlen := len(pc.order) - 1
+			pc.order = pc.order[:newlen]
 			break
 		}
 	}
@@ -182,7 +160,13 @@ func RemoveChild(parent Window, child Window) {
 
 // MoveWindow xxx
 func MoveWindow(parent Window, child Window, delta image.Point) {
-	child.Do(parent, "resize", WinRect(child).Add(delta))
+	pc := parent.Context()
+	childPos, ok := pc.childPos[child]
+	if !ok {
+		log.Printf("WinChildPos: w not in parent childPos?\n")
+		return
+	}
+	pc.childPos[child] = childPos.Add(delta)
 }
 
 // RedrawChildren xxx
@@ -191,76 +175,91 @@ func RedrawChildren(parent Window) {
 		log.Printf("RedrawChildren: parent==nil?\n")
 		return
 	}
-	wd := WinData(parent)
-	if wd == nil {
-		log.Printf("RedrawChildren: No WinData for parent=%v\n", parent)
-		return
-	}
-	for _, w := range wd.order {
-		w.Do(parent, "redraw", nil)
+	pc := parent.Context()
+	for _, w := range pc.order {
+		w.Do("redraw", nil)
 	}
 }
 
 // GetAttValue xxx
 func GetAttValue(w Window, name string) string {
-	wd := WinData(w)
-	if wd == nil {
+	wc := w.Context()
+	if wc == nil {
 		log.Printf("GetAttValue: no WinData for w=%v\n", w)
 		return ""
 	}
-	return wd.att[name]
+	return wc.att[name]
 }
 
 // SetAttValue xxx
 func SetAttValue(w Window, name string, val string) {
-	wd := WinData(w)
-	if wd == nil {
+	wc := w.Context()
+	if wc == nil {
 		log.Printf("SetAttValue: no WinData for w=%v\n", w)
 		return
 	}
-	wd.att[name] = val
+	wc.att[name] = val
 }
 
 // DoUpstream xxx
 func DoUpstream(w Window, cmd string, arg interface{}) {
-	wd := WinData(w)
-	if wd == nil {
-		log.Printf("DoUpstream: no WinData for w=%v\n", w)
-	} else {
-		p := wd.parent
-		if p == nil {
-			log.Printf("DoUpstream: no parent for w=%v\n", w)
-		} else {
-			p.Do(w, cmd, arg)
-		}
+	// log.Printf("DoUpstream: cmd=%s arg=%v\n", cmd, arg)
+	parent := WinParent(w)
+	if parent == nil {
+		log.Printf("DoUpstream: no parent for w=%v\n", w)
+		return
 	}
+
+	// Adjust coordinates to reflect child's position in the parent
+	pos := WinChildPos(parent, w)
+	switch cmd {
+	case "drawline":
+		dl := ToDrawLine(arg)
+		dl.XY0 = dl.XY0.Add(pos)
+		dl.XY1 = dl.XY1.Add(pos)
+		arg = dl
+	case "drawrect":
+		r := ToRect(arg)
+		arg = r.Add(pos)
+	case "drawfilledrect":
+		r := ToRect(arg)
+		arg = r.Add(pos)
+	case "drawtext":
+		t := ToDrawText(arg)
+		t.Pos = t.Pos.Add(pos)
+		arg = t
+	}
+
+	parent.Do(cmd, arg)
 }
 
+/*
 // WindowRect xxx
 func WindowRect(w Window) image.Rectangle {
 	return WinData(w).rect
 }
+*/
 
 // WindowRaise moves w to the top of the order
 func WindowRaise(parent Window, raise Window) {
-	pdata := WinData(parent)
-	orderLen := len(pdata.order)
+	pc := parent.Context()
+	orderLen := len(pc.order)
 
 	// Quick check for common case when it's the top Window
-	if pdata.order[orderLen-1] == raise {
+	if pc.order[orderLen-1] == raise {
 		return
 	}
 
 	shifting := false
-	for n, w := range pdata.order {
+	for n, w := range pc.order {
 		if w == raise {
 			shifting = true
 		}
 		if shifting {
 			if n == (orderLen - 1) {
-				pdata.order[n] = raise
+				pc.order[n] = raise
 			} else {
-				pdata.order[n] = pdata.order[n+1]
+				pc.order[n] = pc.order[n+1]
 			}
 		}
 	}
@@ -287,44 +286,79 @@ func AddToolType(name string, newfunc ToolMaker) {
 	Tools[name] = newfunc
 }
 
-// WinData xxx
-func WinData(w Window) *WindowDatax {
-	return w.Data()
+// WinCurrSize xxx
+func WinCurrSize(w Window) (p image.Point) {
+	return w.Context().currSz
 }
 
-// WinRect xxx
-func WinRect(w Window) (r image.Rectangle) {
-	if wd := WinData(w); wd != nil {
-		r = wd.rect
+// WinSetMySize xxx
+func WinSetMySize(w Window, size image.Point) {
+	w.Context().currSz = size
+	// Don't do w.Do(), that would be recursive
+}
+
+// WinSetChildSize xxx
+func WinSetChildSize(w Window, size image.Point) {
+	if size.X == 0 || size.Y == 0 {
+		log.Printf("WinSetChildSize: too small, setting to 100,100\n")
+		size = image.Point{100, 100}
 	}
-	return r
+	w.Context().currSz = size
+	w.Do("resize", size)
+}
+
+// WinSetChildPos xxx
+func WinSetChildPos(parent Window, child Window, pos image.Point) {
+	if parent == nil {
+		log.Printf("WinChildPos: parent is nil?\n")
+		return
+	}
+	parent.Context().childPos[child] = pos
+}
+
+// WinChildPos xxx
+func WinChildPos(parent Window, child Window) (p image.Point) {
+	if parent == nil {
+		log.Printf("WinChildPos: parent is nil?\n")
+		return
+	}
+	childPos, ok := parent.Context().childPos[child]
+	if !ok {
+		log.Printf("WinChildPos: w not in parent childPos?\n")
+		return
+	}
+	return childPos
+}
+
+// WinChildRect xxx
+func WinChildRect(parent, child Window) (r image.Rectangle) {
+	// A child's Rectangle is determined by two things:
+	// 1) the childPos stored in the parent
+	// 2) the currSize stored in the child
+	childPos := WinChildPos(parent, child)
+	currSize := WinCurrSize(child)
+	return image.Rectangle{Min: childPos, Max: childPos.Add(currSize)}
 }
 
 // WinMinSize xxx
 func WinMinSize(w Window) (r image.Point) {
-	if wd := WinData(w); wd != nil {
-		r = wd.minSize
-	}
-	return r
+	return w.Context().minSize
 }
 
 // WinParent xxx
 func WinParent(w Window) Window {
-	if wd := WinData(w); wd != nil {
-		return wd.parent
-	}
-	return nil
+	return w.Context().parent
 }
 
 // WinStyle xxx
 func WinStyle(w Window) *Style {
-	wd := WinData(w)
-	if wd.style != nil {
-		return wd.style // Window has its own style
+	ctx := w.Context()
+	if ctx.style != nil {
+		return ctx.style // Window has its own style
 	}
-	if wd.parent == nil {
-		log.Printf("WinStye: using DefaultStyle because no parent for w=%v\n", wd)
+	if ctx.parent == nil {
+		log.Printf("WinStye: using DefaultStyle because no parent for w=%v\n", w)
 		return DefaultStyle()
 	}
-	return WinStyle(wd.parent) // use the parent's style
+	return WinStyle(ctx.parent) // use the parent's style
 }

@@ -17,10 +17,10 @@ import (
 // Screen contains the pageWindow.
 // Screen and Style should be the only things calling ebiten.
 type Screen struct {
-	data        WindowDatax
+	ctx         *WinContext
 	currentPage Window
 	style       *Style
-	rect        image.Rectangle
+	rectx       image.Rectangle
 	eimage      *ebiten.Image
 	time0       time.Time
 	lastprint   time.Time
@@ -51,29 +51,27 @@ func Run() {
 	AddToolType("ToolsMenu", NewToolsMenu)
 
 	minSize := image.Point{640, 480}
-	rect := image.Rect(0, 0, 640, 480)
 	style := NewStyle("fixed", 16)
 
 	ebiten.SetWindowSize(minSize.X, minSize.Y)
 	ebiten.SetWindowResizable(true)
 	ebiten.SetWindowTitle("Palette GUI (ebiten)")
 
+	// The Screen is the only Window whose parent is nil
+	screenCtx := NewWindowContext(nil)
 	screen := &Screen{
-		data:      NewWindowData(nil, minSize),
-		rect:      rect,
+		ctx:       screenCtx,
 		eimage:    &ebiten.Image{},
 		time0:     time.Now(),
 		lastprint: time.Now(),
 		foreColor: ForeColor,
 		backColor: BackColor,
 	}
-	// The Screen is the only Window whose parent is nil
-	screen.data.style = style
+	WinSetMySize(screen, minSize)
+	screen.ctx.style = style
 
-	pg := NewPage("home")
-	screen.currentPage = AddChild(screen, pg)
-
-	screen.currentPage.Do(screen, "resize", rect)
+	td := NewPage(screen, "home")
+	screen.currentPage = AddChild(screen, td)
 
 	// This is it!  RunGame runs forever
 	if err := ebiten.RunGame(screen); err != nil {
@@ -81,13 +79,13 @@ func Run() {
 	}
 }
 
-// Data xxx
-func (screen *Screen) Data() *WindowDatax {
-	return &screen.data
+// Context xxx
+func (screen *Screen) Context() *WinContext {
+	return screen.ctx
 }
 
 // Do xxx
-func (screen *Screen) Do(from Window, cmd string, arg interface{}) (interface{}, error) {
+func (screen *Screen) Do(cmd string, arg interface{}) (interface{}, error) {
 
 	switch cmd {
 	case "drawline":
@@ -110,6 +108,8 @@ func (screen *Screen) Do(from Window, cmd string, arg interface{}) (interface{},
 		}
 	case "closeme":
 		log.Printf("screen.runCmds: SHOULD NOT BE GETTING CloseMeCmd!?\n")
+	case "resize":
+
 	default:
 		log.Printf("screen.runCmds: UNRECOGNIZED cmd=%s\n", cmd)
 	}
@@ -122,9 +122,11 @@ func (screen *Screen) Layout(width, height int) (int, int) {
 		log.Printf("Screen.Layout: Hey, screen shouldn't be nil!\n")
 		return width, height
 	}
-	if screen.rect.Dx() != width || screen.rect.Dy() != height {
-		screen.rect = image.Rect(0, 0, width, height)
-		screen.currentPage.Do(screen, "resize", screen.rect)
+	currSize := WinCurrSize(screen)
+	if currSize.X != width || currSize.Y != height {
+		newSize := image.Point{width, height}
+		WinSetMySize(screen, newSize)
+		WinSetChildSize(screen.currentPage, newSize)
 	}
 	return width, height
 }
@@ -137,7 +139,9 @@ func (screen *Screen) Update() (err error) {
 	newPos := image.Point{x, y}
 
 	// Ignore updates outside the screen
-	if !newPos.In(screen.rect) {
+	size := WinCurrSize(screen)
+	rect := image.Rect(0, 0, size.X, size.Y)
+	if !newPos.In(rect) {
 		return nil
 	}
 
@@ -153,16 +157,16 @@ func (screen *Screen) Update() (err error) {
 	for n, eb := range butts {
 		switch {
 		case inpututil.IsMouseButtonJustPressed(eb):
-			screen.currentPage.Do(screen, "mouse", MouseCmd{newPos, n, MouseDown})
+			screen.currentPage.Do("mouse", MouseCmd{newPos, n, MouseDown})
 
 		case inpututil.IsMouseButtonJustReleased(eb):
-			screen.currentPage.Do(screen, "mouse", MouseCmd{newPos, n, MouseUp})
+			screen.currentPage.Do("mouse", MouseCmd{newPos, n, MouseUp})
 
 		default:
 			// Drag events only happen when position changes
 			if newPos.X != screen.cursorPos.X || newPos.Y != screen.cursorPos.Y {
 				screen.cursorPos = newPos
-				screen.currentPage.Do(screen, "mouse", MouseCmd{newPos, n, MouseDrag})
+				screen.currentPage.Do("mouse", MouseCmd{newPos, n, MouseDrag})
 			}
 		}
 	}
@@ -172,7 +176,7 @@ func (screen *Screen) Update() (err error) {
 // Draw satisfies the ebiten.Game interface
 func (screen *Screen) Draw(eimage *ebiten.Image) {
 	screen.eimage = eimage
-	screen.currentPage.Do(screen, "redraw", nil)
+	screen.currentPage.Do("redraw", nil)
 }
 
 // drawRect xxx
