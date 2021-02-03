@@ -7,7 +7,7 @@ import (
 
 // Button xxx
 type Button struct {
-	data      WindowDatax
+	ctx       *WinContext
 	isPressed bool
 	labelOrig string
 	label     string
@@ -17,12 +17,14 @@ type Button struct {
 }
 
 // NewButton xxx
-func NewButton(label string, style *Style) ToolData {
+func NewButton(parent Window, label string) ToolData {
 	b := &Button{
+		ctx:       NewWindowContext(parent),
 		isPressed: false,
 		labelOrig: label,
 		label:     label,
 	}
+	style := WinStyle(b)
 	minSize := image.Point{
 		X: style.TextWidth(label) + 6,
 		Y: style.TextHeight() + 6,
@@ -30,21 +32,22 @@ func NewButton(label string, style *Style) ToolData {
 	return ToolData{b, minSize}
 }
 
-// Data xxx
-func (button *Button) Data() *WindowDatax {
-	return &button.data
+// Context xxx
+func (button *Button) Context() *WinContext {
+	return button.ctx
 }
 
 // Do xxx
-func (button *Button) Do(from Window, cmd string, arg interface{}) (interface{}, error) {
+func (button *Button) Do(cmd string, arg interface{}) (interface{}, error) {
 
-	wd := WinData(button)
 	switch cmd {
 
 	case "resize":
-		toRect := ToRect(arg)
-		if toRect.Dx() < wd.minSize.X || toRect.Dy() < wd.minSize.Y {
-			nchars := toRect.Dx() / wd.style.CharWidth()
+		toPoint := ToPoint(arg)
+		minSize := WinMinSize(button)
+		if toPoint.X < minSize.X || toPoint.Y < minSize.Y {
+			style := WinStyle(button)
+			nchars := toPoint.X / style.CharWidth()
 			if nchars <= 0 {
 				button.label = ""
 			} else if len(button.labelOrig) > nchars {
@@ -56,15 +59,18 @@ func (button *Button) Do(from Window, cmd string, arg interface{}) (interface{},
 
 	case "redraw":
 		DoUpstream(button, "setcolor", ForeColor)
-		DoUpstream(button, "drawrect", wd.rect)
-		rect := WinRect(button)
-		button.labelX = rect.Min.X + 3
-		button.labelY = rect.Min.Y + wd.style.TextHeight()
-		DoUpstream(button, "drawtext", DrawTextCmd{button.label, wd.style.fontFace, image.Point{button.labelX, button.labelY}})
+		rect := image.Rectangle{Max: WinCurrSize(button)}
+		DoUpstream(button, "drawrect", rect)
+		// rect := WinRect(button)
+		style := WinStyle(button)
+		labelPos := image.Point{3, style.TextHeight()}
+		DoUpstream(button, "drawtext", DrawTextCmd{button.label, style.fontFace, labelPos})
 
 	case "mouse":
 		mouse := ToMouse(arg)
-		if !mouse.Pos.In(wd.rect) {
+		currSize := WinCurrSize(button)
+		currRect := image.Rect(0, 0, currSize.X, currSize.Y)
+		if !mouse.Pos.In(currRect) {
 			log.Printf("button: pos not in Rect?\n")
 			break
 		}

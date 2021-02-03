@@ -1,7 +1,7 @@
 package gui
 
 // NewPageMenu xxx
-func NewPageMenu(style *Style) ToolData {
+func NewPageMenu(parent Window) ToolData {
 
 	items := []MenuItem{
 		{label: "About", cmd: "about"},
@@ -14,13 +14,13 @@ func NewPageMenu(style *Style) ToolData {
 		{label: "Misc   ->", cmd: "miscmenu"},
 		{label: "Window ->", cmd: "windowmenu"},
 	}
-	return NewMenu(style, items)
+	return NewMenu(parent, items)
 }
 
 // NewToolsMenu xxx
-func NewToolsMenu(style *Style) ToolData {
+func NewToolsMenu(parent Window) ToolData {
 	items := []MenuItem{
 		{label: "Console", cmd: "sweeptool", arg: "Console"},
 	}
-	return NewMenu(style, items)
+	return NewMenu(parent, items)
 }

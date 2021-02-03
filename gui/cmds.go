@@ -76,6 +76,16 @@ func ToRect(arg interface{}) image.Rectangle {
 	return r
 }
 
+// ToPoint xxx
+func ToPoint(arg interface{}) image.Point {
+	p, ok := arg.(image.Point)
+	if !ok {
+		log.Printf("Unable to convert interface to Point!\n")
+		p = image.Point{0, 0}
+	}
+	return p
+}
+
 // ToMenu xxx
 func ToMenu(arg interface{}) *Menu {
 	r, ok := arg.(*Menu)
@@ -138,6 +148,9 @@ func ToBool(arg interface{}) bool {
 
 // ToString xxx
 func ToString(arg interface{}) string {
+	if arg == nil {
+		return ""
+	}
 	r, ok := arg.(string)
 	if !ok {
 		log.Printf("Unable to convert interface to string!\n")
