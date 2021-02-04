@@ -58,7 +58,7 @@ func NewMenu(parent Window, toolType string, items []MenuItem) ToolData {
 		Y: len(menu.items)*menu.rowHeight + menu.handleHeight + 2,
 	}
 
-	// SetAttValue(m, "istransient", "true")
+	SetAttValue(menu, "istransient", "true")
 	return NewToolData(menu, toolType, minSize)
 }
 
@@ -158,6 +158,7 @@ func (menu *Menu) redraw() {
 	}
 }
 
+// If mouseHandler return value is true, the menu should be removed
 func (menu *Menu) mouseHandler(mouse MouseCmd) (removeMenu bool) {
 
 	istransient := (GetAttValue(menu, "istransient") == "true")
@@ -172,7 +173,8 @@ func (menu *Menu) mouseHandler(mouse MouseCmd) (removeMenu bool) {
 				DoUpstream(menu, "closeme", menu)
 				return true
 			}
-			DoUpstream(menu, "movetool", menu)
+			DoUpstream(menu, "movemenu", menu)
+			SetAttValue(menu, "istransient", "false")
 			return false
 		}
 		return false
@@ -194,21 +196,21 @@ func (menu *Menu) mouseHandler(mouse MouseCmd) (removeMenu bool) {
 	// No callbackups until MouseUp
 	if mouse.Ddu == MouseUp {
 		item := menu.items[menu.itemSelected]
-		w := parent
-		/*
-				if istransient {
-					DoUpstream(menu, "closeme", menu)
-				}
-				return istransient
-			}
-		*/
+		// Save lastMenuX so sub-menu can position itself
 		lastMenuX = WinChildRect(parent, menu).Max.X
-		w.Do(item.cmd, item.arg)
+		parent.Do(item.cmd, item.arg)
 		menu.itemSelected = -1
 		// If we're invoking a sub-menu, don't delete parent yet
-		issubmenu := strings.HasSuffix(item.label, "->")
-		if !issubmenu && istransient {
-			DoUpstream(menu, "closeme", menu)
+		doingSubMenu := strings.HasSuffix(item.label, "->")
+		if istransient {
+			if !doingSubMenu {
+				DoUpstream(menu, "closeme", menu)
+				DoUpstream(menu, "closesavemenu", nil)
+			} else {
+				// Doing a submenu, we don't want to remove a transient parent menu
+				// until the submenu is complete, so save it.
+				WinSaveMenu(parent, menu)
+			}
 		}
 		return !strings.HasSuffix(item.label, "->")
 	}
@@ -259,7 +261,9 @@ func (menu *Menu) Do(cmd string, arg interface{}) (interface{}, error) {
 	case "mouse":
 		mouse := ToMouse(arg)
 		if menu.mouseHandler(mouse) {
-			log.Printf("mouseHandler return true, ignored?\n")
+			if GetAttValue(menu, "istransient") == "true" {
+				DoUpstream(menu, "closeme", menu)
+			}
 		}
 	}
 	return nil, nil

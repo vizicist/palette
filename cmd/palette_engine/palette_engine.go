@@ -10,7 +10,7 @@ import (
 
 	"github.com/vizicist/palette/engine"
 	"github.com/vizicist/palette/gui"
-	"github.com/vizicist/palette/tool"
+	"github.com/vizicist/palette/tools"
 )
 
 func init() {
@@ -51,7 +51,7 @@ func main() {
 	doGui := engine.ConfigBoolWithDefault("gui", false)
 	switch doGui {
 	case true:
-		gui.AddToolType("Console", tool.NewConsole)
+		gui.AddToolType("Console", tools.NewConsole)
 		gui.Run() // this never returns
 		log.Printf("GUI has exited!?\n")
 	case false:
