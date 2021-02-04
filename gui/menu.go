@@ -10,7 +10,7 @@ import (
 
 // Menu xxx
 type Menu struct {
-	ctx          *WinContext
+	ctx          WinContext
 	items        []MenuItem
 	isPressed    bool
 	itemSelected int
@@ -64,7 +64,7 @@ func NewMenu(parent Window, toolType string, items []MenuItem) ToolData {
 
 // Context xxx
 func (menu *Menu) Context() *WinContext {
-	return menu.ctx
+	return &menu.ctx
 }
 
 //////////////////////// End of Window interface methods

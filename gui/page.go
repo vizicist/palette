@@ -17,7 +17,7 @@ type CursorDrawer func()
 
 // Page is the top-most Window
 type Page struct {
-	ctx           *WinContext
+	ctx           WinContext
 	pageName      string
 	lastPos       image.Point
 	mouseHandler  MouseHandler
@@ -41,7 +41,7 @@ func NewPage(parent Window, name string) ToolData {
 
 // Context xxx
 func (page *Page) Context() *WinContext {
-	return page.ctx
+	return &page.ctx
 }
 
 // Do xxx
@@ -124,11 +124,11 @@ func (page *Page) Do(cmd string, arg interface{}) (interface{}, error) {
 	case "submenu":
 		menuType := ToString(arg)
 		pos := image.Point{lastMenuX + 4, page.lastPos.Y}
-		page.AddTool(menuType, pos, image.Point{})
-
-	case "miscmenu":
-
-	case "windowmenu":
+		_, err := page.AddTool(menuType, pos, image.Point{})
+		if err != nil {
+			log.Printf("Page.Do: submenu err=%s\n", err)
+			return nil, err
+		}
 
 	case "sweeptool":
 		page.startSweep("addtool")
@@ -364,6 +364,10 @@ func (page *Page) sweepHandler(cmd MouseCmd) {
 		switch page.currentAction {
 		case "resize":
 			w := page.targetWindow
+			if w == nil {
+				log.Printf("Page.sweepHandler: w==nil?\n")
+				return
+			}
 			r := page.sweepRect()
 			WinSetChildPos(page, w, r.Min)
 			WinSetChildSize(w, r.Max.Sub(r.Min))

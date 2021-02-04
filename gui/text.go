@@ -14,7 +14,7 @@ var defaultBufferSize = 128
 
 // ScrollingText assumes a fixed-width font
 type ScrollingText struct {
-	ctx       *WinContext
+	ctx       WinContext
 	isPressed bool
 	Buffer    []string
 	nlines    int // number of lines actually displayed
@@ -33,7 +33,7 @@ func NewScrollingText(parent Window) ToolData {
 
 // Context xxx
 func (st *ScrollingText) Context() *WinContext {
-	return st.ctx
+	return &st.ctx
 }
 
 func (st *ScrollingText) resize(size image.Point) {

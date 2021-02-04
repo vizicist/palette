@@ -9,7 +9,7 @@ import (
 
 // Console is a window that has a couple of buttons
 type Console struct {
-	ctx         *gui.WinContext
+	ctx         gui.WinContext
 	clearButton gui.Window
 	testButton  gui.Window
 	threeButton gui.Window
@@ -38,7 +38,7 @@ func NewConsole(parent gui.Window) gui.ToolData {
 
 // Context xxx
 func (console *Console) Context() *gui.WinContext {
-	return console.ctx
+	return &console.ctx
 }
 
 // Do xxx
@@ -96,26 +96,34 @@ func (console *Console) Do(cmd string, arg interface{}) (interface{}, error) {
 // Resize xxx
 func (console *Console) resize() {
 
-	size := gui.WinCurrSize(console)
-	buttWidth := size.X / 4
-	buttHeight := gui.WinMinSize(console.clearButton).Y
+	buttHeight := gui.WinStyle(console).TextHeight() + 12
+	mySize := gui.WinCurrSize(console)
+
+	// handle TextArea
+	y0 := buttHeight + 4
+	gui.WinSetChildPos(console, console.TextArea, image.Point{2, y0})
+
+	areaSize := image.Point{mySize.X - 4, mySize.Y - y0 - 2}
+	console.TextArea.Do("resize", areaSize)
+
+	// If the TextArea has adjusted its size a bit, adjust our size as well
+	currsz := gui.WinCurrSize(console.TextArea)
+	mySize.Y += currsz.Y - areaSize.Y
+	mySize.X += currsz.X - areaSize.X
+	gui.WinSetMySize(console, mySize)
+
+	buttWidth := mySize.X / 4
 	buttSize := image.Point{buttWidth, buttHeight}
 
-	pos := image.Point{2, 2}
-
 	// layout and resize all the buttons
+	// XXX - this idiom should eventually be a layout utility
+	pos := image.Point{2, 2}
 	for _, w := range []gui.Window{console.clearButton, console.testButton, console.threeButton} {
 		gui.WinSetChildPos(console, w, pos)
 		gui.WinSetChildSize(w, buttSize)
 		// Advance the horizontal position of the next button
 		pos = pos.Add(image.Point{buttWidth, 0})
 	}
-
-	// handle ScrollingText Window
-	y0 := buttHeight + 4
-	gui.WinSetChildPos(console, console.TextArea, image.Point{2, y0})
-	areaSize := image.Point{size.X - 4, size.Y - y0 - 2}
-	gui.WinSetChildSize(console.TextArea, areaSize)
 }
 
 // Draw xxx

@@ -17,7 +17,7 @@ import (
 // Screen contains the pageWindow.
 // Screen and Style should be the only things calling ebiten.
 type Screen struct {
-	ctx         *WinContext
+	ctx         WinContext
 	currentPage Window
 	style       *Style
 	rectx       image.Rectangle
@@ -81,7 +81,7 @@ func Run() {
 
 // Context xxx
 func (screen *Screen) Context() *WinContext {
-	return screen.ctx
+	return &screen.ctx
 }
 
 // Do xxx

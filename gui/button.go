@@ -7,13 +7,10 @@ import (
 
 // Button xxx
 type Button struct {
-	ctx       *WinContext
+	ctx       WinContext
 	isPressed bool
-	labelOrig string
 	label     string
-	labelX    int
-	labelY    int
-	noRoom    bool
+	labelCurr string // might be truncated because of size
 }
 
 // NewButton xxx
@@ -21,8 +18,8 @@ func NewButton(parent Window, label string) ToolData {
 	b := &Button{
 		ctx:       NewWindowContext(parent),
 		isPressed: false,
-		labelOrig: label,
 		label:     label,
+		labelCurr: label,
 	}
 	style := WinStyle(b)
 	minSize := image.Point{
@@ -34,7 +31,7 @@ func NewButton(parent Window, label string) ToolData {
 
 // Context xxx
 func (button *Button) Context() *WinContext {
-	return button.ctx
+	return &button.ctx
 }
 
 // Do xxx
@@ -49,22 +46,21 @@ func (button *Button) Do(cmd string, arg interface{}) (interface{}, error) {
 			style := WinStyle(button)
 			nchars := toPoint.X / style.CharWidth()
 			if nchars <= 0 {
-				button.label = ""
-			} else if len(button.labelOrig) > nchars {
-				button.label = button.labelOrig[:nchars]
+				button.labelCurr = ""
+			} else if len(button.label) > nchars {
+				button.labelCurr = button.label[:nchars]
 			}
 		} else {
-			button.label = button.labelOrig
+			button.labelCurr = button.label
 		}
 
 	case "redraw":
 		DoUpstream(button, "setcolor", ForeColor)
 		rect := image.Rectangle{Max: WinCurrSize(button)}
 		DoUpstream(button, "drawrect", rect)
-		// rect := WinRect(button)
 		style := WinStyle(button)
 		labelPos := image.Point{3, style.TextHeight()}
-		DoUpstream(button, "drawtext", DrawTextCmd{button.label, style.fontFace, labelPos})
+		DoUpstream(button, "drawtext", DrawTextCmd{button.labelCurr, style.fontFace, labelPos})
 
 	case "mouse":
 		mouse := ToMouse(arg)
@@ -76,7 +72,6 @@ func (button *Button) Do(cmd string, arg interface{}) (interface{}, error) {
 		}
 		switch mouse.Ddu {
 		case MouseDown:
-			// The mouse is inside the button
 			if button.isPressed == false {
 				button.isPressed = true
 				DoUpstream(button, "buttondown", button.label)
