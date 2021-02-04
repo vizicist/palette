@@ -11,8 +11,7 @@ func NewPageMenu(parent Window) ToolData {
 		{label: "Move", cmd: "movetool", arg: "move"},
 		{label: "Delete", cmd: "picktool", arg: "delete"},
 		{label: "Tools  ->", cmd: "submenu", arg: "ToolsMenu"},
-		{label: "Misc   ->", cmd: "miscmenu"},
-		{label: "Window ->", cmd: "windowmenu"},
+		{label: "Window ->", cmd: "submenu", arg: "WindowMenu"},
 	}
 	return NewMenu(parent, "PageMenu", items)
 }

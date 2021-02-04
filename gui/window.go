@@ -6,7 +6,7 @@ import (
 )
 
 // Window is the external (and networkable) interface
-// to a Window instance.
+// to a Window instance.   Context is only local (I think).
 type Window interface {
 	Context() *WinContext
 	Do(cmd string, arg interface{}) (interface{}, error)
@@ -46,7 +46,6 @@ type WinContext struct {
 	style       *Style
 	initialized bool
 
-	childData   map[Window]*WinContext
 	childWindow map[windowID]Window
 	childID     map[Window]windowID
 	childPos    map[Window]image.Point
@@ -58,8 +57,8 @@ type WinContext struct {
 }
 
 // NewWindowContext xxx
-func NewWindowContext(parent Window) *WinContext {
-	return &WinContext{
+func NewWindowContext(parent Window) WinContext {
+	return WinContext{
 
 		parent:      parent,
 		style:       nil, // uses parent's
@@ -67,7 +66,6 @@ func NewWindowContext(parent Window) *WinContext {
 		currSz:      image.Point{},
 		initialized: true,
 
-		childData:   make(map[Window]*WinContext),
 		childWindow: make(map[windowID]Window),
 		childID:     make(map[Window]windowID),
 		childPos:    make(map[Window]image.Point),
@@ -124,20 +122,9 @@ func AddChild(parent Window, td ToolData) Window {
 
 	pc.childWindow[wid] = child
 	pc.childID[child] = wid
-	pc.childData[child] = child.Context()
 	pc.childPos[child] = image.Point{0, 0}
 
 	return child
-}
-
-// WinChildData xxx
-func WinChildData(parent Window, child Window) *WinContext {
-	wd, ok := parent.Context().childData[child]
-	if !ok {
-		log.Printf("WinChildData: no child?\n")
-		return nil
-	}
-	return wd
 }
 
 // RemoveChild xxx
@@ -147,10 +134,6 @@ func RemoveChild(parent Window, child Window) {
 		log.Printf("RemoveChild: child=nil?\n")
 	}
 	pc := parent.Context()
-	if pc == nil {
-		log.Printf("RemoveChild: no WinData for parent=%v\n", parent)
-		return
-	}
 	wid, ok := pc.childID[child]
 	if !ok {
 		log.Printf("RemoveWindow: no window child=%v\n", child)
@@ -197,20 +180,12 @@ func RedrawChildren(parent Window) {
 // GetAttValue xxx
 func GetAttValue(w Window, name string) string {
 	wc := w.Context()
-	if wc == nil {
-		log.Printf("GetAttValue: no WinData for w=%v\n", w)
-		return ""
-	}
 	return wc.att[name]
 }
 
 // SetAttValue xxx
 func SetAttValue(w Window, name string, val string) {
 	wc := w.Context()
-	if wc == nil {
-		log.Printf("SetAttValue: no WinData for w=%v\n", w)
-		return
-	}
 	wc.att[name] = val
 }
 
