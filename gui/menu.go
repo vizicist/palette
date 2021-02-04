@@ -38,7 +38,7 @@ type MenuItem struct {
 }
 
 // NewMenu xxx
-func NewMenu(parent Window, items []MenuItem) ToolData {
+func NewMenu(parent Window, toolType string, items []MenuItem) ToolData {
 
 	menu := &Menu{
 		ctx:          NewWindowContext(parent),
@@ -57,7 +57,7 @@ func NewMenu(parent Window, items []MenuItem) ToolData {
 	}
 
 	// SetAttValue(m, "istransient", "true")
-	return ToolData{W: menu, MinSize: minSize}
+	return NewToolData(menu, toolType, minSize)
 }
 
 // Context xxx
