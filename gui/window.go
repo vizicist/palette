@@ -54,6 +54,7 @@ type WinContext struct {
 	childPos    map[Window]image.Point
 	lastChildID WindowID // to generate unique child window IDs
 	order       []Window // display order of child windows
+	saveMenu    *Menu    // XXX - eventually this should be a list to handle deeper nesting
 
 	att map[string]string
 }
@@ -77,7 +78,9 @@ func NewWindowContext(parent Window) *WinContext {
 	}
 }
 
-// WindowUnder xxx
+// WindowUnder looks for a child window under a given point,
+// and if there is one, returns both the window and a point that has
+// been adjusted to make it relative to the child's coordinate space.
 func WindowUnder(parent Window, pos image.Point) (Window, image.Point) {
 	pc := parent.Context()
 	// Check in reverse order
@@ -301,6 +304,11 @@ func AddToolType(name string, newfunc ToolMaker) {
 // WinToolType xxx
 func WinToolType(w Window) string {
 	return w.Context().toolType
+}
+
+// WinSaveMenu xxx
+func WinSaveMenu(w Window, menu *Menu) {
+	w.Context().saveMenu = menu
 }
 
 // WinCurrSize xxx

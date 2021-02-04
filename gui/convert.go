@@ -1,9 +1,11 @@
 package gui
 
 import (
+	"fmt"
 	"image"
 	"image/color"
 	"log"
+	"strings"
 
 	"golang.org/x/image/font"
 )
@@ -165,6 +167,88 @@ func ToWindow(arg interface{}) Window {
 	if !ok {
 		log.Printf("Unable to convert interface to Window!\n")
 		r = nil
+	}
+	return r
+}
+
+// RectString xxx
+func RectString(r image.Rectangle) string {
+	return fmt.Sprintf("%d,%d,%d,%d", r.Min.X, r.Min.Y, r.Max.X, r.Max.Y)
+}
+
+// PointString xxx
+func PointString(p image.Point) string {
+	return fmt.Sprintf("%d,%d", p.X, p.Y)
+}
+
+// StringToRect xxx
+func StringToRect(s string) (r image.Rectangle) {
+	n, err := fmt.Sscanf(s, "%d,%d,%d,%d", &r.Min.X, &r.Min.Y, &r.Max.X, &r.Max.Y)
+	if err != nil {
+		log.Printf("StringRect: Bad format: %s\n", s)
+		return image.Rectangle{}
+	}
+	if n != 4 {
+		log.Printf("StringRect: Bad format: %s\n", s)
+		return image.Rectangle{}
+	}
+	return r
+}
+
+// StringToPoint xxx
+func StringToPoint(s string) (p image.Point) {
+	n, err := fmt.Sscanf(s, "%d,%d", &p.X, &p.Y)
+	if err != nil {
+		log.Printf("StringPoint: Bad format: %s\n", s)
+		return image.Point{}
+	}
+	if n != 2 {
+		log.Printf("StringPoint: Bad format: %s\n", s)
+		return image.Point{}
+	}
+	return p
+}
+
+// toPrettyJSON looks for {} and [] at the beginning/end of lines
+// to control indenting
+func toPrettyJSON(s string) string {
+	// Make sure it ends in \n
+	if s[len(s)-1] != '\n' {
+		s = s + "\n"
+	}
+	from := 0
+	indentSize := 4
+	indent := 0
+	r := ""
+	slen := len(s)
+	for from < slen {
+		newlinePos := from + strings.Index(s[from:], "\n")
+		line := s[from : newlinePos+1]
+
+		// ignore initial whitespace, we're going to handle it
+		for line[0] == ' ' {
+			line = line[1:]
+		}
+
+		// See if we should un-indent before adding the line
+		firstChar := line[0]
+		if firstChar == '}' || firstChar == ']' {
+			indent -= indentSize
+			if indent < 0 {
+				indent = 0
+			}
+		}
+
+		// Add line with current indent
+		r += strings.Repeat(" ", indent) + line
+
+		// See if we should indent the next line more
+		lastChar := s[newlinePos-1]
+		if lastChar == '{' || lastChar == '[' {
+			indent += indentSize
+		}
+
+		from = newlinePos + 1
 	}
 	return r
 }

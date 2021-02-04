@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"log"
 	"runtime"
-	"strings"
 )
 
 // MouseHandler xxx
@@ -114,6 +113,14 @@ func (page *Page) Do(cmd string, arg interface{}) (interface{}, error) {
 		}
 		RemoveChild(page, w)
 
+	case "closesavemenu":
+		pc := page.Context()
+		menu := pc.saveMenu
+		if menu != nil {
+			RemoveChild(page, menu)
+			pc.saveMenu = nil
+		}
+
 	case "submenu":
 		menuType := ToString(arg)
 		pos := image.Point{lastMenuX + 4, page.lastPos.Y}
@@ -132,10 +139,17 @@ func (page *Page) Do(cmd string, arg interface{}) (interface{}, error) {
 	case "picktool":
 		page.mouseHandler = page.pickHandler
 		page.cursorDrawer = page.drawPickCursor
-		page.currentAction = ToString(arg)
+		page.currentAction = ToString(arg) // e.g. "resize", "delete"
 		page.showCursor(false)
 
 	case "movetool":
+		page.mouseHandler = page.moveHandler
+		page.cursorDrawer = page.drawPickCursor
+		page.dragStart = page.lastPos
+		// page.targetWindow = ToMenu(arg)
+		page.showCursor(false)
+
+	case "movemenu":
 		page.mouseHandler = page.moveHandler
 		page.cursorDrawer = page.drawPickCursor
 		page.dragStart = page.lastPos
@@ -146,88 +160,6 @@ func (page *Page) Do(cmd string, arg interface{}) (interface{}, error) {
 		DoUpstream(page, cmd, arg)
 	}
 	return nil, nil
-}
-
-// toPrettyJSON looks for {} and [] at the beginning/end of lines
-// to control indenting
-func toPrettyJSON(s string) string {
-	// Make sure it ends in \n
-	if s[len(s)-1] != '\n' {
-		s = s + "\n"
-	}
-	from := 0
-	indentSize := 4
-	indent := 0
-	r := ""
-	slen := len(s)
-	for from < slen {
-		newlinePos := from + strings.Index(s[from:], "\n")
-		line := s[from : newlinePos+1]
-
-		// ignore initial whitespace, we're going to handle it
-		for line[0] == ' ' {
-			line = line[1:]
-		}
-
-		// See if we should un-indent before adding the line
-		firstChar := line[0]
-		if firstChar == '}' || firstChar == ']' {
-			indent -= indentSize
-			if indent < 0 {
-				indent = 0
-			}
-		}
-
-		// Add line with current indent
-		r += strings.Repeat(" ", indent) + line
-
-		// See if we should indent the next line more
-		lastChar := s[newlinePos-1]
-		if lastChar == '{' || lastChar == '[' {
-			indent += indentSize
-		}
-
-		from = newlinePos + 1
-	}
-	return r
-}
-
-// RectString xxx
-func RectString(r image.Rectangle) string {
-	return fmt.Sprintf("%d,%d,%d,%d", r.Min.X, r.Min.Y, r.Max.X, r.Max.Y)
-}
-
-// PointString xxx
-func PointString(p image.Point) string {
-	return fmt.Sprintf("%d,%d", p.X, p.Y)
-}
-
-// StringRect xxx
-func StringRect(s string) (r image.Rectangle) {
-	n, err := fmt.Sscanf(s, "%d,%d,%d,%d", &r.Min.X, &r.Min.Y, &r.Max.X, &r.Max.Y)
-	if err != nil {
-		log.Printf("StringRect: Bad format: %s\n", s)
-		return image.Rectangle{}
-	}
-	if n != 4 {
-		log.Printf("StringRect: Bad format: %s\n", s)
-		return image.Rectangle{}
-	}
-	return r
-}
-
-// StringPoint xxx
-func StringPoint(s string) (p image.Point) {
-	n, err := fmt.Sscanf(s, "%d,%d", &p.X, &p.Y)
-	if err != nil {
-		log.Printf("StringPoint: Bad format: %s\n", s)
-		return image.Point{}
-	}
-	if n != 2 {
-		log.Printf("StringPoint: Bad format: %s\n", s)
-		return image.Point{}
-	}
-	return p
 }
 
 func (page *Page) restoreState(s string) error {
@@ -251,15 +183,11 @@ func (page *Page) restoreState(s string) error {
 
 	children := dat["children"].([]interface{})
 	for _, ch := range children {
+
 		childmap := ch.(map[string]interface{})
-
 		toolType := childmap["tooltype"].(string)
-
-		posStr := childmap["pos"].(string)
-		pos := StringPoint(posStr)
-
-		sizeStr := childmap["size"].(string)
-		size := StringPoint(sizeStr)
+		pos := StringToPoint(childmap["pos"].(string))
+		size := StringToPoint(childmap["size"].(string))
 
 		state := childmap["state"].(interface{})
 
@@ -271,8 +199,8 @@ func (page *Page) restoreState(s string) error {
 		}
 		// restore state
 		childW.Do("restore", state)
-		SetAttValue(childW, "istransient", "false")
 		childW.Do("resize", size)
+		SetAttValue(childW, "istransient", "false")
 	}
 
 	return nil
