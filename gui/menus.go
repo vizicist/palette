@@ -10,7 +10,7 @@ func NewPageMenu(parent Window) ToolData {
 		{label: "Resize", cmd: "picktool", arg: "resize"},
 		{label: "Move", cmd: "movetool", arg: "move"},
 		{label: "Delete", cmd: "picktool", arg: "delete"},
-		{label: "Tools  ->", cmd: "toolsmenu"},
+		{label: "Tools  ->", cmd: "submenu", arg: "ToolsMenu"},
 		{label: "Misc   ->", cmd: "miscmenu"},
 		{label: "Window ->", cmd: "windowmenu"},
 	}

@@ -37,6 +37,8 @@ type MenuItem struct {
 	arg    interface{}
 }
 
+var lastMenuX int
+
 // NewMenu xxx
 func NewMenu(parent Window, toolType string, items []MenuItem) ToolData {
 
@@ -200,6 +202,7 @@ func (menu *Menu) mouseHandler(mouse MouseCmd) (removeMenu bool) {
 				return istransient
 			}
 		*/
+		lastMenuX = WinChildRect(parent, menu).Max.X
 		w.Do(item.cmd, item.arg)
 		menu.itemSelected = -1
 		// If we're invoking a sub-menu, don't delete parent yet
