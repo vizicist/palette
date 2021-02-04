@@ -33,7 +33,7 @@ func NewConsole(parent gui.Window) gui.ToolData {
 
 	gui.SetAttValue(console, "islogger", "true")
 
-	return gui.ToolData{W: console, MinSize: image.Point{}}
+	return gui.NewToolData(console, "Console", image.Point{})
 }
 
 // Context xxx
@@ -46,24 +46,22 @@ func (console *Console) Do(cmd string, arg interface{}) (interface{}, error) {
 	switch cmd {
 	case "mouse":
 		mouse := gui.ToMouse(arg)
-		o := gui.WindowUnder(console, mouse.Pos)
-		if o != nil {
-			o.Do(cmd, arg)
+		child, relPos := gui.WindowUnder(console, mouse.Pos)
+		if child != nil {
+			mouse.Pos = relPos
+			child.Do("mouse", mouse)
 		}
 	case "resize":
 		console.resize()
 	case "redraw":
 		console.redraw()
 	case "restore":
-		log.Printf("Console: restore arg=%v\n", arg)
 		_, err := console.TextArea.Do("restore", arg)
 		if err != nil {
-			log.Printf("Console: restore err=%s\n", err)
 			return nil, err
 		}
 
 	case "dumpstate":
-		// in := string.Repeat(" ",12)
 		s, err := console.TextArea.Do("dumpstate", nil)
 		if err != nil {
 			return nil, err
@@ -73,15 +71,17 @@ func (console *Console) Do(cmd string, arg interface{}) (interface{}, error) {
 		log.Printf("console: CloseYourself needs work?\n")
 	case "buttondown":
 		// Clear is the only button
-		bw := gui.ToWindow(arg)
-		switch bw {
-		case console.testButton:
+		b := gui.ToString(arg)
+		switch b {
+		case "Test":
 			log.Printf("Test!\n")
-		case console.threeButton:
+		case "Three":
 			log.Printf("Three!\n")
-		case console.clearButton:
+		case "Clear":
 			log.Printf("Clear!\n")
 			console.TextArea.Do("clear", nil)
+		default:
+			log.Printf("Unknown button: %s\n", b)
 		}
 	case "buttonup":
 		//
@@ -114,7 +114,7 @@ func (console *Console) resize() {
 	// handle ScrollingText Window
 	y0 := buttHeight + 4
 	gui.WinSetChildPos(console, console.TextArea, image.Point{2, y0})
-	areaSize := image.Point{size.X - 2, size.Y - y0 - 2}
+	areaSize := image.Point{size.X - 4, size.Y - y0 - 2}
 	gui.WinSetChildSize(console.TextArea, areaSize)
 }
 

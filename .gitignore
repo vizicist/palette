@@ -44,3 +44,4 @@ scripts/dist
 *.spec
 ship/palette_win
 default/presets_old
+cmd/palette_engine/homepage.json

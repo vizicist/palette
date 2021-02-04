@@ -14,8 +14,21 @@ type Window interface {
 	Do(cmd string, arg interface{}) (interface{}, error)
 }
 
-// WindowID xxx
-type WindowID int
+// ToolData fields are exported
+type ToolData struct {
+	w        Window
+	toolType string
+	minSize  image.Point
+}
+
+// NewToolData xxx
+func NewToolData(w Window, toolType string, minSize image.Point) ToolData {
+	return ToolData{
+		w:        w,
+		toolType: toolType,
+		minSize:  minSize,
+	}
+}
 
 // ToolMaker xxx
 type ToolMaker func(parent Window) ToolData
@@ -23,10 +36,14 @@ type ToolMaker func(parent Window) ToolData
 // Tools xxx
 var Tools = make(map[string]ToolMaker)
 
+// WindowID xxx
+type WindowID int
+
 // WinContext doesn't export any of its fields
 type WinContext struct {
 	parent      Window
 	minSize     image.Point
+	toolType    string
 	currSz      image.Point
 	style       *Style
 	initialized bool
@@ -39,12 +56,6 @@ type WinContext struct {
 	order       []Window // display order of child windows
 
 	att map[string]string
-}
-
-// ToolData fields are exported
-type ToolData struct {
-	W       Window
-	MinSize image.Point
 }
 
 // NewWindowContext xxx
@@ -67,35 +78,37 @@ func NewWindowContext(parent Window) *WinContext {
 }
 
 // WindowUnder xxx
-func WindowUnder(parent Window, pos image.Point) Window {
+func WindowUnder(parent Window, pos image.Point) (Window, image.Point) {
 	pc := parent.Context()
 	// Check in reverse order
 	for n := len(pc.order) - 1; n >= 0; n-- {
 		w := pc.order[n]
 		r := WinChildRect(parent, w)
 		if pos.In(r) {
-			return w
+			return w, RelativePos(parent, w, pos)
 		}
 	}
-	return nil
+	return nil, image.Point{}
 }
 
 // AddChild xxx
 func AddChild(parent Window, td ToolData) Window {
 
-	child := td.W
+	child := td.w
 	cc := child.Context()
 	if cc.initialized == false {
 		log.Printf("AddChild: child.Context not initialized!\n")
 		return nil
 	}
+	cc.minSize = td.minSize
+	cc.currSz = td.minSize
+	cc.toolType = td.toolType
+
 	pc := parent.Context()
 	if pc.initialized == false {
 		log.Printf("AddChild: parent.Data not initialized!?\n")
 		return nil
 	}
-
-	log.Printf("AddChild: start, pc=%p\n", pc)
 
 	pc.lastChildID++
 	wid := pc.lastChildID
@@ -112,7 +125,6 @@ func AddChild(parent Window, td ToolData) Window {
 	pc.childID[child] = wid
 	pc.childData[child] = child.Context()
 	pc.childPos[child] = image.Point{0, 0}
-	log.Printf("AddChild: child=%p wd.childData[child]=%p\n", child, pc.childData[child])
 
 	return child
 }
@@ -284,6 +296,11 @@ func WindowType(w Window) string {
 func AddToolType(name string, newfunc ToolMaker) {
 	log.Printf("AddToolType name=%s\n", name)
 	Tools[name] = newfunc
+}
+
+// WinToolType xxx
+func WinToolType(w Window) string {
+	return w.Context().toolType
 }
 
 // WinCurrSize xxx

@@ -37,7 +37,7 @@ func NewPage(parent Window, name string) ToolData {
 	}
 	page.mouseHandler = page.defaultHandler
 
-	return ToolData{W: page, MinSize: image.Point{640, 480}}
+	return NewToolData(page, "Page", image.Point{640, 480})
 }
 
 // Context xxx
@@ -116,7 +116,7 @@ func (page *Page) Do(cmd string, arg interface{}) (interface{}, error) {
 
 	case "toolsmenu":
 		pos := image.Point{page.lastPos.X + 100, page.lastPos.Y}
-		page.AddTool("ToolsMenu", pos)
+		page.AddTool("ToolsMenu", pos, image.Point{})
 
 	case "miscmenu":
 
@@ -222,7 +222,7 @@ func StringPoint(s string) (p image.Point) {
 		log.Printf("StringPoint: Bad format: %s\n", s)
 		return image.Point{}
 	}
-	if n != 4 {
+	if n != 2 {
 		log.Printf("StringPoint: Bad format: %s\n", s)
 		return image.Point{}
 	}
@@ -251,21 +251,27 @@ func (page *Page) restoreState(s string) error {
 	children := dat["children"].([]interface{})
 	for _, ch := range children {
 		childmap := ch.(map[string]interface{})
-		// wid := childmap["wid"].(string)
-		childType := childmap["type"].(string)
+
+		toolType := childmap["tooltype"].(string)
+
 		posStr := childmap["pos"].(string)
-		childPos := StringPoint(posStr)
-		childState := childmap["state"].(interface{})
+		pos := StringPoint(posStr)
+
+		sizeStr := childmap["size"].(string)
+		size := StringPoint(sizeStr)
+
+		state := childmap["state"].(interface{})
+
 		// Create the window
-		childW, err := page.AddTool(childType, childPos)
+		childW, err := page.AddTool(toolType, pos, size)
 		if err != nil {
-			log.Printf("Page.restoreState: AddTool fails for childType=%s, err=%s\n", childType, err)
+			log.Printf("Page.restoreState: AddTool fails for toolType=%s, err=%s\n", toolType, err)
 			continue
 		}
 		// restore state
-		childW.Do("restore", childState)
+		childW.Do("restore", state)
 		SetAttValue(childW, "istransient", "false")
-		// childW.Do("resize", childRect)
+		childW.Do("resize", size)
 	}
 
 	return nil
@@ -287,8 +293,9 @@ func (page *Page) dumpState() (string, error) {
 		}
 		s += fmt.Sprintf("%s{\n", sep)
 		s += fmt.Sprintf("\"wid\": \"%d\",\n", wid)
-		s += fmt.Sprintf("\"type\": \"%s\",\n", WindowType(child))
+		s += fmt.Sprintf("\"tooltype\": \"%s\",\n", WinToolType(child))
 		s += fmt.Sprintf("\"pos\": \"%s\",\n", PointString(WinChildPos(page, child)))
+		s += fmt.Sprintf("\"size\": \"%s\",\n", PointString(WinCurrSize(child)))
 		s += fmt.Sprintf("\"state\": %s\n", state)
 		s += fmt.Sprintf("}\n")
 		sep = ",\n"
@@ -308,14 +315,14 @@ func (page *Page) MakeTool(name string) (ToolData, error) {
 		return ToolData{}, fmt.Errorf("MakeTool: There is no registered Tool named %s", name)
 	}
 	td := maker(page)
-	if td.W == nil {
+	if td.w == nil {
 		return ToolData{}, fmt.Errorf("MakeTool: maker for Tool %s returns nil Window?", name)
 	}
 	return td, nil
 }
 
 // AddTool xxx
-func (page *Page) AddTool(name string, pos image.Point) (Window, error) {
+func (page *Page) AddTool(name string, pos image.Point, size image.Point) (Window, error) {
 
 	td, err := page.MakeTool(name)
 	if err != nil {
@@ -324,7 +331,11 @@ func (page *Page) AddTool(name string, pos image.Point) (Window, error) {
 
 	child := AddChild(page, td)
 	WinSetChildPos(page, child, pos)
-	WinSetChildSize(child, td.MinSize)
+	// If size isn't specified, use MinSize
+	if size.X == 0 || size.Y == 0 {
+		size = td.minSize
+	}
+	WinSetChildSize(child, size)
 	return child, nil
 }
 
@@ -379,26 +390,27 @@ func (page *Page) resize() {
 	log.Printf("Page.Resize: should be doing menus (and other things)?")
 }
 
-func (page *Page) defaultHandler(cmd MouseCmd) {
+// RelativePos xxx
+func RelativePos(parent Window, w Window, pos image.Point) image.Point {
+	childPos := WinChildPos(parent, w)
+	relativePos := pos.Sub(childPos)
+	return relativePos
+}
 
-	pos := cmd.Pos
+func (page *Page) defaultHandler(mouse MouseCmd) {
 
-	o := WindowUnder(page, pos)
-	if o != nil {
-		if cmd.Ddu == MouseDown {
-			WindowRaise(page, o)
+	child, relPos := WindowUnder(page, mouse.Pos)
+	if child != nil {
+		if mouse.Ddu == MouseDown {
+			WindowRaise(page, child)
 		}
-		// Adjust mouse coordinates so they're relative to the child
-		childPos := WinChildPos(page, o)
-		mouse := ToMouse(cmd)
-		mouse.Pos = mouse.Pos.Sub(childPos)
-		cmd = mouse
-		o.Do("mouse", cmd)
+		mouse.Pos = relPos
+		child.Do("mouse", mouse)
 		return
 	}
 
 	// nothing underneath the mouse
-	if cmd.Ddu == MouseDown {
+	if mouse.Ddu == MouseDown {
 		wc := page.Context()
 		// Remove any transient windows (i.e. popup menus)
 		for _, w := range wc.childWindow {
@@ -407,7 +419,7 @@ func (page *Page) defaultHandler(cmd MouseCmd) {
 			}
 		}
 		// pop up the PageMenu on Down
-		page.AddTool("PageMenu", pos)
+		page.AddTool("PageMenu", mouse.Pos, image.Point{})
 	}
 }
 
@@ -431,11 +443,12 @@ func (page *Page) sweepHandler(cmd MouseCmd) {
 		case "resize":
 			w := page.targetWindow
 			r := page.sweepRect()
-			sz := image.Point{r.Dx(), r.Dy()}
-			WinSetChildSize(w, sz)
+			WinSetChildPos(page, w, r.Min)
+			WinSetChildSize(w, r.Max.Sub(r.Min))
 		case "addtool":
 			r := page.sweepRect()
-			child, err := page.AddTool(page.sweepToolName, r.Min)
+			sz := image.Point{r.Dx(), r.Dy()}
+			child, err := page.AddTool(page.sweepToolName, r.Min, sz)
 			if err != nil {
 				log.Printf("AddTool: err=%s\n", err)
 			} else {
@@ -472,17 +485,17 @@ func (page *Page) pickHandler(cmd MouseCmd) {
 		page.targetWindow = nil // to make it clear until we get MouseUp
 	case MouseDrag:
 	case MouseUp:
-		w := WindowUnder(page, page.lastPos)
-		if w == nil {
+		child, _ := WindowUnder(page, page.lastPos)
+		if child == nil {
 			page.resetHandlers()
 			break
 		}
-		page.targetWindow = w
+		page.targetWindow = child
 		switch page.currentAction {
 		case "resize":
 			page.startSweep("resize")
 		case "delete":
-			RemoveChild(page, w)
+			RemoveChild(page, child)
 			page.resetHandlers()
 		default:
 			log.Printf("Unrecognized currentAction=%s\n", page.currentAction)
@@ -510,7 +523,7 @@ func (page *Page) moveHandler(cmd MouseCmd) {
 		page.resetHandlers()
 
 	case MouseDown:
-		page.targetWindow = WindowUnder(page, page.lastPos)
+		page.targetWindow, _ = WindowUnder(page, page.lastPos)
 		page.dragStart = page.lastPos
 	}
 }

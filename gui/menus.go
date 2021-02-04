@@ -14,7 +14,7 @@ func NewPageMenu(parent Window) ToolData {
 		{label: "Misc   ->", cmd: "miscmenu"},
 		{label: "Window ->", cmd: "windowmenu"},
 	}
-	return NewMenu(parent, items)
+	return NewMenu(parent, "PageMenu", items)
 }
 
 // NewToolsMenu xxx
@@ -22,5 +22,5 @@ func NewToolsMenu(parent Window) ToolData {
 	items := []MenuItem{
 		{label: "Console", cmd: "sweeptool", arg: "Console"},
 	}
-	return NewMenu(parent, items)
+	return NewMenu(parent, "ToolsMenu", items)
 }

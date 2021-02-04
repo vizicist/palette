@@ -29,7 +29,7 @@ func NewButton(parent Window, label string) ToolData {
 		X: style.TextWidth(label) + 6,
 		Y: style.TextHeight() + 6,
 	}
-	return ToolData{b, minSize}
+	return NewToolData(b, "Button", minSize)
 }
 
 // Context xxx

@@ -28,7 +28,7 @@ func NewScrollingText(parent Window) ToolData {
 		isPressed: false,
 		Buffer:    make([]string, defaultBufferSize),
 	}
-	return ToolData{st, image.Point{}} //
+	return NewToolData(st, "ScrollingText", image.Point{})
 }
 
 // Context xxx
