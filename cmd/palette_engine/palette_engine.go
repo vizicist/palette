@@ -51,7 +51,7 @@ func main() {
 	doGui := engine.ConfigBoolWithDefault("gui", false)
 	switch doGui {
 	case true:
-		gui.AddToolType("Console", tools.NewConsole)
+		gui.RegisterToolType("Console", tools.NewConsole)
 		gui.Run() // this never returns
 		log.Printf("GUI has exited!?\n")
 	case false:

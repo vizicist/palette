@@ -1,10 +1,8 @@
 package gui
 
 import (
-	"fmt"
 	"image"
 	"log"
-	"strings"
 )
 
 // Window is the external (and networkable) interface
@@ -33,11 +31,11 @@ func NewToolData(w Window, toolType string, minSize image.Point) ToolData {
 // ToolMaker xxx
 type ToolMaker func(parent Window) ToolData
 
-// Tools xxx
-var Tools = make(map[string]ToolMaker)
+// ToolMakers xxx
+var ToolMakers = make(map[string]ToolMaker)
 
-// WindowID xxx
-type WindowID int
+// windowID xxx
+type windowID int
 
 // WinContext doesn't export any of its fields
 type WinContext struct {
@@ -49,10 +47,10 @@ type WinContext struct {
 	initialized bool
 
 	childData   map[Window]*WinContext
-	childWindow map[WindowID]Window
-	childID     map[Window]WindowID
+	childWindow map[windowID]Window
+	childID     map[Window]windowID
 	childPos    map[Window]image.Point
-	lastChildID WindowID // to generate unique child window IDs
+	lastChildID windowID // to generate unique child window IDs
 	order       []Window // display order of child windows
 	saveMenu    *Menu    // XXX - eventually this should be a list to handle deeper nesting
 
@@ -70,8 +68,8 @@ func NewWindowContext(parent Window) *WinContext {
 		initialized: true,
 
 		childData:   make(map[Window]*WinContext),
-		childWindow: make(map[WindowID]Window),
-		childID:     make(map[Window]WindowID),
+		childWindow: make(map[windowID]Window),
+		childID:     make(map[Window]windowID),
 		childPos:    make(map[Window]image.Point),
 		order:       make([]Window, 0),
 		att:         make(map[string]string),
@@ -88,7 +86,7 @@ func WindowUnder(parent Window, pos image.Point) (Window, image.Point) {
 		w := pc.order[n]
 		r := WinChildRect(parent, w)
 		if pos.In(r) {
-			return w, RelativePos(parent, w, pos)
+			return w, WinRelativePos(parent, w, pos)
 		}
 	}
 	return nil, image.Point{}
@@ -280,29 +278,14 @@ func WindowRaise(parent Window, raise Window) {
 	}
 }
 
-// Point - should I start using this to make code more compact?
-func Point(x, y int) image.Point {
-	return image.Point{X: x, Y: y}
-}
-
-// WindowType xxx
-func WindowType(w Window) string {
-	t := fmt.Sprintf("%T", w)
-	i := strings.LastIndex(t, ".")
-	if i >= 0 {
-		t = t[i+1:]
-	}
-	return t
-}
-
-// AddToolType xxx
-func AddToolType(name string, newfunc ToolMaker) {
+// RegisterToolType xxx
+func RegisterToolType(name string, newfunc ToolMaker) {
 	log.Printf("AddToolType name=%s\n", name)
-	Tools[name] = newfunc
+	ToolMakers[name] = newfunc
 }
 
-// WinToolType xxx
-func WinToolType(w Window) string {
+// ToolType xxx
+func ToolType(w Window) string {
 	return w.Context().toolType
 }
 
@@ -386,4 +369,11 @@ func WinStyle(w Window) *Style {
 		return DefaultStyle()
 	}
 	return WinStyle(ctx.parent) // use the parent's style
+}
+
+// WinRelativePos xxx
+func WinRelativePos(parent Window, w Window, pos image.Point) image.Point {
+	childPos := WinChildPos(parent, w)
+	relativePos := pos.Sub(childPos)
+	return relativePos
 }

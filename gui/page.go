@@ -217,12 +217,12 @@ func (page *Page) dumpState() (string, error) {
 	for wid, child := range wc.childWindow {
 		state, err := child.Do("dumpstate", nil)
 		if err != nil {
-			log.Printf("Page.dumpState: child=%d wintype=%s err=%s\n", wid, WindowType(child), err)
+			log.Printf("Page.dumpState: child=%d type=%T err=%s\n", wid, child, err)
 			continue
 		}
 		s += fmt.Sprintf("%s{\n", sep)
 		s += fmt.Sprintf("\"wid\": \"%d\",\n", wid)
-		s += fmt.Sprintf("\"tooltype\": \"%s\",\n", WinToolType(child))
+		s += fmt.Sprintf("\"tooltype\": \"%s\",\n", ToolType(child))
 		s += fmt.Sprintf("\"pos\": \"%s\",\n", PointString(WinChildPos(page, child)))
 		s += fmt.Sprintf("\"size\": \"%s\",\n", PointString(WinCurrSize(child)))
 		s += fmt.Sprintf("\"state\": %s\n", state)
@@ -239,7 +239,7 @@ func (page *Page) dumpState() (string, error) {
 // MakeTool xxx
 func (page *Page) MakeTool(name string) (ToolData, error) {
 	// style := WinStyle(page)
-	maker, ok := Tools[name]
+	maker, ok := ToolMakers[name]
 	if !ok {
 		return ToolData{}, fmt.Errorf("MakeTool: There is no registered Tool named %s", name)
 	}
@@ -317,13 +317,6 @@ func (page *Page) resize() {
 	size := WinCurrSize(page)
 	WinSetMySize(page, size)
 	log.Printf("Page.Resize: should be doing menus (and other things)?")
-}
-
-// RelativePos xxx
-func RelativePos(parent Window, w Window, pos image.Point) image.Point {
-	childPos := WinChildPos(parent, w)
-	relativePos := pos.Sub(childPos)
-	return relativePos
 }
 
 func (page *Page) defaultHandler(mouse MouseCmd) {
