@@ -114,9 +114,10 @@ func (page *Page) Do(cmd string, arg interface{}) (interface{}, error) {
 		}
 		RemoveChild(page, w)
 
-	case "toolsmenu":
-		pos := image.Point{page.lastPos.X + 100, page.lastPos.Y}
-		page.AddTool("ToolsMenu", pos, image.Point{})
+	case "submenu":
+		menuType := ToString(arg)
+		pos := image.Point{lastMenuX + 4, page.lastPos.Y}
+		page.AddTool(menuType, pos, image.Point{})
 
 	case "miscmenu":
 
