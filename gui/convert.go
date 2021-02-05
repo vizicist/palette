@@ -163,6 +163,9 @@ func ToString(arg interface{}) string {
 
 // ToWindow xxx
 func ToWindow(arg interface{}) Window {
+	if arg == nil {
+		return nil
+	}
 	r, ok := arg.(Window)
 	if !ok {
 		log.Printf("Unable to convert interface to Window!\n")

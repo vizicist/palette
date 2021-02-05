@@ -10,18 +10,19 @@ import (
 
 // Menu xxx
 type Menu struct {
-	ctx          WinContext
-	items        []MenuItem
-	isPressed    bool
-	itemSelected int
-	rowHeight    int
-	handleHeight int
-	handleMidx   int
-	pickedWindow Window
-	sweepBegin   image.Point
-	sweepEnd     image.Point
-	resizeState  int
-	parentMenu   Window
+	ctx           WinContext
+	items         []MenuItem
+	isPressed     bool
+	itemSelected  int
+	rowHeight     int
+	handleHeight  int
+	handleMidx    int
+	pickedWindow  Window
+	sweepBegin    image.Point
+	sweepEnd      image.Point
+	resizeState   int
+	parentMenu    Window
+	activeSubMenu *Menu
 }
 
 // MenuCallback xxx
@@ -58,7 +59,7 @@ func NewMenu(parent Window, toolType string, items []MenuItem) ToolData {
 		Y: len(menu.items)*menu.rowHeight + menu.handleHeight + 2,
 	}
 
-	SetAttValue(menu, "istransient", "true")
+	winSaveTransient(parent, menu)
 	return NewToolData(menu, toolType, minSize)
 }
 
@@ -161,8 +162,6 @@ func (menu *Menu) redraw() {
 // If mouseHandler return value is true, the menu should be removed
 func (menu *Menu) mouseHandler(mouse MouseCmd) (removeMenu bool) {
 
-	istransient := (GetAttValue(menu, "istransient") == "true")
-
 	menu.itemSelected = -1
 
 	// If it's in the handle area...
@@ -174,7 +173,7 @@ func (menu *Menu) mouseHandler(mouse MouseCmd) (removeMenu bool) {
 				return true
 			}
 			DoUpstream(menu, "movemenu", menu)
-			SetAttValue(menu, "istransient", "false")
+			DoUpstream(menu, "makepermanent", menu)
 			return false
 		}
 		return false
@@ -198,19 +197,13 @@ func (menu *Menu) mouseHandler(mouse MouseCmd) (removeMenu bool) {
 		item := menu.items[menu.itemSelected]
 		// Save lastMenuX so sub-menu can position itself
 		lastMenuX = WinChildRect(parent, menu).Max.X
-		parent.Do(item.cmd, item.arg)
-		menu.itemSelected = -1
-		// If we're invoking a sub-menu, don't delete parent yet
 		doingSubMenu := strings.HasSuffix(item.label, "->")
-		if istransient {
-			if !doingSubMenu {
-				DoUpstream(menu, "closeme", menu)
-				DoUpstream(menu, "closesavemenu", nil)
-			} else {
-				// Doing a submenu, we don't want to remove a transient parent menu
-				// until the submenu is complete, so save it.
-				WinSaveMenu(parent, menu)
-			}
+
+		parent.Do(item.cmd, item.arg) // This is the menu "callback" to the parent
+
+		menu.itemSelected = -1
+		if !doingSubMenu {
+			DoUpstream(menu, "closetransients", nil)
 		}
 		return !strings.HasSuffix(item.label, "->")
 	}
@@ -261,9 +254,9 @@ func (menu *Menu) Do(cmd string, arg interface{}) (interface{}, error) {
 	case "mouse":
 		mouse := ToMouse(arg)
 		if menu.mouseHandler(mouse) {
-			if GetAttValue(menu, "istransient") == "true" {
-				DoUpstream(menu, "closeme", menu)
-			}
+			// if GetAttValue(menu, "istransient") == "true" {
+			DoUpstream(menu, "closetransients", menu)
+			// }
 		}
 	}
 	return nil, nil

@@ -3,48 +3,12 @@
     "size": "640,480",
     "children": [
         {
-            "wid": "1",
-            "tooltype": "PageMenu",
-            "pos": "192,69",
-            "size": "91,209",
-            "state": {
-                "items": [
-                    { "label": "About", "cmd": "about", "arg": "", "target": "0" },
-                    { "label": "Dump", "cmd": "dumptofile", "arg": "homepage.json", "target": "0" },
-                    { "label": "Restore", "cmd": "restore", "arg": "homepage.json", "target": "0" },
-                    { "label": "Resize", "cmd": "picktool", "arg": "resize", "target": "0" },
-                    { "label": "Move", "cmd": "movetool", "arg": "move", "target": "0" },
-                    { "label": "Delete", "cmd": "picktool", "arg": "delete", "target": "0" },
-                    { "label": "Tools  ->", "cmd": "submenu", "arg": "ToolsMenu", "target": "0" },
-                    { "label": "Misc   ->", "cmd": "miscmenu", "arg": "", "target": "0" },
-                    { "label": "Window ->", "cmd": "windowmenu", "arg": "", "target": "0" }
-                ]
-            }
-        }
-        ,
-        {
             "wid": "2",
-            "tooltype": "ToolsMenu",
-            "pos": "287,219",
-            "size": "73,33",
-            "state": {
-                "items": [
-                    { "label": "Console", "cmd": "sweeptool", "arg": "Console", "target": "0" }
-                ]
-            }
-        }
-        ,
-        {
-            "wid": "3",
             "tooltype": "Console",
-            "pos": "96,294",
-            "size": "472,154",
+            "pos": "56,307",
+            "size": "573,142",
             "state": {
                 "buffer": [
-                    "# of goroutines: 17",
-                    "Palette Window System - version 0.1",
-                    "# of goroutines: 17",
-                    "Palette Window System - version 0.1",
                     "# of goroutines: 17",
                     "Palette Window System - version 0.1",
                     "",
@@ -175,6 +139,61 @@
                     "",
                     "",
                     ""
+                ]
+            }
+        }
+        ,
+        {
+            "wid": "3",
+            "tooltype": "PageMenu",
+            "pos": "151,35",
+            "size": "91,121",
+            "state": {
+                "items": [
+                    { "label": "About", "cmd": "about", "arg": "", "target": "0" },
+                    { "label": "Dump", "cmd": "dumptofile", "arg": "homepage.json", "target": "0" },
+                    { "label": "Restore", "cmd": "restore", "arg": "homepage.json", "target": "0" },
+                    { "label": "Tools  ->", "cmd": "submenu", "arg": "ToolsMenu", "target": "0" },
+                    { "label": "Window ->", "cmd": "submenu", "arg": "WindowMenu", "target": "0" }
+                ]
+            }
+        }
+        ,
+        {
+            "wid": "4",
+            "tooltype": "WindowMenu",
+            "pos": "278,27",
+            "size": "82,99",
+            "state": {
+                "items": [
+                    { "label": "Resize", "cmd": "picktool", "arg": "resize", "target": "0" },
+                    { "label": "Move", "cmd": "movetool", "arg": "move", "target": "0" },
+                    { "label": "Delete", "cmd": "picktool", "arg": "delete", "target": "0" },
+                    { "label": "More  ->", "cmd": "submenu", "arg": "ToolsMenu", "target": "0" }
+                ]
+            }
+        }
+        ,
+        {
+            "wid": "5",
+            "tooltype": "ToolsMenu",
+            "pos": "405,33",
+            "size": "73,33",
+            "state": {
+                "items": [
+                    { "label": "Console", "cmd": "sweeptool", "arg": "Console", "target": "0" }
+                ]
+            }
+        }
+        ,
+        {
+            "wid": "6",
+            "tooltype": "ToolsMenu",
+            "pos": "436,147",
+            "size": "73,33",
+            "state": {
+                "items": [
+                    { "label": "Console", "cmd": "sweeptool", "arg": "Console", "target": "0" }
                 ]
             }
         }
