@@ -34,8 +34,8 @@ type ToolMaker func(parent Window) ToolData
 // ToolMakers xxx
 var ToolMakers = make(map[string]ToolMaker)
 
-// windowID xxx
-type windowID int
+// WindowID xxx
+type WindowID int
 
 // WinContext doesn't export any of its fields
 type WinContext struct {
@@ -46,12 +46,12 @@ type WinContext struct {
 	style       *Style
 	initialized bool
 
-	childWindow map[windowID]Window
-	childID     map[Window]windowID
+	childWindow map[WindowID]Window
+	childID     map[Window]WindowID
 	childPos    map[Window]image.Point
-	lastChildID windowID // to generate unique child window IDs
-	order       []Window // display order of child windows
-	saveMenu    *Menu    // XXX - eventually this should be a list to handle deeper nesting
+	lastChildID WindowID          // to generate unique child window IDs
+	order       []Window          // display order of child windows
+	transients  map[Window]string // used for transient popup Menus
 
 	att map[string]string
 }
@@ -66,11 +66,12 @@ func NewWindowContext(parent Window) WinContext {
 		currSz:      image.Point{},
 		initialized: true,
 
-		childWindow: make(map[windowID]Window),
-		childID:     make(map[Window]windowID),
+		childWindow: make(map[WindowID]Window),
+		childID:     make(map[Window]WindowID),
 		childPos:    make(map[Window]image.Point),
 		order:       make([]Window, 0),
 		att:         make(map[string]string),
+		transients:  make(map[Window]string),
 	}
 }
 
@@ -255,7 +256,7 @@ func WindowRaise(parent Window, raise Window) {
 
 // RegisterToolType xxx
 func RegisterToolType(name string, newfunc ToolMaker) {
-	log.Printf("AddToolType name=%s\n", name)
+	log.Printf("RegisterToolType name=%s\n", name)
 	ToolMakers[name] = newfunc
 }
 
@@ -264,9 +265,28 @@ func ToolType(w Window) string {
 	return w.Context().toolType
 }
 
-// WinSaveMenu xxx
-func WinSaveMenu(w Window, menu *Menu) {
-	w.Context().saveMenu = menu
+func winSaveTransient(parent Window, w Window) {
+	parent.Context().transients[w] = "dummy"
+}
+
+func winMakePermanent(parent Window, w Window) {
+	delete(parent.Context().transients, w)
+}
+
+func winIsTransient(parent Window, w Window) bool {
+	_, ok := parent.Context().transients[w]
+	return ok
+}
+
+func winRemoveTransients(parent Window, exceptMenu Window) {
+	wc := parent.Context()
+	// Remove any transient windows (i.e. popup menus)
+	for w := range wc.transients {
+		if w != exceptMenu {
+			RemoveChild(parent, w)
+			delete(wc.transients, w)
+		}
+	}
 }
 
 // WinCurrSize xxx
@@ -321,6 +341,20 @@ func WinChildRect(parent, child Window) (r image.Rectangle) {
 	childPos := WinChildPos(parent, child)
 	currSize := WinCurrSize(child)
 	return image.Rectangle{Min: childPos, Max: childPos.Add(currSize)}
+}
+
+// WinChildID xxx
+func WinChildID(parent Window, child Window) WindowID {
+	if parent == nil {
+		log.Printf("WinChildPos: parent is nil?\n")
+		return 0
+	}
+	id, ok := parent.Context().childID[child]
+	if !ok {
+		log.Printf("WinChildPos: w not in parent childID?\n")
+		return 0
+	}
+	return id
 }
 
 // WinMinSize xxx

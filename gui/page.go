@@ -26,6 +26,7 @@ type Page struct {
 	targetWindow  Window      // used for resize, move, delete, etc
 	currentAction string
 	sweepToolName string
+	pageMenu      Window
 }
 
 // NewPage xxx
@@ -101,25 +102,16 @@ func (page *Page) Do(cmd string, arg interface{}) (interface{}, error) {
 		page.mouseHandler(mouse)
 
 	case "closeme":
-		w := ToWindow(arg)
-		menu := ToMenu(w)
-		if menu != nil && menu.parentMenu != nil {
-			// For menus, we want to close parent menus (if transient)
-			pmenu := ToMenu(menu.parentMenu)
-			if pmenu != nil && GetAttValue(pmenu, "istransient") == "true" {
-				pmenu.Do("closeme", menu)
-				RemoveChild(page, pmenu)
-			}
-		}
-		RemoveChild(page, w)
+		child := ToWindow(arg)
+		RemoveChild(page, child)
 
-	case "closesavemenu":
-		pc := page.Context()
-		menu := pc.saveMenu
-		if menu != nil {
-			RemoveChild(page, menu)
-			pc.saveMenu = nil
-		}
+	case "makepermanent":
+		menu := ToMenu(arg)
+		winMakePermanent(page, menu)
+
+	case "closetransients":
+		exceptMenu := ToWindow(arg)
+		winRemoveTransients(page, exceptMenu)
 
 	case "submenu":
 		menuType := ToString(arg)
@@ -167,9 +159,7 @@ func (page *Page) restoreState(s string) error {
 	// clear this page of all children
 	wc := page.Context()
 	for _, w := range wc.childWindow {
-		if GetAttValue(w, "istransient") != "true" {
-			RemoveChild(page, w)
-		}
+		RemoveChild(page, w)
 	}
 
 	var dat map[string]interface{}
@@ -200,7 +190,7 @@ func (page *Page) restoreState(s string) error {
 		// restore state
 		childW.Do("restore", state)
 		childW.Do("resize", size)
-		SetAttValue(childW, "istransient", "false")
+		winMakePermanent(page, childW)
 	}
 
 	return nil
@@ -278,12 +268,13 @@ func (page *Page) log(format string, v ...interface{}) {
 }
 
 func (page *Page) drawSweepRect() {
+	DoUpstream(page, "setcolor", ForeColor)
 	DoUpstream(page, "drawrect", page.sweepRect())
 }
 
 func (page *Page) drawSweepCursor() {
-	pos := page.lastPos
 	DoUpstream(page, "setcolor", ForeColor)
+	pos := page.lastPos
 	DoUpstream(page, "drawline", DrawLineCmd{
 		XY0: pos, XY1: pos.Add(image.Point{20, 0}),
 	})
@@ -300,9 +291,9 @@ func (page *Page) drawSweepCursor() {
 }
 
 func (page *Page) drawPickCursor() {
+	DoUpstream(page, "setcolor", ForeColor)
 	sz := 10
 	pos := page.lastPos
-	DoUpstream(page, "setcolor", ForeColor)
 	DoUpstream(page, "drawline", DrawLineCmd{
 		XY0: pos.Add(image.Point{-sz, 0}),
 		XY1: pos.Add(image.Point{sz, 0}),
@@ -333,15 +324,25 @@ func (page *Page) defaultHandler(mouse MouseCmd) {
 
 	// nothing underneath the mouse
 	if mouse.Ddu == MouseDown {
-		wc := page.Context()
-		// Remove any transient windows (i.e. popup menus)
-		for _, w := range wc.childWindow {
-			if GetAttValue(w, "istransient") == "true" {
-				RemoveChild(page, w)
+
+		pageMenuWasAlreadyUp := false
+		if page.pageMenu != nil && winIsTransient(page, page.pageMenu) {
+			pageMenuWasAlreadyUp = true
+		}
+		winRemoveTransients(page, nil) // remove all transients
+
+		// Normally, pop up the PageMenu on MouseDown, but don't pop it up
+		// if it was in the transients that were just removeda.
+		if pageMenuWasAlreadyUp {
+			page.pageMenu = nil
+		} else {
+			w, err := page.AddTool("PageMenu", mouse.Pos, image.Point{})
+			if err != nil {
+				log.Printf("defaultHandler: unable to create PageMenu err=%s\n", err)
+			} else {
+				page.pageMenu = w
 			}
 		}
-		// pop up the PageMenu on Down
-		page.AddTool("PageMenu", mouse.Pos, image.Point{})
 	}
 }
 
@@ -444,8 +445,9 @@ func (page *Page) moveHandler(cmd MouseCmd) {
 	case MouseUp:
 		// When we move a menu, we want it to be permanent
 		if page.targetWindow != nil {
-			SetAttValue(page.targetWindow, "istransient", "false")
+			page.Do("makepermanent", page.targetWindow)
 		}
+		winRemoveTransients(page, nil)
 		page.resetHandlers()
 
 	case MouseDown:

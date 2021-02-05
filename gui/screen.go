@@ -47,8 +47,7 @@ func Run() {
 	// The user of palette.win can/should add custom tool types,
 	// but we want to make sure that the standard ones are ours.
 	// AddToolType("Menu", NewMenu)
-	RegisterToolType("PageMenu", NewPageMenu)
-	RegisterToolType("ToolsMenu", NewToolsMenu)
+	initStandardMenus()
 
 	minSize := image.Point{640, 480}
 	style := NewStyle("fixed", 16)
