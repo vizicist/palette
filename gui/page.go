@@ -69,11 +69,11 @@ func (page *Page) Do(cmd string, arg interface{}) (interface{}, error) {
 
 	case "dumptofile":
 		fname := ToString(arg)
-		output, err := page.Do("dumpstate", fname)
+		state, err := page.Do("dumpstate", fname)
 		if err != nil {
 			return nil, err
 		}
-		s := ToString(output)
+		s := ToString(state)
 		ps := toPrettyJSON(s)
 		err = ioutil.WriteFile(fname, []byte(ps), 0644)
 		if err != nil {
@@ -168,8 +168,12 @@ func (page *Page) restoreState(s string) error {
 	}
 
 	name := dat["page"].(string)
-	sizeString := dat["size"].(string)
-	log.Printf("restore name=%s sizeString=%s\n", name, sizeString)
+	sz := dat["size"].(string)
+	size := StringToPoint(sz)
+
+	log.Printf("restore name=%s size=%v\n", name, size)
+
+	DoUpstream(page, "resizeme", size)
 
 	children := dat["children"].([]interface{})
 	for _, ch := range children {
@@ -205,6 +209,9 @@ func (page *Page) dumpState() (string, error) {
 	s += fmt.Sprintf("\"children\": [\n") // start children array
 	sep := ""
 	for wid, child := range wc.childWindow {
+		if child == doingMenu { // don't dump the menu used to do a dump
+			continue
+		}
 		state, err := child.Do("dumpstate", nil)
 		if err != nil {
 			log.Printf("Page.dumpState: child=%d type=%T err=%s\n", wid, child, err)
@@ -356,34 +363,133 @@ func (page *Page) sweepRect() image.Rectangle {
 func (page *Page) sweepHandler(cmd MouseCmd) {
 
 	switch cmd.Ddu {
+
 	case MouseDown:
 		page.dragStart = cmd.Pos
 		page.cursorDrawer = page.drawSweepRect
+
 	case MouseDrag:
 		// do nothing
+
 	case MouseUp:
+
+		defer page.resetHandlers() // no matter what
+		r := page.sweepRect()
+		toolPos := r.Min
+		toolSize := r.Max.Sub(r.Min)
+
 		switch page.currentAction {
+
 		case "resize":
 			w := page.targetWindow
 			if w == nil {
 				log.Printf("Page.sweepHandler: w==nil?\n")
 				return
 			}
-			r := page.sweepRect()
-			WinSetChildPos(page, w, r.Min)
-			WinSetChildSize(w, r.Max.Sub(r.Min))
+			// If you don't sweep out anything, look for
+			// as much space as you can find starting at that point.
+			if toolSize.X < 5 || toolSize.Y < 5 {
+				under, _ := WindowUnder(page, toolPos)
+				// If there's a window (other than the one we're resizing)
+				// underneath the point, then don't do anything
+				if under != nil && under != w {
+					log.Printf("Page.sweepHandler: can't resize above a Window\n")
+					return
+				}
+				foundRect := page.findSpace(r.Min, w)
+				if foundRect.Dx()*foundRect.Dy() == 0 {
+					// Last resort
+					foundRect = image.Rectangle{Min: toolPos, Max: toolPos}.Inset(-20)
+				}
+				toolSize = foundRect.Max.Sub(foundRect.Min)
+				toolPos = foundRect.Min
+			}
+			WinSetChildPos(page, w, toolPos)
+			WinSetChildSize(w, toolSize)
+
 		case "addtool":
-			r := page.sweepRect()
-			sz := image.Point{r.Dx(), r.Dy()}
-			child, err := page.AddTool(page.sweepToolName, r.Min, sz)
+			// If you don't sweep out anything, look for
+			// as much space as you can find starting at that point.
+			if toolSize.X < 5 || toolSize.Y < 5 {
+				foundRect := page.findSpace(r.Min, nil)
+				toolSize = foundRect.Max.Sub(foundRect.Min)
+				toolPos = foundRect.Min
+			}
+			child, err := page.AddTool(page.sweepToolName, toolPos, toolSize)
 			if err != nil {
 				log.Printf("AddTool: err=%s\n", err)
 			} else {
-				WinSetChildSize(child, r.Max.Sub(r.Min))
+				WinSetChildSize(child, toolSize)
 			}
 		}
-		page.resetHandlers()
 	}
+}
+
+func (page *Page) findSpace(p image.Point, ignore Window) image.Rectangle {
+
+	rect := image.Rectangle{Min: p, Max: p}.Inset(-4)
+	maxsz := page.ctx.currSz
+	finalRect := rect
+	dx := 1
+	dy := 1
+
+	// Expand as much as we can to the left
+	for rect.Min.X > dx && page.anyOverlap(rect, ignore) == false {
+		finalRect = rect
+		rect.Min.X -= dx
+	}
+	if finalRect.Min.X > dx { // i.e. it overlapped something
+		finalRect.Min.X += dx // back off a bit
+	}
+
+	rect = finalRect // start with the last successful one
+
+	// Expand as much as we can to the right
+	for rect.Max.X < (maxsz.X-dx) && page.anyOverlap(rect, ignore) == false {
+		finalRect = rect
+		rect.Max.X += dx
+	}
+	if finalRect.Max.X < (maxsz.X - dx) { // i.e. it overlapped something
+		finalRect.Max.X -= dx // back off a bit
+	}
+
+	rect = finalRect // start with the last successful one
+
+	// Expand as much as we can go up
+	for rect.Min.Y > dy && page.anyOverlap(rect, ignore) == false {
+		finalRect = rect
+		rect.Min.Y -= dy
+	}
+	if finalRect.Min.Y > dy { // i.e. it overlapped something
+		finalRect.Min.Y += dy // back off a bit
+	}
+
+	rect = finalRect // start with the last successful one
+
+	// Expand as much as we can go down
+	for rect.Max.Y < (maxsz.Y-dy) && page.anyOverlap(rect, ignore) == false {
+		finalRect = rect
+		rect.Max.Y += dy
+	}
+	if finalRect.Max.Y < (maxsz.Y - dy) { // i.e. it overlapped something
+		finalRect.Max.Y -= dy // back off a bit
+	}
+
+	return finalRect
+}
+
+func (page *Page) anyOverlap(rect image.Rectangle, ignore Window) bool {
+	for _, w := range page.ctx.childWindow {
+		if w == ignore {
+			continue
+		}
+		r := WinChildRect(page, w)
+		intersect := r.Intersect(rect)
+		if intersect.Dx() > 0 || intersect.Dy() > 0 {
+			return true
+		}
+	}
+	return false
 }
 
 func (page *Page) resetHandlers() {

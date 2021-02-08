@@ -1,8 +1,8 @@
 package tools
 
 import (
+	"fmt"
 	"image"
-	"log"
 
 	"github.com/vizicist/palette/gui"
 )
@@ -68,20 +68,19 @@ func (console *Console) Do(cmd string, arg interface{}) (interface{}, error) {
 		}
 		return s, nil
 	case "closeyourself":
-		log.Printf("console: CloseYourself needs work?\n")
+		console.addLine("console: CloseYourself needs work?\n")
 	case "buttondown":
 		// Clear is the only button
 		b := gui.ToString(arg)
 		switch b {
 		case "Test":
-			log.Printf("Test!\n")
+			console.addLine("Test!\n")
 		case "Three":
-			log.Printf("Three!\n")
+			console.addLine("Three!\n")
 		case "Clear":
-			log.Printf("Clear!\n")
 			console.TextArea.Do("clear", nil)
 		default:
-			log.Printf("Unknown button: %s\n", b)
+			console.addLine(fmt.Sprintf("Unknown button: %s\n", b))
 		}
 	case "buttonup":
 		//
@@ -91,6 +90,10 @@ func (console *Console) Do(cmd string, arg interface{}) (interface{}, error) {
 		gui.DoUpstream(console, cmd, arg)
 	}
 	return nil, nil
+}
+
+func (console *Console) addLine(s string) {
+	console.TextArea.Do("addline", s)
 }
 
 // Resize xxx
