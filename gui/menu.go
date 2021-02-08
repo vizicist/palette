@@ -39,6 +39,7 @@ type MenuItem struct {
 }
 
 var lastMenuX int
+var doingMenu *Menu
 
 // NewMenu xxx
 func NewMenu(parent Window, toolType string, items []MenuItem) ToolData {
@@ -199,6 +200,7 @@ func (menu *Menu) mouseHandler(mouse MouseCmd) (removeMenu bool) {
 		lastMenuX = WinChildRect(parent, menu).Max.X
 		doingSubMenu := strings.HasSuffix(item.label, "->")
 
+		doingMenu = menu              // this enables "dump" to ignore the menu that's triggering it
 		parent.Do(item.cmd, item.arg) // This is the menu "callback" to the parent
 
 		menu.itemSelected = -1

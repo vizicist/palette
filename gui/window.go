@@ -91,6 +91,8 @@ func WindowUnder(parent Window, pos image.Point) (Window, image.Point) {
 	return nil, image.Point{}
 }
 
+var debugChild = false
+
 // AddChild xxx
 func AddChild(parent Window, td ToolData) Window {
 
@@ -124,6 +126,9 @@ func AddChild(parent Window, td ToolData) Window {
 	pc.childWindow[wid] = child
 	pc.childID[child] = wid
 	pc.childPos[child] = image.Point{0, 0}
+	if debugChild {
+		log.Printf("AddChild: wid=%d child=%p\n", wid, child)
+	}
 
 	return child
 }
@@ -137,8 +142,11 @@ func RemoveChild(parent Window, child Window) {
 	pc := parent.Context()
 	wid, ok := pc.childID[child]
 	if !ok {
-		log.Printf("RemoveWindow: no window child=%v\n", child)
+		log.Printf("RemoveChild: no window child=%v\n", child)
 		return
+	}
+	if debugChild {
+		log.Printf("RemoveChild: removing wid=%d\n", wid)
 	}
 
 	delete(pc.childID, child)
@@ -160,7 +168,7 @@ func MoveWindow(parent Window, child Window, delta image.Point) {
 	pc := parent.Context()
 	childPos, ok := pc.childPos[child]
 	if !ok {
-		log.Printf("WinChildPos: w not in parent childPos?\n")
+		log.Printf("WinMoveWindow: w not in parent childPos?\n")
 		return
 	}
 	pc.childPos[child] = childPos.Add(delta)
@@ -266,10 +274,16 @@ func ToolType(w Window) string {
 }
 
 func winSaveTransient(parent Window, w Window) {
+	if debugChild {
+		log.Printf("winSaveTransient: w=%p\n", w)
+	}
 	parent.Context().transients[w] = "dummy"
 }
 
 func winMakePermanent(parent Window, w Window) {
+	if debugChild {
+		log.Printf("winMakePermanent: w=%p\n", w)
+	}
 	delete(parent.Context().transients, w)
 }
 
@@ -283,6 +297,9 @@ func winRemoveTransients(parent Window, exceptMenu Window) {
 	// Remove any transient windows (i.e. popup menus)
 	for w := range wc.transients {
 		if w != exceptMenu {
+			if debugChild {
+				log.Printf("winRemoveTransients: about to remove wid=%d\n", WinChildID(parent, w))
+			}
 			RemoveChild(parent, w)
 			delete(wc.transients, w)
 		}
@@ -313,7 +330,7 @@ func WinSetChildSize(w Window, size image.Point) {
 // WinSetChildPos xxx
 func WinSetChildPos(parent Window, child Window, pos image.Point) {
 	if parent == nil {
-		log.Printf("WinChildPos: parent is nil?\n")
+		log.Printf("WinSeetChildPos: parent is nil?\n")
 		return
 	}
 	parent.Context().childPos[child] = pos
@@ -346,12 +363,12 @@ func WinChildRect(parent, child Window) (r image.Rectangle) {
 // WinChildID xxx
 func WinChildID(parent Window, child Window) WindowID {
 	if parent == nil {
-		log.Printf("WinChildPos: parent is nil?\n")
+		log.Printf("WinChildID: parent is nil?\n")
 		return 0
 	}
 	id, ok := parent.Context().childID[child]
 	if !ok {
-		log.Printf("WinChildPos: w not in parent childID?\n")
+		log.Printf("WinChildID: w not in parent childID?\n")
 		return 0
 	}
 	return id

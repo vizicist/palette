@@ -107,6 +107,10 @@ func (screen *Screen) Do(cmd string, arg interface{}) (interface{}, error) {
 		}
 	case "closeme":
 		log.Printf("screen.runCmds: SHOULD NOT BE GETTING CloseMeCmd!?\n")
+	case "resizeme":
+		size := ToPoint(arg)
+		ebiten.SetWindowSize(size.X, size.Y)
+
 	case "resize":
 
 	default:
