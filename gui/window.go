@@ -403,3 +403,13 @@ func WinRelativePos(parent Window, w Window, pos image.Point) image.Point {
 	relativePos := pos.Sub(childPos)
 	return relativePos
 }
+
+// WinForwardMouse is a utility function for Tools that just want
+// to forward all their mouse events to whatever sub-windows they have.
+func WinForwardMouse(w Window, mouse MouseCmd) {
+	child, relPos := WindowUnder(w, mouse.Pos)
+	if child != nil {
+		mouse.Pos = relPos
+		child.Do("mouse", mouse)
+	}
+}

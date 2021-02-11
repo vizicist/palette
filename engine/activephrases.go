@@ -152,11 +152,11 @@ func (mgr *ActivePhrasesManager) AdvanceByOneClick() {
 	mgr.ActivePhrasesMutex.Lock()
 	defer mgr.ActivePhrasesMutex.Unlock()
 
-	for cid, a := range mgr.activePhrases {
+	for id, a := range mgr.activePhrases {
 		if a.phrase == nil {
-			log.Printf("advanceactivePhrases, unexpected phrase is nil for cid=%s?  deleting it\n", cid)
+			log.Printf("advanceactivePhrases, unexpected phrase is nil for id=%s?  deleting it\n", id)
 			if a.sendNoteOffs(MaxClicks, DebugUtil.MIDI, mgr.outputCallbacks) {
-				delete(mgr.activePhrases, cid)
+				delete(mgr.activePhrases, id)
 			}
 			continue
 		}
@@ -186,7 +186,7 @@ func (mgr *ActivePhrasesManager) AdvanceByOneClick() {
 		// Send whatever NOTEOFFs are due to be sent, and if everything has
 		// been processed, delete it from the activePhrases
 		if a.sendNoteOffs(a.clickSoFar, DebugUtil.MIDI, mgr.outputCallbacks) {
-			delete(mgr.activePhrases, cid)
+			delete(mgr.activePhrases, id)
 		}
 		a.clickSoFar++
 	}

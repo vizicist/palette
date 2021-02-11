@@ -28,6 +28,7 @@ type Router struct {
 	OSCInput      chan OSCEvent
 	MIDIInput     chan portmidi.Event
 
+	cursorCallbacks      []GestureDeviceCallbackFunc
 	killme               bool // true if Router should be stopped
 	lastClick            Clicks
 	control              chan Command
@@ -40,7 +41,7 @@ type Router struct {
 	resolumeClient       *osc.Client
 	guiClient            *osc.Client
 	plogueClient         *osc.Client
-	publishCursor        bool
+	publishGesture       bool
 	publishMIDI          bool
 	myHostname           string
 	generateVisuals      bool
@@ -63,10 +64,10 @@ type Command struct {
 	Arg    interface{}
 }
 
-// DeviceCursor purpose is to know when it
+// DeviceGesture purpose is to know when it
 // hasn't been seen for a while,
 // in order to generate an UP event
-type DeviceCursor struct {
+type DeviceGesture struct {
 	lastTouch time.Time
 	downed    bool // true if cursor down event has been generated
 }
@@ -126,6 +127,7 @@ func TheRouter() *Router {
 			// might be fatal, but try to continue
 		}
 
+		oneRouter.cursorCallbacks = make([]GestureDeviceCallbackFunc, 0)
 		oneRouter.reactors = make(map[string]*Reactor)
 		oneRouter.regionForMorph = make(map[string]string)
 		oneRouter.regionAssignedToNUID = make(map[string]string)
@@ -156,7 +158,7 @@ func TheRouter() *Router {
 			oneRouter.myHostname = hostname
 		}
 
-		oneRouter.publishCursor = ConfigBool("publishcursor")
+		oneRouter.publishGesture = ConfigBool("publishcursor")
 		oneRouter.publishMIDI = ConfigBool("publishmidi")
 		oneRouter.generateVisuals = ConfigBool("generatevisuals")
 		oneRouter.generateSound = ConfigBool("generatesound")
@@ -398,11 +400,11 @@ func (r *Router) HandleSubscribedEventArgs(args map[string]string) error {
 	case "cursor":
 
 		// If we're publishing cursor events, we ignore ones from ourself
-		if r.publishCursor && nuid == MyNUID() {
+		if r.publishGesture && nuid == MyNUID() {
 			return nil
 		}
 
-		cid := optionalStringArg("cid", args, "UnspecifiedCID")
+		id := optionalStringArg("id", args, "UnspecifiedID")
 
 		switch subEvent {
 		case "down":
@@ -417,10 +419,10 @@ func (r *Router) HandleSubscribedEventArgs(args map[string]string) error {
 			return err
 		}
 
-		ce := CursorDeviceEvent{
+		ce := GestureDeviceEvent{
 			NUID:       nuid,
 			Region:     region,
-			CID:        cid,
+			ID:         id,
 			Timestamp:  int64(CurrentMilli),
 			DownDragUp: subEvent,
 			X:          x,
@@ -429,14 +431,14 @@ func (r *Router) HandleSubscribedEventArgs(args map[string]string) error {
 			Area:       0.0,
 		}
 
-		if r.publishCursor {
-			err := PublishCursorDeviceEvent(ce)
+		if r.publishGesture {
+			err := PublishGestureDeviceEvent(ce)
 			if err != nil {
-				log.Printf("Router.routeCursorDeviceEvent: NATS publishing err=%s\n", err)
+				log.Printf("Router.routeGestureDeviceEvent: NATS publishing err=%s\n", err)
 			}
 		}
 
-		reactor.handleCursorDeviceEvent(ce)
+		reactor.handleGestureDeviceEvent(ce)
 
 	case "sprite":
 
@@ -480,24 +482,28 @@ func (r *Router) HandleSubscribedEventArgs(args map[string]string) error {
 	return nil
 }
 
-func (r *Router) handleCursorDeviceInput(e CursorDeviceEvent) {
+func (r *Router) handleGestureDeviceInput(e GestureDeviceEvent) {
 
 	r.eventMutex.Lock()
 	defer r.eventMutex.Unlock()
 
-	if r.publishCursor {
-		err := PublishCursorDeviceEvent(e)
+	for _, cb := range r.cursorCallbacks {
+		cb(e)
+	}
+
+	if r.publishGesture {
+		err := PublishGestureDeviceEvent(e)
 		if err != nil {
-			log.Printf("Router.routeCursorDeviceEvent: NATS publishing err=%s\n", err)
+			log.Printf("Router.routeGestureDeviceEvent: NATS publishing err=%s\n", err)
 		}
 	}
 
 	reactor, ok := r.reactors[e.Region]
 	if !ok {
-		log.Printf("routeCursorDeviceEvent: no region named %s, unable to process ce=%+v\n", e.Region, e)
+		log.Printf("routeGestureDeviceEvent: no region named %s, unable to process ce=%+v\n", e.Region, e)
 		return
 	}
-	reactor.handleCursorDeviceEvent(e)
+	reactor.handleGestureDeviceEvent(e)
 }
 
 // makeMIDIEvent xxx
@@ -638,15 +644,9 @@ func (r *Router) HandleOSCInput(e OSCEvent) {
 	}
 }
 
-func (r *Router) audioReset() {
-	msg := osc.NewMessage("/play")
-	msg.Append(int32(0))
-	r.plogueClient.Send(msg)
-	// Give Plogue time to react
-	time.Sleep(400 * time.Millisecond)
-	msg = osc.NewMessage("/play")
-	msg.Append(int32(1))
-	r.plogueClient.Send(msg)
+// AddGestureDeviceCallback xxx
+func (r *Router) AddGestureDeviceCallback(f GestureDeviceCallbackFunc) {
+	r.cursorCallbacks = append(r.cursorCallbacks, f)
 }
 
 // ExecuteAPI xxx
@@ -807,7 +807,7 @@ func (r *Router) advanceClickTo(toClick Clicks) {
 	for clk := r.lastClick; clk < toClick; clk++ {
 		for _, reactor := range r.reactors {
 			if (clk % oneBeat) == 0 {
-				reactor.checkCursorUp()
+				reactor.checkGestureUp()
 			}
 			reactor.AdvanceByOneClick()
 		}
@@ -890,6 +890,17 @@ func (r *Router) notifyGUI(eventName string) {
 	}
 }
 
+func (r *Router) audioReset() {
+	msg := osc.NewMessage("/play")
+	msg.Append(int32(0))
+	r.plogueClient.Send(msg)
+	// Give Plogue time to react
+	time.Sleep(400 * time.Millisecond)
+	msg = osc.NewMessage("/play")
+	msg.Append(int32(1))
+	r.plogueClient.Send(msg)
+}
+
 func (r *Router) recordingPlayback(events []*PlaybackEvent) error {
 
 	// XXX - WARNING, this code hasn't been exercised in a LONG time,
@@ -933,7 +944,7 @@ func (r *Router) recordingPlayback(events []*PlaybackEvent) error {
 				xf, _ := ParseFloat32(x, "cursor.x")
 				yf, _ := ParseFloat32(y, "cursor.y")
 				zf, _ := ParseFloat32(z, "cursor.z")
-				reactor.executeIncomingCursor(CursorStepEvent{
+				reactor.executeIncomingGesture(GestureStepEvent{
 					ID:         id,
 					X:          xf,
 					Y:          yf,
@@ -1012,16 +1023,16 @@ func (r *Router) handleOSCEvent(msg *osc.Message) {
 	_ = tags
 	nargs := msg.CountArguments()
 	if nargs < 1 {
-		log.Printf("Router.handleOSCCursorEvent: too few arguments\n")
+		log.Printf("Router.handleOSCGestureEvent: too few arguments\n")
 		return
 	}
 	rawargs, err := argAsString(msg, 0)
 	if err != nil {
-		log.Printf("Router.handleOSCCursorEvent: err=%s\n", err)
+		log.Printf("Router.handleOSCGestureEvent: err=%s\n", err)
 		return
 	}
 	if len(rawargs) == 0 || rawargs[0] != '{' {
-		log.Printf("Router.handleOSCCursorEvent: first char of args must be curly brace\n")
+		log.Printf("Router.handleOSCGestureEvent: first char of args must be curly brace\n")
 		return
 	}
 
@@ -1031,7 +1042,7 @@ func (r *Router) handleOSCEvent(msg *osc.Message) {
 
 	err = r.HandleSubscribedEventArgs(args)
 	if err != nil {
-		log.Printf("Router.handleOSCCursorEvent: err=%s\n", err)
+		log.Printf("Router.handleOSCGestureEvent: err=%s\n", err)
 		return
 	}
 }
@@ -1133,13 +1144,13 @@ func (r *Router) availableRegion(source string) string {
 	for i, used := range alreadyAssigned {
 		if !used {
 			avail := r.regionLetters[i : i+1]
-			if DebugUtil.Cursor {
+			if DebugUtil.Gesture {
 				log.Printf("Router.assignRegion: %s is assigned to source=%s\n", avail, source)
 			}
 			return avail
 		}
 	}
-	if DebugUtil.Cursor {
+	if DebugUtil.Gesture {
 		log.Printf("Router.assignRegion: No regions available\n")
 	}
 	return ""

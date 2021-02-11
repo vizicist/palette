@@ -77,8 +77,8 @@ func LoadMorphs() error {
 
 var noWriter = &NoWriter{}
 
-// RealStartCursorInput starts anything needed to provide device inputs
-func RealStartCursorInput(callback CursorDeviceCallbackFunc) {
+// RealStartGestureInput starts anything needed to provide device inputs
+func RealStartGestureInput(callback GestureDeviceCallbackFunc) {
 
 	err := LoadMorphs()
 	if err != nil {

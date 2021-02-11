@@ -16,8 +16,8 @@ var PaletteEventSubject = "palette.event"
 
 var time0 = time.Now()
 
-// PublishCursorDeviceEvent xxx
-func PublishCursorDeviceEvent(ce CursorDeviceEvent) error {
+// PublishGestureDeviceEvent xxx
+func PublishGestureDeviceEvent(ce GestureDeviceEvent) error {
 	dt := time.Now().Sub(time0)
 	regionvalue := ""
 	if ce.Region != "" {
@@ -26,7 +26,7 @@ func PublishCursorDeviceEvent(ce CursorDeviceEvent) error {
 	event := "cursor_" + ce.DownDragUp
 	params := "{ " +
 		"\"nuid\": \"" + ce.NUID + "\", " +
-		"\"cid\": \"" + ce.CID + "\", " +
+		"\"id\": \"" + ce.ID + "\", " +
 		regionvalue +
 		"\"event\": \"" + event + "\", " +
 		"\"millisecs\": \"" + fmt.Sprintf("%d", dt.Milliseconds()) + "\", " +
@@ -50,7 +50,7 @@ func PublishMIDIDeviceEvent(me MIDIDeviceEvent) error {
 	dt := time.Now().Sub(time0)
 	// NOTE: we ignore the Timestamp on the MIDIDeviceEvent
 	// and use our own, so the timestamps are consistent with
-	// the ones on Cursor events
+	// the ones on Gesture events
 	params := "{ " +
 		"\"nuid\": \"" + MyNUID() + "\", " +
 		"\"event\": \"" + "midi" + "\", " +
