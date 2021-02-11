@@ -12,8 +12,6 @@ import (
 type Riff struct {
 	ctx         gui.WinContext
 	clearButton gui.Window
-	testButton  gui.Window
-	threeButton gui.Window
 	TextArea    gui.Window
 }
 
@@ -25,10 +23,6 @@ func NewRiff(parent gui.Window) gui.ToolData {
 	}
 
 	riff.clearButton = gui.AddChild(riff, gui.NewButton(riff, "Clear"))
-
-	riff.testButton = gui.AddChild(riff, gui.NewButton(riff, "Test"))
-
-	riff.threeButton = gui.AddChild(riff, gui.NewButton(riff, "Three"))
 
 	riff.TextArea = gui.AddChild(riff, gui.NewScrollingText(riff))
 
@@ -78,10 +72,6 @@ func (riff *Riff) Do(cmd string, arg interface{}) (interface{}, error) {
 		// Clear is the only button
 		b := gui.ToString(arg)
 		switch b {
-		case "Test":
-			riff.addLine("Test!\n")
-		case "Three":
-			riff.addLine("Three!\n")
 		case "Clear":
 			riff.TextArea.Do("clear", nil)
 		default:
@@ -126,10 +116,10 @@ func (riff *Riff) resize() {
 	// layout and resize all the buttons
 	// XXX - this idiom should eventually be a layout utility
 	pos := image.Point{2, 2}
-	for _, w := range []gui.Window{riff.clearButton, riff.testButton, riff.threeButton} {
+	for _, w := range []gui.Window{riff.clearButton} {
 		gui.WinSetChildPos(riff, w, pos)
 		gui.WinSetChildSize(w, buttSize)
-		// Advance the horizontal position of the next button
+		// Advance the horizontal position for the next button
 		pos = pos.Add(image.Point{buttWidth, 0})
 	}
 }
