@@ -8,11 +8,11 @@ type MIDIDeviceEvent struct {
 	Data2     int64
 }
 
-// CursorDeviceEvent is a single CursorDevice event
-type CursorDeviceEvent struct {
+// GestureDeviceEvent is a single GestureDevice event
+type GestureDeviceEvent struct {
 	NUID       string
 	Region     string
-	CID        string
+	ID         string
 	Timestamp  int64  // milliseconds
 	DownDragUp string // "down", "drag", "up"
 	X          float32
@@ -21,8 +21,8 @@ type CursorDeviceEvent struct {
 	Area       float32
 }
 
-// CursorStepEvent is a down, drag, or up event inside a loop step
-type CursorStepEvent struct {
+// GestureStepEvent is a down, drag, or up event inside a loop step
+type GestureStepEvent struct {
 	ID         string // globally unique of the form {nuid}.{CID}[.#{instancenum}]
 	X          float32
 	Y          float32
@@ -34,10 +34,10 @@ type CursorStepEvent struct {
 	Finished   bool
 }
 
-// ActiveStepCursor is a currently active (i.e. down) cursor
-// NOTE: these are the cursors caused by CursorStepEvents,
-// not the cursors caused by CursorDeviceEvents.
-type ActiveStepCursor struct {
+// ActiveStepGesture is a currently active (i.e. down) cursor
+// NOTE: these are the cursors caused by GestureStepEvents,
+// not the cursors caused by GestureDeviceEvents.
+type ActiveStepGesture struct {
 	id        string
 	x         float32
 	y         float32
@@ -45,13 +45,13 @@ type ActiveStepCursor struct {
 	loopsLeft int
 	maxz      float32
 	lastDrag  Clicks // to filter MIDI events for drag
-	downEvent CursorStepEvent
+	downEvent GestureStepEvent
 }
 
-// CursorDeviceCallbackFunc xxx
-type CursorDeviceCallbackFunc func(e CursorDeviceEvent)
+// GestureDeviceCallbackFunc xxx
+type GestureDeviceCallbackFunc func(e GestureDeviceEvent)
 
-// StartCursorInput xxx
-func StartCursorInput() {
-	go RealStartCursorInput(TheRouter().handleCursorDeviceInput)
+// StartGestureInput xxx
+func StartGestureInput() {
+	go RealStartGestureInput(TheRouter().handleGestureDeviceInput)
 }

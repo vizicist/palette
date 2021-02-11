@@ -7,8 +7,8 @@ import (
 
 // LoopEvent is what gets played back in a loop
 type LoopEvent struct {
-	hasCursor       bool
-	cursorStepEvent CursorStepEvent
+	hasGesture       bool
+	gestureStepEvent GestureStepEvent
 }
 
 // Step is one step of one loop in the looper
@@ -57,13 +57,13 @@ func (loop *StepLoop) Clear() {
 	}
 }
 
-// ClearID removes all cursorStepEvents with a given id
+// ClearID removes all gestureStepEvents with a given id
 func (loop *StepLoop) ClearID(id string) {
 
 	loop.stepsMutex.Lock()
 	defer loop.stepsMutex.Unlock()
 
-	if DebugUtil.Cursor {
+	if DebugUtil.Gesture {
 		log.Printf("StepLoop.ClearID: START ClearID for id=%s\n", id)
 	}
 	for _, step := range loop.steps {
@@ -73,9 +73,9 @@ func (loop *StepLoop) ClearID(id string) {
 		// log.Printf("Before deleting id=%s  events=%v\n", id, step.events)
 		newevents := step.events[:0]
 		for _, event := range step.events {
-			if event.cursorStepEvent.ID != id {
+			if event.gestureStepEvent.ID != id {
 				newevents = append(newevents, event)
-				// log.Printf("Should be deleting cursorStepEvent = %v\n", event.cursorStepEvent)
+				// log.Printf("Should be deleting gestureStepEvent = %v\n", event.gestureStepEvent)
 			}
 		}
 		step.events = newevents
@@ -84,20 +84,20 @@ func (loop *StepLoop) ClearID(id string) {
 }
 
 // AddToStep adds a StepItem to the loop at the current step
-func (loop *StepLoop) AddToStep(ce CursorStepEvent, stepnum Clicks) {
-	if DebugUtil.Cursor {
-		log.Printf("StepLoop.AddToStep: stepnum=%d cid=%s\n", stepnum, ce.ID)
+func (loop *StepLoop) AddToStep(ce GestureStepEvent, stepnum Clicks) {
+	if DebugUtil.Gesture {
+		log.Printf("StepLoop.AddToStep: stepnum=%d id=%s\n", stepnum, ce.ID)
 	}
 	step := loop.steps[stepnum]
-	le := &LoopEvent{cursorStepEvent: ce}
+	le := &LoopEvent{gestureStepEvent: ce}
 
-	// We only want a single drag event per cursor in a single Step.
-	// If one is found for the same cursor id,
+	// We only want a single drag event per gesture in a single Step.
+	// If one is found for the same gesture id,
 	// replace it rather than appending a second one.
 	if ce.Downdragup == "drag" {
 		replace := -1
 		for i, e := range step.events {
-			if ce.ID == e.cursorStepEvent.ID && e.cursorStepEvent.Downdragup == "drag" {
+			if ce.ID == e.gestureStepEvent.ID && e.gestureStepEvent.Downdragup == "drag" {
 				replace = i
 				break
 			}

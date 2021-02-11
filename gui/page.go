@@ -12,8 +12,8 @@ import (
 // MouseHandler xxx
 type MouseHandler func(MouseCmd)
 
-// CursorDrawer xxx
-type CursorDrawer func()
+// MouseDrawer xxx
+type MouseDrawer func()
 
 // Page is the top-most Window
 type Page struct {
@@ -21,7 +21,7 @@ type Page struct {
 	pageName      string
 	lastPos       image.Point
 	mouseHandler  MouseHandler
-	cursorDrawer  CursorDrawer
+	mouseDrawer   MouseDrawer
 	dragStart     image.Point // used for resize, move, etc
 	targetWindow  Window      // used for resize, move, delete, etc
 	currentAction string
@@ -92,8 +92,8 @@ func (page *Page) Do(cmd string, arg interface{}) (interface{}, error) {
 
 	case "redraw":
 		RedrawChildren(page)
-		if page.cursorDrawer != nil {
-			page.cursorDrawer()
+		if page.mouseDrawer != nil {
+			page.mouseDrawer()
 		}
 
 	case "mouse":
@@ -124,29 +124,29 @@ func (page *Page) Do(cmd string, arg interface{}) (interface{}, error) {
 
 	case "sweeptool":
 		page.startSweep("addtool")
-		page.cursorDrawer = page.drawSweepCursor
+		page.mouseDrawer = page.drawSweepMouse
 		page.sweepToolName = ToString(arg)
-		page.showCursor(false)
+		page.showMouse(false)
 
 	case "picktool":
 		page.mouseHandler = page.pickHandler
-		page.cursorDrawer = page.drawPickCursor
+		page.mouseDrawer = page.drawPickMouse
 		page.currentAction = ToString(arg) // e.g. "resize", "delete"
-		page.showCursor(false)
+		page.showMouse(false)
 
 	case "movetool":
 		page.mouseHandler = page.moveHandler
-		page.cursorDrawer = page.drawPickCursor
+		page.mouseDrawer = page.drawPickMouse
 		page.dragStart = page.lastPos
 		// page.targetWindow = ToMenu(arg)
-		page.showCursor(false)
+		page.showMouse(false)
 
 	case "movemenu":
 		page.mouseHandler = page.moveHandler
-		page.cursorDrawer = page.drawPickCursor
+		page.mouseDrawer = page.drawPickMouse
 		page.dragStart = page.lastPos
 		page.targetWindow = ToMenu(arg)
-		page.showCursor(false)
+		page.showMouse(false)
 
 	default:
 		DoUpstream(page, cmd, arg)
@@ -279,7 +279,7 @@ func (page *Page) drawSweepRect() {
 	DoUpstream(page, "drawrect", page.sweepRect())
 }
 
-func (page *Page) drawSweepCursor() {
+func (page *Page) drawSweepMouse() {
 	DoUpstream(page, "setcolor", ForeColor)
 	pos := page.lastPos
 	DoUpstream(page, "drawline", DrawLineCmd{
@@ -297,7 +297,7 @@ func (page *Page) drawSweepCursor() {
 	})
 }
 
-func (page *Page) drawPickCursor() {
+func (page *Page) drawPickMouse() {
 	DoUpstream(page, "setcolor", ForeColor)
 	sz := 10
 	pos := page.lastPos
@@ -366,7 +366,7 @@ func (page *Page) sweepHandler(cmd MouseCmd) {
 
 	case MouseDown:
 		page.dragStart = cmd.Pos
-		page.cursorDrawer = page.drawSweepRect
+		page.mouseDrawer = page.drawSweepRect
 
 	case MouseDrag:
 		// do nothing
@@ -494,18 +494,18 @@ func (page *Page) anyOverlap(rect image.Rectangle, ignore Window) bool {
 
 func (page *Page) resetHandlers() {
 	page.mouseHandler = page.defaultHandler
-	page.cursorDrawer = nil
+	page.mouseDrawer = nil
 	page.targetWindow = nil
-	page.showCursor(true)
+	page.showMouse(true)
 }
 
-func (page *Page) showCursor(b bool) {
+func (page *Page) showMouse(b bool) {
 	DoUpstream(page, "showcursor", b)
 }
 
 func (page *Page) startSweep(action string) {
 	page.mouseHandler = page.sweepHandler
-	page.cursorDrawer = page.drawSweepCursor
+	page.mouseDrawer = page.drawSweepMouse
 	page.currentAction = action
 	page.dragStart = page.lastPos
 }

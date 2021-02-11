@@ -264,7 +264,7 @@ var morphMaxForce float32 = 1000.0
 var allMorphs []oneMorph
 
 // StartMorph xxx
-func StartMorph(callback CursorDeviceCallbackFunc, forceFactor float32) {
+func StartMorph(callback GestureDeviceCallbackFunc, forceFactor float32) {
 	err := initialize()
 	if err != nil {
 		log.Printf("Morph.Initialize: err=%s\n", err)
@@ -282,14 +282,14 @@ func StartMorph(callback CursorDeviceCallbackFunc, forceFactor float32) {
 	}
 }
 
-// CursorDown etc match values in sensel.h
+// GestureDown etc match values in sensel.h
 const (
-	CursorDown = 1
-	CursorDrag = 2
-	CursorUp   = 3
+	GestureDown = 1
+	GestureDrag = 2
+	GestureUp   = 3
 )
 
-func (m oneMorph) readFrames(callback CursorDeviceCallbackFunc, forceFactor float32) {
+func (m oneMorph) readFrames(callback GestureDeviceCallbackFunc, forceFactor float32) {
 	status := C.SenselReadSensor(C.uchar(m.idx))
 	if status != C.SENSEL_OK {
 		log.Printf("Morph: SenselReadSensor for idx=%d returned %d", m.idx, status)
@@ -322,11 +322,11 @@ func (m oneMorph) readFrames(callback CursorDeviceCallbackFunc, forceFactor floa
 			area := float32(contact.area)
 			var ddu string
 			switch contact.state {
-			case CursorDown:
+			case GestureDown:
 				ddu = "down"
-			case CursorDrag:
+			case GestureDrag:
 				ddu = "drag"
-			case CursorUp:
+			case GestureUp:
 				ddu = "up"
 			default:
 				log.Printf("Morph: Invalid value for contact.state - %d\n", contact.state)
@@ -383,10 +383,10 @@ func (m oneMorph) readFrames(callback CursorDeviceCallbackFunc, forceFactor floa
 				xNorm = 1.0
 			}
 
-			ev := CursorDeviceEvent{
+			ev := GestureDeviceEvent{
 				NUID:       MyNUID(),
 				Region:     region,
-				CID:        cid,
+				ID:         cid,
 				Timestamp:  0,
 				DownDragUp: ddu,
 				X:          xNorm,

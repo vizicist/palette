@@ -10,6 +10,7 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/hajimehoshi/ebiten/v2/text"
+	"github.com/vizicist/palette/engine"
 	"golang.org/x/image/font"
 )
 
@@ -33,9 +34,9 @@ type Screen struct {
 type cursorStyle int
 
 const (
-	normalCursorStyle = iota
-	pickCursorStyle
-	sweepCursorStyle
+	normalMouseStyle = iota
+	pickMouseStyle
+	sweepMouseStyle
 )
 
 // CurrentPage xxx
@@ -72,10 +73,17 @@ func Run() {
 	td := NewPage(screen, "home")
 	screen.currentPage = AddChild(screen, td)
 
+	// Get callbacks for cursor events
+	engine.TheRouter().AddGestureDeviceCallback(screen.handleGestureDeviceInput)
+
 	// This is it!  RunGame runs forever
 	if err := ebiten.RunGame(screen); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func (screen *Screen) handleGestureDeviceInput(e engine.GestureDeviceEvent) {
+	log.Printf("Screen.handleGestureDeviceInput: e=%v\n", e)
 }
 
 // Context xxx

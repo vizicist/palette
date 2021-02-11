@@ -217,8 +217,8 @@ func (menu *Menu) Do(cmd string, arg interface{}) (interface{}, error) {
 
 	switch cmd {
 
-	case "closeyourself":
-		log.Printf("menu.Do: closeyourself needs work!\n")
+	case "close":
+		log.Printf("menu.Do: close needs work?  Maybe not\n")
 
 	case "resize":
 		menu.resize(ToPoint(arg))

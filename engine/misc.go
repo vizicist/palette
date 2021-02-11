@@ -24,7 +24,7 @@ var DebugUtil = DebugFlags{}
 type DebugFlags struct {
 	Advance   bool
 	API       bool
-	Cursor    bool
+	Gesture   bool
 	GenVisual bool
 	GenSound  bool
 	ISF       bool
@@ -48,7 +48,7 @@ func setDebug(dtype string, b bool) error {
 	case "api":
 		DebugUtil.API = b
 	case "cursor":
-		DebugUtil.Cursor = b
+		DebugUtil.Gesture = b
 	case "notify":
 		DebugUtil.Notify = b
 	case "gen":

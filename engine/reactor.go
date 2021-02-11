@@ -53,7 +53,7 @@ type Reactor struct {
 	loopIsRecording        bool
 	loopIsPlaying          bool
 	fadeLoop               float32
-	lastCursorStepEvent    CursorStepEvent
+	lastGestureStepEvent   GestureStepEvent
 	lastUnQuantizedStepNum Clicks
 
 	// params                         map[string]interface{}
@@ -62,16 +62,16 @@ type Reactor struct {
 	paramsMutex               sync.RWMutex
 	activeNotes               map[string]*ActiveNote
 	activeNotesMutex          sync.RWMutex
-	activeCursors             map[string]*ActiveStepCursor
-	activeCursorsMutex        sync.RWMutex
+	activeGestures            map[string]*ActiveStepGesture
+	activeGesturesMutex       sync.RWMutex
 	permInstanceIDMutex       sync.RWMutex
 	permInstanceIDQuantized   map[string]string // map incoming IDs to permInstanceIDs in the steploop
 	permInstanceIDUnquantized map[string]string // map incoming IDs to permInstanceIDs in the steploop
 	permInstanceIDDownClick   map[string]Clicks // map permInstanceIDs to quantized stepnum of the down event
 	permInstanceIDDownQuant   map[string]Clicks // map permInstanceIDs to quantize value of the "down" event
 	permInstanceIDDragOK      map[string]bool
-	deviceCursors             map[string]*DeviceCursor
-	deviceCursorsMutex        sync.RWMutex
+	deviceGestures            map[string]*DeviceGesture
+	deviceGesturesMutex       sync.RWMutex
 
 	activePhrasesManager *ActivePhrasesManager
 
@@ -98,7 +98,7 @@ func NewReactor(pad string, resolumeLayer int, freeframeClient *osc.Client, reso
 		// params:                         make(map[string]interface{}),
 		params:                    NewParamValues(),
 		activeNotes:               make(map[string]*ActiveNote),
-		activeCursors:             make(map[string]*ActiveStepCursor),
+		activeGestures:            make(map[string]*ActiveStepGesture),
 		permInstanceIDQuantized:   make(map[string]string),
 		permInstanceIDUnquantized: make(map[string]string),
 		permInstanceIDDownClick:   make(map[string]Clicks),
@@ -106,7 +106,7 @@ func NewReactor(pad string, resolumeLayer int, freeframeClient *osc.Client, reso
 		permInstanceIDDragOK:      make(map[string]bool),
 		fadeLoop:                  0.5,
 		loop:                      NewLoop(oneBeat * 4),
-		deviceCursors:             make(map[string]*DeviceCursor),
+		deviceGestures:            make(map[string]*DeviceGesture),
 		activePhrasesManager:      NewActivePhrasesManager(),
 
 		MIDIOctaveShift:  0,
@@ -128,44 +128,43 @@ func (r *Reactor) Time() time.Time {
 	return time.Now()
 }
 
-func (r *Reactor) handleCursorDeviceEvent(e CursorDeviceEvent) {
+func (r *Reactor) handleGestureDeviceEvent(e GestureDeviceEvent) {
 
-	id := e.NUID + "." + e.CID
+	id := e.NUID + "." + e.ID
 
-	r.deviceCursorsMutex.Lock()
-	defer r.deviceCursorsMutex.Unlock()
+	r.deviceGesturesMutex.Lock()
+	defer r.deviceGesturesMutex.Unlock()
 
-	tc, ok := r.deviceCursors[id]
+	tc, ok := r.deviceGestures[id]
 	if !ok {
-		// new DeviceCursor
-		tc = &DeviceCursor{}
-		r.deviceCursors[id] = tc
+		tc = &DeviceGesture{}
+		r.deviceGestures[id] = tc
 	}
 	tc.lastTouch = r.Time()
 
-	// If it's a new (downed==false) cursor, make sure the first step event is "down
+	// If it's a new (downed==false) gesture, make sure the first step event is "down
 	if !tc.downed {
 		e.DownDragUp = "down"
 		tc.downed = true
 	}
-	cse := CursorStepEvent{
+	cse := GestureStepEvent{
 		ID:         id,
 		X:          e.X,
 		Y:          e.Y,
 		Z:          e.Z,
 		Downdragup: e.DownDragUp,
 	}
-	if DebugUtil.Cursor {
-		log.Printf("Reactor.handleCursorDeviceEvent: pad=%s e=%+v cse=%+v\n", r.padName, e, cse)
+	if DebugUtil.Gesture {
+		log.Printf("Reactor.handleGestureDeviceEvent: pad=%s e=%+v cse=%+v\n", r.padName, e, cse)
 	}
 
-	r.executeIncomingCursor(cse)
+	r.executeIncomingGesture(cse)
 
 	if e.DownDragUp == "up" {
-		if DebugUtil.Cursor {
-			log.Printf("Router.handleCursorDeviceEvent: deleting cursor id=%s\n", id)
+		if DebugUtil.Gesture {
+			log.Printf("Router.handleGestureDeviceEvent: deleting gesture id=%s\n", id)
 		}
-		delete(r.deviceCursors, id)
+		delete(r.deviceGestures, id)
 	}
 }
 
@@ -174,19 +173,19 @@ func (r *Reactor) handleCursorDeviceEvent(e CursorDeviceEvent) {
 // resulting in a cursor UP event.
 const checkDelay time.Duration = 2 * time.Second
 
-func (r *Reactor) checkCursorUp() {
+func (r *Reactor) checkGestureUp() {
 	now := r.Time()
 
-	r.deviceCursorsMutex.Lock()
-	defer r.deviceCursorsMutex.Unlock()
-	for id, c := range r.deviceCursors {
+	r.deviceGesturesMutex.Lock()
+	defer r.deviceGesturesMutex.Unlock()
+	for id, c := range r.deviceGestures {
 		elapsed := now.Sub(c.lastTouch)
 		if elapsed > checkDelay {
-			r.executeIncomingCursor(CursorStepEvent{ID: id, Downdragup: "up"})
-			if DebugUtil.Cursor {
-				log.Printf("Reactor.checkCursorUp: deleting cursor id=%s elapsed=%v\n", id, elapsed)
+			r.executeIncomingGesture(GestureStepEvent{ID: id, Downdragup: "up"})
+			if DebugUtil.Gesture {
+				log.Printf("Reactor.checkGestureUp: deleting cursor id=%s elapsed=%v\n", id, elapsed)
 			}
-			delete(r.deviceCursors, id)
+			delete(r.deviceGestures, id)
 		}
 	}
 }
@@ -205,16 +204,16 @@ func (r *Reactor) getActiveNote(id string) *ActiveNote {
 	return a
 }
 
-func (r *Reactor) getActiveStepCursor(ce CursorStepEvent) *ActiveStepCursor {
+func (r *Reactor) getActiveStepGesture(ce GestureStepEvent) *ActiveStepGesture {
 	sid := ce.ID
-	r.activeCursorsMutex.RLock()
-	ac, ok := r.activeCursors[sid]
-	r.activeCursorsMutex.RUnlock()
+	r.activeGesturesMutex.RLock()
+	ac, ok := r.activeGestures[sid]
+	r.activeGesturesMutex.RUnlock()
 	if !ok {
-		ac = &ActiveStepCursor{downEvent: ce}
-		r.activeCursorsMutex.Lock()
-		r.activeCursors[sid] = ac
-		r.activeCursorsMutex.Unlock()
+		ac = &ActiveStepGesture{downEvent: ce}
+		r.activeGesturesMutex.Lock()
+		r.activeGestures[sid] = ac
+		r.activeGesturesMutex.Unlock()
 	}
 	return ac
 }
@@ -257,7 +256,7 @@ func (r *Reactor) generateSprite(id string, x, y, z float32) {
 	r.toFreeFramePluginForLayer(msg)
 }
 
-func (r *Reactor) generateVisualsFromCursor(ce CursorStepEvent) {
+func (r *Reactor) generateVisualsFromGesture(ce GestureStepEvent) {
 	if !TheRouter().generateVisuals {
 		return
 	}
@@ -319,7 +318,7 @@ func (r *Reactor) generateSpriteFromNote(a *ActiveNote) {
 	r.toFreeFramePluginForLayer(msg)
 }
 
-func (r *Reactor) notifyGUI(ce CursorStepEvent, wasFresh bool) {
+func (r *Reactor) notifyGUI(ce GestureStepEvent, wasFresh bool) {
 	if !ConfigBool("notifygui") {
 		return
 	}
@@ -479,7 +478,7 @@ func (r *Reactor) PassThruMIDI(e portmidi.Event, scadjust bool) {
 	}
 }
 
-func (r *Reactor) generateSoundFromCursor(ce CursorStepEvent) {
+func (r *Reactor) generateSoundFromGesture(ce GestureStepEvent) {
 	if !TheRouter().generateSound {
 		return
 	}
@@ -569,13 +568,13 @@ func (r *Reactor) AdvanceByOneClick() {
 	if step != nil && step.events != nil && len(step.events) > 0 {
 		for _, event := range step.events {
 
-			ce := event.cursorStepEvent
+			ce := event.gestureStepEvent
 
 			if DebugUtil.Advance {
 				log.Printf("Reactor.advanceClickBy1: pad=%s stepnum=%d ce=%+v\n", r.padName, stepnum, ce)
 			}
 
-			ac := r.getActiveStepCursor(ce)
+			ac := r.getActiveStepGesture(ce)
 			ac.x = ce.X
 			ac.y = ce.Y
 			ac.z = ce.Z
@@ -587,19 +586,19 @@ func (r *Reactor) AdvanceByOneClick() {
 			if ce.Fresh || r.loopIsPlaying {
 				playit = true
 			}
-			event.cursorStepEvent.Fresh = false
+			event.gestureStepEvent.Fresh = false
 			ce.Fresh = false // needed?
 
-			// Note that we fade the z values in CursorStepEvent, not ActiveStepCursor,
-			// because ActiveStepCursor goes away when the gesture ends,
-			// while CursorStepEvents in the loop stick around.
-			event.cursorStepEvent.Z = event.cursorStepEvent.Z * r.fadeLoop // fade it
-			event.cursorStepEvent.LoopsLeft--
+			// Note that we fade the z values in GestureStepEvent, not ActiveStepGesture,
+			// because ActiveStepGesture goes away when the gesture ends,
+			// while GestureStepEvents in the loop stick around.
+			event.gestureStepEvent.Z = event.gestureStepEvent.Z * r.fadeLoop // fade it
+			event.gestureStepEvent.LoopsLeft--
 			ce.LoopsLeft--
 
 			minz := float32(0.001)
 
-			// Keep track of the maximum z value for an ActiveCursor,
+			// Keep track of the maximum z value for an ActiveGesture,
 			// so we know (when get the UP) whether we should
 			// delete this gesture.
 			switch {
@@ -646,10 +645,10 @@ func (r *Reactor) AdvanceByOneClick() {
 						dclick := currentClick - ac.lastDrag
 						if ac.lastDrag < 0 || dclick >= oneBeat/32 {
 							ac.lastDrag = currentClick
-							r.generateSoundFromCursor(ce)
+							r.generateSoundFromGesture(ce)
 						}
 					} else {
-						r.generateSoundFromCursor(ce)
+						r.generateSoundFromGesture(ce)
 					}
 				} else {
 					// Graphics and GUI stuff
@@ -658,7 +657,7 @@ func (r *Reactor) AdvanceByOneClick() {
 						if DebugUtil.Loop {
 							log.Printf("Reactor.advanceClickBy1: stepnum=%d generateVisuals ce=%+v\n", stepnum, ce)
 						}
-						r.generateVisualsFromCursor(ce)
+						r.generateVisualsFromGesture(ce)
 					}
 					r.notifyGUI(ce, wasFresh)
 				}
@@ -676,7 +675,7 @@ func (r *Reactor) AdvanceByOneClick() {
 				// log.Printf("Before deleting id=%s  events=%v\n", id, step.events)
 				newevents := step.events[:0]
 				for _, event := range step.events {
-					if event.cursorStepEvent.ID != removeID {
+					if event.gestureStepEvent.ID != removeID {
 						// Include this event
 						newevents = append(newevents, event)
 					}
@@ -695,10 +694,10 @@ func (r *Reactor) AdvanceByOneClick() {
 	}
 }
 
-func (r *Reactor) executeIncomingCursor(ce CursorStepEvent) {
+func (r *Reactor) executeIncomingGesture(ce GestureStepEvent) {
 
-	if DebugUtil.Cursor {
-		log.Printf("Reactor.executeIncomingCursor: ce=%+v\n", ce)
+	if DebugUtil.Gesture {
+		log.Printf("Reactor.executeIncomingGesture: ce=%+v\n", ce)
 	}
 
 	// Every cursor event actually gets added to the step loop,
@@ -722,7 +721,7 @@ func (r *Reactor) executeIncomingCursor(ce CursorStepEvent) {
 	// 	currentClick, r.loop.currentStep, q, quantizedStepnum)
 
 	// We create a new "permanent" id for each incoming ce.id,
-	// so that all of that id's CursorEvents (from down through UP)
+	// so that all of that id's GestureEvents (from down through UP)
 	// in the steps of the loop will have a unique id.
 
 	r.permInstanceIDMutex.RLock()
@@ -731,7 +730,7 @@ func (r *Reactor) executeIncomingCursor(ce CursorStepEvent) {
 	r.permInstanceIDMutex.RUnlock()
 
 	if (!ok1 || !ok2) && ce.Downdragup != "down" {
-		log.Printf("Reactor.executeIncomingCursor: drag or up event didn't find ce.ID=%s in incomingIDToPermSid*\n", ce.ID)
+		log.Printf("Reactor.executeIncomingGesture: drag or up event didn't find ce.ID=%s in incomingIDToPermSid*\n", ce.ID)
 		return
 	}
 
@@ -775,8 +774,8 @@ func (r *Reactor) executeIncomingCursor(ce CursorStepEvent) {
 	ce.Fresh = true
 	ce.Quantized = true
 
-	// Make a separate CursorEvent for the unquantized event
-	ceUnquantized := CursorStepEvent{
+	// Make a separate copy for the unquantized event
+	ceUnquantized := GestureStepEvent{
 		ID:         permInstanceIDUnquantized,
 		X:          ce.X,
 		Y:          ce.Y,
@@ -897,7 +896,7 @@ func (r *Reactor) paramIntValue(paramname string) int {
 }
 */
 
-func (r *Reactor) cursorToNoteOn(ce CursorStepEvent) *Note {
+func (r *Reactor) cursorToNoteOn(ce GestureStepEvent) *Note {
 	pitch := r.cursorToPitch(ce)
 	pitch = uint8(int(pitch) + r.TransposePitch)
 	velocity := r.cursorToVelocity(ce)
@@ -906,7 +905,7 @@ func (r *Reactor) cursorToNoteOn(ce CursorStepEvent) *Note {
 	return NewNoteOn(pitch, velocity, synth)
 }
 
-func (r *Reactor) cursorToPitch(ce CursorStepEvent) uint8 {
+func (r *Reactor) cursorToPitch(ce GestureStepEvent) uint8 {
 	pitchmin := r.params.ParamIntValue("sound.pitchmin")
 	pitchmax := r.params.ParamIntValue("sound.pitchmax")
 	dp := pitchmax - pitchmin + 1
@@ -925,7 +924,7 @@ func (r *Reactor) cursorToPitch(ce CursorStepEvent) uint8 {
 	return p
 }
 
-func (r *Reactor) cursorToVelocity(ce CursorStepEvent) uint8 {
+func (r *Reactor) cursorToVelocity(ce GestureStepEvent) uint8 {
 	vol := r.params.ParamStringValue("misc.vol", "fixed")
 	velocitymin := r.params.ParamIntValue("sound.velocitymin")
 	velocitymax := r.params.ParamIntValue("sound.velocitymax")
@@ -956,11 +955,11 @@ func (r *Reactor) cursorToVelocity(ce CursorStepEvent) uint8 {
 	return uint8(vel)
 }
 
-func (r *Reactor) cursorToDuration(ce CursorStepEvent) int {
+func (r *Reactor) cursorToDuration(ce GestureStepEvent) int {
 	return 92
 }
 
-func (r *Reactor) cursorToQuant(ce CursorStepEvent) Clicks {
+func (r *Reactor) cursorToQuant(ce GestureStepEvent) Clicks {
 	quant := r.params.ParamStringValue("misc.quant", "fixed")
 	q := Clicks(1)
 	if quant == "none" || quant == "" {
@@ -1145,12 +1144,12 @@ func (r *Reactor) loopComb() {
 	defer r.loop.stepsMutex.Unlock()
 
 	// Create a map of the UP cursor events, so we only do completed notes
-	upEvents := make(map[string]CursorStepEvent)
+	upEvents := make(map[string]GestureStepEvent)
 	for _, step := range r.loop.steps {
 		if step.events != nil && len(step.events) > 0 {
 			for _, event := range step.events {
-				if event.cursorStepEvent.Downdragup == "up" {
-					upEvents[event.cursorStepEvent.ID] = event.cursorStepEvent
+				if event.gestureStepEvent.Downdragup == "up" {
+					upEvents[event.gestureStepEvent.ID] = event.gestureStepEvent
 				}
 			}
 		}
@@ -1163,7 +1162,7 @@ func (r *Reactor) loopComb() {
 		if combme == 0 {
 			r.loop.ClearID(id)
 			// log.Printf("loopComb, ClearID id=%s upEvents[id]=%+v\n", id, upEvents[id])
-			r.generateSoundFromCursor(upEvents[id])
+			r.generateSoundFromGesture(upEvents[id])
 		}
 		combme = (combme + 1) % combmod
 	}
@@ -1182,20 +1181,20 @@ func (r *Reactor) loopQuant() {
 	// Create a map of the UP cursor events, so we only do completed notes
 	// Create a map of the DOWN events so we know how much to shift that cursor.
 	quant := oneBeat / 2
-	upEvents := make(map[string]CursorStepEvent)
-	downEvents := make(map[string]CursorStepEvent)
+	upEvents := make(map[string]GestureStepEvent)
+	downEvents := make(map[string]GestureStepEvent)
 	shiftOf := make(map[string]Clicks)
 	for stepnum, step := range r.loop.steps {
 		if step.events != nil && len(step.events) > 0 {
 			for _, e := range step.events {
-				switch e.cursorStepEvent.Downdragup {
+				switch e.gestureStepEvent.Downdragup {
 				case "up":
-					upEvents[e.cursorStepEvent.ID] = e.cursorStepEvent
+					upEvents[e.gestureStepEvent.ID] = e.gestureStepEvent
 				case "down":
-					downEvents[e.cursorStepEvent.ID] = e.cursorStepEvent
+					downEvents[e.gestureStepEvent.ID] = e.gestureStepEvent
 					shift := r.nextQuant(Clicks(stepnum), quant)
 					log.Printf("Down, shift=%d\n", shift)
-					shiftOf[e.cursorStepEvent.ID] = Clicks(shift)
+					shiftOf[e.gestureStepEvent.ID] = Clicks(shift)
 				}
 			}
 		}
@@ -1212,11 +1211,11 @@ func (r *Reactor) loopQuant() {
 			continue
 		}
 		for _, e := range step.events {
-			if !e.hasCursor {
+			if !e.hasGesture {
 				newsteps[stepnum].events = append(newsteps[stepnum].events, e)
 			} else {
 				log.Printf("IS THIS CODE EVER EXECUTED?\n")
-				id := e.cursorStepEvent.ID
+				id := e.gestureStepEvent.ID
 				newstepnum := stepnum
 				shift, ok := shiftOf[id]
 				// It's shifted

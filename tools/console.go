@@ -67,8 +67,10 @@ func (console *Console) Do(cmd string, arg interface{}) (interface{}, error) {
 			return nil, err
 		}
 		return s, nil
-	case "closeyourself":
-		console.addLine("console: CloseYourself needs work?\n")
+
+	case "close":
+		console.addLine("console: lose needs work? Maybe not\n")
+
 	case "buttondown":
 		// Clear is the only button
 		b := gui.ToString(arg)

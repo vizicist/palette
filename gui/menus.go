@@ -23,6 +23,7 @@ func NewPageMenu(parent Window) ToolData {
 func NewToolsMenu(parent Window) ToolData {
 	items := []MenuItem{
 		{label: "Console", cmd: "sweeptool", arg: "Console"},
+		{label: "Riff", cmd: "sweeptool", arg: "Riff"},
 	}
 	return NewMenu(parent, "ToolsMenu", items)
 }

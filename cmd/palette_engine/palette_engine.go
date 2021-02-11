@@ -44,7 +44,7 @@ func main() {
 	go engine.StartNATSClient()
 	go engine.StartMIDI()
 	go engine.StartRealtime()
-	go engine.StartCursorInput()
+	go engine.StartGestureInput()
 
 	go engine.ListenForLocalDeviceInputsForever()
 
@@ -52,6 +52,7 @@ func main() {
 	switch doGui {
 	case true:
 		gui.RegisterToolType("Console", tools.NewConsole)
+		gui.RegisterToolType("Riff", tools.NewRiff)
 		gui.Run() // this never returns
 		log.Printf("GUI has exited!?\n")
 	case false:
