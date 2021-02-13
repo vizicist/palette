@@ -99,12 +99,13 @@ func NewPipeline(name string, windowWidth int, windowHeight int, visible bool) (
 	// Poly Glitch
 
 	// vizlist := []string{"Empty", "Mirror", "Emboss", "Edges", "Cubic Warp", "Poly Glitch", "Thermal Camera", "Emboss"}
-	vizlist := []string{"Mirror", "Poly Glitch"}
+	// vizlist := []string{"Mirror", "Poly Glitch"}
+	// vizlist := []string{"Mirror"}
+	vizlist := []string{}
 
 	var previousViz Vizlet
 
-	// Add an Empty VizletISF at the very beginning
-	// It'll eventually be a VizletDrawer
+	// Add a VizletDrawer at the very beginning
 	frame := glhf.NewFrame(windowWidth, windowHeight, true)
 	viz, err := NewVizletDrawer("VizletEmpty", "Empty", frame)
 	if err != nil {

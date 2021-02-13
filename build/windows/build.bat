@@ -96,6 +96,10 @@ echo ================ Copying midifiles
 mkdir %ship%\midifiles
 copy %PALETTESOURCE%\default\midifiles\*.* %ship%\midifiles >nul
 
+echo ================ Copying isf files
+mkdir %ship%\isf
+copy %PALETTESOURCE%\default\isf\*.* %ship%\isf >nul
+
 echo ================ Copying windows-specific things
 copy %PALETTESOURCE%\SenselLib\x64\LibSensel.dll %bin% >nul
 copy %PALETTESOURCE%\SenselLib\x64\LibSenselDecompress.dll %bin% >nul

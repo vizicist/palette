@@ -58,6 +58,7 @@ Source: "ship\presets\*"; DestDir: "{app}\presets"; Flags: ignoreversion recurse
 Source: "ship\config\ffgl.json"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\config"; Flags: ignoreversion
 Source: "ship\config\local_settings.json"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\config"; DestName: "settings.json"; Flags: ignoreversion
 Source: "ship\midifiles\*"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\midifiles"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "ship\isf\*"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\isf"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "logs_readme.txt"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\logs"; DestName: "readme.txt"; Flags: ignoreversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 

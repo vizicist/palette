@@ -83,7 +83,7 @@ func run() {
 		vizlet := pipeline.FirstVizlet()
 		// vizlet.SetSpoutIn("vizspout.static")
 		vizlet.SetSpoutIn("vizspout.moving")
-		v.Reactors["A"].SetTargetVizlet(vizlet)
+		// v.Reactors["A"].SetTargetVizlet(vizlet)
 
 	})
 

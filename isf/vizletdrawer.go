@@ -5,7 +5,6 @@ import (
 	"log"
 	"time"
 
-	"github.com/vizicist/palette/engine"
 	"github.com/vizicist/palette/glhf"
 	"github.com/vizicist/palette/spout"
 
@@ -104,7 +103,7 @@ func (viz *VizletDrawer) DoVizlet() error {
 	viz.frame.Begin()
 	viz.shader.Begin()
 
-	glhf.Clear(0, 0, 0, 1)
+	glhf.Clear(1, 0, 0, 1)
 
 	viz.inputTexture.Begin()
 
@@ -235,7 +234,7 @@ func (viz *VizletDrawer) receiveSpoutInputTexture() bool {
 		return false
 	}
 
-	gl.BufferData(gl.ARRAY_BUFFER, len(engine.SquareVerticiesForTriangles)*4, gl.Ptr(engine.SquareVerticiesForTriangles), gl.STATIC_DRAW)
+	gl.BufferData(gl.ARRAY_BUFFER, len(SquareVerticiesForTriangles)*4, gl.Ptr(SquareVerticiesForTriangles), gl.STATIC_DRAW)
 	return true
 }
 
