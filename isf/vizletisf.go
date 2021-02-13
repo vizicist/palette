@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/vizicist/palette/engine"
@@ -142,7 +143,7 @@ func (viz *VizletISF) DoVizlet() error {
 		viz.isfInitialized = true
 	}
 
-	glhf.Clear(0, 0, 0, 1)
+	glhf.Clear(0, 1, 0, 1)
 
 	viz.inputTexture.Begin()
 
@@ -222,7 +223,7 @@ func (viz *VizletISF) receiveSpoutInputTexture() bool {
 		return false
 	}
 
-	gl.BufferData(gl.ARRAY_BUFFER, len(engine.SquareVerticiesForTriangles)*4, gl.Ptr(engine.SquareVerticiesForTriangles), gl.STATIC_DRAW)
+	gl.BufferData(gl.ARRAY_BUFFER, len(SquareVerticiesForTriangles)*4, gl.Ptr(SquareVerticiesForTriangles), gl.STATIC_DRAW)
 	return true
 }
 
@@ -379,8 +380,7 @@ func NewVizletISF(name string, isfname string, frame *glhf.Frame) (Vizlet, error
 		name: name,
 	}
 
-	venue := "PhotonSalon1"
-	fspath, vspath := engine.ISFFilePaths(venue, isfname)
+	fspath, vspath := FilePaths(isfname)
 
 	var fsbytes []byte
 	var vsbytes []byte
@@ -392,7 +392,7 @@ func NewVizletISF(name string, isfname string, frame *glhf.Frame) (Vizlet, error
 			return nil, err
 		}
 	} else {
-		if DebugVenue.ISF {
+		if DebugISF {
 			log.Printf("NewVizletISF: %s using default fragmentShaderISF\n", name)
 		}
 		fsbytes = []byte(defaultFragmentShaderISF)
@@ -404,13 +404,14 @@ func NewVizletISF(name string, isfname string, frame *glhf.Frame) (Vizlet, error
 			return nil, err
 		}
 	} else {
-		if DebugVenue.ISF {
+		if DebugISF {
 			log.Printf("NewVizletISF: %s using default vertexShaderISF\n", name)
 		}
 		vsbytes = []byte(defaultVertexShaderISF)
 	}
 
 	originalVsShader := string(vsbytes)
+
 	preamble, originalFsShader, err := separatePreambleOfISF(string(fsbytes))
 	if err != nil {
 		return nil, err
@@ -448,7 +449,7 @@ func NewVizletISF(name string, isfname string, frame *glhf.Frame) (Vizlet, error
 	finalVsShader = strings.ReplaceAll(finalVsShader, "vv_FragNormCoord", "isf_FragNormCoord")
 	finalFsShader = strings.ReplaceAll(finalFsShader, "vv_FragNormCoord", "isf_FragNormCoord")
 
-	if DebugVenue.ISF {
+	if DebugISF {
 		log.Printf("==================== FINAL FRAGMENT SHADER\n" +
 			finalFsShader + "\n====================\n")
 		log.Printf("==================== FINAL VERTEX SHADER\n" +
@@ -478,6 +479,17 @@ func NewVizletISF(name string, isfname string, frame *glhf.Frame) (Vizlet, error
 		})
 
 	return viz, nil
+}
+
+// FilePath xxx
+func FilePath(nm string) string {
+	dir := engine.LocalPaletteDir()
+	return filepath.Join(dir, "isf", nm)
+}
+
+// FilePaths returns the 2 ISF file paths for a given name
+func FilePaths(nm string) (string, string) {
+	return FilePath(nm + ".fs"), FilePath(nm + ".vs")
 }
 
 func (viz *VizletISF) isfUniformDeclarations() (string, glhf.AttrFormat, error) {

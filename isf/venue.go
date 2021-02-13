@@ -6,15 +6,11 @@ import (
 	"time"
 
 	"github.com/hypebeast/go-osc/osc"
-	"github.com/nats-io/nats.go"
 	"github.com/vizicist/palette/engine"
 )
 
-// DebugVenue controls debugging output
-var DebugVenue = engine.DebugFlags{
-	// MIDI:   true,
-	// Cursor: true,
-}
+// DebugISF xxx
+var DebugISF = true
 
 // OSCEvent is an OSC message
 type OSCEvent struct {
@@ -68,17 +64,19 @@ type PlaybackEvent struct {
 // NewVenue returns a pointer to the one-and-only Venue
 func NewVenue(venueName string) (*Venue, error) {
 
-	config, err := engine.ReadConfigFile(engine.ConfigFilePath("venue.json"))
-	if err != nil {
-		return nil, fmt.Errorf("NewVenue: err=%s", err)
-	}
+	/*
+		config, err := engine.ReadConfigFile(engine.ConfigFilePath("venue.json"))
+		if err != nil {
+			return nil, fmt.Errorf("NewVenue: err=%s", err)
+		}
+	*/
 
 	engine.LoadParamEnums()
 	engine.LoadParamDefs()
 	// engine.LoadEffectsJSON()
 
 	e := &Venue{
-		config:                 config,
+		// config:                 config,
 		defaultClicksPerSecond: engine.Clicks(192),
 		globalParams:           engine.NewParamValues(),
 	}
@@ -89,6 +87,7 @@ func NewVenue(venueName string) (*Venue, error) {
 	return e, nil
 }
 
+/*
 // ConfigValue xxx
 func (e *Venue) ConfigValue(name string) (value string, err error) {
 	value, ok := e.config[name]
@@ -97,18 +96,7 @@ func (e *Venue) ConfigValue(name string) (value string, err error) {
 	}
 	return value, err
 }
-
-// This is a callback from NATS
-func (e *Venue) midiHandler(msg *nats.Msg) {
-	s := string(msg.Data)
-	reply := msg.Reply
-	subj := msg.Subject
-	sub := msg.Sub.Subject
-	if DebugVenue.MIDI {
-		log.Printf("Venue.midiHandler: data=%s reply=%s subj=%s sub=%s\n",
-			s, reply, subj, sub)
-	}
-}
+*/
 
 /*
 // This is a callback from NATS

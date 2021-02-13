@@ -49,6 +49,6 @@ func NewSpriteLine(x, y, z float32, params *engine.ParamValues) *SpriteLine {
 // Draw xxx
 func (s *SpriteLine) Draw(viz *VizletISF) {
 	nlines := 2
-	gl.BufferData(gl.ARRAY_BUFFER, len(engine.LineVerticesForLines)*4, gl.Ptr(engine.LineVerticesForLines), gl.STATIC_DRAW)
+	gl.BufferData(gl.ARRAY_BUFFER, len(LineVerticesForLines)*4, gl.Ptr(LineVerticesForLines), gl.STATIC_DRAW)
 	gl.DrawArrays(gl.LINES, 0, int32(2*nlines))
 }
