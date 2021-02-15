@@ -9,6 +9,7 @@ import (
 
 	"github.com/faiface/mainthread"
 	"github.com/go-gl/glfw/v3.3/glfw"
+	"github.com/vizicist/palette/engine"
 	"github.com/vizicist/palette/glhf"
 	"github.com/vizicist/palette/isf"
 )
@@ -24,19 +25,26 @@ var printOnce sync.Once
 
 func run() {
 
-	log.Printf("main() started")
+	engine.InitLogs("isf.log")
+	engine.InitDebug()
+
+	log.Printf("Palette_ISF: starting\n")
 
 	visible := flag.Bool("visible", true, "Window(s) are visible")
 	_ = visible
 
 	flag.Parse()
 
-	v, err := isf.NewVenue("defaultvenue")
+	realtime, err := isf.NewRealtime()
 	if err != nil {
-		log.Fatalf("NewVenue: err=%s\n", err)
+		log.Fatalf("NewRealtime: err=%s\n", err)
 	}
 
-	go v.Start()
+	engine.LoadParamEnums()
+	engine.LoadParamDefs()
+	// engine.LoadEffectsJSON()
+
+	go realtime.Start()
 
 	defer func() {
 		mainthread.Call(func() {

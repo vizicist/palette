@@ -168,8 +168,8 @@ func TheRouter() *Router {
 	return &oneRouter
 }
 
-// StartOSC xxx
-func StartOSC(source string) {
+// StartOSCListener xxx
+func StartOSCListener(source string) {
 
 	r := TheRouter()
 	handler := r.OSCInput
@@ -190,8 +190,8 @@ func StartOSC(source string) {
 	server.ListenAndServe()
 }
 
-// StartNATSClient xxx
-func StartNATSClient() {
+// StartNATSListener xxx
+func StartNATSListener() {
 
 	StartVizNats()
 
