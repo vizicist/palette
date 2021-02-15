@@ -30,10 +30,10 @@ void main() {
 	normSrcCoord.x = isf_FragNormCoord[0];
 	normSrcCoord.y = isf_FragNormCoord[1];
 
-	if ((normSrcCoord.x > 0.5)&&(horizontal))	{
+	if ((normSrcCoord.x < 0.5)&&(horizontal))	{
 		normSrcCoord.x = (1.0-normSrcCoord.x);
 	}
-	if ((normSrcCoord.y > 0.5)&&(vertical))	{
+	if ((normSrcCoord.y < 0.5)&&(vertical))	{
 		normSrcCoord.y = (1.0-normSrcCoord.y);
 	}
 	

@@ -12,27 +12,33 @@ import (
 // DebugISF xxx
 var DebugISF = true
 
+// DebugShader xxx
+var DebugShader = false
+
 // OSCEvent is an OSC message
 type OSCEvent struct {
 	Msg    *osc.Message
 	Source string
 }
 
-// Command is sent on the control channel of the Venue
+/*
+// Command is sent on the control channel
 type Command struct {
 	Action string // e.g. "addmidi"
 	Arg    interface{}
 }
+*/
 
-// Venue takes events and routes them
-type Venue struct {
-	config map[string]string
+// Realtime takes events and routes them
+type Realtime struct {
+	oscInput chan OSCEvent
+	config   map[string]string
 	// hubRemote *engine.Remote
 
 	inputs          []*osc.Client
 	MIDINumDown     int
 	MIDIOctaveShift int
-	killme          bool // set to true if Venue should be stopped
+	killme          bool // set to true if Reamtime should be stopped
 	lastClick       engine.Clicks
 
 	defaultClicksPerSecond engine.Clicks
@@ -44,7 +50,7 @@ type Venue struct {
 	nowClickOffset engine.Clicks
 	nowClick       engine.Clicks
 
-	control      chan Command
+	// control      chan Command
 	time         time.Time
 	time0        time.Time
 	killPlayback bool
@@ -61,8 +67,8 @@ type PlaybackEvent struct {
 	rawargs   string
 }
 
-// NewVenue returns a pointer to the one-and-only Venue
-func NewVenue(venueName string) (*Venue, error) {
+// NewRealtime returns a pointer to the one-and-only Venue
+func NewRealtime() (*Realtime, error) {
 
 	/*
 		config, err := engine.ReadConfigFile(engine.ConfigFilePath("venue.json"))
@@ -75,10 +81,11 @@ func NewVenue(venueName string) (*Venue, error) {
 	engine.LoadParamDefs()
 	// engine.LoadEffectsJSON()
 
-	e := &Venue{
+	e := &Realtime{
 		// config:                 config,
 		defaultClicksPerSecond: engine.Clicks(192),
 		globalParams:           engine.NewParamValues(),
+		oscInput:               make(chan OSCEvent),
 	}
 
 	// engine.SubscribeToMidi(e.midiHandler)
@@ -100,7 +107,7 @@ func (e *Venue) ConfigValue(name string) (value string, err error) {
 
 /*
 // This is a callback from NATS
-func (e *Venue) cursorHandler(msg *nats.Msg) {
+func (e *Realtime) cursorHandler(msg *nats.Msg) {
 	reply := msg.Reply
 	subj := msg.Subject
 	sub := msg.Sub.Subject
@@ -142,14 +149,14 @@ func (e *Venue) cursorHandler(msg *nats.Msg) {
 */
 
 // seconds2Clicks converts a Time value (elapsed seconds) to Clicks
-func (e *Venue) seconds2Clicks(tm float64) engine.Clicks {
+func (e *Realtime) seconds2Clicks(tm float64) engine.Clicks {
 	var c engine.Clicks
 	c = e.nowClickOffset + engine.Clicks(0.5+float64(tm*1000-float64(e.nowMilliOffset))*(float64(e.clicksPerSecond)/1000.0))
 	return c
 }
 
 // TimeString returns time and clicks
-func (e *Venue) TimeString() string {
+func (e *Realtime) TimeString() string {
 	sofar := e.time.Sub(e.time0)
 	click := e.seconds2Clicks(sofar.Seconds())
 	return fmt.Sprintf("sofar=%f click=%d", sofar.Seconds(), click)
@@ -157,7 +164,7 @@ func (e *Venue) TimeString() string {
 }
 
 // InitializeClicksPerSecond initializes
-func (e *Venue) InitializeClicksPerSecond(clkpersec engine.Clicks) {
+func (e *Realtime) InitializeClicksPerSecond(clkpersec engine.Clicks) {
 	e.clicksPerSecond = clkpersec
 	e.nowMilliOffset = 0
 	e.nowClickOffset = 0
@@ -165,7 +172,7 @@ func (e *Venue) InitializeClicksPerSecond(clkpersec engine.Clicks) {
 }
 
 // ChangeClicksPerSecond is what you use to change the tempo
-func (e *Venue) ChangeClicksPerSecond(clkpersec engine.Clicks) {
+func (e *Realtime) ChangeClicksPerSecond(clkpersec engine.Clicks) {
 	minClicksPerSecond := e.defaultClicksPerSecond / 16
 	if clkpersec < minClicksPerSecond {
 		clkpersec = minClicksPerSecond
@@ -200,30 +207,33 @@ func (e *Venue) callbackOutput(n *engine.Note) {
 */
 
 // Start starts any extra executable/cmdline that's needed, and then runs the looper and never returns
-func (e *Venue) Start() {
+func (e *Realtime) Start() {
 
-	/*
-		var lastPrintedClick engine.Clicks
+	e.startOSCListener("127.0.0.1:3334")
 
-		tick := time.NewTicker(2 * time.Millisecond)
-		e.time0 = <-tick.C
+	// var lastPrintedClick engine.Clicks
 
-		log.Printf("Running.\n")
+	tick := time.NewTicker(2 * time.Millisecond)
+	e.time0 = <-tick.C
 
-		// By reading from tick.C, we wake up every so many milliseconds
-		for now := range tick.C {
+	log.Printf("Running.\n")
 
-			e.time = now
-			sofar := now.Sub(e.time0)
-			secs := sofar.Seconds()
-			newclick := e.seconds2Clicks(secs)
-			e.nowMilli = int(secs * 1000.0)
+	// By reading from tick.C, we wake up every so many milliseconds
+	for now := range tick.C {
 
-			if newclick > e.nowClick {
-				e.advanceClickTo(e.nowClick)
-				e.nowClick = newclick
-			}
+		e.time = now
+		sofar := now.Sub(e.time0)
+		secs := sofar.Seconds()
+		newclick := e.seconds2Clicks(secs)
+		e.nowMilli = int(secs * 1000.0)
 
+		if newclick > e.nowClick {
+			log.Printf("newclick=%d\n", newclick)
+			// e.advanceClickTo(e.nowClick)
+			e.nowClick = newclick
+		}
+
+		/*
 			var everySoOften = e.oneBeat * 32
 			if (e.nowClick%everySoOften) == 0 && e.nowClick != lastPrintedClick {
 				if DebugVenue.Realtime {
@@ -238,8 +248,8 @@ func (e *Venue) Start() {
 				fmt.Println("got command on control channel: ", cmd)
 			default:
 			}
-		}
-	*/
+		*/
+	}
 	log.Printf("Venue.Start: ends unexpectedly\n")
 }
 
@@ -263,10 +273,31 @@ func (e *Venue) advanceClickTo(click engine.Clicks) {
 }
 */
 
+// StartOSCListener xxx
+func (e *Realtime) startOSCListener(source string) {
+
+	handler := e.oscInput
+
+	d := osc.NewStandardDispatcher()
+
+	err := d.AddMsgHandler("*", func(msg *osc.Message) {
+		handler <- OSCEvent{Msg: msg, Source: source}
+	})
+	if err != nil {
+		log.Printf("ERROR! %s\n", err.Error())
+	}
+
+	server := &osc.Server{
+		Addr:       source,
+		Dispatcher: d,
+	}
+	server.ListenAndServe()
+}
+
 // APIHandler is an API execution func
 type APIHandler func(method string, pmap map[string]string) (string, error)
 
-func (e *Venue) handlePerPadAPI(apitype string, apifunc APIHandler, pad string, method string, pmap map[string]string, paramsString string) (string, error) {
+func (e *Realtime) handlePerPadAPI(apitype string, apifunc APIHandler, pad string, method string, pmap map[string]string, paramsString string) (string, error) {
 
 	_, err := apifunc(method, pmap)
 	if err != nil {
@@ -276,7 +307,7 @@ func (e *Venue) handlePerPadAPI(apitype string, apifunc APIHandler, pad string, 
 	return "", err
 }
 
-func (e *Venue) parameterCallback(name, value string) (err error) {
+func (e *Realtime) parameterCallback(name, value string) (err error) {
 	/*
 		switch name {
 
@@ -300,7 +331,7 @@ func (e *Venue) parameterCallback(name, value string) (err error) {
 	return nil
 }
 
-func (e *Venue) oldexecuteGlobalAPI(method string, pmap map[string]string) (result string, err error) {
+func (e *Realtime) oldexecuteGlobalAPI(method string, pmap map[string]string) (result string, err error) {
 
 	globalParams := e.globalParams
 
@@ -373,6 +404,6 @@ func (e *Venue) oldexecuteGlobalAPI(method string, pmap map[string]string) (resu
 }
 
 // Time returns the current time
-func (e *Venue) Time() time.Time {
+func (e *Realtime) Time() time.Time {
 	return time.Now()
 }

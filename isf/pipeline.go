@@ -101,7 +101,8 @@ func NewPipeline(name string, windowWidth int, windowHeight int, visible bool) (
 	// vizlist := []string{"Empty", "Mirror", "Emboss", "Edges", "Cubic Warp", "Poly Glitch", "Thermal Camera", "Emboss"}
 	// vizlist := []string{"Mirror", "Poly Glitch"}
 	// vizlist := []string{"Mirror"}
-	vizlist := []string{}
+	vizlist := []string{"Mirror", "Edges"}
+	// vizlist := []string{}
 
 	var previousViz Vizlet
 
@@ -154,6 +155,8 @@ func (pl *Pipeline) AddVizlet(viz Vizlet) {
 
 // Do runs the pipeline once
 func (pl *Pipeline) Do() {
+
+	// log.Printf("Pipeline.Do\n")
 
 	// Clear the window.
 	// 	glhf.Clear(1, 1, 1, 1)

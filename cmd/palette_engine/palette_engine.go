@@ -19,10 +19,10 @@ func init() {
 
 func main() {
 
-	engine.InitLogs()
+	engine.InitLogs("engine.log")
 	engine.InitDebug()
 
-	log.SetFlags(log.Ldate | log.Lmicroseconds)
+	log.Printf("Palette_Engine: starting\n")
 
 	flag.Parse()
 
@@ -39,9 +39,17 @@ func main() {
 
 	engine.InitMIDI()
 
-	go engine.StartNATSServer()
-	go engine.StartOSC("127.0.0.1:3333")
-	go engine.StartNATSClient()
+	doNATS := false
+	if doNATS {
+		// The NATS stuff is when we want to accept APIs from other machines
+		// It's also used for the Python gui, since the APIS it uses need results
+		go engine.StartNATSServer()
+		go engine.StartNATSListener()
+	}
+
+	// OSC is used for simpler script-driven APIs that don't need results
+	go engine.StartOSCListener("127.0.0.1:3333")
+
 	go engine.StartMIDI()
 	go engine.StartRealtime()
 	go engine.StartGestureInput()
@@ -54,7 +62,7 @@ func main() {
 		gui.RegisterToolType("Console", tools.NewConsole)
 		gui.RegisterToolType("Riff", tools.NewRiff)
 		gui.Run() // this never returns
-		log.Printf("GUI has exited!?\n")
+		log.Printf("Palette_Engine: GUI has exited!?\n")
 	case false:
 		select {} // pause forever
 	}

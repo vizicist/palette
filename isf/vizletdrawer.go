@@ -78,6 +78,7 @@ func (viz *VizletDrawer) DoVizlet() error {
 		if viz.receiveSpoutInputTexture() == true {
 			viz.inputTexture = viz.spoutInputTexture
 			hasComplainedAboutSpoutInput = false // so we complain everytime it disappears
+			// log.Printf("receivedSpoutInputTexture true\n")
 		} else {
 			if hasComplainedAboutSpoutInput == false {
 				// The first time we complain, create/use a blank texture (should it be red?)
@@ -136,6 +137,7 @@ var drawSprites = false
 
 // DrawSprites xxx
 func (viz *VizletDrawer) DrawSprites() {
+	viz.trySquare(viz.Shader())
 	for _, s := range viz.sprites {
 		if s != nil {
 			s.Draw(viz.Shader())
@@ -143,6 +145,32 @@ func (viz *VizletDrawer) DrawSprites() {
 			log.Printf("HEY! something in Reactor.sprites is nil?\n")
 		}
 	}
+}
+
+func (viz *VizletDrawer) trySquare(shader *glhf.Shader) {
+
+	// Comes in 0,0 to 1,1
+	x := float32(0.5)
+	y := float32(0.5)
+	sz := float32(0.2)
+	// log.Printf("Draw SpriteSquare x,y = %f, %f  sz = %f\n", x, y, sz)
+	data := []float32{
+		x - sz, y - sz, 0, 1,
+		x + sz, y - sz, 1, 1,
+		x + sz, y + sz, 1, 0,
+
+		x - sz, y - sz, 0, 1,
+		x + sz, y + sz, 1, 0,
+		x - sz, y + sz, 0, 0,
+	}
+	if squareSlice == nil {
+		squareSlice = newVertexSlice(shader, 6, 6, nil)
+	}
+
+	squareSlice.Begin()
+	squareSlice.SetVertexData(data)
+	squareSlice.Draw()
+	squareSlice.End()
 }
 
 // AgeSprites xxx

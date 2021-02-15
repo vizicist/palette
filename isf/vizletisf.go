@@ -393,7 +393,7 @@ func NewVizletISF(name string, isfname string, frame *glhf.Frame) (Vizlet, error
 		}
 	} else {
 		if DebugISF {
-			log.Printf("NewVizletISF: %s using default fragmentShaderISF\n", name)
+			log.Printf("NewVizletISF: fspath for %s doesn't exist, using default fragmentShaderISF\n", name)
 		}
 		fsbytes = []byte(defaultFragmentShaderISF)
 	}
@@ -405,7 +405,7 @@ func NewVizletISF(name string, isfname string, frame *glhf.Frame) (Vizlet, error
 		}
 	} else {
 		if DebugISF {
-			log.Printf("NewVizletISF: %s using default vertexShaderISF\n", name)
+			log.Printf("NewVizletISF: vspath for %s doesn't exist, using default vertexShaderISF\n", name)
 		}
 		vsbytes = []byte(defaultVertexShaderISF)
 	}
@@ -449,7 +449,7 @@ func NewVizletISF(name string, isfname string, frame *glhf.Frame) (Vizlet, error
 	finalVsShader = strings.ReplaceAll(finalVsShader, "vv_FragNormCoord", "isf_FragNormCoord")
 	finalFsShader = strings.ReplaceAll(finalFsShader, "vv_FragNormCoord", "isf_FragNormCoord")
 
-	if DebugISF {
+	if DebugShader {
 		log.Printf("==================== FINAL FRAGMENT SHADER\n" +
 			finalFsShader + "\n====================\n")
 		log.Printf("==================== FINAL VERTEX SHADER\n" +
@@ -484,7 +484,12 @@ func NewVizletISF(name string, isfname string, frame *glhf.Frame) (Vizlet, error
 // FilePath xxx
 func FilePath(nm string) string {
 	dir := engine.LocalPaletteDir()
-	return filepath.Join(dir, "isf", nm)
+	ps := os.Getenv("PALETTESOURCE")
+	if ps != "" {
+		dir = filepath.Join(ps, "default")
+	}
+	path := filepath.Join(dir, "isf", nm)
+	return path
 }
 
 // FilePaths returns the 2 ISF file paths for a given name
