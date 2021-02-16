@@ -393,7 +393,7 @@ func NewVizletISF(name string, isfname string, frame *glhf.Frame) (Vizlet, error
 		}
 	} else {
 		if DebugISF {
-			log.Printf("NewVizletISF: fspath for %s doesn't exist, using default fragmentShaderISF\n", name)
+			log.Printf("NewVizletISF: no .fs file for %s, using default fragmentShaderISF\n", isfname)
 		}
 		fsbytes = []byte(defaultFragmentShaderISF)
 	}
@@ -405,7 +405,7 @@ func NewVizletISF(name string, isfname string, frame *glhf.Frame) (Vizlet, error
 		}
 	} else {
 		if DebugISF {
-			log.Printf("NewVizletISF: vspath for %s doesn't exist, using default vertexShaderISF\n", name)
+			log.Printf("NewVizletISF: no .vs file for %s, using default vertexShaderISF\n", isfname)
 		}
 		vsbytes = []byte(defaultVertexShaderISF)
 	}

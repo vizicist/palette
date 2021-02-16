@@ -1063,13 +1063,13 @@ func (r *Reactor) ExecuteAPI(api string, args map[string]string, rawargs string)
 	switch api {
 
 	case "loop_recording":
-		v, err := needBoolArg("onoff", api, args)
+		v, err := NeedBoolArg("onoff", api, args)
 		if err == nil {
 			r.loopIsRecording = v
 		}
 
 	case "loop_playing":
-		v, err := needBoolArg("onoff", api, args)
+		v, err := NeedBoolArg("onoff", api, args)
 		if err == nil {
 			r.loopIsPlaying = v
 			r.terminateActiveNotes()
@@ -1084,13 +1084,13 @@ func (r *Reactor) ExecuteAPI(api string, args map[string]string, rawargs string)
 		r.loopComb()
 
 	case "loop_length":
-		i, err := needIntArg("length", api, args)
+		i, err := NeedIntArg("length", api, args)
 		if err == nil {
 			r.loop.SetLength(Clicks(i))
 		}
 
 	case "loop_fade":
-		f, err := needFloatArg("fade", api, args)
+		f, err := NeedFloatArg("fade", api, args)
 		if err == nil {
 			r.fadeLoop = f
 		}
@@ -1099,13 +1099,13 @@ func (r *Reactor) ExecuteAPI(api string, args map[string]string, rawargs string)
 		r.sendANO()
 
 	case "midi_thru":
-		v, err := needStringArg("thru", api, args)
+		v, err := NeedStringArg("thru", api, args)
 		if err == nil {
 			r.MIDIThru = v
 		}
 
 	case "useexternalscale":
-		v, err := needBoolArg("onoff", api, args)
+		v, err := NeedBoolArg("onoff", api, args)
 		if err == nil {
 			r.useExternalScale = v
 		}
@@ -1116,13 +1116,13 @@ func (r *Reactor) ExecuteAPI(api string, args map[string]string, rawargs string)
 		r.MIDINumDown = 0
 
 	case "midi_quantized":
-		v, err := needBoolArg("quantized", api, args)
+		v, err := NeedBoolArg("quantized", api, args)
 		if err == nil {
 			r.MIDIQuantized = v
 		}
 
 	case "set_transpose":
-		v, err := needIntArg("value", api, args)
+		v, err := NeedIntArg("value", api, args)
 		if err == nil {
 			r.TransposePitch = v
 		}

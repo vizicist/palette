@@ -355,7 +355,7 @@ func (r *Router) HandleSubscribedEventArgs(args map[string]string) error {
 
 	// All Events should have nuid and event values
 
-	nuid, err := needStringArg("nuid", "HandleSubscribeEvent", args)
+	nuid, err := NeedStringArg("nuid", "HandleSubscribeEvent", args)
 	if err != nil {
 		return err
 	}
@@ -367,14 +367,14 @@ func (r *Router) HandleSubscribedEventArgs(args map[string]string) error {
 		}
 	*/
 
-	event, err := needStringArg("event", "HandleSubscribeEvent", args)
+	event, err := NeedStringArg("event", "HandleSubscribeEvent", args)
 	if err != nil {
 		return err
 	}
 
 	// If no "region" argument, use one assigned to NUID
 
-	region := optionalStringArg("region", args, "")
+	region := OptionalStringArg("region", args, "")
 	if region == "" {
 		region = r.getRegionForNUID(nuid)
 	} else {
@@ -404,7 +404,7 @@ func (r *Router) HandleSubscribedEventArgs(args map[string]string) error {
 			return nil
 		}
 
-		id := optionalStringArg("id", args, "UnspecifiedID")
+		id := OptionalStringArg("id", args, "UnspecifiedID")
 
 		switch subEvent {
 		case "down":
@@ -414,7 +414,7 @@ func (r *Router) HandleSubscribedEventArgs(args map[string]string) error {
 			return fmt.Errorf("handleSubscribedEvent: Unexpected cursor event type: %s", subEvent)
 		}
 
-		x, y, z, err := r.getXYZ("handleSubscribedEvent", args)
+		x, y, z, err := GetXYZ("handleSubscribedEvent", args)
 		if err != nil {
 			return err
 		}
@@ -443,7 +443,7 @@ func (r *Router) HandleSubscribedEventArgs(args map[string]string) error {
 	case "sprite":
 
 		api := "event.sprite"
-		x, y, z, err := r.getXYZ(api, args)
+		x, y, z, err := GetXYZ(api, args)
 		if err != nil {
 			return nil
 		}
@@ -467,7 +467,7 @@ func (r *Router) HandleSubscribedEventArgs(args map[string]string) error {
 			r.audioReset()
 
 		default:
-			bytes, err := needStringArg("bytes", "HandleMIDIEvent", args)
+			bytes, err := NeedStringArg("bytes", "HandleMIDIEvent", args)
 			if err != nil {
 				return err
 			}
@@ -510,7 +510,7 @@ func (r *Router) handleGestureDeviceInput(e GestureDeviceEvent) {
 func (r *Router) makeMIDIEvent(subEvent string, bytes string, args map[string]string) (*portmidi.Event, error) {
 
 	var timestamp int64
-	s := optionalStringArg("time", args, "")
+	s := OptionalStringArg("time", args, "")
 	if s != "" {
 		f, err := strconv.ParseFloat(s, 64)
 		if err != nil {
@@ -555,25 +555,6 @@ func (r *Router) makeMIDIEvent(subEvent string, bytes string, args map[string]st
 		Data2:     int64(data2),
 	}
 	return me, nil
-}
-
-func (r *Router) getXYZ(api string, args map[string]string) (x, y, z float32, err error) {
-
-	x, err = needFloatArg("x", api, args)
-	if err != nil {
-		return x, y, z, err
-	}
-
-	y, err = needFloatArg("y", api, args)
-	if err != nil {
-		return x, y, z, err
-	}
-
-	z, err = needFloatArg("z", api, args)
-	if err != nil {
-		return x, y, z, err
-	}
-	return x, y, z, err
 }
 
 // HandleAPIInput xxx
@@ -670,7 +651,7 @@ func (r *Router) ExecuteAPI(api string, nuid string, rawargs string) (result int
 
 	if apiprefix == "region" {
 
-		region := optionalStringArg("region", args, "")
+		region := OptionalStringArg("region", args, "")
 		if region == "" {
 			region = r.getRegionForNUID(nuid)
 		} else {
@@ -692,7 +673,7 @@ func (r *Router) ExecuteAPI(api string, nuid string, rawargs string) (result int
 	switch apisuffix {
 
 	case "midi_midifile":
-		filename, err := needStringArg("file", api, args)
+		filename, err := NeedStringArg("file", api, args)
 		if err != nil {
 			break
 		}
@@ -729,16 +710,16 @@ func (r *Router) ExecuteAPI(api string, nuid string, rawargs string) (result int
 		result = value
 
 	case "debug":
-		s, err := needStringArg("debug", api, args)
+		s, err := NeedStringArg("debug", api, args)
 		if err == nil {
-			b, err := needBoolArg("onoff", api, args)
+			b, err := NeedBoolArg("onoff", api, args)
 			if err == nil {
 				setDebug(s, b)
 			}
 		}
 
 	case "set_tempo_factor":
-		v, err := needFloatArg("value", api, args)
+		v, err := NeedFloatArg("value", api, args)
 		if err == nil {
 			ChangeClicksPerSecond(float64(v))
 		}
@@ -761,7 +742,7 @@ func (r *Router) ExecuteAPI(api string, nuid string, rawargs string) (result int
 			r.recordEvent("global", "*", "start", "{}")
 		}
 	case "recordingSave":
-		name, err := needStringArg("name", api, args)
+		name, err := NeedStringArg("name", api, args)
 		if err == nil {
 			err = r.recordingSave(name)
 		}
@@ -777,7 +758,7 @@ func (r *Router) ExecuteAPI(api string, nuid string, rawargs string) (result int
 		r.recordingOn = false
 
 	case "recordingPlay":
-		name, err := needStringArg("name", api, args)
+		name, err := NeedStringArg("name", api, args)
 		if err == nil {
 			events, err := r.recordingLoad(name)
 			if err == nil {
@@ -1026,7 +1007,7 @@ func (r *Router) handleOSCEvent(msg *osc.Message) {
 		log.Printf("Router.handleOSCGestureEvent: too few arguments\n")
 		return
 	}
-	rawargs, err := argAsString(msg, 0)
+	rawargs, err := ArgAsString(msg, 0)
 	if err != nil {
 		log.Printf("Router.handleOSCGestureEvent: err=%s\n", err)
 		return
@@ -1056,7 +1037,7 @@ func (r *Router) handleOSCSpriteEvent(msg *osc.Message) {
 		log.Printf("Router.handleOSCSpriteEvent: too few arguments\n")
 		return
 	}
-	rawargs, err := argAsString(msg, 0)
+	rawargs, err := ArgAsString(msg, 0)
 	if err != nil {
 		log.Printf("Router.handleOSCSpriteEvent: err=%s\n", err)
 		return
@@ -1090,12 +1071,12 @@ func (r *Router) handleOSCAPI(msg *osc.Message) {
 		log.Printf("Router.handleOSCAPI: too few arguments\n")
 		return
 	}
-	api, err := argAsString(msg, 0)
+	api, err := ArgAsString(msg, 0)
 	if err != nil {
 		log.Printf("Router.handleOSCAPI: err=%s\n", err)
 		return
 	}
-	rawargs, err := argAsString(msg, 1)
+	rawargs, err := ArgAsString(msg, 1)
 	if err != nil {
 		log.Printf("Router.handleOSCAPI: err=%s\n", err)
 		return
@@ -1201,43 +1182,6 @@ func (r *Router) getRegionForNUID(nuid string) string {
 	r.regionAssignedToNUID[nuid] = region
 
 	return region
-}
-
-func argAsInt(msg *osc.Message, index int) (i int, err error) {
-	arg := msg.Arguments[index]
-	switch arg.(type) {
-	case int32:
-		i = int(arg.(int32))
-	case int64:
-		i = int(arg.(int64))
-	default:
-		err = fmt.Errorf("Expected an int in OSC argument index=%d", index)
-	}
-	return i, err
-}
-
-func argAsFloat32(msg *osc.Message, index int) (f float32, err error) {
-	arg := msg.Arguments[index]
-	switch arg.(type) {
-	case float32:
-		f = arg.(float32)
-	case float64:
-		f = float32(arg.(float64))
-	default:
-		err = fmt.Errorf("Expected a float in OSC argument index=%d", index)
-	}
-	return f, err
-}
-
-func argAsString(msg *osc.Message, index int) (s string, err error) {
-	arg := msg.Arguments[index]
-	switch arg.(type) {
-	case string:
-		s = arg.(string)
-	default:
-		err = fmt.Errorf("Expected a string in OSC argument index=%d", index)
-	}
-	return s, err
 }
 
 func cursorid(sid int, source string) string {
