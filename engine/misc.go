@@ -14,6 +14,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/hypebeast/go-osc/osc"
 	mail "gopkg.in/mail.v2"
 )
 
@@ -443,7 +444,8 @@ func ConfigValue(nm string) string {
 	return ""
 }
 
-func needFloatArg(nm string, api string, args map[string]string) (float32, error) {
+// NeedFloatArg xx
+func NeedFloatArg(nm string, api string, args map[string]string) (float32, error) {
 	val, ok := args[nm]
 	if !ok {
 		return 0.0, fmt.Errorf("api/event=%s missing value for %s", api, nm)
@@ -455,7 +457,8 @@ func needFloatArg(nm string, api string, args map[string]string) (float32, error
 	return float32(f), nil
 }
 
-func optionalStringArg(nm string, args map[string]string, dflt string) string {
+// OptionalStringArg xx
+func OptionalStringArg(nm string, args map[string]string, dflt string) string {
 	val, ok := args[nm]
 	if !ok {
 		return dflt
@@ -463,7 +466,8 @@ func optionalStringArg(nm string, args map[string]string, dflt string) string {
 	return val
 }
 
-func needStringArg(nm string, api string, args map[string]string) (string, error) {
+// NeedStringArg xx
+func NeedStringArg(nm string, api string, args map[string]string) (string, error) {
 	val, ok := args[nm]
 	if !ok {
 		return "", fmt.Errorf("api/event=%s missing value for %s", api, nm)
@@ -471,7 +475,8 @@ func needStringArg(nm string, api string, args map[string]string) (string, error
 	return val, nil
 }
 
-func needIntArg(nm string, api string, args map[string]string) (int, error) {
+// NeedIntArg xx
+func NeedIntArg(nm string, api string, args map[string]string) (int, error) {
 	val, ok := args[nm]
 	if !ok {
 		return 0, fmt.Errorf("api/event=%s missing value for %s", api, nm)
@@ -483,7 +488,8 @@ func needIntArg(nm string, api string, args map[string]string) (int, error) {
 	return int(v), nil
 }
 
-func needBoolArg(nm string, api string, args map[string]string) (bool, error) {
+// NeedBoolArg xx
+func NeedBoolArg(nm string, api string, args map[string]string) (bool, error) {
 	val, ok := args[nm]
 	if !ok {
 		return false, fmt.Errorf("api/event=%s missing value for %s", api, nm)
@@ -504,4 +510,64 @@ func VenueMidifiles(venue string) ([]string, error) {
 		return nil
 	})
 	return midifiles, err
+}
+
+// ArgAsInt xxx
+func ArgAsInt(msg *osc.Message, index int) (i int, err error) {
+	arg := msg.Arguments[index]
+	switch arg.(type) {
+	case int32:
+		i = int(arg.(int32))
+	case int64:
+		i = int(arg.(int64))
+	default:
+		err = fmt.Errorf("Expected an int in OSC argument index=%d", index)
+	}
+	return i, err
+}
+
+// ArgAsFloat32 xxx
+func ArgAsFloat32(msg *osc.Message, index int) (f float32, err error) {
+	arg := msg.Arguments[index]
+	switch arg.(type) {
+	case float32:
+		f = arg.(float32)
+	case float64:
+		f = float32(arg.(float64))
+	default:
+		err = fmt.Errorf("Expected a float in OSC argument index=%d", index)
+	}
+	return f, err
+}
+
+// ArgAsString xxx
+func ArgAsString(msg *osc.Message, index int) (s string, err error) {
+	arg := msg.Arguments[index]
+	switch arg.(type) {
+	case string:
+		s = arg.(string)
+	default:
+		err = fmt.Errorf("Expected a string in OSC argument index=%d", index)
+	}
+	return s, err
+}
+
+// GetXYZ xxx
+func GetXYZ(api string, args map[string]string) (x, y, z float32, err error) {
+
+	x, err = NeedFloatArg("x", api, args)
+	if err != nil {
+		return x, y, z, err
+	}
+
+	y, err = NeedFloatArg("y", api, args)
+	if err != nil {
+		return x, y, z, err
+	}
+
+	z, err = NeedFloatArg("z", api, args)
+	if err != nil {
+		return x, y, z, err
+	}
+	return x, y, z, err
 }
