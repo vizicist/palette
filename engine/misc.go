@@ -27,7 +27,6 @@ type DebugFlags struct {
 	Cursor    bool
 	GenVisual bool
 	GenSound  bool
-	ISF       bool
 	Loop      bool
 	Config    bool
 	MIDI      bool
@@ -58,8 +57,6 @@ func setDebug(dtype string, b bool) error {
 		DebugUtil.GenSound = b
 	case "genvisual":
 		DebugUtil.GenVisual = b
-	case "isf":
-		DebugUtil.ISF = b
 	case "loop":
 		DebugUtil.Loop = b
 	case "config":
@@ -126,8 +123,8 @@ func fileExists(filename string) bool {
 
 var paletteRoot string
 
-// RootPath is the value of environment variable PALETTE
-func RootPath() string {
+// PaletteDir is the value of environment variable PALETTE
+func PaletteDir() string {
 	if paletteRoot == "" {
 		paletteRoot = os.Getenv("PALETTE")
 		if paletteRoot == "" {
@@ -137,35 +134,31 @@ func RootPath() string {
 	return paletteRoot
 }
 
-// BinFilePath xxx
-func BinFilePath(nm string) string {
-	return filepath.Join(RootPath(), "bin", nm)
-}
-
 var paletteSourceLogged = false
 
 // ConfigFilePath xxx
 func ConfigFilePath(nm string) string {
-	// If PALETTESOURCE is defined, we use it
-	ps := os.Getenv("PALETTESOURCE")
-	if ps != "" {
-		if !paletteSourceLogged {
-			paletteSourceLogged = true
-			log.Printf("Using PALETTESOURCE=%s to get config files\n", ps)
-		}
-		return filepath.Join(ps, "default", "config", nm)
-	}
-	return filepath.Join(RootPath(), "config", nm)
+	return filepath.Join(LocalPaletteDir(), "config", nm)
 }
 
 // MIDIFilePath xxx
 func MIDIFilePath(nm string) string {
-	localdir := LocalPaletteDir()
-	return filepath.Join(localdir, "midifiles", nm)
+	return filepath.Join(LocalPaletteDir(), "midifiles", nm)
 }
 
 // LocalPaletteDir xxx
 func LocalPaletteDir() string {
+	// If PALETTESOURCE is defined, we use it so that during development,
+	// everything (both logs and config) come from there
+	ps := os.Getenv("PALETTESOURCE")
+	if ps != "" {
+		dir := filepath.Join(ps, "default")
+		if !paletteSourceLogged {
+			paletteSourceLogged = true
+			log.Printf("Using PALETTESOURCE to get default from %s\n", dir)
+		}
+		return dir
+	}
 	localapp := os.Getenv("LOCALAPPDATA")
 	if localapp == "" {
 		log.Printf("Expecting LOCALAPPDATA to be set.")
