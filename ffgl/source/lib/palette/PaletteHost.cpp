@@ -46,13 +46,20 @@ ffgl_setdll(std::string dllpath)
 
 	char* pValue;
 	size_t len;
-	errno_t err = _dupenv_s( &pValue, &len, "LOCALAPPDATA" );
-	if( err || pValue == NULL) {
-		NosuchDebugLogPath = "c:\\windows\\temp\\ffgl.log"; // last resort
+
+	errno_t err = _dupenv_s( &pValue, &len, "PALETTESOURCE" );
+	if( !err && pValue != NULL) {
+		NosuchDebugLogPath = std::string(pValue) + "\\default\\logs\\ffgl.log";
 	}
 	else {
-		NosuchDebugLogPath = std::string(pValue) + "\\Palette\\logs\\ffgl.log";
-		free( pValue );
+		errno_t err = _dupenv_s(&pValue, &len, "LOCALAPPDATA");
+		if (err || pValue == NULL) {
+			NosuchDebugLogPath = "c:\\windows\\temp\\ffgl.log"; // last resort
+		}
+		else {
+			NosuchDebugLogPath = std::string(pValue) + "\\Palette\\logs\\ffgl.log";
+			free(pValue);
+		}
 	}
 
 	NosuchDebug("Palette: log=%s\n", NosuchDebugLogPath.c_str());
@@ -296,15 +303,16 @@ PaletteHost::PaletteHost(std::string configfile)
 {
 	NosuchDebugSetThreadName(pthread_self().p,"PaletteHost");
 
+	_scheduler = NULL;  // don't remove, even though we set it at the end of this routine
+	_daemon = NULL;
+	_configJson = NULL;
+
 	_palette = new Palette(this);
 
 	NosuchDebug(1,"=== PaletteHost is being constructed.");
 
 	_configFile = configfile;
-	_configJson = NULL;
 	_time0 = timeGetTime();
-
-	_daemon = NULL;
 
 	initialized = false;
 	gl_shutting_down = false;
