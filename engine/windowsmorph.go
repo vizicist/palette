@@ -335,6 +335,7 @@ func (m oneMorph) readFrames(callback CursorDeviceCallbackFunc, forceFactor floa
 
 			region, ok := MorphDefs[m.serialNum]
 			if !ok {
+				log.Printf("Morph: serial# %s isn't in morphs.json, assuming A\n", m.serialNum)
 				region = "A"
 			}
 
@@ -355,7 +356,7 @@ func (m oneMorph) readFrames(callback CursorDeviceCallbackFunc, forceFactor floa
 					region = "D"
 					xNorm = xNorm - 0.5
 				default:
-					log.Printf("Morph: unable to find region for x/y=%f,%f\n", xNorm, yNorm)
+					log.Printf("Morph: unable to find QUAD region for x/y=%f,%f\n", xNorm, yNorm)
 					continue
 				}
 				xNorm *= 2.0
@@ -364,8 +365,8 @@ func (m oneMorph) readFrames(callback CursorDeviceCallbackFunc, forceFactor floa
 			cid := fmt.Sprintf("%d", contact.id)
 
 			if DebugUtil.Morph {
-				log.Printf("Morph: contact_id=%d morph_idx=%d n=%d state=%d xNorm=%f yNorm=%f zNorm=%f\n",
-					contact.id, m.idx, n, contact.state, xNorm, yNorm, zNorm)
+				log.Printf("Morph: region=%s contact_id=%d morph_idx=%d n=%d state=%d xNorm=%f yNorm=%f zNorm=%f\n",
+					region, contact.id, m.idx, n, contact.state, xNorm, yNorm, zNorm)
 			}
 
 			// make the coordinate space match OpenGL and Freeframe

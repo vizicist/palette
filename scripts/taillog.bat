@@ -1,1 +1,2 @@
-PowerShell -Command "Get-Content %LOCALAPPDATA%\Palette\logs\engine.log  -Wait"
+call setpalettelogdir
+PowerShell -Command "Get-Content %PALETTELOGDIR%\engine.log  -Wait"

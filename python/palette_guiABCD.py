@@ -22,186 +22,6 @@ import palette
 
 signal.signal(signal.SIGINT,signal.SIG_IGN)
 
-RecMode = False
-StartupMode = True
-IncludeSound = True  # to activate Sound page
-
-# ColorBg = '#bbbbbb'
-ColorWhite = '#ffffff'
-ColorBlack = '#000000'
-
-ColorBg = '#000000'
-ColorText = '#ffffff'
-ColorComboText = '#000000'    # black
-# ColorButton = '#888888'  
-ColorButton = '#333333'  
-ColorScrollbar = '#333333'  
-ColorThumb = '#00ffff'  
-
-ColorRed = '#ff0000'
-ColorBlue = '#0000ff'
-ColorGreen = '#00ff00'
-# ColorHigh = '#006666'
-ColorHigh = '#006666'
-ColorBright = '#00ffff'
-ColorAqua = '#00ffff'
-ColorUnHigh = '#888888'
-
-LineSep = "_"
-
-# resetAfterInactivity = 90.0
-resetAfterInactivity = -1
-
-global patchFont, patchTwoLineFont, sliderFont, largestFont, hugeFont, comboFont, largerFont, largeFont, performFont, mediumFont, padLabelFont
-global paramDisplayRows, selectDisplayRows, selectDisplayPerRow
-global pageSizeOfControlNormal, pageSizeOfSelectNormal, pageSizeOfControlAdvanced, pageSizeOfSelectAdvanced
-global pageSizeOfControl, pageSizeOfSelect
-global performButtonPadx, performButtonPady
-global selectButtonPadx, selectButtonPady
-
-def palette_region_api(region, meth, params=""):
-    if region == "":
-        print("palette_region_api: no region specified?  Assuming A")
-        region = "A"
-    if region == "*":
-        print("palette_region_api: What do I do with a * region?")
-        region = "A"
-    p = "\"region\":\""+region+"\""
-    if params == "":
-        params = p
-    else:
-        params = p + "," + params
-    return palette.palette_api("region."+meth,params)
-
-def palette_global_api(meth, params=""):
-    return palette.palette_api("global."+meth,params)
-
-def setFontSizes(fontFactor):
-    global patchFont, patchTwoLineFont, sliderFont, largestFont, hugeFont, comboFont, largerFont, largeFont, performFont, mediumFont, padLabelFont
-    f = 'Helvetica'
-    f = 'Lucida Sans'
-    patchFont = (f, int(20*fontFactor))
-    patchTwoLineFont = (f, int(18*fontFactor))
-    sliderFont = (f, int(12*fontFactor))
-    largestFont = (f, int(24*fontFactor))
-    hugeFont = (f, int(36*fontFactor))
-    comboFont = (f, int(20*fontFactor))
-    largerFont = (f, int(20*fontFactor))
-    largeFont = (f, int(16*fontFactor))
-    performFont = (f, int(18*fontFactor))
-    mediumFont = (f, int(12*fontFactor))
-    padLabelFont = (f, int(16*fontFactor))
-
-OneBeat = 96
-
-PageNames = {
-    "snap":"Snapshot",
-    "sound":"Sound",
-    "visual":"Visual",
-    "effect":"Effect",
-    "sliders":"Sliders",
-}
-ControlPageNames = {
-    "main":"Main",
-    # "sliders1":"Slider1",
-    # "sliders2":"Slider2",
-    # "sliders3":"Slider3",
-}
-
-PerPadPerformLabels = {}
-GlobalPerformLabels = {}
-PerPadPerformLabels["loopinglength"] = [
-    {"label":"Loop Length_8 beats",  "value":8*OneBeat},
-    {"label":"Loop Length_16 beats", "value":16*OneBeat},
-    {"label":"Loop Length_32 beats", "value":32*OneBeat},
-    {"label":"Loop Length_64 beats", "value":64*OneBeat},
-    {"label":"Loop Length_4 beats", "value":4*OneBeat},
-]
-SimpleScales = [
-	{"label":"Newage_Scale",    "value":"newage"},
-	{"label":"Arabian_Scale",   "value":"arabian"},
-	{"label":"Chromatic_Scale", "value":"chromatic"},
-    {"label":"Dorian_Scale","value":"dorian"},
-	{"label":"Fifths_Scale",    "value":"fifths"},
-    {"label":"Harminor_Scale",  "value":"harminor"},
-    {"label":"Lydian_Scale","value":"lydian"},
-    {"label":"Melminor_Scale",  "value":"melminor"},
-]
-PerformScales = [
-	{"label":"Newage_Scale",    "value":"newage"},
-    {"label":"Aeolian_Scale",   "value":"aeolian"},
- 	{"label":"Arabian_Scale",   "value":"arabian"},
- 	{"label":"Chromatic_Scale", "value":"chromatic"},
-    {"label":"Dorian_Scale","value":"dorian"},
- 	{"label":"Fifths_Scale",    "value":"fifths"},
-    {"label":"Harminor_Scale",  "value":"harminor"},
-    {"label":"Ionian_Scale","value":"ionian"},
-    {"label":"Locrian_Scale",   "value":"locrian"},
-    {"label":"Lydian_Scale","value":"lydian"},
-    {"label":"Melminor_Scale",  "value":"melminor"},
-    {"label":"Mixolydian_Scale","value":"mixolydian"},
-    {"label":"Phrygian_Scale",  "value":"phrygian"},
-    {"label":"Raga1_Scale",     "value":"raga1"},
-    {"label":"Raga2_Scale", "value":"raga2"},
-    {"label":"Raga3_Scale", "value":"raga3"},
-    {"label":"Raga4_Scale", "value":"raga4"},
-]
-
-PerPadPerformLabels["quant"] = [
-    {"label":"Fret_Quantize", "value":"frets"},
-    {"label":"Pressure_Quantize", "value":"pressure"},
-    {"label":"Fixed_Time Quant", "value":"fixed"},
-    {"label":"No_Quant",  "value":"none"},
-]
-PerPadPerformLabels["vol"] = [
-    {"label":"Pressure_Vol", "value":"pressure"},
-    {"label":"Fixed_Vol", "value":"fixed"},
-]
-PerPadPerformLabels["loopingfade"] = [
-    {"label":"Loop Fade_Med",  "value":0.4},
-    {"label":"Loop Fade_Slow", "value":0.5},
-    {"label":"Loop Fade_Slower", "value":0.6},
-    {"label":"Loop Fade_Slowest", "value":0.7},
-    {"label":"Loop_Forever", "value":1.0},
-    {"label":"Loop Fade_Fast", "value":0.2},
-    {"label":"Loop Fade_Faster", "value":0.1},
-    {"label":"Loop Fade_Fastest", "value":0.05},
-]
-PerPadPerformLabels["loopingonoff"] = [
-    {"label":"Looping_is OFF",  "value":"off"},
-    {"label":"Looping_REC+PLAY", "value":"recplay"},
-    {"label":"Looping_PLAY ONLY", "value":"play"},
-]
-PerPadPerformLabels["midithru"] = [
-    {"label":"MIDI Input_Thru",  "value":"thru"},
-    {"label":"MIDI Input_Set Scale",  "value":"setscale"},
-    {"label":"MIDI Input_Thru Scadjust", "value":"thruscadjust"},
-    {"label":"MIDI Input_Disabled",  "value":"disabled"},
-]
-PerPadPerformLabels["useexternalscale"] = [
-    {"label":"External Scale_Off",  "value":False},
-    {"label":"External Scale_On",  "value":True},
-]
-PerPadPerformLabels["midiquantized"] = [
-    {"label":"MIDI Thru_Unquantized",  "value":False},
-    {"label":"MIDI Thru_Quantized",  "value":True},
-]
-GlobalPerformLabels["tempo"] = [
-    {"label":"Tempo_Normal",  "value":1.0},
-    {"label":"Tempo_Slow", "value":0.85},
-    {"label":"Tempo_Slower", "value":0.70},
-    {"label":"Tempo_Slowest", "value":0.55},
-    {"label":"Tempo_Fast", "value":1.5},
-    {"label":"Tempo_Faster", "value":2.0},
-    {"label":"Tempo_Fastest", "value":4.0},
-]
-GlobalPerformLabels["transpose"] = [
-    {"label":"Transpose_0",  "value":0},
-    {"label":"Transpose_3",  "value":3},
-    {"label":"Transpose_-2",  "value":-2},
-    {"label":"Transpose_5",  "value":5},
-]
-
 global TopContainer
 TopContainer = None
 global TopApp
@@ -238,12 +58,12 @@ class ProGuiApp(tk.Tk):
 
         self.perpadPerformVal = {}
         self.globalPerformVal = {}
-        for s in PerPadPerformLabels:
+        for s in palette.PerPadPerformLabels:
             self.perpadPerformVal[s] = {}
-        for s in GlobalPerformLabels:
+        for s in palette.GlobalPerformLabels:
             self.globalPerformVal[s] = {}
 
-        self.topContainer = tk.Frame(self, background=ColorBg)
+        self.topContainer = tk.Frame(self, background=palette.ColorBg)
         global TopContainer
         TopContainer = self.topContainer
         global TopApp
@@ -251,7 +71,7 @@ class ProGuiApp(tk.Tk):
 
         self.selectFrame = self.makeSelectFrame(self.topContainer)
         self.performContainer = tk.Frame(self.topContainer,
-            highlightbackground=ColorAqua, highlightcolor=ColorAqua, highlightthickness=3)
+            highlightbackground=palette.ColorAqua, highlightcolor=palette.ColorAqua, highlightthickness=3)
         self.performHeader = PerformHeader(parent=self.performContainer, controller=self)
         self.startupFrame = self.makeStartupFrame(self.topContainer)
 
@@ -324,7 +144,7 @@ class ProGuiApp(tk.Tk):
                         self.loadSnap("Basic_Chaos")
                         self.sendSnap()
 
-            if resetAfterInactivity>0 and (now - self.lastAnything) > resetAfterInactivity:
+            if palette.resetAfterInactivity>0 and (now - self.lastAnything) > palette.resetAfterInactivity:
                 print("Resetting after no activity!!")
                 self.resetLastAnything()
                 self.setAdvanced(0)
@@ -364,18 +184,17 @@ class ProGuiApp(tk.Tk):
             self.resetVisibility()
 
     def resetVisibility(self):
-        global RecMode
         sh = self.selectHeader
         ch = self.performHeader
         if self.showAllPages:
-            for pg in PageNames:
+            for pg in palette.PageNames:
                 if not self.showSliders and pg == "sliders":
                     sh.pageButton[pg].pack_forget()
-                elif IncludeSound == False and not self.showSound and pg == "sound":
+                elif palette.IncludeSound == False and not self.showSound and pg == "sound":
                     sh.pageButton[pg].pack_forget()
                 else:
                     sh.pageButton[pg].pack(side=tk.LEFT,padx=5)
-            for pg in ControlPageNames:
+            for pg in palette.ControlPageNames:
                 # no control page names get displayed if we're not showing slider pages
                 if not self.showSliders or not self.showSound:
                     ch.pageButton[pg].pack_forget()
@@ -383,16 +202,16 @@ class ProGuiApp(tk.Tk):
                     ch.pageButton[pg].pack(side=tk.LEFT,padx=5)
             ch.performMessageLabel.pack_forget()
 
-        elif RecMode:
-            for pg in PageNames:
+        elif palette.RecMode:
+            for pg in palette.PageNames:
                 sh.pageButton[pg].pack_forget()
-            for pg in ControlPageNames:
+            for pg in palette.ControlPageNames:
                 ch.pageButton[pg].pack_forget()
             ch.performMessageLabel.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=50)
         else:
-            for pg in PageNames:
+            for pg in palette.PageNames:
                 sh.pageButton[pg].pack_forget()
-            for pg in ControlPageNames:
+            for pg in palette.ControlPageNames:
                 ch.pageButton[pg].pack_forget()
             ch.performMessageLabel.pack_forget()
 
@@ -433,7 +252,7 @@ class ProGuiApp(tk.Tk):
             return
         # Read parameters from a json file (but NOT a snap file)
 
-        fpath = palette.presetsFilePath(paramstype, paramsname)
+        fpath = palette.searchPresetsFilePath(paramstype, paramsname)
 
         print("Reading JSON:",fpath)
         f = open(fpath)
@@ -494,9 +313,9 @@ class ProGuiApp(tk.Tk):
         # print("\nREAD SNAP PARAMS FILE paramsname=",paramsname)
         # Read parameters from a json file
         if paramsname == "CurrentSnapshot":
-            fpath = palette.localconfigFilePath(paramsname+".json")
+            fpath = palette.configFilePath(paramsname+".json")
         else:
-            fpath = palette.presetsFilePath("snap", paramsname)
+            fpath = palette.searchPresetsFilePath("snap", paramsname)
         print("Reading ",fpath)
         try:
             f = open(fpath)
@@ -527,18 +346,17 @@ class ProGuiApp(tk.Tk):
 
          # This is the area at the very top
         f = tk.Frame(container,
-            highlightbackground=ColorAqua, highlightcolor=ColorAqua, highlightthickness=3)
+            highlightbackground=palette.ColorAqua, highlightcolor=palette.ColorAqua, highlightthickness=3)
 
         self.selectHeader = SelectHeader(parent=f, controller=self)
         self.selectHeader.pack(side=tk.TOP,fill=tk.BOTH)
 
         # These are the pages of buttons for selecting set/patch/sound/visual/etc..
-        global PageNames
-        for pagename in PageNames:
+        for pagename in palette.PageNames:
             self.makeSelectorPage(f, pagename, PageSelector)
 
         # These are the pages you can switch between for editing
-        for pagename in PageNames:
+        for pagename in palette.PageNames:
             self.makeEditPage(f,pagename)
 
         self.editPage["snap"].canRevert = True
@@ -547,9 +365,9 @@ class ProGuiApp(tk.Tk):
 
     def makeStartupFrame(self,container):
         f = tk.Frame(container,
-            highlightbackground=ColorBg, highlightcolor=ColorAqua, highlightthickness=3)
+            highlightbackground=palette.ColorBg, highlightcolor=palette.ColorAqua, highlightthickness=3)
         self.startupLabel = ttk.Label(f, text="               Palette is Loading...", style='Header.TLabel',
-            foreground=ColorText, background=ColorBg, relief="flat", justify=tk.CENTER, font=largestFont)
+            foreground=palette.ColorText, background=palette.ColorBg, relief="flat", justify=tk.CENTER, font=palette.largestFont)
         self.startupLabel.pack(side=tk.TOP,fill=tk.BOTH,expand=True)
         return f
 
@@ -649,7 +467,7 @@ class ProGuiApp(tk.Tk):
         # if paramType == "effect":
         #     self.sendPadOneEffectVal(pad,paramname,val)
         # else:
-        palette_region_api(self.PadName,paramType+".set_param",
+        palette.palette_region_api(self.PadName,paramType+".set_param",
             "\"param\": \"" + paramname + "\"" + \
             ", \"value\": \"" + str(val) + "\"" )
 
@@ -670,7 +488,7 @@ class ProGuiApp(tk.Tk):
                 val = page.getValue(fullparam)
                 self.sendPadOneEffectVal(pad,fullparam,val)
                 continue
-            if not self.paramTypeOf[baseparam] in PageNames:
+            if not self.paramTypeOf[baseparam] in palette.PageNames:
                 print("Not sending param=",origp)
                 continue
             v = page.getValue(origp)
@@ -900,61 +718,61 @@ class ProGuiApp(tk.Tk):
                 print("Unrecognized value of loopingonoff - %s\n" % val)
                 return
 
-            palette_region_api(self.PadName, "loop_recording", '"onoff": "'+str(reconoff)+'"')
-            palette_region_api(self.PadName, "loop_playing", '"onoff": "'+str(playonoff)+'"')
+            palette.palette_region_api(self.PadName, "loop_recording", '"onoff": "'+str(reconoff)+'"')
+            palette.palette_region_api(self.PadName, "loop_playing", '"onoff": "'+str(playonoff)+'"')
 
         elif name == "loopinglength":
             v = self.perpadPerformVal["loopinglength"][pad]["value"]
-            palette_region_api(self.PadName, "loop_length", '"length": "'+str(v)+'"')
+            palette.palette_region_api(self.PadName, "loop_length", '"length": "'+str(v)+'"')
 
         elif name == "loopingfade":
             fade = self.perpadPerformVal["loopingfade"][pad]["value"]
-            palette_region_api(self.PadName, "loop_fade", '"fadelength": "'+str(fade)+'"')
+            palette.palette_region_api(self.PadName, "loop_fade", '"fadelength": "'+str(fade)+'"')
 
         elif name == "quant":
             val = self.perpadPerformVal["quant"][pad]["value"]
-            palette_region_api(self.PadName, "set_param",
+            palette.palette_region_api(self.PadName, "set_param",
                 "\"param\": \"" + "misc.quant" + "\"" + \
                 ", \"value\": \"" + str(val) + "\"")
         elif name == "scale":
             val = self.perpadPerformVal["scale"][pad]["value"]
-            palette_region_api(self.PadName, "set_param",
+            palette.palette_region_api(self.PadName, "set_param",
                 "\"param\": \"" + "misc.scale" + "\"" + \
                 ", \"value\": \"" + str(val) + "\"")
 
         elif name == "vol":
             val = self.perpadPerformVal["vol"][pad]["value"]
             # NOTE: "voltype" here rather than "vol" - should make consistent someday
-            palette_region_api(self.PadName, "set_param",
+            palette.palette_region_api(self.PadName, "set_param",
                 "\"param\": \"" + "misc.vol" + "\"" + \
                 ", \"value\": \"" + str(val) + "\"")
 
         elif name == "comb":
             val = 1.0
-            palette_region_api(self.PadName, "loop_comb",
+            palette.palette_region_api(self.PadName, "loop_comb",
                 "\"value\": \"" + str(val) + "\"")
 
         elif name == "midithru":
             thru = self.perpadPerformVal["midithru"][pad]["value"]
-            palette_region_api(self.PadName, "midi_thru", "\"thru\": \"" + str(thru) + "\"")
+            palette.palette_region_api(self.PadName, "midi_thru", "\"thru\": \"" + str(thru) + "\"")
 
         elif name == "useexternalscale":
             onoff = self.perpadPerformVal["useexternalscale"][pad]["value"]
-            palette_region_api(self.PadName, "useexternalscale", "\"onoff\": \"" + str(onoff) + "\"")
+            palette.palette_region_api(self.PadName, "useexternalscale", "\"onoff\": \"" + str(onoff) + "\"")
 
         elif name == "midiquantized":
             quantized = self.perpadPerformVal["midiquantized"][pad]["value"]
-            palette_region_api(self.PadName, "midi_quantized", "\"quantized\": \"" + str(quantized) + "\"")
+            palette.palette_region_api(self.PadName, "midi_quantized", "\"quantized\": \"" + str(quantized) + "\"")
 
         elif name == "transpose":
             val = self.globalPerformVal["transpose"][pad]["value"]
-            palette_region_api(self.PadName, "set_transpose", "\"value\": \""+str(val) + "\"")
+            palette.palette_region_api(self.PadName, "set_transpose", "\"value\": \""+str(val) + "\"")
 
     def sendGlobalPerformVal(self,name):
 
         if name == "tempo":
             val = self.globalPerformVal["tempo"]["value"]
-            palette_global_api("set_tempo_factor", "\"value\": \""+str(val) + "\"")
+            palette.palette_global_api("set_tempo_factor", "\"value\": \""+str(val) + "\"")
 
         # elif name == "configname":
         #     config = self.globalPerformVal["configname"]["value"]
@@ -962,10 +780,10 @@ class ProGuiApp(tk.Tk):
         #     print("CONFIGNAME setting to ",palette.getConfigName())
 
     def clearPadLoop(self,pad):
-        palette_region_api(self.PadName, "loop_clear", "")
+        palette.palette_region_api(self.PadName, "loop_clear", "")
 
     def combPadLoop(self,pad):
-        palette_region_api(self.PadName, "loop_comb", "")
+        palette.palette_region_api(self.PadName, "loop_comb", "")
 
     def combLoop(self):
         self.resetLastAnything()
@@ -988,27 +806,27 @@ class ProGuiApp(tk.Tk):
             if level == 0:
                 self.showAllPages = False
                 self.showSliders = False
-                PerPadPerformLabels["scale"] = SimpleScales
+                palette.PerPadPerformLabels["scale"] = palette.SimpleScales
             elif level == 1:
                 self.showAllPages = True
                 self.showSliders = False
-                PerPadPerformLabels["scale"] = SimpleScales
+                palette.PerPadPerformLabels["scale"] = palette.SimpleScales
 
     def resetAll(self):
 
-        palette_global_api("audio_reset")
+        palette.palette_global_api("audio_reset")
 
         self.resetLastAnything()
         self.sendANO()
         self.clearExternalScale()
 
         for pad in self.PadNames:
-            for name in PerPadPerformLabels:
-                self.perpadPerformVal[name][pad] = PerPadPerformLabels[name][0]
+            for name in palette.PerPadPerformLabels:
+                self.perpadPerformVal[name][pad] = palette.PerPadPerformLabels[name][0]
                 self.sendPadPerformVal(pad,name)
 
-        for name in GlobalPerformLabels:
-            self.globalPerformVal[name] = GlobalPerformLabels[name][0]
+        for name in palette.GlobalPerformLabels:
+            self.globalPerformVal[name] = palette.GlobalPerformLabels[name][0]
             self.sendGlobalPerformVal(name)
 
         self.setPerformMessage("")
@@ -1018,10 +836,10 @@ class ProGuiApp(tk.Tk):
         self.performPage["main"].updatePerformButtonLabels(self.PadName)
 
     def clearExternalScale(self):
-        palette_region_api(self.PadName, "clearexternalscale")
+        palette.palette_region_api(self.PadName, "clearexternalscale")
 
     def sendANO(self):
-        palette_region_api(self.PadName, "ANO")
+        palette.palette_region_api(self.PadName, "ANO")
 
     def sendSnap(self):
         self.sendSnapPad(self.PadName)
@@ -1044,10 +862,10 @@ class ProGuiApp(tk.Tk):
         for pt in ["sound","visual","effect"]:
             paramlistjson = self.paramListJson(pt,pad)
             if paramstype == None or paramstype == pt:
-                palette_region_api(self.PadName, pt+".set_params", paramlistjson)
+                palette.palette_region_api(self.PadName, pt+".set_params", paramlistjson)
 
         if paramstype == None:
-            for name in PerPadPerformLabels:
+            for name in palette.PerPadPerformLabels:
                 self.sendPadPerformVal(pad,name)
 
     def synthesizeParamsJson(self):
@@ -1084,7 +902,7 @@ class ProGuiApp(tk.Tk):
             self.paramValueTypeOf[name] = self.allParamsJson[name]["valuetype"]
 
         # Construct lists of the parameters, pulled from Params.json
-        for t in PageNames:
+        for t in palette.PageNames:
             self.paramsOfType[t] = collections.OrderedDict()
 
         self.allParamNames = []
@@ -1191,7 +1009,7 @@ class PadChooser(tk.Frame):
         self.PadNum2Name = ["X","A","B","C","D"]
 
         # separator line
-        # canvas = tk.Canvas(self, background=ColorAqua, highlightthickness=0, height=4)
+        # canvas = tk.Canvas(self, background=palette.ColorAqua, highlightthickness=0, height=4)
         # canvas.pack(side=tk.TOP,fill=tk.X)
 
         self.makePadFrame(self,"A",0.05,0.05)
@@ -1202,7 +1020,7 @@ class PadChooser(tk.Frame):
         self.makeGlobalButton(self,0.5,0.15)
         self.padGlobalOn = True
 
-        self.config(background=ColorBg)
+        self.config(background=palette.ColorBg)
 
     def setPadLabel(self,pad,label):
         # self.padLabel[pad].config(text=label)
@@ -1213,30 +1031,30 @@ class PadChooser(tk.Frame):
 
         self.padFrame[pad] = tk.Frame(self)
         self.padFrame[pad].place(relx=x0,rely=y0,relwidth=0.3,relheight=0.4)
-        self.padFrame[pad].config(borderwidth=2,relief="solid",background=ColorUnHigh)
+        self.padFrame[pad].config(borderwidth=2,relief="solid",background=palette.ColorUnHigh)
         self.padFrame[pad].bind("<Button-1>", lambda p=pad: self.padCallback(p))
 
         # self.padLabel[pad] = ttk.Label(self.padFrame[pad], text="")
         # self.padLabel[pad].pack(side=tk.TOP)
-        # self.padLabel[pad].config(background=ColorUnHigh,font=padLabelFont)
+        # self.padLabel[pad].config(background=palette.ColorUnHigh,font=padLabelFont)
         # self.padLabel[pad].bind("<Button-1>", lambda p=pad: self.padCallback(p))
 
         if self.controller.showCursorFeedback:
             self.padCanvas[pad] = tk.Canvas(self.padFrame[pad], width=self.canvasWidth, height=self.canvasHeight, border=0)
             self.padCanvas[pad].pack(side=tk.TOP)
-            self.padCanvas[pad].config(background=ColorUnHigh)
+            self.padCanvas[pad].config(background=palette.ColorUnHigh)
 
     def makeGlobalButton(self,parent,x0,y0):
 
         self.padGlobalButton = tk.Frame(self)
         self.padGlobalButton.place(relx=x0-0.05,rely=y0-0.05,relwidth=0.1,relheight=0.275)
-        self.padGlobalButton.config(borderwidth=2,relief="solid",background=ColorUnHigh)
+        self.padGlobalButton.config(borderwidth=2,relief="solid",background=palette.ColorUnHigh)
         self.padGlobalButton.bind("<Button-1>", self.globalCallback)
 
         self.padGlobalLabel = ttk.Label(self.padGlobalButton, text="*")
         self.padGlobalLabel.pack(side=tk.TOP)
         self.padGlobalLabel.configure(style='GlobalDisabled.TLabel')
-        # self.padGlobalLabel.config(background=ColorUnHigh)
+        # self.padGlobalLabel.config(background=palette.ColorUnHigh)
         self.padGlobalLabel.bind("<Button-1>", self.globalCallback)
 
     def globalCallback(self,e):
@@ -1245,16 +1063,16 @@ class PadChooser(tk.Frame):
 
     def refreshColors(self):
         if self.padGlobalOn:
-            color = ColorHigh
+            color = palette.ColorHigh
         else:
-            color = ColorUnHigh
+            color = palette.ColorUnHigh
         self.padGlobalButton.config(background=color)
         self.padGlobalLabel.config(background=color)
         for p in self.controller.PadNames:
             if self.padGlobalOn or p != self.controller.PadName:
                 self.colorPad(p,color)
             else:
-                self.colorPad(p,ColorHigh)
+                self.colorPad(p,palette.ColorHigh)
 
     def colorPad(self,pad,color):
         self.padFrame[pad].config(background=color)
@@ -1280,7 +1098,7 @@ class PadChooser(tk.Frame):
         elif z > (self.canvasWidth/4):
             z = self.canvasWidth/4
         if highlighted:
-            color = ColorRed
+            color = palette.ColorRed
         else:
             color = self.controller.padColor(pad)
         self.padCanvas[pad].create_oval(x-z,y-z,x+z,y+z,outline=color)
@@ -1303,9 +1121,9 @@ class SelectHeader(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
-        self.config(background=ColorBg)
+        self.config(background=palette.ColorBg)
 
-        self.titleFrame = tk.Frame(self, background=ColorBg)
+        self.titleFrame = tk.Frame(self, background=palette.ColorBg)
         self.titleFrame.pack(side=tk.TOP, fill=tk.X, expand=True)
 
         self.pageButton = {}
@@ -1314,14 +1132,14 @@ class SelectHeader(tk.Frame):
             command=lambda : self.controller.togglePageButons())
         self.headerButton.pack(side=tk.LEFT)
 
-        for i in PageNames:
-            self.makeHeaderButton(i,PageNames[i])
+        for i in palette.PageNames:
+            self.makeHeaderButton(i,palette.PageNames[i])
 
         self.padChooser = PadChooser(parent=parent, controller=controller)
         self.padChooser.place(in_=self.titleFrame, relx=0.7, rely=0, relwidth=0.3, relheight=1.0)
 
     def spacer(self,height):
-        spacer = tk.Canvas(self, background=ColorBg, highlightthickness=0, height=height)
+        spacer = tk.Canvas(self, background=palette.ColorBg, highlightthickness=0, height=height)
         spacer.pack(side=tk.TOP)
 
     def makeHeaderButton(self,pageName,pageTitle):
@@ -1343,9 +1161,9 @@ class PerformHeader(tk.Frame):
 
         tk.Frame.__init__(self, parent)
         self.controller = controller
-        self.config(background=ColorBg)
+        self.config(background=palette.ColorBg)
 
-        self.titleFrame = tk.Frame(self, background=ColorBg)
+        self.titleFrame = tk.Frame(self, background=palette.ColorBg)
         self.titleFrame.pack(side=tk.TOP, fill=tk.X, expand=True)
 
         self.pageButton = {}
@@ -1367,7 +1185,7 @@ class PerformHeader(tk.Frame):
                 self.pageButton[pageName].pack(side=tk.LEFT,padx=5)
 
     def spacer(self,height):
-        w = tk.Canvas(self, background=ColorBg, highlightthickness=0, height=height)
+        w = tk.Canvas(self, background=palette.ColorBg, highlightthickness=0, height=height)
         w.pack(side=tk.TOP)
 
     def performHeaderLabel(self,text):
@@ -1382,7 +1200,7 @@ class PerformHeader(tk.Frame):
             self.performLabel.pack(side=tk.LEFT,padx=5)
 
     def performHeaderInfo(self,text):
-        self.performMessageLabel = ttk.Label(self.titleFrame, text=text, background=ColorBg, style='PerformMessage.TLabel')
+        self.performMessageLabel = ttk.Label(self.titleFrame, text=text, background=palette.ColorBg, style='PerformMessage.TLabel')
         # self.performMessageLabel.pack(side=tk.LEFT, padx=25, ipadx=25)
 
     def headerButton(self,pageName,pageTitle):
@@ -1402,7 +1220,7 @@ class PageEditParams(tk.Frame):
     def __init__(self, parent, controller, paramstype, params):
         tk.Frame.__init__(self, parent)
         self.controller = controller
-        self.config(background=ColorBg)
+        self.config(background=palette.ColorBg)
 
         self.ischanged = False
         self.canRevert = False
@@ -1416,7 +1234,7 @@ class PageEditParams(tk.Frame):
         saveArea = self.makeButtonArea()
         saveArea.pack(side=tk.TOP, fill=tk.X)
 
-        # f = tk.Frame(self, background=ColorBg)
+        # f = tk.Frame(self, background=palette.ColorBg)
         self.paramsFrame = self.makeParamsArea(self)
         self.paramsFrame.pack(side=tk.LEFT, pady=0)
 
@@ -1436,7 +1254,7 @@ class PageEditParams(tk.Frame):
 
     def makeParamsArea(self,container):
 
-        f = tk.Frame(container, background=ColorBg)
+        f = tk.Frame(container, background=palette.ColorBg)
         f.config(borderwidth=1, relief="flat")
 
         self.paramRowName = []
@@ -1464,7 +1282,7 @@ class PageEditParams(tk.Frame):
 
         # The widgets for << < . . > >> are static, in the displayed rows
         for row in range(0,paramDisplayRows):
-            f2 = tk.Frame(f, background=ColorBg)
+            f2 = tk.Frame(f, background=palette.ColorBg)
             self.adjustButton(f2,row,"<<", -3)
             self.adjustButton(f2,row,"<", -2)
             self.adjustButton(f2,row,".", -1)
@@ -1476,7 +1294,7 @@ class PageEditParams(tk.Frame):
         return f
 
     def makeButtonArea(self):
-        f = tk.Frame(self, background=ColorBg)
+        f = tk.Frame(self, background=palette.ColorBg)
 
         if self.paramstype != "snap":
             self.initButton = ttk.Label(f, text="Init", style='Button.TLabel')
@@ -1510,7 +1328,7 @@ class PageEditParams(tk.Frame):
         self.revertButton.bind("<Button-1>", lambda event:self.revert())
 
         self.comboParamsname = ttk.Combobox(f, textvariable=self.paramsnameVar,
-                font=comboFont, style='custom.TCombobox')
+                font=palette.comboFont, style='custom.TCombobox')
         self.comboParamsname.bind("<<ComboboxSelected>>", lambda event,v=self.paramsnameVar : self.checkThenGotoParamsFile(v.get()))
         self.comboParamsname.bind("<Return>", lambda event,v=self.paramsnameVar : self.checkThenGotoParamsFile(v.get()))
 
@@ -1920,15 +1738,15 @@ class ScrollBar(tk.Frame):
         tk.Frame.__init__(self, parent)
         self.notify = notify
         self.tag = tag
-        self.config(background=ColorBg)
+        self.config(background=palette.ColorBg)
 
-        self.scroll = tk.Canvas(self, background=ColorScrollbar, highlightthickness=0)
+        self.scroll = tk.Canvas(self, background=palette.ColorScrollbar, highlightthickness=0)
         self.scroll.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
         self.scroll.bind("<Button-1>", self.scrollClick)
         self.scroll.bind("<B1-Motion>", self.scrollMotion)
         # self.scroll.bind("<MouseWheel>", self.scrollWheel)
 
-        self.thumb = tk.Canvas(self.scroll, background=ColorThumb, highlightthickness=0)
+        self.thumb = tk.Canvas(self.scroll, background=palette.ColorThumb, highlightthickness=0)
         self.thumb.place(in_=self.scroll, relx=0, rely=0.0, relwidth=1, relheight=thumbFactor )
         self.thumb.bind("<Button-1>", self.thumbClick)
         self.thumb.bind("<B1-Motion>", self.thumbMotion)
@@ -2013,9 +1831,9 @@ class PagePerformMain(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
-        self.config(background=ColorBg)
+        self.config(background=palette.ColorBg)
 
-        self.frame = tk.Frame(self, background=ColorBg)
+        self.frame = tk.Frame(self, background=palette.ColorBg)
         self.frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True, pady=5)
 
         self.performButton = {}
@@ -2065,7 +1883,7 @@ class PagePerformMain(tk.Frame):
                 text = button.cget("text")
 
             if isTwoLine(text):
-                text = text.replace(LineSep,"\n",1)
+                text = text.replace(palette.LineSep,"\n",1)
 
             ipady = 0
             button.config(text=text)
@@ -2092,29 +1910,29 @@ class PagePerformMain(tk.Frame):
         if text == None:
             text = name
         if isTwoLine(text):
-            text = text.replace(LineSep,"\n",1)
+            text = text.replace(palette.LineSep,"\n",1)
         self.performButton[name].config(text=text, width=10, style='PerformButton.TLabel')
 
     def performCallback(self,name):
         controller = self.controller
         controller.resetLastAnything()
-        if name in PerPadPerformLabels:
+        if name in palette.PerPadPerformLabels:
             v = controller.perpadPerformVal[name][controller.PadName]
-            nv = controller.nextValue(PerPadPerformLabels[name],v)
+            nv = controller.nextValue(palette.PerPadPerformLabels[name],v)
             text = nv["label"]
             if isTwoLine(text):
-                text = text.replace(LineSep,"\n",1)
+                text = text.replace(palette.LineSep,"\n",1)
             self.performButton[name].config(text=text)
 
             controller.perpadPerformVal[name][controller.PadName] = nv
             controller.sendPadPerformVal(controller.PadName,name)
 
-        elif name in GlobalPerformLabels:
+        elif name in palette.GlobalPerformLabels:
             v = controller.globalPerformVal[name]
-            nv = controller.nextValue(GlobalPerformLabels[name],v)
+            nv = controller.nextValue(palette.GlobalPerformLabels[name],v)
             text = nv["label"]
             if isTwoLine(text):
-                text = text.replace(LineSep,"\n",1)
+                text = text.replace(palette.LineSep,"\n",1)
             self.performButton[name].config(text=text)
 
             controller.globalPerformVal[name] = nv
@@ -2127,7 +1945,7 @@ class PagePerformSliders(tk.Frame):
     def __init__(self, parent,controller,slidersNum):
         tk.Frame.__init__(self, parent)
         self.controller = controller
-        self.config(background=ColorBg)
+        self.config(background=palette.ColorBg)
         # self.sliderGlobalOn = True
 
         self.sliderScale = {}
@@ -2136,10 +1954,10 @@ class PagePerformSliders(tk.Frame):
         self.sliderModify = {}
         self.slidersNum = slidersNum
 
-        self.valsframe = tk.Frame(self, background=ColorBg)
+        self.valsframe = tk.Frame(self, background=palette.ColorBg)
         self.valsframe.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=10)
 
-        self.globalframe = tk.Frame(self, background=ColorBg)
+        self.globalframe = tk.Frame(self, background=palette.ColorBg)
         self.globalframe.pack(side=tk.LEFT,padx=10)
 
         slidersname = self.controller.selectorPage["sliders"].defaultVal()
@@ -2182,7 +2000,7 @@ class PagePerformSliders(tk.Frame):
         self.sliderParam[i] = newname
     
     def setSliders(self,slidersname):
-        j = palette.readJsonPath(palette.presetsFilePath("sliders", slidersname))
+        j = palette.readJsonPath(palette.searchPresetsFilePath("sliders", slidersname))
         # print("slidersname=",slidersname," j=",j)
         p = j["params"]
         for i in range(8):
@@ -2200,12 +2018,12 @@ class PageSelector(tk.Frame):
         self.controller = controller
         self.pagename = pagename
 
-        self.config(background=ColorBg)
+        self.config(background=palette.ColorBg)
 
         self.selectButtons = {}
         self.selectOffset = 0
 
-        self.valsframe = tk.Frame(self, background=ColorBg)
+        self.valsframe = tk.Frame(self, background=palette.ColorBg)
         self.valsframe.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, pady=10)
 
         self.scrollbar = ScrollBar(parent=self, notify=self)
@@ -2241,8 +2059,8 @@ class PageSelector(tk.Frame):
                         style='PatchTwoLine.TLabel'
                         ipady = 0
                         width=13
-                        selectButtonText = selectButtonText.replace(LineSep,"\n",1)
-                        selectButtonText = selectButtonText.replace(LineSep," ")
+                        selectButtonText = selectButtonText.replace(palette.LineSep,"\n",1)
+                        selectButtonText = selectButtonText.replace(palette.LineSep," ")
                     else:
                         style='PatchTwoLine.TLabel'
                         selectButtonText = selectButtonText + "\n"
@@ -2278,88 +2096,6 @@ class PageSelector(tk.Frame):
                 s = 'PatchTwoLine.TLabel'
             self.selectButtons[i].config(style=s)
 
-def makeStyles(app):
-    app.option_add('*TCombobox*Listbox.font', comboFont)
-
-    s = ttk.Style()
-
-    s.configure('.', font=largestFont, background=ColorBg, foreground=ColorText)
-    s.configure('Enabled.TLabel', foreground='green', background=ColorHigh, relief="flat", justify=tk.CENTER, font=mediumFont)
-    s.configure('Disabled.TLabel', foreground='red', background=ColorButton, relief="flat", justify=tk.CENTER, font=mediumFont)
-    s.configure('Edit.TLabel', font=largestFont, foreground=ColorText, background=ColorBg)
-
-    s.configure('Button.TLabel', font=largerFont, foreground=ColorText, background=ColorButton)
-    s.configure('ButtonHigh.TLabel', font=largerFont, foreground=ColorText, background=ColorHigh)
-
-    s.configure('Red.TLabel', foreground='red', justify=tk.CENTER, background=ColorBg)
-    s.configure('Bright.TLabel', foreground=ColorBright, justify=tk.CENTER, background=ColorBg)
-    s.configure('TinyBright.TLabel', foreground=ColorBright, justify=tk.CENTER, background=ColorBg, font=mediumFont)
-    s.configure('Black.TLabel', foreground='black')
-
-    s.configure('Date.TLabel', font=largeFont, foreground=ColorText, justify=tk.LEFT)
-
-    s.configure('PLAY.TLabel', font=largestFont, foreground=ColorText, background=ColorButton, justify=tk.LEFT)
-
-    s.configure('ParamName.TLabel', font=largerFont, foreground=ColorText, justify=tk.LEFT)
-    s.configure('ParamValue.TLabel', foreground=ColorText, borderwidth=2, justify=tk.RIGHT, background=ColorBg, font=largerFont)
-    s.configure('ParamAdjust.TLabel', foreground=ColorText, borderwidth=2, anchor=tk.CENTER, background=ColorButton, font=largeFont)
-
-    s.configure('HeaderEnabled.TLabel', background=ColorHigh, relief="flat", justify=tk.CENTER, font=largestFont)
-    s.configure('HeaderDisabled.TLabel', background=ColorButton, relief="flat", justify=tk.CENTER, font=largestFont)
-
-    s.configure('GlobalEnabled.TLabel', background=ColorHigh, relief="flat", justify=tk.CENTER, font=hugeFont)
-    s.configure('GlobalDisabled.TLabel', background=ColorButton, relief="flat", justify=tk.CENTER, font=hugeFont)
-
-    s.configure('PerformMessage.TLabel', background=ColorBg, foreground=ColorRed, relief="flat", justify=tk.CENTER, align=tk.CENTER, font=performFont)
-
-    s.configure('Header.TLabel', background=ColorButton, foreground=ColorWhite, relief="flat", justify=tk.CENTER, align=tk.CENTER, font=largestFont)
-    s.configure('PerformHeader.TLabel', background=ColorButton, foreground=ColorBright, relief="flat", justify=tk.CENTER, align=tk.CENTER, font=performFont)
-
-    s.configure('ScrollButton.TLabel', foreground=ColorText, font=largestFont, background=ColorScrollbar, anchor=tk.CENTER)
-
-    s.configure('Patch.TLabel', foreground=ColorText, font=patchFont, background=ColorButton, anchor=tk.CENTER, justify=tk.CENTER)
-    s.configure('PatchHighlight.TLabel', foreground=ColorText, font=patchFont, background=ColorRed, anchor=tk.CENTER, justify=tk.CENTER)
-
-    s.configure('PatchTwoLine.TLabel', foreground=ColorText, font=patchTwoLineFont, background=ColorButton, anchor=tk.CENTER, justify=tk.CENTER)
-    s.configure('PatchTwoLineHighlight.TLabel', foreground=ColorText, font=patchTwoLineFont, background=ColorHigh, anchor=tk.CENTER, justify=tk.CENTER)
-
-    s.configure('Slider.TLabel', foreground=ColorText, font=sliderFont, background=ColorBg, anchor=tk.CENTER)
-
-    s.configure('RecordingButton.TLabel', background=ColorRed, relief="flat", justify=tk.CENTER, align=tk.CENTER, font=largeFont)
-
-    s.configure('PerformButton.TLabel', foreground=ColorText, background=ColorButton, relief="flat", justify=tk.CENTER,
-        anchor=tk.CENTER, font=performFont)
-
-    s.configure('RecordingName.TLabel', background=ColorButton, relief="flat", justify=tk.CENTER, anchor=tk.CENTER, font=largestFont)
-    s.configure('RecordingButton.TLabel', background=ColorButton, relief="flat", justify=tk.CENTER, anchor=tk.CENTER, font=largerFont)
-
-    s.configure('custom.TCombobox', foreground=ColorComboText, background=ColorBg)
-
-    s.map('Patch.TLabel',
-        foreground=[('disabled', 'yellow'),
-                    ('pressed', ColorText),
-                    ('active', ColorText)],
-        background=[('disabled', 'yellow'),
-                    ('pressed', ColorHigh),
-                    ('active', ColorButton)]
-        )
-    s.map('PatchTwoLine.TLabel',
-        foreground=[('disabled', 'yellow'),
-                    ('pressed', ColorText),
-                    ('active', ColorText)],
-        background=[('disabled', 'yellow'),
-                    ('pressed', ColorHigh),
-                    ('active', ColorButton)]
-        )
-    s.map('PerformButton.TLabel',
-        foreground=[('disabled', 'yellow'),
-                    ('pressed', ColorText),
-                    ('active', ColorText)],
-        background=[('disabled', 'yellow'),
-                    ('pressed', ColorHigh),
-                    ('active', ColorButton)]
-        )
- 
 def startgui():
     # print("STARTGUI called")
     global StartupMode
@@ -2384,16 +2120,16 @@ def sliderIndexOfParam(paramname):
         return None
 
 def isTwoLine(text):
-    return text.find(LineSep) >= 0 or text.find("\n") >= 0
+    return text.find(palette.LineSep) >= 0 or text.find("\n") >= 0
 
 def CurrentSnapshotPath():
-    return palette.localconfigFilePath("CurrentSnapshot.json")
+    return palette.configFilePath("CurrentSnapshot.json")
 
 def CurrentSnapshotBackupPath():
-    return palette.localconfigFilePath("CurrentSnapshot.backup")
+    return palette.configFilePath("CurrentSnapshot.backup")
 
 def CurrentSnapshotPreviousPath():
-    return palette.localconfigFilePath("CurrentSnapshot.previous")
+    return palette.configFilePath("CurrentSnapshot.previous")
 
 def initMain(app):
     app.iconbitmap(palette.configFilePath("palette.ico"))
@@ -2453,12 +2189,12 @@ if __name__ == "__main__":
         print("INVALID VALUE OF gui_size in config: ",gui_size)
         GuiWidth = 400 ; GuiHeight = 600
 
-    setFontSizes(fontFactor)
+    palette.setFontSizes(fontFactor)
 
     global app
     app = ProGuiApp()
 
-    makeStyles(app)
+    palette.makeStyles(app)
 
     app.wm_geometry("%dx%d" % (GuiWidth,GuiHeight))
 

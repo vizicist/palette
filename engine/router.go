@@ -130,7 +130,8 @@ func TheRouter() *Router {
 		oneRouter.regionForMorph = make(map[string]string)
 		oneRouter.regionAssignedToNUID = make(map[string]string)
 
-		oneRouter.resolumeClient = osc.NewClient("127.0.0.1", 7000)
+		// oneRouter.resolumeClient = osc.NewClient("127.0.0.1", 7000)
+		oneRouter.resolumeClient = osc.NewClient("192.168.1.104", 7000)
 		oneRouter.guiClient = osc.NewClient("127.0.0.1", 3943)
 		oneRouter.plogueClient = osc.NewClient("127.0.0.1", 3210)
 

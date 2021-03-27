@@ -15,6 +15,22 @@
             "args": []
         },
         {
+            "name": "Launch guiA",
+            "type": "python",
+            "request": "launch",
+            "program": "${env:USERPROFILE}/go/src/github.com/vizicist/palette/python/palette_guiA.py",
+            "env": {},
+            "args": []
+        },
+        {
+            "name": "Launch guiABCD",
+            "type": "python",
+            "request": "launch",
+            "program": "${env:USERPROFILE}/go/src/github.com/vizicist/palette/python/palette_guiABCD.py",
+            "env": {},
+            "args": []
+        },
+        {
             "name": "Launch migrateeffects",
             "type": "python",
             "request": "launch",
@@ -29,22 +45,6 @@
             "program": "${env:USERPROFILE}/go/src/github.com/vizicist/palette/python/changeparamval.py",
             "env": {},
             "args": ["default\\presets\\visual", "aspect", "1.000", "1.000"]
-        },
-        {
-            "name": "Launch GUI4",
-            "type": "python",
-            "request": "launch",
-            "program": "${env:USERPROFILE}/go/src/github.com/vizicist/palette/python/palette_guiABCD.py",
-            "env": {},
-            "args": []
-        },
-        {
-            "name": "Launch GUI",
-            "type": "python",
-            "request": "launch",
-            "program": "${env:USERPROFILE}/go/src/github.com/vizicist/palette/python/palette_guiA.py",
-            "env": {},
-            "args": []
         }
     ]
 }
