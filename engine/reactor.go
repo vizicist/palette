@@ -830,7 +830,7 @@ func (r *Reactor) nextQuant(t Clicks, q Clicks) Clicks {
 func (r *Reactor) sendNoteOn(a *ActiveNote) {
 
 	if DebugUtil.MIDI {
-		log.Printf("MIDI.SendNote: a.noteOn=%+v\n", *(a.noteOn))
+		log.Printf("MIDI.SendNote: noteOn pitch:%d velocity:%d sound:%s\n", a.noteOn.Pitch, a.noteOn.Velocity, a.noteOn.Sound)
 	}
 	MIDI.SendNote(a.noteOn)
 
@@ -853,7 +853,7 @@ func (r *Reactor) sendNoteOff(a *ActiveNote) {
 	} else {
 		noteOff := NewNoteOff(n.Pitch, n.Velocity, n.Sound)
 		if DebugUtil.MIDI {
-			log.Printf("MIDI.SendNote: noteOff=%+v\n", *noteOff)
+			log.Printf("MIDI.SendNote: noteOff pitch:%d velocity:%d sound:%s\n", n.Pitch, n.Velocity, n.Sound)
 		}
 		MIDI.SendNote(noteOff)
 	}

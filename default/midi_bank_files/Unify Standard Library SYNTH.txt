@@ -1,0 +1,41 @@
+# All SYNTH patches in Unify Standard Library
+
+1   Unify Standard Library / SYNTH - 80's Brass Revival
+2   Unify Standard Library / SYNTH - Airy Pro53 Sine MM
+3   Unify Standard Library / SYNTH - Airy Whistle MM
+4   Unify Standard Library / SYNTH - Airy Windy Brassy
+5   Unify Standard Library / SYNTH - Always Ready
+6   Unify Standard Library / SYNTH - Ashland
+7   Unify Standard Library / SYNTH - Astro Logic
+8   Unify Standard Library / SYNTH - Basic but OH SO Useful
+9   Unify Standard Library / SYNTH - Body Wrap for Chords
+10   Unify Standard Library / SYNTH - Bold Brass
+11   Unify Standard Library / SYNTH - Brite ANA POP Star
+12   Unify Standard Library / SYNTH - Death of Normalcy
+13   Unify Standard Library / SYNTH - Ironside Mountain
+14   Unify Standard Library / SYNTH - Let's Make a Deal
+15   Unify Standard Library / SYNTH - LFO Life
+16   Unify Standard Library / SYNTH - Loud n Proud Synth Brass
+17   Unify Standard Library / SYNTH - Mau5 Pluck Starter
+18   Unify Standard Library / SYNTH - MEGA RezFall MM
+19   Unify Standard Library / SYNTH - PolyBox 4x Dream Pad
+20   Unify Standard Library / SYNTH - PolyBox 8x Baby's Dancing
+21   Unify Standard Library / SYNTH - PolyBox 8x Cacophony
+22   Unify Standard Library / SYNTH - Powerful Persuasion
+23   Unify Standard Library / SYNTH - RAW Power: Ashland
+24   Unify Standard Library / SYNTH - RAW Power: BattleBorn MM
+25   Unify Standard Library / SYNTH - RAW Power: Ironside Mountain
+26   Unify Standard Library / SYNTH - RAW Power: Klamath
+27   Unify Standard Library / SYNTH - RAW Power: MaxWell 4x
+28   Unify Standard Library / SYNTH - RAW Power: MaxWell 8x
+29   Unify Standard Library / SYNTH - RAW Power: Spiteful Spirit MM
+30   Unify Standard Library / SYNTH - RAW Power: Worlds Divided MM
+31   Unify Standard Library / SYNTH - Retro Creamy
+32   Unify Standard Library / SYNTH - Snappy Kalamath
+33   Unify Standard Library / SYNTH - Solaris MM
+34   Unify Standard Library / SYNTH - Super  4-SYNTH Brass
+35   Unify Standard Library / SYNTH - Synthi String MM
+36   Unify Standard Library / SYNTH - There and Bach MM
+37   Unify Standard Library / SYNTH - Very Pretty Virus MM
+38   Unify Standard Library / SYNTH - Voxy Verbage MM
+39   Unify Standard Library / SYNTH - Zen Love
