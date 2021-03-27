@@ -3,6 +3,9 @@ import nats
 from nats.aio.client import Client as NATS
 from nats.aio.errors import ErrTimeout, ErrNoServers
 from nats.aio.nuid import NUID
+from tkinter import ttk
+from tkinter import font
+import tkinter as tk
 
 import os
 import json
@@ -23,10 +26,266 @@ Verbose = False
 MyNuid = ""
 PaletteSourceLogged = False
 
-def localconfigFilePath(nm):
-    return os.path.join(localAppDataDir(), "config", nm)
+RecMode = False
+StartupMode = True
+IncludeSound = True  # to activate Sound page
+
+# ColorBg = '#bbbbbb'
+ColorWhite = '#ffffff'
+ColorBlack = '#000000'
+
+ColorBg = '#000000'
+ColorText = '#ffffff'
+ColorComboText = '#000000'    # black
+# ColorButton = '#888888'  
+ColorButton = '#333333'  
+ColorScrollbar = '#333333'  
+ColorThumb = '#00ffff'  
+
+ColorRed = '#ff0000'
+ColorBlue = '#0000ff'
+ColorGreen = '#00ff00'
+# ColorHigh = '#006666'
+ColorHigh = '#006666'
+ColorBright = '#00ffff'
+ColorAqua = '#00ffff'
+ColorUnHigh = '#888888'
+
+LineSep = "_"
+
+# resetAfterInactivity = 90.0
+resetAfterInactivity = -1
+
+OneBeat = 96
+
+PageNames = {
+    "snap":"Snapshot",
+    "sound":"Sound",
+    "visual":"Visual",
+    "effect":"Effect",
+    "sliders":"Sliders",
+}
+ControlPageNames = {
+    "main":"Main",
+    # "sliders1":"Slider1",
+    # "sliders2":"Slider2",
+    # "sliders3":"Slider3",
+}
+
+PerPadPerformLabels = {}
+GlobalPerformLabels = {}
+PerPadPerformLabels["loopinglength"] = [
+    {"label":"Loop Length_8 beats",  "value":8*OneBeat},
+    {"label":"Loop Length_16 beats", "value":16*OneBeat},
+    {"label":"Loop Length_32 beats", "value":32*OneBeat},
+    {"label":"Loop Length_64 beats", "value":64*OneBeat},
+    {"label":"Loop Length_4 beats", "value":4*OneBeat},
+]
+SimpleScales = [
+	{"label":"Newage_Scale",    "value":"newage"},
+	{"label":"Arabian_Scale",   "value":"arabian"},
+	{"label":"Chromatic_Scale", "value":"chromatic"},
+    {"label":"Dorian_Scale","value":"dorian"},
+	{"label":"Fifths_Scale",    "value":"fifths"},
+    {"label":"Harminor_Scale",  "value":"harminor"},
+    {"label":"Lydian_Scale","value":"lydian"},
+    {"label":"Melminor_Scale",  "value":"melminor"},
+]
+PerformScales = [
+	{"label":"Newage_Scale",    "value":"newage"},
+    {"label":"Aeolian_Scale",   "value":"aeolian"},
+ 	{"label":"Arabian_Scale",   "value":"arabian"},
+ 	{"label":"Chromatic_Scale", "value":"chromatic"},
+    {"label":"Dorian_Scale","value":"dorian"},
+ 	{"label":"Fifths_Scale",    "value":"fifths"},
+    {"label":"Harminor_Scale",  "value":"harminor"},
+    {"label":"Ionian_Scale","value":"ionian"},
+    {"label":"Locrian_Scale",   "value":"locrian"},
+    {"label":"Lydian_Scale","value":"lydian"},
+    {"label":"Melminor_Scale",  "value":"melminor"},
+    {"label":"Mixolydian_Scale","value":"mixolydian"},
+    {"label":"Phrygian_Scale",  "value":"phrygian"},
+    {"label":"Raga1_Scale",     "value":"raga1"},
+    {"label":"Raga2_Scale", "value":"raga2"},
+    {"label":"Raga3_Scale", "value":"raga3"},
+    {"label":"Raga4_Scale", "value":"raga4"},
+]
+
+PerPadPerformLabels["quant"] = [
+    {"label":"Fret_Quantize", "value":"frets"},
+    {"label":"Pressure_Quantize", "value":"pressure"},
+    {"label":"Fixed_Time Quant", "value":"fixed"},
+    {"label":"No_Quant",  "value":"none"},
+]
+PerPadPerformLabels["vol"] = [
+    {"label":"Pressure_Vol", "value":"pressure"},
+    {"label":"Fixed_Vol", "value":"fixed"},
+]
+PerPadPerformLabels["loopingfade"] = [
+    {"label":"Loop Fade_Med",  "value":0.4},
+    {"label":"Loop Fade_Slow", "value":0.5},
+    {"label":"Loop Fade_Slower", "value":0.6},
+    {"label":"Loop Fade_Slowest", "value":0.7},
+    {"label":"Loop_Forever", "value":1.0},
+    {"label":"Loop Fade_Fast", "value":0.2},
+    {"label":"Loop Fade_Faster", "value":0.1},
+    {"label":"Loop Fade_Fastest", "value":0.05},
+]
+PerPadPerformLabels["loopingonoff"] = [
+    {"label":"Looping_is OFF",  "value":"off"},
+    {"label":"Looping_REC+PLAY", "value":"recplay"},
+    {"label":"Looping_PLAY ONLY", "value":"play"},
+]
+PerPadPerformLabels["midithru"] = [
+    {"label":"MIDI Input_Thru",  "value":"thru"},
+    {"label":"MIDI Input_Set Scale",  "value":"setscale"},
+    {"label":"MIDI Input_Thru Scadjust", "value":"thruscadjust"},
+    {"label":"MIDI Input_Disabled",  "value":"disabled"},
+]
+PerPadPerformLabels["useexternalscale"] = [
+    {"label":"External Scale_Off",  "value":False},
+    {"label":"External Scale_On",  "value":True},
+]
+PerPadPerformLabels["midiquantized"] = [
+    {"label":"MIDI Thru_Unquantized",  "value":False},
+    {"label":"MIDI Thru_Quantized",  "value":True},
+]
+GlobalPerformLabels["tempo"] = [
+    {"label":"Tempo_Normal",  "value":1.0},
+    {"label":"Tempo_Slow", "value":0.85},
+    {"label":"Tempo_Slower", "value":0.70},
+    {"label":"Tempo_Slowest", "value":0.55},
+    {"label":"Tempo_Fast", "value":1.5},
+    {"label":"Tempo_Faster", "value":2.0},
+    {"label":"Tempo_Fastest", "value":4.0},
+]
+GlobalPerformLabels["transpose"] = [
+    {"label":"Transpose_0",  "value":0},
+    {"label":"Transpose_3",  "value":3},
+    {"label":"Transpose_-2",  "value":-2},
+    {"label":"Transpose_5",  "value":5},
+]
+
+def makeStyles(app):
+    app.option_add('*TCombobox*Listbox.font', comboFont)
+
+    s = ttk.Style()
+
+    s.configure('.', font=largestFont, background=ColorBg, foreground=ColorText)
+    s.configure('Enabled.TLabel', foreground='green', background=ColorHigh, relief="flat", justify=tk.CENTER, font=mediumFont)
+    s.configure('Disabled.TLabel', foreground='red', background=ColorButton, relief="flat", justify=tk.CENTER, font=mediumFont)
+    s.configure('Edit.TLabel', font=largestFont, foreground=ColorText, background=ColorBg)
+
+    s.configure('Button.TLabel', font=largerFont, foreground=ColorText, background=ColorButton)
+    s.configure('ButtonHigh.TLabel', font=largerFont, foreground=ColorText, background=ColorHigh)
+
+    s.configure('Red.TLabel', foreground='red', justify=tk.CENTER, background=ColorBg)
+    s.configure('Bright.TLabel', foreground=ColorBright, justify=tk.CENTER, background=ColorBg)
+    s.configure('TinyBright.TLabel', foreground=ColorBright, justify=tk.CENTER, background=ColorBg, font=mediumFont)
+    s.configure('Black.TLabel', foreground='black')
+
+    s.configure('Date.TLabel', font=largeFont, foreground=ColorText, justify=tk.LEFT)
+
+    s.configure('PLAY.TLabel', font=largestFont, foreground=ColorText, background=ColorButton, justify=tk.LEFT)
+
+    s.configure('ParamName.TLabel', font=largerFont, foreground=ColorText, justify=tk.LEFT)
+    s.configure('ParamValue.TLabel', foreground=ColorText, borderwidth=2, justify=tk.RIGHT, background=ColorBg, font=largerFont)
+    s.configure('ParamAdjust.TLabel', foreground=ColorText, borderwidth=2, anchor=tk.CENTER, background=ColorButton, font=largeFont)
+
+    s.configure('HeaderEnabled.TLabel', background=ColorHigh, relief="flat", justify=tk.CENTER, font=largestFont)
+    s.configure('HeaderDisabled.TLabel', background=ColorButton, relief="flat", justify=tk.CENTER, font=largestFont)
+
+    s.configure('GlobalEnabled.TLabel', background=ColorHigh, relief="flat", justify=tk.CENTER, font=hugeFont)
+    s.configure('GlobalDisabled.TLabel', background=ColorButton, relief="flat", justify=tk.CENTER, font=hugeFont)
+
+    s.configure('PerformMessage.TLabel', background=ColorBg, foreground=ColorRed, relief="flat", justify=tk.CENTER, align=tk.CENTER, font=performFont)
+
+    s.configure('Header.TLabel', background=ColorButton, foreground=ColorWhite, relief="flat", justify=tk.CENTER, align=tk.CENTER, font=largestFont)
+    s.configure('PerformHeader.TLabel', background=ColorButton, foreground=ColorBright, relief="flat", justify=tk.CENTER, align=tk.CENTER, font=performFont)
+
+    s.configure('ScrollButton.TLabel', foreground=ColorText, font=largestFont, background=ColorScrollbar, anchor=tk.CENTER)
+
+    s.configure('Patch.TLabel', foreground=ColorText, font=patchFont, background=ColorButton, anchor=tk.CENTER, justify=tk.CENTER)
+    s.configure('PatchHighlight.TLabel', foreground=ColorText, font=patchFont, background=ColorRed, anchor=tk.CENTER, justify=tk.CENTER)
+
+    s.configure('PatchTwoLine.TLabel', foreground=ColorText, font=patchTwoLineFont, background=ColorButton, anchor=tk.CENTER, justify=tk.CENTER)
+    s.configure('PatchTwoLineHighlight.TLabel', foreground=ColorText, font=patchTwoLineFont, background=ColorHigh, anchor=tk.CENTER, justify=tk.CENTER)
+
+    s.configure('Slider.TLabel', foreground=ColorText, font=sliderFont, background=ColorBg, anchor=tk.CENTER)
+
+    s.configure('RecordingButton.TLabel', background=ColorRed, relief="flat", justify=tk.CENTER, align=tk.CENTER, font=largeFont)
+
+    s.configure('PerformButton.TLabel', foreground=ColorText, background=ColorButton, relief="flat", justify=tk.CENTER,
+        anchor=tk.CENTER, font=performFont)
+
+    s.configure('RecordingName.TLabel', background=ColorButton, relief="flat", justify=tk.CENTER, anchor=tk.CENTER, font=largestFont)
+    s.configure('RecordingButton.TLabel', background=ColorButton, relief="flat", justify=tk.CENTER, anchor=tk.CENTER, font=largerFont)
+
+    s.configure('custom.TCombobox', foreground=ColorComboText, background=ColorBg)
+
+    s.map('Patch.TLabel',
+        foreground=[('disabled', 'yellow'),
+                    ('pressed', ColorText),
+                    ('active', ColorText)],
+        background=[('disabled', 'yellow'),
+                    ('pressed', ColorHigh),
+                    ('active', ColorButton)]
+        )
+    s.map('PatchTwoLine.TLabel',
+        foreground=[('disabled', 'yellow'),
+                    ('pressed', ColorText),
+                    ('active', ColorText)],
+        background=[('disabled', 'yellow'),
+                    ('pressed', ColorHigh),
+                    ('active', ColorButton)]
+        )
+    s.map('PerformButton.TLabel',
+        foreground=[('disabled', 'yellow'),
+                    ('pressed', ColorText),
+                    ('active', ColorText)],
+        background=[('disabled', 'yellow'),
+                    ('pressed', ColorHigh),
+                    ('active', ColorButton)]
+        )
+
+
+def palette_region_api(region, meth, params=""):
+    if region == "":
+        print("palette_region_api: no region specified?  Assuming A")
+        region = "A"
+    if region == "*":
+        print("palette_region_api: What do I do with a * region?")
+        region = "A"
+    p = "\"region\":\""+region+"\""
+    if params == "":
+        params = p
+    else:
+        params = p + "," + params
+    return palette_api("region."+meth,params)
+
+def palette_global_api(meth, params=""):
+    return palette_api("global."+meth,params)
+
+def setFontSizes(fontFactor):
+    global patchFont, patchTwoLineFont, sliderFont, largestFont, hugeFont, comboFont, largerFont, largeFont, performFont, mediumFont, padLabelFont
+    f = 'Helvetica'
+    f = 'Lucida Sans'
+    patchFont = (f, int(20*fontFactor))
+    patchTwoLineFont = (f, int(18*fontFactor))
+    sliderFont = (f, int(12*fontFactor))
+    largestFont = (f, int(24*fontFactor))
+    hugeFont = (f, int(36*fontFactor))
+    comboFont = (f, int(20*fontFactor))
+    largerFont = (f, int(20*fontFactor))
+    largeFont = (f, int(16*fontFactor))
+    performFont = (f, int(18*fontFactor))
+    mediumFont = (f, int(12*fontFactor))
+    padLabelFont = (f, int(16*fontFactor))
 
 def configFilePath(nm):
+    return os.path.join(paletteSubDir("config"),nm)
+
+def paletteSubDir(subdir):
     # If PALETTESOURCE is defined, we use
     ps = os.environ.get("PALETTESOURCE")
     if ps != None:
@@ -34,16 +293,13 @@ def configFilePath(nm):
         if not PaletteSourceLogged:
             PaletteSourceLogged = True
             print("Using PALETTESOURCE=",ps," to get config files")
-        return os.path.join(ps, "default", "config", nm)
+        return os.path.join(ps, "default", subdir)
     else:
-        return os.path.join(PaletteDir(), "config", nm)
-
-def localAppDataDir():
-    local = os.environ.get("LOCALAPPDATA")
-    if local == None:
-        print("Expecting LOCALAPPDATA to be set, assuming .")
-        local = "."
-    return os.path.join(local,"Palette")
+        local = os.environ.get("LOCALAPPDATA")
+        if local == None:
+            print("Expecting LOCALAPPDATA to be set, assuming .")
+            local = "."
+        return os.path.join(local, "Palette", subdir)
 
 def presetsPath():
     p = ConfigValue("presetspath")
@@ -52,12 +308,12 @@ def presetsPath():
     if lad != None:
         p = p.replace("%LOCALAPPDATA%",lad)
 
+    presetsDir = paletteSubDir("presets")
     # If PALETTESOURCE is defined, add the default/presets directory
     # to the presetsPath ,so that any editing/creation of presets
     # will be saved there (to be used in the default installation).
-    ps = os.environ.get("PALETTESOURCE")
-    if ps != None:
-        p = os.path.join(ps,"default","presets") + ";" + p
+    if presetsDir != None:
+        p = presetsDir + ";" + p
 
     return p
 
@@ -91,7 +347,7 @@ def localPresetsFilePath(section, nm, suffix=".json"):
     return os.path.join(localdir,section, nm+suffix)
 
 # Look through all the directories in presetspath to find file
-def presetsFilePath(section, nm, suffix=".json"):
+def searchPresetsFilePath(section, nm, suffix=".json"):
     presetspath = presetsPath()
     paths = presetspath.split(";")
     # the local presets directory is the first one in the path
@@ -113,7 +369,7 @@ def MyNUID():
     global MyNuid
     if MyNuid != "":
         return MyNuid
-    path = localconfigFilePath("nuid.json")
+    path = configFilePath("nuid.json")
     if not os.path.isfile(path):
         print("Missing nuid.json file? path=",path)
         return "MissingNUIDFile"
@@ -260,7 +516,7 @@ def ConfigValue(s):
         SettingsJson = readJsonPath(path)
 
     if LocalSettingsJson == None:
-        path = localconfigFilePath("settings.json")
+        path = configFilePath("settings.json")
         if os.path.isfile(path):
             if Verbose:
                 print("Loading ",path)
