@@ -1,4 +1,7 @@
 # utility to migrate from old huefill{initial,final,time} to hue1{initial,final,time} and hue2
+#
+# Even though it's no longer needed (I think), I'm keeping this around because
+# it might become useful as a template for future migrations
 
 import json
 import glob
@@ -78,7 +81,7 @@ for s in files:
     print("file = ",s)
     changehue(s)
 
-files = glob.glob(os.path.join(homedir,"default","presets","snap",'*.json'))
+files = glob.glob(os.path.join(homedir,"default","presets","snapA",'*.json'))
 for s in files:
     print("file = ",s)
     changehue(s)

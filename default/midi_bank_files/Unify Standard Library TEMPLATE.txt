@@ -1,0 +1,15 @@
+# All TEMPLATE patches in Unify Standard Library
+
+1   Unify Standard Library / TEMPLATE - 04 MIDI CHANNEL
+2   Unify Standard Library / TEMPLATE - 08 MIDI CHANNEL
+3   Unify Standard Library / TEMPLATE - 16 MIDI CHANNEL
+4   Unify Standard Library / TEMPLATE - L 1 Layer Start
+5   Unify Standard Library / TEMPLATE - L 2 Layer Start
+6   Unify Standard Library / TEMPLATE - L 3 Layer START
+7   Unify Standard Library / TEMPLATE - MIDIBox MIDI CC to Filter
+8   Unify Standard Library / TEMPLATE - Polyphonic from Mono (PolyBox)
+9   Unify Standard Library / TEMPLATE - Poly from MIDI Files (PolyBox)
+10   Unify Standard Library / TEMPLATE - S 1 Layer Split
+11   Unify Standard Library / TEMPLATE - S 2 Layer Split
+12   Unify Standard Library / TEMPLATE - VS 2 Way Vel Switch
+13   Unify Standard Library / TEMPLATE - VS 3 Way Vel Switch

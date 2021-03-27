@@ -1,0 +1,13 @@
+# All BPM PAD patches in Unify Standard Library
+
+1   Unify Standard Library / BPM PAD - Chord Dance 1
+2   Unify Standard Library / BPM PAD - Chord Dance 2a
+3   Unify Standard Library / BPM PAD - Chord Dance 2b
+4   Unify Standard Library / BPM PAD - Chord Dance 3
+5   Unify Standard Library / BPM PAD - In the Blink of an Eye
+6   Unify Standard Library / BPM PAD - Kalamath FilterDance  (MIDIBox)
+7   Unify Standard Library / BPM PAD - Pump House Nirvana
+8   Unify Standard Library / BPM PAD - Reflective Moments
+9   Unify Standard Library / BPM PAD - Tundra Strings
+10   Unify Standard Library / BPM PAD - Vocal FilterDance  (MIDIBox)
+11   Unify Standard Library / BPM PAD - Waiting for Winter

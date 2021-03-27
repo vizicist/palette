@@ -35,15 +35,17 @@ move palette_engine.exe %bin%\palette_engine.exe > nul
 
 popd
 
-echo ================ Creating palette_gui.exe
+echo ================ Creating palette_guiA.exe and palette_guiABCD.exe
 pushd %PALETTESOURCE%\python
 rm -fr dist
-pyinstaller -i ..\default\config\palette.ico palette_gui.py > pyinstaller.out 2>&1
+pyinstaller -i ..\default\config\palette.ico palette_guiA.py > pyinstaller.out 2>&1
+pyinstaller -i ..\default\config\palette.ico palette_guiABCD.py > pyinstaller.out 2>&1
 pyinstaller testcursor.py > pyinstaller.out 2>&1
 pyinstaller osc.py > pyinstaller.out 2>&1
 
 rem merge all the pyinstalled things into one
-move dist\palette_gui dist\pyinstalled >nul
+move dist\palette_guiA dist\pyinstalled >nul
+move dist\palette_guiABCD dist\pyinstalled >nul
 
 rem merge the other executables into that one
 move dist\testcursor\testcursor.exe dist\pyinstalled >nul
@@ -87,8 +89,13 @@ popd
 
 echo ================ Copying config
 mkdir %ship%\config
-copy %PALETTESOURCE%\default\config\*.json %ship%\config >nul
-copy %PALETTESOURCE%\default\config\*.conf %ship%\config >nul
+
+copy %PALETTESOURCE%\default\config\ffgl.json %ship%\config >nul
+copy %PALETTESOURCE%\default\config\param*.json %ship%\config >nul
+copy %PALETTESOURCE%\default\config\resolume.json %ship%\config >nul
+copy %PALETTESOURCE%\default\config\settings.json %ship%\config >nul
+copy %PALETTESOURCE%\default\config\synths.json %ship%\config >nul
+copy %PALETTESOURCE%\default\config\nats*.conf %ship%\config >nul
 copy %PALETTESOURCE%\default\config\Palette*.avc %ship%\config >nul
 copy %PALETTESOURCE%\default\config\palette.ico %ship%\config >nul
 

@@ -1,0 +1,29 @@
+# All STR patches in Unify Standard Library
+
+1   Unify Standard Library / STR - Beautiful Marriage
+2   Unify Standard Library / STR - Cello Crescendo MM
+3   Unify Standard Library / STR - Cello Vibrato Dreamy (Solo)
+4   Unify Standard Library / STR - Cello Motion Slow DRY
+5   Unify Standard Library / STR - Cello Pizzicato (Solo)
+6   Unify Standard Library / STR - Cello Spicatto (Solo)
+7   Unify Standard Library / STR - Dream Ensemble MM
+8   Unify Standard Library / STR - Dream Strings MM
+9   Unify Standard Library / STR - Nu Orchestral Adventures!
+10   Unify Standard Library / STR - Pizzi de Fantastique!
+11   Unify Standard Library / STR - PizzicatoScape MM
+12   Unify Standard Library / STR - POWER Ensemble MM
+13   Unify Standard Library / STR - StringyBrassy Orchestra
+14   Unify Standard Library / STR - Super Awesome Mega Pizzi
+15   Unify Standard Library / STR - The Trio (Violin, Viola & Cello)
+16   Unify Standard Library / STR - Viola Crescendo MM
+17   Unify Standard Library / STR - Viola Vibrato Dreamy MM (Solo)
+18   Unify Standard Library / STR - Viola Motion Slow DRY
+19   Unify Standard Library / STR - Viola Pizzicato (Solo)
+20   Unify Standard Library / STR - Viola PizziVerb MM
+21   Unify Standard Library / STR - Viola Spicatto VS (Solo)
+22   Unify Standard Library / STR - Violin Crescendo Dreams MM
+23   Unify Standard Library / STR - Violin Dreamy MM (Solo)
+24   Unify Standard Library / STR - Violin Dreamy MM (Ensemble)
+25   Unify Standard Library / STR - Violin Motion Slow DRY
+26   Unify Standard Library / STR - Violin Pizzicato (Solo)
+27   Unify Standard Library / STR - Violin Spicatto VS (Solo)

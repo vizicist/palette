@@ -12,10 +12,12 @@ A Go-based executable that
 - Starts a realtime engine for looping and control of
    sound (MIDI) and visuals (OSC to Resolume and a FFGL plugin).
 
-### bin\palette_gui.exe
+### bin\palette_guiA.exe and bin\palette_guiABCD.exe
 
 - A python-based executable that provides a graphical interface
-to select presets and edit their parameters.
+to select presets and edit their parameters, either
+using a single Morph (palette_guiA.exe) or four (palette_guiABCD.exe)
+
 
 ### ffgl\palette.dll
 

@@ -1,0 +1,13 @@
+# All BPM SNARE patches in Unify Standard Library
+
+1   Unify Standard Library / BPM SNARE - Ambi POP  Snare
+2   Unify Standard Library / BPM SNARE - Nail Driver
+3   Unify Standard Library / BPM SNARE - Noise Snapper
+4   Unify Standard Library / BPM SNARE - Snare 2 and 4 - 2 notes
+5   Unify Standard Library / BPM SNARE - Snare 2 and 4 - 4 notes
+6   Unify Standard Library / BPM SNARE - Vintage Blast
+7   Unify Standard Library / BPM SNARE - Vintage CR
+8   Unify Standard Library / BPM SNARE - Vintage KR
+9   Unify Standard Library / BPM SNARE - Vintage Side Stick
+10   Unify Standard Library / BPM SNARE - Warm Vintage
+11   Unify Standard Library / BPM SNARE - Whip Snapper

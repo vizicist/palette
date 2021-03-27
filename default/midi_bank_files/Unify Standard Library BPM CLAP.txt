@@ -1,0 +1,11 @@
+# All BPM CLAP patches in Unify Standard Library
+
+1   Unify Standard Library / BPM CLAP - Airwave Ambi
+2   Unify Standard Library / BPM CLAP - Airwave Clapish
+3   Unify Standard Library / BPM CLAP - Bullet the Bullet
+4   Unify Standard Library / BPM CLAP - Fingersnaps
+5   Unify Standard Library / BPM CLAP - Natural Roomy
+6   Unify Standard Library / BPM CLAP - Small Group
+7   Unify Standard Library / BPM CLAP - Super Natural
+8   Unify Standard Library / BPM CLAP - Tech Gate
+9   Unify Standard Library / BPM CLAP - Vintage Clapper

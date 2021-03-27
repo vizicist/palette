@@ -1,0 +1,59 @@
+# All BASS patches in Unify Standard Library
+
+1   Unify Standard Library / BASS - 3am Jamm Bass
+2   Unify Standard Library / BASS - 48db DEEEEP Pop
+3   Unify Standard Library / BASS - 48db Macro DEEEEP Pop
+4   Unify Standard Library / BASS - Airwave Bs Growl 1
+5   Unify Standard Library / BASS - Airwave Bs Growl 2
+6   Unify Standard Library / BASS - Airwave Dance 01
+7   Unify Standard Library / BASS - Airwave Dance 02
+8   Unify Standard Library / BASS - Airwave Dance 03
+9   Unify Standard Library / BASS - Airwave Dance 04
+10   Unify Standard Library / BASS - Airwave Dance 05
+11   Unify Standard Library / BASS - Airwave Dance 06
+12   Unify Standard Library / BASS - Airwave Dance 07
+13   Unify Standard Library / BASS - Airwave Dance 08
+14   Unify Standard Library / BASS - Airwave Dance 09
+15   Unify Standard Library / BASS - Airwave Dance 10
+16   Unify Standard Library / BASS - Ana RezDown
+17   Unify Standard Library / BASS - Crispy Fried Notch
+18   Unify Standard Library / BASS - Deep Wood Pluck
+19   Unify Standard Library / BASS - Dirty FM
+20   Unify Standard Library / BASS - GOD MODE
+21   Unify Standard Library / BASS - Messy FM Fretless
+22   Unify Standard Library / BASS - Nato 808 1 Crispy Lp
+23   Unify Standard Library / BASS - Nato 808 1 Crispy
+24   Unify Standard Library / BASS - Nato 808 2 Hollow Lp
+25   Unify Standard Library / BASS - Nato 808 2 Hollow
+26   Unify Standard Library / BASS - Nato 808 3 Fried Lp
+27   Unify Standard Library / BASS - Nato 808 3 Fried
+28   Unify Standard Library / BASS - Nato 808 4 Wasted Lp
+29   Unify Standard Library / BASS - Nato 808 4 Wasted
+30   Unify Standard Library / BASS - Nato Aggression
+31   Unify Standard Library / BASS - Nato BWamm
+32   Unify Standard Library / BASS - Nato DEEP House
+33   Unify Standard Library / BASS - Nato Reese 1
+34   Unify Standard Library / BASS - Nato Reese 2
+35   Unify Standard Library / BASS - Nato Superhero
+36   Unify Standard Library / BASS - Nato The Night Drone
+37   Unify Standard Library / BASS - Nato Wasteland Drone
+38   Unify Standard Library / BASS - Puffy Fat Square DDL
+39   Unify Standard Library / BASS - Puffy Fat Triangle DDL
+40   Unify Standard Library / BASS - Rocker
+41   Unify Standard Library / BASS - Skelter
+42   Unify Standard Library / BASS - Snappy Deep Cauldron Sub
+43   Unify Standard Library / BASS - Snappy Subby Wah
+44   Unify Standard Library / BASS - Solid Dark Pop
+45   Unify Standard Library / BASS - Solid SNAP Dark Pop
+46   Unify Standard Library / BASS - Tonker
+47   Unify Standard Library / BASS SPLIT - Deep Bass and FM/Steinway
+48   Unify Standard Library / BASS SPLIT - Deep Bass and Steinway
+49   Unify Standard Library / BASS SPLIT - Duet 2 Pad
+50   Unify Standard Library / BASS SPLIT - Kat and Mau5
+51   Unify Standard Library / BASS SPLIT - LowFi Bass Bell
+52   Unify Standard Library / BASS SPLIT - Plush Toys
+53   Unify Standard Library / BASS SPLIT - Round Bass & Hydra Rhodes
+54   Unify Standard Library / BASS SPLIT - Round Bass & Rhodes
+55   Unify Standard Library / BASS SPLIT - Slap Bass & Pop Piano
+56   Unify Standard Library / BASS SPLIT -Cinematic Enchantment
+57   Unify Standard Library / BASS SPLIT - Road to KalimbaVille

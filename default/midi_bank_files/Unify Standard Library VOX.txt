@@ -1,0 +1,14 @@
+# All VOX patches in Unify Standard Library
+
+1   Unify Standard Library / VOX - Bolt On Airy Voice
+2   Unify Standard Library / VOX - Nesika Ooohs
+3   Unify Standard Library / VOX - POP Vox MM 1
+4   Unify Standard Library / VOX - POP Vox MM 3
+5   Unify Standard Library / VOX - POP Vox MM 5
+6   Unify Standard Library / VOX - POP Vox MM Eeeeee
+7   Unify Standard Library / VOX - POP Vox MM Noooo
+8   Unify Standard Library / VOX - POP Vox MM Ooh2Ooh
+9   Unify Standard Library / VOX - POP Vox "We Are....." MM
+10   Unify Standard Library / VOX - Tronic VoxSynth
+11   Unify Standard Library / VOX - Voices in the Sanctuary
+12   Unify Standard Library / VOX - Vox Ahhhs MM

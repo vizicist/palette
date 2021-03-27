@@ -1,0 +1,10 @@
+# All HIT patches in Unify Standard Library
+
+1   Unify Standard Library / HIT - Airwave Chord Hit 1 (sus2)
+2   Unify Standard Library / HIT - Airwave Chord Hit 2 (maj7/9)
+3   Unify Standard Library / HIT - Airwave Chord Hit 3 (no3 5/7)
+4   Unify Standard Library / HIT - Airwave Chord Hit 4 (min7)
+5   Unify Standard Library / HIT - Airwave Chord Stab 1
+6   Unify Standard Library / HIT - Airwave Chord Stab 2
+7   Unify Standard Library / HIT - Airwave Chord Stab 3
+8   Unify Standard Library / HIT - Nato Deep Impact
