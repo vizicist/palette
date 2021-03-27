@@ -24,6 +24,7 @@ signal.signal(signal.SIGINT,signal.SIG_IGN)
 
 RecMode = False
 StartupMode = True
+IncludeSound = True  # to activate Sound page
 
 # ColorBg = '#bbbbbb'
 ColorWhite = '#ffffff'
@@ -48,8 +49,6 @@ ColorUnHigh = '#888888'
 
 LineSep = "_"
 
-PadName = "A"
-
 # resetAfterInactivity = 90.0
 resetAfterInactivity = -1
 
@@ -60,9 +59,18 @@ global pageSizeOfControl, pageSizeOfSelect
 global performButtonPadx, performButtonPady
 global selectButtonPadx, selectButtonPady
 
-def palette_region_api(meth, params=""):
-    # DO NOT add the region parameter,
-    # because a gui_remote's region is assigned centrally.
+def palette_region_api(region, meth, params=""):
+    if region == "":
+        print("palette_region_api: no region specified?  Assuming A")
+        region = "A"
+    if region == "*":
+        print("palette_region_api: What do I do with a * region?")
+        region = "A"
+    p = "\"region\":\""+region+"\""
+    if params == "":
+        params = p
+    else:
+        params = p + "," + params
     return palette.palette_api("region."+meth,params)
 
 def palette_global_api(meth, params=""):
@@ -203,6 +211,9 @@ class ProGuiApp(tk.Tk):
     def __init__(self):
         tk.Tk.__init__(self)
 
+        self.PadNames = collections.OrderedDict({ "A":1, "B":2, "C":3, "D":4 })
+        self.PadName = "A"
+
         self.readParamDefs()
         self.frames = {}
         self.editPage = {}
@@ -321,7 +332,7 @@ class ProGuiApp(tk.Tk):
 
                 self.resetVisibility()
                 self.selectPerformPage("main")
-                self.performPage["main"].updatePerformButtonLabels(PadName)
+                self.performPage["main"].updatePerformButtonLabels(self.PadName)
     
             reset = True
 
@@ -360,7 +371,7 @@ class ProGuiApp(tk.Tk):
             for pg in PageNames:
                 if not self.showSliders and pg == "sliders":
                     sh.pageButton[pg].pack_forget()
-                elif not self.showSound and pg == "sound":
+                elif IncludeSound == False and not self.showSound and pg == "sound":
                     sh.pageButton[pg].pack_forget()
                 else:
                     sh.pageButton[pg].pack(side=tk.LEFT,padx=5)
@@ -371,6 +382,7 @@ class ProGuiApp(tk.Tk):
                 else:
                     ch.pageButton[pg].pack(side=tk.LEFT,padx=5)
             ch.performMessageLabel.pack_forget()
+
         elif RecMode:
             for pg in PageNames:
                 sh.pageButton[pg].pack_forget()
@@ -454,7 +466,7 @@ class ProGuiApp(tk.Tk):
                 v = allj["init"]
             editpage.changeValueLabel(base,v)
 
-            self.changePadParamValue(PadName,paramstype,name,v)
+            self.changePadParamValue(self.PadName,paramstype,name,v)
 
             if self.showSliders and paramstype == "sliders" and self.currentPerformPageName[0:7]=="sliders":
                 i = sliderIndexOfParam(name)
@@ -502,7 +514,7 @@ class ProGuiApp(tk.Tk):
             (_,base) = padOfParam(name)
             paramsType = allj["paramstype"]
             if paramsType != "sliders":
-                # fullname = PadName + "_" + base
+                # fullname = self.PadName + "_" + base
                 fullname = base
                 if not fullname in j["params"]:
                     j["params"][fullname] = allj["init"]
@@ -619,7 +631,7 @@ class ProGuiApp(tk.Tk):
         mn = float(self.allParamsJson[param]["min"])
         mx = float(self.allParamsJson[param]["max"])
         v = (mx-mn) * float(val)
-        self.sendSliderParamValue(PadName,param,v)
+        self.sendSliderParamValue(self.PadName,param,v)
 
     def sendSliderParamValue(self,pad,paramname,val):
         self.sendPadParamValue(pad,paramname,val)
@@ -637,7 +649,7 @@ class ProGuiApp(tk.Tk):
         # if paramType == "effect":
         #     self.sendPadOneEffectVal(pad,paramname,val)
         # else:
-        palette_region_api(paramType+".set_param",
+        palette_region_api(self.PadName,paramType+".set_param",
             "\"param\": \"" + paramname + "\"" + \
             ", \"value\": \"" + str(val) + "\"" )
 
@@ -647,9 +659,9 @@ class ProGuiApp(tk.Tk):
             (pad,baseparam) = padOfParam(origp)
             fullparam = origp
             if pad == None:
-                pad = PadName
+                pad = self.PadName
             else:
-                # fullparam = PadName + "_" + baseparam
+                # fullparam = self.PadName + "_" + baseparam
                 fullparam = baseparam
             if not baseparam in self.paramTypeOf:
                 print("param ",baseparam," isn't in paramTypeOf?")
@@ -668,7 +680,7 @@ class ProGuiApp(tk.Tk):
                         self.sendPadParamValue(pad,baseparam,v)
             else:
                 if baseparam in self.paramsOfType[paramstype]:
-                    self.sendPadParamValue(PadName,origp,v)
+                    self.sendPadParamValue(self.PadName,origp,v)
 
     def paramCallback(self,paramname,newval):
 
@@ -686,11 +698,11 @@ class ProGuiApp(tk.Tk):
         else:
             # change the corresponding value on the snap page
             if self.currentPageName != "sliders":
-                # fullparamname = PadName + "_" + paramname
+                # fullparamname = self.PadName + "_" + paramname
                 fullparamname = paramname
                 self.editPage["snap"].changeValueLabel(fullparamname,newval)
                 self.editPage["snap"].setChanged()
-                self.sendPadParamValue(PadName,paramname,newval)
+                self.sendPadParamValue(self.PadName,paramname,newval)
 
         if self.showSliders:
             i = sliderIndexOfParam(paramname)
@@ -718,7 +730,7 @@ class ProGuiApp(tk.Tk):
             print("selectorApply not yet implemented on snap or sliders")
         else:
             self.applyToAllParams(apply,paramstype,val)
-            self.sendSnapPad(PadName,paramstype)
+            self.sendSnapPad(self.PadName,paramstype)
 
     def applyToAllParams(self,apply,paramstype,val):
         snappage = self.editPage["snap"]
@@ -782,7 +794,7 @@ class ProGuiApp(tk.Tk):
 
             if v != "":
                 editpage.changeValueLabel(base,v)
-                self.changePadParamValue(PadName,paramstype,name,v)
+                self.changePadParamValue(self.PadName,paramstype,name,v)
 
         snappage.setChanged()
         snappage.saveJsonInPath(CurrentSnapshotPath())
@@ -809,7 +821,7 @@ class ProGuiApp(tk.Tk):
             self.readParamsFileIntoSnap(paramstype,val)
 
             if paramstype != "sliders":
-                self.sendSnapPad(PadName,paramstype)
+                self.sendSnapPad(self.PadName,paramstype)
 
     def selectorImportAndSend(self,paramstype,val):
         j = json.loads(val)
@@ -834,7 +846,18 @@ class ProGuiApp(tk.Tk):
         else:
             self.readParamsJsonIntoSnap(paramstype,paramsname,j)
             if paramstype != "sliders":
-                self.sendSnapPad(PadName,paramstype)
+                self.sendSnapPad(self.PadName,paramstype)
+
+    def padChooserCallback(self,pad):
+        print("Setting PadName to ",pad)
+        self.PadName = pad
+        self.selectHeader.padChooser.refreshColors()
+
+        if self.editMode:
+            self.editPage[self.currentPageName].startEditing("CurrentSnapshot")
+
+        performControl = self.performPage["main"]
+        performControl.updatePerformButtonLabels(self.PadName)
 
     def loadSnap(self,snapname):
         snappage = self.editPage["snap"]
@@ -877,55 +900,55 @@ class ProGuiApp(tk.Tk):
                 print("Unrecognized value of loopingonoff - %s\n" % val)
                 return
 
-            palette_region_api("loop_recording", '"onoff": "'+str(reconoff)+'"')
-            palette_region_api("loop_playing", '"onoff": "'+str(playonoff)+'"')
+            palette_region_api(self.PadName, "loop_recording", '"onoff": "'+str(reconoff)+'"')
+            palette_region_api(self.PadName, "loop_playing", '"onoff": "'+str(playonoff)+'"')
 
         elif name == "loopinglength":
             v = self.perpadPerformVal["loopinglength"][pad]["value"]
-            palette_region_api("loop_length", '"length": "'+str(v)+'"')
+            palette_region_api(self.PadName, "loop_length", '"length": "'+str(v)+'"')
 
         elif name == "loopingfade":
             fade = self.perpadPerformVal["loopingfade"][pad]["value"]
-            palette_region_api("loop_fade", '"fadelength": "'+str(fade)+'"')
+            palette_region_api(self.PadName, "loop_fade", '"fadelength": "'+str(fade)+'"')
 
         elif name == "quant":
             val = self.perpadPerformVal["quant"][pad]["value"]
-            palette_region_api("set_param",
+            palette_region_api(self.PadName, "set_param",
                 "\"param\": \"" + "misc.quant" + "\"" + \
                 ", \"value\": \"" + str(val) + "\"")
         elif name == "scale":
             val = self.perpadPerformVal["scale"][pad]["value"]
-            palette_region_api("set_param",
+            palette_region_api(self.PadName, "set_param",
                 "\"param\": \"" + "misc.scale" + "\"" + \
                 ", \"value\": \"" + str(val) + "\"")
 
         elif name == "vol":
             val = self.perpadPerformVal["vol"][pad]["value"]
             # NOTE: "voltype" here rather than "vol" - should make consistent someday
-            palette_region_api("set_param",
+            palette_region_api(self.PadName, "set_param",
                 "\"param\": \"" + "misc.vol" + "\"" + \
                 ", \"value\": \"" + str(val) + "\"")
 
         elif name == "comb":
             val = 1.0
-            palette_region_api("loop_comb",
+            palette_region_api(self.PadName, "loop_comb",
                 "\"value\": \"" + str(val) + "\"")
 
         elif name == "midithru":
             thru = self.perpadPerformVal["midithru"][pad]["value"]
-            palette_region_api("midi_thru", "\"thru\": \"" + str(thru) + "\"")
+            palette_region_api(self.PadName, "midi_thru", "\"thru\": \"" + str(thru) + "\"")
 
         elif name == "useexternalscale":
             onoff = self.perpadPerformVal["useexternalscale"][pad]["value"]
-            palette_region_api("useexternalscale", "\"onoff\": \"" + str(onoff) + "\"")
+            palette_region_api(self.PadName, "useexternalscale", "\"onoff\": \"" + str(onoff) + "\"")
 
         elif name == "midiquantized":
             quantized = self.perpadPerformVal["midiquantized"][pad]["value"]
-            palette_region_api("midi_quantized", "\"quantized\": \"" + str(quantized) + "\"")
+            palette_region_api(self.PadName, "midi_quantized", "\"quantized\": \"" + str(quantized) + "\"")
 
         elif name == "transpose":
             val = self.globalPerformVal["transpose"][pad]["value"]
-            palette_region_api("set_transpose", "\"value\": \""+str(val) + "\"")
+            palette_region_api(self.PadName, "set_transpose", "\"value\": \""+str(val) + "\"")
 
     def sendGlobalPerformVal(self,name):
 
@@ -939,24 +962,24 @@ class ProGuiApp(tk.Tk):
         #     print("CONFIGNAME setting to ",palette.getConfigName())
 
     def clearPadLoop(self,pad):
-        palette_region_api("loop_clear", "")
+        palette_region_api(self.PadName, "loop_clear", "")
 
     def combPadLoop(self,pad):
-        palette_region_api("loop_comb", "")
+        palette_region_api(self.PadName, "loop_comb", "")
 
     def combLoop(self):
         self.resetLastAnything()
-        self.combPadLoop(PadName)
+        self.combPadLoop(self.PadName)
 
     def clearLoop(self):
         self.resetLastAnything()
-        self.clearPadLoop(PadName)
+        self.clearPadLoop(self.PadName)
 
     def cycleAdvancedLevel(self):
             # cycle through 0,1,2
             self.setAdvanced((self.advancedLevel + 1) % 3)
             self.resetVisibility()
-            self.performPage["main"].updatePerformButtonLabels(PadName)
+            self.performPage["main"].updatePerformButtonLabels(self.PadName)
 
     def setAdvanced(self,level):
             self.advancedLevel = level
@@ -979,27 +1002,29 @@ class ProGuiApp(tk.Tk):
         self.sendANO()
         self.clearExternalScale()
 
-        for name in PerPadPerformLabels:
-            self.perpadPerformVal[name][PadName] = PerPadPerformLabels[name][0]
-            self.sendPadPerformVal(PadName,name)
+        for pad in self.PadNames:
+            for name in PerPadPerformLabels:
+                self.perpadPerformVal[name][pad] = PerPadPerformLabels[name][0]
+                self.sendPadPerformVal(pad,name)
 
         for name in GlobalPerformLabels:
             self.globalPerformVal[name] = GlobalPerformLabels[name][0]
             self.sendGlobalPerformVal(name)
 
         self.setPerformMessage("")
-        self.clearPadLoop(PadName)
+        for pad in self.PadNames:
+            self.clearPadLoop(pad)
 
-        self.performPage["main"].updatePerformButtonLabels(PadName)
+        self.performPage["main"].updatePerformButtonLabels(self.PadName)
 
     def clearExternalScale(self):
-        palette_region_api("clearexternalscale")
+        palette_region_api(self.PadName, "clearexternalscale")
 
     def sendANO(self):
-        palette_region_api("ANO")
+        palette_region_api(self.PadName, "ANO")
 
     def sendSnap(self):
-        self.sendSnapPad(PadName)
+        self.sendSnapPad(self.PadName)
 
     def paramListJson(self,paramstype,pad):
         paramlist = ""
@@ -1019,7 +1044,7 @@ class ProGuiApp(tk.Tk):
         for pt in ["sound","visual","effect"]:
             paramlistjson = self.paramListJson(pt,pad)
             if paramstype == None or paramstype == pt:
-                palette_region_api(pt+".set_params", paramlistjson)
+                palette_region_api(self.PadName, pt+".set_params", paramlistjson)
 
         if paramstype == None:
             for name in PerPadPerformLabels:
@@ -1078,7 +1103,7 @@ class ProGuiApp(tk.Tk):
             if paramType == "sliders":
                 continue
             # We no longer prepend A_, B_, C_, D_
-            # padParamName = PadName + "_" + x
+            # padParamName = self.PadName + "_" + x
             padParamName = x
             self.paramValueTypeOf[padParamName] = self.allParamsJson[x]["valuetype"]
             self.paramsOfType["snap"][padParamName] = self.allParamsJson[x]
@@ -1150,6 +1175,129 @@ class ProGuiApp(tk.Tk):
             onoff = palette.boolValueOfString(val)
             self.sendPadOneEffectOnOff(pad,name,onoff)
 
+
+class PadChooser(tk.Frame):
+
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent)
+
+        self.controller = controller
+        self.parent = parent
+        self.padLabel = {}
+        self.padFrame = {}
+        self.padCanvas = {}
+        self.canvasHeight = 60
+        self.canvasWidth = 200
+        self.PadNum2Name = ["X","A","B","C","D"]
+
+        # separator line
+        # canvas = tk.Canvas(self, background=ColorAqua, highlightthickness=0, height=4)
+        # canvas.pack(side=tk.TOP,fill=tk.X)
+
+        self.makePadFrame(self,"A",0.05,0.05)
+        self.makePadFrame(self,"B",0.15,0.55)
+        self.makePadFrame(self,"C",0.55,0.55)
+        self.makePadFrame(self,"D",0.65,0.05)
+
+        self.makeGlobalButton(self,0.5,0.15)
+        self.padGlobalOn = True
+
+        self.config(background=ColorBg)
+
+    def setPadLabel(self,pad,label):
+        # self.padLabel[pad].config(text=label)
+        # print("setPadLabel needs to draw in canvas")
+        pass
+
+    def makePadFrame(self,parent,pad,x0,y0):
+
+        self.padFrame[pad] = tk.Frame(self)
+        self.padFrame[pad].place(relx=x0,rely=y0,relwidth=0.3,relheight=0.4)
+        self.padFrame[pad].config(borderwidth=2,relief="solid",background=ColorUnHigh)
+        self.padFrame[pad].bind("<Button-1>", lambda p=pad: self.padCallback(p))
+
+        # self.padLabel[pad] = ttk.Label(self.padFrame[pad], text="")
+        # self.padLabel[pad].pack(side=tk.TOP)
+        # self.padLabel[pad].config(background=ColorUnHigh,font=padLabelFont)
+        # self.padLabel[pad].bind("<Button-1>", lambda p=pad: self.padCallback(p))
+
+        if self.controller.showCursorFeedback:
+            self.padCanvas[pad] = tk.Canvas(self.padFrame[pad], width=self.canvasWidth, height=self.canvasHeight, border=0)
+            self.padCanvas[pad].pack(side=tk.TOP)
+            self.padCanvas[pad].config(background=ColorUnHigh)
+
+    def makeGlobalButton(self,parent,x0,y0):
+
+        self.padGlobalButton = tk.Frame(self)
+        self.padGlobalButton.place(relx=x0-0.05,rely=y0-0.05,relwidth=0.1,relheight=0.275)
+        self.padGlobalButton.config(borderwidth=2,relief="solid",background=ColorUnHigh)
+        self.padGlobalButton.bind("<Button-1>", self.globalCallback)
+
+        self.padGlobalLabel = ttk.Label(self.padGlobalButton, text="*")
+        self.padGlobalLabel.pack(side=tk.TOP)
+        self.padGlobalLabel.configure(style='GlobalDisabled.TLabel')
+        # self.padGlobalLabel.config(background=ColorUnHigh)
+        self.padGlobalLabel.bind("<Button-1>", self.globalCallback)
+
+    def globalCallback(self,e):
+        self.padGlobalOn = not self.padGlobalOn
+        self.refreshColors()
+
+    def refreshColors(self):
+        if self.padGlobalOn:
+            color = ColorHigh
+        else:
+            color = ColorUnHigh
+        self.padGlobalButton.config(background=color)
+        self.padGlobalLabel.config(background=color)
+        for p in self.controller.PadNames:
+            if self.padGlobalOn or p != self.controller.PadName:
+                self.colorPad(p,color)
+            else:
+                self.colorPad(p,ColorHigh)
+
+    def colorPad(self,pad,color):
+        self.padFrame[pad].config(background=color)
+        # self.padLabel[pad].config(background=color)
+        if self.controller.showCursorFeedback:
+            self.padCanvas[pad].config(background=color)
+
+    def highlightPadBorder(self,pad,highlighted):
+        if highlighted:
+            w = 4
+        else:
+            w = 2
+        self.padFrame[pad].config(borderwidth=w)
+
+    def drawOval(self,pad,highlighted,x,y,z):
+        print("drawOval x=",x," y=",y," z=",z)
+        x = x * self.canvasWidth
+        y = y * self.canvasHeight
+        z = z * self.canvasWidth
+        print("================= adjusted x=",x," y=",y," z=",z)
+        if z < 10:
+            z = 10
+        elif z > (self.canvasWidth/4):
+            z = self.canvasWidth/4
+        if highlighted:
+            color = ColorRed
+        else:
+            color = self.controller.padColor(pad)
+        self.padCanvas[pad].create_oval(x-z,y-z,x+z,y+z,outline=color)
+        # self.padFrame[pad].config(background=color)
+
+    def padCallback(self,e):
+        # if self.controller.advancedLevel==0:
+        #    return
+        for pad in self.padFrame:
+            if e.widget == self.padFrame[pad]:
+                self.padGlobalOn = False
+                self.controller.padChooserCallback(pad)
+                self.refreshColors()
+                return
+        print("No pad found in padCallback!?")
+
+
 class SelectHeader(tk.Frame):
 
     def __init__(self, parent, controller):
@@ -1168,6 +1316,9 @@ class SelectHeader(tk.Frame):
 
         for i in PageNames:
             self.makeHeaderButton(i,PageNames[i])
+
+        self.padChooser = PadChooser(parent=parent, controller=controller)
+        self.padChooser.place(in_=self.titleFrame, relx=0.7, rely=0, relwidth=0.3, relheight=1.0)
 
     def spacer(self,height):
         spacer = tk.Canvas(self, background=ColorBg, highlightthickness=0, height=height)
@@ -1948,15 +2099,15 @@ class PagePerformMain(tk.Frame):
         controller = self.controller
         controller.resetLastAnything()
         if name in PerPadPerformLabels:
-            v = controller.perpadPerformVal[name][PadName]
+            v = controller.perpadPerformVal[name][controller.PadName]
             nv = controller.nextValue(PerPadPerformLabels[name],v)
             text = nv["label"]
             if isTwoLine(text):
                 text = text.replace(LineSep,"\n",1)
             self.performButton[name].config(text=text)
 
-            controller.perpadPerformVal[name][PadName] = nv
-            controller.sendPadPerformVal(PadName,name)
+            controller.perpadPerformVal[name][controller.PadName] = nv
+            controller.sendPadPerformVal(controller.PadName,name)
 
         elif name in GlobalPerformLabels:
             v = controller.globalPerformVal[name]
