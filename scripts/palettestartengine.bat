@@ -2,9 +2,10 @@
 
 c:/windows/system32/taskkill /F /IM palette_engine.exe > nul 2>&1
 
-set logdir=%LOCALAPPDATA%\Palette\logs
-
-echo > "%logdir%\engine.log"
-echo > "%logdir%\engine.stdout"
-echo > "%logdir%\engine.stderr"
-start /b "" "%PALETTE%\bin\palette_engine.exe" > "%logdir%\engine.stdout" 2> "%logdir%\engine.stderr"
+call setpalettelogdir
+if not "%PALETTELOGDIR%" == "" (
+	echo > "%PALETTELOGDIR%\engine.log"
+	echo > "%PALETTELOGDIR%\engine.stdout"
+	echo > "%PALETTELOGDIR%\engine.stderr"
+	start /b "" "%PALETTE%\bin\palette_engine.exe" > "%PALETTELOGDIR%\engine.stdout" 2> "%PALETTELOGDIR%\engine.stderr"
+)
