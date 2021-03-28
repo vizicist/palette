@@ -1,5 +1,6 @@
 CurrentSnapshot.*
 *.pyc
+default/logs/*.log
 python/dist
 build/windows/ship
 ffgl/build/windows/x64
