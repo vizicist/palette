@@ -103,7 +103,7 @@
         "controllerzmin":"0.050",
         "enable:sound":"true",
         "enable:visual":"true",
-        "filled":"false",
+        "filled":"true",
         "gravity":"0",
         "hue1final":"46.800",
         "hue1initial":"46.800",

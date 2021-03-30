@@ -59,7 +59,8 @@ resetAfterInactivity = -1
 OneBeat = 96
 
 PageNames = {
-    "snap":"Snapshot",
+    "quad":"Quad",
+    "snap":"Pad",
     "sound":"Sound",
     "visual":"Visual",
     "effect":"Effect",
