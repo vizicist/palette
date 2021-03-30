@@ -81,7 +81,7 @@ for s in files:
     print("file = ",s)
     changehue(s)
 
-files = glob.glob(os.path.join(homedir,"default","presets","snapA",'*.json'))
+files = glob.glob(os.path.join(homedir,"default","presets","snap",'*.json'))
 for s in files:
     print("file = ",s)
     changehue(s)
