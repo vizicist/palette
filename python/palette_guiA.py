@@ -22,8 +22,6 @@ import palette
 
 signal.signal(signal.SIGINT,signal.SIG_IGN)
 
-SnapSuffix = "A"
-
 global TopContainer
 TopContainer = None
 global TopApp
@@ -314,7 +312,7 @@ class ProGuiApp(tk.Tk):
         if paramsname == "CurrentSnapshot":
             fpath = palette.configFilePath(paramsname+".json")
         else:
-            fpath = palette.searchPresetsFilePath("snap"+SnapSuffix, paramsname)
+            fpath = palette.searchPresetsFilePath("snap", paramsname)
         print("Reading ",fpath)
         try:
             f = open(fpath)
