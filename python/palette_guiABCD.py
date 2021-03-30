@@ -628,6 +628,16 @@ class ProGuiApp(tk.Tk):
                 ("Should be highlighting buttoni=",buttoni)
             self.loadSnap(val)
             self.sendSnap()
+        elif paramstype == "quad":
+            if val == "PREVIOUS":
+                self.restorePrevious()
+                val = "CurrentQuad"
+                print("Should be highlighting buttoni=",buttoni)
+            else:
+                self.savePrevious()
+                ("Should be highlighting buttoni=",buttoni)
+            self.loadQuad(val)
+            self.sendQuad()
         else:
             # if we've selected a slider preset
             if self.showSliders and paramstype == "sliders":
@@ -680,8 +690,9 @@ class ProGuiApp(tk.Tk):
     def loadSnap(self,snapname):
         snappage = self.editPage["snap"]
         snappage.startEditing(snapname,doLift=False)
-        snappage.saveJsonInPath(CurrentSnapshotPath())
-        snappage.saveJsonInPath(CurrentSnapshotBackupPath())
+        if snapname != "CurrentSnapshot":
+            snappage.saveJsonInPath(CurrentSnapshotPath())
+            snappage.saveJsonInPath(CurrentSnapshotBackupPath())
         snappage.lift()
         return True
 
@@ -690,6 +701,14 @@ class ProGuiApp(tk.Tk):
         topath = CurrentSnapshotPath()
         palette.copyFile(frompath,topath)
         print("Reverting Backup Copying ",frompath," to ",topath)
+
+    def loadQuad(self,quadname):
+        quadpage = self.editPage["quad"]
+        quadpage.startEditing(quadname,doLift=False)
+        quadpage.saveJsonInPath(CurrentQuadPath())
+        quadpage.saveJsonInPath(CurrentQuadBackupPath())
+        quadpage.lift()
+        return True
 
     def nextValue(self,arr,v):
             found = -1
@@ -844,6 +863,10 @@ class ProGuiApp(tk.Tk):
     def sendSnap(self):
         self.sendSnapPad(self.PadName)
 
+    def sendQuad(self):
+        for pad in self.PadNames:
+            self.sendSnapPad(pad)
+
     def paramListJson(self,paramstype,pad):
         paramlist = ""
         sep = ""
@@ -914,17 +937,23 @@ class ProGuiApp(tk.Tk):
                 self.paramsOfType[t][x] = self.allParamsJson[x]
                 self.paramTypeOf[x] = self.allParamsJson[x]["paramstype"]
 
-        # Create all the parameters for the "snap" settings by
+        # In addition to creating parameters for "snap",
+        # we create all the parameters for the "quad" settings by
         # duplicating all the parameters for each pad (A,B,C,D).
-        for x in self.allParamNames:
-            paramType = self.allParamsJson[x]["paramstype"]
+        for name in self.allParamNames:
+            paramType = self.allParamsJson[name]["paramstype"]
             if paramType == "sliders":
                 continue
-            # We no longer prepend A_, B_, C_, D_
-            # padParamName = self.PadName + "_" + x
-            padParamName = x
-            self.paramValueTypeOf[padParamName] = self.allParamsJson[x]["valuetype"]
-            self.paramsOfType["snap"][padParamName] = self.allParamsJson[x]
+            self.paramValueTypeOf[name] = self.allParamsJson[name]["valuetype"]
+            self.paramsOfType["snap"][name] = self.allParamsJson[name]
+
+            # We prepend A-, B-, etc to the parameter name for quad parameters,
+            # to create entries for "quad" things
+            # in paramValueTypeOf and paramsOfType["quad"]
+            for pad in self.PadNames:
+                quadName = pad + "-" + name
+                self.paramValueTypeOf[quadName] = self.allParamsJson[name]["valuetype"]
+                self.paramsOfType["quad"][quadName] = self.allParamsJson[name]
 
         for x in self.allParamNames:
             paramType = self.allParamsJson[x]["paramstype"]
@@ -1684,9 +1713,15 @@ class PageEditParams(tk.Frame):
             self.clearChanged()
 
     def saveJson(self,section,paramsname,suffix=".json"):
+
+        # These warnings can probably go away when code is correct
         if section == "snap" and paramsname == "CurrentSnapshot":
             print("HEY!  use saveJsonInPath!")
             return
+        if section == "quad" and paramsname == "CurrentQuad":
+            print("HEY!  use saveJsonInPath!")
+            return
+
         # Note: saving always happens in the localPresetsFilePath,
         # even if the original one was loaded from a different directory
         fpath = palette.localPresetsFilePath(section,paramsname,suffix)
@@ -1716,12 +1751,16 @@ class PageEditParams(tk.Frame):
         if t == "bool":
             return "true" if palette.boolValueOfString(v) else "false"
         if t == "int":
+            if v == "":
+                v = "0"
             v = int(v)
             mn = int(self.params[name]["min"])
             mx = int(self.params[name]["max"])
             v = mn if v < mn else mx if v > mx else v
             return ("%6d" % (int(float(v)))).strip()
         if t == "double" or t == "float":
+            if v == "":
+                v = "0.0"
             v = float(v)
             mn = float(self.params[name]["min"])
             mx = float(self.params[name]["max"])
@@ -2130,6 +2169,16 @@ def CurrentSnapshotBackupPath():
 
 def CurrentSnapshotPreviousPath():
     return palette.configFilePath("CurrentSnapshot.previous")
+
+def CurrentQuadPath():
+    return palette.configFilePath("CurrentQuad.json")
+
+def CurrentQuadBackupPath():
+    return palette.configFilePath("CurrentQuad.backup")
+
+def CurrentQuadPreviousPath():
+    return palette.configFilePath("CurrentQuad.previous")
+
 
 def initMain(app):
     app.iconbitmap(palette.configFilePath("palette.ico"))
