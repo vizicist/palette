@@ -245,10 +245,13 @@ class ProGuiApp(tk.Tk):
         else:
             return True
 
-    def readParamsFileIntoSnap(self,paramstype,paramsname):
+    def readParamsFileIntoSnapAndQuad(self,paramstype,paramsname):
         # This is only called from non-snap pages
         if self.currentPageName == "snap" or paramstype == "snap":
-            print("Unexpected snap value in readParamsFileIntoSnap")
+            print("Unexpected snap value in readParamsFileIntoSnapAndQuad")
+            return
+        if self.currentPageName == "quad" or paramstype == "quad":
+            print("Unexpected quad value in readParamsFileIntoSnapAndQuad")
             return
         # Read parameters from a json file (but NOT a snap file)
 
@@ -257,19 +260,20 @@ class ProGuiApp(tk.Tk):
         print("Reading JSON:",fpath)
         f = open(fpath)
         j = json.load(f)
-        self.readParamsJsonIntoSnap(paramstype,paramsname,j)
+        self.readParamsJsonIntoSnapAndQuad(paramstype,paramsname,j)
         f.close()
 
-    def readParamsJsonIntoSnap(self,paramstype,paramsname,j):
+    def readParamsJsonIntoSnapAndQuad(self,paramstype,paramsname,j):
         paramvals = j["params"]
-        if paramstype == "snap":
-            print("Unexpected value in readParamsFileIntoSnap")
+        if paramstype == "snap" or paramstype == "quad":
+            print("Unexpected value in readParamsFileIntoSnapAndQuad")
             return
 
         # The params in the file may not include all of the
         # parameters for the given paramstype, so we loop through
         # all the parameters of a given type
         snappage = self.editPage["snap"]
+        quadpage = self.editPage["quad"]
         editpage = self.editPage[paramstype]
         for name in self.allParamsJson:
             allj = self.allParamsJson[name]
@@ -283,9 +287,19 @@ class ProGuiApp(tk.Tk):
                     v = v["value"]
             else:
                 v = allj["init"]
-            editpage.changeValueLabel(base,v)
 
-            self.changePadParamValue(self.PadName,paramstype,name,v)
+            self.changeValueAndSend(base,v,False)
+
+            ### editpage.changeValueLabel(base,v)
+            ### self.changeValueInSnap(base,v)
+            ### globalOn = self.selectHeader.padChooser.padGlobalOn
+            ### if globalOn:
+            ###     for qpad in self.PadNames:
+            ###         self.changeValueInQuad(qpad,base,v)
+            ### else:
+            ###     self.changeValueInQuad(self.PadName,base,v)
+
+            ### self.changePadParamValue(self.PadName,paramstype,name,v)
 
             if self.showSliders and paramstype == "sliders" and self.currentPerformPageName[0:7]=="sliders":
                 i = sliderIndexOfParam(name)
@@ -294,20 +308,14 @@ class ProGuiApp(tk.Tk):
                     if suffix == "param":
                         self.performPage[self.currentPerformPageName].sliderNameChanged(v,i)
 
-        snappage.setChanged()
-        snappage.saveJsonInPath(CurrentSnapshotPath())
+        self.saveSnapshots()
 
     def changePadParamValue(self,pad,paramstype,paramname,v):
-        snappage = self.editPage["snap"]
-        # if self.paramIsPerPad(paramname):
-        #     snapParamName = pad + "_" + paramname
-        # else:
-        #     snapParamName = paramname
-        snapParamName = paramname
-
-        if paramstype != "sliders":
-            snappage.changeValueLabel(snapParamName,v)
-
+        if paramstype == "sliders":
+            return
+        quadParamName = pad + "-" + paramname
+        self.editPage["snap"].changeValueLabel(paramname,v)
+        self.editPage["quad"].changeValueLabel(quadParamName,v)
 
     def readSnapParamsFile(self,paramsname):
         # print("\nREAD SNAP PARAMS FILE paramsname=",paramsname)
@@ -496,6 +504,8 @@ class ProGuiApp(tk.Tk):
                 if pad:
                     if baseparam in self.paramsOfType[paramstype]:
                         self.sendPadParamValue(pad,baseparam,v)
+            elif paramstype == "quad":
+                print("HEY, DOES quad need some work here? AAA")
             else:
                 if baseparam in self.paramsOfType[paramstype]:
                     self.sendPadParamValue(self.PadName,origp,v)
@@ -505,53 +515,81 @@ class ProGuiApp(tk.Tk):
         # print("paramCallback! paramname=",paramname," newval=",newval)
 
         (pad,baseparam) = padOfParam(paramname)
+        paramstype = self.allParamsJson[baseparam]["paramstype"]
 
         if self.currentPageName == "snap":
             if pad:
+                print("Should this happen? current page is snap, but paramname has a pad?")
                 # Change the value on the other (per-param-type) editing page
-                paramstype = self.allParamsJson[baseparam]["paramstype"]
                 self.editPage[paramstype].changeValueLabel(baseparam,newval)
                 # we still send the changed parameter out to the appropriate pad
                 self.sendPadParamValue(pad,baseparam,newval)
+            else:
+                self.changeValueInQuad(self.PadName,baseparam,newval)
+                self.sendPadParamValue(self.PadName,baseparam,newval)
+
+        elif paramstype == "quad":
+            print("HEY, DOES quad need some work here? BBB")
+
         else:
-            # change the corresponding value on the snap page
+            # change the corresponding value on the snap and quad page
             if self.currentPageName != "sliders":
-                # fullparamname = self.PadName + "_" + paramname
-                fullparamname = paramname
-                self.editPage["snap"].changeValueLabel(fullparamname,newval)
-                self.editPage["snap"].setChanged()
-                self.sendPadParamValue(self.PadName,paramname,newval)
+
+                # if globalOn:
+                #     print("Hey, should this be sending params to all pads?")
+                # self.sendPadParamValue(self.PadName,paramname,newval)
+
+                # XXX - I suspect this section here should be a function
+                self.changeValueAndSend(paramname,newval,True)
 
         if self.showSliders:
             i = sliderIndexOfParam(paramname)
             if i != None:
                 self.performPage[self.currentPerformPageName].sliderNameChanged(newval,i)
 
-        # print("SAVING CURRENTSNAPSHOT!!")
-        self.editPage["snap"].saveJsonInPath(CurrentSnapshotPath())
+        self.saveSnapshots()
+
+    def changeValueAndSend(self,paramname,newval,send):
+        globalOn = self.selectHeader.padChooser.padGlobalOn
+        if globalOn:
+            self.changeValueInSnap(paramname,newval)
+            for qpad in self.PadNames:
+                self.changeValueInQuad(qpad,paramname,newval)
+                if send:
+                    self.sendPadParamValue(qpad,paramname,newval)
+        else:
+            self.changeValueInSnap(paramname,newval)
+            self.changeValueInQuad(self.PadName,paramname,newval)
+            if send:
+                self.sendPadParamValue(self.PadName,paramname,newval)
+
+    def changeValueInSnap(self,paramname,newval):
+        self.editPage["snap"].changeValueLabel(paramname,newval)
         self.editPage["snap"].setChanged()
+
+    def changeValueInQuad(self,pad,paramname,newval):
+        quadName = pad + "-" + paramname
+        self.editPage["quad"].changeValueLabel(quadName,newval)
+        self.editPage["quad"].setChanged()
 
     def savePrevious(self):
         frompath = CurrentSnapshotPath()
         topath = CurrentSnapshotPreviousPath()
         palette.copyFile(frompath,topath)
-        # print("SAVE PREVIOUS Copying ",frompath," to ",topath)
 
     def restorePrevious(self):
         frompath = CurrentSnapshotPreviousPath()
         topath = CurrentSnapshotPath()
         palette.copyFile(frompath,topath)
-        # print("RESTORING PREVIOUS Copying ",frompath," to ",topath)
 
     def selectorApply(self,apply,paramstype,val):
-        if paramstype == "snap" or paramstype == "sliders":
-            print("selectorApply not yet implemented on snap or sliders")
+        if paramstype == "snap" or paramstype == "quad" or paramstype == "sliders":
+            print("selectorApply not yet implemented on snap/quad or sliders")
         else:
             self.applyToAllParams(apply,paramstype,val)
             self.sendSnapPad(self.PadName,paramstype)
 
     def applyToAllParams(self,apply,paramstype,val):
-        snappage = self.editPage["snap"]
         editpage = self.editPage[paramstype]
         # loop through all the parameters of a given type
         for name in self.allParamsJson:
@@ -611,11 +649,19 @@ class ProGuiApp(tk.Tk):
                         v = enums[i]
 
             if v != "":
+                print("Should this code use self.changeValue?")
                 editpage.changeValueLabel(base,v)
                 self.changePadParamValue(self.PadName,paramstype,name,v)
 
-        snappage.setChanged()
+        self.saveSnapshots()
+
+    def saveSnapshots(self):
+        snappage = self.editPage["snap"]
+        quadpage = self.editPage["quad"]
         snappage.saveJsonInPath(CurrentSnapshotPath())
+        snappage.setChanged()
+        quadpage.saveJsonInPath(CurrentQuadPath())
+        quadpage.setChanged()
 
     def selectorLoadAndSend(self,paramstype,val,buttoni):
         if paramstype == "snap":
@@ -646,7 +692,7 @@ class ProGuiApp(tk.Tk):
 
             # even for sliders (which aren't in the snap settings),
             # we want to set the values in the editing page
-            self.readParamsFileIntoSnap(paramstype,val)
+            self.readParamsFileIntoSnapAndQuad(paramstype,val)
 
             if paramstype != "sliders":
                 self.sendSnapPad(self.PadName,paramstype)
@@ -671,8 +717,10 @@ class ProGuiApp(tk.Tk):
         if paramstype == "snap":
             self.loadSnapJson(j)
             self.sendSnap()
+        elif paramstype == "quad":
+            print("Hey, does quad need work here?  FFF")
         else:
-            self.readParamsJsonIntoSnap(paramstype,paramsname,j)
+            self.readParamsJsonIntoSnapAndQuad(paramstype,paramsname,j)
             if paramstype != "sliders":
                 self.sendSnapPad(self.PadName,paramstype)
 
@@ -699,6 +747,11 @@ class ProGuiApp(tk.Tk):
     def revertToBackup(self):
         frompath = CurrentSnapshotBackupPath()
         topath = CurrentSnapshotPath()
+        palette.copyFile(frompath,topath)
+        print("Reverting Backup Copying ",frompath," to ",topath)
+
+        frompath = CurrentQuadBackupPath()
+        topath = CurrentQuadPath()
         palette.copyFile(frompath,topath)
         print("Reverting Backup Copying ",frompath," to ",topath)
 
@@ -1047,7 +1100,7 @@ class PadChooser(tk.Frame):
         self.makePadFrame(self,"D",0.65,0.05)
 
         self.makeGlobalButton(self,0.5,0.15)
-        self.padGlobalOn = True
+        self.padGlobalOn = False
 
         self.config(background=palette.ColorBg)
 
@@ -1325,7 +1378,7 @@ class PageEditParams(tk.Frame):
     def makeButtonArea(self):
         f = tk.Frame(self, background=palette.ColorBg)
 
-        if self.paramstype != "snap":
+        if self.paramstype != "snap" and self.paramstype != "quad":
             self.initButton = ttk.Label(f, text="Init", style='Button.TLabel')
             self.initButton.bind("<Button-1>", lambda event:self.initCallback())
             self.initButton.bind("<ButtonRelease-1>", lambda event:self.initRelease())
@@ -1565,6 +1618,7 @@ class PageEditParams(tk.Frame):
         snappage = self.controller.editPage["snap"]
 
         if name == "CurrentSnapshot" and self.paramstype != "snap":
+            print("quad probably not needed to be handled here, we'll see")
             # pull param values from "snap" page (i.e. the CurrentSnapshot)
             for p in snappage.params:
                 snapv = snappage.getValue(p)
@@ -1583,8 +1637,10 @@ class PageEditParams(tk.Frame):
         else:
             if self.paramstype == "snap":
                 self.controller.readSnapParamsFile(self.paramsname)
+            elif self.paramstype == "quad":
+                print("Hey, Does quad need work here?  CCC")
             else:
-                self.controller.readParamsFileIntoSnap(self.paramstype,self.paramsname)
+                self.controller.readParamsFileIntoSnapAndQuad(self.paramstype,self.paramsname)
 
             for p in self.params:
                 self.changeValueLabel(p,self.getValue(p))
@@ -1592,7 +1648,7 @@ class PageEditParams(tk.Frame):
             if doSend:
                 self.controller.sendParams(self.params,self.paramstype)
 
-        if self.paramstype != "snap" and clearChange:
+        if self.paramstype != "snap" and self.paramstype != "quad" and self.paramstype != "quad":
             self.clearChanged()
         if doLift:
             self.lift()
@@ -1702,8 +1758,8 @@ class PageEditParams(tk.Frame):
             self.revertButton.pack(side=tk.LEFT, expand=True, padx=4)
 
     def revert(self):
-        if self.paramstype != "snap":
-            print("HEY! revert should only work on the snap page")
+        if self.paramstype != "snap" and self.paramstype != "quad":
+            print("HEY! revert should only work on the snap or quad page")
             return
         if self.ischanged:
             self.controller.revertToBackup()
