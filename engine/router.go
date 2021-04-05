@@ -108,7 +108,11 @@ func recordingsFile(nm string) string {
 func TheRouter() *Router {
 	onceRouter.Do(func() {
 
-		oneRouter.regionLetters = "ABCD"
+		oneRouter.regionLetters = ConfigValue("pads")
+		if oneRouter.regionLetters == "" {
+			log.Printf("No value for pads, assuming A")
+			oneRouter.regionLetters = "A"
+		}
 
 		err := LoadParamEnums()
 		if err != nil {
