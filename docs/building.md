@@ -82,6 +82,6 @@ build
 which you should execute to install Palette.
 After that, the Windows Start menu should have a Palette folder under P,
 where you'll find entries for "Start Palette" and "Stop Palette".
-If you select "Start Palette", it will start palette_engine.exe and palette_guiA.exe,
+If you select "Start Palette", it will start palette_engine.exe and palette_gui.exe,
 the later of which should pop up a GUI window with lots of buttons.
 Congratulations, you've now compiled and installed Palette from scratch.

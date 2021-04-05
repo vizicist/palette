@@ -35,17 +35,15 @@ move palette_engine.exe %bin%\palette_engine.exe > nul
 
 popd
 
-echo ================ Creating palette_guiA.exe and palette_guiABCD.exe
+echo ================ Creating palette_gui.exe
 pushd %PALETTESOURCE%\python
 rm -fr dist
-pyinstaller -i ..\default\config\palette.ico palette_guiA.py > pyinstaller.out 2>&1
-pyinstaller -i ..\default\config\palette.ico palette_guiABCD.py > pyinstaller.out 2>&1
+pyinstaller -i ..\default\config\palette.ico palette_gui.py > pyinstaller.out 2>&1
 pyinstaller testcursor.py > pyinstaller.out 2>&1
 pyinstaller osc.py > pyinstaller.out 2>&1
 
 rem merge all the pyinstalled things into one
-move dist\palette_guiA dist\pyinstalled >nul
-move dist\palette_guiABCD dist\pyinstalled >nul
+move dist\palette_gui dist\pyinstalled >nul
 
 rem merge the other executables into that one
 move dist\testcursor\testcursor.exe dist\pyinstalled >nul
