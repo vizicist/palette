@@ -58,21 +58,6 @@ resetAfterInactivity = -1
 
 OneBeat = 96
 
-PageNames = {
-    "quad":"Quad",
-    "snap":"Pad",
-    "sound":"Sound",
-    "visual":"Visual",
-    "effect":"Effect",
-    "sliders":"Sliders",
-}
-ControlPageNames = {
-    "main":"Main",
-    # "sliders1":"Slider1",
-    # "sliders2":"Slider2",
-    # "sliders3":"Slider3",
-}
-
 PerPadPerformLabels = {}
 GlobalPerformLabels = {}
 PerPadPerformLabels["loopinglength"] = [

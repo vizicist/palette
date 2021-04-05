@@ -7,5 +7,6 @@
   "presetspath": "%LOCALAPPDATA%\\Palette\\presets;%PALETTE%\\presets",
   "debug": "morph,osc",
   "fulldebug": "cursor,gen,midi",
+  "pads":"ABCD",
   "this line should not end with a comma": 0
 }
