@@ -77,8 +77,7 @@ Name: "{%LOCALAPPDATA}\{#MyAppName}\presets\sound"
 [Run]
 Filename: {app}\bin\VC_redist.x64.exe; Parameters: "/install /quiet /norestart"; StatusMsg: "Installing 64-bit Windows Universal runtime..."; Flags: waituntilterminated
 Filename: taskkill.exe; Parameters: "/F /IM palette_engine.exe"; StatusMsg: "Making sure palette_engine is not running..."; Flags: waituntilterminated
-Filename: taskkill.exe; Parameters: "/F /IM palette_guiA.exe"; StatusMsg: "Making sure palette_guiA is not running..."; Flags: waituntilterminated
-Filename: taskkill.exe; Parameters: "/F /IM palette_guiABCD.exe"; StatusMsg: "Making sure palette_guiABCD is not running..."; Flags: waituntilterminated
+Filename: taskkill.exe; Parameters: "/F /IM palette_gui.exe"; StatusMsg: "Making sure palette_gui is not running..."; Flags: waituntilterminated
 
 [Icons]
 Name: "{group}\{cm:ProgramOnTheWeb,{#MyAppName}}"; Filename: "{#MyAppURL}"
@@ -112,9 +111,7 @@ begin
   // Kill running palette things so we can install over them
   Exec('>', 'taskkill.exe /IM palette_engine.exe /T /F', '', SW_HIDE,
      ewWaitUntilTerminated, ResultCode);
-  Exec('>', 'taskkill.exe /IM palette_guiA.exe /T /F', '', SW_HIDE,
-     ewWaitUntilTerminated, ResultCode);
-  Exec('>', 'taskkill.exe /IM palette_guiABCD.exe /T /F', '', SW_HIDE,
+  Exec('>', 'taskkill.exe /IM palette_gui.exe /T /F', '', SW_HIDE,
      ewWaitUntilTerminated, ResultCode);
 
   // Proceed Setup
