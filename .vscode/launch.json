@@ -15,18 +15,10 @@
             "args": []
         },
         {
-            "name": "Launch guiA",
+            "name": "Launch gui",
             "type": "python",
             "request": "launch",
-            "program": "${env:USERPROFILE}/go/src/github.com/vizicist/palette/python/palette_guiA.py",
-            "env": {},
-            "args": []
-        },
-        {
-            "name": "Launch guiABCD",
-            "type": "python",
-            "request": "launch",
-            "program": "${env:USERPROFILE}/go/src/github.com/vizicist/palette/python/palette_guiABCD.py",
+            "program": "${env:USERPROFILE}/go/src/github.com/vizicist/palette/python/palette_gui.py",
             "env": {},
             "args": []
         },
