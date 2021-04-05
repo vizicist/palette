@@ -26,13 +26,39 @@ global TopContainer
 TopContainer = None
 global TopApp
 TopApp = None
+global IsQuad
+IsQuad = False
+global AllPadsSelected
+AllPadsSelected = False
+
+ControlPageNames = {
+    "main":"Main",
+    # "sliders1":"Slider1",
+    # "sliders2":"Slider2",
+    # "sliders3":"Slider3",
+}
 
 class ProGuiApp(tk.Tk):
-    def __init__(self):
+
+    def __init__(self,
+            padname="A",
+            padnames="A",
+            pagenames = {
+                "snap":"Pad",
+                "sound":"Sound",
+                "visual":"Visual",
+                "effect":"Effect",
+                "sliders":"Sliders"}
+            ):
+
         tk.Tk.__init__(self)
 
-        self.PadNames = collections.OrderedDict({ "A":1, "B":2, "C":3, "D":4 })
-        self.PadName = "A"
+        self.PageNames = pagenames
+        self.PadNames = collections.OrderedDict()
+        num = 1
+        for ch in padnames:
+            self.PadNames[ch] = num
+            num = num + 1
 
         self.readParamDefs()
         self.frames = {}
@@ -40,7 +66,7 @@ class ProGuiApp(tk.Tk):
         self.performPage = {}
         self.selectorPage = {}
         self.currentPageName = None
-        self.codenamindex = 0
+        
         self.selectorAction = ""
         self.selectorButtonIndex = 0
         self.selectorValue = ""
@@ -81,7 +107,7 @@ class ProGuiApp(tk.Tk):
         # self.performPage["sliders2"] = PagePerformSliders(parent=self.performContainer, controller=self, slidersNum=2)
         # self.performPage["sliders3"] = PagePerformSliders(parent=self.performContainer, controller=self, slidersNum=3)
 
-        self.winfo_toplevel().title("Palette")
+        self.winfo_toplevel().title("Palette "+padnames)
 
         self.escapeCount = 0
         self.lastEscape = time.time()
@@ -95,6 +121,11 @@ class ProGuiApp(tk.Tk):
         self.resetVisibility()
 
         self.topContainer.bind_all("<MouseWheel>", self.scrollWheel)
+
+        self.setupVals()
+
+        # select the initial pad
+        self.padChooserCallback(padname)
 
     def scrollWheel(self,event):
         if self.editMode:
@@ -187,14 +218,14 @@ class ProGuiApp(tk.Tk):
         sh = self.selectHeader
         ch = self.performHeader
         if self.showAllPages:
-            for pg in palette.PageNames:
+            for pg in self.PageNames:
                 if not self.showSliders and pg == "sliders":
                     sh.pageButton[pg].pack_forget()
                 elif palette.IncludeSound == False and not self.showSound and pg == "sound":
                     sh.pageButton[pg].pack_forget()
                 else:
                     sh.pageButton[pg].pack(side=tk.LEFT,padx=5)
-            for pg in palette.ControlPageNames:
+            for pg in ControlPageNames:
                 # no control page names get displayed if we're not showing slider pages
                 if not self.showSliders or not self.showSound:
                     ch.pageButton[pg].pack_forget()
@@ -203,15 +234,15 @@ class ProGuiApp(tk.Tk):
             ch.performMessageLabel.pack_forget()
 
         elif palette.RecMode:
-            for pg in palette.PageNames:
+            for pg in self.PageNames:
                 sh.pageButton[pg].pack_forget()
-            for pg in palette.ControlPageNames:
+            for pg in ControlPageNames:
                 ch.pageButton[pg].pack_forget()
             ch.performMessageLabel.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=50)
         else:
-            for pg in palette.PageNames:
+            for pg in self.PageNames:
                 sh.pageButton[pg].pack_forget()
-            for pg in palette.ControlPageNames:
+            for pg in ControlPageNames:
                 ch.pageButton[pg].pack_forget()
             ch.performMessageLabel.pack_forget()
 
@@ -272,9 +303,6 @@ class ProGuiApp(tk.Tk):
         # The params in the file may not include all of the
         # parameters for the given paramstype, so we loop through
         # all the parameters of a given type
-        snappage = self.editPage["snap"]
-        quadpage = self.editPage["quad"]
-        editpage = self.editPage[paramstype]
         for name in self.allParamsJson:
             allj = self.allParamsJson[name]
             if allj["paramstype"] != paramstype:
@@ -284,22 +312,12 @@ class ProGuiApp(tk.Tk):
                 v = paramvals[base]
                 if "value" in v:
                     # Old versions of the param files used nested structure with "enabled" and "value"
+                    print("IS THIS CODE USED ANYMORE?")
                     v = v["value"]
             else:
                 v = allj["init"]
 
             self.changeValueAndSend(base,v,False)
-
-            ### editpage.changeValueLabel(base,v)
-            ### self.changeValueInSnap(base,v)
-            ### globalOn = self.selectHeader.padChooser.padGlobalOn
-            ### if globalOn:
-            ###     for qpad in self.PadNames:
-            ###         self.changeValueInQuad(qpad,base,v)
-            ### else:
-            ###     self.changeValueInQuad(self.PadName,base,v)
-
-            ### self.changePadParamValue(self.PadName,paramstype,name,v)
 
             if self.showSliders and paramstype == "sliders" and self.currentPerformPageName[0:7]=="sliders":
                 i = sliderIndexOfParam(name)
@@ -309,13 +327,6 @@ class ProGuiApp(tk.Tk):
                         self.performPage[self.currentPerformPageName].sliderNameChanged(v,i)
 
         self.saveSnapshots()
-
-    def changePadParamValue(self,pad,paramstype,paramname,v):
-        if paramstype == "sliders":
-            return
-        quadParamName = pad + "-" + paramname
-        self.editPage["snap"].changeValueLabel(paramname,v)
-        self.editPage["quad"].changeValueLabel(quadParamName,v)
 
     def readSnapParamsFile(self,paramsname):
         # print("\nREAD SNAP PARAMS FILE paramsname=",paramsname)
@@ -360,11 +371,11 @@ class ProGuiApp(tk.Tk):
         self.selectHeader.pack(side=tk.TOP,fill=tk.BOTH)
 
         # These are the pages of buttons for selecting set/patch/sound/visual/etc..
-        for pagename in palette.PageNames:
+        for pagename in self.PageNames:
             self.makeSelectorPage(f, pagename, PageSelector)
 
         # These are the pages you can switch between for editing
-        for pagename in palette.PageNames:
+        for pagename in self.PageNames:
             self.makeEditPage(f,pagename)
 
         self.editPage["snap"].canRevert = True
@@ -496,7 +507,7 @@ class ProGuiApp(tk.Tk):
                 val = page.getValue(fullparam)
                 self.sendPadOneEffectVal(pad,fullparam,val)
                 continue
-            if not self.paramTypeOf[baseparam] in palette.PageNames:
+            if not self.paramTypeOf[baseparam] in self.PageNames:
                 print("Not sending param=",origp)
                 continue
             v = page.getValue(origp)
@@ -532,14 +543,7 @@ class ProGuiApp(tk.Tk):
             print("HEY, DOES quad need some work here? BBB")
 
         else:
-            # change the corresponding value on the snap and quad page
             if self.currentPageName != "sliders":
-
-                # if globalOn:
-                #     print("Hey, should this be sending params to all pads?")
-                # self.sendPadParamValue(self.PadName,paramname,newval)
-
-                # XXX - I suspect this section here should be a function
                 self.changeValueAndSend(paramname,newval,True)
 
         if self.showSliders:
@@ -550,8 +554,8 @@ class ProGuiApp(tk.Tk):
         self.saveSnapshots()
 
     def changeValueAndSend(self,paramname,newval,send):
-        globalOn = self.selectHeader.padChooser.padGlobalOn
-        if globalOn:
+        global AllPadsSelected
+        if AllPadsSelected:
             self.changeValueInSnap(paramname,newval)
             for qpad in self.PadNames:
                 self.changeValueInQuad(qpad,paramname,newval)
@@ -568,9 +572,11 @@ class ProGuiApp(tk.Tk):
         self.editPage["snap"].setChanged()
 
     def changeValueInQuad(self,pad,paramname,newval):
-        quadName = pad + "-" + paramname
-        self.editPage["quad"].changeValueLabel(quadName,newval)
-        self.editPage["quad"].setChanged()
+        global IsQuad
+        if IsQuad:
+            quadName = pad + "-" + paramname
+            self.editPage["quad"].changeValueLabel(quadName,newval)
+            self.editPage["quad"].setChanged()
 
     def savePrevious(self):
         frompath = CurrentSnapshotPath()
@@ -649,19 +655,28 @@ class ProGuiApp(tk.Tk):
                         v = enums[i]
 
             if v != "":
-                print("Should this code use self.changeValue?")
+                print("XXXXX - Should this code use self.changeValue?")
                 editpage.changeValueLabel(base,v)
-                self.changePadParamValue(self.PadName,paramstype,name,v)
+                if paramstype != "sliders":
+                    self.changePadParamValue(self.PadName,name,v)
+                    self.editPage["snap"].changeValueLabel(base,v)
+                    global IsQuad
+                    if IsQuad:
+                        quadParamName = self.PadName + "-" + name
+                        self.editPage["quad"].changeValueLabel(quadParamName,v)
+
 
         self.saveSnapshots()
 
     def saveSnapshots(self):
         snappage = self.editPage["snap"]
-        quadpage = self.editPage["quad"]
         snappage.saveJsonInPath(CurrentSnapshotPath())
         snappage.setChanged()
-        quadpage.saveJsonInPath(CurrentQuadPath())
-        quadpage.setChanged()
+        global IsQuad
+        if IsQuad:
+            quadpage = self.editPage["quad"]
+            quadpage.saveJsonInPath(CurrentQuadPath())
+            quadpage.setChanged()
 
     def selectorLoadAndSend(self,paramstype,val,buttoni):
         if paramstype == "snap":
@@ -725,9 +740,10 @@ class ProGuiApp(tk.Tk):
                 self.sendSnapPad(self.PadName,paramstype)
 
     def padChooserCallback(self,pad):
-        print("Setting PadName to ",pad)
         self.PadName = pad
-        self.selectHeader.padChooser.refreshColors()
+
+        if len(self.PadNames) > 1:
+            self.selectHeader.padChooser.refreshColors()
 
         if self.editMode:
             self.editPage[self.currentPageName].startEditing("CurrentSnapshot")
@@ -894,11 +910,9 @@ class ProGuiApp(tk.Tk):
 
         for pad in self.PadNames:
             for name in palette.PerPadPerformLabels:
-                self.perpadPerformVal[name][pad] = palette.PerPadPerformLabels[name][0]
                 self.sendPadPerformVal(pad,name)
 
         for name in palette.GlobalPerformLabels:
-            self.globalPerformVal[name] = palette.GlobalPerformLabels[name][0]
             self.sendGlobalPerformVal(name)
 
         self.setPerformMessage("")
@@ -906,6 +920,15 @@ class ProGuiApp(tk.Tk):
             self.clearPadLoop(pad)
 
         self.performPage["main"].updatePerformButtonLabels(self.PadName)
+
+    def setupVals(self):
+
+        for pad in self.PadNames:
+            for name in palette.PerPadPerformLabels:
+                self.perpadPerformVal[name][pad] = palette.PerPadPerformLabels[name][0]
+
+        for name in palette.GlobalPerformLabels:
+            self.globalPerformVal[name] = palette.GlobalPerformLabels[name][0]
 
     def clearExternalScale(self):
         palette.palette_region_api(self.PadName, "clearexternalscale")
@@ -947,8 +970,14 @@ class ProGuiApp(tk.Tk):
     def synthesizeParamsJson(self):
 
         # rework the contents of paramdefs.json so that
-        # each "effect.*" parameter is followed by an copy
+        # each "effect.*" parameter is followed by a copy
         # with "2" appended to the parameter name.
+        # This is needed because in Resolume, there are
+        # 2 copies of each effect (one chain of effects is
+        # applied, and then the same set is applied again, in series).
+        # This is a cheap way of allowing some of the later effects
+        # to be applied before the earlier effects, even though
+        # it doesn't allow total freedom in the effect ordering.
 
         s = ""
         path = palette.configFilePath("paramdefs.json")
@@ -978,7 +1007,7 @@ class ProGuiApp(tk.Tk):
             self.paramValueTypeOf[name] = self.allParamsJson[name]["valuetype"]
 
         # Construct lists of the parameters, pulled from Params.json
-        for t in palette.PageNames:
+        for t in self.PageNames:
             self.paramsOfType[t] = collections.OrderedDict()
 
         self.allParamNames = []
@@ -1000,13 +1029,15 @@ class ProGuiApp(tk.Tk):
             self.paramValueTypeOf[name] = self.allParamsJson[name]["valuetype"]
             self.paramsOfType["snap"][name] = self.allParamsJson[name]
 
-            # We prepend A-, B-, etc to the parameter name for quad parameters,
-            # to create entries for "quad" things
-            # in paramValueTypeOf and paramsOfType["quad"]
-            for pad in self.PadNames:
-                quadName = pad + "-" + name
-                self.paramValueTypeOf[quadName] = self.allParamsJson[name]["valuetype"]
-                self.paramsOfType["quad"][quadName] = self.allParamsJson[name]
+            global IsQuad
+            if IsQuad:
+                # We prepend A-, B-, etc to the parameter name for quad parameters,
+                # to create entries for "quad" things
+                # in paramValueTypeOf and paramsOfType["quad"]
+                for pad in self.PadNames:
+                    quadName = pad + "-" + name
+                    self.paramValueTypeOf[quadName] = self.allParamsJson[name]["valuetype"]
+                    self.paramsOfType["quad"][quadName] = self.allParamsJson[name]
 
         for x in self.allParamNames:
             paramType = self.allParamsJson[x]["paramstype"]
@@ -1100,7 +1131,6 @@ class PadChooser(tk.Frame):
         self.makePadFrame(self,"D",0.65,0.05)
 
         self.makeGlobalButton(self,0.5,0.15)
-        self.padGlobalOn = False
 
         self.config(background=palette.ColorBg)
 
@@ -1140,18 +1170,20 @@ class PadChooser(tk.Frame):
         self.padGlobalLabel.bind("<Button-1>", self.globalCallback)
 
     def globalCallback(self,e):
-        self.padGlobalOn = not self.padGlobalOn
+        global AllPadsSelected
+        AllPadsSelected = not AllPadsSelected
         self.refreshColors()
 
     def refreshColors(self):
-        if self.padGlobalOn:
+        global AllPadsSelected
+        if AllPadsSelected:
             color = palette.ColorHigh
         else:
             color = palette.ColorUnHigh
         self.padGlobalButton.config(background=color)
         self.padGlobalLabel.config(background=color)
         for p in self.controller.PadNames:
-            if self.padGlobalOn or p != self.controller.PadName:
+            if AllPadsSelected or p != self.controller.PadName:
                 self.colorPad(p,color)
             else:
                 self.colorPad(p,palette.ColorHigh)
@@ -1191,7 +1223,8 @@ class PadChooser(tk.Frame):
         #    return
         for pad in self.padFrame:
             if e.widget == self.padFrame[pad]:
-                self.padGlobalOn = False
+                global AllPadsSelected
+                AllPadsSelected = False
                 self.controller.padChooserCallback(pad)
                 self.refreshColors()
                 return
@@ -1214,11 +1247,13 @@ class SelectHeader(tk.Frame):
             command=lambda : self.controller.togglePageButons())
         self.headerButton.pack(side=tk.LEFT)
 
-        for i in palette.PageNames:
-            self.makeHeaderButton(i,palette.PageNames[i])
+        for i in self.controller.PageNames:
+            self.makeHeaderButton(i,self.controller.PageNames[i])
 
-        self.padChooser = PadChooser(parent=parent, controller=controller)
-        self.padChooser.place(in_=self.titleFrame, relx=0.7, rely=0, relwidth=0.3, relheight=1.0)
+        global IsQuad
+        if IsQuad:
+            self.padChooser = PadChooser(parent=parent, controller=controller)
+            self.padChooser.place(in_=self.titleFrame, relx=0.7, rely=0, relwidth=0.3, relheight=1.0)
 
     def spacer(self,height):
         spacer = tk.Canvas(self, background=palette.ColorBg, highlightthickness=0, height=height)
@@ -1618,7 +1653,6 @@ class PageEditParams(tk.Frame):
         snappage = self.controller.editPage["snap"]
 
         if name == "CurrentSnapshot" and self.paramstype != "snap":
-            print("quad probably not needed to be handled here, we'll see")
             # pull param values from "snap" page (i.e. the CurrentSnapshot)
             for p in snappage.params:
                 snapv = snappage.getValue(p)
@@ -2235,12 +2269,43 @@ def CurrentQuadBackupPath():
 def CurrentQuadPreviousPath():
     return palette.configFilePath("CurrentQuad.previous")
 
-
 def initMain(app):
     app.iconbitmap(palette.configFilePath("palette.ico"))
     app.mainLoop()
 
 if __name__ == "__main__":
+
+    pads = palette.ConfigValue("pads")
+    if pads == "":
+        npads = 1
+        pads = "A" # default if no pads config value
+
+    npads = len(pads)
+    if npads == 1:
+        # You can set pads to "B", for example
+        padname = pads[0]
+        padnames = pads
+        pagenames = {
+            "snap":"Pad",
+            "sound":"Sound",
+            "visual":"Visual",
+            "effect":"Effect",
+            "sliders":"Sliders",
+        }
+    elif npads == 4:
+        padname = pads[0]
+        padnames = pads
+        IsQuad = True
+        pagenames = {
+            "quad":"Quad",
+            "snap":"Pad",
+            "sound":"Sound",
+            "visual":"Visual",
+            "effect":"Effect",
+            "sliders":"Sliders",
+        }
+    else:
+        print("Unexpected number of pads: ",pads)
 
     gui_size = palette.ConfigValue("gui_size")
     if gui_size == "":
@@ -2297,7 +2362,7 @@ if __name__ == "__main__":
     palette.setFontSizes(fontFactor)
 
     global app
-    app = ProGuiApp()
+    app = ProGuiApp(padname,padnames,pagenames)
 
     palette.makeStyles(app)
 
