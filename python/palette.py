@@ -181,6 +181,9 @@ def makeStyles(app):
     s.configure('HeaderEnabled.TLabel', background=ColorHigh, relief="flat", justify=tk.CENTER, font=largestFont)
     s.configure('HeaderDisabled.TLabel', background=ColorButton, relief="flat", justify=tk.CENTER, font=largestFont)
 
+    s.configure('ChooserEnabled.TLabel', background=ColorHigh, relief="flat", justify=tk.CENTER, font=padLabelFont)
+    s.configure('ChooserDisabled.TLabel', background=ColorButton, relief="flat", justify=tk.CENTER, font=padLabelFont)
+
     s.configure('GlobalEnabled.TLabel', background=ColorHigh, relief="flat", justify=tk.CENTER, font=hugeFont)
     s.configure('GlobalDisabled.TLabel', background=ColorButton, relief="flat", justify=tk.CENTER, font=hugeFont)
 
@@ -266,7 +269,7 @@ def setFontSizes(fontFactor):
     largeFont = (f, int(16*fontFactor))
     performFont = (f, int(18*fontFactor))
     mediumFont = (f, int(12*fontFactor))
-    padLabelFont = (f, int(16*fontFactor))
+    padLabelFont = (f, int(22*fontFactor))
 
 def configFilePath(nm):
     return os.path.join(paletteSubDir("config"),nm)
