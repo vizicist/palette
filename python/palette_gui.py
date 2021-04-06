@@ -1125,31 +1125,25 @@ class PadChooser(tk.Frame):
         # canvas = tk.Canvas(self, background=palette.ColorAqua, highlightthickness=0, height=4)
         # canvas.pack(side=tk.TOP,fill=tk.X)
 
-        self.makePadFrame(self,"A",0.05,0.05)
-        self.makePadFrame(self,"B",0.15,0.55)
-        self.makePadFrame(self,"C",0.55,0.55)
-        self.makePadFrame(self,"D",0.65,0.05)
-
-        self.makeGlobalButton(self,0.5,0.15)
+        self.makeGlobalButton(self,0.0,0.0)
+        self.makePadFrame(self,"A",0.2,0.0)
+        self.makePadFrame(self,"B",0.4,0.0)
+        self.makePadFrame(self,"C",0.6,0.0)
+        self.makePadFrame(self,"D",0.8,0.0)
 
         self.config(background=palette.ColorBg)
-
-    def setPadLabel(self,pad,label):
-        # self.padLabel[pad].config(text=label)
-        # print("setPadLabel needs to draw in canvas")
-        pass
 
     def makePadFrame(self,parent,pad,x0,y0):
 
         self.padFrame[pad] = tk.Frame(self)
-        self.padFrame[pad].place(relx=x0,rely=y0,relwidth=0.3,relheight=0.4)
-        self.padFrame[pad].config(borderwidth=2,relief="solid",background=palette.ColorUnHigh)
+        self.padFrame[pad].place(relx=x0,rely=y0,relwidth=0.15,relheight=1.0)
+        self.padFrame[pad].config(borderwidth=0,relief="solid",background=palette.ColorUnHigh)
         self.padFrame[pad].bind("<Button-1>", lambda p=pad: self.padCallback(p))
 
-        # self.padLabel[pad] = ttk.Label(self.padFrame[pad], text="")
-        # self.padLabel[pad].pack(side=tk.TOP)
-        # self.padLabel[pad].config(background=palette.ColorUnHigh,font=padLabelFont)
-        # self.padLabel[pad].bind("<Button-1>", lambda p=pad: self.padCallback(p))
+        self.padLabel[pad] = ttk.Label(self.padFrame[pad], text=pad)
+        self.padLabel[pad].pack(side=tk.TOP)
+        self.padLabel[pad].configure(style='ChooserDisabled.TLabel')
+        self.padLabel[pad].bind("<Button-1>", lambda p=pad: self.padCallback(p))
 
         if self.controller.showCursorFeedback:
             self.padCanvas[pad] = tk.Canvas(self.padFrame[pad], width=self.canvasWidth, height=self.canvasHeight, border=0)
@@ -1159,13 +1153,13 @@ class PadChooser(tk.Frame):
     def makeGlobalButton(self,parent,x0,y0):
 
         self.padGlobalButton = tk.Frame(self)
-        self.padGlobalButton.place(relx=x0-0.05,rely=y0-0.05,relwidth=0.1,relheight=0.275)
-        self.padGlobalButton.config(borderwidth=2,relief="solid",background=palette.ColorUnHigh)
+        self.padGlobalButton.place(relx=x0,rely=y0,relwidth=0.15,relheight=1.0)
+        self.padGlobalButton.config(borderwidth=0,relief="solid",background=palette.ColorUnHigh)
         self.padGlobalButton.bind("<Button-1>", self.globalCallback)
 
         self.padGlobalLabel = ttk.Label(self.padGlobalButton, text="*")
         self.padGlobalLabel.pack(side=tk.TOP)
-        self.padGlobalLabel.configure(style='GlobalDisabled.TLabel')
+        self.padGlobalLabel.configure(style='ChooserDisabled.TLabel')
         # self.padGlobalLabel.config(background=palette.ColorUnHigh)
         self.padGlobalLabel.bind("<Button-1>", self.globalCallback)
 
@@ -1190,6 +1184,7 @@ class PadChooser(tk.Frame):
 
     def colorPad(self,pad,color):
         self.padFrame[pad].config(background=color)
+        self.padLabel[pad].config(background=color)
         # self.padLabel[pad].config(background=color)
         if self.controller.showCursorFeedback:
             self.padCanvas[pad].config(background=color)
@@ -1222,7 +1217,7 @@ class PadChooser(tk.Frame):
         # if self.controller.advancedLevel==0:
         #    return
         for pad in self.padFrame:
-            if e.widget == self.padFrame[pad]:
+            if e.widget == self.padFrame[pad] or e.widget == self.padLabel[pad]:
                 global AllPadsSelected
                 AllPadsSelected = False
                 self.controller.padChooserCallback(pad)
