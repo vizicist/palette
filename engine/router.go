@@ -285,7 +285,7 @@ func StartMIDI() {
 		return
 	}
 	words := strings.Split(midiinput, ",")
-	inputs := make(map[string]*midiInput)
+	inputs := make(map[string]*MidiInput)
 	for _, input := range words {
 		i := MIDI.getInput(input)
 		if i == nil {
