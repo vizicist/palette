@@ -85,26 +85,58 @@ func (loop *StepLoop) ClearID(id string) {
 
 // AddToStep adds a StepItem to the loop at the current step
 func (loop *StepLoop) AddToStep(ce CursorStepEvent, stepnum Clicks) {
-	if DebugUtil.Cursor {
-		log.Printf("StepLoop.AddToStep: stepnum=%d cid=%s\n", stepnum, ce.ID)
+
+	loop.stepsMutex.Lock()
+	defer loop.stepsMutex.Unlock()
+
+	if DebugUtil.Cursor || DebugUtil.MIDI {
+		log.Printf("StepLoop.AddToStep: stepnum=%d ddu=%s cid=%s\n", stepnum, ce.Downdragup, ce.ID)
 	}
+
 	step := loop.steps[stepnum]
 	le := &LoopEvent{cursorStepEvent: ce}
 
-	// We only want a single drag event per cursor in a single Step.
-	// If one is found for the same cursor id,
+	// We only want a single drag or down event per cursor in a single Step.
+	// If one (of either type) is found for the same cursor id,
 	// replace it rather than appending a second one.
-	if ce.Downdragup == "drag" {
+	if ce.Downdragup == "drag" || ce.Downdragup == "down" {
 		replace := -1
 		for i, e := range step.events {
-			if ce.ID == e.cursorStepEvent.ID && e.cursorStepEvent.Downdragup == "drag" {
+			if ce.ID != e.cursorStepEvent.ID {
+				// It's not the same cursor id, ignore it
+				continue
+			}
+			// If we're adding a drag, and find an existing "down"...
+			if ce.Downdragup == "drag" &&
+				e.cursorStepEvent.Downdragup == "down" {
+				log.Printf("Hey, drag with down in same step!? ce.ID=%s, not replacing\n", ce.ID)
+				// don't replace
+				break
+			}
+			// If we're adding a drag, and find an existing "drag"...
+			if ce.Downdragup == "drag" &&
+				e.cursorStepEvent.Downdragup == "drag" {
+				replace = i
+				break
+			}
+			// If we're adding a down, and find an existing "down"...
+			if ce.Downdragup == "down" &&
+				e.cursorStepEvent.Downdragup == "down" {
+				log.Printf("Hey, down with down in same step!? ce.ID=%s\n", ce.ID)
+				replace = i
+				break
+			}
+			// If we're adding a down, and find an existing "drag"...
+			if ce.Downdragup == "down" &&
+				e.cursorStepEvent.Downdragup == "drag" {
+				log.Printf("Hey, down with drag in same step!? ce.ID=%s\n", ce.ID)
 				replace = i
 				break
 			}
 		}
 		if replace >= 0 {
-			if DebugUtil.Loop {
-				log.Printf("Replacing drag event %d in stepnum=%d\n", replace, stepnum)
+			if DebugUtil.Loop || DebugUtil.MIDI {
+				log.Printf("Replacing %s event %d in stepnum=%d\n", ce.Downdragup, replace, stepnum)
 			}
 			step.events[replace] = le
 			return
