@@ -194,6 +194,11 @@ func Send(out *synthOutput, b1 int64, b2 int64, b3 int64) {
 
 // SendEvent sends one or more MIDI Events
 func SendEvent(out *synthOutput, events []portmidi.Event) {
+	if DebugUtil.MIDI {
+		for i, e := range events {
+			log.Printf("SendEvent: i=%v e=%+v\n", i, e)
+		}
+	}
 	if out.stream == nil {
 		log.Printf("SendEvent: out.stream is nil?  port=%s\n", out.port)
 		return
