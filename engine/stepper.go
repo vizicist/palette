@@ -132,6 +132,10 @@ func (r *Stepper) handleCursorDeviceEvent(e CursorDeviceEvent) {
 
 	id := e.NUID + "." + e.CID
 
+	if e.DownDragUp == "drag" {
+		// log.Printf("handleCursorDeviceEvent: Ignoring drag\n")
+		return
+	}
 	r.deviceCursorsMutex.Lock()
 	defer r.deviceCursorsMutex.Unlock()
 
@@ -476,7 +480,7 @@ func (r *Stepper) PassThruMIDI(e portmidi.Event, scadjust bool) {
 		if DebugUtil.MIDI {
 			log.Printf("MIDI.SendNote: n=%+v\n", *n)
 		}
-		MIDI.SendNote(n)
+		SendNoteToSynth(n)
 	}
 }
 
@@ -503,6 +507,7 @@ func (r *Stepper) generateSoundFromCursor(ce CursorStepEvent) {
 		// log.Printf("generateMIDI sending NoteOn for down\n")
 		r.sendNoteOn(a)
 	case "drag":
+		log.Printf("generateSound: shouldn't be seeing drag\n")
 		if a.noteOn == nil {
 			// if we turn on playing in the middle of an existing loop,
 			// we may see some drag events without a down.
@@ -611,6 +616,7 @@ func (r *Stepper) AdvanceByOneClick() {
 				ac.maxz = -1.0
 				ac.lastDrag = -1
 			case ce.Downdragup == "drag" && ce.Z > ac.maxz:
+				log.Printf("AdvanceByOneClick: shouldn't be seeing drag\n")
 				// log.Printf("Saving ce.Z as ac.maxz = %v\n", ce.Z)
 				ac.maxz = ce.Z
 			default:
@@ -647,6 +653,7 @@ func (r *Stepper) AdvanceByOneClick() {
 				if ce.Quantized {
 					// MIDI stuff
 					if ce.Downdragup == "drag" {
+						log.Printf("playit: shouldn't be seeing drag\n")
 						dclick := currentClick - ac.lastDrag
 						if ac.lastDrag < 0 || dclick >= oneBeat/32 {
 							ac.lastDrag = currentClick
@@ -710,6 +717,7 @@ func (r *Stepper) executeIncomingCursor(ce CursorStepEvent) {
 	if DebugUtil.Cursor {
 		log.Printf("Stepper.executeIncomingCursor: ce=%+v\n", ce)
 	}
+	log.Printf("Stepper.executeIncomingCursor: ce=%+v\n", ce)
 
 	// Every cursor event actually gets added to the step loop,
 	// even if we're not recording a loop.  That way, everything gets
@@ -724,8 +732,10 @@ func (r *Stepper) executeIncomingCursor(ce CursorStepEvent) {
 	q := r.cursorToQuant(ce)
 
 	quantizedStepnum := r.nextQuant(r.loop.currentStep, q)
+	log.Printf("executeCursor: %s, cstep=%d q=%d initial quantizedStepnum=%d\n", ce.Downdragup, r.loop.currentStep, q, quantizedStepnum)
 	for quantizedStepnum >= r.loop.length {
 		quantizedStepnum -= r.loop.length
+		log.Printf("    executeCursor: %s adjusting quantizedStepnum=%d\n", ce.Downdragup, quantizedStepnum)
 	}
 
 	// log.Printf("Quantizing currentClick=%d r.loop.currentStep=%d q=%d quantizedStepnum=%d\n",
@@ -775,6 +785,7 @@ func (r *Stepper) executeIncomingCursor(ce CursorStepEvent) {
 	// a drag event come in shortly after the down event.
 
 	if r.permInstanceIDDragOK[permInstanceIDQuantized] == false && ce.Downdragup == "drag" {
+		log.Printf("executeIncoming: shouldn't be seeing drag\n")
 		if currentClick <= r.permInstanceIDDownClick[permInstanceIDQuantized] {
 			return
 		}
@@ -802,8 +813,10 @@ func (r *Stepper) executeIncomingCursor(ce CursorStepEvent) {
 		// So, use the quantize value of the down event
 		downQuant := r.permInstanceIDDownQuant[permInstanceIDQuantized]
 		quantizedStepnum = r.nextQuant(r.loop.currentStep, downQuant)
+		log.Printf("executeCursor: up, using downQuant=%d initial quantstenum=%d\n", downQuant, quantizedStepnum)
 		for quantizedStepnum >= r.loop.length {
 			quantizedStepnum -= r.loop.length
+			log.Printf("    executeCursor: adjusting quantstepnum=%d\n", quantizedStepnum)
 		}
 
 		// If the up happens too quickly,
@@ -811,11 +824,15 @@ func (r *Stepper) executeIncomingCursor(ce CursorStepEvent) {
 		// so push the up event out a few steps.
 		magicUpDelayClicks := Clicks(8)
 		quantizedStepnum = (quantizedStepnum + magicUpDelayClicks) % r.loop.length
+		log.Printf("    executeCursor: FINAL quantstepnum=%d\n", quantizedStepnum)
 	}
 
-	log.Printf("Stepper %s adding to Steps\n", r.padName)
+	// log.Printf("Stepper %s adding to Steps\n", r.padName)
 	r.loop.AddToStep(ce, quantizedStepnum)
-	r.loop.AddToStep(ceUnquantized, r.loop.currentStep)
+
+	// XXX - PUT THIS BACK!!
+	_ = ceUnquantized
+	// r.loop.AddToStep(ceUnquantized, r.loop.currentStep)
 
 	return
 }
@@ -843,7 +860,7 @@ func (r *Stepper) sendNoteOn(a *ActiveNote) {
 	if DebugUtil.MIDI {
 		log.Printf("MIDI.SendNote: noteOn pitch:%d velocity:%d sound:%s\n", a.noteOn.Pitch, a.noteOn.Velocity, a.noteOn.Sound)
 	}
-	MIDI.SendNote(a.noteOn)
+	SendNoteToSynth(a.noteOn)
 
 	ss := r.params.ParamStringValue("visual.spritesource", "")
 	if ss == "midi" {
@@ -866,7 +883,7 @@ func (r *Stepper) sendNoteOff(a *ActiveNote) {
 		if DebugUtil.MIDI {
 			log.Printf("MIDI.SendNote: noteOff pitch:%d velocity:%d sound:%s\n", n.Pitch, n.Velocity, n.Sound)
 		}
-		MIDI.SendNote(noteOff)
+		SendNoteToSynth(noteOff)
 	}
 }
 
@@ -875,14 +892,7 @@ func (r *Stepper) sendANO() {
 		return
 	}
 	synth := r.params.ParamStringValue("sound.synth", defaultSynth)
-	if synth != "" {
-		if DebugUtil.MIDI {
-			log.Printf("MIDI.SendANO: synth=%s\n", synth)
-		}
-		MIDI.SendANO(synth)
-	} else {
-		log.Printf("MIDI.SendANO: pad=%s synth is empty?\n", r.padName)
-	}
+	SendANOToSynth(synth)
 }
 
 /*
@@ -973,6 +983,10 @@ func (r *Stepper) cursorToDuration(ce CursorStepEvent) int {
 
 func (r *Stepper) cursorToQuant(ce CursorStepEvent) Clicks {
 	quant := r.params.ParamStringValue("misc.quant", "fixed")
+
+	// XXX - UNDO THIS!
+	quant = "fixed"
+
 	q := Clicks(1)
 	if quant == "none" || quant == "" {
 		// q is 1

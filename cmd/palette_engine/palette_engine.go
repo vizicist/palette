@@ -22,6 +22,7 @@ func main() {
 	flag.Parse()
 
 	engine.InitMIDI()
+	engine.InitSynths()
 
 	go engine.StartNATSServer()
 	go engine.StartOSC("127.0.0.1:3333")

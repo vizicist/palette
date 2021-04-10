@@ -99,6 +99,11 @@ func (loop *StepLoop) AddToStep(ce CursorStepEvent, stepnum Clicks) {
 	// We only want a single drag or down event per cursor in a single Step.
 	// If one (of either type) is found for the same cursor id,
 	// replace it rather than appending a second one.
+	if ce.Downdragup == "drag" {
+		log.Printf("AddToStep ignoring drag\n")
+		return
+	}
+
 	if ce.Downdragup == "drag" || ce.Downdragup == "down" {
 		replace := -1
 		for i, e := range step.events {

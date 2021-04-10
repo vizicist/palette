@@ -58,7 +58,7 @@ func (a *ActivePhrase) sendNoteOffs(due Clicks, debug bool, callbacks []*NoteOut
 	ntoff := a.pendingNoteOffs.firstnote
 	for ; ntoff != nil && ntoff.EndOf() < due; ntoff = ntoff.next {
 
-		MIDI.SendNote(ntoff)
+		SendNoteToSynth(ntoff)
 
 		// Remove it from the notesDown phrase
 		a.pendingNoteOffs.firstnote = ntoff.next
@@ -170,12 +170,15 @@ func (mgr *ActivePhrasesManager) AdvanceByOneClick() {
 			case NOTEOFF:
 				log.Printf("ActivePhrasesManager.advanceActivePhrasesByOneStep can't handle NOTEOFF notes yet\n")
 			case NOTE:
+
 				nd := n.Copy()
 				nd.TypeOf = NOTEON
-				MIDI.SendNote(nd)
+				SendNoteToSynth(nd)
+
 				nd.TypeOf = NOTEOFF
 				nd.Clicks = n.EndOf()
 				a.pendingNoteOffs.InsertNote(nd)
+
 			default:
 				log.Printf("advanceActivePhrase unable to handle n.Typeof=%d n=%s\n", n.TypeOf, n)
 			}
