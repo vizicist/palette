@@ -37,7 +37,6 @@ type paramDefBool struct {
 
 type paramDefString struct {
 	values []string
-	// callback func(router *Router, reactor *Reactor, name, value string) error
 }
 
 // ParamDefs is the set of all parameter definitions

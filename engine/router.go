@@ -23,7 +23,7 @@ const debug bool = false
 // Router takes events and routes them
 type Router struct {
 	regionLetters string
-	reactors      map[string]*Reactor
+	steppers      map[string]*Stepper
 	inputs        []*osc.Client
 	OSCInput      chan OSCEvent
 	MIDIInput     chan portmidi.Event
@@ -130,7 +130,7 @@ func TheRouter() *Router {
 			// might be fatal, but try to continue
 		}
 
-		oneRouter.reactors = make(map[string]*Reactor)
+		oneRouter.steppers = make(map[string]*Stepper)
 		oneRouter.regionForMorph = make(map[string]string)
 		oneRouter.regionAssignedToNUID = make(map[string]string)
 
@@ -144,7 +144,7 @@ func TheRouter() *Router {
 			resolumePort := 3334 + i
 			ch := string(c)
 			freeframeClient := osc.NewClient("127.0.0.1", resolumePort)
-			oneRouter.reactors[ch] = NewReactor(ch, resolumeLayer, freeframeClient, oneRouter.resolumeClient, oneRouter.guiClient)
+			oneRouter.steppers[ch] = NewStepper(ch, resolumeLayer, freeframeClient, oneRouter.resolumeClient, oneRouter.guiClient)
 		}
 
 		oneRouter.OSCInput = make(chan OSCEvent)
@@ -339,8 +339,8 @@ func ListenForLocalDeviceInputsForever() {
 				}
 			}
 			// XXX - All Pads??  I guess
-			for _, reactor := range r.reactors {
-				reactor.HandleMIDIDeviceInput(event)
+			for _, stepper := range r.steppers {
+				stepper.HandleMIDIDeviceInput(event)
 			}
 		default:
 			// log.Printf("Sleeping 1 ms - now=%v\n", time.Now())
@@ -385,7 +385,7 @@ func (r *Router) HandleSubscribedEventArgs(args map[string]string) error {
 		delete(args, "region")
 	}
 
-	reactor, ok := r.reactors[region]
+	stepper, ok := r.steppers[region]
 	if !ok {
 		return fmt.Errorf("there is no region named %s", region)
 	}
@@ -441,7 +441,7 @@ func (r *Router) HandleSubscribedEventArgs(args map[string]string) error {
 			}
 		}
 
-		reactor.handleCursorDeviceEvent(ce)
+		stepper.handleCursorDeviceEvent(ce)
 
 	case "sprite":
 
@@ -450,7 +450,7 @@ func (r *Router) HandleSubscribedEventArgs(args map[string]string) error {
 		if err != nil {
 			return nil
 		}
-		reactor.generateSprite("dummy", x, y, z)
+		stepper.generateSprite("dummy", x, y, z)
 
 	case "midi":
 
@@ -462,8 +462,8 @@ func (r *Router) HandleSubscribedEventArgs(args map[string]string) error {
 		switch subEvent {
 		case "time_reset":
 			log.Printf("HandleSubscribeMIDIInput: palette_time_reset, sending ANO\n")
-			reactor.HandleMIDITimeReset()
-			reactor.sendANO()
+			stepper.HandleMIDITimeReset()
+			stepper.sendANO()
 
 		case "audio_reset":
 			log.Printf("HandleSubscribeMIDIInput: palette_audio_reset!!\n")
@@ -478,7 +478,7 @@ func (r *Router) HandleSubscribedEventArgs(args map[string]string) error {
 			if err != nil {
 				return err
 			}
-			reactor.HandleMIDIDeviceInput(*me)
+			stepper.HandleMIDIDeviceInput(*me)
 		}
 	}
 
@@ -497,12 +497,12 @@ func (r *Router) handleCursorDeviceInput(e CursorDeviceEvent) {
 		}
 	}
 
-	reactor, ok := r.reactors[e.Region]
+	stepper, ok := r.steppers[e.Region]
 	if !ok {
 		log.Printf("routeCursorDeviceEvent: no region named %s, unable to process ce=%+v\n", e.Region, e)
 		return
 	}
-	reactor.handleCursorDeviceEvent(e)
+	stepper.handleCursorDeviceEvent(e)
 }
 
 // makeMIDIEvent xxx
@@ -682,11 +682,11 @@ func (r *Router) ExecuteAPI(api string, nuid string, rawargs string) (result int
 			// Remove it from the args given to ExecuteAPI
 			delete(args, "region")
 		}
-		reactor, ok := r.reactors[region]
+		stepper, ok := r.steppers[region]
 		if !ok {
 			return nil, fmt.Errorf("api/event=%s there is no region named %s", api, region)
 		}
-		return reactor.ExecuteAPI(apisuffix, args, rawargs)
+		return stepper.ExecuteAPI(apisuffix, args, rawargs)
 	}
 
 	// Everything else should be "global", eventually I'll factor this
@@ -707,23 +707,23 @@ func (r *Router) ExecuteAPI(api string, nuid string, rawargs string) (result int
 			break
 		}
 		p := mf.Phrase()
-		// Cut it up into 4 channels for the 4 Reactors
+		// Cut it up into 4 channels for the 4 Stepper
 
 		p1 := p.CutSound("channel1")
 		if p1.NumNotes() > 0 {
-			r.reactors["A"].StartPhrase(p1, "midiplaych1")
+			r.steppers["A"].StartPhrase(p1, "midiplaych1")
 		}
 		p2 := p.CutSound("channel2")
 		if p2.NumNotes() > 0 {
-			r.reactors["B"].StartPhrase(p2, "midiplaych2")
+			r.steppers["B"].StartPhrase(p2, "midiplaych2")
 		}
 		p3 := p.CutSound("channel3")
 		if p3.NumNotes() > 0 {
-			r.reactors["C"].StartPhrase(p3, "midiplaych3")
+			r.steppers["C"].StartPhrase(p3, "midiplaych3")
 		}
 		p4 := p.CutSound("channel4")
 		if p4.NumNotes() > 0 {
-			r.reactors["D"].StartPhrase(p4, "midiplaych4")
+			r.steppers["D"].StartPhrase(p4, "midiplaych4")
 		}
 
 	case "echo":
@@ -810,11 +810,11 @@ func (r *Router) advanceClickTo(toClick Clicks) {
 	defer r.eventMutex.Unlock()
 
 	for clk := r.lastClick; clk < toClick; clk++ {
-		for _, reactor := range r.reactors {
+		for _, stepper := range r.steppers {
 			if (clk % oneBeat) == 0 {
-				reactor.checkCursorUp()
+				stepper.checkCursorUp()
 			}
-			reactor.AdvanceByOneClick()
+			stepper.AdvanceByOneClick()
 		}
 	}
 	r.lastClick = toClick
@@ -878,8 +878,8 @@ func (r *Router) recordingPlaybackStop() {
 }
 
 func (r *Router) sendANO() {
-	for _, reactor := range r.reactors {
-		reactor.sendANO()
+	for _, stepper := range r.steppers {
+		stepper.sendANO()
 	}
 }
 
@@ -919,9 +919,9 @@ func (r *Router) recordingPlayback(events []*PlaybackEvent) error {
 			}
 			eventType := (*pe).eventType
 			pad := (*pe).pad
-			var reactor *Reactor
+			var stepper *Stepper
 			if pad != "*" {
-				reactor = r.reactors[pad]
+				stepper = r.steppers[pad]
 			}
 			method := (*pe).method
 			// time := (*pe).time
@@ -938,7 +938,7 @@ func (r *Router) recordingPlayback(events []*PlaybackEvent) error {
 				xf, _ := ParseFloat32(x, "cursor.x")
 				yf, _ := ParseFloat32(y, "cursor.y")
 				zf, _ := ParseFloat32(z, "cursor.z")
-				reactor.executeIncomingCursor(CursorStepEvent{
+				stepper.executeIncomingCursor(CursorStepEvent{
 					ID:         id,
 					X:          xf,
 					Y:          yf,
@@ -947,7 +947,7 @@ func (r *Router) recordingPlayback(events []*PlaybackEvent) error {
 				})
 			case "api":
 				// since we already have args
-				reactor.ExecuteAPI(method, args, rawargs)
+				stepper.ExecuteAPI(method, args, rawargs)
 			case "global":
 				log.Printf("NOT doing anying for global playback, method=%s\n", method)
 			default:
@@ -1105,22 +1105,22 @@ func (r *Router) handleOSCAPI(msg *osc.Message) {
 	return
 }
 
-// OLDgetReactorForNUID - NOTE, this removes the "nuid" argument from the map,
-// partially to avoid (at least until there's a reason for) letting Reactor APIs
+// OLDgetStepperForNUID - NOTE, this removes the "nuid" argument from the map,
+// partially to avoid (at least until there's a reason for) letting Stepper APIs
 // know what source is calling them.  I.e. all source-depdendent behaviour is
 // determined in Router.
-func (r *Router) OLDgetReactorForNUID(api string, args map[string]string) (*Reactor, error) {
+func (r *Router) OLDgetStepperForNUID(api string, args map[string]string) (*Stepper, error) {
 	nuid, ok := args["nuid"]
 	if !ok {
 		return nil, fmt.Errorf("api/event=%s missing value for nuid", api)
 	}
 	delete(args, "nuid") // see comment above
 	region := r.getRegionForNUID(nuid)
-	reactor, ok := TheRouter().reactors[region]
+	stepper, ok := TheRouter().steppers[region]
 	if !ok {
 		return nil, fmt.Errorf("api/event=%s there is no region named %s", api, region)
 	}
-	return reactor, nil
+	return stepper, nil
 }
 
 // availableRegion - return the name of a region that hasn't been assigned to a remote yet

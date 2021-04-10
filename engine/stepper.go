@@ -39,8 +39,8 @@ type ActiveNote struct {
 	noteOn *Note
 }
 
-// Reactor is an entity that that reacts to things (cursor events, apis) and generates output (midi, graphics)
-type Reactor struct {
+// Stepper is an entity that that reacts to things (cursor events, apis) and generates output (midi, graphics)
+type Stepper struct {
 	padName         string
 	resolumeLayer   int // 1,2,3,4
 	freeframeClient *osc.Client
@@ -86,9 +86,9 @@ type Reactor struct {
 	externalScale    *Scale
 }
 
-// NewReactor makes a new Reactor
-func NewReactor(pad string, resolumeLayer int, freeframeClient *osc.Client, resolumeClient *osc.Client, guiClient *osc.Client) *Reactor {
-	r := &Reactor{
+// NewStepper makes a new Stepper
+func NewStepper(pad string, resolumeLayer int, freeframeClient *osc.Client, resolumeClient *osc.Client, guiClient *osc.Client) *Stepper {
+	r := &Stepper{
 		padName:         pad,
 		resolumeLayer:   resolumeLayer,
 		freeframeClient: freeframeClient,
@@ -119,16 +119,16 @@ func NewReactor(pad string, resolumeLayer int, freeframeClient *osc.Client, reso
 	r.ClearExternalScale()
 	r.SetExternalScale(60%12, true) // Middle C
 
-	log.Printf("NewReactor: pad=%s resolumeLayer=%d\n", pad, resolumeLayer)
+	log.Printf("NewStepper: pad=%s resolumeLayer=%d\n", pad, resolumeLayer)
 	return r
 }
 
 // Time returns the current time
-func (r *Reactor) Time() time.Time {
+func (r *Stepper) Time() time.Time {
 	return time.Now()
 }
 
-func (r *Reactor) handleCursorDeviceEvent(e CursorDeviceEvent) {
+func (r *Stepper) handleCursorDeviceEvent(e CursorDeviceEvent) {
 
 	id := e.NUID + "." + e.CID
 
@@ -156,7 +156,7 @@ func (r *Reactor) handleCursorDeviceEvent(e CursorDeviceEvent) {
 		Downdragup: e.DownDragUp,
 	}
 	if DebugUtil.Cursor {
-		log.Printf("Reactor.handleCursorDeviceEvent: pad=%s e=%+v cse=%+v\n", r.padName, e, cse)
+		log.Printf("Stepper.handleCursorDeviceEvent: pad=%s e=%+v cse=%+v\n", r.padName, e, cse)
 	}
 
 	r.executeIncomingCursor(cse)
@@ -174,24 +174,25 @@ func (r *Reactor) handleCursorDeviceEvent(e CursorDeviceEvent) {
 // resulting in a cursor UP event.
 const checkDelay time.Duration = 2 * time.Second
 
-func (r *Reactor) checkCursorUp() {
+func (r *Stepper) checkCursorUp() {
 	now := r.Time()
 
 	r.deviceCursorsMutex.Lock()
 	defer r.deviceCursorsMutex.Unlock()
+
 	for id, c := range r.deviceCursors {
 		elapsed := now.Sub(c.lastTouch)
 		if elapsed > checkDelay {
 			r.executeIncomingCursor(CursorStepEvent{ID: id, Downdragup: "up"})
 			if DebugUtil.Cursor {
-				log.Printf("Reactor.checkCursorUp: deleting cursor id=%s elapsed=%v\n", id, elapsed)
+				log.Printf("Stepper.checkCursorUp: deleting cursor id=%s elapsed=%v\n", id, elapsed)
 			}
 			delete(r.deviceCursors, id)
 		}
 	}
 }
 
-func (r *Reactor) getActiveNote(id string) *ActiveNote {
+func (r *Stepper) getActiveNote(id string) *ActiveNote {
 	r.activeNotesMutex.RLock()
 	a, ok := r.activeNotes[id]
 	r.activeNotesMutex.RUnlock()
@@ -205,7 +206,7 @@ func (r *Reactor) getActiveNote(id string) *ActiveNote {
 	return a
 }
 
-func (r *Reactor) getActiveStepCursor(ce CursorStepEvent) *ActiveStepCursor {
+func (r *Stepper) getActiveStepCursor(ce CursorStepEvent) *ActiveStepCursor {
 	sid := ce.ID
 	r.activeCursorsMutex.RLock()
 	ac, ok := r.activeCursors[sid]
@@ -219,7 +220,7 @@ func (r *Reactor) getActiveStepCursor(ce CursorStepEvent) *ActiveStepCursor {
 	return ac
 }
 
-func (r *Reactor) terminateActiveNotes() {
+func (r *Stepper) terminateActiveNotes() {
 	r.activeNotesMutex.RLock()
 	for id, a := range r.activeNotes {
 		// log.Printf("terminateActiveNotes n=%v\n", a.currentNoteOn)
@@ -232,19 +233,19 @@ func (r *Reactor) terminateActiveNotes() {
 	r.activeNotesMutex.RUnlock()
 }
 
-func (r *Reactor) clearGraphics() {
+func (r *Stepper) clearGraphics() {
 	// send an OSC message to Resolume
 	r.toFreeFramePluginForLayer(osc.NewMessage("/clear"))
 }
 
-func (r *Reactor) publishSprite(id string, x, y, z float32) {
+func (r *Stepper) publishSprite(id string, x, y, z float32) {
 	err := PublishSpriteEvent(x, y, z)
 	if err != nil {
 		log.Printf("publishSprite: err=%s\n", err)
 	}
 }
 
-func (r *Reactor) generateSprite(id string, x, y, z float32) {
+func (r *Stepper) generateSprite(id string, x, y, z float32) {
 	if !TheRouter().generateVisuals {
 		return
 	}
@@ -257,7 +258,7 @@ func (r *Reactor) generateSprite(id string, x, y, z float32) {
 	r.toFreeFramePluginForLayer(msg)
 }
 
-func (r *Reactor) generateVisualsFromCursor(ce CursorStepEvent) {
+func (r *Stepper) generateVisualsFromCursor(ce CursorStepEvent) {
 	if !TheRouter().generateVisuals {
 		return
 	}
@@ -269,12 +270,12 @@ func (r *Reactor) generateVisualsFromCursor(ce CursorStepEvent) {
 	msg.Append(float32(ce.Y))
 	msg.Append(float32(ce.Z))
 	if DebugUtil.GenVisual {
-		log.Printf("Reactor.generateVisuals: pad=%s click=%d stepnum=%d OSC message = %+v\n", r.padName, currentClick, r.loop.currentStep, msg)
+		log.Printf("Stepper.generateVisuals: pad=%s click=%d stepnum=%d OSC message = %+v\n", r.padName, currentClick, r.loop.currentStep, msg)
 	}
 	r.toFreeFramePluginForLayer(msg)
 }
 
-func (r *Reactor) generateSpriteFromNote(a *ActiveNote) {
+func (r *Stepper) generateSpriteFromNote(a *ActiveNote) {
 
 	n := a.noteOn
 	if n.TypeOf != NOTEON {
@@ -319,7 +320,7 @@ func (r *Reactor) generateSpriteFromNote(a *ActiveNote) {
 	r.toFreeFramePluginForLayer(msg)
 }
 
-func (r *Reactor) notifyGUI(ce CursorStepEvent, wasFresh bool) {
+func (r *Stepper) notifyGUI(ce CursorStepEvent, wasFresh bool) {
 	if !ConfigBool("notifygui") {
 		return
 	}
@@ -334,38 +335,38 @@ func (r *Reactor) notifyGUI(ce CursorStepEvent, wasFresh bool) {
 	msg.Append(wasFresh)
 	r.guiClient.Send(msg)
 	if DebugUtil.Notify {
-		log.Printf("Reactor.notifyGUI: msg=%v\n", msg)
+		log.Printf("Stepper.notifyGUI: msg=%v\n", msg)
 	}
 }
 
-func (r *Reactor) toFreeFramePluginForLayer(msg *osc.Message) {
+func (r *Stepper) toFreeFramePluginForLayer(msg *osc.Message) {
 	r.freeframeClient.Send(msg)
 	if DebugUtil.OSC {
-		log.Printf("Reactor.toFreeFramePlugin: layer=%d msg=%v\n", r.resolumeLayer, msg)
+		log.Printf("Stepper.toFreeFramePlugin: layer=%d msg=%v\n", r.resolumeLayer, msg)
 	}
 }
 
-func (r *Reactor) toResolume(msg *osc.Message) {
+func (r *Stepper) toResolume(msg *osc.Message) {
 	r.resolumeClient.Send(msg)
 	if DebugUtil.OSC || DebugUtil.Resolume {
-		log.Printf("Reactor.toResolume: msg=%v\n", msg)
+		log.Printf("Stepper.toResolume: msg=%v\n", msg)
 	}
 }
 
 // ClearExternalScale xxx
-func (r *Reactor) ClearExternalScale() {
+func (r *Stepper) ClearExternalScale() {
 	r.externalScale = makeScale()
 }
 
 // SetExternalScale xxx
-func (r *Reactor) SetExternalScale(pitch int, on bool) {
+func (r *Stepper) SetExternalScale(pitch int, on bool) {
 	s := r.externalScale
 	for p := pitch; p < 128; p += 12 {
 		s.hasNote[p] = on
 	}
 }
 
-func (r *Reactor) handleMIDISetScaleNote(e portmidi.Event) {
+func (r *Stepper) handleMIDISetScaleNote(e portmidi.Event) {
 	status := e.Status & 0xf0
 	pitch := int(e.Data1)
 	if status == 0x90 {
@@ -392,12 +393,12 @@ func (r *Reactor) handleMIDISetScaleNote(e portmidi.Event) {
 }
 
 // HandleMIDITimeReset xxx
-func (r *Reactor) HandleMIDITimeReset() {
+func (r *Stepper) HandleMIDITimeReset() {
 	log.Printf("HandleMIDITimeReset!! needs implementation\n")
 }
 
 // HandleMIDIDeviceInput xxx
-func (r *Reactor) HandleMIDIDeviceInput(e portmidi.Event) {
+func (r *Stepper) HandleMIDIDeviceInput(e portmidi.Event) {
 
 	r.midiInputMutex.Lock()
 	defer r.midiInputMutex.Unlock()
@@ -422,7 +423,7 @@ func (r *Reactor) HandleMIDIDeviceInput(e portmidi.Event) {
 }
 
 // getScale xxx
-func (r *Reactor) getScale() *Scale {
+func (r *Stepper) getScale() *Scale {
 	var scaleName string
 	var scale *Scale
 	if r.useExternalScale {
@@ -435,12 +436,12 @@ func (r *Reactor) getScale() *Scale {
 }
 
 // PassThruMIDI xxx
-func (r *Reactor) PassThruMIDI(e portmidi.Event, scadjust bool) {
+func (r *Stepper) PassThruMIDI(e portmidi.Event, scadjust bool) {
 
-	// log.Printf("Reactor.PassThruMIDI e=%+v\n", e)
+	// log.Printf("Stepper.PassThruMIDI e=%+v\n", e)
 
 	// channel on incoming MIDI is ignored
-	// it uses whatever sound the reactor is using
+	// it uses whatever sound the Stepper is using
 	status := e.Status & 0xf0
 
 	data1 := uint8(e.Data1)
@@ -479,13 +480,13 @@ func (r *Reactor) PassThruMIDI(e portmidi.Event, scadjust bool) {
 	}
 }
 
-func (r *Reactor) generateSoundFromCursor(ce CursorStepEvent) {
+func (r *Stepper) generateSoundFromCursor(ce CursorStepEvent) {
 	if !TheRouter().generateSound {
 		return
 	}
-	if DebugUtil.GenSound {
-		log.Printf("Reactor.generateSound: pad=%s activeNotes=%d ce=%+v\n", r.padName, len(r.activeNotes), ce)
-	}
+	// if DebugUtil.GenSound {
+	// 	log.Printf("Stepper.generateSound: pad=%s activeNotes=%d ce=%+v\n", r.padName, len(r.activeNotes), ce)
+	// }
 	a := r.getActiveNote(ce.ID)
 	switch ce.Downdragup {
 	case "down":
@@ -508,10 +509,12 @@ func (r *Reactor) generateSoundFromCursor(ce CursorStepEvent) {
 			// Also, I'm seeing this pretty commonly in other situations,
 			// not really sure what the underlying reason is,
 			// but it seems to be harmless at the moment.
-			log.Printf("drag event, a.currentNoteOn == nil?\n")
+			log.Printf("=============== HEY! drag event, a.currentNoteOn == nil?\n")
 		} else {
 			// log.Printf("generateMIDI sending NoteOff for previous note\n")
-			r.sendNoteOff(a)
+			// r.sendNoteOff(a)
+			log.Printf("generateMIDI NOT sending NoteOff/NoteOn for previous note\n")
+			break
 		}
 		a.noteOn = r.cursorToNoteOn(ce)
 		// log.Printf("r=%s drag Setting currentNoteOn to %v!\n", r.padName, *(a.currentNoteOn))
@@ -525,12 +528,13 @@ func (r *Reactor) generateSoundFromCursor(ce CursorStepEvent) {
 			// log.Printf("generateMIDI sending NoteOff for UP\n")
 			r.sendNoteOff(a)
 
-			// HACK! There are hanging notes, seems to occur when sending multiple noteons of
-			// the same pitch to the same synth, but I tried fixing it and failed. So.
-			if DebugUtil.MIDI {
-				log.Printf("MIDI.SendANO: synth=%s\n", a.noteOn.Sound)
-			}
-			MIDI.SendANO(a.noteOn.Sound)
+			/*
+				// the same pitch to the same synth, but I tried fixing it and failed. So.
+				if DebugUtil.MIDI {
+					log.Printf("MIDI.SendANO: synth=%s\n", a.noteOn.Sound)
+				}
+				MIDI.SendANO(a.noteOn.Sound)
+			*/
 
 			a.noteOn = nil
 			// log.Printf("r=%s UP Setting currentNoteOn to nil!\n", r.padName)
@@ -542,12 +546,12 @@ func (r *Reactor) generateSoundFromCursor(ce CursorStepEvent) {
 }
 
 // StartPhrase xxx
-func (r *Reactor) StartPhrase(p *Phrase, cid string) {
+func (r *Stepper) StartPhrase(p *Phrase, cid string) {
 	r.activePhrasesManager.StartPhrase(p, "midiplaycid")
 }
 
 // AdvanceByOneClick advances time by 1 click in a StepLoop
-func (r *Reactor) AdvanceByOneClick() {
+func (r *Stepper) AdvanceByOneClick() {
 
 	r.activePhrasesManager.AdvanceByOneClick()
 
@@ -572,7 +576,7 @@ func (r *Reactor) AdvanceByOneClick() {
 			ce := event.cursorStepEvent
 
 			if DebugUtil.Advance {
-				log.Printf("Reactor.advanceClickBy1: pad=%s stepnum=%d ce=%+v\n", r.padName, stepnum, ce)
+				log.Printf("Stepper.advanceClickBy1: pad=%s stepnum=%d ce=%+v\n", r.padName, stepnum, ce)
 			}
 
 			ac := r.getActiveStepCursor(ce)
@@ -646,9 +650,15 @@ func (r *Reactor) AdvanceByOneClick() {
 						dclick := currentClick - ac.lastDrag
 						if ac.lastDrag < 0 || dclick >= oneBeat/32 {
 							ac.lastDrag = currentClick
+							if DebugUtil.GenSound {
+								log.Printf("generateSoundFromCursor: downdragup=%s stepnum=%d ce.ID=%s\n", ce.Downdragup, stepnum, ce.ID)
+							}
 							r.generateSoundFromCursor(ce)
 						}
 					} else {
+						if DebugUtil.GenSound {
+							log.Printf("generateSoundFromCursor: downdragup=%s stepnum=%d ce.ID=%s\n", ce.Downdragup, stepnum, ce.ID)
+						}
 						r.generateSoundFromCursor(ce)
 					}
 				} else {
@@ -656,7 +666,7 @@ func (r *Reactor) AdvanceByOneClick() {
 					ss := r.params.ParamStringValue("visual.spritesource", "")
 					if ss == "cursor" {
 						if DebugUtil.Loop {
-							log.Printf("Reactor.advanceClickBy1: stepnum=%d generateVisuals ce=%+v\n", stepnum, ce)
+							log.Printf("Stepper.advanceClickBy1: stepnum=%d generateVisuals ce=%+v\n", stepnum, ce)
 						}
 						r.generateVisualsFromCursor(ce)
 					}
@@ -689,16 +699,16 @@ func (r *Reactor) AdvanceByOneClick() {
 	loop.currentStep++
 	if loop.currentStep >= loop.length {
 		if DebugUtil.Loop {
-			log.Printf("Reactor.AdvanceClickBy1: region=%s Loop wrapping around to step 0\n", r.padName)
+			log.Printf("Stepper.AdvanceClickBy1: region=%s Loop wrapping around to step 0\n", r.padName)
 		}
 		loop.currentStep = 0
 	}
 }
 
-func (r *Reactor) executeIncomingCursor(ce CursorStepEvent) {
+func (r *Stepper) executeIncomingCursor(ce CursorStepEvent) {
 
 	if DebugUtil.Cursor {
-		log.Printf("Reactor.executeIncomingCursor: ce=%+v\n", ce)
+		log.Printf("Stepper.executeIncomingCursor: ce=%+v\n", ce)
 	}
 
 	// Every cursor event actually gets added to the step loop,
@@ -731,7 +741,7 @@ func (r *Reactor) executeIncomingCursor(ce CursorStepEvent) {
 	r.permInstanceIDMutex.RUnlock()
 
 	if (!ok1 || !ok2) && ce.Downdragup != "down" {
-		log.Printf("Reactor.executeIncomingCursor: drag or up event didn't find ce.ID=%s in incomingIDToPermSid*\n", ce.ID)
+		log.Printf("Stepper.executeIncomingCursor: drag or up event didn't find ce.ID=%s in incomingIDToPermSid*\n", ce.ID)
 		return
 	}
 
@@ -803,13 +813,14 @@ func (r *Reactor) executeIncomingCursor(ce CursorStepEvent) {
 		quantizedStepnum = (quantizedStepnum + magicUpDelayClicks) % r.loop.length
 	}
 
+	log.Printf("Stepper %s adding to Steps\n", r.padName)
 	r.loop.AddToStep(ce, quantizedStepnum)
 	r.loop.AddToStep(ceUnquantized, r.loop.currentStep)
 
 	return
 }
 
-func (r *Reactor) nextQuant(t Clicks, q Clicks) Clicks {
+func (r *Stepper) nextQuant(t Clicks, q Clicks) Clicks {
 	// the algorithm below is the same as KeyKit's nextquant
 	if q <= 1 {
 		return t
@@ -827,7 +838,7 @@ func (r *Reactor) nextQuant(t Clicks, q Clicks) Clicks {
 	return tq
 }
 
-func (r *Reactor) sendNoteOn(a *ActiveNote) {
+func (r *Stepper) sendNoteOn(a *ActiveNote) {
 
 	if DebugUtil.MIDI {
 		log.Printf("MIDI.SendNote: noteOn pitch:%d velocity:%d sound:%s\n", a.noteOn.Pitch, a.noteOn.Velocity, a.noteOn.Sound)
@@ -840,7 +851,7 @@ func (r *Reactor) sendNoteOn(a *ActiveNote) {
 	}
 }
 
-func (r *Reactor) sendNoteOff(a *ActiveNote) {
+func (r *Stepper) sendNoteOff(a *ActiveNote) {
 	n := a.noteOn
 	if n == nil {
 		// Not sure why this sometimes happens
@@ -859,7 +870,7 @@ func (r *Reactor) sendNoteOff(a *ActiveNote) {
 	}
 }
 
-func (r *Reactor) sendANO() {
+func (r *Stepper) sendANO() {
 	if !TheRouter().generateSound {
 		return
 	}
@@ -875,7 +886,7 @@ func (r *Reactor) sendANO() {
 }
 
 /*
-func (r *Reactor) paramStringValue(paramname string, def string) string {
+func (r *Stepper) paramStringValue(paramname string, def string) string {
 	r.paramsMutex.RLock()
 	param, ok := r.params[paramname]
 	r.paramsMutex.RUnlock()
@@ -885,7 +896,7 @@ func (r *Reactor) paramStringValue(paramname string, def string) string {
 	return r.params.param).(paramValString).value
 }
 
-func (r *Reactor) paramIntValue(paramname string) int {
+func (r *Stepper) paramIntValue(paramname string) int {
 	r.paramsMutex.RLock()
 	param, ok := r.params[paramname]
 	r.paramsMutex.RUnlock()
@@ -897,7 +908,7 @@ func (r *Reactor) paramIntValue(paramname string) int {
 }
 */
 
-func (r *Reactor) cursorToNoteOn(ce CursorStepEvent) *Note {
+func (r *Stepper) cursorToNoteOn(ce CursorStepEvent) *Note {
 	pitch := r.cursorToPitch(ce)
 	pitch = uint8(int(pitch) + r.TransposePitch)
 	velocity := r.cursorToVelocity(ce)
@@ -906,7 +917,7 @@ func (r *Reactor) cursorToNoteOn(ce CursorStepEvent) *Note {
 	return NewNoteOn(pitch, velocity, synth)
 }
 
-func (r *Reactor) cursorToPitch(ce CursorStepEvent) uint8 {
+func (r *Stepper) cursorToPitch(ce CursorStepEvent) uint8 {
 	pitchmin := r.params.ParamIntValue("sound.pitchmin")
 	pitchmax := r.params.ParamIntValue("sound.pitchmax")
 	dp := pitchmax - pitchmin + 1
@@ -925,7 +936,7 @@ func (r *Reactor) cursorToPitch(ce CursorStepEvent) uint8 {
 	return p
 }
 
-func (r *Reactor) cursorToVelocity(ce CursorStepEvent) uint8 {
+func (r *Stepper) cursorToVelocity(ce CursorStepEvent) uint8 {
 	vol := r.params.ParamStringValue("misc.vol", "fixed")
 	velocitymin := r.params.ParamIntValue("sound.velocitymin")
 	velocitymax := r.params.ParamIntValue("sound.velocitymax")
@@ -956,11 +967,11 @@ func (r *Reactor) cursorToVelocity(ce CursorStepEvent) uint8 {
 	return uint8(vel)
 }
 
-func (r *Reactor) cursorToDuration(ce CursorStepEvent) int {
+func (r *Stepper) cursorToDuration(ce CursorStepEvent) int {
 	return 92
 }
 
-func (r *Reactor) cursorToQuant(ce CursorStepEvent) Clicks {
+func (r *Stepper) cursorToQuant(ce CursorStepEvent) Clicks {
 	quant := r.params.ParamStringValue("misc.quant", "fixed")
 	q := Clicks(1)
 	if quant == "none" || quant == "" {
@@ -1002,10 +1013,10 @@ type Param struct {
 	value string
 }
 
-func (r *Reactor) handleSetParam(apiprefix, apisuffix string, args map[string]string) (handled bool, err error) {
+func (r *Stepper) handleSetParam(apiprefix, apisuffix string, args map[string]string) (handled bool, err error) {
 
 	// ALL *.set_params and *.set_param APIs
-	// set the params in the Reactor.
+	// set the params in the Stepper.
 
 	handled = false
 	if apisuffix == "set_params" {
@@ -1021,7 +1032,7 @@ func (r *Reactor) handleSetParam(apiprefix, apisuffix string, args map[string]st
 		name, okname := args["param"]
 		value, okvalue := args["value"]
 		if !okname || !okvalue {
-			err = fmt.Errorf("Reactor.handleSetParam: api=%s%s, missing param or value", apiprefix, apisuffix)
+			err = fmt.Errorf("Stepper.handleSetParam: api=%s%s, missing param or value", apiprefix, apisuffix)
 		} else {
 			r.params.SetParamValueWithString(apiprefix+name, value, nil)
 			if apiprefix == "effect." {
@@ -1034,7 +1045,7 @@ func (r *Reactor) handleSetParam(apiprefix, apisuffix string, args map[string]st
 }
 
 // ExecuteAPI xxx
-func (r *Reactor) ExecuteAPI(api string, args map[string]string, rawargs string) (result string, err error) {
+func (r *Stepper) ExecuteAPI(api string, args map[string]string, rawargs string) (result string, err error) {
 
 	// log.Printf("ExecuteAPI: api=%s args=%s\n", api, rawargs)
 
@@ -1133,13 +1144,13 @@ func (r *Reactor) ExecuteAPI(api string, args map[string]string, rawargs string)
 	}
 
 	if !handled && !known {
-		err = fmt.Errorf("Reactor.ExecuteAPI: unknown api=%s", api)
+		err = fmt.Errorf("Stepper.ExecuteAPI: unknown api=%s", api)
 	}
 
 	return result, err
 }
 
-func (r *Reactor) loopComb() {
+func (r *Stepper) loopComb() {
 
 	r.loop.stepsMutex.Lock()
 	defer r.loop.stepsMutex.Unlock()
@@ -1169,7 +1180,7 @@ func (r *Reactor) loopComb() {
 	}
 }
 
-func (r *Reactor) loopQuant() {
+func (r *Stepper) loopQuant() {
 
 	r.loop.stepsMutex.Lock()
 	defer r.loop.stepsMutex.Unlock()
@@ -1230,7 +1241,7 @@ func (r *Reactor) loopQuant() {
 	}
 }
 
-func (r *Reactor) sendEffectParam(name string, value string) {
+func (r *Stepper) sendEffectParam(name string, value string) {
 	// Effect parameters that have ":" in their name are plugin parameters
 	i := strings.Index(name, ":")
 	if i > 0 {
@@ -1259,7 +1270,7 @@ func (r *Reactor) sendEffectParam(name string, value string) {
 
 // getEffectMap returns the resolume.json map for a given effect
 // and map type ("on", "off", or "params")
-func (r *Reactor) getEffectMap(effectName string, mapType string) (map[string]interface{}, string, int, error) {
+func (r *Stepper) getEffectMap(effectName string, mapType string) (map[string]interface{}, string, int, error) {
 	if effectName[1] != '-' {
 		err := fmt.Errorf("No dash in effect, name=%s", effectName)
 		return nil, "", 0, err
@@ -1292,7 +1303,7 @@ func (r *Reactor) getEffectMap(effectName string, mapType string) (map[string]in
 	return mapValue.(map[string]interface{}), realEffectName, effnum, nil
 }
 
-func (r *Reactor) addLayerAndClipNums(addr string, layerNum int, clipNum int) string {
+func (r *Stepper) addLayerAndClipNums(addr string, layerNum int, clipNum int) string {
 	if addr[0] != '/' {
 		log.Printf("WARNING, addr in resolume.json doesn't start with / : %s", addr)
 		addr = "/" + addr
@@ -1301,14 +1312,14 @@ func (r *Reactor) addLayerAndClipNums(addr string, layerNum int, clipNum int) st
 	return addr
 }
 
-func (r *Reactor) resolumeEffectNameOf(name string, num int) string {
+func (r *Stepper) resolumeEffectNameOf(name string, num int) string {
 	if num == 1 {
 		return name
 	}
 	return fmt.Sprintf("%s%d", name, num)
 }
 
-func (r *Reactor) sendPadOneEffectParam(effectName string, paramName string, value float64) {
+func (r *Stepper) sendPadOneEffectParam(effectName string, paramName string, value float64) {
 	paramsMap, realEffectName, realEffectNum, err := r.getEffectMap(effectName, "params")
 	if err != nil {
 		log.Printf("sendPadOneEffectParam: err=%s\n", err)
@@ -1336,7 +1347,7 @@ func (r *Reactor) sendPadOneEffectParam(effectName string, paramName string, val
 	r.toResolume(msg)
 }
 
-func (r *Reactor) addEffectNum(addr string, effect string, num int) string {
+func (r *Stepper) addEffectNum(addr string, effect string, num int) string {
 	if num == 1 {
 		return addr
 	}
@@ -1344,7 +1355,7 @@ func (r *Reactor) addEffectNum(addr string, effect string, num int) string {
 	return strings.Replace(addr, effect, fmt.Sprintf("%s%d", effect, num), 1)
 }
 
-func (r *Reactor) sendPadOneEffectOnOff(effectName string, onoff bool) {
+func (r *Stepper) sendPadOneEffectOnOff(effectName string, onoff bool) {
 	var mapType string
 	if onoff {
 		mapType = "on"
