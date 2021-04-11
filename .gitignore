@@ -1,4 +1,5 @@
 CurrentSnapshot.*
+CurrentQuad.*
 *.pyc
 default/logs/*.log
 python/dist
