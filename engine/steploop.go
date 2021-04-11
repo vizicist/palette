@@ -89,8 +89,8 @@ func (loop *StepLoop) AddToStep(ce CursorStepEvent, stepnum Clicks) {
 	loop.stepsMutex.Lock()
 	defer loop.stepsMutex.Unlock()
 
-	if DebugUtil.Cursor || DebugUtil.MIDI {
-		log.Printf("StepLoop.AddToStep: stepnum=%d ddu=%s cid=%s\n", stepnum, ce.Downdragup, ce.ID)
+	if DebugUtil.Loop {
+		log.Printf("StepLoop.AddToStep: stepnum=%d ddu=%s cid=%s\n", stepnum, ce.Ddu, ce.ID)
 	}
 
 	step := loop.steps[stepnum]
@@ -99,49 +99,43 @@ func (loop *StepLoop) AddToStep(ce CursorStepEvent, stepnum Clicks) {
 	// We only want a single drag or down event per cursor in a single Step.
 	// If one (of either type) is found for the same cursor id,
 	// replace it rather than appending a second one.
-	if ce.Downdragup == "drag" {
-		log.Printf("AddToStep ignoring drag\n")
-		return
-	}
-
-	if ce.Downdragup == "drag" || ce.Downdragup == "down" {
+	if ce.Ddu == "drag" || ce.Ddu == "down" {
 		replace := -1
 		for i, e := range step.events {
-			if ce.ID != e.cursorStepEvent.ID {
+			if e.cursorStepEvent.ID != ce.ID {
 				// It's not the same cursor id, ignore it
 				continue
 			}
-			// If we're adding a drag, and find an existing "down"...
-			if ce.Downdragup == "drag" &&
-				e.cursorStepEvent.Downdragup == "down" {
-				log.Printf("Hey, drag with down in same step!? ce.ID=%s, not replacing\n", ce.ID)
+			if e.cursorStepEvent.Ddu == "up" {
+				log.Printf("Hey, need to handle when up and down/drag are on same step\n")
+				continue
+			}
+			// adding a drag, and finding an existing "down"...
+			if ce.Ddu == "drag" && e.cursorStepEvent.Ddu == "down" {
 				// don't replace
 				break
 			}
-			// If we're adding a drag, and find an existing "drag"...
-			if ce.Downdragup == "drag" &&
-				e.cursorStepEvent.Downdragup == "drag" {
+			// adding a drag, and finding an existing "drag"...
+			if ce.Ddu == "drag" && e.cursorStepEvent.Ddu == "drag" {
 				replace = i
 				break
 			}
-			// If we're adding a down, and find an existing "down"...
-			if ce.Downdragup == "down" &&
-				e.cursorStepEvent.Downdragup == "down" {
+			// adding a down, and finding an existing "down"...
+			if ce.Ddu == "down" && e.cursorStepEvent.Ddu == "down" {
 				log.Printf("Hey, down with down in same step!? ce.ID=%s\n", ce.ID)
 				replace = i
 				break
 			}
-			// If we're adding a down, and find an existing "drag"...
-			if ce.Downdragup == "down" &&
-				e.cursorStepEvent.Downdragup == "drag" {
+			// adding a down, and finding an existing "drag"...
+			if ce.Ddu == "down" && e.cursorStepEvent.Ddu == "drag" {
 				log.Printf("Hey, down with drag in same step!? ce.ID=%s\n", ce.ID)
 				replace = i
 				break
 			}
 		}
 		if replace >= 0 {
-			if DebugUtil.Loop || DebugUtil.MIDI {
-				log.Printf("Replacing %s event %d in stepnum=%d\n", ce.Downdragup, replace, stepnum)
+			if DebugUtil.Loop {
+				log.Printf("Replacing %s event %d in stepnum=%d\n", ce.Ddu, replace, stepnum)
 			}
 			step.events[replace] = le
 			return
@@ -149,9 +143,6 @@ func (loop *StepLoop) AddToStep(ce CursorStepEvent, stepnum Clicks) {
 	}
 
 	step.events = append(step.events, le)
-	if DebugUtil.Loop {
-		log.Printf("AddToStep stepnum=%d #events=%d currentStep=%d ce=%+v\n", stepnum, len(step.events), loop.currentStep, ce)
-	}
 }
 
 // NewLoop allocates and adds a new steploop

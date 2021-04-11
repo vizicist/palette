@@ -132,10 +132,6 @@ func (r *Stepper) handleCursorDeviceEvent(e CursorDeviceEvent) {
 
 	id := e.NUID + "." + e.CID
 
-	if e.DownDragUp == "drag" {
-		// log.Printf("handleCursorDeviceEvent: Ignoring drag\n")
-		return
-	}
 	r.deviceCursorsMutex.Lock()
 	defer r.deviceCursorsMutex.Unlock()
 
@@ -149,26 +145,26 @@ func (r *Stepper) handleCursorDeviceEvent(e CursorDeviceEvent) {
 
 	// If it's a new (downed==false) cursor, make sure the first step event is "down
 	if !tc.downed {
-		e.DownDragUp = "down"
+		e.Ddu = "down"
 		tc.downed = true
 	}
 	cse := CursorStepEvent{
-		ID:         id,
-		X:          e.X,
-		Y:          e.Y,
-		Z:          e.Z,
-		Downdragup: e.DownDragUp,
+		ID:  id,
+		X:   e.X,
+		Y:   e.Y,
+		Z:   e.Z,
+		Ddu: e.Ddu,
 	}
 	if DebugUtil.Cursor {
-		log.Printf("Stepper.handleCursorDeviceEvent: pad=%s e=%+v cse=%+v\n", r.padName, e, cse)
+		log.Printf("Stepper.handleCursorDeviceEvent: pad=%s id=%s ddu=%s xyz=%.4f,%.4f,%.4f\n", r.padName, id, e.Ddu, e.X, e.Y, e.Z)
 	}
 
 	r.executeIncomingCursor(cse)
 
-	if e.DownDragUp == "up" {
-		if DebugUtil.Cursor {
-			log.Printf("Router.handleCursorDeviceEvent: deleting cursor id=%s\n", id)
-		}
+	if e.Ddu == "up" {
+		// if DebugUtil.Cursor {
+		// 	log.Printf("Router.handleCursorDeviceEvent: deleting cursor id=%s\n", id)
+		// }
 		delete(r.deviceCursors, id)
 	}
 }
@@ -187,7 +183,7 @@ func (r *Stepper) checkCursorUp() {
 	for id, c := range r.deviceCursors {
 		elapsed := now.Sub(c.lastTouch)
 		if elapsed > checkDelay {
-			r.executeIncomingCursor(CursorStepEvent{ID: id, Downdragup: "up"})
+			r.executeIncomingCursor(CursorStepEvent{ID: id, Ddu: "up"})
 			if DebugUtil.Cursor {
 				log.Printf("Stepper.checkCursorUp: deleting cursor id=%s elapsed=%v\n", id, elapsed)
 			}
@@ -268,7 +264,7 @@ func (r *Stepper) generateVisualsFromCursor(ce CursorStepEvent) {
 	}
 	// send an OSC message to Resolume
 	msg := osc.NewMessage("/cursor")
-	msg.Append(ce.Downdragup)
+	msg.Append(ce.Ddu)
 	msg.Append(ce.ID)
 	msg.Append(float32(ce.X))
 	msg.Append(float32(ce.Y))
@@ -330,7 +326,7 @@ func (r *Stepper) notifyGUI(ce CursorStepEvent, wasFresh bool) {
 	}
 	// send an OSC message to GUI
 	msg := osc.NewMessage("/notify")
-	msg.Append(ce.Downdragup)
+	msg.Append(ce.Ddu)
 	msg.Append(ce.ID)
 	msg.Append(float32(ce.X))
 	msg.Append(float32(ce.Y))
@@ -492,7 +488,7 @@ func (r *Stepper) generateSoundFromCursor(ce CursorStepEvent) {
 	// 	log.Printf("Stepper.generateSound: pad=%s activeNotes=%d ce=%+v\n", r.padName, len(r.activeNotes), ce)
 	// }
 	a := r.getActiveNote(ce.ID)
-	switch ce.Downdragup {
+	switch ce.Ddu {
 	case "down":
 		// Send NOTEOFF for current note
 		if a.noteOn != nil {
@@ -507,7 +503,6 @@ func (r *Stepper) generateSoundFromCursor(ce CursorStepEvent) {
 		// log.Printf("generateMIDI sending NoteOn for down\n")
 		r.sendNoteOn(a)
 	case "drag":
-		log.Printf("generateSound: shouldn't be seeing drag\n")
 		if a.noteOn == nil {
 			// if we turn on playing in the middle of an existing loop,
 			// we may see some drag events without a down.
@@ -515,16 +510,20 @@ func (r *Stepper) generateSoundFromCursor(ce CursorStepEvent) {
 			// not really sure what the underlying reason is,
 			// but it seems to be harmless at the moment.
 			log.Printf("=============== HEY! drag event, a.currentNoteOn == nil?\n")
-		} else {
-			// log.Printf("generateMIDI sending NoteOff for previous note\n")
-			// r.sendNoteOff(a)
-			log.Printf("generateMIDI NOT sending NoteOff/NoteOn for previous note\n")
-			break
+			return
 		}
-		a.noteOn = r.cursorToNoteOn(ce)
-		// log.Printf("r=%s drag Setting currentNoteOn to %v!\n", r.padName, *(a.currentNoteOn))
-		// log.Printf("generateMIDI sending NoteOn\n")
-		r.sendNoteOn(a)
+		newNoteOn := r.cursorToNoteOn(ce)
+		oldpitch := a.noteOn.Pitch
+		newpitch := newNoteOn.Pitch
+		// We only turn off the existing note (for a given Cursor ID)
+		// and start the new one if the pitch changes
+		if newpitch != oldpitch {
+			r.sendNoteOff(a)
+			a.noteOn = newNoteOn
+			// log.Printf("r=%s drag Setting currentNoteOn to %v!\n", r.padName, *(a.currentNoteOn))
+			// log.Printf("generateMIDI sending NoteOn\n")
+			r.sendNoteOn(a)
+		}
 	case "up":
 		if a.noteOn == nil {
 			// not sure why this happens, yet
@@ -612,11 +611,10 @@ func (r *Stepper) AdvanceByOneClick() {
 			// so we know (when get the UP) whether we should
 			// delete this gesture.
 			switch {
-			case ce.Downdragup == "down":
+			case ce.Ddu == "down":
 				ac.maxz = -1.0
 				ac.lastDrag = -1
-			case ce.Downdragup == "drag" && ce.Z > ac.maxz:
-				log.Printf("AdvanceByOneClick: shouldn't be seeing drag\n")
+			case ce.Ddu == "drag" && ce.Z > ac.maxz:
 				// log.Printf("Saving ce.Z as ac.maxz = %v\n", ce.Z)
 				ac.maxz = ce.Z
 			default:
@@ -624,7 +622,7 @@ func (r *Stepper) AdvanceByOneClick() {
 			}
 
 			// See if this cursor should be removed
-			if ce.Downdragup == "up" &&
+			if ce.Ddu == "up" &&
 				(ce.LoopsLeft < 0 || (ac.maxz > 0.0 && ac.maxz < minz) || (ac.maxz < 0.0 && ac.downEvent.Z < minz)) {
 
 				removeCids = append(removeCids, ce.ID)
@@ -652,19 +650,18 @@ func (r *Stepper) AdvanceByOneClick() {
 
 				if ce.Quantized {
 					// MIDI stuff
-					if ce.Downdragup == "drag" {
-						log.Printf("playit: shouldn't be seeing drag\n")
+					if ce.Ddu == "drag" {
 						dclick := currentClick - ac.lastDrag
 						if ac.lastDrag < 0 || dclick >= oneBeat/32 {
 							ac.lastDrag = currentClick
 							if DebugUtil.GenSound {
-								log.Printf("generateSoundFromCursor: downdragup=%s stepnum=%d ce.ID=%s\n", ce.Downdragup, stepnum, ce.ID)
+								log.Printf("generateSoundFromCursor: ddu=%s stepnum=%d ce.ID=%s\n", ce.Ddu, stepnum, ce.ID)
 							}
 							r.generateSoundFromCursor(ce)
 						}
 					} else {
 						if DebugUtil.GenSound {
-							log.Printf("generateSoundFromCursor: downdragup=%s stepnum=%d ce.ID=%s\n", ce.Downdragup, stepnum, ce.ID)
+							log.Printf("generateSoundFromCursor: ddu=%s stepnum=%d ce.ID=%s\n", ce.Ddu, stepnum, ce.ID)
 						}
 						r.generateSoundFromCursor(ce)
 					}
@@ -714,11 +711,6 @@ func (r *Stepper) AdvanceByOneClick() {
 
 func (r *Stepper) executeIncomingCursor(ce CursorStepEvent) {
 
-	if DebugUtil.Cursor {
-		log.Printf("Stepper.executeIncomingCursor: ce=%+v\n", ce)
-	}
-	log.Printf("Stepper.executeIncomingCursor: ce=%+v\n", ce)
-
 	// Every cursor event actually gets added to the step loop,
 	// even if we're not recording a loop.  That way, everything gets
 	// step-quantized and played back identically, looped or not.
@@ -732,10 +724,8 @@ func (r *Stepper) executeIncomingCursor(ce CursorStepEvent) {
 	q := r.cursorToQuant(ce)
 
 	quantizedStepnum := r.nextQuant(r.loop.currentStep, q)
-	// log.Printf("executeCursor: %s, cstep=%d q=%d initial quantizedStepnum=%d\n", ce.Downdragup, r.loop.currentStep, q, quantizedStepnum)
 	for quantizedStepnum >= r.loop.length {
 		quantizedStepnum -= r.loop.length
-		// log.Printf("    executeCursor: %s adjusting quantizedStepnum=%d\n", ce.Downdragup, quantizedStepnum)
 	}
 
 	// log.Printf("Quantizing currentClick=%d r.loop.currentStep=%d q=%d quantizedStepnum=%d\n",
@@ -750,12 +740,12 @@ func (r *Stepper) executeIncomingCursor(ce CursorStepEvent) {
 	permInstanceIDUnquantized, ok2 := r.permInstanceIDUnquantized[ce.ID]
 	r.permInstanceIDMutex.RUnlock()
 
-	if (!ok1 || !ok2) && ce.Downdragup != "down" {
+	if (!ok1 || !ok2) && ce.Ddu != "down" {
 		log.Printf("Stepper.executeIncomingCursor: drag or up event didn't find ce.ID=%s in incomingIDToPermSid*\n", ce.ID)
 		return
 	}
 
-	if ce.Downdragup == "down" {
+	if ce.Ddu == "down" {
 		// Whether or not this ce.id is in incomingIDToPermSid,
 		// we create a new permanent id.  I.e. every
 		// gesture added to the loop has a unique permanent id.
@@ -784,8 +774,7 @@ func (r *Stepper) executeIncomingCursor(ce CursorStepEvent) {
 	// before the down event (which is quantized), so we only turn on DragOK when we see
 	// a drag event come in shortly after the down event.
 
-	if r.permInstanceIDDragOK[permInstanceIDQuantized] == false && ce.Downdragup == "drag" {
-		log.Printf("executeIncoming: shouldn't be seeing drag\n")
+	if r.permInstanceIDDragOK[permInstanceIDQuantized] == false && ce.Ddu == "drag" {
 		if currentClick <= r.permInstanceIDDownClick[permInstanceIDQuantized] {
 			return
 		}
@@ -798,25 +787,23 @@ func (r *Stepper) executeIncomingCursor(ce CursorStepEvent) {
 
 	// Make a separate CursorEvent for the unquantized event
 	ceUnquantized := CursorStepEvent{
-		ID:         permInstanceIDUnquantized,
-		X:          ce.X,
-		Y:          ce.Y,
-		Z:          ce.Z,
-		LoopsLeft:  ce.LoopsLeft,
-		Downdragup: ce.Downdragup,
-		Quantized:  false,
-		Fresh:      true,
+		ID:        permInstanceIDUnquantized,
+		X:         ce.X,
+		Y:         ce.Y,
+		Z:         ce.Z,
+		LoopsLeft: ce.LoopsLeft,
+		Ddu:       ce.Ddu,
+		Quantized: false,
+		Fresh:     true,
 	}
 
-	if ce.Downdragup == "up" {
+	if ce.Ddu == "up" {
 		// The up event always has a Y value of 0 (someday this may, change, but for now...)
 		// So, use the quantize value of the down event
 		downQuant := r.permInstanceIDDownQuant[permInstanceIDQuantized]
 		quantizedStepnum = r.nextQuant(r.loop.currentStep, downQuant)
-		// log.Printf("executeCursor: up, using downQuant=%d initial quantstenum=%d\n", downQuant, quantizedStepnum)
 		for quantizedStepnum >= r.loop.length {
 			quantizedStepnum -= r.loop.length
-			// log.Printf("    executeCursor: adjusting quantstepnum=%d\n", quantizedStepnum)
 		}
 
 		// If the up happens too quickly,
@@ -824,10 +811,8 @@ func (r *Stepper) executeIncomingCursor(ce CursorStepEvent) {
 		// so push the up event out a few steps.
 		magicUpDelayClicks := Clicks(8)
 		quantizedStepnum = (quantizedStepnum + magicUpDelayClicks) % r.loop.length
-		// log.Printf("    executeCursor: FINAL quantstepnum=%d\n", quantizedStepnum)
 	}
 
-	// log.Printf("Stepper %s adding to Steps\n", r.padName)
 	r.loop.AddToStep(ce, quantizedStepnum)
 	r.loop.AddToStep(ceUnquantized, r.loop.currentStep)
 
@@ -985,12 +970,11 @@ func (r *Stepper) cursorToQuant(ce CursorStepEvent) Clicks {
 	if quant == "none" || quant == "" {
 		// q is 1
 	} else if quant == "frets" {
-		y := 1.0 - ce.Y
-		if y > 0.85 {
+		if ce.Y > 0.85 {
 			q = oneBeat / 8
-		} else if y > 0.55 {
+		} else if ce.Y > 0.55 {
 			q = oneBeat / 4
-		} else if y > 0.25 {
+		} else if ce.Y > 0.25 {
 			q = oneBeat / 2
 		} else {
 			q = oneBeat
@@ -1168,7 +1152,7 @@ func (r *Stepper) loopComb() {
 	for _, step := range r.loop.steps {
 		if step.events != nil && len(step.events) > 0 {
 			for _, event := range step.events {
-				if event.cursorStepEvent.Downdragup == "up" {
+				if event.cursorStepEvent.Ddu == "up" {
 					upEvents[event.cursorStepEvent.ID] = event.cursorStepEvent
 				}
 			}
@@ -1207,7 +1191,7 @@ func (r *Stepper) loopQuant() {
 	for stepnum, step := range r.loop.steps {
 		if step.events != nil && len(step.events) > 0 {
 			for _, e := range step.events {
-				switch e.cursorStepEvent.Downdragup {
+				switch e.cursorStepEvent.Ddu {
 				case "up":
 					upEvents[e.cursorStepEvent.ID] = e.cursorStepEvent
 				case "down":
