@@ -106,7 +106,9 @@ func SendNoteToSynth(note *Note) {
 	case NOTEON:
 		e.Status |= 0x90
 		if synth.noteDown[note.Pitch] {
-			log.Printf("SendNoteToSynth: Ignoring second NOTEON for chan=%d pitch=%d\n", synth.channel, note.Pitch)
+			if DebugUtil.MIDI {
+				log.Printf("SendNoteToSynth: Ignoring second NOTEON for chan=%d pitch=%d\n", synth.channel, note.Pitch)
+			}
 			return
 		}
 		synth.noteDown[note.Pitch] = true

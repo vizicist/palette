@@ -423,15 +423,15 @@ func (r *Router) HandleSubscribedEventArgs(args map[string]string) error {
 		}
 
 		ce := CursorDeviceEvent{
-			NUID:       nuid,
-			Region:     region,
-			CID:        cid,
-			Timestamp:  int64(CurrentMilli),
-			DownDragUp: subEvent,
-			X:          x,
-			Y:          y,
-			Z:          z,
-			Area:       0.0,
+			NUID:      nuid,
+			Region:    region,
+			CID:       cid,
+			Timestamp: int64(CurrentMilli),
+			Ddu:       subEvent,
+			X:         x,
+			Y:         y,
+			Z:         z,
+			Area:      0.0,
 		}
 
 		if r.publishCursor {
@@ -939,11 +939,11 @@ func (r *Router) recordingPlayback(events []*PlaybackEvent) error {
 				yf, _ := ParseFloat32(y, "cursor.y")
 				zf, _ := ParseFloat32(z, "cursor.z")
 				stepper.executeIncomingCursor(CursorStepEvent{
-					ID:         id,
-					X:          xf,
-					Y:          yf,
-					Z:          zf,
-					Downdragup: ddu,
+					ID:  id,
+					X:   xf,
+					Y:   yf,
+					Z:   zf,
+					Ddu: ddu,
 				})
 			case "api":
 				// since we already have args

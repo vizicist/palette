@@ -23,7 +23,7 @@ func PublishCursorDeviceEvent(ce CursorDeviceEvent) error {
 	if ce.Region != "" {
 		regionvalue = "\"region\": \"" + ce.Region + "\", "
 	}
-	event := "cursor_" + ce.DownDragUp
+	event := "cursor_" + ce.Ddu
 	params := "{ " +
 		"\"nuid\": \"" + ce.NUID + "\", " +
 		"\"cid\": \"" + ce.CID + "\", " +
