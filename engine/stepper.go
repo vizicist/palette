@@ -732,10 +732,10 @@ func (r *Stepper) executeIncomingCursor(ce CursorStepEvent) {
 	q := r.cursorToQuant(ce)
 
 	quantizedStepnum := r.nextQuant(r.loop.currentStep, q)
-	log.Printf("executeCursor: %s, cstep=%d q=%d initial quantizedStepnum=%d\n", ce.Downdragup, r.loop.currentStep, q, quantizedStepnum)
+	// log.Printf("executeCursor: %s, cstep=%d q=%d initial quantizedStepnum=%d\n", ce.Downdragup, r.loop.currentStep, q, quantizedStepnum)
 	for quantizedStepnum >= r.loop.length {
 		quantizedStepnum -= r.loop.length
-		log.Printf("    executeCursor: %s adjusting quantizedStepnum=%d\n", ce.Downdragup, quantizedStepnum)
+		// log.Printf("    executeCursor: %s adjusting quantizedStepnum=%d\n", ce.Downdragup, quantizedStepnum)
 	}
 
 	// log.Printf("Quantizing currentClick=%d r.loop.currentStep=%d q=%d quantizedStepnum=%d\n",
@@ -813,10 +813,10 @@ func (r *Stepper) executeIncomingCursor(ce CursorStepEvent) {
 		// So, use the quantize value of the down event
 		downQuant := r.permInstanceIDDownQuant[permInstanceIDQuantized]
 		quantizedStepnum = r.nextQuant(r.loop.currentStep, downQuant)
-		log.Printf("executeCursor: up, using downQuant=%d initial quantstenum=%d\n", downQuant, quantizedStepnum)
+		// log.Printf("executeCursor: up, using downQuant=%d initial quantstenum=%d\n", downQuant, quantizedStepnum)
 		for quantizedStepnum >= r.loop.length {
 			quantizedStepnum -= r.loop.length
-			log.Printf("    executeCursor: adjusting quantstepnum=%d\n", quantizedStepnum)
+			// log.Printf("    executeCursor: adjusting quantstepnum=%d\n", quantizedStepnum)
 		}
 
 		// If the up happens too quickly,
@@ -824,15 +824,12 @@ func (r *Stepper) executeIncomingCursor(ce CursorStepEvent) {
 		// so push the up event out a few steps.
 		magicUpDelayClicks := Clicks(8)
 		quantizedStepnum = (quantizedStepnum + magicUpDelayClicks) % r.loop.length
-		log.Printf("    executeCursor: FINAL quantstepnum=%d\n", quantizedStepnum)
+		// log.Printf("    executeCursor: FINAL quantstepnum=%d\n", quantizedStepnum)
 	}
 
 	// log.Printf("Stepper %s adding to Steps\n", r.padName)
 	r.loop.AddToStep(ce, quantizedStepnum)
-
-	// XXX - PUT THIS BACK!!
-	_ = ceUnquantized
-	// r.loop.AddToStep(ceUnquantized, r.loop.currentStep)
+	r.loop.AddToStep(ceUnquantized, r.loop.currentStep)
 
 	return
 }
@@ -983,9 +980,6 @@ func (r *Stepper) cursorToDuration(ce CursorStepEvent) int {
 
 func (r *Stepper) cursorToQuant(ce CursorStepEvent) Clicks {
 	quant := r.params.ParamStringValue("misc.quant", "fixed")
-
-	// XXX - UNDO THIS!
-	quant = "fixed"
 
 	q := Clicks(1)
 	if quant == "none" || quant == "" {
