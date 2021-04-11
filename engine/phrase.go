@@ -25,14 +25,13 @@ const (
 
 // Clicks is a time or duration value.
 // NOTE: A Clicks value can be negative because
-// it's sometimes relative to the starting time of a Phrase
+// it's sometimes relative to the starting time of a Phrase.
+// XXX - possibly could have a type to distinguish Clicks that are
+// XXX - used as absolute time versus Clicks that are step numbers
 type Clicks int64
 
 // MaxClicks is the high-possible value for Clicks
 const MaxClicks = Clicks(math.MaxInt64)
-
-// XXX - probably could have a StepNum type to distinguish Clicks that are
-// XXX - used as absolute time versus Clicks that are step numbers
 
 // Phrase is a time-ordered list of Notes
 // which are MIDI messages and other realtime events).

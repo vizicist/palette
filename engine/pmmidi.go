@@ -146,7 +146,8 @@ func SendEvent(out *MidiOutput, events []portmidi.Event) {
 	}
 }
 
-// GetOutputStream gets the Stream for a named port
+// GetOutputStream gets the Stream for a named port.  There can be multiple writers to an
+// output stream; a cache of per-port output streams is kept in MIDIIO.outputDeviceStream
 func (m *MIDIIO) getOutputStream(name string) (devid portmidi.DeviceID, stream *portmidi.Stream) {
 	var present bool
 	devid, present = m.outputDeviceID[name]

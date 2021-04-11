@@ -9,9 +9,10 @@ import (
 )
 
 type Synth struct {
-	port    string
-	channel int // 0-15 for MIDI channels 1-16
-	midiOut *MidiOutput
+	port     string
+	channel  int // 0-15 for MIDI channels 1-16
+	midiOut  *MidiOutput
+	noteDown []bool
 }
 
 var Synths map[string]*Synth
@@ -56,9 +57,10 @@ func InitSynths() {
 
 func NewSynth(port string, channel int, midiOut *MidiOutput) *Synth {
 	return &Synth{
-		port:    port,
-		channel: channel,
-		midiOut: midiOut,
+		port:     port,
+		channel:  channel,
+		midiOut:  midiOut,
+		noteDown: make([]bool, 128),
 	}
 }
 
@@ -75,6 +77,9 @@ func SendANOToSynth(synthName string) {
 		Status:    int64(status),
 		Data1:     int64(0x7b),
 		Data2:     int64(0x00),
+	}
+	for i := range synth.noteDown {
+		synth.noteDown[i] = false
 	}
 	// log.Printf("Sending ANO portmidi.Event = %s\n", e)
 	SendEvent(synth.midiOut, []portmidi.Event{e})
@@ -93,16 +98,21 @@ func SendNoteToSynth(note *Note) {
 		Data1:     int64(note.Pitch),
 		Data2:     int64(note.Velocity),
 	}
+	if note.TypeOf == NOTEON && note.Velocity == 0 {
+		// log.Printf("MIDIIO.SendNote: NOTEON with velocity==0 is a NOTEOFF\n")
+		note.TypeOf = NOTEOFF
+	}
 	switch note.TypeOf {
 	case NOTEON:
-		if note.Velocity == 0 {
-			// log.Printf("MIDIIO.SendNote: NOTEON with velocity==0 is a NOTEOFF\n")
-			e.Status |= 0x80
-		} else {
-			e.Status |= 0x90
+		e.Status |= 0x90
+		if synth.noteDown[note.Pitch] {
+			log.Printf("SendNoteToSynth: Ignoring second NOTEON for chan=%d pitch=%d\n", synth.channel, note.Pitch)
+			return
 		}
+		synth.noteDown[note.Pitch] = true
 	case NOTEOFF:
 		e.Status |= 0x80
+		synth.noteDown[note.Pitch] = false
 	case CONTROLLER:
 		e.Status |= 0xB0
 	case PROGCHANGE:
@@ -112,7 +122,7 @@ func SendNoteToSynth(note *Note) {
 	case PITCHBEND:
 		e.Status |= 0xE0
 	default:
-		log.Printf("SendNote can't handle Note TypeOf=%v\n", note.TypeOf)
+		log.Printf("SendNoteToSynth: can't handle Note TypeOf=%v\n", note.TypeOf)
 		return
 	}
 
