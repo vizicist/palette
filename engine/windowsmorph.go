@@ -385,15 +385,15 @@ func (m oneMorph) readFrames(callback CursorDeviceCallbackFunc, forceFactor floa
 			}
 
 			ev := CursorDeviceEvent{
-				NUID:       MyNUID(),
-				Region:     region,
-				CID:        cid,
-				Timestamp:  0,
-				DownDragUp: ddu,
-				X:          xNorm,
-				Y:          yNorm,
-				Z:          zNorm,
-				Area:       area,
+				NUID:      MyNUID(),
+				Region:    region,
+				CID:       cid,
+				Timestamp: 0,
+				Ddu:       ddu,
+				X:         xNorm,
+				Y:         yNorm,
+				Z:         zNorm,
+				Area:      area,
 			}
 			callback(ev)
 		}
