@@ -169,7 +169,8 @@ class ProGuiApp(tk.Tk):
                     self.resetVisibility()
                     doneLoading = True
                     try:
-                        self.loadSnap("CurrentSnapshot")
+                        snapshotName = PadSnapshotName(self.PadName)
+                        self.loadSnap(snapshotName)
                         self.sendSnap()
                     except:
                         self.loadSnap("Basic_Chaos")
@@ -331,22 +332,53 @@ class ProGuiApp(tk.Tk):
     def readSnapParamsFile(self,paramsname):
         # print("\nREAD SNAP PARAMS FILE paramsname=",paramsname)
         # Read parameters from a json file
-        if paramsname == "CurrentSnapshot":
+        if isSnapshotName(paramsname):
             fpath = palette.configFilePath(paramsname+".json")
         else:
             fpath = palette.searchPresetsFilePath("snap", paramsname)
-        print("Reading ",fpath)
+        print("readSnapParamsFile: path=",fpath)
         try:
             f = open(fpath)
         except:
             print("No such file?  fpath=",fpath)
             return
         j = json.load(f)
-        self.loadSnapJson(j)
+        self.loadSnapJson(j,self.editPage["snap"])
         f.close()
 
-    def loadSnapJson(self,j):
-        snappage = self.editPage["snap"]
+    def readQuadParamsFile(self,paramsname):
+        # print("\nREAD SNAP PARAMS FILE paramsname=",paramsname)
+        # Read parameters from a json file
+        if isSnapshotName(paramsname):
+            fpath = palette.configFilePath(paramsname+".json")
+        else:
+            fpath = palette.searchPresetsFilePath("quad", paramsname)
+        print("readSnapParamsFile: path=",fpath)
+        try:
+            f = open(fpath)
+        except:
+            print("No such file?  fpath=",fpath)
+            return
+        j = json.load(f)
+        self.loadQuadJson(j,self.editPage["quad"])
+        f.close()
+
+
+    def readQuadSnapFile(self):
+        fpath = CurrentQuadPath()
+        print("readQuadParamsFile: path=",fpath)
+        try:
+            f = open(fpath)
+        except:
+            print("No such file?  fpath=",fpath)
+            return
+        j = json.load(f)
+        self.loadSnapJson(j,self.editPage["quad"])
+        f.close()
+
+    def loadSnapJson(self,j,snappage):
+
+        # If parameters exist that aren't in j, add their default value
         for name in self.allParamsJson:
             allj = self.allParamsJson[name]
             (_,base) = padOfParam(name)
@@ -360,6 +392,26 @@ class ProGuiApp(tk.Tk):
         for name in j["params"]:
             v = j["params"][name]
             snappage.changeValueLabel(name,v)
+
+    def loadQuadJson(self,j,quadpage):
+
+        # If parameters exist that aren't in j, add their default value to j.
+        # This helps when new parameters are added that aren't in existing preset files.
+        for name in self.allParamsJson:
+            allj = self.allParamsJson[name]
+            (_,base) = padOfParam(name)
+            paramsType = allj["paramstype"]
+            if paramsType != "sliders":
+                for pad in self.PadNames:
+                    fullname = pad + "-" + base
+                    if not fullname in j["params"]:
+                        j["params"][fullname] = allj["init"]
+
+        for name in j["params"]:
+            v = j["params"][name]
+            print("loadQuadJson name=",name," v=",v)
+            quadpage.changeValueLabel(name,v)
+
 
     def makeSelectFrame(self,container):
 
@@ -418,7 +470,7 @@ class ProGuiApp(tk.Tk):
         for pg in pages:
             pages[pg].pack_forget()
 
-    def togglePageButons(self):
+    def togglePageButtons(self):
         # if self.advancedLevel == 0:
         #     return
         self.showAllPages = not self.showAllPages
@@ -438,6 +490,12 @@ class ProGuiApp(tk.Tk):
         self.forgetPages(self.selectorPage)
         self.forgetPages(self.editPage)
 
+        if pagename == "quad":
+            # we don't want to show the PadChooser when we're on the Quad page
+            self.selectHeader.forgetPadChooser()
+        else:
+            self.selectHeader.placePadChooser()
+
         if self.editMode:
             page = self.editPage[pagename]
         else:
@@ -447,7 +505,11 @@ class ProGuiApp(tk.Tk):
         page.tkraise()
 
         if self.editMode:
-            self.editPage[pagename].startEditing("CurrentSnapshot",doLift=False)
+            if pagename == "quad":
+                snapshotName = CurrentQuadPath()
+            else:
+                snapshotName = PadSnapshotName(self.PadName)
+            self.editPage[pagename].startEditing(snapshotName,doLift=False)
 
     def selectPerformPage(self,pagename):
         self.currentPerformPageName = pagename
@@ -579,14 +641,16 @@ class ProGuiApp(tk.Tk):
             self.editPage["quad"].setChanged()
 
     def savePrevious(self):
-        frompath = CurrentSnapshotPath()
-        topath = CurrentSnapshotPreviousPath()
-        palette.copyFile(frompath,topath)
+        frompath = CurrentSnapshotPath(self.PadName)
+        if os.path.exists(frompath):
+            topath = CurrentSnapshotPreviousPath(self.PadName)
+            palette.copyFile(frompath,topath)
 
     def restorePrevious(self):
-        frompath = CurrentSnapshotPreviousPath()
-        topath = CurrentSnapshotPath()
-        palette.copyFile(frompath,topath)
+        frompath = CurrentSnapshotPreviousPath(self.PadName)
+        if os.path.exists(frompath):
+            topath = CurrentSnapshotPath(self.PadName)
+            palette.copyFile(frompath,topath)
 
     def selectorApply(self,apply,paramstype,val):
         if paramstype == "snap" or paramstype == "quad" or paramstype == "sliders":
@@ -670,7 +734,7 @@ class ProGuiApp(tk.Tk):
 
     def saveSnapshots(self):
         snappage = self.editPage["snap"]
-        snappage.saveJsonInPath(CurrentSnapshotPath())
+        snappage.saveJsonInPath(CurrentSnapshotPath(self.PadName))
         snappage.setChanged()
         global IsQuad
         if IsQuad:
@@ -682,7 +746,7 @@ class ProGuiApp(tk.Tk):
         if paramstype == "snap":
             if val == "PREVIOUS":
                 self.restorePrevious()
-                val = "CurrentSnapshot"
+                val = PadSnapshotName(self.PadName)
                 print("Should be highlighting buttoni=",buttoni)
             else:
                 self.savePrevious()
@@ -730,7 +794,7 @@ class ProGuiApp(tk.Tk):
             return
 
         if paramstype == "snap":
-            self.loadSnapJson(j)
+            self.loadSnapJson(j,self.editPage["snap"])
             self.sendSnap()
         elif paramstype == "quad":
             print("Hey, does quad need work here?  FFF")
@@ -746,7 +810,8 @@ class ProGuiApp(tk.Tk):
             self.selectHeader.padChooser.refreshColors()
 
         if self.editMode:
-            self.editPage[self.currentPageName].startEditing("CurrentSnapshot")
+            snapname = PadSnapshotName(pad)
+            self.editPage[self.currentPageName].startEditing(snapname)
 
         performControl = self.performPage["main"]
         performControl.updatePerformButtonLabels(self.PadName)
@@ -754,15 +819,15 @@ class ProGuiApp(tk.Tk):
     def loadSnap(self,snapname):
         snappage = self.editPage["snap"]
         snappage.startEditing(snapname,doLift=False)
-        if snapname != "CurrentSnapshot":
-            snappage.saveJsonInPath(CurrentSnapshotPath())
-            snappage.saveJsonInPath(CurrentSnapshotBackupPath())
+        if not isSnapshotName(snapname):
+            snappage.saveJsonInPath(CurrentSnapshotPath(self.PadName))
+            snappage.saveJsonInPath(CurrentSnapshotBackupPath(self.PadName))
         snappage.lift()
         return True
 
     def revertToBackup(self):
-        frompath = CurrentSnapshotBackupPath()
-        topath = CurrentSnapshotPath()
+        frompath = CurrentSnapshotBackupPath(self.PadName)
+        topath = CurrentSnapshotPath(self.PadName)
         palette.copyFile(frompath,topath)
         print("Reverting Backup Copying ",frompath," to ",topath)
 
@@ -981,6 +1046,7 @@ class ProGuiApp(tk.Tk):
 
         s = ""
         path = palette.configFilePath("paramdefs.json")
+        print("Reading path=",path)
         f = open(path,'r')
         lines = f.readlines() 
         for line in lines: 
@@ -1239,7 +1305,7 @@ class SelectHeader(tk.Frame):
         self.pageButton = {}
 
         self.headerButton = ttk.Button(self.titleFrame, text="Preset", style='Header.TLabel',
-            command=lambda : self.controller.togglePageButons())
+            command=lambda : self.controller.togglePageButtons())
         self.headerButton.pack(side=tk.LEFT)
 
         for i in self.controller.PageNames:
@@ -1248,7 +1314,13 @@ class SelectHeader(tk.Frame):
         global IsQuad
         if IsQuad:
             self.padChooser = PadChooser(parent=parent, controller=controller)
-            self.padChooser.place(in_=self.titleFrame, relx=0.7, rely=0, relwidth=0.3, relheight=1.0)
+            self.placePadChooser()
+
+    def placePadChooser(self):
+        self.padChooser.place(in_=self.titleFrame, relx=0.7, rely=0, relwidth=0.3, relheight=1.0)
+
+    def forgetPadChooser(self):
+        self.padChooser.place_forget()
 
     def spacer(self,height):
         spacer = tk.Canvas(self, background=palette.ColorBg, highlightthickness=0, height=height)
@@ -1632,7 +1704,7 @@ class PageEditParams(tk.Frame):
 
     def setParamsName(self,name):
         self.paramsname = name
-        if name != "CurrentSnapshot":
+        if not isSnapshotName(name):
             try:
                 n = self.paramFiles.index(name)
                 self.comboParamsname.current(n)
@@ -1641,13 +1713,25 @@ class PageEditParams(tk.Frame):
 
     def startEditing(self,name,doLift=True,clearChange=True,doSend=False):
 
+        print("=== startEditing name=",name)
+        # HACK
+        if "CurrentQuad" in name:
+            self.controller.readQuadSnapFile()
+        elif self.paramstype == "quad":
+            self.controller.readQuadParamsFile(name)
+            # XXX - this should be done automatically - switch it from Quad to Pad
+            print("YOU HAVE TO SWITCH TO A NON-QUAD PAGE BEFORE SELECTING A PAD!")
+            return
+        else:
+            self.controller.readSnapParamsFile(name)
+
         self.comboParamsname.configure(values=self.paramFiles)
 
         self.setParamsName(name)
 
         snappage = self.controller.editPage["snap"]
 
-        if name == "CurrentSnapshot" and self.paramstype != "snap":
+        if isSnapshotName(name) and self.paramstype != "snap":
             # pull param values from "snap" page (i.e. the CurrentSnapshot)
             for p in snappage.params:
                 snapv = snappage.getValue(p)
@@ -1664,10 +1748,9 @@ class PageEditParams(tk.Frame):
                 if self.paramstype == "sliders" and slider:
                     self.changeValueLabel(p,snapv)
         else:
-            if self.paramstype == "snap":
-                self.controller.readSnapParamsFile(self.paramsname)
-            elif self.paramstype == "quad":
-                print("Hey, Does quad need work here?  CCC")
+            if self.paramstype == "snap" or self.paramstype == "quad":
+                pass
+                # We've already read quad things above
             else:
                 self.controller.readParamsFileIntoSnapAndQuad(self.paramstype,self.paramsname)
 
@@ -1690,10 +1773,11 @@ class PageEditParams(tk.Frame):
         print("loadParams name=",name,"doSend=",doSend)
         self.startEditing(name,doSend=doSend)
         # After loading on the snap page, we return to CurrentSnapshot
-        if name != "CurrentSnapshot":
-            self.saveJsonInPath(CurrentSnapshotPath())
-            self.saveJsonInPath(CurrentSnapshotPreviousPath())
-            self.startEditing("CurrentSnapshot")
+        if not isSnapshotName(name):
+            self.saveJsonInPath(CurrentSnapshotPath(self.controller.PadName))
+            self.saveJsonInPath(CurrentSnapshotPreviousPath(self.controller.PadName))
+            snapname = PadSnapshotName(self.controller.PadName)
+            self.startEditing(snapname)
 
     def forgetAll(self):
         self.comboParamsname.pack_forget()
@@ -1766,7 +1850,7 @@ class PageEditParams(tk.Frame):
 
     def saveOkCallback(self):
         name = self.paramsnameVar.get()
-        if name == "CurrentSnapshot":
+        if isSnapshotName(name):
             return
 
         self.saveJson(self.paramstype,name)
@@ -1793,14 +1877,15 @@ class PageEditParams(tk.Frame):
         if self.ischanged:
             self.controller.revertToBackup()
             # We assume startEditing() will load CurrentSnapshot
-            self.startEditing("CurrentSnapshot")
+            snapname = PadSnapshotName(self.controller.PadName)
+            self.startEditing(snapname)
             self.controller.sendSnap()
             self.clearChanged()
 
     def saveJson(self,section,paramsname,suffix=".json"):
 
         # These warnings can probably go away when code is correct
-        if section == "snap" and paramsname == "CurrentSnapshot":
+        if section == "snap" and isSnapshotName(paramsname):
             print("HEY!  use saveJsonInPath!")
             return
         if section == "quad" and paramsname == "CurrentQuad":
@@ -2246,14 +2331,23 @@ def sliderIndexOfParam(paramname):
 def isTwoLine(text):
     return text.find(palette.LineSep) >= 0 or text.find("\n") >= 0
 
-def CurrentSnapshotPath():
-    return palette.configFilePath("CurrentSnapshot.json")
+def isSnapshotName(name):
+    return name.startswith("CurrentSnapshot")
 
-def CurrentSnapshotBackupPath():
-    return palette.configFilePath("CurrentSnapshot.backup")
+def PadSnapshotName(pad):
+    return "CurrentSnapshot_"+pad
 
-def CurrentSnapshotPreviousPath():
-    return palette.configFilePath("CurrentSnapshot.previous")
+def CurrentSnapshotPath(pad):
+    nm = PadSnapshotName(pad)
+    return palette.configFilePath(nm+".json")
+
+def CurrentSnapshotBackupPath(pad):
+    nm = PadSnapshotName(pad)
+    return palette.configFilePath(nm+".backup")
+
+def CurrentSnapshotPreviousPath(pad):
+    nm = PadSnapshotName(pad)
+    return palette.configFilePath(nm+".previous")
 
 def CurrentQuadPath():
     return palette.configFilePath("CurrentQuad.json")

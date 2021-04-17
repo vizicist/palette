@@ -9,17 +9,28 @@ import (
 )
 
 type Synth struct {
-	port     string
-	channel  int // 0-15 for MIDI channels 1-16
-	midiOut  *MidiOutput
-	noteDown []bool
+	port        string
+	channel     int // 0-15 for MIDI channels 1-16
+	bankprogram BankProgram
+	midiOut     *MidiOutput
+	noteDown    []bool
 }
+
+type BankProgram struct {
+	bank    int
+	program int
+}
+
+// Keep track of which BankProgram is currently used on a given MidiOutput,
+// se we only send bank/program things when it changes
+var MidiOutBankProgram map[*MidiOutput]BankProgram
 
 var Synths map[string]*Synth
 
 func InitSynths() {
 
 	Synths = make(map[string]*Synth)
+	MidiOutBankProgram = make(map[*MidiOutput]BankProgram)
 
 	filename := ConfigFilePath("synths.json")
 	bytes, err := ioutil.ReadFile(filename)
@@ -31,6 +42,8 @@ func InitSynths() {
 		Name    string `json:"name"`
 		Port    string `json:"port"`
 		Channel int    `json:"channel"`
+		Bank    int    `json:"bank"`
+		Program int    `json:"program"`
 	}
 
 	var jsynths struct {
@@ -44,23 +57,26 @@ func InitSynths() {
 		nm := jsynths.Synths[i].Name
 		port := jsynths.Synths[i].Port
 		channel := jsynths.Synths[i].Channel
+		bank := jsynths.Synths[i].Bank
+		program := jsynths.Synths[i].Program
 		var midiOut *MidiOutput
 		if synthoutput {
 			midiOut = MIDI.NewMidiOutput(port, channel)
 		} else {
 			midiOut = MIDI.NewFakeMidiOutput(port, channel)
 		}
-		Synths[nm] = NewSynth(port, channel, midiOut)
+		Synths[nm] = NewSynth(port, channel, bank, program, midiOut)
 	}
 	log.Printf("Synths loaded, len=%d\n", len(Synths))
 }
 
-func NewSynth(port string, channel int, midiOut *MidiOutput) *Synth {
+func NewSynth(port string, channel int, bank int, program int, midiOut *MidiOutput) *Synth {
 	return &Synth{
-		port:     port,
-		channel:  channel,
-		midiOut:  midiOut,
-		noteDown: make([]bool, 128),
+		port:        port,
+		channel:     channel,
+		bankprogram: BankProgram{bank, program},
+		midiOut:     midiOut,
+		noteDown:    make([]bool, 128),
 	}
 }
 
@@ -127,6 +143,10 @@ func SendNoteToSynth(note *Note) {
 		log.Printf("SendNoteToSynth: can't handle Note TypeOf=%v\n", note.TypeOf)
 		return
 	}
+
+	// XXX - Should keep track per-midiOut/per-channel (across all synths) of the current
+	// bank/program selected on that midiOut/channel, and if it changes, then (and only then)
+	// send the bank/program select
 
 	// log.Printf("Sending portmidi.Event = %s\n", e)
 	SendEvent(synth.midiOut, []portmidi.Event{e})
