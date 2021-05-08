@@ -30,6 +30,8 @@ global IsQuad
 IsQuad = False
 global AllPadsSelected
 AllPadsSelected = False
+global DefaultAdvanced
+DefaultAdvanced = 1
 
 ControlPageNames = {
     "main":"Main",
@@ -41,26 +43,21 @@ ControlPageNames = {
 class ProGuiApp(tk.Tk):
 
     def __init__(self,
-            padname="A",
-            padnames="A",
-            visiblepagenames = {
-                "snap":"Pad",
-                "sound":"Sound",
-                "visual":"Visual",
-                "effect":"Effect",
-                "sliders":"Sliders"}
+            padname,
+            padnames,
+            visiblepagenames
             ):
 
         tk.Tk.__init__(self)
 
         self.AllPageNames = {
-                "quad":"Quad",
-                "snap":"Pad",
-                "sound":"Sound",
-                "visual":"Visual",
-                "effect":"Effect",
-                "misc":"Misc",
-                "sliders":"Sliders"}
+                "quad":0,
+                "snap":0,
+                "sound":0,
+                "visual":0,
+                "effect":0,
+                "misc":0,
+                "sliders":0}
 
         self.VisiblePageNames = visiblepagenames
         self.PadNames = collections.OrderedDict()
@@ -87,7 +84,13 @@ class ProGuiApp(tk.Tk):
         self.showSound = False
         self.showPadFeedback = True
         self.showCursorFeedback = False
-        self.setAdvanced(0)  # default to non-advanced mode
+
+        advanced = palette.ConfigValue("advanced")
+        if advanced == "":
+            level = 0
+        else:
+            level = int(advanced)
+        self.setAdvanced(level)
 
         self.performHeader = None
 
@@ -188,7 +191,9 @@ class ProGuiApp(tk.Tk):
             if palette.resetAfterInactivity>0 and (now - self.lastAnything) > palette.resetAfterInactivity:
                 print("Resetting after no activity!!")
                 self.resetLastAnything()
-                self.setAdvanced(0)
+
+                global DefaultAdvanced
+                self.setAdvanced(DefaultAdvanced)
                 self.resetAll()
 
                 self.resetVisibility()
@@ -242,13 +247,14 @@ class ProGuiApp(tk.Tk):
                 else:
                     ch.pageButton[pg].pack(side=tk.LEFT,padx=5)
             ch.performMessageLabel.pack_forget()
+        
+        # elif palette.RecMode:
+        #     for pg in self.VisiblePageNames:
+        #         sh.pageButton[pg].pack_forget()
+        #     for pg in ControlPageNames:
+        #         ch.pageButton[pg].pack_forget()
+        #     ch.performMessageLabel.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=50)
 
-        elif palette.RecMode:
-            for pg in self.VisiblePageNames:
-                sh.pageButton[pg].pack_forget()
-            for pg in ControlPageNames:
-                ch.pageButton[pg].pack_forget()
-            ch.performMessageLabel.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=50)
         else:
             for pg in self.VisiblePageNames:
                 sh.pageButton[pg].pack_forget()
@@ -256,8 +262,14 @@ class ProGuiApp(tk.Tk):
                 ch.pageButton[pg].pack_forget()
             ch.performMessageLabel.pack_forget()
 
+            sh.pageButton["quad"].pack(side=tk.LEFT)
+
         self.editMode = False
-        self.selectEditPage("snap")
+        global IsQuad
+        if IsQuad:
+            self.selectEditPage("quad")
+        else:
+            self.selectEditPage("snap")
 
         pg = self.performPage["main"]
 
@@ -488,12 +500,13 @@ class ProGuiApp(tk.Tk):
 
     def clickEditPage(self,pagename):
 
-        # A second click on the page header will toggle editMode
-        if self.currentPageName == pagename:
+        # A second click on a page header will toggle editMode if advanced>1
+        if self.advancedLevel > 1 and self.currentPageName == pagename:
             self.editMode = not self.editMode
         self.selectEditPage(pagename)
 
     def selectEditPage(self,pagename):
+
         self.currentPageName = pagename
         self.selectHeader.highlightPageButton(pagename)
 
@@ -506,7 +519,7 @@ class ProGuiApp(tk.Tk):
         else:
             self.selectHeader.placePadChooser()
 
-        if self.editMode:
+        if self.advancedLevel > 1 and self.editMode:
             page = self.editPage[pagename]
         else:
             page = self.selectorPage[pagename]
@@ -968,14 +981,17 @@ class ProGuiApp(tk.Tk):
             self.advancedLevel = level
             print("setAdvanced, level is ",self.advancedLevel)
             self.escapeCount = 0
-            if level == 0:
+            if self.advancedLevel == 0:
                 self.showAllPages = False
                 self.showSliders = False
-                palette.PerPadPerformLabels["scale"] = palette.SimpleScales
-            elif level == 1:
+            elif self.advancedLevel == 1:
                 self.showAllPages = True
                 self.showSliders = False
-                palette.PerPadPerformLabels["scale"] = palette.SimpleScales
+            elif self.advancedLevel == 2:
+                self.showAllPages = True
+                self.showSliders = False
+            else:
+                print("Unrecognized advanced value: ",level)
 
     def resetAll(self):
 
@@ -1014,7 +1030,11 @@ class ProGuiApp(tk.Tk):
         palette.palette_region_api(self.PadName, "ANO")
 
     def sendSnap(self):
-        self.sendSnapPad(self.PadName)
+        if AllPadsSelected == True:
+            for pad in self.PadNames:
+                self.sendSnapPad(pad)
+        else:
+            self.sendSnapPad(self.PadName)
 
     def sendQuad(self):
         for pad in self.PadNames:
@@ -1038,7 +1058,7 @@ class ProGuiApp(tk.Tk):
         for pt in ["sound","visual","effect"]:
             paramlistjson = self.paramListJson(pt,pad)
             if paramstype == None or paramstype == pt:
-                palette.palette_region_api(self.PadName, pt+".set_params", paramlistjson)
+                palette.palette_region_api(pad, pt+".set_params", paramlistjson)
 
         if paramstype == None:
             for name in palette.PerPadPerformLabels:
@@ -1244,6 +1264,7 @@ class PadChooser(tk.Frame):
     def globalCallback(self,e):
         global AllPadsSelected
         AllPadsSelected = not AllPadsSelected
+        print("AllPadsSelected = ",AllPadsSelected)
         self.refreshColors()
 
     def refreshColors(self):
@@ -1316,9 +1337,9 @@ class SelectHeader(tk.Frame):
 
         self.pageButton = {}
 
-        self.headerButton = ttk.Button(self.titleFrame, text="Preset", style='Header.TLabel',
-            command=lambda : self.controller.togglePageButtons())
-        self.headerButton.pack(side=tk.LEFT)
+        # self.headerButton = ttk.Button(self.titleFrame, text="Preset", style='Header.TLabel',
+        #     command=lambda : self.controller.togglePageButtons())
+        # self.headerButton.pack(side=tk.LEFT)
 
         for i in self.controller.VisiblePageNames:
             self.makeHeaderButton(i,self.controller.VisiblePageNames[i])
@@ -1340,7 +1361,18 @@ class SelectHeader(tk.Frame):
 
     def makeHeaderButton(self,pageName,pageTitle):
         # print("makeHeaderButton name=",pageName)
-        self.pageButton[pageName] = ttk.Button(self.titleFrame, text=pageTitle, style='HeaderDisabled.TLabel',
+
+        # Hack so that the leftmost button is always Preset
+        displayedPageTitle = pageTitle
+        global IsQuad
+        if IsQuad:
+            if pageName == "quad":
+                displayedPageTitle = "Preset"
+        else:
+            if pageName == "snap":
+                displayedPageTitle = "Preset"
+
+        self.pageButton[pageName] = ttk.Button(self.titleFrame, text=displayedPageTitle, style='HeaderDisabled.TLabel',
             command=lambda nm=pageName: self.controller.clickEditPage(nm))
         self.pageButton[pageName].pack(side=tk.LEFT,padx=5)
 
@@ -2402,7 +2434,7 @@ if __name__ == "__main__":
         padnames = pads
         IsQuad = True
         visiblepagenames = {
-            "quad":"Quad",
+            "quad":"Preset",
             "snap":"Pad",
             "sound":"Sound",
             "visual":"Visual",
@@ -2464,11 +2496,13 @@ if __name__ == "__main__":
         GuiWidth = 400 ; GuiHeight = 600
 
     palette.setFontSizes(fontFactor)
+    palette.PerPadPerformLabels["scale"] = palette.SimpleScales
 
     global app
     app = ProGuiApp(padname,padnames,visiblepagenames)
 
     palette.makeStyles(app)
+
 
     app.wm_geometry("%dx%d" % (GuiWidth,GuiHeight))
 
