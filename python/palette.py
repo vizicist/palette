@@ -200,8 +200,6 @@ def makeStyles(app):
     s.configure('PatchTwoLine.TLabel', foreground=ColorText, font=patchTwoLineFont, background=ColorButton, anchor=tk.CENTER, justify=tk.CENTER)
     s.configure('PatchTwoLineHighlight.TLabel', foreground=ColorText, font=patchTwoLineFont, background=ColorHigh, anchor=tk.CENTER, justify=tk.CENTER)
 
-    s.configure('Slider.TLabel', foreground=ColorText, font=sliderFont, background=ColorBg, anchor=tk.CENTER)
-
     s.configure('RecordingButton.TLabel', background=ColorRed, relief="flat", justify=tk.CENTER, align=tk.CENTER, font=largeFont)
 
     s.configure('PerformButton.TLabel', foreground=ColorText, background=ColorButton, relief="flat", justify=tk.CENTER,
@@ -256,12 +254,11 @@ def palette_global_api(meth, params=""):
     return palette_api("global."+meth,params)
 
 def setFontSizes(fontFactor):
-    global patchFont, patchTwoLineFont, sliderFont, largestFont, hugeFont, comboFont, largerFont, largeFont, performFont, mediumFont, padLabelFont
+    global patchFont, patchTwoLineFont, largestFont, hugeFont, comboFont, largerFont, largeFont, performFont, mediumFont, padLabelFont
     f = 'Helvetica'
     f = 'Lucida Sans'
     patchFont = (f, int(20*fontFactor))
     patchTwoLineFont = (f, int(18*fontFactor))
-    sliderFont = (f, int(12*fontFactor))
     largestFont = (f, int(24*fontFactor))
     hugeFont = (f, int(36*fontFactor))
     comboFont = (f, int(20*fontFactor))
@@ -378,6 +375,7 @@ ApiLock = threading.Lock()
 PythonNUID = MyNUID() + "_python"
 
 def palette_api(meth, params=None):
+
     fullparams = "{ " + params + "}"
     r1,err = invoke_jsonrpc("palette.api",meth,fullparams)
     if err != None:
@@ -387,7 +385,7 @@ def palette_api(meth, params=None):
 def palette_publish(subject,params):
 
     if DebugApi:
-        print("invoke_event: params=",params)
+        print("palette_publish: params=",params)
 
     # Acquire lock before sending
     global ApiLock
@@ -417,7 +415,11 @@ def invoke_jsonrpc(subject, api, params):
     result = None
 
     if DebugApi:
-        print("invoke_jsonrpc: api=",api," params=",params)
+        s = params
+        lim = 100
+        if len(s) > lim:
+            s = s[0:lim] + " ..."
+        print("invoke_jsonrpc: api=",api," params=",s)
 
     # Acquire lock before sending
     ApiLock.acquire()
@@ -426,8 +428,6 @@ def invoke_jsonrpc(subject, api, params):
             params = "{}"
         escaped = params.replace("\"","\\\"")
         req = "{ \"api\": \"%s\", \"nuid\": \"%s\", \"params\": \"%s\"}" % (api,MyNUID(),escaped)
-        if DebugApi:
-            print("SENDING subject=",subject," req=",req)
 
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
