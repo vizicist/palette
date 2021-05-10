@@ -4,7 +4,6 @@
 	"logic_visual": [ "default", "maze", "maze4", "maze33" ],
 	"quant": [ "none", "frets", "fixed", "pressure" ],
 	"vol": [ "fixed", "pressure" ],
-  "sliderModify": [ "scale", "replace" ],
   "shape": [ "line", "triangle", "square", "circle" ],
   "movedir": [ "cursor", "left", "right", "up", "down", "random", "random90", "updown", "leftright" ],
   "rotangdir": [ "right", "left", "random" ],

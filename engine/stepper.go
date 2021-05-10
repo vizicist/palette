@@ -1012,10 +1012,13 @@ func (r *Stepper) handleSetParam(apiprefix, apisuffix string, args map[string]st
 
 	handled = false
 	if apisuffix == "set_params" {
+		log.Printf("Stepper.handleSetParam: api=%s%s\n", apiprefix, apisuffix)
 		for name, value := range args {
 			r.params.SetParamValueWithString(apiprefix+name, value, nil)
 			if apiprefix == "effect." {
 				r.sendEffectParam(name, value)
+			} else if apiprefix == "visual." {
+				log.Printf("Stepper.handleSetParam: set_params SHOULD be sending %s %s\n", name, value)
 			}
 		}
 		handled = true
@@ -1023,12 +1026,15 @@ func (r *Stepper) handleSetParam(apiprefix, apisuffix string, args map[string]st
 	if apisuffix == "set_param" {
 		name, okname := args["param"]
 		value, okvalue := args["value"]
+		log.Printf("Stepper.handleSetParam set_param name=%s value=%s\n", name, value)
 		if !okname || !okvalue {
 			err = fmt.Errorf("Stepper.handleSetParam: api=%s%s, missing param or value", apiprefix, apisuffix)
 		} else {
 			r.params.SetParamValueWithString(apiprefix+name, value, nil)
 			if apiprefix == "effect." {
 				r.sendEffectParam(name, value)
+			} else if apiprefix == "visual." {
+				log.Printf("Stepper.handleSetParam: set_param SHOULD be sending %s %s\n", name, value)
 			}
 			handled = true
 		}
@@ -1059,6 +1065,7 @@ func (r *Stepper) ExecuteAPI(api string, args map[string]string, rawargs string)
 		msg := osc.NewMessage("/api")
 		msg.Append(apisuffix)
 		msg.Append(rawargs)
+		log.Printf("ExecuteAPI: forwarding visual api %s\n", apisuffix)
 		r.toFreeFramePluginForLayer(msg)
 		handled = true
 	}
