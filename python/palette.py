@@ -14,10 +14,12 @@ import collections
 import time
 import signal
 from urllib import request, parse
-try:
-    import thread
-except ImportError:
-    import _thread as thread
+
+# try:
+#     import thread
+# except ImportError:
+import _thread as thread
+
 import threading
 import platform
 
