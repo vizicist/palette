@@ -2,6 +2,7 @@ CurrentSnapshot.*
 CurrentQuad.*
 *.pyc
 default/logs/*.log
+default/config/CurrentPad_*
 python/dist
 build/windows/ship
 ffgl/build/windows/x64

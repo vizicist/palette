@@ -9,16 +9,24 @@
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "${env:USERPROFILE}/go/src/github.com/vizicist/palette/cmd/palette_engine/palette_engine.go",
+            "program": "${env:PALETTESOURCE}/cmd/palette_engine/palette_engine.go",
             "env": {
-                "Path": "${env:Path};${workspaceFolder};%{env:PALETTE}"             },
+                "Path": "${env:Path};${workspaceFolder};c:/Users/me/Documents/github/vizicist/palette/SenselLib/x64;"             },
             "args": []
         },
         {
             "name": "Launch gui",
             "type": "python",
             "request": "launch",
-            "program": "${env:USERPROFILE}/go/src/github.com/vizicist/palette/python/palette_gui.py",
+            "program": "${env:PALETTESOURCE}/python/palette_gui.py",
+            "env": {},
+            "args": []
+        },
+        {
+            "name": "Launch gui old",
+            "type": "python",
+            "request": "launch",
+            "program": "${env:PALETTESOURCE}/python/palette_guiold.py",
             "env": {},
             "args": []
         },
@@ -26,7 +34,7 @@
             "name": "Launch migrateeffects",
             "type": "python",
             "request": "launch",
-            "program": "${env:USERPROFILE}/go/src/github.com/vizicist/palette/python/migrateeffects.py",
+            "program": "${env:PALETTESOURCE}/python/migrateeffects.py",
             "env": {},
             "args": []
         },
@@ -34,7 +42,7 @@
             "name": "Launch changeparamval",
             "type": "python",
             "request": "launch",
-            "program": "${env:USERPROFILE}/go/src/github.com/vizicist/palette/python/changeparamval.py",
+            "program": "${env:PALETTESOURCE}/python/changeparamval.py",
             "env": {},
             "args": ["default\\presets\\visual", "aspect", "1.000", "1.000"]
         }
