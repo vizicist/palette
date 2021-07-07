@@ -306,14 +306,14 @@ def presetsPath():
     return p
 
 # Combine presets in the presetsPath list
-def presetsListAll(section):
+def presetsListAll(presetType):
     presetspath = presetsPath()
     paths = presetspath.split(";")
     allvals = []
     for dir in paths:
-        sectiondir = os.path.join(dir,section)
-        if os.path.isdir(sectiondir):
-            vals = listOfJsonFiles(sectiondir)
+        presetdir = os.path.join(dir,presetType)
+        if os.path.isdir(presetdir):
+            vals = listOfJsonFiles(presetdir)
             for v in vals:
                 if not v in allvals:
                     allvals.append(v)
@@ -325,24 +325,24 @@ def presetsListAll(section):
 # This one always returns the local (first) directory in the presetspath,
 # which is either the user's LOCALAPPDATA version or (if PALETTESOURCE is
 # defined) the PALETTESOURCE version.
-def localPresetsFilePath(section, nm, suffix=".json"):
+def localPresetsFilePath(presetType, nm, suffix=".json"):
     presetspath = presetsPath()
     paths = presetspath.split(";")
     localdir = paths[0]
     if not os.path.isdir(localdir):
         print("No presets directory?  dir=",localdir)
         localdir = "."
-    return os.path.join(localdir,section, nm+suffix)
+    return os.path.join(localdir,presetType, nm+suffix)
 
 # Look through all the directories in presetspath to find file
-def searchPresetsFilePath(section, nm, suffix=".json"):
+def searchPresetsFilePath(presetType, nm, suffix=".json"):
     presetspath = presetsPath()
     paths = presetspath.split(";")
     # the local presets directory is the first one in the path
     finalpath = "."
     for dir in paths:
         if os.path.isdir(dir):
-            finalpath = os.path.join(dir,section, nm+suffix)
+            finalpath = os.path.join(dir,presetType, nm+suffix)
             if os.path.exists(finalpath):
                 break
     return finalpath

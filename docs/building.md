@@ -8,7 +8,7 @@
 
 - Install Go version 1.15 or later from https://golang.org/dl/
 
-- Install Python 3.8.6 or later (BUT NOT FROM THE WINDOWS STORE!), and select the option for adding it to your PATH.
+- Install Python 3.9.6 (64-bit) or later (BUT NOT FROM THE WINDOWS STORE!), and select the option for adding it to your PATH.
 
 - Install Visual Studio Code from https://code.visualstudio.com/download
 
@@ -35,8 +35,8 @@
 - Open a new "cmd" window (so that changes to environment variables from the installed packages are reflected) and clone the repos by entering these lines
 
 ```
-mkdir %USERPROFILE%\go\src\github.com\vizicist
-cd %USERPROFILE%\go\src\github.com\vizicist
+mkdir %USERPROFILE%\Documents\Github\vizicist
+cd %USERPROFILE%\Documents\Github\vizicist
 git clone https://github.com/vizicist/palette.git
 git clone https://github.com/vizicist/portmidi.git
 ```
@@ -57,14 +57,14 @@ go get gopkg.in/mail.v2
  C:\Program Files\Git\bin
  C:\Program Files\Git\usr\bin
  C:\Program Files\mingw-w64\x86_64-8.1.0-posix-sjlj-rt_v6-rev0\mingw64\bin
- %USERPROFILE%\go\bin
- %USERPROFILE%\go\src\github.com\vizicist\palette\scripts
+ %LOCALAPPDATA%\bin
+ %USERPROFILE%\Documents\Github\vizicist\palette\SenselLib\x64
 ```
 
 - Add a new environment variable in your System Properties:
 
 ```
- PALETTESOURCE=%USERPROFILE%\go\src\github.com\vizicist\palette
+ PALETTESOURCE=%USERPROFILE%\Documents\Github\vizicist\palette
 ```
 
 - In Visual Studio Code, click on the "extensions marketplace" icon (four little squares) on the left side.
