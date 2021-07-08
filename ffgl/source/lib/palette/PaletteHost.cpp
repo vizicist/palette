@@ -287,7 +287,7 @@ void PaletteHost::StaticInitialization()
 	srand((unsigned)time(NULL));
 
 	// Default debugging stuff
-	NosuchDebugLevel = 0;   // 0=minimal messages, 1=more, 2=extreme
+	NosuchDebugLevel = 1;   // 0=minimal messages, 1=more, 2=extreme
 	NosuchDebugTimeTag = true;
 	NosuchDebugToLog = true;
 	NosuchAppName = "Palette";
