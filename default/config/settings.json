@@ -1,11 +1,11 @@
 {
-  "generatesound": "true",
+  "generatesound": "false",
   "generatevisuals": "true",
   "publishcursor": "false",
   "publishmidi": "false",
   "natsconf": "natsalone.conf",
   "presetspath": "%LOCALAPPDATA%\\Palette\\presets;%PALETTE%\\presets",
-  "debug": "osc",
+  "debug": "osc,genvisual",
   "pads":"ABCD",
   "advanced":"2",
   "this line should not end with a comma": 0
