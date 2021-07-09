@@ -47,7 +47,12 @@ ffgl_setdll(std::string dllpath)
 	char* pValue;
 	size_t len;
 
-	errno_t err = _dupenv_s( &pValue, &len, "PALETTESOURCE" );
+	errno_t err = _dupenv_s( &pValue, &len, "PALETTEDEBUG" );
+	if (!err && pValue != NULL) {
+		NosuchDebugLevel = atoi( std::string(pValue).c_str() );
+	}
+
+	err = _dupenv_s( &pValue, &len, "PALETTESOURCE" );
 	if( !err && pValue != NULL) {
 		NosuchDebugLogPath = std::string(pValue) + "\\default\\logs\\ffgl.log";
 	}
@@ -62,7 +67,7 @@ ffgl_setdll(std::string dllpath)
 		}
 	}
 
-	NosuchDebug("Palette: log=%s\n", NosuchDebugLogPath.c_str());
+	NosuchDebug("Palette: debuglevel=%d log=%s\n", NosuchDebugLevel, NosuchDebugLogPath.c_str());
 
 	struct _stat statbuff;
 	int e = _stat(NosuchCurrentDir.c_str(),&statbuff);
@@ -286,15 +291,7 @@ void PaletteHost::StaticInitialization()
 
 	srand((unsigned)time(NULL));
 
-	// Default debugging stuff
-	NosuchDebugLevel = 1;   // 0=minimal messages, 1=more, 2=extreme
-	NosuchDebugTimeTag = true;
-	NosuchDebugToLog = true;
 	NosuchAppName = "Palette";
-#ifdef DEBUG_TO_BUFFER
-	NosuchDebugToBuffer = true;
-#endif
-	NosuchDebugAutoFlush = true;
 	
 	NosuchDebug(1,"=== PaletteHost Static Initialization!");
 }

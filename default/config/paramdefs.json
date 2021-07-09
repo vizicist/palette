@@ -109,7 +109,7 @@
 "sound.controllerstyle": {"valuetype":"string", "min":"controllerstyle", "max":"controllerstyle", "init":"modulationonly", "comment":"#" },
 "sound.controllerzmax": {"valuetype":"float", "min":"0.0", "max":"1.0", "init":"0.3", "comment":"#" },
 "sound.controllerzmin": {"valuetype":"float", "min":"0.0", "max":"1.0", "init":"0.05", "comment":"#" },
-"sound.synth": {"valuetype":"string", "min":"synth", "max":"synth", "init":"", "comment":"#" },
+"sound.synth": {"valuetype":"string", "min":"synth", "max":"synth", "init":"default", "comment":"#" },
 "sound.inputport": {"valuetype":"string", "min":"inputport", "max":"inputport", "init":"", "comment":"#" },
 "sound.pitchmax": {"valuetype":"int", "min":"0", "max":"127", "init":"80", "comment":"#" },
 "sound.pitchmin": {"valuetype":"int", "min":"0", "max":"127", "init":"33", "comment":"#" },
