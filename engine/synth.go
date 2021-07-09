@@ -130,6 +130,7 @@ func SendNoteToSynth(note *Note) {
 		synth.noteDown[note.Pitch] = true
 	case NOTEOFF:
 		e.Status |= 0x80
+		e.Data2 = 0
 		synth.noteDown[note.Pitch] = false
 	case CONTROLLER:
 		e.Status |= 0xB0
@@ -148,6 +149,8 @@ func SendNoteToSynth(note *Note) {
 	// bank/program selected on that midiOut/channel, and if it changes, then (and only then)
 	// send the bank/program select
 
-	// log.Printf("Sending portmidi.Event = %s\n", e)
+	// if DebugUtil.MIDI {
+	// 	log.Printf("Sending portmidi.Event = %s\n", e)
+	// }
 	SendEvent(synth.midiOut, []portmidi.Event{e})
 }

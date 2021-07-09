@@ -1,5 +1,5 @@
 {
-  "generatesound": "false",
+  "generatesound": "true",
   "generatevisuals": "true",
   "publishcursor": "false",
   "publishmidi": "false",

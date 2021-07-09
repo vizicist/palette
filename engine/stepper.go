@@ -669,7 +669,7 @@ func (r *Stepper) AdvanceByOneClick() {
 					// Graphics and GUI stuff
 					ss := r.params.ParamStringValue("visual.spritesource", "")
 					if ss == "cursor" {
-						if DebugUtil.Loop {
+						if TheRouter().generateVisuals && DebugUtil.Loop {
 							log.Printf("Stepper.advanceClickBy1: stepnum=%d generateVisuals ce=%+v\n", stepnum, ce)
 						}
 						r.generateVisualsFromCursor(ce)
@@ -702,9 +702,9 @@ func (r *Stepper) AdvanceByOneClick() {
 
 	loop.currentStep++
 	if loop.currentStep >= loop.length {
-		if DebugUtil.Loop {
-			log.Printf("Stepper.AdvanceClickBy1: region=%s Loop wrapping around to step 0\n", r.padName)
-		}
+		// if DebugUtil.MIDI {
+		// 	log.Printf("Stepper.AdvanceClickBy1: region=%s Loop length=%d wrapping around to step 0\n", r.padName, loop.length)
+		// }
 		loop.currentStep = 0
 	}
 }
@@ -802,8 +802,14 @@ func (r *Stepper) executeIncomingCursor(ce CursorStepEvent) {
 		// So, use the quantize value of the down event
 		downQuant := r.permInstanceIDDownQuant[permInstanceIDQuantized]
 		quantizedStepnum = r.nextQuant(r.loop.currentStep, downQuant)
+		if DebugUtil.Loop {
+			log.Printf("UP event: qsn1=%d loopleng=%d\n", quantizedStepnum, r.loop.length)
+		}
 		for quantizedStepnum >= r.loop.length {
 			quantizedStepnum -= r.loop.length
+			if DebugUtil.Loop {
+				log.Printf("   quantizedStepnum2=%d\n", quantizedStepnum)
+			}
 		}
 
 		// If the up happens too quickly,
@@ -811,12 +817,13 @@ func (r *Stepper) executeIncomingCursor(ce CursorStepEvent) {
 		// so push the up event out a few steps.
 		magicUpDelayClicks := Clicks(8)
 		quantizedStepnum = (quantizedStepnum + magicUpDelayClicks) % r.loop.length
+		if DebugUtil.Loop {
+			log.Printf("   FINAL quantizedStepnum2=%d\n", quantizedStepnum)
+		}
 	}
 
 	r.loop.AddToStep(ce, quantizedStepnum)
 	r.loop.AddToStep(ceUnquantized, r.loop.currentStep)
-
-	return
 }
 
 func (r *Stepper) nextQuant(t Clicks, q Clicks) Clicks {

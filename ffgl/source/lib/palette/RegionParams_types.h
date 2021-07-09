@@ -3,7 +3,6 @@ DEFINE_TYPES(logic_sound);
 DEFINE_TYPES(logic_visual);
 DEFINE_TYPES(quant);
 DEFINE_TYPES(vol);
-DEFINE_TYPES(sliderModify);
 DEFINE_TYPES(shape);
 DEFINE_TYPES(movedir);
 DEFINE_TYPES(rotangdir);
@@ -42,9 +41,6 @@ RegionParams_InitializeTypes() {
 
 	RegionParams_volTypes.push_back("fixed");
 	RegionParams_volTypes.push_back("pressure");
-
-	RegionParams_sliderModifyTypes.push_back("scale");
-	RegionParams_sliderModifyTypes.push_back("replace");
 
 	RegionParams_shapeTypes.push_back("line");
 	RegionParams_shapeTypes.push_back("triangle");
