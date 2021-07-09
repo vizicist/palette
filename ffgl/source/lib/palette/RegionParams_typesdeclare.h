@@ -3,7 +3,6 @@ DECLARE_TYPES(logic_sound);
 DECLARE_TYPES(logic_visual);
 DECLARE_TYPES(quant);
 DECLARE_TYPES(vol);
-DECLARE_TYPES(sliderModify);
 DECLARE_TYPES(shape);
 DECLARE_TYPES(movedir);
 DECLARE_TYPES(rotangdir);
