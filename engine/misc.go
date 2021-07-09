@@ -190,7 +190,7 @@ func StringMap(params string) (map[string]string, error) {
 		return nil, err
 	}
 	if t != json.Delim('{') {
-		return nil, errors.New("Expected '{' delimiter")
+		return nil, errors.New("expected '{' delimiter")
 	}
 	values := make(map[string]string)
 	for dec.More() {
@@ -199,7 +199,7 @@ func StringMap(params string) (map[string]string, error) {
 			return nil, err
 		}
 		if !dec.More() {
-			return nil, errors.New("Incomplete JSON?")
+			return nil, errors.New("incomplete JSON?")
 		}
 		value, err := dec.Token()
 		if err != nil {
