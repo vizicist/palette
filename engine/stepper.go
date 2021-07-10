@@ -119,7 +119,6 @@ func NewStepper(pad string, resolumeLayer int, freeframeClient *osc.Client, reso
 	r.ClearExternalScale()
 	r.SetExternalScale(60%12, true) // Middle C
 
-	log.Printf("NewStepper: pad=%s resolumeLayer=%d\n", pad, resolumeLayer)
 	return r
 }
 
@@ -532,14 +531,6 @@ func (r *Stepper) generateSoundFromCursor(ce CursorStepEvent) {
 			// log.Printf("generateMIDI sending NoteOff for UP\n")
 			r.sendNoteOff(a)
 
-			/*
-				// the same pitch to the same synth, but I tried fixing it and failed. So.
-				if DebugUtil.MIDI {
-					log.Printf("MIDI.SendANO: synth=%s\n", a.noteOn.Sound)
-				}
-				MIDI.SendANO(a.noteOn.Sound)
-			*/
-
 			a.noteOn = nil
 			// log.Printf("r=%s UP Setting currentNoteOn to nil!\n", r.padName)
 		}
@@ -864,16 +855,17 @@ func (r *Stepper) sendNoteOff(a *ActiveNote) {
 		// log.Printf("HEY! sendNoteOff got a nil?\n")
 		return
 	}
-	// the Note coming in should be a NOTEON
-	if n.TypeOf != NOTEON {
-		log.Printf("HEY! sendNoteOff expects a NOTEON!?")
-	} else {
-		noteOff := NewNoteOff(n.Pitch, n.Velocity, n.Sound)
-		if DebugUtil.MIDI {
-			log.Printf("MIDI.SendNote: noteOff pitch:%d velocity:%d sound:%s\n", n.Pitch, n.Velocity, n.Sound)
-		}
-		SendNoteToSynth(noteOff)
+	// the Note coming in should be a NOTEON or NOTEOFF
+	if n.TypeOf != NOTEON && n.TypeOf != NOTEOFF {
+		log.Printf("HEY! sendNoteOff didn't get a NOTEON or NOTEOFF!?")
+		return
 	}
+
+	noteOff := NewNoteOff(n.Pitch, n.Velocity, n.Sound)
+	if DebugUtil.MIDI {
+		log.Printf("MIDI.SendNote: noteOff pitch:%d velocity:%d sound:%s\n", n.Pitch, n.Velocity, n.Sound)
+	}
+	SendNoteToSynth(noteOff)
 }
 
 func (r *Stepper) sendANO() {
@@ -1006,53 +998,19 @@ func (r *Stepper) cursorToQuant(ce CursorStepEvent) Clicks {
 	return q
 }
 
-// Param is a single parameter name/value
-type Param struct {
-	name  string
-	value string
-}
-
-func (r *Stepper) handleSetParam(apiprefix, apisuffix string, args map[string]string) (handled bool, err error) {
-
-	// ALL *.set_params and *.set_param APIs
-	// set the params in the Stepper.
-
-	handled = false
-	if apisuffix == "set_params" {
-		log.Printf("Stepper.handleSetParam: api=%s%s\n", apiprefix, apisuffix)
-		for name, value := range args {
-			r.params.SetParamValueWithString(apiprefix+name, value, nil)
-			if apiprefix == "effect." {
-				r.sendEffectParam(name, value)
-			} else if apiprefix == "visual." {
-				log.Printf("Stepper.handleSetParam: set_params SHOULD be sending %s %s\n", name, value)
-			}
-		}
-		handled = true
+func (r *Stepper) SetOneParamValue(apiprefix, name, value string) {
+	r.params.SetParamValueWithString(apiprefix+name, value, nil)
+	if apiprefix == "effect." {
+		r.sendEffectParam(name, value)
 	}
-	if apisuffix == "set_param" {
-		name, okname := args["param"]
-		value, okvalue := args["value"]
-		log.Printf("Stepper.handleSetParam set_param name=%s value=%s\n", name, value)
-		if !okname || !okvalue {
-			err = fmt.Errorf("Stepper.handleSetParam: api=%s%s, missing param or value", apiprefix, apisuffix)
-		} else {
-			r.params.SetParamValueWithString(apiprefix+name, value, nil)
-			if apiprefix == "effect." {
-				r.sendEffectParam(name, value)
-			} else if apiprefix == "visual." {
-				log.Printf("Stepper.handleSetParam: set_param SHOULD be sending %s %s\n", name, value)
-			}
-			handled = true
-		}
-	}
-	return handled, err
 }
 
 // ExecuteAPI xxx
 func (r *Stepper) ExecuteAPI(api string, args map[string]string, rawargs string) (result string, err error) {
 
-	// log.Printf("ExecuteAPI: api=%s args=%s\n", api, rawargs)
+	if DebugUtil.API {
+		log.Printf("ExecuteAPI: api=%s rawargs=%s\n", api, rawargs)
+	}
 
 	dot := strings.Index(api, ".")
 	var apiprefix string
@@ -1062,9 +1020,26 @@ func (r *Stepper) ExecuteAPI(api string, args map[string]string, rawargs string)
 		apisuffix = api[dot+1:]
 	}
 
-	handled, err := r.handleSetParam(apiprefix, apisuffix, args)
-	if err != nil {
-		return "", err
+	// ALL *.set_params and *.set_param APIs set the params in the Stepper.
+	//
+	// In addition:
+	//    Effect parameters get sent one-at-a-time to Resolume's main OSC port (typically 7000).
+
+	handled := false
+	if apisuffix == "set_params" {
+		for name, value := range args {
+			r.SetOneParamValue(apiprefix, name, value)
+		}
+		handled = true
+	}
+	if apisuffix == "set_param" {
+		name, okname := args["param"]
+		value, okvalue := args["value"]
+		if !okname || !okvalue {
+			return "", fmt.Errorf("Stepper.handleSetParam: api=%s%s, missing param or value", apiprefix, apisuffix)
+		}
+		r.SetOneParamValue(apiprefix, name, value)
+		handled = true
 	}
 
 	// ALL visual.* APIs get forwarded to the FreeFrame plugin inside Resolume
@@ -1072,9 +1047,12 @@ func (r *Stepper) ExecuteAPI(api string, args map[string]string, rawargs string)
 		msg := osc.NewMessage("/api")
 		msg.Append(apisuffix)
 		msg.Append(rawargs)
-		log.Printf("ExecuteAPI: forwarding visual api %s\n", apisuffix)
 		r.toFreeFramePluginForLayer(msg)
 		handled = true
+	}
+
+	if handled {
+		return result, nil
 	}
 
 	known := true
