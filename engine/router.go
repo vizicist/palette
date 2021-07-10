@@ -24,9 +24,9 @@ const debug bool = false
 type Router struct {
 	regionLetters string
 	steppers      map[string]*Stepper
-	inputs        []*osc.Client
-	OSCInput      chan OSCEvent
-	MIDIInput     chan portmidi.Event
+	// inputs        []*osc.Client
+	OSCInput  chan OSCEvent
+	MIDIInput chan portmidi.Event
 
 	killme               bool // true if Router should be stopped
 	lastClick            Clicks
@@ -71,6 +71,7 @@ type DeviceCursor struct {
 	downed    bool // true if cursor down event has been generated
 }
 
+/*
 // APIEvent is an API invocation
 type APIEvent struct {
 	apiType string // sound, visual, effect, global
@@ -78,6 +79,7 @@ type APIEvent struct {
 	method  string
 	args    []string
 }
+*/
 
 // PlaybackEvent is a time-tagged cursor or API event
 type PlaybackEvent struct {
@@ -327,7 +329,7 @@ func StartMIDI() {
 // ListenForLocalDeviceInputsForever listens for local device inputs (OSC, MIDI)
 func ListenForLocalDeviceInputsForever() {
 	r := TheRouter()
-	for r.killme == false {
+	for !r.killme {
 		select {
 		case msg := <-r.OSCInput:
 			r.HandleOSCInput(msg)
@@ -601,17 +603,17 @@ func (r *Router) HandleAPIInput(executor APIExecutorFunc, data string) (response
 	}
 	api, ok := smap["api"]
 	if !ok {
-		response = ErrorResponse(fmt.Errorf("Missing api parameter"))
+		response = ErrorResponse(fmt.Errorf("missing api parameter"))
 		return
 	}
 	nuid, ok := smap["nuid"]
 	if !ok {
-		response = ErrorResponse(fmt.Errorf("Missing nuid parameter"))
+		response = ErrorResponse(fmt.Errorf("missing nuid parameter"))
 		return
 	}
 	rawargs, ok := smap["params"]
 	if !ok {
-		response = ErrorResponse(fmt.Errorf("Missing params parameter"))
+		response = ErrorResponse(fmt.Errorf("missing params parameter"))
 		return
 	}
 	if DebugUtil.API {
@@ -772,7 +774,8 @@ func (r *Router) ExecuteAPI(api string, nuid string, rawargs string) (result int
 			r.recordEvent("global", "*", "start", "{}")
 		}
 	case "recordingSave":
-		name, err := needStringArg("name", api, args)
+		var name string
+		name, err = needStringArg("name", api, args)
 		if err == nil {
 			err = r.recordingSave(name)
 		}
@@ -827,7 +830,7 @@ func (r *Router) advanceClickTo(toClick Clicks) {
 }
 
 func (r *Router) recordEvent(eventType string, pad string, method string, args string) {
-	if r.recordingOn == false {
+	if !r.recordingOn {
 		log.Printf("HEY! recordEvent called when recordingOn is false!?\n")
 		return
 	}
@@ -1038,7 +1041,11 @@ func (r *Router) handleOSCEvent(msg *osc.Message) {
 
 	// Add the required nuid argument, which OSC input doesn't provide
 	newrawargs := "{ \"nuid\": \"" + MyNUID() + "\", " + rawargs[1:]
-	args, err := StringMap(newrawargs)
+	var args map[string]string
+	args, err = StringMap(newrawargs)
+	if err != nil {
+		return
+	}
 
 	err = r.HandleSubscribedEventArgs(args)
 	if err != nil {
@@ -1108,7 +1115,6 @@ func (r *Router) handleOSCAPI(msg *osc.Message) {
 	if err != nil {
 		log.Printf("Router.handleOSCAPI: err=%s", err)
 	}
-	return
 }
 
 // OLDgetStepperForNUID - NOTE, this removes the "nuid" argument from the map,
@@ -1203,41 +1209,45 @@ func (r *Router) getRegionForNUID(nuid string) string {
 
 func argAsInt(msg *osc.Message, index int) (i int, err error) {
 	arg := msg.Arguments[index]
-	switch arg.(type) {
+	switch v := arg.(type) {
 	case int32:
-		i = int(arg.(int32))
+		i = int(v)
 	case int64:
-		i = int(arg.(int64))
+		i = int(v)
 	default:
-		err = fmt.Errorf("Expected an int in OSC argument index=%d", index)
+		err = fmt.Errorf("expected an int in OSC argument index=%d", index)
 	}
 	return i, err
 }
 
 func argAsFloat32(msg *osc.Message, index int) (f float32, err error) {
 	arg := msg.Arguments[index]
-	switch arg.(type) {
+	switch v := arg.(type) {
 	case float32:
-		f = arg.(float32)
+		f = v
 	case float64:
-		f = float32(arg.(float64))
+		f = float32(v)
 	default:
-		err = fmt.Errorf("Expected a float in OSC argument index=%d", index)
+		err = fmt.Errorf("expected a float in OSC argument index=%d", index)
 	}
 	return f, err
 }
 
 func argAsString(msg *osc.Message, index int) (s string, err error) {
 	arg := msg.Arguments[index]
-	switch arg.(type) {
+	switch v := arg.(type) {
 	case string:
-		s = arg.(string)
+		s = v
 	default:
-		err = fmt.Errorf("Expected a string in OSC argument index=%d", index)
+		err = fmt.Errorf("expected a string in OSC argument index=%d", index)
 	}
 	return s, err
 }
 
-func cursorid(sid int, source string) string {
-	return fmt.Sprintf("%d@%s", sid, source)
-}
+// This silliness is to avoid unused function errors from go-staticcheck
+var rr *Router
+var _ = rr.recordPadAPI
+var _ = rr.handleOSCSpriteEvent
+var _ = rr.handleOSCAPI
+var _ = argAsInt
+var _ = argAsFloat32

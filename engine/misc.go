@@ -340,7 +340,7 @@ func (w *VizLogWriter) Write(p []byte) (n int, err error) {
 	// Only add a prefix if the thing being written doesn't start with "<"
 	// I.e. if there's already a log prefix, don't add another one.
 	myprefix := ""
-	if strings.Index(s, "<") < 0 {
+	if !strings.Contains(s, "<") {
 		myprefix = "<" + w.Source + "> "
 	}
 	final := fmt.Sprintf("%s%s%s", myprefix, s, newline)

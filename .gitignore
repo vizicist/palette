@@ -2,6 +2,8 @@ CurrentSnapshot.*
 CurrentQuad.*
 *.pyc
 default/logs/*.log
+default/logs/*.stderr
+default/logs/*.stdout
 default/config/CurrentPad_*
 python/dist
 build/windows/ship

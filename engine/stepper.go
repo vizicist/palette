@@ -49,17 +49,17 @@ type Stepper struct {
 	lastActiveID    int
 
 	// tempoFactor            float64
-	loop                   *StepLoop
-	loopIsRecording        bool
-	loopIsPlaying          bool
-	fadeLoop               float32
-	lastCursorStepEvent    CursorStepEvent
-	lastUnQuantizedStepNum Clicks
+	loop            *StepLoop
+	loopIsRecording bool
+	loopIsPlaying   bool
+	fadeLoop        float32
+	// lastCursorStepEvent    CursorStepEvent
+	// lastUnQuantizedStepNum Clicks
 
 	// params                         map[string]interface{}
 	params *ParamValues
 
-	paramsMutex               sync.RWMutex
+	// paramsMutex               sync.RWMutex
 	activeNotes               map[string]*ActiveNote
 	activeNotesMutex          sync.RWMutex
 	activeCursors             map[string]*ActiveStepCursor
@@ -449,7 +449,7 @@ func (r *Stepper) PassThruMIDI(e portmidi.Event, scadjust bool) {
 
 	synth := r.params.ParamStringValue("sound.synth", defaultSynth)
 	var n *Note
-	if (status == 0x90 || status == 0x80) && scadjust == true {
+	if (status == 0x90 || status == 0x80) && scadjust {
 		scale := r.getScale()
 		pitch = scale.ClosestTo(pitch)
 	}
@@ -765,7 +765,7 @@ func (r *Stepper) executeIncomingCursor(ce CursorStepEvent) {
 	// before the down event (which is quantized), so we only turn on DragOK when we see
 	// a drag event come in shortly after the down event.
 
-	if r.permInstanceIDDragOK[permInstanceIDQuantized] == false && ce.Ddu == "drag" {
+	if !r.permInstanceIDDragOK[permInstanceIDQuantized] && ce.Ddu == "drag" {
 		if currentClick <= r.permInstanceIDDownClick[permInstanceIDQuantized] {
 			return
 		}
@@ -916,15 +916,15 @@ func (r *Stepper) cursorToPitch(ce CursorStepEvent) uint8 {
 	p := uint8(pitchmin + p1%dp)
 	scale := r.getScale()
 	p = scale.ClosestTo(p)
-	pnew := p + uint8(12*r.MIDIOctaveShift)
-	if pnew < 0 {
-		p = pnew + 12
-	} else if pnew > 127 {
-		p = pnew - 12
-	} else {
-		p = uint8(pnew)
+	// MIDIOctaveShift might be negative
+	pnew := int(p) + 12*r.MIDIOctaveShift
+	for pnew < 0 {
+		pnew += 12
 	}
-	return p
+	for pnew > 127 {
+		pnew -= 12
+	}
+	return uint8(pnew)
 }
 
 func (r *Stepper) cursorToVelocity(ce CursorStepEvent) uint8 {
@@ -1036,7 +1036,7 @@ func (r *Stepper) ExecuteAPI(api string, args map[string]string, rawargs string)
 		name, okname := args["param"]
 		value, okvalue := args["value"]
 		if !okname || !okvalue {
-			return "", fmt.Errorf("Stepper.handleSetParam: api=%s%s, missing param or value", apiprefix, apisuffix)
+			return "", fmt.Errorf("stepper.handleSetParam: api=%s%s, missing param or value", apiprefix, apisuffix)
 		}
 		r.SetOneParamValue(apiprefix, name, value)
 		handled = true
@@ -1128,7 +1128,7 @@ func (r *Stepper) ExecuteAPI(api string, args map[string]string, rawargs string)
 	}
 
 	if !handled && !known {
-		err = fmt.Errorf("Stepper.ExecuteAPI: unknown api=%s", api)
+		err = fmt.Errorf("stepper.ExecuteAPI: unknown api=%s", api)
 	}
 
 	return result, err
@@ -1256,32 +1256,32 @@ func (r *Stepper) sendEffectParam(name string, value string) {
 // and map type ("on", "off", or "params")
 func (r *Stepper) getEffectMap(effectName string, mapType string) (map[string]interface{}, string, int, error) {
 	if effectName[1] != '-' {
-		err := fmt.Errorf("No dash in effect, name=%s", effectName)
+		err := fmt.Errorf("no dash in effect, name=%s", effectName)
 		return nil, "", 0, err
 	}
 	effects, ok := ResolumeJSON["effects"]
 	if !ok {
-		err := fmt.Errorf("No effects value in resolume.json?")
+		err := fmt.Errorf("no effects value in resolume.json?")
 		return nil, "", 0, err
 	}
 	realEffectName := effectName[2:]
 
 	n, err := strconv.Atoi(effectName[0:1])
 	if err != nil {
-		return nil, "", 0, fmt.Errorf("Bad format of effectName=%s", effectName)
+		return nil, "", 0, fmt.Errorf("bad format of effectName=%s", effectName)
 	}
 	effnum := int(n)
 
 	effectsmap := effects.(map[string]interface{})
 	oneEffect, ok := effectsmap[realEffectName]
 	if !ok {
-		err := fmt.Errorf("No effects value for effect=%s", effectName)
+		err := fmt.Errorf("no effects value for effect=%s", effectName)
 		return nil, "", 0, err
 	}
 	oneEffectMap := oneEffect.(map[string]interface{})
 	mapValue, ok := oneEffectMap[mapType]
 	if !ok {
-		err := fmt.Errorf("No params value for effect=%s", effectName)
+		err := fmt.Errorf("no params value for effect=%s", effectName)
 		return nil, "", 0, err
 	}
 	return mapValue.(map[string]interface{}), realEffectName, effnum, nil
@@ -1377,3 +1377,9 @@ func (r *Stepper) sendPadOneEffectOnOff(effectName string, onoff bool) {
 	r.toResolume(msg)
 
 }
+
+// This silliness is to avoid unused function errors from go-staticcheck
+var ss *Stepper
+var _ = ss.publishSprite
+var _ = ss.cursorToDuration
+var _ = ss.loopQuant
