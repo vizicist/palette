@@ -10,10 +10,10 @@ def listport(paramfile):
     p = params["params"]
     path = os.path.split(paramfile)
     fname = path[len(path)-1]
-    print "%s \"%s\" %d" % (fname, p["regionport"]["value"], int(p["regionchannel"]["value"]))
+    print("%s \"%s\" %d" % (fname, p["regionport"]["value"], int(p["regionchannel"]["value"])))
 
 if len(sys.argv) < 1:
-    print "usage: %s [paramdir]" % sys.argv[0]
+    print("usage: %s [paramdir]" % sys.argv[0])
     sys.exit(1)
 
 paramdir = sys.argv[1]

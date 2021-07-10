@@ -285,59 +285,6 @@ class ProGuiApp(tk.Tk):
     def paramIsPerPad(self,name):
         return True
 
-    def oldreadOtherParamsJsonIntoSnapAndQuad(self,pagename,j):
-
-        paramvals = j["params"]
-        if pagename == "quad":
-            print("Unexpected value in readParamsFileIntoSnapAndQuad")
-            return
-
-        self.loadPageJson(self.editPage["snap"],j)
-
-        # The params in the file may not include all of the
-        # parameters for the given pagename, so we loop through
-        # all the parameters of a given type
-        for name in self.allParamsJson:
-            allj = self.allParamsJson[name]
-            t = allj["pagename"]
-            if pagename == "snap":
-                if t != "sound" and t != "visual" and t != "effect":
-                    continue
-            else:
-                if t != pagename:
-                    continue
-            (pad,base) = padOfParam(name)
-            if pad != None:
-                print("Unexpected non-Non pad??")
-                continue
-            if base in paramvals:
-                v = paramvals[base]
-                if "value" in v:
-                    # Old versions of the param files used nested structure with "enabled" and "value"
-                    print("IS THIS CODE USED ANYMORE?")
-                    v = v["value"]
-            else:
-                v = allj["init"]
-
-            self.changeValueAndSend(base,v,False)
-
-    def oldreadSnapParamsFileIntoPage(self,paramsname,pagename):
-        print("\nREAD SNAP PARAMS FILE paramsname=",paramsname)
-        # Read parameters from a json file
-        if isCurrentName(paramsname):
-            fpath = palette.configFilePath(paramsname+".json")
-        else:
-            fpath = palette.searchPresetsFilePath("snap", paramsname)
-        print("readSnapParamsFile: path=",fpath)
-        try:
-            f = open(fpath)
-        except:
-            print("No such file?  BB fpath=",fpath)
-            return
-        j = json.load(f)
-        self.loadPageJson(self.editPage[pagename],j)
-        f.close()
-
     def readQuadParamsFile(self,paramsname):
         fpath = palette.searchPresetsFilePath("quad", paramsname)
         print("readQuadParamsFile: fpath=",fpath)
@@ -540,18 +487,18 @@ class ProGuiApp(tk.Tk):
             quadName = PadParamName(pad,paramname)
             self.editPage["quad"].changeValue(quadName,newval)
 
-    def selectorApply(self,apply,pagename,val):
-        if pagename == "snap" or pagename == "quad":
+    def selectorApply(self,apply,paramType,val):
+        if paramType == "snap" or paramType == "quad":
             print("selectorApply not yet implemented on snap/quad")
         else:
-            self.applyToAllParams(apply,pagename,val)
-            page = self.editPage[pagename]
+            self.applyToAllParams(apply,paramType,val)
+            page = self.editPage[paramType]
             page.startEditing(CurrentPadFilename(self.CurrPad))
             if self.allPadsSelected:
                 for pad in self.PadNames:
-                    self.sendSnapPad(pad,page,pagename)
+                    self.sendPadParamsOfType(pad,paramType)
             else:
-                self.sendSnapPad(self.CurrPad,page,pagename)
+                self.sendPadParamsOfType(self.CurrPad,paramType)
 
     def applyToAllParams(self,apply,pagename,val):
         # loop through all the parameters of a given type
@@ -634,41 +581,40 @@ class ProGuiApp(tk.Tk):
         p = self.Pads[padName]
         p.saveCurrent()
 
-    def selectorLoadAndSend(self,pagename,presetname,buttoni):
+    def selectorLoadAndSend(self,paramType,presetname,buttoni):
 
         if self.editMode:
             print("HEY!! selectorLoadAndSend shouldn't be used in editMode?")
             return
 
-        if pagename == "quad":
+        if paramType == "quad":
             print("Should be highlighting buttoni=",buttoni)
             self.loadQuad(presetname)
             self.sendQuad()
         else:
-            self.loadOther(pagename,presetname)
-            self.sendOther(pagename)
+            self.loadOther(paramType,presetname)
+            self.sendParamsOfType(paramType)
 
-    def selectorImportAndSend(self,pagename,val):
+    def selectorImportAndSend(self,paramType,val):
         j = json.loads(val)
         if "paramstype" in j:
             jparamstype = j["paramstype"]
         else:
             jparamstype = "NoValue"
 
-        if jparamstype != pagename:
+        if jparamstype != paramType:
             # this error will be common, need a visible message
             print("Mismatched paramstype in JSON!")
             return
 
-        if pagename == "snap":
+        if paramType == "snap":
             self.loadPageJson(self.editPage["snap"],j)
             self.sendPage(self.editPage["snap"])
-        elif pagename == "quad":
+        elif paramType == "quad":
             print("Hey, does quad need work here?  FFF")
         else:
-            self.readOtherParamsJsonIntoSnapAndQuad(pagename,j)
-            page = self.editPage[pagename]
-            self.sendSnapPad(self.CurrPad,page,pagename)
+            self.readOtherParamsJsonIntoSnapAndQuad(paramType,j)
+            self.sendPadParamsOfType(self.CurrPad,paramType)
 
     def padChooserCallback(self,pad):
         self.CurrPad = pad
@@ -702,8 +648,8 @@ class ProGuiApp(tk.Tk):
             self.loadPadValues(self.CurrPad,pagename,presetname)
 
         # load values into the edit page
-        page = self.editPage[pagename]
-        page.loadOtherPreset(presetname)
+        # page = self.editPage[pagename]
+        # page.loadOtherPreset(presetname)
 
     def loadPadValues(self,padName,pagename,presetname):
         p = self.Pads[padName]
@@ -909,21 +855,14 @@ class ProGuiApp(tk.Tk):
     def sendANO(self):
         palette.palette_region_api(self.CurrPad, "ANO")
 
-    def sendOther(self,pagename):
-        page = self.editPage[pagename]
+    def sendParamsOfType(self,paramType):
         if self.allPadsSelected:
-            for pad in self.PadNames:
-                self.sendOtherPad(pad,page,pagename)
+            for padName in self.PadNames:
+                p = self.Pads[padName]
+                p.sendParamsOfType(paramType)
         else:
-            self.sendOtherPad(self.CurrPad,page,pagename)
-
-    def sendSnap(self):
-        page = self.editPage["snap"]
-        if self.allPadsSelected:
-            for pad in self.PadNames:
-                self.sendSnapPad(pad,page,None)
-        else:
-            self.sendSnapPad(self.CurrPad,page,None)
+            p = self.Pads[self.CurrPad]
+            p.sendParamsOfType(paramType)
 
     def sendQuad(self):
         for pad in self.PadNames:
@@ -947,35 +886,21 @@ class ProGuiApp(tk.Tk):
 
         return paramlist
 
-    def snapParamListJson(self,pagename,pad):
-        paramlist = ""
-        sep = ""
-        page = self.editPage[pagename]
-        for name in self.allParamsJson:
-            j = self.allParamsJson[name]
-            if j["paramstype"] == pagename:
-                # paramname = pad + "_" + name
-                paramname = name
-                v = page.getValue(paramname)
-                paramlist = paramlist + sep + "\"" + name + "\" : \"" + str(v) + "\""
-                sep = ", "
-
+    def padParamListJson(self,paramType,padName):
+        pad = self.Pads[padName]
+        paramlist = pad.paramListOfType(paramType)
         return paramlist
 
-    def sendSnapPad(self,pad,page,pagename):
+    def sendPadParamsOfType(self,pad,paramType):
         for pt in ["sound","visual","effect"]:
-            paramlistjson = self.snapParamListJson(pt,pad)
-            if pagename == None or pagename == pt:
+            paramlistjson = self.padParamListJson(pt,pad)
+            if paramType == None or paramType == pt:
                 palette.palette_region_api(pad, pt+".set_params", paramlistjson)
 
-        if pagename == None:
+        if paramType == None:
             for name in palette.PerPadPerformLabels:
                 self.sendPadPerformVal(pad,name)
 
-    def sendOtherPad(self,pad,page,pagename):
-        paramlistjson = self.snapParamListJson(pagename,pad)
-        # print("sendOtherPad pagename=",pagename," json=",paramlistjson)
-        palette.palette_region_api(pad, pagename+".set_params", paramlistjson)
 
     def synthesizeParamsJson(self):
 
@@ -1110,7 +1035,7 @@ class Pad():
         if not self.loadFile(fpath):
             print("Unable to load preset file: ",fpath)
         else:
-            print("Loaded Pad ",self.padName," : ",fpath)
+            print("Loaded Pad",self.padName,"from",fpath)
 
     def loadFile(self,path):
         try:
@@ -1124,6 +1049,7 @@ class Pad():
 
     def saveCurrent(self):
         j = { "params": self.paramValues }
+        print("Saving pad",self.padName,"in",self.snapPath)
         SaveJsonInPath(j,self.snapPath)
 
     def loadJson(self,j):
@@ -1135,6 +1061,9 @@ class Pad():
     def setValue(self,name,val):
         self.paramValues[name] = val
  
+    def getValue(self,name):
+        return self.paramValues[name]
+ 
     def sendParamValue(self,paramname,val):
         if not paramname in self.controller.paramTypeOf:
             print("Unrecognized parameter: ",paramname)
@@ -1143,6 +1072,27 @@ class Pad():
         palette.palette_region_api(self.padName,paramType+".set_param",
             "\"param\": \"" + paramname + "\"" + \
             ", \"value\": \"" + str(val) + "\"" )
+
+    def sendParamsOfType(self,paramType):
+        paramlistjson = self.paramListOfType(paramType)
+        print("Sending pad",self.padName,"params of type",paramType)
+        # print("paramlistjson = ",paramlistjson)
+        palette.palette_region_api(self.padName, paramType+".set_params", paramlistjson)
+
+    def paramListOfType(self,paramType):
+        paramlist = ""
+        sep = ""
+        # XXX - should this use self.params ?
+        for name in self.controller.allParamsJson:
+            j = self.controller.allParamsJson[name]
+            if j["paramstype"] == paramType:
+                # paramname = pad + "_" + name
+                paramname = name
+                v = self.getValue(paramname)
+                paramlist = paramlist + sep + "\"" + name + "\" : \"" + str(v) + "\""
+                sep = ", "
+
+        return paramlist
 
 class PadChooser(tk.Frame):
 
@@ -1821,6 +1771,7 @@ class PageEditParams(tk.Frame):
         # even if the original one was loaded from a different directory
         fpath = palette.localPresetsFilePath(section,paramsname,suffix)
         j = self.jsonParamNump()
+        print("Edit page is saving JSON in:",fpath)
         SaveJsonInPath(j,fpath)
 
     def jsonParamDump(self):
@@ -2185,7 +2136,6 @@ def CurrentPadPath(pad):
     return palette.configFilePath(nm+".json")
 
 def SaveJsonInPath(j,fpath):
-    print("Saving JSON in:",fpath)
     f = open(fpath,"w")
     if not f:
         print("SaveJsonInPath: unable to open path=",fpath)
