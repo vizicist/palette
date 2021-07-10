@@ -1,5 +1,5 @@
 call palettestopresolume
-delay 3
+call delay 3
 copy ..\..\binaries\x64\Debug\Palette.dll "c:\Program Files\Palette\ffgl"
 copy ..\..\binaries\x64\Debug\Palette.pdb "c:\Program Files\Palette\ffgl"
 copy ..\..\..\default\config\paramdefs.json "c:\Program Files\Palette\config\paramdefs.json"

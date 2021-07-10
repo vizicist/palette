@@ -18,7 +18,7 @@ var time0 = time.Now()
 
 // PublishCursorDeviceEvent xxx
 func PublishCursorDeviceEvent(ce CursorDeviceEvent) error {
-	dt := time.Now().Sub(time0)
+	dt := time.Since(time0)
 	regionvalue := ""
 	if ce.Region != "" {
 		regionvalue = "\"region\": \"" + ce.Region + "\", "
@@ -47,7 +47,7 @@ func PublishCursorDeviceEvent(ce CursorDeviceEvent) error {
 
 // PublishMIDIDeviceEvent xxx
 func PublishMIDIDeviceEvent(me MIDIDeviceEvent) error {
-	dt := time.Now().Sub(time0)
+	dt := time.Since(time0)
 	// NOTE: we ignore the Timestamp on the MIDIDeviceEvent
 	// and use our own, so the timestamps are consistent with
 	// the ones on Cursor events
@@ -216,9 +216,11 @@ func setupConnOptions(opts []nats.Option) []nats.Option {
 }
 
 func handleDiscover(msg *nats.Msg) {
-	response := fmt.Sprintf("%s", MyNUID())
+	response := MyNUID()
 	if DebugUtil.API {
 		log.Printf("handleDiscover: data=%s reply=%s response=%s\n", string(msg.Data), msg.Reply, response)
 	}
 	msg.Respond([]byte(response))
 }
+
+var _ = handleDiscover // to avoid unused error from go-staticcheck

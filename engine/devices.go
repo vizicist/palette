@@ -38,11 +38,11 @@ type CursorStepEvent struct {
 // NOTE: these are the cursors caused by CursorStepEvents,
 // not the cursors caused by CursorDeviceEvents.
 type ActiveStepCursor struct {
-	id        string
-	x         float32
-	y         float32
-	z         float32
-	loopsLeft int
+	// id        string
+	x float32
+	y float32
+	z float32
+	// loopsLeft int
 	maxz      float32
 	lastDrag  Clicks // to filter MIDI events for drag
 	downEvent CursorStepEvent

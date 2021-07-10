@@ -86,8 +86,6 @@ func RealStartCursorInput(callback CursorDeviceCallbackFunc) {
 	}
 
 	go StartMorph(callback, 1.0)
-
-	return
 }
 
 // KillProcess kills a process (synchronously)

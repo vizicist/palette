@@ -124,7 +124,8 @@ NosuchOscUdpInput::Check()
 
 		ProcessReceivedPacket(inet_ntoa(sin.sin_addr),p);
     }
-    NosuchDebug("NosuchOscUdpInput.Check: quiting early, too many packets (%d)\n", toomany);
+    NosuchDebug(1,"NosuchOscUdpInput.Check: quiting early, too many packets at once (%d)\n", toomany);
+    // The rest of the packets will be picked up by the next call to Check()
 }
 
 void

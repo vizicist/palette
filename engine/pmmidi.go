@@ -23,7 +23,7 @@ type MIDIIO struct {
 }
 
 type MidiInput struct {
-	name     string
+	// name     string
 	deviceID portmidi.DeviceID
 	stream   *portmidi.Stream
 }

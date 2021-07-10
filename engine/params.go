@@ -21,10 +21,10 @@ type ParamDef struct {
 }
 
 type paramDefFloat struct {
-	min     float32
-	max     float32
-	Init    string
-	comment string
+	min  float32
+	max  float32
+	Init string
+	// comment string
 }
 
 type paramDefInt struct {
@@ -121,7 +121,7 @@ func (vals *ParamValues) paramDefOf(origname string) (ParamDef, error) {
 		// If it's a name like effect.mirror:x
 		n, err := fmt.Sscanf(withoutcolon, "%d-%s", &effnum, &base)
 		toreplace := withoutcolon
-		if err != nil {
+		if n != 2 || err != nil {
 			return ParamDef{}, fmt.Errorf("ParamValues.SetParamValueWithString err=%s", err)
 		}
 		realParamName = strings.Replace(origname, toreplace, base, 1)

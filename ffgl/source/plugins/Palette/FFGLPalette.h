@@ -9,13 +9,13 @@ public:
 	~FFGLPalette() { }
 
 	// override methods in CFFGLPlugin
-	FFResult InitGL( const FFGLViewportStruct* vp ) override;
-	FFResult ProcessOpenGL( ProcessOpenGLStruct* pGL ) override;
+	FFResult InitGL(const FFGLViewportStruct* vp) override;
+	FFResult ProcessOpenGL(ProcessOpenGLStruct* pGL) override;
 	FFResult DeInitGL() override;
-	FFResult SetFloatParameter( unsigned int dwIndex, float value ) override;
-	float GetFloatParameter( unsigned int index ) override;
-	FFResult SetTextParameter( unsigned int index, const char* value ) override;
-	char* GetTextParameter( unsigned int index ) override;
+	FFResult SetFloatParameter(unsigned int dwIndex, float value) override;
+	float GetFloatParameter(unsigned int index) override;
+	FFResult SetTextParameter(unsigned int index, const char* value) override;
+	char* GetTextParameter(unsigned int index) override;
 
 	PaletteHost* paletteHost;
 
@@ -23,23 +23,34 @@ public:
 	// Factory method
 	///////////////////////////////////////////////////
 
-	static FFResult __stdcall CreateInstance( CFFGLPlugin** ppOutInstance )
+	static FFResult __stdcall CreateInstance(CFFGLPlugin** ppOutInstance)
 	{
-		// The ffgl.json file is under %LOCALAPPDATA%
+		// The search for ffgl.json is as follows:
+		// - first look in $PALETTESOURCE if it's set
+		// - then look in %LOCALAPPDATA%
+		// - last resort is temp dir
+
 		std::string jsonpath;
 
-		char* pValue;
-		size_t len;
-		errno_t err = _dupenv_s( &pValue, &len, "LOCALAPPDATA" );
-		if( err || pValue == NULL) {
-			jsonpath = "c:\\windows\\temp\\ffgl.json";// last resort
-			NosuchDebug( "No value for LOCALAPPDATA? using jsonpath=%s\n", jsonpath.c_str() );
+		char* srcValue;
+		size_t srclen;
+		errno_t srcerr = _dupenv_s(&srcValue, &srclen, "PALETTESOURCE");
+		if (!srcerr && srcValue != NULL) {
+			jsonpath = std::string(srcValue) + "\\default\\config\\ffgl.json";
+			free(srcValue);
+		} else {
+			char* localValue;
+			size_t locallen;
+			errno_t localerr = _dupenv_s(&localValue, &locallen, "LOCALAPPDATA");
+			if (!localerr && localValue != NULL) {
+				jsonpath = std::string( localValue ) + "\\Palette\\config\\ffgl.json";
+				free( localValue );
+			} else {
+				jsonpath = "c:\\windows\\temp\\ffgl.json";// last resort
+				NosuchDebug("No value for LOCALAPPDATA? using jsonpath=%s\n", jsonpath.c_str());
+			}
 		}
-		else {
-			jsonpath = std::string( pValue ) + "\\Palette\\config\\ffgl.json";
-			free( pValue );
-		}
-		NosuchDebug( "Palette: config=%s", jsonpath.c_str() );
+
 		*ppOutInstance = new FFGLPalette( jsonpath );
 		if( *ppOutInstance != NULL )
 			return FF_SUCCESS;

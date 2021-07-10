@@ -189,7 +189,7 @@ func (n *Note) Compare(n2 *Note) int {
 		return 1
 	}
 
-	if d := n.Pitch - n2.Pitch; d < 0 {
+	if d := int(n.Pitch) - int(n2.Pitch); d < 0 {
 		return -1
 	} else if d > 0 {
 		return 1
@@ -201,7 +201,7 @@ func (n *Note) Compare(n2 *Note) int {
 		return 1
 	}
 
-	if d := n.Velocity - n2.Velocity; d < 0 {
+	if d := int(n.Velocity) - int(n2.Velocity); d < 0 {
 		return -1
 	} else if d > 0 {
 		return 1
