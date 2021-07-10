@@ -338,7 +338,7 @@ PaletteHost::PaletteHost(std::string configfile)
 		return;
 	}
 
-	// NosuchDebug("Loading config=%s\n",_configFile.c_str());
+	NosuchDebug("Loading config=%s\n",_configFile.c_str());
 	std::string line;
 	std::string jstr;
 	while ( getline(f,line) ) {
@@ -415,13 +415,10 @@ PaletteHost::LoadPaletteConfig(cJSON* c)
 	if ( (j=getString(c,"debugcursor")) != NULL ) {
 		NosuchDebugCursor = istrue(j->valuestring);
 	}
-	if ( (j=getNumber(c,"debugsprite")) != NULL ) {
+	if ( (j=getString(c,"debugsprite")) != NULL ) {
 		NosuchDebugSprite = istrue(j->valuestring);
 	}
-	if ( (j=getNumber(c,"debugsprite")) != NULL ) {
-		NosuchDebugSprite = istrue(j->valuestring);
-	}
-	if ( (j=getNumber(c,"debugautoflush")) != NULL ) {
+	if ( (j=getString(c,"debugautoflush")) != NULL ) {
 		NosuchDebugAutoFlush = istrue(j->valuestring);
 	}
 }
