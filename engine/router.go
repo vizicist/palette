@@ -134,10 +134,15 @@ func TheRouter() *Router {
 		oneRouter.regionForMorph = make(map[string]string)
 		oneRouter.regionAssignedToNUID = make(map[string]string)
 
-		// oneRouter.resolumeClient = osc.NewClient("127.0.0.1", 7000)
-		oneRouter.resolumeClient = osc.NewClient("192.168.1.104", 7000)
-		oneRouter.guiClient = osc.NewClient("127.0.0.1", 3943)
-		oneRouter.plogueClient = osc.NewClient("127.0.0.1", 3210)
+		resolumePort := 7000
+		guiPort := 3943
+		ploguePort := 3210
+
+		oneRouter.resolumeClient = osc.NewClient("127.0.0.1", resolumePort)
+		oneRouter.guiClient = osc.NewClient("127.0.0.1", guiPort)
+		oneRouter.plogueClient = osc.NewClient("127.0.0.1", ploguePort)
+
+		log.Printf("OSC client ports: resolume=%d gui=%d plogue=%d\n", resolumePort, guiPort, ploguePort)
 
 		for i, c := range oneRouter.regionLetters {
 			resolumeLayer := 1 + i
@@ -145,6 +150,7 @@ func TheRouter() *Router {
 			ch := string(c)
 			freeframeClient := osc.NewClient("127.0.0.1", resolumePort)
 			oneRouter.steppers[ch] = NewStepper(ch, resolumeLayer, freeframeClient, oneRouter.resolumeClient, oneRouter.guiClient)
+			log.Printf("Pad %s created, resolumeLayer=%d resolumePort=%d\n", ch, resolumeLayer, resolumePort)
 		}
 
 		oneRouter.OSCInput = make(chan OSCEvent)
@@ -1172,11 +1178,9 @@ func (r *Router) setRegionForMorph(serialnum string, region string) {
 	r.regionAssignedMutex.Lock()
 	defer r.regionAssignedMutex.Unlock()
 
-	log.Printf("setRegionForMorph: Assigning region=%s to serialnum=%s\n", region, serialnum)
-	r.regionForMorph[serialnum] = region
-}
-
-func (r *Router) assignRegionForMorph(serialnum string, region string) {
+	if DebugUtil.Morph {
+		log.Printf("setRegionForMorph: Assigning region=%s to serialnum=%s\n", region, serialnum)
+	}
 	r.regionForMorph[serialnum] = region
 }
 
