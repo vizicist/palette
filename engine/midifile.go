@@ -113,9 +113,9 @@ func (m *MIDIFile) Parse() error {
 }
 
 func (m *MIDIFile) readMT() (string, error) {
-	b0, err := m.readc()
-	b1, err := m.readc()
-	b2, err := m.readc()
+	b0, _ := m.readc()
+	b1, _ := m.readc()
+	b2, _ := m.readc()
 	b3, err := m.readc()
 	if err != nil {
 		return "", err
@@ -133,9 +133,9 @@ func (m *MIDIFile) readHeader() error {
 		return fmt.Errorf("bad header in midifile, expecting MThd, got %s", s)
 	}
 
-	m.toberead, err = m.read32bit()
-	m.format, err = m.read16bit()
-	m.ntracks, err = m.read16bit()
+	m.toberead, _ = m.read32bit()
+	m.format, _ = m.read16bit()
+	m.ntracks, _ = m.read16bit()
 	m.division, err = m.read16bit()
 	if err != nil {
 		return err
@@ -233,7 +233,7 @@ func (m *MIDIFile) noteoff(synth string, pitch, velocity byte) {
 		/* it's an isolated note-off */
 		n = m.queuenote(synth, pitch, velocity, NOTEOFF)
 		n.Duration = 0
-	} else if m.onoffmerge == false && velocity != defaultReleaseVelocity {
+	} else if !m.onoffmerge && velocity != defaultReleaseVelocity {
 		/* If the note-off matches a previous note-on, but has a */
 		/* non-default velocity, then we have to turn it into a */
 		/* separate keykit note-off, instead of merging it with */
@@ -520,7 +520,7 @@ func (m *MIDIFile) readTrack() error {
 			}
 			lookfor := m.toberead - lng
 
-			if sysexcontinue == false {
+			if !sysexcontinue {
 				m.msginit()
 			}
 
@@ -532,7 +532,7 @@ func (m *MIDIFile) readTrack() error {
 				m.msgadd(c)
 			}
 
-			if sysexcontinue == false {
+			if !sysexcontinue {
 				m.arbitrary("", m.msgbytes())
 			} else if c == 0xf7 {
 				m.sysex("", m.msgbytes())
@@ -560,9 +560,9 @@ func (m *MIDIFile) readc() (byte, error) {
 }
 
 func (m *MIDIFile) read32bit() (int, error) {
-	b0, err := m.readc()
-	b1, err := m.readc()
-	b2, err := m.readc()
+	b0, _ := m.readc()
+	b1, _ := m.readc()
+	b2, _ := m.readc()
 	b3, err := m.readc()
 	if err != nil {
 		return 0, err
@@ -573,7 +573,7 @@ func (m *MIDIFile) read32bit() (int, error) {
 }
 
 func (m *MIDIFile) read16bit() (int, error) {
-	b0, err := m.readc()
+	b0, _ := m.readc()
 	b1, err := m.readc()
 	if err != nil {
 		return 0, err
