@@ -184,7 +184,7 @@ class ProGuiApp(tk.Tk):
                     self.resetAll()
                     self.resetVisibility()
                     doneLoading = True
-                    self.sendAllParamsForAllPads()
+                    self.sendCurrentParamsForAllPads()
 
             if palette.resetAfterInactivity>0 and (now - self.lastAnything) > palette.resetAfterInactivity:
                 print("Resetting after no activity!!")
@@ -284,36 +284,58 @@ class ProGuiApp(tk.Tk):
         self.performContainer.place(in_=self.topContainer, relx=0, rely=self.performPageY, relwidth=1, relheight=pageSizeOfControl)
         self.selectFrame.place(in_=self.topContainer, relx=0, rely=0, relwidth=1, relheight=pageSizeOfSelect)
 
-    def paramIsPerPad(self,name):
-        return True
+    def saveQuad(self,name):
 
-    def readQuadParamsFile(self,paramsname):
-        fpath = palette.searchPresetsFilePath("quad", paramsname)
-        print("readQuadParamsFile: fpath=",fpath)
+        quadPath = palette.localPresetsFilePath("quad",name)
+        quadValues = {}
+
+        for padName in self.Pads:
+            pad = self.Pads[padName]
+            padvalues = pad.getValues()
+            for paramName in padvalues:
+                fullName = PadParamName(padName,paramName)
+                quadValues[fullName] = padvalues[paramName]
+
+        j = { "params": quadValues }
+        print("Saving quad in",quadPath)
+        SaveJsonInPath(j,quadPath)
+
+    def loadQuad(self,presetName):
+        fpath = palette.searchPresetsFilePath("quad", presetName)
+        print("readQuadPreset: fpath=",fpath)
         try:
             f = open(fpath)
         except:
             print("No such file?  CC fpath=",fpath)
             return
         j = json.load(f)
-        self.loadQuadJson(j,self.editPage["quad"])
+        self.loadQuadJson(j)
         f.close()
 
-    def loadQuadJson(self,j,quadpage):
+    def loadQuadJson(self,quadJson):
 
-        # If parameters exist that aren't in j, add their default value to j.
-        # This helps when new parameters are added that aren't in existing preset files.
-        for name in self.allParamsJson:
-            allj = self.allParamsJson[name]
-            (_,base) = padOfParam(name)
-            for pad in self.PadNames:
-                fullname = PadParamName(pad,base)
-                if not fullname in j["params"]:
-                    j["params"][fullname] = allj["init"]
+        if self.editMode:
+            print("loadQuadJson shouldn't be called in edit mode")
+            return
 
-        for name in j["params"]:
-            v = j["params"][name]
-            quadpage.changeValue(name,v)
+        # quadJson parameter names take the form A-shape,
+        # the first letter is the pad name.
+        quadParams = quadJson["params"]
+
+        for padName in self.PadNames:
+
+            pad = self.Pads[padName]
+
+            # If parameters exist that aren't in quadJson,
+            # use their default value to j.
+            # This helps when new parameters are added
+            # that aren't in existing preset files.
+            pad.setInitValues()
+
+            for fullname in quadParams:
+                (padnameofparam,baseparam) = padOfParam(fullname)
+                if padnameofparam == padName:
+                    pad.setValue(baseparam,quadParams[fullname])
 
     def makeSelectFrame(self,container):
 
@@ -424,13 +446,6 @@ class ProGuiApp(tk.Tk):
 
         self.performPage[pagename].tkraise()
 
-    def sendPadParamValue(self,pad,paramname,val):
-        # print("sendPadParamValue pad=",pad," name=",paramname," val=",val)
-        paramType = self.paramTypeOf[paramname]
-        palette.palette_region_api(pad,paramType+".set_param",
-            "\"param\": \"" + paramname + "\"" + \
-            ", \"value\": \"" + str(val) + "\"" )
-
     def paramCallback(self,paramname,newval):
 
         # print("paramCallback! paramname=",paramname," newval=",newval)
@@ -443,12 +458,6 @@ class ProGuiApp(tk.Tk):
         else:
             # self.Pads[self.CurrPad].changeValue(baseparam,newval)
             self.changeAndSendValue(baseparam,newval)
-
-    def getPadParamValue(self,pad,name):
-        t = self.paramValueTypeOf[name]
-        p = self.Pads[pad]
-        v = p.getParamValue(name)
-        return v
 
     def sendParamValues(self,values):
         print("sendParamValues: ",values)
@@ -465,27 +474,14 @@ class ProGuiApp(tk.Tk):
         if self.allPadsSelected:
             for padName in self.PadNames:
                 p = self.Pads[padName]
-                p.setValue(basename,newval)
-                # eventually move these into p.setValue
-                self.sendPadParamValue(padName,basename,newval)
+                p.setValueAndSend(basename,newval)
         else:
             p = self.Pads[self.CurrPad]
-            p.setValue(basename,newval)
-            # eventually move these into p.setValue
-            self.sendPadParamValue(self.CurrPad,basename,newval)
+            p.setValueAndSend(basename,newval)
 
         if self.editMode:
             page = self.editPage[self.currentPageName]
             page.changeValueText(basename,newval)
-
-    def changeValueInSnap(self,paramname,newval):
-        self.editPage["snap"].changeValue(paramname,newval)
-
-    def changeValueInQuad(self,pad,paramname,newval):
-        global IsQuad
-        if IsQuad:
-            quadName = PadParamName(pad,paramname)
-            self.editPage["quad"].changeValue(quadName,newval)
 
     def selectorApply(self,apply,paramType):
 
@@ -659,22 +655,6 @@ class ProGuiApp(tk.Tk):
         p.loadPresetValues(paramType,presetname)
         p.saveCurrent()
  
-    def loadQuad(self,quadname):
-
-        print("\n=== loadQuad ",quadname)
-
-        self.readQuadParamsFile(quadname)
-
-        # quadpage.comboParamsname.configure(values=self.paramFiles)
-
-        for pad in self.PadNames:
-            self.updatePageFromQuad("snap",pad)
-            self.saveCurrent(pad)
-
-        # for p in self.params:
-        #     self.changeValue(p,self.getValue(p))
-        # self.lift()
-
     def refreshPage(self):
         if self.editMode:
             # If we're in edit mode,
@@ -684,22 +664,6 @@ class ProGuiApp(tk.Tk):
             else:
                 self.copyPadToPage(self.CurrPad,self.currentPageName)
 
-    def updatePageFromQuad(self,pagename,frompad):
-        quadpage = self.editPage["quad"]
-        page = self.editPage[pagename]
-        for name in page.params:
-            qname = PadParamName(frompad,name)
-            v = quadpage.getValue(qname)
-            page.changeValue(name,v)
-
-    def updateQuadFromSnap(self,frompad):
-        quadpage = self.editPage["quad"]
-        snappage = self.editPage["snap"]
-        for name in snappage.params:
-            v = snappage.getValue(name)
-            qname = PadParamName(frompad,name)
-            quadpage.changeValue(qname,v)
- 
     def nextValue(self,arr,v):
             found = -1
             for i in range(len(arr)):
@@ -868,34 +832,20 @@ class ProGuiApp(tk.Tk):
             p.sendParamsOfType(paramType)
 
     def sendQuad(self):
-        for pad in self.PadNames:
-            print("Sending all parameters for pad = ",pad)
+        for padName in self.PadNames:
+            print("Sending all parameters for pad = ",padName)
             for pt in ["sound","visual","effect"]:
-                paramlistjson = self.quadParamListJson(pt,pad)
-                # print("sendQuad calling set_params for pad=",pad," pt=",pt," json=",paramlistjson)
-                palette.palette_region_api(pad, pt+".set_params", paramlistjson)
-
-    def quadParamListJson(self,pagename,pad):
-        quadpage = self.editPage["quad"]
-        paramlist = ""
-        sep = ""
-        for name in self.allParamsJson:
-            j = self.allParamsJson[name]
-            if j["paramstype"] == pagename:
-                paramname = PadParamName(pad,name)
-                v = quadpage.getValue(paramname)
-                paramlist = paramlist + sep + "\"" + name + "\" : \"" + str(v) + "\""
-                sep = ", "
-
-        return paramlist
+                paramlistjson = self.padParamListJson(pt,padName)
+                # print("   paramlistjson = ",paramlistjson)
+                palette.palette_region_api(padName, pt+".set_params", paramlistjson)
 
     def padParamListJson(self,paramType,padName):
         pad = self.Pads[padName]
         paramlist = pad.paramListOfType(paramType)
         return paramlist
 
-    def sendAllParamsForAllPads(self):
-        print("Sending all params for all pads")
+    def sendCurrentParamsForAllPads(self):
+        print("Sending current params for all pads")
         for paramType in ["sound","visual","effect"]:
             for pad in self.PadNames:
                 self.sendPadParamsOfType(pad,paramType)
@@ -1024,10 +974,13 @@ class Pad():
         self.paramValues = {}
         self.controller = controller
         self.params = self.controller.paramsOfType["snap"]
-        for paramName in self.params:
-            self.paramValues[paramName] = self.params[paramName]["init"]
+        self.setInitValues()
         self.snapPath = CurrentPadPath(padName)
         self.padName = padName
+
+    def setInitValues(self):
+        for paramName in self.params:
+            self.paramValues[paramName] = self.params[paramName]["init"]
 
     def getValues(self):
         return self.paramValues
@@ -1064,26 +1017,36 @@ class Pad():
     def loadJson(self,j):
         # the self.params has all (i.e. snap) parameters, but
         # we only want to load whatever's in the json we're given.
-        for name in j["params"]:
-            self.setValue(name,j["params"][name])
+        for paramName in j["params"]:
+            self.setValue(paramName,j["params"][paramName])
 
-    def setValue(self,name,val):
-        self.paramValues[name] = val
- 
-    def getValue(self,name):
-        return self.paramValues[name]
- 
-    def sendParamValue(self,paramname,val):
-        if not paramname in self.controller.paramTypeOf:
-            print("Unrecognized parameter: ",paramname)
+    def setValue(self,paramName,val):
+        if not paramName in self.paramValues:
+            print("Hey, Pad.setValue paramName=",paramName,"not in paramValues?")
             return
-        paramType = self.controller.paramTypeOf[paramname]
+        self.paramValues[paramName] = val
+ 
+    def getValue(self,paramName):
+        return self.paramValues[paramName]
+ 
+    def sendValue(self,paramName):
+        if not paramName in self.paramValues:
+            print("Hey, Pad.sendValue paramName=",paramName,"not in paramValues?")
+            return
+        val = self.paramValues[paramName]
+        if not paramName in self.controller.paramTypeOf:
+            print("Unrecognized parameter: ",paramName)
+            return
+        paramType = self.controller.paramTypeOf[paramName]
         palette.palette_region_api(self.padName,paramType+".set_param",
-            "\"param\": \"" + paramname + "\"" + \
+            "\"param\": \"" + paramName + "\"" + \
             ", \"value\": \"" + str(val) + "\"" )
 
     def sendParamsOfType(self,paramType):
         if paramType == "snap":
+            print("Is this ever used?")
+            # I think this code is obsolete
+            # because paramListOfType("snap") should work
             for pt in ["sound","visual","effect"]:
                 self.sendParamsOfType(pt)
         else:
@@ -1355,6 +1318,7 @@ class PageEditParams(tk.Frame):
         self.paramsFrame = self.makeParamsArea(self)
         self.scrollbar = ScrollBar(parent=self, notify=self)
 
+        # XXX this is old
         # On the "quad" and "snap" pages, the parameter values aren't shown,
         # just the buttons to import/export/save
         # if not (pagename == "quad" or pagename == "snap"):
@@ -1639,12 +1603,11 @@ class PageEditParams(tk.Frame):
 
     def setPresetNameInComboBox(self,name):
         self.paramsname = name
-        if not isCurrentName(name):
-            try:
-                n = self.paramFiles.index(name)
-                self.comboParamsname.current(n)
-            except:
-                pass
+        try:
+            n = self.paramFiles.index(name)
+            self.comboParamsname.current(n)
+        except:
+            pass
 
     def loadOtherPreset(self,name):
 
@@ -1678,10 +1641,10 @@ class PageEditParams(tk.Frame):
 
     def startEditing(self,name,doLift=True):
 
-        print("\n=== startEditing pagename=%s name=%s" % (self.pagename,name))
+        print("=== startEditing pagename=%s name=%s" % (self.pagename,name))
         if self.pagename == "quad":
-            print("\nAre you getting here?\n")
-            self.controller.readQuadParamsFile(name)
+            print("Are you getting here?")
+            # self.controller.readQuadPreset(name)
         else:
             self.controller.readSnapParamsFileIntoPage(name,self.pagename)
 
@@ -1762,15 +1725,9 @@ class PageEditParams(tk.Frame):
 
     def saveOkCallback(self):
         name = self.paramsnameVar.get()
-        if isCurrentName(name):
-            return
 
         if self.pagename == "quad":
-            print("XXX - needs work A")
-            # for pad in self.controller.PadNames:
-            #     self.loadSnapNamed(CurrentPadFilename(pad))
-            #     self.controller.updateQuadFromSnap(pad)
-            # self.saveJson("quad",name)
+            self.controller.saveQuad(name)
         else:
             self.saveJson(self.pagename,name)
             # self.saveJson(self.pagename,name)
@@ -2138,9 +2095,6 @@ def PadParamName(pad,param):
 
 def isTwoLine(text):
     return text.find(palette.LineSep) >= 0 or text.find("\n") >= 0
-
-def isCurrentName(name):
-    return name.startswith("CurrentPad")
 
 def CurrentPadFilename(pad):
     return "CurrentPad_"+pad
