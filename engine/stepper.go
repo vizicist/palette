@@ -1008,8 +1008,8 @@ func (r *Stepper) SetOneParamValue(apiprefix, name, value string) {
 // ExecuteAPI xxx
 func (r *Stepper) ExecuteAPI(api string, args map[string]string, rawargs string) (result string, err error) {
 
-	if DebugUtil.API {
-		log.Printf("ExecuteAPI: api=%s rawargs=%s\n", api, rawargs)
+	if DebugUtil.StepperAPI {
+		log.Printf("StepperAPI: api=%s rawargs=%s\n", api, rawargs)
 	}
 
 	dot := strings.Index(api, ".")
