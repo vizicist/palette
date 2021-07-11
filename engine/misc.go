@@ -22,21 +22,22 @@ var DebugUtil = DebugFlags{}
 
 // DebugFlags xxx
 type DebugFlags struct {
-	Advance   bool
-	API       bool
-	Cursor    bool
-	GenVisual bool
-	GenSound  bool
-	Loop      bool
-	Config    bool
-	MIDI      bool
-	Morph     bool
-	NATS      bool
-	OSC       bool
-	Resolume  bool
-	Notify    bool
-	Realtime  bool
-	Remote    bool
+	Advance    bool
+	API        bool
+	StepperAPI bool
+	Cursor     bool
+	GenVisual  bool
+	GenSound   bool
+	Loop       bool
+	Config     bool
+	MIDI       bool
+	Morph      bool
+	NATS       bool
+	OSC        bool
+	Resolume   bool
+	Notify     bool
+	Realtime   bool
+	Remote     bool
 }
 
 func setDebug(dtype string, b bool) error {
@@ -46,6 +47,8 @@ func setDebug(dtype string, b bool) error {
 		DebugUtil.Advance = b
 	case "api":
 		DebugUtil.API = b
+	case "executeapi":
+		DebugUtil.StepperAPI = b
 	case "cursor":
 		DebugUtil.Cursor = b
 	case "notify":
