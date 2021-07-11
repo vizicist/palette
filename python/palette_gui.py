@@ -69,9 +69,10 @@ class ProGuiApp(tk.Tk):
         self.readParamDefs()
 
         self.Pads = {}
-        for pad in self.PadNames:
-            self.Pads[pad] = Pad(self,pad)
-            self.Pads[pad].loadCurrent()
+        for padName in self.PadNames:
+            p = Pad(self,padName)
+            self.Pads[p] = padName
+            p.loadCurrent()
 
         self.allPadsSelected = False
 
@@ -101,10 +102,7 @@ class ProGuiApp(tk.Tk):
 
         self.performHeader = None
 
-        self.perpadPerformVal = {}
         self.globalPerformVal = {}
-        for s in palette.PerPadPerformLabels:
-            self.perpadPerformVal[s] = {}
         for s in palette.GlobalPerformLabels:
             self.globalPerformVal[s] = {}
 
@@ -184,7 +182,8 @@ class ProGuiApp(tk.Tk):
                     self.resetAll()
                     self.resetVisibility()
                     doneLoading = True
-                    self.sendCurrentParamsForAllPads()
+                    for pad in self.Pads:
+                        pad.sendParamsOfType("snap")
 
             if palette.resetAfterInactivity>0 and (now - self.lastAnything) > palette.resetAfterInactivity:
                 print("Resetting after no activity!!")
@@ -289,11 +288,10 @@ class ProGuiApp(tk.Tk):
         quadPath = palette.localPresetsFilePath("quad",name)
         quadValues = {}
 
-        for padName in self.Pads:
-            pad = self.Pads[padName]
+        for pad in self.Pads:
             padvalues = pad.getValues()
             for paramName in padvalues:
-                fullName = PadParamName(padName,paramName)
+                fullName = PadParamName(pad.name(),paramName)
                 quadValues[fullName] = padvalues[paramName]
 
         j = { "params": quadValues }
@@ -322,9 +320,7 @@ class ProGuiApp(tk.Tk):
         # the first letter is the pad name.
         quadParams = quadJson["params"]
 
-        for padName in self.PadNames:
-
-            pad = self.Pads[padName]
+        for pad in self.Pads:
 
             # If parameters exist that aren't in quadJson,
             # use their default value to j.
@@ -334,7 +330,7 @@ class ProGuiApp(tk.Tk):
 
             for fullname in quadParams:
                 (padnameofparam,baseparam) = padOfParam(fullname)
-                if padnameofparam == padName:
+                if padnameofparam == pad.name():
                     pad.setValue(baseparam,quadParams[fullname])
 
     def makeSelectFrame(self,container):
@@ -404,14 +400,23 @@ class ProGuiApp(tk.Tk):
             pass
         else:
             if self.editMode:
-                pad = self.CurrPad
                 if self.allPadsSelected:
                     print("allPadsSelected: using values from Pad A")
-                    pad = "A"
+                    pad = self.padNamed("A")
+                else:
+                    pad = self.CurrPad
 
                 page = self.editPage[pagename]
-                p = self.Pads[pad]
-                page.setValues(p.getValues())
+                page.setValues(pad.getValues())
+
+    def padNamed(self,padName):
+        lastResort = None
+        for pad in self.Pads:
+            lastResort = pad
+            if pad.name() == padName:
+                return pad
+        print("There is no Pad named",padName,", last resort, using",lastResort.name())
+        return lastResort
 
     def selectPage(self,pagename):
 
@@ -456,7 +461,6 @@ class ProGuiApp(tk.Tk):
         if pagename == "quad":
             print("HEY, DOES quad need some work here? BBB")
         else:
-            # self.Pads[self.CurrPad].changeValue(baseparam,newval)
             self.changeAndSendValue(baseparam,newval)
 
     def sendParamValues(self,values):
@@ -465,23 +469,22 @@ class ProGuiApp(tk.Tk):
             v = values[name]
             if self.allPadsSelected:
                 for pad in self.Pads:
-                    p = self.Pads[pad]
-                    p.sendParamValue(name,v)
+                    pad.sendParamValue(name,v)
             else:
-                self.Pads[self.CurrPad].sendParamValue(name,v)
+                self.CurrPad.sendParamValue(name,v)
 
     def changeAndSendValue(self,basename,newval):
         if self.allPadsSelected:
-            for padName in self.PadNames:
-                p = self.Pads[padName]
-                p.setValueAndSend(basename,newval)
+            for pad in self.Pads:
+                pad.setValue(basename,newval)
+                pad.sendValue(basename)
         else:
-            p = self.Pads[self.CurrPad]
-            p.setValueAndSend(basename,newval)
+            self.CurrPad.setValue(basename,newval)
+            self.CurrPad.sendValue(basename)
 
-        if self.editMode:
-            page = self.editPage[self.currentPageName]
-            page.changeValueText(basename,newval)
+        # if self.editMode:
+        #     page = self.editPage[self.currentPageName]
+        #     page.changeValueText(basename,newval)
 
     def selectorApply(self,apply,paramType):
 
@@ -489,23 +492,28 @@ class ProGuiApp(tk.Tk):
             print("Hmmm, selectorAply should only be called in editMode")
             return
 
-        if paramType == "snap" or paramType == "quad":
-            print("selectorApply not yet implemented on snap/quad")
+        if paramType == "quad":
+            print("selectorApply not implemented on quad")
         else:
+
             self.applyToAllParams(apply,paramType)
+
+            self.refreshPage()
+            self.saveCurrent()
+
             if self.allPadsSelected:
                 print("Sending",paramType,"params to all pads")
-                for pad in self.PadNames:
-                    self.sendPadParamsOfType(pad,paramType)
+                for pad in self.Pads:
+                    pad.sendParamsOfType(paramType)
             else:
-                print("Sending",paramType,"params to pad",self.CurrPad)
-                self.sendPadParamsOfType(self.CurrPad,paramType)
+                print("Sending",paramType,"params to pad",self.CurrPad.name())
+                self.CurrPad.sendParamsOfType(paramType)
 
-    def applyToAllParams(self,apply,pagename):
+    def applyToAllParams(self,apply,paramType):
         # loop through all the parameters of a given type
         for name in self.allParamsJson:
             j = self.allParamsJson[name]
-            if j["paramstype"] != pagename:
+            if paramType != "snap" and j["paramstype"] != paramType:
                 continue
             valuetype = j["valuetype"]
             (p,basename) = padOfParam(name)
@@ -563,21 +571,14 @@ class ProGuiApp(tk.Tk):
                         v = enums[i]
 
             if v != "":
-                # editpage.changeValue(basename,v)
                 self.changeAndSendValue(basename,v)
-
-        self.saveCurrent()
 
     def saveCurrent(self):
         if self.allPadsSelected:
-            for pad in self.PadNames:
-                self.saveCurrentForPad(pad)
+            for pad in self.Pads:
+                pad.saveCurrent()
         else:
-            self.saveCurrentForPad(self.CurrPad)
-
-    def saveCurrentForPad(self,padName):
-        p = self.Pads[padName]
-        p.saveCurrent()
+            self.CurrPad.saveCurrent()
 
     def selectorLoadAndSend(self,paramType,presetname,buttoni):
 
@@ -591,7 +592,14 @@ class ProGuiApp(tk.Tk):
             self.sendQuad()
         else:
             self.loadOther(paramType,presetname)
-            self.sendParamsOfType(paramType)
+            self.sendOther(paramType)
+
+    def sendOther(self,paramType):
+        if self.allPadsSelected:
+            for pad in self.Pads:
+                pad.sendParamsOfType(paramType)
+        else:
+            self.CurrPad.sendParamsOfType(paramType)
 
     def selectorImportAndSend(self,paramType,val):
         j = json.loads(val)
@@ -612,16 +620,16 @@ class ProGuiApp(tk.Tk):
             print("Hey, does quad need work here?  FFF")
         else:
             self.readOtherParamsJsonIntoSnapAndQuad(paramType,j)
-            print("Sending",paramType,"params to pad",self.CurrPad)
-            self.sendPadParamsOfType(self.CurrPad,paramType)
+            print("Sending",paramType,"params to pad",self.CurrPad.name())
+            self.CurrPad.sendParamsOfType(paramType)
 
-    def padChooserCallback(self,pad):
-        self.CurrPad = pad
+    def padChooserCallback(self,padName):
+        self.CurrPad = self.padNamed(padName)
 
         self.allPadsSelected = False
 
         if len(self.PadNames) > 1:
-            self.selectHeader.padChooser.refreshColors()
+            self.selectHeader.padChooser.refreshPadColors()
 
         self.refreshPage()
 
@@ -630,9 +638,8 @@ class ProGuiApp(tk.Tk):
 
         self.editPage[self.currentPageName].updateParamView()
 
-    def copyPadToPage(self,padName,pageName):
-        p = self.Pads[padName]
-        padvalues = p.getValues()
+    def copyPadToPage(self,pad,pageName):
+        padvalues = pad.getValues()
         page = self.editPage[pageName]
         for nm in padvalues:
             page.changeValueText(nm,padvalues[nm])
@@ -641,105 +648,32 @@ class ProGuiApp(tk.Tk):
 
         # Load values into the params of the currently-selected Pads
         if self.allPadsSelected:
-            for pad in self.PadNames:
-                self.loadPadValues(pad,paramType,presetname)
+            for pad in self.Pads:
+                pad.loadValues(paramType,presetname)
         else:
-            self.loadPadValues(self.CurrPad,paramType,presetname)
+            self.CurrPad.loadValues(paramType,presetname)
 
         # load values into the edit page
         # page = self.editPage[pagename]
         # page.loadOtherPreset(presetname)
 
-    def loadPadValues(self,padName,paramType,presetname):
-        p = self.Pads[padName]
-        p.loadPresetValues(paramType,presetname)
-        p.saveCurrent()
- 
     def refreshPage(self):
         if self.editMode:
             # If we're in edit mode,
             # make sure the values are updated from the Pad values
             if self.allPadsSelected:
-                self.copyPadToPage("A",self.currentPageName)
+                self.copyPadToPage(self.padNamed("A"),self.currentPageName)
             else:
                 self.copyPadToPage(self.CurrPad,self.currentPageName)
 
     def nextValue(self,arr,v):
-            found = -1
-            for i in range(len(arr)):
-                if arr[i]["value"] == v["value"]:
-                    found = i
-                    break
-            found = (found + 1) % len(arr)
-            return arr[found]
-
-    def sendPadPerformVal(self,pad,name):
-        # print("sendPadPerformVal pad=",pad," name=",name)
-        if name == "loopingonoff":
-            val = self.perpadPerformVal["loopingonoff"][pad]["value"]
-            reconoff = False
-            playonoff = False
-            if val == "off":
-                pass
-            elif val == "recplay":
-                reconoff = True
-                playonoff = True
-            elif val == "play":
-                reconoff = False
-                playonoff = True
-            else:
-                print("Unrecognized value of loopingonoff - %s\n" % val)
-                return
-
-            palette.palette_region_api(self.CurrPad, "loop_recording", '"onoff": "'+str(reconoff)+'"')
-            palette.palette_region_api(self.CurrPad, "loop_playing", '"onoff": "'+str(playonoff)+'"')
-
-        elif name == "loopinglength":
-            v = self.perpadPerformVal["loopinglength"][pad]["value"]
-            palette.palette_region_api(self.CurrPad, "loop_length", '"length": "'+str(v)+'"')
-
-        elif name == "loopingfade":
-            fade = self.perpadPerformVal["loopingfade"][pad]["value"]
-            palette.palette_region_api(self.CurrPad, "loop_fade", '"fadelength": "'+str(fade)+'"')
-
-        elif name == "quant":
-            val = self.perpadPerformVal["quant"][pad]["value"]
-            palette.palette_region_api(self.CurrPad, "set_param",
-                "\"param\": \"" + "misc.quant" + "\"" + \
-                ", \"value\": \"" + str(val) + "\"")
-        elif name == "scale":
-            val = self.perpadPerformVal["scale"][pad]["value"]
-            palette.palette_region_api(self.CurrPad, "set_param",
-                "\"param\": \"" + "misc.scale" + "\"" + \
-                ", \"value\": \"" + str(val) + "\"")
-
-        elif name == "vol":
-            val = self.perpadPerformVal["vol"][pad]["value"]
-            # NOTE: "voltype" here rather than "vol" - should make consistent someday
-            palette.palette_region_api(self.CurrPad, "set_param",
-                "\"param\": \"" + "misc.vol" + "\"" + \
-                ", \"value\": \"" + str(val) + "\"")
-
-        elif name == "comb":
-            val = 1.0
-            palette.palette_region_api(self.CurrPad, "loop_comb",
-                "\"value\": \"" + str(val) + "\"")
-
-        elif name == "midithru":
-            thru = self.perpadPerformVal["midithru"][pad]["value"]
-            palette.palette_region_api(self.CurrPad, "midi_thru", "\"thru\": \"" + str(thru) + "\"")
-
-        elif name == "useexternalscale":
-            onoff = self.perpadPerformVal["useexternalscale"][pad]["value"]
-            palette.palette_region_api(self.CurrPad, "useexternalscale", "\"onoff\": \"" + str(onoff) + "\"")
-
-        elif name == "midiquantized":
-            quantized = self.perpadPerformVal["midiquantized"][pad]["value"]
-            palette.palette_region_api(self.CurrPad, "midi_quantized", "\"quantized\": \"" + str(quantized) + "\"")
-
-        elif name == "transpose":
-            val = self.globalPerformVal["transpose"][pad]["value"]
-            palette.palette_region_api(self.CurrPad, "set_transpose", "\"value\": \""+str(val) + "\"")
+        found = -1
+        for i in range(len(arr)):
+            if arr[i]["value"] == v["value"]:
+                found = i
+                break
+        found = (found + 1) % len(arr)
+        return arr[found]
 
     def sendGlobalPerformVal(self,name):
 
@@ -753,18 +687,18 @@ class ProGuiApp(tk.Tk):
         #     print("CONFIGNAME setting to ",palette.getConfigName())
 
     def clearPadLoop(self,pad):
-        palette.palette_region_api(self.CurrPad, "loop_clear", "")
+        palette.palette_region_api(self.CurrPad.name(), "loop_clear", "")
 
     def combPadLoop(self,pad):
-        palette.palette_region_api(self.CurrPad, "loop_comb", "")
+        palette.palette_region_api(self.CurrPad.name(), "loop_comb", "")
 
     def combLoop(self):
         self.resetLastAnything()
-        self.combPadLoop(self.CurrPad)
+        self.combPadLoop(self.CurrPad.name())
 
     def clearLoop(self):
         self.resetLastAnything()
-        self.clearPadLoop(self.CurrPad)
+        self.clearPadLoop(self.CurrPad.name())
 
     def cycleAdvancedLevel(self):
             # cycle through 0,1,2
@@ -793,9 +727,9 @@ class ProGuiApp(tk.Tk):
         self.sendANO()
         self.clearExternalScale()
 
-        for pad in self.PadNames:
+        for pad in self.Pads:
             for name in palette.PerPadPerformLabels:
-                self.sendPadPerformVal(pad,name)
+                pad.sendPerformVal(name)
 
         for name in palette.GlobalPerformLabels:
             self.sendGlobalPerformVal(name)
@@ -808,58 +742,26 @@ class ProGuiApp(tk.Tk):
 
     def setupVals(self):
 
-        # XXX - perpadPerformVal should be inside class Pad
-        for pad in self.PadNames:
-            for name in palette.PerPadPerformLabels:
-                self.perpadPerformVal[name][pad] = palette.PerPadPerformLabels[name][0]
-
         for name in palette.GlobalPerformLabels:
             self.globalPerformVal[name] = palette.GlobalPerformLabels[name][0]
 
     def clearExternalScale(self):
-        palette.palette_region_api(self.CurrPad, "clearexternalscale")
+        palette.palette_region_api(self.CurrPad.name(), "clearexternalscale")
 
     def sendANO(self):
-        palette.palette_region_api(self.CurrPad, "ANO")
-
-    def sendParamsOfType(self,paramType):
-        if self.allPadsSelected:
-            for padName in self.PadNames:
-                p = self.Pads[padName]
-                p.sendParamsOfType(paramType)
-        else:
-            p = self.Pads[self.CurrPad]
-            p.sendParamsOfType(paramType)
+        palette.palette_region_api(self.CurrPad.name(), "ANO")
 
     def sendQuad(self):
-        for padName in self.PadNames:
-            print("Sending all parameters for pad = ",padName)
+        for pad in self.Pads:
+            print("Sending all parameters for pad = ",pad.name())
             for pt in ["sound","visual","effect"]:
-                paramlistjson = self.padParamListJson(pt,padName)
-                # print("   paramlistjson = ",paramlistjson)
-                palette.palette_region_api(padName, pt+".set_params", paramlistjson)
+                paramlistjson = pad.paramListOfType(pt)
+                palette.palette_region_api(pad.name(), pt+".set_params", paramlistjson)
 
-    def padParamListJson(self,paramType,padName):
-        pad = self.Pads[padName]
-        paramlist = pad.paramListOfType(paramType)
-        return paramlist
-
-    def sendCurrentParamsForAllPads(self):
-        print("Sending current params for all pads")
-        for paramType in ["sound","visual","effect"]:
-            for pad in self.PadNames:
-                self.sendPadParamsOfType(pad,paramType)
-
-    def sendPadParamsOfType(self,pad,paramType):
-        for pt in ["sound","visual","effect"]:
-            paramlistjson = self.padParamListJson(pt,pad)
-            if paramType == None or paramType == pt:
-                palette.palette_region_api(pad, pt+".set_params", paramlistjson)
-
-        if paramType == None:
-            for name in palette.PerPadPerformLabels:
-                self.sendPadPerformVal(pad,name)
-
+    # def padParamListJson(self,paramType,padName):
+    #    pad = self.Pads[padName]
+    #    paramlist = pad.paramListOfType(paramType)
+    #    return paramlist
 
     def synthesizeParamsJson(self):
 
@@ -978,6 +880,15 @@ class Pad():
         self.snapPath = CurrentPadPath(padName)
         self.padName = padName
 
+        self.perpadPerformVal = {}
+        for s in palette.PerPadPerformLabels:
+            self.perpadPerformVal[s] = {}
+        for name in palette.PerPadPerformLabels:
+            self.perpadPerformVal[name] = palette.PerPadPerformLabels[name][0]
+
+    def name(self):
+        return self.padName
+
     def setInitValues(self):
         for paramName in self.params:
             self.paramValues[paramName] = self.params[paramName]["init"]
@@ -985,6 +896,10 @@ class Pad():
     def getValues(self):
         return self.paramValues
 
+    def loadValues(self,paramType,presetname):
+        self.loadPresetValues(paramType,presetname)
+        self.saveCurrent()
+ 
     def loadCurrent(self):
         path = self.snapPath
         if not self.loadFile(path):
@@ -1043,18 +958,84 @@ class Pad():
             ", \"value\": \"" + str(val) + "\"" )
 
     def sendParamsOfType(self,paramType):
-        if paramType == "snap":
-            print("Is this ever used?")
-            # I think this code is obsolete
-            # because paramListOfType("snap") should work
-            for pt in ["sound","visual","effect"]:
-                self.sendParamsOfType(pt)
-        else:
-            paramlistjson = self.paramListOfType(paramType)
-            print("Sending pad",self.padName,"params of type",paramType)
-            # print("   paramlistjson = ",paramlistjson)
-            palette.palette_region_api(self.padName, paramType+".set_params", paramlistjson)
+        for pt in ["sound","visual","effect"]:
+            if paramType == "snap" or paramType == pt:
+                paramlistjson = self.paramListOfType(pt)
+                palette.palette_region_api(self.name(), pt+".set_params", paramlistjson)
 
+        if paramType == None:
+            for name in palette.PerPadPerformLabels:
+                self.sendPerformVal(name)
+
+    def sendPerformVal(self,name):
+        # print("sendPadPerformVal pad=",pad," name=",name)
+        if name == "loopingonoff":
+            val = self.perpadPerformVal["loopingonoff"]["value"]
+            reconoff = False
+            playonoff = False
+            if val == "off":
+                pass
+            elif val == "recplay":
+                reconoff = True
+                playonoff = True
+            elif val == "play":
+                reconoff = False
+                playonoff = True
+            else:
+                print("Unrecognized value of loopingonoff - %s\n" % val)
+                return
+
+            palette.palette_region_api(self.name(), "loop_recording", '"onoff": "'+str(reconoff)+'"')
+            palette.palette_region_api(self.name(), "loop_playing", '"onoff": "'+str(playonoff)+'"')
+
+        elif name == "loopinglength":
+            v = self.perpadPerformVal["loopinglength"]["value"]
+            palette.palette_region_api(self.name(), "loop_length", '"length": "'+str(v)+'"')
+
+        elif name == "loopingfade":
+            fade = self.perpadPerformVal["loopingfade"]["value"]
+            palette.palette_region_api(self.name(), "loop_fade", '"fadelength": "'+str(fade)+'"')
+
+        elif name == "quant":
+            val = self.perpadPerformVal["quant"]["value"]
+            palette.palette_region_api(self.name(), "set_param",
+                "\"param\": \"" + "misc.quant" + "\"" + \
+                ", \"value\": \"" + str(val) + "\"")
+        elif name == "scale":
+            val = self.perpadPerformVal["scale"]["value"]
+            palette.palette_region_api(self.name(), "set_param",
+                "\"param\": \"" + "misc.scale" + "\"" + \
+                ", \"value\": \"" + str(val) + "\"")
+
+        elif name == "vol":
+            val = self.perpadPerformVal["vol"]["value"]
+            # NOTE: "voltype" here rather than "vol" - should make consistent someday
+            palette.palette_region_api(self.name(), "set_param",
+                "\"param\": \"" + "misc.vol" + "\"" + \
+                ", \"value\": \"" + str(val) + "\"")
+
+        elif name == "comb":
+            val = 1.0
+            palette.palette_region_api(self.name(), "loop_comb",
+                "\"value\": \"" + str(val) + "\"")
+
+        elif name == "midithru":
+            thru = self.perpadPerformVal["midithru"]["value"]
+            palette.palette_region_api(self.name(), "midi_thru", "\"thru\": \"" + str(thru) + "\"")
+
+        elif name == "useexternalscale":
+            onoff = self.perpadPerformVal["useexternalscale"]["value"]
+            palette.palette_region_api(self.name(), "useexternalscale", "\"onoff\": \"" + str(onoff) + "\"")
+
+        elif name == "midiquantized":
+            quantized = self.perpadPerformVal["midiquantized"]["value"]
+            palette.palette_region_api(self.name(), "midi_quantized", "\"quantized\": \"" + str(quantized) + "\"")
+
+        elif name == "transpose":
+            val = self.globalPerformVal["transpose"]["value"]
+            palette.palette_region_api(self.name(), "set_transpose", "\"value\": \""+str(val) + "\"")
+
+ 
     def paramListOfType(self,paramType):
         paramlist = ""
         sep = ""
@@ -1129,9 +1110,9 @@ class PadChooser(tk.Frame):
     def allPadsSelectedCallback(self,e):
         self.controller.allPadsSelected = not self.controller.allPadsSelected
         self.controller.refreshPage()
-        self.refreshColors()
+        self.refreshPadColors()
 
-    def refreshColors(self):
+    def refreshPadColors(self):
         if self.controller.allPadsSelected:
             color = palette.ColorHigh
         else:
@@ -1139,7 +1120,7 @@ class PadChooser(tk.Frame):
         self.padGlobalButton.config(background=color)
         self.padGlobalLabel.config(background=color)
         for p in self.controller.PadNames:
-            if self.controller.allPadsSelected or p != self.controller.CurrPad:
+            if self.controller.allPadsSelected or p != self.controller.CurrPad.name():
                 self.colorPad(p,color)
             else:
                 self.colorPad(p,palette.ColorHigh)
@@ -1179,7 +1160,7 @@ class PadChooser(tk.Frame):
         for pad in self.padFrame:
             if e.widget == self.padFrame[pad] or e.widget == self.padLabel[pad]:
                 self.controller.padChooserCallback(pad)
-                self.refreshColors()
+                self.refreshPadColors()
                 return
         print("No pad found in padCallback!?")
 
@@ -1379,7 +1360,7 @@ class PageEditParams(tk.Frame):
     def makeButtonArea(self):
         f = tk.Frame(self, background=palette.ColorBg)
 
-        if self.pagename != "snap" and self.pagename != "quad":
+        if self.pagename != "quad":
             self.initButton = ttk.Label(f, text="Init", style='Button.TLabel')
             self.initButton.bind("<Button-1>", lambda event:self.initCallback())
             self.initButton.bind("<ButtonRelease-1>", lambda event:self.initRelease())
@@ -1923,8 +1904,8 @@ class PagePerformMain(tk.Frame):
         for name in self.buttonNames:
             button = self.performButton[name]
 
-            if name in self.controller.perpadPerformVal:
-                text = self.controller.perpadPerformVal[name][pad]["label"]
+            if name in pad.perpadPerformVal:
+                text = pad.perpadPerformVal[name]["label"]
             elif name in self.controller.globalPerformVal:
                 text = self.controller.globalPerformVal[name]["label"]
             else:
@@ -1965,15 +1946,15 @@ class PagePerformMain(tk.Frame):
         controller = self.controller
         controller.resetLastAnything()
         if name in palette.PerPadPerformLabels:
-            v = controller.perpadPerformVal[name][controller.CurrPad]
+            v = controller.perpadPerformVal[name][controller.CurrPad.name()]
             nv = controller.nextValue(palette.PerPadPerformLabels[name],v)
             text = nv["label"]
             if isTwoLine(text):
                 text = text.replace(palette.LineSep,"\n",1)
             self.performButton[name].config(text=text)
 
-            controller.perpadPerformVal[name][controller.CurrPad] = nv
-            controller.sendPadPerformVal(controller.CurrPad,name)
+            controller.perpadPerformVal[name][controller.CurrPad.name()] = nv
+            controller.sendPadPerformVal(controller.CurrPad.name(),name)
 
         elif name in palette.GlobalPerformLabels:
             v = controller.globalPerformVal[name]

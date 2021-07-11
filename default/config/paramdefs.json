@@ -57,7 +57,7 @@
 "effect.trails:feedback": {"valuetype": "float", "min": "0.0", "max": "1.0", "randmin":"0.5", "randmax":"0.70", "init": "0.70", "comment": "#" },
 
 "misc.quant": {"valuetype":"string", "min":"quant", "max":"quant", "init":"frets", "comment":"# Quantization style" },
-"misc.scale": {"valuetype":"string", "min":"scale", "max":"scale", "init":"newage", "comment":"# Quantization style" },
+"misc.scale": {"valuetype":"string", "min":"scale", "max":"scale", "randmax":"newage", "init":"newage", "comment":"# Quantization style" },
 "misc.vol": {"valuetype":"string", "min":"vol", "max":"vol", "init":"pressure", "comment":"# Velocity style" },
 "misc.enable:sound": {"valuetype":"bool", "min":"false", "max":"true", "init":"true", "comment":"# Enable Sound" },
 "misc.enable:visual": {"valuetype":"bool", "min":"false", "max":"true", "init":"true", "comment":"# Enable Visual" },
