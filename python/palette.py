@@ -60,9 +60,12 @@ resetAfterInactivity = -1
 
 OneBeat = 96
 
-PerPadPerformLabels = {}
+PerformLabels = {}
 GlobalPerformLabels = {}
-PerPadPerformLabels["loopinglength"] = [
+
+PerformDefaultVal = {} # these values are indexes into PerformLabels
+
+PerformLabels["loopinglength"] = [
     {"label":"Loop Length_8 beats",  "value":8*OneBeat},
     {"label":"Loop Length_16 beats", "value":16*OneBeat},
     {"label":"Loop Length_32 beats", "value":32*OneBeat},
@@ -99,42 +102,46 @@ PerformScales = [
     {"label":"Raga4_Scale", "value":"raga4"},
 ]
 
-PerPadPerformLabels["quant"] = [
+PerformLabels["quant"] = [
     {"label":"Fret_Quantize", "value":"frets"},
     {"label":"Pressure_Quantize", "value":"pressure"},
     {"label":"Fixed_Time Quant", "value":"fixed"},
     {"label":"No_Quant",  "value":"none"},
 ]
-PerPadPerformLabels["vol"] = [
+PerformLabels["vol"] = [
     {"label":"Pressure_Vol", "value":"pressure"},
     {"label":"Fixed_Vol", "value":"fixed"},
 ]
-PerPadPerformLabels["loopingfade"] = [
+
+PerformLabels["loopingfade"] = [
+    {"label":"Loop Fade_Fastest", "value":0.05},
+    {"label":"Loop Fade_Faster", "value":0.1},
+    {"label":"Loop Fade_Fast", "value":0.2},
     {"label":"Loop Fade_Med",  "value":0.4},
     {"label":"Loop Fade_Slow", "value":0.5},
     {"label":"Loop Fade_Slower", "value":0.6},
     {"label":"Loop Fade_Slowest", "value":0.7},
     {"label":"Loop_Forever", "value":1.0},
-    {"label":"Loop Fade_Fast", "value":0.2},
-    {"label":"Loop Fade_Faster", "value":0.1},
-    {"label":"Loop Fade_Fastest", "value":0.05},
 ]
-PerPadPerformLabels["loopingonoff"] = [
+PerformDefaultVal["loopingfade"] = 5
+
+PerformLabels["loopingonoff"] = [
     {"label":"Looping_is OFF",  "value":"off"},
-    {"label":"Looping_REC+PLAY", "value":"recplay"},
-    {"label":"Looping_PLAY ONLY", "value":"play"},
+    {"label":"Looping_is ON", "value":"recplay"},
+    # {"label":"Looping_REC+PLAY", "value":"recplay"},
+    # {"label":"Looping_PLAY ONLY", "value":"play"},
 ]
-PerPadPerformLabels["midithru"] = [
+PerformLabels["midithru"] = [
     {"label":"MIDI Input_Thru",  "value":"thru"},
     {"label":"MIDI Input_Set Scale",  "value":"setscale"},
     {"label":"MIDI Input_Thru Scadjust", "value":"thruscadjust"},
     {"label":"MIDI Input_Disabled",  "value":"disabled"},
 ]
-PerPadPerformLabels["useexternalscale"] = [
+PerformLabels["useexternalscale"] = [
     {"label":"External Scale_Off",  "value":False},
     {"label":"External Scale_On",  "value":True},
 ]
-PerPadPerformLabels["midiquantized"] = [
+PerformLabels["midiquantized"] = [
     {"label":"MIDI Thru_Unquantized",  "value":False},
     {"label":"MIDI Thru_Quantized",  "value":True},
 ]
