@@ -28,6 +28,7 @@ Verbose = False
 MyNuid = ""
 PaletteSourceLogged = False
 
+IsQuad = False
 RecMode = False
 StartupMode = True
 IncludeSound = True  # to activate Sound page
@@ -175,10 +176,10 @@ def makeStyles(app):
     s.configure('RandEtcButtonHigh.TLabel', font=largerFont, foreground=ColorText, background=ColorHigh)
 
     s.configure('ParamName.TLabel', font=paramNameFont, foreground=ColorText, justify=tk.LEFT)
-    s.configure('ParamValue.TLabel', foreground=ColorText, borderwidth=2, justify=tk.RIGHT, background=ColorBg, font=largerFont)
-    s.configure('ParamAdjust.TLabel', foreground=ColorText, borderwidth=2, anchor=tk.CENTER, background=ColorButton, font=largeFont)
+    s.configure('ParamValue.TLabel', font=paramValueFont, foreground=ColorText, borderwidth=2, justify=tk.RIGHT, background=ColorBg)
+    s.configure('ParamAdjust.TLabel', foreground=ColorText, borderwidth=2, anchor=tk.CENTER, background=ColorButton, font=paramAdjustFont)
 
-    s.configure('GlobalButton.TLabel', background=ColorButton, relief="flat", justify=tk.CENTER, font=padLabelFont)
+    s.configure('GlobalButton.TLabel', font=padLabelFont, background=ColorButton, relief="flat", justify=tk.CENTER)
 
     s.configure('PerformMessage.TLabel', background=ColorBg, foreground=ColorRed, relief="flat", justify=tk.CENTER, align=tk.CENTER, font=performButtonFont)
 
@@ -252,7 +253,7 @@ def setFontSizes(fontFactor):
     global presetButtonFont, largestFont
     global hugeFont, comboFont, largerFont, largeFont
     global performButtonFont, performSmallFont
-    global padLabelFont, paramNameFont
+    global padLabelFont, paramNameFont, paramValueFont, paramAdjustFont
     f = 'Helvetica'
     f = 'Lucida Sans'
     presetButtonFont = (f, int(16*fontFactor))
@@ -260,6 +261,8 @@ def setFontSizes(fontFactor):
     hugeFont = (f, int(36*fontFactor))
     comboFont = (f, int(20*fontFactor))
     paramNameFont = (f, int(18*fontFactor))
+    paramValueFont = (f, int(18*fontFactor))
+    paramAdjustFont = (f, int(20*fontFactor))
     largerFont = (f, int(20*fontFactor))
     largeFont = (f, int(16*fontFactor))
     performButtonFont = (f, int(16*fontFactor))
