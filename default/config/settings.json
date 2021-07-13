@@ -5,8 +5,8 @@
   "publishmidi": "false",
   "natsconf": "natsalone.conf",
   "presetspath": "%LOCALAPPDATA%\\Palette\\presets;%PALETTE%\\presets",
-  "debug": "api",
+  "debug": "",
   "pads":"ABCD",
-  "guilevel":"0",
+  "guilevel":"2",
   "this line should not end with a comma": 0
 }
