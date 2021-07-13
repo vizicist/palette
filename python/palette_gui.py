@@ -22,12 +22,6 @@ import palette
 
 signal.signal(signal.SIGINT,signal.SIG_IGN)
 
-global TopContainer
-TopContainer = None
-global TopApp
-TopApp = None
-global IsQuad
-IsQuad = False
 global ShowImport
 ShowImport = False
 
@@ -46,6 +40,44 @@ class ProGuiApp(tk.Tk):
             padnames,
             visiblepagenames
             ):
+
+        s = palette.ConfigValue("guilevel")
+        if s == "":
+            self.defaultGuiLevel = 0
+        else:
+            self.defaultGuiLevel = int(s)
+
+        self.setGuiLevel(self.defaultGuiLevel)
+
+        self.fontFactor = 1.0
+        self.thumbFactor = 0.1
+
+        self.selectDisplayPerRow = 4
+
+        self.pageSizeOfSelectNormal = 0.922
+        self.pageSizeOfControlNormal = 1.0 - self.pageSizeOfSelectNormal
+        self.pageSizeOfPadChooserNormal = 0.0
+        self.selectDisplayRowsNormal = 17
+        self.paramDisplayRowsNormal = 27
+
+        self.pageSizeOfSelectAdvanced = 0.75
+        self.pageSizeOfControlAdvanced = 0.15
+        self.pageSizeOfPadChooserAdvanced = 0.1
+        self.selectDisplayRowsAdvanced = 15
+        self.paramDisplayRowsAdvanced = 24
+        if (self.pageSizeOfSelectAdvanced + self.pageSizeOfControlAdvanced + self.pageSizeOfPadChooserAdvanced) != 1.0:
+            print("Hey, page sizes don't add up to 1.0")
+
+        self.performButtonPadx = 6
+        self.performButtonPady = 3
+
+        self.selectButtonPadx = 5
+        self.selectButtonPady = 3
+
+        self.setPageSizes()
+
+        palette.setFontSizes(self.fontFactor)
+        palette.PerformLabels["scale"] = palette.SimpleScales
 
         tk.Tk.__init__(self)
 
@@ -91,15 +123,7 @@ class ProGuiApp(tk.Tk):
         self.showPadFeedback = True
         self.showCursorFeedback = False
 
-        s = palette.ConfigValue("guilevel")
-        if s == "":
-            self.defaultGuiLevel = 0
-        else:
-            self.defaultGuiLevel = int(s)
-
-        self.setGuiLevel(self.defaultGuiLevel)
-
-        self.performHeader = None
+        self.performHeader = None  # needed?
 
         # The values in globalPerformIndex are indexes into palette.PerformLabels
         # and the defaults point to the first entry in the label list
@@ -108,19 +132,17 @@ class ProGuiApp(tk.Tk):
             self.globalPerformIndex[s] = 0
 
         self.topContainer = tk.Frame(self, background=palette.ColorBg)
-        global TopContainer
-        TopContainer = self.topContainer
-        global TopApp
-        TopApp = self
 
         self.selectFrame = self.makeSelectFrame(self.topContainer)
-        self.performContainer = tk.Frame(self.topContainer,
-            highlightbackground=palette.ColorAqua, highlightcolor=palette.ColorAqua, highlightthickness=3)
-        self.performHeader = PerformHeader(parent=self.performContainer, controller=self)
+        self.performFrame = self.makePerformFrame(self.topContainer)
+        self.performHeader = PerformHeader(parent=self.performFrame, controller=self)
         self.startupFrame = self.makeStartupFrame(self.topContainer)
+        self.padChooser = self.makePadChooserFrame(parent=self.topContainer,controller=self)
 
         # These are the pages for performance things
-        self.performPage["main"] = PagePerformMain(parent=self.performContainer, controller=self)
+        # I used to have different perform pages (some with sliders), but
+        # currently there's only one.
+        self.performPage["main"] = PagePerformMain(parent=self.performFrame, controller=self)
 
         self.winfo_toplevel().title("Palette "+padnames)
 
@@ -140,6 +162,15 @@ class ProGuiApp(tk.Tk):
 
         # select the initial pad
         self.padChooserCallback(padname)
+
+    def placePadChooser(self):
+        if self.guiLevel > 0:
+            self.padChooser.place(in_=self.topContainer, relx=0, rely=self.padChooserPageY, relwidth=1, relheight=self.pageSizeOfPadChooser)
+        else:
+            self.padChooser.place_forget()
+
+    def forgetPadChooser(self):
+        self.padChooser.place_forget()
 
     def scrollWheel(self,event):
         if self.editMode:
@@ -173,7 +204,8 @@ class ProGuiApp(tk.Tk):
                 pass
             elif StartupMode:
                 self.selectFrame.place_forget()
-                self.performContainer.place_forget()
+                self.performFrame.place_forget()
+                self.padChooser.place_forget()
                 self.startupFrame.place(in_=self.topContainer, relx=0, rely=0, relwidth=1, relheight=1)
             else:
                 # do this once
@@ -253,33 +285,43 @@ class ProGuiApp(tk.Tk):
             sh.pageButton["quad"].pack(side=tk.LEFT)
 
         self.editMode = False
-        global IsQuad
-        if IsQuad:
+        if palette.IsQuad:
             self.selectPage("quad")
         else:
             self.selectPage("snap")
 
-        pg = self.performPage["main"]
-
-        global pageSizeOfSelect, pageSizeOfControl
         if self.guiLevel == 0:
-            pageSizeOfControl = pageSizeOfControlNormal
-            pageSizeOfSelect = pageSizeOfSelectNormal
+            self.performFrame.place(in_=self.topContainer, relx=0, rely=self.performPageY, relwidth=1, relheight=self.pageSizeOfControl)
+            self.selectFrame.place(in_=self.topContainer, relx=0, rely=0, relwidth=1, relheight=self.pageSizeOfSelect)
+            self.placePadChooser()
         else:
-            pageSizeOfControl = pageSizeOfControlAdvanced
-            pageSizeOfSelect = pageSizeOfSelectAdvanced
+            self.performFrame.place(in_=self.topContainer, relx=0, rely=self.performPageY, relwidth=1, relheight=self.pageSizeOfControl)
+            self.selectFrame.place(in_=self.topContainer, relx=0, rely=0, relwidth=1, relheight=self.pageSizeOfSelect)
+            self.placePadChooser()
+
+    def setPageSizes(self):
+        if self.guiLevel == 0:
+            self.pageSizeOfControl = self.pageSizeOfControlNormal
+            self.pageSizeOfSelect = self.pageSizeOfSelectNormal
+            self.pageSizeOfPadChooser = self.pageSizeOfPadChooserNormal
+            self.selectDisplayRows = self.selectDisplayRowsNormal
+            self.paramDisplayRows = self.paramDisplayRowsNormal
+        else:
+            # Advanced is any guiLevel>0
+            self.pageSizeOfControl = self.pageSizeOfControlAdvanced
+            self.pageSizeOfSelect = self.pageSizeOfSelectAdvanced
+            self.pageSizeOfPadChooser = self.pageSizeOfPadChooserAdvanced
+            self.selectDisplayRows = self.selectDisplayRowsAdvanced
+            self.paramDisplayRows = self.paramDisplayRowsAdvanced
 
         y = 0
         self.selectPageY = y
-        y += pageSizeOfSelect
+        y += self.pageSizeOfSelect
+        self.padChooserPageY = y
+        y += self.pageSizeOfPadChooser
         self.performPageY = y
-        y += pageSizeOfControl
-
-        # self.selectFrame.place(in_=self.topContainer, relx=0, rely=0, relwidth=1, relheight=pageSizeOfSelect)
-        self.performContainer.place(in_=self.topContainer, relx=0, rely=self.performPageY, relwidth=1, relheight=pageSizeOfControl)
-        self.performContainer.place(in_=self.topContainer, relx=0, rely=self.performPageY, relwidth=1, relheight=pageSizeOfControl)
-        self.selectFrame.place(in_=self.topContainer, relx=0, rely=0, relwidth=1, relheight=pageSizeOfSelect)
-
+        y += self.pageSizeOfControl
+ 
     def saveQuad(self,name):
 
         quadPath = palette.localPresetsFilePath("quad",name)
@@ -329,6 +371,17 @@ class ProGuiApp(tk.Tk):
                 (padnameofparam,baseparam) = padOfParam(fullname)
                 if padnameofparam == pad.name():
                     pad.setValue(baseparam,quadParams[fullname])
+
+    def makePadChooserFrame(self,parent,controller):
+        f = PadChooser(parent,controller)
+        # f = tk.Frame(parent,
+        #     highlightbackground=palette.ColorAqua, highlightcolor=palette.ColorAqua, highlightthickness=3)
+        f.config(background=palette.ColorBg)
+        return f
+
+    def makePerformFrame(self,parent):
+        return tk.Frame(parent,
+            highlightbackground=palette.ColorAqua, highlightcolor=palette.ColorAqua, highlightthickness=3)
 
     def makeSelectFrame(self,container):
 
@@ -380,8 +433,6 @@ class ProGuiApp(tk.Tk):
             pages[pg].pack_forget()
 
     def togglePageButtons(self):
-        # if self.advancedLevel == 0:
-        #     return
         self.showAllPages = not self.showAllPages
         self.resetVisibility()
 
@@ -422,9 +473,9 @@ class ProGuiApp(tk.Tk):
 
         if pagename == "quad":
             # we don't want to show the PadChooser when we're on the Quad page
-            self.selectHeader.forgetPadChooser()
+            self.forgetPadChooser()
         else:
-            self.selectHeader.placePadChooser()
+            self.placePadChooser()
 
         if self.guiLevel > 1 and self.editMode:
             page = self.editPage[pagename]
@@ -623,7 +674,7 @@ class ProGuiApp(tk.Tk):
         self.allPadsSelected = False
 
         if len(self.PadNames) > 1:
-            self.selectHeader.padChooser.refreshPadColors()
+            self.padChooser.refreshPadColors()
 
         self.refreshPage()
 
@@ -713,6 +764,7 @@ class ProGuiApp(tk.Tk):
     def cycleGuiLevel(self):
         # cycle through 0,1,2
         self.setGuiLevel((self.guiLevel + 1) % 3)
+        self.setPageSizes()
         self.resetVisibility()
         self.performPage["main"].updatePerformButtonLabels(self.CurrPad)
 
@@ -733,12 +785,13 @@ class ProGuiApp(tk.Tk):
         palette.palette_global_api("audio_reset")
 
         self.setGuiLevel(self.defaultGuiLevel)
+        self.setPageSizes()
         self.resetLastAnything()
         self.sendANO()
         self.clearExternalScale()
 
         self.CurrPad = self.padNamed("A")
-        self.selectHeader.padChooser.refreshPadColors()
+        self.padChooser.refreshPadColors()
 
         for pad in self.Pads:
             for name in palette.PerformLabels:
@@ -768,11 +821,6 @@ class ProGuiApp(tk.Tk):
             for pt in ["sound","visual","effect"]:
                 paramlistjson = pad.paramListOfType(pt)
                 palette.palette_region_api(pad.name(), pt+".set_params", paramlistjson)
-
-    # def padParamListJson(self,paramType,padName):
-    #    pad = self.Pads[padName]
-    #    paramlist = pad.paramListOfType(paramType)
-    #    return paramlist
 
     def synthesizeParamsJson(self):
 
@@ -835,8 +883,7 @@ class ProGuiApp(tk.Tk):
             self.paramValueTypeOf[name] = self.allParamsJson[name]["valuetype"]
             self.paramsOfType["snap"][name] = self.allParamsJson[name]
 
-            global IsQuad
-            if IsQuad:
+            if palette.IsQuad:
                 # We prepend A-, B-, etc to the parameter name for quad parameters,
                 # to create entries for "quad" things
                 # in paramValueTypeOf and paramsOfType["quad"]
@@ -1067,6 +1114,7 @@ class Pad():
 
         return paramlist
 
+
 class PadChooser(tk.Frame):
 
     def __init__(self, parent, controller):
@@ -1082,28 +1130,35 @@ class PadChooser(tk.Frame):
         self.PadNum2Name = ["X","A","B","C","D"]
 
         # separator line
-        # canvas = tk.Canvas(self, background=palette.ColorAqua, highlightthickness=0, height=4)
+        # canvas = tk.Canvas(self, background=ColorAqua, highlightthickness=0, height=4)
         # canvas.pack(side=tk.TOP,fill=tk.X)
 
-        self.makeGlobalButton(self,0.0,0.0)
-        self.makePadFrame(self,"A",0.2,0.0)
-        self.makePadFrame(self,"B",0.4,0.0)
-        self.makePadFrame(self,"C",0.6,0.0)
-        self.makePadFrame(self,"D",0.8,0.0)
+        self.makePadFrame(self,"A",0.05,0.05)
+        self.makePadFrame(self,"B",0.15,0.55)
+        self.makePadFrame(self,"C",0.55,0.55)
+        self.makePadFrame(self,"D",0.65,0.05)
+
+        self.makeGlobalButton(self,0.5,0.15)
+        self.padGlobalOn = True
 
         self.config(background=palette.ColorBg)
+
+    def setPadLabel(self,pad,label):
+        # self.padLabel[pad].config(text=label)
+        # print("setPadLabel needs to draw in canvas")
+        pass
 
     def makePadFrame(self,parent,pad,x0,y0):
 
         self.padFrame[pad] = tk.Frame(self)
-        self.padFrame[pad].place(relx=x0,rely=y0,relwidth=0.15,relheight=1.0)
-        self.padFrame[pad].config(borderwidth=0,relief="solid",background=palette.ColorUnHigh)
+        self.padFrame[pad].place(relx=x0,rely=y0,relwidth=0.3,relheight=0.4)
+        self.padFrame[pad].config(borderwidth=2,relief="solid",background=palette.ColorUnHigh)
         self.padFrame[pad].bind("<Button-1>", lambda p=pad: self.padCallback(p))
 
-        self.padLabel[pad] = ttk.Label(self.padFrame[pad], text=pad)
-        self.padLabel[pad].pack(side=tk.TOP)
-        self.padLabel[pad].configure(style='GlobalButton.TLabel')
-        self.padLabel[pad].bind("<Button-1>", lambda p=pad: self.padCallback(p))
+        # self.padLabel[pad] = ttk.Label(self.padFrame[pad], text="")
+        # self.padLabel[pad].pack(side=tk.TOP)
+        # self.padLabel[pad].config(background=ColorUnHigh,font=padLabelFont)
+        # self.padLabel[pad].bind("<Button-1>", lambda p=pad: self.padCallback(p))
 
         if self.controller.showCursorFeedback:
             self.padCanvas[pad] = tk.Canvas(self.padFrame[pad], width=self.canvasWidth, height=self.canvasHeight, border=0)
@@ -1113,40 +1168,57 @@ class PadChooser(tk.Frame):
     def makeGlobalButton(self,parent,x0,y0):
 
         self.padGlobalButton = tk.Frame(self)
-        self.padGlobalButton.place(relx=x0,rely=y0,relwidth=0.15,relheight=1.0)
-        self.padGlobalButton.config(borderwidth=0,relief="solid",background=palette.ColorUnHigh)
-        self.padGlobalButton.bind("<Button-1>", self.allPadsSelectedCallback)
+        self.padGlobalButton.place(relx=x0-0.05,rely=y0-0.05,relwidth=0.1,relheight=0.275)
+        self.padGlobalButton.config(borderwidth=2,relief="solid",background=palette.ColorUnHigh)
+        self.padGlobalButton.bind("<Button-1>", self.globalCallback)
 
         self.padGlobalLabel = ttk.Label(self.padGlobalButton, text="*")
         self.padGlobalLabel.pack(side=tk.TOP)
-        self.padGlobalLabel.configure(style='GlobalButton.TLabel')
-        # self.padGlobalLabel.config(background=palette.ColorUnHigh)
-        self.padGlobalLabel.bind("<Button-1>", self.allPadsSelectedCallback)
+        self.padGlobalLabel.configure(style='GlobalDisabled.TLabel')
+        # self.padGlobalLabel.config(background=ColorUnHigh)
+        self.padGlobalLabel.bind("<Button-1>", self.globalCallback)
 
-    def allPadsSelectedCallback(self,e):
-        self.controller.allPadsSelected = not self.controller.allPadsSelected
-        self.controller.refreshPage()
-        self.refreshPadColors()
+    def globalCallback(self,e):
 
-    def refreshPadColors(self):
-        if self.controller.allPadsSelected:
+        # If you hit * 4 times quickly it
+        # will cycle through the advanced modes
+        now = time.time()
+        dt = now - self.controller.lastEscape
+        if dt < 0.75:
+            self.controller.escapeCount += 1
+        else:
+            self.controller.escapeCount = 0
+        self.controller.lastEscape = now
+        # print("escapeCount=",self.controller.escapeCount)
+
+        if self.controller.escapeCount == 3:
+            self.controller.cycleAdvancedLevel()
+            return
+
+        if self.controller.guiLevel==0:
+            return
+
+        self.padGlobalOn = not self.padGlobalOn
+        self.refreshColors()
+
+    def refreshColors(self):
+        if self.padGlobalOn:
             color = palette.ColorHigh
         else:
             color = palette.ColorUnHigh
         self.padGlobalButton.config(background=color)
         self.padGlobalLabel.config(background=color)
-        for p in self.controller.PadNames:
-            if self.controller.allPadsSelected or p != self.controller.CurrPad.name():
-                self.colorPad(p,color)
+        for pad in self.controller.Pads:
+            if self.controller.allPadsSelected or pad != self.controller.CurrPad:
+                self.colorPad(pad.name(),color)
             else:
-                self.colorPad(p,palette.ColorHigh)
+                self.colorPad(pad.name(),palette.ColorHigh)
 
-    def colorPad(self,pad,color):
-        self.padFrame[pad].config(background=color)
-        self.padLabel[pad].config(background=color)
+    def colorPad(self,padName,color):
+        self.padFrame[padName].config(background=color)
         # self.padLabel[pad].config(background=color)
         if self.controller.showCursorFeedback:
-            self.padCanvas[pad].config(background=color)
+            self.padCanvas[padName].config(background=color)
 
     def highlightPadBorder(self,pad,highlighted):
         if highlighted:
@@ -1170,16 +1242,31 @@ class PadChooser(tk.Frame):
         else:
             color = self.controller.padColor(pad)
         self.padCanvas[pad].create_oval(x-z,y-z,x+z,y+z,outline=color)
-        # self.padFrame[pad].config(background=color)
 
     def padCallback(self,e):
+        if self.controller.guiLevel==0:
+            return
         for pad in self.padFrame:
-            if e.widget == self.padFrame[pad] or e.widget == self.padLabel[pad]:
+            if e.widget == self.padFrame[pad]:
+                self.padGlobalOn = False
                 self.controller.padChooserCallback(pad)
-                self.refreshPadColors()
+                self.refreshColors()
                 return
         print("No pad found in padCallback!?")
 
+    def refreshPadColors(self):
+        if self.controller.allPadsSelected:
+            color = palette.ColorHigh
+        else:
+            color = palette.ColorUnHigh
+        self.padGlobalButton.config(background=color)
+        self.padGlobalLabel.config(background=color)
+
+        for pad in self.controller.Pads:
+            if self.controller.allPadsSelected or pad != self.controller.CurrPad:
+                self.colorPad(pad.name(),color)
+            else:
+                self.colorPad(pad.name(),palette.ColorHigh)
 
 class SelectHeader(tk.Frame):
 
@@ -1200,17 +1287,6 @@ class SelectHeader(tk.Frame):
         for i in self.controller.VisiblePageNames:
             self.makeHeaderButton(i,self.controller.VisiblePageNames[i])
 
-        global IsQuad
-        if IsQuad:
-            self.padChooser = PadChooser(parent=parent, controller=controller)
-            self.placePadChooser()
-
-    def placePadChooser(self):
-        self.padChooser.place(in_=self.titleFrame, relx=0.7, rely=0, relwidth=0.3, relheight=1.0)
-
-    def forgetPadChooser(self):
-        self.padChooser.place_forget()
-
     def spacer(self,height):
         spacer = tk.Canvas(self, background=palette.ColorBg, highlightthickness=0, height=height)
         spacer.pack(side=tk.TOP)
@@ -1220,8 +1296,7 @@ class SelectHeader(tk.Frame):
 
         # Hack so that the leftmost button is always Preset
         displayedPageTitle = pageTitle
-        global IsQuad
-        if IsQuad:
+        if palette.IsQuad:
             if pageName == "quad":
                 displayedPageTitle = "Preset"
         else:
@@ -1335,6 +1410,8 @@ class PageEditParams(tk.Frame):
 
     def makeParamsArea(self,container):
 
+        self.controller = container.controller
+
         f = tk.Frame(container, background=palette.ColorBg)
         f.config(borderwidth=1, relief="flat")
 
@@ -1355,19 +1432,19 @@ class PageEditParams(tk.Frame):
 
             # print("MakeParamsArea pagename=",self.pagename," Param=",name)
             self.paramRowName.append(name)
-            self.paramLabelWidget[name] = ttk.Label(f, width=22, text=name, style='ParamName.TLabel')
+            self.paramLabelWidget[name] = ttk.Label(f, width=20, text=name, style='ParamName.TLabel')
             self.paramLabelWidget[name].config()
 
             self.paramValueWidget[name] = ttk.Label(f, width=10, anchor=tk.E, style='ParamValue.TLabel')
             self.paramValueWidget[name].bind("<Button-1>", lambda event,nm=name: self.valueClicked(nm))
 
         # The widgets for << < . . > >> are static, in the displayed rows
-        for row in range(0,paramDisplayRows):
+        for row in range(0,self.controller.paramDisplayRows):
             f2 = tk.Frame(f, background=palette.ColorBg)
             self.adjustButton(f2,row,"<<", -3)
             self.adjustButton(f2,row,"<", -2)
-            self.adjustButton(f2,row,".", -1)
-            self.adjustButton(f2,row,".", 1)
+            self.adjustButton(f2,row,"-", -1)
+            self.adjustButton(f2,row,"+", 1)
             self.adjustButton(f2,row,">", 2)
             self.adjustButton(f2,row,">>", 3)
             self.paramAdjustFrame[row] = f2
@@ -1421,13 +1498,13 @@ class PageEditParams(tk.Frame):
 
     def scrollNotify(self,sfy,tag):
         nparams = len(self.params)
-        self.valuesDisplayOffset = int((nparams-paramDisplayRows) * sfy)
+        self.valuesDisplayOffset = int((nparams-self.controller.paramDisplayRows) * sfy)
         # print("valuesDisplayOffset=",self.valuesDisplayOffset)
         self.updateParamView()
 
     def updateParamView(self):
 
-        for r in range(0,paramDisplayRows):
+        for r in range(0,self.controller.paramDisplayRows):
             self.paramAdjustFrame[r].grid_forget()
 
         px = 0
@@ -1435,7 +1512,7 @@ class PageEditParams(tk.Frame):
         # print("updateParamView valuesDisplayOffset=",self.valuesDisplayOffset)
         for name in self.params:
             showrow = row - self.valuesDisplayOffset
-            showme = (showrow >= 0 and showrow < paramDisplayRows)
+            showme = (showrow >= 0 and showrow < self.controller.paramDisplayRows)
             if showme:
                 self.paramLabelWidget[name].grid(row=showrow, column=0, sticky=tk.W)
                 self.paramValueWidget[name].grid(row=showrow, column=1, padx=px)
@@ -1782,6 +1859,7 @@ class ScrollBar(tk.Frame):
 
     def __init__(self, parent, notify, tag=None):
         tk.Frame.__init__(self, parent)
+        self.controller = parent.controller
         self.notify = notify
         self.tag = tag
         self.config(background=palette.ColorBg)
@@ -1795,7 +1873,7 @@ class ScrollBar(tk.Frame):
         # self.scroll.bind("<MouseWheel>", self.scrollWheel)
 
         self.thumb = tk.Canvas(self.scroll, background=palette.ColorThumb, highlightthickness=0)
-        self.thumb.place(in_=self.scroll, relx=0, rely=0.0, relwidth=1, relheight=thumbFactor )
+        self.thumb.place(in_=self.scroll, relx=0, rely=0.0, relwidth=1, relheight=self.controller.thumbFactor )
         self.thumb.bind("<Button-1>", self.thumbClick)
         self.thumb.bind("<B1-Motion>", self.thumbMotion)
 
@@ -1826,7 +1904,7 @@ class ScrollBar(tk.Frame):
 
     def scrollWheel(self,event):
         scrollHeight = self.scroll.winfo_height()
-        dy = int(scrollHeight * thumbFactor)
+        dy = int(scrollHeight * self.controller.thumbFactor)
         dy = dy * 4
         if event.delta > 0:
             amount = -dy
@@ -1859,7 +1937,7 @@ class ScrollBar(tk.Frame):
         elif fy > 1.0:
             fy = 1.0
 
-        thumbHalfHeight = thumbFactor / 2.0
+        thumbHalfHeight = self.controller.thumbFactor / 2.0
         if fy < thumbHalfHeight:
             fthumby = thumbHalfHeight
         elif fy > (1.0-thumbHalfHeight):
@@ -1870,7 +1948,7 @@ class ScrollBar(tk.Frame):
         fthumby -= thumbHalfHeight
 
         # print("currentY=",self.currentY," fy=",fy," fthumby=",fthumby)
-        self.thumb.place(in_=self.scroll, relx=0, rely=fthumby, relwidth=1, relheight=thumbFactor )
+        self.thumb.place(in_=self.scroll, relx=0, rely=fthumby, relwidth=1, relheight=self.controller.thumbFactor )
         self.notify.scrollNotify(fy,self.tag)
         # print("END OF MOVEBY\n")
 
@@ -1948,7 +2026,7 @@ class PagePerformMain(tk.Frame):
                 # if guiLevel > 0:
                 #     style = 'PerformButtonSmall.TLabel'
                 button.config(text=text, width=11, style=style)
-                button.grid(row=row,column=col, padx=performButtonPadx,pady=performButtonPady,ipady=ipady)
+                button.grid(row=row,column=col, padx=self.controller.performButtonPadx,pady=self.controller.performButtonPady,ipady=ipady)
             col += 1
             if col >= performButtonsPerRow:
                 col = 0
@@ -2049,11 +2127,11 @@ class PageSelector(tk.Frame):
     def scrollNotify(self,sfy,tag):
         # print("scrollNotify sfy=",sfy," tag=",tag)
         nparams = len(self.vals)
-        selectPerPage = selectDisplayRows * selectDisplayPerRow
+        selectPerPage = self.controller.selectDisplayRows * self.controller.selectDisplayPerRow
         tmp = int(sfy * (nparams-selectPerPage))
-        self.selectOffset = int(tmp / selectDisplayPerRow) * selectDisplayPerRow
+        self.selectOffset = int(tmp / self.controller.selectDisplayPerRow) * self.controller.selectDisplayPerRow
         # silly code
-        if self.selectOffset > (nparams-selectPerPage-selectDisplayPerRow):
+        if self.selectOffset > (nparams-selectPerPage-self.controller.selectDisplayPerRow):
             self.selectOffset = nparams - selectPerPage
         if self.selectOffset < 0:
             self.selectOffset = 0
@@ -2062,8 +2140,8 @@ class PageSelector(tk.Frame):
     def doLayout(self):
         valindex = self.selectOffset
         i = 0
-        for r in range(0,selectDisplayRows):
-            for c in range(0,selectDisplayPerRow):
+        for r in range(0,self.controller.selectDisplayRows):
+            for c in range(0,self.controller.selectDisplayPerRow):
                 if valindex < len(self.vals):
 
                     # First time here, we create the Button
@@ -2085,7 +2163,7 @@ class PageSelector(tk.Frame):
                     if not i in self.selectButtons:
                         self.selectButtons[i] = ttk.Button(self.valsframe, width=width, style=style)
 
-                    self.selectButtons[i].grid(row=r,column=c,padx=selectButtonPadx,pady=selectButtonPady,ipady=ipady,ipadx=ipadx)
+                    self.selectButtons[i].grid(row=r,column=c,padx=self.controller.selectButtonPadx,pady=self.controller.selectButtonPady,ipady=ipady,ipadx=ipadx)
                     self.selectButtons[i].config(text=selectButtonText,
                         command=lambda val=self.vals[valindex],buttoni=i:self.selectorCallback(val,buttoni))
                     valindex += 1
@@ -2176,7 +2254,7 @@ if __name__ == "__main__":
     elif npads == 4:
         padname = pads[0]
         padnames = pads
-        IsQuad = True
+        palette.IsQuad = True
         visiblepagenames = {
             "quad":"Preset",
             "snap":"Pad",
@@ -2187,36 +2265,13 @@ if __name__ == "__main__":
     else:
         print("Unexpected number of pads: ",pads)
 
-    GuiWidth = 800 ; GuiHeight = 1280
-    fontFactor = 1.0
-    thumbFactor = 0.1
-
-    selectDisplayRows = 17
-    selectDisplayPerRow = 4
-    paramDisplayRows = 27
-
-    pageSizeOfSelectNormal = 0.922
-    pageSizeOfControlNormal = 1.0 - pageSizeOfSelectNormal
-
-    pageSizeOfSelectAdvanced = 0.85
-    pageSizeOfControlAdvanced = 1.0 - pageSizeOfSelectAdvanced
-
-    performButtonPadx = 6
-    performButtonPady = 3
-
-    selectButtonPadx = 5
-    selectButtonPady = 3
-
-    palette.setFontSizes(fontFactor)
-    palette.PerformLabels["scale"] = palette.SimpleScales
-
     global app
     app = ProGuiApp(padname,padnames,visiblepagenames)
 
     palette.makeStyles(app)
 
 
-    app.wm_geometry("%dx%d" % (GuiWidth,GuiHeight))
+    app.wm_geometry("%dx%d" % (800,1280))
 
     delay = 0.0
 
