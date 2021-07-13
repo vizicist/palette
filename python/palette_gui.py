@@ -351,7 +351,7 @@ class ProGuiApp(tk.Tk):
     def makeStartupFrame(self,container):
         f = tk.Frame(container,
             highlightbackground=palette.ColorBg, highlightcolor=palette.ColorAqua, highlightthickness=3)
-        self.startupLabel = ttk.Label(f, text="               Palette is Loading...", style='Header.TLabel',
+        self.startupLabel = ttk.Label(f, text="               Palette is Loading...", style='Loading.TLabel',
             foreground=palette.ColorText, background=palette.ColorBg, relief="flat", justify=tk.CENTER, font=palette.largestFont)
         self.startupLabel.pack(side=tk.TOP,fill=tk.BOTH,expand=True)
         return f
@@ -1102,7 +1102,7 @@ class PadChooser(tk.Frame):
 
         self.padLabel[pad] = ttk.Label(self.padFrame[pad], text=pad)
         self.padLabel[pad].pack(side=tk.TOP)
-        self.padLabel[pad].configure(style='ChooserDisabled.TLabel')
+        self.padLabel[pad].configure(style='GlobalButton.TLabel')
         self.padLabel[pad].bind("<Button-1>", lambda p=pad: self.padCallback(p))
 
         if self.controller.showCursorFeedback:
@@ -1119,7 +1119,7 @@ class PadChooser(tk.Frame):
 
         self.padGlobalLabel = ttk.Label(self.padGlobalButton, text="*")
         self.padGlobalLabel.pack(side=tk.TOP)
-        self.padGlobalLabel.configure(style='ChooserDisabled.TLabel')
+        self.padGlobalLabel.configure(style='GlobalButton.TLabel')
         # self.padGlobalLabel.config(background=palette.ColorUnHigh)
         self.padGlobalLabel.bind("<Button-1>", self.allPadsSelectedCallback)
 
@@ -1228,16 +1228,16 @@ class SelectHeader(tk.Frame):
             if pageName == "snap":
                 displayedPageTitle = "Preset"
 
-        self.pageButton[pageName] = ttk.Button(self.titleFrame, text=displayedPageTitle, style='HeaderDisabled.TLabel',
+        self.pageButton[pageName] = ttk.Button(self.titleFrame, text=displayedPageTitle, style='PageButtonDisabled.TLabel',
             command=lambda nm=pageName: self.controller.clickPage(nm))
         self.pageButton[pageName].pack(side=tk.LEFT,padx=5)
 
     def highlightPageButton(self,pagename):
         for nm in self.pageButton:
             if nm == pagename:
-                self.pageButton[nm].config(style='HeaderEnabled.TLabel')
+                self.pageButton[nm].config(style='PageButtonEnabled.TLabel')
             else:
-                self.pageButton[nm].config(style='HeaderDisabled.TLabel')
+                self.pageButton[nm].config(style='PageButtonDisabled.TLabel')
 
 class PerformHeader(tk.Frame):
 
@@ -1285,16 +1285,16 @@ class PerformHeader(tk.Frame):
         # self.performMessageLabel.pack(side=tk.LEFT, padx=25, ipadx=25)
 
     def headerButton(self,pageName,pageTitle):
-        self.pageButton[pageName] = ttk.Button(self.titleFrame, text=pageTitle, style='HeaderDisabled.TLabel',
+        self.pageButton[pageName] = ttk.Button(self.titleFrame, text=pageTitle, style='PageButtonDisabled.TLabel',
             command=lambda nm=pageName: self.controller.selectPerformPage(nm))
         # self.pageButton[pageName].pack(side=tk.LEFT,padx=5)
 
     def highlightPageButton(self,pagename):
         for nm in self.pageButton:
             if nm == pagename:
-                self.pageButton[nm].config(style='HeaderEnabled.TLabel')
+                self.pageButton[nm].config(style='PageButtonEnabled.TLabel')
             else:
-                self.pageButton[nm].config(style='HeaderDisabled.TLabel')
+                self.pageButton[nm].config(style='PageButtonDisabled.TLabel')
 
 class PageEditParams(tk.Frame):
 
@@ -1378,28 +1378,28 @@ class PageEditParams(tk.Frame):
         f = tk.Frame(self, background=palette.ColorBg)
 
         if self.pagename != "quad":
-            self.initButton = ttk.Label(f, text="Init", style='Button.TLabel')
+            self.initButton = ttk.Label(f, text="Init", style='RandEtcButton.TLabel')
             self.initButton.bind("<Button-1>", lambda event:self.initCallback())
             self.initButton.bind("<ButtonRelease-1>", lambda event:self.initRelease())
             self.initButton.pack(side=tk.LEFT, padx=2)
 
-            self.randButton = ttk.Label(f, text="Rnd", style='Button.TLabel')
+            self.randButton = ttk.Label(f, text="Rnd", style='RandEtcButton.TLabel')
             self.randButton.bind("<Button-1>", lambda event:self.randCallback())
             self.randButton.bind("<ButtonRelease-1>", lambda event:self.randRelease())
             self.randButton.pack(side=tk.LEFT, padx=2)
 
         if ShowImport:
-            self.importButton = ttk.Label(f, text="Imp", style='Button.TLabel')
+            self.importButton = ttk.Label(f, text="Imp", style='RandEtcButton.TLabel')
             self.importButton.bind("<Button-1>", lambda event:self.saveImportCallback())
             self.importButton.bind("<ButtonRelease-1>", lambda event:self.saveImportRelease())
             self.importButton.pack(side=tk.LEFT, padx=2)
 
-            self.exportButton = ttk.Label(f, text="Exp", style='Button.TLabel')
+            self.exportButton = ttk.Label(f, text="Exp", style='RandEtcButton.TLabel')
             self.exportButton.bind("<Button-1>", lambda event:self.saveExportCallback())
             self.exportButton.bind("<ButtonRelease-1>", lambda event:self.saveExportRelease())
             self.exportButton.pack(side=tk.LEFT, padx=2)
 
-        b = ttk.Label(f, text="Save", style='Button.TLabel')
+        b = ttk.Label(f, text="Save", style='RandEtcButton.TLabel')
         b.bind("<Button-1>", lambda event:self.saveCallback())
         b.pack(side=tk.LEFT, pady=5, padx=2)
 
@@ -1411,10 +1411,10 @@ class PageEditParams(tk.Frame):
         self.comboParamsname.bind("<<ComboboxSelected>>", lambda event,v=self.paramsnameVar : self.checkThenGotoParamsFile(v.get()))
         self.comboParamsname.bind("<Return>", lambda event,v=self.paramsnameVar : self.checkThenGotoParamsFile(v.get()))
 
-        self.okButton = ttk.Label(f, text="OK", style='Button.TLabel')
+        self.okButton = ttk.Label(f, text="OK", style='RandEtcButton.TLabel')
         self.okButton.bind("<Button-1>", lambda event:self.saveOkCallback())
 
-        self.cancelButton = ttk.Label(f, text="Cancel", style='Button.TLabel')
+        self.cancelButton = ttk.Label(f, text="Cancel", style='RandEtcButton.TLabel')
         self.cancelButton.bind("<Button-1>", lambda event:self.saveCancelCallback())
 
         return f
@@ -1674,7 +1674,7 @@ class PageEditParams(tk.Frame):
         self.randButton.config(style=s)
 
     def randRelease(self):
-        s = 'Button.TLabel'
+        s = 'RandEtcButton.TLabel'
         self.randButton.config(style=s)
 
     def initCallback(self):
@@ -1686,7 +1686,7 @@ class PageEditParams(tk.Frame):
         self.initButton.config(style=s)
 
     def initRelease(self):
-        s = 'Button.TLabel'
+        s = 'RandEtcButton.TLabel'
         self.initButton.config(style=s)
 
     def saveExportCallback(self):
@@ -1700,7 +1700,7 @@ class PageEditParams(tk.Frame):
         self.exportButton.config(style=s)
 
     def saveExportRelease(self):
-        s = 'Button.TLabel'
+        s = 'RandEtcButton.TLabel'
         self.exportButton.config(style=s)
 
     def saveImportCallback(self):
@@ -1718,7 +1718,7 @@ class PageEditParams(tk.Frame):
         self.importButton.config(style=s)
 
     def saveImportRelease(self):
-        s = 'Button.TLabel'
+        s = 'RandEtcButton.TLabel'
         self.importButton.config(style=s)
 
     def saveOkCallback(self):
@@ -1788,6 +1788,8 @@ class ScrollBar(tk.Frame):
 
         self.scroll = tk.Canvas(self, background=palette.ColorScrollbar, highlightthickness=0)
         self.scroll.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        # try - self.scroll.pack(side=tk.TOP, width=200, height=400)
+        # self.scroll.place(in_=self, width=200, height=400)
         self.scroll.bind("<Button-1>", self.scrollClick)
         self.scroll.bind("<B1-Motion>", self.scrollMotion)
         # self.scroll.bind("<MouseWheel>", self.scrollWheel)
@@ -1889,19 +1891,19 @@ class PagePerformMain(tk.Frame):
         self.makePerformButton("loopinglength")
         self.makePerformButton("loopingfade")
         self.makePerformButton("Loop_Clear", self.controller.clearLoop)
+        self.makePerformButton("Reset_All", self.controller.resetAll)
 
         # More advanced buttons
-        # self.makePerformButton("transpose")
-        # self.makePerformButton("useexternalscale")
-        # self.makePerformButton("Notes_Off", self.controller.sendANO)
+        self.makePerformButton("transpose")
+        self.makePerformButton("useexternalscale")
+        self.makePerformButton("Notes_Off", self.controller.sendANO)
 
-        # self.makePerformButton("quant")
-        # self.makePerformButton("vol")
-        # self.makePerformButton("scale")
-        # self.makePerformButton("midithru")
-        # self.makePerformButton("midiquantized")
+        self.makePerformButton("quant")
+        self.makePerformButton("vol")
+        self.makePerformButton("scale")
+        self.makePerformButton("midithru")
+        self.makePerformButton("midiquantized")
         # self.makePerformButton("TBD1_ ")
-        self.makePerformButton("Reset_All", self.controller.resetAll)
 
         ### self.makePerformButton("Comb_Notes", self.controller.combLoop)
         ### self.makePerformButton("useexternalscale")
@@ -1912,12 +1914,12 @@ class PagePerformMain(tk.Frame):
         self.advancedButtons = {
             "recording", "quant", "vol", "scale", "tempo", "Comb_Notes",
             "midithru", "midiquantized", "Notes_Off", "All Notes_Off",
-            "useexternalscale",
+            "transpose", "useexternalscale",
             # "configname"
         }
 
     def updatePerformButtonLabels(self,pad):
-        performButtonsPerRow = 7
+        performButtonsPerRow = 5
         col = 0
         row = 0
         for name in self.buttonNames:
@@ -1938,9 +1940,14 @@ class PagePerformMain(tk.Frame):
             ipady = 0
             button.config(text=text)
 
-            if name == "TBD" or (self.controller.guiLevel==0 and name in self.advancedButtons):
+            guiLevel = self.controller.guiLevel
+            if name == "TBD" or (guiLevel==0 and name in self.advancedButtons):
                 button.grid_forget()
             else:
+                style = 'PerformButton.TLabel'
+                # if guiLevel > 0:
+                #     style = 'PerformButtonSmall.TLabel'
+                button.config(text=text, width=11, style=style)
                 button.grid(row=row,column=col, padx=performButtonPadx,pady=performButtonPady,ipady=ipady)
             col += 1
             if col >= performButtonsPerRow:
@@ -2064,13 +2071,13 @@ class PageSelector(tk.Frame):
                     ipadx = 0
                     istwo = isTwoLine(selectButtonText)
                     if istwo:
-                        style='PatchTwoLine.TLabel'
+                        style='PresetButton.TLabel'
                         ipady = 0
                         width=13
                         selectButtonText = selectButtonText.replace(palette.LineSep,"\n",1)
                         selectButtonText = selectButtonText.replace(palette.LineSep," ")
                     else:
-                        style='PatchTwoLine.TLabel'
+                        style='PresetButton.TLabel'
                         selectButtonText = selectButtonText + "\n"
                         ipady = 0
                         width=13
@@ -2099,9 +2106,9 @@ class PageSelector(tk.Frame):
         self.controller.selectorButtonIndex = buttoni
         for i in self.selectButtons:
             if i == buttoni:
-                s = 'PatchTwoLineHighlight.TLabel'
+                s = 'PresetButtonHighlight.TLabel'
             else:
-                s = 'PatchTwoLine.TLabel'
+                s = 'PresetButton.TLabel'
             self.selectButtons[i].config(style=s)
 
 def startgui():
@@ -2180,57 +2187,25 @@ if __name__ == "__main__":
     else:
         print("Unexpected number of pads: ",pads)
 
-    gui_size = palette.ConfigValue("gui_size")
-    if gui_size == "":
-        gui_size = "small"   # default
+    GuiWidth = 800 ; GuiHeight = 1280
+    fontFactor = 1.0
+    thumbFactor = 0.1
 
-    if gui_size == "small":
-        # print("small size")
-        GuiWidth = 520 ; GuiHeight = 560
-        fontFactor = 0.5
-        thumbFactor = 0.1
+    selectDisplayRows = 17
+    selectDisplayPerRow = 4
+    paramDisplayRows = 27
 
-        selectDisplayRows = 13
-        paramDisplayRows = 23
-        selectDisplayPerRow = 4
+    pageSizeOfSelectNormal = 0.922
+    pageSizeOfControlNormal = 1.0 - pageSizeOfSelectNormal
 
-        pageSizeOfSelectNormal = 0.912
-        pageSizeOfControlNormal = 1.0 - pageSizeOfSelectNormal
+    pageSizeOfSelectAdvanced = 0.85
+    pageSizeOfControlAdvanced = 1.0 - pageSizeOfSelectAdvanced
 
-        pageSizeOfSelectAdvanced = 0.86
-        pageSizeOfControlAdvanced = 1.0 - pageSizeOfSelectAdvanced
+    performButtonPadx = 6
+    performButtonPady = 3
 
-        performButtonPadx = 6
-        performButtonPady = 0
-
-        selectButtonPadx = 5
-        selectButtonPady = 3
-
-    elif gui_size == "max":
-        # print("max size")
-        GuiWidth = 800 ; GuiHeight = 1280
-        fontFactor = 1.0
-        thumbFactor = 0.1
-        paramDisplayRows = 20
-        selectDisplayRows = 13
-        selectDisplayPerRow = 4
-
-        # 0.85 total
-        pageSizeOfControlNormal = 0.17
-        pageSizeOfSelectNormal = 0.68
-        # 0.85 total
-        pageSizeOfControlAdvanced = 0.27
-        pageSizeOfSelectAdvanced = 0.58
-
-        performButtonPadx = 8
-        performButtonPady = 5
-
-        selectButtonPadx = 10
-        selectButtonPady = 5
-
-    else:
-        print("INVALID VALUE OF gui_size in config: ",gui_size)
-        GuiWidth = 400 ; GuiHeight = 600
+    selectButtonPadx = 5
+    selectButtonPady = 3
 
     palette.setFontSizes(fontFactor)
     palette.PerformLabels["scale"] = palette.SimpleScales

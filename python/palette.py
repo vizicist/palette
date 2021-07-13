@@ -166,56 +166,34 @@ def makeStyles(app):
 
     s = ttk.Style()
 
-    s.configure('.', font=largestFont, background=ColorBg, foreground=ColorText)
-    s.configure('Enabled.TLabel', foreground='green', background=ColorHigh, relief="flat", justify=tk.CENTER, font=mediumFont)
-    s.configure('Disabled.TLabel', foreground='red', background=ColorButton, relief="flat", justify=tk.CENTER, font=mediumFont)
-    s.configure('Edit.TLabel', font=largestFont, foreground=ColorText, background=ColorBg)
+    s.configure('.', font=largeFont, background=ColorBg, foreground=ColorText)
 
-    s.configure('Button.TLabel', font=largerFont, foreground=ColorText, background=ColorButton)
-    s.configure('ButtonHigh.TLabel', font=largerFont, foreground=ColorText, background=ColorHigh)
+    s.configure('PageButtonEnabled.TLabel', background=ColorHigh, relief="flat", justify=tk.CENTER, font=largestFont)
+    s.configure('PageButtonDisabled.TLabel', background=ColorButton, relief="flat", justify=tk.CENTER, font=largestFont)
 
-    s.configure('Red.TLabel', foreground='red', justify=tk.CENTER, background=ColorBg)
-    s.configure('Bright.TLabel', foreground=ColorBright, justify=tk.CENTER, background=ColorBg)
-    s.configure('TinyBright.TLabel', foreground=ColorBright, justify=tk.CENTER, background=ColorBg, font=mediumFont)
-    s.configure('Black.TLabel', foreground='black')
+    s.configure('RandEtcButton.TLabel', font=largerFont, foreground=ColorText, background=ColorButton)
+    s.configure('RandEtcButtonHigh.TLabel', font=largerFont, foreground=ColorText, background=ColorHigh)
 
-    s.configure('Date.TLabel', font=largeFont, foreground=ColorText, justify=tk.LEFT)
-
-    s.configure('PLAY.TLabel', font=largestFont, foreground=ColorText, background=ColorButton, justify=tk.LEFT)
-
-    s.configure('ParamName.TLabel', font=largerFont, foreground=ColorText, justify=tk.LEFT)
+    s.configure('ParamName.TLabel', font=paramNameFont, foreground=ColorText, justify=tk.LEFT)
     s.configure('ParamValue.TLabel', foreground=ColorText, borderwidth=2, justify=tk.RIGHT, background=ColorBg, font=largerFont)
     s.configure('ParamAdjust.TLabel', foreground=ColorText, borderwidth=2, anchor=tk.CENTER, background=ColorButton, font=largeFont)
 
-    s.configure('HeaderEnabled.TLabel', background=ColorHigh, relief="flat", justify=tk.CENTER, font=largestFont)
-    s.configure('HeaderDisabled.TLabel', background=ColorButton, relief="flat", justify=tk.CENTER, font=largestFont)
+    s.configure('GlobalButton.TLabel', background=ColorButton, relief="flat", justify=tk.CENTER, font=padLabelFont)
 
-    s.configure('ChooserEnabled.TLabel', background=ColorHigh, relief="flat", justify=tk.CENTER, font=padLabelFont)
-    s.configure('ChooserDisabled.TLabel', background=ColorButton, relief="flat", justify=tk.CENTER, font=padLabelFont)
+    s.configure('PerformMessage.TLabel', background=ColorBg, foreground=ColorRed, relief="flat", justify=tk.CENTER, align=tk.CENTER, font=performButtonFont)
 
-    s.configure('GlobalEnabled.TLabel', background=ColorHigh, relief="flat", justify=tk.CENTER, font=hugeFont)
-    s.configure('GlobalDisabled.TLabel', background=ColorButton, relief="flat", justify=tk.CENTER, font=hugeFont)
+    s.configure('Loading.TLabel', background=ColorButton, foreground=ColorWhite, relief="flat", justify=tk.CENTER, align=tk.CENTER, font=largestFont)
+    s.configure('PerformHeader.TLabel', background=ColorButton, foreground=ColorBright, relief="flat", justify=tk.CENTER, align=tk.CENTER, font=performButtonFont)
 
-    s.configure('PerformMessage.TLabel', background=ColorBg, foreground=ColorRed, relief="flat", justify=tk.CENTER, align=tk.CENTER, font=performFont)
-
-    s.configure('Header.TLabel', background=ColorButton, foreground=ColorWhite, relief="flat", justify=tk.CENTER, align=tk.CENTER, font=largestFont)
-    s.configure('PerformHeader.TLabel', background=ColorButton, foreground=ColorBright, relief="flat", justify=tk.CENTER, align=tk.CENTER, font=performFont)
-
-    s.configure('ScrollButton.TLabel', foreground=ColorText, font=largestFont, background=ColorScrollbar, anchor=tk.CENTER)
-
-    s.configure('Patch.TLabel', foreground=ColorText, font=patchFont, background=ColorButton, anchor=tk.CENTER, justify=tk.CENTER)
-    s.configure('PatchHighlight.TLabel', foreground=ColorText, font=patchFont, background=ColorRed, anchor=tk.CENTER, justify=tk.CENTER)
-
-    s.configure('PatchTwoLine.TLabel', foreground=ColorText, font=patchTwoLineFont, background=ColorButton, anchor=tk.CENTER, justify=tk.CENTER)
-    s.configure('PatchTwoLineHighlight.TLabel', foreground=ColorText, font=patchTwoLineFont, background=ColorHigh, anchor=tk.CENTER, justify=tk.CENTER)
+    s.configure('PresetButton.TLabel', foreground=ColorText, font=presetButtonFont, background=ColorButton, anchor=tk.CENTER, justify=tk.CENTER)
+    s.configure('PresetButtonHighlight.TLabel', foreground=ColorText, font=presetButtonFont, background=ColorHigh, anchor=tk.CENTER, justify=tk.CENTER)
 
     s.configure('RecordingButton.TLabel', background=ColorRed, relief="flat", justify=tk.CENTER, align=tk.CENTER, font=largeFont)
 
     s.configure('PerformButton.TLabel', foreground=ColorText, background=ColorButton, relief="flat", justify=tk.CENTER,
-        anchor=tk.CENTER, font=performFont)
-
-    s.configure('RecordingName.TLabel', background=ColorButton, relief="flat", justify=tk.CENTER, anchor=tk.CENTER, font=largestFont)
-    s.configure('RecordingButton.TLabel', background=ColorButton, relief="flat", justify=tk.CENTER, anchor=tk.CENTER, font=largerFont)
+        anchor=tk.CENTER, font=performButtonFont)
+    s.configure('PerformButtonSmall.TLabel', foreground=ColorText, background=ColorButton, relief="flat", justify=tk.CENTER,
+        anchor=tk.CENTER, font=performSmallFont)
 
     s.configure('custom.TCombobox', foreground=ColorComboText, background=ColorBg)
 
@@ -227,7 +205,7 @@ def makeStyles(app):
                     ('pressed', ColorHigh),
                     ('active', ColorButton)]
         )
-    s.map('PatchTwoLine.TLabel',
+    s.map('PresetButton.TLabel',
         foreground=[('disabled', 'yellow'),
                     ('pressed', ColorText),
                     ('active', ColorText)],
@@ -236,6 +214,14 @@ def makeStyles(app):
                     ('active', ColorButton)]
         )
     s.map('PerformButton.TLabel',
+        foreground=[('disabled', 'yellow'),
+                    ('pressed', ColorText),
+                    ('active', ColorText)],
+        background=[('disabled', 'yellow'),
+                    ('pressed', ColorHigh),
+                    ('active', ColorButton)]
+        )
+    s.map('PerformButtonSmall.TLabel',
         foreground=[('disabled', 'yellow'),
                     ('pressed', ColorText),
                     ('active', ColorText)],
@@ -263,18 +249,21 @@ def palette_global_api(meth, params=""):
     return palette_api("global."+meth,params)
 
 def setFontSizes(fontFactor):
-    global patchFont, patchTwoLineFont, largestFont, hugeFont, comboFont, largerFont, largeFont, performFont, mediumFont, padLabelFont
+    global presetButtonFont, largestFont
+    global hugeFont, comboFont, largerFont, largeFont
+    global performButtonFont, performSmallFont
+    global padLabelFont, paramNameFont
     f = 'Helvetica'
     f = 'Lucida Sans'
-    patchFont = (f, int(20*fontFactor))
-    patchTwoLineFont = (f, int(18*fontFactor))
+    presetButtonFont = (f, int(16*fontFactor))
     largestFont = (f, int(24*fontFactor))
     hugeFont = (f, int(36*fontFactor))
     comboFont = (f, int(20*fontFactor))
+    paramNameFont = (f, int(18*fontFactor))
     largerFont = (f, int(20*fontFactor))
     largeFont = (f, int(16*fontFactor))
-    performFont = (f, int(18*fontFactor))
-    mediumFont = (f, int(12*fontFactor))
+    performButtonFont = (f, int(16*fontFactor))
+    performSmallFont = (f, int(12*fontFactor))
     padLabelFont = (f, int(22*fontFactor))
 
 def configFilePath(nm):
