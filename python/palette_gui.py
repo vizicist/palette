@@ -22,9 +22,6 @@ import palette
 
 signal.signal(signal.SIGINT,signal.SIG_IGN)
 
-global ShowImport
-ShowImport = False
-
 ControlPageNames = {
     "main":"Main",
 }
@@ -54,7 +51,7 @@ class ProGuiApp(tk.Tk):
 
         self.selectDisplayPerRow = 4
 
-        self.pageSizeOfSelectNormal = 0.922
+        self.pageSizeOfSelectNormal = 0.94
         self.pageSizeOfControlNormal = 1.0 - self.pageSizeOfSelectNormal
         self.pageSizeOfPadChooserNormal = 0.0
         self.selectDisplayRowsNormal = 17
@@ -64,7 +61,7 @@ class ProGuiApp(tk.Tk):
         self.pageSizeOfControlAdvanced = 0.15
         self.pageSizeOfPadChooserAdvanced = 0.1
         self.selectDisplayRowsAdvanced = 15
-        self.paramDisplayRowsAdvanced = 24
+        self.paramDisplayRowsAdvanced = 23
         if (self.pageSizeOfSelectAdvanced + self.pageSizeOfControlAdvanced + self.pageSizeOfPadChooserAdvanced) != 1.0:
             print("Hey, page sizes don't add up to 1.0")
 
@@ -118,7 +115,6 @@ class ProGuiApp(tk.Tk):
         self.activeCursors = {}
         self.activeTime = {}
         self.editMode = False
-        self.showAllPages = False
         self.showSound = False
         self.showPadFeedback = True
         self.showCursorFeedback = False
@@ -256,33 +252,21 @@ class ProGuiApp(tk.Tk):
             self.performHeader.performMessageLabel.config(text=text)
 
     def resetVisibility(self):
-        sh = self.selectHeader
         ch = self.performHeader
-        if self.showAllPages:
+        if self.guiLevel > 0:
             for pg in self.VisiblePageNames:
-                if palette.IncludeSound == False and not self.showSound and pg == "sound":
-                    sh.pageButton[pg].pack_forget()
-                else:
-                    sh.pageButton[pg].pack(side=tk.LEFT,padx=5)
+                self.selectTitle.pageButton[pg].pack(side=tk.LEFT,padx=5)
             for pg in ControlPageNames:
                 ch.pageButton[pg].pack_forget()
             ch.performMessageLabel.pack_forget()
-        
-        # elif palette.RecMode:
-        #     for pg in self.VisiblePageNames:
-        #         sh.pageButton[pg].pack_forget()
-        #     for pg in ControlPageNames:
-        #         ch.pageButton[pg].pack_forget()
-        #     ch.performMessageLabel.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=50)
-
         else:
             for pg in self.VisiblePageNames:
-                sh.pageButton[pg].pack_forget()
+                self.selectTitle.pageButton[pg].pack_forget()
             for pg in ControlPageNames:
                 ch.pageButton[pg].pack_forget()
             ch.performMessageLabel.pack_forget()
 
-            sh.pageButton["quad"].pack(side=tk.LEFT)
+            self.selectTitle.pageButton["quad"].pack(side=tk.LEFT)
 
         self.editMode = False
         if palette.IsQuad:
@@ -298,6 +282,8 @@ class ProGuiApp(tk.Tk):
             self.performFrame.place(in_=self.topContainer, relx=0, rely=self.performPageY, relwidth=1, relheight=self.pageSizeOfControl)
             self.selectFrame.place(in_=self.topContainer, relx=0, rely=0, relwidth=1, relheight=self.pageSizeOfSelect)
             self.placePadChooser()
+
+        self.selectTitle.repack()
 
     def setPageSizes(self):
         if self.guiLevel == 0:
@@ -374,8 +360,6 @@ class ProGuiApp(tk.Tk):
 
     def makePadChooserFrame(self,parent,controller):
         f = PadChooser(parent,controller)
-        # f = tk.Frame(parent,
-        #     highlightbackground=palette.ColorAqua, highlightcolor=palette.ColorAqua, highlightthickness=3)
         f.config(background=palette.ColorBg)
         return f
 
@@ -385,16 +369,15 @@ class ProGuiApp(tk.Tk):
 
     def makeSelectFrame(self,container):
 
-         # This is the area at the very top
         f = tk.Frame(container,
-            highlightbackground=palette.ColorAqua, highlightcolor=palette.ColorAqua, highlightthickness=3)
+            highlightbackground=palette.ColorAqua, highlightcolor=palette.ColorAqua, highlightthickness=0)
 
-        self.selectHeader = SelectHeader(parent=f, controller=self)
-        self.selectHeader.pack(side=tk.TOP,fill=tk.BOTH)
+        self.selectTitle = SelectHeader(parent=f, controller=self)
+        self.selectTitle.pack(side=tk.TOP,fill=tk.BOTH)
 
         # These are the pages of buttons for selecting set/patch/sound/visual/etc..
         # Each one has a SelectorPage with the preset buttons,
-        # and an EditPage with all the parameters of the current preset
+        # and an EditPage with all the parameters of the preset
         for pagename in self.VisiblePageNames:
             self.makeSelectorPage(f, pagename, PageSelector)
             self.makeEditPage(f,pagename)
@@ -421,6 +404,7 @@ class ProGuiApp(tk.Tk):
 
         self.selectorPage[pagename] = page
         page.pack(side=tk.TOP,fill=tk.BOTH,expand=True)
+        page.config(highlightbackground=palette.ColorAqua, highlightcolor=palette.ColorAqua, highlightthickness=3)
 
     def makeEditPage(self,parent,pagename):
         page = PageEditParams(parent=parent, controller=self,
@@ -431,10 +415,6 @@ class ProGuiApp(tk.Tk):
     def forgetPages(self,pages):
         for pg in pages:
             pages[pg].pack_forget()
-
-    def togglePageButtons(self):
-        self.showAllPages = not self.showAllPages
-        self.resetVisibility()
 
     def clickPage(self,pagename):
 
@@ -466,7 +446,7 @@ class ProGuiApp(tk.Tk):
     def selectPage(self,pagename):
 
         self.currentPageName = pagename
-        self.selectHeader.highlightPageButton(pagename)
+        self.selectTitle.highlightPageButton(pagename)
 
         self.forgetPages(self.selectorPage)
         self.forgetPages(self.editPage)
@@ -771,14 +751,6 @@ class ProGuiApp(tk.Tk):
     def setGuiLevel(self,level):
         print("Setting GuiLevel to",level)
         self.guiLevel = level
-        if self.guiLevel == 0:
-            self.showAllPages = False
-        elif self.guiLevel == 1:
-            self.showAllPages = True
-        elif self.guiLevel == 2:
-            self.showAllPages = True
-        else:
-            print("Unrecognized guiLevel value: ",level)
 
     def resetAll(self):
 
@@ -1129,14 +1101,10 @@ class PadChooser(tk.Frame):
         self.canvasWidth = 200
         self.PadNum2Name = ["X","A","B","C","D"]
 
-        # separator line
-        # canvas = tk.Canvas(self, background=ColorAqua, highlightthickness=0, height=4)
-        # canvas.pack(side=tk.TOP,fill=tk.X)
-
-        self.makePadFrame(self,"A",0.05,0.05)
-        self.makePadFrame(self,"B",0.15,0.55)
-        self.makePadFrame(self,"C",0.55,0.55)
-        self.makePadFrame(self,"D",0.65,0.05)
+        self.makePadFrame(self,"A",0.05,0.07)
+        self.makePadFrame(self,"B",0.15,0.53)
+        self.makePadFrame(self,"C",0.55,0.53)
+        self.makePadFrame(self,"D",0.65,0.07)
 
         self.makeGlobalButton(self,0.5,0.15)
         self.padGlobalOn = True
@@ -1174,8 +1142,7 @@ class PadChooser(tk.Frame):
 
         self.padGlobalLabel = ttk.Label(self.padGlobalButton, text="*")
         self.padGlobalLabel.pack(side=tk.TOP)
-        self.padGlobalLabel.configure(style='GlobalDisabled.TLabel')
-        # self.padGlobalLabel.config(background=ColorUnHigh)
+        self.padGlobalLabel.configure(style='GlobalButton.TLabel')
         self.padGlobalLabel.bind("<Button-1>", self.globalCallback)
 
     def globalCallback(self,e):
@@ -1273,40 +1240,32 @@ class SelectHeader(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
-        self.config(background=palette.ColorBg)
 
         self.titleFrame = tk.Frame(self, background=palette.ColorBg)
         self.titleFrame.pack(side=tk.TOP, fill=tk.X, expand=True)
 
+        self.PaletteTitle = ttk.Label(self.titleFrame, style='PageButtonDisabled.TLabel',background=palette.ColorBg)
+
         self.pageButton = {}
+        for pageName in self.controller.VisiblePageNames:
+            realText = self.controller.VisiblePageNames[pageName]
+            self.pageButton[pageName] = ttk.Button(self.titleFrame, text=realText, style='PageButtonDisabled.TLabel',
+                command=lambda nm=pageName: self.controller.clickPage(nm))
 
-        # self.headerButton = ttk.Button(self.titleFrame, text="Preset", style='Header.TLabel',
-        #     command=lambda : self.controller.togglePageButtons())
-        # self.headerButton.pack(side=tk.LEFT)
+        self.repack()
 
-        for i in self.controller.VisiblePageNames:
-            self.makeHeaderButton(i,self.controller.VisiblePageNames[i])
-
-    def spacer(self,height):
-        spacer = tk.Canvas(self, background=palette.ColorBg, highlightthickness=0, height=height)
-        spacer.pack(side=tk.TOP)
-
-    def makeHeaderButton(self,pageName,pageTitle):
-        # print("makeHeaderButton name=",pageName)
-
-        # Hack so that the leftmost button is always Preset
-        displayedPageTitle = pageTitle
-        if palette.IsQuad:
-            if pageName == "quad":
-                displayedPageTitle = "Preset"
+    def repack(self):
+        if self.controller.guiLevel == 0:
+            self.PaletteTitle.config(text="Space Palette Pro",justify=tk.CENTER)
+            self.PaletteTitle.pack(side=tk.TOP,pady=10)
+            for pageName in self.controller.VisiblePageNames:
+                self.pageButton[pageName].pack_forget()
         else:
-            if pageName == "snap":
-                displayedPageTitle = "Preset"
-
-        self.pageButton[pageName] = ttk.Button(self.titleFrame, text=displayedPageTitle, style='PageButtonDisabled.TLabel',
-            command=lambda nm=pageName: self.controller.clickPage(nm))
-        self.pageButton[pageName].pack(side=tk.LEFT,padx=5)
-
+            self.PaletteTitle.config(text="  Presets:  ",justify=tk.LEFT)
+            self.PaletteTitle.pack(side=tk.LEFT,pady=10)
+            for pageName in self.controller.VisiblePageNames:
+                self.pageButton[pageName].pack(side=tk.LEFT,padx=5)
+            
     def highlightPageButton(self,pagename):
         for nm in self.pageButton:
             if nm == pagename:
@@ -1340,10 +1299,6 @@ class PerformHeader(tk.Frame):
             else:
                 self.pageButton[pageName].pack(side=tk.LEFT,padx=5)
 
-    def spacer(self,height):
-        w = tk.Canvas(self, background=palette.ColorBg, highlightthickness=0, height=height)
-        w.pack(side=tk.TOP)
-
     def performHeaderLabel(self,text):
         self.performLabel = ttk.Label(self.titleFrame, text=text, style='PerformHeader.TLabel')
         self.performLabel.pack(side=tk.LEFT)
@@ -1376,7 +1331,9 @@ class PageEditParams(tk.Frame):
     def __init__(self, parent, controller, pagename, params):
         tk.Frame.__init__(self, parent)
         self.controller = controller
-        self.config(background=palette.ColorBg)
+
+        self.config(background=palette.ColorBg,
+            highlightbackground=palette.ColorAqua, highlightcolor=palette.ColorAqua, highlightthickness=3)
 
         self.params = params
         self.paramsnameVar = tk.StringVar()
@@ -1460,12 +1417,14 @@ class PageEditParams(tk.Frame):
             self.initButton.bind("<ButtonRelease-1>", lambda event:self.initRelease())
             self.initButton.pack(side=tk.LEFT, padx=2)
 
-            self.randButton = ttk.Label(f, text="Rnd", style='RandEtcButton.TLabel')
+            self.randButton = ttk.Label(f, text="Rand", style='RandEtcButton.TLabel')
             self.randButton.bind("<Button-1>", lambda event:self.randCallback())
             self.randButton.bind("<ButtonRelease-1>", lambda event:self.randRelease())
             self.randButton.pack(side=tk.LEFT, padx=2)
 
-        if ShowImport:
+        # import/export needs to be resurrected
+        showImport = False
+        if showImport:
             self.importButton = ttk.Label(f, text="Imp", style='RandEtcButton.TLabel')
             self.importButton.bind("<Button-1>", lambda event:self.saveImportCallback())
             self.importButton.bind("<ButtonRelease-1>", lambda event:self.saveImportRelease())
@@ -2256,7 +2215,7 @@ if __name__ == "__main__":
         padnames = pads
         palette.IsQuad = True
         visiblepagenames = {
-            "quad":"Preset",
+            "quad":"Quad",
             "snap":"Pad",
             "sound":"Sound",
             "visual":"Visual",
