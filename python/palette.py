@@ -31,7 +31,6 @@ PaletteSourceLogged = False
 IsQuad = False
 RecMode = False
 StartupMode = True
-IncludeSound = True  # to activate Sound page
 
 # ColorBg = '#bbbbbb'
 ColorWhite = '#ffffff'
@@ -179,7 +178,7 @@ def makeStyles(app):
     s.configure('ParamValue.TLabel', font=paramValueFont, foreground=ColorText, borderwidth=2, justify=tk.RIGHT, background=ColorBg)
     s.configure('ParamAdjust.TLabel', foreground=ColorText, borderwidth=2, anchor=tk.CENTER, background=ColorButton, font=paramAdjustFont)
 
-    s.configure('GlobalButton.TLabel', font=padLabelFont, background=ColorButton, relief="flat", justify=tk.CENTER)
+    s.configure('GlobalButton.TLabel', font=largestFont, background=ColorButton, relief="flat", justify=tk.CENTER)
 
     s.configure('PerformMessage.TLabel', background=ColorBg, foreground=ColorRed, relief="flat", justify=tk.CENTER, align=tk.CENTER, font=performButtonFont)
 
