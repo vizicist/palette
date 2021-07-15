@@ -21,9 +21,6 @@ var defaultSynth = "P_01_C_01"
 var loopForever = 999999
 var uniqueIndex = 0
 
-// CurrentMilli is the time from the start, in milliseconds
-var CurrentMilli int
-
 var currentMilliOffset int
 var currentClickOffset Clicks
 var clicksPerSecond int
@@ -116,14 +113,393 @@ func NewStepper(pad string, resolumeLayer int, freeframeClient *osc.Client, reso
 		TransposePitch:   0,
 	}
 	r.params.SetDefaultValues()
-	r.ClearExternalScale()
-	r.SetExternalScale(60%12, true) // Middle C
+	r.clearExternalScale()
+	r.setExternalScale(60%12, true) // Middle C
 
 	return r
 }
 
+// PassThruMIDI xxx
+func (r *Stepper) PassThruMIDI(e portmidi.Event, scadjust bool) {
+
+	// log.Printf("Stepper.PassThruMIDI e=%+v\n", e)
+
+	// channel on incoming MIDI is ignored
+	// it uses whatever sound the Stepper is using
+	status := e.Status & 0xf0
+
+	data1 := uint8(e.Data1)
+	data2 := uint8(e.Data2)
+	pitch := data1
+
+	synth := r.params.ParamStringValue("sound.synth", defaultSynth)
+	var n *Note
+	if (status == 0x90 || status == 0x80) && scadjust {
+		scale := r.getScale()
+		pitch = scale.ClosestTo(pitch)
+	}
+	switch status {
+	case 0x90:
+		n = NewNoteOn(pitch, data2, synth)
+	case 0x80:
+		n = NewNoteOff(pitch, data2, synth)
+	case 0xB0:
+		n = NewController(data1, data2, synth)
+	case 0xC0:
+		n = NewProgChange(data1, data2, synth)
+	case 0xD0:
+		n = NewChanPressure(data1, data2, synth)
+	case 0xE0:
+		n = NewPitchBend(data1, data2, synth)
+	default:
+		log.Printf("PassThruMIDI unable to handle status=%02x\n", status)
+		return
+	}
+	if n != nil {
+		// log.Printf("PassThruMIDI sending note=%s\n", n)
+		if DebugUtil.MIDI {
+			log.Printf("MIDI.SendNote: n=%+v\n", *n)
+		}
+		SendNoteToSynth(n)
+	}
+}
+
+// AdvanceByOneClick advances time by 1 click in a StepLoop
+func (r *Stepper) AdvanceByOneClick() {
+
+	r.activePhrasesManager.AdvanceByOneClick()
+
+	loop := r.loop
+
+	loop.stepsMutex.Lock()
+	defer loop.stepsMutex.Unlock()
+
+	stepnum := loop.currentStep
+	if DebugUtil.Advance {
+		if stepnum%20 == 0 {
+			log.Printf("advanceClickby1 start stepnum=%d\n", stepnum)
+		}
+	}
+
+	step := loop.steps[stepnum]
+
+	var removeCids []string
+	if step != nil && step.events != nil && len(step.events) > 0 {
+		for _, event := range step.events {
+
+			ce := event.cursorStepEvent
+
+			if DebugUtil.Advance {
+				log.Printf("Stepper.advanceClickBy1: pad=%s stepnum=%d ce=%+v\n", r.padName, stepnum, ce)
+			}
+
+			ac := r.getActiveStepCursor(ce)
+			ac.x = ce.X
+			ac.y = ce.Y
+			ac.z = ce.Z
+
+			wasFresh := ce.Fresh
+
+			// Freshly added things ALWAYS get played.
+			playit := false
+			if ce.Fresh || r.loopIsPlaying {
+				playit = true
+			}
+			event.cursorStepEvent.Fresh = false
+			ce.Fresh = false // needed?
+
+			// Note that we fade the z values in CursorStepEvent, not ActiveStepCursor,
+			// because ActiveStepCursor goes away when the gesture ends,
+			// while CursorStepEvents in the loop stick around.
+			event.cursorStepEvent.Z = event.cursorStepEvent.Z * r.fadeLoop // fade it
+			event.cursorStepEvent.LoopsLeft--
+			ce.LoopsLeft--
+
+			minz := float32(0.001)
+
+			// Keep track of the maximum z value for an ActiveCursor,
+			// so we know (when get the UP) whether we should
+			// delete this gesture.
+			switch {
+			case ce.Ddu == "down":
+				ac.maxz = -1.0
+				ac.lastDrag = -1
+			case ce.Ddu == "drag" && ce.Z > ac.maxz:
+				// log.Printf("Saving ce.Z as ac.maxz = %v\n", ce.Z)
+				ac.maxz = ce.Z
+			default:
+				// log.Printf("up!\n")
+			}
+
+			// See if this cursor should be removed
+			if ce.Ddu == "up" &&
+				(ce.LoopsLeft < 0 || (ac.maxz > 0.0 && ac.maxz < minz) || (ac.maxz < 0.0 && ac.downEvent.Z < minz)) {
+
+				removeCids = append(removeCids, ce.ID)
+				// NOTE: playit should still be left true for this UP event
+			} else {
+				// Don't play any events in this step with an id that we're getting ready to remove
+				for _, cid := range removeCids {
+					if ce.ID == cid {
+						playit = false
+					}
+				}
+			}
+
+			if playit {
+
+				// XXX - eventually, a parameter should allow
+				// either of MIDI or Graphics to be quantized,
+				// but for the moment, it's hardcoded that
+				// MIDI things are generated from quantized events
+				// and Graphic things from unquantized events.
+
+				// We actually get two virtually-identical events
+				// for each incoming cursor event.  One is unquantized,
+				// and one is time-quantized
+
+				if ce.Quantized {
+					// MIDI stuff
+					if ce.Ddu == "drag" {
+						dclick := currentClick - ac.lastDrag
+						if ac.lastDrag < 0 || dclick >= oneBeat/32 {
+							ac.lastDrag = currentClick
+							if DebugUtil.GenSound {
+								log.Printf("generateSoundFromCursor: ddu=%s stepnum=%d ce.ID=%s\n", ce.Ddu, stepnum, ce.ID)
+							}
+							r.generateSoundFromCursor(ce)
+						}
+					} else {
+						if DebugUtil.GenSound {
+							log.Printf("generateSoundFromCursor: ddu=%s stepnum=%d ce.ID=%s\n", ce.Ddu, stepnum, ce.ID)
+						}
+						r.generateSoundFromCursor(ce)
+					}
+				} else {
+					// Graphics and GUI stuff
+					ss := r.params.ParamStringValue("visual.spritesource", "")
+					if ss == "cursor" {
+						if TheRouter().generateVisuals && DebugUtil.Loop {
+							log.Printf("Stepper.advanceClickBy1: stepnum=%d generateVisuals ce=%+v\n", stepnum, ce)
+						}
+						r.generateVisualsFromCursor(ce)
+					}
+					r.notifyGUI(ce, wasFresh)
+				}
+			}
+		}
+	}
+	if len(removeCids) > 0 {
+		for _, removeID := range removeCids {
+			for _, step := range loop.steps {
+				// We want to delete all events from this step that have removeId
+
+				// This method of deleting things from an array without
+				// allocating a new array is found on this page:
+				// https://vbauerster.github.io/2017/04/removing-items-from-a-slice-while-iterating-in-go/
+				// log.Printf("Before deleting id=%s  events=%v\n", id, step.events)
+				newevents := step.events[:0]
+				for _, event := range step.events {
+					if event.cursorStepEvent.ID != removeID {
+						// Include this event
+						newevents = append(newevents, event)
+					}
+				}
+				step.events = newevents
+			}
+		}
+	}
+
+	loop.currentStep++
+	if loop.currentStep >= loop.length {
+		// if DebugUtil.MIDI {
+		// 	log.Printf("Stepper.AdvanceClickBy1: region=%s Loop length=%d wrapping around to step 0\n", r.padName, loop.length)
+		// }
+		loop.currentStep = 0
+	}
+}
+
+// ExecuteAPI xxx
+func (r *Stepper) ExecuteAPI(api string, args map[string]string, rawargs string) (result string, err error) {
+
+	if DebugUtil.StepperAPI {
+		log.Printf("StepperAPI: api=%s rawargs=%s\n", api, rawargs)
+	}
+
+	dot := strings.Index(api, ".")
+	var apiprefix string
+	apisuffix := api
+	if dot >= 0 {
+		apiprefix = api[0 : dot+1] // includes the dot
+		apisuffix = api[dot+1:]
+	}
+
+	// ALL *.set_params and *.set_param APIs set the params in the Stepper.
+	//
+	// In addition:
+	//    Effect parameters get sent one-at-a-time to Resolume's main OSC port (typically 7000).
+
+	handled := false
+	if apisuffix == "set_params" {
+		for name, value := range args {
+			r.setOneParamValue(apiprefix, name, value)
+		}
+		handled = true
+	}
+	if apisuffix == "set_param" {
+		name, okname := args["param"]
+		value, okvalue := args["value"]
+		if !okname || !okvalue {
+			return "", fmt.Errorf("stepper.handleSetParam: api=%s%s, missing param or value", apiprefix, apisuffix)
+		}
+		r.setOneParamValue(apiprefix, name, value)
+		handled = true
+	}
+
+	// ALL visual.* APIs get forwarded to the FreeFrame plugin inside Resolume
+	if apiprefix == "visual." {
+		msg := osc.NewMessage("/api")
+		msg.Append(apisuffix)
+		msg.Append(rawargs)
+		r.toFreeFramePluginForLayer(msg)
+		handled = true
+	}
+
+	if handled {
+		return result, nil
+	}
+
+	known := true
+	switch api {
+
+	case "loop_recording":
+		v, err := needBoolArg("onoff", api, args)
+		if err == nil {
+			r.loopIsRecording = v
+		}
+
+	case "loop_playing":
+		v, err := needBoolArg("onoff", api, args)
+		if err == nil {
+			r.loopIsPlaying = v
+			r.terminateActiveNotes()
+		}
+
+	case "loop_clear":
+		r.loop.Clear()
+		r.clearGraphics()
+		r.sendANO()
+
+	case "loop_comb":
+		r.loopComb()
+
+	case "loop_length":
+		i, err := needIntArg("length", api, args)
+		if err == nil {
+			r.loop.SetLength(Clicks(i))
+		}
+
+	case "loop_fade":
+		f, err := needFloatArg("fade", api, args)
+		if err == nil {
+			r.fadeLoop = f
+		}
+
+	case "ANO":
+		r.sendANO()
+
+	case "midi_thru":
+		v, err := needStringArg("thru", api, args)
+		if err == nil {
+			r.MIDIThru = v
+		}
+
+	case "useexternalscale":
+		v, err := needBoolArg("onoff", api, args)
+		if err == nil {
+			r.useExternalScale = v
+		}
+
+	case "clearexternalscale":
+		// log.Printf("router is clearing external scale\n")
+		r.clearExternalScale()
+		r.MIDINumDown = 0
+
+	case "midi_quantized":
+		v, err := needBoolArg("quantized", api, args)
+		if err == nil {
+			r.MIDIQuantized = v
+		}
+
+	case "set_transpose":
+		v, err := needIntArg("value", api, args)
+		if err == nil {
+			r.TransposePitch = v
+		}
+
+	default:
+		known = false
+	}
+
+	if !handled && !known {
+		err = fmt.Errorf("stepper.ExecuteAPI: unknown api=%s", api)
+	}
+
+	return result, err
+}
+
+// HandleMIDITimeReset xxx
+func (r *Stepper) HandleMIDITimeReset() {
+	log.Printf("HandleMIDITimeReset!! needs implementation\n")
+}
+
+// HandleMIDIDeviceInput xxx
+func (r *Stepper) HandleMIDIDeviceInput(e portmidi.Event) {
+
+	r.midiInputMutex.Lock()
+	defer r.midiInputMutex.Unlock()
+
+	if DebugUtil.MIDI {
+		log.Printf("Router.HandleMIDIDeviceInput: MIDIInput event=%+v\n", e)
+	}
+	switch r.MIDIThru {
+	case "":
+		// do nothing
+	case "disabled":
+		// do nothing
+	case "setscale":
+		r.handleMIDISetScaleNote(e)
+	case "thru":
+		r.PassThruMIDI(e, false)
+	case "thruscadjust":
+		r.PassThruMIDI(e, true)
+	default:
+		log.Printf("Router.HandleMIDIDeviceInput: unknown MIDIThru value=%s\n", r.MIDIThru)
+	}
+}
+
+func (r *Stepper) setOneParamValue(apiprefix, name, value string) {
+	r.params.SetParamValueWithString(apiprefix+name, value, nil)
+	if apiprefix == "effect." {
+		r.sendEffectParam(name, value)
+	}
+}
+
+// ClearExternalScale xxx
+func (r *Stepper) clearExternalScale() {
+	r.externalScale = makeScale()
+}
+
+// SetExternalScale xxx
+func (r *Stepper) setExternalScale(pitch int, on bool) {
+	s := r.externalScale
+	for p := pitch; p < 128; p += 12 {
+		s.hasNote[p] = on
+	}
+}
+
 // Time returns the current time
-func (r *Stepper) Time() time.Time {
+func (r *Stepper) time() time.Time {
 	return time.Now()
 }
 
@@ -140,7 +516,7 @@ func (r *Stepper) handleCursorDeviceEvent(e CursorDeviceEvent) {
 		tc = &DeviceCursor{}
 		r.deviceCursors[id] = tc
 	}
-	tc.lastTouch = r.Time()
+	tc.lastTouch = r.time()
 
 	// If it's a new (downed==false) cursor, make sure the first step event is "down
 	if !tc.downed {
@@ -174,7 +550,7 @@ func (r *Stepper) handleCursorDeviceEvent(e CursorDeviceEvent) {
 const checkDelay time.Duration = 2 * time.Second
 
 func (r *Stepper) checkCursorUp() {
-	now := r.Time()
+	now := r.time()
 
 	r.deviceCursorsMutex.Lock()
 	defer r.deviceCursorsMutex.Unlock()
@@ -352,19 +728,6 @@ func (r *Stepper) toResolume(msg *osc.Message) {
 	}
 }
 
-// ClearExternalScale xxx
-func (r *Stepper) ClearExternalScale() {
-	r.externalScale = makeScale()
-}
-
-// SetExternalScale xxx
-func (r *Stepper) SetExternalScale(pitch int, on bool) {
-	s := r.externalScale
-	for p := pitch; p < 128; p += 12 {
-		s.hasNote[p] = on
-	}
-}
-
 func (r *Stepper) handleMIDISetScaleNote(e portmidi.Event) {
 	status := e.Status & 0xf0
 	pitch := int(e.Data1)
@@ -375,9 +738,9 @@ func (r *Stepper) handleMIDISetScaleNote(e portmidi.Event) {
 			r.MIDINumDown = 0
 		}
 		if r.MIDINumDown == 0 {
-			r.ClearExternalScale()
+			r.clearExternalScale()
 		}
-		r.SetExternalScale(pitch%12, true)
+		r.setExternalScale(pitch%12, true)
 		r.MIDINumDown++
 		if pitch < 60 {
 			r.MIDIOctaveShift = -1
@@ -388,36 +751,6 @@ func (r *Stepper) handleMIDISetScaleNote(e portmidi.Event) {
 		}
 	} else if status == 0x80 {
 		r.MIDINumDown--
-	}
-}
-
-// HandleMIDITimeReset xxx
-func (r *Stepper) HandleMIDITimeReset() {
-	log.Printf("HandleMIDITimeReset!! needs implementation\n")
-}
-
-// HandleMIDIDeviceInput xxx
-func (r *Stepper) HandleMIDIDeviceInput(e portmidi.Event) {
-
-	r.midiInputMutex.Lock()
-	defer r.midiInputMutex.Unlock()
-
-	if DebugUtil.MIDI {
-		log.Printf("Router.HandleMIDIDeviceInput: MIDIInput event=%+v\n", e)
-	}
-	switch r.MIDIThru {
-	case "":
-		// do nothing
-	case "disabled":
-		// do nothing
-	case "setscale":
-		r.handleMIDISetScaleNote(e)
-	case "thru":
-		r.PassThruMIDI(e, false)
-	case "thruscadjust":
-		r.PassThruMIDI(e, true)
-	default:
-		log.Printf("Router.HandleMIDIDeviceInput: unknown MIDIThru value=%s\n", r.MIDIThru)
 	}
 }
 
@@ -432,51 +765,6 @@ func (r *Stepper) getScale() *Scale {
 		scale = GlobalScale(scaleName)
 	}
 	return scale
-}
-
-// PassThruMIDI xxx
-func (r *Stepper) PassThruMIDI(e portmidi.Event, scadjust bool) {
-
-	// log.Printf("Stepper.PassThruMIDI e=%+v\n", e)
-
-	// channel on incoming MIDI is ignored
-	// it uses whatever sound the Stepper is using
-	status := e.Status & 0xf0
-
-	data1 := uint8(e.Data1)
-	data2 := uint8(e.Data2)
-	pitch := data1
-
-	synth := r.params.ParamStringValue("sound.synth", defaultSynth)
-	var n *Note
-	if (status == 0x90 || status == 0x80) && scadjust {
-		scale := r.getScale()
-		pitch = scale.ClosestTo(pitch)
-	}
-	switch status {
-	case 0x90:
-		n = NewNoteOn(pitch, data2, synth)
-	case 0x80:
-		n = NewNoteOff(pitch, data2, synth)
-	case 0xB0:
-		n = NewController(data1, data2, synth)
-	case 0xC0:
-		n = NewProgChange(data1, data2, synth)
-	case 0xD0:
-		n = NewChanPressure(data1, data2, synth)
-	case 0xE0:
-		n = NewPitchBend(data1, data2, synth)
-	default:
-		log.Printf("PassThruMIDI unable to handle status=%02x\n", status)
-		return
-	}
-	if n != nil {
-		// log.Printf("PassThruMIDI sending note=%s\n", n)
-		if DebugUtil.MIDI {
-			log.Printf("MIDI.SendNote: n=%+v\n", *n)
-		}
-		SendNoteToSynth(n)
-	}
 }
 
 func (r *Stepper) generateSoundFromCursor(ce CursorStepEvent) {
@@ -537,166 +825,6 @@ func (r *Stepper) generateSoundFromCursor(ce CursorStepEvent) {
 		r.activeNotesMutex.Lock()
 		delete(r.activeNotes, ce.ID)
 		r.activeNotesMutex.Unlock()
-	}
-}
-
-// StartPhrase xxx
-func (r *Stepper) StartPhrase(p *Phrase, cid string) {
-	r.activePhrasesManager.StartPhrase(p, "midiplaycid")
-}
-
-// AdvanceByOneClick advances time by 1 click in a StepLoop
-func (r *Stepper) AdvanceByOneClick() {
-
-	r.activePhrasesManager.AdvanceByOneClick()
-
-	loop := r.loop
-
-	loop.stepsMutex.Lock()
-	defer loop.stepsMutex.Unlock()
-
-	stepnum := loop.currentStep
-	if DebugUtil.Advance {
-		if stepnum%20 == 0 {
-			log.Printf("advanceClickby1 start stepnum=%d\n", stepnum)
-		}
-	}
-
-	step := loop.steps[stepnum]
-
-	var removeCids []string
-	if step != nil && step.events != nil && len(step.events) > 0 {
-		for _, event := range step.events {
-
-			ce := event.cursorStepEvent
-
-			if DebugUtil.Advance {
-				log.Printf("Stepper.advanceClickBy1: pad=%s stepnum=%d ce=%+v\n", r.padName, stepnum, ce)
-			}
-
-			ac := r.getActiveStepCursor(ce)
-			ac.x = ce.X
-			ac.y = ce.Y
-			ac.z = ce.Z
-
-			wasFresh := ce.Fresh
-
-			// Freshly added things ALWAYS get played.
-			playit := false
-			if ce.Fresh || r.loopIsPlaying {
-				playit = true
-			}
-			event.cursorStepEvent.Fresh = false
-			ce.Fresh = false // needed?
-
-			// Note that we fade the z values in CursorStepEvent, not ActiveStepCursor,
-			// because ActiveStepCursor goes away when the gesture ends,
-			// while CursorStepEvents in the loop stick around.
-			event.cursorStepEvent.Z = event.cursorStepEvent.Z * r.fadeLoop // fade it
-			event.cursorStepEvent.LoopsLeft--
-			ce.LoopsLeft--
-
-			minz := float32(0.001)
-
-			// Keep track of the maximum z value for an ActiveCursor,
-			// so we know (when get the UP) whether we should
-			// delete this gesture.
-			switch {
-			case ce.Ddu == "down":
-				ac.maxz = -1.0
-				ac.lastDrag = -1
-			case ce.Ddu == "drag" && ce.Z > ac.maxz:
-				// log.Printf("Saving ce.Z as ac.maxz = %v\n", ce.Z)
-				ac.maxz = ce.Z
-			default:
-				// log.Printf("up!\n")
-			}
-
-			// See if this cursor should be removed
-			if ce.Ddu == "up" &&
-				(ce.LoopsLeft < 0 || (ac.maxz > 0.0 && ac.maxz < minz) || (ac.maxz < 0.0 && ac.downEvent.Z < minz)) {
-
-				removeCids = append(removeCids, ce.ID)
-				// NOTE: playit should still be left true for this UP event
-			} else {
-				// Don't play any events in this step with an id that we're getting ready to remove
-				for _, cid := range removeCids {
-					if ce.ID == cid {
-						playit = false
-					}
-				}
-			}
-
-			if playit {
-
-				// XXX - eventually, a parameter should allow
-				// either of MIDI or Graphics to be quantized,
-				// but for the moment, it's hardcoded that
-				// MIDI things are generated from quantized events
-				// and Graphic things from unquantized events.
-
-				// We actually get two virtually-identical events
-				// for each incoming cursor event.  One is unquantized,
-				// and one is time-quantized
-
-				if ce.Quantized {
-					// MIDI stuff
-					if ce.Ddu == "drag" {
-						dclick := currentClick - ac.lastDrag
-						if ac.lastDrag < 0 || dclick >= oneBeat/32 {
-							ac.lastDrag = currentClick
-							if DebugUtil.GenSound {
-								log.Printf("generateSoundFromCursor: ddu=%s stepnum=%d ce.ID=%s\n", ce.Ddu, stepnum, ce.ID)
-							}
-							r.generateSoundFromCursor(ce)
-						}
-					} else {
-						if DebugUtil.GenSound {
-							log.Printf("generateSoundFromCursor: ddu=%s stepnum=%d ce.ID=%s\n", ce.Ddu, stepnum, ce.ID)
-						}
-						r.generateSoundFromCursor(ce)
-					}
-				} else {
-					// Graphics and GUI stuff
-					ss := r.params.ParamStringValue("visual.spritesource", "")
-					if ss == "cursor" {
-						if TheRouter().generateVisuals && DebugUtil.Loop {
-							log.Printf("Stepper.advanceClickBy1: stepnum=%d generateVisuals ce=%+v\n", stepnum, ce)
-						}
-						r.generateVisualsFromCursor(ce)
-					}
-					r.notifyGUI(ce, wasFresh)
-				}
-			}
-		}
-	}
-	if len(removeCids) > 0 {
-		for _, removeID := range removeCids {
-			for _, step := range loop.steps {
-				// We want to delete all events from this step that have removeId
-
-				// This method of deleting things from an array without
-				// allocating a new array is found on this page:
-				// https://vbauerster.github.io/2017/04/removing-items-from-a-slice-while-iterating-in-go/
-				// log.Printf("Before deleting id=%s  events=%v\n", id, step.events)
-				newevents := step.events[:0]
-				for _, event := range step.events {
-					if event.cursorStepEvent.ID != removeID {
-						// Include this event
-						newevents = append(newevents, event)
-					}
-				}
-				step.events = newevents
-			}
-		}
-	}
-
-	loop.currentStep++
-	if loop.currentStep >= loop.length {
-		// if DebugUtil.MIDI {
-		// 	log.Printf("Stepper.AdvanceClickBy1: region=%s Loop length=%d wrapping around to step 0\n", r.padName, loop.length)
-		// }
-		loop.currentStep = 0
 	}
 }
 
@@ -996,142 +1124,6 @@ func (r *Stepper) cursorToQuant(ce CursorStepEvent) Clicks {
 	q = Clicks(float64(q) / TempoFactor)
 	// log.Printf("Quant q=%d tempofactor=%f\n", q, TempoFactor)
 	return q
-}
-
-func (r *Stepper) SetOneParamValue(apiprefix, name, value string) {
-	r.params.SetParamValueWithString(apiprefix+name, value, nil)
-	if apiprefix == "effect." {
-		r.sendEffectParam(name, value)
-	}
-}
-
-// ExecuteAPI xxx
-func (r *Stepper) ExecuteAPI(api string, args map[string]string, rawargs string) (result string, err error) {
-
-	if DebugUtil.StepperAPI {
-		log.Printf("StepperAPI: api=%s rawargs=%s\n", api, rawargs)
-	}
-
-	dot := strings.Index(api, ".")
-	var apiprefix string
-	apisuffix := api
-	if dot >= 0 {
-		apiprefix = api[0 : dot+1] // includes the dot
-		apisuffix = api[dot+1:]
-	}
-
-	// ALL *.set_params and *.set_param APIs set the params in the Stepper.
-	//
-	// In addition:
-	//    Effect parameters get sent one-at-a-time to Resolume's main OSC port (typically 7000).
-
-	handled := false
-	if apisuffix == "set_params" {
-		for name, value := range args {
-			r.SetOneParamValue(apiprefix, name, value)
-		}
-		handled = true
-	}
-	if apisuffix == "set_param" {
-		name, okname := args["param"]
-		value, okvalue := args["value"]
-		if !okname || !okvalue {
-			return "", fmt.Errorf("stepper.handleSetParam: api=%s%s, missing param or value", apiprefix, apisuffix)
-		}
-		r.SetOneParamValue(apiprefix, name, value)
-		handled = true
-	}
-
-	// ALL visual.* APIs get forwarded to the FreeFrame plugin inside Resolume
-	if apiprefix == "visual." {
-		msg := osc.NewMessage("/api")
-		msg.Append(apisuffix)
-		msg.Append(rawargs)
-		r.toFreeFramePluginForLayer(msg)
-		handled = true
-	}
-
-	if handled {
-		return result, nil
-	}
-
-	known := true
-	switch api {
-
-	case "loop_recording":
-		v, err := needBoolArg("onoff", api, args)
-		if err == nil {
-			r.loopIsRecording = v
-		}
-
-	case "loop_playing":
-		v, err := needBoolArg("onoff", api, args)
-		if err == nil {
-			r.loopIsPlaying = v
-			r.terminateActiveNotes()
-		}
-
-	case "loop_clear":
-		r.loop.Clear()
-		r.clearGraphics()
-		r.sendANO()
-
-	case "loop_comb":
-		r.loopComb()
-
-	case "loop_length":
-		i, err := needIntArg("length", api, args)
-		if err == nil {
-			r.loop.SetLength(Clicks(i))
-		}
-
-	case "loop_fade":
-		f, err := needFloatArg("fade", api, args)
-		if err == nil {
-			r.fadeLoop = f
-		}
-
-	case "ANO":
-		r.sendANO()
-
-	case "midi_thru":
-		v, err := needStringArg("thru", api, args)
-		if err == nil {
-			r.MIDIThru = v
-		}
-
-	case "useexternalscale":
-		v, err := needBoolArg("onoff", api, args)
-		if err == nil {
-			r.useExternalScale = v
-		}
-
-	case "clearexternalscale":
-		// log.Printf("router is clearing external scale\n")
-		r.ClearExternalScale()
-		r.MIDINumDown = 0
-
-	case "midi_quantized":
-		v, err := needBoolArg("quantized", api, args)
-		if err == nil {
-			r.MIDIQuantized = v
-		}
-
-	case "set_transpose":
-		v, err := needIntArg("value", api, args)
-		if err == nil {
-			r.TransposePitch = v
-		}
-
-	default:
-		known = false
-	}
-
-	if !handled && !known {
-		err = fmt.Errorf("stepper.ExecuteAPI: unknown api=%s", api)
-	}
-
-	return result, err
 }
 
 func (r *Stepper) loopComb() {
