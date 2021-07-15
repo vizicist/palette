@@ -123,14 +123,18 @@ PerformLabels["loopingfade"] = [
     {"label":"Loop Fade_Slowest", "value":0.7},
     {"label":"Loop_Forever", "value":1.0},
 ]
-PerformDefaultVal["loopingfade"] = 5
+PerformDefaultVal["loopingfade"] = 0
 
 PerformLabels["loopingonoff"] = [
     {"label":"Looping_is OFF",  "value":"off"},
+    # {"label":"Looping_is ON", "value":"recplay"},
     {"label":"Looping_is ON", "value":"recplay"},
-    # {"label":"Looping_REC+PLAY", "value":"recplay"},
-    # {"label":"Looping_PLAY ONLY", "value":"play"},
+    {"label":"Loop_Playback Only", "value":"play"},
 ]
+# PerformLabels["loopingset"] = [
+#     {"label":"Loop_1",  "value":1},
+#     {"label":"Loop_2",  "value":2},
+# ]
 PerformLabels["midithru"] = [
     {"label":"MIDI Input_Thru",  "value":"thru"},
     {"label":"MIDI Input_Set Scale",  "value":"setscale"},
@@ -138,12 +142,12 @@ PerformLabels["midithru"] = [
     {"label":"MIDI Input_Disabled",  "value":"disabled"},
 ]
 PerformLabels["useexternalscale"] = [
-    {"label":"External Scale_Off",  "value":False},
-    {"label":"External Scale_On",  "value":True},
+    {"label":"Ext MIDI_Scale Off",  "value":False},
+    {"label":"Ext MIDI_Scale_On",  "value":True},
 ]
 PerformLabels["midiquantized"] = [
-    {"label":"MIDI Thru_Unquantized",  "value":False},
-    {"label":"MIDI Thru_Quantized",  "value":True},
+    {"label":"MIDI Thru_NoQuant",  "value":False},
+    {"label":"MIDI Thru_Quant",  "value":True},
 ]
 GlobalPerformLabels["tempo"] = [
     {"label":"Tempo_Normal",  "value":1.0},

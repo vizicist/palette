@@ -20,6 +20,9 @@ import (
 
 const debug bool = false
 
+// CurrentMilli is the time from the start, in milliseconds
+var CurrentMilli int
+
 // Router takes events and routes them
 type Router struct {
 	regionLetters string
@@ -705,34 +708,7 @@ func (r *Router) ExecuteAPI(api string, nuid string, rawargs string) (result int
 	switch apisuffix {
 
 	case "midi_midifile":
-		filename, err := needStringArg("file", api, args)
-		if err != nil {
-			break
-		}
-		midipath := filepath.Join(MIDIFilePath(filename))
-		mf, err := NewMIDIFile(midipath)
-		if err != nil {
-			break
-		}
-		p := mf.Phrase()
-		// Cut it up into 4 channels for the 4 Stepper
-
-		p1 := p.CutSound("channel1")
-		if p1.NumNotes() > 0 {
-			r.steppers["A"].StartPhrase(p1, "midiplaych1")
-		}
-		p2 := p.CutSound("channel2")
-		if p2.NumNotes() > 0 {
-			r.steppers["B"].StartPhrase(p2, "midiplaych2")
-		}
-		p3 := p.CutSound("channel3")
-		if p3.NumNotes() > 0 {
-			r.steppers["C"].StartPhrase(p3, "midiplaych3")
-		}
-		p4 := p.CutSound("channel4")
-		if p4.NumNotes() > 0 {
-			r.steppers["D"].StartPhrase(p4, "midiplaych4")
-		}
+		return nil, fmt.Errorf("midi_midifile API has been removed")
 
 	case "echo":
 		value, ok := args["value"]

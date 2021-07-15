@@ -979,6 +979,9 @@ class Pad():
         elif name == "loopingfade":
             palette.palette_region_api(self.name(), "loop_fade", '"fadelength": "'+str(val)+'"')
 
+        elif name == "loopingset":
+            palette.palette_region_api(self.name(), "loop_set", '"set": "'+str(val)+'"')
+
         elif name == "quant":
             palette.palette_region_api(self.name(), "set_param",
                 "\"param\": \"" + "misc.quant" + "\"" + \
@@ -1791,33 +1794,31 @@ class PagePerformMain(tk.Frame):
         self.frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True, pady=5)
 
         self.performButton = {}
+        self.advancedButtons = {}
         self.buttonNames = []
 
-        self.makePerformButton("loopingonoff")
-        self.makePerformButton("loopinglength")
-        self.makePerformButton("loopingfade")
+        self.makePerformButton("loopingonoff",None)
+        self.makePerformButton("loopinglength",None)
+        self.makePerformButton("loopingfade",None)
         self.makePerformButton("Loop_Clear", self.controller.clearLoop)
         self.makePerformButton("Reset_All", self.controller.resetAll)
 
         # More advanced buttons
-        self.makePerformButton("transpose")
-        self.makePerformButton("useexternalscale")
-        self.makePerformButton("Notes_Off", self.controller.sendANO)
+        self.makePerformButtonAdvanced("transpose",None)
+        self.makePerformButtonAdvanced("useexternalscale",None)
+        self.makePerformButtonAdvanced("Notes_Off", self.controller.sendANO)
 
-        self.makePerformButton("quant")
-        self.makePerformButton("vol")
-        self.makePerformButton("scale")
-        self.makePerformButton("midithru")
-        self.makePerformButton("midiquantized")
+        self.makePerformButtonAdvanced("quant",None)
+        self.makePerformButtonAdvanced("vol",None)
+        self.makePerformButtonAdvanced("scale",None)
+        self.makePerformButtonAdvanced("midithru",None)
+        self.makePerformButtonAdvanced("midiquantized",None)
 
-        ### self.makePerformButton("Comb_Notes", self.controller.combLoop)
+        ### self.makePerformButtonAdvanced("Comb_Notes", self.controller.combLoop)
 
-        self.advancedButtons = {
-            "recording", "quant", "vol", "scale", "tempo", "Comb_Notes",
-            "midithru", "midiquantized", "Notes_Off", "All Notes_Off",
-            "transpose", "useexternalscale",
-            # "configname"
-        }
+    def makePerformButtonAdvanced(self,name,f):
+        self.advancedButtons[name] = 0
+        self.makePerformButton(name,f)
 
     def updatePerformButtonLabels(self,pad):
         performButtonsPerRow = 5
