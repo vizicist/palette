@@ -43,7 +43,7 @@ type ActiveStepCursor struct {
 	y float32
 	z float32
 	// loopsLeft int
-	maxz      float32
+	maxzSoFar float32
 	lastDrag  Clicks // to filter MIDI events for drag
 	downEvent CursorStepEvent
 }
