@@ -222,18 +222,19 @@ func (r *Stepper) AdvanceByOneClick() {
 			// delete this gesture.
 			switch {
 			case ce.Ddu == "down":
-				ac.maxz = -1.0
+				ac.maxzSoFar = -1.0
 				ac.lastDrag = -1
-			case ce.Ddu == "drag" && ce.Z > ac.maxz:
+			case ce.Ddu == "drag" && ce.Z > ac.maxzSoFar:
 				// log.Printf("Saving ce.Z as ac.maxz = %v\n", ce.Z)
-				ac.maxz = ce.Z
+				ac.maxzSoFar = ce.Z
 			default:
 				// log.Printf("up!\n")
 			}
 
 			// See if this cursor should be removed
-			if ce.Ddu == "up" &&
-				(ce.LoopsLeft < 0 || (ac.maxz > 0.0 && ac.maxz < minz) || (ac.maxz < 0.0 && ac.downEvent.Z < minz)) {
+			if ce.Ddu == "up" && (ce.LoopsLeft < 0 || (ce.Z < minz) ||
+				(ac.maxzSoFar > 0.0 && ac.maxzSoFar < minz) ||
+				(ac.maxzSoFar < 0.0 && ac.downEvent.Z < minz)) {
 
 				removeCids = append(removeCids, ce.ID)
 				// NOTE: playit should still be left true for this UP event
