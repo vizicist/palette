@@ -239,7 +239,7 @@ class ProGuiApp(tk.Tk):
                 self.pageHeader.pageButton[pg].pack_forget()
 
         self.editMode = False
-        if palette.IsQuad:
+        if palette.IsQuad and self.guiLevel == 0:
             self.selectPage("quad")
         else:
             self.selectPage("snap")
@@ -977,7 +977,7 @@ class Pad():
             palette.palette_region_api(self.name(), "loop_length", '"length": "'+str(val)+'"')
 
         elif name == "loopingfade":
-            palette.palette_region_api(self.name(), "loop_fade", '"fadelength": "'+str(val)+'"')
+            palette.palette_region_api(self.name(), "loop_fade", '"fade": "'+str(val)+'"')
 
         elif name == "loopingset":
             palette.palette_region_api(self.name(), "loop_set", '"set": "'+str(val)+'"')
@@ -1553,7 +1553,7 @@ class PageEditParams(tk.Frame):
         if doLift:
             self.lift()
 
-    def startEditing(self,name,doLift=True):
+    def oldstartEditing(self,name,doLift=True):
 
         print("=== startEditing pagename=%s name=%s" % (self.pagename,name))
         if self.pagename == "quad":
@@ -1877,11 +1877,9 @@ class PagePerformMain(tk.Frame):
         controller = self.controller
         controller.resetLastAnything()
 
-        # The PerformLabels are per-pad perform values
         if name in palette.PerformLabels:
 
-            if controller.allPadsSelected:
-
+            if controller.currentPageName == "quad" or controller.allPadsSelected:
                 # We do the CurrPad and then force all of the
                 # other pads to whatever the newindex is for that one
                 newtext = self.padPerformCallback(controller.CurrPad,name)
