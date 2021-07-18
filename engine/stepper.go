@@ -412,29 +412,34 @@ func (r *Stepper) ExecuteAPI(api string, args map[string]string, rawargs string)
 	case "midi_thru":
 		v, err := needStringArg("thru", api, args)
 		if err == nil {
+			log.Printf("midi_thru set to %v", v)
 			r.MIDIThru = v
 		}
 
 	case "useexternalscale":
 		v, err := needBoolArg("onoff", api, args)
 		if err == nil {
+			log.Printf("useexternalscale set to %v", v)
 			r.useExternalScale = v
 		}
 
 	case "clearexternalscale":
 		// log.Printf("router is clearing external scale\n")
+		log.Printf("clearExternalScale called")
 		r.clearExternalScale()
 		r.MIDINumDown = 0
 
 	case "midi_quantized":
 		v, err := needBoolArg("quantized", api, args)
 		if err == nil {
+			log.Printf("midiquantized = %v", v)
 			r.MIDIQuantized = v
 		}
 
 	case "set_transpose":
 		v, err := needIntArg("value", api, args)
 		if err == nil {
+			log.Printf("set_transpose = %v", v)
 			r.TransposePitch = v
 		}
 
@@ -488,6 +493,7 @@ func (r *Stepper) setOneParamValue(apiprefix, name, value string) {
 
 // ClearExternalScale xxx
 func (r *Stepper) clearExternalScale() {
+	log.Printf("clearExternalScale pad=%s", r.padName)
 	r.externalScale = makeScale()
 }
 
@@ -497,6 +503,7 @@ func (r *Stepper) setExternalScale(pitch int, on bool) {
 	for p := pitch; p < 128; p += 12 {
 		s.hasNote[p] = on
 	}
+	log.Printf("setExternalScale pad=%s pitch=%v on=%v", r.padName, pitch, on)
 }
 
 // Time returns the current time
@@ -1110,11 +1117,11 @@ func (r *Stepper) cursorToQuant(ce CursorStepEvent) Clicks {
 	} else if quant == "fixed" {
 		q = oneBeat / 4
 	} else if quant == "pressure" {
-		if ce.Z > 0.30 {
+		if ce.Z > 0.20 {
 			q = oneBeat / 8
-		} else if ce.Z > 0.15 {
+		} else if ce.Z > 0.10 {
 			q = oneBeat / 4
-		} else if ce.Z > 0.06 {
+		} else if ce.Z > 0.05 {
 			q = oneBeat / 2
 		} else {
 			q = oneBeat

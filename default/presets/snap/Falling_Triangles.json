@@ -134,7 +134,7 @@
         "rotangdir":"random",
         "rotanginit":"0.000",
         "rotangspeed":"0.000",
-        "rotauto":"true",
+        "rotauto":"false",
         "saturation":"1.000",
         "scale":"newage",
         "shape":"triangle",

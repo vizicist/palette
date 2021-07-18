@@ -42,7 +42,7 @@
         "1-posterize":"false",
         "1-posterize:posterize":"0.139",
         "1-trails":"false",
-        "1-trails:feedback":"0.509",
+        "1-trails:feedback":"0.550",
         "1-twisted":"false",
         "1-twisted:radius":"0.588",
         "1-twisted:twirl":"0.408",
@@ -88,7 +88,7 @@
         "2-posterize":"false",
         "2-posterize:posterize":"0.215",
         "2-trails":"false",
-        "2-trails:feedback":"0.508",
+        "2-trails:feedback":"0.550",
         "2-twisted":"false",
         "2-twisted:radius":"0.500",
         "2-twisted:twirl":"0.102"
