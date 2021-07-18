@@ -71,9 +71,9 @@ class ProGuiApp(tk.Tk):
         self.selectButtonPady = 3
 
         self.setFrameSizes()
+        self.setScaleList()
 
         palette.setFontSizes(self.fontFactor)
-        palette.PerformLabels["scale"] = palette.SimpleScales
 
         tk.Tk.__init__(self)
 
@@ -100,7 +100,7 @@ class ProGuiApp(tk.Tk):
             self.Pads[p] = padName
             p.loadCurrent()
 
-        self.allPadsSelected = False
+        self.allPadsSelected = True
 
         self.frames = {}
         self.editPage = {}
@@ -147,6 +147,12 @@ class ProGuiApp(tk.Tk):
 
         # select the initial pad
         self.padChooserCallback(padname)
+
+    def setScaleList(self):
+        if self.guiLevel == 0:
+            palette.PerformLabels["scale"] = palette.SimpleScales
+        else:
+            palette.PerformLabels["scale"] = palette.PerformScales
 
     def placePadChooser(self):
         if self.guiLevel > 0 and self.currentPageName != "quad":
@@ -203,7 +209,6 @@ class ProGuiApp(tk.Tk):
 
             if palette.resetAfterInactivity>0 and (now - self.lastAnything) > palette.resetAfterInactivity:
                 print("Resetting after no activity!!")
-                self.resetLastAnything()
                 self.resetAll()
                 self.performPage.updatePerformButtonLabels(self.CurrPad)
     
@@ -697,6 +702,11 @@ class ProGuiApp(tk.Tk):
     def setGuiLevel(self,level):
         print("Setting GuiLevel to",level)
         self.guiLevel = level
+        self.setScaleList()
+
+    def sendANO(self):
+        for pad in self.Pads:
+            pad.sendANO()
 
     def resetAll(self):
 
@@ -704,13 +714,15 @@ class ProGuiApp(tk.Tk):
 
         self.setGuiLevel(self.defaultGuiLevel)
         self.resetLastAnything()
-        self.sendANO()
-        self.clearExternalScale()
 
+        self.allPadsSelected = True
         self.CurrPad = self.padNamed("A")
         self.padChooser.refreshPadColors()
+        self.sendANO()
 
         for pad in self.Pads:
+            pad.useExternalScale(False)
+            pad.clearExternalScale()
             for name in palette.PerformLabels:
                 pad.sendPerformVal(name)
 
@@ -724,12 +736,6 @@ class ProGuiApp(tk.Tk):
         self.performPage.updatePerformButtonLabels(self.CurrPad)
 
         self.resetVisibility()
-
-    def clearExternalScale(self):
-        palette.palette_region_api(self.CurrPad.name(), "clearexternalscale")
-
-    def sendANO(self):
-        palette.palette_region_api(self.CurrPad.name(), "ANO")
 
     def sendQuad(self):
         for pad in self.Pads:
@@ -951,6 +957,15 @@ class Pad():
     def setPerformIndex(self,name,index):
         self.performIndex[name] = index
 
+    def sendANO(self):
+        palette.palette_region_api(self.name(), "ANO")
+
+    def clearExternalScale(self):
+        palette.palette_region_api(self.name(), "clearexternalscale")
+
+    def useExternalScale(self,onoff):
+        palette.palette_region_api(self.name(), "useexternalscale", "\"onoff\": \"" + str(onoff) + "\"")
+
     def sendPerformVal(self,name):
         index = self.performIndex[name]
         labels = palette.PerformLabels[name]
@@ -1006,7 +1021,7 @@ class Pad():
             palette.palette_region_api(self.name(), "midi_thru", "\"thru\": \"" + str(val) + "\"")
 
         elif name == "useexternalscale":
-            palette.palette_region_api(self.name(), "useexternalscale", "\"onoff\": \"" + str(val) + "\"")
+            self.useExternalScale(val)
 
         elif name == "midiquantized":
             palette.palette_region_api(self.name(), "midi_quantized", "\"quantized\": \"" + str(val) + "\"")
@@ -1805,12 +1820,12 @@ class PagePerformMain(tk.Frame):
 
         # More advanced buttons
         self.makePerformButtonAdvanced("transpose",None)
-        self.makePerformButtonAdvanced("useexternalscale",None)
+        self.makePerformButtonAdvanced("scale",None)
         self.makePerformButtonAdvanced("Notes_Off", self.controller.sendANO)
 
         self.makePerformButtonAdvanced("quant",None)
         self.makePerformButtonAdvanced("vol",None)
-        self.makePerformButtonAdvanced("scale",None)
+        self.makePerformButtonAdvanced("useexternalscale",None)
         self.makePerformButtonAdvanced("midithru",None)
         self.makePerformButtonAdvanced("midiquantized",None)
 

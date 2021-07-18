@@ -15,3 +15,5 @@ if not "%PALETTESOURCE%" == "" (
 ) else (
 	start /b "" "%PALETTE%\bin\pyinstalled\palette_gui.exe" > "%PALETTELOGDIR%\gui.stdout" 2> "%PALETTELOGDIR%\gui.stderr"
 )
+call delay 2
+call resizegui

@@ -9,7 +9,7 @@ def changeparam(paramfile,paramname,paramnewname):
     f.close()
 
     for ch in {"A","B","C","D"}:
-        chname = ch + "_" + paramname
+        chname = ch + "-" + paramname
         if chname in params["params"]:
             params["params"][paramnewname] = params["params"][chname]
             del params["params"][chname]

@@ -8,17 +8,36 @@ def changeparam(paramfile,paramname,oldval,newval):
     params = json.load(f)
     f.close()
 
-    for ch in {"A","B","C","D"}:
-        chname = ch + "_" + paramname
-        if chname in params["params"]:
-            if params["params"][chname] == oldval:
-                print("Changing chname=",chname)
-                params["params"][chname] = str(newval)
+    for pad in {"A","B","C","D"}:
 
+        # In quad presets, sound and visual parameters are {pad}-{paramname}
+        fullname = pad + "-" + paramname
+        if fullname in params["params"]:
+            if params["params"][fullname] == oldval:
+                print(paramfile,": Changing param=",fullname)
+                params["params"][fullname] = str(newval)
+
+        # ... except for effect parameters which are {pad}-{number}-{paramname}
+        for num in {"1","2"}:
+            fullname = pad + "-" + num + "-" + paramname
+            if fullname in params["params"]:
+                if params["params"][fullname] == oldval:
+                    print(paramfile,": Changing param=",fullname)
+                    params["params"][fullname] = str(newval)
+
+    # In other of presets, the parameter is just the {paramname}
     if paramname in params["params"]:
         if params["params"][paramname] == oldval:
             print("Changing parmname=",paramname)
             params["params"][paramname] = str(newval)
+
+    # ... except for effect parameters which are {number}-{paramname}
+    for num in {"1","2"}:
+        fullname = num + "-" + paramname
+        if fullname in params["params"]:
+            if params["params"][fullname] == oldval:
+                print(paramfile,": Changing param=",fullname)
+                params["params"][fullname] = str(newval)
 
     print("Writing ",paramfile)
     f = open(paramfile,"w")

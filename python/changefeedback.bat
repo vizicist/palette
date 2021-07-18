@@ -1,0 +1,32 @@
+python changeparamval.py ../default/presets/snap trails:feedback 0.580 0.550
+python changeparamval.py ../default/presets/snap trails:feedback 0.555 0.550
+python changeparamval.py ../default/presets/snap trails:feedback 0.658 0.550
+python changeparamval.py ../default/presets/snap trails:feedback 0.665 0.550
+python changeparamval.py ../default/presets/snap trails:feedback 0.573 0.550
+python changeparamval.py ../default/presets/snap trails:feedback 0.850 0.550
+python changeparamval.py ../default/presets/snap trails:feedback 0.599 0.550
+python changeparamval.py ../default/presets/snap trails:feedback 0.521 0.550
+python changeparamval.py ../default/presets/snap trails:feedback 0.689 0.550
+python changeparamval.py ../default/presets/snap trails:feedback 0.541 0.550
+python changeparamval.py ../default/presets/snap trails:feedback 0.576 0.550
+python changeparamval.py ../default/presets/snap trails:feedback 0.697 0.550
+python changeparamval.py ../default/presets/snap trails:feedback 0.669 0.550
+python changeparamval.py ../default/presets/snap trails:feedback 0.541 0.550
+python changeparamval.py ../default/presets/snap trails:feedback 0.611 0.550
+python changeparamval.py ../default/presets/snap trails:feedback 0.616 0.550
+python changeparamval.py ../default/presets/snap trails:feedback 0.624 0.550
+python changeparamval.py ../default/presets/snap trails:feedback 0.659 0.550
+python changeparamval.py ../default/presets/snap trails:feedback 0.695 0.550
+python changeparamval.py ../default/presets/snap trails:feedback 0.508 0.550
+python changeparamval.py ../default/presets/snap trails:feedback 0.509 0.550
+python changeparamval.py ../default/presets/snap trails:feedback 0.630 0.550
+python changeparamval.py ../default/presets/snap trails:feedback 0.628 0.550
+python changeparamval.py ../default/presets/snap trails:feedback 0.591 0.550
+
+python changeparamval.py ../default/presets/effect trails:feedback 0.750 0.550
+python changeparamval.py ../default/presets/effect trails:feedback 0.509 0.550
+python changeparamval.py ../default/presets/effect trails:feedback 0.508 0.550
+python changeparamval.py ../default/presets/effect trails:feedback 0.578 0.550
+python changeparamval.py ../default/presets/effect trails:feedback 0.640 0.550
+
+python changeparamval.py ../default/presets/quad trails:feedback 0.55 0.550

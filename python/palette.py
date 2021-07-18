@@ -75,31 +75,32 @@ PerformLabels["loopinglength"] = [
 SimpleScales = [
 	{"label":"Newage_Scale",    "value":"newage"},
 	{"label":"Arabian_Scale",   "value":"arabian"},
-	{"label":"Chromatic_Scale", "value":"chromatic"},
-    {"label":"Dorian_Scale","value":"dorian"},
+	# {"label":"Chromatic_Scale", "value":"chromatic"},
+    # {"label":"Dorian_Scale","value":"dorian"},
 	{"label":"Fifths_Scale",    "value":"fifths"},
     {"label":"Harminor_Scale",  "value":"harminor"},
-    {"label":"Lydian_Scale","value":"lydian"},
+    # {"label":"Lydian_Scale","value":"lydian"},
     {"label":"Melminor_Scale",  "value":"melminor"},
+    {"label":"Raga_Scale",     "value":"raga1"},
 ]
 PerformScales = [
 	{"label":"Newage_Scale",    "value":"newage"},
-    {"label":"Aeolian_Scale",   "value":"aeolian"},
+    # {"label":"Aeolian_Scale",   "value":"aeolian"},
  	{"label":"Arabian_Scale",   "value":"arabian"},
  	{"label":"Chromatic_Scale", "value":"chromatic"},
-    {"label":"Dorian_Scale","value":"dorian"},
+    # {"label":"Dorian_Scale","value":"dorian"},
  	{"label":"Fifths_Scale",    "value":"fifths"},
     {"label":"Harminor_Scale",  "value":"harminor"},
-    {"label":"Ionian_Scale","value":"ionian"},
-    {"label":"Locrian_Scale",   "value":"locrian"},
-    {"label":"Lydian_Scale","value":"lydian"},
+    # {"label":"Ionian_Scale","value":"ionian"},
+    # {"label":"Locrian_Scale",   "value":"locrian"},
+    # {"label":"Lydian_Scale","value":"lydian"},
     {"label":"Melminor_Scale",  "value":"melminor"},
-    {"label":"Mixolydian_Scale","value":"mixolydian"},
+    # {"label":"Mixolydian_Scale","value":"mixolydian"},
     {"label":"Phrygian_Scale",  "value":"phrygian"},
-    {"label":"Raga1_Scale",     "value":"raga1"},
-    {"label":"Raga2_Scale", "value":"raga2"},
-    {"label":"Raga3_Scale", "value":"raga3"},
-    {"label":"Raga4_Scale", "value":"raga4"},
+    {"label":"Raga_Scale",     "value":"raga1"},
+    # {"label":"Raga2_Scale", "value":"raga2"},
+    # {"label":"Raga3_Scale", "value":"raga3"},
+    # {"label":"Raga4_Scale", "value":"raga4"},
 ]
 
 PerformLabels["quant"] = [
@@ -136,10 +137,10 @@ PerformLabels["loopingonoff"] = [
 #     {"label":"Loop_2",  "value":2},
 # ]
 PerformLabels["midithru"] = [
+    {"label":"MIDI Input_Disabled",  "value":"disabled"},
     {"label":"MIDI Input_Thru",  "value":"thru"},
     {"label":"MIDI Input_Set Scale",  "value":"setscale"},
     {"label":"MIDI Input_Thru Scadjust", "value":"thruscadjust"},
-    {"label":"MIDI Input_Disabled",  "value":"disabled"},
 ]
 PerformLabels["useexternalscale"] = [
     {"label":"Ext MIDI_Scale Off",  "value":False},
