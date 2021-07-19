@@ -75,9 +75,11 @@ type Stepper struct {
 	// Things moved over from Router
 	MIDINumDown      int
 	MIDIOctaveShift  int
-	MIDIThru         string // "disabled", "thru", etc
+	MIDIThru         bool
+	MIDIThruScadjust bool
+	MIDISetScale     bool
 	MIDIQuantized    bool
-	useExternalScale bool // if true, scadjust uses "external" Scale
+	MIDIUseScale     bool // if true, scadjust uses "external" Scale
 	TransposePitch   int
 	midiInputMutex   sync.RWMutex
 	externalScale    *Scale
@@ -107,8 +109,10 @@ func NewStepper(pad string, resolumeLayer int, freeframeClient *osc.Client, reso
 		activePhrasesManager:      NewActivePhrasesManager(),
 
 		MIDIOctaveShift:  0,
-		MIDIThru:         "thru",
-		useExternalScale: false,
+		MIDIThru:         false,
+		MIDISetScale:     false,
+		MIDIThruScadjust: false,
+		MIDIUseScale:     false,
 		MIDIQuantized:    false,
 		TransposePitch:   0,
 	}
@@ -122,7 +126,9 @@ func NewStepper(pad string, resolumeLayer int, freeframeClient *osc.Client, reso
 // PassThruMIDI xxx
 func (r *Stepper) PassThruMIDI(e portmidi.Event, scadjust bool) {
 
-	// log.Printf("Stepper.PassThruMIDI e=%+v\n", e)
+	if DebugUtil.MIDI {
+		log.Printf("Stepper.PassThruMIDI e=%+v\n", e)
+	}
 
 	// channel on incoming MIDI is ignored
 	// it uses whatever sound the Stepper is using
@@ -381,7 +387,7 @@ func (r *Stepper) ExecuteAPI(api string, args map[string]string, rawargs string)
 
 	case "loop_playing":
 		v, err := needBoolArg("onoff", api, args)
-		if err == nil {
+		if err == nil && v != r.loopIsPlaying {
 			r.loopIsPlaying = v
 			r.terminateActiveNotes()
 		}
@@ -397,7 +403,10 @@ func (r *Stepper) ExecuteAPI(api string, args map[string]string, rawargs string)
 	case "loop_length":
 		i, err := needIntArg("length", api, args)
 		if err == nil {
-			r.loop.SetLength(Clicks(i))
+			nclicks := Clicks(i)
+			if nclicks != r.loop.length {
+				r.loop.SetLength(nclicks)
+			}
 		}
 
 	case "loop_fade":
@@ -410,36 +419,42 @@ func (r *Stepper) ExecuteAPI(api string, args map[string]string, rawargs string)
 		r.sendANO()
 
 	case "midi_thru":
-		v, err := needStringArg("thru", api, args)
+		v, err := needBoolArg("onoff", api, args)
 		if err == nil {
-			log.Printf("midi_thru set to %v", v)
 			r.MIDIThru = v
 		}
 
-	case "useexternalscale":
+	case "midi_setscale":
 		v, err := needBoolArg("onoff", api, args)
 		if err == nil {
-			log.Printf("useexternalscale set to %v", v)
-			r.useExternalScale = v
+			r.MIDISetScale = v
+		}
+
+	case "midi_usescale":
+		v, err := needBoolArg("onoff", api, args)
+		if err == nil {
+			r.MIDIUseScale = v
 		}
 
 	case "clearexternalscale":
-		// log.Printf("router is clearing external scale\n")
-		log.Printf("clearExternalScale called")
 		r.clearExternalScale()
 		r.MIDINumDown = 0
 
 	case "midi_quantized":
-		v, err := needBoolArg("quantized", api, args)
+		v, err := needBoolArg("onoff", api, args)
 		if err == nil {
-			log.Printf("midiquantized = %v", v)
 			r.MIDIQuantized = v
+		}
+
+	case "midi_thruscadjust":
+		v, err := needBoolArg("onoff", api, args)
+		if err == nil {
+			r.MIDIThruScadjust = v
 		}
 
 	case "set_transpose":
 		v, err := needIntArg("value", api, args)
 		if err == nil {
-			log.Printf("set_transpose = %v", v)
 			r.TransposePitch = v
 		}
 
@@ -468,19 +483,11 @@ func (r *Stepper) HandleMIDIDeviceInput(e portmidi.Event) {
 	if DebugUtil.MIDI {
 		log.Printf("Router.HandleMIDIDeviceInput: MIDIInput event=%+v\n", e)
 	}
-	switch r.MIDIThru {
-	case "":
-		// do nothing
-	case "disabled":
-		// do nothing
-	case "setscale":
+	if r.MIDIThru {
+		r.PassThruMIDI(e, r.MIDIThruScadjust)
+	}
+	if r.MIDISetScale {
 		r.handleMIDISetScaleNote(e)
-	case "thru":
-		r.PassThruMIDI(e, false)
-	case "thruscadjust":
-		r.PassThruMIDI(e, true)
-	default:
-		log.Printf("Router.HandleMIDIDeviceInput: unknown MIDIThru value=%s\n", r.MIDIThru)
 	}
 }
 
@@ -493,7 +500,9 @@ func (r *Stepper) setOneParamValue(apiprefix, name, value string) {
 
 // ClearExternalScale xxx
 func (r *Stepper) clearExternalScale() {
-	log.Printf("clearExternalScale pad=%s", r.padName)
+	if DebugUtil.MIDI {
+		log.Printf("clearExternalScale pad=%s", r.padName)
+	}
 	r.externalScale = makeScale()
 }
 
@@ -503,7 +512,9 @@ func (r *Stepper) setExternalScale(pitch int, on bool) {
 	for p := pitch; p < 128; p += 12 {
 		s.hasNote[p] = on
 	}
-	log.Printf("setExternalScale pad=%s pitch=%v on=%v", r.padName, pitch, on)
+	if DebugUtil.MIDI {
+		log.Printf("setExternalScale pad=%s pitch=%v on=%v", r.padName, pitch, on)
+	}
 }
 
 // Time returns the current time
@@ -766,7 +777,7 @@ func (r *Stepper) handleMIDISetScaleNote(e portmidi.Event) {
 func (r *Stepper) getScale() *Scale {
 	var scaleName string
 	var scale *Scale
-	if r.useExternalScale {
+	if r.MIDIUseScale {
 		scale = r.externalScale
 	} else {
 		scaleName = r.params.ParamStringValue("misc.scale", "newage")
