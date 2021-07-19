@@ -626,6 +626,7 @@ class ProGuiApp(tk.Tk):
         self.refreshPage()
 
         self.performPage.updatePerformButtonLabels(self.CurrPad)
+        self.CurrPad.sendPerformVals()
 
         self.editPage[self.currentPageName].updateParamView()
 
@@ -723,8 +724,6 @@ class ProGuiApp(tk.Tk):
         for pad in self.Pads:
             pad.useExternalScale(False)
             pad.clearExternalScale()
-            for name in palette.PerformLabels:
-                pad.sendPerformVal(name)
 
         for name in palette.GlobalPerformLabels:
             self.sendGlobalPerformVal(name)
@@ -732,6 +731,7 @@ class ProGuiApp(tk.Tk):
         for pad in self.Pads:
             pad.clearLoop()
             pad.setDefaultPerform()
+            pad.sendPerformVals()
 
         self.performPage.updatePerformButtonLabels(self.CurrPad)
 
@@ -948,8 +948,11 @@ class Pad():
                 palette.palette_region_api(self.name(), pt+".set_params", paramlistjson)
 
         if paramType == "snap":
-            for name in palette.PerformLabels:
-                self.sendPerformVal(name)
+            self.sendPerformVals()
+
+    def sendPerformVals(self):
+        for name in palette.PerformLabels:
+            self.sendPerformVal(name)
 
     def getPerformIndex(self,name):
         return self.performIndex[name]
@@ -964,7 +967,7 @@ class Pad():
         palette.palette_region_api(self.name(), "clearexternalscale")
 
     def useExternalScale(self,onoff):
-        palette.palette_region_api(self.name(), "useexternalscale", "\"onoff\": \"" + str(onoff) + "\"")
+        palette.palette_region_api(self.name(), "midi_usescale", "\"onoff\": \"" + str(onoff) + "\"")
 
     def sendPerformVal(self,name):
         index = self.performIndex[name]
@@ -1018,16 +1021,25 @@ class Pad():
                 "\"value\": \"" + str(val) + "\"")
 
         elif name == "midithru":
-            palette.palette_region_api(self.name(), "midi_thru", "\"thru\": \"" + str(val) + "\"")
+            palette.palette_region_api(self.name(), "midi_thru", "\"onoff\": \"" + str(val) + "\"")
 
-        elif name == "useexternalscale":
+        elif name == "midisetscale":
+            palette.palette_region_api(self.name(), "midi_setscale", "\"onoff\": \"" + str(val) + "\"")
+
+        elif name == "midiusescale":
             self.useExternalScale(val)
 
         elif name == "midiquantized":
-            palette.palette_region_api(self.name(), "midi_quantized", "\"quantized\": \"" + str(val) + "\"")
+            palette.palette_region_api(self.name(), "midi_quantized", "\"onoff\": \"" + str(val) + "\"")
+
+        elif name == "midithruscadjust":
+            palette.palette_region_api(self.name(), "midi_thruscadjust", "\"onoff\": \"" + str(val) + "\"")
 
         elif name == "transpose":
             palette.palette_region_api(self.name(), "set_transpose", "\"value\": \""+str(val) + "\"")
+
+        else:
+            print("SendPerformVal: unhandled name=",name)
 
     def clearLoop(self):
         palette.palette_region_api(self.name(), "loop_clear", "")
@@ -1825,8 +1837,10 @@ class PagePerformMain(tk.Frame):
 
         self.makePerformButtonAdvanced("quant",None)
         self.makePerformButtonAdvanced("vol",None)
-        self.makePerformButtonAdvanced("useexternalscale",None)
         self.makePerformButtonAdvanced("midithru",None)
+        self.makePerformButtonAdvanced("midisetscale",None)
+        self.makePerformButtonAdvanced("midiusescale",None)
+        self.makePerformButtonAdvanced("midithruscadjust",None)
         self.makePerformButtonAdvanced("midiquantized",None)
 
         ### self.makePerformButtonAdvanced("Comb_Notes", self.controller.combLoop)

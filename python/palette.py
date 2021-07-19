@@ -132,19 +132,21 @@ PerformLabels["loopingonoff"] = [
     {"label":"Looping_is ON", "value":"recplay"},
     {"label":"Loop_Playback Only", "value":"play"},
 ]
-# PerformLabels["loopingset"] = [
-#     {"label":"Loop_1",  "value":1},
-#     {"label":"Loop_2",  "value":2},
-# ]
 PerformLabels["midithru"] = [
-    {"label":"MIDI Input_Disabled",  "value":"disabled"},
-    {"label":"MIDI Input_Thru",  "value":"thru"},
-    {"label":"MIDI Input_Set Scale",  "value":"setscale"},
-    {"label":"MIDI Input_Thru Scadjust", "value":"thruscadjust"},
+    {"label":"MIDI Thru_Off",  "value":False},  # default value at startup
+    {"label":"MIDI Thru_On",  "value":True},
 ]
-PerformLabels["useexternalscale"] = [
-    {"label":"Ext MIDI_Scale Off",  "value":False},
-    {"label":"Ext MIDI_Scale_On",  "value":True},
+PerformLabels["midisetscale"] = [
+    {"label":"MIDI Set Scale_Off",  "value":False},
+    {"label":"MIDI Set Scale_On",  "value":True},
+]
+PerformLabels["midiusescale"] = [
+    {"label":"MIDI Use Scale_Off",  "value":False},
+    {"label":"MIDI Use Scale_On",  "value":True},
+]
+PerformLabels["midithruscadjust"] = [
+    {"label":"MIDI Thru_Scadjust Off",  "value":False},
+    {"label":"MIDI Thru_Scadjust On",  "value":True},
 ]
 PerformLabels["midiquantized"] = [
     {"label":"MIDI Thru_NoQuant",  "value":False},
