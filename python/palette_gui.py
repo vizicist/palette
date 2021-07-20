@@ -150,9 +150,9 @@ class ProGuiApp(tk.Tk):
 
     def setScaleList(self):
         if self.guiLevel == 0:
-            palette.PerformLabels["scale"] = palette.SimpleScales
+            palette.GlobalPerformLabels["scale"] = palette.SimpleScales
         else:
-            palette.PerformLabels["scale"] = palette.PerformScales
+            palette.GlobalPerformLabels["scale"] = palette.PerformScales
 
     def placePadChooser(self):
         if self.guiLevel > 0 and self.currentPageName != "quad":
@@ -665,6 +665,10 @@ class ProGuiApp(tk.Tk):
 
         if name == "tempo":
             palette.palette_global_api("set_tempo_factor", "\"value\": \""+str(val) + "\"")
+        elif name == "transpose":
+            palette.palette_global_api("set_transpose", "\"value\": \""+str(val) + "\"")
+        elif name == "scale":
+            palette.palette_global_api("set_scale", "\"value\": \""+str(val) + "\"")
 
     def combPadLoop(self,pad):
         palette.palette_region_api(self.CurrPad.name(), "loop_comb", "")
@@ -724,6 +728,9 @@ class ProGuiApp(tk.Tk):
         for pad in self.Pads:
             pad.useExternalScale(False)
             pad.clearExternalScale()
+
+        for s in palette.GlobalPerformLabels:
+            self.globalPerformIndex[s] = 0
 
         for name in palette.GlobalPerformLabels:
             self.sendGlobalPerformVal(name)
@@ -869,6 +876,9 @@ class Pad():
         # but there can be exceptions, specified in PerformDefaultVal
         for name in palette.PerformDefaultVal:
             self.performIndex[name] = palette.PerformDefaultVal[name]
+
+        for name in palette.GlobalPerformLabels:
+            self.performIndex[name] = 0
 
     def name(self):
         return self.padName
@@ -1036,7 +1046,8 @@ class Pad():
             palette.palette_region_api(self.name(), "midi_thruscadjust", "\"onoff\": \"" + str(val) + "\"")
 
         elif name == "transpose":
-            palette.palette_region_api(self.name(), "set_transpose", "\"value\": \""+str(val) + "\"")
+            print("HEY, transpose shouldn't be here")
+            # palette.palette_global_api(self.name(), "set_transpose", "\"value\": \""+str(val) + "\"")
 
         else:
             print("SendPerformVal: unhandled name=",name)
