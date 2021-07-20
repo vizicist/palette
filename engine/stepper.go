@@ -456,6 +456,7 @@ func (r *Stepper) ExecuteAPI(api string, args map[string]string, rawargs string)
 		v, err := needIntArg("value", api, args)
 		if err == nil {
 			r.TransposePitch = v
+			log.Printf("set_transpose TransposePitch=%v", v)
 		}
 
 	default:
@@ -1049,6 +1050,7 @@ func (r *Stepper) paramIntValue(paramname string) int {
 func (r *Stepper) cursorToNoteOn(ce CursorStepEvent) *Note {
 	pitch := r.cursorToPitch(ce)
 	pitch = uint8(int(pitch) + r.TransposePitch)
+	// log.Printf("cursorToNoteOn pitch=%v trans=%v", pitch, r.TransposePitch)
 	velocity := r.cursorToVelocity(ce)
 	synth := r.params.ParamStringValue("sound.synth", defaultSynth)
 	// log.Printf("cursorToNoteOn x=%.5f y=%.5f z=%.5f pitch=%d velocity=%d\n", ce.x, ce.y, ce.z, pitch, velocity)

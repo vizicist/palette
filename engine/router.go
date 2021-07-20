@@ -732,6 +732,22 @@ func (r *Router) ExecuteAPI(api string, nuid string, rawargs string) (result int
 			ChangeClicksPerSecond(float64(v))
 		}
 
+	case "set_transpose":
+		v, err := needFloatArg("value", api, args)
+		if err == nil {
+			for _, stepper := range r.steppers {
+				stepper.TransposePitch = int(v)
+			}
+		}
+
+	case "set_scale":
+		v, err := needStringArg("value", api, args)
+		if err == nil {
+			for _, stepper := range r.steppers {
+				stepper.setOneParamValue("misc.", "scale", v)
+			}
+		}
+
 	case "audio_reset":
 		r.audioReset()
 
