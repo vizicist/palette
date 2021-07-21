@@ -124,7 +124,7 @@ PerformLabels["loopingfade"] = [
     {"label":"Loop Fade_Slowest", "value":0.7},
     {"label":"Loop_Forever", "value":1.0},
 ]
-PerformDefaultVal["loopingfade"] = 0
+PerformDefaultVal["loopingfade"] = 7
 
 PerformLabels["loopingonoff"] = [
     {"label":"Looping_is OFF",  "value":"off"},
