@@ -82,6 +82,7 @@ copy ipaddress.bat %bin% >nul
 copy taillog.bat %bin% >nul
 copy natsmon.bat %bin% >nul
 copy delay.bat %bin% >nul
+copy setpalettelogdir.bat %bin% >nul
 
 popd
 
