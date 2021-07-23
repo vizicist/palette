@@ -12,8 +12,10 @@ if not "%PALETTELOGDIR%" == "" (
 
 if not "%PALETTESOURCE%" == "" (
 	start /b "" "%PALETTESOURCE%\build\windows\ship\bin\pyinstalled\palette_gui.exe" > "%PALETTELOGDIR%\gui.stdout" 2> "%PALETTELOGDIR%\gui.stderr"
+	call delay 10
+	call "%PALETTESOURCE%\scripts\resizegui.bat"
 ) else (
 	start /b "" "%PALETTE%\bin\pyinstalled\palette_gui.exe" > "%PALETTELOGDIR%\gui.stdout" 2> "%PALETTELOGDIR%\gui.stderr"
+	call delay 10
+	call "%PALETTE%\bin\resizegui.bat"
 )
-call delay 2
-call resizegui
