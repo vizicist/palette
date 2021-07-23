@@ -7,7 +7,7 @@
   "presetspath": "%LOCALAPPDATA%\\Palette\\presets;%PALETTE%\\presets",
   "debug": "",
   "pads":"ABCD",
-  "guilevel":"2",
+  "guilevel":"0",
   "midiinput":"microKEY2 Air",
   "this line should not end with a comma": 0
 }
