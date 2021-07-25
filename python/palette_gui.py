@@ -47,22 +47,22 @@ class ProGuiApp(tk.Tk):
         self.fontFactor = 1.0
         self.thumbFactor = 0.1
 
+        # These are the same in both normal and advanced
         self.selectDisplayPerRow = 3
+        self.paramDisplayRows = 21
 
         # Normal layout values
         self.frameSizeOfSelectNormal = 0.94
         self.frameSizeOfControlNormal = 1.0 - self.frameSizeOfSelectNormal
         self.frameSizeOfPadChooserNormal = 0.0
         self.selectDisplayRowsNormal = 15
-        self.paramDisplayRowsNormal = 27
 
         # Advanced layout values (allows for the PadChooser space)
-        self.frameSizeOfSelectAdvanced = 0.70
+        self.frameSizeOfSelectAdvanced = 0.71
         self.frameSizeOfControlAdvanced = 0.15
-        self.frameSizeOfPadChooserAdvanced = 0.15
+        self.frameSizeOfPadChooserAdvanced = 0.14
         self.frameSizeOfSelectAdvancedQuad = self.frameSizeOfSelectAdvanced + self.frameSizeOfPadChooserAdvanced
         self.selectDisplayRowsAdvanced = 11
-        self.paramDisplayRowsAdvanced = 23
         if (self.frameSizeOfSelectAdvanced + self.frameSizeOfControlAdvanced + self.frameSizeOfPadChooserAdvanced) != 1.0:
             print("Hey, page sizes don't add up to 1.0")
 
@@ -273,7 +273,6 @@ class ProGuiApp(tk.Tk):
             self.frameSizeOfSelect = self.frameSizeOfSelectNormal
             self.frameSizeOfPadChooser = self.frameSizeOfPadChooserNormal
             self.selectDisplayRows = self.selectDisplayRowsNormal
-            self.paramDisplayRows = self.paramDisplayRowsNormal
 
         elif self.currentPageName == "quad":
 
@@ -281,7 +280,6 @@ class ProGuiApp(tk.Tk):
             self.frameSizeOfSelect = self.frameSizeOfSelectAdvancedQuad
             self.frameSizeOfPadChooser = 0.0
             self.selectDisplayRows = self.selectDisplayRowsAdvanced
-            self.paramDisplayRows = self.paramDisplayRowsAdvanced
 
         else:
             # Advanced is any guiLevel>0
@@ -289,7 +287,6 @@ class ProGuiApp(tk.Tk):
             self.frameSizeOfSelect = self.frameSizeOfSelectAdvanced
             self.frameSizeOfPadChooser = self.frameSizeOfPadChooserAdvanced
             self.selectDisplayRows = self.selectDisplayRowsAdvanced
-            self.paramDisplayRows = self.paramDisplayRowsAdvanced
 
         y = 0
         self.selectPageY = y
@@ -417,7 +414,7 @@ class ProGuiApp(tk.Tk):
 
         if pagename != "quad" and self.editMode:
             if self.allPadsSelected:
-                print("allPadsSelected: using values from Pad A")
+                # print("allPadsSelected: using values from Pad A")
                 pad = self.padNamed("A")
             else:
                 pad = self.CurrPad
@@ -454,7 +451,9 @@ class ProGuiApp(tk.Tk):
 
         self.setFrameSizes()
 
-        page.doLayout()
+        if not self.editMode:
+            page.doLayout()
+
         page.pack(side=tk.TOP,fill=tk.BOTH,expand=True)
         page.tkraise()
 
@@ -1522,7 +1521,7 @@ class PageEditParams(tk.Frame):
         return (name in self.paramValueWidget)
 
     def setValues(self,values):
-        print("Edit page, changing ALL parameters in setValues")
+        # print("Edit page, changing ALL parameters in setValues")
         for name in self.params:
             if name in values:
                 self.changeValueText(name,values[name])
