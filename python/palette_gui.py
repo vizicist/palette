@@ -47,19 +47,21 @@ class ProGuiApp(tk.Tk):
         self.fontFactor = 1.0
         self.thumbFactor = 0.1
 
-        self.selectDisplayPerRow = 4
+        self.selectDisplayPerRow = 3
 
+        # Normal layout values
         self.frameSizeOfSelectNormal = 0.94
         self.frameSizeOfControlNormal = 1.0 - self.frameSizeOfSelectNormal
         self.frameSizeOfPadChooserNormal = 0.0
-        self.selectDisplayRowsNormal = 17
+        self.selectDisplayRowsNormal = 15
         self.paramDisplayRowsNormal = 27
 
-        self.frameSizeOfSelectAdvanced = 0.75
+        # Advanced layout values (allows for the PadChooser space)
+        self.frameSizeOfSelectAdvanced = 0.70
         self.frameSizeOfControlAdvanced = 0.15
-        self.frameSizeOfPadChooserAdvanced = 0.1
+        self.frameSizeOfPadChooserAdvanced = 0.15
         self.frameSizeOfSelectAdvancedQuad = self.frameSizeOfSelectAdvanced + self.frameSizeOfPadChooserAdvanced
-        self.selectDisplayRowsAdvanced = 15
+        self.selectDisplayRowsAdvanced = 11
         self.paramDisplayRowsAdvanced = 23
         if (self.frameSizeOfSelectAdvanced + self.frameSizeOfControlAdvanced + self.frameSizeOfPadChooserAdvanced) != 1.0:
             print("Hey, page sizes don't add up to 1.0")
@@ -140,7 +142,7 @@ class ProGuiApp(tk.Tk):
 
         self.topContainer.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
         self.performPage.pack(side=tk.TOP,fill=tk.BOTH,expand=True)
-        self.selectPage("snap")
+        # self.selectPage("snap")
         self.resetVisibility()
 
         self.topContainer.bind_all("<MouseWheel>", self.scrollWheel)
@@ -450,6 +452,9 @@ class ProGuiApp(tk.Tk):
         else:
             page = self.selectorPage[pagename]
 
+        self.setFrameSizes()
+
+        page.doLayout()
         page.pack(side=tk.TOP,fill=tk.BOTH,expand=True)
         page.tkraise()
 
@@ -2001,6 +2006,10 @@ class PageSelector(tk.Frame):
 
     def doLayout(self):
         valindex = self.selectOffset
+
+        for i in self.selectButtons:
+            self.selectButtons[i].grid_forget()
+
         i = 0
         for r in range(0,self.controller.selectDisplayRows):
             for c in range(0,self.controller.selectDisplayPerRow):
@@ -2023,15 +2032,15 @@ class PageSelector(tk.Frame):
                         width=13
 
                     if not i in self.selectButtons:
+                        if i > len(self.vals):
+                            print("Hey, i > len(self.vals) ??")
                         self.selectButtons[i] = ttk.Button(self.valsframe, width=width, style=style)
 
                     self.selectButtons[i].grid(row=r,column=c,padx=self.controller.selectButtonPadx,pady=self.controller.selectButtonPady,ipady=ipady,ipadx=ipadx)
                     self.selectButtons[i].config(text=selectButtonText,
                         command=lambda val=self.vals[valindex],buttoni=i:self.selectorCallback(val,buttoni))
                     valindex += 1
-                else:
-                    if i in self.selectButtons:
-                        self.selectButtons[i].grid_forget()
+
                 i += 1
 
     def defaultVal(self):

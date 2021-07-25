@@ -262,7 +262,7 @@ def setFontSizes(fontFactor):
     global padLabelFont, paramNameFont, paramValueFont, paramAdjustFont
     f = 'Helvetica'
     f = 'Lucida Sans'
-    presetButtonFont = (f, int(16*fontFactor))
+    presetButtonFont = (f, int(20*fontFactor))
     largestFont = (f, int(24*fontFactor))
     hugeFont = (f, int(36*fontFactor))
     comboFont = (f, int(20*fontFactor))
