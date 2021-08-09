@@ -64,6 +64,7 @@ pushd %PALETTESOURCE%\ffgl\binaries\x64\Release
 copy Palette*.dll %ship%\ffgl > nul
 copy Palette*.pdb %ship%\ffgl > nul
 copy %PALETTESOURCE%\build\windows\pthreadvc2.dll %ship%\ffgl >nul
+copy %PALETTESOURCE%\build\windows\msvcr100.dll %ship%\ffgl >nul
 popd
 
 echo ================ Copying binaries
@@ -82,6 +83,7 @@ copy ipaddress.bat %bin% >nul
 copy taillog.bat %bin% >nul
 copy natsmon.bat %bin% >nul
 copy delay.bat %bin% >nul
+copy resizegui.bat %bin% >nul
 copy setpalettelogdir.bat %bin% >nul
 
 popd
