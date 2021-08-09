@@ -97,6 +97,7 @@ copy %PALETTESOURCE%\default\config\synths.json %ship%\config >nul
 copy %PALETTESOURCE%\default\config\nats*.conf %ship%\config >nul
 copy %PALETTESOURCE%\default\config\Palette*.avc %ship%\config >nul
 copy %PALETTESOURCE%\default\config\palette.ico %ship%\config >nul
+copy %PALETTESOURCE%\default\config\palette.bidule %ship%\config >nul
 
 echo ================ Copying midifiles
 mkdir %ship%\midifiles
