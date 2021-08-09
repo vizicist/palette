@@ -1,3 +1,5 @@
 call build.bat
 call palettestopall
-..\..\release\palette_5.02_win_setup.exe
+set INSTALLER=..\..\release\palette_5.1_win_setup.exe
+copy %INSTALLER% t:\tjt\media\spacepalettepro\installers >nul
+%INSTALLER%
