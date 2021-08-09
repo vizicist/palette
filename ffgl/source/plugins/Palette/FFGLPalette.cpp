@@ -12,8 +12,8 @@ enum ParamType : FFUInt32
 static CFFGLPluginInfo PluginInfo(
 	// PluginFactory< FFGLPalette >,// Create method
 	FFGLPalette::CreateInstance,         // Create method
-	"PL03",                        // Plugin unique ID
-	"Palette3",            // Plugin name
+	"PLTA",                        // Plugin unique ID
+	"Palette",                     // Plugin name
 	2,                             // API major version number
 	1,                             // API minor version number
 	1,                             // Plugin major version number
