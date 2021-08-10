@@ -96,6 +96,7 @@ copy %PALETTESOURCE%\default\config\param*.json %ship%\config >nul
 copy %PALETTESOURCE%\default\config\resolume.json %ship%\config >nul
 copy %PALETTESOURCE%\default\config\settings.json %ship%\config >nul
 copy %PALETTESOURCE%\default\config\synths.json %ship%\config >nul
+copy %PALETTESOURCE%\default\config\morphs.json %ship%\config >nul
 copy %PALETTESOURCE%\default\config\nats*.conf %ship%\config >nul
 copy %PALETTESOURCE%\default\config\Palette*.avc %ship%\config >nul
 copy %PALETTESOURCE%\default\config\palette.ico %ship%\config >nul
@@ -116,6 +117,12 @@ xcopy /e /y %PALETTESOURCE%\default\presets %ship%\presets > nul
 echo ================ Removing unused things
 rm -fr %bin%\pyinstalled\tcl\tzdata
 
-call buildsetup.bat
+echo ================ Creating installer
+"c:\Program Files (x86)\Inno Setup 6\ISCC.exe" /Q palette_win_setup.iss
+if exist "T:\\tmp" (
+	copy Output\palette_*_win_setup.exe t:\tmp >nul
+)
+move Output\palette_*_win_setup.exe %PALETTESOURCE%\release >nul
+rmdir Output
 
 :getout
