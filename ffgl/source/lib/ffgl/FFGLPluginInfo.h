@@ -137,8 +137,6 @@ public:
 	/// \return		A pointer to the factory method of the plugin subclass.
 	FPCREATEINSTANCEGL* GetFactoryMethod() const;
 
-	void SetPluginIdAndName( const char* pchUniqueID, const char* pchPluginName );
-
 private:
 	// Structures containing information about the plugin
 	PluginInfoStruct m_PluginInfo;

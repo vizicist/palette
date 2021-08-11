@@ -14,7 +14,7 @@ extern std::string NosuchDebugLogPath;
 // extern std::string NosuchDebugLogDir;
 extern std::string NosuchDebugPrefix;
 extern std::string NosuchAppName;
-extern std::string NosuchCurrentDir;
+// extern std::string NosuchCurrentDir;
 extern int NosuchDebugTag;
 
 std::string NosuchSnprintf(const char *fmt, ...);

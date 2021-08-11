@@ -23,6 +23,43 @@ static CFFGLPluginInfo PluginInfo(
 	"by Tim Thompson"        // About
 );
 
+extern "C" {
+extern bool ffgl_setdll( std::string dllpath );
+}
+
+//////////////////////////////////////////////////////////////////
+// Plugin dll entry point
+//////////////////////////////////////////////////////////////////
+BOOL APIENTRY DllMain( HANDLE hModule, DWORD ul_reason_for_call, LPVOID lpReserved )
+{
+	char dllpath[ MAX_PATH ];
+	GetModuleFileNameA( (HMODULE)hModule, dllpath, MAX_PATH );
+
+	if( ul_reason_for_call == DLL_PROCESS_ATTACH )
+	{
+		if( !ffgl_setdll( std::string( dllpath ) ) )
+		{
+			NosuchDebug( "DllMain: ffgl_setdll failed" );
+			return FALSE;
+		}
+
+		NosuchDebug( 1, "DllMain: DLLPROCESS_ATTACH dll=%s", dllpath );
+	}
+	if( ul_reason_for_call == DLL_PROCESS_DETACH )
+	{
+		NosuchDebug( 1, "DllMain: DLLPROCESS_DETACH dll=%s", dllpath );
+	}
+	if( ul_reason_for_call == DLL_THREAD_ATTACH )
+	{
+		NosuchDebug( 1, "DllMain: DLLTHREAD_ATTACH dll=%s", dllpath );
+	}
+	if( ul_reason_for_call == DLL_THREAD_DETACH )
+	{
+		NosuchDebug( 1, "DllMain: DLLTHREAD_DETACH dll=%s", dllpath );
+	}
+	return TRUE;
+}
+
 std::string ffgl_name()
 {
 	return "Palette";

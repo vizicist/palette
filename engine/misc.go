@@ -137,8 +137,6 @@ func PaletteDir() string {
 	return paletteRoot
 }
 
-var paletteSourceLogged = false
-
 // ConfigFilePath xxx
 func ConfigFilePath(nm string) string {
 	return filepath.Join(LocalPaletteDir(), "config", nm)
@@ -149,19 +147,8 @@ func MIDIFilePath(nm string) string {
 	return filepath.Join(LocalPaletteDir(), "midifiles", nm)
 }
 
-// LocalPaletteDir xxx
+// LocalPaletteDir gets used for local (and changed) presets and config
 func LocalPaletteDir() string {
-	// If PALETTESOURCE is defined, we use it so that during development,
-	// everything (both logs and config) come from there
-	ps := os.Getenv("PALETTESOURCE")
-	if ps != "" {
-		dir := filepath.Join(ps, "default")
-		if !paletteSourceLogged {
-			paletteSourceLogged = true
-			log.Printf("Using PALETTESOURCE to get default from %s\n", dir)
-		}
-		return dir
-	}
 	localapp := os.Getenv("LOCALAPPDATA")
 	if localapp == "" {
 		log.Printf("Expecting LOCALAPPDATA to be set.")
@@ -179,10 +166,14 @@ func LocalConfigFilePath(nm string) string {
 	return filepath.Join(localdir, "config", nm)
 }
 
-// LogFilePath xxx
+// LogFilePath is always in the LOCALAPPDATA directory
 func LogFilePath(nm string) string {
-	localdir := LocalPaletteDir()
-	return filepath.Join(localdir, "logs", nm)
+	localapp := os.Getenv("LOCALAPPDATA")
+	if localapp == "" {
+		log.Printf("Expecting LOCALAPPDATA to be set, using c:/windows/tmp for log directory.\n")
+		return "C:/windows/tmp"
+	}
+	return filepath.Join(localapp, "Palette", "logs", nm)
 }
 
 // StringMap takes a JSON string and returns a map of elements
