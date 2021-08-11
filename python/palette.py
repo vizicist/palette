@@ -26,7 +26,6 @@ import platform
 DebugApi = False
 Verbose = False
 MyNuid = ""
-PaletteSourceLogged = False
 
 IsQuad = False
 RecMode = False
@@ -279,20 +278,11 @@ def configFilePath(nm):
     return os.path.join(paletteSubDir("config"),nm)
 
 def paletteSubDir(subdir):
-    # If PALETTESOURCE is defined, we use
-    ps = os.environ.get("PALETTESOURCE")
-    if ps != None:
-        global PaletteSourceLogged
-        if not PaletteSourceLogged:
-            PaletteSourceLogged = True
-            print("Using PALETTESOURCE=",ps," to get config files")
-        return os.path.join(ps, "default", subdir)
-    else:
-        local = os.environ.get("LOCALAPPDATA")
-        if local == None:
-            print("Expecting LOCALAPPDATA to be set, assuming .")
-            local = "."
-        return os.path.join(local, "Palette", subdir)
+    local = os.environ.get("LOCALAPPDATA")
+    if local == None:
+        print("Expecting LOCALAPPDATA to be set, assuming .")
+        local = "."
+    return os.path.join(local, "Palette", subdir)
 
 def presetsPath():
     p = ConfigValue("presetspath")
@@ -300,14 +290,6 @@ def presetsPath():
     lad = os.environ.get("LOCALAPPDATA")
     if lad != None:
         p = p.replace("%LOCALAPPDATA%",lad)
-
-    presetsDir = paletteSubDir("presets")
-    # If PALETTESOURCE is defined, add the default/presets directory
-    # to the presetsPath ,so that any editing/creation of presets
-    # will be saved there (to be used in the default installation).
-    if presetsDir != None:
-        p = presetsDir + ";" + p
-
     return p
 
 # Combine presets in the presetsPath list
@@ -328,8 +310,7 @@ def presetsListAll(presetType):
     return sortvals
 
 # This one always returns the local (first) directory in the presetspath,
-# which is either the user's LOCALAPPDATA version or (if PALETTESOURCE is
-# defined) the PALETTESOURCE version.
+# which is usually the user's LOCALAPPDATA version
 def localPresetsFilePath(presetType, nm, suffix=".json"):
     presetspath = presetsPath()
     paths = presetspath.split(";")

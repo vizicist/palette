@@ -20,59 +20,47 @@ using namespace ffglex;
 bool PaletteHost::StaticInitialized = false;
 void* PaletteHost::ThreadPointer = NULL;
 
-extern "C"
-{
-
+extern "C" {
 bool
-ffgl_setdll(std::string dllpath)
+ffgl_setdll( std::string dllpath )
 {
-	NosuchDebugSetThreadName(pthread_self().p,"FFGLDLL");
+	NosuchDebugSetThreadName( pthread_self().p, "FFGLDLL" );
 
-	dllpath = NosuchToLower(dllpath);
+	dllpath = NosuchToLower( dllpath );
 
-	size_t lastslash = dllpath.find_last_of("/\\");
-	size_t lastdot = dllpath.find_last_of(".");
-	std::string suffix = (lastdot==dllpath.npos?"":dllpath.substr(lastdot));
-
-	if ( suffix != ".dll" ) {
-		NosuchDebug("Hey! dll name (%s) isn't of the form *.dll!?",dllpath.c_str());
+	size_t lastslash   = dllpath.find_last_of( "/\\" );
+	size_t lastdot     = dllpath.find_last_of( "." );
+	std::string suffix = ( lastdot == dllpath.npos ? "" : dllpath.substr( lastdot ) );
+	if( suffix != ".dll" )
+	{
+		NosuchDebug( "Hey! dll name (%s) isn't of the form *.dll!?", dllpath.c_str() );
 		return false;
 	}
-
-	std::string dir = dllpath.substr(0,lastslash);
-	std::string prefix = dllpath.substr(lastslash+1,lastdot-lastslash-1);
-
-	NosuchCurrentDir = dir;
 
 	char* pValue;
 	size_t len;
 
 	errno_t err = _dupenv_s( &pValue, &len, "PALETTEDEBUG" );
-	if (!err && pValue != NULL) {
-		NosuchDebugLevel = atoi( std::string(pValue).c_str() );
+	if( !err && pValue != NULL )
+	{
+		NosuchDebugLevel = atoi( std::string( pValue ).c_str() );
 	}
 
-	err = _dupenv_s( &pValue, &len, "PALETTESOURCE" );
-	if( !err && pValue != NULL) {
-		NosuchDebugLogPath = std::string(pValue) + "\\default\\logs\\ffgl.log";
-	}
-	else {
-		errno_t err = _dupenv_s(&pValue, &len, "LOCALAPPDATA");
-		if (err || pValue == NULL) {
-			NosuchDebugLogPath = "c:\\windows\\temp\\ffgl.log"; // last resort
-		}
-		else {
-			NosuchDebugLogPath = std::string(pValue) + "\\Palette\\logs\\ffgl.log";
-			free(pValue);
-		}
+	NosuchDebugLogPath = "c:\\windows\\temp\\ffgl.log";// last resort
+
+	err = _dupenv_s( &pValue, &len, "LOCALAPPDATA" );
+	if( err == 0 && pValue != NULL )
+	{
+		NosuchDebugLogPath = std::string( pValue ) + "\\Palette\\logs\\ffgl.log";
+		free( pValue );
 	}
 
-	NosuchDebug("Palette: debuglevel=%d log=%s\n", NosuchDebugLevel, NosuchDebugLogPath.c_str());
+	NosuchDebug( "Palette: debuglevel=%d log=%s\n", NosuchDebugLevel, NosuchDebugLogPath.c_str() );
 
-	struct _stat statbuff;
-	int e = _stat(NosuchCurrentDir.c_str(),&statbuff);
-	if ( ! (e == 0 && (statbuff.st_mode | _S_IFDIR) != 0) ) {
-		NosuchDebug("Hey! No directory %s!?",NosuchCurrentDir.c_str());
+	err = _dupenv_s( &pValue, &len, "PALETTE" );
+	if( err || pValue == NULL )
+	{
+		NosuchDebug( "No value for PALETTE!?\n" );
 		return false;
 	}
 

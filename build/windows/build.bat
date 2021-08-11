@@ -76,6 +76,7 @@ echo ================ Copying scripts
 pushd %PALETTESOURCE%\scripts
 copy palettestart*.bat %bin% >nul
 copy palettestop*.bat %bin% >nul
+copy paletteactivate*.bat %bin% >nul
 copy palettetasks.bat %bin% >nul
 copy testcursor.bat %bin% >nul
 copy osc.bat %bin% >nul
@@ -117,12 +118,15 @@ xcopy /e /y %PALETTESOURCE%\default\presets %ship%\presets > nul
 echo ================ Removing unused things
 rm -fr %bin%\pyinstalled\tcl\tzdata
 
-echo ================ Creating installer
-"c:\Program Files (x86)\Inno Setup 6\ISCC.exe" /Q palette_win_setup.iss
+set /p version=<../../VERSION
+echo ================ Creating installer for VERSION %version%
+sed -e "s/VERSION/%version%/" < palette_win_setup.iss > tmp.iss
+"c:\Program Files (x86)\Inno Setup 6\ISCC.exe" /Q tmp.iss
 if exist "T:\\tmp" (
-	copy Output\palette_*_win_setup.exe t:\tmp >nul
+	copy Output\palette_%version%_win_setup.exe t:\tmp >nul
 )
-move Output\palette_*_win_setup.exe %PALETTESOURCE%\release >nul
+move Output\palette_%version%_win_setup.exe %PALETTESOURCE%\release >nul
 rmdir Output
+rm tmp.iss
 
 :getout

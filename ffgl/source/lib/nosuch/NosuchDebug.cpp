@@ -25,7 +25,7 @@ std::string NosuchDebugPrefix = "";
 // std::string NosuchDebugLogFile = "ffgl.log";
 // std::string NosuchDebugLogDir = ".";
 std::string NosuchDebugLogPath;
-std::string NosuchCurrentDir = ".";
+// std::string NosuchCurrentDir = ".";
 
 #ifdef DEBUG_TO_BUFFER
 bool NosuchDebugToBuffer = true;
@@ -240,6 +240,7 @@ NosuchErrorOutput(const char *fmt, ...)
 #endif
 }
 
+#if 0
 std::string
 NosuchFullPath(std::string filepath)
 {
@@ -249,6 +250,7 @@ NosuchFullPath(std::string filepath)
 		return NosuchCurrentDir + "/" + filepath;
 	}
 }
+#endif
 
 std::string
 NosuchForwardSlash(std::string filepath) {
