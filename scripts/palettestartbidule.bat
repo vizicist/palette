@@ -1,4 +1,4 @@
-@echo on
+@echo off
 call palettestopbidule.bat
 set patch="%LOCALAPPDATA%\Palette\config\palette.bidule"
 echo Starting Bidule on %patch%

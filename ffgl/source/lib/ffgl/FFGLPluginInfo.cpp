@@ -104,22 +104,3 @@ FPCREATEINSTANCEGL* CFFGLPluginInfo::GetFactoryMethod() const
 {
 	return m_pCreateInstance;
 }
-
-void CFFGLPluginInfo::SetPluginIdAndName( const char* pchUniqueID, const char* pchPluginName )
-{
-	bool bEndFound = false;
-	for( int i = 0; ( i < 16 ) && ( !bEndFound ); ++i )
-	{
-		if( pchPluginName[ i ] == 0 )
-			bEndFound = true;
-		( m_PluginInfo.PluginName )[ i ] = ( bEndFound ) ? 0 : pchPluginName[ i ];
-	}
-
-	bEndFound = false;
-	for( int j = 0; ( j < 4 ) && ( !bEndFound ); ++j )
-	{
-		if( pchUniqueID[ j ] == 0 )
-			bEndFound = true;
-		( m_PluginInfo.PluginUniqueID )[ j ] = ( bEndFound ) ? 0 : pchUniqueID[ j ];
-	}
-}

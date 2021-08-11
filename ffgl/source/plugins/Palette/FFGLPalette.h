@@ -26,29 +26,20 @@ public:
 	static FFResult __stdcall CreateInstance(CFFGLPlugin** ppOutInstance)
 	{
 		// The search for ffgl.json is as follows:
-		// - first look in $PALETTESOURCE if it's set
-		// - then look in %LOCALAPPDATA%
+		// - look in %LOCALAPPDATA%
 		// - last resort is temp dir
 
 		std::string jsonpath;
 
-		char* srcValue;
-		size_t srclen;
-		errno_t srcerr = _dupenv_s(&srcValue, &srclen, "PALETTESOURCE");
-		if (!srcerr && srcValue != NULL) {
-			jsonpath = std::string(srcValue) + "\\default\\config\\ffgl.json";
-			free(srcValue);
+		char* localValue;
+		size_t locallen;
+		errno_t localerr = _dupenv_s(&localValue, &locallen, "LOCALAPPDATA");
+		if (!localerr && localValue != NULL) {
+			jsonpath = std::string( localValue ) + "\\Palette\\config\\ffgl.json";
+			free( localValue );
 		} else {
-			char* localValue;
-			size_t locallen;
-			errno_t localerr = _dupenv_s(&localValue, &locallen, "LOCALAPPDATA");
-			if (!localerr && localValue != NULL) {
-				jsonpath = std::string( localValue ) + "\\Palette\\config\\ffgl.json";
-				free( localValue );
-			} else {
-				jsonpath = "c:\\windows\\temp\\ffgl.json";// last resort
-				NosuchDebug("No value for LOCALAPPDATA? using jsonpath=%s\n", jsonpath.c_str());
-			}
+			jsonpath = "c:\\windows\\temp\\ffgl.json";// last resort
+			NosuchDebug("No value for LOCALAPPDATA? using jsonpath=%s\n", jsonpath.c_str());
 		}
 
 		*ppOutInstance = new FFGLPalette( jsonpath );
