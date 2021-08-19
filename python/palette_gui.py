@@ -1840,9 +1840,9 @@ class PagePerformMain(tk.Frame):
         self.buttonNames = []
 
         self.makePerformButton("transpose",None)
-        self.makePerformButton("loopingonoff",None)
-        self.makePerformButton("loopingfade",None)
-        self.makePerformButton("Loop_Clear", self.controller.clearLoop)
+        # self.makePerformButton("loopingonoff",None)
+        # self.makePerformButton("loopingfade",None)
+        self.makePerformButton("Clear_ ", self.controller.clearLoop)
         self.makePerformButton("Reset_All", self.controller.resetAll)
 
         # More advanced buttons
