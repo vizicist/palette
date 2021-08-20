@@ -19,6 +19,6 @@ call delay 1
 start /b "" %res% > "%PALETTELOGDIR%\resolume.log" 2>&1
 
 call delay 7
-call paletteactivateresolume
+call paletteactivate
 
 :getout
