@@ -303,9 +303,9 @@ func StartMIDI() {
 			log.Printf("StartMIDI: There is no input named %s\n", input)
 		} else {
 			inputs[input] = i
+			log.Printf("Successfully opened MIDI input device %s\n", input)
 		}
 	}
-	log.Printf("Successfully opened MIDI input device %s\n", midiinput)
 	for {
 		for nm, input := range inputs {
 			hasinput, err := input.Poll()

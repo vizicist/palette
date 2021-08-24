@@ -2135,13 +2135,15 @@ if __name__ == "__main__":
     else:
         print("Unexpected number of pads: ",pads)
 
-    global app
     app = ProGuiApp(padname,padnames,visiblepagenames)
 
     palette.makeStyles(app)
 
-
-    app.wm_geometry("%dx%d" % (800,1280))
+    guisize = palette.ConfigValue("guisize")
+    if guisize == "" or guisize == "large":
+        app.wm_geometry("%dx%d" % (800,1280))
+    else:
+        app.wm_geometry("%dx%d" % (400,640))
 
     delay = 0.0
 
