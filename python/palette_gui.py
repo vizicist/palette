@@ -81,9 +81,9 @@ class ProGuiApp(tk.Tk):
             self.frameSizeOfSelectNormal = 1.0 - self.frameSizeOfControlNormal
             self.frameSizeOfPadChooserNormal = 0.0
             self.selectDisplayRowsNormal = 15
-            self.frameSizeOfSelectAdvanced = 0.71
             self.frameSizeOfControlAdvanced = 0.15
-            self.frameSizeOfPadChooserAdvanced = 0.14
+            self.frameSizeOfPadChooserAdvanced = 0.13
+            self.frameSizeOfSelectAdvanced = 1.0 - self.frameSizeOfControlAdvanced - self.frameSizeOfPadChooserAdvanced
             self.performButtonPadx = 6
             self.selectDisplayRowsAdvanced = 11
         else:
@@ -91,7 +91,7 @@ class ProGuiApp(tk.Tk):
             self.frameSizeOfControlNormal = 0.085
             self.frameSizeOfSelectNormal = 1.0 - self.frameSizeOfControlNormal
             self.frameSizeOfPadChooserNormal = 0.0
-            self.selectDisplayRowsNormal = 10
+            self.selectDisplayRowsNormal = 14
             self.frameSizeOfControlAdvanced = 0.19
             self.frameSizeOfPadChooserAdvanced = 0.14
             self.frameSizeOfSelectAdvanced = 1.0 - self.frameSizeOfControlAdvanced - self.frameSizeOfPadChooserAdvanced
@@ -168,7 +168,8 @@ class ProGuiApp(tk.Tk):
 
         self.performPage = PagePerformMain(parent=self.performFrame, controller=self)
 
-        self.winfo_toplevel().title("Palette "+padnames)
+        self.windowName = "Palette "+padnames
+        self.winfo_toplevel().title(self.windowName)
 
         self.escapeCount = 0
         self.lastEscape = time.time()
@@ -410,8 +411,8 @@ class ProGuiApp(tk.Tk):
     def makeStartupFrame(self,container):
         f = tk.Frame(container,
             highlightbackground=ColorBg, highlightcolor=ColorAqua, highlightthickness=3)
-        self.startupLabel = ttk.Label(f, text="               Palette is Loading...", style='Loading.TLabel',
-            foreground=ColorText, background=ColorBg, relief="flat", justify=tk.CENTER, font=largestFont)
+        self.startupLabel = ttk.Label(f, text="  Space Palette Pro is Loading...", style='Loading.TLabel',
+            foreground=ColorText, background=ColorBg, relief="flat", justify=tk.CENTER, font=hugeFont)
         self.startupLabel.pack(side=tk.TOP,fill=tk.BOTH,expand=True)
         return f
 
@@ -716,7 +717,7 @@ class ProGuiApp(tk.Tk):
 
     def clearLoop(self):
 
-        log("LoopClear")
+        # log("LoopClear")
 
         self.resetLastAnything()
 
@@ -2044,6 +2045,28 @@ class PageSelector(tk.Frame):
     def doLayout(self):
         valindex = self.selectOffset
 
+        ipadx = 0
+        ipady = 0
+
+        if self.controller.guiLevel == 0 or self.pagename == "quad":
+            nrows = self.controller.selectDisplayRowsNormal
+        else:
+            nrows = self.controller.selectDisplayRowsAdvanced
+        nbuttons = self.controller.selectDisplayPerRow * nrows
+        nvals = len(self.vals)
+        if nvals <= nbuttons:
+            # get rid of the scrollbar and make the buttons wider
+            self.scrollbar.pack_forget()
+            buttonwidth=14
+            ipadx = 3
+        else:
+            self.scrollbar.pack(side=tk.LEFT, fill=tk.Y, expand=True, pady=11, padx=4)
+            buttonwidth=13
+
+        # log("doLayout page=",self.pagename," nbuttons=",nbuttons, "nvals=",nvals, "nrows=",nrows,"buttonwidth=",buttonwidth)
+
+        self.valsframe.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, pady=10)
+
         for i in self.selectButtons:
             self.selectButtons[i].grid_forget()
 
@@ -2054,24 +2077,19 @@ class PageSelector(tk.Frame):
 
                     # First time here, we create the Button
                     selectButtonText = self.vals[valindex]
-                    ipadx = 0
                     istwo = isTwoLine(selectButtonText)
                     if istwo:
                         style='PresetButton.TLabel'
-                        ipady = 0
-                        width=13
                         selectButtonText = selectButtonText.replace(palette.LineSep,"\n",1)
                         selectButtonText = selectButtonText.replace(palette.LineSep," ")
                     else:
                         style='PresetButton.TLabel'
                         selectButtonText = selectButtonText + "\n"
-                        ipady = 0
-                        width=13
 
                     if not i in self.selectButtons:
                         if i > len(self.vals):
                             log("Hey, i > len(self.vals) ??")
-                        self.selectButtons[i] = ttk.Button(self.valsframe, width=width, style=style)
+                        self.selectButtons[i] = ttk.Button(self.valsframe, width=buttonwidth, style=style)
 
                     self.selectButtons[i].grid(row=r,column=c,padx=self.controller.selectButtonPadx,pady=self.controller.selectButtonPady,ipady=ipady,ipadx=ipadx)
                     self.selectButtons[i].config(text=selectButtonText,
@@ -2097,9 +2115,15 @@ class PageSelector(tk.Frame):
                 s = 'PresetButton.TLabel'
             self.selectButtons[i].config(style=s)
 
-def startgui():
+def startgui(windowName,*args):
     global StartupMode
     StartupMode = False
+    coords = palette.ConfigValue("guiresize")
+    size = palette.ConfigValue("guisize")
+    if size == "large" and coords != "":
+        log("Resizing GUI")
+        cmd = "nircmdc.exe win setsize stitle \""+windowName+"\" "+coords
+        os.system(cmd)
 
 def padOfParam(paramname):
     pad = paramname[0]
@@ -2289,8 +2313,8 @@ if __name__ == "__main__":
     else:
         log("Unexpected value of guisize (%s)\n" % guisize)
 
-    delay = 0.0
+    delay = 1.0
 
-    threading.Timer(delay, startgui).start()
+    threading.Timer(delay, startgui, args=[app.windowName], kwargs=None).start()
 
     initMain(app)
