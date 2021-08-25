@@ -20,6 +20,28 @@ from codenamize import codenamize
 
 import palette
 
+IsQuad = False
+RecMode = False
+StartupMode = True
+
+ColorWhite = '#ffffff'
+ColorBlack = '#000000'
+
+ColorBg = '#000000'
+ColorText = '#ffffff'
+ColorComboText = '#000000'    # black
+ColorButton = '#333333'  
+ColorScrollbar = '#333333'  
+ColorThumb = '#00ffff'  
+
+ColorRed = '#ff0000'
+ColorBlue = '#0000ff'
+ColorGreen = '#00ff00'
+ColorHigh = '#006666'
+ColorBright = '#00ffff'
+ColorAqua = '#00ffff'
+ColorUnHigh = '#888888'
+
 signal.signal(signal.SIGINT,signal.SIG_IGN)
 
 class Params():
@@ -31,8 +53,11 @@ class ProGuiApp(tk.Tk):
     def __init__(self,
             padname,
             padnames,
-            visiblepagenames
+            visiblepagenames,
+            guisize
             ):
+
+        self.guisize = guisize
 
         s = palette.ConfigValue("guilevel")
         if s == "":
@@ -44,29 +69,39 @@ class ProGuiApp(tk.Tk):
 
         self.setGuiLevel(self.defaultGuiLevel)
 
-        self.fontFactor = 1.0
         self.thumbFactor = 0.1
 
         # These are the same in both normal and advanced
         self.selectDisplayPerRow = 3
-        self.paramDisplayRows = 21
 
         # Normal layout values
-        self.frameSizeOfSelectNormal = 0.94
-        self.frameSizeOfControlNormal = 1.0 - self.frameSizeOfSelectNormal
-        self.frameSizeOfPadChooserNormal = 0.0
-        self.selectDisplayRowsNormal = 15
+        if guisize == "large":
+            self.paramDisplayRows = 21
+            self.frameSizeOfControlNormal = 0.06
+            self.frameSizeOfSelectNormal = 1.0 - self.frameSizeOfControlNormal
+            self.frameSizeOfPadChooserNormal = 0.0
+            self.selectDisplayRowsNormal = 15
+            self.frameSizeOfSelectAdvanced = 0.71
+            self.frameSizeOfControlAdvanced = 0.15
+            self.frameSizeOfPadChooserAdvanced = 0.14
+            self.performButtonPadx = 6
+            self.selectDisplayRowsAdvanced = 11
+        else:
+            self.paramDisplayRows = 19
+            self.frameSizeOfControlNormal = 0.085
+            self.frameSizeOfSelectNormal = 1.0 - self.frameSizeOfControlNormal
+            self.frameSizeOfPadChooserNormal = 0.0
+            self.selectDisplayRowsNormal = 10
+            self.frameSizeOfControlAdvanced = 0.19
+            self.frameSizeOfPadChooserAdvanced = 0.14
+            self.frameSizeOfSelectAdvanced = 1.0 - self.frameSizeOfControlAdvanced - self.frameSizeOfPadChooserAdvanced
+            self.performButtonPadx = 3
+            self.selectDisplayRowsAdvanced = 9
 
-        # Advanced layout values (allows for the PadChooser space)
-        self.frameSizeOfSelectAdvanced = 0.71
-        self.frameSizeOfControlAdvanced = 0.15
-        self.frameSizeOfPadChooserAdvanced = 0.14
         self.frameSizeOfSelectAdvancedQuad = self.frameSizeOfSelectAdvanced + self.frameSizeOfPadChooserAdvanced
-        self.selectDisplayRowsAdvanced = 11
         if (self.frameSizeOfSelectAdvanced + self.frameSizeOfControlAdvanced + self.frameSizeOfPadChooserAdvanced) != 1.0:
-            print("Hey, page sizes don't add up to 1.0")
+            log("Hey, page sizes don't add up to 1.0")
 
-        self.performButtonPadx = 6
         self.performButtonPady = 3
 
         self.selectButtonPadx = 5
@@ -75,7 +110,7 @@ class ProGuiApp(tk.Tk):
         self.setFrameSizes()
         self.setScaleList()
 
-        palette.setFontSizes(self.fontFactor)
+        setFontSizes(self.guisize)
 
         tk.Tk.__init__(self)
 
@@ -124,7 +159,7 @@ class ProGuiApp(tk.Tk):
         for s in palette.GlobalPerformLabels:
             self.globalPerformIndex[s] = 0
 
-        self.topContainer = tk.Frame(self, background=palette.ColorBg)
+        self.topContainer = tk.Frame(self, background=ColorBg)
 
         self.selectFrame = self.makeSelectFrame(self.topContainer)
         self.performFrame = self.makePerformFrame(self.topContainer)
@@ -181,7 +216,7 @@ class ProGuiApp(tk.Tk):
             except tk.TclError:
                 s = traceback.format_exc()
                 if s.find("application has been destroyed") >= 0:
-                    print("Application has been closed!")
+                    log("Application has been closed!")
                 else:
                     traceback.print_exc(file=sys.stdout)
                 break
@@ -210,7 +245,7 @@ class ProGuiApp(tk.Tk):
                         pad.sendParamsOfType("snap")
 
             if palette.resetAfterInactivity>0 and (now - self.lastAnything) > palette.resetAfterInactivity:
-                print("Resetting after no activity!!")
+                log("Resetting after no activity!!")
                 self.resetAll()
                 self.performPage.updatePerformButtonLabels(self.CurrPad)
     
@@ -246,7 +281,7 @@ class ProGuiApp(tk.Tk):
                 self.pageHeader.pageButton[pg].pack_forget()
 
         self.editMode = False
-        if palette.IsQuad and self.guiLevel == 0:
+        if IsQuad and self.guiLevel == 0:
             self.selectPage("quad")
         else:
             self.selectPage("snap")
@@ -308,16 +343,16 @@ class ProGuiApp(tk.Tk):
                 quadValues[fullName] = padvalues[paramName]
 
         j = { "params": quadValues }
-        print("Saving quad in",quadPath)
+        log("Saving quad in",quadPath)
         SaveJsonInPath(j,quadPath)
 
     def loadQuad(self,presetName):
         fpath = palette.searchPresetsFilePath("quad", presetName)
-        print("readQuadPreset: fpath=",fpath)
+        debug("readQuadPreset: fpath=",fpath)
         try:
             f = open(fpath)
         except:
-            print("No such file?  CC fpath=",fpath)
+            log("No such file?  CC fpath=",fpath)
             return
         j = json.load(f)
         self.loadQuadJson(j)
@@ -326,7 +361,7 @@ class ProGuiApp(tk.Tk):
     def loadQuadJson(self,quadJson):
 
         if self.editMode:
-            print("loadQuadJson shouldn't be called in edit mode")
+            log("loadQuadJson shouldn't be called in edit mode")
             return
 
         # quadJson parameter names take the form A-shape,
@@ -348,17 +383,17 @@ class ProGuiApp(tk.Tk):
 
     def makePadChooserFrame(self,parent,controller):
         f = PadChooser(parent,controller)
-        f.config(background=palette.ColorBg)
+        f.config(background=ColorBg)
         return f
 
     def makePerformFrame(self,parent):
         return tk.Frame(parent,
-            highlightbackground=palette.ColorAqua, highlightcolor=palette.ColorAqua, highlightthickness=3)
+            highlightbackground=ColorAqua, highlightcolor=ColorAqua, highlightthickness=3)
 
     def makeSelectFrame(self,container):
 
         f = tk.Frame(container,
-            highlightbackground=palette.ColorAqua, highlightcolor=palette.ColorAqua, highlightthickness=0)
+            highlightbackground=ColorAqua, highlightcolor=ColorAqua, highlightthickness=0)
 
         self.pageHeader = PageHeader(parent=f, controller=self)
         self.pageHeader.pack(side=tk.TOP,fill=tk.BOTH)
@@ -374,9 +409,9 @@ class ProGuiApp(tk.Tk):
 
     def makeStartupFrame(self,container):
         f = tk.Frame(container,
-            highlightbackground=palette.ColorBg, highlightcolor=palette.ColorAqua, highlightthickness=3)
+            highlightbackground=ColorBg, highlightcolor=ColorAqua, highlightthickness=3)
         self.startupLabel = ttk.Label(f, text="               Palette is Loading...", style='Loading.TLabel',
-            foreground=palette.ColorText, background=palette.ColorBg, relief="flat", justify=tk.CENTER, font=palette.largestFont)
+            foreground=ColorText, background=ColorBg, relief="flat", justify=tk.CENTER, font=largestFont)
         self.startupLabel.pack(side=tk.TOP,fill=tk.BOTH,expand=True)
         return f
 
@@ -392,7 +427,7 @@ class ProGuiApp(tk.Tk):
 
         self.selectorPage[pagename] = page
         page.pack(side=tk.TOP,fill=tk.BOTH,expand=True)
-        page.config(highlightbackground=palette.ColorAqua, highlightcolor=palette.ColorAqua, highlightthickness=3)
+        page.config(highlightbackground=ColorAqua, highlightcolor=ColorAqua, highlightthickness=3)
 
     def makeEditPage(self,parent,pagename):
         page = PageEditParams(parent=parent, controller=self,
@@ -414,7 +449,7 @@ class ProGuiApp(tk.Tk):
 
         if pagename != "quad" and self.editMode:
             if self.allPadsSelected:
-                # print("allPadsSelected: using values from Pad A")
+                # log("allPadsSelected: using values from Pad A")
                 pad = self.padNamed("A")
             else:
                 pad = self.CurrPad
@@ -431,7 +466,7 @@ class ProGuiApp(tk.Tk):
             lastResort = pad
             if pad.name() == padName:
                 return pad
-        print("There is no Pad named",padName,", last resort, using",lastResort.name())
+        log("There is no Pad named",padName,", last resort, using",lastResort.name())
         return lastResort
 
     def selectPage(self,pagename):
@@ -458,7 +493,7 @@ class ProGuiApp(tk.Tk):
         page.tkraise()
 
     def sendParamValues(self,values):
-        print("sendParamValues: ",values)
+        log("sendParamValues: "+str(values))
         for name in values:
             v = values[name]
             if self.allPadsSelected:
@@ -476,31 +511,28 @@ class ProGuiApp(tk.Tk):
             self.CurrPad.setValue(basename,newval)
             self.CurrPad.sendValue(basename)
 
-        # if self.editMode:
-        #     page = self.editPage[self.currentPageName]
-        #     page.changeValueText(basename,newval)
-
     def selectorApply(self,apply,paramType):
 
+        log("selectorApply 1")
         if not self.editMode:
-            print("Hmmm, selectorAply should only be called in editMode")
+            log("Hmmm, selectorAply should only be called in editMode")
             return
 
         if paramType == "quad":
-            print("selectorApply not implemented on quad")
+            log("selectorApply not implemented on quad")
         else:
 
             self.applyToAllParams(apply,paramType)
-
             self.refreshPage()
+
             self.saveCurrent()
 
             if self.allPadsSelected:
-                print("Sending",paramType,"params to all pads")
+                log("Sending",paramType,"params to all pads")
                 for pad in self.Pads:
                     pad.sendParamsOfType(paramType)
             else:
-                print("Sending",paramType,"params to pad",self.CurrPad.name())
+                log("Sending",paramType,"params to pad",self.CurrPad.name())
                 self.CurrPad.sendParamsOfType(paramType)
 
     def applyToAllParams(self,apply,paramType):
@@ -512,7 +544,7 @@ class ProGuiApp(tk.Tk):
             valuetype = j["valuetype"]
             (p,basename) = padOfParam(name)
             if p != None:
-                print("Unexpected pad in param value?")
+                log("Unexpected pad in param value?")
                 continue
             v = ""
             min = j["min"]
@@ -559,7 +591,7 @@ class ProGuiApp(tk.Tk):
                         if max in enums:
                             v = max
                         else:
-                            print("Hey, randmax=",max," isn't a valid enum value for name=",name)
+                            log("Hey, randmax=",max," isn't a valid enum value for name=",name)
                     else:
                         i = random.randint(0,len(enums)-1)
                         v = enums[i]
@@ -579,11 +611,12 @@ class ProGuiApp(tk.Tk):
     def selectorLoadAndSend(self,paramType,presetname,buttoni):
 
         if self.editMode:
-            print("HEY!! selectorLoadAndSend shouldn't be used in editMode?")
+            log("HEY!! selectorLoadAndSend shouldn't be used in editMode?")
             return
 
         if paramType == "quad":
-            print("Should be highlighting buttoni=",buttoni)
+            # log("Should be highlighting buttoni=",buttoni)
+            log("Loading",paramType,presetname)
             self.loadQuad(presetname)
             self.sendQuad()
         else:
@@ -606,17 +639,17 @@ class ProGuiApp(tk.Tk):
 
         if jparamstype != paramType:
             # this error will be common, need a visible message
-            print("Mismatched paramstype in JSON!")
+            log("Mismatched paramstype in JSON!")
             return
 
         if paramType == "snap":
             self.loadPageJson(self.editPage["snap"],j)
             self.sendPage(self.editPage["snap"])
         elif paramType == "quad":
-            print("Hey, does quad need work here?  FFF")
+            log("Hey, does quad need work here?  FFF")
         else:
             self.readOtherParamsJsonIntoSnapAndQuad(paramType,j)
-            print("Sending",paramType,"params to pad",self.CurrPad.name())
+            log("Sending",paramType,"params to pad",self.CurrPad.name())
             self.CurrPad.sendParamsOfType(paramType)
 
     def padChooserCallback(self,padName):
@@ -682,6 +715,9 @@ class ProGuiApp(tk.Tk):
         self.combPadLoop(self.CurrPad.name())
 
     def clearLoop(self):
+
+        log("LoopClear")
+
         self.resetLastAnything()
 
         # click the Loop Clear button 4 times quickly to change the GuiLevel
@@ -705,11 +741,12 @@ class ProGuiApp(tk.Tk):
     def cycleGuiLevel(self):
         # cycle through 0,1,2
         self.setGuiLevel((self.guiLevel + 1) % 3)
+        log("GuiLevel",self.guiLevel)
         self.resetVisibility()
         self.performPage.updatePerformButtonLabels(self.CurrPad)
 
     def setGuiLevel(self,level):
-        print("Setting GuiLevel to",level)
+        debug("Setting GuiLevel to",level)
         self.guiLevel = level
         self.setScaleList()
 
@@ -718,6 +755,8 @@ class ProGuiApp(tk.Tk):
             pad.sendANO()
 
     def resetAll(self):
+
+        log("ResetAll")
 
         palette.palette_global_api("audio_reset")
 
@@ -750,7 +789,7 @@ class ProGuiApp(tk.Tk):
 
     def sendQuad(self):
         for pad in self.Pads:
-            print("Sending all parameters for pad = ",pad.name())
+            debug("Sending all parameters for pad = ",pad.name())
             for pt in ["sound","visual","effect"]:
                 paramlistjson = pad.paramListOfType(pt)
                 palette.palette_region_api(pad.name(), pt+".set_params", paramlistjson)
@@ -769,7 +808,7 @@ class ProGuiApp(tk.Tk):
 
         s = ""
         path = palette.configFilePath("paramdefs.json")
-        print("Reading path=",path)
+        log("Reading",path)
         f = open(path,'r')
         lines = f.readlines() 
         for line in lines: 
@@ -815,7 +854,7 @@ class ProGuiApp(tk.Tk):
             self.paramValueTypeOf[name] = self.allParamsJson[name]["valuetype"]
             self.paramsOfType["snap"][name] = self.allParamsJson[name]
 
-            if palette.IsQuad:
+            if IsQuad:
                 # We prepend A-, B-, etc to the parameter name for quad parameters,
                 # to create entries for "quad" things
                 # in paramValueTypeOf and paramsOfType["quad"]
@@ -827,7 +866,7 @@ class ProGuiApp(tk.Tk):
         # The things here get ADDED to the ones already read in from paramenums.json
         for pt in {"sound", "visual", "effect"}:
             if pt in self.paramenums:
-                print("WARNING! pt=",pt," is already in paramenums.json!")
+                log("WARNING! pt=",pt," is already in paramenums.json!")
             else:
                 self.paramenums[pt] = palette.presetsListAll(pt)
 
@@ -848,7 +887,7 @@ class ProGuiApp(tk.Tk):
         for name in newparamsjson:
             parts = name.split(".")
             if len(parts) != 2:
-                print("Unable to handle param name: ",name)
+                log("Unable to handle param name: ",name)
                 continue
             paramstype = parts[0]
             parambasename = parts[1]
@@ -901,16 +940,16 @@ class Pad():
     def loadCurrent(self):
         path = self.snapPath
         if not self.loadFile(path):
-            print("No Current settings for pad=",self.padName," path=",path)
+            debug("No Current settings for pad=",self.padName," path=",path)
         else:
-            print("Loaded pad=",self.padName," from path=",path)
+            log("Loaded",self.padName,"from",path)
 
     def loadPresetValues(self,paramType,presetName):
         fpath = palette.searchPresetsFilePath(paramType, presetName)
         if not self.loadFile(fpath):
-            print("Unable to load preset file: ",fpath)
+            log("Unable to load preset file: ",fpath)
         else:
-            print("Loaded Pad",self.padName,"from",fpath)
+            log("Loaded",self.padName,"from",fpath)
 
     def loadFile(self,path):
         try:
@@ -924,7 +963,7 @@ class Pad():
 
     def saveCurrent(self):
         j = { "params": self.paramValues }
-        print("Saving pad",self.padName,"in",self.snapPath)
+        debug("Saving",self.padName,"in",self.snapPath)
         SaveJsonInPath(j,self.snapPath)
 
     def loadJson(self,j):
@@ -935,7 +974,7 @@ class Pad():
 
     def setValue(self,paramName,val):
         if not paramName in self.paramValues:
-            print("Hey, Pad.setValue paramName=",paramName,"not in paramValues?")
+            log("Hey, Pad.setValue paramName=",paramName,"not in paramValues?")
             return
         self.paramValues[paramName] = val
  
@@ -944,11 +983,11 @@ class Pad():
  
     def sendValue(self,paramName):
         if not paramName in self.paramValues:
-            print("Hey, Pad.sendValue paramName=",paramName,"not in paramValues?")
+            log("Hey, Pad.sendValue paramName=",paramName,"not in paramValues?")
             return
         val = self.paramValues[paramName]
         if not paramName in self.controller.paramTypeOf:
-            print("Unrecognized parameter: ",paramName)
+            log("Unrecognized parameter: ",paramName)
             return
         paramType = self.controller.paramTypeOf[paramName]
         palette.palette_region_api(self.padName,paramType+".set_param",
@@ -999,7 +1038,7 @@ class Pad():
                 reconoff = False
                 playonoff = True
             else:
-                print("Unrecognized value of loopingonoff - %s\n" % val)
+                log("Unrecognized value of loopingonoff - %s\n" % val)
                 return
 
             palette.palette_region_api(self.name(), "loop_recording", '"onoff": "'+str(reconoff)+'"')
@@ -1050,11 +1089,11 @@ class Pad():
             palette.palette_region_api(self.name(), "midi_thruscadjust", "\"onoff\": \"" + str(val) + "\"")
 
         elif name == "transpose":
-            print("HEY, transpose shouldn't be here")
+            log("HEY, transpose shouldn't be here")
             # palette.palette_global_api(self.name(), "set_transpose", "\"value\": \""+str(val) + "\"")
 
         else:
-            print("SendPerformVal: unhandled name=",name)
+            log("SendPerformVal: unhandled name=",name)
 
     def clearLoop(self):
         palette.palette_region_api(self.name(), "loop_clear", "")
@@ -1096,25 +1135,25 @@ class PadChooser(tk.Frame):
 
         self.makeGlobalButton(self,0.5,0.15)
 
-        self.config(background=palette.ColorBg)
+        self.config(background=ColorBg)
 
     def makePadFrame(self,parent,pad,x0,y0):
 
         self.padFrame[pad] = tk.Frame(self)
         self.padFrame[pad].place(relx=x0,rely=y0,relwidth=0.3,relheight=0.4)
-        self.padFrame[pad].config(borderwidth=2,relief="solid",background=palette.ColorUnHigh)
+        self.padFrame[pad].config(borderwidth=2,relief="solid",background=ColorUnHigh)
         self.padFrame[pad].bind("<Button-1>", lambda p=pad: self.padCallback(p))
 
         if self.controller.showCursorFeedback:
             self.padCanvas[pad] = tk.Canvas(self.padFrame[pad], width=self.canvasWidth, height=self.canvasHeight, border=0)
             self.padCanvas[pad].pack(side=tk.TOP)
-            self.padCanvas[pad].config(background=palette.ColorUnHigh)
+            self.padCanvas[pad].config(background=ColorUnHigh)
 
     def makeGlobalButton(self,parent,x0,y0):
 
         self.padGlobalButton = tk.Frame(self)
         self.padGlobalButton.place(relx=x0-0.05,rely=y0-0.05,relwidth=0.1,relheight=0.275)
-        self.padGlobalButton.config(borderwidth=2,relief="solid",background=palette.ColorUnHigh)
+        self.padGlobalButton.config(borderwidth=2,relief="solid",background=ColorUnHigh)
         self.padGlobalButton.bind("<Button-1>", self.globalCallback)
 
         self.padGlobalLabel = ttk.Label(self.padGlobalButton, text="*")
@@ -1146,16 +1185,16 @@ class PadChooser(tk.Frame):
 
     def refreshColors(self):
         if self.controller.allPadsSelected:
-            color = palette.ColorHigh
+            color = ColorHigh
         else:
-            color = palette.ColorUnHigh
+            color = ColorUnHigh
         self.padGlobalButton.config(background=color)
         self.padGlobalLabel.config(background=color)
         for pad in self.controller.Pads:
             if self.controller.allPadsSelected or pad != self.controller.CurrPad:
                 self.colorPad(pad.name(),color)
             else:
-                self.colorPad(pad.name(),palette.ColorHigh)
+                self.colorPad(pad.name(),ColorHigh)
 
     def colorPad(self,padName,color):
         self.padFrame[padName].config(background=color)
@@ -1170,17 +1209,17 @@ class PadChooser(tk.Frame):
         self.padFrame[pad].config(borderwidth=w)
 
     def drawOval(self,pad,highlighted,x,y,z):
-        print("drawOval x=",x," y=",y," z=",z)
+        log("drawOval x=",x," y=",y," z=",z)
         x = x * self.canvasWidth
         y = y * self.canvasHeight
         z = z * self.canvasWidth
-        print("================= adjusted x=",x," y=",y," z=",z)
+        log("================= adjusted x=",x," y=",y," z=",z)
         if z < 10:
             z = 10
         elif z > (self.canvasWidth/4):
             z = self.canvasWidth/4
         if highlighted:
-            color = palette.ColorRed
+            color = ColorRed
         else:
             color = self.controller.padColor(pad)
         self.padCanvas[pad].create_oval(x-z,y-z,x+z,y+z,outline=color)
@@ -1194,13 +1233,13 @@ class PadChooser(tk.Frame):
                 self.controller.padChooserCallback(pad)
                 self.refreshColors()
                 return
-        print("No pad found in padCallback!?")
+        log("No pad found in padCallback!?")
 
     def refreshPadColors(self):
         if self.controller.allPadsSelected:
-            color = palette.ColorHigh
+            color = ColorHigh
         else:
-            color = palette.ColorUnHigh
+            color = ColorUnHigh
         self.padGlobalButton.config(background=color)
         self.padGlobalLabel.config(background=color)
 
@@ -1208,7 +1247,7 @@ class PadChooser(tk.Frame):
             if self.controller.allPadsSelected or pad != self.controller.CurrPad:
                 self.colorPad(pad.name(),color)
             else:
-                self.colorPad(pad.name(),palette.ColorHigh)
+                self.colorPad(pad.name(),ColorHigh)
 
 class PageHeader(tk.Frame):
 
@@ -1216,10 +1255,10 @@ class PageHeader(tk.Frame):
         tk.Frame.__init__(self, parent)
         self.controller = controller
 
-        self.titleFrame = tk.Frame(self, background=palette.ColorBg)
+        self.titleFrame = tk.Frame(self, background=ColorBg)
         self.titleFrame.pack(side=tk.TOP, fill=tk.X, expand=True)
 
-        self.PaletteTitle = ttk.Label(self.titleFrame, style='PageButtonDisabled.TLabel',background=palette.ColorBg)
+        self.PaletteTitle = ttk.Label(self.titleFrame, style='PageButtonDisabled.TLabel',background=ColorBg)
 
         self.pageButton = {}
         for pageName in self.controller.visiblePageNames:
@@ -1254,8 +1293,8 @@ class PageEditParams(tk.Frame):
         tk.Frame.__init__(self, parent)
         self.controller = controller
 
-        self.config(background=palette.ColorBg,
-            highlightbackground=palette.ColorAqua, highlightcolor=palette.ColorAqua, highlightthickness=3)
+        self.config(background=ColorBg,
+            highlightbackground=ColorAqua, highlightcolor=ColorAqua, highlightthickness=3)
 
         self.params = params
         self.paramsnameVar = tk.StringVar()
@@ -1291,7 +1330,7 @@ class PageEditParams(tk.Frame):
 
         self.controller = container.controller
 
-        f = tk.Frame(container, background=palette.ColorBg)
+        f = tk.Frame(container, background=ColorBg)
         f.config(borderwidth=1, relief="flat")
 
         self.paramRowName = []
@@ -1309,7 +1348,7 @@ class PageEditParams(tk.Frame):
 
         for name in self.params:
 
-            # print("MakeParamsArea pagename=",self.pagename," Param=",name)
+            # log("MakeParamsArea pagename=",self.pagename," Param=",name)
             self.paramRowName.append(name)
             self.paramLabelWidget[name] = ttk.Label(f, width=20, text=name, style='ParamName.TLabel')
             self.paramLabelWidget[name].config()
@@ -1319,7 +1358,7 @@ class PageEditParams(tk.Frame):
 
         # The widgets for << < . . > >> are static, in the displayed rows
         for row in range(0,self.controller.paramDisplayRows):
-            f2 = tk.Frame(f, background=palette.ColorBg)
+            f2 = tk.Frame(f, background=ColorBg)
             self.adjustButton(f2,row,"<<", -3)
             self.adjustButton(f2,row,"<", -2)
             self.adjustButton(f2,row,"-", -1)
@@ -1331,7 +1370,7 @@ class PageEditParams(tk.Frame):
         return f
 
     def makeButtonArea(self):
-        f = tk.Frame(self, background=palette.ColorBg)
+        f = tk.Frame(self, background=ColorBg)
 
         if self.pagename != "quad":
             self.initButton = ttk.Label(f, text="Init", style='RandEtcButton.TLabel')
@@ -1365,7 +1404,7 @@ class PageEditParams(tk.Frame):
         # they're revealed when the Save button is pressed.
 
         self.comboParamsname = ttk.Combobox(f, textvariable=self.paramsnameVar,
-                font=palette.comboFont, style='custom.TCombobox')
+                font=comboFont, style='custom.TCombobox')
         self.comboParamsname.bind("<<ComboboxSelected>>", lambda event,v=self.paramsnameVar : self.checkThenGotoParamsFile(v.get()))
         self.comboParamsname.bind("<Return>", lambda event,v=self.paramsnameVar : self.checkThenGotoParamsFile(v.get()))
 
@@ -1380,7 +1419,7 @@ class PageEditParams(tk.Frame):
     def scrollNotify(self,sfy,tag):
         nparams = len(self.params)
         self.valuesDisplayOffset = int((nparams-self.controller.paramDisplayRows) * sfy)
-        # print("valuesDisplayOffset=",self.valuesDisplayOffset)
+        # log("valuesDisplayOffset=",self.valuesDisplayOffset)
         self.updateParamView()
 
     def updateParamView(self):
@@ -1390,7 +1429,7 @@ class PageEditParams(tk.Frame):
 
         px = 0
         row = 0
-        # print("updateParamView valuesDisplayOffset=",self.valuesDisplayOffset)
+        # log("updateParamView valuesDisplayOffset=",self.valuesDisplayOffset)
         for name in self.params:
             showrow = row - self.valuesDisplayOffset
             showme = (showrow >= 0 and showrow < self.controller.paramDisplayRows)
@@ -1411,10 +1450,10 @@ class PageEditParams(tk.Frame):
             w.pack(side=tk.LEFT, padx=4)
 
     def valueClicked(self,name):
-        print("valueClicked! name=",name)
+        log("valueClicked! name=",name)
 
     def adjustValue(self,row,amount):
-        # print("adjustValue valuesDisplayOffset=",self.valuesDisplayOffset)
+        # log("adjustValue valuesDisplayOffset=",self.valuesDisplayOffset)
         paramrow = row + self.valuesDisplayOffset
         name = self.paramRowName[paramrow]
         t = self.controller.paramValueTypeOf[name]
@@ -1455,7 +1494,7 @@ class PageEditParams(tk.Frame):
                 v = v + (dv/100)
             if amount == 3:
                 v = v + (dv/10)
-            # print("amount=",amount," mx=",mx," v=",v)
+            # log("amount=",amount," mx=",mx," v=",v)
             newval = v
         elif t == "string":
             v = str(widg.cget("text"))
@@ -1463,9 +1502,9 @@ class PageEditParams(tk.Frame):
             try:
                 i = vals.index(v.strip())
             except:
-                print("Unable to find v=",v)
+                log("Unable to find v=",v)
                 i = 0
-            # print("string v=",v," t=",t," vals=",vals," existing i=",i)
+            # log("string v=",v," t=",t," vals=",vals," existing i=",i)
             nvals = len(vals)
             mid = int(nvals/10)
             if amount == -3:
@@ -1521,13 +1560,13 @@ class PageEditParams(tk.Frame):
         return (name in self.paramValueWidget)
 
     def setValues(self,values):
-        # print("Edit page, changing ALL parameters in setValues")
+        # log("Edit page, changing ALL parameters in setValues")
         for name in self.params:
             if name in values:
                 self.changeValueText(name,values[name])
 
     def changeValueText(self,name,v):
-        # print("CHANGE VALUE LABEL EDIT PAGE=",self.pagename," name=",name," v=",v)
+        # log("CHANGE VALUE LABEL EDIT PAGE=",self.pagename," name=",name," v=",v)
         if not name in self.paramValueWidget:
             # ignore names not on this page
             return
@@ -1539,7 +1578,7 @@ class PageEditParams(tk.Frame):
             try:
                 s = self.normalizeJsonValue(name,v)
             except:
-                print("Error when trying convert v=",v)
+                log("Error when trying convert v=",v)
                 traceback.print_exc(file=sys.stdout)
             widg.config(text=s)
         elif t == "int":
@@ -1571,7 +1610,7 @@ class PageEditParams(tk.Frame):
         try:
             f = open(path)
         except:
-            print("Unable to load preset: ",path)
+            log("Unable to load preset: ",path)
             return
 
         j = json.load(f)
@@ -1581,7 +1620,7 @@ class PageEditParams(tk.Frame):
 
     def loadSnapNamed(self,name,doLift=True):
 
-        print("\n=== loadSnapNamed ",name)
+        log("\n=== loadSnapNamed ",name)
 
         self.controller.readSnapParamsFileIntoPage(name,"snap")
 
@@ -1597,9 +1636,9 @@ class PageEditParams(tk.Frame):
 
     def oldstartEditing(self,name,doLift=True):
 
-        print("=== startEditing pagename=%s name=%s" % (self.pagename,name))
+        log("=== startEditing pagename=%s name=%s" % (self.pagename,name))
         if self.pagename == "quad":
-            print("Are you getting here?")
+            log("Are you getting here?")
             # self.controller.readQuadPreset(name)
         else:
             self.controller.readSnapParamsFileIntoPage(name,self.pagename)
@@ -1624,8 +1663,8 @@ class PageEditParams(tk.Frame):
         self.forgetAll()
 
     def randCallback(self):
-        s = pyperclip.paste()
-        self.controller.selectorValue = s
+        # s = pyperclip.paste()
+        # self.controller.selectorValue = s
         self.controller.selectorAction = "RAND"
         self.forgetAll()
         self.randButton.config(style='RandEtcButtonHigh.TLabel')
@@ -1634,8 +1673,8 @@ class PageEditParams(tk.Frame):
         self.randButton.config(style='RandEtcButton.TLabel')
 
     def initCallback(self):
-        s = pyperclip.paste()
-        self.controller.selectorValue = s
+        # s = pyperclip.paste()
+        # self.controller.selectorValue = s
         self.controller.selectorAction = "INIT"
         self.forgetAll()
         self.initButton.config(style='RandEtcButtonHigh.TLabel')
@@ -1658,10 +1697,10 @@ class PageEditParams(tk.Frame):
     def saveImportCallback(self):
         s = pyperclip.paste()
         if s == "":
-            print("Nothing in copy/paste buffer")
+            log("Nothing in copy/paste buffer")
             return
         if s[0] != "{":
-            print("Bad format in copy buffer, expecting Json")
+            log("Bad format in copy buffer, expecting Json")
             return
         self.controller.selectorValue = s
         self.controller.selectorAction = "IMPORT"
@@ -1690,7 +1729,7 @@ class PageEditParams(tk.Frame):
         # even if the original one was loaded from a different directory
         fpath = palette.localPresetsFilePath(section,fname,suffix)
         j = self.jsonParamDump()
-        print("Edit page is saving JSON in:",fpath)
+        log("Edit page is saving JSON in:",fpath)
         SaveJsonInPath(j,fpath)
 
     def jsonParamDump(self):
@@ -1735,9 +1774,9 @@ class ScrollBar(tk.Frame):
         self.controller = parent.controller
         self.notify = notify
         self.tag = tag
-        self.config(background=palette.ColorBg)
+        self.config(background=ColorBg)
 
-        self.scroll = tk.Canvas(self, background=palette.ColorScrollbar, highlightthickness=0)
+        self.scroll = tk.Canvas(self, background=ColorScrollbar, highlightthickness=0)
         self.scroll.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
         # try - self.scroll.pack(side=tk.TOP, width=200, height=400)
         # self.scroll.place(in_=self, width=200, height=400)
@@ -1745,7 +1784,7 @@ class ScrollBar(tk.Frame):
         self.scroll.bind("<B1-Motion>", self.scrollMotion)
         # self.scroll.bind("<MouseWheel>", self.scrollWheel)
 
-        self.thumb = tk.Canvas(self.scroll, background=palette.ColorThumb, highlightthickness=0)
+        self.thumb = tk.Canvas(self.scroll, background=ColorThumb, highlightthickness=0)
         self.thumb.place(in_=self.scroll, relx=0, rely=0.0, relwidth=1, relheight=self.controller.thumbFactor )
         self.thumb.bind("<Button-1>", self.thumbClick)
         self.thumb.bind("<B1-Motion>", self.thumbMotion)
@@ -1755,24 +1794,24 @@ class ScrollBar(tk.Frame):
 
     def thumbClick(self,event):
         thumbHeight = self.thumb.winfo_height()
-        # print("\nthumbClick event.y = ",event.y," thumbHeight=",thumbHeight)
+        # log("\nthumbClick event.y = ",event.y," thumbHeight=",thumbHeight)
         dy = event.y - (thumbHeight/2) 
         self.scrollMoveBy(dy)
 
     def thumbMotion(self,event):
         thumbHeight = self.thumb.winfo_height()
-        # print("\nthumbMotion event.y = ",event.y," thumbHeight=",thumbHeight)
+        # log("\nthumbMotion event.y = ",event.y," thumbHeight=",thumbHeight)
         dy = event.y - (thumbHeight/2) 
         self.scrollMoveBy(dy)
 
     def scrollClick(self,event):
         dy = event.y - self.currentY
-        # print("\nscrollClick event.y=",event.y," dy=",dy)
+        # log("\nscrollClick event.y=",event.y," dy=",dy)
         self.scrollMoveBy(dy)
 
     def scrollMotion(self,event):
         dy = event.y - self.currentY
-        # print("\nscrollMotion event.y=",event.y," dy=",dy)
+        # log("\nscrollMotion event.y=",event.y," dy=",dy)
         self.scrollMoveBy(dy)
 
     def scrollWheel(self,event):
@@ -1783,13 +1822,13 @@ class ScrollBar(tk.Frame):
             amount = -dy
         else:
             amount = dy
-        # print("\nscrollWheel delta=",event.delta," dy=",dy," amount=",amount)
+        # log("\nscrollWheel delta=",event.delta," dy=",dy," amount=",amount)
         self.scrollMoveBy(amount)
 
     def scrollMoveBy(self,dy):
         scrollHeight = self.scroll.winfo_height()
 
-        # print("scrollMove dy=",dy,"  currentY=",self.currentY,"  scrollHeight=",scrollHeight)
+        # log("scrollMove dy=",dy,"  currentY=",self.currentY,"  scrollHeight=",scrollHeight)
         dy = dy / 16  # scale it down
         newy = self.currentY + dy
         if newy < 0.0:
@@ -1798,7 +1837,7 @@ class ScrollBar(tk.Frame):
             newy = scrollHeight
 
         if newy == self.currentY:
-            # print("scrollMove no change, do nothing")
+            # log("scrollMove no change, do nothing")
             return
 
         self.currentY = newy
@@ -1820,32 +1859,32 @@ class ScrollBar(tk.Frame):
 
         fthumby -= thumbHalfHeight
 
-        # print("currentY=",self.currentY," fy=",fy," fthumby=",fthumby)
+        # log("currentY=",self.currentY," fy=",fy," fthumby=",fthumby)
         self.thumb.place(in_=self.scroll, relx=0, rely=fthumby, relwidth=1, relheight=self.controller.thumbFactor )
         self.notify.scrollNotify(fy,self.tag)
-        # print("END OF MOVEBY\n")
+        # log("END OF MOVEBY\n")
 
 class PagePerformMain(tk.Frame):
 
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
-        self.config(background=palette.ColorBg)
+        self.config(background=ColorBg)
 
-        self.frame = tk.Frame(self, background=palette.ColorBg)
+        self.frame = tk.Frame(self, background=ColorBg)
         self.frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True, pady=5)
 
         self.performButton = {}
         self.advancedButtons = {}
         self.buttonNames = []
 
-        self.makePerformButton("transpose",None)
-        # self.makePerformButton("loopingonoff",None)
-        # self.makePerformButton("loopingfade",None)
-        self.makePerformButton("Clear_ ", self.controller.clearLoop)
         self.makePerformButton("Reset_All", self.controller.resetAll)
+        self.makePerformButton("Clear_ ", self.controller.clearLoop)
+        self.makePerformButton("transpose",None)
 
         # More advanced buttons
+        self.makePerformButtonAdvanced("loopingonoff",None)
+        self.makePerformButtonAdvanced("loopingfade",None)
         self.makePerformButtonAdvanced("loopinglength",None)
         self.makePerformButtonAdvanced("scale",None)
         self.makePerformButtonAdvanced("Notes_Off", self.controller.sendANO)
@@ -1891,8 +1930,6 @@ class PagePerformMain(tk.Frame):
                 button.grid_forget()
             else:
                 style = 'PerformButton.TLabel'
-                # if guiLevel > 0:
-                #     style = 'PerformButtonSmall.TLabel'
                 button.config(text=text, width=11, style=style)
                 button.grid(row=row,column=col, padx=self.controller.performButtonPadx,pady=self.controller.performButtonPady,ipady=ipady)
             col += 1
@@ -1921,6 +1958,7 @@ class PagePerformMain(tk.Frame):
         controller = self.controller
         controller.resetLastAnything()
 
+        log("Perform Button Pressed",name)
         if name in palette.PerformLabels:
 
             if controller.currentPageName == "quad" or controller.allPadsSelected:
@@ -1944,7 +1982,7 @@ class PagePerformMain(tk.Frame):
             controller.sendGlobalPerformVal(name)
 
         else:
-            print("UNHANDLED performCallback name=",name)
+            log("UNHANDLED performCallback name=",name)
 
     def padPerformCallback(self,pad,name):
         labels = palette.PerformLabels[name]
@@ -1977,12 +2015,12 @@ class PageSelector(tk.Frame):
         self.controller = controller
         self.pagename = pagename
 
-        self.config(background=palette.ColorBg)
+        self.config(background=ColorBg)
 
         self.selectButtons = {}
         self.selectOffset = 0
 
-        self.valsframe = tk.Frame(self, background=palette.ColorBg)
+        self.valsframe = tk.Frame(self, background=ColorBg)
         self.valsframe.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, pady=10)
 
         self.scrollbar = ScrollBar(parent=self, notify=self)
@@ -1991,7 +2029,7 @@ class PageSelector(tk.Frame):
         self.doLayout()
 
     def scrollNotify(self,sfy,tag):
-        # print("scrollNotify sfy=",sfy," tag=",tag)
+        # log("scrollNotify sfy=",sfy," tag=",tag)
         nparams = len(self.vals)
         selectPerPage = self.controller.selectDisplayRows * self.controller.selectDisplayPerRow
         tmp = int(sfy * (nparams-selectPerPage))
@@ -2032,7 +2070,7 @@ class PageSelector(tk.Frame):
 
                     if not i in self.selectButtons:
                         if i > len(self.vals):
-                            print("Hey, i > len(self.vals) ??")
+                            log("Hey, i > len(self.vals) ??")
                         self.selectButtons[i] = ttk.Button(self.valsframe, width=width, style=style)
 
                     self.selectButtons[i].grid(row=r,column=c,padx=self.controller.selectButtonPadx,pady=self.controller.selectButtonPady,ipady=ipady,ipadx=ipadx)
@@ -2060,11 +2098,8 @@ class PageSelector(tk.Frame):
             self.selectButtons[i].config(style=s)
 
 def startgui():
-    # print("STARTGUI called")
     global StartupMode
     StartupMode = False
-    # global startupPhase
-    # startupPhase = ""
 
 def padOfParam(paramname):
     pad = paramname[0]
@@ -2091,7 +2126,7 @@ def CurrentPadPath(pad):
 def SaveJsonInPath(j,fpath):
     f = open(fpath,"w")
     if not f:
-        print("SaveJsonInPath: unable to open path=",fpath)
+        log("SaveJsonInPath: unable to open path=",fpath)
         return
     f.write(json.dumps(j, sort_keys=True, indent=4, separators=(',',':')))
     # To avoid complaints from editors, add a final newline
@@ -2102,9 +2137,112 @@ def initMain(app):
     app.iconbitmap(palette.configFilePath("palette.ico"))
     app.mainLoop()
 
+def setFontSizes(guisize):
+    global presetButtonFont, largestFont
+    global hugeFont, comboFont, largerFont, largeFont, performButtonFont
+    global padLabelFont, paramNameFont, paramValueFont, paramAdjustFont
+
+    f = 'Helvetica'
+    f = 'Lucida Sans'
+
+    if guisize == "large":
+        presetButtonFont = (f, int(20))
+        largestFont = (f, int(24))
+        hugeFont = (f, int(36))
+        comboFont = (f, int(20))
+        largerFont = (f, int(20))
+        largeFont = (f, int(16))
+        performButtonFont = (f, int(16))
+        padLabelFont = (f, int(22))
+        paramNameFont = (f, int(18))
+        paramValueFont = (f, int(18))
+        paramAdjustFont = (f, int(20))
+    else:
+        presetButtonFont = (f, int(10))
+        largestFont = (f, int(12))
+        hugeFont = (f, int(18))
+        comboFont = (f, int(10))
+        largerFont = (f, int(10))
+        largeFont = (f, int(8))
+        performButtonFont = (f, int(7))
+        padLabelFont = (f, int(8))
+        paramNameFont = (f, int(8))
+        paramValueFont = (f, int(8))
+        paramAdjustFont = (f, int(6))
+
+def makeStyles(app):
+    app.option_add('*TCombobox*Listbox.font', comboFont)
+
+    s = ttk.Style()
+
+    s.configure('.', font=largeFont, background=ColorBg, foreground=ColorText)
+
+    s.configure('PageButtonEnabled.TLabel', background=ColorHigh, relief="flat", justify=tk.CENTER, font=largestFont)
+    s.configure('PageButtonDisabled.TLabel', background=ColorButton, relief="flat", justify=tk.CENTER, font=largestFont)
+
+    s.configure('RandEtcButton.TLabel', font=largerFont, foreground=ColorText, background=ColorButton)
+    s.configure('RandEtcButtonHigh.TLabel', font=largerFont, foreground=ColorText, background=ColorHigh)
+
+    s.configure('ParamName.TLabel', font=paramNameFont, foreground=ColorText, justify=tk.LEFT)
+    s.configure('ParamValue.TLabel', font=paramValueFont, foreground=ColorText, borderwidth=2, justify=tk.RIGHT, background=ColorBg)
+    s.configure('ParamAdjust.TLabel', foreground=ColorText, borderwidth=2, anchor=tk.CENTER, background=ColorButton, font=paramAdjustFont)
+
+    s.configure('GlobalButton.TLabel', font=largestFont, background=ColorButton, relief="flat", justify=tk.CENTER)
+
+    s.configure('PerformMessage.TLabel', background=ColorBg, foreground=ColorRed, relief="flat", justify=tk.CENTER, align=tk.CENTER, font=performButtonFont)
+
+    s.configure('Loading.TLabel', background=ColorButton, foreground=ColorWhite, relief="flat", justify=tk.CENTER, align=tk.CENTER, font=largestFont)
+    s.configure('PerformHeader.TLabel', background=ColorButton, foreground=ColorBright, relief="flat", justify=tk.CENTER, align=tk.CENTER, font=performButtonFont)
+
+    s.configure('PresetButton.TLabel', foreground=ColorText, font=presetButtonFont, background=ColorButton, anchor=tk.CENTER, justify=tk.CENTER)
+    s.configure('PresetButtonHighlight.TLabel', foreground=ColorText, font=presetButtonFont, background=ColorHigh, anchor=tk.CENTER, justify=tk.CENTER)
+
+    s.configure('RecordingButton.TLabel', background=ColorRed, relief="flat", justify=tk.CENTER, align=tk.CENTER, font=largeFont)
+
+    s.configure('PerformButton.TLabel', foreground=ColorText, background=ColorButton, relief="flat", justify=tk.CENTER,
+        anchor=tk.CENTER, font=performButtonFont)
+
+    s.configure('custom.TCombobox', foreground=ColorComboText, background=ColorBg)
+
+    s.map('Patch.TLabel',
+        foreground=[('disabled', 'yellow'),
+                    ('pressed', ColorText),
+                    ('active', ColorText)],
+        background=[('disabled', 'yellow'),
+                    ('pressed', ColorHigh),
+                    ('active', ColorButton)]
+        )
+    s.map('PresetButton.TLabel',
+        foreground=[('disabled', 'yellow'),
+                    ('pressed', ColorText),
+                    ('active', ColorText)],
+        background=[('disabled', 'yellow'),
+                    ('pressed', ColorHigh),
+                    ('active', ColorButton)]
+        )
+    s.map('PerformButton.TLabel',
+        foreground=[('disabled', 'yellow'),
+                    ('pressed', ColorText),
+                    ('active', ColorText)],
+        background=[('disabled', 'yellow'),
+                    ('pressed', ColorHigh),
+                    ('active', ColorButton)]
+        )
+
+def log(*args):
+    palette.log(*args)
+
+def debug(*args):
+    palette.debug(*args)
+
+def loginit():
+    palette.loginit()
+
 if __name__ == "__main__":
 
-    print("\n========= Palette GUI starts\n")
+    loginit()
+    log("")
+    log("Start GUI")
     pads = palette.ConfigValue("pads")
     if pads == "":
         npads = 1
@@ -2124,7 +2262,7 @@ if __name__ == "__main__":
     elif npads == 4:
         padname = pads[0]
         padnames = pads
-        palette.IsQuad = True
+        IsQuad = True
         visiblepagenames = {
             "quad":"Quad",
             "snap":"Pad",
@@ -2133,17 +2271,23 @@ if __name__ == "__main__":
             "effect":"Effect",
         }
     else:
-        print("Unexpected number of pads: ",pads)
-
-    app = ProGuiApp(padname,padnames,visiblepagenames)
-
-    palette.makeStyles(app)
+        log("Unexpected number of pads: ",pads)
 
     guisize = palette.ConfigValue("guisize")
-    if guisize == "" or guisize == "large":
+
+    if guisize == "":
+        guisize = "large"
+
+    app = ProGuiApp(padname,padnames,visiblepagenames,guisize)
+
+    makeStyles(app)
+
+    if guisize == "large":
         app.wm_geometry("%dx%d" % (800,1280))
-    else:
+    elif guisize == "small":
         app.wm_geometry("%dx%d" % (400,640))
+    else:
+        log("Unexpected value of guisize (%s)\n" % guisize)
 
     delay = 0.0
 
