@@ -4,7 +4,6 @@ c:/windows/system32/taskkill /F /IM palette_gui.exe > nul 2>&1
 
 call setpalettelogdir
 
-echo > "%PALETTELOGDIR%\gui.log"
 echo > "%PALETTELOGDIR%\gui.stdout"
 echo > "%PALETTELOGDIR%\gui.stderr"
 
