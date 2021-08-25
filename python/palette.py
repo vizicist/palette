@@ -8,6 +8,7 @@ from tkinter import font
 import tkinter as tk
 
 import os
+import io
 import json
 import glob
 import collections
@@ -26,31 +27,6 @@ import platform
 DebugApi = False
 Verbose = False
 MyNuid = ""
-
-IsQuad = False
-RecMode = False
-StartupMode = True
-
-# ColorBg = '#bbbbbb'
-ColorWhite = '#ffffff'
-ColorBlack = '#000000'
-
-ColorBg = '#000000'
-ColorText = '#ffffff'
-ColorComboText = '#000000'    # black
-# ColorButton = '#888888'  
-ColorButton = '#333333'  
-ColorScrollbar = '#333333'  
-ColorThumb = '#00ffff'  
-
-ColorRed = '#ff0000'
-ColorBlue = '#0000ff'
-ColorGreen = '#00ff00'
-# ColorHigh = '#006666'
-ColorHigh = '#006666'
-ColorBright = '#00ffff'
-ColorAqua = '#00ffff'
-ColorUnHigh = '#888888'
 
 LineSep = "_"
 
@@ -167,82 +143,13 @@ GlobalPerformLabels["transpose"] = [
     {"label":"Transpose_5",  "value":5},
 ]
 
-def makeStyles(app):
-    app.option_add('*TCombobox*Listbox.font', comboFont)
-
-    s = ttk.Style()
-
-    s.configure('.', font=largeFont, background=ColorBg, foreground=ColorText)
-
-    s.configure('PageButtonEnabled.TLabel', background=ColorHigh, relief="flat", justify=tk.CENTER, font=largestFont)
-    s.configure('PageButtonDisabled.TLabel', background=ColorButton, relief="flat", justify=tk.CENTER, font=largestFont)
-
-    s.configure('RandEtcButton.TLabel', font=largerFont, foreground=ColorText, background=ColorButton)
-    s.configure('RandEtcButtonHigh.TLabel', font=largerFont, foreground=ColorText, background=ColorHigh)
-
-    s.configure('ParamName.TLabel', font=paramNameFont, foreground=ColorText, justify=tk.LEFT)
-    s.configure('ParamValue.TLabel', font=paramValueFont, foreground=ColorText, borderwidth=2, justify=tk.RIGHT, background=ColorBg)
-    s.configure('ParamAdjust.TLabel', foreground=ColorText, borderwidth=2, anchor=tk.CENTER, background=ColorButton, font=paramAdjustFont)
-
-    s.configure('GlobalButton.TLabel', font=largestFont, background=ColorButton, relief="flat", justify=tk.CENTER)
-
-    s.configure('PerformMessage.TLabel', background=ColorBg, foreground=ColorRed, relief="flat", justify=tk.CENTER, align=tk.CENTER, font=performButtonFont)
-
-    s.configure('Loading.TLabel', background=ColorButton, foreground=ColorWhite, relief="flat", justify=tk.CENTER, align=tk.CENTER, font=largestFont)
-    s.configure('PerformHeader.TLabel', background=ColorButton, foreground=ColorBright, relief="flat", justify=tk.CENTER, align=tk.CENTER, font=performButtonFont)
-
-    s.configure('PresetButton.TLabel', foreground=ColorText, font=presetButtonFont, background=ColorButton, anchor=tk.CENTER, justify=tk.CENTER)
-    s.configure('PresetButtonHighlight.TLabel', foreground=ColorText, font=presetButtonFont, background=ColorHigh, anchor=tk.CENTER, justify=tk.CENTER)
-
-    s.configure('RecordingButton.TLabel', background=ColorRed, relief="flat", justify=tk.CENTER, align=tk.CENTER, font=largeFont)
-
-    s.configure('PerformButton.TLabel', foreground=ColorText, background=ColorButton, relief="flat", justify=tk.CENTER,
-        anchor=tk.CENTER, font=performButtonFont)
-    s.configure('PerformButtonSmall.TLabel', foreground=ColorText, background=ColorButton, relief="flat", justify=tk.CENTER,
-        anchor=tk.CENTER, font=performSmallFont)
-
-    s.configure('custom.TCombobox', foreground=ColorComboText, background=ColorBg)
-
-    s.map('Patch.TLabel',
-        foreground=[('disabled', 'yellow'),
-                    ('pressed', ColorText),
-                    ('active', ColorText)],
-        background=[('disabled', 'yellow'),
-                    ('pressed', ColorHigh),
-                    ('active', ColorButton)]
-        )
-    s.map('PresetButton.TLabel',
-        foreground=[('disabled', 'yellow'),
-                    ('pressed', ColorText),
-                    ('active', ColorText)],
-        background=[('disabled', 'yellow'),
-                    ('pressed', ColorHigh),
-                    ('active', ColorButton)]
-        )
-    s.map('PerformButton.TLabel',
-        foreground=[('disabled', 'yellow'),
-                    ('pressed', ColorText),
-                    ('active', ColorText)],
-        background=[('disabled', 'yellow'),
-                    ('pressed', ColorHigh),
-                    ('active', ColorButton)]
-        )
-    s.map('PerformButtonSmall.TLabel',
-        foreground=[('disabled', 'yellow'),
-                    ('pressed', ColorText),
-                    ('active', ColorText)],
-        background=[('disabled', 'yellow'),
-                    ('pressed', ColorHigh),
-                    ('active', ColorButton)]
-        )
-
 
 def palette_region_api(region, meth, params=""):
     if region == "":
-        print("palette_region_api: no region specified?  Assuming A")
+        log("palette_region_api: no region specified?  Assuming A")
         region = "A"
     if region == "*":
-        print("palette_region_api: What do I do with a * region?")
+        log("palette_region_api: What do I do with a * region?")
         region = "A"
     p = "\"region\":\""+region+"\""
     if params == "":
@@ -254,33 +161,16 @@ def palette_region_api(region, meth, params=""):
 def palette_global_api(meth, params=""):
     return palette_api("global."+meth,params)
 
-def setFontSizes(fontFactor):
-    global presetButtonFont, largestFont
-    global hugeFont, comboFont, largerFont, largeFont
-    global performButtonFont, performSmallFont
-    global padLabelFont, paramNameFont, paramValueFont, paramAdjustFont
-    f = 'Helvetica'
-    f = 'Lucida Sans'
-    presetButtonFont = (f, int(20*fontFactor))
-    largestFont = (f, int(24*fontFactor))
-    hugeFont = (f, int(36*fontFactor))
-    comboFont = (f, int(20*fontFactor))
-    paramNameFont = (f, int(18*fontFactor))
-    paramValueFont = (f, int(18*fontFactor))
-    paramAdjustFont = (f, int(20*fontFactor))
-    largerFont = (f, int(20*fontFactor))
-    largeFont = (f, int(16*fontFactor))
-    performButtonFont = (f, int(16*fontFactor))
-    performSmallFont = (f, int(12*fontFactor))
-    padLabelFont = (f, int(22*fontFactor))
-
 def configFilePath(nm):
     return os.path.join(paletteSubDir("config"),nm)
+
+def logFilePath(nm):
+    return os.path.join(paletteSubDir("logs"),nm)
 
 def paletteSubDir(subdir):
     local = os.environ.get("LOCALAPPDATA")
     if local == None:
-        print("Expecting LOCALAPPDATA to be set, assuming .")
+        log("Expecting LOCALAPPDATA to be set, assuming .")
         local = "."
     return os.path.join(local, "Palette", subdir)
 
@@ -316,7 +206,7 @@ def localPresetsFilePath(presetType, nm, suffix=".json"):
     paths = presetspath.split(";")
     localdir = paths[0]
     if not os.path.isdir(localdir):
-        print("No presets directory?  dir=",localdir)
+        log("No presets directory?  dir=",localdir)
         localdir = "."
     return os.path.join(localdir,presetType, nm+suffix)
 
@@ -345,7 +235,7 @@ def MyNUID():
         return MyNuid
     path = configFilePath("nuid.json")
     if not os.path.isfile(path):
-        print("Missing nuid.json file? path=",path)
+        log("Missing nuid.json file? path=",path)
         return "MissingNUIDFile"
     nuidjson = readJsonPath(path)
     if "nuid" in nuidjson:
@@ -367,13 +257,13 @@ def palette_api(meth, params=None):
     fullparams = "{ " + params + "}"
     r1,err = invoke_jsonrpc("palette.api",meth,fullparams)
     if err != None:
-        print("API of ",meth," returned err=",err)
+        log("API of ",meth," returned err=",err)
     return r1
 
 def palette_publish(subject,params):
 
     if DebugApi:
-        print("palette_publish: params=",params)
+        log("palette_publish: params=",params)
 
     # Acquire lock before sending
     global ApiLock
@@ -385,7 +275,7 @@ def palette_publish(subject,params):
         loop.close()
 
     except ErrTimeout:
-        print("palette_event: publish timed out, subject=%s params=%s\n" % (subject,params))
+        log("palette_event: publish timed out, subject=%s params=%s\n" % (subject,params))
 
     ApiLock.release()
 
@@ -407,7 +297,7 @@ def invoke_jsonrpc(subject, api, params):
         lim = 100
         if len(s) > lim:
             s = s[0:lim] + " ..."
-        print("invoke_jsonrpc: api=",api," params=",s)
+        log("invoke_jsonrpc: api=",api," params=",s)
 
     # Acquire lock before sending
     ApiLock.acquire()
@@ -423,7 +313,7 @@ def invoke_jsonrpc(subject, api, params):
         loop.close()
 
     except ErrTimeout:
-        print("invoke_jsonrpc: request timed out, subject=%s api=%s\n" % (subject,api))
+        log("invoke_jsonrpc: request timed out, subject=%s api=%s\n" % (subject,api))
 
     ApiLock.release()
 
@@ -486,17 +376,17 @@ def ConfigValue(s):
     if SettingsJson == None:
         path = configFilePath("settings.json")
         if not os.path.isfile(path):
-            print("No file? path=",path)
+            log("No file? path=",path)
             return ""
         if Verbose:
-            print("Loading ",path)
+            log("Loading ",path)
         SettingsJson = readJsonPath(path)
 
     if LocalSettingsJson == None:
         path = configFilePath("settings.json")
         if os.path.isfile(path):
             if Verbose:
-                print("Loading ",path)
+                log("Loading ",path)
             LocalSettingsJson = readJsonPath(path)
 
     if LocalSettingsJson != None and s in LocalSettingsJson:
@@ -512,7 +402,7 @@ def PaletteDir():
     if paletteDir == None:
         paletteDir = os.environ.get("PALETTE")
         if paletteDir == None:
-            print("PALETTE environment variable needs to be defined.")
+            log("PALETTE environment variable needs to be defined.")
             exit()
     return paletteDir
 
@@ -572,3 +462,41 @@ def NoticeKeyboardInterrupt():
     default (raise KeyboardInterrupt).
     """
     return signal.signal(signal.SIGINT, signal.default_int_handler)
+
+import logging
+
+# global palettelogger
+# global palettehandle
+
+def sprint(*args, end='', **kwargs):
+    sio = io.StringIO()
+    print(*args, **kwargs, end=end, file=sio)
+    return sio.getvalue()
+
+def loginit():
+    # logging.basicConfig(filename="gui.log",encoding='utf-8', level=logging.DEBUG)
+    logpath = logFilePath("gui.log")
+    logging.basicConfig(filename=logpath,
+        encoding='utf-8',
+        format='%(asctime)s %(message)s',
+        level=logging.INFO)
+
+    # global palettelogger
+    # palettelogger = logging.getLogger("palette")
+    # palettelogger.setLevel(logging.INFO)
+
+    # global palettehandle
+    # fh = logging.FileHandler(logpath)
+    # formatter = logging.Formatter("%(asctime)s %(message)s")
+    # fh.setFormatter(formatter)
+    # palettelogger.addHandler(fh)
+
+def log(*args):
+    global palettelogger
+    s = sprint(*args)
+    logging.info(s)
+
+def debug(*args):
+    global palettelogger
+    s = sprint(*args)
+    logging.debug(s)
