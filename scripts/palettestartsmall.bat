@@ -16,6 +16,6 @@ echo Starting Engine
 call palettestartengine
 
 echo Starting GUI
-call palettestartgui
+call palettestartgui small
 
 call paletteactivate

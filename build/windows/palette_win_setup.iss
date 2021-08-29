@@ -82,10 +82,8 @@ Filename: taskkill.exe; Parameters: "/F /IM palette_gui.exe"; StatusMsg: "Making
 
 [Icons]
 Name: "{group}\{cm:ProgramOnTheWeb,{#MyAppName}}"; Filename: "{#MyAppURL}"
-Name: "{group}\Start Palette"; Filename: "{app}\bin\palettestart.bat"; Flags: runminimized
-Name: "{group}\Stop Palette"; Filename: "{app}\bin\palettestop.bat"; Flags: runminimized
-Name: "{group}\Start Palette and Resolume"; Filename: "{app}\bin\palettestartall.bat"; Flags: runminimized
-Name: "{group}\Stop Palette and Resolume"; Filename: "{app}\bin\palettestopall.bat"; Flags: runminimized
+Name: "{group}\Start Palette"; Filename: "{app}\bin\palette.exe"; Parameters: "start all"; Flags: runminimized
+Name: "{group}\Stop Palette"; Filename: "{app}\bin\palette.exe"; Parameters: "stop all"; Flags: runminimized
 
 [Registry]
 Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; \
