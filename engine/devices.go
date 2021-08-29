@@ -14,7 +14,7 @@ type CursorDeviceEvent struct {
 	Region    string
 	CID       string
 	Timestamp int64  // milliseconds
-	Ddu       string // "down", "drag", "up"
+	Ddu       string // "down", "drag", "up" (sometimes "clear")
 	X         float32
 	Y         float32
 	Z         float32

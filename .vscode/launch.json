@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Launch Engine",
+            "name": "Engine",
             "type": "go",
             "request": "launch",
             "mode": "auto",
@@ -15,7 +15,45 @@
             "args": []
         },
         {
-            "name": "Launch gui",
+            "name": "activate",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
+            "env": {
+                "Path": "${env:Path};${workspaceFolder};c:/Users/me/Documents/github/vizicist/palette/SenselLib/x64;"             },
+            "args": ["start", "activate"]
+        },
+        {
+            "name": "start all",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
+            "env": {
+                "Path": "${env:Path};${workspaceFolder};c:/Users/me/Documents/github/vizicist/palette/SenselLib/x64;"             },
+            "args": ["start", "all"]
+        },
+        {
+            "name": "stop all",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
+            "env": {
+                "Path": "${env:Path};${workspaceFolder};c:/Users/me/Documents/github/vizicist/palette/SenselLib/x64;"             },
+            "args": ["stop", "all"]
+        },
+        {
+            "name": "small gui.py",
+            "type": "python",
+            "request": "launch",
+            "program": "${env:PALETTESOURCE}/python/palette_gui.py",
+            "env": {},
+            "args": ["small"]
+        },
+        {
+            "name": "large gui.py",
             "type": "python",
             "request": "launch",
             "program": "${env:PALETTESOURCE}/python/palette_gui.py",
