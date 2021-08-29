@@ -530,6 +530,22 @@ func (r *Stepper) handleCursorDeviceEvent(e CursorDeviceEvent) {
 	r.deviceCursorsMutex.Lock()
 	defer r.deviceCursorsMutex.Unlock()
 
+	// Special event to clear cursors (by sending them "up" events)
+	if e.Ddu == "clear" {
+		for id, c := range r.deviceCursors {
+			if !c.downed {
+				log.Printf("Hmmm, why is a cursor not downed?\n")
+			} else {
+				r.executeIncomingCursor(CursorStepEvent{ID: id, Ddu: "up"})
+				if DebugUtil.Cursor {
+					log.Printf("Clearing cursor id=%s\n", id)
+				}
+				delete(r.deviceCursors, id)
+			}
+		}
+		return
+	}
+
 	tc, ok := r.deviceCursors[id]
 	if !ok {
 		// new DeviceCursor
