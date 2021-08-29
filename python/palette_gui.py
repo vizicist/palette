@@ -168,7 +168,7 @@ class ProGuiApp(tk.Tk):
 
         self.performPage = PagePerformMain(parent=self.performFrame, controller=self)
 
-        self.windowName = "Palette "+padnames
+        self.windowName = "Palette Control"
         self.winfo_toplevel().title(self.windowName)
 
         self.escapeCount = 0
@@ -2115,12 +2115,12 @@ class PageSelector(tk.Frame):
                 s = 'PresetButton.TLabel'
             self.selectButtons[i].config(style=s)
 
-def startgui(windowName,*args):
+def startgui(windowName,guisize,*args):
     global StartupMode
     StartupMode = False
     coords = palette.ConfigValue("guiresize")
-    size = palette.ConfigValue("guisize")
-    if size == "large" and coords != "":
+    # Hardcoded - the small size doesn't pay attention to guiresize
+    if guisize == "large" and coords != "":
         log("Resizing GUI")
         cmd = "nircmdc.exe win setsize stitle \""+windowName+"\" "+coords
         os.system(cmd)
@@ -2298,6 +2298,8 @@ if __name__ == "__main__":
         log("Unexpected number of pads: ",pads)
 
     guisize = palette.ConfigValue("guisize")
+    if len(sys.argv) > 1:
+        guisize = sys.argv[1]
 
     if guisize == "":
         guisize = "large"
@@ -2313,8 +2315,7 @@ if __name__ == "__main__":
     else:
         log("Unexpected value of guisize (%s)\n" % guisize)
 
-    delay = 1.0
-
-    threading.Timer(delay, startgui, args=[app.windowName], kwargs=None).start()
+    delay = 1.0 # allow window to be drawn
+    threading.Timer(delay, startgui, args=[app.windowName,guisize], kwargs=None).start()
 
     initMain(app)

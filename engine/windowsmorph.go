@@ -257,11 +257,13 @@ type oneMorph struct {
 	fwVersionBuild   uint8
 	fwVersionRelease uint8
 	deviceID         int
+	isQuad           bool
+	region           string // "A", "B", "C", "D", or "QUAD"
 }
 
 var morphMaxForce float32 = 1000.0
 
-var allMorphs []oneMorph
+var allMorphs []*oneMorph
 
 // StartMorph xxx
 func StartMorph(callback CursorDeviceCallbackFunc, forceFactor float32) {
@@ -289,7 +291,7 @@ const (
 	CursorUp   = 3
 )
 
-func (m oneMorph) readFrames(callback CursorDeviceCallbackFunc, forceFactor float32) {
+func (m *oneMorph) readFrames(callback CursorDeviceCallbackFunc, forceFactor float32) {
 	status := C.SenselReadSensor(C.uchar(m.idx))
 	if status != C.SENSEL_OK {
 		log.Printf("Morph: SenselReadSensor for idx=%d returned %d", m.idx, status)
@@ -333,40 +335,71 @@ func (m oneMorph) readFrames(callback CursorDeviceCallbackFunc, forceFactor floa
 				continue
 			}
 
-			region, ok := MorphDefs[m.serialNum]
-			if !ok {
-				log.Printf("Morph: serial# %s isn't in morphs.json, assuming A\n", m.serialNum)
-				region = "A"
-			}
-
-			if region == "QUAD" {
-				// Adjust the xNorm and yNorm values to provide
-				// full range 0-1 within each quadrant.
-				switch {
-				case xNorm < 0.5 && yNorm < 0.5:
-					region = "A"
-				case xNorm < 0.5 && yNorm >= 0.5:
-					region = "B"
-					yNorm = yNorm - 0.5
-				case xNorm >= 0.5 && yNorm >= 0.5:
-					region = "C"
-					xNorm = xNorm - 0.5
-					yNorm = yNorm - 0.5
-				case xNorm >= 0.5 && yNorm < 0.5:
-					region = "D"
-					xNorm = xNorm - 0.5
-				default:
-					log.Printf("Morph: unable to find QUAD region for x/y=%f,%f\n", xNorm, yNorm)
-					continue
-				}
-				xNorm *= 2.0
-				yNorm *= 2.0
-			}
 			cid := fmt.Sprintf("%d", contact.id)
 
+			if m.isQuad {
+
+				// If the position is in one of the corners,
+				// we change the region to that corner.
+
+				edge := float32(0.075)
+				newregion := ""
+				if xNorm < edge && yNorm < edge {
+					newregion = "A"
+				} else if xNorm < edge && yNorm > (1.0-edge) {
+					newregion = "B"
+				} else if xNorm > (1.0-edge) && yNorm > (1.0-edge) {
+					newregion = "C"
+				} else if xNorm > (1.0-edge) && yNorm < edge {
+					newregion = "D"
+				}
+				if newregion != "" {
+					if newregion != m.region {
+						log.Printf("Switching QUAD pad to region %s", m.region)
+						ce := CursorDeviceEvent{
+							NUID:      MyNUID(),
+							Region:    m.region,
+							CID:       cid,
+							Timestamp: 0,
+							Ddu:       "clear",
+						}
+						callback(ce)
+						m.region = newregion
+					}
+					// We don't pass corner things through
+					continue
+				}
+
+				/*
+					// THIS SHOULD BE RE-ENABLED AS AN OPTION, EVENTUALLY.
+					// This method splits a single pad into 4 quadrants.
+					// Adjust the xNorm and yNorm values to provide
+					// full range 0-1 within each quadrant.
+					switch {
+					case xNorm < 0.5 && yNorm < 0.5:
+						region = "A"
+					case xNorm < 0.5 && yNorm >= 0.5:
+						region = "B"
+						yNorm = yNorm - 0.5
+					case xNorm >= 0.5 && yNorm >= 0.5:
+						region = "C"
+						xNorm = xNorm - 0.5
+						yNorm = yNorm - 0.5
+					case xNorm >= 0.5 && yNorm < 0.5:
+						region = "D"
+						xNorm = xNorm - 0.5
+					default:
+						log.Printf("Morph: unable to find QUAD region for x/y=%f,%f\n", xNorm, yNorm)
+						continue
+					}
+					xNorm *= 2.0
+					yNorm *= 2.0
+				*/
+			}
+
 			if DebugUtil.Morph {
-				log.Printf("Morph: region=%s contact_id=%d morph_idx=%d n=%d state=%d xNorm=%f yNorm=%f zNorm=%f\n",
-					region, contact.id, m.idx, n, contact.state, xNorm, yNorm, zNorm)
+				log.Printf("Morph: isquad=%v region=%s contact_id=%d morph_idx=%d n=%d state=%d xNorm=%f yNorm=%f zNorm=%f\n",
+					m.isQuad, m.region, contact.id, m.idx, n, contact.state, xNorm, yNorm, zNorm)
 			}
 
 			// make the coordinate space match OpenGL and Freeframe
@@ -386,7 +419,7 @@ func (m oneMorph) readFrames(callback CursorDeviceCallbackFunc, forceFactor floa
 
 			ev := CursorDeviceEvent{
 				NUID:      MyNUID(),
-				Region:    region,
+				Region:    m.region,
 				CID:       cid,
 				Timestamp: 0,
 				Ddu:       ddu,
@@ -405,11 +438,12 @@ func initialize() error {
 
 	numdevices := int(C.SenselNumDevices())
 
-	allMorphs = make([]oneMorph, numdevices)
+	allMorphs = make([]*oneMorph, numdevices)
 
 	for idx := uint8(0); idx < uint8(numdevices); idx++ {
 
-		m := &allMorphs[idx]
+		m := &oneMorph{}
+		allMorphs[idx] = m
 		m.idx = idx
 		m.serialNum = C.GoString(C.SenselDeviceSerialNum(C.uchar(idx)))
 
@@ -443,6 +477,20 @@ func initialize() error {
 		m.fwVersionBuild = uint8(firmwareinfo.fw_version_build)
 		m.fwVersionRelease = uint8(firmwareinfo.fw_version_release)
 		m.deviceID = int(firmwareinfo.device_id)
+		morphdef, ok := MorphDefs[m.serialNum]
+		if !ok {
+			log.Printf("Morph: serial# %s isn't in morphs.json, assuming QUAD\n", m.serialNum)
+			morphdef = "QUAD"
+		}
+
+		switch morphdef {
+		case "QUAD":
+			m.isQuad = true
+			m.region = "A"
+		case "A", "B", "C", "D":
+			m.isQuad = false
+			m.region = morphdef
+		}
 
 		// Don't use DebugUtil.Morph, this always gets logged
 		log.Printf("Morph Opened and Started: idx=%d serial=%s firmware=%d.%d.%d suceeded\n",

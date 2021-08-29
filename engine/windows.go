@@ -12,6 +12,17 @@ import (
 	"syscall"
 )
 
+func StartExecutable(executable string, background bool, stdoutWriter io.Writer, stderrWriter io.Writer, args ...string) error {
+	return Spawn(executable, background, stdoutWriter, stderrWriter, args...)
+}
+
+func StopExecutable(executable string) {
+	stdout := &NoWriter{}
+	stderr := &NoWriter{}
+	// ignore errors
+	_ = Spawn("c:\\windows\\system32\\taskkill.exe", false, stdout, stderr, "/F", "/IM", executable)
+}
+
 // Spawn executes something.  If background is true, it doesn't block
 func Spawn(executable string, background bool, stdout io.Writer, stderr io.Writer, args ...string) error {
 
@@ -32,13 +43,7 @@ func Spawn(executable string, background bool, stdout io.Writer, stderr io.Write
 	} else {
 		err = cmd.Run()
 	}
-	if err != nil {
-		// Don't do Fatal here - some commands like taskkill will fail harmlessly
-		log.Printf("Spawn: cmd=%s err=%s\n", cmd, err)
-		return err
-	}
-	log.Printf("Spawn: bg=%v cmd=%s\n", background, cmd)
-	return nil
+	return err
 }
 
 // MorphDefs xxx
@@ -75,8 +80,6 @@ func LoadMorphs() error {
 	return nil
 }
 
-var noWriter = &NoWriter{}
-
 // RealStartCursorInput starts anything needed to provide device inputs
 func RealStartCursorInput(callback CursorDeviceCallbackFunc) {
 
@@ -90,6 +93,6 @@ func RealStartCursorInput(callback CursorDeviceCallbackFunc) {
 
 // KillProcess kills a process (synchronously)
 func KillProcess(exe string) {
-	Spawn("cmd.exe", false, noWriter, noWriter, "/c", "taskkill", "/f", "/im", exe)
+	Spawn("cmd.exe", false, NoWriterInstance, NoWriterInstance, "/c", "taskkill", "/f", "/im", exe)
 
 }

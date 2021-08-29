@@ -155,7 +155,7 @@ func TheRouter() *Router {
 			ch := string(c)
 			freeframeClient := osc.NewClient("127.0.0.1", resolumePort)
 			oneRouter.steppers[ch] = NewStepper(ch, resolumeLayer, freeframeClient, oneRouter.resolumeClient, oneRouter.guiClient)
-			log.Printf("Pad %s created, resolumeLayer=%d resolumePort=%d\n", ch, resolumeLayer, resolumePort)
+			// log.Printf("Pad %s created, resolumeLayer=%d resolumePort=%d\n", ch, resolumeLayer, resolumePort)
 		}
 
 		oneRouter.OSCInput = make(chan OSCEvent)

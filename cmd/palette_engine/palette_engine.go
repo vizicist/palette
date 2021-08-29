@@ -14,7 +14,9 @@ func main() {
 	signal.Ignore(syscall.SIGHUP)
 	signal.Ignore(syscall.SIGINT)
 
-	engine.InitLogs()
+	engine.InitLog("engine")
+	log.Printf("====================== Palette Engine is starting\n")
+
 	engine.InitDebug()
 
 	log.SetFlags(log.Ldate | log.Lmicroseconds)

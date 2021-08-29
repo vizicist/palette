@@ -17,8 +17,5 @@ call palettestartengine
 
 echo Starting GUI
 call palettestartgui
-call delay 4
-echo Resizing GUI
-call resizegui
 
 call paletteactivate

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"image"
 	"image/draw"
+	"io"
 	"io/ioutil"
 	"log"
 	"os"
@@ -96,18 +97,17 @@ func InitDebug() {
 	}
 }
 
-// InitLogs xxx
-func InitLogs() {
-	logfile := "engine.log"
+// InitLog xxx
+func InitLog(logname string) {
+	logfile := logname + ".log"
 	logpath := LogFilePath(logfile)
 	file, err := os.OpenFile(logpath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
 	if err != nil {
-		fmt.Printf("InitLogs: Unable to open logfile=%s logpath=%s err=%s", logfile, logpath, err)
+		fmt.Printf("InitLog: Unable to open logfile=%s logpath=%s err=%s", logfile, logpath, err)
 		return
 	}
-	log.Printf("Logs are being saved in %s\n", logpath)
+	// log.Printf("Log is being saved in %s\n", logpath)
 	log.SetOutput(file)
-	log.Printf("====================== Palette Engine is starting\n")
 }
 
 // fileExists checks if a file exists
@@ -174,6 +174,15 @@ func LogFilePath(nm string) string {
 		return "C:/windows/tmp"
 	}
 	return filepath.Join(localapp, "Palette", "logs", nm)
+}
+
+func FileExists(filepath string) bool {
+	fileinfo, err := os.Stat(filepath)
+	if os.IsNotExist(err) {
+		return false
+	}
+	// Return false if the fileinfo says the file path is a directory.
+	return !fileinfo.IsDir()
 }
 
 // StringMap takes a JSON string and returns a map of elements
@@ -314,37 +323,48 @@ func SendMail(recipient, subject, body string) error {
 	return nil
 }
 
-// VizLogWriter xxx
-type VizLogWriter struct {
-	Source string
+type NoWriter struct {
+	// Source string
 }
+
+type FileWriter struct {
+	File *os.File
+}
+
+var NoWriterInstance io.Writer
 
 // InitLog xxx
-func InitLog(source string) {
-	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds)
-	log.SetOutput(&VizLogWriter{Source: source})
+func MakeFileWriter(path string) io.Writer {
+
+	file, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+	if err != nil {
+		fmt.Printf("MakeFileWriter: Unable to open path=%s err=%s", path, err)
+		return nil
+	}
+	_ = file
+	return &FileWriter{File: file}
+	// return &FileWriter{File: file}
 }
 
-func (w *VizLogWriter) Write(p []byte) (n int, err error) {
+/*
+func (w *FileWriter) Close() {
+	err := w.File.Close()
+	if err != nil {
+		// doing a log.Printf here might be a recursive error
+		// log.Printf("FileWriter.Close: err=%s\n", err)
+	}
+}
+*/
+
+func (w *FileWriter) Write(p []byte) (n int, err error) {
 	s := string(p)
 	newline := ""
 	if !strings.HasSuffix(s, "\n") {
 		newline = "\n"
 	}
-	// Only add a prefix if the thing being written doesn't start with "<"
-	// I.e. if there's already a log prefix, don't add another one.
-	myprefix := ""
-	if !strings.Contains(s, "<") {
-		myprefix = "<" + w.Source + "> "
-	}
-	final := fmt.Sprintf("%s%s%s", myprefix, s, newline)
-	os.Stderr.Write([]byte(final))
+	final := fmt.Sprintf("%s%s", s, newline)
+	w.File.Write([]byte(final))
 	return len(p), nil
-}
-
-// NoWriter xxx
-type NoWriter struct {
-	Source string
 }
 
 func (w *NoWriter) Write(p []byte) (n int, err error) {
