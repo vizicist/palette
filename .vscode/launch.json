@@ -15,7 +15,7 @@
             "args": []
         },
         {
-            "name": "activate",
+            "name": "small gui",
             "type": "go",
             "request": "launch",
             "mode": "auto",
