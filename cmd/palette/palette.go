@@ -95,14 +95,20 @@ func handle_startstop(startstop string, args []string) {
 
 	switch cmd {
 
-	case "all":
+	case "all", "allsmall":
 		handle_startstop(startstop, []string{"resolume"})
 		handle_startstop(startstop, []string{"bidule"})
 		handle_startstop(startstop, []string{"engine"})
-		handle_startstop(startstop, []string{"gui"})
-		// Give resolume and bidule some time to start
-		time.Sleep(10000 * time.Millisecond)
-		handle_startstop(startstop, []string{"activate"})
+		if cmd == "allsmall" {
+			handle_startstop(startstop, []string{"guismall"})
+		} else {
+			handle_startstop(startstop, []string{"gui"})
+		}
+		if startstop == "start" {
+			// Give resolume and bidule some time to start
+			time.Sleep(10000 * time.Millisecond)
+			handle_startstop(startstop, []string{"activate"})
+		}
 		return
 
 	case "activate":
@@ -112,13 +118,15 @@ func handle_startstop(startstop string, args []string) {
 		return
 
 	case "gui":
-		if nargs > 1 {
-			exearg = args[1]
-		} else {
-			exearg = "large" // default
-		}
 		exe = "palette_gui.exe"
 		fullexe = filepath.Join(palette, "bin", "pyinstalled", exe)
+		exearg = "large" // default
+		// don't return
+
+	case "guismall":
+		exe = "palette_gui.exe"
+		fullexe = filepath.Join(palette, "bin", "pyinstalled", exe)
+		exearg = "small"
 		// don't return
 
 	case "engine":
