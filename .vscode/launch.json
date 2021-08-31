@@ -15,24 +15,14 @@
             "args": []
         },
         {
-            "name": "small gui",
+            "name": "start allsmall",
             "type": "go",
             "request": "launch",
             "mode": "auto",
             "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
             "env": {
                 "Path": "${env:Path};${workspaceFolder};c:/Users/me/Documents/github/vizicist/palette/SenselLib/x64;"             },
-            "args": ["start", "activate"]
-        },
-        {
-            "name": "start all",
-            "type": "go",
-            "request": "launch",
-            "mode": "auto",
-            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
-            "env": {
-                "Path": "${env:Path};${workspaceFolder};c:/Users/me/Documents/github/vizicist/palette/SenselLib/x64;"             },
-            "args": ["start", "all"]
+            "args": ["start", "allsmall"]
         },
         {
             "name": "stop all",
@@ -43,30 +33,6 @@
             "env": {
                 "Path": "${env:Path};${workspaceFolder};c:/Users/me/Documents/github/vizicist/palette/SenselLib/x64;"             },
             "args": ["stop", "all"]
-        },
-        {
-            "name": "small gui.py",
-            "type": "python",
-            "request": "launch",
-            "program": "${env:PALETTESOURCE}/python/palette_gui.py",
-            "env": {},
-            "args": ["small"]
-        },
-        {
-            "name": "large gui.py",
-            "type": "python",
-            "request": "launch",
-            "program": "${env:PALETTESOURCE}/python/palette_gui.py",
-            "env": {},
-            "args": []
-        },
-        {
-            "name": "Launch gui old",
-            "type": "python",
-            "request": "launch",
-            "program": "${env:PALETTESOURCE}/python/palette_guiold.py",
-            "env": {},
-            "args": []
         },
         {
             "name": "Launch migrateeffects",
