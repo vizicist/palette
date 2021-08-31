@@ -100,9 +100,11 @@ func handle_startstop(startstop string, args []string) {
 		handle_startstop(startstop, []string{"bidule"})
 		handle_startstop(startstop, []string{"engine"})
 
-		// Give resolume time to start, so GUI is on top
+		// Give resolume time to start, before starting
+		// GUI and activating things
 		if startstop == "start" {
-			time.Sleep(10000 * time.Millisecond)
+			time.Sleep(12000 * time.Millisecond)
+			handle_startstop(startstop, []string{"activate"})
 		}
 
 		// Start the GUI.
@@ -112,12 +114,6 @@ func handle_startstop(startstop string, args []string) {
 			handle_startstop(startstop, []string{"gui"})
 		}
 
-		// Activate layers in Resolume, make sure
-		// audio is on, etc.
-		if startstop == "start" {
-			time.Sleep(5000 * time.Millisecond)
-			handle_startstop(startstop, []string{"activate"})
-		}
 		return
 
 	case "activate":
