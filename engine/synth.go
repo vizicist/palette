@@ -35,7 +35,8 @@ func InitSynths() {
 	filename := ConfigFilePath("synths.json")
 	bytes, err := ioutil.ReadFile(filename)
 	if err != nil {
-		log.Fatal(err)
+		log.Printf("InitSynths: ReadFile of %s failed, err=%s\n", filename, err)
+		return
 	}
 
 	type synth struct {
@@ -65,7 +66,12 @@ func InitSynths() {
 		} else {
 			midiOut = MIDI.NewFakeMidiOutput(port, channel)
 		}
-		Synths[nm] = NewSynth(port, channel, bank, program, midiOut)
+		if midiOut == nil {
+			log.Printf("InitSynths: Unable to open midi port=%s\n", port)
+			Synths[nm] = nil
+		} else {
+			Synths[nm] = NewSynth(port, channel, bank, program, midiOut)
+		}
 	}
 	log.Printf("Synths loaded, len=%d\n", len(Synths))
 }
@@ -87,6 +93,11 @@ func SendANOToSynth(synthName string) {
 		log.Printf("SendANOToSynth: no such synth - %s\n", synthName)
 		return
 	}
+	if synth == nil {
+		// We don't complain, we assume the inability to open the
+		// synth named synthName has already been logged.
+		return
+	}
 	status := 0xb0 | (synth.channel - 1)
 	e := portmidi.Event{
 		Timestamp: portmidi.Time(),
@@ -106,6 +117,11 @@ func SendNoteToSynth(note *Note) {
 	synth, ok := Synths[note.Sound]
 	if !ok {
 		log.Printf("SendNoteToSynth: no such synth - %s\n", note.Sound)
+		return
+	}
+	if synth == nil {
+		// We don't complain, we assume the inability to open the
+		// synth named synthName has already been logged.
 		return
 	}
 	e := portmidi.Event{

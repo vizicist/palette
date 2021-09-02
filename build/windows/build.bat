@@ -131,9 +131,10 @@ xcopy /e /y %PALETTESOURCE%\default\presets %ship%\presets > nul
 echo ================ Removing unused things
 rm -fr %bin%\pyinstalled\tcl\tzdata
 
+copy %PALETTESOURCE%\VERSION %ship% >nul
 set /p version=<../../VERSION
 echo ================ Creating installer for VERSION %version%
-sed -e "s/VERSION/%version%/" < palette_win_setup.iss > tmp.iss
+sed -e "s/SUBSTITUTE_VERSION_HERE/%version%/" < palette_win_setup.iss > tmp.iss
 "c:\Program Files (x86)\Inno Setup 6\ISCC.exe" /Q tmp.iss
 if exist "T:\\tmp" (
 	copy Output\palette_%version%_win_setup.exe t:\tmp >nul
