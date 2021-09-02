@@ -4,7 +4,7 @@
 #include "environment.iss"
 
 #define MyAppName "Palette"
-#define MyAppVersion "VERSION"
+#define MyAppVersion "SUBSTITUTE_VERSION_HERE"
 #define MyAppPublisher "Nosuch Media"
 #define MyAppURL "https://github.com/vizicist/palette"
 
@@ -44,6 +44,7 @@ Type: files; Name:"{app}\presets\effect\*.json"
 Type: files; Name:"{app}\presets\visual\*.json"
 
 [Files]
+Source: "ship\VERSION"; DestDir: "{app}"; Flags: ignoreversion
 Source: "ship\bin\*"; DestDir: "{app}\bin"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "ship\ffgl\*"; DestDir: "{app}\ffgl"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "ship\presets\*"; DestDir: "{app}\presets"; Flags: ignoreversion recursesubdirs createallsubdirs
