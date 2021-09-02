@@ -2124,6 +2124,10 @@ def startgui(windowName,guisize,*args):
         log("Resizing GUI")
         cmd = "nircmdc.exe win setsize stitle \""+windowName+"\" "+coords
         os.system(cmd)
+        cmd = "nircmdc.exe win -style stitle \""+windowName+"\" 0x00CA0000"
+        os.system(cmd)
+        cmd = "nircmdc.exe win max stitle \""+windowName+"\""
+        os.system(cmd)
 
 def padOfParam(paramname):
     pad = paramname[0]
