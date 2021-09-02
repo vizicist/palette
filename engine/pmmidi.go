@@ -121,15 +121,6 @@ func (m *MIDIIO) getInput(dev string) *MidiInput {
 	return s
 }
 
-/*
-// Send writes to a MIDI output
-func Send(out *midiOutput, b1 int64, b2 int64, b3 int64) {
-	if err := out.stream.WriteShort(b1, b2, b3); err != nil {
-		log.Fatal(err)
-	}
-}
-*/
-
 // SendEvent sends one or more MIDI Events
 func SendEvent(out *MidiOutput, events []portmidi.Event) {
 	if DebugUtil.MIDI {
@@ -142,7 +133,8 @@ func SendEvent(out *MidiOutput, events []portmidi.Event) {
 		return
 	}
 	if err := out.stream.Write(events); err != nil {
-		log.Fatal(err)
+		log.Printf("out.stream.Write: err=%s\n", err)
+		return
 	}
 }
 
@@ -160,7 +152,8 @@ func (m *MIDIIO) getOutputStream(name string) (devid portmidi.DeviceID, stream *
 	if !present {
 		m.outputDeviceStream[name], err = portmidi.NewOutputStream(devid, 1, 0)
 		if err != nil {
-			log.Fatal(err)
+			log.Printf("getOutputStream: Unable to create NewOutputStream for %s\n", name)
+			return -1, nil
 		}
 		stream = m.outputDeviceStream[name]
 	}
@@ -189,6 +182,10 @@ func (m *MIDIIO) getInputStream(name string) (devid portmidi.DeviceID, stream *p
 
 func (m *MIDIIO) NewMidiOutput(port string, channel int) *MidiOutput {
 	devid, stream := m.getOutputStream(port)
+	if stream == nil {
+		log.Printf("NewMidiOutput: failed to get OutpuStream for port=%s\n", port)
+		return nil
+	}
 	return &MidiOutput{port: port, deviceID: devid, stream: stream, channel: channel}
 }
 

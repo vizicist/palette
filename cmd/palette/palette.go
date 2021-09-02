@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"os"
 	"os/signal"
 	"path/filepath"
 	"syscall"
@@ -24,7 +25,9 @@ func main() {
 
 	args := flag.Args()
 	if len(args) < 2 {
-		log.Fatal("Usage: palette {start|stop} {gui|engine|bidule|activate}\n")
+		usage := "Usage: palette {start|stop} {engine|gui|bidule|all|activate}\n"
+		os.Stderr.WriteString(usage)
+		log.Fatal(usage)
 	}
 	nargs := len(args)
 	if nargs == 0 {

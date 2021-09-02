@@ -15,6 +15,16 @@
             "args": []
         },
         {
+            "name": "test palette",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
+            "env": {
+                "Path": "${env:Path};${workspaceFolder};c:/Users/me/Documents/github/vizicist/palette/SenselLib/x64;"             },
+            "args": ["start", "guismall"]
+        },
+        {
             "name": "start allsmall",
             "type": "go",
             "request": "launch",
@@ -33,22 +43,6 @@
             "env": {
                 "Path": "${env:Path};${workspaceFolder};c:/Users/me/Documents/github/vizicist/palette/SenselLib/x64;"             },
             "args": ["stop", "all"]
-        },
-        {
-            "name": "Launch migrateeffects",
-            "type": "python",
-            "request": "launch",
-            "program": "${env:PALETTESOURCE}/python/migrateeffects.py",
-            "env": {},
-            "args": []
-        },
-        {
-            "name": "Launch changeparamval",
-            "type": "python",
-            "request": "launch",
-            "program": "${env:PALETTESOURCE}/python/changeparamval.py",
-            "env": {},
-            "args": ["default\\presets\\visual", "aspect", "1.000", "1.000"]
         }
     ]
 }
