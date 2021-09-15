@@ -99,17 +99,11 @@ func SendANOToSynth(synthName string) {
 		return
 	}
 	status := 0xb0 | (synth.channel - 1)
-	e := portmidi.Event{
-		Timestamp: portmidi.Time(),
-		Status:    int64(status),
-		Data1:     int64(0x7b),
-		Data2:     int64(0x00),
-	}
 	for i := range synth.noteDown {
 		synth.noteDown[i] = false
 	}
-	// log.Printf("Sending ANO portmidi.Event = %s\n", e)
-	SendEvent(synth.midiOut, []portmidi.Event{e})
+	log.Printf("SendANOToSynth: synth=%s\n", synthName)
+	synth.midiOut.stream.WriteShort(int64(status), int64(0x7b), int64(0x00))
 }
 
 // SendNote sends MIDI output for a Note
@@ -168,5 +162,6 @@ func SendNoteToSynth(note *Note) {
 	// if DebugUtil.MIDI {
 	// 	log.Printf("Sending portmidi.Event = %s\n", e)
 	// }
-	SendEvent(synth.midiOut, []portmidi.Event{e})
+	log.Printf("SendNoteToSynth: synth=%s status=0x%02x data1=%d data2=%d\n", synth.midiOut.Name(), e.Status, e.Data1, e.Data2)
+	synth.midiOut.stream.WriteShort(e.Status, e.Data1, e.Data2)
 }
