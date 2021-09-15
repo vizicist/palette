@@ -158,7 +158,7 @@ func (r *Stepper) PassThruMIDI(e portmidi.Event, scadjust bool) {
 	case 0xE0:
 		n = NewPitchBend(data1, data2, synth)
 	default:
-		log.Printf("PassThruMIDI unable to handle status=%02x\n", status)
+		log.Printf("PassThruMIDI unable to handle status=0x%02x\n", status)
 		return
 	}
 	if n != nil {
@@ -501,7 +501,7 @@ func (r *Stepper) setOneParamValue(apiprefix, name, value string) {
 
 // ClearExternalScale xxx
 func (r *Stepper) clearExternalScale() {
-	if DebugUtil.MIDI {
+	if DebugUtil.Scale {
 		log.Printf("clearExternalScale pad=%s", r.padName)
 	}
 	r.externalScale = makeScale()
@@ -513,7 +513,7 @@ func (r *Stepper) setExternalScale(pitch int, on bool) {
 	for p := pitch; p < 128; p += 12 {
 		s.hasNote[p] = on
 	}
-	if DebugUtil.MIDI {
+	if DebugUtil.Scale {
 		log.Printf("setExternalScale pad=%s pitch=%v on=%v", r.padName, pitch, on)
 	}
 }

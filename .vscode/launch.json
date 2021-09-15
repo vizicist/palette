@@ -15,14 +15,14 @@
             "args": []
         },
         {
-            "name": "test palette",
+            "name": "test erae",
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
+            "program": "${env:PALETTESOURCE}/cmd/erae/erae.go",
             "env": {
                 "Path": "${env:Path};${workspaceFolder};c:/Users/me/Documents/github/vizicist/palette/SenselLib/x64;"             },
-            "args": ["start", "guismall"]
+            "args": []
         },
         {
             "name": "start allsmall",

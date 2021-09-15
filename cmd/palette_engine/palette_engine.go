@@ -23,15 +23,18 @@ func main() {
 
 	flag.Parse()
 
-	engine.InitMIDI()
+	midiinput := engine.ConfigValue("midiinput")
+	engine.InitMIDI(midiinput)
 	engine.InitSynths()
-
 	go engine.StartNATSServer()
-	go engine.StartOSC("127.0.0.1:3333")
-	go engine.StartNATSClient()
-	go engine.StartMIDI()
-	go engine.StartRealtime()
-	go engine.StartCursorInput()
 
-	engine.ListenForLocalDeviceInputsForever() // never returns
+	r := engine.TheRouter()
+
+	go r.StartOSC("127.0.0.1:3333")
+	go r.StartNATSClient()
+	go r.StartMIDI()
+	go r.StartRealtime()
+	go r.StartCursorInput()
+
+	r.ListenForLocalDeviceInputsForever() // never returns
 }

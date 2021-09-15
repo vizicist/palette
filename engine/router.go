@@ -31,6 +31,7 @@ type Router struct {
 	OSCInput  chan OSCEvent
 	MIDIInput chan portmidi.Event
 
+	midiEventHandler     MIDIEventHandler
 	killme               bool // true if Router should be stopped
 	lastClick            Clicks
 	control              chan Command
@@ -183,9 +184,8 @@ func TheRouter() *Router {
 }
 
 // StartOSC xxx
-func StartOSC(source string) {
+func (r *Router) StartOSC(source string) {
 
-	r := TheRouter()
 	handler := r.OSCInput
 
 	d := osc.NewStandardDispatcher()
@@ -205,17 +205,16 @@ func StartOSC(source string) {
 }
 
 // StartNATSClient xxx
-func StartNATSClient() {
+func (r *Router) StartNATSClient() {
 
 	StartVizNats()
 
 	// Hand all NATS messages to HandleAPI
-	router := TheRouter()
 
 	log.Printf("StartNATS: Subscribing to %s\n", PaletteAPISubject)
 	TheVizNats.Subscribe(PaletteAPISubject, func(msg *nats.Msg) {
 		data := string(msg.Data)
-		response := router.HandleAPIInput(router.ExecuteAPI, data)
+		response := r.HandleAPIInput(r.ExecuteAPI, data)
 		msg.Respond([]byte(response))
 	})
 
@@ -226,7 +225,7 @@ func StartNATSClient() {
 		if err != nil {
 			log.Printf("HandleSubscribedEvent: err=%s\n", err)
 		}
-		err = router.HandleSubscribedEventArgs(args)
+		err = r.HandleSubscribedEventArgs(args)
 		if err != nil {
 			log.Printf("HandleSubscribedEvent: err=%s\n", err)
 		}
@@ -243,11 +242,9 @@ func TimeString() string {
 }
 
 // StartRealtime runs the looper and never returns
-func StartRealtime() {
+func (r *Router) StartRealtime() {
 
 	log.Println("StartRealtime begins")
-
-	r := TheRouter()
 
 	// Wake up every 2 milliseconds and check looper events
 	tick := time.NewTicker(2 * time.Millisecond)
@@ -288,40 +285,35 @@ func StartRealtime() {
 	log.Println("StartRealtime ends")
 }
 
-// StartMIDI listens for MIDI events and sends them to the MIDIInput chan
-func StartMIDI() {
-	r := TheRouter()
-	midiinput := ConfigValue("midiinput")
-	if midiinput == "" {
-		return
-	}
-	words := strings.Split(midiinput, ",")
-	inputs := make(map[string]*MidiInput)
-	for _, input := range words {
-		i := MIDI.getInput(input)
-		if i == nil {
-			log.Printf("StartMIDI: There is no input named %s\n", input)
-		} else {
-			inputs[input] = i
-			log.Printf("Successfully opened MIDI input device %s\n", input)
-		}
-	}
+type MIDIEventHandler func(portmidi.Event)
+
+func (r *Router) SetMIDIEventHandler(handler MIDIEventHandler) {
+	r.midiEventHandler = handler
+}
+
+// StartMIDI listens for MIDI events and sends their bytes to the MIDIInput chan
+func (r *Router) StartMIDI() {
+	inputs := MIDI.InputMap()
 	for {
 		for nm, input := range inputs {
 			hasinput, err := input.Poll()
 			if err != nil {
-				log.Printf("StartMIDI: Poll of input=%s err=%v\n", nm, err)
-			} else if hasinput {
-				event, err := input.ReadEvent()
-				if err != nil {
-					log.Printf("StartMIDI: ReadEvent of input=%s err=%s\n", nm, err)
-					// we may have lost some NOTEOFF's so reset our count
-					// r.MIDINumDown = 0
-				} else {
-					if DebugUtil.MIDI {
-						log.Printf("StartMIDI: input=%s event=%+v\n", nm, event)
-					}
-					r.MIDIInput <- event
+				log.Printf("StartMIDI: Poll input=%s err=%s\n", nm, err)
+				continue
+			}
+			if !hasinput {
+				continue
+			}
+			events, err := input.ReadEvents()
+			if err != nil {
+				log.Printf("StartMIDI: ReadEvent input=%s err=%s\n", input.Name(), err)
+				continue
+			}
+			// Feed the MIDI bytes to r.MIDIInput one byte at a time
+			for _, event := range events {
+				r.MIDIInput <- event
+				if r.midiEventHandler != nil {
+					r.midiEventHandler(event)
 				}
 			}
 		}
@@ -330,28 +322,36 @@ func StartMIDI() {
 }
 
 // ListenForLocalDeviceInputsForever listens for local device inputs (OSC, MIDI)
-func ListenForLocalDeviceInputsForever() {
-	r := TheRouter()
+// We could have separate goroutines for the different inputs, but doing
+// them in a single select eliminates some need for locking.
+func (r *Router) ListenForLocalDeviceInputsForever() {
 	for !r.killme {
 		select {
 		case msg := <-r.OSCInput:
 			r.HandleOSCInput(msg)
 		case event := <-r.MIDIInput:
 			if r.publishMIDI {
-				me := MIDIDeviceEvent{
-					Timestamp: int64(event.Timestamp),
-					Status:    event.Status,
-					Data1:     event.Data1,
-					Data2:     event.Data2,
-				}
-				err := PublishMIDIDeviceEvent(me)
-				if err != nil {
-					log.Printf("Router.HandleDevieMIDIInput: me=%+v err=%s\n", me, err)
+				log.Printf("ListenForLocalDeviceInputsForever: publicMIDI does nothing!!\n")
+				if event.SysEx != nil {
+					// we don't publish sysex
+				} else {
+					me := MIDIDeviceEvent{
+						Timestamp: int64(event.Timestamp),
+						Status:    event.Status,
+						Data1:     event.Data1,
+						Data2:     event.Data2,
+					}
+					err := PublishMIDIDeviceEvent(me)
+					if err != nil {
+						log.Printf("Router.HandleDevieMIDIInput: me=%+v err=%s\n", me, err)
+					}
 				}
 			}
-			// XXX - All Pads??  I guess
 			for _, stepper := range r.steppers {
 				stepper.HandleMIDIDeviceInput(event)
+			}
+			if DebugUtil.MIDI {
+				log.Printf("ListenForLocalDeviceInputsForever: MIDIInput event=0x%02x\n", event)
 			}
 		default:
 			// log.Printf("Sleeping 1 ms - now=%v\n", time.Now())
@@ -540,6 +540,7 @@ func (r *Router) makeMIDIEvent(subEvent string, bytes string, args map[string]st
 	if err != nil {
 		return nil, fmt.Errorf("makeMIDIEvent: unable to decode hex bytes = %s", bytes)
 	}
+	var event *portmidi.Event
 	status := 0
 	data1 := 0
 	data2 := 0
@@ -554,17 +555,19 @@ func (r *Router) makeMIDIEvent(subEvent string, bytes string, args map[string]st
 		status = int(bytearr[0])
 		data1 = int(bytearr[1])
 		data2 = int(bytearr[2])
+		event = &portmidi.Event{
+			Timestamp: portmidi.Timestamp(timestamp),
+			Status:    int64(status),
+			Data1:     int64(data1),
+			Data2:     int64(data2),
+			SysEx:     []byte{},
+		}
 	default:
+		// XXX - SHOULD CONSTRUCT portmidi.Event where Sysex is the array of bytes
 		return nil, fmt.Errorf("makeMIDIEvent: unable to handle midi bytes len=%d", nbytes)
 	}
 
-	me := &portmidi.Event{
-		Timestamp: portmidi.Timestamp(timestamp),
-		Status:    int64(status),
-		Data1:     int64(data1),
-		Data2:     int64(data2),
-	}
-	return me, nil
+	return event, nil
 }
 
 func (r *Router) getXYZ(api string, args map[string]string) (x, y, z float32, err error) {

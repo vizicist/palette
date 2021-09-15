@@ -1,8 +1,10 @@
+//go:build windows
 // +build windows
 
 package engine
 
 import (
+	"fmt"
 	"log"
 	"strings"
 
@@ -23,23 +25,31 @@ type MIDIIO struct {
 }
 
 type MidiInput struct {
-	// name     string
+	name     string
 	deviceID portmidi.DeviceID
 	stream   *portmidi.Stream
 }
 
+func (in MidiInput) Name() string {
+	return in.name
+}
+
 type MidiOutput struct {
-	port     string
+	name     string
 	deviceID portmidi.DeviceID
 	stream   *portmidi.Stream
 	channel  int // 0-15 for MIDI channels 1-16
+}
+
+func (out MidiOutput) Name() string {
+	return out.name
 }
 
 // MIDI is a pointer to
 var MIDI *MIDIIO
 
 // InitMIDI initializes stuff
-func InitMIDI() {
+func InitMIDI(midiinput string) {
 
 	InitializeClicksPerSecond(defaultClicksPerSecond)
 
@@ -76,9 +86,8 @@ func InitMIDI() {
 			numInputs++
 		}
 	}
-	midiInput := ConfigValue("midiinput")
-	if midiInput != "" {
-		m.loadInputs(midiInput)
+	if midiinput != "" {
+		m.loadInputs(midiinput)
 	}
 	MIDI = m
 	log.Printf("MIDI devices (%d inputs, %d outputs) have been initialized\n", numInputs, numOutputs)
@@ -88,16 +97,15 @@ func (m *MidiInput) Poll() (bool, error) {
 	return m.stream.Poll()
 }
 
-func (m *MidiInput) ReadEvent() (portmidi.Event, error) {
+func (m *MidiInput) ReadEvents() ([]portmidi.Event, error) {
 	// If you increase the value here,
 	// be sure to actually handle all the events that come back
-	events, err := m.stream.Read(1)
+	events, err := m.stream.Read(1024)
 	if err != nil {
-		return portmidi.Event{}, err
+		return nil, err
 	}
 	// log.Printf("\nmidiInput len(events)=%d\n", len(events))
-	me := events[0]
-	return me, err
+	return events, err
 }
 
 /*
@@ -113,27 +121,37 @@ func (m *MIDIIO) NewMidiOutput(synth string) *midiOutput {
 }
 */
 
-func (m *MIDIIO) getInput(dev string) *MidiInput {
-	s, ok := m.midiInputs[dev]
-	if !ok {
-		return nil
-	}
-	return s
-}
-
 // SendEvent sends one or more MIDI Events
-func SendEvent(out *MidiOutput, events []portmidi.Event) {
+func (out *MidiOutput) WriteSysex(bytes []byte) {
 	if DebugUtil.MIDI {
-		for i, e := range events {
-			log.Printf("SendEvent: i=%v e=%+v\n", i, e)
+		s := "["
+		for _, b := range bytes {
+			s += fmt.Sprintf(" 0x%02x", b)
 		}
+		s += " ]\n"
+		log.Printf("SendSysex: bytes = %s\n", s)
 	}
 	if out.stream == nil {
-		log.Printf("SendEvent: out.stream is nil?  port=%s\n", out.port)
+		log.Printf("SendEvent: out.stream is nil?  port=%s\n", out.name)
 		return
 	}
-	if err := out.stream.Write(events); err != nil {
+	tm := portmidi.Time()
+	if err := out.stream.WriteSysExBytes(tm, bytes); err != nil {
 		log.Printf("out.stream.Write: err=%s\n", err)
+		return
+	}
+}
+
+func (out *MidiOutput) WriteShort(status, data1, data2 int64) {
+	if DebugUtil.MIDI {
+		log.Printf("MidiOutput.WriteShort: status=0x%02x data1=%d data2=%d\n", status, data1, data2)
+	}
+	if out.stream == nil {
+		log.Printf("SendEvent: out.stream is nil?  port=%s\n", out.name)
+		return
+	}
+	if err := out.stream.WriteShort(status, data1, data2); err != nil {
+		log.Printf("out.stream.WriteShort: err=%s\n", err)
 		return
 	}
 }
@@ -170,7 +188,7 @@ func (m *MIDIIO) getInputStream(name string) (devid portmidi.DeviceID, stream *p
 	var err error
 	stream, present = m.inputDeviceStream[name]
 	if !present {
-		m.inputDeviceStream[name], err = portmidi.NewInputStream(devid, 128)
+		m.inputDeviceStream[name], err = portmidi.NewInputStream(devid, 1024)
 		if err != nil {
 			log.Printf("portmidi.NewInputStream: err=%s\n", err)
 			return -1, nil
@@ -180,17 +198,26 @@ func (m *MIDIIO) getInputStream(name string) (devid portmidi.DeviceID, stream *p
 	return devid, stream
 }
 
-func (m *MIDIIO) NewMidiOutput(port string, channel int) *MidiOutput {
-	devid, stream := m.getOutputStream(port)
+func (m *MIDIIO) NewMidiOutput(name string, channel int) *MidiOutput {
+	devid, stream := m.getOutputStream(name)
 	if stream == nil {
-		log.Printf("NewMidiOutput: failed to get OutpuStream for port=%s\n", port)
+		log.Printf("NewMidiOutput: failed to get OutpuStream for name=%s\n", name)
 		return nil
 	}
-	return &MidiOutput{port: port, deviceID: devid, stream: stream, channel: channel}
+	return &MidiOutput{name: name, deviceID: devid, stream: stream, channel: channel}
+}
+
+func (m *MIDIIO) NewMidiInput(name string) *MidiInput {
+	devid, stream := m.getInputStream(name)
+	if stream == nil {
+		log.Printf("NewMidiOutput: failed to get OutpuStream for name=%s\n", name)
+		return nil
+	}
+	return &MidiInput{name: name, deviceID: devid, stream: stream}
 }
 
 func (m *MIDIIO) NewFakeMidiOutput(port string, channel int) *MidiOutput {
-	return &MidiOutput{port: port, deviceID: -1, stream: nil, channel: channel}
+	return &MidiOutput{name: port, deviceID: -1, stream: nil, channel: channel}
 }
 
 func (m *MIDIIO) loadInputs(dev string) {
@@ -199,9 +226,14 @@ func (m *MIDIIO) loadInputs(dev string) {
 	for _, nm := range words {
 		devid, stream := m.getInputStream(nm)
 		if stream != nil {
+			log.Printf("MIDIIO.loadInputs: Successfully opened %s\n", nm)
 			m.midiInputs[nm] = &MidiInput{deviceID: devid, stream: stream}
 		} else {
 			log.Printf("MIDIIO.loadInputs: Unable to open %s\n", nm)
 		}
 	}
+}
+
+func (m *MIDIIO) InputMap() map[string]*MidiInput {
+	return m.midiInputs
 }

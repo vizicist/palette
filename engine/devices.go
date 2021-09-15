@@ -52,6 +52,7 @@ type ActiveStepCursor struct {
 type CursorDeviceCallbackFunc func(e CursorDeviceEvent)
 
 // StartCursorInput xxx
-func StartCursorInput() {
-	go RealStartCursorInput(TheRouter().handleCursorDeviceInput)
+
+func (r *Router) StartCursorInput() {
+	go RealStartCursorInput(r.handleCursorDeviceInput)
 }
