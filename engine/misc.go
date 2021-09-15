@@ -32,6 +32,7 @@ type DebugFlags struct {
 	Loop       bool
 	Config     bool
 	MIDI       bool
+	Scale      bool
 	Morph      bool
 	NATS       bool
 	OSC        bool
