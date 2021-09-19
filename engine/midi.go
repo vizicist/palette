@@ -6,7 +6,6 @@ package engine
 import (
 	"fmt"
 	"log"
-	"strings"
 
 	"github.com/vizicist/portmidi"
 )
@@ -14,7 +13,8 @@ import (
 // MIDIIO encapsulate everything having to do with MIDI I/O
 type MIDIIO struct {
 	// synth name is the key in these maps
-	midiInputs map[string]*MidiInput
+	midiInputs  map[string]*MidiInput
+	midiOutputs map[string]*MidiOutput
 	// MIDI device name is the key in these maps
 	outputDeviceID     map[string]portmidi.DeviceID
 	outputDeviceInfo   map[string]*portmidi.DeviceInfo
@@ -30,31 +30,45 @@ type MidiInput struct {
 	stream   *portmidi.Stream
 }
 
-func (in MidiInput) Name() string {
-	return in.name
-}
-
 type MidiOutput struct {
 	name     string
 	deviceID portmidi.DeviceID
 	stream   *portmidi.Stream
-	channel  int // 0-15 for MIDI channels 1-16
+	// channel  int // 0-15 for MIDI channels 1-16
+}
+
+type Timestamp int64
+
+// MidiEvent is very similar to portmidi.Event, but I don't want to tie things
+// too directly to portmidi, so that it can be replaced easily if necessary.
+type MidiEvent struct {
+	Timestamp Timestamp
+	Status    int64 // if == 0xF0, use SysEx, otherwise Data1 and Data2.
+	Data1     int64
+	Data2     int64
+	SysEx     []byte
+	source    string // {midiinputname} or maybe {IPaddress}.{midiinputname}
 }
 
 func (out MidiOutput) Name() string {
 	return out.name
 }
 
+func (in MidiInput) Name() string {
+	return in.name
+}
+
 // MIDI is a pointer to
 var MIDI *MIDIIO
 
 // InitMIDI initializes stuff
-func InitMIDI(midiinput string) {
+func InitMIDI() {
 
 	InitializeClicksPerSecond(defaultClicksPerSecond)
 
-	m := &MIDIIO{
+	MIDI = &MIDIIO{
 		midiInputs:         make(map[string]*MidiInput),
+		midiOutputs:        make(map[string]*MidiOutput),
 		outputDeviceID:     make(map[string]portmidi.DeviceID),
 		outputDeviceInfo:   make(map[string]*portmidi.DeviceInfo),
 		outputDeviceStream: make(map[string]*portmidi.Stream),
@@ -70,26 +84,37 @@ func InitMIDI(midiinput string) {
 	ndevices := portmidi.CountDevices()
 	numInputs := 0
 	numOutputs := 0
+	erae := false
 	for n := 0; n < ndevices; n++ {
 		devid := portmidi.DeviceID(n)
 		dev := portmidi.Info(devid)
+		if dev.Name == "Erae Touch" {
+			erae = true
+		}
 		if dev.IsOutputAvailable {
 			// log.Printf("MIDI OUTPUT device = %s  devid=%v\n", dev.Name, devid)
-			m.outputDeviceID[dev.Name] = devid
-			m.outputDeviceInfo[dev.Name] = dev
+			MIDI.outputDeviceID[dev.Name] = devid
+			MIDI.outputDeviceInfo[dev.Name] = dev
 			numOutputs++
 		}
 		if dev.IsInputAvailable {
 			// log.Printf("MIDI INPUT device = %s  devid=%v\n", dev.Name, devid)
-			m.inputDeviceID[dev.Name] = devid
-			m.inputDeviceInfo[dev.Name] = dev
+			MIDI.inputDeviceID[dev.Name] = devid
+			MIDI.inputDeviceInfo[dev.Name] = dev
 			numInputs++
 		}
 	}
+
+	midiinput := ConfigValue("midiinput")
 	if midiinput != "" {
-		m.loadInputs(midiinput)
+		MIDI.openInput(midiinput)
 	}
-	MIDI = m
+
+	if erae {
+		log.Printf("Erae Touch input is being enabled\n")
+		InitErae()
+	}
+
 	log.Printf("MIDI devices (%d inputs, %d outputs) have been initialized\n", numInputs, numOutputs)
 }
 
@@ -97,19 +122,30 @@ func (m *MidiInput) Poll() (bool, error) {
 	return m.stream.Poll()
 }
 
-func (m *MidiInput) ReadEvents() ([]portmidi.Event, error) {
+func (m *MidiInput) ReadEvents() ([]MidiEvent, error) {
 	// If you increase the value here,
 	// be sure to actually handle all the events that come back
-	events, err := m.stream.Read(1024)
+	rawEvents, err := m.stream.Read(1024)
 	if err != nil {
 		return nil, err
+	}
+	events := make([]MidiEvent, len(rawEvents))
+	for n, e := range rawEvents {
+		events[n] = MidiEvent{
+			Timestamp: Timestamp(e.Timestamp),
+			Status:    e.Status,
+			Data1:     e.Data1,
+			Data2:     e.Data2,
+			SysEx:     e.SysEx,
+			source:    m.Name(),
+		}
 	}
 	// log.Printf("\nmidiInput len(events)=%d\n", len(events))
 	return events, err
 }
 
 /*
-func (m *MIDIIO) NewMidiOutput(synth string) *midiOutput {
+func (m *MIDIIO) GetMidiOutput(synth string) *midiOutput {
 	s, ok := m.midiOutputs[synth]
 	if !ok {
 		s, ok = m.midiOutputs[defaultSynth]
@@ -121,23 +157,27 @@ func (m *MIDIIO) NewMidiOutput(synth string) *midiOutput {
 }
 */
 
-// SendEvent sends one or more MIDI Events
+// WriteSysex sends one or more MIDI Events
 func (out *MidiOutput) WriteSysex(bytes []byte) {
+	if out == nil {
+		log.Printf("MidiOutput.WriteSysex: out is nil?\n")
+		return
+	}
 	if DebugUtil.MIDI {
 		s := "["
 		for _, b := range bytes {
 			s += fmt.Sprintf(" 0x%02x", b)
 		}
-		s += " ]\n"
-		log.Printf("SendSysex: bytes = %s\n", s)
+		s += " ]"
+		log.Printf("WriteSysex: bytes = %s\n", s)
 	}
 	if out.stream == nil {
-		log.Printf("SendEvent: out.stream is nil?  port=%s\n", out.name)
+		log.Printf("WriteSysex: out.stream is nil?  port=%s\n", out.name)
 		return
 	}
 	tm := portmidi.Time()
 	if err := out.stream.WriteSysExBytes(tm, bytes); err != nil {
-		log.Printf("out.stream.Write: err=%s\n", err)
+		log.Printf("WriteSysExBytes: err=%s\n", err)
 		return
 	}
 }
@@ -168,6 +208,7 @@ func (m *MIDIIO) getOutputStream(name string) (devid portmidi.DeviceID, stream *
 	var err error
 	stream, present = m.outputDeviceStream[name]
 	if !present {
+		log.Printf("Opening MIDI Output: %s\n", name)
 		m.outputDeviceStream[name], err = portmidi.NewOutputStream(devid, 1, 0)
 		if err != nil {
 			log.Printf("getOutputStream: Unable to create NewOutputStream for %s\n", name)
@@ -178,7 +219,7 @@ func (m *MIDIIO) getOutputStream(name string) (devid portmidi.DeviceID, stream *
 	return devid, stream
 }
 
-// GetInputStream gets the Stream for a named port
+// getInputStream gets the Stream for a named port
 func (m *MIDIIO) getInputStream(name string) (devid portmidi.DeviceID, stream *portmidi.Stream) {
 	var present bool
 	devid, present = m.inputDeviceID[name]
@@ -188,6 +229,7 @@ func (m *MIDIIO) getInputStream(name string) (devid portmidi.DeviceID, stream *p
 	var err error
 	stream, present = m.inputDeviceStream[name]
 	if !present {
+		log.Printf("Opening MIDI Input: %s\n", name)
 		m.inputDeviceStream[name], err = portmidi.NewInputStream(devid, 1024)
 		if err != nil {
 			log.Printf("portmidi.NewInputStream: err=%s\n", err)
@@ -198,39 +240,43 @@ func (m *MIDIIO) getInputStream(name string) (devid portmidi.DeviceID, stream *p
 	return devid, stream
 }
 
-func (m *MIDIIO) NewMidiOutput(name string, channel int) *MidiOutput {
-	devid, stream := m.getOutputStream(name)
-	if stream == nil {
-		log.Printf("NewMidiOutput: failed to get OutpuStream for name=%s\n", name)
+func (m *MIDIIO) GetMidiOutput(name string) *MidiOutput {
+	midiout, ok := m.midiOutputs[name]
+	if !ok {
 		return nil
 	}
-	return &MidiOutput{name: name, deviceID: devid, stream: stream, channel: channel}
+	return midiout
 }
 
-func (m *MIDIIO) NewMidiInput(name string) *MidiInput {
-	devid, stream := m.getInputStream(name)
-	if stream == nil {
-		log.Printf("NewMidiOutput: failed to get OutpuStream for name=%s\n", name)
+func (m *MIDIIO) GetMidiInput(name string) *MidiInput {
+	midiin, ok := m.midiInputs[name]
+	if !ok {
 		return nil
 	}
-	return &MidiInput{name: name, deviceID: devid, stream: stream}
+	return midiin
 }
 
-func (m *MIDIIO) NewFakeMidiOutput(port string, channel int) *MidiOutput {
-	return &MidiOutput{name: port, deviceID: -1, stream: nil, channel: channel}
+func (m *MIDIIO) openOutput(nm string) *MidiOutput {
+	devid, stream := m.getOutputStream(nm)
+	if stream == nil {
+		log.Printf("MIDIIO.openInput: Unable to open %s\n", nm)
+		return nil
+	}
+	out := &MidiOutput{name: nm, deviceID: devid, stream: stream}
+	m.midiOutputs[nm] = out
+	return out
 }
 
-func (m *MIDIIO) loadInputs(dev string) {
-	// Should load this from settings.json file
-	words := strings.Split(dev, ",")
-	for _, nm := range words {
-		devid, stream := m.getInputStream(nm)
-		if stream != nil {
-			log.Printf("MIDIIO.loadInputs: Successfully opened %s\n", nm)
-			m.midiInputs[nm] = &MidiInput{deviceID: devid, stream: stream}
-		} else {
-			log.Printf("MIDIIO.loadInputs: Unable to open %s\n", nm)
-		}
+func (m *MIDIIO) openFakeOutput(port string) *MidiOutput {
+	return &MidiOutput{name: port, deviceID: -1, stream: nil}
+}
+
+func (m *MIDIIO) openInput(nm string) {
+	devid, stream := m.getInputStream(nm)
+	if stream != nil {
+		m.midiInputs[nm] = &MidiInput{name: nm, deviceID: devid, stream: stream}
+	} else {
+		log.Printf("MIDIIO.openInput: Unable to open %s\n", nm)
 	}
 }
 

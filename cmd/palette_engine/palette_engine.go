@@ -23,8 +23,7 @@ func main() {
 
 	flag.Parse()
 
-	midiinput := engine.ConfigValue("midiinput")
-	engine.InitMIDI(midiinput)
+	engine.InitMIDI()
 	engine.InitSynths()
 	go engine.StartNATSServer()
 
@@ -36,5 +35,5 @@ func main() {
 	go r.StartRealtime()
 	go r.StartCursorInput()
 
-	r.ListenForLocalDeviceInputsForever() // never returns
+	r.InputListener() // never returns
 }

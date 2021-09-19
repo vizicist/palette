@@ -49,3 +49,5 @@ scripts/dist
 *.spec
 ship/palette_win
 default/presets_old
+cmd/palette_engine/__debug_bin.exe
+cmd/palette/__debug_bin.exe
