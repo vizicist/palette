@@ -15,7 +15,6 @@ import (
 
 	"github.com/hypebeast/go-osc/osc"
 	nats "github.com/nats-io/nats.go"
-	"github.com/vizicist/portmidi"
 )
 
 const debug bool = false
@@ -26,10 +25,10 @@ var CurrentMilli int
 // Router takes events and routes them
 type Router struct {
 	regionLetters string
-	steppers      map[string]*Stepper
+	motors        map[string]*Motor
 	// inputs        []*osc.Client
 	OSCInput  chan OSCEvent
-	MIDIInput chan portmidi.Event
+	MIDIInput chan MidiEvent
 
 	midiEventHandler     MIDIEventHandler
 	killme               bool // true if Router should be stopped
@@ -136,7 +135,7 @@ func TheRouter() *Router {
 			// might be fatal, but try to continue
 		}
 
-		oneRouter.steppers = make(map[string]*Stepper)
+		oneRouter.motors = make(map[string]*Motor)
 		oneRouter.regionForMorph = make(map[string]string)
 		oneRouter.regionAssignedToNUID = make(map[string]string)
 
@@ -155,12 +154,12 @@ func TheRouter() *Router {
 			resolumePort := 3334 + i
 			ch := string(c)
 			freeframeClient := osc.NewClient("127.0.0.1", resolumePort)
-			oneRouter.steppers[ch] = NewStepper(ch, resolumeLayer, freeframeClient, oneRouter.resolumeClient, oneRouter.guiClient)
+			oneRouter.motors[ch] = NewMotor(ch, resolumeLayer, freeframeClient, oneRouter.resolumeClient, oneRouter.guiClient)
 			// log.Printf("Pad %s created, resolumeLayer=%d resolumePort=%d\n", ch, resolumeLayer, resolumePort)
 		}
 
 		oneRouter.OSCInput = make(chan OSCEvent)
-		oneRouter.MIDIInput = make(chan portmidi.Event)
+		oneRouter.MIDIInput = make(chan MidiEvent)
 		oneRouter.recordingOn = false
 
 		oneRouter.myHostname = ConfigValue("hostname")
@@ -214,7 +213,7 @@ func (r *Router) StartNATSClient() {
 	log.Printf("StartNATS: Subscribing to %s\n", PaletteAPISubject)
 	TheVizNats.Subscribe(PaletteAPISubject, func(msg *nats.Msg) {
 		data := string(msg.Data)
-		response := r.HandleAPIInput(r.ExecuteAPI, data)
+		response := r.handleAPIInput(r.ExecuteAPI, data)
 		msg.Respond([]byte(response))
 	})
 
@@ -285,7 +284,7 @@ func (r *Router) StartRealtime() {
 	log.Println("StartRealtime ends")
 }
 
-type MIDIEventHandler func(portmidi.Event)
+type MIDIEventHandler func(MidiEvent)
 
 func (r *Router) SetMIDIEventHandler(handler MIDIEventHandler) {
 	r.midiEventHandler = handler
@@ -293,6 +292,9 @@ func (r *Router) SetMIDIEventHandler(handler MIDIEventHandler) {
 
 // StartMIDI listens for MIDI events and sends their bytes to the MIDIInput chan
 func (r *Router) StartMIDI() {
+	if EraeEnabled {
+		r.SetMIDIEventHandler(HandleEraeMIDI)
+	}
 	inputs := MIDI.InputMap()
 	for {
 		for nm, input := range inputs {
@@ -306,7 +308,7 @@ func (r *Router) StartMIDI() {
 			}
 			events, err := input.ReadEvents()
 			if err != nil {
-				log.Printf("StartMIDI: ReadEvent input=%s err=%s\n", input.Name(), err)
+				log.Printf("StartMIDI: ReadEvent input=%s err=%s\n", nm, err)
 				continue
 			}
 			// Feed the MIDI bytes to r.MIDIInput one byte at a time
@@ -321,17 +323,17 @@ func (r *Router) StartMIDI() {
 	}
 }
 
-// ListenForLocalDeviceInputsForever listens for local device inputs (OSC, MIDI)
+// InputListener listens for local device inputs (OSC, MIDI)
 // We could have separate goroutines for the different inputs, but doing
 // them in a single select eliminates some need for locking.
-func (r *Router) ListenForLocalDeviceInputsForever() {
+func (r *Router) InputListener() {
 	for !r.killme {
 		select {
 		case msg := <-r.OSCInput:
-			r.HandleOSCInput(msg)
+			r.handleOSCInput(msg)
 		case event := <-r.MIDIInput:
 			if r.publishMIDI {
-				log.Printf("ListenForLocalDeviceInputsForever: publicMIDI does nothing!!\n")
+				log.Printf("InputListener: publicMIDI does nothing!!\n")
 				if event.SysEx != nil {
 					// we don't publish sysex
 				} else {
@@ -343,22 +345,22 @@ func (r *Router) ListenForLocalDeviceInputsForever() {
 					}
 					err := PublishMIDIDeviceEvent(me)
 					if err != nil {
-						log.Printf("Router.HandleDevieMIDIInput: me=%+v err=%s\n", me, err)
+						log.Printf("InputListener: me=%+v err=%s\n", me, err)
 					}
 				}
 			}
-			for _, stepper := range r.steppers {
-				stepper.HandleMIDIDeviceInput(event)
+			for _, motor := range r.motors {
+				motor.HandleMIDIDeviceInput(event)
 			}
 			if DebugUtil.MIDI {
-				log.Printf("ListenForLocalDeviceInputsForever: MIDIInput event=0x%02x\n", event)
+				log.Printf("InputListener: MIDIInput event=0x%02x\n", event)
 			}
 		default:
 			// log.Printf("Sleeping 1 ms - now=%v\n", time.Now())
 			time.Sleep(time.Millisecond)
 		}
 	}
-	log.Printf("Router is being killed\n")
+	log.Printf("InputListener is being killed\n")
 }
 
 // HandleSubscribedEventArgs xxx
@@ -396,7 +398,7 @@ func (r *Router) HandleSubscribedEventArgs(args map[string]string) error {
 		delete(args, "region")
 	}
 
-	stepper, ok := r.steppers[region]
+	motor, ok := r.motors[region]
 	if !ok {
 		return fmt.Errorf("there is no region named %s", region)
 	}
@@ -452,7 +454,7 @@ func (r *Router) HandleSubscribedEventArgs(args map[string]string) error {
 			}
 		}
 
-		stepper.handleCursorDeviceEvent(ce)
+		motor.handleCursorDeviceEvent(ce)
 
 	case "sprite":
 
@@ -461,7 +463,7 @@ func (r *Router) HandleSubscribedEventArgs(args map[string]string) error {
 		if err != nil {
 			return nil
 		}
-		stepper.generateSprite("dummy", x, y, z)
+		motor.generateSprite("dummy", x, y, z)
 
 	case "midi":
 
@@ -473,8 +475,8 @@ func (r *Router) HandleSubscribedEventArgs(args map[string]string) error {
 		switch subEvent {
 		case "time_reset":
 			log.Printf("HandleSubscribeMIDIInput: palette_time_reset, sending ANO\n")
-			stepper.HandleMIDITimeReset()
-			stepper.sendANO()
+			motor.HandleMIDITimeReset()
+			motor.sendANO()
 
 		case "audio_reset":
 			log.Printf("HandleSubscribeMIDIInput: palette_audio_reset!!\n")
@@ -485,11 +487,11 @@ func (r *Router) HandleSubscribedEventArgs(args map[string]string) error {
 			if err != nil {
 				return err
 			}
-			me, err := r.makeMIDIEvent(subEvent, bytes, args)
+			me, err := r.makeMIDIEvent("subscribed", bytes, args)
 			if err != nil {
 				return err
 			}
-			stepper.HandleMIDIDeviceInput(*me)
+			motor.HandleMIDIDeviceInput(*me)
 		}
 	}
 
@@ -508,16 +510,16 @@ func (r *Router) handleCursorDeviceInput(e CursorDeviceEvent) {
 		}
 	}
 
-	stepper, ok := r.steppers[e.Region]
+	motor, ok := r.motors[e.Region]
 	if !ok {
 		log.Printf("routeCursorDeviceEvent: no region named %s, unable to process ce=%+v\n", e.Region, e)
 		return
 	}
-	stepper.handleCursorDeviceEvent(e)
+	motor.handleCursorDeviceEvent(e)
 }
 
 // makeMIDIEvent xxx
-func (r *Router) makeMIDIEvent(subEvent string, bytes string, args map[string]string) (*portmidi.Event, error) {
+func (r *Router) makeMIDIEvent(source string, bytes string, args map[string]string) (*MidiEvent, error) {
 
 	var timestamp int64
 	s := optionalStringArg("time", args, "")
@@ -540,31 +542,46 @@ func (r *Router) makeMIDIEvent(subEvent string, bytes string, args map[string]st
 	if err != nil {
 		return nil, fmt.Errorf("makeMIDIEvent: unable to decode hex bytes = %s", bytes)
 	}
-	var event *portmidi.Event
-	status := 0
-	data1 := 0
-	data2 := 0
+	var event *MidiEvent
 	switch nbytes {
 	case 0:
 		return nil, fmt.Errorf("makeMIDIEvent: unable to handle midi bytes len=%d", nbytes)
 	case 1:
-		return nil, fmt.Errorf("makeMIDIEvent: unable to handle midi bytes len=%d", nbytes)
-	case 2:
-		return nil, fmt.Errorf("makeMIDIEvent: unable to handle midi bytes len=%d", nbytes)
-	case 3:
-		status = int(bytearr[0])
-		data1 = int(bytearr[1])
-		data2 = int(bytearr[2])
-		event = &portmidi.Event{
-			Timestamp: portmidi.Timestamp(timestamp),
-			Status:    int64(status),
-			Data1:     int64(data1),
-			Data2:     int64(data2),
+		event = &MidiEvent{
+			Timestamp: Timestamp(timestamp),
+			Status:    int64(bytearr[0]),
+			Data1:     int64(0),
+			Data2:     int64(0),
 			SysEx:     []byte{},
+			source:    source,
+		}
+	case 2:
+		// return nil, fmt.Errorf("makeMIDIEvent: unable to handle midi bytes len=%d", nbytes)
+		event = &MidiEvent{
+			Timestamp: Timestamp(timestamp),
+			Status:    int64(bytearr[0]),
+			Data1:     int64(bytearr[1]),
+			Data2:     int64(0),
+			SysEx:     []byte{},
+			source:    source,
+		}
+	case 3:
+		event = &MidiEvent{
+			Timestamp: Timestamp(timestamp),
+			Status:    int64(bytearr[0]),
+			Data1:     int64(bytearr[1]),
+			Data2:     int64(bytearr[2]),
+			SysEx:     []byte{},
+			source:    source,
 		}
 	default:
-		// XXX - SHOULD CONSTRUCT portmidi.Event where Sysex is the array of bytes
-		return nil, fmt.Errorf("makeMIDIEvent: unable to handle midi bytes len=%d", nbytes)
+		event = &MidiEvent{
+			Timestamp: Timestamp(timestamp),
+			Status:    int64(bytearr[0]),
+			Data1:     int64(0),
+			Data2:     int64(0),
+			SysEx:     bytearr,
+		}
 	}
 
 	return event, nil
@@ -590,7 +607,7 @@ func (r *Router) getXYZ(api string, args map[string]string) (x, y, z float32, er
 }
 
 // HandleAPIInput xxx
-func (r *Router) HandleAPIInput(executor APIExecutorFunc, data string) (response string) {
+func (r *Router) handleAPIInput(executor APIExecutorFunc, data string) (response string) {
 
 	r.eventMutex.Lock()
 	defer r.eventMutex.Unlock()
@@ -635,7 +652,7 @@ func (r *Router) HandleAPIInput(executor APIExecutorFunc, data string) (response
 }
 
 // HandleOSCInput xxx
-func (r *Router) HandleOSCInput(e OSCEvent) {
+func (r *Router) handleOSCInput(e OSCEvent) {
 
 	r.eventMutex.Lock()
 	defer r.eventMutex.Unlock()
@@ -696,11 +713,11 @@ func (r *Router) ExecuteAPI(api string, nuid string, rawargs string) (result int
 			// Remove it from the args given to ExecuteAPI
 			delete(args, "region")
 		}
-		stepper, ok := r.steppers[region]
+		motor, ok := r.motors[region]
 		if !ok {
 			return nil, fmt.Errorf("api/event=%s there is no region named %s", api, region)
 		}
-		return stepper.ExecuteAPI(apisuffix, args, rawargs)
+		return motor.ExecuteAPI(apisuffix, args, rawargs)
 	}
 
 	// Everything else should be "global", eventually I'll factor this
@@ -738,16 +755,16 @@ func (r *Router) ExecuteAPI(api string, nuid string, rawargs string) (result int
 	case "set_transpose":
 		v, err := needFloatArg("value", api, args)
 		if err == nil {
-			for _, stepper := range r.steppers {
-				stepper.TransposePitch = int(v)
+			for _, motor := range r.motors {
+				motor.TransposePitch = int(v)
 			}
 		}
 
 	case "set_scale":
 		v, err := needStringArg("value", api, args)
 		if err == nil {
-			for _, stepper := range r.steppers {
-				stepper.setOneParamValue("misc.", "scale", v)
+			for _, motor := range r.motors {
+				motor.setOneParamValue("misc.", "scale", v)
 			}
 		}
 
@@ -814,11 +831,11 @@ func (r *Router) advanceClickTo(toClick Clicks) {
 	defer r.eventMutex.Unlock()
 
 	for clk := r.lastClick; clk < toClick; clk++ {
-		for _, stepper := range r.steppers {
+		for _, motor := range r.motors {
 			if (clk % oneBeat) == 0 {
-				stepper.checkCursorUp()
+				motor.checkCursorUp()
 			}
-			stepper.AdvanceByOneClick()
+			motor.AdvanceByOneClick()
 		}
 	}
 	r.lastClick = toClick
@@ -882,8 +899,8 @@ func (r *Router) recordingPlaybackStop() {
 }
 
 func (r *Router) sendANO() {
-	for _, stepper := range r.steppers {
-		stepper.sendANO()
+	for _, motor := range r.motors {
+		motor.sendANO()
 	}
 }
 
@@ -923,9 +940,9 @@ func (r *Router) recordingPlayback(events []*PlaybackEvent) error {
 			}
 			eventType := (*pe).eventType
 			pad := (*pe).pad
-			var stepper *Stepper
+			var motor *Motor
 			if pad != "*" {
-				stepper = r.steppers[pad]
+				motor = r.motors[pad]
 			}
 			method := (*pe).method
 			// time := (*pe).time
@@ -942,7 +959,7 @@ func (r *Router) recordingPlayback(events []*PlaybackEvent) error {
 				xf, _ := ParseFloat32(x, "cursor.x")
 				yf, _ := ParseFloat32(y, "cursor.y")
 				zf, _ := ParseFloat32(z, "cursor.z")
-				stepper.executeIncomingCursor(CursorStepEvent{
+				motor.executeIncomingCursor(CursorStepEvent{
 					ID:  id,
 					X:   xf,
 					Y:   yf,
@@ -951,7 +968,7 @@ func (r *Router) recordingPlayback(events []*PlaybackEvent) error {
 				})
 			case "api":
 				// since we already have args
-				stepper.ExecuteAPI(method, args, rawargs)
+				motor.ExecuteAPI(method, args, rawargs)
 			case "global":
 				log.Printf("NOT doing anying for global playback, method=%s\n", method)
 			default:
@@ -1110,24 +1127,6 @@ func (r *Router) handleOSCAPI(msg *osc.Message) {
 	if err != nil {
 		log.Printf("Router.handleOSCAPI: err=%s", err)
 	}
-}
-
-// OLDgetStepperForNUID - NOTE, this removes the "nuid" argument from the map,
-// partially to avoid (at least until there's a reason for) letting Stepper APIs
-// know what source is calling them.  I.e. all source-depdendent behaviour is
-// determined in Router.
-func (r *Router) OLDgetStepperForNUID(api string, args map[string]string) (*Stepper, error) {
-	nuid, ok := args["nuid"]
-	if !ok {
-		return nil, fmt.Errorf("api/event=%s missing value for nuid", api)
-	}
-	delete(args, "nuid") // see comment above
-	region := r.getRegionForNUID(nuid)
-	stepper, ok := TheRouter().steppers[region]
-	if !ok {
-		return nil, fmt.Errorf("api/event=%s there is no region named %s", api, region)
-	}
-	return stepper, nil
 }
 
 // availableRegion - return the name of a region that hasn't been assigned to a remote yet
