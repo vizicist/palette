@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/hypebeast/go-osc/osc"
-	"github.com/vizicist/portmidi"
 )
 
 const defaultClicksPerSecond = 192
@@ -37,7 +36,7 @@ type ActiveNote struct {
 }
 
 // Stepper is an entity that that reacts to things (cursor events, apis) and generates output (midi, graphics)
-type Stepper struct {
+type Motor struct {
 	padName         string
 	resolumeLayer   int // 1,2,3,4
 	freeframeClient *osc.Client
@@ -86,8 +85,8 @@ type Stepper struct {
 }
 
 // NewStepper makes a new Stepper
-func NewStepper(pad string, resolumeLayer int, freeframeClient *osc.Client, resolumeClient *osc.Client, guiClient *osc.Client) *Stepper {
-	r := &Stepper{
+func NewMotor(pad string, resolumeLayer int, freeframeClient *osc.Client, resolumeClient *osc.Client, guiClient *osc.Client) *Motor {
+	r := &Motor{
 		padName:         pad,
 		resolumeLayer:   resolumeLayer,
 		freeframeClient: freeframeClient,
@@ -124,7 +123,7 @@ func NewStepper(pad string, resolumeLayer int, freeframeClient *osc.Client, reso
 }
 
 // PassThruMIDI xxx
-func (r *Stepper) PassThruMIDI(e portmidi.Event, scadjust bool) {
+func (motor *Motor) PassThruMIDI(e MidiEvent, scadjust bool) {
 
 	if DebugUtil.MIDI {
 		log.Printf("Stepper.PassThruMIDI e=%+v\n", e)
@@ -138,10 +137,10 @@ func (r *Stepper) PassThruMIDI(e portmidi.Event, scadjust bool) {
 	data2 := uint8(e.Data2)
 	pitch := data1
 
-	synth := r.params.ParamStringValue("sound.synth", defaultSynth)
+	synth := motor.params.ParamStringValue("sound.synth", defaultSynth)
 	var n *Note
 	if (status == 0x90 || status == 0x80) && scadjust {
-		scale := r.getScale()
+		scale := motor.getScale()
 		pitch = scale.ClosestTo(pitch)
 	}
 	switch status {
@@ -171,11 +170,11 @@ func (r *Stepper) PassThruMIDI(e portmidi.Event, scadjust bool) {
 }
 
 // AdvanceByOneClick advances time by 1 click in a StepLoop
-func (r *Stepper) AdvanceByOneClick() {
+func (motor *Motor) AdvanceByOneClick() {
 
-	r.activePhrasesManager.AdvanceByOneClick()
+	motor.activePhrasesManager.AdvanceByOneClick()
 
-	loop := r.loop
+	loop := motor.loop
 
 	loop.stepsMutex.Lock()
 	defer loop.stepsMutex.Unlock()
@@ -196,10 +195,10 @@ func (r *Stepper) AdvanceByOneClick() {
 			ce := event.cursorStepEvent
 
 			if DebugUtil.Advance {
-				log.Printf("Stepper.advanceClickBy1: pad=%s stepnum=%d ce=%+v\n", r.padName, stepnum, ce)
+				log.Printf("Stepper.advanceClickBy1: pad=%s stepnum=%d ce=%+v\n", motor.padName, stepnum, ce)
 			}
 
-			ac := r.getActiveStepCursor(ce)
+			ac := motor.getActiveStepCursor(ce)
 			ac.x = ce.X
 			ac.y = ce.Y
 			ac.z = ce.Z
@@ -208,7 +207,7 @@ func (r *Stepper) AdvanceByOneClick() {
 
 			// Freshly added things ALWAYS get played.
 			playit := false
-			if ce.Fresh || r.loopIsPlaying {
+			if ce.Fresh || motor.loopIsPlaying {
 				playit = true
 			}
 			event.cursorStepEvent.Fresh = false
@@ -217,7 +216,7 @@ func (r *Stepper) AdvanceByOneClick() {
 			// Note that we fade the z values in CursorStepEvent, not ActiveStepCursor,
 			// because ActiveStepCursor goes away when the gesture ends,
 			// while CursorStepEvents in the loop stick around.
-			event.cursorStepEvent.Z = event.cursorStepEvent.Z * r.fadeLoop // fade it
+			event.cursorStepEvent.Z = event.cursorStepEvent.Z * motor.fadeLoop // fade it
 			event.cursorStepEvent.LoopsLeft--
 			ce.LoopsLeft--
 
@@ -274,24 +273,24 @@ func (r *Stepper) AdvanceByOneClick() {
 							if DebugUtil.GenSound {
 								log.Printf("generateSoundFromCursor: ddu=%s stepnum=%d ce.ID=%s\n", ce.Ddu, stepnum, ce.ID)
 							}
-							r.generateSoundFromCursor(ce)
+							motor.generateSoundFromCursor(ce)
 						}
 					} else {
 						if DebugUtil.GenSound {
 							log.Printf("generateSoundFromCursor: ddu=%s stepnum=%d ce.ID=%s\n", ce.Ddu, stepnum, ce.ID)
 						}
-						r.generateSoundFromCursor(ce)
+						motor.generateSoundFromCursor(ce)
 					}
 				} else {
 					// Graphics and GUI stuff
-					ss := r.params.ParamStringValue("visual.spritesource", "")
+					ss := motor.params.ParamStringValue("visual.spritesource", "")
 					if ss == "cursor" {
 						if TheRouter().generateVisuals && DebugUtil.Loop {
 							log.Printf("Stepper.advanceClickBy1: stepnum=%d generateVisuals ce=%+v\n", stepnum, ce)
 						}
-						r.generateVisualsFromCursor(ce)
+						motor.generateVisualsFromCursor(ce)
 					}
-					r.notifyGUI(ce, wasFresh)
+					motor.notifyGUI(ce, wasFresh)
 				}
 			}
 		}
@@ -327,7 +326,7 @@ func (r *Stepper) AdvanceByOneClick() {
 }
 
 // ExecuteAPI xxx
-func (r *Stepper) ExecuteAPI(api string, args map[string]string, rawargs string) (result string, err error) {
+func (motor *Motor) ExecuteAPI(api string, args map[string]string, rawargs string) (result string, err error) {
 
 	if DebugUtil.StepperAPI {
 		log.Printf("StepperAPI: api=%s rawargs=%s\n", api, rawargs)
@@ -349,7 +348,7 @@ func (r *Stepper) ExecuteAPI(api string, args map[string]string, rawargs string)
 	handled := false
 	if apisuffix == "set_params" {
 		for name, value := range args {
-			r.setOneParamValue(apiprefix, name, value)
+			motor.setOneParamValue(apiprefix, name, value)
 		}
 		handled = true
 	}
@@ -357,9 +356,9 @@ func (r *Stepper) ExecuteAPI(api string, args map[string]string, rawargs string)
 		name, okname := args["param"]
 		value, okvalue := args["value"]
 		if !okname || !okvalue {
-			return "", fmt.Errorf("stepper.handleSetParam: api=%s%s, missing param or value", apiprefix, apisuffix)
+			return "", fmt.Errorf("Motor.handleSetParam: api=%s%s, missing param or value", apiprefix, apisuffix)
 		}
-		r.setOneParamValue(apiprefix, name, value)
+		motor.setOneParamValue(apiprefix, name, value)
 		handled = true
 	}
 
@@ -368,7 +367,7 @@ func (r *Stepper) ExecuteAPI(api string, args map[string]string, rawargs string)
 		msg := osc.NewMessage("/api")
 		msg.Append(apisuffix)
 		msg.Append(rawargs)
-		r.toFreeFramePluginForLayer(msg)
+		motor.toFreeFramePluginForLayer(msg)
 		handled = true
 	}
 
@@ -382,80 +381,80 @@ func (r *Stepper) ExecuteAPI(api string, args map[string]string, rawargs string)
 	case "loop_recording":
 		v, err := needBoolArg("onoff", api, args)
 		if err == nil {
-			r.loopIsRecording = v
+			motor.loopIsRecording = v
 		}
 
 	case "loop_playing":
 		v, err := needBoolArg("onoff", api, args)
-		if err == nil && v != r.loopIsPlaying {
-			r.loopIsPlaying = v
-			r.terminateActiveNotes()
+		if err == nil && v != motor.loopIsPlaying {
+			motor.loopIsPlaying = v
+			motor.terminateActiveNotes()
 		}
 
 	case "loop_clear":
-		r.loop.Clear()
-		r.clearGraphics()
-		r.sendANO()
+		motor.loop.Clear()
+		motor.clearGraphics()
+		motor.sendANO()
 
 	case "loop_comb":
-		r.loopComb()
+		motor.loopComb()
 
 	case "loop_length":
 		i, err := needIntArg("length", api, args)
 		if err == nil {
 			nclicks := Clicks(i)
-			if nclicks != r.loop.length {
-				r.loop.SetLength(nclicks)
+			if nclicks != motor.loop.length {
+				motor.loop.SetLength(nclicks)
 			}
 		}
 
 	case "loop_fade":
 		f, err := needFloatArg("fade", api, args)
 		if err == nil {
-			r.fadeLoop = f
+			motor.fadeLoop = f
 		}
 
 	case "ANO":
-		r.sendANO()
+		motor.sendANO()
 
 	case "midi_thru":
 		v, err := needBoolArg("onoff", api, args)
 		if err == nil {
-			r.MIDIThru = v
+			motor.MIDIThru = v
 		}
 
 	case "midi_setscale":
 		v, err := needBoolArg("onoff", api, args)
 		if err == nil {
-			r.MIDISetScale = v
+			motor.MIDISetScale = v
 		}
 
 	case "midi_usescale":
 		v, err := needBoolArg("onoff", api, args)
 		if err == nil {
-			r.MIDIUseScale = v
+			motor.MIDIUseScale = v
 		}
 
 	case "clearexternalscale":
-		r.clearExternalScale()
-		r.MIDINumDown = 0
+		motor.clearExternalScale()
+		motor.MIDINumDown = 0
 
 	case "midi_quantized":
 		v, err := needBoolArg("onoff", api, args)
 		if err == nil {
-			r.MIDIQuantized = v
+			motor.MIDIQuantized = v
 		}
 
 	case "midi_thruscadjust":
 		v, err := needBoolArg("onoff", api, args)
 		if err == nil {
-			r.MIDIThruScadjust = v
+			motor.MIDIThruScadjust = v
 		}
 
 	case "set_transpose":
 		v, err := needIntArg("value", api, args)
 		if err == nil {
-			r.TransposePitch = v
+			motor.TransposePitch = v
 			log.Printf("set_transpose TransposePitch=%v", v)
 		}
 
@@ -464,95 +463,97 @@ func (r *Stepper) ExecuteAPI(api string, args map[string]string, rawargs string)
 	}
 
 	if !handled && !known {
-		err = fmt.Errorf("stepper.ExecuteAPI: unknown api=%s", api)
+		err = fmt.Errorf("Motor.ExecuteAPI: unknown api=%s", api)
 	}
 
 	return result, err
 }
 
 // HandleMIDITimeReset xxx
-func (r *Stepper) HandleMIDITimeReset() {
+func (motor *Motor) HandleMIDITimeReset() {
 	log.Printf("HandleMIDITimeReset!! needs implementation\n")
 }
 
 // HandleMIDIDeviceInput xxx
-func (r *Stepper) HandleMIDIDeviceInput(e portmidi.Event) {
+func (motor *Motor) HandleMIDIDeviceInput(e MidiEvent) {
 
-	r.midiInputMutex.Lock()
-	defer r.midiInputMutex.Unlock()
+	motor.midiInputMutex.Lock()
+	defer motor.midiInputMutex.Unlock()
 
 	if DebugUtil.MIDI {
 		log.Printf("Router.HandleMIDIDeviceInput: MIDIInput event=%+v\n", e)
 	}
-	if r.MIDIThru {
-		r.PassThruMIDI(e, r.MIDIThruScadjust)
+	if motor.MIDIThru {
+		motor.PassThruMIDI(e, motor.MIDIThruScadjust)
 	}
-	if r.MIDISetScale {
-		r.handleMIDISetScaleNote(e)
+	if motor.MIDISetScale {
+		motor.handleMIDISetScaleNote(e)
 	}
 }
 
-func (r *Stepper) setOneParamValue(apiprefix, name, value string) {
-	r.params.SetParamValueWithString(apiprefix+name, value, nil)
+func (motor *Motor) setOneParamValue(apiprefix, name, value string) {
+	motor.params.SetParamValueWithString(apiprefix+name, value, nil)
 	if apiprefix == "effect." {
-		r.sendEffectParam(name, value)
+		motor.sendEffectParam(name, value)
 	}
 }
 
 // ClearExternalScale xxx
-func (r *Stepper) clearExternalScale() {
+func (motor *Motor) clearExternalScale() {
 	if DebugUtil.Scale {
-		log.Printf("clearExternalScale pad=%s", r.padName)
+		log.Printf("clearExternalScale pad=%s", motor.padName)
 	}
-	r.externalScale = makeScale()
+	motor.externalScale = makeScale()
 }
 
 // SetExternalScale xxx
-func (r *Stepper) setExternalScale(pitch int, on bool) {
-	s := r.externalScale
+func (motor *Motor) setExternalScale(pitch int, on bool) {
+	s := motor.externalScale
 	for p := pitch; p < 128; p += 12 {
 		s.hasNote[p] = on
 	}
 	if DebugUtil.Scale {
-		log.Printf("setExternalScale pad=%s pitch=%v on=%v", r.padName, pitch, on)
+		log.Printf("setExternalScale pad=%s pitch=%v on=%v", motor.padName, pitch, on)
 	}
 }
 
 // Time returns the current time
-func (r *Stepper) time() time.Time {
+func (motor *Motor) time() time.Time {
 	return time.Now()
 }
 
-func (r *Stepper) handleCursorDeviceEvent(e CursorDeviceEvent) {
+func (motor *Motor) handleCursorDeviceEvent(e CursorDeviceEvent) {
 
 	id := e.NUID + "." + e.CID
 
-	r.deviceCursorsMutex.Lock()
-	defer r.deviceCursorsMutex.Unlock()
+	motor.deviceCursorsMutex.Lock()
+	defer motor.deviceCursorsMutex.Unlock()
 
 	// Special event to clear cursors (by sending them "up" events)
 	if e.Ddu == "clear" {
-		for id, c := range r.deviceCursors {
+		for id, c := range motor.deviceCursors {
 			if !c.downed {
 				log.Printf("Hmmm, why is a cursor not downed?\n")
 			} else {
-				r.executeIncomingCursor(CursorStepEvent{ID: id, Ddu: "up"})
+				motor.executeIncomingCursor(CursorStepEvent{ID: id, Ddu: "up"})
 				if DebugUtil.Cursor {
 					log.Printf("Clearing cursor id=%s\n", id)
 				}
-				delete(r.deviceCursors, id)
+				delete(motor.deviceCursors, id)
 			}
 		}
 		return
 	}
 
-	tc, ok := r.deviceCursors[id]
+	// e.Ddu is "down", "drag", or "up"
+
+	tc, ok := motor.deviceCursors[id]
 	if !ok {
 		// new DeviceCursor
 		tc = &DeviceCursor{}
-		r.deviceCursors[id] = tc
+		motor.deviceCursors[id] = tc
 	}
-	tc.lastTouch = r.time()
+	tc.lastTouch = motor.time()
 
 	// If it's a new (downed==false) cursor, make sure the first step event is "down
 	if !tc.downed {
@@ -567,16 +568,16 @@ func (r *Stepper) handleCursorDeviceEvent(e CursorDeviceEvent) {
 		Ddu: e.Ddu,
 	}
 	if DebugUtil.Cursor {
-		log.Printf("Stepper.handleCursorDeviceEvent: pad=%s id=%s ddu=%s xyz=%.4f,%.4f,%.4f\n", r.padName, id, e.Ddu, e.X, e.Y, e.Z)
+		log.Printf("Stepper.handleCursorDeviceEvent: pad=%s id=%s ddu=%s xyz=%.4f,%.4f,%.4f\n", motor.padName, id, e.Ddu, e.X, e.Y, e.Z)
 	}
 
-	r.executeIncomingCursor(cse)
+	motor.executeIncomingCursor(cse)
 
 	if e.Ddu == "up" {
 		// if DebugUtil.Cursor {
 		// 	log.Printf("Router.handleCursorDeviceEvent: deleting cursor id=%s\n", id)
 		// }
-		delete(r.deviceCursors, id)
+		delete(motor.deviceCursors, id)
 	}
 }
 
@@ -585,78 +586,78 @@ func (r *Stepper) handleCursorDeviceEvent(e CursorDeviceEvent) {
 // resulting in a cursor UP event.
 const checkDelay time.Duration = 2 * time.Second
 
-func (r *Stepper) checkCursorUp() {
-	now := r.time()
+func (motor *Motor) checkCursorUp() {
+	now := motor.time()
 
-	r.deviceCursorsMutex.Lock()
-	defer r.deviceCursorsMutex.Unlock()
+	motor.deviceCursorsMutex.Lock()
+	defer motor.deviceCursorsMutex.Unlock()
 
-	for id, c := range r.deviceCursors {
+	for id, c := range motor.deviceCursors {
 		elapsed := now.Sub(c.lastTouch)
 		if elapsed > checkDelay {
-			r.executeIncomingCursor(CursorStepEvent{ID: id, Ddu: "up"})
+			motor.executeIncomingCursor(CursorStepEvent{ID: id, Ddu: "up"})
 			if DebugUtil.Cursor {
 				log.Printf("Stepper.checkCursorUp: deleting cursor id=%s elapsed=%v\n", id, elapsed)
 			}
-			delete(r.deviceCursors, id)
+			delete(motor.deviceCursors, id)
 		}
 	}
 }
 
-func (r *Stepper) getActiveNote(id string) *ActiveNote {
-	r.activeNotesMutex.RLock()
-	a, ok := r.activeNotes[id]
-	r.activeNotesMutex.RUnlock()
+func (motor *Motor) getActiveNote(id string) *ActiveNote {
+	motor.activeNotesMutex.RLock()
+	a, ok := motor.activeNotes[id]
+	motor.activeNotesMutex.RUnlock()
 	if !ok {
-		r.lastActiveID++
-		a = &ActiveNote{id: r.lastActiveID}
-		r.activeNotesMutex.Lock()
-		r.activeNotes[id] = a
-		r.activeNotesMutex.Unlock()
+		motor.lastActiveID++
+		a = &ActiveNote{id: motor.lastActiveID}
+		motor.activeNotesMutex.Lock()
+		motor.activeNotes[id] = a
+		motor.activeNotesMutex.Unlock()
 	}
 	return a
 }
 
-func (r *Stepper) getActiveStepCursor(ce CursorStepEvent) *ActiveStepCursor {
+func (motor *Motor) getActiveStepCursor(ce CursorStepEvent) *ActiveStepCursor {
 	sid := ce.ID
-	r.activeCursorsMutex.RLock()
-	ac, ok := r.activeCursors[sid]
-	r.activeCursorsMutex.RUnlock()
+	motor.activeCursorsMutex.RLock()
+	ac, ok := motor.activeCursors[sid]
+	motor.activeCursorsMutex.RUnlock()
 	if !ok {
 		ac = &ActiveStepCursor{downEvent: ce}
-		r.activeCursorsMutex.Lock()
-		r.activeCursors[sid] = ac
-		r.activeCursorsMutex.Unlock()
+		motor.activeCursorsMutex.Lock()
+		motor.activeCursors[sid] = ac
+		motor.activeCursorsMutex.Unlock()
 	}
 	return ac
 }
 
-func (r *Stepper) terminateActiveNotes() {
-	r.activeNotesMutex.RLock()
-	for id, a := range r.activeNotes {
+func (motor *Motor) terminateActiveNotes() {
+	motor.activeNotesMutex.RLock()
+	for id, a := range motor.activeNotes {
 		// log.Printf("terminateActiveNotes n=%v\n", a.currentNoteOn)
 		if a != nil {
-			r.sendNoteOff(a)
+			motor.sendNoteOff(a)
 		} else {
 			log.Printf("Hey, activeNotes entry for id=%s\n", id)
 		}
 	}
-	r.activeNotesMutex.RUnlock()
+	motor.activeNotesMutex.RUnlock()
 }
 
-func (r *Stepper) clearGraphics() {
+func (motor *Motor) clearGraphics() {
 	// send an OSC message to Resolume
-	r.toFreeFramePluginForLayer(osc.NewMessage("/clear"))
+	motor.toFreeFramePluginForLayer(osc.NewMessage("/clear"))
 }
 
-func (r *Stepper) publishSprite(id string, x, y, z float32) {
+func (motor *Motor) publishSprite(id string, x, y, z float32) {
 	err := PublishSpriteEvent(x, y, z)
 	if err != nil {
 		log.Printf("publishSprite: err=%s\n", err)
 	}
 }
 
-func (r *Stepper) generateSprite(id string, x, y, z float32) {
+func (motor *Motor) generateSprite(id string, x, y, z float32) {
 	if !TheRouter().generateVisuals {
 		return
 	}
@@ -666,10 +667,10 @@ func (r *Stepper) generateSprite(id string, x, y, z float32) {
 	msg.Append(y)
 	msg.Append(z)
 	msg.Append(id)
-	r.toFreeFramePluginForLayer(msg)
+	motor.toFreeFramePluginForLayer(msg)
 }
 
-func (r *Stepper) generateVisualsFromCursor(ce CursorStepEvent) {
+func (motor *Motor) generateVisualsFromCursor(ce CursorStepEvent) {
 	if !TheRouter().generateVisuals {
 		return
 	}
@@ -681,12 +682,12 @@ func (r *Stepper) generateVisualsFromCursor(ce CursorStepEvent) {
 	msg.Append(float32(ce.Y))
 	msg.Append(float32(ce.Z))
 	if DebugUtil.GenVisual {
-		log.Printf("Stepper.generateVisuals: pad=%s click=%d stepnum=%d OSC message = %+v\n", r.padName, currentClick, r.loop.currentStep, msg)
+		log.Printf("Stepper.generateVisuals: pad=%s click=%d stepnum=%d OSC message = %+v\n", motor.padName, currentClick, motor.loop.currentStep, msg)
 	}
-	r.toFreeFramePluginForLayer(msg)
+	motor.toFreeFramePluginForLayer(msg)
 }
 
-func (r *Stepper) generateSpriteFromNote(a *ActiveNote) {
+func (motor *Motor) generateSpriteFromNote(a *ActiveNote) {
 
 	n := a.noteOn
 	if n.TypeOf != NOTEON {
@@ -697,8 +698,8 @@ func (r *Stepper) generateSpriteFromNote(a *ActiveNote) {
 	oscaddr := "/sprite"
 
 	// The first argument is a relative pitch amoun (0.0 to 1.0) within its range
-	pitchmin := uint8(r.params.ParamIntValue("sound.pitchmin"))
-	pitchmax := uint8(r.params.ParamIntValue("sound.pitchmax"))
+	pitchmin := uint8(motor.params.ParamIntValue("sound.pitchmin"))
+	pitchmax := uint8(motor.params.ParamIntValue("sound.pitchmax"))
 	if n.Pitch < pitchmin || n.Pitch > pitchmax {
 		log.Printf("Unexpected value of n.Pitch=%d, not between %d and %d\n", n.Pitch, pitchmin, pitchmax)
 		return
@@ -706,7 +707,7 @@ func (r *Stepper) generateSpriteFromNote(a *ActiveNote) {
 
 	var x float32
 	var y float32
-	switch r.params.ParamStringValue("visual.placement", "random") {
+	switch motor.params.ParamStringValue("visual.placement", "random") {
 	case "random":
 		x = rand.Float32()
 		y = rand.Float32()
@@ -728,10 +729,10 @@ func (r *Stepper) generateSpriteFromNote(a *ActiveNote) {
 	// Someday localhost should be changed to the actual IP address
 	msg.Append(fmt.Sprintf("%d@localhost", a.id))
 	// log.Printf("generateSprite msg=%+v\n", msg)
-	r.toFreeFramePluginForLayer(msg)
+	motor.toFreeFramePluginForLayer(msg)
 }
 
-func (r *Stepper) notifyGUI(ce CursorStepEvent, wasFresh bool) {
+func (motor *Motor) notifyGUI(ce CursorStepEvent, wasFresh bool) {
 	if !ConfigBool("notifygui") {
 		return
 	}
@@ -742,75 +743,75 @@ func (r *Stepper) notifyGUI(ce CursorStepEvent, wasFresh bool) {
 	msg.Append(float32(ce.X))
 	msg.Append(float32(ce.Y))
 	msg.Append(float32(ce.Z))
-	msg.Append(int32(r.resolumeLayer))
+	msg.Append(int32(motor.resolumeLayer))
 	msg.Append(wasFresh)
-	r.guiClient.Send(msg)
+	motor.guiClient.Send(msg)
 	if DebugUtil.Notify {
 		log.Printf("Stepper.notifyGUI: msg=%v\n", msg)
 	}
 }
 
-func (r *Stepper) toFreeFramePluginForLayer(msg *osc.Message) {
-	r.freeframeClient.Send(msg)
+func (motor *Motor) toFreeFramePluginForLayer(msg *osc.Message) {
+	motor.freeframeClient.Send(msg)
 	if DebugUtil.OSC {
-		log.Printf("Stepper.toFreeFramePlugin: layer=%d msg=%v\n", r.resolumeLayer, msg)
+		log.Printf("Stepper.toFreeFramePlugin: layer=%d msg=%v\n", motor.resolumeLayer, msg)
 	}
 }
 
-func (r *Stepper) toResolume(msg *osc.Message) {
-	r.resolumeClient.Send(msg)
+func (motor *Motor) toResolume(msg *osc.Message) {
+	motor.resolumeClient.Send(msg)
 	if DebugUtil.OSC || DebugUtil.Resolume {
 		log.Printf("Stepper.toResolume: msg=%v\n", msg)
 	}
 }
 
-func (r *Stepper) handleMIDISetScaleNote(e portmidi.Event) {
+func (motor *Motor) handleMIDISetScaleNote(e MidiEvent) {
 	status := e.Status & 0xf0
 	pitch := int(e.Data1)
 	if status == 0x90 {
 		// If there are no notes held down (i.e. this is the first), clear the scale
-		if r.MIDINumDown < 0 {
+		if motor.MIDINumDown < 0 {
 			// this can happen when there's a Read error that misses a NOTEON
-			r.MIDINumDown = 0
+			motor.MIDINumDown = 0
 		}
-		if r.MIDINumDown == 0 {
-			r.clearExternalScale()
+		if motor.MIDINumDown == 0 {
+			motor.clearExternalScale()
 		}
-		r.setExternalScale(pitch%12, true)
-		r.MIDINumDown++
+		motor.setExternalScale(pitch%12, true)
+		motor.MIDINumDown++
 		if pitch < 60 {
-			r.MIDIOctaveShift = -1
+			motor.MIDIOctaveShift = -1
 		} else if pitch > 72 {
-			r.MIDIOctaveShift = 1
+			motor.MIDIOctaveShift = 1
 		} else {
-			r.MIDIOctaveShift = 0
+			motor.MIDIOctaveShift = 0
 		}
 	} else if status == 0x80 {
-		r.MIDINumDown--
+		motor.MIDINumDown--
 	}
 }
 
 // getScale xxx
-func (r *Stepper) getScale() *Scale {
+func (motor *Motor) getScale() *Scale {
 	var scaleName string
 	var scale *Scale
-	if r.MIDIUseScale {
-		scale = r.externalScale
+	if motor.MIDIUseScale {
+		scale = motor.externalScale
 	} else {
-		scaleName = r.params.ParamStringValue("misc.scale", "newage")
+		scaleName = motor.params.ParamStringValue("misc.scale", "newage")
 		scale = GlobalScale(scaleName)
 	}
 	return scale
 }
 
-func (r *Stepper) generateSoundFromCursor(ce CursorStepEvent) {
+func (motor *Motor) generateSoundFromCursor(ce CursorStepEvent) {
 	if !TheRouter().generateSound {
 		return
 	}
 	// if DebugUtil.GenSound {
 	// 	log.Printf("Stepper.generateSound: pad=%s activeNotes=%d ce=%+v\n", r.padName, len(r.activeNotes), ce)
 	// }
-	a := r.getActiveNote(ce.ID)
+	a := motor.getActiveNote(ce.ID)
 	switch ce.Ddu {
 	case "down":
 		// Send NOTEOFF for current note
@@ -819,12 +820,12 @@ func (r *Stepper) generateSoundFromCursor(ce CursorStepEvent) {
 			// faster than the checkDelay can generate the UP event.
 			log.Printf("Unexpected down when currentNoteOn is non-nil!? currentNoteOn=%+v\n", a)
 			// log.Printf("generateMIDI sending NoteOff before down note\n")
-			r.sendNoteOff(a)
+			motor.sendNoteOff(a)
 		}
-		a.noteOn = r.cursorToNoteOn(ce)
+		a.noteOn = motor.cursorToNoteOn(ce)
 		// log.Printf("r=%s down Setting currentNoteOn to %v!\n", r.padName, *(a.currentNoteOn))
 		// log.Printf("generateMIDI sending NoteOn for down\n")
-		r.sendNoteOn(a)
+		motor.sendNoteOn(a)
 	case "drag":
 		if a.noteOn == nil {
 			// if we turn on playing in the middle of an existing loop,
@@ -835,52 +836,52 @@ func (r *Stepper) generateSoundFromCursor(ce CursorStepEvent) {
 			log.Printf("=============== HEY! drag event, a.currentNoteOn == nil?\n")
 			return
 		}
-		newNoteOn := r.cursorToNoteOn(ce)
+		newNoteOn := motor.cursorToNoteOn(ce)
 		oldpitch := a.noteOn.Pitch
 		newpitch := newNoteOn.Pitch
 		// We only turn off the existing note (for a given Cursor ID)
 		// and start the new one if the pitch changes
 		if newpitch != oldpitch {
-			r.sendNoteOff(a)
+			motor.sendNoteOff(a)
 			a.noteOn = newNoteOn
 			// log.Printf("r=%s drag Setting currentNoteOn to %v!\n", r.padName, *(a.currentNoteOn))
 			// log.Printf("generateMIDI sending NoteOn\n")
-			r.sendNoteOn(a)
+			motor.sendNoteOn(a)
 		}
 	case "up":
 		if a.noteOn == nil {
 			// not sure why this happens, yet
-			log.Printf("r=%s Unexpected UP when currentNoteOn is nil?\n", r.padName)
+			log.Printf("r=%s Unexpected UP when currentNoteOn is nil?\n", motor.padName)
 		} else {
 			// log.Printf("generateMIDI sending NoteOff for UP\n")
-			r.sendNoteOff(a)
+			motor.sendNoteOff(a)
 
 			a.noteOn = nil
 			// log.Printf("r=%s UP Setting currentNoteOn to nil!\n", r.padName)
 		}
-		r.activeNotesMutex.Lock()
-		delete(r.activeNotes, ce.ID)
-		r.activeNotesMutex.Unlock()
+		motor.activeNotesMutex.Lock()
+		delete(motor.activeNotes, ce.ID)
+		motor.activeNotesMutex.Unlock()
 	}
 }
 
-func (r *Stepper) executeIncomingCursor(ce CursorStepEvent) {
+func (motor *Motor) executeIncomingCursor(ce CursorStepEvent) {
 
 	// Every cursor event actually gets added to the step loop,
 	// even if we're not recording a loop.  That way, everything gets
 	// step-quantized and played back identically, looped or not.
 
-	if r.loopIsRecording {
+	if motor.loopIsRecording {
 		ce.LoopsLeft = loopForever
 	} else {
 		ce.LoopsLeft = 0
 	}
 
-	q := r.cursorToQuant(ce)
+	q := motor.cursorToQuant(ce)
 
-	quantizedStepnum := r.nextQuant(r.loop.currentStep, q)
-	for quantizedStepnum >= r.loop.length {
-		quantizedStepnum -= r.loop.length
+	quantizedStepnum := motor.nextQuant(motor.loop.currentStep, q)
+	for quantizedStepnum >= motor.loop.length {
+		quantizedStepnum -= motor.loop.length
 	}
 
 	// log.Printf("Quantizing currentClick=%d r.loop.currentStep=%d q=%d quantizedStepnum=%d\n",
@@ -890,10 +891,10 @@ func (r *Stepper) executeIncomingCursor(ce CursorStepEvent) {
 	// so that all of that id's CursorEvents (from down through UP)
 	// in the steps of the loop will have a unique id.
 
-	r.permInstanceIDMutex.RLock()
-	permInstanceIDQuantized, ok1 := r.permInstanceIDQuantized[ce.ID]
-	permInstanceIDUnquantized, ok2 := r.permInstanceIDUnquantized[ce.ID]
-	r.permInstanceIDMutex.RUnlock()
+	motor.permInstanceIDMutex.RLock()
+	permInstanceIDQuantized, ok1 := motor.permInstanceIDQuantized[ce.ID]
+	permInstanceIDUnquantized, ok2 := motor.permInstanceIDUnquantized[ce.ID]
+	motor.permInstanceIDMutex.RUnlock()
 
 	if (!ok1 || !ok2) && ce.Ddu != "down" {
 		log.Printf("Stepper.executeIncomingCursor: drag or up event didn't find ce.ID=%s in incomingIDToPermSid*\n", ce.ID)
@@ -908,32 +909,32 @@ func (r *Stepper) executeIncomingCursor(ce CursorStepEvent) {
 		// any drag and UP things (which aren't quantized)
 		// aren't added before or on that step.
 
-		r.permInstanceIDMutex.Lock()
+		motor.permInstanceIDMutex.Lock()
 
 		permInstanceIDQuantized = fmt.Sprintf("%s#%d", ce.ID, uniqueIndex)
 		uniqueIndex++
 		permInstanceIDUnquantized = fmt.Sprintf("%s#%d", ce.ID, uniqueIndex)
 		uniqueIndex++
 
-		r.permInstanceIDQuantized[ce.ID] = permInstanceIDQuantized
-		r.permInstanceIDUnquantized[ce.ID] = permInstanceIDUnquantized
+		motor.permInstanceIDQuantized[ce.ID] = permInstanceIDQuantized
+		motor.permInstanceIDUnquantized[ce.ID] = permInstanceIDUnquantized
 
-		r.permInstanceIDDownClick[permInstanceIDQuantized] = r.nextQuant(currentClick, q)
-		r.permInstanceIDDownQuant[permInstanceIDQuantized] = q
-		r.permInstanceIDDragOK[permInstanceIDQuantized] = false
+		motor.permInstanceIDDownClick[permInstanceIDQuantized] = motor.nextQuant(currentClick, q)
+		motor.permInstanceIDDownQuant[permInstanceIDQuantized] = q
+		motor.permInstanceIDDragOK[permInstanceIDQuantized] = false
 
-		r.permInstanceIDMutex.Unlock()
+		motor.permInstanceIDMutex.Unlock()
 	}
 
 	// We don't want to quantize drag events, but we also don't want them to do anything
 	// before the down event (which is quantized), so we only turn on DragOK when we see
 	// a drag event come in shortly after the down event.
 
-	if !r.permInstanceIDDragOK[permInstanceIDQuantized] && ce.Ddu == "drag" {
-		if currentClick <= r.permInstanceIDDownClick[permInstanceIDQuantized] {
+	if !motor.permInstanceIDDragOK[permInstanceIDQuantized] && ce.Ddu == "drag" {
+		if currentClick <= motor.permInstanceIDDownClick[permInstanceIDQuantized] {
 			return
 		}
-		r.permInstanceIDDragOK[permInstanceIDQuantized] = true
+		motor.permInstanceIDDragOK[permInstanceIDQuantized] = true
 	}
 
 	ce.ID = permInstanceIDQuantized
@@ -955,13 +956,13 @@ func (r *Stepper) executeIncomingCursor(ce CursorStepEvent) {
 	if ce.Ddu == "up" {
 		// The up event always has a Y value of 0 (someday this may, change, but for now...)
 		// So, use the quantize value of the down event
-		downQuant := r.permInstanceIDDownQuant[permInstanceIDQuantized]
-		quantizedStepnum = r.nextQuant(r.loop.currentStep, downQuant)
+		downQuant := motor.permInstanceIDDownQuant[permInstanceIDQuantized]
+		quantizedStepnum = motor.nextQuant(motor.loop.currentStep, downQuant)
 		if DebugUtil.Loop {
-			log.Printf("UP event: qsn1=%d loopleng=%d\n", quantizedStepnum, r.loop.length)
+			log.Printf("UP event: qsn1=%d loopleng=%d\n", quantizedStepnum, motor.loop.length)
 		}
-		for quantizedStepnum >= r.loop.length {
-			quantizedStepnum -= r.loop.length
+		for quantizedStepnum >= motor.loop.length {
+			quantizedStepnum -= motor.loop.length
 			if DebugUtil.Loop {
 				log.Printf("   quantizedStepnum2=%d\n", quantizedStepnum)
 			}
@@ -971,17 +972,17 @@ func (r *Stepper) executeIncomingCursor(ce CursorStepEvent) {
 		// the graphics don't have time to fire,
 		// so push the up event out a few steps.
 		magicUpDelayClicks := Clicks(8)
-		quantizedStepnum = (quantizedStepnum + magicUpDelayClicks) % r.loop.length
+		quantizedStepnum = (quantizedStepnum + magicUpDelayClicks) % motor.loop.length
 		if DebugUtil.Loop {
 			log.Printf("   FINAL quantizedStepnum2=%d\n", quantizedStepnum)
 		}
 	}
 
-	r.loop.AddToStep(ce, quantizedStepnum)
-	r.loop.AddToStep(ceUnquantized, r.loop.currentStep)
+	motor.loop.AddToStep(ce, quantizedStepnum)
+	motor.loop.AddToStep(ceUnquantized, motor.loop.currentStep)
 }
 
-func (r *Stepper) nextQuant(t Clicks, q Clicks) Clicks {
+func (motor *Motor) nextQuant(t Clicks, q Clicks) Clicks {
 	// the algorithm below is the same as KeyKit's nextquant
 	if q <= 1 {
 		return t
@@ -999,20 +1000,20 @@ func (r *Stepper) nextQuant(t Clicks, q Clicks) Clicks {
 	return tq
 }
 
-func (r *Stepper) sendNoteOn(a *ActiveNote) {
+func (motor *Motor) sendNoteOn(a *ActiveNote) {
 
 	if DebugUtil.MIDI {
 		log.Printf("MIDI.SendNote: noteOn pitch:%d velocity:%d sound:%s\n", a.noteOn.Pitch, a.noteOn.Velocity, a.noteOn.Sound)
 	}
 	SendNoteToSynth(a.noteOn)
 
-	ss := r.params.ParamStringValue("visual.spritesource", "")
+	ss := motor.params.ParamStringValue("visual.spritesource", "")
 	if ss == "midi" {
-		r.generateSpriteFromNote(a)
+		motor.generateSpriteFromNote(a)
 	}
 }
 
-func (r *Stepper) sendNoteOff(a *ActiveNote) {
+func (motor *Motor) sendNoteOff(a *ActiveNote) {
 	n := a.noteOn
 	if n == nil {
 		// Not sure why this sometimes happens
@@ -1032,11 +1033,11 @@ func (r *Stepper) sendNoteOff(a *ActiveNote) {
 	SendNoteToSynth(noteOff)
 }
 
-func (r *Stepper) sendANO() {
+func (motor *Motor) sendANO() {
 	if !TheRouter().generateSound {
 		return
 	}
-	synth := r.params.ParamStringValue("sound.synth", defaultSynth)
+	synth := motor.params.ParamStringValue("sound.synth", defaultSynth)
 	SendANOToSynth(synth)
 }
 
@@ -1063,26 +1064,26 @@ func (r *Stepper) paramIntValue(paramname string) int {
 }
 */
 
-func (r *Stepper) cursorToNoteOn(ce CursorStepEvent) *Note {
-	pitch := r.cursorToPitch(ce)
-	pitch = uint8(int(pitch) + r.TransposePitch)
+func (motor *Motor) cursorToNoteOn(ce CursorStepEvent) *Note {
+	pitch := motor.cursorToPitch(ce)
+	pitch = uint8(int(pitch) + motor.TransposePitch)
 	// log.Printf("cursorToNoteOn pitch=%v trans=%v", pitch, r.TransposePitch)
-	velocity := r.cursorToVelocity(ce)
-	synth := r.params.ParamStringValue("sound.synth", defaultSynth)
+	velocity := motor.cursorToVelocity(ce)
+	synth := motor.params.ParamStringValue("sound.synth", defaultSynth)
 	// log.Printf("cursorToNoteOn x=%.5f y=%.5f z=%.5f pitch=%d velocity=%d\n", ce.x, ce.y, ce.z, pitch, velocity)
 	return NewNoteOn(pitch, velocity, synth)
 }
 
-func (r *Stepper) cursorToPitch(ce CursorStepEvent) uint8 {
-	pitchmin := r.params.ParamIntValue("sound.pitchmin")
-	pitchmax := r.params.ParamIntValue("sound.pitchmax")
+func (motor *Motor) cursorToPitch(ce CursorStepEvent) uint8 {
+	pitchmin := motor.params.ParamIntValue("sound.pitchmin")
+	pitchmax := motor.params.ParamIntValue("sound.pitchmax")
 	dp := pitchmax - pitchmin + 1
 	p1 := int(ce.X * float32(dp))
 	p := uint8(pitchmin + p1%dp)
-	scale := r.getScale()
+	scale := motor.getScale()
 	p = scale.ClosestTo(p)
 	// MIDIOctaveShift might be negative
-	pnew := int(p) + 12*r.MIDIOctaveShift
+	pnew := int(p) + 12*motor.MIDIOctaveShift
 	for pnew < 0 {
 		pnew += 12
 	}
@@ -1092,10 +1093,10 @@ func (r *Stepper) cursorToPitch(ce CursorStepEvent) uint8 {
 	return uint8(pnew)
 }
 
-func (r *Stepper) cursorToVelocity(ce CursorStepEvent) uint8 {
-	vol := r.params.ParamStringValue("misc.vol", "fixed")
-	velocitymin := r.params.ParamIntValue("sound.velocitymin")
-	velocitymax := r.params.ParamIntValue("sound.velocitymax")
+func (motor *Motor) cursorToVelocity(ce CursorStepEvent) uint8 {
+	vol := motor.params.ParamStringValue("misc.vol", "fixed")
+	velocitymin := motor.params.ParamIntValue("sound.velocitymin")
+	velocitymax := motor.params.ParamIntValue("sound.velocitymax")
 	// bogus, when values in json are missing
 	if velocitymin == 0 && velocitymax == 0 {
 		velocitymin = 0
@@ -1123,12 +1124,12 @@ func (r *Stepper) cursorToVelocity(ce CursorStepEvent) uint8 {
 	return uint8(vel)
 }
 
-func (r *Stepper) cursorToDuration(ce CursorStepEvent) int {
+func (motor *Motor) cursorToDuration(ce CursorStepEvent) int {
 	return 92
 }
 
-func (r *Stepper) cursorToQuant(ce CursorStepEvent) Clicks {
-	quant := r.params.ParamStringValue("misc.quant", "fixed")
+func (motor *Motor) cursorToQuant(ce CursorStepEvent) Clicks {
+	quant := motor.params.ParamStringValue("misc.quant", "fixed")
 
 	q := Clicks(1)
 	if quant == "none" || quant == "" {
@@ -1163,14 +1164,14 @@ func (r *Stepper) cursorToQuant(ce CursorStepEvent) Clicks {
 	return q
 }
 
-func (r *Stepper) loopComb() {
+func (motor *Motor) loopComb() {
 
-	r.loop.stepsMutex.Lock()
-	defer r.loop.stepsMutex.Unlock()
+	motor.loop.stepsMutex.Lock()
+	defer motor.loop.stepsMutex.Unlock()
 
 	// Create a map of the UP cursor events, so we only do completed notes
 	upEvents := make(map[string]CursorStepEvent)
-	for _, step := range r.loop.steps {
+	for _, step := range motor.loop.steps {
 		if step.events != nil && len(step.events) > 0 {
 			for _, event := range step.events {
 				if event.cursorStepEvent.Ddu == "up" {
@@ -1185,18 +1186,18 @@ func (r *Stepper) loopComb() {
 	for id := range upEvents {
 		// log.Printf("AT END id = %s\n", id)
 		if combme == 0 {
-			r.loop.ClearID(id)
+			motor.loop.ClearID(id)
 			// log.Printf("loopComb, ClearID id=%s upEvents[id]=%+v\n", id, upEvents[id])
-			r.generateSoundFromCursor(upEvents[id])
+			motor.generateSoundFromCursor(upEvents[id])
 		}
 		combme = (combme + 1) % combmod
 	}
 }
 
-func (r *Stepper) loopQuant() {
+func (motor *Motor) loopQuant() {
 
-	r.loop.stepsMutex.Lock()
-	defer r.loop.stepsMutex.Unlock()
+	motor.loop.stepsMutex.Lock()
+	defer motor.loop.stepsMutex.Unlock()
 
 	// XXX - Need to make sure we have mutex for changing loop steps
 	// XXX - DOES THIS EVEN WORK?
@@ -1209,7 +1210,7 @@ func (r *Stepper) loopQuant() {
 	upEvents := make(map[string]CursorStepEvent)
 	downEvents := make(map[string]CursorStepEvent)
 	shiftOf := make(map[string]Clicks)
-	for stepnum, step := range r.loop.steps {
+	for stepnum, step := range motor.loop.steps {
 		if step.events != nil && len(step.events) > 0 {
 			for _, e := range step.events {
 				switch e.cursorStepEvent.Ddu {
@@ -1217,7 +1218,7 @@ func (r *Stepper) loopQuant() {
 					upEvents[e.cursorStepEvent.ID] = e.cursorStepEvent
 				case "down":
 					downEvents[e.cursorStepEvent.ID] = e.cursorStepEvent
-					shift := r.nextQuant(Clicks(stepnum), quant)
+					shift := motor.nextQuant(Clicks(stepnum), quant)
 					log.Printf("Down, shift=%d\n", shift)
 					shiftOf[e.cursorStepEvent.ID] = Clicks(shift)
 				}
@@ -1230,8 +1231,8 @@ func (r *Stepper) loopQuant() {
 	}
 
 	// We're going to create a brand new steps array
-	newsteps := make([]*Step, len(r.loop.steps))
-	for stepnum, step := range r.loop.steps {
+	newsteps := make([]*Step, len(motor.loop.steps))
+	for stepnum, step := range motor.loop.steps {
 		if step.events == nil || len(step.events) == 0 {
 			continue
 		}
@@ -1246,7 +1247,7 @@ func (r *Stepper) loopQuant() {
 				// It's shifted
 				if ok {
 					shiftStep := Clicks(stepnum) + shift
-					newstepnum = int(shiftStep) % len(r.loop.steps)
+					newstepnum = int(shiftStep) % len(motor.loop.steps)
 				}
 				newsteps[newstepnum].events = append(newsteps[newstepnum].events, e)
 			}
@@ -1254,7 +1255,7 @@ func (r *Stepper) loopQuant() {
 	}
 }
 
-func (r *Stepper) sendEffectParam(name string, value string) {
+func (motor *Motor) sendEffectParam(name string, value string) {
 	// Effect parameters that have ":" in their name are plugin parameters
 	i := strings.Index(name, ":")
 	if i > 0 {
@@ -1269,21 +1270,21 @@ func (r *Stepper) sendEffectParam(name string, value string) {
 				f = 0.0
 			}
 		}
-		r.sendPadOneEffectParam(name[0:i], name[i+1:], f)
+		motor.sendPadOneEffectParam(name[0:i], name[i+1:], f)
 	} else {
 		onoff, err := strconv.ParseBool(value)
 		if err != nil {
 			log.Printf("Unable to parse bool!? value=%s\n", value)
 			onoff = false
 		}
-		r.sendPadOneEffectOnOff(name, onoff)
+		motor.sendPadOneEffectOnOff(name, onoff)
 
 	}
 }
 
 // getEffectMap returns the resolume.json map for a given effect
 // and map type ("on", "off", or "params")
-func (r *Stepper) getEffectMap(effectName string, mapType string) (map[string]interface{}, string, int, error) {
+func (motor *Motor) getEffectMap(effectName string, mapType string) (map[string]interface{}, string, int, error) {
 	if effectName[1] != '-' {
 		err := fmt.Errorf("no dash in effect, name=%s", effectName)
 		return nil, "", 0, err
@@ -1316,7 +1317,7 @@ func (r *Stepper) getEffectMap(effectName string, mapType string) (map[string]in
 	return mapValue.(map[string]interface{}), realEffectName, effnum, nil
 }
 
-func (r *Stepper) addLayerAndClipNums(addr string, layerNum int, clipNum int) string {
+func (motor *Motor) addLayerAndClipNums(addr string, layerNum int, clipNum int) string {
 	if addr[0] != '/' {
 		log.Printf("WARNING, addr in resolume.json doesn't start with / : %s", addr)
 		addr = "/" + addr
@@ -1325,15 +1326,15 @@ func (r *Stepper) addLayerAndClipNums(addr string, layerNum int, clipNum int) st
 	return addr
 }
 
-func (r *Stepper) resolumeEffectNameOf(name string, num int) string {
+func (motor *Motor) resolumeEffectNameOf(name string, num int) string {
 	if num == 1 {
 		return name
 	}
 	return fmt.Sprintf("%s%d", name, num)
 }
 
-func (r *Stepper) sendPadOneEffectParam(effectName string, paramName string, value float64) {
-	paramsMap, realEffectName, realEffectNum, err := r.getEffectMap(effectName, "params")
+func (motor *Motor) sendPadOneEffectParam(effectName string, paramName string, value float64) {
+	paramsMap, realEffectName, realEffectNum, err := motor.getEffectMap(effectName, "params")
 	if err != nil {
 		log.Printf("sendPadOneEffectParam: err=%s\n", err)
 		return
@@ -1349,18 +1350,18 @@ func (r *Stepper) sendPadOneEffectParam(effectName string, paramName string, val
 	}
 	addr := oneParam.(string)
 
-	resEffectName := r.resolumeEffectNameOf(realEffectName, realEffectNum)
+	resEffectName := motor.resolumeEffectNameOf(realEffectName, realEffectNum)
 	addr = strings.Replace(addr, realEffectName, resEffectName, 1)
 
-	addr = r.addLayerAndClipNums(addr, r.resolumeLayer, 1)
+	addr = motor.addLayerAndClipNums(addr, motor.resolumeLayer, 1)
 
 	// log.Printf("sendPadOneEffectParam effect=%s param=%s value=%f\n", effectName, paramName, value)
 	msg := osc.NewMessage(addr)
 	msg.Append(float32(value))
-	r.toResolume(msg)
+	motor.toResolume(msg)
 }
 
-func (r *Stepper) addEffectNum(addr string, effect string, num int) string {
+func (motor *Motor) addEffectNum(addr string, effect string, num int) string {
 	if num == 1 {
 		return addr
 	}
@@ -1368,7 +1369,7 @@ func (r *Stepper) addEffectNum(addr string, effect string, num int) string {
 	return strings.Replace(addr, effect, fmt.Sprintf("%s%d", effect, num), 1)
 }
 
-func (r *Stepper) sendPadOneEffectOnOff(effectName string, onoff bool) {
+func (motor *Motor) sendPadOneEffectOnOff(effectName string, onoff bool) {
 	var mapType string
 	if onoff {
 		mapType = "on"
@@ -1376,7 +1377,7 @@ func (r *Stepper) sendPadOneEffectOnOff(effectName string, onoff bool) {
 		mapType = "off"
 	}
 
-	onoffMap, realEffectName, realEffectNum, err := r.getEffectMap(effectName, mapType)
+	onoffMap, realEffectName, realEffectNum, err := motor.getEffectMap(effectName, mapType)
 	if err != nil {
 		log.Printf("SendPadOneEffectOnOff: err=%s\n", err)
 		return
@@ -1397,18 +1398,18 @@ func (r *Stepper) sendPadOneEffectOnOff(effectName string, onoff bool) {
 		return
 	}
 	addr := onoffAddr.(string)
-	addr = r.addEffectNum(addr, realEffectName, realEffectNum)
-	addr = r.addLayerAndClipNums(addr, r.resolumeLayer, 1)
+	addr = motor.addEffectNum(addr, realEffectName, realEffectNum)
+	addr = motor.addLayerAndClipNums(addr, motor.resolumeLayer, 1)
 	onoffValue := int(onoffArg.(float64))
 
 	msg := osc.NewMessage(addr)
 	msg.Append(int32(onoffValue))
-	r.toResolume(msg)
+	motor.toResolume(msg)
 
 }
 
 // This silliness is to avoid unused function errors from go-staticcheck
-var ss *Stepper
+var ss *Motor
 var _ = ss.publishSprite
 var _ = ss.cursorToDuration
 var _ = ss.loopQuant

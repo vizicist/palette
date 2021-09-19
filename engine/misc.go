@@ -40,6 +40,7 @@ type DebugFlags struct {
 	Notify     bool
 	Realtime   bool
 	Remote     bool
+	Erae       bool
 }
 
 func setDebug(dtype string, b bool) error {

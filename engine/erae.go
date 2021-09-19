@@ -1,0 +1,324 @@
+package engine
+
+import (
+	"encoding/binary"
+	"fmt"
+	"log"
+	"math"
+	"math/rand"
+)
+
+var EraeRegion = "A"
+var EraeEnabled = false
+var EraeOutput *MidiOutput
+var EraeInput *MidiInput
+var MyPrefix byte = 0x55
+var EraeWidth int = 0x2a
+var EraeHeight int = 0x18
+
+func InitErae() {
+	MIDI.openInput("Erae Touch")
+	MIDI.openOutput("Erae Touch")
+	EraeInput = MIDI.GetMidiInput("Erae Touch")
+	EraeOutput = MIDI.GetMidiOutput("Erae Touch")
+	if EraeInput == nil || EraeOutput == nil {
+		log.Printf("Unable to open Erae Touch.  Is the EraeLab application open?\n")
+		return
+	}
+	EraeEnabled = true
+	DebugUtil.Erae = true
+	DebugUtil.GenVisual = true
+	DebugUtil.OSC = true
+}
+
+func HandleEraeMIDI(event MidiEvent) {
+	if event.SysEx != nil {
+		bb := event.SysEx
+		if bb[1] == MyPrefix {
+			handleEraeSysex(bb)
+		}
+	} else {
+		log.Printf("handleEraeMIDI: ReadEvent event=%+v\n", event)
+	}
+}
+
+func handleEraeSysex(bb []byte) {
+	// This assumes the RECEIVER PREFIX BYTES is exactly 1 byte
+	if bb[2] == 0x7f {
+		handleBoundary(bb)
+	} else {
+		handleFinger(bb)
+	}
+}
+
+func handleBoundary(bb []byte) {
+	s := ""
+	for _, b := range bb {
+		s += fmt.Sprintf(" 0x%02x", b)
+	}
+	expected := 7
+	if len(bb) != expected {
+		log.Printf("handleBoundary: bad reply message, length isn't %d bytes\n", expected)
+		return
+	}
+	zone := bb[3]
+	width := bb[4]
+	height := bb[5]
+	log.Printf("BOUNDARY REPLY zone=%d width=%d height=%d\n", zone, width, height)
+}
+
+var lastX float32
+var lastY float32
+var lastZ float32
+
+func handleFinger(bb []byte) {
+
+	router := TheRouter()
+
+	finger := bb[2] & 0x0f
+	action := (bb[2] & 0xf0) >> 4
+	zone := bb[3]
+	xyzbytes := bb[4:18]
+	chksum := bb[18]
+	realbytes, chk := EraeUnbitize7chksum(xyzbytes)
+	if chk != chksum {
+		log.Printf("handleFinger: chksum didn't match!  Ignoring finger message\n")
+		return
+	}
+	x := Float32frombytes(realbytes[0:4])
+	y := Float32frombytes(realbytes[4:8])
+	z := Float32frombytes(realbytes[8:12])
+	cid := fmt.Sprintf("%d", finger)
+
+	x = x / float32(EraeWidth)
+	y = y / float32(EraeHeight)
+
+	dx := lastX - x
+	dy := lastY - y
+	dz := lastZ - z
+
+	if DebugUtil.Erae {
+		log.Printf("FINGER finger=%d action=%d zone=%d x=%f y=%f z=%f   dx=%f dy=%f dz=%f\n", finger, action, zone, x, y, z, dx, dy, dz)
+	}
+
+	lastX = x
+	lastY = y
+	lastZ = z
+
+	// If the position is in one of the corners,
+	// we change the region to that corner.
+
+	edge := float32(0.1)
+	newregion := ""
+	if x < edge && y < edge {
+		newregion = "A"
+	} else if x < edge && y > (1.0-edge) {
+		newregion = "B"
+	} else if x > (1.0-edge) && y > (1.0-edge) {
+		newregion = "C"
+	} else if x > (1.0-edge) && y < edge {
+		newregion = "D"
+	}
+
+	if newregion != "" {
+		if newregion != EraeRegion {
+			// Clear cursor state from existing region
+			ce := CursorDeviceEvent{
+				NUID:      MyNUID(),
+				Region:    EraeRegion,
+				CID:       cid,
+				Timestamp: int64(CurrentMilli),
+				Ddu:       "clear",
+			}
+			router.handleCursorDeviceInput(ce)
+			log.Printf("Switching Erae to region %s", newregion)
+			EraeRegion = newregion
+		}
+		// We don't pass corner things through, even if we haven't changed the region
+		return
+	}
+
+	// make the coordinate space match OpenGL and Freeframe
+	// yNorm = 1.0 - yNorm
+
+	// Make sure we don't send anyting out of bounds
+	if y < 0.0 {
+		y = 0.0
+	} else if y > 1.0 {
+		y = 1.0
+	}
+	if x < 0.0 {
+		x = 0.0
+	} else if x > 1.0 {
+		x = 1.0
+	}
+
+	var ddu = ""
+	switch action {
+	case 0:
+		ddu = "down"
+	case 1:
+		ddu = "drag"
+	case 2:
+		ddu = "up"
+	default:
+		log.Printf("handleFinger: invalid value for action = %d\n", action)
+		return
+	}
+
+	ce := CursorDeviceEvent{
+		NUID:      MyNUID(),
+		Region:    EraeRegion,
+		CID:       cid,
+		Timestamp: int64(CurrentMilli),
+		Ddu:       ddu,
+		X:         x,
+		Y:         y,
+		Z:         z,
+		Area:      0.0,
+	}
+	// XXX - should Fresh be true???
+
+	router.handleCursorDeviceInput(ce)
+}
+
+func EraeTest() {
+	EraeApiModeDisable()
+	EraeApiModeEnable()
+	zone := 1
+	EraeZoneBoundaryRequest(zone)
+	EraeZoneClearDisplay(zone)
+	EraeZoneRectangle(zone, 0, 0, 0x2a, 0x18, 0x10, 0x10, 0x10)
+
+	for i := 0; i < 100; i++ {
+		x := byte(rand.Intn(EraeWidth))
+		y := byte(rand.Intn(EraeHeight))
+		EraeZoneClearPixel(zone, x, y, 0x37, 0x10, 0x10)
+	}
+	/*
+		erae_zone_clear_pixel(zone, 2, 3, 0x37, 0x10, 0x10)
+		erae_zone_clear_pixel(zone, 2, 4, 0x37, 0x10, 0x10)
+		erae_zone_clear_pixel(zone, 3, 2, 0x37, 0x10, 0x10)
+		erae_zone_clear_pixel(zone, 4, 2, 0x37, 0x10, 0x10)
+		erae_zone_clear_pixel(zone, 5, 2, 0x37, 0x10, 0x10)
+	*/
+}
+
+func EraeApiModeEnable() {
+	bytes := []byte{0xf0, 0x00, 0x21, 0x50, 0x00, 0x01, 0x00, 0x01,
+		0x01, 0x01, 0x04, 0x01,
+		MyPrefix, 0xf7}
+	EraeOutput.WriteSysex(bytes)
+}
+
+func EraeApiModeDisable() {
+	bytes := []byte{0xf0, 0x00, 0x21, 0x50, 0x00, 0x01, 0x00, 0x01,
+		0x01, 0x01, 0x04, 0x02, 0xf7}
+	EraeOutput.WriteSysex(bytes)
+}
+
+func EraeZoneBoundaryRequest(zone int) {
+	bytes := []byte{0xf0, 0x00, 0x21, 0x50, 0x00, 0x01, 0x00, 0x01,
+		0x01, 0x01, 0x04, 0x10,
+		byte(zone), 0xf7}
+	EraeOutput.WriteSysex(bytes)
+}
+
+func EraeZoneClearDisplay(zone int) {
+	bytes := []byte{0xf0, 0x00, 0x21, 0x50, 0x00, 0x01, 0x00, 0x01,
+		0x01, 0x01, 0x04, 0x20,
+		byte(zone), 0xf7}
+	EraeOutput.WriteSysex(bytes)
+}
+
+func EraeZoneClearPixel(zone int, x, y, r, g, b byte) {
+	bytes := []byte{0xf0, 0x00, 0x21, 0x50, 0x00, 0x01, 0x00, 0x01,
+		0x01, 0x01, 0x04, 0x21,
+		byte(zone), x, y, r, g, b, 0xf7}
+	EraeOutput.WriteSysex(bytes)
+}
+
+func EraeZoneRectangle(zone int, x, y, w, h, r, g, b byte) {
+	bytes := []byte{
+		0xf0, 0x00, 0x21, 0x50, 0x00, 0x01, 0x00, 0x01,
+		0x01, 0x01, 0x04, 0x22,
+		byte(zone), x, y, w, h, r, g, b,
+		0xf7,
+	}
+	EraeOutput.WriteSysex(bytes)
+}
+
+/**
+* 7-bitize an array of bytes and get the resulting checksum
+* Algorithm taken from Erae documentation.
+* Return value is the output bytes and checksum
+ */
+func EraeBitize7chksum(in []byte) (out []byte, chksum byte) {
+	chksum = 0
+	i := 0
+	outsize := 0
+	inlen := len(in)
+	out = make([]byte, 2*inlen) // too large, but the return value is sliced
+	for i < inlen {
+		out[outsize] = 0
+		for j := 0; (j < 7) && (i+j < inlen); j++ {
+			out[outsize] |= (in[i+j] & 0x80) >> (j + 1)
+			out[outsize+j+1] = in[i+j] & 0x7F
+			chksum ^= out[outsize+j+1]
+		}
+		chksum ^= out[outsize]
+		i += 7
+		outsize += 8
+	}
+	return out[0:outsize], chksum
+}
+
+/*
+* 7-unbitize an array of bytes and get the incomming checksum
+* Algorithm taken from Erae documentation.
+* Return value is the output bytes and checksum
+ */
+func EraeUnbitize7chksum(in []byte) ([]byte, byte) {
+	inlen := len(in)
+	chksum := byte(0)
+	i := 0
+	outsize := 0
+	out := make([]byte, 2*len(in)) // too large, but the return value is sliced
+	for i < inlen {
+		chksum ^= in[i]
+		for j := 0; (j < 7) && (j+1+i < inlen); j++ {
+			b := ((in[i] << (j + 1)) & 0x80) | in[i+j+1]
+			out[outsize+j] = b
+			chksum ^= in[i+j+1]
+		}
+		i += 8
+		outsize += 7
+	}
+	return out[0:outsize], chksum
+}
+
+func Float32frombytes(bytes []byte) float32 {
+	if len(bytes) != 4 {
+		log.Printf("Float32frombytes: length of bytes is not 4\n")
+		return 0
+	}
+	bits := binary.LittleEndian.Uint32(bytes)
+	float := math.Float32frombits(bits)
+	return float
+}
+
+func Float32bytes(float float32) []byte {
+	bits := math.Float32bits(float)
+	bytes := make([]byte, 4)
+	binary.LittleEndian.PutUint32(bytes, bits)
+	return bytes
+}
+
+/*
+func testmain() {
+	bytes := Float64bytes(math.Pi)
+	fmt.Println(bytes)
+	float := Float64frombytes(bytes)
+	fmt.Println(float)
+}
+*/
