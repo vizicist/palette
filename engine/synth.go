@@ -62,9 +62,9 @@ func InitSynths() {
 		program := jsynths.Synths[i].Program
 		var midiOut *MidiOutput
 		if synthoutput {
-			midiOut = MIDI.NewMidiOutput(port, channel)
+			midiOut = MIDI.openOutput(port)
 		} else {
-			midiOut = MIDI.NewFakeMidiOutput(port, channel)
+			midiOut = MIDI.openFakeOutput(port)
 		}
 		if midiOut == nil {
 			log.Printf("InitSynths: Unable to open midi port=%s\n", port)
@@ -102,7 +102,7 @@ func SendANOToSynth(synthName string) {
 	for i := range synth.noteDown {
 		synth.noteDown[i] = false
 	}
-	log.Printf("SendANOToSynth: synth=%s\n", synthName)
+	// log.Printf("SendANOToSynth: synth=%s\n", synthName)
 	synth.midiOut.stream.WriteShort(int64(status), int64(0x7b), int64(0x00))
 }
 
@@ -162,6 +162,8 @@ func SendNoteToSynth(note *Note) {
 	// if DebugUtil.MIDI {
 	// 	log.Printf("Sending portmidi.Event = %s\n", e)
 	// }
-	log.Printf("SendNoteToSynth: synth=%s status=0x%02x data1=%d data2=%d\n", synth.midiOut.Name(), e.Status, e.Data1, e.Data2)
+	if DebugUtil.MIDI {
+		log.Printf("SendNoteToSynth: synth=%s status=0x%02x data1=%d data2=%d\n", synth.midiOut.Name(), e.Status, e.Data1, e.Data2)
+	}
 	synth.midiOut.stream.WriteShort(e.Status, e.Data1, e.Data2)
 }
