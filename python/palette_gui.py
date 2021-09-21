@@ -76,7 +76,7 @@ class ProGuiApp(tk.Tk):
 
         # Normal layout values
         if guisize == "large":
-            self.paramDisplayRows = 21
+            self.paramDisplayRows = 19
             self.frameSizeOfControlNormal = 0.06
             self.frameSizeOfSelectNormal = 1.0 - self.frameSizeOfControlNormal
             self.frameSizeOfPadChooserNormal = 0.0
@@ -84,10 +84,12 @@ class ProGuiApp(tk.Tk):
             self.frameSizeOfControlAdvanced = 0.15
             self.frameSizeOfPadChooserAdvanced = 0.13
             self.frameSizeOfSelectAdvanced = 1.0 - self.frameSizeOfControlAdvanced - self.frameSizeOfPadChooserAdvanced
-            self.performButtonPadx = 6
-            self.selectDisplayRowsAdvanced = 11
+            self.performButtonPadx = 3
+            self.performButtonPady = 2
+            self.performButtonsPerRow = 6
+            self.selectDisplayRowsAdvanced = 10
         else:
-            self.paramDisplayRows = 19
+            self.paramDisplayRows = 18
             self.frameSizeOfControlNormal = 0.085
             self.frameSizeOfSelectNormal = 1.0 - self.frameSizeOfControlNormal
             self.frameSizeOfPadChooserNormal = 0.0
@@ -96,13 +98,14 @@ class ProGuiApp(tk.Tk):
             self.frameSizeOfPadChooserAdvanced = 0.14
             self.frameSizeOfSelectAdvanced = 1.0 - self.frameSizeOfControlAdvanced - self.frameSizeOfPadChooserAdvanced
             self.performButtonPadx = 3
-            self.selectDisplayRowsAdvanced = 9
+            self.performButtonPady = 3
+            self.performButtonsPerRow = 6
+            self.selectDisplayRowsAdvanced = 8
 
         self.frameSizeOfSelectAdvancedQuad = self.frameSizeOfSelectAdvanced + self.frameSizeOfPadChooserAdvanced
         if (self.frameSizeOfSelectAdvanced + self.frameSizeOfControlAdvanced + self.frameSizeOfPadChooserAdvanced) != 1.0:
             log("Hey, page sizes don't add up to 1.0")
 
-        self.performButtonPady = 3
 
         self.selectButtonPadx = 5
         self.selectButtonPady = 3
@@ -1905,7 +1908,7 @@ class PagePerformMain(tk.Frame):
         self.makePerformButton(name,f)
 
     def updatePerformButtonLabels(self,pad):
-        performButtonsPerRow = 5
+        # self.controller.performButtonsPerRow = 5
         col = 0
         row = 0
         for name in self.buttonNames:
@@ -1934,7 +1937,7 @@ class PagePerformMain(tk.Frame):
                 button.config(text=text, width=11, style=style)
                 button.grid(row=row,column=col, padx=self.controller.performButtonPadx,pady=self.controller.performButtonPady,ipady=ipady)
             col += 1
-            if col >= performButtonsPerRow:
+            if col >= self.controller.performButtonsPerRow:
                 col = 0
                 row += 1
 
@@ -2025,7 +2028,7 @@ class PageSelector(tk.Frame):
         self.valsframe.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, pady=10)
 
         self.scrollbar = ScrollBar(parent=self, notify=self)
-        self.scrollbar.pack(side=tk.LEFT, fill=tk.Y, expand=True, pady=11, padx=5)
+        # self.scrollbar.pack(side=tk.LEFT, fill=tk.Y, expand=True, pady=11, padx=5)
 
         self.doLayout()
 
@@ -2047,6 +2050,8 @@ class PageSelector(tk.Frame):
 
         ipadx = 0
         ipady = 0
+        padx = self.controller.selectButtonPadx
+        pady = self.controller.selectButtonPady
 
         if self.controller.guiLevel == 0 or self.pagename == "quad":
             nrows = self.controller.selectDisplayRowsNormal
@@ -2055,13 +2060,16 @@ class PageSelector(tk.Frame):
         nbuttons = self.controller.selectDisplayPerRow * nrows
         nvals = len(self.vals)
         if nvals <= nbuttons:
-            # get rid of the scrollbar and make the buttons wider
+            # get rid of the scrollbar and adjust the button layout factors
             self.scrollbar.pack_forget()
-            buttonwidth=14
-            ipadx = 3
+            buttonwidth=17
+            ipadx = 2
+            padx -= 3
         else:
+            # scrollbar is present
             self.scrollbar.pack(side=tk.LEFT, fill=tk.Y, expand=True, pady=11, padx=4)
             buttonwidth=13
+            pady -= 1
 
         # log("doLayout page=",self.pagename," nbuttons=",nbuttons, "nvals=",nvals, "nrows=",nrows,"buttonwidth=",buttonwidth)
 
@@ -2075,7 +2083,6 @@ class PageSelector(tk.Frame):
             for c in range(0,self.controller.selectDisplayPerRow):
                 if valindex < len(self.vals):
 
-                    # First time here, we create the Button
                     selectButtonText = self.vals[valindex]
                     istwo = isTwoLine(selectButtonText)
                     if istwo:
@@ -2086,13 +2093,14 @@ class PageSelector(tk.Frame):
                         style='PresetButton.TLabel'
                         selectButtonText = selectButtonText + "\n"
 
+                    # First time here, we create the Button
                     if not i in self.selectButtons:
                         if i > len(self.vals):
                             log("Hey, i > len(self.vals) ??")
                         self.selectButtons[i] = ttk.Button(self.valsframe, width=buttonwidth, style=style)
 
-                    self.selectButtons[i].grid(row=r,column=c,padx=self.controller.selectButtonPadx,pady=self.controller.selectButtonPady,ipady=ipady,ipadx=ipadx)
-                    self.selectButtons[i].config(text=selectButtonText,
+                    self.selectButtons[i].grid(row=r,column=c,padx=padx,pady=pady,ipady=ipady,ipadx=ipadx)
+                    self.selectButtons[i].config(text=selectButtonText, width=buttonwidth,
                         command=lambda val=self.vals[valindex],buttoni=i:self.selectorCallback(val,buttoni))
                     valindex += 1
 
@@ -2170,8 +2178,7 @@ def setFontSizes(guisize):
     global hugeFont, comboFont, largerFont, largeFont, performButtonFont
     global padLabelFont, paramNameFont, paramValueFont, paramAdjustFont
 
-    f = 'Helvetica'
-    f = 'Lucida Sans'
+    f = 'Open Sans Regular'
 
     if guisize == "large":
         presetButtonFont = (f, int(20))
@@ -2180,7 +2187,7 @@ def setFontSizes(guisize):
         comboFont = (f, int(20))
         largerFont = (f, int(20))
         largeFont = (f, int(16))
-        performButtonFont = (f, int(16))
+        performButtonFont = (f, int(14))
         padLabelFont = (f, int(22))
         paramNameFont = (f, int(18))
         paramValueFont = (f, int(18))

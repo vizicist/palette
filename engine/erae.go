@@ -26,19 +26,25 @@ func InitErae() {
 		return
 	}
 	EraeEnabled = true
-	DebugUtil.Erae = true
-	DebugUtil.GenVisual = true
-	DebugUtil.OSC = true
+	// DebugUtil.OSC = true
+	// DebugUtil.Erae = true
 }
 
 func HandleEraeMIDI(event MidiEvent) {
 	if event.SysEx != nil {
 		bb := event.SysEx
+		if DebugUtil.Erae {
+			s := ""
+			for _, b := range bb {
+				s += fmt.Sprintf(" 0x%02x", b)
+			}
+			log.Printf("HandleEraeMIDI: bytes = %s\n", s)
+		}
 		if bb[1] == MyPrefix {
 			handleEraeSysex(bb)
 		}
 	} else {
-		log.Printf("handleEraeMIDI: ReadEvent event=%+v\n", event)
+		log.Printf("HandleEraeMIDI: no action for event=%+v\n", event)
 	}
 }
 
@@ -52,10 +58,6 @@ func handleEraeSysex(bb []byte) {
 }
 
 func handleBoundary(bb []byte) {
-	s := ""
-	for _, b := range bb {
-		s += fmt.Sprintf(" 0x%02x", b)
-	}
 	expected := 7
 	if len(bb) != expected {
 		log.Printf("handleBoundary: bad reply message, length isn't %d bytes\n", expected)
@@ -77,7 +79,6 @@ func handleFinger(bb []byte) {
 
 	finger := bb[2] & 0x0f
 	action := (bb[2] & 0xf0) >> 4
-	zone := bb[3]
 	xyzbytes := bb[4:18]
 	chksum := bb[18]
 	realbytes, chk := EraeUnbitize7chksum(xyzbytes)
@@ -93,17 +94,16 @@ func handleFinger(bb []byte) {
 	x = x / float32(EraeWidth)
 	y = y / float32(EraeHeight)
 
-	dx := lastX - x
-	dy := lastY - y
-	dz := lastZ - z
-
 	if DebugUtil.Erae {
+		zone := bb[3]
+		dx := lastX - x
+		dy := lastY - y
+		dz := lastZ - z
 		log.Printf("FINGER finger=%d action=%d zone=%d x=%f y=%f z=%f   dx=%f dy=%f dz=%f\n", finger, action, zone, x, y, z, dx, dy, dz)
+		lastX = x
+		lastY = y
+		lastZ = z
 	}
-
-	lastX = x
-	lastY = y
-	lastZ = z
 
 	// If the position is in one of the corners,
 	// we change the region to that corner.

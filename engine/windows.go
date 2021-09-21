@@ -1,3 +1,4 @@
+//go:build windows
 // +build windows
 
 package engine
@@ -75,7 +76,7 @@ func LoadMorphs() error {
 			log.Printf("Setting Morph serial=%s region=%s\n", serialnum, regionname)
 		}
 		MorphDefs[serialnum] = regionname
-		TheRouter().setRegionForMorph(serialnum, regionname)
+		// TheRouter().setRegionForMorph(serialnum, regionname)
 	}
 	return nil
 }

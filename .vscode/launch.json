@@ -25,6 +25,22 @@
             "args": []
         },
         {
+            "name": "start gui large",
+            "type": "python",
+            "request": "launch",
+            "program": "${env:PALETTESOURCE}/python/palette_gui.py",
+            "console": "integratedTerminal",
+            "args": ["large"]
+        },
+        {
+            "name": "start gui small",
+            "type": "python",
+            "request": "launch",
+            "program": "${env:PALETTESOURCE}/python/palette_gui.py",
+            "console": "integratedTerminal",
+            "args": ["small"]
+        },
+        {
             "name": "start allsmall",
             "type": "go",
             "request": "launch",

@@ -63,6 +63,7 @@ Source: "ship\config\settings.json"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\conf
 Source: "ship\midifiles\*"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\midifiles"; Flags: comparetimestamp ignoreversion recursesubdirs createallsubdirs
 Source: "logs_readme.txt"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\logs"; DestName: "readme.txt"; Flags: ignoreversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
+Source: "OpenSans-Regular.ttf"; DestDir: "{fonts}"; FontInstall: "Open Sans Regular"; Flags: onlyifdoesntexist uninsneveruninstall
 
 ; This specifies the Visual C++ Windows Runtime Redistributable to install, it's put in {app}\bin to help debug things.
 [Files]

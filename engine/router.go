@@ -30,25 +30,25 @@ type Router struct {
 	OSCInput  chan OSCEvent
 	MIDIInput chan MidiEvent
 
-	midiEventHandler     MIDIEventHandler
-	killme               bool // true if Router should be stopped
-	lastClick            Clicks
-	control              chan Command
-	time                 time.Time
-	time0                time.Time
-	killPlayback         bool
-	recordingOn          bool
-	recordingFile        *os.File
-	recordingBegun       time.Time
-	resolumeClient       *osc.Client
-	guiClient            *osc.Client
-	plogueClient         *osc.Client
-	publishCursor        bool
-	publishMIDI          bool
-	myHostname           string
-	generateVisuals      bool
-	generateSound        bool
-	regionForMorph       map[string]string // for all known Morph serial#'s
+	midiEventHandler MIDIEventHandler
+	killme           bool // true if Router should be stopped
+	lastClick        Clicks
+	control          chan Command
+	time             time.Time
+	time0            time.Time
+	killPlayback     bool
+	recordingOn      bool
+	recordingFile    *os.File
+	recordingBegun   time.Time
+	resolumeClient   *osc.Client
+	guiClient        *osc.Client
+	plogueClient     *osc.Client
+	publishCursor    bool
+	publishMIDI      bool
+	myHostname       string
+	generateVisuals  bool
+	generateSound    bool
+	// regionForMorph       map[string]string // for all known Morph serial#'s
 	regionAssignedToNUID map[string]string
 	regionAssignedMutex  sync.RWMutex // covers both regionForMorph and regionAssignedToNUID
 	eventMutex           sync.RWMutex
@@ -136,7 +136,7 @@ func TheRouter() *Router {
 		}
 
 		oneRouter.motors = make(map[string]*Motor)
-		oneRouter.regionForMorph = make(map[string]string)
+		// oneRouter.regionForMorph = make(map[string]string)
 		oneRouter.regionAssignedToNUID = make(map[string]string)
 
 		resolumePort := 7000
@@ -1171,6 +1171,7 @@ func (r *Router) getRegionForSource(fullsource string) string {
 }
 */
 
+/*
 // This is used only at startup to pre-seed the
 // Regions for known Morphs (e.g for Space Palette Pro).
 func (r *Router) setRegionForMorph(serialnum string, region string) {
@@ -1183,9 +1184,12 @@ func (r *Router) setRegionForMorph(serialnum string, region string) {
 	}
 	r.regionForMorph[serialnum] = region
 }
+*/
 
-// Assumes we have the r.regionAssignedMutex
 func (r *Router) getRegionForNUID(nuid string) string {
+
+	r.regionAssignedMutex.Lock()
+	defer r.regionAssignedMutex.Unlock()
 
 	// See if we've already assigned a region to this source
 	region, ok := r.regionAssignedToNUID[nuid]
