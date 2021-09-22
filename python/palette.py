@@ -3,9 +3,6 @@ import nats
 from nats.aio.client import Client as NATS
 from nats.aio.errors import ErrTimeout, ErrNoServers
 from nats.aio.nuid import NUID
-from tkinter import ttk
-from tkinter import font
-import tkinter as tk
 
 import os
 import io
@@ -14,7 +11,6 @@ import glob
 import collections
 import time
 import signal
-from urllib import request, parse
 
 # try:
 #     import thread
