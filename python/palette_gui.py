@@ -15,7 +15,6 @@ import collections
 import signal
 import pyperclip
 import random
-from subprocess import call, Popen
 from codenamize import codenamize
 
 import palette
