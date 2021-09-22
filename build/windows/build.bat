@@ -113,6 +113,7 @@ copy %PALETTESOURCE%\default\config\synths.json %ship%\config >nul
 copy %PALETTESOURCE%\default\config\morphs.json %ship%\config >nul
 copy %PALETTESOURCE%\default\config\nats*.conf %ship%\config >nul
 copy %PALETTESOURCE%\default\config\Palette*.avc %ship%\config >nul
+copy %PALETTESOURCE%\default\config\EraeTouchLayout.emk %ship%\config >nul
 copy %PALETTESOURCE%\default\config\palette.ico %ship%\config >nul
 copy %PALETTESOURCE%\default\config\palette.bidule %ship%\config >nul
 
