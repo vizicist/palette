@@ -26,19 +26,6 @@ func main() {
 	go r.StartMIDI()
 	go r.InputListener() // never returns
 
-	args := flag.Args()
-	nargs := len(args)
-
-	cmd := "test" // default cmd
-	if nargs != 0 {
-		cmd = args[0]
-	}
-	switch cmd {
-	case "test":
-		engine.EraeTest()
-	default:
-		log.Printf("Unrecognized: %s\n", args[0])
-	}
 	log.Printf("Blocking forever....\n")
 	select {} // block forever
 }

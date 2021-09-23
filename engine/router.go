@@ -17,8 +17,6 @@ import (
 	nats "github.com/nats-io/nats.go"
 )
 
-const debug bool = false
-
 // CurrentMilli is the time from the start, in milliseconds
 var CurrentMilli int
 
@@ -43,6 +41,7 @@ type Router struct {
 	resolumeClient   *osc.Client
 	guiClient        *osc.Client
 	plogueClient     *osc.Client
+	cursorCount      int
 	publishCursor    bool
 	publishMIDI      bool
 	myHostname       string
@@ -249,7 +248,7 @@ func (r *Router) StartRealtime() {
 	tick := time.NewTicker(2 * time.Millisecond)
 	r.time0 = <-tick.C
 
-	var lastPrintedClick Clicks
+	var nextAliveSecs float64
 
 	// By reading from tick.C, we wake up every 2 milliseconds
 	for now := range tick.C {
@@ -266,12 +265,11 @@ func (r *Router) StartRealtime() {
 			currentClick = newclick
 		}
 
-		var everySoOften = oneBeat * 4
-		if (currentClick%everySoOften) == 0 && currentClick != lastPrintedClick {
-			if debug {
-				log.Printf("currentClick=%d  unix=%d:%d\n", currentClick, time.Now().Unix(), time.Now().UnixNano())
-			}
-			lastPrintedClick = currentClick
+		var aliveInterval = 5.0
+		if secs > nextAliveSecs {
+			nextAliveSecs += aliveInterval
+			PublishAliveEvent(secs, r.cursorCount)
+			r.cursorCount = 0
 		}
 
 		select {
@@ -413,6 +411,10 @@ func (r *Router) HandleSubscribedEventArgs(args map[string]string) error {
 
 	switch mainEvent {
 
+	case "engine":
+		log.Printf("Router: ignoring engine event\n")
+		return nil
+
 	case "cursor":
 
 		// If we're publishing cursor events, we ignore ones from ourself
@@ -515,6 +517,7 @@ func (r *Router) handleCursorDeviceInput(e CursorDeviceEvent) {
 		log.Printf("routeCursorDeviceEvent: no region named %s, unable to process ce=%+v\n", e.Region, e)
 		return
 	}
+	r.cursorCount++
 	motor.handleCursorDeviceEvent(e)
 }
 
@@ -736,6 +739,25 @@ func (r *Router) ExecuteAPI(api string, nuid string, rawargs string) (result int
 			value = "ECHO!"
 		}
 		result = value
+
+	case "fakemidi":
+		// publish fake event for testing
+		me := MIDIDeviceEvent{
+			Timestamp: int64(0),
+			Status:    0x90,
+			Data1:     0x10,
+			Data2:     0x10,
+		}
+		eee := PublishMIDIDeviceEvent(me)
+		if eee != nil {
+			log.Printf("InputListener: me=%+v err=%s\n", me, eee)
+		}
+		/*
+			d := time.Duration(secs) * time.Second
+			log.Printf("hang: d=%+v\n", d)
+			time.Sleep(d)
+			log.Printf("hang is done\n")
+		*/
 
 	case "debug":
 		s, err := needStringArg("debug", api, args)

@@ -52,6 +52,7 @@ Source: "ship\presets\*"; DestDir: "{app}\presets"; Flags: ignoreversion recurse
 Source: "ship\config\nats*.conf"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
 Source: "ship\config\paramdefs.json"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
 Source: "ship\config\paramenums.json"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
+Source: "ship\config\EraeTouchLayout.emk"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
 Source: "ship\config\Palette*.avc"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
 Source: "ship\config\palette.ico"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
 Source: "ship\config\palette.bidule"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion

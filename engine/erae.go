@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"log"
 	"math"
-	"math/rand"
+	"sync"
+	"time"
 )
 
 var EraeRegion = "A"
@@ -15,6 +16,8 @@ var EraeInput *MidiInput
 var MyPrefix byte = 0x55
 var EraeWidth int = 0x2a
 var EraeHeight int = 0x18
+var EraeZone byte = 1
+var EraeMutex sync.RWMutex
 
 func InitErae() {
 	MIDI.openInput("Erae Touch")
@@ -28,6 +31,7 @@ func InitErae() {
 	EraeEnabled = true
 	// DebugUtil.OSC = true
 	// DebugUtil.Erae = true
+	EraeZoneClearDisplay(EraeZone)
 }
 
 func HandleEraeMIDI(event MidiEvent) {
@@ -73,12 +77,48 @@ var lastX float32
 var lastY float32
 var lastZ float32
 
+func EraeFingerIndicator(zone, x, y byte) {
+	if DebugUtil.Erae {
+		log.Printf("EraeFingerIndicator!!   x,y=%d,%d\n", x, y)
+	}
+	rectw := byte(2)
+	recth := byte(2)
+	dim := 1.0
+	for dim > 0 {
+		// Should set color based on EraeRegion
+		red := byte(0)
+		green := byte(0)
+		blue := byte(0)
+		alpha := byte(0x7f * dim)
+		switch EraeRegion {
+		case "A":
+			red = alpha
+		case "B":
+			green = alpha
+		case "C":
+			blue = alpha
+		case "D":
+			red = alpha
+			green = alpha
+			blue = alpha
+		}
+
+		EraeZoneRectangle(zone, x, y, rectw, recth, red, green, blue)
+
+		time.Sleep(100 * time.Millisecond)
+		dim -= 0.05
+	}
+	// Erase it
+	EraeZoneRectangle(zone, x, y, rectw, recth, 0x00, 0x00, 0x00)
+}
+
 func handleFinger(bb []byte) {
 
 	router := TheRouter()
 
 	finger := bb[2] & 0x0f
 	action := (bb[2] & 0xf0) >> 4
+	zone := bb[3]
 	xyzbytes := bb[4:18]
 	chksum := bb[18]
 	realbytes, chk := EraeUnbitize7chksum(xyzbytes)
@@ -86,16 +126,16 @@ func handleFinger(bb []byte) {
 		log.Printf("handleFinger: chksum didn't match!  Ignoring finger message\n")
 		return
 	}
-	x := Float32frombytes(realbytes[0:4])
-	y := Float32frombytes(realbytes[4:8])
-	z := Float32frombytes(realbytes[8:12])
+	rawx := Float32frombytes(realbytes[0:4])
+	rawy := Float32frombytes(realbytes[4:8])
+	rawz := Float32frombytes(realbytes[8:12])
 	cid := fmt.Sprintf("%d", finger)
 
-	x = x / float32(EraeWidth)
-	y = y / float32(EraeHeight)
+	x := rawx / float32(EraeWidth)
+	y := rawy / float32(EraeHeight)
+	z := rawz
 
 	if DebugUtil.Erae {
-		zone := bb[3]
 		dx := lastX - x
 		dy := lastY - y
 		dz := lastZ - z
@@ -131,12 +171,19 @@ func handleFinger(bb []byte) {
 				Ddu:       "clear",
 			}
 			router.handleCursorDeviceInput(ce)
-			log.Printf("Switching Erae to region %s", newregion)
+			if DebugUtil.Erae {
+				log.Printf("Switching Erae to region %s", newregion)
+			}
 			EraeRegion = newregion
 		}
 		// We don't pass corner things through, even if we haven't changed the region
 		return
 	}
+
+	// Do you need to round the value of rawx/y ??
+	// if action == 0 {
+	go EraeFingerIndicator(zone, byte(rawx), byte(rawy))
+	// }
 
 	// make the coordinate space match OpenGL and Freeframe
 	// yNorm = 1.0 - yNorm
@@ -182,70 +229,54 @@ func handleFinger(bb []byte) {
 	router.handleCursorDeviceInput(ce)
 }
 
-func EraeTest() {
-	EraeApiModeDisable()
-	EraeApiModeEnable()
-	zone := 1
-	EraeZoneBoundaryRequest(zone)
-	EraeZoneClearDisplay(zone)
-	EraeZoneRectangle(zone, 0, 0, 0x2a, 0x18, 0x10, 0x10, 0x10)
-
-	for i := 0; i < 100; i++ {
-		x := byte(rand.Intn(EraeWidth))
-		y := byte(rand.Intn(EraeHeight))
-		EraeZoneClearPixel(zone, x, y, 0x37, 0x10, 0x10)
-	}
-	/*
-		erae_zone_clear_pixel(zone, 2, 3, 0x37, 0x10, 0x10)
-		erae_zone_clear_pixel(zone, 2, 4, 0x37, 0x10, 0x10)
-		erae_zone_clear_pixel(zone, 3, 2, 0x37, 0x10, 0x10)
-		erae_zone_clear_pixel(zone, 4, 2, 0x37, 0x10, 0x10)
-		erae_zone_clear_pixel(zone, 5, 2, 0x37, 0x10, 0x10)
-	*/
+func EraeWriteSysex(bytes []byte) {
+	EraeMutex.Lock()
+	defer EraeMutex.Unlock()
+	EraeOutput.WriteSysex(bytes)
 }
 
 func EraeApiModeEnable() {
 	bytes := []byte{0xf0, 0x00, 0x21, 0x50, 0x00, 0x01, 0x00, 0x01,
 		0x01, 0x01, 0x04, 0x01,
 		MyPrefix, 0xf7}
-	EraeOutput.WriteSysex(bytes)
+	EraeWriteSysex(bytes)
 }
 
 func EraeApiModeDisable() {
 	bytes := []byte{0xf0, 0x00, 0x21, 0x50, 0x00, 0x01, 0x00, 0x01,
 		0x01, 0x01, 0x04, 0x02, 0xf7}
-	EraeOutput.WriteSysex(bytes)
+	EraeWriteSysex(bytes)
 }
 
-func EraeZoneBoundaryRequest(zone int) {
+func EraeZoneBoundaryRequest(zone byte) {
 	bytes := []byte{0xf0, 0x00, 0x21, 0x50, 0x00, 0x01, 0x00, 0x01,
 		0x01, 0x01, 0x04, 0x10,
 		byte(zone), 0xf7}
-	EraeOutput.WriteSysex(bytes)
+	EraeWriteSysex(bytes)
 }
 
-func EraeZoneClearDisplay(zone int) {
+func EraeZoneClearDisplay(zone byte) {
 	bytes := []byte{0xf0, 0x00, 0x21, 0x50, 0x00, 0x01, 0x00, 0x01,
 		0x01, 0x01, 0x04, 0x20,
 		byte(zone), 0xf7}
-	EraeOutput.WriteSysex(bytes)
+	EraeWriteSysex(bytes)
 }
 
-func EraeZoneClearPixel(zone int, x, y, r, g, b byte) {
+func EraeZoneClearPixel(zone, x, y, r, g, b byte) {
 	bytes := []byte{0xf0, 0x00, 0x21, 0x50, 0x00, 0x01, 0x00, 0x01,
 		0x01, 0x01, 0x04, 0x21,
 		byte(zone), x, y, r, g, b, 0xf7}
-	EraeOutput.WriteSysex(bytes)
+	EraeWriteSysex(bytes)
 }
 
-func EraeZoneRectangle(zone int, x, y, w, h, r, g, b byte) {
+func EraeZoneRectangle(zone, x, y, w, h, r, g, b byte) {
 	bytes := []byte{
 		0xf0, 0x00, 0x21, 0x50, 0x00, 0x01, 0x00, 0x01,
 		0x01, 0x01, 0x04, 0x22,
 		byte(zone), x, y, w, h, r, g, b,
 		0xf7,
 	}
-	EraeOutput.WriteSysex(bytes)
+	EraeWriteSysex(bytes)
 }
 
 /**
