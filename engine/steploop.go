@@ -189,3 +189,17 @@ func ChangeClicksPerSecond(factor float64) {
 func Seconds2Clicks(tm float64) Clicks {
 	return currentClickOffset + Clicks(0.5+float64(tm*1000-float64(currentMilliOffset))*(float64(clicksPerSecond)/1000.0))
 }
+
+// Clicks2Seconds converts Clicks to Time (seconds), relative
+func Clicks2Seconds(clk Clicks) float64 {
+	return float64(clk) / float64(clicksPerSecond)
+}
+
+// Clicks2Seconds converts Clicks to Time (seconds), absolute
+func Clicks2SecondsAbsolute(clk Clicks) float64 {
+	// Take current*Offset values into account
+	clk -= currentClickOffset
+	secs := float64(clk) / float64(clicksPerSecond)
+	secs -= (float64(currentMilliOffset) * 1000.0)
+	return secs
+}

@@ -73,6 +73,8 @@ func setDebug(dtype string, b bool) error {
 		DebugUtil.Morph = b
 	case "nats":
 		DebugUtil.NATS = b
+	case "erae":
+		DebugUtil.Erae = b
 	case "osc":
 		DebugUtil.OSC = b
 	case "resolume":
