@@ -35,9 +35,6 @@ func PublishCursorDeviceEvent(ce CursorDeviceEvent) error {
 		"\"z\": \"" + fmt.Sprintf("%f", ce.Z) + "\", " +
 		"\"area\": \"" + fmt.Sprintf("%f", ce.Area) + "\" }"
 
-	if DebugUtil.NATS {
-		log.Printf("Publishing %s %s\n", PaletteEventSubject, params)
-	}
 	err := TheVizNats.Publish(PaletteEventSubject, params)
 	if err != nil {
 		return err
@@ -60,9 +57,6 @@ func PublishMIDIDeviceEvent(me MIDIDeviceEvent) error {
 		"\"data1\": \"" + fmt.Sprintf("%d", me.Data1) + "\", " +
 		"\"data2\": \"" + fmt.Sprintf("%d", me.Data2) + "\" }"
 
-	if DebugUtil.MIDI {
-		log.Printf("Publishing %s %s\n", PaletteEventSubject, params)
-	}
 	err := TheVizNats.Publish(PaletteEventSubject, params)
 	if err != nil {
 		return err
@@ -78,7 +72,21 @@ func PublishSpriteEvent(x, y, z float32) error {
 		"\"y\": \"" + fmt.Sprintf("%f", y) + "\", " +
 		"\"z\": \"" + fmt.Sprintf("%f", z) + "\" }"
 
-	log.Printf("Publishing %s %s\n", PaletteEventSubject, params)
+	err := TheVizNats.Publish(PaletteEventSubject, params)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// PublishAliveEvent xxx
+func PublishAliveEvent(secs float64, cursorCount int) error {
+	params := "{ " +
+		"\"nuid\": \"" + MyNUID() + "\", " +
+		"\"event\": \"" + "alive" + "\", " +
+		"\"seconds\": \"" + fmt.Sprintf("%f", secs) + "\", " +
+		"\"cursorcount\": \"" + fmt.Sprintf("%d", cursorCount) +
+		"\" }"
 
 	err := TheVizNats.Publish(PaletteEventSubject, params)
 	if err != nil {

@@ -17,6 +17,10 @@ import pyperclip
 import random
 from codenamize import codenamize
 
+import asyncio
+from nats.aio.client import Client as NATS
+from nats.aio.errors import ErrConnectionClosed, ErrTimeout, ErrNoServers
+
 import palette
 
 IsQuad = False
@@ -2272,6 +2276,52 @@ def debug(*args):
 def loginit():
     palette.loginit()
 
+Killme = False
+
+async def nats_listen_for_palette(loop,app):
+
+    nc = NATS()
+    await nc.connect("nats://127.0.0.1:4222", loop=loop)
+
+    async def message_handler(msg):
+        subject = msg.subject
+        reply = msg.reply
+        data = msg.data.decode()
+        if data == "exit":
+            global Killme
+            Killme = True
+
+        # print("Received a message on '{subject} {reply}': {data}".format(
+        #     subject=subject, reply=reply, data=data))
+        if subject == "palette.event":
+            j = json.loads(data)
+            event = j["event"]
+            secs = j["seconds"]
+            count = j["cursorcount"]
+            if event == "alive" and int(count) == 0:
+                print("SHOULD RESET!!")
+
+
+    # "*" matches any token, at any level of the subject.
+    await nc.subscribe("palette.event", cb=message_handler)
+
+    # WAIT FOR INCOMING MESSAGES
+    while Killme == False:
+        await asyncio.sleep(.1)
+
+    print("Killme caused exit")
+
+    # Gracefully close the connection.
+    await nc.drain()
+
+
+def background_thread(app):  # runs in background thread
+
+    loop = asyncio.new_event_loop()
+    loop.run_until_complete(nats_listen_for_palette(loop,app))
+    loop.close()
+    print("background_thread has finished?")
+
 if __name__ == "__main__":
 
     loginit()
@@ -2327,5 +2377,9 @@ if __name__ == "__main__":
 
     delay = 1.0 # allow window to be drawn
     threading.Timer(delay, startgui, args=[app.windowName,guisize], kwargs=None).start()
+
+    thd = threading.Thread(target=background_thread,args=(app,))   # timer thread
+    thd.daemon = True
+    thd.start()  # start timer loop
 
     initMain(app)
