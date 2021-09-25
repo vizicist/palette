@@ -25,7 +25,6 @@ import palette
 
 IsQuad = False
 RecMode = False
-StartupMode = True
 
 ColorWhite = '#ffffff'
 ColorBlack = '#000000'
@@ -62,6 +61,9 @@ class ProGuiApp(tk.Tk):
 
         self.guisize = guisize
 
+        self.currentMode = ""
+        self.nextMode = ""
+
         s = palette.ConfigValue("guilevel")
         if s == "":
             self.defaultGuiLevel = 0
@@ -73,6 +75,9 @@ class ProGuiApp(tk.Tk):
         self.setGuiLevel(self.defaultGuiLevel)
 
         self.thumbFactor = 0.1
+
+        self.lastAnything = 0
+        self.resetAfterInactivity = int(palette.ConfigValue("attracttimeout"))
 
         # These are the same in both normal and advanced
         self.selectDisplayPerRow = 3
@@ -113,7 +118,7 @@ class ProGuiApp(tk.Tk):
         self.selectButtonPadx = 5
         self.selectButtonPady = 3
 
-        self.setFrameSizes()
+        # self.setFrameSizes()
         self.setScaleList()
 
         setFontSizes(self.guisize)
@@ -165,15 +170,6 @@ class ProGuiApp(tk.Tk):
         for s in palette.GlobalPerformLabels:
             self.globalPerformIndex[s] = 0
 
-        self.topContainer = tk.Frame(self, background=ColorBg)
-
-        self.selectFrame = self.makeSelectFrame(self.topContainer)
-        self.performFrame = self.makePerformFrame(self.topContainer)
-        self.startupFrame = self.makeStartupFrame(self.topContainer)
-        self.padChooser = self.makePadChooserFrame(parent=self.topContainer,controller=self)
-
-        self.performPage = PagePerformMain(parent=self.performFrame, controller=self)
-
         self.windowName = "Palette Control"
         self.winfo_toplevel().title(self.windowName)
 
@@ -181,17 +177,8 @@ class ProGuiApp(tk.Tk):
         self.lastEscape = time.time()
         self.lastClearLoop = time.time()
         self.resetLastAnything()
-
-        self.topContainer.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
-        self.performPage.pack(side=tk.TOP,fill=tk.BOTH,expand=True)
-        # self.selectPage("snap")
-        self.resetVisibility()
-
-        self.topContainer.bind_all("<MouseWheel>", self.scrollWheel)
-
-        # select the initial pad
-        self.padChooserCallback(padname)
-
+        self.layoutDone = False
+    
     def setScaleList(self):
         if self.guiLevel == 0:
             palette.GlobalPerformLabels["scale"] = palette.SimpleScales
@@ -215,7 +202,7 @@ class ProGuiApp(tk.Tk):
         scrollbar.scrollWheel(event)
 
     def mainLoop(self):
-        doneLoading = False
+        # doneLoading = False
         while True:
             try:
                 self.update_idletasks()
@@ -235,47 +222,150 @@ class ProGuiApp(tk.Tk):
 
             now = time.time()
 
-            if doneLoading:
-                pass
-            elif StartupMode:
-                self.selectFrame.place_forget()
-                self.performFrame.place_forget()
-                self.padChooser.place_forget()
-                self.startupFrame.place(in_=self.topContainer, relx=0, rely=0, relwidth=1, relheight=1)
-            else:
-                # do this once
-                if doneLoading == False:
-                    self.startupFrame.place_forget()
+            if self.nextMode != "":
+
+                # switch to a new Mode 
+                if self.nextMode == "layout":
+                    self.initLayout()
+                    self.nextMode = "attract"
+                    self.startAttractMode()
+
+                elif self.nextMode == "help":
+                    self.startHelpMode()
+
+                elif self.nextMode == "attract":
+                    self.startAttractMode()
+
+                elif self.nextMode == "normal":
+                    self.startNormalMode()
+
+                else:
+                    log("Invalid value for nextMode: ",self.nextMode)
+
+                self.currentMode = self.nextMode
+                self.nextMode = ""
+
+            if self.currentMode == "":
+                continue
+
+            if self.currentMode == "normal":
+                self.doSelectorAction()
+                if self.resetAfterInactivity>0 and (now - self.lastAnything) > self.resetAfterInactivity:
+                    log("No activity, starting attract mode...")
                     self.resetAll()
-                    doneLoading = True
-                    for pad in self.Pads:
-                        pad.sendParamsOfType("snap")
+                    self.nextMode = "attract"
 
-            if palette.resetAfterInactivity>0 and (now - self.lastAnything) > palette.resetAfterInactivity:
-                log("Resetting after no activity!!")
-                self.resetAll()
-                self.performPage.updatePerformButtonLabels(self.CurrPad)
-    
-            reset = True
+            elif self.currentMode == "attract":
+                self.doAttractAction()
 
-            if self.selectorAction == "LOAD":
-                self.selectorLoadAndSend(self.currentPageName,self.selectorValue,self.selectorButtonIndex)
-    
-            elif self.selectorAction == "IMPORT":
-                self.selectorImportAndSend(self.currentPageName,self.selectorValue)
+            elif self.currentMode == "help":
+                self.doHelpAction()
 
-            elif self.selectorAction == "INIT":
-                self.selectorApply("init",self.currentPageName)
-
-            elif self.selectorAction == "RAND":
-                self.selectorApply("rand",self.currentPageName)
+            elif self.currentMode == "startup":
+                self.doStartupAction()
 
             else:
-                reset = False
+                log("Invalid value for currentMode: ",self.currentMode)
+                self.currentMode = ""
 
-            if reset:
-                self.resetLastAnything()
-            self.selectorAction = ""
+    def startNormalMode(self):
+        # self.startupFrame.place_forget()
+        self.attractFrame.place_forget()
+        self.helpFrame.place_forget()
+        self.resetVisibility()
+
+    def startAttractMode(self):
+        self.lastAttractAction = 0
+        self.selectFrame.place_forget()
+        self.performFrame.place_forget()
+        self.padChooser.place_forget()
+        self.helpFrame.place_forget()
+        self.attractFrame.place(in_=self.topContainer, relx=0, rely=0, relwidth=1, relheight=1)
+        # self.selectorLoadAndSend("quad","Square_Fantasia")
+        # self.selectorLoadAndSend("quad","Circular_Garden")
+        attractPreset = palette.ConfigValue("attractpreset")
+        self.selectorLoadAndSend("quad",attractPreset)
+
+    def startHelpMode(self):
+        self.selectFrame.place_forget()
+        self.performFrame.place_forget()
+        self.padChooser.place_forget()
+        self.attractFrame.place_forget()
+        self.helpFrame.place(in_=self.topContainer, relx=0, rely=0, relwidth=1, relheight=1)
+
+    def initLayout(self):
+
+        if self.layoutDone == True:
+            log("Hey! initLayout called twice!?")
+            return
+        self.layoutDone = True
+
+        self.topContainer = tk.Frame(self, background=ColorBg)
+
+        self.selectFrame = self.makeSelectFrame(self.topContainer)
+        self.performFrame = self.makePerformFrame(self.topContainer)
+        self.attractFrame = self.makeAttractFrame(self.topContainer)
+        self.helpFrame = self.makeHelpFrame(self.topContainer)
+        self.padChooser = self.makePadChooserFrame(parent=self.topContainer,controller=self)
+
+        self.performPage = PagePerformMain(parent=self.performFrame, controller=self)
+
+        self.topContainer.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        self.topContainer.bind_all("<MouseWheel>", self.scrollWheel)
+
+        self.performPage.pack(side=tk.TOP,fill=tk.BOTH,expand=True)
+
+        # self.selectPage("snap")
+        self.resetVisibility()
+
+        # select the initial pad
+        self.padChooserCallback(padname)
+        self.allPadsSelected = True
+        self.padChooser.refreshColors()
+
+    def doStartupAction(self):
+        pass
+
+    def randomSprite(self,region,downup):
+        x = random.random()
+        y = random.random()
+        z = 0.6 - random.random() / 2.0
+        palette.SendSpriteEvent("0",x,y,z,region)
+
+    def doAttractAction(self):
+        now = time.time()
+        dt = now - self.lastAttractAction
+        if dt > 0.5:
+            regions = ["A","B","C","D"]
+            i = int(random.random()*99) % 4
+            region = regions[i]
+            self.randomSprite(region,"down")
+            self.randomSprite(region,"up")
+            self.lastAttractAction = now
+
+    def doHelpAction(self):
+        pass
+
+    def doSelectorAction(self):
+        reset = True
+        if self.selectorAction == "LOAD":
+            self.selectorLoadAndSend(self.currentPageName,self.selectorValue)
+
+        elif self.selectorAction == "IMPORT":
+            self.selectorImportAndSend(self.currentPageName,self.selectorValue)
+
+        elif self.selectorAction == "INIT":
+            self.selectorApply("init",self.currentPageName)
+
+        elif self.selectorAction == "RAND":
+            self.selectorApply("rand",self.currentPageName)
+
+        else:
+            reset = False
+
+        if reset:
+            self.resetLastAnything()
+        self.selectorAction = ""
     
     def resetLastAnything(self):
         self.lastAnything = time.time()
@@ -414,13 +504,46 @@ class ProGuiApp(tk.Tk):
 
         return f
 
-    def makeStartupFrame(self,container):
+    # def makeStartupFrame(self,container):
+    #     f = tk.Frame(container,
+    #         highlightbackground=ColorBg, highlightcolor=ColorAqua, highlightthickness=3)
+    #     lbl = ttk.Label(f, text="  Space Palette Pro is Loading...", style='Loading.TLabel',
+    #         foreground=ColorText, background=ColorBg, relief="flat", justify=tk.CENTER, font=hugeFont)
+    #     lbl.pack(side=tk.TOP,fill=tk.BOTH,expand=True)
+    #     return f
+
+    def unattract(self):
+        self.nextMode = "normal"
+        self.resetLastAnything()
+
+    def unhelp(self):
+        self.nextMode = "normal"
+        self.resetLastAnything()
+
+    def makeAttractFrame(self,container):
+
+        path = palette.configFilePath("attractscreen.png")
+        self.attractImage = tk.PhotoImage(file=path)
+
         f = tk.Frame(container,
             highlightbackground=ColorBg, highlightcolor=ColorAqua, highlightthickness=3)
-        self.startupLabel = ttk.Label(f, text="  Space Palette Pro is Loading...", style='Loading.TLabel',
-            foreground=ColorText, background=ColorBg, relief="flat", justify=tk.CENTER, font=hugeFont)
-        self.startupLabel.pack(side=tk.TOP,fill=tk.BOTH,expand=True)
+        button = ttk.Button(f, image=self.attractImage, style='Attract.TLabel',
+            command=self.unattract)
+        button.pack(side=tk.TOP,fill=tk.BOTH,expand=True)
         return f
+
+    def makeHelpFrame(self,container):
+
+        path = palette.configFilePath("helpscreen.png")
+        self.helpImage = tk.PhotoImage(file=path)
+
+        f = tk.Frame(container,
+            highlightbackground=ColorBg, highlightcolor=ColorAqua, highlightthickness=3)
+        button = ttk.Button(f, image=self.helpImage, style='Attract.TLabel',
+            command=self.unhelp)
+        button.pack(side=tk.TOP,fill=tk.BOTH,expand=True)
+        return f
+
 
     def updateSelectorPage(self,pagename,files):
         page = self.selectorPage[pagename]
@@ -456,7 +579,6 @@ class ProGuiApp(tk.Tk):
 
         if pagename != "quad" and self.editMode:
             if self.allPadsSelected:
-                # log("allPadsSelected: using values from Pad A")
                 pad = self.padNamed("A")
             else:
                 pad = self.CurrPad
@@ -615,14 +737,13 @@ class ProGuiApp(tk.Tk):
         else:
             self.CurrPad.saveCurrent()
 
-    def selectorLoadAndSend(self,paramType,presetname,buttoni):
+    def selectorLoadAndSend(self,paramType,presetname):
 
         if self.editMode:
             log("HEY!! selectorLoadAndSend shouldn't be used in editMode?")
             return
 
         if paramType == "quad":
-            # log("Should be highlighting buttoni=",buttoni)
             log("Loading",paramType,presetname)
             self.loadQuad(presetname)
             self.sendQuad()
@@ -748,18 +869,20 @@ class ProGuiApp(tk.Tk):
     def cycleGuiLevel(self):
         # cycle through 0,1,2
         self.setGuiLevel((self.guiLevel + 1) % 3)
-        log("GuiLevel",self.guiLevel)
         self.resetVisibility()
         self.performPage.updatePerformButtonLabels(self.CurrPad)
+        log("GuiLevel",self.guiLevel)
 
     def setGuiLevel(self,level):
-        debug("Setting GuiLevel to",level)
         self.guiLevel = level
         self.setScaleList()
 
     def sendANO(self):
         for pad in self.Pads:
             pad.sendANO()
+
+    def startHelp(self):
+        self.nextMode = "help"
 
     def resetAll(self):
 
@@ -1887,9 +2010,10 @@ class PagePerformMain(tk.Frame):
 
         self.makePerformButton("Reset_All", self.controller.resetAll)
         self.makePerformButton("Clear_ ", self.controller.clearLoop)
-        self.makePerformButton("transpose",None)
+        self.makePerformButton("Help_ ", self.controller.startHelp)
 
         # More advanced buttons
+        self.makePerformButtonAdvanced("transpose",None)
         self.makePerformButtonAdvanced("loopingonoff",None)
         self.makePerformButtonAdvanced("loopingfade",None)
         self.makePerformButtonAdvanced("loopinglength",None)
@@ -2031,9 +2155,9 @@ class PageSelector(tk.Frame):
         self.valsframe.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, pady=10)
 
         self.scrollbar = ScrollBar(parent=self, notify=self)
-        # self.scrollbar.pack(side=tk.LEFT, fill=tk.Y, expand=True, pady=11, padx=5)
 
-        self.doLayout()
+        # self.scrollbar.pack(side=tk.LEFT, fill=tk.Y, expand=True, pady=11, padx=5)
+        # self.doLayout()
 
     def scrollNotify(self,sfy,tag):
         # log("scrollNotify sfy=",sfy," tag=",tag)
@@ -2126,19 +2250,20 @@ class PageSelector(tk.Frame):
                 s = 'PresetButton.TLabel'
             self.selectButtons[i].config(style=s)
 
-def startgui(windowName,guisize,*args):
-    global StartupMode
-    StartupMode = False
-    coords = palette.ConfigValue("guiresize")
+def afterWindowIsDisplayed(windowName,guisize,*args):
+    global PaletteApp
+    resizecoords = palette.ConfigValue("guiresize")
     # Hardcoded - the small size doesn't pay attention to guiresize
-    if guisize == "large" and coords != "":
+    if guisize == "large" and resizecoords != "":
+        time.sleep(1.0) # wait for window to be visible so nircmdc sees it
         log("Resizing GUI")
-        cmd = "nircmdc.exe win setsize stitle \""+windowName+"\" "+coords
+        cmd = "nircmdc.exe win setsize stitle \""+windowName+"\" "+resizecoords
         os.system(cmd)
         cmd = "nircmdc.exe win -style stitle \""+windowName+"\" 0x00CA0000"
         os.system(cmd)
         cmd = "nircmdc.exe win max stitle \""+windowName+"\""
         os.system(cmd)
+    PaletteApp.nextMode = "layout"
 
 def padOfParam(paramname):
     pad = paramname[0]
@@ -2230,6 +2355,7 @@ def makeStyles(app):
     s.configure('PerformMessage.TLabel', background=ColorBg, foreground=ColorRed, relief="flat", justify=tk.CENTER, align=tk.CENTER, font=performButtonFont)
 
     s.configure('Loading.TLabel', background=ColorButton, foreground=ColorWhite, relief="flat", justify=tk.CENTER, align=tk.CENTER, font=largestFont)
+    s.configure('Attract.TLabel', background=ColorBg, foreground=ColorWhite, relief="flat", justify=tk.CENTER, align=tk.CENTER, font=largestFont)
     s.configure('PerformHeader.TLabel', background=ColorButton, foreground=ColorBright, relief="flat", justify=tk.CENTER, align=tk.CENTER, font=performButtonFont)
 
     s.configure('PresetButton.TLabel', foreground=ColorText, font=presetButtonFont, background=ColorButton, anchor=tk.CENTER, justify=tk.CENTER)
@@ -2276,40 +2402,44 @@ def debug(*args):
 def loginit():
     palette.loginit()
 
-Killme = False
+KillNATS = False
 
 async def nats_listen_for_palette(loop,app):
 
     nc = NATS()
     await nc.connect("nats://127.0.0.1:4222", loop=loop)
 
-    async def message_handler(msg):
+    async def palette_event_handler(msg):
         subject = msg.subject
         reply = msg.reply
         data = msg.data.decode()
         if data == "exit":
-            global Killme
-            Killme = True
+            global KillNATS
+            KillNATS = True
 
-        # print("Received a message on '{subject} {reply}': {data}".format(
+        # log("Received a message on '{subject} {reply}': {data}".format(
         #     subject=subject, reply=reply, data=data))
+
         if subject == "palette.event":
             j = json.loads(data)
             event = j["event"]
-            secs = j["seconds"]
-            count = j["cursorcount"]
-            if event == "alive" and int(count) == 0:
-                print("SHOULD RESET!!")
+            if event == "alive":
+                secs = j["seconds"]
+                count = j["cursorcount"]
+                if int(count) > 0:
+                    log("cursor events, calling resetLastAnything!!")
+                    global PaletteApp
+                    PaletteApp.resetLastAnything()
 
 
     # "*" matches any token, at any level of the subject.
-    await nc.subscribe("palette.event", cb=message_handler)
+    await nc.subscribe("palette.event", cb=palette_event_handler)
 
     # WAIT FOR INCOMING MESSAGES
-    while Killme == False:
+    while KillNATS == False:
         await asyncio.sleep(.1)
 
-    print("Killme caused exit")
+    log("KillNATS caused exit")
 
     # Gracefully close the connection.
     await nc.drain()
@@ -2320,7 +2450,7 @@ def background_thread(app):  # runs in background thread
     loop = asyncio.new_event_loop()
     loop.run_until_complete(nats_listen_for_palette(loop,app))
     loop.close()
-    print("background_thread has finished?")
+    log("background_thread has finished?")
 
 if __name__ == "__main__":
 
@@ -2364,22 +2494,25 @@ if __name__ == "__main__":
     if guisize == "":
         guisize = "large"
 
-    app = ProGuiApp(padname,padnames,visiblepagenames,guisize)
+    global PaletteApp
+    PaletteApp = ProGuiApp(padname,padnames,visiblepagenames,guisize)
 
-    makeStyles(app)
+    makeStyles(PaletteApp)
 
     if guisize == "large":
-        app.wm_geometry("%dx%d" % (800,1280))
+        PaletteApp.wm_geometry("%dx%d" % (800,1280))
     elif guisize == "small":
-        app.wm_geometry("%dx%d" % (400,640))
+        PaletteApp.wm_geometry("%dx%d" % (400,640))
     else:
         log("Unexpected value of guisize (%s)\n" % guisize)
 
-    delay = 1.0 # allow window to be drawn
-    threading.Timer(delay, startgui, args=[app.windowName,guisize], kwargs=None).start()
+    PaletteApp.nextMode = ""
+    PaletteApp.currentMode = ""
 
-    thd = threading.Thread(target=background_thread,args=(app,))   # timer thread
+    threading.Timer(0.0, afterWindowIsDisplayed, args=[PaletteApp.windowName,guisize], kwargs=None).start()
+
+    thd = threading.Thread(target=background_thread,args=(PaletteApp,))   # timer thread
     thd.daemon = True
     thd.start()  # start timer loop
 
-    initMain(app)
+    initMain(PaletteApp)
