@@ -25,6 +25,13 @@
             "args": []
         },
         {
+            "name": "test hang.py",
+            "type": "python",
+            "request": "launch",
+            "program": "${env:PALETTESOURCE}/python/hang.py",
+            "console": "integratedTerminal"
+        },
+        {
             "name": "start gui large",
             "type": "python",
             "request": "launch",
