@@ -53,6 +53,8 @@ Source: "ship\config\nats*.conf"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\config"
 Source: "ship\config\paramdefs.json"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
 Source: "ship\config\paramenums.json"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
 Source: "ship\config\EraeTouchLayout.emk"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
+Source: "ship\config\attractscreen.png"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
+Source: "ship\config\helpscreen.png"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
 Source: "ship\config\Palette*.avc"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
 Source: "ship\config\palette.ico"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
 Source: "ship\config\palette.bidule"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
@@ -77,6 +79,7 @@ Name: "{%LOCALAPPDATA}\{#MyAppName}\presets\visual"
 Name: "{%LOCALAPPDATA}\{#MyAppName}\presets\effect"
 Name: "{%LOCALAPPDATA}\{#MyAppName}\presets\snap"
 Name: "{%LOCALAPPDATA}\{#MyAppName}\presets\sound"
+Name: "{%LOCALAPPDATA}\{#MyAppName}\presets\quad"
 
 [Run]
 Filename: {app}\bin\VC_redist.x64.exe; Parameters: "/install /quiet /norestart"; StatusMsg: "Installing 64-bit Windows Universal runtime..."; Flags: waituntilterminated

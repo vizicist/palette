@@ -116,6 +116,8 @@ copy %PALETTESOURCE%\default\config\Palette*.avc %ship%\config >nul
 copy %PALETTESOURCE%\default\config\EraeTouchLayout.emk %ship%\config >nul
 copy %PALETTESOURCE%\default\config\palette.ico %ship%\config >nul
 copy %PALETTESOURCE%\default\config\palette.bidule %ship%\config >nul
+copy %PALETTESOURCE%\default\config\attractscreen.png %ship%\config >nul
+copy %PALETTESOURCE%\default\config\helpscreen.png %ship%\config >nul
 
 echo ================ Copying midifiles
 mkdir %ship%\midifiles

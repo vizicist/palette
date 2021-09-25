@@ -26,9 +26,6 @@ MyNuid = ""
 
 LineSep = "_"
 
-# resetAfterInactivity = 90.0
-resetAfterInactivity = -1
-
 OneBeat = 96
 
 PerformLabels = {}
@@ -411,10 +408,11 @@ def SendCursorEvent(cid,ddu,x,y,z):
         "\"x\": \"%f\", \"y\": \"%f\", \"z\": \"%f\" }")  % (x,y,z)
     palette_publish("palette.event",e)
 
-def SendSpriteEvent(cid,x,y,z):
+def SendSpriteEvent(cid,x,y,z,region="A"):
     event = "sprite"
     e = ("{ \"nuid\": \"" + PythonNUID + "\", " + \
         "\"cid\": \"" + str(cid) + "\", " + \
+        "\"region\": \"" + region + "\", " + \
         "\"event\": \"" + event + "\", " + \
         "\"x\": \"%f\", \"y\": \"%f\", \"z\": \"%f\" }")  % (x,y,z)
     palette_publish("palette.event",e)
