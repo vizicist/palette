@@ -227,8 +227,12 @@ class ProGuiApp(tk.Tk):
                 # switch to a new Mode 
                 if self.nextMode == "layout":
                     self.initLayout()
-                    self.nextMode = "attract"
-                    self.startAttractMode()
+                    if self.resetAfterInactivity>0:
+                        self.nextMode = "attract"
+                        self.startAttractMode()
+                    else:
+                        self.nextMode = "normal"
+                        self.startNormalMode()
 
                 elif self.nextMode == "help":
                     self.startHelpMode()

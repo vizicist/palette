@@ -11,7 +11,7 @@
   "guisize":"large",
   "guiresize":"-800 0 800 1280",
   "midiinput":"microKEY2 Air",
-  "attracttimeout":"600",
+  "attracttimeout":"0",
   "attractpreset":"Full Bore_Borealis",
   "this line should not end with a comma": 0
 }
