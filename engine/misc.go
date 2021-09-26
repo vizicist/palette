@@ -9,6 +9,7 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"net/smtp"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -504,4 +505,27 @@ func needBoolArg(nm string, api string, args map[string]string) (bool, error) {
 		return false, fmt.Errorf("api/event=%s bad value for %s", api, val)
 	}
 	return b, nil
+}
+
+func SendEmail(to, msg, login, password string) {
+	from := login
+	toaddrs := []string{to}
+	smtpHost := "smtp.gmail.com"
+	smtpPort := "587"
+
+	hostname, err := os.Hostname()
+	if err != nil {
+		log.Printf("os.Hostname: err=%s\n", err)
+		hostname = "unknown"
+	}
+	message := fmt.Sprintf("Subject: Palette - %s - %s\n\nhostname: %s\nmessage: %s", hostname, msg, hostname, msg)
+
+	// Create authentication
+	auth := smtp.PlainAuth("", from, password, smtpHost)
+
+	// Send actual message
+	err = smtp.SendMail(smtpHost+":"+smtpPort, auth, from, toaddrs, []byte(message))
+	if err != nil {
+		log.Printf("SendMail: err = %s\n", err)
+	}
 }

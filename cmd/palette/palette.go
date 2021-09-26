@@ -24,15 +24,19 @@ func main() {
 	flag.Parse()
 
 	args := flag.Args()
-	if len(args) < 2 {
+	nargs := len(args)
+	if nargs != 2 {
 		usage := "Usage: palette {start|stop} {engine|gui|bidule|all|activate}\n"
 		os.Stderr.WriteString(usage)
 		log.Fatal(usage)
 	}
-	nargs := len(args)
-	if nargs == 0 {
-		log.Printf("Expecting argument to start\n")
-		return
+
+	emailto := engine.ConfigValue("emailto")
+	emaillogin := engine.ConfigValue("emaillogin")
+	emailpassword := engine.ConfigValue("emailpassword")
+	if emailto != "" && emaillogin != "" && emailpassword != "" {
+		msg := fmt.Sprintf("%s %s", args[0], args[1])
+		engine.SendEmail(emailto, msg, emaillogin, emailpassword)
 	}
 
 	switch args[0] {

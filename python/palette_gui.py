@@ -2431,7 +2431,7 @@ async def nats_listen_for_palette(loop,app):
                 secs = j["seconds"]
                 count = j["cursorcount"]
                 if int(count) > 0:
-                    log("cursor events, calling resetLastAnything!!")
+                    # log("cursor events, calling resetLastAnything!!")
                     global PaletteApp
                     PaletteApp.resetLastAnything()
 
