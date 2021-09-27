@@ -518,7 +518,7 @@ func SendEmail(to, msg, login, password string) {
 		log.Printf("os.Hostname: err=%s\n", err)
 		hostname = "unknown"
 	}
-	message := fmt.Sprintf("Subject: Palette - %s - %s\n\nhostname: %s\nmessage: %s", hostname, msg, hostname, msg)
+	message := fmt.Sprintf("To: %s\nSubject: Palette - %s - %s\n\nhostname: %s\nmessage: %s", to, hostname, msg, hostname, msg)
 
 	// Create authentication
 	auth := smtp.PlainAuth("", from, password, smtpHost)

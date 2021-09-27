@@ -415,7 +415,9 @@ class ProGuiApp(tk.Tk):
             self.frameSizeOfControl = self.frameSizeOfControlAdvanced
             self.frameSizeOfSelect = self.frameSizeOfSelectAdvancedQuad
             self.frameSizeOfPadChooser = 0.0
-            self.selectDisplayRows = self.selectDisplayRowsAdvanced
+            # Note - on Quad page, the PadChooser is not shown, and
+            # selectDisplayRowsNormal is used
+            self.selectDisplayRows = self.selectDisplayRowsNormal
 
         else:
             # Advanced is any guiLevel>0

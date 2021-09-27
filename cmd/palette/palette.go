@@ -47,6 +47,8 @@ func main() {
 	}
 }
 
+// handle_activate sends OSC messages to start the layers in Resolume,
+// and make sure the audio is on in Bidule.
 func handle_activate() {
 
 	log.Printf("Activating\n")
@@ -62,16 +64,12 @@ func handle_activate() {
 	start_layer(resolumeClient, 4)
 
 	biduleClient := osc.NewClient(addr, bidulePort)
-	start_play(biduleClient, 1)
-}
-
-func start_play(biduleClient *osc.Client, onoff int) {
 	msg := osc.NewMessage("/play")
-	msg.Append(int32(onoff))
+	msg.Append(int32(1)) // turn it on
 	// log.Printf("Sending %s\n", msg.String())
 	err := biduleClient.Send(msg)
 	if err != nil {
-		log.Printf("start_play: err=%s\n", err)
+		log.Printf("handle_activate: osc to Bidule, err=%s\n", err)
 	}
 }
 
@@ -82,7 +80,7 @@ func start_layer(resolumeClient *osc.Client, layer int) {
 	// log.Printf("Sending %s\n", msg.String())
 	err := resolumeClient.Send(msg)
 	if err != nil {
-		log.Printf("start_layer: err=%s\n", err)
+		log.Printf("start_layer: osc to Resolume err=%s\n", err)
 	}
 }
 
@@ -108,9 +106,9 @@ func handle_startstop(startstop string, args []string) {
 		handle_startstop(startstop, []string{"engine"})
 
 		// Give resolume time to start, before starting
-		// GUI and activating things
+		// GUI and activating things.
 		if startstop == "start" {
-			time.Sleep(12000 * time.Millisecond)
+			time.Sleep(12 * time.Second)
 			handle_startstop(startstop, []string{"activate"})
 		}
 
@@ -119,6 +117,17 @@ func handle_startstop(startstop string, args []string) {
 			handle_startstop(startstop, []string{"guismall"})
 		} else {
 			handle_startstop(startstop, []string{"gui"})
+		}
+
+		// Sometimes the audio in bidule is still turned off
+		// (perhaps when it hasn't completed its startup by
+		// the time the first activate is sent), so
+		// send a few more activates to make sure
+		if startstop == "start" {
+			time.Sleep(12 * time.Second)
+			handle_startstop(startstop, []string{"activate"})
+			time.Sleep(12 * time.Second)
+			handle_startstop(startstop, []string{"activate"})
 		}
 
 		return
