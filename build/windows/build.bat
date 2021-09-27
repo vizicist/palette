@@ -139,11 +139,11 @@ set /p version=<../../VERSION
 echo ================ Creating installer for VERSION %version%
 sed -e "s/SUBSTITUTE_VERSION_HERE/%version%/" < palette_win_setup.iss > tmp.iss
 "c:\Program Files (x86)\Inno Setup 6\ISCC.exe" /Q tmp.iss
-if exist "T:\\tmp" (
-	copy Output\palette_%version%_win_setup.exe t:\tmp >nul
-)
 move Output\palette_%version%_win_setup.exe %PALETTESOURCE%\release >nul
 rmdir Output
 rm tmp.iss
+if exist "T:\\tmp" (
+	copy %PALETTESOURCE%\release\palette_%version%_win_setup.exe t:\tmp >nul
+)
 
 :getout
