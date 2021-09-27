@@ -45,7 +45,10 @@ Type: files; Name:"{app}\presets\visual\*.json"
 
 [Files]
 Source: "ship\VERSION"; DestDir: "{app}"; Flags: ignoreversion
-Source: "ship\bin\*"; DestDir: "{app}\bin"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "ship\bin\*.bat"; DestDir: "{app}\bin"; Flags: comparetimestamp ignoreversion
+Source: "ship\bin\*.dll"; DestDir: "{app}\bin"; Flags: comparetimestamp ignoreversion
+Source: "ship\bin\*.exe"; DestDir: "{app}\bin"; Flags: comparetimestamp ignoreversion
+Source: "ship\bin\pyinstalled\*"; DestDir: "{app}\bin\pyinstalled"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "ship\ffgl\*"; DestDir: "{app}\ffgl"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "ship\presets\*"; DestDir: "{app}\presets"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE - all config files go in LOCALAPPDATA
