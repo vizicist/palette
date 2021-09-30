@@ -179,8 +179,8 @@ func ChangeClicksPerSecond(factor float64) {
 	if clkpersec > maxClicksPerSecond {
 		clkpersec = maxClicksPerSecond
 	}
-	currentMilliOffset = CurrentMilli
-	currentClickOffset = currentClick
+	currentMilliOffset = CurrentMilli()
+	currentClickOffset = CurrentClick()
 	clicksPerSecond = clkpersec
 	oneBeat = Clicks(clicksPerSecond / 2)
 }

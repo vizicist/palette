@@ -18,7 +18,20 @@ import (
 )
 
 // CurrentMilli is the time from the start, in milliseconds
-var CurrentMilli int
+var currentMilli int64
+var currentMilliMutex sync.Mutex
+
+func CurrentMilli() int64 {
+	currentMilliMutex.Lock()
+	defer currentMilliMutex.Unlock()
+	return int64(currentMilli)
+}
+
+func SetCurrentMilli(m int64) {
+	currentMilliMutex.Lock()
+	currentMilli = m
+	currentMilliMutex.Unlock()
+}
 
 // Router takes events and routes them
 type Router struct {
@@ -205,19 +218,18 @@ func (r *Router) StartOSC(source string) {
 // StartNATSClient xxx
 func (r *Router) StartNATSClient() {
 
-	StartVizNats()
-
+	ConnectNATS()
 	// Hand all NATS messages to HandleAPI
 
 	log.Printf("StartNATS: Subscribing to %s\n", PaletteAPISubject)
-	TheVizNats.Subscribe(PaletteAPISubject, func(msg *nats.Msg) {
+	SubscribeNATS(PaletteAPISubject, func(msg *nats.Msg) {
 		data := string(msg.Data)
 		response := r.handleAPIInput(r.ExecuteAPI, data)
 		msg.Respond([]byte(response))
 	})
 
 	log.Printf("StartNATS: subscribing to %s\n", PaletteEventSubject)
-	TheVizNats.Subscribe(PaletteEventSubject, func(msg *nats.Msg) {
+	SubscribeNATS(PaletteEventSubject, func(msg *nats.Msg) {
 		data := string(msg.Data)
 		args, err := StringMap(data)
 		if err != nil {
@@ -257,12 +269,13 @@ func (r *Router) StartRealtime() {
 		sofar := now.Sub(r.time0)
 		secs := sofar.Seconds()
 		newclick := Seconds2Clicks(secs)
-		CurrentMilli = int(secs * 1000.0)
+		SetCurrentMilli(int64(secs * 1000.0))
 
+		currentClick := CurrentClick()
 		if newclick > currentClick {
 			// log.Printf("ADVANCING CLICK now=%v click=%d\n", time.Now(), newclick)
 			r.advanceClickTo(currentClick)
-			currentClick = newclick
+			SetCurrentClick(newclick)
 		}
 
 		var aliveInterval = 5.0
@@ -441,7 +454,7 @@ func (r *Router) HandleSubscribedEventArgs(args map[string]string) error {
 			NUID:      nuid,
 			Region:    region,
 			CID:       cid,
-			Timestamp: int64(CurrentMilli),
+			Timestamp: CurrentMilli(),
 			Ddu:       subEvent,
 			X:         x,
 			Y:         y,
