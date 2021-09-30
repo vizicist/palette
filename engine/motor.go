@@ -20,11 +20,24 @@ var defaultSynth = "P_01_C_01"
 var loopForever = 999999
 var uniqueIndex = 0
 
-var currentMilliOffset int
+var currentMilliOffset int64
 var currentClickOffset Clicks
 var clicksPerSecond int
 var currentClick Clicks
 var oneBeat Clicks
+var currentClickMutex sync.Mutex
+
+func CurrentClick() Clicks {
+	currentClickMutex.Lock()
+	defer currentClickMutex.Unlock()
+	return currentClick
+}
+
+func SetCurrentClick(clk Clicks) {
+	currentClickMutex.Lock()
+	currentClick = clk
+	currentClickMutex.Unlock()
+}
 
 // TempoFactor xxx
 var TempoFactor = float64(1.0)
@@ -35,7 +48,7 @@ type ActiveNote struct {
 	noteOn *Note
 }
 
-// Stepper is an entity that that reacts to things (cursor events, apis) and generates output (midi, graphics)
+// Motor is an entity that that reacts to things (cursor events, apis) and generates output (midi, graphics)
 type Motor struct {
 	padName         string
 	resolumeLayer   int // 1,2,3,4
@@ -84,7 +97,7 @@ type Motor struct {
 	externalScale    *Scale
 }
 
-// NewStepper makes a new Stepper
+// NewMotor makes a new Motor
 func NewMotor(pad string, resolumeLayer int, freeframeClient *osc.Client, resolumeClient *osc.Client, guiClient *osc.Client) *Motor {
 	r := &Motor{
 		padName:         pad,
@@ -126,11 +139,11 @@ func NewMotor(pad string, resolumeLayer int, freeframeClient *osc.Client, resolu
 func (motor *Motor) PassThruMIDI(e MidiEvent, scadjust bool) {
 
 	if DebugUtil.MIDI {
-		log.Printf("Stepper.PassThruMIDI e=%+v\n", e)
+		log.Printf("Motor.PassThruMIDI e=%+v\n", e)
 	}
 
 	// channel on incoming MIDI is ignored
-	// it uses whatever sound the Stepper is using
+	// it uses whatever sound the Motor is using
 	status := e.Status & 0xf0
 
 	data1 := uint8(e.Data1)
@@ -195,7 +208,7 @@ func (motor *Motor) AdvanceByOneClick() {
 			ce := event.cursorStepEvent
 
 			if DebugUtil.Advance {
-				log.Printf("Stepper.advanceClickBy1: pad=%s stepnum=%d ce=%+v\n", motor.padName, stepnum, ce)
+				log.Printf("Motor.advanceClickBy1: pad=%s stepnum=%d ce=%+v\n", motor.padName, stepnum, ce)
 			}
 
 			ac := motor.getActiveStepCursor(ce)
@@ -267,6 +280,7 @@ func (motor *Motor) AdvanceByOneClick() {
 				if ce.Quantized {
 					// MIDI stuff
 					if ce.Ddu == "drag" {
+						currentClick := CurrentClick()
 						dclick := currentClick - ac.lastDrag
 						if ac.lastDrag < 0 || dclick >= oneBeat/32 {
 							ac.lastDrag = currentClick
@@ -286,7 +300,7 @@ func (motor *Motor) AdvanceByOneClick() {
 					ss := motor.params.ParamStringValue("visual.spritesource", "")
 					if ss == "cursor" {
 						if TheRouter().generateVisuals && DebugUtil.Loop {
-							log.Printf("Stepper.advanceClickBy1: stepnum=%d generateVisuals ce=%+v\n", stepnum, ce)
+							log.Printf("Motor.advanceClickBy1: stepnum=%d generateVisuals ce=%+v\n", stepnum, ce)
 						}
 						motor.generateVisualsFromCursor(ce)
 					}
@@ -319,7 +333,7 @@ func (motor *Motor) AdvanceByOneClick() {
 	loop.currentStep++
 	if loop.currentStep >= loop.length {
 		// if DebugUtil.MIDI {
-		// 	log.Printf("Stepper.AdvanceClickBy1: region=%s Loop length=%d wrapping around to step 0\n", r.padName, loop.length)
+		// 	log.Printf("Motor.AdvanceClickBy1: region=%s Loop length=%d wrapping around to step 0\n", r.padName, loop.length)
 		// }
 		loop.currentStep = 0
 	}
@@ -328,8 +342,8 @@ func (motor *Motor) AdvanceByOneClick() {
 // ExecuteAPI xxx
 func (motor *Motor) ExecuteAPI(api string, args map[string]string, rawargs string) (result string, err error) {
 
-	if DebugUtil.StepperAPI {
-		log.Printf("StepperAPI: api=%s rawargs=%s\n", api, rawargs)
+	if DebugUtil.MotorAPI {
+		log.Printf("MotorAPI: api=%s rawargs=%s\n", api, rawargs)
 	}
 
 	dot := strings.Index(api, ".")
@@ -340,7 +354,7 @@ func (motor *Motor) ExecuteAPI(api string, args map[string]string, rawargs strin
 		apisuffix = api[dot+1:]
 	}
 
-	// ALL *.set_params and *.set_param APIs set the params in the Stepper.
+	// ALL *.set_params and *.set_param APIs set the params in the Motor.
 	//
 	// In addition:
 	//    Effect parameters get sent one-at-a-time to Resolume's main OSC port (typically 7000).
@@ -568,7 +582,7 @@ func (motor *Motor) handleCursorDeviceEvent(e CursorDeviceEvent) {
 		Ddu: e.Ddu,
 	}
 	if DebugUtil.Cursor {
-		log.Printf("Stepper.handleCursorDeviceEvent: pad=%s id=%s ddu=%s xyz=%.4f,%.4f,%.4f\n", motor.padName, id, e.Ddu, e.X, e.Y, e.Z)
+		log.Printf("Motor.handleCursorDeviceEvent: pad=%s id=%s ddu=%s xyz=%.4f,%.4f,%.4f\n", motor.padName, id, e.Ddu, e.X, e.Y, e.Z)
 	}
 
 	motor.executeIncomingCursor(cse)
@@ -597,7 +611,7 @@ func (motor *Motor) checkCursorUp() {
 		if elapsed > checkDelay {
 			motor.executeIncomingCursor(CursorStepEvent{ID: id, Ddu: "up"})
 			if DebugUtil.Cursor {
-				log.Printf("Stepper.checkCursorUp: deleting cursor id=%s elapsed=%v\n", id, elapsed)
+				log.Printf("Motor.checkCursorUp: deleting cursor id=%s elapsed=%v\n", id, elapsed)
 			}
 			delete(motor.deviceCursors, id)
 		}
@@ -682,7 +696,7 @@ func (motor *Motor) generateVisualsFromCursor(ce CursorStepEvent) {
 	msg.Append(float32(ce.Y))
 	msg.Append(float32(ce.Z))
 	if DebugUtil.GenVisual {
-		log.Printf("Stepper.generateVisuals: pad=%s click=%d stepnum=%d OSC message = %+v\n", motor.padName, currentClick, motor.loop.currentStep, msg)
+		log.Printf("Motor.generateVisuals: pad=%s click=%d stepnum=%d OSC message = %+v\n", motor.padName, CurrentClick(), motor.loop.currentStep, msg)
 	}
 	motor.toFreeFramePluginForLayer(msg)
 }
@@ -747,21 +761,21 @@ func (motor *Motor) notifyGUI(ce CursorStepEvent, wasFresh bool) {
 	msg.Append(wasFresh)
 	motor.guiClient.Send(msg)
 	if DebugUtil.Notify {
-		log.Printf("Stepper.notifyGUI: msg=%v\n", msg)
+		log.Printf("Motor.notifyGUI: msg=%v\n", msg)
 	}
 }
 
 func (motor *Motor) toFreeFramePluginForLayer(msg *osc.Message) {
 	motor.freeframeClient.Send(msg)
 	if DebugUtil.OSC {
-		log.Printf("Stepper.toFreeFramePlugin: layer=%d msg=%v\n", motor.resolumeLayer, msg)
+		log.Printf("Motor.toFreeFramePlugin: layer=%d msg=%v\n", motor.resolumeLayer, msg)
 	}
 }
 
 func (motor *Motor) toResolume(msg *osc.Message) {
 	motor.resolumeClient.Send(msg)
 	if DebugUtil.OSC || DebugUtil.Resolume {
-		log.Printf("Stepper.toResolume: msg=%v\n", msg)
+		log.Printf("Motor.toResolume: msg=%v\n", msg)
 	}
 }
 
@@ -809,7 +823,7 @@ func (motor *Motor) generateSoundFromCursor(ce CursorStepEvent) {
 		return
 	}
 	// if DebugUtil.GenSound {
-	// 	log.Printf("Stepper.generateSound: pad=%s activeNotes=%d ce=%+v\n", r.padName, len(r.activeNotes), ce)
+	// 	log.Printf("Motor.generateSound: pad=%s activeNotes=%d ce=%+v\n", r.padName, len(r.activeNotes), ce)
 	// }
 	a := motor.getActiveNote(ce.ID)
 	switch ce.Ddu {
@@ -897,7 +911,7 @@ func (motor *Motor) executeIncomingCursor(ce CursorStepEvent) {
 	motor.permInstanceIDMutex.RUnlock()
 
 	if (!ok1 || !ok2) && ce.Ddu != "down" {
-		log.Printf("Stepper.executeIncomingCursor: drag or up event didn't find ce.ID=%s in incomingIDToPermSid*\n", ce.ID)
+		log.Printf("Motor.executeIncomingCursor: drag or up event didn't find ce.ID=%s in incomingIDToPermSid*\n", ce.ID)
 		return
 	}
 
@@ -919,7 +933,7 @@ func (motor *Motor) executeIncomingCursor(ce CursorStepEvent) {
 		motor.permInstanceIDQuantized[ce.ID] = permInstanceIDQuantized
 		motor.permInstanceIDUnquantized[ce.ID] = permInstanceIDUnquantized
 
-		motor.permInstanceIDDownClick[permInstanceIDQuantized] = motor.nextQuant(currentClick, q)
+		motor.permInstanceIDDownClick[permInstanceIDQuantized] = motor.nextQuant(CurrentClick(), q)
 		motor.permInstanceIDDownQuant[permInstanceIDQuantized] = q
 		motor.permInstanceIDDragOK[permInstanceIDQuantized] = false
 
@@ -931,7 +945,7 @@ func (motor *Motor) executeIncomingCursor(ce CursorStepEvent) {
 	// a drag event come in shortly after the down event.
 
 	if !motor.permInstanceIDDragOK[permInstanceIDQuantized] && ce.Ddu == "drag" {
-		if currentClick <= motor.permInstanceIDDownClick[permInstanceIDQuantized] {
+		if CurrentClick() <= motor.permInstanceIDDownClick[permInstanceIDQuantized] {
 			return
 		}
 		motor.permInstanceIDDragOK[permInstanceIDQuantized] = true
@@ -1042,7 +1056,7 @@ func (motor *Motor) sendANO() {
 }
 
 /*
-func (r *Stepper) paramStringValue(paramname string, def string) string {
+func (r *Motor) paramStringValue(paramname string, def string) string {
 	r.paramsMutex.RLock()
 	param, ok := r.params[paramname]
 	r.paramsMutex.RUnlock()
@@ -1052,7 +1066,7 @@ func (r *Stepper) paramStringValue(paramname string, def string) string {
 	return r.params.param).(paramValString).value
 }
 
-func (r *Stepper) paramIntValue(paramname string) int {
+func (r *Motor) paramIntValue(paramname string) int {
 	r.paramsMutex.RLock()
 	param, ok := r.params[paramname]
 	r.paramsMutex.RUnlock()
