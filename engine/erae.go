@@ -167,7 +167,7 @@ func handleFinger(bb []byte) {
 				NUID:      MyNUID(),
 				Region:    EraeRegion,
 				CID:       cid,
-				Timestamp: int64(CurrentMilli),
+				Timestamp: CurrentMilli(),
 				Ddu:       "clear",
 			}
 			router.handleCursorDeviceInput(ce)
@@ -217,7 +217,7 @@ func handleFinger(bb []byte) {
 		NUID:      MyNUID(),
 		Region:    EraeRegion,
 		CID:       cid,
-		Timestamp: int64(CurrentMilli),
+		Timestamp: CurrentMilli(),
 		Ddu:       ddu,
 		X:         x,
 		Y:         y,
