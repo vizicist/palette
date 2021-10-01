@@ -124,9 +124,13 @@ func handle_startstop(startstop string, args []string) {
 		// the time the first activate is sent), so
 		// send a few more activates to make sure
 		if startstop == "start" {
-			time.Sleep(12 * time.Second)
+			time.Sleep(24 * time.Second)
 			handle_startstop(startstop, []string{"activate"})
-			time.Sleep(12 * time.Second)
+			time.Sleep(24 * time.Second)
+			handle_startstop(startstop, []string{"activate"})
+			time.Sleep(24 * time.Second)
+			handle_startstop(startstop, []string{"activate"})
+			time.Sleep(24 * time.Second)
 			handle_startstop(startstop, []string{"activate"})
 		}
 
