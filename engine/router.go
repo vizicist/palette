@@ -18,8 +18,36 @@ import (
 )
 
 // CurrentMilli is the time from the start, in milliseconds
+const defaultClicksPerSecond = 192
+const minClicksPerSecond = (defaultClicksPerSecond / 16)
+const maxClicksPerSecond = (defaultClicksPerSecond * 16)
+
+var defaultSynth = "P_01_C_01"
+var loopForever = 999999
+
 var currentMilli int64
 var currentMilliMutex sync.Mutex
+var currentMilliOffset int64
+var currentClickOffset Clicks
+var clicksPerSecond int
+var currentClick Clicks
+var oneBeat Clicks
+var currentClickMutex sync.Mutex
+
+func CurrentClick() Clicks {
+	currentClickMutex.Lock()
+	defer currentClickMutex.Unlock()
+	return currentClick
+}
+
+func SetCurrentClick(clk Clicks) {
+	currentClickMutex.Lock()
+	currentClick = clk
+	currentClickMutex.Unlock()
+}
+
+// TempoFactor xxx
+var TempoFactor = float64(1.0)
 
 func CurrentMilli() int64 {
 	currentMilliMutex.Lock()
@@ -48,6 +76,11 @@ type Router struct {
 	time             time.Time
 	time0            time.Time
 	killPlayback     bool
+	transposeAuto    bool
+	transposeNext    Clicks
+	transposeBeats   Clicks // time between auto transpose changes
+	transposeIndex   int    // current place in tranposeValues
+	transposeValues  []int
 	recordingOn      bool
 	recordingFile    *os.File
 	recordingBegun   time.Time
@@ -174,6 +207,13 @@ func TheRouter() *Router {
 		oneRouter.MIDIInput = make(chan MidiEvent)
 		oneRouter.recordingOn = false
 
+		// Transpose control
+		oneRouter.transposeAuto = ConfigBoolWithDefault("transposeauto", true)
+		defBeats := 8
+		oneRouter.transposeBeats = Clicks(ConfigIntWithDefault("transposebeats", defBeats))
+		oneRouter.transposeNext = oneRouter.transposeBeats * oneBeat // first one
+		oneRouter.transposeValues = []int{0, -2, 3, -5}
+
 		oneRouter.myHostname = ConfigValue("hostname")
 		if oneRouter.myHostname == "" {
 			hostname, err := os.Hostname()
@@ -274,13 +314,16 @@ func (r *Router) StartRealtime() {
 		currentClick := CurrentClick()
 		if newclick > currentClick {
 			// log.Printf("ADVANCING CLICK now=%v click=%d\n", time.Now(), newclick)
+			r.advanceTransposeTo(newclick)
 			r.advanceClickTo(currentClick)
 			SetCurrentClick(newclick)
 		}
 
-		var aliveInterval = 5.0
+		// every so often send out an "alive" event
+		// with a cursorCount since the last one
+		var aliveIntervalSeconds = 30.0
 		if secs > nextAliveSecs {
-			nextAliveSecs += aliveInterval
+			nextAliveSecs += aliveIntervalSeconds
 			PublishAliveEvent(secs, r.cursorCount)
 			r.cursorCount = 0
 		}
@@ -293,6 +336,25 @@ func (r *Router) StartRealtime() {
 		}
 	}
 	log.Println("StartRealtime ends")
+}
+
+func (r *Router) advanceTransposeTo(newclick Clicks) {
+	if r.transposeAuto && r.transposeNext < newclick {
+		r.transposeNext += (r.transposeBeats * oneBeat)
+		r.transposeIndex = (r.transposeIndex + 1) % len(r.transposeValues)
+		transposePitch := r.transposeValues[r.transposeIndex]
+		if DebugUtil.Transpose {
+			log.Printf("advanceTransposeTo: newclick=%d transposePitch=%d\n", newclick, transposePitch)
+		}
+		for _, motor := range r.motors {
+			// motor.clearDown()
+			if DebugUtil.Transpose {
+				log.Printf("  setting transposepitch in motor pad=%s trans=%d activeNotes=%d\n", motor.padName, transposePitch, len(motor.activeNotes))
+			}
+			motor.terminateActiveNotes()
+			motor.TransposePitch = transposePitch
+		}
+	}
 }
 
 type MIDIEventHandler func(MidiEvent)
@@ -495,7 +557,7 @@ func (r *Router) HandleSubscribedEventArgs(args map[string]string) error {
 
 		case "audio_reset":
 			log.Printf("HandleSubscribeMIDIInput: palette_audio_reset!!\n")
-			r.audioReset()
+			go r.audioReset()
 
 		default:
 			bytes, err := needStringArg("bytes", "HandleMIDIEvent", args)
@@ -690,7 +752,13 @@ func (r *Router) handleOSCInput(e OSCEvent) {
 	}
 }
 
+var audioResetMutex sync.Mutex
+
 func (r *Router) audioReset() {
+
+	audioResetMutex.Lock()
+	defer audioResetMutex.Unlock()
+
 	msg := osc.NewMessage("/play")
 	msg.Append(int32(0))
 	r.plogueClient.Send(msg)
@@ -795,6 +863,17 @@ func (r *Router) ExecuteAPI(api string, nuid string, rawargs string) (result int
 			}
 		}
 
+	case "set_autotranspose":
+		b, err := needBoolArg("onoff", api, args)
+		if err == nil {
+			r.transposeAuto = b
+			// Quantizing CurrentClick() to a beat or measure might be nice
+			r.transposeNext = CurrentClick() + r.transposeBeats*oneBeat
+			for _, motor := range r.motors {
+				motor.TransposePitch = 0
+			}
+		}
+
 	case "set_scale":
 		v, err := needStringArg("value", api, args)
 		if err == nil {
@@ -804,7 +883,7 @@ func (r *Router) ExecuteAPI(api string, nuid string, rawargs string) (result int
 		}
 
 	case "audio_reset":
-		r.audioReset()
+		go r.audioReset()
 
 	case "recordingStart":
 		r.recordingOn = true

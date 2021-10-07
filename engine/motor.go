@@ -12,35 +12,7 @@ import (
 	"github.com/hypebeast/go-osc/osc"
 )
 
-const defaultClicksPerSecond = 192
-const minClicksPerSecond = (defaultClicksPerSecond / 16)
-const maxClicksPerSecond = (defaultClicksPerSecond * 16)
-
-var defaultSynth = "P_01_C_01"
-var loopForever = 999999
 var uniqueIndex = 0
-
-var currentMilliOffset int64
-var currentClickOffset Clicks
-var clicksPerSecond int
-var currentClick Clicks
-var oneBeat Clicks
-var currentClickMutex sync.Mutex
-
-func CurrentClick() Clicks {
-	currentClickMutex.Lock()
-	defer currentClickMutex.Unlock()
-	return currentClick
-}
-
-func SetCurrentClick(clk Clicks) {
-	currentClickMutex.Lock()
-	currentClick = clk
-	currentClickMutex.Unlock()
-}
-
-// TempoFactor xxx
-var TempoFactor = float64(1.0)
 
 // ActiveNote is a currently active MIDI note
 type ActiveNote struct {
@@ -116,7 +88,7 @@ func NewMotor(pad string, resolumeLayer int, freeframeClient *osc.Client, resolu
 		permInstanceIDDownQuant:   make(map[string]Clicks),
 		permInstanceIDDragOK:      make(map[string]bool),
 		fadeLoop:                  0.5,
-		loop:                      NewLoop(oneBeat * 4),
+		loop:                      NewLoop(oneBeat * 8), // matches default in GUI
 		deviceCursors:             make(map[string]*DeviceCursor),
 		activePhrasesManager:      NewActivePhrasesManager(),
 
@@ -185,6 +157,15 @@ func (motor *Motor) PassThruMIDI(e MidiEvent, scadjust bool) {
 // AdvanceByOneClick advances time by 1 click in a StepLoop
 func (motor *Motor) AdvanceByOneClick() {
 
+	motor.deviceCursorsMutex.Lock()
+	defer motor.deviceCursorsMutex.Unlock()
+
+	// motor.activeCursorsMutex.Lock()
+	// defer motor.activeCursorsMutex.Unlock()
+
+	// motor.activeNotesMutex.Lock()
+	// defer motor.activeNotesMutex.Unlock()
+
 	motor.activePhrasesManager.AdvanceByOneClick()
 
 	loop := motor.loop
@@ -193,6 +174,11 @@ func (motor *Motor) AdvanceByOneClick() {
 	defer loop.stepsMutex.Unlock()
 
 	stepnum := loop.currentStep
+
+	if DebugUtil.Transpose {
+		log.Printf("Advance 1 click stepnum=%d\n", stepnum)
+	}
+
 	if DebugUtil.Advance {
 		if stepnum%20 == 0 {
 			log.Printf("advanceClickby1 start stepnum=%d\n", stepnum)
@@ -469,7 +455,9 @@ func (motor *Motor) ExecuteAPI(api string, args map[string]string, rawargs strin
 		v, err := needIntArg("value", api, args)
 		if err == nil {
 			motor.TransposePitch = v
-			log.Printf("set_transpose TransposePitch=%v", v)
+			if DebugUtil.Transpose {
+				log.Printf("motor API set_transpose TransposePitch=%v", v)
+			}
 		}
 
 	default:
@@ -624,7 +612,10 @@ func (motor *Motor) getActiveNote(id string) *ActiveNote {
 	motor.activeNotesMutex.RUnlock()
 	if !ok {
 		motor.lastActiveID++
-		a = &ActiveNote{id: motor.lastActiveID}
+		a = &ActiveNote{
+			id:     motor.lastActiveID,
+			noteOn: nil,
+		}
 		motor.activeNotesMutex.Lock()
 		motor.activeNotes[id] = a
 		motor.activeNotesMutex.Unlock()
@@ -822,10 +813,26 @@ func (motor *Motor) generateSoundFromCursor(ce CursorStepEvent) {
 	if !TheRouter().generateSound {
 		return
 	}
-	// if DebugUtil.GenSound {
-	// 	log.Printf("Motor.generateSound: pad=%s activeNotes=%d ce=%+v\n", r.padName, len(r.activeNotes), ce)
-	// }
 	a := motor.getActiveNote(ce.ID)
+	if DebugUtil.Transpose {
+		log.Printf("Motor.gen: pad=%s ntsactive=%d ce.id=%s ddu=%s\n",
+			motor.padName, len(motor.activeNotes), ce.ID, ce.Ddu)
+		if a == nil {
+			log.Printf("   a is nil\n")
+		} else {
+			if a.noteOn == nil {
+				log.Printf("   a.id=%d a.noteOn=nil\n", a.id)
+			} else {
+				s := fmt.Sprintf("   a.id=%d a.noteOn=%+v\n", a.id, *(a.noteOn))
+				if strings.Contains(s, "PANIC") {
+					log.Printf("HEY, PANIC?\n")
+				} else {
+					log.Printf("%s\n", s)
+
+				}
+			}
+		}
+	}
 	switch ce.Ddu {
 	case "down":
 		// Send NOTEOFF for current note
@@ -837,8 +844,15 @@ func (motor *Motor) generateSoundFromCursor(ce CursorStepEvent) {
 			motor.sendNoteOff(a)
 		}
 		a.noteOn = motor.cursorToNoteOn(ce)
-		// log.Printf("r=%s down Setting currentNoteOn to %v!\n", r.padName, *(a.currentNoteOn))
-		// log.Printf("generateMIDI sending NoteOn for down\n")
+		if DebugUtil.Transpose {
+			s := fmt.Sprintf("Setting a.noteOn to %+v!\n", *(a.noteOn))
+			if strings.Contains(s, "PANIC") {
+				log.Printf("PANIC, a.noteOn?\n")
+			} else {
+				log.Printf("%s\n", s)
+			}
+			log.Printf("generateMIDI sending NoteOn for down\n")
+		}
 		motor.sendNoteOn(a)
 	case "drag":
 		if a.noteOn == nil {
@@ -847,7 +861,9 @@ func (motor *Motor) generateSoundFromCursor(ce CursorStepEvent) {
 			// Also, I'm seeing this pretty commonly in other situations,
 			// not really sure what the underlying reason is,
 			// but it seems to be harmless at the moment.
-			log.Printf("=============== HEY! drag event, a.currentNoteOn == nil?\n")
+			if DebugUtil.Router {
+				log.Printf("=============== HEY! drag event, a.currentNoteOn == nil?\n")
+			}
 			return
 		}
 		newNoteOn := motor.cursorToNoteOn(ce)
@@ -858,8 +874,15 @@ func (motor *Motor) generateSoundFromCursor(ce CursorStepEvent) {
 		if newpitch != oldpitch {
 			motor.sendNoteOff(a)
 			a.noteOn = newNoteOn
-			// log.Printf("r=%s drag Setting currentNoteOn to %v!\n", r.padName, *(a.currentNoteOn))
-			// log.Printf("generateMIDI sending NoteOn\n")
+			if DebugUtil.Transpose {
+				s := fmt.Sprintf("r=%s drag Setting currentNoteOn to %+v\n", motor.padName, *(a.noteOn))
+				if strings.Contains(s, "PANIC") {
+					log.Printf("PANIC? setting currentNoteOn\n")
+				} else {
+					log.Printf("%s\n", s)
+				}
+				log.Printf("generateMIDI sending NoteOn\n")
+			}
 			motor.sendNoteOn(a)
 		}
 	case "up":
@@ -889,6 +912,10 @@ func (motor *Motor) executeIncomingCursor(ce CursorStepEvent) {
 		ce.LoopsLeft = loopForever
 	} else {
 		ce.LoopsLeft = 0
+	}
+
+	if DebugUtil.Transpose {
+		log.Printf("MOTOR.INCOMINGCURSOR: ce.id=%s ddu=%s\n", ce.ID, ce.Ddu)
 	}
 
 	q := motor.cursorToQuant(ce)
