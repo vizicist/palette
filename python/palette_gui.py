@@ -840,6 +840,8 @@ class ProGuiApp(tk.Tk):
             palette.palette_global_api("set_transpose", "\"value\": \""+str(val) + "\"")
         elif name == "scale":
             palette.palette_global_api("set_scale", "\"value\": \""+str(val) + "\"")
+        elif name == "autotranspose":
+            palette.palette_global_api("set_autotranspose", "\"onoff\": \""+str(val) + "\"")
 
     def combPadLoop(self,pad):
         palette.palette_region_api(self.CurrPad.name(), "loop_comb", "")
@@ -848,9 +850,16 @@ class ProGuiApp(tk.Tk):
         self.resetLastAnything()
         self.combPadLoop(self.CurrPad.name())
 
-    def clearLoop(self):
-
-        # log("LoopClear")
+    def clear(self):
+        if self.allPadsSelected:
+            for pad in self.Pads:
+                pad.clearLoop()
+            palette.palette_global_api("audio_reset")
+        else:
+            self.CurrPad.clearLoop()
+        self.checkEscape()
+ 
+    def checkEscape(self):
 
         self.resetLastAnything()
 
@@ -865,12 +874,6 @@ class ProGuiApp(tk.Tk):
                 self.escapeCount = 0
         else:
             self.escapeCount = 0
-
-        if self.allPadsSelected:
-            for pad in self.Pads:
-                pad.clearLoop()
-        else:
-            self.CurrPad.clearLoop()
 
     def cycleGuiLevel(self):
         # cycle through 0,1,2
@@ -2015,15 +2018,16 @@ class PagePerformMain(tk.Frame):
         self.buttonNames = []
 
         self.makePerformButton("Reset_All", self.controller.resetAll)
-        self.makePerformButton("Clear_ ", self.controller.clearLoop)
+        self.makePerformButton("Clear_ ", self.controller.clear)
         self.makePerformButton("Help_ ", self.controller.startHelp)
 
         # More advanced buttons
-        self.makePerformButtonAdvanced("transpose",None)
         self.makePerformButtonAdvanced("loopingonoff",None)
         self.makePerformButtonAdvanced("loopingfade",None)
         self.makePerformButtonAdvanced("loopinglength",None)
         self.makePerformButtonAdvanced("scale",None)
+        self.makePerformButtonAdvanced("transpose",None)
+        self.makePerformButtonAdvanced("autotranspose",None)
         self.makePerformButtonAdvanced("Notes_Off", self.controller.sendANO)
 
         self.makePerformButtonAdvanced("quant",None)
