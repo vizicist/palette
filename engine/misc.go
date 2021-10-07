@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -12,9 +13,11 @@ import (
 	"net/smtp"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	mail "gopkg.in/mail.v2"
 )
@@ -42,6 +45,9 @@ type DebugFlags struct {
 	Realtime  bool
 	Remote    bool
 	Erae      bool
+	Transpose bool
+	Router    bool
+	Go        bool
 }
 
 func setDebug(dtype string, b bool) error {
@@ -74,6 +80,12 @@ func setDebug(dtype string, b bool) error {
 		DebugUtil.Morph = b
 	case "nats":
 		DebugUtil.NATS = b
+	case "transpose":
+		DebugUtil.Transpose = b
+	case "go":
+		DebugUtil.Go = b
+	case "router":
+		DebugUtil.Router = b
 	case "erae":
 		DebugUtil.Erae = b
 	case "osc":
@@ -102,8 +114,38 @@ func InitDebug() {
 	}
 }
 
+type logWriter struct {
+	file *os.File
+}
+
+func (writer logWriter) Write(bytes []byte) (int, error) {
+
+	t := time.Now()
+	year, month, day := t.Date()
+	hour, min, sec := t.Clock()
+	micro := t.Nanosecond() / 1e3
+
+	var s string
+	if DebugUtil.Go {
+		goid := GoroutineID()
+		// Add GO# to log to indicate Goroutine
+		s = fmt.Sprintf("%d/%d/%d %2d:%2d:%2d.%6d GO#%d %s",
+			year, month, day, hour, min, sec, micro, goid, bytes)
+	} else {
+		s = fmt.Sprintf("%d/%d/%d %2d:%2d:%2d.%6d %s",
+			year, month, day, hour, min, sec, micro, bytes)
+
+	}
+	bb := []byte(s)
+	return writer.file.Write(bb)
+}
+
 // InitLog xxx
 func InitLog(logname string) {
+
+	defaultLogger := log.Default()
+	defaultLogger.SetFlags(0)
+
 	logfile := logname + ".log"
 	logpath := LogFilePath(logfile)
 	file, err := os.OpenFile(logpath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
@@ -112,7 +154,14 @@ func InitLog(logname string) {
 		return
 	}
 	// log.Printf("Log is being saved in %s\n", logpath)
-	log.SetOutput(file)
+	// log.SetOutput(file)
+	log.SetFlags(0)
+	logger := logWriter{file: file}
+	// log.SetFlags(log.Ldate | log.Lmicroseconds)
+	log.SetFlags(0)
+	log.SetOutput(logger)
+	log.Printf("InitLog finished\n")
+
 }
 
 // fileExists checks if a file exists
@@ -401,7 +450,7 @@ func ConfigBool(nm string) bool {
 	}
 	b, err := IsTrueValue(v)
 	if err != nil {
-		log.Printf("Config value of %s (%s) is invalid, assuming false", nm, v)
+		log.Printf("Config value of %s (%s) is invalid, assuming false\n", nm, v)
 		return false
 	}
 	return b
@@ -417,7 +466,21 @@ func ConfigBoolWithDefault(nm string, dflt bool) bool {
 	return b
 }
 
-// ConfigValue returns "" if there's no value
+func ConfigIntWithDefault(nm string, dflt int) int {
+	s := ConfigValue(nm)
+	if s == "" {
+		return dflt
+	}
+	var val int
+	nfound, err := fmt.Sscanf(s, "%d", &val)
+	if nfound == 0 || err != nil {
+		log.Printf("Config value of %s isn't an integer (%s)\n", nm, s)
+		return dflt
+	}
+	return val
+}
+
+// ConfigValue returns "" if there's no value.  I.e. "" and 'no value' are identical
 func ConfigValue(nm string) string {
 
 	configMutex.Lock()
@@ -528,4 +591,13 @@ func SendEmail(to, msg, login, password string) {
 	if err != nil {
 		log.Printf("SendMail: err = %s\n", err)
 	}
+}
+
+func GoroutineID() uint64 {
+	b := make([]byte, 64)
+	b = b[:runtime.Stack(b, false)]
+	b = bytes.TrimPrefix(b, []byte("goroutine "))
+	b = b[:bytes.IndexByte(b, ' ')]
+	n, _ := strconv.ParseUint(string(b), 10, 64)
+	return n
 }

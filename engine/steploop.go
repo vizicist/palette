@@ -24,7 +24,7 @@ type StepLoop struct {
 	steps       []*Step
 }
 
-// SetLength changesthe length of a loop
+// SetLength changes the length of a loop
 func (loop *StepLoop) SetLength(nclicks Clicks) {
 
 	loop.stepsMutex.Lock()
@@ -166,7 +166,7 @@ func InitializeClicksPerSecond(clkpersec int) {
 	clicksPerSecond = clkpersec
 	currentMilliOffset = 0
 	currentClickOffset = 0
-	oneBeat = Clicks(clicksPerSecond / 2)
+	oneBeat = Clicks(clicksPerSecond / 2) // i.e. 120bpm
 }
 
 // ChangeClicksPerSecond is what you use to change the tempo

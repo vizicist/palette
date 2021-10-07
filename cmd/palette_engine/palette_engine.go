@@ -19,8 +19,6 @@ func main() {
 
 	engine.InitDebug()
 
-	log.SetFlags(log.Ldate | log.Lmicroseconds)
-
 	flag.Parse()
 
 	engine.InitMIDI()

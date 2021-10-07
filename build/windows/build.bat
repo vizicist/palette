@@ -142,8 +142,5 @@ sed -e "s/SUBSTITUTE_VERSION_HERE/%version%/" < palette_win_setup.iss > tmp.iss
 move Output\palette_%version%_win_setup.exe %PALETTESOURCE%\release >nul
 rmdir Output
 rm tmp.iss
-if exist "T:\\tmp" (
-	copy %PALETTESOURCE%\release\palette_%version%_win_setup.exe t:\tmp >nul
-)
 
 :getout

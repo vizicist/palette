@@ -135,7 +135,10 @@ GlobalPerformLabels["transpose"] = [
     {"label":"Transpose_-2",  "value":-2},
     {"label":"Transpose_5",  "value":5},
 ]
-
+GlobalPerformLabels["autotranspose"] = [
+    {"label":"Transpose_Auto On",  "value":True},
+    {"label":"Transpose_Auto Off",  "value":False},
+]
 
 def palette_region_api(region, meth, params=""):
     if region == "":
