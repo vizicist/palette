@@ -6,7 +6,10 @@ import (
 	"os/signal"
 	"syscall"
 
+	_ "github.com/vizicist/palette/block"
 	"github.com/vizicist/palette/engine"
+	_ "github.com/vizicist/palette/window"
+	"github.com/vizicist/palette/winsys"
 )
 
 func main() {
@@ -33,6 +36,8 @@ func main() {
 	go r.StartMIDI()
 	go r.StartRealtime()
 	go r.StartCursorInput()
+	go r.InputListener()
 
-	r.InputListener() // never returns
+	winsys.Run() // must run in main thread
+
 }

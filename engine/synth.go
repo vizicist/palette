@@ -108,9 +108,10 @@ func SendANOToSynth(synthName string) {
 
 // SendNote sends MIDI output for a Note
 func SendNoteToSynth(note *Note) {
-	synth, ok := Synths[note.Sound]
+	sound := note.Sound
+	synth, ok := Synths[sound]
 	if !ok {
-		log.Printf("SendNoteToSynth: no such synth - %s\n", note.Sound)
+		log.Printf("SendNoteToSynth: no such synth - %s\n", sound)
 		return
 	}
 	if synth == nil {
@@ -121,34 +122,34 @@ func SendNoteToSynth(note *Note) {
 	e := portmidi.Event{
 		Timestamp: portmidi.Time(),
 		Status:    int64(synth.channel - 1), // pre-populate with the channel
-		Data1:     int64(note.Pitch),
-		Data2:     int64(note.Velocity),
+		Data1:     int64(0),                 // gets replaced below
+		Data2:     int64(0),                 // gets replaced below
 	}
-	if note.TypeOf == NOTEON && note.Velocity == 0 {
-		// log.Printf("MIDIIO.SendNote: NOTEON with velocity==0 is a NOTEOFF\n")
-		note.TypeOf = NOTEOFF
+	if note.TypeOf == "noteon" && note.Velocity == 0 {
+		log.Printf("MIDIIO.SendNote: noteon with velocity==0 is changed to a noteoff\n")
+		note.TypeOf = "noteoff"
 	}
 	switch note.TypeOf {
-	case NOTEON:
+	case "noteon":
 		e.Status |= 0x90
 		if synth.noteDown[note.Pitch] {
 			if DebugUtil.MIDI {
-				log.Printf("SendNoteToSynth: Ignoring second NOTEON for chan=%d pitch=%d\n", synth.channel, note.Pitch)
+				log.Printf("SendNoteToSynth: Ignoring second noteon for chan=%d pitch=%d\n", synth.channel, note.Pitch)
 			}
 			return
 		}
 		synth.noteDown[note.Pitch] = true
-	case NOTEOFF:
+	case "noteoff":
 		e.Status |= 0x80
 		e.Data2 = 0
 		synth.noteDown[note.Pitch] = false
-	case CONTROLLER:
+	case "controller":
 		e.Status |= 0xB0
-	case PROGCHANGE:
+	case "progchange":
 		e.Status |= 0xC0
-	case CHANPRESSURE:
+	case "chanpressure":
 		e.Status |= 0xD0
-	case PITCHBEND:
+	case "pitchbend":
 		e.Status |= 0xE0
 	default:
 		log.Printf("SendNoteToSynth: can't handle Note TypeOf=%v\n", note.TypeOf)
