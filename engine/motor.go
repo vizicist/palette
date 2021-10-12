@@ -505,14 +505,14 @@ func (motor *Motor) clearExternalScale() {
 	if DebugUtil.Scale {
 		log.Printf("clearExternalScale pad=%s", motor.padName)
 	}
-	motor.externalScale = makeScale()
+	motor.externalScale = MakeScale()
 }
 
 // SetExternalScale xxx
 func (motor *Motor) setExternalScale(pitch int, on bool) {
 	s := motor.externalScale
 	for p := pitch; p < 128; p += 12 {
-		s.hasNote[p] = on
+		s.HasNote[p] = on
 	}
 	if DebugUtil.Scale {
 		log.Printf("setExternalScale pad=%s pitch=%v on=%v", motor.padName, pitch, on)
@@ -695,7 +695,7 @@ func (motor *Motor) generateVisualsFromCursor(ce CursorStepEvent) {
 func (motor *Motor) generateSpriteFromNote(a *ActiveNote) {
 
 	n := a.noteOn
-	if n.TypeOf != NOTEON {
+	if n.TypeOf != "noteon" {
 		return
 	}
 
@@ -776,7 +776,7 @@ func (motor *Motor) handleMIDISetScaleNote(e MidiEvent) {
 	if status == 0x90 {
 		// If there are no notes held down (i.e. this is the first), clear the scale
 		if motor.MIDINumDown < 0 {
-			// this can happen when there's a Read error that misses a NOTEON
+			// this can happen when there's a Read error that misses a noteon
 			motor.MIDINumDown = 0
 		}
 		if motor.MIDINumDown == 0 {
@@ -835,7 +835,7 @@ func (motor *Motor) generateSoundFromCursor(ce CursorStepEvent) {
 	}
 	switch ce.Ddu {
 	case "down":
-		// Send NOTEOFF for current note
+		// Send noteoff for current note
 		if a.noteOn != nil {
 			// I think this happens if we get things coming in
 			// faster than the checkDelay can generate the UP event.
@@ -1061,9 +1061,9 @@ func (motor *Motor) sendNoteOff(a *ActiveNote) {
 		// log.Printf("HEY! sendNoteOff got a nil?\n")
 		return
 	}
-	// the Note coming in should be a NOTEON or NOTEOFF
-	if n.TypeOf != NOTEON && n.TypeOf != NOTEOFF {
-		log.Printf("HEY! sendNoteOff didn't get a NOTEON or NOTEOFF!?")
+	// the Note coming in should be a noteon or noteoff
+	if n.TypeOf != "noteon" && n.TypeOf != "noteoff" {
+		log.Printf("HEY! sendNoteOff didn't get a noteon or noteoff!?")
 		return
 	}
 

@@ -165,22 +165,22 @@ func (mgr *ActivePhrasesManager) AdvanceByOneClick() {
 		// See if any notes in the Phrase are due to be put out
 		for ; n != nil && n.Clicks <= a.clickSoFar; n = n.next {
 			switch n.TypeOf {
-			case NOTEON:
+			case "noteon":
 				log.Printf("ActivePhrasesManager.advanceActivePhrasesByOneStep can't handle NOTEON notes yet\n")
-			case NOTEOFF:
+			case "noteoff":
 				log.Printf("ActivePhrasesManager.advanceActivePhrasesByOneStep can't handle NOTEOFF notes yet\n")
-			case NOTE:
+			case "note":
 
 				nd := n.Copy()
-				nd.TypeOf = NOTEON
+				nd.TypeOf = "noteon"
 				SendNoteToSynth(nd)
 
-				nd.TypeOf = NOTEOFF
+				nd.TypeOf = "noteoff"
 				nd.Clicks = n.EndOf()
 				a.pendingNoteOffs.InsertNote(nd)
 
 			default:
-				log.Printf("advanceActivePhrase unable to handle n.Typeof=%d n=%s\n", n.TypeOf, n)
+				log.Printf("advanceActivePhrase unable to handle n.Typeof=%s n=%s\n", n.TypeOf, n)
 			}
 			// advance to the next note in the ActivePhrase
 			a.nextnote = n.next

@@ -8,21 +8,6 @@ import (
 	"sync"
 )
 
-// NoteType is NOTE, NOTEON, NOTEOFF, or NOTEBYTES
-type NoteType int
-
-// These are the constant values of NoteType
-const (
-	NOTE         NoteType = iota // full note with duration
-	NOTEON       NoteType = iota
-	NOTEOFF      NoteType = iota
-	CONTROLLER   NoteType = iota
-	PROGCHANGE   NoteType = iota
-	CHANPRESSURE NoteType = iota
-	PITCHBEND    NoteType = iota
-	NOTEBYTES    NoteType = iota
-)
-
 // Clicks is a time or duration value.
 // NOTE: A Clicks value can be negative because
 // it's sometimes relative to the starting time of a Phrase.
@@ -46,11 +31,11 @@ type Phrase struct {
 
 // Note is a single item in a Phrase
 type Note struct {
-	TypeOf   NoteType // NOTE, NOTEON, NOTEOFF, CONTROLLER, NOTEBYTES
-	Clicks   Clicks   // nanoseconds
-	Duration Clicks   // nanoseconds, when it's a NOTE
-	Pitch    uint8    // 0-127
-	Velocity uint8    // 0-127
+	TypeOf   string // note, noteon, noteoff, controller, notebytes
+	Clicks   Clicks // nanoseconds
+	Duration Clicks // nanoseconds, when it's a note
+	Pitch    uint8  // 0-127
+	Velocity uint8  // 0-127
 	Sound    string
 	bytes    []byte
 	next     *Note
@@ -101,59 +86,59 @@ func (n *Note) Format(f fmt.State, c rune) {
 	f.Write([]byte(s))
 }
 
-// NewNote create a new Note of type NOTE, i.e. with duration
+// NewNote create a new Note of type note, i.e. with duration
 func NewNote(pitch uint8, velocity uint8, duration Clicks, sound string) *Note {
-	return &Note{TypeOf: NOTE, Pitch: pitch, Velocity: velocity, Duration: duration, Sound: sound}
+	return &Note{TypeOf: "note", Pitch: pitch, Velocity: velocity, Duration: duration, Sound: sound}
 }
 
-// NewNoteOn create a new NOTEON
+// NewNoteOn create a new noteon
 func NewNoteOn(pitch uint8, velocity uint8, sound string) *Note {
-	return &Note{TypeOf: NOTEON, Pitch: pitch, Velocity: velocity, Sound: sound}
+	return &Note{TypeOf: "noteon", Pitch: pitch, Velocity: velocity, Sound: sound}
 }
 
-// NewNoteOff create a new NOTEOFF
+// NewNoteOff create a new noteoff
 func NewNoteOff(pitch uint8, velocity uint8, sound string) *Note {
-	return &Note{TypeOf: NOTEOFF, Pitch: pitch, Velocity: velocity, Sound: sound}
+	return &Note{TypeOf: "noteoff", Pitch: pitch, Velocity: velocity, Sound: sound}
 }
 
-// NewController create a new NOTEOFF
+// NewController create a new noteoff
 func NewController(controller uint8, value uint8, sound string) *Note {
-	return &Note{TypeOf: CONTROLLER, Pitch: controller, Velocity: value, Sound: sound}
+	return &Note{TypeOf: "controller", Pitch: controller, Velocity: value, Sound: sound}
 }
 
 // NewProgChange xxx
 func NewProgChange(program uint8, value uint8, sound string) *Note {
-	return &Note{TypeOf: PROGCHANGE, Pitch: program, Velocity: value, Sound: sound}
+	return &Note{TypeOf: "progchange", Pitch: program, Velocity: value, Sound: sound}
 }
 
 // NewChanPressure xxx
 func NewChanPressure(data1 uint8, velocity uint8, sound string) *Note {
-	return &Note{TypeOf: CHANPRESSURE, Pitch: data1, Velocity: velocity, Sound: sound}
+	return &Note{TypeOf: "chanpressure", Pitch: data1, Velocity: velocity, Sound: sound}
 }
 
 // NewPitchBend xxx
 func NewPitchBend(data1 uint8, data2 uint8, sound string) *Note {
-	return &Note{TypeOf: PITCHBEND, Pitch: data1, Velocity: data2, Sound: sound}
+	return &Note{TypeOf: "pitchbend", Pitch: data1, Velocity: data2, Sound: sound}
 }
 
 // EndOf returns the ending time of a note
 func (n *Note) EndOf() Clicks {
-	if n.TypeOf == NOTE {
+	if n.TypeOf == "note" {
 		return n.Clicks + n.Duration
 	}
 	return n.Clicks
 }
 
-// IsNote returns true if the note is a NOTE, NOTEON, or NOTEOFF
+// IsNote returns true if the note is a note, noteon, or noteoff
 func (n *Note) IsNote() bool {
-	if n.TypeOf == NOTE || n.TypeOf == NOTEON || n.TypeOf == NOTEOFF {
+	if n.TypeOf == "note" || n.TypeOf == "noteon" || n.TypeOf == "noteoff" {
 		return true
 	}
 	return false
 }
 
 // ReadablePitch returns a readable string for a note pitch
-// Note that it also includes a + or - if it's a NOTEON or NOTEOFF.
+// Note that it also includes a + or - if it's a noteon or noteoff.
 // If it's not a NOTE-type note, "" is returned
 func (n *Note) ReadablePitch() string {
 	scachars := []string{
@@ -162,11 +147,11 @@ func (n *Note) ReadablePitch() string {
 	}
 
 	pre := ""
-	if n.TypeOf == NOTEON {
+	if n.TypeOf == "noteon" {
 		pre = "+"
-	} else if n.TypeOf == NOTEOFF {
+	} else if n.TypeOf == "noteoff" {
 		pre = "-"
-	} else if n.TypeOf != NOTE {
+	} else if n.TypeOf != "note" {
 		return ""
 	}
 	return fmt.Sprintf("%s%s", pre, scachars[n.Pitch%12])
@@ -183,7 +168,7 @@ func (n *Note) Compare(n2 *Note) int {
 		return 1
 	}
 
-	if d := n.TypeOf - n2.TypeOf; d < 0 {
+	if d := strings.Compare(n.TypeOf, n2.TypeOf); d < 0 {
 		return -1
 	} else if d > 0 {
 		return 1
@@ -207,7 +192,7 @@ func (n *Note) Compare(n2 *Note) int {
 		return 1
 	}
 
-	if n.TypeOf == NOTE {
+	if n.TypeOf == "note" {
 		if d := n.Duration - n2.Duration; d < 0 {
 			return -1
 		} else if d > 0 {
@@ -311,12 +296,12 @@ func (n *Note) ToString() string {
 
 	pitch := n.ReadablePitch()
 	if pitch == "" {
-		log.Printf("Note.ToString unable to handle n.Typeof=%d\n", n.TypeOf)
+		log.Printf("Note.ToString unable to handle n.Typeof=%s\n", n.TypeOf)
 		return "''"
 	}
 	octave := -2 + int(n.Pitch)/12 // MIDI octave
 	s := fmt.Sprintf("'%so%d", pitch, octave)
-	if n.TypeOf == NOTE {
+	if n.TypeOf == "note" {
 		s += fmt.Sprintf("d%d", n.Duration)
 	}
 	s += fmt.Sprintf("v%dt%dS%s'", n.Velocity, n.Clicks, n.Sound)
@@ -380,7 +365,7 @@ func (p *Phrase) ToString() string {
 
 		pitch := n.ReadablePitch()
 		if pitch == "" {
-			log.Printf("Phrase.ToString unable to handle n.Typeof=%d, using c\n", n.TypeOf)
+			log.Printf("Phrase.ToString unable to handle n.Typeof=%s, using c\n", n.TypeOf)
 			pitch = "c"
 		}
 		s += pitch
@@ -392,7 +377,7 @@ func (p *Phrase) ToString() string {
 			lastOctave = octave
 		}
 
-		if n.TypeOf == NOTE {
+		if n.TypeOf == "note" {
 			if first || n.Duration != lastDuration {
 				s += fmt.Sprintf("d%d", n.Duration)
 			}
@@ -442,7 +427,7 @@ func (p *Phrase) ResetLengthNoLock() {
 		p.Length = 0
 	} else {
 		n := p.lastnote
-		if n.TypeOf == NOTE {
+		if n.TypeOf == "note" {
 			p.Length = n.Clicks + n.Duration
 		} else {
 			p.Length = n.Clicks

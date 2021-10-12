@@ -69,6 +69,9 @@ type Router struct {
 	OSCInput  chan OSCEvent
 	MIDIInput chan MidiEvent
 
+	block        map[string]Block
+	blockContext map[string]*EContext
+
 	midiEventHandler MIDIEventHandler
 	killme           bool // true if Router should be stopped
 	lastClick        Clicks
@@ -183,6 +186,8 @@ func TheRouter() *Router {
 		oneRouter.motors = make(map[string]*Motor)
 		// oneRouter.regionForMorph = make(map[string]string)
 		oneRouter.regionAssignedToNUID = make(map[string]string)
+		oneRouter.block = make(map[string]Block)
+		oneRouter.blockContext = make(map[string]*EContext)
 
 		resolumePort := 7000
 		guiPort := 3943
