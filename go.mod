@@ -5,7 +5,7 @@ go 1.16
 require (
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
 	github.com/golang/protobuf v1.4.3 // indirect
-	github.com/hajimehoshi/ebiten/v2 v2.2.0
+	github.com/hajimehoshi/ebiten/v2 v2.2.1
 	github.com/hypebeast/go-osc v0.0.0-20200115085105-85fee7fed692
 	github.com/klauspost/compress v1.13.3 // indirect
 	github.com/minio/highwayhash v1.0.2 // indirect

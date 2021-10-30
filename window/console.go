@@ -102,7 +102,8 @@ func (console *Console) addLine(s string) {
 // Resize xxx
 func (console *Console) resize() {
 
-	buttHeight := winsys.WinStyle(console).TextHeight() + 12
+	styleInfo := winsys.WinStyleInfo(console)
+	buttHeight := styleInfo.TextHeight() + 12
 	mySize := winsys.WinCurrSize(console)
 
 	// handle TextArea

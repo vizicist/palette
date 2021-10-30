@@ -73,16 +73,20 @@ func (cmd Cmd) ValuesFloat(name string, dflt float32) float32 {
 	return float32(f)
 }
 
+func (cmd Cmd) ValuesSetXY(key string, pos image.Point) {
+	cmd.Values[key] = fmt.Sprintf("%d,%d", pos.X, pos.Y)
+}
+
 func (cmd Cmd) ValuesSetPos(pos image.Point) {
-	cmd.Values["pos"] = fmt.Sprintf("%d,%d", pos.X, pos.Y)
+	cmd.ValuesSetXY("pos", pos)
 }
 
 func (cmd Cmd) ValuesSetXY0(pos image.Point) {
-	cmd.Values["xy0"] = fmt.Sprintf("%d,%d", pos.X, pos.Y)
+	cmd.ValuesSetXY("xy0", pos)
 }
 
 func (cmd Cmd) ValuesSetXY1(pos image.Point) {
-	cmd.Values["xy1"] = fmt.Sprintf("%d,%d", pos.X, pos.Y)
+	cmd.ValuesSetXY("xy1", pos)
 }
 
 func (cmd Cmd) ValuesPos(dflt image.Point) image.Point {
@@ -108,26 +112,29 @@ func (cmd Cmd) ValuesRect(dflt image.Rectangle) image.Rectangle {
 }
 
 // ValuesXY is used to get any 2-valued int value (ie. pos or size)
-func (cmd Cmd) ValuesXY(which string, dflt image.Point) image.Point {
-	s, ok := cmd.Values[which]
+func (cmd Cmd) ValuesXY(xyname string, dflt image.Point) image.Point {
+	xystr, ok := cmd.Values[xyname]
 	if !ok {
 		return dflt
 	}
-	var x int
-	var y int
-	n, err := fmt.Sscanf(s, "%d,%d", &x, &y)
-	if n != 2 || err != nil {
-		log.Printf("ValuesPos unable to parse pos\n")
+	var x, y int
+	n, err := fmt.Sscanf(xystr, "%d,%d", &x, &y)
+	if err != nil {
+		log.Printf("ValuesXY failed to parse - %s\n", xystr)
+		return dflt
+	}
+	if n != 2 {
+		log.Printf("ValuesXY didn't parse - %s\n", xystr)
 		return dflt
 	}
 	return image.Point{x, y}
 }
 
 func (cmd Cmd) ValuesColor(dflt color.RGBA) color.RGBA {
-	r := cmd.ValuesUint8("r", 0)
-	g := cmd.ValuesUint8("g", 0)
-	b := cmd.ValuesUint8("b", 0)
-	a := cmd.ValuesUint8("a", 0)
+	r := cmd.ValuesUint8("r", dflt.R)
+	g := cmd.ValuesUint8("g", dflt.G)
+	b := cmd.ValuesUint8("b", dflt.B)
+	a := cmd.ValuesUint8("a", dflt.A)
 	return color.RGBA{
 		R: r,
 		G: g,
@@ -146,7 +153,8 @@ func (cmd Cmd) ValuesInt(name string, dflt int) int {
 		return dflt
 	}
 	i, err := strconv.Atoi(v)
-	if err == nil {
+	if err != nil {
+		log.Printf("ValuesInt: %s isn't an int? (%s)\n", name, v)
 		return dflt
 	}
 	return i
