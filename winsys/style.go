@@ -25,8 +25,8 @@ var ForeColor = color.RGBA{255, 255, 255, 255}
 // GreenColor xxx
 var GreenColor = color.RGBA{0, 0xff, 0, 0xff}
 
-// Style xxx
-type Style struct {
+// StyleInfo xxx
+type StyleInfo struct {
 	fontHeight  int
 	charWidth   int
 	textColor   color.RGBA
@@ -36,12 +36,12 @@ type Style struct {
 }
 
 // DefaultStyle xxx
-func DefaultStyle() *Style {
-	return NewStyle("fixed", 16)
+func DefaultStyleName() string {
+	return "fixed"
 }
 
 // NewStyle xxx
-func NewStyle(fontName string, fontHeight int) *Style {
+func NewStyle(styleName string, fontHeight int) *StyleInfo {
 
 	if fontHeight <= 0 {
 		log.Printf("NewStyle: invalid fontHeight, using 12\n")
@@ -51,7 +51,7 @@ func NewStyle(fontName string, fontHeight int) *Style {
 	var f *truetype.Font
 	var err error
 
-	switch fontName {
+	switch styleName {
 
 	case "fixed":
 		fontfile := engine.ConfigFilePath("consola.ttf")
@@ -70,21 +70,21 @@ func NewStyle(fontName string, fontHeight int) *Style {
 		}
 
 	default:
-		log.Printf("NewStyle: unrecognized fontname=%s, using gomono\n", fontName)
+		log.Printf("NewStyle: unrecognized fontname=%s, using gomono\n", styleName)
 	}
 
 	if err != nil {
-		log.Printf("NewStyle: unable to get font=%s, resorting to gomono, err=%s\n", fontName, err)
+		log.Printf("NewStyle: unable to get font=%s, resorting to gomono, err=%s\n", styleName, err)
 		f, _ = truetype.Parse(gomono.TTF) // last resort
 	} else if f == nil {
-		log.Printf("NewStyle: unable to get font=%s, f is nil?\n", fontName)
+		log.Printf("NewStyle: unable to get font=%s, f is nil?\n", styleName)
 		f, _ = truetype.Parse(gomono.TTF) // last resort
 	}
 	face := truetype.NewFace(f, &truetype.Options{Size: float64(fontHeight)})
 	fontRect := TextBoundString(face, "fghijklMNQ")
 	charRect := TextBoundString(face, "Q")
 
-	return &Style{
+	return &StyleInfo{
 		fontHeight:  fontRect.Max.Y - fontRect.Min.Y,
 		charWidth:   charRect.Max.X - charRect.Min.X,
 		fontFace:    face,
@@ -95,7 +95,7 @@ func NewStyle(fontName string, fontHeight int) *Style {
 }
 
 // TextFitRect xxx
-func (style *Style) TextFitRect(s string) image.Rectangle {
+func (style *StyleInfo) TextFitRect(s string) image.Rectangle {
 	width := len(s) * style.CharWidth()
 	height := style.TextHeight()
 	pos := image.Point{0, 0}
@@ -103,26 +103,26 @@ func (style *Style) TextFitRect(s string) image.Rectangle {
 }
 
 // TextHeight xxx
-func (style *Style) TextHeight() int {
+func (style *StyleInfo) TextHeight() int {
 	return style.fontHeight
 }
 
 // TextWidth xxx
-func (style *Style) TextWidth(s string) int {
+func (style *StyleInfo) TextWidth(s string) int {
 	return style.charWidth * len(s)
 }
 
 // CharWidth is a single character's width
-func (style *Style) CharWidth() int {
+func (style *StyleInfo) CharWidth() int {
 	return style.charWidth
 }
 
 // RowHeight is the height of text rows (e.g. in ScrollingTextArea)
-func (style *Style) RowHeight() int {
+func (style *StyleInfo) RowHeight() int {
 	return style.fontHeight + 2
 }
 
 // BoundString xxx
-func (style *Style) BoundString(s string) image.Rectangle {
+func (style *StyleInfo) BoundString(s string) image.Rectangle {
 	return TextBoundString(style.fontFace, s)
 }

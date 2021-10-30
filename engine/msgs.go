@@ -41,7 +41,7 @@ type MIDIDeviceMsg struct {
 
 func NewMIDIDeviceMsg(e portmidi.Event) string {
 	return fmt.Sprintf(
-		`"timestamp":"%d","status":"%d","data1":"%d","data2":"%d"`,
+		`{"timestamp":"%d","status":"%d","data1":"%d","data2":"%d"}`,
 		e.Timestamp, e.Status, e.Data1, e.Data2)
 }
 
@@ -73,16 +73,16 @@ type Cursor3DMsg struct {
 // ActiveStepCursor3D is a currently active (i.e. down) cursor
 // NOTE: these are the cursors caused by Cursor3DMsgs,
 // not the cursors caused by Cursor3DDeviceMsgs.
-type ActiveStepCursor3D struct {
-	id        string
-	x         float32
-	y         float32
-	z         float32
-	loopsLeft int
-	maxz      float32
-	lastDrag  Clicks // to filter MIDI events for drag
-	downMsg   Cursor3DMsg
-}
+// type ActiveStepCursor3D struct {
+// 	id        string
+// 	x         float32
+// 	y         float32
+// 	z         float32
+// 	loopsLeft int
+// 	maxz      float32
+// 	lastDrag  Clicks // to filter MIDI events for drag
+// 	downMsg   Cursor3DMsg
+// }
 
 // Cursor3DDeviceCallbackFunc xxx
 type Cursor3DDeviceCallbackFunc func(e Cursor3DDeviceMsg)

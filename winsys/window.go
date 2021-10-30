@@ -21,7 +21,7 @@ type WinContext struct {
 	minSize     image.Point
 	toolType    string
 	currSz      image.Point
-	style       *Style
+	styleName   string
 	initialized bool
 
 	childWindow map[string]Window // map window name to Window
@@ -39,7 +39,7 @@ func NewWindowContext(parent Window) WinContext {
 	return WinContext{
 
 		parent:      parent,
-		style:       nil, // uses parent's
+		styleName:   "", // uses parent's
 		minSize:     image.Point{},
 		currSz:      image.Point{},
 		initialized: true,
@@ -218,7 +218,7 @@ func DoUpstream(w Window, cmd engine.Cmd) {
 		forwarded = cmd
 
 	case "drawtext":
-		pos := cmd.ValuesPos(image.Point{})
+		pos := cmd.ValuesXY("pos", engine.PointZero)
 		newpos := pos.Add(adjust)
 		cmd.ValuesSetPos(newpos)
 		forwarded = cmd
@@ -378,17 +378,23 @@ func WinParent(w Window) Window {
 	return w.Context().parent
 }
 
-// WinStyle xxx
-func WinStyle(w Window) *Style {
+// WinStyleName xxx
+func WinStyleInfo(w Window) *StyleInfo {
+	styleName := WinStyleName(w)
+	return Styles[styleName]
+}
+
+// WinStyleName xxx
+func WinStyleName(w Window) string {
 	ctx := w.Context()
-	if ctx.style != nil {
-		return ctx.style // Window has its own style
+	if ctx.styleName != "" {
+		return ctx.styleName // Window has its own style
 	}
 	if ctx.parent == nil {
 		log.Printf("WinStye: using DefaultStyle because no parent for w=%v\n", w)
-		return DefaultStyle()
+		return DefaultStyleName()
 	}
-	return WinStyle(ctx.parent) // use the parent's style
+	return WinStyleName(ctx.parent) // use the parent's style
 }
 
 // WinRelativePos xxx

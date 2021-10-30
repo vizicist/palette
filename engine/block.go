@@ -8,9 +8,9 @@ type Block interface {
 
 // EContext xxx
 type EContext struct {
-	instanceName string
-	blockType    string
-	wantsClick   bool
+	// instanceName string
+	// blockType    string
+	wantsClick bool
 }
 
 // Wire xxx

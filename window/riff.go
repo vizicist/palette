@@ -87,7 +87,7 @@ func (riff *Riff) addLine(line string) {
 // Resize xxx
 func (riff *Riff) resize() {
 
-	buttHeight := winsys.WinStyle(riff).TextHeight() + 12
+	buttHeight := winsys.WinStyleInfo(riff).TextHeight() + 12
 	mySize := winsys.WinCurrSize(riff)
 
 	// handle TextArea

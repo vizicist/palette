@@ -1,0 +1,13 @@
+{
+    "page": "home",
+    "size": "1393,480",
+    "children": [
+        {
+            "wid": "12",
+            "tooltype": "Console",
+            "pos": "47,233",
+            "size": "1259,232",
+            "state": ""
+        }
+    ]
+}

@@ -247,6 +247,7 @@ func StringMap(params string) (map[string]string, error) {
 		return nil, err
 	}
 	if t != json.Delim('{') {
+		log.Printf("StringMap: no curly - %s\n", params)
 		return nil, errors.New("expected '{' delimiter")
 	}
 	values := make(map[string]string)

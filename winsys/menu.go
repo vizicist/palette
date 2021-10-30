@@ -50,12 +50,12 @@ func NewMenu(parent Window, menuType string, items []MenuItem) WindowData {
 		itemSelected: -1,
 	}
 
-	style := WinStyle(menu)
+	styleInfo := WinStyleInfo(menu)
 	// DO NOT use Style.RowHeight, we want wider row spacing
-	menu.rowHeight = style.TextHeight() + 6
+	menu.rowHeight = styleInfo.TextHeight() + 6
 	menu.handleHeight = 9
 	minSize := image.Point{
-		X: 12 + menu.maxX(style, menu.items),
+		X: 12 + menu.maxX(styleInfo, menu.items),
 		Y: len(menu.items)*menu.rowHeight + menu.handleHeight + 2,
 	}
 
@@ -74,12 +74,12 @@ func (menu *Menu) Context() *WinContext {
 // and computes the posX,posY of each menu item
 func (menu *Menu) resize(size image.Point) {
 
-	style := WinStyle(menu)
+	styleInfo := WinStyleInfo(menu)
 	// Recompute all the y positions in the items
 
 	maxX := -1
 	for n, item := range menu.items {
-		brect := style.BoundString(item.Label)
+		brect := styleInfo.BoundString(item.Label)
 		if brect.Max.X > maxX {
 			maxX = brect.Max.X
 		}
@@ -94,7 +94,7 @@ func (menu *Menu) resize(size image.Point) {
 }
 
 // minSize computes the minimum size of the menu
-func (menu *Menu) maxX(style *Style, items []MenuItem) int {
+func (menu *Menu) maxX(style *StyleInfo, items []MenuItem) int {
 	maxX := -1
 	for _, item := range items {
 		brect := style.BoundString(item.Label)
@@ -110,7 +110,7 @@ func (menu *Menu) redraw() {
 
 	currSize := WinCurrSize(menu)
 	rect := image.Rect(0, 0, currSize.X, currSize.Y)
-	style := WinStyle(menu)
+	styleName := WinStyleName(menu)
 
 	DoUpstream(menu, NewSetColorCmd(color.RGBA{0x00, 0x00, 0x00, 0xff}))
 	DoUpstream(menu, NewDrawFilledRectCmd(rect.Inset(1)))
@@ -147,7 +147,7 @@ func (menu *Menu) redraw() {
 		}
 
 		DoUpstream(menu, NewSetColorCmd(fore))
-		DoUpstream(menu, NewDrawTextCmd(item.Label, style.fontFace, rect.Min.Add(image.Point{item.posX, item.posY})))
+		DoUpstream(menu, NewDrawTextCmd(item.Label, styleName, rect.Min.Add(image.Point{item.posX, item.posY})))
 		if n != menu.itemSelected && n < (nitems-1) {
 			DoUpstream(menu, NewDrawLineCmd(image.Point{rect.Min.X, liney}, image.Point{rect.Max.X, liney}))
 		}
@@ -218,7 +218,7 @@ func (menu *Menu) Do(cmd engine.Cmd) string {
 		log.Printf("menu.Do: close needs work?  Maybe not\n")
 
 	case "resize":
-		size := cmd.ValuesSize(image.Point{0, 0})
+		size := cmd.ValuesXY("size", engine.PointZero)
 		menu.resize(size)
 
 	case "redraw":

@@ -7,6 +7,7 @@ package winsys
 import (
 	"image"
 	"image/color"
+	"io/ioutil"
 	"log"
 	"time"
 
@@ -24,7 +25,7 @@ import (
 type Screen struct {
 	ctx         WinContext
 	currentPage Window
-	// style       *Style
+	styleName   string
 	// rectx       image.Rectangle
 	eimage    *ebiten.Image
 	time0     time.Time
@@ -37,7 +38,7 @@ type Screen struct {
 // CurrentPage xxx
 var CurrentPage *Page
 
-var Styles map[string]Style
+var Styles map[string]*StyleInfo
 
 // Run runs the Gui and never returns
 func Run() {
@@ -48,7 +49,10 @@ func Run() {
 	RegisterDefaultTools()
 
 	minSize := image.Point{640, 480}
-	style := NewStyle("fixed", 16)
+
+	Styles = make(map[string]*StyleInfo)
+	Styles["fixed"] = NewStyle("fixed", 16)
+	Styles["regular"] = NewStyle("regular", 16)
 
 	ebiten.SetWindowSize(minSize.X, minSize.Y)
 	ebiten.SetWindowResizable(true)
@@ -56,19 +60,33 @@ func Run() {
 
 	// The Screen is the only Window whose parent is nil
 	screenCtx := NewWindowContext(nil)
+	eimage := ebiten.NewImage(minSize.X, minSize.Y)
 	screen := &Screen{
 		ctx:       screenCtx,
-		eimage:    &ebiten.Image{},
+		eimage:    eimage,
 		time0:     time.Now(),
 		lastprint: time.Now(),
 		foreColor: ForeColor,
 		backColor: BackColor,
+		styleName: "fixed",
 	}
 	WinSetMySize(screen, minSize)
-	screen.ctx.style = style
 
 	td := NewPage(screen, "home")
 	screen.currentPage = AddChild(screen, td)
+
+	// START DEBUG - do RESTORE
+	fname := "homepage.json"
+	bytes, err := ioutil.ReadFile(fname)
+	if err != nil {
+		panic(err)
+	}
+	page := td.w.(*Page)
+	err = page.restoreState(string(bytes))
+	if err != nil {
+		panic(err)
+	}
+	// END DEBUG - do RESTORE
 
 	// This is it!  RunGame runs forever
 	if err := ebiten.RunGame(screen); err != nil {
@@ -97,9 +115,9 @@ func (screen *Screen) Do(cmd engine.Cmd) string {
 		screen.drawFilledRect(rect)
 	case "drawtext":
 		text := cmd.ValuesString("text", "")
-		face := cmd.ValuesString("face", "")
-		pos := cmd.ValuesPos(engine.PointZero)
-		screen.drawText(text, face, pos)
+		styleName := cmd.ValuesString("style", "")
+		pos := cmd.ValuesXY("pos", engine.PointZero)
+		screen.drawText(text, styleName, pos)
 	case "setcolor":
 		c := cmd.ValuesColor(RedColor)
 		screen.foreColor = c
@@ -181,7 +199,11 @@ func (screen *Screen) Update() (err error) {
 
 // Draw satisfies the ebiten.Game interface
 func (screen *Screen) Draw(eimage *ebiten.Image) {
-	// screen.eimage = eimage
+
+	screen.eimage = eimage
+	xy0 := image.Point{10, 10}
+	xy1 := image.Point{100, 100}
+	screen.drawLine(xy0, xy1)
 	screen.currentPage.Do(engine.NewSimpleCmd("redraw"))
 }
 
@@ -191,6 +213,7 @@ func (screen *Screen) drawRect(rect image.Rectangle) {
 	y0 := rect.Min.Y
 	x1 := rect.Max.X
 	y1 := rect.Max.Y
+	log.Printf("drawRect: xy0=%d,%d xy1=%d,%d\n", x0, y0, x1, y1)
 	screen.drawLine(image.Point{x0, y0}, image.Point{x1, y0})
 	screen.drawLine(image.Point{x1, y0}, image.Point{x1, y1})
 	screen.drawLine(image.Point{x1, y1}, image.Point{x0, y1})
@@ -199,18 +222,21 @@ func (screen *Screen) drawRect(rect image.Rectangle) {
 
 // drawLine xxx
 func (screen *Screen) drawLine(xy0, xy1 image.Point) {
+	// log.Printf("drawLine: xy0=%d,%d xy1=%d,%d color=%+v\n", xy0.X, xy0.Y, xy1.X, xy1.Y, screen.foreColor)
 	ebitenutil.DrawLine(screen.eimage,
 		float64(xy0.X), float64(xy0.Y), float64(xy1.X), float64(xy1.Y), screen.foreColor)
 }
 
 func (screen *Screen) drawText(s string, styleName string, pos image.Point) {
-	style := Styles[styleName]
-	text.Draw(screen.eimage, s, style.fontFace, pos.X, pos.Y, screen.foreColor)
+	styleInfo := Styles[styleName]
+	log.Printf("drawText: s=%s pos=%d,%d\n", s, pos.X, pos.Y)
+	text.Draw(screen.eimage, s, styleInfo.fontFace, pos.X, pos.Y, screen.foreColor)
 }
 
 func (screen *Screen) drawFilledRect(rect image.Rectangle) {
 	w := rect.Max.X - rect.Min.X
 	h := rect.Max.Y - rect.Min.Y
+	log.Printf("drawFilledRect: xy=%d,%d wh=%d,%d\n", rect.Min.X, rect.Min.Y, w, h)
 	ebitenutil.DrawRect(screen.eimage, float64(rect.Min.X), float64(rect.Min.Y), float64(w), float64(h), screen.foreColor)
 }
 

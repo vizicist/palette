@@ -41,10 +41,10 @@ func (st *ScrollingText) Context() *WinContext {
 
 func (st *ScrollingText) resize(size image.Point) {
 
-	style := WinStyle(st)
+	styleInfo := WinStyleInfo(st)
 	// See how many lines and chars we can fit in the rect
-	st.nlines = size.Y / style.RowHeight()
-	st.nchars = size.X / style.CharWidth()
+	st.nlines = size.Y / styleInfo.RowHeight()
+	st.nchars = size.X / styleInfo.CharWidth()
 
 	// in case the buffer isn't big enough
 	if st.nlines > len(st.Buffer) {
@@ -53,14 +53,15 @@ func (st *ScrollingText) resize(size image.Point) {
 		st.Buffer = newbuffer
 	}
 	// Adjust our size so we're exactly that height
-	WinSetMySize(st, image.Point{size.X, st.nlines * style.RowHeight()})
+	WinSetMySize(st, image.Point{size.X, st.nlines * styleInfo.RowHeight()})
 }
 
 func (st *ScrollingText) redraw() {
 
 	sz := WinCurrSize(st)
 	rect := image.Rect(0, 0, sz.X, sz.Y)
-	style := WinStyle(st)
+	styleInfo := WinStyleInfo(st)
+	styleName := WinStyleName(st)
 
 	DoUpstream(st, NewSetColorCmd(ForeColor))
 	DoUpstream(st, NewDrawRectCmd(rect))
@@ -105,8 +106,8 @@ func (st *ScrollingText) redraw() {
 		line := linestack[n]
 		if line != "" {
 			// rownum 0 is the bottom
-			texty := rect.Max.Y - n*style.RowHeight() - 4
-			DoUpstream(st, NewDrawTextCmd(line, style.fontFace, image.Point{textx, texty}))
+			texty := rect.Max.Y - n*styleInfo.RowHeight() - 4
+			DoUpstream(st, NewDrawTextCmd(line, styleName, image.Point{textx, texty}))
 		}
 	}
 }
@@ -126,7 +127,7 @@ func (st *ScrollingText) Do(cmd engine.Cmd) string {
 	switch cmd.Subj {
 
 	case "resize":
-		size := cmd.ValuesSize(engine.PointZero)
+		size := cmd.ValuesXY("size", engine.PointZero)
 		st.resize(size)
 
 	case "redraw":

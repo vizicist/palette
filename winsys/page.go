@@ -222,14 +222,14 @@ func (page *Page) restoreState(s string) error {
 		RemoveChild(page, w)
 	}
 
-	// var dat map[string]interface{}
-	var dat map[string]string
+	var dat map[string]interface{}
+	// var dat map[string]string
 	if err := json.Unmarshal([]byte(s), &dat); err != nil {
 		return err
 	}
 
-	name := dat["page"]
-	sz := dat["size"]
+	name := dat["page"].(string)
+	sz := dat["size"].(string)
 	size := StringToPoint(sz)
 
 	log.Printf("restore name=%s size=%v\n", name, size)
@@ -238,28 +238,26 @@ func (page *Page) restoreState(s string) error {
 
 	log.Printf("HEY!! restoreState needs work!\n")
 
-	/*
-		children := strings.Split(dat["children"], ",")
-		for _, ch := range children {
+	children := dat["children"].([]interface{})
+	for _, ch := range children {
 
-			childmap := ch.(map[string]interface{})
-			toolType := childmap["tooltype"].(string)
-			pos := StringToPoint(childmap["pos"].(string))
-			size := StringToPoint(childmap["size"].(string))
-			state := childmap["state"]
+		childmap := ch.(map[string]interface{})
+		toolType := childmap["tooltype"].(string)
+		pos := StringToPoint(childmap["pos"].(string))
+		size := StringToPoint(childmap["size"].(string))
+		state := childmap["state"].(string)
 
-			// Create the window
-			childW, err := page.AddTool(toolType, pos, size)
-			if err != nil {
-				log.Printf("Page.restoreState: AddTool fails for toolType=%s, err=%s\n", toolType, err)
-				continue
-			}
-			// restore state
-			childW.Do(NewRestoreCmd(state))
-			childW.Do(NewResizeCmd(size))
-			winMakePermanent(page, childW)
+		// Create the window
+		childW, err := page.AddTool(toolType, pos, size)
+		if err != nil {
+			log.Printf("Page.restoreState: AddTool fails for toolType=%s, err=%s\n", toolType, err)
+			continue
 		}
-	*/
+		// restore state
+		childW.Do(NewRestoreCmd(state))
+		childW.Do(NewResizeCmd(size))
+		winMakePermanent(page, childW)
+	}
 
 	return nil
 }
@@ -296,7 +294,6 @@ func (page *Page) dumpState() (string, error) {
 
 // MakeTool xxx
 func (page *Page) MakeTool(name string) (WindowData, error) {
-	// style := WinStyle(page)
 	maker, ok := WindowMakers[name]
 	if !ok {
 		return WindowData{}, fmt.Errorf("MakeTool: There is no registered Tool named %s", name)
@@ -323,6 +320,7 @@ func (page *Page) AddTool(name string, pos image.Point, size image.Point) (Windo
 		size = td.minSize
 	}
 	WinSetChildSize(child, size)
+	log.Printf("Page.AddTool: %s pos=%d,%d size=%d,%d\n", name, pos.X, pos.Y, size.X, size.Y)
 	return child, nil
 }
 
