@@ -23,10 +23,10 @@ func NewButton(parent Window, label string) WindowData {
 		label:     label,
 		labelCurr: label,
 	}
-	style := WinStyle(b)
+	styleInfo := WinStyleInfo(b)
 	minSize := image.Point{
-		X: style.TextWidth(label) + 6,
-		Y: style.TextHeight() + 6,
+		X: styleInfo.TextWidth(label) + 6,
+		Y: styleInfo.TextHeight() + 6,
 	}
 	return NewToolData(b, "Button", minSize)
 }
@@ -41,13 +41,12 @@ func (button *Button) Do(cmd engine.Cmd) string {
 
 	switch cmd.Subj {
 	case "resize":
-		x := cmd.ValuesInt("x", 0)
-		y := cmd.ValuesInt("y", 0)
-		toPoint := image.Point{X: x, Y: y}
+		sz := cmd.ValuesXY("size", engine.PointZero)
+		toPoint := image.Point{X: sz.X, Y: sz.Y}
 		minSize := WinMinSize(button)
 		if toPoint.X < minSize.X || toPoint.Y < minSize.Y {
-			style := WinStyle(button)
-			nchars := toPoint.X / style.CharWidth()
+			styleInfo := WinStyleInfo(button)
+			nchars := toPoint.X / styleInfo.CharWidth()
 			if nchars <= 0 {
 				button.labelCurr = ""
 			} else if len(button.label) > nchars {
@@ -62,9 +61,10 @@ func (button *Button) Do(cmd engine.Cmd) string {
 
 		DoUpstream(button, NewDrawRectCmd(image.Rectangle{Max: WinCurrSize(button)}))
 
-		style := WinStyle(button)
-		labelPos := image.Point{3, style.TextHeight()}
-		DoUpstream(button, NewDrawTextCmd(button.labelCurr, style.fontFace, labelPos))
+		styleInfo := WinStyleInfo(button)
+		labelPos := image.Point{3, styleInfo.TextHeight()}
+		styleName := WinStyleName(button)
+		DoUpstream(button, NewDrawTextCmd(button.labelCurr, styleName, labelPos))
 
 	case "mouse":
 		currSize := WinCurrSize(button)
