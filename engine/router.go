@@ -461,6 +461,7 @@ func (r *Router) HandleSubscribedEventArgs(args map[string]string) error {
 		return err
 	}
 
+	// log.Printf("Router.HandleSubscribedEventArgs: event=%s\n", event)
 	// If no "region" argument, use one assigned to NUID
 
 	region := optionalStringArg("region", args, "")
@@ -732,8 +733,8 @@ func (r *Router) handleAPIInput(executor APIExecutorFunc, data string) (response
 // HandleOSCInput xxx
 func (r *Router) handleOSCInput(e OSCEvent) {
 
-	r.eventMutex.Lock()
-	defer r.eventMutex.Unlock()
+	// r.eventMutex.Lock()
+	// defer r.eventMutex.Unlock()
 
 	if DebugUtil.OSC {
 		log.Printf("Router.HandleOSCInput: msg=%s\n", e.Msg.String())
@@ -746,6 +747,9 @@ func (r *Router) handleOSCInput(e OSCEvent) {
 
 	case "/event":
 		r.handleOSCEvent(e.Msg)
+
+	case "/patchxr":
+		r.handlePatchXREvent(e.Msg)
 
 	default:
 		log.Printf("Router.HandleOSCInput: Unrecognized OSC message source=%s msg=%s\n", e.Source, e.Msg)
@@ -1176,6 +1180,53 @@ func (r *Router) handleOSCEvent(msg *osc.Message) {
 	err = r.HandleSubscribedEventArgs(args)
 	if err != nil {
 		log.Printf("Router.handleOSCCursorEvent: err=%s\n", err)
+		return
+	}
+}
+
+func (r *Router) handlePatchXREvent(msg *osc.Message) {
+
+	tags, _ := msg.TypeTags()
+	_ = tags
+	nargs := msg.CountArguments()
+	if nargs < 1 {
+		log.Printf("Router.handlePatchXREvent: too few arguments\n")
+		return
+	}
+	var err error
+	// Add the required nuid argument, which OSC input doesn't provide
+	if nargs < 3 {
+		log.Printf("handlePatchXREvent: not enough arguments\n")
+		return
+	}
+	action, _ := argAsString(msg, 0)
+	region, _ := argAsString(msg, 1)
+	switch action {
+	case "cursordown":
+		log.Printf("handlePatchXREvent: cursordown ignored\n")
+		return
+	case "cursorup":
+		log.Printf("handlePatchXREvent: cursorup ignored\n")
+		return
+	}
+	// drag
+	if nargs < 5 {
+		log.Printf("Not enough arguments for drag\n")
+		return
+	}
+	x, _ := argAsFloat32(msg, 2)
+	y, _ := argAsFloat32(msg, 3)
+	z, _ := argAsFloat32(msg, 4)
+	s := fmt.Sprintf("{ \"nuid\": \"%s\", \"event\": \"cursor_drag\", \"region\": \"%s\", \"x\": \"%f\", \"y\": \"%f\", \"z\": \"%f\" }", MyNUID(), region, x, y, z)
+	var args map[string]string
+	args, err = StringMap(s)
+	if err != nil {
+		return
+	}
+
+	err = r.HandleSubscribedEventArgs(args)
+	if err != nil {
+		log.Printf("Router.handlePatchXREvent: err=%s\n", err)
 		return
 	}
 }
