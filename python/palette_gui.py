@@ -279,7 +279,9 @@ class ProGuiApp(tk.Tk):
         self.resetVisibility()
 
     def startAttractMode(self):
-        self.lastAttractAction = 0
+
+        self.lastAttractSpriteTime = 0
+        self.lastAttractPresetTime = 0
         self.selectFrame.place_forget()
         self.performFrame.place_forget()
         self.padChooser.place_forget()
@@ -287,8 +289,13 @@ class ProGuiApp(tk.Tk):
         self.attractFrame.place(in_=self.topContainer, relx=0, rely=0, relwidth=1, relheight=1)
         # self.selectorLoadAndSend("quad","Square_Fantasia")
         # self.selectorLoadAndSend("quad","Circular_Garden")
-        attractPreset = palette.ConfigValue("attractpreset")
-        self.selectorLoadAndSend("quad",attractPreset)
+        self.attractPreset = palette.ConfigValue("attractpreset")
+        self.randomSpriteTime = float(palette.ConfigValue("randomspritetime"))
+        self.randomPresetTime = float(palette.ConfigValue("randompresettime"))
+        if self.attractPreset != "random":
+            self.attractPreset = palette.ConfigValue("attractpreset")
+            self.selectorLoadAndSend("quad",self.attractPreseet)
+        self.doAttractAction()
 
     def startHelpMode(self):
         self.selectFrame.place_forget()
@@ -338,14 +345,24 @@ class ProGuiApp(tk.Tk):
 
     def doAttractAction(self):
         now = time.time()
-        dt = now - self.lastAttractAction
-        if dt > 0.5:
+        
+        if (now - self.lastAttractSpriteTime) > self.randomSpriteTime:
             regions = ["A","B","C","D"]
             i = int(random.random()*99) % 4
             region = regions[i]
             self.randomSprite(region,"down")
             self.randomSprite(region,"up")
-            self.lastAttractAction = now
+            self.lastAttractSpriteTime = now
+
+            cid = str(now)
+            palette.SendCursorEvent(cid,"down",random.random(),1.0-(random.random()/3.0),random.random()/4.0)
+            dt = 0.05
+            time.sleep(dt)
+            palette.SendCursorEvent(cid,"up",random.random(),random.random(),0.0)
+
+        if self.attractPreset == "random" and (now - self.lastAttractPresetTime) > self.randomPresetTime:
+            self.selectorLoadAndSendRand("quad")
+            self.lastAttractPresetTime = now
 
     def doHelpAction(self):
         pass
@@ -756,6 +773,24 @@ class ProGuiApp(tk.Tk):
         else:
             self.loadOther(paramType,presetname)
             self.sendOther(paramType)
+
+    def selectorLoadAndSendRand(self,paramType):
+
+        if self.editMode:
+            log("HEY!! selectorLoadAndSendRand shouldn't be used in editMode?")
+            return
+
+        presets = palette.presetsListAll(paramType)
+        i = random.randint(0,len(presets)-1)
+        presetname = presets[i]
+        if paramType == "quad":
+            log("Loading",paramType,presetname)
+            self.loadQuad(presetname)
+            self.sendQuad()
+        else:
+            self.loadOther(paramType,presetname)
+            self.sendOther(paramType)
+
 
     def sendOther(self,paramType):
         if self.allPadsSelected:
