@@ -22,18 +22,18 @@ type MouseDrawer func()
 
 // Page is the top-most Window
 type Page struct {
-	ctx           WinContext
-	pageName      string
-	lastPos       image.Point
-	mouseHandler  MouseHandler
-	mouseDrawer   MouseDrawer
-	dragStart     image.Point // used for resize, move, etc
-	targetWindow  string      // used for resize, move, delete, etc
-	currentAction string
-	sweepToolName string
-	pageMenu      Window
-	logWriter     io.Writer
-	logFile       *os.File
+	ctx              WinContext
+	pageName         string
+	lastPos          image.Point
+	mouseHandler     MouseHandler
+	mouseDrawer      MouseDrawer
+	dragStart        image.Point // used for resize, move, etc
+	targetWindowName string      // used for resize, move, delete, etc
+	currentAction    string
+	sweepToolName    string
+	pageMenu         Window
+	logWriter        io.Writer
+	logFile          *os.File
 }
 
 // MakePermanentMsg xxx
@@ -44,8 +44,18 @@ type MakePermanentMsg struct {
 // NewPage xxx
 func NewPage(parent Window, name string) WindowData {
 	page := &Page{
-		ctx:      NewWindowContext(parent),
-		pageName: name,
+		ctx:              NewWindowContext(parent),
+		pageName:         name,
+		lastPos:          image.Point{},
+		mouseHandler:     nil,
+		mouseDrawer:      nil,
+		dragStart:        image.Point{},
+		targetWindowName: "",
+		currentAction:    "",
+		sweepToolName:    name,
+		pageMenu:         nil,
+		logWriter:        nil,
+		logFile:          &os.File{},
 	}
 	page.mouseHandler = page.defaultHandler
 	page.logWriter = PageLogWriter{page: page}
@@ -158,15 +168,15 @@ func (page *Page) Do(cmd engine.Cmd) string {
 		page.mouseHandler(cmd)
 
 	case "closeme":
-		w := WindowNamed(cmd.ValuesString("window", ""))
+		w := WinChildNamed(page, cmd.ValuesString("window", ""))
 		RemoveChild(page, w)
 
 	case "makepermanent":
-		w := WindowNamed(cmd.ValuesString("window", ""))
+		w := WinChildNamed(page, cmd.ValuesString("window", ""))
 		winMakePermanent(page, w)
 
 	case "closetransients":
-		w := WindowNamed(cmd.ValuesString("except", ""))
+		w := WinChildNamed(page, cmd.ValuesString("except", ""))
 		winRemoveTransients(page, w)
 
 	case "submenu":
@@ -205,7 +215,7 @@ func (page *Page) Do(cmd engine.Cmd) string {
 		page.mouseDrawer = page.drawPickMouse
 		page.dragStart = page.lastPos
 		menuName := cmd.ValuesString("menu", "")
-		page.targetWindow = menuName
+		page.targetWindowName = menuName
 		page.showMouse(false)
 
 	default:
@@ -436,12 +446,16 @@ func (page *Page) sweepHandler(cmd engine.Cmd) {
 		switch page.currentAction {
 
 		case "resize":
-			wname := page.targetWindow
+			wname := page.targetWindowName
 			if wname == "" {
 				log.Printf("Page.sweepHandler: no targetWindow?\n")
 				return
 			}
-			w := WindowNamed(wname)
+			w := WinChildNamed(page, wname)
+			if w == nil {
+				log.Printf("Page.sweepHandler: no window named %s\n", wname)
+				return
+			}
 			// If you don't sweep out anything, look for
 			// as much space as you can find starting at that point.
 			if toolSize.X < 5 || toolSize.Y < 5 {
@@ -551,7 +565,7 @@ func (page *Page) anyOverlap(rect image.Rectangle, ignore Window) bool {
 func (page *Page) resetHandlers() {
 	page.mouseHandler = page.defaultHandler
 	page.mouseDrawer = nil
-	page.targetWindow = ""
+	page.targetWindowName = ""
 	page.showMouse(true)
 }
 
@@ -572,7 +586,7 @@ func (page *Page) pickHandler(cmd engine.Cmd) {
 	ddu := cmd.ValuesString("ddu", "")
 	switch ddu {
 	case "down":
-		page.targetWindow = "" // to make it clear until we get MouseUp
+		page.targetWindowName = "" // to make it clear until we get MouseUp
 	case "drag":
 	case "up":
 		child, _ := WindowUnder(page, page.lastPos)
@@ -581,7 +595,7 @@ func (page *Page) pickHandler(cmd engine.Cmd) {
 			break
 		}
 		childName := WinChildName(page, child)
-		page.targetWindow = childName
+		page.targetWindowName = childName
 		switch page.currentAction {
 		case "resize":
 			page.startSweep("resize")
@@ -601,24 +615,24 @@ func (page *Page) moveHandler(cmd engine.Cmd) {
 	switch ddu {
 
 	case "drag":
-		if page.targetWindow != "" {
+		if page.targetWindowName != "" {
 			dpos := page.lastPos.Sub(page.dragStart)
-			wtarget := WindowNamed(page.targetWindow)
+			wtarget := WinChildNamed(page, page.targetWindowName)
 			MoveWindow(page, wtarget, dpos)
 			page.dragStart = page.lastPos
 		}
 
 	case "up":
 		// When we move a menu, we want it to be permanent
-		if page.targetWindow != "" {
-			page.Do(NewMakePermanentCmd(page.targetWindow))
+		if page.targetWindowName != "" {
+			page.Do(NewMakePermanentCmd(page.targetWindowName))
 		}
 		winRemoveTransients(page, nil)
 		page.resetHandlers()
 
 	case "down":
 		targetWindow, _ := WindowUnder(page, page.lastPos)
-		page.targetWindow = WinChildName(page, targetWindow)
+		page.targetWindowName = WinChildName(page, targetWindow)
 		page.dragStart = page.lastPos
 	}
 }

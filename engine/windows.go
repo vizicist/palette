@@ -72,7 +72,7 @@ func LoadMorphs() error {
 
 	for serialnum, regioninfo := range toplevel {
 		regionname := regioninfo.(string)
-		if DebugUtil.Morph {
+		if Debug.Morph {
 			log.Printf("Setting Morph serial=%s region=%s\n", serialnum, regionname)
 		}
 		MorphDefs[serialnum] = regionname

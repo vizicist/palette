@@ -155,7 +155,7 @@ func (vn *VizNats) Connect() error {
 
 // Request is used for APIs - it blocks waiting for a response and returns the response
 func (vn *VizNats) Request(subj, data string, timeout time.Duration) (retdata string, err error) {
-	if DebugUtil.NATS {
+	if Debug.NATS {
 		log.Printf("VizNats.Request: %s %s\n", subj, data)
 	}
 	nc := vn.natsConn
@@ -170,7 +170,7 @@ func (vn *VizNats) Request(subj, data string, timeout time.Duration) (retdata st
 // Publish xxx
 func (vn *VizNats) Publish(subj string, msg string) error {
 
-	if DebugUtil.NATS {
+	if Debug.NATS {
 		log.Printf("VizNats.Publish: %s %s\n", subj, msg)
 	}
 
@@ -192,7 +192,7 @@ func (vn *VizNats) Publish(subj string, msg string) error {
 // Subscribe xxx
 func SubscribeNATS(subj string, callback nats.MsgHandler) error {
 
-	if DebugUtil.NATS {
+	if Debug.NATS {
 		log.Printf("VizNats.Subscribe: %s\n", subj)
 	}
 	nc := theVizNats.natsConn
@@ -229,7 +229,7 @@ func setupConnOptions(opts []nats.Option) []nats.Option {
 
 func handleDiscover(msg *nats.Msg) {
 	response := MyNUID()
-	if DebugUtil.API {
+	if Debug.API {
 		log.Printf("handleDiscover: data=%s reply=%s response=%s\n", string(msg.Data), msg.Reply, response)
 	}
 	msg.Respond([]byte(response))

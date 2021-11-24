@@ -3,6 +3,7 @@ package window
 import (
 	"fmt"
 	"image"
+	"log"
 
 	"github.com/vizicist/palette/engine"
 	"github.com/vizicist/palette/winsys"
@@ -56,6 +57,9 @@ func (console *Console) Do(cmd engine.Cmd) string {
 		if child != nil {
 			// Note that we update the value in cmd.Values
 			cmd.ValuesSetPos(relpos)
+			if engine.Debug.Mouse {
+				log.Printf("Console Do mouse cmd=%v\n", cmd)
+			}
 			child.Do(cmd)
 		}
 

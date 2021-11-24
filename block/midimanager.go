@@ -205,7 +205,7 @@ func (alg *MidiManager) sendANO() {
 		}
 		synth := r.params.ParamStringValue("sound.synth", defaultSynth)
 		if synth != "" {
-			if DebugUtil.MIDI {
+			if engine.Debug.MIDI {
 				log.Printf("MIDI.SendANO: synth=%s\n", synth)
 			}
 			MIDI.SendANO(synth)

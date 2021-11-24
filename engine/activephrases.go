@@ -103,7 +103,7 @@ func (mgr *ActivePhrasesManager) StopPhrase(cid string, active *ActivePhrase, fo
 		}
 	}
 
-	readyToDelete := active.sendNoteOffs(MaxClicks, DebugUtil.MIDI, mgr.outputCallbacks)
+	readyToDelete := active.sendNoteOffs(MaxClicks, Debug.MIDI, mgr.outputCallbacks)
 	if readyToDelete || forceDelete {
 		delete(mgr.activePhrases, cid)
 	}
@@ -155,7 +155,7 @@ func (mgr *ActivePhrasesManager) AdvanceByOneClick() {
 	for cid, a := range mgr.activePhrases {
 		if a.phrase == nil {
 			log.Printf("advanceactivePhrases, unexpected phrase is nil for cid=%s?  deleting it\n", cid)
-			if a.sendNoteOffs(MaxClicks, DebugUtil.MIDI, mgr.outputCallbacks) {
+			if a.sendNoteOffs(MaxClicks, Debug.MIDI, mgr.outputCallbacks) {
 				delete(mgr.activePhrases, cid)
 			}
 			continue
@@ -188,7 +188,7 @@ func (mgr *ActivePhrasesManager) AdvanceByOneClick() {
 
 		// Send whatever NOTEOFFs are due to be sent, and if everything has
 		// been processed, delete it from the activePhrases
-		if a.sendNoteOffs(a.clickSoFar, DebugUtil.MIDI, mgr.outputCallbacks) {
+		if a.sendNoteOffs(a.clickSoFar, Debug.MIDI, mgr.outputCallbacks) {
 			delete(mgr.activePhrases, cid)
 		}
 		a.clickSoFar++

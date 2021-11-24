@@ -38,6 +38,10 @@ func main() {
 	go r.StartCursorInput()
 	go r.InputListener()
 
-	winsys.Run() // must run in main thread
+	if engine.ConfigBoolWithDefault("winsys", false) {
+		winsys.Run() // must run in main thread, never returns
+	} else {
+		select {} // block forever
+	}
 
 }
