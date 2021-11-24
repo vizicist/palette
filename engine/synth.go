@@ -121,9 +121,9 @@ func SendNoteToSynth(note *Note) {
 	}
 	e := portmidi.Event{
 		Timestamp: portmidi.Time(),
-		Status:    int64(synth.channel - 1), // pre-populate with the channel
-		Data1:     int64(0),                 // gets replaced below
-		Data2:     int64(0),                 // gets replaced below
+		Status:    int64(synth.channel - 1),
+		Data1:     int64(note.Pitch),
+		Data2:     int64(note.Velocity),
 	}
 	if note.TypeOf == "noteon" && note.Velocity == 0 {
 		log.Printf("MIDIIO.SendNote: noteon with velocity==0 is changed to a noteoff\n")
@@ -133,7 +133,7 @@ func SendNoteToSynth(note *Note) {
 	case "noteon":
 		e.Status |= 0x90
 		if synth.noteDown[note.Pitch] {
-			if DebugUtil.MIDI {
+			if Debug.MIDI {
 				log.Printf("SendNoteToSynth: Ignoring second noteon for chan=%d pitch=%d\n", synth.channel, note.Pitch)
 			}
 			return
@@ -160,10 +160,10 @@ func SendNoteToSynth(note *Note) {
 	// bank/program selected on that midiOut/channel, and if it changes, then (and only then)
 	// send the bank/program select
 
-	// if DebugUtil.MIDI {
+	// if Debug.MIDI {
 	// 	log.Printf("Sending portmidi.Event = %s\n", e)
 	// }
-	if DebugUtil.MIDI {
+	if Debug.MIDI {
 		log.Printf("SendNoteToSynth: synth=%s status=0x%02x data1=%d data2=%d\n", synth.midiOut.Name(), e.Status, e.Data1, e.Data2)
 	}
 	synth.midiOut.stream.WriteShort(e.Status, e.Data1, e.Data2)

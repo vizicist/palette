@@ -199,11 +199,7 @@ func (screen *Screen) Update() (err error) {
 
 // Draw satisfies the ebiten.Game interface
 func (screen *Screen) Draw(eimage *ebiten.Image) {
-
 	screen.eimage = eimage
-	xy0 := image.Point{10, 10}
-	xy1 := image.Point{100, 100}
-	screen.drawLine(xy0, xy1)
 	screen.currentPage.Do(engine.NewSimpleCmd("redraw"))
 }
 
@@ -213,7 +209,9 @@ func (screen *Screen) drawRect(rect image.Rectangle) {
 	y0 := rect.Min.Y
 	x1 := rect.Max.X
 	y1 := rect.Max.Y
-	log.Printf("drawRect: xy0=%d,%d xy1=%d,%d\n", x0, y0, x1, y1)
+	if engine.Debug.Drawing {
+		log.Printf("drawRect: xy0=%d,%d xy1=%d,%d\n", x0, y0, x1, y1)
+	}
 	screen.drawLine(image.Point{x0, y0}, image.Point{x1, y0})
 	screen.drawLine(image.Point{x1, y0}, image.Point{x1, y1})
 	screen.drawLine(image.Point{x1, y1}, image.Point{x0, y1})
@@ -222,21 +220,27 @@ func (screen *Screen) drawRect(rect image.Rectangle) {
 
 // drawLine xxx
 func (screen *Screen) drawLine(xy0, xy1 image.Point) {
-	// log.Printf("drawLine: xy0=%d,%d xy1=%d,%d color=%+v\n", xy0.X, xy0.Y, xy1.X, xy1.Y, screen.foreColor)
+	if engine.Debug.Drawing {
+		log.Printf("drawLine: xy0=%d,%d xy1=%d,%d color=%+v\n", xy0.X, xy0.Y, xy1.X, xy1.Y, screen.foreColor)
+	}
 	ebitenutil.DrawLine(screen.eimage,
 		float64(xy0.X), float64(xy0.Y), float64(xy1.X), float64(xy1.Y), screen.foreColor)
 }
 
 func (screen *Screen) drawText(s string, styleName string, pos image.Point) {
 	styleInfo := Styles[styleName]
-	log.Printf("drawText: s=%s pos=%d,%d\n", s, pos.X, pos.Y)
+	if engine.Debug.Drawing {
+		log.Printf("drawText: s=%s pos=%d,%d\n", s, pos.X, pos.Y)
+	}
 	text.Draw(screen.eimage, s, styleInfo.fontFace, pos.X, pos.Y, screen.foreColor)
 }
 
 func (screen *Screen) drawFilledRect(rect image.Rectangle) {
 	w := rect.Max.X - rect.Min.X
 	h := rect.Max.Y - rect.Min.Y
-	log.Printf("drawFilledRect: xy=%d,%d wh=%d,%d\n", rect.Min.X, rect.Min.Y, w, h)
+	if engine.Debug.Drawing {
+		log.Printf("drawFilledRect: xy=%d,%d wh=%d,%d\n", rect.Min.X, rect.Min.Y, w, h)
+	}
 	ebitenutil.DrawRect(screen.eimage, float64(rect.Min.X), float64(rect.Min.Y), float64(w), float64(h), screen.foreColor)
 }
 

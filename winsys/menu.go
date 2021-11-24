@@ -126,6 +126,7 @@ func (menu *Menu) redraw() {
 	midx := menu.handleMidx
 
 	// Draw the X at the right side of the handle area
+
 	DoUpstream(menu, NewDrawLineCmd(image.Point{midx, rect.Min.Y}, image.Point{midx, liney}))
 	// the midx-1 is just so the X looks a little nicer
 	DoUpstream(menu, NewDrawLineCmd(image.Point{midx - 1, rect.Min.Y}, image.Point{rect.Max.X, liney}))
