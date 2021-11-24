@@ -36,10 +36,16 @@ type WinContext struct {
 
 // NewWindowContext xxx
 func NewWindowContext(parent Window) WinContext {
+	style := DefaultStyleName()
+	if parent == nil {
+		log.Printf("Hey, NewWindowContext given nil parent?\n")
+	} else {
+		style = parent.Context().styleName
+	}
 	return WinContext{
 
 		parent:      parent,
-		styleName:   "", // uses parent's
+		styleName:   style,
 		minSize:     image.Point{},
 		currSz:      image.Point{},
 		initialized: true,
@@ -362,10 +368,25 @@ func WinChildName(parent Window, child Window) string {
 	}
 	id, ok := parent.Context().childName[child]
 	if !ok {
-		log.Printf("WinChildID: w not in parent childName?\n")
+		// log.Printf("WinChildID: w not in parent childName?\n")
 		return ""
 	}
 	return id
+}
+
+// WinChildNamed xxx
+func WinChildNamed(parent Window, name string) Window {
+	if parent == nil {
+		log.Printf("WinChildNamed: parent is nil?\n")
+		return nil
+	}
+	for w, nm := range parent.Context().childName {
+		if nm == name {
+			return w
+		}
+	}
+	log.Printf("WinChildNamed: parent is nil?\n")
+	return nil
 }
 
 // WinMinSize xxx

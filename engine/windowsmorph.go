@@ -1,3 +1,4 @@
+//go:build windows
 // +build windows
 
 package engine
@@ -397,7 +398,7 @@ func (m *oneMorph) readFrames(callback CursorDeviceCallbackFunc, forceFactor flo
 				*/
 			}
 
-			if DebugUtil.Morph {
+			if Debug.Morph {
 				log.Printf("Morph: isquad=%v region=%s contact_id=%d morph_idx=%d n=%d state=%d xNorm=%f yNorm=%f zNorm=%f\n",
 					m.isQuad, m.region, contact.id, m.idx, n, contact.state, xNorm, yNorm, zNorm)
 			}
@@ -492,7 +493,7 @@ func initialize() error {
 			m.region = morphdef
 		}
 
-		// Don't use DebugUtil.Morph, this always gets logged
+		// Don't use Debug.Morph, this should always gets logged
 		log.Printf("Morph Opened and Started: idx=%d serial=%s firmware=%d.%d.%d suceeded\n",
 			m.idx, m.serialNum, m.fwVersionMajor, m.fwVersionMinor, m.fwVersionBuild)
 	}
