@@ -28,7 +28,7 @@ func NewDrawTextCmd(text string, styleName string, pos image.Point) engine.Cmd {
 
 // NewDrawLineMsg xxx
 func NewDrawLineCmd(xy0 image.Point, xy1 image.Point) engine.Cmd {
-	arr, _ := engine.StringMap(fmt.Sprintf(`{"xy0":"%d,%d","xy1":"%d,%d"}`, xy0.Y, xy0.Y, xy1.X, xy1.Y))
+	arr, _ := engine.StringMap(fmt.Sprintf(`{"xy0":"%d,%d","xy1":"%d,%d"}`, xy0.X, xy0.Y, xy1.X, xy1.Y))
 	return engine.Cmd{Subj: "drawline", Values: arr}
 }
 
@@ -58,7 +58,7 @@ func NewCloseMeCmd(menu string) engine.Cmd {
 // NewMouseMsg xxx
 func NewShowMouseCursorCmd(b bool) engine.Cmd {
 	arr, _ := engine.StringMap(fmt.Sprintf(`{"show":"%v"}`, b))
-	return engine.Cmd{Subj: "showmouse", Values: arr}
+	return engine.Cmd{Subj: "showmousecursor", Values: arr}
 }
 
 // NewMouseMsg xxx
@@ -113,15 +113,19 @@ func NewResizeMeCmd(size image.Point) engine.Cmd {
 
 // NewAddLineMsg xxx
 func NewAddLineCmd(line string) engine.Cmd {
-	arr, _ := engine.StringMap(fmt.Sprintf(`{"lines":"%s"}`, line))
+	n := strings.Index(line, "\n")
+	if n >= 0 {
+		line = line[0:n]
+	}
+	arr, _ := engine.StringMap(fmt.Sprintf(`{"line":"%s"}`, line))
 	return engine.Cmd{Subj: "addline", Values: arr}
 }
 
 // ShowMouseCursorMsg xxx
-func NewShowMouseCursor(show bool) engine.Cmd {
-	arr, _ := engine.StringMap(fmt.Sprintf(`{"show":"%v"}`, show))
-	return engine.Cmd{Subj: "showmousecursor", Values: arr}
-}
+// func NewShowMouseCursor(show bool) engine.Cmd {
+// 	arr, _ := engine.StringMap(fmt.Sprintf(`{"show":"%v"}`, show))
+// 	return engine.Cmd{Subj: "showmousecursor", Values: arr}
+// }
 
 // MenuCallbackMsg xxx
 type MenuCallbackMsg struct {

@@ -348,12 +348,12 @@ func (r *Router) advanceTransposeTo(newclick Clicks) {
 		r.transposeNext += (r.transposeBeats * oneBeat)
 		r.transposeIndex = (r.transposeIndex + 1) % len(r.transposeValues)
 		transposePitch := r.transposeValues[r.transposeIndex]
-		if DebugUtil.Transpose {
+		if Debug.Transpose {
 			log.Printf("advanceTransposeTo: newclick=%d transposePitch=%d\n", newclick, transposePitch)
 		}
 		for _, motor := range r.motors {
 			// motor.clearDown()
-			if DebugUtil.Transpose {
+			if Debug.Transpose {
 				log.Printf("  setting transposepitch in motor pad=%s trans=%d activeNotes=%d\n", motor.padName, transposePitch, len(motor.activeNotes))
 			}
 			motor.terminateActiveNotes()
@@ -430,7 +430,7 @@ func (r *Router) InputListener() {
 			for _, motor := range r.motors {
 				motor.HandleMIDIDeviceInput(event)
 			}
-			if DebugUtil.MIDI {
+			if Debug.MIDI {
 				log.Printf("InputListener: MIDIInput event=0x%02x\n", event)
 			}
 		default:
@@ -698,7 +698,7 @@ func (r *Router) handleAPIInput(executor APIExecutorFunc, data string) (response
 	smap, err := StringMap(data)
 
 	defer func() {
-		if DebugUtil.API {
+		if Debug.API {
 			log.Printf("Router.HandleAPI: response=%s\n", response)
 		}
 	}()
@@ -722,7 +722,7 @@ func (r *Router) handleAPIInput(executor APIExecutorFunc, data string) (response
 		response = ErrorResponse(fmt.Errorf("missing params parameter"))
 		return
 	}
-	if DebugUtil.API {
+	if Debug.API {
 		log.Printf("Router.HandleAPI: api=%s args=%s\n", api, rawargs)
 	}
 	result, err := executor(api, nuid, rawargs)
@@ -740,7 +740,7 @@ func (r *Router) handleOSCInput(e OSCEvent) {
 	r.eventMutex.Lock()
 	defer r.eventMutex.Unlock()
 
-	if DebugUtil.OSC {
+	if Debug.OSC {
 		log.Printf("Router.HandleOSCInput: msg=%s\n", e.Msg.String())
 	}
 	switch e.Msg.Address {
@@ -1030,7 +1030,7 @@ func (r *Router) notifyGUI(eventName string) {
 	msg := osc.NewMessage("/notify")
 	msg.Append(eventName)
 	r.guiClient.Send(msg)
-	if DebugUtil.OSC {
+	if Debug.OSC {
 		log.Printf("Router.notifyGUI: msg=%v\n", msg)
 	}
 }
@@ -1263,13 +1263,13 @@ func (r *Router) availableRegion(source string) string {
 	for i, used := range alreadyAssigned {
 		if !used {
 			avail := r.regionLetters[i : i+1]
-			if DebugUtil.Cursor {
+			if Debug.Cursor {
 				log.Printf("Router.assignRegion: %s is assigned to source=%s\n", avail, source)
 			}
 			return avail
 		}
 	}
-	if DebugUtil.Cursor {
+	if Debug.Cursor {
 		log.Printf("Router.assignRegion: No regions available\n")
 	}
 	return ""
@@ -1298,7 +1298,7 @@ func (r *Router) setRegionForMorph(serialnum string, region string) {
 	r.regionAssignedMutex.Lock()
 	defer r.regionAssignedMutex.Unlock()
 
-	if DebugUtil.Morph {
+	if Debug.Morph {
 		log.Printf("setRegionForMorph: Assigning region=%s to serialnum=%s\n", region, serialnum)
 	}
 	r.regionForMorph[serialnum] = region
