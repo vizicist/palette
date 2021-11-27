@@ -70,10 +70,10 @@ func Run() {
 		backColor: BackColor,
 		styleName: "fixed",
 	}
-	WinSetMySize(screen, minSize)
+	WinSetSize(screen, minSize)
 
 	td := NewPage(screen, "home")
-	screen.currentPage = AddChild(screen, td)
+	screen.currentPage = WinAddChild(screen, td)
 
 	// START DEBUG - do RESTORE
 	fname := "homepage.json"
@@ -146,10 +146,10 @@ func (screen *Screen) Layout(width, height int) (int, int) {
 		log.Printf("Screen.Layout: Hey, screen shouldn't be nil!\n")
 		return width, height
 	}
-	currSize := WinCurrSize(screen)
+	currSize := WinGetSize(screen)
 	if currSize.X != width || currSize.Y != height {
 		newSize := image.Point{width, height}
-		WinSetMySize(screen, newSize)
+		WinSetSize(screen, newSize)
 		WinSetChildSize(screen.currentPage, newSize)
 	}
 	return width, height
@@ -163,7 +163,7 @@ func (screen *Screen) Update() (err error) {
 	newPos := image.Point{x, y}
 
 	// Ignore updates outside the screen
-	size := WinCurrSize(screen)
+	size := WinGetSize(screen)
 	rect := image.Rect(0, 0, size.X, size.Y)
 	if !newPos.In(rect) {
 		return nil
