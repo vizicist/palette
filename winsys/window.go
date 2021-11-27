@@ -10,6 +10,10 @@ import (
 
 // Window is the external (and networkable) interface
 // to a Window instance.   Context is only local (I think).
+
+// All of the funcs that we want to work on this interface are
+// named Win*
+
 type Window interface {
 	Context() *WinContext
 	Do(cmd engine.Cmd) string
@@ -59,10 +63,10 @@ func NewWindowContext(parent Window) WinContext {
 	}
 }
 
-// WindowUnder looks for a child window under a given point,
+// WinFindWindowUnder looks for a child window under a given point,
 // and if there is one, returns both the window and a point that has
 // been adjusted to make it relative to the child's coordinate space.
-func WindowUnder(parent Window, pos image.Point) (Window, image.Point) {
+func WinFindWindowUnder(parent Window, pos image.Point) (Window, image.Point) {
 	pc := parent.Context()
 	// Check in reverse order
 	for n := len(pc.order) - 1; n >= 0; n-- {
@@ -77,8 +81,8 @@ func WindowUnder(parent Window, pos image.Point) (Window, image.Point) {
 
 var debugChild = false
 
-// AddChild xxx
-func AddChild(parent Window, td WindowData) Window {
+// WinAddChild xxx
+func WinAddChild(parent Window, td WindowData) Window {
 
 	child := td.w
 	cc := child.Context()
@@ -117,8 +121,8 @@ func AddChild(parent Window, td WindowData) Window {
 	return child
 }
 
-// RemoveChild xxx
-func RemoveChild(parent Window, child Window) {
+// WinRemoveChild xxx
+func WinRemoveChild(parent Window, child Window) {
 
 	if child == nil {
 		log.Printf("RemoveChild: child=nil?\n")
@@ -149,8 +153,8 @@ func RemoveChild(parent Window, child Window) {
 	}
 }
 
-// MoveWindow xxx
-func MoveWindow(parent Window, child Window, delta image.Point) {
+// winMoveWindow xxx
+func winMoveWindow(parent Window, child Window, delta image.Point) {
 	pc := parent.Context()
 	childPos, ok := pc.childPos[child]
 	if !ok {
@@ -160,8 +164,8 @@ func MoveWindow(parent Window, child Window, delta image.Point) {
 	pc.childPos[child] = childPos.Add(delta)
 }
 
-// RedrawChildren xxx
-func RedrawChildren(parent Window) {
+// WinRedrawChildren xxx
+func WinRedrawChildren(parent Window) {
 	if parent == nil {
 		log.Printf("RedrawChildren: parent==nil?\n")
 		return
@@ -172,19 +176,19 @@ func RedrawChildren(parent Window) {
 	}
 }
 
-// GetAttValue xxx
-func GetAttValue(w Window, name string) string {
+// WinGetAttValue xxx
+func WinGetAttValue(w Window, name string) string {
 	wc := w.Context()
 	return wc.att[name]
 }
 
-// SetAttValue xxx
-func SetAttValue(w Window, name string, val string) {
+// WinSetAttValue xxx
+func WinSetAttValue(w Window, name string, val string) {
 	wc := w.Context()
 	wc.att[name] = val
 }
 
-func GetAndAdjustXY01(cmd engine.Cmd, adjust image.Point) engine.Cmd {
+func getAndAdjustXY01(cmd engine.Cmd, adjust image.Point) engine.Cmd {
 	xy0 := cmd.ValuesXY0(image.Point{})
 	xy1 := cmd.ValuesXY1(image.Point{})
 	newxy0 := xy0.Add(adjust)
@@ -194,8 +198,8 @@ func GetAndAdjustXY01(cmd engine.Cmd, adjust image.Point) engine.Cmd {
 	return cmd
 }
 
-// DoUpstream xxx
-func DoUpstream(w Window, cmd engine.Cmd) {
+// WinDoUpstream xxx
+func WinDoUpstream(w Window, cmd engine.Cmd) {
 	subj := cmd.Subj
 	// log.Printf("DoUpstream: cmd=%s arg=%v\n", cmd, arg)
 	parent := WinParent(w)
@@ -212,15 +216,15 @@ func DoUpstream(w Window, cmd engine.Cmd) {
 	switch subj {
 
 	case "drawline":
-		cmd := GetAndAdjustXY01(cmd, adjust)
+		cmd := getAndAdjustXY01(cmd, adjust)
 		forwarded = cmd
 
 	case "drawrect":
-		cmd := GetAndAdjustXY01(cmd, adjust)
+		cmd := getAndAdjustXY01(cmd, adjust)
 		forwarded = cmd
 
 	case "drawfilledrect":
-		cmd := GetAndAdjustXY01(cmd, adjust)
+		cmd := getAndAdjustXY01(cmd, adjust)
 		forwarded = cmd
 
 	case "drawtext":
@@ -236,15 +240,8 @@ func DoUpstream(w Window, cmd engine.Cmd) {
 	parent.Do(forwarded)
 }
 
-/*
-// WindowRect xxx
-func WindowRect(w Window) image.Rectangle {
-	return WinData(w).rect
-}
-*/
-
-// WindowRaise moves w to the top of the order
-func WindowRaise(parent Window, raise Window) {
+// winRaise moves w to the top of the order
+func winRaise(parent Window, raise Window) {
 	pc := parent.Context()
 	orderLen := len(pc.order)
 
@@ -268,8 +265,8 @@ func WindowRaise(parent Window, raise Window) {
 	}
 }
 
-// ToolType xxx
-func ToolType(w Window) string {
+// winToolType xxx
+func winToolType(w Window) string {
 	return w.Context().toolType
 }
 
@@ -300,19 +297,19 @@ func winRemoveTransients(parent Window, exceptMenu Window) {
 			if debugChild {
 				log.Printf("winRemoveTransients: about to remove wid=%s\n", WinChildName(parent, w))
 			}
-			RemoveChild(parent, w)
+			WinRemoveChild(parent, w)
 			delete(wc.transients, w)
 		}
 	}
 }
 
-// WinCurrSize xxx
-func WinCurrSize(w Window) (p image.Point) {
+// WinGetSize xxx
+func WinGetSize(w Window) (p image.Point) {
 	return w.Context().currSz
 }
 
-// WinSetMySize xxx
-func WinSetMySize(w Window, size image.Point) {
+// WinSetSize xxx
+func WinSetSize(w Window, size image.Point) {
 	w.Context().currSz = size
 	// Don't do w.Do(), that would be recursive
 }
@@ -356,7 +353,7 @@ func WinChildRect(parent, child Window) (r image.Rectangle) {
 	// 1) the childPos stored in the parent
 	// 2) the currSize stored in the child
 	childPos := WinChildPos(parent, child)
-	currSize := WinCurrSize(child)
+	currSize := WinGetSize(child)
 	return image.Rectangle{Min: childPos, Max: childPos.Add(currSize)}
 }
 
@@ -385,7 +382,7 @@ func WinChildNamed(parent Window, name string) Window {
 			return w
 		}
 	}
-	log.Printf("WinChildNamed: parent is nil?\n")
+	log.Printf("WinChildNamed: no child named %s\n", name)
 	return nil
 }
 
@@ -431,7 +428,7 @@ func WinForwardMouse(w Window, cmd engine.Cmd) {
 	ddu := cmd.ValuesString("ddu", "")
 	bnum := cmd.ValuesInt("buttonnum", 0)
 	pos := cmd.ValuesPos(engine.PointZero)
-	child, relPos := WindowUnder(w, pos)
+	child, relPos := WinFindWindowUnder(w, pos)
 	if child != nil {
 		relcmd := NewMouseCmd(ddu, relPos, bnum)
 		child.Do(relcmd)
