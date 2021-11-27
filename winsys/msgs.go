@@ -44,8 +44,8 @@ func NewDrawLineCmd(xy0 image.Point, xy1 image.Point) engine.Cmd {
 //////////////////////////////////////////////////////////////////
 
 // NewCloseTransientsCmd xxx
-func NewCloseTransientsCmd(menu string) engine.Cmd {
-	arr, _ := engine.StringMap(fmt.Sprintf(`{"menu":"%s"}`, menu))
+func NewCloseTransientsCmd(exceptMenuName string) engine.Cmd {
+	arr, _ := engine.StringMap(fmt.Sprintf(`{"exceptmenu":"%s"}`, exceptMenuName))
 	return engine.Cmd{Subj: "closetransients", Values: arr}
 }
 

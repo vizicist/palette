@@ -30,15 +30,15 @@ func NewConsole(parent winsys.Window) winsys.WindowData {
 		ctx: winsys.NewWindowContext(parent),
 	}
 
-	console.clearButton = winsys.AddChild(console, winsys.NewButton(console, "Clear"))
+	console.clearButton = winsys.WinAddChild(console, winsys.NewButton(console, "Clear"))
 
-	console.testButton = winsys.AddChild(console, winsys.NewButton(console, "Test"))
+	console.testButton = winsys.WinAddChild(console, winsys.NewButton(console, "Test"))
 
-	console.threeButton = winsys.AddChild(console, winsys.NewButton(console, "Three"))
+	console.threeButton = winsys.WinAddChild(console, winsys.NewButton(console, "Three"))
 
-	console.TextArea = winsys.AddChild(console, winsys.NewScrollingText(console))
+	console.TextArea = winsys.WinAddChild(console, winsys.NewScrollingText(console))
 
-	winsys.SetAttValue(console, "islogger", "true")
+	winsys.WinSetAttValue(console, "islogger", "true")
 
 	return winsys.NewToolData(console, "Console", image.Point{})
 }
@@ -53,7 +53,7 @@ func (console *Console) Do(cmd engine.Cmd) string {
 	switch cmd.Subj {
 	case "mouse":
 		pos := cmd.ValuesPos(engine.PointZero)
-		child, relpos := winsys.WindowUnder(console, pos)
+		child, relpos := winsys.WinFindWindowUnder(console, pos)
 		if child != nil {
 			// Note that we update the value in cmd.Values
 			cmd.ValuesSetPos(relpos)
@@ -94,7 +94,7 @@ func (console *Console) Do(cmd engine.Cmd) string {
 		}
 
 	default:
-		winsys.DoUpstream(console, cmd)
+		winsys.WinDoUpstream(console, cmd)
 	}
 	return engine.OkResult()
 }
@@ -108,7 +108,7 @@ func (console *Console) resize() {
 
 	styleInfo := winsys.WinStyleInfo(console)
 	buttHeight := styleInfo.TextHeight() + 12
-	mySize := winsys.WinCurrSize(console)
+	mySize := winsys.WinGetSize(console)
 
 	// handle TextArea
 	y0 := buttHeight + 4
@@ -118,10 +118,10 @@ func (console *Console) resize() {
 	console.TextArea.Do(winsys.NewResizeCmd(areaSize))
 
 	// If the TextArea has adjusted its size a bit, adjust our size as well
-	currsz := winsys.WinCurrSize(console.TextArea)
+	currsz := winsys.WinGetSize(console.TextArea)
 	mySize.Y += currsz.Y - areaSize.Y
 	mySize.X += currsz.X - areaSize.X
-	winsys.WinSetMySize(console, mySize)
+	winsys.WinSetSize(console, mySize)
 
 	buttWidth := mySize.X / 4
 	buttSize := image.Point{buttWidth, buttHeight}
@@ -139,11 +139,11 @@ func (console *Console) resize() {
 
 // Draw xxx
 func (console *Console) redraw() {
-	size := winsys.WinCurrSize(console)
+	size := winsys.WinGetSize(console)
 	rect := image.Rect(0, 0, size.X, size.Y)
-	winsys.DoUpstream(console, winsys.NewSetColorCmd(winsys.BackColor))
-	winsys.DoUpstream(console, winsys.NewDrawFilledRectCmd(rect.Inset(1)))
-	winsys.DoUpstream(console, winsys.NewSetColorCmd(winsys.ForeColor))
-	winsys.DoUpstream(console, winsys.NewDrawRectCmd(rect))
-	winsys.RedrawChildren(console)
+	winsys.WinDoUpstream(console, winsys.NewSetColorCmd(winsys.BackColor))
+	winsys.WinDoUpstream(console, winsys.NewDrawFilledRectCmd(rect.Inset(1)))
+	winsys.WinDoUpstream(console, winsys.NewSetColorCmd(winsys.ForeColor))
+	winsys.WinDoUpstream(console, winsys.NewDrawRectCmd(rect))
+	winsys.WinRedrawChildren(console)
 }

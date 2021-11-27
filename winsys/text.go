@@ -53,18 +53,18 @@ func (st *ScrollingText) resize(size image.Point) {
 		st.Buffer = newbuffer
 	}
 	// Adjust our size so we're exactly that height
-	WinSetMySize(st, image.Point{size.X, st.nlines * styleInfo.RowHeight()})
+	WinSetSize(st, image.Point{size.X, st.nlines * styleInfo.RowHeight()})
 }
 
 func (st *ScrollingText) redraw() {
 
-	sz := WinCurrSize(st)
+	sz := WinGetSize(st)
 	rect := image.Rect(0, 0, sz.X, sz.Y)
 	styleInfo := WinStyleInfo(st)
 	styleName := WinStyleName(st)
 
-	DoUpstream(st, NewSetColorCmd(ForeColor))
-	DoUpstream(st, NewDrawRectCmd(rect))
+	WinDoUpstream(st, NewSetColorCmd(ForeColor))
+	WinDoUpstream(st, NewDrawRectCmd(rect))
 
 	if st.nchars == 0 || st.nlines == 0 {
 		// window is too small
@@ -107,7 +107,7 @@ func (st *ScrollingText) redraw() {
 		if line != "" {
 			// rownum 0 is the bottom
 			texty := rect.Max.Y - n*styleInfo.RowHeight() - 4
-			DoUpstream(st, NewDrawTextCmd(line, styleName, image.Point{textx, texty}))
+			WinDoUpstream(st, NewDrawTextCmd(line, styleName, image.Point{textx, texty}))
 		}
 	}
 }
