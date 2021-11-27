@@ -57,17 +57,17 @@ func (button *Button) Do(cmd engine.Cmd) string {
 		}
 
 	case "redraw":
-		DoUpstream(button, NewSetColorCmd(ForeColor))
+		WinDoUpstream(button, NewSetColorCmd(ForeColor))
 
-		DoUpstream(button, NewDrawRectCmd(image.Rectangle{Max: WinCurrSize(button)}))
+		WinDoUpstream(button, NewDrawRectCmd(image.Rectangle{Max: WinGetSize(button)}))
 
 		styleInfo := WinStyleInfo(button)
 		labelPos := image.Point{3, styleInfo.TextHeight()}
 		styleName := WinStyleName(button)
-		DoUpstream(button, NewDrawTextCmd(button.labelCurr, styleName, labelPos))
+		WinDoUpstream(button, NewDrawTextCmd(button.labelCurr, styleName, labelPos))
 
 	case "mouse":
-		currSize := WinCurrSize(button)
+		currSize := WinGetSize(button)
 		currRect := image.Rect(0, 0, currSize.X, currSize.Y)
 		pos := cmd.ValuesPos(image.Point{0, 0})
 		if !pos.In(currRect) {
@@ -79,12 +79,12 @@ func (button *Button) Do(cmd engine.Cmd) string {
 		case "down":
 			if !button.isPressed {
 				button.isPressed = true
-				DoUpstream(button, NewButtonDownCmd(button.label))
+				WinDoUpstream(button, NewButtonDownCmd(button.label))
 			}
 		case "up":
 			if button.isPressed {
 				button.isPressed = false
-				DoUpstream(button, NewButtonUpCmd(button.label))
+				WinDoUpstream(button, NewButtonUpCmd(button.label))
 			}
 		}
 

@@ -158,7 +158,7 @@ func (page *Page) Do(cmd engine.Cmd) string {
 		page.resize()
 
 	case "redraw":
-		RedrawChildren(page)
+		WinRedrawChildren(page)
 		if page.mouseDrawer != nil {
 			page.mouseDrawer()
 		}
@@ -169,15 +169,19 @@ func (page *Page) Do(cmd engine.Cmd) string {
 
 	case "closeme":
 		w := WinChildNamed(page, cmd.ValuesString("window", ""))
-		RemoveChild(page, w)
+		WinRemoveChild(page, w)
 
 	case "makepermanent":
 		w := WinChildNamed(page, cmd.ValuesString("window", ""))
 		winMakePermanent(page, w)
 
 	case "closetransients":
-		w := WinChildNamed(page, cmd.ValuesString("except", ""))
-		winRemoveTransients(page, w)
+		exceptMenuName := cmd.ValuesString("exceptmenu", "")
+		var exceptWindow Window
+		if exceptMenuName != "" {
+			exceptWindow = WinChildNamed(page, exceptMenuName)
+		}
+		winRemoveTransients(page, exceptWindow)
 
 	case "submenu":
 		submenutype := cmd.ValuesString("submenu", "")
@@ -219,7 +223,7 @@ func (page *Page) Do(cmd engine.Cmd) string {
 		page.showMouse(false)
 
 	default:
-		DoUpstream(page, cmd)
+		WinDoUpstream(page, cmd)
 	}
 	return engine.OkResult()
 }
@@ -229,7 +233,7 @@ func (page *Page) restoreState(s string) error {
 	// clear this page of all children
 	wc := page.Context()
 	for _, w := range wc.childWindow {
-		RemoveChild(page, w)
+		WinRemoveChild(page, w)
 	}
 
 	var dat map[string]interface{}
@@ -244,7 +248,7 @@ func (page *Page) restoreState(s string) error {
 
 	log.Printf("restore name=%s size=%v\n", name, size)
 
-	DoUpstream(page, NewResizeMeCmd(size))
+	WinDoUpstream(page, NewResizeMeCmd(size))
 
 	log.Printf("HEY!! restoreState needs work!\n")
 
@@ -277,7 +281,7 @@ func (page *Page) dumpState() (string, error) {
 	wc := page.Context()
 	s := "{\n"
 	s += fmt.Sprintf("\"page\": \"%s\",\n", page.pageName)
-	s += fmt.Sprintf("\"size\": \"%s\",\n", PointString(WinCurrSize(page)))
+	s += fmt.Sprintf("\"size\": \"%s\",\n", PointString(WinGetSize(page)))
 	s += "\"children\": [\n" // start children array
 	sep := ""
 	for wid, child := range wc.childWindow {
@@ -288,9 +292,9 @@ func (page *Page) dumpState() (string, error) {
 
 		s += fmt.Sprintf("%s{\n", sep)
 		s += fmt.Sprintf("\"wid\": \"%s\",\n", wid)
-		s += fmt.Sprintf("\"tooltype\": \"%s\",\n", ToolType(child))
+		s += fmt.Sprintf("\"tooltype\": \"%s\",\n", winToolType(child))
 		s += fmt.Sprintf("\"pos\": \"%s\",\n", PointString(WinChildPos(page, child)))
-		s += fmt.Sprintf("\"size\": \"%s\",\n", PointString(WinCurrSize(child)))
+		s += fmt.Sprintf("\"size\": \"%s\",\n", PointString(WinGetSize(child)))
 		s += fmt.Sprintf("\"state\": %s\n", state)
 		s += "}\n"
 		sep = ",\n"
@@ -323,7 +327,7 @@ func (page *Page) AddTool(name string, pos image.Point, size image.Point) (Windo
 		return nil, err
 	}
 
-	child := AddChild(page, td)
+	child := WinAddChild(page, td)
 	WinSetChildPos(page, child, pos)
 	// If size isn't specified, use MinSize
 	if size.X == 0 || size.Y == 0 {
@@ -337,7 +341,7 @@ func (page *Page) AddTool(name string, pos image.Point, size image.Point) (Windo
 func (page *Page) log(format string, v ...interface{}) {
 	wc := page.Context()
 	for _, w := range wc.childWindow {
-		if GetAttValue(w, "islogger") == "true" {
+		if WinGetAttValue(w, "islogger") == "true" {
 			line := fmt.Sprintf(format, v...)
 			w.Do(NewAddLineCmd(line))
 		}
@@ -345,35 +349,35 @@ func (page *Page) log(format string, v ...interface{}) {
 }
 
 func (page *Page) drawSweepRect() {
-	DoUpstream(page, NewSetColorCmd(ForeColor))
-	DoUpstream(page, NewDrawRectCmd(page.sweepRect()))
+	WinDoUpstream(page, NewSetColorCmd(ForeColor))
+	WinDoUpstream(page, NewDrawRectCmd(page.sweepRect()))
 }
 
 func (page *Page) drawSweepMouse() {
-	DoUpstream(page, NewSetColorCmd(ForeColor))
+	WinDoUpstream(page, NewSetColorCmd(ForeColor))
 	pos := page.lastPos
-	DoUpstream(page, NewDrawLineCmd(pos, pos.Add(image.Point{20, 0})))
-	DoUpstream(page, NewDrawLineCmd(pos, pos.Add(image.Point{0, 20})))
+	WinDoUpstream(page, NewDrawLineCmd(pos, pos.Add(image.Point{20, 0})))
+	WinDoUpstream(page, NewDrawLineCmd(pos, pos.Add(image.Point{0, 20})))
 	pos = pos.Add(image.Point{10, 10})
-	DoUpstream(page, NewDrawLineCmd(pos, pos.Add(image.Point{10, 0})))
-	DoUpstream(page, NewDrawLineCmd(pos, pos.Add(image.Point{0, 10})))
+	WinDoUpstream(page, NewDrawLineCmd(pos, pos.Add(image.Point{10, 0})))
+	WinDoUpstream(page, NewDrawLineCmd(pos, pos.Add(image.Point{0, 10})))
 }
 
 func (page *Page) drawPickMouse() {
-	DoUpstream(page, NewSetColorCmd(ForeColor))
+	WinDoUpstream(page, NewSetColorCmd(ForeColor))
 	sz := 10
 	pos := page.lastPos
-	DoUpstream(page, NewDrawLineCmd(
+	WinDoUpstream(page, NewDrawLineCmd(
 		pos.Add(image.Point{-sz, 0}),
 		pos.Add(image.Point{sz, 0})))
-	DoUpstream(page, NewDrawLineCmd(
+	WinDoUpstream(page, NewDrawLineCmd(
 		pos.Add(image.Point{0, -sz}),
 		pos.Add(image.Point{0, sz})))
 }
 
 func (page *Page) resize() {
-	size := WinCurrSize(page)
-	WinSetMySize(page, size)
+	size := WinGetSize(page)
+	WinSetSize(page, size)
 	log.Printf("Page.Resize: should be doing menus (and other things)?")
 }
 
@@ -382,10 +386,10 @@ func (page *Page) defaultHandler(cmd engine.Cmd) {
 	pos := cmd.ValuesPos(image.Point{0, 0})
 	ddu := cmd.ValuesString("ddu", "")
 
-	child, relPos := WindowUnder(page, pos)
+	child, relPos := WinFindWindowUnder(page, pos)
 	if child != nil {
 		if ddu == "down" {
-			WindowRaise(page, child)
+			winRaise(page, child)
 		}
 		cmd.ValuesSetPos(relPos)
 		child.Do(cmd)
@@ -459,7 +463,7 @@ func (page *Page) sweepHandler(cmd engine.Cmd) {
 			// If you don't sweep out anything, look for
 			// as much space as you can find starting at that point.
 			if toolSize.X < 5 || toolSize.Y < 5 {
-				under, _ := WindowUnder(page, toolPos)
+				under, _ := WinFindWindowUnder(page, toolPos)
 				// If there's a window (other than the one we're resizing)
 				// underneath the point, then don't do anything
 				if under != nil && under != w {
@@ -570,7 +574,7 @@ func (page *Page) resetHandlers() {
 }
 
 func (page *Page) showMouse(b bool) {
-	DoUpstream(page, NewShowMouseCursorCmd(b))
+	WinDoUpstream(page, NewShowMouseCursorCmd(b))
 }
 
 func (page *Page) startSweep(action string) {
@@ -589,7 +593,7 @@ func (page *Page) pickHandler(cmd engine.Cmd) {
 		page.targetWindowName = "" // to make it clear until we get MouseUp
 	case "drag":
 	case "up":
-		child, _ := WindowUnder(page, page.lastPos)
+		child, _ := WinFindWindowUnder(page, page.lastPos)
 		if child == nil {
 			page.resetHandlers()
 			break
@@ -600,7 +604,7 @@ func (page *Page) pickHandler(cmd engine.Cmd) {
 		case "resize":
 			page.startSweep("resize")
 		case "delete":
-			RemoveChild(page, child)
+			WinRemoveChild(page, child)
 			page.resetHandlers()
 		default:
 			log.Printf("Unrecognized currentAction=%s\n", page.currentAction)
@@ -618,20 +622,22 @@ func (page *Page) moveHandler(cmd engine.Cmd) {
 		if page.targetWindowName != "" {
 			dpos := page.lastPos.Sub(page.dragStart)
 			wtarget := WinChildNamed(page, page.targetWindowName)
-			MoveWindow(page, wtarget, dpos)
+			winMoveWindow(page, wtarget, dpos)
 			page.dragStart = page.lastPos
 		}
 
 	case "up":
 		// When we move a menu, we want it to be permanent
+		var exceptWindow Window
 		if page.targetWindowName != "" {
 			page.Do(NewMakePermanentCmd(page.targetWindowName))
+			exceptWindow = WinChildNamed(page, page.targetWindowName)
 		}
-		winRemoveTransients(page, nil)
+		winRemoveTransients(page, exceptWindow)
 		page.resetHandlers()
 
 	case "down":
-		targetWindow, _ := WindowUnder(page, page.lastPos)
+		targetWindow, _ := WinFindWindowUnder(page, page.lastPos)
 		page.targetWindowName = WinChildName(page, targetWindow)
 		page.dragStart = page.lastPos
 	}

@@ -108,29 +108,29 @@ func (menu *Menu) maxX(style *StyleInfo, items []MenuItem) int {
 // Draw xxx
 func (menu *Menu) redraw() {
 
-	currSize := WinCurrSize(menu)
+	currSize := WinGetSize(menu)
 	rect := image.Rect(0, 0, currSize.X, currSize.Y)
 	styleName := WinStyleName(menu)
 
-	DoUpstream(menu, NewSetColorCmd(color.RGBA{0x00, 0x00, 0x00, 0xff}))
-	DoUpstream(menu, NewDrawFilledRectCmd(rect.Inset(1)))
+	WinDoUpstream(menu, NewSetColorCmd(color.RGBA{0x00, 0x00, 0x00, 0xff}))
+	WinDoUpstream(menu, NewDrawFilledRectCmd(rect.Inset(1)))
 
-	DoUpstream(menu, NewSetColorCmd(color.RGBA{0xff, 0xff, 0xff, 0xff}))
-	DoUpstream(menu, NewDrawRectCmd(rect))
+	WinDoUpstream(menu, NewSetColorCmd(color.RGBA{0xff, 0xff, 0xff, 0xff}))
+	WinDoUpstream(menu, NewDrawRectCmd(rect))
 
 	liney := rect.Min.Y + menu.handleHeight
 
 	// Draw the bar at the top of the menu
-	DoUpstream(menu, NewDrawLineCmd(image.Point{rect.Min.X, liney}, image.Point{rect.Max.X, liney}))
+	WinDoUpstream(menu, NewDrawLineCmd(image.Point{rect.Min.X, liney}, image.Point{rect.Max.X, liney}))
 
 	midx := menu.handleMidx
 
 	// Draw the X at the right side of the handle area
 
-	DoUpstream(menu, NewDrawLineCmd(image.Point{midx, rect.Min.Y}, image.Point{midx, liney}))
+	WinDoUpstream(menu, NewDrawLineCmd(image.Point{midx, rect.Min.Y}, image.Point{midx, liney}))
 	// the midx-1 is just so the X looks a little nicer
-	DoUpstream(menu, NewDrawLineCmd(image.Point{midx - 1, rect.Min.Y}, image.Point{rect.Max.X, liney}))
-	DoUpstream(menu, NewDrawLineCmd(image.Point{midx - 1, liney}, image.Point{rect.Max.X, rect.Min.Y}))
+	WinDoUpstream(menu, NewDrawLineCmd(image.Point{midx - 1, rect.Min.Y}, image.Point{rect.Max.X, liney}))
+	WinDoUpstream(menu, NewDrawLineCmd(image.Point{midx - 1, liney}, image.Point{rect.Max.X, rect.Min.Y}))
 
 	nitems := len(menu.items)
 	liney0 := rect.Min.Y + menu.handleHeight + menu.rowHeight/4 - 4
@@ -143,14 +143,14 @@ func (menu *Menu) redraw() {
 			back = ForeColor
 			itemRect := image.Rect(rect.Min.X+1, liney-menu.rowHeight, rect.Max.X-1, liney)
 
-			DoUpstream(menu, NewSetColorCmd(back))
-			DoUpstream(menu, NewDrawFilledRectCmd(itemRect))
+			WinDoUpstream(menu, NewSetColorCmd(back))
+			WinDoUpstream(menu, NewDrawFilledRectCmd(itemRect))
 		}
 
-		DoUpstream(menu, NewSetColorCmd(fore))
-		DoUpstream(menu, NewDrawTextCmd(item.Label, styleName, rect.Min.Add(image.Point{item.posX, item.posY})))
+		WinDoUpstream(menu, NewSetColorCmd(fore))
+		WinDoUpstream(menu, NewDrawTextCmd(item.Label, styleName, rect.Min.Add(image.Point{item.posX, item.posY})))
 		if n != menu.itemSelected && n < (nitems-1) {
-			DoUpstream(menu, NewDrawLineCmd(image.Point{rect.Min.X, liney}, image.Point{rect.Max.X, liney}))
+			WinDoUpstream(menu, NewDrawLineCmd(image.Point{rect.Min.X, liney}, image.Point{rect.Max.X, liney}))
 		}
 	}
 }
@@ -169,11 +169,11 @@ func (menu *Menu) mouseHandler(cmd engine.Cmd) (removeMenu bool) {
 			menuname := WinChildName(parent, menu)
 			if pos.X > menu.handleMidx {
 				// Clicked in the X, remove the menu no matter what
-				DoUpstream(menu, NewCloseMeCmd(menuname))
+				WinDoUpstream(menu, NewCloseMeCmd(menuname))
 				return true
 			}
-			DoUpstream(menu, NewMoveMenuCmd(menuname))
-			DoUpstream(menu, NewMakePermanentCmd(menuname))
+			WinDoUpstream(menu, NewMoveMenuCmd(menuname))
+			WinDoUpstream(menu, NewMakePermanentCmd(menuname))
 			return false
 		}
 		return false
@@ -203,7 +203,7 @@ func (menu *Menu) mouseHandler(cmd engine.Cmd) (removeMenu bool) {
 
 		menu.itemSelected = -1
 		if !doingSubMenu {
-			DoUpstream(menu, NewCloseTransientsCmd(""))
+			WinDoUpstream(menu, NewCloseTransientsCmd(""))
 		}
 		return !strings.HasSuffix(item.Label, "->")
 	}
@@ -243,7 +243,7 @@ func (menu *Menu) Do(cmd engine.Cmd) string {
 			// if GetAttValue(menu, "istransient") == "true" {
 			parent := WinParent(menu)
 			menuname := WinChildName(parent, menu)
-			DoUpstream(menu, NewCloseTransientsCmd(menuname))
+			WinDoUpstream(menu, NewCloseTransientsCmd(menuname))
 			// }
 		}
 	}

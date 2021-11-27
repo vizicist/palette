@@ -26,11 +26,11 @@ func NewRiff(parent winsys.Window) winsys.WindowData {
 		ctx: winsys.NewWindowContext(parent),
 	}
 
-	riff.clearButton = winsys.AddChild(riff, winsys.NewButton(riff, "Clear"))
+	riff.clearButton = winsys.WinAddChild(riff, winsys.NewButton(riff, "Clear"))
 
-	riff.TextArea = winsys.AddChild(riff, winsys.NewScrollingText(riff))
+	riff.TextArea = winsys.WinAddChild(riff, winsys.NewScrollingText(riff))
 
-	winsys.SetAttValue(riff, "islogger", "true")
+	winsys.WinSetAttValue(riff, "islogger", "true")
 
 	// engine.TheRouter().SendCursor3DDeviceEventsTo(riff.handleCursor3DDeviceInput)
 
@@ -75,7 +75,7 @@ func (riff *Riff) Do(cmd engine.Cmd) string {
 	case "addline":
 		riff.TextArea.Do(cmd)
 	default:
-		winsys.DoUpstream(riff, cmd)
+		winsys.WinDoUpstream(riff, cmd)
 	}
 	return engine.OkResult()
 }
@@ -88,7 +88,7 @@ func (riff *Riff) addLine(line string) {
 func (riff *Riff) resize() {
 
 	buttHeight := winsys.WinStyleInfo(riff).TextHeight() + 12
-	mySize := winsys.WinCurrSize(riff)
+	mySize := winsys.WinGetSize(riff)
 
 	// handle TextArea
 	y0 := buttHeight + 4
@@ -98,10 +98,10 @@ func (riff *Riff) resize() {
 	riff.TextArea.Do(winsys.NewResizeCmd(areaSize))
 
 	// If the TextArea has adjusted its size a bit, adjust our size as well
-	currsz := winsys.WinCurrSize(riff.TextArea)
+	currsz := winsys.WinGetSize(riff.TextArea)
 	mySize.Y += currsz.Y - areaSize.Y
 	mySize.X += currsz.X - areaSize.X
-	winsys.WinSetMySize(riff, mySize)
+	winsys.WinSetSize(riff, mySize)
 
 	buttWidth := mySize.X / 4
 	buttSize := image.Point{buttWidth, buttHeight}
@@ -119,11 +119,11 @@ func (riff *Riff) resize() {
 
 // Draw xxx
 func (riff *Riff) redraw() {
-	size := winsys.WinCurrSize(riff)
+	size := winsys.WinGetSize(riff)
 	rect := image.Rect(0, 0, size.X, size.Y)
-	winsys.DoUpstream(riff, winsys.NewSetColorCmd(winsys.BackColor))
-	winsys.DoUpstream(riff, winsys.NewDrawFilledRectCmd(rect.Inset(1)))
-	winsys.DoUpstream(riff, winsys.NewSetColorCmd(winsys.ForeColor))
-	winsys.DoUpstream(riff, winsys.NewDrawRectCmd(rect))
-	winsys.RedrawChildren(riff)
+	winsys.WinDoUpstream(riff, winsys.NewSetColorCmd(winsys.BackColor))
+	winsys.WinDoUpstream(riff, winsys.NewDrawFilledRectCmd(rect.Inset(1)))
+	winsys.WinDoUpstream(riff, winsys.NewSetColorCmd(winsys.ForeColor))
+	winsys.WinDoUpstream(riff, winsys.NewDrawRectCmd(rect))
+	winsys.WinRedrawChildren(riff)
 }
