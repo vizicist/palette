@@ -105,6 +105,7 @@ popd
 echo ================ Copying config
 mkdir %ship%\config
 
+copy %PALETTESOURCE%\default\config\homepage.json %ship%\config >nul
 copy %PALETTESOURCE%\default\config\ffgl.json %ship%\config >nul
 copy %PALETTESOURCE%\default\config\param*.json %ship%\config >nul
 copy %PALETTESOURCE%\default\config\resolume.json %ship%\config >nul
@@ -118,6 +119,8 @@ copy %PALETTESOURCE%\default\config\palette.ico %ship%\config >nul
 copy %PALETTESOURCE%\default\config\palette.bidule %ship%\config >nul
 copy %PALETTESOURCE%\default\config\attractscreen.png %ship%\config >nul
 copy %PALETTESOURCE%\default\config\helpscreen.png %ship%\config >nul
+copy %PALETTESOURCE%\default\config\consola.ttf %ship%\config >nul
+copy %PALETTESOURCE%\default\config\OpenSans-Regular.ttf %ship%\config >nul
 
 echo ================ Copying midifiles
 mkdir %ship%\midifiles

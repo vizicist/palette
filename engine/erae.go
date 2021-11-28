@@ -29,15 +29,15 @@ func InitErae() {
 		return
 	}
 	EraeEnabled = true
-	// DebugUtil.OSC = true
-	// DebugUtil.Erae = true
+	// engine.Debug.OSC = true
+	// engine.Debug.Erae = true
 	EraeZoneClearDisplay(EraeZone)
 }
 
 func HandleEraeMIDI(event MidiEvent) {
 	if event.SysEx != nil {
 		bb := event.SysEx
-		if DebugUtil.Erae {
+		if Debug.Erae {
 			s := ""
 			for _, b := range bb {
 				s += fmt.Sprintf(" 0x%02x", b)
@@ -78,7 +78,7 @@ var lastY float32
 var lastZ float32
 
 func EraeFingerIndicator(zone, x, y byte) {
-	if DebugUtil.Erae {
+	if Debug.Erae {
 		log.Printf("EraeFingerIndicator!!   x,y=%d,%d\n", x, y)
 	}
 	rectw := byte(2)
@@ -135,7 +135,7 @@ func handleFinger(bb []byte) {
 	y := rawy / float32(EraeHeight)
 	z := rawz
 
-	if DebugUtil.Erae {
+	if Debug.Erae {
 		dx := lastX - x
 		dy := lastY - y
 		dz := lastZ - z
@@ -171,7 +171,7 @@ func handleFinger(bb []byte) {
 				Ddu:       "clear",
 			}
 			router.handleCursorDeviceInput(ce)
-			if DebugUtil.Erae {
+			if Debug.Erae {
 				log.Printf("Switching Erae to region %s", newregion)
 			}
 			EraeRegion = newregion

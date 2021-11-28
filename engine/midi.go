@@ -163,7 +163,7 @@ func (out *MidiOutput) WriteSysex(bytes []byte) {
 		log.Printf("MidiOutput.WriteSysex: out is nil?\n")
 		return
 	}
-	if DebugUtil.MIDI {
+	if Debug.MIDI {
 		s := "["
 		for _, b := range bytes {
 			s += fmt.Sprintf(" 0x%02x", b)
@@ -183,7 +183,7 @@ func (out *MidiOutput) WriteSysex(bytes []byte) {
 }
 
 func (out *MidiOutput) WriteShort(status, data1, data2 int64) {
-	if DebugUtil.MIDI {
+	if Debug.MIDI {
 		log.Printf("MidiOutput.WriteShort: status=0x%02x data1=%d data2=%d\n", status, data1, data2)
 	}
 	if out.stream == nil {
