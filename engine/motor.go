@@ -110,7 +110,7 @@ func NewMotor(pad string, resolumeLayer int, freeframeClient *osc.Client, resolu
 // PassThruMIDI xxx
 func (motor *Motor) PassThruMIDI(e MidiEvent, scadjust bool) {
 
-	if DebugUtil.MIDI {
+	if Debug.MIDI {
 		log.Printf("Motor.PassThruMIDI e=%+v\n", e)
 	}
 
@@ -147,7 +147,7 @@ func (motor *Motor) PassThruMIDI(e MidiEvent, scadjust bool) {
 	}
 	if n != nil {
 		// log.Printf("PassThruMIDI sending note=%s\n", n)
-		if DebugUtil.MIDI {
+		if Debug.MIDI {
 			log.Printf("MIDI.SendNote: n=%+v\n", *n)
 		}
 		SendNoteToSynth(n)
@@ -175,11 +175,11 @@ func (motor *Motor) AdvanceByOneClick() {
 
 	stepnum := loop.currentStep
 
-	if DebugUtil.Transpose {
+	if Debug.Transpose {
 		log.Printf("Advance 1 click stepnum=%d\n", stepnum)
 	}
 
-	if DebugUtil.Advance {
+	if Debug.Advance {
 		if stepnum%20 == 0 {
 			log.Printf("advanceClickby1 start stepnum=%d\n", stepnum)
 		}
@@ -193,7 +193,7 @@ func (motor *Motor) AdvanceByOneClick() {
 
 			ce := event.cursorStepEvent
 
-			if DebugUtil.Advance {
+			if Debug.Advance {
 				log.Printf("Motor.advanceClickBy1: pad=%s stepnum=%d ce=%+v\n", motor.padName, stepnum, ce)
 			}
 
@@ -270,13 +270,13 @@ func (motor *Motor) AdvanceByOneClick() {
 						dclick := currentClick - ac.lastDrag
 						if ac.lastDrag < 0 || dclick >= oneBeat/32 {
 							ac.lastDrag = currentClick
-							if DebugUtil.GenSound {
+							if Debug.GenSound {
 								log.Printf("generateSoundFromCursor: ddu=%s stepnum=%d ce.ID=%s\n", ce.Ddu, stepnum, ce.ID)
 							}
 							motor.generateSoundFromCursor(ce)
 						}
 					} else {
-						if DebugUtil.GenSound {
+						if Debug.GenSound {
 							log.Printf("generateSoundFromCursor: ddu=%s stepnum=%d ce.ID=%s\n", ce.Ddu, stepnum, ce.ID)
 						}
 						motor.generateSoundFromCursor(ce)
@@ -285,7 +285,7 @@ func (motor *Motor) AdvanceByOneClick() {
 					// Graphics and GUI stuff
 					ss := motor.params.ParamStringValue("visual.spritesource", "")
 					if ss == "cursor" {
-						if TheRouter().generateVisuals && DebugUtil.Loop {
+						if TheRouter().generateVisuals && Debug.Loop {
 							log.Printf("Motor.advanceClickBy1: stepnum=%d generateVisuals ce=%+v\n", stepnum, ce)
 						}
 						motor.generateVisualsFromCursor(ce)
@@ -318,7 +318,7 @@ func (motor *Motor) AdvanceByOneClick() {
 
 	loop.currentStep++
 	if loop.currentStep >= loop.length {
-		// if DebugUtil.MIDI {
+		// if engine.Debug.MIDI {
 		// 	log.Printf("Motor.AdvanceClickBy1: region=%s Loop length=%d wrapping around to step 0\n", r.padName, loop.length)
 		// }
 		loop.currentStep = 0
@@ -328,7 +328,7 @@ func (motor *Motor) AdvanceByOneClick() {
 // ExecuteAPI xxx
 func (motor *Motor) ExecuteAPI(api string, args map[string]string, rawargs string) (result string, err error) {
 
-	if DebugUtil.MotorAPI {
+	if Debug.MotorAPI {
 		log.Printf("MotorAPI: api=%s rawargs=%s\n", api, rawargs)
 	}
 
@@ -455,7 +455,7 @@ func (motor *Motor) ExecuteAPI(api string, args map[string]string, rawargs strin
 		v, err := needIntArg("value", api, args)
 		if err == nil {
 			motor.TransposePitch = v
-			if DebugUtil.Transpose {
+			if Debug.Transpose {
 				log.Printf("motor API set_transpose TransposePitch=%v", v)
 			}
 		}
@@ -482,7 +482,7 @@ func (motor *Motor) HandleMIDIDeviceInput(e MidiEvent) {
 	motor.midiInputMutex.Lock()
 	defer motor.midiInputMutex.Unlock()
 
-	if DebugUtil.MIDI {
+	if Debug.MIDI {
 		log.Printf("Router.HandleMIDIDeviceInput: MIDIInput event=%+v\n", e)
 	}
 	if motor.MIDIThru {
@@ -502,19 +502,19 @@ func (motor *Motor) setOneParamValue(apiprefix, name, value string) {
 
 // ClearExternalScale xxx
 func (motor *Motor) clearExternalScale() {
-	if DebugUtil.Scale {
+	if Debug.Scale {
 		log.Printf("clearExternalScale pad=%s", motor.padName)
 	}
-	motor.externalScale = makeScale()
+	motor.externalScale = MakeScale()
 }
 
 // SetExternalScale xxx
 func (motor *Motor) setExternalScale(pitch int, on bool) {
 	s := motor.externalScale
 	for p := pitch; p < 128; p += 12 {
-		s.hasNote[p] = on
+		s.HasNote[p] = on
 	}
-	if DebugUtil.Scale {
+	if Debug.Scale {
 		log.Printf("setExternalScale pad=%s pitch=%v on=%v", motor.padName, pitch, on)
 	}
 }
@@ -538,7 +538,7 @@ func (motor *Motor) handleCursorDeviceEvent(e CursorDeviceEvent) {
 				log.Printf("Hmmm, why is a cursor not downed?\n")
 			} else {
 				motor.executeIncomingCursor(CursorStepEvent{ID: id, Ddu: "up"})
-				if DebugUtil.Cursor {
+				if Debug.Cursor {
 					log.Printf("Clearing cursor id=%s\n", id)
 				}
 				delete(motor.deviceCursors, id)
@@ -569,14 +569,14 @@ func (motor *Motor) handleCursorDeviceEvent(e CursorDeviceEvent) {
 		Z:   e.Z,
 		Ddu: e.Ddu,
 	}
-	if DebugUtil.Cursor {
+	if Debug.Cursor {
 		log.Printf("Motor.handleCursorDeviceEvent: pad=%s id=%s ddu=%s xyz=%.4f,%.4f,%.4f\n", motor.padName, id, e.Ddu, e.X, e.Y, e.Z)
 	}
 
 	motor.executeIncomingCursor(cse)
 
 	if e.Ddu == "up" {
-		// if DebugUtil.Cursor {
+		// if Debug.Cursor {
 		// 	log.Printf("Router.handleCursorDeviceEvent: deleting cursor id=%s\n", id)
 		// }
 		delete(motor.deviceCursors, id)
@@ -603,7 +603,7 @@ func (motor *Motor) checkCursorUp() {
 		elapsed := now.Sub(c.lastTouch)
 		if elapsed > checkDelay {
 			motor.executeIncomingCursor(CursorStepEvent{ID: id, Ddu: "up"})
-			if DebugUtil.Cursor {
+			if Debug.Cursor {
 				log.Printf("Motor.checkCursorUp: deleting cursor id=%s elapsed=%v\n", id, elapsed)
 			}
 			delete(motor.deviceCursors, id)
@@ -691,7 +691,7 @@ func (motor *Motor) generateVisualsFromCursor(ce CursorStepEvent) {
 	msg.Append(float32(ce.X))
 	msg.Append(float32(ce.Y))
 	msg.Append(float32(ce.Z))
-	if DebugUtil.GenVisual {
+	if Debug.GenVisual {
 		log.Printf("Motor.generateVisuals: pad=%s click=%d stepnum=%d OSC message = %+v\n", motor.padName, CurrentClick(), motor.loop.currentStep, msg)
 	}
 	motor.toFreeFramePluginForLayer(msg)
@@ -700,7 +700,7 @@ func (motor *Motor) generateVisualsFromCursor(ce CursorStepEvent) {
 func (motor *Motor) generateSpriteFromNote(a *ActiveNote) {
 
 	n := a.noteOn
-	if n.TypeOf != NOTEON {
+	if n.TypeOf != "noteon" {
 		return
 	}
 
@@ -756,21 +756,21 @@ func (motor *Motor) notifyGUI(ce CursorStepEvent, wasFresh bool) {
 	msg.Append(int32(motor.resolumeLayer))
 	msg.Append(wasFresh)
 	motor.guiClient.Send(msg)
-	if DebugUtil.Notify {
+	if Debug.Notify {
 		log.Printf("Motor.notifyGUI: msg=%v\n", msg)
 	}
 }
 
 func (motor *Motor) toFreeFramePluginForLayer(msg *osc.Message) {
 	motor.freeframeClient.Send(msg)
-	if DebugUtil.OSC {
+	if Debug.OSC {
 		log.Printf("Motor.toFreeFramePlugin: layer=%d msg=%v\n", motor.resolumeLayer, msg)
 	}
 }
 
 func (motor *Motor) toResolume(msg *osc.Message) {
 	motor.resolumeClient.Send(msg)
-	if DebugUtil.OSC || DebugUtil.Resolume {
+	if Debug.OSC || Debug.Resolume {
 		log.Printf("Motor.toResolume: msg=%v\n", msg)
 	}
 }
@@ -781,7 +781,7 @@ func (motor *Motor) handleMIDISetScaleNote(e MidiEvent) {
 	if status == 0x90 {
 		// If there are no notes held down (i.e. this is the first), clear the scale
 		if motor.MIDINumDown < 0 {
-			// this can happen when there's a Read error that misses a NOTEON
+			// this can happen when there's a Read error that misses a noteon
 			motor.MIDINumDown = 0
 		}
 		if motor.MIDINumDown == 0 {
@@ -819,7 +819,7 @@ func (motor *Motor) generateSoundFromCursor(ce CursorStepEvent) {
 		return
 	}
 	a := motor.getActiveNote(ce.ID)
-	if DebugUtil.Transpose {
+	if Debug.Transpose {
 		log.Printf("Motor.gen: pad=%s ntsactive=%d ce.id=%s ddu=%s\n",
 			motor.padName, len(motor.activeNotes), ce.ID, ce.Ddu)
 		if a == nil {
@@ -840,7 +840,7 @@ func (motor *Motor) generateSoundFromCursor(ce CursorStepEvent) {
 	}
 	switch ce.Ddu {
 	case "down":
-		// Send NOTEOFF for current note
+		// Send noteoff for current note
 		if a.noteOn != nil {
 			// I think this happens if we get things coming in
 			// faster than the checkDelay can generate the UP event.
@@ -849,7 +849,7 @@ func (motor *Motor) generateSoundFromCursor(ce CursorStepEvent) {
 			motor.sendNoteOff(a)
 		}
 		a.noteOn = motor.cursorToNoteOn(ce)
-		if DebugUtil.Transpose {
+		if Debug.Transpose {
 			s := fmt.Sprintf("Setting a.noteOn to %+v!\n", *(a.noteOn))
 			if strings.Contains(s, "PANIC") {
 				log.Printf("PANIC, a.noteOn?\n")
@@ -866,7 +866,7 @@ func (motor *Motor) generateSoundFromCursor(ce CursorStepEvent) {
 			// Also, I'm seeing this pretty commonly in other situations,
 			// not really sure what the underlying reason is,
 			// but it seems to be harmless at the moment.
-			if DebugUtil.Router {
+			if Debug.Router {
 				log.Printf("=============== HEY! drag event, a.currentNoteOn == nil?\n")
 			}
 			return
@@ -879,7 +879,7 @@ func (motor *Motor) generateSoundFromCursor(ce CursorStepEvent) {
 		if newpitch != oldpitch {
 			motor.sendNoteOff(a)
 			a.noteOn = newNoteOn
-			if DebugUtil.Transpose {
+			if Debug.Transpose {
 				s := fmt.Sprintf("r=%s drag Setting currentNoteOn to %+v\n", motor.padName, *(a.noteOn))
 				if strings.Contains(s, "PANIC") {
 					log.Printf("PANIC? setting currentNoteOn\n")
@@ -919,7 +919,7 @@ func (motor *Motor) executeIncomingCursor(ce CursorStepEvent) {
 		ce.LoopsLeft = 0
 	}
 
-	if DebugUtil.Transpose {
+	if Debug.Transpose {
 		log.Printf("MOTOR.INCOMINGCURSOR: ce.id=%s ddu=%s\n", ce.ID, ce.Ddu)
 	}
 
@@ -1004,12 +1004,12 @@ func (motor *Motor) executeIncomingCursor(ce CursorStepEvent) {
 		// So, use the quantize value of the down event
 		downQuant := motor.permInstanceIDDownQuant[permInstanceIDQuantized]
 		quantizedStepnum = motor.nextQuant(motor.loop.currentStep, downQuant)
-		if DebugUtil.Loop {
+		if Debug.Loop {
 			log.Printf("UP event: qsn1=%d loopleng=%d\n", quantizedStepnum, motor.loop.length)
 		}
 		for quantizedStepnum >= motor.loop.length {
 			quantizedStepnum -= motor.loop.length
-			if DebugUtil.Loop {
+			if Debug.Loop {
 				log.Printf("   quantizedStepnum2=%d\n", quantizedStepnum)
 			}
 		}
@@ -1019,7 +1019,7 @@ func (motor *Motor) executeIncomingCursor(ce CursorStepEvent) {
 		// so push the up event out a few steps.
 		magicUpDelayClicks := Clicks(8)
 		quantizedStepnum = (quantizedStepnum + magicUpDelayClicks) % motor.loop.length
-		if DebugUtil.Loop {
+		if Debug.Loop {
 			log.Printf("   FINAL quantizedStepnum2=%d\n", quantizedStepnum)
 		}
 	}
@@ -1048,7 +1048,7 @@ func (motor *Motor) nextQuant(t Clicks, q Clicks) Clicks {
 
 func (motor *Motor) sendNoteOn(a *ActiveNote) {
 
-	if DebugUtil.MIDI {
+	if Debug.MIDI {
 		log.Printf("MIDI.SendNote: noteOn pitch:%d velocity:%d sound:%s\n", a.noteOn.Pitch, a.noteOn.Velocity, a.noteOn.Sound)
 	}
 	SendNoteToSynth(a.noteOn)
@@ -1066,14 +1066,14 @@ func (motor *Motor) sendNoteOff(a *ActiveNote) {
 		// log.Printf("HEY! sendNoteOff got a nil?\n")
 		return
 	}
-	// the Note coming in should be a NOTEON or NOTEOFF
-	if n.TypeOf != NOTEON && n.TypeOf != NOTEOFF {
-		log.Printf("HEY! sendNoteOff didn't get a NOTEON or NOTEOFF!?")
+	// the Note coming in should be a noteon or noteoff
+	if n.TypeOf != "noteon" && n.TypeOf != "noteoff" {
+		log.Printf("HEY! sendNoteOff didn't get a noteon or noteoff!?")
 		return
 	}
 
 	noteOff := NewNoteOff(n.Pitch, n.Velocity, n.Sound)
-	if DebugUtil.MIDI {
+	if Debug.MIDI {
 		log.Printf("MIDI.SendNote: noteOff pitch:%d velocity:%d sound:%s\n", n.Pitch, n.Velocity, n.Sound)
 	}
 	SendNoteToSynth(noteOff)
