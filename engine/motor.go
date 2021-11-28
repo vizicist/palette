@@ -586,10 +586,15 @@ func (motor *Motor) handleCursorDeviceEvent(e CursorDeviceEvent) {
 // checkDelay is the Duration that has to pass
 // before we decide a cursor is no longer present,
 // resulting in a cursor UP event.
-const checkDelay time.Duration = 2 * time.Second
+var checkDelay time.Duration = 0
 
 func (motor *Motor) checkCursorUp() {
 	now := motor.time()
+
+	if checkDelay == 0 {
+		milli := ConfigIntWithDefault("upcheckmillisecs", 1000)
+		checkDelay = time.Duration(milli) * time.Millisecond
+	}
 
 	motor.deviceCursorsMutex.Lock()
 	defer motor.deviceCursorsMutex.Unlock()
