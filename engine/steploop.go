@@ -63,7 +63,7 @@ func (loop *StepLoop) ClearID(id string) {
 	loop.stepsMutex.Lock()
 	defer loop.stepsMutex.Unlock()
 
-	if DebugUtil.Cursor {
+	if Debug.Cursor {
 		log.Printf("StepLoop.ClearID: START ClearID for id=%s\n", id)
 	}
 	for _, step := range loop.steps {
@@ -89,7 +89,7 @@ func (loop *StepLoop) AddToStep(ce CursorStepEvent, stepnum Clicks) {
 	loop.stepsMutex.Lock()
 	defer loop.stepsMutex.Unlock()
 
-	if DebugUtil.Loop {
+	if Debug.Loop {
 		log.Printf("StepLoop.AddToStep: stepnum=%d ddu=%s cid=%s\n", stepnum, ce.Ddu, ce.ID)
 	}
 
@@ -134,7 +134,7 @@ func (loop *StepLoop) AddToStep(ce CursorStepEvent, stepnum Clicks) {
 			}
 		}
 		if replace >= 0 {
-			if DebugUtil.Loop {
+			if Debug.Loop {
 				log.Printf("Replacing %s event %d in stepnum=%d\n", ce.Ddu, replace, stepnum)
 			}
 			step.events[replace] = le

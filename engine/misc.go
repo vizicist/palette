@@ -22,80 +22,87 @@ import (
 	mail "gopkg.in/mail.v2"
 )
 
-// DebugUtil controls debugging
-var DebugUtil = DebugFlags{}
+// Debug controls debugging
+var Debug = debugFlags{}
 
-// DebugFlags xxx
-type DebugFlags struct {
+type debugFlags struct {
 	Advance   bool
 	API       bool
-	MotorAPI  bool
-	Cursor    bool
-	GenVisual bool
-	GenSound  bool
-	Loop      bool
 	Config    bool
+	Drawing   bool
+	Cursor    bool
+	Erae      bool
+	GenSound  bool
+	GenVisual bool
+	Go        bool
+	Loop      bool
 	MIDI      bool
-	Scale     bool
 	Morph     bool
+	MotorAPI  bool
+	Mouse     bool
 	NATS      bool
+	Notify    bool
 	OSC       bool
 	Resolume  bool
-	Notify    bool
 	Realtime  bool
 	Remote    bool
-	Erae      bool
-	Transpose bool
 	Router    bool
-	Go        bool
+	Scale     bool
+	Transpose bool
 }
 
 func setDebug(dtype string, b bool) error {
 	d := strings.ToLower(dtype)
 	switch d {
 	case "advance":
-		DebugUtil.Advance = b
+		Debug.Advance = b
 	case "api":
-		DebugUtil.API = b
-	case "executeapi":
-		DebugUtil.MotorAPI = b
-	case "cursor":
-		DebugUtil.Cursor = b
-	case "notify":
-		DebugUtil.Notify = b
-	case "gen":
-		DebugUtil.GenSound = b
-		DebugUtil.GenVisual = b
-	case "gensound":
-		DebugUtil.GenSound = b
-	case "genvisual":
-		DebugUtil.GenVisual = b
-	case "loop":
-		DebugUtil.Loop = b
+		Debug.API = b
 	case "config":
-		DebugUtil.Config = b
-	case "midi":
-		DebugUtil.MIDI = b
-	case "morph":
-		DebugUtil.Morph = b
-	case "nats":
-		DebugUtil.NATS = b
-	case "transpose":
-		DebugUtil.Transpose = b
-	case "go":
-		DebugUtil.Go = b
-	case "router":
-		DebugUtil.Router = b
+		Debug.Config = b
+	case "cursor":
+		Debug.Cursor = b
+	case "drawing":
+		Debug.Drawing = b
 	case "erae":
-		DebugUtil.Erae = b
+		Debug.Erae = b
+	case "executeapi":
+		Debug.MotorAPI = b
+	case "gen":
+		Debug.GenSound = b
+		Debug.GenVisual = b
+	case "gensound":
+		Debug.GenSound = b
+	case "genvisual":
+		Debug.GenVisual = b
+	case "go":
+		Debug.Go = b
+	case "loop":
+		Debug.Loop = b
+	case "midi":
+		Debug.MIDI = b
+	case "morph":
+		Debug.Morph = b
+	case "mouse":
+		Debug.Mouse = b
+	case "nats":
+		Debug.NATS = b
+	case "notify":
+		Debug.Notify = b
 	case "osc":
-		DebugUtil.OSC = b
+		Debug.OSC = b
 	case "resolume":
-		DebugUtil.Resolume = b
+		Debug.Resolume = b
 	case "realtime":
-		DebugUtil.Realtime = b
+		Debug.Realtime = b
 	case "remote":
-		DebugUtil.Remote = b
+		Debug.Remote = b
+	case "router":
+		Debug.Router = b
+	case "scale":
+		Debug.Scale = b
+	case "transpose":
+		Debug.Transpose = b
 	default:
 		return fmt.Errorf("setDebug: unrecognized debug type=%s", dtype)
 	}
@@ -126,7 +133,7 @@ func (writer logWriter) Write(bytes []byte) (int, error) {
 	micro := t.Nanosecond() / 1e3
 
 	var s string
-	if DebugUtil.Go {
+	if Debug.Go {
 		goid := GoroutineID()
 		// Add GO# to log to indicate Goroutine
 		s = fmt.Sprintf("%d/%d/%d %2d:%2d:%2d.%6d GO#%d %s",
@@ -247,6 +254,7 @@ func StringMap(params string) (map[string]string, error) {
 		return nil, err
 	}
 	if t != json.Delim('{') {
+		log.Printf("StringMap: no curly - %s\n", params)
 		return nil, errors.New("expected '{' delimiter")
 	}
 	values := make(map[string]string)

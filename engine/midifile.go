@@ -217,7 +217,7 @@ func (m *MIDIFile) noteon(synth string, pitch, velocity byte) {
 	if velocity == 0 {
 		m.noteoff(synth, pitch, defaultReleaseVelocity)
 	} else {
-		m.queuenote(synth, pitch, velocity, NOTEON)
+		m.queuenote(synth, pitch, velocity, "noteon")
 	}
 }
 func (m *MIDIFile) noteoff(synth string, pitch, velocity byte) {
@@ -225,25 +225,25 @@ func (m *MIDIFile) noteoff(synth string, pitch, velocity byte) {
 	/* find the first note-on (if any) that matches this one */
 	n := m.noteq.firstnote
 	for ; n != nil; n = n.next {
-		if n.Sound == synth && n.Pitch == pitch && n.TypeOf == NOTEON {
+		if n.Sound == synth && n.Pitch == pitch && n.TypeOf == "noteon" {
 			break
 		}
 	}
 	if n == nil {
 		/* it's an isolated note-off */
-		n = m.queuenote(synth, pitch, velocity, NOTEOFF)
+		n = m.queuenote(synth, pitch, velocity, "noteoff")
 		n.Duration = 0
 	} else if !m.onoffmerge && velocity != defaultReleaseVelocity {
 		/* If the note-off matches a previous note-on, but has a */
 		/* non-default velocity, then we have to turn it into a */
 		/* separate keykit note-off, instead of merging it with */
 		/* the note-on into a single note. */
-		o := m.queuenote(synth, pitch, velocity, NOTEOFF)
+		o := m.queuenote(synth, pitch, velocity, "noteoff")
 		n.Duration = 0
 		o.Duration = 0
 	} else {
 		/* A completed note. */
-		n.TypeOf = NOTE
+		n.TypeOf = "note"
 		n.Duration = m.clicks() - n.Clicks
 
 		/* If the MIDI File contains negative delta times (which */
@@ -266,7 +266,7 @@ func (m *MIDIFile) noteoff(synth string, pitch, velocity byte) {
 			break
 		}
 		/* quit when we get to the first unfinished note */
-		if n.TypeOf != NOTEBYTES && n.Duration == UnfinishedDuration {
+		if n.TypeOf != "notebytes" && n.Duration == UnfinishedDuration {
 			break
 		}
 		m.putnfree()
@@ -301,7 +301,7 @@ func (m *MIDIFile) chanpressure(synth string, c1 byte) {
 
 func (m *MIDIFile) queuebytes(synth string, bytes []byte) {
 	n := &Note{
-		TypeOf: NOTEBYTES,
+		TypeOf: "notebytes",
 		Clicks: m.clicks(),
 		bytes:  bytes,
 		Sound:  synth,
@@ -344,7 +344,7 @@ func (m *MIDIFile) clicks() Clicks {
 	return (Clicks)(clks + 0.5) // round it
 }
 
-func (m *MIDIFile) queuenote(synth string, pitch, velocity byte, notetype NoteType) *Note {
+func (m *MIDIFile) queuenote(synth string, pitch, velocity byte, notetype string) *Note {
 	n := &Note{
 		TypeOf:   notetype,
 		Clicks:   m.clicks(),
