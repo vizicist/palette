@@ -38,13 +38,25 @@ type WinContext struct {
 	att map[string]string
 }
 
+// NewWindowContextNoParent xxx
+func newWindowContextNoParent() WinContext {
+	return realNewWindowContext(nil, DefaultStyleName())
+}
+
 // NewWindowContext xxx
 func NewWindowContext(parent Window) WinContext {
-	style := DefaultStyleName()
+	var style string
 	if parent == nil {
-		log.Printf("Hey, NewWindowContext given nil parent?\n")
-	} else {
+		log.Printf("NewWindowContext: unexpected parent == nil?\n")
 		style = parent.Context().styleName
+	}
+	return realNewWindowContext(parent, style)
+}
+
+func realNewWindowContext(parent Window, style string) WinContext {
+
+	if style == "" {
+		style = DefaultStyleName()
 	}
 	return WinContext{
 
@@ -393,7 +405,11 @@ func WinMinSize(w Window) (r image.Point) {
 
 // WinParent xxx
 func WinParent(w Window) Window {
-	return w.Context().parent
+	parent := w.Context().parent
+	if parent == nil {
+		log.Printf("Hey, why is WinParent being called for WorldWindow\n")
+	}
+	return parent
 }
 
 // WinStyleName xxx
