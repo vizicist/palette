@@ -5,6 +5,7 @@ package winsys
  I.e. it manages everything about the screen and mouse events.
 */
 import (
+	"fmt"
 	"image"
 	"image/color"
 	"io/ioutil"
@@ -37,6 +38,7 @@ type Screen struct {
 
 // CurrentPage xxx
 var CurrentPage *Page
+var CurrentWorld *Window
 
 var Styles map[string]*StyleInfo
 
@@ -48,7 +50,21 @@ func Run() {
 	// AddToolType("Menu", NewMenu)
 	RegisterDefaultTools()
 
-	minSize := image.Point{640, 480}
+	minSize := image.Point{X: 640, Y: 480} // default
+
+	// change it with config value
+	winsize := engine.ConfigValue("winsize")
+	if winsize != "" {
+		var xsize int
+		var ysize int
+		n, err := fmt.Sscanf(winsize, "%d,%d", &xsize, &ysize)
+		if err != nil || n != 2 {
+			log.Printf("Run: bad format of winsize")
+		} else {
+			minSize.X = xsize
+			minSize.Y = ysize
+		}
+	}
 
 	Styles = make(map[string]*StyleInfo)
 	Styles["fixed"] = NewStyle("fixed", 16)
@@ -59,7 +75,7 @@ func Run() {
 	ebiten.SetWindowTitle("Palette Window System")
 
 	// The Screen is the only Window whose parent is nil
-	screenCtx := NewWindowContext(nil)
+	screenCtx := newWindowContextNoParent()
 	eimage := ebiten.NewImage(minSize.X, minSize.Y)
 	screen := &Screen{
 		ctx:       screenCtx,
@@ -76,17 +92,17 @@ func Run() {
 	screen.currentPage = WinAddChild(screen, td)
 
 	// START DEBUG - do RESTORE
-	fname := "homepage.json"
+	fname := engine.ConfigFilePath("homepage.json")
 	bytes, err := ioutil.ReadFile(fname)
 	if err != nil {
-		panic(err)
+		log.Printf("Run: No homepage - %s\n", fname)
+	} else {
+		page := td.w.(*Page)
+		err = page.restoreState(string(bytes))
+		if err != nil {
+			log.Printf("Unable to restoreState: %s\n", err)
+		}
 	}
-	page := td.w.(*Page)
-	err = page.restoreState(string(bytes))
-	if err != nil {
-		panic(err)
-	}
-	// END DEBUG - do RESTORE
 
 	// This is it!  RunGame runs forever
 	if err := ebiten.RunGame(screen); err != nil {
