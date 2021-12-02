@@ -136,23 +136,26 @@ func (page *Page) Do(cmd engine.Cmd) string {
 	case "dumpfile":
 		fname := cmd.ValuesString("filename", "")
 		retmsg := page.Do(engine.NewSimpleCmd("getstate"))
+		log.Printf("dumpfile, retmsg=%s\n", retmsg)
 		m, _ := engine.StringMap(retmsg)
 		state, ok := m["state"]
 		if !ok {
-			panic("DumpFileMsg didn't receive StateDatamsg")
-		}
-		ps := toPrettyJSON(state)
-		err := ioutil.WriteFile(fname, []byte(ps), 0644)
-		if err != nil {
-			panic(fmt.Sprintf("DumpFileMsg: err=%s", err))
+			log.Printf("DumpFileMsg didn't receive valid StateDatamsg\n")
+		} else {
+			ps := toPrettyJSON(state)
+			fpath := engine.ConfigFilePath(fname)
+			err := ioutil.WriteFile(fpath, []byte(ps), 0644)
+			if err != nil {
+				log.Printf(fmt.Sprintf("DumpFileMsg: err=%s", err))
+			}
 		}
 
 	case "getstate":
 		state, err := page.dumpState()
-		if err != nil {
-			panic(fmt.Sprintf("GetStateMsg: err=%s", err))
+		if err == nil {
+			return state
 		}
-		return state
+		log.Printf("GetStateMsg: err=%s", err)
 
 	case "resize":
 		page.resize()
@@ -187,9 +190,8 @@ func (page *Page) Do(cmd engine.Cmd) string {
 		submenutype := cmd.ValuesString("submenu", "")
 		pos := image.Point{lastMenuX + 4, page.lastPos.Y}
 		_, err := page.AddTool(submenutype, pos, image.Point{})
-		// XXX - AddTool should panic, probably
 		if err != nil {
-			panic(fmt.Sprintf("Page.Do: submenu err=%s\n", err))
+			log.Printf("Page.Do: submenu AddTool err=%s\n", err)
 		}
 
 	case "sweeptool":

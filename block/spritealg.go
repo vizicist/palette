@@ -14,7 +14,7 @@ func init() {
 
 // SpriteAlg1 is a trivial visualization, for development
 type SpriteAlg1 struct {
-	context   engine.EContext
+	// context   engine.EContext
 	oscPort   int
 	oscClient *osc.Client
 	layer     string // A, B, C, ...
