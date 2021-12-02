@@ -369,7 +369,7 @@ func IsTrueValue(value string) (bool, error) {
 
 // SendMail xxx
 func SendMail(recipient, subject, body string) error {
-	log.Printf("mysendmail recipient=%s subject=%s len(body)=%d\n", recipient, subject, len(body))
+	log.Printf("SendMail: recipient=%s subject=%s len(body)=%d\n", recipient, subject, len(body))
 	m := mail.NewMessage()
 	m.SetHeader("From", "me@timthompson.com")
 	m.SetHeader("To", recipient)
@@ -380,7 +380,7 @@ func SendMail(recipient, subject, body string) error {
 	d := mail.NewDialer("smtp.gmail.com", 587, "me@timthompson.com", "zsdntvhomjnnmmmp")
 
 	if err := d.DialAndSend(m); err != nil {
-		panic(err)
+		log.Printf("SendMail: err=%s\n", err)
 	}
 	return nil
 }

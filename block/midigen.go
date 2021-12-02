@@ -125,7 +125,7 @@ func (alg *MidiGen1) AcceptEngineMsg(ctx *engine.EContext, cmd engine.Cmd) strin
 				alg.terminateNote(ctx, old, id)
 			}
 		default:
-			panic("Bad value of DownDragUp")
+			log.Printf("Bad value of DownDragUp\n")
 		}
 	}
 	return ""
