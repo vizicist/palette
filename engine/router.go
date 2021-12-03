@@ -214,8 +214,7 @@ func TheRouter() *Router {
 
 		// Transpose control
 		oneRouter.transposeAuto = ConfigBoolWithDefault("transposeauto", true)
-		defBeats := 8
-		oneRouter.transposeBeats = Clicks(ConfigIntWithDefault("transposebeats", defBeats))
+		oneRouter.transposeBeats = Clicks(ConfigIntWithDefault("transposebeats", 48))
 		oneRouter.transposeNext = oneRouter.transposeBeats * oneBeat // first one
 		oneRouter.transposeValues = []int{0, -2, 3, -5}
 
@@ -872,7 +871,7 @@ func (r *Router) ExecuteAPI(api string, nuid string, rawargs string) (result int
 			}
 		}
 
-	case "set_autotranspose":
+	case "set_transposeauto":
 		b, err := needBoolArg("onoff", api, args)
 		if err == nil {
 			r.transposeAuto = b
