@@ -485,24 +485,6 @@ func ConfigValue(nm string) string {
 			log.Printf("ReadConfigFile: path=%s err=%s", path, err)
 			return ""
 		}
-
-		/*
-			// THIS IS OLD STUFF, THERE'S ONLY ONE CONFIG FILE NOW
-			// AND IT'S IN THE LOCAL APP DIRECTORY
-			// If it exists, merge local settings.json
-			localpath := LocalConfigFilePath("settings.json")
-			if localpath != "" && fileExists(localpath) {
-				localconfigMap, err := ReadConfigFile(localpath)
-				if err != nil {
-					log.Printf("ReadConfigFile: localpath=%s err=%s", localpath, err)
-				} else {
-					// log.Printf("Merging settings from %s\n", localpath)
-					for k, v := range localconfigMap {
-						configMap[k] = v
-					}
-				}
-			}
-		*/
 	}
 	val, ok := configMap[nm]
 	if ok {
