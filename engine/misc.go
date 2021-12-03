@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"archive/zip"
 	"bytes"
 	"encoding/json"
 	"errors"
@@ -10,7 +11,6 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
-	"net/smtp"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -19,7 +19,7 @@ import (
 	"sync"
 	"time"
 
-	mail "gopkg.in/mail.v2"
+	"gopkg.in/gomail.v2"
 )
 
 // Debug controls debugging
@@ -367,24 +367,6 @@ func IsTrueValue(value string) (bool, error) {
 	}
 }
 
-// SendMail xxx
-func SendMail(recipient, subject, body string) error {
-	log.Printf("SendMail: recipient=%s subject=%s len(body)=%d\n", recipient, subject, len(body))
-	m := mail.NewMessage()
-	m.SetHeader("From", "me@timthompson.com")
-	m.SetHeader("To", recipient)
-	m.SetHeader("Subject", subject)
-	m.SetBody("text/html", body)
-	// m.Attach("/home/Alex/lolcat.jpg")
-
-	d := mail.NewDialer("smtp.gmail.com", 587, "me@timthompson.com", "zsdntvhomjnnmmmp")
-
-	if err := d.DialAndSend(m); err != nil {
-		log.Printf("SendMail: err=%s\n", err)
-	}
-	return nil
-}
-
 type NoWriter struct {
 	// Source string
 }
@@ -504,19 +486,23 @@ func ConfigValue(nm string) string {
 			return ""
 		}
 
-		// If it exists, merge local settings.json
-		localpath := LocalConfigFilePath("settings.json")
-		if localpath != "" && fileExists(localpath) {
-			localconfigMap, err := ReadConfigFile(localpath)
-			if err != nil {
-				log.Printf("ReadConfigFile: localpath=%s err=%s", localpath, err)
-			} else {
-				log.Printf("Merging settings from %s\n", localpath)
-				for k, v := range localconfigMap {
-					configMap[k] = v
+		/*
+			// THIS IS OLD STUFF, THERE'S ONLY ONE CONFIG FILE NOW
+			// AND IT'S IN THE LOCAL APP DIRECTORY
+			// If it exists, merge local settings.json
+			localpath := LocalConfigFilePath("settings.json")
+			if localpath != "" && fileExists(localpath) {
+				localconfigMap, err := ReadConfigFile(localpath)
+				if err != nil {
+					log.Printf("ReadConfigFile: localpath=%s err=%s", localpath, err)
+				} else {
+					// log.Printf("Merging settings from %s\n", localpath)
+					for k, v := range localconfigMap {
+						configMap[k] = v
+					}
 				}
 			}
-		}
+		*/
 	}
 	val, ok := configMap[nm]
 	if ok {
@@ -578,26 +564,114 @@ func needBoolArg(nm string, api string, args map[string]string) (bool, error) {
 	return b, nil
 }
 
-func SendEmail(to, msg, login, password string) {
-	from := login
-	toaddrs := []string{to}
-	smtpHost := "smtp.gmail.com"
-	smtpPort := "587"
+func ziplogs(logsdir string, zipfile string) error {
+	file, err := os.Create(zipfile)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
 
+	w := zip.NewWriter(file)
+	defer w.Close()
+
+	walker := func(path string, info os.FileInfo, err error) error {
+		// log.Printf("Crawling: %#v\n", path)
+		if err != nil {
+			return err
+		}
+		if info.IsDir() {
+			return nil
+		}
+		file, err := os.Open(path)
+		if err != nil {
+			return err
+		}
+		defer file.Close()
+
+		// Transform path into a zip-root relative path.
+		lastslash := strings.LastIndex(path, "logs\\")
+		relativePath := path
+		if lastslash >= 0 {
+			relativePath = relativePath[lastslash+5:]
+		}
+		f, err := w.Create(relativePath)
+		if err != nil {
+			return err
+		}
+
+		_, err = io.Copy(f, file)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
+	err = filepath.Walk(logsdir, walker)
+	if err != nil {
+		log.Printf("filepath.Walk: err=%s\n", err)
+	}
+	return err
+}
+
+func SendLogs(recipient, login, password string) {
+	zipfile := ""
+	logsdir := LogFilePath("")
+
+	currentTime := time.Now()
+	timeStampString := currentTime.Format("2006-01-02 15:04:05")
+	layOut := "2006-01-02 15:04:05"
+	hr := 0
+	min := 0
+	sec := 0
+	timeStamp, err := time.Parse(layOut, timeStampString)
+	if err == nil {
+		hr, min, sec = timeStamp.Clock()
+	}
+	year, month, day := time.Now().Date()
+	zipname := fmt.Sprintf("%s_logs_%04d_%02d_%02d_%02d_%02d_%02d.zip", Hostname(), year, month, day, hr, min, sec)
+	zipfile = ConfigFilePath(zipname)
+	err = ziplogs(logsdir, zipfile)
+	if err != nil {
+		log.Printf("SendLogs: err=%s\n", err)
+		zipfile = ""
+	} else {
+		log.Printf("SendLogs: zipfile=%s\n", zipfile)
+	}
+	body := fmt.Sprintf("host=%s palette logfiles attached\n", Hostname())
+	SendMail(recipient, login, password, body, zipfile)
+}
+
+func Hostname() string {
 	hostname, err := os.Hostname()
 	if err != nil {
-		log.Printf("os.Hostname: err=%s\n", err)
-		hostname = "unknown"
+		log.Printf("SendMail: hostname err=%s\n", err)
+		hostname = "Unknown"
 	}
-	message := fmt.Sprintf("To: %s\nSubject: Palette - %s - %s\n\nhostname: %s\nmessage: %s", to, hostname, msg, hostname, msg)
+	return hostname
+}
 
-	// Create authentication
-	auth := smtp.PlainAuth("", from, password, smtpHost)
+// SendMail xxx
+func SendMail(recipient, login, password, body, attachfile string) {
 
-	// Send actual message
-	err = smtp.SendMail(smtpHost+":"+smtpPort, auth, from, toaddrs, []byte(message))
-	if err != nil {
-		log.Printf("SendMail: err = %s\n", err)
+	log.Printf("SendMail: recipient=%s\n", recipient)
+
+	smtpHost := "smtp.gmail.com"
+	smtpPort := 587
+	subject := "Palette Report from " + Hostname()
+
+	m := gomail.NewMessage()
+	m.SetHeader("From", "me@timthompson.com")
+	m.SetHeader("To", recipient)
+	m.SetHeader("Subject", subject)
+	m.SetBody("text/html", body)
+	if attachfile != "" {
+		m.Attach(attachfile)
+	}
+
+	d := gomail.NewDialer(smtpHost, smtpPort, login, password)
+
+	if err := d.DialAndSend(m); err != nil {
+		log.Printf("SendMail: err=%s\n", err)
 	}
 }
 

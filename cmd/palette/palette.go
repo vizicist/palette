@@ -14,6 +14,12 @@ import (
 	"github.com/vizicist/palette/engine"
 )
 
+func usage() {
+	usage := "Usage: palette {start|stop|sendlogs} {engine|gui|bidule|all|activate}\n"
+	os.Stderr.WriteString(usage)
+	log.Fatal(usage)
+}
+
 func main() {
 
 	signal.Ignore(syscall.SIGHUP)
@@ -25,25 +31,36 @@ func main() {
 
 	args := flag.Args()
 	nargs := len(args)
-	if nargs != 2 {
-		usage := "Usage: palette {start|stop} {engine|gui|bidule|all|activate}\n"
-		os.Stderr.WriteString(usage)
-		log.Fatal(usage)
-	}
 
-	emailto := engine.ConfigValue("emailto")
-	emaillogin := engine.ConfigValue("emaillogin")
-	emailpassword := engine.ConfigValue("emailpassword")
-	if emailto != "" && emaillogin != "" && emailpassword != "" {
-		msg := fmt.Sprintf("%s %s", args[0], args[1])
-		engine.SendEmail(emailto, msg, emaillogin, emailpassword)
-	}
+	recipient := engine.ConfigValue("emailto")
+	login := engine.ConfigValue("emaillogin")
+	password := engine.ConfigValue("emailpassword")
 
-	switch args[0] {
-	case "start", "stop":
-		handle_startstop(args[0], args[1:])
+	switch nargs {
+
+	case 1:
+		switch args[0] {
+		case "sendlogs":
+			engine.SendLogs(recipient, login, password)
+		default:
+			usage()
+		}
+		return
+
+	case 2:
+		switch args[0] {
+		case "start", "stop":
+			if recipient != "" && login != "" && password != "" {
+				body := fmt.Sprintf("host=%s palette executed args = %v", engine.Hostname(), args)
+				engine.SendMail(recipient, login, password, body, "")
+			}
+			handle_startstop(args[0], args[1:])
+		default:
+			usage()
+		}
+
 	default:
-		log.Fatalf("Unrecognized command: %s\n", args[0])
+		usage()
 	}
 }
 

@@ -48,6 +48,16 @@
             "args": ["small"]
         },
         {
+            "name": "sendlogs",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
+            "env": {
+                "Path": "${env:Path};${workspaceFolder};c:/Users/me/Documents/github/vizicist/palette/SenselLib/x64;"             },
+            "args": ["sendlogs"]
+        },
+        {
             "name": "start allsmall",
             "type": "go",
             "request": "launch",
