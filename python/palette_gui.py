@@ -790,7 +790,8 @@ class ProGuiApp(tk.Tk):
         i = random.randint(0,len(presets)-1)
         presetname = presets[i]
         if paramType == "quad":
-            log("Loading",paramType,presetname)
+            if self.currentMode != "attract":
+                log("Loading",paramType,presetname)
             self.loadQuad(presetname)
             self.sendQuad()
         else:
