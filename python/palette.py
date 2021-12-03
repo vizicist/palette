@@ -171,7 +171,7 @@ def paletteSubDir(subdir):
     return os.path.join(local, "Palette", subdir)
 
 def presetsPath():
-    p = ConfigValue("presetspath")
+    p = ConfigValue("presetspath","%LOCALAPPDATA%\\Palette\\presets;%PALETTE%\\presets")
     p = p.replace("%PALETTE%",PaletteDir())
     lad = os.environ.get("LOCALAPPDATA")
     if lad != None:
@@ -366,31 +366,27 @@ def copyFile(frompath,topath):
 SettingsJson = None
 LocalSettingsJson = None
 
-def ConfigValue(s):
+def ConfigValue(s,defvalue=""):
     global SettingsJson
-    global LocalSettingsJson
     if SettingsJson == None:
         path = configFilePath("settings.json")
         if not os.path.isfile(path):
             log("No file? path=",path)
-            return ""
+            return defvalue
         if Verbose:
             log("Loading ",path)
         SettingsJson = readJsonPath(path)
 
-    if LocalSettingsJson == None:
-        path = configFilePath("settings.json")
-        if os.path.isfile(path):
-            if Verbose:
-                log("Loading ",path)
-            LocalSettingsJson = readJsonPath(path)
-
-    if LocalSettingsJson != None and s in LocalSettingsJson:
-        return LocalSettingsJson[s]
-    elif SettingsJson != None and s in SettingsJson:
+    if SettingsJson != None and s in SettingsJson:
         return SettingsJson[s]
     else:
-        return ""
+        return defvalue
+
+def ConfigFloat(s,defvalue=0.0):
+    s = ConfigValue(s)
+    if s == "":
+        s = str(defvalue)
+    return float(s)
 
 paletteDir = None
 def PaletteDir():
