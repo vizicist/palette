@@ -879,8 +879,8 @@ class ProGuiApp(tk.Tk):
             palette.palette_global_api("set_transpose", "\"value\": \""+str(val) + "\"")
         elif name == "scale":
             palette.palette_global_api("set_scale", "\"value\": \""+str(val) + "\"")
-        elif name == "autotranspose":
-            palette.palette_global_api("set_autotranspose", "\"onoff\": \""+str(val) + "\"")
+        elif name == "transposeauto":
+            palette.palette_global_api("set_transposeauto", "\"onoff\": \""+str(val) + "\"")
 
     def combPadLoop(self,pad):
         palette.palette_region_api(self.CurrPad.name(), "loop_comb", "")
@@ -2066,7 +2066,7 @@ class PagePerformMain(tk.Frame):
         self.makePerformButtonAdvanced("loopinglength",None)
         self.makePerformButtonAdvanced("scale",None)
         self.makePerformButtonAdvanced("transpose",None)
-        self.makePerformButtonAdvanced("autotranspose",None)
+        self.makePerformButtonAdvanced("transposeauto",None)
         self.makePerformButtonAdvanced("Notes_Off", self.controller.sendANO)
 
         self.makePerformButtonAdvanced("quant",None)
