@@ -48,13 +48,25 @@ func main() {
 		return
 
 	case 2:
+
+		body := ""
+		if recipient != "" && login != "" && password != "" {
+			body = fmt.Sprintf("host=%s palette executed args = %v", engine.Hostname(), args)
+			engine.SendMail(recipient, login, password, body, "")
+		}
+
 		switch args[0] {
-		case "start", "stop":
-			if recipient != "" && login != "" && password != "" {
-				body := fmt.Sprintf("host=%s palette executed args = %v", engine.Hostname(), args)
-				engine.SendMail(recipient, login, password, body, "")
-			}
+
+		case "start":
 			handle_startstop(args[0], args[1:])
+			// Always send logs after starting all
+			if args[1] == "all" {
+				engine.SendLogs(recipient, login, password)
+			}
+
+		case "stop":
+			handle_startstop(args[0], args[1:])
+
 		default:
 			usage()
 		}
