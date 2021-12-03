@@ -541,6 +541,7 @@ class ProGuiApp(tk.Tk):
 
     def unattract(self):
         self.nextMode = "normal"
+        log("Screen pressed, stopping attract mode...")
         self.resetLastAnything()
 
     def unhelp(self):
@@ -771,7 +772,8 @@ class ProGuiApp(tk.Tk):
             return
 
         if paramType == "quad":
-            log("Loading",paramType,presetname)
+            if self.currentMode != "attract":
+                log("Loading",paramType,presetname)
             self.loadQuad(presetname)
             self.sendQuad()
         else:
