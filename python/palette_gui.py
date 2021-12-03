@@ -77,7 +77,7 @@ class ProGuiApp(tk.Tk):
         self.thumbFactor = 0.1
 
         self.lastAnything = 0
-        self.resetAfterInactivity = int(palette.ConfigValue("attracttimeout"))
+        self.resetAfterInactivity = int(palette.ConfigValue("attracttimeout","600"))
 
         # These are the same in both normal and advanced
         self.selectDisplayPerRow = 3
@@ -289,11 +289,10 @@ class ProGuiApp(tk.Tk):
         self.attractFrame.place(in_=self.topContainer, relx=0, rely=0, relwidth=1, relheight=1)
         # self.selectorLoadAndSend("quad","Square_Fantasia")
         # self.selectorLoadAndSend("quad","Circular_Garden")
-        self.attractPreset = palette.ConfigValue("attractpreset")
-        self.randomSpriteTime = float(palette.ConfigValue("randomspritetime"))
-        self.randomPresetTime = float(palette.ConfigValue("randompresettime"))
+        self.attractPreset = palette.ConfigValue("attractpreset","random")
+        self.randomSpriteTime = palette.ConfigFloat("randomspritetime",0.3)
+        self.randomPresetTime = palette.ConfigFloat("randompresettime",20.0)
         if self.attractPreset != "random":
-            self.attractPreset = palette.ConfigValue("attractpreset")
             self.selectorLoadAndSend("quad",self.attractPreseet)
         self.doAttractAction()
 
@@ -354,11 +353,16 @@ class ProGuiApp(tk.Tk):
             self.randomSprite(region,"up")
             self.lastAttractSpriteTime = now
 
-            cid = str(now)
-            palette.SendCursorEvent(cid,"down",random.random(),1.0-(random.random()/3.0),random.random()/4.0)
-            dt = 0.05
-            time.sleep(dt)
-            palette.SendCursorEvent(cid,"up",random.random(),random.random(),0.0)
+            randtype = "sprite"
+            if randtype == "sprite":
+                cid = str(now)
+                palette.SendSpriteEvent(cid,random.random(),1.0-(random.random()/3.0),random.random()/4.0)
+            else:
+                cid = str(now)
+                palette.SendCursorEvent(cid,"down",random.random(),1.0-(random.random()/3.0),random.random()/4.0)
+                dt = 0.05
+                time.sleep(dt)
+                palette.SendCursorEvent(cid,"up",random.random(),random.random(),0.0)
 
         if self.attractPreset == "random" and (now - self.lastAttractPresetTime) > self.randomPresetTime:
             self.selectorLoadAndSendRand("quad")
