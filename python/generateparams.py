@@ -38,12 +38,12 @@ def generate(homedir, force, sourcedir, floatType):
 		return
 
 	if force:
-            print("Generateparams: update forced due to -f argument")
+		print("Generateparams: update forced due to -f argument")
 	else:
 		if enumupdated:
-                    print("Generateparams: update due to change in %s" % (enumfile))
+			print("Generateparams: update due to change in %s" % (enumfile))
 		if jsonupdated:
-                    print("Generateparams: update due to change in %s" % (jsonfile))
+			print("Generateparams: update due to change in %s" % (jsonfile))
 
 	try:
 		f = open(jsonfile)
