@@ -38,6 +38,10 @@ func main() {
 	go r.StartCursorInput()
 	go r.InputListener()
 
+	if engine.ConfigBoolWithDefault("depthlib", false) {
+		go engine.DepthRunForever()
+	}
+
 	if engine.ConfigBoolWithDefault("winsys", false) {
 		winsys.Run() // must run in main thread, never returns
 	} else {
