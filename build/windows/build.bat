@@ -68,9 +68,14 @@ move dist\osc\osc.exe dist\pyinstalled >nul
 move dist\pyinstalled %bin% >nul
 popd
 
+echo ================ Compiling depthlib
+pushd ..\..\depthlib
+call build.bat > nul
+popd
+
 echo ================ Compiling FFGL plugin
-set MSBUILDCMD=C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\Common7\Tools\vsmsbuildcmd.bat
-call "%MSBUILDCMD%" > nul
+rem set MSBUILDCMD=C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\Common7\Tools\vsmsbuildcmd.bat
+rem call "%MSBUILDCMD%" > nul
 pushd %PALETTESOURCE%\ffgl\build\windows
 msbuild /t:Build /p:Configuration=Release /p:Platform="x64" FFGLPlugins.sln > nul
 popd
@@ -129,6 +134,7 @@ copy %PALETTESOURCE%\default\midifiles\*.* %ship%\midifiles >nul
 echo ================ Copying windows-specific things
 copy %PALETTESOURCE%\SenselLib\x64\LibSensel.dll %bin% >nul
 copy %PALETTESOURCE%\SenselLib\x64\LibSenselDecompress.dll %bin% >nul
+copy %PALETTESOURCE%\depthlib\build\x64\Debug\depthlib.dll %bin% >nul
 
 echo ================ Copying presets
 mkdir %ship%\presets
