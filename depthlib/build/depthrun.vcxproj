@@ -1,0 +1,265 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="MinSizeRel|x64">
+      <Configuration>MinSizeRel</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="RelWithDebInfo|x64">
+      <Configuration>RelWithDebInfo</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{4125C0C4-4A2B-3773-942F-FEA596145890}</ProjectGuid>
+    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
+    <Keyword>Win32Proj</Keyword>
+    <Platform>x64</Platform>
+    <ProjectName>depthrun</ProjectName>
+    <VCProjectUpgraderObjectName>NoUpgrade</VCProjectUpgraderObjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v141</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v141</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v141</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v141</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.20506.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">depthrun.dir\$(Configuration)\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">depthrun</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.exe</TargetExt>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</LinkIncremental>
+    <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</GenerateManifest>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">depthrun.dir\$(Configuration)\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">depthrun</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.exe</TargetExt>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkIncremental>
+    <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</GenerateManifest>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\tjt\Documents\GitHub\vizicist\depthrun\build\MinSizeRel\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">depthrun.dir\MinSizeRel\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">depthrun</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">.exe</TargetExt>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkIncremental>
+    <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">true</GenerateManifest>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\tjt\Documents\GitHub\vizicist\depthrun\build\RelWithDebInfo\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">depthrun.dir\RelWithDebInfo\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">depthrun</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">.exe</TargetExt>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">true</LinkIncremental>
+    <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">true</GenerateManifest>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>\depthai-core\include;\depthai-core\include\depthai-shared\3rdparty;\depthai-core\include\depthai-bootloader-shared;C:\.hunter\_Base\062a19a\e6a62be\e8963fc\Install\include;c:\opencv\build\include;..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <Optimization>Disabled</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;DEPTHAI_TARGET_CORE;JSON_USE_IMPLICIT_CONVERSIONS=1;__PC__;XLINK_USE_MX_ID_NAME=ON;CMAKE_INTDIR="Debug";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;DEPTHAI_TARGET_CORE;JSON_USE_IMPLICIT_CONVERSIONS=1;__PC__;XLINK_USE_MX_ID_NAME=ON;CMAKE_INTDIR=\"Debug\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\Users\tjt\Documents\GitHub\vizicist\depthrun\depthai-core\include;C:\Users\tjt\Documents\GitHub\vizicist\depthrun\depthai-core\shared\depthai-shared\include;C:\Users\tjt\Documents\GitHub\vizicist\depthrun\depthai-core\shared\depthai-bootloader-shared\include;C:\Users\tjt\Documents\GitHub\vizicist\depthrun\depthai-core\shared\depthai-shared\3rdparty;C:\.hunter\_Base\062a19a\e6a62be\e8963fc\Install\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>C:\Users\tjt\Documents\GitHub\vizicist\depthrun\depthai-core\include;C:\Users\tjt\Documents\GitHub\vizicist\depthrun\depthai-core\shared\depthai-shared\include;C:\Users\tjt\Documents\GitHub\vizicist\depthrun\depthai-core\shared\depthai-bootloader-shared\include;C:\Users\tjt\Documents\GitHub\vizicist\depthrun\depthai-core\shared\depthai-shared\3rdparty;C:\.hunter\_Base\062a19a\e6a62be\e8963fc\Install\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <Link>
+      <AdditionalDependencies>..\build\x64\Debug\depthlib.lib;opencv_world454d.lib;depthai-cored.lib;C:\.hunter\_Base\062a19a\e6a62be\e8963fc\Install\lib\XLinkd.lib;C:\.hunter\_Base\062a19a\e6a62be\e8963fc\Install\lib\bz2d.lib;C:\.hunter\_Base\062a19a\e6a62be\e8963fc\Install\lib\archive_staticd.lib;C:\.hunter\_Base\062a19a\e6a62be\e8963fc\Install\lib\lzmad.lib;C:\.hunter\_Base\062a19a\e6a62be\e8963fc\Install\lib\spdlogd.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>c:\opencv\build\x64\vc15\lib;c:\depthai-core\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <ImportLibrary>C:/Users/tjt/Documents/GitHub/vizicist/depthrun/build/Debug/depthrun.lib</ImportLibrary>
+      <ProgramDataBaseFile>C:/Users/tjt/Documents/GitHub/vizicist/depthrun/build/Debug/depthrun.pdb</ProgramDataBaseFile>
+      <SubSystem>Console</SubSystem>
+    </Link>
+    <ProjectReference>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+    </ProjectReference>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>\depthai-core\include;\depthai-core\include\depthai-shared\3rdparty;\depthai-core\include\depthai-bootloader-shared;C:\.hunter\_Base\062a19a\e6a62be\e8963fc\Install\include;c:\opencv\build\include;..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <Optimization>MaxSpeed</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;DEPTHAI_TARGET_CORE;JSON_USE_IMPLICIT_CONVERSIONS=1;__PC__;XLINK_USE_MX_ID_NAME=ON;CMAKE_INTDIR="Release";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <DebugInformationFormat>
+      </DebugInformationFormat>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;DEPTHAI_TARGET_CORE;JSON_USE_IMPLICIT_CONVERSIONS=1;__PC__;XLINK_USE_MX_ID_NAME=ON;CMAKE_INTDIR=\"Release\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\Users\tjt\Documents\GitHub\vizicist\depthrun\depthai-core\include;C:\Users\tjt\Documents\GitHub\vizicist\depthrun\depthai-core\shared\depthai-shared\include;C:\Users\tjt\Documents\GitHub\vizicist\depthrun\depthai-core\shared\depthai-bootloader-shared\include;C:\Users\tjt\Documents\GitHub\vizicist\depthrun\depthai-core\shared\depthai-shared\3rdparty;C:\.hunter\_Base\062a19a\e6a62be\e8963fc\Install\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>C:\Users\tjt\Documents\GitHub\vizicist\depthrun\depthai-core\include;C:\Users\tjt\Documents\GitHub\vizicist\depthrun\depthai-core\shared\depthai-shared\include;C:\Users\tjt\Documents\GitHub\vizicist\depthrun\depthai-core\shared\depthai-bootloader-shared\include;C:\Users\tjt\Documents\GitHub\vizicist\depthrun\depthai-core\shared\depthai-shared\3rdparty;C:\.hunter\_Base\062a19a\e6a62be\e8963fc\Install\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <Link>
+      <AdditionalDependencies>..\build\x64\Release\depthlib.lib;opencv_world454.lib;depthai-core.lib;C:\.hunter\_Base\062a19a\e6a62be\e8963fc\Install\lib\XLinkd.lib;C:\.hunter\_Base\062a19a\e6a62be\e8963fc\Install\lib\bz2d.lib;C:\.hunter\_Base\062a19a\e6a62be\e8963fc\Install\lib\archive_staticd.lib;C:\.hunter\_Base\062a19a\e6a62be\e8963fc\Install\lib\lzmad.lib;C:\.hunter\_Base\062a19a\e6a62be\e8963fc\Install\lib\spdlogd.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>c:\opencv\build\x64\vc15\lib;c:\depthai-core\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <ImportLibrary>C:/Users/tjt/Documents/GitHub/vizicist/depthrun/build/Release/depthrun.lib</ImportLibrary>
+      <ProgramDataBaseFile>C:/Users/tjt/Documents/GitHub/vizicist/depthrun/build/Release/depthrun.pdb</ProgramDataBaseFile>
+      <SubSystem>Console</SubSystem>
+    </Link>
+    <ProjectReference>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+    </ProjectReference>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>C:\Users\tjt\Documents\GitHub\vizicist\depthrun\depthai-core\include;C:\Users\tjt\Documents\GitHub\vizicist\depthrun\depthai-core\shared\depthai-shared\include;C:\Users\tjt\Documents\GitHub\vizicist\depthrun\depthai-core\shared\depthai-bootloader-shared\include;C:\Users\tjt\Documents\GitHub\vizicist\depthrun\depthai-core\shared\depthai-shared\3rdparty;C:\.hunter\_Base\062a19a\e6a62be\e8963fc\Install\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <Optimization>MinSpace</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;DEPTHAI_TARGET_CORE;JSON_USE_IMPLICIT_CONVERSIONS=1;__PC__;XLINK_USE_MX_ID_NAME=ON;CMAKE_INTDIR="MinSizeRel";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <DebugInformationFormat>
+      </DebugInformationFormat>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;DEPTHAI_TARGET_CORE;JSON_USE_IMPLICIT_CONVERSIONS=1;__PC__;XLINK_USE_MX_ID_NAME=ON;CMAKE_INTDIR=\"MinSizeRel\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\Users\tjt\Documents\GitHub\vizicist\depthrun\depthai-core\include;C:\Users\tjt\Documents\GitHub\vizicist\depthrun\depthai-core\shared\depthai-shared\include;C:\Users\tjt\Documents\GitHub\vizicist\depthrun\depthai-core\shared\depthai-bootloader-shared\include;C:\Users\tjt\Documents\GitHub\vizicist\depthrun\depthai-core\shared\depthai-shared\3rdparty;C:\.hunter\_Base\062a19a\e6a62be\e8963fc\Install\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>C:\Users\tjt\Documents\GitHub\vizicist\depthrun\depthai-core\include;C:\Users\tjt\Documents\GitHub\vizicist\depthrun\depthai-core\shared\depthai-shared\include;C:\Users\tjt\Documents\GitHub\vizicist\depthrun\depthai-core\shared\depthai-bootloader-shared\include;C:\Users\tjt\Documents\GitHub\vizicist\depthrun\depthai-core\shared\depthai-shared\3rdparty;C:\.hunter\_Base\062a19a\e6a62be\e8963fc\Install\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <Link>
+      <AdditionalDependencies>depthai-core\MinSizeRel\depthai-core.lib;depthai-core\MinSizeRel\depthai-resources.lib;C:\.hunter\_Base\062a19a\e6a62be\e8963fc\Install\lib\XLinkd.lib;C:\.hunter\_Base\062a19a\e6a62be\e8963fc\Install\lib\bz2d.lib;C:\.hunter\_Base\062a19a\e6a62be\e8963fc\Install\lib\archive_staticd.lib;C:\.hunter\_Base\062a19a\e6a62be\e8963fc\Install\lib\lzmad.lib;C:\.hunter\_Base\062a19a\e6a62be\e8963fc\Install\lib\spdlogd.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <ImportLibrary>C:/Users/tjt/Documents/GitHub/vizicist/depthrun/build/MinSizeRel/depthrun.lib</ImportLibrary>
+      <ProgramDataBaseFile>C:/Users/tjt/Documents/GitHub/vizicist/depthrun/build/MinSizeRel/depthrun.pdb</ProgramDataBaseFile>
+      <SubSystem>Console</SubSystem>
+    </Link>
+    <ProjectReference>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+    </ProjectReference>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>C:\Users\tjt\Documents\GitHub\vizicist\depthrun\depthai-core\include;C:\Users\tjt\Documents\GitHub\vizicist\depthrun\depthai-core\shared\depthai-shared\include;C:\Users\tjt\Documents\GitHub\vizicist\depthrun\depthai-core\shared\depthai-bootloader-shared\include;C:\Users\tjt\Documents\GitHub\vizicist\depthrun\depthai-core\shared\depthai-shared\3rdparty;C:\.hunter\_Base\062a19a\e6a62be\e8963fc\Install\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <Optimization>MaxSpeed</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;DEPTHAI_TARGET_CORE;JSON_USE_IMPLICIT_CONVERSIONS=1;__PC__;XLINK_USE_MX_ID_NAME=ON;CMAKE_INTDIR="RelWithDebInfo";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;DEPTHAI_TARGET_CORE;JSON_USE_IMPLICIT_CONVERSIONS=1;__PC__;XLINK_USE_MX_ID_NAME=ON;CMAKE_INTDIR=\"RelWithDebInfo\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\Users\tjt\Documents\GitHub\vizicist\depthrun\depthai-core\include;C:\Users\tjt\Documents\GitHub\vizicist\depthrun\depthai-core\shared\depthai-shared\include;C:\Users\tjt\Documents\GitHub\vizicist\depthrun\depthai-core\shared\depthai-bootloader-shared\include;C:\Users\tjt\Documents\GitHub\vizicist\depthrun\depthai-core\shared\depthai-shared\3rdparty;C:\.hunter\_Base\062a19a\e6a62be\e8963fc\Install\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>C:\Users\tjt\Documents\GitHub\vizicist\depthrun\depthai-core\include;C:\Users\tjt\Documents\GitHub\vizicist\depthrun\depthai-core\shared\depthai-shared\include;C:\Users\tjt\Documents\GitHub\vizicist\depthrun\depthai-core\shared\depthai-bootloader-shared\include;C:\Users\tjt\Documents\GitHub\vizicist\depthrun\depthai-core\shared\depthai-shared\3rdparty;C:\.hunter\_Base\062a19a\e6a62be\e8963fc\Install\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <Link>
+      <AdditionalDependencies>depthai-core\RelWithDebInfo\depthai-core.lib;depthai-core\RelWithDebInfo\depthai-resources.lib;C:\.hunter\_Base\062a19a\e6a62be\e8963fc\Install\lib\XLinkd.lib;C:\.hunter\_Base\062a19a\e6a62be\e8963fc\Install\lib\bz2d.lib;C:\.hunter\_Base\062a19a\e6a62be\e8963fc\Install\lib\archive_staticd.lib;C:\.hunter\_Base\062a19a\e6a62be\e8963fc\Install\lib\lzmad.lib;C:\.hunter\_Base\062a19a\e6a62be\e8963fc\Install\lib\spdlogd.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <ImportLibrary>C:/Users/tjt/Documents/GitHub/vizicist/depthrun/build/RelWithDebInfo/depthrun.lib</ImportLibrary>
+      <ProgramDataBaseFile>C:/Users/tjt/Documents/GitHub/vizicist/depthrun/build/RelWithDebInfo/depthrun.pdb</ProgramDataBaseFile>
+      <SubSystem>Console</SubSystem>
+    </Link>
+    <ProjectReference>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+    </ProjectReference>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\depthrun\main.cpp" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
