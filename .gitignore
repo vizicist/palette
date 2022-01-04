@@ -5,6 +5,7 @@ default/logs/*.log
 default/logs/*.stderr
 default/logs/*.stdout
 default/config/CurrentPad_*
+default/config/client_secret_*
 python/dist
 build/windows/ship
 ffgl/build/windows/x64
