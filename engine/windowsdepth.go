@@ -3,11 +3,11 @@
 
 package engine
 
-// #cgo LDFLAGS: -L. "${SRCDIR}/../../depthlib/build/x64/Debug/depthlib.dll"
+// #cgo LDFLAGS: -L. "${SRCDIR}/../depthlib/build/x64/Debug/depthlib.dll"
 /*
 #include <stdlib.h>
 #include <stdio.h>
-#include "../../depthlib/include/depthlib.h"
+#include "../depthlib/include/depthlib.h"
 
 extern void DepthCallback(char *subj, char *msg);
 */
