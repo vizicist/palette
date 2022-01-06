@@ -17,6 +17,11 @@ echo ================ Upgrading Python
 python -m pip install pip | grep -v "already.*satisfied"
 pip install codenamize pip install python-osc pip install asyncio-nats-client pyinstaller get-mac mido pyperclip | grep -v "already satisfied"
 
+echo ================ Compiling depthlib
+pushd ..\..\depthlib
+call build.bat > nul
+popd
+
 echo ================ Creating palette.exe
 
 pushd %PALETTESOURCE%\cmd\palette
@@ -66,11 +71,6 @@ move dist\palette_gui dist\pyinstalled >nul
 move dist\testcursor\testcursor.exe dist\pyinstalled >nul
 move dist\osc\osc.exe dist\pyinstalled >nul
 move dist\pyinstalled %bin% >nul
-popd
-
-echo ================ Compiling depthlib
-pushd ..\..\depthlib
-call build.bat > nul
 popd
 
 echo ================ Compiling FFGL plugin
