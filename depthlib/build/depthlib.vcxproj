@@ -96,14 +96,14 @@
       <PreprocessorDefinitions>_DEBUG;DEPTHLIB_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>\depthai-core\include;\depthai-core\include\depthai-shared\3rdparty;\depthai-core\include\depthai-bootloader-shared;c:\opencv\build\include;C:\.hunter\_Base\062a19a\e6a62be\e8963fc\Install\include;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\build\windows\vc15\include\depthai-shared\3rdparty;..\..\build\windows\vc15\include\depthai-bootloader-shared;..\..\build\windows\vc15\include;..\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <AdditionalDependencies>opencv_world454d.lib;depthai-cored.lib;C:\.hunter\_Base\062a19a\e6a62be\e8963fc\Install\lib\XLinkd.lib;C:\.hunter\_Base\062a19a\e6a62be\e8963fc\Install\lib\bz2d.lib;C:\.hunter\_Base\062a19a\e6a62be\e8963fc\Install\lib\archive_staticd.lib;C:\.hunter\_Base\062a19a\e6a62be\e8963fc\Install\lib\lzmad.lib;C:\.hunter\_Base\062a19a\e6a62be\e8963fc\Install\lib\spdlogd.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>c:\opencv\build\x64\vc15\lib;c:\depthai-core\lib;</AdditionalLibraryDirectories>
+      <AdditionalDependencies>opencv_world454.lib;depthai-core.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\..\build\windows\vc15\lib</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -153,7 +153,7 @@
       <PreprocessorDefinitions>NDEBUG;DEPTHLIB_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>\depthai-core\include;\depthai-core\include\depthai-shared\3rdparty;\depthai-core\include\depthai-bootloader-shared;c:\opencv\build\include;C:\.hunter\_Base\062a19a\e6a62be\e8963fc\Install\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\build\windows\vc15\include\depthai-shared\3rdparty;..\..\build\windows\vc15\include\depthai-bootloader-shared;..\..\build\windows\vc15\include;..\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -161,8 +161,8 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <AdditionalLibraryDirectories>c:\opencv\build\x64\vc15\lib;c:\depthai-core\lib;</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opencv_world454.lib;depthai-core.lib;C:\.hunter\_Base\062a19a\e6a62be\e8963fc\Install\lib\XLinkd.lib;C:\.hunter\_Base\062a19a\e6a62be\e8963fc\Install\lib\bz2d.lib;C:\.hunter\_Base\062a19a\e6a62be\e8963fc\Install\lib\archive_staticd.lib;C:\.hunter\_Base\062a19a\e6a62be\e8963fc\Install\lib\lzmad.lib;C:\.hunter\_Base\062a19a\e6a62be\e8963fc\Install\lib\spdlogd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\..\build\windows\vc15\lib</AdditionalLibraryDirectories>
+      <AdditionalDependencies>opencv_world454.lib;depthai-core.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

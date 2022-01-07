@@ -3,7 +3,7 @@
 
 package engine
 
-// #cgo LDFLAGS: -L. "${SRCDIR}/../depthlib/build/x64/Debug/depthlib.dll"
+// #cgo LDFLAGS: -L. "${SRCDIR}/../depthlib/build/x64/Release/depthlib.dll"
 /*
 #include <stdlib.h>
 #include <stdio.h>
