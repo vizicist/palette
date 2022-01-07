@@ -112,8 +112,8 @@
       <ProxyFileName>%(Filename)_p.c</ProxyFileName>
     </Midl>
     <Link>
-      <AdditionalDependencies>..\build\x64\Debug\depthlib.lib;opencv_world454d.lib;depthai-cored.lib;C:\.hunter\_Base\062a19a\e6a62be\e8963fc\Install\lib\XLinkd.lib;C:\.hunter\_Base\062a19a\e6a62be\e8963fc\Install\lib\bz2d.lib;C:\.hunter\_Base\062a19a\e6a62be\e8963fc\Install\lib\archive_staticd.lib;C:\.hunter\_Base\062a19a\e6a62be\e8963fc\Install\lib\lzmad.lib;C:\.hunter\_Base\062a19a\e6a62be\e8963fc\Install\lib\spdlogd.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>c:\opencv\build\x64\vc15\lib;c:\depthai-core\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>..\build\x64\Debug\depthlib.lib;opencv_world454.lib;depthai-core.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\..\build\windows\vc15\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
@@ -156,8 +156,8 @@
       <ProxyFileName>%(Filename)_p.c</ProxyFileName>
     </Midl>
     <Link>
-      <AdditionalDependencies>..\build\x64\Release\depthlib.lib;opencv_world454.lib;depthai-core.lib;C:\.hunter\_Base\062a19a\e6a62be\e8963fc\Install\lib\XLinkd.lib;C:\.hunter\_Base\062a19a\e6a62be\e8963fc\Install\lib\bz2d.lib;C:\.hunter\_Base\062a19a\e6a62be\e8963fc\Install\lib\archive_staticd.lib;C:\.hunter\_Base\062a19a\e6a62be\e8963fc\Install\lib\lzmad.lib;C:\.hunter\_Base\062a19a\e6a62be\e8963fc\Install\lib\spdlogd.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>c:\opencv\build\x64\vc15\lib;c:\depthai-core\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>..\build\x64\Release\depthlib.lib;opencv_world454.lib;depthai-core.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\..\build\windows\vc15\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>

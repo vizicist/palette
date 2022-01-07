@@ -38,7 +38,7 @@ func main() {
 	go r.StartCursorInput()
 	go r.InputListener()
 
-	if engine.ConfigBoolWithDefault("depthlib", false) {
+	if engine.ConfigBoolWithDefault("depth", false) {
 		go engine.DepthRunForever()
 	}
 
