@@ -85,8 +85,8 @@ mkdir %ship%\ffgl
 pushd %PALETTESOURCE%\ffgl\binaries\x64\Release
 copy Palette*.dll %ship%\ffgl > nul
 copy Palette*.pdb %ship%\ffgl > nul
-copy %PALETTESOURCE%\build\windows\pthreadvc2.dll %ship%\ffgl >nul
-copy %PALETTESOURCE%\build\windows\msvcr100.dll %ship%\ffgl >nul
+copy %PALETTESOURCE%\build\windows\vc15\bin\pthreadvc2.dll %ship%\ffgl >nul
+copy %PALETTESOURCE%\build\windows\vc15\bin\msvcr100.dll %ship%\ffgl >nul
 popd
 
 echo ================ Copying binaries
@@ -134,7 +134,9 @@ copy %PALETTESOURCE%\default\midifiles\*.* %ship%\midifiles >nul
 echo ================ Copying windows-specific things
 copy %PALETTESOURCE%\SenselLib\x64\LibSensel.dll %bin% >nul
 copy %PALETTESOURCE%\SenselLib\x64\LibSenselDecompress.dll %bin% >nul
-copy %PALETTESOURCE%\depthlib\build\x64\Debug\depthlib.dll %bin% >nul
+copy %PALETTESOURCE%\depthlib\build\x64\Release\depthlib.dll %bin% >nul
+copy vc15\bin\depthai-core.dll %bin% >nul
+copy vc15\bin\opencv_world454.dll %bin% >nul
 
 echo ================ Copying presets
 mkdir %ship%\presets
