@@ -74,7 +74,7 @@ Source: "logs_readme.txt"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\logs"; DestNam
 
 ; This specifies the Visual C++ Windows Runtime Redistributable to install, it's put in {app}\bin to help debug things.
 [Files]
-Source: "VC_redist.x64.exe"; DestDir: {app}\bin
+Source: "vc15\bin\VC_redist.x64.exe"; DestDir: {app}\bin
 
 ; This presets directory is where locally-saved presets go
 [Dirs]
