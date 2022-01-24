@@ -5,6 +5,11 @@
   - have Resolume Avenue (or Arena) 7
   - and have a Sensel Morph.
 
+- These instructions will give you a visuals-only Palette.
+
+- If you want to install both the visual and musical aspects of a full-blown
+Space Palette Pro, these are not the instructions for you.  Instead, use: <a href="https://github.com/vizicist/spacepalettepro/blob/main/doc/building_software.md">https://github.com/vizicist/spacepalettepro/blob/main/doc/building_software.md</a>
+
 ## One-time installation steps
 
 - First, download and execute the latest installer from the
