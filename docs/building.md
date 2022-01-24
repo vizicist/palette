@@ -1,5 +1,11 @@
 ## Initializing a Palette build and development environment.
 
+NOTE: these instructions are only appropriate if you are wanting
+to recompile the Palette software from scratch.
+If instead you just want to install it using one of the
+released installation packages, which is certainly a lot simpler and is recommended, use:
+<a href="https://github.com/vizicist/palette/blob/main/docs/using_resolume.md">https://github.com/vizicist/palette/blob/main/docs/using_resolume.md</a>
+
 - Please send email to me@timthompson.com if these instructions don't work for you.
 
 - When given a choice between 64-bit and 32-bin installations, choose 64-bit.
