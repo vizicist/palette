@@ -55,8 +55,11 @@ The Morph is extremely sensitive with a large dynamic range.
 
 ## Looping
 
+- Looping operations are only visible in the more advanced modes of the GUI.
+
 - The buttons at the bottom of the GUI let you turn on Looping, which will loop your
 gestures on the Morph.  You can control the length of the loops and how quickly they fade out.
+The effects of the looping controls are per-pad, depending (like parameter changes) on which pads are currently highlighted in the GUI.
 
 - Beware, if you leave looping on, you may get confused about what's going on, since you'll be seeing
 the results of your live gestures as well as the looped gestures.
