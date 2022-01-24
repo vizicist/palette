@@ -599,8 +599,8 @@ class ProGuiApp(tk.Tk):
 
     def clickPage(self,pagename):
 
-        # A second click on a page header will toggle editMode if GuiLevel>1
-        if self.guiLevel > 1 and self.currentPageName == pagename:
+        # A second click on a page header will toggle editMode
+        if self.guiLevel > 0 and self.currentPageName == pagename:
             self.editMode = not self.editMode
 
         self.selectPage(pagename)
@@ -636,7 +636,7 @@ class ProGuiApp(tk.Tk):
 
         self.placePadChooser()
 
-        if self.guiLevel > 1 and self.editMode:
+        if self.guiLevel > 0 and self.editMode:
             page = self.editPage[pagename]
         else:
             page = self.selectorPage[pagename]
@@ -918,8 +918,8 @@ class ProGuiApp(tk.Tk):
             self.escapeCount = 0
 
     def cycleGuiLevel(self):
-        # cycle through 0,1,2
-        self.setGuiLevel((self.guiLevel + 1) % 3)
+        # cycle through 0,1 (used to be more levels)
+        self.setGuiLevel((self.guiLevel + 1) % 2)
         self.resetVisibility()
         self.performPage.updatePerformButtonLabels(self.CurrPad)
         log("GuiLevel",self.guiLevel)
