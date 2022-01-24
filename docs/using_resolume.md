@@ -25,7 +25,7 @@ Instead, use: <a href="https://github.com/vizicist/spacepalettepro/blob/main/doc
 
 - In Resolume's <i>Preferences->OSC</i>, enable "OSC Input" with an incoming port of 7000.
 
-- Use Resolume's <i>Composition->Open</i> to open: <pre>C:\Program Files\Palette\config\PaletteA.avc</pre>
+- Use Resolume's <i>Composition->Open</i> to open: <pre>%LOCALAPPDATA%\Palette\config\PaletteA.avc</pre>
   That composition contains a single layer with a <b>Palette</b> plugin followed by several dozen FFGL plugins.
   Don't worry if there's a big yellow X in the layer, it should go away the next time Resolume starts.
 
@@ -33,14 +33,9 @@ Instead, use: <a href="https://github.com/vizicist/spacepalettepro/blob/main/doc
 
 ## Starting the Palette
 
-- Make sure the Sensel Morph is plugged in.
+- Make sure the Sensel Morph is plugged in, and that Resolume is not currently running.
 
-- Invoke <b>Start Palette and Resolume</b> found in the Palette folder of the Windows Start menu.
-The Palette software will be started, along with Resolume.
-
-- If you want to start the Palette software and Resolume independently, you can use <b>Start Palette</b>.
-In that case, you'll need to manually activate the Palette clip inside Resolume.  This is done automatically
-if you use <b>Start Palette and Resolume</b>.
+- Invoke <b>Start Palette (small GUI)</b> found in the Palette folder of the Windows Start menu.  This will start up the Palette software, including Resolume.  The smaller-than-normal GUI is appropriate when you only have one Morph.
 
 - You should now be able to finger paint on the Morph and see results in the Resolume output.
 
