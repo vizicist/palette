@@ -25,8 +25,8 @@ Instead, use: <a href="https://github.com/vizicist/spacepalettepro/blob/main/doc
 
 - In Resolume's <i>Preferences->OSC</i>, enable "OSC Input" with an incoming port of 7000.
 
-- Use Resolume's <i>Composition->Open</i> to open: <pre>%LOCALAPPDATA%\Palette\config\PaletteA.avc</pre>
-  That composition contains a single layer with a <b>Palette</b> plugin followed by several dozen FFGL plugins.
+- Use Resolume's <i>Composition->Open</i> to open: <pre>%LOCALAPPDATA%\Palette\config\PaletteABCD.avc</pre>
+  That composition contains four layers, each with a <b>Palette</b> FFGL plugin followed by several dozen other FFGL effect plugins.
   Don't worry if there's a big yellow X in the layer, it should go away the next time Resolume starts.
 
 - Quit Resolume.
