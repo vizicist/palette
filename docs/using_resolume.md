@@ -14,7 +14,11 @@ Instead, use: <a href="https://github.com/vizicist/spacepalettepro/blob/main/doc
 
 ## One-time installation steps
 
-- First, download and execute the latest installer from the
+- Download and install the SenselApp (64 bit) from https://shop.sensel.com/pages/support#downloads
+
+- Start the SenselApp, make sure the Morph is updated to the latest firmware, and then quit the SenselApp.
+
+- Download and execute the latest Palette installer from the
 <a href=https://github.com/vizicist/palette/tree/main/release>release directory</a>.
 
 - If the installer asks you to reboot Windows, please do so.
