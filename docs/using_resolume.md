@@ -36,4 +36,4 @@ If you want to attempt it, these are the instructions to use:
 - Quit Resolume.
 
 - You're now ready to start using the Palette, as described in 
-<a href="https://github.com/vizicist/spacepalettepro/blob/main/doc/starting_and_using.md">https://github.com/vizicist/spacepalettepro/blob/main/doc/starting_and_using.md</a>
+<a href="https://github.com/vizicist/palette/blob/main/docs/starting_and_using.md">https://github.com/vizicist/palette/blob/main/docs/starting_and_using.md</a>
