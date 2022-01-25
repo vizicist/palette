@@ -105,7 +105,7 @@ DEPTHLIB_API int DepthRun(DepthCallbackFunc callback, int show) {
 			for ( x = 0; x< cvimg.cols; x++ ) {
 				for (y = 0; y < cvimg.rows; y++) {
 					uchar *p = cvimg.data + (y*cvimg.cols + x);
-					if (*p > 100 && *p <= 150) {
+					if (*p > 0 && *p <= 100) {
 						// *p = 0;
 					}
 					else {
