@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strings"
 	"syscall"
 	"time"
 
@@ -234,7 +235,13 @@ func handle_startstop(startstop string, args []string) {
 		engine.StartExecutable(fullexe, true, stdoutWriter, stderrWriter, exearg)
 	case "stop":
 		log.Printf("Stopping %s\n", cmd)
-		engine.StopExecutable(cmd)
+		// isolate the last part of exe path
+		justexe := fullexe
+		lastslash := strings.LastIndexAny(fullexe, "/\\")
+		if lastslash >= 0 {
+			justexe = fullexe[lastslash+1:]
+		}
+		engine.StopExecutable(justexe)
 
 	default:
 		log.Printf("Unknown syntax of start command.\n")
