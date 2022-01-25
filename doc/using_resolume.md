@@ -2,22 +2,26 @@
 
 - These installation instructions will give you a visuals-only Palette.
 
-- If you want to install both the visual and musical aspects of a full-blown
-Space Palette Pro,
-these are not the instructions for you.
-Instead, use: <a href="https://github.com/vizicist/spacepalettepro/blob/main/doc/building_software.md">https://github.com/vizicist/spacepalettepro/blob/main/doc/building_software.md</a>
+- Installing the musical aspects of a full-blown Space Palette Pro is a much more
+involved process involving lots of additional software and configuration.
+If you want to attempt it, these are the instructions to use:
+<a href="https://github.com/vizicist/spacepalettepro/blob/main/doc/building_software.md">https://github.com/vizicist/spacepalettepro/blob/main/doc/building_software.md</a>
 
-- These instructions assume that you:
+- The instructions below assume that you:
   - are running Windows 10
   - have Resolume Avenue (or Arena) 7
   - and have a Sensel Morph.
 
 ## One-time installation steps
 
-- First, download and execute the latest installer from the
+- Download and install the SenselApp (64 bit) from https://shop.sensel.com/pages/support#downloads
+
+- Start the SenselApp, make sure the Morph is updated to the latest firmware, and then quit the SenselApp.
+
+- Download and execute the latest Palette installer from the
 <a href=https://github.com/vizicist/palette/tree/main/release>release directory</a>.
 
-- If the installer asks you to reboot Windows, please do so.
+- If the Palette installer asks you to reboot Windows, please do so.
 
 - Start Resolume
 
@@ -32,4 +36,4 @@ Instead, use: <a href="https://github.com/vizicist/spacepalettepro/blob/main/doc
 - Quit Resolume.
 
 - You're now ready to start using the Palette, as described in 
-<a href="https://github.com/vizicist/spacepalettepro/blob/main/doc/starting_and_using.md">https://github.com/vizicist/spacepalettepro/blob/main/doc/starting_and_using.md</a>
+<a href="https://github.com/vizicist/palette/blob/main/doc/starting_and_using.md">https://github.com/vizicist/palette/blob/main/doc/starting_and_using.md</a>
