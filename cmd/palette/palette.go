@@ -120,7 +120,7 @@ func handle_startstop(startstop string, args []string) {
 		log.Printf("Expecting argument to start command\n")
 		return
 	}
-	exe := ""
+	// exe := ""
 	fullexe := ""
 	cmd := args[0]
 	exearg := ""
@@ -172,41 +172,45 @@ func handle_startstop(startstop string, args []string) {
 		return
 
 	case "gui":
-		exe = "palette_gui.exe"
-		fullexe = filepath.Join(palette, "bin", "pyinstalled", exe)
+		fullexe = filepath.Join(palette, "bin", "pyinstalled", "palette_gui.exe")
 		exearg = "large" // default
 		// don't return
 
 	case "guismall":
-		exe = "palette_gui.exe"
-		fullexe = filepath.Join(palette, "bin", "pyinstalled", exe)
+		fullexe = filepath.Join(palette, "bin", "pyinstalled", "palette_gui.exe")
 		exearg = "small"
 		// don't return
 
 	case "engine":
-		exe = "palette_engine.exe"
-		fullexe = filepath.Join(palette, "bin", exe)
+		fullexe = filepath.Join(palette, "bin", "palette_engine.exe")
 		// don't return
 
 	case "bidule":
-		exe = "PlogueBidule_x64.exe"
-		fullexe = "C:\\Program Files\\Plogue\\Bidule\\PlogueBidule_X64.exe"
+		fullexe = engine.ConfigValue("bidule")
+		if fullexe == "" {
+			fullexe = "C:\\Program Files\\Plogue\\Bidule\\PlogueBidule_X64.exe"
+		}
 		exearg = engine.ConfigFilePath("palette.bidule")
 		if !engine.FileExists(fullexe) {
-			log.Printf("No Bidule found\n")
+			log.Printf("No Bidule found, looking for %s\n", fullexe)
 			return
 		}
 		// don't return
 
 	case "resolume":
-		exe = "Avenue.exe"
-		fullexe = "C:\\Program Files\\Resolume Avenue\\Avenue.exe"
-		if !engine.FileExists(fullexe) {
-			exe = "Arena.exe"
-			fullexe = "C:\\Program Files\\Resolume Arena\\Arena.exe"
+		fullexe = engine.ConfigValue("resolume")
+		if fullexe != "" && !engine.FileExists(fullexe) {
+			log.Printf("No Resolume found, looking for %s\n", fullexe)
+			return
+		}
+		if fullexe == "" {
+			fullexe = "C:\\Program Files\\Resolume Avenue\\Avenue.exe"
 			if !engine.FileExists(fullexe) {
-				log.Printf("No Resolume found\n")
-				return
+				fullexe = "C:\\Program Files\\Resolume Arena\\Arena.exe"
+				if !engine.FileExists(fullexe) {
+					log.Printf("No Resolume found in default locations\n")
+					return
+				}
 			}
 		}
 		// don't return
@@ -229,8 +233,8 @@ func handle_startstop(startstop string, args []string) {
 		log.Printf("Starting %s\n", fullexe)
 		engine.StartExecutable(fullexe, true, stdoutWriter, stderrWriter, exearg)
 	case "stop":
-		log.Printf("Stopping %s\n", exe)
-		engine.StopExecutable(exe)
+		log.Printf("Stopping %s\n", cmd)
+		engine.StopExecutable(cmd)
 
 	default:
 		log.Printf("Unknown syntax of start command.\n")
