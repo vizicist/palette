@@ -32,6 +32,20 @@
             "console": "integratedTerminal"
         },
         {
+            "name": "start bidule",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
+            "args": ["start", "bidule"]
+        },
+        {
+            "name": "start resolume",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
+            "args": ["start", "resolume"]
+        },
+        {
             "name": "start gui large",
             "type": "python",
             "request": "launch",
