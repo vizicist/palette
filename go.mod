@@ -3,7 +3,6 @@ module github.com/vizicist/palette
 go 1.16
 
 require (
-	github.com/andreykaipov/goobs v0.7.1 // indirect
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
 	github.com/golang/protobuf v1.4.3 // indirect
 	github.com/hajimehoshi/ebiten/v2 v2.2.1
