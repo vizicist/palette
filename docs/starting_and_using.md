@@ -6,7 +6,7 @@
 
 - Make sure the Sensel Morph is plugged in, and that Resolume is not currently running.
 
-- Invoke <b>Start Palette</b> found in the Palette folder of the Windows Start menu.  This will start up a few things things: the Palette engine that runs in the background, the Palette GUI that you use to select and edit presets, and Resolume.  If you've installed Plogue Bidule for doing music, Bidule will also be started.
+- Invoke <b>Start Palette</b> found in the Palette folder of the Windows Start menu.  This will start up a few things: the Palette engine that runs in the background, the Palette GUI that you use to select and edit presets, and Resolume.  If you've installed Plogue Bidule for doing music, Bidule will also be started.
 
 - If you have an actual touchscreen (as in the Space Palette Pro controller), you can set the guisize value in %LOCALAPPDATA%\Palette\config\settings.json to have the GUI show up on that touchscreen.
 
@@ -34,9 +34,10 @@ you don't need to switch - you have simultaneous access to all four.
 
 - In the default "casual instrument" mode, each preset changes the settings of all four Morphs simultaneously.
 
-## Advanced Modes
+## Advanced Mode
 
-- There are 3 modes - casual, advanced, and super-advanced - which can be cycled through by pressing the "Clear" button four times in a row, quickly.  In the 
+- There are 2 modes - casual and advanced.  You can switch between them by pressing the "Clear" button (at the bottom of the Palette GUI) four times in a row, quickly.
+In the Advanced Mode, you have more per-pad control and can edit the presets as described below.
 
 ## Looping
 
@@ -51,13 +52,11 @@ the results of your live gestures as well as the looped gestures.
 
 ## Editing the presets
 
-- To get more control and edit the presets, click on the <b>Preset</b> button
-at the very top of the GUI.
-This will reveal the buttons to access separate pages for Snapshot, Visual, and Effect presets.
-A Snapshot preset contains both visual and effect settings, and the Visual and Effect
-presets let you control these things independently.
+- In the Advanced mode, you will see buttons at the top of the GUI that let you access
+separate pages for Pad, Sound, Visual, and Effect presets.
+A Pad preset combines the Sound, Visual and Effect settings.
 
-- Clicking the buttons at the top of the page for Snapshot, Visual, and Effect will toggle
+- Clicking the buttons at the top of the page for Pad, Sound, Visual, and Effect will toggle
 between 1) seeing the page of named presets and 2) seeing the list of parameters which you can 
 then edit.  When editing, you'll also see buttons that allow you to save it, either with the same
 name or as a newly named preset.  Any presets that you edit (newly named or not) will be saved
