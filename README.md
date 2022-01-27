@@ -14,10 +14,10 @@ using your fingers as 3D cursors on Sensel Morph pads.  The Palette software con
 
 # Documentation
 
-- <a href=docs/using_resolume.md>Using Palette with the Sensel Morph as a visual instrument in Resolume
+- <a href=doc/using_resolume.md>Using Palette with the Sensel Morph as a visual instrument in Resolume
 
-- <a href=docs/implementation.md>Implementation details</a>
+- <a href=doc/implementation.md>Implementation details</a>
 
-- <a href=docs/building.md>Configuring a build/development environment on Windows</a>
+- <a href=doc/building.md>Configuring a build/development environment on Windows</a>
 
 
