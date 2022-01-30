@@ -595,7 +595,14 @@ func ziplogs(logsdir string, zipfile string) error {
 	return err
 }
 
-func SendLogs(recipient, login, password string) {
+func SendLogs() {
+
+	recipient := ConfigValue("emailto")
+	if recipient == "" {
+		log.Printf("SendLogs: not sending, no emailto in settings\n")
+		return
+	}
+
 	zipfile := ""
 	logsdir := LogFilePath("")
 
@@ -620,7 +627,7 @@ func SendLogs(recipient, login, password string) {
 		log.Printf("SendLogs: zipfile=%s\n", zipfile)
 	}
 	body := fmt.Sprintf("host=%s palette logfiles attached\n", Hostname())
-	SendMail(recipient, login, password, body, zipfile)
+	SendMailWithAttachment(body, zipfile)
 }
 
 func Hostname() string {
@@ -632,9 +639,25 @@ func Hostname() string {
 	return hostname
 }
 
-// SendMail xxx
-func SendMail(recipient, login, password, body, attachfile string) {
+func SendMail(body string) {
+	sendMail(body, "")
+}
 
+func SendMailWithAttachment(body, attachfile string) {
+	sendMail(body, attachfile)
+}
+
+// SendMail xxx
+func sendMail(body, attachfile string) {
+
+	recipient := ConfigValue("emailto")
+	login := ConfigValue("emaillogin")
+	password := ConfigValue("emailpassword")
+
+	if recipient == "" {
+		log.Printf("SendMail: not sending, no emailto in settings\n")
+		return
+	}
 	log.Printf("SendMail: recipient=%s\n", recipient)
 
 	smtpHost := "smtp.gmail.com"
