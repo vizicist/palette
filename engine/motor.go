@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -93,7 +94,7 @@ func NewMotor(pad string, resolumeLayer int, freeframeClient *osc.Client, resolu
 		activePhrasesManager:      NewActivePhrasesManager(),
 
 		MIDIOctaveShift:  0,
-		MIDIThru:         false,
+		MIDIThru:         true,
 		MIDISetScale:     false,
 		MIDIThruScadjust: false,
 		MIDIUseScale:     false,
@@ -107,8 +108,19 @@ func NewMotor(pad string, resolumeLayer int, freeframeClient *osc.Client, resolu
 	return r
 }
 
+func (motor *Motor) processNoteOutput(n *Note) {
+	if Debug.MIDI {
+		log.Printf("%s: n=%+v\n", CallerFunc(), *n)
+	}
+}
+
+func (motor *Motor) SendNoteToSynth(n *Note) {
+	motor.processNoteOutput(n)
+	SendNoteToSynth(n)
+}
+
 // PassThruMIDI xxx
-func (motor *Motor) PassThruMIDI(e MidiEvent, scadjust bool) {
+func (motor *Motor) PassThruMIDI(e MidiEvent) {
 
 	if Debug.MIDI {
 		log.Printf("Motor.PassThruMIDI e=%+v\n", e)
@@ -124,7 +136,7 @@ func (motor *Motor) PassThruMIDI(e MidiEvent, scadjust bool) {
 
 	synth := motor.params.ParamStringValue("sound.synth", defaultSynth)
 	var n *Note
-	if (status == 0x90 || status == 0x80) && scadjust {
+	if (status == 0x90 || status == 0x80) && motor.MIDIThruScadjust {
 		scale := motor.getScale()
 		pitch = scale.ClosestTo(pitch)
 	}
@@ -147,10 +159,7 @@ func (motor *Motor) PassThruMIDI(e MidiEvent, scadjust bool) {
 	}
 	if n != nil {
 		// log.Printf("PassThruMIDI sending note=%s\n", n)
-		if Debug.MIDI {
-			log.Printf("MIDI.SendNote: n=%+v\n", *n)
-		}
-		SendNoteToSynth(n)
+		motor.SendNoteToSynth(n)
 	}
 }
 
@@ -476,21 +485,42 @@ func (motor *Motor) HandleMIDITimeReset() {
 	log.Printf("HandleMIDITimeReset!! needs implementation\n")
 }
 
-// HandleMIDIDeviceInput xxx
-func (motor *Motor) HandleMIDIDeviceInput(e MidiEvent) {
+// HandleMIDIInput xxx
+func (motor *Motor) HandleMIDIInput(e MidiEvent) {
 
 	motor.midiInputMutex.Lock()
 	defer motor.midiInputMutex.Unlock()
 
 	if Debug.MIDI {
-		log.Printf("Router.HandleMIDIDeviceInput: MIDIInput event=%+v\n", e)
+		log.Printf("Router.HandleMIDIInput: event=%+v\n", e)
 	}
 	if motor.MIDIThru {
-		motor.PassThruMIDI(e, motor.MIDIThruScadjust)
+		motor.PassThruMIDI(e)
 	}
 	if motor.MIDISetScale {
 		motor.handleMIDISetScaleNote(e)
 	}
+}
+func CallerPackageAndFunc() (string, string) {
+	pc, _, _, _ := runtime.Caller(1)
+
+	funcName := runtime.FuncForPC(pc).Name()
+	lastDot := strings.LastIndexByte(funcName, '.')
+
+	packagename := funcName[:lastDot]
+	funcname := funcName[lastDot+1:]
+	return packagename, funcname
+}
+
+// CallerFunc gives just the final func name
+func CallerFunc() string {
+	pc, _, _, _ := runtime.Caller(1)
+
+	funcName := runtime.FuncForPC(pc).Name()
+	lastSlash := strings.LastIndexByte(funcName, '/')
+
+	funcname := funcName[lastSlash+1:]
+	return funcname
 }
 
 func (motor *Motor) setOneParamValue(apiprefix, name, value string) {
@@ -1051,7 +1081,7 @@ func (motor *Motor) sendNoteOn(a *ActiveNote) {
 	if Debug.MIDI {
 		log.Printf("MIDI.SendNote: noteOn pitch:%d velocity:%d sound:%s\n", a.noteOn.Pitch, a.noteOn.Velocity, a.noteOn.Sound)
 	}
-	SendNoteToSynth(a.noteOn)
+	motor.SendNoteToSynth(a.noteOn)
 
 	ss := motor.params.ParamStringValue("visual.spritesource", "")
 	if ss == "midi" {
@@ -1076,7 +1106,7 @@ func (motor *Motor) sendNoteOff(a *ActiveNote) {
 	if Debug.MIDI {
 		log.Printf("MIDI.SendNote: noteOff pitch:%d velocity:%d sound:%s\n", n.Pitch, n.Velocity, n.Sound)
 	}
-	SendNoteToSynth(noteOff)
+	motor.SendNoteToSynth(noteOff)
 }
 
 func (motor *Motor) sendANO() {

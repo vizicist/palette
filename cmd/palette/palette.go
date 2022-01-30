@@ -32,48 +32,44 @@ func main() {
 
 	args := flag.Args()
 	nargs := len(args)
+	word0 := ""
+	word1 := ""
+	if nargs > 0 {
+		word0 = args[0]
+	}
+	if nargs > 1 {
+		word1 = args[1]
+	}
 
-	recipient := engine.ConfigValue("emailto")
-	login := engine.ConfigValue("emaillogin")
-	password := engine.ConfigValue("emailpassword")
+	sendlogs := false
+	sendmail := false
 
-	switch nargs {
+	switch word0 {
 
-	case 1:
-		switch args[0] {
-		case "sendlogs":
-			engine.SendLogs(recipient, login, password)
-		default:
-			usage()
-		}
-		return
+	case "sendlogs":
+		sendlogs = true
 
-	case 2:
+	case "start":
 
-		body := ""
-		if recipient != "" && login != "" && password != "" {
-			body = fmt.Sprintf("host=%s palette executed args = %v", engine.Hostname(), args)
-			engine.SendMail(recipient, login, password, body, "")
-		}
+		sendmail = true
+		handle_start(word1)
+		sendlogs = (word1 == "all") // Always send logs after starting all
 
-		switch args[0] {
-
-		case "start":
-			handle_startstop(args[0], args[1:])
-			// Always send logs after starting all
-			if args[1] == "all" {
-				engine.SendLogs(recipient, login, password)
-			}
-
-		case "stop":
-			handle_startstop(args[0], args[1:])
-
-		default:
-			usage()
-		}
+	case "stop":
+		sendmail = true
+		handle_stop(word1)
 
 	default:
 		usage()
+	}
+
+	if sendmail {
+		body := fmt.Sprintf("host=%s palette executed args = %v", engine.Hostname(), args)
+		engine.SendMail(body)
+	}
+
+	if sendlogs {
+		engine.SendLogs()
 	}
 }
 
@@ -114,16 +110,10 @@ func start_layer(resolumeClient *osc.Client, layer int) {
 	}
 }
 
-func handle_startstop(startstop string, args []string) {
+func handle_start(cmd string) {
 
-	nargs := len(args)
-	if nargs == 0 {
-		log.Printf("Expecting argument to start command\n")
-		return
-	}
 	// exe := ""
 	fullexe := ""
-	cmd := args[0]
 	exearg := ""
 
 	palette := engine.PaletteDir()
@@ -131,45 +121,35 @@ func handle_startstop(startstop string, args []string) {
 	switch cmd {
 
 	case "all", "allsmall":
-		handle_startstop(startstop, []string{"resolume"})
-		handle_startstop(startstop, []string{"bidule"})
-		handle_startstop(startstop, []string{"engine"})
+		handle_start("resolume_only")
+		handle_start("bidule")
+		handle_start("engine")
 
 		// Give resolume time to start, before starting
 		// GUI and activating things.
-		if startstop == "start" {
-			time.Sleep(12 * time.Second)
-			handle_startstop(startstop, []string{"activate"})
-		}
+		time.Sleep(12 * time.Second)
+		handle_start("activate")
 
 		// Start the GUI.
 		if cmd == "allsmall" {
-			handle_startstop(startstop, []string{"guismall"})
+			handle_start("guismall")
 		} else {
-			handle_startstop(startstop, []string{"gui"})
+			handle_start("gui")
 		}
 
 		// Sometimes the audio in bidule is still turned off
 		// (perhaps when it hasn't completed its startup by
 		// the time the first activate is sent), so
 		// send a few more activates to make sure
-		if startstop == "start" {
+		for i := 0; i < 4; i++ {
 			time.Sleep(24 * time.Second)
-			handle_startstop(startstop, []string{"activate"})
-			time.Sleep(24 * time.Second)
-			handle_startstop(startstop, []string{"activate"})
-			time.Sleep(24 * time.Second)
-			handle_startstop(startstop, []string{"activate"})
-			time.Sleep(24 * time.Second)
-			handle_startstop(startstop, []string{"activate"})
+			handle_start("activate")
 		}
 
 		return
 
 	case "activate":
-		if startstop == "start" {
-			handle_activate()
-		}
+		handle_activate()
 		return
 
 	case "gui":
@@ -199,6 +179,14 @@ func handle_startstop(startstop string, args []string) {
 		// don't return
 
 	case "resolume":
+		handle_start("resolume_only")
+
+		// Give resolume time to start, before starting
+		// GUI and activating things.
+		time.Sleep(12 * time.Second)
+		handle_start("activate")
+
+	case "resolume_only":
 		fullexe = engine.ConfigValue("resolume")
 		if fullexe != "" && !engine.FileExists(fullexe) {
 			log.Printf("No Resolume found, looking for %s\n", fullexe)
@@ -221,29 +209,90 @@ func handle_startstop(startstop string, args []string) {
 		return
 	}
 
-	switch startstop {
-	case "start":
-		stdoutWriter := engine.MakeFileWriter(engine.LogFilePath(cmd + ".stdout"))
-		if stdoutWriter == nil {
-			stdoutWriter = &engine.NoWriter{}
+	stdoutWriter := engine.MakeFileWriter(engine.LogFilePath(cmd + ".stdout"))
+	if stdoutWriter == nil {
+		stdoutWriter = &engine.NoWriter{}
+	}
+	stderrWriter := engine.MakeFileWriter(engine.LogFilePath(cmd + ".stderr"))
+	if stderrWriter == nil {
+		stderrWriter = &engine.NoWriter{}
+	}
+	log.Printf("Starting %s\n", fullexe)
+	engine.StartExecutable(fullexe, true, stdoutWriter, stderrWriter, exearg)
+}
+
+func handle_stop(cmd string) {
+
+	exeToStop := ""
+
+	palette := engine.PaletteDir()
+
+	switch cmd {
+
+	case "all", "allsmall":
+		handle_stop("resolume_only")
+		handle_stop("bidule")
+		handle_stop("engine")
+
+		if cmd == "allsmall" {
+			handle_stop("guismall")
+		} else {
+			handle_stop("gui")
 		}
-		stderrWriter := engine.MakeFileWriter(engine.LogFilePath(cmd + ".stderr"))
-		if stderrWriter == nil {
-			stderrWriter = &engine.NoWriter{}
+
+	case "activate":
+		// nothing to stop
+
+	case "gui":
+		exeToStop = filepath.Join(palette, "bin", "pyinstalled", "palette_gui.exe")
+
+	case "guismall":
+		exeToStop = filepath.Join(palette, "bin", "pyinstalled", "palette_gui.exe")
+
+	case "engine":
+		exeToStop = filepath.Join(palette, "bin", "palette_engine.exe")
+
+	case "bidule":
+		exeToStop = engine.ConfigValue("bidule")
+		if exeToStop == "" {
+			exeToStop = "C:\\Program Files\\Plogue\\Bidule\\PlogueBidule_X64.exe"
 		}
-		log.Printf("Starting %s\n", fullexe)
-		engine.StartExecutable(fullexe, true, stdoutWriter, stderrWriter, exearg)
-	case "stop":
-		log.Printf("Stopping %s\n", cmd)
-		// isolate the last part of exe path
-		justexe := fullexe
-		lastslash := strings.LastIndexAny(fullexe, "/\\")
-		if lastslash >= 0 {
-			justexe = fullexe[lastslash+1:]
+		if !engine.FileExists(exeToStop) {
+			log.Printf("No Bidule found, looking for %s\n", exeToStop)
+			return
 		}
-		engine.StopExecutable(justexe)
+
+	case "resolume", "resolume_only":
+		exeToStop = engine.ConfigValue("resolume")
+		if exeToStop != "" && !engine.FileExists(exeToStop) {
+			log.Printf("No Resolume found, looking for %s\n", exeToStop)
+			return
+		}
+		if exeToStop == "" {
+			exeToStop = "C:\\Program Files\\Resolume Avenue\\Avenue.exe"
+			if !engine.FileExists(exeToStop) {
+				exeToStop = "C:\\Program Files\\Resolume Arena\\Arena.exe"
+				if !engine.FileExists(exeToStop) {
+					log.Printf("No Resolume found in default locations\n")
+					return
+				}
+			}
+		}
 
 	default:
-		log.Printf("Unknown syntax of start command.\n")
+		log.Printf("Unknown target of stop command.\n")
+		return
 	}
+
+	if exeToStop != "" {
+		log.Printf("Stopping %s\n", cmd)
+		// isolate the last part of exe path
+		justexe := exeToStop
+		lastslash := strings.LastIndexAny(exeToStop, "/\\")
+		if lastslash >= 0 {
+			justexe = exeToStop[lastslash+1:]
+		}
+		engine.StopExecutable(justexe)
+	}
+
 }

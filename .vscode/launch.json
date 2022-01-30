@@ -32,6 +32,13 @@
             "console": "integratedTerminal"
         },
         {
+            "name": "start engine",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
+            "args": ["start", "engine"]
+        },
+        {
             "name": "start bidule",
             "type": "go",
             "request": "launch",
@@ -60,6 +67,15 @@
             "program": "${env:PALETTESOURCE}/python/palette_gui.py",
             "console": "integratedTerminal",
             "args": ["small"]
+        },
+        {
+            "name": "run testmidi.py",
+            "type": "python",
+            "request": "launch",
+            "program": "${env:PALETTESOURCE}/python/testmidi.py",
+            "console": "integratedTerminal",
+            "cwd": "${fileDirname}",
+            "args": [""]
         },
         {
             "name": "sendlogs",
