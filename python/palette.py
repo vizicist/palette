@@ -421,25 +421,24 @@ def SendMIDIEvent(device,timesofar,msg):
     for b in msg.bytes():
         bytestr += ("%02x" % b)
 
-    event = "midi_" + msg.type
     e = ("{ \"nuid\": \"%s\", " + \
-        "\"event\": \"%s\", " + \
+        "\"event\": \"midi\", " + \
         "\"device\": \"%s\", " + \
         "\"time\": \"%f\", " + \
         "\"bytes\": \"%s\" }") % \
-            (PythonNUID, event, device, timesofar, bytestr)
+            (PythonNUID, device, timesofar, bytestr)
 
     palette_publish("palette.event",e)
 
 def SendMIDITimeReset():
     e = ("{ \"nuid\": \"%s\", " + \
-        "\"event\": \"midi_time_reset\" }") % \
+        "\"event\": \"midi_reset\" }") % \
             (PythonNUID)
     palette_publish("palette.event",e)
 
 def SendMIDIAudioReset():
     e = ("{ \"nuid\": \"%s\", " + \
-        "\"event\": \"midi_audio_reset\" }") % \
+        "\"event\": \"audio_reset\" }") % \
             (PythonNUID)
     palette_publish("palette.event",e)
 
