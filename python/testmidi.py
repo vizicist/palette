@@ -6,7 +6,6 @@ mid = mido.MidiFile('../default/midifiles/cdef.mid')
 msgtimesofar = 0.0
 playbacktimefactor = 0.5
 xtimefactor = 0.1
-cursorid = "one"
 mididevice = "testmidi"
 
 def doNote(msg,msgtimesofar):
@@ -14,11 +13,7 @@ def doNote(msg,msgtimesofar):
         cursorevent = "up"
     else:
         cursorevent = "down"
-    x = msgtimesofar * xtimefactor
-    y = msg.note / 128.0
-    print("cursorevent=",cursorevent," x=",x," y=",y)
-    palette.SendCursorEvent(cursorid,cursorevent,x,y,0.5)
-    palette.SendMIDIEvent(mididevice,msg)
+    palette.SendMIDIEvent(mididevice,msgtimesofar,msg)
 
 for msg in mid:
     msgtimesofar += msg.time           # note: not tm
