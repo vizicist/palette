@@ -10,7 +10,7 @@
   "mirror": [ "none", "vertical", "horizontal", "four" ],
   "justification": [ "center", "left", "right", "top", "bottom", "topleft", "topright", "bottomleft", "bottomright" ],
   "controllerstyle": [ "modulationonly", "allcontrollers", "pitchYZ", "nothing" ],
-  "placement": [ "random", "linear", "cursor" ],
+  "placement": [ "random", "linear", "cursor", "top", "bottom", "left", "right" ],
   "spritesource": [ "cursor", "midi", "none" ],
   "midibehaviour": [
     "scalecapture",

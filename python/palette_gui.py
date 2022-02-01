@@ -2539,16 +2539,12 @@ if __name__ == "__main__":
     else:
         log("Unexpected number of pads: ",pads)
 
-    if len(sys.argv) > 1:
-        guisize = sys.argv[1]
-
-    # config values override
     configsize = palette.ConfigValue("guisize")
     if configsize != "":
         guisize = configsize
 
     if guisize == "":
-        guisize = "large"
+        guisize = "small"
 
     global PaletteApp
     PaletteApp = ProGuiApp(padname,padnames,visiblepagenames,guisize)
