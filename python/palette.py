@@ -101,8 +101,8 @@ PerformLabels["loopingonoff"] = [
     {"label":"Loop_Playback Only", "value":"play"},
 ]
 PerformLabels["midithru"] = [
-    {"label":"MIDI Thru_Off",  "value":False},  # default value at startup
     {"label":"MIDI Thru_On",  "value":True},
+    {"label":"MIDI Thru_Off",  "value":False},  # default value at startup
 ]
 PerformLabels["midisetscale"] = [
     {"label":"MIDI Set Scale_Off",  "value":False},
@@ -416,7 +416,7 @@ def SendSpriteEvent(cid,x,y,z,region="A"):
         "\"x\": \"%f\", \"y\": \"%f\", \"z\": \"%f\" }")  % (x,y,z)
     palette_publish("palette.event",e)
 
-def SendMIDIEvent(device,timesofar,msg):
+def SendMIDIEvent(device,timesofar,msg,region="A"):
     bytestr = "0x"
     for b in msg.bytes():
         bytestr += ("%02x" % b)
@@ -424,6 +424,7 @@ def SendMIDIEvent(device,timesofar,msg):
     e = ("{ \"nuid\": \"%s\", " + \
         "\"event\": \"midi\", " + \
         "\"device\": \"%s\", " + \
+        "\"region\": \"" + region + "\", " + \
         "\"time\": \"%f\", " + \
         "\"bytes\": \"%s\" }") % \
             (PythonNUID, device, timesofar, bytestr)

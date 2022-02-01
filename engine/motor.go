@@ -109,6 +109,10 @@ func NewMotor(pad string, resolumeLayer int, freeframeClient *osc.Client, resolu
 }
 
 func (motor *Motor) processNoteOutput(n *Note) {
+	ss := motor.params.ParamStringValue("visual.spritesource", "")
+	if ss == "midi" {
+		motor.generateSpriteFromNote(n)
+	}
 	if Debug.MIDI {
 		log.Printf("%s: n=%+v\n", CallerFunc(), *n)
 	}
@@ -727,17 +731,12 @@ func (motor *Motor) generateVisualsFromCursor(ce CursorStepEvent) {
 	motor.toFreeFramePluginForLayer(msg)
 }
 
-func (motor *Motor) generateSpriteFromNote(a *ActiveNote) {
+func (motor *Motor) generateSpriteFromNote(n *Note) {
 
-	n := a.noteOn
 	if n.TypeOf != "noteon" {
 		return
 	}
 
-	// send an OSC message to Resolume
-	oscaddr := "/sprite"
-
-	// The first argument is a relative pitch amoun (0.0 to 1.0) within its range
 	pitchmin := uint8(motor.params.ParamIntValue("sound.pitchmin"))
 	pitchmax := uint8(motor.params.ParamIntValue("sound.pitchmax"))
 	if n.Pitch < pitchmin || n.Pitch > pitchmax {
@@ -757,17 +756,34 @@ func (motor *Motor) generateSpriteFromNote(a *ActiveNote) {
 	case "cursor":
 		x = rand.Float32()
 		y = rand.Float32()
+	case "top":
+		y = 1.0
+		x = float32(n.Pitch-pitchmin) / float32(pitchmax-pitchmin)
+	case "bottom":
+		y = 0.0
+		x = float32(n.Pitch-pitchmin) / float32(pitchmax-pitchmin)
+	case "left":
+		y = float32(n.Pitch-pitchmin) / float32(pitchmax-pitchmin)
+		x = 0.0
+	case "right":
+		y = float32(n.Pitch-pitchmin) / float32(pitchmax-pitchmin)
+		x = 1.0
 	default:
 		x = rand.Float32()
 		y = rand.Float32()
 	}
 
+	// send an OSC message to Resolume
+	oscaddr := "/sprite"
 	msg := osc.NewMessage(oscaddr)
 	msg.Append(x)
 	msg.Append(y)
 	msg.Append(float32(n.Velocity) / 127.0)
-	// Someday localhost should be changed to the actual IP address
-	msg.Append(fmt.Sprintf("%d@localhost", a.id))
+
+	// Someday localhost should be changed to the actual IP address.
+	// XXX - Set sprite ID to pitch, is this right?
+	msg.Append(fmt.Sprintf("%d@localhost", n.Pitch))
+
 	// log.Printf("generateSprite msg=%+v\n", msg)
 	motor.toFreeFramePluginForLayer(msg)
 }
@@ -1085,7 +1101,8 @@ func (motor *Motor) sendNoteOn(a *ActiveNote) {
 
 	ss := motor.params.ParamStringValue("visual.spritesource", "")
 	if ss == "midi" {
-		motor.generateSpriteFromNote(a)
+		n := a.noteOn
+		motor.generateSpriteFromNote(n)
 	}
 }
 
