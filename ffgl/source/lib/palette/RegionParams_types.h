@@ -84,6 +84,10 @@ RegionParams_InitializeTypes() {
 	RegionParams_placementTypes.push_back("random");
 	RegionParams_placementTypes.push_back("linear");
 	RegionParams_placementTypes.push_back("cursor");
+	RegionParams_placementTypes.push_back("top");
+	RegionParams_placementTypes.push_back("bottom");
+	RegionParams_placementTypes.push_back("left");
+	RegionParams_placementTypes.push_back("right");
 
 	RegionParams_spritesourceTypes.push_back("cursor");
 	RegionParams_spritesourceTypes.push_back("midi");

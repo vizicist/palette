@@ -53,20 +53,12 @@
             "args": ["start", "resolume"]
         },
         {
-            "name": "start gui large",
+            "name": "start gui",
             "type": "python",
             "request": "launch",
             "program": "${env:PALETTESOURCE}/python/palette_gui.py",
             "console": "integratedTerminal",
-            "args": ["large"]
-        },
-        {
-            "name": "start gui small",
-            "type": "python",
-            "request": "launch",
-            "program": "${env:PALETTESOURCE}/python/palette_gui.py",
-            "console": "integratedTerminal",
-            "args": ["small"]
+            "args": []
         },
         {
             "name": "run testmidi.py",

@@ -154,12 +154,6 @@ func handle_start(cmd string) {
 
 	case "gui":
 		fullexe = filepath.Join(palette, "bin", "pyinstalled", "palette_gui.exe")
-		exearg = "large" // default
-		// don't return
-
-	case "guismall":
-		fullexe = filepath.Join(palette, "bin", "pyinstalled", "palette_gui.exe")
-		exearg = "small"
 		// don't return
 
 	case "engine":
