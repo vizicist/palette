@@ -56,19 +56,15 @@ class ProGuiApp(tk.Tk):
             padname,
             padnames,
             visiblepagenames,
-            guisize
+            isguilarge
             ):
 
-        self.guisize = guisize
+        self.isguilarge = isguilarge
 
         self.currentMode = ""
         self.nextMode = ""
 
-        s = palette.ConfigValue("guilevel")
-        if s == "":
-            self.defaultGuiLevel = 0
-        else:
-            self.defaultGuiLevel = int(s)
+        self.defaultGuiLevel = int(palette.ConfigValue("guilevel",defvalue="0"))
 
         self.currentPageName = None
 
@@ -77,13 +73,13 @@ class ProGuiApp(tk.Tk):
         self.thumbFactor = 0.1
 
         self.lastAnything = 0
-        self.resetAfterInactivity = int(palette.ConfigValue("attracttimeout","600"))
+        self.resetAfterInactivity = int(palette.ConfigValue("attracttimeout",defvalue="0"))
 
         # These are the same in both normal and advanced
         self.selectDisplayPerRow = 3
 
         # Normal layout values
-        if guisize == "large":
+        if self.isguilarge:
             self.paramDisplayRows = 19
             self.frameSizeOfControlNormal = 0.06
             self.frameSizeOfSelectNormal = 1.0 - self.frameSizeOfControlNormal
@@ -121,7 +117,7 @@ class ProGuiApp(tk.Tk):
         # self.setFrameSizes()
         self.setScaleList()
 
-        setFontSizes(self.guisize)
+        setFontSizes(self.isguilarge)
 
         tk.Tk.__init__(self)
 
@@ -2302,19 +2298,18 @@ class PageSelector(tk.Frame):
                 s = 'PresetButton.TLabel'
             self.selectButtons[i].config(style=s)
 
-def afterWindowIsDisplayed(windowName,guisize,*args):
-    global PaletteApp
-    resizecoords = palette.ConfigValue("guiresize")
-    # Hardcoded - the small size doesn't pay attention to guiresize
-    if guisize == "large" and resizecoords != "":
+def afterWindowIsDisplayed(windowName,guiresize,*args):
+    if guiresize != "":
         time.sleep(1.0) # wait for window to be visible so nircmdc sees it
         log("Resizing GUI")
-        cmd = "nircmdc.exe win setsize stitle \""+windowName+"\" "+resizecoords
+        # The value of guiresize should be four integers separated by spaces
+        cmd = "nircmdc.exe win setsize stitle \""+windowName+"\" "+guiresize
         os.system(cmd)
         cmd = "nircmdc.exe win -style stitle \""+windowName+"\" 0x00CA0000"
         os.system(cmd)
         cmd = "nircmdc.exe win max stitle \""+windowName+"\""
         os.system(cmd)
+    global PaletteApp
     PaletteApp.nextMode = "layout"
 
 def padOfParam(paramname):
@@ -2353,14 +2348,14 @@ def initMain(app):
     app.iconbitmap(palette.configFilePath("palette.ico"))
     app.mainLoop()
 
-def setFontSizes(guisize):
+def setFontSizes(isguilarge):
     global presetButtonFont, largestFont
     global hugeFont, comboFont, largerFont, largeFont, performButtonFont
     global padLabelFont, paramNameFont, paramValueFont, paramAdjustFont
 
     f = 'Open Sans Regular'
 
-    if guisize == "large":
+    if isguilarge:
         presetButtonFont = (f, int(20))
         largestFont = (f, int(24))
         hugeFont = (f, int(36))
@@ -2509,11 +2504,9 @@ if __name__ == "__main__":
     loginit()
     log("")
     log("Start GUI")
-    pads = palette.ConfigValue("pads")
-    if pads == "":
-        npads = 1
-        pads = "A" # default if no pads config value
 
+    # Default is all four pads
+    pads = palette.ConfigValue("pads",defvalue="ABCD")
     npads = len(pads)
     if npads == 1:
         # You can set pads to "B", for example
@@ -2539,29 +2532,27 @@ if __name__ == "__main__":
     else:
         log("Unexpected number of pads: ",pads)
 
-    configsize = palette.ConfigValue("guisize")
-    if configsize != "":
-        guisize = configsize
-
-    if guisize == "":
-        guisize = "small"
+    # guiresize is of the form x,y,w,h
+    guiresize = palette.ConfigValue("guiresize",defvalue="")
 
     global PaletteApp
-    PaletteApp = ProGuiApp(padname,padnames,visiblepagenames,guisize)
+    PaletteApp = ProGuiApp(padname,padnames,visiblepagenames,guiresize)
 
     makeStyles(PaletteApp)
 
-    if guisize == "large":
-        PaletteApp.wm_geometry("%dx%d" % (800,1280))
-    elif guisize == "small":
-        PaletteApp.wm_geometry("%dx%d" % (400,640))
+    # If guiresize is specified in the settings.json,
+    # we assume it's the "large" version of the gui
+    if guiresize != "":
+        # Fixed size - the guiresize is really only used to reposition it.
+        # Should check to see whether the resize matches the 800x1280 expectation
+        PaletteApp.wm_geometry("%dx%d" % (800,1280))  # LARGE VERSION
     else:
-        log("Unexpected value of guisize (%s)\n" % guisize)
+        PaletteApp.wm_geometry("%dx%d" % (400,640))   # SMALL VERSION
 
     PaletteApp.nextMode = ""
     PaletteApp.currentMode = ""
 
-    threading.Timer(0.0, afterWindowIsDisplayed, args=[PaletteApp.windowName,guisize], kwargs=None).start()
+    threading.Timer(0.0, afterWindowIsDisplayed, args=[PaletteApp.windowName,guiresize], kwargs=None).start()
 
     thd = threading.Thread(target=background_thread,args=(PaletteApp,))   # timer thread
     thd.daemon = True

@@ -163,8 +163,8 @@ func TheRouter() *Router {
 
 		oneRouter.regionLetters = ConfigValue("pads")
 		if oneRouter.regionLetters == "" {
-			log.Printf("No value for pads, assuming A")
-			oneRouter.regionLetters = "A"
+			log.Printf("No value for pads, assuming ABCD")
+			oneRouter.regionLetters = "ABCD"
 		}
 
 		err := LoadParamEnums()
