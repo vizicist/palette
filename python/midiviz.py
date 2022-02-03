@@ -1,8 +1,14 @@
 import mido
 import palette
 import time
+import sys
 
-mid = mido.MidiFile('../default/midifiles/midiviz.mid')
+if len(sys.argv) > 1:
+    fn = sys.argv[1]
+else:
+    fn = "midiviz.mid"
+mid = mido.MidiFile('../default/midifiles/'+fn)
+print("mid = ",mid)
 playbacktimefactor = 0.5
 mididevice = "testmidi"
 
