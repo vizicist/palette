@@ -1,11 +1,15 @@
 
 @echo off
 
-if not "%PALETTESOURCE%" == "" goto keepgoing
+if not "%PALETTESOURCE%" == "" goto keepgoing1
 echo You must set the PALETTESOURCE environment variable.
 goto getout
+:keepgoing1
 
-:keepgoing
+if not "%VSINSTALLDIR%" == "" goto keepgoing2
+echo Calling msdev17 to set build environment.
+call msdev17.bat
+:keepgoing2
 
 set ship=%PALETTESOURCE%\build\windows\ship
 set bin=%ship%\bin
