@@ -735,10 +735,10 @@ func CliCommand(args []string) {
 		CliCommand([]string{"api", "global.sendlogs"})
 
 	case "start":
-		CliCommand([]string{"api", "process.start", word1})
+		CliCommand([]string{"api", "process.start", "{ \"process\": \"" + word1 + "\" }"})
 
 	case "stop":
-		CliCommand([]string{"api", "process.stop", word1})
+		CliCommand([]string{"api", "process.stop", "{ \"process\": \"" + word1 + "\" }"})
 
 	case "api":
 		out, err := EngineAPI(word1, word2)
