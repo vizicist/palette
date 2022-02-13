@@ -95,6 +95,32 @@ func PublishAliveEvent(secs float64, cursorCount int) error {
 	return nil
 }
 
+// EngineAPI xxx
+func EngineAPI(api, params string) (retmap map[string]string, err error) {
+	timeout := 3 * time.Second
+	args := "{ " +
+		"\"nuid\": \"" + MyNUID() + "\", " +
+		"\"api\": \"" + api + "\", " +
+		"\"params\": \"" + jsonEscape(params) +
+		"\" }"
+	result, err := theVizNats.Request("palette.api", args, timeout)
+	if err != nil {
+		log.Printf("EngineAPI: protocol error err=%s\n", err)
+		return nil, err
+	}
+	retmap, err = StringMap(result)
+	if err != nil {
+		log.Printf("EngineAPI: protocol stringmap err=%s\n", err)
+		return nil, err
+	}
+	apierr, hasapierr := retmap["error"]
+	if hasapierr {
+		log.Printf("EngineAPI: api error err=%s\n", apierr)
+		return nil, fmt.Errorf("%s", apierr)
+	}
+	return retmap, err
+}
+
 // VizNats xxx
 type VizNats struct {
 	natsConn *nats.Conn
@@ -112,7 +138,7 @@ func InitNATS() {
 	theVizNats = NewVizNats()
 }
 
-func ConnectNATS() {
+func ConnectToNATSServer() {
 	err := theVizNats.Connect()
 	if err != nil {
 		log.Printf("VizNats.Connect: err=%s\n", err)
