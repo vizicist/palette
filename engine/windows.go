@@ -13,19 +13,32 @@ import (
 	"syscall"
 )
 
-func StartExecutable(executable string, background bool, stdoutWriter io.Writer, stderrWriter io.Writer, args ...string) error {
-	return Spawn(executable, background, stdoutWriter, stderrWriter, args...)
-}
-
 func StopExecutable(executable string) {
 	stdout := &NoWriter{}
 	stderr := &NoWriter{}
-	// ignore errors
-	_ = Spawn("c:\\windows\\system32\\taskkill.exe", false, stdout, stderr, "/F", "/IM", executable)
+	cmd, err := StartExecutable("c:\\windows\\system32\\taskkill.exe", false, stdout, stderr, "/F", "/IM", executable)
+	if err != nil {
+		log.Printf("StopExecutable: err=%s\n", err)
+	} else {
+		cmd.Wait()
+	}
 }
 
-// Spawn executes something.  If background is true, it doesn't block
-func Spawn(executable string, background bool, stdout io.Writer, stderr io.Writer, args ...string) error {
+// StartExecutable executes something.  If background is true, it doesn't block
+func StartExecutableRedirectOutput(cmd string, fullexe string, background bool, args ...string) (*exec.Cmd, error) {
+	stdoutWriter := MakeFileWriter(LogFilePath(cmd + ".stdout"))
+	if stdoutWriter == nil {
+		stdoutWriter = &NoWriter{}
+	}
+	stderrWriter := MakeFileWriter(LogFilePath(cmd + ".stderr"))
+	if stderrWriter == nil {
+		stderrWriter = &NoWriter{}
+	}
+	return StartExecutable(fullexe, true, stdoutWriter, stderrWriter, args...)
+}
+
+// StartExecutable executes something.  If background is true, it doesn't block
+func StartExecutable(executable string, background bool, stdout io.Writer, stderr io.Writer, args ...string) (*exec.Cmd, error) {
 
 	cmd := exec.Command(executable, args...)
 
@@ -44,7 +57,7 @@ func Spawn(executable string, background bool, stdout io.Writer, stderr io.Write
 	} else {
 		err = cmd.Run()
 	}
-	return err
+	return cmd, err
 }
 
 // MorphDefs xxx
@@ -94,6 +107,10 @@ func RealStartCursorInput(callback CursorDeviceCallbackFunc) {
 
 // KillProcess kills a process (synchronously)
 func KillProcess(exe string) {
-	Spawn("cmd.exe", false, NoWriterInstance, NoWriterInstance, "/c", "taskkill", "/f", "/im", exe)
-
+	cmd, err := StartExecutable("cmd.exe", false, NoWriterInstance, NoWriterInstance, "/c", "taskkill", "/f", "/im", exe)
+	if err != nil {
+		log.Printf("KillProcess: err=%s\n", err)
+	} else {
+		cmd.Wait()
+	}
 }

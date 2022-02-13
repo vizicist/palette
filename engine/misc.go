@@ -248,6 +248,10 @@ func FileExists(filepath string) bool {
 
 // StringMap takes a JSON string and returns a map of elements
 func StringMap(params string) (map[string]string, error) {
+	// The enclosing curly braces are optional
+	if params == "" || params[0] == '"' {
+		params = "{ " + params + " }"
+	}
 	dec := json.NewDecoder(strings.NewReader(params))
 	t, err := dec.Token()
 	if err != nil {
@@ -303,10 +307,10 @@ func jsonEscape(s string) string {
 	return s
 }
 
-// ErrorResponse return a JSON 2.0 error response
+// ErrorResponse return an error response
 func ErrorResponse(err error) string {
 	escaped := jsonEscape(err.Error())
-	return `{ "error": { "code": 999, "message": "` + escaped + `" } }`
+	return `{ "error": "` + escaped + `" }`
 }
 
 // LoadImage reads an image file
@@ -687,4 +691,70 @@ func GoroutineID() uint64 {
 	b = b[:bytes.IndexByte(b, ' ')]
 	n, _ := strconv.ParseUint(string(b), 10, 64)
 	return n
+}
+
+func SanityCheckForever() {
+	for {
+		log.Printf("Checking for resolume\n")
+		time.Sleep(5 * time.Second)
+	}
+}
+
+func CliCommand(args []string) {
+
+	nargs := len(args)
+	var word0, word1, word2 string
+	if nargs > 0 {
+		word0 = args[0]
+	}
+	if nargs > 1 {
+		word1 = args[1]
+	}
+	if nargs > 2 {
+		word2 = args[2]
+	}
+
+	switch word0 {
+
+	case "":
+		msg := "usage: palette api {api} {args}\n"
+		msg += "       palette start {process}\n"
+		msg += "       palette stop {process}\n"
+		msg += "       palette sendlogs\n"
+		os.Stdout.WriteString(msg)
+
+	case "engine":
+		KillProcess("palette_engine.exe")
+		fullexe := filepath.Join(PaletteDir(), "bin", "palette_engine.exe")
+		_, err := StartExecutableRedirectOutput("palette_engine.exe", fullexe, true, "")
+		if err != nil {
+			log.Printf("start: err=%s\n", err)
+		}
+
+	case "sendlogs":
+		CliCommand([]string{"api", "global.sendlogs"})
+
+	case "start":
+		CliCommand([]string{"api", "process.start", word1})
+
+	case "stop":
+		CliCommand([]string{"api", "process.stop", word1})
+
+	case "api":
+		out, err := EngineAPI(word1, word2)
+		var msg string
+		if err != nil {
+			log.Printf("api: err=%s\n", err)
+			msg = fmt.Sprintf("error: %s\n", err)
+		} else {
+			log.Printf("api: out=%s\n", out)
+			msg = fmt.Sprintf("output: %s\n", out)
+		}
+		os.Stdout.WriteString(msg)
+
+	default:
+		msg := fmt.Sprintf("cliCommand: unrecognized %s\n", word0)
+		os.Stdout.WriteString(msg)
+		log.Printf("%s", msg)
+	}
 }

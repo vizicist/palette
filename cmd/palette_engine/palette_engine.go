@@ -24,6 +24,16 @@ func main() {
 
 	flag.Parse()
 
+	// Normally, the engine should never die, but if it does,
+	// other processes (e.g. resolume, bidule) may be left around.
+	// So, unless told otherwise, we kill everything to get a clean start.
+	if engine.ConfigBoolWithDefault("killonstartup", true) {
+		engine.KillProcess("Arena.exe")
+		engine.KillProcess("Avenue.exe")
+		engine.KillProcess("PlogueBidule_x64.exe")
+		engine.KillProcess("palette_gui.exe")
+	}
+
 	engine.InitMIDI()
 	engine.InitSynths()
 	engine.InitNATS()
@@ -38,8 +48,18 @@ func main() {
 	go r.StartCursorInput()
 	go r.InputListener()
 
+	if engine.ConfigBoolWithDefault("startall", true) {
+		engine.StartRunning("resolume")
+		engine.StartRunning("gui")
+		engine.StartRunning("bidule")
+	}
+
 	if engine.ConfigBoolWithDefault("depth", false) {
 		go engine.DepthRunForever()
+	}
+
+	if engine.ConfigBoolWithDefault("sanitycheck", false) {
+		go engine.SanityCheckForever()
 	}
 
 	if engine.ConfigBoolWithDefault("winsys", false) {

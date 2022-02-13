@@ -8,6 +8,13 @@
             "name": "Engine",
             "type": "go",
             "request": "launch",
+            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
+            "args": ["engine"]
+        },
+        {
+            "name": "OLD Engine",
+            "type": "go",
+            "request": "launch",
             "mode": "auto",
             "program": "${env:PALETTESOURCE}/cmd/palette_engine/palette_engine.go",
             "env": {
@@ -15,45 +22,63 @@
             "args": []
         },
         {
-            "name": "test erae",
-            "type": "go",
-            "request": "launch",
-            "mode": "auto",
-            "program": "${env:PALETTESOURCE}/cmd/erae/erae.go",
-            "env": {
-                "Path": "${env:Path};${workspaceFolder};c:/Users/me/Documents/github/vizicist/palette/SenselLib/x64;"             },
-            "args": []
-        },
-        {
-            "name": "test hang.py",
-            "type": "python",
-            "request": "launch",
-            "program": "${env:PALETTESOURCE}/python/hang.py",
-            "console": "integratedTerminal"
-        },
-        {
-            "name": "start engine",
+            "name": "start resolume",
             "type": "go",
             "request": "launch",
             "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
-            "args": ["start", "engine"]
+            "args": ["api", "process.start", "\"process\":\"resolume\""]
+        },
+        {
+            "name": "stop resolume",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
+            "args": ["api", "process.stop", "\"process\":\"resolume\""]
         },
         {
             "name": "start bidule",
             "type": "go",
             "request": "launch",
             "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
-            "args": ["start", "bidule"]
+            "args": ["api", "process.start", "\"process\":\"bidule\""]
         },
         {
-            "name": "start resolume",
+            "name": "stop bidule",
             "type": "go",
             "request": "launch",
             "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
-            "args": ["start", "resolume"]
+            "args": ["api", "process.stop", "\"process\":\"bidule\""]
         },
         {
             "name": "start gui",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
+            "args": ["api", "process.start", "\"process\":\"gui\""]
+        },
+        {
+            "name": "stop gui",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
+            "args": ["api", "process.stop", "\"process\":\"gui\""]
+        },
+        {
+            "name": "start all",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
+            "args": ["api", "process.start", "\"process\":\"all\""]
+        },
+        {
+            "name": "stop all",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
+            "args": ["api", "process.stop", "\"process\":\"all\""]
+        },
+        {
+            "name": "OLD start gui",
             "type": "python",
             "request": "launch",
             "program": "${env:PALETTESOURCE}/python/palette_gui.py",
@@ -80,24 +105,14 @@
             "args": ["sendlogs"]
         },
         {
-            "name": "start allsmall",
+            "name": "test erae",
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
+            "program": "${env:PALETTESOURCE}/cmd/erae/erae.go",
             "env": {
                 "Path": "${env:Path};${workspaceFolder};c:/Users/me/Documents/github/vizicist/palette/SenselLib/x64;"             },
-            "args": ["start", "allsmall"]
-        },
-        {
-            "name": "stop all",
-            "type": "go",
-            "request": "launch",
-            "mode": "auto",
-            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
-            "env": {
-                "Path": "${env:Path};${workspaceFolder};c:/Users/me/Documents/github/vizicist/palette/SenselLib/x64;"             },
-            "args": ["stop", "all"]
+            "args": []
         }
     ]
 }

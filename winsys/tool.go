@@ -2,7 +2,6 @@ package winsys
 
 import (
 	"image"
-	"log"
 )
 
 // WindowData fields are exported
@@ -30,7 +29,7 @@ var WindowMakers = make(map[string]WindowMaker)
 // RegisterWindow xxx
 func RegisterWindow(name string, newfunc WindowMaker) {
 	WindowMakers[name] = newfunc
-	log.Printf("Registered Tool %s maker=%T\n", name, newfunc)
+	// log.Printf("Registered Tool %s maker=%T\n", name, newfunc)
 }
 
 // RegisterDefaultTools xxx
