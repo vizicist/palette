@@ -700,7 +700,9 @@ func SanityCheckForever() {
 	}
 }
 
-func CliCommand(args []string) {
+func CliCommand(args []string) map[string]string {
+
+	retmap := map[string]string{}
 
 	nargs := len(args)
 	var word0, word1, word2 string
@@ -714,47 +716,60 @@ func CliCommand(args []string) {
 		word2 = args[2]
 	}
 
+	var msg string
+	const engineexe = "palette_engine.exe"
+
 	switch word0 {
 
 	case "":
-		msg := "usage: palette api {api} {args}\n"
+		msg = "usage: palette api {api} {args}\n"
 		msg += "       palette start {process}\n"
 		msg += "       palette stop {process}\n"
 		msg += "       palette sendlogs\n"
-		os.Stdout.WriteString(msg)
 
 	case "engine":
-		KillProcess("palette_engine.exe")
-		fullexe := filepath.Join(PaletteDir(), "bin", "palette_engine.exe")
-		_, err := StartExecutableRedirectOutput("palette_engine.exe", fullexe, true, "")
-		if err != nil {
-			log.Printf("start: err=%s\n", err)
-		}
 
 	case "sendlogs":
-		CliCommand([]string{"api", "global.sendlogs"})
+		retmap = CliCommand([]string{"api", "global.sendlogs"})
 
 	case "start":
-		CliCommand([]string{"api", "process.start", "{ \"process\": \"" + word1 + "\" }"})
+		if word1 == "engine" {
+			KillExe(engineexe)
+			fullexe := filepath.Join(PaletteDir(), "bin", engineexe)
+			_, err := StartExecutableRedirectOutput("engine", fullexe, true, "")
+			if err != nil {
+				retmap["error"] = fmt.Sprintf("start: err=%s\n", err)
+			}
+		} else {
+			retmap = CliCommand([]string{"api", "process.start", "{ \"process\": \"" + word1 + "\" }"})
+		}
 
 	case "stop":
-		CliCommand([]string{"api", "process.stop", "{ \"process\": \"" + word1 + "\" }"})
+		if word1 == "engine" {
+			// first stop everything else
+			CliCommand([]string{"api", "process.stop", "{ \"process\": \"" + "all" + "\" }"})
+			// then kill ourselves?
+			KillExe(engineexe)
+		} else {
+			retmap = CliCommand([]string{"api", "process.stop", "{ \"process\": \"" + word1 + "\" }"})
+		}
 
 	case "api":
-		out, err := EngineAPI(word1, word2)
-		var msg string
-		if err != nil {
-			log.Printf("api: err=%s\n", err)
-			msg = fmt.Sprintf("error: %s\n", err)
-		} else {
-			log.Printf("api: out=%s\n", out)
-			msg = fmt.Sprintf("output: %s\n", out)
+		var e error
+		retmap, e = EngineAPI(word1, word2)
+		if e != nil {
+			// internal error
+			log.Printf("api: error=%s\n", e)
+			// NEW retmap
+			retmap = map[string]string{}
+			retmap["error"] = fmt.Sprintf("internal err=%s\n", e)
 		}
-		os.Stdout.WriteString(msg)
 
 	default:
-		msg := fmt.Sprintf("cliCommand: unrecognized %s\n", word0)
-		os.Stdout.WriteString(msg)
-		log.Printf("%s", msg)
+		// NEW retmap
+		retmap = map[string]string{}
+		retmap["error"] = fmt.Sprintf("cliCommand: unrecognized %s\n", word0)
 	}
+
+	return retmap
 }
