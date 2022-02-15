@@ -13,24 +13,26 @@ import (
 	"syscall"
 )
 
-func StopExecutable(executable string) {
+func StopExecutable(executable string) error {
 	stdout := &NoWriter{}
 	stderr := &NoWriter{}
 	cmd, err := StartExecutable("c:\\windows\\system32\\taskkill.exe", false, stdout, stderr, "/F", "/IM", executable)
 	if err != nil {
-		log.Printf("StopExecutable: err=%s\n", err)
-	} else {
-		cmd.Wait()
+		// We don't want to complain if the executable isn't
+		// currently running, so don't return any error here.
+		return nil
 	}
+	cmd.Wait()
+	return nil
 }
 
 // StartExecutable executes something.  If background is true, it doesn't block
-func StartExecutableRedirectOutput(cmd string, fullexe string, background bool, args ...string) (*exec.Cmd, error) {
-	stdoutWriter := MakeFileWriter(LogFilePath(cmd + ".stdout"))
+func StartExecutableRedirectOutput(logName string, fullexe string, background bool, args ...string) (*exec.Cmd, error) {
+	stdoutWriter := MakeFileWriter(LogFilePath(logName + ".stdout"))
 	if stdoutWriter == nil {
 		stdoutWriter = &NoWriter{}
 	}
-	stderrWriter := MakeFileWriter(LogFilePath(cmd + ".stderr"))
+	stderrWriter := MakeFileWriter(LogFilePath(logName + ".stderr"))
 	if stderrWriter == nil {
 		stderrWriter = &NoWriter{}
 	}
@@ -103,14 +105,4 @@ func RealStartCursorInput(callback CursorDeviceCallbackFunc) {
 	}
 
 	go StartMorph(callback, 1.0)
-}
-
-// KillProcess kills a process (synchronously)
-func KillProcess(exe string) {
-	cmd, err := StartExecutable("cmd.exe", false, NoWriterInstance, NoWriterInstance, "/c", "taskkill", "/f", "/im", exe)
-	if err != nil {
-		log.Printf("KillProcess: err=%s\n", err)
-	} else {
-		cmd.Wait()
-	}
 }

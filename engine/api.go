@@ -4,172 +4,21 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"os/exec"
-	"path/filepath"
 	"strings"
 	"time"
-
-	"github.com/hypebeast/go-osc/osc"
 )
-
-type RunningCmd struct {
-	cmd *exec.Cmd
-}
-
-var RunningCmds = map[string]RunningCmd{}
-
-func activateLater(dur time.Duration, ntimes int) {
-	for i := 0; i < ntimes; i++ {
-		time.Sleep(dur)
-		_, err := executeAPIActivate()
-		if err != nil {
-			log.Printf("activateLater: err=%s\n", err)
-		}
-	}
-}
-
-func StartRunning(process string) error {
-
-	log.Printf("StartRunning: process %s\n", process)
-
-	_, found := RunningCmds[process]
-	if found {
-		return fmt.Errorf("executeAPIStart: process %s already running", process)
-	}
-	switch process {
-
-	case "all":
-		err := StartRunning("resolume")
-		if err != nil {
-			return fmt.Errorf("start: resolume err=%s", err)
-		}
-		err = StartRunning("gui")
-		if err != nil {
-			return fmt.Errorf("start: gui err=%s", err)
-		}
-		err = StartRunning("bidule")
-		if err != nil {
-			return fmt.Errorf("start: bidule err=%s", err)
-		}
-		// Always send logs after starting all
-		SendLogs()
-
-	case "gui":
-		fullexe := filepath.Join(PaletteDir(), "bin", "pyinstalled", "palette_gui.exe")
-		cmd, err := StartExecutableRedirectOutput(process, fullexe, true, "")
-		if err != nil {
-			return fmt.Errorf("start: err=%s", err)
-		}
-		RunningCmds[process] = RunningCmd{cmd: cmd}
-
-	case "bidule":
-		fullexe := ConfigValue("bidule")
-		if fullexe == "" {
-			fullexe = "C:\\Program Files\\Plogue\\Bidule\\PlogueBidule_X64.exe"
-		}
-		exearg := ConfigFilePath("palette.bidule")
-		if !FileExists(fullexe) {
-			return fmt.Errorf("no Bidule found, looking for %s", fullexe)
-		}
-		cmd, err := StartExecutableRedirectOutput("bidule", fullexe, true, exearg)
-		if err != nil {
-			return fmt.Errorf("start: bidule err=%s", err)
-		}
-		RunningCmds[process] = RunningCmd{cmd: cmd}
-		// bidule can take forever to load, especially on non-SSD
-		go activateLater(10*time.Second, 20)
-
-	case "resolume":
-		fullexe := ConfigValue("resolume")
-		if fullexe != "" && !FileExists(fullexe) {
-			return fmt.Errorf("no Resolume found, looking for %s", fullexe)
-		}
-		if fullexe == "" {
-			fullexe = "C:\\Program Files\\Resolume Avenue\\Avenue.exe"
-			if !FileExists(fullexe) {
-				fullexe = "C:\\Program Files\\Resolume Arena\\Arena.exe"
-				if !FileExists(fullexe) {
-					return fmt.Errorf("no Resolume found in default locations")
-				}
-			}
-		}
-		cmd, err := StartExecutableRedirectOutput("resolume", fullexe, true, "")
-		if err != nil {
-			return fmt.Errorf("start: resolume err=%s", err)
-		}
-		RunningCmds[process] = RunningCmd{cmd: cmd}
-		go activateLater(8*time.Second, 2)
-
-	default:
-		return fmt.Errorf("start: unrecognized process %s", process)
-	}
-
-	return nil
-}
-
-func stopRunning(process string) (string, error) {
-	cmd, found := RunningCmds[process]
-	if !found {
-		return "", fmt.Errorf("stop: process %s not running", process)
-	}
-	p := cmd.cmd.Process
-	defer delete(RunningCmds, process)
-	if p == nil {
-		return "", fmt.Errorf("stop: process %s not Running", process)
-	}
-	err := p.Kill()
-	if err != nil {
-		return "", fmt.Errorf("stop: Kill of %s err=%s", process, err)
-	}
-	return "0", nil
-}
-
-func executeAPIActivate() (string, error) {
-	// handle_activate sends OSC messages to start the layers in Resolume,
-	// and make sure the audio is on in Bidule.
-	addr := "127.0.0.1"
-	resolumePort := 7000
-	bidulePort := 3210
-
-	resolumeClient := osc.NewClient(addr, resolumePort)
-	start_layer(resolumeClient, 1)
-	start_layer(resolumeClient, 2)
-	start_layer(resolumeClient, 3)
-	start_layer(resolumeClient, 4)
-
-	biduleClient := osc.NewClient(addr, bidulePort)
-	msg := osc.NewMessage("/play")
-	msg.Append(int32(1)) // turn it on
-	// log.Printf("Sending %s\n", msg.String())
-	err := biduleClient.Send(msg)
-	if err != nil {
-		return "", fmt.Errorf("handle_activate: osc to Bidule, err=%s", err)
-	}
-	return "0", nil
-}
-
-func start_layer(resolumeClient *osc.Client, layer int) {
-	addr := fmt.Sprintf("/composition/layers/%d/clips/1/connect", layer)
-	msg := osc.NewMessage(addr)
-	msg.Append(int32(1))
-	// log.Printf("Sending %s\n", msg.String())
-	err := resolumeClient.Send(msg)
-	if err != nil {
-		log.Printf("start_layer: osc to Resolume err=%s\n", err)
-	}
-}
 
 // ExecuteAPI xxx
 func (r *Router) ExecuteAPI(api string, nuid string, rawargs string) (result interface{}, err error) {
 
-	apiargs, err := StringMap(rawargs)
-	if err != nil {
-		response := ErrorResponse(fmt.Errorf("Router.ExecuteAPI: Unable to interpret value - %s", rawargs))
+	apiargs, e := StringMap(rawargs)
+	if e != nil {
+		result = ErrorResponse(fmt.Errorf("Router.ExecuteAPI: Unable to interpret value - %s", rawargs))
 		log.Printf("Router.ExecuteAPI: bad rawargs value = %s\n", rawargs)
-		return response, nil
+		return result, e
 	}
 
-	result = "0" // most APIs just return 0, so pre-populate it
+	result = "" // pre-populate most common result
 
 	words := strings.SplitN(api, ".", 2)
 	if len(words) != 2 {
@@ -177,6 +26,8 @@ func (r *Router) ExecuteAPI(api string, nuid string, rawargs string) (result int
 	}
 	apiprefix := words[0]
 	apisuffix := words[1]
+
+	/////////////////////// region.* APIs
 
 	if apiprefix == "region" {
 
@@ -194,7 +45,10 @@ func (r *Router) ExecuteAPI(api string, nuid string, rawargs string) (result int
 		return motor.ExecuteAPI(apisuffix, apiargs, rawargs)
 	}
 
+	/////////////////////// process.* APIs
+
 	if apiprefix == "process" {
+
 		switch apisuffix {
 
 		case "start":
@@ -202,20 +56,26 @@ func (r *Router) ExecuteAPI(api string, nuid string, rawargs string) (result int
 			if !ok {
 				process = "all"
 			}
-			return nil, StartRunning(process)
+			err = StartRunning(process)
 
 		case "stop":
 			process, ok := apiargs["process"]
 			if !ok {
 				process = "all"
 			}
-			return stopRunning(process)
+			err = StopRunning(process)
 
 		case "activate":
-			return executeAPIActivate()
+			result, err = executeAPIActivate()
 
 		default:
-			return nil, fmt.Errorf("ExecuteAPI: unknown api %s", api)
+			err = fmt.Errorf("ExecuteAPI: unknown api %s", api)
+		}
+
+		if err != nil {
+			return nil, err
+		} else {
+			return result, nil
 		}
 	}
 
@@ -223,6 +83,8 @@ func (r *Router) ExecuteAPI(api string, nuid string, rawargs string) (result int
 	if apiprefix != "global" {
 		return nil, fmt.Errorf("ExecuteAPI: api=%s unknown apiprefix=%s", api, apiprefix)
 	}
+
+	/////////////////////// global.* APIs
 
 	switch apisuffix {
 
