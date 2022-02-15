@@ -21,6 +21,7 @@ func main() {
 	log.Printf("====================== Palette Engine is starting\n")
 
 	engine.InitDebug()
+	engine.InitProcessInfo()
 
 	flag.Parse()
 
@@ -28,10 +29,9 @@ func main() {
 	// other processes (e.g. resolume, bidule) may be left around.
 	// So, unless told otherwise, we kill everything to get a clean start.
 	if engine.ConfigBoolWithDefault("killonstartup", true) {
-		engine.KillProcess("Arena.exe")
-		engine.KillProcess("Avenue.exe")
-		engine.KillProcess("PlogueBidule_x64.exe")
-		engine.KillProcess("palette_gui.exe")
+		engine.KillProcess("resolume")
+		engine.KillProcess("bidule")
+		engine.KillProcess("gui")
 	}
 
 	engine.InitMIDI()
