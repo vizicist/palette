@@ -64,7 +64,7 @@ func ResolumeInfo() *processInfo {
 	if lastslash > 0 {
 		exe = fullpath[lastslash+1:]
 	}
-	return &processInfo{exe, fullpath, "", 2}
+	return &processInfo{exe, fullpath, "", 4}
 }
 
 func GuiInfo() *processInfo {
@@ -79,23 +79,9 @@ func StartRunning(process string) error {
 
 	switch process {
 
-	case "all":
-		for _, p := range []string{"resolume", "gui", "bidule"} {
-			err := StopRunning(p)
-			if err != nil {
-				return fmt.Errorf("stop: process=%s err=%s", p, err)
-			}
-			err = StartRunning(p)
-			if err != nil {
-				return fmt.Errorf("start: process=%s err=%s", p, err)
-			}
-		}
-		// Always send logs after starting all
-		SendLogs()
-
 	case "gui", "bidule", "resolume":
 		p := ProcessInfo[process]
-		_, err := StartExecutableRedirectOutput(process, p.FullPath, true, p.Arg)
+		_, err := StartExecutableLogOutput(process, p.FullPath, true, p.Arg)
 		if err != nil {
 			return fmt.Errorf("start: bidule err=%s", err)
 		}
@@ -123,11 +109,31 @@ func StopRunning(process string) (err error) {
 		if !ok {
 			return fmt.Errorf("StopRunning: unknown process=%s", process)
 		}
-		return StopExecutable(p.Exe)
+		return KillExecutable(p.Exe)
+	}
+}
+
+func IsRunning(process string) bool {
+	p, ok := ProcessInfo[process]
+	if !ok {
+		log.Printf("IsRunning: no process named %s\n", process)
+		return false
+	}
+	b := IsRunningExecutable(p.Exe)
+	// log.Printf("IsRunning: process=%s exe=%s b=%v\n", process, p.Exe, b)
+	return b
+}
+
+func CheckProcesses() {
+	for process := range ProcessInfo {
+		if !IsRunning(process) {
+			StartRunning(process)
+		}
 	}
 }
 
 func executeAPIActivate() (string, error) {
+
 	// handle_activate sends OSC messages to start the layers in Resolume,
 	// and make sure the audio is on in Bidule.
 	addr := "127.0.0.1"
@@ -169,17 +175,7 @@ func KillProcess(process string) {
 		log.Printf("KillProcess: no process named %s\n", process)
 		return
 	}
-	KillExe(p.Exe)
-}
-
-// KillProcess kills a process (synchronously)
-func KillExe(exe string) {
-	cmd, err := StartExecutable("cmd.exe", false, NoWriterInstance, NoWriterInstance, "/c", "taskkill", "/f", "/im", exe)
-	if err != nil {
-		log.Printf("KillProcess: err=%s\n", err)
-	} else {
-		cmd.Wait()
-	}
+	KillExecutable(p.Exe)
 }
 
 func activateLater(ntimes int) {

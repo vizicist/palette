@@ -8,13 +8,6 @@
             "name": "Engine",
             "type": "go",
             "request": "launch",
-            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
-            "args": ["engine"]
-        },
-        {
-            "name": "OLD Engine",
-            "type": "go",
-            "request": "launch",
             "mode": "auto",
             "program": "${env:PALETTESOURCE}/cmd/palette_engine/palette_engine.go",
             "env": {
@@ -22,56 +15,63 @@
             "args": []
         },
         {
-            "name": "start resolume",
+            "name": "Start Engine",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
+            "args": ["start","engine"]
+        },
+        {
+            "name": "Start Resolume",
             "type": "go",
             "request": "launch",
             "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
             "args": ["api", "process.start", "\"process\":\"resolume\""]
         },
         {
-            "name": "stop resolume",
+            "name": "Stop resolume",
             "type": "go",
             "request": "launch",
             "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
-            "args": ["api", "process.stop", "\"process\":\"resolume\""]
+            "args": ["stop", "resolume"]
         },
         {
-            "name": "start bidule",
+            "name": "Start bidule",
             "type": "go",
             "request": "launch",
             "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
             "args": ["api", "process.start", "\"process\":\"bidule\""]
         },
         {
-            "name": "stop bidule",
+            "name": "Stop bidule",
             "type": "go",
             "request": "launch",
             "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
             "args": ["api", "process.stop", "\"process\":\"bidule\""]
         },
         {
-            "name": "start gui",
+            "name": "Start gui",
             "type": "go",
             "request": "launch",
             "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
             "args": ["api", "process.start", "\"process\":\"gui\""]
         },
         {
-            "name": "stop gui",
+            "name": "Stop gui",
             "type": "go",
             "request": "launch",
             "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
             "args": ["api", "process.stop", "\"process\":\"gui\""]
         },
         {
-            "name": "start all",
+            "name": "Start all",
             "type": "go",
             "request": "launch",
             "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
             "args": ["api", "process.start", "\"process\":\"all\""]
         },
         {
-            "name": "stop all",
+            "name": "Stop all",
             "type": "go",
             "request": "launch",
             "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",

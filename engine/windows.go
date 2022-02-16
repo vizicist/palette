@@ -4,16 +4,16 @@
 package engine
 
 import (
-	"encoding/json"
-	"fmt"
+	"bufio"
 	"io"
-	"io/ioutil"
 	"log"
 	"os/exec"
+	"strings"
 	"syscall"
 )
 
-func StopExecutable(executable string) error {
+func KillExecutable(executable string) error {
+	log.Printf("KillExecutable: executable=%s\n", executable)
 	stdout := &NoWriter{}
 	stderr := &NoWriter{}
 	cmd, err := StartExecutable("c:\\windows\\system32\\taskkill.exe", false, stdout, stderr, "/F", "/IM", executable)
@@ -27,7 +27,7 @@ func StopExecutable(executable string) error {
 }
 
 // StartExecutable executes something.  If background is true, it doesn't block
-func StartExecutableRedirectOutput(logName string, fullexe string, background bool, args ...string) (*exec.Cmd, error) {
+func StartExecutableLogOutput(logName string, fullexe string, background bool, args ...string) (*exec.Cmd, error) {
 	stdoutWriter := MakeFileWriter(LogFilePath(logName + ".stdout"))
 	if stdoutWriter == nil {
 		stdoutWriter = &NoWriter{}
@@ -62,47 +62,36 @@ func StartExecutable(executable string, background bool, stdout io.Writer, stder
 	return cmd, err
 }
 
-// MorphDefs xxx
-var MorphDefs map[string]string
-
-// LoadMorphs initializes the list of morphs
-func LoadMorphs() error {
-
-	MorphDefs = make(map[string]string)
-
-	// If you have more than one morph, or
-	// want the region assignment to NOT be
-	// automatice, put them in here.
-	path := LocalConfigFilePath("morphs.json")
-	bytes, err := ioutil.ReadFile(path)
-	if err != nil {
-		return nil // It's okay if file isn't present
-	}
-	var f interface{}
-	err = json.Unmarshal(bytes, &f)
-	if err != nil {
-		return fmt.Errorf("unable to Unmarshal %s, err=%s", path, err)
-	}
-	toplevel := f.(map[string]interface{})
-
-	for serialnum, regioninfo := range toplevel {
-		regionname := regioninfo.(string)
-		if Debug.Morph {
-			log.Printf("Setting Morph serial=%s region=%s\n", serialnum, regionname)
-		}
-		MorphDefs[serialnum] = regionname
-		// TheRouter().setRegionForMorph(serialnum, regionname)
-	}
-	return nil
+type gatherWriter struct {
+	gathered string
 }
 
-// RealStartCursorInput starts anything needed to provide device inputs
-func RealStartCursorInput(callback CursorDeviceCallbackFunc) {
+func (writer *gatherWriter) Write(bytes []byte) (int, error) {
+	writer.gathered += string(bytes)
+	return len(bytes), nil
+}
 
-	err := LoadMorphs()
+func IsRunningExecutable(exe string) bool {
+	stdout := &gatherWriter{}
+	stderr := &NoWriter{}
+	cmd, err := StartExecutable("c:\\windows\\system32\\tasklist.exe", false, stdout, stderr)
 	if err != nil {
-		log.Printf("StartDeviceInput: LoadMorphs err=%s\n", err)
+		log.Printf("StartExecutable: tasklist.exe err=%s\n", err)
+		return false
 	}
+	cmd.Wait()
 
-	go StartMorph(callback, 1.0)
+	scanner := bufio.NewScanner(strings.NewReader(stdout.gathered))
+	scanner.Split(bufio.ScanLines)
+	exe = strings.ToLower(exe)
+	for scanner.Scan() {
+		line := scanner.Text()
+		words := strings.Fields(line)
+		if len(words) > 0 {
+			if strings.ToLower(words[0]) == exe {
+				return true
+			}
+		}
+	}
+	return false
 }

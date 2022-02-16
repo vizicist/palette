@@ -304,7 +304,10 @@ func (r *Router) StartRealtime() {
 	tick := time.NewTicker(2 * time.Millisecond)
 	r.time0 = <-tick.C
 
-	var nextAliveSecs float64
+	var nextAliveSecs int
+	var nextCheckSecs int
+	var aliveIntervalSeconds = ConfigIntWithDefault("aliveinterval", 30)
+	var processcheckSeconds = ConfigIntWithDefault("processcheckinterval", 60)
 
 	// By reading from tick.C, we wake up every 2 milliseconds
 	for now := range tick.C {
@@ -325,11 +328,19 @@ func (r *Router) StartRealtime() {
 
 		// every so often send out an "alive" event
 		// with a cursorCount since the last one
-		var aliveIntervalSeconds = 30.0
-		if secs > nextAliveSecs {
+		if int(secs) > nextAliveSecs {
 			nextAliveSecs += aliveIntervalSeconds
 			PublishAliveEvent(secs, r.cursorCount)
 			r.cursorCount = 0
+		}
+
+		// Every so often check to see if necessary
+		// processes (like Resolume) are still running
+		if processcheckSeconds > 0 && int(secs) > nextCheckSecs {
+			nextCheckSecs += processcheckSeconds
+			// Put it in background, so calling
+			// tasklist or ps doesn't disrupt realtime
+			go CheckProcesses()
 		}
 
 		select {
@@ -1188,7 +1199,7 @@ func (r *Router) getRegionForNUID(nuid string) string {
 
 	// Hasn't been seen yet, let's get an available region
 	region = r.availableRegion(nuid)
-	log.Printf("getRegionForNUID: Assigning region=%s to nuid=%s\n", region, nuid)
+	// log.Printf("getRegionForNUID: Assigning region=%s to nuid=%s\n", region, nuid)
 	r.regionAssignedToNUID[nuid] = region
 
 	return region

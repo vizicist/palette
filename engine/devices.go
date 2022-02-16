@@ -1,5 +1,12 @@
 package engine
 
+import (
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"log"
+)
+
 // MIDIDeviceEvent is a single MIDI event
 type MIDIDeviceEvent struct {
 	Timestamp int64 // milliseconds
@@ -51,8 +58,45 @@ type ActiveStepCursor struct {
 // CursorDeviceCallbackFunc xxx
 type CursorDeviceCallbackFunc func(e CursorDeviceEvent)
 
-// StartCursorInput xxx
+// MorphDefs xxx
+var MorphDefs map[string]string
 
+// StartCursorInput xxx
 func (r *Router) StartCursorInput() {
-	go RealStartCursorInput(r.handleCursorDeviceInput)
+	err := LoadMorphs()
+	if err != nil {
+		log.Printf("StartCursorInput: LoadMorphs err=%s\n", err)
+	}
+	go StartMorph(r.handleCursorDeviceInput, 1.0)
+}
+
+// LoadMorphs initializes the list of morphs
+func LoadMorphs() error {
+
+	MorphDefs = make(map[string]string)
+
+	// If you have more than one morph, or
+	// want the region assignment to NOT be
+	// automatice, put them in here.
+	path := LocalConfigFilePath("morphs.json")
+	bytes, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil // It's okay if file isn't present
+	}
+	var f interface{}
+	err = json.Unmarshal(bytes, &f)
+	if err != nil {
+		return fmt.Errorf("unable to Unmarshal %s, err=%s", path, err)
+	}
+	toplevel := f.(map[string]interface{})
+
+	for serialnum, regioninfo := range toplevel {
+		regionname := regioninfo.(string)
+		if Debug.Morph {
+			log.Printf("Setting Morph serial=%s region=%s\n", serialnum, regionname)
+		}
+		MorphDefs[serialnum] = regionname
+		// TheRouter().setRegionForMorph(serialnum, regionname)
+	}
+	return nil
 }

@@ -92,8 +92,8 @@ Filename: taskkill.exe; Parameters: "/F /IM palette_gui.exe"; StatusMsg: "Making
 
 [Icons]
 Name: "{group}\{cm:ProgramOnTheWeb,{#MyAppName}}"; Filename: "{#MyAppURL}"
-Name: "{group}\Start Palette"; Filename: "{app}\bin\palette.exe"; Parameters: "start all"; Flags: runminimized
-Name: "{group}\Stop Palette"; Filename: "{app}\bin\palette.exe"; Parameters: "stop all"; Flags: runminimized
+Name: "{group}\Start Palette"; Filename: "{app}\bin\palette.exe"; Parameters: "start"; Flags: runminimized
+Name: "{group}\Stop Palette"; Filename: "{app}\bin\palette.exe"; Parameters: "stop"; Flags: runminimized
 Name: "{group}\Config Directory"; Filename: "{win}\explorer.exe"; Parameters: "{%LOCALAPPDATA}\{#MyAppName}\config"
 
 [Registry]
