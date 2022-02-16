@@ -18,10 +18,10 @@ func main() {
 	signal.Ignore(syscall.SIGINT)
 
 	engine.InitLog("engine")
-	log.Printf("====================== Palette Engine is starting\n")
-
 	engine.InitDebug()
 	engine.InitProcessInfo()
+
+	log.Printf("====================== Palette Engine is starting\n")
 
 	flag.Parse()
 
@@ -48,18 +48,8 @@ func main() {
 	go r.StartCursorInput()
 	go r.InputListener()
 
-	if engine.ConfigBoolWithDefault("startall", true) {
-		engine.StartRunning("resolume")
-		engine.StartRunning("gui")
-		engine.StartRunning("bidule")
-	}
-
 	if engine.ConfigBoolWithDefault("depth", false) {
 		go engine.DepthRunForever()
-	}
-
-	if engine.ConfigBoolWithDefault("sanitycheck", false) {
-		go engine.SanityCheckForever()
 	}
 
 	if engine.ConfigBoolWithDefault("winsys", false) {

@@ -2299,16 +2299,24 @@ class PageSelector(tk.Frame):
             self.selectButtons[i].config(style=s)
 
 def afterWindowIsDisplayed(windowName,guiresize,*args):
+
     if guiresize != "":
+
         time.sleep(1.0) # wait for window to be visible so nircmdc sees it
         log("Resizing GUI")
         # The value of guiresize should be four integers separated by spaces
+
         cmd = "nircmdc.exe win setsize stitle \""+windowName+"\" "+guiresize
         os.system(cmd)
-        cmd = "nircmdc.exe win -style stitle \""+windowName+"\" 0x00CA0000"
-        os.system(cmd)
-        cmd = "nircmdc.exe win max stitle \""+windowName+"\""
-        os.system(cmd)
+
+        # By default, remove the title bar and maximize it
+        guimaximize = palette.ConfigValue("guimaximize",defvalue="true")
+        if guimaximize == "true":
+            cmd = "nircmdc.exe win -style stitle \""+windowName+"\" 0x00CA0000"
+            os.system(cmd)
+            cmd = "nircmdc.exe win max stitle \""+windowName+"\""
+            os.system(cmd)
+
     global PaletteApp
     PaletteApp.nextMode = "layout"
 
