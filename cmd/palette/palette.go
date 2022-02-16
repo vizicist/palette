@@ -16,14 +16,15 @@ func main() {
 	signal.Ignore(syscall.SIGHUP)
 	signal.Ignore(syscall.SIGINT)
 
-	flag.Parse()
-	args := flag.Args()
-	engine.InitDebug()
-
 	engine.InitLog("palette")
+	engine.InitDebug()
+	engine.InitProcessInfo()
 	engine.InitNATS()
 	engine.ConnectToNATSServer()
-	retmap := engine.CliCommand(args)
+
+	flag.Parse()
+	retmap := engine.CliCommand(flag.Args())
+
 	result, rok := retmap["result"]
 	errout, eok := retmap["error"]
 	if eok && errout != "" {
