@@ -54,16 +54,18 @@ func (r *Router) ExecuteAPI(api string, nuid string, rawargs string) (result int
 		case "start":
 			process, ok := apiargs["process"]
 			if !ok {
-				process = "all"
+				err = fmt.Errorf("ExecuteAPI: missing process argument")
+			} else {
+				err = StartRunning(process)
 			}
-			err = StartRunning(process)
 
 		case "stop":
 			process, ok := apiargs["process"]
 			if !ok {
-				process = "all"
+				err = fmt.Errorf("ExecuteAPI: missing process argument")
+			} else {
+				err = StopRunning(process)
 			}
-			err = StopRunning(process)
 
 		case "activate":
 			result, err = executeAPIActivate()

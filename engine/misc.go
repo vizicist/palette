@@ -136,10 +136,10 @@ func (writer logWriter) Write(bytes []byte) (int, error) {
 	if Debug.Go {
 		goid := GoroutineID()
 		// Add GO# to log to indicate Goroutine
-		s = fmt.Sprintf("%d/%d/%d %2d:%2d:%2d.%6d GO#%d %s",
+		s = fmt.Sprintf("%04d/%02d/%02d %02d:%02d:%02d.%06d GO#%d %s",
 			year, month, day, hour, min, sec, micro, goid, bytes)
 	} else {
-		s = fmt.Sprintf("%d/%d/%d %2d:%2d:%2d.%6d %s",
+		s = fmt.Sprintf("%04d/%02d/%02d %02d:%02d:%02d.%06d %s",
 			year, month, day, hour, min, sec, micro, bytes)
 
 	}
@@ -160,15 +160,10 @@ func InitLog(logname string) {
 		fmt.Printf("InitLog: Unable to open logfile=%s logpath=%s err=%s", logfile, logpath, err)
 		return
 	}
-	// log.Printf("Log is being saved in %s\n", logpath)
-	// log.SetOutput(file)
 	log.SetFlags(0)
 	logger := logWriter{file: file}
-	// log.SetFlags(log.Ldate | log.Lmicroseconds)
 	log.SetFlags(0)
 	log.SetOutput(logger)
-	log.Printf("InitLog finished\n")
-
 }
 
 // fileExists checks if a file exists
@@ -693,13 +688,6 @@ func GoroutineID() uint64 {
 	return n
 }
 
-func SanityCheckForever() {
-	for {
-		log.Printf("Checking for resolume\n")
-		time.Sleep(5 * time.Second)
-	}
-}
-
 func CliCommand(args []string) map[string]string {
 
 	retmap := map[string]string{}
@@ -727,31 +715,36 @@ func CliCommand(args []string) map[string]string {
 		msg += "       palette stop {process}\n"
 		msg += "       palette sendlogs\n"
 
-	case "engine":
-
 	case "sendlogs":
 		retmap = CliCommand([]string{"api", "global.sendlogs"})
 
 	case "start":
-		if word1 == "engine" {
-			KillExe(engineexe)
+		if word1 == "" || word1 == "engine" {
+
+			// Kill any currently-running engine.
+			// The other processes will be killed by
+			// the engine when it starts up.
+			KillExecutable(engineexe)
+
+			// Start the engine (which also starts up other processes)
 			fullexe := filepath.Join(PaletteDir(), "bin", engineexe)
-			_, err := StartExecutableRedirectOutput("engine", fullexe, true, "")
+			_, err := StartExecutableLogOutput("engine", fullexe, true, "")
 			if err != nil {
 				retmap["error"] = fmt.Sprintf("start: err=%s\n", err)
 			}
 		} else {
-			retmap = CliCommand([]string{"api", "process.start", "{ \"process\": \"" + word1 + "\" }"})
+			// Start a specific process
+			StartRunning(word1)
 		}
 
 	case "stop":
-		if word1 == "engine" {
+		if word1 == "" || word1 == "engine" {
 			// first stop everything else
-			CliCommand([]string{"api", "process.stop", "{ \"process\": \"" + "all" + "\" }"})
-			// then kill ourselves?
-			KillExe(engineexe)
+			StopRunning("all")
+			// then kill ourselves
+			KillExecutable(engineexe)
 		} else {
-			retmap = CliCommand([]string{"api", "process.stop", "{ \"process\": \"" + word1 + "\" }"})
+			StopRunning(word1)
 		}
 
 	case "api":
