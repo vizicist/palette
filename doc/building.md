@@ -20,7 +20,7 @@ released installation packages, which is certainly a lot simpler and is recommen
 
 - Install Inno Setup from https://jrsoftware.org/isinfo.php
 
-- Install Visual Studio 2019 Community Edition from https://visualstudio.microsoft.com/downloads
+- Install Visual Studio 2017 Community Edition from https://visualstudio.microsoft.com/downloads
 
 	- in the Workload tab, select "Desktop Development with C++"
 	- In the Individual components tab, select "Msbuild"
@@ -62,7 +62,7 @@ go get gopkg.in/mail.v2
 ```
  C:\Program Files\Git\bin
  C:\Program Files\Git\usr\bin
- C:\Program Files\mingw-w64\x86_64-8.1.0-posix-sjlj-rt_v6-rev0\mingw64\bin
+ C:\Program Files\mingw-w64\x86_64-8.1.0-release-posix-sjlj-rt_v6-rev0\mingw64\bin
  %LOCALAPPDATA%\bin
  %USERPROFILE%\Documents\Github\vizicist\palette\SenselLib\x64
 ```

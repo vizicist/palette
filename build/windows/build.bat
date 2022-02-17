@@ -8,7 +8,7 @@ goto getout
 
 if not "%VSINSTALLDIR%" == "" goto keepgoing2
 echo Calling msdev17 to set build environment.
-call msdev17.bat
+call ..\..\scripts\msdev17.bat
 :keepgoing2
 
 set ship=%PALETTESOURCE%\build\windows\ship
