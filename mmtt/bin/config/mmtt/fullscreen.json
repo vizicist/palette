@@ -1,0 +1,19 @@
+{
+  "autowindow": 80,
+  "backbottom": 1402,
+  "backtop": 1357,
+  "blob_maxsize": 10000,
+  "blob_minsize": 65,
+  "blob_param1": 100,
+  "bottom": 479,
+  "debug": 0,
+  "front": 0,
+  "left": 0,
+  "right": 639,
+  "tilt": -2.574,
+  "top": 0,
+  "usemask": 0,
+  "regions": [
+    { "first_sid": 11000, "x": 0, "y": 0, "width": 640, "height": 480 }
+  ]
+}

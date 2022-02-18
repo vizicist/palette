@@ -1,0 +1,32 @@
+{
+  "autowindow": 80,
+  "backbottom": 783,
+  "backtop": 756,
+  "blob_filter": 1,
+  "blob_maxsize": 10000,
+  "blob_minsize": 65,
+  "blob_param1": 100,
+  "bottom": 479,
+  "confidence": 200,
+  "debug": 0,
+  "depthfactor": 2.55,
+  "front": 0,
+  "left": 0,
+  "right": 639,
+  "showfps": 0,
+  "showmask": 0,
+  "showrawdepth": 0,
+  "showregionhits": 1,
+  "showregionmap": 0,
+  "showregionrects": 0,
+  "tilt": 0,
+  "top": 0,
+  "usemask": 1,
+  "regions": [
+    { "first_sid": 11000, "x": 30, "y": 158, "width": 258, "height": 60},
+    { "first_sid": 12000, "x": 13, "y": 90, "width": 137, "height": 60},
+    { "first_sid": 13000, "x": 164, "y": 91, "width": 142, "height": 60},
+    { "first_sid": 14000, "x": 30, "y": 24, "width": 259, "height": 59}
+  ]
+
+}

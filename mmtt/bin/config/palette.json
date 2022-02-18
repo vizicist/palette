@@ -1,0 +1,15 @@
+{
+  "httpport": 4445,
+  "tuioport": 3333,
+  "tuiohost": "127.0.0.1",
+  "resolumeport": 7000,
+  "graphicbehaviour": "2013",
+  "musicbehaviour": "2013",
+  "config": "default",
+  "patch": "new2",
+  "sharedmem": 0,
+  "tuio": 1,
+  "debugtoconsole": 1,
+  "debugtolog": 1,
+  "debuglogfile": "debug.txt"
+}

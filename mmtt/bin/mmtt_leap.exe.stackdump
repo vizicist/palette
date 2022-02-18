@@ -1,0 +1,11 @@
+Exception: STATUS_ACCESS_VIOLATION at eip=610DAA99
+eax=00000000 ebx=00000000 ecx=00000000 edx=0225ABB0 esi=00000000 edi=00000144
+ebp=0225AB7C esp=0225AA64 program=\\?\C:\local\manifold\bin\mmtt_leap.exe, pid 5744, thread unknown (0x17B8)
+cs=0023 ds=002B es=002B fs=0053 gs=002B ss=002B
+Stack trace:
+Frame     Function  Args
+0225AB7C  610DAA99  (00000000, 00000000, 00000000, 00000000)
+0225AC4C  610DB897  (FFFFFFFF, FFFFFFFF, 00000000, 00000000)
+0225ACAC  6102EABE  (00000002, D1F938C2, 0225CDB8, 75CE6CDC)
+0225AD38  75CE6E91  (00000002, 0225CDB8, 75CE6CDC, 00000000)
+      0 [unknown (0x17B8)] sh 5744! exception::handle: Error while dumping state (probably corrupted stack)

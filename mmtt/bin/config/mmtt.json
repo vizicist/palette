@@ -1,0 +1,17 @@
+{
+  "port": 4444,
+#  "camera": "kinetic",
+#  "camera": "pcx",
+   "camera": "kinect",
+  "patchdir": "mmtt",
+  "patch": "bm2019",
+  "tempdir": "c:/windows/temp",
+  "sharedmem": 0,
+  "tuio": 1,
+  "tuio.25d.clientlist": "127.0.0.1:3333",
+  "initialalign": 1,
+  "python": 0,
+  "debugtoconsole": 1,
+  "debugtolog": 1,
+  "debuglogfile": "debug.txt"
+}

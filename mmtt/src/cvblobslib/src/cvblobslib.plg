@@ -1,0 +1,37 @@
+<html>
+<body>
+<pre>
+<h1>Build Log</h1>
+<h3>
+--------------------Configuration: cvblobslib - Win32 Debug--------------------
+</h3>
+<h3>Command Lines</h3>
+Creating temporary file "C:\DOCUME~1\rborras\CONFIG~1\Temp\RSP30B.tmp" with contents
+[
+/nologo /MDd /W3 /Gm /GX /ZI /Od /I "c:\Archivos de programa\OpenCV\cv\include" /I "c:\Archivos de programa\OpenCV\cxcore\include\\" /I "c:\Archivos de programa\OpenCV\OtherLibs\HighGUI\\" /I "c:\Archivos de programa\OpenCV\cv\include\\" /I "..\inspecta\matrix" /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /D "_AFXDLL" /FR"Debug/" /Fp"Debug/cvblobslib.pch" /YX /Fo"Debug/" /Fd"Debug/" /FD /GZ /Qopenmp /c 
+"D:\users\ricard\src\utilitats\cpp\cvblobslib\versioOpenCV\blob.cpp"
+"D:\users\ricard\src\utilitats\cpp\cvblobslib\versioOpenCV\BlobContour.cpp"
+"D:\users\ricard\src\utilitats\cpp\cvblobslib\versioOpenCV\BlobOperators.cpp"
+"D:\users\ricard\src\utilitats\cpp\cvblobslib\versioOpenCV\BlobResult.cpp"
+"D:\users\ricard\src\utilitats\cpp\cvblobslib\versioOpenCV\ComponentLabeling.cpp"
+]
+Creating command line "xicl6.exe @C:\DOCUME~1\rborras\CONFIG~1\Temp\RSP30B.tmp" 
+Creating command line "xilink6.exe -lib /nologo /out:"Debug\cvblobslib.lib"  .\Debug\blob.obj .\Debug\BlobContour.obj .\Debug\BlobOperators.obj .\Debug\BlobResult.obj .\Debug\ComponentLabeling.obj "
+<h3>Output Window</h3>
+Compiling...
+Command line warning D4002 : ignoring unknown option '/Qopenmp'
+blob.cpp
+BlobContour.cpp
+BlobOperators.cpp
+BlobResult.cpp
+ComponentLabeling.cpp
+Creating library...
+xilib: executing 'C:\ARCHIV~1\MICROS~2\VC98\Bin\lib.exe'
+
+
+
+<h3>Results</h3>
+cvblobslib.lib - 0 error(s), 1 warning(s)
+</pre>
+</body>
+</html>
