@@ -1,0 +1,260 @@
+##############################################
+#
+# See README.txt
+#
+# This is a configuration using 8 instances of
+# Alchemy and one instance of Battery3. 
+#
+##############################################
+
+channel 1 = Alchemy
+channel 2 = Alchemy
+channel 3 = Alchemy
+channel 4 = Alchemy
+channel 5 = Alchemy
+channel 6 = Alchemy
+channel 7 = Alchemy
+channel 8 = Alchemy
+channel 10 = Battery3
+
+##############################################
+
+synth = Battery3
+program 1     = Beatbox
+
+##############################################
+
+synth = Alchemy
+program 1   = Bass 01 Pick Bass
+program 2   = Bass 02 Belly Button
+program 3   = Bass 03 RazorBak Bass
+program 4   = Bass Battle Bass
+program 5   = Bass BiFilter Head
+program 6   = Bass Classic Triad
+program 7   = Bass Cs5 PopaSweep
+program 8   = Bass Dean E Upright Sustain
+program 9   = Bass Deeper
+program 10  = Bass Downtempo Electric Bass
+program 11  = Bass Electric Bass
+program 12  = Bass Electric Upright
+program 13  = Bass Face Plant
+program 14  = Bass Fat Rez Buster
+program 15  = Bass Fuzzy Square Bass
+program 16  = Bass Gasm
+program 17  = Bass Grunge Bass
+program 18  = Bass Jazz Base
+program 19  = Bass Ladyland
+program 20  = Bass Notched Squares
+program 21  = Bass RawNES
+program 22  = Bass Rhombus
+program 23  = Bass Smokey
+program 24  = Bass Stretched Staccato
+program 25  = Bass Taureg Moon
+program 26  = Effect Crystal Pad
+program 27  = Effect Violin Glissando Scape
+program 28  = Effect Violin High FX split
+program 29  = Lead 01 Spectral Light
+program 30  = Lead 02 Native American Flute
+program 31  = Lead 03 Forest  Lakota
+program 32  = Lead 04 Light Bulbs
+program 33  = Lead 05 Chelonian Mallet
+program 34  = Lead 06 Vibrimba
+program 35  = Lead 07 SQ80 Attack Organ
+program 36  = Lead 09 Additive Dream Guitar
+program 37  = Lead Aluminium Bandpass
+program 38  = Lead Ambient Drift
+program 39  = Lead Automata
+program 40  = Lead AxusPluck
+program 41  = Lead Cello Resynthed Vibrato Pad Split
+program 42  = Lead Dragonfly Pluck
+program 43  = Lead Female Overtone Singing mixed
+program 44  = Lead FM Rhodes T
+program 45  = Lead Glass Mallets Round Robin 4
+program 46  = Lead Grandiose
+program 47  = Lead Here Comes The Sun
+program 48  = Lead Lamp Mallets RR4 3Vel
+program 49  = Lead Melltron Flute
+program 50  = Lead Midnight Jupiter Keys
+program 51  = Lead Sawtooth Pluck
+program 52  = Lead Swirling Combs Vibrato
+program 53  = Lead Swirling Combs
+program 54  = Lead Triangular Phase
+program 55  = Pad 01 Cinematique
+program 56  = Pad 02 Pavilion
+program 57  = Pad 04 Sascha
+program 58  = Pad 05 New Cathedral
+program 59  = Pad 1000 Oceans
+program 60  = Pad Active Galaxy
+program 61  = Pad Allen Talking
+program 62  = Pad Angelic Choir
+program 63  = Pad Attack Ships On Fire
+program 64  = Pad Bowed Cymbal Piano
+program 65  = Pad Cathedral Dreams
+program 66  = Pad Choir-Female-Ah
+program 67  = Pad Cosmic Bell
+program 68  = Pad Dark and Distant
+program 69  = Pad Departure
+program 70  = Pad DrOOne A
+program 71  = Pad Fake Choir
+program 72  = Pad Frozen Choir Sweep
+program 73  = Pad Gently Glitching Organ
+program 74  = Pad Glass Dream
+program 75  = Pad Glass Driveway
+program 76  = Pad Glockenspiel resynthed
+program 77  = Pad Granular Steel Koto RR2
+program 78  = Pad Guitar PM Acoustic
+program 79  = Pad Hall Of the Stone Church
+program 80  = Pad Harmonic Ladder
+program 81  = Pad Harp Heaven
+program 82  = Pad Haunted Plucks
+program 83  = Pad JPad
+program 84  = Pad Katamorphic Pyrenees
+program 85  = Pad Lonley Movie Pad
+program 86  = Pad Lutcimbala Pluck
+program 87  = Pad M13 Cluster
+program 88  = Pad Morphsichord
+program 89  = Pad Motion Glory Wave
+program 90  = Pad Ocean Science
+program 91  = Pad Oceanic
+program 92  = Pad Organic Alchemist
+program 93  = Pad Orion Nebula
+program 94  = Pad Pad Liquid Silver
+program 95  = Pad Parsec
+program 96  = Pad Pulsing WaterStrings
+program 97  = Pad Saragossa Sea
+program 98  = Pad Sawstars
+program 99  = Pad Shimmer
+program 100 = Pad Sinemood
+program 101 = Pad Spies & Agents
+program 102 = Pad Spiritualized
+program 103 = Pad Syntholin
+program 104 = Pad Tea Ceremony
+program 105 = Pad TempelsNebula
+program 106 = Pad TI Filtration Strings
+program 107 = Pad Tinkling Scapes
+program 108 = Pad TJT Bed Of Grass
+program 109 = Pad Warm Glistening
+program 110 = Perc 2 Thai Gongs mixed RR8 4Vel
+program 111 = Perc 2 Thai Gongs split RR8 4Vel
+program 112 = Perc Alien Language
+program 113 = Perc Amulet
+program 114 = Perc Bell Menu
+program 115 = Perc Belltree-Like
+program 116 = Perc Blowfish
+program 117 = Perc Blue Sphere
+program 118 = Perc Caviar Cans split RR8 3-4 Vel
+program 119 = Perc Cello Pizz Patch
+program 120 = Perc Crystal Glass Mood
+program 121 = Perc Dumbbell Plate RR6 4Vel
+program 122 = Perc Four Way Drum Morph
+program 123 = Perc Malletopia
+program 124 = Perc Thai Gong large RR8 4Vel
+program 125 = Perc Tonic Kit
+program 126 = Perc Tuned Cymbals
+
+##############################################
+
+soundbank 0 = Guthman
+
+soundset 0
+sound 0 = Pad 01 Cinematique
+sound 1 = Pad Gently Glitching Organ
+sound 2 = Pad Glockenspiel resynthed
+sound 3 = Pad Morphsichord
+
+soundset 1
+sound 0 = Pad Allen Talking
+sound 1 = Perc Blue Sphere
+sound 2 = Pad 04 Sascha
+sound 3 = Pad TempelsNebula
+
+soundset 2
+sound 0 = Bass Electric Upright
+sound 1 = Lead Grandiose
+sound 2 = Lead 07 SQ80 Attack Organ
+sound 3 = Beatbox
+
+soundset 3
+sound 0 = Bass Cs5 PopaSweep
+sound 1 = Lead Sawtooth Pluck
+sound 2 = Lead Here Comes The Sun
+sound 3 = Lead Aluminium Bandpass
+
+soundset 4
+sound 0 = Pad Pad Liquid Silver
+sound 1 = Pad Angelic Choir
+sound 2 = Lead Cello Resynthed Vibrato Pad Split
+sound 3 = Pad Gently Glitching Organ
+
+soundset 5
+sound 0 = Bass Notched Squares
+sound 1 = Pad Warm Glistening
+sound 2 = Lead 02 Native American Flute
+sound 3 = Perc Cello Pizz Patch
+
+soundset 6
+sound 0 = Pad Glockenspiel resynthed
+sound 1 = Perc Bell Menu
+sound 2 = Perc Crystal Glass Mood
+sound 3 = Lead 01 Spectral Light
+
+soundset 7
+sound 0 = Perc Caviar Cans split RR8 3-4 Vel
+sound 1 = Perc Tonic Kit
+sound 2 = Perc Tuned Cymbals
+sound 3 = Beatbox
+
+##############################################
+
+soundbank 1 = Misc
+
+soundset 0
+sound 0 = Pad Tinkling Scapes
+sound 1 = Pad Harmonic Ladder
+sound 2 = Lead Female Overtone Singing mixed
+sound 3 = Beatbox
+
+soundset 1
+sound 0 = Pad Bowed Cymbal Piano
+sound 1 = Perc 2 Thai Gongs mixed RR8 4Vel
+sound 2 = Perc Dumbbell Plate RR6 4Vel
+sound 3 = Perc Caviar Cans split RR8 3-4 Vel
+
+soundset 2
+sound 0 = Lead Lamp Mallets RR4 3Vel
+sound 1 = Lead Glass Mallets Round Robin 4
+sound 2 = Lead Dragonfly Pluck
+sound 3 = Lead FM Rhodes T
+
+soundset 3
+sound 0 = Pad Parsec
+sound 1 = Pad 04 Sascha
+sound 2 = Pad Active Galaxy
+sound 3 = Perc Blue Sphere
+
+soundset 4
+sound 0 = Pad Cosmic Bell
+sound 1 = Pad Lutcimbala Pluck
+sound 2 = Lead Dragonfly Pluck
+sound 3 = Pad M13 Cluster
+
+soundset 5
+sound 0 = Pad Katamorphic Pyrenees
+sound 1 = Pad Ocean Science
+sound 2 = Pad Pad Liquid Silver
+sound 3 = Pad M13 Cluster
+
+soundset 6
+sound 0 = Bass 01 Pick Bass
+sound 1 = Lead 09 Additive Dream Guitar
+sound 2 = Lead Here Comes The Sun
+sound 3 = Beatbox
+
+soundset 7
+sound 0 = Bass Deeper
+sound 1 = Lead FM Rhodes T
+sound 2 = Lead 02 Native American Flute
+sound 3 = Beatbox
+
+##############################################
+

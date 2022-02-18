@@ -1,0 +1,149 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html dir="ltr">
+    
+<head>
+<meta name="viewport"
+  content="width=device-width,
+  minimum-scale=1.0, maximum-scale=1.0" />
+<style type="text/css">
+	body, html { font-family:helvetica,arial,sans-serif; font-size:90%; }
+</style>
+</head>
+<body>
+<h1>README for MultiMultiTouchTouch</h1>
+<p>
+**** NOTE **** this document needs to be updated, particularly to document the
+new method of defining regions with coordinates rather than interactively or with the specially-colored image.
+<p>
+The MMTT (Multi Multi Touch Touch) program uses the Microsoft Kinect to create multiple 3D multitouch surfaces in mid-air that you can interact with by merely waving your hands.
+The <a href=http://spacepalette.com>Space Palette</a> instrument is
+one of its applications, you can find a YouTube video
+<a href=http://www.youtube.com/watch?v=y2d4BSSyOok>here</a> and more details
+<a href=http://spacepalette.com>here</a>.
+This document describes how to use MMTT.
+<h2>Installation, Startup, and Debugging</h2>
+Currently, MMTT only runs on Windows, and assumes that you have
+<a href="http://openkinect.org/wiki/Getting_Started#Driver_installation">installed</a> the libfreenect drivers for the Kinect.
+After starting MMTT, you should see a window appear that contains
+a depth image from the Kinect.
+If you don't see a window, the most likely reason is that you don't have a
+Kinect plugged into your computer or that you need to
+<a href="http://openkinect.org/wiki/Getting_Started#Driver_installation">install the drivers</a>.
+You interact with the program (when it is running) by pointing your browser at
+<a href=http://127.0.0.1:4444>http://127.0.0.1:4444</a>.
+Debugging and status information can be viewed with <a href=http://technet.microsoft.com/en-us/sysinternals/bb896647>debugview</a>.
+<h2>Usage Scenarios</h2>
+The multiple 3D multitouch surfaces that MMTT provides exist within a
+single plane, with the Z direction pointing at the Kinect.
+When using MMTT, you need to know where that plane is,
+either using a physical device (e.g. a frame) or audio/visual feedback
+(e.g. a projected image).
+MMTT was primarily designed to be used with a frame (any flat surface with
+lots of large holes), since this simplifies the registration of the regions
+as well as
+providing visual guidance for both the player and audience.
+However, you can also define the
+regions by providing a specially-colored image,
+or by specifying the regions in a configuration file.
+<h3>Using a physical frame to define the regions</h3>
+To use a physical frame, first you need to build one.
+One easy and quick way is to cut holes in a sheet of foam core board.
+My original prototype
+used wood <a href=http://www.dickblick.com/categories/stretcherstrips/>stretcher bars</a> that are easily available at craft and artist
+supply stores, and you can get them in many different lengths
+to build any size frame you like.  I used these to make
+a few 4-sided frames and used zip-ties to tie them together.
+I've built the latest frame by cutting regions out of a
+solid sheet of birch plywood.  Anything that is flat and has large open regions will do.  The open regions don't have to be rectangular, but should be at least a few inches high and/or wide.  The parts of the frame between the open regions should be at least an inch wide.
+<p>
+Using a physical frame requires that you register the frame, telling MMTT where the regions are.  This is a one-time operation:
+<ol>
+<li>Put the frame in front of the Kinect, at a distance somewhere between 1 meter and 2.5 meters
+<li>Start the MMTT program
+<li>
+Adjust the parameters of the depth thresholding.
+The depth threshold parameters are Threshold Front, Threshold Top,
+and Threshold Bottom, found on the
+browser-based user interface.
+These parameters identify the range of distance from the Kinect
+to wherever the frame and your hands will be.
+The Threshold Front value is the minimum distance for the "front" of the detection range, close to the Kinect.  Normally this will be 0, meaning that there
+is no minimum distance.
+The Threshold Top and Threshold Bottom values identify the distance to the plane of the frame, in meters.
+The goal is to set the Threshold Top and Bottom values so that your flat frame is included, but things beyond the plane of the frame (like your body) are not included.
+The reason there are Top and Bottom values is to allow some skew correction in the vertical direction; the Kinect will usually be centered horizontally with respect to the frame, but not centered vertically.
+<li>
+Start the manual registration process with the "Start Registration" button on the browser-based user interface.
+Then, stick your hand into each hole of the frame that you want to use, in order.
+When you pull your hand out of each hole, you should see (in the image
+on the screen) the color of that region change to the next color in
+the <a href=./colors.html>color sequence</a>.
+The registration process concludes either when you stick your hand into
+the first region for a second time, or when you press the "Stop Registration"
+button.
+<li>
+Type a new configuration name into the text field next to the
+"Save Config" button, and press "Save Config".
+This will save two files - a .json file with the
+current control parameters, and a .ppm (portable pix map) image file with the current region map that you've just defined.
+</ol>
+<p>
+After registering a particular frame and saving its configuration, you
+can subsequently just start the
+MMTT program and load the saved configuration.   If you move
+the Kinect or the frame, you may have to tweak the threshold parameters and/or
+re-register and re-save the configuration.
+If things have only moved slightly, you should be able
+to just press the "RePoke" button at the top of the
+browser-based user interface, which pretends to re-register by sticking a "virtual hand" in the center of each of the
+currently-configured regions.
+After doing this, you should save the configuration again.
+<p>
+<h3>Using a specially-color image to define the regions</h3>
+If you look at the image file <b>reference.ppm</b> (which
+is a Portable Pixmap image), you will see the type of colored image
+that can be used to configure MMTT without having a physical frame.
+Each different color identifies a different region.  White is used to identify
+the frame (if it is present), which gets ignored when looking for your hands.
+This <a href=colors.html>Color Reference Page</a> shows you the different colors
+you should use in this image for each region.  If you create a .ppm file
+containing an image with these colors, you can then load it using the
+browser-based user interface.
+<h3>Debugging</h3>
+Debugging and status information can be viewed with <a href=http://technet.microsoft.com/en-us/sysinternals/bb896647>debugview</a>.
+The browser-based user interface
+contains a number of controls toward the bottom of the page that can be
+used to see what's going on.  For example, the "Show Region Map" button
+will let you see the current map of regions.  The "Show Raw Depth" button
+will show you the raw depth image with no thresholding.
+</body>
+<h3>OSC / TUIO output</h3>
+<a href=http://www.tuio.org/?specification>TUIO is a standard</a> for multitouch events using OSC.
+By default, the TUIO output of MMTT gets sent to port 3333 of host 127.0.0.1,
+using the profile for 25D surfaces
+(i.e. the OSC messages start with /tuio/25Dblb).
+You can change this by using the -n option, letting you can specify one or more semicolon-separated host:port values.
+For example, -n127.0.0.1:3333;127.0.0.1:7777 would tell MMTT to send TUIO
+to two clients on host 127.0.0.1, one at port 3333 and one at port 7777.
+<p>
+If you want to interact with programs that expect the TUIO 2D profile,
+you can tell MMTT to use the 2D profile by using the -o option.
+For example, -o127.0.0.1:3333 would tell MMTT to send TUIO messages using
+the 2D profile to a clients on host 127.0.0.1 at port 3333.
+<p>
+The TUIO session id's indicate the region of the frame by multiplying the region id by 1000 and adding it to the session id.  So, if you see session id's 2000, 2001, 5000, and 5001, you know that 4 hands have been detected - 2 in region 2 and 2 in region 5.
+<h3>Command-line Options</h3>
+Note: there is no space between an option letter and its value (when it has a value).
+<p>
+<table>
+<tr><td width=5%></td><td width=15%>-f</td><td width=40%>Disable auto-flushing of debug output</td></tr>
+<tr><td></td><td>-h<i>html-directory</i></td><td>Specify the directory from which to serve HTML</td></tr>
+<tr><td></td><td>-l<i>logfile</i></td><td>Specify the debug log filename</td></tr>
+<tr><td></td><td>-L</td><td>Disable debugging to log file</td></tr>
+<tr><td></td><td>-D</td><td>Disable all debug output</td></tr>
+<tr><td></td><td>-o<i>host:port</i></td><td>Specify the host:port to receive 2D TUIO messages (multiple values can be separated by semicolons)</td></tr>
+<tr><td></td><td>-n<i>host:port</i></td><td>Specify the host:port to receive 25D TUIO messages (multiple values can be separated by semicolons)</td></tr>
+</table>
+</ul>
+<h3>Questions, etc.</h3>
+Send email to me@timthompson.com

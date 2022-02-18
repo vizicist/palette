@@ -1,0 +1,25 @@
+# See README.txt
+# You should edit this file to specify the MIDI ports you use.
+
+# midi output = 01. Internal MIDI
+# midi input = 02. Internal MIDI
+#
+midi output = loopMidi Port 1
+midi input = loopMidi Port 2
+# midi input = MIDISPORT Uno / 1x1 In
+# midi output = 2- UM-1
+# midi input = 2- UM-1
+
+# Other examples:
+
+# midi output = 01. Internal MIDI
+# midi input = 02. Internal MIDI
+
+# midi output = Out To Midi Yoke:  1
+# midi input = In From Midi Yoke:  2
+
+# midi output = Midi Yoke:  1
+# midi input = Midi Yoke:  2
+#
+# midi output = loopMidi Port 1
+# midi input = loopMidi Port 2

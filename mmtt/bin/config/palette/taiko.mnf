@@ -1,0 +1,23 @@
+##############################################
+#
+# This is a configuration for a single synth,
+# in this case, Battery3.
+#
+##############################################
+
+channel 10 = Battery3
+
+##############################################
+
+synth = Battery3
+program 1     = Beatbox
+
+##############################################
+
+soundbank 0 = Taiko
+
+soundset 0
+sound 0 = Beatbox
+
+##############################################
+

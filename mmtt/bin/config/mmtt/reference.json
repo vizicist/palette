@@ -1,0 +1,16 @@
+{
+  "autowindow": 80,
+  "backbottom": 1480,
+  "backtop": 1465,
+  "blob_maxsize": 10000,
+  "blob_minsize": 65,
+  "blob_param1": 100,
+  "bottom": 479,
+  "debug": 0,
+  "front": 100,
+  "left": 0,
+  "right": 639,
+  "tilt": -0.42897,
+  "top": 0,
+  "usemask": 1
+}
