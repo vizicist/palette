@@ -49,9 +49,13 @@ Source: "ship\bin\*.bat"; DestDir: "{app}\bin"; Flags: comparetimestamp ignoreve
 Source: "ship\bin\*.dll"; DestDir: "{app}\bin"; Flags: comparetimestamp ignoreversion
 Source: "ship\bin\*.exe"; DestDir: "{app}\bin"; Flags: comparetimestamp ignoreversion
 Source: "ship\bin\pyinstalled\*"; DestDir: "{app}\bin\pyinstalled"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "ship\bin\mmtt_kinect\*"; DestDir: "{app}\bin\mmtt_kinect"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "ship\ffgl\*"; DestDir: "{app}\ffgl"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "ship\html\*"; DestDir: "{app}\html"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "ship\presets\*"; DestDir: "{app}\presets"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE - all config files go in LOCALAPPDATA
+Source: "ship\config\mmtt_kinect.json"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
+Source: "ship\config\mmtt_kinect\*.json"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\config\mmtt_kinect"; Flags: comparetimestamp ignoreversion
 Source: "ship\config\nats*.conf"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
 Source: "ship\config\paramdefs.json"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
 Source: "ship\config\paramenums.json"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion

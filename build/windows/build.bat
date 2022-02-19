@@ -15,7 +15,14 @@ set ship=%PALETTESOURCE%\build\windows\ship
 set bin=%ship%\bin
 rm -fr %ship% > nul 2>&1
 mkdir %ship%
-mkdir %bin%
+mkdir %ship%\bin
+mkdir %ship%\presets
+mkdir %ship%\bin\mmtt_kinect
+mkdir %ship%\html
+mkdir %ship%\midifiles
+mkdir %ship%\ffgl
+mkdir %ship%\config
+mkdir %ship%\config\mmtt_kinect
 
 echo ================ Upgrading Python
 python -m pip install pip | grep -v "already.*satisfied"
@@ -78,14 +85,11 @@ move dist\pyinstalled %bin% >nul
 popd
 
 echo ================ Compiling FFGL plugin
-rem set MSBUILDCMD=C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\Common7\Tools\vsmsbuildcmd.bat
-rem call "%MSBUILDCMD%" > nul
 pushd %PALETTESOURCE%\ffgl\build\windows
 msbuild /t:Build /p:Configuration=Release /p:Platform="x64" FFGLPlugins.sln > nul
 popd
 
 echo ================ Copying FFGL plugin
-mkdir %ship%\ffgl
 pushd %PALETTESOURCE%\ffgl\binaries\x64\Release
 copy Palette*.dll %ship%\ffgl > nul
 copy Palette*.pdb %ship%\ffgl > nul
@@ -93,7 +97,24 @@ copy %PALETTESOURCE%\build\windows\vc15\bin\pthreadvc2.dll %ship%\ffgl >nul
 copy %PALETTESOURCE%\build\windows\vc15\bin\msvcr100.dll %ship%\ffgl >nul
 popd
 
-echo ================ Copying binaries
+echo ================ Compiling mmtt_kinect
+pushd %PALETTESOURCE%\mmtt_kinect\build\windows
+msbuild /t:Build /p:Configuration=Debug /p:Platform="x32" mmtt_kinect.sln > nul
+rem Put mmtt_kinect in its own bin directory, to keep 32-bit things separate
+copy mmtt_kinect\Debug\mmtt_kinect.exe %bin%\mmtt_kinect >nul
+copy mmtt_kinect\*.dll %bin%\mmtt_kinect >nul
+popd
+pushd %PALETTESOURCE%\mmtt_kinect
+copy config\mmtt_kinect.json %ship%\config > nul
+copy config\mmtt_kinect\*.* %ship%\config\mmtt_kinect > nul
+popd
+
+echo ================ Copying html
+pushd %PALETTESOURCE%
+xcopy /e /y html %ship%\html >nul
+popd
+
+echo ================ Copying misc binaries
 copy %PALETTESOURCE%\binaries\nats\nats-pub.exe %bin% >nul
 copy %PALETTESOURCE%\binaries\nats\nats-sub.exe %bin% >nul
 copy %PALETTESOURCE%\binaries\nircmdc.exe %bin% >nul
@@ -112,7 +133,6 @@ copy setpalettelogdir.bat %bin% >nul
 popd
 
 echo ================ Copying config
-mkdir %ship%\config
 
 copy %PALETTESOURCE%\default\config\homepage.json %ship%\config >nul
 copy %PALETTESOURCE%\default\config\ffgl.json %ship%\config >nul
@@ -132,7 +152,6 @@ copy %PALETTESOURCE%\default\config\consola.ttf %ship%\config >nul
 copy %PALETTESOURCE%\default\config\OpenSans-Regular.ttf %ship%\config >nul
 
 echo ================ Copying midifiles
-mkdir %ship%\midifiles
 copy %PALETTESOURCE%\default\midifiles\*.* %ship%\midifiles >nul
 
 echo ================ Copying windows-specific things
@@ -143,7 +162,6 @@ copy vc15\bin\depthai-core.dll %bin% >nul
 copy vc15\bin\opencv_world454.dll %bin% >nul
 
 echo ================ Copying presets
-mkdir %ship%\presets
 xcopy /e /y %PALETTESOURCE%\default\presets %ship%\presets > nul
 
 echo ================ Removing unused things

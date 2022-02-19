@@ -1,0 +1,47 @@
+{
+  "autowindow": 80,
+  "backbottom": 1140,
+  "backtop": 1325,
+  "blob_filter": 1,
+  "blob_maxsize": 10000,
+  "blob_minsize": 200,
+  "blob_param1": 100,
+  "bottom": 479,
+  "confidence": 200,
+  "debug": 0,
+  "front": 0,
+  "left": 0,
+  "right": 639,
+  "showfps": 0,
+  "showmask": 0,
+  "showrawdepth": 0,
+  "showregionhits": 1,
+  "showregionmap": 0,
+  "showregionrects": 1,
+  "tilt": 0,
+  "top": 0,
+  "usemask": 1,
+  "regions": [
+    { "first_sid": 11000, "x": 199, "y": 53, "width": 233, "height": 131},
+    { "first_sid": 12000, "x": 18, "y": 192, "width": 280, "height": 103},
+    { "first_sid": 13000, "x": 324, "y": 197, "width": 289, "height": 107},
+    { "first_sid": 14000, "x": 190, "y": 310, "width": 235, "height": 132},
+
+    { "first_sid": 53000, "x": 126, "y": 87, "width": 58, "height": 37},
+    { "first_sid": 52000, "x": 52, "y": 138, "width": 55, "height": 38},
+    { "first_sid": 51000, "x": 124, "y": 140, "width": 58, "height": 39},
+
+    { "first_sid": 43000, "x": 48, "y": 304, "width": 54, "height": 40},
+    { "first_sid": 42000, "x": 119, "y": 308, "width": 58, "height": 37},
+    { "first_sid": 41000, "x": 116, "y": 359, "width": 58, "height": 40},
+
+    { "first_sid": 33000, "x": 448, "y": 93, "width": 58, "height": 38},
+    { "first_sid": 32000, "x": 446, "y": 148, "width": 61, "height": 38},
+    { "first_sid": 31000, "x": 523, "y": 150, "width": 59, "height": 37},
+
+    { "first_sid": 23000, "x": 441, "y": 317, "width": 60, "height": 38},
+    { "first_sid": 22000, "x": 518, "y": 319, "width": 58, "height": 39},
+    { "first_sid": 21000, "x": 441, "y": 372, "width": 59, "height": 37}
+  ]
+
+}

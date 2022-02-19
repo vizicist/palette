@@ -1,0 +1,9 @@
+README.txt
+setup.py
+SimpleOSC.egg-info/PKG-INFO
+SimpleOSC.egg-info/SOURCES.txt
+SimpleOSC.egg-info/dependency_links.txt
+SimpleOSC.egg-info/top_level.txt
+osc/OSC.py
+osc/__init__.py
+osc/oscAPI.py

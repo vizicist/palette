@@ -1,0 +1,129 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#ifndef __BORLANDC__
+
+// #include "winres.h"
+#ifdef _AFX_MINREBUILD
+#pragma component(minrebuild, off)
+#endif
+
+#define VS_VERSION_INFO     1
+
+#ifdef APSTUDIO_INVOKED
+#define APSTUDIO_HIDDEN_SYMBOLS // Ignore following symbols
+#endif
+
+#ifndef WINVER
+#define WINVER 0x0501   // default to Windows XP
+#endif
+
+#include <winresrc.h>
+
+// operation messages sent to DLGINIT
+#define LB_ADDSTRING    (WM_USER+1)
+#define CB_ADDSTRING    (WM_USER+3)
+
+#ifdef APSTUDIO_INVOKED
+#undef APSTUDIO_HIDDEN_SYMBOLS
+#endif
+
+#ifdef IDC_STATIC
+#undef IDC_STATIC
+#endif
+#define IDC_STATIC      (-1)
+
+#ifdef _AFX_MINREBUILD
+#pragma component(minrebuild, on)
+#endif
+
+#endif
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (Canada) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENC)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_CAN
+#pragma code_page(1252)
+#endif //_WIN32
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu
+//
+
+IDR_MYMENU MENU 
+BEGIN
+    POPUP "&File"
+    BEGIN
+        MENUITEM "E&xit",                       ID_FILE_EXIT
+    END
+    POPUP "&Stuff"
+    BEGIN
+        MENUITEM "&Go",                         ID_STUFF_GO
+        MENUITEM "Go &Somewhere Else",          ID_STUFF_GOSOMEWHEREELSE, GRAYED
+    END
+END
+
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#ifndef __BORLANDC__\r\n"
+    "#include ""winres.h""\r\n"
+    "#endif\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDI_MYICON              ICON                    "mmtt.ico"
+#endif    // English (Canada) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+
