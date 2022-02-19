@@ -340,7 +340,7 @@ func (r *Router) StartRealtime() {
 			nextCheckSecs += processcheckSeconds
 			// Put it in background, so calling
 			// tasklist or ps doesn't disrupt realtime
-			go CheckProcesses()
+			go CheckProcessesAndRestartIfNecessary()
 		}
 
 		select {
