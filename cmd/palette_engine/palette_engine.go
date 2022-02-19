@@ -32,6 +32,8 @@ func main() {
 		engine.KillProcess("resolume")
 		engine.KillProcess("bidule")
 		engine.KillProcess("gui")
+		engine.KillProcess("mmtt_kinect")
+		engine.KillProcess("mmtt_oak")
 	}
 
 	engine.InitMIDI()
