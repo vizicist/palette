@@ -1,7 +1,7 @@
 {
   "autowindow": 80,
-  "backbottom": 1380,
-  "backtop": 1448,
+  "backbottom": 1290,
+  "backtop": 1514,
   "blob_filter": 1,
   "blob_maxsize": 10000,
   "blob_minsize": 200,
@@ -21,6 +21,8 @@
   "tilt": 0,
   "top": 0,
   "usemask": 1,
+  "shiftx": 0,
+  "shifty": 30,
   "regions": [
     { "first_sid": 11000, "x": 194, "y": 286, "width": 246, "height": 116},
     { "first_sid": 12000, "x": 327, "y": 172, "width": 279, "height": 99},

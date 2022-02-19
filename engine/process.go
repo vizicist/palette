@@ -20,15 +20,23 @@ type processInfo struct {
 var ProcessInfo = map[string](*processInfo){}
 
 func InitProcessInfo() {
-	ProcessInfo["resolume"] = ResolumeInfo()
-	ProcessInfo["gui"] = GuiInfo()
-	ProcessInfo["bidule"] = BiduleInfo()
-
-	mmtt := ConfigValue("mmtt")
-	if mmtt != "" {
-		m := MmttInfo(mmtt)
-		if m != nil {
-			ProcessInfo["mmtt"] = m
+	autostart := ConfigValue("autostart")
+	if autostart == "" {
+		autostart = "resolume,gui,bidule"
+	}
+	arr := strings.Split(autostart, ",")
+	for _, process := range arr {
+		switch process {
+		case "resolume":
+			ProcessInfo[process] = ResolumeInfo()
+		case "gui":
+			ProcessInfo["gui"] = GuiInfo()
+		case "bidule":
+			ProcessInfo["bidule"] = BiduleInfo()
+		case "mmtt_kinect":
+			ProcessInfo["mmtt_kinect"] = MmttInfo("mmtt_kinect")
+		case "mmtt_oak":
+			ProcessInfo["mmtt_oak"] = MmttInfo("mmtt_oak")
 		}
 	}
 }
@@ -142,7 +150,7 @@ func IsRunning(process string) bool {
 	return b
 }
 
-func CheckProcesses() {
+func CheckProcessesAndRestartIfNecessary() {
 	for process := range ProcessInfo {
 		if !IsRunning(process) {
 			StartRunning(process)
