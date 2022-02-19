@@ -5,21 +5,32 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Engine",
-            "type": "go",
-            "request": "launch",
-            "mode": "auto",
-            "program": "${env:PALETTESOURCE}/cmd/palette_engine/palette_engine.go",
-            "env": {
-                "Path": "${env:Path};${workspaceFolder};c:/Users/me/Documents/github/vizicist/palette/SenselLib/x64;"             },
-            "args": []
-        },
-        {
-            "name": "Start Engine",
+            "name": "Start",
             "type": "go",
             "request": "launch",
             "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
-            "args": ["start","engine"]
+            "args": ["start"]
+        },
+        {
+            "name": "Stop",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
+            "args": ["stop"]
+        },
+        {
+            "name": "Start MMTT",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
+            "args": ["api", "process.start", "\"process\":\"mmtt\""]
+        },
+        {
+            "name": "Stop MMTT",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
+            "args": ["api", "process.stop", "\"process\":\"mmtt\""]
         },
         {
             "name": "Start Resolume",
@@ -64,18 +75,14 @@
             "args": ["api", "process.stop", "\"process\":\"gui\""]
         },
         {
-            "name": "Start all",
+            "name": "Engine (palette_engine.go)",
             "type": "go",
             "request": "launch",
-            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
-            "args": ["api", "process.start", "\"process\":\"all\""]
-        },
-        {
-            "name": "Stop all",
-            "type": "go",
-            "request": "launch",
-            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
-            "args": ["api", "process.stop", "\"process\":\"all\""]
+            "mode": "auto",
+            "program": "${env:PALETTESOURCE}/cmd/palette_engine/palette_engine.go",
+            "env": {
+                "Path": "${env:Path};${workspaceFolder};c:/Users/me/Documents/github/vizicist/palette/SenselLib/x64;"             },
+            "args": []
         },
         {
             "name": "OLD start gui",

@@ -1,0 +1,20 @@
+Steps to use the library (using MSVC++ sp 5):
+1 - open the project of the library and build it
+2 - in the project where the library should be used, add:
+2.1 In "Project/Settings/C++/Preprocessor/Additional Include
+directories" add the directory where the blob library is stored
+2.2 In "Project/Settings/Link/Input/Additional library path" add
+the directory where the blob library is stored and in "Object/Library
+modules" add the cvblobslib.lib file
+3- Include the file "BlobResult.h" where you want to use blob variables.
+4- To see an example on using the blob library, see the file
+example.txt inside the zip file.
+
+NOTE: Verify that in the project where the cvblobslib.lib is used, the MFC Runtime Libraries are not mixed: 
+
+1. 	Check in "Project->Settings->C/C++->Code Generation->Use run-time library" of your project and set it to 
+	Debug Multithreaded DLL (debug version ) or to Multithreaded DLL ( release version ).
+2 	Check in "Project->Settings->General" how it uses the MFC. It should be "Use MFC in a shared DLL". 
+
+NOTE: The library can be compiled and used in .NET using this steps, but the menu options may differ a little
+NOTE2: In the .NET version, the character sets must be equal in the .lib and in the project. [OpenCV yahoo group: Msg 35500]

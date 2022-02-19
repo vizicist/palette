@@ -1,0 +1,27 @@
+{
+  "autowindow": 80,
+  "backbottom": 556,
+  "backtop": 570,
+  "blob_filter": 1,
+  "blob_maxsize": 15000,
+  "blob_minsize": 1215,
+  "blob_param1": 100,
+  "bottom": 479,
+  "debug": 0,
+  "front": 0,
+  "left": 0,
+  "right": 639,
+  "showfps": 0,
+  "showmask": 0,
+  "showrawdepth": 0,
+  "showregionhits": 1,
+  "showregionmap": 0,
+  "showregionrects": 0,
+  "tilt": 0,
+  "top": 0,
+  "usemask": 0,
+  "regions": [
+    { "first_sid": 11000, "x": 0, "y": 0, "width": 640, "height": 480}
+  ]
+
+}

@@ -711,8 +711,8 @@ func CliCommand(args []string) map[string]string {
 
 	case "":
 		msg = "usage: palette api {api} {args}\n"
-		msg += "       palette start {process}\n"
-		msg += "       palette stop {process}\n"
+		msg += "       palette start [process]\n"
+		msg += "       palette stop [process]\n"
 		msg += "       palette sendlogs\n"
 
 	case "sendlogs":

@@ -1,0 +1,83 @@
+function make_string_ui(divid,valueid,regionnum,label,nm,unsettable) {
+        var x = dojo.byId(divid);
+	if ( x == null ) {
+		alert("make_value_ui, no divid: "+divid);
+		return;
+	}
+	// alert("make_string_ui, valueid="+valueid);
+	x.innerHTML = "<table border=0 bgcolor="+RowColor+" width=100%><tr>"
+	+one_tinyspacer()
+	+blank_button()
+	+blank_button()
+	+one_button(nm,valueid,regionnum,"-","decr",1)
+	+"<td width=40% align=center>"
+	+"<table border=0 width=100%><tr>"
+	+one_labelspacer()
+	+"<td class=valuelabel>"+label+"</td>"
+	+"<td class=valuevalue><span id='"+valueid+"' /></span></td>"
+	+"</tr></table>"
+	+"</td>"
+	+one_button(nm,valueid,regionnum,"+","incr",1)
+	+blank_button()
+	+blank_button()
+	+one_unset_button(unsettable,nm,valueid)
+	+"<td class=endspacer></td>"
+	+"</tr></table>"
+		;
+}
+
+function make_value_ui(divid,valueid,regionnum,label,nm,unsettable) {
+        var x = dojo.byId(divid);
+	if ( x == null ) {
+		alert("make_value_ui, no divid: "+divid);
+		return;
+	}
+	// alert("make_value_ui, valueid="+valueid);
+	x.innerHTML = "<table border=0 bgcolor="+RowColor+" width=100%><tr>"
+	+one_tinyspacer()
+	+one_button(nm,valueid,regionnum,"---","decr",0.1)
+	+one_button(nm,valueid,regionnum,"--","decr",0.01)
+	+one_button(nm,valueid,regionnum,"-","decr",0.001)
+	+"<td width=40% align=center>"
+	+"<table border=0 width=100%><tr>"
+	+one_labelspacer()
+	+"<td class=valuelabel>"+label+"</td>"
+	+"<td class=valuevalue><span id='"+valueid+"' /></span></td>"
+	+"</tr></table>"
+	+"</td>"
+	+one_button(nm,valueid,regionnum,"+","incr",0.001)
+	+one_button(nm,valueid,regionnum,"++","incr",0.01)
+	+one_button(nm,valueid,regionnum,"+++","incr",0.1)
+	+one_unset_button(unsettable,nm,valueid)
+	+"<td class=endspacer></td>"
+	+"</tr></table>"
+		;
+}
+
+function make_toggle_ui(divid,valueid,regionnum,label,nm,unsettable) {
+        var x = dojo.byId(divid);
+	if ( x == null ) {
+		alert("make_toggle_ui, no divid: "+divid);
+		return;
+	}
+	x.innerHTML = "<table border=0 bgcolor="+RowColor+" width=100%><tr>"
+	+one_tinyspacer()
+	+blank_button()
+	+blank_button()
+	+blank_button()
+	+"<td width=40% align=center>"
+	+"<table border=0 width=100%><tr>"
+	+one_labelspacer()
+	+"<td class=valuelabel>"+label+"</td>"
+	+"<td class=valuevalue><span id='"+valueid+"' /></span></td>"
+	+"</tr></table>"
+	+"</td>"
+	+one_toggle(nm,valueid,regionnum,"Toggle","togg")
+	+blank_button()
+	+blank_button()
+	+one_unset_button(unsettable,nm,valueid)
+	+"<td class=endspacer></td>"
+	+"</tr></table>"
+		;
+}
+

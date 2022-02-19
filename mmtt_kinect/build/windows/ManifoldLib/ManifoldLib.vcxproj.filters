@@ -1,0 +1,210 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Source Files\cJSON">
+      <UniqueIdentifier>{64099acf-9dfe-4f90-8277-4dc744573b05}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\nosuch">
+      <UniqueIdentifier>{fa0a8e45-33c9-4965-b451-0f7d6e0bed51}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\cvblobslib">
+      <UniqueIdentifier>{defa0072-72a6-40c6-a06b-d53a5d1e6fa9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\osc">
+      <UniqueIdentifier>{cffeee16-72cd-4c92-aea6-78860dbfd221}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\oscpack">
+      <UniqueIdentifier>{a1589fa7-d16c-4b82-ac6d-b79de95c6b4d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\oscpack\ip">
+      <UniqueIdentifier>{c8d34a3d-5ddb-4a3b-9af0-cd6db7aca249}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\oscpack\ip\win32">
+      <UniqueIdentifier>{0b2cbe22-8eff-45d0-bb5a-6fd114a54d08}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\oscpack\osc">
+      <UniqueIdentifier>{53af680d-1328-4957-b8f0-15fbd883d526}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Header Files\nosuch">
+      <UniqueIdentifier>{14c26ee0-debe-4a09-962c-8110d011ac98}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
+    </Filter>
+    <Filter Include="Header Files\zlib">
+      <UniqueIdentifier>{001960c7-4d8a-4f7e-b984-5db2721f1279}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\zlib">
+      <UniqueIdentifier>{60929878-9f71-43bd-ad37-9f4189c6ac26}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\src\cJSON\cJSON.cpp">
+      <Filter>Source Files\cJSON</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\nosuch\NosuchDebug.cpp">
+      <Filter>Source Files\nosuch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\nosuch\NosuchException.cpp">
+      <Filter>Source Files\nosuch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\nosuch\NosuchHttp.cpp">
+      <Filter>Source Files\nosuch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\nosuch\NosuchOscInput.cpp">
+      <Filter>Source Files\nosuch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\nosuch\NosuchOscTcpInput.cpp">
+      <Filter>Source Files\nosuch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\nosuch\NosuchOscUdpInput.cpp">
+      <Filter>Source Files\nosuch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\nosuch\NosuchSocket.cpp">
+      <Filter>Source Files\nosuch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\nosuch\NosuchUtil.cpp">
+      <Filter>Source Files\nosuch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\nosuch\sha1.c">
+      <Filter>Source Files\nosuch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\cvblobslib\src\blob.cpp">
+      <Filter>Source Files\cvblobslib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\cvblobslib\src\BlobContour.cpp">
+      <Filter>Source Files\cvblobslib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\cvblobslib\src\BlobOperators.cpp">
+      <Filter>Source Files\cvblobslib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\cvblobslib\src\BlobResult.cpp">
+      <Filter>Source Files\cvblobslib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\cvblobslib\src\ComponentLabeling.cpp">
+      <Filter>Source Files\cvblobslib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\osc\src\OscBundle.cpp">
+      <Filter>Source Files\osc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\osc\src\OscMessage.cpp">
+      <Filter>Source Files\osc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\osc\src\OscSender.cpp">
+      <Filter>Source Files\osc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\oscpack\ip\IpEndpointName.cpp">
+      <Filter>Source Files\oscpack\ip</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\oscpack\ip\win32\NetworkingUtils.cpp">
+      <Filter>Source Files\oscpack\ip\win32</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\oscpack\ip\win32\UdpSocket.cpp">
+      <Filter>Source Files\oscpack\ip\win32</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\oscpack\osc\OscOutboundPacketStream.cpp">
+      <Filter>Source Files\oscpack\osc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\oscpack\osc\OscPrintReceivedElements.cpp">
+      <Filter>Source Files\oscpack\osc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\oscpack\osc\OscReceivedElements.cpp">
+      <Filter>Source Files\oscpack\osc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\oscpack\osc\OscTypes.cpp">
+      <Filter>Source Files\oscpack\osc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\zlib\adler32.c">
+      <Filter>Source Files\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\zlib\compress.c">
+      <Filter>Source Files\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\zlib\crc32.c">
+      <Filter>Source Files\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\zlib\deflate.c">
+      <Filter>Source Files\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\zlib\gzclose.c">
+      <Filter>Source Files\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\zlib\gzlib.c">
+      <Filter>Source Files\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\zlib\gzread.c">
+      <Filter>Source Files\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\zlib\gzwrite.c">
+      <Filter>Source Files\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\zlib\infback.c">
+      <Filter>Source Files\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\zlib\inffast.c">
+      <Filter>Source Files\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\zlib\inflate.c">
+      <Filter>Source Files\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\zlib\inftrees.c">
+      <Filter>Source Files\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\zlib\trees.c">
+      <Filter>Source Files\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\zlib\uncompr.c">
+      <Filter>Source Files\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\zlib\zutil.c">
+      <Filter>Source Files\zlib</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\src\nosuch\NosuchColor.h">
+      <Filter>Header Files\nosuch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\nosuch\NosuchDebug.h">
+      <Filter>Header Files\nosuch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\nosuch\NosuchGraphics.h">
+      <Filter>Header Files\nosuch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\nosuch\NosuchHttp.h">
+      <Filter>Header Files\nosuch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\nosuch\NosuchOscInput.h">
+      <Filter>Header Files\nosuch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\nosuch\NosuchOscTcpInput.h">
+      <Filter>Header Files\nosuch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\nosuch\NosuchOscUdpInput.h">
+      <Filter>Header Files\nosuch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\nosuch\NosuchSocket.h">
+      <Filter>Header Files\nosuch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\nosuch\NosuchUtil.h">
+      <Filter>Header Files\nosuch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\nosuch\sha1.h">
+      <Filter>Header Files\nosuch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\zlib\zlib.h">
+      <Filter>Header Files\zlib</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ClassDiagram1.cd" />
+  </ItemGroup>
+</Project>

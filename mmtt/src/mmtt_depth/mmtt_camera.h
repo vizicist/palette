@@ -1,2 +1,0 @@
-// #define CREATIVE_CAMERA
-// #define KINETIC_CAMERA
