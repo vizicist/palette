@@ -20,6 +20,12 @@ released installation packages, which is certainly a lot simpler and is recommen
 
 - Install Inno Setup from https://jrsoftware.org/isinfo.php
 
+- Install Visual Studio 2013 Community Edition from https://visualstudio.microsoft.com/downloads
+
+  - This will require downloading and mounting a .iso DVD image.
+  - This version is required to get the v120 compiler tools for building older things,
+  even though Visual Studio 2017 will be used to actually build things.
+
 - Install Visual Studio 2017 Community Edition from https://visualstudio.microsoft.com/downloads
 
 	- in the Workload tab, select "Desktop Development with C++"
