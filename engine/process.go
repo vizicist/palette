@@ -23,6 +23,14 @@ func InitProcessInfo() {
 	ProcessInfo["resolume"] = ResolumeInfo()
 	ProcessInfo["gui"] = GuiInfo()
 	ProcessInfo["bidule"] = BiduleInfo()
+
+	mmtt := ConfigValue("mmtt")
+	if mmtt != "" {
+		m := MmttInfo(mmtt)
+		if m != nil {
+			ProcessInfo["mmtt"] = m
+		}
+	}
 }
 
 func BiduleInfo() *processInfo {
@@ -73,25 +81,35 @@ func GuiInfo() *processInfo {
 	return &processInfo{exe, fullpath, "", 0}
 }
 
+func MmttInfo(mmtt string) *processInfo {
+	exe := mmtt + ".exe"
+	fullpath := filepath.Join(PaletteDir(), "bin", mmtt, exe)
+	if !FileExists(fullpath) {
+		log.Printf("no mmtt executable found, looking for %s", fullpath)
+		return nil
+	}
+	return &processInfo{exe, fullpath, "", 0}
+}
+
 func StartRunning(process string) error {
 
 	log.Printf("StartRunning: process %s\n", process)
 
-	switch process {
-
-	case "gui", "bidule", "resolume":
-		p := ProcessInfo[process]
-		_, err := StartExecutableLogOutput(process, p.FullPath, true, p.Arg)
-		if err != nil {
-			return fmt.Errorf("start: bidule err=%s", err)
-		}
-		// bidule can take forever to load, especially on non-SSD
-		go activateLater(p.ActivateTimes)
-
-	default:
+	p, ok := ProcessInfo[process]
+	if !ok {
 		return fmt.Errorf("start: unrecognized process %s", process)
 	}
 
+	log.Printf("StartExecutableLogOutput: process=%s fullpath=%s\n", process, p.FullPath)
+	_, err := StartExecutableLogOutput(process, p.FullPath, true, p.Arg)
+	if err != nil {
+		return fmt.Errorf("start: process=%s err=%s", process, err)
+	}
+
+	// Some things (bidule and resolume) need to be activated
+	if p.ActivateTimes > 0 {
+		go activateLater(p.ActivateTimes)
+	}
 	return nil
 }
 

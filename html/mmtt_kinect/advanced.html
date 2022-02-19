@@ -1,0 +1,374 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html dir="ltr">
+    
+<head>
+<meta name="viewport"
+  content="width=device-width,
+  minimum-scale=1.0, maximum-scale=1.0" />
+<style type="text/css">
+	body, html { font-family:helvetica,arial,sans-serif; font-size:90%; }
+</style>
+<style type="text/css">
+    html, body { width: 100%; margin: 0; }
+    button.incdec { width: 100%; }
+    text.spacer { width: 30%; }
+    td.valuelabel { width: 15%; text-align: center}
+    td.valuevalue { width: 15%; text-align: center}
+    td.buttontrio { width: 10%; text-align: center}
+</style>
+
+<script src="dojo/dojo.js" djConfig="parseOnLoad: true"> </script>
+<script type="text/javascript">
+
+var ValNames = [
+		["Tilt","tilt","number"],
+		["Threshold Top","backtop","number"],
+		["Threshold Bottom","backbottom","number"],
+		["Threshold Front","front","number"],
+		["Left Edge","left","number"],
+		["Right Edge","right","number"],
+		["Top Edge","top","number"],
+		["Bottom Edge","bottom","number"],
+		["Max Blob Size","blob_maxsize","number"],
+		["Min Blob Size","blob_minsize","number"],
+		["Minimum Confidence","confidence","number"],
+		["Depth Factor","depthfactor","number"],
+		["Expand Factor","expandfactor","number"],
+		["Use Mask","usemask","toggle"],
+		["Blob Filter","blob_filter","toggle"],
+		["Show Mask","showmask","toggle"],
+		["Show Region Map","showregionmap","toggle"],
+		["Show Region Rects","showregionrects","toggle"],
+		["Show Region Hits","showregionhits","toggle"],
+		["Show Raw Depth","showrawdepth","toggle"],
+		["Extreme Debugging","debug","toggle"],
+		["Do Python","dopython","toggle"],
+		["Show FPS","showfps","toggle"]
+      ];
+
+var LastResult = "";
+
+function is_toggle(nm) {
+	for ( n in ValNames ) {
+		a = ValNames[n]
+		if ( nm == a[1] ) {
+			if ( a[2] == "toggle" )
+				return(true);
+			else
+				return(false);
+		}
+	}
+	return(false);
+}
+
+function is_threshold(nm) {
+	for ( n in ValNames ) {
+		a = ValNames[n]
+		if ( nm == a[1] ) {
+			if ( a[0].match(/^thresh/i) )
+				return true;
+			else
+				return(false);
+		}
+	}
+}
+
+function format_value(varname,r) {
+	var s = r.result;
+	if ( is_toggle(varname) ) {
+		if ( s == "0" )
+			s = "off";
+		else
+			s = "on";
+	} else if ( is_threshold(varname) ) {
+		s = s * 3.0;
+		s = s.toPrecision(5);
+	} else {
+		s = s.toPrecision(5);
+	}
+	return s;
+}
+
+function format_error(meth,err) {
+	var estr = "" + err;
+	if ( estr.match(/xmlhttprequest exception 101/i) ) {
+		return "Unable to connect to MMTT - is it running?";
+	} else {
+		return "Method: "+meth+"  Error:" + err;
+	}
+}
+
+function get_and_update_value(varname) {
+	// The value of params should include the curly braces
+	var id = "12345";
+	var url = "/dojo.txt";
+
+	var params = "{ \"name\": \"" + varname + "\" }";
+	var meth = "mmtt_get";
+
+	var def = dojo.xhrPost( {
+		url: url,
+		handleAs: "json",
+		sync: true,
+		postData: "{ \"jsonrpc\": \"2.0\", \"method\": \""+meth+"\", \"params\": "+params+", \"id\":\""+id+"\" }\n"
+	});
+
+	var place = dojo.byId("status");
+	place.innerHTML = "Sending meth="+meth
+
+	def.then( function(r) {
+		if ( r == null ) {
+			place.innerHTML = ("Method: "+meth+"  Error! r is null");
+		} else if ( r.error ) {
+			place.innerHTML = ("Method: "+meth+"  Error! id:" + r.id + " msg="+r.error.message);
+		} else {
+			place.innerHTML = ("Status: OK");
+			dojo.byId("value_"+varname).innerHTML = format_value(varname,r);
+		}
+		},
+		function(err) {
+			place.innerHTML = format_error(meth,err);
+	});
+
+}
+
+function updatevalues() {
+	for ( n in ValNames ) {
+		a = ValNames[n]
+		var name = a[1]; 
+		get_and_update_value(name);
+	}
+}
+
+function decr(name,amount) {
+	adjust_value(name,"mmtt_decrement","{\"name\": \""+name+"\", \"amount\": "+amount+"}","value_"+name);
+}
+function incr(name,amount) {
+	adjust_value(name,"mmtt_increment","{\"name\": \""+name+"\", \"amount\": "+amount+"}","value_"+name);
+}
+
+function togg(name,amount) {
+	adjust_value(name,"mmtt_toggle","{\"name\": \""+name+"\" }","value_"+name);
+}
+
+function doaction(meth,params) {
+	params = (typeof params === "undefined") ? "{ }" : params;
+
+	// The value of params should include the curly braces
+	var id = "12345";
+	var url = "/dojo.txt";
+
+	var def = dojo.xhrPost( {
+		url: url,
+		handleAs: "json",
+		sync: true,
+		postData: "{ \"jsonrpc\": \"2.0\", \"method\": \""+meth+"\", \"params\": "+params+", \"id\":\""+id+"\" }\n"
+	});
+
+	var place = dojo.byId("status");
+	place.innerHTML = "Sending meth="+meth
+
+	def.then( function(r) {
+		if ( r == null ) {
+			place.innerHTML = ("Method: "+meth+"  Error! r is null");
+		} else if ( r.error ) {
+			place.innerHTML = ("Method: "+meth+"  Error! id:" + r.id + " msg="+r.error.message);
+		} else {
+			place.innerHTML = ("Status: OK");
+		}
+		},
+		function(err) {
+			place.innerHTML = format_error(meth,err);
+	});
+
+}
+
+function doconfig(type) {
+	// type is either "load" or "save"
+	meth = "config_"+type
+	config = dojo.byId("text_configname");
+	name = config.value;
+	params = "{ \"name\": \""+name+"\" }";
+
+	// The value of params should include the curly braces
+	var id = "12345";
+	var url = "/dojo.txt";
+
+	var def = dojo.xhrPost( {
+		url: url,
+		handleAs: "json",
+		sync: true,
+		postData: "{ \"jsonrpc\": \"2.0\", \"method\": \""+meth+"\", \"params\": "+params+", \"id\":\""+id+"\" }\n"
+	});
+
+	var place = dojo.byId("status");
+	place.innerHTML = "Sending meth="+meth
+
+	LastResult = false;
+	def.then( function(r) {
+		if ( r == null ) {
+			place.innerHTML = ("Method: "+meth+"  Error! r is null");
+		} else if ( r.error ) {
+			place.innerHTML = ("Method: "+meth+"  Error! id:" + r.id + " msg="+r.error.message);
+		} else {
+			place.innerHTML = ("Result: "+r.result);
+			LastResult = true;
+		}
+		},
+		function(err) {
+			place.innerHTML = format_error(meth,err);
+	});
+	if ( LastResult ) {
+		updatevalues();
+	}
+	return;
+
+}
+
+function adjust_value(varname,meth,params,valueplace) {
+
+	// The value of params should include the curly braces
+	var id = "12345";
+	var url = "/dojo.txt";
+	var valplace = dojo.byId(valueplace);
+	var place = dojo.byId("status");
+
+	if ( params == "" ) {
+		params = "{ }";
+	}
+
+	var def = dojo.xhrPost( {
+		url: url,
+		handleAs: "json",
+		sync: true,
+		postData: "{ \"jsonrpc\": \"2.0\", \"method\": \""+meth+"\", \"params\": "+params+", \"id\":\""+id+"\" }\n"
+	});
+
+	place.innerHTML = "Sending meth="+meth;
+
+	def.then( function(r) {
+		if ( r == null ) {
+			place.innerHTML = ("Method: "+meth+"  Error! r is null");
+		} else if ( r.error ) {
+			place.innerHTML = ("Method: "+meth+"  Error! id:" + r.id + " msg="+r.error.message);
+		} else {
+			place.innerHTML = ("Status: OK");
+			valplace.innerHTML = format_value(varname,r);
+		}
+		},
+		function(err) {
+			place.innerHTML = format_error(meth,err);
+			}
+		);
+
+}
+
+function one_button(nm,label,incdectype,incdecval) {
+	return "<td class=buttontrio>"
+		+"<button class=incdec name='"+incdectype+"_"+nm+"' onClick='"+incdectype+"(&quot;"+nm+"&quot;,"+incdecval+");'>"+label+"</button>"
+		+"</td>";
+}
+
+function one_toggle(nm,label) {
+	return "<td class=buttontrio>"
+		+"<button class=incdec name='toggle_"+nm+"' onClick='togg(&quot;"+nm+"&quot);'>"+label+"</button>"
+		+"</td>";
+}
+
+function one_spacer() {
+	return "<td class=buttontrio></td>";
+}
+
+function make_value_ui(label,nm) {
+        var x = dojo.byId("div_"+nm);
+	x.innerHTML = "<table width=100%><tr><td></td>"
+	+one_button(nm,"---","decr",0.1)
+	+one_button(nm,"--","decr",0.01)
+	+one_button(nm,"-","decr",0.001)
+	+"<td class=valuelabel align=center>"
+	+"<table border=1 width=100%><tr>"
+	+"<td>"+label+"<br><span id='value_"+nm+"' /></span></td>"
+	+"</tr></table>"
+	+"</td>"
+	+one_button(nm,"+","incr",0.001)
+	+one_button(nm,"++","incr",0.01)
+	+one_button(nm,"+++","incr",0.1)
+	+"<td></td>"
+	+"</tr></table>"
+		;
+}
+
+function make_toggle_ui(label,nm) {
+        var x = dojo.byId("div_"+nm);
+	x.innerHTML = "<table width=100%><tr>"
+	+one_spacer()
+	+one_spacer()
+	+one_spacer()
+	+"<td class=valuelabel>"+label+"</td>"
+	+"<td class=valuevalue><span class=value id='value_"+nm+"' /></span></td>"
+	+one_toggle(nm,"Toggle","togg")
+	+one_spacer()
+	+one_spacer()
+	+"<td></td>"
+	+"</tr></table>"
+		;
+}
+
+function setup() {
+	var values = dojo.byId("values");
+	for ( n in ValNames ) {
+		a = ValNames[n];
+		var name = a[1]; 
+		values.innerHTML += ("<div id='div_"+name+"'></div>");
+		if ( a[2] == "number" ) {
+			make_value_ui(a[0],a[1]);
+		} else if ( a[2] == "toggle" ) {
+			make_toggle_ui(a[0],a[1]);
+		} else {
+			alert("Unknown val type: "+a[2]);
+		}
+	}
+	updatevalues();
+}
+function show_kinect() { doaction('set_drawmode','{ "mode" : "kinect" }'); }
+function show_python() { doaction('set_drawmode','{ "mode" : "python" }'); }
+function align_start() { doaction('align_start'); }
+function align_stop() { doaction('align_stop'); }
+
+dojo.addOnLoad(setup);
+</script>
+</head>
+    
+<body class="claro">
+
+<center>
+<h2>Space Manifold Calibration (Advanced)</h2>
+<input type="button" name="butt_start" value="START sending TUIO (Shows only Filtered Depth)" onClick="doaction('start');">
+&nbsp;&nbsp;&nbsp;
+<input type="button" name="butt_stop" value="STOP sending TUIO (Shows Raw Depth)" onClick="doaction('stop');">
+<p>
+<input type="button" name="butt_loadconfig" value="Load Config" onClick="doconfig('load');">
+<input type="button" name="butt_saveconfig" value="Save Config" onClick="doconfig('save');">
+<input type="text" id="text_configname" name="text_configname" value="default">
+<p>
+<input type="button" name="butt_autopoke" value="RePoke" onClick="doaction('autopoke');">
+<input type="button" name="butt_startreg" value="Start Registration" onClick="doaction('start_registration');">
+<input type="button" name="butt_stopreg" value="Stop Registration" onClick="doaction('stop_registration');">
+<input type="button" name="butt_align_start" value="Align Start" onClick="align_start();">
+<input type="button" name="butt_align_stop" value="Align Stop" onClick="align_stop();">
+<br>
+<div id="status">&nbsp;</div>
+</center>
+<p>
+<div id="values"></div>
+<p>
+<center>
+<a href=calibration.html>Switch to simple calibration page</a>
+<br>
+<a href=draw.html>Go to monitor and drawing page</a>
+</center>
+	
+</body>
+
+</html>
+

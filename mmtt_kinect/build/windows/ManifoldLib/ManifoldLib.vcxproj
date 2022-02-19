@@ -1,0 +1,207 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{FE47B0FF-9049-458E-BB8E-E13A1BE31C58}</ProjectGuid>
+    <RootNamespace>ManifoldCommon</RootNamespace>
+    <Keyword>Win32Proj</Keyword>
+    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <PlatformToolset>v141</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <PlatformToolset>v141</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v141</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.40219.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(Configuration)\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(Configuration)\</IntDir>
+    <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(KINECTSDK10_DIR)\inc;$(IncludePath)</IncludePath>
+    <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(KINECTSDK10_DIR)\inc;$(IncludePath)</IncludePath>
+    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(KINECTSDK10_DIR)\lib\x86;$(LibraryPath)</LibraryPath>
+    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(KINECTSDK10_DIR)\lib\x86;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>..\..\..\src\leap\include;..\..\..\src\portmidi\pm_commonx;..\..\..\src\nosuch;..\..\..\src\osc\include;..\..\..\src\pthreads-win32-2.8.0\Pre-built.2\include;..\..\..\src\cvblobslib\src;..\..\..\src\portmidi\porttime;..\..\..\src\opencv\build\include;..\..\..\src\libfreenect-master\include;..\..\..\src\cJSON;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>true</MinimalRebuild>
+      <ExceptionHandling>Async</ExceptionHandling>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+    <Lib>
+      <OutputFile>Debug\ManifoldLib.lib</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>C:\local\manifold\..\src\leap\include;..\..\..\src\portmidi\pm_common;..\..\..\src\nosuch;..\..\..\src\osc\include;..\..\..\src\pthreads-win32-2.8.0\Pre-built.2\include;..\..\..\src\cvblobslib\src;..\..\..\src\portmidi\porttime;..\..\..\src\opencv\build\include;..\..\..\src\libfreenect-master\include;..\..\..\src\cJSON;..\..\..\src\freeframe;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ExceptionHandling>Async</ExceptionHandling>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+    <Lib>
+      <OutputFile>Debug\ManifoldLib.lib</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <AdditionalIncludeDirectories>..;..\cJSON;..\nosuch;..\osc\include;..\pthreads-win32-2.8.0\Pre-built.2\include;..\portmidi\porttime;..\cvblobslib\src;..\opencv\build\include;..\libfreenect\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+    <Lib>
+      <OutputFile>Release\ManifoldLib.lib</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <AdditionalIncludeDirectories>..;..\cJSON;..\nosuch;..\osc\include;..\pthreads-win32-2.8.0\Pre-built.2\include;..\portmidi\porttime;..\cvblobslib\src;..\opencv\build\include;..\libfreenect\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+    <Lib>
+      <OutputFile>Release\ManifoldLib.lib</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\src\cJSON\cJSON.cpp" />
+    <ClCompile Include="..\..\..\src\nosuch\NosuchDebug.cpp" />
+    <ClCompile Include="..\..\..\src\nosuch\NosuchException.cpp" />
+    <ClCompile Include="..\..\..\src\nosuch\NosuchHttp.cpp" />
+    <ClCompile Include="..\..\..\src\nosuch\NosuchOscInput.cpp" />
+    <ClCompile Include="..\..\..\src\nosuch\NosuchOscTcpInput.cpp" />
+    <ClCompile Include="..\..\..\src\nosuch\NosuchOscUdpInput.cpp" />
+    <ClCompile Include="..\..\..\src\nosuch\NosuchSocket.cpp" />
+    <ClCompile Include="..\..\..\src\nosuch\NosuchUtil.cpp" />
+    <ClCompile Include="..\..\..\src\nosuch\sha1.c" />
+    <ClCompile Include="..\..\..\src\cvblobslib\src\blob.cpp" />
+    <ClCompile Include="..\..\..\src\cvblobslib\src\BlobContour.cpp" />
+    <ClCompile Include="..\..\..\src\cvblobslib\src\BlobOperators.cpp" />
+    <ClCompile Include="..\..\..\src\cvblobslib\src\BlobResult.cpp" />
+    <ClCompile Include="..\..\..\src\cvblobslib\src\ComponentLabeling.cpp" />
+    <ClCompile Include="..\..\..\src\osc\src\OscBundle.cpp" />
+    <ClCompile Include="..\..\..\src\osc\src\OscMessage.cpp" />
+    <ClCompile Include="..\..\..\src\osc\src\OscSender.cpp" />
+    <ClCompile Include="..\..\..\src\oscpack\ip\IpEndpointName.cpp" />
+    <ClCompile Include="..\..\..\src\oscpack\ip\win32\NetworkingUtils.cpp" />
+    <ClCompile Include="..\..\..\src\oscpack\ip\win32\UdpSocket.cpp" />
+    <ClCompile Include="..\..\..\src\oscpack\osc\OscOutboundPacketStream.cpp" />
+    <ClCompile Include="..\..\..\src\oscpack\osc\OscPrintReceivedElements.cpp" />
+    <ClCompile Include="..\..\..\src\oscpack\osc\OscReceivedElements.cpp" />
+    <ClCompile Include="..\..\..\src\oscpack\osc\OscTypes.cpp" />
+    <ClCompile Include="..\..\..\src\zlib\adler32.c" />
+    <ClCompile Include="..\..\..\src\zlib\compress.c" />
+    <ClCompile Include="..\..\..\src\zlib\crc32.c" />
+    <ClCompile Include="..\..\..\src\zlib\deflate.c" />
+    <ClCompile Include="..\..\..\src\zlib\gzclose.c" />
+    <ClCompile Include="..\..\..\src\zlib\gzlib.c" />
+    <ClCompile Include="..\..\..\src\zlib\gzread.c" />
+    <ClCompile Include="..\..\..\src\zlib\gzwrite.c" />
+    <ClCompile Include="..\..\..\src\zlib\infback.c" />
+    <ClCompile Include="..\..\..\src\zlib\inffast.c" />
+    <ClCompile Include="..\..\..\src\zlib\inflate.c" />
+    <ClCompile Include="..\..\..\src\zlib\inftrees.c" />
+    <ClCompile Include="..\..\..\src\zlib\trees.c" />
+    <ClCompile Include="..\..\..\src\zlib\uncompr.c" />
+    <ClCompile Include="..\..\..\src\zlib\zutil.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\src\nosuch\NosuchColor.h" />
+    <ClInclude Include="..\..\..\src\nosuch\NosuchDebug.h" />
+    <ClInclude Include="..\..\..\src\nosuch\NosuchGraphics.h" />
+    <ClInclude Include="..\..\..\src\nosuch\NosuchHttp.h" />
+    <ClInclude Include="..\..\..\src\nosuch\NosuchOscInput.h" />
+    <ClInclude Include="..\..\..\src\nosuch\NosuchOscTcpInput.h" />
+    <ClInclude Include="..\..\..\src\nosuch\NosuchOscUdpInput.h" />
+    <ClInclude Include="..\..\..\src\nosuch\NosuchSocket.h" />
+    <ClInclude Include="..\..\..\src\nosuch\NosuchUtil.h" />
+    <ClInclude Include="..\..\..\src\nosuch\sha1.h" />
+    <ClInclude Include="..\..\..\src\zlib\zlib.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ClassDiagram1.cd" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
