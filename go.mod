@@ -9,7 +9,6 @@ require (
 	github.com/hypebeast/go-osc v0.0.0-20200115085105-85fee7fed692
 	github.com/klauspost/compress v1.14.2 // indirect
 	github.com/minio/highwayhash v1.0.2 // indirect
-	github.com/nats-io/jwt v1.2.2 // indirect
 	github.com/nats-io/nats-server/v2 v2.7.2
 	github.com/nats-io/nats.go v1.13.1-0.20220121202836-972a071d373d
 	github.com/nats-io/nuid v1.0.1
