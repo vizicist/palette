@@ -37,6 +37,8 @@ func InitProcessInfo() {
 			ProcessInfo["mmtt_kinect"] = MmttInfo("mmtt_kinect")
 		case "mmtt_oak":
 			ProcessInfo["mmtt_oak"] = MmttInfo("mmtt_oak")
+		case "nothing":
+			// i.e. you can put "autostart":"nothing" to start nothing
 		}
 	}
 }
