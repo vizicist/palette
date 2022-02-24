@@ -5,6 +5,13 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "testapi",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
+            "args": ["api", "region.sound.list_params", "\"region\":\"A\""]
+        },
+        {
             "name": "Start",
             "type": "go",
             "request": "launch",
@@ -85,7 +92,7 @@
             "args": []
         },
         {
-            "name": "OLD start gui",
+            "name": "Start Python Gui",
             "type": "python",
             "request": "launch",
             "program": "${env:PALETTESOURCE}/python/palette_gui.py",
