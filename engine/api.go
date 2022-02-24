@@ -160,7 +160,7 @@ func (r *Router) ExecuteAPI(api string, nuid string, rawargs string) (result int
 		v, err := needStringArg("value", api, apiargs)
 		if err == nil {
 			for _, motor := range r.motors {
-				motor.setOneParamValue("misc.", "scale", v)
+				motor.setOneParamValue("misc.scale", v)
 			}
 		}
 

@@ -345,63 +345,71 @@ func (motor *Motor) ExecuteAPI(api string, args map[string]string, rawargs strin
 		log.Printf("MotorAPI: api=%s rawargs=%s\n", api, rawargs)
 	}
 
-	dot := strings.Index(api, ".")
-	var apiprefix string
-	apisuffix := api
-	if dot >= 0 {
-		apiprefix = api[0 : dot+1] // includes the dot
-		apisuffix = api[dot+1:]
-	}
-
-	// ALL *.set_params and *.set_param APIs set the params in the Motor.
-	//
-	// In addition:
-	//    Effect parameters get sent one-at-a-time to Resolume's main OSC port (typically 7000).
-
-	handled := false
-	if apisuffix == "set_params" {
-		for name, value := range args {
-			motor.setOneParamValue(apiprefix, name, value)
-		}
-		handled = true
-	}
-	if apisuffix == "set_param" {
-		name, okname := args["param"]
-		value, okvalue := args["value"]
-		if !okname || !okvalue {
-			return "", fmt.Errorf("Motor.handleSetParam: api=%s%s, missing param or value", apiprefix, apisuffix)
-		}
-		motor.setOneParamValue(apiprefix, name, value)
-		handled = true
-	}
-
 	// ALL visual.* APIs get forwarded to the FreeFrame plugin inside Resolume
-	if apiprefix == "visual." {
+	if strings.HasPrefix(api, "visual.") {
 		msg := osc.NewMessage("/api")
-		msg.Append(apisuffix)
+		msg.Append(strings.TrimPrefix(api, "visual."))
 		msg.Append(rawargs)
 		motor.toFreeFramePluginForLayer(msg)
-		handled = true
 	}
 
-	if handled {
-		return result, nil
-	}
-
-	known := true
 	switch api {
 
+	case "set_params":
+		// prefix argument gets prepended to all the parameter names.
+		prefix, okprefix := args["prefix"]
+		if !okprefix {
+			prefix = ""
+		} else {
+			prefix = prefix + "."
+		}
+		for name, value := range args {
+			motor.setOneParamValue(prefix+name, value)
+		}
+
+		/*
+			case "set_param":
+				name, okname := args["param"]
+				value, okvalue := args["value"]
+				if !okname || !okvalue {
+					return "", fmt.Errorf("Motor.handleSetParam: api=%s, missing param or value", api)
+				}
+				motor.setOneParamValue(name, value)
+		*/
+
+	case "get_params":
+		result = ""
+		sep := ""
+		prefix, okprefix := args["prefix"]
+		if !okprefix {
+			prefix = ""
+		} else {
+			prefix = prefix + "."
+		}
+		for nm := range motor.params.values {
+			name := prefix + nm
+			val := motor.params.paramValueAsString(name)
+			log.Printf("list name=%s val=%s\n", name, val)
+			result += fmt.Sprintf("%s{\"name\":\"%s\",\"value\":\"%s\"}", sep, name, val)
+			sep = ","
+		}
+		return result, nil
+
 	case "loop_recording":
-		v, err := needBoolArg("onoff", api, args)
-		if err == nil {
+		v, e := needBoolArg("onoff", api, args)
+		if e == nil {
 			motor.loopIsRecording = v
+		} else {
+			err = e
 		}
 
 	case "loop_playing":
-		v, err := needBoolArg("onoff", api, args)
-		if err == nil && v != motor.loopIsPlaying {
+		v, e := needBoolArg("onoff", api, args)
+		if e == nil && v != motor.loopIsPlaying {
 			motor.loopIsPlaying = v
 			motor.terminateActiveNotes()
+		} else {
+			err = e
 		}
 
 	case "loop_clear":
@@ -413,39 +421,49 @@ func (motor *Motor) ExecuteAPI(api string, args map[string]string, rawargs strin
 		motor.loopComb()
 
 	case "loop_length":
-		i, err := needIntArg("length", api, args)
-		if err == nil {
+		i, e := needIntArg("length", api, args)
+		if e == nil {
 			nclicks := Clicks(i)
 			if nclicks != motor.loop.length {
 				motor.loop.SetLength(nclicks)
 			}
+		} else {
+			err = e
 		}
 
 	case "loop_fade":
-		f, err := needFloatArg("fade", api, args)
-		if err == nil {
+		f, e := needFloatArg("fade", api, args)
+		if e == nil {
 			motor.fadeLoop = f
+		} else {
+			err = e
 		}
 
 	case "ANO":
 		motor.sendANO()
 
 	case "midi_thru":
-		v, err := needBoolArg("onoff", api, args)
-		if err == nil {
+		v, e := needBoolArg("onoff", api, args)
+		if e == nil {
 			motor.MIDIThru = v
+		} else {
+			err = e
 		}
 
 	case "midi_setscale":
-		v, err := needBoolArg("onoff", api, args)
-		if err == nil {
+		v, e := needBoolArg("onoff", api, args)
+		if e == nil {
 			motor.MIDISetScale = v
+		} else {
+			err = e
 		}
 
 	case "midi_usescale":
-		v, err := needBoolArg("onoff", api, args)
-		if err == nil {
+		v, e := needBoolArg("onoff", api, args)
+		if e == nil {
 			motor.MIDIUseScale = v
+		} else {
+			err = e
 		}
 
 	case "clearexternalscale":
@@ -459,25 +477,25 @@ func (motor *Motor) ExecuteAPI(api string, args map[string]string, rawargs strin
 		}
 
 	case "midi_thruscadjust":
-		v, err := needBoolArg("onoff", api, args)
-		if err == nil {
+		v, e := needBoolArg("onoff", api, args)
+		if e == nil {
 			motor.MIDIThruScadjust = v
+		} else {
+			err = e
 		}
 
 	case "set_transpose":
-		v, err := needIntArg("value", api, args)
-		if err == nil {
+		v, e := needIntArg("value", api, args)
+		if e == nil {
 			motor.TransposePitch = v
 			if Debug.Transpose {
 				log.Printf("motor API set_transpose TransposePitch=%v", v)
 			}
+		} else {
+			err = e
 		}
 
 	default:
-		known = false
-	}
-
-	if !handled && !known {
 		err = fmt.Errorf("Motor.ExecuteAPI: unknown api=%s", api)
 	}
 
@@ -527,9 +545,13 @@ func CallerFunc() string {
 	return funcname
 }
 
-func (motor *Motor) setOneParamValue(apiprefix, name, value string) {
-	motor.params.SetParamValueWithString(apiprefix+name, value, nil)
-	if apiprefix == "effect." {
+func (motor *Motor) setOneParamValue(fullname, value string) {
+
+	motor.params.SetParamValueWithString(fullname, value, nil)
+
+	if strings.HasPrefix(fullname, "effect.") {
+		name := strings.TrimPrefix(fullname, "effect.")
+		// Effect parameters get sent to Resolume
 		motor.sendEffectParam(name, value)
 	}
 }

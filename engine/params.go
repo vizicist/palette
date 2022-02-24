@@ -102,31 +102,39 @@ func (vals *ParamValues) SetParamValueWithString(name, value string, callback Pa
 func (vals *ParamValues) paramDefOf(origname string) (ParamDef, error) {
 
 	realParamName := origname
-	if strings.HasPrefix(origname, "effect.") {
+	/*
+		if strings.HasPrefix(origname, "effect.") {
 
-		// We expect effect param names to be of the form
-		// effect.{#}-{base} or effect.{#}-{base}:{param}
+			// We expect effect param names to be of the form
+			// effect.{#}-{base} or effect.{#}-{base}:{param}
 
-		restof := origname[len("effect."):]
-		if len(restof) > 1 && restof[1] != '-' {
-			restof = "1-" + restof
+			restof := origname[len("effect."):]
+			if len(restof) > 1 && restof[1] != '-' {
+				restof = "1-" + restof
+			}
+			var base string
+			var effnum int
+			n := strings.Index(restof, ":")
+			withoutcolon := restof
+			if n > 0 {
+				withoutcolon = restof[0:n]
+			}
+			// If it's a name like effect.mirror:x
+			n, err := fmt.Sscanf(withoutcolon, "%d-%s", &effnum, &base)
+			toreplace := withoutcolon
+			if n != 2 || err != nil {
+				return ParamDef{}, fmt.Errorf("ParamValues.SetParamValueWithString err=%s", err)
+			}
+			realParamName = strings.Replace(origname, toreplace, base, 1)
 		}
-		var base string
-		var effnum int
-		n := strings.Index(restof, ":")
-		withoutcolon := restof
-		if n > 0 {
-			withoutcolon = restof[0:n]
-		}
-		// If it's a name like effect.mirror:x
-		n, err := fmt.Sscanf(withoutcolon, "%d-%s", &effnum, &base)
-		toreplace := withoutcolon
-		if n != 2 || err != nil {
-			return ParamDef{}, fmt.Errorf("ParamValues.SetParamValueWithString err=%s", err)
-		}
-		realParamName = strings.Replace(origname, toreplace, base, 1)
+	*/
+	log.Printf("realParamName=%s\n", realParamName)
+	p, ok := ParamDefs[realParamName]
+	if !ok {
+		return ParamDef{}, fmt.Errorf("no parameter named %s", realParamName)
+	} else {
+		return p, nil
 	}
-	return ParamDefs[realParamName], nil
 }
 
 // realSetParamValueWithString xxx
@@ -340,7 +348,18 @@ func LoadParamDefs() error {
 			}
 		}
 
-		ParamDefs[name] = pd
+		if category == "effect" {
+			// For effect parameters, the list only has
+			// one instance of each Freeframe plugin, but
+			// the Resolume configuration has 2 instances
+			// of each plugin.
+			name = strings.TrimPrefix(name, "effect.")
+			ParamDefs["effect.1-"+name] = pd
+			ParamDefs["effect.2-"+name] = pd
+		} else {
+			ParamDefs[name] = pd
+		}
+
 	}
 	return nil
 }
@@ -353,6 +372,25 @@ func (vals *ParamValues) paramValue(name string) ParamValue {
 		return nil
 	}
 	return val
+}
+
+func (vals *ParamValues) paramValueAsString(name string) string {
+	val := vals.paramValue(name)
+	if val == nil {
+		return ""
+	}
+	switch v := val.(type) {
+	case paramValString:
+		return v.value
+	case paramValInt:
+		return fmt.Sprintf("%d", v.value)
+	case paramValFloat:
+		return fmt.Sprintf("%f", v.value)
+	case paramValBool:
+		return fmt.Sprintf("%v", v.value)
+	default:
+		return "BADVALUETYPE"
+	}
 }
 
 // ParamStringValue xxx
