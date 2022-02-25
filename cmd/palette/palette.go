@@ -33,7 +33,7 @@ func main() {
 	if eok && errout != "" {
 		os.Stdout.WriteString("error: " + errout + "\n")
 	} else if rok && result != "" {
-		os.Stdout.WriteString("result: " + result)
+		os.Stdout.WriteString(result)
 	}
 }
 
@@ -73,9 +73,12 @@ func CliCommand(args []string) map[string]string {
 		msg += "       palette set {category}.{parameter} {value} [region {region}]\n"
 		msg += "       palette get {category}.{parameter} [region {region}]\n"
 		msg += "       palette api {api} {args}\n"
+		retmap["result"] = msg
 
 	case "preset":
+
 		switch word1 {
+
 		case "load":
 			preset := word2
 			region := ""
@@ -84,6 +87,21 @@ func CliCommand(args []string) map[string]string {
 			}
 			args := fmt.Sprintf("\"region\":\"%s\",\"preset\":\"%s\"", region, preset)
 			_, err := engine.EngineAPI("preset.load", args)
+			if err != nil {
+				retmap["error"] = fmt.Sprintf("preset load: err=%s\n", err)
+			}
+
+		case "save":
+			preset := word2
+			region := ""
+			if word3 == "region" && word4 != "" {
+				region = word4
+			} else {
+				retmap["error"] = "preset save needs region value, assuming A"
+				region = "A"
+			}
+			args := fmt.Sprintf("\"region\":\"%s\",\"preset\":\"%s\"", region, preset)
+			_, err := engine.EngineAPI("preset.save", args)
 			if err != nil {
 				retmap["error"] = fmt.Sprintf("preset load: err=%s\n", err)
 			}

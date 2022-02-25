@@ -225,6 +225,15 @@ func presetFilePath(preset string, writable bool) string {
 	return filepath.Join(PaletteDir(), "presets", category, presetjson)
 }
 
+func PresetNameSplit(preset string) (string, string) {
+	words := strings.SplitN(preset, ".", 2)
+	if len(words) == 1 {
+		return "", words[0]
+	} else {
+		return words[0], words[1]
+	}
+}
+
 // MIDIFilePath xxx
 func MIDIFilePath(nm string) string {
 	return filepath.Join(LocalPaletteDir(), "midifiles", nm)

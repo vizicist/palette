@@ -431,6 +431,29 @@ func (motor *Motor) ExecuteAPI(api string, args map[string]string, rawargs strin
 		}
 		return "", nil
 
+	case "save":
+		preset, okpreset := args["preset"]
+		if !okpreset {
+			return "", fmt.Errorf("missing preset parameter")
+		}
+		log.Printf("Should be saving preset=%s\n", preset)
+		wantCategory, _ := PresetNameSplit(preset)
+		path := WriteablePresetFilePath(preset)
+		s := ""
+		sep := "{\n    \"params\": {\n"
+		for nm := range motor.params.values {
+			thisCategory, thisPreset := PresetNameSplit(nm)
+			if thisCategory != wantCategory {
+				continue
+			}
+			s += fmt.Sprintf("%s        \"%s\":\"%s\"", sep, thisPreset, motor.params.paramValueAsString(nm))
+			sep = ",\n"
+		}
+		s += "\n    }\n}"
+		data := []byte(s)
+		err := ioutil.WriteFile(path, data, 0644)
+		return "", err
+
 	case "loop_recording":
 		v, e := needBoolArg("onoff", api, args)
 		if e == nil {

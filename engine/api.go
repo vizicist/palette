@@ -123,6 +123,24 @@ func (r *Router) ExecuteAPI(api string, nuid string, rawargs string) (result int
 			}
 			return "", nil
 
+		case "save":
+			region, ok := apiargs["region"]
+			if !ok {
+				return nil, fmt.Errorf("ExecuteAPI: missing region argument")
+			}
+			motor, ok := r.motors[region]
+			if !ok {
+				return nil, fmt.Errorf("ExecuteAPI: no region named %s", region)
+			}
+			r, err := motor.ExecuteAPI(apisuffix, apiargs, rawargs)
+			if err != nil {
+				return nil, err
+			}
+			if r != "" {
+				return nil, fmt.Errorf("unexpected non-null result from preset load api")
+			}
+			return "", nil
+
 		default:
 			return nil, fmt.Errorf("unrecognized prefix sub-command: %s", api)
 		}
