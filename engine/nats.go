@@ -97,7 +97,8 @@ func PublishAliveEvent(secs float64, cursorCount int) error {
 
 // EngineAPI xxx
 func EngineAPI(api, params string) (retmap map[string]string, err error) {
-	timeout := 3 * time.Second
+	// Long timeout to better handle engine debugging
+	timeout := 60 * time.Second
 	args := "{ " +
 		"\"nuid\": \"" + MyNUID() + "\", " +
 		"\"api\": \"" + api + "\", " +
