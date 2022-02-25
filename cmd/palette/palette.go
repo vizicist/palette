@@ -42,7 +42,7 @@ func CliCommand(args []string) map[string]string {
 	retmap := map[string]string{}
 
 	nargs := len(args)
-	var word0, word1, word2 string
+	var word0, word1, word2, word3, word4 string
 	if nargs > 0 {
 		word0 = args[0]
 	}
@@ -51,6 +51,12 @@ func CliCommand(args []string) map[string]string {
 	}
 	if nargs > 2 {
 		word2 = args[2]
+	}
+	if nargs > 3 {
+		word3 = args[3]
+	}
+	if nargs > 4 {
+		word4 = args[4]
 	}
 
 	var msg string
@@ -62,7 +68,41 @@ func CliCommand(args []string) map[string]string {
 		msg = "usage:  palette start [process]\n"
 		msg += "       palette stop [process]\n"
 		msg += "       palette sendlogs\n"
+		msg += "       palette preset load {category}.{preset} [region {region}]\n"
+		msg += "       palette preset list {category}\n"
+		msg += "       palette set {category}.{parameter} {value} [region {region}]\n"
+		msg += "       palette get {category}.{parameter} [region {region}]\n"
 		msg += "       palette api {api} {args}\n"
+
+	case "preset":
+		switch word1 {
+		case "load":
+			preset := word2
+			region := ""
+			if word3 == "region" && word4 != "" {
+				region = word4
+			}
+			args := fmt.Sprintf("\"region\":\"%s\",\"preset\":\"%s\"", region, preset)
+			_, err := engine.EngineAPI("preset.load", args)
+			if err != nil {
+				retmap["error"] = fmt.Sprintf("preset load: err=%s\n", err)
+			}
+
+		case "list":
+			category := ""
+			if word2 != "" {
+				category = word2
+			}
+			args := fmt.Sprintf("\"category\":\"%s\"", category)
+			r, err := engine.EngineAPI("preset.list", args)
+			if err != nil {
+				retmap["error"] = fmt.Sprintf("preset list: err=%s\n", err)
+			}
+			retmap = r
+
+		default:
+			retmap["error"] = fmt.Sprintf("Unknown preset sub-command: %s\n", word2)
+		}
 
 	case "sendlogs":
 		retmap = CliCommand([]string{"api", "global.sendlogs"})
