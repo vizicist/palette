@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 )
@@ -31,18 +32,100 @@ func (r *Router) ExecuteAPI(api string, nuid string, rawargs string) (result int
 
 	if apiprefix == "region" {
 
-		region := optionalStringArg("region", apiargs, "")
-		if region == "" {
-			region = r.getRegionForNUID(nuid)
-		} else {
-			// Remove it from the args given to ExecuteAPI
-			delete(apiargs, "region")
+		return nil, fmt.Errorf("region.* APIs have been removed")
+		/*
+			region := optionalStringArg("region", apiargs, "")
+			if region == "" {
+				region = r.getRegionForNUID(nuid)
+			} else {
+				// Remove it from the args given to ExecuteAPI
+				delete(apiargs, "region")
+			}
+			motor, ok := r.motors[region]
+			if !ok {
+				return nil, fmt.Errorf("api/event=%s there is no region named %s", api, region)
+			}
+			return motor.ExecuteAPI(apisuffix, apiargs, rawargs)
+		*/
+	}
+
+	if apiprefix == "preset" {
+
+		switch apisuffix {
+		case "list":
+
+			wantCategory := optionalStringArg("category", apiargs, "")
+			result := "["
+			sep := ""
+
+			walker := func(path string, info os.FileInfo, err error) error {
+				// log.Printf("Crawling: %#v\n", path)
+				if err != nil {
+					return err
+				}
+				if info.IsDir() {
+					return nil
+				}
+				// Only look at .json files
+				if !strings.HasSuffix(path, ".json") {
+					return nil
+				}
+				path = strings.TrimSuffix(path, ".json")
+				// the last two components of the path are category and preset
+				thisCategory := ""
+				thisPreset := ""
+				lastslash2 := -1
+				lastslash := strings.LastIndex(path, "\\")
+				if lastslash >= 0 {
+					thisPreset = path[lastslash+1:]
+					path2 := path[0:lastslash]
+					lastslash2 = strings.LastIndex(path2, "\\")
+					if lastslash2 >= 0 {
+						thisCategory = path2[lastslash2+1:]
+					}
+				}
+				if wantCategory == "" || thisCategory == wantCategory {
+					result += sep + "\"" + thisCategory + "." + thisPreset + "\""
+					sep = ","
+				}
+				return nil
+			}
+
+			presetsDir1 := filepath.Join(PaletteDir(), "presets")
+			err = filepath.Walk(presetsDir1, walker)
+			if err != nil {
+				log.Printf("filepath.Walk: err=%s\n", err)
+			}
+			presetsDir2 := filepath.Join(LocalPaletteDir(), "presets")
+			err = filepath.Walk(presetsDir2, walker)
+			if err != nil {
+				log.Printf("filepath.Walk: err=%s\n", err)
+			}
+			result += "]"
+			return result, nil
+
+		case "load":
+			wantRegion := optionalStringArg("region", apiargs, "")
+			wantPreset := optionalStringArg("preset", apiargs, "")
+			if wantPreset == "" {
+				return nil, fmt.Errorf("no preset argument in preset.log api")
+			}
+			for region, motor := range r.motors {
+				if wantRegion == "" || wantRegion == region {
+					r, err := motor.ExecuteAPI(apisuffix, apiargs, rawargs)
+					if err != nil {
+						return nil, err
+					}
+					if r != "" {
+						return nil, fmt.Errorf("unexpected non-null result from preset load api")
+					}
+				}
+			}
+			return "", nil
+
+		default:
+			return nil, fmt.Errorf("unrecognized prefix sub-command: %s", api)
 		}
-		motor, ok := r.motors[region]
-		if !ok {
-			return nil, fmt.Errorf("api/event=%s there is no region named %s", api, region)
-		}
-		return motor.ExecuteAPI(apisuffix, apiargs, rawargs)
 	}
 
 	/////////////////////// process.* APIs

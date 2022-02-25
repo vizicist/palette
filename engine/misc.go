@@ -198,6 +198,33 @@ func ConfigFilePath(nm string) string {
 	return filepath.Join(LocalPaletteDir(), "config", nm)
 }
 
+// ReadablePresetFilePath xxx
+func ReadablePresetFilePath(preset string) string {
+	return presetFilePath(preset, false)
+}
+
+// WritablePresetFilePath xxx
+func WriteablePresetFilePath(preset string) string {
+	return presetFilePath(preset, true)
+}
+
+// presetFilePath returns the full path of a preset file.
+func presetFilePath(preset string, writable bool) string {
+	category := ""
+	i := strings.Index(preset, ".")
+	if i >= 0 {
+		category = preset[0:i]
+		preset = preset[i+1:]
+	}
+	presetjson := preset + ".json"
+	localpath := filepath.Join(LocalPaletteDir(), "presets", category, presetjson)
+	// Use the local path if it exists or we want a writable path
+	if writable || FileExists(localpath) {
+		return localpath
+	}
+	return filepath.Join(PaletteDir(), "presets", category, presetjson)
+}
+
 // MIDIFilePath xxx
 func MIDIFilePath(nm string) string {
 	return filepath.Join(LocalPaletteDir(), "midifiles", nm)

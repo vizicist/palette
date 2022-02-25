@@ -9,7 +9,17 @@
             "type": "go",
             "request": "launch",
             "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
-            "args": ["api", "region.sound.list_params", "\"region\":\"A\""]
+            "args": ["preset", "load", "visual.Circle_Bottom Up"]
+        },
+        {
+            "name": "Engine (palette_engine.go)",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${env:PALETTESOURCE}/cmd/palette_engine/palette_engine.go",
+            "env": {
+                "Path": "${env:Path};${workspaceFolder};c:/Users/me/Documents/github/vizicist/palette/SenselLib/x64;"             },
+            "args": []
         },
         {
             "name": "Start",
@@ -80,16 +90,6 @@
             "request": "launch",
             "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
             "args": ["api", "process.stop", "\"process\":\"gui\""]
-        },
-        {
-            "name": "Engine (palette_engine.go)",
-            "type": "go",
-            "request": "launch",
-            "mode": "auto",
-            "program": "${env:PALETTESOURCE}/cmd/palette_engine/palette_engine.go",
-            "env": {
-                "Path": "${env:Path};${workspaceFolder};c:/Users/me/Documents/github/vizicist/palette/SenselLib/x64;"             },
-            "args": []
         },
         {
             "name": "Start Python Gui",

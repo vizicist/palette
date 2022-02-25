@@ -99,39 +99,10 @@ func (vals *ParamValues) SetParamValueWithString(name, value string, callback Pa
 	return vals.realSetParamValueWithString(name, value, callback, true)
 }
 
-func (vals *ParamValues) paramDefOf(origname string) (ParamDef, error) {
-
-	realParamName := origname
-	/*
-		if strings.HasPrefix(origname, "effect.") {
-
-			// We expect effect param names to be of the form
-			// effect.{#}-{base} or effect.{#}-{base}:{param}
-
-			restof := origname[len("effect."):]
-			if len(restof) > 1 && restof[1] != '-' {
-				restof = "1-" + restof
-			}
-			var base string
-			var effnum int
-			n := strings.Index(restof, ":")
-			withoutcolon := restof
-			if n > 0 {
-				withoutcolon = restof[0:n]
-			}
-			// If it's a name like effect.mirror:x
-			n, err := fmt.Sscanf(withoutcolon, "%d-%s", &effnum, &base)
-			toreplace := withoutcolon
-			if n != 2 || err != nil {
-				return ParamDef{}, fmt.Errorf("ParamValues.SetParamValueWithString err=%s", err)
-			}
-			realParamName = strings.Replace(origname, toreplace, base, 1)
-		}
-	*/
-	log.Printf("realParamName=%s\n", realParamName)
-	p, ok := ParamDefs[realParamName]
+func (vals *ParamValues) paramDefOf(name string) (ParamDef, error) {
+	p, ok := ParamDefs[name]
 	if !ok {
-		return ParamDef{}, fmt.Errorf("no parameter named %s", realParamName)
+		return ParamDef{}, fmt.Errorf("no parameter named %s", name)
 	} else {
 		return p, nil
 	}

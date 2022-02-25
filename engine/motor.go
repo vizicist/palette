@@ -1,7 +1,9 @@
 package engine
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"math/rand"
 	"runtime"
@@ -355,45 +357,79 @@ func (motor *Motor) ExecuteAPI(api string, args map[string]string, rawargs strin
 
 	switch api {
 
-	case "set_params":
-		// prefix argument gets prepended to all the parameter names.
-		prefix, okprefix := args["prefix"]
-		if !okprefix {
-			prefix = ""
-		} else {
-			prefix = prefix + "."
+	case "set":
+		// if preset, category gets prepended to all the parameter names.
+		prefix := ""
+		category, okcategory := args["category"]
+		if okcategory {
+			prefix = category + "."
 		}
 		for name, value := range args {
-			motor.setOneParamValue(prefix+name, value)
+			if name != "category" {
+				motor.setOneParamValue(prefix+name, value)
+			}
 		}
 
-		/*
-			case "set_param":
-				name, okname := args["param"]
-				value, okvalue := args["value"]
-				if !okname || !okvalue {
-					return "", fmt.Errorf("Motor.handleSetParam: api=%s, missing param or value", api)
-				}
-				motor.setOneParamValue(name, value)
-		*/
-
-	case "get_params":
+	case "get":
 		result = ""
 		sep := ""
-		prefix, okprefix := args["prefix"]
-		if !okprefix {
-			prefix = ""
-		} else {
-			prefix = prefix + "."
+		prefix := ""
+		// if preset, category gets prepended to all the parameter names.
+		category, okcategory := args["category"]
+		if okcategory {
+			prefix = category + "."
 		}
 		for nm := range motor.params.values {
 			name := prefix + nm
 			val := motor.params.paramValueAsString(name)
-			log.Printf("list name=%s val=%s\n", name, val)
 			result += fmt.Sprintf("%s{\"name\":\"%s\",\"value\":\"%s\"}", sep, name, val)
 			sep = ","
 		}
-		return result, nil
+
+	case "load":
+		preset, okpreset := args["preset"]
+		if !okpreset {
+			return "", fmt.Errorf("missing preset parameter")
+		}
+		log.Printf("Should be loading preset=%s\n", preset)
+		path := ReadablePresetFilePath(preset)
+		bytes, err := ioutil.ReadFile(path)
+		if err != nil {
+			return "", err
+		}
+		var f interface{}
+		err = json.Unmarshal(bytes, &f)
+		if err != nil {
+			return "", fmt.Errorf("unable to Unmarshal path=%s, err=%s", path, err)
+		}
+		toplevel := f.(map[string]interface{})
+		params, okparams := toplevel["params"]
+		if !okparams {
+			return "", fmt.Errorf("no params value in jsom")
+		}
+		paramsmap, okmap := params.(map[string]interface{})
+		if !okmap {
+			return "", fmt.Errorf("params value is not a map in jsom")
+		}
+		// If the preset value is of the form {category}.{preset},
+		// then we pull off the category and add it as a prefix
+		// to the parameter names.
+		prefix := ""
+		i := strings.Index(preset, ".")
+		if i >= 0 {
+			prefix = preset[0 : i+1]
+		}
+		for nm := range paramsmap {
+			i := paramsmap[nm]
+			s, oks := i.(string)
+			if !oks {
+				log.Printf("nm=%s value isn't a string in params json", nm)
+			}
+			log.Printf("paramsmap nm=%s s=%s\n", nm, s)
+			fullname := prefix + nm
+			motor.setOneParamValue(fullname, s)
+		}
+		return "", nil
 
 	case "loop_recording":
 		v, e := needBoolArg("onoff", api, args)
@@ -548,6 +584,16 @@ func CallerFunc() string {
 func (motor *Motor) setOneParamValue(fullname, value string) {
 
 	motor.params.SetParamValueWithString(fullname, value, nil)
+
+	if strings.HasPrefix(fullname, "visual.") {
+		log.Printf("Should setOneParamValue be setting visual.* params to FF?")
+		name := strings.TrimPrefix(fullname, "visual.")
+		msg := osc.NewMessage("/api")
+		msg.Append("set_params")
+		args := fmt.Sprintf("{\"%s\":\"%s\"}", name, value)
+		msg.Append(args)
+		motor.toFreeFramePluginForLayer(msg)
+	}
 
 	if strings.HasPrefix(fullname, "effect.") {
 		name := strings.TrimPrefix(fullname, "effect.")
