@@ -26,8 +26,10 @@ func main() {
 	engine.InitNATS()
 	engine.ConnectToNATSServer()
 
+	regionPtr := flag.String("region", "*", "Region name or *")
+
 	flag.Parse()
-	out := CliCommand(flag.Args())
+	out := CliCommand(*regionPtr, flag.Args())
 	// If the output starts with [ or {,
 	// we assume it's a json array or object,
 	// and print it out more readably.
@@ -47,11 +49,11 @@ func usage() string {
     palette start [process]
     palette stop [process]
     palette sendlogs
-    palette list {category}
-    palette load {region}.{category}.{preset}
-    palette save {region}.{category}.{preset}
-    palette set {region}.{category}.{parameter} {value}]
-    palette get {region}.{category}.{parameter}
+    palette preset list [{category}]
+    palette [-region={region}] load {category}.{preset}
+    palette [-region {region}] save {category}.{preset}
+    palette [-region {region}] set {category}.{parameter} [{value}]
+    palette [-region {region}] get {category}.{parameter}
     palette api {api} {args}`
 }
 
@@ -108,56 +110,60 @@ func interpretApiOutput(rawresult string, err error) string {
 	return result
 }
 
-func CliCommand(args []string) string {
+func CliCommand(region string, args []string) string {
 
-	nargs := len(args)
-	var word0, word1, word2 string
-	if nargs > 0 {
-		word0 = args[0]
-	}
-	if nargs > 1 {
-		word1 = args[1]
-	}
-	if nargs > 2 {
-		word2 = args[2]
+	if len(args) == 0 {
+		return usage()
 	}
 
 	const engineexe = "palette_engine.exe"
 
-	switch word0 {
+	switch args[0] {
 
-	case "":
-		return usage()
-
-	case "set":
-		args := fmt.Sprintf("\"name\":\"%s\",\"value\":\"%s\"", word1, word2)
-		return interpretApiOutput(engine.EngineAPI("value.set", args))
+	case "load", "save":
+		if len(args) < 1 {
+			return "Insufficient arguments"
+		}
+		apiargs := fmt.Sprintf("\"region\":\"%s\",\"preset\":\"%s\"", region, args[1])
+		return interpretApiOutput(engine.EngineAPI(args[0], apiargs))
 
 	case "get":
-		args := fmt.Sprintf("\"name\":\"%s\"", word1)
-		return interpretApiOutput(engine.EngineAPI("value.get", args))
+		if len(args) < 1 {
+			return "Insufficient arguments"
+		}
+		apiargs := fmt.Sprintf("\"region\":\"%s\",\"name\":\"%s\"", region, args[1])
+		return interpretApiOutput(engine.EngineAPI(args[0], apiargs))
 
-	case "load":
-		args := fmt.Sprintf("\"preset\":\"%s\"", word1)
-		return interpretApiOutput(engine.EngineAPI("preset.load", args))
+	case "set":
+		if len(args) < 2 {
+			return "Insufficient arguments"
+		}
+		apiargs := fmt.Sprintf("\"region\":\"%s\",\"name\":\"%s\",\"value\":\"%s\"", region, args[1], args[2])
+		return interpretApiOutput(engine.EngineAPI(args[0], apiargs))
 
-	case "save":
-		args := fmt.Sprintf("\"preset\":\"%s\"", word2)
-		return interpretApiOutput(engine.EngineAPI("preset.save", args))
-
-	case "list":
-		category := ""
-		if word1 != "" {
-			category = word1
+	case "preset":
+		if len(args) < 2 {
+			return "preset command not enough arguments\n"
+		}
+		if args[1] != "list" {
+			return "preset command only takes list\n"
+		}
+		category := "*"
+		if len(args) > 2 {
+			category = args[2]
 		}
 		args := fmt.Sprintf("\"category\":\"%s\"", category)
 		return interpretApiOutput(engine.EngineAPI("preset.list", args))
 
 	case "sendlogs":
-		return CliCommand([]string{"api", "global.sendlogs"})
+		return interpretApiOutput(engine.EngineAPI("global.sendlogs", ""))
 
 	case "start":
-		if word1 == "" || word1 == "engine" {
+		process := "engine"
+		if len(args) > 0 {
+			process = args[1]
+		}
+		if process == "engine" {
 
 			// Kill any currently-running engine.
 			// The other processes will be killed by
@@ -173,28 +179,34 @@ func CliCommand(args []string) string {
 			return "Engine started\n"
 		} else {
 			// Start a specific process
-			args := fmt.Sprintf("\"process\":\"%s\"", word1)
+			args := fmt.Sprintf("\"process\":\"%s\"", process)
 			return interpretApiOutput(engine.EngineAPI("process.start", args))
 		}
 
 	case "stop":
-		if word1 == "" || word1 == "engine" {
+		process := "engine"
+		if len(args) > 0 {
+			process = args[1]
+		}
+		if process == "engine" {
 			// first stop everything else
 			engine.StopRunning("all")
 			// then kill ourselves
 			engine.KillExecutable(engineexe)
 		} else {
-			// engine.StopRunning(word1)
-			args := fmt.Sprintf("\"process\":\"%s\"", word1)
+			args := fmt.Sprintf("\"process\":\"%s\"", process)
 			return interpretApiOutput(engine.EngineAPI("process.stop", args))
 		}
 
 	case "api":
-		return interpretApiOutput(engine.EngineAPI(word1, word2))
+		if len(args) < 2 {
+			return "Insufficient arguments"
+		}
+		return interpretApiOutput(engine.EngineAPI(args[1], args[2]))
 
 	default:
 		// NEW retmap
-		return fmt.Sprintf("Unrecognized command: %s", word0)
+		return fmt.Sprintf("Unrecognized command: %s", args[0])
 	}
 	return ""
 }

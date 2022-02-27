@@ -34,23 +34,9 @@ func (motor *Motor) ExecuteAPI(api string, args map[string]string, rawargs strin
 		}
 		log.Printf("Should be loading preset=%s\n", preset)
 		path := ReadablePresetFilePath(preset)
-		bytes, err := ioutil.ReadFile(path)
+		paramsmap, err := LoadParamsMap(path)
 		if err != nil {
 			return "", err
-		}
-		var f interface{}
-		err = json.Unmarshal(bytes, &f)
-		if err != nil {
-			return "", fmt.Errorf("unable to Unmarshal path=%s, err=%s", path, err)
-		}
-		toplevel := f.(map[string]interface{})
-		params, okparams := toplevel["params"]
-		if !okparams {
-			return "", fmt.Errorf("no params value in jsom")
-		}
-		paramsmap, okmap := params.(map[string]interface{})
-		if !okmap {
-			return "", fmt.Errorf("params value is not a map in jsom")
 		}
 		// If the preset value is of the form {category}.{preset},
 		// then we pull off the category and add it as a prefix
@@ -60,15 +46,14 @@ func (motor *Motor) ExecuteAPI(api string, args map[string]string, rawargs strin
 		if i >= 0 {
 			prefix = preset[0 : i+1]
 		}
-		for nm := range paramsmap {
-			i := paramsmap[nm]
-			s, oks := i.(string)
-			if !oks {
+		for nm, ival := range paramsmap {
+			val, okval := ival.(string)
+			if !okval {
 				log.Printf("nm=%s value isn't a string in params json", nm)
 			}
-			log.Printf("paramsmap nm=%s s=%s\n", nm, s)
+			log.Printf("paramsmap nm=%s s=%s\n", nm, val)
 			fullname := prefix + nm
-			err = motor.SetOneParamValue(fullname, s)
+			err = motor.SetOneParamValue(fullname, val)
 			if err != nil {
 				return "", err
 			}
@@ -101,6 +86,18 @@ func (motor *Motor) ExecuteAPI(api string, args map[string]string, rawargs strin
 		s += "\n    }\n}"
 		data := []byte(s)
 		err := ioutil.WriteFile(path, data, 0644)
+		return "", err
+
+	case "send":
+		log.Printf("Should be sending all parameters for region=%s\n", motor.padName)
+		for nm := range motor.params.values {
+			valstring, e := motor.params.paramValueAsString(nm)
+			if e != nil {
+				log.Printf("Unexepected error from paramValueAsString for nm=%s\n", nm)
+				continue
+			}
+			log.Printf("Should send nm=%s val=%s\n", nm, valstring)
+		}
 		return "", err
 
 	case "loop_recording":
@@ -208,4 +205,30 @@ func (motor *Motor) ExecuteAPI(api string, args map[string]string, rawargs strin
 	}
 
 	return result, err
+}
+
+func LoadParamsMap(path string) (map[string]interface{}, error) {
+	bytes, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	var f interface{}
+	err = json.Unmarshal(bytes, &f)
+	if err != nil {
+		return nil, fmt.Errorf("unable to Unmarshal path=%s, err=%s", path, err)
+	}
+	toplevel, ok := f.(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("unable to convert params to map[string]interface{}")
+
+	}
+	params, okparams := toplevel["params"]
+	if !okparams {
+		return nil, fmt.Errorf("no params value in json")
+	}
+	paramsmap, okmap := params.(map[string]interface{})
+	if !okmap {
+		return nil, fmt.Errorf("params value is not a map[string]string in jsom")
+	}
+	return paramsmap, nil
 }
