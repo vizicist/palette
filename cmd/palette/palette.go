@@ -1,12 +1,13 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
-	"log"
 	"os"
 	"os/signal"
 	"path/filepath"
+	"sort"
 	"syscall"
 
 	_ "github.com/vizicist/palette/block"
@@ -26,23 +27,91 @@ func main() {
 	engine.ConnectToNATSServer()
 
 	flag.Parse()
-	retmap := CliCommand(flag.Args())
-
-	result, rok := retmap["result"]
-	errout, eok := retmap["error"]
-	if eok && errout != "" {
-		os.Stdout.WriteString("error: " + errout + "\n")
-	} else if rok && result != "" {
-		os.Stdout.WriteString(result)
+	out := CliCommand(flag.Args())
+	// If the output starts with [ or {,
+	// we assume it's a json array or object,
+	// and print it out more readably.
+	if out != "" {
+		switch out[0] {
+		case '[':
+			out = readableArray(out)
+		case '{':
+			out = readableObject(out)
+		}
 	}
+	os.Stdout.WriteString(out)
 }
 
-func CliCommand(args []string) map[string]string {
+func usage() string {
+	return `Usage:
+    palette start [process]
+    palette stop [process]
+    palette sendlogs
+    palette list {category}
+    palette load {region}.{category}.{preset}
+    palette save {region}.{category}.{preset}
+    palette set {region}.{category}.{parameter} {value}]
+    palette get {region}.{category}.{parameter}
+    palette api {api} {args}`
+}
 
-	retmap := map[string]string{}
+func readableArray(s string) string {
+	var arr []string
+	err := json.Unmarshal([]byte(s), &arr)
+	if err != nil {
+		return fmt.Sprintf("Unable to print API array output? err=%s s=%s", err, s)
+	}
+	sort.Strings(arr)
+	out := ""
+	for _, val := range arr {
+		out += fmt.Sprintf("%s\n", val)
+	}
+	return out
+}
+
+func readableObject(s string) string {
+	objmap, err := engine.StringMap(s)
+	if err != nil {
+		return fmt.Sprintf("Unable to parse json: %s", s)
+	}
+
+	arr := make([]string, 0, len(objmap))
+	for key, val := range objmap {
+		arr = append(arr, fmt.Sprintf("%s %s\n", key, val))
+	}
+	sort.Strings(arr)
+	out := ""
+	for _, val := range arr {
+		out += fmt.Sprintf("%s\n", val)
+	}
+	return out
+}
+
+// interpretApiOutput takes the result of an API invocation and
+// produces what will appear in visible output from a CLI command.
+func interpretApiOutput(rawresult string, err error) string {
+	if err != nil {
+		return fmt.Sprintf("Internal error: %s", err)
+	}
+	retmap, err2 := engine.StringMap(rawresult)
+	if err2 != nil {
+		return fmt.Sprintf("API produced non-json output: %s", rawresult)
+	}
+	e, eok := retmap["error"]
+	if eok {
+		return fmt.Sprintf("API error: %s", e)
+	}
+	result, rok := retmap["result"]
+	if !rok {
+		return "API produced no error or result"
+	}
+	return result
+}
+
+func CliCommand(args []string) string {
 
 	nargs := len(args)
-	var word0, word1, word2, word3, word4 string
+	var word0, word1, word2 string
 	if nargs > 0 {
 		word0 = args[0]
 	}
@@ -52,78 +121,40 @@ func CliCommand(args []string) map[string]string {
 	if nargs > 2 {
 		word2 = args[2]
 	}
-	if nargs > 3 {
-		word3 = args[3]
-	}
-	if nargs > 4 {
-		word4 = args[4]
-	}
 
-	var msg string
 	const engineexe = "palette_engine.exe"
 
 	switch word0 {
 
 	case "":
-		msg = "usage:  palette start [process]\n"
-		msg += "       palette stop [process]\n"
-		msg += "       palette sendlogs\n"
-		msg += "       palette preset load {category}.{preset} [region {region}]\n"
-		msg += "       palette preset list {category}\n"
-		msg += "       palette set {category}.{parameter} {value} [region {region}]\n"
-		msg += "       palette get {category}.{parameter} [region {region}]\n"
-		msg += "       palette api {api} {args}\n"
-		retmap["result"] = msg
+		return usage()
 
-	case "preset":
+	case "set":
+		args := fmt.Sprintf("\"name\":\"%s\",\"value\":\"%s\"", word1, word2)
+		return interpretApiOutput(engine.EngineAPI("value.set", args))
 
-		switch word1 {
+	case "get":
+		args := fmt.Sprintf("\"name\":\"%s\"", word1)
+		return interpretApiOutput(engine.EngineAPI("value.get", args))
 
-		case "load":
-			preset := word2
-			region := ""
-			if word3 == "region" && word4 != "" {
-				region = word4
-			}
-			args := fmt.Sprintf("\"region\":\"%s\",\"preset\":\"%s\"", region, preset)
-			_, err := engine.EngineAPI("preset.load", args)
-			if err != nil {
-				retmap["error"] = fmt.Sprintf("preset load: err=%s\n", err)
-			}
+	case "load":
+		args := fmt.Sprintf("\"preset\":\"%s\"", word1)
+		return interpretApiOutput(engine.EngineAPI("preset.load", args))
 
-		case "save":
-			preset := word2
-			region := ""
-			if word3 == "region" && word4 != "" {
-				region = word4
-			} else {
-				retmap["error"] = "preset save needs region value, assuming A"
-				region = "A"
-			}
-			args := fmt.Sprintf("\"region\":\"%s\",\"preset\":\"%s\"", region, preset)
-			_, err := engine.EngineAPI("preset.save", args)
-			if err != nil {
-				retmap["error"] = fmt.Sprintf("preset load: err=%s\n", err)
-			}
+	case "save":
+		args := fmt.Sprintf("\"preset\":\"%s\"", word2)
+		return interpretApiOutput(engine.EngineAPI("preset.save", args))
 
-		case "list":
-			category := ""
-			if word2 != "" {
-				category = word2
-			}
-			args := fmt.Sprintf("\"category\":\"%s\"", category)
-			r, err := engine.EngineAPI("preset.list", args)
-			if err != nil {
-				retmap["error"] = fmt.Sprintf("preset list: err=%s\n", err)
-			}
-			retmap = r
-
-		default:
-			retmap["error"] = fmt.Sprintf("Unknown preset sub-command: %s\n", word2)
+	case "list":
+		category := ""
+		if word1 != "" {
+			category = word1
 		}
+		args := fmt.Sprintf("\"category\":\"%s\"", category)
+		return interpretApiOutput(engine.EngineAPI("preset.list", args))
 
 	case "sendlogs":
-		retmap = CliCommand([]string{"api", "global.sendlogs"})
+		return CliCommand([]string{"api", "global.sendlogs"})
 
 	case "start":
 		if word1 == "" || word1 == "engine" {
@@ -137,16 +168,13 @@ func CliCommand(args []string) map[string]string {
 			fullexe := filepath.Join(engine.PaletteDir(), "bin", engineexe)
 			_, err := engine.StartExecutableLogOutput("engine", fullexe, true, "")
 			if err != nil {
-				retmap["error"] = fmt.Sprintf("start: err=%s\n", err)
+				return fmt.Sprintf("Engine not started: err=%s\n", err)
 			}
+			return "Engine started\n"
 		} else {
 			// Start a specific process
-			// engine.StartRunning(word1)
 			args := fmt.Sprintf("\"process\":\"%s\"", word1)
-			_, err := engine.EngineAPI("process.start", args)
-			if err != nil {
-				retmap["error"] = fmt.Sprintf("start: process=%s err=%s\n", word1, err)
-			}
+			return interpretApiOutput(engine.EngineAPI("process.start", args))
 		}
 
 	case "stop":
@@ -158,28 +186,15 @@ func CliCommand(args []string) map[string]string {
 		} else {
 			// engine.StopRunning(word1)
 			args := fmt.Sprintf("\"process\":\"%s\"", word1)
-			_, err := engine.EngineAPI("process.stop", args)
-			if err != nil {
-				retmap["error"] = fmt.Sprintf("start: process=%s err=%s\n", word1, err)
-			}
+			return interpretApiOutput(engine.EngineAPI("process.stop", args))
 		}
 
 	case "api":
-		var e error
-		retmap, e = engine.EngineAPI(word1, word2)
-		if e != nil {
-			// internal error
-			log.Printf("api: error=%s\n", e)
-			// NEW retmap
-			retmap = map[string]string{}
-			retmap["error"] = fmt.Sprintf("internal err=%s\n", e)
-		}
+		return interpretApiOutput(engine.EngineAPI(word1, word2))
 
 	default:
 		// NEW retmap
-		retmap = map[string]string{}
-		retmap["error"] = fmt.Sprintf("cliCommand: unrecognized %s\n", word0)
+		return fmt.Sprintf("Unrecognized command: %s", word0)
 	}
-
-	return retmap
+	return ""
 }
