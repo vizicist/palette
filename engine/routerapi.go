@@ -21,29 +21,63 @@ func (r *Router) ExecuteAPI(api string, nuid string, rawargs string) (result int
 
 	result = "" // pre-populate most common result
 
-	words := strings.SplitN(api, ".", 2)
-	if len(words) != 2 {
-		return nil, fmt.Errorf("Router.ExecuteAPI: api=%s is badly formatted, needs a dot", api)
+	region, regionok := apiargs["region"]
+	if !regionok {
+		region = "*"
 	}
 
-	apisuffix := words[1]
+	words := strings.Split(api, ".")
+	apiprefix := words[0]
+	apisuffix := ""
+	if len(words) > 1 {
+		apisuffix = words[1]
+	}
 
-	switch words[0] {
+	switch apiprefix {
 
-	case "region":
-		return nil, fmt.Errorf("region.* APIs have been removed")
+	// These are the APIs that are region-specific
+	case "load":
+		preset, okpreset := apiargs["preset"]
+		if !okpreset {
+			return "", fmt.Errorf("no preset argument in load api")
+		}
+		words := strings.Split(preset, ".")
+		if len(words) > 1 && words[0] == "quad" {
+			path := ReadablePresetFilePath(preset)
+			paramsmap, err := LoadParamsMap(path)
+			if err != nil {
+				return "", err
+			}
+			err = LoadQuadParams(paramsmap)
+			if err != nil {
+				return "", err
+			}
+			return "", nil
+			// return r.executeAPI(region, api, apiargs, rawargs)
+		}
+		if !regionok {
+			return nil, fmt.Errorf("Router.ExecuteAPI: api=%s missing region argument", api)
+		}
+		return r.executeRegionAPI(region, api, apiargs, rawargs)
 
-	case "value":
-		return r.executeValueAPI(apisuffix, apiargs, rawargs)
+	case "save", "get", "set":
+		if !regionok {
+			return nil, fmt.Errorf("Router.ExecuteAPI: api=%s missing region argument", api)
+		}
+		return r.executeRegionAPI(region, api, apiargs, rawargs)
 
-	case "preset":
-		return r.executePresetAPI(apisuffix, apiargs, rawargs)
+	case "preset.list":
+		return r.executePresetAPI("list", apiargs, rawargs)
 
-	case "process":
-		return r.executeProcessAPI(apisuffix, apiargs)
+	case "process.start", "process.stop":
+		return r.executeProcessAPI(api, apiargs)
 
 	case "global":
 		return r.executeGlobalAPI(apisuffix, apiargs)
+
+	case "sendlogs":
+		SendLogs()
+		return "", nil
 
 	default:
 		return nil, fmt.Errorf("ExecuteAPI: unknown prefix on api=%s", api)
@@ -82,7 +116,7 @@ func presetList(apiargs map[string]string) (string, error) {
 				thisCategory = path2[lastslash2+1:]
 			}
 		}
-		if wantCategory == "" || thisCategory == wantCategory {
+		if wantCategory == "*" || thisCategory == wantCategory {
 			result += sep + "\"" + thisCategory + "." + thisPreset + "\""
 			sep = ","
 		}
@@ -108,29 +142,66 @@ func (r *Router) executePresetAPI(api string, apiargs map[string]string, rawargs
 	case "list":
 		return presetList(apiargs)
 
-	case "load":
-		wantRegion := optionalStringArg("region", apiargs, "")
-		wantPreset := optionalStringArg("preset", apiargs, "")
-		if wantPreset == "" {
-			return "", fmt.Errorf("no preset argument in preset.load api")
+	default:
+		return "", fmt.Errorf("unrecognized prefix sub-command: %s", api)
+	}
+}
+
+func (r *Router) executeRegionAPI(region string, api string, apiargs map[string]string, rawargs string) (result string, err error) {
+
+	switch api {
+
+	case "set":
+		name, ok := apiargs["name"]
+		if !ok {
+			return "", fmt.Errorf("executeRegionAPI: missing name argument")
 		}
-		for region, motor := range r.motors {
-			if wantRegion == "" || wantRegion == region {
-				r, err := motor.ExecuteAPI(api, apiargs, "")
+		value, ok := apiargs["value"]
+		if !ok {
+			return "", fmt.Errorf("executeRegionAPI: missing value argument")
+		}
+		for thisRegion, motor := range r.motors {
+			if region == "*" || region == thisRegion {
+				err = motor.SetOneParamValue(name, value)
 				if err != nil {
 					return "", err
 				}
-				if r != "" {
-					return "", fmt.Errorf("unexpected non-null result from preset load api")
+			}
+		}
+		return "", nil
+
+	case "get":
+		name, ok := apiargs["name"]
+		if !ok {
+			return "", fmt.Errorf("executeRegionAPI: missing name argument")
+		}
+		if region == "*" {
+			return "", fmt.Errorf("executeRegionAPI: get can't handle *")
+		}
+		motor, ok := r.motors[region]
+		if !ok {
+			return "", fmt.Errorf("no region named %s", region)
+		}
+		return motor.params.paramValueAsString(name)
+
+	case "load":
+		preset := optionalStringArg("preset", apiargs, "")
+		if preset == "" {
+			return "", fmt.Errorf("no preset argument in load api")
+		}
+		for thisRegion, motor := range r.motors {
+			if region == "*" || thisRegion == region {
+				_, err := motor.ExecuteAPI(api, apiargs, "")
+				if err != nil {
+					return "", err
 				}
 			}
 		}
 		return "", nil
 
 	case "save":
-		region, ok := apiargs["region"]
-		if !ok {
-			return "", fmt.Errorf("ExecuteAPI: missing region argument")
+		if region == "*" {
+			return "", fmt.Errorf("executeRegionAPI: save can't handle *")
 		}
 		motor, ok := r.motors[region]
 		if !ok {
@@ -146,63 +217,7 @@ func (r *Router) executePresetAPI(api string, apiargs map[string]string, rawargs
 		return "", nil
 
 	default:
-		return "", fmt.Errorf("unrecognized prefix sub-command: %s", api)
-	}
-}
-
-func (r *Router) executeValueAPI(api string, apiargs map[string]string, rawargs string) (result string, err error) {
-
-	// Both get and set expect the name argument to
-	// be a full name - {region}.{category}.{parameter}
-	fullname, ok := apiargs["name"]
-	if !ok {
-		return "", fmt.Errorf("ExecuteAPI: missing name argument")
-	}
-	words := strings.Split(fullname, ".")
-	if len(words) != 3 {
-		return "", fmt.Errorf("ExecuteAPI: name value must have 3 components")
-	}
-	// Remove the first part (region) of the name,
-	// leaving just the category and parameter name
-	name := words[1] + "." + words[2]
-	region := words[0]
-
-	switch api {
-
-	case "set":
-		value, ok := apiargs["value"]
-		if !ok {
-			return "", fmt.Errorf("ExecuteAPI: missing value argument")
-		}
-		if region == "*" {
-			// Apply set to all regions
-			for _, motor := range r.motors {
-				err = motor.SetOneParamValue(name, value)
-				if err != nil {
-					return "", err
-				}
-			}
-		} else {
-			motor, ok := r.motors[region]
-			if !ok {
-				return "", fmt.Errorf("no region named %s", region)
-			}
-			err = motor.SetOneParamValue(name, value)
-			if err != nil {
-				return "", err
-			}
-		}
-		return "", nil
-
-	case "get":
-		motor, ok := r.motors[region]
-		if !ok {
-			return "", fmt.Errorf("no region named %s", region)
-		}
-		return motor.params.paramValueAsString(name)
-
-	default:
-		return "", fmt.Errorf("executeValueAPI: unknown api=%s", api)
+		return "", fmt.Errorf("executeRegionAPI: unknown api=%s", api)
 	}
 }
 
@@ -212,7 +227,7 @@ func (r *Router) executeProcessAPI(api string, apiargs map[string]string) (resul
 	case "start":
 		process, ok := apiargs["process"]
 		if !ok {
-			err = fmt.Errorf("ExecuteAPI: missing process argument")
+			err = fmt.Errorf("executeProcessAPI: missing process argument")
 		} else {
 			err = StartRunning(process)
 		}
@@ -220,7 +235,7 @@ func (r *Router) executeProcessAPI(api string, apiargs map[string]string) (resul
 	case "stop":
 		process, ok := apiargs["process"]
 		if !ok {
-			err = fmt.Errorf("ExecuteAPI: missing process argument")
+			err = fmt.Errorf("executeProcessAPI: missing process argument")
 		} else {
 			err = StopRunning(process)
 		}
@@ -229,7 +244,7 @@ func (r *Router) executeProcessAPI(api string, apiargs map[string]string) (resul
 		result, err = executeAPIActivate()
 
 	default:
-		err = fmt.Errorf("ExecuteAPI: unknown api %s", api)
+		err = fmt.Errorf("executeProcessAPI: unknown api %s", api)
 	}
 
 	if err != nil {
@@ -242,9 +257,6 @@ func (r *Router) executeProcessAPI(api string, apiargs map[string]string) (resul
 func (r *Router) executeGlobalAPI(api string, apiargs map[string]string) (result string, err error) {
 
 	switch api {
-
-	case "sendlogs":
-		SendLogs()
 
 	case "midi_midifile":
 		return "", fmt.Errorf("midi_midifile API has been removed")
@@ -374,4 +386,15 @@ func (r *Router) executeGlobalAPI(api string, apiargs map[string]string) (result
 	}
 
 	return result, err
+}
+
+func LoadQuadParams(paramsmap map[string]interface{}) error {
+	for nm, ival := range paramsmap {
+		val, ok := ival.(string)
+		if !ok {
+			return fmt.Errorf("value of nm=%s isn't a string", nm)
+		}
+		log.Printf("paramsmap nm=%s val=%s\n", nm, val)
+	}
+	return nil
 }

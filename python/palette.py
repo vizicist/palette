@@ -142,17 +142,14 @@ GlobalPerformLabels["transposeauto"] = [
 
 def palette_region_api(region, meth, params=""):
     if region == "":
-        log("palette_region_api: no region specified?  Assuming A")
-        region = "A"
-    if region == "*":
-        log("palette_region_api: What do I do with a * region?")
-        region = "A"
+        log("palette_region_api: no region specified?  Assuming *")
+        region = "*"
     p = "\"region\":\""+region+"\""
     if params == "":
         params = p
     else:
         params = p + "," + params
-    return palette_api("region."+meth,params)
+    return palette_api(meth,params)
 
 def palette_global_api(meth, params=""):
     return palette_api("global."+meth,params)
