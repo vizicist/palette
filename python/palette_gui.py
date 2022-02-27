@@ -466,40 +466,40 @@ class ProGuiApp(tk.Tk):
         log("Saving quad in",quadPath)
         SaveJsonInPath(j,quadPath)
 
-    def loadQuad(self,presetName):
-        fpath = palette.searchPresetsFilePath("quad", presetName)
-        debug("readQuadPreset: fpath=",fpath)
-        try:
-            f = open(fpath)
-        except:
-            log("No such file?  CC fpath=",fpath)
-            return
-        j = json.load(f)
-        self.loadQuadJson(j)
-        f.close()
-
-    def loadQuadJson(self,quadJson):
-
-        if self.editMode:
-            log("loadQuadJson shouldn't be called in edit mode")
-            return
-
-        # quadJson parameter names take the form A-shape,
-        # the first letter is the pad name.
-        quadParams = quadJson["params"]
-
-        for pad in self.Pads:
-
-            # If parameters exist that aren't in quadJson,
-            # use their default value to j.
-            # This helps when new parameters are added
-            # that aren't in existing preset files.
-            pad.setInitValues()
-
-            for fullname in quadParams:
-                (padnameofparam,baseparam) = padOfParam(fullname)
-                if padnameofparam == pad.name():
-                    pad.setValue(baseparam,quadParams[fullname])
+#     def loadQuad(self,presetName):
+#         fpath = palette.searchPresetsFilePath("quad", presetName)
+#         debug("readQuadPreset: fpath=",fpath)
+#         try:
+#             f = open(fpath)
+#         except:
+#             log("No such file?  CC fpath=",fpath)
+#             return
+#         j = json.load(f)
+#         self.loadQuadJson(j)
+#         f.close()
+# 
+#     def loadQuadJson(self,quadJson):
+# 
+#         if self.editMode:
+#             log("loadQuadJson shouldn't be called in edit mode")
+#             return
+# 
+#         # quadJson parameter names take the form A-shape,
+#         # the first letter is the pad name.
+#         quadParams = quadJson["params"]
+# 
+#         for pad in self.Pads:
+# 
+#             # If parameters exist that aren't in quadJson,
+#             # use their default value to j.
+#             # This helps when new parameters are added
+#             # that aren't in existing preset files.
+#             pad.setInitValues()
+# 
+#             for fullname in quadParams:
+#                 (padnameofparam,baseparam) = padOfParam(fullname)
+#                 if padnameofparam == pad.name():
+#                     pad.setValue(baseparam,quadParams[fullname])
 
     def makePadChooserFrame(self,parent,controller):
         f = PadChooser(parent,controller)
@@ -770,11 +770,15 @@ class ProGuiApp(tk.Tk):
         if paramType == "quad":
             if self.currentMode != "attract":
                 log("Loading",paramType,presetname)
-            self.loadQuad(presetname)
-            self.sendQuad()
+            self.loadAndSendQuad(presetname)
+            # self.sendQuad()
         else:
-            self.loadOther(paramType,presetname)
-            self.sendOther(paramType)
+            self.loadAndSendOther(paramType,presetname)
+            # self.sendOther(paramType)
+
+    def loadAndSendQuad(self,presetname):
+        print("Hi from loadAndSendQuad presetname=",presetname)
+        palette.palette_global_api("load", "\"preset\": \""+str(presetname) + "\"")
 
     def selectorLoadAndSendRand(self,paramType):
 
@@ -788,11 +792,11 @@ class ProGuiApp(tk.Tk):
         if paramType == "quad":
             if self.currentMode != "attract":
                 log("Loading",paramType,presetname)
-            self.loadQuad(presetname)
-            self.sendQuad()
+            self.loadAndSendQuad(presetname)
+            # self.sendQuad()
         else:
-            self.loadOther(paramType,presetname)
-            self.sendOther(paramType)
+            self.loadAndSendOther(paramType,presetname)
+            # self.sendOther(paramType)
 
 
     def sendOther(self,paramType):
@@ -1222,7 +1226,7 @@ class Pad():
             palette.palette_region_api(self.name(), "loop_playing", '"onoff": "'+str(playonoff)+'"')
 
         elif name == "loopinglength":
-            palette.palette_region_api(self.name(), "loop_length", '"length": "'+str(val)+'"')
+            palette.palette_region_api(self.name(), "loop_length", '"value": "'+str(val)+'"')
 
         elif name == "loopingfade":
             palette.palette_region_api(self.name(), "loop_fade", '"fade": "'+str(val)+'"')
