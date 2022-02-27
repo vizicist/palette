@@ -345,23 +345,25 @@ func (vals *ParamValues) paramValue(name string) ParamValue {
 	return val
 }
 
-func (vals *ParamValues) paramValueAsString(name string) string {
+func (vals *ParamValues) paramValueAsString(name string) (string, error) {
 	val := vals.paramValue(name)
 	if val == nil {
-		return ""
+		return "", fmt.Errorf("no parameter named %s", name)
 	}
+	s := ""
 	switch v := val.(type) {
 	case paramValString:
-		return v.value
+		s = v.value
 	case paramValInt:
-		return fmt.Sprintf("%d", v.value)
+		s = fmt.Sprintf("%d", v.value)
 	case paramValFloat:
-		return fmt.Sprintf("%f", v.value)
+		s = fmt.Sprintf("%f", v.value)
 	case paramValBool:
-		return fmt.Sprintf("%v", v.value)
+		s = fmt.Sprintf("%v", v.value)
 	default:
-		return "BADVALUETYPE"
+		s = "BADVALUETYPE"
 	}
+	return s, nil
 }
 
 // ParamStringValue xxx

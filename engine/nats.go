@@ -95,8 +95,9 @@ func PublishAliveEvent(secs float64, cursorCount int) error {
 	return nil
 }
 
-// EngineAPI xxx
-func EngineAPI(api, params string) (retmap map[string]string, err error) {
+// EngineAPI result is json with either a "result" or "error" value.
+// The err return value is an internal error, not from the API.
+func EngineAPI(api, params string) (result string, err error) {
 	// Long timeout to better handle engine debugging
 	timeout := 60 * time.Second
 	args := "{ " +
@@ -104,22 +105,7 @@ func EngineAPI(api, params string) (retmap map[string]string, err error) {
 		"\"api\": \"" + api + "\", " +
 		"\"params\": \"" + jsonEscape(params) +
 		"\" }"
-	result, err := theVizNats.Request("palette.api", args, timeout)
-	if err != nil {
-		log.Printf("EngineAPI: protocol error err=%s\n", err)
-		return nil, err
-	}
-	retmap, err = StringMap(result)
-	if err != nil {
-		log.Printf("EngineAPI: protocol stringmap err=%s\n", err)
-		return nil, err
-	}
-	apierr, hasapierr := retmap["error"]
-	if hasapierr {
-		log.Printf("EngineAPI: api error err=%s\n", apierr)
-		return nil, fmt.Errorf("%s", apierr)
-	}
-	return retmap, err
+	return theVizNats.Request("palette.api", args, timeout)
 }
 
 // VizNats xxx
@@ -189,7 +175,12 @@ func (vn *VizNats) Request(subj, data string, timeout time.Duration) (retdata st
 	bytes := []byte(data)
 	msg, err := nc.Request(subj, bytes, timeout)
 	if err != nil {
-		return "", fmt.Errorf("Request: subj=%s err=%s", subj, err)
+		if err == nats.ErrInvalidConnection {
+			err = fmt.Errorf("palette engine is either not responding or running")
+		} else {
+			err = fmt.Errorf("request: subj=%s err=%s", subj, err)
+		}
+		return "", err
 	}
 	return string(msg.Data), nil
 }

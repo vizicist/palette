@@ -9,7 +9,7 @@
             "type": "go",
             "request": "launch",
             "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
-            "args": ["preset", "save", "visual.default"]
+            "args": ["set", "*.visual.speed", "0.222"]
         },
         {
             "name": "Engine (palette_engine.go)",
