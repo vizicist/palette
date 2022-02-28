@@ -27,6 +27,14 @@
             "args": []
         },
         {
+            "name": "Start Python Gui",
+            "type": "python",
+            "request": "launch",
+            "program": "${env:PALETTESOURCE}/python/palette_gui.py",
+            "console": "integratedTerminal",
+            "args": []
+        },
+        {
             "name": "Start",
             "type": "go",
             "request": "launch",
@@ -95,14 +103,6 @@
             "request": "launch",
             "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
             "args": ["api", "process.stop", "\"process\":\"gui\""]
-        },
-        {
-            "name": "Start Python Gui",
-            "type": "python",
-            "request": "launch",
-            "program": "${env:PALETTESOURCE}/python/palette_gui.py",
-            "console": "integratedTerminal",
-            "args": []
         },
         {
             "name": "run testmidi.py",
