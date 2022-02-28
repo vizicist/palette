@@ -51,8 +51,9 @@ func (motor *Motor) ExecuteAPI(api string, args map[string]string, rawargs strin
 			if !okval {
 				log.Printf("nm=%s value isn't a string in params json", nm)
 			}
-			log.Printf("paramsmap nm=%s s=%s\n", nm, val)
 			fullname := prefix + nm
+			// This is where the parameter values get applied,
+			// which may trigger things (like sending OSC)
 			err = motor.SetOneParamValue(fullname, val)
 			if err != nil {
 				return "", err
@@ -126,7 +127,7 @@ func (motor *Motor) ExecuteAPI(api string, args map[string]string, rawargs strin
 		motor.loopComb()
 
 	case "loop_length":
-		i, e := needIntArg("length", api, args)
+		i, e := needIntArg("value", api, args)
 		if e == nil {
 			nclicks := Clicks(i)
 			if nclicks != motor.loop.length {

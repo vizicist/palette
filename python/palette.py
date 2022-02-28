@@ -140,7 +140,7 @@ GlobalPerformLabels["transposeauto"] = [
     {"label":"Transpose_Auto Off",  "value":False},
 ]
 
-def palette_region_api(region, meth, params=""):
+def palette_region_api(region, api, params=""):
     if region == "":
         log("palette_region_api: no region specified?  Assuming *")
         region = "*"
@@ -149,10 +149,10 @@ def palette_region_api(region, meth, params=""):
         params = p
     else:
         params = p + "," + params
-    return palette_api(meth,params)
+    return palette_api(api,params)
 
-def palette_global_api(meth, params=""):
-    return palette_api("global."+meth,params)
+def palette_global_api(api, params=""):
+    return palette_api("global."+api,params)
 
 def configFilePath(nm):
     return os.path.join(paletteSubDir("config"),nm)
@@ -245,12 +245,12 @@ def boolValueOfString(v):
 ApiLock = threading.Lock()
 PythonNUID = MyNUID() + "_python"
 
-def palette_api(meth, params=None):
+def palette_api(api, params=None):
 
     fullparams = "{ " + params + "}"
-    r1,err = invoke_jsonrpc("palette.api",meth,fullparams)
+    r1,err = invoke_jsonrpc("palette.api",api,fullparams)
     if err != None:
-        log("API of ",meth," returned err=",err)
+        log("API of ",api," returned err=",err)
     return r1
 
 def palette_publish(subject,params):
