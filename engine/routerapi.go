@@ -35,35 +35,18 @@ func (r *Router) ExecuteAPI(api string, nuid string, rawargs string) (result int
 
 	switch apiprefix {
 
-	// These are the APIs that are region-specific
-	case "load":
-		preset, okpreset := apiargs["preset"]
-		if !okpreset {
-			return "", fmt.Errorf("no preset argument in load api")
-		}
-		words := strings.Split(preset, ".")
-		if len(words) > 1 && words[0] == "quad" {
-			path := ReadablePresetFilePath(preset)
-			paramsmap, err := LoadParamsMap(path)
-			if err != nil {
-				return "", err
-			}
-			err = LoadQuadParams(paramsmap)
-			if err != nil {
-				return "", err
-			}
-			return "", nil
-			// return r.executeAPI(region, api, apiargs, rawargs)
-		}
-		if !regionok {
-			return nil, fmt.Errorf("Router.ExecuteAPI: api=%s missing region argument", api)
-		}
-		return r.executeRegionAPI(region, api, apiargs, rawargs)
+	// These are the APIs that are region-specific.
+	// "load" has one exception - it's not region-specific
+	// when used to load quad.* presets.
+	case "load", "save", "get", "set",
+		"loop_comb", "loop_set", "loop_clear",
+		"loop_length", "loop_fade",
+		"loop_recording", "loop_playing",
+		"quant", "scale", "vol", "comb",
+		"midi_thru", "midi_setscale", "midi_usescale",
+		"midi_quantized", "midi_thruscadjust",
+		"transpose":
 
-	case "save", "get", "set":
-		if !regionok {
-			return nil, fmt.Errorf("Router.ExecuteAPI: api=%s missing region argument", api)
-		}
 		return r.executeRegionAPI(region, api, apiargs, rawargs)
 
 	case "preset.list":
@@ -149,8 +132,25 @@ func (r *Router) executePresetAPI(api string, apiargs map[string]string, rawargs
 
 func (r *Router) executeRegionAPI(region string, api string, apiargs map[string]string, rawargs string) (result string, err error) {
 
+	// The "load" API is non-region-specific
+	// when it's loading "quad.*" presets.
+	if api == "load" {
+		// So, let's see if it's a quad.* preset
+		preset, okpreset := apiargs["preset"]
+		if !okpreset {
+			return "", fmt.Errorf("no preset argument in load api")
+		}
+		if strings.HasPrefix(preset, "quad.") {
+			return r.loadQuadPreset(preset)
+		}
+		// otherwise continue to treat it
+		// like a normal region-specific "load".
+	}
+
 	switch api {
 
+	// XXX - I'm not sure there's a reason why the "set" api
+	// is handled up here instead of down in the motors.
 	case "set":
 		name, ok := apiargs["name"]
 		if !ok {
@@ -185,10 +185,6 @@ func (r *Router) executeRegionAPI(region string, api string, apiargs map[string]
 		return motor.params.paramValueAsString(name)
 
 	case "load":
-		preset := optionalStringArg("preset", apiargs, "")
-		if preset == "" {
-			return "", fmt.Errorf("no preset argument in load api")
-		}
 		for thisRegion, motor := range r.motors {
 			if region == "*" || thisRegion == region {
 				_, err := motor.ExecuteAPI(api, apiargs, "")
@@ -217,8 +213,51 @@ func (r *Router) executeRegionAPI(region string, api string, apiargs map[string]
 		return "", nil
 
 	default:
-		return "", fmt.Errorf("executeRegionAPI: unknown api=%s", api)
+		// The region-specific APIs above are handled
+		// here in the Router context, but for everything else,
+		// we punt down to the region's motor.
+		// region can be A, B, C, D, or *
+		for tmpRegion, motor := range r.motors {
+			if region == "*" || tmpRegion == region {
+				_, err := motor.ExecuteAPI(api, apiargs, rawargs)
+				if err != nil {
+					return "", err
+				}
+			}
+		}
+		return "", nil
 	}
+}
+
+func (r *Router) loadQuadPreset(preset string) (string, error) {
+	path := ReadablePresetFilePath(preset)
+	paramsmap, err := LoadParamsMap(path)
+	if err != nil {
+		return "", err
+	}
+	// Here's where the params get applied,
+	// which among other things
+	// may result in sending OSC messages out.
+	for name, ival := range paramsmap {
+		value, ok := ival.(string)
+		if !ok {
+			return "", fmt.Errorf("value of name=%s isn't a string", name)
+		}
+		// In a quad file, the parameter names are of the form:
+		// {region}-{parametername}
+		words := strings.SplitN(name, "-", 2)
+		motor, ok := r.motors[words[0]]
+		if !ok {
+			return "", fmt.Errorf("no region named %s", words[0])
+		}
+		err = motor.SetOneParamValue(name, value)
+		if err != nil {
+			// XXX - might not want to
+			// fail completely on individual failures
+			return "", err
+		}
+	}
+	return "", nil
 }
 
 func (r *Router) executeProcessAPI(api string, apiargs map[string]string) (result string, err error) {
@@ -381,20 +420,9 @@ func (r *Router) executeGlobalAPI(api string, apiargs map[string]string) (result
 
 	default:
 		log.Printf("Router.ExecuteAPI api=%s is not recognized\n", api)
-		err = fmt.Errorf("Router.ExecuteAPI unrecognized api=%s", api)
+		err = fmt.Errorf("Router.ExecuteGlobalAPI unrecognized api=%s", api)
 		result = ""
 	}
 
 	return result, err
-}
-
-func LoadQuadParams(paramsmap map[string]interface{}) error {
-	for nm, ival := range paramsmap {
-		val, ok := ival.(string)
-		if !ok {
-			return fmt.Errorf("value of nm=%s isn't a string", nm)
-		}
-		log.Printf("paramsmap nm=%s val=%s\n", nm, val)
-	}
-	return nil
 }

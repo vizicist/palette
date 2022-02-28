@@ -466,41 +466,6 @@ class ProGuiApp(tk.Tk):
         log("Saving quad in",quadPath)
         SaveJsonInPath(j,quadPath)
 
-#     def loadQuad(self,presetName):
-#         fpath = palette.searchPresetsFilePath("quad", presetName)
-#         debug("readQuadPreset: fpath=",fpath)
-#         try:
-#             f = open(fpath)
-#         except:
-#             log("No such file?  CC fpath=",fpath)
-#             return
-#         j = json.load(f)
-#         self.loadQuadJson(j)
-#         f.close()
-# 
-#     def loadQuadJson(self,quadJson):
-# 
-#         if self.editMode:
-#             log("loadQuadJson shouldn't be called in edit mode")
-#             return
-# 
-#         # quadJson parameter names take the form A-shape,
-#         # the first letter is the pad name.
-#         quadParams = quadJson["params"]
-# 
-#         for pad in self.Pads:
-# 
-#             # If parameters exist that aren't in quadJson,
-#             # use their default value to j.
-#             # This helps when new parameters are added
-#             # that aren't in existing preset files.
-#             pad.setInitValues()
-# 
-#             for fullname in quadParams:
-#                 (padnameofparam,baseparam) = padOfParam(fullname)
-#                 if padnameofparam == pad.name():
-#                     pad.setValue(baseparam,quadParams[fullname])
-
     def makePadChooserFrame(self,parent,controller):
         f = PadChooser(parent,controller)
         f.config(background=ColorBg)
@@ -526,14 +491,6 @@ class ProGuiApp(tk.Tk):
             self.makeEditPage(f,pagename)
 
         return f
-
-    # def makeStartupFrame(self,container):
-    #     f = tk.Frame(container,
-    #         highlightbackground=ColorBg, highlightcolor=ColorAqua, highlightthickness=3)
-    #     lbl = ttk.Label(f, text="  Space Palette Pro is Loading...", style='Loading.TLabel',
-    #         foreground=ColorText, background=ColorBg, relief="flat", justify=tk.CENTER, font=hugeFont)
-    #     lbl.pack(side=tk.TOP,fill=tk.BOTH,expand=True)
-    #     return f
 
     def unattract(self):
         self.nextMode = "normal"
@@ -771,14 +728,11 @@ class ProGuiApp(tk.Tk):
             if self.currentMode != "attract":
                 log("Loading",paramType,presetname)
             self.loadAndSendQuad(presetname)
-            # self.sendQuad()
         else:
             self.loadAndSendOther(paramType,presetname)
-            # self.sendOther(paramType)
 
     def loadAndSendQuad(self,presetname):
-        print("Hi from loadAndSendQuad presetname=",presetname)
-        palette.palette_global_api("load", "\"preset\": \""+str(presetname) + "\"")
+        palette.palette_api("load", "\"preset\": \"quad."+str(presetname) + "\"")
 
     def selectorLoadAndSendRand(self,paramType):
 
@@ -1171,8 +1125,8 @@ class Pad():
             log("Unrecognized parameter: ",paramName)
             return
         paramType = self.controller.paramTypeOf[paramName]
-        palette.palette_region_api(self.padName,paramType+".set_param",
-            "\"param\": \"" + paramName + "\"" + \
+        palette.palette_region_api(self.padName,paramType+".set",
+            "\"name\": \"" + paramName + "\"" + \
             ", \"value\": \"" + str(val) + "\"" )
 
     def sendParamsOfType(self,paramType):
@@ -1235,17 +1189,17 @@ class Pad():
             palette.palette_region_api(self.name(), "loop_set", '"set": "'+str(val)+'"')
 
         elif name == "quant":
-            palette.palette_region_api(self.name(), "set_param",
+            palette.palette_region_api(self.name(), "set",
                 "\"param\": \"" + "misc.quant" + "\"" + \
                 ", \"value\": \"" + str(val) + "\"")
         elif name == "scale":
-            palette.palette_region_api(self.name(), "set_param",
+            palette.palette_region_api(self.name(), "set",
                 "\"param\": \"" + "misc.scale" + "\"" + \
                 ", \"value\": \"" + str(val) + "\"")
 
         elif name == "vol":
             # NOTE: "voltype" here rather than "vol" - should make consistent someday
-            palette.palette_region_api(self.name(), "set_param",
+            palette.palette_region_api(self.name(), "set",
                 "\"param\": \"" + "misc.vol" + "\"" + \
                 ", \"value\": \"" + str(val) + "\"")
 
