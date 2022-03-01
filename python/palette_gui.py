@@ -1190,17 +1190,17 @@ class Pad():
 
         elif name == "quant":
             palette.palette_region_api(self.name(), "set",
-                "\"param\": \"" + "misc.quant" + "\"" + \
+                "\"name\": \"" + "misc.quant" + "\"" + \
                 ", \"value\": \"" + str(val) + "\"")
         elif name == "scale":
             palette.palette_region_api(self.name(), "set",
-                "\"param\": \"" + "misc.scale" + "\"" + \
+                "\"name\": \"" + "misc.scale" + "\"" + \
                 ", \"value\": \"" + str(val) + "\"")
 
         elif name == "vol":
             # NOTE: "voltype" here rather than "vol" - should make consistent someday
             palette.palette_region_api(self.name(), "set",
-                "\"param\": \"" + "misc.vol" + "\"" + \
+                "\"name\": \"" + "misc.vol" + "\"" + \
                 ", \"value\": \"" + str(val) + "\"")
 
         elif name == "comb":

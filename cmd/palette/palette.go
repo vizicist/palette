@@ -160,7 +160,7 @@ func CliCommand(region string, args []string) string {
 
 	case "start":
 		process := "engine"
-		if len(args) > 0 {
+		if len(args) > 1 {
 			process = args[1]
 		}
 		if process == "engine" {
@@ -185,7 +185,7 @@ func CliCommand(region string, args []string) string {
 
 	case "stop":
 		process := "engine"
-		if len(args) > 0 {
+		if len(args) > 1 {
 			process = args[1]
 		}
 		if process == "engine" {

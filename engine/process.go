@@ -21,7 +21,7 @@ var ProcessInfo = map[string](*processInfo){}
 
 func InitProcessInfo() {
 	autostart := ConfigValue("autostart")
-	if autostart == "" {
+	if autostart == "" || autostart == "all" {
 		autostart = "resolume,gui,bidule"
 	}
 	arr := strings.Split(autostart, ",")
