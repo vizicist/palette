@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"sort"
 	"strings"
 
 	"github.com/hypebeast/go-osc/osc"
@@ -67,28 +68,7 @@ func (motor *Motor) ExecuteAPI(api string, args map[string]string, rawargs strin
 			return "", fmt.Errorf("missing preset parameter")
 		}
 		log.Printf("Should be saving preset=%s\n", preset)
-		wantCategory, _ := PresetNameSplit(preset)
-		path := WriteablePresetFilePath(preset)
-		s := ""
-		sep := "{\n    \"params\": {\n"
-		for nm := range motor.params.values {
-			thisCategory, thisPreset := PresetNameSplit(nm)
-			if thisCategory != wantCategory {
-				continue
-			}
-			valstring, e := motor.params.paramValueAsString(nm)
-			if e != nil {
-				log.Printf("Unexepected error from paramValueAsString for nm=%s\n", nm)
-				continue
-			}
-			s += fmt.Sprintf("%s        \"%s\":\"%s\"", sep, thisPreset, valstring)
-			sep = ",\n"
-		}
-		s += "\n    }\n}"
-		data := []byte(s)
-		err := ioutil.WriteFile(path, data, 0644)
-		return "", err
-
+		motor.savePreset(preset)
 	case "send":
 		log.Printf("Should be sending all parameters for region=%s\n", motor.padName)
 		for nm := range motor.params.values {
@@ -206,6 +186,41 @@ func (motor *Motor) ExecuteAPI(api string, args map[string]string, rawargs strin
 	}
 
 	return result, err
+}
+
+func (motor *Motor) savePreset(preset string) error {
+
+	// wantCategory is sound, visual, effect, snap, or quad
+	wantCategory, _ := PresetNameSplit(preset)
+	path := WriteablePresetFilePath(preset)
+	s := "{\n    \"params\": {\n"
+
+	// Print the parameter values sorted by name
+	fullNames := motor.params.values
+	sortedNames := make([]string, 0, len(fullNames))
+	for k := range fullNames {
+		sortedNames = append(sortedNames, k)
+	}
+	sort.Strings(sortedNames)
+
+	sep := ""
+	for _, fullName := range sortedNames {
+		thisCategory, _ := PresetNameSplit(fullName)
+		// "snap" category contains all parameters
+		if wantCategory != "snap" && wantCategory != thisCategory {
+			continue
+		}
+		valstring, e := motor.params.paramValueAsString(fullName)
+		if e != nil {
+			log.Printf("Unexepected error from paramValueAsString for nm=%s\n", fullName)
+			continue
+		}
+		s += fmt.Sprintf("%s        \"%s\":\"%s\"", sep, fullName, valstring)
+		sep = ",\n"
+	}
+	s += "\n    }\n}"
+	data := []byte(s)
+	return ioutil.WriteFile(path, data, 0644)
 }
 
 func LoadParamsMap(path string) (map[string]interface{}, error) {

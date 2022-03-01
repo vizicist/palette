@@ -9,8 +9,12 @@
             "type": "go",
             "request": "launch",
             "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
+            // "args": ["start"]
+            "args": ["stop"]
+            // "args": ["-region=A", "save", "snap.default"]
+            // "args": ["save", "quad.default"]
             // "args": ["load", "quad.default"]
-            "args": ["-region=B","load", "visual.default"]
+            // "args": ["-region=B","load", "visual.default"]
             // "args": ["-region=A", "save", "visual.default"]
             // "args": ["set", "visual.speed", "0.333"]
             // "args": ["-region=A", "get", "visual.speed"]
