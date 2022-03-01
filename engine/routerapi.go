@@ -2,9 +2,11 @@ package engine
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 )
@@ -36,8 +38,8 @@ func (r *Router) ExecuteAPI(api string, nuid string, rawargs string) (result int
 	switch apiprefix {
 
 	// These are the APIs that are region-specific.
-	// "load" has one exception - it's not region-specific
-	// when used to load quad.* presets.
+	// "load" and "save" have one exception - they
+	// are not region-specific when used on quad.* presets.
 	case "load", "save", "get", "set",
 		"loop_comb", "loop_set", "loop_clear",
 		"loop_length", "loop_fade",
@@ -132,19 +134,23 @@ func (r *Router) executePresetAPI(api string, apiargs map[string]string, rawargs
 
 func (r *Router) executeRegionAPI(region string, api string, apiargs map[string]string, rawargs string) (result string, err error) {
 
-	// The "load" API is non-region-specific
-	// when it's loading "quad.*" presets.
-	if api == "load" {
+	// The "load" and "save" APIs are non-region-specific
+	// when loading "quad.*" presets.
+	if api == "load" || api == "save" {
 		// So, let's see if it's a quad.* preset
 		preset, okpreset := apiargs["preset"]
 		if !okpreset {
 			return "", fmt.Errorf("no preset argument in load api")
 		}
 		if strings.HasPrefix(preset, "quad.") {
-			return r.loadQuadPreset(preset)
+			if api == "load" {
+				return "", r.loadQuadPreset(preset)
+			} else {
+				return "", r.saveQuadPreset(preset)
+			}
 		}
 		// otherwise continue to treat it
-		// like a normal region-specific "load".
+		// like a normal region-specific api
 	}
 
 	switch api {
@@ -229,11 +235,42 @@ func (r *Router) executeRegionAPI(region string, api string, apiargs map[string]
 	}
 }
 
-func (r *Router) loadQuadPreset(preset string) (string, error) {
+func (r *Router) saveQuadPreset(preset string) error {
+
+	// wantCategory is sound, visual, effect, snap, or quad
+	path := WriteablePresetFilePath(preset)
+	s := "{\n    \"params\": {\n"
+
+	sep := ""
+	for _, motor := range r.motors {
+		// Print the parameter values sorted by name
+		fullNames := motor.params.values
+		sortedNames := make([]string, 0, len(fullNames))
+		for k := range fullNames {
+			sortedNames = append(sortedNames, k)
+		}
+		sort.Strings(sortedNames)
+
+		for _, fullName := range sortedNames {
+			valstring, e := motor.params.paramValueAsString(fullName)
+			if e != nil {
+				log.Printf("Unexepected error from paramValueAsString for nm=%s\n", fullName)
+				continue
+			}
+			s += fmt.Sprintf("%s        \"%s-%s\":\"%s\"", sep, motor.padName, fullName, valstring)
+			sep = ",\n"
+		}
+	}
+	s += "\n    }\n}"
+	data := []byte(s)
+	return ioutil.WriteFile(path, data, 0644)
+}
+
+func (r *Router) loadQuadPreset(preset string) error {
 	path := ReadablePresetFilePath(preset)
 	paramsmap, err := LoadParamsMap(path)
 	if err != nil {
-		return "", err
+		return err
 	}
 	// Here's where the params get applied,
 	// which among other things
@@ -241,23 +278,32 @@ func (r *Router) loadQuadPreset(preset string) (string, error) {
 	for name, ival := range paramsmap {
 		value, ok := ival.(string)
 		if !ok {
-			return "", fmt.Errorf("value of name=%s isn't a string", name)
+			return fmt.Errorf("value of name=%s isn't a string", name)
 		}
 		// In a quad file, the parameter names are of the form:
 		// {region}-{parametername}
 		words := strings.SplitN(name, "-", 2)
 		motor, ok := r.motors[words[0]]
 		if !ok {
-			return "", fmt.Errorf("no region named %s", words[0])
+			return fmt.Errorf("no region named %s", words[0])
 		}
-		err = motor.SetOneParamValue(name, value)
+		// We expect the parameter to be of the form
+		// {category}.{parameter}, but old "quad" files
+		// didn't include the category.
+		parameterName := words[1]
+		if !strings.Contains(parameterName, ".") {
+			log.Printf("loadQuadPreset: preset=%s parameter=%s is in OLD format, not supported", preset, parameterName)
+			return fmt.Errorf("")
+		}
+		// use words[1] so the motor doesn't see the region name
+		err = motor.SetOneParamValue(parameterName, value)
 		if err != nil {
 			// XXX - might not want to
 			// fail completely on individual failures
-			return "", err
+			return err
 		}
 	}
-	return "", nil
+	return nil
 }
 
 func (r *Router) executeProcessAPI(api string, apiargs map[string]string) (result string, err error) {
