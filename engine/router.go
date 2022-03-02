@@ -262,7 +262,7 @@ func (r *Router) StartOSC(source string) {
 // StartNATSClient xxx
 func (r *Router) StartNATSClient() {
 
-	ConnectToNATSServer()
+	// ConnectToNATSServer()
 	// Hand all NATS messages to HandleAPI
 
 	log.Printf("StartNATS: Subscribing to %s\n", PaletteAPISubject)

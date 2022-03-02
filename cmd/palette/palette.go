@@ -23,8 +23,6 @@ func main() {
 	engine.InitLog("palette")
 	engine.InitDebug()
 	engine.InitProcessInfo()
-	engine.InitNATS()
-	engine.ConnectToNATSServer()
 
 	regionPtr := flag.String("region", "*", "Region name or *")
 
@@ -49,7 +47,7 @@ func usage() string {
     palette start [process]
     palette stop [process]
     palette sendlogs
-    palette preset list [{category}]
+    palette list [{category}]
     palette [-region={region}] load {category}.{preset}
     palette [-region {region}] save {category}.{preset}
     palette [-region {region}] set {category}.{parameter} [{value}]
@@ -141,19 +139,13 @@ func CliCommand(region string, args []string) string {
 		apiargs := fmt.Sprintf("\"region\":\"%s\",\"name\":\"%s\",\"value\":\"%s\"", region, args[1], args[2])
 		return interpretApiOutput(engine.EngineAPI(args[0], apiargs))
 
-	case "preset":
-		if len(args) < 2 {
-			return "preset command not enough arguments\n"
-		}
-		if args[1] != "list" {
-			return "preset command only takes list\n"
-		}
+	case "list":
 		category := "*"
-		if len(args) > 2 {
-			category = args[2]
+		if len(args) > 1 {
+			category = args[1]
 		}
 		args := fmt.Sprintf("\"category\":\"%s\"", category)
-		return interpretApiOutput(engine.EngineAPI("preset.list", args))
+		return interpretApiOutput(engine.EngineAPI("list", args))
 
 	case "sendlogs":
 		return interpretApiOutput(engine.EngineAPI("global.sendlogs", ""))
@@ -172,7 +164,7 @@ func CliCommand(region string, args []string) string {
 
 			// Start the engine (which also starts up other processes)
 			fullexe := filepath.Join(engine.PaletteDir(), "bin", engineexe)
-			_, err := engine.StartExecutableLogOutput("engine", fullexe, true, "")
+			err := engine.StartExecutableLogOutput("engine", fullexe, true, "")
 			if err != nil {
 				return fmt.Sprintf("Engine not started: err=%s\n", err)
 			}
@@ -180,7 +172,7 @@ func CliCommand(region string, args []string) string {
 		} else {
 			// Start a specific process
 			args := fmt.Sprintf("\"process\":\"%s\"", process)
-			return interpretApiOutput(engine.EngineAPI("process.start", args))
+			return interpretApiOutput(engine.EngineAPI("start", args))
 		}
 
 	case "stop":
@@ -195,7 +187,7 @@ func CliCommand(region string, args []string) string {
 			engine.KillExecutable(engineexe)
 		} else {
 			args := fmt.Sprintf("\"process\":\"%s\"", process)
-			return interpretApiOutput(engine.EngineAPI("process.stop", args))
+			return interpretApiOutput(engine.EngineAPI("stop", args))
 		}
 
 	case "api":

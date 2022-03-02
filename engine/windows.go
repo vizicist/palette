@@ -12,22 +12,18 @@ import (
 	"syscall"
 )
 
-func KillExecutable(executable string) error {
+func KillExecutable(executable string) {
 	log.Printf("KillExecutable: executable=%s\n", executable)
 	stdout := &NoWriter{}
 	stderr := &NoWriter{}
-	cmd, err := StartExecutable("c:\\windows\\system32\\taskkill.exe", false, stdout, stderr, "/F", "/IM", executable)
-	if err != nil {
-		// We don't want to complain if the executable isn't
-		// currently running, so don't return any error here.
-		return nil
-	}
+	cmd, _ := StartExecutable("c:\\windows\\system32\\taskkill.exe", false, stdout, stderr, "/F", "/IM", executable)
+	// We don't want to complain if the executable isn't
+	// currently running, so ignore errors
 	cmd.Wait()
-	return nil
 }
 
 // StartExecutable executes something.  If background is true, it doesn't block
-func StartExecutableLogOutput(logName string, fullexe string, background bool, args ...string) (*exec.Cmd, error) {
+func StartExecutableLogOutput(logName string, fullexe string, background bool, args ...string) error {
 	stdoutWriter := MakeFileWriter(LogFilePath(logName + ".stdout"))
 	if stdoutWriter == nil {
 		stdoutWriter = &NoWriter{}
@@ -36,7 +32,8 @@ func StartExecutableLogOutput(logName string, fullexe string, background bool, a
 	if stderrWriter == nil {
 		stderrWriter = &NoWriter{}
 	}
-	return StartExecutable(fullexe, true, stdoutWriter, stderrWriter, args...)
+	_, err := StartExecutable(fullexe, true, stdoutWriter, stderrWriter, args...)
+	return err
 }
 
 // StartExecutable executes something.  If background is true, it doesn't block

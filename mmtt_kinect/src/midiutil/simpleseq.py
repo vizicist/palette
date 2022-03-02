@@ -572,20 +572,20 @@ class SequencerApp:
         root.bind(EVT_TRACK_FEEDBACK, self._processMidiEvents)
     
     def _makeMenuBar(self, root):
-	    menubar = Menu(root)
-	    # create a pulldown menu, and add it to the menu bar
-	    filemenu = Menu(menubar, tearoff=0)
-	    filemenu.add_command(label="Open", command=notYet)
-	    filemenu.add_command(label="Save", command=notYet)
-	    filemenu.add_separator()
-	    filemenu.add_command(label="Exit", command=self._onClose)
-	    menubar.add_cascade(label="File", menu=filemenu)
+        menubar = Menu(root)
+        # create a pulldown menu, and add it to the menu bar
+        filemenu = Menu(menubar, tearoff=0)
+        filemenu.add_command(label="Open", command=notYet)
+        filemenu.add_command(label="Save", command=notYet)
+        filemenu.add_separator()
+        filemenu.add_command(label="Exit", command=self._onClose)
+        menubar.add_cascade(label="File", menu=filemenu)
 	    
-	    helpmenu = Menu(menubar, tearoff=0)
-	    helpmenu.add_command(label="About", command=self._onAbout)
-	    menubar.add_cascade(label="Help", menu=helpmenu)
+        helpmenu = Menu(menubar, tearoff=0)
+        helpmenu.add_command(label="About", command=self._onAbout)
+        menubar.add_cascade(label="Help", menu=helpmenu)
 	    # display the menu
-	    root.config(menu=menubar)
+        root.config(menu=menubar)
 
     def _makeToolBar(self, root):
         toolbar = Frame(root)

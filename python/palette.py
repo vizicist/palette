@@ -396,10 +396,11 @@ def PaletteDir():
     return paletteDir
 
 
-def SendCursorEvent(cid,ddu,x,y,z):
+def SendCursorEvent(cid,ddu,x,y,z,region="A"):
     event = "cursor_" + ddu
     e = ("{ \"nuid\": \"" + PythonNUID + "\", " + \
         "\"cid\": \"" + str(cid) + "\", " + \
+        "\"region\": \"" + region + "\", " + \
         "\"event\": \"" + event + "\", " + \
         "\"x\": \"%f\", \"y\": \"%f\", \"z\": \"%f\" }")  % (x,y,z)
     palette_publish("palette.event",e)
