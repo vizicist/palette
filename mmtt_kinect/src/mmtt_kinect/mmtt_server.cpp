@@ -1213,6 +1213,10 @@ MmttServer::LoadPatchJson(std::string jstr)
 		for ( int n=0; n<nregions; n++ ) {
 			cJSON *rv = cJSON_GetArrayItem(regionsval,n);
 
+			cJSON *c_name = cJSON_GetObjectItem(rv,"name");
+			if ( c_name == NULL ) { return("Missing name value in patch file!?"); }
+			if ( c_name->type != cJSON_String ) { return("The type of name in patch file is wrong!?\n"); }
+
 			cJSON *c_first_sid = cJSON_GetObjectItem(rv,"first_sid");
 			if ( c_first_sid == NULL ) { return("Missing first_sid value in patch file!?"); }
 			if ( c_first_sid->type != cJSON_Number ) { return("The type of first_sid in patch file is wrong!?\n"); }
@@ -1255,7 +1259,8 @@ MmttServer::LoadPatchJson(std::string jstr)
 			}
 			CvRect rect = cvRect(x, y, c_width->valueint, c_height->valueint);
 			int first_sid = c_first_sid->valueint;
-			_new_regions.push_back(new MmttRegion(regionid,first_sid,rect));
+			char *name = c_name->valuestring;
+			_new_regions.push_back(new MmttRegion(name,regionid,first_sid,rect));
 			NosuchDebug(1,"LoadPatchJson regionid=%d first_sid=%d x,y=%d,%d width,height=%d,%d",
 				regionid,first_sid,c_x->valueint,c_y->valueint,c_width->valueint,c_height->valueint);
 			regionid++;
@@ -1426,11 +1431,11 @@ MmttServer::LoadPatch(std::string prefix)
 
 void MmttServer::startNewRegions()
 {
-	NosuchDebug(1,"startNewRegions!!");
+	NosuchDebug("startNewRegions!!");
 	_new_regions.clear();
 	CvRect all = cvRect(0,0,_camWidth,_camHeight);
-	_new_regions.push_back(new MmttRegion(0,0,all));   // region 0 - the whole image?  Not really used, I think
-	_new_regions.push_back(new MmttRegion(1,0,all));   // region 1 - the background
+	_new_regions.push_back(new MmttRegion("Region0",0,0,all));   // region 0 - the whole image?  Not really used, I think
+	_new_regions.push_back(new MmttRegion("Region1",1,0,all));   // region 1 - the background
 }
 
 void MmttServer::finishNewRegions()
@@ -1451,11 +1456,11 @@ void MmttServer::finishNewRegions()
 		}
 #endif
 	}
-	NosuchDebug(1,"finishNewRegions!! _curr_regions follows");
+	NosuchDebug("finishNewRegions!! _curr_regions follows");
 	_curr_regions = _new_regions;
 	for ( int i=0; i<nrsize; i++ ) {
 		MmttRegion* cr = _curr_regions[i];
-		NosuchDebug(1,"REGION i=%d xy=%d,%d wh=%d,%d",i,cr->_rect.x,cr->_rect.y,cr->_rect.width,cr->_rect.height);
+		NosuchDebug("REGION i=%d xy=%d,%d wh=%d,%d",i,cr->_rect.x,cr->_rect.y,cr->_rect.width,cr->_rect.height);
 	}
 }
 
@@ -1509,7 +1514,8 @@ MmttServer::deriveRegionsFromImage()
 		int w = region_id_maxx[id] - region_id_minx[id] + 1;
 		int h = region_id_maxy[id] - region_id_miny[id] + 1;
 		int first_sid = (id-1) * 1000;
-		_new_regions.push_back(new MmttRegion(id,first_sid,cvRect(region_id_minx[id],region_id_miny[id],w,h)));
+		std::string name = NosuchSnprintf("Region_fromimage_%d", id);
+		_new_regions.push_back(new MmttRegion(name,id,first_sid,cvRect(region_id_minx[id],region_id_miny[id],w,h)));
 		NosuchDebug(1,"derived region id=%d x,y=%d,%d width,height=%d,%d",
 				id,region_id_minx[id],region_id_miny[id],w,h);
 	}
@@ -1554,7 +1560,9 @@ MmttServer::SavePatch(std::string prefix, const char* id)
 		if ( r->_first_sid == 0 ) {
 			continue;
 		}
-		f_json << sep2 << "    { \"first_sid\": " << (r->_first_sid)
+		f_json << sep2
+			<< "    { \"name\": " << (r->_name)
+			<< ", \"first_sid\": " << (r->_first_sid)
 			<< ", \"x\": " << r->_rect.x
 			<< ", \"y\": " << r->_rect.y
 			<< ", \"width\": " << r->_rect.width
@@ -1858,7 +1866,9 @@ MmttServer::registrationPoke(CvPoint pt)
 		CvConnectedComp connected;
 		cvFloodFill(_regionsImage, pt, cvScalar(currentRegionValue), cvScalarAll(0), cvScalarAll(0), &connected);
 		int first_sid = (currentRegionValue-1) * 1000;
-		_new_regions.push_back(new MmttRegion(currentRegionValue,first_sid,connected.rect));
+
+		std::string name = NosuchSnprintf("Region%d", currentRegionValue);
+		_new_regions.push_back(new MmttRegion(name,currentRegionValue,first_sid,connected.rect));
 		CvRect r = connected.rect;
 		NosuchDebug(1,"Creating new region %d at minxy=%d,%d maxxy=%d,%d\n",currentRegionValue-1,r.x,r.y,r.x+r.width,r.y+r.height);
 		currentRegionValue++;
@@ -2025,7 +2035,7 @@ MmttServer::analyzePixels()
 				CvPoint xy = sess->_center;
 				xy = relativeToRegion(r, xy);
 				float z = float(sess->_depth_mm);
-				addCursorEvent(bundle, "drag", sid, float(xy.x), float(xy.y), z);
+				addCursorEvent(bundle, "drag", r->_name, sid, float(xy.x), float(xy.y), z);
 
 				blob_sid[mindist_i] = sid;
 				it++;
@@ -2038,7 +2048,7 @@ MmttServer::analyzePixels()
 				CvPoint xy = sess->_center;
 				xy = relativeToRegion(r, xy);
 				float z = sess->_depth_normalized;
-				addCursorEvent(bundle, "up", sid, float(xy.x), float(xy.y), z);
+				addCursorEvent(bundle, "up", r->_name, sid, float(xy.x), float(xy.y), z);
 
 				delete sess;
 				r->_sessions.erase(erase_it);
@@ -2104,7 +2114,7 @@ MmttServer::analyzePixels()
 			CvPoint xy = sess->_center;
 			xy = relativeToRegion(r, xy);
 			float z = float(sess->_depth_mm);
-			addCursorEvent(bundle, "down", sid, float(xy.x), float(xy.y), z);
+			addCursorEvent(bundle, "down", r->_name, sid, float(xy.x), float(xy.y), z);
 		}
 
 		float depthavg = depthtotal / depthcount;
@@ -2271,12 +2281,12 @@ make_hfid(int hid, int fid)
 }
 
 void
-MmttServer::addCursorEvent(OscBundle &bundle, std::string downdragup, int sid, float x, float y, float z) {
+MmttServer::addCursorEvent(OscBundle &bundle, std::string downdragup, std::string region, int sid, float x, float y, float z) {
 	OscMessage msg;
 
 	msg.clear();
 	msg.setAddress("/cursor"+downdragup);
-	msg.addStringArg("set");
+	msg.addStringArg(region);
 	msg.addIntArg(sid);
 	msg.addFloatArg(x);      // x (position)
 	msg.addFloatArg(y);      // y (position)
