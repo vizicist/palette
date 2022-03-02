@@ -38,7 +38,7 @@ func main() {
 
 	engine.InitMIDI()
 	engine.InitSynths()
-	engine.InitNATS()
+	// engine.InitNATS()
 	go engine.StartNATSServer()
 
 	r := engine.TheRouter()

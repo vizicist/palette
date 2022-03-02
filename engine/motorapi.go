@@ -33,42 +33,17 @@ func (motor *Motor) ExecuteAPI(api string, args map[string]string, rawargs strin
 		if !okpreset {
 			return "", fmt.Errorf("missing preset parameter")
 		}
-		log.Printf("Should be loading preset=%s\n", preset)
-		path := ReadablePresetFilePath(preset)
-		paramsmap, err := LoadParamsMap(path)
-		if err != nil {
-			return "", err
-		}
-		// If the preset value is of the form {category}.{preset},
-		// then we pull off the category and add it as a prefix
-		// to the parameter names.
-		prefix := ""
-		i := strings.Index(preset, ".")
-		if i >= 0 {
-			prefix = preset[0 : i+1]
-		}
-		for nm, ival := range paramsmap {
-			val, okval := ival.(string)
-			if !okval {
-				log.Printf("nm=%s value isn't a string in params json", nm)
-			}
-			fullname := prefix + nm
-			// This is where the parameter values get applied,
-			// which may trigger things (like sending OSC)
-			err = motor.SetOneParamValue(fullname, val)
-			if err != nil {
-				return "", err
-			}
-		}
-		return "", nil
+		log.Printf("Loading region=%s with preset=%s\n", motor.padName, preset)
+		err = motor.loadPreset(preset)
 
 	case "save":
 		preset, okpreset := args["preset"]
 		if !okpreset {
 			return "", fmt.Errorf("missing preset parameter")
 		}
-		log.Printf("Should be saving preset=%s\n", preset)
-		motor.savePreset(preset)
+		log.Printf("Saving preset=%s\n", preset)
+		err = motor.savePreset(preset)
+
 	case "send":
 		log.Printf("Should be sending all parameters for region=%s\n", motor.padName)
 		for nm := range motor.params.values {
@@ -186,6 +161,42 @@ func (motor *Motor) ExecuteAPI(api string, args map[string]string, rawargs strin
 	}
 
 	return result, err
+}
+
+func (motor *Motor) loadPreset(preset string) error {
+	path := ReadablePresetFilePath(preset)
+	paramsmap, err := LoadParamsMap(path)
+	if err != nil {
+		return err
+	}
+	// If the preset value is of the form {category}.{preset},
+	// then we pull off the category and add it as a prefix
+	// to the parameter names.
+	prefix := ""
+	i := strings.Index(preset, ".")
+	if i >= 0 {
+		prefix = preset[0 : i+1]
+	}
+	// HOWEVER, snap.* presets already have
+	// category prefixes on the parameter names,
+	// so we don't need to add them.
+	if prefix == "snap." {
+		prefix = ""
+	}
+	for nm, ival := range paramsmap {
+		val, okval := ival.(string)
+		if !okval {
+			log.Printf("nm=%s value isn't a string in params json", nm)
+		}
+		fullname := prefix + nm
+		// This is where the parameter values get applied,
+		// which may trigger things (like sending OSC)
+		err = motor.SetOneParamValue(fullname, val)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (motor *Motor) savePreset(preset string) error {

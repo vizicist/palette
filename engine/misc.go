@@ -505,6 +505,14 @@ func ConfigIntWithDefault(nm string, dflt int) int {
 	return val
 }
 
+func ConfigStringWithDefault(nm string, dflt string) string {
+	s := ConfigValue(nm)
+	if s == "" {
+		return dflt
+	}
+	return s
+}
+
 // ConfigValue returns "" if there's no value.  I.e. "" and 'no value' are identical
 func ConfigValue(nm string) string {
 
@@ -630,12 +638,13 @@ func ziplogs(logsdir string, zipfile string) error {
 	return err
 }
 
-func SendLogs() {
+func SendLogs() error {
 
 	recipient := ConfigValue("emailto")
 	if recipient == "" {
-		log.Printf("SendLogs: not sending, no emailto in settings\n")
-		return
+		msg := "SendLogs: not sending, no emailto in settings"
+		log.Printf("%s\n", msg)
+		return fmt.Errorf(msg)
 	}
 
 	zipfile := ""
@@ -656,13 +665,12 @@ func SendLogs() {
 	zipfile = ConfigFilePath(zipname)
 	err = ziplogs(logsdir, zipfile)
 	if err != nil {
-		log.Printf("SendLogs: err=%s\n", err)
-		zipfile = ""
+		return fmt.Errorf("sendLogs: err=%s", err)
 	} else {
 		log.Printf("SendLogs: zipfile=%s\n", zipfile)
 	}
 	body := fmt.Sprintf("host=%s palette logfiles attached\n", Hostname())
-	SendMailWithAttachment(body, zipfile)
+	return SendMailWithAttachment(body, zipfile)
 }
 
 func Hostname() string {
@@ -674,24 +682,19 @@ func Hostname() string {
 	return hostname
 }
 
-func SendMail(body string) {
-	sendMail(body, "")
-}
-
-func SendMailWithAttachment(body, attachfile string) {
-	sendMail(body, attachfile)
+func SendMail(body string) error {
+	return SendMailWithAttachment(body, "")
 }
 
 // SendMail xxx
-func sendMail(body, attachfile string) {
+func SendMailWithAttachment(body, attachfile string) error {
 
 	recipient := ConfigValue("emailto")
 	login := ConfigValue("emaillogin")
 	password := ConfigValue("emailpassword")
 
 	if recipient == "" {
-		log.Printf("SendMail: not sending, no emailto in settings\n")
-		return
+		return fmt.Errorf("sendMail: not sending, no emailto in settings")
 	}
 	log.Printf("SendMail: recipient=%s\n", recipient)
 
@@ -710,9 +713,7 @@ func sendMail(body, attachfile string) {
 
 	d := gomail.NewDialer(smtpHost, smtpPort, login, password)
 
-	if err := d.DialAndSend(m); err != nil {
-		log.Printf("SendMail: err=%s\n", err)
-	}
+	return d.DialAndSend(m)
 }
 
 func GoroutineID() uint64 {

@@ -719,38 +719,36 @@ class ProGuiApp(tk.Tk):
             self.CurrPad.saveCurrent()
 
     def selectorLoadAndSend(self,paramType,presetname):
-
         if self.editMode:
             log("HEY!! selectorLoadAndSend shouldn't be used in editMode?")
             return
+        self.loadAndSend(paramType,presetname)
 
-        if paramType == "quad":
-            if self.currentMode != "attract":
-                log("Loading",paramType,presetname)
-            self.loadAndSendQuad(presetname)
+    def loadAndSend(self,presettype,presetname):
+        if self.currentMode != "attract":
+            log("Loading",presettype,presetname)
+
+        if self.allPadsSelected:
+            region = "*"
         else:
-            self.loadAndSendOther(paramType,presetname)
+            region = self.CurrPad.name()
 
-    def loadAndSendQuad(self,presetname):
-        palette.palette_api("load", "\"preset\": \"quad."+str(presetname) + "\"")
+        palette.palette_region_api(region,"load", "\"preset\": \""+presettype+"."+str(presetname) + "\"")
 
-    def selectorLoadAndSendRand(self,paramType):
+    def selectorLoadAndSendRand(self,presetType):
 
         if self.editMode:
             log("HEY!! selectorLoadAndSendRand shouldn't be used in editMode?")
             return
 
-        presets = palette.presetsListAll(paramType)
+        presets = palette.presetsListAll(presetType)
         i = random.randint(0,len(presets)-1)
         presetname = presets[i]
-        if paramType == "quad":
-            if self.currentMode != "attract":
-                log("Loading",paramType,presetname)
+        if presetType == "quad":
             self.loadAndSendQuad(presetname)
             # self.sendQuad()
         else:
-            self.loadAndSendOther(paramType,presetname)
-            # self.sendOther(paramType)
+            self.loadAndSendOther(presetType,presetname)
 
 
     def sendOther(self,paramType):

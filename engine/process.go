@@ -11,36 +11,21 @@ import (
 )
 
 type processInfo struct {
-	Exe           string // just the last part
-	FullPath      string
-	Arg           string
-	ActivateTimes int
+	Exe               string // just the last part
+	FullPath          string
+	Arg               string
+	ActivateLaterTime int
 }
 
 var ProcessInfo = map[string](*processInfo){}
 
 func InitProcessInfo() {
-	autostart := ConfigValue("autostart")
-	if autostart == "" || autostart == "all" {
-		autostart = "resolume,gui,bidule"
-	}
-	arr := strings.Split(autostart, ",")
-	for _, process := range arr {
-		switch process {
-		case "resolume":
-			ProcessInfo[process] = ResolumeInfo()
-		case "gui":
-			ProcessInfo["gui"] = GuiInfo()
-		case "bidule":
-			ProcessInfo["bidule"] = BiduleInfo()
-		case "mmtt_kinect":
-			ProcessInfo["mmtt_kinect"] = MmttInfo("mmtt_kinect")
-		case "mmtt_oak":
-			ProcessInfo["mmtt_oak"] = MmttInfo("mmtt_oak")
-		case "nothing":
-			// i.e. you can put "autostart":"nothing" to start nothing
-		}
-	}
+	ProcessInfo["resolume"] = ResolumeInfo()
+	ProcessInfo["gui"] = GuiInfo()
+	ProcessInfo["bidule"] = BiduleInfo()
+	ProcessInfo["mmtt_kinect"] = MmttInfo("mmtt_kinect")
+	ProcessInfo["mmtt_kinect"] = MmttInfo("mmtt_kinect")
+	ProcessInfo["mmtt_oak"] = MmttInfo("mmtt_oak")
 }
 
 func BiduleInfo() *processInfo {
@@ -101,49 +86,59 @@ func MmttInfo(mmtt string) *processInfo {
 	return &processInfo{exe, fullpath, "", 0}
 }
 
+func getProcessInfo(process string) (*processInfo, error) {
+	p, ok := ProcessInfo[process]
+	if !ok {
+		return nil, fmt.Errorf("getProcessInfo: no process %s", process)
+	}
+	if p == nil {
+		return nil, fmt.Errorf("getProcessInfo: no process info for %s", process)
+	}
+	return p, nil
+}
+
 func StartRunning(process string) error {
 
 	log.Printf("StartRunning: process %s\n", process)
 
-	p, ok := ProcessInfo[process]
-	if !ok {
-		return fmt.Errorf("start: unrecognized process %s", process)
+	p, err := getProcessInfo(process)
+	if err != nil {
+		return err
 	}
 
 	log.Printf("StartExecutableLogOutput: process=%s fullpath=%s\n", process, p.FullPath)
-	_, err := StartExecutableLogOutput(process, p.FullPath, true, p.Arg)
+	err = StartExecutableLogOutput(process, p.FullPath, true, p.Arg)
 	if err != nil {
 		return fmt.Errorf("start: process=%s err=%s", process, err)
 	}
 
 	// Some things (bidule and resolume) need to be activated
-	if p.ActivateTimes > 0 {
-		go activateLater(p.ActivateTimes)
+	if p.ActivateLaterTime > 0 {
+		go activateLater(p.ActivateLaterTime)
 	}
 	return nil
 }
 
+// StopRunning doesn't return any errors
 func StopRunning(process string) (err error) {
 	if process == "all" {
 		for nm := range ProcessInfo {
-			e := StopRunning(nm)
-			if e != nil {
-				err = e
-			}
+			StopRunning(nm)
 		}
 		return err
 	} else {
-		p, ok := ProcessInfo[process]
-		if !ok {
-			return fmt.Errorf("StopRunning: unknown process=%s", process)
+		p, err := getProcessInfo(process)
+		if err != nil {
+			return err
 		}
-		return KillExecutable(p.Exe)
+		KillExecutable(p.Exe)
+		return nil
 	}
 }
 
 func IsRunning(process string) bool {
-	p, ok := ProcessInfo[process]
-	if !ok {
+	p, err := getProcessInfo(process)
+	if err != nil {
 		log.Printf("IsRunning: no process named %s\n", process)
 		return false
 	}
@@ -153,9 +148,20 @@ func IsRunning(process string) bool {
 }
 
 func CheckProcessesAndRestartIfNecessary() {
-	for process := range ProcessInfo {
-		if !IsRunning(process) {
-			StartRunning(process)
+	autostart := ConfigStringWithDefault("autostart", "all")
+	if autostart == "nothing" {
+		return
+	}
+	if autostart == "all" {
+		autostart = "resolume,bidule,gui"
+	}
+	processes := strings.Split(autostart, ",")
+	for _, process := range processes {
+		p, _ := getProcessInfo(process)
+		if p != nil {
+			if !IsRunning(process) {
+				StartRunning(process)
+			}
 		}
 	}
 }
@@ -198,9 +204,9 @@ func start_layer(resolumeClient *osc.Client, layer int) {
 
 // KillProcess kills a process (synchronously)
 func KillProcess(process string) {
-	p, ok := ProcessInfo[process]
-	if !ok {
-		log.Printf("KillProcess: no process named %s\n", process)
+	p, err := getProcessInfo(process)
+	if err != nil {
+		log.Printf("KillProcess: err=%s\n", err)
 		return
 	}
 	KillExecutable(p.Exe)
