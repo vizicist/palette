@@ -136,18 +136,18 @@ public:
 
 class MmttRegion {
 public:
-	MmttRegion(int i, int first_sid, CvRect r) {
+	MmttRegion(std::string name, int i, int first_sid, CvRect r) {
 		id = i;
 		_first_sid = first_sid;
 		_rect = r;
-		name = NosuchSnprintf("Region%d",id);
+		_name = name;
 		NosuchDebug(1,"==== NEW MmttRegion id=%d _first_sid=%d",id,_first_sid);
 	}
 	~MmttRegion() {
 		NosuchDebug("MmttRegion DESTRUCTOR called! _id=%d\n",_first_sid);
 	}
 	int id;
-	std::string name;
+	std::string _name;
 	int _first_sid;
 	CvRect _rect;
 	// std::vector<CBlob*> _blobs;
@@ -272,7 +272,7 @@ private:
 	void copyColorImageToRegionsAndMask(unsigned char* pixels, IplImage* regions, IplImage* mask, bool reverseColor, bool reverseX );
 	void copyRegionRectsToRegionsImage(IplImage* regions, bool reverseColor, bool reverseX);
 
-	void addCursorEvent(OscBundle &bundle, std::string downdragup, int sid, float x, float y, float z);
+	void addCursorEvent(OscBundle &bundle, std::string downdragup, std::string region, int sid, float x, float y, float z);
 	void sendCursorEvents(OscBundle &bundle);
 
 	void _updateValue(std::string nm, MmttValue* v);
