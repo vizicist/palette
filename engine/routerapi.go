@@ -23,19 +23,7 @@ func (r *Router) ExecuteAPI(api string, nuid string, rawargs string) (result int
 
 	result = "" // pre-populate most common result
 
-	region, regionok := apiargs["region"]
-	if !regionok {
-		region = "*"
-	}
-
-	words := strings.Split(api, ".")
-	apiprefix := words[0]
-	apisuffix := ""
-	if len(words) > 1 {
-		apisuffix = words[1]
-	}
-
-	switch apiprefix {
+	switch api {
 
 	// These are the APIs that are region-specific.
 	// "load" and "save" have one exception - they
@@ -49,23 +37,47 @@ func (r *Router) ExecuteAPI(api string, nuid string, rawargs string) (result int
 		"midi_quantized", "midi_thruscadjust",
 		"transpose":
 
+		region, regionok := apiargs["region"]
+		if !regionok {
+			region = "*"
+		}
 		return r.executeRegionAPI(region, api, apiargs, rawargs)
 
-	case "preset.list":
-		return r.executePresetAPI("list", apiargs, rawargs)
+	case "list":
+		return presetList(apiargs)
 
-	case "process.start", "process.stop":
-		return r.executeProcessAPI(api, apiargs)
+	case "start", "stop":
+		process, ok := apiargs["process"]
+		if !ok {
+			err = fmt.Errorf("executeProcessAPI: missing process argument")
+		} else if api == "start" {
+			err = StartRunning(process)
+		} else {
+			err = StopRunning(process)
+		}
+		return "", err
 
-	case "global":
-		return r.executeGlobalAPI(apisuffix, apiargs)
+	case "activate":
+		return executeAPIActivate()
 
 	case "sendlogs":
-		SendLogs()
-		return "", nil
+		return "", SendLogs()
 
 	default:
-		return nil, fmt.Errorf("ExecuteAPI: unknown prefix on api=%s", api)
+		// All other APIs are of the form {apitype}.{api}.
+		// So far there's only global.* APIs.
+		words := strings.Split(api, ".")
+		apitype := words[0]
+		apisuffix := ""
+		if len(words) > 1 {
+			apisuffix = words[1]
+		}
+		if apitype == "global" {
+			return r.executeGlobalAPI(apisuffix, apiargs)
+		} else {
+			return nil, fmt.Errorf("ExecuteAPI: unknown prefix on api=%s", api)
+		}
+
 	}
 }
 
@@ -122,6 +134,7 @@ func presetList(apiargs map[string]string) (string, error) {
 	return result, nil
 }
 
+/*
 func (r *Router) executePresetAPI(api string, apiargs map[string]string, rawargs string) (string, error) {
 	switch api {
 	case "list":
@@ -131,6 +144,7 @@ func (r *Router) executePresetAPI(api string, apiargs map[string]string, rawargs
 		return "", fmt.Errorf("unrecognized prefix sub-command: %s", api)
 	}
 }
+*/
 
 func (r *Router) executeRegionAPI(region string, api string, apiargs map[string]string, rawargs string) (result string, err error) {
 
@@ -144,8 +158,10 @@ func (r *Router) executeRegionAPI(region string, api string, apiargs map[string]
 		}
 		if strings.HasPrefix(preset, "quad.") {
 			if api == "load" {
+				log.Printf("Loading preset=%s", preset)
 				return "", r.loadQuadPreset(preset)
 			} else {
+				log.Printf("Saving preset=%s", preset)
 				return "", r.saveQuadPreset(preset)
 			}
 		}
@@ -306,6 +322,7 @@ func (r *Router) loadQuadPreset(preset string) error {
 	return nil
 }
 
+/*
 func (r *Router) executeProcessAPI(api string, apiargs map[string]string) (result string, err error) {
 	switch api {
 
@@ -325,9 +342,6 @@ func (r *Router) executeProcessAPI(api string, apiargs map[string]string) (resul
 			err = StopRunning(process)
 		}
 
-	case "activate":
-		result, err = executeAPIActivate()
-
 	default:
 		err = fmt.Errorf("executeProcessAPI: unknown api %s", api)
 	}
@@ -338,6 +352,7 @@ func (r *Router) executeProcessAPI(api string, apiargs map[string]string) (resul
 		return result, nil
 	}
 }
+*/
 
 func (r *Router) executeGlobalAPI(api string, apiargs map[string]string) (result string, err error) {
 

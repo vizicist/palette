@@ -102,7 +102,7 @@ func (vals *ParamValues) SetParamValueWithString(name, value string, callback Pa
 func (vals *ParamValues) paramDefOf(name string) (ParamDef, error) {
 	p, ok := ParamDefs[name]
 	if !ok {
-		return ParamDef{}, fmt.Errorf("no parameter named %s", name)
+		return ParamDef{}, fmt.Errorf("paramDefOf: no parameter named %s", name)
 	} else {
 		return p, nil
 	}
@@ -348,7 +348,7 @@ func (vals *ParamValues) paramValue(name string) ParamValue {
 func (vals *ParamValues) paramValueAsString(name string) (string, error) {
 	val := vals.paramValue(name)
 	if val == nil {
-		return "", fmt.Errorf("no parameter named %s", name)
+		return "", fmt.Errorf("paramValueAsString: no parameter named %s", name)
 	}
 	s := ""
 	switch v := val.(type) {
