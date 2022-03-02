@@ -5,12 +5,12 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "testapi",
+            "name": "testcli",
             "type": "go",
             "request": "launch",
             "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
             // "args": ["start"]
-            "args": ["stop"]
+            // "args": ["stop"]
             // "args": ["-region=A", "save", "snap.default"]
             // "args": ["save", "quad.default"]
             // "args": ["load", "quad.default"]
@@ -18,7 +18,7 @@
             // "args": ["-region=A", "save", "visual.default"]
             // "args": ["set", "visual.speed", "0.333"]
             // "args": ["-region=A", "get", "visual.speed"]
-            // "args": ["preset","list"]
+            "args": ["list","sound"]
         },
         {
             "name": "Engine (palette_engine.go)",
@@ -57,21 +57,21 @@
             "type": "go",
             "request": "launch",
             "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
-            "args": ["api", "process.start", "\"process\":\"mmtt\""]
+            "args": ["api", "start", "\"process\":\"mmtt\""]
         },
         {
             "name": "Stop MMTT",
             "type": "go",
             "request": "launch",
             "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
-            "args": ["api", "process.stop", "\"process\":\"mmtt\""]
+            "args": ["api", "stop", "\"process\":\"mmtt\""]
         },
         {
             "name": "Start Resolume",
             "type": "go",
             "request": "launch",
             "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
-            "args": ["api", "process.start", "\"process\":\"resolume\""]
+            "args": ["api", "start", "\"process\":\"resolume\""]
         },
         {
             "name": "Stop resolume",
@@ -85,28 +85,28 @@
             "type": "go",
             "request": "launch",
             "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
-            "args": ["api", "process.start", "\"process\":\"bidule\""]
+            "args": ["api", "start", "\"process\":\"bidule\""]
         },
         {
             "name": "Stop bidule",
             "type": "go",
             "request": "launch",
             "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
-            "args": ["api", "process.stop", "\"process\":\"bidule\""]
+            "args": ["api", "stop", "\"process\":\"bidule\""]
         },
         {
             "name": "Start gui",
             "type": "go",
             "request": "launch",
             "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
-            "args": ["api", "process.start", "\"process\":\"gui\""]
+            "args": ["api", "start", "\"process\":\"gui\""]
         },
         {
             "name": "Stop gui",
             "type": "go",
             "request": "launch",
             "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
-            "args": ["api", "process.stop", "\"process\":\"gui\""]
+            "args": ["api", "stop", "\"process\":\"gui\""]
         },
         {
             "name": "run testmidi.py",

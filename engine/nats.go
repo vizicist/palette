@@ -16,6 +16,28 @@ var PaletteEventSubject = "palette.event"
 
 var time0 = time.Now()
 
+type paletteNATS struct {
+	natsConn *nats.Conn
+}
+
+var natsSingleton *paletteNATS
+
+// NATS xxx
+func NATS() *paletteNATS {
+	if natsSingleton != nil {
+		return natsSingleton
+	}
+	natsSingleton = &paletteNATS{
+		natsConn: nil,
+	}
+	err := natsSingleton.Connect()
+	if err != nil {
+		log.Printf("NATS: err=%s\n", err)
+		natsSingleton.natsConn = nil
+	}
+	return natsSingleton
+}
+
 // PublishCursorDeviceEvent xxx
 func PublishCursorDeviceEvent(ce CursorDeviceEvent) error {
 	dt := time.Since(time0)
@@ -35,7 +57,7 @@ func PublishCursorDeviceEvent(ce CursorDeviceEvent) error {
 		"\"z\": \"" + fmt.Sprintf("%f", ce.Z) + "\", " +
 		"\"area\": \"" + fmt.Sprintf("%f", ce.Area) + "\" }"
 
-	err := theVizNats.Publish(PaletteEventSubject, params)
+	err := NATSPublish(PaletteEventSubject, params)
 	if err != nil {
 		return err
 	}
@@ -57,7 +79,7 @@ func PublishMIDIDeviceEvent(me MIDIDeviceEvent) error {
 		"\"data1\": \"" + fmt.Sprintf("%d", me.Data1) + "\", " +
 		"\"data2\": \"" + fmt.Sprintf("%d", me.Data2) + "\" }"
 
-	err := theVizNats.Publish(PaletteEventSubject, params)
+	err := NATSPublish(PaletteEventSubject, params)
 	if err != nil {
 		return err
 	}
@@ -72,7 +94,7 @@ func PublishSpriteEvent(x, y, z float32) error {
 		"\"y\": \"" + fmt.Sprintf("%f", y) + "\", " +
 		"\"z\": \"" + fmt.Sprintf("%f", z) + "\" }"
 
-	err := theVizNats.Publish(PaletteEventSubject, params)
+	err := NATSPublish(PaletteEventSubject, params)
 	if err != nil {
 		return err
 	}
@@ -88,7 +110,7 @@ func PublishAliveEvent(secs float64, cursorCount int) error {
 		"\"cursorcount\": \"" + fmt.Sprintf("%d", cursorCount) +
 		"\" }"
 
-	err := theVizNats.Publish(PaletteEventSubject, params)
+	err := NATSPublish(PaletteEventSubject, params)
 	if err != nil {
 		return err
 	}
@@ -105,49 +127,17 @@ func EngineAPI(api, params string) (result string, err error) {
 		"\"api\": \"" + api + "\", " +
 		"\"params\": \"" + jsonEscape(params) +
 		"\" }"
-	return theVizNats.Request("palette.api", args, timeout)
-}
-
-// VizNats xxx
-type VizNats struct {
-	natsConn *nats.Conn
-}
-
-// TheVizNats is the only one
-var theVizNats *VizNats
-
-// InitVizNats xxx
-func InitNATS() {
-	if theVizNats != nil {
-		log.Printf("InitNATS: called twice!?\n")
-		return
-	}
-	theVizNats = NewVizNats()
-}
-
-func ConnectToNATSServer() {
-	err := theVizNats.Connect()
-	if err != nil {
-		log.Printf("VizNats.Connect: err=%s\n", err)
-		theVizNats.natsConn = nil
-	}
-}
-
-// NewVizNats xxx
-func NewVizNats() *VizNats {
-	return &VizNats{
-		natsConn: nil,
-	}
+	return NATSRequest("palette.api", args, timeout)
 }
 
 // Connect xxx
-func (vn *VizNats) Connect() error {
+func (vn *paletteNATS) Connect() error {
 
 	var urls = nats.DefaultURL // The nats server URLs (separated by comma)
 	var userCreds = ""         // User Credentials File
 
 	// Connect Options.
-	opts := []nats.Option{nats.Name("VizNat Subscriber")}
+	opts := []nats.Option{nats.Name("Palette Subscriber")}
 	opts = setupConnOptions(opts)
 
 	// Use UserCredentials
@@ -167,9 +157,10 @@ func (vn *VizNats) Connect() error {
 }
 
 // Request is used for APIs - it blocks waiting for a response and returns the response
-func (vn *VizNats) Request(subj, data string, timeout time.Duration) (retdata string, err error) {
+func NATSRequest(subj, data string, timeout time.Duration) (retdata string, err error) {
+	vn := NATS()
 	if Debug.NATS {
-		log.Printf("VizNats.Request: %s %s\n", subj, data)
+		log.Printf("NATS.Request: %s %s\n", subj, data)
 	}
 	nc := vn.natsConn
 	bytes := []byte(data)
@@ -185,16 +176,17 @@ func (vn *VizNats) Request(subj, data string, timeout time.Duration) (retdata st
 	return string(msg.Data), nil
 }
 
-// Publish xxx
-func (vn *VizNats) Publish(subj string, msg string) error {
+// NATSPublish xxx
+func NATSPublish(subj string, msg string) error {
 
+	vn := NATS()
 	if Debug.NATS {
-		log.Printf("VizNats.Publish: %s %s\n", subj, msg)
+		log.Printf("NATSPublish: %s %s\n", subj, msg)
 	}
 
 	nc := vn.natsConn
 	if nc == nil {
-		return fmt.Errorf("Publish: subject=%s, no connection to nats-server", subj)
+		return fmt.Errorf("NATSPublish: subject=%s, no connection to nats-server", subj)
 	}
 	bytes := []byte(msg)
 
@@ -211,9 +203,9 @@ func (vn *VizNats) Publish(subj string, msg string) error {
 func SubscribeNATS(subj string, callback nats.MsgHandler) error {
 
 	if Debug.NATS {
-		log.Printf("VizNats.Subscribe: %s\n", subj)
+		log.Printf("NATS.Subscribe: %s\n", subj)
 	}
-	nc := theVizNats.natsConn
+	nc := NATS().natsConn
 	if nc == nil {
 		return fmt.Errorf("SubscribeNATS: subject=%s, no connection to nats-server", subj)
 	}
@@ -240,7 +232,7 @@ func setupConnOptions(opts []nats.Option) []nats.Option {
 	}))
 	opts = append(opts, nats.ClosedHandler(func(nc *nats.Conn) {
 		log.Printf("nats.ClosedHandler, Exiting: %v", nc.LastError())
-		theVizNats.natsConn = nil
+		NATS().natsConn = nil
 	}))
 	return opts
 }
