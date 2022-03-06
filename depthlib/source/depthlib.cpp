@@ -1,7 +1,7 @@
 #include <iostream>
 
 // include depthai library
-#include <depthai/depthai.hpp>
+// #include <depthai/depthai.hpp>
 
 #include <opencv2/core.hpp>
 #include <opencv2/videoio.hpp>

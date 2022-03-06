@@ -100,7 +100,7 @@
     <Link>
       <AdditionalOptions>/ignore:4099 %(AdditionalOptions)</AdditionalOptions>
       <AdditionalDependencies>opencv_highgui2411d.lib;opencv_core2411d.lib;opencv_flann2411d.lib;opencv_ml2411d.lib;opencv_imgproc2411d.lib;IlmImfd.lib;libjpegd.lib;libpngd.lib;libtiffd.lib;libjasperd.lib;pthreadVC2.lib;winmm.lib;ManifoldLib.lib;Kinect10.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\..\..\src\opencv\build\x86\vc12\staticlib;..\\ManifoldLib\Debug;..\..\..\src\pthreads-win32-2.8.0\Pre-built.2\lib;C:\Python26\libs;C:\Program Files\Microsoft SDKs\Kinect\v1.7\lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\..\src\opencv\build\x86\vc12\staticlib;..\\ManifoldLib\Debug;..\..\..\src\pthreads-win32-2.8.0\Pre-built.2\lib;C:\Program Files\Microsoft SDKs\Kinect\v1.7\lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <IgnoreSpecificDefaultLibraries>LIBCMT;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <GenerateDebugInformation>true</GenerateDebugInformation>
