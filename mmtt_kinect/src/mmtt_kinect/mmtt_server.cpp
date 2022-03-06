@@ -244,7 +244,7 @@ MmttServer::MmttServer(std::string defaultsfile)
 			exit(1);
 		}
 		// Do it again?  There's a bug where it doesn't get completely initialized unless you do it twice!?  HACK!!
-		LoadPatch(_patchFile);
+		// LoadPatch(_patchFile);
 	}
 
 	if ( _do_initialalign ) {
@@ -2487,18 +2487,26 @@ MmttServer::makeMmttServer()
 
 	MmttServer* server = new MmttServer(NosuchLocalPath("config/mmtt_kinect.json"));
 
+	NosuchDebug("after new MmttServer\n");
+
 	std::string stat = server->status();
 	if ( stat != "" ) {
 		NosuchDebug("Failure in creating MmttServer? status=%s",stat.c_str());
 		return NULL;
 	}
 
+	NosuchDebug("after status\n");
+
 	if ( NosuchNetworkInit() ) {
 		NosuchDebug("Unable to initialize networking?");
 		return NULL;
 	}
 
+	NosuchDebug("before startHttpThread in makeMmttServer\n");
+
 	startHttpThread(server);
+
+	NosuchDebug("after startHttpThread in makeMmttServer\n");
 
 	return server;
 }
