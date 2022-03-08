@@ -327,14 +327,11 @@ dojo.addOnLoad(setup);
 
 <center>
 <h2>Space Manifold Calibration</h2>
+<input type="button" name="butt_autopoke" value="ReAlign" onClick="doaction('align_start');">
+&nbsp;&nbsp;&nbsp;
 <input type="button" name="butt_start" value="START sending TUIO (Shows only Filtered Depth)" onClick="doaction('start');">
 &nbsp;&nbsp;&nbsp;
 <input type="button" name="butt_stop" value="STOP sending TUIO (Shows Raw Depth)" onClick="doaction('stop');">
-<p>
-<input type="button" name="butt_autopoke" value="SwitchCamera" onClick="doaction('switch_camera');">
-<input type="button" name="butt_autopoke" value="ReAlign" onClick="doaction('align_start');">
-<input type="button" name="butt_loadconfig" value="Load Config" onClick="doconfig('load');">
-<input type="text" id="text_configname" name="text_configname" value="default">
 <br>
 <div id="status">&nbsp;</div>
 </center>

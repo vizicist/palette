@@ -1,6 +1,7 @@
 CurrentSnapshot.*
 CurrentQuad.*
 *.pyc
+*.suo
 default/logs/*.log
 default/logs/*.stderr
 default/logs/*.stdout
@@ -13,6 +14,7 @@ ffgl/build/windows/.vs
 ffgl/binaries
 ffgl/source/lib/oldpthreads
 windows/ship
+mmtt_kinect_old
 params/gentle/snap/CurrentSnapshot.*
 # Binaries for programs and plugins
 build/windows/.vs
