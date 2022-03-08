@@ -159,7 +159,7 @@ public:
 
 class MmttServer {
  public:
-	MmttServer(std::string defaultsfile);
+	MmttServer();
 	~MmttServer();
 
 	static MmttServer* makeMmttServer();
@@ -195,7 +195,7 @@ class MmttServer {
 	CvScalar colorOfSession(int g);
 	int regionOfColor(int r, int g, int b);
 
-	std::string SavePatch(std::string prefix, const char* id);
+	std::string SavePatch(const char* id);
 	void deriveRegionsFromImage();
 	void startNewRegions();
 	void finishNewRegions();
@@ -251,8 +251,6 @@ class MmttServer {
 private:
 
 	void init_values();
-	void LoadGlobalDefaults();
-	void LoadConfigDefaultsJson(std::string jstr);
 	void doRegistration();
 	void doDepthRegistration();
 	void doAutoDepthRegistration();
@@ -287,14 +285,12 @@ private:
 	std::string _OscClientList;
 	std::vector<OscSender *> _Clients;
 
-	std::string _global_defaults_file;
 	bool _do_sharedmem;
 	bool _do_initialalign;
 	std::string _status;
 
 	int _jsonport;
 	std::string _patchFile;
-	std::string _patchDir;
 	std::string _tempDir;
 	int	_camWidth;
 	int	_camHeight;

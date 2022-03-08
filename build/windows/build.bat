@@ -105,8 +105,7 @@ copy mmtt_kinect\Debug\mmtt_kinect.exe %bin%\mmtt_kinect >nul
 copy mmtt_kinect\*.dll %bin%\mmtt_kinect >nul
 popd
 pushd %PALETTESOURCE%\mmtt_kinect
-copy config\mmtt_kinect.json %ship%\config > nul
-copy config\mmtt_kinect\*.* %ship%\config\mmtt_kinect > nul
+copy config\mmtt_*.json %ship%\config > nul
 popd
 
 echo ================ Copying html

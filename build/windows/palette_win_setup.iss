@@ -54,8 +54,7 @@ Source: "ship\ffgl\*"; DestDir: "{app}\ffgl"; Flags: ignoreversion recursesubdir
 Source: "ship\html\*"; DestDir: "{app}\html"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "ship\presets\*"; DestDir: "{app}\presets"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE - all config files go in LOCALAPPDATA
-Source: "ship\config\mmtt_kinect.json"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
-Source: "ship\config\mmtt_kinect\*.json"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\config\mmtt_kinect"; Flags: comparetimestamp ignoreversion
+Source: "ship\config\mmtt*.json"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
 Source: "ship\config\nats*.conf"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
 Source: "ship\config\paramdefs.json"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
 Source: "ship\config\paramenums.json"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion

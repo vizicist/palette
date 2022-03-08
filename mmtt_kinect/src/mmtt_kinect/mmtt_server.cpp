@@ -122,14 +122,13 @@ static float raw_depth_to_meters(int raw_depth)
 	return 0.0f;
 }
 
-MmttServer::MmttServer(std::string defaultsfile)
+MmttServer::MmttServer()
 {
 	NosuchErrorPopup = MmttServer::ErrorPopup;
 
 	ThisServer = this;  // should try to remove this eventually 
 
 	_status = "Uninitialized";
-	_global_defaults_file = defaultsfile;
 	_regionsfilled = false;
 	_regionsDefinedByPatch = false;
 	_showrawdepth = false;
@@ -138,7 +137,7 @@ MmttServer::MmttServer(std::string defaultsfile)
 	registrationState = 0;
 	continuousAlign = false;
 
-	_OscClientList = "";
+	_OscClientList = "127.0.0.1:3333";
 
 	_newblobresult = NULL;
 	_oldblobresult = NULL;
@@ -157,7 +156,11 @@ MmttServer::MmttServer(std::string defaultsfile)
 	json_cond = PTHREAD_COND_INITIALIZER;
 	json_pending = FALSE;
 
-	LoadGlobalDefaults();
+	_jsonport = 4444;
+	_do_initialalign = true;
+	_patchFile = "";
+	_patchFile = NosuchLocalPath("config/mmtt_patch.json");
+	_tempDir = "c:/windows/temp";
 
 	camera = DepthCamera::makeDepthCamera(this,"kinect");
 	if ( ! camera ) {
@@ -882,10 +885,11 @@ has_invalid_char(const char *nm)
 
 std::string
 MmttServer::startAlign() {
-	std::string err = LoadPatch(_patchFile);
-	if ( err != "" ) {
-		return NosuchSnprintf("LoadPatch failed!?  err=%s",err.c_str());
-	}
+	// std::string err = LoadPatch(_patchFile);
+	// if ( err != "" ) {
+	// 	return NosuchSnprintf("LoadPatch failed!?  err=%s",err.c_str());
+	// }
+	NosuchDebug("startAlign is NOT calling LoadPatch!\n");
 	if ( _curr_regions.size() == 0 ) {
 		return "No regions yet - do you need to load a patch?";
 	}
@@ -1004,15 +1008,7 @@ MmttServer::ExecuteJson(const char *method, cJSON *params, const char *id) {
 		return ok_json(id);
 	}
 	if ( strcmp(method,"config_save")==0 || strcmp(method,"patch_save")==0 ) {
-		cJSON *c_nm = cJSON_GetObjectItem(params,"name");
-		if ( ! c_nm ) {
-			return error_json(-32000,"Missing name argument",id);
-		}
-		char *nm = c_nm->valuestring;
-		if ( has_invalid_char(nm) ) {
-			return error_json(-32000,"Invalid characters in name",id);
-		}
-		return SavePatch(nm,id);
+		return SavePatch(id);
 	}
 	if ( strcmp(method,"config_load")==0 || strcmp(method,"patch_load")==0 ) {
 		cJSON *c_nm = cJSON_GetObjectItem(params,"name");
@@ -1027,8 +1023,8 @@ MmttServer::ExecuteJson(const char *method, cJSON *params, const char *id) {
 		std::string err = LoadPatch(_patchFile);
 		if ( err == "" ) {
 			// Not sure this is still needed - it was a bug workaround
-			NosuchDebug("Loading Patch a second time"); // HACK!!
-			(void) LoadPatch(_patchFile);
+			// NosuchDebug("Loading Patch a second time"); // HACK!!
+			// (void) LoadPatch(_patchFile);
 			return ok_json(id);
 		} else {
 			return error_json(-32000,err.c_str(),id);
@@ -1269,44 +1265,6 @@ MmttServer::LoadPatchJson(std::string jstr)
 	return("");
 }
 
-void
-MmttServer::LoadGlobalDefaults()
-{
-	// These are default values, which can be overridden by the config file.
-	_jsonport = 4444;
-	// _do_sharedmem = false;
-	_do_initialalign = false;
-	_patchFile = "";
-	_patchDir = NosuchLocalPath("config/mmtt_kinect");
-	_tempDir = "c:/windows/temp";
-	NosuchDebugToConsole = true;
-	NosuchDebugToLog = true;
-	NosuchDebugSetLogDirFile(_tempDir,"debug.txt");
-
-	// Config file can override those values
-	ifstream f;
-	std::string fname = _global_defaults_file;
-
-	f.open(fname.c_str());
-	if ( ! f.good() ) {
-		std::string err = NosuchSnprintf("No config file (%s), assuming defaults\n",fname.c_str());
-		NosuchErrorOutput("%s",err.c_str());
-	} else {
-		NosuchDebug("Loading config=%s\n",fname.c_str());
-		std::string line;
-		std::string jstr;
-		while ( getline(f,line) ) {
-			if ( line.size()>0 && line.at(0)=='#' ) {
-				NosuchDebug(1,"Ignoring comment line=%s\n",line.c_str());
-				continue;
-			}
-			jstr += line;
-		}
-		f.close();
-		LoadConfigDefaultsJson(jstr);
-	}
-}
-
 static cJSON *
 getNumber(cJSON *json,char *name)
 {
@@ -1325,72 +1283,17 @@ getString(cJSON *json,char *name)
 	return NULL;
 }
 
-void
-MmttServer::LoadConfigDefaultsJson(std::string jstr)
-{
-	cJSON *json = cJSON_Parse(jstr.c_str());
-	if ( ! json ) {
-		NosuchDebug("Unable to parse json for config!?  json= %s\n",jstr.c_str());
-		return;
-	}
-
-	cJSON *j;
-
-	if ( (j=getString(json,"clientlist")) != NULL ) {
-		_OscClientList = std::string(j->valuestring);
-	}
-	if ( (j=getNumber(json,"initialalign")) != NULL ) {
-		_do_initialalign = (j->valueint != 0);
-	}
-	if ( (j=getNumber(json,"port")) != NULL ) {
-		_jsonport = j->valueint;
-	}
-	if ( (j=getString(json,"patch")) != NULL ) {
-		_patchFile = std::string(j->valuestring);
-	}
-	if ( (j=getString(json,"tempdir")) != NULL ) {
-		_tempDir = std::string(j->valuestring);
-	}
-	if ( (j=getNumber(json,"debugtoconsole")) != NULL ) {
-		NosuchDebugToConsole = j->valueint?TRUE:FALSE;
-	}
-	if ( (j=getNumber(json,"debugtolog")) != NULL ) {
-		NosuchDebugToLog = j->valueint?TRUE:FALSE;
-	}
-	if ( (j=getNumber(json,"debugautoflush")) != NULL ) {
-		NosuchDebugAutoFlush = j->valueint?TRUE:FALSE;
-	}
-}
-
-
 std::string
-MmttServer::LoadPatch(std::string prefix)
+MmttServer::LoadPatch(std::string fname)
 {
 	startNewRegions();
 
-	std::string fname = NosuchForwardSlash(_patchDir + "/" + prefix);
-	if ( fname.find(".json") == fname.npos ) {
-		fname = fname + ".json";
-	}
 	ifstream f;
-
 	f.open(fname.c_str());
 	if ( ! f.good() ) {
 		std::string err = NosuchSnprintf("Warning - unable to open patch file: %s\n",fname.c_str());
 		NosuchDebug("%s",err.c_str());  // avoid re-interpreting %'s and \\'s in name
-		// If it's not in the main MmttPatchDir, try the tempdir, since
-		// that's where new patches get saved
-		fname = NosuchForwardSlash(_tempDir + "/" + prefix);
-		NosuchDebug("Trying tempdir, fname=%s",fname.c_str());
-		if ( fname.find(".json") == fname.npos ) {
-			fname = fname + ".json";
-		}
-		f.open(fname.c_str());
-		if ( ! f.good() ) {
-			std::string err = NosuchSnprintf("Warning - unable to open patch file: %s\n",fname.c_str());
-			NosuchDebug("%s",err.c_str());  // avoid re-interpreting %'s and \\'s in name
-			return err;
-		}
+		return err;
 	}
 	NosuchDebug("Loading patch=%s\n",fname.c_str());
 	std::string line;
@@ -1410,7 +1313,7 @@ MmttServer::LoadPatch(std::string prefix)
 	}
 
 	if ( ! _regionsDefinedByPatch ) {
-		std::string fn_patch_image = _patchDir + "/" + prefix + ".ppm";
+		std::string fn_patch_image = NosuchLocalPath("config/mmtt.ppm");
 		NosuchDebug("Reading mask image from %s",fn_patch_image.c_str());
 		IplImage* img = cvLoadImage( fn_patch_image.c_str(), CV_LOAD_IMAGE_COLOR );
 		if ( ! img ) {
@@ -1443,18 +1346,17 @@ void MmttServer::finishNewRegions()
 	int nrsize = _new_regions.size();
 	int crsize = _curr_regions.size();
 	if ( nrsize == crsize ) {
-		NosuchDebug(1,"finishNewRegions!! copying first_sid values");
+		NosuchDebug(1,"finishNewRegions!! copying first_sid and _name values");
 		for ( int i=0; i<nrsize; i++ ) {
 			MmttRegion* cr = _curr_regions[i];
 			MmttRegion* nr = _new_regions[i];
 			nr->_first_sid = cr->_first_sid;
+			nr->_name = cr->_name;
 		}
 	} else {
-#if 0
 		if ( nrsize!=0 && crsize!=0 ) {
 			NosuchDebug("WARNING!! _curr_regions=%d _new_regions=%d size doesn't match!",crsize,nrsize);
 		}
-#endif
 	}
 	NosuchDebug("finishNewRegions!! _curr_regions follows");
 	_curr_regions = _new_regions;
@@ -1522,26 +1424,17 @@ MmttServer::deriveRegionsFromImage()
 }
 
 std::string
-MmttServer::SavePatch(std::string prefix, const char* id)
+MmttServer::SavePatch(const char* id)
 {
 	if ( ! _regionsfilled ) {
 		NosuchDebug("Unable to save patch, regions are not filled yet");
 		return error_json(-32700,"Unable to save patch, regions are not filled yet",id);
 	}
-	std::string patchdir = _patchDir;
-	std::string fname = patchdir + "/" + prefix + ".json";
+	std::string fname = NosuchLocalPath("config/mmtt_patch_save.json");
 	ofstream f_json(fname.c_str());
 	if ( ! f_json.is_open() ) {
 		NosuchDebug("Unable to open %s!?",fname.c_str());
-		// If we can't write in _patchDir, try the tempdir
-		patchdir = _tempDir;
-		fname = NosuchForwardSlash(patchdir + "/" + prefix + ".json");
-		NosuchDebug("Trying tempdir, fname=%s",fname.c_str());
-		f_json.open(fname.c_str());
-		if ( ! f_json.is_open() ) {
-			NosuchDebug("Unable to open %s!?",fname.c_str());
-			return error_json(-32700,"Unable to open patch file",id);
-		}
+		return error_json(-32700,"Unable to open patch file",id);
 	}
 	f_json << "{";
 
@@ -1549,6 +1442,11 @@ MmttServer::SavePatch(std::string prefix, const char* id)
 	for ( map<std::string, MmttValue*>::iterator vit=mmtt_values.begin(); vit != mmtt_values.end(); vit++ ) {
 		std::string nm = vit->first;
 		MmttValue* v = vit->second;
+		// These values are only used when reading,
+		// ie. the other coords will already be shifted
+		if (nm == "shiftx" || nm == "shifty") {
+			continue;
+		}
 		f_json << sep << "  \"" << nm << "\": " << v->internal_value;
 		sep = ",\n";
 	}
@@ -1561,7 +1459,7 @@ MmttServer::SavePatch(std::string prefix, const char* id)
 			continue;
 		}
 		f_json << sep2
-			<< "    { \"name\": " << (r->_name)
+			<< "    { \"name\": \"" << (r->_name) << "\""
 			<< ", \"first_sid\": " << (r->_first_sid)
 			<< ", \"x\": " << r->_rect.x
 			<< ", \"y\": " << r->_rect.y
@@ -1575,7 +1473,7 @@ MmttServer::SavePatch(std::string prefix, const char* id)
 	f_json.close();
 	NosuchDebug("Saved patch: %s",fname.c_str());
 
-	std::string fn_patch_image = patchdir + "/" + prefix + ".ppm";
+	std::string fn_patch_image = NosuchLocalPath("config/mmtt_patch_save.ppm");
 
 	copyRegionsToColorImage(_regionsImage,(unsigned char *)(_tmpRegionsColor->imageData),TRUE,TRUE,TRUE);
 	if ( !cvSaveImage(fn_patch_image.c_str(),_tmpRegionsColor) ) {
@@ -1821,7 +1719,7 @@ MmttServer::registrationContinueManual()
 	_tmpThresh->imageData = (char *)thresh_front;
 
 	CBlobResult blobs = CBlobResult(_tmpThresh, NULL, 0);
-	// NosuchDebug("blobs = %d\n",blobs.GetNumBlobs());
+	NosuchDebug("Registration continue blobs = %d\n",blobs.GetNumBlobs());
 
 	blobs.Filter( blobs, B_EXCLUDE, CBlobGetArea(), B_GREATER, val_blob_maxsize.internal_value );
 	blobs.Filter( blobs, B_EXCLUDE, CBlobGetArea(), B_LESS, val_blob_minsize.internal_value );
@@ -2485,7 +2383,7 @@ MmttServer::makeMmttServer()
 	NosuchDebugSetLogDirFile(logdir,"mmtt_kinect.log");
 	NosuchDebug("Hello mmtt_kinect\n");
 
-	MmttServer* server = new MmttServer(NosuchLocalPath("config/mmtt_kinect.json"));
+	MmttServer* server = new MmttServer();
 
 	NosuchDebug("after new MmttServer\n");
 
