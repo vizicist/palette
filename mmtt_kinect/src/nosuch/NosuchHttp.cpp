@@ -99,7 +99,7 @@ NosuchSocketConnection::CollectHttpRequest(const char *p) {
 		_buff_sofar = _buff_sofar.substr(i+1);
 		// ... until you get to the end of the headers
 		if ( CollectHttpHeader(line) ) {
-			NosuchDebug("Got to end of headers!");
+			// NosuchDebug("Got to end of headers!");
 			if ( _collecting_post_data ) {
 				bool done = CollectPostData(_buff_sofar);
 				_buff_sofar = "";
