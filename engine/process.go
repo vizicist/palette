@@ -23,8 +23,7 @@ func InitProcessInfo() {
 	ProcessInfo["resolume"] = ResolumeInfo()
 	ProcessInfo["gui"] = GuiInfo()
 	ProcessInfo["bidule"] = BiduleInfo()
-	ProcessInfo["mmtt_kinect"] = MmttInfo("mmtt_kinect")
-	ProcessInfo["mmtt_kinect"] = MmttInfo("mmtt_kinect")
+	ProcessInfo["mmtt_kinect"] = KinectInfo()
 	ProcessInfo["mmtt_oak"] = MmttInfo("mmtt_oak")
 }
 
@@ -74,6 +73,16 @@ func GuiInfo() *processInfo {
 	exe := "palette_gui.exe"
 	fullpath := filepath.Join(PaletteDir(), "bin", "pyinstalled", exe)
 	return &processInfo{exe, fullpath, "", 0}
+}
+
+func KinectInfo() *processInfo {
+	// NOTE: it's inside a sub-directory of bin, so all the necessary .dll's are contained
+	fullpath := filepath.Join(PaletteDir(), "bin", "mmtt_kinect", "mmtt_kinect.exe")
+	if !FileExists(fullpath) {
+		log.Printf("no kinect_mmtt executable found, looking for %s", fullpath)
+		return nil
+	}
+	return &processInfo{"mmtt_kinect.exe", fullpath, "", 0}
 }
 
 func MmttInfo(mmtt string) *processInfo {
