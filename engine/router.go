@@ -749,8 +749,11 @@ func (r *Router) handleOSCInput(e OSCEvent) {
 		log.Printf("OSC /api is not implemented\n")
 		// r.handleOSCAPI(e.Msg)
 
-	case "/event":
+	case "/event": // These messages encode the arguments as JSON
 		r.handleOSCEvent(e.Msg)
+
+	case "/cursor":
+		r.handleMMTTCursor(e.Msg)
 
 	case "/patchxr":
 		r.handlePatchXREvent(e.Msg)
@@ -985,22 +988,95 @@ func (r *Router) recordingLoad(name string) ([]*PlaybackEvent, error) {
 	return events, nil
 }
 
+func (r *Router) handleMMTTButton(ddu string, butt string) {
+	if ddu == "down" {
+		log.Printf("MMTT BUTTON %s\n", butt)
+	}
+}
+
+// handleMMTTCursor handles messages from MMTT and reformats them
+// as a standard cursor event before sending them to r.HandleEvent
+func (r *Router) handleMMTTCursor(msg *osc.Message) {
+
+	tags, _ := msg.TypeTags()
+	_ = tags
+	nargs := msg.CountArguments()
+	if nargs < 1 {
+		log.Printf("Router.handleMMTTCursor: too few arguments\n")
+		return
+	}
+	ddu, err := argAsString(msg, 0)
+	if err != nil {
+		log.Printf("Router.handleMMTTEvent: err=%s\n", err)
+		return
+	}
+	cid, err := argAsString(msg, 1)
+	if err != nil {
+		log.Printf("Router.handleMMTTEvent: err=%s\n", err)
+		return
+	}
+	region := "A"
+	words := strings.Split(cid, ".")
+	if len(words) > 1 {
+		region = words[0]
+	}
+	x, err := argAsFloat32(msg, 2)
+	if err != nil {
+		log.Printf("Router.handleMMTTEvent: x err=%s\n", err)
+		return
+	}
+	y, err := argAsFloat32(msg, 3)
+	if err != nil {
+		log.Printf("Router.handleMMTTEvent: y err=%s\n", err)
+		return
+	}
+	z, err := argAsFloat32(msg, 4)
+	if err != nil {
+		log.Printf("Router.handleMMTTEvent: z err=%s\n", err)
+		return
+	}
+
+	motor, mok := r.motors[region]
+	if !mok {
+		// log.Printf("Router.handleMMTTEvent: no region named %s\n", region)
+		r.handleMMTTButton(ddu, region)
+		return
+	}
+
+	ce := CursorDeviceEvent{
+		NUID:      MyNUID(),
+		Region:    region,
+		CID:       cid,
+		Timestamp: CurrentMilli(),
+		Ddu:       ddu,
+		X:         x,
+		Y:         y,
+		Z:         z,
+		Area:      0.0,
+	}
+	if Debug.Cursor {
+		log.Printf("MMTT ce=%v\n", ce)
+	}
+
+	motor.handleCursorDeviceEvent(ce)
+}
+
 func (r *Router) handleOSCEvent(msg *osc.Message) {
 
 	tags, _ := msg.TypeTags()
 	_ = tags
 	nargs := msg.CountArguments()
 	if nargs < 1 {
-		log.Printf("Router.handleOSCCursorEvent: too few arguments\n")
+		log.Printf("Router.handleOSCEvent: too few arguments\n")
 		return
 	}
 	rawargs, err := argAsString(msg, 0)
 	if err != nil {
-		log.Printf("Router.handleOSCCursorEvent: err=%s\n", err)
+		log.Printf("Router.handleOSCEvent: err=%s\n", err)
 		return
 	}
 	if len(rawargs) == 0 || rawargs[0] != '{' {
-		log.Printf("Router.handleOSCCursorEvent: first char of args must be curly brace\n")
+		log.Printf("Router.handleOSCEvent: first char of args must be curly brace\n")
 		return
 	}
 
@@ -1014,7 +1090,7 @@ func (r *Router) handleOSCEvent(msg *osc.Message) {
 
 	err = r.HandleEvent(args)
 	if err != nil {
-		log.Printf("Router.handleOSCCursorEvent: err=%s\n", err)
+		log.Printf("Router.handleOSCEvent: err=%s\n", err)
 		return
 	}
 }

@@ -437,6 +437,8 @@ func (motor *Motor) handleCursorDeviceEvent(e CursorDeviceEvent) {
 	motor.deviceCursorsMutex.Lock()
 	defer motor.deviceCursorsMutex.Unlock()
 
+	// log.Printf("handleCursorDeviceEvent e=%v\n", e)
+
 	// Special event to clear cursors (by sending them "up" events)
 	if e.Ddu == "clear" {
 		for id, c := range motor.deviceCursors {

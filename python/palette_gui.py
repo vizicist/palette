@@ -2261,7 +2261,7 @@ def afterWindowIsDisplayed(windowName,guiresize,*args):
         time.sleep(1.0) # wait for window to be visible so nircmdc sees it
         log("Resizing GUI")
         # The value of guiresize should be four integers separated by spaces
-
+        guiresize = guiresize.replace(","," ")
         cmd = "nircmdc.exe win setsize stitle \""+windowName+"\" "+guiresize
         os.system(cmd)
 
