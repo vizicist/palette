@@ -215,6 +215,7 @@ MmttServer::MmttServer()
 	mmtt_values["shiftx"] = &val_shiftx;
 	mmtt_values["shifty"] = &val_shifty;
 
+
 	_camSize = cvSize(_camWidth,_camHeight);
 	_tmpGray = cvCreateImage( _camSize, 8, 1 ); // allocate a 1 channel byte image
 	_maskImage = cvCreateImage( _camSize, IPL_DEPTH_8U, 1 ); // allocate a 1 channel byte image
@@ -1810,9 +1811,21 @@ MmttServer::removeMaskFrom(uint8_t* pixels)
 	}
 }
 
-CvPoint
+typedef struct FloatPoint {
+	float x;
+	float y;
+} FloatPoint;
+
+
+FloatPoint
 relativeToRegion(MmttRegion* r, CvPoint xy) {
-	return CvPoint{ xy.x - r->_rect.x, xy.y - r->_rect.y };
+	FloatPoint rxy = FloatPoint{ (float)(xy.x - r->_rect.x), (float)(xy.y - r->_rect.y) };
+	// normalize to 0-1
+	rxy.x = rxy.x / r->_rect.width;
+	rxy.y = rxy.y / r->_rect.height;
+	// Y is reversed?
+	rxy.y = 1.0f - rxy.y;
+	return rxy;
 }
 
 void
@@ -1931,9 +1944,10 @@ MmttServer::analyzePixels()
 				// r->_sessions[sid] = new MmttSession(blob,sess->_frame_born);
 
 				CvPoint xy = sess->_center;
-				xy = relativeToRegion(r, xy);
+				FloatPoint rxy = relativeToRegion(r, xy);
 				float z = float(sess->_depth_mm);
-				addCursorEvent(bundle, "drag", r->_name, sid, float(xy.x), float(xy.y), z);
+
+				addCursorEvent(bundle, "drag", r->_name, sid, rxy.x, rxy.y, z);
 
 				blob_sid[mindist_i] = sid;
 				it++;
@@ -1944,9 +1958,9 @@ MmttServer::analyzePixels()
 				it++;
 
 				CvPoint xy = sess->_center;
-				xy = relativeToRegion(r, xy);
+				FloatPoint rxy = relativeToRegion(r, xy);
 				float z = sess->_depth_normalized;
-				addCursorEvent(bundle, "up", r->_name, sid, float(xy.x), float(xy.y), z);
+				addCursorEvent(bundle, "up", r->_name, sid, rxy.x, rxy.y, z);
 
 				delete sess;
 				r->_sessions.erase(erase_it);
@@ -2010,9 +2024,9 @@ MmttServer::analyzePixels()
 			isnew = true;
 
 			CvPoint xy = sess->_center;
-			xy = relativeToRegion(r, xy);
+			FloatPoint rxy = relativeToRegion(r, xy);
 			float z = float(sess->_depth_mm);
-			addCursorEvent(bundle, "down", r->_name, sid, float(xy.x), float(xy.y), z);
+			addCursorEvent(bundle, "down", r->_name, sid, rxy.x, rxy.y, z);
 		}
 
 		float depthavg = depthtotal / depthcount;
@@ -2101,30 +2115,30 @@ MmttServer::showRegionRects()
 		CvScalar c = region2cvscalar[r->id];
 		int thick = 1;
 		cvRectangle(_ffImage, cvPoint(arect.x,arect.y),
-			cvPoint(arect.x+arect.width-1,arect.y+arect.height-1), c,thick,8,0);
-		// NosuchDebug("Showing region %d x,y=%d,%d  width,height=%d,%d",r->_id,arect.x,arect.y,arect.width,arect.height);
+cvPoint(arect.x + arect.width - 1, arect.y + arect.height - 1), c, thick, 8, 0);
+// NosuchDebug("Showing region %d x,y=%d,%d  width,height=%d,%d",r->_id,arect.x,arect.y,arect.width,arect.height);
 	}
 }
 
 void
 MmttServer::showMask()
 {
-	for (int x=0; x<_camWidth; x++ ) {
-		for (int y=0; y<_camHeight; y++ ) {
-			int i = x + y*_camWidth;
+	for (int x = 0; x < _camWidth; x++) {
+		for (int y = 0; y < _camHeight; y++) {
+			int i = x + y * _camWidth;
 			unsigned char g = _maskImage->imageData[i];
-			_ffpixels[i*3 + 0] = g;
-			_ffpixels[i*3 + 1] = g;
-			_ffpixels[i*3 + 2] = g;
+			_ffpixels[i * 3 + 0] = g;
+			_ffpixels[i * 3 + 1] = g;
+			_ffpixels[i * 3 + 2] = g;
 		}
 	}
 }
 
 static void
-write_span( CvPoint spanpt0, CvPoint spanpt1, OscMessage& msg, CvRect regionrect)
+write_span(CvPoint spanpt0, CvPoint spanpt1, OscMessage& msg, CvRect regionrect)
 {
 	// NosuchDebug(2,"Writing span pt0=%d,%d  pt1=%d,%d  region=xy=%d,%d wh=%d,%d",spanpt0.x,spanpt0.y,spanpt1.x,spanpt1.y,regionrect.x,regionrect.y,regionrect.width,regionrect.height);
-	if ( spanpt0.x > spanpt1.x ) {
+	if (spanpt0.x > spanpt1.x) {
 		// NosuchDebug(2,"Swapping x values");
 		int tmp = spanpt0.x;
 		spanpt0.x = spanpt1.x;
@@ -2134,16 +2148,16 @@ write_span( CvPoint spanpt0, CvPoint spanpt1, OscMessage& msg, CvRect regionrect
 	int spandy = spanpt1.y - spanpt0.y;
 	int dx = spanpt0.x - regionrect.x;
 	int dy = spanpt0.y - regionrect.y;
-	if ( spandy != 0 ) {
+	if (spandy != 0) {
 		NosuchDebug("Hey, something is wrong, y of spanpt0 and spanpt1 should be the same!");
 		return;
 	}
 	float x = float(dx);
 	float y = float(dy);
-	normalize_region_xy(x,y,regionrect);
+	normalize_region_xy(x, y, regionrect);
 
-	float scaledlength = float(spandx+1) / (regionrect.width);
-	if ( scaledlength > 1.0 ) {
+	float scaledlength = float(spandx + 1) / (regionrect.width);
+	if (scaledlength > 1.0) {
 		scaledlength = 1.0;
 	}
 
@@ -2154,10 +2168,10 @@ write_span( CvPoint spanpt0, CvPoint spanpt1, OscMessage& msg, CvRect regionrect
 
 double
 bound_it(double v) {
-	if ( v < 0.0 ) {
+	if (v < 0.0) {
 		return 0.0;
 	}
-	if ( v > 1.0 ) {
+	if (v > 1.0) {
 		return 1.0;
 	}
 	return v;
@@ -2165,10 +2179,10 @@ bound_it(double v) {
 
 bool
 point_is_in(CvPoint pt, CvRect& rect) {
-	if ( pt.x < rect.x ) return false;
-	if ( pt.x > (rect.x+rect.width) ) return false;
-	if ( pt.y < rect.y ) return false;
-	if ( pt.y > (rect.y+rect.height) ) return false;
+	if (pt.x < rect.x) return false;
+	if (pt.x > (rect.x + rect.width)) return false;
+	if (pt.y < rect.y) return false;
+	if (pt.y > (rect.y + rect.height)) return false;
 	return true;
 }
 
@@ -2182,16 +2196,42 @@ void
 MmttServer::addCursorEvent(OscBundle &bundle, std::string downdragup, std::string region, int sid, float x, float y, float z) {
 	OscMessage msg;
 
+	float backmiddle = float(val_backbottom.internal_value + val_backtop.internal_value) / 2.0f;
+	if (z < 1.0 || downdragup == "up") {
+		z = 0.0;
+	}
+	else {
+		// If it's beyond the front value, clip it
+		if (z < val_front.internal_value) {
+			z = float(val_front.internal_value);
+		}
+
+		// The z value coming is in the distance to the camera,
+		// and we want the distance from the frame.
+		z = backmiddle - z;
+		float range = float(backmiddle - val_front.internal_value);
+		z = z / range;
+		if (z < 0.0) {
+			z = 0.0;
+		} else if ( z > 1.0 ) {
+			z = 1.0;
+		}
+	}
+
 	msg.clear();
-	msg.setAddress("/cursor"+downdragup);
-	msg.addStringArg(region);
-	msg.addIntArg(sid);
+	msg.setAddress("/cursor");
+	msg.addStringArg(downdragup);
+	std::string cid = NosuchSnprintf("%s.%d",region.c_str(),sid);
+	msg.addStringArg(cid);
 	msg.addFloatArg(x);      // x (position)
 	msg.addFloatArg(y);      // y (position)
 	msg.addFloatArg(z);        // z (position)
+
+	// NosuchDebug("AddCursorEvent xyz=%f %f %f\n", x, y, z);
 	// msg.addFloatArg((float)blobrect.width);   // w (width)
 	// msg.addFloatArg((float)blobrect.height);  // h (height)
 	// msg.addFloatArg(f);			   // f (area)
+
 	bundle.addMessage(msg);
 }
 

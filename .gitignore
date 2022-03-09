@@ -18,6 +18,7 @@ mmtt_kinect_old
 params/gentle/snap/CurrentSnapshot.*
 # Binaries for programs and plugins
 build/windows/.vs
+mmtt_kinect/build/windows/.oldvs
 mmtt_kinect/build/windows/.vs
 source/windows/.vs
 source/windows/x64
