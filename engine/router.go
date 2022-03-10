@@ -988,9 +988,33 @@ func (r *Router) recordingLoad(name string) ([]*PlaybackEvent, error) {
 	return events, nil
 }
 
+var ButtonPresetMap = map[string]string{
+	"UL1": "Blue Purple_Cartoon Clouds",
+	"UL2": "Circular_Garden",
+	"UL3": "Cloudy_Elevations",
+	"LL1": "Crowded_Inversions",
+	"LL2": "Floating_Grains",
+	"LL3": "Full Bore_Borealis",
+	"UR1": "All Drums_Squares",
+	"UR2": "Bursting_With Color",
+	"UR3": "Quick Scat_Circles",
+	"LR1": "Funky_Squares",
+	"LR2": "All Scat_Squares",
+	"LR3": "Playful_Plucks",
+}
+
 func (r *Router) handleMMTTButton(ddu string, butt string) {
 	if ddu == "down" {
-		log.Printf("MMTT BUTTON %s\n", butt)
+		preset, ok := ButtonPresetMap[butt]
+		if !ok {
+			log.Printf("No Preset assigned to BUTTON %s\n", butt)
+			return
+		}
+		log.Printf("BUTTON %s PATCH %s\n", butt, preset)
+		err := r.loadQuadPreset("quad." + preset)
+		if err != nil {
+			log.Printf("handleMMTTButton: preset=%s err=%s\n", preset, err)
+		}
 	}
 }
 
