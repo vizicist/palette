@@ -108,25 +108,20 @@ func getProcessInfo(process string) (*processInfo, error) {
 
 func StartRunning(process string) error {
 
-	log.Printf("StartRunning: process %s\n", process)
-
 	p, err := getProcessInfo(process)
 	if err != nil {
+		log.Printf("StartRunning: no info for process=%s\n", process)
 		return err
 	}
 
-	log.Printf("StartExecutableLogOutput: process=%s fullpath=%s\n", process, p.FullPath)
+	log.Printf("StartRunning: path=%s\n", p.FullPath)
+
 	err = StartExecutableLogOutput(process, p.FullPath, true, p.Arg)
 	if err != nil {
 		return fmt.Errorf("start: process=%s err=%s", process, err)
 	}
 
-	// Some things (bidule and resolume) need to be activated
-	if process == "bidule" {
-		log.Printf("SHOULD BE ACTIVATING BIDULE\n")
-	}
 	if p.ActivateFunc != nil {
-		log.Printf("Calling ActivateFunc for process=%s\n", process)
 		go p.ActivateFunc()
 	}
 	return nil
@@ -169,12 +164,10 @@ func CheckProcessesAndRestartIfNecessary() {
 		autostart = "resolume,bidule,gui"
 	}
 	processes := strings.Split(autostart, ",")
-	log.Printf("CheckProcessesAndRestart processes=%s\n", processes)
 	for _, process := range processes {
 		p, _ := getProcessInfo(process)
 		if p != nil {
 			if !IsRunning(process) {
-				log.Printf("CheckProcessesAndRestart is calling StartRunning %s\n", process)
 				go StartRunning(process)
 			}
 		}
@@ -184,7 +177,6 @@ func CheckProcessesAndRestartIfNecessary() {
 func resolumeActivate() {
 	// handle_activate sends OSC messages to start the layers in Resolume,
 	// and make sure the audio is on in Bidule.
-	log.Printf("resolumeActivate!\n")
 	addr := "127.0.0.1"
 	resolumePort := 7000
 	resolumeClient := osc.NewClient(addr, resolumePort)
@@ -219,7 +211,6 @@ func bypassLayer(resolumeClient *osc.Client, layer int, onoff bool) {
 }
 
 func biduleActivate() {
-	log.Printf("biduleActivate started!!\n")
 	addr := "127.0.0.1"
 	bidulePort := 3210
 	biduleClient := osc.NewClient(addr, bidulePort)
@@ -228,7 +219,6 @@ func biduleActivate() {
 	for i := 0; i < 10; i++ {
 		dt := 5 * time.Second
 		time.Sleep(dt)
-		log.Printf("biduleActivate msg=%s\n", msg.String())
 		_ = biduleClient.Send(msg)
 	}
 }
