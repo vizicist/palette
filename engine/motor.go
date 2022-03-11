@@ -648,8 +648,7 @@ func (motor *Motor) generateSpriteFromNote(n *Note) {
 	}
 
 	// send an OSC message to Resolume
-	oscaddr := "/sprite"
-	msg := osc.NewMessage(oscaddr)
+	msg := osc.NewMessage("/sprite")
 	msg.Append(x)
 	msg.Append(y)
 	msg.Append(float32(n.Velocity) / 127.0)

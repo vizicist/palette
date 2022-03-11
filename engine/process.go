@@ -11,10 +11,10 @@ import (
 )
 
 type processInfo struct {
-	Exe               string // just the last part
-	FullPath          string
-	Arg               string
-	ActivateLaterTime int
+	Exe          string // just the last part
+	FullPath     string
+	Arg          string
+	ActivateFunc func()
 }
 
 var ProcessInfo = map[string](*processInfo){}
@@ -42,7 +42,7 @@ func BiduleInfo() *processInfo {
 		exe = fullpath[lastslash+1:]
 	}
 	arg := ConfigFilePath("palette.bidule")
-	return &processInfo{exe, fullpath, arg, 10}
+	return &processInfo{exe, fullpath, arg, biduleActivate}
 }
 
 func ResolumeInfo() *processInfo {
@@ -66,13 +66,13 @@ func ResolumeInfo() *processInfo {
 	if lastslash > 0 {
 		exe = fullpath[lastslash+1:]
 	}
-	return &processInfo{exe, fullpath, "", 4}
+	return &processInfo{exe, fullpath, "", resolumeActivate}
 }
 
 func GuiInfo() *processInfo {
 	exe := "palette_gui.exe"
 	fullpath := filepath.Join(PaletteDir(), "bin", "pyinstalled", exe)
-	return &processInfo{exe, fullpath, "", 0}
+	return &processInfo{exe, fullpath, "", nil}
 }
 
 func KinectInfo() *processInfo {
@@ -82,7 +82,7 @@ func KinectInfo() *processInfo {
 		log.Printf("no kinect_mmtt executable found, looking for %s", fullpath)
 		return nil
 	}
-	return &processInfo{"mmtt_kinect.exe", fullpath, "", 0}
+	return &processInfo{"mmtt_kinect.exe", fullpath, "", nil}
 }
 
 func MmttInfo(mmtt string) *processInfo {
@@ -92,7 +92,7 @@ func MmttInfo(mmtt string) *processInfo {
 		log.Printf("no mmtt executable found, looking for %s", fullpath)
 		return nil
 	}
-	return &processInfo{exe, fullpath, "", 0}
+	return &processInfo{exe, fullpath, "", nil}
 }
 
 func getProcessInfo(process string) (*processInfo, error) {
@@ -122,8 +122,12 @@ func StartRunning(process string) error {
 	}
 
 	// Some things (bidule and resolume) need to be activated
-	if p.ActivateLaterTime > 0 {
-		go activateLater(p.ActivateLaterTime)
+	if process == "bidule" {
+		log.Printf("SHOULD BE ACTIVATING BIDULE\n")
+	}
+	if p.ActivateFunc != nil {
+		log.Printf("Calling ActivateFunc for process=%s\n", process)
+		go p.ActivateFunc()
 	}
 	return nil
 }
@@ -165,49 +169,67 @@ func CheckProcessesAndRestartIfNecessary() {
 		autostart = "resolume,bidule,gui"
 	}
 	processes := strings.Split(autostart, ",")
+	log.Printf("CheckProcessesAndRestart processes=%s\n", processes)
 	for _, process := range processes {
 		p, _ := getProcessInfo(process)
 		if p != nil {
 			if !IsRunning(process) {
-				StartRunning(process)
+				log.Printf("CheckProcessesAndRestart is calling StartRunning %s\n", process)
+				go StartRunning(process)
 			}
 		}
 	}
 }
 
-func executeAPIActivate() (string, error) {
-
+func resolumeActivate() {
 	// handle_activate sends OSC messages to start the layers in Resolume,
 	// and make sure the audio is on in Bidule.
+	log.Printf("resolumeActivate!\n")
 	addr := "127.0.0.1"
 	resolumePort := 7000
-	bidulePort := 3210
-
 	resolumeClient := osc.NewClient(addr, resolumePort)
-	start_layer(resolumeClient, 1)
-	start_layer(resolumeClient, 2)
-	start_layer(resolumeClient, 3)
-	start_layer(resolumeClient, 4)
+	for i := 0; i < 4; i++ {
+		dt := 5 * time.Second
+		time.Sleep(dt)
+		connectClip(resolumeClient, 1, 1)
+		connectClip(resolumeClient, 2, 1)
+		connectClip(resolumeClient, 3, 1)
+		connectClip(resolumeClient, 4, 1)
+	}
+}
 
+func connectClip(resolumeClient *osc.Client, layer int, clip int) {
+	addr := fmt.Sprintf("/composition/layers/%d/clips/%d/connect", layer, clip)
+	msg := osc.NewMessage(addr)
+	// Note: sending 0 doesn't seem to disable a clip; you need to
+	// bypass the layer to turn it off
+	msg.Append(int32(1))
+	_ = resolumeClient.Send(msg)
+}
+
+func bypassLayer(resolumeClient *osc.Client, layer int, onoff bool) {
+	addr := fmt.Sprintf("/composition/layers/%d/bypassed", layer)
+	msg := osc.NewMessage(addr)
+	v := 0
+	if onoff {
+		v = 1
+	}
+	msg.Append(int32(v))
+	_ = resolumeClient.Send(msg)
+}
+
+func biduleActivate() {
+	log.Printf("biduleActivate started!!\n")
+	addr := "127.0.0.1"
+	bidulePort := 3210
 	biduleClient := osc.NewClient(addr, bidulePort)
 	msg := osc.NewMessage("/play")
 	msg.Append(int32(1)) // turn it on
-	// log.Printf("Sending %s\n", msg.String())
-	err := biduleClient.Send(msg)
-	if err != nil {
-		return "", fmt.Errorf("handle_activate: osc to Bidule, err=%s", err)
-	}
-	return "0", nil
-}
-
-func start_layer(resolumeClient *osc.Client, layer int) {
-	addr := fmt.Sprintf("/composition/layers/%d/clips/1/connect", layer)
-	msg := osc.NewMessage(addr)
-	msg.Append(int32(1))
-	// log.Printf("Sending %s\n", msg.String())
-	err := resolumeClient.Send(msg)
-	if err != nil {
-		log.Printf("start_layer: osc to Resolume err=%s\n", err)
+	for i := 0; i < 10; i++ {
+		dt := 5 * time.Second
+		time.Sleep(dt)
+		log.Printf("biduleActivate msg=%s\n", msg.String())
+		_ = biduleClient.Send(msg)
 	}
 }
 
@@ -219,15 +241,4 @@ func KillProcess(process string) {
 		return
 	}
 	KillExecutable(p.Exe)
-}
-
-func activateLater(ntimes int) {
-	for i := 0; i < ntimes; i++ {
-		dt := 5 * time.Second
-		time.Sleep(dt)
-		_, err := executeAPIActivate()
-		if err != nil {
-			log.Printf("activateLater: err=%s\n", err)
-		}
-	}
 }
