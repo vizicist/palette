@@ -1007,26 +1007,23 @@ var ButtonPresetMap = map[string]string{
 	"LR3": "Playful_Plucks",
 }
 
-func (r *Router) handleMMTTButton(ddu string, butt string) {
-	if ddu == "down" {
-		preset, ok := ButtonPresetMap[butt]
-		if !ok {
-			log.Printf("No Preset assigned to BUTTON %s\n", butt)
-			return
-		}
-		log.Printf("BUTTON %s PATCH %s\n", butt, preset)
-		err := r.loadQuadPreset("quad." + preset)
-		if err != nil {
-			log.Printf("handleMMTTButton: preset=%s err=%s\n", preset, err)
-		}
-		text := strings.ReplaceAll(preset, "_", "\n")
-		go r.showText(text)
+func (r *Router) handleMMTTButton(butt string) {
+	preset, ok := ButtonPresetMap[butt]
+	if !ok {
+		log.Printf("No Preset assigned to BUTTON %s\n", butt)
+		return
 	}
+	log.Printf("Router.handleMMTTButton: butt=%s preset=%s\n", butt, preset)
+	err := r.loadQuadPreset("quad." + preset)
+	if err != nil {
+		log.Printf("handleMMTTButton: preset=%s err=%s\n", preset, err)
+	}
+
+	text := strings.ReplaceAll(preset, "_", "\n")
+	go r.showText(text)
 }
 
 func (r *Router) showText(text string) {
-
-	log.Printf("Router.showText: text=%s\n", text)
 
 	// disable the text display by bypassing the layer
 	bypassLayer(r.resolumeClient, 5, true)
@@ -1087,8 +1084,14 @@ func (r *Router) handleMMTTCursor(msg *osc.Message) {
 
 	motor, mok := r.motors[region]
 	if !mok {
-		// log.Printf("Router.handleMMTTEvent: no region named %s\n", region)
-		r.handleMMTTButton(ddu, region)
+		// If it's not a region, it's a button.
+		if z > 0.5 {
+			// log.Printf("NOT triggering button too deep z=%f\n", z)
+			return
+		}
+		if ddu == "down" {
+			r.handleMMTTButton(region)
+		}
 		return
 	}
 
@@ -1103,7 +1106,7 @@ func (r *Router) handleMMTTCursor(msg *osc.Message) {
 		Z:         z,
 		Area:      0.0,
 	}
-	if Debug.Cursor {
+	if Debug.MMTT {
 		log.Printf("MMTT ce=%v\n", ce)
 	}
 
