@@ -305,7 +305,11 @@ func (r *Router) StartRealtime() {
 	r.time0 = <-tick.C
 
 	var nextAliveSecs int
-	var nextCheckSecs int
+
+	// Don't start checking processes right away, after killing them on a restart,
+	// they may still be running for a bit
+	var nextCheckSecs int = 2
+
 	var aliveIntervalSeconds = ConfigIntWithDefault("aliveinterval", 30)
 	var processcheckSeconds = ConfigIntWithDefault("processcheckinterval", 60)
 
@@ -1015,7 +1019,28 @@ func (r *Router) handleMMTTButton(ddu string, butt string) {
 		if err != nil {
 			log.Printf("handleMMTTButton: preset=%s err=%s\n", preset, err)
 		}
+		text := strings.ReplaceAll(preset, "_", "\n")
+		go r.showText(text)
 	}
+}
+
+func (r *Router) showText(text string) {
+
+	log.Printf("Router.showText: text=%s\n", text)
+
+	// disable the text display by bypassing the layer
+	bypassLayer(r.resolumeClient, 5, true)
+
+	addr := "/composition/layers/5/clips/1/video/source/textgenerator/text/params/lines"
+	msg := osc.NewMessage(addr)
+	msg.Append(text)
+	_ = r.resolumeClient.Send(msg)
+
+	// give it time to "sink in", otherwise the previous text displays briefly
+	time.Sleep(150 * time.Millisecond)
+
+	connectClip(r.resolumeClient, 5, 1)
+	bypassLayer(r.resolumeClient, 5, false)
 }
 
 // handleMMTTCursor handles messages from MMTT and reformats them
