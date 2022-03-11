@@ -58,7 +58,9 @@ func (r *Router) ExecuteAPI(api string, nuid string, rawargs string) (result int
 		return "", err
 
 	case "activate":
-		return executeAPIActivate()
+		go resolumeActivate()
+		go biduleActivate()
+		return "", nil
 
 	case "sendlogs":
 		return "", SendLogs()
