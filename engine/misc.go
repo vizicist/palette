@@ -37,6 +37,7 @@ type debugFlags struct {
 	Go        bool
 	Loop      bool
 	MIDI      bool
+	MMTT      bool
 	Morph     bool
 	MotorAPI  bool
 	Mouse     bool
@@ -81,6 +82,8 @@ func setDebug(dtype string, b bool) error {
 		Debug.Loop = b
 	case "midi":
 		Debug.MIDI = b
+	case "mmtt":
+		Debug.MMTT = b
 	case "morph":
 		Debug.Morph = b
 	case "mouse":

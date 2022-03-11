@@ -2011,6 +2011,9 @@ MmttServer::analyzePixels()
 			continue;
 		}
 
+		float depthavg = depthtotal / depthcount;
+		float depth_adjusted_avg = depth_adjusted_total / depthcount;
+
 		bool isnew = false;
 		int sid = blob_sid[i];
 		if ( sid < 0 ) {
@@ -2025,12 +2028,11 @@ MmttServer::analyzePixels()
 
 			CvPoint xy = sess->_center;
 			FloatPoint rxy = relativeToRegion(r, xy);
-			float z = float(sess->_depth_mm);
+			// float z = float(sess->_depth_mm);
+			float z = float(depthavg + 0.5f);
 			addCursorEvent(bundle, "down", r->_name, sid, rxy.x, rxy.y, z);
 		}
 
-		float depthavg = depthtotal / depthcount;
-		float depth_adjusted_avg = depth_adjusted_total / depthcount;
 		r->_sessions[sid]->_depth_mm = (int)(depthavg + 0.5f);
 		r->_sessions[sid]->_depth_normalized = depth_adjusted_avg / 1000.0f;
 
@@ -2227,7 +2229,8 @@ MmttServer::addCursorEvent(OscBundle &bundle, std::string downdragup, std::strin
 	msg.addFloatArg(y);      // y (position)
 	msg.addFloatArg(z);        // z (position)
 
-	// NosuchDebug("AddCursorEvent xyz=%f %f %f\n", x, y, z);
+	// NosuchDebug("Sending /cursor cid=%s ddu=%s xyz=%f %f %f\n", cid.c_str(), downdragup.c_str(), x, y, z);
+
 	// msg.addFloatArg((float)blobrect.width);   // w (width)
 	// msg.addFloatArg((float)blobrect.height);  // h (height)
 	// msg.addFloatArg(f);			   // f (area)
