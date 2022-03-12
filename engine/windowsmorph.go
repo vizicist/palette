@@ -399,8 +399,8 @@ func (m *oneMorph) readFrames(callback CursorDeviceCallbackFunc, forceFactor flo
 			}
 
 			if Debug.Morph {
-				log.Printf("Morph: serial=%s region=%s contact_id=%d morph_idx=%d n=%d state=%d xNorm=%f yNorm=%f zNorm=%f\n",
-					m.serialNum, m.region, contact.id, m.idx, n, contact.state, xNorm, yNorm, zNorm)
+				log.Printf("Morph: region=%s contact_id=%d idx=%d n=%d state=%d xyzNorm=%f %f %f\n",
+					m.region, contact.id, m.idx, n, contact.state, xNorm, yNorm, zNorm)
 			}
 
 			// make the coordinate space match OpenGL and Freeframe
