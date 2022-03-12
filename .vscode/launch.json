@@ -39,6 +39,13 @@
             "args": []
         },
         {
+            "name": "Status",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
+            "args": ["status"]
+        },
+        {
             "name": "Start",
             "type": "go",
             "request": "launch",
