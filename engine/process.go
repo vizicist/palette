@@ -174,6 +174,16 @@ func CheckProcessesAndRestartIfNecessary() {
 	}
 }
 
+func ProcessStatus() string {
+	s := ""
+	for name, _ := range ProcessInfo {
+		if IsRunning(name) {
+			s += fmt.Sprintf("%s is running\n", name)
+		}
+	}
+	return s
+}
+
 func resolumeActivate() {
 	// handle_activate sends OSC messages to start the layers in Resolume,
 	// and make sure the audio is on in Bidule.
