@@ -150,6 +150,9 @@ func CliCommand(region string, args []string) string {
 	case "sendlogs":
 		return interpretApiOutput(engine.EngineAPI("global.sendlogs", ""))
 
+	case "status":
+		return engine.ProcessStatus()
+
 	case "start":
 		process := "engine"
 		if len(args) > 1 {
