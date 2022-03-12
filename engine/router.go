@@ -1106,8 +1106,10 @@ func (r *Router) handleMMTTCursor(msg *osc.Message) {
 		Z:         z,
 		Area:      0.0,
 	}
+	// XXX - HACK!!
+	ce.Z = 2 * ce.Z
 	if Debug.MMTT {
-		log.Printf("MMTT ce=%v\n", ce)
+		log.Printf("MMTT %s %s xyz= %f %f %f\n", ce.CID, ce.Ddu, ce.X, ce.Y, ce.Z)
 	}
 
 	motor.handleCursorDeviceEvent(ce)
