@@ -1,213 +1,204 @@
-state 0 //
 
-    0 $accept: . program
+state 0
+	$accept: .program $end 
 
-    '('     shift, and goto state 5
-    NOT     shift, and goto state 4
-    NUMBER  shift, and goto state 3
+	NUMBER  shift 3
+	NOT  shift 4
+	'('  shift 5
+	.  error
 
-    expr     goto state 2
-    program  goto state 1
+	program  goto 1
+	expr  goto 2
 
-state 1 // NUMBER [$end]
+state 1
+	$accept:  program.$end 
 
-    0 $accept: program .  [$end]
+	$end  accept
+	.  error
 
-    $end  accept
 
-state 2 // NUMBER [$end]
+state 2
+	program:  expr.    (1)
+	expr:  expr.AND expr 
+	expr:  expr.OR expr 
 
-    1 program: expr .  [$end]
-    4 expr: expr . AND expr  // assoc %left, prec 3
-    6 expr: expr . OR expr  // assoc %left, prec 4
+	AND  shift 6
+	OR  shift 7
+	.  reduce 1 (src line 57)
 
-    $end  reduce using rule 1 (program)
-    AND   shift, and goto state 7
-    OR    shift, and goto state 9
 
-state 3 // NUMBER
+state 3
+	expr:  NUMBER.    (2)
+	expr:  NUMBER.'<' NUMBER 
+	expr:  NUMBER.'>' NUMBER 
+	expr:  NUMBER.IS NUMBER 
+	expr:  NUMBER.GE NUMBER 
+	expr:  NUMBER.LE NUMBER 
 
-    2 expr: NUMBER .  [$end, ')', AND, OR]
-    7 expr: NUMBER . '<' NUMBER
-    8 expr: NUMBER . '>' NUMBER
-    9 expr: NUMBER . IS NUMBER
-   10 expr: NUMBER . GE NUMBER
-   11 expr: NUMBER . LE NUMBER
+	IS  shift 10
+	'<'  shift 8
+	GE  shift 11
+	'>'  shift 9
+	LE  shift 12
+	.  reduce 2 (src line 63)
 
-    $end  reduce using rule 2 (expr)
-    ')'   reduce using rule 2 (expr)
-    '<'   shift, and goto state 13
-    '>'   shift, and goto state 14
-    AND   reduce using rule 2 (expr)
-    GE    shift, and goto state 16
-    IS    shift, and goto state 15
-    LE    shift, and goto state 17
-    OR    reduce using rule 2 (expr)
 
-state 4 // NOT
+state 4
+	expr:  NOT.expr 
 
-    3 expr: NOT . expr  // assoc %right, prec 5
+	NUMBER  shift 3
+	NOT  shift 4
+	'('  shift 5
+	.  error
 
-    '('     shift, and goto state 5
-    NOT     shift, and goto state 4
-    NUMBER  shift, and goto state 3
+	expr  goto 13
 
-    expr  goto state 12
+state 5
+	expr:  '('.expr ')' 
 
-state 5 // '('
+	NUMBER  shift 3
+	NOT  shift 4
+	'('  shift 5
+	.  error
 
-    5 expr: '(' . expr ')'
+	expr  goto 14
 
-    '('     shift, and goto state 5
-    NOT     shift, and goto state 4
-    NUMBER  shift, and goto state 3
+state 6
+	expr:  expr AND.expr 
 
-    expr  goto state 6
+	NUMBER  shift 3
+	NOT  shift 4
+	'('  shift 5
+	.  error
 
-state 6 // '(' NUMBER [')']
+	expr  goto 15
 
-    4 expr: expr . AND expr  // assoc %left, prec 3
-    5 expr: '(' expr . ')'
-    6 expr: expr . OR expr  // assoc %left, prec 4
+state 7
+	expr:  expr OR.expr 
 
-    ')'  shift, and goto state 8
-    AND  shift, and goto state 7
-    OR   shift, and goto state 9
+	NUMBER  shift 3
+	NOT  shift 4
+	'('  shift 5
+	.  error
 
-state 7 // NUMBER AND
+	expr  goto 16
 
-    4 expr: expr AND . expr  // assoc %left, prec 3
+state 8
+	expr:  NUMBER '<'.NUMBER 
 
-    '('     shift, and goto state 5
-    NOT     shift, and goto state 4
-    NUMBER  shift, and goto state 3
+	NUMBER  shift 17
+	.  error
 
-    expr  goto state 11
 
-state 8 // '(' NUMBER ')'
+state 9
+	expr:  NUMBER '>'.NUMBER 
 
-    5 expr: '(' expr ')' .  [$end, ')', AND, OR]
+	NUMBER  shift 18
+	.  error
 
-    $end  reduce using rule 5 (expr)
-    ')'   reduce using rule 5 (expr)
-    AND   reduce using rule 5 (expr)
-    OR    reduce using rule 5 (expr)
 
-state 9 // NUMBER OR
+state 10
+	expr:  NUMBER IS.NUMBER 
 
-    6 expr: expr OR . expr  // assoc %left, prec 4
+	NUMBER  shift 19
+	.  error
 
-    '('     shift, and goto state 5
-    NOT     shift, and goto state 4
-    NUMBER  shift, and goto state 3
 
-    expr  goto state 10
+state 11
+	expr:  NUMBER GE.NUMBER 
 
-state 10 // NUMBER OR NUMBER [$end]
+	NUMBER  shift 20
+	.  error
 
-    4 expr: expr . AND expr  // assoc %left, prec 3
-    6 expr: expr . OR expr  // assoc %left, prec 4
-    6 expr: expr OR expr .  [$end, ')', AND, OR]  // assoc %left, prec 4
 
-    $end  reduce using rule 6 (expr)
-    ')'   reduce using rule 6 (expr)
-    AND   reduce using rule 6 (expr)
-    OR    reduce using rule 6 (expr)
+state 12
+	expr:  NUMBER LE.NUMBER 
 
-state 11 // NUMBER AND NUMBER [$end]
+	NUMBER  shift 21
+	.  error
 
-    4 expr: expr . AND expr  // assoc %left, prec 3
-    4 expr: expr AND expr .  [$end, ')', AND]  // assoc %left, prec 3
-    6 expr: expr . OR expr  // assoc %left, prec 4
 
-    $end  reduce using rule 4 (expr)
-    ')'   reduce using rule 4 (expr)
-    AND   reduce using rule 4 (expr)
-    OR    shift, and goto state 9
+state 13
+	expr:  NOT expr.    (3)
+	expr:  expr.AND expr 
+	expr:  expr.OR expr 
 
-state 12 // NOT NUMBER [$end]
+	.  reduce 3 (src line 68)
 
-    3 expr: NOT expr .  [$end, ')', AND, OR]  // assoc %right, prec 5
-    4 expr: expr . AND expr  // assoc %left, prec 3
-    6 expr: expr . OR expr  // assoc %left, prec 4
 
-    $end  reduce using rule 3 (expr)
-    ')'   reduce using rule 3 (expr)
-    AND   reduce using rule 3 (expr)
-    OR    reduce using rule 3 (expr)
+state 14
+	expr:  expr.AND expr 
+	expr:  '(' expr.')' 
+	expr:  expr.OR expr 
 
-state 13 // NUMBER '<'
+	AND  shift 6
+	OR  shift 7
+	')'  shift 22
+	.  error
 
-    7 expr: NUMBER '<' . NUMBER
 
-    NUMBER  shift, and goto state 22
+state 15
+	expr:  expr.AND expr 
+	expr:  expr AND expr.    (4)
+	expr:  expr.OR expr 
 
-state 14 // NUMBER '>'
+	OR  shift 7
+	.  reduce 4 (src line 72)
 
-    8 expr: NUMBER '>' . NUMBER
 
-    NUMBER  shift, and goto state 21
+state 16
+	expr:  expr.AND expr 
+	expr:  expr.OR expr 
+	expr:  expr OR expr.    (6)
 
-state 15 // NUMBER IS
+	.  reduce 6 (src line 80)
 
-    9 expr: NUMBER IS . NUMBER
 
-    NUMBER  shift, and goto state 20
+state 17
+	expr:  NUMBER '<' NUMBER.    (7)
 
-state 16 // NUMBER GE
+	.  reduce 7 (src line 84)
 
-   10 expr: NUMBER GE . NUMBER
 
-    NUMBER  shift, and goto state 19
+state 18
+	expr:  NUMBER '>' NUMBER.    (8)
 
-state 17 // NUMBER LE
+	.  reduce 8 (src line 88)
 
-   11 expr: NUMBER LE . NUMBER
 
-    NUMBER  shift, and goto state 18
+state 19
+	expr:  NUMBER IS NUMBER.    (9)
 
-state 18 // NUMBER LE NUMBER
+	.  reduce 9 (src line 92)
 
-   11 expr: NUMBER LE NUMBER .  [$end, ')', AND, OR]
 
-    $end  reduce using rule 11 (expr)
-    ')'   reduce using rule 11 (expr)
-    AND   reduce using rule 11 (expr)
-    OR    reduce using rule 11 (expr)
+state 20
+	expr:  NUMBER GE NUMBER.    (10)
 
-state 19 // NUMBER GE NUMBER
+	.  reduce 10 (src line 96)
 
-   10 expr: NUMBER GE NUMBER .  [$end, ')', AND, OR]
 
-    $end  reduce using rule 10 (expr)
-    ')'   reduce using rule 10 (expr)
-    AND   reduce using rule 10 (expr)
-    OR    reduce using rule 10 (expr)
+state 21
+	expr:  NUMBER LE NUMBER.    (11)
 
-state 20 // NUMBER IS NUMBER
+	.  reduce 11 (src line 100)
 
-    9 expr: NUMBER IS NUMBER .  [$end, ')', AND, OR]
 
-    $end  reduce using rule 9 (expr)
-    ')'   reduce using rule 9 (expr)
-    AND   reduce using rule 9 (expr)
-    OR    reduce using rule 9 (expr)
+state 22
+	expr:  '(' expr ')'.    (5)
 
-state 21 // NUMBER '>' NUMBER
+	.  reduce 5 (src line 76)
 
-    8 expr: NUMBER '>' NUMBER .  [$end, ')', AND, OR]
 
-    $end  reduce using rule 8 (expr)
-    ')'   reduce using rule 8 (expr)
-    AND   reduce using rule 8 (expr)
-    OR    reduce using rule 8 (expr)
-
-state 22 // NUMBER '<' NUMBER
-
-    7 expr: NUMBER '<' NUMBER .  [$end, ')', AND, OR]
-
-    $end  reduce using rule 7 (expr)
-    ')'   reduce using rule 7 (expr)
-    AND   reduce using rule 7 (expr)
-    OR    reduce using rule 7 (expr)
-
+14 terminals, 3 nonterminals
+12 grammar rules, 23/8000 states
+0 shift/reduce, 0 reduce/reduce conflicts reported
+52 working sets used
+memory: parser 5/120000
+20 extra closures
+31 shift entries, 1 exceptions
+6 goto entries
+0 entries saved by goto default
+Optimizer space used: output 25/120000
+25 table entries, 0 zero
+maximum spread: 14, maximum offset: 8
