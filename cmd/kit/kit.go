@@ -2,18 +2,21 @@ package main
 
 import (
 	"fmt"
+
 	"github.com/vizicist/palette/kit"
 )
 
+var vars = map[string]interface{}{
+	"A": 1,
+	"B": 1,
+}
 
 func main() {
-	vars := map[string]interface{}{
-		"A": 1,
-		"B": 1,
-	}
-	f := kit.Parse("NOT (A IS B)", vars)
-	fmt.Printf("%t\n", f) // false
+	eval("print(999)")
+	// eval("A IS B")
+}
 
-	t := kit.Parse("A IS B", vars)
-	fmt.Printf("%t\n", t) // true
+func eval(s string) {
+	err := kit.Parse(s, vars)
+	fmt.Printf("s=%s err=%v\n", s, err)
 }

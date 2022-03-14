@@ -187,20 +187,10 @@ func Eval(e Expression) bool {
 	}
 	return false
 }
-func Parse(exp string, vars map[string]interface{}) (err error) {
-	defer func() {
-		if r := recover(); r!=nil {
-			err = fmt.Errorf("recovered from ", r)
-		}
-	}()
+func Parse(exp string, vars map[string]interface{}) bool {
 	l := new(Lexer)
 	l.Vars = vars
 	l.Init(strings.NewReader(exp))
 	yyParse(l)
-	b := Eval(l.result)
-	if b == false {
-		return fmt.Errorf("Eval returned false\n")
-	} else {
-		return nil
-	}
+	return Eval(l.result)
 }
