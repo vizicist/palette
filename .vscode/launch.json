@@ -10,6 +10,8 @@
             "request": "launch",
             "mode": "auto",
             "program": "${env:PALETTESOURCE}/cmd/kit/kit.go",
+            // "cwd": "${fileDirname}/",
+            "cwd": "${env:PALETTESOURCE}/kit",
             "env": {
                 "Path": "${env:Path};${workspaceFolder};"             },
             "args": []
