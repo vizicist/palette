@@ -1,21 +1,24 @@
 package kit
+
+//go:generate goyacc -o gram.go gram.y
+
 //// /*
 ////  *	Copyright 1996 AT&T Corp.  All rights reserved.
 ////  */
-//// 
+////
 //// #include "key.h"
 //// #include "gram.h"
-//// 
+////
 //// #ifdef FFF
 //// FILE *FF = NULL;
 //// #endif
-//// 
+////
 //// #ifndef lint
 //// char *Copyright = "KeyKit 8.0 - Copyright 1996 AT&T Corp.  All rights reserved.";
 //// #endif
-//// 
+////
 //// // int errno;
-//// 
+////
 //// char *Yytext;
 //// char *Yytextend;
 //// char *Buffer;
@@ -35,7 +38,7 @@ package kit
 //// long Ungotsize = 0;
 //// int Usestdio = 0;
 //// int ReadytoEval = 0;
-//// 
+////
 //// FILE *Fin = NULL;		/* current input */
 //// FILE *Fout = NULL;		/* current output */
 //// int Keycnt = 0;
@@ -44,11 +47,11 @@ package kit
 //// int Gotanint = 0;
 //// int Errfileit = 0;
 //// int Dbg = 0;
-//// 
+////
 //// char Tty[] = "tty";
 //// char *Infile = Tty;		/* current input file name */
 //// char Autopop = 0;
-//// 
+////
 //// static FILE *Fstack[FSTACKSIZE];	/* Nested FILEs being read */
 //// static char *Fnstack[FSTACKSIZE];	/* The names of those files */
 //// static int Lnstack[FSTACKSIZE];		/* Current line # in those files */
@@ -60,48 +63,48 @@ package kit
 //// static long Ungoti;
 //// static int Maxpathleng = 0;
 //// static Htablep Keylibtable = NULL;
-//// 
+////
 //// char *Progname = "key";
 //// int Macrosused = 0;
 //// int Lineno = 1;
-//// 
+////
 //// Instnodep Loopstack[FSTACKSIZE];
 //// int Loopnum = -1;
-//// 
+////
 //// Codep Fkeyfunc[NFKEYS];
-//// 
+////
 //// char *stdinonly[] = { "-" };
-//// 
+////
 //// #define DONTFLAGERROR 0
 //// #define FLAGERROR 1
-//// 
+////
 //// int Argc;
 //// char **Argv;
-//// 
+////
 //// void keyerrfile(char *fmt,...);
-//// 
+////
 //// void
 //// keystart(void)
 //// {
 //// 	register char *p;
-//// 
+////
 //// 	/* these are dynamically allocated to avoid using global static */
 //// 	/* memory, which some compilers limit to 64 K */
-//// 
+////
 //// 	if ( (p=getenv("BUFSIZ")) == NULL )
 //// 		Buffsize = BUFSIZ;
 //// 	else
 //// 		Buffsize = atoi(p);
-//// 
+////
 //// 	keysrand(0x87654321,0x11111111,0x12345678);
-//// 
+////
 //// 	Yytext = kmalloc(Buffsize,"keystart");
 //// 	Yytext[0] = 0;
 //// 	Yytextend = (Yytext+Buffsize-1);
-//// 
+////
 //// 	Buffer = kmalloc(Buffsize,"keystart");
 //// 	Buffer[0] = 0;
-//// 
+////
 //// 	Msg1 = kmalloc((unsigned)(Msg1size=Buffsize),"keystart");
 //// 	Msg1[0] = 0;
 //// 	Msg2 = kmalloc((unsigned)(Msg2size=10),"keystart");
@@ -110,24 +113,24 @@ package kit
 //// 	Msg3[0] = 0;
 //// 	Wmsg = kmalloc((unsigned)(Wmsgsize=Buffsize),"keystart");
 //// 	Wmsg[0] = 0;
-//// 
+////
 //// 	Ungot = kmalloc((unsigned)(Ungotsize=Buffsize),"keystart");
 //// 	Ungot[0] = 0;
 //// 	Ungoti = 0;
 //// 	Pyytext = Yytext;
-//// 
+////
 //// 	_Dnumtmp_.type = D_NUM;
 //// 	Stopcode.u.func = (BYTEFUNC)I_STOP;
 //// 	Stopcode.type = IC_INST;
-//// 
+////
 //// 	/* Nextobjid = 1 + (mdep_currtime()%(1<<15)) << 15; */
 //// 	Nextobjid = 1;
-//// 
+////
 //// 	newcontext((Symbolp)NULL,113);		/* no good reason for 113 */
 //// 	Topct = Currct;
-//// 
+////
 //// 	/* Watch out, order of these things is probably critical. */
-//// 
+////
 //// 	initstrs();
 //// 	initsyms();
 //// 	pushiseg();
@@ -135,13 +138,13 @@ package kit
 //// 	initfifos();
 //// 	mdep_prerc();	/* Machine-dependent, BEFORE reading keykit.rc. */
 //// }
-//// 
+////
 //// void
 //// keyfile(char *fname,int flag)
 //// {
 //// 	FILE *f;
 //// 	Codep cp, cp2;
-//// 
+////
 //// 	OPENTEXTFILE(f,fname,"r");
 //// 	if ( f == NULL ) {
 //// 		if ( flag )
@@ -162,7 +165,7 @@ package kit
 //// 	else
 //// 		nestinstruct(cp);
 //// }
-//// 
+////
 //// /* used when we just want to define functions, */
 //// /* and not actually execute anything. */
 //// void
@@ -171,18 +174,18 @@ package kit
 //// 	Codep cp = instructs(s);
 //// 	freecode(cp);
 //// }
-//// 
+////
 //// void
 //// keystr(char *s)
 //// {
 //// 	Codep cp;
-//// 
+////
 //// 	T = newtask(instructs(""));
 //// 	cp = instructs(s);
 //// 	if ( cp )
 //// 		nestinstruct(cp);
 //// }
-//// 
+////
 //// /* defnonly(s) - warn if illegal definition */
 //// void
 //// defnonly(char *s)
@@ -190,7 +193,7 @@ package kit
 //// 	if (Indef == 0)
 //// 		execerror("%s used outside definition",s);
 //// }
-//// 
+////
 //// /* looponly(s) - warn if illegal continue or break */
 //// void
 //// looponly(char *s)
@@ -198,7 +201,7 @@ package kit
 //// 	if (Loopnum<0)
 //// 		execerror("%s used outside a for or while loop",s);
 //// }
-//// 
+////
 //// void
 //// loopstart(void)
 //// {
@@ -206,25 +209,25 @@ package kit
 //// 		execerror("Loops are nested too deeply!");
 //// 	Loopstack[++Loopnum] = NULL;
 //// }
-//// 
+////
 //// void
 //// looppatch(Instnodep patchin)
 //// {
 //// 	Instnodep t;
 //// 	Instcode* ip;
-//// 
+////
 //// 	t = Loopstack[Loopnum];
 //// 	Loopstack[Loopnum] = patchin;
 //// 	ip = ptincode(patchin,1);
 //// 	ip->u.in = t;
 //// }
-//// 
+////
 //// void
 //// loopend(Instnodep icontinue,Instnodep ibreak)
 //// {
 //// 	Instnodep i, nexti;
 //// 	Instcode* ic;
-//// 
+////
 //// 	dummyset(nexti);
 //// 	/* patch up the break and continue statements */
 //// 	if ( Loopnum < 0 )
@@ -247,21 +250,21 @@ package kit
 //// 	}
 //// 	Loopnum--;
 //// }
-//// 
+////
 //// /* yyerror(s) - report compile-time error */
 //// void
 //// yyerror(char *s)
 //// {
 //// 	warning(s);
 //// 	Errors++;
-//// 
+////
 //// 	while ( Indef > 0 ) {
 //// 		Codep cp;
 //// 		Datum *dp;
 //// 		Symbolp s = Currct->func;
-//// 
+////
 //// 		enddef(s);
-//// 
+////
 //// 		/* We want to completely eradicate the function that was */
 //// 		/* being defined when the error occured. */
 //// 		dp = symdataptr(s);
@@ -272,30 +275,30 @@ package kit
 //// 		}
 //// 		s->stype = UNDEF;
 //// 	}
-//// 
+////
 //// 	flushfin();	/* flush rest of current file */
-//// 
+////
 //// 	/* DON'T LONGJMP (Hmm, why did I say this?  It's causing a problem */
 //// 	/* in either case.)  There are sometimes (but not usually) serious */
 //// 	/* problems when a syntax error is encountered, particularly when */
-//// 	/* there's an unclosed brace.  UNFIXED BUG HERE.   */ 
+//// 	/* there's an unclosed brace.  UNFIXED BUG HERE.   */
 //// }
-//// 
+////
 //// char *
 //// ipfuncname(Codep cp)
 //// {
-//// 
+////
 //// 	if ( cp == NULL )
 //// 		return NULL;
 //// 	else
 //// 		return symname(symof(cp));
 //// }
-//// 
+////
 //// char *
 //// infuncname(Instnodep in)
 //// {
 //// 	char *p;
-//// 
+////
 //// 	if ( in == NULL )
 //// 		return "NULL";
 //// 	if ( (in=nextinode(in)) == NULL )
@@ -314,7 +317,7 @@ package kit
 //// 	}
 //// 	return p;
 //// }
-//// 
+////
 //// void
 //// pstacktrace(Datum *dp)
 //// {
@@ -324,11 +327,11 @@ package kit
 //// 	makeroom((long)(64+strlen(s)),&Msgt,&Msgtsize);
 //// 	tprint("Function traceback:\n%s",s);
 //// }
-//// 
+////
 //// static char *Stackbuff = NULL;
 //// static long Stackbuffsofar = 0;
 //// static long Stackbuffsize = 0;
-//// 
+////
 //// void
 //// stackbuffclear(void)
 //// {
@@ -336,7 +339,7 @@ package kit
 //// 	*Stackbuff = '\0';
 //// 	Stackbuffsofar = 0;
 //// }
-//// 
+////
 //// void
 //// stackbuff(char *s)
 //// {
@@ -345,26 +348,26 @@ package kit
 //// 	strcpy(Stackbuff+Stackbuffsofar,s);
 //// 	Stackbuffsofar += sleng;
 //// }
-//// 
+////
 //// long
 //// stackbuffleng(void)
 //// {
 //// 	return Stackbuffsofar;
 //// }
-//// 
+////
 //// void
 //// stackbufftrunc(long lng)
 //// {
 //// 	Stackbuff[lng] = '\0';
 //// 	Stackbuffsofar = lng;
 //// }
-//// 
+////
 //// char *
 //// stackbuffstr(void)
 //// {
 //// 	return Stackbuff;
 //// }
-//// 
+////
 //// char *
 //// stacktrace(Datum *dp,int full,int newlines,Ktaskp t)
 //// {
@@ -378,7 +381,7 @@ package kit
 //// 	Datum *stackbegin = t->stack;
 //// 	char *s, *ipf;
 //// 	int waserr = 0;
-//// 
+////
 //// 	stackbuffclear();
 //// 	while ( dp != NULL ) {
 //// 		if ( dp > initialdp || dp < stackbegin ) {
@@ -438,20 +441,20 @@ package kit
 //// 	}
 //// 	return s;
 //// }
-//// 
+////
 //// int Inerror = 0;
-//// 
+////
 //// void
 //// keyerrfile(char *fmt,...)
 //// {
 //// 	va_list args;
 //// 	static FILE *f = NULL;
-//// 
+////
 //// 	if ( f == NULL )
 //// 		f = fopen("key.dbg","w");
-//// 
+////
 //// 	va_start(args,fmt);
-//// 
+////
 //// 	if ( f == NULL )
 //// 		vfprintf(stderr,fmt,args);	/* last resort */
 //// 	else {
@@ -461,13 +464,13 @@ package kit
 //// 	}
 //// 	va_end(args);
 //// }
-//// 
+////
 //// /* recover from run-time error */
 //// void
 //// execerror(char *fmt,...)
 //// {
 //// 	va_list args;
-//// 
+////
 //// 	Inerror++;
 //// 	if ( Inerror > 1 ) {
 //// 		if ( Inerror > 3 ) {
@@ -481,18 +484,18 @@ package kit
 //// 		warning("Recursive error?");
 //// 		goto skipabit;
 //// 	}
-//// 
+////
 //// 	/* somewhat arbitrary, real conservative because it has been */
 //// 	/* easy to overrun this buffer with the stack trace, in the past. */
 //// 	makeroom(1024+2*(long)strlen(fmt),&Msgt,&Msgtsize);
-//// 
+////
 //// 	va_start(args,fmt);
 //// 	vsprintf(Msgt,fmt,args);
 //// 	va_end(args);
-//// 
+////
 //// 	if ( Errfileit )
 //// 		keyerrfile("%s\n",Msgt);
-//// 
+////
 //// 	/* If there is a per-task error function, we save the error message */
 //// 	/* for it.  The per-task error function will be invoked in taskbury. */
 //// 	if ( T != NULL && T->ontaskerror != NULL ) {
@@ -505,26 +508,26 @@ package kit
 //// 			pstacktrace(T->stackframe);
 //// 		}
 //// 	}
-//// 
+////
 ////     skipabit:
-//// 
+////
 //// 	if ( T ) {
 //// 		taskkill(T,1);
 //// 		T = NULL;
 //// 	}
 //// 	else
 //// 		eprint("Hmmm, T==NULL in execerror!?\n");
-//// 
+////
 //// 	/* When we get an error in one task, we don't want */
 //// 	/* to clear Topsched and do other things that screw up realtime, */
 //// 	/* so we no longer call resetstuff() here. */
 //// 	/* resetstuff(); */
-//// 
+////
 ////     skipmore:
-//// 
+////
 //// 	if ( *Abortonerr != 0 )
 //// 		mdep_abortexit(Msgt);
-//// 
+////
 //// 	/* avoid calling user-defined error function when recursive */
 //// 	if ( Inerror < 2 ) {
 //// 		if ( Errorfuncd->type == D_CODEP )
@@ -534,23 +537,23 @@ package kit
 //// 	}
 //// 	else
 //// 		Errors++;
-//// 
+////
 //// 	flushfin();	/* flush rest of current file */
-//// 
+////
 ////     skipitall:
-//// 
+////
 //// 	Inerror = 0;
 //// 	restartexec();
 //// 	/*NOTREACHED*/
 //// }
-//// 
+////
 //// void
 //// resetstuff(void)
 //// {
 //// 	resetreal();		/* in case it happens during rtloop() */
 //// 	m_reset();
 //// }
-//// 
+////
 //// void
 //// forcereboot(void)
 //// {
@@ -560,14 +563,14 @@ package kit
 //// 	restartexec();
 //// 	/*NOTREACHED*/
 //// }
-//// 
+////
 //// /* print warning message */
 //// void
 //// warning(char *fmt,...)
 //// {
 //// 	long needed;
 //// 	va_list args;
-//// 
+////
 //// 	if ( fmt == NULL )
 //// 		return;
 //// 	/* need to be especially conservative in the length, here, because */
@@ -576,11 +579,11 @@ package kit
 //// 	needed = 512L + (long)strlen(fmt) + (Infile?(long)strlen(Infile):0);
 //// 	makeroom(needed,&Wmsg,&Wmsgsize);
 //// 	sprintf(Wmsg, "%s: ",Progname);
-//// 
+////
 //// 	va_start(args,fmt);
 //// 	vsprintf(strend(Wmsg),fmt,args);
 //// 	va_end(args);
-//// 
+////
 //// 	/* On syntax errors, we don't bother telling what line we were */
 //// 	/* executing, since that's unlikely to be of any use. */
 //// 	if ( strcmp(fmt,"syntax error") != 0 ) {
@@ -593,28 +596,28 @@ package kit
 //// 	eprint(Wmsg);
 //// 	tsync();
 //// }
-//// 
+////
 //// /* popup warning message */
 //// void
 //// popupwarning(char *fmt,...)
 //// {
 //// 	long needed;
 //// 	va_list args;
-//// 
+////
 //// 	if ( fmt == NULL )
 //// 		return;
-//// 
+////
 //// 	/* Somewhat arbitrary, meant to be conservative, but in reality */
 //// 	/* it's still capable of being overrun.  */
 //// 	needed = 512L + (long)strlen(fmt) + (Infile?(long)strlen(Infile):0);
 //// 	makeroom(needed,&Wmsg,&Wmsgsize);
-//// 
+////
 //// 	sprintf(Wmsg, "%s: ",Progname);
-//// 
+////
 //// 	va_start(args,fmt);
 //// 	vsprintf(strend(Wmsg),fmt,args);
 //// 	va_end(args);
-//// 
+////
 //// 	/* On syntax errors, we don't bother telling what line we were */
 //// 	/* executing, since that's unlikely to be of any use. */
 //// 	if ( strcmp(fmt,"syntax error") != 0 ) {
@@ -626,7 +629,7 @@ package kit
 //// 	strcat(Wmsg,"\n");
 //// 	mdep_popup(Wmsg);
 //// }
-//// 
+////
 //// void
 //// finalexit(int r)
 //// {
@@ -634,7 +637,7 @@ package kit
 //// 	mdep_bye();
 //// 	exit(r);
 //// }
-//// 
+////
 //// void
 //// realexit(int r)
 //// {
@@ -642,7 +645,7 @@ package kit
 //// 	closeallfifos();	/* so ports get closed */
 //// 	finalexit(r);
 //// }
-//// 
+////
 //// void
 //// fatalerror(char *s)
 //// {
@@ -653,14 +656,14 @@ package kit
 //// 	realexit(1);
 //// 	/*NOTREACHED*/
 //// }
-//// 
+////
 //// void
 //// myre_fail(char *s,int c)
 //// {
 //// 	dummyusage(c);
 //// 	execerror("Failure in myre_exec: %s",s);
 //// }
-//// 
+////
 //// void
 //// tsync(void)
 //// {
@@ -668,55 +671,55 @@ package kit
 //// 	mdep_sync();
 //// #endif
 //// }
-//// 
+////
 //// void
 //// tprint(char *fmt,...)
 //// {
 //// 	va_list args;
-//// 
+////
 //// 	va_start(args,fmt);
 //// 	kdoprnt(0,stdout,fmt,args);
 //// 	va_end(args);
 //// }
-//// 
+////
 //// void
 //// eprint(char *fmt,...)
 //// {
 //// 	va_list args;
-//// 
+////
 //// 	va_start(args,fmt);
 //// 	kdoprnt(1,stderr,fmt,args);
 //// 	fflush(stderr);
 //// 	va_end(args);
 //// }
-//// 
+////
 //// void
 //// kdoprnt(int addnewline, FILE *f, char *fmt, va_list args)
 //// {
 //// 	long lng;
-//// 
+////
 //// 	/* Somewhat arbitrary, meant to be conservative, but in reality */
 //// 	/* it's still capable of being overrun.  Things that are likely */
 //// 	/* to overrun it should do their own makeroom() calls. */
 //// 	makeroom(1024+2*(long)strlen(fmt),&Msgt,&Msgtsize);
-//// 
+////
 //// 	vsprintf(Msgt,fmt,args);
-//// 
+////
 //// 	if ( Errfileit )
 //// 		keyerrfile(Msgt);
-//// 
+////
 //// 	if ( Usestdio )
 //// 		fputs(Msgt,f);
 //// 	else
 //// 		putonconsoutfifo(uniqstr(Msgt));
-//// 
+////
 //// 	if ( addnewline ) {
 //// 		lng = (long)strlen(Msgt);
 //// 		if ( Msgt[lng-1] != '\n' )
 //// 			putonconsoutfifo(uniqstr("\n"));
 //// 	}
 //// }
-//// 
+////
 //// void
 //// intcatch(void)
 //// {
@@ -738,12 +741,12 @@ package kit
 //// 	if ( Gotanint > 1 )
 //// 		eprint("Gotanint=%d\n",Gotanint);
 //// }
-//// 
+////
 //// void setintcatch(void)
 //// {
 //// 	/* mdep_setinterrupt((SIGFUNCTYPE)intcatch); */
 //// }
-//// 
+////
 //// void
 //// yyunget(int ch)
 //// {
@@ -755,7 +758,7 @@ package kit
 //// 	if ( Pyytext > Yytext )
 //// 		Pyytext--;
 //// }
-//// 
+////
 //// void
 //// stuffch(int ch)
 //// {
@@ -765,26 +768,26 @@ package kit
 //// 		ch = '\n';
 //// 	Ungot[Ungoti++] = ch;
 //// }
-//// 
+////
 //// void
 //// stuffword(register char *q)
 //// {
 //// 	register char *t = strend(q) - 1;
-//// 
+////
 //// 	while ( t>=q )
 //// 		stuffch(*t--);
 //// }
-//// 
+////
 //// int
 //// yyinput(void)
 //// {
 //// 	register int ch;
-//// 
+////
 //// restart:
 //// 	if ( (ch=yyrawin()) == EOF ) {
 //// 		return(EOF);
 //// 	}
-//// 
+////
 //// 	/* a backslash followed by \r or \n is ignored */
 //// 	if ( ch == '\\' ) {
 //// 		register int nextc = yyrawin();
@@ -794,7 +797,7 @@ package kit
 //// 	}
 //// 	return(ch);
 //// }
-//// 
+////
 //// void
 //// pushfin(FILE *f,char *fn,int autopop)
 //// {
@@ -808,25 +811,25 @@ package kit
 //// 		}
 //// 		execerror("Too many files are being sourced!  Increase FSTACKSIZE!");
 //// 	}
-//// 
+////
 //// 	/* Save current file pointer and name */
 //// 	*Fstackp++ = Fin;
 //// 	*Fnstackp++ = Infile;
 //// 	*Lnstackp++ = Lineno;
 //// 	*Popstackp++ = Autopop;
-//// 
+////
 //// 	if ( f!=NULL && mdep_fisatty(f) ) {
 //// 		Infile = Tty;
 //// 	}
 //// 	else {
 //// 		/* Must make local copy of name, because it's not unique */
 //// 		/* and file inclusion can be recursive. */
-//// 
+////
 //// 		Infile = fn ? strsave(fn) : fn;		/* NOT uniqstr */
 //// 	}
 //// 	Fin = f;
 //// 	Lineno = 1;
-//// 
+////
 //// #ifdef TRYWITHOUT
 //// 	keyerrfile("Linetrace A may be adding I_FILENAME!\n");
 //// 	if ( *Linetrace ) {
@@ -836,20 +839,20 @@ package kit
 //// 		code(strinst(Infile==NULL?Nullstr:uniqstr(Infile)));
 //// 	}
 //// #endif
-//// 
+////
 //// 	Autopop = autopop;
 //// 	if ( ! Autopop ) {
 //// 		yyreset();
 //// 	}
 //// }
-//// 
+////
 //// /* skip the rest of the current input file and go to the previous one */
 //// void
 //// popfin(void)
 //// {
 //// 	if ( ! Autopop )
 //// 		yyreset();
-//// 
+////
 //// 	/* Restore file we were reading before this one */
 //// 	if ( Fstackp <= Fstack ) {
 //// 		eprint("Hey, popfin called too often?\n");
@@ -875,7 +878,7 @@ package kit
 //// 	}
 //// #endif
 //// }
-//// 
+////
 //// void
 //// yyreset(void)
 //// {
@@ -886,7 +889,7 @@ package kit
 //// 	Indef = 0;
 //// 	/* ttyclear(); */
 //// }
-//// 
+////
 //// /* skip the rest of the current input file */
 //// void
 //// flushfin(void)
@@ -905,13 +908,13 @@ package kit
 //// 		fclose(Fin);
 //// 	}
 //// }
-//// 
+////
 //// /* Get a character from the current input (Fin), with no interpretation. */
 //// int
 //// yyrawin(void)
 //// {
 //// 	register int ch;
-//// 
+////
 //// restart:
 //// 	/* If we have input stashed away, use it */
 //// 	if ( Ungoti > 0 ) {
@@ -929,7 +932,7 @@ package kit
 //// 			if ( ch > '\r' )
 //// 				goto getout;
 //// 		}
-//// 
+////
 //// 		if ( ch == EOF ) {
 //// 			if ( Autopop ) {
 //// 				myfclose(Fin);
@@ -940,7 +943,7 @@ package kit
 //// 		}
 //// 		if ( ch == '\r' )
 //// 			ch = '\n';
-//// 
+////
 //// 		if ( ch == '\n' ) {
 //// 			/* We only adjust Lineno when we read a character */
 //// 			/* the first time (ie. not when from Ungot). */
@@ -951,18 +954,18 @@ package kit
 //// 			}
 //// 		}
 //// 	}
-//// 
+////
 //// getout:
 //// 	if ( Pyytext < Yytextend )
 //// 		*Pyytext++ = ch;
 //// 	return(ch);
 //// }
-//// 
+////
 //// int Killchar = '@';
 //// int Erasechar = '\b';
 //// int Eofchar = 4;
 //// int Intrchar = 0x7f;
-//// 
+////
 //// Codep
 //// instructs(char *s)
 //// {
@@ -982,7 +985,7 @@ package kit
 //// 		return cp;
 //// 	}
 //// }
-//// 
+////
 //// void
 //// corecheck(void)
 //// {
@@ -994,15 +997,15 @@ package kit
 //// 	}
 //// #endif
 //// }
-//// 
+////
 //// int
 //// checkfunckey(int c)
 //// {
 //// 	int n;
-//// 
+////
 //// 	if ( (c & FKEYBIT) == 0 )
 //// 		return 0;	/* not a function key */
-//// 
+////
 //// 	n = c & (~FKEYBIT);
 //// 	if ( n >= 0 && n < NFKEYS ) {
 //// 		Codep cp = Fkeyfunc[n];
@@ -1012,24 +1015,24 @@ package kit
 //// 	}
 //// 	return 0;
 //// }
-//// 
+////
 //// /* follow() - look ahead for >=, etc. */
 //// int
 //// follow(int expect,int ifyes,int ifno)
 //// {
 //// 	register int ch = yyinput();
-//// 
+////
 //// 	if ( ch == expect)
 //// 		return ifyes;
 //// 	yyunget(ch);
 //// 	return ifno;
 //// }
-//// 
+////
 //// int
 //// follo2(int expect1,int ifyes1,int expect2,int ifyes2,int ifno)
 //// {
 //// 	register int ch = yyinput();
-//// 
+////
 //// 	if ( ch == expect1)
 //// 		return ifyes1;
 //// 	if ( ch == expect2)
@@ -1037,12 +1040,12 @@ package kit
 //// 	yyunget(ch);
 //// 	return ifno;
 //// }
-//// 
+////
 //// int
 //// follo3(int expect1,int ifyes1,int expect2,int expect3,int ifyes2,int ifyes3,int ifno)
 //// {
 //// 	register int ch = yyinput();
-//// 
+////
 //// 	if ( ch == expect1)
 //// 		return ifyes1;
 //// 	if ( ch == expect2) {
@@ -1055,13 +1058,13 @@ package kit
 //// 	yyunget(ch);
 //// 	return ifno;
 //// }
-//// 
-//// 
+////
+////
 //// int
 //// eatpound(void)
 //// {
 //// 	int c;
-//// 
+////
 //// 	/* comments extend from a '#' (at the beginning of a word) */
 //// 	/* to the end of the line. */
 //// 	for ( ;; ) {
@@ -1074,9 +1077,9 @@ package kit
 //// 		}
 //// 	}
 //// 	*Pyytext = '\0';
-//// 
+////
 //// 	/* Could be a macro or #include, though */
-//// 
+////
 //// 	if ( strncmp("#define",Yytext,7) == 0 )
 //// 		macrodefine(Yytext+7,1);
 //// 	else if ( strncmp("#include",Yytext,8) == 0 )
@@ -1085,7 +1088,7 @@ package kit
 //// 		mdep_popup("#library in eatpound() no longer recognized!");
 //// 	return(1);
 //// }
-//// 
+////
 //// void
 //// plibrary(char *dir,char *s)
 //// {
@@ -1099,13 +1102,13 @@ package kit
 //// 	kfree(wrd1);
 //// 	kfree(wrd2);
 //// }
-//// 
+////
 //// void
 //// load1keylib(char *dir, char *keylibk)
 //// {
 //// 	FILE *f;
 //// 	char buff[BUFSIZ];
-//// 
+////
 //// 	OPENTEXTFILE(f,keylibk,"r");
 //// 	if ( Errfileit )
 //// 		tprint("Loading keylib: %s\n",keylibk);
@@ -1117,7 +1120,7 @@ package kit
 //// 		myfclose(f);
 //// 	}
 //// }
-//// 
+////
 //// void
 //// loadkeylibk(void)
 //// {
@@ -1127,17 +1130,17 @@ package kit
 //// 	static char **pathparts = NULL;
 //// 	static char *lastkeypath = NULL;
 //// 	static char *pathfname = NULL;	/* result is kept here */
-//// 
+////
 //// 	(void) pathsearch("keylib.k",&pathsize,&pathparts,
 //// 			&lastkeypath,&pathfname,Keypath,load1keylib);
 //// }
-//// 
+////
 //// void
 //// addplibrary(char *dir,char *fname,char *funcname)
 //// {
 //// 	char buff[BUFSIZ];
 //// 	Hnodep h;
-//// 
+////
 //// 	if ( mdep_makepath(dir,fname,buff,BUFSIZ) ) {
 //// 		mdep_popup("mdep_makepath fails?");
 //// 		return;
@@ -1147,13 +1150,13 @@ package kit
 //// 		h->val = strdatum(uniqstr(buff));
 //// 	}
 //// }
-//// 
+////
 //// void
 //// pinclude(char *s)
 //// {
 //// 	char *p, *p1 = NULL;
 //// 	char *fname;
-//// 
+////
 //// 	/* isolate the file name (getting rid of quotes) */
 //// 	while ( isspace(*s) )
 //// 		s++;
@@ -1189,9 +1192,9 @@ package kit
 //// 		eprint("#include failed, can't find '%s' ?!\n",p1);
 //// 	}
 //// }
-//// 
+////
 //// #define skipspace(s) while(isspace(*s))s++
-//// 
+////
 //// typedef struct Macro {
 //// 	char *name;
 //// 	char **params;
@@ -1199,9 +1202,9 @@ package kit
 //// 	char *value;
 //// 	struct Macro *next;
 //// } Macro;
-//// 
+////
 //// static Macro *Topmac = NULL;
-//// 
+////
 //// /* Scan the macro definition in s, creating a new Macro structure. */
 //// void
 //// macrodefine(char *s,int checkkeyword)
@@ -1217,7 +1220,7 @@ package kit
 //// 	(void) strcpy(buffer,s);
 //// 	s = buffer;
 //// #endif
-//// 
+////
 //// 	skipspace(s);
 //// 	for ( p=s; isnamechar(*p); p++ )
 //// 		;
@@ -1225,7 +1228,7 @@ package kit
 //// 	if ( echar != '\0' )
 //// 		*p++ = '\0';
 //// 	nm = uniqstr(s);
-//// 
+////
 //// 	if ( checkkeyword ) {
 //// 		sym = findsym(nm,Keywords);
 //// 		if ( sym ) {
@@ -1251,7 +1254,7 @@ package kit
 //// 	else {
 //// 		char **pp, *param, *params[NPARAMS];
 //// 		int nparams = 0;
-//// 
+////
 //// 		/* Gather parameter names */
 //// 		do {
 //// 			if ( nparams >= NPARAMS )
@@ -1261,13 +1264,13 @@ package kit
 //// 			echar = scanparam(&p);
 //// 			params[nparams++] = uniqstr(param);
 //// 		} while ( echar == ',' );
-//// 
+////
 //// 		if ( echar != ')' )
 //// 			execerror("Improper #define format");
-//// 
+////
 //// 		skipspace(p);
 //// 		m->value = uniqstr(p);
-//// 
+////
 //// 		m->nparams = nparams;
 //// 		if ( nparams > 0 ) {
 //// 			pp=(char **)kmalloc(nparams*sizeof(char *),"macrodefine2");
@@ -1279,13 +1282,13 @@ package kit
 //// 	m->next = Topmac;
 //// 	Topmac = m;
 //// }
-//// 
+////
 //// int
 //// scanparam(char **ap)
 //// {
 //// 	register char *p = *ap;
 //// 	int echar;
-//// 
+////
 //// 	while ( isnamechar(*p) )
 //// 		p++;
 //// 	echar = *p;
@@ -1293,7 +1296,7 @@ package kit
 //// 	*ap = p;
 //// 	return(echar);
 //// }
-//// 
+////
 //// /* Check to see if name is a macro, and if so, substitute its value (possibly*/
 //// /* gathering the arguments and substituting them in the macro definition). */
 //// /* The macro value is stuffed back onto the input stream. */
@@ -1305,17 +1308,17 @@ package kit
 //// 	char *buff, *errstr;
 //// 	int c, n, nparams, echar;
 //// 	char ch;
-//// 
+////
 //// 	for ( m=Topmac; m!=NULL; m=m->next ) {
 //// 		if ( name == m->name )
 //// 			break;
 //// 	}
 //// 	if ( m == NULL )
 //// 		return;
-//// 
+////
 //// 	if ( ++Macrosused > 10 )
 //// 		execerror("Macros too deeply nested (recursive?)");
-//// 
+////
 //// 	if ( m->nparams <= 0 ) {
 //// 		stuffword(m->value);
 //// 		return;
@@ -1324,9 +1327,9 @@ package kit
 //// 	while ( (c=yyinput()) != EOF && c != '(' )
 //// 		;
 //// 	nparams = m->nparams;
-//// 
+////
 //// 	buff = kmalloc(Buffsize,"macroeval");
-//// 
+////
 //// 	for ( n=echar=0; echar != ')' ; n++ ) {
 //// 		p = scantill("),",buff,buff+Buffsize);
 //// 		if ( p == NULL ) {
@@ -1347,7 +1350,7 @@ package kit
 //// 		errstr = "Too few arguments in call to macro";
 //// 		goto err;
 //// 	}
-//// 
+////
 //// 	/* now stuff the macro replacement value, and substitute any */
 //// 	/* parameters we find. */
 //// 	p = m->value;
@@ -1375,34 +1378,34 @@ package kit
 //// 	}
 //// 	*sofar = '\0';
 //// 	stuffword(buff);
-//// 
+////
 //// 	for ( n=0; n < nparams; n++ )
 //// 		kfree(args[n]);
 //// 	kfree(buff);
 //// 	return;
-//// 
+////
 ////     err:
 //// 	kfree(buff);
 //// 	execerror("%s %s",errstr,m->name);
 //// 	return;		 /* should be NOTREACHED*/
 //// }
-//// 
+////
 //// char *
 //// scantill(char *lookfor,char *buff,char *pend)
 //// {
 //// 	register char *p = buff;
 //// 	register int ch;
-//// 
+////
 //// 	while ( (ch=yyinput()) != EOF ) {
-//// 
+////
 //// 		if ( p >= pend )
 //// 			execerror("Too much macro expansion!");
-//// 
+////
 //// 		*p++ = ch;
 //// 		/* if we find one of the characters we're looking for... */
 //// 		if ( strchr(lookfor,ch) != NULL )
 //// 			return(p);
-//// 
+////
 //// 		switch ( ch ) {
 //// 		case '(': p = scantill(")",p,pend); break;
 //// 		case '{': p = scantill("}",p,pend); break;
@@ -1413,7 +1416,7 @@ package kit
 //// 	}
 //// 	return(NULL);
 //// }
-//// 
+////
 //// void
 //// readkeylibs(void)
 //// {
@@ -1423,13 +1426,13 @@ package kit
 //// 	}
 //// 	loadkeylibk();
 //// }
-//// 
+////
 //// Symstr
 //// filedefining(char *fnc)
 //// {
 //// 	static int first = 1;
 //// 	Hnodep h;
-//// 
+////
 //// 	if ( first ) {
 //// 		first = 0;
 //// 		readkeylibs();
@@ -1440,7 +1443,7 @@ package kit
 //// 	}
 //// 	return NULL;
 //// }
-//// 
+////
 //// /* loadsym - Attempt to load a function definition for a symbol. */
 //// /*           This should only be used for global variables. */
 //// /*           If pushit is set, the value of the symbol is pushed */
@@ -1453,65 +1456,65 @@ package kit
 //// 	FILE *f = NULL;
 //// 	int errs = 0;
 //// 	Codep cp;
-//// 
+////
 //// 	sname = symname(s);
 //// 	fname = filedefining(sname);
-//// 
+////
 //// 	if ( fname )
 //// 		OPENTEXTFILE(f,fname,"r");
-//// 
+////
 //// 	if ( f == NULL ) {
 //// 		if ( pushit ) {
 //// 			pushexp(s->sd);
 //// 		}
 //// 		return 1;
 //// 	}
-//// 
+////
 //// 	if ( *Loadverbose )
 //// 		tprint("Loading %s\n",fname);
 //// 	pushfin(f,fname,0);
-//// 
+////
 //// 	pushiseg();
-//// 
+////
 //// 	Errors = 0;
 //// 	yyparse();
 //// 	errs = Errors;
-//// 
+////
 //// 	/* We need to push the loaded value right away, because */
 //// 	/* nestinstruct() is going to push some other garbage */
 //// 	/* on the stack. */
 //// 	if ( pushit ) {
 //// 		pushexp(s->sd);
 //// 	}
-//// 
+////
 //// 	cp = popiseg();
 //// 	if ( errs > 0 )
 //// 		freecode(cp);
 //// 	else
 //// 		nestinstruct(cp);
-//// 
+////
 //// 	popfin();
 //// 	myfclose(f);
-//// 
+////
 //// 	if ( isnoval(s->sd) ) {
 //// 		eprint("Warning: no value for '%s' found in file '%s' !?\n",
 //// 			symname(s),fname);
 //// 	}
-//// 
+////
 //// 	return(errs);
 //// }
-//// 
+////
 //// Phrasep
 //// filetoph(FILE *f,char *fname)
 //// {
 //// 	Phrasep p;
-//// 
+////
 //// 	pushfin(f,fname,0);
 //// 	p = yyphrase(yyinput);
 //// 	popfin();
 //// 	return p;
 //// }
-//// 
+////
 //// char *
 //// kpathsearch(char *fname)
 //// {
@@ -1519,11 +1522,11 @@ package kit
 //// 	static char **pathparts = NULL;
 //// 	static char *lastkeypath = NULL;
 //// 	static char *pathfname = NULL;	/* result is kept here */
-//// 
+////
 //// 	return pathsearch(fname,&pathsize,&pathparts,
 //// 			&lastkeypath,&pathfname,Keypath,(PATHFUNC)NULL);
 //// }
-//// 
+////
 //// char *
 //// mpathsearch(char *fname)
 //// {
@@ -1531,29 +1534,29 @@ package kit
 //// 	static char **pathparts = NULL;
 //// 	static char *lastkeypath = NULL;
 //// 	static char *pathfname = NULL;	/* result is kept here */
-//// 
+////
 //// 	return pathsearch(fname,&pathsize,&pathparts,
 //// 			&lastkeypath,&pathfname,Musicpath,(PATHFUNC)NULL);
 //// }
-//// 
+////
 //// /* Seach a path for a file, and return a static (ie. reused on subsequent */
 //// /* calls) buffer of full path. This routine is confusingly generalized */
 //// /* so it can be used for searching both Keypath and Musicpath. */
-//// 
+////
 //// char *
 //// pathsearch(char *fname,long *apathsize,char ***apathparts,Symstrp alastkeypath,char **apathfname,Symstrp pathvar,PATHFUNC pfunc)
 //// {
 //// 	char *kp;
 //// 	long needed;
 //// 	int pn = 0;
-//// 
+////
 //// 	if ( *apathparts == NULL || *alastkeypath != *pathvar ) {
 //// 		if ( *apathparts != NULL )
 //// 			kfree(*apathparts);
 //// 		*apathparts = makeparts(*pathvar);
 //// 		*alastkeypath = *pathvar;
 //// 	}
-//// 
+////
 //// 	needed = Maxpathleng + (long)strlen(fname) + 8;
 //// 	if ( needed > *apathsize ) {
 //// 		if ( *apathfname != NULL )
@@ -1561,15 +1564,15 @@ package kit
 //// 		*apathfname = kmalloc((unsigned)needed,"kpathsearch");
 //// 		*apathsize = needed;
 //// 	}
-//// 
+////
 //// 	/* for absolute and relative path names, there is no search */
 //// 	if ( mdep_full_or_relative_path(fname) ) {
 //// 		strcpy(*apathfname,fname);
 //// 		return(*apathfname);
 //// 	}
-//// 
+////
 //// 	while ( (kp=(*apathparts)[pn++]) != NULL ) {
-//// 
+////
 //// 		/* combine directory and filename */
 //// 		if ( mdep_makepath(kp, fname, *apathfname, *apathsize) ) {
 //// 			mdep_popup("mdep_makepath fails?");
@@ -1588,7 +1591,7 @@ package kit
 //// 	}
 //// 	return(NULL);
 //// }
-//// 
+////
 //// /*
 ////  * Break a KEYPATH into Pathsep-separated parts.
 ////  * Pathsep can be escaped.
@@ -1601,12 +1604,12 @@ package kit
 //// 	char *buff, *bp, *p;
 //// 	char c, sep;
 //// 	char **parts;
-//// 
+////
 //// 	buff = kmalloc(Buffsize,"makeparts");
 //// 	if ( Pathsep == NULL || *Pathsep == NULL )
 //// 		execerror("bad Pathsep value!?");
 //// 	sep = **Pathsep;
-//// 
+////
 //// 	/* count to get the (maximum) # of parts */
 //// 	p = path;
 //// 	while ( *p != '\0' ) {
@@ -1617,17 +1620,17 @@ package kit
 //// 	bp = buff;
 //// 	nparts = 0;
 //// 	c = 1;	/* just to be non-0 */
-//// 
+////
 //// 	for ( p=path; c != '\0' ; ) {
-//// 
+////
 //// 		c = *p++;
 //// 		if ( c == sep || c == '\0' ) {
 //// 			*bp = '\0';
-//// 
+////
 //// 			/* An empty value is equivalent to the current directory */
 //// 			if ( *buff == '\0' )
 //// 				mdep_currentdir(buff,Buffsize);
-//// 
+////
 //// 			parts[nparts++] = uniqstr(buff);
 //// 			lng = (long)strlen(buff);
 //// 			if ( lng > Maxpathleng )
@@ -1646,7 +1649,7 @@ package kit
 //// 	kfree(buff);
 //// 	return(parts);
 //// }
-//// 
+////
 //// int
 //// MAIN(int argc,char **argv)
 //// {
@@ -1656,34 +1659,34 @@ package kit
 //// 	char *p;
 //// 	int c;
 //// 	int realConsolefd;
-//// 
+////
 //// 	Argv = argv;
 //// 	Argc = argc;
 //// 	p = argv[0];
-//// 
+////
 //// 	Fin = stdin;
 //// 	Fout = stdout;
 //// 	Diagfunc = mdep_popup;
-//// 
+////
 //// 	mdep_hello(argc,argv);
-//// 
+////
 //// 	realConsolefd = Consolefd;
 //// 	Consolefd = -1;
-//// 
+////
 //// 	keystart();
-//// 
+////
 //// 	while ( argc > 1 && argv[1][0] == '-' ) {
-//// 
+////
 //// 		c = argv[1][1];
-//// 
+////
 //// 		/* a '-' by itself represents stdin, and '-c' preceeds */
 //// 		/* command-line keykit statements. These both end */
 //// 		/* the processing of command-line options */
 //// 		if ( c == '\0' || c == 'c' )
 //// 			break;
-//// 
+////
 //// 		switch (c) {
-//// 
+////
 //// 		case 'p':
 //// 			if ( argv[1][2]=='\0' && argc>2 ) {
 //// 				argc--;
@@ -1720,7 +1723,7 @@ package kit
 //// 		case 'I':
 //// 			*Abortonint = 1;
 //// 			break;
-//// 
+////
 //// 		/* can't decide what letter to use */
 //// 		case 'e':
 //// 		case 'E':
@@ -1747,7 +1750,7 @@ package kit
 //// 			/* The -t option increases *Linetrace to 2 which */
 //// 			/* will cause a complete line-level trace to */
 //// 			/* be put into the file key.err. */
-//// 
+////
 //// 			(*Linetrace)++;
 //// 			break;
 //// 		case 'y':
@@ -1760,7 +1763,7 @@ package kit
 //// 		argc--;
 //// 		argv++;
 //// 	}
-//// 
+////
 //// 	if ( argc <= 1 ) {
 //// 		argc = 1;
 //// 		argv = stdinonly;
@@ -1769,28 +1772,28 @@ package kit
 //// 		argc--;
 //// 		argv++;
 //// 	}
-//// 
+////
 //// 	/* I can't recall why we play this game with the Consolefd, but it */
 //// 	/* probably has something to do with end-of-file, or something.    */
 //// 	/* For startgraphics(), we restore the real Consolefd for linux.   */
 //// 	Consolefd = realConsolefd;
 //// 	startgraphics();
 //// 	Consolefd = -1;
-//// 
+////
 //// 	startrealtime();
 //// 	startreboot();
-//// 
+////
 //// 	initsyms2();	/* for stuff that gets set in startgraphics, mainly */
 //// 	if ( Errfileit )
 //// 		*Loadverbose = 1;
-//// 
+////
 //// 	ReadytoEval = 1;
 //// 	go_interactive = 1;
-//// 
+////
 //// 	while ( argc-- > 0 ) {
 //// 		char *arg = *argv++;
 //// 		char *suff = strrchr(arg,'.');
-//// 
+////
 //// 		if ( strcmp(arg,"-") == 0 ) {
 //// 			/* Start up an interactive command interpreter */
 //// 			Consolefd = realConsolefd;
@@ -1800,7 +1803,7 @@ package kit
 //// 			}
 //// 			exectasks(0);
 //// 			Consolefd = -1;
-//// 
+////
 //// 			go_interactive = 0;
 //// 			continue;
 //// 		}
@@ -1815,15 +1818,15 @@ package kit
 //// 			}
 //// 			else
 //// 				arg += 2;
-//// 
+////
 //// 			keystr(arg);
-//// 
+////
 //// 			exectasks(0);
 //// 			go_interactive = 0;
 //// 			nerrs += Errors;
 //// 			continue;
 //// 		}
-//// 
+////
 //// 		/* Anything else should be the name of a file */
 //// 		if ( ! exists(arg) ) {
 //// 			sprintf(Msg1,"No such file: %s",arg);
@@ -1856,7 +1859,7 @@ package kit
 //// 		exectasks(0);
 //// 		Consolefd = -1;
 //// 	}
-//// 
+////
 //// 	finalexit(nerrs);
 //// 	return(nerrs);	/* what the hey... */
 //// }

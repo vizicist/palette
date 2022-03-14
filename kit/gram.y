@@ -1,11 +1,13 @@
 %{
 package kit
+
 import (
 	"text/scanner"
 	"strconv"
 	"strings"
 	"fmt"
 )
+
 type Expression interface{}
 type ParenExpr struct {
 	SubExpr Expression
@@ -31,6 +33,13 @@ type UnaryExpr struct {
 	operator string
 	right    Expression
 }
+
+type Lexer struct {
+	scanner.Scanner
+	Vars   map[string]interface{}
+	result Expression
+}
+
 %}
 %union{
 	token Token
@@ -93,11 +102,7 @@ expr
 		$$ = BinOpExpr{left: NumExpr{literal: $1.literal}, operator: "<=", right: NumExpr{literal: $3.literal}}
 	}
 %%
-type Lexer struct {
-	scanner.Scanner
-	Vars map[string]interface{}
-	result Expression
-}
+
 func (l *Lexer) Lex(lval *yySymType) int {
 	token := l.Scan()
 	lit := l.TokenText()
@@ -153,7 +158,7 @@ func Eval(e Expression) bool {
 		right := Eval(t.right)
 		switch t.operator {
 		case "!":
-			return ! right
+			return !right
 		}
 	case AssocExpr:
 		fmt.Println("Assoc")
