@@ -5,6 +5,16 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Kit",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${env:PALETTESOURCE}/cmd/kit/kit.go",
+            "env": {
+                "Path": "${env:Path};${workspaceFolder};"             },
+            "args": []
+        },
+        {
             "name": "testcli",
             "type": "go",
             "request": "launch",
