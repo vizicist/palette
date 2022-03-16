@@ -2,7 +2,7 @@
 package kit
 
 import (
-	"text/scanner"
+	// "text/scanner"
 	"strconv"
 	"strings"
 	"fmt"
@@ -35,24 +35,86 @@ type UnaryExpr struct {
 }
 
 type Lexer struct {
-	scanner.Scanner
+	// scanner.Scanner
+	reader *strings.Reader
 	Vars   map[string]interface{}
 	result Expression
+	Yytext string
+	yylval yySymType
 }
+
+type Symbol struct {
+	x int
+}
+type Instnode struct {
+	x int
+}
+type Phrase struct {
+	x int
+}
+
+type Symbolp *Symbol
+type Instnodep *Instnode
+type Phrasep *Phrase
 
 %}
 %union{
 	token Token
 	expr  Expression
+	sym Symbolp	/* symbol table pointer */
+	in Instnodep /* machine instruction */
+	num int /* number of arguments */
+	val int	/* numeric constant */
+	dbl float32	/* floating constant */
+	str string /* string constant */
+	phr Phrasep	/* phrase constant */
 }
-%type<expr> program
-%type<expr> expr
-%token<token> NUMBER NOT AND OR IS
+
+// %token<token> NUMBER NOT AND OR IS
+/// %left '<' GE '>' LE
+/// %left AND
+/// %left OR
+
 %left IS
-%left '<' GE '>' LE
-%left AND
-%left OR
 %right NOT
+
+%type   <expr> program
+/// %type   <expr> expr
+%token	<sym>	VAR UNDEF MACRO TOGLOBSYM QMARK2 DOLLAR2 WHILE DOTDOTDOT
+%token	<sym>	IF ELSE FOR SYM_IN BEINGREAD EVAL BREAK CONTINUE TASK
+%token	<sym>	SYM_DELETE UNDEFINE RETURN FUNC DEFINED READONLY ONCHANGE GLOBALDEC
+%token	<sym>	CLASS METHOD KW_NEW NARGS TYPEOF XY
+%token	<sym>	DUR VOL TIME CHAN PITCH LENGTH NUMBER TYPE ATTRIB FLAGS VARG PORT
+%token	<phr>	PHRASE
+%token	<str>	STRING NAME
+%token	<val>	INTEGER OBJECT
+%token	<dbl>	DOUBLE
+%token	<num>	PLUSEQ MINUSEQ MULEQ DIVEQ AMPEQ INC DEC
+%token	<num>	POSTINC POSTDEC OREQ XOREQ RSHIFTEQ LSHIFTEQ
+%type	<in>	expr
+/// %type   <in>    stmt stmts nosemi optstmt funcstart stmtnv
+/// %type	<in>	tcond tfcond optrelx forin1 forin2 forinend end goto
+/// %type	<in>	select1 select2 select3 and or equals
+/// %type	<in>	prefunc1 prefunc3 preobj method arglist narglist
+/// %type	<sym>	uniqvar var dottype globvar uniqm
+/// %type	<num>	args prmlist prms arrlist
+/// %type	<str>	methname
+%right	'=' PLUSEQ MINUSEQ MULEQ DIVEQ AMPEQ OREQ XOREQ RSHIFTEQ LSHIFTEQ
+%right	'?'
+%right	':'
+%left	OR
+%left	AND
+%left	'|'
+%left	'^'
+%left	'&'
+%nonassoc	GT GE LT LE EQ NE REGEXEQ
+%left	LSHIFT RSHIFT
+%left	'+' '-'
+%left	'*' '/'
+%left	UNARYMINUS BANG '~'
+%left	'%' '.'
+%left	INC DEC
+
 %%
 program
 	: expr
@@ -63,46 +125,11 @@ program
 expr
 	: NUMBER
 	{
-		$$ = NumExpr{literal: $1.literal}
-	}
-	| NOT expr
-	{
-		$$ = UnaryExpr{operator: "!", right: $2}
-	}
-	| expr AND expr
-	{
-		$$ = AssocExpr{left: $1, operator: "&&", right: $3}
-	}
-	| '(' expr ')'
-	{
-		$$ = ParenExpr{SubExpr: $2}
-	}
-	| expr OR expr
-	{
-		$$ = AssocExpr{left: $1, operator: "||", right: $3}
-	}
-	| NUMBER '<' NUMBER
-	{
-		$$ = BinOpExpr{left: NumExpr{literal: $1.literal}, operator: "<", right: NumExpr{literal: $3.literal}}
-	}
-	| NUMBER '>' NUMBER
-	{
-		$$ = BinOpExpr{left: NumExpr{literal: $1.literal}, operator: ">", right: NumExpr{literal: $3.literal}}
-	}
-	| NUMBER IS NUMBER
-	{
-		$$ = BinOpExpr{left: NumExpr{literal: $1.literal}, operator: "=", right: NumExpr{literal: $3.literal}}
-	}
-	| NUMBER GE NUMBER
-	{
-		$$ = BinOpExpr{left: NumExpr{literal: $1.literal}, operator: ">=", right: NumExpr{literal: $3.literal}}
-	}
-	| NUMBER LE NUMBER
-	{
-		$$ = BinOpExpr{left: NumExpr{literal: $1.literal}, operator: "<=", right: NumExpr{literal: $3.literal}}
+		$$ = &Instnode{x: 777}
 	}
 %%
 
+/*
 func (l *Lexer) Lex(lval *yySymType) int {
 	token := l.Scan()
 	lit := l.TokenText()
@@ -137,6 +164,7 @@ func (l *Lexer) Lex(lval *yySymType) int {
 	lval.token = Token{token: tok, literal: lit}
 	return tok
 }
+*/
 func (l *Lexer) Error(e string) {
 	panic(e)
 }
@@ -190,16 +218,16 @@ func Eval(e Expression) bool {
 func Parse(exp string, vars map[string]interface{}) (err error) {
 	defer func() {
 		if r := recover(); r!=nil {
-			err = fmt.Errorf("recovered from ", r)
+			err = fmt.Errorf("recovered from %s", r)
 		}
 	}()
 	l := new(Lexer)
 	l.Vars = vars
-	l.Init(strings.NewReader(exp))
+	l.Init(exp)
 	yyParse(l)
 	b := Eval(l.result)
 	if b == false {
-		return fmt.Errorf("Eval returned false\n")
+		return fmt.Errorf("eval returned false")
 	} else {
 		return nil
 	}
