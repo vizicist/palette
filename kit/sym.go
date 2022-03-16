@@ -1,21 +1,22 @@
 package kit
+
 //// /*
 ////  *	Copyright 1996 AT&T Corp.  All rights reserved.
 ////  */
-//// 
+////
 //// #define OVERLAY8
-//// 
+////
 //// #include "key.h"
 //// #include "gram.h"
-//// 
+////
 //// Htablep Keywords = NULL;
 //// Htablep Macros = NULL;
 //// Htablep Topht = NULL;
 //// static Htablep Freeht = NULL;
-//// 
+////
 //// Context *Currct = NULL;
 //// Context *Topct = NULL;
-//// 
+////
 //// Symlongp Merge, Now, Clicks, Debug, Sync, Optimize, Mergefilter, Nowoffset;
 //// Symlongp Mergeport1, Mergeport2;
 //// Symlongp Debugwait, Debugmidi, Debugrun, Debugfifo, Debugmouse, Debuggesture;
@@ -46,12 +47,12 @@ package kit
 //// Htablepp Track, Wpick;
 //// Htablepp Chancolormap;
 //// Symlongp Chancolors;
-//// 
+////
 //// void
 //// newcontext(Symbolp s, int sz)
 //// {
 //// 	Context *c;
-//// 
+////
 //// 	c = (Context *) kmalloc(sizeof(Context),"newcontext");
 //// 	c->symbols = newht(sz);
 //// 	c->func = s;
@@ -60,7 +61,7 @@ package kit
 //// 	c->paramnum = 1;
 //// 	Currct = c;
 //// }
-//// 
+////
 //// void
 //// popcontext(void)
 //// {
@@ -71,16 +72,16 @@ package kit
 //// 	kfree((char*)Currct);
 //// 	Currct = nextc;
 //// }
-//// 
+////
 //// Symbolp Free_sy = NULL;
-//// 
+////
 //// Symbolp
 //// newsy(void)
 //// {
 //// 	static Symbolp lastsy;
 //// 	static int used = ALLOCSY;
 //// 	Symbolp s;
-//// 
+////
 //// 	/* First check the free list and use those nodes, before using */
 //// 	/* the newly allocated stuff. */
 //// 	if ( Free_sy != NULL ) {
@@ -88,7 +89,7 @@ package kit
 //// 		Free_sy = Free_sy->next;
 //// 		goto getout;
 //// 	}
-//// 
+////
 //// 	/* allocate a BUNCH of new ones at a time */
 //// 	if ( used == ALLOCSY ) {
 //// 		used = 0;
@@ -96,7 +97,7 @@ package kit
 //// 	}
 //// 	used++;
 //// 	s = lastsy++;
-//// 
+////
 ////     getout:
 //// 	s->stype = UNDEF;
 //// 	s->stackpos = 0;	/* i.e. it's global */
@@ -105,7 +106,7 @@ package kit
 //// 	s->next = NULL;
 //// 	return(s);
 //// }
-//// 
+////
 //// void
 //// freesy(register Symbolp sy)
 //// {
@@ -113,21 +114,20 @@ package kit
 //// 	sy->next = Free_sy;
 //// 	Free_sy = sy;
 //// }
-//// 
+////
 //// Symbolp
-//// findsym(register char *p,Htablep symbols)
-//// {
-//// 	Datum key;
-//// 	Hnodep h;
-//// 
-//// 	key = strdatum(p);
-//// 	h = hashtable(symbols,key,H_LOOK);
-//// 	if ( h )
-//// 		return h->val.u.sym;
-//// 	else
-//// 		return NULL;
-//// }
-//// 
+
+func findsym(p string, symbols Htablep) Symbolp {
+	key := strdatum(p)
+	h := hashtable(symbols, key, H_LOOK)
+	if h {
+		return h.val.u.sym
+	} else {
+		return NULL
+	}
+}
+
+////
 //// Symbolp
 //// findobjsym(char *p,Kobjectp o,Kobjectp *foundobj)
 //// {
@@ -135,7 +135,7 @@ package kit
 //// 	Hnodep h;
 //// 	Htablep symbols = o->symbols;
 //// 	Symbolp s;
-//// 
+////
 //// 	if ( symbols == NULL ) {
 //// 		mdep_popup("Internal error - findobjsym finds NULL symbols!");
 //// 		return NULL;
@@ -147,7 +147,7 @@ package kit
 //// 			*foundobj = o;
 //// 		return h->val.u.sym;
 //// 	}
-//// 
+////
 //// 	/* Not found, try inherited objects */
 //// 	if ( o->inheritfrom != NULL ) {
 //// 		Kobjectp o2;
@@ -160,13 +160,13 @@ package kit
 //// 	}
 //// 	return NULL;
 //// }
-//// 
+////
 //// Symbolp
 //// uniqvar(char* pre)
 //// {
 //// 	static long unum = 0;
 //// 	char buff[32];
-//// 
+////
 //// 	if ( pre == NULL )
 //// 		pre = "";
 //// 	strncpy(buff,pre,20);	/* 20 is 32 - (space for NONAMEPREFIX + num) */
@@ -176,20 +176,20 @@ package kit
 //// 		execerror("uniqvar() has run out of names!?");
 //// 	return globalinstallnew(uniqstr(buff),VAR);
 //// }
-//// 
+////
 //// /* lookup(p) - find p in symbol table */
 //// Symbolp
 //// lookup(char *p)
 //// {
 //// 	Symbolp s;
-//// 
+////
 //// 	if ( (s=findsym(p,Currct->symbols)) != NULL )
 //// 		return(s);
 //// 	if ( Currct != Topct && (s=findsym(p,Topct->symbols)) != NULL )
 //// 		return(s);
 //// 	return(NULL);
 //// }
-//// 
+////
 //// Symbolp
 //// localinstall(Symstr p,int t)
 //// {
@@ -200,9 +200,9 @@ package kit
 //// 		s->stackpos = -(Currct->localnum++);	/* okay if chars are unsigned*/
 //// 	return(s);
 //// }
-//// 
+////
 //// int Starting = 1;
-//// 
+////
 //// Symbolp
 //// globalinstall(Symstr p,int t)
 //// {
@@ -212,21 +212,21 @@ package kit
 //// 	s = syminstall(p,Topct->symbols,t);
 //// 	return(s);
 //// }
-//// 
+////
 //// /* Use this variation if you know that the symbol is new */
 //// Symbolp
 //// globalinstallnew(Symstr p,int t)
 //// {
 //// 	return syminstall(p,Topct->symbols,t);
 //// }
-//// 
+////
 //// Symbolp
 //// syminstall(Symstr p,Htablep symbols,int t)
 //// {
 //// 	Symbolp s;
 //// 	Hnodep h;
 //// 	Datum key;
-//// 
+////
 //// 	key = strdatum(p);
 //// 	h = hashtable(symbols,key,H_INSERT);
 //// 	if ( h==NULL )
@@ -246,7 +246,7 @@ package kit
 //// 	}
 //// 	return s;
 //// }
-//// 
+////
 //// void
 //// clearsym(register Symbolp s)
 //// {
@@ -254,7 +254,7 @@ package kit
 //// 	Codep cp;
 //// 	BLTINCODE bc;
 //// #endif
-//// 
+////
 //// 	if ( s->stype == VAR ) {
 //// 		Datum *dp = symdataptr(s);
 //// 		switch (dp->type) {
@@ -271,7 +271,7 @@ package kit
 //// 			}
 //// 			break;
 //// 		case D_CODEP:
-//// 
+////
 //// 			/* BUG FIX - 5/4/97 - no longer free it */
 //// #ifdef OLDSTUFF
 //// 			cp = dp->u.codep;
@@ -290,7 +290,7 @@ package kit
 //// 		}
 //// 	}
 //// }
-//// 
+////
 //// static struct {		/* Keywords */
 //// 	char	*name;
 //// 	int	kval;
@@ -337,7 +337,7 @@ package kit
 //// 	"port",		PORT,
 //// 	0,		0,
 //// };
-//// 
+////
 //// long
 //// neednum(char *s,Datum d)
 //// {
@@ -345,7 +345,7 @@ package kit
 //// 		execerror("%s expects a number, got %s!",s,atypestr(d.type));
 //// 	return ( roundval(d) );
 //// }
-//// 
+////
 //// Codep
 //// needfunc(char *s,Datum d)
 //// {
@@ -353,7 +353,7 @@ package kit
 //// 		execerror("%s expects a function, got %s!",s,atypestr(d.type));
 //// 	return d.u.codep;
 //// }
-//// 
+////
 //// Kobjectp
 //// needobj(char *s,Datum d)
 //// {
@@ -361,13 +361,13 @@ package kit
 //// 		execerror("%s expects an object, got %s!",s,atypestr(d.type));
 //// 	return d.u.obj;
 //// }
-//// 
+////
 //// Fifo *
 //// needfifo(char *s,Datum d)
 //// {
 //// 	long n;
 //// 	Fifo *f;
-//// 
+////
 //// 	if ( d.type != D_NUM && d.type != D_DBL ) {
 //// 		execerror("%s expects a fifo id (i.e. a number), but got %s!",
 //// 			s,atypestr(d.type));
@@ -376,18 +376,18 @@ package kit
 //// 	f = fifoptr(n);
 //// 	return f;
 //// }
-//// 
+////
 //// Fifo *
 //// needvalidfifo(char *s,Datum d)
 //// {
 //// 	Fifo *f;
-//// 
+////
 //// 	f = needfifo(s,d);
 //// 	if ( f == NULL )
 //// 		execerror("%s expects a fifo id, and %ld is not a valid fifo id!",s,numval(d));
 //// 	return f;
 //// }
-//// 
+////
 //// char *
 //// needstr(char *s,Datum d)
 //// {
@@ -395,7 +395,7 @@ package kit
 //// 		execerror("%s expects a string, got %s!",s,atypestr(d.type));
 //// 	return ( d.u.str );
 //// }
-//// 
+////
 //// Htablep
 //// needarr(char *s,Datum d)
 //// {
@@ -403,7 +403,7 @@ package kit
 //// 		execerror("%s expects an array, got %s!",s,atypestr(d.type));
 //// 	return ( d.u.arr );
 //// }
-//// 
+////
 //// Phrasep
 //// needphr(char *s,Datum d)
 //// {
@@ -411,17 +411,17 @@ package kit
 //// 		execerror("%s expects a phrase, got %s!",s,atypestr(d.type));
 //// 	return ( d.u.phr );
 //// }
-//// 
+////
 //// Symstr
 //// datumstr(Datum d)
 //// {
 //// 	char buff[32];
 //// 	char *p;
 //// 	long id;
-//// 
+////
 //// 	if ( isnoval(d) )
 //// 		execerror("Attempt to convert uninitialized value (Noval) to string!?");
-//// 
+////
 //// 	switch ( d.type ) {
 //// 	case D_NUM:
 //// 		(void) prlongto(d.u.val,p=buff);
@@ -456,15 +456,15 @@ package kit
 //// 	p = uniqstr(p);
 //// 	return p;
 //// }
-//// 
+////
 //// Datum
 //// newarrdatum(int used,int size)
 //// {
 //// 	Datum d;
-//// 
+////
 //// 	d.type = D_ARR;
 //// 	d.u.arr = newht(size>0 ? size : ARRAYHASHSIZE);
-//// 	
+////
 //// #ifdef OLDSTUFF
 //// if(Debug&&*Debug>1)eprint("newarrdatum(%d), d.u.arr=%ld\n",used,(long)(d.u.arr));
 //// #endif
@@ -472,20 +472,20 @@ package kit
 //// 	d.u.arr->h_tobe = 0;
 //// 	return d;
 //// }
-//// 
+////
 //// Htablepp
 //// globarray(char *name)
 //// {
 //// 	Datum *dp;
 //// 	Symbolp s;
-//// 
+////
 //// 	s = globalinstall(name,VAR);
 //// 	s->stype = VAR;
 //// 	dp = symdataptr(s);
 //// 	*dp = newarrdatum(1,0);
 //// 	return &(dp->u.arr);
 //// }
-//// 
+////
 //// Datum
 //// phrsplit(Phrasep p)
 //// {
@@ -502,17 +502,17 @@ package kit
 //// 	int samesection, nactive = 0;
 //// 	long t, elapse, closest, now = 0L;
 //// 	long arrnum = 0L;
-//// 
+////
 //// 	da = newarrdatum(0,0);
 //// 	arr = da.u.arr;
-//// 
+////
 //// 	n = firstnote(p);
-//// 
+////
 //// 	while ( n!=NULL || nactive>0 ) {
-//// 
+////
 //// 		/* find out which event is closer: the end of a pending */
 //// 		/* note, or the start of the next one (if there is one). */
-//// 
+////
 //// 		if ( n != NULL ) {
 //// 			closest = n->clicks - now;
 //// 			samesection = 1;
@@ -521,7 +521,7 @@ package kit
 //// 			closest = 30000;
 //// 			samesection = 0;
 //// 		}
-//// 
+////
 //// 		/* Check the ending times of the pending notes, to see */
 //// 		/* if any of them end before the next note starts.  If so, */
 //// 		/* we want to create a new section.  */
@@ -535,18 +535,18 @@ package kit
 //// 				samesection = 0;
 //// 			}
 //// 		}
-//// 
+////
 //// 		/* We want to let that amount of time elapse. */
 //// 		elapse = closest;
 //// 		if ( samesection!=0 && (closest == 0 || nactive == 0) )
 //// 			goto addtosame;
-//// 
+////
 //// 		/* We're going to create a new element in the split array */
-//// 
+////
 //// 		d = numdatum((long)arrnum++);
 //// 		s = arraysym(arr,d,H_INSERT);
 //// 		p2 = newph(1);
-//// 
+////
 //// 		/* add all active notes to the phrase */
 //// 		tm2 = now+elapse;
 //// 		for ( k=0; k<nactive; k++ ) {
@@ -563,7 +563,7 @@ package kit
 //// 		}
 //// 		p2->p_leng = tm2;
 //// 		*symdataptr(s) = phrdatum(p2);
-//// 
+////
 //// 		/* If any notes are pending, take into account elapsed */
 //// 		/* time, and if they expire, get rid of them. */
 //// 		for ( i=0; i<nactive; i++ ) {
@@ -578,7 +578,7 @@ package kit
 //// 				i--;	/* don't advance loop index */
 //// 			}
 //// 		}
-//// 
+////
 //// 	addtosame:
 //// 		if ( samesection ) {
 //// 			/* add this new note (and all others that start at the */
@@ -597,10 +597,10 @@ package kit
 //// 	}
 //// 	return(da);
 //// }
-//// 
+////
 //// /* sep contains the list of possible separator characters. */
 //// /* multiple consecutive separator characters are treated as one. */
-//// 
+////
 //// Datum
 //// strsplit(char *str,char *sep)
 //// {
@@ -613,7 +613,7 @@ package kit
 //// 	long n;
 //// 	int slen = (int)strlen(str);
 //// 	int state;
-//// 
+////
 //// 	/* avoid kmalloc if we can use small buffer */
 //// 	if ( slen >= sizeof(buffer) )
 //// 		buff = kmalloc((unsigned)(slen+1),"strsplit");
@@ -621,7 +621,7 @@ package kit
 //// 		buff = buffer;
 //// 	strcpy(buff,str);
 //// 	endp = buff + slen;
-//// 
+////
 //// 	/* An inital scan to figure out how big an array we need */
 //// 	for ( state=0,n=0,p=buff; state >= 0 && p < endp ; p++ ) {
 //// 		isasep = (strchr(sep,*p) != NULL);
@@ -640,12 +640,12 @@ package kit
 //// 	}
 //// 	if ( state == 1 )
 //// 		n++;
-//// 
+////
 //// 	da = newarrdatum(0,(int)n);
 //// 	arr = da.u.arr;
-//// 
+////
 //// 	for ( state=0,n=0,p=buff; state >= 0 && p < endp ; p++ ) {
-//// 
+////
 //// 		isasep = (strchr(sep,*p) != NULL);
 //// 		switch ( state ) {
 //// 		case 0:	/* before word */
@@ -671,7 +671,7 @@ package kit
 //// 		kfree(buff);
 //// 	return(da);
 //// }
-//// 
+////
 //// void
 //// setarraydata(Htablep arr,Datum i,Datum d)
 //// {
@@ -681,13 +681,13 @@ package kit
 //// 	s = arraysym(arr,i,H_INSERT);
 //// 	*symdataptr(s) = d;
 //// }
-//// 
+////
 //// void
 //// setarrayelem(Htablep arr,long n,char *p)
 //// {
 //// 	setarraydata(arr,numdatum(n),strdatum(uniqstr(p)));
 //// }
-//// 
+////
 //// void
 //// fputdatum(FILE *f,Datum d)
 //// {
@@ -695,7 +695,7 @@ package kit
 //// 	int c;
 //// 	int i = 0;
 //// 	int nl = (*Printsplit)!=0;
-//// 
+////
 //// 	if ( d.type == D_STR )
 //// 		putc('"',f);
 //// 	for ( ; (c=(*str)) != '\0'; str++ ) {
@@ -727,7 +727,7 @@ package kit
 //// 	if ( d.type == D_STR )
 //// 		putc('"',f);
 //// }
-//// 
+////
 //// static struct binum {
 //// 	char *name;
 //// 	long val;
@@ -738,7 +738,7 @@ package kit
 //// 	"Interrupt", MAXLONG-2, &Intrval,
 //// 	"Merge", 1L, &Merge,
 //// 	"Mergeport1", 0L, &Mergeport1,    // default output
-//// 	"Mergeport2", -1L, &Mergeport2,   // 
+//// 	"Mergeport2", -1L, &Mergeport2,   //
 //// 	"Mergefilter", 0L, &Mergefilter,
 //// 	"Clicks", (long)(DEFCLICKS), &Clicks,
 //// 	"Debug", 0L, &Debug,
@@ -850,9 +850,9 @@ package kit
 //// 		offset effect, default turns it off for channel 10, drums */
 //// 	0, 0, 0
 //// };
-//// 
+////
 //// Phrasepp Currphr, Recphr;
-//// 
+////
 //// static struct biphr {
 //// 	char *name;
 //// 	Phrasepp *ptophr;
@@ -861,12 +861,12 @@ package kit
 //// 	"Recorded", &Recphr,
 //// 	0, 0
 //// };
-//// 
+////
 //// Symstrp Keypath, Machine, Keyerasechar, Keykillchar, Keyroot;
 //// Symstrp Printsep, Printend, Musicpath;
 //// Symstrp Pathsep, Dirseparator, Devmidi, Version, Initconfig, Nullvalsymp;
 //// Symstrp Fontname, Icon, Windowsys, Drawwindow, Picktrack;
-//// 
+////
 //// static struct bistr {
 //// 	char *name;
 //// 	char *val;
@@ -891,7 +891,7 @@ package kit
 //// 	"Nullval", "", &Nullvalsymp,
 //// 	0, 0, 0
 //// };
-//// 
+////
 //// void
 //// installnum(char *name,Symlongp *pvar,long defval)
 //// {
@@ -904,14 +904,14 @@ package kit
 //// 	}
 //// 	*pvar = (Symlongp)( &(symdataptr(s)->u.val) ) ;
 //// }
-//// 
+////
 //// void
 //// installstr(char *name,char *str)
 //// {
 //// 	Symbolp s = globalinstallnew(uniqstr(name),VAR);
 //// 	*symdataptr(s) = strdatum(uniqstr(str));
 //// }
-//// 
+////
 //// /* build a Datum that is a function pointer, pointing to a built-in function */
 //// Datum
 //// funcdp(Symbolp s, BLTINCODE f)
@@ -919,16 +919,16 @@ package kit
 //// 	Codep cp;
 //// 	Datum d;
 //// 	int sz;
-//// 
+////
 //// 	sz = Codesize[IC_BLTIN] + varinum_size(0) + Codesize[IC_SYM];
 //// 	cp = (Codep) kmalloc(sz,"funcdp");
 //// 	// keyerrfile("CP 0 = %lld, sz=%d\n", (intptr_t)cp,sz);
-//// 
+////
 //// 	*Numinst1 += sz;
-//// 
+////
 //// 	d.type = D_CODEP;
 //// 	d.u.codep = cp;
-//// 
+////
 //// 	cp = put_bltincode(f,cp);
 //// 	// keyerrfile("CP 3 = %lld\n", (intptr_t)cp);
 //// 	cp = put_numcode(0,cp);
@@ -937,13 +937,13 @@ package kit
 //// 	// keyerrfile("CP 5 = %lld\n", (intptr_t)cp);
 //// 	return d;
 //// }
-//// 
+////
 //// /* Pre-defined macros.  It is REQUIRED that these values match the */
 //// /* corresponding values in phrase.h and grid.h.  For example, the value */
 //// /* of P_STORE must match STORE, NT_NOTE must match NOTE, etc.  */
-//// 
+////
 //// static char *Stdmacros[] = {
-//// 
+////
 //// 	/* These are values for nt.type, also used as bit-vals for  */
 //// 	/* the value of Filter. */
 //// 	"MIDIBYTES 1", /* NT_LE3BYTES is not here - not user-visible */
@@ -953,9 +953,9 @@ package kit
 //// 	"CHANPRESSURE 16", "CONTROLLER 32", "PROGRAM 64", "PRESSURE 128",
 //// 		"PITCHBEND 256", "SYSEX 512", "POSITION 1024", "CLOCK 2048",
 //// 		"SONG 4096", "STARTSTOPCONT 8192", "SYSEXTEXT 16384",
-//// 
+////
 //// 	"Nullstr \"\"",
-//// 
+////
 //// 	/* Values for action() types.  The values are intended to not */
 //// 	/* overlap the values for interrupt(), to avoid misuse and */
 //// 	/* also to leave open the possibility of merging the two. */
@@ -985,7 +985,7 @@ package kit
 //// 	"KILL 1",
 //// 	NULL
 //// };
-//// 
+////
 //// /* initsyms() - install constants and built-ins in table */
 //// void
 //// initsyms(void)
@@ -994,21 +994,21 @@ package kit
 //// 	Symbolp s;
 //// 	Datum *dp;
 //// 	char *p;
-//// 
+////
 //// 	Zeroval = numdatum(0L);
 //// 	Noval = numdatum(MAXLONG);
 //// 	Nullstr = uniqstr("");
-//// 
-//// 	Keywords = newht(113);	/* no good reason for 113 */ 
+////
+//// 	Keywords = newht(113);	/* no good reason for 113 */
 //// 	for (i = 0; (p = keywords[i].name) != NULL; i++) {
 //// 		(void)syminstall(uniqstr(p), Keywords, keywords[i].kval);
 //// 	}
-//// 
+////
 //// 	for (i=0; (p=binums[i].name)!=NULL; i++) {
-//// 		/* Don't need to uniqstr(p), because installnum does it. */ 
+//// 		/* Don't need to uniqstr(p), because installnum does it. */
 //// 		installnum(p,binums[i].ptovar,binums[i].val);
 //// 	}
-//// 	
+////
 //// 	for (i=0; (p=biphrs[i].name)!=NULL; i++) {
 //// 		s = globalinstallnew(uniqstr(p),VAR);
 //// 		dp = symdataptr(s);
@@ -1016,36 +1016,36 @@ package kit
 //// 		*(biphrs[i].ptophr) = &(dp->u.phr);
 //// 		s->stackpos = 0;	/* i.e. it's global */
 //// 	}
-//// 	
+////
 //// 	for (i=0; (p=bistrs[i].name)!=NULL; i++) {
 //// 		s = globalinstallnew(uniqstr(p),VAR);
 //// 		dp = symdataptr(s);
 //// 		*dp = strdatum(uniqstr(bistrs[i].val));
 //// 		*(bistrs[i].ptostr) = &(dp->u.str);
 //// 	}
-//// 	
+////
 //// 	for (i=0; (p=builtins[i].name)!=NULL; i++) {
 //// 		s = globalinstallnew(uniqstr(p), VAR);
 //// 		dp = symdataptr(s);
 //// 		*dp = funcdp(s,builtins[i].bltindex);
 //// 	}
-//// 
+////
 //// 	Rebootfuncd = symdataptr(lookup(uniqstr("Rebootfunc")));
 //// 	Nullfuncd = symdataptr(lookup(uniqstr("nullfunc")));
 //// 	Errorfuncd = symdataptr(lookup(uniqstr("Errorfunc")));
 //// 	Intrfuncd = symdataptr(lookup(uniqstr("Intrfunc")));
 //// 	Nullvald = symdataptr(lookup(uniqstr("Nullval")));
 //// 	Nullval = *Nullvald;
-//// 
+////
 //// 	Colorfuncd = symdataptr(lookup(uniqstr("Colorfunc")));
 //// 	Redrawfuncd = symdataptr(lookup(uniqstr("Redrawfunc")));
 //// 	Resizefuncd = symdataptr(lookup(uniqstr("Resizefunc")));
 //// 	Exitfuncd = symdataptr(lookup(uniqstr("Exitfunc")));
 //// 	Track = globarray(uniqstr("Track"));
 //// 	Chancolormap = globarray(uniqstr("Chancolormap"));
-//// 
+////
 //// 	Macros = newht(113);	/* no good reason for 113 */
-//// 
+////
 //// 	for ( i=0; (p=Stdmacros[i]) != NULL;  i++ ) {
 //// 		/* Some compilers make strings read-only */
 //// 		p = strsave(p);
@@ -1056,16 +1056,16 @@ package kit
 //// 	macrodefine(Msg1,0);
 //// 	sprintf(Msg1,"MAXPRIORITY=%ld",(long)(MAXPRIORITY));
 //// 	macrodefine(Msg1,0);
-//// 
+////
 //// 	*Inputistty = mdep_fisatty(Fin) ? 1 : 0;
 //// 	if ( *Inputistty == 0 )
 //// 		*Consecho = 0;
 //// 	Starting = 0;
-//// 
+////
 //// 	*Keypath = uniqstr(mdep_keypath());
 //// 	*Musicpath = uniqstr(mdep_musicpath());
 //// }
-//// 
+////
 //// void
 //// initsyms2(void)
 //// {
@@ -1082,7 +1082,7 @@ package kit
 //// 		*Keykillchar = uniqstr(str);
 //// 	}
 //// }
-//// 
+////
 //// Datum Str_x0, Str_y0, Str_x1, Str_y1, Str_x, Str_y, Str_button;
 //// Datum Str_type, Str_mouse, Str_drag, Str_move, Str_up, Str_down;
 //// Datum Str_highest, Str_lowest, Str_earliest, Str_latest, Str_modifier;
@@ -1095,7 +1095,7 @@ package kit
 //// #ifdef MDEP_OSC_SUPPORT
 //// Datum Str_elements, Str_seconds, Str_fraction;
 //// #endif
-//// 
+////
 //// void
 //// initstrs(void)
 //// {
@@ -1144,15 +1144,15 @@ package kit
 //// 	Str_fraction = strdatum(uniqstr("fraction"));
 //// #endif
 //// }
-//// 
+////
 //// static FILE *Mf;
-//// 
+////
 //// void
 //// pfprint(char *s)
 //// {
 //// 	fputs(s,Mf);
 //// }
-//// 
+////
 //// void
 //// phtofile(FILE *f,Phrasep p)
 //// {
@@ -1162,15 +1162,15 @@ package kit
 //// 	if ( fflush(f) )
 //// 		mdep_popup("Unexpected error from fflush()!?");
 //// }
-//// 
+////
 //// void
 //// vartofile(Symbolp s, char *fname)
 //// {
 //// 	FILE *f;
-//// 	
+////
 //// 	if ( fname==NULL || *fname == '\0' )
 //// 		return;
-//// 
+////
 //// 	if ( stdioname(fname) )
 //// 		f = stdout;
 //// 	else if ( *fname == '|' ) {
@@ -1192,34 +1192,34 @@ package kit
 //// 			return;
 //// 		}
 //// 	}
-//// 
+////
 //// 	phtofile(f,symdataptr(s)->u.phr);
-//// 	
+////
 //// 	if ( f != stdout ) {
 //// 		if ( *fname != '|' )
 //// 			getnclose(fname);
 //// #ifdef PIPES
 //// 		else {
 //// 			if ( pclose(f) < 0 )
-//// 				eprint("Error in pclose!?\n"); 
+//// 				eprint("Error in pclose!?\n");
 //// 		}
 //// #endif
 //// 	}
 //// }
-//// 
+////
 //// /* Map the contents of a file (or output of a pipe) into a phrase */
 //// /* variable. Note that if the file can't be read or the pipe can't */
 //// /* be opened, it's a silent error. */
-//// 
+////
 //// void
 //// filetovar(register Symbolp s, char *fname)
 //// {
 //// 	FILE *f;
 //// 	Phrasep ph;
-//// 
+////
 //// 	if ( fname==NULL || *fname == '\0' )
 //// 		return;
-//// 
+////
 //// 	if ( stdioname(fname) )
 //// 		f = stdin;
 //// 	else if ( *fname == '|' ) {
@@ -1233,12 +1233,12 @@ package kit
 //// 	}
 //// 	else {
 //// 		/* a normal file */
-//// 
+////
 //// 		/* Use KEYPATH value to look for files. */
 //// 		char *pf = mpathsearch(fname);
 //// 		if ( pf )
 //// 			fname = pf;
-//// 
+////
 //// 		f = getnopen(fname,"r");
 //// 	}
 //// 	if ( f == NULL || feof(f) )
@@ -1249,28 +1249,28 @@ package kit
 //// 	ph = filetoph(f,fname);
 //// 	phincruse(ph);
 //// 	*symdataptr(s) = phrdatum(ph);
-//// 
+////
 //// 	if ( f != stdin ) {
 //// 		if ( *fname != '|' )
 //// 			getnclose(fname);
 //// #ifdef PIPES
 //// 		else
 //// 			if ( pclose(f) < 0 )
-//// 				eprint("Error in pclose!?\n"); 
+//// 				eprint("Error in pclose!?\n");
 //// #endif
 //// 	}
-//// 
+////
 //// }
-//// 
+////
 //// Hnodep Free_hn = NULL;
-//// 
+////
 //// Hnodep
 //// newhn(void)
 //// {
 //// 	static Hnodep lasthn;
 //// 	static int used = ALLOCHN;
 //// 	Hnodep hn;
-//// 
+////
 //// 	/* First check the free list and use those nodes, before using */
 //// 	/* the newly allocated stuff. */
 //// 	if ( Free_hn != NULL ) {
@@ -1278,7 +1278,7 @@ package kit
 //// 		Free_hn = Free_hn->next;
 //// 		goto getout;
 //// 	}
-//// 
+////
 //// 	/* allocate a BUNCH of new ones at a time */
 //// 	if ( used == ALLOCHN ) {
 //// 		used = 0;
@@ -1286,20 +1286,20 @@ package kit
 //// 	}
 //// 	used++;
 //// 	hn = lasthn++;
-//// 
+////
 ////     getout:
 //// 	hn->next = NULL;
 //// 	hn->val = symdatum(NULL);
 //// 	/* hn->key = NULL; */
 //// 	return(hn);
 //// }
-//// 
+////
 //// void
 //// freehn(Hnodep hn)
 //// {
 //// 	if ( hn == NULL )
 //// 		execerror("Hey, hn==NULL in freehn\n");
-//// 
+////
 //// 	switch ( hn->val.type ) {
 //// 	case D_SYM:
 //// 		if ( hn->val.u.sym ) {
@@ -1323,11 +1323,11 @@ package kit
 //// 		break;
 //// 	}
 //// 	hn->val = Noval;
-//// 
+////
 //// 	hn->next = Free_hn;
 //// 	Free_hn = hn;
 //// }
-//// 
+////
 //// #ifdef OLDSTUFF
 //// void
 //// chkfreeht() {
@@ -1342,16 +1342,16 @@ package kit
 //// 	}
 //// }
 //// #endif
-//// 
+////
 //// /* To avoid freeing and re-allocating the large chunks of memory */
 //// /* used for the hash tables, we keep them around and reuse them. */
-//// 
+////
 //// Htablep
 //// newht(int size)
 //// {
 //// 	register Hnodepp h, pp;
 //// 	register Htablep ht;
-//// 
+////
 //// /* eprint("(newht(%d ",size); */
 //// 	/* See if there's a saved table we can use */
 //// 	for ( ht=Freeht; ht!=NULL; ht=ht->h_next ) {
@@ -1385,7 +1385,7 @@ package kit
 //// 		while ( pp-- != h )
 //// 			*pp =  NULL;
 //// 	}
-//// 
+////
 //// 	ht->count = 0;
 //// 	ht->h_used = 0;
 //// 	ht->h_tobe = 0;
@@ -1399,14 +1399,14 @@ package kit
 //// 	Topht = ht;
 //// 	return(ht);
 //// }
-//// 
+////
 //// void
 //// clearht(Htablep ht)
 //// {
 //// 	register Hnodep hn, nexthn;
 //// 	register Hnodepp pp;
 //// 	register int n = ht->size;
-//// 	
+////
 //// 	pp = ht->nodetable;
 //// 	/* as we're freeing the Hnodes pointed to by this hash table, */
 //// 	/* we zero out the table, in preparation for its reuse. */
@@ -1425,14 +1425,14 @@ package kit
 //// 	}
 //// 	ht->count = 0;
 //// }
-//// 
+////
 //// void
 //// freeht(Htablep ht)
 //// {
 //// 	register Htablep ht2;
-//// 
+////
 //// 	clearht(ht);
-//// 
+////
 //// 	/* If it's in the Htobechecked list... */
 //// 	for ( ht2=Htobechecked; ht2!=NULL; ht2=ht2->h_next ) {
 //// 		if ( ht2 == ht )
@@ -1447,7 +1447,7 @@ package kit
 //// 		else
 //// 			ht2->h_prev->h_next = ht2->h_next;
 //// 	}
-//// 
+////
 //// 	for ( ht2=Freeht; ht2!=NULL; ht2=ht2->h_next ) {
 //// 		if ( ht == ht2 ) {
 //// 			eprint("HEY!, Trying to free an ht node (%lld) that's already in the Free list!!\n",(intptr_t)ht);
@@ -1464,7 +1464,7 @@ package kit
 //// 	ht->h_state = 0;
 //// 	Freeht = ht;
 //// }
-//// 
+////
 //// void
 //// htlists(void)
 //// {
@@ -1479,29 +1479,29 @@ package kit
 //// 	for(ht3=Topht;ht3!=NULL;ht3=ht3->h_next)eprint("(%lld,sz%d,u%d,t%d)",(intptr_t)ht3,ht3->size,ht3->h_used,ht3->h_tobe);
 //// 	eprint("\n");
 //// }
-//// 
+////
 //// Htablep Stringtable = NULL;
-//// 
+////
 //// /* uniqstr uses the same Hnode definition as is used for array element */
 //// /* hash tables, even though the only type of value stored is a string. */
-//// 
+////
 //// Symstr
 //// uniqstr(char *s)
 //// {
 //// 	Hnodepp table;
 //// 	Hnodep h, toph;
 //// 	int v;
-//// 
+////
 //// 	if ( Stringtable == NULL ) {
 //// 		char *p = getenv("STRHASHSIZE");
 //// 		Stringtable = newht( p ? atoi(p) : 1009 );
 //// 	}
-//// 
+////
 //// 	{
 //// 		register unsigned int t = 0;
 //// 		register int c;
 //// 		register char *p = s;
-//// 
+////
 //// 		/* compute hash value of string */
 //// 		while ( (c=(*p++)) != '\0' ) {
 //// 			t += c;
@@ -1509,24 +1509,24 @@ package kit
 //// 		}
 //// 		v = t % (Stringtable->size);
 //// 	}
-//// 
+////
 //// 	table = Stringtable->nodetable;
 //// 	toph = table[v];
 //// 	if ( toph == NULL ) {
 //// 		/* no collision */
 //// 		h = newhn();
 //// 		h->key.u.str = kmalloc((unsigned)strlen(s)+1,"uniqstr");
-//// 
+////
 //// 		strcpy((char*)(h->key.u.str),s);
 //// 		/* h->sym is unused, key and value are the same */
 //// 	}
 //// 	else {
 //// 		Hnodep prev;
-//// 
+////
 //// 		/* quick test for first node in list, most common case */
 //// 		if ( strcmp(toph->key.u.str,s) == 0  )
 //// 			return(toph->key.u.str);
-//// 
+////
 //// 		/* Look through entire list */
 //// 		h = toph;
 //// 		for ( prev=h; (h=h->next) != NULL; prev=h ) {
@@ -1537,7 +1537,7 @@ package kit
 //// 			/* string wasn't found, add it */
 //// 			h = newhn();
 //// 			h->key.u.str = kmalloc((unsigned)strlen(s)+1,"uniqstr");
-//// 
+////
 //// 			strcpy((char*)(h->key.u.str),s);
 //// 			/* h->sym is unused, key and value are the same */
 //// 		}
@@ -1555,12 +1555,12 @@ package kit
 //// 	table[v] = h;
 //// 	return(h->key.u.str);
 //// }
-//// 
+////
 //// int
 //// isundefd(Symbolp s)
 //// {
 //// 	Datum d;
-//// 
+////
 //// 	if ( s->stype == UNDEF )
 //// 		return(1);
 //// 	d = *symdataptr(s);
@@ -1569,7 +1569,7 @@ package kit
 //// 	else
 //// 		return(0);
 //// }
-//// 
+////
 //// /*
 ////  * Look for an element in the hash table.
 ////  * Values of 'action':
@@ -1577,7 +1577,7 @@ package kit
 ////  *     H_LOOK ==> look for, but don't insert
 ////  *     H_DELETE ==> look for and delete
 ////  */
-//// 
+////
 //// Hnodep
 //// hashtable(Htablep ht,Datum key,int action)
 //// {
@@ -1585,9 +1585,9 @@ package kit
 //// 	Hnodep h, toph, prev;
 //// 	int v, nc;
 //// int cnt = 0;
-//// 
+////
 //// 	table = ht->nodetable;
-//// 
+////
 //// 	/* base the hash value on the 'uniqstr'ed pointer */
 //// 	switch ( key.type ) {
 //// 	case D_NUM:
@@ -1603,13 +1603,13 @@ package kit
 //// 		execerror("hashtable isn't prepared for that key.type");
 //// 		break;
 //// 	}
-//// 
+////
 //// 	/* look in hash table of existing elements */
 //// 	toph = table[v];
 //// 	if ( toph != NULL ) {
-//// 
+////
 //// 		/* collision */
-//// 
+////
 //// 		/* quick test for first node in list, most common case */
 //// 		if ( dcompare(key,toph->key) == 0 ) {
 //// 			if ( action != H_DELETE )
@@ -1620,7 +1620,7 @@ package kit
 //// 			ht->count--;
 //// 			return(NULL);
 //// 		}
-//// 
+////
 //// 		/* Look through entire list */
 //// 		h = toph;
 //// 		nc = 0;
@@ -1647,27 +1647,27 @@ package kit
 //// 			return(h);
 //// 		}
 //// 	}
-//// 
+////
 //// 	/* it wasn't found */
 //// 	if ( action == H_DELETE ) {
 //// 		return(NULL);
 //// 	}
-//// 
+////
 //// 	if ( action == H_LOOK )
 //// 		return(NULL);
-//// 
+////
 //// 	h = newhn();
 //// 	h->key = key;
 //// 	h->val = Noval;
 //// 	ht->count++;
-//// 
+////
 //// 	/* Add to top of collision list */
 //// 	h->next = toph;
 //// 	table[v] = h;
-//// 
+////
 //// 	return(h);
 //// }
-//// 
+////
 //// /*
 ////  * Look for the symbol for a particular array element, given
 ////  * a pointer to the main array symbol, and the subscript value.
@@ -1676,7 +1676,7 @@ package kit
 ////  *     H_LOOK ==> look for symbol, don't insert
 ////  *     H_DELETE ==> look for symbol and delete it
 ////  */
-//// 
+////
 //// Symbolp
 //// arraysym(Htablep arr,Datum subs,int action)
 //// {
@@ -1684,12 +1684,12 @@ package kit
 //// 	Symbolp ns;
 //// 	Hnodep h;
 //// 	Datum key;
-//// 
+////
 //// 	if ( arr == NULL )
 //// 		execerror("Internal error: arr==0 in arraysym!?");
-//// 
+////
 //// 	key = dtoindex(subs);
-//// 
+////
 //// 	switch (action) {
 //// 	case H_LOOK:
 //// 		h = hashtable(arr,key,action);
@@ -1716,28 +1716,28 @@ package kit
 //// 	}
 //// 	return(s);
 //// }
-//// 
+////
 //// int
 //// arrsize(Htablep arr)
 //// {
 //// 	return arr->count;
 //// }
-//// 
+////
 //// int
 //// dtcmp(Datum *d1,Datum *d2)
 //// {
 //// 	return dcompare(*d1,*d2);
 //// }
-//// 
+////
 //// static int elsize;	/* element size */
 //// static INTFUNC2P qscompare;
-//// 
+////
 //// /*
 ////  * Quick Sort routine.
 ////  * Code by Duane Morse (...!noao!terak!anasazi!duane)
 ////  * Based on Knuth's ART OF COMPUTER PROGRAMMING, VOL III, pp 114-117.
 ////  */
-//// 
+////
 //// /* Exchange the contents of two vectors.  n is the size of vectors in bytes. */
 //// static void
 //// memexch(register unsigned char *s1,register unsigned char *s2,register int n)
@@ -1749,13 +1749,13 @@ package kit
 //// 		*s2++ = c;
 //// 	}
 //// }
-//// 
+////
 //// static void
 //// mysort(unsigned char *vec,int nel)
 //// {
 //// 	register short i, j;
 //// 	register unsigned char *iptr, *jptr, *kptr;
-//// 
+////
 //// begin:
 //// 	if (nel == 2) {	/* If 2 items, check them by hand. */
 //// 		if ((*qscompare)(vec, vec + elsize) > 0)
@@ -1768,23 +1768,23 @@ package kit
 //// 	iptr = vec;
 //// 	jptr = vec + elsize * nel;
 //// 	while (--j > i) {
-//// 
+////
 //// 		/* From the righthand side, find first value */
 //// 		/* that should be to the left of k. */
 //// 		jptr -= elsize;
 //// 		if ((*qscompare)(jptr, kptr) > 0)
 //// 			continue;
-//// 
+////
 //// 		/* Now from the lefthand side, find first value */
 //// 		/* that should be to right of k. */
-//// 
+////
 //// 		iptr += elsize;
 //// 		while(++i < j && (*qscompare)(iptr, kptr) <= 0)
 //// 			iptr += elsize;
-//// 
+////
 //// 		if (i >= j)
 //// 			break;
-//// 
+////
 //// 		/* Exchange the two items; k will eventually end up between them. */
 //// 		memexch(jptr, iptr, elsize);
 //// 	}
@@ -1793,14 +1793,14 @@ package kit
 //// 	/* Now sort the two partitions. */
 //// 	if ((nel -= (i + 1)) > 1)
 //// 		mysort(iptr + elsize, nel);
-//// 
+////
 //// 	/* To save a little time, just start the routine over by hand. */
 //// 	if (i > 1) {
 //// 		nel = i;
 //// 		goto begin;
 //// 	}
 //// }
-//// 
+////
 //// static void
 //// pqsort(unsigned char *vec,int nel,int esize,INTFUNC2P compptr)
 //// {
@@ -1810,7 +1810,7 @@ package kit
 //// 	qscompare = compptr;
 //// 	mysort(vec, nel);
 //// }
-//// 
+////
 //// /* Return a Noval-terminated list of the index values of an array.  */
 //// Datum *
 //// arrlist(Htablep arr,int *asize,int sortit)
@@ -1820,12 +1820,12 @@ package kit
 //// 	register Datum *lp;
 //// 	register int hsize;
 //// 	Datum *list;
-//// 
+////
 //// 	pp = arr->nodetable;
 //// 	hsize = arr->size;
 //// 	*asize = arrsize(arr);
 //// 	list = (Datum *) kmalloc((*asize+1)*sizeof(Datum),"arrlist");
-//// 
+////
 //// 	lp = list;
 //// 	/* visit each slot in the hash table */
 //// 	while ( hsize-- > 0 ) {
@@ -1839,14 +1839,14 @@ package kit
 //// 		pqsort((unsigned char *)list,*asize,(int)sizeof(Datum),(INTFUNC2P)dtcmp);
 //// 	return(list);
 //// }
-//// 
+////
 //// void
 //// hashvisit(Htablep arr,HNODEFUNC f)
 //// {
 //// 	register Hnodepp pp;
 //// 	register Hnodep h;
 //// 	register int hsize;
-//// 
+////
 //// 	pp = arr->nodetable;
 //// 	hsize = arr->size;
 //// 	/* visit each slot in the hash table */
@@ -1858,4 +1858,4 @@ package kit
 //// 		}
 //// 	}
 //// }
-//// 
+////

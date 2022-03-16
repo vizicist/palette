@@ -58,3 +58,5 @@ cmd/palette_engine/__debug_bin.exe
 cmd/palette/__debug_bin.exe
 cmd/kit/kit.exe
 kit/y.output
+kit/gram.go
+
