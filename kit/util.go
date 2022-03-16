@@ -1,35 +1,36 @@
 package kit
+
 //// /*
 ////  *	Copyright 1996 AT&T Corp.  All rights reserved.
 ////  */
-//// 
+////
 //// /* This is a hook to include 'overlay' directives (in mdep.h) */
 //// #define OVERLAY1
-//// 
+////
 //// #include "key.h"
 //// #include "gram.h"
-//// 
+////
 //// Phrasep Tobechecked = NULL;
 //// Htablep Htobechecked = NULL;
 //// int Chkstuff = 0;
-//// 
+////
 //// void
 //// addtobechecked(register Phrasep p)
 //// {
 //// 	register Phrasep tp;
-//// 
+////
 //// 	/* make sure it's not already in there */
 //// 	for ( tp=Tobechecked; tp!=NULL; tp=tp->p_next ) {
 //// 		if ( tp == p )
 //// 			return;
 //// 	}
-//// 
+////
 //// 	/* Workaround to detect a bug. */
 //// 	if ( p->p_tobe < -1000 ) {
 //// 		eprint("Ignoring possible bad phrase in addtobechecked!?  Potential memory leak.  p=%lld  tobe=%ld\n",(intptr_t)p,(long)(p->p_tobe));
 //// 		return;
 //// 	}
-//// 
+////
 //// 	/* remove it from original list */
 //// 	if ( p == Topph )
 //// 		Topph = p->p_next;
@@ -38,7 +39,7 @@ package kit
 //// 	if ( p->p_prev != NULL )
 //// 		(p->p_prev)->p_next = p->p_next;
 //// 	/* Add it to Tobechecked list */
-//// 
+////
 //// 	p->p_next = Tobechecked;
 //// 	p->p_prev = NULL;
 //// 	if ( Tobechecked != NULL )
@@ -46,7 +47,7 @@ package kit
 //// 	Tobechecked = p;
 //// 	Chkstuff = 1;
 //// }
-//// 
+////
 //// void
 //// httobechecked(register Htablep p)
 //// {
@@ -61,7 +62,7 @@ package kit
 //// 	if ( p->h_prev != NULL )
 //// 		(p->h_prev)->h_next = p->h_next;
 //// 	/* Add it to Htobechecked list */
-//// 
+////
 //// 	p->h_next = Htobechecked;
 //// 	p->h_prev = NULL;
 //// 	p->h_state = HT_TOBECHECKED;
@@ -70,12 +71,12 @@ package kit
 //// 	Htobechecked = p;
 //// 	Chkstuff = 1;
 //// }
-//// 
+////
 //// /*
 ////  * phrmerge -  add the contents of 'p' to 'outph', delayed
 ////  * by 'offset'. The assumption is that both phrase's are already sorted.
 ////  */
-//// 
+////
 //// void
 //// phrmerge(Phrasep p,Phrasep outp,long offset)
 //// {
@@ -85,7 +86,7 @@ package kit
 //// 	Noteptr *plastn;
 //// 	Noteptr lastn;
 //// 	int newone = 0;
-//// 
+////
 //// 	/* If p and outp are same, create fresh copy (easiest fix) */
 //// 	if ( p == outp ) {
 //// 		Phrasep np = newph(1);
@@ -93,12 +94,12 @@ package kit
 //// 		p = np;
 //// 		newone = 1;
 //// 	}
-//// 	
+////
 //// 	/* If the 'p' phrase can just be tacked onto the end of 'outp', */
 //// 	/* then do it directly.  This is an attempt to speed up a common */
 //// 	/* use of this function. */
 //// 	if ( firstnote(p)!=NULL && firstnote(outp)!=NULL
-//// 		&& (lastn=lastnote(outp))!=NULL 
+//// 		&& (lastn=lastnote(outp))!=NULL
 //// 		&& ntcmporder(lastnote(outp),firstnote(p)) < 0 ) {
 //// 		for ( nt=firstnote(p); nt!=NULL; nt=nextnote(nt) ) {
 //// 			nt2 = ntcopy(nt);
@@ -110,11 +111,11 @@ package kit
 //// 		lastnote(outp) = lastn;
 //// 		goto getout;
 //// 	}
-//// 
+////
 //// 	/* We want to merge outp and p, putting the result */
 //// 	/* back into outp.  Pull off the existing outp list */
 //// 	/* and zero it out. */
-//// 
+////
 //// 	outn = firstnote(outp);
 //// 	setfirstnote(outp) = NULL;
 //// 	nt = firstnote(p);
@@ -125,9 +126,9 @@ package kit
 //// 	/* highly optimized code */
 //// 	plastn = &(realfirstnote(outp));
 //// 	for ( ;; ) {
-//// 
+////
 //// 		chkrealoften();	/* so realtime isn't affected */
-//// 
+////
 //// 		/* Put the lesser of the two available nt's onto */
 //// 		/* the end of the new 'outp' list.  */
 //// 		if ( outn!=NULL ) {
@@ -165,7 +166,7 @@ package kit
 //// 	if ( newone )
 //// 		phdecruse(p);
 //// }
-//// 
+////
 //// void
 //// phdump(void)
 //// {
@@ -187,39 +188,39 @@ package kit
 //// 		ph1dump(p);
 //// 	}
 //// }
-//// 
+////
 //// void
 //// ph1dump(Phrasep p)
 //// {
 //// 	Noteptr n;
 //// 	int num;
-//// 
+////
 //// 	num = 0;
 //// 	for ( n=firstnote(p); n!=NULL; n=n->next )
 //// 		num++;
 //// 	sprintf(Msg1,"phrase=%lld numnotes=%d used=%d tobe=%d\n",
 //// 		(intptr_t)p,num,(int)(p->p_used),(int)(p->p_tobe));tprint(Msg1);
 //// }
-//// 
+////
 //// void
 //// phcheck(void)
 //// {
 //// 	register Phrasep p, nxt;
-//// 
+////
 //// 	dummyset(nxt);
 //// 	for ( p=Tobechecked; p!=NULL; p=nxt ) {
-//// 
+////
 //// 		p->p_used += p->p_tobe;
 //// 		p->p_tobe = 0;
-//// 
+////
 //// 		nxt = p->p_next;
-//// 
+////
 //// 		/* remove it from Tobechecked list */
 //// 		if ( p->p_prev != NULL )
 //// 			p->p_prev->p_next = p->p_next;
 //// 		if ( p->p_next != NULL )
 //// 			p->p_next->p_prev = p->p_prev;
-//// 
+////
 //// 		if ( p->p_used > 0 ) {
 //// 			/* and add it back to Topph list */
 //// 			p->p_next = Topph;
@@ -245,12 +246,12 @@ package kit
 //// 	}
 //// 	Tobechecked = NULL;
 //// }
-//// 
+////
 //// void
 //// htcheck(void)
 //// {
 //// 	register Htablep h, nxt, savelist;
-//// 
+////
 //// #ifdef lint
 //// 	nxt=0;
 //// #endif
@@ -259,22 +260,22 @@ package kit
 //// if(*Debugmalloc>1)eprint("HTCHECK START\n");
 //// 	savelist = Htobechecked;
 //// 	Htobechecked = NULL;
-//// 
+////
 //// 	for ( h=savelist; h!=NULL; h=nxt ) {
-//// 
+////
 //// 		nxt = h->h_next;
-//// 
+////
 //// 		h->h_used += h->h_tobe;
 //// if(*Debug>1)eprint("SUMMED h=%lld used=%d\n",(intptr_t)h,h->h_used);
 //// 		h->h_tobe = 0;
-//// 
+////
 //// 		/* remove it from Tobechecked list */
 //// 		if ( h->h_prev != NULL )
 //// 			h->h_prev->h_next = h->h_next;
 //// 		if ( h->h_next != NULL )
 //// 			h->h_next->h_prev = h->h_prev;
 //// 		h->h_state = 0;
-//// 
+////
 //// 		if ( h->h_used > 0 ) {
 //// if(*Debug>1)eprint("htcheck, h=%lld still used\n",(intptr_t)h);
 //// 			/* and add it back to Topht list */
@@ -294,12 +295,12 @@ package kit
 //// 		}
 //// 	}
 //// }
-//// 
+////
 //// /* This sequence number is used to represent a pseudo-modification-time */
 //// /* in phrases.  Cheaper than mdep_currtime(), and monotonically increasing. */
 //// /* Macros usesequence() and currsequence() are defined in key.h */
 //// long Seqnum = 0;
-//// 
+////
 //// char *
 //// strend(register char *s)
 //// {
@@ -307,45 +308,45 @@ package kit
 //// 		s++;
 //// 	return(s);
 //// }
-//// 
+////
 //// #ifdef OLDRAND
 //// static long Randx=1;
-//// 
+////
 //// void
 //// keysrand(unsigned x)
 //// {
 //// 	Randx = x;
 //// }
-//// 
+////
 //// int
 //// keyrand(void)
 //// {
 //// 	return((int)(((Randx = Randx * 1103515245L + 12345)>>16) & 0x7fff));
 //// }
 //// #endif
-//// 
+////
 //// /*
 ////  * returns x(n) + z(n) where x(n) = x(n-1) + x(n-2) mod 2^32
 ////  * z(n) = 30903 * z(n-1) + carry mod 2^16
 ////  * Simple, fast, and very good. Period > 2^60
 ////  * This code was obtained from http://remus.rutgers.edu/~rhoads/Code/rands.c
 ////  */
-//// 
+////
 //// static unsigned int kr2_x, kr2_y, kr2_z;  /* the seeds */
-//// 
+////
 //// /* returns a random 32-bit integer */
 //// unsigned int
 //// keyrand(void)
 //// {
 //// 	unsigned int v;
-//// 
+////
 //// 	v = kr2_x * kr2_y;
 //// 	kr2_x = kr2_y;
 //// 	kr2_y = v;
 //// 	kr2_z = (kr2_z & 65535) * 30903 + (kr2_z >> 16);
 //// 	return (kr2_y + (kr2_z&65535));
 //// }
-//// 
+////
 //// void keysrand (unsigned int seed1, unsigned int seed2, unsigned int seed3)
 //// {
 //// 	kr2_x = (seed1<<1) | 1;
@@ -353,16 +354,16 @@ package kit
 //// 	kr2_y = (seed2<<1) | 1;
 //// 	kr2_z = seed3;
 //// }
-//// 
-//// 
+////
+////
 //// static int Lensofar;
 //// static PFCHAR Phpfunc;
-//// 
+////
 //// void
 //// phputc(int c)
 //// {
 //// 	char ch[2];
-//// 
+////
 //// 	if ( Lensofar >= 0 && Lensofar >= (int)(*Printsplit) ) {
 //// 		(*Phpfunc)("\\\n");
 //// 		Lensofar = 0;
@@ -373,7 +374,7 @@ package kit
 //// 	if ( Lensofar >= 0 )
 //// 		Lensofar++;
 //// }
-//// 
+////
 //// void
 //// phputs(char *s)
 //// {
@@ -389,17 +390,17 @@ package kit
 //// 			Lensofar += len;
 //// 	}
 //// }
-//// 
+////
 //// void
 //// messprint(Noteptr nt)
 //// {
 //// 	Unchar* b;
 //// 	int n, v, c1, c2;
 //// 	int lng;
-//// 
+////
 //// 	b = ptrtobyte(nt,0);
 //// 	lng = ntbytesleng(nt);
-//// 
+////
 //// 	/* Check for the special 'text' messages */
 //// 	if ( lng>3 && (b[0]&0xff)==0xf0 && (b[1]&0xff)==0x00 && (b[2]&0xff)==0x7f ) {
 //// 		phputc('"');
@@ -420,7 +421,7 @@ package kit
 //// 		}
 //// 	}
 //// }
-//// 
+////
 //// /*
 ////  * phprint(pfunc,ph,nl)
 ////  *
@@ -429,7 +430,7 @@ package kit
 ////  * if nl > 0, add newlines every so many cols (and initial
 ////  * value is nl).  If 0, no newlines are inserted.
 ////  */
-//// 
+////
 //// void
 //// phprint(PFCHAR pfunc,Phrasep ph,int nl)
 //// {
@@ -438,19 +439,19 @@ package kit
 //// 	int first = 1;
 //// 	char nbuff[64];	/* for numbers and normal notes only, */
 //// 			/* this *should* suffice */
-//// 
+////
 //// 	Phpfunc = pfunc;
 //// 	if ( nl )
 //// 		Lensofar = 0;
 //// 	else
 //// 		Lensofar = -1;
-//// 
+////
 //// 	/* reset default values for volume, duration, etc. */
 //// 	resetdef();
-//// 
+////
 //// 	phputc('\'');
 //// 	for ( n=firstnote(ph); n!=NULL; n=nextnote(n) ) {
-//// 
+////
 //// 		if ( first )
 //// 			first = 0;
 //// 		else {
@@ -465,14 +466,14 @@ package kit
 //// 			}
 //// 			phputs(s);
 //// 		}
-//// 
+////
 //// 		if ( ntisbytes(n) )
 //// 			messprint(n);
 //// 		else {
 //// 			nttostr(n,nbuff);
 //// 			phputs(nbuff);
 //// 		}
-//// 
+////
 //// #ifdef NTATTRIB
 //// 		if ( attribof(n) != Defatt && attribof(n) != NULL ) {
 //// 			Defatt = attribof(n);
@@ -493,19 +494,19 @@ package kit
 //// 			(void) prlongto(flagsof(n),&nbuff[1]);
 //// 			phputs(nbuff);
 //// 		}
-//// 
+////
 //// 		if ( timeof(n) != Deftime ) {
 //// 			nbuff[0] = 't';
 //// 			(void) prlongto(timeof(n),&nbuff[1]);
 //// 			phputs(nbuff);
 //// 		}
-//// 
+////
 //// 		/* The default time for the next note is the start of the */
 //// 		/* previous note.  If a comma is seen (before the NEXT note), */
 //// 		/* the default will be the end of the previous note. */
 //// 		Deftime = timeof(n);
 //// 		Def2time = endof(n);
-//// 
+////
 //// 		endm = endof(n);
 //// 		if ( endm > maxend )
 //// 			maxend = endm;
@@ -518,33 +519,33 @@ package kit
 //// 	}
 //// 	phputc('\'');
 //// }
-//// 
+////
 //// char *Scachars[] = {
 //// 	"c", "c+", "d", "e-", "e", "f", "f+",
 //// 	"g", "a-", "a", "b-", "b", "c"
 //// };
-//// 
+////
 //// /*
 ////  * nttostr(nt,buff)
 ////  *
 ////  * Put a human-readable interpretation of a note into a string.
 ////  */
-//// 
+////
 //// void
 //// nttostr(Noteptr n,char *buff)
 //// {
 //// 	int chan, oct, vol;
 //// 	DURATIONTYPE dur;
 //// 	register char *p = buff;
-//// 
+////
 //// 	if ( typeof(n) == NT_ON )
 //// 		*p++ = '+';
 //// 	if ( typeof(n) == NT_OFF )
 //// 		*p++ = '-';
-//// 
+////
 //// 	strcpy(p,Scachars[canonipitchof(pitchof(n))]);
 //// 	p = strend(p);
-//// 
+////
 //// 	/* We only add the other stuff when it's different from the last one*/
 //// 	if ( (oct=canoctave((int)(pitchof(n)))) != Defoct ) {
 //// 		*p++ = 'o';
@@ -567,13 +568,13 @@ package kit
 //// 	}
 //// 	*p = '\0';
 //// }
-//// 
+////
 //// int
 //// phsize(register Phrasep p,register int notes)
 //// {
 //// 	register int size = 0;
 //// 	register Noteptr n;
-//// 
+////
 //// 	if ( p==NULL )
 //// 		return(0);
 //// 	for ( n=firstnote(p); n!=NULL; n=nextnote(n) ) {
@@ -582,19 +583,19 @@ package kit
 //// 	}
 //// 	return(size);
 //// }
-//// 
+////
 //// /*
 ////  * picknt
 ////  *
 ////  * Find and return the picknum'th note in a phrase.
 ////  */
-//// 
+////
 //// Noteptr
 //// picknt(register Phrasep ph,register int picknum)
 //// {
 //// 	register Noteptr nt;
 //// 	register int n;
-//// 
+////
 //// 	if ( picknum < PHRASEBASE ) {
 //// #ifdef BASEERROR
 //// 		execerror("There's no note number '%d' in that phrase!",picknum);
@@ -608,19 +609,19 @@ package kit
 //// 	}
 //// 	return(nt);
 //// }
-//// 
+////
 //// /* phrinphr(d1,d2) - evaluate conditional value of 'phrase in phrase' */
 //// int
 //// phrinphr(Datum d1,Datum d2)
 //// {
 //// 	register Noteptr nt1, nt2;
-//// 
+////
 //// 	if ( d1.type != D_PHR || d2.type != D_PHR )
 //// 		inerr();
-//// 
+////
 //// 	/* If the 'value' contains more than 1 note, ALL notes must be */
 //// 	/* contained in the 'phrase' in order for the condition to be true. */
-//// 
+////
 //// 	for ( nt1=firstnote(d1.u.phr); nt1!=NULL; nt1=nextnote(nt1) ) {
 //// 		for ( nt2=firstnote(d2.u.phr); nt2!=NULL; nt2=nextnote(nt2) ) {
 //// 			if ( pitchof(nt2) == pitchof(nt1) )
@@ -631,12 +632,12 @@ package kit
 //// 	}
 //// 	return(1);
 //// }
-//// 
+////
 //// char *
 //// atypestr(int type)
 //// {
 //// 	char *s;
-//// 
+////
 //// 	switch(type){
 //// 	case D_NUM:	s = "an integer"; break;
 //// 	case D_STR:	s = "a string"; break;
@@ -656,12 +657,12 @@ package kit
 //// 	}
 //// 	return s;
 //// }
-//// 
+////
 //// char *
 //// typestr(int type)
 //// {
 //// 	char *p;
-//// 
+////
 //// 	p = atypestr(type);
 //// 	/* remove initial "a " or "an " */
 //// 	if ( *(p+1) == ' ' )
@@ -670,12 +671,12 @@ package kit
 //// 		p += 3;
 //// 	return p;
 //// }
-//// 
+////
 //// char *
 //// dotstr(register int type)
 //// {
 //// 	register char *p;
-//// 
+////
 //// 	switch(type){
 //// 	case LENGTH:	 p = ".length"; break;
 //// 	case VOL:	 p = ".vol"; break;
@@ -690,7 +691,7 @@ package kit
 //// 	}
 //// 	return(p);
 //// }
-//// 
+////
 //// Datum
 //// phdotvalue(Phrasep ph,int type)
 //// {
@@ -698,7 +699,7 @@ package kit
 //// 	Noteptr nt;
 //// 	int n=0;
 //// 	long sum=0;
-//// 
+////
 //// 	switch (type) {
 //// 	case LENGTH:
 //// 		d = numdatum(ph->p_leng);
@@ -746,7 +747,7 @@ package kit
 //// 	}
 //// 	return d;
 //// }
-//// 
+////
 //// int
 //// ntdotvalue(register Noteptr n,register int type,Datum *ad)
 //// {
@@ -754,7 +755,7 @@ package kit
 //// 	long v = -1;
 //// 	int utype = usertypeof(n);
 //// 	Unchar* b0;
-//// 
+////
 //// 	if ( type == ATTRIB ) {
 //// #ifndef NTATTRIB
 //// 		(*ad) = strdatum(Nullstr);
@@ -823,12 +824,12 @@ package kit
 //// 	}
 //// 	return r;
 //// }
-//// 
+////
 //// long
 //// getnumval(Datum d,int round)
 //// {
 //// 	long v;
-//// 
+////
 //// 	switch (d.type) {
 //// 	case D_NUM:
 //// 		v = d.u.val;
@@ -894,11 +895,11 @@ package kit
 //// 	case D_PHR:
 //// 		{
 //// 			register Noteptr n = firstnote(d.u.phr);
-//// 
+////
 //// 			/* numeric value of a phrase is either */
 //// 			/* the pitch of the first note, or the */
 //// 			/* value of the first MIDIbyte */
-//// 
+////
 //// 			if ( n == NULL )
 //// 				v = -1;
 //// 			else {
@@ -938,13 +939,13 @@ package kit
 //// 	}
 //// 	return v;
 //// }
-//// 
+////
 //// double
 //// getdblval(Datum d)
 //// {
 //// 	double f;
 //// 	char *endptr;
-//// 
+////
 //// 	switch (d.type) {
 //// 	case D_NUM:
 //// 		f = (double) d.u.val;
@@ -968,12 +969,12 @@ package kit
 //// 	}
 //// 	return f;
 //// }
-//// 
+////
 //// int
 //// getnmtype(Datum d)
 //// {
 //// 	int t;
-//// 
+////
 //// 	switch (d.type) {
 //// 	case D_NUM:
 //// 	case D_DBL:
@@ -991,21 +992,21 @@ package kit
 //// 	}
 //// 	return t;
 //// }
-//// 
+////
 //// #define MAXOPEN 15
-//// 
+////
 //// struct finfo {
 //// 	FILE *ptr;
 //// 	char *name;		/* file name or command */
 //// 	char *mode;		/* "r" or "w" */
 //// } Files[MAXOPEN];
-//// 
+////
 //// int
 //// findfile(register char *name)
 //// {
 //// 	register char *p;
 //// 	register int n;
-//// 
+////
 //// 	for ( n=0; n<MAXOPEN; n++ ) {
 //// 		p = Files[n].name;
 //// 		if ( p!=NULL && strcmp(name,p)==0 )
@@ -1013,16 +1014,16 @@ package kit
 //// 	}
 //// 	return(-1);
 //// }
-//// 
+////
 //// void
 //// getnclose(char *fname)
 //// {
 //// 	int n;
 //// 	FILE *f;
-//// 
+////
 //// 	if ( (n=findfile(fname)) < 0 )
 //// 		execerror("Can't close something that's not open: %s",fname);
-//// 
+////
 //// 	f = Files[n].ptr;
 //// 	if ( *fname == '|' ) {
 //// #ifdef PIPES
@@ -1037,13 +1038,13 @@ package kit
 //// 	Files[n].ptr = NULL;
 //// 	Files[n].name = NULL;
 //// }
-//// 
+////
 //// FILE *
 //// getnopen(char *name,char *mode)
 //// {
 //// 	register FILE *f = NULL;
 //// 	register int n;
-//// 
+////
 //// 	/* Look to see if the file (or pipe) is already open */
 //// 	if ( (n=findfile(name)) >= 0 ) {
 //// 		if ( strcmp(Files[n].mode,mode) == 0 )
@@ -1053,7 +1054,7 @@ package kit
 //// 		n = findfile(name);
 //// 		/* continue on and open the file */
 //// 	}
-//// 
+////
 //// 	/* find an open slot */
 //// 	for ( n=0; n<MAXOPEN; n++ ) {
 //// 		if ( Files[n].name == NULL )
@@ -1061,9 +1062,9 @@ package kit
 //// 	}
 //// 	if ( n >= MAXOPEN )
 //// 		execerror("Too many open files!");
-//// 
+////
 //// 	/* A pipe is indicated by an initial character */
-//// 
+////
 //// 	if ( *name == '|' ) {
 //// #ifdef PIPES
 //// 		register char *cmd = name + 1;
@@ -1086,39 +1087,39 @@ package kit
 //// 	}
 //// 	return(f);
 //// }
-//// 
+////
 //// void
 //// closefile(void)
 //// {
 //// 	Datum d;
-//// 
+////
 //// 	popinto(d);
 //// 	if ( d.type != D_STR )
 //// 		execerror("close: must be given a string!");
 //// 	getnclose(d.u.str);
 //// }
-//// 
+////
 //// void
 //// forinerr(void)
 //// {
 //// 	execerror("for(... in ...) can only be used on phrases and arrays!");
 //// }
-//// 
+////
 //// void
 //// inerr(void)
 //// {
 //// 	execerror("'in' conditions only work on arrays and phrases!");
 //// }
-//// 
+////
 //// Instnodep Ifree = NULL;
-//// 
+////
 //// Instnodep
 //// newin(void)
 //// {
 //// 	static Instnodep lastin;
 //// 	static int used = ALLOCIN;
 //// 	Instnodep i;
-//// 
+////
 //// 	/* First check the free list and use those nodes, before using */
 //// 	/* the newly allocated stuff. */
 //// 	if ( Ifree != NULL ) {
@@ -1138,42 +1139,42 @@ package kit
 //// 	i->code.type = 0;
 //// 	return(i);
 //// }
-//// 
+////
 //// void
 //// freeiseg(Instnodep in)
 //// {
 //// 	Instnodep nxti;
-//// 
+////
 //// 	dummyset(nxti);
 //// 	for ( ; in!=NULL; in=nxti ) {
 //// 		nxti = nextinode(in);
 //// 		freeinode(in);
 //// 	}
 //// }
-//// 
+////
 //// void
 //// freecode(Codep cp)
 //// {
 //// 	kfree(cp);
 //// }
-//// 
+////
 //// void
 //// freeinode(Instnodep in)
 //// {
 //// 	nextinode(in) = Ifree;
 //// 	Ifree = in;
 //// }
-//// 
+////
 //// Lknode *Toplk = NULL;
 //// Lknode *Freelk = NULL;
-//// 
+////
 //// Lknode *
 //// newlk(Symstr nm)
 //// {
 //// 	static Lknode *lastlk;
 //// 	static int used = ALLOCLK;
 //// 	Lknode *lk;
-//// 
+////
 //// 	/* First check the free list and use those nodes, before using */
 //// 	/* the newly allocated stuff. */
 //// 	if ( Freelk != NULL ) {
@@ -1197,7 +1198,7 @@ package kit
 //// /* eprintf("NEWLK lk=%ld\n",lk); */
 //// 	return(lk);
 //// }
-//// 
+////
 //// void
 //// unlinklk(Lknode *lk)
 //// {
@@ -1214,7 +1215,7 @@ package kit
 //// /* eprint("UNLINK lk=%ld\n",lk); */
 //// 	freelk(lk);
 //// }
-//// 
+////
 //// void
 //// freelk(Lknode *lk)
 //// {
@@ -1223,12 +1224,12 @@ package kit
 //// 	lk->next = Freelk;
 //// 	Freelk = lk;
 //// }
-//// 
+////
 //// Lknode *
 //// findtoplk(Symstr nm)
 //// {
 //// 	Lknode *lk;
-//// 
+////
 //// 	for ( lk=Toplk; lk!=NULL; lk=lk->next ) {
 //// 		if ( nm == lk->name )
 //// 			return lk;
@@ -1239,14 +1240,14 @@ package kit
 //// 	Toplk = lk;
 //// 	return(lk);
 //// }
-//// 
+////
 //// /* Unlock all locks held by a task */
 //// void
 //// unlocktid(Ktaskp t)
 //// {
 //// 	Lknode *lk, *nextlk;
 //// 	Lknode *lk2, *nextlk2, *prelk2;
-//// 
+////
 //// 	for ( lk=Toplk; lk!=NULL; lk=nextlk ) {
 //// 		/* scan queued up locks */
 //// 		for ( prelk2=NULL,lk2=lk->notify; lk2!=NULL; lk2=nextlk2 ) {
@@ -1272,13 +1273,13 @@ package kit
 //// 			unlocklk(lk);
 //// 	}
 //// }
-//// 
+////
 //// /* Returns the restarted task, if any, caused by unlocking the lock. */
 //// Ktaskp
 //// unlocklk(Lknode *lk)
 //// {
 //// 	Ktaskp t, rt;
-//// 
+////
 //// 	if ( lk->notify == NULL ) {
 //// 		/* No tasks are pending to get the lock. */
 //// 		lk->owner = NULL;
@@ -1288,31 +1289,31 @@ package kit
 //// 	else {
 //// 		/* There's another task waiting for the lock. */
 //// 		Lknode *nextlk = lk->notify;
-//// 
+////
 //// 		t = nextlk->owner;	/* the task we will restart */
-//// 
+////
 //// 		/* Just shift the info from the notify lk into the head, */
 //// 		/* and then free the notify lk. */
 //// 		lk->notify = nextlk->notify;
 //// 		lk->owner = nextlk->owner;
 //// 		t->lock = lk;
-//// 
+////
 //// 		freelk(nextlk);
-//// 
+////
 //// 		if ( t->state != T_LOCKWAIT )
 //// 			execerror("In unlock(), tid=%ld should have been in 'lockwait' state, but was in state=%d!?",t->tid,t->state);
-//// 
+////
 //// 		restarttask(t);
 //// 		rt = t;
 //// 	}
 //// 	return(rt);
 //// }
-//// 
+////
 //// void
 //// rmalllocks(void)
 //// {
 //// 	Lknode *lk;
-//// 
+////
 //// 	while ( Toplk ) {
 //// 		lk = Toplk;
 //// 		Toplk = Toplk->next;
@@ -1320,18 +1321,18 @@ package kit
 //// 	}
 //// 	Toplk = NULL;
 //// }
-//// 
+////
 //// Kobjectp Topobj = NULL;
 //// Kobjectp Freeobj = NULL;
 //// long Nextobjid = 1;
-//// 
+////
 //// Kobjectp
 //// newobj(long id,int complain)
 //// {
 //// 	static Kobjectp lastobj;
 //// 	static int used = ALLOCOBJ;
 //// 	Kobjectp obj;
-//// 
+////
 //// /* sprintf(Msg1,"newobject, id=%d complain=%d",id,complain); mdep_popup(Msg1); */
 //// 	if ( id == 0 ) {
 //// 		;	/* object $0 is like NULL */
@@ -1368,12 +1369,12 @@ package kit
 //// 		Nextobjid = id+1;
 //// 	obj->onext = Topobj;
 //// 	Topobj = obj;
-//// 
+////
 //// /* sprintf(buff,"newobject end, id=%d",obj->id); mdep_popup(buff); */
-//// 
+////
 //// 	return(obj);
 //// }
-//// 
+////
 //// Kobjectp
 //// findobjnum(long n)
 //// {
@@ -1388,13 +1389,13 @@ package kit
 //// /* sprintf(Msg1,"findobjnum didn't find ! n=%d",n); mdep_popup(Msg1); */
 //// 	return NULL;
 //// }
-//// 
+////
 //// void
 //// unlinkobj(Kobjectp o)
 //// {
 //// 	Kobjectp o2;
 //// 	Kobjectp preo;
-//// 
+////
 //// 	for ( o2=Topobj,preo=NULL; o2!=NULL && o2!=o; preo=o2,o2=o2->onext )
 //// 		;
 //// 	if ( o2 == NULL )
@@ -1405,7 +1406,7 @@ package kit
 //// 	else
 //// 		preo->onext = o->onext;
 //// }
-//// 
+////
 //// void
 //// freeobj(Kobjectp o)
 //// {
@@ -1413,11 +1414,11 @@ package kit
 //// 	/* must be freed explicitly, in KeyKit-level code. */
 //// 	unlinkobj(o);
 //// 	o->id = -1;
-//// 
+////
 //// 	clearht(o->symbols);	/* but don't free table itself, it's reused */
-//// 
+////
 //// /* sprintf(Msg1,"freeobj o->id=%d",o->id);popup(Msg1); */
-//// 
+////
 //// #ifdef HACKHACKHACK
 //// /* WARNING!  This is a hack to avoid re-using objects. */
 //// /* We need reference counting!! */
@@ -1425,15 +1426,15 @@ package kit
 //// 	Freeobj = o;
 //// #endif
 //// }
-//// 
+////
 //// Dnode *Dnfree = NULL;
-//// 
+////
 //// Dnode *
 //// newdn(void)
 //// {
 //// 	static Dnode *lastdn;
 //// 	static int used = ALLOCDN;
-//// 
+////
 //// 	/* First check the free list and use those nodes, before using */
 //// 	/* the newly allocated stuff. */
 //// 	if ( Dnfree != NULL ) {
@@ -1450,35 +1451,35 @@ package kit
 //// 	lastdn->next = NULL;
 //// 	return(lastdn++);
 //// }
-//// 
+////
 //// void
 //// freedn(Dnode *dn)
 //// {
 //// 	dn->next = Dnfree;
 //// 	Dnfree = dn;
 //// }
-//// 
+////
 //// void
 //// freednodes(Dnode *dn)
 //// {
 //// 	register Dnode *nxtd;
-//// 
+////
 //// 	dummyset(nxtd);
 //// 	for ( ; dn!=NULL; dn=nxtd ) {
 //// 		nxtd = dn->next;
 //// 		freedn(dn);
 //// 	}
 //// }
-//// 
+////
 //// Datum
-//// strdatum(char *s)
-//// {
-//// 	Datum d;
-//// 	d.type = D_STR;
-//// 	d.u.str = s;
-//// 	return d;
-//// }
-//// 
+func strdatum(s string) Datum {
+	var d Datum
+	d.dtype = D_STR
+	d.u = s
+	return d
+}
+
+////
 //// Datum
 //// dbldatum(double f)
 //// {
@@ -1487,7 +1488,7 @@ package kit
 //// 	d.u.dbl = (DBLTYPE) f;
 //// 	return d;
 //// }
-//// 
+////
 //// Datum
 //// phrdatum(Phrasep p)
 //// {
@@ -1496,7 +1497,7 @@ package kit
 //// 	d.u.phr = p;
 //// 	return d;
 //// }
-//// 
+////
 //// Datum
 //// codepdatum(Codep cp)
 //// {
@@ -1505,7 +1506,7 @@ package kit
 //// 	d.u.codep = cp;
 //// 	return d;
 //// }
-//// 
+////
 //// Datum
 //// framedatum(Datum *f)
 //// {
@@ -1514,7 +1515,7 @@ package kit
 //// 	d.u.frm = f;
 //// 	return d;
 //// }
-//// 
+////
 //// Datum
 //// datumdatum(Datum *f)
 //// {
@@ -1523,7 +1524,7 @@ package kit
 //// 	d.u.frm = f;
 //// 	return d;
 //// }
-//// 
+////
 //// Datum
 //// notedatum(Noteptr n)
 //// {
@@ -1532,7 +1533,7 @@ package kit
 //// 	d.u.note = n;
 //// 	return d;
 //// }
-//// 
+////
 //// Datum
 //// symdatum(Symbolp s)
 //// {
@@ -1541,7 +1542,7 @@ package kit
 //// 	d.u.sym = s;
 //// 	return d;
 //// }
-//// 
+////
 //// Datum
 //// fifodatum(Fifo *f)
 //// {
@@ -1550,7 +1551,7 @@ package kit
 //// 	d.u.fifo = f;
 //// 	return d;
 //// }
-//// 
+////
 //// Datum
 //// taskdatum(Ktaskp t)
 //// {
@@ -1559,7 +1560,7 @@ package kit
 //// 	d.u.task = t;
 //// 	return d;
 //// }
-//// 
+////
 //// Datum
 //// arrdatum(Htablep arr)
 //// {
@@ -1568,7 +1569,7 @@ package kit
 //// 	d.u.arr = arr;
 //// 	return d;
 //// }
-//// 
+////
 //// Datum
 //// objdatum(Kobjectp obj)
 //// {
@@ -1577,7 +1578,7 @@ package kit
 //// 	d.u.obj = obj;
 //// 	return d;
 //// }
-//// 
+////
 //// int Codesize[9] = {
 //// 	0,	/* IC_NONE */
 //// 	5,	/* IC_NUM */
@@ -1589,7 +1590,7 @@ package kit
 //// 	1,	/* IC_FUNC */
 //// 	1	/* IC_BLTIN */
 //// };
-//// 
+////
 //// Unchar *
 //// put_ipcode(Codep ip, Unchar *p)
 //// {
@@ -1605,21 +1606,21 @@ package kit
 //// 	*p++ = u.bytes[7];
 //// 	return p;
 //// }
-//// 
+////
 //// Unchar *
 //// put_funccode(BYTEFUNC func, Unchar *p)
 //// {
 //// 	*p++ = (Unchar)(intptr_t)func;
 //// 	return p;
 //// }
-//// 
+////
 //// Unchar *
 //// put_bltincode(Unchar bltin, Unchar *p)
 //// {
 //// 	*p++ = bltin;
 //// 	return p;
 //// }
-//// 
+////
 //// Unchar *
 //// put_strcode(Symstr str, Unchar *p)
 //// {
@@ -1635,7 +1636,7 @@ package kit
 //// 	*p++ = u.bytes[7];
 //// 	return p;
 //// }
-//// 
+////
 //// Unchar *
 //// put_dblcode(DBLTYPE dbl, Unchar *p)
 //// {
@@ -1651,19 +1652,19 @@ package kit
 //// 	*p++ = u.bytes[7];
 //// 	return p;
 //// }
-//// 
+////
 //// Unchar *
 //// put_numcode(long num, Unchar *p)
 //// {
 //// 	Unchar *tp;
-//// 
+////
 //// #ifdef FFF
 //// fprintf(FF,"put_numcode num=%d\n",num);
 //// #endif
 //// 	tp = varinum_put(num,p);
 //// 	return tp;
 //// }
-//// 
+////
 //// Unchar *
 //// put_symcode(Symbolp sym, Unchar *p)
 //// {
@@ -1679,7 +1680,7 @@ package kit
 //// 	*p++ = u.bytes[7];
 //// 	return p;
 //// }
-//// 
+////
 //// Unchar *
 //// put_phrcode(Phrasep phr, Unchar *p)
 //// {
@@ -1695,7 +1696,7 @@ package kit
 //// 	*p++ = u.bytes[7];
 //// 	return p;
 //// }
-//// 
+////
 //// Symstr
 //// scan_strcode(Unchar **pp)
 //// {
@@ -1712,7 +1713,7 @@ package kit
 //// 	*pp = p;
 //// 	return u.str;
 //// }
-//// 
+////
 //// Symbolp
 //// scan_symcode(Unchar **pp)
 //// {
@@ -1729,7 +1730,7 @@ package kit
 //// 	*pp = p;
 //// 	return u.sym;
 //// }
-//// 
+////
 //// DBLTYPE
 //// scan_dblcode(Unchar **pp)
 //// {
@@ -1746,7 +1747,7 @@ package kit
 //// 	*pp = p;
 //// 	return u.dbl;
 //// }
-//// 
+////
 //// Phrasep
 //// scan_phrcode(Unchar **pp)
 //// {
@@ -1763,7 +1764,7 @@ package kit
 //// 	*pp = p;
 //// 	return u.phr;
 //// }
-//// 
+////
 //// Codep
 //// scan_ipcode(Unchar **pp)
 //// {
@@ -1780,14 +1781,14 @@ package kit
 //// 	*pp = p;
 //// 	return u.ip;
 //// }
-//// 
+////
 //// long
 //// nparamsof(Codep cp)
 //// {
 //// 	SCAN_BLTINCODE(cp);
 //// 	return scan_numcode(&cp);
 //// }
-//// 
+////
 //// Symbolp
 //// symof(Codep cp)
 //// {
@@ -1795,7 +1796,7 @@ package kit
 //// 	scan_numcode(&cp);
 //// 	return scan_symcode(&cp);
 //// }
-//// 
+////
 //// long
 //// nlocalsof(Codep cp)
 //// {
@@ -1804,7 +1805,7 @@ package kit
 //// 	scan_symcode(&cp);
 //// 	return scan_numcode(&cp);
 //// }
-//// 
+////
 //// Codep
 //// firstinstof(Codep cp)
 //// {
@@ -1814,12 +1815,12 @@ package kit
 //// 	scan_numcode(&cp);
 //// 	return cp;
 //// }
-//// 
+////
 //// Unchar *
 //// varinum_put(long value,Unchar *p)
 //// {
 //// 	int sign;
-//// 
+////
 //// 	if ( value > 0 )
 //// 		sign = 0;
 //// 	else {
@@ -1831,9 +1832,9 @@ package kit
 //// 	}
 //// 	else {
 //// 		unsigned long buffer;
-//// 
+////
 //// 		*p++ = 0x80 | sign | 0x3f ;
-//// 
+////
 //// 		/* The extended values use the Standard MIDI File's */
 //// 		/* variable-length number convention. */
 //// 		buffer = value & 0x7f;
@@ -1842,24 +1843,24 @@ package kit
 //// 			buffer |= 0x80;
 //// 			buffer += (value & 0x7f);
 //// 		}
-//// 
+////
 //// 		for ( ;; ) {
 //// 			*p++ = (int)(buffer&0xff);
 //// 			if (buffer & 0x80)
 //// 				buffer >>= 8;
 //// 			else
 //// 				break;
-//// 		} 
+//// 		}
 //// 	}
 //// 	return p;
 //// }
-//// 
+////
 //// int
 //// varinum_size(long value)
 //// {
 //// 	int sign;
 //// 	int sz = 0;
-//// 
+////
 //// 	if ( value > 0 )
 //// 		sign = 0;
 //// 	else {
@@ -1870,9 +1871,9 @@ package kit
 //// 		sz++;
 //// 	else {
 //// 		unsigned long buffer;
-//// 
+////
 //// 		sz++;
-//// 
+////
 //// 		/* The extended values use the Standard MIDI File's */
 //// 		/* variable-length number convention. */
 //// 		buffer = value & 0x7f;
@@ -1881,18 +1882,18 @@ package kit
 //// 			buffer |= 0x80;
 //// 			buffer += (value & 0x7f);
 //// 		}
-//// 
+////
 //// 		for ( ;; ) {
 //// 			sz++;
 //// 			if (buffer & 0x80)
 //// 				buffer >>= 8;
 //// 			else
 //// 				break;
-//// 		} 
+//// 		}
 //// 	}
 //// 	return sz;
 //// }
-//// 
+////
 //// long
 //// scan_numcode(Unchar **pp)
 //// {
@@ -1900,9 +1901,9 @@ package kit
 //// 	int c;
 //// 	int sign;
 //// 	int b;
-//// 
+////
 //// 	b = *(*pp)++;
-//// 
+////
 //// 	/* check for common case (small positive) with 1 test */
 //// 	if ( (b & 0xc0) == 0 ) {
 //// 		/* value is correct as-is */
@@ -1929,9 +1930,9 @@ package kit
 //// 	}
 //// 	return (value);
 //// }
-//// 
+////
 //// Unchar B___;	/* temp for SCAN_NUMCODE macro */
-//// 
+////
 //// /* In scan_numcode1, the first byte is already read and checked for the */
 //// /* 1-byte small-positive case. */
 //// long
@@ -1940,7 +1941,7 @@ package kit
 //// 	long value;
 //// 	int c;
 //// 	int sign;
-//// 
+////
 //// 	if ( (b & 0x80) == 0 ) {
 //// 		/* not extended, the value fits within 1 byte */
 //// 		if ( b & 0x40 )
@@ -1962,11 +1963,11 @@ package kit
 //// 	}
 //// 	return (value);
 //// }
-//// 
+////
 //// #ifdef MDEP_OSC_SUPPORT
-//// 
+////
 //// #define MAXBLOBSIZE 8192
-//// 
+////
 //// void
 //// osc_padit(char *msg,int msgsize,int *sofarp, int topad)
 //// {
@@ -1974,20 +1975,20 @@ package kit
 //// 		msg[(*sofarp)++] = '\0';
 //// 	}
 //// }
-//// 
+////
 //// void
 //// osc_pack_str(char *msg,int msgsize,int *sofarp, char *s)
 //// {
 //// 	int cnt = 0;
 //// 	int c;
-//// 
+////
 //// 	while ( (c=*s++) != '\0' && msgsize > *sofarp ) {
 //// 		msg[(*sofarp)++] = c;
 //// 		cnt++;
 //// 	}
 //// 	osc_padit(msg,msgsize,sofarp,4-cnt%4);
 //// }
-//// 
+////
 //// void
 //// osc_pack_int(char *msg,int msgsize,int *sofarp, int v)
 //// {
@@ -1995,7 +1996,7 @@ package kit
 //// 		char b[4];
 //// 		int i;
 //// 	} u;
-//// 
+////
 //// 	u.i = v;
 //// 	/* Should really use htonl or something */
 //// 	msg[(*sofarp)++] = u.b[3];
@@ -2003,7 +2004,7 @@ package kit
 //// 	msg[(*sofarp)++] = u.b[1];
 //// 	msg[(*sofarp)++] = u.b[0];
 //// }
-//// 
+////
 //// void
 //// osc_pack_dbl(char *msg,int msgsize,int *sofarp, DBLTYPE v)
 //// {
@@ -2011,7 +2012,7 @@ package kit
 //// 		char b[4];
 //// 		float d;
 //// 	} u;
-//// 
+////
 //// 	u.d = v;
 //// 	/* Should really use htonl or something */
 //// 	msg[(*sofarp)++] = u.b[3];
@@ -2019,7 +2020,7 @@ package kit
 //// 	msg[(*sofarp)++] = u.b[1];
 //// 	msg[(*sofarp)++] = u.b[0];
 //// }
-//// 
+////
 //// char *
 //// osc_scanstring(char **buff, int *buffsize)
 //// {
@@ -2027,7 +2028,7 @@ package kit
 //// 	char *buff0 = *buff;
 //// 	int buffsize0 = *buffsize;
 //// 	int mod4;
-//// 
+////
 //// 	while ( **buff != '\0' && totalcnt < buffsize0 ) {
 //// 		(*buff)++;
 //// 		(*buffsize)--;
@@ -2037,11 +2038,11 @@ package kit
 //// 		tprint("OSC parser did not find ending 0 on string.");
 //// 		return "";
 //// 	}
-//// 
+////
 //// 	(*buff)++;
 //// 	(*buffsize)--;
 //// 	totalcnt++;
-//// 
+////
 //// 	mod4 = totalcnt % 4;
 //// 	if ( mod4 ) {
 //// 		int n;
@@ -2049,53 +2050,53 @@ package kit
 //// 			if ( **buff != '\0' ) {
 //// 				tprint("Unexpected non-0 (0x%02x) "
 //// 					"while scanning osc string?",**buff);
-//// 			} 
+//// 			}
 //// 			(*buff)++;
 //// 		}
 //// 	}
 //// 	return buff0;
 //// }
-//// 
+////
 //// int
 //// osc_scanint(char **buff, int *buffsize)
 //// {
 //// 	int i;
-//// 
+////
 //// 	i = my_ntohl(*((int *)(*buff)));
 //// 	(*buff) += 4;
 //// 	*buffsize -= 4;
 //// 	return i;
 //// }
-//// 
+////
 //// void
 //// osc_scantimetag(char **buff, int *buffsize, int *secs, int *fract)
 //// {
 //// 	*secs = my_ntohl(*((int *)(*buff)));
 //// 	(*buff) += 4;
 //// 	*buffsize -= 4;
-//// 
+////
 //// 	*fract = my_ntohl(*((int *)(*buff)));
 //// 	(*buff) += 4;
 //// 	*buffsize -= 4;
 //// }
-//// 
+////
 //// int
 //// osc_scanblob(char **buff, int *buffsize, char *blobbuff, int blobbuffsize)
 //// {
 //// 	int n;
 //// 	int blobsz;
 //// 	int copied = 0;
-//// 
+////
 //// 	blobsz = my_ntohl(*((int *)(*buff)));
 //// 	(*buff) += 4;
 //// 	*buffsize -= 4;
-//// 
+////
 //// 	// tprint("   SCANBLOB blobsz = %d\n",blobsz);
 //// 	if ( blobsz >= MAXBLOBSIZE ) {
 //// 		tprint("   BLOB too big! (%d)\n",blobsz);
 //// 		return(0);
 //// 	}
-//// 
+////
 //// 	for ( n=0; n<blobsz; n++ ) {
 //// 		if ( n < blobbuffsize ) {
 //// 			*blobbuff++ = **buff;
@@ -2106,20 +2107,20 @@ package kit
 //// 	}
 //// 	return copied;
 //// }
-//// 
+////
 //// float
 //// osc_scanfloat(char **buff, int *buffsize)
 //// {
 //// 	float *floatp;
 //// 	int i;
-//// 
+////
 //// 	i = my_ntohl(*((int *)(*buff)));
 //// 	(*buff) += 4;
 //// 	*buffsize -= 4;
 //// 	floatp = ((float *) (&i));
 //// 	return *floatp;
 //// }
-//// 
+////
 //// Datum
 //// osc_array(char *buff, int buffsize, int used)
 //// {
@@ -2132,7 +2133,7 @@ package kit
 //// 	char blobbuff[MAXBLOBSIZE];
 //// 	int blobbuffsz = sizeof(blobbuff);
 //// 	Datum dindex;
-//// 
+////
 //// 	// tprint("\n\nOSC_ARRAY start, buffsize=%d\n",buffsize);
 //// 	if ( *buff == '/' ) {
 //// 		d = newarrdatum(used,3);
@@ -2188,14 +2189,14 @@ package kit
 //// 			int blobnum = 0;
 //// 			int cnt = 0;
 //// 			Datum elem;
-//// 
+////
 //// 			/* Skip past #bundle - OSC spec says it's 8 bytes */
 //// 			buff += 8;
 //// 			buffsize -= 8;
-//// 
+////
 //// 			osc_scantimetag(&buff,&buffsize,&secs,&fract);
 //// 			// tprint("OSC bundle START, secs=%d fract=%d\n",secs,fract);
-//// 
+////
 //// 			while ( buffsize > 0 ) {
 //// 				if ( cnt > 100 ) {
 //// 					tprint("OSC bundle has more than 100 elements!?  Something's probably wrong.\n");
@@ -2217,7 +2218,7 @@ package kit
 //// 			setarraydata(d.u.arr,Str_elements,numdatum(cnt));
 //// 			setarraydata(d.u.arr,Str_seconds,numdatum(secs));
 //// 			setarraydata(d.u.arr,Str_fraction,numdatum(fract));
-//// 
+////
 //// 			// tprint("OSC bundle END\n");
 //// 		}
 //// 	} else {
