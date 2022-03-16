@@ -43,9 +43,6 @@ type Lexer struct {
 	yylval yySymType
 }
 
-type Symbol struct {
-	x int
-}
 type Instnode struct {
 	x int
 }
@@ -53,7 +50,6 @@ type Phrase struct {
 	x int
 }
 
-type Symbolp *Symbol
 type Instnodep *Instnode
 type Phrasep *Phrase
 

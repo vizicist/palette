@@ -1,5 +1,9 @@
 package kit
 
+import (
+	"crypto/md5"
+)
+
 //// /*
 ////  *	Copyright 1996 AT&T Corp.  All rights reserved.
 ////  */
@@ -9,10 +13,12 @@ package kit
 //// #include "key.h"
 //// #include "gram.h"
 ////
-//// Htablep Keywords = NULL;
-//// Htablep Macros = NULL;
-//// Htablep Topht = NULL;
-//// static Htablep Freeht = NULL;
+
+var Keywords Htablep
+var Macros Htablep
+var Topht Htablep
+var Freeht Htablep
+
 ////
 //// Context *Currct = NULL;
 //// Context *Topct = NULL;
@@ -123,7 +129,7 @@ func findsym(p string, symbols Htablep) Symbolp {
 	if h {
 		return h.val.u.sym
 	} else {
-		return NULL
+		return nil
 	}
 }
 
@@ -1570,103 +1576,117 @@ func findsym(p string, symbols Htablep) Symbolp {
 //// 		return(0);
 //// }
 ////
-//// /*
-////  * Look for an element in the hash table.
-////  * Values of 'action':
-////  *     H_INSERT ==> look for, and if not found, insert
-////  *     H_LOOK ==> look for, but don't insert
-////  *     H_DELETE ==> look for and delete
-////  */
-////
-//// Hnodep
-//// hashtable(Htablep ht,Datum key,int action)
-//// {
-//// 	Hnodepp table;
-//// 	Hnodep h, toph, prev;
-//// 	int v, nc;
-//// int cnt = 0;
-////
-//// 	table = ht->nodetable;
-////
-//// 	/* base the hash value on the 'uniqstr'ed pointer */
-//// 	switch ( key.type ) {
-//// 	case D_NUM:
-//// 		v = ((unsigned int)(key.u.val)) % (ht->size);
-//// 		break;
-//// 	case D_STR:
-//// 		v = ((intptr_t)(key.u.str)>>2) % (ht->size);
-//// 		break;
-//// 	case D_OBJ:
-//// 		v = ((unsigned int)(key.u.obj->id)>>2) % (ht->size);
-//// 		break;
-//// 	default:
-//// 		execerror("hashtable isn't prepared for that key.type");
-//// 		break;
-//// 	}
-////
-//// 	/* look in hash table of existing elements */
-//// 	toph = table[v];
-//// 	if ( toph != NULL ) {
-////
-//// 		/* collision */
-////
-//// 		/* quick test for first node in list, most common case */
-//// 		if ( dcompare(key,toph->key) == 0 ) {
-//// 			if ( action != H_DELETE )
-//// 				return(toph);
-//// 			/* delete from list and free */
-//// 			table[v] = toph->next;
-//// 			freehn(toph);
-//// 			ht->count--;
-//// 			return(NULL);
-//// 		}
-////
-//// 		/* Look through entire list */
-//// 		h = toph;
-//// 		nc = 0;
-//// 		for ( prev=h; ((h=h->next) != NULL); prev=h ) {
-//// 			nc++;
-//// 			if ( dcompare(key,h->key) == 0 ) {
-//// 				break;
-//// 			}
-//// 		}
-//// 		if ( h != NULL ) {
-//// 			/* Found.  Delete it from it's current */
-//// 			/* position so we can either move it to the top, */
-//// 			/* or leave it deleted. */
-//// 			prev->next = h->next;
-//// 			if ( action == H_DELETE ) {
-//// 				/* delete it */
-//// 				freehn(h);
-//// 				ht->count--;
-//// 				return(NULL);
-//// 			}
-//// 			/* move it to the top of the collision list */
-//// 			h->next = toph;
-//// 			table[v] = h;
-//// 			return(h);
-//// 		}
-//// 	}
-////
-//// 	/* it wasn't found */
-//// 	if ( action == H_DELETE ) {
-//// 		return(NULL);
-//// 	}
-////
-//// 	if ( action == H_LOOK )
-//// 		return(NULL);
-////
-//// 	h = newhn();
-//// 	h->key = key;
-//// 	h->val = Noval;
-//// 	ht->count++;
-////
-//// 	/* Add to top of collision list */
-//// 	h->next = toph;
-//// 	table[v] = h;
-////
-//// 	return(h);
-//// }
+
+func hashvalue(s string) int {
+	hmd5 := md5.Sum([]byte(s))
+	// hsha1 := sha1.Sum([]byte(s))
+	// hsha2 := sha256.Sum256([]byte(s))
+	return hm5
+}
+
+/*
+ * Look for an element in the hash table.
+ * Values of 'action':
+ *     H_INSERT ==> look for, and if not found, insert
+ *     H_LOOK ==> look for, but don't insert
+ *     H_DELETE ==> look for and delete
+ */
+
+func hashtable(ht Htablep, key Datum, action int) Hnodep {
+
+	var table Hnodepp
+	var h, toph, prev Hnodep
+	var v int
+	cnt := 0
+
+	table = ht.nodetable
+
+	// base the hash value on the 'uniqstr'ed pointer
+	switch key.dtype {
+	case D_NUM:
+		v = key.u.(int) % (ht.size)
+	case D_STR:
+		v = hashvalue(key.u.(string)) % (ht.size)
+	case D_OBJ:
+		// use raw obj id for the hash value
+		kobj := key.u.(Kobjectp)
+		v = kobj.id % (ht.size)
+	default:
+		execerror("hashtable isn't prepared for that key.type")
+	}
+
+	/* look in hash table of existing elements */
+	toph = table[v]
+	if toph != nil {
+
+		/* collision */
+		////
+		/* quick test for first node in list, most common case */
+		if dcompare(key, toph.key) == 0 {
+			if action != H_DELETE {
+				return toph
+			}
+			/* delete from list and free */
+			table[v] = toph.next
+			freehn(toph)
+			ht.count--
+			return (nil)
+		}
+		////
+		/* Look through entire list */
+		h = toph
+		nc := 0
+		prev := h
+		for {
+			h = h.next
+			if h == nil {
+				break
+			}
+			nc++
+			if dcompare(key, h.key) == 0 {
+				break
+			}
+			prev = h
+		}
+		if h != nil {
+			/* Found.  Delete it from it's current */
+			/* position so we can either move it to the top, */
+			/* or leave it deleted. */
+			prev.next = h.next
+			if action == H_DELETE {
+				/* delete it */
+				freehn(h)
+				ht.count--
+				return nil
+			}
+			/* move it to the top of the collision list */
+			h.next = toph
+			table[v] = h
+			return (h)
+		}
+	}
+	////
+	/* it wasn't found */
+	if action == H_DELETE {
+		return nil
+	}
+	////
+	if action == H_LOOK {
+		return nil
+	}
+	////
+	h = newhn()
+	h.key = key
+	h.val = Noval
+	ht.count++
+	////
+	/* Add to top of collision list */
+	h.next = toph
+	table[v] = h
+	////
+	return (h)
+}
+
 ////
 //// /*
 ////  * Look for the symbol for a particular array element, given
