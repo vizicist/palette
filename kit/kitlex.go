@@ -165,7 +165,7 @@ func (l *Lexer) Lex(lval *yySymType) (retval int) {
 	//// 	Macrosused = 0;
 	////
 
-	/// restart:
+restart:
 	/* Skip initial white space */
 	c := byte(' ')
 	for c == ' ' || c == '\t' || c == '\n' {
@@ -199,7 +199,7 @@ func (l *Lexer) Lex(lval *yySymType) (retval int) {
 		s := findsym(up, Keywords)
 		if s != nil {
 			retval = s.stype
-			yylval.sym = s
+			l.yylval.sym = s
 			goto getout
 		}
 		s = findsym(up, Macros)
@@ -207,7 +207,7 @@ func (l *Lexer) Lex(lval *yySymType) (retval int) {
 			macroeval(up)
 			goto restart
 		}
-		yylval.str = up
+		l.yylval.str = up
 		retval = NAME
 		goto getout
 	}
