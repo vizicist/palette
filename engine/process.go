@@ -176,7 +176,7 @@ func CheckProcessesAndRestartIfNecessary() {
 
 func ProcessStatus() string {
 	s := ""
-	for name, _ := range ProcessInfo {
+	for name := range ProcessInfo {
 		if IsRunning(name) {
 			s += fmt.Sprintf("%s is running\n", name)
 		}
