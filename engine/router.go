@@ -992,25 +992,11 @@ func (r *Router) recordingLoad(name string) ([]*PlaybackEvent, error) {
 	return events, nil
 }
 
-var ButtonPresetMap = map[string]string{
-	"UL1": "Blue Purple_Cartoon Clouds",
-	"UL2": "Circular_Garden",
-	"UL3": "Cloudy_Elevations",
-	"LL1": "Crowded_Inversions",
-	"LL2": "Floating_Grains",
-	"LL3": "Full Bore_Borealis",
-	"UR1": "All Drums_Squares",
-	"UR2": "Bursting_With Color",
-	"UR3": "Quick Scat_Circles",
-	"LR1": "Funky_Squares",
-	"LR2": "All Scat_Squares",
-	"LR3": "Playful_Plucks",
-}
-
 func (r *Router) handleMMTTButton(butt string) {
-	preset, ok := ButtonPresetMap[butt]
-	if !ok {
-		log.Printf("No Preset assigned to BUTTON %s\n", butt)
+	preset := ConfigStringWithDefault(butt, "")
+	if preset == "" {
+		log.Printf("No Preset assigned to BUTTON %s, using Perky_Shapes\n", butt)
+		preset = "Perky_Shapes"
 		return
 	}
 	log.Printf("Router.handleMMTTButton: butt=%s preset=%s\n", butt, preset)
