@@ -1123,8 +1123,9 @@ class Pad():
             log("Unrecognized parameter: ",paramName)
             return
         paramType = self.controller.paramTypeOf[paramName]
-        palette.palette_region_api(self.padName,paramType+".set",
-            "\"name\": \"" + paramName + "\"" + \
+        fullParamName = paramType + "." + paramName
+        palette.palette_region_api(self.padName,"set",
+            "\"name\": \"" + fullParamName + "\"" + \
             ", \"value\": \"" + str(val) + "\"" )
 
     def sendParamsOfType(self,paramType):
