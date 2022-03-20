@@ -1258,38 +1258,45 @@ func dcompare(d1 Datum, d2 Datum) int {
 
 		/* Uninitialized values look like integers, and comparisons */
 		/* with Uninitialized values are either == or != */
-		if d1.u.val == Noval.u.val || d2.u.val == Noval.u.val {
+		d1val := d1.u.(int)
+		d2val := d2.u.(int)
+		noval := Noval.u.(int)
+		if d1val == noval || d2val == noval {
 			execerror("Can't compare undefined values!?")
 			/* used to be: */
 			/* return (d1.u.val==d2.u.val)?0:1; */
 		}
 
-		if d1.u.val > d2.u.val {
+		if d1val > d2val {
 			n = 1
-		} else if d1.u.val < d2.u.val {
+		} else if d1val < d2val {
 			n = -1
 		} else {
 			n = 0
 		}
 	} else if d1.dtype == D_STR && d2.dtype == D_STR {
-		if d1.u.str == d2.u.str {
+		d1str := d1.u.(string)
+		d2str := d2.u.(string)
+		if d1str == d2str {
 			n = 0
 		} else {
 			/* an ASCII comparison, don't use pointers */
-			n = strcmp(d1.u.str, d2.u.str)
+			n = strcmp(d1str, d2str)
 		}
 	} else if d1.dtype == D_PHR && d2.dtype == D_PHR {
-		n = phrcmp(d1.u.phr, d2.u.phr)
+		n = phrcmp(d1.u.(Phrasep), d2.u.(Phrasep))
 	} else if d1.dtype == D_OBJ && d2.dtype == D_OBJ {
-		if d1.u.obj.id > d2.u.obj.id {
+		d1obj := d1.u.(Kobjectp)
+		d2obj := d2.u.(Kobjectp)
+		if d1obj.id > d2obj.id {
 			n = 1
-		} else if d1.u.obj.id < d2.u.obj.id {
+		} else if d1obj.id < d2obj.id {
 			n = -1
 		} else {
 			n = 0
 		}
 	} else if d1.dtype == D_CODEP && d2.dtype == D_CODEP {
-		if d1.u.codep == d2.u.codep {
+		if d1.u.(Codep) == d2.u.(Codep) {
 			n = 0
 		} else {
 			n = 1
@@ -1313,8 +1320,10 @@ func dcompare(d1 Datum, d2 Datum) int {
 	} else if d1.dtype == D_ARR || d2.dtype == D_ARR {
 		if d1.dtype != d2.dtype {
 			n = 1
+		} else if d1.u.(Htablep) != d2.u.(Htablep) {
+			n = 0
 		} else {
-			n = (d1.u.arr != d2.u.arr)
+			n = 1
 		}
 	} else {
 		/* numval() is normally illegal on arrays.  We want */

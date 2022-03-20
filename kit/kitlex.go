@@ -204,7 +204,7 @@ restart:
 		}
 		s = findsym(up, Macros)
 		if s != nil {
-			macroeval(up)
+			l.macroeval(up)
 			goto restart
 		}
 		l.yylval.str = up

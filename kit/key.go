@@ -46,7 +46,8 @@ type Codep *Unchar
 type Hnodep *Hnode
 type Hnodepp **Hnode
 
-/// typedef struct Kobject *Kobjectp;
+type Kobjectp *Kobject
+
 ///
 /// /* These macros can be overridden in mdep.h for systems that require */
 /// /* special ways of opening text vs. binary files. */
@@ -90,18 +91,23 @@ type Hnodepp **Hnode
 /// #endif
 /// #endif
 ///
-/// #ifndef isspace
-/// #define isspace(c) ((c)==' '||(c)=='\t'||(c)=='\n'||(c)=='\r')
-/// #endif
-///
-/// #ifndef isdigit
-/// #define isdigit(c) ((c)>='0'&&(c)<='9')
-/// #endif
-///
-/// #ifndef isalpha
-/// #define isalpha(c) (((c)>='a'&&(c)<='z')||((c)>='A'&&(c)<='Z')||(c)=='_')
-/// #endif
-///
+
+func isspace(c byte) bool {
+	if c == ' ' || c == '\t' || c == '\n' || c == '\r' {
+		return true
+	} else {
+		return false
+	}
+}
+
+func isdigit(c byte) bool {
+	return c >= '0' && c <= '9'
+}
+
+func isalpha(c byte) bool {
+	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_'
+}
+
 /// #ifndef isalnum
 /// #define isalnum(c) (((c)>='a'&&(c)<='z')||((c)>='A'&&(c)<='Z')||(c)=='_'||((c)>='0'&&(c)<='9'))
 /// #endif
@@ -740,15 +746,16 @@ type Symbolp *Symbol
 /// 	struct Lknode *notify;	/* List of pending locks with same name */
 /// } Lknode;
 ///
-/// typedef struct Kobject {
-/// 	long id;
-/// 	Htablep symbols;
-/// 	Kobjectp inheritfrom;	/* list of objects we inherit from */
-/// 	Kobjectp nextinherit;	/* next in that list */
-/// 	Kobjectp children;
-/// 	Kobjectp nextsibling;
-/// 	Kobjectp onext;
-/// } Kobject;
+type Kobject struct {
+	id          int
+	symbols     Htablep
+	inheritfrom Kobjectp /* list of objects we inherit from */
+	nextinherit Kobjectp /* next in that list */
+	children    Kobjectp
+	nextsibling Kobjectp
+	onext       Kobjectp
+}
+
 ///
 /// /*
 ///  * There are this many input devices, and this many output devices.
@@ -862,12 +869,24 @@ type Symbolp *Symbol
 /// #define ARG(n) (*(T->arg0+(n)))
 ///
 /// #define isglobal(s) ((s)->stackpos==0)
+
+func isnoval(d Datum) bool {
+	dval := d.u.(int)
+	noval := Noval.u.(int)
+	if dval == noval && d.dtype == Noval.dtype {
+		return true
+	}
+	return false
+}
+
 /// /* #define isnoval(d) (((d).type==Noval.type)&&((d).u.val==Noval.u.val)) */
 /// #define isnoval(d) (((d).u.val==Noval.u.val) && ((d).type==Noval.type) )
+
 /// #define CHKNOVAL(d,s) if(isnoval(d)){ \
 /// 		sprintf(Msg1,"Uninitialized value (Noval) can't be handled by %s",s); \
 /// 		execerror(Msg1); \
 /// 	}
+
 ///
 /// /* In function calls, there are PREARGSIZE things on the stack before */
 /// /* the argument values.  Currently this is the func/obj/method values. */
@@ -991,9 +1010,26 @@ type Symbolp *Symbol
 /// #define PRFUNC(x)
 /// #endif
 ///
-/// #define numval(d) ((d).type==D_NUM?(d).u.val:getnumval(d,0))
+func numval(d Datum) int {
+	if d.dtype == D_NUM {
+		return d.u.(int)
+	} else {
+		return getnumval(d, false)
+	}
+}
+
 /// #define roundval(d) ((d).type==D_NUM?(d).u.val:getnumval(d,1))
+
+func dblval(d Datum) float32 {
+	if d.dtype == D_DBL {
+		return d.u.(float32)
+	} else {
+		return getdblval(d)
+	}
+}
+
 /// #define dblval(d) ((d).type==D_DBL?(double)((d).u.dbl):getdblval(d))
+
 /// #define numtype(d) ((d).type==D_NUM?(d).type:getnmtype(d))
 ///
 /// #define FSTACKSIZE	16	/* Maximum # of nested files being read */
