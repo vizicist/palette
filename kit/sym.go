@@ -46,6 +46,11 @@ var Freeht Htablep
 //// Datum *Rebootfuncd, *Nullfuncd, *Errorfuncd;
 //// Datum *Intrfuncd, *Nullvald;
 //// Datum Zeroval, Noval, Nullval, _Dnumtmp_;
+var Zeroval Datum
+var Noval Datum
+var Nullval Datum
+var _Dnumtmp_ Datum
+
 //// Datum *Colorfuncd;
 //// Datum *Redrawfuncd;
 //// Datum *Resizefuncd;
@@ -126,8 +131,8 @@ var Freeht Htablep
 func findsym(p string, symbols Htablep) Symbolp {
 	key := strdatum(p)
 	h := hashtable(symbols, key, H_LOOK)
-	if h {
-		return h.val.u.sym
+	if h != nil {
+		return h.val.u.(Symbolp)
 	} else {
 		return nil
 	}

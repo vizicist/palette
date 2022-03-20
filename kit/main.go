@@ -1195,15 +1195,16 @@ package kit
 ////
 //// #define skipspace(s) while(isspace(*s))s++
 ////
-//// typedef struct Macro {
-//// 	char *name;
-//// 	char **params;
-//// 	int nparams;
-//// 	char *value;
-//// 	struct Macro *next;
-//// } Macro;
-////
-//// static Macro *Topmac = NULL;
+type Macro struct {
+name string
+params []string
+nparams int
+value string
+next *Macro
+}
+
+var TopMac *Macro
+
 ////
 //// /* Scan the macro definition in s, creating a new Macro structure. */
 //// void
@@ -1297,125 +1298,139 @@ package kit
 //// 	return(echar);
 //// }
 ////
-//// /* Check to see if name is a macro, and if so, substitute its value (possibly*/
-//// /* gathering the arguments and substituting them in the macro definition). */
-//// /* The macro value is stuffed back onto the input stream. */
-//// void
-//// macroeval(char *name)
-//// {
-//// 	Macro *m;
-//// 	char *p, *q, *sofar, *args[NPARAMS];
-//// 	char *buff, *errstr;
-//// 	int c, n, nparams, echar;
-//// 	char ch;
+/* Check to see if name is a macro, and if so, substitute its value (possibly*/
+/* gathering the arguments and substituting them in the macro definition). */
+/* The macro value is stuffed back onto the input stream. */
+func (l *Lexer) macroeval(name string) {
+	var m *Macro
+	var q, sofar string
+	var args []string
+	var buff, errstr string
+	var c, n, nparams, echar int
+	var ch byte
+	
+	for m=Topmac; m!=NULL; m=m.next {
+		if ( name == m.name ) {
+			break
+		}
+	}
+	if m == nil {
+		return
+	}
+		
+	Macrosused++
+	if Macrosused > 10 {
+		execerror("Macros too deeply nested (recursive?)");
+	}
+		
+	if m.nparams <= 0 {
+		stuffword(m.value)
+		return
+	}
+	/* The macro has parameters */
+	for {
+		c := l.yyinput()
+		if c == EOF || c == '(' {
+			break
+		}
+	}
+	nparams = m.nparams
+	
+	var buff string
+	
+	n := 0
+	echar := 0
+	for ; echar != ')' ; n++ {
+		i = scantill("),",buff,buff+Buffsize)
+		if i < 0 {
+			errstr = "Non-terminated call to macro"
+			goto err
+		}
+		echar = buff[i-1]
+		if ( n < nparams ) {
+			args[n] = strsave(buff);	/* NOT uniqstr */
+		}
+	}
+	if n > nparams {
+		errstr = "Too many arguments in call to macro"
+		goto err
+	}
+	if n < nparams {
+		errstr = "Too few arguments in call to macro"
+		goto err
+	}
+	
+	/* now stuff the macro replacement value, and substitute any */
+	/* parameters we find. */
+	si := 0
+	for i, ch := range m.value {
+
+		buff[si] = ch
+		if ! l.isnamechar(ch) {
+			si++;
+			continue;
+		}
+
+		/* we've seen the start of a name; grab the rest */
+		qi = si+1
+		for l.isnamechar(*p) {
+			*q++ = *p++;
+		}
+		*q = '\0';
+
+		/* see if it's a parameter name */
+		for ( n=0; n < nparams; n++ ) {
+			if ( strcmp(m->params[n],sofar) == 0 )
+				break;
+		}
+		/* if it is a parameter, substitute the value */
+		if ( n < nparams )
+			strcpy(sofar,args[n]);
+		sofar = strend(sofar);
+	}
+	*sofar = '\0';
+	stuffword(buff);
 ////
-//// 	for ( m=Topmac; m!=NULL; m=m->next ) {
-//// 		if ( name == m->name )
-//// 			break;
-//// 	}
-//// 	if ( m == NULL )
-//// 		return;
+	for ( n=0; n < nparams; n++ )
+		kfree(args[n]);
+	kfree(buff);
+	return;
 ////
-//// 	if ( ++Macrosused > 10 )
-//// 		execerror("Macros too deeply nested (recursive?)");
-////
-//// 	if ( m->nparams <= 0 ) {
-//// 		stuffword(m->value);
-//// 		return;
-//// 	}
-//// 	/* The macro has parameters */
-//// 	while ( (c=yyinput()) != EOF && c != '(' )
-//// 		;
-//// 	nparams = m->nparams;
-////
-//// 	buff = kmalloc(Buffsize,"macroeval");
-////
-//// 	for ( n=echar=0; echar != ')' ; n++ ) {
-//// 		p = scantill("),",buff,buff+Buffsize);
-//// 		if ( p == NULL ) {
-//// 			errstr = "Non-terminated call to macro";
-//// 			goto err;
-//// 		}
-//// 		echar = *--p;
-//// 		*p = '\0';	/* get rid of terminating ',' or ')' */
-//// 		if ( n < nparams ) {
-//// 			args[n] = strsave(buff);	/* NOT uniqstr */
-//// 		}
-//// 	}
-//// 	if ( n > nparams ) {
-//// 		errstr = "Too many arguments in call to macro";
-//// 		goto err;
-//// 	}
-//// 	if ( n < nparams ) {
-//// 		errstr = "Too few arguments in call to macro";
-//// 		goto err;
-//// 	}
-////
-//// 	/* now stuff the macro replacement value, and substitute any */
-//// 	/* parameters we find. */
-//// 	p = m->value;
-//// 	sofar = buff;
-//// 	while ( (ch=(*p++)) != '\0' ) {
-//// 		*sofar = ch;
-//// 		if ( ! isnamechar(ch) ){
-//// 			sofar++;
-//// 			continue;
-//// 		}
-//// 		/* we've seen the start of a name; grab the rest */
-//// 		q = sofar+1;
-//// 		while ( isnamechar(*p) )
-//// 			*q++ = *p++;
-//// 		*q = '\0';
-//// 		/* see if it's a parameter name */
-//// 		for ( n=0; n < nparams; n++ ) {
-//// 			if ( strcmp(m->params[n],sofar) == 0 )
-//// 				break;
-//// 		}
-//// 		/* if it is a parameter, substitute the value */
-//// 		if ( n < nparams )
-//// 			strcpy(sofar,args[n]);
-//// 		sofar = strend(sofar);
-//// 	}
-//// 	*sofar = '\0';
-//// 	stuffword(buff);
-////
-//// 	for ( n=0; n < nparams; n++ )
-//// 		kfree(args[n]);
-//// 	kfree(buff);
-//// 	return;
-////
-////     err:
-//// 	kfree(buff);
-//// 	execerror("%s %s",errstr,m->name);
-//// 	return;		 /* should be NOTREACHED*/
-//// }
-////
-//// char *
-//// scantill(char *lookfor,char *buff,char *pend)
-//// {
-//// 	register char *p = buff;
-//// 	register int ch;
-////
-//// 	while ( (ch=yyinput()) != EOF ) {
-////
-//// 		if ( p >= pend )
-//// 			execerror("Too much macro expansion!");
-////
-//// 		*p++ = ch;
-//// 		/* if we find one of the characters we're looking for... */
-//// 		if ( strchr(lookfor,ch) != NULL )
-//// 			return(p);
-////
-//// 		switch ( ch ) {
-//// 		case '(': p = scantill(")",p,pend); break;
-//// 		case '{': p = scantill("}",p,pend); break;
-//// 		case '[': p = scantill("]",p,pend); break;
-//// 		case '"': p = scantill("\"",p,pend); break;
-//// 		case '\'': p = scantill("'",p,pend); break;
-//// 		}
-//// 	}
-//// 	return(NULL);
-//// }
+    err:
+	kfree(buff);
+	execerror("%s %s",errstr,m->name);
+	return;		 /* should be NOTREACHED*/
+}
+
+func (l *Lexer) scantill(lookfor string) string {
+
+	var finalbuff string
+	register char *p = buff;
+	register int ch;
+	
+	for {
+		ch: = l.yyinput()
+		if ch == EOF {
+			break
+		}
+		
+		finalstring += string(ch)
+		*p++ = ch;
+		/* if we find one of the characters we're looking for... */
+		if ( strchr(lookfor,ch) != NULL )
+			return(p);
+			
+		switch ( ch ) {
+		case '(': p = scantill(")",p,pend); break;
+		case '{': p = scantill("}",p,pend); break;
+		case '[': p = scantill("]",p,pend); break;
+		case '"': p = scantill("\"",p,pend); break;
+		case '\'': p = scantill("'",p,pend); break;
+		}
+	}
+	return -1;
+}
+
 ////
 //// void
 //// readkeylibs(void)

@@ -1,5 +1,10 @@
 package kit
 
+import (
+	"fmt"
+	"strings"
+)
+
 //// /*
 ////  *	Copyright 1996 AT&T Corp.  All rights reserved.
 ////  */
@@ -825,173 +830,160 @@ package kit
 //// 	return r;
 //// }
 ////
-//// long
-//// getnumval(Datum d,int round)
-//// {
-//// 	long v;
-////
-//// 	switch (d.type) {
-//// 	case D_NUM:
-//// 		v = d.u.val;
-//// 		break;
-//// 	case D_DBL:
-//// 		if ( round )
-//// 			v = (long)(d.u.dbl + 0.5);
-//// 		else
-//// 			v = (long)(d.u.dbl);
-//// 		break;
-//// 	case D_STR:
-//// 		{
-//// 			char *p = d.u.str;
-//// 			int sign = 1;
-//// 			int was_hex = 0;
-//// 			if ( p == NULL ) {
-//// 				v = Noval.u.val;
-//// 				break;
-//// 			}
-//// 			while ( isspace(*p) )
-//// 				p++;
-//// 			if ( *p == '+' )
-//// 				p++;
-//// 			else if ( *p == '-' ) {
-//// 				p++;
-//// 				sign = -1;
-//// 			}
-//// 			if ( ! isdigit(*p) ) {
-//// 				v = Noval.u.val;
-//// 				break;
-//// 			}
-//// 			if ( p[0]=='0' ) {	/* hex or octal */
-//// 				int i;
-//// 				char *q = p+1;
-//// 				v = 0;
-//// 				if ( *q =='x' ) {
-//// 					was_hex = 1;
-//// 					for ( q++; *q != '\0'; q++ ) {
-//// 						i = hexchar(*q);
-//// 						if ( i < 0 )
-//// 							break;
-//// 						v = (v*16) + i;
-//// 					}
-//// 				}
-//// 				else {
-//// 					for ( ; *q != '\0'; q++ ) {
-//// 						i = *q - '0';
-//// 						if ( i < 0 || i > 7 )
-//// 							break;
-//// 						v = (v*8) + i;
-//// 					}
-//// 				}
-//// 			}
-//// 			else
-//// 				v = atol(p);
-//// 			/* A 'q' suffix multiplies by *Clicks */
-//// 			p = strchr(p,'\0');
-//// 			if ( was_hex==0 && p>d.u.str && (*(p-1) == 'b' || *(p-1) == 'q') )
-//// 				v *= *Clicks;
-//// 			v *= sign;
-//// 		}
-//// 		break;
-//// 	case D_PHR:
-//// 		{
-//// 			register Noteptr n = firstnote(d.u.phr);
-////
-//// 			/* numeric value of a phrase is either */
-//// 			/* the pitch of the first note, or the */
-//// 			/* value of the first MIDIbyte */
-////
-//// 			if ( n == NULL )
-//// 				v = -1;
-//// 			else {
-//// 				if ( ntisbytes(n) )
-//// 					v = (*ptrtobyte(n,0)) & 0xff;
-//// 				else
-//// 					v = pitchof(n);
-//// 			}
-//// 		}
-//// 		break;
-//// 	case D_CODEP:
-//// 		// XXX - This code truncates the value of codep on a 64-bit system
-//// 		// XXX - It seems to work, but it might not work at some point.
-//// 		// XXX - Perhaps some code should be added here to make sure that
-//// 		// XXX - the truncated part is 0 (i.e. not significant)?  Not sure.
-//// 		// XXX - Maybe this means that numbers in KeyKit are 32-bit,
-//// 		// XXX - even on a 64-bit system?  Just thinking out loud here.
-//// 		v = (long)(d.u.codep);
-//// 		break;
-//// 	case D_ARR:
-//// 		execerror("getnumval() doesn't work for D_ARR!");
-//// #ifdef OLDCODE
-//// 		// I'm not sure this case is still used, it might be vestigal code.  Changing getnumval to be 64-bit (i.e. long long or intptr_t)
-//// 		// is a lot of work, so making it an execution error will detect whether it's actually used.
-//// 		v = (long)(d.u.arr);
-//// #endif
-//// 		break;
-//// 	case D_OBJ:
-//// 		execerror("getnumval() doesn't work for D_OBJ!");
-//// 		break;
-//// 	case D_SYM:
-//// 		execerror("getnumval() doesn't work for D_SYM!");
-//// 		/*NOTREACHED*/
-//// 	default:
-//// 		execerror("Unknown data type (%d) in getnumval!",d.type);
-//// 		/*NOTREACHED*/
-//// 	}
-//// 	return v;
-//// }
-////
-//// double
-//// getdblval(Datum d)
-//// {
-//// 	double f;
-//// 	char *endptr;
-////
-//// 	switch (d.type) {
-//// 	case D_NUM:
-//// 		f = (double) d.u.val;
-//// 		break;
-//// 	case D_DBL:
-//// 		f = (double)d.u.dbl;
-//// 		break;
-//// 	case D_STR:
-//// 		f = (double) strtod(d.u.str,&endptr);
-//// 		/*
-//// 		 * If conversion fails, force it to 0.
-//// 		 */
-//// 		if ( endptr == d.u.str )
-//// 			f = 0.0;
-//// 		break;
-//// 	case D_PHR:
-//// 		f = (double) getnumval(d,0);
-//// 		break;
-//// 	default:
-//// 		execerror("Unknown data type (%d) in getdblval!",d.type);
-//// 	}
-//// 	return f;
-//// }
-////
-//// int
-//// getnmtype(Datum d)
-//// {
-//// 	int t;
-////
-//// 	switch (d.type) {
-//// 	case D_NUM:
-//// 	case D_DBL:
-//// 		t = d.type;
-//// 		break;
-//// 	case D_STR:
-//// 		if (strchr(d.u.str,'.')!=NULL)
-//// 			t = D_DBL;
-//// 		else
-//// 			t = D_NUM;
-//// 		break;
-//// 	default:
-//// 		t = D_NUM;
-//// 		break;
-//// 	}
-//// 	return t;
-//// }
+
+func getnumval(d Datum, round bool) int {
+	var v int
+
+	switch d.dtype {
+	case D_NUM:
+		v = d.u.(int)
+	case D_DBL:
+		if round {
+			v = int(d.u.(float32) + 0.5)
+		} else {
+			v = int(d.u.(float32))
+		}
+	case D_STR:
+		s := d.u.(string)
+		sign := 1
+		was_hex := 0
+		if s == "" {
+			v = Noval.u.(int)
+			break
+		}
+		si := 0
+		for _, ch := range s {
+			if !isspace(byte(ch)) {
+				break
+			}
+		}
+
+		if s[si] == '+' {
+			si++
+		} else if s[si] == '-' {
+			si++
+			sign = -1
+		}
+
+		if !isdigit(s[si]) {
+			v = Noval.u.(int)
+			break
+		}
+		if s[0] == '0' { /* hex or octal */
+			qi := si + 1
+			v = 0
+			if s[qi] == 'x' {
+				was_hex = 1
+				for _, ch := range s[qi] {
+					i = hexchar(ch)
+					if i < 0 {
+						break
+					}
+					v = (v * 16) + i
+				}
+			} else {
+				for _, ch := range s[qi] {
+					i = int(ch) - '0'
+					if i < 0 || i > 7 {
+						break
+					}
+					v = (v * 8) + i
+				}
+			}
+		} else {
+			v = atol(p)
+		}
+		/* A 'q' suffix multiplies by *Clicks */
+		lastch := s[len(s)-1]
+		if was_hex == 0 && (lastch == 'b' || lastch == 'q') {
+			v *= *Clicks
+		}
+		v *= sign
+	case D_PHR:
+		n := firstnote(d.u.(Phrasep))
+
+		/* numeric value of a phrase is either */
+		/* the pitch of the first note, or the */
+		/* value of the first MIDIbyte */
+
+		if n == NULL {
+			v = -1
+		} else {
+			if ntisbytes(n) {
+				v = (*ptrtobyte(n, 0)) & 0xff
+			} else {
+				v = pitchof(n)
+			}
+		}
+	case D_CODEP:
+		// XXX - This code truncates the value of codep on a 64-bit system
+		// XXX - It seems to work, but it might not work at some point.
+		// XXX - Perhaps some code should be added here to make sure that
+		// XXX - the truncated part is 0 (i.e. not significant)?  Not sure.
+		// XXX - Maybe this means that numbers in KeyKit are 32-bit,
+		// XXX - even on a 64-bit system?  Just thinking out loud here.
+		v = int(d.u.codep)
+	case D_ARR:
+		execerror("getnumval() doesn't work for D_ARR!")
+		// I'm not sure this case is still used, it might be vestigal code.  Changing getnumval to be 64-bit (i.e. long long or intptr_t)
+		// is a lot of work, so making it an execution error will detect whether it's actually used.
+		// v = (long)(d.u.arr);
+	case D_OBJ:
+		execerror("getnumval() doesn't work for D_OBJ!")
+	case D_SYM:
+		execerror("getnumval() doesn't work for D_SYM!")
+	default:
+		execerror("Unknown data type (%d) in getnumval!", d.dtype)
+	}
+	return v
+}
+
+func getdblval(d Datum) float32 {
+	var f float32
+
+	switch d.dtype {
+	case D_NUM:
+		f = float32(d.u.(int))
+	case D_DBL:
+		f = d.u.(float32)
+	case D_STR:
+		s := d.u.(string)
+		n, err := fmt.Sscanf(s, "%f", &f)
+		/*
+		 * If conversion fails, force it to 0.
+		 */
+		if err != nil || n != 1 {
+			f = 0.0
+		}
+	case D_PHR:
+		f = float32(getnumval(d, 0))
+		break
+	default:
+		execerror("Unknown data type (%d) in getdblval!", d.dtype)
+	}
+	return f
+}
+
+func getnmtype(d Datum) int16 {
+
+	var t int16
+	switch d.dtype {
+	case D_NUM:
+	case D_DBL:
+		t = d.dtype
+	case D_STR:
+		i := strings.Index(d.u.(string), ".")
+		if i >= 0 {
+			t = D_DBL
+		} else {
+			t = D_NUM
+		}
+	default:
+		t = D_NUM
+	}
+	return t
+}
+
 ////
 //// #define MAXOPEN 15
 ////
@@ -1472,6 +1464,7 @@ package kit
 //// }
 ////
 //// Datum
+
 func strdatum(s string) Datum {
 	var d Datum
 	d.dtype = D_STR
