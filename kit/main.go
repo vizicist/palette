@@ -1,5 +1,10 @@
 package kit
 
+import (
+	"log"
+	"strings"
+)
+
 //go:generate goyacc -o gram.go gram.y
 
 //// /*
@@ -465,87 +470,90 @@ package kit
 //// 	va_end(args);
 //// }
 ////
-//// /* recover from run-time error */
-//// void
-//// execerror(char *fmt,...)
-//// {
-//// 	va_list args;
-////
-//// 	Inerror++;
-//// 	if ( Inerror > 1 ) {
-//// 		if ( Inerror > 3 ) {
-//// 			warning("Recursive error!!!");
-//// 			goto skipitall;
-//// 		}
-//// 		if ( Inerror > 2 ) {
-//// 			warning("Recursive error!!");
-//// 			goto skipmore;
-//// 		}
-//// 		warning("Recursive error?");
-//// 		goto skipabit;
-//// 	}
-////
-//// 	/* somewhat arbitrary, real conservative because it has been */
-//// 	/* easy to overrun this buffer with the stack trace, in the past. */
-//// 	makeroom(1024+2*(long)strlen(fmt),&Msgt,&Msgtsize);
-////
-//// 	va_start(args,fmt);
-//// 	vsprintf(Msgt,fmt,args);
-//// 	va_end(args);
-////
-//// 	if ( Errfileit )
-//// 		keyerrfile("%s\n",Msgt);
-////
-//// 	/* If there is a per-task error function, we save the error message */
-//// 	/* for it.  The per-task error function will be invoked in taskbury. */
-//// 	if ( T != NULL && T->ontaskerror != NULL ) {
-//// 		T->ontaskerrormsg = uniqstr(Msgt);
-//// 	} else {
-//// 		/* Default onerror action is to use warning(), */
-//// 		/* and to print a stacktrace. */
-//// 		warning(Msgt);
-//// 		if ( T ) {
-//// 			pstacktrace(T->stackframe);
-//// 		}
-//// 	}
-////
-////     skipabit:
-////
-//// 	if ( T ) {
-//// 		taskkill(T,1);
-//// 		T = NULL;
-//// 	}
-//// 	else
-//// 		eprint("Hmmm, T==NULL in execerror!?\n");
-////
-//// 	/* When we get an error in one task, we don't want */
-//// 	/* to clear Topsched and do other things that screw up realtime, */
-//// 	/* so we no longer call resetstuff() here. */
-//// 	/* resetstuff(); */
-////
-////     skipmore:
-////
-//// 	if ( *Abortonerr != 0 )
-//// 		mdep_abortexit(Msgt);
-////
-//// 	/* avoid calling user-defined error function when recursive */
-//// 	if ( Inerror < 2 ) {
-//// 		if ( Errorfuncd->type == D_CODEP )
-//// 			taskfunc0(Errorfuncd->u.codep);
-//// 		else
-//// 			eprint("Warning, Errorfunc has non-function value!?");
-//// 	}
-//// 	else
-//// 		Errors++;
-////
-//// 	flushfin();	/* flush rest of current file */
-////
-////     skipitall:
-////
-//// 	Inerror = 0;
-//// 	restartexec();
-//// 	/*NOTREACHED*/
-//// }
+
+/* recover from run-time error */
+func execerror(fmt string) {
+
+	log.Printf("execerror: fmt=%s\n", fmt)
+
+	//// 	va_list args;
+	////
+	//// 	Inerror++;
+	//// 	if ( Inerror > 1 ) {
+	//// 		if ( Inerror > 3 ) {
+	//// 			warning("Recursive error!!!");
+	//// 			goto skipitall;
+	//// 		}
+	//// 		if ( Inerror > 2 ) {
+	//// 			warning("Recursive error!!");
+	//// 			goto skipmore;
+	//// 		}
+	//// 		warning("Recursive error?");
+	//// 		goto skipabit;
+	//// 	}
+	////
+	//// 	/* somewhat arbitrary, real conservative because it has been */
+	//// 	/* easy to overrun this buffer with the stack trace, in the past. */
+	//// 	makeroom(1024+2*(long)strlen(fmt),&Msgt,&Msgtsize);
+	////
+	//// 	va_start(args,fmt);
+	//// 	vsprintf(Msgt,fmt,args);
+	//// 	va_end(args);
+	////
+	//// 	if ( Errfileit )
+	//// 		keyerrfile("%s\n",Msgt);
+	////
+	//// 	/* If there is a per-task error function, we save the error message */
+	//// 	/* for it.  The per-task error function will be invoked in taskbury. */
+	//// 	if ( T != NULL && T->ontaskerror != NULL ) {
+	//// 		T->ontaskerrormsg = uniqstr(Msgt);
+	//// 	} else {
+	//// 		/* Default onerror action is to use warning(), */
+	//// 		/* and to print a stacktrace. */
+	//// 		warning(Msgt);
+	//// 		if ( T ) {
+	//// 			pstacktrace(T->stackframe);
+	//// 		}
+	//// 	}
+	////
+	////     skipabit:
+	////
+	//// 	if ( T ) {
+	//// 		taskkill(T,1);
+	//// 		T = NULL;
+	//// 	}
+	//// 	else
+	//// 		eprint("Hmmm, T==NULL in execerror!?\n");
+	////
+	//// 	/* When we get an error in one task, we don't want */
+	//// 	/* to clear Topsched and do other things that screw up realtime, */
+	//// 	/* so we no longer call resetstuff() here. */
+	//// 	/* resetstuff(); */
+	////
+	////     skipmore:
+	////
+	//// 	if ( *Abortonerr != 0 )
+	//// 		mdep_abortexit(Msgt);
+	////
+	//// 	/* avoid calling user-defined error function when recursive */
+	//// 	if ( Inerror < 2 ) {
+	//// 		if ( Errorfuncd->type == D_CODEP )
+	//// 			taskfunc0(Errorfuncd->u.codep);
+	//// 		else
+	//// 			eprint("Warning, Errorfunc has non-function value!?");
+	//// 	}
+	//// 	else
+	//// 		Errors++;
+	////
+	//// 	flushfin();	/* flush rest of current file */
+	////
+	////     skipitall:
+	////
+	//// 	Inerror = 0;
+	//// 	restartexec();
+	//// 	/*NOTREACHED*/
+}
+
 ////
 //// void
 //// resetstuff(void)
@@ -1196,11 +1204,11 @@ package kit
 //// #define skipspace(s) while(isspace(*s))s++
 ////
 type Macro struct {
-name string
-params []string
-nparams int
-value string
-next *Macro
+	name    string
+	params  []string
+	nparams int
+	value   string
+	next    *Macro
 }
 
 var TopMac *Macro
@@ -1305,24 +1313,24 @@ func (l *Lexer) macroeval(name string) {
 	var m *Macro
 	var q, sofar string
 	var args []string
-	var buff, errstr string
+	var errstr string
 	var c, n, nparams, echar int
 	var ch byte
-	
-	for m=Topmac; m!=NULL; m=m.next {
-		if ( name == m.name ) {
+
+	for m = Topmac; m != NULL; m = m.next {
+		if name == m.name {
 			break
 		}
 	}
 	if m == nil {
 		return
 	}
-		
+
 	Macrosused++
 	if Macrosused > 10 {
-		execerror("Macros too deeply nested (recursive?)");
+		execerror("Macros too deeply nested (recursive?)")
 	}
-		
+
 	if m.nparams <= 0 {
 		stuffword(m.value)
 		return
@@ -1335,20 +1343,18 @@ func (l *Lexer) macroeval(name string) {
 		}
 	}
 	nparams = m.nparams
-	
-	var buff string
-	
+
 	n := 0
 	echar := 0
-	for ; echar != ')' ; n++ {
-		i = scantill("),",buff,buff+Buffsize)
+	for ; echar != ')'; n++ {
+		i = scantill("),", buff, buff+Buffsize)
 		if i < 0 {
 			errstr = "Non-terminated call to macro"
 			goto err
 		}
 		echar = buff[i-1]
-		if ( n < nparams ) {
-			args[n] = strsave(buff);	/* NOT uniqstr */
+		if n < nparams {
+			args[n] = strsave(buff) /* NOT uniqstr */
 		}
 	}
 	if n > nparams {
@@ -1359,76 +1365,96 @@ func (l *Lexer) macroeval(name string) {
 		errstr = "Too few arguments in call to macro"
 		goto err
 	}
-	
+
 	/* now stuff the macro replacement value, and substitute any */
 	/* parameters we find. */
-	si := 0
+	buff := ""
+	grabbingName := false
+	name := ""
 	for i, ch := range m.value {
 
-		buff[si] = ch
-		if ! l.isnamechar(ch) {
-			si++;
-			continue;
+		isname := l.isnamechar(ch)
+		if grabbingName {
+			if isName {
+				name += string(ch)
+			} else {
+				// The name is complete,
+				// see if it's a parameter name
+				for n := 0; n < nparams; n++ {
+					if m.params[n] == name {
+						break
+					}
+				}
+				// if it is a parameter, substitute the value
+				if n < nparams {
+					buff += args[n]
+				} else {
+					buff += name
+				}
+
+				buff += string(ch) // the char that ended the name
+				grabbingName = false
+			}
+		} else if l.isnamechar(ch) {
+			name := string(ch)
+			grabbingName = true
+		} else {
+			buff += string(ch)
 		}
 
 		/* we've seen the start of a name; grab the rest */
-		qi = si+1
-		for l.isnamechar(*p) {
-			*q++ = *p++;
-		}
-		*q = '\0';
-
-		/* see if it's a parameter name */
-		for ( n=0; n < nparams; n++ ) {
-			if ( strcmp(m->params[n],sofar) == 0 )
-				break;
-		}
-		/* if it is a parameter, substitute the value */
-		if ( n < nparams )
-			strcpy(sofar,args[n]);
-		sofar = strend(sofar);
 	}
-	*sofar = '\0';
-	stuffword(buff);
-////
-	for ( n=0; n < nparams; n++ )
-		kfree(args[n]);
-	kfree(buff);
-	return;
-////
-    err:
-	kfree(buff);
-	execerror("%s %s",errstr,m->name);
-	return;		 /* should be NOTREACHED*/
+
+	stuffword(buff)
+
+	for n := 0; n < nparams; n++ {
+		kfree(args[n])
+	}
+	kfree(buff)
+	return
+
+err:
+	kfree(buff)
+	execerror("%s %s", errstr, m.name)
 }
 
 func (l *Lexer) scantill(lookfor string) string {
 
-	var finalbuff string
-	register char *p = buff;
-	register int ch;
-	
+	buff := ""
+
 	for {
-		ch: = l.yyinput()
-		if ch == EOF {
+		ch := l.yyinput()
+		if ch == 0 {
 			break
 		}
-		
-		finalstring += string(ch)
-		*p++ = ch;
+
 		/* if we find one of the characters we're looking for... */
-		if ( strchr(lookfor,ch) != NULL )
-			return(p);
-			
-		switch ( ch ) {
-		case '(': p = scantill(")",p,pend); break;
-		case '{': p = scantill("}",p,pend); break;
-		case '[': p = scantill("]",p,pend); break;
-		case '"': p = scantill("\"",p,pend); break;
-		case '\'': p = scantill("'",p,pend); break;
+		if strings.Contains(lookfor, ch) {
+			l.yyunget()
+			return (buff)
+		}
+
+		buff += string(ch)
+
+		switch ch {
+		case '(':
+			p = l.scantill(")")
+			break
+		case '{':
+			p = l.scantill("}")
+			break
+		case '[':
+			p = l.scantill("]")
+			break
+		case '"':
+			p = l.scantill("\"")
+			break
+		case '\'':
+			p = l.scantill("'")
+			break
 		}
 	}
-	return -1;
+	return -1
 }
 
 ////

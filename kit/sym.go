@@ -18,11 +18,9 @@ var Keywords Htablep
 var Macros Htablep
 var Topht Htablep
 var Freeht Htablep
+var Currct *Context
+var Topct *Context
 
-////
-//// Context *Currct = NULL;
-//// Context *Topct = NULL;
-////
 //// Symlongp Merge, Now, Clicks, Debug, Sync, Optimize, Mergefilter, Nowoffset;
 //// Symlongp Mergeport1, Mergeport2;
 //// Symlongp Debugwait, Debugmidi, Debugrun, Debugfifo, Debugmouse, Debuggesture;
@@ -59,74 +57,54 @@ var _Dnumtmp_ Datum
 //// Htablepp Chancolormap;
 //// Symlongp Chancolors;
 ////
-//// void
-//// newcontext(Symbolp s, int sz)
-//// {
-//// 	Context *c;
-////
-//// 	c = (Context *) kmalloc(sizeof(Context),"newcontext");
-//// 	c->symbols = newht(sz);
-//// 	c->func = s;
-//// 	c->next = Currct;
-//// 	c->localnum = 1;
-//// 	c->paramnum = 1;
-//// 	Currct = c;
-//// }
-////
-//// void
-//// popcontext(void)
-//// {
-//// 	Context *nextc;
-//// 	if ( Currct == NULL || Currct->next == NULL )
-//// 		execerror("popcontext called too many times!\n");
-//// 	nextc = Currct->next;
-//// 	kfree((char*)Currct);
-//// 	Currct = nextc;
-//// }
-////
-//// Symbolp Free_sy = NULL;
-////
-//// Symbolp
-//// newsy(void)
-//// {
-//// 	static Symbolp lastsy;
-//// 	static int used = ALLOCSY;
-//// 	Symbolp s;
-////
-//// 	/* First check the free list and use those nodes, before using */
-//// 	/* the newly allocated stuff. */
-//// 	if ( Free_sy != NULL ) {
-//// 		s = Free_sy;
-//// 		Free_sy = Free_sy->next;
-//// 		goto getout;
-//// 	}
-////
-//// 	/* allocate a BUNCH of new ones at a time */
-//// 	if ( used == ALLOCSY ) {
-//// 		used = 0;
-//// 		lastsy = (Symbolp) kmalloc(ALLOCSY*sizeof(Symbol),"newsy");
-//// 	}
-//// 	used++;
-//// 	s = lastsy++;
-////
-////     getout:
-//// 	s->stype = UNDEF;
-//// 	s->stackpos = 0;	/* i.e. it's global */
-//// 	s->flags = 0;
-//// 	s->onchange = NULL;
-//// 	s->next = NULL;
-//// 	return(s);
-//// }
-////
-//// void
-//// freesy(register Symbolp sy)
-//// {
-//// 	/* Add it to the list of free symbols */
-//// 	sy->next = Free_sy;
-//// 	Free_sy = sy;
-//// }
-////
-//// Symbolp
+
+func newcontext(s Symbolp, sz int) {
+	c := &Context{}
+	c.symbols = newht(sz)
+	c.cfunc = s
+	c.next = Currct
+	c.localnum = 1
+	c.paramnum = 1
+	Currct = c
+}
+
+func popcontext() {
+	if Currct == nil || Currct.next == nil {
+		execerror("popcontext called too many times!\n")
+	}
+	nextc := Currct.next
+	// kfree(Currct)
+	Currct = nextc
+}
+
+var Free_sy Symbolp
+
+func newsy() Symbolp {
+
+	var s Symbolp
+
+	// First check the free list and use those nodes, before using
+	// the newly allocated stuff.
+	if Free_sy != nil {
+		s = Free_sy
+		Free_sy = Free_sy.next
+	} else {
+		s = &Symbol{}
+	}
+
+	s.stype = UNDEF
+	s.stackpos = 0 // i.e. it's global
+	s.flags = 0
+	s.onchange = nil
+	s.next = nil
+	return s
+}
+
+func freesy(sy Symbolp) {
+	/* Add it to the list of free symbols */
+	sy.next = Free_sy
+	Free_sy = sy
+}
 
 func findsym(p string, symbols Htablep) Symbolp {
 	key := strdatum(p)
@@ -258,49 +236,52 @@ func findsym(p string, symbols Htablep) Symbolp {
 //// 	return s;
 //// }
 ////
-//// void
-//// clearsym(register Symbolp s)
-//// {
-//// #ifdef OLDSTUFF
-//// 	Codep cp;
-//// 	BLTINCODE bc;
-//// #endif
-////
-//// 	if ( s->stype == VAR ) {
-//// 		Datum *dp = symdataptr(s);
-//// 		switch (dp->type) {
-//// 		case D_ARR:
-//// 			if ( dp->u.arr ) {
-//// 				arrdecruse(dp->u.arr);
-//// 				dp->u.arr = NULL;
-//// 			}
-//// 			break;
-//// 		case D_PHR:
-//// 			if ( dp->u.phr != NULL ) {
-//// 				phdecruse(dp->u.phr);
-//// 				dp->u.phr = NULL;
-//// 			}
-//// 			break;
-//// 		case D_CODEP:
-////
-//// 			/* BUG FIX - 5/4/97 - no longer free it */
-//// #ifdef OLDSTUFF
-//// 			cp = dp->u.codep;
-//// 			bc = ((cp==NULL) ? 0 : BLTINOF(cp));
-//// 			/* If it's a built-in function, then the codep was */
-//// 			/* allocated by funcdp(), so we can free it. */
-//// 			if ( bc != 0 ) {
-//// 				/* kfree(cp); */
-//// 				dp->u.codep = NULL;
-//// 			}
-//// #endif
-//// 			dp->u.codep = NULL;
-//// 			break;
-//// 		default:
-//// 			break;
-//// 		}
-//// 	}
-//// }
+
+func clearsym(s Symbolp) {
+
+	//// #ifdef OLDSTUFF
+	//// 	Codep cp;
+	//// 	BLTINCODE bc;
+	//// #endif
+
+	if s.stype == VAR {
+		dp := symdataptr(s)
+		switch dp.dtype {
+		case D_ARR:
+			if dp.u.(Htablep) != nil {
+				arrdecruse(dp.u.(Htablep))
+				dp.u = nil
+			}
+			break
+		case D_PHR:
+			phr := dp.u.(Phrasep)
+			if phr != nil {
+				phdecruse(phr)
+				dp.u = nil
+			}
+			break
+		case D_CODEP:
+
+			//// 			// BUG FIX - 5/4/97 - no longer free it
+			//// #ifdef OLDSTUFF
+			//// 			cp = dp->u.codep;
+			//// 			bc = ((cp==NULL) ? 0 : BLTINOF(cp));
+			//// 			// If it's a built-in function, then the codep was
+			//// 			// allocated by funcdp(), so we can free it.
+			//// 			if ( bc != 0 ) {
+			//// 				// kfree(cp);
+			//// 				dp->u.codep = NULL;
+			//// 			}
+			//// #endif
+
+			dp.u = nil
+			break
+		default:
+			break
+		}
+	}
+}
+
 ////
 //// static struct {		/* Keywords */
 //// 	char	*name;
@@ -999,83 +980,83 @@ func findsym(p string, symbols Htablep) Symbolp {
 ////
 //// /* initsyms() - install constants and built-ins in table */
 //// void
-//// initsyms(void)
-//// {
-//// 	int i;
-//// 	Symbolp s;
-//// 	Datum *dp;
-//// 	char *p;
-////
-//// 	Zeroval = numdatum(0L);
-//// 	Noval = numdatum(MAXLONG);
-//// 	Nullstr = uniqstr("");
-////
-//// 	Keywords = newht(113);	/* no good reason for 113 */
-//// 	for (i = 0; (p = keywords[i].name) != NULL; i++) {
-//// 		(void)syminstall(uniqstr(p), Keywords, keywords[i].kval);
-//// 	}
-////
-//// 	for (i=0; (p=binums[i].name)!=NULL; i++) {
-//// 		/* Don't need to uniqstr(p), because installnum does it. */
-//// 		installnum(p,binums[i].ptovar,binums[i].val);
-//// 	}
-////
-//// 	for (i=0; (p=biphrs[i].name)!=NULL; i++) {
-//// 		s = globalinstallnew(uniqstr(p),VAR);
-//// 		dp = symdataptr(s);
-//// 		*dp = phrdatum(newph(1));
-//// 		*(biphrs[i].ptophr) = &(dp->u.phr);
-//// 		s->stackpos = 0;	/* i.e. it's global */
-//// 	}
-////
-//// 	for (i=0; (p=bistrs[i].name)!=NULL; i++) {
-//// 		s = globalinstallnew(uniqstr(p),VAR);
-//// 		dp = symdataptr(s);
-//// 		*dp = strdatum(uniqstr(bistrs[i].val));
-//// 		*(bistrs[i].ptostr) = &(dp->u.str);
-//// 	}
-////
-//// 	for (i=0; (p=builtins[i].name)!=NULL; i++) {
-//// 		s = globalinstallnew(uniqstr(p), VAR);
-//// 		dp = symdataptr(s);
-//// 		*dp = funcdp(s,builtins[i].bltindex);
-//// 	}
-////
-//// 	Rebootfuncd = symdataptr(lookup(uniqstr("Rebootfunc")));
-//// 	Nullfuncd = symdataptr(lookup(uniqstr("nullfunc")));
-//// 	Errorfuncd = symdataptr(lookup(uniqstr("Errorfunc")));
-//// 	Intrfuncd = symdataptr(lookup(uniqstr("Intrfunc")));
-//// 	Nullvald = symdataptr(lookup(uniqstr("Nullval")));
-//// 	Nullval = *Nullvald;
-////
-//// 	Colorfuncd = symdataptr(lookup(uniqstr("Colorfunc")));
-//// 	Redrawfuncd = symdataptr(lookup(uniqstr("Redrawfunc")));
-//// 	Resizefuncd = symdataptr(lookup(uniqstr("Resizefunc")));
-//// 	Exitfuncd = symdataptr(lookup(uniqstr("Exitfunc")));
-//// 	Track = globarray(uniqstr("Track"));
-//// 	Chancolormap = globarray(uniqstr("Chancolormap"));
-////
-//// 	Macros = newht(113);	/* no good reason for 113 */
-////
-//// 	for ( i=0; (p=Stdmacros[i]) != NULL;  i++ ) {
-//// 		/* Some compilers make strings read-only */
-//// 		p = strsave(p);
-//// 		macrodefine(p,0);
-//// 		free(p);
-//// 	}
-//// 	sprintf(Msg1,"MAXCLICKS=%ld",(long)(MAXCLICKS));
-//// 	macrodefine(Msg1,0);
-//// 	sprintf(Msg1,"MAXPRIORITY=%ld",(long)(MAXPRIORITY));
-//// 	macrodefine(Msg1,0);
-////
-//// 	*Inputistty = mdep_fisatty(Fin) ? 1 : 0;
-//// 	if ( *Inputistty == 0 )
-//// 		*Consecho = 0;
-//// 	Starting = 0;
-////
-//// 	*Keypath = uniqstr(mdep_keypath());
-//// 	*Musicpath = uniqstr(mdep_musicpath());
-//// }
+func initsyms() {
+	//// 	int i;
+	//// 	Symbolp s;
+	//// 	Datum *dp;
+	//// 	char *p;
+	////
+	Zeroval = numdatum(0)
+	//// 	Noval = numdatum(MAXLONG);
+	//// 	Nullstr = uniqstr("");
+	////
+	//// 	Keywords = newht(113);	/* no good reason for 113 */
+	//// 	for (i = 0; (p = keywords[i].name) != NULL; i++) {
+	//// 		(void)syminstall(uniqstr(p), Keywords, keywords[i].kval);
+	//// 	}
+	////
+	//// 	for (i=0; (p=binums[i].name)!=NULL; i++) {
+	//// 		/* Don't need to uniqstr(p), because installnum does it. */
+	//// 		installnum(p,binums[i].ptovar,binums[i].val);
+	//// 	}
+	////
+	//// 	for (i=0; (p=biphrs[i].name)!=NULL; i++) {
+	//// 		s = globalinstallnew(uniqstr(p),VAR);
+	//// 		dp = symdataptr(s);
+	//// 		*dp = phrdatum(newph(1));
+	//// 		*(biphrs[i].ptophr) = &(dp->u.phr);
+	//// 		s->stackpos = 0;	/* i.e. it's global */
+	//// 	}
+	////
+	//// 	for (i=0; (p=bistrs[i].name)!=NULL; i++) {
+	//// 		s = globalinstallnew(uniqstr(p),VAR);
+	//// 		dp = symdataptr(s);
+	//// 		*dp = strdatum(uniqstr(bistrs[i].val));
+	//// 		*(bistrs[i].ptostr) = &(dp->u.str);
+	//// 	}
+	////
+	//// 	for (i=0; (p=builtins[i].name)!=NULL; i++) {
+	//// 		s = globalinstallnew(uniqstr(p), VAR);
+	//// 		dp = symdataptr(s);
+	//// 		*dp = funcdp(s,builtins[i].bltindex);
+	//// 	}
+	////
+	//// 	Rebootfuncd = symdataptr(lookup(uniqstr("Rebootfunc")));
+	//// 	Nullfuncd = symdataptr(lookup(uniqstr("nullfunc")));
+	//// 	Errorfuncd = symdataptr(lookup(uniqstr("Errorfunc")));
+	//// 	Intrfuncd = symdataptr(lookup(uniqstr("Intrfunc")));
+	//// 	Nullvald = symdataptr(lookup(uniqstr("Nullval")));
+	//// 	Nullval = *Nullvald;
+	////
+	//// 	Colorfuncd = symdataptr(lookup(uniqstr("Colorfunc")));
+	//// 	Redrawfuncd = symdataptr(lookup(uniqstr("Redrawfunc")));
+	//// 	Resizefuncd = symdataptr(lookup(uniqstr("Resizefunc")));
+	//// 	Exitfuncd = symdataptr(lookup(uniqstr("Exitfunc")));
+	//// 	Track = globarray(uniqstr("Track"));
+	//// 	Chancolormap = globarray(uniqstr("Chancolormap"));
+	////
+	//// 	Macros = newht(113);	/* no good reason for 113 */
+	////
+	//// 	for ( i=0; (p=Stdmacros[i]) != NULL;  i++ ) {
+	//// 		/* Some compilers make strings read-only */
+	//// 		p = strsave(p);
+	//// 		macrodefine(p,0);
+	//// 		free(p);
+	//// 	}
+	//// 	sprintf(Msg1,"MAXCLICKS=%ld",(long)(MAXCLICKS));
+	//// 	macrodefine(Msg1,0);
+	//// 	sprintf(Msg1,"MAXPRIORITY=%ld",(long)(MAXPRIORITY));
+	//// 	macrodefine(Msg1,0);
+	////
+	//// 	*Inputistty = mdep_fisatty(Fin) ? 1 : 0;
+	//// 	if ( *Inputistty == 0 )
+	//// 		*Consecho = 0;
+	//// 	Starting = 0;
+	////
+	//// 	*Keypath = uniqstr(mdep_keypath());
+	//// 	*Musicpath = uniqstr(mdep_musicpath());
+}
+
 ////
 //// void
 //// initsyms2(void)
@@ -1272,73 +1253,60 @@ func findsym(p string, symbols Htablep) Symbolp {
 //// 	}
 ////
 //// }
-////
-//// Hnodep Free_hn = NULL;
-////
-//// Hnodep
-//// newhn(void)
-//// {
-//// 	static Hnodep lasthn;
-//// 	static int used = ALLOCHN;
-//// 	Hnodep hn;
-////
-//// 	/* First check the free list and use those nodes, before using */
-//// 	/* the newly allocated stuff. */
-//// 	if ( Free_hn != NULL ) {
-//// 		hn = Free_hn;
-//// 		Free_hn = Free_hn->next;
-//// 		goto getout;
-//// 	}
-////
-//// 	/* allocate a BUNCH of new ones at a time */
-//// 	if ( used == ALLOCHN ) {
-//// 		used = 0;
-//// 		lasthn = (Hnodep) kmalloc(ALLOCHN*sizeof(Hnode),"newhn");
-//// 	}
-//// 	used++;
-//// 	hn = lasthn++;
-////
-////     getout:
-//// 	hn->next = NULL;
-//// 	hn->val = symdatum(NULL);
-//// 	/* hn->key = NULL; */
-//// 	return(hn);
-//// }
-////
-//// void
-//// freehn(Hnodep hn)
-//// {
-//// 	if ( hn == NULL )
-//// 		execerror("Hey, hn==NULL in freehn\n");
-////
-//// 	switch ( hn->val.type ) {
-//// 	case D_SYM:
-//// 		if ( hn->val.u.sym ) {
-//// 			clearsym(hn->val.u.sym);
-//// 			freesy(hn->val.u.sym);
-//// 		}
-//// 		break;
-//// 	case D_TASK:
-//// 		if ( hn->val.u.task ) {
-//// 			freetp(hn->val.u.task);
-//// 		}
-//// 		break;
-//// 	case D_FIFO:
-//// 		if ( hn->val.u.fifo )
-//// 			freeff(hn->val.u.fifo);
-//// 		break;
-//// 	case D_WIND:
-//// 		break;
-//// 	default:
-//// 		eprint("Hey, type=%d in clearhn, should something go here??\n",hn->val.type);
-//// 		break;
-//// 	}
-//// 	hn->val = Noval;
-////
-//// 	hn->next = Free_hn;
-//// 	Free_hn = hn;
-//// }
-////
+
+var Free_hn Hnodep
+
+func newhn() Hnodep {
+
+	var hn Hnodep
+
+	/* First check the free list and use those nodes, before using */
+	/* the newly allocated stuff. */
+	if Free_hn != nil {
+		hn = Free_hn
+		Free_hn = Free_hn.next
+	} else {
+		hn = &Hnode{}
+	}
+
+	hn.next = nil
+	hn.val = symdatum(nil)
+	/* hn.key = NULL; */
+	return (hn)
+}
+
+func freehn(hn Hnodep) {
+
+	if hn == nil {
+		execerror("Hey, hn==NULL in freehn\n")
+	}
+	switch hn.val.dtype {
+	case D_SYM:
+		sym := hn.val.u.(Symbolp)
+		if sym != nil {
+			clearsym(sym)
+			freesy(sym)
+		}
+	case D_TASK:
+		t := hn.val.u.(Ktaskp)
+		if t != nil {
+			freetp(t)
+		}
+	case D_FIFO:
+		if hn.val.u.fifo {
+			freeff(hn.val.u.fifo)
+		}
+	case D_WIND:
+		// do nothing
+	default:
+		eprint("Hey, type=%d in clearhn, should something go here??\n", hn.val.dtype)
+	}
+	hn.val = Noval
+
+	hn.next = Free_hn
+	Free_hn = hn
+}
+
 //// #ifdef OLDSTUFF
 //// void
 //// chkfreeht() {
@@ -1354,127 +1322,122 @@ func findsym(p string, symbols Htablep) Symbolp {
 //// }
 //// #endif
 ////
-//// /* To avoid freeing and re-allocating the large chunks of memory */
-//// /* used for the hash tables, we keep them around and reuse them. */
-////
-//// Htablep
-//// newht(int size)
-//// {
-//// 	register Hnodepp h, pp;
-//// 	register Htablep ht;
-////
-//// /* eprint("(newht(%d ",size); */
-//// 	/* See if there's a saved table we can use */
-//// 	for ( ht=Freeht; ht!=NULL; ht=ht->h_next ) {
-//// 		if ( ht->size == size )
-//// 			break;
-//// 	}
-//// 	if ( ht != NULL ) {
-//// 		/* Remove from Freeht list */
-//// 		if ( ht->h_prev == NULL ) {
-//// 			/* it's the first one in the Freeht list */
-//// 			Freeht = ht->h_next;
-//// 			if ( Freeht != NULL )
-//// 				Freeht->h_prev = NULL;
-//// 		}
-//// 		else if ( ht->h_next == NULL ) {
-//// 			/* it's the last one in the Freeht list */
-//// 			ht->h_prev->h_next = NULL;
-//// 		}
-//// 		else {
-//// 			ht->h_next->h_prev = ht->h_prev;
-//// 			ht->h_prev->h_next = ht->h_next;
-//// 		}
-//// 	}
-//// 	else {
-//// 		ht = (Htablep) kmalloc( sizeof(Htable), "newht" );
-//// 		h = (Hnodepp) kmalloc( size * sizeof(Hnodep), "newht" );
-//// 		ht->size = size;
-//// 		ht->nodetable = h;
-//// 		/* initialize entire table to NULLS */
-//// 		pp = h + size;
-//// 		while ( pp-- != h )
-//// 			*pp =  NULL;
-//// 	}
-////
-//// 	ht->count = 0;
-//// 	ht->h_used = 0;
-//// 	ht->h_tobe = 0;
-//// 	ht->h_next = NULL;
-//// 	ht->h_prev = NULL;
-//// 	ht->h_state = 0;
-//// 	if ( Topht != NULL ) {
-//// 		Topht->h_prev = ht;
-//// 		ht->h_next = Topht;
-//// 	}
-//// 	Topht = ht;
-//// 	return(ht);
-//// }
-////
-//// void
-//// clearht(Htablep ht)
-//// {
-//// 	register Hnodep hn, nexthn;
-//// 	register Hnodepp pp;
-//// 	register int n = ht->size;
-////
-//// 	pp = ht->nodetable;
-//// 	/* as we're freeing the Hnodes pointed to by this hash table, */
-//// 	/* we zero out the table, in preparation for its reuse. */
-//// #ifdef lint
-//// 	nexthn = 0;
-//// #endif
-//// 	if ( ht->count != 0 ) {
-//// 		while ( --n >= 0 ) {
-//// 			for ( hn=(*pp); hn != NULL; hn=nexthn ) {
-//// 				nexthn = hn->next;
-//// /* if(*Debug>0)eprint("freehn being called from clearht\n"); */
-//// 				freehn(hn);
-//// 			}
-//// 			*pp++ = NULL;
-//// 		}
-//// 	}
-//// 	ht->count = 0;
-//// }
-////
-//// void
-//// freeht(Htablep ht)
-//// {
-//// 	register Htablep ht2;
-////
-//// 	clearht(ht);
-////
-//// 	/* If it's in the Htobechecked list... */
-//// 	for ( ht2=Htobechecked; ht2!=NULL; ht2=ht2->h_next ) {
-//// 		if ( ht2 == ht )
-//// 			break;
-//// 	}
-//// 	/* remove it */
-//// 	if ( ht2 != NULL ) {
-//// 		if ( ht2->h_next )
-//// 			ht2->h_next->h_prev = ht2->h_prev;
-//// 		if ( ht2 == Htobechecked )
-//// 			Htobechecked = ht2->h_next;
-//// 		else
-//// 			ht2->h_prev->h_next = ht2->h_next;
-//// 	}
-////
-//// 	for ( ht2=Freeht; ht2!=NULL; ht2=ht2->h_next ) {
-//// 		if ( ht == ht2 ) {
-//// 			eprint("HEY!, Trying to free an ht node (%lld) that's already in the Free list!!\n",(intptr_t)ht);
-//// 			abort();
-//// 		}
-//// 	}
-//// 	/* Add to Freeht list */
-//// 	if ( Freeht )
-//// 		Freeht->h_prev = ht;
-//// 	ht->h_next = Freeht;
-//// 	ht->h_prev = NULL;
-//// 	ht->h_used = 0;
-//// 	ht->h_tobe = 0;
-//// 	ht->h_state = 0;
-//// 	Freeht = ht;
-//// }
+
+// To avoid freeing and re-allocating the large chunks of memory
+// used for the hash tables, we keep them around and reuse them.
+func newht(size int) Htablep {
+	var h, pp Hnodepp
+	var ht Htablep
+
+	/* eprint("(newht(%d ",size); */
+	// See if there's a saved table we can use
+	for ht = Freeht; ht != nil; ht = ht.h_next {
+		if ht.size == size {
+			break
+		}
+	}
+	if ht != nil {
+		// Remove from Freeht list
+		if ht.h_prev == nil {
+			// it's the first one in the Freeht list
+			Freeht = ht.h_next
+			if Freeht != nil {
+				Freeht.h_prev = nil
+			}
+		} else if ht.h_next == nil {
+			// it's the last one in the Freeht list
+			ht.h_prev.h_next = nil
+		} else {
+			ht.h_next.h_prev = ht.h_prev
+			ht.h_prev.h_next = ht.h_next
+		}
+	} else {
+		ht = &Htable{}
+		h = make([]Hnodep, size)
+		ht.size = size
+		ht.nodetable = h
+		// initialize entire table to NULLS
+		// pp = h + size;
+		// while ( pp-- != h ) {
+		// 	*pp =  NULL;
+		// }
+	}
+
+	ht.count = 0
+	ht.h_used = 0
+	ht.h_tobe = 0
+	ht.h_next = nil
+	ht.h_prev = nil
+	ht.h_state = 0
+	if Topht != nil {
+		Topht.h_prev = ht
+		ht.h_next = Topht
+	}
+	Topht = ht
+	return (ht)
+}
+
+func clearht(ht Htablep) {
+	// var hn, nexthn Hnodep
+	n := ht.size
+
+	pp := ht.nodetable
+	// as we're freeing the Hnodes pointed to by this hash table,
+	// we zero out the table, in preparation for its reuse.
+	if ht.count != 0 {
+		for i, hn := range ht.nodetable {
+			for tmp := hn; tmp != nil; tmp = nexthn {
+				nexthn = tmp.next
+				// freehn(hn)
+			}
+			ht.nodetable[i] = nil
+		}
+	}
+	ht.count = 0
+}
+
+func freeht(ht Htablep) {
+
+	var ht2 Htablep
+
+	clearht(ht)
+
+	/* If it's in the Htobechecked list... */
+	for ht2 := Htobechecked; ht2 != nil; ht2 = ht2.h_next {
+		if ht2 == ht {
+			break
+		}
+	}
+	/* remove it */
+	if ht2 != nil {
+		if ht2.h_next {
+			ht2.h_next.h_prev = ht2.h_prev
+		}
+		if ht2 == Htobechecked {
+			Htobechecked = ht2.h_next
+		} else {
+			ht2.h_prev.h_next = ht2.h_next
+		}
+	}
+
+	for ht2 := Freeht; ht2 != nil; ht2 = ht2.h_next {
+		if ht == ht2 {
+			eprint("HEY!, Trying to free an ht node that's already in the Free list!!\n")
+			abort()
+		}
+	}
+	/* Add to Freeht list */
+	if Freeht != nil {
+		Freeht.h_prev = ht
+	}
+	ht.h_next = Freeht
+	ht.h_prev = nil
+	ht.h_used = 0
+	ht.h_tobe = 0
+	ht.h_state = 0
+	Freeht = ht
+}
+
 ////
 //// void
 //// htlists(void)
@@ -1586,7 +1549,12 @@ func hashvalue(s string) int {
 	hmd5 := md5.Sum([]byte(s))
 	// hsha1 := sha1.Sum([]byte(s))
 	// hsha2 := sha256.Sum256([]byte(s))
-	return hm5
+	var res int
+	for _, v := range hmd5[0:8] {
+		res <<= 8
+		res |= int(v)
+	}
+	return res
 }
 
 /*
@@ -1599,10 +1567,9 @@ func hashvalue(s string) int {
 
 func hashtable(ht Htablep, key Datum, action int) Hnodep {
 
-	var table Hnodepp
-	var h, toph, prev Hnodep
+	var table []Hnodep
+	var h, toph Hnodep
 	var v int
-	cnt := 0
 
 	table = ht.nodetable
 

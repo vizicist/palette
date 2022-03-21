@@ -33,19 +33,20 @@ package kit
 type Unchar byte
 type Codep *Unchar
 
-/// typedef struct Instnode *Instnodep;
-/// typedef struct Midimessdata *Midimessp;
-/// typedef struct Notedata *Noteptr;
+// type Instnodep *Instnode
+type Midimessp *Midimessdata
+
+type Noteptr *Notedata
+
 /// typedef char *Bytep;
-/// typedef struct Phrase *Phrasep;
-/// typedef struct Symbol *Symbolp;
+
 /// typedef Phrasep *Phrasepp;
 /// typedef long *Symlongp;
 /// typedef char *Symstr;
 /// typedef Symstr *Symstrp;
-type Hnodep *Hnode
-type Hnodepp **Hnode
 
+type Hnodep *Hnode
+type Hnodepp []Hnodep
 type Kobjectp *Kobject
 
 ///
@@ -122,12 +123,16 @@ func isalpha(c byte) bool {
 ///
 /// typedef float DBLTYPE;
 /// typedef int (*INTFUNC)(NOARG);
-/// typedef void (*BYTEFUNC)(NOARG);
-/// typedef Unchar BLTINCODE;
+
+type BYTEFUNC func()
+
 ///
 /// #ifdef __STDC__
 /// typedef void (*STRFUNC)(Symstr);
-/// typedef void (*BLTINFUNC)(int);
+
+type BLTINFUNC func() int
+type BLTINCODE byte
+
 /// typedef int (*HNODEFUNC)(Hnodep);
 /// typedef void (*PATHFUNC)(char*,char*);
 /// #else
@@ -483,18 +488,20 @@ const H_DELETE = 2
 /// /* restrictions) and so that separate intruction segements (e.g. for each */
 /// /* user-defined function) can be more easily maintained. */
 ///
-/// typedef union Instunion {
-/// 	BLTINCODE bltin;
-/// 	BYTEFUNC func;
-/// 	DBLTYPE dbl;
-/// 	long val;
-/// 	Symstr str;
-/// 	Symbolp sym;
-/// 	Instnodep in;
-/// 	Codep ip;
-/// 	Phrasep phr;
-/// 	Unchar bytes[8];
-/// } Inst;
+type Inst struct {
+	i interface{}
+	/// 	BLTINCODE bltin;
+	/// 	BYTEFUNC func;
+	/// 	DBLTYPE dbl;
+	/// 	long val;
+	/// 	Symstr str;
+	/// 	Symbolp sym;
+	/// 	Instnodep in;
+	/// 	Codep ip;
+	/// 	Phrasep phr;
+	/// 	Unchar bytes[8];
+}
+
 ///
 /// /* values of ival in Inst */
 /// #define IBREAK 8
@@ -526,16 +533,12 @@ const H_DELETE = 2
 /// /* This is an arbitrary magic number */
 /// #define FORINJUNK 0x1234
 ///
-/// typedef struct Instcode {
-/// 	Inst u;
-/// 	int type;
-/// } Instcode;
-///
-/// typedef struct Instnode {
-/// 	Instcode code;
-/// 	Instnodep inext;
-/// 	int offset;	/* only used in inodes2code() */
-/// } Instnode;
+
+type Instcode struct {
+	u     Inst
+	itype int
+}
+
 ///
 /// /* The Datum is the basic type for the Stack that gets manipulated during */
 /// /* the execution of Inst's. */
@@ -581,15 +584,15 @@ type Hnode struct {
 	val  Datum
 }
 
-///
-/// #define HT_TOBECHECKED 1
+const HT_TOBECHECKED = 1
+
 ///
 type Htable struct {
 	size      int /* size of nodetable */
 	count     int /* number of actual elements */
 	h_used    int16
 	h_tobe    int16
-	nodetable Hnodepp
+	nodetable []Hnodep
 	h_next    Htablep
 	h_prev    Htablep
 	h_state   int16 /* HT_TOBECHECKED or 0 */
@@ -610,43 +613,43 @@ type Htablep *Htable
 /// /* When an array is passed as an argument to a function, it is passed */
 /// /* by reference, allowing modification of the passed array */
 ///
-type Symbol struct { /* symbol table entry */
+type Symbol struct { // symbol table entry
 	next Symbolp
-	name Datum /* For normal variables, this is the name. */
-	/* For array elements, it's the index value. */
-	stype    int   /* UNDEF, VAR, MACRO, TOGLOBSYM, -or- a keyword */
-	stackpos byte  /* 0 if symbol is global, okay if unsigned or signed */
-	flags    byte  /* S_READONLY, etc. */
-	onchange Codep /* to execute when variable changes value */
-	sd       Datum /* Value of global VARs and array elements. */
+	name Datum // For normal variables, this is the name.
+	// For array elements, it's the index value.
+	stype    int   // UNDEF, VAR, MACRO, TOGLOBSYM, -or- a keyword
+	stackpos int8  // 0 is global, >0 is parameter, <0 is local
+	flags    byte  // S_READONLY, etc.
+	onchange Codep // to execute when variable changes value
+	sd       Datum // Value of global VARs and array elements.
 }
 
 type Symbolp *Symbol
 
-///
-/// /* When parsing a keykit program, Contexts are used to determine what */
-/// /* Symbols are local (e.g. parameters within a user-defined function) */
-/// /* and which are global. */
-///
-/// typedef struct Context {
-/// 	struct Context *next;
-/// 	Symbolp func;
-/// 	Htablep symbols;
-/// 	int localnum;
-/// 	int paramnum;
-/// } Context;
-///
-/// struct bltinfo {
-/// 	char *name;
-/// 	BLTINFUNC func;
-/// 	BLTINCODE bltindex;
-/// };
-/// extern struct bltinfo builtins[];
-/// extern BYTEFUNC Bytefuncs[];
-/// extern char *Bytenames[];
-/// extern BLTINFUNC Bltinfuncs[];
-///
-/// typedef struct Ktask *Ktaskp;
+// When parsing a keykit program, Contexts are used to determine what
+// Symbols are local (e.g. parameters within a user-defined function)
+// and which are global.
+type Context struct {
+	next     *Context
+	cfunc    Symbolp
+	symbols  Htablep
+	localnum int
+	paramnum int
+}
+
+type bltinfo struct {
+	name      string
+	bltinfunc BLTINFUNC
+	bltindex  BLTINCODE
+}
+
+var builtins []bltinfo
+var Bytefuncs []BYTEFUNC
+var Bytenames []string
+var Bltinfuncs []BLTINFUNC
+
+type Ktaskp *Ktask
+
 ///
 /// #define OFF_USER 0
 /// #define OFF_INTERNAL 1
@@ -676,76 +679,77 @@ type Symbolp *Symbol
 /// 	struct Tofree *next;
 /// } Tofree;
 ///
-/// typedef struct Ktask {
-/// 	Unchar* pc;	/* current instruction */
-/// 	Ktaskp nextrun;	/* Used for the Running list */
-/// 	Datum *stack;	/* the stack (duh) */
-/// 	int stacksize;	/* allocated size of stack */
-/// 	Datum *stackp;	/* next free spot on stack */
-/// 	Datum *stackend;/* just past last allocated element */
-/// 	Datum *stackframe;	/* beginning of current stack frame */
-/// 	Datum *arg0;	/* argument 0 of current stack frame */
-/// 	int state;	/* T_FREE, T_RUNNING, etc. */
-/// 	int nested;	/* number of nested instruction streams */
-/// 	long tid;	/* task id, >= 0 */
-/// 	int priority;	/* 0=normal, >0 is high priority */
-/// 	Codep first;	/* first instruction */
-/// 	int schedcnt;	/* number of scheduled events due to this task */
-/// 	long cnt;	/* number of instructions executed */
-/// 	int tmp;	/* for temporary use as a flag, counter, etc. */
-/// 	Ktaskp twait;   /* if state==T_WAITING, we're waiting for this */
-/// 	Datum *qmarkframe;    /* keeps track of ? (in ph{??.chan==1} ) */
-/// 	int qmarknum;	      /* ? number (as in ph{??.number<10} ) */
-/// 	int rminstruct;	      /* says if instructions should be freed */
-/// 	Ktaskp parent;
-/// 	int anychild;	      /* If this task has any children */
-/// 	int anywait;	      /* If any tasks are waiting for this one */
-/// 	struct Fifo *fifo;	      /* Task is blocked on this fifo. */
-/// 	Codep onexit;
-/// 	Dnode *onexitargs;
-/// 	Codep ontaskerror;
-/// 	Dnode *ontaskerrorargs;
-/// 	Symstr ontaskerrormsg;
-/// 	Ktaskp nxt;     /* Used for the Toptp and Freetp lists */
-/// 	Ktaskp tmplist; /* Used for temporary lists. */
-/// 	long linenum;
-/// 	Symstr filename;
-/// 	struct Lknode *lock;
-/// 	Kobjectp obj;	/* object we're running method of */
-/// 	Kobjectp realobj;/* object we're running method on behalf of */
-/// 	Symstr method;
-/// 	BLTINCODE pend_bltin;	/* pending function (when T_OBJBLOCKED). */
-/// 	short pend_npassed;	/* for pending function */
-/// } Task;
-///
-/// typedef struct Fifodata {
-/// 	struct Fifodata *next;
-/// 	Datum d;
-/// } Fifodata;
-///
-/// typedef struct Fifo {
-/// 	Fifodata *head;		/* Points to last "put" */
-/// 	Fifodata *tail;		/* Points to next "get" */
-/// 	int size;
-/// 	int flags;		/* For FIFO_* bitflags, see above */
-/// 	FILE *fp;		/* If non-NULL, this is a file fifo */
-/// 	Ktaskp t;		/* This task is blocked on this fifo */
-/// 	PORTHANDLE port;	/* If FIFO_ISPORT is set, this is used. */
-/// 	long num;
-/// 	struct Fifo *next;
-/// 	Fifotype fifoctl_type;	/* type of data read from fifo */
-/// 	char *linebuff;		/* Saved data for FIFO_LINE */
-/// 	long linesize;		/* Total size of linebuff (for makeroom) */
-/// 	long linesofar;		/* How much actually used */
-/// } Fifo;
-///
-/// typedef struct Lknode {
-/// 	Symstr name;		/* Only used in Toplk list. */
-/// 	Task *owner;
-/// 	struct Lknode *next;	/* Only used in Toplk list. */
-/// 	struct Lknode *notify;	/* List of pending locks with same name */
-/// } Lknode;
-///
+
+type Ktask struct {
+	pc              *Unchar /* current instruction */
+	nextrun         Ktaskp  /* Used for the Running list */
+	stack           *Datum  /* the stack (duh) */
+	stacksize       int     /* allocated size of stack */
+	stackp          *Datum  /* next free spot on stack */
+	stackend        *Datum  /* just past last allocated element */
+	stackframe      *Datum  /* beginning of current stack frame */
+	arg0            *Datum  /* argument 0 of current stack frame */
+	state           int     /* T_FREE, T_RUNNING, etc. */
+	nexted          int     /* number of nested instruction streams */
+	tid             int     /* task id, >= 0 */
+	priority        int     /* 0=normal, >0 is high priority */
+	first           Codep   /* first instruction */
+	schedcnt        int     /* number of scheduled events due to this task */
+	cnt             int     /* number of instructions executed */
+	tmp             int     /* for temporary use as a flag, counter, etc. */
+	twait           Ktaskp  /* if state==T_WAITING, we're waiting for this */
+	qmarkframe      *Datum  /* keeps track of ? (in ph{??.chan==1} ) */
+	qmarknum        int     /* ? number (as in ph{??.number<10} ) */
+	rminstruct      int     /* says if instructions should be freed */
+	parent          Ktaskp
+	anychild        int   /* If this task has any children */
+	anywait         int   /* If any tasks are waiting for this one */
+	fifo            *Fifo /* Task is blocked on this fifo. */
+	onexit          Codep
+	onexitargs      *Dnode
+	ontaskerror     Codep
+	ontaskerrorargs *Dnode
+	ontaskerrormsg  Symstr
+	nxt             Ktaskp /* Used for the Toptp and Freetp lists */
+	tmplist         Ktaskp /* Used for temporary lists. */
+	linenum         long
+	filename        Symstr
+	lock            *Lknode
+	obj             Kobjectp /* object we're running method of */
+	realobj         Kobjectp /* object we're running method on behalf of */
+	method          Symstr
+	pend_bltin      BLTINCODE /* pending function (when T_OBJBLOCKED). */
+	pend_npassed    short     /* for pending function */
+}
+
+type Fifodata struct {
+	next *Fifodata
+	d    Datum
+}
+
+type Fifo struct {
+	head         Fifodata // Points to last "put"
+	tail         Fifodata // Points to next "get"
+	size         int
+	flags        int        // For FIFO_* bitflags, see above
+	fp           *FILE      // If non-NULL, this is a file fifo
+	t            Ktaskp     // This task is blocked on this fifo
+	port         PORTHANDLE // If FIFO_ISPORT is set, this is used.
+	num          int
+	next         *Fifo
+	fifoctl_type Fifotype // type of data read from fifo
+	linebuff     string   // Saved data for FIFO_LINE
+	linesize     int      // Total size of linebuff (for makeroom)
+	linesofar    int      // How much actually used
+}
+
+type Lknode struct {
+	name   Symstr // Only used in Toplk list.
+	owner  *Task
+	next   *Lknode // Only used in Toplk list.
+	notify *Lknode // List of pending locks with same name
+}
+
 type Kobject struct {
 	id          int
 	symbols     Htablep
@@ -756,7 +760,6 @@ type Kobject struct {
 	onext       Kobjectp
 }
 
-///
 /// /*
 ///  * There are this many input devices, and this many output devices.
 ///  */
@@ -818,18 +821,18 @@ type Kobject struct {
 ///
 /// #define fifonum(f) ((f)->num)
 ///
-/// #define FIFOINC 64
-///
-/// #define SCH_NOTEOFF 0
-/// #define SCH_PHRASE 1
-/// #define SCH_WAKE 2
-///
-/// #define FREEABLE 1
-/// #define NOTFREEABLE 0
-///
-/// #define MAXPRIORITY 1000
-/// #define DEFPRIORITY 500
-///
+const FIFOINC = 64
+
+const SCH_NOTEOFF = 0
+const SCH_PHRASE = 1
+const SCH_WAKE = 2
+
+const FREEABLE = 1
+const NOTFREEABLE = 0
+
+const MAXPRIORITY = 1000
+const DEFPRIORITY = 500
+
 /// #define disabled(s) ((s)->clicks==MAXCLICKS)
 ///
 /// extern Sched *Topsched;
@@ -925,17 +928,37 @@ func isnoval(d Datum) bool {
 /// #define symname(s) ((s)->name.type==D_STR?(s)->name.u.str:dtostr((s)->name))
 ///
 /// extern Datum _Dnumtmp_;
-/// #define numdatum(l) ((_Dnumtmp_.u.val=(l)),_Dnumtmp_)
+
+func numdatum(l int) Datum {
+	return Datum{dtype: D_NUM, u: l}
+}
+
 ///
 /// #define phnumused(p) ((p)->p_used)
 /// #define phreallyused(p) ((p)->p_used+(p)->p_tobe)
 ///
 /// #define phincruse(p) {if((p)!=NULL){((p)->p_tobe)++;}}
-/// #define phdecruse(p) {if((p)!=NULL){ \
-/// 	if(((p)->p_used+(--((p)->p_tobe)))<=0)addtobechecked(p);}}
-///
+
+func phdecruse(p Phrasep) {
+	if p != nil {
+		p.p_tobe -= 1
+		if p.p_used+p.p_tobe <= 0 {
+			addtobechecked(p)
+		}
+	}
+}
+
 /// #define arrincruse(a) {if((a)!=NULL){((a)->h_tobe)++;}}
-/// #define arrdecruse(a) {if((a)!=NULL){if(((a)->h_used+(--((a)->h_tobe)))<=0)httobechecked(a);}}
+
+func arrdecruse(a Htablep) {
+	if a != nil {
+		a.h_tobe -= 1
+		if a.h_used+(a.h_tobe) <= 0 {
+			httobechecked(a)
+		}
+	}
+}
+
 ///
 /// #define incruse(d) {if((d).type==D_PHR)phincruse((d).u.phr) else if((d).type==D_ARR)arrincruse((d).u.arr)}
 /// #define decruse(d) {if((d).type==D_PHR)phdecruse((d).u.phr) else if((d).type==D_ARR)arrdecruse((d).u.arr)}

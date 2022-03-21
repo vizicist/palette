@@ -1,42 +1,45 @@
 package kit
+
 //// /*
 ////  *	Copyright 1996 AT&T Corp.  All rights reserved.
 ////  */
-//// 
+////
 //// #define OVERLAY6
-//// 
+////
 //// #ifdef PYTHON
 //// #include "Python.h"
 //// #endif
 //// #include "key.h"
 //// #include "gram.h"
-//// 
-//// 
+////
+////
 //// Codep Ipop, Idosweep, Ireboot;
-//// 
-//// Ktaskp T;		/* currently-active task */
-//// Ktaskp Running = NULL;	/* list of runnable tasks */
-//// 
-//// int Currpriority = DEFPRIORITY; /* current priority level, tasks lower */
-//// 				/* than this do not run. */
-//// 
-//// static Ktaskp Toptp = NULL;
-//// static Ktaskp Freetp = NULL;
-//// static long Tid = 0;
-//// 
-//// Htablep Tasktable = NULL;
+////
+
+var T Ktaskp       // currently-active task
+var Running Ktaskp // list of runnable tasks
+
+var Currpriority int = DEFPRIORITY // current priority level,
+// tasks lower than this do not run.
+
+var Toptp Ktaskp
+var Freetp Ktaskp
+var Tid int
+
+var Tasktable Htablep
+
 //// int Nwaiting = 0;
 //// int Nsleeptill = 0;
-//// 
+////
 //// #ifdef DEBUGRUN
 //// Ktaskp TraceT = NULL;
 //// #endif
-//// 
+////
 //// int Consolefd = 0;
 //// int Displayfd = -1;
 //// int Midifd = -1;
 //// static int ConsoleEOF = 0;
-//// 
+////
 //// /* The order in this list does NOT have to match the I_* values, */
 //// /* or anything else. */
 //// struct ilist {
@@ -135,7 +138,7 @@ package kit
 //// 	i_xy4, "i_xy4",
 //// 	0, 0
 //// };
-//// 
+////
 //// char *
 //// funcnameof(BYTEFUNC i)
 //// {
@@ -146,7 +149,7 @@ package kit
 //// 	}
 //// 	return NULL;
 //// }
-//// 
+////
 //// Ktaskp
 //// taskptr(long tid)
 //// {
@@ -156,16 +159,16 @@ package kit
 //// 	else
 //// 		return(NULL);
 //// }
-//// 
+////
 //// jmp_buf Begin;
-//// 
+////
 //// void
 //// restartexec(void)
 //// {
 //// 	longjmp(Begin,1);
 //// 	/*NOTREACHED*/
 //// }
-//// 
+////
 //// void
 //// makesuredefined(Datum **dpp,char *nm)
 //// {
@@ -177,7 +180,7 @@ package kit
 //// 		*dpp = symdataptr(s);
 //// 	}
 //// }
-//// 
+////
 //// void
 //// checkports(void)
 //// {
@@ -186,21 +189,21 @@ package kit
 //// 	PORTHANDLE port;
 //// 	Fifo *f;
 //// 	Datum ddata;
-//// 
+////
 //// 	while ( 1 ) {
 //// 		ddata = Noval;
 //// 		sz = mdep_getportdata(&port,buff,BIGBUFSIZ,&ddata);
 //// 		/* -1 indicates there's no more ports with info */
 //// 		if ( sz == -1 )
 //// 			break;
-//// 
+////
 //// 		/* See which fifo got some data */
 //// 		f = port2fifo(port);
 //// 		if ( f == NULL ) {
 //// 			eprint("Port value (%d) from mdep_getportdata not in a fifo?!",port);
 //// 			continue;
 //// 		}
-//// 
+////
 //// 		// tprint("(checkports port=%ld f=%ld sz=%d\n",(long)port,(long)f,sz);
 //// 		if ( sz <= 0 ) {
 //// 			long v;
@@ -231,7 +234,7 @@ package kit
 //// 			Datum da;
 //// 			Fifo *f0, *f1;
 //// 			PORTHANDLE *php = (PORTHANDLE*)buff;
-//// 
+////
 //// 			if ( sz != 2*sizeof(PORTHANDLE) ) {
 //// 				mdep_popup("FIFOTYPE_FIFO got unexpected size from getportdata?!");
 //// 				continue;
@@ -276,17 +279,17 @@ package kit
 //// 		}
 //// 	}
 //// }
-//// 
+////
 //// static long lastexpose = 0;
 //// static long lastresize = 0;
-//// 
+////
 //// void
 //// handlewaitfor(int wn)
 //// {
 //// 	long t;
 //// 	long dt;
 //// 	long dt2;
-//// 
+////
 //// 	switch(wn){
 //// 	case K_CONSOLE:
 //// 		{
@@ -297,11 +300,11 @@ package kit
 //// 			doanint();
 //// 		}
 //// 		break;
-//// 
+////
 //// 	case K_MOUSE:
 //// 		checkmouse();
 //// 		break;
-//// 
+////
 //// 	case K_WINDEXPOSE:
 //// 		t = MILLICLOCK;
 //// 		dt = t-lastexpose;
@@ -313,7 +316,7 @@ package kit
 //// 			taskfunc0(Redrawfuncd->u.codep);
 //// 		}
 //// 		break;
-//// 
+////
 //// 	case K_WINDRESIZE:
 //// 		t = MILLICLOCK;
 //// 		dt = t-lastresize;
@@ -326,7 +329,7 @@ package kit
 //// 			taskfunc0(Resizefuncd->u.codep);
 //// 		}
 //// 		break;
-//// 
+////
 //// 	/* mdep_waitfor() really shouldn't return multiple values, */
 //// 	/* but it does on Linux. */
 //// 	case K_WINDEXPOSE | K_WINDRESIZE:
@@ -355,7 +358,7 @@ package kit
 //// 			taskfunc0(Redrawfuncd->u.codep);
 //// 		}
 //// 		break;
-//// 
+////
 //// 	case K_PORT:
 //// 		checkports();
 //// 		break;
@@ -380,11 +383,11 @@ package kit
 //// 		break;
 //// 	}
 //// }
-//// 
+////
 //// #ifdef PYTHON
 //// PyThreadState * KeyPyState = NULL;
 //// #endif
-//// 
+////
 //// char *Bytenames[] = {
 //// 	"i_pop",
 //// 	"i_dblpush",
@@ -477,7 +480,7 @@ package kit
 //// 	"i_xy2",
 //// 	"i_xy4"
 //// };
-//// 
+////
 //// /* The order in this list MUST match the values of the I_* macros */
 //// BYTEFUNC Bytefuncs[] = {
 //// 	i_pop,
@@ -571,45 +574,45 @@ package kit
 //// 	i_xy2,
 //// 	i_xy4
 //// };
-//// 
+////
 //// void
 //// exectasks(int nosetjmp)
 //// {
 //// 	int wn, b;
 //// 	long tmout, ccnt, thcnt;
-//// 
+////
 //// #ifdef PYTHON
 //// 	Py_BEGIN_ALLOW_THREADS
-//// 
+////
 //// 	// { PyThreadState *_save;
 //// 	// 	_save = PyEval_SaveThread();
-//// 
+////
 //// 	// KeyPyState = PyEval_SaveThread();
 //// #endif
-//// 
+////
 //// 	if ( (!nosetjmp) )
 //// 		setjmp(Begin);
-//// 
+////
 //// 	setintcatch();
-//// 
+////
 //// 	thcnt = ccnt = 0;
 //// 	int nbytenames = sizeof(Bytenames)/sizeof(Bytenames[0]);
-//// 
+////
 //// 	for ( ;; ) {
-//// 
+////
 //// 		/* The value of Throttle controls how many instructions */
 //// 		/* will be interpreted per each check of realtime stuff. */
 //// 		if ( ++thcnt <= *Throttle )
 //// 			goto runit;
 //// 		thcnt = 0;
-//// 
+////
 //// 		if ( Gotanint ) {
 //// 			doanint();
 //// 			goto runit;
 //// 		}
-//// 
+////
 //// #define DEFTIMEOUT 5000
-//// 
+////
 //// 		if ( Running != NULL )
 //// 			tmout = 0;
 //// 		else {
@@ -628,11 +631,11 @@ package kit
 //// 				tmout = DEFTIMEOUT;
 //// 		}
 //// 		wn = mdep_waitfor((int)tmout);
-//// 
+////
 //// 		/* Handle MIDI I/O right away. */
 //// 		chkoutput();
 //// 		chkinput();
-//// 
+////
 //// 		switch(wn){
 //// 		case 0:
 //// 			mdep_popup("Warning, mdep_waitfor returned 0!");
@@ -643,53 +646,53 @@ package kit
 //// 			handlewaitfor(wn);
 //// 			break;
 //// 		}
-//// 
+////
 //// 	runit:
-//// 
+////
 //// 		for ( T=Running; T!=NULL; T=T->nextrun ) {
-//// 
+////
 //// 			if ( T->priority < Currpriority )
 //// 				continue;
-//// 				
+////
 //// 			b = SCAN_FUNCCODE(Pc);
 //// 			if ( b >= nbytenames || b < 0 ) {
 //// 				fatalerror("Invalid byte code!!\n");
 //// 				continue;
 //// 			}
 //// 			T->cnt++;
-//// 
+////
 //// 			/* TADA!!!  This runs 1 interpreted instruction. */
 //// 			(*(Bytefuncs[b]))();
-//// 
+////
 //// 			if ( T == NULL )
 //// 				break;
 //// 		}
-//// 
+////
 //// 		if ( (Chkstuff!=0) && (ccnt-- <= 0) ) {
 //// 			if ( Tobechecked != NULL ) phcheck();
 //// 			if ( Htobechecked != NULL ) htcheck();
 //// 			Chkstuff = 0;
 //// 			ccnt = (int)*Checkcount;
 //// 		}
-//// 
+////
 //// 	}
 //// 	T = NULL;
-//// 
+////
 //// #ifdef PYTHON
 //// 	Py_END_ALLOW_THREADS
-//// 
+////
 //// 	// PyEval_RestoreThread(_save); }
-//// 
+////
 //// 	// PyEval_RestoreThread(KeyPyState);
 //// #endif
 //// }
-//// 
+////
 //// void
 //// loadsym(Symbolp s,int pushit)
 //// {
 //// 	int nerrs;
 //// 	Datum d;
-//// 
+////
 //// #ifdef TRYTHISEVENTUALLY
 //// 	clearsym(s);
 //// 	*symdataptr(s) = Noval;
@@ -706,13 +709,13 @@ package kit
 //// 	if ( isnoval(d) )
 //// 		execerror("No value found for %s!?\n",symname(s));
 //// }
-//// 
+////
 //// void
 //// i_vareval(void)
 //// {
 //// 	execerror("i_vareval should never actually be called!");
 //// }
-//// 
+////
 //// void
 //// i_objvareval(void)
 //// {
@@ -720,17 +723,17 @@ package kit
 //// 	Kobjectp o, fo;
 //// 	Symstr p;
 //// 	Datum d, d2;
-//// 
+////
 //// 	popinto(d);
 //// 	if ( d.type != D_STR )
 //// 		execerror("object variable expression expects a string, but got %s!\n",atypestr(d.type));
 //// 	p = d.u.str;
-//// 
+////
 //// 	popinto(d2);
 //// 	if ( d2.type != D_OBJ )
 //// 		execerror("object expression expects an object, but got %s!",atypestr(d2.type));
 //// 	o = d2.u.obj;
-//// 
+////
 //// 	s = findobjsym(p,o,&fo);
 //// 	if ( s == NULL ) {
 //// 		execerror("No element '%s' in object $%ld !?",
@@ -741,13 +744,13 @@ package kit
 //// 	d = *symdataptr(s);
 //// 	pushm(d);
 //// }
-//// 
+////
 //// void
 //// i_funcnamed(void)
 //// {
 //// 	Symbolp s;
 //// 	Datum d, retd;
-//// 
+////
 //// 	popinto(d);
 //// 	if ( d.type != D_STR )
 //// 		execerror("function() expects a string, but got %s!",atypestr(d.type));
@@ -761,7 +764,7 @@ package kit
 //// 		pushm(retd);
 //// 	}
 //// }
-//// 
+////
 //// /* evaluation of a local variable */
 //// void
 //// i_lvareval(void)
@@ -769,14 +772,14 @@ package kit
 //// 	Symbolp s;
 //// 	Datum d;
 //// 	int sp;
-//// 
+////
 //// 	s = use_symcode();
 //// 	sp = s->stackpos;
-//// 
+////
 //// 	/* handle unsigned characters and broken compilers */
 //// 	if ( sp > 127 )
 //// 		sp -= 256;
-//// 
+////
 //// 	if ( sp > 0 ) {
 //// 		/* It's one of the parameter variables */
 //// 		d = ARG(sp - 1);
@@ -786,18 +789,18 @@ package kit
 //// 		Datum *dp = T->stackframe - FRAMEHEADER + sp + 1;
 //// 		d = *dp;
 //// 	}
-//// 
+////
 //// 	if ( isnoval(d) )
 //// 		execerror("no value for variable \"%s\", \n",symname(s));
 //// 	pushm(d);
 //// }
-//// 
+////
 //// /* evaluation of a global variable */
 //// void
 //// i_gvareval(void)
 //// {
 //// 	Symbolp s;
-//// 
+////
 //// 	s = use_symcode();
 //// 	switch(s->stype){
 //// 	case VAR:
@@ -813,7 +816,7 @@ package kit
 //// 	case UNDEF:
 //// 		/* try to find a function definition for it */
 //// 		loadsym(s,1);
-//// 
+////
 //// 		/* I don't think this test really works... */
 //// 		if ( s->sd.type == D_CODEP && s->sd.u.codep == NULL ) {
 //// 			eprint("Unable to find a definition for a function named '%s' !!",symname(s));
@@ -824,17 +827,17 @@ package kit
 //// 		execerror("Unexpected value in IVAREVAL!");
 //// 	}
 //// }
-//// 
+////
 //// void
 //// i_varpush(void)
 //// {
 //// 	Datum d;
-//// 
+////
 //// 	d.u.sym = use_symcode();
 //// 	d.type = D_SYM;
 //// 	pushm_notph(d);
 //// }
-//// 
+////
 //// void
 //// i_objvarpush(void)
 //// {
@@ -842,7 +845,7 @@ package kit
 //// 	Symbolp s;
 //// 	Kobjectp obj;
 //// 	Symstr p;
-//// 
+////
 //// 	popinto(d);
 //// 	if ( d.type != D_STR )
 //// 		execerror("object expression expects a string, but got %s!\n",atypestr(d.type));
@@ -860,16 +863,16 @@ package kit
 //// 	s = syminstall(p,obj->symbols,VAR);	/* NOT findobjsym */
 //// 	pushexp(symdatum(s));
 //// }
-//// 
+////
 //// void
 //// i_callfunc(void)
 //// {
 //// 	Symbolp s;
-//// 
+////
 //// 	s = use_symcode();
 //// 	callfuncd(s);
 //// }
-//// 
+////
 //// void
 //// i_objcallfuncpush(void)
 //// {
@@ -877,25 +880,25 @@ package kit
 //// 	Datum d1, d2, d;
 //// 	Kobjectp o, fo;
 //// 	Symstr p;
-//// 
+////
 //// 	popinto(d1);
 //// 	if ( d1.type != D_STR )
 //// 		execerror("object expression expects a string, but got %s!\n",atypestr(d1.type));
 //// 	p = d1.u.str;
-//// 
+////
 //// 	popinto(d2);
 //// 	if ( d2.type != D_OBJ )
 //// 		execerror("Attempt to call object method (%s) on a non-object value!?",p);
 //// 	o = d2.u.obj;
-//// 
+////
 //// 	s = findobjsym(p,o,&fo);
 //// 	if ( s == NULL ) {
 //// 		execerror("Element '%s' of object $%ld doesn't exist!?",
 //// 			p,o->id);
 //// 	}
-//// 
+////
 //// 	/* We want to push the function, object, and method. */
-//// 
+////
 //// 	d = *symdataptr(s);
 //// 	if ( d.type != D_CODEP ) {
 //// 		execerror("Element '%s' of object $%ld isn't a function!?  (it's %s)",
@@ -909,23 +912,23 @@ package kit
 //// 	d = strdatum(p);
 //// 	pushnoinc(d);
 //// }
-//// 
+////
 //// void
 //// i_objcallfunc(void)
 //// {
 //// 	Symbolp s;
-//// 
+////
 //// 	s = use_symcode();
 //// 	callfuncd(s);
 //// }
-//// 
+////
 //// void
 //// i_array(void)
 //// {
 //// 	long nitems;
 //// 	Datum a, d1, d2;
 //// 	int n;
-//// 
+////
 //// 	nitems = use_numcode();	/* size of array list */
 //// 	a = newarrdatum(0,(int)nitems);
 //// 	for ( n=0; n<nitems; n++ ) {
@@ -935,7 +938,7 @@ package kit
 //// 	}
 //// 	pushexp(a);
 //// }
-//// 
+////
 //// void
 //// filelinetrace(void)
 //// {
@@ -944,7 +947,7 @@ package kit
 //// 		fn = "(NULL)";
 //// 	keyerrfile("Task=%d File=%s Line=%ld\n",T->tid,fn,T->linenum);
 //// }
-//// 
+////
 //// void
 //// i_linenum(void)
 //// {
@@ -952,7 +955,7 @@ package kit
 //// 	if ( *Linetrace > 1 )
 //// 		filelinetrace();
 //// }
-//// 
+////
 //// void
 //// i_filename(void)
 //// {
@@ -962,7 +965,7 @@ package kit
 //// 		filelinetrace();
 //// #endif
 //// }
-//// 
+////
 //// int
 //// printmeth(Hnodep h)
 //// {
@@ -974,33 +977,33 @@ package kit
 //// 	}
 //// 	return(0);
 //// }
-//// 
+////
 //// void
 //// i_pushinfo(void)
 //// {
 //// 	Datum d;
 //// 	long currlinenum = T->linenum;
 //// 	char *currfilename = T->filename;
-//// 
+////
 //// 	popinto(d);
 //// 	if ( d.type != D_NUM )
 //// 		execerror("Internal error, i_pushinfo expected a D_NUM!?");
 //// 	T->linenum = d.u.val;
-//// 
+////
 //// 	popinto(d);
 //// 	if ( d.type != D_STR )
 //// 		execerror("Internal error, i_pushinfo expected a D_STR!?");
 //// 	T->filename = d.u.str;
-//// 
+////
 //// 	pushnum(currlinenum)
 //// 	pushexp(strdatum(currfilename));
 //// }
-//// 
+////
 //// void
 //// i_popinfo(void)
 //// {
 //// 	Datum d;
-//// 
+////
 //// 	popinto(d);
 //// 	if ( d.type != D_STR )
 //// 		execerror("Hey, i_popinfo didn't get D_STR? got %s\n",atypestr(d.type));
@@ -1012,13 +1015,13 @@ package kit
 //// 	else
 //// 		T->linenum = d.u.val;
 //// }
-//// 
+////
 //// void
 //// i_typeof(void)
 //// {
 //// 	Datum d;
 //// 	char *p;
-//// 
+////
 //// 	popinto(d);
 //// 	if ( isnoval(d) )
 //// 		p = "<Uninitialized>";
@@ -1031,13 +1034,13 @@ package kit
 //// 		p += 3;
 //// 	pushstr(uniqstr(p));
 //// }
-//// 
+////
 //// void
 //// i_xy2(void)
 //// {
 //// 	Datum d1, d2, r;
 //// 	long x0, y0;
-//// 
+////
 //// 	popinto(d1);
 //// 	popinto(d2);
 //// 	y0 = neednum("xy",d1);
@@ -1045,13 +1048,13 @@ package kit
 //// 	r = xyarr(x0,y0);
 //// 	pushm(r);
 //// }
-//// 
+////
 //// void
 //// i_xy4(void)
 //// {
 //// 	Datum d1, d2, d3, d4, r;
 //// 	long x0, y0, x1, y1;
-//// 
+////
 //// 	popinto(d1);
 //// 	popinto(d2);
 //// 	popinto(d3);
@@ -1063,13 +1066,13 @@ package kit
 //// 	r = xy01arr(x0,y0,x1,y1);
 //// 	pushm(r);
 //// }
-//// 
+////
 //// void
 //// i_nargs(void)
 //// {
 //// 	Datum d, *frm, *arg0;
 //// 	int npassed, n;
-//// 
+////
 //// 	/* We work in this stackframe */
 //// 	frm = T->stackframe;
 //// 	npassed = numval(*npassed_of_frame(frm));
@@ -1081,14 +1084,14 @@ package kit
 //// 	}
 //// 	pushnum(n)
 //// }
-//// 
+////
 //// void
 //// i_classinit(void)
 //// {
 //// 	Datum d, d2;
 //// 	Symbolp sym;
 //// 	Kobjectp o;
-//// 
+////
 //// 	d = ARG(0);
 //// 	if ( d.type == D_OBJ )
 //// 		o = d.u.obj;
@@ -1098,7 +1101,7 @@ package kit
 //// 		execerror("Internal error, invalid object in i_classinit!?");
 //// 	if ( o->symbols == NULL )
 //// 		execerror("Internal error, o->symbols==NULL in i_classinit?");
-//// 
+////
 //// 	/* There are pairs of values on the stack (method function and name),*/
 //// 	/* terminated by the class name. */
 //// 	while ( 1 ) {
@@ -1110,51 +1113,51 @@ package kit
 //// 		sym = syminstall(uniqstr(d2.u.str),o->symbols,VAR);
 //// 		*symdataptr(sym) = d;
 //// 	}
-//// 
+////
 //// 	/* The name of the class is put into a data element */
 //// 	/* (named "class") in the object. */
 //// 	setdata(o,"class",d);
-//// 
+////
 //// 	/* hashvisit(o->symbols,printmeth); */
-//// 
+////
 //// 	/* This will be the return value of the class function. */
 //// 	pushexp(objdatum(o));
-//// 
+////
 //// 	/* Now push the initial stuff on the stack that is necessary */
 //// 	/* to call the "init" method of this object.  The rest of the */
 //// 	/* necessary stuff for this method invocation is done in the yacc */
 //// 	/* grammar. */
-//// 
+////
 //// 	sym = findsym(Str_init.u.str,o->symbols);
 //// 	if ( sym == NULL )
 //// 		execerror("No init method found in i_classinit\n");
-//// 
+////
 //// 	d = *symdataptr(sym);
 //// 	pushexp(d);
-//// 
+////
 //// 	d.u.obj = o;
 //// 	d.type = D_OBJ;
 //// 	pushm_notph(d);
-//// 
+////
 //// 	d.u.obj = o;
 //// 	d.type = D_OBJ;
 //// 	pushm_notph(d);
-//// 
+////
 //// 	d = Str_init;
 //// 	pushm_notph(d);
 //// }
-//// 
+////
 //// void
 //// i_forin1(void)
 //// {
 //// 	Symbolp s;
 //// 	Datum d;
 //// 	Codep i1;
-//// 
+////
 //// 	s = use_symcode();
 //// 	i1 = use_ipcode();
 //// 	popinto(d);
-//// 
+////
 //// 	pushexp(codepdatum(i1));	/* for final jumping out of loop */
 //// 	pushexp(symdatum(s));
 //// 	if ( d.type == D_PHR ) {
@@ -1164,7 +1167,7 @@ package kit
 //// 	else if ( d.type == D_ARR ) {
 //// 		int asize;
 //// 		Datum *alist;
-//// 
+////
 //// 		alist = arrlist(d.u.arr,&asize,(int)(*Arraysort!=0));
 //// 		pushexp(numdatum(0L));
 //// 		pushexp(datumdatum(alist));
@@ -1176,14 +1179,14 @@ package kit
 //// 	/* directly out of a "for(x in y)" loop. */
 //// 	pushexp(numdatum(FORINJUNK));
 //// }
-//// 
+////
 //// void
 //// i_forin2(void)
 //// {
 //// 	Datum d, d2, d3;
-//// 
+////
 //// 	/* don't pop the stuff, we just use it in-place */
-//// 
+////
 //// 	if ( Stackp < (Stack+4) )
 //// 		execerror("IFORIN2 detects low stack?!");
 //// 	d = *(Stackp-2);
@@ -1209,7 +1212,7 @@ package kit
 //// 	else if ( d.type == D_DATUM ) {
 //// 		Datum subd;
 //// 		long v1;
-//// 
+////
 //// 		v1 = d2.u.val;
 //// 		subd = *(d.u.datum+v1);
 //// 		if ( isnoval(subd) ) {
@@ -1224,31 +1227,31 @@ package kit
 //// 	else
 //// 		execerror("IFORIN2 got unexpected type!?");
 //// }
-//// 
+////
 //// void
 //// i_popnreturn(void)
 //// {
 //// 	Datum d;
-//// 
+////
 //// 	popinto(d);
 //// 	ret(d);
 //// }
-//// 
+////
 //// void
 //// i_stop(void)
 //// {
 //// 	Datum d;
-//// 
+////
 //// 	popinto(d);
 //// 	if ( d.type != D_CODEP )
 //// 		execerror("ISTOP got %s (numval=%ld) (expected D_CODEP), Task=%ld!  val=%ld",atypestr(d.type),numval(d),T->tid,d.u.val);
 //// 	Pc = d.u.codep;
 //// 	if ( Pc )
 //// 		return;
-//// 
+////
 //// 	if ( T->nested > 0 ) {
 //// 		Datum d1, d2, d3;
-//// 
+////
 //// 		if ( T->rminstruct )
 //// 			freecode(T->first);
 //// 		popinto(d1);	/* rminstruct */
@@ -1262,33 +1265,33 @@ package kit
 //// 		T->nested--;
 //// 		return;
 //// 	}
-//// 		
+////
 //// 	/* Remove task */
 //// 	taskkill(T,0);
-//// 
+////
 //// 	T = NULL;
 //// }
-//// 
+////
 //// void
 //// i_select1(void)
 //// {
 //// 	Datum d;
-//// 
+////
 //// 	/* Top of stack is the original phrase. */
 //// 	d = *(Stackp-1);
 //// 	if ( d.type != D_PHR )
 //// 		execerror("select operation only works on phrases!");
-//// 
+////
 //// 	pushexp(phrdatum(newph(0)));	/* to be constructed */
 //// 	pushexp(notedatum(firstnote(d.u.phr)));	/* walking note */
-//// 
+////
 //// 	pushexp(numdatum(T->qmarknum));
 //// 	pushexp(phrdatum(newph(0)));	/* qmark phrase */
 //// 	pushexp(framedatum(T->qmarkframe));
 //// 	T->qmarkframe = Stackp-1;
 //// 	T->qmarknum = 0;
 //// }
-//// 
+////
 //// void
 //// i_select2(void)
 //// {
@@ -1296,7 +1299,7 @@ package kit
 //// 	Phrasep qph;
 //// 	Datum d, d2;
 //// 	Codep i1;
-//// 
+////
 //// 	i1 = use_ipcode();
 //// 	/* stack == qmark sym, qmark frame, walking note ptr, */
 //// 	/*          new phrase and orig phrase */
@@ -1333,13 +1336,13 @@ package kit
 //// 	(Stackp-4)->u.note = nextnote(wnt);
 //// 	T->qmarknum++;
 //// }
-//// 
+////
 //// void
 //// i_select3(void)
 //// {
 //// 	Codep i1;
 //// 	Datum d;
-//// 
+////
 //// 	i1 = use_ipcode();
 //// 	popinto(d);	/* condition value */
 //// 	if ( numval(d) ) {
@@ -1350,14 +1353,14 @@ package kit
 //// 	}
 //// 	setpc(i1);
 //// }
-//// 
+////
 //// void
 //// i_print(void)
 //// {
 //// 	long nargs;
 //// 	int n;
 //// 	Datum d;
-//// 
+////
 //// 	nargs = use_numcode();
 //// 	for ( n=(int)nargs; n>0; ) {
 //// 		Datum d2;
@@ -1372,7 +1375,7 @@ package kit
 //// 		popinto(d);
 //// 	tsync();
 //// }
-//// 
+////
 //// void
 //// keyprintf(char *fmt,int arg0,int nargs, STRFUNC outfunc)
 //// {
@@ -1382,9 +1385,9 @@ package kit
 //// 	int c;
 //// 	Datum d;
 //// 	char *w, word[256];
-//// 
+////
 //// 	s[1] = '\0';
-//// 
+////
 //// 	while ( (c=(*p++)) != '\0' ) {
 //// 	    switch (c) {
 //// 	    case '%':
@@ -1433,7 +1436,7 @@ package kit
 //// 	    }
 //// 	}
 //// }
-//// 
+////
 //// void
 //// checkmouse(void)
 //// {
@@ -1443,19 +1446,19 @@ package kit
 //// 	int m, x, y, mod, b;
 //// 	int moved;
 //// 	int pressed = 0;
-//// 
+////
 //// 	if ( *Mousedisable )
 //// 		return;
-//// 
+////
 //// 	b = mdep_mouse(&x,&y,&mod);
 //// 	m = b & 3;	/* We only want to acknowledge button 1&2 */
-//// 
+////
 //// 	moved = (x!=oldx || y!=oldy);
-//// 
+////
 //// 	/* Avoid multiple mouse events when the mouse hasn't moved */
 //// 	if ( m==oldm && !moved )
 //// 		return;
-//// 
+////
 //// #ifdef NO_MOUSE_UP_DRAG_EVENTS
 //// 	/* This eliminates mouse drag events when the button is up. */
 //// 	if ( m==oldm && m==0 ) )
@@ -1465,7 +1468,7 @@ package kit
 //// 		pressed = 1;
 //// 	else if ( oldm > 0 && m == 0 )
 //// 		pressed = -1;
-//// 
+////
 //// 	oldm = m;
 //// 	if ( moved ) {
 //// 		oldx = x;
@@ -1473,7 +1476,7 @@ package kit
 //// 	}
 //// 	putonmousefifo(m,x,y,pressed,mod);
 //// }
-//// 
+////
 //// int
 //// handleconsole(void)
 //// {
@@ -1485,7 +1488,7 @@ package kit
 //// 		}
 //// 		return -2;
 //// 	}
-//// 
+////
 //// 	if ( *Inputistty==0 || mdep_statconsole() ) {
 //// 		int c;
 //// 		c = mdep_getconsole();
@@ -1523,7 +1526,7 @@ package kit
 //// 	}
 //// 	return 0;
 //// }
-//// 
+////
 //// void
 //// doanint(void)
 //// {
@@ -1533,70 +1536,70 @@ package kit
 //// 	else
 //// 		eprint("Warning, Intrfunc has a non-function value!?");
 //// }
-//// 
+////
 //// void
 //// i_goto(void)
 //// {
 //// 	Pc = use_ipcode();
 //// }
-//// 
+////
 //// void
 //// i_tfcondeval(void)
 //// {
 //// 	Codep i1, i2;
 //// 	Datum d;
-//// 
+////
 //// 	i1 = use_ipcode();
 //// 	i2 = use_ipcode();
-//// 
+////
 //// 	popinto(d);
 //// 	if ( numval(d) )
 //// 		setpc(i1);
 //// 	else
 //// 		setpc(i2);
 //// }
-//// 
+////
 //// void
 //// i_tcondeval(void)
 //// {
 //// 	Codep i1;
 //// 	Datum d;
-//// 
+////
 //// 	i1 = use_ipcode();
 //// 	popinto(d);
 //// 	if ( ! numval(d) )
 //// 		setpc(i1);
 //// }
-//// 
+////
 //// void
 //// i_constant(void)
 //// {
 //// 	Datum d;
-//// 
+////
 //// 	d.u.val = use_numcode();
 //// 	d.type = D_NUM;
 //// 	pushm_notph(d);
 //// }
-//// 
+////
 //// void
 //// i_dotdotarg(void)
 //// {
 //// 	long nargs;
 //// 	int n, up_npassed, up_nparams;
 //// 	Datum d, dnpassed, dfunc, *dp;
-//// 
+////
 //// 	nargs = use_numcode();
 //// 	dp = T->stackframe;
 //// 	if ( dp == NULL )
 //// 		execerror("Unexpected dp==NULL in i_dotdotarg!?");
 //// 	dnpassed = *npassed_of_frame(dp);
 //// 	up_npassed = numval(dnpassed);
-//// 
+////
 //// 	dfunc = *func_of_frame(dp);
 //// 	if ( dfunc.type != D_CODEP )
 //// 		execerror("Unexpected dfunc!=D_CODEP in i_dotdotarg!?");
 //// 	up_nparams = nparamsof(dfunc.u.codep);
-//// 
+////
 //// 	for ( n=up_nparams; n<up_npassed; n++ ) {
 //// 		d = ARG(n);
 //// 		pushm(d);
@@ -1604,7 +1607,7 @@ package kit
 //// 	}
 //// 	pushexp(numdatum(nargs));
 //// }
-//// 
+////
 //// void
 //// i_varg(void)
 //// {
@@ -1612,7 +1615,7 @@ package kit
 //// 	int n, nv;
 //// 	Htablep arr;
 //// 	Datum d, *dp;
-//// 
+////
 //// 	nargs = use_numcode();
 //// 	popinto(d);
 //// 	if ( d.type != D_ARR ) {
@@ -1636,34 +1639,34 @@ package kit
 //// 	}
 //// 	pushexp(numdatum(nargs));
 //// }
-//// 
+////
 //// void
 //// i_currobjeval(void)
 //// {
 //// 	Datum d;
-//// 
+////
 //// 	d.u.obj = T->realobj;
 //// 	d.type = D_OBJ;
 //// 	pushm_notph(d);
-//// 
+////
 //// 	d.u.obj = T->obj;
 //// 	d.type = D_OBJ;
 //// 	pushm_notph(d);
-//// 
+////
 //// 	d.type = D_STR;
 //// 	d.u.str = T->method;
 //// 	pushm_notph(d);
 //// }
-//// 
+////
 //// void
 //// i_constobjeval(void)
 //// {
 //// 	long id;
 //// 	Datum d;
 //// 	Kobjectp o;
-//// 
+////
 //// 	id = use_numcode();
-//// 
+////
 //// 	o = findobjnum(id);
 //// 	/* If it doesn't already exist, we create it. */
 //// 	if ( o == NULL )
@@ -1671,12 +1674,12 @@ package kit
 //// 	d = objdatum(o);
 //// 	pushm_notph(d);
 //// }
-//// 
+////
 //// void
 //// i_ecurrobjeval(void)
 //// {
 //// 	Datum d;
-//// 
+////
 //// 	d.u.obj = T->obj;
 //// 	d.type = D_OBJ;
 //// 	if ( d.u.obj == NULL )
@@ -1685,12 +1688,12 @@ package kit
 //// 		execerror("Current object has been deleted!?");
 //// 	pushm_notph(d);
 //// }
-//// 
+////
 //// void
 //// i_erealobjeval(void)
 //// {
 //// 	Datum d;
-//// 
+////
 //// 	d.u.obj = T->realobj;
 //// 	d.type = D_OBJ;
 //// 	if ( d.u.obj == NULL )
@@ -1699,46 +1702,46 @@ package kit
 //// 		execerror("Real object has been deleted!?");
 //// 	pushm_notph(d);
 //// }
-//// 
+////
 //// void
 //// i_returnv(void)
 //// {
 //// 	Datum d;
-//// 
+////
 //// 	popinto(d);
 //// 	ret(d);
 //// }
-//// 
+////
 //// void
 //// i_return(void)
 //// {
 //// 	ret(Nullval);
 //// }
-//// 
+////
 //// void
 //// i_qmark(void)
 //// {
 //// 	Phrasep p1 = (T->qmarkframe-1)->u.phr;
 //// 	pushexp(phrdatum(p1));
 //// }
-//// 
+////
 //// void
 //// forinjumptoend(void)
 //// {
 //// 	Datum d;
-//// 
+////
 //// 	d = *(Stackp-5);
 //// 	if ( d.type != D_CODEP )
 //// 		execerror("forinjumptoend() didn't get D_CODEP!\n");
 //// 	setpc(d.u.codep);
 //// }
-//// 
+////
 //// void
 //// i_forinend(void)
 //// {
 //// 	Datum d;
 //// 	int n;
-//// 
+////
 //// 	popinto(d);	/* should be FORINJUNK */
 //// 	popinto(d);	/* either a phrase or an array */
 //// 	if ( d.type == D_DATUM ) {
@@ -1748,7 +1751,7 @@ package kit
 //// 	for ( n=0; n<3; n++ )
 //// 		popinto(d);
 //// }
-//// 
+////
 //// void
 //// rmalltasksfifos(void)
 //// {
@@ -1757,20 +1760,20 @@ package kit
 //// 	setrunning((Ktaskp)NULL);
 //// 	closeallfifos();
 //// }
-//// 
+////
 //// void
 //// startreboot(void)
 //// {
 //// 	rmalltasksfifos();
 //// 	rmalllocks();
 //// 	(void) newtask(Ireboot);
-//// 
+////
 //// 	Consinf = specialfifo();
 //// 	*Consinfnum = fifonum(Consinf);
-//// 
+////
 //// 	Consoutf = specialfifo();
 //// 	*Consoutfnum = fifonum(Consoutf);
-//// 
+////
 //// 	if ( Midiok ) {
 //// 		Midi_in_f = specialfifo();
 //// 		*Midi_in_fnum = fifonum(Midi_in_f);
@@ -1779,14 +1782,14 @@ package kit
 //// 		Midi_in_f = NULL;
 //// 		*Midi_in_fnum = -1;
 //// 	}
-//// 
+////
 //// 	Mousef = specialfifo();
 //// 	*Mousefnum = fifonum(Mousef);
 //// 	reinitwinds();
-//// 
+////
 //// 	wredraw1(Wroot);
 //// }
-//// 
+////
 //// void
 //// nestinstruct(Codep cp)
 //// {
@@ -1794,21 +1797,21 @@ package kit
 //// 	pushexp(codepdatum(T->first));
 //// 	pushexp(numdatum(T->rminstruct));
 //// 	pushexp(codepdatum((Codep)NULL));
-//// 
+////
 //// 	T->nested++;
 //// 	T->rminstruct = 1;
 //// 	T->first = cp;
 //// 	T->pc = cp;
 //// }
-//// 
+////
 //// void
 //// taskfunc0(Codep cp)
 //// {
 //// 	Ktaskp t, saveT;
-//// 
+////
 //// 	/* start up a task to call it */
 //// 	t = newtask(Ipop);
-//// 
+////
 //// 	saveT = T;
 //// 	T = t;
 //// 	pushexp(codepdatum(cp));
@@ -1819,13 +1822,13 @@ package kit
 //// 	callfuncd((Symbolp)NULL);
 //// 	T = saveT;
 //// }
-//// 
+////
 //// int
 //// pushdnodes(Dnode *dn,int move)
 //// {
 //// 	Dnode *dp;
 //// 	int nargs;
-//// 
+////
 //// 	for ( nargs=0,dp=dn; dp!=NULL; nargs++,dp=dp->next ) {
 //// 		if ( move ) {
 //// 			/* do not remove curly braces, pushm is bad */
@@ -1838,16 +1841,16 @@ package kit
 //// 	}
 //// 	return nargs;
 //// }
-//// 
+////
 //// void
 //// taskfuncn(Codep cp,Dnode *dn)
 //// {
 //// 	Ktaskp t, saveT;
 //// 	int nargs;
-//// 
+////
 //// 	/* start up a task to call cp */
 //// 	t = newtask(Ipop);
-//// 
+////
 //// 	saveT = T;
 //// 	T = t;
 //// 	pushexp(codepdatum(cp));
@@ -1859,7 +1862,7 @@ package kit
 //// 	callfuncd((Symbolp)NULL);
 //// 	T = saveT;
 //// }
-//// 
+////
 //// void
 //// initstack(Ktaskp t)
 //// {
@@ -1874,19 +1877,19 @@ package kit
 //// 		t->stackp++;
 //// 	}
 //// }
-//// 
+////
 //// Ktaskp
 //// newtask(Codep cp)
 //// {
 //// 	int stksize = INITSTACKSIZE;
 //// 	Ktaskp t = newtp(T_RUNNING);
-//// 
+////
 //// 	t->stack = (Datum*) kmalloc(stksize*sizeof(Datum),"newtaskstack");
 //// 	t->stacksize = stksize;
 //// 	t->stackend = t->stack + stksize;
-//// 
+////
 //// 	initstack(t);
-//// 
+////
 //// 	t->rminstruct = 0;
 //// 	t->cnt = 0L;
 //// 	t->nested = 0;
@@ -1899,10 +1902,10 @@ package kit
 //// 	t->filename = NULL;
 //// 	t->parent = T;	/* slightly dangerous - calling routines should */
 //// 			/* be careful that T is indeed the desired parent. */
-//// 
+////
 //// 	if ( t->parent == t )
 //// 		execerror("t->parent==t in newtask!!!");
-//// 
+////
 //// 	if ( T ) {
 //// 		T->anychild = 1;
 //// 		t->priority = T->priority;
@@ -1910,43 +1913,43 @@ package kit
 //// 	else {
 //// 		t->priority = (int)*Defpriority;
 //// 	}
-//// 
+////
 //// 	t->pc = cp;
 //// 	t->first = cp;
 //// 	linktask(t);
-//// 
+////
 //// 	return t;
 //// }
-//// 
+////
 //// void
 //// setrunning(Ktaskp t)
 //// {
 //// 	Running = t;
 //// }
-//// 
+////
 //// void
 //// restarttask(Ktaskp t)
 //// {
 //// 	t->state = T_RUNNING;
 //// 	linktask(t);
 //// }
-//// 
+////
 //// void
 //// taskunrun(Ktaskp t,int nstate)
 //// {
 //// 	unlinktask(t);
 //// 	t->state = nstate;
 //// }
-//// 
+////
 //// Ktaskp Tasklist;
-//// 
+////
 //// int
 //// taskcollectchildren(Hnodep h)
 //// {
 //// 	Ktaskp t = h->val.u.task;
 //// 	int addit = 0;
 //// 	Ktaskp t2;
-//// 
+////
 //// 	/* If this task's parent is in the list, it's a child, so add it. */
 //// 	for ( t2=Tasklist; t2!=NULL; t2=t2->tmplist) {
 //// 		if ( t->parent == t2 ) {
@@ -1971,17 +1974,17 @@ package kit
 //// 	}
 //// 	return 0;
 //// }
-//// 
+////
 //// void
 //// taskkill(Ktaskp t,int killchildren)
 //// {
 //// 	Ktaskp tp;
 //// 	int prio = T->priority;	   /* of task who's doing the killing */
-//// 
+////
 //// 	if ( t->state == T_FREE ) {
 //// 		return;			/* be lenient */
 //// 	}
-//// 
+////
 //// 	if ( t->anychild == 0 ) {
 //// 		if ( t->priority <= prio ) {
 //// 			taskbury(t);
@@ -1991,12 +1994,12 @@ package kit
 //// 		/* Create a list of all children */
 //// 		t->tmplist = NULL;
 //// 		Tasklist = t;
-//// 
+////
 //// 		/* The list is created in reverse order (children at the */
 //// 		/* top of the list).  This is very important, because that's */
 //// 		/* the order we want to kill them in. */
 //// 		hashvisit(Tasktable,taskcollectchildren);
-//// 
+////
 //// #ifdef DEBUGSTUFF
 //// tprint("taskkill(t=%ld killchildren=%d), children=",t->tid,killchildren);
 //// for ( tp=Tasklist; tp!=NULL; tp=tp->tmplist ) {
@@ -2025,9 +2028,9 @@ package kit
 //// 		}
 //// 	}
 //// }
-//// 
+////
 //// static Ktaskp Taskbeingkilled;
-//// 
+////
 //// int
 //// taskunwait(Hnodep h)
 //// {
@@ -2038,7 +2041,7 @@ package kit
 //// 	}
 //// 	return 0;
 //// }
-//// 
+////
 //// void
 //// wakewaiters(Ktaskp t)
 //// {
@@ -2047,13 +2050,13 @@ package kit
 //// 		hashvisit(Tasktable,taskunwait);
 //// 	}
 //// }
-//// 
+////
 //// void
 //// taskbury(Ktaskp t)
 //// {
 //// 	/* Restart any tasks that were waiting on this one. */
 //// 	wakewaiters(t);
-//// 
+////
 //// 	switch (t->state) {
 //// 	case T_BLOCKED:
 //// 		if ( t->fifo ) {
@@ -2073,12 +2076,12 @@ package kit
 //// 		execerror("kill: stopped task id!?\n");
 //// 		break;
 //// 	}
-//// 
+////
 //// 	/* If there's an onerror function defined for this task, use it. */
 //// 	if ( t->ontaskerror ) {
-//// 		int nargs; 
+//// 		int nargs;
 //// 		Ktaskp saveT = T;
-//// 
+////
 //// 		T = t;
 //// 		initstack(t);
 //// 		t->pc = (Unchar*)Ipop;
@@ -2089,7 +2092,7 @@ package kit
 //// 		pushexp(objdatum(saveT?saveT->realobj:NULL));
 //// 		pushexp(objdatum(saveT?saveT->obj:NULL));
 //// 		pushexp(strdatum(saveT?saveT->method:Nullstr));
-//// 
+////
 //// 		/* Push the error string on as the first argument, then */
 //// 		/* the rest of the args given to onerror(). */
 //// 		nargs = 0;
@@ -2099,23 +2102,23 @@ package kit
 //// 		}
 //// 		nargs += pushdnodes(t->ontaskerrorargs,1);
 //// 		pushexp(numdatum(nargs));
-//// 
+////
 //// 		callfuncd((Symbolp)NULL);
-//// 
+////
 //// 		freednodes(t->ontaskerrorargs);
-//// 
+////
 //// 		t->ontaskerror = NULL;
 //// 		t->ontaskerrorargs = NULL;
 //// 		t->ontaskerrormsg = NULL;
-//// 
+////
 //// 		if ( t->state != T_RUNNING )
 //// 			restarttask(t);
 //// 		T = saveT;
 //// 	}
 //// 	else if ( t->onexit ) {
-//// 		int nargs; 
+//// 		int nargs;
 //// 		Ktaskp saveT = T;
-//// 
+////
 //// 		T = t;
 //// 		initstack(t);
 //// 		t->pc = (Unchar*)Ipop;
@@ -2142,13 +2145,13 @@ package kit
 //// 		deletetask(t);
 //// 	}
 //// }
-//// 
+////
 //// void
 //// printrunning(char *s)
 //// {
 //// 	char *sep = "";
 //// 	Ktaskp t;
-//// 
+////
 //// 	eprint("RUNNING Tasks (%s) = ",s);
 //// 	for ( t=Running; t!=NULL; t=t->nextrun ) {
 //// 		eprint("%s%ld",sep,t->tid);
@@ -2156,7 +2159,7 @@ package kit
 //// 	}
 //// 	eprint("\n");
 //// }
-//// 
+////
 //// #ifdef TRYWITHOUT
 //// void
 //// taskclear(Ktaskp t)
@@ -2196,112 +2199,108 @@ package kit
 //// 	t->filename = "";
 //// }
 //// #endif
-//// 
-//// Ktaskp
-//// newtp(int state)
-//// {
-//// 	Ktaskp t;
-//// 	Hnodep h;
-//// 
-//// 	if ( Freetp != NULL ) {
-//// 		t = Freetp;
-//// 		Freetp = Freetp->nxt;
-//// 	}
-//// 	else {
-//// 		t = (Ktaskp) kmalloc(sizeof(Task),"newtp");
-//// 	}
-//// 
-//// 	/* add it to list of non-free tasks */
-//// 	t->nxt = Toptp;
-//// 	Toptp = t;
-//// 
-//// 	/* The initializations are carefully chosen to be exactly (hopefully) */
-//// 	/* the ones needed by all tasks, realtime or otherwise. */
-//// 
-//// 	t->stack = NULL;
-//// 	t->state = state;
-//// 	t->anychild = 0;
-//// 	t->anywait = 0;
-//// 	t->priority = 0;
-//// 	t->onexit = NULL;
-//// 	t->onexitargs = NULL;
-//// 	t->ontaskerror = NULL;
-//// 	t->ontaskerrorargs = NULL;
-//// 	t->ontaskerrormsg = NULL;
-//// 	t->qmarkframe = NULL;
-//// 	t->linenum = 0;
-//// 	t->filename = "";
-//// 	t->tid = Tid++;
-//// 	/* Add it to Tasktable */
-//// 	h = hashtable(Tasktable,numdatum(t->tid),H_INSERT);
-//// 	if ( isnoval(h->val) )
-//// 		h->val = taskdatum(t);
-//// 	else
-//// 		eprint("Hmm, task=%ld was already in Tasktable!?\n",t->tid);
-//// 	return t;
-//// }
-//// 
-//// void
-//// linktask(Ktaskp p)
-//// {
-//// 	p->nextrun = Running;
-//// 	setrunning(p);
-//// }
-//// 
-//// void
-//// freetp(Ktaskp t)
-//// {
-//// 	/* T_SCHED tasks don't have any stack or instructions */
-//// 	if ( t->state != T_SCHED ) {
-//// 		if ( t->rminstruct ) {
-//// 			freecode(t->first);
-//// 			t->first = NULL;
-//// 		}
-//// 	}
-//// 	if ( t->stack ) {
-//// 		kfree(t->stack);
-//// 		t->stack = NULL;
-//// 	}
-//// 	t->state = T_FREE;
-//// 	t->nxt = Freetp;
-//// 	Freetp = t;
-//// 
-//// }
-//// 
-//// void
-//// deletetask(Ktaskp t)
-//// {
-//// 	/* Remove it from the Tasktable (if this becomes expensive, we */
-//// 	/* might be able to delay it, and clean up T_FREE tasks from the */
-//// 	/* table in a delayed/lazy fashion. */
-//// 	(void) hashtable(Tasktable,numdatum(t->tid),H_DELETE);
-//// }
-//// 
-//// void
-//// unlinktask(Ktaskp p)
-//// {
-//// 	Ktaskp q;
-//// 	Ktaskp r = NULL;
-//// 
-//// 	if ( p == NULL )
-//// 		return;
-//// /* eprint("UNLINKTASK, t=%ld tid=%ld\n",(long)p,p->tid); */
-//// 	for ( q=Running; q!=NULL && q!=p; r=q,q=q->nextrun )
-//// 		;
-//// 	if ( q == NULL )
-//// 		return;
-//// 	if ( r == NULL )
-//// 		setrunning(p->nextrun);
-//// 	else
-//// 		r->nextrun = p->nextrun;
-//// }
-//// 
+
+func newtp(state int) Ktaskp {
+	var t Ktaskp
+	var h Hnodep
+
+	if Freetp != NULL {
+		t = Freetp
+		Freetp = Freetp.nxt
+	} else {
+		t = &Task{}
+	}
+
+	/* add it to list of non-free tasks */
+	t.nxt = Toptp
+	Toptp = t
+
+	/* The initializations are carefully chosen to be exactly (hopefully) */
+	/* the ones needed by all tasks, realtime or otherwise. */
+
+	t.stack = nil
+	t.state = state
+	t.anychild = 0
+	t.anywait = 0
+	t.priority = 0
+	t.onexit = nil
+	t.onexitargs = nil
+	t.ontaskerror = nil
+	t.ontaskerrorargs = nil
+	t.ontaskerrormsg = nil
+	t.qmarkframe = nil
+	t.linenum = 0
+	t.filename = ""
+	t.tid = Tid
+	Tid += 1
+	/* Add it to Tasktable */
+	h = hashtable(Tasktable, numdatum(t.tid), H_INSERT)
+	if isnoval(h.val) == true {
+		h.val = taskdatum(t)
+	} else {
+		eprint("Hmm, task=%ld was already in Tasktable!?\n", t.tid)
+	}
+	return t
+}
+
+func linktask(Ktaskp p) {
+	p.nextrun = Running
+	setrunning(p)
+}
+
+func freetp(t Ktaskp) {
+	/* T_SCHED tasks don't have any stack or instructions */
+	if t.state != T_SCHED {
+		if t.rminstruct {
+			freecode(t.first)
+			t.first = nil
+		}
+	}
+	if t.stack != nil {
+		kfree(t.stack)
+		t.stack = nil
+	}
+	t.state = T_FREE
+	t.nxt = Freetp
+	Freetp = t
+}
+
+func deletetask(t Ktaskp) {
+	/* Remove it from the Tasktable (if this becomes expensive, we */
+	/* might be able to delay it, and clean up T_FREE tasks from the */
+	/* table in a delayed/lazy fashion. */
+	hashtable(Tasktable, numdatum(t.tid), H_DELETE)
+}
+
+func unlinktask(p Ktaskp) {
+	var q Ktaskp
+	var r Ktaskp
+
+	if p == nil {
+		return
+	}
+	/* eprint("UNLINKTASK, t=%ld tid=%ld\n",(long)p,p->tid); */
+	for q = Running; q != nil && q != p; {
+		r = q
+		q = q.nextrun
+	}
+	if q == nil {
+		return
+	}
+	if r == nil {
+		setrunning(p.nextrun)
+	} else {
+		r.nextrun = p.nextrun
+	}
+}
+
+////
 //// void
 //// expandstack(Ktaskp p)
 //// {
 //// 	expandstackatleast(p,1);
 //// }
-//// 
+////
 //// void
 //// expandstackatleast(Ktaskp p, int needed)
 //// {
@@ -2311,18 +2310,18 @@ package kit
 //// 	Datum *oldsf = p->stackframe;
 //// 	Datum *oldqf = p->qmarkframe;
 //// 	Datum *s, *ns;
-//// 
-//// 
+////
+////
 //// 	/* We want to increase by at least 50% */
 //// 	if ( (p->stacksize)/2 > needed )
 //// 		needed = p->stacksize / 2;
-//// 
+////
 //// 	p->stacksize += needed;
 //// 	p->stack = (Datum*) kmalloc(p->stacksize*sizeof(Datum),"expandstack");
 //// 	p->stackp = p->stack + (oldsp - olds);
 //// 	p->qmarkframe = p->stack + (oldqf - olds);
 //// 	p->stackend = p->stack + p->stacksize;
-//// 
+////
 //// 	/* copy old stack to new one */
 //// 	if ( olds == NULL ) {
 //// 		mdep_popup("Internal error: olds == NULL in expandstack!?");
@@ -2340,24 +2339,24 @@ package kit
 //// 		else
 //// 			*ns = *s;
 //// 	}
-//// 
+////
 //// 	if ( oldsf != NULL ) {
 //// 		p->stackframe = p->stack + (oldsf - olds);
 //// 		redoarg0(p);
 //// 	}
 //// 	kfree(olds);
 //// }
-//// 
+////
 //// /* This sets of the sequence of instructions that's used for dragging */
 //// /* phrases, sweeping stuff, and doing the menus.  Basically just an */
 //// /* infinite loop, followed by a return.  */
-//// 
+////
 //// Codep
 //// infiniteloop(BYTEFUNC f)
 //// {
 //// 	Instnodep in, i;
 //// 	Codep cp;
-//// 
+////
 //// 	pushiseg();
 //// 	in = code(funcinst(f));
 //// 	i = code(instnodeinst(in));	/* An infinite loop to previous code. */
@@ -2366,7 +2365,7 @@ package kit
 //// 	cp = popiseg();
 //// 	return cp;
 //// }
-//// 
+////
 //// void
 //// inittasks(void)
 //// {
@@ -2374,23 +2373,23 @@ package kit
 //// 		char *p = getenv("TASKHASHSIZE");
 //// 		Tasktable = newht( p ? atoi(p) : 67 );
 //// 	}
-//// 
+////
 //// 	Ireboot = instructs("Rebootfunc();");
-//// 
+////
 //// 	pushiseg();
 //// 	code(funcinst(I_POPVAL));
 //// 	code(Stopcode);
 //// 	Ipop = popiseg();
-//// 
+////
 //// 	Idosweep = infiniteloop((BYTEFUNC)I_DOSWEEPCONT);
 //// }
-//// 
+////
 //// void
 //// eprfunc(BYTEFUNC i)
 //// {
 //// 	char *p;
 //// 	intptr_t ii;
-//// 
+////
 //// 	ii = (intptr_t)i;
 //// 	if ( ii>=0 && ii < (sizeof(Bytenames)/sizeof(Bytenames[0])) ) {
 //// 		keyerrfile("%s (%ld)",Bytenames[ii],ii);

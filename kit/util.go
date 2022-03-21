@@ -16,9 +16,11 @@ import (
 //// #include "gram.h"
 ////
 //// Phrasep Tobechecked = NULL;
-//// Htablep Htobechecked = NULL;
-//// int Chkstuff = 0;
-////
+
+var Htobechecked Htablep
+
+var Chkstuff int
+
 //// void
 //// addtobechecked(register Phrasep p)
 //// {
@@ -53,30 +55,33 @@ import (
 //// 	Chkstuff = 1;
 //// }
 ////
-//// void
-//// httobechecked(register Htablep p)
-//// {
-//// 	/* if it's already in the list... */
-//// 	if ( p->h_state == HT_TOBECHECKED )
-//// 		return;
-//// 	/* remove it from original list */
-//// 	if ( p == Topht )
-//// 		Topht = p->h_next;
-//// 	if ( p->h_next != NULL )
-//// 		(p->h_next)->h_prev = p->h_prev;
-//// 	if ( p->h_prev != NULL )
-//// 		(p->h_prev)->h_next = p->h_next;
-//// 	/* Add it to Htobechecked list */
-////
-//// 	p->h_next = Htobechecked;
-//// 	p->h_prev = NULL;
-//// 	p->h_state = HT_TOBECHECKED;
-//// 	if ( Htobechecked != NULL )
-//// 		Htobechecked->h_prev = p;
-//// 	Htobechecked = p;
-//// 	Chkstuff = 1;
-//// }
-////
+
+func httobechecked(p Htablep) {
+	/* if it's already in the list... */
+	if p.h_state == HT_TOBECHECKED {
+		return
+	}
+	/* remove it from original list */
+	if p == Topht {
+		Topht = p.h_next
+	}
+	if p.h_next != nil {
+		(p.h_next).h_prev = p.h_prev
+	}
+	if p.h_prev != nil {
+		(p.h_prev).h_next = p.h_next
+	}
+	/* Add it to Htobechecked list */
+	p.h_next = Htobechecked
+	p.h_prev = nil
+	p.h_state = HT_TOBECHECKED
+	if Htobechecked != nil {
+		Htobechecked.h_prev = p
+	}
+	Htobechecked = p
+	Chkstuff = 1
+}
+
 //// /*
 ////  * phrmerge -  add the contents of 'p' to 'outph', delayed
 ////  * by 'offset'. The assumption is that both phrase's are already sorted.
@@ -1526,24 +1531,21 @@ func strdatum(s string) Datum {
 //// 	d.u.note = n;
 //// 	return d;
 //// }
-////
-//// Datum
-//// symdatum(Symbolp s)
-//// {
-//// 	Datum d;
-//// 	d.type = D_SYM;
-//// 	d.u.sym = s;
-//// 	return d;
-//// }
-////
-//// Datum
-//// fifodatum(Fifo *f)
-//// {
-//// 	Datum d;
-//// 	d.type = D_FIFO;
-//// 	d.u.fifo = f;
-//// 	return d;
-//// }
+
+func symdatum(s Symbolp) Datum {
+	var d Datum
+	d.dtype = D_SYM
+	d.u = s
+	return d
+}
+
+func fifodatum(f *Fifo) Datum {
+	var d Datum
+	d.dtype = D_FIFO
+	d.u = f
+	return d
+}
+
 ////
 //// Datum
 //// taskdatum(Ktaskp t)
