@@ -1,5 +1,7 @@
 package kit
 
+import "strings"
+
 //// /*
 ////  *	Copyright 1996 AT&T Corp.  All rights reserved.
 ////  */
@@ -1058,29 +1060,32 @@ package kit
 //// 		t->arg0 = NULL;
 //// }
 ////
-//// Datum *
-//// symdataptr(Symbolp s)
-//// {
-//// 	Datum *sf;
-//// 	int sp = s->stackpos;
-////
-//// 	/* handle unsigned characters and broken compilers */
-//// 	if ( sp > 127 )
-//// 		sp -= 256;
-////
-//// 	if ( sp == 0 )		/* it's a global var */
-//// 		return &(s->sd);
-////
-//// 	if ( sp > 0 )		/* it's a parameter var */
-//// 		return T->arg0 + sp - 1;
-////
-//// 	/* stackpos<0 , it's a local var */
-////
-//// 	sf = T->stackframe;
-//// 	if ( sf == NULL )
-//// 		execerror("Internal error - stackframe NULL, sym=%s\n",symname(s));
-//// 	return sf - FRAMEHEADER + sp + 1;
-//// }
+
+func symdataptr(s Symbolp) *Datum {
+	sp := s.stackpos
+
+	/* handle unsigned characters and broken compilers */
+	if sp > 127 {
+		sp -= 256
+	}
+
+	if sp == 0 { // it's a global var
+		return &(s.sd)
+	}
+
+	if sp > 0 { // it's a parameter var
+		return T.arg0 + sp - 1
+	}
+
+	/* stackpos<0 , it's a local var */
+
+	sf := T.stackframe
+	if sf == nil {
+		execerror("Internal error - stackframe NULL, sym=%s\n", symname(s))
+	}
+	return sf - FRAMEHEADER + sp + 1
+}
+
 ////
 //// void
 //// i_divcode(void)
@@ -1256,10 +1261,10 @@ func dcompare(d1 Datum, d2 Datum) int {
 	var n int
 	if d1.dtype == D_NUM && d2.dtype == D_NUM {
 
-		/* Uninitialized values look like integers, and comparisons */
-		/* with Uninitialized values are either == or != */
 		d1val := d1.u.(int)
 		d2val := d2.u.(int)
+		/* Uninitialized values look like integers, and comparisons */
+		/* with Uninitialized values are either == or != */
 		noval := Noval.u.(int)
 		if d1val == noval || d2val == noval {
 			execerror("Can't compare undefined values!?")
@@ -1281,7 +1286,7 @@ func dcompare(d1 Datum, d2 Datum) int {
 			n = 0
 		} else {
 			/* an ASCII comparison, don't use pointers */
-			n = strcmp(d1str, d2str)
+			n = strings.Compare(d1str, d2str)
 		}
 	} else if d1.dtype == D_PHR && d2.dtype == D_PHR {
 		n = phrcmp(d1.u.(Phrasep), d2.u.(Phrasep))

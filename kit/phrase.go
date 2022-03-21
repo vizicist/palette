@@ -1,32 +1,177 @@
 package kit
-//// /*
-////  *	Copyright 1996 AT&T Corp.  All rights reserved.
-////  */
-//// 
-//// #define OVERLAY6
-//// 
+
+import "strings"
+
+// These values need to be independent bits (1,2,etc.), and their order
+// is the order that they'll be sorted (after clicks) within phrases.
+const NT_BYTES = 1
+const T_NOTE = 2
+const T_ON = 4
+const T_OFF = 8
+const T_LE3BYTES = 16
+
+const FLG_PICK = 1 // bits in .flags value of Notes
+
+// default values at the beginning of constant phrases
+const DEFCHAN = 0
+const DEFVOL = 63
+const DEFOCT = 3
+const DEFCLICKS = 96
+const DEFPORT = 0
+
+// A magic number (sorry...) for un-initialized click-type values
+const UNDEFCLICKS = -99999
+
+// Maximum (and illegal) value of a clicks value.
+// Should be the maximum value of a long, but I'm
+// too lazy to find the most portable way of defining
+// that.  This is adequate.
+const MAXCLICKS = 9999999
+
+//// /* This is the maximum number of MIDI ports we support */
+//// #define MAX_PORTS 32
+////
+//// #define typeof(nt) ((nt)->type)
+//// #define portof(nt) ((nt)->port)
+//// #define timeof(nt) ((nt)->clicks)
+////
+//// /* Beware - original endof() macro triggered a compiler bug on the sparc */
+//// #ifdef ORIGINAL_ENDOF
+//// #define endof(nt) \
+//// 	((typeof(nt)==NT_NOTE)?((long)(durof(nt)+timeof(nt))):(timeof(nt))) */
+//// #endif
+//// #define endof(nt) (timeof(nt)+((typeof(nt)==NT_NOTE)?durof(nt):0L))
+////
+//// #define messof(nt) ((nt)->u.m)
+//// #define chanof(nt) (((nt)->u.n.chan) & 0x0f)
+//// #define setchanof(nt) ((nt)->u.n.chan)
+//// #define pitchof(nt) ((nt)->u.n.pitch)
+//// #define volof(nt) ((nt)->u.n.vol)
+//// #define durof(nt) ((nt)->u.n.duration)
+
+func attribof(nt Noteptr) string {
+	return nt.attrib
+}
+
+//// #define flagsof(nt) ((nt)->flags)
+//// #define le3_nbytesof(nt) ((nt)->u.b.nbytes)
+//// #define gt3_nbytesof(nt) ((nt)->u.m->leng)
+//// #define ntisnote(nt) (typeof(nt)==NT_NOTE||typeof(nt)==NT_ON||typeof(nt)==NT_OFF)
+//// #define ntisbytes(nt) (typeof(nt)==NT_BYTES||typeof(nt)==NT_LE3BYTES)
+//// #define canonipitchof(p) ((p)%12)
+//// #define canoctave(p) (-2+(p)/12)
+//// #define setfirstnote(p) ((p)->p_notes)
+//// #define realfirstnote(p) ((p)->p_notes)
+
+func nextnote(n Noteptr) Noteptr {
+	return n.next
+}
+func lastnote(p Phrasep) Noteptr {
+	return p.p_end
+}
+func firstnote(p Phrasep) Noteptr {
+	return p.p_notes
+}
+
+////
+//// /* first-time initialization */
+//// #define init1ph(p) {(p)->p_prev = NULL;}
+////
+//// /* Maximum size of a single note (which is normally small, but for */
+//// /* quoted strings can be any size) */
+//// #define NOTESIZE 256
+////
+//// #ifndef ALLOCNT
+//// #define ALLOCNT 512
+//// #endif
+//// #ifndef ALLOCPH
+//// #define ALLOCPH 128
+//// #endif
+////
+//// #define DURATIONTYPE long
+//// #define MAXDURATION (MAXLONG-2)
+//// #define UNFINISHED_DURATION (MAXLONG-1)
+////
+
+type Midimessdata struct {
+	leng  int
+	bytes *byte
+}
+
+type Note_n struct { // for NT_NOTE, NT_ON, NT_OFF
+	channel  byte
+	pitch    byte
+	vol      byte
+	duration int
+}
+
+type Note_b struct { // for NT_LE3BYTES
+	nbytes uint8
+	bytes  [3]byte
+}
+
+type Notedata struct {
+	next   Noteptr
+	clicks int // # of clicks from start of phrase.
+
+	// The n, b, and m elements were originally a union
+	n Note_n    // for NT_NOTE, NT_ON, NT_OFF
+	b Note_b    // for NT_LE3BYTES
+	m Midimessp // for NT_BYTES */
+
+	ntype  byte // NT_NOTE, NT_BYTES, NT_LE3BYTES, NT_ON, NT_OFF
+	port   uint8
+	flags  uint16
+	attrib string
+}
+
+type Phrase struct {
+	p_notes Noteptr
+	p_end   Noteptr // last note in phrase
+
+	p_leng int   // Length in clicks.  If -1, this is an available (temp) one.
+	p_used int16 // Number of things using this phrase
+	p_tobe int16 // Pending increment to p_used
+
+	p_next Phrasep
+	p_prev Phrasep
+}
+
+// extern Phrasep Topph, Freeph;
+// extern FILE *Fgetc;
+// extern int Defvol, Defoct, Defchan, Defport;
+
+// extern char *Defatt;
+// extern UINT16 Defflags;
+// extern long Deftime, Def2time;
+// extern int Numnotes;
+// extern char *Nullstr;
+
+////
 //// #include "key.h"
 //// #include "gram.h"
-//// 
+////
 //// extern char *Msg1;
-//// 
+////
 //// char *Nullstr = "";
 //// int Defvol, Defoct, Defchan, Defport;
-//// DURATIONTYPE Defdur;
+
+var Defdur int
+
 //// char *Defatt;
 //// long Deftime = 0L;
 //// long Def2time = 0L;
 //// UINT16 Defflags = 0;
-//// 
+////
 //// /* Each phrase in the entire system is a member of one of the following lists */
-//// 
+////
 //// Noteptr Freent = NULL;
 //// Phrasep Topph = NULL;		/* Phrases in use */
 //// Phrasep Freeph = NULL;		/* Free list, available for re-use by newph() */
-//// 
+////
 //// int Numnotes = 0;	/* Total number of notes in use. */
 //// int Numalloc = 0;	/* Total number of notes that have been allocated. */
-//// 
+////
 //// #ifdef OLDSTUFF
 //// void
 //// countnotes(void)
@@ -34,7 +179,7 @@ package kit
 //// 	Noteptr nt;
 //// 	Phrasep ph;
 //// 	int n, nph, npage;
-//// 
+////
 //// 	eprint("Numnotes=%d\n",Numnotes);
 //// 	n = 0;
 //// 	for(nt=Freent;nt!=NULL;nt=nextnote(nt))
@@ -69,7 +214,7 @@ package kit
 //// 	eprint("Num in Tobechecked phrases=%d npage=%d notes=%d\n",nph,npage,n);
 //// }
 //// #endif
-//// 
+////
 //// void
 //// resetdef(void)
 //// {
@@ -82,7 +227,7 @@ package kit
 //// 	Defflags = 0;
 //// 	Deftime = Def2time = 0L;
 //// }
-//// 
+////
 //// int
 //// saniport(long port)
 //// {
@@ -91,14 +236,14 @@ package kit
 //// 	}
 //// 	return port;
 //// }
-//// 
-//// Noteptr 
+////
+//// Noteptr
 //// newnt(void)
 //// {
 //// 	static Noteptr lastn;
 //// 	static int used = ALLOCNT;
 //// 	register Noteptr n;
-//// 
+////
 //// 	/* to avoid spending much time on it, we only check memory */
 //// 	/* every so often. */
 //// 	{static int cnt = 0;
@@ -107,7 +252,7 @@ package kit
 //// 			corecheck();
 //// 		}
 //// 	}
-//// 
+////
 //// 	/* First check the free list and use those nodes, before using */
 //// 	/* the newly allocated stuff. */
 //// 	if ( Freent != NULL ) {
@@ -131,14 +276,14 @@ package kit
 //// 	Numnotes++;
 //// 	return(n);
 //// }
-//// 
+////
 //// Midimessp
 //// savemess(Unchar* mess,int leng)
 //// {
 //// 	Midimessp m;
 //// 	register Unchar *p, *q;
 //// 	register int n;
-//// 
+////
 //// 	m = (Midimessp) kmalloc(sizeof(Midimessdata),"savemess");
 //// 	m->leng = leng;
 //// 	m->bytes = (Unchar*) kmalloc((unsigned)leng,"savebytes");
@@ -148,7 +293,7 @@ package kit
 //// 		*p++ = *q++;
 //// 	return(m);
 //// }
-//// 
+////
 //// /*
 ////  * Add a node to the free list
 ////  */
@@ -156,7 +301,7 @@ package kit
 //// ntfree(Noteptr n)
 //// {
 ////         register Midimessp m;
-//// 
+////
 //// 	if ( n == NULL )
 //// 		return;
 ////         if ( typeof(n) == NT_BYTES ) {
@@ -170,13 +315,13 @@ package kit
 ////         Freent = n;
 //// 	Numnotes--;
 //// }
-//// 
-//// Noteptr 
+////
+//// Noteptr
 //// ntcopy(register Noteptr n)
 //// {
 //// 	register Noteptr nn;
 //// 	int i, nb;
-//// 
+////
 //// 	nn = newnt();
 //// 	timeof(nn) = timeof(n);
 //// #ifdef NTATTRIB
@@ -203,20 +348,20 @@ package kit
 //// 	nextnote(nn) = NULL;
 //// 	return(nn);
 //// }
-//// 
+////
 //// /* freents(n) - works even if n==NULL to begin with */
 //// void
 //// freents(Noteptr n)
 //// {
 //// 	Noteptr nxt;
-//// 
+////
 //// 	dummyset(nxt);
 //// 	for ( ; n!=NULL; n=nxt ) {
 //// 		nxt = n->next;
 //// 		ntfree(n);
 //// 	}
 //// }
-//// 
+////
 //// /* compare two Midimess (ie. raw bytes) */
 //// int
 //// bytescmp(Noteptr n1,Noteptr n2)
@@ -224,20 +369,20 @@ package kit
 //// 	Unchar *p1, *p2;
 //// 	int lng1, lng2;
 //// 	int cmp, n;
-//// 
+////
 //// 	p1 = ptrtobyte(n1,0);
 //// 	lng1 = ntbytesleng(n1);
-//// 
+////
 //// 	p2 = ptrtobyte(n2,0);
 //// 	lng2 = ntbytesleng(n2);
-//// 
+////
 //// 	for ( n=lng1; n-- > 0; ) {
 //// 		if ( (cmp=(*p1++)-(*p2++)) != 0 )
 //// 			return cmp;
 //// 	}
 //// 	return lng1 - lng2;
 //// }
-//// 
+////
 //// int
 //// utypeof(Noteptr nt)
 //// {
@@ -250,141 +395,178 @@ package kit
 //// 		return NT_BYTES;
 //// 	}
 //// }
-//// 
-//// /* Compare two notes in the way used for ordering within a phrase. */
-//// /* I *think* this routine is starting to become almost exactly like */
-//// /* ntcmpxact(), except for the handling of midibytes types. */
-//// /* Probably should add a parameter to it, rather than duplicate the */
-//// /* code twice - that way it'll keep in sync better if there are future */
-//// /* changes. */
-//// int
-//// ntcmporder(register Noteptr n1,register Noteptr n2)
-//// {
-//// 	register long ld;
-//// 	register int d;
-//// #ifdef NTATTRIB
-//// 	char *att1;
-//// 	char *att2;
-//// #endif
-//// 
-//// 	if ( (ld=timeof(n1)-timeof(n2)) < 0 )
-//// 		return -1;
-//// 	if ( ld > 0 )
-//// 		return 1;
-//// 	if ( (d=utypeof(n1)-utypeof(n2)) < 0 )
-//// 		return -1;
-//// 	if ( d > 0 )
-//// 		return 1;
-//// 	/* Types are the same.  NT_BYTES are not sorted further, so */
-//// 	/* that the order of things like pitch bends and other */
-//// 	/* miscellaneous stuff is retained. */
-//// 	if ( ntisbytes(n1) )
-//// 		return 0;
-//// 	if ( (d=pitchof(n1)-pitchof(n2)) < 0 )
-//// 		return -1;
-//// 	if ( d > 0 )
-//// 		return 1;
-//// 	if ( (d=chanof(n1)-chanof(n2)) < 0 )
-//// 		return -1;
-//// 	if ( d > 0 )
-//// 		return 1;
-//// 	if ( (d=portof(n1)-portof(n2)) < 0 )
-//// 		return -1;
-//// 	if ( d > 0 )
-//// 		return 1;
-//// 	if ( (d=volof(n1)-volof(n2)) < 0 )
-//// 		return -1;
-//// 	if ( d > 0 )
-//// 		return 1;
-//// 	if ( (d=flagsof(n1)-flagsof(n2)) < 0 )
-//// 		return -1;
-//// 	if ( d > 0 )
-//// 		return 1;
-//// 	if ( (ld=durof(n1)-durof(n2)) < 0 )
-//// 		return -1;
-//// 	if ( ld > 0 )
-//// 		return 1;
-//// #ifdef NTATTRIB
-//// 	/* Quick equality test is to compare the char* pointers, */
-//// 	/* since they're both uniqstr'ed.  */
-//// 	att1 = attribof(n1);
-//// 	att2 = attribof(n2);
-//// 	if ( att1 != att2 ) {
-//// 		if ( strcmp(att1,att2) < 0 )
-//// 			return -1;
-//// 		else
-//// 			return 1;
-//// 	}
-//// #endif
-//// 	return 0;
-//// }
-//// 
-//// /* compare two notes exactly (all attributes are used in the comparison) */
-//// int
-//// ntcmpxact(register Noteptr n1,register Noteptr n2)
-//// {
-//// 	register long ld;
-//// 	register int d;
-//// #ifdef NTATTRIB
-//// 	char *att1;
-//// 	char *att2;
-//// #endif
-//// 
-//// 	if ( (ld=timeof(n1)-timeof(n2)) < 0 )
-//// 		return -1;
-//// 	if ( ld > 0 )
-//// 		return 1;
-//// 	if ( (d=utypeof(n1)-utypeof(n2)) < 0 )
-//// 		return -1;
-//// 	if ( d > 0 )
-//// 		return 1;
-//// 	/* types are the same, NT_BYTES needs to be compared */
-//// 	if ( ntisbytes(n1) )
-//// 		return bytescmp(n1,n2);
-//// 	if ( (d=pitchof(n1)-pitchof(n2)) < 0 )
-//// 		return -1;
-//// 	if ( d > 0 )
-//// 		return 1;
-//// 	if ( (d=chanof(n1)-chanof(n2)) < 0 )
-//// 		return -1;
-//// 	if ( d > 0 )
-//// 		return 1;
-//// 	if ( (d=portof(n1)-portof(n2)) < 0 )
-//// 		return -1;
-//// 	if ( d > 0 )
-//// 		return 1;
-//// 	if ( (d=volof(n1)-volof(n2)) < 0 )
-//// 		return -1;
-//// 	if ( d > 0 )
-//// 		return 1;
-//// 	if ( (d=flagsof(n1)-flagsof(n2)) < 0 )
-//// 		return -1;
-//// 	if ( d > 0 )
-//// 		return 1;
-//// 	if ( (ld=durof(n1)-durof(n2)) < 0 )
-//// 		return -1;
-//// 	if ( ld > 0 )
-//// 		return 1;
-//// #ifdef NTATTRIB
-//// 	/* Quick equality test is to compare the char* pointers, */
-//// 	/* since they're both uniqstr'ed.  */
-//// 	att1 = attribof(n1);
-//// 	att2 = attribof(n2);
-//// 	if ( att1 != att2 ) {
-//// 		if ( strcmp(att1,att2) < 0 )
-//// 			return -1;
-//// 		else
-//// 			return 1;
-//// 	}
-//// #endif
-//// 	return 0;
-//// }
-//// 
+////
+/* Compare two notes in the way used for ordering within a phrase. */
+/* I *think* this routine is starting to become almost exactly like */
+/* ntcmpxact(), except for the handling of midibytes types. */
+/* Probably should add a parameter to it, rather than duplicate the */
+/* code twice - that way it'll keep in sync better if there are future */
+/* changes. */
+func ntcmporder(n1 Noteptr, n2 Noteptr) int {
+
+	ld := timeof(n1) - timeof(n2)
+	if ld < 0 {
+		return -1
+	}
+	if ld > 0 {
+		return 1
+	}
+
+	d := utypeof(n1) - utypeof(n2)
+	if d < 0 {
+		return -1
+	}
+	if d > 0 {
+		return 1
+	}
+
+	/* Types are the same.  NT_BYTES are not sorted further, so */
+	/* that the order of things like pitch bends and other */
+	/* miscellaneous stuff is retained. */
+	if ntisbytes(n1) {
+		return 0
+	}
+	d := pitchof(n1) - pitchof(n2)
+	if d < 0 {
+		return -1
+	}
+	if d > 0 {
+		return 1
+	}
+
+	d := chanof(n1) - chanof(n2)
+	if d < 0 {
+		return -1
+	}
+	if d > 0 {
+		return 1
+	}
+
+	d = portof(n1) - portof(n2)
+	if d < 0 {
+		return -1
+	}
+	if d > 0 {
+		return 1
+	}
+
+	d := volof(n1) - volof(n2)
+	if d < 0 {
+		return -1
+	}
+	if d > 0 {
+		return 1
+	}
+
+	d := flagsof(n1) - flagsof(n2)
+	if d < 0 {
+		return -1
+	}
+	if d > 0 {
+		return 1
+	}
+
+	ld := durof(n1) - durof(n2)
+	if ld < 0 {
+		return -1
+	}
+	if ld > 0 {
+		return 1
+	}
+
+	/* Quick equality test is to compare the char* pointers, */
+	/* since they're both uniqstr'ed.  */
+	att1 := attribof(n1)
+	att2 := attribof(n2)
+	v := strings.Compare(att1, att2)
+	return v
+}
+
+// compare two notes exactly (all attributes are used in the comparison)
+func ntcmpxact(n1 Noteptr, n2 Noteptr) int {
+
+	ld := timeof(n1) - timeof(n2)
+	if ld < 0 {
+		return -1
+	}
+	if ld > 0 {
+		return 1
+	}
+
+	d := utypeof(n1) - utypeof(n2)
+	if d < 0 {
+		return -1
+	}
+	if d > 0 {
+		return 1
+	}
+
+	/* types are the same, NT_BYTES needs to be compared */
+	if ntisbytes(n1) {
+		return bytescmp(n1, n2)
+	}
+	d := pitchof(n1) - pitchof(n2)
+	if d < 0 {
+		return -1
+	}
+	if d > 0 {
+		return 1
+	}
+
+	d := chanof(n1) - chanof(n2)
+	if d < 0 {
+		return -1
+	}
+	if d > 0 {
+		return 1
+	}
+
+	d := portof(n1) - portof(n2)
+	if d < 0 {
+		return -1
+	}
+	if d > 0 {
+		return 1
+	}
+
+	d = volof(n1) - volof(n2)
+	if d < 0 {
+		return -1
+	}
+	if d > 0 {
+		return 1
+	}
+
+	d = flagsof(n1) - flagsof(n2)
+	if d < 0 {
+		return -1
+	}
+	if d > 0 {
+		return 1
+	}
+
+	ld = durof(n1) - durof(n2)
+	if ld < 0 {
+		return -1
+	}
+	if ld > 0 {
+		return 1
+	}
+
+	// Quick equality test is to compare the char* pointers,
+	// since they're both uniqstr'ed.
+	att1 := attribof(n1)
+	att2 := attribof(n2)
+	v := strings.Compare(att1, att2)
+	return v
+}
+
+////
 //// void
 //// phcopy(Phrasep out,Phrasep in)
 //// {
 //// 	register Noteptr n, newn, lastn;
-//// 
+////
 //// 	lastn = NULL;
 //// 	out->p_leng = in->p_leng;
 //// 	for ( n=firstnote(in); n!=NULL; n=nextnote(n) ) {
@@ -397,26 +579,26 @@ package kit
 //// 		chkrealoften();
 //// 	}
 //// 	out->p_end = lastn;
-//// 
+////
 //// }
-//// 
+////
 //// /*
 ////  * phreorder
 ////  *
 ////  * Make sure the notes in a phrase are in the proper order,
 ////  * and set p_end as a side effect.
 ////  */
-//// 
+////
 //// void
 //// phreorder(Phrasep ph,long tmout)
 //// {
 //// 	register Noteptr n, nextn;
 //// 	int cnt = 0;
-//// 
+////
 //// 	/* Since we're re-ordering, we can't trust p_end, so we */
 //// 	/* have to make sure ntinsert() doesn't use it. */
 //// 	lastnote(ph) = NULL;
-//// 
+////
 //// 	for ( n=firstnote(ph); n!=NULL; ) {
 //// 		if ( tmout > 0 && ++cnt > 100 ) {
 //// 			cnt = 0;
@@ -451,13 +633,13 @@ package kit
 //// 	}
 //// 	ph->p_end = n;
 //// }
-//// 
+////
 //// void
 //// phcutusertype(Phrasep pin,Phrasep pout,int types,int invert)
 //// {
 //// 	register Noteptr n;
 //// 	int istype;
-//// 
+////
 //// 	for ( n=firstnote(pin); n!=NULL; n=nextnote(n) ) {
 //// 		istype = (usertypeof(n) & types) != 0;
 //// 		if ( invert )
@@ -466,13 +648,13 @@ package kit
 //// 			ntinsert(ntcopy(n),pout);
 //// 	}
 //// }
-//// 
+////
 //// void
 //// phcutcontroller(Phrasep pin,Phrasep pout,int cnum, int invert)
 //// {
 //// 	register Noteptr n;
 //// 	int istype;
-//// 
+////
 //// 	for ( n=firstnote(pin); n!=NULL; n=nextnote(n) ) {
 //// 		istype = (usertypeof(n) & M_CONTROLLER) != 0;
 //// 		if ( invert )
@@ -481,24 +663,24 @@ package kit
 //// 			ntinsert(ntcopy(n),pout);
 //// 	}
 //// }
-//// 
+////
 //// void
 //// phcutflags(Phrasep pin,Phrasep pout,long mask)
 //// {
 //// 	register Noteptr n;
-//// 
+////
 //// 	for ( n=firstnote(pin); n!=NULL; n=nextnote(n) ) {
 //// 		if ( (flagsof(n) & mask) != 0 )
 //// 			ntinsert(ntcopy(n),pout);
 //// 	}
 //// }
-//// 
+////
 //// void
 //// phcutchannel(Phrasep pin,Phrasep pout,int chan)
 //// {
 //// 	register Noteptr n;
 //// 	Datum d;
-//// 
+////
 //// 	for ( n=firstnote(pin); n!=NULL; n=nextnote(n) ) {
 //// 		if ( ! ntdotvalue(n,CHAN,&d) )
 //// 			continue;
@@ -506,20 +688,20 @@ package kit
 //// 			ntinsert(ntcopy(n),pout);
 //// 	}
 //// }
-//// 
+////
 //// /*
 ////  * All of the phcut*() functions have the following semantics:
 ////  * the time period of the cut starts at tm1 and ends at (but does NOT
 ////  * include) tm2.  If tm2==tm1, it is handled as if tm2=tm+1.
 ////  * If tm2<0, the cut extends to the end of the phrase.
 ////  */
-//// 
+////
 //// void
 //// phcut(Phrasep pin,Phrasep pout,long tm1,long tm2,int p1,int p2)
 //// {
 //// 	register Noteptr n;
 //// 	register long t;
-//// 
+////
 //// 	if ( tm1 == tm2 )
 //// 		tm2 = tm1 + 1;
 //// 	for ( n=firstnote(pin); n!=NULL; n=nextnote(n) ) {
@@ -530,13 +712,13 @@ package kit
 //// 		}
 //// 	}
 //// }
-//// 
+////
 //// void
 //// phcutincl(Phrasep pin,Phrasep pout,long tm1,long tm2)
 //// {
 //// 	register Noteptr n;
 //// 	register long t, e;
-//// 
+////
 //// 	if ( tm1 == tm2 )
 //// 		tm2 = tm1 + 1;
 //// 	for ( n=firstnote(pin); n!=NULL; n=nextnote(n) ) {
@@ -544,19 +726,19 @@ package kit
 //// 		e = endof(n);
 //// 		if ( t == e )
 //// 			e = t + 1;
-//// 
+////
 //// 		if ( (t<=tm1 && e>tm1) || (t>tm1 && t<tm2) )
 //// 			ntinsert(ntcopy(n),pout);
 //// 	}
 //// }
-//// 
+////
 //// void
 //// phcuttrunc(Phrasep pin,Phrasep pout,long tm1,long tm2)
 //// {
 //// 	Noteptr n, newn;
 //// 	long prehang, overhang;
 //// 	long t, e;
-//// 
+////
 //// 	if ( tm1 == tm2 )
 //// 		tm2 = tm1 + 1;
 //// 	for ( n=firstnote(pin); n!=NULL; n=nextnote(n) ) {
@@ -564,12 +746,12 @@ package kit
 //// 		e = endof(n);
 //// 		if ( t == e )
 //// 			e = t + 1;
-//// 
+////
 //// 		if ( t >= tm2 || e <= tm1 )
 //// 			continue;
-//// 
+////
 //// 		newn = ntcopy(n);
-//// 
+////
 //// 		prehang = tm1 - t;
 //// 		if ( prehang > 0 ) {
 //// 			timeof(newn) += prehang;
@@ -590,14 +772,14 @@ package kit
 //// 		pout->p_leng = pin->p_leng - tm1;
 //// #endif
 //// }
-//// 
+////
 //// Phrasep
 //// newph(int inituse)
 //// {
 //// 	static Phrasep lastph;
 //// 	static int used = ALLOCPH;
 //// 	register Phrasep p;
-//// 
+////
 //// 	/* First check the free list and use those nodes, before */
 //// 	/* using newly allocated stuff. */
 //// 	if ( Freeph != NULL ) {
@@ -605,7 +787,7 @@ package kit
 //// 		Freeph = Freeph->p_next;
 //// 		goto getout;
 //// 	}
-//// 
+////
 //// 	/* allocate a bunch of new ones at a time */
 //// 	if ( used == ALLOCPH ) {
 //// 		lastph = (Phrasep) kmalloc(ALLOCPH*sizeof(Phrase),"newph");
@@ -625,7 +807,7 @@ package kit
 //// 	Topph = p;
 //// 	return(p);
 //// }
-//// 
+////
 //// void
 //// reinitph(register Phrasep p)
 //// {
@@ -635,21 +817,21 @@ package kit
 //// 	p->p_used = 0;
 //// 	p->p_tobe = 0;
 //// }
-//// 
+////
 //// /*
 ////  * ntinsert(n,p)
 ////  *
 ////  * Insert a note into a phrase, using the note's
 ////  * time (clicks) to determine where it goes.
 ////  */
-//// 
+////
 //// void
 //// ntinsert(Noteptr n,Phrasep p)
 //// {
 //// 	register Noteptr lastn = NULL;
 //// 	register Noteptr prevnt = NULL;
 //// 	register Noteptr nt1;
-//// 
+////
 //// 	/* quick check to see if it goes at the end */
 //// 	lastn = p->p_end;
 //// 	if ( lastn != NULL && ntcmporder(n,lastn) >= 0 ) {
@@ -658,7 +840,7 @@ package kit
 //// 		p->p_end = n;
 //// 		return;
 //// 	}
-//// 
+////
 //// 	nt1 = firstnote(p);
 //// 	while ( nt1!=NULL && ntcmporder(nt1,n) <= 0 ) {
 //// 		prevnt = nt1;
@@ -673,43 +855,43 @@ package kit
 //// 		p->p_end = n;
 //// /* printf("   after expensive ntinsert, p->first=%ld\n",realfirstnote(p)); */
 //// }
-//// 
+////
 //// /*
 ////  * ntdelete
 ////  *
 ////  * Find and delete a note from a phrase.
 ////  */
-//// 
+////
 //// void
 //// ntdelete(register Phrasep ph,register Noteptr nt)
 //// {
 //// 	register Noteptr n, pre;
-//// 
+////
 //// 	for ( pre=NULL,n=firstnote(ph); n!=NULL; pre=n,n=n->next ) {
 //// 		if ( n == nt )
 //// 			break;
 //// 	}
 //// 	if ( n != NULL ) {
 //// 		/* we found it; delete it */
-//// 
+////
 //// 		if ( pre == NULL )
 //// 			setfirstnote(ph) = nt->next;
 //// 		else
 //// 			pre->next = nt->next;
-//// 
+////
 //// 		if ( nt->next == NULL )
 //// 			ph->p_end = pre;
-//// 
+////
 //// 		ntfree(nt);
 //// 	}
 //// }
-//// 
+////
 //// int
 //// usertypeof(Noteptr nt)
 //// {
 //// 	Unchar* bp;
 //// 	int ch1, ch2, ch3;
-//// 
+////
 //// 	switch(nt->type){
 //// 	case NT_NOTE:
 //// 		return NT_NOTE;
@@ -753,20 +935,20 @@ package kit
 //// 		return NT_BYTES;
 //// 	}
 //// }
-//// 
+////
 //// /*
 ////  * phtype
 ////  *
 ////  * The phrase type equals the type of all its notes, if they're all
 ////  * consistent, or equals NT_BYTES if they're mixed.
 ////  */
-//// 
+////
 //// int
 //// phtype(register Phrasep p)
 //// {
 //// 	register Noteptr n = firstnote(p);
 //// 	register int t;
-//// 
+////
 //// 	if ( n == NULL )
 //// 		return(NT_BYTES);	/* -1 would be another possibility */
 //// 	t = usertypeof(n);
@@ -776,7 +958,7 @@ package kit
 //// 	}
 //// 	return(t);
 //// }
-//// 
+////
 //// char *
 //// notetoke(INTFUNC infunc)
 //// {
@@ -789,24 +971,24 @@ package kit
 //// 	register int state = 0;
 //// 	register char *p = notebuff;
 //// 	register int c;
-//// 
+////
 //// 	while ( state >= 0 ) {
-//// 
+////
 //// 		if ( sc != 0 ) {
 //// 			c = sc;
 //// 			sc = 0;
 //// 		}
 //// 		else
 //// 			c = (*infunc)();
-//// 
+////
 //// 		if ( c == EOF )
 //// 			break;
-//// 
+////
 //// 		if ( p>=endofbuff ) {
 //// 			/* increase size of notebuff */
 //// 			char *r, *newbuff;
 //// 			char *q = notebuff;
-//// 
+////
 //// 			buffsize += buffinc;
 //// 			buffinc = (buffinc*3)/2;
 //// 			newbuff = kmalloc(buffsize,"notetoke");
@@ -818,7 +1000,7 @@ package kit
 //// 			endofbuff = notebuff + buffsize;
 //// 			p = r;
 //// 		}
-//// 
+////
 //// 		switch (state) {
 //// 		case 0:
 //// 			if ( c == ',' ) {
@@ -910,7 +1092,7 @@ package kit
 //// 	else
 //// 		return(notebuff);
 //// }
-//// 
+////
 //// Phrasep
 //// yyphrase(INTFUNC infunc)
 //// {
@@ -920,16 +1102,16 @@ package kit
 //// 	char *buff;
 //// 	long maxend = UNDEFCLICKS;
 //// 	int nquotes = 0;
-//// 
+////
 //// 	/* reset default values for volume, duration, etc. */
 //// 	resetdef();
-//// 
+////
 //// 	p = newph(0);
 //// 	setfirstnote(p) = NULL;
 //// 	p->p_leng = UNDEFCLICKS;
-//// 
+////
 //// 	while ( (buff=notetoke(infunc)) != NULL ) {
-//// 
+////
 //// 		/* if we see a quote, ignore it, but quit reading when we */
 //// 		/* get a second one, no matter what state we're in. */
 //// 		if ( *buff == '\'' ) {
@@ -940,16 +1122,16 @@ package kit
 //// 		/* Be forgiving of isolated or duplicated commas */
 //// 		if ( *buff==',' && *(buff+1)=='\0' )
 //// 			continue;
-//// 
+////
 //// 		n = ntparse(buff,p);
-//// 
+////
 //// 		/* keep track of the maximum note ending time */
 //// 		if ( maxend==UNDEFCLICKS || Def2time>maxend )
 //// 			maxend = Def2time;
-//// 
+////
 //// 		if ( n == NULL )
 //// 			continue;
-//// 
+////
 //// 		/* Avoid ntinsert() if possibe (as an optimization) */
 //// 		if ( firstnote(p) == NULL ) {
 //// 			setfirstnote(p) = n;
@@ -967,10 +1149,10 @@ package kit
 //// 			while ( lastn->next != NULL )
 //// 				lastn = lastn->next;
 //// 		}
-//// 
+////
 //// 	}
 //// 	p->p_end = lastn;
-//// 
+////
 //// 	/* If the phrase length isn't explicit, it's the maximum */
 //// 	/* note ending time.  Note that we want to handle trailing */
 //// 	/* rests, which update Deftime* but aren't real notes. */
@@ -979,23 +1161,23 @@ package kit
 //// 	}
 //// 	return(p);
 //// }
-//// 
+////
 //// static Symstr Strptr;
-//// 
+////
 //// int
 //// strinput(void)
 //// {
 //// 	register int c = *Strptr++;
 //// 	return ( c == '\0' ? EOF : c );
 //// }
-//// 
+////
 //// Phrasep
 //// strtophr(Symstr s)
 //// {
 //// 	Strptr = s;
 //// 	return(yyphrase(strinput));
 //// }
-//// 
+////
 //// int
 //// ntbytesleng(Noteptr n)
 //// {
@@ -1004,7 +1186,7 @@ package kit
 //// 	else	/* NT_LE3BYTES */
 //// 		return le3_nbytesof(n);
 //// }
-//// 
+////
 //// /*
 ////  * ntparse(s,p)
 ////  *
@@ -1013,14 +1195,14 @@ package kit
 ////  * Things that are not explicitly specified (e.g. the volume, octave,
 ////  * duration) are taken from the previous call to ntparse.
 ////  */
-//// 
-//// Noteptr 
+////
+//// Noteptr
 //// ntparse(char *s,Phrasep p)
 //// {
 //// 	register Noteptr n;
 //// 	int type = NT_NOTE;
 //// 	long lng;
-//// 
+////
 //// 	while ( isspace(*s) || *s == '|' )
 //// 		s++;
 //// 	/* A comma indicates the note should be put at the end of the */
@@ -1032,7 +1214,7 @@ package kit
 //// 			s++;
 //// 		Deftime = Def2time;
 //// 	}
-////  
+////
 //// 	/* first char of note determines basic type */
 //// 	switch (*s) {
 //// 	case 'l':
@@ -1070,31 +1252,31 @@ package kit
 //// 		n = strtont(s); /* NT_NOTE */
 //// 		break;
 //// 	}
-//// 
+////
 //// 	if ( n == NULL )
 //// 		return(NULL);	/* error */
-//// 
+////
 //// 	typeof(n) = type;
-//// 
+////
 //// 	Deftime = timeof(n);
 //// 	Def2time = endof(n);
-//// 
+////
 //// 	return(n);
 //// }
-//// 
+////
 //// /*
 ////  * attscan(s)
 ////  *
 ////  * Scan an attribute value of a note.
 ////  */
-//// 
+////
 //// char *
 //// attscan(char **s)
 //// {
 //// 	char *olds = *s;
 //// 	char *r;
 //// 	char c, savec;
-//// 
+////
 //// 	while ( (c=(**s)) != '`' && c != '\0' )
 //// 		(*s)++;
 //// 	savec = **s;
@@ -1104,7 +1286,7 @@ package kit
 //// 	(*s)++;
 //// 	return r;
 //// }
-//// 
+////
 //// /*
 ////  * strtont(s)
 ////  *
@@ -1113,14 +1295,14 @@ package kit
 ////  * not explicitly specified (e.g. the volume, octave, duration) are
 ////  * taken from the previous call to strtont.
 ////  */
-//// 
-//// Noteptr 
+////
+//// Noteptr
 //// strtont(char *s)
 //// {
 //// 	static char pitchnames[]={'c','d','e','f','g','a','b','\0'};
 //// 	static int pitchvals[] = { 24, 26, 28, 29, 31, 33, 35};	/* octave 0 */
 //// 	int vol, octave, chan;
-//// 	DURATIONTYPE dur;
+//// 	int dur;
 //// 	int val = 0, pitch = -1, isrest = 0;
 //// 	long clicks = -1L;
 //// 	Noteptr n;
@@ -1128,7 +1310,7 @@ package kit
 //// 	register char c;
 //// 	UINT16 flags;
 //// 	int port;
-//// 
+////
 //// 	vol = Defvol;
 //// 	octave = Defoct;
 //// 	dur = Defdur;
@@ -1137,7 +1319,7 @@ package kit
 //// 	att = Defatt;
 //// 	flags = Defflags;
 //// 	port = Defport;
-//// 
+////
 //// 	if ( *s == 'p' ) {
 //// 		/* If it starts with a 'p', it's a raw pitch number.. */
 //// 		s++;
@@ -1153,7 +1335,7 @@ package kit
 //// 		int i = 0;
 //// 		int schr = *s;
 //// 		register char *pn = pitchnames;
-//// 
+////
 //// 		while ( (c=(*pn++)) != '\0' ) {
 //// 			if ( c == schr )
 //// 				break;
@@ -1188,7 +1370,7 @@ package kit
 //// 			break;
 //// 		case 'd':
 //// 		case 'D':
-//// 			dur = (DURATIONTYPE) numscan(&s);
+//// 			dur = (int) numscan(&s);
 //// 			break;
 //// 		case 't':
 //// 		case 'T':
@@ -1209,37 +1391,37 @@ package kit
 //// 			break;
 //// 		}
 //// 	}
-//// 
+////
 //// 	/* If a 'raw' pitch number wasn't given .. */
 //// 	if ( pitch < 0 )
 //// 		pitch = val + 12 * octave;
-//// 
+////
 //// 	/* various sanity checking */
 //// 	if ( pitch < 0 )
 //// 		pitch = 0;
 //// 	else if ( pitch > 127 )
 //// 		pitch = 127;
-//// 
+////
 //// #ifdef OLDSTUFF
 //// 	if ( clicks < 0 )
 //// 		clicks = 0;
 //// #endif
-//// 
+////
 //// 	if ( chan < 0 )
 //// 		chan = 0;
 //// 	else if ( chan > 15 )
 //// 		chan = 15;
-//// 
+////
 //// 	if ( vol < 0 )
 //// 		vol = 0;
 //// 	else if ( vol > 127 )
 //// 		vol = 127;
-//// 
+////
 //// 	port = saniport(port);
-//// 
+////
 //// 	if ( dur < 0 )
 //// 		dur = 0;
-//// 
+////
 //// 	Defchan = chan;
 //// 	Defdur = dur;
 //// 	Defvol = vol;
@@ -1247,14 +1429,14 @@ package kit
 //// 	Defatt = att;
 //// 	Defflags = flags;
 //// 	Defport = port;
-//// 
+////
 //// 	/* For rests, we just update Deftime* so the default for the */
 //// 	/* next note will be appropriate. */
 //// 	if ( isrest ) {
 //// 		Deftime = Def2time = clicks + dur;
 //// 		return((Noteptr)NULL);
 //// 	}
-//// 
+////
 //// 	/* If no explicit position is given, */
 //// 	/* add it to the end of the list. */
 //// 	/* create and add a normal note */
@@ -1264,8 +1446,8 @@ package kit
 //// 	setchanof(n) = chan ;
 //// 	pitchof(n) = pitch ;
 //// 	volof(n) = vol ;
-//// 	durof(n) = (DURATIONTYPE)dur;
-//// 
+//// 	durof(n) = dur;
+////
 //// 	/*
 //// 	 * Previous bugs in mfin.c may have generated .kp files
 //// 	 * that contain durations equal to UNFINISHED_DURATION.
@@ -1274,23 +1456,23 @@ package kit
 //// 	if ( durof(n) == UNFINISHED_DURATION ) {
 //// 		durof(n) = *Clicks;
 //// 	}
-//// 
+////
 //// 	flagsof(n) = flags;
 //// 	portof(n) = Defport;
 //// #ifdef NTATTRIB
 //// 	attribof(n) = att;
 //// #endif
-//// 
+////
 //// 	return(n);
 //// }
-//// 
+////
 //// /*
 ////  * messtont
 ////  *
 ////  * Given a string with a raw MIDI message (in hex bytes),
 ////  * scan it and return the equivalent note.
 ////  */
-//// 
+////
 //// Noteptr
 //// messtont(char *s)
 //// {
@@ -1301,13 +1483,13 @@ package kit
 //// 	char c;
 //// 	int h, i, bytenum=0, byte1;
 //// 	int nbytes = 0;
-//// 
+////
 //// 	n = newnt();
-//// 
+////
 //// 	timeof(n) = Deftime;
 //// 	flagsof(n) = Defflags;
 //// 	portof(n) = Defport;
-//// 
+////
 //// #ifdef NTATTRIB
 //// 	attribof(n) = Defatt;
 //// #endif
@@ -1369,25 +1551,25 @@ package kit
 //// 		typeof(n) = NT_BYTES;
 //// 		messof(n) = savemess(bytes,nbytes);
 //// 	}
-//// 
+////
 //// 	return(n);
 //// }
-//// 
+////
 //// /*
 ////  * strtotextmess
 ////  *
 ////  * Given a string with a text MIDI message (in double quotes)
 ////  * scan it and return the equivalent note.
 ////  */
-//// 
-//// Noteptr 
+////
+//// Noteptr
 //// strtotextmess(char *s)
 //// {
 //// 	Noteptr n;
 //// 	char c;
 //// 	int nbytes=0;
 //// 	unsigned char *buff;
-//// 
+////
 //// 	n = newnt();
 //// 	timeof(n) = Deftime;
 //// 	flagsof(n) = Defflags;
@@ -1434,12 +1616,12 @@ package kit
 //// 	kfree(buff);
 //// 	return(n);
 //// }
-//// 
+////
 //// Unchar*
 //// ptrtobyte(register Noteptr n,register int num)
 //// {
 //// 	register Midimessp m;
-//// 
+////
 //// 	switch(typeof(n)){
 //// 	case NT_LE3BYTES:
 //// 		if ( num < (int)(le3_nbytesof(n)) )
@@ -1448,7 +1630,7 @@ package kit
 //// 	default:	/* NT_BYTES */
 //// 		{
 //// 		m = messof(n);
-//// 
+////
 //// 		if ( m != NULL && m->bytes != NULL && num < m->leng )
 //// 			return (Unchar*)(&(m->bytes[num]));
 //// 		}
@@ -1457,4 +1639,4 @@ package kit
 //// 	execerror("Internal error, ptrtobyte can't get pointer (num=%d)!?\n",num);
 //// 	return(NULL);	/* to make compiler happy */
 //// }
-//// 
+////

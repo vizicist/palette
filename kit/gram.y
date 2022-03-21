@@ -44,10 +44,9 @@ type Lexer struct {
 }
 
 type Instnode struct {
-	x int
-}
-type Phrase struct {
-	x int
+	code   Instcode
+	inext  Instnodep
+	offset int // only used in inodes2code() */
 }
 
 type Instnodep *Instnode
@@ -121,7 +120,7 @@ program
 expr
 	: NUMBER
 	{
-		$$ = &Instnode{x: 777}
+		$$ = &Instnode{}
 	}
 %%
 
