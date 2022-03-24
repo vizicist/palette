@@ -1,28 +1,19 @@
 package kit
-//// /*
-////  *	Copyright 1996 AT&T Corp.  All rights reserved.
-////  */
-//// 
-//// /* This is a hook to include 'overlay' directives (in mdep.h) */
-//// #define OVERLAY1
-//// 
+
 //// int Debugqnote = 0;
-//// 
-//// #include "key.h"
-//// #include "keymidi.h"
-//// 
+////
 //// static char *Timeoutmsg = "This is a demo copy of KeyKit.\nThe timeout has expired, sorry.";
 //// static void real_putnmidi(int buffsize, char *buff, int port);
-//// 
+////
 //// static int Currport = 0;	/* 1-based input port number (keykit's port
 //// 				/* numbers), 0 means default. */
-//// 
+////
 //// static int lastsync = 0;
 //// static long lastnowoffset = 0;
-//// 
+////
 //// static void put3onmonitorfifo(int c1, int c2, int c3);
 //// static void putonmonitorfifo(Noteptr n);
-//// 
+////
 //// void
 //// chksched(char *str)
 //// {
@@ -32,7 +23,7 @@ package kit
 //// 			eprint("Sched order: %s %ld %ld\n",str,s->clicks,s->next->clicks);
 //// 	}
 //// }
-//// 
+////
 //// void
 //// psched(void)
 //// {
@@ -43,49 +34,49 @@ package kit
 //// 	}
 //// 	eprint(";)\n");
 //// }
-//// 
+////
 //// static char *Grabbuff = NULL;
 //// static long Grabbuffsize = 0;
-//// 
+////
 //// int Midiok = 0;
-//// 
+////
 //// long Tempo = 500000L;	/* Microseconds per beat */
-//// 
+////
 //// long Milltempo = 500;	/* Milliseconds per beat */
-//// 
+////
 //// long Start;		/* Millsecond value at start of rtloop() */
-//// 
+////
 //// long Midinow;		/* If MIDI clocks are in control, this is */
 //// 			/* current time in keykit clicks */
 //// 			/* THIS VALUE INCLUDES Nowoffset !! */
-//// 
+////
 //// long Midimilli = 0;	/* in milliseconds */
-//// 
+////
 //// long Nextclick = -1;	/* in milliseconds */
-//// 
+////
 //// int Chkmouse = 0;	/* if non-zero, there are mouse actions to be */
 //// 			/* checked. */
-//// 
+////
 //// char Sustain[MIDI_OUT_DEVICES+1][16];
 //// 			/* one for each MIDI channel, keeping track of */
 //// 			/* whether the sustain switch is down. */
 //// char Portamento[MIDI_OUT_DEVICES+1][16];
 //// 			/* one for each MIDI channel, like Sustain */
-//// 
+////
 //// /*
 ////  * first index is 0 (for defaults) or 0-based input port number+1,
 ////  * second index is 0-based channel.  The value is the 1-based output port #.
 ////  */
 //// int Portmap[PORTMAP_SIZE][16] = { 0 };
-//// 
+////
 //// #define portmapof(port,ch) (((port)==DEFPORT)?(Portmap[DEFPORT][ch]):(Portmap[(port)-MIDI_IN_PORT_OFFSET][(ch)]))
-//// 
+////
 //// int Newdeferred = 0;
-//// 
+////
 //// static int Grabcnt;	/* used to throttle MIDI input in GRABMIDI */
-//// 
+////
 //// #define ISMONITORING (*Monitor_fnum >= 0)
-//// 
+////
 //// /*
 ////  * midiput
 ////  *
@@ -104,7 +95,7 @@ package kit
 //// 	if ( port > MIDI_IN_PORT_OFFSET ) {
 //// 		port = portmapof(port,chan);
 //// 	}
-//// 
+////
 //// 	/*
 //// 	 * If we're putting stuff out on port 0, or on
 //// 	 * a port that's not open, we use the
@@ -120,8 +111,8 @@ package kit
 //// 			return;
 //// 		}
 //// 	}
-//// 
-//// 
+////
+////
 //// 	/* real MIDI output */
 //// 	if ( *Debugmidi ) {
 //// 		int k;
@@ -134,15 +125,15 @@ package kit
 //// 		real_putnmidi(n,(char*)msg,port);
 //// 	}
 //// }
-//// 
+////
 //// #define SETMILLI if ( ! *Sync ) {Midimilli=MILLICLOCK;}
-//// 
+////
 //// /* Macro here is an optimization (premature as always :-) to */
 //// /* avoid function calls for things called extremely often. */
-//// 
+////
 //// static int Ngrabbed = 0;
 //// static char *Grabbed = NULL;
-//// 
+////
 //// #define GRABMIDI Grabcnt=0;while(1){\
 //// 			if ( Ngrabbed <= 0 ) { \
 //// 				Ngrabbed = real_getnmidi(Grabbuff,Grabbuffsize,&Currport); \
@@ -155,16 +146,16 @@ package kit
 //// 				if (Grabcnt++ >= (*Grablimit)){goto grabout;} \
 //// 			} \
 //// 		}; grabout: Grabcnt=Grabcnt;
-//// 
+////
 //// static void
 //// real_putnmidi(int buffsize, char *buff,int port)
 //// {
 //// 	long fn = *Midi_out_fnum;
 //// 	int echoport = 0;
-//// 
+////
 //// 	if ( *Echoport > 0 && *Echoport < MIDI_IN_PORT_OFFSET )
 //// 		echoport = *Echoport;
-//// 
+////
 //// 	if ( fn >= 0 ) {
 //// 		Fifo *f = fifoptr(fn);
 //// 		if ( f->flags & FIFO_ISPORT ) {
@@ -195,13 +186,13 @@ package kit
 //// 		}
 //// 	}
 //// }
-//// 
+////
 //// static int
 //// real_getnmidi(char *buff,int buffsize,int *port)
 //// {
 //// 	int r;
 //// 	int mdep_port;
-//// 
+////
 //// 	r = mdep_getnmidi(buff,buffsize,&mdep_port);
 //// 	// if ( r != 0 ) {
 //// 	// 	keyerrfile("mdep_getnmidi r=%d\n",r);
@@ -213,7 +204,7 @@ package kit
 //// 	}
 //// 	return r;
 //// }
-//// 
+////
 //// static void
 //// midiflush(void)
 //// {
@@ -222,30 +213,30 @@ package kit
 //// 	while ( real_getnmidi(buff,sizeof(buff),&dummy) > 0 )
 //// 		;
 //// }
-//// 
+////
 //// static void
 //// put3midi(int c1,int c2,int c3,int port,int chan)
 //// {
 //// 	char buff[3];
-//// 
+////
 //// 	buff[0] = c1;
 //// 	buff[1] = c2;
 //// 	buff[2] = c3;
 //// 	midiput(3,(Unchar*)buff,port,chan);
-//// 
+////
 //// 	if ( ISMONITORING ) {
 //// 		put3onmonitorfifo(c1,c2,c3);
 //// 	}
 //// }
-//// 
+////
 //// /*****************
 ////  * From here on down is the real-time loop stuff
 ////  ****************/
-//// 
+////
 //// extern struct midiaction Intmidi;	/* Defined below */
-//// 
+////
 //// Sched *Topsched = NULL;	/* Deferred events within realtime() */
-//// 
+////
 //// /* These hold noteons/off that are scheduled during a single click. */
 //// /* Use to guarantee noteoff's are before note-on's (within same click). */
 //// /* Offmsg2 holds note-offs that are scheduled by 0-duration notes, */
@@ -264,109 +255,106 @@ package kit
 //// static Unchar *Onmonitor;
 //// static Unchar *Offmonitor;
 //// static Unchar *Off2monitor;
-//// 
+////
 //// Symlongp Maxatonce, Noteqsize;
-//// 
-//// /* This is a queue of notes that have been received via MIDI in (and */
-//// /* possibly echoed on MIDI out), but have not been processed. */
-//// /* If we get more than Noteqsize notes queued up, we're in trouble... */
-//// static Notedata *Noteq;	/* circular queue */
-//// static int Qavail = 0;	/* index of next free slot in noteq */
-//// static int Qbegin = 0;	/* index of head of circular queue */
-//// 
-//// static Sched *Freesch = NULL;
-//// static Notedata Intnt;
-//// static Noteptr Earliestcurrent = NULL;
-//// static Noteptr Recmiddle = NULL;
-//// 
+////
+
+// This is a queue of notes that have been received via MIDI in (and
+// possibly echoed on MIDI out), but have not been processed.
+// If we get more than Noteqsize notes queued up, we're in trouble...
+var Noteq *Notedata // circular queue
+var Qavail = 0      // index of next free slot in noteq
+var Qbegin = 0      // index of head of circular queue
+
+var Freesch *Sched
+var Intnt Notedata
+var Earliestcurrent Noteptr
+var Recmiddle Noteptr
+
 //// #define NOACT ((actfunc)0)
-//// 
-//// void
-//// resetcurrphr(void)
-//// {
-//// 	phdecruse(*Currphr);
-//// 	*Currphr = newph(1);
-//// }
-//// 
-//// /* startrealtime only gets called once, at the very beginning */
-//// 
-//// void
-//// initmidiport(Midiport *p)
-//// {
-//// 	p->name = NULL;
-//// 	p->private1 = 0;
-//// 	p->opened = 0;
-//// }
-//// 
-//// void
-//// startrealtime(void)
-//// {
-//// 	unsigned u;
-//// 	int n;
-//// 
-//// 	installnum("Noteqsize",&Noteqsize,256);
-//// 
-//// 	Noteq = (Notedata *) kmalloc((unsigned)(*Noteqsize) * sizeof(Notedata),"startreal");
-//// 
-//// 	installnum("Maxatonce",&Maxatonce,256);
-//// 	u = (unsigned)(*Maxatonce) * 3 * sizeof(char);
-//// 	Onmsg = (char *) kmalloc(u,"startreal");
-//// 	Offmsg = (char *) kmalloc(u,"startreal");
-//// 	Offmsg2 = (char *) kmalloc(u,"startreal");
-//// 
-//// 	u = (unsigned)(*Maxatonce) * sizeof(int);
-//// 	Onport = (int *) kmalloc(u,"startreal");
-//// 	Offport = (int *) kmalloc(u,"startreal");
-//// 	Off2port = (int *) kmalloc(u,"startreal");
-//// 
-//// 	Onmonitor = (Unchar *) kmalloc(*Maxatonce,"startreal");
-//// 	Offmonitor = (Unchar *) kmalloc(*Maxatonce,"startreal");
-//// 	Off2monitor = (Unchar *) kmalloc(*Maxatonce,"startreal");
-//// 
-//// 	makeroom(256L,&Grabbuff,&Grabbuffsize);
-//// 
-//// 	for ( n=0; n<MIDI_IN_DEVICES; n++ )
-//// 		initmidiport(&Midiinputs[n]);
-//// 	for ( n=0; n<MIDI_OUT_DEVICES; n++ )
-//// 		initmidiport(&Midioutputs[n]);
-//// 
-//// 	if ( mdep_initmidi(Midiinputs,Midioutputs) == 0 ) {
-//// 		Midiok = 1;
-//// 		midiflush();
-//// 		
-//// 	}
-//// 
-//// 	/* Free existing phrases in Current and (if recording) Record */
-//// 	resetcurrphr();
-//// 
-//// 	if ( *Record ) {
-//// 		phdecruse(*Recphr);
-//// 		*Recphr = newph(1);
-//// 		Recmiddle = NULL;
-//// 		Earliestcurrent = NULL;
-//// 	}
-//// 
-//// 	Midi = Intmidi;		/* This is the structure that controls */
-//// 				/* the MIDI parser. */
-//// 	midiparse(-1);		/* Initialize MIDI parser. */
-//// 
-//// 	*Now = -1L;
-//// 	*Nowoffset = 0;
-//// 	Midinow = 0;
-//// 	Midimilli = 0;
-//// 
-//// 	clrcontroller();
-//// 
-//// 	mdep_resetclock();
-//// 	Start = MILLICLOCK;
-//// 	Nextclick = Start;
-//// }
-//// 
+
+func resetcurrphr() {
+	phdecruse(*Currphr)
+	*Currphr = newph(1)
+}
+
+/* startrealtime only gets called once, at the very beginning */
+
+func initmidiport(p *Midiport) {
+	p.name = nil
+	p.private1 = 0
+	p.opened = 0
+}
+
+func startrealtime() {
+	var u uint
+	
+	installnum("Noteqsize",&Noteqsize,256)
+	
+	Noteq = (Notedata *) kmalloc((unsigned)(*Noteqsize) * sizeof(Notedata),"startreal")
+	
+	installnum("Maxatonce",&Maxatonce,256)
+	u = (unsigned)(*Maxatonce) * 3 * sizeof(char)
+	Onmsg = (char *) kmalloc(u,"startreal")
+	Offmsg = (char *) kmalloc(u,"startreal")
+	Offmsg2 = (char *) kmalloc(u,"startreal")
+	
+	u = (unsigned)(*Maxatonce) * sizeof(int)
+	Onport = (int *) kmalloc(u,"startreal")
+	Offport = (int *) kmalloc(u,"startreal")
+	Off2port = (int *) kmalloc(u,"startreal")
+	
+	Onmonitor = (Unchar *) kmalloc(*Maxatonce,"startreal")
+	Offmonitor = (Unchar *) kmalloc(*Maxatonce,"startreal")
+	Off2monitor = (Unchar *) kmalloc(*Maxatonce,"startreal")
+	
+	makeroom(256,&Grabbuff,&Grabbuffsize)
+	
+	for n:=0; n<MIDI_IN_DEVICES; n++ {
+		initmidiport(&Midiinputs[n])
+	}
+	for n:=0; n<MIDI_OUT_DEVICES; n++ {
+		initmidiport(&Midioutputs[n])
+	}
+		
+	if mdep_initmidi(Midiinputs,Midioutputs) == 0 {
+		Midiok = 1
+		midiflush()
+		
+	}
+	
+	/* Free existing phrases in Current and (if recording) Record */
+	resetcurrphr();
+////
+	if ( *Record ) {
+		phdecruse(*Recphr);
+		*Recphr = newph(1);
+		Recmiddle = NULL;
+		Earliestcurrent = NULL;
+	}
+////
+	Midi = Intmidi;		/* This is the structure that controls */
+				/* the MIDI parser. */
+	midiparse(-1);		/* Initialize MIDI parser. */
+////
+	*Now = -1L;
+	*Nowoffset = 0;
+	Midinow = 0;
+	Midimilli = 0;
+////
+	clrcontroller()
+	
+	mdep_resetclock()
+	Start = MILLICLOCK
+	Nextclick = Start
+}
+
+
 //// void
 //// clrcontroller(void)
 //// {
 //// 	int n, m;
-//// 
+////
 //// 	for ( m=0; m<=MIDI_OUT_DEVICES; m++ ) {
 //// 		for ( n=0; n<16; n++ ) {
 //// 			Sustain[m][n] = 0;
@@ -374,7 +362,7 @@ package kit
 //// 		}
 //// 	}
 //// }
-//// 
+////
 //// void
 //// newtempo(long t)
 //// {
@@ -386,7 +374,7 @@ package kit
 //// 	Nextclick = t;
 //// 	Start = t - ((*Now) * Milltempo)/(*Clicks);
 //// }
-//// 
+////
 //// /* gets called in execerror(), in case of a signal interrupt */
 //// void
 //// resetreal(void)
@@ -394,38 +382,38 @@ package kit
 //// 	*Now = -1;
 //// 	*Nowoffset = 0;
 //// 	Nextclick = -1;
-//// 
+////
 //// 	midiflush();
 //// 	/* flushconsole(); */
 //// 	finishoff();		/* Must be before clrsched.  */
 //// 	clrsched(&Topsched);
 //// }
-//// 
+////
 //// /* Send note-offs for any unfinished notes in Currphr */
 //// /* and send any note-off's in Topsched.  Also make sure the Recphr is */
 //// /* in canonical order. */
-//// 
+////
 //// void
 //// finishoff(void)
 //// {
 //// 	register Sched *s;
 //// 	int c, m;
 //// 	Noteptr n;
-//// 
+////
 //// 	for ( n=firstnote(*Currphr); n!=NULL; n=nextnote(n) ) {
 //// 		if ( typeof(n) != NT_ON )
 //// 			continue;
 //// 		put3midi((int)(NOTEOFF | chanof(n)), (int)pitchof(n), (int)volof(n), (int)portof(n), (int)chanof(n));
 //// 	}
 //// 	resetcurrphr();
-//// 
+////
 //// 	for ( s=Topsched; s!=NULL; s=s->next ) {
 //// 		if ( s->type==SCH_NOTEOFF ) {	/* assume its a NOTEOFF */
 //// 			n = s->note;
 //// 			put3midi( (int)(NOTEOFF | chanof(n)), (int)pitchof(n), (int)volof(n), (int)portof(n), (int)chanof(n) );
 //// 		}
 //// 	}
-//// 
+////
 //// 	for ( m=0; m<=MIDI_OUT_DEVICES; m++ ) {
 //// 		for ( c=0; c<16; c++ ) {
 //// 			if ( Sustain[m][c] ) {
@@ -442,7 +430,7 @@ package kit
 //// 	/* The timeout is an attempt to try to isolate it. */
 //// 	phreorder(*Recphr,MILLICLOCK+5000);
 //// }
-//// 
+////
 //// /* Add a 3-byte message to the Recorded phrase and output it */
 //// /* chan is 0-based, port is 1-based (or 0 for default) */
 //// void
@@ -450,7 +438,7 @@ package kit
 //// {
 //// 	register Noteptr n = &Intnt;
 //// 	int c0 = n0 | chan;
-//// 
+////
 //// 	timeof(n) = *Now;
 //// 	typeof(n) = NT_LE3BYTES;
 //// 	le3_nbytesof(n) = 3;
@@ -460,12 +448,12 @@ package kit
 //// 	portof(n) = port;
 //// 	if ( *Recinput )
 //// 		ntrecord(ntcopy(n));
-//// 
+////
 //// 	put3midi( c0, c1, c2, port, chan );
 //// }
-//// 
+////
 //// long Chkcount = 0;	/* for chkrealoften macro */
-//// 
+////
 //// #ifdef OLDSTUFF
 //// void
 //// chkrealoften(void)
@@ -478,7 +466,7 @@ package kit
 //// 	}
 //// }
 //// #endif
-//// 
+////
 //// void
 //// chkinput(void)
 //// {
@@ -486,12 +474,12 @@ package kit
 //// 	/* and queue up the note on/off's to be */
 //// 	/* processed. */
 //// 	GRABMIDI;
-//// 
+////
 //// 	while ( Qavail != Qbegin ) {
 //// 		register Noteptr q;
-//// 
+////
 //// 		q = (Noteptr)(&Noteq[Qbegin]);
-//// 
+////
 //// 		switch(typeof(q)){
 //// 		case NT_ON:
 //// 			noteon(q);
@@ -508,7 +496,7 @@ package kit
 //// 			Qbegin = 0;
 //// 	}
 //// }
-//// 
+////
 //// void
 //// chkoutput(void)
 //// {
@@ -516,10 +504,10 @@ package kit
 //// 	Ktaskp t;
 //// 	int disable;
 //// 	long throttle;
-//// 
+////
 //// 	/* Don't bother looking at the schedule list until */
 //// 	/* the time has advanced to the next click. */
-//// 
+////
 //// 	if ( *Sync ) {
 //// 		if ( (Midinow-1) <= *Now )
 //// 			return;
@@ -547,39 +535,39 @@ package kit
 //// 			Nextclick = Start;
 //// 		}
 //// 	}
-//// 
+////
 //// 	s = Topsched;
 //// 	Numon = 0;
 //// 	Numoff = 0;
 //// 	Numoff2 = 0;
 //// 	Anynew = 0;
-//// 
+////
 //// 	/* The Midithrottle value gets used to limit the number of scheduled */
 //// 	/* notes we handle at once. */
 //// 	throttle = *Midithrottle;
 //// 	if ( throttle > *Maxatonce )
 //// 		throttle = *Maxatonce-1;
-//// 
+////
 //// 	dummyset(nexts);
 //// 	for( pres=NULL; s != NULL; s=nexts){
-//// 
+////
 //// 		/* Topsched list is sorted, so is safe to break early */
 //// 		if ( s->clicks > *Now )
 //// 			break;
-//// 
+////
 //// 		if ( --throttle <= 0 )
 //// 			break;
-//// 
+////
 //// 		disable = 1;
 //// 		switch (s->type) {
-//// 
+////
 //// 		case SCH_NOTEOFF:
 //// 			disable = execnt(s,pres);
 //// 			break;
 //// 		case SCH_PHRASE:
 //// 			disable = execnt(s,pres);
 //// 			break;
-//// 
+////
 //// 		case SCH_WAKE:
 //// 			t = s->task;
 //// 			if ( t->state != T_SLEEPTILL )
@@ -587,7 +575,7 @@ package kit
 //// 			Nsleeptill--;
 //// 			restarttask(t);
 //// 			break;
-//// 
+////
 //// 		default:
 //// 			eprint("(?=%d)",s->type);
 //// 			disable = 0;
@@ -619,7 +607,7 @@ package kit
 //// 				put3onmonitorfifo(*cc,*(cc+1),*(cc+2));
 //// 			}
 //// 		}
-//// 
+////
 //// 		while ( --Numon >= 0 ) {
 //// 			midiput( 3, (Unchar*)(&(Onmsg[3*Numon])),Onport[Numon],Onmsg[3*Numon]&0xf);
 //// 			if ( ismon && Onmonitor[Numon] ) {
@@ -627,7 +615,7 @@ package kit
 //// 				put3onmonitorfifo(*cc,*(cc+1),*(cc+2));
 //// 			}
 //// 		}
-//// 
+////
 //// 		while ( --Numoff2 >= 0 ) {
 //// 			midiput( 3, (Unchar*)(&(Offmsg2[3*Numoff2])),Off2port[Numoff2],Offmsg2[3*Numoff2]&0xf);
 //// 			if ( ismon && Off2monitor[Numoff2] ) {
@@ -635,11 +623,11 @@ package kit
 //// 				put3onmonitorfifo(*cc,*(cc+1),*(cc+2));
 //// 			}
 //// 		}
-//// 
+////
 //// 	}
 //// 	return;
 //// }
-//// 
+////
 //// Unchar *
 //// ustrchr(Unchar *pn,int n)
 //// {
@@ -651,7 +639,7 @@ package kit
 //// 	else
 //// 		return pn;
 //// }
-//// 
+////
 //// int
 //// chanofbyte(int b)
 //// {
@@ -663,11 +651,11 @@ package kit
 //// 		return -1;
 //// 	return b & 0xf;	/* channel # is lower 4 bits */
 //// }
-//// 
+////
 //// /*
 ////  * execnt - execute a scheduled note
 ////  */
-//// 
+////
 //// int
 //// execnt(register Sched *s, Sched *pres)
 //// {
@@ -677,14 +665,14 @@ package kit
 //// 	Noteptr nxt;
 //// 	char *p;
 //// 	int realpitch;
-//// 
+////
 //// sametime:
 //// 	n = s->note;
 //// 	nttype = typeof(n);
 //// 	realpitch = pitchof(n);
-//// 
+////
 //// 	if ( nttype==NT_ON
-//// 		|| nttype==NT_NOTE 
+//// 		|| nttype==NT_NOTE
 //// 		|| ( nttype == NT_OFF && s->offtype != OFF_INTERNAL ) ) {
 //// 		/* Apply Offsetpitch */
 //// 		if ( *Offsetpitch != 0 && *Offsetportfilter != portof(n) && ((*Offsetfilter&(1<<chanof(n)))==0) ) {
@@ -696,7 +684,7 @@ package kit
 //// 			}
 //// 		}
 //// 	}
-//// 		
+////
 //// 	if ( *Recsched && *Record && (s->offtype == OFF_USER) ) {
 //// 		int recordit = 0;
 //// 		/* Figure out whether we need to record it. */
@@ -724,7 +712,7 @@ package kit
 //// 		Unchar* b = ptrtobyte(n,0);
 //// 		if ( (b[0] & 0xf0) == CONTROLLER )
 //// 			chkcontroller(portof(n),b);
-//// 
+////
 //// 		if ( (b[0]&0xff)==0xf0 && b[1]==0x00 && b[2]==0x7f ) {
 //// 			/* Special "Tempo=###" text notes control tempo */
 //// 			if ( strncmp((char*)(&b[3]),"Tempo=",6) == 0 ) {
@@ -783,7 +771,7 @@ package kit
 //// 		*p++ = realpitch;
 //// 		*p++ = volof(n);
 //// 		Anynew = 1;
-//// 
+////
 //// 		/* if it was the start of a full note, schedule the note-off*/
 //// 		if ( nttype == NT_NOTE ) {
 //// 			long dur = (long)durof(n);
@@ -807,7 +795,7 @@ package kit
 //// 				Noteptr nn = ntcopy(n);
 //// 				Sched *ns;
 //// 				long offtime = s->clicks + dur;
-//// 
+////
 //// 				pitchof(nn) = realpitch;
 //// 				nextnote(nn) = NULL;
 //// 				typeof(nn) = NT_OFF;
@@ -819,14 +807,14 @@ package kit
 //// 			}
 //// 		}
 //// 	}
-//// 
+////
 ////    toomuch:
-//// 
+////
 //// 	/* We purposely handle the repeat stuff AFTER the stuff above, so */
 //// 	/* that the note-off's scheduled above should be BEFORE any */
 //// 	/* note-on's scheduled for the start of a repeat.  */
 //// 	if ( s->repeat > 0 && s->note == firstnote(s->phr) ) {
-//// 
+////
 //// 		long rtm = s->clicks + s->repeat + timeof(firstnote(s->phr));
 //// 		Sched *ns = immsched(SCH_PHRASE,rtm,s->task,s->monitor);
 //// 		s->task->schedcnt++;
@@ -835,7 +823,7 @@ package kit
 //// 		phincruse(ns->phr);
 //// 		ns->note = firstnote(ns->phr);
 //// 	}
-//// 
+////
 //// 	nxt = nextnote(n);
 //// 	if ( nxt != NULL ) {
 //// 		/* advance to the next note in the phrase */
@@ -846,7 +834,7 @@ package kit
 //// 			n = nxt;
 //// 			goto sametime;
 //// 		}
-//// 
+////
 //// 		/* figure out when the next note should be scheduled (the */
 //// 		/* current clicks value includes the start time of the */
 //// 		/* phrase AND the time of the note) */
@@ -869,17 +857,17 @@ package kit
 //// 		/* make note of the fact that it should be freed. */
 //// 		disable++;
 //// 	}
-//// 
+////
 //// 	return disable;
 //// }
-//// 
+////
 //// void
 //// toomany(char *onoff)
 //// {
 //// 	static long lasttime = 0;
 //// 	long tm = MILLICLOCK;
 //// 	long dt = tm - lasttime;
-//// 
+////
 //// 	if ( dt < 0 )
 //// 		dt = -dt;
 //// 	/* Warn no more often than every couple seconds */
@@ -891,17 +879,17 @@ package kit
 //// 		lasttime = tm;
 //// 	}
 //// }
-//// 
+////
 //// /* The rc_* functions are called from the MIDI interpreter (midiparse). */
 //// /* To promptly handle (and echo) MIDI input, these routines just stuff */
 //// /* things into the Noteq array, which is then later processed more */
 //// /* completely. */
-//// 
+////
 //// void
 //// rc_on(Unchar *mess,int indx)
 //// {
 //// 	register Noteptr q;
-//// 
+////
 //// 	if ( *Merge != 0 ) {
 //// 		if ( *Mergefilter == 0 || ( (1<<Currchan) & *Mergefilter)==0 ) {
 //// 			if ( *Mergeport1 >= 0 ) {
@@ -920,12 +908,12 @@ package kit
 //// 	volof(q) = (int)(mess[2]);
 //// 	// keyerrfile("rc_on pitch=%d\n",pitchof(q));
 //// }
-//// 
+////
 //// void
 //// rc_off(Unchar *mess,int indx)
 //// {
 //// 	register Noteptr q;
-//// 
+////
 //// 	if ( *Merge != 0 ) {
 //// 		if ( *Mergefilter == 0 || ( (1<<Currchan) & *Mergefilter)==0 ) {
 //// 			if ( *Mergeport1 >= 0 ) {
@@ -943,18 +931,18 @@ package kit
 //// 	pitchof(q) = (int)(mess[1]);
 //// 	volof(q) = (int)(mess[2]);
 //// }
-//// 
+////
 //// void
 //// rc_mess(Unchar *mess,int indx)
 //// {
 //// 	rc_messhandle(mess,indx,-1);	/* no channel */
 //// }
-//// 
+////
 //// void
 //// rc_messhandle(Unchar *mess,int indx, int chan)
 //// {
 //// 	register Noteptr q;
-//// 
+////
 //// 	if ( *Merge != 0 ) {
 //// 		if ( chan<0 || *Mergefilter == 0 || ( (1<<chan) & *Mergefilter)==0 ) {
 //// 			if ( *Mergeport1 >= 0 ) {
@@ -981,7 +969,7 @@ package kit
 //// 		messof(q) = savemess(mess,indx);
 //// 	}
 //// }
-//// 
+////
 //// void
 //// rc_control(Unchar *mess,int indx)
 //// {
@@ -991,56 +979,56 @@ package kit
 //// 		rc_messhandle(mess,indx,Currchan);
 //// 	}
 //// }
-//// 
+////
 //// void
 //// rc_pressure(Unchar *mess,int indx)
 //// {
 //// 	if ( ((*Filter) & M_PRESSURE) == 0 )
 //// 		rc_messhandle(mess,indx,Currchan);
 //// }
-//// 
+////
 //// void
 //// rc_program(Unchar *mess,int indx)
 //// {
 //// 	if ( ((*Filter) & M_PROGRAM) == 0 )
 //// 		rc_messhandle(mess,indx,Currchan);
 //// }
-//// 
+////
 //// void
 //// rc_chanpress(Unchar *mess,int indx)
 //// {
 //// 	if ( ((*Filter) & M_CHANPRESSURE) == 0 )
 //// 		rc_messhandle(mess,indx,Currchan);
 //// }
-//// 
+////
 //// void
 //// rc_pitchbend(Unchar *mess,int indx)
 //// {
 //// 	if ( ((*Filter) & M_PITCHBEND) == 0 )
 //// 		rc_messhandle(mess,indx,Currchan);
 //// }
-//// 
+////
 //// void
 //// rc_sysex(Unchar *mess,int indx)
 //// {
 //// 	if ( ((*Filter) & M_SYSEX) == 0 )
 //// 		rc_messhandle(mess,indx,-1);	/* no channel */
 //// }
-//// 
+////
 //// void
 //// rc_position(Unchar *mess,int indx)
 //// {
 //// 	if ( ((*Filter) & M_POSITION) == 0 )
 //// 		rc_messhandle(mess,indx,-1);	/* no channel */
 //// }
-//// 
+////
 //// void
 //// rc_song(Unchar *mess,int indx)
 //// {
 //// 	if ( ((*Filter) & M_SONG) == 0 )
 //// 		rc_messhandle(mess,indx,-1);	/* no channel */
 //// }
-//// 
+////
 //// void
 //// rc_startstopcont(Unchar *mess,int indx)
 //// {
@@ -1059,7 +1047,7 @@ package kit
 //// 	if ( ((*Filter) & M_STARTSTOPCONT) == 0 )
 //// 		rc_messhandle(mess,indx,-1);	/* no channel */
 //// }
-//// 
+////
 //// void
 //// rc_clock(Unchar *mess,int indx)
 //// {
@@ -1067,7 +1055,7 @@ package kit
 //// 	static int cnt = 0;
 //// 	dummyusage(mess);
 //// 	dummyusage(indx);
-//// 
+////
 //// 	if ( ! *Sync ) {
 //// 		if ( ((*Filter) & M_CLOCK) == 0 )
 //// 			rc_messhandle(mess,indx,-1);	/* no channel */
@@ -1094,7 +1082,7 @@ package kit
 //// 				Midinow += *Nowoffset;
 //// /* tprint("Adding Nowoffset to Midinow\n"); */
 //// 			}
-//// 
+////
 //// 			if ( Midinow < (*Now ) ) {
 //// /* tprint("adjusting Midinow from %ld to %ld\n",Midinow, *Now); */
 //// 				Midinow = *Now ;
@@ -1103,13 +1091,13 @@ package kit
 //// 		}
 //// 	}
 //// }
-//// 
+////
 //// /* Need to keep track of what foot switches are down */
 //// void
 //// chkcontroller(int port, Unchar* mess)
 //// {
 //// 	int chan = (int)(mess[0] & 0xf);
-//// 
+////
 //// 	/*
 //// 	 * If the port is an input port, map it to the output port.
 //// 	 */
@@ -1118,7 +1106,7 @@ package kit
 //// 	}
 //// 	if ( port < 0 || port > MIDI_OUT_DEVICES )
 //// 		execerror("Invalid port value (%d) in chkcontroller!?\n",port);
-//// 
+////
 //// 	switch ( mess[1] & 0xff ) {
 //// 	case SUSTAIN:
 //// 		Sustain[port][chan] = (mess[2]?1:0);
@@ -1128,13 +1116,13 @@ package kit
 //// 		break;
 //// 	}
 //// }
-//// 
-//// Noteptr 
+////
+//// Noteptr
 //// qnote(int chan)
 //// {
 //// 	register Noteptr q = (Noteptr)(&Noteq[Qavail]);
 //// 	int nextq = Qavail+1;
-//// 
+////
 //// 	if ( nextq >= *Noteqsize )
 //// 		nextq = 0;
 //// 	if ( nextq == Qbegin ) {
@@ -1161,12 +1149,12 @@ package kit
 //// #endif
 //// 	return q;
 //// }
-//// 
+////
 //// void
 //// noteon(register Noteptr q)
 //// {
 //// 	register Noteptr n;
-//// 
+////
 //// 	typeof(&Intnt) = NT_ON;
 //// 	timeof(&Intnt) = timeof(q);
 //// 	setchanof(&Intnt)= chanof(q);
@@ -1179,19 +1167,19 @@ package kit
 //// 	attribof(&Intnt) = attribof(q);
 //// #endif
 //// 	nextnote(&Intnt) = NULL;
-//// 
+////
 //// 	n = ntcopy(&Intnt);
-//// 
+////
 //// 	/* Always add the new notes to the start of the Current phrase, */
 //// 	/* so that Current[0] is always the most recent note. */
 //// 	nextnote(n) = firstnote(*Currphr);
 //// 	setfirstnote(*Currphr) = n;
-//// 
+////
 //// 	// keyerrfile("noteon onmidiin\n");
 //// 	putonmidiinfifo(&Intnt);
 //// 	putonmonitorfifo(&Intnt);
 //// }
-//// 
+////
 //// void
 //// noteoff(Noteptr q)
 //// {
@@ -1199,7 +1187,7 @@ package kit
 //// 	register Noteptr pre = NULL;
 //// 	register int chan = chanof(q);
 //// 	register int pitch = pitchof(q);
-//// 
+////
 //// 	/* Look for this note in the Current phrase */
 //// 	for ( n=firstnote(*Currphr); n!=NULL; pre=n,n=nextnote(n) ) {
 //// 		if ( chan==(int)chanof(n) && pitch==(int)pitchof(n) )
@@ -1207,35 +1195,35 @@ package kit
 //// 	}
 //// 	if ( n == NULL )
 //// 		return;	/* couldn't find note-on to match the note-off */
-//// 
+////
 //// 	/* we want to note the fact if this is the earliest (ie. last) */
 //// 	/* note in the Currphr, so we can adjust Recmiddle. */
-//// 
+////
 //// #ifdef OLDSTUFF
 //// 	if ( *Record && *Recinput && (*Recfilter & (1<<chanof(n))) == 0 )
 //// #endif
-//// 
+////
 //// 	if ( nextnote(n) == NULL ) {
 //// 		Earliestcurrent = n;
 //// 	}
 //// 	else {
 //// 		Earliestcurrent = NULL;
 //// 	}
-//// 		
+////
 //// 	/* Remove the note from the Current phrase. */
 //// 	if ( n == firstnote(*Currphr))
 //// 		setfirstnote(*Currphr) = nextnote(n);
 //// 	else
 //// 		pre->next = nextnote(n);
-//// 
+////
 //// 	typeof(n) = NT_NOTE;		/* in Current, it's NT_ON */
 //// 	durof(n) = timeof(q) - timeof(n);
-//// 
+////
 //// 	/* Add it to the Recorded phrase */
 //// 	if ( *Recinput ) {
 //// 		ntrecord(n);
 //// 	}
-//// 
+////
 //// 	/* The Intnt is not the complete note; it's just the note-off */
 //// 	typeof(&Intnt) = NT_OFF;
 //// 	timeof(&Intnt) = timeof(q);
@@ -1248,17 +1236,17 @@ package kit
 //// #ifdef NTATTRIB
 //// 	attribof(&Intnt) = attribof(n);
 //// #endif
-//// 
+////
 //// 	putonmidiinfifo(&Intnt);
 //// 	putonmonitorfifo(&Intnt);
 //// }
-//// 
+////
 //// void
 //// notemess(Noteptr q)
 //// {
 //// 	long clks = timeof(q);
 //// 	Unchar* b;
-//// 
+////
 //// 	typeof(&Intnt) = typeof(q);	/* NOT usertypeof() */
 //// 	timeof(&Intnt) = clks;
 //// 	messof(&Intnt) = messof(q);
@@ -1268,14 +1256,14 @@ package kit
 //// 	attribof(&Intnt) = attribof(q);
 //// #endif
 //// 	nextnote(&Intnt) = NULL;
-//// 
+////
 //// 	b = ptrtobyte(&Intnt,0);
-//// 
+////
 //// 	/* Do we perhaps want to monitor midi clocks ?? */
 //// 	if ( b[0] != 0xf8 ) {
 //// 		putonmonitorfifo(&Intnt);
 //// 	}
-//// 
+////
 //// 	/* Add it to the Recorded phrase */
 //// 	if ( *Recinput && *Recsysex ) {
 //// 		/* We never want to record midi clocks, though */
@@ -1286,7 +1274,7 @@ package kit
 //// 	// keyerrfile("notemess onmidiin\n");
 //// 	putonmidiinfifo(&Intnt);
 //// }
-//// 
+////
 //// /* putonmonitorfifo(n) - Send things to the Monitorfifo */
 //// static void
 //// putonmonitorfifo(Noteptr n)
@@ -1298,7 +1286,7 @@ package kit
 //// 		}
 //// 	}
 //// }
-//// 
+////
 //// /* put3onmonitorfifo(n) - Send things to the Monitorfifo */
 //// /* Shouldn't need to check ISMONITORING, caller should check. */
 //// static void
@@ -1308,14 +1296,14 @@ package kit
 //// 	Noteptr nt;
 //// 	Fifo *f;
 //// 	int b;
-//// 
+////
 //// 	f = fifoptr(*Monitor_fnum);
 //// 	if ( f == NULL )
 //// 		return;
-//// 
+////
 //// 	nt = &ntdata;
 //// 	b = (c1 & 0xf0);
-//// 
+////
 //// 	if ( b == NOTEON ) {
 //// 		typeof(nt) = NT_ON;
 //// 	} else if ( b == NOTEOFF ) {
@@ -1330,19 +1318,19 @@ package kit
 //// 	volof(nt) = c3;
 //// 	putntonfifo(nt,f);
 //// }
-//// 
+////
 //// /* ntrecord(n) - Add a note to the Recorded phrase. */
 //// void
 //// ntrecord(Noteptr n)
 //// {
 //// 	Noteptr pren, sn, tn;
-//// 
+////
 //// 	if ( *Record == 0 || (*Recfilter & (1<<chanof(n))) != 0 )
 //// 		return;
-//// 
+////
 //// 	if ( phreallyused(*Recphr) > 1 ) {
 //// 		Phrasep p;
-//// 
+////
 //// 		phdecruse(*Recphr);
 //// 		p = newph(1);
 //// 		phcopy(p,*Recphr);
@@ -1350,9 +1338,9 @@ package kit
 //// 		Recmiddle = NULL;
 //// 		Earliestcurrent = NULL;
 //// 	}
-//// 
+////
 //// 	/* NO need to make a ntcopy() of n, we own this one. */
-//// 
+////
 //// 	/* Recmiddle is a pointer to the note in Recphr whose time is */
 //// 	/* guaranteed to be before any of the notes in Currphr.  We use */
 //// 	/* this as the starting point for the insertion search. */
@@ -1370,12 +1358,12 @@ package kit
 //// 	nextnote(n) = sn;
 //// 	if ( sn == NULL )
 //// 		lastnote(*Recphr) = n;
-//// 
+////
 //// 	if ( pren == NULL )
 //// 		setfirstnote(*Recphr) = n;
 //// 	else
 //// 		nextnote(pren) = n;
-//// 
+////
 //// 	if ( Earliestcurrent ) {
 //// 		if ( n == Earliestcurrent ) {
 //// 			Recmiddle = n;
@@ -1390,7 +1378,7 @@ package kit
 //// 	}
 //// 	else {
 //// 		Noteptr ntn;
-//// 
+////
 //// 		ntn = NULL;
 //// 		for ( tn=Recmiddle; tn!=NULL; tn=ntn ) {
 //// 			ntn = nextnote(tn);
@@ -1402,19 +1390,19 @@ package kit
 //// 		if ( tn )
 //// 			Recmiddle = tn;
 //// 	}
-//// 
+////
 //// 	if ( endof(n) > (*Recphr)->p_leng ) {
 //// 		(*Recphr)->p_leng = endof(n);
 //// 	}
 //// }
-//// 
+////
 //// struct midiaction Intmidi = {
 //// 	rc_off,		/* note off (uses same routine as note on) */
 //// 	rc_on,		/* note on */
 //// 	rc_pressure,	/* pressure */
 //// 	rc_control,	/* controller */
 //// 	rc_program,	/* program */
-//// 	rc_chanpress,	/* chanpress */	
+//// 	rc_chanpress,	/* chanpress */
 //// 	rc_pitchbend,	/* pitchbend */
 //// 	rc_sysex,	/* sysex */
 //// 	rc_position,	/* position */
@@ -1428,13 +1416,13 @@ package kit
 //// 	NULL,		/* active sensing is ignored */
 //// 	rc_mess		/* reset */
 //// };
-//// 
+////
 //// /* clear a schedule list */
 //// void
 //// clrsched(Sched **as)
 //// {
 //// 	register Sched *s, *nxt;
-//// 
+////
 //// 	dummyset(nxt);
 //// 	for ( s=(*as); s!=NULL; s=nxt ) {
 //// 		nxt = s->next;
@@ -1442,20 +1430,20 @@ package kit
 //// 	}
 //// 	*as = NULL;
 //// }
-//// 
+////
 //// Sched *
 //// newsch(void)
 //// {
 //// 	static Sched *last = NULL;
 //// 	static int nused = 0;
-//// 
+////
 //// 	/* First check the free list and use those nodes before anything else */
 //// 	if ( Freesch != NULL ) {
 //// 		Sched *s = Freesch;
 //// 		Freesch = Freesch->next;
 //// 		return(s);
 //// 	}
-//// 
+////
 //// 	if ( last == NULL || nused == ALLOCSCH ) {
 //// 		nused = 0;
 //// 		last = (Sched *)
@@ -1464,15 +1452,15 @@ package kit
 //// 	nused++;
 //// 	return(last++);
 //// }
-//// 
+////
 //// /* unsched - unschedule all events due to a particular task */
 //// void
 //// unsched(Task *t)
 //// {
 //// 	register Sched *s, *pres;
-//// 
+////
 //// 	for ( pres=NULL,s=Topsched; s!=NULL; ) {
-//// 
+////
 //// 		if ( s->task == t ) {
 //// 			register Sched *nexts = s->next;
 //// 			if ( s->type == SCH_NOTEOFF ) {
@@ -1493,7 +1481,7 @@ package kit
 //// 		}
 //// 	}
 //// }
-//// 
+////
 //// void
 //// freesch(register Sched *s)
 //// {
@@ -1520,12 +1508,12 @@ package kit
 //// 	s->next = Freesch;
 //// 	Freesch = s;
 //// }
-//// 
+////
 //// Sched *
 //// immsched(int type,long clicks,Ktaskp tp,int monitor)
 //// {
 //// 	Sched *s;
-//// 
+////
 //// 	/* add a new one to the end of the list. */
 //// 	s = newsch();
 //// 	s->type = type;
@@ -1536,7 +1524,7 @@ package kit
 //// 	s->task = tp;
 //// 	s->repeat = 0L;
 //// 	s->monitor = monitor;
-//// 
+////
 //// 	/* insert into list, sorted by clicks */
 //// 	if ( Topsched == NULL || clicks < Topsched->clicks ) {
 //// 		s->next = Topsched;
@@ -1555,14 +1543,14 @@ package kit
 //// 	}
 //// 	return(s);
 //// }
-//// 
+////
 //// /* schedule a phrase */
 //// long
 //// taskphr(Phrasep ph, long clicks, long rep, int monitor)
 //// {
 //// 	Sched *s;
 //// 	Ktaskp t;
-//// 
+////
 //// /* eprint("taskphr(milli=%ld clicks=%ld leng=%ld)\n",MILLICLOCK,clicks,ph->p_leng); */
 //// 	t = newtp(T_SCHED);
 //// 	t->stack = NULL;
@@ -1576,7 +1564,7 @@ package kit
 //// 	phincruse(ph);
 //// 	return t->tid;
 //// }
-//// 
+////
 //// void
 //// schdwake(long clicks)
 //// {
