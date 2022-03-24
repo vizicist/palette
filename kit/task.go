@@ -1,21 +1,8 @@
 package kit
 
-//// /*
-////  *	Copyright 1996 AT&T Corp.  All rights reserved.
-////  */
-////
-//// #define OVERLAY6
-////
-//// #ifdef PYTHON
-//// #include "Python.h"
-//// #endif
-//// #include "key.h"
-//// #include "gram.h"
-////
-////
-//// Codep Ipop, Idosweep, Ireboot;
-////
+import "log"
 
+var Ipop, Idosweep, Ireboot Codep
 var T Ktaskp       // currently-active task
 var Running Ktaskp // list of runnable tasks
 
@@ -1921,18 +1908,16 @@ var Tasktable Htablep
 //// 	return t;
 //// }
 ////
-//// void
-//// setrunning(Ktaskp t)
-//// {
-//// 	Running = t;
-//// }
-////
-//// void
-//// restarttask(Ktaskp t)
-//// {
-//// 	t->state = T_RUNNING;
-//// 	linktask(t);
-//// }
+
+func setrunning(t Ktaskp) {
+	Running = t
+}
+
+func restarttask(t Ktaskp) {
+	t.state = T_RUNNING
+	linktask(t)
+}
+
 ////
 //// void
 //// taskunrun(Ktaskp t,int nstate)
@@ -2204,11 +2189,11 @@ func newtp(state int) Ktaskp {
 	var t Ktaskp
 	var h Hnodep
 
-	if Freetp != NULL {
+	if Freetp != nil {
 		t = Freetp
 		Freetp = Freetp.nxt
 	} else {
-		t = &Task{}
+		t = &Ktask{}
 	}
 
 	/* add it to list of non-free tasks */
@@ -2227,7 +2212,7 @@ func newtp(state int) Ktaskp {
 	t.onexitargs = nil
 	t.ontaskerror = nil
 	t.ontaskerrorargs = nil
-	t.ontaskerrormsg = nil
+	t.ontaskerrormsg = ""
 	t.qmarkframe = nil
 	t.linenum = 0
 	t.filename = ""
@@ -2238,12 +2223,12 @@ func newtp(state int) Ktaskp {
 	if isnoval(h.val) == true {
 		h.val = taskdatum(t)
 	} else {
-		eprint("Hmm, task=%ld was already in Tasktable!?\n", t.tid)
+		log.Printf("Hmm, task=%d was already in Tasktable!?\n", t.tid)
 	}
 	return t
 }
 
-func linktask(Ktaskp p) {
+func linktask(p Ktaskp) {
 	p.nextrun = Running
 	setrunning(p)
 }
@@ -2251,7 +2236,7 @@ func linktask(Ktaskp p) {
 func freetp(t Ktaskp) {
 	/* T_SCHED tasks don't have any stack or instructions */
 	if t.state != T_SCHED {
-		if t.rminstruct {
+		if t.rminstruct != 0 {
 			freecode(t.first)
 			t.first = nil
 		}

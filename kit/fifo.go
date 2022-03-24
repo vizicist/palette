@@ -1,203 +1,159 @@
 package kit
-//// /*
-////  *	Copyright 1996 AT&T Corp.  All rights reserved.
-////  */
-//// 
-//// #define OVERLAY7
-//// 
-//// #include "key.h"
-//// 
-//// Htablep Fifotable = NULL;
-//// Fifo *Topfifo = NULL;
-//// Fifo *Freefifo = NULL;
-//// int Nblocked = 0;
-//// long Fifonum = 0;
-//// int Default_fifotype = 0;
-//// 
-//// Fifo *Midi_in_f = NULL;
-//// Fifo *Midi_out_f = NULL;
-//// Fifo *Consinf = NULL;
-//// Fifo *Consoutf = NULL;
-//// Fifo *Mousef = NULL;
-//// 
-//// void
-//// initfifos(void)
-//// {
-//// 	if ( Fifotable == NULL ) {
-//// 		char *p = getenv("FIFOHASHSIZE");
-//// 		Fifotable = newht( p ? atoi(p) : 67 );
-//// 	}
-//// }
-//// 
-//// static Fifodata *Freefd = NULL;
-//// 
-//// Fifodata *
-//// newfd(Datum d)
-//// {
-//// 	static int used = ALLOCFD;
-//// 	static Fifodata *lastfd;
-//// 	Fifodata *fd;
-//// 
-//// 	if ( Freefd != NULL ) {
-//// 		fd = Freefd;
-//// 		Freefd = Freefd->next;
-//// 	}
-//// 	else {
-//// 		if ( used == ALLOCFD ) {
-//// 			used = 0;
-//// 			lastfd = (Fifodata *) kmalloc(ALLOCFD*sizeof(Fifodata),"newfd");
-//// 		}
-//// 		used++;
-//// 		fd = lastfd++;
-//// 	}
-//// #ifdef THIS_CAUSES_PROBLEM_ON_MAC_AND_DOESNT_REALLY_DO_ANYTHING_ANYWAY
-//// 	if ( lastfd == NULL ) {
-//// 		eprint("Internal error, lastfd==NULL!?  forced abort()\n");
-//// 		abort();
-//// 	}
-//// #endif
-//// 	fd->d = d;
-//// 	incruse(d);
-//// 	fd->next = NULL;
-//// 	return fd;
-//// }
-//// 
-//// void
-//// freefd(Fifodata *fd)
-//// {
-//// 	decruse(fd->d);
-//// 	/* Add to free list */
-//// 	fd->next = Freefd;
-//// 	Freefd = fd;
-//// }
-//// 
-//// Fifo *
-//// fifoptr(long n)
-//// {
-//// 	Hnodep h = hashtable(Fifotable,numdatum(n),H_LOOK);
-//// 	if ( h )
-//// 		return( h->val.u.fifo );
-//// 	else
-//// 		return(NULL);
-//// }
-//// 
-//// PORTHANDLE porttofind;
-//// Fifo *foundfifo;
-//// 
-//// int
-//// findport(Hnodep h)
-//// {
-//// 	Fifo *f;
-//// 
-//// 	f = h->val.u.fifo;
-//// 	if ( (f->flags & FIFO_ISPORT) != 0 && f->port == porttofind )
-//// 		foundfifo = f;
-//// 	return 0;
-//// }
-//// 
-//// Fifo *
-//// port2fifo(PORTHANDLE port)
-//// {
-//// 	foundfifo = NULL;
-//// 	porttofind = port;
-//// 	hashvisit(Fifotable,findport);
-//// 	return foundfifo;
-//// }
-//// 
-//// void
-//// closefifo(Fifo *f)
-//// {
-//// 	Fifodata *fd, *nextfd;
-//// 
-//// 	flushlinebuff(f);
-//// 	if ( f->flags & FIFO_ISPORT ) {
-//// 		if ( mdep_closeport(f->port) )
-//// 			mdep_popup("Unexpected event, mdep_closeport failed!?");
-//// 	}
-//// 	else if ( f->fp ) {
-//// 		if ( (f->flags & FIFO_PIPE) != 0 ) {
-//// #ifdef PIPES
-//// 			if ( pclose(f->fp) < 0 )
-//// 				eprint("Error in pclose!?\n");
-//// #else
-//// 			eprint("No pipes?!\n");
-//// #endif
-//// 		}
-//// 		else
-//// 			myfclose(f->fp);
-//// 		f->fp = NULL;
-//// 	}
-//// 
-//// 	/* If any task is blocked on it, give them an Eof */
-//// 	if ( f->t && f->t->state != T_FREE ) {
-//// 		if ( f->t->state == T_BLOCKED ) {
-//// 			Ktaskp saveT;
-//// 
-//// 			saveT = T;
-//// 			T = f->t;
-//// 			unblocktask(f->t);
-//// 			/* This returns Eofval to the get() that's blocked */
-//// 			ret(numdatum(*Eofval));
-//// 			T = saveT;
-//// 		}
-//// 		else
-//// 			eprint("Internal error, in closefifo, task wasn't blocked?? state=%d\n",f->t->state);
-//// 	}
-//// 	f->t = NULL;
-//// 	f->flags = 0;
-//// 	f->size = 0;
-//// 
-//// #ifdef lint
-//// 	nextfd = NULL;
-//// #endif
-//// 	for ( fd=f->tail; fd!=NULL; fd=nextfd ) {
-//// 		nextfd = fd->next;
-//// 		freefd(fd);
-//// 	}
-//// }
-//// 
-//// void
-//// deletefifo(Fifo *f)
-//// {
-//// 	(void) hashtable(Fifotable,numdatum(f->num),H_DELETE);
-//// }
-//// 
-//// void
-//// freeff(Fifo *f)
-//// {
-//// 	if ( f->flags & FIFO_OPEN )
-//// 		closefifo(f);
-//// 	f->next = Freefifo;
-//// 	Freefifo = f;
-//// }
-//// 
-//// void
-//// flushfifo(Fifo *f)
-//// {
-//// 	Fifodata *fd, *nextfd;
-//// 
-//// 	flushlinebuff(f);
-//// 	if ( f->fp ) {
-//// 		if ( (f->flags & (FIFO_WRITE|FIFO_APPEND)) != 0 )
-//// 			if ( fflush(f->fp) )
-//// 				mdep_popup("Unexpected error from fflush()?");
-//// 	}
-//// 	else if ( f->tail ) {
-//// 		/* there's data in the fifo, clear it */
-//// #ifdef lint
-//// 		nextfd = NULL;
-//// #endif
-//// 		for ( fd=f->tail; fd!=NULL; fd=nextfd ) {
-//// 			nextfd = fd->next;
-//// 			freefd(fd);
-//// 		}
-//// 		f->head = NULL;
-//// 		f->tail = NULL;
-//// 		f->size = 0;
-//// 		f->t = NULL;
-//// 	}
-//// }
-//// 
+
+import "github.com/vizicist/palette/engine"
+
+var Fifotable Htablep
+var Topfifo *Fifo
+var Freefifo *Fifo
+
+var Nblocked int
+var Fifonum int
+var Default_fifotype int
+
+var Midi_in_f *Fifo
+var Midi_out_f *Fifo
+var Consinf *Fifo
+var Consoutf *Fifo
+var Mousef *Fifo
+
+func initfifos() {
+	if Fifotable == nil {
+		htsize := engine.ConfigIntWithDefault("FIFOHASHSIZE", 67)
+		Fifotable = newht(htsize)
+	}
+}
+
+var Freefd *Fifodata
+
+func newfd(d Datum) *Fifodata {
+
+	var fd *Fifodata
+
+	if Freefd != nil {
+		fd = Freefd
+		Freefd = Freefd.next
+	} else {
+		fd = &Fifodata{}
+	}
+	fd.d = d
+	incruse(d)
+	fd.next = nil
+	return fd
+}
+
+func freefd(fd *Fifodata) {
+	decruse(fd.d)
+	/* Add to free list */
+	fd.next = Freefd
+	Freefd = fd
+}
+
+func fifoptr(n int) *Fifo {
+	h := hashtable(Fifotable, numdatum(n), H_LOOK)
+	if h != nil {
+		return h.val.u.(*Fifo)
+	} else {
+		return nil
+	}
+}
+
+var porttofind PORTHANDLE
+var foundfifo *Fifo
+
+func findport(h Hnodep) int {
+	f := h.val.u.(*Fifo)
+	if (f.flags&FIFO_ISPORT) != 0 && f.port == porttofind {
+		foundfifo = f
+	}
+	return 0
+}
+
+func port2fifo(port PORTHANDLE) *Fifo {
+	foundfifo = nil
+	porttofind = port
+	hashvisit(Fifotable, findport)
+	return foundfifo
+}
+
+func closefifo(f *Fifo) {
+
+	// *Fifodata *fd, *nextfd;
+
+	flushlinebuff(f)
+	if (f.flags & FIFO_ISPORT) != 0 {
+		if mdep_closeport(f.port) {
+			mdep_popup("Unexpected event, mdep_closeport failed!?")
+		}
+	} else if f.fp != nil {
+		if (f.flags & FIFO_PIPE) != 0 {
+			if pclose(f.fp) < 0 {
+				eprint("Error in pclose!?\n")
+			}
+		} else {
+			myfclose(f.fp)
+		}
+		f.fp = nil
+	}
+
+	/* If any task is blocked on it, give them an Eof */
+	if f.t != nil && f.t.state != T_FREE {
+		if f.t.state == T_BLOCKED {
+			saveT := T
+			T = f.t
+			unblocktask(f.t)
+			/* This returns Eofval to the get() that's blocked */
+			ret(numdatum(*Eofval))
+			T = saveT
+		} else {
+			eprint("Internal error, in closefifo, task wasn't blocked?? state=%d\n", f.t.state)
+		}
+	}
+	f.t = nil
+	f.flags = 0
+	f.size = 0
+
+	for fd := f.tail; fd != nil; fd = nextfd {
+		nextfd = fd.next
+		freefd(fd)
+	}
+}
+
+func deletefifo(f *Fifo) {
+	hashtable(Fifotable, numdatum(f.num), H_DELETE)
+}
+
+func freeff(f *Fifo) {
+	if (f.flags & FIFO_OPEN) != 0 {
+		closefifo(f)
+	}
+	f.next = Freefifo
+	Freefifo = f
+}
+
+func flushfifo(f *Fifo) {
+
+	flushlinebuff(f)
+	if f.fp != nil {
+		if (f.flags & (FIFO_WRITE | FIFO_APPEND)) != 0 {
+			if fflush(f.fp) {
+				mdep_popup("Unexpected error from fflush()?")
+			}
+		}
+	} else if f.tail != nil {
+		/* there's data in the fifo, clear it */
+		var nextfd *Fifodata
+		for fd := f.tail; fd != nil; fd = nextfd {
+			nextfd = fd.next
+			freefd(fd)
+		}
+		f.head = nil
+		f.tail = nil
+		f.size = 0
+		f.t = nil
+	}
+}
+
+////
 //// void
 //// flushlinebuff(Fifo* f)
 //// {
@@ -207,14 +163,14 @@ package kit
 //// 		f->linesofar = 0;
 //// 	}
 //// }
-//// 
+////
 //// void
 //// closeallfifos(void)
 //// {
 //// 	clearht(Fifotable);
 //// 	Nblocked = 0;
 //// }
-//// 
+////
 //// char *
 //// nameofchar(int c)
 //// {
@@ -476,17 +432,17 @@ package kit
 //// 		"254", /* 254 */
 //// 		"255", /* 255 */
 //// 	};
-//// 
+////
 //// 	c = c & 0xff;
 //// 	return names[c];
 //// }
-//// 
+////
 //// void
 //// putonconsinfifo(int c)
 //// {
 //// 	if ( Consinf == NULL )
 //// 		execerror("Internal error, Consinf==NULL?");
-//// 
+////
 //// 	if ( c < 0 )
 //// 		putfifo(Consinf,numdatum(*Eofval));
 //// 	else if ( c == Intrchar )
@@ -508,7 +464,7 @@ package kit
 //// 		putfifo(Consinf,strdatum(uniqstr(s)));
 //// 	}
 //// }
-//// 
+////
 //// void
 //// putonconsoutfifo(char *s)
 //// {
@@ -517,7 +473,7 @@ package kit
 //// 	else
 //// 		putfifo(Consoutf,strdatum(s));
 //// }
-//// 
+////
 //// void
 //// putonconsechofifo(char *s)
 //// {
@@ -527,15 +483,15 @@ package kit
 //// 	else
 //// 		putonconsoutfifo(s);
 //// }
-//// 
+////
 //// void
 //// putonmousefifo(int mval,int x,int y,int pressed,int mod)
 //// {
 //// 	static int lastpressed = -99;	/* just so it's not -1, 0, or 1 */
-//// 
+////
 //// 	if ( Mousef == NULL )
 //// 		execerror("Hmm, Mousef == NULL in putonmousefifo?");
-//// 
+////
 //// 	/* when dragging or moving (i.e. pressed==0), we don't want */
 //// 	/* too many events to collect in mouse fifo. */
 //// 	if (!(pressed==0 && lastpressed==0 && fifosize(Mousef)>*Mousefifolimit)) {
@@ -543,7 +499,7 @@ package kit
 //// 		long lx = x;
 //// 		long ly = y;
 //// 		Datum t;
-//// 
+////
 //// 		switch (pressed) {
 //// 		case 1:
 //// 			t = Str_down;
@@ -573,13 +529,13 @@ package kit
 ////     getout:
 //// 	lastpressed = pressed;
 //// }
-//// 
+////
 //// void
 //// putonmidiinfifo(Noteptr n)
 //// {
 //// 	putntonfifo(n,Midi_in_f);
 //// }
-//// 
+////
 //// void
 //// putntonfifo(Noteptr n,Fifo* f)
 //// {
@@ -591,14 +547,14 @@ package kit
 //// 		putfifo(f,phrdatum(ph));
 //// 	}
 //// }
-//// 
+////
 //// char *
 //// findopt(char *nm,char **args)
 //// {
 //// 	int n, ln;
 //// 	char *p, *q;
 //// 	char buff[BUFSIZ];
-//// 
+////
 //// 	for ( n=0; (p=args[n])!=NULL; n++ ) {
 //// 		if ( (q=strchr(p,'=')) == NULL )
 //// 			continue;
@@ -610,13 +566,13 @@ package kit
 //// 	}
 //// 	return NULL;
 //// }
-//// 
+////
 //// int
 //// isspecialfifo(Fifo *f)
 //// {
 //// 	return (f->flags) & FIFO_SPECIAL ;
 //// }
-//// 
+////
 //// Fifo *
 //// specialfifo(void)
 //// {
@@ -625,15 +581,15 @@ package kit
 //// 		execerror("Internal error - can't open specialfifo()!?");
 //// 	f->flags |= FIFO_SPECIAL ;
 //// 	return f;
-//// 	
+////
 //// }
-//// 
+////
 //// Fifo *
 //// getafifo()
 //// {
 //// 	Fifo *f;
 //// 	Hnodep h;
-//// 
+////
 //// 	/* try to find a free one */
 //// 	if ( Freefifo ) {
 //// 		f = Freefifo;
@@ -655,7 +611,7 @@ package kit
 //// 	f->linebuff = NULL;
 //// 	f->linesize = 0;
 //// 	f->linesofar = 0;
-//// 
+////
 //// 	f->num = Fifonum++;
 //// 	h = hashtable(Fifotable,numdatum(f->num),H_INSERT);
 //// 	if ( isnoval(h->val) )
@@ -664,7 +620,7 @@ package kit
 //// 		eprint("Hmm, fifo=%ld was already in Fifotable???\n",f->num);
 //// 	return f;
 //// }
-//// 
+////
 //// int
 //// fifoctl2type(char *mode, int def)
 //// {
@@ -678,12 +634,12 @@ package kit
 //// 		return FIFOTYPE_ARRAY;
 //// 	return def;	/* default */
 //// }
-//// 
+////
 //// int
 //// mode2flags(char *mode)
 //// {
 //// 	int flags = 0;
-//// 
+////
 //// 	if ( strchr(mode,'w') != NULL )
 //// 		flags |= FIFO_WRITE;
 //// 	if ( strchr(mode,'a') != NULL )
@@ -692,14 +648,14 @@ package kit
 //// 		flags |= FIFO_READ;
 //// 	return flags;
 //// }
-//// 
+////
 //// int
 //// newfifo(char *fname,char *mode,char *porttype,Fifo **pf1,Fifo **pf2)
 //// {
 //// 	Fifo *f1, *f2;
 //// 	FILE *fp;
 //// 	int flags;
-//// 
+////
 //// 	if ( fname == NULL ) {
 //// 		/* It's a keykit generic fifo */
 //// 		f1 = getafifo();
@@ -707,14 +663,14 @@ package kit
 //// 		*pf1 = f1;
 //// 		return 1;
 //// 	}
-//// 
+////
 //// 	if ( mode == NULL )
 //// 		execerror("Internal error, mode==NULL in newfifo()");
 //// 	if ( porttype == NULL )
 //// 		execerror("Internal error, porttype==NULL in newfifo()");
-//// 
+////
 //// 	flags = mode2flags(mode) | FIFO_OPEN;
-//// 
+////
 //// 	if ( strcmp(porttype,"pipe") == 0 ) {
 //// #ifdef PIPES
 //// 		if ( (flags&(FIFO_WRITE|FIFO_APPEND)) != 0 )
@@ -762,7 +718,7 @@ package kit
 //// 		int rflag = (strchr(mode,'r')!=NULL);
 //// 		int wflag = (strchr(mode,'w')!=NULL);
 //// 		int r = 0;
-//// 
+////
 //// 		ports = mdep_openport(fname,mode,porttype);
 //// 		// tprint("mdep_openports returned ports = %ld\n",ports);
 //// 		if ( ports == NULL ) {
@@ -770,7 +726,7 @@ package kit
 //// 				fname,mode,porttype);
 //// 			return 0;
 //// 		}
-//// 
+////
 //// 		if ( rflag && ports[0] ) {
 //// 			f1 = getafifo();
 //// 			f1->flags = FIFO_OPEN | FIFO_ISPORT | FIFO_READ;
@@ -791,21 +747,21 @@ package kit
 //// 		return r;
 //// 	}
 //// }
-//// 
+////
 //// int
 //// fifosize(Fifo *f)
 //// {
 //// 	return f->size;
 //// }
-//// 
+////
 //// void
 //// getfromfifo(Fifo *f)
 //// {
 //// 	Fifodata *fd;
 //// 	Datum d;
-//// 
+////
 //// 	fd = f->tail;
-//// 
+////
 //// 	if ( f->fp ) {
 //// 		int c = getc(f->fp);
 //// 		if ( c < 0 ) {
@@ -832,7 +788,7 @@ package kit
 //// 	else if ( fd ) {	/* i.e. there's something in the fifo */
 //// 		if ( f->size <= 0 )
 //// 			execerror("Hey, f->tail is non-NULL, but f->size is <=0\n");
-//// 
+////
 //// 		if ( ((f->flags) & FIFO_NORETURN) != 0 ) {
 //// 			f->flags &= (~FIFO_NORETURN); /* only lasts 1 time */
 //// 		}
@@ -857,13 +813,13 @@ package kit
 //// 		}
 //// 	}
 //// }
-//// 
+////
 //// Datum
 //// removedatafromfifo(Fifo *f)
 //// {
 //// 	Fifodata *fd = f->tail;
 //// 	Datum d;
-//// 
+////
 //// 	d = fd->d;
 //// 	/* remove if from the fifo */
 //// 	f->tail = fd->next;
@@ -872,7 +828,7 @@ package kit
 //// 	freefd(fd);
 //// 	return(d);
 //// }
-//// 
+////
 //// void
 //// blockfifo(Fifo *f,int noreturn)
 //// {
@@ -886,7 +842,7 @@ package kit
 //// 	taskunrun(T,T_BLOCKED);
 //// 	T = Running;
 //// }
-//// 
+////
 //// void
 //// unblocktask(Ktaskp t)
 //// {
@@ -894,7 +850,7 @@ package kit
 //// 	Nblocked--;
 //// 	t->fifo = NULL;
 //// }
-//// 
+////
 //// void
 //// getfifo(Fifo *f)
 //// {
@@ -902,28 +858,28 @@ package kit
 //// 		execerror("Attempt to get() on a fifo (%ld) that is opened for writing!",fifonum(f));
 //// 	getfromfifo(f);
 //// }
-//// 
+////
 //// static FILE *Fputfp;
-//// 
+////
 //// void
 //// fputit(char *s)
 //// {
 //// 	fputs(s,Fputfp);
 //// }
-//// 
+////
 //// void
 //// putfifo(Fifo *f,Datum d)
 //// {
 //// 	Fifodata *fd;
 //// 	char bytes[4];
 //// 	Symstr s;
-//// 
+////
 //// 	/* This routine is used both by the bi_put() routine when a */
 //// 	/* user is putting something on a fifo, as well as by the */
 //// 	/* handlewaitfor() when something arrives on a port, and it needs */
 //// 	/* to be put on a fifo for future reading by the user */
 //// 	/* (i.e. bi_get()).  Probably needs to be split up in the future. */
-//// 
+////
 //// 	if ( (f->flags & FIFO_ISPORT) != 0 && (f->flags & FIFO_WRITE) != 0 ) {
 //// 		switch(d.type) {
 //// 		case D_NUM:
@@ -937,7 +893,7 @@ package kit
 //// 		}
 //// 		return;
 //// 	}
-//// 
+////
 //// 	if ( f->fp ) {
 //// 		if ( f->fifoctl_type == FIFOTYPE_BINARY ) {
 //// 			int c = roundval(d);
@@ -949,9 +905,9 @@ package kit
 //// 		}
 //// 		return;
 //// 	}
-//// 
+////
 //// 	fd = newfd(d);
-//// 
+////
 //// 	if ( f->head ) {
 //// 		/* The list of fd's goes from f->tail to f->head.  f->tail is */
 //// 		/* where they're gotten from, and f->head is where they're put on. */
@@ -964,7 +920,7 @@ package kit
 //// 	f->head = fd;
 //// 	f->size++;
 //// 	// keyerrfile("putfifo, size=%d\n",f->size);
-//// 
+////
 //// 	/* If there is a task that blocked on a get() */
 //// 	/* of this fifo, resurrect it. */
 //// 	if ( f->t ) {

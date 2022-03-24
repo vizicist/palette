@@ -2,12 +2,6 @@ package kit
 
 import "strings"
 
-//// /*
-////  *	Copyright 1996 AT&T Corp.  All rights reserved.
-////  */
-////
-//// #define OVERLAY3
-////
 //// #include "key.h"
 //// #include "gram.h"
 ////

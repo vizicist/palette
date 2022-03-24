@@ -7,19 +7,8 @@ import (
 
 //go:generate goyacc -o gram.go gram.y
 
-//// /*
-////  *	Copyright 1996 AT&T Corp.  All rights reserved.
-////  */
-////
-//// #include "key.h"
-//// #include "gram.h"
-////
 //// #ifdef FFF
 //// FILE *FF = NULL;
-//// #endif
-////
-//// #ifndef lint
-//// char *Copyright = "KeyKit 8.0 - Copyright 1996 AT&T Corp.  All rights reserved.";
 //// #endif
 ////
 //// // int errno;
@@ -994,18 +983,6 @@ func execerror(fmt string) {
 //// 	}
 //// }
 ////
-//// void
-//// corecheck(void)
-//// {
-//// #ifdef CORELEFT
-//// 	long v = CORELEFT;
-//// 	if ( v >= 0 && v < *Lowcorelim ) {
-//// 		tprint("Memory is getting very low.  %d K left.  Get out while you can.\n",
-//// 			(int)(CORELEFT/1000));
-//// 	}
-//// #endif
-//// }
-////
 //// int
 //// checkfunckey(int c)
 //// {
@@ -1213,85 +1190,82 @@ type Macro struct {
 
 var TopMac *Macro
 
+// Scan the macro definition in s, creating a new Macro structure. */
+func macrodefine(char *s,int checkkeyword) {
+	char *p, *nm;
+	Macro *m;
+	int n, echar;
+	Symbolp sym;
+#ifdef __GNUC__
+	/* This is because in GNU C, constant strings (e.g. those */
+	/* passed to macrodefine()) are not writable by default. */
+	char buffer[strlen(s)+1];
+	(void) strcpy(buffer,s);
+	s = buffer;
+#endif
 ////
-//// /* Scan the macro definition in s, creating a new Macro structure. */
-//// void
-//// macrodefine(char *s,int checkkeyword)
-//// {
-//// 	char *p, *nm;
-//// 	Macro *m;
-//// 	int n, echar;
-//// 	Symbolp sym;
-//// #ifdef __GNUC__
-//// 	/* This is because in GNU C, constant strings (e.g. those */
-//// 	/* passed to macrodefine()) are not writable by default. */
-//// 	char buffer[strlen(s)+1];
-//// 	(void) strcpy(buffer,s);
-//// 	s = buffer;
-//// #endif
+	skipspace(s);
+	for ( p=s; isnamechar(*p); p++ )
+		;
+	echar = *p;
+	if ( echar != '\0' )
+		*p++ = '\0';
+	nm = uniqstr(s);
 ////
-//// 	skipspace(s);
-//// 	for ( p=s; isnamechar(*p); p++ )
-//// 		;
-//// 	echar = *p;
-//// 	if ( echar != '\0' )
-//// 		*p++ = '\0';
-//// 	nm = uniqstr(s);
+	if ( checkkeyword ) {
+		sym = findsym(nm,Keywords);
+		if ( sym ) {
+			eprint("Can't #define an existing symbol: %s\n",nm);
+			return;
+		}
+	}
+	sym = findsym(nm,Macros);
+	if ( sym == 0 )
+                (void) syminstall(nm,Macros,MACRO);
+	else if ( sym->stype == UNDEF )
+		sym->stype = MACRO;
+	else if ( sym->stype != MACRO ) {
+	}
+	m = (Macro *) kmalloc(sizeof(Macro),"macrodefine");
+	m->name = nm;
+	skipspace(p);
+	if ( echar != '(' ) {
+		/* Macro has no parameters */
+		m->nparams = 0;
+		m->value = uniqstr(p);
+	}
+	else {
+		char **pp, *param, *params[NPARAMS];
+		int nparams = 0;
 ////
-//// 	if ( checkkeyword ) {
-//// 		sym = findsym(nm,Keywords);
-//// 		if ( sym ) {
-//// 			eprint("Can't #define an existing symbol: %s\n",nm);
-//// 			return;
-//// 		}
-//// 	}
-//// 	sym = findsym(nm,Macros);
-//// 	if ( sym == 0 )
-////                 (void) syminstall(nm,Macros,MACRO);
-//// 	else if ( sym->stype == UNDEF )
-//// 		sym->stype = MACRO;
-//// 	else if ( sym->stype != MACRO ) {
-//// 	}
-//// 	m = (Macro *) kmalloc(sizeof(Macro),"macrodefine");
-//// 	m->name = nm;
-//// 	skipspace(p);
-//// 	if ( echar != '(' ) {
-//// 		/* Macro has no parameters */
-//// 		m->nparams = 0;
-//// 		m->value = uniqstr(p);
-//// 	}
-//// 	else {
-//// 		char **pp, *param, *params[NPARAMS];
-//// 		int nparams = 0;
+		/* Gather parameter names */
+		do {
+			if ( nparams >= NPARAMS )
+				execerror("Too many macro parameters!  Increase NPARAMS!");
+			skipspace(p);
+			param = p;
+			echar = scanparam(&p);
+			params[nparams++] = uniqstr(param);
+		} while ( echar == ',' );
 ////
-//// 		/* Gather parameter names */
-//// 		do {
-//// 			if ( nparams >= NPARAMS )
-//// 				execerror("Too many macro parameters!  Increase NPARAMS!");
-//// 			skipspace(p);
-//// 			param = p;
-//// 			echar = scanparam(&p);
-//// 			params[nparams++] = uniqstr(param);
-//// 		} while ( echar == ',' );
+		if ( echar != ')' )
+			execerror("Improper #define format");
 ////
-//// 		if ( echar != ')' )
-//// 			execerror("Improper #define format");
+		skipspace(p);
+		m->value = uniqstr(p);
 ////
-//// 		skipspace(p);
-//// 		m->value = uniqstr(p);
-////
-//// 		m->nparams = nparams;
-//// 		if ( nparams > 0 ) {
-//// 			pp=(char **)kmalloc(nparams*sizeof(char *),"macrodefine2");
-//// 			for ( n=0; n<nparams; n++ )
-//// 				pp[n] = params[n];
-//// 			m->params = pp;
-//// 		}
-//// 	}
-//// 	m->next = Topmac;
-//// 	Topmac = m;
-//// }
-////
+		m->nparams = nparams;
+		if ( nparams > 0 ) {
+			pp=(char **)kmalloc(nparams*sizeof(char *),"macrodefine2");
+			for ( n=0; n<nparams; n++ )
+				pp[n] = params[n];
+			m->params = pp;
+		}
+	}
+	m->next = Topmac;
+	Topmac = m;
+}
+
 //// int
 //// scanparam(char **ap)
 //// {
@@ -1310,14 +1284,13 @@ var TopMac *Macro
 /* gathering the arguments and substituting them in the macro definition). */
 /* The macro value is stuffed back onto the input stream. */
 func (l *Lexer) macroeval(name string) {
-	var m *Macro
-	var q, sofar string
+	// var q, sofar string
 	var args []string
 	var errstr string
-	var c, n, nparams, echar int
-	var ch byte
+	// var c, n, nparams, echar int
+	// var ch byte
 
-	for m = Topmac; m != NULL; m = m.next {
+	for m := Topmac; m != nil; m = m.next {
 		if name == m.name {
 			break
 		}

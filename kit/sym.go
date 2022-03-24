@@ -2,17 +2,8 @@ package kit
 
 import (
 	"crypto/md5"
+	"log"
 )
-
-//// /*
-////  *	Copyright 1996 AT&T Corp.  All rights reserved.
-////  */
-////
-//// #define OVERLAY8
-////
-//// #include "key.h"
-//// #include "gram.h"
-////
 
 var Keywords Htablep
 var Macros Htablep
@@ -21,42 +12,41 @@ var Freeht Htablep
 var Currct *Context
 var Topct *Context
 
-//// Symlongp Merge, Now, Clicks, Debug, Sync, Optimize, Mergefilter, Nowoffset;
-//// Symlongp Mergeport1, Mergeport2;
-//// Symlongp Debugwait, Debugmidi, Debugrun, Debugfifo, Debugmouse, Debuggesture;
-//// Symlongp Clocksperclick, Clicksperclock, Graphics, Debugdraw, Debugmalloc;
-//// Symlongp Millicount, Throttle2, Loadverbose, Warnnegative, Midifilenoteoff;
-//// Symlongp Drawcount, Mousedisable, Forceinputport, Showsync, Echoport;
-//// Symlongp Inputistty, Debugoff, Fakewrap, Mfsysextype;
-//// Symlongp Tempotrack, Onoffmerge, Defrelease, Grablimit, Mfformat, Defoutport;
-//// Symlongp Filter, Record, Recsched, Throttle, Recfilter, Recinput, Recsysex;
-//// Symlongp Lowcorelim, Arraysort, Midithrottle, Defpriority;
-//// Symlongp Taskaddr, Debuginst, Usewindfifos, Prepoll, Printsplit;
-//// Symlongp Novalval, Eofval, Intrval, Debugkill, Debugkill1, Linetrace;
-//// Symlongp Abortonint, Abortonerr, Redrawignoretime, Resizeignoretime;
-//// Symlongp Consecho, Checkcount, Isofuncwarn, Consupdown, Monitor_fnum;
-//// Symlongp Consecho_fnum, Slashcheck, Directcount, SubstrCount;
-//// Symlongp Mousefnum, Consinfnum, Consoutfnum, Midi_in_fnum, Mousefifolimit;
-//// Symlongp Saveglobalsize, Warningsleep, Millires, Milliwarn, Resizefix;
-//// Symlongp Minbardx, Kobjectoffset, Midi_out_fnum, Mousemoveevents;
-//// Symlongp Numinst1, Numinst2, Offsetpitch, Offsetfilter, DoDirectinput;
-//// Symlongp Offsetportfilter;
-//// Datum *Rebootfuncd, *Nullfuncd, *Errorfuncd;
-//// Datum *Intrfuncd, *Nullvald;
-//// Datum Zeroval, Noval, Nullval, _Dnumtmp_;
+var Merge, Now, Clicks, Debug, Sync, Optimize, Mergefilter, Nowoffset Symlongp
+var Mergeport1, Mergeport2 Symlongp
+var Debugwait, Debugmidi, Debugrun, Debugfifo, Debugmouse, Debuggesture Symlongp
+var Clocksperclick, Clicksperclock, Graphics, Debugdraw, Debugmalloc Symlongp
+var Millicount, Throttle2, Loadverbose, Warnnegative, Midifilenoteoff Symlongp
+var Drawcount, Mousedisable, Forceinputport, Showsync, Echoport Symlongp
+var Inputistty, Debugoff, Fakewrap, Mfsysextype Symlongp
+var Tempotrack, Onoffmerge, Defrelease, Grablimit, Mfformat, Defoutport Symlongp
+var Filter, Record, Recsched, Throttle, Recfilter, Recinput, Recsysex Symlongp
+var Lowcorelim, Arraysort, Midithrottle, Defpriority Symlongp
+var Taskaddr, Debuginst, Usewindfifos, Prepoll, Printsplit Symlongp
+var Novalval, Eofval, Intrval, Debugkill, Debugkill1, Linetrace Symlongp
+var Abortonint, Abortonerr, Redrawignoretime, Resizeignoretime Symlongp
+var Consecho, Checkcount, Isofuncwarn, Consupdown, Monitor_fnum Symlongp
+var Consecho_fnum, Slashcheck, Directcount, SubstrCount Symlongp
+var Mousefnum, Consinfnum, Consoutfnum, Midi_in_fnum, Mousefifolimit Symlongp
+var Saveglobalsize, Warningsleep, Millires, Milliwarn, Resizefix Symlongp
+var Minbardx, Kobjectoffset, Midi_out_fnum, Mousemoveevents Symlongp
+var Numinst1, Numinst2, Offsetpitch, Offsetfilter, DoDirectinput Symlongp
+var Offsetportfilter Symlongp
+
+var Rebootfuncd, Nullfuncd, Errorfuncd *Datum
+var Intrfuncd, Nullvald *Datum
 var Zeroval Datum
 var Noval Datum
 var Nullval Datum
 var _Dnumtmp_ Datum
 
-//// Datum *Colorfuncd;
-//// Datum *Redrawfuncd;
-//// Datum *Resizefuncd;
-//// Datum *Exitfuncd;
-//// Htablepp Track, Wpick;
-//// Htablepp Chancolormap;
-//// Symlongp Chancolors;
-////
+var Colorfuncd *Datum
+var Redrawfuncd *Datum
+var Resizefuncd *Datum
+var Exitfuncd *Datum
+var Track, Wpick Htablepp
+var Chancolormap Htablepp
+var Chancolors Symlongp
 
 func newcontext(s Symbolp, sz int) {
 	c := &Context{}
@@ -282,201 +272,174 @@ func clearsym(s Symbolp) {
 	}
 }
 
-////
-//// static struct {		/* Keywords */
-//// 	char	*name;
-//// 	int	kval;
-//// } keywords[] = {
-//// 	"function",	FUNC,
-//// 	"return",	RETURN,
-//// 	"if",		IF,
-//// 	"else",		ELSE,
-//// 	"while",	WHILE,
-//// 	"for",		FOR,
-//// 	"in",		SYM_IN,  /* to avoid conflict on windows */
-//// 	"break",	BREAK,
-//// 	"continue",	CONTINUE,
-//// 	"task",		TASK,
-//// 	"eval",		EVAL,
-//// 	"vol",		VOL,	/* sorry, I'm just used to 'vol' */
-//// 	"volume",	VOL,
-//// 	"vel",		VOL,
-//// 	"velocity",	VOL,
-//// 	"chan",		CHAN,
-//// 	"channel",	CHAN,
-//// 	"pitch",	PITCH,
-//// 	"time",		TIME,
-//// 	"dur",		DUR,
-//// 	"duration",	DUR,
-//// 	"length",	LENGTH,
-//// 	"number",	NUMBER,
-//// 	"type",		TYPE,
-//// 	"defined",	DEFINED,
-//// 	"undefine",	UNDEFINE,
-//// 	"delete",	SYM_DELETE,
-//// 	"readonly",	READONLY,
-//// 	"onchange",	ONCHANGE,
-//// 	"flags",	FLAGS,
-//// 	"varg",		VARG,
-//// 	"attrib",	ATTRIB,
-//// 	"global",	GLOBALDEC,
-//// 	"class",	CLASS,
-//// 	"method",	METHOD,
-//// 	"new",		KW_NEW,
-//// 	"nargs",	NARGS,
-//// 	"typeof",	TYPEOF,
-//// 	"xy",		XY,
-//// 	"port",		PORT,
-//// 	0,		0,
-//// };
-////
-//// long
-//// neednum(char *s,Datum d)
-//// {
-//// 	if ( d.type != D_NUM && d.type != D_DBL )
-//// 		execerror("%s expects a number, got %s!",s,atypestr(d.type));
-//// 	return ( roundval(d) );
-//// }
-////
-//// Codep
-//// needfunc(char *s,Datum d)
-//// {
-//// 	if ( d.type != D_CODEP )
-//// 		execerror("%s expects a function, got %s!",s,atypestr(d.type));
-//// 	return d.u.codep;
-//// }
-////
-//// Kobjectp
-//// needobj(char *s,Datum d)
-//// {
-//// 	if ( d.type != D_OBJ )
-//// 		execerror("%s expects an object, got %s!",s,atypestr(d.type));
-//// 	return d.u.obj;
-//// }
-////
-//// Fifo *
-//// needfifo(char *s,Datum d)
-//// {
-//// 	long n;
-//// 	Fifo *f;
-////
-//// 	if ( d.type != D_NUM && d.type != D_DBL ) {
-//// 		execerror("%s expects a fifo id (i.e. a number), but got %s!",
-//// 			s,atypestr(d.type));
-//// 	}
-//// 	n = roundval(d);
-//// 	f = fifoptr(n);
-//// 	return f;
-//// }
-////
-//// Fifo *
-//// needvalidfifo(char *s,Datum d)
-//// {
-//// 	Fifo *f;
-////
-//// 	f = needfifo(s,d);
-//// 	if ( f == NULL )
-//// 		execerror("%s expects a fifo id, and %ld is not a valid fifo id!",s,numval(d));
-//// 	return f;
-//// }
-////
-//// char *
-//// needstr(char *s,Datum d)
-//// {
-//// 	if ( d.type != D_STR )
-//// 		execerror("%s expects a string, got %s!",s,atypestr(d.type));
-//// 	return ( d.u.str );
-//// }
-////
-//// Htablep
-//// needarr(char *s,Datum d)
-//// {
-//// 	if ( d.type != D_ARR )
-//// 		execerror("%s expects an array, got %s!",s,atypestr(d.type));
-//// 	return ( d.u.arr );
-//// }
-////
-//// Phrasep
-//// needphr(char *s,Datum d)
-//// {
-//// 	if ( d.type != D_PHR )
-//// 		execerror("%s expects a phrase, got %s!",s,atypestr(d.type));
-//// 	return ( d.u.phr );
-//// }
-////
-//// Symstr
-//// datumstr(Datum d)
-//// {
-//// 	char buff[32];
-//// 	char *p;
-//// 	long id;
-////
-//// 	if ( isnoval(d) )
-//// 		execerror("Attempt to convert uninitialized value (Noval) to string!?");
-////
-//// 	switch ( d.type ) {
-//// 	case D_NUM:
-//// 		(void) prlongto(d.u.val,p=buff);
-//// 		break;
-//// 	case D_PHR:
-//// 		p = phrstr(d.u.phr,0);
-//// 		break;
-//// 	case D_DBL:
-//// 		sprintf(p=buff,"%g",d.u.dbl);
-//// 		break;
-//// 	case D_STR:
-//// 		p = d.u.str;
-//// 		break;
-//// 	case D_ARR:
-//// 		/* we re-use the routines in main.c for doing */
-//// 		/* printing into a buffer.  I supposed we could really */
-//// 		/* do this for all the data types here. */
-//// 		stackbuffclear();
-//// 		prdatum(d,stackbuff,1);
-//// 		p = stackbuffstr();
-//// 		break;
-//// 	case D_OBJ:
-//// 		buff[0] = '$';
-//// 		id = (d.u.obj?d.u.obj->id:-1) + *Kobjectoffset;
-//// 		(void) prlongto(id,buff+1);
-//// 		p = buff;
-//// 		break;
-//// 	default:
-//// 		p = "";
-//// 		break;
-//// 	}
-//// 	p = uniqstr(p);
-//// 	return p;
-//// }
-////
-//// Datum
-//// newarrdatum(int used,int size)
-//// {
-//// 	Datum d;
-////
-//// 	d.type = D_ARR;
-//// 	d.u.arr = newht(size>0 ? size : ARRAYHASHSIZE);
-////
-//// #ifdef OLDSTUFF
-//// if(Debug&&*Debug>1)eprint("newarrdatum(%d), d.u.arr=%ld\n",used,(long)(d.u.arr));
-//// #endif
-//// 	d.u.arr->h_used = used;
-//// 	d.u.arr->h_tobe = 0;
-//// 	return d;
-//// }
-////
-//// Htablepp
-//// globarray(char *name)
-//// {
-//// 	Datum *dp;
-//// 	Symbolp s;
-////
-//// 	s = globalinstall(name,VAR);
-//// 	s->stype = VAR;
-//// 	dp = symdataptr(s);
-//// 	*dp = newarrdatum(1,0);
-//// 	return &(dp->u.arr);
-//// }
+type keywordinfo struct {
+	name string
+	kval int
+}
+
+var keywords = []keywordinfo{
+	"function",	FUNC,
+	"return",	RETURN,
+	"if",		IF,
+	"else",		ELSE,
+	"while",	WHILE,
+	"for",		FOR,
+	"in",		SYM_IN,  /* to avoid conflict on windows */
+	"break",	BREAK,
+	"continue",	CONTINUE,
+	"task",		TASK,
+	"eval",		EVAL,
+	"vol",		VOL,	/* sorry, I'm just used to 'vol' */
+	"volume",	VOL,
+	"vel",		VOL,
+	"velocity",	VOL,
+	"chan",		CHAN,
+	"channel",	CHAN,
+	"pitch",	PITCH,
+	"time",		TIME,
+	"dur",		DUR,
+	"duration",	DUR,
+	"length",	LENGTH,
+	"number",	NUMBER,
+	"type",		TYPE,
+	"defined",	DEFINED,
+	"undefine",	UNDEFINE,
+	"delete",	SYM_DELETE,
+	"readonly",	READONLY,
+	"onchange",	ONCHANGE,
+	"flags",	FLAGS,
+	"varg",		VARG,
+	"attrib",	ATTRIB,
+	"global",	GLOBALDEC,
+	"class",	CLASS,
+	"method",	METHOD,
+	"new",		KW_NEW,
+	"nargs",	NARGS,
+	"typeof",	TYPEOF,
+	"xy",		XY,
+	"port",		PORT,
+	0,		0,
+}
+
+func neednum(s string,d Datum) int {
+	if d.dtype != D_NUM && d.dtype != D_DBL {
+		execerror("%s expects a number, got %s!",s,atypestr(d.dtype));
+	}
+	return roundval(d)
+}
+
+func needfunc(s string,d Datum) Codep {
+	if d.dtype != D_CODEP {
+		execerror("%s expects a function, got %s!",s,atypestr(d.dtype))
+	}
+	return d.u.codep
+}
+
+func needobj(s string, d Datum) Kobjectp {
+	if d.dtype != D_OBJ {
+		execerror("%s expects an object, got %s!",s,atypestr(d.dtype))
+	}
+	return d.u.obj
+}
+
+func needfifo(s string,d Datum) *Fifo {
+	
+	if d.dtype != D_NUM && d.dtype != D_DBL {
+		execerror("%s expects a fifo id (i.e. a number), but got %s!",
+			s,atypestr(d.dtype))
+	}
+	n := roundval(d)
+	f := fifoptr(n)
+	return f
+}
+
+func needvalidfifo(s string,d Datum) *Fifo {
+	f := needfifo(s,d)
+	if f == nil {
+		execerror("%s expects a fifo id, and %ld is not a valid fifo id!",s,numval(d))
+	}
+	return f
+}
+
+func needstr(char *s,Datum d) string {
+	if d.dtype != D_STR {
+		execerror("%s expects a string, got %s!",s,atypestr(d.dtype))
+	}
+	return d.u.str
+}
+
+func needarr(s string,d Datum ) Htablep {
+	if d.dtype != D_ARR {
+		execerror("%s expects an array, got %s!",s,atypestr(d.dtype))
+	}
+	return d.u.(Htablep)
+}
+
+func needphr(s string ,d Datum) Phrasep {
+	if d.dtype != D_PHR {
+		execerror("%s expects a phrase, got %s!",s,atypestr(d.dtype))
+	}
+	return d.u.(Phrasep)
+}
+
+func datumstr(Datum d) (s Symstr) {
+	if isnoval(d) {
+		execerror("Attempt to convert uninitialized value (Noval) to string!?")
+	}
+		
+	switch ( d.tdype ) {
+	case D_NUM:
+		s = strconv.Itoa(d.u.(int))
+	case D_PHR:
+		s = phrstr(d.u.(Phrasep),0)
+	case D_DBL:
+		s = log.Snprintf("%f",d.u.(float))
+	case D_STR:
+		s = d.u.(string)
+	case D_ARR:
+		/* we re-use the routines in main.c for doing */
+		/* printing into a buffer.  I supposed we could really */
+		/* do this for all the data types here. */
+		stackbuffclear()
+		prdatum(d,stackbuff,1)
+		s = stackbuffstr()
+	case D_OBJ:
+		var id int
+		obj := d.u.(Kobjectp)
+		if obj != nil {
+			id = obj.id
+		} else {
+			id = -1
+		}
+		id += *Kobjectoffset
+		s = log.Snprintf("$%d",id)
+	default:
+		s = ""
+	}
+	return s
+}
+
+func newarrdatum(used int ,size int) Datum {
+	d := Datum{dtype:D_ARR}
+	if size <= 0 {
+		size = ARRAYHASHSIZE
+	}
+	arr := newht(size)
+	arr.h_used = used
+	arr.h_tobe = 0
+	d.u = arr
+	return d
+}
+
+func globarray(name string) Htablepp {
+	s := globalinstall(name,VAR)
+	s.stype = VAR
+	dp := symdataptr(s)
+	*dp = newarrdatum(1,0)
+	arr := dp.u.(Htablep)
+	return &arr
+}
+
 ////
 //// Datum
 //// phrsplit(Phrasep p)
@@ -720,341 +683,349 @@ func clearsym(s Symbolp) {
 //// 		putc('"',f);
 //// }
 ////
-//// static struct binum {
-//// 	char *name;
-//// 	long val;
-//// 	Symlongp *ptovar;
-//// } binums[] = {
-//// 	"Noval", MAXLONG, &Novalval,
-//// 	"Eof", MAXLONG-1, &Eofval,
-//// 	"Interrupt", MAXLONG-2, &Intrval,
-//// 	"Merge", 1L, &Merge,
-//// 	"Mergeport1", 0L, &Mergeport1,    // default output
-//// 	"Mergeport2", -1L, &Mergeport2,   //
-//// 	"Mergefilter", 0L, &Mergefilter,
-//// 	"Clicks", (long)(DEFCLICKS), &Clicks,
-//// 	"Debug", 0L, &Debug,
-//// 	"Optimize", 1L, &Optimize,
-//// 	"Debugwait", 0L, &Debugwait,
-//// 	"Debugoff", 0L, &Debugoff,
-//// 	"Fakewrap", 0L, &Fakewrap,
-//// 	"Debugrun", 0L, &Debugrun,
-//// 	"Debuginst", 0L, &Debuginst,
-//// 	"Debugkill", 0L, &Debugkill,
-//// 	"Debugfifo", 0L, &Debugfifo,
-//// 	"Debugmalloc", 0L, &Debugmalloc,
-//// 	"Debugdraw", 0L, &Debugdraw,
-//// 	"Debugmouse", 0L, &Debugmouse,
-//// 	"Debugmidi", 0L, &Debugmidi,
-//// 	"Debuggesture", 0L, &Debuggesture,
-//// 	"Now", -1L, &Now,
-//// 	"Nowoffset", 0L, &Nowoffset,
-//// 	"Sync", 0L, &Sync,
-//// 	"Showsync", 0L, &Showsync,
-//// 	"Clocksperclick", 1L, &Clocksperclick,
-//// 	"Clicksperclock", 1L, &Clicksperclock,
-//// 	"Filter", 0L, &Filter,	/* bitmask for message filtering */
-//// 	"Record", 1L, &Record,		/* If 0, recording is disabled */
-//// 	"Recsched", 0L, &Recsched,	/* If 1, record scheduled stuff */
-//// 	"Recinput", 1L, &Recinput,	/* If 1, record midi input */
-//// 	"Recsysex", 1L, &Recsysex,	/* If 1, record sysex */
-//// 	"Recfilter", 0L, &Recfilter,	/* per-channel bitmask turns off recording */
-//// 	"Lowcore", DEFLOWLIM, &Lowcorelim,
-//// 	"Millicount", 0L, &Millicount,	/* see mdep.c */
-//// 	"Throttle2", 100L, &Throttle2,
-//// 	"Drawcount", 8L, &Drawcount,
-//// 	"Mousedisable", 0L, &Mousedisable,
-//// 	"Forceinputport", -1L, &Forceinputport,
-//// 	"Checkcount", 20L, &Checkcount,
-//// 	"Loadverbose", 0L, &Loadverbose,
-//// 	"Warnnegative", 1L, &Warnnegative,
-//// 	"Midifilenoteoff", 1L, &Midifilenoteoff,
-//// 	"Isofuncwarn", 1L, &Isofuncwarn,
-//// 	"Inputistty", 0L, &Inputistty,
-//// 	"Arraysort", 0, &Arraysort,
-//// 	"Taskaddr", 0, &Taskaddr,
-//// 	"Tempotrack", 0, &Tempotrack,
-//// 	"Onoffmerge", 1, &Onoffmerge,
-//// 	"Defrelease", 0, &Defrelease,
-//// 	"Defoutport", 0, &Defoutport,
-//// 	"Echoport", 0, &Echoport,
-//// 	"Grablimit", 1000, &Grablimit,
-//// 	"Mfformat", 0, &Mfformat,
-//// 	"Mfsysextype", 0, &Mfsysextype,
-//// 	"Trace", 1, &Linetrace,
-//// 	"Abortonint", 0, &Abortonint,
-//// 	"Abortonerr", 0, &Abortonerr,
-//// 	"Debugkill1", 0, &Debugkill1,
-//// 	"Consecho", 1, &Consecho,
-//// 	"Slashcheck", 1, &Slashcheck,
-//// 	"Directcount", 0, &Directcount,
-//// 	"SubstrCount", 0, &SubstrCount,
-//// 	"Consupdown", 0, &Consupdown,
-//// 	"Prepoll", 0, &Prepoll,
-//// 	"Printsplit", 77, &Printsplit,
-//// 	"Midithrottle", 128, &Midithrottle,
-//// 	"Throttle", 100, &Throttle,
-//// 	"Defpriority", 500, &Defpriority,
-//// 	"Redrawignoretime", 100L, &Redrawignoretime,
-//// 	"Resizeignoretime", 100L, &Resizeignoretime,
-//// 	"Graphics", 1, &Graphics,
-//// 	"Consinfifo", -1, &Consinfnum,
-//// 	"Consoutfifo", -1, &Consoutfnum,
-//// 	"Mousefifo", -1, &Mousefnum,
-//// 	"Midiinfifo", -1, &Midi_in_fnum,
-//// 	"Midioutfifo", -1, &Midi_out_fnum,
-//// 	"Monitorfifo", -1, &Monitor_fnum,
-//// 	"Consechofifo", -1, &Consecho_fnum,
-//// 	"Saveglobalsize", 256L, &Saveglobalsize,
-//// 	"Warningsleep", 0L, &Warningsleep,
-//// 	"Millires", 1L, &Millires,
-//// 	"Milliwarn", 2L, &Milliwarn,
-//// 	"Resizefix", 1L, &Resizefix,
-//// 	"Mousemoveevents", 0L, &Mousemoveevents,
-//// 	"Objectoffset", 0L, &Kobjectoffset,
-//// 	"Showtext", 1, &Showtext,
-//// 	"Showbar", 4*DEFCLICKS, &Showbar,
-//// 	"Sweepquant", 1, &Sweepquant,
-//// 	"Menuymargin", 2, &Menuymargin,
-//// 	"Menusize", 12, &Menusize,
-//// 	"Dragquant", 1, &Dragquant,
-//// 	"Menuscrollwidth", 15, &Menuscrollwidth,
-//// 	"Textscrollsize", 200, &Textscrollsize,
-//// 	"Menujump", 0, &Menujump,
-//// 	"Panraster", 1, &Panraster,
-//// 	"Bendrange", 1024*16, &Bendrange,
-//// 	"Bendoffset", 64, &Bendoffset,
-//// 	"Volstem", 0, &Volstem,
-//// 	"Volstemsize", 4, &Volstemsize,
-//// 	"Colors", 2, &Colors,
-//// 	"Colornotes", 1, &Colornotes,
-//// 	"Chancolors", 0, &Chancolors,
-//// 	"Inverse", 0, &Inverse,
-//// 	"Usewindfifos", 0, &Usewindfifos,
-//// 	"Mousefifolimit", 1L, &Mousefifolimit,
-//// 	"Minbardx", 8L, &Minbardx,
-//// 	"Numinst1", 0L, &Numinst1,
-//// 	"Numinst2", 0L, &Numinst2,
-//// 	"Directinput", 0L, &DoDirectinput,
-//// 	"Offsetpitch", 0L, &Offsetpitch,
-//// 	"Offsetportfilter", -1L, &Offsetportfilter,
-//// 	"Offsetfilter", 1<<9, &Offsetfilter,/* per-channel bitmask turns off
-//// 		offset effect, default turns it off for channel 10, drums */
-//// 	0, 0, 0
-//// };
-////
-//// Phrasepp Currphr, Recphr;
-////
-//// static struct biphr {
-//// 	char *name;
-//// 	Phrasepp *ptophr;
-//// } biphrs[] = {
-//// 	"Current", &Currphr,
-//// 	"Recorded", &Recphr,
-//// 	0, 0
-//// };
-////
-//// Symstrp Keypath, Machine, Keyerasechar, Keykillchar, Keyroot;
-//// Symstrp Printsep, Printend, Musicpath;
-//// Symstrp Pathsep, Dirseparator, Devmidi, Version, Initconfig, Nullvalsymp;
-//// Symstrp Fontname, Icon, Windowsys, Drawwindow, Picktrack;
-////
-//// static struct bistr {
-//// 	char *name;
-//// 	char *val;
-//// 	Symstrp *ptostr;
-//// } bistrs[] = {
-//// 	"Keyroot", "", &Keyroot,
-//// 	"Keypath", "", &Keypath,
-//// 	"Musicpath", "", &Musicpath,
-//// 	"Machine", MACHINE, &Machine,
-//// 	"Devmidi", "", &Devmidi,
-//// 	"Printsep", " ", &Printsep,
-//// 	"Printend", "\n", &Printend,
-//// 	"Pathseparator", PATHSEP, &Pathsep,
-//// 	"Dirseparator", SEPARATOR, &Dirseparator,
-//// 	"Version", KEYVERSION, &Version,
-//// 	"Initconfig", "", &Initconfig,
-//// 	"Killchar", "", &Keykillchar,
-//// 	"Erasechar", "", &Keyerasechar,
-//// 	"Font", "", &Fontname,
-//// 	"Icon", "", &Icon,
-//// 	"Windowsys", "", &Windowsys,
-//// 	"Nullval", "", &Nullvalsymp,
-//// 	0, 0, 0
-//// };
-////
-//// void
-//// installnum(char *name,Symlongp *pvar,long defval)
-//// {
-//// 	Symbolp s;
-//// 	name = uniqstr(name);
-//// 	/* Only install and set value if not already present */
-//// 	if ( (s=lookup(name)) == NULL ) {
-//// 		s = globalinstallnew(name,VAR);
-//// 		*symdataptr(s) = numdatum(defval);
-//// 	}
-//// 	*pvar = (Symlongp)( &(symdataptr(s)->u.val) ) ;
-//// }
-////
-//// void
-//// installstr(char *name,char *str)
-//// {
-//// 	Symbolp s = globalinstallnew(uniqstr(name),VAR);
-//// 	*symdataptr(s) = strdatum(uniqstr(str));
-//// }
-////
-//// /* build a Datum that is a function pointer, pointing to a built-in function */
-//// Datum
-//// funcdp(Symbolp s, BLTINCODE f)
-//// {
-//// 	Codep cp;
-//// 	Datum d;
-//// 	int sz;
-////
-//// 	sz = Codesize[IC_BLTIN] + varinum_size(0) + Codesize[IC_SYM];
-//// 	cp = (Codep) kmalloc(sz,"funcdp");
-//// 	// keyerrfile("CP 0 = %lld, sz=%d\n", (intptr_t)cp,sz);
-////
-//// 	*Numinst1 += sz;
-////
-//// 	d.type = D_CODEP;
-//// 	d.u.codep = cp;
-////
-//// 	cp = put_bltincode(f,cp);
-//// 	// keyerrfile("CP 3 = %lld\n", (intptr_t)cp);
-//// 	cp = put_numcode(0,cp);
-//// 	// keyerrfile("CP 4 = %lld\n", (intptr_t)cp);
-//// 	cp = put_symcode(s,cp);
-//// 	// keyerrfile("CP 5 = %lld\n", (intptr_t)cp);
-//// 	return d;
-//// }
-////
-//// /* Pre-defined macros.  It is REQUIRED that these values match the */
-//// /* corresponding values in phrase.h and grid.h.  For example, the value */
-//// /* of P_STORE must match STORE, NT_NOTE must match NOTE, etc.  */
-////
-//// static char *Stdmacros[] = {
-////
-//// 	/* These are values for nt.type, also used as bit-vals for  */
-//// 	/* the value of Filter. */
-//// 	"MIDIBYTES 1", /* NT_LE3BYTES is not here - not user-visible */
-//// 	"NOTE 2",
-//// 	"NOTEON 4",
-//// 	"NOTEOFF 8",
-//// 	"CHANPRESSURE 16", "CONTROLLER 32", "PROGRAM 64", "PRESSURE 128",
-//// 		"PITCHBEND 256", "SYSEX 512", "POSITION 1024", "CLOCK 2048",
-//// 		"SONG 4096", "STARTSTOPCONT 8192", "SYSEXTEXT 16384",
-////
-//// 	"Nullstr \"\"",
-////
-//// 	/* Values for action() types.  The values are intended to not */
-//// 	/* overlap the values for interrupt(), to avoid misuse and */
-//// 	/* also to leave open the possibility of merging the two. */
-//// 	"BUTTON1DOWN 1024", "BUTTON2DOWN 2048", "BUTTON12DOWN 4096",
-//// 	"BUTTON1UP 8192", "BUTTON2UP 16384", "BUTTON12UP 32768",
-//// 	"BUTTON1DRAG 65536", "BUTTON2DRAG 131072", "BUTTON12DRAG 262144",
-//// 	"MOVING 524288",
-//// 	/* values for setmouse() and sweep() */
-//// 	"NOTHING 0", "ARROW 1", "SWEEP 2", "CROSS 3",
-//// 		"LEFTRIGHT 4", "UPDOWN 5", "ANYWHERE 6", "BUSY 7",
-//// 		"DRAG 8", "BRUSH 9", "INVOKE 10", "POINT 11", "CLOSEST 12",
-//// 		"DRAW 13",
-//// 	/* values for cut() */
-//// 	"NORMAL 0", "TRUNCATE 1", "INCLUSIVE 2",
-//// 	"CUT_TIME 3", "CUT_FLAGS 4", "CUT_TYPE 5",
-//// 	"CUT_CHANNEL 6", "CUT_NOTTYPE 7",
-//// 	/* values for menudo() */
-//// 	"MENU_NOCHOICE -1", "MENU_BACKUP -2", "MENU_UNDEFINED -3",
-//// 	"MENU_MOVE -4", "MENU_DELETE -5",
-//// 	/* values for draw() */
-//// 	"CLEAR 0", "STORE 1", "XOR 2",
-//// 	/* values for window() */
-//// 	"TEXT 1", "PHRASE 2",
-//// 	/* values for style() */
-//// 	"NOBORDER 0", "BORDER 1", "BUTTON 2", "MENUBUTTON 3", "PRESSEDBUTTON 4",
-//// 	/* values for kill() signals */
-//// 	"KILL 1",
-//// 	NULL
-//// };
-////
-//// /* initsyms() - install constants and built-ins in table */
-//// void
+
+type binum struct {
+	name string
+	val int
+	ptovar *Symlongp
+}
+
+const MAXINT = math.MaxInt32
+
+var binums = []binum {
+	"Noval", MAXINT, &Novalval,
+	"Eof", MAXINT-1, &Eofval,
+	"Interrupt", MAXINT-2, &Intrval,
+	"Merge", 1, &Merge,
+	"Mergeport1", 0, &Mergeport1,    // default output
+	"Mergeport2", -1, &Mergeport2,   //
+	"Mergefilter", 0, &Mergefilter,
+	"Clicks", (long)(DEFCLICKS), &Clicks,
+	"Debug", 0, &Debug,
+	"Optimize", 1, &Optimize,
+	"Debugwait", 0, &Debugwait,
+	"Debugoff", 0, &Debugoff,
+	"Fakewrap", 0, &Fakewrap,
+	"Debugrun", 0, &Debugrun,
+	"Debuginst", 0, &Debuginst,
+	"Debugkill", 0, &Debugkill,
+	"Debugfifo", 0, &Debugfifo,
+	"Debugmalloc", 0, &Debugmalloc,
+	"Debugdraw", 0, &Debugdraw,
+	"Debugmouse", 0, &Debugmouse,
+	"Debugmidi", 0, &Debugmidi,
+	"Debuggesture", 0, &Debuggesture,
+	"Now", -1, &Now,
+	"Nowoffset", 0, &Nowoffset,
+	"Sync", 0, &Sync,
+	"Showsync", 0, &Showsync,
+	"Clocksperclick", 1, &Clocksperclick,
+	"Clicksperclock", 1, &Clicksperclock,
+	"Filter", 0, &Filter,	/* bitmask for message filtering */
+	"Record", 1, &Record,		/* If 0, recording is disabled */
+	"Recsched", 0, &Recsched,	/* If 1, record scheduled stuff */
+	"Recinput", 1, &Recinput,	/* If 1, record midi input */
+	"Recsysex", 1, &Recsysex,	/* If 1, record sysex */
+	"Recfilter", 0, &Recfilter,	/* per-channel bitmask turns off recording */
+	"Lowcore", DEFLOWLIM, &Lowcorelim,
+	"Millicount", 0, &Millicount,	/* see mdep.c */
+	"Throttle2", 100, &Throttle2,
+	"Drawcount", 8, &Drawcount,
+	"Mousedisable", 0, &Mousedisable,
+	"Forceinputport", -1, &Forceinputport,
+	"Checkcount", 20, &Checkcount,
+	"Loadverbose", 0, &Loadverbose,
+	"Warnnegative", 1, &Warnnegative,
+	"Midifilenoteoff", 1, &Midifilenoteoff,
+	"Isofuncwarn", 1, &Isofuncwarn,
+	"Inputistty", 0, &Inputistty,
+	"Arraysort", 0, &Arraysort,
+	"Taskaddr", 0, &Taskaddr,
+	"Tempotrack", 0, &Tempotrack,
+	"Onoffmerge", 1, &Onoffmerge,
+	"Defrelease", 0, &Defrelease,
+	"Defoutport", 0, &Defoutport,
+	"Echoport", 0, &Echoport,
+	"Grablimit", 1000, &Grablimit,
+	"Mfformat", 0, &Mfformat,
+	"Mfsysextype", 0, &Mfsysextype,
+	"Trace", 1, &Linetrace,
+	"Abortonint", 0, &Abortonint,
+	"Abortonerr", 0, &Abortonerr,
+	"Debugkill1", 0, &Debugkill1,
+	"Consecho", 1, &Consecho,
+	"Slashcheck", 1, &Slashcheck,
+	"Directcount", 0, &Directcount,
+	"SubstrCount", 0, &SubstrCount,
+	"Consupdown", 0, &Consupdown,
+	"Prepoll", 0, &Prepoll,
+	"Printsplit", 77, &Printsplit,
+	"Midithrottle", 128, &Midithrottle,
+	"Throttle", 100, &Throttle,
+	"Defpriority", 500, &Defpriority,
+	"Redrawignoretime", 100, &Redrawignoretime,
+	"Resizeignoretime", 100, &Resizeignoretime,
+	"Graphics", 1, &Graphics,
+	"Consinfifo", -1, &Consinfnum,
+	"Consoutfifo", -1, &Consoutfnum,
+	"Mousefifo", -1, &Mousefnum,
+	"Midiinfifo", -1, &Midi_in_fnum,
+	"Midioutfifo", -1, &Midi_out_fnum,
+	"Monitorfifo", -1, &Monitor_fnum,
+	"Consechofifo", -1, &Consecho_fnum,
+	"Saveglobalsize", 256, &Saveglobalsize,
+	"Warningsleep", 0, &Warningsleep,
+	"Millires", 1, &Millires,
+	"Milliwarn", 2, &Milliwarn,
+	"Resizefix", 1, &Resizefix,
+	"Mousemoveevents", 0, &Mousemoveevents,
+	"Objectoffset", 0, &Kobjectoffset,
+	"Showtext", 1, &Showtext,
+	"Showbar", 4*DEFCLICKS, &Showbar,
+	"Sweepquant", 1, &Sweepquant,
+	"Menuymargin", 2, &Menuymargin,
+	"Menusize", 12, &Menusize,
+	"Dragquant", 1, &Dragquant,
+	"Menuscrollwidth", 15, &Menuscrollwidth,
+	"Textscrollsize", 200, &Textscrollsize,
+	"Menujump", 0, &Menujump,
+	"Panraster", 1, &Panraster,
+	"Bendrange", 1024*16, &Bendrange,
+	"Bendoffset", 64, &Bendoffset,
+	"Volstem", 0, &Volstem,
+	"Volstemsize", 4, &Volstemsize,
+	"Colors", 2, &Colors,
+	"Colornotes", 1, &Colornotes,
+	"Chancolors", 0, &Chancolors,
+	"Inverse", 0, &Inverse,
+	"Usewindfifos", 0, &Usewindfifos,
+	"Mousefifolimit", 1, &Mousefifolimit,
+	"Minbardx", 8, &Minbardx,
+	"Numinst1", 0, &Numinst1,
+	"Numinst2", 0, &Numinst2,
+	"Directinput", 0, &DoDirectinput,
+	"Offsetpitch", 0, &Offsetpitch,
+	"Offsetportfilter", -1, &Offsetportfilter,
+	"Offsetfilter", 1<<9, &Offsetfilter,/* per-channel bitmask turns off
+		offset effect, default turns it off for channel 10, drums */
+	"", 0, nil,
+}
+
+var Currphr, Recphr Phrasepp
+
+type biphr struct {
+	char *name;
+	Phrasepp *ptophr;
+}
+
+var biphrs = []biphr{
+	"Current", &Currphr,
+	"Recorded", &Recphr,
+	0, 0,
+}
+
+var Keypath, Machine, Keyerasechar, Keykillchar, Keyroot Symstrp
+var Printsep, Printend, Musicpath Symstrp
+var Pathsep, Dirseparator, Devmidi, Version, Initconfig, Nullvalsymp Symstrp
+var Fontname, Icon, Windowsys, Drawwindow, Picktrack Symstrp
+
+type bistr struct {
+	name string
+	val string
+	ptostr *Symstrp
+}
+
+var bistrs = []bistr{
+	"Keyroot", "", &Keyroot,
+	"Keypath", "", &Keypath,
+	"Musicpath", "", &Musicpath,
+	"Machine", MACHINE, &Machine,
+	"Devmidi", "", &Devmidi,
+	"Printsep", " ", &Printsep,
+	"Printend", "\n", &Printend,
+	"Pathseparator", PATHSEP, &Pathsep,
+	"Dirseparator", SEPARATOR, &Dirseparator,
+	"Version", KEYVERSION, &Version,
+	"Initconfig", "", &Initconfig,
+	"Killchar", "", &Keykillchar,
+	"Erasechar", "", &Keyerasechar,
+	"Font", "", &Fontname,
+	"Icon", "", &Icon,
+	"Windowsys", "", &Windowsys,
+	"Nullval", "", &Nullvalsymp,
+	"", "", 0,
+}
+
+func installnum(name string,pvar *Symlongp,defval int) {
+
+	var s Symbolp
+	/* Only install and set value if not already present */
+	s := lookup(name)
+	if s == nil {
+		s = globalinstallnew(name,VAR)
+		*symdataptr(s) = numdatum(defval)
+	}
+	*pvar = (Symlongp)( &(symdataptr(s).u.val) )
+}
+
+func installstr(name string, str string) {
+	s := globalinstallnew(uniqstr(name),VAR)
+	*symdataptr(s) = strdatum(uniqstr(str))
+}
+
+/* build a Datum that is a function pointer, pointing to a built-in function */
+func funcdp(s Symbolp, f BLTINCODE) Datum {
+
+	sz := Codesize[IC_BLTIN] + varinum_size(0) + Codesize[IC_SYM];
+	cp := (Codep) kmalloc(sz,"funcdp");
+	// keyerrfile("CP 0 = %lld, sz=%d\n", (intptr_t)cp,sz);
+	
+	*Numinst1 += sz
+	
+	d := Datum{dtype : D_CODEP, u: cp}
+	
+	cp = put_bltincode(f,cp)
+	cp = put_numcode(0,cp)
+	cp = put_symcode(s,cp)
+	return d
+}
+
+// Pre-defined macros.  It is REQUIRED that these values match the 
+// corresponding values in phrase.h and grid.h.  For example, the value
+// of P_STORE must match STORE, NT_NOTE must match NOTE, etc.
+
+var Stdmacros = []string{
+	// These are values for nt.type, also used as bit-vals for
+	// the value of Filter.
+	"MIDIBYTES 1", // NT_LE3BYTES is not here - not user-visible
+	"NOTE 2",
+	"NOTEON 4",
+	"NOTEOFF 8",
+	"CHANPRESSURE 16", "CONTROLLER 32", "PROGRAM 64", "PRESSURE 128",
+		"PITCHBEND 256", "SYSEX 512", "POSITION 1024", "CLOCK 2048",
+		"SONG 4096", "STARTSTOPCONT 8192", "SYSEXTEXT 16384",
+		
+	"Nullstr \"\"",
+	
+	// Values for action() types.  The values are intended to not
+	// overlap the values for interrupt(), to avoid misuse and
+	// also to leave open the possibility of merging the two.
+	"BUTTON1DOWN 1024", "BUTTON2DOWN 2048", "BUTTON12DOWN 4096",
+	"BUTTON1UP 8192", "BUTTON2UP 16384", "BUTTON12UP 32768",
+	"BUTTON1DRAG 65536", "BUTTON2DRAG 131072", "BUTTON12DRAG 262144",
+	"MOVING 524288",
+	// values for setmouse() and sweep()
+	"NOTHING 0", "ARROW 1", "SWEEP 2", "CROSS 3",
+		"LEFTRIGHT 4", "UPDOWN 5", "ANYWHERE 6", "BUSY 7",
+		"DRAG 8", "BRUSH 9", "INVOKE 10", "POINT 11", "CLOSEST 12",
+		"DRAW 13",
+	// values for cut()
+	"NORMAL 0", "TRUNCATE 1", "INCLUSIVE 2",
+	"CUT_TIME 3", "CUT_FLAGS 4", "CUT_TYPE 5",
+	"CUT_CHANNEL 6", "CUT_NOTTYPE 7",
+	// values for menudo()
+	"MENU_NOCHOICE -1", "MENU_BACKUP -2", "MENU_UNDEFINED -3",
+	"MENU_MOVE -4", "MENU_DELETE -5",
+	// values for draw()
+	"CLEAR 0", "STORE 1", "XOR 2",
+	// values for window()
+	"TEXT 1", "PHRASE 2",
+	// values for style()
+	"NOBORDER 0", "BORDER 1", "BUTTON 2", "MENUBUTTON 3", "PRESSEDBUTTON 4",
+	// values for kill() signals
+	"KILL 1",
+	nil
+}
+
+// initsyms - install constants and built-ins in table */
+void
 func initsyms() {
-	//// 	int i;
-	//// 	Symbolp s;
-	//// 	Datum *dp;
-	//// 	char *p;
-	////
+	// 	int i;
+	// 	Symbolp s;
+	// 	Datum *dp;
+	// 	char *p;
+	
 	Zeroval = numdatum(0)
-	//// 	Noval = numdatum(MAXLONG);
-	//// 	Nullstr = uniqstr("");
-	////
-	//// 	Keywords = newht(113);	/* no good reason for 113 */
-	//// 	for (i = 0; (p = keywords[i].name) != NULL; i++) {
-	//// 		(void)syminstall(uniqstr(p), Keywords, keywords[i].kval);
-	//// 	}
-	////
-	//// 	for (i=0; (p=binums[i].name)!=NULL; i++) {
-	//// 		/* Don't need to uniqstr(p), because installnum does it. */
-	//// 		installnum(p,binums[i].ptovar,binums[i].val);
-	//// 	}
-	////
-	//// 	for (i=0; (p=biphrs[i].name)!=NULL; i++) {
-	//// 		s = globalinstallnew(uniqstr(p),VAR);
-	//// 		dp = symdataptr(s);
-	//// 		*dp = phrdatum(newph(1));
-	//// 		*(biphrs[i].ptophr) = &(dp->u.phr);
-	//// 		s->stackpos = 0;	/* i.e. it's global */
-	//// 	}
-	////
-	//// 	for (i=0; (p=bistrs[i].name)!=NULL; i++) {
-	//// 		s = globalinstallnew(uniqstr(p),VAR);
-	//// 		dp = symdataptr(s);
-	//// 		*dp = strdatum(uniqstr(bistrs[i].val));
-	//// 		*(bistrs[i].ptostr) = &(dp->u.str);
-	//// 	}
-	////
-	//// 	for (i=0; (p=builtins[i].name)!=NULL; i++) {
-	//// 		s = globalinstallnew(uniqstr(p), VAR);
-	//// 		dp = symdataptr(s);
-	//// 		*dp = funcdp(s,builtins[i].bltindex);
-	//// 	}
-	////
-	//// 	Rebootfuncd = symdataptr(lookup(uniqstr("Rebootfunc")));
-	//// 	Nullfuncd = symdataptr(lookup(uniqstr("nullfunc")));
-	//// 	Errorfuncd = symdataptr(lookup(uniqstr("Errorfunc")));
-	//// 	Intrfuncd = symdataptr(lookup(uniqstr("Intrfunc")));
-	//// 	Nullvald = symdataptr(lookup(uniqstr("Nullval")));
-	//// 	Nullval = *Nullvald;
-	////
-	//// 	Colorfuncd = symdataptr(lookup(uniqstr("Colorfunc")));
-	//// 	Redrawfuncd = symdataptr(lookup(uniqstr("Redrawfunc")));
-	//// 	Resizefuncd = symdataptr(lookup(uniqstr("Resizefunc")));
-	//// 	Exitfuncd = symdataptr(lookup(uniqstr("Exitfunc")));
-	//// 	Track = globarray(uniqstr("Track"));
-	//// 	Chancolormap = globarray(uniqstr("Chancolormap"));
-	////
-	//// 	Macros = newht(113);	/* no good reason for 113 */
-	////
-	//// 	for ( i=0; (p=Stdmacros[i]) != NULL;  i++ ) {
-	//// 		/* Some compilers make strings read-only */
-	//// 		p = strsave(p);
-	//// 		macrodefine(p,0);
-	//// 		free(p);
-	//// 	}
-	//// 	sprintf(Msg1,"MAXCLICKS=%ld",(long)(MAXCLICKS));
-	//// 	macrodefine(Msg1,0);
-	//// 	sprintf(Msg1,"MAXPRIORITY=%ld",(long)(MAXPRIORITY));
-	//// 	macrodefine(Msg1,0);
-	////
-	//// 	*Inputistty = mdep_fisatty(Fin) ? 1 : 0;
-	//// 	if ( *Inputistty == 0 )
-	//// 		*Consecho = 0;
-	//// 	Starting = 0;
-	////
-	//// 	*Keypath = uniqstr(mdep_keypath());
-	//// 	*Musicpath = uniqstr(mdep_musicpath());
+	Noval = numdatum(MAXLONG)
+	Nullstr = uniqstr("")
+	
+	Keywords = newht(113)	/* no good reason for 113 */
+	for i := 0; ; i++ {
+		p := keywords[i].name
+		if p == nil {
+			break
+		}
+		syminstall(uniqstr(p), Keywords, keywords[i].kval)
+	}
+	
+	for n, p := range binums {
+		// Don't need to uniqstr(p), because installnum does it.
+		installnum(p,binums[i].ptovar,binums[i].val);
+	}
+	for i:=0; ; i++ {
+		p = binums[i].name
+		if p == nil {
+			break
+		}
+		/* Don't need to uniqstr(p), because installnum does it. */
+		installnum(p,binums[i].ptovar,binums[i].val);
+	}
+	
+	 	for (i=0; (p=biphrs[i].name)!=NULL; i++) {
+	 		s = globalinstallnew(uniqstr(p),VAR);
+	 		dp = symdataptr(s);
+	 		*dp = phrdatum(newph(1));
+	 		*(biphrs[i].ptophr) = &(dp->u.phr);
+	 		s->stackpos = 0;	/* i.e. it's global */
+	 	}
+	
+	 	for (i=0; (p=bistrs[i].name)!=NULL; i++) {
+	 		s = globalinstallnew(uniqstr(p),VAR);
+	 		dp = symdataptr(s);
+	 		*dp = strdatum(uniqstr(bistrs[i].val));
+	 		*(bistrs[i].ptostr) = &(dp->u.str);
+	 	}
+	
+	 	for (i=0; (p=builtins[i].name)!=NULL; i++) {
+	 		s = globalinstallnew(uniqstr(p), VAR);
+	 		dp = symdataptr(s);
+	 		*dp = funcdp(s,builtins[i].bltindex);
+	 	}
+	
+	 	Rebootfuncd = symdataptr(lookup(uniqstr("Rebootfunc")));
+	 	Nullfuncd = symdataptr(lookup(uniqstr("nullfunc")));
+	 	Errorfuncd = symdataptr(lookup(uniqstr("Errorfunc")));
+	 	Intrfuncd = symdataptr(lookup(uniqstr("Intrfunc")));
+	 	Nullvald = symdataptr(lookup(uniqstr("Nullval")));
+	 	Nullval = *Nullvald;
+	
+	 	Colorfuncd = symdataptr(lookup(uniqstr("Colorfunc")));
+	 	Redrawfuncd = symdataptr(lookup(uniqstr("Redrawfunc")));
+	 	Resizefuncd = symdataptr(lookup(uniqstr("Resizefunc")));
+	 	Exitfuncd = symdataptr(lookup(uniqstr("Exitfunc")));
+	 	Track = globarray(uniqstr("Track"));
+	 	Chancolormap = globarray(uniqstr("Chancolormap"));
+	
+	 	Macros = newht(113);	/* no good reason for 113 */
+	
+	 	for ( i=0; (p=Stdmacros[i]) != NULL;  i++ ) {
+	 		/* Some compilers make strings read-only */
+	 		p = strsave(p);
+	 		macrodefine(p,0);
+	 		free(p);
+	 	}
+	 	sprintf(Msg1,"MAXCLICKS=%ld",(long)(MAXCLICKS));
+	 	macrodefine(Msg1,0);
+	 	sprintf(Msg1,"MAXPRIORITY=%ld",(long)(MAXPRIORITY));
+	 	macrodefine(Msg1,0);
+	
+	 	*Inputistty = mdep_fisatty(Fin) ? 1 : 0;
+	 	if ( *Inputistty == 0 )
+	 		*Consecho = 0;
+	 	Starting = 0;
+	
+	 	*Keypath = uniqstr(mdep_keypath());
+	 	*Musicpath = uniqstr(mdep_musicpath());
 }
 
 ////
@@ -1293,13 +1264,14 @@ func freehn(hn Hnodep) {
 			freetp(t)
 		}
 	case D_FIFO:
-		if hn.val.u.fifo {
-			freeff(hn.val.u.fifo)
+		ff := hn.val.u.(*Fifo)
+		if ff != nil {
+			freeff(ff)
 		}
 	case D_WIND:
 		// do nothing
 	default:
-		eprint("Hey, type=%d in clearhn, should something go here??\n", hn.val.dtype)
+		log.Printf("Hey, type=%d in clearhn, should something go here??\n", hn.val.dtype)
 	}
 	hn.val = Noval
 
@@ -1326,7 +1298,6 @@ func freehn(hn Hnodep) {
 // To avoid freeing and re-allocating the large chunks of memory
 // used for the hash tables, we keep them around and reuse them.
 func newht(size int) Htablep {
-	var h, pp Hnodepp
 	var ht Htablep
 
 	/* eprint("(newht(%d ",size); */
@@ -1353,9 +1324,8 @@ func newht(size int) Htablep {
 		}
 	} else {
 		ht = &Htable{}
-		h = make([]Hnodep, size)
 		ht.size = size
-		ht.nodetable = h
+		ht.nodetable = make([]Hnodep, size)
 		// initialize entire table to NULLS
 		// pp = h + size;
 		// while ( pp-- != h ) {
@@ -1378,14 +1348,11 @@ func newht(size int) Htablep {
 }
 
 func clearht(ht Htablep) {
-	// var hn, nexthn Hnodep
-	n := ht.size
-
-	pp := ht.nodetable
 	// as we're freeing the Hnodes pointed to by this hash table,
 	// we zero out the table, in preparation for its reuse.
 	if ht.count != 0 {
 		for i, hn := range ht.nodetable {
+			var nexthn Hnodep
 			for tmp := hn; tmp != nil; tmp = nexthn {
 				nexthn = tmp.next
 				// freehn(hn)
@@ -1410,7 +1377,7 @@ func freeht(ht Htablep) {
 	}
 	/* remove it */
 	if ht2 != nil {
-		if ht2.h_next {
+		if ht2.h_next != nil {
 			ht2.h_next.h_prev = ht2.h_prev
 		}
 		if ht2 == Htobechecked {
@@ -1422,8 +1389,8 @@ func freeht(ht Htablep) {
 
 	for ht2 := Freeht; ht2 != nil; ht2 = ht2.h_next {
 		if ht == ht2 {
-			eprint("HEY!, Trying to free an ht node that's already in the Free list!!\n")
-			abort()
+			log.Printf("HEY!, Trying to free an ht node that's already in the Free list!!\n")
+			// abort()
 		}
 	}
 	/* Add to Freeht list */
