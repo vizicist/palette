@@ -1,11 +1,5 @@
 package kit
 
-//// /*
-////  *	Copyright 1996 AT&T Corp.  All rights reserved.
-////  */
-////
-//// #define OVERLAY5
-////
 //// #include "key.h"
 //// #include "gram.h"
 ////

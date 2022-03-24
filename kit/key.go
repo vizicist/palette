@@ -1,9 +1,7 @@
 package kit
 
-/// /*
-///  *	Copyright 1996 AT&T Corp.  All rights reserved.
-///  */
-///
+import "os"
+
 /// /*
 /// 	The following defines are normally set in mdep.h; they are described
 /// 	here only to document the options available.
@@ -38,12 +36,12 @@ type Midimessp *Midimessdata
 
 type Noteptr *Notedata
 
-/// typedef char *Bytep;
+type Bytep string
 
-/// typedef Phrasep *Phrasepp;
-/// typedef long *Symlongp;
-/// typedef char *Symstr;
-/// typedef Symstr *Symstrp;
+type Phrasepp *Phrasep
+type Symlongp *int
+type Symstr string
+type Symstrp *Symstr
 
 type Hnodep *Hnode
 type Hnodepp []Hnodep
@@ -59,10 +57,9 @@ type Kobjectp *Kobject
 /// #define OPENBINFILE(f,file,mode) f=fopen(file,mode)
 /// #endif
 ///
-/// #ifndef PORTHANDLE
-/// #define PORTHANDLE unsigned long
-/// #endif
-///
+
+type PORTHANDLE uint64
+
 /// // #define DEBUG
 /// // #define BIGDEBUG
 /// // #define DEBUGEXEC
@@ -570,14 +567,11 @@ type Datum struct { /* interpreter stack type */
 
 }
 
-///
-/// typedef union Datumu Datumu;
-///
-/// typedef struct Dnode {
-/// 	struct Datum d;
-/// 	struct Dnode *next;
-/// } Dnode;
-///
+type Dnode struct {
+	d    Datum
+	next *Dnode
+}
+
 type Hnode struct {
 	next Hnodep
 	key  Datum
@@ -586,7 +580,6 @@ type Hnode struct {
 
 const HT_TOBECHECKED = 1
 
-///
 type Htable struct {
 	size      int /* size of nodetable */
 	count     int /* number of actual elements */
@@ -650,35 +643,31 @@ var Bltinfuncs []BLTINFUNC
 
 type Ktaskp *Ktask
 
-///
-/// #define OFF_USER 0
-/// #define OFF_INTERNAL 1
-///
-/// typedef enum {
-/// 	FIFOTYPE_UNTYPED,
-/// 	FIFOTYPE_BINARY,
-/// 	FIFOTYPE_LINE,
-/// 	FIFOTYPE_FIFO,
-/// 	FIFOTYPE_ARRAY
-/// } Fifotype;
-///
-/// typedef struct schednode {
-/// 	struct schednode *next;
-/// 	long clicks;			/* scheduled time */
-/// 	char type;			/* SCH_* */
-/// 	char offtype;			/* for SCH_NOTEOFF) */
-/// 	char monitor;			/* If 1, add to Monitorfifo */
-/// 	Phrasep phr;			/* for SCH_PHRASE */
-/// 	Noteptr note;			/* for SCH_NOTEOFF and SCH_PHRASE. */
-/// 	Ktaskp task;
-/// 	long repeat;			/* if > 0, a repeat time. */
-/// } Sched;
-///
-/// typedef struct Tofree {
-/// 	Noteptr note;
-/// 	struct Tofree *next;
-/// } Tofree;
-///
+const OFF_USER = 0
+const OFF_INTERNAL = 1
+
+const FIFOTYPE_UNTYPED = 0
+const FIFOTYPE_BINARY = 1
+const FIFOTYPE_LINE = 2
+const FIFOTYPE_FIFO = 3
+const FIFOTYPE_ARRAY = 4
+
+type Sched struct {
+	next    *Sched
+	clicks  int     // scheduled time
+	stype   uint8   // SCH_*
+	offtype uint8   // for SCH_NOTEOFF)
+	monitor bool    // If true, add to Monitorfifo
+	phr     Phrasep // for SCH_PHRASE
+	note    Noteptr // for SCH_NOTEOFF and SCH_PHRASE.
+	task    Ktaskp
+	repeat  int // if > 0, a repeat time.
+}
+
+type Tofree struct {
+	note Noteptr
+	next *Tofree
+}
 
 type Ktask struct {
 	pc              *Unchar /* current instruction */
@@ -712,14 +701,14 @@ type Ktask struct {
 	ontaskerrormsg  Symstr
 	nxt             Ktaskp /* Used for the Toptp and Freetp lists */
 	tmplist         Ktaskp /* Used for temporary lists. */
-	linenum         long
+	linenum         int
 	filename        Symstr
 	lock            *Lknode
 	obj             Kobjectp /* object we're running method of */
 	realobj         Kobjectp /* object we're running method on behalf of */
 	method          Symstr
 	pend_bltin      BLTINCODE /* pending function (when T_OBJBLOCKED). */
-	pend_npassed    short     /* for pending function */
+	pend_npassed    int       /* for pending function */
 }
 
 type Fifodata struct {
@@ -728,24 +717,24 @@ type Fifodata struct {
 }
 
 type Fifo struct {
-	head         Fifodata // Points to last "put"
-	tail         Fifodata // Points to next "get"
+	head         *Fifodata // Points to last "put"
+	tail         *Fifodata // Points to next "get"
 	size         int
 	flags        int        // For FIFO_* bitflags, see above
-	fp           *FILE      // If non-NULL, this is a file fifo
+	fp           *os.File   // If non-NULL, this is a file fifo
 	t            Ktaskp     // This task is blocked on this fifo
 	port         PORTHANDLE // If FIFO_ISPORT is set, this is used.
 	num          int
 	next         *Fifo
-	fifoctl_type Fifotype // type of data read from fifo
-	linebuff     string   // Saved data for FIFO_LINE
-	linesize     int      // Total size of linebuff (for makeroom)
-	linesofar    int      // How much actually used
+	fifoctl_type int    // type of data read from fifo
+	linebuff     string // Saved data for FIFO_LINE
+	linesize     int    // Total size of linebuff (for makeroom)
+	linesofar    int    // How much actually used
 }
 
 type Lknode struct {
 	name   Symstr // Only used in Toplk list.
-	owner  *Task
+	owner  *Ktask
 	next   *Lknode // Only used in Toplk list.
 	notify *Lknode // List of pending locks with same name
 }
@@ -781,45 +770,53 @@ type Kobject struct {
 /// Midiport Midiinputs[MIDI_IN_DEVICES];
 /// Midiport Midioutputs[MIDI_OUT_DEVICES];
 ///
-/// /*
-///  * Used for the first argument of the mdep_midi function.
-///  */
-/// #define MIDI_OPEN_OUTPUT 0
-/// #define MIDI_CLOSE_OUTPUT 1
-/// #define MIDI_OPEN_INPUT 2
-/// #define MIDI_CLOSE_INPUT 3
-///
-/// /* values of T->state */
-/// /* T_RUNNING is a task that is currently free, available for use */
-/// #define T_FREE 0
-/// /* T_RUNNING is an active task */
-/// #define T_RUNNING 1
-/// /* T_BLOCKED is a task blocked on a fifo */
-/// #define T_BLOCKED 2
-/// /* T_SLEEPTILL is a task that is waiting because of a sleeptill() function */
-/// #define T_SLEEPTILL 3
-/// /* T_STOPPED is a task stopped */
-/// #define T_STOPPED 4
-/// /* T_SCHED is a task scheduled as a result of realtime() */
-/// #define T_SCHED 5
-/// /* T_WAITING is a task waiting for a signal. */
-/// #define T_WAITING 6
-/// /* T_LOCKWAIT is a task waiting for a lock. */
-/// #define T_LOCKWAIT 7
-///
-/// /* Bits that can be set in Fifo.flags.  When a fifo is */
-/// /* created, all of the bits default to 0. */
-/// #define FIFO_OPEN 1		/* if set, FIFO is open */
-/// #define FIFO_PIPE (1<<1)	/* fifo is connected to a pipe (vs. a file) */
-/// #define FIFO_WRITE (1<<2)	/* fifo is used for writing */
-/// #define FIFO_READ (1<<3)	/* fifo is used for reading */
-/// #define FIFO_SPECIAL (1<<4)	/* fifo is special (MIDI, CONSOLE, MOUSE), */
-/// 				/* it can't be closed by the user. */
-/// #define FIFO_NORETURN (1<<5)	/* tells whether to use ret() */
-/// #define FIFO_APPEND (1<<6)	/* fifo is writing */
-/// #define FIFO_ISPORT (1<<7)	/* fifo is attached to a mdep_openport() */
-///
-/// #define fifonum(f) ((f)->num)
+
+// Used for the first argument of the mdep_midi function.
+const MIDI_OPEN_OUTPUT = 0
+const MIDI_CLOSE_OUTPUT = 1
+const MIDI_OPEN_INPUT = 2
+const MIDI_CLOSE_INPUT = 3
+
+// values of T->state
+// T_RUNNING is a task that is currently free, available for use
+const T_FREE = 0
+
+// T_RUNNING is an active task
+const T_RUNNING = 1
+
+// T_BLOCKED is a task blocked on a fifo
+const T_BLOCKED = 2
+
+// T_SLEEPTILL is a task that is waiting because of a sleeptill() function
+const T_SLEEPTILL = 3
+
+// T_STOPPED is a task stopped
+const T_STOPPED = 4
+
+// T_SCHED is a task scheduled as a result of realtime()
+const T_SCHED = 5
+
+// T_WAITING is a task waiting for a signal.
+const T_WAITING = 6
+
+// T_LOCKWAIT is a task waiting for a lock.
+const T_LOCKWAIT = 7
+
+// Bits that can be set in Fifo.flags.  When a fifo is
+// created, all of the bits default to 0.
+const FIFO_OPEN = 1            // if set, FIFO is open
+const FIFO_PIPE = (1 << 1)     // fifo is connected to a pipe (vs. a file)
+const FIFO_WRITE = (1 << 2)    // fifo is used for writing
+const FIFO_READ = (1 << 3)     // fifo is used for reading
+const FIFO_SPECIAL = (1 << 4)  // fifo is special (MIDI, CONSOLE, MOUSE), it can't be closed by the user. */
+const FIFO_NORETURN = (1 << 5) // tells whether to use ret()
+const FIFO_APPEND = (1 << 6)   // fifo is writing
+const FIFO_ISPORT = (1 << 7)   // fifo is attached to a mdep_openport()
+
+func fifonum(f *Fifo) int {
+	return f.num
+}
+
 ///
 const FIFOINC = 64
 
@@ -1137,7 +1134,9 @@ func dblval(d Datum) float32 {
 /// extern long Chkcount;
 ///
 /// /* Global keykit variables */
-/// extern Symlongp Clicks, Merge, Debug, Now, Sync, Lag, Graphics, Mergefilter;
+
+var Clicks, Merge, Debug, Now, Sync, Lag, Graphics, Mergefilter Symlongp
+
 /// extern Symlongp Mergeport1, Mergeport2;
 /// extern Symlongp Debugwait, Debugmidi, Debugrun, Optimize, Debugfifo, Debugmouse;
 /// extern Symlongp Clocksperclick, Clicksperclock, Inputistty, Recsysex;
