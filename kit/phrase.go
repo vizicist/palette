@@ -165,17 +165,10 @@ type Phrase struct {
 // extern int Numnotes;
 // extern char *Nullstr;
 
-////
-//// #include "key.h"
-//// #include "gram.h"
-////
 //// extern char *Msg1;
-////
-//// char *Nullstr = "";
-//// int Defvol, Defoct, Defchan, Defport;
 
-var Defdur int
-
+var Nullstr = ""
+var Defvol, Defoct, Defchan, Defport, Defdur int
 var Defatt string
 var Deftime int
 var Def2time int
@@ -202,17 +195,17 @@ func resetdef() {
 	Def2time = 0
 }
 
-func saniport(long port) int {
+func saniport(port int) int {
 	if port < 0 || port > MAX_PORT_VALUE {
 		port = DEFPORT
 	}
 	return port
 }
 
-func newnt() (n Notptr) {
+func newnt() (n Noteptr) {
 	// First check the free list and use those nodes, before using
 	// the newly allocated stuff.
-	if Freent != NULL {
+	if Freent != nil {
 		n = Freent
 		Freent = Freent.next
 		goto getout

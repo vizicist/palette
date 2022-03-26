@@ -106,126 +106,114 @@ func findsym(p string, symbols Htablep) Symbolp {
 	}
 }
 
-////
-//// Symbolp
-//// findobjsym(char *p,Kobjectp o,Kobjectp *foundobj)
-//// {
-//// 	Datum key;
-//// 	Hnodep h;
-//// 	Htablep symbols = o->symbols;
-//// 	Symbolp s;
-////
-//// 	if ( symbols == NULL ) {
-//// 		mdep_popup("Internal error - findobjsym finds NULL symbols!");
-//// 		return NULL;
-//// 	}
-//// 	key = strdatum(p);
-//// 	h = hashtable(symbols,key,H_LOOK);
-//// 	if ( h ) {
-//// 		if ( foundobj )
-//// 			*foundobj = o;
-//// 		return h->val.u.sym;
-//// 	}
-////
-//// 	/* Not found, try inherited objects */
-//// 	if ( o->inheritfrom != NULL ) {
-//// 		Kobjectp o2;
-//// 		for ( o2=o->inheritfrom; o2!=NULL; o2=o2->nextinherit ) {
-//// 			s=findobjsym(p,o2,foundobj);
-//// 			if ( s != NULL ) {
-//// 				return(s);
-//// 			}
-//// 		}
-//// 	}
-//// 	return NULL;
-//// }
-////
-//// Symbolp
-//// uniqvar(char* pre)
-//// {
-//// 	static long unum = 0;
-//// 	char buff[32];
-////
-//// 	if ( pre == NULL )
-//// 		pre = "";
-//// 	strncpy(buff,pre,20);	/* 20 is 32 - (space for NONAMEPREFIX + num) */
-//// 	buff[20] = 0;
-//// 	sprintf(strend(buff),"%s%ld",NONAMEPREFIX,unum++);
-//// 	if ( unum > (MAXLONG-4) )
-//// 		execerror("uniqvar() has run out of names!?");
-//// 	return globalinstallnew(uniqstr(buff),VAR);
-//// }
-////
-//// /* lookup(p) - find p in symbol table */
-//// Symbolp
-//// lookup(char *p)
-//// {
-//// 	Symbolp s;
-////
-//// 	if ( (s=findsym(p,Currct->symbols)) != NULL )
-//// 		return(s);
-//// 	if ( Currct != Topct && (s=findsym(p,Topct->symbols)) != NULL )
-//// 		return(s);
-//// 	return(NULL);
-//// }
-////
-//// Symbolp
-//// localinstall(Symstr p,int t)
-//// {
-//// 	Symbolp s = syminstall(p,Currct->symbols,t);
-//// 	if ( Inparams )
-//// 		s->stackpos = Currct->paramnum++;
-//// 	else
-//// 		s->stackpos = -(Currct->localnum++);	/* okay if chars are unsigned*/
-//// 	return(s);
-//// }
-////
-//// int Starting = 1;
-////
-//// Symbolp
-//// globalinstall(Symstr p,int t)
-//// {
-//// 	Symbolp s;
-//// 	if ( (s=findsym(p,Topct->symbols)) != NULL )
-//// 		return s;
-//// 	s = syminstall(p,Topct->symbols,t);
-//// 	return(s);
-//// }
-////
-//// /* Use this variation if you know that the symbol is new */
-//// Symbolp
-//// globalinstallnew(Symstr p,int t)
-//// {
-//// 	return syminstall(p,Topct->symbols,t);
-//// }
-////
-//// Symbolp
-//// syminstall(Symstr p,Htablep symbols,int t)
-//// {
-//// 	Symbolp s;
-//// 	Hnodep h;
-//// 	Datum key;
-////
-//// 	key = strdatum(p);
-//// 	h = hashtable(symbols,key,H_INSERT);
-//// 	if ( h==NULL )
-//// 		execerror("Unexpected h==NULL in syminstall!?");
-//// 	if ( isnoval(h->val) ) {
-//// 		s = newsy();
-//// 		s->name = key;
-//// 		s->stype = t;
-//// 		s->stackpos = 0;
-//// 		s->sd = Noval;
-//// 		h->val = symdatum(s);
-//// 	}
-//// 	else {
-//// 		if ( h->val.type != D_SYM )
-//// 			execerror("Unexpected h->val.type!=D_SYM in syminstall!?");
-//// 		s = h->val.u.sym;
-//// 	}
-//// 	return s;
-//// }
-////
+func findobjsym(p string,o Kobjectp,foundobj *Kobjectp) Symbolp {
+	symbols := o.symbols
+	if symbols == nil {
+		log.Printf("Internal error - findobjsym finds NULL symbols!\n")
+		return nil
+	}
+	key := strdatum(p)
+	h := hashtable(symbols,key,H_LOOK)
+	if h != nil {
+		if foundobj {
+			*foundobj = o
+		}
+		return h.val.u.sym
+	}
+	
+	// Not found, try inherited objects
+	if o.inheritfrom != nil {
+		for o2:=o.inheritfrom; o2!=nil; o2=o2.nextinherit {
+			s=findobjsym(p,o2,foundobj)
+			if s != nil {
+				return s
+			}
+		}
+	}
+	return nil
+}
+
+var unum = 0
+
+func uniqvar(pre string) Symbolp {
+	
+	buff := pre[0:20]
+	sprintf(strend(buff),"%s%ld",NONAMEPREFIX,unum)
+	unum++
+	if unum > (math.MaxInt32-4) {
+		execerror("uniqvar() has run out of names!?")
+	}
+	return globalinstallnew(buff,VAR)
+}
+
+// lookup(p) - find p in symbol table
+func lookup(p string) Symbolp {
+	s := findsym(p,Currct.symbols)
+	if s != nil {
+		return s
+	}
+	if Currct != Topct {
+		s = findsym(p,Topct.symbols)
+		if s != nil {
+			return s
+		}
+	}
+	return nil
+}
+
+func localinstall(p string,t int) Symbolp {
+	s := syminstall(p,Currct.symbols,t)
+	if Inparams {
+		s.stackpos = Currct.paramnum
+		Currct.paramnum++
+	} else {
+		s.stackpos = -(Currct.localnum)	// okay if chars are unsigned
+		Currct.localnum++
+	}
+	return s
+}
+
+var Starting = 1
+
+func globalinstall(p string,t int) Symbolp {
+	s := findsym(p,Topct.symbols)
+	if s != nil {
+		return s
+	}
+	s = syminstall(p,Topct.symbols,t)
+	return s
+}
+
+// Use this variation if you know that the symbol is new
+func
+globalinstallnew(p string,t int) Symbolp {
+	return syminstall(p,Topct.symbols,t)
+}
+
+func syminstall(p string,symbols Htablep,t int) Symbolp {
+
+	var s Symbolp
+
+	key := strdatum(p);
+	h := hashtable(symbols,key,H_INSERT)
+	if h==NULL {
+		execerror("Unexpected h==NULL in syminstall!?")
+	}
+	if isnoval(h.val) {
+		s := newsy()
+		s.name = key
+		s.stype = t
+		s.stackpos = 0
+		s.sd = Noval
+		h.val = symdatum(s)
+	} else {
+		if h.val.stype != D_SYM {
+			execerror("Unexpected h.val.stype!=D_SYM in syminstall!?")
+		}
+		s = h.val.u.(Symbolp)
+	}
+	return s
+}
 
 func clearsym(s Symbolp) {
 
@@ -440,249 +428,240 @@ func globarray(name string) Htablepp {
 	return &arr
 }
 
-////
-//// Datum
-//// phrsplit(Phrasep p)
-//// {
-//// #define MAXSIMUL 128
-//// 	Noteptr activent[MAXSIMUL];
-//// 	long activetime[MAXSIMUL];
-//// 	Noteptr n, newn;
-//// 	Phrasep p2;
-//// 	Symbolp s;
-//// 	Datum d, da;
-//// 	long tm2;
-//// 	int i, j, k;
-//// 	Htablep arr;
-//// 	int samesection, nactive = 0;
-//// 	long t, elapse, closest, now = 0L;
-//// 	long arrnum = 0L;
-////
-//// 	da = newarrdatum(0,0);
-//// 	arr = da.u.arr;
-////
-//// 	n = firstnote(p);
-////
-//// 	while ( n!=NULL || nactive>0 ) {
-////
-//// 		/* find out which event is closer: the end of a pending */
-//// 		/* note, or the start of the next one (if there is one). */
-////
-//// 		if ( n != NULL ) {
-//// 			closest = n->clicks - now;
-//// 			samesection = 1;
-//// 		}
-//// 		else {
-//// 			closest = 30000;
-//// 			samesection = 0;
-//// 		}
-////
-//// 		/* Check the ending times of the pending notes, to see */
-//// 		/* if any of them end before the next note starts.  If so, */
-//// 		/* we want to create a new section.  */
-//// 		for ( k=0; k<nactive; k++ ) {
-//// #ifdef OLDSTUFF
-//// 			if ( durof(activent[k]) <= 0 )
-//// 				continue;
-//// #endif
-//// 			if ( (t=activetime[k]) <= closest ) {
-//// 				closest = t;
-//// 				samesection = 0;
-//// 			}
-//// 		}
-////
-//// 		/* We want to let that amount of time elapse. */
-//// 		elapse = closest;
-//// 		if ( samesection!=0 && (closest == 0 || nactive == 0) )
-//// 			goto addtosame;
-////
-//// 		/* We're going to create a new element in the split array */
-////
-//// 		d = numdatum((long)arrnum++);
-//// 		s = arraysym(arr,d,H_INSERT);
-//// 		p2 = newph(1);
-////
-//// 		/* add all active notes to the phrase */
-//// 		tm2 = now+elapse;
-//// 		for ( k=0; k<nactive; k++ ) {
-//// 			newn = ntcopy(activent[k]);
-//// 			if ( timeof(newn) < now ) {
-//// 				long overhang = now - timeof(newn);
-//// 				timeof(newn) += overhang;
-//// 				durof(newn) -= overhang;
-//// 			}
-//// 			if ( endof(newn) > tm2 ) {
-//// 				durof(newn) = tm2-timeof(newn);
-//// 			}
-//// 			ntinsert(newn,p2);
-//// 		}
-//// 		p2->p_leng = tm2;
-//// 		*symdataptr(s) = phrdatum(p2);
-////
-//// 		/* If any notes are pending, take into account elapsed */
-//// 		/* time, and if they expire, get rid of them. */
-//// 		for ( i=0; i<nactive; i++ ) {
-//// 			if ( (activetime[i] -= elapse) <= 0L ) {
-//// 				/* Remove this note from the list by */
-//// 				/* shifting everything down. */
-//// 				for ( j=i+1; j<nactive; j++ ) {
-//// 					activetime[j-1] = activetime[j];
-//// 					activent[j-1] = activent[j];
-//// 				}
-//// 				nactive--;
-//// 				i--;	/* don't advance loop index */
-//// 			}
-//// 		}
-////
-//// 	addtosame:
-//// 		if ( samesection ) {
-//// 			/* add this new note (and all others that start at the */
-//// 			/* same time) to the list of active ones */
-//// 			long thistime = timeof(n);
-//// 			while ( n!=NULL && timeof(n) == thistime ) {
-//// 				if ( nactive >= MAXSIMUL )
-//// 					execerror("Too many simultaneous notes in expression (limit is %d)\n",MAXSIMUL);
-//// 				activent[nactive] = n;
-//// 				activetime[nactive++] = durof(n);
-//// 				/* advance to next note */
-//// 				n = nextnote(n);
-//// 			}
-//// 		}
-//// 		now += elapse;
-//// 	}
-//// 	return(da);
-//// }
-////
-//// /* sep contains the list of possible separator characters. */
-//// /* multiple consecutive separator characters are treated as one. */
-////
-//// Datum
-//// strsplit(char *str,char *sep)
-//// {
-//// 	char buffer[128];
-//// 	char *buff, *p, *endp;
-//// 	char *word = NULL;
-//// 	int isasep;
-//// 	Datum da;
-//// 	Htablep arr;
-//// 	long n;
-//// 	int slen = (int)strlen(str);
-//// 	int state;
-////
-//// 	/* avoid kmalloc if we can use small buffer */
-//// 	if ( slen >= sizeof(buffer) )
-//// 		buff = kmalloc((unsigned)(slen+1),"strsplit");
-//// 	else
-//// 		buff = buffer;
-//// 	strcpy(buff,str);
-//// 	endp = buff + slen;
-////
-//// 	/* An inital scan to figure out how big an array we need */
-//// 	for ( state=0,n=0,p=buff; state >= 0 && p < endp ; p++ ) {
-//// 		isasep = (strchr(sep,*p) != NULL);
-//// 		switch ( state ) {
-//// 		case 0:	/* before word */
-//// 			if ( ! isasep )
-//// 				state = 1;
-//// 			break;
-//// 		case 1:	/* scanning word */
-//// 			if ( isasep ) {
-//// 				n++;
-//// 				state=0;
-//// 			}
-//// 			break;
-//// 		}
-//// 	}
-//// 	if ( state == 1 )
-//// 		n++;
-////
-//// 	da = newarrdatum(0,(int)n);
-//// 	arr = da.u.arr;
-////
-//// 	for ( state=0,n=0,p=buff; state >= 0 && p < endp ; p++ ) {
-////
-//// 		isasep = (strchr(sep,*p) != NULL);
-//// 		switch ( state ) {
-//// 		case 0:	/* before word */
-//// 			if ( ! isasep ) {
-//// 				word = p;
-//// 				state = 1;
-//// 			}
-//// 			break;
-//// 		case 1:	/* scanning word */
-//// 			if ( isasep ) {
-//// 				*p = '\0';
-//// 				setarrayelem(arr,n++,word);
-//// 				state=0;
-//// 			}
-//// 			break;
-//// 		}
-//// 	}
-//// 	if ( state == 1 ) {
-//// 		*p = '\0';
-//// 		setarrayelem(arr,n++,word);
-//// 	}
-//// 	if ( slen >= sizeof(buffer) )
-//// 		kfree(buff);
-//// 	return(da);
-//// }
-////
-//// void
-//// setarraydata(Htablep arr,Datum i,Datum d)
-//// {
-//// 	Symbolp s;
-//// 	if ( isnoval(i) )
-//// 		execerror("Can't use undefined value as array index\n");
-//// 	s = arraysym(arr,i,H_INSERT);
-//// 	*symdataptr(s) = d;
-//// }
-////
-//// void
-//// setarrayelem(Htablep arr,long n,char *p)
-//// {
-//// 	setarraydata(arr,numdatum(n),strdatum(uniqstr(p)));
-//// }
-////
-//// void
-//// fputdatum(FILE *f,Datum d)
-//// {
-//// 	char *str = datumstr(d);
-//// 	int c;
-//// 	int i = 0;
-//// 	int nl = (*Printsplit)!=0;
-////
-//// 	if ( d.type == D_STR )
-//// 		putc('"',f);
-//// 	for ( ; (c=(*str)) != '\0'; str++ ) {
-//// 		char *p = NULL;
-//// 		i++;
-//// 		if ( nl>0 && i>nl ) {
-//// 			i = 0;
-//// 			fputs("\\\n",f);
-//// 		}
-//// 		switch (c) {
-//// 		case '\n':
-//// 			p = "\\n";
-//// 			break;
-//// 		case '\r':
-//// 			p = "\\r";
-//// 			break;
-//// 		case '"':
-//// 			p = "\\\"";
-//// 			break;
-//// 		case '\\':
-//// 			p = "\\\\";
-//// 			break;
-//// 		}
-//// 		if ( p )
-//// 			fputs(p,f);
-//// 		else
-//// 			putc(c,f);
-//// 	}
-//// 	if ( d.type == D_STR )
-//// 		putc('"',f);
-//// }
-////
+func
+phrsplit(p Phrasep) Datum {
+	MAXSIMUL := 128
+	activent := make([]Noteptr,MAXSIMUL)
+	activetime := make([]int,MAXSIMUL)
+	// Noteptr n, newn
+	// Phrasep p2;
+	// Symbolp s;
+	// Datum d, da;
+	// long tm2;
+	// int i, j, k;
+	// Htablep arr;
+	// int samesection, nactive = 0;
+	// long t, elapse, closest, now = 0L;
+
+	
+	da := newarrdatum(0,0)
+	arr := da.u.(Htablep)
+
+	arrnum := 0
+	closest := 0
+	samesection := false
+	
+	n := firstnote(p)
+	
+	for ; n!=nil || nactive>0;  {
+		
+		// find out which event is closer: the end of a pending
+		// note, or the start of the next one (if there is one).
+		
+		if n != nil {
+			closest = n.clicks - now
+			samesection = 1
+		} else {
+			closest = 30000
+			samesection = 0
+		}
+		
+		// Check the ending times of the pending notes, to see
+		// if any of them end before the next note starts.  If so,
+		// we want to create a new section. 
+		for k=0; k<nactive; k++ {
+			t := activetime[k]
+			if t <= closest {
+				closest = t
+				samesection = 0
+			}
+		}
+		
+		// We want to let that amount of time elapse.
+		elapse = closest
+		if samesection!=0 && (closest == 0 || nactive == 0) {
+			goto addtosame
+		}
+		
+		// We're going to create a new element in the split array
+		
+		d := numdatum(arrnum)
+		arrnum++
+		s := arraysym(arr,d,H_INSERT)
+		p2 := newph(1)
+		
+		// add all active notes to the phrase
+		tm2 = now+elapse
+		for k=0; k<nactive; k++ {
+			newn = ntcopy(activent[k])
+			if timeof(newn) < now {
+				overhang := now - timeof(newn)
+				timeof(newn) += overhang
+				durof(newn) -= overhang
+			}
+			if endof(newn) > tm2 {
+				durof(newn) = tm2-timeof(newn)
+			}
+			ntinsert(newn,p2)
+		}
+		p2.p_leng = tm2;
+		*symdataptr(s) = phrdatum(p2)
+		
+		// If any notes are pending, take into account elapsed
+		// time, and if they expire, get rid of them.
+		for i:=0; i<nactive; i++ {
+			activetime[i] -= elapse
+			if activetime[i] <= 0 {
+				// Remove this note from the list by
+				// shifting everything down.
+				for j=i+1; j<nactive; j++ {
+					activetime[j-1] = activetime[j];
+					activent[j-1] = activent[j];
+				}
+				nactive--
+				i--	// don't advance loop index */
+			}
+		}
+		
+	addtosame:
+		if samesection {
+			// add this new note (and all others that start at the 
+			// same time) to the list of active ones 
+			thistime := timeof(n);
+			for ; n!=nil && timeof(n) == thistime ; {
+				if nactive >= MAXSIMUL {
+					execerror("Too many simultaneous notes in expression (limit is %d)\n",MAXSIMUL)
+				}
+				activent[nactive] = n
+				activetime[nactive] = durof(n)
+				nactive++
+				// advance to next note
+				n = nextnote(n)
+			}
+		}
+		now += elapse
+	}
+	return da
+}
+
+// sep contains the list of possible separator characters.
+// multiple consecutive separator characters are treated as one.
+func strsplit(str string,sep string) Datum {
+	// char buffer[128];
+	// char *buff, *p, *endp;
+	// char *word = NULL;
+	// int isasep;
+	// Datum da;
+	// Htablep arr;
+	// long n;
+	// int state;
+
+	
+	// An inital scan to figure out how big an array we need
+	state := 0
+	nwords := 0
+	slen := strlen(str)
+	for i:=0; state >= 0 && i<slen ; i++ {
+		isasep := strings.ContainsAny(str[i],sep)
+		switch ( state ) {
+		case 0:	/* before word */
+			if ! isasep {
+				state = 1
+			}
+		case 1:	/* scanning word */
+			if isasep {
+				nwords++
+				state=0
+			}
+		}
+	}
+	if state == 1 {
+		nwords++
+	}
+		
+	da = newarrdatum(0,n)
+	arr = da.u.(Htablep)
+	
+	state := 0
+	nwords := 0
+	var wordi int
+	for i=0; state >= 0 && i < slen ; i++ {
+		
+		isasep := strings.ContainsAny(str[i],sep)
+		switch ( state ) {
+		case 0:	/* before word */
+			if ! isasep {
+				wordi := i
+				state = 1
+			}
+		case 1:	/* scanning word */
+			if isasep {
+				word := str[wordi:i]
+				setarrayelem(arr,nwords,word)
+				nwords++
+				state=0
+			}
+		}
+	}
+	if state == 1 {
+		setarrayelem(arr,nwords,word)
+	}
+	// if slen >= sizeof(buffer) {
+	// 	kfree(buff);
+	// }
+	return da
+}
+
+func setarraydata(arr Htablep,i Datum,d Datum) {
+	if isnoval(i) {
+		execerror("Can't use undefined value as array index\n")
+	}
+	s := arraysym(arr,i,H_INSERT)
+	*symdataptr(s) = d
+}
+
+func setarrayelem(arr Htablep ,n int,p string) {
+	setarraydata(arr,numdatum(n),strdatum(p))
+}
+
+func fputdatum(f os.File,d Datum) {
+	str := datumstr(d)
+	nl := false
+	if (*Printsplit) != 0 {
+		nl = true
+	}
+	
+	if d.dtype == D_STR {
+		putc('"',f)
+	}
+	slen := len()
+	for i:=0; i<slen; i++ {
+		p = ""
+		i++
+		if nl>0 && i>nl {
+			i = 0
+			fputs("\\\n",f)
+		}
+		switch (c) {
+		case '\n':
+			p = "\\n";
+		case '\r':
+			p = "\\r";
+		case '"':
+			p = "\\\"";
+		case '\\':
+			p = "\\\\";
+		}
+		if ( p ) {
+			fputs(p,f)
+		} else {
+			putc(c,f)
+		}
+	}
+	if d.dtype == D_STR {
+		putc('"',f)
+	}
+}
 
 type binum struct {
 	name string
@@ -873,11 +852,11 @@ func installstr(name string, str string) {
 	*symdataptr(s) = strdatum(uniqstr(str))
 }
 
-/* build a Datum that is a function pointer, pointing to a built-in function */
+// build a Datum that is a function pointer, pointing to a built-in function
 func funcdp(s Symbolp, f BLTINCODE) Datum {
 
 	sz := Codesize[IC_BLTIN] + varinum_size(0) + Codesize[IC_SYM];
-	cp := (Codep) kmalloc(sz,"funcdp");
+	cp := (Codep) kmalloc(sz,"funcdp")
 	// keyerrfile("CP 0 = %lld, sz=%d\n", (intptr_t)cp,sz);
 	
 	*Numinst1 += sz

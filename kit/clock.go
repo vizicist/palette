@@ -1,20 +1,13 @@
 package kit
-//// #include <sys\types.h>
-//// #include <sys\timeb.h>
-//// 
-//// static struct _timeb Tb0;
-//// 
-//// long
-//// mdep_milliclock()
-//// {
-//// 	struct _timeb tb;
-//// 
-//// 	_ftime(&tb);
-//// 	return (long)((tb.time-Tb0.time)*1000 + (tb.millitm-Tb0.millitm));
-//// }
-//// 
-//// void
-//// mdep_resetclock()
-//// {
-//// 	_ftime(&Tb0);
-//// }
+
+var tm0 int
+var Firsttime int
+
+func mdep_milliclock() int {
+	return (timeGetTime()) - tm0
+}
+
+func mdep_resetclock() {
+	Firsttime = timeGetTime()
+	tm0 = Firsttime
+}

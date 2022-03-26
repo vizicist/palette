@@ -3,6 +3,7 @@ package kit
 import (
 	"log"
 	"strings"
+	"unicode"
 )
 
 //go:generate goyacc -o gram.go gram.y
@@ -461,9 +462,10 @@ import (
 ////
 
 /* recover from run-time error */
-func execerror(fmt string) {
+func execerror(fmt string, v ...interface{}) {
 
 	log.Printf("execerror: fmt=%s\n", fmt)
+	log.Printf(fmt, v...)
 
 	//// 	va_list args;
 	////
@@ -1191,95 +1193,84 @@ type Macro struct {
 var TopMac *Macro
 
 // Scan the macro definition in s, creating a new Macro structure. */
-func macrodefine(char *s,int checkkeyword) {
-	char *p, *nm;
-	Macro *m;
-	int n, echar;
-	Symbolp sym;
-#ifdef __GNUC__
-	/* This is because in GNU C, constant strings (e.g. those */
-	/* passed to macrodefine()) are not writable by default. */
-	char buffer[strlen(s)+1];
-	(void) strcpy(buffer,s);
-	s = buffer;
-#endif
-////
-	skipspace(s);
-	for ( p=s; isnamechar(*p); p++ )
-		;
-	echar = *p;
-	if ( echar != '\0' )
-		*p++ = '\0';
-	nm = uniqstr(s);
-////
-	if ( checkkeyword ) {
-		sym = findsym(nm,Keywords);
-		if ( sym ) {
-			eprint("Can't #define an existing symbol: %s\n",nm);
-			return;
+func macrodefine(l *Lexer, s string, checkkeyword bool) {
+
+	i := 0
+	for ; l.isspace(s[i]); i++ {
+	}
+	for ; l.isnamechar(s[i]); i++ {
+	}
+	nm := s[0:i] // uniqstr(s);
+
+	if checkkeyword {
+		sym = findsym(nm, Keywords)
+		if sym {
+			log.Printf("Can't #define an existing symbol: %s\n", nm)
+			return
 		}
 	}
-	sym = findsym(nm,Macros);
-	if ( sym == 0 )
-                (void) syminstall(nm,Macros,MACRO);
-	else if ( sym->stype == UNDEF )
-		sym->stype = MACRO;
-	else if ( sym->stype != MACRO ) {
+	sym = findsym(nm, Macros)
+	if sym == 0 {
+		syminstall(nm, Macros, MACRO)
+	} else if sym.stype == UNDEF {
+		sym.stype = MACRO
+	} else if sym.stype != MACRO {
+		//
 	}
-	m = (Macro *) kmalloc(sizeof(Macro),"macrodefine");
-	m->name = nm;
-	skipspace(p);
-	if ( echar != '(' ) {
+	m := &Macro{name: nm}
+	for i := 0; unicode.IsSpace(s[i]); i++ {
+	}
+	if echar != '(' {
 		/* Macro has no parameters */
-		m->nparams = 0;
-		m->value = uniqstr(p);
-	}
-	else {
-		char **pp, *param, *params[NPARAMS];
-		int nparams = 0;
-////
+		m.nparams = 0
+		m.value = s[i:]
+	} else {
+		// char **pp, *param, *params[NPARAMS];
+		nparams := 0
 		/* Gather parameter names */
-		do {
-			if ( nparams >= NPARAMS )
-				execerror("Too many macro parameters!  Increase NPARAMS!");
-			skipspace(p);
-			param = p;
-			echar = scanparam(&p);
-			params[nparams++] = uniqstr(param);
-		} while ( echar == ',' );
-////
-		if ( echar != ')' )
-			execerror("Improper #define format");
-////
-		skipspace(p);
-		m->value = uniqstr(p);
-////
-		m->nparams = nparams;
-		if ( nparams > 0 ) {
-			pp=(char **)kmalloc(nparams*sizeof(char *),"macrodefine2");
-			for ( n=0; n<nparams; n++ )
-				pp[n] = params[n];
-			m->params = pp;
+		i := 0
+		for {
+			if nparams >= NPARAMS {
+				execerror("Too many macro parameters!  Increase NPARAMS!")
+			}
+			for ; unicode.IsSpace(s[i]); i++ {
+			}
+			param, ei := scanparam(s[i:])
+			params[nparams] = param
+			nparams++
+			i += ei
+			if s[i] != ',' {
+				break
+			}
+		}
+
+		if s[i] != ')' {
+			execerror("Improper #define format")
+		}
+
+		for i := 0; unicode.IsSpace(s[i]); i++ {
+		}
+		m.value = s[i:]
+
+		m.nparams = nparams
+		if nparams > 0 {
+			pp := make([]string, nparams)
+			for n := 0; n < nparams; n++ {
+				pp[n] = params[n]
+			}
+			m.params = pp
 		}
 	}
-	m->next = Topmac;
-	Topmac = m;
+	m.next = Topmac
+	Topmac = m
 }
 
-//// int
-//// scanparam(char **ap)
-//// {
-//// 	register char *p = *ap;
-//// 	int echar;
-////
-//// 	while ( isnamechar(*p) )
-//// 		p++;
-//// 	echar = *p;
-//// 	*p++ = '\0';
-//// 	*ap = p;
-//// 	return(echar);
-//// }
-////
+func scanparam(s string) (string, int) {
+	for i := 0; l.isnamechar(s[i]); i++ {
+	}
+	return s[0:i], i
+}
+
 /* Check to see if name is a macro, and if so, substitute its value (possibly*/
 /* gathering the arguments and substituting them in the macro definition). */
 /* The macro value is stuffed back onto the input stream. */
