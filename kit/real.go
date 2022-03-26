@@ -325,30 +325,28 @@ func startrealtime() {
 	
 	/* Free existing phrases in Current and (if recording) Record */
 	resetcurrphr();
-////
-	if ( *Record ) {
-		phdecruse(*Recphr);
-		*Recphr = newph(1);
-		Recmiddle = NULL;
-		Earliestcurrent = NULL;
+	
+	if *Record {
+		phdecruse(*Recphr)
+		*Recphr = newph(1)
+		Recmiddle = nil
+		Earliestcurrent = nil
 	}
-////
-	Midi = Intmidi;		/* This is the structure that controls */
-				/* the MIDI parser. */
-	midiparse(-1);		/* Initialize MIDI parser. */
-////
-	*Now = -1L;
-	*Nowoffset = 0;
-	Midinow = 0;
-	Midimilli = 0;
-////
+	
+	Midi = Intmidi		// This is the structure that controls the MIDI parser.
+	midiparse(-1)		// Initialize MIDI parser.
+	
+	*Now = -1
+	*Nowoffset = 0
+	Midinow = 0
+	Midimilli = 0
+	
 	clrcontroller()
 	
 	mdep_resetclock()
 	Start = MILLICLOCK
 	Nextclick = Start
 }
-
 
 //// void
 //// clrcontroller(void)
