@@ -1,26 +1,21 @@
 package kit
-//// /*
-////  *	Copyright 1996 AT&T Corp.  All rights reserved.
-////  */
-//// 
+
 //// /*
 ////  * Convert a keykit phrase to Standard MIDI File.
 ////  */
-//// 
-//// #define OVERLAY2
-//// 
+////
 //// #include <stdio.h>
 //// #include <errno.h>
 //// #include "key.h"
 //// #include "keymidi.h"
-//// 
+////
 //// #define MYMETATEMPO	-1
 //// #define MYMETATIMESIG	-2
 //// #define MYMETAKEYSIG	-3
 //// #define MYMETASEQNUM	-4
 //// #define MYMETASMPTE	-5
 //// #define MYCHANPREFIX	-6
-//// 
+////
 //// static Noteptr Pend = NULL;		/* list of pending note-offs */
 //// static FILE *Trktmp;
 //// static char Tmpfname[16];	/* enough space for "#xxxxx.tmp" */
@@ -28,7 +23,7 @@ package kit
 //// static FILE *Outf;
 //// static double Clickfactor = 1.0;
 //// static int Laststat = 0;	/* NOTEON, NOTEOFF, PRESSURE, etc. */
-//// 
+////
 //// static void
 //// trackbyte(int c)	/* must be used by everything that writes track data */
 //// {
@@ -36,22 +31,22 @@ package kit
 //// 	putc(c,Trktmp);
 //// 	Trksize++;
 //// }
-//// 
+////
 //// static void
 //// writevarinum (register long value)
 //// {
 //// 	unsigned char buffer[8];
 //// 	int bi = 0;
-//// 
+////
 //// 	buffer[bi] = (unsigned char)(value & 0x7f);
 //// 	while ((value >>= 7) > 0 && bi < (sizeof(buffer)-1) ) {
 //// 		buffer[++bi] = 0x80 | (unsigned char)(value & 0x7f);
 //// 	}
 //// 	while ( bi >= 0 ) {
 //// 		trackbyte((int)(buffer[bi--]&0xff));
-//// 	} 
+//// 	}
 //// }
-//// 
+////
 //// static void
 //// putdelta(long clicks)
 //// {
@@ -62,14 +57,14 @@ package kit
 //// 	/* should do some scaling here? */
 //// 	writevarinum ((long)(clicks*Clickfactor + 0.5));
 //// }
-//// 
+////
 //// static void
 //// write16bit(int val)
 //// {
 //// 	putc( (val>>8) & 0xff, Outf );
 //// 	putc( val & 0xff, Outf );
 //// }
-//// 
+////
 //// static void
 //// write32bit(long val)
 //// {
@@ -78,7 +73,7 @@ package kit
 //// 	putc( (int)((val>>8) & 0xff), Outf );
 //// 	putc( (int)(val & 0xff), Outf );
 //// }
-//// 
+////
 //// static void
 //// putnote(unsigned int c,unsigned int p,unsigned int v)
 //// {
@@ -90,7 +85,7 @@ package kit
 //// 	trackbyte((int)p);
 //// 	trackbyte((int)v);
 //// }
-//// 
+////
 //// static char *
 //// keytextmess(char *b,int lng)
 //// {
@@ -104,7 +99,7 @@ package kit
 //// 		return(NULL);
 //// 	return(&b[3]);
 //// }
-//// 
+////
 //// static int
 //// metatype(char *s)
 //// {
@@ -133,14 +128,14 @@ package kit
 //// 	};
 //// 	int n;
 //// 	char *p;
-//// 
+////
 //// 	for ( n=0; (p=ttype[n].type_name) != NULL; n++ ) {
 //// 		if ( strcmp(s,p) == 0 )
 //// 			return(ttype[n].type_val);
 //// 	}
 //// 	return 0;
 //// }
-//// 
+////
 //// static void
 //// putmetatext(type,contents)  /* generate a standard midifile meta text message */
 //// int type;
@@ -148,7 +143,7 @@ package kit
 //// {
 //// 	char *q;
 //// 	int lng;
-//// 
+////
 //// 	trackbyte(0xff);
 //// 	trackbyte(type);
 //// 	/* see how long it is. */
@@ -159,7 +154,7 @@ package kit
 //// 	while ( ((*contents)&0xff) != 0xf7 )
 //// 		trackbyte(*contents++);
 //// }
-//// 
+////
 //// static void
 //// mftempo(long microsecs)
 //// {
@@ -170,7 +165,7 @@ package kit
 //// 	trackbyte( (int)((microsecs>>8) & 0xff) );
 //// 	trackbyte( (int)(microsecs & 0xff) );
 //// }
-//// 
+////
 //// static void
 //// timesig(int nn, int dd, int cc, int bb)
 //// {
@@ -182,7 +177,7 @@ package kit
 //// 	trackbyte(cc);
 //// 	trackbyte(bb);
 //// }
-//// 
+////
 //// static void
 //// keysig(int sf,int mi)
 //// {
@@ -192,7 +187,7 @@ package kit
 //// 	trackbyte(sf);
 //// 	trackbyte(mi);
 //// }
-//// 
+////
 //// static void
 //// seqnum(int n)
 //// {
@@ -201,7 +196,7 @@ package kit
 //// 	trackbyte(0x02);
 //// 	write16bit(n);
 //// }
-//// 
+////
 //// static void
 //// chanprefix(int n)
 //// {
@@ -210,7 +205,7 @@ package kit
 //// 	trackbyte(0x01);
 //// 	trackbyte(n);
 //// }
-//// 
+////
 //// static void
 //// smpte(int hr, int mn, int se, int fr, int ff)
 //// {
@@ -223,7 +218,7 @@ package kit
 //// 	trackbyte(fr);
 //// 	trackbyte(ff);
 //// }
-//// 
+////
 //// static void
 //// putmymeta(int type, char *contents)
 //// {
@@ -284,13 +279,13 @@ package kit
 //// 		break;
 //// 	}
 //// }
-//// 
+////
 //// static int
 //// metamess(char *text)
 //// {
 //// 	char *p;
 //// 	int type;
-//// 
+////
 //// 	/* look for the '=' */
 //// 	for ( p=text; *p!='=' && ((*p)&0xff) != 0xf7; p++ )
 //// 		;
@@ -299,17 +294,17 @@ package kit
 //// 	*p = '\0';
 //// 	type = metatype(text);
 //// 	*p++ = '=';
-//// 
+////
 //// 	if ( type == 0 )
 //// 		return(0);	/* unrecognized */
-//// 
+////
 //// 	if ( type > 0 )
 //// 		putmetatext(type,p);
 //// 	else
 //// 		putmymeta(type,p);
 //// 	return(1);
 //// }
-//// 
+////
 //// static void
 //// putbytes(Noteptr nt)
 //// {
@@ -318,7 +313,7 @@ package kit
 //// 	int expecting = 0;
 //// 	unsigned char b1;
 //// 	int n;
-//// 
+////
 //// 	b1 = *b;
 //// 	switch ( b1 & 0xf0 )  {
 //// 	case NOTEON:
@@ -333,7 +328,7 @@ package kit
 //// 		expecting = 2;
 //// 		break;
 //// 	}
-//// 
+////
 //// 	if ( expecting!=0 && expecting==lng ) {
 //// 		/* see if we can use running status, ie. omit status byte */
 //// 		if ( (int)b1 != Laststat )
@@ -345,9 +340,9 @@ package kit
 //// 	else {
 //// 		/* See if it's a keykit 'text' message, which is used */
 //// 		/* to represent meta messages. */
-//// 
+////
 //// 		char *text = keytextmess((char *)b,lng);
-//// 
+////
 //// 		if ( text!=NULL && metamess(text)!=0 ) {
 //// 			/* metamess() outputs the message as a side-effect. */
 //// 			dummyusage(text);
@@ -378,7 +373,7 @@ package kit
 //// 	}
 //// 	Laststat = b1;
 //// }
-//// 
+////
 //// static void
 //// header(int format,int ntrks, int division)
 //// {
@@ -388,7 +383,7 @@ package kit
 //// 	write16bit(ntrks);
 //// 	write16bit(division);
 //// }
-//// 
+////
 //// static int
 //// inittrack(void)
 //// {
@@ -402,12 +397,12 @@ package kit
 //// 	Pend = NULL;
 //// 	return 0;
 //// }
-//// 
+////
 //// static int
 //// dumptrack(void)
 //// {
 //// 	int c;
-//// 
+////
 //// 	myfclose(Trktmp);
 //// 	OPENBINFILE(Trktmp,Tmpfname,"r");
 //// 	if ( Trktmp == NULL ) {
@@ -422,7 +417,7 @@ package kit
 //// 	myfclose(Trktmp);
 //// 	return 0;
 //// }
-//// 
+////
 //// static void
 //// endoftrack(void)
 //// {
@@ -430,7 +425,7 @@ package kit
 //// 	trackbyte(0x2f);
 //// 	trackbyte(0x00);
 //// }
-//// 
+////
 //// static int
 //// tempotrack(void)
 //// {
@@ -446,7 +441,7 @@ package kit
 //// 		return 1;
 //// 	return 0;
 //// }
-//// 
+////
 //// static void
 //// setfactor(int div)
 //// {
@@ -458,86 +453,86 @@ package kit
 //// 		eprint("Warning: division (%d) doesn't evenly divide DEFCLICKS (%d)\n",div,DEFCLICKS);
 //// 	}
 //// }
-//// 
+////
 //// static void
 //// maketemp()	/* find a temporary file name (inefficient but portable) */
 //// {
 //// 	int n = 0;
-//// 
+////
 //// 	do {
 //// 		sprintf(Tmpfname,"#%05d.tmp",++n);
 //// 	} while ( exists(Tmpfname) );
 //// }
-//// 
+////
 //// static void
 //// rmtemp(void)
 //// {
 //// 	(void) unlink(Tmpfname);
 //// }
-//// 
+////
 //// static void
 //// addpend(Noteptr n)
 //// {
 //// 	Noteptr newp, pp;
 //// 	Noteptr lastp = NULL;
-//// 
+////
 //// 	newp = ntcopy(n);
 //// 	timeof(newp) = endof(n);
 //// 	typeof(newp) = NT_OFF;
-//// 
+////
 //// 	/* insertion sort into existing list */
 //// 	for ( pp=Pend; pp!=NULL; pp=nextnote(pp) ) {
 //// 		if ( ntcmporder(pp,newp) > 0 )
 //// 			break;
 //// 		lastp = pp;
 //// 	}
-//// 
+////
 //// 	nextnote(newp) = pp;	/* pp may be NULL */
-//// 
+////
 //// 	if ( pp == Pend )
 //// 		Pend = newp;
 //// 	else
 //// 		nextnote(lastp) = newp;
 //// }
-//// 
+////
 //// static void
 //// phtrack(Phrasep p)
 //// {
 //// 	Noteptr n = firstnote(p);
 //// 	long lasttime = 0;
 //// 	long toend;
-//// 
+////
 //// 	while ( n != NULL || Pend != NULL ) {
-//// 
+////
 //// 		/* Put out whichever is earlier - the top pending note-off or */
 //// 		/* the start of the next note.  If they're both at the same */
 //// 		/* time, the Pending note-off's get preference. */
-//// 
+////
 //// 		if ( n==NULL || (Pend!=NULL && timeof(Pend) <= timeof(n) ) ) {
-//// 
+////
 //// 			/* put out the top pending note-off */
-//// 
+////
 //// 			Noteptr nextp = nextnote(Pend);
-//// 
+////
 //// 			putdelta(timeof(Pend)-lasttime);
-//// 
+////
 //// 			lasttime = timeof(Pend);
-//// 
+////
 //// 			/* To distinguish this kind of note-off from a */
 //// 			/* note-off with a release velocity, we use the */
 //// 			/* common method of a note-on with a 0 volume. */
-//// 
+////
 //// 			if ( *Midifilenoteoff != 0 )
 //// 				putnote(NOTEOFF | chanof(Pend), pitchof(Pend), 0);
 //// 			else
 //// 				putnote(NOTEON | chanof(Pend), pitchof(Pend), 0);
-//// 
+////
 //// 			ntfree(Pend);
 //// 			Pend =  nextp;
 //// 		}
 //// 		else {
 //// 			/* put out the next note in the phrase */
-//// 
+////
 //// 			putdelta(timeof(n)-lasttime);
 //// 			lasttime = timeof(n);
 //// 			if ( typeof(n) == NT_BYTES || typeof(n) == NT_LE3BYTES) {
@@ -545,14 +540,14 @@ package kit
 //// 			}
 //// 			else {
 //// 				int high;
-//// 
+////
 //// 				/* typeof(n) is NT_NOTE, NT_ON, or NT_OFF */
 //// 				if ( typeof(n) == NT_OFF )
 //// 					high = NOTEOFF;
 //// 				else
 //// 					high = NOTEON;
 //// 				putnote( high | chanof(n),pitchof(n),volof(n));
-//// 
+////
 //// 				/* For a full note, we add the note-off */
 //// 				/* to the Pend'ing list */
 //// 				if ( typeof(n) == NT_NOTE )
@@ -569,7 +564,7 @@ package kit
 //// 	putdelta(toend);
 //// 	endoftrack();
 //// }
-//// 
+////
 //// static int
 //// dophrase(Phrasep p)
 //// {
@@ -580,7 +575,7 @@ package kit
 //// 		return 1;
 //// 	return 0;
 //// }
-//// 
+////
 //// void
 //// arrtomf(Htablep arr,char *fname)
 //// {
@@ -589,7 +584,7 @@ package kit
 //// 	Phrasep ph;
 //// 	int div = (int)(*Clicks);
 //// 	int err = 0;
-//// 
+////
 //// 	if ( stdioname(fname) )
 //// 		Outf = stdout;
 //// 	else {
@@ -601,14 +596,14 @@ package kit
 //// 				fname,strerror(errno));
 //// 		}
 //// 	}
-//// 
+////
 //// 	alist = arrlist(arr,&ntracks,1);
-//// 
+////
 //// 	maketemp();
 //// 	setfactor(div);
-//// 
+////
 //// 	type = ntracks>1 ? 1 : 0;
-//// 
+////
 //// 	if ( *Tempotrack == 0 )
 //// 		header( type, ntracks, div);
 //// 	else {
@@ -621,7 +616,7 @@ package kit
 //// 	for ( n=0; n<ntracks; n++ ) {
 //// 		Symbol *as = arraysym(arr,alist[n],H_LOOK);
 //// 		Datum *dp = symdataptr(as);
-//// 
+////
 //// 		if ( dp->type != D_PHR ) {
 //// 			err = 1;
 //// 			tprint("midifile: non-phrase found in array!");
@@ -634,7 +629,7 @@ package kit
 //// 			goto getout;
 //// 	}
 ////     getout:
-//// 
+////
 //// 	rmtemp();
 //// 	if ( Outf != stdout )
 //// 		myfclose(Outf);

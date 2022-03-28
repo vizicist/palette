@@ -1,29 +1,24 @@
 package kit
-//// /*
-////  *	Copyright 1996 AT&T Corp.  All rights reserved.
-////  */
-//// 
-//// #define OVERLAY7
-//// 
+
 //// #include "key.h"
 //// #include "gram.h"
-//// 
+////
 //// Kwind *Topwind = NULL;
 //// Kwind *Freewind = NULL;
 //// Htablep Windhash = NULL;
-//// 
+////
 //// #define WINDUNSCALED -2
-//// 
+////
 //// void
 //// wredraw1(Kwind *w)
 //// {
 //// 	showsane(w);
 //// 	werase(w);
-//// 
+////
 //// 	if ( (w->flags & WFLAG_NOBORDER) == 0 ) {
 //// 		my_plotmode(P_STORE);
 //// 		if ( (w->flags & WFLAG_BUTTON) != 0 )
-//// 			wshadow(w, 
+//// 			wshadow(w,
 //// 				(w->flags&WFLAG_MENUBUTTON) != 0,
 //// 				(w->flags&WFLAG_PRESSED) != 0 );
 //// 		else
@@ -36,7 +31,7 @@ package kit
 //// 	if ( w->type == WIND_MENU )
 //// 		redrawmenu(w);
 //// 	w->flags |= WFLAG_DRAWN;
-//// 
+////
 //// 	/* We always move freshly-drawn windows to the top, so when we */
 //// 	/* do a "childunder", we find them first. */
 //// 	if ( w->prev ) {
@@ -53,13 +48,13 @@ package kit
 //// 		Topwind = w;
 //// 	}
 //// }
-//// 
+////
 //// void
 //// woutline(Kwind *w)
 //// {
 //// 	mdep_box(w->x0,w->y0,w->x1,w->y1);
 //// }
-//// 
+////
 //// void
 //// wshadow(Kwind *w,int menubutton,int pressed)
 //// {
@@ -70,27 +65,27 @@ package kit
 //// 	mdep_color(pressed?Lightcolor:Darkcolor);
 //// 	mdep_line(w->x0+1,w->y1-1,w->x1-1,w->y1-1);	/* bottom shadow */
 //// 	mdep_line(w->x0+2,w->y1-2,w->x1-2,w->y1-2);	/* bottom shadow */
-//// 
+////
 //// 	mdep_line(w->x1-1,w->y0+1,w->x1-1,w->y1-1);	/* right shadow */
 //// 	mdep_line(w->x1-2,w->y0+2,w->x1-2,w->y1-2);	/* right shadow */
-//// 
+////
 //// 	mdep_color(Forecolor);
-//// 
+////
 //// 	if ( menubutton ) {
 //// 		/* extra shadow lines to distinguish menu button */
 //// 		mdep_line(w->x0+3,w->y1-3,w->x1-3,w->y1-3);
 //// 		mdep_line(w->x1-3,w->y0+3,w->x1-3,w->y1-3);
 //// 	}
 //// }
-//// 
+////
 //// void
 //// werase(Kwind *w)
 //// {
 //// 	long x1 = w->x1;
 //// 	long y1 = w->y1;
-//// 
+////
 //// 	my_plotmode(P_CLEAR);
-//// 
+////
 //// 	/* Watch out, we don't want to change w->x1 or w->y1. */
 //// 	if ( x1 > Wroot->x1 ) {
 //// #ifdef OLDSTUFF
@@ -105,26 +100,26 @@ package kit
 //// 		y1 = Wroot->y1;
 //// 	}
 //// 	mdep_boxfill(w->x0,w->y0,x1,y1);
-//// 
+////
 //// /* my_plotmode(P_STORE); mdep_box(w->x0-1,w->y0-1,x1+1,y1+1); */
 //// }
-//// 
+////
 //// Kwind *
 //// validwind(int n,char *s)
 //// {
 //// 	Kwind *w = windptr(n);
-//// 
+////
 //// 	if ( w == NULL )
 //// 		execerror("%s given invalid window number (%d)",s,n);
 //// 	return w;
 //// }
-//// 
+////
 //// Kwind *
 //// windptr(int n)
 //// {
 //// 	Datum key;
 //// 	Hnodep h;
-//// 
+////
 //// 	key = numdatum(n);
 //// 	h = hashtable(Windhash,key,H_LOOK);
 //// 	if ( h )
@@ -132,23 +127,23 @@ package kit
 //// 	else
 //// 		return NULL;
 //// }
-//// 
+////
 //// void
 //// windlist(void)
 //// {
 //// 	Kwind *w;
-//// 
+////
 //// 	for ( w=Topwind; w!=NULL; w=w->next ) {
 //// 		tprint("window w=%lld  wnum=%d  xy01=%d,%d,%d,%d\n",
 //// 			(intptr_t)w,windnum(w),w->x0,w->y0,w->x1,w->y1);
 //// 	}
 //// }
-//// 
+////
 //// Kwind *
 //// windfinddeep(Kwind *w,int x,int y)
 //// {
 //// 	Kwind *cw;
-//// 
+////
 //// 	if ( w==NULL )
 //// 		execerror("windfinddeep() got w==NULL!?");
 //// 	for ( cw=Topwind; cw!=NULL; cw=cw->next ) {
@@ -157,19 +152,19 @@ package kit
 //// 	}
 //// 	return cw;
 //// }
-//// 
+////
 //// int
 //// windcontains(Kwind *w,long x0,long y0)
 //// {
 //// 	int inwind;
-//// 
+////
 //// 	if ( w==NULL )
 //// 		execerror("windcontains() found w==NULL!?");
 //// 	inwind = (x0>=w->x0 && x0<=w->x1
 //// 		&& y0>=w->y0 && y0<=w->y1);
 //// 	return inwind;
 //// }
-//// 
+////
 //// int
 //// windlevel(Kwind *w)
 //// {
@@ -182,7 +177,7 @@ package kit
 //// 	}
 //// 	return(-1);
 //// }
-//// 
+////
 //// int
 //// windoverlaps(Kwind *w,long x0,long y0,long x1,long y1)
 //// {
@@ -190,10 +185,10 @@ package kit
 //// 	int w2x0, w2y0, w2x1, w2y1;
 //// 	int xover = 0;
 //// 	int yover = 0;
-//// 
+////
 //// 	if ( w==NULL )
 //// 		execerror("windoverlaps() found w==NULL!?");
-//// 
+////
 //// 	w1x0 = w->x0;
 //// 	w1y0 = w->y0;
 //// 	w1x1 = w->x1;
@@ -202,7 +197,7 @@ package kit
 //// 	w2y0 = y0;
 //// 	w2x1 = x1;
 //// 	w2y1 = y1;
-//// 
+////
 //// 	/* see if x values overlap */
 //// 	if ( (w2x0 >= w1x0 && w2x0 <= w1x1)
 //// 		|| (w2x1 >= w1x0 && w2x1 <= w1x1)
@@ -211,7 +206,7 @@ package kit
 //// 	}
 //// 	if ( (w2y0 >= w1y0 && w2y0 <= w1y1)
 //// 		|| (w2y1 >= w1y0 && w2y1 <= w1y1)
-//// 		|| (w2y0 < w1y0 && w2y1 > w1y1) ) { 
+//// 		|| (w2y0 < w1y0 && w2y1 > w1y1) ) {
 //// 		yover = 1;
 //// 	}
 //// 	if ( xover && yover )
@@ -219,14 +214,14 @@ package kit
 //// 	else
 //// 		return 0;
 //// }
-//// 
+////
 //// static int Windownum = 0;
-//// 
+////
 //// void
 //// reinitwinds(void)
 //// {
 //// 	Kwind *w, *nw=NULL;
-//// 
+////
 //// 	if ( Topwind ) {
 //// 		for ( w=Topwind; w!=NULL; w=nw ) {
 //// 			nw = w->next;
@@ -236,22 +231,22 @@ package kit
 //// 	if ( Windhash != NULL )
 //// 		freeht(Windhash);
 //// 	Windhash = newht(61);
-//// 
+////
 //// 	Windownum = 0;
-//// 
+////
 //// 	/* create Root window */
 //// 	Wroot = newkwind();
 //// 	Wroot->type = WIND_GENERIC;
 //// 	Wroot->flags |= WFLAG_NOBORDER;
 //// 	setwrootsize();
 //// }
-//// 
+////
 //// void
 //// setwrootsize(void)
 //// {
 //// 	k_setsize(Wroot,0,0,mdep_maxx(),mdep_maxy());
 //// }
-//// 
+////
 //// Datum
 //// winddatum(Kwind *w)
 //// {
@@ -260,14 +255,14 @@ package kit
 //// 	d.u.wind = w;
 //// 	return d;
 //// }
-//// 
+////
 //// Kwind *
 //// newkwind(void)
 //// {
 //// 	Kwind *w;
 //// 	Datum key;
 //// 	Hnodep h;
-//// 
+////
 //// 	if ( Freewind ) {
 //// 		w = Freewind;
 //// 		if ( Freewind->next )
@@ -277,20 +272,20 @@ package kit
 //// 	else {
 //// 		w = (Kwind * ) kmalloc(sizeof(Kwind),"newkwind");
 //// 	}
-//// 
+////
 //// 	waddtolist(w,&Topwind);
-//// 
+////
 //// 	w->type = WIND_GENERIC;
-//// 
+////
 //// 	w->flags = 0;
-//// 
+////
 //// 	w->x0 = -1;
 //// 	w->y0 = 0;
 //// 	w->x1 = 0;
 //// 	w->y1 = 0;
-//// 
+////
 //// 	windnum(w) = Windownum++;
-//// 
+////
 //// 	key = numdatum(windnum(w));
 //// 	h = hashtable(Windhash,key,H_INSERT);
 //// 	if ( h!=NULL && isnoval(h->val) ) {
@@ -298,10 +293,10 @@ package kit
 //// 	}
 //// 	else
 //// 		eprint("Hey, newkwind finds window # %d already in hashtable!?\n",windnum(w));
-//// 
+////
 //// 	return w;
 //// }
-//// 
+////
 //// void
 //// k_initphrase(Kwind *w)
 //// {
@@ -311,13 +306,13 @@ package kit
 //// 	w->showbar = *Showbar;
 //// 	w->showleng = 2 * w->showbar;
 //// }
-//// 
+////
 //// void
 //// k_inittext(Kwind *w)
 //// {
 //// 	int n;
 //// 	char **pp;
-//// 
+////
 //// 	w->inscroll = 0;
 //// 	w->currcols = 0;
 //// 	w->disprows = 0;
@@ -325,13 +320,13 @@ package kit
 //// 	w->curry = 0;
 //// 	w->currcol = 0;
 //// 	w->currrow = 0;
-//// 
+////
 //// /* Hmmm, if the screen gets resized, the MAXCOLS may not be enough. */
 //// /* This might be the reason for resize problems?  I'll add a 4* to make */
 //// /* sure it's not a problem.  Small waste of memory, but not that much.  */
-//// 
+////
 //// #define MAXCOLS (2+4*(Wroot->x1/mdep_fontwidth()))
-//// 
+////
 //// 	w->numlines = *Textscrollsize;
 //// 	w->bufflines = (char **) kmalloc(w->numlines*sizeof(char *),"inittext");
 //// 	for ( pp=w->bufflines,n=w->numlines-1; n>=0 ; n-- )
@@ -343,28 +338,28 @@ package kit
 //// 	w->bufflines[w->currlnum] = w->currline;
 //// 	w->toplnum = 0;
 //// }
-//// 
+////
 //// void
 //// k_reinittext(Kwind *w)
 //// {
 //// 	int n;
 //// 	char **pp;
-//// 
+////
 //// #if 0
 //// 	w->inscroll = 0;
 //// 	w->currcols = 0;
 //// 	w->disprows = 0;
 //// 	w->currx = 0;
 //// 	w->curry = 0;
-//// 
+////
 //// #define MAXCOLS (2+Wroot->x1/mdep_fontwidth())
 //// 	w->numlines = *Textscrollsize;
 //// 	/* Don't realloc bufflines */
-//// 
+////
 //// 	w->currcol = 0;
 //// 	w->currrow = 0;
 //// #endif
-//// 
+////
 //// 	for ( pp=w->bufflines,n=w->numlines-1; n>=0 ; n-- )
 //// 		*pp++ = NULL;
 //// 	w->currline[0] = '\0';
@@ -373,7 +368,7 @@ package kit
 //// 	w->bufflines[w->currlnum] = w->currline;
 //// 	w->toplnum = 0;
 //// }
-//// 
+////
 //// void
 //// kwindtext(Symstr str,int kx0,int ky0,int kx1,int ky1,int just)
 //// {
@@ -383,7 +378,7 @@ package kit
 //// 	int nlines = 1;
 //// 	char *p;
 //// 	int n, dy, mx, my;
-//// 
+////
 //// 	makeroom((long)(strlen(str)+1),&keepstr,&keepstrsize);
 //// 	strcpy(keepstr,str);
 //// 	for ( p=keepstr; *p!='\0'; p++ ) {
@@ -392,7 +387,7 @@ package kit
 //// 			nlines++;
 //// 		}
 //// 	}
-//// 
+////
 //// 	mx = mdep_maxx();
 //// 	if ( kx0 > mx ) {
 //// 		eprint("Warning, invalid x value (%d) in .text, %d is used instead. (str=%s just=%d)",
@@ -423,7 +418,7 @@ package kit
 //// 			ky1,my-1,str,just);
 //// 		ky1 = my-1;
 //// 	}
-//// 
+////
 //// 	dy = (ky1 - ky0)/nlines;
 //// 	p = keepstr;
 //// 	for ( n=0; n<nlines; n++ ) {
@@ -432,7 +427,7 @@ package kit
 //// 		p += (strlen(p)+1);
 //// 	}
 //// }
-//// 
+////
 //// void
 //// textfill(char *s,int x0,int y0,int x1,int y1,int just)
 //// {
@@ -443,10 +438,10 @@ package kit
 //// 	int x, y, dx, dy, lng;
 //// 	int wid = mdep_fontwidth();
 //// 	int hgt = mdep_fontheight();
-//// 
+////
 //// 	tx = wid*(long)strlen(s);
 //// 	ty = hgt;
-//// 
+////
 //// 	y = ((y1+y0-ty)/2);	/* should probably do a ceil() on this */
 //// 	if ( y < y0 ) {
 //// 		/* no room vertically, draw === in the area to indicate that */
@@ -457,7 +452,7 @@ package kit
 //// 		mdep_line((int)x0+dx,(int)y1-dy,(int)x1-dx,(int)y1-dy);
 //// 		return;
 //// 	}
-//// 
+////
 //// 	if ( just == TEXT_CENTER ) {
 //// 		x = ((x1+x0-tx)/2);
 //// 		if ( x >= x0 )
@@ -466,7 +461,7 @@ package kit
 //// 			/* String is too long - copy and truncate to fit */
 //// 			makeroom((long)(strlen(s)+1),&keepstr,&keepstrsize);
 //// 			strcpy(keepstr,s);
-//// 
+////
 //// 			lng = (x1-x0)/wid;
 //// 			if ( lng <= 0 )
 //// 				goto minitext;
@@ -500,7 +495,7 @@ package kit
 //// 			/* String is too long - copy and truncate to fit */
 //// 			int slen = (int)strlen(s);
 //// 			int shiftleft;
-//// 
+////
 //// 			makeroom((long)(slen+1),&keepstr,&keepstrsize);
 //// 			strcpy(keepstr,s);
 //// 			lng = (x1-x0-wid)/wid;
@@ -514,7 +509,7 @@ package kit
 //// 		}
 //// 	}
 //// }
-//// 
+////
 //// void
 //// kwindline(Kwind *w,int x0,int y0,int x1,int y1)
 //// {
@@ -525,27 +520,27 @@ package kit
 //// 		mdep_line(x0,y0,x1,y1);
 //// 	}
 //// }
-//// 
+////
 //// void
 //// kwindrect(Kwind *w,int x0,int y0,int x1,int y1)
 //// {
 //// 	kwindrect2(w,x0,y0,x1,y1,0);
 //// }
-//// 
+////
 //// void
 //// kwindfill(Kwind *w,int x0,int y0,int x1,int y1)
 //// {
 //// 	kwindrect2(w,x0,y0,x1,y1,1);
 //// }
-//// 
+////
 //// void
 //// kwindrect2(Kwind *w,int x0,int y0,int x1,int y1,int dofill)
 //// {
 //// 	Krect clip;
 //// 	clip = makerect(w->x0,w->y0,w->x1,w->y1);
-//// 
+////
 //// 	rectnormi(&x0,&y0,&x1,&y1);
-//// 
+////
 //// 	if ( rectclipit(w,&x0,&y0,&x1,&y1,&clip) != NT_INVISIBLE ) {
 //// 		mdep_color(Forecolor);
 //// 		if ( dofill )
@@ -554,27 +549,27 @@ package kit
 //// 			mdep_box(x0,y0,x1,y1);
 //// 	}
 //// }
-//// 
+////
 //// void
 //// kwindellipse(Kwind *w,int x0,int y0,int x1,int y1)
 //// {
 //// 	kwindellipse2(w,x0,y0,x1,y1,0);
 //// }
-//// 
+////
 //// void
 //// kwindfillellipse(Kwind *w,int x0,int y0,int x1,int y1)
 //// {
 //// 	kwindellipse2(w,x0,y0,x1,y1,1);
 //// }
-//// 
+////
 //// void
 //// kwindellipse2(Kwind *w,int x0,int y0,int x1,int y1,int dofill)
 //// {
 //// 	Krect clip;
 //// 	clip = makerect(w->x0,w->y0,w->x1,w->y1);
-//// 
+////
 //// 	rectnormi(&x0,&y0,&x1,&y1);
-//// 
+////
 //// 	if ( rectclipit(w,&x0,&y0,&x1,&y1,&clip) != NT_INVISIBLE ) {
 //// 		mdep_color(Forecolor);
 //// 		if ( dofill )
@@ -583,14 +578,14 @@ package kit
 //// 			mdep_ellipse(x0,y0,x1,y1);
 //// 	}
 //// }
-//// 
+////
 //// void
 //// kwindfillpolygon(Kwind *w,int *xarr,int *yarr,int arrsize)
 //// {
 //// 	Krect clip;
-//// 
+////
 //// 	clip = makerect(w->x0,w->y0,w->x1,w->y1);
-//// 
+////
 //// 	if ( arrsize < 3 ) {
 //// 		execerror("Too few points given to kwindfillpolygon");
 //// 	}
@@ -603,11 +598,11 @@ package kit
 //// 		}
 //// 	}
 //// #endif
-//// 
+////
 //// 	mdep_color(Forecolor);
 //// 	mdep_fillpolygon(xarr,yarr,arrsize);
 //// }
-//// 
+////
 //// void
 //// rectnorml(long *ax0,long *ay0,long *ax1,long *ay1)
 //// {
@@ -622,7 +617,7 @@ package kit
 //// 		*ay1 = t;
 //// 	}
 //// }
-//// 
+////
 //// void
 //// rectnormi(int *ax0,int *ay0,int *ax1,int *ay1)
 //// {
@@ -637,7 +632,7 @@ package kit
 //// 		*ay1 = t;
 //// 	}
 //// }
-//// 
+////
 //// void
 //// scalexy(long *ax,long *ay,long fromx0,long fromy0,long fromx1,long fromy1,long tox0,long toy0,long tox1,long toy1)
 //// {
@@ -652,7 +647,7 @@ package kit
 //// 	else
 //// 		*ay = toy0 + ((*ay-fromy0)*(toy1-toy0)+(fromdy/2))/fromdy;
 //// }
-//// 
+////
 //// void
 //// scalephr2raw(Kwind *w,long *ax,long *ay)
 //// {
@@ -668,7 +663,7 @@ package kit
 //// 	long fromy1 = w->showlow;
 //// 	scalexy(ax,ay,fromx0,fromy0,fromx1,fromy1,tox0,toy0,tox1,toy1);
 //// }
-//// 
+////
 //// void
 //// scalegrid2wind(Kwind *w,long *ax,long *ay)
 //// {
@@ -680,7 +675,7 @@ package kit
 //// 		(long)windxmin(w)+1,(long)windymin(w)+1,
 //// 		(long)windxmax(w)-1,(long)windymax(w)-1);
 //// }
-//// 
+////
 //// void
 //// scalewind2grid(Kwind *w,long *ax,long *ay)
 //// {
@@ -692,7 +687,7 @@ package kit
 //// 		w->showstart, (long)(w->showhigh),
 //// 		w->showstart + w->showleng, (long)(w->showlow));
 //// }
-//// 
+////
 //// void
 //// k_setsize(Kwind *w,int x0,int y0,int x1,int y1)
 //// {
@@ -729,23 +724,23 @@ package kit
 //// 	}
 //// 	v_settextsize(w);
 //// }
-//// 
+////
 //// Kitem *
 //// newkitem(char *name)
 //// {
 //// 	Kitem *ki;
-//// 
+////
 //// 	ki = (Kitem * ) kmalloc(sizeof(Kitem),"newkitem");
 //// 	ki->name = name;
 //// 	ki->next = NULL;
 //// 	return ki;
 //// }
-//// 
+////
 //// Kitem *
 //// k_findmenuitem(Symstr name,Kwind *w,int create)
 //// {
 //// 	Kitem *ki, *ki2;
-//// 
+////
 //// 	for ( ki=w->km.items; ki!=NULL; ki=ki->next ) {
 //// 		if ( name == ki->name )
 //// 			return ki;
@@ -764,7 +759,7 @@ package kit
 //// 	ki->pos = w->km.nitems++;
 //// 	return ki;
 //// }
-//// 
+////
 //// void
 //// windhashdelete(Kwind *w)
 //// {
@@ -772,7 +767,7 @@ package kit
 //// 	key = numdatum(windnum(w));
 //// 	hashtable(Windhash,key,H_DELETE);
 //// }
-//// 
+////
 //// void
 //// wfree(Kwind *w)
 //// {
@@ -782,7 +777,7 @@ package kit
 //// 	if ( (w->flags & WFLAG_SAVEDUNDER) != 0 )
 //// 		mdep_freebitmap(w->saveunder);
 //// }
-//// 
+////
 //// void
 //// wunlink(Kwind *w,Kwind **tw)
 //// {
@@ -794,7 +789,7 @@ package kit
 //// 	else
 //// 		*tw = w->next;
 //// }
-//// 
+////
 //// void
 //// waddtolist(Kwind *w, Kwind **wlist)
 //// {
@@ -804,7 +799,7 @@ package kit
 //// 		(*wlist)->prev = w;
 //// 	*wlist = w;
 //// }
-//// 
+////
 //// void
 //// k_initmenu(Kwind *w)
 //// {
@@ -819,12 +814,12 @@ package kit
 //// 	w->km.width = 0;
 //// 	w->km.header = 8;
 //// }
-//// 
+////
 //// Kitem *
 //// k_menuitem(Kwind *w,Symstr item)
 //// {
 //// 	Kitem *ki;
-//// 
+////
 //// 	/* We only want to call m_menuitem once, when item is first created. */
 //// 	ki = k_findmenuitem(item,w,0);
 //// 	if ( ki == NULL ) {
@@ -833,7 +828,7 @@ package kit
 //// 	}
 //// 	return ki;
 //// }
-//// 
+////
 //// Krect
 //// makerect(long x0, long y0, long x1, long y1)
 //// {
