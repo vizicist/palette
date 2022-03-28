@@ -1,9 +1,7 @@
 package kit
 
-/// /*
-///  *	Copyright 1996 AT&T Corp.  All rights reserved.
-///  */
-///
+import "os"
+
 /// /*
 /// 	The following defines are normally set in mdep.h; they are described
 /// 	here only to document the options available.
@@ -38,12 +36,12 @@ type Midimessp *Midimessdata
 
 type Noteptr *Notedata
 
-/// typedef char *Bytep;
+type Bytep string
 
-/// typedef Phrasep *Phrasepp;
-/// typedef long *Symlongp;
-/// typedef char *Symstr;
-/// typedef Symstr *Symstrp;
+type Phrasepp *Phrasep
+type Symlongp *int
+type Symstr string
+type Symstrp *Symstr
 
 type Hnodep *Hnode
 type Hnodepp []Hnodep
@@ -59,10 +57,9 @@ type Kobjectp *Kobject
 /// #define OPENBINFILE(f,file,mode) f=fopen(file,mode)
 /// #endif
 ///
-/// #ifndef PORTHANDLE
-/// #define PORTHANDLE unsigned long
-/// #endif
-///
+
+type PORTHANDLE uint64
+
 /// // #define DEBUG
 /// // #define BIGDEBUG
 /// // #define DEBUGEXEC
@@ -160,334 +157,333 @@ const D_TASK = 12
 const D_WIND = 13
 const D_OBJ = 14
 
-///
-/// /* Watch out, these values must line up with the Bytefuncs array */
-/// #define I_POPVAL	0
-/// #define I_DBLPUSH	1
-/// #define I_STRINGPUSH	2
-/// #define I_PHRASEPUSH	3
-/// #define I_ARREND	4
-/// #define I_ARRAYPUSH	5
-/// #define I_INCOND	6
-/// #define I_DIVCODE	7
-/// #define I_PAR		8
-/// #define I_AMP		9
-/// #define I_LSHIFT	10
-/// #define I_RIGHTSHIFT	11
-/// #define I_NEGATE	12
-/// #define I_TILDA		13
-/// #define I_LT		14
-/// #define I_GT		15
-/// #define I_LE		16
-/// #define I_GE		17
-/// #define I_NE		18
-/// #define I_EQ		19
-/// #define I_REGEXEQ	20
-/// #define I_AND1		21
-/// #define I_OR1		22
-/// #define I_NOT		23
-/// #define I_NOOP		24
-/// #define I_POPIGNORE	25
-/// #define I_DEFINED	26
-/// #define I_OBJDEFINED	27
-/// #define I_CURROBJDEFINED	28
-/// #define I_REALOBJDEFINED	29
-/// #define I_TASK		30
-/// #define I_UNDEFINE	31
-/// #define I_DOT		32
-/// #define I_MODULO	33
-/// #define I_ADDCODE	34
-/// #define I_SUBCODE	35
-/// #define I_MULCODE	36
-/// #define I_XORCODE	37
-/// #define I_DOTASSIGN	38
-/// #define I_MODDOTASSIGN	39
-/// #define I_MODASSIGN	40
-/// #define I_VARASSIGN	41
-/// #define I_DELETEIT	42
-/// #define I_DELETEARRITEM	43
-/// #define I_READONLYIT	44
-/// #define I_ONCHANGEIT	45
-/// #define I_EVAL		46
-/// #define I_VAREVAL	47
-/// #define I_OBJVAREVAL	48
-/// #define I_FUNCNAMED	49
-/// #define I_LVAREVAL	50
-/// #define I_GVAREVAL	51
-/// #define I_VARPUSH	52
-/// #define I_OBJVARPUSH	53
-/// #define I_CALLFUNC	54
-/// #define I_OBJCALLFUNCPUSH	55
-/// #define I_OBJCALLFUNC	56
-/// #define I_ARRAY		57
-/// #define I_LINENUM	58
-/// #define I_FILENAME	59
-/// #define I_FORIN1	60
-/// #define I_FORIN2	61
-/// #define I_POPNRETURN	62
-/// #define I_STOP		63
-/// #define I_SELECT1	64
-/// #define I_SELECT2	65
-/// #define I_SELECT3	66
-/// #define I_PRINT		67
-/// #define I_GOTO		68
-/// #define I_TFCONDEVAL	69
-/// #define I_TCONDEVAL	70
-/// #define I_CONSTANT	71
-/// #define I_DOTDOTARG	72
-/// #define I_VARG		73
-/// #define I_CURROBJEVAL	74
-/// #define I_CONSTOBJEVAL	75
-/// #define I_ECURROBJEVAL	76
-/// #define I_EREALOBJEVAL	77
-/// #define I_RETURNV	78
-/// #define I_RETURN	79
-/// #define I_QMARK		80
-/// #define I_FORINEND	81
-/// #define I_DOSWEEPCONT	82
-/// #define I_CLASSINIT	83
-/// #define I_PUSHINFO	84
-/// #define I_POPINFO	85
-/// #define I_NARGS		86
-/// #define I_TYPEOF	87
-/// #define I_XY2		88
-/// #define I_XY4		89
-///
-/// /* watch out, these values are tied to the Codesize array */
-/// #define IC_NONE 0
-/// #define IC_NUM 1
-/// #define IC_STR 2
-/// #define IC_DBL 3
-/// #define IC_SYM 4
-/// #define IC_PHR 5
-/// #define IC_INST 6
-/// #define IC_FUNC 7
-/// #define IC_BLTIN 8
-///
-/// /* Watch out, these values must line up with the Bltinfuncs array */
-/// #define BI_NONE		0
-/// #define BI_SIZEOF	1
-/// #define BI_OLDNARGS	2
-/// #define BI_ARGV		3
-/// #define BI_MIDIBYTES	4
-/// #define BI_SUBSTR	5
-/// #define BI_SBBYES	6
-/// #define BI_RAND		7
-/// #define BI_ERROR	8
-/// #define BI_PRINTF	9
-/// #define BI_READPHR	10
-/// #define BI_EXIT		11
-/// #define BI_OLDTYPEOF	12
-/// #define BI_SPLIT	13
-/// #define BI_CUT		14
-/// #define BI_STRING	15
-/// #define BI_INTEGER	16
-/// #define BI_PHRASE	17
-/// #define BI_FLOAT	18
-/// #define BI_SYSTEM	19
-/// #define BI_CHDIR	20
-/// #define BI_TEMPO	21
-/// #define BI_MILLICLOCK	22
-/// #define BI_CURRTIME	23
-/// #define BI_FILETIME	24
-/// #define BI_GARBCOLLECT	25
-/// #define BI_FUNKEY	26
-/// #define BI_ASCII	27
-/// #define BI_MIDIFILE	28
-/// #define BI_REBOOT	29
-/// #define BI_REFUNC	30
-/// #define BI_DEBUG	31
-/// #define BI_PATHSEARCH	32
-/// #define BI_SYMBOLNAMED	33
-/// #define BI_LIMITSOF	34
-/// #define BI_SIN		35
-/// #define BI_COS		36
-/// #define BI_TAN		37
-/// #define BI_ASIN		38
-/// #define BI_ACOS		39
-/// #define BI_ATAN		40
-/// #define BI_SQRT		41
-/// #define BI_POW		42
-/// #define BI_EXP		43
-/// #define BI_LOG		44
-/// #define BI_LOG10	45
-/// #define BI_REALTIME	46
-/// #define BI_FINISHOFF	47
-/// #define BI_SPRINTF	48
-/// #define BI_GET		49
-/// #define BI_PUT		50
-/// #define BI_OPEN		51
-/// #define BI_FIFOSIZE	52
-/// #define BI_FLUSH	53
-/// #define BI_CLOSE	54
-/// #define BI_TASKINFO	55
-/// #define BI_KILL		56
-/// #define BI_PRIORITY	57
-/// #define BI_ONEXIT	58
-/// #define BI_SLEEPTILL	59
-/// #define BI_WAIT		60
-/// #define BI_LOCK		61
-/// #define BI_UNLOCK	62
-/// #define BI_OBJECT	63
-/// #define BI_OBJECTLIST	64
-/// #define BI_WINDOBJECT	65
-/// #define BI_SCREEN	66
-/// #define BI_SETMOUSE	67
-/// #define BI_MOUSEWARP	68
-/// #define BI_BROWSEFILES	69
-/// #define BI_COLORSET	70
-/// #define BI_COLORMIX	71
-/// #define BI_SYNC		72
-/// #define BI_OLDXY	73
-/// #define BI_CORELEFT	74
-/// #define BI_PRSTACK	75
-/// #define BI_PHDUMP	76
-/// #define BI_NULLFUNC	77
-/// /* Methods, much like built-in functions */
-/// #define O_SETINIT	78
-/// #define O_ADDCHILD	79
-/// #define O_REMOVECHILD	80
-/// #define O_CHILDUNDER	81
-/// #define O_CHILDREN	82
-/// #define O_INHERITED	83
-/// #define O_ADDINHERIT	84
-/// #define O_SIZE		85
-/// #define O_REDRAW	86
-/// #define O_CONTAINS	87
-/// #define O_XMIN		88
-/// #define O_YMIN		89
-/// #define O_XMAX		90
-/// #define O_YMAX		91
-/// #define O_LINE		92
-/// #define O_BOX		93
-/// #define O_FILL		94
-/// #define O_STYLE		95
-/// #define O_MOUSEDO	96
-/// #define O_TYPE		97
-/// #define O_TEXTCENTER	98
-/// #define O_TEXTLEFT	99
-/// #define O_TEXTRIGHT	100
-/// #define O_TEXTHEIGHT	101
-/// #define O_TEXTWIDTH	102
-/// #define O_SAVEUNDER	103
-/// #define O_RESTOREUNDER	104
-/// #define O_PRINTF	105
-/// #define O_DRAWPHRASE	106
-/// #define O_SCALETOGRID	107
-/// #define O_VIEW		108
-/// #define O_TRACKNAME	109
-/// #define O_SWEEP		110
-/// #define O_CLOSESTNOTE	111
-/// #define O_MENUITEM	112
-/// #define BI_LSDIR	113
-/// #define BI_REKEYLIB	114
-/// #define BI_FIFOCTL	115
-/// #define BI_MDEP		116
-/// #define BI_HELP		117
-/// #define O_MENUITEMS	118
-/// #define O_ELLIPSE	119
-/// #define O_FILLELLIPSE	120
-/// #define O_SCALETOWIND	121
-/// #define BI_ATTRIBARRAY	122
-/// #define BI_ONERROR	123
-/// #define BI_MIDI		124
-/// #define BI_BITMAP	125
-/// #define BI_OBJECTINFO	126
-/// #define O_FILLPOLYGON	127
-///
-/// #define IO_STD 1
-/// #define IO_REDIR 2
-///
-/// #define CUT_NORMAL 0
-/// #define CUT_TRUNCATE 1
-/// #define CUT_INCLUSIVE 2
-/// #define CUT_TIME 3
-/// #define CUT_FLAGS 4
-/// #define CUT_TYPE 5
-/// #define CUT_CHANNEL 6
-/// #define CUT_NOTTYPE 7
-/// #define CUT_PITCH 7
-///
-/// /* These values start here because they continue from NT_ON, NT_OFF, ... */
-/// #define M_CHANPRESSURE 16
-/// #define M_CONTROLLER 32
-/// #define M_PROGRAM 64
-/// #define M_PRESSURE 128
-/// #define M_PITCHBEND 256
-/// #define M_SYSEX 512
-/// #define M_POSITION 1024
-/// #define M_CLOCK 2048
-/// #define M_SONG 4096
-/// #define M_STARTSTOPCONT 8192
-/// #define M_SYSEXTEXT 16384
-///
-/// /* Used for return values of mdep_waitfor() */
-/// #define K_CONSOLE  1
-/// #define K_MOUSE 2
-/// #define K_MIDI 4
-/// #define K_WINDEXPOSE 8
-/// #define K_WINDRESIZE 16
-/// #define K_TIMEOUT 32
-/// #define K_ERROR 64
-/// #define K_NOTHING 128
-/// #define K_QUIT 256
-/// #define K_PORT 512
-///
-/// #define T_STATUS 1
-/// #define T_KILL 2
-/// #define T_PAUSE 4
-/// #define T_RESTART 8
-///
-/// /* For Symbol.flags */
-/// #define S_READONLY 1
-/// #define S_SEEN 2
-///
-/// /* Offset applied to return values of fromconsole() for function keys */
-/// #define FKEYBIT 1024
-/// #define KEYUPBIT 2048
-/// #define KEYDOWNBIT 4096
-/// #define NFKEYS 24
-///
-/// /* This flag allows 'phrase % number' operation to be zero or one-based */
-/// /* I guess 1-based is more natural (ie. 'a,b,c'%1 == 'a'), but 0-based */
-/// /* would make it more array-like.  Note that the existing library of */
-/// /* keykit functions depends on phrases being one-based, so this can't */
-/// /* be changed unless you change the library.  Not advised, but I can */
-/// /* envision changing it if/when other strong reasons warrant it. */
-/// #define PHRASEBASE 1		/* affects 'phrase % number' operation */
-///
-/// /* These are the amounts used for bulk allocation of various structures */
-/// #define ALLOCSY 64
-/// #define ALLOCIN 512
-/// #define ALLOCSCH 64
-/// #define ALLOCHN 128
-/// #define ALLOCTF 32
-/// #define ALLOCINT 32
-/// #define ALLOCDN 32
-/// #define ALLOCFD 32
-/// #define ALLOCLK 32
-/// #define ALLOCOBJ 64
-///
+// Watch out, these values must line up with the Bytefuncs array
+const I_POPVAL = 0
+const I_DBLPUSH = 1
+const I_STRINGPUSH = 2
+const I_PHRASEPUSH = 3
+const I_ARREND = 4
+const I_ARRAYPUSH = 5
+const I_INCOND = 6
+const I_DIVCODE = 7
+const I_PAR = 8
+const I_AMP = 9
+const I_LSHIFT = 10
+const I_RIGHTSHIFT = 11
+const I_NEGATE = 12
+const I_TILDA = 13
+const I_LT = 14
+const I_GT = 15
+const I_LE = 16
+const I_GE = 17
+const I_NE = 18
+const I_EQ = 19
+const I_REGEXEQ = 20
+const I_AND1 = 21
+const I_OR1 = 22
+const I_NOT = 23
+const I_NOOP = 24
+const I_POPIGNORE = 25
+const I_DEFINED = 26
+const I_OBJDEFINED = 27
+const I_CURROBJDEFINED = 28
+const I_REALOBJDEFINED = 29
+const I_TASK = 30
+const I_UNDEFINE = 31
+const I_DOT = 32
+const I_MODULO = 33
+const I_ADDCODE = 34
+const I_SUBCODE = 35
+const I_MULCODE = 36
+const I_XORCODE = 37
+const I_DOTASSIGN = 38
+const I_MODDOTASSIGN = 39
+const I_MODASSIGN = 40
+const I_VARASSIGN = 41
+const I_DELETEIT = 42
+const I_DELETEARRITEM = 43
+const I_READONLYIT = 44
+const I_ONCHANGEIT = 45
+const I_EVAL = 46
+const I_VAREVAL = 47
+const I_OBJVAREVAL = 48
+const I_FUNCNAMED = 49
+const I_LVAREVAL = 50
+const I_GVAREVAL = 51
+const I_VARPUSH = 52
+const I_OBJVARPUSH = 53
+const I_CALLFUNC = 54
+const I_OBJCALLFUNCPUSH = 55
+const I_OBJCALLFUNC = 56
+const I_ARRAY = 57
+const I_LINENUM = 58
+const I_FILENAME = 59
+const I_FORIN1 = 60
+const I_FORIN2 = 61
+const I_POPNRETURN = 62
+const I_STOP = 63
+const I_SELECT1 = 64
+const I_SELECT2 = 65
+const I_SELECT3 = 66
+const I_PRINT = 67
+const I_GOTO = 68
+const I_TFCONDEVAL = 69
+const I_TCONDEVAL = 70
+const I_CONSTANT = 71
+const I_DOTDOTARG = 72
+const I_VARG = 73
+const I_CURROBJEVAL = 74
+const I_CONSTOBJEVAL = 75
+const I_ECURROBJEVAL = 76
+const I_EREALOBJEVAL = 77
+const I_RETURNV = 78
+const I_RETURN = 79
+const I_QMARK = 80
+const I_FORINEND = 81
+const I_DOSWEEPCONT = 82
+const I_CLASSINIT = 83
+const I_PUSHINFO = 84
+const I_POPINFO = 85
+const I_NARGS = 86
+const I_TYPEOF = 87
+const I_XY2 = 88
+const I_XY4 = 89
+
+// watch out, these values are tied to the Codesize array
+const IC_NONE = 0
+const IC_NUM = 1
+const IC_STR = 2
+const IC_DBL = 3
+const IC_SYM = 4
+const IC_PHR = 5
+const IC_INST = 6
+const IC_FUNC = 7
+const IC_BLTIN = 8
+
+// Watch out, these values must line up with the Bltinfuncs array
+const BI_NONE = 0
+const BI_SIZEOF = 1
+const BI_OLDNARGS = 2
+const BI_ARGV = 3
+const BI_MIDIBYTES = 4
+const BI_SUBSTR = 5
+const BI_SBBYES = 6
+const BI_RAND = 7
+const BI_ERROR = 8
+const BI_PRINTF = 9
+const BI_READPHR = 10
+const BI_EXIT = 11
+const BI_OLDTYPEOF = 12
+const BI_SPLIT = 13
+const BI_CUT = 14
+const BI_STRING = 15
+const BI_INTEGER = 16
+const BI_PHRASE = 17
+const BI_FLOAT = 18
+const BI_SYSTEM = 19
+const BI_CHDIR = 20
+const BI_TEMPO = 21
+const BI_MILLICLOCK = 22
+const BI_CURRTIME = 23
+const BI_FILETIME = 24
+const BI_GARBCOLLECT = 25
+const BI_FUNKEY = 26
+const BI_ASCII = 27
+const BI_MIDIFILE = 28
+const BI_REBOOT = 29
+const BI_REFUNC = 30
+const BI_DEBUG = 31
+const BI_PATHSEARCH = 32
+const BI_SYMBOLNAMED = 33
+const BI_LIMITSOF = 34
+const BI_SIN = 35
+const BI_COS = 36
+const BI_TAN = 37
+const BI_ASIN = 38
+const BI_ACOS = 39
+const BI_ATAN = 40
+const BI_SQRT = 41
+const BI_POW = 42
+const BI_EXP = 43
+const BI_LOG = 44
+const BI_LOG10 = 45
+const BI_REALTIME = 46
+const BI_FINISHOFF = 47
+const BI_SPRINTF = 48
+const BI_GET = 49
+const BI_PUT = 50
+const BI_OPEN = 51
+const BI_FIFOSIZE = 52
+const BI_FLUSH = 53
+const BI_CLOSE = 54
+const BI_TASKINFO = 55
+const BI_KILL = 56
+const BI_PRIORITY = 57
+const BI_ONEXIT = 58
+const BI_SLEEPTILL = 59
+const BI_WAIT = 60
+const BI_LOCK = 61
+const BI_UNLOCK = 62
+const BI_OBJECT = 63
+const BI_OBJECTLIST = 64
+const BI_WINDOBJECT = 65
+const BI_SCREEN = 66
+const BI_SETMOUSE = 67
+const BI_MOUSEWARP = 68
+const BI_BROWSEFILES = 69
+const BI_COLORSET = 70
+const BI_COLORMIX = 71
+const BI_SYNC = 72
+const BI_OLDXY = 73
+const BI_CORELEFT = 74
+const BI_PRSTACK = 75
+const BI_PHDUMP = 76
+const BI_NULLFUNC = 77
+
+// Methods, much like built-in functions
+const O_SETINIT = 78
+const O_ADDCHILD = 79
+const O_REMOVECHILD = 80
+const O_CHILDUNDER = 81
+const O_CHILDREN = 82
+const O_INHERITED = 83
+const O_ADDINHERIT = 84
+const O_SIZE = 85
+const O_REDRAW = 86
+const O_CONTAINS = 87
+const O_XMIN = 88
+const O_YMIN = 89
+const O_XMAX = 90
+const O_YMAX = 91
+const O_LINE = 92
+const O_BOX = 93
+const O_FILL = 94
+const O_STYLE = 95
+const O_MOUSEDO = 96
+const O_TYPE = 97
+const O_TEXTCENTER = 98
+const O_TEXTLEFT = 99
+const O_TEXTRIGHT = 100
+const O_TEXTHEIGHT = 101
+const O_TEXTWIDTH = 102
+const O_SAVEUNDER = 103
+const O_RESTOREUNDER = 104
+const O_PRINTF = 105
+const O_DRAWPHRASE = 106
+const O_SCALETOGRID = 107
+const O_VIEW = 108
+const O_TRACKNAME = 109
+const O_SWEEP = 110
+const O_CLOSESTNOTE = 111
+const O_MENUITEM = 112
+const BI_LSDIR = 113
+const BI_REKEYLIB = 114
+const BI_FIFOCTL = 115
+const BI_MDEP = 116
+const BI_HELP = 117
+const O_MENUITEMS = 118
+const O_ELLIPSE = 119
+const O_FILLELLIPSE = 120
+const O_SCALETOWIND = 121
+const BI_ATTRIBARRAY = 122
+const BI_ONERROR = 123
+const BI_MIDI = 124
+const BI_BITMAP = 125
+const BI_OBJECTINFO = 126
+const O_FILLPOLYGON = 127
+
+const IO_STD = 1
+const IO_REDIR = 2
+
+const CUT_NORMAL = 0
+const CUT_TRUNCATE = 1
+const CUT_INCLUSIVE = 2
+const CUT_TIME = 3
+const CUT_FLAGS = 4
+const CUT_TYPE = 5
+const CUT_CHANNEL = 6
+const CUT_NOTTYPE = 7
+
+// These values start here because they continue from NT_ON, NT_OFF, ...
+const M_CHANPRESSURE = 16
+const M_CONTROLLER = 32
+const M_PROGRAM = 64
+const M_PRESSURE = 128
+const M_PITCHBEND = 256
+const M_SYSEX = 512
+const M_POSITION = 1024
+const M_CLOCK = 2048
+const M_SONG = 4096
+const M_STARTSTOPCONT = 8192
+const M_SYSEXTEXT = 16384
+
+// Used for return values of mdep_waitfor()
+const K_CONSOLE = 1
+const K_MOUSE = 2
+const K_MIDI = 4
+const K_WINDEXPOSE = 8
+const K_WINDRESIZE = 16
+const K_TIMEOUT = 32
+const K_ERROR = 64
+const K_NOTHING = 128
+const K_QUIT = 256
+const K_PORT = 512
+
+const T_STATUS = 1
+const T_KILL = 2
+const T_PAUSE = 4
+const T_RESTART = 8
+
+// For Symbol.flags
+const S_READONLY = 1
+const S_SEEN = 2
+
+// Offset applied to return values of fromconsole() for function keys
+const FKEYBIT = 1024
+const KEYUPBIT = 2048
+const KEYDOWNBIT = 4096
+const NFKEYS = 24
+
+// This flag allows 'phrase % number' operation to be zero or one-based
+// I guess 1-based is more natural (ie. 'a,b,c'%1 == 'a'), but 0-based
+// would make it more array-like.  Note that the existing library of
+// keykit functions depends on phrases being one-based, so this can't
+// be changed unless you change the library.  Not advised, but I can
+// envision changing it if/when other strong reasons warrant it.
+
+const PHRASEBASE = 1 // affects 'phrase % number' operation
+
+// These are the amounts used for bulk allocation of various structures
+const ALLOCSY = 64
+const ALLOCIN = 512
+const ALLOCSCH = 64
+const ALLOCHN = 128
+const ALLOCTF = 32
+const ALLOCINT = 32
+const ALLOCDN = 32
+const ALLOCFD = 32
+const ALLOCLK = 32
+const ALLOCOBJ = 64
+
 const H_INSERT = 0
 const H_LOOK = 1
 const H_DELETE = 2
 
-///
-/// #define COMPLAIN 1
-/// #define NOCOMPLAIN 0
-///
-/// /* default separator for split() on strings */
-/// #define DEFSPLIT " \t\n"
-///
+const COMPLAIN = 1
+const NOCOMPLAIN = 0
+
+// default separator for split() on strings
+const DEFSPLIT = " \t\n"
+
 /// #define ISDEBUGON (Debug!=NULL && *Debug!=0)
-///
-/// /* KeyKit programs get parsed and 'compiled' into lists of Inst's. */
-/// /* Each program segment (e.g. a function) is kept in a separate list. */
-/// /* The Inst's are maintained as linked lists rather than as arrays, */
-/// /* so that they can be dynamically allocated (hence no program length */
-/// /* restrictions) and so that separate intruction segements (e.g. for each */
-/// /* user-defined function) can be more easily maintained. */
-///
+
+// KeyKit programs get parsed and 'compiled' into lists of Inst's.
+// Each program segment (e.g. a function) is kept in a separate list.
+// The Inst's are maintained as linked lists rather than as arrays,
+// so that they can be dynamically allocated (hence no program length
+// restrictions) and so that separate intruction segements (e.g. for each
+// user-defined function) can be more easily maintained.
+
 type Inst struct {
 	i interface{}
 	/// 	BLTINCODE bltin;
@@ -502,11 +498,10 @@ type Inst struct {
 	/// 	Unchar bytes[8];
 }
 
-///
-/// /* values of ival in Inst */
-/// #define IBREAK 8
-/// #define ICONTINUE 9
-///
+// values of ival in Inst
+const IBREAK = 8
+const ICONTINUE = 9
+
 /// union str_union {
 /// 	Symstr str;
 /// 	Unchar bytes[8];
@@ -528,25 +523,19 @@ type Inst struct {
 /// 	Unchar bytes[8];
 /// };
 ///
-/// #define DONTPUSH 0x800
-///
-/// /* This is an arbitrary magic number */
-/// #define FORINJUNK 0x1234
-///
+const DONTPUSH = 0x800
+
+// This is an arbitrary magic number
+const FORINJUNK = 0x1234
 
 type Instcode struct {
 	u     Inst
 	itype int
 }
 
-///
-/// /* The Datum is the basic type for the Stack that gets manipulated during */
-/// /* the execution of Inst's. */
-///
-
 // Datum is the interpreter stack type
-type Datum struct { /* interpreter stack type */
-	dtype int16 /* uses D_* values */
+type Datum struct { // interpreter stack type
+	dtype int16 // uses D_* values
 	u     interface{}
 
 	/// 	union Datumu {
@@ -570,14 +559,11 @@ type Datum struct { /* interpreter stack type */
 
 }
 
-///
-/// typedef union Datumu Datumu;
-///
-/// typedef struct Dnode {
-/// 	struct Datum d;
-/// 	struct Dnode *next;
-/// } Dnode;
-///
+type Dnode struct {
+	d    Datum
+	next *Dnode
+}
+
 type Hnode struct {
 	next Hnodep
 	key  Datum
@@ -586,7 +572,6 @@ type Hnode struct {
 
 const HT_TOBECHECKED = 1
 
-///
 type Htable struct {
 	size      int /* size of nodetable */
 	count     int /* number of actual elements */
@@ -618,7 +603,7 @@ type Symbol struct { // symbol table entry
 	name Datum // For normal variables, this is the name.
 	// For array elements, it's the index value.
 	stype    int   // UNDEF, VAR, MACRO, TOGLOBSYM, -or- a keyword
-	stackpos int8  // 0 is global, >0 is parameter, <0 is local
+	stackpos int   // 0 is global, >0 is parameter, <0 is local
 	flags    byte  // S_READONLY, etc.
 	onchange Codep // to execute when variable changes value
 	sd       Datum // Value of global VARs and array elements.
@@ -650,35 +635,31 @@ var Bltinfuncs []BLTINFUNC
 
 type Ktaskp *Ktask
 
-///
-/// #define OFF_USER 0
-/// #define OFF_INTERNAL 1
-///
-/// typedef enum {
-/// 	FIFOTYPE_UNTYPED,
-/// 	FIFOTYPE_BINARY,
-/// 	FIFOTYPE_LINE,
-/// 	FIFOTYPE_FIFO,
-/// 	FIFOTYPE_ARRAY
-/// } Fifotype;
-///
-/// typedef struct schednode {
-/// 	struct schednode *next;
-/// 	long clicks;			/* scheduled time */
-/// 	char type;			/* SCH_* */
-/// 	char offtype;			/* for SCH_NOTEOFF) */
-/// 	char monitor;			/* If 1, add to Monitorfifo */
-/// 	Phrasep phr;			/* for SCH_PHRASE */
-/// 	Noteptr note;			/* for SCH_NOTEOFF and SCH_PHRASE. */
-/// 	Ktaskp task;
-/// 	long repeat;			/* if > 0, a repeat time. */
-/// } Sched;
-///
-/// typedef struct Tofree {
-/// 	Noteptr note;
-/// 	struct Tofree *next;
-/// } Tofree;
-///
+const OFF_USER = 0
+const OFF_INTERNAL = 1
+
+const FIFOTYPE_UNTYPED = 0
+const FIFOTYPE_BINARY = 1
+const FIFOTYPE_LINE = 2
+const FIFOTYPE_FIFO = 3
+const FIFOTYPE_ARRAY = 4
+
+type Sched struct {
+	next    *Sched
+	clicks  int     // scheduled time
+	stype   uint8   // SCH_*
+	offtype uint8   // for SCH_NOTEOFF)
+	monitor bool    // If true, add to Monitorfifo
+	phr     Phrasep // for SCH_PHRASE
+	note    Noteptr // for SCH_NOTEOFF and SCH_PHRASE.
+	task    Ktaskp
+	repeat  int // if > 0, a repeat time.
+}
+
+type Tofree struct {
+	note Noteptr
+	next *Tofree
+}
 
 type Ktask struct {
 	pc              *Unchar /* current instruction */
@@ -712,14 +693,14 @@ type Ktask struct {
 	ontaskerrormsg  Symstr
 	nxt             Ktaskp /* Used for the Toptp and Freetp lists */
 	tmplist         Ktaskp /* Used for temporary lists. */
-	linenum         long
+	linenum         int
 	filename        Symstr
 	lock            *Lknode
 	obj             Kobjectp /* object we're running method of */
 	realobj         Kobjectp /* object we're running method on behalf of */
 	method          Symstr
 	pend_bltin      BLTINCODE /* pending function (when T_OBJBLOCKED). */
-	pend_npassed    short     /* for pending function */
+	pend_npassed    int       /* for pending function */
 }
 
 type Fifodata struct {
@@ -728,24 +709,24 @@ type Fifodata struct {
 }
 
 type Fifo struct {
-	head         Fifodata // Points to last "put"
-	tail         Fifodata // Points to next "get"
+	head         *Fifodata // Points to last "put"
+	tail         *Fifodata // Points to next "get"
 	size         int
 	flags        int        // For FIFO_* bitflags, see above
-	fp           *FILE      // If non-NULL, this is a file fifo
+	fp           *os.File   // If non-NULL, this is a file fifo
 	t            Ktaskp     // This task is blocked on this fifo
 	port         PORTHANDLE // If FIFO_ISPORT is set, this is used.
 	num          int
 	next         *Fifo
-	fifoctl_type Fifotype // type of data read from fifo
-	linebuff     string   // Saved data for FIFO_LINE
-	linesize     int      // Total size of linebuff (for makeroom)
-	linesofar    int      // How much actually used
+	fifoctl_type int    // type of data read from fifo
+	linebuff     string // Saved data for FIFO_LINE
+	linesize     int    // Total size of linebuff (for makeroom)
+	linesofar    int    // How much actually used
 }
 
 type Lknode struct {
 	name   Symstr // Only used in Toplk list.
-	owner  *Task
+	owner  *Ktask
 	next   *Lknode // Only used in Toplk list.
 	notify *Lknode // List of pending locks with same name
 }
@@ -760,66 +741,68 @@ type Kobject struct {
 	onext       Kobjectp
 }
 
-/// /*
-///  * There are this many input devices, and this many output devices.
-///  */
-/// #define MAX_PORT_VALUE (MIDI_IN_DEVICES+MIDI_OUT_DEVICES)
-/// #define MIDI_OUT_DEVICES 64
-/// #define MIDI_IN_PORT_OFFSET 64
-/// #define MIDI_IN_DEVICES 64
-/// #define PORTMAP_SIZE (MIDI_IN_DEVICES+1)
-///
-/// typedef struct Midiport {
-/// 	int opened;
-/// 	Symstr name;
-/// 	int private1;	/* mdep layer can use this for whatever it wants */
-/// } Midiport;
-///
-/// /*
-///  * The index into this array is the port number minus 1.
-///  */
-/// Midiport Midiinputs[MIDI_IN_DEVICES];
-/// Midiport Midioutputs[MIDI_OUT_DEVICES];
-///
-/// /*
-///  * Used for the first argument of the mdep_midi function.
-///  */
-/// #define MIDI_OPEN_OUTPUT 0
-/// #define MIDI_CLOSE_OUTPUT 1
-/// #define MIDI_OPEN_INPUT 2
-/// #define MIDI_CLOSE_INPUT 3
-///
-/// /* values of T->state */
-/// /* T_RUNNING is a task that is currently free, available for use */
-/// #define T_FREE 0
-/// /* T_RUNNING is an active task */
-/// #define T_RUNNING 1
-/// /* T_BLOCKED is a task blocked on a fifo */
-/// #define T_BLOCKED 2
-/// /* T_SLEEPTILL is a task that is waiting because of a sleeptill() function */
-/// #define T_SLEEPTILL 3
-/// /* T_STOPPED is a task stopped */
-/// #define T_STOPPED 4
-/// /* T_SCHED is a task scheduled as a result of realtime() */
-/// #define T_SCHED 5
-/// /* T_WAITING is a task waiting for a signal. */
-/// #define T_WAITING 6
-/// /* T_LOCKWAIT is a task waiting for a lock. */
-/// #define T_LOCKWAIT 7
-///
-/// /* Bits that can be set in Fifo.flags.  When a fifo is */
-/// /* created, all of the bits default to 0. */
-/// #define FIFO_OPEN 1		/* if set, FIFO is open */
-/// #define FIFO_PIPE (1<<1)	/* fifo is connected to a pipe (vs. a file) */
-/// #define FIFO_WRITE (1<<2)	/* fifo is used for writing */
-/// #define FIFO_READ (1<<3)	/* fifo is used for reading */
-/// #define FIFO_SPECIAL (1<<4)	/* fifo is special (MIDI, CONSOLE, MOUSE), */
-/// 				/* it can't be closed by the user. */
-/// #define FIFO_NORETURN (1<<5)	/* tells whether to use ret() */
-/// #define FIFO_APPEND (1<<6)	/* fifo is writing */
-/// #define FIFO_ISPORT (1<<7)	/* fifo is attached to a mdep_openport() */
-///
-/// #define fifonum(f) ((f)->num)
+const MIDI_OUT_DEVICES = 64
+const MIDI_IN_DEVICES = 64
+const MIDI_IN_PORT_OFFSET = 64
+const MAX_PORT_VALUE = 128 // MIDI_IN_DEVICES+MIDI_OUT_DEVICES
+const PORTMAP_SIZE = 65    // MIDI_IN_DEVICES+1
+
+type Midiport struct {
+	opened   int
+	name     Symstr
+	private1 int // mdep layer can use this for whatever it wants
+}
+
+// The index into this array is the port number minus 1.
+var Midiinputs []Midiport
+var Midioutputs []Midiport
+
+// Used for the first argument of the mdep_midi function.
+const MIDI_OPEN_OUTPUT = 0
+const MIDI_CLOSE_OUTPUT = 1
+const MIDI_OPEN_INPUT = 2
+const MIDI_CLOSE_INPUT = 3
+
+// values of T->state
+// T_RUNNING is a task that is currently free, available for use
+const T_FREE = 0
+
+// T_RUNNING is an active task
+const T_RUNNING = 1
+
+// T_BLOCKED is a task blocked on a fifo
+const T_BLOCKED = 2
+
+// T_SLEEPTILL is a task that is waiting because of a sleeptill() function
+const T_SLEEPTILL = 3
+
+// T_STOPPED is a task stopped
+const T_STOPPED = 4
+
+// T_SCHED is a task scheduled as a result of realtime()
+const T_SCHED = 5
+
+// T_WAITING is a task waiting for a signal.
+const T_WAITING = 6
+
+// T_LOCKWAIT is a task waiting for a lock.
+const T_LOCKWAIT = 7
+
+// Bits that can be set in Fifo.flags.  When a fifo is
+// created, all of the bits default to 0.
+const FIFO_OPEN = 1            // if set, FIFO is open
+const FIFO_PIPE = (1 << 1)     // fifo is connected to a pipe (vs. a file)
+const FIFO_WRITE = (1 << 2)    // fifo is used for writing
+const FIFO_READ = (1 << 3)     // fifo is used for reading
+const FIFO_SPECIAL = (1 << 4)  // fifo is special (MIDI, CONSOLE, MOUSE), it can't be closed by the user. */
+const FIFO_NORETURN = (1 << 5) // tells whether to use ret()
+const FIFO_APPEND = (1 << 6)   // fifo is writing
+const FIFO_ISPORT = (1 << 7)   // fifo is attached to a mdep_openport()
+
+func fifonum(f *Fifo) int {
+	return f.num
+}
+
 ///
 const FIFOINC = 64
 
@@ -1137,7 +1120,9 @@ func dblval(d Datum) float32 {
 /// extern long Chkcount;
 ///
 /// /* Global keykit variables */
-/// extern Symlongp Clicks, Merge, Debug, Now, Sync, Lag, Graphics, Mergefilter;
+
+// var Clicks, Merge, Debug, Now, Sync, Lag, Graphics, Mergefilter Symlongp
+
 /// extern Symlongp Mergeport1, Mergeport2;
 /// extern Symlongp Debugwait, Debugmidi, Debugrun, Optimize, Debugfifo, Debugmouse;
 /// extern Symlongp Clocksperclick, Clicksperclock, Inputistty, Recsysex;

@@ -1,13 +1,10 @@
 package kit
 
-import "strings"
+import (
+	"log"
+	"strings"
+)
 
-//// /*
-////  *	Copyright 1996 AT&T Corp.  All rights reserved.
-////  */
-////
-//// #define OVERLAY3
-////
 //// #include "key.h"
 //// #include "gram.h"
 ////
@@ -1066,6 +1063,7 @@ func symdataptr(s Symbolp) *Datum {
 
 	/* handle unsigned characters and broken compilers */
 	if sp > 127 {
+		log.Printf("In symdataptr, questionable code!\n")
 		sp -= 256
 	}
 

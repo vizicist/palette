@@ -5,10 +5,10 @@ import "strings"
 // These values need to be independent bits (1,2,etc.), and their order
 // is the order that they'll be sorted (after clicks) within phrases.
 const NT_BYTES = 1
-const T_NOTE = 2
-const T_ON = 4
-const T_OFF = 8
-const T_LE3BYTES = 16
+const NT_NOTE = 2
+const NT_ON = 4
+const NT_OFF = 8
+const NT_LE3BYTES = 16
 
 const FLG_PICK = 1 // bits in .flags value of Notes
 
@@ -28,13 +28,21 @@ const UNDEFCLICKS = -99999
 // that.  This is adequate.
 const MAXCLICKS = 9999999
 
-//// /* This is the maximum number of MIDI ports we support */
-//// #define MAX_PORTS 32
-////
-//// #define typeof(nt) ((nt)->type)
-//// #define portof(nt) ((nt)->port)
-//// #define timeof(nt) ((nt)->clicks)
-////
+// This is the maximum number of MIDI ports we support
+const MAX_PORTS = 32
+
+func typeof(nt Noteptr) uint8 {
+	return nt.ntype
+}
+
+func portof(nt Noteptr) uint8 {
+	return nt.port
+}
+
+func timeof(nt Noteptr) int {
+	return nt.clicks
+}
+
 //// /* Beware - original endof() macro triggered a compiler bug on the sparc */
 //// #ifdef ORIGINAL_ENDOF
 //// #define endof(nt) \
@@ -57,8 +65,18 @@ func attribof(nt Noteptr) string {
 //// #define le3_nbytesof(nt) ((nt)->u.b.nbytes)
 //// #define gt3_nbytesof(nt) ((nt)->u.m->leng)
 //// #define ntisnote(nt) (typeof(nt)==NT_NOTE||typeof(nt)==NT_ON||typeof(nt)==NT_OFF)
-//// #define ntisbytes(nt) (typeof(nt)==NT_BYTES||typeof(nt)==NT_LE3BYTES)
-//// #define canonipitchof(p) ((p)%12)
+
+func ntisbytes(nt Noteptr) bool {
+	if typeof(nt) == NT_BYTES || typeof(nt) == NT_LE3BYTES {
+		return true
+	}
+	return false
+}
+
+func canonipitchof(p int) int {
+	return (p) % 12
+}
+
 //// #define canoctave(p) (-2+(p)/12)
 //// #define setfirstnote(p) ((p)->p_notes)
 //// #define realfirstnote(p) ((p)->p_notes)
@@ -147,136 +165,60 @@ type Phrase struct {
 // extern int Numnotes;
 // extern char *Nullstr;
 
-////
-//// #include "key.h"
-//// #include "gram.h"
-////
 //// extern char *Msg1;
-////
-//// char *Nullstr = "";
-//// int Defvol, Defoct, Defchan, Defport;
 
-var Defdur int
+var Nullstr = ""
+var Defvol, Defoct, Defchan, Defport, Defdur int
+var Defatt string
+var Deftime int
+var Def2time int
+var Defflags uint16
 
-//// char *Defatt;
-//// long Deftime = 0L;
-//// long Def2time = 0L;
-//// UINT16 Defflags = 0;
-////
-//// /* Each phrase in the entire system is a member of one of the following lists */
-////
-//// Noteptr Freent = NULL;
-//// Phrasep Topph = NULL;		/* Phrases in use */
-//// Phrasep Freeph = NULL;		/* Free list, available for re-use by newph() */
-////
-//// int Numnotes = 0;	/* Total number of notes in use. */
-//// int Numalloc = 0;	/* Total number of notes that have been allocated. */
-////
-//// #ifdef OLDSTUFF
-//// void
-//// countnotes(void)
-//// {
-//// 	Noteptr nt;
-//// 	Phrasep ph;
-//// 	int n, nph, npage;
-////
-//// 	eprint("Numnotes=%d\n",Numnotes);
-//// 	n = 0;
-//// 	for(nt=Freent;nt!=NULL;nt=nextnote(nt))
-//// 		n++;
-//// 	eprint("Numfree=%d\n",n);
-//// 	n = nph = npage = 0;
-//// 	for(ph=Topph;ph!=NULL;ph=ph->p_next) {
-//// 		if ( ispagedout(ph) )
-//// 			npage++;
-//// 		else
-//// 			n += phsize(ph,0);
-//// 		nph++;
-//// 	}
-//// 	eprint("Num in Topph phrases=%d npage=%d notes=%d\n",nph,npage,n);
-//// 	n = nph = npage = 0;
-//// 	for(ph=Freeph;ph!=NULL;ph=ph->p_next) {
-//// 		if ( ispagedout(ph) )
-//// 			npage++;
-//// 		else
-//// 			n += phsize(ph,0);
-//// 		nph++;
-//// 	}
-//// 	eprint("Num in Freeph phrases=%d npage=%d notes=%d\n",nph,npage,n);
-//// 	n = nph = npage = 0;
-//// 	for(ph=Tobechecked;ph!=NULL;ph=ph->p_next) {
-//// 		if ( ispagedout(ph) )
-//// 			npage++;
-//// 		else
-//// 			n += phsize(ph,0);
-//// 		nph++;
-//// 	}
-//// 	eprint("Num in Tobechecked phrases=%d npage=%d notes=%d\n",nph,npage,n);
-//// }
-//// #endif
-////
-//// void
-//// resetdef(void)
-//// {
-//// 	Defvol = DEFVOL;
-//// 	Defoct = DEFOCT;
-//// 	Defdur = DEFCLICKS;
-//// 	Defchan = DEFCHAN;
-//// 	Defport = DEFPORT;
-//// 	Defatt = Nullstr;
-//// 	Defflags = 0;
-//// 	Deftime = Def2time = 0L;
-//// }
-////
-//// int
-//// saniport(long port)
-//// {
-//// 	if ( port < 0 || port > MAX_PORT_VALUE ) {
-//// 		port = DEFPORT;
-//// 	}
-//// 	return port;
-//// }
-////
-//// Noteptr
-//// newnt(void)
-//// {
-//// 	static Noteptr lastn;
-//// 	static int used = ALLOCNT;
-//// 	register Noteptr n;
-////
-//// 	/* to avoid spending much time on it, we only check memory */
-//// 	/* every so often. */
-//// 	{static int cnt = 0;
-//// 		if ( ++cnt > 256 ) {
-//// 			cnt = 0;
-//// 			corecheck();
-//// 		}
-//// 	}
-////
-//// 	/* First check the free list and use those nodes, before using */
-//// 	/* the newly allocated stuff. */
-//// 	if ( Freent != NULL ) {
-//// 		n = Freent;
-//// 		Freent = Freent->next;
-//// 		goto getout;
-//// 	}
-//// 	if ( used == ALLOCNT ) {
-//// 		Numalloc += ALLOCNT;
-//// 		used = 0;
-//// 		lastn = (Noteptr) kmalloc(ALLOCNT*sizeof(Notedata),"newnt");
-//// 	}
-//// 	used++;
-//// 	n = lastn++;
-////     getout:
-//// 	n->next = NULL;
-//// #ifdef NTATTRIB
-//// 	n->attrib = Nullstr;
-//// #endif
-//// 	n->flags = 0;
-//// 	Numnotes++;
-//// 	return(n);
-//// }
-////
+// Each phrase in the entire system is a member of one of the following lists */
+
+var Freent Noteptr
+var Topph Phrasep  // Phrases in use
+var Freeph Phrasep // Free list, available for re-use by newph()
+
+var Numnotes int // Total number of notes in use.
+var Numalloc int // Total number of notes that have been allocated.
+
+func resetdef() {
+	Defvol = DEFVOL
+	Defoct = DEFOCT
+	Defdur = DEFCLICKS
+	Defchan = DEFCHAN
+	Defport = DEFPORT
+	Defatt = Nullstr
+	Defflags = 0
+	Deftime = 0
+	Def2time = 0
+}
+
+func saniport(port int) int {
+	if port < 0 || port > MAX_PORT_VALUE {
+		port = DEFPORT
+	}
+	return port
+}
+
+func newnt() (n Noteptr) {
+	// First check the free list and use those nodes, before using
+	// the newly allocated stuff.
+	if Freent != nil {
+		n = Freent
+		Freent = Freent.next
+		goto getout
+	}
+	n = &Notedata{}
+getout:
+	n.next = nil
+	n.attrib = ""
+	n.flags = 0
+	Numnotes++
+	return n
+}
+
 //// Midimessp
 //// savemess(Unchar* mess,int leng)
 //// {
@@ -382,26 +324,24 @@ var Defdur int
 //// 	}
 //// 	return lng1 - lng2;
 //// }
-////
-//// int
-//// utypeof(Noteptr nt)
-//// {
-//// 	switch (nt->type) {
-//// 	case NT_ON:
-//// 	case NT_OFF:
-//// 	case NT_NOTE:
-//// 		return nt->type;
-//// 	default:
-//// 		return NT_BYTES;
-//// 	}
-//// }
-////
-/* Compare two notes in the way used for ordering within a phrase. */
-/* I *think* this routine is starting to become almost exactly like */
-/* ntcmpxact(), except for the handling of midibytes types. */
-/* Probably should add a parameter to it, rather than duplicate the */
-/* code twice - that way it'll keep in sync better if there are future */
-/* changes. */
+
+func utypeof(nt Noteptr) int {
+	switch nt.ntype {
+	case NT_ON:
+	case NT_OFF:
+	case NT_NOTE:
+		return nt.ntype
+	default:
+		return NT_BYTES
+	}
+}
+
+// Compare two notes in the way used for ordering within a phrase.
+// I *think* this routine is starting to become almost exactly like
+// ntcmpxact(), except for the handling of midibytes types.
+// Probably should add a parameter to it, rather than duplicate the
+// code twice - that way it'll keep in sync better if there are future
+// changes.
 func ntcmporder(n1 Noteptr, n2 Noteptr) int {
 
 	ld := timeof(n1) - timeof(n2)
