@@ -1,23 +1,18 @@
 package kit
-//// /*
-////  *	Copyright 1996 AT&T Corp.  All rights reserved.
-////  */
-//// 
-//// #define OVERLAY4
-//// 
+
 //// #include "key.h"
-//// 
+////
 //// #include "d_menu.h"
-//// 
+////
 //// static int Menuysize = 0;
-//// 
+////
 //// #define MSCROLLWIDTH ((int)(*Menuscrollwidth)*mdep_fontwidth()/4) /* width of menu scroll bar */
 //// #define mymin(a,b) ((a)>(b)?(b):(a))
 //// #define shown(w) mymin((w)->km.nitems,(w)->km.menusize)
 //// #define menuxarea(w) ((w)->km.width+5)
 //// #define menuyarea(w) ((w)->km.height+4)
 //// #define hasscrollbar(w) ((w)->km.offset!=0)
-//// 
+////
 //// static void
 //// scrollbar(Kwind *w)
 //// {
@@ -28,26 +23,26 @@ package kit
 //// 	int top = w->km.top;
 //// 	int bary0, bary1;
 //// 	int inset = MSCROLLWIDTH/7;
-//// 
+////
 //// 	bary0 = y0 + ((y1-y0)*top)/nitems;
 //// 	bary1 = y0 + ((y1-y0)*(top+w->km.menusize))/nitems;
 //// 	my_plotmode(P_STORE);
 //// 	mdep_boxfill(x0+1+inset,bary0+1,x0+MSCROLLWIDTH-1-inset,bary1-1);
 //// }
-//// 
+////
 //// static void
 //// erasescrollbar(Kwind *w)
 //// {
 //// 	my_plotmode(P_CLEAR);
 //// 	mdep_boxfill(w->km.x+1,w->km.y+w->km.header+1,w->km.x+MSCROLLWIDTH-1,w->km.y+w->km.height-1);
 //// }
-//// 
+////
 //// void
 //// menustringat(Kwind *w,int itempos,int itemnum)
 //// {
 //// 	int n;
 //// 	Kitem *ki;
-//// 
+////
 //// 	for ( n=0,ki=w->km.items; ki!=NULL; ki=ki->next,n++ ) {
 //// 		if ( n == itemnum ) {
 //// 			int y = w->km.y+w->km.header+itempos*Menuysize+1+(int)(*Menuymargin);
@@ -56,7 +51,7 @@ package kit
 //// 		}
 //// 	}
 //// }
-//// 
+////
 //// /* menuconstruct(m,existing) - if 'existing' is non-zero, we assume */
 //// /* the menu's already displayed, so we keep the frame, and only change */
 //// /* the strings. */
@@ -69,13 +64,13 @@ package kit
 //// 	int realy0 = w->km.y;
 //// 	int y0 = w->km.y + w->km.header;
 //// 	int nshow = shown(w);
-//// 
+////
 //// 	/* Let MIDI I/O happen, since redrawing menus can take some time */
 //// 	mdep_sync(); chkinput(); chkoutput(); mdep_sync();
-//// 
+////
 //// 	x1 = x0 + w->km.width;
 //// 	y1 = realy0 + w->km.height;
-//// 
+////
 //// 	if ( ! existing ) {
 //// 		my_plotmode(P_CLEAR);
 //// 		mdep_boxfill(x0,y0,x1,y0+Menuysize-2);
@@ -133,22 +128,22 @@ package kit
 //// 			erasescrollbar(w);
 //// 		scrollbar(w);
 //// 	}
-//// 
+////
 //// 	mdep_sync();
 //// }
-//// 
+////
 //// void
 //// m_menuitem(Kwind *w,Kitem *ki)
 //// {
 //// 	dummyusage(ki);
 //// 	w->km.made = 0;
 //// }
-//// 
+////
 //// void
 //// menusetsize(Kwind *w, int x0, int y0, int x1, int y1)
 //// {
 //// 	int dy, sz;
-//// 
+////
 //// 	dummyusage(x0);
 //// 	dummyusage(x1);
 //// 	dy = y1 - y0;
@@ -163,7 +158,7 @@ package kit
 //// 	w->km.choice = M_NOCHOICE;
 //// 	w->lasty = y0;
 //// }
-//// 
+////
 //// void
 //// menucalcxy(Kwind *w)
 //// {
@@ -171,7 +166,7 @@ package kit
 //// 	int maxlen = 0;
 //// 	int n, c;
 //// 	Kitem *ki;
-//// 
+////
 //// 	w->km.x = w->x0;
 //// 	w->km.y = w->y0;
 //// 	for ( n=0,ki=w->km.items; ki!=NULL; ki=ki->next,n++ ) {
@@ -189,11 +184,11 @@ package kit
 //// 		w->km.offset = MSCROLLWIDTH;
 //// 		w->km.width += MSCROLLWIDTH;
 //// 	}
-//// 
+////
 //// 	/* adjust y to put mouse over choice */
 //// 	if ( choice < 0 )
 //// 		choice = 0;
-//// 
+////
 //// 	/* the edges of the screen may require repositioning */
 //// 	if ( w->km.x <= 0 ) {
 //// 		w->km.x = 1;
@@ -211,45 +206,45 @@ package kit
 //// 		w->km.y = Wroot->y1 - w->km.height - 3;
 //// 		w->y0 = w->km.y;
 //// 	}
-//// 
+////
 //// 	/* NEW STUFF */
 //// 	w->x1 = w->x0 + w->km.width + 4;
 //// 	w->y1 = w->y0 + w->km.height + 2;
-//// 
+////
 //// 	if ( w->km.x <= 0 || w->km.y <= 0 ) {
 //// 		wredraw1(Wroot);
 //// 		execerror("Whoops, menu is too big to fit on the screen!");
 //// 	}
 //// }
-//// 
+////
 //// void
 //// drawchoice(Kwind *w,int unhigh)
 //// {
 //// 	int x0, y0;
-//// 
+////
 //// 	if ( w->km.choice < 0 )
 //// 		return;
 //// 	x0 = w->km.x+1;
 //// 	y0 = w->km.y + w->km.header + w->km.choice * Menuysize + 1;
-//// 
+////
 //// 	my_plotmode(unhigh?P_CLEAR:P_STORE);
 //// 	mdep_boxfill(w->km.offset+x0, y0, x0 + w->km.width-2, y0 + Menuysize - 2);
 //// 	my_plotmode(unhigh?P_STORE:P_CLEAR);
 //// 	menustringat(w,w->km.choice,w->km.choice+w->km.top);
 //// }
-//// 
+////
 //// void
 //// highchoice(Kwind *w)
 //// {
 //// 	drawchoice(w,0);
 //// }
-//// 
+////
 //// void
 //// unhighchoice(Kwind *w)
 //// {
 //// 	drawchoice(w,1);
 //// }
-//// 
+////
 //// int
 //// boundit(int val,int mn,int mx)
 //// {
@@ -260,15 +255,15 @@ package kit
 //// 	else
 //// 		return val;
 //// }
-//// 
+////
 //// static void
 //// updatemenu(Kwind *w,int mx,int my, int nodraw)
 //// {
 //// 	int nchoice;
-//// 
-//// 	if ( my < w->km.y || my > (w->km.y + w->km.height) 
+////
+//// 	if ( my < w->km.y || my > (w->km.y + w->km.height)
 //// 		|| mx < w->km.x || mx > (w->km.x + w->km.width) ) {
-//// 
+////
 //// 		/* if we've got a current choice, unhighlight it */
 //// 		if ( w->km.choice >= 0 ) {
 //// 			unhighchoice(w);
@@ -276,24 +271,24 @@ package kit
 //// 		w->km.choice = M_NOCHOICE;
 //// 		return;
 //// 	}
-//// 
+////
 //// 	/* see if we're in a menu item */
 //// 	nchoice = menuchoice(w,mx,my);
-//// 
+////
 //// 	if ( nchoice != M_MOVE && nchoice != M_DELETE ) {
 //// 		/* see if we're in the scroll bar */
 //// 		if ( scrollupdate(w,mx,my) )
 //// 			return;
 //// 	}
-//// 
+////
 //// 	/* if we've got a current choice, and we've changed it... */
 //// 	if ( w->km.choice >= 0 && w->km.choice != nchoice ) {
-//// 
+////
 //// 		/* Normally, unhighlight the item we've left */
 //// 		unhighchoice(w);
 //// 		w->km.choice = M_NOCHOICE;
 //// 	}
-//// 
+////
 //// 	/* highlight the new choice */
 //// 	if ( w->km.choice != nchoice ) {
 //// 		w->km.choice = nchoice;
@@ -303,19 +298,19 @@ package kit
 //// 	}
 //// 	return;
 //// }
-//// 
+////
 //// int
 //// scrollupdate(Kwind *w,int mx,int my)
 //// {
 //// 	int newtop;
-//// 
+////
 //// 	if ( ! (mx >= w->km.x && mx < w->km.x + w->km.offset) ) {
 //// 		w->inscroll = 0;
 //// 		return 0;
 //// 	}
-//// 
+////
 //// #define BETTERSCROLLING 1
-//// 
+////
 //// 	/* if we just moved into the scrol bar... */
 //// #ifdef BETTERSCROLLING
 //// 	if ( 1 ) {
@@ -363,7 +358,7 @@ package kit
 //// 	}
 //// 	else {
 //// 		int sz, dm, chgtop;
-//// 
+////
 //// 		sz = (w->km.height/(3*w->km.nitems/2));
 //// 		sz = (w->km.height/w->km.nitems);
 //// 		if ( sz <= 0 )
@@ -390,7 +385,7 @@ package kit
 //// 	}
 //// 	return 1;
 //// }
-//// 
+////
 //// int
 //// menuchoice(Kwind *w,int x,int y)
 //// {
@@ -400,7 +395,7 @@ package kit
 //// 	int nchoice = M_NOCHOICE;
 //// 	int x0 = w->km.x;
 //// 	int x1 = x0 + w->km.width;
-//// 
+////
 //// 	if ( x >= x0 && x <= x1 ) {
 //// 		if ( y > w->km.y && y < ny ) {
 //// 			if ( x > ((x0+x1)/2+x1)/2 )
@@ -417,23 +412,23 @@ package kit
 //// 	}
 //// 	return nchoice;
 //// }
-//// 
+////
 //// void
 //// m_reset(void)
 //// {
 //// }
-//// 
+////
 //// void
 //// m_init(void)
 //// {
 //// 	static int first = 1;
-//// 
+////
 //// 	if ( first ) {
 //// 		Menuysize = mdep_fontheight() + 2 * (int)(*Menuymargin);
 //// 		first = 0;
 //// 	}
 //// }
-//// 
+////
 //// void
 //// m_menudo(Kwind *w,int b,int x,int y,int nodraw)
 //// {

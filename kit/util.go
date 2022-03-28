@@ -2,59 +2,49 @@ package kit
 
 import (
 	"fmt"
+	"log"
+	"strconv"
 	"strings"
 )
 
-//// /*
-////  *	Copyright 1996 AT&T Corp.  All rights reserved.
-////  */
-////
-//// /* This is a hook to include 'overlay' directives (in mdep.h) */
-//// #define OVERLAY1
-////
-//// #include "key.h"
-//// #include "gram.h"
-////
-//// Phrasep Tobechecked = NULL;
-
+var Tobechecked Phrasep
 var Htobechecked Htablep
-
 var Chkstuff int
 
-//// void
-//// addtobechecked(register Phrasep p)
-//// {
-//// 	register Phrasep tp;
-////
-//// 	/* make sure it's not already in there */
-//// 	for ( tp=Tobechecked; tp!=NULL; tp=tp->p_next ) {
-//// 		if ( tp == p )
-//// 			return;
-//// 	}
-////
-//// 	/* Workaround to detect a bug. */
-//// 	if ( p->p_tobe < -1000 ) {
-//// 		eprint("Ignoring possible bad phrase in addtobechecked!?  Potential memory leak.  p=%lld  tobe=%ld\n",(intptr_t)p,(long)(p->p_tobe));
-//// 		return;
-//// 	}
-////
-//// 	/* remove it from original list */
-//// 	if ( p == Topph )
-//// 		Topph = p->p_next;
-//// 	if ( p->p_next != NULL )
-//// 		(p->p_next)->p_prev = p->p_prev;
-//// 	if ( p->p_prev != NULL )
-//// 		(p->p_prev)->p_next = p->p_next;
-//// 	/* Add it to Tobechecked list */
-////
-//// 	p->p_next = Tobechecked;
-//// 	p->p_prev = NULL;
-//// 	if ( Tobechecked != NULL )
-//// 		Tobechecked->p_prev = p;
-//// 	Tobechecked = p;
-//// 	Chkstuff = 1;
-//// }
-////
+func addtobechecked(p Phrasep) {
+
+	// make sure it's not already in there
+	for tp := Tobechecked; tp != nil; tp = tp.p_next {
+		if tp == p {
+			return
+		}
+	}
+
+	// Workaround to detect a bug.
+	if p.p_tobe < -1000 {
+		log.Printf("Ignoring possible bad phrase in addtobechecked!?  Potential memory leak. tobe=%d\n", p.p_tobe)
+		return
+	}
+
+	/* remove it from original list */
+	if p == Topph {
+		Topph = p.p_next
+	}
+	if p.p_next != nil {
+		(p.p_next).p_prev = p.p_prev
+	}
+	if p.p_prev != nil {
+		(p.p_prev).p_next = p.p_next
+	}
+	/* Add it to Tobechecked list */
+	p.p_next = Tobechecked
+	p.p_prev = nil
+	if Tobechecked != nil {
+		Tobechecked.p_prev = p
+	}
+	Tobechecked = p
+	Chkstuff = 1
+}
 
 func httobechecked(p Htablep) {
 	/* if it's already in the list... */
@@ -879,16 +869,16 @@ func getnumval(d Datum, round bool) int {
 			v = 0
 			if s[qi] == 'x' {
 				was_hex = 1
-				for _, ch := range s[qi] {
-					i = hexchar(ch)
+				for _, ch := range s[qi:] {
+					i := hexchar(int(ch))
 					if i < 0 {
 						break
 					}
 					v = (v * 16) + i
 				}
 			} else {
-				for _, ch := range s[qi] {
-					i = int(ch) - '0'
+				for _, ch := range s[qi:] {
+					i := int(ch) - '0'
 					if i < 0 || i > 7 {
 						break
 					}
@@ -896,7 +886,11 @@ func getnumval(d Datum, round bool) int {
 				}
 			}
 		} else {
-			v = atol(p)
+			var err error
+			v, err = strconv.Atoi(s)
+			if err != nil {
+				v = 0
+			}
 		}
 		/* A 'q' suffix multiplies by *Clicks */
 		lastch := s[len(s)-1]
@@ -911,7 +905,7 @@ func getnumval(d Datum, round bool) int {
 		/* the pitch of the first note, or the */
 		/* value of the first MIDIbyte */
 
-		if n == NULL {
+		if n == nil {
 			v = -1
 		} else {
 			if ntisbytes(n) {
@@ -1149,52 +1143,41 @@ func getnmtype(d Datum) int16 {
 //// 	}
 //// }
 ////
-//// void
-//// freecode(Codep cp)
-//// {
-//// 	kfree(cp);
-//// }
-////
-//// void
-//// freeinode(Instnodep in)
-//// {
-//// 	nextinode(in) = Ifree;
-//// 	Ifree = in;
-//// }
-////
-//// Lknode *Toplk = NULL;
-//// Lknode *Freelk = NULL;
-////
-//// Lknode *
-//// newlk(Symstr nm)
-//// {
-//// 	static Lknode *lastlk;
-//// 	static int used = ALLOCLK;
-//// 	Lknode *lk;
-////
-//// 	/* First check the free list and use those nodes, before using */
-//// 	/* the newly allocated stuff. */
-//// 	if ( Freelk != NULL ) {
-//// 		lk = Freelk;
-//// 		Freelk = Freelk->next;
-//// /* eprint("NEWLK IS REUSING Freelk = %ld\n",lk); */
-//// 		goto getout;
-//// 	}
-//// 	if ( used == ALLOCLK ) {
-//// 		used = 0;
-//// 		lastlk = (Lknode*) kmalloc(ALLOCLK*sizeof(Lknode),"newlk");
-//// /* eprint("NEWLK IS ALLOCATING lastlk = %ld\n",lastlk); */
-//// 	}
-//// 	used++;
-//// 	lk = lastlk++;
-////    getout:
-//// 	lk->name = nm;
-//// 	lk->owner = NULL;
-//// 	lk->next = NULL;
-//// 	lk->notify = NULL;
-//// /* eprintf("NEWLK lk=%ld\n",lk); */
-//// 	return(lk);
-//// }
+
+func freecode(Codep cp) {
+	kfree(cp)
+}
+
+func freeinode(Instnodep in) {
+	nextinode(in) = Ifree
+	Ifree = in
+}
+
+var Toplk *Lknode
+var Freelk *Lknode
+
+func newlk(nm Symstr) *Lknode {
+
+	// static Lknode *lastlk;
+	// static int used = ALLOCLK;
+	var lk *Lknode
+
+	/* First check the free list and use those nodes, before using */
+	/* the newly allocated stuff. */
+	if Freelk != nil {
+		lk = Freelk
+		Freelk = Freelk.next
+		goto getout
+	}
+	lk = &Lknode{}
+getout:
+	lk.name = nm
+	lk.owner = nil
+	lk.next = nil
+	lk.notify = nil
+	return (lk)
+}
+
 ////
 //// void
 //// unlinklk(Lknode *lk)
@@ -1522,69 +1505,43 @@ func strdatum(s string) Datum {
 //// 	d.u.frm = f;
 //// 	return d;
 //// }
-////
-//// Datum
-//// notedatum(Noteptr n)
-//// {
-//// 	Datum d;
-//// 	d.type = D_NOTE;
-//// 	d.u.note = n;
-//// 	return d;
-//// }
+
+func notedatum(Noteptr n) Datum {
+	return Datum{dtype: D_NOTE, u: n}
+}
 
 func symdatum(s Symbolp) Datum {
-	var d Datum
-	d.dtype = D_SYM
-	d.u = s
-	return d
+	return Datum{dtype: D_SYM, u: s}
 }
 
 func fifodatum(f *Fifo) Datum {
-	var d Datum
-	d.dtype = D_FIFO
-	d.u = f
-	return d
+	return Datum{dtype: D_FIFO, u: f}
 }
 
-////
-//// Datum
-//// taskdatum(Ktaskp t)
-//// {
-//// 	Datum d;
-//// 	d.type = D_TASK;
-//// 	d.u.task = t;
-//// 	return d;
-//// }
-////
-//// Datum
-//// arrdatum(Htablep arr)
-//// {
-//// 	Datum d;
-//// 	d.type = D_ARR;
-//// 	d.u.arr = arr;
-//// 	return d;
-//// }
-////
-//// Datum
-//// objdatum(Kobjectp obj)
-//// {
-//// 	Datum d;
-//// 	d.type = D_OBJ;
-//// 	d.u.obj = obj;
-//// 	return d;
-//// }
-////
-//// int Codesize[9] = {
-//// 	0,	/* IC_NONE */
-//// 	5,	/* IC_NUM */
-//// 	8,	/* IC_STR */
-//// 	8,	/* IC_DBL */
-//// 	8,	/* IC_SYM */
-//// 	8,	/* IC_PHR */
-//// 	8,	/* IC_INST */
-//// 	1,	/* IC_FUNC */
-//// 	1	/* IC_BLTIN */
-//// };
+func taskdatum(Ktaskp t) Datum {
+	return Datum{dtype: D_TASK, u: t}
+}
+
+func arrdatum(arr Htablep) Datum {
+	return Datum{dtype: D_ARR, u: arr}
+}
+
+func objdatum(obj Kobjectp) Datum {
+	return Datum{dtype: D_OBJ, u: obj}
+}
+
+var Codesize = []int{
+	0, // IC_NONE
+	5, // IC_NUM
+	8, // IC_STR
+	8, // IC_DBL
+	8, // IC_SYM
+	8, // IC_PHR
+	8, // IC_INST
+	1, // IC_FUNC
+	1, // IC_BLTIN
+}
+
 ////
 //// Unchar *
 //// put_ipcode(Codep ip, Unchar *p)
