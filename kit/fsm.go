@@ -1,13 +1,8 @@
 package kit
-//// /*
-////  *	Copyright 1996 AT&T Corp.  All rights reserved.
-////  */
-//// 
-//// #define OVERLAY7
-//// 
+
 //// #include "key.h"
 //// #include "keymidi.h"
-//// 
+////
 //// /*
 ////  * midiparse(inbyte)
 ////  *
@@ -25,53 +20,53 @@ package kit
 ////  * message is received, the 'Currfunc' is called, and the State goes back
 ////  * to NEEDSTATUS.
 ////  */
-//// 
+////
 //// /* possible values for State */
 //// #define NEEDSTATUS 0
 //// #define NEEDONEBYTE 1
 //// #define NEEDTWOBYTES 2
 //// #define VARIABLELENGTH 3
-//// 
+////
 //// #define MESSAGESIZE 256
-//// 
+////
 //// int State = NEEDSTATUS;	/* The current state of the finite state machine. */
 //// 			/* It indicates what we're currently looking for. */
-//// 
+////
 //// actfunc Currfunc = NULL;/* This is the 'midiaction' function for the */
 //// 				/* current MIDI message being processed. */
-//// 
+////
 //// int Currchan = 0;	/* This is the current channel, ie. the channel # */
 //// 			/* on the latest 'channel message' status byte. */
-//// 
+////
 //// Unchar *Currmessage = NULL;	/* Current message buffer */
-//// 
+////
 //// int Messleng = 0;	/* Size of currently allocated message */
-//// 
+////
 //// int Messindex = 0;	/* Index of next byte to go into */
 //// 			/* 'Currmessage'.  When Messindex */
 //// 			/* gets >= Messleng, the 'Currmessage' */
 //// 			/* is reallocated to a larger size. */
-//// 
+////
 //// int Runnable = 0;	/* If non-zero, the current MIDI message */
 //// 			/* can use the "running status byte" feature. */
-//// 
+////
 //// struct midiaction Midi = {
 //// 	NULL,NULL,NULL,NULL,NULL,
 //// 	NULL,NULL,NULL,NULL,NULL,
 //// 	NULL,NULL,NULL,NULL,NULL,
 //// 	NULL,NULL,NULL
 //// };
-//// 
+////
 //// void
 //// midiparse(register int inbyte)
 //// {
 //// 	int highbit;
-//// 
-//// 
+////
+////
 //// 	/* If necessary, allocate larger message buffer. */
 //// 	if ( Messindex >= Messleng )
 //// 		biggermess(&Currmessage,&Messleng);
-//// 
+////
 //// 	if ( inbyte == -1 ) {
 //// 		/* start off in running status mode for notes */
 //// 		Messindex = 0;
@@ -79,19 +74,19 @@ package kit
 //// 		chanmsg(0x90);
 //// 		return;
 //// 	}
-//// 
+////
 //// 	if ( (inbyte & 0x80) != 0 )
 //// 		highbit = 1;
 //// 	else
 //// 		highbit = 0;
-//// 
+////
 //// 	/* Check active sensing early, so it doesn't interrupt sysex. */
 //// 	if ( inbyte == 0xfe ) {
 //// 		if ( Midi.mi_active != NULL )
 //// 			(*(Midi.mi_active))(Currmessage,Messindex);
 //// 		return;
 //// 	}
-//// 
+////
 //// 	/*
 //// 	 * Variable length messages (ie. the 'system exclusive')
 //// 	 * can be terminated by the next status byte, not necessarily
@@ -105,7 +100,7 @@ package kit
 //// 		Currfunc = NULL;
 //// 		State = NEEDSTATUS;
 //// 	}
-//// 
+////
 //// 	/*
 //// 	   Real time messages can occur ANYPLACE,
 //// 	   but do not interrupt running status.
@@ -114,11 +109,11 @@ package kit
 //// 		realmess(inbyte);
 //// 		return;
 //// 	}
-//// 
+////
 //// 	/*
 //// 	 * Status bytes always start a new message.
 //// 	 */
-//// 
+////
 //// 	if ( highbit ) {
 //// 		Messindex = 0;
 //// 		Currmessage[Messindex++] = inbyte;
@@ -130,13 +125,13 @@ package kit
 //// 			chanmsg(inbyte);
 //// 		return;
 //// 	}
-//// 
+////
 //// 	/*
 //// 	 * We've got a Data byte.
 //// 	 */
-//// 
+////
 //// 	Currmessage[Messindex++] = inbyte;
-//// 
+////
 //// 	switch ( State ) {
 //// 	case NEEDSTATUS:
 //// 		/*
@@ -177,19 +172,19 @@ package kit
 //// 	}
 //// 	return;
 //// }
-//// 
+////
 //// /*
 ////  * realmess(inbyte)
 ////  *
 ////  * Call the real-time function for the specified byte, immediately.
 ////  * These can occur anywhere, so they don't change the State.
 ////  */
-//// 
+////
 //// void
 //// realmess(int inbyte)
 //// {
 //// 	register actfunc f = NULL;
-//// 
+////
 //// 	switch ( inbyte ) {
 //// 	case 0xf8:
 //// 		f = Midi.mi_timing;
@@ -217,21 +212,21 @@ package kit
 //// 	}
 //// 	return;
 //// }
-//// 
+////
 //// /*
 ////  * chanmsg(inbyte)
 ////  *
 ////  * Interpret a Channel (voice or mode) Message status byte.
 ////  */
-//// 
+////
 //// void
 //// chanmsg(int inbyte)
 //// {
 //// 	Currchan = inbyte & 0xf;	/* channel # is lower 4 bits */
 //// 	Runnable = 1;			/* Channel messages can use running status */
-//// 
+////
 //// 	/* The high 4 bits, which determine the type of channel message. */
-//// 
+////
 //// 	switch ( inbyte & 0xf0 ) {
 //// 	case 0x80:
 //// 		Currfunc = Midi.mi_off;
@@ -264,7 +259,7 @@ package kit
 //// 	}
 //// 	return;
 //// }
-//// 
+////
 //// /*
 ////  * sysmess(inbyte)
 ////  *
@@ -275,12 +270,12 @@ package kit
 ////  * If the function IS called immediately, the finite state machine is reset
 ////  * (Currfunc=NULL,State=NEEDSTATUS).
 ////  */
-//// 
+////
 //// void
 //// sysmess(int inbyte)
 //// {
 //// 	register actfunc f = NULL;
-//// 
+////
 //// 	switch ( inbyte ) {
 //// 	case 0xf0:
 //// 		Currfunc = Midi.mi_sysex;
@@ -309,30 +304,30 @@ package kit
 //// 		(*f)(Currmessage,Messindex);
 //// 	return;
 //// }
-//// 
+////
 //// /*
 ////  * biggermess(amessage,aMessleng);
 ////  *
 ////  * Allocate a bigger message buffer.  The current message and its length
 ////  * are passed by pointer, so that they can both be modified.
 ////  */
-//// 
+////
 //// void
 //// biggermess(Unchar **amessage,int *aMessleng)
 //// {
 //// 	Unchar *oldmess = *amessage;
 //// 	Unchar *newmess;
 //// 	int oldleng = *aMessleng;
-//// 
+////
 //// 	*aMessleng += MESSAGESIZE;
 //// 	newmess = (Unchar *) kmalloc( (unsigned)(sizeof(char)*(*aMessleng)), "biggermess" );
-//// 
+////
 //// 	/* copy old message into larger new message */
 //// 	if ( oldmess != NULL ) {
 //// 		register Unchar *p = newmess;
 //// 		register Unchar *q = oldmess;
 //// 		register Unchar *endq = &oldmess[oldleng];
-//// 
+////
 //// 		for ( ; q!=endq ; p++,q++ )
 //// 			*p = *q;
 //// 		kfree(oldmess);

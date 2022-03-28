@@ -1,18 +1,5 @@
 package kit
 
-//// /*
-////  *	Copyright 1996 AT&T Corp.  All rights reserved.
-////  */
-////
-//// /* This is a hook that allows things to be put into mdep.h for */
-//// /* one-time inclusion.  For example, this can be used to put a small */
-//// /* function in mdep.h, so that the full mdep.o isn't needed. */
-//// #define ONETIMEINCLUDE
-////
-//// #define OVERLAY6
-////
-//// #include "key.h"
-////
 //// void (*Fatalfunc)(char *) = 0;
 //// void (*Diagfunc)(char *) = 0;
 //// long dval = 1;

@@ -1,24 +1,16 @@
 package kit
-//// /*
-////  *	Copyright 1996 AT&T Corp.  All rights reserved.
-////  */
-//// 
+
 //// /*
 ////  * Read a Standard MIDI File.
 ////  */
-//// 
-//// #include <ctype.h>
-//// #include "key.h"
-//// #include "keymidi.h"
-//// #include "mf.h"
-//// 
+////
 //// int Mf_nomerge = 0;		/* 1 => continue'ed system exclusives are */
 //// 				/* not collapsed. */
 //// long Mf_currtime = 0L;		/* current time in delta-time units */
 //// int Mf_skipinit = 1;		/* 1 if initial garbage should be skipped */
-//// 
+////
 //// #define finished(n) durof(n)=0
-//// 
+////
 //// static FILE *Mf;
 //// static long Mf_toberead = 0L;
 //// static int Tracknum;
@@ -28,45 +20,45 @@ package kit
 //// static double Clickfactor = 1.0;
 //// static Htablep Mfarr;
 //// static int Mformat;
-//// 
+////
 //// static void
 //// mferror(char *s)
 //// {
 //// 	execerror(s);
 //// }
-//// 
+////
 //// static void
 //// mfwarning(char *s)
 //// {
 //// 	warning(s);
 //// }
-//// 
+////
 //// int
 //// mgetc(void)
 //// {
 //// 	return getc(Mf);
 //// }
-//// 
+////
 //// /* read a single character and abort on EOF */
 //// static int
 //// egetc(void)
 //// {
 //// 	int c = mgetc();
-//// 
+////
 //// 	if ( c == EOF )
 //// 		mferror("premature EOF");
 //// 	Mf_toberead--;
 //// 	return(c);
 //// }
-//// 
+////
 //// /* readvarinum - read a varying-length number */
-//// 
+////
 //// static long
 //// readvarinum(void)
 //// {
 //// 	long value;
 //// 	int c;
-//// 
+////
 //// 	c = egetc();
 //// 	value = c;
 //// 	if ( c & 0x80 ) {
@@ -78,37 +70,37 @@ package kit
 //// 	}
 //// 	return (value);
 //// }
-//// 
+////
 //// static long
 //// to32bit(int c1,int c2,int c3,int c4)
 //// {
 //// 	long value = 0L;
-//// 
+////
 //// 	value = (c1 & 0xff);
 //// 	value = (value<<8) + (c2 & 0xff);
 //// 	value = (value<<8) + (c3 & 0xff);
 //// 	value = (value<<8) + (c4 & 0xff);
 //// 	return (value);
 //// }
-//// 
+////
 //// static int
 //// to16bit(int c1,int c2)
 //// {
 //// 	return ((c1 & 0xff ) << 8) + (c2 & 0xff);
 //// }
-//// 
+////
 //// static long
 //// read32bit(void)
 //// {
 //// 	int c1, c2, c3, c4;
-//// 
+////
 //// 	c1 = egetc();
 //// 	c2 = egetc();
 //// 	c3 = egetc();
 //// 	c4 = egetc();
 //// 	return to32bit(c1,c2,c3,c4);
 //// }
-//// 
+////
 //// static int
 //// read16bit(void)
 //// {
@@ -117,57 +109,57 @@ package kit
 //// 	c2 = egetc();
 //// 	return to16bit(c1,c2);
 //// }
-//// 
+////
 //// /* The code below allows collection of a system exclusive message of */
 //// /* arbitrary length.  The Msg1buff is expanded as necessary.  The only */
 //// /* visible data/routines are msginit(), msgadd(), msg(), msgleng(). */
-//// 
+////
 //// #define MSGINCREMENT 128
 //// static Unchar *Msg1buff = NULL;	/* message buffer */
 //// static int Msg1alloc = 0;		/* Size of currently allocated Msg1 */
 //// static int Msg1index = 0;	/* index of next available location in Msg1 */
-//// 
+////
 //// static void
 //// msginit(void)
 //// {
 //// 	Msg1index = 0;
 //// }
-//// 
+////
 //// static Unchar *
 //// msg(void)
 //// {
 //// 	return(Msg1buff);
 //// }
-//// 
+////
 //// static int
 //// msgleng(void)
 //// {
 //// 	return(Msg1index);
 //// }
-//// 
+////
 //// static void
 //// msgenlarge(void)
 //// {
 //// 	Unchar *newmess;
 //// 	Unchar *oldmess = Msg1buff;
 //// 	int oldleng = Msg1alloc;
-//// 
+////
 //// 	Msg1alloc += MSGINCREMENT;
 //// 	newmess = (Unchar *) kmalloc( (unsigned)(sizeof(char)*Msg1alloc),"msgenlarge");
-//// 
+////
 //// 	/* copy old message into larger new one */
 //// 	if ( oldmess != NULL ) {
 //// 		register Unchar *p = newmess;
 //// 		register Unchar *q = oldmess;
 //// 		register Unchar *endq = &oldmess[oldleng];
-//// 
+////
 //// 		for ( ; q!=endq ; p++,q++ )
 //// 			*p = *q;
 //// 		kfree(oldmess);
 //// 	}
 //// 	Msg1buff = newmess;
 //// }
-//// 
+////
 //// static void
 //// msgadd(int c)
 //// {
@@ -176,7 +168,7 @@ package kit
 //// 		msgenlarge();
 //// 	Msg1buff[Msg1index++] = c;
 //// }
-//// 
+////
 //// /* read through the "MThd" or "MTrk" header string */
 //// /* if skip is 1, we attempt to skip initial garbage. */
 //// static int
@@ -187,7 +179,7 @@ package kit
 //// 	char buff[32];
 //// 	int c;
 //// 	char *errmsg = "expecting ";
-//// 
+////
 ////     retry:
 //// 	while ( nread<4 ) {
 //// 		c = mgetc();
@@ -216,35 +208,35 @@ package kit
 //// 	mferror(buff);
 //// 	return(0);
 //// }
-//// 
+////
 //// /* read a header chunk */
 //// static int
 //// readheader(void)
 //// {
 //// 	int format, ntrks, division;
-//// 
+////
 //// 	if ( readmt("MThd",Mf_skipinit) == EOF )
 //// 		return(0);
-//// 
+////
 //// 	Mf_toberead = read32bit();
 //// 	format = read16bit();
 //// 	ntrks = read16bit();
 //// 	division = read16bit();
-//// 
+////
 //// 	k_header(format,ntrks,division);
-//// 
+////
 //// 	/* flush any extra stuff, in case the length of header is not 6 */
 //// 	while ( Mf_toberead > 0 )
 //// 		(void) egetc();
 //// 	return(ntrks);
 //// }
-//// 
+////
 //// static void
 //// metaevent(int type)
 //// {
 //// 	int leng = msgleng();
 //// 	Unchar *m = msg();
-//// 
+////
 //// 	switch  ( type ) {
 //// 	case 0x00:
 //// 		k_seqnum(to16bit((int)(m[0]),(int)(m[1])));
@@ -294,12 +286,12 @@ package kit
 //// 		break;
 //// 	}
 //// }
-//// 
+////
 //// static void
 //// chanmessage(int status,int c1,int c2)
 //// {
 //// 	int chan = status & 0xf;
-//// 
+////
 //// 	switch ( status & 0xf0 ) {
 //// 	case NOTEOFF:
 //// 		k_noteoff(chan,c1,c2);
@@ -324,21 +316,21 @@ package kit
 //// 		break;
 //// 	}
 //// }
-//// 
+////
 //// static long
 //// mfclicks(void)
 //// {
 //// 	double clks = (double)Mf_currtime/Clickfactor;
 //// 	return((long)(clks+0.5)); /* round it */
 //// }
-//// 
+////
 //// /*ARGSUSED*/
 //// void
 //// k_header(int f,int n,int d)
 //// {
 //// 	Mformat = f;
 //// 	Tracknum = 0;
-//// 	
+////
 //// 	if ( (0x8000 & d) != 0 ) {
 //// 		/* It's SMPTE, frame-per-second and ticks per frame */
 //// 		int frames_per_second = (d >> 8) & 0x7f;
@@ -347,21 +339,21 @@ package kit
 //// 	} else {
 //// 		Clickfactor = (double)d / (double)(*Clicks);
 //// 	}
-//// 
+////
 //// #ifdef WARNEVEN
 //// 	if ( (d>(*Clicks) && (((int)Clickfactor)*(*Clicks))!=d )
 //// 	    || (d<(*Clicks) && (Clicks/d)*d!=(*Clicks)))
 //// 		eprint("Warning: division (%d) doesn't evenly divide Clicks (%ld)\n",d,*Clicks);
 //// #endif
-//// 
+////
 //// }
-//// 
+////
 //// void
 //// k_starttrack(void)
 //// {
 //// 	Symbolp se;
 //// 	Datum d, *dp;
-//// 
+////
 //// 	d = numdatum((long)(Tracknum++));
 //// 	se = arraysym(Mfarr,d,H_INSERT);
 //// 	clearsym(se);
@@ -369,26 +361,26 @@ package kit
 //// 	*dp = phrdatum(newph(1));
 //// 	Currph = dp->u.phr;
 //// }
-//// 
+////
 //// /* output the top Noteq and remove it from the list */
 //// void
 //// putnfree(void)
 //// {
 //// 	Noteptr n = firstnote(Noteq);
 //// 	Noteptr nxt = nextnote(n);
-//// 
+////
 //// 	setfirstnote(Noteq) = nxt; 	/* remove from list */
 //// 	if ( n == lastnote(Noteq) )
 //// 		lastnote(Noteq) = nxt;
-//// 
+////
 //// 	if ( durof(n) == UNFINISHED_DURATION )
 //// 		durof(n) = mfclicks() - timeof(n);
-//// 
+////
 //// 	ntinsert(n,Currph);
 //// 	/* DO NOT call ntfree(), since we've given the note away to Currph */
 //// 	Numq--;
 //// }
-//// 
+////
 //// void
 //// putallnotes(void)
 //// {
@@ -397,13 +389,13 @@ package kit
 //// 	lastnote(Noteq) = NULL;
 //// 	Currph->p_leng = mfclicks();
 //// }
-//// 
+////
 //// void
 //// k_endtrack(void)
 //// {
 //// 	putallnotes();
 //// }
-//// 
+////
 //// void
 //// k_noteon(int chan,int pitch,int vol)
 //// {
@@ -413,7 +405,7 @@ package kit
 //// 	}
 //// 	(void) queuenote(chan,pitch,vol,NT_ON);
 //// }
-//// 
+////
 //// Noteptr
 //// queuenote(int chan,int pitch,int vol,int type)
 //// {
@@ -430,12 +422,12 @@ package kit
 //// 	Numq++;
 //// 	return n;
 //// }
-//// 
+////
 //// void
 //// k_noteoff(int chan,int pitch,int vol)
 //// {
 //// 	Noteptr n;
-//// 
+////
 //// 	/* find the first note-on (if any) that matches this one */
 //// 	for ( n=firstnote(Noteq); n!=NULL; n=nextnote(n) ) {
 //// 		if ( chanof(n)==chan
@@ -462,7 +454,7 @@ package kit
 //// 		/* A completed note. */
 //// 		typeof(n) = NT_NOTE;
 //// 		durof(n) = mfclicks() - timeof(n);
-//// 
+////
 //// 		/* If the MIDI File contains negative delta times (which */
 //// 		/* probably aren't legal!) the duration turns out to be */
 //// 		/* negative.  Here we deal with that. */
@@ -471,12 +463,12 @@ package kit
 //// 			durof(n) = - durof(n);
 //// 		}
 //// 	}
-//// 
+////
 //// 	/* Now start at the beginning of the list and put out any */
 //// 	/* notes we've completed.  This guarantees that the starting */
 //// 	/* times of the notes are in the proper (ie. monotonically */
 //// 	/* progressing) order. */
-//// 
+////
 //// 	while ( (n=firstnote(Noteq)) != NULL ) {
 //// 		/* quit when we get to the first unfinished note */
 //// 		if ( typeof(n)!=NT_BYTES && durof(n) == UNFINISHED_DURATION )
@@ -488,39 +480,39 @@ package kit
 //// 	/* Force it out. */
 //// 	if ( Numq > 1024 )
 //// 		putnfree();
-//// 
+////
 //// }
-//// 
+////
 //// void
 //// k_pressure(int chan,int pitch,int press)
 //// {
 //// 	threebytes(PRESSURE | chan,pitch,press);
 //// }
-//// 
+////
 //// void
 //// k_controller(int chan,int control,int value)
 //// {
 //// 	threebytes(CONTROLLER | chan,control,value);
 //// }
-//// 
+////
 //// void
 //// k_pitchbend(int chan,int msb,int lsb)
 //// {
 //// 	threebytes(PITCHBEND | chan,msb,lsb);
 //// }
-//// 
+////
 //// void
 //// k_program(int chan,int program)
 //// {
 //// 	twobytes(PROGRAM | chan,program);
 //// }
-//// 
+////
 //// void
 //// k_chanpressure(int chan,int press)
 //// {
 //// 	twobytes(CHANPRESSURE | chan,press);
 //// }
-//// 
+////
 //// void
 //// threebytes(int c1,int c2,int c3)
 //// {
@@ -537,7 +529,7 @@ package kit
 //// 	ntinsert(n,Noteq);
 //// 	Numq++;
 //// }
-//// 
+////
 //// void
 //// twobytes(int c1,int c2)
 //// {
@@ -553,7 +545,7 @@ package kit
 //// 	ntinsert(n,Noteq);
 //// 	Numq++;
 //// }
-//// 
+////
 //// void
 //// queuemess(Unchar *mess,int leng)
 //// {
@@ -566,25 +558,25 @@ package kit
 //// 	ntinsert(n,Noteq);
 //// 	Numq++;
 //// }
-//// 
+////
 //// static void
 //// k_sysex(int leng,Unchar *mess)
 //// {
 //// 	queuemess(mess,leng);
 //// }
-//// 
+////
 //// static void
 //// sysex(void)
 //// {
 //// 	k_sysex(msgleng(),msg());
 //// }
-//// 
+////
 //// void
 //// k_arbitrary(int leng,Unchar *mess)
 //// {
 //// 	queuemess(mess,leng);
 //// }
-//// 
+////
 //// void
 //// k_tempo(long tempo)
 //// {
@@ -592,13 +584,13 @@ package kit
 //// 	sprintf(s,"\"Tempo=%ld\"t%ld",tempo,mfclicks());
 //// 	ntinsert(strtotextmess(s),Currph);
 //// }
-//// 
+////
 //// void
 //// k_timesig(unsigned nn,unsigned dd,unsigned cc,unsigned bb)
 //// {
 //// 	char s[100];
 //// 	int denom = 1;
-//// 
+////
 //// 	while ( dd-- > 0 )
 //// 		denom *= 2;
 //// 	/* First 2 numbers are time signature, next is MIDI-clocks-per-click, */
@@ -606,7 +598,7 @@ package kit
 //// 	sprintf(s,"\"Timesig=%d/%d,%d,%d\"t%ld", nn,denom,cc,bb,mfclicks());
 //// 	ntinsert(strtotextmess(s),Currph);
 //// }
-//// 
+////
 //// void
 //// k_keysig(unsigned sf,unsigned mi)
 //// {
@@ -614,7 +606,7 @@ package kit
 //// 	sprintf(s,"\"Keysig=%d,%d\"t%ld",sf,mi,mfclicks());
 //// 	ntinsert(strtotextmess(s),Currph);
 //// }
-//// 
+////
 //// void
 //// k_chanprefix(unsigned c)
 //// {
@@ -622,7 +614,7 @@ package kit
 //// 	sprintf(s,"\"Channelprefix=%d\"t%ld",c,mfclicks());
 //// 	ntinsert(strtotextmess(s),Currph);
 //// }
-//// 
+////
 //// void
 //// k_seqnum(int n)
 //// {
@@ -630,7 +622,7 @@ package kit
 //// 	sprintf(s,"\"Sequence=%d\"t%ld",n,mfclicks());
 //// 	ntinsert(strtotextmess(s),Currph);
 //// }
-//// 
+////
 //// void
 //// k_smpte(unsigned hr,unsigned mn,unsigned se,unsigned fr,unsigned ff)
 //// {
@@ -638,7 +630,7 @@ package kit
 //// 	sprintf(s,"\n\"Smpte=%d,%d,%d,%d,%d\"t%ld",hr,mn,se,fr,ff,mfclicks());
 //// 	ntinsert(strtotextmess(s),Currph);
 //// }
-//// 
+////
 //// void
 //// k_metatext(int type,int leng,Unchar *mess)
 //// {
@@ -657,7 +649,7 @@ package kit
 //// 	register int n, c;
 //// 	register Unchar *p = mess;
 //// 	char *s, *es;
-//// 
+////
 //// 	if ( type < 1 || type > unrecognized )
 //// 		type = unrecognized;
 //// 	/* The size here is just conservative, not magic. */
@@ -673,7 +665,7 @@ package kit
 //// 	ntinsert(strtotextmess(s),Currph);
 //// 	kfree(s);
 //// }
-//// 
+////
 //// /* read a track chunk */
 //// static int
 //// readtrack(void)
@@ -691,28 +683,28 @@ package kit
 //// 	int running = 0;	/* 1 when running status used */
 //// 	int status = 0;		/* (possibly running) status byte */
 //// 	int needed;
-//// 
+////
 //// 	if ( readmt("MTrk",0) == EOF )
 //// 		return EOF;
-//// 
+////
 //// 	Mf_toberead = read32bit();
 //// 	Mf_currtime = 0;
-//// 
+////
 //// 	k_starttrack();
-//// 
+////
 //// 	while ( Mf_toberead > 0 ) {
-//// 
+////
 //// 		long dt = readvarinum();	/* delta time */
 //// 		if ( dt < 0 && (*Warnnegative != 0) ) {
 //// 			tprint("Warning: negative delta time (%ld) in MIDI file!\n",dt);
 //// 		}
 //// 		Mf_currtime += dt;
-//// 
+////
 //// 		c = egetc();
-//// 
+////
 //// 		if ( sysexcontinue && c != 0xf7 )
 //// 			mfwarning("didn't find expected continuation of a sysex");
-//// 
+////
 //// 		if ( (c & 0x80) == 0 ) {	 /* running status? */
 //// 			if ( status == 0 )
 //// 				mfwarning("unexpected running status");
@@ -722,70 +714,70 @@ package kit
 //// 			status = c;
 //// 			running = 0;
 //// 		}
-//// 
+////
 //// 		needed = chantype[ (status>>4) & 0xf ];
-//// 
+////
 //// 		if ( needed ) {		/* ie. is it a channel message? */
-//// 
+////
 //// 			if ( running )
 //// 				c1 = c;
 //// 			else
 //// 				c1 = egetc() & 0x7f;
-//// 
+////
 //// 			/* The &0xf7 here may seem unnecessary, but I've seen */
 //// 			/* 'bad' midi files that had, e.g., volume bytes */
 //// 			/* with the upper bit set.  This code should not harm */
 //// 			/* proper data. */
-//// 
+////
 //// 			chanmessage( status, c1, (needed>1) ? (egetc()&0x7f) : 0 );
 //// 			continue;
 //// 		}
-//// 
+////
 //// 		switch ( c ) {
-//// 
+////
 //// 		case 0xff:			/* meta event */
-//// 
+////
 //// 			type = egetc();
 //// 			/* watch out - Don't combine the next 2 statements */
 //// 			lng = readvarinum();
 //// 			lookfor = Mf_toberead - lng;
 //// 			msginit();
-//// 
+////
 //// 			while ( Mf_toberead > lookfor )
 //// 				msgadd(egetc());
-//// 
+////
 //// 			metaevent(type);
 //// 			break;
-//// 
+////
 //// 		case 0xf0:		/* start of system exclusive */
-//// 
+////
 //// 			/* watch out - Don't combine the next 2 statements */
 //// 			lng = readvarinum();
 //// 			lookfor = Mf_toberead - lng;
 //// 			msginit();
 //// 			msgadd(0xf0);
-//// 
+////
 //// 			while ( Mf_toberead > lookfor )
 //// 				msgadd(c=egetc());
-//// 
+////
 //// 			if ( c==0xf7 || Mf_nomerge==0 )
 //// 				sysex();
 //// 			else
 //// 				sysexcontinue = 1;  /* merge into next msg */
 //// 			break;
-//// 
+////
 //// 		case 0xf7:	/* sysex continuation or arbitrary stuff */
-//// 
+////
 //// 			/* watch out - Don't combine the next 2 statements */
 //// 			lng = readvarinum();
 //// 			lookfor = Mf_toberead - lng;
-//// 
+////
 //// 			if ( ! sysexcontinue )
 //// 				msginit();
-//// 
+////
 //// 			while ( Mf_toberead > lookfor )
 //// 				msgadd(c=egetc());
-//// 
+////
 //// 			if ( ! sysexcontinue ) {
 //// 				k_arbitrary(msgleng(),msg());
 //// 			}
@@ -806,14 +798,14 @@ package kit
 //// 	k_endtrack();
 //// 	return 0;
 //// }
-//// 
+////
 //// int
 //// mftoarr(char *mfname,Htablep arr)
 //// {
 //// 	int ntrks;
-//// 
+////
 //// 	Mfarr = arr;
-//// 
+////
 //// 	if ( strcmp(mfname,"-") != 0 ) {
 //// 		if ( *mfname == '\0' )
 //// 			execerror("Invalid (null) filename given to midifile");
@@ -824,9 +816,9 @@ package kit
 //// 	}
 //// 	else
 //// 		Mf = stdin;
-//// 
+////
 //// 	Noteq = newph(0);
-//// 
+////
 //// 	ntrks = readheader();
 //// 	if ( ntrks <= 0 )
 //// 		mfwarning("No tracks!");
@@ -834,9 +826,9 @@ package kit
 //// 		if ( readtrack() == EOF )
 //// 			break;
 //// 	}
-//// 
+////
 //// 	if ( Mf != stdin )
 //// 		myfclose(Mf);
-//// 
+////
 //// 	return Mformat;
 //// }

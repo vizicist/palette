@@ -1,11 +1,5 @@
 package kit
-//// /*
-////  *	Copyright 1996 AT&T Corp.  All rights reserved.
-////  */
-//// 
-//// #include "key.h"
-//// #include "gram.h"
-//// 
+
 //// void
 //// o_setinit(int argc)
 //// {
@@ -20,7 +14,7 @@ package kit
 //// 	ret(Nullval);
 //// #endif
 //// }
-//// 
+////
 //// void
 //// setelement(Kobjectp o,Symstr e,Datum d)
 //// {
@@ -30,7 +24,7 @@ package kit
 //// 	sym = syminstall(e,o->symbols,VAR);
 //// 	*symdataptr(sym) = d;
 //// }
-//// 
+////
 //// void
 //// setmethod(Kobjectp o,char *m,BLTINCODE i)
 //// {
@@ -41,7 +35,7 @@ package kit
 //// 	sym = syminstall(meth,o->symbols,VAR);
 //// 	*symdataptr(sym) = funcdp(sym,i);
 //// }
-//// 
+////
 //// void
 //// setdata(Kobjectp o,char *m,Datum d)
 //// {
@@ -52,7 +46,7 @@ package kit
 //// 	sym = syminstall(meth,o->symbols,VAR);
 //// 	*symdataptr(sym) = d;
 //// }
-//// 
+////
 //// Kobjectp
 //// defaultobject(long id,int complain)
 //// {
@@ -68,25 +62,25 @@ package kit
 //// 	setdata(o,"class",Nullval);
 //// 	return o;
 //// }
-//// 
+////
 //// void
 //// o_addchild(int argc)
 //// {
 //// 	Kobjectp o1, o2, o;
-//// 
+////
 //// 	if ( argc != 1 )
 //// 		execerror("usage: .addchild(new-child-object)");
 //// 	if ( T->obj == NULL )
 //// 		execerror("usage: .addchild() called with no current object!?");
 //// 	o1 = T->obj;
 //// 	o2 = needobj(".addchild",ARG(0));
-//// 
+////
 //// 	/* find end of o1 children list (stopping if o2 is already in it) */
 //// 	for (o=o1->children;o!=NULL&&o->nextsibling!=NULL&&o!=o2;o=o->nextsibling)
 //// 		;
 //// 	if ( o == o2 )  /* It's already in the list.  Harmless error. */
 //// 		goto getout;
-//// 
+////
 //// 	if ( o2->nextsibling != NULL ) {
 //// 		tprint("In $%ld.addchild() - $%ld is a child of something else!?\n",o1->id,o2->id);
 //// 		goto getout;
@@ -104,7 +98,7 @@ package kit
 ////     getout:
 //// 	ret(Nullval);
 //// }
-//// 
+////
 //// #ifdef SAVEFORERRORCHECKING
 //// void
 //// chksib(Kobjectp o1, char *s)
@@ -116,12 +110,12 @@ package kit
 //// 	}
 //// }
 //// #endif
-//// 
+////
 //// void
 //// o_removechild(int argc)
 //// {
 //// 	Kobjectp o1, o2, o, preo;
-//// 
+////
 //// 	if ( argc != 1 )
 //// 		execerror("usage: .removechild(child-object)");
 //// 	if ( T->realobj == NULL )
@@ -139,21 +133,21 @@ package kit
 //// 		o1->children = o->nextsibling;
 //// 	else
 //// 		preo->nextsibling = o->nextsibling;
-//// 
+////
 //// 	/* NULL out the nextsibling of the object we've just removed, */
 //// 	/* so that there's no warning if we try to add it back. */
 //// 	o2->nextsibling = NULL;
-//// 
+////
 //// 	/* Don't free the object, it must be done explicitly */
 //// 	ret(Nullval);
 //// }
-//// 	
+////
 //// void
 //// o_children(int argc)
 //// {
 //// 	Kobjectp o, obj;
 //// 	Datum d;
-//// 
+////
 //// 	obj = T->realobj;
 //// 	d = newarrdatum(0,32);
 //// 	for ( o=obj->children; o!=NULL; o=o->nextsibling ) {
@@ -163,12 +157,12 @@ package kit
 //// 	}
 //// 	ret(d);
 //// }
-//// 
+////
 //// void
 //// o_addinherit(int argc)
 //// {
 //// 	Kobjectp o1, o2, o;
-//// 
+////
 //// 	if ( argc != 1 )
 //// 		execerror("usage: .addinherit(obj-to-inherit-from)");
 //// 	o1 = T->realobj;
@@ -187,26 +181,26 @@ package kit
 //// 	}
 //// 	ret(Nullval);
 //// }
-//// 
+////
 //// void
 //// o_inherited(int argc)
 //// {
 //// 	Kobjectp o, obj;
 //// 	Datum d;
-//// 
+////
 //// 	obj = T->realobj;
 //// 	d = newarrdatum(0,32);
 //// 	for ( o=obj->inheritfrom; o!=NULL; o=o->nextinherit )
 //// 		setarraydata(d.u.arr,objdatum(o),numdatum(o->id));
 //// 	ret(d);
 //// }
-//// 
+////
 //// Kwind*
 //// windid(Kobjectp o)
 //// {
 //// 	Datum d;
 //// 	Symbolp s;
-//// 
+////
 //// 	if ( o->symbols == NULL )
 //// 		execerror("Internal error, o->symbols==NULL in windid!");
 //// 	s = findsym(Str_w.u.str,o->symbols);
@@ -218,7 +212,7 @@ package kit
 //// 	}
 //// 	return(d.u.wind);
 //// }
-//// 
+////
 //// void
 //// o_size(int argc)
 //// {
@@ -226,7 +220,7 @@ package kit
 //// 	long x0, y0, x1, y1;
 //// 	int n;
 //// 	Kwind *w;
-//// 
+////
 //// 	w = windid(T->obj);
 //// 	if ( argc == 0 ) {
 //// 		retval = xy01arr((long)(w->x0),(long)(w->y0),
@@ -246,7 +240,7 @@ package kit
 //// 	}
 //// 	ret(retval);
 //// }
-//// 
+////
 //// void
 //// o_contains(int argc)
 //// {
@@ -254,7 +248,7 @@ package kit
 //// 	int n;
 //// 	Kwind *w;
 //// 	long r;
-//// 
+////
 //// 	w = windid(T->obj);
 //// 	n = getxy01(needarr(".contains",ARG(0)),&x0,&y0,&x1,&y1,1,"bad array given to .contains");
 //// 	if ( n == 2 )
@@ -263,7 +257,7 @@ package kit
 //// 		r = windoverlaps(w,x0,y0,x1,y1);
 //// 	ret(numdatum(r));
 //// }
-//// 
+////
 //// void
 //// o_mousedo(int argc)
 //// {
@@ -274,18 +268,18 @@ package kit
 //// 	long r = 0;
 //// 	int nodraw;
 //// 	char *bad = "bad array given to .mousedo, needs x0/y0/button";
-//// 
+////
 //// 	w = windid(T->obj);
 //// 	arr = needarr(".mousedo",ARG(0));
 //// 	n = getxy01(arr,&x0,&y0,&x1,&y1,1,bad);
 //// 	if ( n != 2 )
 //// 		execerror(bad);
 //// 	butt = arraynumval(arr,Str_button,bad);
-//// 
+////
 //// 	/* If there's a "mousedown" value in the array, it's a flag */
 //// 	/* telling us that we shouldn't redraw/highlight anything. */
 //// 	nodraw = (arraysym(arr,Str_down,H_LOOK) != NULL);
-//// 
+////
 //// 	if ( w->type == WIND_MENU ) {
 //// 		m_menudo(w,butt,x0,y0,nodraw);
 //// 		if ( w->km.choice >= 0 )
@@ -300,12 +294,12 @@ package kit
 //// 		execerror(".mousedo only works on menu and text windows!?");
 //// 	ret(numdatum(r));
 //// }
-//// 
+////
 //// int
 //// needplotmode(char *meth,Datum d)
 //// {
 //// 	int n;
-//// 
+////
 //// 	n = neednum(meth,d);
 //// 	switch (n) {
 //// 	case P_STORE:
@@ -317,7 +311,7 @@ package kit
 //// 	}
 //// 	return n;
 //// }
-//// 
+////
 //// void
 //// o_lineboxfill(int argc,char *meth,KWFUNC f,int norm)
 //// {
@@ -325,7 +319,7 @@ package kit
 //// 	int n, omode;
 //// 	Kwind *w;
 //// 	char *bad = "bad xy array, must have 4 elements (x0/y0/x1/y1)";
-//// 
+////
 //// 	w = windid(T->obj);
 //// 	n = getxy01(needarr(meth,ARG(0)),&x0,&y0,&x1,&y1,norm,bad);
 //// 	if ( n != 4 )
@@ -336,7 +330,7 @@ package kit
 //// 	if ( Pmode != omode )
 //// 		my_plotmode(omode);
 //// }
-//// 
+////
 //// void
 //// o_fillpolygon(int argc)
 //// {
@@ -351,7 +345,7 @@ package kit
 //// 	int xarr[MAX_POLYGON_POINTS];
 //// 	int yarr[MAX_POLYGON_POINTS];
 //// 	int pi = 0;
-//// 
+////
 //// 	w = windid(T->obj);
 //// 	arr = needarr(".fillpolygon",ARG(0));
 //// 	asize = arrsize(arr);
@@ -361,10 +355,10 @@ package kit
 //// 	if ( asize < 3 ) {
 //// 		execerror("Too few points in polygon array");
 //// 	}
-//// 
+////
 //// 	omode = Pmode;
 //// 	my_plotmode( argc<=1 ? P_STORE : (int)needplotmode(".fillpolygon",ARG(1)) );
-//// 
+////
 //// 	for ( n=0; n<asize; n++ ) {
 //// 		arrindex = numdatum(n);
 //// 		s = arraysym(arr,arrindex,H_LOOK);
@@ -389,28 +383,28 @@ package kit
 //// 		my_plotmode(omode);
 //// 	ret(Nullval);
 //// }
-//// 
+////
 //// void
 //// o_line(int argc)
 //// {
 //// 	o_lineboxfill(argc,".line",kwindline,0);
 //// 	ret(Nullval);
 //// }
-//// 
+////
 //// void
 //// o_box(int argc)
 //// {
 //// 	o_lineboxfill(argc,".rectangle",kwindrect,1);
 //// 	ret(Nullval);
 //// }
-//// 
+////
 //// void
 //// o_fill(int argc)
 //// {
 //// 	o_lineboxfill(argc,".fillrectangle",kwindfill,1);
 //// 	ret(Nullval);
 //// }
-//// 
+////
 //// void
 //// o_ellipse(int argc)
 //// {
@@ -419,7 +413,7 @@ package kit
 //// 	o_lineboxfill(argc,".ellipse",kwindellipse,1);
 //// 	ret(Nullval);
 //// }
-//// 
+////
 //// void
 //// o_fillellipse(int argc)
 //// {
@@ -428,7 +422,7 @@ package kit
 //// 	o_lineboxfill(argc,".fillellipse",kwindfillellipse,1);
 //// 	ret(Nullval);
 //// }
-//// 
+////
 //// void
 //// o_style(int argc)
 //// {
@@ -436,7 +430,7 @@ package kit
 //// 	int b;
 //// 	int allflags = WFLAG_NOBORDER | WFLAG_BUTTON
 //// 			| WFLAG_MENUBUTTON | WFLAG_PRESSED;
-//// 
+////
 //// 	if ( argc > 0 ) {
 //// 		w->flags &= (~allflags);
 //// 		b = (int)neednum(".style",ARG(0));
@@ -473,13 +467,13 @@ package kit
 //// 	}
 //// 	ret(numdatum(b));
 //// }
-//// 
+////
 //// void
 //// o_saveunder(int argc)
 //// {
 //// 	int wid, hgt;
 //// 	Kwind *w = windid(T->obj);
-//// 
+////
 //// 	/* We used to check for multiple saveunders (i.e. without an */
 //// 	/* interveaning restoreunder), but no more. */
 //// 	wid = w->x1 - w->x0 + 1;
@@ -488,10 +482,10 @@ package kit
 //// 	my_plotmode(P_STORE);
 //// 	mdep_pullbitmap(w->x0,w->y0,w->saveunder);
 //// 	w->flags |= WFLAG_SAVEDUNDER;
-//// 
+////
 //// 	ret(Nullval);
 //// }
-//// 
+////
 //// void
 //// o_restoreunder(int argc)
 //// {
@@ -512,19 +506,19 @@ package kit
 //// 		execerror(".restoreunder used without a previous saveunder!?");
 //// 	ret(Nullval);
 //// }
-//// 
+////
 //// void
 //// o_textheight(int argc)
 //// {
 //// 	ret(numdatum(mdep_fontheight()));
 //// }
-//// 
+////
 //// void
 //// o_textwidth(int argc)
 //// {
 //// 	ret(numdatum(mdep_fontwidth()));
 //// }
-//// 
+////
 //// void
 //// o_text(int argc,int just)
 //// {
@@ -533,8 +527,8 @@ package kit
 //// 	int n, omode;
 //// 	char *bad = "bad xy array in .text*, must have x0/y0/x1/y1";
 //// 	Kwind *w = windid(T->obj);
-//// 
-//// 	if ( (w->type==WIND_TEXT && (argc<0 || argc>1)) || 
+////
+//// 	if ( (w->type==WIND_TEXT && (argc<0 || argc>1)) ||
 //// 		(w->type!=WIND_TEXT && (argc < 2 || argc > 3))) {
 //// 		execerror("bad usage of .text*");
 //// 	}
@@ -546,45 +540,45 @@ package kit
 //// 	n = getxy01(needarr(".text",ARG(1)),&x0,&y0,&x1,&y1,1,bad);
 //// 	if ( n != 4 )
 //// 		execerror(bad);
-//// 
+////
 //// 	omode = Pmode;
 //// 	my_plotmode( argc<=2 ? P_STORE : (int)needplotmode(".text",ARG(2)) );
 //// 	kwindtext(str,(int)x0,(int)y0,(int)x1,(int)y1,just);
 //// 	if ( Pmode != omode )
 //// 		my_plotmode(omode);
 //// }
-//// 
+////
 //// void
 //// o_printf(int argc)
 //// {
 //// 	char *fmt = needstr(".printf",ARG(0));
-//// 
+////
 //// 	Wprintf = windid(T->obj);
 //// 	keyprintf(fmt,1,argc-1,wprint);
 //// 	ret(Nullval);
 //// }
-//// 
+////
 //// void
 //// o_textcenter(int argc)
 //// {
 //// 	o_text(argc,TEXT_CENTER);
 //// 	ret(Nullval);
 //// }
-//// 
+////
 //// void
 //// o_textleft(int argc)
 //// {
 //// 	o_text(argc,TEXT_LEFT);
 //// 	ret(Nullval);
 //// }
-//// 
+////
 //// void
 //// o_textright(int argc)
 //// {
 //// 	o_text(argc,TEXT_RIGHT);
 //// 	ret(Nullval);
 //// }
-//// 
+////
 //// void
 //// o_type(int argc)
 //// {
@@ -599,35 +593,35 @@ package kit
 //// 	}
 //// 	ret(strdatum(uniqstr(t)));
 //// }
-//// 
+////
 //// void
 //// o_xmin(int argc)
 //// {
 //// 	Kwind *w = windid(T->obj);
 //// 	ret(numdatum(windxmin(w)));
 //// }
-//// 
+////
 //// void
 //// o_ymin(int argc)
 //// {
 //// 	Kwind *w = windid(T->obj);
 //// 	ret(numdatum(windymin(w)));
 //// }
-//// 
+////
 //// void
 //// o_xmax(int argc)
 //// {
 //// 	Kwind *w = windid(T->obj);
 //// 	ret(numdatum(windxmax(w)));
 //// }
-//// 
+////
 //// void
 //// o_ymax(int argc)
 //// {
 //// 	Kwind *w = windid(T->obj);
 //// 	ret(numdatum(windymax(w)));
 //// }
-//// 
+////
 //// void
 //// o_redraw(int argc)
 //// {
@@ -635,7 +629,7 @@ package kit
 //// 	wredraw1(w);
 //// 	ret(Nullval);
 //// }
-//// 
+////
 //// void
 //// o_childunder(int argc)
 //// {
@@ -647,7 +641,7 @@ package kit
 //// 	Htablep arr;
 //// 	char *s = ".childunder";
 //// 	char *bad = "bad xy array in .childunder";
-//// 
+////
 //// 	arr = needarr(s,ARG(0));
 //// 	n = getxy01(arr,&x0,&y0,&x1,&y1,1,bad);
 //// 	if ( n != 2 )
@@ -683,7 +677,7 @@ package kit
 //// 	}
 //// 	ret(objdatum(topo));
 //// }
-//// 
+////
 //// void
 //// o_drawphrase(int argc)
 //// {
@@ -691,7 +685,7 @@ package kit
 //// 	char *s = ".drawphrase";
 //// 	Kwind *w = windid(T->obj);
 //// 	int omode;
-//// 
+////
 //// 	if ( argc > 2 )
 //// 		execerror("bad usage of .drawphrase");
 //// 	ph = needphr(s,ARG(0));
@@ -702,7 +696,7 @@ package kit
 //// 		my_plotmode(omode);
 //// 	ret(Nullval);
 //// }
-//// 
+////
 //// void
 //// o_scaletogrid(int argc)
 //// {
@@ -713,7 +707,7 @@ package kit
 //// 	char *bad = "bad xy array in .scaletogrid";
 //// 	char *s = ".scaletogrid";
 //// 	Kwind *w = windid(T->obj);
-//// 
+////
 //// 	arr = needarr(s,ARG(0));
 //// 	n = getxy01(arr,&x0,&y0,&x1,&y1,1,bad);
 //// 	if ( n == 2 ) {
@@ -730,7 +724,7 @@ package kit
 //// 	addnonxy(retval.u.arr,arr);
 //// 	ret(retval);
 //// }
-//// 
+////
 //// void
 //// o_scaletowind(int argc)
 //// {
@@ -741,7 +735,7 @@ package kit
 //// 	char *bad = "bad xy array in .scaletowind";
 //// 	char *s = ".scaletowind";
 //// 	Kwind *w = windid(T->obj);
-//// 
+////
 //// 	arr = needarr(s,ARG(0));
 //// 	n = getxy01(arr,&x0,&y0,&x1,&y1,1,bad);
 //// 	if ( n == 2 ) {
@@ -758,7 +752,7 @@ package kit
 //// 	addnonxy(retval.u.arr,arr);
 //// 	ret(retval);
 //// }
-//// 
+////
 //// void
 //// o_closestnote(int argc)
 //// {
@@ -771,7 +765,7 @@ package kit
 //// 	char *bad = "bad xy array in .closestnote";
 //// 	char *s = ".closestnote";
 //// 	Kwind *w = windid(T->obj);
-//// 
+////
 //// 	arr = needarr(s,ARG(0));
 //// 	/* The values we're getting in the array are SUPPOSED to be raw */
 //// 	/* x,y values, NOT click/pitch values. */
@@ -785,7 +779,7 @@ package kit
 //// 	d = phrdatum(ph);
 //// 	ret(d);
 //// }
-//// 
+////
 //// void
 //// o_view(int argc)
 //// {
@@ -796,7 +790,7 @@ package kit
 //// 	char *bad = "bad array given to .view, needs x0/y0/x1/y1";
 //// 	char *s = ".view";
 //// 	Kwind *w = windid(T->obj);
-//// 
+////
 //// 	if ( argc == 1 ) {
 //// 		arr = needarr(s,ARG(0));
 //// 		n = getxy01(arr,&x0,&y0,&x1,&y1,1,bad);
@@ -811,7 +805,7 @@ package kit
 //// 		w->showstart+w->showleng,(long)(w->showhigh));
 //// 	ret(retval);
 //// }
-//// 
+////
 //// void
 //// o_sweep(int argc)
 //// {
@@ -822,10 +816,10 @@ package kit
 //// 	char *bad = "bad array given to .sweep, needs x0/y0/x1/y1";
 //// 	char *s = ".sweep";
 //// 	Kwind *w = windid(T->obj);
-//// 
+////
 //// 	if ( argc != 3 )
 //// 		execerror("usage: .sweep(f,type,xy)");
-//// 
+////
 //// 	f = needvalidfifo(s,ARG(0));
 //// 	n = (int)neednum(s,ARG(1));
 //// 	arr = needarr("sweep",ARG(2));
@@ -834,13 +828,13 @@ package kit
 //// 	/* Don't return a value, since dosweepstart() starts */
 //// 	/* an instruction sequence that will eventually return a value. */
 //// }
-//// 
+////
 //// void
 //// o_trackname(int argc)
 //// {
 //// 	Kwind *w = windid(T->obj);
 //// 	Datum retval;
-//// 
+////
 //// 	retval = Nullval;
 //// 	if ( w->type != WIND_PHRASE )
 //// 		execerror(".trackname() can only be used on phrase windows");
@@ -856,7 +850,7 @@ package kit
 //// 		execerror("usage: window(\"phrase\" [,trackname])");
 //// 	ret(retval);
 //// }
-//// 
+////
 //// void
 //// o_menuitem(int argc)
 //// {
@@ -865,13 +859,13 @@ package kit
 //// 	char *s = ".menuitem";
 //// 	Kitem *ki;
 //// 	int r = -1;
-//// 
+////
 //// 	if ( argc != 1 )
 //// 		execerror("usage: .menuitem(label)");
-//// 
+////
 //// 	if ( w->type != WIND_MENU )
 //// 		execerror(".menuitem() must be applied to a menu window!?");
-//// 	
+////
 //// 	label = needstr(s,ARG(0));
 //// 	ki = k_menuitem(w,label);
 //// 	ki->args = NULL;
@@ -879,7 +873,7 @@ package kit
 //// 	r = ki->pos;
 //// 	ret(numdatum(r));
 //// }
-//// 
+////
 //// void
 //// o_menuitems(int argc)
 //// {
@@ -887,17 +881,17 @@ package kit
 //// 	char *s = ".menuitems";
 //// 	Kitem *ki;
 //// 	Datum d;
-//// 
+////
 //// 	if ( w->type != WIND_MENU )
 //// 		execerror(".menuitems() must be applied to a menu window!?");
-//// 	
+////
 //// 	d = newarrdatum(0,11);
 //// 	for ( ki=w->km.items; ki!=NULL; ki=ki->next ) {
 //// 		setarraydata(d.u.arr,strdatum(ki->name),numdatum(0));
 //// 	}
 //// 	ret(d);
 //// }
-//// 
+////
 //// Kobjectp
 //// windobject(long id,int complain,char *type)
 //// {
@@ -905,12 +899,12 @@ package kit
 //// 	Symbolp s;
 //// 	Kobjectp o;
 //// 	Kwind *w = NULL;
-//// 
+////
 //// 	if(id==0){
 //// 		mdep_popup("windobject got id==0!?");
 //// 		abort();
 //// 	}
-//// 
+////
 //// #ifdef OLDSTUFF
 //// 	Symstr c;
 //// 	static Symstr str_generic, str_menu, str_phrase, str_root, str_text;
@@ -923,9 +917,9 @@ package kit
 //// 		str_menu = uniqstr("window/menu");
 //// 	}
 //// #endif
-//// 
+////
 //// 	o = defaultobject(id,complain);
-//// 
+////
 //// 	if ( strcmp(type,"generic") == 0 ) {
 //// 		w = newkwind();
 //// 		w->type = WIND_GENERIC;
@@ -951,15 +945,15 @@ package kit
 //// 	}
 //// 	else
 //// 		execerror("window(new...), bad argument!");
-//// 
+////
 //// 	if ( w != Wroot )
 //// 		k_setsize(w,0,0,0,0);
-//// 
+////
 //// 	if ( o->symbols == NULL )
 //// 		execerror("Internal error, o->symbols==NULL in windobject!");
 //// 	s = syminstall(Str_w.u.str,o->symbols,VAR);
 //// 	(*symdataptr(s)) = winddatum(w);
-//// 
+////
 //// 	/* general window methods */
 //// 	setmethod(o,"size",O_SIZE);
 //// 	setmethod(o,"resize",O_SIZE);
@@ -988,7 +982,7 @@ package kit
 //// 	setmethod(o,"saveunder",O_SAVEUNDER);
 //// 	setmethod(o,"restoreunder",O_RESTOREUNDER);
 //// 	setmethod(o,"printf",O_PRINTF);
-//// 
+////
 //// 	/* phrase window methods */
 //// 	setmethod(o,"drawphrase",O_DRAWPHRASE);
 //// 	setmethod(o,"scaletogrid",O_SCALETOGRID);
@@ -997,10 +991,10 @@ package kit
 //// 	setmethod(o,"trackname",O_TRACKNAME);
 //// 	setmethod(o,"sweep",O_SWEEP);
 //// 	setmethod(o,"closestnote",O_CLOSESTNOTE);
-//// 
+////
 //// 	/* menu window methods */
 //// 	setmethod(o,"menuitem",O_MENUITEM);
 //// 	setmethod(o,"menuitems",O_MENUITEMS);
-//// 
+////
 //// 	return o;
 //// }

@@ -111,6 +111,10 @@ func (l *Lexer) yyunget() {
 	}
 }
 
+func (l *Lexer) isspace(c byte) bool {
+	return c == ' ' || c == '\t' || c == '\b' || c == '\n' || c == '\r'
+}
+
 /* legal subsequent characters of names */
 func (l *Lexer) isnamechar(c byte) bool {
 	if l.isalnum(c) == true || c == '_' {
