@@ -47,8 +47,8 @@ released installation packages, which is certainly a lot simpler and is recommen
 - Open a new "cmd" window (so that changes to environment variables from the installed packages are reflected) and clone the repos by entering these lines
 
 ```
-mkdir %USERPROFILE%\Documents\Github\vizicist
-cd %USERPROFILE%\Documents\Github\vizicist
+mkdir %USERPROFILE%\Documents\Github
+cd %USERPROFILE%\Documents\Github
 git clone https://github.com/vizicist/palette.git
 git clone https://github.com/vizicist/portmidi.git
 ```
@@ -69,14 +69,14 @@ go get gopkg.in/mail.v2
  C:\Program Files\Git\bin
  C:\Program Files\Git\usr\bin
  C:\Program Files\mingw-w64\x86_64-8.1.0-release-posix-sjlj-rt_v6-rev0\mingw64\bin
- %LOCALAPPDATA%\bin
- %USERPROFILE%\Documents\Github\vizicist\palette\SenselLib\x64
+ %CommonProgramFiles%\bin
+ %USERPROFILE%\Documents\Github\palette\SenselLib\x64
 ```
 
 - Add a new environment variable in your System Properties:
 
 ```
- PALETTESOURCE=%USERPROFILE%\Documents\Github\vizicist\palette
+ PALETTESOURCE=%USERPROFILE%\Documents\Github\palette
 ```
 
 - In Visual Studio Code, click on the "extensions marketplace" icon (four little squares) on the left side.

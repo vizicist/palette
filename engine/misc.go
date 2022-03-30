@@ -244,9 +244,9 @@ func MIDIFilePath(nm string) string {
 
 // LocalPaletteDir gets used for local (and changed) presets and config
 func LocalPaletteDir() string {
-	localapp := os.Getenv("LOCALAPPDATA")
+	localapp := os.Getenv("CommonProgramFiles")
 	if localapp == "" {
-		log.Printf("Expecting LOCALAPPDATA to be set.")
+		log.Printf("Expecting CommonProgramFiles to be set.")
 		return ""
 	}
 	return filepath.Join(localapp, "Palette")
@@ -261,14 +261,14 @@ func LocalConfigFilePath(nm string) string {
 	return filepath.Join(localdir, "config", nm)
 }
 
-// LogFilePath is always in the LOCALAPPDATA directory
+// LogFilePath has a default if LocalPaletteDir fails
 func LogFilePath(nm string) string {
-	localapp := os.Getenv("LOCALAPPDATA")
-	if localapp == "" {
-		log.Printf("Expecting LOCALAPPDATA to be set, using c:/windows/tmp for log directory.\n")
-		return "C:/windows/tmp"
+	localdir := LocalPaletteDir()
+	if localdir == "" {
+		log.Printf("Warning - using c:/windows/tmp for log directory.\n")
+		return filepath.Join("C:/windows/tmp", nm)
 	}
-	return filepath.Join(localapp, "Palette", "logs", nm)
+	return filepath.Join(localdir, "logs", nm)
 }
 
 func FileExists(filepath string) bool {
