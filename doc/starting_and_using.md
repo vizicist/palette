@@ -8,7 +8,7 @@
 
 - Invoke <b>Start Palette</b> found in the Palette folder of the Windows Start menu.  This will start up a few things: the Palette engine that runs in the background, the Palette GUI that you use to select and edit presets, and Resolume.  If you've installed Plogue Bidule for doing music, Bidule will also be started.
 
-- If you have an actual touchscreen (as in the Space Palette Pro controller), you can set the guisize value in %LOCALAPPDATA%\Palette\config\settings.json to have the GUI show up on that touchscreen.
+- If you have an actual touchscreen (as in the Space Palette Pro controller), you can set the guisize value in %CommonProgramFiles%\Palette\config\settings.json to have the GUI show up on that touchscreen.
 
 ## Basic Usage
 
@@ -79,14 +79,14 @@ you should find an entry for <b>Palette</b> in Resolume's Sources tab, in the al
 If you don't see this, look for clues in the Resolume log file in this directory: <pre>%APPDATA%\Resolume Avenue</pre>
 
 - If for some reason Resolume crashes at startup,
-you can look in this file: <pre>%LOCALAPPDATA%\Palette\logs\ffgl.log</pre>
+you can look in this file: <pre>%CommonProgramFiles%\Palette\logs\ffgl.log</pre>
 for clues as to the reason.  If you can't resolve the issue,
 you should either remove the ffgl directory from Resolume's <i>Preferences->Video</i> section or just uninstall Palette.
 
-- When the Palette FFGL plugin is properly activated, this log file: <pre>%LOCALAPPDATA%\Palette\logs\ffgl.log</pre>
+- When the Palette FFGL plugin is properly activated, this log file: <pre>%CommonProgramFiles%\Palette\logs\ffgl.log</pre>
 should contain this line at the end: <pre>Palette: listening for OSC on port 3334</pre>
 
-- In this logfile: <pre>%LOCALAPPDATA%\Palette\logs\engine.log</pre>
+- In this logfile: <pre>%CommonProgramFiles%\Palette\logs\engine.log</pre>
 you should see lines like these: <pre>2020/11/17 12:36:16 ====================== Palette Engine is starting
 2020/11/17 12:36:17.030899 MIDI devices (18 inputs, 20 outputs) have been initialized
 2020/11/17 12:36:17.031868 StartRealtime begins

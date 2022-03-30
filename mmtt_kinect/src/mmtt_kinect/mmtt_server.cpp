@@ -2416,7 +2416,7 @@ MmttServer::makeMmttServer()
 	}
 	NosuchPaletteDir = std::string(p);
 
-	p = getenv("LOCALAPPDATA");
+	p = getenv("CommonProgramFiles");
 	if ( p == NULL ) {
 		p = ".";
 	}
