@@ -79,6 +79,9 @@ func LoadMorphs() error {
 	// want the region assignment to NOT be
 	// automatice, put them in here.
 	path := LocalConfigFilePath("morphs.json")
+	if !fileExists(path) {
+		return fmt.Errorf("unable to get path to morphs.json")
+	}
 	bytes, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil // It's okay if file isn't present

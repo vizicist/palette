@@ -161,18 +161,18 @@ def logFilePath(nm):
     return os.path.join(paletteSubDir("logs"),nm)
 
 def paletteSubDir(subdir):
-    local = os.environ.get("LOCALAPPDATA")
+    local = os.environ.get("CommonProgramFiles")
     if local == None:
-        log("Expecting LOCALAPPDATA to be set, assuming .")
+        log("Expecting CommonProgramFiles to be set, assuming .")
         local = "."
     return os.path.join(local, "Palette", subdir)
 
 def presetsPath():
-    p = ConfigValue("presetspath","%LOCALAPPDATA%\\Palette\\presets;%PALETTE%\\presets")
+    p = ConfigValue("presetspath","%CommonProgramFiles%\\Palette\\presets;%PALETTE%\\presets")
     p = p.replace("%PALETTE%",PaletteDir())
-    lad = os.environ.get("LOCALAPPDATA")
+    lad = os.environ.get("CommonProgramFiles")
     if lad != None:
-        p = p.replace("%LOCALAPPDATA%",lad)
+        p = p.replace("%CommonProgramFiles%",lad)
     return p
 
 # Combine presets in the presetsPath list
@@ -193,7 +193,7 @@ def presetsListAll(presetType):
     return sortvals
 
 # This one always returns the local (first) directory in the presetspath,
-# which is usually the user's LOCALAPPDATA version
+# which is usually the user's CommonProgramFiles version
 def localPresetsFilePath(presetType, nm, suffix=".json"):
     presetspath = presetsPath()
     paths = presetspath.split(";")

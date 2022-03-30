@@ -48,7 +48,7 @@ ffgl_setdll( std::string dllpath )
 
 	NosuchDebugLogPath = "c:\\windows\\temp\\ffgl.log";// last resort
 
-	err = _dupenv_s( &pValue, &len, "LOCALAPPDATA" );
+	err = _dupenv_s( &pValue, &len, "CommonProgramFiles" );
 	if( err == 0 && pValue != NULL )
 	{
 		NosuchDebugLogPath = std::string( pValue ) + "\\Palette\\logs\\ffgl.log";
