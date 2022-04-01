@@ -340,7 +340,7 @@ func (m *oneMorph) readFrames(callback CursorDeviceCallbackFunc, forceFactor flo
 
 			switch m.morphtype {
 
-			case "fourcorners":
+			case "corners":
 				// If the position is in one of the corners,
 				// we change the region to that corner.
 				edge := float32(0.075)
