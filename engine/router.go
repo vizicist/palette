@@ -1071,7 +1071,7 @@ func (r *Router) handleMMTTCursor(msg *osc.Message) {
 	motor, mok := r.motors[region]
 	if !mok {
 		// If it's not a region, it's a button.
-		if z > 0.5 {
+		if z > 0.1 {
 			// log.Printf("NOT triggering button too deep z=%f\n", z)
 			return
 		}
