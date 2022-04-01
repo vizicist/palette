@@ -74,7 +74,7 @@ Source: "ship\config\attractscreen.png"; DestDir: "{commoncf64}\{#MyAppName}\con
 Source: "ship\config\helpscreen.png"; DestDir: "{commoncf64}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
 Source: "ship\config\Palette*.avc"; DestDir: "{commoncf64}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
 Source: "ship\config\palette.ico"; DestDir: "{commoncf64}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
-Source: "ship\config\palette.bidule"; DestDir: "{commoncf64}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
+Source: "ship\config\*.bidule"; DestDir: "{commoncf64}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
 Source: "ship\config\resolume.json"; DestDir: "{commoncf64}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
 Source: "ship\config\ffgl.json"; DestDir: "{commoncf64}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
 Source: "ship\config\synths.json"; DestDir: "{commoncf64}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion

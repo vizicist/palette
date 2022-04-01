@@ -41,7 +41,11 @@ func BiduleInfo() *processInfo {
 	if lastslash > 0 {
 		exe = fullpath[lastslash+1:]
 	}
-	arg := ConfigFilePath("palette.bidule")
+	bidulefile := ConfigValue("bidulefile")
+	if bidulefile == "" {
+		bidulefile = "omnisphere.bidule"
+	}
+	arg := ConfigFilePath(bidulefile)
 	return &processInfo{exe, fullpath, arg, biduleActivate}
 }
 
