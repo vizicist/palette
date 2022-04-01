@@ -2198,12 +2198,14 @@ void
 MmttServer::addCursorEvent(OscBundle &bundle, std::string downdragup, std::string region, int sid, float x, float y, float z) {
 	OscMessage msg;
 
+	// NosuchDebug("\n---- addCursorEvent\n");
 	float backmiddle = float(val_backbottom.internal_value + val_backtop.internal_value) / 2.0f;
 	if (z < 1.0 || downdragup == "up") {
 		z = 0.0;
 	}
 	else {
 		// If it's beyond the front value, clip it
+		// NosuchDebug("CLIPPING z=%f to front=%f\n", z, val_front.internal_value);
 		if (z < val_front.internal_value) {
 			z = float(val_front.internal_value);
 		}
@@ -2219,7 +2221,6 @@ MmttServer::addCursorEvent(OscBundle &bundle, std::string downdragup, std::strin
 			z = 1.0;
 		}
 	}
-
 	msg.clear();
 	msg.setAddress("/cursor");
 	msg.addStringArg(downdragup);
@@ -2227,7 +2228,12 @@ MmttServer::addCursorEvent(OscBundle &bundle, std::string downdragup, std::strin
 	msg.addStringArg(cid);
 	msg.addFloatArg(x);      // x (position)
 	msg.addFloatArg(y);      // y (position)
-	msg.addFloatArg(z);        // z (position)
+	// NosuchDebug("orig z = %f  squared = %f\n", z, z*z);
+	msg.addFloatArg(z*z);        // z (position)
+
+	// NosuchDebug("backmiddle=%f  backbottom=%f  backtop=%f  front=%f\n",
+	//	backmiddle, float(val_backbottom.internal_value), float(val_backtop.internal_value), val_front.internal_value);
+	// NosuchDebug("CursorEvent cid=%s ddu=%s xyz=%f %f %f\n", cid.c_str(), downdragup.c_str(), x, y, z);
 
 	// NosuchDebug("Sending /cursor cid=%s ddu=%s xyz=%f %f %f\n", cid.c_str(), downdragup.c_str(), x, y, z);
 
