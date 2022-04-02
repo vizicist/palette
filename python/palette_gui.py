@@ -564,11 +564,22 @@ class ProGuiApp(tk.Tk):
             else:
                 pad = self.CurrPad
 
-            page = self.editPage[pagename]
-            page.setValues(pad.getValues())
+            # page.setValues(pad.getValues())
+            self.refreshValues(pagename,pad)
 
         self.setFrameSizes()
         self.placeFrames()
+
+    def refreshValues(self,pagename,pad):
+        page = self.editPage[pagename]
+        for name in pad.params:
+            value = palette.palette_region_api(pad.name(), "get",
+                "\"name\": \"" + name + "\"")
+            ptype = self.paramTypeOf[name]
+            if ptype != pagename:
+                continue
+            w = page.paramValueWidget[name]
+            w.config(text=value)
 
     def padNamed(self,padName):
         lastResort = None
@@ -1672,6 +1683,8 @@ class PageEditParams(tk.Frame):
 
         newval = self.normalizeJsonValue(name,newval)
         self.paramValueWidget[name].config(text=newval)
+
+        log("adjustValue ValueWidget name=",name," value=",newval)
 
         self.controller.changeAndSendValue(name,newval)
         self.controller.saveCurrent()
