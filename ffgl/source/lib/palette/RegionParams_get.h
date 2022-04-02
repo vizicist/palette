@@ -1,3 +1,5 @@
+GET_DBL_PARAM(noisevertex);
+GET_BOOL_PARAM(cursorsprites);
 GET_DBL_PARAM(alphafinal);
 GET_DBL_PARAM(alphainitial);
 GET_DBL_PARAM(alphatime);
