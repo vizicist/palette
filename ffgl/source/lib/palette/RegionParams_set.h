@@ -1,3 +1,5 @@
+SET_DBL_PARAM(noisevertex);
+SET_BOOL_PARAM(cursorsprites);
 SET_DBL_PARAM(alphafinal);
 SET_DBL_PARAM(alphainitial);
 SET_DBL_PARAM(alphatime);
