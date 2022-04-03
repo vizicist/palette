@@ -1,3 +1,5 @@
+IS_SPRITE_PARAM(noisevertex);
+IS_SPRITE_PARAM(cursorsprites);
 IS_SPRITE_PARAM(alphafinal);
 IS_SPRITE_PARAM(alphainitial);
 IS_SPRITE_PARAM(alphatime);
