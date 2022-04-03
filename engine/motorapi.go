@@ -193,7 +193,9 @@ func (motor *Motor) loadPreset(preset string) error {
 		// which may trigger things (like sending OSC)
 		err = motor.SetOneParamValue(fullname, val)
 		if err != nil {
-			return err
+			log.Printf("Loading preset %s, err=%s\n", preset, err)
+			// Don't abort the whole load, i.e. we are tolerant
+			// of unknown parameters in the preset
 		}
 	}
 	return nil
@@ -202,7 +204,7 @@ func (motor *Motor) loadPreset(preset string) error {
 func (motor *Motor) savePreset(preset string) error {
 
 	// wantCategory is sound, visual, effect, snap, or quad
-	wantCategory, _ := PresetNameSplit(preset)
+	presetCategory, _ := PresetNameSplit(preset)
 	path := WriteablePresetFilePath(preset)
 	s := "{\n    \"params\": {\n"
 
@@ -216,15 +218,28 @@ func (motor *Motor) savePreset(preset string) error {
 
 	sep := ""
 	for _, fullName := range sortedNames {
-		thisCategory, _ := PresetNameSplit(fullName)
-		// "snap" category contains all parameters
-		if wantCategory != "snap" && wantCategory != thisCategory {
-			continue
+		paramCategory, _ := PresetNameSplit(fullName)
+		// Decide which parameters to put out.
+		// "snap" category contains all parameters.
+		includeCategory := false
+		if presetCategory != "snap" {
+			// regular categories
+			if presetCategory != paramCategory {
+				continue
+			}
+		} else {
+			// For snap presets, the category
+			// is included in the parameter name
+			includeCategory = true
 		}
+
 		valstring, e := motor.params.paramValueAsString(fullName)
 		if e != nil {
 			log.Printf("Unexepected error from paramValueAsString for nm=%s\n", fullName)
 			continue
+		}
+		if includeCategory {
+			fullName = paramCategory + "." + fullName
 		}
 		s += fmt.Sprintf("%s        \"%s\":\"%s\"", sep, fullName, valstring)
 		sep = ",\n"

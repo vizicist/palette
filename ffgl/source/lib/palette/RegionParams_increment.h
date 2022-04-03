@@ -1,3 +1,5 @@
+INC_DBL_PARAM(noisevertex,0.0f,1.0f);
+INC_BOOL_PARAM(cursorsprites);
 INC_DBL_PARAM(alphafinal,0.0f,1.0f);
 INC_DBL_PARAM(alphainitial,0.0f,1.0f);
 INC_DBL_PARAM(alphatime,0.01f,10.0f);

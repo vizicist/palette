@@ -279,7 +279,9 @@ func StartMorph(callback CursorDeviceCallbackFunc, forceFactor float32) {
 	}
 	for {
 		for _, m := range allMorphs {
-			m.readFrames(callback, forceFactor)
+			if m.opened {
+				m.readFrames(callback, forceFactor)
+			}
 		}
 		time.Sleep(time.Millisecond)
 	}
@@ -295,7 +297,9 @@ const (
 func (m *oneMorph) readFrames(callback CursorDeviceCallbackFunc, forceFactor float32) {
 	status := C.SenselReadSensor(C.uchar(m.idx))
 	if status != C.SENSEL_OK {
-		log.Printf("Morph: SenselReadSensor for idx=%d returned %d", m.idx, status)
+		log.Printf("Morph: SenselReadSensor for idx=%d returned %d\n", m.idx, status)
+		log.Printf("Morph: %s has been disabled due to SenselReadSensor errors\n", m.serialNum)
+		m.opened = false
 	}
 	numFrames := C.SenselGetNumAvailableFrames(C.uchar(m.idx))
 	if numFrames <= 0 {
@@ -482,9 +486,9 @@ func initialize() error {
 			// It's not explicitly present in morphs.json
 			morphtype = ConfigValue("morphtype")
 			if morphtype == "" {
-				m.morphtype = "corners"
+				morphtype = "corners" // default value
+				log.Printf("Morph: serial# %s isn't in morphs.json, using morphtype = %s\n", m.serialNum, morphtype)
 			}
-			log.Printf("Morph: serial# %s isn't in morphs.json, using morphtype = %s\n", m.serialNum, morphtype)
 		}
 
 		m.morphtype = morphtype
