@@ -25,23 +25,26 @@ func (r *Router) ExecuteAPI(api string, nuid string, rawargs string) (result int
 
 	switch api {
 
-	// These are the APIs that are region-specific.
-	// "load" and "save" have one exception - they
-	// are not region-specific when used on quad.* presets.
-	case "load", "save", "get", "set",
-		"loop_comb", "loop_set", "loop_clear",
-		"loop_length", "loop_fade",
-		"loop_recording", "loop_playing",
-		"quant", "scale", "vol", "comb",
-		"midi_thru", "midi_setscale", "midi_usescale",
-		"midi_quantized", "midi_thruscadjust",
-		"transpose":
+	/*
+		// These are the APIs that are region-specific.
+		// "load" and "save" have one exception - they
+		// are not region-specific when used on quad.* presets.
+		case "load", "save", "get", "set",
+			"loop_comb", "loop_set", "loop_clear",
+			"loop_length", "loop_fade",
+			"loop_recording", "loop_playing",
+			"quant", "scale", "vol", "comb",
+			"midi_thru", "midi_setscale", "midi_usescale",
+			"midi_quantized", "midi_thruscadjust",
+			"ANO", "clearexternalscale",
+			"transpose":
 
-		region, regionok := apiargs["region"]
-		if !regionok {
-			region = "*"
-		}
-		return r.executeRegionAPI(region, api, apiargs, rawargs)
+			region, regionok := apiargs["region"]
+			if !regionok {
+				region = "*"
+			}
+			return r.executeRegionAPI(region, api, apiargs, rawargs)
+	*/
 
 	case "list":
 		return presetList(apiargs)
@@ -66,14 +69,22 @@ func (r *Router) ExecuteAPI(api string, nuid string, rawargs string) (result int
 		return "", SendLogs()
 
 	default:
-		// All other APIs are of the form {apitype}.{api}.
-		// So far there's only global.* APIs.
 		words := strings.Split(api, ".")
+		// Singlw-word APIs are region-specific
+		if len(words) <= 1 {
+			region, regionok := apiargs["region"]
+			if !regionok {
+				region = "*"
+			}
+			return r.executeRegionAPI(region, api, apiargs, rawargs)
+		}
+		// Other APIs are of the form {apitype}.{api}
 		apitype := words[0]
 		apisuffix := ""
 		if len(words) > 1 {
 			apisuffix = words[1]
 		}
+		// So far there's only global.* APIs.
 		if apitype == "global" {
 			return r.executeGlobalAPI(apisuffix, apiargs)
 		} else {
