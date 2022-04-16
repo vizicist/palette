@@ -399,12 +399,12 @@ class ProGuiApp(tk.Tk):
                 self.pageHeader.pageButton[pg].pack_forget()
 
         self.editMode = False
+        self.setFrameSizes()
         if IsQuad and self.guiLevel == 0:
             self.selectPage("quad")
         else:
             self.selectPage("snap")
 
-        self.setFrameSizes()
         self.placeFrames()
 
         self.pageHeader.repack()
@@ -623,14 +623,14 @@ class ProGuiApp(tk.Tk):
             else:
                 self.CurrPad.sendParamValue(name,v)
 
-    def changeAndSendValue(self,basename,newval):
+    def changeAndSendValue(self,paramType,basename,newval):
         if self.allPadsSelected:
             for pad in self.Pads:
-                pad.setValue(basename,newval)
-                pad.sendValue(basename)
+                pad.setValue(paramType,basename,newval)
+                pad.sendValue(paramType,basename)
         else:
-            self.CurrPad.setValue(basename,newval)
-            self.CurrPad.sendValue(basename)
+            self.CurrPad.setValue(paramType,basename,newval)
+            self.CurrPad.sendValue(paramType,basename)
 
     def selectorApply(self,apply,paramType):
 
@@ -718,7 +718,7 @@ class ProGuiApp(tk.Tk):
                         v = enums[i]
 
             if v != "":
-                self.changeAndSendValue(basename,v)
+                self.changeAndSendValue(paramType,basename,v)
 
         self.saveCurrent()
 
@@ -756,7 +756,7 @@ class ProGuiApp(tk.Tk):
         i = random.randint(0,len(presets)-1)
         presetname = presets[i]
         if presetType == "quad":
-            self.loadAndSendQuad(presetname)
+            self.loadAndSend("quad",presetname)
             # self.sendQuad()
         else:
             self.loadAndSendOther(presetType,presetname)
@@ -1123,18 +1123,22 @@ class Pad():
         # the self.params has all (i.e. snap) parameters, but
         # we only want to load whatever's in the json we're given.
         for paramName in j["params"]:
-            self.setValue(paramName,j["params"][paramName])
+            self.setValue("",paramName,j["params"][paramName])
 
-    def setValue(self,paramName,val):
+    def setValue(self,paramType,paramName,val):
+        if not paramType == "" and not paramName.startswith(paramType):
+            paramName = paramType + "." + paramName
         if not paramName in self.paramValues:
-            log("Hey, Pad.setValue paramName=",paramName,"not in paramValues?")
+            log("Hey, Pad.setValue fullname=",paramName,"not in paramValues?")
             return
         self.paramValues[paramName] = val
  
     def getValue(self,paramName):
         return self.paramValues[paramName]
  
-    def sendValue(self,paramName):
+    def sendValue(self,paramType,paramName):
+        if not paramType == "" and not paramName.startswith(paramType):
+            paramName = paramType + "." + paramName
         if not paramName in self.paramValues:
             log("Hey, Pad.sendValue paramName=",paramName,"not in paramValues?")
             return
@@ -1686,7 +1690,8 @@ class PageEditParams(tk.Frame):
 
         log("adjustValue ValueWidget name=",name," value=",newval)
 
-        self.controller.changeAndSendValue(name,newval)
+        paramType = self.controller.paramTypeOf[name]
+        self.controller.changeAndSendValue(paramType,name,newval)
         self.controller.saveCurrent()
 
     def listOfType(self,typesname):
