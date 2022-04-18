@@ -383,6 +383,9 @@ func CallerFunc() string {
 
 func (motor *Motor) SetOneParamValue(fullname, value string) error {
 
+	if Debug.Values {
+		log.Printf("SetOneParamValue motor=%s %s %s\n", motor.padName, fullname, value)
+	}
 	err := motor.params.SetParamValueWithString(fullname, value, nil)
 	if err != nil {
 		return err

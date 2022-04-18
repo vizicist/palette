@@ -145,6 +145,7 @@ private:
 	cJSON* _configJson;
 
 	int SendToResolume(osc::OutboundPacketStream& p);
+	int SendToEngine();
 
 };
 
