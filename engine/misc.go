@@ -50,6 +50,7 @@ type debugFlags struct {
 	Router    bool
 	Scale     bool
 	Transpose bool
+	Values    bool
 }
 
 func setDebug(dtype string, b bool) error {
@@ -106,6 +107,8 @@ func setDebug(dtype string, b bool) error {
 		Debug.Scale = b
 	case "transpose":
 		Debug.Transpose = b
+	case "values":
+		Debug.Values = b
 	default:
 		return fmt.Errorf("setDebug: unrecognized debug type=%s", dtype)
 	}
