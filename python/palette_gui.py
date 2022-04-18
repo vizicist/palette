@@ -3,6 +3,7 @@
 from tkinter import ttk
 from tkinter import font
 import tkinter as tk
+from tkinter import messagebox
 
 import glob
 import os
@@ -330,6 +331,25 @@ class ProGuiApp(tk.Tk):
         self.padChooserCallback(padname)
         self.allPadsSelected = True
         self.padChooser.refreshColors()
+
+    def popup(self,msg):
+        usemessagebox = True
+        if usemessagebox:
+            windowName = "Palette Message"
+            messagebox.showinfo(windowName,msg)
+        else:
+            # XXX - The problem with this approach is that
+            # the window can end up on a different monitor
+            # than the palette gui.
+            win = tk.Toplevel(highlightbackground=ColorBg, highlightcolor=ColorAqua, highlightthickness=3, background=ColorBg)
+            win.wm_title(windowName)
+            win.iconbitmap(palette.configFilePath("palette.ico"))
+    
+            l = tk.Label(win, text=msg, background=ColorBg, foreground=ColorText)
+            l.grid(row=0, column=0)
+    
+            b = ttk.Button(win, text="Okay", command=win.destroy)
+            b.grid(row=1, column=0,pady=(10,30))
 
     def doStartupAction(self):
         pass
@@ -1880,8 +1900,9 @@ class PageEditParams(tk.Frame):
 
     def savePreset(self,preset):
 
-        if self.controller.allPadsSelected:
-            log("savePreset can only save one Pad's preset")
+        if self.pagename != "quad" and self.controller.allPadsSelected:
+            msg = "\n   You can't save a "+self.pagename+" preset when all four pads are selected.   \n\nPlease select the single pad you want to save as a preset.\n"
+            self.controller.popup(msg)
             return
 
         pad = self.controller.CurrPad.name()

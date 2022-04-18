@@ -487,6 +487,8 @@ func (r *Router) executePresetAPI(api string, apiargs map[string]string) (result
 			if err != nil {
 				return "", err
 			}
+			r.saveCurrentSnaps("*")
+
 		} else {
 			motor, ok := r.motors[region]
 			if !ok {
