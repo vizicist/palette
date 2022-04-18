@@ -25,34 +25,13 @@ func (r *Router) ExecuteAPI(api string, nuid string, rawargs string) (result int
 
 	switch api {
 
-	/*
-		// These are the APIs that are region-specific.
-		// "load" and "save" have one exception - they
-		// are not region-specific when used on quad.* presets.
-		case "load", "save", "get", "set",
-			"loop_comb", "loop_set", "loop_clear",
-			"loop_length", "loop_fade",
-			"loop_recording", "loop_playing",
-			"quant", "scale", "vol", "comb",
-			"midi_thru", "midi_setscale", "midi_usescale",
-			"midi_quantized", "midi_thruscadjust",
-			"ANO", "clearexternalscale",
-			"transpose":
-
-			region, regionok := apiargs["region"]
-			if !regionok {
-				region = "*"
-			}
-			return r.executeRegionAPI(region, api, apiargs, rawargs)
-	*/
-
 	case "list":
 		return presetList(apiargs)
 
 	case "start", "stop":
 		process, ok := apiargs["process"]
 		if !ok {
-			err = fmt.Errorf("executeProcessAPI: missing process argument")
+			err = fmt.Errorf("ExecuteAPI: missing process argument")
 		} else if api == "start" {
 			err = StartRunning(process)
 		} else {
@@ -76,7 +55,8 @@ func (r *Router) ExecuteAPI(api string, nuid string, rawargs string) (result int
 			if !regionok {
 				region = "*"
 			}
-			return r.executeRegionAPI(region, api, apiargs, rawargs)
+			result, err = r.executeRegionAPI(region, api, apiargs, rawargs)
+			return result, err
 		}
 		// Other APIs are of the form {apitype}.{api}
 		apitype := words[0]
@@ -87,6 +67,8 @@ func (r *Router) ExecuteAPI(api string, nuid string, rawargs string) (result int
 		// So far there's only global.* APIs.
 		if apitype == "global" {
 			return r.executeGlobalAPI(apisuffix, apiargs)
+		} else if apitype == "preset" {
+			return r.executePresetAPI(apisuffix, apiargs)
 		} else {
 			return nil, fmt.Errorf("ExecuteAPI: unknown prefix on api=%s", api)
 		}
@@ -147,40 +129,7 @@ func presetList(apiargs map[string]string) (string, error) {
 	return result, nil
 }
 
-/*
-func (r *Router) executePresetAPI(api string, apiargs map[string]string, rawargs string) (string, error) {
-	switch api {
-	case "list":
-		return presetList(apiargs)
-
-	default:
-		return "", fmt.Errorf("unrecognized prefix sub-command: %s", api)
-	}
-}
-*/
-
 func (r *Router) executeRegionAPI(region string, api string, apiargs map[string]string, rawargs string) (result string, err error) {
-
-	// The "load" and "save" APIs are non-region-specific
-	// when loading "quad.*" presets.
-	if api == "load" || api == "save" {
-		// So, let's see if it's a quad.* preset
-		preset, okpreset := apiargs["preset"]
-		if !okpreset {
-			return "", fmt.Errorf("no preset argument in load api")
-		}
-		if strings.HasPrefix(preset, "quad.") {
-			if api == "load" {
-				log.Printf("Loading preset=%s", preset)
-				return "", r.loadQuadPreset(preset)
-			} else {
-				log.Printf("Saving preset=%s", preset)
-				return "", r.saveQuadPreset(preset)
-			}
-		}
-		// otherwise continue to treat it
-		// like a normal region-specific api
-	}
 
 	switch api {
 
@@ -195,11 +144,31 @@ func (r *Router) executeRegionAPI(region string, api string, apiargs map[string]
 		if !ok {
 			return "", fmt.Errorf("executeRegionAPI: missing value argument")
 		}
+		// Set value first
 		for thisRegion, motor := range r.motors {
 			if region == "*" || region == thisRegion {
 				err = motor.SetOneParamValue(name, value)
 				if err != nil {
 					return "", err
+				}
+			}
+		}
+		// then save it
+		return "", r.saveCurrentSnaps(region)
+
+	// XXX - I'm not sure there's a reason why the "setparams" api
+	// is handled up here instead of down in the motors.
+	case "setparams":
+		for name, value := range apiargs {
+			if name == "region" {
+				continue
+			}
+			for thisRegion, motor := range r.motors {
+				if region == "*" || region == thisRegion {
+					err = motor.SetOneParamValue(name, value)
+					if err != nil {
+						return "", err
+					}
 				}
 			}
 		}
@@ -215,37 +184,9 @@ func (r *Router) executeRegionAPI(region string, api string, apiargs map[string]
 		}
 		motor, ok := r.motors[region]
 		if !ok {
-			return "", fmt.Errorf("no region named %s", region)
+			return "", fmt.Errorf("ExecuteRegionAPI: no region named %s", region)
 		}
 		return motor.params.paramValueAsString(name)
-
-	case "load":
-		for thisRegion, motor := range r.motors {
-			if region == "*" || thisRegion == region {
-				_, err := motor.ExecuteAPI(api, apiargs, "")
-				if err != nil {
-					return "", err
-				}
-			}
-		}
-		return "", nil
-
-	case "save":
-		if region == "*" {
-			return "", fmt.Errorf("executeRegionAPI: save can't handle *")
-		}
-		motor, ok := r.motors[region]
-		if !ok {
-			return "", fmt.Errorf("ExecuteAPI: no region named %s", region)
-		}
-		r, err := motor.ExecuteAPI(api, apiargs, rawargs)
-		if err != nil {
-			return "", err
-		}
-		if r != "" {
-			return "", fmt.Errorf("unexpected non-null result from preset load api")
-		}
-		return "", nil
 
 	default:
 		// The region-specific APIs above are handled
@@ -271,7 +212,9 @@ func (r *Router) saveQuadPreset(preset string) error {
 	s := "{\n    \"params\": {\n"
 
 	sep := ""
+	log.Printf("saveQuadPreset preset=%s\n", preset)
 	for _, motor := range r.motors {
+		log.Printf("starting motor=%s\n", motor.padName)
 		// Print the parameter values sorted by name
 		fullNames := motor.params.values
 		sortedNames := make([]string, 0, len(fullNames))
@@ -491,6 +434,90 @@ func (r *Router) executeGlobalAPI(api string, apiargs map[string]string) (result
 
 	case "recordingPlaybackStop":
 		r.recordingPlaybackStop()
+
+	default:
+		log.Printf("Router.ExecuteAPI api=%s is not recognized\n", api)
+		err = fmt.Errorf("Router.ExecuteGlobalAPI unrecognized api=%s", api)
+		result = ""
+	}
+
+	return result, err
+}
+
+func (r *Router) saveCurrentSnaps(region string) error {
+	// log.Printf("saveCurrentSnaps region=%s\n", region)
+	if region == "*" {
+		for _, motor := range r.motors {
+			err := motor.saveCurrentSnap()
+			if err != nil {
+				return err
+			}
+		}
+	} else {
+		motor, ok := r.motors[region]
+		if !ok {
+			return fmt.Errorf("saveCurrentSnaps: no region named %s\n", region)
+		}
+		return motor.saveCurrentSnap()
+
+	}
+	return nil
+}
+
+func (r *Router) executePresetAPI(api string, apiargs map[string]string) (result string, err error) {
+
+	switch api {
+
+	case "list":
+		return presetList(apiargs)
+
+	case "load":
+		preset, okpreset := apiargs["preset"]
+		if !okpreset {
+			return "", fmt.Errorf("missing preset parameter")
+		}
+		prefix, _ := PresetNameSplit(preset)
+		region, okregion := apiargs["region"]
+		if !okregion {
+			// It should be a quad preset, then.
+			if prefix != "quad" {
+				return "", fmt.Errorf("expecting a quad.* preset when no region supplied")
+			}
+			err = r.loadQuadPreset(preset)
+			if err != nil {
+				return "", err
+			}
+		} else {
+			motor, ok := r.motors[region]
+			if !ok {
+				return "", fmt.Errorf("ExecutePresetAPI, no region named %s\n", region)
+			}
+			err = motor.loadPreset(preset)
+			err2 := motor.saveCurrentSnap()
+			if err2 != nil {
+				log.Printf("error saving CurrentSnap, err=%s", err)
+			}
+			return "", err
+		}
+
+	case "save":
+		preset, okpreset := apiargs["preset"]
+		if !okpreset {
+			return "", fmt.Errorf("missing preset parameter")
+		}
+		region, okregion := apiargs["region"]
+		if !okregion {
+			return "", fmt.Errorf("missing region parameter")
+		}
+		motor, ok := r.motors[region]
+		if !ok {
+			return "", fmt.Errorf("no motor named %s\n", region)
+		}
+		if strings.HasPrefix(preset, "quad.") {
+			return "", r.saveQuadPreset(preset)
+		} else {
+			return "", motor.saveCurrentAsPreset(preset)
+		}
 
 	default:
 		log.Printf("Router.ExecuteAPI api=%s is not recognized\n", api)

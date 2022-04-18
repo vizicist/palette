@@ -138,13 +138,15 @@ class ProGuiApp(tk.Tk):
 
         self.readParamDefs()
 
+        self.allPadsSelected = True
         self.Pads = {}
         for padName in self.PadNames:
             p = Pad(self,padName)
             self.Pads[p] = padName
-            p.loadCurrent()
+            # p.loadPreset("_Current_"+padName)
 
-        self.allPadsSelected = True
+        # This guarantees that there will be _Current_[ABCD] in the Common Files area
+        # self.saveCurrent()
 
         self.frames = {}
         self.editPage = {}
@@ -451,21 +453,6 @@ class ProGuiApp(tk.Tk):
         self.performPageY = y
         y += self.frameSizeOfControl
  
-    def saveQuad(self,name):
-
-        quadPath = palette.localPresetsFilePath("quad",name)
-        quadValues = {}
-
-        for pad in self.Pads:
-            padvalues = pad.getValues()
-            for paramName in padvalues:
-                fullName = PadParamName(pad.name(),paramName)
-                quadValues[fullName] = padvalues[paramName]
-
-        j = { "params": quadValues }
-        log("Saving quad in",quadPath)
-        SaveJsonInPath(j,quadPath)
-
     def makePadChooserFrame(self,parent,controller):
         f = PadChooser(parent,controller)
         f.config(background=ColorBg)
@@ -558,7 +545,7 @@ class ProGuiApp(tk.Tk):
 
         self.selectPage(pagename)
 
-        if pagename != "quad" and self.editMode:
+        if self.editMode and pagename != "quad" and pagename != "snap":
             if self.allPadsSelected:
                 pad = self.padNamed("A")
             else:
@@ -573,13 +560,15 @@ class ProGuiApp(tk.Tk):
     def refreshValues(self,pagename,pad):
         page = self.editPage[pagename]
         for name in pad.params:
+            ptype = self.paramTypeOf[name]
+            if pagename != "snap" and ptype != pagename:
+                continue
             value = palette.palette_region_api(pad.name(), "get",
                 "\"name\": \"" + name + "\"")
-            ptype = self.paramTypeOf[name]
-            if ptype != pagename:
-                continue
             w = page.paramValueWidget[name]
             w.config(text=value)
+            # Need to set the value in local params values 
+            pad.setValue("",name,value)
 
     def padNamed(self,padName):
         lastResort = None
@@ -646,8 +635,6 @@ class ProGuiApp(tk.Tk):
             self.applyToAllParams(apply,paramType)
             self.refreshPage()
 
-            self.saveCurrent()
-
             if self.allPadsSelected:
                 log("Sending",paramType,"params to all pads")
                 for pad in self.Pads:
@@ -655,6 +642,8 @@ class ProGuiApp(tk.Tk):
             else:
                 log("Sending",paramType,"params to pad",self.CurrPad.name())
                 self.CurrPad.sendParamsOfType(paramType)
+
+            # self.saveCurrent()
 
     def applyToAllParams(self,apply,paramType):
         # loop through all the parameters of a given type
@@ -720,14 +709,16 @@ class ProGuiApp(tk.Tk):
             if v != "":
                 self.changeAndSendValue(paramType,basename,v)
 
-        self.saveCurrent()
+    # def loadCurrent(self):
+    #     for pad in self.Pads:
+    #         pad.loadCurrent()
 
-    def saveCurrent(self):
-        if self.allPadsSelected:
-            for pad in self.Pads:
-                pad.saveCurrent()
-        else:
-            self.CurrPad.saveCurrent()
+    # def saveCurrent(self):
+    #     if self.allPadsSelected:
+    #         for pad in self.Pads:
+    #             pad.saveCurrent()
+    #     else:
+    #         self.CurrPad.saveCurrent()
 
     def selectorLoadAndSend(self,paramType,presetname):
         if self.editMode:
@@ -736,15 +727,22 @@ class ProGuiApp(tk.Tk):
         self.loadAndSend(paramType,presetname)
 
     def loadAndSend(self,presettype,presetname):
+
         if self.currentMode != "attract":
             log("Loading",presettype,presetname)
 
-        if self.allPadsSelected:
-            region = "*"
+        if presettype == "quad":
+            log("calling preset.load on quad preset="+presetname)
+            palette.palette_api("preset.load", "\"preset\": \""+presettype+"."+str(presetname) + "\"")
+        elif self.allPadsSelected:
+            for pad in self.Pads:
+                log("calling preset.load on pad="+pad.name()+" preset="+presetname)
+                palette.palette_region_api(pad.name(),"preset.load", "\"preset\": \""+presettype+"."+str(presetname) + "\"")
         else:
             region = self.CurrPad.name()
+            palette.palette_region_api(region,"preset.load", "\"preset\": \""+presettype+"."+str(presetname) + "\"")
 
-        palette.palette_region_api(region,"load", "\"preset\": \""+presettype+"."+str(presetname) + "\"")
+        # self.saveCurrent()
 
     def selectorLoadAndSendRand(self,presetType):
 
@@ -755,12 +753,7 @@ class ProGuiApp(tk.Tk):
         presets = palette.presetsListAll(presetType)
         i = random.randint(0,len(presets)-1)
         presetname = presets[i]
-        if presetType == "quad":
-            self.loadAndSend("quad",presetname)
-            # self.sendQuad()
-        else:
-            self.loadAndSendOther(presetType,presetname)
-
+        self.loadAndSend(presetType,presetname)
 
 #    def sendOther(self,paramType):
 #        if self.allPadsSelected:
@@ -936,7 +929,7 @@ class ProGuiApp(tk.Tk):
             debug("Sending all parameters for pad = ",pad.name())
             for pt in ["sound","visual","effect"]:
                 paramlistjson = pad.paramListOfType(pt)
-                palette.palette_region_api(pad.name(), pt+".set_params", paramlistjson)
+                palette.palette_region_api(pad.name(), "setparams", paramlistjson)
 
     def synthesizeParamsJson(self):
 
@@ -1086,38 +1079,43 @@ class Pad():
     def getValues(self):
         return self.paramValues
 
-    def loadValues(self,paramType,presetname):
-        self.loadPresetValues(paramType,presetname)
-        self.saveCurrent()
+#     def loadValues(self,paramType,presetname):
+#         self.loadPresetValues(paramType,presetname)
+#         self.saveCurrent()
  
-    def loadCurrent(self):
-        path = self.snapPath
-        if not self.loadFile(path):
-            debug("No Current settings for pad=",self.padName," path=",path)
-        else:
-            log("Loaded",self.padName,"from",path)
+#        path = self.snapPath
+#        if not self.loadFile(path):
+#            debug("No Current settings for pad=",self.name()," path=",path)
+#        else:
+#            log("Loaded",self.name(),"from",path)
 
-    def loadPresetValues(self,paramType,presetName):
-        fpath = palette.searchPresetsFilePath(paramType, presetName)
-        if not self.loadFile(fpath):
-            log("Unable to load preset file: ",fpath)
-        else:
-            log("Loaded",self.padName,"from",fpath)
+#    def loadPresetValues(self,paramType,presetName):
+#        fpath = palette.searchPresetsFilePath(paramType, presetName)
+#        if not self.loadFile(fpath):
+#            log("Unable to load preset file: ",fpath)
+#        else:
+#            log("Loaded",self.name(),"from",fpath)
 
-    def loadFile(self,path):
-        try:
-            f = open(path)
-            j = json.load(f)
-            self.loadJson(j)
-            f.close()
-            return True
-        except:
-            return False
+#    def loadFile(self,path):
+#        try:
+#            f = open(path)
+#            j = json.load(f)
+#            self.loadJson(j)
+#            f.close()
+#            return True
+#        except:
+#            return False
 
-    def saveCurrent(self):
-        j = { "params": self.paramValues }
-        debug("Saving",self.padName,"in",self.snapPath)
-        SaveJsonInPath(j,self.snapPath)
+    # def currentSnapName(self):
+    #     return "snap._Current_"+self.name()
+
+    # def saveCurrent(self):
+    #     palette.palette_region_api(self.name(),"preset.save",
+    #         "\"preset\": \"" + self.currentSnapName() + "\"")
+
+    # def loadCurrent(self):
+    #     palette.palette_region_api(self.name(),"preset.load",
+    #         "\"preset\": \"" + self.currentSnapName() + "\"")
 
     def loadJson(self,j):
         # the self.params has all (i.e. snap) parameters, but
@@ -1149,7 +1147,7 @@ class Pad():
         paramType = self.controller.paramTypeOf[paramName]
         # fullParamName = paramType + "." + paramName
         fullParamName = paramName
-        palette.palette_region_api(self.padName,"set",
+        palette.palette_region_api(self.name(),"set",
             "\"name\": \"" + fullParamName + "\"" + \
             ", \"value\": \"" + str(val) + "\"" )
 
@@ -1157,7 +1155,7 @@ class Pad():
         for pt in ["sound","visual","effect"]:
             if paramType == "snap" or paramType == pt:
                 paramlistjson = self.paramListOfType(pt)
-                palette.palette_region_api(self.name(), pt+".set_params", paramlistjson)
+                palette.palette_region_api(self.name(), "setparams", paramlistjson)
 
         if paramType == "snap":
             self.sendPerformVals()
@@ -1463,7 +1461,7 @@ class PageEditParams(tk.Frame):
         saveArea = self.makeButtonArea()
         saveArea.pack(side=tk.TOP, fill=tk.X)
 
-        self.updateParamFiles()
+        self.updatePresetNames()
         self.paramsFrame = self.makeParamsArea(self)
         self.scrollbar = ScrollBar(parent=self, notify=self)
 
@@ -1472,7 +1470,7 @@ class PageEditParams(tk.Frame):
         # just the buttons to import/export/save
         # if not (pagename == "quad" or pagename == "snap"):
 
-        if pagename != "quad":
+        if pagename != "quad" and pagename != "snap":
             self.paramsFrame.pack(side=tk.LEFT, pady=0)
             self.scrollbar.pack(side=tk.LEFT, fill=tk.Y, expand=True, pady=10, padx=5)
             self.updateParamView()
@@ -1480,10 +1478,9 @@ class PageEditParams(tk.Frame):
         defname = self.controller.selectorPage[pagename].defaultVal()
         self.setPresetNameInComboBox(defname)
 
-    def updateParamFiles(self):
-        files = palette.presetsListAll(self.pagename)
-        self.paramFiles = files
-        self.comboParamsname.configure(values=self.paramFiles)
+    def updatePresetNames(self):
+        self.presetNames = palette.presetsListAll(self.pagename)
+        self.comboParamsname.configure(values=self.presetNames)
 
     def makeParamsArea(self,container):
 
@@ -1531,7 +1528,7 @@ class PageEditParams(tk.Frame):
     def makeButtonArea(self):
         f = tk.Frame(self, background=ColorBg)
 
-        if self.pagename != "quad":
+        if self.pagename != "quad" and self.pagename != "snap":
             self.initButton = ttk.Label(f, text="Init", style='RandEtcButton.TLabel')
             self.initButton.bind("<Button-1>", lambda event:self.initCallback())
             self.initButton.bind("<ButtonRelease-1>", lambda event:self.initRelease())
@@ -1688,11 +1685,12 @@ class PageEditParams(tk.Frame):
         newval = self.normalizeJsonValue(name,newval)
         self.paramValueWidget[name].config(text=newval)
 
-        log("adjustValue ValueWidget name=",name," value=",newval)
+        # log("adjustValue ValueWidget name=",name," value=",newval)
 
         paramType = self.controller.paramTypeOf[name]
         self.controller.changeAndSendValue(paramType,name,newval)
-        self.controller.saveCurrent()
+
+        # self.controller.saveCurrent()
 
     def listOfType(self,typesname):
         return self.controller.paramenums[typesname]
@@ -1761,7 +1759,7 @@ class PageEditParams(tk.Frame):
     def setPresetNameInComboBox(self,name):
         self.paramsname = name
         try:
-            n = self.paramFiles.index(name)
+            n = self.presetNames.index(name)
             self.comboParamsname.current(n)
         except:
             pass
@@ -1874,25 +1872,34 @@ class PageEditParams(tk.Frame):
 
     def saveOkCallback(self):
         name = self.paramsnameVar.get()
+        self.savePreset(self.pagename + "." + name)
 
-        if self.pagename == "quad":
-            self.controller.saveQuad(name)
-        else:
-            self.saveJson(self.pagename,name)
-            # self.saveJson(self.pagename,name)
-
-        self.updateParamFiles()
-        self.controller.updateSelectorPage(self.pagename,self.paramFiles)
+        self.updatePresetNames()
+        self.controller.updateSelectorPage(self.pagename,self.presetNames)
         self.saveCancelCallback()
 
-    def saveJson(self,section,fname,suffix=".json"):
+    def savePreset(self,preset):
 
-        # Note: saving always happens in the localPresetsFilePath,
-        # even if the original one was loaded from a different directory
-        fpath = palette.localPresetsFilePath(section,fname,suffix)
-        j = self.jsonParamDump(section)
-        log("Edit page is saving JSON in:",fpath)
-        SaveJsonInPath(j,fpath)
+        if self.controller.allPadsSelected:
+            log("savePreset can only save one Pad's preset")
+            return
+
+        pad = self.controller.CurrPad.name()
+        result = palette.palette_api("preset.save",
+                "\"region\": \"" + pad + "\","+
+                "\"preset\": \"" + preset + "\"")
+        if result != "":
+            log("result of save for preset=",preset," has non-empty result=",result)
+
+
+#    def saveJson(self,section,fname,suffix=".json"):
+#
+#        # Note: saving always happens in the localPresetsFilePath,
+#        # even if the original one was loaded from a different directory
+#        fpath = palette.localPresetsFilePath(section,fname,suffix)
+#        j = self.jsonParamDump(section)
+#        log("Edit page is saving JSON in:",fpath)
+#        SaveJsonInPath(j,fpath)
 
     def jsonParamDump(self,section):
         newjson = {}
@@ -2333,15 +2340,15 @@ def CurrentPadPath(pad):
     nm = CurrentPadFilename(pad)
     return palette.configFilePath(nm+".json")
 
-def SaveJsonInPath(j,fpath):
-    f = open(fpath,"w")
-    if not f:
-        log("SaveJsonInPath: unable to open path=",fpath)
-        return
-    f.write(json.dumps(j, sort_keys=True, indent=4, separators=(',',':')))
-    # To avoid complaints from editors, add a final newline
-    f.write("\n")
-    f.close()
+# def SaveJsonInPath(j,fpath):
+#     f = open(fpath,"w")
+#     if not f:
+#         log("SaveJsonInPath: unable to open path=",fpath)
+#         return
+#     f.write(json.dumps(j, sort_keys=True, indent=4, separators=(',',':')))
+#     # To avoid complaints from editors, add a final newline
+#     f.write("\n")
+#     f.close()
 
 def initMain(app):
     app.iconbitmap(palette.configFilePath("palette.ico"))
