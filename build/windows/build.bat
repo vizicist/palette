@@ -72,6 +72,7 @@ popd
 echo ================ Creating palette_gui.exe, testcursor.exe, osc.exe
 pushd %PALETTESOURCE%\python
 rm -fr dist
+rm -fr build
 pyinstaller -i ..\default\config\palette.ico palette_gui.py > pyinstaller.out 2>&1
 pyinstaller testcursor.py > pyinstaller.out 2>&1
 pyinstaller osc.py > pyinstaller.out 2>&1
