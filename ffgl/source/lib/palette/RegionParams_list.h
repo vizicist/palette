@@ -1,3 +1,5 @@
+"noisevertex",
+"cursorsprites",
 "alphafinal",
 "alphainitial",
 "alphatime",

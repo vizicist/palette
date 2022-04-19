@@ -28,32 +28,9 @@ func (motor *Motor) ExecuteAPI(api string, args map[string]string, rawargs strin
 
 	switch api {
 
-	case "load":
-		preset, okpreset := args["preset"]
-		if !okpreset {
-			return "", fmt.Errorf("missing preset parameter")
-		}
-		log.Printf("Loading region=%s with preset=%s\n", motor.padName, preset)
-		err = motor.loadPreset(preset)
-
-	case "save":
-		preset, okpreset := args["preset"]
-		if !okpreset {
-			return "", fmt.Errorf("missing preset parameter")
-		}
-		log.Printf("Saving preset=%s\n", preset)
-		err = motor.savePreset(preset)
-
 	case "send":
-		log.Printf("Should be sending all parameters for region=%s\n", motor.padName)
-		for nm := range motor.params.values {
-			valstring, e := motor.params.paramValueAsString(nm)
-			if e != nil {
-				log.Printf("Unexepected error from paramValueAsString for nm=%s\n", nm)
-				continue
-			}
-			log.Printf("Should send nm=%s val=%s\n", nm, valstring)
-		}
+		log.Printf("API send should be sending all parameters for region=%s\n", motor.padName)
+		motor.sendAllParameters()
 		return "", err
 
 	case "loop_recording":
@@ -163,47 +140,80 @@ func (motor *Motor) ExecuteAPI(api string, args map[string]string, rawargs strin
 	return result, err
 }
 
+func (motor *Motor) sendAllParameters() {
+	for nm := range motor.params.values {
+		val, e := motor.params.paramValueAsString(nm)
+		if e != nil {
+			log.Printf("Unexepected error from paramValueAsString for nm=%s\n", nm)
+			// Keep going
+			continue
+		}
+		// This assumes that if you set a parameter to the same value,
+		// that it will re-send the mesasges to Resolume for visual.* params
+		err := motor.SetOneParamValue(nm, val)
+		if err != nil {
+			log.Printf("sendAllParameters nm=%s val=%s err=%s\n", nm, val, err)
+		}
+	}
+}
+
 func (motor *Motor) loadPreset(preset string) error {
+
 	path := ReadablePresetFilePath(preset)
+	log.Printf("loadPreset region=%s path=%s\n", motor.padName, path)
 	paramsmap, err := LoadParamsMap(path)
 	if err != nil {
 		return err
 	}
-	// If the preset value is of the form {category}.{preset},
-	// then we pull off the category and add it as a prefix
-	// to the parameter names.
-	prefix := ""
-	i := strings.Index(preset, ".")
-	if i >= 0 {
-		prefix = preset[0 : i+1]
-	}
-	// HOWEVER, snap.* presets already have
-	// category prefixes on the parameter names,
-	// so we don't need to add them.
-	if prefix == "snap." {
-		prefix = ""
-	}
-	for nm, ival := range paramsmap {
+
+	for name, ival := range paramsmap {
 		val, okval := ival.(string)
 		if !okval {
-			log.Printf("nm=%s value isn't a string in params json", nm)
+			log.Printf("nm=%s value isn't a string in params json", name)
 		}
-		fullname := prefix + nm
+		fullname := name
 		// This is where the parameter values get applied,
 		// which may trigger things (like sending OSC)
 		err = motor.SetOneParamValue(fullname, val)
 		if err != nil {
-			return err
+			log.Printf("Loading preset %s, err=%s\n", preset, err)
+			// Don't abort the whole load, i.e. we are tolerant
+			// of unknown parameters in the preset
 		}
 	}
+
+	// For any parameters that are in Paramdefs but are NOT in the loaded
+	// preset, we put out the "init" values.  This happens when new parameters
+	// are added which don't exist in existing preset files.
+	for nm, def := range ParamDefs {
+		_, found := paramsmap[nm]
+		if !found {
+			init := def.Init
+			err = motor.SetOneParamValue(nm, init)
+			if err != nil {
+				log.Printf("Loading preset %s, param=%s, init=%s, err=%s\n", preset, nm, init, err)
+			}
+		}
+	}
+
 	return nil
 }
 
-func (motor *Motor) savePreset(preset string) error {
+func (motor *Motor) restoreCurrentSnap() {
+	motor.loadPreset("snap._Current_" + motor.padName)
+}
 
-	// wantCategory is sound, visual, effect, snap, or quad
-	wantCategory, _ := PresetNameSplit(preset)
+func (motor *Motor) saveCurrentAsPreset(preset string) error {
 	path := WriteablePresetFilePath(preset)
+	return motor.saveCurrentSnapInPath(path)
+}
+
+func (motor *Motor) saveCurrentSnap() error {
+	return motor.saveCurrentAsPreset("snap._Current_" + motor.padName)
+}
+
+func (motor *Motor) saveCurrentSnapInPath(path string) error {
+
 	s := "{\n    \"params\": {\n"
 
 	// Print the parameter values sorted by name
@@ -216,11 +226,6 @@ func (motor *Motor) savePreset(preset string) error {
 
 	sep := ""
 	for _, fullName := range sortedNames {
-		thisCategory, _ := PresetNameSplit(fullName)
-		// "snap" category contains all parameters
-		if wantCategory != "snap" && wantCategory != thisCategory {
-			continue
-		}
 		valstring, e := motor.params.paramValueAsString(fullName)
 		if e != nil {
 			log.Printf("Unexepected error from paramValueAsString for nm=%s\n", fullName)
@@ -231,6 +236,7 @@ func (motor *Motor) savePreset(preset string) error {
 	}
 	s += "\n    }\n}"
 	data := []byte(s)
+	// log.Printf("SaveCurrentSnapInPath %s path=%s\n", motor.padName, path)
 	return ioutil.WriteFile(path, data, 0644)
 }
 
