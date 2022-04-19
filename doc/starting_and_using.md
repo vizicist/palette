@@ -72,6 +72,12 @@ case that randomized parameters will produce no output.
 
 - Use <b>Stop Palette</b> from the Palette folder of the Windows Start menu.
 
+## Configuring
+
+- The Config directory: <pre>%CommonProgramFiles%\Palette\config</pre>
+contains various files you can edit to control things.
+The settings.json file is the one you'll adjust most often.
+
 ## Debugging hints
 
 - To verify that the Palette FFGL plugin is being recognized and loaded by Resolume,
@@ -87,14 +93,4 @@ you should either remove the ffgl directory from Resolume's <i>Preferences->Vide
 should contain this line at the end: <pre>Palette: listening for OSC on port 3334</pre>
 
 - In this logfile: <pre>%CommonProgramFiles%\Palette\logs\engine.log</pre>
-you should see lines like these: <pre>2020/11/17 12:36:16 ====================== Palette Engine is starting
-2020/11/17 12:36:17.030899 MIDI devices (18 inputs, 20 outputs) have been initialized
-2020/11/17 12:36:17.031868 StartRealtime begins
-2020/11/17 12:36:17.039870 NewReactor: pad=A resolumeLayer=1
-2020/11/17 12:36:17.039870 NewReactor: pad=B resolumeLayer=2
-2020/11/17 12:36:17.039870 NewReactor: pad=C resolumeLayer=3
-2020/11/17 12:36:17.039870 NewReactor: pad=D resolumeLayer=4
-2020/11/17 12:36:17.416867 Morph Opened and Started: idx=0 serial=SM01180216801 firmware=0.19.216 suceeded
-2020/11/17 12:36:17.533556 StartNATS: Subscribing to palette.api
-2020/11/17 12:36:17.533556 StartNATS: subscribing to palette.event
-</pre>
+you should see lines that indicate what has happened and/or failed during startup.
