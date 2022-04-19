@@ -166,30 +166,12 @@ func (motor *Motor) loadPreset(preset string) error {
 		return err
 	}
 
-	/*
-		// If the preset value is of the form {category}.{preset},
-		// then we pull off the category and add it as a prefix
-		// to the parameter names.
-		prefix := ""
-		i := strings.Index(preset, ".")
-		if i >= 0 {
-			prefix = preset[0 : i+1]
-		}
-		// HOWEVER, snap.* presets already have
-		// category prefixes on the parameter names,
-		// so we don't need to add them.
-		if prefix == "snap." || prefix == "quad." {
-			prefix = ""
-		}
-	*/
-
-	for nm, ival := range paramsmap {
+	for name, ival := range paramsmap {
 		val, okval := ival.(string)
 		if !okval {
-			log.Printf("nm=%s value isn't a string in params json", nm)
+			log.Printf("nm=%s value isn't a string in params json", name)
 		}
-		// fullname := prefix + nm
-		fullname := nm
+		fullname := name
 		// This is where the parameter values get applied,
 		// which may trigger things (like sending OSC)
 		err = motor.SetOneParamValue(fullname, val)
@@ -199,6 +181,21 @@ func (motor *Motor) loadPreset(preset string) error {
 			// of unknown parameters in the preset
 		}
 	}
+
+	// For any parameters that are in Paramdefs but are NOT in the loaded
+	// preset, we put out the "init" values.  This happens when new parameters
+	// are added which don't exist in existing preset files.
+	for nm, def := range ParamDefs {
+		_, found := paramsmap[nm]
+		if !found {
+			init := def.Init
+			err = motor.SetOneParamValue(nm, init)
+			if err != nil {
+				log.Printf("Loading preset %s, param=%s, init=%s, err=%s\n", preset, nm, init, err)
+			}
+		}
+	}
+
 	return nil
 }
 
