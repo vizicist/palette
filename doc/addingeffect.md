@@ -1,6 +1,7 @@
 ## How to add a new FFGL effect to the Palette
 
-- Add the effect to the PaletteABCD.avc composition in Resolume.  It should be added eight times in total.  Within each of the four layers - A,B,C,D - the new effect should be added twice within the long pipeline of effects you'll find there.  Use the existing effects as a guide for where to place the two instances of a new effect, and place them in alphabetical order.  
+- Add the effect to the PaletteABCD.avc composition in Resolume.  It should be added eight times in total.  Within each of the four layers - A,B,C,D - the new effect should be added twice within the long pipeline of effects you'll find there.  Use the existing effects as a guide for where to place the two instances of a new effect, and place them in alphabetical order.  After you change the PaletteABCD.avc composition and write it out, copy it from the standard location (in
+  %USERPROFILE%\Documents\Resolume Avenue\Compositions) to your %CommonProgramFiles%\Palette\config directory, so that you don't lose it.
 
 - Add the effect and its parameters to the %CommonProgramFiles%\Palette\config\paramdefs.json file.  Here's a sample for the recently-added "goo" effect.
 <pre>
@@ -47,8 +48,8 @@ In particular, the last entry in any JSON list (like the one in paramdefs.json) 
       }
     },
 </pre>
-- Again, carefully note whether there's a comma after the last entry in a JSON list. The two examples above are intended to be inserted into the middle of their respective files, hence they show a final comma.
-
 - The values in the resolume.json file provide the OSC addresses for their respective parameters.  They sometimes match the parameter name displayed in Resolume, but sometimes they are different.  You can use "Shortcuts->Edit OSC" in Resolume to display the OSC address of the parameters, to check.
+
+- Again, carefully note whether there's a comma after the last entry in a JSON list. The two examples above are intended to be inserted into the middle of their respective files, hence they show a final comma.
 
 - That's it!  If you restart the Palette, the new effect should show up in the GUI and be usable.
