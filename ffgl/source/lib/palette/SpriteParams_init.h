@@ -1,3 +1,5 @@
+INIT_PARAM(noisevertex);
+INIT_PARAM(cursorsprites);
 INIT_PARAM(alphafinal);
 INIT_PARAM(alphainitial);
 INIT_PARAM(alphatime);

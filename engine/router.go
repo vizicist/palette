@@ -233,6 +233,10 @@ func TheRouter() *Router {
 		oneRouter.generateVisuals = ConfigBool("generatevisuals")
 		oneRouter.generateSound = ConfigBool("generatesound")
 
+		for _, motor := range oneRouter.motors {
+			motor.restoreCurrentSnap()
+		}
+
 		go oneRouter.notifyGUI("restart")
 	})
 	return &oneRouter
@@ -749,6 +753,9 @@ func (r *Router) handleOSCInput(e OSCEvent) {
 	}
 	switch e.Msg.Address {
 
+	case "/clientrestart":
+		r.handleClientRestart(e.Msg)
+
 	case "/api":
 		log.Printf("OSC /api is not implemented\n")
 		// r.handleOSCAPI(e.Msg)
@@ -1026,6 +1033,41 @@ func (r *Router) showText(text string) {
 	bypassLayer(r.resolumeClient, 5, false)
 }
 
+func (r *Router) handleClientRestart(msg *osc.Message) {
+
+	tags, _ := msg.TypeTags()
+	_ = tags
+	nargs := msg.CountArguments()
+	if nargs < 1 {
+		log.Printf("Router.handleOSCEvent: too few arguments\n")
+		return
+	}
+	// Even though the argument is an integer port number,
+	// it's a string in the OSC message sent from the Palette FFGL plugin.
+	s, err := argAsString(msg, 0)
+	if err != nil {
+		log.Printf("Router.handleOSCEvent: err=%s\n", err)
+		return
+	}
+	portnum, err := strconv.Atoi(s)
+	if err != nil {
+		log.Printf("Router.handleOSCEvent: Atoi err=%s\n", err)
+		return
+	}
+	var found *Motor
+	for _, motor := range r.motors {
+		if motor.freeframeClient.Port() == portnum {
+			found = motor
+			break
+		}
+	}
+	if found == nil {
+		log.Printf("handleClientRestart unable to find Motor with portnum=%d\n", portnum)
+	} else {
+		found.sendAllParameters()
+	}
+}
+
 // handleMMTTCursor handles messages from MMTT and reformats them
 // as a standard cursor event before sending them to r.HandleEvent
 func (r *Router) handleMMTTCursor(msg *osc.Message) {
@@ -1071,7 +1113,7 @@ func (r *Router) handleMMTTCursor(msg *osc.Message) {
 	motor, mok := r.motors[region]
 	if !mok {
 		// If it's not a region, it's a button.
-		if z > 0.5 {
+		if z > 0.1 {
 			// log.Printf("NOT triggering button too deep z=%f\n", z)
 			return
 		}

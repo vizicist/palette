@@ -72,6 +72,7 @@ popd
 echo ================ Creating palette_gui.exe, testcursor.exe, osc.exe
 pushd %PALETTESOURCE%\python
 rm -fr dist
+rm -fr build
 pyinstaller -i ..\default\config\palette.ico palette_gui.py > pyinstaller.out 2>&1
 pyinstaller testcursor.py > pyinstaller.out 2>&1
 pyinstaller osc.py > pyinstaller.out 2>&1
@@ -144,7 +145,7 @@ copy %PALETTESOURCE%\default\config\nats*.conf %ship%\config >nul
 copy %PALETTESOURCE%\default\config\Palette*.avc %ship%\config >nul
 copy %PALETTESOURCE%\default\config\EraeTouchLayout.emk %ship%\config >nul
 copy %PALETTESOURCE%\default\config\palette.ico %ship%\config >nul
-copy %PALETTESOURCE%\default\config\palette.bidule %ship%\config >nul
+copy %PALETTESOURCE%\default\config\*.bidule %ship%\config >nul
 copy %PALETTESOURCE%\default\config\attractscreen.png %ship%\config >nul
 copy %PALETTESOURCE%\default\config\helpscreen.png %ship%\config >nul
 copy %PALETTESOURCE%\default\config\consola.ttf %ship%\config >nul

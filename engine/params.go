@@ -390,6 +390,14 @@ func (vals *ParamValues) ParamFloatValue(name string) float32 {
 	param := vals.paramValue(name)
 	if param == nil {
 		log.Printf("**** No existing float value for param name=%s ??\n", name)
+		pd, ok := ParamDefs[name]
+		if ok {
+			f, err := strconv.ParseFloat(pd.Init, 64)
+			if err == nil {
+				log.Printf("Using pd.Init=%f\n", f)
+				return float32(f)
+			}
+		}
 		return 0.0
 	}
 	f := (param).(paramValFloat).value
