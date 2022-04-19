@@ -2,6 +2,24 @@
   "host": "127.0.0.1",
   "port": 7000,
   "effects": {
+    "goo": {
+      "on": {
+        "addr": "/goo/bypassed",
+        "arg": 0
+      },
+      "off": {
+        "addr": "/goo/bypassed",
+        "arg": 1
+      },
+      "params": {
+        "resolution": "/goo/effect/resolution",
+        "speed": "/goo/effect/speed",
+        "maxdistortionx": "/goo/effect/maxdistortionx",
+        "maxdistortiony": "/goo/effect/maxdistortiony",
+        "maxdistortionz": "/goo/effect/maxdistortionz",
+        "shade": "/goo/effect/shade"
+      }
+    },
     "twisted": {
       "on": {
         "addr": "/twisted/bypassed",

@@ -56,6 +56,14 @@
 "effect.trails": {"valuetype": "bool", "min": "false", "max": "true", "randmax": "0.2", "init": "false", "comment": "#" },
 "effect.trails:feedback": {"valuetype": "float", "min": "0.0", "max": "1.0", "randmin":"0.5", "randmax":"0.70", "init": "0.70", "comment": "#" },
 
+"effect.goo": {"valuetype": "bool", "min": "false", "max": "true", "randmax": "0.2", "init": "false", "comment": "#" },
+"effect.goo:resolution": {"valuetype": "int", "min": "4", "max": "128", "randmin":"4", "randmax":"32", "init": "16", "comment": "#" },
+"effect.goo:speed": {"valuetype": "float", "min": "0.0", "max": "1.0", "randmin":"0.0", "randmax":"0.25", "init": "0.15", "comment": "#" },
+"effect.goo:maxdistortionx": {"valuetype": "float", "min": "0.0", "max": "1.0", "randmin":"0.0", "randmax":"1.0", "init": "1.0", "comment": "#" },
+"effect.goo:maxdistortiony": {"valuetype": "float", "min": "0.0", "max": "1.0", "randmin":"0.0", "randmax":"1.0", "init": "1.0", "comment": "#" },
+"effect.goo:maxdistortionz": {"valuetype": "float", "min": "0.0", "max": "1.0", "randmin":"0.0", "randmax":"1.0", "init": "1.0", "comment": "#" },
+"effect.goo:shade": {"valuetype": "float", "min": "0.0", "max": "1.0", "randmin":"0.0", "randmax":"1.0", "init": "1.0", "comment": "#" },
+
 "misc.quant": {"valuetype":"string", "min":"quant", "max":"quant", "init":"frets", "comment":"# Quantization style" },
 "misc.scale": {"valuetype":"string", "min":"scale", "max":"scale", "randmax":"newage", "init":"newage", "comment":"# Quantization style" },
 "misc.vol": {"valuetype":"string", "min":"vol", "max":"vol", "init":"pressure", "comment":"# Velocity style" },
@@ -68,6 +76,8 @@
 "misc.pitchoffset": {"valuetype": "float", "min": "0.0", "max": "128.0",  "init": "0.0", "comment": "#" },
 "misc.pitchfactor": {"valuetype": "float", "min": "0.1", "max": "10.0",  "init": "1.0",	"comment": "#" },
 
+"visual.noisevertex": {"valuetype":"float", "min":"0.0", "max":"1.0", "randmin":"0.0", "randmax":"0.0", "init":"0.0", "comment":"# 0-1" },
+"visual.cursorsprites": {"valuetype":"bool", "min":"false", "max":"true", "init":"false", "comment":"#" },
 "visual.alphafinal": {"valuetype":"float", "min":"0.0", "max":"1.0", "randmin":"0.0", "randmax":"0.0", "init":"0.0", "comment":"# 0-1" },
 "visual.alphainitial": {"valuetype":"float", "min":"0.0", "max":"1.0", "randmin":"0.5", "randmax":"1.0", "init":"1.0", "comment":"# 0-1" },
 "visual.alphatime": {"valuetype":"float", "min":"0.01", "max":"10.0", "randmin":"0.5", "randmax":"5.0", "init":"3.0", "comment":"# secs" },
@@ -109,6 +119,7 @@
 "sound.controllerstyle": {"valuetype":"string", "min":"controllerstyle", "max":"controllerstyle", "init":"modulationonly", "comment":"#" },
 "sound.controllerzmax": {"valuetype":"float", "min":"0.0", "max":"1.0", "init":"0.3", "comment":"#" },
 "sound.controllerzmin": {"valuetype":"float", "min":"0.0", "max":"1.0", "init":"0.05", "comment":"#" },
+"sound.deltaztrig": {"valuetype":"float", "min":"0.0", "max":"1.0", "init":"1.0", "comment":"#" },
 "sound.synth": {"valuetype":"string", "min":"synth", "max":"synth", "init":"default", "comment":"#" },
 "sound.inputport": {"valuetype":"string", "min":"inputport", "max":"inputport", "init":"", "comment":"#" },
 "sound.pitchmax": {"valuetype":"int", "min":"0", "max":"127", "init":"80", "comment":"#" },

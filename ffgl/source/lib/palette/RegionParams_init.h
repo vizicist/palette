@@ -1,3 +1,5 @@
+noisevertex = 0.0f;
+cursorsprites = false;
 alphafinal = 0.0f;
 alphainitial = 1.0f;
 alphatime = 3.0f;
