@@ -3,6 +3,7 @@ package engine
 import (
 	"fmt"
 	"log"
+	"math"
 	"math/rand"
 	"runtime"
 	"strconv"
@@ -254,6 +255,9 @@ func (motor *Motor) AdvanceByOneClick() {
 				(ac.maxzSoFar < 0.0 && ac.downEvent.Z < minz)) {
 
 				removeCids = append(removeCids, ce.ID)
+				if Debug.Cursor {
+					log.Printf("Adding ce.ID=%s to removeCids\n", ce.ID)
+				}
 				// NOTE: playit should still be left true for this UP event
 			} else {
 				// Don't play any events in this step with an id that we're getting ready to remove
@@ -383,6 +387,9 @@ func CallerFunc() string {
 
 func (motor *Motor) SetOneParamValue(fullname, value string) error {
 
+	if Debug.Values {
+		log.Printf("SetOneParamValue motor=%s %s %s\n", motor.padName, fullname, value)
+	}
 	err := motor.params.SetParamValueWithString(fullname, value, nil)
 	if err != nil {
 		return err
@@ -795,7 +802,15 @@ func (motor *Motor) generateSoundFromCursor(ce CursorStepEvent) {
 		newpitch := newNoteOn.Pitch
 		// We only turn off the existing note (for a given Cursor ID)
 		// and start the new one if the pitch changes
-		if newpitch != oldpitch {
+
+		// Also do this if the Z/Velocity value changes more than the trigger value
+		dv := float64(int(a.noteOn.Velocity) - int(newNoteOn.Velocity))
+		adv := math.Abs(dv)
+		deltaz := float32(adv / 128.0)
+		deltaztrig := motor.params.ParamFloatValue("sound.deltaztrig")
+		// log.Printf("genSound for drag!   a.noteOn.vel=%d  newNoteOn.vel=%d deltaz=%f deltaztrig=%f\n", a.noteOn.Velocity, newNoteOn.Velocity, deltaz, deltaztrig)
+
+		if newpitch != oldpitch || deltaz > deltaztrig {
 			motor.sendNoteOff(a)
 			a.noteOn = newNoteOn
 			if Debug.Transpose {
@@ -1225,18 +1240,9 @@ func (motor *Motor) sendEffectParam(name string, value string) {
 	// Effect parameters that have ":" in their name are plugin parameters
 	i := strings.Index(name, ":")
 	if i > 0 {
-		var f float64
-		if value == "" {
-			f = 0.0
-		} else {
-			var err error
-			f, err = strconv.ParseFloat(value, 64)
-			if err != nil {
-				log.Printf("Unable to parse float!? value=%s\n", value)
-				f = 0.0
-			}
-		}
-		motor.sendPadOneEffectParam(name[0:i], name[i+1:], f)
+		effectName := name[0:i]
+		paramName := name[i+1:]
+		motor.sendPadOneEffectParam(effectName, paramName, value)
 	} else {
 		onoff, err := strconv.ParseBool(value)
 		if err != nil {
@@ -1244,7 +1250,6 @@ func (motor *Motor) sendEffectParam(name string, value string) {
 			onoff = false
 		}
 		motor.sendPadOneEffectOnOff(name, onoff)
-
 	}
 }
 
@@ -1299,7 +1304,8 @@ func (motor *Motor) resolumeEffectNameOf(name string, num int) string {
 	return fmt.Sprintf("%s%d", name, num)
 }
 
-func (motor *Motor) sendPadOneEffectParam(effectName string, paramName string, value float64) {
+func (motor *Motor) sendPadOneEffectParam(effectName string, paramName string, value string) {
+	fullName := "effect" + "." + effectName + ":" + paramName
 	paramsMap, realEffectName, realEffectNum, err := motor.getEffectMap(effectName, "params")
 	if err != nil {
 		log.Printf("sendPadOneEffectParam: err=%s\n", err)
@@ -1314,16 +1320,62 @@ func (motor *Motor) sendPadOneEffectParam(effectName string, paramName string, v
 		log.Printf("No params value for param=%s in effect=%s\n", paramName, effectName)
 		return
 	}
-	addr := oneParam.(string)
 
+	oneDef, ok := ParamDefs[fullName]
+	if !ok {
+		log.Printf("No paramdef value for param=%s in effect=%s\n", paramName, effectName)
+		return
+	}
+
+	addr := oneParam.(string)
 	resEffectName := motor.resolumeEffectNameOf(realEffectName, realEffectNum)
 	addr = strings.Replace(addr, realEffectName, resEffectName, 1)
-
 	addr = motor.addLayerAndClipNums(addr, motor.resolumeLayer, 1)
 
-	// log.Printf("sendPadOneEffectParam effect=%s param=%s value=%f\n", effectName, paramName, value)
 	msg := osc.NewMessage(addr)
-	msg.Append(float32(value))
+
+	// Append the value to the message, depending on the type of the parameter
+
+	switch oneDef.typedParamDef.(type) {
+
+	case paramDefInt:
+		valint, err := strconv.Atoi(value)
+		if err != nil {
+			log.Printf("paramDefInt conversion err=%s", err)
+			valint = 0
+		}
+		msg.Append(int32(valint))
+
+	case paramDefBool:
+		valbool, err := strconv.ParseBool(value)
+		if err != nil {
+			log.Printf("paramDefBool conversion err=%s", err)
+			valbool = false
+		}
+		onoffValue := 0
+		if valbool {
+			onoffValue = 1
+		}
+		msg.Append(int32(onoffValue))
+
+	case paramDefString:
+		valstr := value
+		msg.Append(valstr)
+
+	case paramDefFloat:
+		var valfloat float32
+		valfloat, err := ParseFloat32(value, resEffectName)
+		if err != nil {
+			log.Printf("paramDefFloat conversion err=%s", err)
+			valfloat = 0.0
+		}
+		msg.Append(float32(valfloat))
+
+	default:
+		log.Printf("SetParamValueWithString: unknown type of ParamDef for name=%s", fullName)
+		return
+	}
+
 	motor.toResolume(msg)
 }
 
@@ -1371,7 +1423,6 @@ func (motor *Motor) sendPadOneEffectOnOff(effectName string, onoff bool) {
 	msg := osc.NewMessage(addr)
 	msg.Append(int32(onoffValue))
 	motor.toResolume(msg)
-
 }
 
 // This silliness is to avoid unused function errors from go-staticcheck

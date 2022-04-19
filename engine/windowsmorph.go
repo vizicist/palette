@@ -258,8 +258,8 @@ type oneMorph struct {
 	fwVersionBuild   uint8
 	fwVersionRelease uint8
 	deviceID         int
-	isQuad           bool
-	region           string // "A", "B", "C", "D", or "QUAD"
+	morphtype        string // "corners", "quadrants"
+	region           string // "A", "B", "C", "D"
 }
 
 var morphMaxForce float32 = 1000.0
@@ -279,7 +279,9 @@ func StartMorph(callback CursorDeviceCallbackFunc, forceFactor float32) {
 	}
 	for {
 		for _, m := range allMorphs {
-			m.readFrames(callback, forceFactor)
+			if m.opened {
+				m.readFrames(callback, forceFactor)
+			}
 		}
 		time.Sleep(time.Millisecond)
 	}
@@ -295,7 +297,9 @@ const (
 func (m *oneMorph) readFrames(callback CursorDeviceCallbackFunc, forceFactor float32) {
 	status := C.SenselReadSensor(C.uchar(m.idx))
 	if status != C.SENSEL_OK {
-		log.Printf("Morph: SenselReadSensor for idx=%d returned %d", m.idx, status)
+		log.Printf("Morph: SenselReadSensor for idx=%d returned %d\n", m.idx, status)
+		log.Printf("Morph: %s has been disabled due to SenselReadSensor errors\n", m.serialNum)
+		m.opened = false
 	}
 	numFrames := C.SenselGetNumAvailableFrames(C.uchar(m.idx))
 	if numFrames <= 0 {
@@ -338,11 +342,11 @@ func (m *oneMorph) readFrames(callback CursorDeviceCallbackFunc, forceFactor flo
 
 			cid := fmt.Sprintf("%d", contact.id)
 
-			if m.isQuad {
+			switch m.morphtype {
 
+			case "corners":
 				// If the position is in one of the corners,
 				// we change the region to that corner.
-
 				edge := float32(0.075)
 				newregion := ""
 				if xNorm < edge && yNorm < edge {
@@ -356,7 +360,7 @@ func (m *oneMorph) readFrames(callback CursorDeviceCallbackFunc, forceFactor flo
 				}
 				if newregion != "" {
 					if newregion != m.region {
-						log.Printf("Switching QUAD pad to region %s", m.region)
+						log.Printf("Switching corners pad to region %s", m.region)
 						ce := CursorDeviceEvent{
 							NUID:      MyNUID(),
 							Region:    m.region,
@@ -368,34 +372,32 @@ func (m *oneMorph) readFrames(callback CursorDeviceCallbackFunc, forceFactor flo
 						m.region = newregion
 					}
 					// We don't pass corner things through
-					continue
+					continue // the loop
 				}
 
-				/*
-					// THIS SHOULD BE RE-ENABLED AS AN OPTION, EVENTUALLY.
-					// This method splits a single pad into 4 quadrants.
-					// Adjust the xNorm and yNorm values to provide
-					// full range 0-1 within each quadrant.
-					switch {
-					case xNorm < 0.5 && yNorm < 0.5:
-						region = "A"
-					case xNorm < 0.5 && yNorm >= 0.5:
-						region = "B"
-						yNorm = yNorm - 0.5
-					case xNorm >= 0.5 && yNorm >= 0.5:
-						region = "C"
-						xNorm = xNorm - 0.5
-						yNorm = yNorm - 0.5
-					case xNorm >= 0.5 && yNorm < 0.5:
-						region = "D"
-						xNorm = xNorm - 0.5
-					default:
-						log.Printf("Morph: unable to find QUAD region for x/y=%f,%f\n", xNorm, yNorm)
-						continue
-					}
-					xNorm *= 2.0
-					yNorm *= 2.0
-				*/
+			case "quadrants":
+				// This method splits a single pad into quadrants.
+				// Adjust the xNorm and yNorm values to provide
+				// full range 0-1 within each quadrant.
+				switch {
+				case xNorm < 0.5 && yNorm < 0.5:
+					m.region = "A"
+				case xNorm < 0.5 && yNorm >= 0.5:
+					m.region = "B"
+					yNorm = yNorm - 0.5
+				case xNorm >= 0.5 && yNorm >= 0.5:
+					m.region = "C"
+					xNorm = xNorm - 0.5
+					yNorm = yNorm - 0.5
+				case xNorm >= 0.5 && yNorm < 0.5:
+					m.region = "D"
+					xNorm = xNorm - 0.5
+				default:
+					log.Printf("Morph: unable to find QUAD region for x/y=%f,%f\n", xNorm, yNorm)
+					continue
+				}
+				xNorm *= 2.0
+				yNorm *= 2.0
 			}
 
 			if Debug.Morph {
@@ -478,19 +480,25 @@ func initialize() error {
 		m.fwVersionBuild = uint8(firmwareinfo.fw_version_build)
 		m.fwVersionRelease = uint8(firmwareinfo.fw_version_release)
 		m.deviceID = int(firmwareinfo.device_id)
-		morphdef, ok := MorphDefs[m.serialNum]
+
+		morphtype, ok := MorphDefs[m.serialNum]
 		if !ok {
-			log.Printf("Morph: serial# %s isn't in morphs.json, assuming QUAD\n", m.serialNum)
-			morphdef = "QUAD"
+			// It's not explicitly present in morphs.json
+			morphtype = ConfigValue("morphtype")
+			if morphtype == "" {
+				morphtype = "corners" // default value
+				log.Printf("Morph: serial# %s isn't in morphs.json, using morphtype = %s\n", m.serialNum, morphtype)
+			}
 		}
 
-		switch morphdef {
-		case "QUAD":
-			m.isQuad = true
+		m.morphtype = morphtype
+		switch m.morphtype {
+		case "corners", "quadrants":
 			m.region = "A"
 		case "A", "B", "C", "D":
-			m.isQuad = false
-			m.region = morphdef
+			m.region = morphtype
+		default:
+			log.Printf("Unexpected morphtype, got %s, expecting one of A,B,C,D,corners,quadrants", morphtype)
 		}
 
 		// Don't use Debug.Morph, this should always gets logged

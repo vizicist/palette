@@ -109,6 +109,7 @@ SendToUDPServer(char *serverhost, int serverport, const char *data, int leng)
     return 0;
 }
 
+#ifdef OLDSTUFF
 int
 RegisterWithAServer(char *serverhost, int serverport, char *myhost, int myport)
 {
@@ -129,5 +130,6 @@ UnRegisterWithAServer(char *serverhost, int serverport, char *myhost, int myport
       << "localhost" << myport << osc::EndMessage;
     return SendToUDPServer(serverhost,serverport,p.Data(),(int)p.Size());
 }
+#endif
 
 
