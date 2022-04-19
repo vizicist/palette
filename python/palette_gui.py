@@ -1640,7 +1640,10 @@ class PageEditParams(tk.Frame):
         if t == "bool":
             newval = True if amount>0 else False
         elif t == "int":
-            v = int(widg.cget("text"))
+            txt = widg.cget("text")
+            if txt == "":
+                txt = self.params[name]["init"]
+            v = int(txt)
             dv = int(mx) - int(mn)
             if amount == -3:
                 v = v - (dv/10)

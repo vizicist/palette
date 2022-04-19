@@ -239,11 +239,13 @@ func (r *Router) saveQuadPreset(preset string) error {
 }
 
 func (r *Router) loadQuadPreset(preset string) error {
+
 	path := ReadablePresetFilePath(preset)
 	paramsmap, err := LoadParamsMap(path)
 	if err != nil {
 		return err
 	}
+
 	// Here's where the params get applied,
 	// which among other things
 	// may result in sending OSC messages out.
@@ -275,6 +277,28 @@ func (r *Router) loadQuadPreset(preset string) error {
 			return err
 		}
 	}
+
+	// For any parameters that are in Paramdefs but are NOT in the loaded
+	// preset, we put out the "init" values.  This happens when new parameters
+	// are added which don't exist in existing preset files.
+	// This is similar to code in Motor.loadPreset, except we
+	// have to do it for all for pads
+	for _, c := range oneRouter.regionLetters {
+		padName := string(c)
+		motor := r.motors[padName]
+		for nm, def := range ParamDefs {
+			paramName := string(padName) + "-" + nm
+			_, found := paramsmap[paramName]
+			if !found {
+				init := def.Init
+				err = motor.SetOneParamValue(nm, init)
+				if err != nil {
+					log.Printf("Loading preset %s, param=%s, init=%s, err=%s\n", preset, nm, init, err)
+				}
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -456,7 +480,7 @@ func (r *Router) saveCurrentSnaps(region string) error {
 	} else {
 		motor, ok := r.motors[region]
 		if !ok {
-			return fmt.Errorf("saveCurrentSnaps: no region named %s\n", region)
+			return fmt.Errorf("saveCurrentSnaps: no region named %s", region)
 		}
 		return motor.saveCurrentSnap()
 
@@ -492,7 +516,7 @@ func (r *Router) executePresetAPI(api string, apiargs map[string]string) (result
 		} else {
 			motor, ok := r.motors[region]
 			if !ok {
-				return "", fmt.Errorf("ExecutePresetAPI, no region named %s\n", region)
+				return "", fmt.Errorf("ExecutePresetAPI, no region named %s", region)
 			}
 			err = motor.loadPreset(preset)
 			err2 := motor.saveCurrentSnap()
@@ -513,7 +537,7 @@ func (r *Router) executePresetAPI(api string, apiargs map[string]string) (result
 		}
 		motor, ok := r.motors[region]
 		if !ok {
-			return "", fmt.Errorf("no motor named %s\n", region)
+			return "", fmt.Errorf("no motor named %s", region)
 		}
 		if strings.HasPrefix(preset, "quad.") {
 			return "", r.saveQuadPreset(preset)

@@ -178,6 +178,24 @@
       "params": {
         "feedback": "/trails/effect/feedback"
       }
+    },
+    "goo": {
+      "on": {
+        "addr": "/goo/bypassed",
+        "arg": 0
+      },
+      "off": {
+        "addr": "/goo/bypassed",
+        "arg": 1
+      },
+      "params": {
+        "resolution": "/goo/effect/resolution",
+        "speed": "/goo/effect/speed",
+        "maxdistortionx": "/goo/effect/maxdistortionx",
+        "maxdistortiony": "/goo/effect/maxdistortiony",
+        "maxdistortionz": "/goo/effect/maxdistortionz",
+        "shade": "/goo/effect/shade"
+      }
     }
   }
 }
