@@ -20,6 +20,7 @@ var uniqueIndex = 0
 type ActiveNote struct {
 	id     int
 	noteOn *Note
+	ce     CursorStepEvent // the one that triggered the note
 }
 
 // Motor is an entity that that reacts to things (cursor events, apis) and generates output (midi, graphics)
@@ -775,6 +776,7 @@ func (motor *Motor) generateSoundFromCursor(ce CursorStepEvent) {
 			motor.sendNoteOff(a)
 		}
 		a.noteOn = motor.cursorToNoteOn(ce)
+		a.ce = ce
 		if Debug.Transpose {
 			s := fmt.Sprintf("Setting a.noteOn to %+v!\n", *(a.noteOn))
 			if strings.Contains(s, "PANIC") {
@@ -804,15 +806,39 @@ func (motor *Motor) generateSoundFromCursor(ce CursorStepEvent) {
 		// and start the new one if the pitch changes
 
 		// Also do this if the Z/Velocity value changes more than the trigger value
-		dv := float64(int(a.noteOn.Velocity) - int(newNoteOn.Velocity))
-		adv := math.Abs(dv)
-		deltaz := float32(adv / 128.0)
+
+		// NOTE: this could and perhaps should use a.ce.Z now that we're
+		// saving a.ce, like the deltay value
+
+		dz := float64(int(a.noteOn.Velocity) - int(newNoteOn.Velocity))
+		deltaz := float32(math.Abs(dz) / 128.0)
 		deltaztrig := motor.params.ParamFloatValue("sound.deltaztrig")
+
+		deltay := float32(math.Abs(float64(a.ce.Y - ce.Y)))
+		deltaytrig := motor.params.ParamFloatValue("sound.deltaytrig")
 		// log.Printf("genSound for drag!   a.noteOn.vel=%d  newNoteOn.vel=%d deltaz=%f deltaztrig=%f\n", a.noteOn.Velocity, newNoteOn.Velocity, deltaz, deltaztrig)
 
-		if newpitch != oldpitch || deltaz > deltaztrig {
+		if motor.params.ParamStringValue("sound.controllerstyle", "nothing") == "modulationonly" {
+			zmin := motor.params.ParamFloatValue("sound.controllerzmin")
+			zmax := motor.params.ParamFloatValue("sound.controllerzmax")
+			cmin := motor.params.ParamIntValue("sound.controllermin")
+			cmax := motor.params.ParamIntValue("sound.controllermax")
+			oldz := a.ce.Z
+			newz := ce.Z
+			// XXX - should put the old controller value in ActiveNote so
+			// it doesn't need to be computed every time
+			oldzc := BoundAndScaleController(oldz, zmin, zmax, cmin, cmax)
+			newzc := BoundAndScaleController(newz, zmin, zmax, cmin, cmax)
+
+			if newzc != 0 && newzc != oldzc {
+				SendControllerToSynth(a.noteOn.Sound, 1, newzc)
+			}
+		}
+
+		if newpitch != oldpitch || deltaz > deltaztrig || deltay > deltaytrig {
 			motor.sendNoteOff(a)
 			a.noteOn = newNoteOn
+			a.ce = ce
 			if Debug.Transpose {
 				s := fmt.Sprintf("r=%s drag Setting currentNoteOn to %+v\n", motor.padName, *(a.noteOn))
 				if strings.Contains(s, "PANIC") {
@@ -833,6 +859,7 @@ func (motor *Motor) generateSoundFromCursor(ce CursorStepEvent) {
 			motor.sendNoteOff(a)
 
 			a.noteOn = nil
+			a.ce = ce // Hmmmm, might be useful, or wrong
 			// log.Printf("r=%s UP Setting currentNoteOn to nil!\n", r.padName)
 		}
 		motor.activeNotesMutex.Lock()
@@ -992,6 +1019,9 @@ func (motor *Motor) sendNoteOn(a *ActiveNote) {
 		n := a.noteOn
 		motor.generateSpriteFromNote(n)
 	}
+}
+
+func (motor *Motor) sendController(a *ActiveNote) {
 }
 
 func (motor *Motor) sendNoteOff(a *ActiveNote) {

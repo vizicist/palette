@@ -78,7 +78,7 @@ PerformLabels["quant"] = [
     {"label":"No_Quant",  "value":"none"},
 ]
 PerformLabels["vol"] = [
-    {"label":"Pressure_Vol", "value":"pressure"},
+    {"label":"Pressure_Velocity", "value":"pressure"},
     {"label":"Fixed_Vol", "value":"fixed"},
 ]
 
@@ -93,6 +93,18 @@ PerformLabels["loopingfade"] = [
     {"label":"Loop_Forever", "value":1.0},
 ]
 PerformDefaultVal["loopingfade"] = 0
+
+PerformLabels["deltaztrig"] = [
+    {"label":"Retrigger_Pressure OFF", "value":1.0},
+    {"label":"Retrigger_Pressure ON", "value":0.1},
+]
+PerformDefaultVal["deltaztrig"] = 0
+
+PerformLabels["deltaytrig"] = [
+    {"label":"Retrigger_Vertical OFF", "value":1.0},
+    {"label":"Retrigger_Vertical ON", "value":0.1},
+]
+PerformDefaultVal["deltaytrig"] = 0
 
 PerformLabels["loopingonoff"] = [
     {"label":"Looping_is OFF",  "value":"off"},

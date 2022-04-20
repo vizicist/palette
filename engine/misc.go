@@ -115,6 +115,21 @@ func setDebug(dtype string, b bool) error {
 	return nil
 }
 
+func BoundAndScaleController(v, vmin, vmax float32, cmin, cmax int) int {
+	newv := BoundAndScaleFloat(v, vmin, vmax, float32(cmin), float32(cmax))
+	return int(newv)
+}
+
+func BoundAndScaleFloat(v, vmin, vmax, outmin, outmax float32) float32 {
+	if v < vmin {
+		v = vmin
+	} else if v > vmax {
+		v = vmax
+	}
+	out := outmin + (outmax-outmin)*((v-vmin)/(vmax-vmin))
+	return out
+}
+
 // InitDebug xxx
 func InitDebug() {
 	debug := ConfigValue("debug")

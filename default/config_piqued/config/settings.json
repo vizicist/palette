@@ -1,0 +1,13 @@
+{
+  "generatesound": "true",
+  "generatevisuals": "true",
+  "publishcursor": "false",
+  "publishmidi": "false",
+  "midiinput": "microKEY2 Air",
+  "debug": "",
+  "autostart": "none",
+  "killonstartup": "false",
+  "guiresizeOLD": "-800,0,800,1280",
+  "guilevel": "1",
+  "this line should not end with a comma": 0
+}

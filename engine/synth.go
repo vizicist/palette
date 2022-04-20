@@ -106,6 +106,29 @@ func SendANOToSynth(synthName string) {
 	synth.midiOut.stream.WriteShort(int64(status), int64(0x7b), int64(0x00))
 }
 
+func SendControllerToSynth(sound string, cnum int, cval int) {
+	synth, ok := Synths[sound]
+	if !ok {
+		log.Printf("SendNoteToSynth: no such synth - %s\n", sound)
+		return
+	}
+	e := portmidi.Event{
+		Timestamp: portmidi.Time(),
+		Status:    int64(synth.channel - 1),
+		Data1:     int64(cnum),
+		Data2:     int64(cval),
+	}
+	e.Status |= 0xb0
+	if Debug.MIDI {
+		log.Printf("SendControllerToSynth: synth=%s status=0x%02x data1=%d data2=%d\n", synth.midiOut.Name(), e.Status, e.Data1, e.Data2)
+	}
+	if e.Data2 > 0x7f {
+		log.Printf("SendControllerToSynth: Hey! Data2 shouldn't be > 0x7f\n")
+	} else {
+		synth.midiOut.stream.WriteShort(e.Status, e.Data1, e.Data2)
+	}
+}
+
 // SendNote sends MIDI output for a Note
 func SendNoteToSynth(note *Note) {
 	sound := note.Sound
