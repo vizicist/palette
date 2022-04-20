@@ -64,6 +64,8 @@ class ProGuiApp(tk.Tk):
 
         self.currentMode = ""
         self.nextMode = ""
+        self.lastLoadType = ""
+        self.lastLoadName = ""
 
         self.defaultGuiLevel = int(palette.ConfigValue("guilevel",defvalue="0"))
 
@@ -748,6 +750,16 @@ class ProGuiApp(tk.Tk):
 
     def loadAndSend(self,presettype,presetname):
 
+        # a second click on the same preset will switch to edit mode
+        # (same thing as click on the page header)
+        if presettype == self.lastLoadType and presetname == self.lastLoadName:
+            self.clickPage(presettype)
+        self.lastLoadType = presettype
+        self.lastLoadName = presetname
+        log("loadAndSend presettype="+presettype+" presetname="+presetname)
+        self.editPage[presettype].paramsnameVar.set(presetname)
+        log("paramsnamevar="+self.editPage[presettype].paramsnameVar.get())
+
         if self.currentMode != "attract":
             log("Loading",presettype,presetname)
 
@@ -1230,6 +1242,16 @@ class Pad():
         elif name == "loopingset":
             palette.palette_region_api(self.name(), "loop_set", '"set": "'+str(val)+'"')
 
+        elif name == "deltaztrig":
+            palette.palette_region_api(self.name(), "set",
+                "\"name\": \"" + "sound.deltaztrig" + "\"" + \
+                ", \"value\": \"" + str(val) + "\"")
+
+        elif name == "deltaytrig":
+            palette.palette_region_api(self.name(), "set",
+                "\"name\": \"" + "sound.deltaytrig" + "\"" + \
+                ", \"value\": \"" + str(val) + "\"")
+
         elif name == "quant":
             palette.palette_region_api(self.name(), "set",
                 "\"name\": \"" + "misc.quant" + "\"" + \
@@ -1582,7 +1604,7 @@ class PageEditParams(tk.Frame):
         self.comboParamsname = ttk.Combobox(f, textvariable=self.paramsnameVar,
                 font=comboFont, style='custom.TCombobox')
         self.comboParamsname.bind("<<ComboboxSelected>>", lambda event,v=self.paramsnameVar : self.checkThenGotoParamsFile(v.get()))
-        self.comboParamsname.bind("<Return>", lambda event,v=self.paramsnameVar : self.checkThenGotoParamsFile(v.get()))
+        self.comboParamsname.bind("<Return>", lambda event,v=self.paramsnameVar : self.checkThenGotoParamsFileReturn(v.get()))
 
         self.okButton = ttk.Label(f, text="OK", style='RandEtcButton.TLabel')
         self.okButton.bind("<Button-1>", lambda event:self.saveOkCallback())
@@ -1777,6 +1799,11 @@ class PageEditParams(tk.Frame):
             raise Exception("Unrecognized paramType value? t="+t)
 
     def checkThenGotoParamsFile(self, name):
+        log("In checkThenGoToParamsFile for name="+name)
+        return
+
+    def checkThenGotoParamsFileReturn(self, name):
+        log("In checkThenGoToParamsFileReturn for name="+name)
         return
 
     def setPresetNameInComboBox(self,name):
@@ -2092,6 +2119,8 @@ class PagePerformMain(tk.Frame):
 
         self.makePerformButtonAdvanced("quant",None)
         self.makePerformButtonAdvanced("vol",None)
+        # self.makePerformButtonAdvanced("deltaztrig",None)
+        # self.makePerformButtonAdvanced("deltaytrig",None)
         self.makePerformButtonAdvanced("midithru",None)
         self.makePerformButtonAdvanced("midisetscale",None)
         self.makePerformButtonAdvanced("midiusescale",None)
