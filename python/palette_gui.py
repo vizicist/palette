@@ -566,6 +566,8 @@ class ProGuiApp(tk.Tk):
             self.editMode = not self.editMode
 
         self.selectPage(pagename)
+        self.lastLoadType = ""
+        self.lastLoadName = ""
 
         if self.editMode and pagename != "quad" and pagename != "snap":
             if self.allPadsSelected:
