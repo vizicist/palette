@@ -95,6 +95,7 @@ class ProGuiApp(tk.Tk):
             self.performButtonPady = 2
             self.performButtonsPerRow = 6
             self.selectDisplayRowsAdvanced = 10
+            self.selectDisplayRowsAdvancedQuad = 12
         else:
             self.paramDisplayRows = 18
             self.frameSizeOfControlNormal = 0.085
@@ -456,9 +457,8 @@ class ProGuiApp(tk.Tk):
             self.frameSizeOfControl = self.frameSizeOfControlAdvanced
             self.frameSizeOfSelect = self.frameSizeOfSelectAdvancedQuad
             self.frameSizeOfPadChooser = 0.0
-            # Note - on Quad page, the PadChooser is not shown, and
-            # selectDisplayRowsNormal is used
-            self.selectDisplayRows = self.selectDisplayRowsNormal
+            # Note - on Quad page, the PadChooser is not shown
+            self.selectDisplayRows = self.selectDisplayRowsAdvancedQuad
 
         else:
             # Advanced is any guiLevel>0
@@ -2279,10 +2279,14 @@ class PageSelector(tk.Frame):
         padx = self.controller.selectButtonPadx
         pady = self.controller.selectButtonPady
 
-        if self.controller.guiLevel == 0 or self.pagename == "quad":
+        # if self.controller.guiLevel == 0 or self.pagename == "quad":
+        if self.controller.guiLevel == 0:
             nrows = self.controller.selectDisplayRowsNormal
         else:
-            nrows = self.controller.selectDisplayRowsAdvanced
+            if self.pagename == "quad":
+                nrows = self.controller.selectDisplayRowsAdvanced - 4
+            else:
+                nrows = self.controller.selectDisplayRowsAdvanced
         nbuttons = self.controller.selectDisplayPerRow * nrows
         nvals = len(self.vals)
         if nvals <= nbuttons:
@@ -2296,6 +2300,8 @@ class PageSelector(tk.Frame):
             self.scrollbar.pack(side=tk.LEFT, fill=tk.Y, expand=True, pady=11, padx=4)
             buttonwidth=13
             pady -= 1
+
+        self.controller.setFrameSizes()  # hack
 
         # log("doLayout page=",self.pagename," nbuttons=",nbuttons, "nvals=",nvals, "nrows=",nrows,"buttonwidth=",buttonwidth)
 
