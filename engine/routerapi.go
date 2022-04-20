@@ -149,7 +149,10 @@ func (r *Router) executeRegionAPI(region string, api string, apiargs map[string]
 			if region == "*" || region == thisRegion {
 				err = motor.SetOneParamValue(name, value)
 				if err != nil {
-					return "", err
+					log.Printf("executeRegionAPI: set of %s failed, err=%s\n", name, err)
+					// But don't fail completely, this might be for
+					// parameters that no longer exist, and a hard failure may
+					// cause more problems.
 				}
 			}
 		}
@@ -167,7 +170,10 @@ func (r *Router) executeRegionAPI(region string, api string, apiargs map[string]
 				if region == "*" || region == thisRegion {
 					err = motor.SetOneParamValue(name, value)
 					if err != nil {
-						return "", err
+						log.Printf("executeRegionAPI: set of %s failed, err=%s\n", name, err)
+						// But don't fail completely, this might be for
+						// parameters that no longer exist, and a hard failure may
+						// cause more problems.
 					}
 				}
 			}
@@ -272,9 +278,9 @@ func (r *Router) loadQuadPreset(preset string) error {
 		// use words[1] so the motor doesn't see the region name
 		err = motor.SetOneParamValue(parameterName, value)
 		if err != nil {
-			// XXX - might not want to
-			// fail completely on individual failures
-			return err
+			log.Printf("loadQuadPreset: name=%s err=%s\n", parameterName, err)
+			// Don't fail completely on individual failures,
+			// some might be for parameters that no longer exist.
 		}
 	}
 
@@ -293,7 +299,9 @@ func (r *Router) loadQuadPreset(preset string) error {
 				init := def.Init
 				err = motor.SetOneParamValue(nm, init)
 				if err != nil {
-					log.Printf("Loading preset %s, param=%s, init=%s, err=%s\n", preset, nm, init, err)
+					log.Printf("loadQuadPreset: %s, param=%s, init=%s, err=%s\n", preset, nm, init, err)
+					// Don't fail completely on individual failures,
+					// some might be for parameters that no longer exist.
 				}
 			}
 		}

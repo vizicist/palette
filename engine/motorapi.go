@@ -153,6 +153,7 @@ func (motor *Motor) sendAllParameters() {
 		err := motor.SetOneParamValue(nm, val)
 		if err != nil {
 			log.Printf("sendAllParameters nm=%s val=%s err=%s\n", nm, val, err)
+			// Don't fail completely
 		}
 	}
 }
@@ -166,17 +167,22 @@ func (motor *Motor) loadPreset(preset string) error {
 		return err
 	}
 
+	presetType, _ := PresetNameSplit(preset)
 	for name, ival := range paramsmap {
 		val, okval := ival.(string)
 		if !okval {
 			log.Printf("nm=%s value isn't a string in params json", name)
 		}
 		fullname := name
+		paramType, _ := PresetNameSplit(fullname)
+		if presetType != "snap" && paramType != presetType {
+			continue
+		}
 		// This is where the parameter values get applied,
 		// which may trigger things (like sending OSC)
 		err = motor.SetOneParamValue(fullname, val)
 		if err != nil {
-			log.Printf("Loading preset %s, err=%s\n", preset, err)
+			log.Printf("loadPreset: preset %s, err=%s\n", preset, err)
 			// Don't abort the whole load, i.e. we are tolerant
 			// of unknown parameters in the preset
 		}
@@ -186,12 +192,18 @@ func (motor *Motor) loadPreset(preset string) error {
 	// preset, we put out the "init" values.  This happens when new parameters
 	// are added which don't exist in existing preset files.
 	for nm, def := range ParamDefs {
+		// Only include parameters of the desired type
+		paramType, _ := PresetNameSplit(nm)
+		if presetType != "snap" && paramType != presetType {
+			continue
+		}
 		_, found := paramsmap[nm]
 		if !found {
 			init := def.Init
 			err = motor.SetOneParamValue(nm, init)
 			if err != nil {
 				log.Printf("Loading preset %s, param=%s, init=%s, err=%s\n", preset, nm, init, err)
+				// Don't fail completely
 			}
 		}
 	}
