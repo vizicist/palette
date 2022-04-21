@@ -154,7 +154,7 @@
         "A-sound.timefret3y":"0.900",
         "A-sound.timefret4q":"0.125",
         "A-sound.timefret4y":"1.000",
-        "A-sound.velocitymax":"0",
+        "A-sound.velocitymax":"127",
         "A-sound.velocitymin":"0",
         "A-misc.vol":"pressure",
         "A-sound.xcontroller":"1",
