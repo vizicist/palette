@@ -1,4 +1,5 @@
 import asyncio
+# from nis import match
 import nats
 from nats.aio.client import Client as NATS
 from nats.aio.errors import ErrTimeout, ErrNoServers
@@ -41,35 +42,36 @@ PerformLabels["loopinglength"] = [
     {"label":"Loop Length_4 beats", "value":4*OneBeat},
 ]
 SimpleScales = [
-	{"label":"Newage_Scale",    "value":"newage"},
-	{"label":"Arabian_Scale",   "value":"arabian"},
-	# {"label":"Chromatic_Scale", "value":"chromatic"},
-    # {"label":"Dorian_Scale","value":"dorian"},
-	{"label":"Fifths_Scale",    "value":"fifths"},
-    {"label":"Harminor_Scale",  "value":"harminor"},
-    # {"label":"Lydian_Scale","value":"lydian"},
-    {"label":"Melminor_Scale",  "value":"melminor"},
-    {"label":"Raga_Scale",     "value":"raga1"},
+	{"label":"*Newage_Scale",    "value":"newage"},
+	{"label":"*Arabian_Scale",   "value":"arabian"},
+	# {"label":"*Chromatic_Scale", "value":"chromatic"},
+    # {"label":"*Dorian_Scale","value":"dorian"},
+	{"label":"*Fifths_Scale",    "value":"fifths"},
+    {"label":"*Harminor_Scale",  "value":"harminor"},
+    # {"label":"*Lydian_Scale","value":"lydian"},
+    {"label":"*Melminor_Scale",  "value":"melminor"},
+    {"label":"*Raga_Scale",     "value":"raga1"},
 ]
 PerformScales = [
-	{"label":"Newage_Scale",    "value":"newage"},
-    # {"label":"Aeolian_Scale",   "value":"aeolian"},
- 	{"label":"Arabian_Scale",   "value":"arabian"},
- 	{"label":"Chromatic_Scale", "value":"chromatic"},
-    # {"label":"Dorian_Scale","value":"dorian"},
- 	{"label":"Fifths_Scale",    "value":"fifths"},
-    {"label":"Harminor_Scale",  "value":"harminor"},
-    # {"label":"Ionian_Scale","value":"ionian"},
-    # {"label":"Locrian_Scale",   "value":"locrian"},
-    # {"label":"Lydian_Scale","value":"lydian"},
-    {"label":"Melminor_Scale",  "value":"melminor"},
-    # {"label":"Mixolydian_Scale","value":"mixolydian"},
-    {"label":"Phrygian_Scale",  "value":"phrygian"},
-    {"label":"Raga_Scale",     "value":"raga1"},
-    # {"label":"Raga2_Scale", "value":"raga2"},
-    # {"label":"Raga3_Scale", "value":"raga3"},
-    # {"label":"Raga4_Scale", "value":"raga4"},
+	{"label":"*Newage_Scale",    "value":"newage"},
+    # {"label":"*Aeolian_Scale",   "value":"aeolian"},
+ 	{"label":"*Arabian_Scale",   "value":"arabian"},
+ 	{"label":"*Chromatic_Scale", "value":"chromatic"},
+    # {"label":"*Dorian_Scale","value":"dorian"},
+ 	{"label":"*Fifths_Scale",    "value":"fifths"},
+    {"label":"*Harminor_Scale",  "value":"harminor"},
+    # {"label":"*Ionian_Scale","value":"ionian"},
+    # {"label":"*Locrian_Scale",   "value":"locrian"},
+    # {"label":"*Lydian_Scale","value":"lydian"},
+    {"label":"*Melminor_Scale",  "value":"melminor"},
+    # {"label":"*Mixolydian_Scale","value":"mixolydian"},
+    {"label":"*Phrygian_Scale",  "value":"phrygian"},
+    {"label":"*Raga_Scale",     "value":"raga1"},
+    # {"label":"*Raga2_Scale", "value":"raga2"},
+    # {"label":"*Raga3_Scale", "value":"raga3"},
+    # {"label":"*Raga4_Scale", "value":"raga4"},
 ]
+PerformDefaultVal["scale"] = 0
 
 PerformLabels["quant"] = [
     {"label":"Fret_Quantize", "value":"frets"},
@@ -136,23 +138,29 @@ PerformLabels["midiquantized"] = [
     {"label":"MIDI Thru_Quant",  "value":True},
 ]
 GlobalPerformLabels["tempo"] = [
-    {"label":"Tempo_Normal",  "value":1.0},
-    {"label":"Tempo_Slow", "value":0.85},
-    {"label":"Tempo_Slower", "value":0.70},
-    {"label":"Tempo_Slowest", "value":0.55},
-    {"label":"Tempo_Fast", "value":1.5},
-    {"label":"Tempo_Faster", "value":2.0},
-    {"label":"Tempo_Fastest", "value":4.0},
+    {"label":"*Tempo_Normal",  "value":1.0},
+    {"label":"*Tempo_Slow", "value":0.85},
+    {"label":"*Tempo_Slower", "value":0.70},
+    {"label":"*Tempo_Slowest", "value":0.55},
+    {"label":"*Tempo_Fast", "value":1.5},
+    {"label":"*Tempo_Faster", "value":2.0},
+    {"label":"*Tempo_Fastest", "value":4.0},
 ]
+PerformDefaultVal["tempo"] = 0
+
+# NOTE: the order of these things needs to match
+# the order in oneRouter.transposeValues in router.go
 GlobalPerformLabels["transpose"] = [
-    {"label":"Transpose_0",  "value":0},
-    {"label":"Transpose_3",  "value":3},
-    {"label":"Transpose_-2",  "value":-2},
-    {"label":"Transpose_5",  "value":5},
+    {"label":"*Transpose_0",  "value":0},
+    {"label":"*Transpose_-2",  "value":-2},
+    {"label":"*Transpose_3",  "value":3},
+    {"label":"*Transpose_-5",  "value":-5},
 ]
+PerformDefaultVal["transpose"] = 0
+
 GlobalPerformLabels["transposeauto"] = [
-    {"label":"Transpose_Auto On",  "value":True},
-    {"label":"Transpose_Auto Off",  "value":False},
+    {"label":"*Transpose_Auto On",  "value":True},
+    {"label":"*Transpose_Auto Off",  "value":False},
 ]
 PerformDefaultVal["transposeauto"] = 1
 
