@@ -188,7 +188,7 @@ class ProGuiApp(tk.Tk):
             palette.GlobalPerformLabels["scale"] = palette.PerformScales
 
     def placePadChooser(self):
-        if self.guiLevel > 0 and self.currentPageName != "quad":
+        if self.guiLevel > 0:
             self.padChooser.place(in_=self.topContainer, relx=0, rely=self.padChooserPageY, relwidth=1, relheight=self.frameSizeOfPadChooser)
         else:
             self.padChooser.place_forget()
@@ -453,12 +453,12 @@ class ProGuiApp(tk.Tk):
             self.selectDisplayRows = self.selectDisplayRowsNormal
 
         elif self.currentPageName == "quad":
-
+            # quad page layout used to omit the PadChooser,
+            # but I put it back, so this is the same as below
             self.frameSizeOfControl = self.frameSizeOfControlAdvanced
-            self.frameSizeOfSelect = self.frameSizeOfSelectAdvancedQuad
-            self.frameSizeOfPadChooser = 0.0
-            # Note - on Quad page, the PadChooser is not shown
-            self.selectDisplayRows = self.selectDisplayRowsAdvancedQuad
+            self.frameSizeOfSelect = self.frameSizeOfSelectAdvanced
+            self.frameSizeOfPadChooser = self.frameSizeOfPadChooserAdvanced
+            self.selectDisplayRows = self.selectDisplayRowsAdvanced
 
         else:
             # Advanced is any guiLevel>0
@@ -763,14 +763,18 @@ class ProGuiApp(tk.Tk):
         self.lastLoadName = presetname
         log("loadAndSend presettype="+presettype+" presetname="+presetname)
         self.editPage[presettype].paramsnameVar.set(presetname)
-        log("paramsnamevar="+self.editPage[presettype].paramsnameVar.get())
+        # log("paramsnamevar="+self.editPage[presettype].paramsnameVar.get())
 
         if self.currentMode != "attract":
             log("Loading",presettype,presetname)
 
         if presettype == "quad":
             log("calling preset.load on quad preset="+presetname)
-            palette.palette_api("preset.load", "\"preset\": \""+presettype+"."+str(presetname) + "\"")
+            if self.allPadsSelected:
+                palette.palette_api("preset.load", "\"preset\": \""+presettype+"."+str(presetname) + "\", \"regions\": \"*\"")
+            else:
+                regions = self.CurrPad.name()
+                palette.palette_api("preset.load", "\"preset\": \""+presettype+"."+str(presetname) + "\", \"regions\": \""+regions+"\"")
         elif self.allPadsSelected:
             for pad in self.Pads:
                 log("calling preset.load on pad="+pad.name()+" preset="+presetname)

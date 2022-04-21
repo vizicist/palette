@@ -244,7 +244,7 @@ func (r *Router) saveQuadPreset(preset string) error {
 	return ioutil.WriteFile(path, data, 0644)
 }
 
-func (r *Router) loadQuadPreset(preset string) error {
+func (r *Router) loadQuadPreset(preset string, regions string) error {
 
 	path := ReadablePresetFilePath(preset)
 	paramsmap, err := LoadParamsMap(path)
@@ -263,9 +263,13 @@ func (r *Router) loadQuadPreset(preset string) error {
 		// In a quad file, the parameter names are of the form:
 		// {region}-{parametername}
 		words := strings.SplitN(name, "-", 2)
-		motor, ok := r.motors[words[0]]
+		region := words[0]
+		motor, ok := r.motors[region]
 		if !ok {
-			return fmt.Errorf("no region named %s", words[0])
+			return fmt.Errorf("no region named %s", region)
+		}
+		if regions != "*" && regions != region {
+			continue
 		}
 		// We expect the parameter to be of the form
 		// {category}.{parameter}, but old "quad" files
@@ -515,11 +519,16 @@ func (r *Router) executePresetAPI(api string, apiargs map[string]string) (result
 			if prefix != "quad" {
 				return "", fmt.Errorf("expecting a quad.* preset when no region supplied")
 			}
-			err = r.loadQuadPreset(preset)
+			regions, okregions := apiargs["regions"]
+			if !okregions {
+				log.Printf("Hmmm, no regions value on quad load?\n")
+				regions = "*"
+			}
+			err = r.loadQuadPreset(preset, regions)
 			if err != nil {
 				return "", err
 			}
-			r.saveCurrentSnaps("*")
+			r.saveCurrentSnaps(regions)
 
 		} else {
 			motor, ok := r.motors[region]

@@ -1007,7 +1007,7 @@ func (r *Router) handleMMTTButton(butt string) {
 		return
 	}
 	log.Printf("Router.handleMMTTButton: butt=%s preset=%s\n", butt, preset)
-	err := r.loadQuadPreset("quad." + preset)
+	err := r.loadQuadPreset("quad."+preset, "*")
 	if err != nil {
 		log.Printf("handleMMTTButton: preset=%s err=%s\n", preset, err)
 	}
