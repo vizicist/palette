@@ -1077,7 +1077,6 @@ func (r *Motor) paramIntValue(paramname string) int {
 
 func (motor *Motor) cursorToNoteOn(ce CursorStepEvent) *Note {
 	pitch := motor.cursorToPitch(ce)
-	pitch = uint8(int(pitch) + motor.TransposePitch)
 	// log.Printf("cursorToNoteOn pitch=%v trans=%v", pitch, r.TransposePitch)
 	velocity := motor.cursorToVelocity(ce)
 	synth := motor.params.ParamStringValue("sound.synth", defaultSynth)
@@ -1091,17 +1090,22 @@ func (motor *Motor) cursorToPitch(ce CursorStepEvent) uint8 {
 	dp := pitchmax - pitchmin + 1
 	p1 := int(ce.X * float32(dp))
 	p := uint8(pitchmin + p1%dp)
-	scale := motor.getScale()
-	p = scale.ClosestTo(p)
-	// MIDIOctaveShift might be negative
-	pnew := int(p) + 12*motor.MIDIOctaveShift
-	for pnew < 0 {
-		pnew += 12
+	// log.Printf("cursorToPitch: X=%f p=%d\n", ce.X, p)
+	chromatic := motor.params.ParamBoolValue("sound.chromatic")
+	if !chromatic {
+		scale := motor.getScale()
+		p = scale.ClosestTo(p)
+		// MIDIOctaveShift might be negative
+		i := int(p) + 12*motor.MIDIOctaveShift
+		for i < 0 {
+			i += 12
+		}
+		for i > 127 {
+			i -= 12
+		}
+		p = uint8(i + motor.TransposePitch)
 	}
-	for pnew > 127 {
-		pnew -= 12
-	}
-	return uint8(pnew)
+	return p
 }
 
 func (motor *Motor) cursorToVelocity(ce CursorStepEvent) uint8 {
