@@ -214,8 +214,12 @@ func TheRouter() *Router {
 
 		// Transpose control
 		oneRouter.transposeAuto = ConfigBoolWithDefault("transposeauto", true)
+		log.Printf("oneRouter.transposeAuto=%v\n", oneRouter.transposeAuto)
 		oneRouter.transposeBeats = Clicks(ConfigIntWithDefault("transposebeats", 48))
 		oneRouter.transposeNext = oneRouter.transposeBeats * oneBeat // first one
+
+		// NOTE: the order of values here needs to match the
+		// order in palette.py
 		oneRouter.transposeValues = []int{0, -2, 3, -5}
 
 		oneRouter.myHostname = ConfigValue("hostname")
@@ -377,6 +381,7 @@ func (r *Router) advanceTransposeTo(newclick Clicks) {
 			motor.terminateActiveNotes()
 			motor.TransposePitch = transposePitch
 		}
+		log.Printf("advancing transposePitch to %d\n", transposePitch)
 	}
 }
 

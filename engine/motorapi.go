@@ -126,9 +126,7 @@ func (motor *Motor) ExecuteAPI(api string, args map[string]string, rawargs strin
 		v, e := needIntArg("value", api, args)
 		if e == nil {
 			motor.TransposePitch = v
-			if Debug.Transpose {
-				log.Printf("motor API set_transpose TransposePitch=%v", v)
-			}
+			log.Printf("motor API set_transpose TransposePitch=%v", v)
 		} else {
 			err = e
 		}
