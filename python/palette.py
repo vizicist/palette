@@ -83,16 +83,16 @@ PerformLabels["vol"] = [
 ]
 
 PerformLabels["loopingfade"] = [
-    {"label":"Loop Fade_Fastest", "value":0.05},
-    {"label":"Loop Fade_Faster", "value":0.1},
-    {"label":"Loop Fade_Fast", "value":0.2},
-    {"label":"Loop Fade_Med",  "value":0.4},
-    {"label":"Loop Fade_Slow", "value":0.5},
-    {"label":"Loop Fade_Slower", "value":0.6},
     {"label":"Loop Fade_Slowest", "value":0.7},
+    {"label":"Loop Fade_Slower", "value":0.6},
+    {"label":"Loop Fade_Slow", "value":0.5},
+    {"label":"Loop Fade_Med",  "value":0.4},
+    {"label":"Loop Fade_Fast", "value":0.2},
+    {"label":"Loop Fade_Faster", "value":0.1},
+    {"label":"Loop Fade_Fastest", "value":0.05},
     {"label":"Loop_Forever", "value":1.0},
 ]
-PerformDefaultVal["loopingfade"] = 0
+PerformDefaultVal["loopingfade"] = 7
 
 PerformLabels["deltaztrig"] = [
     {"label":"Retrigger_Pressure OFF", "value":1.0},
@@ -112,10 +112,13 @@ PerformLabels["loopingonoff"] = [
     {"label":"Looping_is ON", "value":"recplay"},
     {"label":"Loop_Playback Only", "value":"play"},
 ]
+
 PerformLabels["midithru"] = [
     {"label":"MIDI Thru_On",  "value":True},
     {"label":"MIDI Thru_Off",  "value":False},  # default value at startup
 ]
+PerformDefaultVal["midithru"] = 1
+
 PerformLabels["midisetscale"] = [
     {"label":"MIDI Set Scale_Off",  "value":False},
     {"label":"MIDI Set Scale_On",  "value":True},
@@ -151,6 +154,7 @@ GlobalPerformLabels["transposeauto"] = [
     {"label":"Transpose_Auto On",  "value":True},
     {"label":"Transpose_Auto Off",  "value":False},
 ]
+PerformDefaultVal["transposeauto"] = 1
 
 def palette_region_api(region, api, params=""):
     if region == "":
