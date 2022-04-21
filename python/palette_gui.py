@@ -71,6 +71,18 @@ class ProGuiApp(tk.Tk):
 
         self.currentPageName = None
 
+        # The values in globalPerformIndex are indexes into palette.PerformLabels
+        # and the defaults point to the first entry in the label list
+        self.globalPerformIndex = {}
+        for name in palette.GlobalPerformLabels:
+            self.globalPerformIndex[name] = palette.PerformDefaultVal[name]
+        b = palette.ConfigValue("transposeauto",defvalue="true")
+        if b == "true":
+            self.globalPerformIndex["transposeauto"] = 0
+        else:
+            self.globalPerformIndex["transposeauto"] = 1
+        self.globalPerformIndex["transpose"] = 0
+
         self.setGuiLevel(self.defaultGuiLevel)
 
         self.thumbFactor = 0.1
@@ -118,9 +130,6 @@ class ProGuiApp(tk.Tk):
         self.selectButtonPadx = 5
         self.selectButtonPady = 3
 
-        # self.setFrameSizes()
-        self.setScaleList()
-
         setFontSizes(self.isguilarge)
 
         tk.Tk.__init__(self)
@@ -166,12 +175,6 @@ class ProGuiApp(tk.Tk):
         self.showPadFeedback = True
         self.showCursorFeedback = False
 
-        # The values in globalPerformIndex are indexes into palette.PerformLabels
-        # and the defaults point to the first entry in the label list
-        self.globalPerformIndex = {}
-        for s in palette.GlobalPerformLabels:
-            self.globalPerformIndex[s] = 0
-
         self.windowName = "Palette Control"
         self.winfo_toplevel().title(self.windowName)
 
@@ -180,12 +183,16 @@ class ProGuiApp(tk.Tk):
         self.lastClearLoop = time.time()
         self.resetLastAnything()
         self.layoutDone = False
+
+        self.initLayout()
+        self.resetAll()
     
     def setScaleList(self):
         if self.guiLevel == 0:
             palette.GlobalPerformLabels["scale"] = palette.SimpleScales
         else:
             palette.GlobalPerformLabels["scale"] = palette.PerformScales
+        self.globalPerformIndex["scale"] = palette.PerformDefaultVal["scale"]
 
     def placePadChooser(self):
         if self.guiLevel > 0:
@@ -870,6 +877,10 @@ class ProGuiApp(tk.Tk):
 
     def sendGlobalPerformVal(self,name):
 
+        newtext = self.performPage.globalPerformText(name)
+        self.performPage.performButton[name].config(text=newtext)
+        log("sendGlobalPerformVal: Setting button name="+name+" text="+newtext)
+
         index = self.globalPerformIndex[name]
         val = palette.GlobalPerformLabels[name][index]["value"]
 
@@ -951,7 +962,10 @@ class ProGuiApp(tk.Tk):
             pad.clearExternalScale()
 
         for s in palette.GlobalPerformLabels:
-            self.globalPerformIndex[s] = 0
+            if s in palette.PerformDefaultVal:
+                self.globalPerformIndex[s] = palette.PerformDefaultVal[s]
+            else:
+                self.globalPerformIndex[s] = 0
 
         for name in palette.GlobalPerformLabels:
             self.sendGlobalPerformVal(name)
@@ -1107,9 +1121,6 @@ class Pad():
         for name in palette.PerformDefaultVal:
             self.performIndex[name] = palette.PerformDefaultVal[name]
 
-        for name in palette.GlobalPerformLabels:
-            self.performIndex[name] = 0
-
     def name(self):
         return self.padName
 
@@ -1205,6 +1216,10 @@ class Pad():
         for name in palette.PerformLabels:
             self.sendPerformVal(name)
 
+    # def sendGlobalPerformVals(self):
+    #     for name in palette.GlobalPerformLabels:
+    #         self.sendGlobalPerformVal(name)
+
     def getPerformIndex(self,name):
         return self.performIndex[name]
 
@@ -1224,6 +1239,7 @@ class Pad():
         index = self.performIndex[name]
         labels = palette.PerformLabels[name]
         val = labels[index]["value"]
+        log("sendPerformVal: pad="+self.padName+" name="+name+" val="+str(val))
         if name == "loopingonoff":
             reconoff = False
             playonoff = False
@@ -2132,6 +2148,7 @@ class PagePerformMain(tk.Frame):
         self.makePerformButtonAdvanced("midiusescale",None)
         self.makePerformButtonAdvanced("midithruscadjust",None)
         self.makePerformButtonAdvanced("midiquantized",None)
+        self.makePerformButtonAdvanced("tempo",None)
 
         ### self.makePerformButtonAdvanced("Comb_Notes", self.controller.combLoop)
 
@@ -2160,6 +2177,9 @@ class PagePerformMain(tk.Frame):
 
             ipady = 0
             button.config(text=text)
+            log("setting perform button to text="+text)
+            if text == "*Transpose\nAuto On":
+                log("HEY, Transpose ON!??\n")
 
             guiLevel = self.controller.guiLevel
             if name == "TBD" or (guiLevel==0 and name in self.advancedButtons):
@@ -2197,7 +2217,7 @@ class PagePerformMain(tk.Frame):
         log("Perform Button Pressed",name)
         if name in palette.PerformLabels:
 
-            if controller.currentPageName == "quad" or controller.allPadsSelected:
+            if controller.allPadsSelected:
                 # We do the CurrPad and then force all of the
                 # other pads to whatever the newindex is for that one
                 newtext = self.padPerformCallback(controller.CurrPad,name)
@@ -2215,33 +2235,49 @@ class PagePerformMain(tk.Frame):
 
             newtext = self.globalPerformCallback(name)
             self.performButton[name].config(text=newtext)
+            log("Setting performButton newtext="+newtext)
             controller.sendGlobalPerformVal(name)
 
         else:
             log("UNHANDLED performCallback name=",name)
 
     def padPerformCallback(self,pad,name):
-        labels = palette.PerformLabels[name]
-        index = pad.performIndex[name]
-        newindex = ( index + 1 ) % len(labels)
-        newtext = labels[newindex]["label"]
-        if isTwoLine(newtext):
-            newtext = newtext.replace(palette.LineSep,"\n",1)
-        pad.performIndex[name] = newindex
-        return newtext
+        if name in palette.GlobalPerformLabels:
+            labels = palette.GlobalPerformLabels[name]
+            index = self.globalPerformIndex[name]
+            newindex = ( index + 1 ) % len(labels)
+            newtext = labels[newindex]["label"]
+            if isTwoLine(newtext):
+                newtext = newtext.replace(palette.LineSep,"\n",1)
+            pad.globalPerformIndex[name] = newindex
+            return newtext
+        else:
+            labels = palette.PerformLabels[name]
+            index = pad.performIndex[name]
+            newindex = ( index + 1 ) % len(labels)
+            newtext = labels[newindex]["label"]
+            if isTwoLine(newtext):
+                newtext = newtext.replace(palette.LineSep,"\n",1)
+            pad.performIndex[name] = newindex
+            return newtext
 
     def globalPerformCallback(self,name):
             controller = self.controller
             labels = palette.GlobalPerformLabels[name]
             index = controller.globalPerformIndex[name]
             newindex = ( index + 1 ) % len(labels)
-            newtext = labels[newindex]["label"]
-            if isTwoLine(newtext):
-                newtext = newtext.replace(palette.LineSep,"\n",1)
-
             controller.globalPerformIndex[name] = newindex
 
-            return newtext
+            return self.globalPerformText(name)
+
+    def globalPerformText(self,name):
+            controller = self.controller
+            labels = palette.GlobalPerformLabels[name]
+            index = controller.globalPerformIndex[name]
+            text = labels[index]["label"]
+            if isTwoLine(text):
+                text = text.replace(palette.LineSep,"\n",1)
+            return text
 
 class PageSelector(tk.Frame):
 
