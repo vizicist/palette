@@ -569,7 +569,7 @@ class ProGuiApp(tk.Tk):
         self.lastLoadType = ""
         self.lastLoadName = ""
 
-        if self.editMode and pagename != "quad" and pagename != "snap":
+        if self.editMode and pagename != "quad":
             if self.allPadsSelected:
                 pad = self.padNamed("A")
             else:
@@ -626,18 +626,21 @@ class ProGuiApp(tk.Tk):
         page.pack(side=tk.TOP,fill=tk.BOTH,expand=True)
         page.tkraise()
 
+    def doAllPads(self):
+        return self.allPadsSelected or self.currentPageName=="quad"
+
     def sendParamValues(self,values):
         log("sendParamValues: "+str(values))
         for name in values:
             v = values[name]
-            if self.allPadsSelected:
+            if self.doAllPads():
                 for pad in self.Pads:
                     pad.sendParamValue(name,v)
             else:
                 self.CurrPad.sendParamValue(name,v)
 
     def changeAndSendValue(self,paramType,basename,newval):
-        if self.allPadsSelected:
+        if self.doAllPads():
             for pad in self.Pads:
                 pad.setValue(paramType,basename,newval)
                 pad.sendValue(paramType,basename)
@@ -883,7 +886,7 @@ class ProGuiApp(tk.Tk):
         self.combPadLoop(self.CurrPad.name())
 
     def clear(self):
-        if self.allPadsSelected:
+        if self.doAllPads():
             for pad in self.Pads:
                 pad.clearLoop()
             palette.palette_global_api("audio_reset")
@@ -1509,12 +1512,9 @@ class PageEditParams(tk.Frame):
         self.paramsFrame = self.makeParamsArea(self)
         self.scrollbar = ScrollBar(parent=self, notify=self)
 
-        # XXX this is old
-        # On the "quad" and "snap" pages, the parameter values aren't shown,
+        # On the "quad" page, the parameter values aren't shown,
         # just the buttons to import/export/save
-        # if not (pagename == "quad" or pagename == "snap"):
-
-        if pagename != "quad" and pagename != "snap":
+        if pagename != "quad":
             self.paramsFrame.pack(side=tk.LEFT, pady=0)
             self.scrollbar.pack(side=tk.LEFT, fill=tk.Y, expand=True, pady=10, padx=5)
             self.updateParamView()
