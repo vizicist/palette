@@ -901,9 +901,12 @@ class ProGuiApp(tk.Tk):
         self.combPadLoop(self.CurrPad.name())
 
     def clear(self):
-        if self.doAllPads():
+        # Even on the "quad" page,
+        # it pays attention to the chooser
+        if self.allPadsSelected:
             for pad in self.Pads:
                 pad.clearLoop()
+            # Extra clearing (on/off) of Bidule
             palette.palette_global_api("audio_reset")
         else:
             self.CurrPad.clearLoop()

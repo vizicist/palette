@@ -183,9 +183,14 @@ func CliCommand(region string, args []string) string {
 		if len(args) > 1 {
 			process = args[1]
 		}
-		if process == "engine" {
-			// first stop everything else
+		if process == "all" {
 			engine.StopRunning("all")
+			engine.KillExecutable(engineexe)
+		} else if process == "engine" {
+			// first stop everything else, unless killonstartup is false
+			if engine.ConfigBoolWithDefault("killonstartup", true) {
+				engine.StopRunning("all")
+			}
 			// then kill ourselves
 			engine.KillExecutable(engineexe)
 		} else {
