@@ -300,7 +300,11 @@ func (r *Router) loadQuadPreset(preset string, regions string) error {
 				init := def.Init
 				err = motor.SetOneParamValue(nm, init)
 				if err != nil {
-					log.Printf("loadQuadPreset: %s, param=%s, init=%s, err=%s\n", preset, nm, init, err)
+					// a hack to eliminate errors on a parameter that
+					// still exists in some presets.
+					if nm != "sound.controller" {
+						log.Printf("loadQuadPreset: %s, param=%s, init=%s, err=%s\n", preset, nm, init, err)
+					}
 					// Don't fail completely on individual failures,
 					// some might be for parameters that no longer exist.
 				}
