@@ -185,7 +185,7 @@ homedir = os.getenv("PALETTESOURCE")
 
 # This can be used on either "effect" or "snap"
 
-files = glob.glob(os.path.join(homedir,"default","presets_original","effect",'*.json'))
+files = glob.glob(os.path.join(homedir,"data","presets_original","effect",'*.json'))
 for s in files:
     print("file = ",s)
     changeeffects(s)
