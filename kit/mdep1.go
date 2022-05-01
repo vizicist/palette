@@ -1,3 +1,9 @@
+package kit
+
+import (
+)
+
+/*
 #include <windows.h>
 #include <malloc.h>
 #include <dos.h>
@@ -8,77 +14,70 @@
 #include "mdep.h"
 
 void mdep_destroywindow(void);
+*/
 
-#define SEPARATOR "\\"
+const SEPARATOR = "\\"
 
-void
-mdep_hello(int argc,char **argv)
-{
-	_set_fmode(O_BINARY);
+func mdep_hello(argc int, argv []string) {
+	// _set_fmode(O_BINARY);
 }
 
-void
-mdep_bye(void)
-{
-	mdep_destroywindow();
+func mdep_bye() {
+	mdep_destroywindow()
 }
 
-int
-mdep_changedir(char *d)
-{
-	return _chdir(d);
+func mdep_changedir(d string) {
+	return os.Chdir(d)
 }
 
-char *
-mdep_currentdir(char *buff,int leng)
-{
-	if ( GetCurrentDirectory(leng,buff) == 0 )
-		return NULL;
-	else
-		return buff;
+func mdep_currentdir() string {
+	return os.Getwd()
 }
 
-#define fileisdir(fd) (((fd).dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)!=0)
+// #define fileisdir(fd) (((fd).dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)!=0)
 
-int
-mdep_lsdir(char *dir, char *exp, void (*callback)(char *,int))
-{
+type LsdirCallback func(string,int)
+func mdep_lsdir(dir string, exp string, callback LsdirCallback) int {
+	/*
 	WIN32_FIND_DATA fd;
 	HANDLE h;
-	char buff[255];	/* should be MAX_PATH */
+	char buff[255];	// should be MAX_PATH
 
 	strcpy(buff,dir);
 	strcat(buff,SEPARATOR);
 	strcat(buff,exp);
 	h = FindFirstFile(buff,&fd);
 	if ( h == INVALID_HANDLE_VALUE )
-		return(0);	/* okay, there's just nothing that matches */
+		return(0);	// okay, there's just nothing that matches
 	callback(fd.cFileName,fileisdir(fd)?1:0);
 	while ( FindNextFile(h,&fd) == TRUE )
 		callback(fd.cFileName,fileisdir(fd)?1:0);
 	return(0);
+	*/
+	return 0
 }
 
-long
-mdep_filetime(char *fn)
-{
+func mdep_filetime(fn string) long {
+	/*
 	struct _stat s;
 
 	if ( _stat(fn,&s) == -1 )
 		return(-1);
 
-	/*
-	 * Win98 (and 95?, probably) returns a -1 in the st_mtime
-	 * field when then modification time of the file is
-	 * either way in the past or future (I had a file for
-	 * which "DIR" said it was 8/7/72 and mks's "ls -l"
-	 * said it was modified in 2115, so I'm not sure which it
-	 * was, but it was returning -1 in the st_mtime field.
-	 */
+	//
+	// Win98 (and 95?, probably) returns a -1 in the st_mtime
+	// field when then modification time of the file is
+	// either way in the past or future (I had a file for
+	// which "DIR" said it was 8/7/72 and mks's "ls -l"
+	// said it was modified in 2115, so I'm not sure which it
+	// was, but it was returning -1 in the st_mtime field.
+	//
 	if ( s.st_mtime < 0 )
 		s.st_mtime = 0;
 
 	return((long)(s.st_mtime));
+	*/
+	return 0
 }
 
 int

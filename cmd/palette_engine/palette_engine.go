@@ -55,9 +55,10 @@ func main() {
 	}
 
 	if engine.ConfigBoolWithDefault("winsys", false) {
-		winsys.Run() // must run in main thread, never returns
-	} else {
-		select {} // block forever
+		// must run in main thread
+		winsys.Run()
+		// it only returns when the window is closed.
 	}
+	select {} // block forever
 
 }

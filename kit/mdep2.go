@@ -1,9 +1,14 @@
-/*
- *	Copyright 1996 AT&T Corp.  All rights reserved.
- */
+package kit
+
+import (
+	"path/filepath"
+	"github.com/vizicist/palette/engine"
+	"os"
+)
 
 /* This is the nt mdep2.c */
 
+/*
 #define WINSOCK
 #include <windows.h>
 #include <mmsystem.h>
@@ -19,13 +24,16 @@
 #include <io.h>
 #include <direct.h>
 #include "key.h"
+*/
 
-#define K_JOYBUTTON 0
-#define K_JOYANALOG 1
+const (
+	K_JOYBUTTON = 0
+	K_JOYANALOG = 1
+	SEPARATOR = "\\"
+	PALETTESIZE = 256
+)
 
-#define SEPARATOR "\\"
-#define PALETTESIZE 256
-
+/*
 #ifdef WINSOCK
 #define WS_VERSION_REQUIRED 0x0101
 #define SOCK_UNCONNECTED 0
@@ -65,7 +73,7 @@ struct myportinfo {
 	char isopen;
 	char closeme;
 	char hasreturnedfinaldata;
-	char *buff;	/* for stuff put on a socket that hasn't connected */
+	char *buff;	// for stuff put on a socket that hasn't connected
 	int buffsize;
 	struct myportinfo *savem0;
 	struct myportinfo *savem1;
@@ -77,14 +85,16 @@ Myport *Topport = NULL;
 char *Myhostname = NULL;
 int NoWinsock = 1;
 
-/* To make VC++ 6 happy */
+// To make VC++ 6 happy
 typedef int (_stdcall *MYDLGPROC)(HWND,UINT,UINT,LONG);
 
 static void sockaway(PORTHANDLE m,char *buff,int size);
 static void sendsockedaway(PORTHANDLE mp);
 
 #endif
+*/
 
+/*
 HANDLE Khinstance;
 HANDLE KhprevInstance;
 int KnCmdShow;
@@ -115,7 +125,7 @@ static HPALETTE Hpal = NULL;
 static int Inverted = 0;
 static RECT Kwindrect;
 
-HWND Khwnd;	/* DO NOT MAKE THIS STATIC!!! */
+HWND Khwnd;	// DO NOT MAKE THIS STATIC!!!
 
 static void createpensandbrushes();
 static void createlogpal(void);
@@ -138,25 +148,27 @@ static int tcpip_send(PORTHANDLE,char *,int);
 #endif
 
 void handlemidioutput(long long,int);
+*/
 
 // int errno;
 /* int __mb_cur_max = 0x00100000L; */
 
-void
-mdep_popup(char *s)
-{
+func mdep_popup(s string) {
+	/*
 	int n;
 	if ( s == NULL )
 		s = "Internal error?  NULL given to mdep_popup()?!";
-	/* Sometimes there are blank messages, ignore them */
+	// Sometimes there are blank messages, ignore them
 	if ( strcmp(s,"\n")==0 )
 		return;
 	// n = MessageBox(Khwnd, s, "KeyKit", MB_ICONEXCLAMATION | MB_OK);
 	n = MessageBox(Khwnd, s, "KeyKit", 0);
 	if ( n == IDCANCEL )
 		cleanexit();
+		*/
 }
 
+/*
 #define IDM_ABOUT 100
 #define IDM_KEY_ABORT 105
 
@@ -213,7 +225,7 @@ savejoy(int jt, int jn, int bn, int bv)
 	static long lastwarn = 0;
 
 	if ( Keyjoypos >= MAXJOYEV ) {
-		/* Don't complain, it's just annoying */
+		// Don't complain, it's just annoying
 #if 0
 		if ( complain==1 &&
 			(lastwarn==0 || (mdep_milliclock()-lastwarn)>30000) ) {
@@ -260,96 +272,87 @@ keyerrfile("saveconsole n=0x%x consolepos=%d\n",n,Keyconsolepos);
 	else
 		Keyconsole[Keyconsolepos++] = n;
 }
+*/
 
-int
-mdep_statconsole()
-{
-	return ( Keyconsolepos > 0 );
+var Keyconsole []int
+
+func mdep_statconsole() int {
+	return Keyconsolepos > 0;
 }
 
-int
-mdep_getconsole(void)
-{
-	int c;
-	if ( Keyconsolepos <= 0 )
-		c = -1;
-	else
-		c = Keyconsole[--Keyconsolepos];
-	return c;
+func mdep_getconsole() int {
+	var c int
+	if Keyconsolepos <= 0 {
+		c = -1
+	} else {
+		Keyconsolepos--
+		c = Keyconsole[Keyconsolepos]
+	}
+	return c
 }
 
-#define MAXEVENTS 512
-static short Keyevents[MAXEVENTS];
-static int Keyeventpos = 0;
-static int Keyeventwarned = 0;
-static int amBrowsing = 0;
+var Keyevents []int
+var Keyeventpos = 0
+var Keyeventwarned = 0
+var amBrowsing = 0
 
-static void
-shiftup(short *arr,int n)
-{
-	int i;
-	for ( i=n; i>0; i-- )
-		arr[i] = arr[i-1];
+func shortup(arr *[]int,n int) {
+	for i:=n; i>0; i-- {
+		*arr[i] = *arr[i-1]
+	}
 }
 
-static void
-saveevent(int n)
-{
-	if ( Keyeventpos >= MAXEVENTS ) {
-		/* Don't warn while the file browser is up */
-		if ( amBrowsing==0 && Keyeventwarned == 0 ) {
-			Keyeventwarned = 1;
-			eprint("Too many events received by saveevent!");
+func saveevent(n int) {
+	if Keyeventpos >= MAXEVENTS {
+		// Don't warn while the file browser is up
+		if amBrowsing==0 && Keyeventwarned == 0 {
+			Keyeventwarned = 1
+			eprint("Too many events received by saveevent!")
 		}
-	}
-	else {
-		shiftup(Keyevents,Keyeventpos++);
-		Keyevents[0] = n;
+	} else {
+		shiftup(Keyevents,Keyeventpos)
+		Keyeventpos++
+		Keyevents[0] = n
 	}
 }
 
-void
-saveportevent(void)
-{
-	saveevent(K_PORT);
+func saveportevent() {
+	saveevent(K_PORT)
 }
 
 // See if there's any event of a given type in the queue.
-static int
-ispendingevent(int n)
-{
-	int i;
-	for ( i=Keyeventpos-1; i>=0; i-- ) {
-		if ( Keyevents[i] == n )
-			return 1;
+func ispendingevent(n int) int {
+	for i:=Keyeventpos-1; i>=0; i-- {
+		if ( Keyevents[i] == n ) {
+			return 1
+		}
 	}
-	return 0;
+	return 0
 }
 
-static int
-getkeyevent(void)
-{
-	int r;
-
-	if ( Keyeventpos <= 0 ) {
-		Keyeventwarned = 0;
-		r = -1;
+func getkeyevent() int {
+	r := 0
+	if Keyeventpos <= 0 {
+		Keyeventwarned = 0
+		r = -1
+	} else {
+		Keyeventpos--
+		r = Keyevents[Keyeventpos]
+		if r == K_MOUSE {
+			getmouseevent()
+		}
 	}
-	else {
-		r = Keyevents[--Keyeventpos];
-		if (r == K_MOUSE)
-			getmouseevent();
-	}
-	return r;
+	return r
 }
 
+/*
 int WINAPI
 WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance,
                     LPSTR lpszCmdParam, int nCmdShow)
 {
 	static char szAppName[] = "KeyKit" ;
 	WNDCLASS    wndclass ;
-	static char *argv[6];	/* static to avoid putting on stack */
+	static char *argv[6];	// static to avoid putting on stack 
 	HMENU hmenu;
 	int fx, fy, sx, sy, n;
 	char *s, *p;
@@ -357,7 +360,7 @@ WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
 	n=0;
 	argv[n++] = "key";
-	s = strsave(lpszCmdParam); /* afraid to alter lpszCmdParam in-place */
+	s = strsave(lpszCmdParam); // afraid to alter lpszCmdParam in-place
 	for ( p=strtok(s," "); p!=NULL; p=strtok(NULL," ") ) {
 		if ( strcmp(p,"-F") == 0 )
 			fullscreen = 1;
@@ -372,7 +375,7 @@ WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
 	if (!hPrevInstance) {
 		wndclass.style	       = CS_HREDRAW | CS_VREDRAW;
-		/* wndclass.style	       = CS_HREDRAW | CS_VREDRAW | CS_OWNDC ; */
+		// wndclass.style	       = CS_HREDRAW | CS_VREDRAW | CS_OWNDC ;
 		wndclass.lpfnWndProc   = (WNDPROC) WndProc ;
 		wndclass.cbClsExtra    = 0 ;
 		wndclass.cbWndExtra    = 0 ;
@@ -477,12 +480,12 @@ joyinit(int millipoll)
 	for ( n=0; n<numdev; n++ ) {
 		MMRESULT r = joyGetDevCaps(n,&caps,sizeof(JOYCAPS));
 		if ( r == JOYERR_NOERROR ) {
-			/*
-			 * For some reason (at least on XP), capturing
-			 * only seems to work once - i.e. if we do
-			 * a joyReleaseCapture, a subsequent joySetCapture
-			 * will fail.  So, we only do it once.
-			 */
+			//
+			// For some reason (at least on XP), capturing
+			// only seems to work once - i.e. if we do
+			// a joyReleaseCapture, a subsequent joySetCapture
+			// will fail.  So, we only do it once.
+			//
 			if ( JoyCaptured[n] )
 				r = JOYERR_NOERROR;
 			else {
@@ -632,7 +635,7 @@ doaccept(SOCKET sock)
 		sockerror(sock,"accept() failed");
 		return;
 	}
-	/* create 2 new fifos for reading/writing new socket */
+	// create 2 new fifos for reading/writing new socket
 	prlongto(acc_sin.sin_addr.S_un.S_addr,addrstr);
 	name = uniqstr(addrstr);
 
@@ -651,7 +654,7 @@ doaccept(SOCKET sock)
 	m1->sock = newsock;
 	m1->sockstate = SOCK_CONNECTED;
 
-	/* Save port values for subsequent reading through tcpip_listen port */
+	// Save port values for subsequent reading through tcpip_listen port
 	for ( mp=Topport; mp!=NULL; mp=mp->next ) {
 		if ( mp->sock == sock ) {
 			if ( mp->savem0 !=NULL || mp->savem1 != NULL ) {
@@ -682,13 +685,13 @@ WndProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_KEY_SOCKET:
 		sock = (SOCKET) wParam;
 
-		saveevent(K_PORT);	/* don't really have to do it for */
-					/* all FD_* events, but better not */
-					/* to miss anything. */
+		saveevent(K_PORT);	// don't really have to do it for 
+					// all FD_* events, but better not
+					// to miss anything.
 
 		switch(WSAGETSELECTEVENT(lParam)) {
 		case FD_READ:
-/* tprint("FD_READ seen!\n"); */
+// tprint("FD_READ seen!\n");
 			// tprint("Got FD_READ!\n");
 			for ( mp=Topport; mp!=NULL; mp=mp->next ) {
 				if ( mp->sock == sock && (
@@ -696,7 +699,7 @@ WndProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 					|| mp->myport_type == MYPORT_UDP_LISTEN
 					|| mp->myport_type == MYPORT_OSC_LISTEN
 					)) {
-/* tprint("Setting PORT_CANREAD\n"); */
+// tprint("Setting PORT_CANREAD\n");
 					mp->portstate = PORT_CANREAD;
 				}
 			}
@@ -712,7 +715,7 @@ WndProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 			doaccept(sock);
 			break;
 		case FD_CONNECT:
-			/* remember there's 2 ports for each socket. */
+			// remember there's 2 ports for each socket.
 			nfound = 0;
 			for ( mp=Topport; mp!=NULL; mp=mp->next ) {
 				if ( mp->sock == sock ) {
@@ -730,7 +733,7 @@ WndProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case FD_OOB:
 			break;
 		case FD_CLOSE:
-			/* remember, there's 2 ports for each socket. */
+			// remember, there's 2 ports for each socket.
 			nfound = 0;
 			for ( mp=Topport; mp!=NULL; mp=mp->next ) {
 				if ( mp->sock == sock ) {
@@ -749,8 +752,8 @@ WndProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 		return 0;
 #endif
 	case WM_TIMER:
-		/* These messages should only be received while */
-		/* mdep_browse() is active.  Something of a hack. */
+		// These messages should only be received while
+		// mdep_browse() is active.  Something of a hack.
 		chkinput();
 		chkoutput();
 		handlewaitfor(mdep_waitfor(0));
@@ -765,7 +768,7 @@ WndProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 		saveevent(K_MIDI);
 		return 0;
 	case WM_KEY_MIDIOUTPUT:
-		/* The wParam is the port */
+		// The wParam is the port
 		handlemidioutput( lParam, (int) wParam );
 		return 0;
 	case WM_KEY_PORT:
@@ -795,7 +798,7 @@ WndProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 		pLogPal->palVersion    = 0x300;
 		pLogPal->palNumEntries = PALETTESIZE;
 
-		/* fill in intensities for all palette entry colors */
+		// fill in intensities for all palette entry colors
 		for (iLoop = 0; iLoop < PALETTESIZE; iLoop++) {
 			*((WORD *) (&pLogPal->palPalEntry[iLoop].peRed)) = (WORD)iLoop;
 			pLogPal->palPalEntry[iLoop].peBlue  = 0;
@@ -825,8 +828,8 @@ WndProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 		Maxx = LOWORD(lParam);
 		Maxy = HIWORD(lParam);
 
-		/* We grab it here, because we might be on our way out */
-		/* (exiting) when we want to get it in mdep_screensize(). */
+		// We grab it here, because we might be on our way out
+		// (exiting) when we want to get it in mdep_screensize().
 		{
 			RECT r;
 			if ( GetWindowRect(Khwnd,&r) == FALSE )
@@ -843,7 +846,7 @@ WndProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 		}
 		break;
 	case WM_KEYDOWN:
-		/* for function keys */
+		// for function keys
 		if ( wParam >= 112 && wParam <= 123 ) {
 			saveconsole((int)((wParam-112)|FKEYBIT));
 			saveevent(K_CONSOLE);
@@ -854,14 +857,14 @@ WndProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 keyerrfile("KEYDOWN lParam=0x%lx wParam=0x%lx\n",(long)lParam,(long)wParam);
 #endif
 			if ( (lParam & (1<<30)) != 0 ) {
-				/* It's a repeat character, don't add */
+				// It's a repeat character, don't add
 			} else {
-				/* It's the first time for this char */
+				// It's the first time for this char
 				if ( (int)wParam == 3 && Intrfunc != NULL ) {
 					(*Intrfunc)(SIGINT);
 				}
 				else {
-					/* a normal character */
+					// a normal character
 					saveconsole((int)(wParam|KEYDOWNBIT));
 					saveevent(K_CONSOLE);
 				}
@@ -874,12 +877,12 @@ keyerrfile("KEYDOWN lParam=0x%lx wParam=0x%lx\n",(long)lParam,(long)wParam);
 #ifdef DEBUGTYPING
 keyerrfile("KEYUP lParam=0x%lx wParam=0x%lx\n",(long)lParam,(long)wParam);
 #endif
-			/* It's the first time for this char */
+			// It's the first time for this char
 			if ( (int)wParam == 3 && Intrfunc != NULL ) {
-				/* (*Intrfunc)(SIGINT); */
+				// (*Intrfunc)(SIGINT);
 			}
 			else {
-				/* a normal character */
+				// a normal character
 				saveconsole((int)(wParam|KEYUPBIT));
 				saveevent(K_CONSOLE);
 			}
@@ -892,7 +895,7 @@ keyerrfile("KEYUP lParam=0x%lx wParam=0x%lx\n",(long)lParam,(long)wParam);
 				(*Intrfunc)(SIGINT);
 			}
 			else {
-				/* a normal character */
+				// a normal character
 				saveconsole((int)wParam);
 				saveevent(K_CONSOLE);
 			}
@@ -947,7 +950,7 @@ keyerrfile("KEYUP lParam=0x%lx wParam=0x%lx\n",(long)lParam,(long)wParam);
 		return 0;
 
 	case WM_PAINT:
-		/* if ( ! ispendingevent(K_WINDRESIZE) && ! ispendingevent(K_WINDEXPOSE) ) */
+		// if ( ! ispendingevent(K_WINDRESIZE) && ! ispendingevent(K_WINDEXPOSE) )
 		if ( ! ispendingevent(K_WINDEXPOSE) ) {
 			saveevent(K_WINDEXPOSE);
 		}
@@ -955,19 +958,19 @@ keyerrfile("KEYUP lParam=0x%lx wParam=0x%lx\n",(long)lParam,(long)wParam);
 		return 0 ;
 
 	case WM_CLOSE:
-		/* The window handle is used in the midi callback, so make sure */
-		/* midi gets closed before the window is destroyed. */
+		// The window handle is used in the midi callback, so make sure
+		// midi gets closed before the window is destroyed.
 		mdep_endmidi();
 		saveevent(K_QUIT);
 		return 0;
 
 	case WM_QUIT:
-		mdep_endmidi();		/* not really needed, but just in case */
+		mdep_endmidi();		// not really needed, but just in case
 		saveevent(K_QUIT);
 		return 0;
 
 	case WM_DESTROY:
-		mdep_endmidi();		/* not really needed, but just in case */
+		mdep_endmidi();		// not really needed, but just in case
 		saveevent(K_QUIT);
 		return 0 ;
 
@@ -1028,14 +1031,14 @@ keyroot(void)
 
 	if ( SearchPath(NULL,cmd,".exe",BUFSIZ,buff,&pfile) == 0 ) {
 
-		/* The LAST resort is KEYROOT, not first.  That way */
-		/* if we happen to execute some other version, */
-		/* a mis-set KEYROOT won't screw us up. */
+		// The LAST resort is KEYROOT, not first.  That way
+		// if we happen to execute some other version,
+		// a mis-set KEYROOT won't screw us up.
 
 		if ( (p=getenv("KEYROOT")) != NULL && *p != '\0' )
 			root = uniqstr(p);
 		else {
-			/* Last last resorts is ".." */
+			// Last last resorts is ".."
 			if ( exists("../lib/keyrc.k") )
 				root = uniqstr("..");
 			else if ( exists("c:\\key\\lib\\keyrc.k") )
@@ -1048,12 +1051,12 @@ keyroot(void)
 	}
 	else {
 		cmd = buff;
-		/* Take off file.exe */
+		// Take off file.exe
 		if ( (p=strrchr(cmd,'/')) != NULL )
 			*p = '\0';
 		else if ( (p=strrchr(cmd,'\\')) != NULL )
 			*p = '\0';
-		/* Take off parent directory (i.e. src or bin) */
+		// Take off parent directory (i.e. src or bin)
 		if ( (p=strrchr(cmd,'/')) != NULL )
 			*p = '\0';
 		else if ( (p=strrchr(cmd,'\\')) != NULL )
@@ -1079,63 +1082,61 @@ keyhelp(char *fname)
 	}
 	return str;
 }
+*/
 
-void
-mdep_prerc(void)
-{
-	/* Warning - this may be the second time we call GetDeviceCaps for */
-	/* this stuff - createlogpal() may have been called by this time. */
-
-	/* Find out how many colors we have. */
+func mdep_prerc() {
+	// Warning - this may be the second time we call GetDeviceCaps for
+	// this stuff - createlogpal() may have been called by this time.
+	// Find out how many colors we have.
 	if ( (GetDeviceCaps(Khdc,RASTERCAPS) & RC_PALETTE) == 0 ) {
 		*Colors = GetDeviceCaps(Khdc, NUMCOLORS);
-		/* documentation says -1 means it has more than 8 bits/pixel */
-		if ( *Colors == -1 || *Colors > KEYNCOLORS )
+		// documentation says -1 means it has more than 8 bits/pixel
+		if ( *Colors == -1 || *Colors > KEYNCOLORS ) {
 			*Colors = KEYNCOLORS;
+		}
+	} else {
+		*Colors = KEYNCOLORS;	// size of logical palette
 	}
-	else {
-		*Colors = KEYNCOLORS;	/* size of logical palette */
-	}
-	*Pathsep = uniqstr(PATHSEP);
-	*Panraster = 0;
-	*Keyroot = keyroot();
+	
+	*Pathsep = uniqstr(PATHSEP)
+	*Panraster = 0
+	*Keyroot = keyroot()
 }
 
-void
-mdep_initcolors(void)
-{
+func mdep_initcolors() {
+	/*
 	int n = 256;
 	char *p = getenv("KEYINVERSE");
 
 	if ( p != NULL && *p != '0' ) {
 		Inverted = 1;
-		mdep_colormix(0, 0, 0, 0 );		/* black */
-		mdep_colormix(1, 255*n, 255*n, 255*n);	/* white */
-		mdep_colormix(2, 255*n, 0, 0	);	/* red, for Pickcolor */
-		mdep_colormix(3, 200*n, 200*n, 200*n);	/* light grey */
-		mdep_colormix(4, 100*n, 100*n, 100*n);	/* dark grey */
+		mdep_colormix(0, 0, 0, 0 );		// black
+		mdep_colormix(1, 255*n, 255*n, 255*n);	// white
+		mdep_colormix(2, 255*n, 0, 0	);	// red, for Pickcolor
+		mdep_colormix(3, 200*n, 200*n, 200*n);	// light grey
+		mdep_colormix(4, 100*n, 100*n, 100*n);	// dark grey
 	}
 	else {
 		Inverted = 0;
-		mdep_colormix(0, 255*n, 255*n, 255*n);	/* white */
-		mdep_colormix(1, 0, 0, 0 );		/* black */
-		mdep_colormix(2, 255*n, 0, 0	);	/* red, for Pickcolor */
-		mdep_colormix(3, 200*n, 200*n, 200*n);	/* light grey */
-		mdep_colormix(4, 100*n, 100*n, 100*n);	/* dark grey */
+		mdep_colormix(0, 255*n, 255*n, 255*n);	// white
+		mdep_colormix(1, 0, 0, 0 );		// black
+		mdep_colormix(2, 255*n, 0, 0	);	// red, for Pickcolor
+		mdep_colormix(3, 200*n, 200*n, 200*n);	// light grey
+		mdep_colormix(4, 100*n, 100*n, 100*n);	// dark grey
 	}
+	*/
 }
 
 
-char *
-mdep_keypath(void)
-{
+func mdep_keypath() string {
+	/*
 	char *p, *path;
 
 	if ( (p=getenv("KEYPATH")) != NULL && *p != '\0' ) {
 		path = uniqstr(p);
 	}
 	else {
-		/* The length calculation here is inexact but liberal */
+		// The length calculation here is inexact but liberal
 		p = (char *) kmalloc((unsigned)(2*strlen(keyroot())+128),"keypath");
 		sprintf(p,".%s%s%sliblocal%s%s%slib",
 			PATHSEP,keyroot(),SEPARATOR,
@@ -1144,11 +1145,12 @@ mdep_keypath(void)
 		kfree(p);
 	}
 	return path;
+	*/
+	return engine.PaletteDir()
 }
 
-char *
-mdep_musicpath(void)
-{
+func mdep_musicpath() string {
+	/*
 	char *p, *str;
 
 	p = (char *) kmalloc((unsigned)(3*strlen(keyroot())+64),"musicpath");
@@ -1158,63 +1160,56 @@ mdep_musicpath(void)
 	str = uniqstr(p);
 	kfree(p);
 	return str;
+	*/
+	return filepath.Join(engine.PaletteDir(),"midifiles")
 }
 
-void
-mdep_postrc(void)
-{
+func mdep_postrc() {
 }
 
-static void
-cleanexit(void)
-{
-	mdep_endmidi();
-	mdep_bye();
-	exit(0);
+func cleanexit() {
+	mdep_endmidi()
+	mdep_bye()
+	os.Exit(0)
 }
 
-void
-mdep_abortexit(char *s)
-{
-	DebugBreak();		/* for debugging? */
-	/* FatalAppExit(0,s); 	/* in final version */
+func mdep_abortexit(s string) {
+	DebugBreak();		// for debugging?
+	// FatalAppExit(0,s); 	// in final version 
 
-	/* NOTREACHED */
-	exit(1);
+	// NOTREACHED
+	os.Exit(1);
 }
 
-int
-mdep_shellexec(char *s)
-{
-	return system(s);
+func mdep_shellexec(s string) int {
+	return system(s)
 }
 
-void
-mdep_setinterrupt(SIGFUNCTYPE i)
-{
+func mdep_setinterrupt(i SIGFUNCTYPE) {
+	/*
 	Intrfunc = i;
 	signal(SIGFPE, i);
 	signal(SIGILL, i);
-	/*  signal(SIGINT, i);   */
+	//  signal(SIGINT, i);
 	signal(SIGSEGV, i);
-	/*  signal(SIGTERM, i);  */
+	//  signal(SIGTERM, i);
+	*/
 }
 
-void
-mdep_ignoreinterrupt(void)
-{
+func mdep_ignoreinterrupt() {
+	/*
 	Intrfunc = NULL;
 	signal(SIGFPE, SIG_IGN);
 	signal(SIGILL, SIG_IGN);
-	/*  signal(SIGINT, SIG_IGN);   */
+	//  signal(SIGINT, SIG_IGN);
 	signal(SIGSEGV, SIG_IGN);
-	/*  signal(SIGTERM, SIG_IGN);  */
+	//  signal(SIGTERM, SIG_IGN); 
+	*/
 }
 
-static int
-handle1input(void)
-{
-	if ( PeekMessage (&Kmessage, NULL, 0, 0,PM_REMOVE) == FALSE ) {
+/*
+func handle1input() int {
+	if PeekMessage (&Kmessage, NULL, 0, 0,PM_REMOVE) == FALSE {
 		return FALSE;
 	}
 	TranslateMessage (&Kmessage) ;
@@ -1224,107 +1219,54 @@ handle1input(void)
 #endif
 	return TRUE;
 }
+*/
 
-int Ktimehack = 0;
-
-int
-mdep_waitfor(int tmout)
-{
-	static int usetimer = 1;
-	int n;
-	int timerid = 0;
-	long tm0, tm1;
+func mdep_waitfor(tmout int) int {
+	var tm0, tm1 long
 
 	tm0 = mdep_milliclock();
-	if ( tmout < *Millires ) {
-		/* timeout is essentially 0, so don't block */
-		if ( (n=getkeyevent()) > 0 )
-			return n;
-		if ( handle1input() == FALSE )
-			return K_TIMEOUT;
-		if ( (n=getkeyevent()) > 0 )
-			return n;
-		return K_TIMEOUT;
+	if tmout < *Millires {
+		// timeout is essentially 0, so don't block
+		n := getkeyevent()
+		if n > 0 {
+			return n
+		}
+		if handle1input() == FALSE {
+			return K_TIMEOUT
+		}
+		n = getkeyevent()
+		if n > 0 {
+			return n
+		}
+		return K_TIMEOUT
 	}
-	timerid = timeSetEvent((UINT)tmout,(UINT)(*Millires),
-		(LPTIMECALLBACK)KeyTimerFunc, (DWORD_PTR)0, TIME_ONESHOT);
-	if ( timerid == 0 ) {
-		usetimer = 0;
 
-/* screw the warning altogether */
-#ifdef OLDSTUFF
-		char buf[250];
-		static int warned = 0;
-		if ( ! warned ) {
-			/* To disable initial warning, set KEYNOWARN env var.*/
-			char *p = getenv("KEYNOWARN");
-			if ( p == NULL || *p == '\0' ) {
-				sprintf(buf,"The following warning will only appear once.\n"
-					"Unable to use timeSetEvent!?  (Probably Win32s)\n"
-					"TIMING WILL BE DONE WITH POLLING!");
-				"tmout=%ld timeGetTime=%ld *Now=%ld  milli=%ld.\n"
-				tmout,(long)timeGetTime(),*Now,mdep_milliclock());
-				eprint(buf);
-			}
-			warned = 1;
+	for {
+		n = getkeyevent()
+		if n > 0 {
+			break
 		}
-#endif
 
-	}
-	while (1) {
-		if ( (n=getkeyevent()) > 0 )
-			break;
-
-		/* Here is where we block, if ever. */
-
-		if ( usetimer ) {
-			/*
-			 * Usually, we quit because WM_DESTROY has
-			 * done a saveevent(K_QUIT), but just in case,
-			 * we check the return value of GetMessage
-			 * anyway.
-			 */
-			if ( GetMessage(&Kmessage,NULL,0,0)==FALSE ) {
-				return K_QUIT;
-			}
-			TranslateMessage (&Kmessage) ;
-			DispatchMessage (&Kmessage) ;
-#if KEYDISPLAY
-			AppDo3();
-#endif
+		// Here is where we block, if ever.
+		// THIS ONE DOES NOT BLOCK!!  For Win32s.
+		handle1input()
+		tm1 = mdep_milliclock()
+		if (tm1-tm0) > tmout {
+				return K_TIMEOUT
 		}
-		else {
-			/* THIS ONE DOES NOT BLOCK!!  For Win32s.  */
-			(void) handle1input();
-			tm1 = mdep_milliclock();
-			if ( (tm1-tm0) > tmout )
-				return K_TIMEOUT;
-		}
-		if ( tmout == 0 ) {
-			/* If timeout is 0, we want to get out after only */
-			/* 1 check of the message queues. */
-			n = K_TIMEOUT;
-			break;
+		if tmout == 0 {
+			// If timeout is 0, we want to get out after only
+			// 1 check of the message queues.
+			n = K_TIMEOUT
+			break
 		}
 	}
-	if ( timerid != 0 ) {
-		if ( n != K_TIMEOUT )
-			timeKillEvent(timerid);
-	}
-#ifdef SAVEFORARAINYDAY
-{
-	long tm1 = mdep_milliclock();
-	long diff = tm1 - tm0 - tmout;
-	if ( diff > *Milliwarn ) {
-		eprint("Timeout mismatch (%ld) tm1=%ld Last=%ld",diff,tm1,Lasttimeout);
-	}
-}
-#endif
-	return n;
+	return n
 }
 
 /* From here on down is plotting support */
 
+/*
 typedef struct Mbitmap {
 	HBITMAP hBitmap;
 } Mbitmap;
@@ -1334,8 +1276,8 @@ starttimerstuff(void)
 {
 	TIMECAPS tc;
 
-	/* This gets done only once.  We do it here so that programs can */
-	/* use the graphical stuff without calling mdep_initmidi.  */
+	// This gets done only once.  We do it here so that programs can
+	// use the graphical stuff without calling mdep_initmidi.
 
 	timeGetDevCaps(&tc, sizeof(TIMECAPS));
 	if ( tc.wPeriodMin > (UINT)(*Millires) ) {
@@ -1356,10 +1298,10 @@ starttimerstuff(void)
 		eprint("KeySetupDll fail!?");
 	}
 }
+*/
 
-int
-mdep_startgraphics(int argc,char **argv)
-{
+func mdep_startgraphics(argc int,argv []string) int {
+	/*
 	static first = 1;
 
 	if ( ! first )
@@ -1383,9 +1325,9 @@ mdep_startgraphics(int argc,char **argv)
 			goto getout;
 		}
 
-		/* Get hostname --
-			** Assumption that you have modified
-			your hosts file (in system/drivers/etc/hosts. */
+		// Get hostname --
+		//   ** Assumption that you have modified
+		//   your hosts file (in system/drivers/etc/hosts.
 
 		dwSize = sizeof(myname);
 		if ( GetComputerNameA(myname,&dwSize) == FALSE ) {
@@ -1394,7 +1336,7 @@ mdep_startgraphics(int argc,char **argv)
 				strcpy(myname,"localhost");
 			}
 		}
-		/* Change hostname to lower case */
+		// Change hostname to lower case
 		for ( p=myname; *p!=0; p++ ) {
 			if ( *p >= 'A' && *p <= 'Z' )
 				*p = *p - 'A' + 'a';
@@ -1405,14 +1347,14 @@ mdep_startgraphics(int argc,char **argv)
 	}
     getout:
 #endif
+*/
 	return(0);
 }
 
-#define FILENAMESIZE   300
+// #define FILENAMESIZE   300
 
-char *
-mdep_browse(char *desc, char *types, int mustexist)
-{
+func mdep_browse(desc string, types string, int mustexist) string {
+	/*
 	static char szFilter[FILENAMESIZE];
 	static char szFileName[FILENAMESIZE];
 	static char saveddir[_MAX_PATH];
@@ -1462,12 +1404,12 @@ mdep_browse(char *desc, char *types, int mustexist)
 			szFilter[i] = '\0';
 	}
 
-	/* We sent WM_TIMER messages every 2 milliseconds, so we get at */
-	/* least some realtime I/O, though no KeyKit statement processing. */
+	// We sent WM_TIMER messages every 2 milliseconds, so we get at
+	// least some realtime I/O, though no KeyKit statement processing.
 	timerid = SetTimer(Khwnd,1,2,NULL);
 	amBrowsing = 1;
 
-	/* Display the Open dialog box. */
+	// Display the Open dialog box.
 	if ( GetOpenFileName(&ofn) == TRUE )
 		fn = ofn.lpstrFile;
 	else
@@ -1482,6 +1424,8 @@ mdep_browse(char *desc, char *types, int mustexist)
 	if ( origdir[0] != 0 )
 		_chdir(origdir);
 	return fn;
+	*/
+	return desc 
 }
 
 /* NOTE: the values that mdep_screenresize() and mdep_screensize() use are NOT */
@@ -1489,96 +1433,93 @@ mdep_browse(char *desc, char *types, int mustexist)
 /*       give the size of the plotting area, which is not the same as the */
 /*       size of the enclosing window frame, which is what mdep_screensize() */
 /*       gives and what mdep_screenresize() expects. */
-int
-mdep_screenresize(int x0, int y0, int x1, int y1)
-{
-	int n;
-	n = SetWindowPos(Khwnd,HWND_TOP,x0,y0,x1-x0,y1-y0,SWP_NOCOPYBITS);
-	return (n==FALSE);
+func
+mdep_screenresize(x0, y0, x1, y1 int) bool {
+	/*
+	n := SetWindowPos(Khwnd,HWND_TOP,x0,y0,x1-x0,y1-y0,SWP_NOCOPYBITS);
+	*/
+	return false
 }
 
-int
-mdep_screensize(int *x0, int *y0, int *x1, int *y1)
-{
+func
+mdep_screensize() (x0, y0, x1, y1 int)  {
+	/*
 	if ( Kwindrect.right < 0 ) {
 		RECT r;
-		if ( GetWindowRect(Khwnd,&r) == FALSE )
-			return 1;
-		Kwindrect = r;
+		if GetWindowRect(Khwnd,&r) == FALSE {
+			return 1
+		}
+		Kwindrect = r
 	}
-	*x0 = Kwindrect.left;
-	*y0 = Kwindrect.top;
-	*x1 = Kwindrect.right;
-	*y1 = Kwindrect.bottom;
-	return 0;
+	*/
+	return Kwindrect.left, Kwindrect.top, Kwindrect.right, Kwindrect.bottom
 }
 
-int
-mdep_maxx()
-{
-	return Maxx;
+func mdep_maxx() int {
+	return Maxx
 }
 
-int
-mdep_maxy()
-{
-	return Maxy;
+func mdep_maxy() int {
+	return Maxy
 }
 
-void
-mdep_plotmode(int mode)
-{
-	if ( mode == Plotmode )
-		return;
-	if ( mode!=P_STORE && mode!=P_CLEAR && mode!=P_XOR ) {
-		eprint("Bad mode (%d) in mdep_plotmode",mode);
-		return;
+func
+mdep_plotmode(mode int) {
+	if mode == Plotmode {
+		return
 	}
-	Plotmode = mode;
+	if mode!=P_STORE && mode!=P_CLEAR && mode!=P_XOR {
+		log.Printf("Bad mode (%d) in mdep_plotmode",mode)
+		return
+	}
+	Plotmode = mode
 
-	if ( Plotmode == P_STORE ) {
-		setfgpen(Fgindex);
-		SetROP2(Khdc,R2_COPYPEN);
-		SetTextColor(Khdc,Rgbvals[Fgindex]);
-	}
-	else if ( Plotmode == P_CLEAR ) {
+	if Plotmode == P_STORE {
+		/*
+		setfgpen(Fgindex)
+		SetROP2(Khdc,R2_COPYPEN)
+		SetTextColor(Khdc,Rgbvals[Fgindex])
+		*/
+	} else if Plotmode == P_CLEAR {
+		/*
 		setfgpen(Bgindex);
 		SetROP2(Khdc,R2_COPYPEN);
 		SetTextColor(Khdc,Rgbvals[Bgindex]);
-	}
-	else {
+		*/
+	} else {
+		/*
 		setfgpen(Fgindex);
-		/* It really should always be XORPEN, but for some reason */
-		/* it doesn't work when doing black on white background? */
+		// It really should always be XORPEN, but for some reason
+		// it doesn't work when doing black on white background?
 		if ( Inverted )
 			SetROP2(Khdc,R2_XORPEN);
 		else
 			SetROP2(Khdc,R2_MERGEPENNOT);
 		SetROP2(Khdc,R2_NOT);
 		SetTextColor(Khdc,Rgbvals[Fgindex]);
+		*/
 	}
 }
 
-void
-mdep_endgraphics(void)
-{
+func mdep_endgraphics() {
+	/*
 	freecursors();
 	deletepensandbrushes();
 #ifdef WINSOCK
 	if ( WSACleanup() )
 		sockerror(INVALID_SOCKET,"WSACleanup() failed");
 #endif
+*/
 }
 
-void
-mdep_destroywindow()
-{
+/*
+func mdep_destroywindow() {
 	MSG msg;
 
 	DestroyWindow(Khwnd);
 	PostQuitMessage(0);
 
-	/* Acquire and dispatch messages until a WM_QUIT message is received. */
+	// Acquire and dispatch messages until a WM_QUIT message is received.
 	while (GetMessage(&msg, NULL, 0, 0)) {
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
@@ -1586,93 +1527,83 @@ mdep_destroywindow()
 
 	CoUninitialize() ;
 }
+*/
 
-void
-mdep_line(int x0,int y0,int x1,int y1)
-{
-	POINT pt[3];
+func mdep_line(x0,y0,x1,y1 int) {
+	var pt [3]POINT
 
-	pt[0].x = x0;
-	pt[0].y = y0;
-	pt[1].x = x1;
-	pt[1].y = y1;
-	/* The additional entry here is because */
-	/* we want inclusive endpoints. */
-	pt[2].x = x1+1;
-	pt[2].y = y1+1;
+	pt[0].x = x0
+	pt[0].y = y0
+	pt[1].x = x1
+	pt[1].y = y1
+	// The additional entry here is because 
+	// we want inclusive endpoints.
+	pt[2].x = x1+1
+	pt[2].y = y1+1
 
+	log.Printf("Should be drawing a line\n")
+	/*
 	if ( Polyline(Khdc,pt,3) == FALSE )
 		eprint("Polyline fails in mdep_line!?\n");
+	*/
 }
 
-void
-mdep_box(int x0,int y0,int x1,int y1)
-{
-	POINT pt[5];
+func mdep_box(x0,y0,x1,y1 int) {
+	var pt [5]POINT
 
-	pt[0].x = x0;
-	pt[0].y = y0;
-	pt[1].x = x1;
-	pt[1].y = y0;
-	pt[2].x = x1;
-	pt[2].y = y1;
-	pt[3].x = x0;
-	pt[3].y = y1;
-	pt[4].x = x0;
-	pt[4].y = y0;
+	pt[0].x = x0
+	pt[0].y = y0
+	pt[1].x = x1
+	pt[1].y = y0
+	pt[2].x = x1
+	pt[2].y = y1
+	pt[3].x = x0
+	pt[3].y = y1
+	pt[4].x = x0
+	pt[4].y = y0
+	log.Printf("Should be drawing a box\n")
+	/*
 	if ( Polyline(Khdc,pt,5) == FALSE )
 		eprint("Polyline fails in mdep_box!?\n");
+	*/
 }
 
-void
-mdep_boxfill(int x0,int y0,int x1,int y1)
-{
-	int t;
-
-	if ( x0 > x1 ) {
-		t = x0;
-		x0 = x1;
-		x1 = t;
+func mdep_boxfill(x0,y0,x1,y1 int) {
+	if x0 > x1 {
+		t := x0
+		x0 = x1
+		x1 = t
 	}
-	if ( y0 > y1 ) {
-		t = y0;
-		y0 = y1;
-		y1 = t;
+	if y0 > y1 {
+		t := y0
+		y0 = y1
+		y1 = t
 	}
 
-#ifdef THETHOUGHTDIDNTCOUNT
-	/* The drawing of lines vs filled boxes doesn't appear to speed */
-	/* it up noticably, but it's the thought that counts.  :-)  */
-
-	if ( x0 == x1 ) {
-		MoveToEx(Khdc,x0,y0,(LPPOINT)NULL);
-		LineTo(Khdc,x1,y1+1);
-	}
-	else if ( y0 == y1 ) {
-		MoveToEx(Khdc,x0,y0,(LPPOINT)NULL);
-		LineTo(Khdc,x1+1,y1);
-	}
-	else {
-#endif
 		switch(Plotmode){
 		case P_CLEAR:
+			/*
 			setbgbrush();
 			PatBlt(Khdc,x0,y0,(x1-x0+1),(y1-y0+1),PATCOPY);
-			break;
+			*/
+			break
 		case P_STORE:
+			/*
 			setfgbrush();
 			PatBlt(Khdc,x0,y0,(x1-x0+1),(y1-y0+1),PATCOPY);
-			break;
+			*/
+			break
 		case P_XOR:
+			/*
 			setfgbrush();
 			PatBlt(Khdc,x0,y0,(x1-x0+1),(y1-y0+1),DSTINVERT);
-			break;
+			*/
+			break
 		}
 }
 
-void
-mdep_ellipse(int x0,int y0,int x1,int y1)
-{
+func mdep_ellipse(x0,y0,x1,y1 int) {
+	/*
 	SelectObject(Khdc, GetStockObject(HOLLOW_BRUSH));
 	switch(Plotmode){
 	case P_CLEAR:
@@ -1685,11 +1616,11 @@ mdep_ellipse(int x0,int y0,int x1,int y1)
 		break;
 	}
 	setfgbrush();
+	*/
 }
 
-void
-mdep_fillellipse(int x0,int y0,int x1,int y1)
-{
+func mdep_fillellipse(x0,y0,x1,y1 int) {
+	/*
 	switch(Plotmode){
 	case P_CLEAR:
 		setfgpen(Bgindex);
@@ -1703,40 +1634,41 @@ mdep_fillellipse(int x0,int y0,int x1,int y1)
 		Ellipse(Khdc,x0,y0,x1,y1);
 		break;
 	}
+	*/
 }
 
-void
-mdep_fillpolygon(int *xarr,int *yarr,int arrsize)
-{
-	int n;
-	POINT pts[MAX_POLYGON_POINTS];
+func mdep_fillpolygon(xarr []int,yarr []int,int arrsize) {
+	var pts [MAX_POLYGON_POINTS]POINT
 
-	for ( n=0; n<arrsize; n++ ) {
-		pts[n].x = xarr[n];
-		pts[n].y = yarr[n];
+	for n:=0; n<arrsize; n++ {
+		pts[n].x = xarr[n]
+		pts[n].y = yarr[n]
 	}
 	switch(Plotmode){
 	case P_CLEAR:
+		/*
 		setfgpen(Bgindex);
 		setbgbrush();
 		Polygon(Khdc,pts,arrsize);
 		setfgbrush();
-		break;
+		*/
 	case P_STORE:
+		/*
 		setfgbrush();
 		setfgpen(Fgindex);
 		Polygon(Khdc,pts,arrsize);
-		break;
+		*/
 	}
 }
 
+/*
 Pbitmap
 mdep_allocbitmap(int xsize,int ysize)
 {
 	Pbitmap pb;
 	Mbitmap *mbptr;
 
-/* xsize+=1; ysize+=1; */
+/* xsize+=1; ysize+=1;
 	pb.xsize = pb.origx = xsize;
 	pb.ysize = pb.origy = ysize;
 	mbptr = (Mbitmap*) kmalloc(sizeof(Mbitmap),"mdep_bitmap");
@@ -1751,7 +1683,7 @@ Pbitmap
 mdep_reallocbitmap(int xsize,int ysize,Pbitmap pb)
 {
 	Mbitmap *mbptr = (Mbitmap*)pb.ptr;
-/* xsize+=1; ysize+=1; */
+/* xsize+=1; ysize+=1;
 	if ( mbptr )
 		DeleteObject(mbptr->hBitmap);
 	mdep_freebitmap(pb);
@@ -1802,37 +1734,30 @@ mdep_putbitmap(int x0,int y0,Pbitmap pb)
 	SelectObject(hdcMem,old);
 	DeleteDC(hdcMem);
 }
+*/
 
-/* Gets current state of mouse, always returns immediately.  */
-int
-mdep_mouse(int *ax,int *ay, int *am)
-{
-	if ( ax )
-		*ax = Msx;
-	if ( ay )
-		*ay = Msy;
-	if ( am )
-		*am = Msm;
-	return Msb;
+// Gets current state of mouse, always returns immediately.
+func mdep_mouse(int *ax,int *ay, int *am) (x,y,m,b int) {
+	return Msx, Msy, Msm, Msb
 }
 
-int
-mdep_mousewarp(int x, int y)
-{
-	POINT p;
+/*
+func mdep_mousewarp(x, y int) int {
+	var p POINT
 
-	p.x = 0;
-	p.y = 0;
-	if ( ClientToScreen(Khwnd,&p) == FALSE )
-		return 0;
-	x += p.x;
-	y += p.y;
-	return ( SetCursorPos(x,y) == TRUE );
+	p.x = 0
+	p.y = 0
+	if ClientToScreen(Khwnd,&p) == FALSE {
+		return 0
+	}
+	x += p.x
+	y += p.y
+	return SetCursorPos(x,y) == TRUE
 }
+*/
 
-void
-mdep_color(int n)
-{
+func mdep_color(n int) {
+	/*
 	Fgindex = n;
 	if ( Plotmode == P_STORE ) {
 		setfgpen(Fgindex);
@@ -1842,7 +1767,7 @@ mdep_color(int n)
 		setfgpen(Bgindex);
 		SetTextColor(Khdc,Rgbvals[Bgindex]);
 	}
-	else {	/* P_XOR */
+	else {	/* P_XOR
 		setfgpen(Fgindex);
 		if ( Inverted )
 			SetROP2(Khdc,R2_XORPEN);
@@ -1851,51 +1776,48 @@ mdep_color(int n)
 		SetROP2(Khdc,R2_NOT);
 		SetTextColor(Khdc,Rgbvals[Fgindex]);
 	}
+	*/
 }
 
-void
-mdep_colormix(int n,int r,int g,int b)
-{
+func mdep_colormix(n,r,g,b int) {
 	setuprgb(n,r/256,g/256,b/256);
 }
 
-void
-mdep_sync(void)
-{
-	GdiFlush();
+func mdep_sync() {
+	GdiFlush()
 }
 
-char *
-mdep_fontinit(char *fnt)
-{
+func mdep_fontinit(fnt string) string {
+	/*
 	SelectObject (Khdc, GetStockObject (SYSTEM_FIXED_FONT)) ;
-	return((char*)NULL);
+	*/
+	return ""
 }
 
-int
-mdep_fontheight(void)
-{
-	if ( Fontht < 0 )
-		getfontinfo();
-	return Fontht;
+func mdep_fontheight() int {
+	if Fontht < 0 {
+		getfontinfo()
+	}
+	return Fontht
 }
 
-int
-mdep_fontwidth(void)
-{
-	if ( Fontwd < 0 )
-		getfontinfo();
-	return Fontwd;
+func mdep_fontwidth() {
+	if Fontwd < 0 {
+		getfontinfo()
+	}
+	return Fontwd
 }
 
-void
-mdep_string(int x, int y, char *s)
-{
-	if ( Plotmode == P_XOR )
-		eprint("P_XOR mode doesn't work in mdep_string!!");
+func mdep_string(x, y int, s string) {
+	/*
+	if Plotmode == P_XOR {
+		log.Printf("P_XOR mode doesn't work in mdep_string!!");
+	}
 	SetBkMode(Khdc,TRANSPARENT);
-	/* SetTextColor(Khdc,Rgbvals[Fgindex]); */
+	// SetTextColor(Khdc,Rgbvals[Fgindex]);
 	TextOut(Khdc,x,y,s,(int)strlen((const char *)s));
+	*/
+	log.Printf("%s")
 }
 
 static struct cinfo {
@@ -2945,6 +2867,7 @@ mdep_putportdata(PORTHANDLE m, char *buff, int size)
 int
 mdep_getportdata(PORTHANDLE *handle, char *buff, int buffsize, Datum *pd)
 {
+	/*
 #ifdef WINSOCK
 	Myport *m;
 	int r;
@@ -3000,7 +2923,7 @@ mdep_getportdata(PORTHANDLE *handle, char *buff, int buffsize, Datum *pd)
 					eprint("Warning - got PORT_CANREAD when savem0/m1==NULL !?");
 					continue;
 				}
-				/* return porthandle values as port data */
+				// return porthandle values as port data 
 				php = (PORTHANDLE*)buff;
 				*php++ = m->savem0;
 				*php++ = m->savem1;
@@ -3044,6 +2967,7 @@ mdep_getportdata(PORTHANDLE *handle, char *buff, int buffsize, Datum *pd)
     }
 	return -1;
 }
+*/
 
 int
 mdep_closeport(PORTHANDLE m)
