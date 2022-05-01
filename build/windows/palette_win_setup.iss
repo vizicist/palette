@@ -37,22 +37,24 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 ; Delete ALL presets in {app} of an existing installation, to control the default set of presets.
 ; This should be okay because any saved/edited presets (even of the default presets) are saved in
 ; the %CommonProgramFiles% directory, and we don't delete those.
-Type: files; Name:"{app}\presets\snapA\*.json"
-Type: files; Name:"{app}\presets\snapABCD\*.json"
+Type: files; Name:"{app}\presets\snap\*.json"
+Type: files; Name:"{app}\presets\quad\*.json"
 Type: files; Name:"{app}\presets\sound\*.json"
 Type: files; Name:"{app}\presets\effect\*.json"
 Type: files; Name:"{app}\presets\visual\*.json"
+Type: files; Name:"{app}\presets_*\snap\*.json"
+Type: files; Name:"{app}\presets_*\quad\*.json"
+Type: files; Name:"{app}\presets_*\sound\*.json"
+Type: files; Name:"{app}\presets_*\effect\*.json"
+Type: files; Name:"{app}\presets_*\visual\*.json"
 
 ; Note that these directories are made writable by anyone, for local changes and config
 [Dirs]
-Name: "{commoncf64}\{#MyAppName}\presets"; Permissions: users-modify
-Name: "{commoncf64}\{#MyAppName}\presets\visual"; Permissions: users-modify
-Name: "{commoncf64}\{#MyAppName}\presets\effect"; Permissions: users-modify
-Name: "{commoncf64}\{#MyAppName}\presets\snap"; Permissions: users-modify
-Name: "{commoncf64}\{#MyAppName}\presets\sound"; Permissions: users-modify
-Name: "{commoncf64}\{#MyAppName}\presets\quad"; Permissions: users-modify
 Name: "{commoncf64}\{#MyAppName}\logs"; Permissions: users-modify
 Name: "{commoncf64}\{#MyAppName}\config"; Permissions: users-modify
+Name: "{commoncf64}\{#MyAppName}\midifiles"; Permissions: users-modify
+Name: "{commoncf64}\{#MyAppName}\presets"; Permissions: users-modify
+Name: "{commoncf64}\{#MyAppName}\presets_nosuchtim"; Permissions: users-modify
 
 [Files]
 Source: "ship\VERSION"; DestDir: "{app}"; Flags: ignoreversion
@@ -64,6 +66,7 @@ Source: "ship\bin\mmtt_kinect\*"; DestDir: "{app}\bin\mmtt_kinect"; Flags: ignor
 Source: "ship\ffgl\*"; DestDir: "{app}\ffgl"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "ship\html\*"; DestDir: "{app}\html"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "ship\presets\*"; DestDir: "{app}\presets"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "ship\presets_nosuchtim\*"; DestDir: "{app}\presets_nosuchtim"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE - all config files go in CommonProgramFiles
 Source: "ship\config\mmtt*.json"; DestDir: "{commoncf64}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
 Source: "ship\config\nats*.conf"; DestDir: "{commoncf64}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion

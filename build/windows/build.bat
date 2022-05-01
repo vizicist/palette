@@ -163,8 +163,8 @@ copy vc15\bin\opencv_world454.dll %bin% >nul
 echo ================ Copying presets
 mkdir %ship%\presets
 xcopy /e /y %PALETTESOURCE%\data\presets %ship%\presets > nul
-mkdir %ship%\presets_piqued
-xcopy /e /y %PALETTESOURCE%\data\presets_piqued %ship%\presets_piqued > nul
+mkdir %ship%\presets_nosuchtim
+xcopy /e /y %PALETTESOURCE%\data\presets_nosuchtim %ship%\presets_nosuchtim > nul
 
 echo ================ Removing unused things
 rm -fr %bin%\pyinstalled\tcl\tzdata
