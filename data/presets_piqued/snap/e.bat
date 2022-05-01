@@ -1,0 +1,1 @@
+vi CleanFloating_Squares.json Floating_GuitarSquares.json Moire_QuadLines.json Simply_Circles.json SoftPulse_SmallCircles.json
