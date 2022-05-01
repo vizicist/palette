@@ -7,7 +7,7 @@ if len(sys.argv) > 1:
     fn = sys.argv[1]
 else:
     fn = "midiviz.mid"
-mid = mido.MidiFile('../default/midifiles/'+fn)
+mid = mido.MidiFile('../data/midifiles/'+fn)
 print("mid = ",mid)
 playbacktimefactor = 0.5
 mididevice = "testmidi"

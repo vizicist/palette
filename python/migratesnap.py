@@ -6,7 +6,7 @@ import sys
 import os
 
 snapfile = sys.argv[1]
-defsfile = "../../../default/config/paramdefs.json"
+defsfile = "../../../data/config/paramdefs.json"
 
 df = open(defsfile, 'r')
 qf = open(snapfile, 'r')
