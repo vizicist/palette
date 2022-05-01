@@ -16,7 +16,6 @@ set bin=%ship%\bin
 rm -fr %ship% > nul 2>&1
 mkdir %ship%
 mkdir %ship%\bin
-mkdir %ship%\presets
 mkdir %ship%\bin\mmtt_kinect
 mkdir %ship%\html
 mkdir %ship%\midifiles
@@ -73,7 +72,7 @@ echo ================ Creating palette_gui.exe, testcursor.exe, osc.exe
 pushd %PALETTESOURCE%\python
 rm -fr dist
 rm -fr build
-pyinstaller -i ..\default\config\palette.ico palette_gui.py > pyinstaller.out 2>&1
+pyinstaller -i ..\data\config\palette.ico palette_gui.py > pyinstaller.out 2>&1
 pyinstaller testcursor.py > pyinstaller.out 2>&1
 pyinstaller osc.py > pyinstaller.out 2>&1
 
@@ -134,25 +133,25 @@ popd
 
 echo ================ Copying config
 
-copy %PALETTESOURCE%\default\config\homepage.json %ship%\config >nul
-copy %PALETTESOURCE%\default\config\ffgl.json %ship%\config >nul
-copy %PALETTESOURCE%\default\config\param*.json %ship%\config >nul
-copy %PALETTESOURCE%\default\config\resolume.json %ship%\config >nul
-copy %PALETTESOURCE%\default\config\settings.json %ship%\config >nul
-copy %PALETTESOURCE%\default\config\synths.json %ship%\config >nul
-copy %PALETTESOURCE%\default\config\morphs.json %ship%\config >nul
-copy %PALETTESOURCE%\default\config\nats*.conf %ship%\config >nul
-copy %PALETTESOURCE%\default\config\Palette*.avc %ship%\config >nul
-copy %PALETTESOURCE%\default\config\EraeTouchLayout.emk %ship%\config >nul
-copy %PALETTESOURCE%\default\config\palette.ico %ship%\config >nul
-copy %PALETTESOURCE%\default\config\*.bidule %ship%\config >nul
-copy %PALETTESOURCE%\default\config\attractscreen.png %ship%\config >nul
-copy %PALETTESOURCE%\default\config\helpscreen.png %ship%\config >nul
-copy %PALETTESOURCE%\default\config\consola.ttf %ship%\config >nul
-copy %PALETTESOURCE%\default\config\OpenSans-Regular.ttf %ship%\config >nul
+copy %PALETTESOURCE%\data\config\homepage.json %ship%\config >nul
+copy %PALETTESOURCE%\data\config\ffgl.json %ship%\config >nul
+copy %PALETTESOURCE%\data\config\param*.json %ship%\config >nul
+copy %PALETTESOURCE%\data\config\resolume.json %ship%\config >nul
+copy %PALETTESOURCE%\data\config\settings.json %ship%\config >nul
+copy %PALETTESOURCE%\data\config\synths.json %ship%\config >nul
+copy %PALETTESOURCE%\data\config\morphs.json %ship%\config >nul
+copy %PALETTESOURCE%\data\config\nats*.conf %ship%\config >nul
+copy %PALETTESOURCE%\data\config\Palette*.avc %ship%\config >nul
+copy %PALETTESOURCE%\data\config\EraeTouchLayout.emk %ship%\config >nul
+copy %PALETTESOURCE%\data\config\palette.ico %ship%\config >nul
+copy %PALETTESOURCE%\data\config\*.bidule %ship%\config >nul
+copy %PALETTESOURCE%\data\config\attractscreen.png %ship%\config >nul
+copy %PALETTESOURCE%\data\config\helpscreen.png %ship%\config >nul
+copy %PALETTESOURCE%\data\config\consola.ttf %ship%\config >nul
+copy %PALETTESOURCE%\data\config\OpenSans-Regular.ttf %ship%\config >nul
 
 echo ================ Copying midifiles
-copy %PALETTESOURCE%\default\midifiles\*.* %ship%\midifiles >nul
+copy %PALETTESOURCE%\data\midifiles\*.* %ship%\midifiles >nul
 
 echo ================ Copying windows-specific things
 copy %PALETTESOURCE%\SenselLib\x64\LibSensel.dll %bin% >nul
@@ -162,7 +161,10 @@ copy vc15\bin\depthai-core.dll %bin% >nul
 copy vc15\bin\opencv_world454.dll %bin% >nul
 
 echo ================ Copying presets
-xcopy /e /y %PALETTESOURCE%\default\presets %ship%\presets > nul
+mkdir %ship%\presets
+xcopy /e /y %PALETTESOURCE%\data\presets %ship%\presets > nul
+mkdir %ship%\presets_piqued
+xcopy /e /y %PALETTESOURCE%\data\presets_piqued %ship%\presets_piqued > nul
 
 echo ================ Removing unused things
 rm -fr %bin%\pyinstalled\tcl\tzdata

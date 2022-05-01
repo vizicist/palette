@@ -2,7 +2,7 @@ import mido
 import palette
 import time
 
-mid = mido.MidiFile('../default/midifiles/cdef.mid')
+mid = mido.MidiFile('../data/midifiles/cdef.mid')
 msgtimesofar = 0.0
 playbacktimefactor = 0.5
 xtimefactor = 0.1

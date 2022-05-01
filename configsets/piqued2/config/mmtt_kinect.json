@@ -1,8 +1,0 @@
-{
-  "port": 4444,
-  "patch": "bm2019",
-  "tempdir": "c:/windows/temp",
-  "clientlist": "127.0.0.1:3333",
-  "initialalign": 1,
-  "debugtolog": 1
-}
