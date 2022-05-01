@@ -25,10 +25,6 @@ func (r *Router) ExecuteAPI(api string, nuid string, rawargs string) (result int
 
 	switch api {
 
-	case "list":
-		// There's now a preset.list API, this should probably be removed
-		return presetList(apiargs)
-
 	case "start", "stop":
 		process, ok := apiargs["process"]
 		if !ok {

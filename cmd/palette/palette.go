@@ -153,6 +153,9 @@ func CliCommand(region string, args []string) string {
 	case "status", "tasks":
 		return engine.ProcessStatus()
 
+	case "activate":
+		return interpretApiOutput(engine.EngineAPI("activate", ""))
+
 	case "start":
 		process := "engine"
 		if len(args) > 1 {
