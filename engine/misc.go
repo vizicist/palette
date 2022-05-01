@@ -226,7 +226,18 @@ func ReadablePresetFilePath(preset string) string {
 
 // WritablePresetFilePath xxx
 func WriteablePresetFilePath(preset string) string {
-	return presetFilePath(preset, true)
+	path := presetFilePath(preset, true)
+	os.MkdirAll(filepath.Dir(path), 0777)
+	return path
+}
+
+var presetsDir string
+
+func PresetsDir() string {
+	if presetsDir == "" {
+		presetsDir = ConfigStringWithDefault("presetsdir", "presets")
+	}
+	return presetsDir
 }
 
 // presetFilePath returns the full path of a preset file.
@@ -238,12 +249,12 @@ func presetFilePath(preset string, writable bool) string {
 		preset = preset[i+1:]
 	}
 	presetjson := preset + ".json"
-	localpath := filepath.Join(LocalPaletteDir(), "presets", category, presetjson)
+	localpath := filepath.Join(LocalPaletteDir(), PresetsDir(), category, presetjson)
 	// Use the local path if it exists or we want a writable path
 	if writable || FileExists(localpath) {
 		return localpath
 	}
-	return filepath.Join(PaletteDir(), "presets", category, presetjson)
+	return filepath.Join(PaletteDir(), PresetsDir(), category, presetjson)
 }
 
 func PresetNameSplit(preset string) (string, string) {

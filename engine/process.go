@@ -20,11 +20,13 @@ type processInfo struct {
 var ProcessInfo = map[string](*processInfo){}
 
 func InitProcessInfo() {
+	ProcessInfo["engine"] = EngineInfo()
+	ProcessInfo["VSCode debugger"] = VSCodeInfo()
 	ProcessInfo["resolume"] = ResolumeInfo()
 	ProcessInfo["gui"] = GuiInfo()
 	ProcessInfo["bidule"] = BiduleInfo()
 	ProcessInfo["mmtt_kinect"] = KinectInfo()
-	ProcessInfo["mmtt_oak"] = MmttInfo("mmtt_oak")
+	// ProcessInfo["mmtt_oak"] = MmttInfo("mmtt_oak")
 }
 
 func BiduleInfo() *processInfo {
@@ -79,6 +81,18 @@ func GuiInfo() *processInfo {
 	return &processInfo{exe, fullpath, "", nil}
 }
 
+func EngineInfo() *processInfo {
+	exe := "palette_engine.exe"
+	fullpath := filepath.Join(PaletteDir(), "bin", exe)
+	return &processInfo{exe, fullpath, "", nil}
+}
+
+func VSCodeInfo() *processInfo {
+	exe := "__debug_bin.exe"
+	fullpath := ""
+	return &processInfo{exe, fullpath, "", nil}
+}
+
 func KinectInfo() *processInfo {
 	// NOTE: it's inside a sub-directory of bin, so all the necessary .dll's are contained
 	fullpath := filepath.Join(PaletteDir(), "bin", "mmtt_kinect", "mmtt_kinect.exe")
@@ -114,8 +128,10 @@ func StartRunning(process string) error {
 
 	p, err := getProcessInfo(process)
 	if err != nil {
-		log.Printf("StartRunning: no info for process=%s\n", process)
-		return err
+		return fmt.Errorf("StartRunning: no info for process=%s\n", process)
+	}
+	if p.FullPath == "" {
+		return fmt.Errorf("StartRunning: unable to start %s, no executable path", process)
 	}
 
 	log.Printf("StartRunning: path=%s\n", p.FullPath)

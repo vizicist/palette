@@ -26,6 +26,7 @@ func (r *Router) ExecuteAPI(api string, nuid string, rawargs string) (result int
 	switch api {
 
 	case "list":
+		// There's now a preset.list API, this should probably be removed
 		return presetList(apiargs)
 
 	case "start", "stop":
@@ -115,12 +116,12 @@ func presetList(apiargs map[string]string) (string, error) {
 		return nil
 	}
 
-	presetsDir1 := filepath.Join(PaletteDir(), "presets")
+	presetsDir1 := filepath.Join(PaletteDir(), PresetsDir())
 	err := filepath.Walk(presetsDir1, walker)
 	if err != nil {
 		log.Printf("filepath.Walk: err=%s\n", err)
 	}
-	presetsDir2 := filepath.Join(LocalPaletteDir(), "presets")
+	presetsDir2 := filepath.Join(LocalPaletteDir(), PresetsDir())
 	err = filepath.Walk(presetsDir2, walker)
 	if err != nil {
 		log.Printf("filepath.Walk: err=%s\n", err)

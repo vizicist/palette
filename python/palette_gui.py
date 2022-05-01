@@ -113,14 +113,14 @@ class ProGuiApp(tk.Tk):
             self.frameSizeOfControlNormal = 0.085
             self.frameSizeOfSelectNormal = 1.0 - self.frameSizeOfControlNormal
             self.frameSizeOfPadChooserNormal = 0.0
-            self.selectDisplayRowsNormal = 14
+            self.selectDisplayRowsNormal = 13
             self.frameSizeOfControlAdvanced = 0.19
             self.frameSizeOfPadChooserAdvanced = 0.14
             self.frameSizeOfSelectAdvanced = 1.0 - self.frameSizeOfControlAdvanced - self.frameSizeOfPadChooserAdvanced
             self.performButtonPadx = 3
             self.performButtonPady = 3
             self.performButtonsPerRow = 6
-            self.selectDisplayRowsAdvanced = 8
+            self.selectDisplayRowsAdvanced = 9
 
         self.frameSizeOfSelectAdvancedQuad = self.frameSizeOfSelectAdvanced + self.frameSizeOfPadChooserAdvanced
         if (self.frameSizeOfSelectAdvanced + self.frameSizeOfControlAdvanced + self.frameSizeOfPadChooserAdvanced) != 1.0:
@@ -879,7 +879,7 @@ class ProGuiApp(tk.Tk):
 
         newtext = self.performPage.globalPerformText(name)
         self.performPage.performButton[name].config(text=newtext)
-        log("sendGlobalPerformVal: Setting button name="+name+" text="+newtext)
+        # log("sendGlobalPerformVal: Setting button name="+name+" text="+newtext)
 
         index = self.globalPerformIndex[name]
         val = palette.GlobalPerformLabels[name][index]["value"]
@@ -1242,7 +1242,7 @@ class Pad():
         index = self.performIndex[name]
         labels = palette.PerformLabels[name]
         val = labels[index]["value"]
-        log("sendPerformVal: pad="+self.padName+" name="+name+" val="+str(val))
+        # log("sendPerformVal: pad="+self.padName+" name="+name+" val="+str(val))
         if name == "loopingonoff":
             reconoff = False
             playonoff = False
@@ -2180,9 +2180,9 @@ class PagePerformMain(tk.Frame):
 
             ipady = 0
             button.config(text=text)
-            log("setting perform button to text="+text)
-            if text == "*Transpose\nAuto On":
-                log("HEY, Transpose ON!??\n")
+            # log("setting perform button to text="+text)
+            # if text == "*Transpose\nAuto On":
+            #     log("HEY, Transpose ON!??\n")
 
             guiLevel = self.controller.guiLevel
             if name == "TBD" or (guiLevel==0 and name in self.advancedButtons):

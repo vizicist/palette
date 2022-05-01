@@ -192,8 +192,10 @@ def paletteSubDir(subdir):
     return os.path.join(local, "Palette", subdir)
 
 def presetsPath():
-    p = ConfigValue("presetspath","%CommonProgramFiles%\\Palette\\presets;%PALETTE%\\presets")
+    presetsdir = ConfigValue("presetsdir","presets")
+    p = ConfigValue("presetspath","%CommonProgramFiles%\\Palette\\%presetsdir%;%PALETTE%\\%presetsdir%")
     p = p.replace("%PALETTE%",PaletteDir())
+    p = p.replace("%presetsdir%",presetsdir)
     lad = os.environ.get("CommonProgramFiles")
     if lad != None:
         p = p.replace("%CommonProgramFiles%",lad)
@@ -209,7 +211,7 @@ def presetsListAll(presetType):
         if os.path.isdir(presetdir):
             vals = listOfJsonFiles(presetdir)
             for v in vals:
-                if not v in allvals:
+                if not v in allvals and v[0] != "_":
                     allvals.append(v)
     sortvals = []
     for v in sorted(allvals):
