@@ -26,6 +26,7 @@ type Phrase struct {
 	lastnote  *Note
 	Length    Clicks
 }
+type Phrasep *Phrase
 
 // Note should be an interface?
 

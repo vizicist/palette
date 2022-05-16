@@ -48,7 +48,7 @@ ffgl_setdll( std::string dllpath )
 
 	NosuchDebugLogPath = "c:\\windows\\temp\\ffgl.log";// last resort
 
-	err = _dupenv_s( &pValue, &len, "LOCALAPPDATA" );
+	err = _dupenv_s( &pValue, &len, "CommonProgramFiles" );
 	if( err == 0 && pValue != NULL )
 	{
 		NosuchDebugLogPath = std::string( pValue ) + "\\Palette\\logs\\ffgl.log";
@@ -411,6 +411,14 @@ PaletteHost::LoadPaletteConfig(cJSON* c)
 	}
 }
 
+int PaletteHost::SendToEngine()
+{
+	char buffer[ 1024 ];
+	osc::OutboundPacketStream p( buffer, sizeof(buffer) );
+	p << osc::BeginMessage( "/clientrestart" ) << m_oscport.c_str() << osc::EndMessage;
+	return SendToUDPServer(DEFAULT_ENGINE_HOST,DEFAULT_ENGINE_PORT,p.Data(),(int)p.Size());
+}
+
 int PaletteHost::SendToResolume(osc::OutboundPacketStream& p) {
 	NosuchDebug(1,"SendToResolume host=%s port=%d",DEFAULT_RESOLUME_HOST,DEFAULT_RESOLUME_PORT);
     return SendToUDPServer(DEFAULT_RESOLUME_HOST,DEFAULT_RESOLUME_PORT,p.Data(),(int)p.Size());
@@ -612,6 +620,9 @@ void PaletteHost::SetOscPort( std::string oscport )
 	NosuchDebug( "PaletteHost::SetOscPort: PaletteDaemon is listening on port=%d\n", port );
 	_daemon = new PaletteDaemon(this, port, DEFAULT_OSC_INPUT_HOST);
 	m_oscport = oscport;
+
+	// NosuchDebug( "PaletteHost::SetOscPort: calling SendToEngine\n" );
+	SendToEngine();
 }
 
 void PaletteHost::lock_paletteHost() {

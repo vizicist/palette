@@ -1,25 +1,19 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
-	"log"
 	"os"
 	"os/signal"
 	"path/filepath"
-	"strings"
+	"sort"
 	"syscall"
-	"time"
 
-	"github.com/hypebeast/go-osc/osc"
+	_ "github.com/vizicist/palette/block"
 	"github.com/vizicist/palette/engine"
+	_ "github.com/vizicist/palette/window"
 )
-
-func usage() {
-	usage := "Usage: palette {start|stop|sendlogs} {engine|gui|bidule|all|activate}\n"
-	os.Stderr.WriteString(usage)
-	log.Fatal(usage)
-}
 
 func main() {
 
@@ -27,223 +21,195 @@ func main() {
 	signal.Ignore(syscall.SIGINT)
 
 	engine.InitLog("palette")
+	engine.InitDebug()
+	engine.InitProcessInfo()
+
+	regionPtr := flag.String("region", "*", "Region name or *")
 
 	flag.Parse()
-
-	args := flag.Args()
-	nargs := len(args)
-
-	recipient := engine.ConfigValue("emailto")
-	login := engine.ConfigValue("emaillogin")
-	password := engine.ConfigValue("emailpassword")
-
-	switch nargs {
-
-	case 1:
-		switch args[0] {
-		case "sendlogs":
-			engine.SendLogs(recipient, login, password)
-		default:
-			usage()
+	out := CliCommand(*regionPtr, flag.Args())
+	// If the output starts with [ or {,
+	// we assume it's a json array or object,
+	// and print it out more readably.
+	if out != "" {
+		switch out[0] {
+		case '[':
+			out = readableArray(out)
+		case '{':
+			out = readableObject(out)
 		}
-		return
-
-	case 2:
-
-		body := ""
-		if recipient != "" && login != "" && password != "" {
-			body = fmt.Sprintf("host=%s palette executed args = %v", engine.Hostname(), args)
-			engine.SendMail(recipient, login, password, body, "")
-		}
-
-		switch args[0] {
-
-		case "start":
-			handle_startstop(args[0], args[1:])
-			// Always send logs after starting all
-			if args[1] == "all" {
-				engine.SendLogs(recipient, login, password)
-			}
-
-		case "stop":
-			handle_startstop(args[0], args[1:])
-
-		default:
-			usage()
-		}
-
-	default:
-		usage()
 	}
+	os.Stdout.WriteString(out)
 }
 
-// handle_activate sends OSC messages to start the layers in Resolume,
-// and make sure the audio is on in Bidule.
-func handle_activate() {
+func usage() string {
+	return `Usage:
+    palette start [process]
+    palette stop [process]
+    palette sendlogs
+    palette list [{category}]
+    palette [-region={region}] load {category}.{preset}
+    palette [-region {region}] save {category}.{preset}
+    palette [-region {region}] set {category}.{parameter} [{value}]
+    palette [-region {region}] get {category}.{parameter}
+    palette api {api} {args}`
+}
 
-	log.Printf("Activating\n")
-
-	addr := "127.0.0.1"
-	resolumePort := 7000
-	bidulePort := 3210
-
-	resolumeClient := osc.NewClient(addr, resolumePort)
-	start_layer(resolumeClient, 1)
-	start_layer(resolumeClient, 2)
-	start_layer(resolumeClient, 3)
-	start_layer(resolumeClient, 4)
-
-	biduleClient := osc.NewClient(addr, bidulePort)
-	msg := osc.NewMessage("/play")
-	msg.Append(int32(1)) // turn it on
-	// log.Printf("Sending %s\n", msg.String())
-	err := biduleClient.Send(msg)
+func readableArray(s string) string {
+	var arr []string
+	err := json.Unmarshal([]byte(s), &arr)
 	if err != nil {
-		log.Printf("handle_activate: osc to Bidule, err=%s\n", err)
+		return fmt.Sprintf("Unable to print API array output? err=%s s=%s", err, s)
 	}
+	sort.Strings(arr)
+	out := ""
+	for _, val := range arr {
+		out += fmt.Sprintf("%s\n", val)
+	}
+	return out
 }
 
-func start_layer(resolumeClient *osc.Client, layer int) {
-	addr := fmt.Sprintf("/composition/layers/%d/clips/1/connect", layer)
-	msg := osc.NewMessage(addr)
-	msg.Append(int32(1))
-	// log.Printf("Sending %s\n", msg.String())
-	err := resolumeClient.Send(msg)
+func readableObject(s string) string {
+	objmap, err := engine.StringMap(s)
 	if err != nil {
-		log.Printf("start_layer: osc to Resolume err=%s\n", err)
+		return fmt.Sprintf("Unable to parse json: %s", s)
 	}
+
+	arr := make([]string, 0, len(objmap))
+	for key, val := range objmap {
+		arr = append(arr, fmt.Sprintf("%s %s\n", key, val))
+	}
+	sort.Strings(arr)
+	out := ""
+	for _, val := range arr {
+		out += fmt.Sprintf("%s\n", val)
+	}
+	return out
 }
 
-func handle_startstop(startstop string, args []string) {
-
-	nargs := len(args)
-	if nargs == 0 {
-		log.Printf("Expecting argument to start command\n")
-		return
+// interpretApiOutput takes the result of an API invocation and
+// produces what will appear in visible output from a CLI command.
+func interpretApiOutput(rawresult string, err error) string {
+	if err != nil {
+		return fmt.Sprintf("Internal error: %s", err)
 	}
-	// exe := ""
-	fullexe := ""
-	cmd := args[0]
-	exearg := ""
+	retmap, err2 := engine.StringMap(rawresult)
+	if err2 != nil {
+		return fmt.Sprintf("API produced non-json output: %s", rawresult)
+	}
+	e, eok := retmap["error"]
+	if eok {
+		return fmt.Sprintf("API error: %s", e)
+	}
+	result, rok := retmap["result"]
+	if !rok {
+		return "API produced no error or result"
+	}
+	return result
+}
 
-	palette := engine.PaletteDir()
+func CliCommand(region string, args []string) string {
 
-	switch cmd {
+	if len(args) == 0 {
+		return usage()
+	}
 
-	case "all", "allsmall":
-		handle_startstop(startstop, []string{"resolume"})
-		handle_startstop(startstop, []string{"bidule"})
-		handle_startstop(startstop, []string{"engine"})
+	const engineexe = "palette_engine.exe"
 
-		// Give resolume time to start, before starting
-		// GUI and activating things.
-		if startstop == "start" {
-			time.Sleep(12 * time.Second)
-			handle_startstop(startstop, []string{"activate"})
+	switch args[0] {
+
+	case "load", "save":
+		if len(args) < 1 {
+			return "Insufficient arguments"
 		}
+		apiargs := fmt.Sprintf("\"region\":\"%s\",\"preset\":\"%s\"", region, args[1])
+		return interpretApiOutput(engine.EngineAPI(args[0], apiargs))
 
-		// Start the GUI.
-		if cmd == "allsmall" {
-			handle_startstop(startstop, []string{"guismall"})
-		} else {
-			handle_startstop(startstop, []string{"gui"})
+	case "get":
+		if len(args) < 1 {
+			return "Insufficient arguments"
 		}
+		apiargs := fmt.Sprintf("\"region\":\"%s\",\"name\":\"%s\"", region, args[1])
+		return interpretApiOutput(engine.EngineAPI(args[0], apiargs))
 
-		// Sometimes the audio in bidule is still turned off
-		// (perhaps when it hasn't completed its startup by
-		// the time the first activate is sent), so
-		// send a few more activates to make sure
-		if startstop == "start" {
-			time.Sleep(24 * time.Second)
-			handle_startstop(startstop, []string{"activate"})
-			time.Sleep(24 * time.Second)
-			handle_startstop(startstop, []string{"activate"})
-			time.Sleep(24 * time.Second)
-			handle_startstop(startstop, []string{"activate"})
-			time.Sleep(24 * time.Second)
-			handle_startstop(startstop, []string{"activate"})
+	case "set":
+		if len(args) < 2 {
+			return "Insufficient arguments"
 		}
+		apiargs := fmt.Sprintf("\"region\":\"%s\",\"name\":\"%s\",\"value\":\"%s\"", region, args[1], args[2])
+		return interpretApiOutput(engine.EngineAPI(args[0], apiargs))
 
-		return
+	case "list":
+		category := "*"
+		if len(args) > 1 {
+			category = args[1]
+		}
+		args := fmt.Sprintf("\"category\":\"%s\"", category)
+		return interpretApiOutput(engine.EngineAPI("list", args))
+
+	case "sendlogs":
+		return interpretApiOutput(engine.EngineAPI("global.sendlogs", ""))
+
+	case "status", "tasks":
+		return engine.ProcessStatus()
 
 	case "activate":
-		if startstop == "start" {
-			handle_activate()
-		}
-		return
+		return interpretApiOutput(engine.EngineAPI("activate", ""))
 
-	case "gui":
-		fullexe = filepath.Join(palette, "bin", "pyinstalled", "palette_gui.exe")
-		exearg = "large" // default
-		// don't return
-
-	case "guismall":
-		fullexe = filepath.Join(palette, "bin", "pyinstalled", "palette_gui.exe")
-		exearg = "small"
-		// don't return
-
-	case "engine":
-		fullexe = filepath.Join(palette, "bin", "palette_engine.exe")
-		// don't return
-
-	case "bidule":
-		fullexe = engine.ConfigValue("bidule")
-		if fullexe == "" {
-			fullexe = "C:\\Program Files\\Plogue\\Bidule\\PlogueBidule_X64.exe"
-		}
-		exearg = engine.ConfigFilePath("palette.bidule")
-		if !engine.FileExists(fullexe) {
-			log.Printf("No Bidule found, looking for %s\n", fullexe)
-			return
-		}
-		// don't return
-
-	case "resolume":
-		fullexe = engine.ConfigValue("resolume")
-		if fullexe != "" && !engine.FileExists(fullexe) {
-			log.Printf("No Resolume found, looking for %s\n", fullexe)
-			return
-		}
-		if fullexe == "" {
-			fullexe = "C:\\Program Files\\Resolume Avenue\\Avenue.exe"
-			if !engine.FileExists(fullexe) {
-				fullexe = "C:\\Program Files\\Resolume Arena\\Arena.exe"
-				if !engine.FileExists(fullexe) {
-					log.Printf("No Resolume found in default locations\n")
-					return
-				}
-			}
-		}
-		// don't return
-
-	default:
-		log.Printf("Unknown target of start command.\n")
-		return
-	}
-
-	switch startstop {
 	case "start":
-		stdoutWriter := engine.MakeFileWriter(engine.LogFilePath(cmd + ".stdout"))
-		if stdoutWriter == nil {
-			stdoutWriter = &engine.NoWriter{}
+		process := "engine"
+		if len(args) > 1 {
+			process = args[1]
 		}
-		stderrWriter := engine.MakeFileWriter(engine.LogFilePath(cmd + ".stderr"))
-		if stderrWriter == nil {
-			stderrWriter = &engine.NoWriter{}
+		if process == "engine" {
+
+			// Kill any currently-running engine.
+			// The other processes will be killed by
+			// the engine when it starts up.
+			engine.KillExecutable(engineexe)
+
+			// Start the engine (which also starts up other processes)
+			fullexe := filepath.Join(engine.PaletteDir(), "bin", engineexe)
+			err := engine.StartExecutableLogOutput("engine", fullexe, true, "")
+			if err != nil {
+				return fmt.Sprintf("Engine not started: err=%s\n", err)
+			}
+			return "Engine started\n"
+		} else {
+			// Start a specific process
+			args := fmt.Sprintf("\"process\":\"%s\"", process)
+			return interpretApiOutput(engine.EngineAPI("start", args))
 		}
-		log.Printf("Starting %s\n", fullexe)
-		engine.StartExecutable(fullexe, true, stdoutWriter, stderrWriter, exearg)
+
 	case "stop":
-		log.Printf("Stopping %s\n", cmd)
-		// isolate the last part of exe path
-		justexe := fullexe
-		lastslash := strings.LastIndexAny(fullexe, "/\\")
-		if lastslash >= 0 {
-			justexe = fullexe[lastslash+1:]
+		process := "engine"
+		if len(args) > 1 {
+			process = args[1]
 		}
-		engine.StopExecutable(justexe)
+		if process == "all" {
+			engine.StopRunning("all")
+			engine.KillExecutable(engineexe)
+		} else if process == "engine" {
+			// first stop everything else, unless killonstartup is false
+			if engine.ConfigBoolWithDefault("killonstartup", true) {
+				engine.StopRunning("all")
+			}
+			// then kill ourselves
+			engine.KillExecutable(engineexe)
+		} else {
+			args := fmt.Sprintf("\"process\":\"%s\"", process)
+			return interpretApiOutput(engine.EngineAPI("stop", args))
+		}
+
+	case "api":
+		if len(args) < 2 {
+			return "Insufficient arguments"
+		}
+		return interpretApiOutput(engine.EngineAPI(args[1], args[2]))
 
 	default:
-		log.Printf("Unknown syntax of start command.\n")
+		// NEW retmap
+		return fmt.Sprintf("Unrecognized command: %s", args[0])
 	}
+	return ""
 }

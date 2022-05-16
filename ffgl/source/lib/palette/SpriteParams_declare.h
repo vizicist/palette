@@ -1,3 +1,5 @@
+float noisevertex;
+bool cursorsprites;
 float alphafinal;
 float alphainitial;
 float alphatime;

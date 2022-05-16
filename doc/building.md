@@ -4,7 +4,7 @@ NOTE: these instructions are only appropriate if you are wanting
 to recompile the Palette software from scratch.
 If instead you just want to install it using one of the
 released installation packages, which is certainly a lot simpler and is recommended, use:
-<a href="https://github.com/vizicist/palette/blob/main/docs/using_resolume.md">https://github.com/vizicist/palette/blob/main/docs/using_resolume.md</a>
+<a href="https://github.com/vizicist/palette/blob/main/doc/using_resolume.md">https://github.com/vizicist/palette/blob/main/doc/using_resolume.md</a>
 
 - Please send email to me@timthompson.com if these instructions don't work for you.
 
@@ -20,61 +20,47 @@ released installation packages, which is certainly a lot simpler and is recommen
 
 - Install Inno Setup from https://jrsoftware.org/isinfo.php
 
-- Install Visual Studio 2019 Community Edition from https://visualstudio.microsoft.com/downloads
+- Install Visual Studio 2013 Community Edition from https://visualstudio.microsoft.com/downloads
+
+  - This will require downloading and mounting a .iso DVD image.
+  - This version is required to get the v120 compiler tools for building older things,
+  even though Visual Studio 2017 will be used to actually build things.
+
+- Install Visual Studio 2017 Community Edition from https://visualstudio.microsoft.com/downloads
 
 	- in the Workload tab, select "Desktop Development with C++"
 	- In the Individual components tab, select "Msbuild"
 
-- Install mingw64 using this installer:
-
- https://sourceforge.net/projects/mingw-w64/files/Toolchains%20targetting%20Win32/Personal%20Builds/mingw-builds/installer/mingw-w64-install.exe
-
-
-```
- *** USE THESE SETTINGS WHEN INSTALLING mingw64 ***
- Version: 8.1.0
- Architecture: x86_64
- Threads: posix
- Exception: sjlj
-```
+- Install mingw64 to get the gcc compiler.  The online installers don't always work.  You'll want the 8.1.0 version, x86_64 architecture, posix threads, and sjlj exceptions.  Email me if you have any trouble getting it.
 
 - Open a new "cmd" window (so that changes to environment variables from the installed packages are reflected) and clone the repos by entering these lines
 
 ```
-mkdir %USERPROFILE%\Documents\Github\vizicist
-cd %USERPROFILE%\Documents\Github\vizicist
+mkdir %USERPROFILE%\Documents\Github
+cd %USERPROFILE%\Documents\Github
 git clone https://github.com/vizicist/palette.git
 git clone https://github.com/vizicist/portmidi.git
 ```
 
-- Install a few Go packages by entering these lines in the "cmd" window:
-
-```
-go get github.com/hypebeast/go-osc/osc
-go get github.com/nats-io/nats-server/server
-go get github.com/nats-io/nats.go
-go get github.com/nats-io/nuid
-go get gopkg.in/mail.v2
-```
-
-- Make sure these directories are added to your PATH variable in System Properties.
+- Make sure these directories are added to your PATH variable in System Properties.  If your gcc.exe is somewhere other than C:\Program Files\mingw64\bin, adjust that path.
 
 ```
  C:\Program Files\Git\bin
  C:\Program Files\Git\usr\bin
- C:\Program Files\mingw-w64\x86_64-8.1.0-posix-sjlj-rt_v6-rev0\mingw64\bin
- %LOCALAPPDATA%\bin
- %USERPROFILE%\Documents\Github\vizicist\palette\SenselLib\x64
+ C:\Program Files\mingw64\bin
 ```
+
+Not sure whether %USERPROFILE%\Documents\Github\palette\SenselLib\x64 is needed, it depends on how you execute things during development.
 
 - Add a new environment variable in your System Properties:
 
 ```
- PALETTESOURCE=%USERPROFILE%\Documents\Github\vizicist\palette
+ PALETTESOURCE=%USERPROFILE%\Documents\Github\palette
 ```
 
 - In Visual Studio Code, click on the "extensions marketplace" icon (four little squares) on the left side.
   In the "Search Extensions" field, enter "go", and install the Go language support.
+  Also install Python language support.
   Other pieces of the Go toolchain will be offered to you automatically within VSCode.
 
 - To compile everything, use a newly-created "cmd" window (so that the changes to PATH and the environment variable are reflected) and enter these lines:
@@ -86,8 +72,10 @@ build
 
 - The result of this should be an installer executable in the release directory,
 which you should execute to install Palette.
-After that, the Windows Start menu should have a Palette folder under P,
-where you'll find entries for "Start Palette" and "Stop Palette".
-If you select "Start Palette", it will start palette_engine.exe and palette_gui.exe,
-the later of which should pop up a GUI window with lots of buttons.
-Congratulations, you've now compiled and installed Palette from scratch.
+
+- If this is the first time you've run the Palette software, you should follow the instructions for one-time steps in
+<a href="https://github.com/vizicist/palette/blob/main/doc/using_resolume.md">https://github.com/vizicist/palette/blob/main/doc/using_resolume.md</a>.
+
+- After that, you're ready to start using the Palette, as described in 
+<a href="https://github.com/vizicist/palette/blob/main/doc/starting_and_using.md">https://github.com/vizicist/palette/blob/main/doc/starting_and_using.md</a>
+

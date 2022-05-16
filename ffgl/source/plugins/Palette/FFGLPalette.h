@@ -26,20 +26,20 @@ public:
 	static FFResult __stdcall CreateInstance(CFFGLPlugin** ppOutInstance)
 	{
 		// The search for ffgl.json is as follows:
-		// - look in %LOCALAPPDATA%
+		// - look in %CommonProgramFiles%
 		// - last resort is temp dir
 
 		std::string jsonpath;
 
 		char* localValue;
 		size_t locallen;
-		errno_t localerr = _dupenv_s(&localValue, &locallen, "LOCALAPPDATA");
+		errno_t localerr = _dupenv_s(&localValue, &locallen, "CommonProgramFiles");
 		if (!localerr && localValue != NULL) {
 			jsonpath = std::string( localValue ) + "\\Palette\\config\\ffgl.json";
 			free( localValue );
 		} else {
 			jsonpath = "c:\\windows\\temp\\ffgl.json";// last resort
-			NosuchDebug("No value for LOCALAPPDATA? using jsonpath=%s\n", jsonpath.c_str());
+			NosuchDebug("No value for CommonProgramFiles? using jsonpath=%s\n", jsonpath.c_str());
 		}
 
 		*ppOutInstance = new FFGLPalette( jsonpath );
