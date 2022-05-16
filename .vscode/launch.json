@@ -72,6 +72,13 @@
             "args": ["stop"]
         },
         {
+            "name": "Stop Engine",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
+            "args": ["stop", "engine"]
+        },
+        {
             "name": "Start MMTT",
             "type": "go",
             "request": "launch",
