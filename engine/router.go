@@ -163,8 +163,8 @@ func TheRouter() *Router {
 
 		oneRouter.regionLetters = ConfigValue("pads")
 		if oneRouter.regionLetters == "" {
-			log.Printf("No value for pads, assuming A")
-			oneRouter.regionLetters = "A"
+			log.Printf("No value for pads, assuming ABCD")
+			oneRouter.regionLetters = "ABCD"
 		}
 
 		err := LoadParamEnums()
@@ -214,8 +214,12 @@ func TheRouter() *Router {
 
 		// Transpose control
 		oneRouter.transposeAuto = ConfigBoolWithDefault("transposeauto", true)
+		log.Printf("oneRouter.transposeAuto=%v\n", oneRouter.transposeAuto)
 		oneRouter.transposeBeats = Clicks(ConfigIntWithDefault("transposebeats", 48))
 		oneRouter.transposeNext = oneRouter.transposeBeats * oneBeat // first one
+
+		// NOTE: the order of values here needs to match the
+		// order in palette.py
 		oneRouter.transposeValues = []int{0, -2, 3, -5}
 
 		oneRouter.myHostname = ConfigValue("hostname")
@@ -232,6 +236,10 @@ func TheRouter() *Router {
 		oneRouter.publishMIDI = ConfigBool("publishmidi")
 		oneRouter.generateVisuals = ConfigBool("generatevisuals")
 		oneRouter.generateSound = ConfigBool("generatesound")
+
+		for _, motor := range oneRouter.motors {
+			motor.restoreCurrentSnap()
+		}
 
 		go oneRouter.notifyGUI("restart")
 	})
@@ -262,13 +270,13 @@ func (r *Router) StartOSC(source string) {
 // StartNATSClient xxx
 func (r *Router) StartNATSClient() {
 
-	ConnectNATS()
+	// ConnectToNATSServer()
 	// Hand all NATS messages to HandleAPI
 
 	log.Printf("StartNATS: Subscribing to %s\n", PaletteAPISubject)
 	SubscribeNATS(PaletteAPISubject, func(msg *nats.Msg) {
 		data := string(msg.Data)
-		response := r.handleAPIInput(r.ExecuteAPI, data)
+		response := r.handleAPIInput(data)
 		msg.Respond([]byte(response))
 	})
 
@@ -279,7 +287,7 @@ func (r *Router) StartNATSClient() {
 		if err != nil {
 			log.Printf("HandleSubscribedEvent: err=%s\n", err)
 		}
-		err = r.HandleSubscribedEventArgs(args)
+		err = r.HandleEvent(args)
 		if err != nil {
 			log.Printf("HandleSubscribedEvent: err=%s\n", err)
 		}
@@ -304,7 +312,14 @@ func (r *Router) StartRealtime() {
 	tick := time.NewTicker(2 * time.Millisecond)
 	r.time0 = <-tick.C
 
-	var nextAliveSecs float64
+	var nextAliveSecs int
+
+	// Don't start checking processes right away, after killing them on a restart,
+	// they may still be running for a bit
+	var nextCheckSecs int = 2
+
+	var aliveIntervalSeconds = ConfigIntWithDefault("aliveinterval", 30)
+	var processcheckSeconds = ConfigIntWithDefault("processcheckinterval", 60)
 
 	// By reading from tick.C, we wake up every 2 milliseconds
 	for now := range tick.C {
@@ -325,11 +340,19 @@ func (r *Router) StartRealtime() {
 
 		// every so often send out an "alive" event
 		// with a cursorCount since the last one
-		var aliveIntervalSeconds = 30.0
-		if secs > nextAliveSecs {
+		if int(secs) > nextAliveSecs {
 			nextAliveSecs += aliveIntervalSeconds
 			PublishAliveEvent(secs, r.cursorCount)
 			r.cursorCount = 0
+		}
+
+		// Every so often check to see if necessary
+		// processes (like Resolume) are still running
+		if processcheckSeconds > 0 && int(secs) > nextCheckSecs {
+			nextCheckSecs += processcheckSeconds
+			// Put it in background, so calling
+			// tasklist or ps doesn't disrupt realtime
+			go CheckProcessesAndRestartIfNecessary()
 		}
 
 		select {
@@ -358,6 +381,7 @@ func (r *Router) advanceTransposeTo(newclick Clicks) {
 			motor.terminateActiveNotes()
 			motor.TransposePitch = transposePitch
 		}
+		log.Printf("advancing transposePitch to %d\n", transposePitch)
 	}
 }
 
@@ -427,7 +451,7 @@ func (r *Router) InputListener() {
 				}
 			}
 			for _, motor := range r.motors {
-				motor.HandleMIDIDeviceInput(event)
+				motor.HandleMIDIInput(event)
 			}
 			if Debug.MIDI {
 				log.Printf("InputListener: MIDIInput event=0x%02x\n", event)
@@ -441,14 +465,14 @@ func (r *Router) InputListener() {
 }
 
 // HandleSubscribedEventArgs xxx
-func (r *Router) HandleSubscribedEventArgs(args map[string]string) error {
+func (r *Router) HandleEvent(args map[string]string) error {
 
 	r.eventMutex.Lock()
 	defer r.eventMutex.Unlock()
 
 	// All Events should have nuid and event values
 
-	nuid, err := needStringArg("nuid", "HandleSubscribeEvent", args)
+	nuid, err := needStringArg("nuid", "HandleEvent", args)
 	if err != nil {
 		return err
 	}
@@ -460,14 +484,12 @@ func (r *Router) HandleSubscribedEventArgs(args map[string]string) error {
 		}
 	*/
 
-	event, err := needStringArg("event", "HandleSubscribeEvent", args)
+	event, err := needStringArg("event", "HandleEvent", args)
 	if err != nil {
 		return err
 	}
 
-	// log.Printf("Router.HandleSubscribedEventArgs: event=%s\n", event)
 	// If no "region" argument, use one assigned to NUID
-
 	region := optionalStringArg("region", args, "")
 	if region == "" {
 		region = r.getRegionForNUID(nuid)
@@ -476,26 +498,22 @@ func (r *Router) HandleSubscribedEventArgs(args map[string]string) error {
 		delete(args, "region")
 	}
 
+	if Debug.Router {
+		log.Printf("Router.HandleEvent: region=%s event=%s\n", region, event)
+	}
+
 	motor, ok := r.motors[region]
 	if !ok {
 		return fmt.Errorf("there is no region named %s", region)
 	}
 
-	eventWords := strings.SplitN(event, "_", 2)
-	subEvent := ""
-	mainEvent := event
-	if len(eventWords) > 1 {
-		mainEvent = eventWords[0]
-		subEvent = eventWords[1]
-	}
-
-	switch mainEvent {
+	switch event {
 
 	case "engine":
 		log.Printf("Router: ignoring engine event\n")
 		return nil
 
-	case "cursor":
+	case "cursor_down", "cursor_drag", "cursor_up":
 
 		// If we're publishing cursor events, we ignore ones from ourself
 		if r.publishCursor && nuid == MyNUID() {
@@ -504,10 +522,9 @@ func (r *Router) HandleSubscribedEventArgs(args map[string]string) error {
 
 		cid := optionalStringArg("cid", args, "UnspecifiedCID")
 
+		subEvent := event[7:] // assumes event is cursor_*
 		switch subEvent {
-		case "down":
-		case "drag":
-		case "up":
+		case "down", "drag", "up":
 		default:
 			return fmt.Errorf("handleSubscribedEvent: Unexpected cursor event type: %s", subEvent)
 		}
@@ -547,34 +564,30 @@ func (r *Router) HandleSubscribedEventArgs(args map[string]string) error {
 		}
 		motor.generateSprite("dummy", x, y, z)
 
-	case "midi":
+	case "midi_reset":
+		log.Printf("HandleEvent: midi_reset, sending ANO\n")
+		motor.HandleMIDITimeReset()
+		motor.sendANO()
 
+	case "audio_reset":
+		log.Printf("HandleEvent: audio_reset!!\n")
+		go r.audioReset()
+
+	case "midi":
 		// If we're publishing midi events, we ignore ones from ourself
 		if r.publishMIDI && nuid == MyNUID() {
 			return nil
 		}
 
-		switch subEvent {
-		case "time_reset":
-			log.Printf("HandleSubscribeMIDIInput: palette_time_reset, sending ANO\n")
-			motor.HandleMIDITimeReset()
-			motor.sendANO()
-
-		case "audio_reset":
-			log.Printf("HandleSubscribeMIDIInput: palette_audio_reset!!\n")
-			go r.audioReset()
-
-		default:
-			bytes, err := needStringArg("bytes", "HandleMIDIEvent", args)
-			if err != nil {
-				return err
-			}
-			me, err := r.makeMIDIEvent("subscribed", bytes, args)
-			if err != nil {
-				return err
-			}
-			motor.HandleMIDIDeviceInput(*me)
+		bytes, err := needStringArg("bytes", "HandleEvent", args)
+		if err != nil {
+			return err
 		}
+		me, err := r.makeMIDIEvent("subscribed", bytes, args)
+		if err != nil {
+			return err
+		}
+		motor.HandleMIDIInput(*me)
 	}
 
 	return nil
@@ -690,7 +703,7 @@ func (r *Router) getXYZ(api string, args map[string]string) (x, y, z float32, er
 }
 
 // HandleAPIInput xxx
-func (r *Router) handleAPIInput(executor APIExecutorFunc, data string) (response string) {
+func (r *Router) handleAPIInput(data string) (response string) {
 
 	r.eventMutex.Lock()
 	defer r.eventMutex.Unlock()
@@ -725,7 +738,7 @@ func (r *Router) handleAPIInput(executor APIExecutorFunc, data string) (response
 	if Debug.API {
 		log.Printf("Router.HandleAPI: api=%s args=%s\n", api, rawargs)
 	}
-	result, err := executor(api, nuid, rawargs)
+	result, err := r.ExecuteAPI(api, nuid, rawargs)
 	if err != nil {
 		response = ErrorResponse(err)
 	} else {
@@ -745,12 +758,18 @@ func (r *Router) handleOSCInput(e OSCEvent) {
 	}
 	switch e.Msg.Address {
 
+	case "/clientrestart":
+		r.handleClientRestart(e.Msg)
+
 	case "/api":
 		log.Printf("OSC /api is not implemented\n")
 		// r.handleOSCAPI(e.Msg)
 
-	case "/event":
+	case "/event": // These messages encode the arguments as JSON
 		r.handleOSCEvent(e.Msg)
+
+	case "/cursor":
+		r.handleMMTTCursor(e.Msg)
 
 	case "/patchxr":
 		r.handlePatchXREvent(e.Msg)
@@ -775,175 +794,6 @@ func (r *Router) audioReset() {
 	msg = osc.NewMessage("/play")
 	msg.Append(int32(1))
 	r.plogueClient.Send(msg)
-}
-
-// ExecuteAPI xxx
-func (r *Router) ExecuteAPI(api string, nuid string, rawargs string) (result interface{}, err error) {
-
-	args, err := StringMap(rawargs)
-	if err != nil {
-		response := ErrorResponse(fmt.Errorf("Router.ExecuteAPI: Unable to interpret value - %s", rawargs))
-		log.Printf("Router.ExecuteAPI: bad rawargs value = %s\n", rawargs)
-		return response, nil
-	}
-
-	result = "0" // most APIs just return 0, so pre-populate it
-
-	words := strings.SplitN(api, ".", 2)
-	if len(words) != 2 {
-		return nil, fmt.Errorf("Router.ExecuteAPI: api=%s is badly formatted, needs a dot", api)
-	}
-	apiprefix := words[0]
-	apisuffix := words[1]
-
-	if apiprefix == "region" {
-
-		region := optionalStringArg("region", args, "")
-		if region == "" {
-			region = r.getRegionForNUID(nuid)
-		} else {
-			// Remove it from the args given to ExecuteAPI
-			delete(args, "region")
-		}
-		motor, ok := r.motors[region]
-		if !ok {
-			return nil, fmt.Errorf("api/event=%s there is no region named %s", api, region)
-		}
-		return motor.ExecuteAPI(apisuffix, args, rawargs)
-	}
-
-	// Everything else should be "global", eventually I'll factor this
-	if apiprefix != "global" {
-		return nil, fmt.Errorf("ExecuteAPI: api=%s unknown apiprefix=%s", api, apiprefix)
-	}
-
-	switch apisuffix {
-
-	case "midi_midifile":
-		return nil, fmt.Errorf("midi_midifile API has been removed")
-
-	case "echo":
-		value, ok := args["value"]
-		if !ok {
-			value = "ECHO!"
-		}
-		result = value
-
-	case "fakemidi":
-		// publish fake event for testing
-		me := MIDIDeviceEvent{
-			Timestamp: int64(0),
-			Status:    0x90,
-			Data1:     0x10,
-			Data2:     0x10,
-		}
-		eee := PublishMIDIDeviceEvent(me)
-		if eee != nil {
-			log.Printf("InputListener: me=%+v err=%s\n", me, eee)
-		}
-		/*
-			d := time.Duration(secs) * time.Second
-			log.Printf("hang: d=%+v\n", d)
-			time.Sleep(d)
-			log.Printf("hang is done\n")
-		*/
-
-	case "debug":
-		s, err := needStringArg("debug", api, args)
-		if err == nil {
-			b, err := needBoolArg("onoff", api, args)
-			if err == nil {
-				setDebug(s, b)
-			}
-		}
-
-	case "set_tempo_factor":
-		v, err := needFloatArg("value", api, args)
-		if err == nil {
-			ChangeClicksPerSecond(float64(v))
-		}
-
-	case "set_transpose":
-		v, err := needFloatArg("value", api, args)
-		if err == nil {
-			for _, motor := range r.motors {
-				motor.TransposePitch = int(v)
-			}
-		}
-
-	case "set_transposeauto":
-		b, err := needBoolArg("onoff", api, args)
-		if err == nil {
-			r.transposeAuto = b
-			// Quantizing CurrentClick() to a beat or measure might be nice
-			r.transposeNext = CurrentClick() + r.transposeBeats*oneBeat
-			for _, motor := range r.motors {
-				motor.TransposePitch = 0
-			}
-		}
-
-	case "set_scale":
-		v, err := needStringArg("value", api, args)
-		if err == nil {
-			for _, motor := range r.motors {
-				motor.setOneParamValue("misc.", "scale", v)
-			}
-		}
-
-	case "audio_reset":
-		go r.audioReset()
-
-	case "recordingStart":
-		r.recordingOn = true
-		if r.recordingFile != nil {
-			log.Printf("Hey, recordingFile wasn't nil?\n")
-			r.recordingFile.Close()
-		}
-		r.recordingFile, err = os.Create(recordingsFile("LastRecording.json"))
-		if err != nil {
-			return nil, err
-		}
-		r.recordingBegun = time.Now()
-		if r.recordingOn {
-			r.recordEvent("global", "*", "start", "{}")
-		}
-	case "recordingSave":
-		var name string
-		name, err = needStringArg("name", api, args)
-		if err == nil {
-			err = r.recordingSave(name)
-		}
-
-	case "recordingStop":
-		if r.recordingOn {
-			r.recordEvent("global", "*", "stop", "{}")
-		}
-		if r.recordingFile != nil {
-			r.recordingFile.Close()
-			r.recordingFile = nil
-		}
-		r.recordingOn = false
-
-	case "recordingPlay":
-		name, err := needStringArg("name", api, args)
-		if err == nil {
-			events, err := r.recordingLoad(name)
-			if err == nil {
-				r.sendANO()
-				go r.recordingPlayback(events)
-			}
-		}
-
-	case "recordingPlaybackStop":
-		r.recordingPlaybackStop()
-
-	default:
-		log.Printf("Router.ExecuteAPI api=%s is not recognized\n", api)
-		err = fmt.Errorf("Router.ExecuteAPI unrecognized api=%s", api)
-		result = ""
-	}
-
-	return result, err
 }
 
 func (r *Router) advanceClickTo(toClick Clicks) {
@@ -1154,22 +1004,166 @@ func (r *Router) recordingLoad(name string) ([]*PlaybackEvent, error) {
 	return events, nil
 }
 
+func (r *Router) handleMMTTButton(butt string) {
+	preset := ConfigStringWithDefault(butt, "")
+	if preset == "" {
+		log.Printf("No Preset assigned to BUTTON %s, using Perky_Shapes\n", butt)
+		preset = "Perky_Shapes"
+		return
+	}
+	log.Printf("Router.handleMMTTButton: butt=%s preset=%s\n", butt, preset)
+	err := r.loadQuadPreset("quad."+preset, "*")
+	if err != nil {
+		log.Printf("handleMMTTButton: preset=%s err=%s\n", preset, err)
+	}
+
+	text := strings.ReplaceAll(preset, "_", "\n")
+	go r.showText(text)
+}
+
+func (r *Router) showText(text string) {
+
+	// disable the text display by bypassing the layer
+	bypassLayer(r.resolumeClient, 5, true)
+
+	addr := "/composition/layers/5/clips/1/video/source/textgenerator/text/params/lines"
+	msg := osc.NewMessage(addr)
+	msg.Append(text)
+	_ = r.resolumeClient.Send(msg)
+
+	// give it time to "sink in", otherwise the previous text displays briefly
+	time.Sleep(150 * time.Millisecond)
+
+	connectClip(r.resolumeClient, 5, 1)
+	bypassLayer(r.resolumeClient, 5, false)
+}
+
+func (r *Router) handleClientRestart(msg *osc.Message) {
+
+	tags, _ := msg.TypeTags()
+	_ = tags
+	nargs := msg.CountArguments()
+	if nargs < 1 {
+		log.Printf("Router.handleOSCEvent: too few arguments\n")
+		return
+	}
+	// Even though the argument is an integer port number,
+	// it's a string in the OSC message sent from the Palette FFGL plugin.
+	s, err := argAsString(msg, 0)
+	if err != nil {
+		log.Printf("Router.handleOSCEvent: err=%s\n", err)
+		return
+	}
+	portnum, err := strconv.Atoi(s)
+	if err != nil {
+		log.Printf("Router.handleOSCEvent: Atoi err=%s\n", err)
+		return
+	}
+	var found *Motor
+	for _, motor := range r.motors {
+		if motor.freeframeClient.Port() == portnum {
+			found = motor
+			break
+		}
+	}
+	if found == nil {
+		log.Printf("handleClientRestart unable to find Motor with portnum=%d\n", portnum)
+	} else {
+		found.sendAllParameters()
+	}
+}
+
+// handleMMTTCursor handles messages from MMTT and reformats them
+// as a standard cursor event before sending them to r.HandleEvent
+func (r *Router) handleMMTTCursor(msg *osc.Message) {
+
+	tags, _ := msg.TypeTags()
+	_ = tags
+	nargs := msg.CountArguments()
+	if nargs < 1 {
+		log.Printf("Router.handleMMTTCursor: too few arguments\n")
+		return
+	}
+	ddu, err := argAsString(msg, 0)
+	if err != nil {
+		log.Printf("Router.handleMMTTEvent: err=%s\n", err)
+		return
+	}
+	cid, err := argAsString(msg, 1)
+	if err != nil {
+		log.Printf("Router.handleMMTTEvent: err=%s\n", err)
+		return
+	}
+	region := "A"
+	words := strings.Split(cid, ".")
+	if len(words) > 1 {
+		region = words[0]
+	}
+	x, err := argAsFloat32(msg, 2)
+	if err != nil {
+		log.Printf("Router.handleMMTTEvent: x err=%s\n", err)
+		return
+	}
+	y, err := argAsFloat32(msg, 3)
+	if err != nil {
+		log.Printf("Router.handleMMTTEvent: y err=%s\n", err)
+		return
+	}
+	z, err := argAsFloat32(msg, 4)
+	if err != nil {
+		log.Printf("Router.handleMMTTEvent: z err=%s\n", err)
+		return
+	}
+
+	motor, mok := r.motors[region]
+	if !mok {
+		// If it's not a region, it's a button.
+		if z > 0.1 {
+			// log.Printf("NOT triggering button too deep z=%f\n", z)
+			return
+		}
+		if ddu == "down" {
+			r.handleMMTTButton(region)
+		}
+		return
+	}
+
+	ce := CursorDeviceEvent{
+		NUID:      MyNUID(),
+		Region:    region,
+		CID:       cid,
+		Timestamp: CurrentMilli(),
+		Ddu:       ddu,
+		X:         x,
+		Y:         y,
+		Z:         z,
+		Area:      0.0,
+	}
+	// XXX - HACK!!
+	ce.Z = 2 * ce.Z
+	if Debug.MMTT {
+		log.Printf("MMTT %s %s xyz= %f %f %f\n", ce.CID, ce.Ddu, ce.X, ce.Y, ce.Z)
+	}
+
+	motor.handleCursorDeviceEvent(ce)
+}
+
 func (r *Router) handleOSCEvent(msg *osc.Message) {
 
 	tags, _ := msg.TypeTags()
 	_ = tags
 	nargs := msg.CountArguments()
 	if nargs < 1 {
-		log.Printf("Router.handleOSCCursorEvent: too few arguments\n")
+		log.Printf("Router.handleOSCEvent: too few arguments\n")
 		return
 	}
 	rawargs, err := argAsString(msg, 0)
 	if err != nil {
-		log.Printf("Router.handleOSCCursorEvent: err=%s\n", err)
+		log.Printf("Router.handleOSCEvent: err=%s\n", err)
 		return
 	}
 	if len(rawargs) == 0 || rawargs[0] != '{' {
-		log.Printf("Router.handleOSCCursorEvent: first char of args must be curly brace\n")
+		log.Printf("Router.handleOSCEvent: first char of args must be curly brace\n")
 		return
 	}
 
@@ -1181,9 +1175,9 @@ func (r *Router) handleOSCEvent(msg *osc.Message) {
 		return
 	}
 
-	err = r.HandleSubscribedEventArgs(args)
+	err = r.HandleEvent(args)
 	if err != nil {
-		log.Printf("Router.handleOSCCursorEvent: err=%s\n", err)
+		log.Printf("Router.handleOSCEvent: err=%s\n", err)
 		return
 	}
 }
@@ -1228,7 +1222,7 @@ func (r *Router) handlePatchXREvent(msg *osc.Message) {
 		return
 	}
 
-	err = r.HandleSubscribedEventArgs(args)
+	err = r.HandleEvent(args)
 	if err != nil {
 		log.Printf("Router.handlePatchXREvent: err=%s\n", err)
 		return
@@ -1262,7 +1256,7 @@ func (r *Router) handleOSCSpriteEvent(msg *osc.Message) {
 		return
 	}
 
-	err = r.HandleSubscribedEventArgs(args)
+	err = r.HandleEvent(args)
 	if err != nil {
 		log.Printf("Router.handleOSCSpriteEvent: err=%s\n", err)
 		return
@@ -1368,7 +1362,7 @@ func (r *Router) getRegionForNUID(nuid string) string {
 
 	// Hasn't been seen yet, let's get an available region
 	region = r.availableRegion(nuid)
-	log.Printf("getRegionForNUID: Assigning region=%s to nuid=%s\n", region, nuid)
+	// log.Printf("getRegionForNUID: Assigning region=%s to nuid=%s\n", region, nuid)
 	r.regionAssignedToNUID[nuid] = region
 
 	return region

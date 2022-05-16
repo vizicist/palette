@@ -36,12 +36,25 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 [InstallDelete]
 ; Delete ALL presets in {app} of an existing installation, to control the default set of presets.
 ; This should be okay because any saved/edited presets (even of the default presets) are saved in
-; the %LOCALAPPDATA% directory, and we don't delete those.
-Type: files; Name:"{app}\presets\snapA\*.json"
-Type: files; Name:"{app}\presets\snapABCD\*.json"
+; the %CommonProgramFiles% directory, and we don't delete those.
+Type: files; Name:"{app}\presets\snap\*.json"
+Type: files; Name:"{app}\presets\quad\*.json"
 Type: files; Name:"{app}\presets\sound\*.json"
 Type: files; Name:"{app}\presets\effect\*.json"
 Type: files; Name:"{app}\presets\visual\*.json"
+Type: files; Name:"{app}\presets_*\snap\*.json"
+Type: files; Name:"{app}\presets_*\quad\*.json"
+Type: files; Name:"{app}\presets_*\sound\*.json"
+Type: files; Name:"{app}\presets_*\effect\*.json"
+Type: files; Name:"{app}\presets_*\visual\*.json"
+
+; Note that these directories are made writable by anyone, for local changes and config
+[Dirs]
+Name: "{commoncf64}\{#MyAppName}\logs"; Permissions: users-modify
+Name: "{commoncf64}\{#MyAppName}\config"; Permissions: users-modify
+Name: "{commoncf64}\{#MyAppName}\midifiles"; Permissions: users-modify
+Name: "{commoncf64}\{#MyAppName}\presets"; Permissions: users-modify
+Name: "{commoncf64}\{#MyAppName}\presets_nosuchtim"; Permissions: users-modify
 
 [Files]
 Source: "ship\VERSION"; DestDir: "{app}"; Flags: ignoreversion
@@ -49,41 +62,36 @@ Source: "ship\bin\*.bat"; DestDir: "{app}\bin"; Flags: comparetimestamp ignoreve
 Source: "ship\bin\*.dll"; DestDir: "{app}\bin"; Flags: comparetimestamp ignoreversion
 Source: "ship\bin\*.exe"; DestDir: "{app}\bin"; Flags: comparetimestamp ignoreversion
 Source: "ship\bin\pyinstalled\*"; DestDir: "{app}\bin\pyinstalled"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "ship\bin\mmtt_kinect\*"; DestDir: "{app}\bin\mmtt_kinect"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "ship\ffgl\*"; DestDir: "{app}\ffgl"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "ship\html\*"; DestDir: "{app}\html"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "ship\presets\*"; DestDir: "{app}\presets"; Flags: ignoreversion recursesubdirs createallsubdirs
-; NOTE - all config files go in LOCALAPPDATA
-Source: "ship\config\nats*.conf"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
-Source: "ship\config\paramdefs.json"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
-Source: "ship\config\paramenums.json"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
-Source: "ship\config\EraeTouchLayout.emk"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
-Source: "ship\config\attractscreen.png"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
-Source: "ship\config\helpscreen.png"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
-Source: "ship\config\Palette*.avc"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
-Source: "ship\config\palette.ico"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
-Source: "ship\config\palette.bidule"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
-Source: "ship\config\resolume.json"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
-Source: "ship\config\ffgl.json"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
-Source: "ship\config\synths.json"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
-Source: "ship\config\morphs.json"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
-Source: "ship\config\settings.json"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
-Source: "ship\config\OpenSans-Regular.ttf"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
-Source: "ship\config\consola.ttf"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
-Source: "ship\midifiles\*"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\midifiles"; Flags: comparetimestamp ignoreversion recursesubdirs createallsubdirs
-Source: "logs_readme.txt"; DestDir: "{%LOCALAPPDATA}\{#MyAppName}\logs"; DestName: "readme.txt"; Flags: ignoreversion
+Source: "ship\presets_nosuchtim\*"; DestDir: "{app}\presets_nosuchtim"; Flags: ignoreversion recursesubdirs createallsubdirs
+; NOTE - all config files go in CommonProgramFiles
+Source: "ship\config\mmtt*.json"; DestDir: "{commoncf64}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
+Source: "ship\config\nats*.conf"; DestDir: "{commoncf64}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
+Source: "ship\config\paramdefs.json"; DestDir: "{commoncf64}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
+Source: "ship\config\paramenums.json"; DestDir: "{commoncf64}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
+Source: "ship\config\EraeTouchLayout.emk"; DestDir: "{commoncf64}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
+Source: "ship\config\attractscreen.png"; DestDir: "{commoncf64}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
+Source: "ship\config\helpscreen.png"; DestDir: "{commoncf64}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
+Source: "ship\config\Palette*.avc"; DestDir: "{commoncf64}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
+Source: "ship\config\palette.ico"; DestDir: "{commoncf64}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
+Source: "ship\config\*.bidule"; DestDir: "{commoncf64}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
+Source: "ship\config\resolume.json"; DestDir: "{commoncf64}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
+Source: "ship\config\ffgl.json"; DestDir: "{commoncf64}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
+Source: "ship\config\synths.json"; DestDir: "{commoncf64}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
+Source: "ship\config\morphs.json"; DestDir: "{commoncf64}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
+Source: "ship\config\settings.json"; DestDir: "{commoncf64}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
+Source: "ship\config\OpenSans-Regular.ttf"; DestDir: "{commoncf64}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
+Source: "ship\config\consola.ttf"; DestDir: "{commoncf64}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
+Source: "ship\midifiles\*"; DestDir: "{commoncf64}\{#MyAppName}\midifiles"; Flags: comparetimestamp ignoreversion recursesubdirs createallsubdirs
+Source: "logs_readme.txt"; DestDir: "{commoncf64}\{#MyAppName}\logs"; DestName: "readme.txt"; Flags: ignoreversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 ; This specifies the Visual C++ Windows Runtime Redistributable to install, it's put in {app}\bin to help debug things.
 [Files]
 Source: "vc15\bin\VC_redist.x64.exe"; DestDir: {app}\bin
-
-; This presets directory is where locally-saved presets go
-[Dirs]
-Name: "{%LOCALAPPDATA}\{#MyAppName}\presets"
-Name: "{%LOCALAPPDATA}\{#MyAppName}\presets\visual"
-Name: "{%LOCALAPPDATA}\{#MyAppName}\presets\effect"
-Name: "{%LOCALAPPDATA}\{#MyAppName}\presets\snap"
-Name: "{%LOCALAPPDATA}\{#MyAppName}\presets\sound"
-Name: "{%LOCALAPPDATA}\{#MyAppName}\presets\quad"
 
 [Run]
 Filename: {app}\bin\VC_redist.x64.exe; Parameters: "/install /quiet /norestart"; StatusMsg: "Installing 64-bit Windows Universal runtime..."; Flags: waituntilterminated
@@ -92,9 +100,9 @@ Filename: taskkill.exe; Parameters: "/F /IM palette_gui.exe"; StatusMsg: "Making
 
 [Icons]
 Name: "{group}\{cm:ProgramOnTheWeb,{#MyAppName}}"; Filename: "{#MyAppURL}"
-Name: "{group}\Start Palette"; Filename: "{app}\bin\palette.exe"; Parameters: "start all"; Flags: runminimized
-Name: "{group}\Stop Palette"; Filename: "{app}\bin\palette.exe"; Parameters: "stop all"; Flags: runminimized
-Name: "{group}\Config Directory"; Filename: "{win}\explorer.exe"; Parameters: "{%LOCALAPPDATA}\{#MyAppName}\config"
+Name: "{group}\Start Palette"; Filename: "{app}\bin\palette.exe"; Parameters: "start"; Flags: runminimized
+Name: "{group}\Stop Palette"; Filename: "{app}\bin\palette.exe"; Parameters: "stop"; Flags: runminimized
+Name: "{group}\Config Directory"; Filename: "{win}\explorer.exe"; Parameters: "{commoncf64}\{#MyAppName}\config"
 
 [Registry]
 Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; \

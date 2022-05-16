@@ -1,0 +1,269 @@
+#ifndef _MANIFOLD_H
+#define _MANIFOLD_H
+
+#include "ManifoldPython.h"
+#include "osc/OscOutboundPacketStream.h"
+#include "FFGLPluginSDK.h"
+#include "NosuchOscInput.h"
+#include "PaletteOscInput.h"
+#include "NosuchOscInput.h"
+#include "NosuchLooper.h"
+#include "NosuchScheduler.h"
+#include "NosuchColor.h"
+#include "NosuchHttp.h"
+
+class PaletteFF;
+class Palette;
+class PaletteHttp;
+class Cursor;
+
+#define DEFAULT_RESOLUME_PORT 7000
+#define DEFAULT_PYFFLE_PORT 9876
+#define DEFAULT_OSC_INPUT_PORT 3333
+#define DEFAULT_OSC_INPUT_HOST "127.0.0.1"
+#define DEFAULT_HTTP_INPUT_PORT 4445
+
+#define REGIONID_FOR_OVERRIDE_PARAMS -2
+#define REGIONID_FOR_GLOBAL_PARAMS -1
+
+extern PaletteFF* RealManifold;
+
+std::string sidString(int sidnum, const char* source);
+
+class ManifoldDaemon {
+public:
+	ManifoldDaemon(PaletteFF* mf, int osc_input_port, std::string osc_input_host, int http_port);
+	~ManifoldDaemon();
+	void *network_input_threadfunc(void *arg);
+private:
+	bool _network_thread_created;
+	bool daemon_shutting_down;
+	pthread_t _network_thread;
+	PaletteFF* _manifold;
+	PaletteOscInput* _oscinput;
+	PaletteHttp* _http;
+};
+
+class PaletteFF : public CFreeFrameGLPlugin, public NosuchOscMessageProcessor, public NosuchSchedulerClient
+{
+public:
+	PaletteFF();
+	~PaletteFF();
+
+	///////////////////////////////////////////////////
+	// FreeFrame plugin methods
+	///////////////////////////////////////////////////
+	
+	DWORD	SetParameter(const SetParameterStruct* pParam);		
+	DWORD	GetParameter(DWORD dwIndex);					
+	DWORD	ProcessOpenGL(ProcessOpenGLStruct* pGL);
+
+	virtual DWORD InitGL(const FFGLViewportStruct *vp) {
+		NosuchDebug(1,"Hi from PaletteFF::InitGL!");
+		return FF_SUCCESS;
+	}
+	virtual DWORD DeInitGL() {
+		NosuchDebug(1,"Hi from PaletteFF::DeInitGL!");
+		return FF_SUCCESS;
+	}
+
+	void test_stuff();
+	bool initStuff();
+	void lock_palette();
+	void unlock_palette();
+	void lock_python();
+	void unlock_python();
+
+	bool disable_on_exception;
+	bool disabled;
+
+	std::string RespondToJson(std::string method, cJSON *params, const char *id);
+	std::string ExecuteJson(std::string meth, cJSON *params, const char *id);
+	std::string ExecuteJsonAndCatchExceptions(std::string meth, cJSON *params, const char *id);
+
+	void ShowText(std::string text, int x, int y, int timeout);
+	void CheckText(int millinow);
+	int _textEraseTime;
+
+	int SendToResolume(osc::OutboundPacketStream& p);
+	int EnableEffect(int effectnum, bool enabled);
+	int NumEffectSet();
+	void LoadEffectSet(int effectset);
+	void LoadEffectSetRandom();
+
+	void ProcessOscMessage(const char *source, const osc::ReceivedMessage& m);
+
+	static bool checkAddrPattern(const char *addr, char *patt);
+
+	std::string jsonFloatResult(float r, const char* id);
+	std::string jsonIntResult(int r, const char* id);
+	std::string jsonStringResult(std::string r, const char* id);
+	std::string jsonMethError(std::string e, const char* id);
+	std::string jsonError(int code, std::string e, const char* id);
+	std::string jsonConfigResult(std::string name, const char *id);
+
+	char *_resolumehost;
+	int _resolumeport;
+
+	char *_pyfflehost;
+	int _pyffleport;
+
+	// GRAPHICS ROUTINES
+	float width;
+	float height;
+
+	bool m_filled;
+	NosuchColor m_fill_color;
+	float m_fill_alpha;
+	bool m_stroked;
+	NosuchColor m_stroke_color;
+	float m_stroke_alpha;
+
+	void fill(NosuchColor c, float alpha);
+	void noFill();
+	void stroke(NosuchColor c, float alpha);
+	void noStroke();
+	void strokeWeight(float w);
+	void background(int);
+	void rect(float x, float y, float width, float height);
+	void pushMatrix();
+	void popMatrix();
+	void translate(float x, float y);
+	void scale(float x, float y);
+	void rotate(float degrees);
+	void line(float x0, float y0, float x1, float y1);
+	void triangle(float x0, float y0, float x1, float y1, float x2, float y2);
+	void quad(float x0, float y0, float x1, float y1, float x2, float y2, float x3, float y3);
+	void ellipse(float x0, float y0, float w, float h);
+
+	///////////////////////////////////////////////////
+	// Factory method
+	///////////////////////////////////////////////////
+
+	static DWORD __stdcall CreateInstance(CFreeFrameGLPlugin **ppInstance) {
+		NosuchDebug(1,"PaletteFF CreatInstance is creating!\n");
+
+		if ( ! StaticInitialized ) {
+			StaticInitialization();
+			StaticInitialized = true;
+		}
+
+		*ppInstance = new PaletteFF();
+		if (*ppInstance != NULL)
+			return FF_SUCCESS;
+		return FF_FAIL;
+	}
+
+	ManifoldDaemon* _daemon;
+
+	int NumberScheduled(click_t minclicks, click_t maxclicks, std::string sid) {
+		return scheduler()->NumberScheduled(minclicks,maxclicks,sid);
+	}
+
+	int CurrentClick() {
+		return scheduler()->CurrentClick();
+	}
+
+	NosuchScheduler* scheduler() {
+		NosuchAssert(_scheduler);
+		return _scheduler;
+	}
+
+	void AddLoop(NosuchLoop* loop) {
+		_looper->AddLoop(loop);
+	}
+
+	void OutputNotificationMidiMsg(MidiMsg* mm, std::string sid);
+	void CursorDownNotification(Cursor* c);
+	void CursorLoopNotification(NosuchCursorMotion* cm, NosuchLoop* lp);
+	// std::string SurfaceNameOfSid(std::string sid);
+	// std::string ButtonNameOfSid(std::string sid);
+	Region* RegionOfSurfaceName(std::string s);
+	Region* RegionOfButtonName(std::string s);
+	// Region* RegionOfSid(std::string sid);
+	Palette* palette() { return _palette; }
+	bool python_events_disabled() { return _python_events_disabled; }
+
+protected:	
+
+	// Parameters
+	// float m_brightness;
+
+	Palette* _palette;
+	NosuchScheduler* _scheduler;
+	NosuchLooper* _looper;
+	
+	pthread_mutex_t json_mutex;
+	pthread_cond_t json_cond;
+
+	pthread_mutex_t palette_mutex;
+	pthread_mutex_t python_mutex;
+
+	bool json_pending;
+	std::string json_method;
+	cJSON* json_params;
+	const char *json_id;
+	std::string json_result;
+
+	bool gl_shutting_down;
+	bool initialized;
+
+	static bool StaticInitialized;
+	static void StaticInitialization();
+
+	bool python_recompileModule(char *modulename);
+	bool python_init();
+	int python_runfile(std::string filename);
+	bool python_reloadPyffleUtilModule();
+	void python_disable(std::string msg);
+	std::string python_draw();
+	std::string python_process_osc();
+	void test_draw();
+	bool python_change_processor(const char* behavename);
+	PyObject* python_getProcessorObject(const char *btype);
+	PyObject* python_lock_and_call(PyObject* func, PyObject *pArgs);
+
+	PyObject *_recompileFunc;
+	PyObject *_processorObj;
+	PyObject *_processorDrawFunc;
+	PyObject *_getProcessorFunc;
+	PyObject *_callBoundFunc;
+    PyObject *_nosuchUtilModule;
+    PyObject *_PyffleUtilModule;
+
+private:
+	bool _python_enabled;
+	bool _python_events_disabled;
+	std::string _python_path; // not used yet
+	bool _dotest;
+	void read_config(std::ifstream& f);
+	void config_and_initialize();
+	std::string _midi_input;
+	std::string _midi_output;
+	int _osc_input_port;
+	std::string _osc_input_host;
+	int _http_input_port;
+	int _resolume_output_port;  // This is the port we're sending output TO
+	std::string _resolume_output_host;
+	int _pyffle_output_port;  // This is the port we're sending output TO
+	std::string _pyffle_output_host;
+
+	// std::map<int,std::string> sid_to_surface;
+	// std::map<int,std::string> sid_to_button;
+};
+
+class PaletteHttp: public NosuchHttp {
+public:
+	PaletteHttp(PaletteFF* server, int port, int timeout) : NosuchHttp(port,timeout) {
+		_server = server;
+	}
+	~PaletteHttp() {
+	}
+	std::string RespondToJson(const char *method, cJSON *params, const char *id) {
+		return _server->RespondToJson(method, params, id);
+	}
+private:
+	PaletteFF* _server;
+};
+
+#endif

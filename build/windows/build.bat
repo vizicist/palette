@@ -1,17 +1,27 @@
 
 @echo off
 
-if not "%PALETTESOURCE%" == "" goto keepgoing
+if not "%PALETTESOURCE%" == "" goto keepgoing1
 echo You must set the PALETTESOURCE environment variable.
 goto getout
+:keepgoing1
 
-:keepgoing
+if not "%VSINSTALLDIR%" == "" goto keepgoing2
+echo Calling msdev17 to set build environment.
+call ..\..\scripts\msdev17.bat
+:keepgoing2
 
 set ship=%PALETTESOURCE%\build\windows\ship
 set bin=%ship%\bin
 rm -fr %ship% > nul 2>&1
 mkdir %ship%
-mkdir %bin%
+mkdir %ship%\bin
+mkdir %ship%\bin\mmtt_kinect
+mkdir %ship%\html
+mkdir %ship%\midifiles
+mkdir %ship%\ffgl
+mkdir %ship%\config
+mkdir %ship%\config\mmtt_kinect
 
 echo ================ Upgrading Python
 python -m pip install pip | grep -v "already.*satisfied"
@@ -61,7 +71,8 @@ popd
 echo ================ Creating palette_gui.exe, testcursor.exe, osc.exe
 pushd %PALETTESOURCE%\python
 rm -fr dist
-pyinstaller -i ..\default\config\palette.ico palette_gui.py > pyinstaller.out 2>&1
+rm -fr build
+pyinstaller -i ..\data\config\palette.ico palette_gui.py > pyinstaller.out 2>&1
 pyinstaller testcursor.py > pyinstaller.out 2>&1
 pyinstaller osc.py > pyinstaller.out 2>&1
 
@@ -74,14 +85,11 @@ move dist\pyinstalled %bin% >nul
 popd
 
 echo ================ Compiling FFGL plugin
-rem set MSBUILDCMD=C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\Common7\Tools\vsmsbuildcmd.bat
-rem call "%MSBUILDCMD%" > nul
 pushd %PALETTESOURCE%\ffgl\build\windows
 msbuild /t:Build /p:Configuration=Release /p:Platform="x64" FFGLPlugins.sln > nul
 popd
 
 echo ================ Copying FFGL plugin
-mkdir %ship%\ffgl
 pushd %PALETTESOURCE%\ffgl\binaries\x64\Release
 copy Palette*.dll %ship%\ffgl > nul
 copy Palette*.pdb %ship%\ffgl > nul
@@ -89,7 +97,23 @@ copy %PALETTESOURCE%\build\windows\vc15\bin\pthreadvc2.dll %ship%\ffgl >nul
 copy %PALETTESOURCE%\build\windows\vc15\bin\msvcr100.dll %ship%\ffgl >nul
 popd
 
-echo ================ Copying binaries
+echo ================ Compiling mmtt_kinect
+pushd %PALETTESOURCE%\mmtt_kinect\build\windows
+msbuild /t:Build /p:Configuration=Debug /p:Platform="x32" mmtt_kinect.sln > nul
+rem Put mmtt_kinect in its own bin directory, to keep 32-bit things separate
+copy mmtt_kinect\Debug\mmtt_kinect.exe %bin%\mmtt_kinect >nul
+copy mmtt_kinect\*.dll %bin%\mmtt_kinect >nul
+popd
+pushd %PALETTESOURCE%\mmtt_kinect
+copy config\mmtt_*.json %ship%\config > nul
+popd
+
+echo ================ Copying html
+pushd %PALETTESOURCE%
+xcopy /e /y html %ship%\html >nul
+popd
+
+echo ================ Copying misc binaries
 copy %PALETTESOURCE%\binaries\nats\nats-pub.exe %bin% >nul
 copy %PALETTESOURCE%\binaries\nats\nats-sub.exe %bin% >nul
 copy %PALETTESOURCE%\binaries\nircmdc.exe %bin% >nul
@@ -108,28 +132,26 @@ copy setpalettelogdir.bat %bin% >nul
 popd
 
 echo ================ Copying config
-mkdir %ship%\config
 
-copy %PALETTESOURCE%\default\config\homepage.json %ship%\config >nul
-copy %PALETTESOURCE%\default\config\ffgl.json %ship%\config >nul
-copy %PALETTESOURCE%\default\config\param*.json %ship%\config >nul
-copy %PALETTESOURCE%\default\config\resolume.json %ship%\config >nul
-copy %PALETTESOURCE%\default\config\settings.json %ship%\config >nul
-copy %PALETTESOURCE%\default\config\synths.json %ship%\config >nul
-copy %PALETTESOURCE%\default\config\morphs.json %ship%\config >nul
-copy %PALETTESOURCE%\default\config\nats*.conf %ship%\config >nul
-copy %PALETTESOURCE%\default\config\Palette*.avc %ship%\config >nul
-copy %PALETTESOURCE%\default\config\EraeTouchLayout.emk %ship%\config >nul
-copy %PALETTESOURCE%\default\config\palette.ico %ship%\config >nul
-copy %PALETTESOURCE%\default\config\palette.bidule %ship%\config >nul
-copy %PALETTESOURCE%\default\config\attractscreen.png %ship%\config >nul
-copy %PALETTESOURCE%\default\config\helpscreen.png %ship%\config >nul
-copy %PALETTESOURCE%\default\config\consola.ttf %ship%\config >nul
-copy %PALETTESOURCE%\default\config\OpenSans-Regular.ttf %ship%\config >nul
+copy %PALETTESOURCE%\data\config\homepage.json %ship%\config >nul
+copy %PALETTESOURCE%\data\config\ffgl.json %ship%\config >nul
+copy %PALETTESOURCE%\data\config\param*.json %ship%\config >nul
+copy %PALETTESOURCE%\data\config\resolume.json %ship%\config >nul
+copy %PALETTESOURCE%\data\config\settings.json %ship%\config >nul
+copy %PALETTESOURCE%\data\config\synths.json %ship%\config >nul
+copy %PALETTESOURCE%\data\config\morphs.json %ship%\config >nul
+copy %PALETTESOURCE%\data\config\nats*.conf %ship%\config >nul
+copy %PALETTESOURCE%\data\config\Palette*.avc %ship%\config >nul
+copy %PALETTESOURCE%\data\config\EraeTouchLayout.emk %ship%\config >nul
+copy %PALETTESOURCE%\data\config\palette.ico %ship%\config >nul
+copy %PALETTESOURCE%\data\config\*.bidule %ship%\config >nul
+copy %PALETTESOURCE%\data\config\attractscreen.png %ship%\config >nul
+copy %PALETTESOURCE%\data\config\helpscreen.png %ship%\config >nul
+copy %PALETTESOURCE%\data\config\consola.ttf %ship%\config >nul
+copy %PALETTESOURCE%\data\config\OpenSans-Regular.ttf %ship%\config >nul
 
 echo ================ Copying midifiles
-mkdir %ship%\midifiles
-copy %PALETTESOURCE%\default\midifiles\*.* %ship%\midifiles >nul
+copy %PALETTESOURCE%\data\midifiles\*.* %ship%\midifiles >nul
 
 echo ================ Copying windows-specific things
 copy %PALETTESOURCE%\SenselLib\x64\LibSensel.dll %bin% >nul
@@ -140,7 +162,9 @@ copy vc15\bin\opencv_world454.dll %bin% >nul
 
 echo ================ Copying presets
 mkdir %ship%\presets
-xcopy /e /y %PALETTESOURCE%\default\presets %ship%\presets > nul
+xcopy /e /y %PALETTESOURCE%\data\presets %ship%\presets > nul
+mkdir %ship%\presets_nosuchtim
+xcopy /e /y %PALETTESOURCE%\data\presets_nosuchtim %ship%\presets_nosuchtim > nul
 
 echo ================ Removing unused things
 rm -fr %bin%\pyinstalled\tcl\tzdata
