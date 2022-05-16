@@ -214,6 +214,15 @@ func PaletteDir() string {
 	return paletteRoot
 }
 
+func PaletteVersion() string {
+	path := filepath.Join(PaletteDir(), "VERSION")
+	bytes, err := ioutil.ReadFile(path)
+	if err != nil {
+		return "Unknown" // It's okay if file isn't present
+	}
+	return string(bytes)
+}
+
 // ConfigFilePath xxx
 func ConfigFilePath(nm string) string {
 	return filepath.Join(LocalPaletteDir(), "config", nm)
