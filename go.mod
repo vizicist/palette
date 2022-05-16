@@ -7,10 +7,8 @@ require (
 	github.com/golang/protobuf v1.4.3 // indirect
 	github.com/hajimehoshi/ebiten/v2 v2.2.1
 	github.com/hypebeast/go-osc v0.0.0-20200115085105-85fee7fed692
-	github.com/klauspost/compress v1.14.2 // indirect
-	github.com/minio/highwayhash v1.0.2 // indirect
-	github.com/nats-io/nats-server/v2 v2.7.2
-	github.com/nats-io/nats.go v1.13.1-0.20220121202836-972a071d373d
+	github.com/nats-io/nats-server/v2 v2.7.4
+	github.com/nats-io/nats.go v1.13.1-0.20220308171302-2f2f6968e98d
 	github.com/nats-io/nuid v1.0.1
 	github.com/vizicist/portmidi v0.0.0-20210913231047-2a6612aaa69b
 	golang.org/x/crypto v0.0.0-20220214200702-86341886e292 // indirect
