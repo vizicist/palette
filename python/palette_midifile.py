@@ -72,7 +72,7 @@ if __name__=="__main__":
 
     args = parser.parse_args()
 
-    mid = mido.MidiFile(os.path.join('../default/midifiles/',args.midifile))
+    mid = mido.MidiFile(os.path.join('../data/midifiles/',args.midifile))
 
     if args.generate == "cursor":
         dofunc = doNote2Cursor

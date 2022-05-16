@@ -1,0 +1,28 @@
+#ifndef NOSUCHSCHEDULER_H
+#define NOSUCHSCHEDULER_H
+
+#include "NosuchUtil.h"
+#include "NosuchMidi.h"
+#include "porttime.h"
+#include "portmidi.h"
+#include <vector>
+
+#define IN_QUEUE_SIZE 1024
+#define OUT_QUEUE_SIZE 1024
+
+class NosuchScheduler {
+public:
+	NosuchScheduler() : mRunning(FALSE) {
+	}
+	bool Setup();
+	void Stop();
+	void Callback(PtTimestamp timestamp);
+	void Add(MidiMsg m);
+private:
+	bool mRunning;
+	std::vector<MidiMsg> mScheduled;
+	PmStream *mInput;
+	PmStream *mOutput;
+};
+
+#endif
