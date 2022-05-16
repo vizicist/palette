@@ -6,7 +6,7 @@ import time
 
 timesofar = 0.0
 
-for msg in mido.MidiFile('../default/midifiles/prelude.mid'):
+for msg in mido.MidiFile('../data/midifiles/prelude.mid'):
     timesofar += msg.time
     time.sleep(msg.time * 0.5)  # play it twice as fast
     # Send each note's MIDI

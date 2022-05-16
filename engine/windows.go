@@ -4,28 +4,40 @@
 package engine
 
 import (
-	"encoding/json"
-	"fmt"
+	"bufio"
 	"io"
-	"io/ioutil"
 	"log"
 	"os/exec"
+	"strings"
 	"syscall"
 )
 
-func StartExecutable(executable string, background bool, stdoutWriter io.Writer, stderrWriter io.Writer, args ...string) error {
-	return Spawn(executable, background, stdoutWriter, stderrWriter, args...)
-}
-
-func StopExecutable(executable string) {
+func KillExecutable(executable string) {
+	log.Printf("KillExecutable: executable=%s\n", executable)
 	stdout := &NoWriter{}
 	stderr := &NoWriter{}
-	// ignore errors
-	_ = Spawn("c:\\windows\\system32\\taskkill.exe", false, stdout, stderr, "/F", "/IM", executable)
+	cmd, _ := StartExecutable("c:\\windows\\system32\\taskkill.exe", false, stdout, stderr, "/F", "/IM", executable)
+	// We don't want to complain if the executable isn't
+	// currently running, so ignore errors
+	cmd.Wait()
 }
 
-// Spawn executes something.  If background is true, it doesn't block
-func Spawn(executable string, background bool, stdout io.Writer, stderr io.Writer, args ...string) error {
+// StartExecutable executes something.  If background is true, it doesn't block
+func StartExecutableLogOutput(logName string, fullexe string, background bool, args ...string) error {
+	stdoutWriter := MakeFileWriter(LogFilePath(logName + ".stdout"))
+	if stdoutWriter == nil {
+		stdoutWriter = &NoWriter{}
+	}
+	stderrWriter := MakeFileWriter(LogFilePath(logName + ".stderr"))
+	if stderrWriter == nil {
+		stderrWriter = &NoWriter{}
+	}
+	_, err := StartExecutable(fullexe, true, stdoutWriter, stderrWriter, args...)
+	return err
+}
+
+// StartExecutable executes something.  If background is true, it doesn't block
+func StartExecutable(executable string, background bool, stdout io.Writer, stderr io.Writer, args ...string) (*exec.Cmd, error) {
 
 	cmd := exec.Command(executable, args...)
 
@@ -44,56 +56,39 @@ func Spawn(executable string, background bool, stdout io.Writer, stderr io.Write
 	} else {
 		err = cmd.Run()
 	}
-	return err
+	return cmd, err
 }
 
-// MorphDefs xxx
-var MorphDefs map[string]string
+type gatherWriter struct {
+	gathered string
+}
 
-// LoadMorphs initializes the list of morphs
-func LoadMorphs() error {
+func (writer *gatherWriter) Write(bytes []byte) (int, error) {
+	writer.gathered += string(bytes)
+	return len(bytes), nil
+}
 
-	MorphDefs = make(map[string]string)
-
-	// If you have more than one morph, or
-	// want the region assignment to NOT be
-	// automatice, put them in here.
-	path := LocalConfigFilePath("morphs.json")
-	bytes, err := ioutil.ReadFile(path)
+func IsRunningExecutable(exe string) bool {
+	stdout := &gatherWriter{}
+	stderr := &NoWriter{}
+	cmd, err := StartExecutable("c:\\windows\\system32\\tasklist.exe", false, stdout, stderr)
 	if err != nil {
-		return nil // It's okay if file isn't present
+		log.Printf("StartExecutable: tasklist.exe err=%s\n", err)
+		return false
 	}
-	var f interface{}
-	err = json.Unmarshal(bytes, &f)
-	if err != nil {
-		return fmt.Errorf("unable to Unmarshal %s, err=%s", path, err)
-	}
-	toplevel := f.(map[string]interface{})
+	cmd.Wait()
 
-	for serialnum, regioninfo := range toplevel {
-		regionname := regioninfo.(string)
-		if Debug.Morph {
-			log.Printf("Setting Morph serial=%s region=%s\n", serialnum, regionname)
+	scanner := bufio.NewScanner(strings.NewReader(stdout.gathered))
+	scanner.Split(bufio.ScanLines)
+	exe = strings.ToLower(exe)
+	for scanner.Scan() {
+		line := scanner.Text()
+		words := strings.Fields(line)
+		if len(words) > 0 {
+			if strings.ToLower(words[0]) == exe {
+				return true
+			}
 		}
-		MorphDefs[serialnum] = regionname
-		// TheRouter().setRegionForMorph(serialnum, regionname)
 	}
-	return nil
-}
-
-// RealStartCursorInput starts anything needed to provide device inputs
-func RealStartCursorInput(callback CursorDeviceCallbackFunc) {
-
-	err := LoadMorphs()
-	if err != nil {
-		log.Printf("StartDeviceInput: LoadMorphs err=%s\n", err)
-	}
-
-	go StartMorph(callback, 1.0)
-}
-
-// KillProcess kills a process (synchronously)
-func KillProcess(exe string) {
-	Spawn("cmd.exe", false, NoWriterInstance, NoWriterInstance, "/c", "taskkill", "/f", "/im", exe)
-
+	return false
 }

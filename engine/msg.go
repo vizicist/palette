@@ -169,7 +169,7 @@ func (cmd Cmd) ValuesString(name string, dflt string) string {
 }
 
 func (ctx *EContext) PublishCmd(cmd Cmd) {
-	theVizNats.Publish(cmd.Subj, cmd.ValuesToString())
+	NATSPublish(cmd.Subj, cmd.ValuesToString())
 }
 
 // SendClickMsgs lets a Block turn reception of ClickMsgs on or off

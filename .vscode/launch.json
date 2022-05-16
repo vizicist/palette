@@ -5,7 +5,35 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Engine",
+            "name": "Kit",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${env:PALETTESOURCE}/cmd/kit/kit.go",
+            // "cwd": "${fileDirname}/",
+            "cwd": "${env:PALETTESOURCE}/kit",
+            "env": {
+                "Path": "${env:Path};${workspaceFolder};"             },
+            "args": []
+        },
+        {
+            "name": "testcli",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
+            // "args": ["start"]
+            // "args": ["stop"]
+            // "args": ["-region=A", "save", "snap.default"]
+            // "args": ["save", "quad.default"]
+            // "args": ["load", "quad.default"]
+            // "args": ["-region=B","load", "visual.default"]
+            // "args": ["-region=A", "save", "visual.default"]
+            // "args": ["set", "visual.speed", "0.333"]
+            // "args": ["-region=A", "get", "visual.speed"]
+            "args": ["list","sound"]
+        },
+        {
+            "name": "Engine (palette_engine.go)",
             "type": "go",
             "request": "launch",
             "mode": "auto",
@@ -15,51 +43,105 @@
             "args": []
         },
         {
-            "name": "test erae",
-            "type": "go",
+            "name": "Start Python Gui",
+            "type": "python",
             "request": "launch",
-            "mode": "auto",
-            "program": "${env:PALETTESOURCE}/cmd/erae/erae.go",
-            "env": {
-                "Path": "${env:Path};${workspaceFolder};c:/Users/me/Documents/github/vizicist/palette/SenselLib/x64;"             },
+            "program": "${env:PALETTESOURCE}/python/palette_gui.py",
+            "console": "integratedTerminal",
             "args": []
         },
         {
-            "name": "test hang.py",
-            "type": "python",
-            "request": "launch",
-            "program": "${env:PALETTESOURCE}/python/hang.py",
-            "console": "integratedTerminal"
-        },
-        {
-            "name": "start bidule",
+            "name": "Status",
             "type": "go",
             "request": "launch",
             "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
-            "args": ["start", "bidule"]
+            "args": ["status"]
         },
         {
-            "name": "start resolume",
+            "name": "Start",
             "type": "go",
             "request": "launch",
             "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
-            "args": ["start", "resolume"]
+            "args": ["start"]
         },
         {
-            "name": "start gui large",
-            "type": "python",
+            "name": "Stop",
+            "type": "go",
             "request": "launch",
-            "program": "${env:PALETTESOURCE}/python/palette_gui.py",
-            "console": "integratedTerminal",
-            "args": ["large"]
+            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
+            "args": ["stop"]
         },
         {
-            "name": "start gui small",
+            "name": "Stop Engine",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
+            "args": ["stop", "engine"]
+        },
+        {
+            "name": "Start MMTT",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
+            "args": ["api", "start", "\"process\":\"mmtt\""]
+        },
+        {
+            "name": "Stop MMTT",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
+            "args": ["api", "stop", "\"process\":\"mmtt\""]
+        },
+        {
+            "name": "Start Resolume",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
+            "args": ["api", "start", "\"process\":\"resolume\""]
+        },
+        {
+            "name": "Stop resolume",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
+            "args": ["stop", "resolume"]
+        },
+        {
+            "name": "Start bidule",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
+            "args": ["api", "start", "\"process\":\"bidule\""]
+        },
+        {
+            "name": "Stop bidule",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
+            "args": ["api", "stop", "\"process\":\"bidule\""]
+        },
+        {
+            "name": "Start gui",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
+            "args": ["api", "start", "\"process\":\"gui\""]
+        },
+        {
+            "name": "Stop gui",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
+            "args": ["api", "stop", "\"process\":\"gui\""]
+        },
+        {
+            "name": "run testmidi.py",
             "type": "python",
             "request": "launch",
-            "program": "${env:PALETTESOURCE}/python/palette_gui.py",
+            "program": "${env:PALETTESOURCE}/python/testmidi.py",
             "console": "integratedTerminal",
-            "args": ["small"]
+            "cwd": "${fileDirname}",
+            "args": [""]
         },
         {
             "name": "sendlogs",
@@ -72,24 +154,14 @@
             "args": ["sendlogs"]
         },
         {
-            "name": "start allsmall",
+            "name": "test erae",
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
+            "program": "${env:PALETTESOURCE}/cmd/erae/erae.go",
             "env": {
                 "Path": "${env:Path};${workspaceFolder};c:/Users/me/Documents/github/vizicist/palette/SenselLib/x64;"             },
-            "args": ["start", "allsmall"]
-        },
-        {
-            "name": "stop all",
-            "type": "go",
-            "request": "launch",
-            "mode": "auto",
-            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
-            "env": {
-                "Path": "${env:Path};${workspaceFolder};c:/Users/me/Documents/github/vizicist/palette/SenselLib/x64;"             },
-            "args": ["stop", "all"]
+            "args": []
         }
     ]
 }

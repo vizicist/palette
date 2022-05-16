@@ -37,6 +37,7 @@ type debugFlags struct {
 	Go        bool
 	Loop      bool
 	MIDI      bool
+	MMTT      bool
 	Morph     bool
 	MotorAPI  bool
 	Mouse     bool
@@ -49,6 +50,7 @@ type debugFlags struct {
 	Router    bool
 	Scale     bool
 	Transpose bool
+	Values    bool
 }
 
 func setDebug(dtype string, b bool) error {
@@ -81,6 +83,8 @@ func setDebug(dtype string, b bool) error {
 		Debug.Loop = b
 	case "midi":
 		Debug.MIDI = b
+	case "mmtt":
+		Debug.MMTT = b
 	case "morph":
 		Debug.Morph = b
 	case "mouse":
@@ -103,10 +107,27 @@ func setDebug(dtype string, b bool) error {
 		Debug.Scale = b
 	case "transpose":
 		Debug.Transpose = b
+	case "values":
+		Debug.Values = b
 	default:
 		return fmt.Errorf("setDebug: unrecognized debug type=%s", dtype)
 	}
 	return nil
+}
+
+func BoundAndScaleController(v, vmin, vmax float32, cmin, cmax int) int {
+	newv := BoundAndScaleFloat(v, vmin, vmax, float32(cmin), float32(cmax))
+	return int(newv)
+}
+
+func BoundAndScaleFloat(v, vmin, vmax, outmin, outmax float32) float32 {
+	if v < vmin {
+		v = vmin
+	} else if v > vmax {
+		v = vmax
+	}
+	out := outmin + (outmax-outmin)*((v-vmin)/(vmax-vmin))
+	return out
 }
 
 // InitDebug xxx
@@ -136,10 +157,10 @@ func (writer logWriter) Write(bytes []byte) (int, error) {
 	if Debug.Go {
 		goid := GoroutineID()
 		// Add GO# to log to indicate Goroutine
-		s = fmt.Sprintf("%d/%d/%d %2d:%2d:%2d.%6d GO#%d %s",
+		s = fmt.Sprintf("%04d/%02d/%02d %02d:%02d:%02d.%06d GO#%d %s",
 			year, month, day, hour, min, sec, micro, goid, bytes)
 	} else {
-		s = fmt.Sprintf("%d/%d/%d %2d:%2d:%2d.%6d %s",
+		s = fmt.Sprintf("%04d/%02d/%02d %02d:%02d:%02d.%06d %s",
 			year, month, day, hour, min, sec, micro, bytes)
 
 	}
@@ -160,15 +181,10 @@ func InitLog(logname string) {
 		fmt.Printf("InitLog: Unable to open logfile=%s logpath=%s err=%s", logfile, logpath, err)
 		return
 	}
-	// log.Printf("Log is being saved in %s\n", logpath)
-	// log.SetOutput(file)
 	log.SetFlags(0)
 	logger := logWriter{file: file}
-	// log.SetFlags(log.Ldate | log.Lmicroseconds)
 	log.SetFlags(0)
 	log.SetOutput(logger)
-	log.Printf("InitLog finished\n")
-
 }
 
 // fileExists checks if a file exists
@@ -203,6 +219,53 @@ func ConfigFilePath(nm string) string {
 	return filepath.Join(LocalPaletteDir(), "config", nm)
 }
 
+// ReadablePresetFilePath xxx
+func ReadablePresetFilePath(preset string) string {
+	return presetFilePath(preset, false)
+}
+
+// WritablePresetFilePath xxx
+func WriteablePresetFilePath(preset string) string {
+	path := presetFilePath(preset, true)
+	os.MkdirAll(filepath.Dir(path), 0777)
+	return path
+}
+
+var presetsDir string
+
+func PresetsDir() string {
+	if presetsDir == "" {
+		presetsDir = ConfigStringWithDefault("presetsdir", "presets")
+	}
+	return presetsDir
+}
+
+// presetFilePath returns the full path of a preset file.
+func presetFilePath(preset string, writable bool) string {
+	category := ""
+	i := strings.Index(preset, ".")
+	if i >= 0 {
+		category = preset[0:i]
+		preset = preset[i+1:]
+	}
+	presetjson := preset + ".json"
+	localpath := filepath.Join(LocalPaletteDir(), PresetsDir(), category, presetjson)
+	// Use the local path if it exists or we want a writable path
+	if writable || FileExists(localpath) {
+		return localpath
+	}
+	return filepath.Join(PaletteDir(), PresetsDir(), category, presetjson)
+}
+
+func PresetNameSplit(preset string) (string, string) {
+	words := strings.SplitN(preset, ".", 2)
+	if len(words) == 1 {
+		return "", words[0]
+	} else {
+		return words[0], words[1]
+	}
+}
+
 // MIDIFilePath xxx
 func MIDIFilePath(nm string) string {
 	return filepath.Join(LocalPaletteDir(), "midifiles", nm)
@@ -210,9 +273,9 @@ func MIDIFilePath(nm string) string {
 
 // LocalPaletteDir gets used for local (and changed) presets and config
 func LocalPaletteDir() string {
-	localapp := os.Getenv("LOCALAPPDATA")
+	localapp := os.Getenv("CommonProgramFiles")
 	if localapp == "" {
-		log.Printf("Expecting LOCALAPPDATA to be set.")
+		log.Printf("Expecting CommonProgramFiles to be set.")
 		return ""
 	}
 	return filepath.Join(localapp, "Palette")
@@ -227,14 +290,14 @@ func LocalConfigFilePath(nm string) string {
 	return filepath.Join(localdir, "config", nm)
 }
 
-// LogFilePath is always in the LOCALAPPDATA directory
+// LogFilePath has a default if LocalPaletteDir fails
 func LogFilePath(nm string) string {
-	localapp := os.Getenv("LOCALAPPDATA")
-	if localapp == "" {
-		log.Printf("Expecting LOCALAPPDATA to be set, using c:/windows/tmp for log directory.\n")
-		return "C:/windows/tmp"
+	localdir := LocalPaletteDir()
+	if localdir == "" {
+		log.Printf("Warning - using c:/windows/tmp for log directory.\n")
+		return filepath.Join("C:/windows/tmp", nm)
 	}
-	return filepath.Join(localapp, "Palette", "logs", nm)
+	return filepath.Join(localdir, "logs", nm)
 }
 
 func FileExists(filepath string) bool {
@@ -248,6 +311,10 @@ func FileExists(filepath string) bool {
 
 // StringMap takes a JSON string and returns a map of elements
 func StringMap(params string) (map[string]string, error) {
+	// The enclosing curly braces are optional
+	if params == "" || params[0] == '"' {
+		params = "{ " + params + " }"
+	}
 	dec := json.NewDecoder(strings.NewReader(params))
 	t, err := dec.Token()
 	if err != nil {
@@ -303,10 +370,10 @@ func jsonEscape(s string) string {
 	return s
 }
 
-// ErrorResponse return a JSON 2.0 error response
+// ErrorResponse return an error response
 func ErrorResponse(err error) string {
 	escaped := jsonEscape(err.Error())
-	return `{ "error": { "code": 999, "message": "` + escaped + `" } }`
+	return `{ "error": "` + escaped + `" }`
 }
 
 // LoadImage reads an image file
@@ -470,6 +537,14 @@ func ConfigIntWithDefault(nm string, dflt int) int {
 	return val
 }
 
+func ConfigStringWithDefault(nm string, dflt string) string {
+	s := ConfigValue(nm)
+	if s == "" {
+		return dflt
+	}
+	return s
+}
+
 // ConfigValue returns "" if there's no value.  I.e. "" and 'no value' are identical
 func ConfigValue(nm string) string {
 
@@ -595,7 +670,15 @@ func ziplogs(logsdir string, zipfile string) error {
 	return err
 }
 
-func SendLogs(recipient, login, password string) {
+func SendLogs() error {
+
+	recipient := ConfigValue("emailto")
+	if recipient == "" {
+		msg := "SendLogs: not sending, no emailto in settings"
+		log.Printf("%s\n", msg)
+		return fmt.Errorf(msg)
+	}
+
 	zipfile := ""
 	logsdir := LogFilePath("")
 
@@ -614,13 +697,12 @@ func SendLogs(recipient, login, password string) {
 	zipfile = ConfigFilePath(zipname)
 	err = ziplogs(logsdir, zipfile)
 	if err != nil {
-		log.Printf("SendLogs: err=%s\n", err)
-		zipfile = ""
+		return fmt.Errorf("sendLogs: err=%s", err)
 	} else {
 		log.Printf("SendLogs: zipfile=%s\n", zipfile)
 	}
 	body := fmt.Sprintf("host=%s palette logfiles attached\n", Hostname())
-	SendMail(recipient, login, password, body, zipfile)
+	return SendMailWithAttachment(body, zipfile)
 }
 
 func Hostname() string {
@@ -632,9 +714,20 @@ func Hostname() string {
 	return hostname
 }
 
-// SendMail xxx
-func SendMail(recipient, login, password, body, attachfile string) {
+func SendMail(body string) error {
+	return SendMailWithAttachment(body, "")
+}
 
+// SendMail xxx
+func SendMailWithAttachment(body, attachfile string) error {
+
+	recipient := ConfigValue("emailto")
+	login := ConfigValue("emaillogin")
+	password := ConfigValue("emailpassword")
+
+	if recipient == "" {
+		return fmt.Errorf("sendMail: not sending, no emailto in settings")
+	}
 	log.Printf("SendMail: recipient=%s\n", recipient)
 
 	smtpHost := "smtp.gmail.com"
@@ -652,9 +745,7 @@ func SendMail(recipient, login, password, body, attachfile string) {
 
 	d := gomail.NewDialer(smtpHost, smtpPort, login, password)
 
-	if err := d.DialAndSend(m); err != nil {
-		log.Printf("SendMail: err=%s\n", err)
-	}
+	return d.DialAndSend(m)
 }
 
 func GoroutineID() uint64 {

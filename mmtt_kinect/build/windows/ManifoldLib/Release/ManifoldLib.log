@@ -1,0 +1,67 @@
+﻿Build started 2/17/2022 5:53:06 PM.
+     1>Project "C:\local\manifold\vs2010\ManifoldLib\ManifoldLib.vcxproj" on node 2 (Rebuild target(s)).
+     1>ClCompile:
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /I.. /I..\cJSON /I..\nosuch /I..\osc\include /I"..\pthreads-win32-2.8.0\Pre-built.2\include" /I..\portmidi\porttime /I..\cvblobslib\src /I..\opencv\build\include /I..\libfreenect\include /Zi /nologo /W3 /WX- /O2 /Oi /Oy- /GL /D WIN32 /D NDEBUG /D _LIB /D _CRT_SECURE_NO_WARNINGS /D _CRT_SECURE_NO_DEPRECATE /D _CRT_NONSTDC_NO_DEPRECATE /D _UNICODE /D UNICODE /Gm- /EHsc /MT /GS /Gy /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Release\\" /Fd"Release\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt ..\..\src\cJSON\cJSON.cpp ..\..\src\freeframe\FFGL.cpp ..\..\src\freeframe\FFGLPluginInstance.cpp ..\..\src\freeframe\ffutil.cpp ..\..\src\freeframe\WinPluginInstance.cpp ..\..\src\nosuch\NosuchDebug.cpp ..\..\src\nosuch\NosuchException.cpp ..\..\src\nosuch\NosuchHttp.cpp ..\..\src\nosuch\NosuchMidi.cpp ..\..\src\nosuch\NosuchOscInput.cpp ..\..\src\nosuch\NosuchOscTcpInput.cpp ..\..\src\nosuch\NosuchOscUdpInput.cpp ..\..\src\nosuch\NosuchSocket.cpp ..\..\src\nosuch\NosuchUtil.cpp ..\..\src\cvblobslib\src\blob.cpp ..\..\src\cvblobslib\src\BlobContour.cpp ..\..\src\cvblobslib\src\BlobOperators.cpp ..\..\src\cvblobslib\src\BlobResult.cpp ..\..\src\cvblobslib\src\ComponentLabeling.cpp ..\..\src\nosuch\ShareMemHeader.cpp ..\..\src\nosuch\UT_Mutex.cpp ..\..\src\nosuch\UT_SharedMem.cpp ..\..\src\osc\src\OscBundle.cpp ..\..\src\osc\src\OscMessage.cpp ..\..\src\osc\src\OscSender.cpp ..\..\src\oscpack\ip\IpEndpointName.cpp ..\..\src\oscpack\ip\win32\NetworkingUtils.cpp ..\..\src\oscpack\ip\win32\UdpSocket.cpp ..\..\src\oscpack\osc\OscOutboundPacketStream.cpp ..\..\src\oscpack\osc\OscPrintReceivedElements.cpp ..\..\src\oscpack\osc\OscReceivedElements.cpp ..\..\src\oscpack\osc\OscTypes.cpp
+         cJSON.cpp
+         FFGL.cpp
+     1>..\..\src\freeframe\FFGL.cpp(69): fatal error C1083: Cannot open include file: 'NosuchDebug.h': No such file or directory
+         FFGLPluginInstance.cpp
+     1>..\..\src\freeframe\FFGLPluginInstance.cpp(1): fatal error C1083: Cannot open include file: 'NosuchUtil.h': No such file or directory
+         ffutil.cpp
+     1>..\..\src\freeframe\ffutil.cpp(1): fatal error C1083: Cannot open include file: 'NosuchUtil.h': No such file or directory
+         WinPluginInstance.cpp
+     1>..\..\src\freeframe\WinPluginInstance.cpp(1): fatal error C1083: Cannot open include file: 'NosuchUtil.h': No such file or directory
+         NosuchDebug.cpp
+     1>..\..\src\nosuch\NosuchDebug.cpp(36): fatal error C1083: Cannot open include file: 'porttime.h': No such file or directory
+         NosuchException.cpp
+     1>c:\local\manifold\src\nosuch\NosuchUtil.h(34): fatal error C1083: Cannot open include file: 'pthread.h': No such file or directory
+         NosuchHttp.cpp
+     1>c:\local\manifold\src\nosuch\NosuchUtil.h(34): fatal error C1083: Cannot open include file: 'pthread.h': No such file or directory
+         NosuchMidi.cpp
+     1>c:\local\manifold\src\nosuch\NosuchUtil.h(34): fatal error C1083: Cannot open include file: 'pthread.h': No such file or directory
+         NosuchOscInput.cpp
+     1>c:\local\manifold\src\nosuch\NosuchUtil.h(34): fatal error C1083: Cannot open include file: 'pthread.h': No such file or directory
+         NosuchOscTcpInput.cpp
+     1>..\..\src\nosuch\NosuchOscTcpInput.cpp(2): fatal error C1083: Cannot open include file: 'osc/OscReceivedElements.h': No such file or directory
+         NosuchOscUdpInput.cpp
+     1>c:\local\manifold\src\nosuch\NosuchUtil.h(34): fatal error C1083: Cannot open include file: 'pthread.h': No such file or directory
+         NosuchSocket.cpp
+         NosuchUtil.cpp
+     1>c:\local\manifold\src\nosuch\NosuchUtil.h(34): fatal error C1083: Cannot open include file: 'pthread.h': No such file or directory
+         blob.cpp
+     1>c:\local\manifold\src\cvblobslib\src\blob.h(21): fatal error C1083: Cannot open include file: 'opencv/cxcore.h': No such file or directory
+         BlobContour.cpp
+     1>c:\local\manifold\src\cvblobslib\src\BlobContour.h(6): fatal error C1083: Cannot open include file: 'opencv/cv.h': No such file or directory
+         BlobOperators.cpp
+     1>c:\local\manifold\src\cvblobslib\src\Blob.h(21): fatal error C1083: Cannot open include file: 'opencv/cxcore.h': No such file or directory
+         BlobResult.cpp
+     1>c:\local\manifold\src\cvblobslib\src\BlobResult.h(24): fatal error C1083: Cannot open include file: 'opencv/cxcore.h': No such file or directory
+         ComponentLabeling.cpp
+     1>c:\local\manifold\src\cvblobslib\src\BlobContour.h(6): fatal error C1083: Cannot open include file: 'opencv/cv.h': No such file or directory
+         ShareMemHeader.cpp
+     1>c:\local\manifold\src\nosuch\NosuchUtil.h(34): fatal error C1083: Cannot open include file: 'pthread.h': No such file or directory
+         Compiling...
+         UT_Mutex.cpp
+     1>c:\local\manifold\src\nosuch\NosuchUtil.h(34): fatal error C1083: Cannot open include file: 'pthread.h': No such file or directory
+         UT_SharedMem.cpp
+     1>c:\local\manifold\src\nosuch\NosuchUtil.h(34): fatal error C1083: Cannot open include file: 'pthread.h': No such file or directory
+         OscBundle.cpp
+     1>..\..\src\osc\src\OscBundle.cpp(28): fatal error C1083: Cannot open include file: 'OscBundle.h': No such file or directory
+         OscMessage.cpp
+     1>..\..\src\osc\src\OscMessage.cpp(27): fatal error C1083: Cannot open include file: 'OscMessage.h': No such file or directory
+         OscSender.cpp
+     1>..\..\src\osc\src\OscSender.cpp(28): fatal error C1083: Cannot open include file: 'OscSender.h': No such file or directory
+         IpEndpointName.cpp
+         NetworkingUtils.cpp
+     1>..\..\src\oscpack\ip\win32\NetworkingUtils.cpp(30): fatal error C1083: Cannot open include file: 'ip/NetworkingUtils.h': No such file or directory
+         UdpSocket.cpp
+     1>..\..\src\oscpack\ip\win32\UdpSocket.cpp(30): fatal error C1083: Cannot open include file: 'ip/UdpSocket.h': No such file or directory
+         OscOutboundPacketStream.cpp
+         OscPrintReceivedElements.cpp
+         OscReceivedElements.cpp
+         OscTypes.cpp
+     1>Done Building Project "C:\local\manifold\vs2010\ManifoldLib\ManifoldLib.vcxproj" (Rebuild target(s)) -- FAILED.
+
+Build FAILED.
+
+Time Elapsed 00:00:02.56

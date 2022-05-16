@@ -1,6 +1,7 @@
 CurrentSnapshot.*
 CurrentQuad.*
 *.pyc
+*.suo
 default/logs/*.log
 default/logs/*.stderr
 default/logs/*.stdout
@@ -13,9 +14,12 @@ ffgl/build/windows/.vs
 ffgl/binaries
 ffgl/source/lib/oldpthreads
 windows/ship
+mmtt_kinect_old
 params/gentle/snap/CurrentSnapshot.*
 # Binaries for programs and plugins
 build/windows/.vs
+mmtt_kinect/build/windows/.oldvs
+mmtt_kinect/build/windows/.vs
 source/windows/.vs
 source/windows/x64
 badffgl
@@ -52,3 +56,7 @@ ship/palette_win
 default/presets_old
 cmd/palette_engine/__debug_bin.exe
 cmd/palette/__debug_bin.exe
+cmd/kit/kit.exe
+kit/y.output
+kit/gram.go
+

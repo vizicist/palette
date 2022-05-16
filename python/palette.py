@@ -1,4 +1,5 @@
 import asyncio
+# from nis import match
 import nats
 from nats.aio.client import Client as NATS
 from nats.aio.errors import ErrTimeout, ErrNoServers
@@ -41,35 +42,36 @@ PerformLabels["loopinglength"] = [
     {"label":"Loop Length_4 beats", "value":4*OneBeat},
 ]
 SimpleScales = [
-	{"label":"Newage_Scale",    "value":"newage"},
-	{"label":"Arabian_Scale",   "value":"arabian"},
-	# {"label":"Chromatic_Scale", "value":"chromatic"},
-    # {"label":"Dorian_Scale","value":"dorian"},
-	{"label":"Fifths_Scale",    "value":"fifths"},
-    {"label":"Harminor_Scale",  "value":"harminor"},
-    # {"label":"Lydian_Scale","value":"lydian"},
-    {"label":"Melminor_Scale",  "value":"melminor"},
-    {"label":"Raga_Scale",     "value":"raga1"},
+	{"label":"*Newage_Scale",    "value":"newage"},
+	{"label":"*Arabian_Scale",   "value":"arabian"},
+	# {"label":"*Chromatic_Scale", "value":"chromatic"},
+    # {"label":"*Dorian_Scale","value":"dorian"},
+	{"label":"*Fifths_Scale",    "value":"fifths"},
+    {"label":"*Harminor_Scale",  "value":"harminor"},
+    # {"label":"*Lydian_Scale","value":"lydian"},
+    {"label":"*Melminor_Scale",  "value":"melminor"},
+    {"label":"*Raga_Scale",     "value":"raga1"},
 ]
 PerformScales = [
-	{"label":"Newage_Scale",    "value":"newage"},
-    # {"label":"Aeolian_Scale",   "value":"aeolian"},
- 	{"label":"Arabian_Scale",   "value":"arabian"},
- 	{"label":"Chromatic_Scale", "value":"chromatic"},
-    # {"label":"Dorian_Scale","value":"dorian"},
- 	{"label":"Fifths_Scale",    "value":"fifths"},
-    {"label":"Harminor_Scale",  "value":"harminor"},
-    # {"label":"Ionian_Scale","value":"ionian"},
-    # {"label":"Locrian_Scale",   "value":"locrian"},
-    # {"label":"Lydian_Scale","value":"lydian"},
-    {"label":"Melminor_Scale",  "value":"melminor"},
-    # {"label":"Mixolydian_Scale","value":"mixolydian"},
-    {"label":"Phrygian_Scale",  "value":"phrygian"},
-    {"label":"Raga_Scale",     "value":"raga1"},
-    # {"label":"Raga2_Scale", "value":"raga2"},
-    # {"label":"Raga3_Scale", "value":"raga3"},
-    # {"label":"Raga4_Scale", "value":"raga4"},
+	{"label":"*Newage_Scale",    "value":"newage"},
+    # {"label":"*Aeolian_Scale",   "value":"aeolian"},
+ 	{"label":"*Arabian_Scale",   "value":"arabian"},
+ 	{"label":"*Chromatic_Scale", "value":"chromatic"},
+    # {"label":"*Dorian_Scale","value":"dorian"},
+ 	{"label":"*Fifths_Scale",    "value":"fifths"},
+    {"label":"*Harminor_Scale",  "value":"harminor"},
+    # {"label":"*Ionian_Scale","value":"ionian"},
+    # {"label":"*Locrian_Scale",   "value":"locrian"},
+    # {"label":"*Lydian_Scale","value":"lydian"},
+    {"label":"*Melminor_Scale",  "value":"melminor"},
+    # {"label":"*Mixolydian_Scale","value":"mixolydian"},
+    {"label":"*Phrygian_Scale",  "value":"phrygian"},
+    {"label":"*Raga_Scale",     "value":"raga1"},
+    # {"label":"*Raga2_Scale", "value":"raga2"},
+    # {"label":"*Raga3_Scale", "value":"raga3"},
+    # {"label":"*Raga4_Scale", "value":"raga4"},
 ]
+PerformDefaultVal["scale"] = 0
 
 PerformLabels["quant"] = [
     {"label":"Fret_Quantize", "value":"frets"},
@@ -78,21 +80,33 @@ PerformLabels["quant"] = [
     {"label":"No_Quant",  "value":"none"},
 ]
 PerformLabels["vol"] = [
-    {"label":"Pressure_Vol", "value":"pressure"},
+    {"label":"Pressure_Velocity", "value":"pressure"},
     {"label":"Fixed_Vol", "value":"fixed"},
 ]
 
 PerformLabels["loopingfade"] = [
-    {"label":"Loop Fade_Fastest", "value":0.05},
-    {"label":"Loop Fade_Faster", "value":0.1},
-    {"label":"Loop Fade_Fast", "value":0.2},
-    {"label":"Loop Fade_Med",  "value":0.4},
-    {"label":"Loop Fade_Slow", "value":0.5},
-    {"label":"Loop Fade_Slower", "value":0.6},
     {"label":"Loop Fade_Slowest", "value":0.7},
+    {"label":"Loop Fade_Slower", "value":0.6},
+    {"label":"Loop Fade_Slow", "value":0.5},
+    {"label":"Loop Fade_Med",  "value":0.4},
+    {"label":"Loop Fade_Fast", "value":0.2},
+    {"label":"Loop Fade_Faster", "value":0.1},
+    {"label":"Loop Fade_Fastest", "value":0.05},
     {"label":"Loop_Forever", "value":1.0},
 ]
-PerformDefaultVal["loopingfade"] = 0
+PerformDefaultVal["loopingfade"] = 7
+
+PerformLabels["deltaztrig"] = [
+    {"label":"Retrigger_Pressure OFF", "value":1.0},
+    {"label":"Retrigger_Pressure ON", "value":0.1},
+]
+PerformDefaultVal["deltaztrig"] = 0
+
+PerformLabels["deltaytrig"] = [
+    {"label":"Retrigger_Vertical OFF", "value":1.0},
+    {"label":"Retrigger_Vertical ON", "value":0.1},
+]
+PerformDefaultVal["deltaytrig"] = 0
 
 PerformLabels["loopingonoff"] = [
     {"label":"Looping_is OFF",  "value":"off"},
@@ -100,10 +114,13 @@ PerformLabels["loopingonoff"] = [
     {"label":"Looping_is ON", "value":"recplay"},
     {"label":"Loop_Playback Only", "value":"play"},
 ]
+
 PerformLabels["midithru"] = [
-    {"label":"MIDI Thru_Off",  "value":False},  # default value at startup
     {"label":"MIDI Thru_On",  "value":True},
+    {"label":"MIDI Thru_Off",  "value":False},  # default value at startup
 ]
+PerformDefaultVal["midithru"] = 1
+
 PerformLabels["midisetscale"] = [
     {"label":"MIDI Set Scale_Off",  "value":False},
     {"label":"MIDI Set Scale_On",  "value":True},
@@ -121,41 +138,45 @@ PerformLabels["midiquantized"] = [
     {"label":"MIDI Thru_Quant",  "value":True},
 ]
 GlobalPerformLabels["tempo"] = [
-    {"label":"Tempo_Normal",  "value":1.0},
-    {"label":"Tempo_Slow", "value":0.85},
-    {"label":"Tempo_Slower", "value":0.70},
-    {"label":"Tempo_Slowest", "value":0.55},
-    {"label":"Tempo_Fast", "value":1.5},
-    {"label":"Tempo_Faster", "value":2.0},
-    {"label":"Tempo_Fastest", "value":4.0},
+    {"label":"*Tempo_Normal",  "value":1.0},
+    {"label":"*Tempo_Slow", "value":0.85},
+    {"label":"*Tempo_Slower", "value":0.70},
+    {"label":"*Tempo_Slowest", "value":0.55},
+    {"label":"*Tempo_Fast", "value":1.5},
+    {"label":"*Tempo_Faster", "value":2.0},
+    {"label":"*Tempo_Fastest", "value":4.0},
 ]
-GlobalPerformLabels["transpose"] = [
-    {"label":"Transpose_0",  "value":0},
-    {"label":"Transpose_3",  "value":3},
-    {"label":"Transpose_-2",  "value":-2},
-    {"label":"Transpose_5",  "value":5},
-]
-GlobalPerformLabels["transposeauto"] = [
-    {"label":"Transpose_Auto On",  "value":True},
-    {"label":"Transpose_Auto Off",  "value":False},
-]
+PerformDefaultVal["tempo"] = 0
 
-def palette_region_api(region, meth, params=""):
+# NOTE: the order of these things needs to match
+# the order in oneRouter.transposeValues in router.go
+GlobalPerformLabels["transpose"] = [
+    {"label":"*Transpose_0",  "value":0},
+    {"label":"*Transpose_-2",  "value":-2},
+    {"label":"*Transpose_3",  "value":3},
+    {"label":"*Transpose_-5",  "value":-5},
+]
+PerformDefaultVal["transpose"] = 0
+
+GlobalPerformLabels["transposeauto"] = [
+    {"label":"*Transpose_Auto On",  "value":True},
+    {"label":"*Transpose_Auto Off",  "value":False},
+]
+PerformDefaultVal["transposeauto"] = 1
+
+def palette_region_api(region, api, params=""):
     if region == "":
-        log("palette_region_api: no region specified?  Assuming A")
-        region = "A"
-    if region == "*":
-        log("palette_region_api: What do I do with a * region?")
-        region = "A"
+        log("palette_region_api: no region specified?  Assuming *")
+        region = "*"
     p = "\"region\":\""+region+"\""
     if params == "":
         params = p
     else:
         params = p + "," + params
-    return palette_api("region."+meth,params)
+    return palette_api(api,params)
 
-def palette_global_api(meth, params=""):
-    return palette_api("global."+meth,params)
+def palette_global_api(api, params=""):
+    return palette_api("global."+api,params)
 
 def configFilePath(nm):
     return os.path.join(paletteSubDir("config"),nm)
@@ -164,18 +185,20 @@ def logFilePath(nm):
     return os.path.join(paletteSubDir("logs"),nm)
 
 def paletteSubDir(subdir):
-    local = os.environ.get("LOCALAPPDATA")
+    local = os.environ.get("CommonProgramFiles")
     if local == None:
-        log("Expecting LOCALAPPDATA to be set, assuming .")
+        log("Expecting CommonProgramFiles to be set, assuming .")
         local = "."
     return os.path.join(local, "Palette", subdir)
 
 def presetsPath():
-    p = ConfigValue("presetspath","%LOCALAPPDATA%\\Palette\\presets;%PALETTE%\\presets")
+    presetsdir = ConfigValue("presetsdir","presets")
+    p = ConfigValue("presetspath","%CommonProgramFiles%\\Palette\\%presetsdir%;%PALETTE%\\%presetsdir%")
     p = p.replace("%PALETTE%",PaletteDir())
-    lad = os.environ.get("LOCALAPPDATA")
+    p = p.replace("%presetsdir%",presetsdir)
+    lad = os.environ.get("CommonProgramFiles")
     if lad != None:
-        p = p.replace("%LOCALAPPDATA%",lad)
+        p = p.replace("%CommonProgramFiles%",lad)
     return p
 
 # Combine presets in the presetsPath list
@@ -188,7 +211,7 @@ def presetsListAll(presetType):
         if os.path.isdir(presetdir):
             vals = listOfJsonFiles(presetdir)
             for v in vals:
-                if not v in allvals:
+                if not v in allvals and v[0] != "_":
                     allvals.append(v)
     sortvals = []
     for v in sorted(allvals):
@@ -196,7 +219,7 @@ def presetsListAll(presetType):
     return sortvals
 
 # This one always returns the local (first) directory in the presetspath,
-# which is usually the user's LOCALAPPDATA version
+# which is usually the user's CommonProgramFiles version
 def localPresetsFilePath(presetType, nm, suffix=".json"):
     presetspath = presetsPath()
     paths = presetspath.split(";")
@@ -248,12 +271,12 @@ def boolValueOfString(v):
 ApiLock = threading.Lock()
 PythonNUID = MyNUID() + "_python"
 
-def palette_api(meth, params=None):
+def palette_api(api, params=None):
 
     fullparams = "{ " + params + "}"
-    r1,err = invoke_jsonrpc("palette.api",meth,fullparams)
+    r1,err = invoke_jsonrpc("palette.api",api,fullparams)
     if err != None:
-        log("API of ",meth," returned err=",err)
+        log("API of ",api," returned err=",err)
     return r1
 
 def palette_publish(subject,params):
@@ -399,10 +422,11 @@ def PaletteDir():
     return paletteDir
 
 
-def SendCursorEvent(cid,ddu,x,y,z):
+def SendCursorEvent(cid,ddu,x,y,z,region="A"):
     event = "cursor_" + ddu
     e = ("{ \"nuid\": \"" + PythonNUID + "\", " + \
         "\"cid\": \"" + str(cid) + "\", " + \
+        "\"region\": \"" + region + "\", " + \
         "\"event\": \"" + event + "\", " + \
         "\"x\": \"%f\", \"y\": \"%f\", \"z\": \"%f\" }")  % (x,y,z)
     palette_publish("palette.event",e)
@@ -416,30 +440,30 @@ def SendSpriteEvent(cid,x,y,z,region="A"):
         "\"x\": \"%f\", \"y\": \"%f\", \"z\": \"%f\" }")  % (x,y,z)
     palette_publish("palette.event",e)
 
-def SendMIDIEvent(device,timesofar,msg):
+def SendMIDIEvent(device,timesofar,msg,region="A"):
     bytestr = "0x"
     for b in msg.bytes():
         bytestr += ("%02x" % b)
 
-    event = "midi_" + msg.type
     e = ("{ \"nuid\": \"%s\", " + \
-        "\"event\": \"%s\", " + \
+        "\"event\": \"midi\", " + \
         "\"device\": \"%s\", " + \
+        "\"region\": \"" + region + "\", " + \
         "\"time\": \"%f\", " + \
         "\"bytes\": \"%s\" }") % \
-            (PythonNUID, event, device, timesofar, bytestr)
+            (PythonNUID, device, timesofar, bytestr)
 
     palette_publish("palette.event",e)
 
 def SendMIDITimeReset():
     e = ("{ \"nuid\": \"%s\", " + \
-        "\"event\": \"midi_time_reset\" }") % \
+        "\"event\": \"midi_reset\" }") % \
             (PythonNUID)
     palette_publish("palette.event",e)
 
 def SendMIDIAudioReset():
     e = ("{ \"nuid\": \"%s\", " + \
-        "\"event\": \"midi_audio_reset\" }") % \
+        "\"event\": \"audio_reset\" }") % \
             (PythonNUID)
     palette_publish("palette.event",e)
 

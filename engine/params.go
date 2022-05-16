@@ -99,34 +99,13 @@ func (vals *ParamValues) SetParamValueWithString(name, value string, callback Pa
 	return vals.realSetParamValueWithString(name, value, callback, true)
 }
 
-func (vals *ParamValues) paramDefOf(origname string) (ParamDef, error) {
-
-	realParamName := origname
-	if strings.HasPrefix(origname, "effect.") {
-
-		// We expect effect param names to be of the form
-		// effect.{#}-{base} or effect.{#}-{base}:{param}
-
-		restof := origname[len("effect."):]
-		if len(restof) > 1 && restof[1] != '-' {
-			restof = "1-" + restof
-		}
-		var base string
-		var effnum int
-		n := strings.Index(restof, ":")
-		withoutcolon := restof
-		if n > 0 {
-			withoutcolon = restof[0:n]
-		}
-		// If it's a name like effect.mirror:x
-		n, err := fmt.Sscanf(withoutcolon, "%d-%s", &effnum, &base)
-		toreplace := withoutcolon
-		if n != 2 || err != nil {
-			return ParamDef{}, fmt.Errorf("ParamValues.SetParamValueWithString err=%s", err)
-		}
-		realParamName = strings.Replace(origname, toreplace, base, 1)
+func (vals *ParamValues) paramDefOf(name string) (ParamDef, error) {
+	p, ok := ParamDefs[name]
+	if !ok {
+		return ParamDef{}, fmt.Errorf("paramDefOf: no parameter named %s", name)
+	} else {
+		return p, nil
 	}
-	return ParamDefs[realParamName], nil
 }
 
 // realSetParamValueWithString xxx
@@ -340,7 +319,18 @@ func LoadParamDefs() error {
 			}
 		}
 
-		ParamDefs[name] = pd
+		if category == "effect" {
+			// For effect parameters, the list only has
+			// one instance of each Freeframe plugin, but
+			// the Resolume configuration has 2 instances
+			// of each plugin.
+			name = strings.TrimPrefix(name, "effect.")
+			ParamDefs["effect.1-"+name] = pd
+			ParamDefs["effect.2-"+name] = pd
+		} else {
+			ParamDefs[name] = pd
+		}
+
 	}
 	return nil
 }
@@ -353,6 +343,27 @@ func (vals *ParamValues) paramValue(name string) ParamValue {
 		return nil
 	}
 	return val
+}
+
+func (vals *ParamValues) paramValueAsString(name string) (string, error) {
+	val := vals.paramValue(name)
+	if val == nil {
+		return "", fmt.Errorf("paramValueAsString: no parameter named %s", name)
+	}
+	s := ""
+	switch v := val.(type) {
+	case paramValString:
+		s = v.value
+	case paramValInt:
+		s = fmt.Sprintf("%d", v.value)
+	case paramValFloat:
+		s = fmt.Sprintf("%f", v.value)
+	case paramValBool:
+		s = fmt.Sprintf("%v", v.value)
+	default:
+		s = "BADVALUETYPE"
+	}
+	return s, nil
 }
 
 // ParamStringValue xxx
@@ -379,6 +390,14 @@ func (vals *ParamValues) ParamFloatValue(name string) float32 {
 	param := vals.paramValue(name)
 	if param == nil {
 		log.Printf("**** No existing float value for param name=%s ??\n", name)
+		pd, ok := ParamDefs[name]
+		if ok {
+			f, err := strconv.ParseFloat(pd.Init, 64)
+			if err == nil {
+				log.Printf("Using pd.Init=%f\n", f)
+				return float32(f)
+			}
+		}
 		return 0.0
 	}
 	f := (param).(paramValFloat).value

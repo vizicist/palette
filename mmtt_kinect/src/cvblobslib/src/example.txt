@@ -1,0 +1,28 @@
+	/**
+		Example of extracting and filtering the blobs of an image
+	*/
+	
+	// object that will contain blobs of inputImage
+	CBlobResult blobs;
+	
+	// Extract the blobs using a threshold of 100 in the image
+	blobs = CBlobResult( inputImage, NULL, 100, true );
+
+	// create a file with some of the extracted features
+	blobs.PrintBlobs( "c:\\tmp\\blobs.txt" );
+
+	// discard the blobs with less area than 5000 pixels
+	// ( the criteria to filter can be any class derived from COperadorBlob )
+	blobs.Filter( blobs, B_INCLUDE, CBlobGetArea(), B_GREATER, 5000 );
+	// create a file with filtered results
+	blobs.PrintBlobs( "c:\\tmp\\filteredBlobs.txt" );
+
+	// object with the blob with most perimeter in the image
+	// ( the criteria to select can be any class derived from COperadorBlob )
+	CBlob blobWithBiggestPerimeter, CBlob blobWithLessArea;
+
+	// from the filtered blobs, get the blob with biggest perimeter
+	blobs.GetNthBlob( CBlobGetPerimeter(), 0, blobWithBiggestPerimeter );
+	// get the blob with less area
+	blobs.GetNthBlob( CBlobGetArea(), blobs.GetNumBlobs() - 1, blobWithLessArea );
+

@@ -3,7 +3,9 @@ package engine
 import (
 	"fmt"
 	"log"
+	"math"
 	"math/rand"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -18,6 +20,7 @@ var uniqueIndex = 0
 type ActiveNote struct {
 	id     int
 	noteOn *Note
+	ce     CursorStepEvent // the one that triggered the note
 }
 
 // Motor is an entity that that reacts to things (cursor events, apis) and generates output (midi, graphics)
@@ -93,7 +96,7 @@ func NewMotor(pad string, resolumeLayer int, freeframeClient *osc.Client, resolu
 		activePhrasesManager:      NewActivePhrasesManager(),
 
 		MIDIOctaveShift:  0,
-		MIDIThru:         false,
+		MIDIThru:         true,
 		MIDISetScale:     false,
 		MIDIThruScadjust: false,
 		MIDIUseScale:     false,
@@ -107,8 +110,23 @@ func NewMotor(pad string, resolumeLayer int, freeframeClient *osc.Client, resolu
 	return r
 }
 
+func (motor *Motor) processNoteOutput(n *Note) {
+	ss := motor.params.ParamStringValue("visual.spritesource", "")
+	if ss == "midi" {
+		motor.generateSpriteFromNote(n)
+	}
+	if Debug.MIDI {
+		log.Printf("%s: n=%+v\n", CallerFunc(), *n)
+	}
+}
+
+func (motor *Motor) SendNoteToSynth(n *Note) {
+	motor.processNoteOutput(n)
+	SendNoteToSynth(n)
+}
+
 // PassThruMIDI xxx
-func (motor *Motor) PassThruMIDI(e MidiEvent, scadjust bool) {
+func (motor *Motor) PassThruMIDI(e MidiEvent) {
 
 	if Debug.MIDI {
 		log.Printf("Motor.PassThruMIDI e=%+v\n", e)
@@ -124,7 +142,7 @@ func (motor *Motor) PassThruMIDI(e MidiEvent, scadjust bool) {
 
 	synth := motor.params.ParamStringValue("sound.synth", defaultSynth)
 	var n *Note
-	if (status == 0x90 || status == 0x80) && scadjust {
+	if (status == 0x90 || status == 0x80) && motor.MIDIThruScadjust {
 		scale := motor.getScale()
 		pitch = scale.ClosestTo(pitch)
 	}
@@ -147,10 +165,7 @@ func (motor *Motor) PassThruMIDI(e MidiEvent, scadjust bool) {
 	}
 	if n != nil {
 		// log.Printf("PassThruMIDI sending note=%s\n", n)
-		if Debug.MIDI {
-			log.Printf("MIDI.SendNote: n=%+v\n", *n)
-		}
-		SendNoteToSynth(n)
+		motor.SendNoteToSynth(n)
 	}
 }
 
@@ -241,6 +256,9 @@ func (motor *Motor) AdvanceByOneClick() {
 				(ac.maxzSoFar < 0.0 && ac.downEvent.Z < minz)) {
 
 				removeCids = append(removeCids, ce.ID)
+				if Debug.Cursor {
+					log.Printf("Adding ce.ID=%s to removeCids\n", ce.ID)
+				}
 				// NOTE: playit should still be left true for this UP event
 			} else {
 				// Don't play any events in this step with an id that we're getting ready to remove
@@ -325,179 +343,75 @@ func (motor *Motor) AdvanceByOneClick() {
 	}
 }
 
-// ExecuteAPI xxx
-func (motor *Motor) ExecuteAPI(api string, args map[string]string, rawargs string) (result string, err error) {
-
-	if Debug.MotorAPI {
-		log.Printf("MotorAPI: api=%s rawargs=%s\n", api, rawargs)
-	}
-
-	dot := strings.Index(api, ".")
-	var apiprefix string
-	apisuffix := api
-	if dot >= 0 {
-		apiprefix = api[0 : dot+1] // includes the dot
-		apisuffix = api[dot+1:]
-	}
-
-	// ALL *.set_params and *.set_param APIs set the params in the Motor.
-	//
-	// In addition:
-	//    Effect parameters get sent one-at-a-time to Resolume's main OSC port (typically 7000).
-
-	handled := false
-	if apisuffix == "set_params" {
-		for name, value := range args {
-			motor.setOneParamValue(apiprefix, name, value)
-		}
-		handled = true
-	}
-	if apisuffix == "set_param" {
-		name, okname := args["param"]
-		value, okvalue := args["value"]
-		if !okname || !okvalue {
-			return "", fmt.Errorf("Motor.handleSetParam: api=%s%s, missing param or value", apiprefix, apisuffix)
-		}
-		motor.setOneParamValue(apiprefix, name, value)
-		handled = true
-	}
-
-	// ALL visual.* APIs get forwarded to the FreeFrame plugin inside Resolume
-	if apiprefix == "visual." {
-		msg := osc.NewMessage("/api")
-		msg.Append(apisuffix)
-		msg.Append(rawargs)
-		motor.toFreeFramePluginForLayer(msg)
-		handled = true
-	}
-
-	if handled {
-		return result, nil
-	}
-
-	known := true
-	switch api {
-
-	case "loop_recording":
-		v, err := needBoolArg("onoff", api, args)
-		if err == nil {
-			motor.loopIsRecording = v
-		}
-
-	case "loop_playing":
-		v, err := needBoolArg("onoff", api, args)
-		if err == nil && v != motor.loopIsPlaying {
-			motor.loopIsPlaying = v
-			motor.terminateActiveNotes()
-		}
-
-	case "loop_clear":
-		motor.loop.Clear()
-		motor.clearGraphics()
-		motor.sendANO()
-
-	case "loop_comb":
-		motor.loopComb()
-
-	case "loop_length":
-		i, err := needIntArg("length", api, args)
-		if err == nil {
-			nclicks := Clicks(i)
-			if nclicks != motor.loop.length {
-				motor.loop.SetLength(nclicks)
-			}
-		}
-
-	case "loop_fade":
-		f, err := needFloatArg("fade", api, args)
-		if err == nil {
-			motor.fadeLoop = f
-		}
-
-	case "ANO":
-		motor.sendANO()
-
-	case "midi_thru":
-		v, err := needBoolArg("onoff", api, args)
-		if err == nil {
-			motor.MIDIThru = v
-		}
-
-	case "midi_setscale":
-		v, err := needBoolArg("onoff", api, args)
-		if err == nil {
-			motor.MIDISetScale = v
-		}
-
-	case "midi_usescale":
-		v, err := needBoolArg("onoff", api, args)
-		if err == nil {
-			motor.MIDIUseScale = v
-		}
-
-	case "clearexternalscale":
-		motor.clearExternalScale()
-		motor.MIDINumDown = 0
-
-	case "midi_quantized":
-		v, err := needBoolArg("onoff", api, args)
-		if err == nil {
-			motor.MIDIQuantized = v
-		}
-
-	case "midi_thruscadjust":
-		v, err := needBoolArg("onoff", api, args)
-		if err == nil {
-			motor.MIDIThruScadjust = v
-		}
-
-	case "set_transpose":
-		v, err := needIntArg("value", api, args)
-		if err == nil {
-			motor.TransposePitch = v
-			if Debug.Transpose {
-				log.Printf("motor API set_transpose TransposePitch=%v", v)
-			}
-		}
-
-	default:
-		known = false
-	}
-
-	if !handled && !known {
-		err = fmt.Errorf("Motor.ExecuteAPI: unknown api=%s", api)
-	}
-
-	return result, err
-}
-
 // HandleMIDITimeReset xxx
 func (motor *Motor) HandleMIDITimeReset() {
 	log.Printf("HandleMIDITimeReset!! needs implementation\n")
 }
 
-// HandleMIDIDeviceInput xxx
-func (motor *Motor) HandleMIDIDeviceInput(e MidiEvent) {
+// HandleMIDIInput xxx
+func (motor *Motor) HandleMIDIInput(e MidiEvent) {
 
 	motor.midiInputMutex.Lock()
 	defer motor.midiInputMutex.Unlock()
 
 	if Debug.MIDI {
-		log.Printf("Router.HandleMIDIDeviceInput: MIDIInput event=%+v\n", e)
+		log.Printf("Router.HandleMIDIInput: event=%+v\n", e)
 	}
 	if motor.MIDIThru {
-		motor.PassThruMIDI(e, motor.MIDIThruScadjust)
+		motor.PassThruMIDI(e)
 	}
 	if motor.MIDISetScale {
 		motor.handleMIDISetScaleNote(e)
 	}
 }
+func CallerPackageAndFunc() (string, string) {
+	pc, _, _, _ := runtime.Caller(1)
 
-func (motor *Motor) setOneParamValue(apiprefix, name, value string) {
-	motor.params.SetParamValueWithString(apiprefix+name, value, nil)
-	if apiprefix == "effect." {
+	funcName := runtime.FuncForPC(pc).Name()
+	lastDot := strings.LastIndexByte(funcName, '.')
+
+	packagename := funcName[:lastDot]
+	funcname := funcName[lastDot+1:]
+	return packagename, funcname
+}
+
+// CallerFunc gives just the final func name
+func CallerFunc() string {
+	pc, _, _, _ := runtime.Caller(1)
+
+	funcName := runtime.FuncForPC(pc).Name()
+	lastSlash := strings.LastIndexByte(funcName, '/')
+
+	funcname := funcName[lastSlash+1:]
+	return funcname
+}
+
+func (motor *Motor) SetOneParamValue(fullname, value string) error {
+
+	if Debug.Values {
+		log.Printf("SetOneParamValue motor=%s %s %s\n", motor.padName, fullname, value)
+	}
+	err := motor.params.SetParamValueWithString(fullname, value, nil)
+	if err != nil {
+		return err
+	}
+
+	if strings.HasPrefix(fullname, "visual.") {
+		name := strings.TrimPrefix(fullname, "visual.")
+		msg := osc.NewMessage("/api")
+		msg.Append("set_params")
+		args := fmt.Sprintf("{\"%s\":\"%s\"}", name, value)
+		msg.Append(args)
+		motor.toFreeFramePluginForLayer(msg)
+	}
+
+	if strings.HasPrefix(fullname, "effect.") {
+		name := strings.TrimPrefix(fullname, "effect.")
+		// Effect parameters get sent to Resolume
 		motor.sendEffectParam(name, value)
 	}
+
+	return nil
 }
 
 // ClearExternalScale xxx
@@ -530,6 +444,8 @@ func (motor *Motor) handleCursorDeviceEvent(e CursorDeviceEvent) {
 
 	motor.deviceCursorsMutex.Lock()
 	defer motor.deviceCursorsMutex.Unlock()
+
+	// log.Printf("handleCursorDeviceEvent e=%v\n", e)
 
 	// Special event to clear cursors (by sending them "up" events)
 	if e.Ddu == "clear" {
@@ -697,17 +613,12 @@ func (motor *Motor) generateVisualsFromCursor(ce CursorStepEvent) {
 	motor.toFreeFramePluginForLayer(msg)
 }
 
-func (motor *Motor) generateSpriteFromNote(a *ActiveNote) {
+func (motor *Motor) generateSpriteFromNote(n *Note) {
 
-	n := a.noteOn
 	if n.TypeOf != "noteon" {
 		return
 	}
 
-	// send an OSC message to Resolume
-	oscaddr := "/sprite"
-
-	// The first argument is a relative pitch amoun (0.0 to 1.0) within its range
 	pitchmin := uint8(motor.params.ParamIntValue("sound.pitchmin"))
 	pitchmax := uint8(motor.params.ParamIntValue("sound.pitchmax"))
 	if n.Pitch < pitchmin || n.Pitch > pitchmax {
@@ -727,17 +638,33 @@ func (motor *Motor) generateSpriteFromNote(a *ActiveNote) {
 	case "cursor":
 		x = rand.Float32()
 		y = rand.Float32()
+	case "top":
+		y = 1.0
+		x = float32(n.Pitch-pitchmin) / float32(pitchmax-pitchmin)
+	case "bottom":
+		y = 0.0
+		x = float32(n.Pitch-pitchmin) / float32(pitchmax-pitchmin)
+	case "left":
+		y = float32(n.Pitch-pitchmin) / float32(pitchmax-pitchmin)
+		x = 0.0
+	case "right":
+		y = float32(n.Pitch-pitchmin) / float32(pitchmax-pitchmin)
+		x = 1.0
 	default:
 		x = rand.Float32()
 		y = rand.Float32()
 	}
 
-	msg := osc.NewMessage(oscaddr)
+	// send an OSC message to Resolume
+	msg := osc.NewMessage("/sprite")
 	msg.Append(x)
 	msg.Append(y)
 	msg.Append(float32(n.Velocity) / 127.0)
-	// Someday localhost should be changed to the actual IP address
-	msg.Append(fmt.Sprintf("%d@localhost", a.id))
+
+	// Someday localhost should be changed to the actual IP address.
+	// XXX - Set sprite ID to pitch, is this right?
+	msg.Append(fmt.Sprintf("%d@localhost", n.Pitch))
+
 	// log.Printf("generateSprite msg=%+v\n", msg)
 	motor.toFreeFramePluginForLayer(msg)
 }
@@ -849,6 +776,7 @@ func (motor *Motor) generateSoundFromCursor(ce CursorStepEvent) {
 			motor.sendNoteOff(a)
 		}
 		a.noteOn = motor.cursorToNoteOn(ce)
+		a.ce = ce
 		if Debug.Transpose {
 			s := fmt.Sprintf("Setting a.noteOn to %+v!\n", *(a.noteOn))
 			if strings.Contains(s, "PANIC") {
@@ -876,9 +804,41 @@ func (motor *Motor) generateSoundFromCursor(ce CursorStepEvent) {
 		newpitch := newNoteOn.Pitch
 		// We only turn off the existing note (for a given Cursor ID)
 		// and start the new one if the pitch changes
-		if newpitch != oldpitch {
+
+		// Also do this if the Z/Velocity value changes more than the trigger value
+
+		// NOTE: this could and perhaps should use a.ce.Z now that we're
+		// saving a.ce, like the deltay value
+
+		dz := float64(int(a.noteOn.Velocity) - int(newNoteOn.Velocity))
+		deltaz := float32(math.Abs(dz) / 128.0)
+		deltaztrig := motor.params.ParamFloatValue("sound.deltaztrig")
+
+		deltay := float32(math.Abs(float64(a.ce.Y - ce.Y)))
+		deltaytrig := motor.params.ParamFloatValue("sound.deltaytrig")
+		// log.Printf("genSound for drag!   a.noteOn.vel=%d  newNoteOn.vel=%d deltaz=%f deltaztrig=%f\n", a.noteOn.Velocity, newNoteOn.Velocity, deltaz, deltaztrig)
+
+		if motor.params.ParamStringValue("sound.controllerstyle", "nothing") == "modulationonly" {
+			zmin := motor.params.ParamFloatValue("sound.controllerzmin")
+			zmax := motor.params.ParamFloatValue("sound.controllerzmax")
+			cmin := motor.params.ParamIntValue("sound.controllermin")
+			cmax := motor.params.ParamIntValue("sound.controllermax")
+			oldz := a.ce.Z
+			newz := ce.Z
+			// XXX - should put the old controller value in ActiveNote so
+			// it doesn't need to be computed every time
+			oldzc := BoundAndScaleController(oldz, zmin, zmax, cmin, cmax)
+			newzc := BoundAndScaleController(newz, zmin, zmax, cmin, cmax)
+
+			if newzc != 0 && newzc != oldzc {
+				SendControllerToSynth(a.noteOn.Sound, 1, newzc)
+			}
+		}
+
+		if newpitch != oldpitch || deltaz > deltaztrig || deltay > deltaytrig {
 			motor.sendNoteOff(a)
 			a.noteOn = newNoteOn
+			a.ce = ce
 			if Debug.Transpose {
 				s := fmt.Sprintf("r=%s drag Setting currentNoteOn to %+v\n", motor.padName, *(a.noteOn))
 				if strings.Contains(s, "PANIC") {
@@ -899,6 +859,7 @@ func (motor *Motor) generateSoundFromCursor(ce CursorStepEvent) {
 			motor.sendNoteOff(a)
 
 			a.noteOn = nil
+			a.ce = ce // Hmmmm, might be useful, or wrong
 			// log.Printf("r=%s UP Setting currentNoteOn to nil!\n", r.padName)
 		}
 		motor.activeNotesMutex.Lock()
@@ -1051,12 +1012,16 @@ func (motor *Motor) sendNoteOn(a *ActiveNote) {
 	if Debug.MIDI {
 		log.Printf("MIDI.SendNote: noteOn pitch:%d velocity:%d sound:%s\n", a.noteOn.Pitch, a.noteOn.Velocity, a.noteOn.Sound)
 	}
-	SendNoteToSynth(a.noteOn)
+	motor.SendNoteToSynth(a.noteOn)
 
 	ss := motor.params.ParamStringValue("visual.spritesource", "")
 	if ss == "midi" {
-		motor.generateSpriteFromNote(a)
+		n := a.noteOn
+		motor.generateSpriteFromNote(n)
 	}
+}
+
+func (motor *Motor) sendController(a *ActiveNote) {
 }
 
 func (motor *Motor) sendNoteOff(a *ActiveNote) {
@@ -1076,7 +1041,7 @@ func (motor *Motor) sendNoteOff(a *ActiveNote) {
 	if Debug.MIDI {
 		log.Printf("MIDI.SendNote: noteOff pitch:%d velocity:%d sound:%s\n", n.Pitch, n.Velocity, n.Sound)
 	}
-	SendNoteToSynth(noteOff)
+	motor.SendNoteToSynth(noteOff)
 }
 
 func (motor *Motor) sendANO() {
@@ -1112,7 +1077,6 @@ func (r *Motor) paramIntValue(paramname string) int {
 
 func (motor *Motor) cursorToNoteOn(ce CursorStepEvent) *Note {
 	pitch := motor.cursorToPitch(ce)
-	pitch = uint8(int(pitch) + motor.TransposePitch)
 	// log.Printf("cursorToNoteOn pitch=%v trans=%v", pitch, r.TransposePitch)
 	velocity := motor.cursorToVelocity(ce)
 	synth := motor.params.ParamStringValue("sound.synth", defaultSynth)
@@ -1126,17 +1090,22 @@ func (motor *Motor) cursorToPitch(ce CursorStepEvent) uint8 {
 	dp := pitchmax - pitchmin + 1
 	p1 := int(ce.X * float32(dp))
 	p := uint8(pitchmin + p1%dp)
-	scale := motor.getScale()
-	p = scale.ClosestTo(p)
-	// MIDIOctaveShift might be negative
-	pnew := int(p) + 12*motor.MIDIOctaveShift
-	for pnew < 0 {
-		pnew += 12
+	// log.Printf("cursorToPitch: X=%f p=%d\n", ce.X, p)
+	chromatic := motor.params.ParamBoolValue("sound.chromatic")
+	if !chromatic {
+		scale := motor.getScale()
+		p = scale.ClosestTo(p)
+		// MIDIOctaveShift might be negative
+		i := int(p) + 12*motor.MIDIOctaveShift
+		for i < 0 {
+			i += 12
+		}
+		for i > 127 {
+			i -= 12
+		}
+		p = uint8(i + motor.TransposePitch)
 	}
-	for pnew > 127 {
-		pnew -= 12
-	}
-	return uint8(pnew)
+	return p
 }
 
 func (motor *Motor) cursorToVelocity(ce CursorStepEvent) uint8 {
@@ -1305,18 +1274,9 @@ func (motor *Motor) sendEffectParam(name string, value string) {
 	// Effect parameters that have ":" in their name are plugin parameters
 	i := strings.Index(name, ":")
 	if i > 0 {
-		var f float64
-		if value == "" {
-			f = 0.0
-		} else {
-			var err error
-			f, err = strconv.ParseFloat(value, 64)
-			if err != nil {
-				log.Printf("Unable to parse float!? value=%s\n", value)
-				f = 0.0
-			}
-		}
-		motor.sendPadOneEffectParam(name[0:i], name[i+1:], f)
+		effectName := name[0:i]
+		paramName := name[i+1:]
+		motor.sendPadOneEffectParam(effectName, paramName, value)
 	} else {
 		onoff, err := strconv.ParseBool(value)
 		if err != nil {
@@ -1324,7 +1284,6 @@ func (motor *Motor) sendEffectParam(name string, value string) {
 			onoff = false
 		}
 		motor.sendPadOneEffectOnOff(name, onoff)
-
 	}
 }
 
@@ -1379,7 +1338,8 @@ func (motor *Motor) resolumeEffectNameOf(name string, num int) string {
 	return fmt.Sprintf("%s%d", name, num)
 }
 
-func (motor *Motor) sendPadOneEffectParam(effectName string, paramName string, value float64) {
+func (motor *Motor) sendPadOneEffectParam(effectName string, paramName string, value string) {
+	fullName := "effect" + "." + effectName + ":" + paramName
 	paramsMap, realEffectName, realEffectNum, err := motor.getEffectMap(effectName, "params")
 	if err != nil {
 		log.Printf("sendPadOneEffectParam: err=%s\n", err)
@@ -1394,16 +1354,62 @@ func (motor *Motor) sendPadOneEffectParam(effectName string, paramName string, v
 		log.Printf("No params value for param=%s in effect=%s\n", paramName, effectName)
 		return
 	}
-	addr := oneParam.(string)
 
+	oneDef, ok := ParamDefs[fullName]
+	if !ok {
+		log.Printf("No paramdef value for param=%s in effect=%s\n", paramName, effectName)
+		return
+	}
+
+	addr := oneParam.(string)
 	resEffectName := motor.resolumeEffectNameOf(realEffectName, realEffectNum)
 	addr = strings.Replace(addr, realEffectName, resEffectName, 1)
-
 	addr = motor.addLayerAndClipNums(addr, motor.resolumeLayer, 1)
 
-	// log.Printf("sendPadOneEffectParam effect=%s param=%s value=%f\n", effectName, paramName, value)
 	msg := osc.NewMessage(addr)
-	msg.Append(float32(value))
+
+	// Append the value to the message, depending on the type of the parameter
+
+	switch oneDef.typedParamDef.(type) {
+
+	case paramDefInt:
+		valint, err := strconv.Atoi(value)
+		if err != nil {
+			log.Printf("paramDefInt conversion err=%s", err)
+			valint = 0
+		}
+		msg.Append(int32(valint))
+
+	case paramDefBool:
+		valbool, err := strconv.ParseBool(value)
+		if err != nil {
+			log.Printf("paramDefBool conversion err=%s", err)
+			valbool = false
+		}
+		onoffValue := 0
+		if valbool {
+			onoffValue = 1
+		}
+		msg.Append(int32(onoffValue))
+
+	case paramDefString:
+		valstr := value
+		msg.Append(valstr)
+
+	case paramDefFloat:
+		var valfloat float32
+		valfloat, err := ParseFloat32(value, resEffectName)
+		if err != nil {
+			log.Printf("paramDefFloat conversion err=%s", err)
+			valfloat = 0.0
+		}
+		msg.Append(float32(valfloat))
+
+	default:
+		log.Printf("SetParamValueWithString: unknown type of ParamDef for name=%s", fullName)
+		return
+	}
+
 	motor.toResolume(msg)
 }
 
@@ -1451,7 +1457,6 @@ func (motor *Motor) sendPadOneEffectOnOff(effectName string, onoff bool) {
 	msg := osc.NewMessage(addr)
 	msg.Append(int32(onoffValue))
 	motor.toResolume(msg)
-
 }
 
 // This silliness is to avoid unused function errors from go-staticcheck

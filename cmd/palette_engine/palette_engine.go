@@ -18,15 +18,27 @@ func main() {
 	signal.Ignore(syscall.SIGINT)
 
 	engine.InitLog("engine")
-	log.Printf("====================== Palette Engine is starting\n")
-
 	engine.InitDebug()
+	engine.InitProcessInfo()
+
+	log.Printf("====================== Palette Engine is starting\n")
 
 	flag.Parse()
 
+	// Normally, the engine should never die, but if it does,
+	// other processes (e.g. resolume, bidule) may be left around.
+	// So, unless told otherwise, we kill everything to get a clean start.
+	if engine.ConfigBoolWithDefault("killonstartup", true) {
+		engine.KillProcess("resolume")
+		engine.KillProcess("bidule")
+		engine.KillProcess("gui")
+		engine.KillProcess("mmtt_kinect")
+		engine.KillProcess("mmtt_oak")
+	}
+
 	engine.InitMIDI()
 	engine.InitSynths()
-	engine.InitNATS()
+	// engine.InitNATS()
 	go engine.StartNATSServer()
 
 	r := engine.TheRouter()
@@ -43,9 +55,10 @@ func main() {
 	}
 
 	if engine.ConfigBoolWithDefault("winsys", false) {
-		winsys.Run() // must run in main thread, never returns
-	} else {
-		select {} // block forever
+		// must run in main thread
+		winsys.Run()
+		// it only returns when the window is closed.
 	}
+	select {} // block forever
 
 }
