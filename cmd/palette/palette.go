@@ -43,16 +43,29 @@ func main() {
 }
 
 func usage() string {
-	return `Usage:
+	return `Commands:
     palette start [process]
     palette stop [process]
+    palette activate
     palette sendlogs
     palette list [{category}]
     palette [-region={region}] load {category}.{preset}
     palette [-region {region}] save {category}.{preset}
     palette [-region {region}] set {category}.{parameter} [{value}]
     palette [-region {region}] get {category}.{parameter}
-    palette api {api} {args}`
+    palette status
+	palette version
+	palette plugin register {plugin} {events}
+    palette api {api} {args}
+	
+Regions:
+    A, B, C, D, *
+
+Events:
+    midiin, midiout, cursor
+
+Categories:
+    quad, snap, sound, visual, effect`
 }
 
 func readableArray(s string) string {
