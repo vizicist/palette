@@ -14,6 +14,7 @@ require (
 	golang.org/x/crypto v0.0.0-20220214200702-86341886e292 // indirect
 	golang.org/x/image v0.0.0-20210628002857-a66eb6448b8d
 	golang.org/x/sys v0.0.0-20220209214540-3681064d5158 // indirect
+	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20220210224613-90d013bbcef8 // indirect
 	google.golang.org/protobuf v1.25.0 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
