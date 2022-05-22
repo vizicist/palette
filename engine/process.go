@@ -128,7 +128,7 @@ func StartRunning(process string) error {
 
 	p, err := getProcessInfo(process)
 	if err != nil {
-		return fmt.Errorf("StartRunning: no info for process=%s\n", process)
+		return fmt.Errorf("StartRunning: no info for process=%s", process)
 	}
 	if p.FullPath == "" {
 		return fmt.Errorf("StartRunning: unable to start %s, no executable path", process)

@@ -44,6 +44,19 @@ func (r *Router) ExecuteAPI(api string, nuid string, rawargs string) (result int
 	case "sendlogs":
 		return "", SendLogs()
 
+	case "register":
+		// palette register {plugin} {events}
+		plugin, pok := apiargs["plugin"]
+		if !pok {
+			return "", fmt.Errorf("ExecuteAPI: missing plugin argument")
+		}
+		events, eok := apiargs["events"]
+		if !eok {
+			return "", fmt.Errorf("ExecuteAPI: missing events argument")
+		}
+		err := r.registerPlugin(plugin, events)
+		return "", err
+
 	default:
 		words := strings.Split(api, ".")
 		// Singlw-word APIs are region-specific

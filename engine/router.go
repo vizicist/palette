@@ -100,6 +100,7 @@ type Router struct {
 	regionAssignedToNUID map[string]string
 	regionAssignedMutex  sync.RWMutex // covers both regionForMorph and regionAssignedToNUID
 	eventMutex           sync.RWMutex
+	plugin               map[string]*PluginRef
 }
 
 // OSCEvent is an OSC message
@@ -188,6 +189,7 @@ func TheRouter() *Router {
 		oneRouter.regionAssignedToNUID = make(map[string]string)
 		oneRouter.block = make(map[string]Block)
 		oneRouter.blockContext = make(map[string]*EContext)
+		oneRouter.plugin = make(map[string]*PluginRef)
 
 		resolumePort := 7000
 		guiPort := 3943
@@ -381,7 +383,6 @@ func (r *Router) advanceTransposeTo(newclick Clicks) {
 			motor.terminateActiveNotes()
 			motor.TransposePitch = transposePitch
 		}
-		log.Printf("advancing transposePitch to %d\n", transposePitch)
 	}
 }
 
@@ -1317,6 +1318,43 @@ func (r *Router) availableRegion(source string) string {
 		log.Printf("Router.assignRegion: No regions available\n")
 	}
 	return ""
+}
+
+func (r *Router) registerPlugin(plugin string, events string) error {
+	_, pok := r.plugin[plugin]
+	if pok {
+		return fmt.Errorf("registerPlugin: there is already a plugin named %s", plugin)
+	}
+	bits, err := events2bits(events)
+	if err != nil {
+		return err
+	}
+	p := &PluginRef{
+		Name:   plugin,
+		Events: bits,
+		Active: false,
+	}
+	r.plugin[plugin] = p
+	return nil
+}
+
+func events2bits(events string) (bits uint, err error) {
+	words := strings.Split(events, ",")
+	for _, w := range words {
+		switch w {
+		case "midiinput":
+			bits |= EventMidiInput
+		case "midioutput":
+			bits |= EventMidiOutput
+		case "cursor":
+			bits |= EventCursor
+		case "all":
+			bits |= (EventMidiInput | EventMidiOutput | EventCursor)
+		default:
+			return 0, fmt.Errorf("unknown event name: %s", w)
+		}
+	}
+	return bits, nil
 }
 
 /*

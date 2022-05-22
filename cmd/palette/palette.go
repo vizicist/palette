@@ -55,7 +55,7 @@ func usage() string {
     palette [-region {region}] get {category}.{parameter}
     palette status
 	palette version
-	palette plugin register {plugin} {events}
+	palette register {plugin} {events}
     palette api {api} {args}
 	
 Regions:

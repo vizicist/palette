@@ -5,6 +5,7 @@ go 1.16
 require (
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
 	github.com/golang/protobuf v1.4.3 // indirect
+	github.com/goplus/gop v1.1.0-beta3 // indirect
 	github.com/hajimehoshi/ebiten/v2 v2.2.1
 	github.com/hypebeast/go-osc v0.0.0-20200115085105-85fee7fed692
 	github.com/nats-io/nats-server/v2 v2.7.4
