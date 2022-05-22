@@ -5,32 +5,11 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Kit",
+            "name": "Plugin example_go",
             "type": "go",
             "request": "launch",
-            "mode": "auto",
-            "program": "${env:PALETTESOURCE}/cmd/kit/kit.go",
-            // "cwd": "${fileDirname}/",
-            "cwd": "${env:PALETTESOURCE}/kit",
-            "env": {
-                "Path": "${env:Path};${workspaceFolder};"             },
+            "program": "${env:PALETTESOURCE}/plugins/example_go/example_go.go",
             "args": []
-        },
-        {
-            "name": "testcli",
-            "type": "go",
-            "request": "launch",
-            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
-            // "args": ["start"]
-            // "args": ["stop"]
-            // "args": ["-region=A", "save", "snap.default"]
-            // "args": ["save", "quad.default"]
-            // "args": ["load", "quad.default"]
-            // "args": ["-region=B","load", "visual.default"]
-            // "args": ["-region=A", "save", "visual.default"]
-            // "args": ["set", "visual.speed", "0.333"]
-            // "args": ["-region=A", "get", "visual.speed"]
-            "args": ["list","sound"]
         },
         {
             "name": "Engine (palette_engine.go)",
