@@ -14,6 +14,10 @@ var PaletteAPISubject = "palette.api"
 // PaletteEventSubject xxx
 var PaletteEventSubject = "palette.event"
 
+// PaletteNote messages are sent from the engine to plugins for output notes.
+// and also from plugins to the engine in order to play them (somehow avoiding recursion)
+var PaletteNoteSubject = "palette.note"
+
 var time0 = time.Now()
 
 type paletteNATS struct {
@@ -111,6 +115,24 @@ func PublishAliveEvent(secs float64, cursorCount int) error {
 		"\" }"
 
 	err := NATSPublish(PaletteEventSubject, params)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// PublishNoteOutput xxx
+func PublishNote(ref *PluginRef, note *Note, source string) error {
+
+	notestr := note.ToString()
+	params := "{ " +
+		"\"nuid\": \"" + ref.pluginNUID + "\", " +
+		"\"source\": \"" + source + "\", " +
+		"\"note\": \"" + jsonEscape(notestr) + "\", " +
+		"\"clicks\": \"" + fmt.Sprintf("%d", note.Clicks) +
+		"\" }"
+
+	err := NATSPublish(PluginSubject(ref.pluginNUID), params)
 	if err != nil {
 		return err
 	}
