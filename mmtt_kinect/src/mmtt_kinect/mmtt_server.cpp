@@ -2422,7 +2422,9 @@ MmttServer::makeMmttServer()
 	}
 	NosuchPaletteDir = std::string(p);
 
-	p = getenv("CommonProgramFiles");
+	// This weird name is to get the 64-bit Common Files directory
+	// (where the Palette stuff is kept) from a 32-bit program.
+	p = getenv("CommonProgramW6432");
 	if ( p == NULL ) {
 		p = ".";
 	}
