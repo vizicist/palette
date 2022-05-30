@@ -110,7 +110,9 @@ func NewMotor(pad string, resolumeLayer int, freeframeClient *osc.Client, resolu
 	return r
 }
 
-func (motor *Motor) processNoteOutput(n *Note) {
+func (motor *Motor) SendNoteToSynth(n *Note) {
+
+	// XXX - eventually this should be done by a plugin?
 	ss := motor.params.ParamStringValue("visual.spritesource", "")
 	if ss == "midi" {
 		motor.generateSpriteFromNote(n)
@@ -118,10 +120,7 @@ func (motor *Motor) processNoteOutput(n *Note) {
 	if Debug.MIDI {
 		log.Printf("%s: n=%+v\n", CallerFunc(), *n)
 	}
-}
 
-func (motor *Motor) SendNoteToSynth(n *Note) {
-	motor.processNoteOutput(n)
 	SendNoteToSynth(n)
 }
 

@@ -32,6 +32,7 @@ type Phrasep *Phrase
 
 // Note is a single item in a Phrase
 type Note struct {
+	Source   string // might be based on (or equal to) NUID
 	TypeOf   string // note, noteon, noteoff, controller, notebytes
 	Clicks   Clicks // nanoseconds
 	Duration Clicks // nanoseconds, when it's a note
@@ -219,78 +220,6 @@ func (n *Note) Copy() *Note {
 	return newn
 }
 
-/*
-OLD VERSION OF TOSTRING
-// ToString returns a human-readable version of a Phrase
-func (p *Phrase) ToString() string {
-	s := "'"
-	var first = true
-
-	var lastClicks Clicks
-	var lastDuration Clicks
-	var lastEndClicks Clicks
-	_ = lastEndClicks // why do I need this?  lastEndClicks is used
-	var lastSound string
-
-	lastClicks = 0
-	lastDuration = math.MaxInt64
-	lastEndClicks = 0
-
-	for n := p.firstnote; n != nil; {
-		// Put out the time value
-		if first {
-			first = false
-		} else {
-			// Separator is a space if it starts at the same time as the last one, otherwise comma
-			if n.Clicks == lastClicks {
-				s += " "
-			} else {
-				s += ","
-			}
-		}
-
-		switch n.TypeOf {
-		case NOTE:
-			s += fmt.Sprintf("p%dv%d", n.Pitch, n.Velocity)
-			if n.Duration != lastDuration {
-				s += fmt.Sprintf("d%d", n.Duration)
-				lastDuration = n.Duration
-			}
-		case NOTEON:
-			s += fmt.Sprintf("+p%dv%d", n.Pitch, n.Velocity)
-		case NOTEOFF:
-			s += fmt.Sprintf("-p%dv%d", n.Pitch, n.Velocity)
-		case CONTROLLER:
-			s += fmt.Sprintf("x%02x%02x", n.Data1(), n.Data2())
-		case PROGCHANGE:
-			s += fmt.Sprintf("x%02x%02x", n.Data1(), n.Data2())
-		case CHANPRESSURE:
-			s += fmt.Sprintf("x%02x%02x", n.Data1(), n.Data2())
-		case PITCHBEND:
-			s += fmt.Sprintf("x%02x%02x", n.Data1(), n.Data2())
-		case NOTEBYTES:
-			return "<NOTEBYTES not yet handled>"
-		default:
-			return fmt.Sprintf("<Note Type %d not yet handled>", n.TypeOf)
-		}
-
-		if n.Clicks != lastClicks {
-			s += fmt.Sprintf("t%d", n.Clicks)
-			lastClicks = n.Clicks
-		}
-		if n.Sound != lastSound {
-			lastSound = n.Sound
-			s += fmt.Sprintf("S%s", n.Sound)
-		}
-
-		lastEndClicks = n.EndOf()
-		n = n.next
-	}
-	s += "'"
-	return s
-}
-*/
-
 // ToString produces a human-readable version of a Note.
 // Note that it includes the surrounding quotes that make it look like a Phrase
 func (n *Note) ToString() string {
@@ -307,6 +236,47 @@ func (n *Note) ToString() string {
 	}
 	s += fmt.Sprintf("v%dt%dS%s'", n.Velocity, n.Clicks, n.Sound)
 	return s
+}
+
+func NoteFromString(s string) (*Note, error) {
+	if s == "" {
+		return nil, fmt.Errorf("NoteFromString: bad format - %s", s)
+	}
+	i := 0
+	ntype := "note"
+	switch s[i] {
+	case '+':
+		ntype = "noteon"
+		i++
+	case '-':
+		ntype = "noteoff"
+		i++
+	}
+	var pitch int
+	if s[i] == 'p' {
+		// scan number
+		log.Printf("NoteFromString: needs implementation here\n")
+		pitch = 33
+		i++
+	} else {
+		letters := map[string]int{"a": 0, "b": 1, "c": 2, "d": 3, "e": 4, "f": 5, "g": 6}
+		p, ok := letters[string(s[i])]
+		if !ok {
+			return nil, fmt.Errorf("NoteFromString: bad note letter - %s", s)
+		}
+		pitch = p
+	}
+	vel := 64
+	note := &Note{
+		Source:   "",           // might be based on (or equal to) NUID
+		TypeOf:   ntype,        // note, noteon, noteoff, controller, notebytes
+		Clicks:   0,            // nanoseconds
+		Duration: 0,            // nanoseconds, when it's a note
+		Pitch:    uint8(pitch), // 0-127
+		Velocity: uint8(vel),   // 0-127
+		Sound:    "",
+	}
+	return note, nil
 }
 
 ////////////////////// Phrase methods /////////////////////////

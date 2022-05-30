@@ -68,6 +68,7 @@ type Router struct {
 	// inputs        []*osc.Client
 	OSCInput  chan OSCEvent
 	MIDIInput chan MidiEvent
+	NoteInput chan *Note
 
 	block        map[string]Block
 	blockContext map[string]*EContext
@@ -212,6 +213,7 @@ func TheRouter() *Router {
 
 		oneRouter.OSCInput = make(chan OSCEvent)
 		oneRouter.MIDIInput = make(chan MidiEvent)
+		oneRouter.NoteInput = make(chan *Note)
 		oneRouter.recordingOn = false
 
 		// Transpose control
@@ -473,14 +475,14 @@ func (r *Router) HandleEvent(args map[string]string) error {
 
 	// All Events should have nuid and event values
 
-	nuid, err := needStringArg("nuid", "HandleEvent", args)
+	fromNUID, err := needStringArg("nuid", "HandleEvent", args)
 	if err != nil {
 		return err
 	}
 
 	/*
 		// Ignore anything from myself
-		if nuid == MyNUID() {
+		if fromNUID == MyNUID() {
 			return nil
 		}
 	*/
@@ -493,7 +495,7 @@ func (r *Router) HandleEvent(args map[string]string) error {
 	// If no "region" argument, use one assigned to NUID
 	region := optionalStringArg("region", args, "")
 	if region == "" {
-		region = r.getRegionForNUID(nuid)
+		region = r.getRegionForNUID(fromNUID)
 	} else {
 		// Remove it from the args
 		delete(args, "region")
@@ -517,7 +519,7 @@ func (r *Router) HandleEvent(args map[string]string) error {
 	case "cursor_down", "cursor_drag", "cursor_up":
 
 		// If we're publishing cursor events, we ignore ones from ourself
-		if r.publishCursor && nuid == MyNUID() {
+		if r.publishCursor && fromNUID == MyNUID() {
 			return nil
 		}
 
@@ -536,7 +538,7 @@ func (r *Router) HandleEvent(args map[string]string) error {
 		}
 
 		ce := CursorDeviceEvent{
-			NUID:      nuid,
+			NUID:      fromNUID,
 			Region:    region,
 			CID:       cid,
 			Timestamp: CurrentMilli(),
@@ -576,7 +578,7 @@ func (r *Router) HandleEvent(args map[string]string) error {
 
 	case "midi":
 		// If we're publishing midi events, we ignore ones from ourself
-		if r.publishMIDI && nuid == MyNUID() {
+		if r.publishMIDI && fromNUID == MyNUID() {
 			return nil
 		}
 
@@ -726,7 +728,7 @@ func (r *Router) handleAPIInput(data string) (response string) {
 		response = ErrorResponse(fmt.Errorf("missing api parameter"))
 		return
 	}
-	nuid, ok := smap["nuid"]
+	fromNUID, ok := smap["nuid"]
 	if !ok {
 		response = ErrorResponse(fmt.Errorf("missing nuid parameter"))
 		return
@@ -739,7 +741,7 @@ func (r *Router) handleAPIInput(data string) (response string) {
 	if Debug.API {
 		log.Printf("Router.HandleAPI: api=%s args=%s\n", api, rawargs)
 	}
-	result, err := r.ExecuteAPI(api, nuid, rawargs)
+	result, err := r.ExecuteAPI(api, fromNUID, rawargs)
 	if err != nil {
 		response = ErrorResponse(err)
 	} else {
@@ -1168,8 +1170,10 @@ func (r *Router) handleOSCEvent(msg *osc.Message) {
 		return
 	}
 
-	// Add the required nuid argument, which OSC input doesn't provide
-	newrawargs := "{ \"nuid\": \"" + MyNUID() + "\", " + rawargs[1:]
+	// Add the required nuid argument, which OSC input doesn't provide.
+	// It's "unknown" because we don't have access to info about the originator.
+	fromNUID := "unknown"
+	newrawargs := "{ \"nuid\": \"" + fromNUID + "\", " + rawargs[1:]
 	var args map[string]string
 	args, err = StringMap(newrawargs)
 	if err != nil {
@@ -1320,24 +1324,57 @@ func (r *Router) availableRegion(source string) string {
 	return ""
 }
 
-func (r *Router) registerPlugin(plugin string, events string) error {
-	_, pok := r.plugin[plugin]
+type PluginRef struct {
+	pluginNUID      string
+	Name            string
+	Events          uint // see Event* bits
+	Active          bool
+	forwardToPlugin chan interface{}
+	killme          bool
+}
+
+func (r *Router) NewPluginRef(pluginNUID string, name string, events uint) *PluginRef {
+	ref := &PluginRef{
+		pluginNUID:      pluginNUID,
+		Name:            name,
+		Events:          events,
+		Active:          false,
+		forwardToPlugin: make(chan interface{}),
+		killme:          false,
+	}
+	return ref
+}
+
+func (r *Router) registerPlugin(pluginNUID string, pluginName string, events string) error {
+	_, pok := r.plugin[pluginName]
 	if pok {
-		return fmt.Errorf("registerPlugin: there is already a plugin named %s", plugin)
+		return fmt.Errorf("registerPlugin: there is already a plugin named %s", pluginName)
 	}
 	bits, err := events2bits(events)
 	if err != nil {
 		return err
 	}
-	p := &PluginRef{
-		Name:   plugin,
-		Events: bits,
-		Active: false,
-	}
-	r.plugin[plugin] = p
+	p := r.NewPluginRef(pluginNUID, pluginName, bits)
+	go r.PluginForwarder(p)
+	r.plugin[pluginName] = p
 	return nil
 }
 
+func (r *Router) PluginForwarder(ref *PluginRef) {
+	log.Printf("PluginForwarder: started for plugin=%s\n", ref.Name)
+	for !ref.killme {
+		// Read from forwardToPlugin and send to the plugin via NATS
+		msg := <-ref.forwardToPlugin
+		log.Printf("PluginForwarder: got msg=%v\n", msg)
+		switch note := msg.(type) {
+		case *Note:
+			log.Printf("PluginForwarder: plugin=%s toplugin note=%s\n", ref.Name, note)
+			PublishNote(ref, note, "output.engine")
+		default:
+			log.Printf("PluginForwarder: unknown type received on forwardToPlugin\n")
+		}
+	}
+}
 func events2bits(events string) (bits uint, err error) {
 	words := strings.Split(events, ",")
 	for _, w := range words {
@@ -1345,47 +1382,17 @@ func events2bits(events string) (bits uint, err error) {
 		case "midiinput":
 			bits |= EventMidiInput
 		case "midioutput":
-			bits |= EventMidiOutput
+			bits |= EventNoteOutput
 		case "cursor":
 			bits |= EventCursor
 		case "all":
-			bits |= (EventMidiInput | EventMidiOutput | EventCursor)
+			bits |= (EventMidiInput | EventNoteOutput | EventCursor)
 		default:
 			return 0, fmt.Errorf("unknown event name: %s", w)
 		}
 	}
 	return bits, nil
 }
-
-/*
-func (r *Router) getRegionForSource(fullsource string) string {
-
-	r.regionAssignedMutex.Lock()
-	defer r.regionAssignedMutex.Unlock()
-
-	// A couple different types of source strings.
-	// Anyting starting with SM is a Sensel Morph serial#
-	if fullsource[:2] == "SM" {
-		return r.getRegionForMorph(fullsource)
-	}
-	return r.getRegionForNUID(fullsource)
-}
-*/
-
-/*
-// This is used only at startup to pre-seed the
-// Regions for known Morphs (e.g for Space Palette Pro).
-func (r *Router) setRegionForMorph(serialnum string, region string) {
-
-	r.regionAssignedMutex.Lock()
-	defer r.regionAssignedMutex.Unlock()
-
-	if Debug.Morph {
-		log.Printf("setRegionForMorph: Assigning region=%s to serialnum=%s\n", region, serialnum)
-	}
-	r.regionForMorph[serialnum] = region
-}
-*/
 
 func (r *Router) getRegionForNUID(nuid string) string {
 

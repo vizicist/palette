@@ -190,4 +190,12 @@ func SendNoteToSynth(note *Note) {
 		log.Printf("SendNoteToSynth: synth=%s status=0x%02x data1=%d data2=%d\n", synth.midiOut.Name(), e.Status, e.Data1, e.Data2)
 	}
 	synth.midiOut.stream.WriteShort(e.Status, e.Data1, e.Data2)
+
+	// go through Plugins and send the Note
+	for _, pluginRef := range oneRouter.plugin {
+		if (pluginRef.Events & EventNoteOutput) != 0 {
+			log.Printf("Engine is sending note=%s to plugin=%s\n", note, pluginRef.Name)
+			pluginRef.forwardToPlugin <- note
+		}
+	}
 }

@@ -12,7 +12,7 @@ import (
 )
 
 // ExecuteAPI xxx
-func (r *Router) ExecuteAPI(api string, nuid string, rawargs string) (result interface{}, err error) {
+func (r *Router) ExecuteAPI(api string, fromNUID string, rawargs string) (result interface{}, err error) {
 
 	apiargs, e := StringMap(rawargs)
 	if e != nil {
@@ -54,7 +54,7 @@ func (r *Router) ExecuteAPI(api string, nuid string, rawargs string) (result int
 		if !eok {
 			return "", fmt.Errorf("ExecuteAPI: missing events argument")
 		}
-		err := r.registerPlugin(plugin, events)
+		err := r.registerPlugin(fromNUID, plugin, events)
 		return "", err
 
 	default:
