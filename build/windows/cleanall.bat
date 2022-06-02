@@ -13,5 +13,6 @@ rm -fr %PALETTESOURCE%\python\dist
 rm -fr %PALETTESOURCE%\depthlib\build\.vs
 rm -fr %PALETTESOURCE%\depthlib\build\x64
 rm -fr %PALETTESOURCE%\depthlib\build\*.dir
+del /s %PALETTESOURCE%\mmtt_kinect\build\windows\*.obj
 
 :getout

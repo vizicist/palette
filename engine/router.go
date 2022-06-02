@@ -1121,8 +1121,9 @@ func (r *Router) handleMMTTCursor(msg *osc.Message) {
 	motor, mok := r.motors[region]
 	if !mok {
 		// If it's not a region, it's a button.
-		if z > 0.1 {
-			// log.Printf("NOT triggering button too deep z=%f\n", z)
+		buttonDepth := ConfigFloatWithDefault("mmtt_buttondepth", 0.1)
+		if z > buttonDepth {
+			log.Printf("NOT triggering button too deep z=%f buttonDepth=%f\n", z, buttonDepth)
 			return
 		}
 		if ddu == "down" {
@@ -1143,12 +1144,31 @@ func (r *Router) handleMMTTCursor(msg *osc.Message) {
 		Area:      0.0,
 	}
 	// XXX - HACK!!
-	ce.Z = 2 * ce.Z
+	zfactor := ConfigFloatWithDefault("mmttzfactor", 3.0)
+	ahack := ConfigFloatWithDefault("mmttahack", 1.0)
+	ce.Z = boundval(ahack * zfactor * ce.Z)
+
+	xexpand := ConfigFloatWithDefault("mmttxexpand", 1.0)
+	ce.X = boundval(((ce.X - 0.5) * xexpand) + 0.5)
+
+	yexpand := ConfigFloatWithDefault("mmttyexpand", 1.0)
+	ce.Y = boundval(((ce.Y - 0.5) * yexpand) + 0.5)
+
 	if Debug.MMTT {
 		log.Printf("MMTT %s %s xyz= %f %f %f\n", ce.CID, ce.Ddu, ce.X, ce.Y, ce.Z)
 	}
 
 	motor.handleCursorDeviceEvent(ce)
+}
+
+func boundval(v float32) float32 {
+	if v < 0.0 {
+		return 0.0
+	}
+	if v > 1.0 {
+		return 1.0
+	}
+	return v
 }
 
 func (r *Router) handleOSCEvent(msg *osc.Message) {

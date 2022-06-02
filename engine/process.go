@@ -25,8 +25,7 @@ func InitProcessInfo() {
 	ProcessInfo["resolume"] = ResolumeInfo()
 	ProcessInfo["gui"] = GuiInfo()
 	ProcessInfo["bidule"] = BiduleInfo()
-	ProcessInfo["mmtt_kinect"] = KinectInfo()
-	// ProcessInfo["mmtt_oak"] = MmttInfo("mmtt_oak")
+	ProcessInfo["mmtt"] = MmttInfo()
 }
 
 func BiduleInfo() *processInfo {
@@ -93,24 +92,19 @@ func VSCodeInfo() *processInfo {
 	return &processInfo{exe, fullpath, "", nil}
 }
 
-func KinectInfo() *processInfo {
+func MmttInfo() *processInfo {
 	// NOTE: it's inside a sub-directory of bin, so all the necessary .dll's are contained
-	fullpath := filepath.Join(PaletteDir(), "bin", "mmtt_kinect", "mmtt_kinect.exe")
-	if !FileExists(fullpath) {
-		log.Printf("no kinect_mmtt executable found, looking for %s", fullpath)
+	mmtt := ConfigStringWithDefault("mmtt", "")
+	if mmtt == "" {
 		return nil
 	}
-	return &processInfo{"mmtt_kinect.exe", fullpath, "", nil}
-}
-
-func MmttInfo(mmtt string) *processInfo {
-	exe := mmtt + ".exe"
-	fullpath := filepath.Join(PaletteDir(), "bin", mmtt, exe)
+	// The value of mmtt is either "kinect" or "oak"
+	fullpath := filepath.Join(PaletteDir(), "bin", "mmtt_"+mmtt, "mmtt_"+mmtt+".exe")
 	if !FileExists(fullpath) {
 		log.Printf("no mmtt executable found, looking for %s", fullpath)
 		return nil
 	}
-	return &processInfo{exe, fullpath, "", nil}
+	return &processInfo{"mmtt_" + mmtt + ".exe", fullpath, "", nil}
 }
 
 func getProcessInfo(process string) (*processInfo, error) {
@@ -182,6 +176,10 @@ func CheckProcessesAndRestartIfNecessary() {
 	}
 	if autostart == "all" {
 		autostart = "resolume,bidule,gui"
+		mmtt := ConfigStringWithDefault("mmtt", "")
+		if mmtt != "" {
+			autostart = autostart + ",mmtt"
+		}
 	}
 	processes := strings.Split(autostart, ",")
 	for _, process := range processes {

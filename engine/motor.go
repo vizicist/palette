@@ -1020,8 +1020,8 @@ func (motor *Motor) sendNoteOn(a *ActiveNote) {
 	}
 }
 
-func (motor *Motor) sendController(a *ActiveNote) {
-}
+// func (motor *Motor) sendController(a *ActiveNote) {
+// }
 
 func (motor *Motor) sendNoteOff(a *ActiveNote) {
 	n := a.noteOn

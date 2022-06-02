@@ -158,8 +158,7 @@ MmttServer::MmttServer()
 
 	_jsonport = 4444;
 	_do_initialalign = true;
-	_patchFile = "";
-	_patchFile = NosuchLocalPath("config/mmtt_patch.json");
+	_patchFile = NosuchLocalPath("config/mmtt_kinect.json");
 	_tempDir = "c:/windows/temp";
 
 	camera = DepthCamera::makeDepthCamera(this,"kinect");
