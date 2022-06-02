@@ -3,6 +3,8 @@
   "generatevisuals": "true",
   "publishcursor": "false",
   "publishmidi": "false",
+  "mmtt": "kinect",
+  "mmtt_buttondepth": "0.05",
   "debug": "",
   "this line should not end with a comma": 0
 }

@@ -24,26 +24,12 @@ var ValNames = [
 		["Tilt","tilt","number"],
 		["Threshold Top","backtop","number"],
 		["Threshold Bottom","backbottom","number"],
-		["Threshold Front","front","number"],
-		["Left Edge","left","number"],
-		["Right Edge","right","number"],
-		["Top Edge","top","number"],
-		["Bottom Edge","bottom","number"],
 		["Max Blob Size","blob_maxsize","number"],
 		["Min Blob Size","blob_minsize","number"],
 		["Minimum Confidence","confidence","number"],
-		["Depth Factor","depthfactor","number"],
-		["Expand Factor","expandfactor","number"],
-		["Use Mask","usemask","toggle"],
-		["Blob Filter","blob_filter","toggle"],
-		["Show Mask","showmask","toggle"],
-		["Show Region Map","showregionmap","toggle"],
 		["Show Region Rects","showregionrects","toggle"],
 		["Show Region Hits","showregionhits","toggle"],
-		["Show Raw Depth","showrawdepth","toggle"],
-		["Extreme Debugging","debug","toggle"],
-		["Do Python","dopython","toggle"],
-		["Show FPS","showfps","toggle"]
+		["Show Raw Depth","showrawdepth","toggle"]
       ];
 
 var LastResult = "";
@@ -332,8 +318,6 @@ function setup() {
 }
 function show_kinect() { doaction('set_drawmode','{ "mode" : "kinect" }'); }
 function show_python() { doaction('set_drawmode','{ "mode" : "python" }'); }
-function align_start() { doaction('align_start'); }
-function align_stop() { doaction('align_stop'); }
 
 dojo.addOnLoad(setup);
 </script>
@@ -342,15 +326,12 @@ dojo.addOnLoad(setup);
 <body class="claro">
 
 <center>
-<h2>Space Manifold Calibration (Advanced)</h2>
+<h2>Space Palette Calibration</h2>
+<input type="button" name="butt_autopoke" value="ReAlign" onClick="doaction('align_start');">
+&nbsp;&nbsp;&nbsp;
 <input type="button" name="butt_start" value="START sending TUIO (Shows only Filtered Depth)" onClick="doaction('start');">
 &nbsp;&nbsp;&nbsp;
 <input type="button" name="butt_stop" value="STOP sending TUIO (Shows Raw Depth)" onClick="doaction('stop');">
-<p>
-<input type="button" name="butt_autopoke" value="Realign" onClick="doaction('autopoke');">
-<input type="button" name="butt_startreg" value="Start Registration" onClick="doaction('start_registration');">
-<input type="button" name="butt_stopreg" value="Stop Registration" onClick="doaction('stop_registration');">
-<input type="button" name="butt_saveconfig" value="Save Config" onClick="doconfig('save');">
 <br>
 <div id="status">&nbsp;</div>
 </center>
@@ -358,7 +339,7 @@ dojo.addOnLoad(setup);
 <div id="values"></div>
 <p>
 <center>
-<a href=calibration.html>Switch to simple calibration page</a>
+<a href=advanced.html>Go to to advanced calibration page</a>
 <br>
 <a href=draw.html>Go to monitor and drawing page</a>
 </center>

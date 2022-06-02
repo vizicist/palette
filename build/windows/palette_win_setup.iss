@@ -68,7 +68,7 @@ Source: "ship\html\*"; DestDir: "{app}\html"; Flags: ignoreversion recursesubdir
 Source: "ship\presets\*"; DestDir: "{app}\presets"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "ship\presets_nosuchtim\*"; DestDir: "{app}\presets_nosuchtim"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE - all config files go in CommonProgramFiles
-Source: "ship\config\mmtt*.json"; DestDir: "{commoncf64}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
+Source: "ship\config\mmtt_*.json"; DestDir: "{commoncf64}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
 Source: "ship\config\nats*.conf"; DestDir: "{commoncf64}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
 Source: "ship\config\paramdefs.json"; DestDir: "{commoncf64}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
 Source: "ship\config\paramenums.json"; DestDir: "{commoncf64}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
