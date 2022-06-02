@@ -17,11 +17,10 @@ rm -fr %ship% > nul 2>&1
 mkdir %ship%
 mkdir %ship%\bin
 mkdir %ship%\bin\mmtt_kinect
+mkdir %ship%\config
 mkdir %ship%\html
 mkdir %ship%\midifiles
 mkdir %ship%\ffgl
-mkdir %ship%\config
-mkdir %ship%\config\mmtt_kinect
 
 echo ================ Upgrading Python
 python -m pip install pip | grep -v "already.*satisfied"
@@ -101,11 +100,8 @@ echo ================ Compiling mmtt_kinect
 pushd %PALETTESOURCE%\mmtt_kinect\build\windows
 msbuild /t:Build /p:Configuration=Debug /p:Platform="x32" mmtt_kinect.sln > nul
 rem Put mmtt_kinect in its own bin directory, to keep 32-bit things separate
-copy mmtt_kinect\Debug\mmtt_kinect.exe %bin%\mmtt_kinect >nul
+copy mmtt_kinect\Debug\mmtt_kinect.exe %bin%\mmtt_kinect\mmtt_kinect.exe >nul
 copy mmtt_kinect\*.dll %bin%\mmtt_kinect >nul
-popd
-pushd %PALETTESOURCE%\mmtt_kinect
-copy config\mmtt_*.json %ship%\config > nul
 popd
 
 echo ================ Copying html
@@ -138,6 +134,7 @@ copy %PALETTESOURCE%\data\config\ffgl.json %ship%\config >nul
 copy %PALETTESOURCE%\data\config\param*.json %ship%\config >nul
 copy %PALETTESOURCE%\data\config\resolume.json %ship%\config >nul
 copy %PALETTESOURCE%\data\config\settings.json %ship%\config >nul
+copy %PALETTESOURCE%\data\config\mmtt_*.json %ship%\config >nul
 copy %PALETTESOURCE%\data\config\synths.json %ship%\config >nul
 copy %PALETTESOURCE%\data\config\morphs.json %ship%\config >nul
 copy %PALETTESOURCE%\data\config\nats*.conf %ship%\config >nul

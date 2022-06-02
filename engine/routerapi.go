@@ -254,6 +254,9 @@ func (r *Router) saveQuadPreset(preset string) error {
 	return ioutil.WriteFile(path, data, 0644)
 }
 
+func OldParameterName(nm string) bool {
+	return nm == "sound.controller" || nm == "sound.controllerchan"
+}
 func (r *Router) loadQuadPreset(preset string, regions string) error {
 
 	path := ReadablePresetFilePath(preset)
@@ -292,7 +295,9 @@ func (r *Router) loadQuadPreset(preset string, regions string) error {
 		// use words[1] so the motor doesn't see the region name
 		err = motor.SetOneParamValue(parameterName, value)
 		if err != nil {
-			log.Printf("loadQuadPreset: name=%s err=%s\n", parameterName, err)
+			if !OldParameterName(parameterName) {
+				log.Printf("loadQuadPreset: name=%s err=%s\n", parameterName, err)
+			}
 			// Don't fail completely on individual failures,
 			// some might be for parameters that no longer exist.
 		}
@@ -315,7 +320,7 @@ func (r *Router) loadQuadPreset(preset string, regions string) error {
 				if err != nil {
 					// a hack to eliminate errors on a parameter that
 					// still exists in some presets.
-					if nm != "sound.controller" {
+					if !OldParameterName(nm) {
 						log.Printf("loadQuadPreset: %s, param=%s, init=%s, err=%s\n", preset, nm, init, err)
 					}
 					// Don't fail completely on individual failures,

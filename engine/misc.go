@@ -546,6 +546,20 @@ func ConfigIntWithDefault(nm string, dflt int) int {
 	return val
 }
 
+func ConfigFloatWithDefault(nm string, dflt float32) float32 {
+	s := ConfigValue(nm)
+	if s == "" {
+		return dflt
+	}
+	var f float64
+	f, err := strconv.ParseFloat(s, 32)
+	if err != nil {
+		log.Printf("Unable to parse config value of %s\n", s)
+		return dflt
+	}
+	return float32(f)
+}
+
 func ConfigStringWithDefault(nm string, dflt string) string {
 	s := ConfigValue(nm)
 	if s == "" {
