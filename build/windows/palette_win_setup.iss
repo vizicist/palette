@@ -55,6 +55,7 @@ Name: "{commoncf64}\{#MyAppName}\config"; Permissions: users-modify
 Name: "{commoncf64}\{#MyAppName}\midifiles"; Permissions: users-modify
 Name: "{commoncf64}\{#MyAppName}\presets"; Permissions: users-modify
 Name: "{commoncf64}\{#MyAppName}\presets_nosuchtim"; Permissions: users-modify
+Name: "{commoncf64}\{#MyAppName}\presets_subzero"; Permissions: users-modify
 
 [Files]
 Source: "ship\VERSION"; DestDir: "{app}"; Flags: ignoreversion
@@ -67,6 +68,7 @@ Source: "ship\ffgl\*"; DestDir: "{app}\ffgl"; Flags: ignoreversion recursesubdir
 Source: "ship\html\*"; DestDir: "{app}\html"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "ship\presets\*"; DestDir: "{app}\presets"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "ship\presets_nosuchtim\*"; DestDir: "{app}\presets_nosuchtim"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "ship\presets_subzero\*"; DestDir: "{app}\presets_subzero"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE - all config files go in CommonProgramFiles
 Source: "ship\config\mmtt_*.json"; DestDir: "{commoncf64}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
 Source: "ship\config\nats*.conf"; DestDir: "{commoncf64}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
