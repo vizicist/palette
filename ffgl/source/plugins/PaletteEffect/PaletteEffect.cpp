@@ -2,8 +2,7 @@
 using namespace ffglex;
 
 static CFFGLPluginInfo PluginInfo(
-	// PluginFactory< PaletteEffect >,// Create method
-	PaletteEffect::CreatePlugin,	// Create method
+	PluginFactory< PaletteEffect >,// Create method
 	"RE01",                      // Plugin unique ID of maximum length 4.
 	"PaletteEffect",            // Plugin name
 	2,                           // API major version number

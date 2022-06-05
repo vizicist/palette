@@ -22,6 +22,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Events", "Events.vcxproj", 
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Palette", "Palette.vcxproj", "{76D28E77-F48E-4379-8F3B-AE61CD2E7DB4}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PaletteEffect", "PaletteEffect.vcxproj", "{21DC8703-F1A4-4EC6-920A-D338C48431FC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -56,6 +58,10 @@ Global
 		{76D28E77-F48E-4379-8F3B-AE61CD2E7DB4}.Debug|x64.Build.0 = Debug|x64
 		{76D28E77-F48E-4379-8F3B-AE61CD2E7DB4}.Release|x64.ActiveCfg = Release|x64
 		{76D28E77-F48E-4379-8F3B-AE61CD2E7DB4}.Release|x64.Build.0 = Release|x64
+		{21DC8703-F1A4-4EC6-920A-D338C48431FC}.Debug|x64.ActiveCfg = Debug|x64
+		{21DC8703-F1A4-4EC6-920A-D338C48431FC}.Debug|x64.Build.0 = Debug|x64
+		{21DC8703-F1A4-4EC6-920A-D338C48431FC}.Release|x64.ActiveCfg = Release|x64
+		{21DC8703-F1A4-4EC6-920A-D338C48431FC}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -68,6 +74,7 @@ Global
 		{01FC8291-A59A-4D36-9F2A-31E1D5998BD0} = {26AC2413-23B7-4D1F-BB58-17D67106F3F1}
 		{B02CC7B5-D2B4-4DB0-8390-4D25BBA96181} = {26AC2413-23B7-4D1F-BB58-17D67106F3F1}
 		{76D28E77-F48E-4379-8F3B-AE61CD2E7DB4} = {26AC2413-23B7-4D1F-BB58-17D67106F3F1}
+		{21DC8703-F1A4-4EC6-920A-D338C48431FC} = {F16144DC-83FA-4B2B-8E05-8BE54C7236DF}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {28436461-C06F-497A-8594-636977E4CDAF}
