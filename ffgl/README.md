@@ -1,4 +1,6 @@
-This is the Resolume fork of the FFGL repository. It is up to date and has Visual Studio and Xcode projects to compile 64 bit plugins that can be loaded by Resolume 7.0.3 and up.
+This is the Resolume fork of the FFGL repository. It is up to date and has Visual Studio and Xcode projects to compile 64 bit plugins that can be loaded by Resolume 7.0.3 and up.  
+
+**Note for macOS developers:** *Resolume 7.11.0 has added native ARM support. This means that on Apple Sillicon it will run as a native ARM process. Native ARM processes cannot load x86_64 based plugins. To enable your plugin to be loaded you should build it as universal build. If your Xcode is up-to-date enough you can choose to build for "Any Mac (Apple Silicon, Intel)" instead of "My Mac" in the top left corner. Please read the [apple developer documentation](https://developer.apple.com/documentation/apple-silicon/building-a-universal-macos-binary) for more information about universal builds.*
 
 The master branch is used for continued development. It will contain the latest features, fixes and bugs. Plugins compiled with the master branch will work in Resolume 7.3.1 and up.
 If you do not want to be affected by the latest bugs you can use one of the stable releases. eg FFGL 2.2, which is the most recent released version of the sdk. Plugin development for Resolume 7.0.0/7.0.1/7.0.2 is no longer supported by this repository. These versions are very old and there are many newer versions that users can update to.
@@ -8,8 +10,12 @@ You can find some help to get started with FFGL plugin development on the [wiki]
 Also more examples are available on this [repo](https://github.com/flyingrub/ffgl/tree/more/).
 
 ## Master branch changes since FFGL 2.2
-*None yet, you can suggest a change by creating an issue. In the issue describe the problem that has to be solved and if you want a suggestion on how it could be solved.*
+- Replaced glload by glew, enabling OpenGL 4.6 extensions to be used inside plugins. Plugins may need to add deps/glew.props to their project's property pages for them to link to the binary.
+- Implemented parameter display names. Parameter names are used as identification during serialization, display names can be used to override the name that is shown in the ui. The display name can also be changed dynamically by raising a display name changed event. (Requires Resolume 7.4.0 and up)
+- Implemented value change events. Plugins can change their own parameter values and make the host pick up the change. See the new Events example on how to do this. (Requires Resolume 7.4.0 and up)
+- Implemented dynamic option elements. Plugins can add/remove/rename option elements on the fly. (Requires Resolume 7.4.1 and up)
 
+*You can suggest a change by creating an issue. In the issue describe the problem that has to be solved and if you want, a suggestion on how it could be solved.*
 
 ## Quickstart
 
