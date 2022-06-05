@@ -492,9 +492,6 @@ func (w *NoWriter) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
-var configMap map[string]string
-var configMutex sync.Mutex
-
 // ReadConfigFile xxx
 func ReadConfigFile(path string) (map[string]string, error) {
 	bytes, err := ioutil.ReadFile(path)
@@ -567,6 +564,9 @@ func ConfigStringWithDefault(nm string, dflt string) string {
 	}
 	return s
 }
+
+var configMap map[string]string
+var configMutex sync.Mutex
 
 // ConfigValue returns "" if there's no value.  I.e. "" and 'no value' are identical
 func ConfigValue(nm string) string {

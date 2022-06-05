@@ -2,7 +2,6 @@
 #include <string>
 #include <sstream>
 #include "../ffgl/FFGL.h"//For OpenGL
-#include "nosuch/NosuchDebug.h"
 
 namespace ffglex
 {
@@ -22,14 +21,12 @@ struct GlVertexTextured
 	float x, y, z;
 };
 
-/*
 static GlVertex g_QuadVertices[] = {
 	{ -1.0f, -1.0f, 1.0f },
 	{ 1.0f, -1.0f, 1.0f },
 	{ 1.0f, 1.0f, 1.0f },
 	{ -1.0f, 1.0f, 1.0f }
 };
-*/
 static const GlVertexTextured TEXTURED_QUAD_VERTICES[] = {
 	{ 0.0f, 1.0f, -1.0f, 1.0f, 0.0f }, //Top-left
 	{ 1.0f, 1.0f, 1.0f, 1.0f, 0.0f },  //Top-right
@@ -198,7 +195,6 @@ void Log( const Args&... args )
 	std::ostringstream oss;
 	VariadicMessageBuilder( oss, args... );
 	Log( oss.str() );
-	NosuchDebug( oss.str().c_str() );
 }
 
 }//End namespace ffglex
