@@ -10,8 +10,7 @@ enum ParamType : FFUInt32
 };
 
 static CFFGLPluginInfo PluginInfo(
-	// PluginFactory< FFGLPalette >,// Create method
-	FFGLPalette::CreateInstance,         // Create method
+	PluginFactory< FFGLPalette >,// Create method
 	"PLTA",                        // Plugin unique ID
 	"Palette",                     // Plugin name
 	2,                             // API major version number
@@ -19,7 +18,7 @@ static CFFGLPluginInfo PluginInfo(
 	1,                             // Plugin major version number
 	000,                           // Plugin minor version number
 	FF_SOURCE,                     // Plugin type
-	"Palette instrument plugin v0.90 #3",// Plugin description
+	"Palette instrument plugin",// Plugin description
 	"by Tim Thompson"        // About
 );
 
@@ -71,10 +70,29 @@ CFFGLPluginInfo& ffgl_plugininfo()
 }
 
 
-FFGLPalette::FFGLPalette(std::string configfile) :
-	CFFGLPlugin()
+FFGLPalette::FFGLPalette() : CFFGLPlugin()
 {
-	paletteHost = new PaletteHost( configfile );
+	// The search for ffgl.json is as follows:
+	// - look in %CommonProgramFiles%
+	// - last resort is temp dir
+
+	std::string jsonpath;
+
+	char* localValue;
+	size_t locallen;
+	errno_t localerr = _dupenv_s( &localValue, &locallen, "CommonProgramFiles" );
+	if( !localerr && localValue != NULL )
+	{
+		jsonpath = std::string( localValue ) + "\\Palette\\config\\ffgl.json";
+		free( localValue );
+	}
+	else
+	{
+		jsonpath = "c:\\windows\\temp\\ffgl.json";// last resort
+		NosuchDebug( "No value for CommonProgramFiles? using jsonpath=%s\n", jsonpath.c_str() );
+	}
+
+	paletteHost = new PaletteHost( jsonpath );
 
 	// Input properties
 	SetMinInputs( 0 );

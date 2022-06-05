@@ -86,6 +86,7 @@ popd
 echo ================ Compiling FFGL plugin
 pushd %PALETTESOURCE%\ffgl\build\windows
 msbuild /t:Build /p:Configuration=Release /p:Platform="x64" Palette.vcxproj > nul
+msbuild /t:Build /p:Configuration=Release /p:Platform="x64" PaletteEffect.vcxproj > nul
 popd
 
 echo ================ Copying FFGL plugin
