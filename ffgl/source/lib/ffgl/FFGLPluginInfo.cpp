@@ -1,4 +1,3 @@
-#define _CRT_SECURE_NO_WARNINGS
 //
 // Copyright (c) 2004 - InfoMus Lab - DIST - University of Genova
 //
@@ -26,9 +25,11 @@ extern CFFGLPluginInfo* g_CurrPluginInfo;
 // CFFGLPluginInfo constructor and destructor
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-CFFGLPluginInfo::CFFGLPluginInfo( FPCREATEINSTANCEGL* pCreateInstance, const char* pchUniqueID, const char* pchPluginName, unsigned int dwAPIMajorVersion, unsigned int dwAPIMinorVersion, unsigned int dwPluginMajorVersion, unsigned int dwPluginMinorVersion, unsigned int dwPluginType, const char* pchDescription, const char* pchAbout, unsigned int dwFreeFrameExtendedDataSize, const void* pFreeFrameExtendedDataBlock ) :
+CFFGLPluginInfo::CFFGLPluginInfo( FPCREATEINSTANCEGL* pCreateInstance, const char* pchUniqueID, const char* pchPluginName, unsigned int dwAPIMajorVersion, unsigned int dwAPIMinorVersion, unsigned int dwPluginMajorVersion, unsigned int dwPluginMinorVersion, unsigned int dwPluginType, const char* pchDescription, const char* pchAbout, unsigned int dwFreeFrameExtendedDataSize, const void* pFreeFrameExtendedDataBlock, FPINITIALISELIBRARY* initialiseLibrary, FPDEINITIALISELIBRARY* deinitialiseLibrary ) :
 	about( pchAbout ),
-	description( pchDescription )
+	description( pchDescription ),
+	m_initialiseLibrary( initialiseLibrary ),
+	m_deinitialiseLibrary( deinitialiseLibrary )
 {
 	//This FFGL SDK is intended for developing plugins based on the FFGL 2.0 specification. Please
 	//update your plugin code to use FFGL 2.0.
@@ -90,8 +91,6 @@ CFFGLPluginInfo::~CFFGLPluginInfo()
 
 const PluginInfoStruct* CFFGLPluginInfo::GetPluginInfo() const
 {
-	strcpy( (char*)(m_PluginInfo.PluginName), "Palette" );
-	memcpy( (char*)(m_PluginInfo.PluginUniqueID), "PLTA", 4 );
 	return &m_PluginInfo;
 }
 
@@ -103,4 +102,13 @@ const PluginExtendedInfoStruct* CFFGLPluginInfo::GetPluginExtendedInfo() const
 FPCREATEINSTANCEGL* CFFGLPluginInfo::GetFactoryMethod() const
 {
 	return m_pCreateInstance;
+}
+
+FPINITIALISELIBRARY* CFFGLPluginInfo::GetInitialiseMethod() const
+{
+	return m_initialiseLibrary;
+}
+FPDEINITIALISELIBRARY* CFFGLPluginInfo::GetDeinitialiseMethod() const
+{
+	return m_deinitialiseLibrary;
 }

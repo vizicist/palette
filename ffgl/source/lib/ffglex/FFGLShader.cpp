@@ -1,5 +1,4 @@
 #include "FFGLShader.h"
-
 #include <stdio.h>
 #include <vector>
 #include <assert.h>
