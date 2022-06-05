@@ -80,7 +80,6 @@
 #include "FFGLPluginSDK.h"
 #include "FFGLThumbnailInfo.h"
 #include "FFGLLog.h"
-#include "../glsdk_0_5_2/glload/include/gl_load.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Static and extern variables used in the FreeFrame SDK
@@ -106,7 +105,7 @@ bool InitGLExts()
 		return initResult;
 	triedInit = true;
 
-	if( ogl_LoadFunctions() == ogl_LOAD_FAILED )
+	if( glewInit() != GLEW_OK )
 		return false;
 	initResult = true;
 	return initResult;
@@ -123,6 +122,15 @@ FFResult initialise()
 {
 	if( g_CurrPluginInfo == NULL )
 		return FF_FAIL;
+
+	//Allow the plugin to initialise itself before we do anything with it. This allows it
+	//to execute some setup code that it'll only ever need to do once.
+	if( FPINITIALISELIBRARY* pInitialise = g_CurrPluginInfo->GetInitialiseMethod() )
+	{
+		FFResult result = pInitialise();
+		if( result != FF_SUCCESS )
+			return result;
+	}
 
 	if( s_pPrototype == NULL )
 	{
@@ -143,11 +151,20 @@ FFResult initialise()
 }
 FFResult deInitialise()
 {
+	if( g_CurrPluginInfo == NULL )
+		return FF_FAIL;
+		
 	if( s_pPrototype != NULL )
 	{
 		delete s_pPrototype;
 		s_pPrototype = NULL;
 	}
+
+	//Allow the plugin to initialise itself before we do anything with it. This allows it
+	//to execute some setup code that it'll only ever need to do once.
+	if( FPDEINITIALISELIBRARY* pDeinitialise = g_CurrPluginInfo->GetDeinitialiseMethod() )
+		pDeinitialise();
+
 	return FF_SUCCESS;
 }
 unsigned int getNumParameters()
@@ -393,39 +410,52 @@ FFResult deInstantiateGL( void* instanceID )
 
 	return FF_FAIL;
 }
-FFUInt32 getNumParameterElements( unsigned int index )
+FFUInt32 getNumParameterElements( unsigned int index, CFFGLPlugin* pPlugObj = nullptr )
 {
-	if( s_pPrototype == NULL )
+	if( pPlugObj == nullptr )
 	{
-		FFResult dwRet = initialise();
-		if( dwRet == FF_FAIL )
-			return FF_FAIL;
+		if( s_pPrototype == nullptr )
+		{
+			FFResult dwRet = initialise();
+			if( dwRet == FF_FAIL )
+				return FF_FAIL;
+		}
+		pPlugObj = s_pPrototype;
 	}
 
-	return s_pPrototype->GetNumParamElements( index );
+	return pPlugObj->GetNumParamElements( index );
 }
-char* getParameterElementName( unsigned int paramIndex, unsigned int elementIndex )
+char* getParameterElementName( unsigned int paramIndex, unsigned int elementIndex, CFFGLPlugin* pPlugObj = nullptr )
 {
-	if( s_pPrototype == NULL )
+	if( pPlugObj == nullptr )
 	{
-		FFResult dwRet = initialise();
-		if( dwRet == FF_FAIL )
-			return NULL;
+		if( s_pPrototype == nullptr )
+		{
+			FFResult dwRet = initialise();
+			if( dwRet == FF_FAIL )
+				return nullptr;
+		}
+		pPlugObj = s_pPrototype;
 	}
 
-	return s_pPrototype->GetParamElementName( paramIndex, elementIndex );
+	return pPlugObj->GetParamElementName( paramIndex, elementIndex );
 }
-FFMixed getParameterElementDefault( unsigned int paramIndex, unsigned int elementIndex )
+FFMixed getParameterElementValue( unsigned int paramIndex, unsigned int elementIndex, CFFGLPlugin* pPlugObj = nullptr )
 {
 	FFMixed ret;
 	ret.UIntValue = FF_FAIL;
-	if( s_pPrototype == NULL )
+	if( pPlugObj == nullptr )
 	{
-		FFResult dwRet = initialise();
-		if( dwRet == FF_FAIL )
-			return ret;
+		if( s_pPrototype == nullptr )
+		{
+			FFResult dwRet = initialise();
+			if( dwRet == FF_FAIL )
+				return ret;
+		}
+		pPlugObj = s_pPrototype;
 	}
-	return s_pPrototype->GetParamElementDefault( paramIndex, elementIndex );
+
+	return pPlugObj->GetParamElementDefault( paramIndex, elementIndex );
 }
 FFUInt32 GetNumElementSeparators( unsigned int paramIndex )
 {
@@ -491,13 +521,18 @@ FFMixed getParamRange( FFMixed input )
 	getRange->range   = range;
 	return ret;
 }
+void writeStringToHostBuffer( const std::string& stringToWrite, StringBufferStruct& hostBuffer )
+{
+	size_t numToCopy = std::min( (size_t)hostBuffer.maxToWrite, stringToWrite.length() );
+	memcpy( hostBuffer.address, stringToWrite.c_str(), numToCopy );
+}
 FFMixed getParamGroup( FFMixed input )
 {
 	FFMixed ret;
 	ret.UIntValue = FF_FAIL;
 
-	GetParamGroupStructTag* getParamGroup = reinterpret_cast< GetParamGroupStructTag* >( input.PointerValue );
-	if( getParamGroup == nullptr || getParamGroup->stringBuffer.maxToWrite == 0 )
+	GetStringStructTag* getStringStruct = reinterpret_cast< GetStringStructTag* >( input.PointerValue );
+	if( getStringStruct == nullptr || getStringStruct->stringBuffer.maxToWrite == 0 )
 		return ret;
 
 	if( s_pPrototype == nullptr )
@@ -507,12 +542,28 @@ FFMixed getParamGroup( FFMixed input )
 			return ret;
 	}
 
-	ret.UIntValue = FF_SUCCESS;
+	std::string paramGroup = s_pPrototype->GetParamGroup( getStringStruct->parameterNumber );
+	writeStringToHostBuffer( paramGroup, getStringStruct->stringBuffer );
 
-	//Copy the group name into the output buffer.
-	std::string paramGroup = s_pPrototype->GetParamGroup( getParamGroup->parameterNumber );
-	size_t numToCopy       = std::min( (size_t)getParamGroup->stringBuffer.maxToWrite, paramGroup.length() );
-	memcpy( getParamGroup->stringBuffer.address, paramGroup.c_str(), numToCopy );
+	ret.UIntValue = FF_SUCCESS;
+	return ret;
+}
+FFMixed getParamDisplayName( void* instanceID, FFMixed input )
+{
+	FFMixed ret;
+	ret.UIntValue               = FF_FAIL;
+	CFFGLPlugin* pluginInstance = (CFFGLPlugin*)instanceID;
+	if( pluginInstance == nullptr )
+		return ret;
+
+	GetStringStructTag* getStringStruct = reinterpret_cast< GetStringStructTag* >( input.PointerValue );
+	if( getStringStruct == nullptr || getStringStruct->stringBuffer.maxToWrite == 0 )
+		return ret;
+
+	std::string displayName = pluginInstance->GetParamDisplayName( getStringStruct->parameterNumber );
+	writeStringToHostBuffer( displayName, getStringStruct->stringBuffer );
+
+	ret.UIntValue = FF_SUCCESS;
 	return ret;
 }
 FFUInt32 getThumbnail( GetThumbnailStruct& getStruct )
@@ -587,8 +638,6 @@ FFMixed plugMain( FFUInt32 functionCode, FFMixed inputValue, FFInstanceID instan
 
 	// typecast DWORD into pointer to a CFFGLPlugin
 	pPlugObj = (CFFGLPlugin*)instanceID;
-
-	// Get the DLL name
 
 	switch( functionCode )
 	{
@@ -760,16 +809,16 @@ FFMixed plugMain( FFUInt32 functionCode, FFMixed inputValue, FFInstanceID instan
 		}
 		break;
 	case FF_GET_NUM_PARAMETER_ELEMENTS:
-		retval.UIntValue = getNumParameterElements( inputValue.UIntValue );
+		retval.UIntValue = getNumParameterElements( inputValue.UIntValue, pPlugObj );
 		break;
 	case FF_GET_PARAMETER_ELEMENT_NAME: {
 		const GetParameterElementNameStruct* arguments = (const GetParameterElementNameStruct*)inputValue.PointerValue;
-		retval.PointerValue                            = getParameterElementName( arguments->ParameterNumber, arguments->ElementNumber );
+		retval.PointerValue                            = getParameterElementName( arguments->ParameterNumber, arguments->ElementNumber, pPlugObj );
 		break;
 	}
 	case FF_GET_PARAMETER_ELEMENT_VALUE: {
 		const GetParameterElementValueStruct* arguments = (const GetParameterElementValueStruct*)inputValue.PointerValue;
-		retval                                          = getParameterElementDefault( arguments->ParameterNumber, arguments->ElementNumber );
+		retval                                          = getParameterElementValue( arguments->ParameterNumber, arguments->ElementNumber, pPlugObj );
 		break;
 	}
 	case FF_GET_NUM_ELEMENT_SEPARATORS: {
@@ -840,6 +889,9 @@ FFMixed plugMain( FFUInt32 functionCode, FFMixed inputValue, FFInstanceID instan
 		break;
 	case FF_GET_PARAM_GROUP:
 		retval = getParamGroup( inputValue );
+		break;
+	case FF_GET_PARAM_DISPLAY_NAME:
+		retval = getParamDisplayName( pPlugObj, inputValue );
 		break;
 
 	case FF_GET_THUMBNAIL:
@@ -1023,7 +1075,6 @@ void ValidateContextState()
 	glGetIntegerv( GL_BLEND_EQUATION_ALPHA, glInt );
 	assert( glInt[ 0 ] == GL_FUNC_ADD );
 
-#ifdef TJT_HACK
 	glGetIntegerv( GL_BLEND_SRC_RGB, glInt );
 	assert( glInt[ 0 ] == GL_ONE );
 	glGetIntegerv( GL_BLEND_SRC_ALPHA, glInt );
@@ -1032,7 +1083,6 @@ void ValidateContextState()
 	assert( glInt[ 0 ] == GL_ZERO );
 	glGetIntegerv( GL_BLEND_DST_ALPHA, glInt );
 	assert( glInt[ 0 ] == GL_ZERO );
-#endif
 
 	glGetBooleanv( GL_DEPTH_WRITEMASK, glBool );
 	assert( glBool[ 0 ] == GL_TRUE );
