@@ -92,7 +92,7 @@ public:
 	float width;
 	float height;
 
-	PaletteDrawer* _drawer;
+	// PaletteDrawer* _drawer;
 
 	///////////////////////////////////////////////////
 	// Factory method

@@ -68,6 +68,8 @@ public:
 
 	Region region;
 
+	PaletteDrawer* Drawer() { return _drawer; }
+
 private:
 
 	PaletteHost* _paletteHost;

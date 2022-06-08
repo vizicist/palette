@@ -54,6 +54,9 @@ public:
 
 	float finalAspect( float aspect );
 
+	int viewportWidth() { return m_vp.width; }
+	int viewportHeight() { return m_vp.height; }
+
 private:
 
 	FFGLViewportStruct m_vp;
