@@ -208,7 +208,7 @@ void PaletteDrawer::drawQuad(SpriteParams& params, SpriteState& state, float x0,
 	ffglex::ScopedVAOBinding vaoBinding( vaoID );
 	ffglex::ScopedVBOBinding vboBinding( vboID );
 
-	float screenAspect  = float( m_vp.height ) / float( m_vp.width );
+	float screenAspect  = float( viewportHeight()) / float( viewportWidth() );
 	m_matrix = glm::scale( m_matrix, glm::vec3(screenAspect, 1.0f, 1.0f ));
 
 	float finalaspect = finalAspect( params.aspect );
@@ -258,7 +258,7 @@ void PaletteDrawer::drawTriangle(SpriteParams& params, SpriteState& state, float
 	ffglex::ScopedVAOBinding vaoBinding( vaoID );
 	ffglex::ScopedVBOBinding vboBinding( vboID );
 
-	float screenAspect  = float( m_vp.height ) / float( m_vp.width );
+	float screenAspect  = float( viewportHeight() ) / float( viewportWidth() );
 	m_matrix = glm::scale( m_matrix, glm::vec3(screenAspect, 1.0f, 1.0f ));
 
 	float finalaspect = finalAspect( params.aspect );
@@ -311,7 +311,7 @@ void PaletteDrawer::drawEllipse(SpriteParams& params, SpriteState& state, float 
 	ffglex::ScopedVAOBinding vaoBinding( vaoID );
 	ffglex::ScopedVBOBinding vboBinding( vboID );
 
-	float screenAspect  = float( m_vp.height ) / float( m_vp.width );
+	float screenAspect  = float( viewportHeight() ) / float( viewportWidth() );
 	m_matrix = glm::scale( m_matrix, glm::vec3(screenAspect, 1.0f, 1.0f ));
 
 	float finalaspect = finalAspect( params.aspect );
