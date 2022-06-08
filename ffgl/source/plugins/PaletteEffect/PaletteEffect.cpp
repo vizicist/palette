@@ -66,6 +66,7 @@ void main()
 static const char _fragmentShaderCode[] = R"(#version 410 core
 uniform sampler2D InputTexture;
 uniform vec3 Brightness;
+uniform int tjt;
 
 in vec2 uv;
 
@@ -73,7 +74,13 @@ out vec4 fragColor;
 
 void main()
 {
-	vec4 color = texture( InputTexture, uv );
+	vec4 color;
+	if ( tjt > 0 ) {
+		vec2 uv2 = uv / 2.0;
+		color = texture( InputTexture, uv2 );
+	} else {
+		color = texture( InputTexture, uv );
+	}
 	//The InputTexture contains premultiplied colors, so we need to unpremultiply first to apply our effect on straight colors.
 	if( color.a > 0.0 )
 		color.rgb /= color.a;
@@ -112,10 +119,12 @@ PaletteEffect::~PaletteEffect()
 
 FFResult PaletteEffect::InitGL( const FFGLViewportStruct* vp )
 {
-	x = vp->x;
-	y = vp->y;
-	width = vp->width;
-	height = vp->height;
+	paletteHost->InitGL( vp ); // NEW
+
+	// x = vp->x;
+	// y = vp->y;
+	// width = vp->width;
+	// height = vp->height;
 
 	NosuchDebug( "PaletteEffect.InitGL: x,y=%d,%d w,h=%d,%d", vp->x, vp->y, vp->width, vp->height );
 	if( !shader.Compile( _vertexShaderCode, _fragmentShaderCode ) )
@@ -159,12 +168,21 @@ FFResult PaletteEffect::ProcessOpenGL( ProcessOpenGLStruct* pGL )
 	Scoped2DTextureBinding textureBinding( pGL->inputTextures[ 0 ]->Handle );
 
 	shader.Set( "inputTexture", 0 );
+	shader.Set( "tjt", 0 );
 
+	PaletteHost* ph = paletteHost;
+	PaletteDrawer* pd = ph->palette()->Drawer();
+
+	int width         = currentViewport.width;
+	int height         = currentViewport.height;
 	int npixels = width * height * 4;
 
 	if (savedPixels != NULL) {
+
 		// NosuchDebug( "ProcessOpenGL inpixels wh=%d,%d  hash=%d\n", width, height, inh1 );
 		// NosuchDebug( "ProcessOpenGL readPixels wh=%d,%d  pix0,1=%d,%d hash=%d\n", width, height, pixels[0],pixels[1], h1);
+
+		// glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, savedPixels );
 		glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, savedPixels );
 	}
 
@@ -173,13 +191,20 @@ FFResult PaletteEffect::ProcessOpenGL( ProcessOpenGLStruct* pGL )
 	FFGLTexCoords maxCoords = GetMaxGLTexCoords( *pGL->inputTextures[ 0 ] );
 	shader.Set( "MaxUV", maxCoords.s, maxCoords.t );
 
+	bool saveit = false;
+
+	if( readCount++ > 100 ) {
+		shader.Set( "tjt", 1 );
+		readCount = 0;
+		saveit  = true;
+	}
+
 	//This takes care of sending all the parameter that the plugin registered to the shader.
 	SendParams( shader );
 
 	quad.Draw();
 
-	if( readCount++ > 100 ) {
-
+	if( saveit ) {
 		if( savedPixels == NULL ) {
 			savedPixels = (char*)malloc( npixels );
 			memset( savedPixels, 0, npixels );
@@ -187,15 +212,19 @@ FFResult PaletteEffect::ProcessOpenGL( ProcessOpenGLStruct* pGL )
 			glReadPixels(0,0,width,height,GL_RGB,GL_UNSIGNED_BYTE, savedPixels);
 			int h2       = pixelhash( savedPixels, npixels );
 			NosuchDebug( "ProcessOpenGL readPixels wh=%d,%d hash=%d\n", width, height, h2 );
-			readCount = 0;
 			}
 	}
 
-	return FF_SUCCESS;
+	return paletteHost->PaletteHostProcessOpenGL( pGL );
+
+	// return FF_SUCCESS;
 }
 
 FFResult PaletteEffect::DeInitGL()
 {
+	paletteHost->DeInitGL();
+	delete paletteHost;
+
 	shader.FreeGLResources();
 	quad.Release();
 

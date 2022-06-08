@@ -19,10 +19,10 @@ public:
 
 protected:
 	PaletteHost* paletteHost;
-	int x;
-	int y;
-	int width;
-	int height;
+	// int x;
+	// int y;
+	// int width;
+	// int height;
 	char* savedPixels;
 	int readCount;
 
