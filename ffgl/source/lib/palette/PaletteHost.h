@@ -49,7 +49,7 @@ static int transpose_vals[] = { 0,3,-2,5 };
 class PaletteHost : public NosuchOscMessageProcessor
 {
 public:
-	PaletteHost(std::string configfile);
+	PaletteHost();
 	virtual ~PaletteHost();
 
 	///////////////////////////////////////////////////

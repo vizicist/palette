@@ -12,6 +12,19 @@ public:
 	FFResult InitGL( const FFGLViewportStruct* vp ) override;
 	FFResult ProcessOpenGL( ProcessOpenGLStruct* pGL ) override;
 	FFResult DeInitGL() override;
+	// FFResult SetFloatParameter( unsigned int dwIndex, float value ) override;
+	// float GetFloatParameter( unsigned int index ) override;
+	FFResult SetTextParameter( unsigned int index, const char* value ) override;
+	char* GetTextParameter( unsigned int index ) override;
+
+protected:
+	PaletteHost* paletteHost;
+	int x;
+	int y;
+	int width;
+	int height;
+	char* savedPixels;
+	int readCount;
 
 private:
 	ffglex::FFGLShader shader;  //!< Utility to help us compile and link some shaders into a program.

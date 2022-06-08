@@ -18,13 +18,9 @@ static CFFGLPluginInfo PluginInfo(
 	1,                             // Plugin major version number
 	000,                           // Plugin minor version number
 	FF_SOURCE,                     // Plugin type
-	"Palette instrument plugin",// Plugin description
+	"Palette Instrument",// Plugin description
 	"by Tim Thompson"        // About
 );
-
-extern "C" {
-extern bool ffgl_setdll( std::string dllpath );
-}
 
 //////////////////////////////////////////////////////////////////
 // Plugin dll entry point
@@ -36,12 +32,7 @@ BOOL APIENTRY DllMain( HANDLE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 
 	if( ul_reason_for_call == DLL_PROCESS_ATTACH )
 	{
-		if( !ffgl_setdll( std::string( dllpath ) ) )
-		{
-			NosuchDebug( "DllMain: ffgl_setdll failed" );
-			return FALSE;
-		}
-
+		NosuchDebugSetThreadName( pthread_self().p, "PALETTE_DLL" );
 		NosuchDebug( 1, "DllMain: DLLPROCESS_ATTACH dll=%s", dllpath );
 	}
 	if( ul_reason_for_call == DLL_PROCESS_DETACH )
@@ -72,27 +63,7 @@ CFFGLPluginInfo& ffgl_plugininfo()
 
 FFGLPalette::FFGLPalette() : CFFGLPlugin()
 {
-	// The search for ffgl.json is as follows:
-	// - look in %CommonProgramFiles%
-	// - last resort is temp dir
-
-	std::string jsonpath;
-
-	char* localValue;
-	size_t locallen;
-	errno_t localerr = _dupenv_s( &localValue, &locallen, "CommonProgramFiles" );
-	if( !localerr && localValue != NULL )
-	{
-		jsonpath = std::string( localValue ) + "\\Palette\\config\\ffgl.json";
-		free( localValue );
-	}
-	else
-	{
-		jsonpath = "c:\\windows\\temp\\ffgl.json";// last resort
-		NosuchDebug( "No value for CommonProgramFiles? using jsonpath=%s\n", jsonpath.c_str() );
-	}
-
-	paletteHost = new PaletteHost( jsonpath );
+	paletteHost = new PaletteHost();
 
 	// Input properties
 	SetMinInputs( 0 );

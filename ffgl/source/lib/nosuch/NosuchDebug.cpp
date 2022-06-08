@@ -22,10 +22,7 @@ std::string NosuchAppName = "Nosuch App";
 
 int NosuchDebugTag = 0;
 std::string NosuchDebugPrefix = "";
-// std::string NosuchDebugLogFile = "ffgl.log";
-// std::string NosuchDebugLogDir = ".";
 std::string NosuchDebugLogPath;
-// std::string NosuchCurrentDir = ".";
 
 #ifdef DEBUG_TO_BUFFER
 bool NosuchDebugToBuffer = true;
@@ -117,10 +114,40 @@ NosuchDebugDumpLog()
 
 void
 RealNosuchDebugInit() {
-	if ( ! DebugInitialized ) {
-		dMutex = CreateMutex(NULL, FALSE, NULL);
-		DebugInitialized = TRUE;
+	if ( DebugInitialized ) {
+		return;
 	}
+
+	dMutex = CreateMutex(NULL, FALSE, NULL);
+	DebugInitialized = TRUE;
+
+	char* pValue;
+	size_t len;
+
+	errno_t err = _dupenv_s( &pValue, &len, "PALETTEDEBUG" );
+	if( !err && pValue != NULL )
+	{
+		NosuchDebugLevel = atoi( std::string( pValue ).c_str() );
+	}
+
+	NosuchDebugLogPath = "c:\\windows\\temp\\ffgl.log";// last resort
+
+	err = _dupenv_s( &pValue, &len, "CommonProgramFiles" );
+	if( err == 0 && pValue != NULL )
+	{
+		NosuchDebugLogPath = std::string( pValue ) + "\\Palette\\logs\\ffgl.log";
+		free( pValue );
+	}
+
+	NosuchDebug( "NosuchDebugInit: debuglevel=%d log=%s\n", NosuchDebugLevel, NosuchDebugLogPath.c_str() );
+
+	err = _dupenv_s( &pValue, &len, "PALETTE" );
+	if( err || pValue == NULL )
+	{
+		NosuchDebug( "No value for PALETTE!?\n" );
+	}
+
+
 }
 
 void
@@ -239,18 +266,6 @@ NosuchErrorOutput(const char *fmt, ...)
     va_end(args2);
 #endif
 }
-
-#if 0
-std::string
-NosuchFullPath(std::string filepath)
-{
-	if ( filepath == "." ) {
-		return NosuchCurrentDir;
-	} else {
-		return NosuchCurrentDir + "/" + filepath;
-	}
-}
-#endif
 
 std::string
 NosuchForwardSlash(std::string filepath) {
