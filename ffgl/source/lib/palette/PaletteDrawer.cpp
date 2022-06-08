@@ -15,7 +15,7 @@
 
 using namespace ffglex;
 
-static const char vertexShaderGradient[] = R"(#version 410 core
+static const char vertexShaderPalette[] = R"(#version 410 core
 layout( location = 0 ) in vec4 vPosition;
 layout( location = 1 ) in vec2 vUV;
 
@@ -31,7 +31,7 @@ void main()
 }
 )";
 
-static const char fragmentShaderGradient[] = R"(#version 410 core
+static const char fragmentShaderPalette[] = R"(#version 410 core
 uniform vec4 RGBALeft;
 uniform vec4 RGBARight;
 
@@ -372,7 +372,7 @@ FFResult PaletteDrawer::InitGL( const FFGLViewportStruct* vp)
 {
 	m_vp = *vp;
 
-	if( !m_shader_gradient.Compile( vertexShaderGradient, fragmentShaderGradient ) )
+	if( !m_shader_gradient.Compile( vertexShaderPalette, fragmentShaderPalette ) )
 	{
 		NosuchDebug( "Error in compiling m_shader_gradient!" );
 		DeInitGL();
