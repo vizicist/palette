@@ -9,12 +9,9 @@ extern bool NosuchDebugSprite;
 extern bool NosuchDebugToLog;
 extern bool NosuchDebugTimeTag;
 extern bool NosuchDebugAutoFlush;
-extern std::string NosuchDebugLogPath;
-// extern std::string NosuchDebugLogFile;
-// extern std::string NosuchDebugLogDir;
+// extern std::string NosuchDebugLogPath;
 extern std::string NosuchDebugPrefix;
 extern std::string NosuchAppName;
-// extern std::string NosuchCurrentDir;
 extern int NosuchDebugTag;
 
 std::string NosuchSnprintf(const char *fmt, ...);

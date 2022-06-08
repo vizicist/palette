@@ -20,54 +20,6 @@ using namespace ffglex;
 bool PaletteHost::StaticInitialized = false;
 void* PaletteHost::ThreadPointer = NULL;
 
-extern "C" {
-bool
-ffgl_setdll( std::string dllpath )
-{
-	NosuchDebugSetThreadName( pthread_self().p, "FFGLDLL" );
-
-	dllpath = NosuchToLower( dllpath );
-
-	size_t lastslash   = dllpath.find_last_of( "/\\" );
-	size_t lastdot     = dllpath.find_last_of( "." );
-	std::string suffix = ( lastdot == dllpath.npos ? "" : dllpath.substr( lastdot ) );
-	if( suffix != ".dll" )
-	{
-		NosuchDebug( "Hey! dll name (%s) isn't of the form *.dll!?", dllpath.c_str() );
-		return false;
-	}
-
-	char* pValue;
-	size_t len;
-
-	errno_t err = _dupenv_s( &pValue, &len, "PALETTEDEBUG" );
-	if( !err && pValue != NULL )
-	{
-		NosuchDebugLevel = atoi( std::string( pValue ).c_str() );
-	}
-
-	NosuchDebugLogPath = "c:\\windows\\temp\\ffgl.log";// last resort
-
-	err = _dupenv_s( &pValue, &len, "CommonProgramFiles" );
-	if( err == 0 && pValue != NULL )
-	{
-		NosuchDebugLogPath = std::string( pValue ) + "\\Palette\\logs\\ffgl.log";
-		free( pValue );
-	}
-
-	NosuchDebug( "Palette: debuglevel=%d log=%s\n", NosuchDebugLevel, NosuchDebugLogPath.c_str() );
-
-	err = _dupenv_s( &pValue, &len, "PALETTE" );
-	if( err || pValue == NULL )
-	{
-		NosuchDebug( "No value for PALETTE!?\n" );
-		return false;
-	}
-
-	return true;
-}
-}
-
 void *daemon_threadfunc(void *arg)
 {
 	PaletteDaemon* b = (PaletteDaemon*)arg;
@@ -284,9 +236,29 @@ void PaletteHost::StaticInitialization()
 	NosuchDebug(1,"=== PaletteHost Static Initialization!");
 }
 
-PaletteHost::PaletteHost(std::string configfile)
-{
-	NosuchDebugSetThreadName(pthread_self().p,"PaletteHost");
+PaletteHost::PaletteHost()
+{	
+	// The search for ffgl.json is as follows:
+	// - look in %CommonProgramFiles%
+	// - last resort is temp dir
+
+	std::string configfile;
+
+	char* localValue;
+	size_t locallen;
+	errno_t localerr = _dupenv_s( &localValue, &locallen, "CommonProgramFiles" );
+	if( !localerr && localValue != NULL )
+	{
+		configfile = std::string( localValue ) + "\\Palette\\config\\ffgl.json";
+		free( localValue );
+	}
+	else
+	{
+		configfile = "c:\\windows\\temp\\ffgl.json";// last resort
+		NosuchDebug( "No value for CommonProgramFiles? using configfile=%s\n", configfile.c_str() );
+	}
+
+	// NosuchDebugSetThreadName(pthread_self().p,"PaletteHost");
 
 	_scheduler = NULL;  // don't remove, even though we set it at the end of this routine
 	_daemon = NULL;

@@ -1,9 +1,15 @@
+#include "PaletteAll.h"
 #include "PaletteEffect.h"
 using namespace ffglex;
 
+enum ParamType : FFUInt32
+{
+	PT_OSC_PORT,
+};
+
 static CFFGLPluginInfo PluginInfo(
 	PluginFactory< PaletteEffect >,// Create method
-	"RE01",                      // Plugin unique ID of maximum length 4.
+	"PLTE",                      // Plugin unique ID of maximum length 4.
 	"PaletteEffect",            // Plugin name
 	2,                           // API major version number
 	1,                           // API minor version number
@@ -13,6 +19,34 @@ static CFFGLPluginInfo PluginInfo(
 	"Palette Effect",  // Plugin description
 	"by Tim Thompson"      // About
 );
+
+//////////////////////////////////////////////////////////////////
+// Plugin dll entry point
+//////////////////////////////////////////////////////////////////
+BOOL APIENTRY DllMain( HANDLE hModule, DWORD ul_reason_for_call, LPVOID lpReserved )
+{
+	char dllpath[ MAX_PATH ];
+	GetModuleFileNameA( (HMODULE)hModule, dllpath, MAX_PATH );
+
+	if( ul_reason_for_call == DLL_PROCESS_ATTACH )
+	{
+		NosuchDebugSetThreadName( pthread_self().p, "PALETTEEFFECT_DLL" );
+		NosuchDebug( 1, "DllMain: DLLPROCESS_ATTACH dll=%s", dllpath );
+	}
+	if( ul_reason_for_call == DLL_PROCESS_DETACH )
+	{
+		NosuchDebug( 1, "DllMain: DLLPROCESS_DETACH dll=%s", dllpath );
+	}
+	if( ul_reason_for_call == DLL_THREAD_ATTACH )
+	{
+		NosuchDebug( 1, "DllMain: DLLTHREAD_ATTACH dll=%s", dllpath );
+	}
+	if( ul_reason_for_call == DLL_THREAD_DETACH )
+	{
+		NosuchDebug( 1, "DllMain: DLLTHREAD_DETACH dll=%s", dllpath );
+	}
+	return TRUE;
+}
 
 static const char _vertexShaderCode[] = R"(#version 410 core
 uniform vec2 MaxUV;
@@ -55,6 +89,10 @@ void main()
 
 PaletteEffect::PaletteEffect()
 {
+	paletteHost = new PaletteHost();
+	savedPixels = NULL;
+	readCount   = 0;
+
 	// Input properties
 	SetMinInputs( 1 );
 	SetMaxInputs( 1 );
@@ -62,6 +100,9 @@ PaletteEffect::PaletteEffect()
 	//We declare that this plugin has a Brightness parameter which is a RGB param.
 	//The name here must match the one you declared in your fragment shader.
 	AddRGBColorParam( "Brightness" );
+
+	// My Parameters
+	// SetParamInfof( PT_OSC_PORT, "OSC Port", FF_TYPE_TEXT );
 
 	FFGLLog::LogToHost( "Created PaletteEffect effect" );
 }
@@ -71,6 +112,12 @@ PaletteEffect::~PaletteEffect()
 
 FFResult PaletteEffect::InitGL( const FFGLViewportStruct* vp )
 {
+	x = vp->x;
+	y = vp->y;
+	width = vp->width;
+	height = vp->height;
+
+	NosuchDebug( "PaletteEffect.InitGL: x,y=%d,%d w,h=%d,%d", vp->x, vp->y, vp->width, vp->height );
 	if( !shader.Compile( _vertexShaderCode, _fragmentShaderCode ) )
 	{
 		DeInitGL();
@@ -85,6 +132,17 @@ FFResult PaletteEffect::InitGL( const FFGLViewportStruct* vp )
 	//Use base-class init as success result so that it retains the viewport.
 	return CFFGLPlugin::InitGL( vp );
 }
+
+int pixelhash( char* pixels, int npixels )
+{
+	int h = 0;
+	int n;
+	for( n=0; n<npixels; n++ ) {
+		h += pixels[ n ];
+	}
+	return h;
+}
+
 FFResult PaletteEffect::ProcessOpenGL( ProcessOpenGLStruct* pGL )
 {
 	if( pGL->numInputTextures < 1 )
@@ -102,6 +160,14 @@ FFResult PaletteEffect::ProcessOpenGL( ProcessOpenGLStruct* pGL )
 
 	shader.Set( "inputTexture", 0 );
 
+	int npixels = width * height * 4;
+
+	if (savedPixels != NULL) {
+		// NosuchDebug( "ProcessOpenGL inpixels wh=%d,%d  hash=%d\n", width, height, inh1 );
+		// NosuchDebug( "ProcessOpenGL readPixels wh=%d,%d  pix0,1=%d,%d hash=%d\n", width, height, pixels[0],pixels[1], h1);
+		glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, savedPixels );
+	}
+
 	//The input texture's dimension might change each frame and so might the content area.
 	//We're adopting the texture's maxUV using a uniform because that way we dont have to update our vertex buffer each frame.
 	FFGLTexCoords maxCoords = GetMaxGLTexCoords( *pGL->inputTextures[ 0 ] );
@@ -112,8 +178,22 @@ FFResult PaletteEffect::ProcessOpenGL( ProcessOpenGLStruct* pGL )
 
 	quad.Draw();
 
+	if( readCount++ > 100 ) {
+
+		if( savedPixels == NULL ) {
+			savedPixels = (char*)malloc( npixels );
+			memset( savedPixels, 0, npixels );
+			NosuchDebug( "Saving Pixels!\n" );
+			glReadPixels(0,0,width,height,GL_RGB,GL_UNSIGNED_BYTE, savedPixels);
+			int h2       = pixelhash( savedPixels, npixels );
+			NosuchDebug( "ProcessOpenGL readPixels wh=%d,%d hash=%d\n", width, height, h2 );
+			readCount = 0;
+			}
+	}
+
 	return FF_SUCCESS;
 }
+
 FFResult PaletteEffect::DeInitGL()
 {
 	shader.FreeGLResources();
@@ -121,3 +201,38 @@ FFResult PaletteEffect::DeInitGL()
 
 	return FF_SUCCESS;
 }
+
+FFResult PaletteEffect::SetTextParameter( unsigned int index, const char* value )
+{
+	switch( index )
+	{
+	case PT_OSC_PORT:
+		paletteHost->SetOscPort( std::string( value ) );
+		return FF_SUCCESS;
+	}
+	NosuchDebug( "SetTextParameter FAILS?" );
+	return FF_FAIL;
+}
+
+char* PaletteEffect::GetTextParameter( unsigned int index )
+{
+	static std::string value;
+	switch( index )
+	{
+	case PT_OSC_PORT:
+		value = paletteHost->GetOscPort();
+		return (char*)( value.c_str() );
+	}
+	NosuchDebug( "GetTextParameter returns NULL?" );
+	return NULL;
+}
+
+// FFResult PaletteEffect::SetFloatParameter( unsigned int dwIndex, float value )
+// {
+// 	return FF_FAIL;
+// }
+
+// float PaletteEffect::GetFloatParameter( unsigned int index )
+// {
+// 	return 0.0f;
+// }
