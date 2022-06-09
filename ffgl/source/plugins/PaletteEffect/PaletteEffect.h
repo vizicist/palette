@@ -2,7 +2,7 @@
 #include <string>
 #include <FFGLSDK.h>
 
-class PaletteEffect : public ffglqs::Plugin
+class PaletteEffect : public CFFGLPlugin
 {
 public:
 	PaletteEffect();
