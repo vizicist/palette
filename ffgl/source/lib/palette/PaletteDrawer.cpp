@@ -34,6 +34,8 @@ void main()
 static const char fragmentShaderPalette[] = R"(#version 410 core
 uniform vec4 RGBALeft;
 uniform vec4 RGBARight;
+uniform sampler2D InputTexture;
+uniform int tjt;
 
 in vec2 uv;
 
@@ -41,7 +43,13 @@ out vec4 fragColor;
 
 void main()
 {
-	fragColor = mix( RGBALeft, RGBARight, uv.x );
+	int usetexture;
+	usetexture = 0;
+	if ( usetexture > 0 ) {
+		fragColor = texture( InputTexture, uv );
+	} else {
+		fragColor = mix( RGBALeft, RGBARight, uv.x );
+	}
 }
 )";
 

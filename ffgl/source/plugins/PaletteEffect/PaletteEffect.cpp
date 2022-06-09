@@ -65,7 +65,6 @@ void main()
 
 static const char _fragmentShaderCode[] = R"(#version 410 core
 uniform sampler2D InputTexture;
-uniform vec3 Brightness;
 uniform int tjt;
 
 in vec2 uv;
@@ -75,6 +74,9 @@ out vec4 fragColor;
 void main()
 {
 	vec4 color;
+	vec3 bright;
+	bright = vec3(0.5, 0.5, 0.5);
+
 	if ( tjt > 0 ) {
 		vec2 uv2 = uv / 2.0;
 		color = texture( InputTexture, uv2 );
@@ -85,7 +87,7 @@ void main()
 	if( color.a > 0.0 )
 		color.rgb /= color.a;
 
-	color.rgb += Brightness * 2. - 1.;
+	color.rgb += bright * 2. - 1.;
 
 	//The plugin has to output premultiplied colors, this is how we're premultiplying our straight color while also
 	//ensuring we aren't going out of the LDR the video engine is working in.
@@ -94,7 +96,10 @@ void main()
 }
 )";
 
-PaletteEffect::PaletteEffect()
+
+// class PaletteEffect : public ffglqs::Plugin
+
+PaletteEffect::PaletteEffect() : CFFGLPlugin()
 {
 	paletteHost = new PaletteHost();
 	savedPixels = NULL;
@@ -106,9 +111,11 @@ PaletteEffect::PaletteEffect()
 
 	//We declare that this plugin has a Brightness parameter which is a RGB param.
 	//The name here must match the one you declared in your fragment shader.
-	AddRGBColorParam( "Brightness" );
+	// AddRGBColorParam( "Brightness" );
 
 	// My Parameters
+	// AddParam( Param::Create( "OSC Port" ) );
+	SetParamInfo( PT_OSC_PORT, "OSC Port", FF_TYPE_TEXT, "5555" );
 	// SetParamInfof( PT_OSC_PORT, "OSC Port", FF_TYPE_TEXT );
 
 	FFGLLog::LogToHost( "Created PaletteEffect effect" );
@@ -191,6 +198,7 @@ FFResult PaletteEffect::ProcessOpenGL( ProcessOpenGLStruct* pGL )
 	FFGLTexCoords maxCoords = GetMaxGLTexCoords( *pGL->inputTextures[ 0 ] );
 	shader.Set( "MaxUV", maxCoords.s, maxCoords.t );
 
+#ifdef TRYWITHOUT
 	bool saveit = false;
 
 	if( readCount++ > 100 ) {
@@ -198,12 +206,14 @@ FFResult PaletteEffect::ProcessOpenGL( ProcessOpenGLStruct* pGL )
 		readCount = 0;
 		saveit  = true;
 	}
+#endif
 
 	//This takes care of sending all the parameter that the plugin registered to the shader.
-	SendParams( shader );
+	// SendParams( shader );
 
-	quad.Draw();
+	// quad.Draw();
 
+#ifdef TRYWITHOUT
 	if( saveit ) {
 		if( savedPixels == NULL ) {
 			savedPixels = (char*)malloc( npixels );
@@ -214,6 +224,7 @@ FFResult PaletteEffect::ProcessOpenGL( ProcessOpenGLStruct* pGL )
 			NosuchDebug( "ProcessOpenGL readPixels wh=%d,%d hash=%d\n", width, height, h2 );
 			}
 	}
+#endif
 
 	return paletteHost->PaletteHostProcessOpenGL( pGL );
 

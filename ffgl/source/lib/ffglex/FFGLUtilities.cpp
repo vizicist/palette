@@ -11,6 +11,10 @@
 #include <iostream>
 #include <algorithm>
 
+#if defined( NOSUCHLIB )
+#include "NosuchDebug.h"
+#endif
+
 namespace ffglex
 {
 unsigned int is_power_of_2( unsigned int x )
@@ -170,6 +174,9 @@ void Log( const std::string& message )
 	OutputDebugStringA( message.c_str() );
 	OutputDebugStringA( "\n" );
 	std::cout << message << std::endl;
+#if defined( NOSUCHLIB )
+	NosuchDebug("%s\n",message.c_str());
+#endif
 #else
 	printf( "%s", ( message + "\n" ).c_str() );
 #endif
