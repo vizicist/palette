@@ -29,10 +29,14 @@ def generate(homedir, force, sourcedir, floatType):
 	# if generated file is more recent than the definitions, do nothing
 	jsonmtime = os.path.getmtime(jsonfile)
 	enummtime = os.path.getmtime(enumfile)
-	outputmtime = os.path.getmtime(os.path.join(sourcedir,"SpriteParams_declare.h"))
 
-	jsonupdated = outputmtime < jsonmtime 
-	enumupdated = outputmtime < enummtime
+	try:
+		outputmtime = os.path.getmtime(os.path.join(sourcedir,"RegionParams_declare.h"))
+		jsonupdated = outputmtime < jsonmtime 
+		enumupdated = outputmtime < enummtime
+	except:
+		jsonupdated = True
+		enumupdated = True
 
 	if not force and not jsonupdated and not enumupdated:
 		return
@@ -59,9 +63,6 @@ def generate(homedir, force, sourcedir, floatType):
 	out_rp_list = openFile(sourcedir,"RegionParams_list.h")
 	out_rp_set = openFile(sourcedir,"RegionParams_set.h")
 	out_rp_toggle = openFile(sourcedir,"RegionParams_toggle.h")
-
-	out_sp_declare = openFile(sourcedir,"SpriteParams_declare.h")
-	out_sp_init = openFile(sourcedir,"SpriteParams_init.h")
 
 	j = json.load(f)
 
@@ -99,7 +100,7 @@ def generate(homedir, force, sourcedir, floatType):
 			out_rp_declare.write("%s %s;\n"%(realtype,basename))
 			out_rp_get.write("GET_%s_PARAM(%s);\n"%(captype,basename))
 
-			out_rp_init.write("%s = %s%s;\n"%(basename,init,fsuffix))
+			out_rp_init.write("INIT_PARAM ( %s , %s%s );\n"%(basename,init,fsuffix))
 			out_rp_list.write("\"%s\",\n"%basename)
 			out_rp_set.write("SET_%s_PARAM(%s);\n"%(captype,basename))
 
@@ -118,9 +119,6 @@ def generate(homedir, force, sourcedir, floatType):
 				print("Unrecognized paramtype: %s" % typ)
 
 		if paramtype == "sprite" or paramtype == "visual":
-			out_sp_declare.write("%s %s;\n"%(realtype,basename))
-			out_sp_init.write("INIT_PARAM(%s);\n"%basename)
-
 			out_rp_issprite.write("IS_SPRITE_PARAM(%s);\n"%basename)
 
 	out_rp_declare.close()
@@ -131,8 +129,6 @@ def generate(homedir, force, sourcedir, floatType):
 	out_rp_list.close()
 	out_rp_set.close()
 	out_rp_toggle.close()
-	out_sp_declare.close()
-	out_sp_init.close()
 
 	########################################
 	## Now process paramenums.json

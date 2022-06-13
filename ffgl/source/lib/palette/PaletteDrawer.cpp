@@ -36,6 +36,7 @@ uniform vec4 RGBALeft;
 uniform vec4 RGBARight;
 uniform sampler2D InputTexture;
 uniform int tjt;
+uniform int style;
 
 in vec2 uv;
 
@@ -44,8 +45,8 @@ out vec4 fragColor;
 void main()
 {
 	int usetexture;
-	usetexture = 0;
-	if ( usetexture > 0 ) {
+	usetexture = 1;
+	if ( style > 0 ) {
 		fragColor = texture( InputTexture, uv );
 	} else {
 		fragColor = mix( RGBALeft, RGBARight, uv.x );
@@ -184,6 +185,11 @@ bool PaletteDrawer::prepareToDraw( SpriteParams& params, SpriteState& state )
 	glUniform4f( m_rgbLeftLocation, c1.R(), c1.G(), c1.B(), state.alpha );
 	glUniform4f( m_rgbRightLocation, c2.R(), c2.G(), c2.B(), state.alpha );
 	glUniformMatrix4fv( m_matrixLocation, 1, GL_FALSE, glm::value_ptr(m_matrix) );
+	int style = 0;
+	if ( params.spritestyle == "texture" ) {
+		style = 1;
+	}
+	glUniform1i( m_styleLocation, style );
 
 	return true;
 }
@@ -393,6 +399,7 @@ FFResult PaletteDrawer::InitGL( const FFGLViewportStruct* vp)
 	m_rgbLeftLocation  = m_shader_gradient.FindUniform( "RGBALeft" );
 	m_rgbRightLocation = m_shader_gradient.FindUniform( "RGBARight" );
 	m_matrixLocation = m_shader_gradient.FindUniform( "vMatrix" );
+	m_styleLocation  = m_shader_gradient.FindUniform( "style" );
 
 	return FF_SUCCESS;
 }

@@ -11,6 +11,7 @@ DECLARE_TYPES(justification);
 DECLARE_TYPES(controllerstyle);
 DECLARE_TYPES(placement);
 DECLARE_TYPES(spritesource);
+DECLARE_TYPES(spritestyle);
 DECLARE_TYPES(midibehaviour);
 DECLARE_TYPES(scale);
 DECLARE_TYPES(inputport);
