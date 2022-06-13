@@ -18,6 +18,8 @@ public:
 	char* GetTextParameter(unsigned int index) override;
 
 protected:
+	ffglex::FFGLShader shader;  //!< Utility to help us compile and link some shaders into a program.
+	// ffglex::FFGLScreenQuad quad;
 	PaletteHost* paletteHost;
 
 };

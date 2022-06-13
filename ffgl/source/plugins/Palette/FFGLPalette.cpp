@@ -11,14 +11,14 @@ enum ParamType : FFUInt32
 
 static CFFGLPluginInfo PluginInfo(
 	PluginFactory< FFGLPalette >,// Create method
-	"PLTA",                        // Plugin unique ID
+	"PLTX",                        // Plugin unique ID
 	"Palette",                     // Plugin name
 	2,                             // API major version number
 	1,                             // API minor version number
 	1,                             // Plugin major version number
 	000,                           // Plugin minor version number
-	FF_SOURCE,                     // Plugin type
-	"Palette Instrument",// Plugin description
+	FF_EFFECT,                     // Plugin type
+	"Palette X Instrument",// Plugin description
 	"by Tim Thompson"        // About
 );
 
@@ -50,30 +50,18 @@ BOOL APIENTRY DllMain( HANDLE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 	return TRUE;
 }
 
-std::string ffgl_name()
-{
-	return "Palette";
-}
-
-CFFGLPluginInfo& ffgl_plugininfo()
-{
-	return PluginInfo;
-}
-
-
 FFGLPalette::FFGLPalette() : CFFGLPlugin()
 {
 	paletteHost = new PaletteHost();
 
 	// Input properties
-	SetMinInputs( 0 );
-	SetMaxInputs( 0 );
+	SetMinInputs( 1 );
+	SetMaxInputs( 1 );
 
 	// Parameters
 	SetParamInfof( PT_OSC_PORT, "OSC Port", FF_TYPE_TEXT );
-
-	FFGLLog::LogToHost( "Created Palette" );
 }
+
 FFResult FFGLPalette::InitGL( const FFGLViewportStruct* vp )
 {
 	NosuchDebug( "Palette.InitGL: x,y=%d,%d w,h=%d,%d", vp->x, vp->y, vp->width, vp->height );
@@ -87,17 +75,34 @@ bool PaletteFFThreadNameSet = false;
 
 FFResult FFGLPalette::ProcessOpenGL( ProcessOpenGLStruct* pGL )
 {
+	if( pGL->numInputTextures < 1 )
+		return FF_FAIL;
+
+	if( pGL->inputTextures[ 0 ] == NULL )
+		return FF_FAIL;
+
 	if( !PaletteFFThreadNameSet )
 	{
 		NosuchDebugSetThreadName( pthread_self().p, "ProcessOpenGL" );
 		PaletteFFThreadNameSet = true;
 	}
+
+	//FFGL requires us to leave the context in a default state on return, so use this scoped binding to help us do that.
+	ScopedShaderBinding shaderBinding( shader.GetGLID() );
+	//The shader's sampler is always bound to sampler index 0 so that's where we need to bind the texture.
+	//Again, we're using the scoped bindings to help us keep the context in a default state.
+	ScopedSamplerActivation activateSampler( 0 );
+	Scoped2DTextureBinding textureBinding( pGL->inputTextures[ 0 ]->Handle );
+
+	// quad.Draw();
+
 	return paletteHost->PaletteHostProcessOpenGL( pGL );
 }
 FFResult FFGLPalette::DeInitGL()
 {
 	paletteHost->DeInitGL( );
 	delete paletteHost;
+	// quad.Release();
 	return FF_SUCCESS;
 }
 

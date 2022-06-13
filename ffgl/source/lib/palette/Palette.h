@@ -61,6 +61,7 @@ public:
 
 	void clear();
 	int draw();
+	int drawbg();
 	void advanceTo(int tm);
 
 	void LoadParamPush(cJSON* sound, cJSON* visual);
