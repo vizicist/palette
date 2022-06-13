@@ -11,6 +11,7 @@
 Region::Region() {
 
 	_spritelist = new SpriteList();
+	_spritelistbg = new SpriteList();
 
 	NosuchLockInit(&_region_mutex,"region");
 	_cursorlist_rwlock = PTHREAD_RWLOCK_INITIALIZER;
@@ -26,6 +27,12 @@ Region::Region() {
 
 	initParams();
 
+}
+
+void copyParamValues(RegionParams *from, RegionParams *to) {
+#undef INIT_PARAM
+#define INIT_PARAM(name,def) to->name = from->name;
+#include "RegionParams_init.h"
 }
 
 Region::~Region() {
@@ -264,7 +271,7 @@ Region::instantiateSprite(TrackedCursor* c, bool throttle) {
 
 	Sprite* s = makeSprite(params.shape);
 	if (s) {
-		s->params.initValues(this);
+		copyParamValues(&params,&(s->params));
 		float anginit = s->params.rotanginit;
 		if (s->params.rotauto) {
 			anginit = -c->curr_degrees;
@@ -298,17 +305,44 @@ Region::instantiateSprite(TrackedCursor* c, bool throttle) {
 void
 Region::instantiateSpriteAt(std::string cid, glm::vec2 pos, float z) {
 
+	NosuchDebug( "Region::instantiateSpriteAt: Region=this=%lld  spritestyle=%s\n", (long long)this, this->params.spritestyle.c_str() );
 	// std::string shape = params.shape;
 	Sprite* s = makeSprite(params.shape);
 	std::string source = "instantiate_at";
 	if (s) {
-		s->params.initValues(this);
+		copyParamValues(&params,&(s->params));
 		float anginit = s->params.rotanginit;
 		s->initState(cid, source, pos, spriteMoveDir(NULL), z, anginit);
 		if (NosuchDebugSprite) {
 			NosuchDebug("Region.instantiateSpriteAt: cid=%s pos=%f,%f", cid.c_str(), pos.x, pos.y);
 		}
 		_spritelist->add(s, params.nsprites);
+	}
+}
+
+void
+Region::instantiateSpriteBg() {
+
+	if( _spritelistbg->size() != 0 ) {
+		return;
+	}
+	NosuchDebug( "Region::instantiateSpriteBg: creating square sprite for bg\n" );
+	Sprite* s = makeSprite("square");
+	std::string source = "bg_source";
+	std::string cid = "bg_cid";
+	if (s) {
+		copyParamValues(&params,&(s->params));
+		float anginit = 315.0f;
+		glm::vec2 pos( 0.5f, 0.5f );
+		float z = 0.0f;
+		s->initState(cid, source, pos, spriteMoveDir(NULL), 0.5, anginit);
+		if (NosuchDebugSprite) {
+			NosuchDebug("Region.instantiateSpriteBg: cid=%s pos=%f,%f", cid.c_str(), pos.x, pos.y);
+		}
+		s->params.spritestyle = "texture";
+		s->params.aspect      = 0.527f;
+		s->state.size         = 3.82f;
+		_spritelistbg->add(s, 100);  // should only be 1, but might someday be more
 	}
 }
 
@@ -347,8 +381,19 @@ void Region::draw(PaletteDrawer* b) {
 	_spritelist->unlock();
 }
 
+void Region::drawbg(PaletteDrawer* drawer) {
+	if( params.inputbackground ) {
+		Region::instantiateSpriteBg();
+		// Only 1 sprite in _spritelistbg, so far
+		// _spritelistbg->lock_read();
+		_spritelistbg->draw(drawer);
+		// _spritelistbg->unlock();
+	}
+}
+
 void Region::clear() {
 	_spritelist->clear();
+	// NosuchDebug( "Region::clear is NOT (yet) clearing _spritelistbg\n" );
 	clearCursors();
 }
 

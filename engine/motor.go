@@ -26,7 +26,7 @@ type ActiveNote struct {
 // Motor is an entity that that reacts to things (cursor events, apis) and generates output (midi, graphics)
 type Motor struct {
 	padName         string
-	resolumeLayer   int // 1,2,3,4
+	resolumeLayer   int // see ResolumeLayerForPad
 	freeframeClient *osc.Client
 	resolumeClient  *osc.Client
 	guiClient       *osc.Client

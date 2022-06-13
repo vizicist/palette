@@ -160,6 +160,7 @@ void Sprite::drawAt(PaletteDrawer* drawer, float x, float y, float scalex, float
 	}
 
 	float degrees = state.rotanginit + state.rotangsofar;
+	NosuchDebug(1, "Sprite::drawAt: xdir=%d ydir=%d degrees=%f anginit=%f sofar=%f\n", xdir, ydir, degrees, state.rotanginit, state.rotangsofar );
 
 	// XXX - I'm not sure why I have to do this - there's an extra translate/scale somewhere
 	// XXX - in the rendering or assumptions, and this is needed to negate it.

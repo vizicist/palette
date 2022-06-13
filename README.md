@@ -1,5 +1,7 @@
 # Palette - a system for visual music instruments
 
+# WARNING - main branch is under active development, do not use.
+
 Palette is used in the <a href=https://youtu.be/HDtxEyCI_zc>Space Palette Pro</a>,
 an instrument that lets you fingerpaint sound and visuals
 using your fingers as 3D cursors on Sensel Morph pads.  The Palette software consists of:

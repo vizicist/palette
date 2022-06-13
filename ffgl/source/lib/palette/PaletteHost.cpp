@@ -485,6 +485,10 @@ DWORD PaletteHost::PaletteHostProcessOpenGL(ProcessOpenGLStruct *pGL)
 
 	lock_paletteHost();
 
+	// This optionally (based on parameter visual.inputbackground)
+	// draws the input texture as a background.
+	_palette->drawbg();
+
 	bool gotexception = false;
 	try {
 		int tm = _palette->now;

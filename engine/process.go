@@ -204,17 +204,20 @@ func ProcessStatus() string {
 
 func resolumeActivate() {
 	// handle_activate sends OSC messages to start the layers in Resolume,
-	// and make sure the audio is on in Bidule.
 	addr := "127.0.0.1"
 	resolumePort := 7000
 	resolumeClient := osc.NewClient(addr, resolumePort)
+	// do it a few times, in case Resolume hasn't started up
 	for i := 0; i < 4; i++ {
-		dt := 5 * time.Second
-		time.Sleep(dt)
-		connectClip(resolumeClient, 1, 1)
-		connectClip(resolumeClient, 2, 1)
-		connectClip(resolumeClient, 3, 1)
-		connectClip(resolumeClient, 4, 1)
+		time.Sleep(5 * time.Second)
+		for _, pad := range oneRouter.regionLetters {
+			layernum := oneRouter.ResolumeLayerForPad(string(pad))
+			clipnum := 1
+			if Debug.Resolume {
+				log.Printf("Activating Resolume layer %d, clip %d\n", layernum, clipnum)
+			}
+			connectClip(resolumeClient, layernum, clipnum)
+		}
 	}
 }
 

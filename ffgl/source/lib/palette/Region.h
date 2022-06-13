@@ -16,15 +16,17 @@ class GraphicBehaviour;
 #define MAX_REGION_ID 22
 #define PORT_NEEDS_LOOKUP -99
 
-float scale_z(PaletteHost* ph,float z);
-
 #define DECLARE_TYPES(t) extern std::vector<std::string> RegionParams_##t##Types;
 #include "RegionParams_typesdeclare.h"
 void RegionParams_InitializeTypes();
 
+class Region;
+
 class RegionParams : public Params {
 public:
 	RegionParams() {
+#undef INIT_PARAM
+#define INIT_PARAM( name, def ) ; name = ##def ;
 #include "RegionParams_init.h"
 	}
 
@@ -103,7 +105,11 @@ public:
 #include "RegionParams_issprite.h"
 		return false;
 	}
+
+
 };
+
+void copyParamValues( RegionParams* from, RegionParams* to );
 
 class Region {
 
@@ -119,9 +125,11 @@ public:
 	Sprite* makeSprite(std::string shape);
 	void instantiateSprite(TrackedCursor* c, bool throttle);
 	void instantiateSpriteAt(std::string cid, glm::vec2 pos, float z);
+	void instantiateSpriteBg();
 	float spriteMoveDir(TrackedCursor* c);
 	// these need to be thread-safe
 	void draw(PaletteDrawer* b);
+	void drawbg(PaletteDrawer* b);
 	void advanceTo(int tm);
 	void clear();
 	void deleteOldCursors(Palette* palette);
@@ -155,6 +163,7 @@ private:
 	// Access to these lists need to be thread-safe
 	// std::list<Sprite*> sprites;
 	SpriteList* _spritelist;
+	SpriteList* _spritelistbg; // Usually just a single sprite which is the background
 
 	// int m_id;
 	int r;

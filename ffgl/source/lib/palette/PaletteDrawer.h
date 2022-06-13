@@ -77,4 +77,5 @@ private:
 	GLint m_rgbLeftLocation;
 	GLint m_rgbRightLocation;
 	GLint m_matrixLocation;
+	GLint m_styleLocation;
 };

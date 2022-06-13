@@ -1025,7 +1025,9 @@ void ValidateContextState()
 			glActiveTexture( GL_TEXTURE0 + sampler );
 			//Please use the ScopedTextureBinding to automatically unbind textures after you're done with them.
 			glGetIntegerv( pair.binding, glInt );
+#ifdef DONTINCLUDE_TJTHACK
 			assert( glInt[ 0 ] == 0 );
+#endif
 		}
 	}
 	glActiveTexture( GL_TEXTURE0 );

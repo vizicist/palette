@@ -11,6 +11,7 @@ DEFINE_TYPES(justification);
 DEFINE_TYPES(controllerstyle);
 DEFINE_TYPES(placement);
 DEFINE_TYPES(spritesource);
+DEFINE_TYPES(spritestyle);
 DEFINE_TYPES(midibehaviour);
 DEFINE_TYPES(scale);
 DEFINE_TYPES(inputport);
@@ -92,6 +93,9 @@ RegionParams_InitializeTypes() {
 	RegionParams_spritesourceTypes.push_back("cursor");
 	RegionParams_spritesourceTypes.push_back("midi");
 	RegionParams_spritesourceTypes.push_back("none");
+
+	RegionParams_spritestyleTypes.push_back("hue");
+	RegionParams_spritestyleTypes.push_back("texture");
 
 	RegionParams_midibehaviourTypes.push_back("scalecapture");
 	RegionParams_midibehaviourTypes.push_back("none");

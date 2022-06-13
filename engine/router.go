@@ -72,6 +72,7 @@ type Router struct {
 
 	block        map[string]Block
 	blockContext map[string]*EContext
+	layerMap     map[string]int // map of pads to resolume layer numbers
 
 	midiEventHandler MIDIEventHandler
 	killme           bool // true if Router should be stopped
@@ -203,7 +204,7 @@ func TheRouter() *Router {
 		log.Printf("OSC client ports: resolume=%d gui=%d plogue=%d\n", resolumePort, guiPort, ploguePort)
 
 		for i, c := range oneRouter.regionLetters {
-			resolumeLayer := 1 + i
+			resolumeLayer := oneRouter.ResolumeLayerForPad(string(c))
 			resolumePort := 3334 + i
 			ch := string(c)
 			freeframeClient := osc.NewClient("127.0.0.1", resolumePort)
@@ -248,6 +249,26 @@ func TheRouter() *Router {
 		go oneRouter.notifyGUI("restart")
 	})
 	return &oneRouter
+}
+
+func (r *Router) ResolumeLayerForPad(pad string) int {
+	if r.layerMap == nil {
+		def := "1,2,3,4,5"
+		s := ConfigStringWithDefault("resolumelayers", def)
+		layers := strings.Split(s, ",")
+		if len(layers) != 5 {
+			log.Printf("ResolumeLayerForPad: resolumelayers value needs 5 values\n")
+			layers = strings.Split(def, ",")
+		}
+		r.layerMap = make(map[string]int)
+		r.layerMap["A"], _ = strconv.Atoi(layers[0])
+		r.layerMap["B"], _ = strconv.Atoi(layers[1])
+		r.layerMap["C"], _ = strconv.Atoi(layers[2])
+		r.layerMap["D"], _ = strconv.Atoi(layers[3])
+		r.layerMap["T"], _ = strconv.Atoi(layers[4]) // text layer
+		log.Printf("resolumeLayers = %+v\n", r.layerMap)
+	}
+	return r.layerMap[pad]
 }
 
 // StartOSC xxx
@@ -1026,10 +1047,12 @@ func (r *Router) handleMMTTButton(butt string) {
 
 func (r *Router) showText(text string) {
 
-	// disable the text display by bypassing the layer
-	bypassLayer(r.resolumeClient, 5, true)
+	textLayerNum := r.ResolumeLayerForPad("T")
 
-	addr := "/composition/layers/5/clips/1/video/source/textgenerator/text/params/lines"
+	// disable the text display by bypassing the layer
+	bypassLayer(r.resolumeClient, textLayerNum, true)
+
+	addr := fmt.Sprintf("/composition/layers/%d/clips/1/video/source/textgenerator/text/params/lines", textLayerNum)
 	msg := osc.NewMessage(addr)
 	msg.Append(text)
 	_ = r.resolumeClient.Send(msg)
@@ -1037,8 +1060,8 @@ func (r *Router) showText(text string) {
 	// give it time to "sink in", otherwise the previous text displays briefly
 	time.Sleep(150 * time.Millisecond)
 
-	connectClip(r.resolumeClient, 5, 1)
-	bypassLayer(r.resolumeClient, 5, false)
+	connectClip(r.resolumeClient, textLayerNum, 1)
+	bypassLayer(r.resolumeClient, textLayerNum, false)
 }
 
 func (r *Router) handleClientRestart(msg *osc.Message) {
