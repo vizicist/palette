@@ -194,6 +194,12 @@ int Palette::draw() {
 	return 0;
 }
 
+int Palette::drawbg() {
+	region.drawbg(_drawer);
+	return 0;
+}
+
+
 #include "NosuchColor.h"
 
 void Palette::LoadParamPush(cJSON* sound, cJSON* visual) {

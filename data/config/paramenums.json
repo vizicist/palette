@@ -12,6 +12,7 @@
   "controllerstyle": [ "modulationonly", "allcontrollers", "pitchYZ", "nothing" ],
   "placement": [ "random", "linear", "cursor", "top", "bottom", "left", "right" ],
   "spritesource": [ "cursor", "midi", "none" ],
+  "spritestyle": [ "hue", "texture" ],
   "midibehaviour": [
     "scalecapture",
     "none",
