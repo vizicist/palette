@@ -207,16 +207,21 @@ func resolumeActivate() {
 	addr := "127.0.0.1"
 	resolumePort := 7000
 	resolumeClient := osc.NewClient(addr, resolumePort)
+	textLayer := oneRouter.ResolumeLayerForText()
+	clipnum := 1
+
 	// do it a few times, in case Resolume hasn't started up
 	for i := 0; i < 4; i++ {
 		time.Sleep(5 * time.Second)
 		for _, pad := range oneRouter.regionLetters {
 			layernum := oneRouter.ResolumeLayerForPad(string(pad))
-			clipnum := 1
 			if Debug.Resolume {
 				log.Printf("Activating Resolume layer %d, clip %d\n", layernum, clipnum)
 			}
 			connectClip(resolumeClient, layernum, clipnum)
+		}
+		if textLayer >= 1 {
+			connectClip(resolumeClient, textLayer, clipnum)
 		}
 	}
 }
