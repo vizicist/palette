@@ -205,9 +205,10 @@ func TheRouter() *Router {
 
 		for i, c := range oneRouter.regionLetters {
 			resolumeLayer := oneRouter.ResolumeLayerForPad(string(c))
-			resolumePort := 3334 + i
+			ffglPort := 3334 + i
 			ch := string(c)
-			freeframeClient := osc.NewClient("127.0.0.1", resolumePort)
+			freeframeClient := osc.NewClient("127.0.0.1", ffglPort)
+			log.Printf("OSC freeframeClient: port=%d layer=%d\n", ffglPort, resolumeLayer)
 			oneRouter.motors[ch] = NewMotor(ch, resolumeLayer, freeframeClient, oneRouter.resolumeClient, oneRouter.guiClient)
 			// log.Printf("Pad %s created, resolumeLayer=%d resolumePort=%d\n", ch, resolumeLayer, resolumePort)
 		}
@@ -251,22 +252,33 @@ func TheRouter() *Router {
 	return &oneRouter
 }
 
+func (r *Router) ResolumeLayerForText() int {
+	defLayer := "5"
+	s := ConfigStringWithDefault("textlayer", defLayer)
+	layernum, err := strconv.Atoi(s)
+	if err != nil {
+		log.Printf("Bad format for textlayer value")
+		layernum, _ = strconv.Atoi(defLayer)
+	}
+	return layernum
+}
+
 func (r *Router) ResolumeLayerForPad(pad string) int {
 	if r.layerMap == nil {
-		def := "1,2,3,4,5"
-		s := ConfigStringWithDefault("resolumelayers", def)
+		regionLayers := "1,2,3,4"
+		s := ConfigStringWithDefault("regionlayers", regionLayers)
 		layers := strings.Split(s, ",")
-		if len(layers) != 5 {
-			log.Printf("ResolumeLayerForPad: resolumelayers value needs 5 values\n")
-			layers = strings.Split(def, ",")
+		if len(layers) != 4 {
+			log.Printf("ResolumeLayerForPad: regionlayers value needs 4 values\n")
+			layers = strings.Split(regionLayers, ",")
 		}
 		r.layerMap = make(map[string]int)
 		r.layerMap["A"], _ = strconv.Atoi(layers[0])
 		r.layerMap["B"], _ = strconv.Atoi(layers[1])
 		r.layerMap["C"], _ = strconv.Atoi(layers[2])
 		r.layerMap["D"], _ = strconv.Atoi(layers[3])
-		r.layerMap["T"], _ = strconv.Atoi(layers[4]) // text layer
-		log.Printf("resolumeLayers = %+v\n", r.layerMap)
+
+		log.Printf("Router: Resolume layerMap = %+v\n", r.layerMap)
 	}
 	return r.layerMap[pad]
 }
@@ -531,6 +543,7 @@ func (r *Router) HandleEvent(args map[string]string) error {
 		return fmt.Errorf("there is no region named %s", region)
 	}
 
+	log.Printf("router.HandleEvent: %s\n", event)
 	switch event {
 
 	case "engine":
@@ -1047,7 +1060,7 @@ func (r *Router) handleMMTTButton(butt string) {
 
 func (r *Router) showText(text string) {
 
-	textLayerNum := r.ResolumeLayerForPad("T")
+	textLayerNum := r.ResolumeLayerForText()
 
 	// disable the text display by bypassing the layer
 	bypassLayer(r.resolumeClient, textLayerNum, true)
