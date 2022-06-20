@@ -255,9 +255,9 @@ func (motor *Motor) AdvanceByOneClick() {
 				(ac.maxzSoFar < 0.0 && ac.downEvent.Z < minz)) {
 
 				removeCids = append(removeCids, ce.ID)
-				if Debug.Cursor {
-					log.Printf("Adding ce.ID=%s to removeCids\n", ce.ID)
-				}
+				// if Debug.Cursor {
+				// 	log.Printf("Adding ce.ID=%s to removeCids\n", ce.ID)
+				// }
 				// NOTE: playit should still be left true for this UP event
 			} else {
 				// Don't play any events in this step with an id that we're getting ready to remove

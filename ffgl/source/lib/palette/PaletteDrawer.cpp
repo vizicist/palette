@@ -123,12 +123,15 @@ void PaletteDrawer::strokeWeight(float w) {
 	glLineWidth((GLfloat)w);
 }
 void PaletteDrawer::rotate(float radians) {
+	NosuchDebug( "rotate: %f\n", radians );
 	m_matrix = glm::rotate( m_matrix, radians, glm::vec3(0.0f,0.0f,1.0f));
 }
 void PaletteDrawer::translate(float x, float y) {
+	NosuchDebug("translate: %f %f\n",x,y);
 	m_matrix = glm::translate( m_matrix, glm::vec3(x,y,0.0f));
 }
 void PaletteDrawer::scale(float x, float y) {
+	NosuchDebug("scale: %f %f\n",x,y);
 	m_matrix = glm::scale( m_matrix, glm::vec3(x, y, 1.0f ));
 }
 
@@ -224,6 +227,8 @@ void PaletteDrawer::drawQuad(SpriteParams& params, SpriteState& state, float x0,
 
 	float screenAspect  = float( viewportHeight()) / float( viewportWidth() );
 	m_matrix = glm::scale( m_matrix, glm::vec3(screenAspect, 1.0f, 1.0f ));
+
+	NosuchDebug("drawQuad: aspect=%f xy0=%.3f,%.3f xy1=%.3f,%.3f xy2=%.3f,%.3f xy3=%.3f,%.3f\n" , screenAspect, x0,y0,x1,y1,x2,y2,x3,y3);
 
 	float finalaspect = finalAspect( params.aspect );
 	if ( finalaspect != 1.0f )
