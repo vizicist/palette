@@ -690,7 +690,7 @@ func (motor *Motor) notifyGUI(ce CursorStepEvent, wasFresh bool) {
 func (motor *Motor) toFreeFramePluginForLayer(msg *osc.Message) {
 	motor.freeframeClient.Send(msg)
 	if Debug.OSC {
-		log.Printf("Motor.toFreeFramePlugin: layer=%d msg=%v\n", motor.resolumeLayer, msg)
+		log.Printf("Motor.toFreeFramePlugin: layer=%d port=%d msg=%v\n", motor.resolumeLayer, motor.freeframeClient.Port(), msg)
 	}
 }
 
