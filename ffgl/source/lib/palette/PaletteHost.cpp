@@ -822,7 +822,7 @@ void PaletteHost::ProcessOscMessage( std::string source, const osc::ReceivedMess
 	    const char *types = m.TypeTags();
 		const char *addr = m.AddressPattern();
 		Nprocessed++;
-		NosuchDebug("ProcessOscMessage source=%s currentclick=%d addr=%s",
+		NosuchDebug(1, "ProcessOscMessage source=%s currentclick=%d addr=%s",
 			source.c_str(),Scheduler::CurrentClick,addr);
 
 		if (checkAddrPattern(addr, "/cursor")) {
