@@ -63,9 +63,6 @@ NosuchOscInput::ProcessOscBundle( std::string source, const osc::ReceivedBundle&
 {
     // ignore bundle time tag for now
 
-#ifdef NEWDEBUG
-	NosuchDebug("PROCESSOSCBUNDLE timetag=%ld",b.TimeTag());
-#endif
     for( osc::ReceivedBundle::const_iterator i = b.ElementsBegin();
 		i != b.ElementsEnd();
 		++i ) {
