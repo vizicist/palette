@@ -543,7 +543,6 @@ func (r *Router) HandleEvent(args map[string]string) error {
 		return fmt.Errorf("there is no region named %s", region)
 	}
 
-	log.Printf("router.HandleEvent: %s\n", event)
 	switch event {
 
 	case "engine":
