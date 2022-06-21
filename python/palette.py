@@ -162,7 +162,7 @@ GlobalPerformLabels["transposeauto"] = [
     {"label":"*Transpose_Auto On",  "value":True},
     {"label":"*Transpose_Auto Off",  "value":False},
 ]
-PerformDefaultVal["transposeauto"] = 1
+PerformDefaultVal["transposeauto"] = 0
 
 def palette_region_api(region, api, params=""):
     if region == "":

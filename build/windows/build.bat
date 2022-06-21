@@ -164,6 +164,8 @@ mkdir %ship%\presets_nosuchtim
 xcopy /e /y %PALETTESOURCE%\data\presets_nosuchtim %ship%\presets_nosuchtim > nul
 mkdir %ship%\presets_subzero
 xcopy /e /y %PALETTESOURCE%\data\presets_subzero %ship%\presets_subzero > nul
+mkdir %ship%\presets_fnf
+xcopy /e /y %PALETTESOURCE%\data\presets_fnf %ship%\presets_fnf > nul
 
 echo ================ Removing unused things
 rm -fr %bin%\pyinstalled\tcl\tzdata
