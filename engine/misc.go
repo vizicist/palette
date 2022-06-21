@@ -245,10 +245,7 @@ var presetsDir string
 func PresetsDir() string {
 	if presetsDir == "" {
 		// config name can be presets or presetdir
-		presetsDir = ConfigStringWithDefault("presetsdir", "xxxxx")
-		if presetsDir == "xxxxx" {
-			presetsDir = ConfigStringWithDefault("presets", "presets")
-		}
+		presetsDir = ConfigStringWithDefault("presetsdir", "presets")
 	}
 	return presetsDir
 }
