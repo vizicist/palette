@@ -12,11 +12,9 @@ glm::vec2 Sprite::vertexNoise()
 	float y = 0.0f;
 	if ( params.noisevertexx > 0.0f ) {
 		x = (float)(params.noisevertexx * RANDFLOAT * ((rand()%2)==0?1:-1));
-		NosuchDebug( "noise x=%f\n", x );
 	}
 	if ( params.noisevertexy > 0.0f ) {
 		y = (float)(params.noisevertexy * RANDFLOAT * ((rand()%2)==0?1:-1));
-		NosuchDebug( "noise y=%f\n", y );
 	}
 	return glm::vec2(x,y);
 }
