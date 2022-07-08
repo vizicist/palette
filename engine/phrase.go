@@ -1,9 +1,12 @@
 package engine
 
 import (
+	"bufio"
 	"fmt"
+	"io"
 	"log"
 	"math"
+	"strconv"
 	"strings"
 	"sync"
 )
@@ -238,43 +241,155 @@ func (n *Note) ToString() string {
 	return s
 }
 
-func NoteFromString(s string) (*Note, error) {
+// NoteFromString interprets keykit-like note strings
+func NoteFromString(s string) (note *Note, err error) {
 	if s == "" {
 		return nil, fmt.Errorf("NoteFromString: bad format - %s", s)
 	}
-	i := 0
 	ntype := "note"
-	switch s[i] {
-	case '+':
-		ntype = "noteon"
-		i++
-	case '-':
-		ntype = "noteoff"
-		i++
-	}
-	var pitch int
-	if s[i] == 'p' {
-		// scan number
-		log.Printf("NoteFromString: needs implementation here\n")
-		pitch = 33
-		i++
-	} else {
-		letters := map[string]int{"a": 0, "b": 1, "c": 2, "d": 3, "e": 4, "f": 5, "g": 6}
-		p, ok := letters[string(s[i])]
-		if !ok {
-			return nil, fmt.Errorf("NoteFromString: bad note letter - %s", s)
+	reader := strings.NewReader(s)
+	scanner := NewPhraseScanner(reader)
+	state := 0
+	npitch := -1
+	nflat := false
+	nsharp := false
+	noctave := 3 // Note: default octave is 3
+	nsound := ""
+	endstate := 99
+	nattribute := ""
+	for state != endstate {
+
+		// At the beginning (state 0) we only want 1 character
+		switch state {
+		case 0:
+			ch := scanner.ScanChar()
+			switch ch {
+			case "":
+				state = endstate
+			case "'":
+				continue
+			case "-":
+				ntype = "noteoff"
+				// stay in state 0
+			case "+":
+				ntype = "noteon"
+				// stay in state 0
+			case "p":
+				state = 1
+			case "c":
+				npitch = 24
+				state = 2
+			case "d":
+				npitch = 26
+				state = 2
+			case "e":
+				npitch = 28
+				state = 2
+			case "f":
+				npitch = 29
+				state = 2
+			case "g":
+				npitch = 31
+				state = 2
+			case "a":
+				npitch = 33
+				state = 2
+			case "b":
+				npitch = 35
+				state = 2
+			default:
+				return nil, fmt.Errorf("unexpected in Phrase: ch=%s", ch)
+			}
+
+		case 1: // after 'p'
+			npitch, err = scanner.ScanNumber()
+			if err != nil {
+				return nil, err
+			}
+			ch := scanner.ScanChar()
+			switch ch {
+			case "":
+				state = endstate
+			default:
+				nattribute = ch
+				state = 3
+			}
+
+		case 2: // after a note (a,b,c,d,...)
+			ch := scanner.ScanChar()
+			switch ch {
+			case "":
+				state = endstate
+			case "-":
+				nflat = true
+				// stay in state 2
+			case "+":
+				nsharp = true
+				// stay in state 2
+			case "o", "v", "t", "S": // octave
+				nattribute = ch
+				state = 3
+			default:
+				return nil, fmt.Errorf("unexpected char: ch=%s", ch)
+			}
+
+		case 3:
+			switch nattribute {
+			case "o":
+				noctave, err = scanner.ScanNumber()
+				if err != nil {
+					return nil, err
+				}
+
+			case "S": // sound
+				var tok Token
+				tok, nsound = scanner.ScanWord()
+				if tok != WORD {
+					return nil, fmt.Errorf("unexpected non-WORD: sound=%s", nsound)
+				}
+
+			case "v": // velocity
+				noctave, err = scanner.ScanNumber()
+				if err != nil {
+					return nil, err
+				}
+
+			case "t": // time
+				noctave, err = scanner.ScanNumber()
+				if err != nil {
+					return nil, err
+				}
+
+			default:
+				return nil, fmt.Errorf("bad attribute: %s", nattribute)
+			}
+			// read the next char, either another attribute, or end
+			nattribute = scanner.ScanChar()
+			if nattribute == "" || nattribute == "'" {
+				state = endstate
+			}
+
+		default:
+			return nil, fmt.Errorf("bad state: %d", state)
 		}
-		pitch = p
 	}
-	vel := 64
-	note := &Note{
-		Source:   "",           // might be based on (or equal to) NUID
-		TypeOf:   ntype,        // note, noteon, noteoff, controller, notebytes
-		Clicks:   0,            // nanoseconds
-		Duration: 0,            // nanoseconds, when it's a note
-		Pitch:    uint8(pitch), // 0-127
-		Velocity: uint8(vel),   // 0-127
-		Sound:    "",
+
+	if nflat {
+		npitch--
+	}
+	if nsharp {
+		npitch++
+	}
+	npitch = npitch + noctave*12
+	nvelocity := 64
+	note = &Note{
+		Source:   "",               // might be based on (or equal to) NUID
+		TypeOf:   ntype,            // note, noteon, noteoff, controller, notebytes
+		Clicks:   0,                // nanoseconds
+		Duration: 0,                // nanoseconds, when it's a note
+		Pitch:    uint8(npitch),    // 0-127
+		Velocity: uint8(nvelocity), // 0-127
+		Sound:    nsound,
 	}
 	return note, nil
 }
@@ -472,8 +587,136 @@ func (p *Phrase) InsertNoLock(note *Note) *Phrase {
 	return p
 }
 
+// Token is something returned by the PhraseScanner
+type Token int
+
+const (
+	EOF Token = iota
+	WORD
+	NUMBER
+	MINUS
+	PLUS
+	COMMA
+	SINGLEQUOTE
+	SPACE
+	UNKNOWN
+)
+
+func isWhitespace(ch rune) bool {
+	return ch == ' ' || ch == '\t' || ch == '\n'
+}
+
+func isWord(ch rune) bool {
+	return (ch >= 'a' && ch <= 'z') ||
+		(ch >= 'A' && ch <= 'Z') ||
+		(ch >= '0' && ch <= '9') ||
+		(ch == '_')
+
+}
+
+func isNumber(ch rune) bool {
+	return ch == '-' || (ch >= '0' && ch <= '9')
+}
+
 // InsertNote inserts a note into a Phrase
 // NOTE: it's assumed that the Phrase is already locked for writing.
 func (p *Phrase) InsertNote(nt *Note) *Phrase {
 	return p.InsertNoLock(nt)
+}
+
+// PhraseScanner represents a lexical scanner for phrase constants
+type PhraseScanner struct {
+	r *bufio.Reader
+}
+
+// NewScanner returns a new instance of Scanner.
+func NewPhraseScanner(r io.Reader) *PhraseScanner {
+	return &PhraseScanner{r: bufio.NewReader(r)}
+}
+
+// read reads the next rune from the bufferred reader.
+// Returns the rune(0) if an error occurs (or io.EOF is returned).
+func (s *PhraseScanner) read() rune {
+	ch, _, err := s.r.ReadRune()
+	if err != nil {
+		return rune(0)
+	}
+	return ch
+}
+
+// unread places the previously read rune back on the reader.
+func (s *PhraseScanner) unread() {
+	_ = s.r.UnreadRune()
+}
+
+func (s *PhraseScanner) ScanChar() string {
+	ch := s.read()
+	return string(ch)
+}
+
+func (s *PhraseScanner) ScanNumber() (int, error) {
+	tok, str := s.ScanWord()
+	if tok != NUMBER {
+		return 0, fmt.Errorf("unexpected non-NUMBER: str=%s", str)
+	}
+	n, err := strconv.Atoi(str)
+	if err != nil {
+		return 0, fmt.Errorf("bad NUMBER: str=%s", str)
+	}
+	return n, nil
+}
+
+// Scan returns the next token and literal value.
+func (s *PhraseScanner) ScanWord() (tok Token, lit string) {
+	// Read the next rune.
+	ch := s.read()
+
+	// If we see whitespace then consume all contiguous whitespace.
+	// If we see a letter then consume as an ident or reserved word.
+	if isWhitespace(ch) {
+		for {
+			ch = s.read()
+			if !isWhitespace(ch) {
+				s.unread()
+				break
+			}
+		}
+		return SPACE, ""
+	} else if isNumber(ch) {
+		word := string(ch)
+		for {
+			ch = s.read()
+			if !isNumber(ch) {
+				s.unread()
+				break
+			}
+			word += string(ch)
+		}
+		return NUMBER, word
+	} else if isWord(ch) {
+		word := string(ch)
+		for {
+			ch = s.read()
+			if !isWord(ch) {
+				s.unread()
+				break
+			}
+			word += string(ch)
+		}
+		return WORD, word
+	}
+
+	// Otherwise read the individual character.
+	switch ch {
+	case '\'':
+		return SINGLEQUOTE, "'"
+	case '-':
+		return MINUS, "-"
+	case '+':
+		return PLUS, "+"
+	case ',':
+		return COMMA, ","
+	default:
+		return UNKNOWN, string(ch)
+	}
 }
