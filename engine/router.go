@@ -1412,6 +1412,7 @@ func (r *Router) registerPlugin(pluginNUID string, pluginName string, events str
 	if err != nil {
 		return err
 	}
+	log.Printf("Router.registerPlugin: uid=%s name=%s events=%s\n", pluginNUID, pluginName, events)
 	p := r.NewPluginRef(pluginNUID, pluginName, bits)
 	go r.PluginForwarder(p)
 	r.plugin[pluginName] = p
@@ -1432,6 +1433,7 @@ func (r *Router) PluginForwarder(ref *PluginRef) {
 			log.Printf("PluginForwarder: unknown type received on forwardToPlugin\n")
 		}
 	}
+	log.Printf("PluginForwarder: ended for plugin=%s\n", ref.Name)
 }
 func events2bits(events string) (bits uint, err error) {
 	words := strings.Split(events, ",")

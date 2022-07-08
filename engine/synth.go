@@ -196,6 +196,8 @@ func SendNoteToSynth(note *Note) {
 		if (pluginRef.Events & EventNoteOutput) != 0 {
 			log.Printf("Engine is sending note=%s to plugin=%s\n", note, pluginRef.Name)
 			pluginRef.forwardToPlugin <- note
+		} else {
+			log.Printf("Engine is NOT sending note=%s to plugin=%s\n", note, pluginRef.Name)
 		}
 	}
 }

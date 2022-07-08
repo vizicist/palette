@@ -43,10 +43,13 @@ func PluginRegister(pluginNUID string, name string, eventTypes string, callback 
 	plugin := &Plugin{
 		callback: callback,
 	}
+	Plugins[pluginNUID] = plugin
 
 	subj := PluginSubject(pluginNUID)
-	log.Printf("RegisterPlugin: subj=%s\n", subj)
-	SubscribeNATS(subj, plugin.pluginCallback)
+
+	log.Printf("RegisterPlugin: nuid=%s subj=%s name=%s eventType=%s\n", pluginNUID, subj, name, eventTypes)
+
+	SubscribeNATS(subj, plugin.natsCallback)
 
 	params := "{ " +
 		"\"plugin\": \"" + name + "\", " +
@@ -62,22 +65,22 @@ func PluginRegister(pluginNUID string, name string, eventTypes string, callback 
 	return err
 }
 
-func (plugin *Plugin) pluginCallback(msg *nats.Msg) {
+func (plugin *Plugin) natsCallback(msg *nats.Msg) {
 	data := string(msg.Data)
 	args, err := StringMap(data)
 	if err != nil {
-		log.Printf("pluginCallback: err=%s\n", err)
+		log.Printf("natsCallback: err=%s\n", err)
 		return
 	}
-	notestr, err := needStringArg("note", "pluginCallback", args)
+	notestr, err := needStringArg("note", "natsCallback", args)
 	if err != nil {
-		log.Printf("pluginCallback: err=%s\n", err)
+		log.Printf("natsCallback: err=%s\n", err)
 		return
 	}
-	log.Printf("pluginCallback: notestr=%s\n", notestr)
+	log.Printf("natsCallback: notestr=%s\n", notestr)
 	note, err := NoteFromString(notestr)
 	if err != nil {
-		log.Printf("pluginCallback: bad notestr - %s\n", notestr)
+		log.Printf("natsCallback: bad notestr - %s\n", notestr)
 		return
 	}
 	plugin.callback("note", note)
