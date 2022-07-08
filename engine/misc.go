@@ -44,6 +44,7 @@ type debugFlags struct {
 	NATS      bool
 	Notify    bool
 	OSC       bool
+	Plugin    bool
 	Resolume  bool
 	Realtime  bool
 	Remote    bool
@@ -103,6 +104,8 @@ func setDebug(dtype string, b bool) error {
 		Debug.Remote = b
 	case "router":
 		Debug.Router = b
+	case "plugin":
+		Debug.Plugin = b
 	case "scale":
 		Debug.Scale = b
 	case "transpose":
