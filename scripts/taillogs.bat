@@ -1,3 +1,3 @@
 call setpalettelogdir
-pushd %PALETTELOGDIR%
+pushd "%PALETTELOGDIR%"
 tail -f *
