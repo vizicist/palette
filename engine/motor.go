@@ -163,7 +163,7 @@ func (motor *Motor) PassThruMIDI(e MidiEvent) {
 		return
 	}
 	if n != nil {
-		// log.Printf("PassThruMIDI sending note=%s\n", n)
+		// log.Printf("PassThruMIDI sending note=%v\n", *n)
 		motor.SendNoteToSynth(n)
 	}
 }

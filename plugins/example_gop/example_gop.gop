@@ -7,11 +7,12 @@ import (
 )
 
 func callback(eventType string, eventData string) {
-	log.Printf("hello: callback type=%s data=%s\n", eventType, eventData)
+	log.Printf("example_gop: callback type=%s data=%s\n", eventType, eventData)
 }
 
 func main() {
-	err := engine.Register("hello", engine.EventAll, callback)
+	engine.InitLog("example_gop")
+	plugin, err := engine.PluginRegister("all", callback)
 	if err != nil {
 		log.Printf("plugin.Register: err=%s\n", err)
 		return

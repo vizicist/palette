@@ -93,7 +93,7 @@ func NewSimpleCmd(subj string) Cmd {
 
 func NewNoteCmd(note *Note) Cmd {
 	values := make(map[string]string)
-	values["note"] = note.ToString()
+	values["note"] = note.String()
 	return Cmd{Subj: "note", Values: values}
 }
 
