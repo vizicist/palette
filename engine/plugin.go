@@ -6,63 +6,70 @@ import (
 	"time"
 
 	"github.com/nats-io/nats.go"
+	"github.com/nats-io/nuid"
 )
 
-// This package is the external interface to register Plugins
+// This package is the external interface that Plugins use
+// to register themselves, receive events, and do things
+// like play notes or spawn sprites.
+// Should probably be a separate package.
 
 type Plugin struct {
-	Name     string
-	Events   uint // see Event* bits
+	id       string
 	callback PluginCallback
 }
 
+// This allows for multiple plugins to be registered in a single
 var Plugins = make(map[string]*Plugin)
 
-func PluginSubject(pluginNUID string) string {
-	return fmt.Sprintf("plugin.input.%s", pluginNUID)
+func PluginInputSubject(id string) string {
+	return fmt.Sprintf("plugin.input.%s", id)
 }
 
-// Bits for Events
-const EventMidiInput = 0x01
-const EventNoteOutput = 0x02
-const EventCursor = 0x04
-const EventAll = EventMidiInput | EventNoteOutput | EventCursor
+func PluginOutputSubject(id string) string {
+	return fmt.Sprintf("plugin.output.%s", id)
+}
 
-type PluginCallback func(eventType string, eventData interface{})
+func (plugin *Plugin) ID() string {
+	return plugin.id
+}
+
+type PluginCallback func(pluginid string, eventType string, eventData interface{})
 
 // PluginRegister is intended for use by a plugin, in order to send
 // a message (api call) to the engine over NATS, telling the engine
 // to send particular event types to the named plugin.
-func PluginRegister(pluginNUID string, name string, eventTypes string, callback PluginCallback) error {
+func PluginRegister(eventTypes string, callback PluginCallback) (*Plugin, error) {
 
-	// equivalent to: palette register {name} {eventTypes}
-	_, ok := Plugins[pluginNUID]
+	pluginid := nuid.Next()
+	_, ok := Plugins[pluginid]
 	if ok {
-		return fmt.Errorf("PluginRegister: plugin %s is already registered", pluginNUID)
+		return nil, fmt.Errorf("PluginRegister: %s is already registered!?", pluginid)
 	}
 	plugin := &Plugin{
+		id:       pluginid,
 		callback: callback,
 	}
-	Plugins[pluginNUID] = plugin
+	Plugins[pluginid] = plugin
 
-	subj := PluginSubject(pluginNUID)
+	inputSubject := PluginInputSubject(pluginid)
 
-	log.Printf("RegisterPlugin: nuid=%s subj=%s name=%s eventType=%s\n", pluginNUID, subj, name, eventTypes)
+	log.Printf("PluginRegister: pluginid=%s subj=%s eventType=%s\n", pluginid, inputSubject, eventTypes)
 
-	SubscribeNATS(subj, plugin.natsCallback)
+	SubscribeNATS(inputSubject, plugin.natsCallback)
 
-	params := "{ " +
-		"\"plugin\": \"" + name + "\", " +
-		"\"events\": \"" + eventTypes + "\"" +
-		"}"
-	args := "{ " +
-		"\"nuid\": \"" + MyNUID() + "\", " +
-		"\"api\": \"" + "register" + "\", " +
-		"\"params\": \"" + jsonEscape(params) +
-		"\" }"
+	params := JsonObject(
+		"pluginid", pluginid,
+		"events", eventTypes,
+	)
+	args := JsonObject(
+		"nuid", MyNUID(),
+		"api", "register",
+		"params", jsonEscape(params),
+	)
 	timeout := 60 * time.Second
 	_, err := NATSRequest("palette.api", args, timeout)
-	return err
+	return plugin, err
 }
 
 func (plugin *Plugin) natsCallback(msg *nats.Msg) {
@@ -77,11 +84,39 @@ func (plugin *Plugin) natsCallback(msg *nats.Msg) {
 		log.Printf("natsCallback: err=%s\n", err)
 		return
 	}
-	log.Printf("natsCallback: notestr=%s\n", notestr)
+	// log.Printf("natsCallback: notestr=%s\n", notestr)
 	note, err := NoteFromString(notestr)
 	if err != nil {
 		log.Printf("natsCallback: bad notestr - %s\n", notestr)
 		return
 	}
-	plugin.callback("note", note)
+	plugin.callback(plugin.ID(), "note", note)
+}
+
+func JsonObject(args ...string) string {
+	if len(args)%2 != 0 {
+		log.Printf("ApiParams: odd number of arguments, args=%v\n", args)
+		return "{}"
+	}
+	params := ""
+	sep := ""
+	for n := range args {
+		if n%2 == 0 {
+			params = params + sep + "\"" + args[n] + "\": \"" + args[n+1] + "\""
+		}
+		sep = ", "
+	}
+	return "{" + params + "}"
+}
+
+// PlayNote is intended for use by a plugin, to play a Note
+func (plugin *Plugin) PlayNote(note *Note) error {
+
+	params := JsonObject("source", plugin.ID(), "note", note.String())
+	args := JsonObject(
+		"nuid", MyNUID(),
+		"api", "sound.playnote",
+		"params", jsonEscape(params),
+	)
+	return NATSPublish("palette.api", args)
 }

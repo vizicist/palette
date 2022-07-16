@@ -34,6 +34,12 @@ var currentClick Clicks
 var oneBeat Clicks
 var currentClickMutex sync.Mutex
 
+// Bits for Events
+const EventMidiInput = 0x01
+const EventNoteOutput = 0x02
+const EventCursor = 0x04
+const EventAll = EventMidiInput | EventNoteOutput | EventCursor
+
 func CurrentClick() Clicks {
 	currentClickMutex.Lock()
 	defer currentClickMutex.Unlock()
@@ -1383,18 +1389,16 @@ func (r *Router) availableRegion(source string) string {
 }
 
 type PluginRef struct {
-	pluginNUID      string
-	Name            string
+	pluginid        string
 	Events          uint // see Event* bits
 	Active          bool
 	forwardToPlugin chan interface{}
 	killme          bool
 }
 
-func (r *Router) NewPluginRef(pluginNUID string, name string, events uint) *PluginRef {
+func (r *Router) NewPluginRef(pluginid string, events uint) *PluginRef {
 	ref := &PluginRef{
-		pluginNUID:      pluginNUID,
-		Name:            name,
+		pluginid:        pluginid,
 		Events:          events,
 		Active:          false,
 		forwardToPlugin: make(chan interface{}),
@@ -1403,38 +1407,63 @@ func (r *Router) NewPluginRef(pluginNUID string, name string, events uint) *Plug
 	return ref
 }
 
-func (r *Router) registerPlugin(pluginNUID string, pluginName string, events string) error {
-	_, pok := r.plugin[pluginName]
+/*
+func (r *Router) pluginCallback(msg *nats.Msg) {
+	data := string(msg.Data)
+	log.Printf("Router.pluginCallback: data=%s\n", data)
+	args, err := StringMap(data)
+	if err != nil {
+		log.Printf("natsCallback: err=%s\n", err)
+		return
+	}
+	notestr, err := needStringArg("note", "pluginCallback", args)
+	if err != nil {
+		log.Printf("natsCallback: err=%s\n", err)
+		return
+	}
+	log.Printf("Router.pluginCallback: note=%s\n", notestr)
+}
+*/
+
+func (r *Router) registerPlugin(pluginid string, events string) error {
+	_, pok := r.plugin[pluginid]
 	if pok {
-		return fmt.Errorf("registerPlugin: there is already a plugin named %s", pluginName)
+		return fmt.Errorf("registerPlugin: there is already a plugin %s", pluginid)
 	}
 	bits, err := events2bits(events)
 	if err != nil {
 		return err
 	}
-	log.Printf("Router.registerPlugin: uid=%s name=%s events=%s\n", pluginNUID, pluginName, events)
-	p := r.NewPluginRef(pluginNUID, pluginName, bits)
+	log.Printf("Router.registerPlugin: pluginid=%s events=%s\n", pluginid, events)
+	p := r.NewPluginRef(pluginid, bits)
 	go r.PluginForwarder(p)
-	r.plugin[pluginName] = p
+	r.plugin[pluginid] = p
+
+	// Listen for NATS events from it
+	// SubscribeNATS(PluginInputSubject(pluginid), r.pluginCallback)
 	return nil
 }
 
 func (r *Router) PluginForwarder(ref *PluginRef) {
-	log.Printf("PluginForwarder: started for plugin=%s\n", ref.Name)
+	if Debug.Plugin {
+		log.Printf("PluginForwarder: plugin=%s started\n", ref.pluginid)
+	}
 	for !ref.killme {
 		// Read from forwardToPlugin and send to the plugin via NATS
 		msg := <-ref.forwardToPlugin
-		log.Printf("PluginForwarder: got msg=%v\n", msg)
 		switch note := msg.(type) {
 		case *Note:
-			log.Printf("PluginForwarder: plugin=%s toplugin note=%s\n", ref.Name, note)
-			PublishNote(ref, note, "output.engine")
+			if Debug.Plugin {
+				log.Printf("PluginForwarder: plugin=%s note=%v\n", ref.pluginid, *note)
+			}
+			PublishNote(PluginInputSubject(ref.pluginid), note, "output.engine")
 		default:
 			log.Printf("PluginForwarder: unknown type received on forwardToPlugin\n")
 		}
 	}
-	log.Printf("PluginForwarder: ended for plugin=%s\n", ref.Name)
+	log.Printf("PluginForwarder: plugin=%s ended\n", ref.pluginid)
 }
+
 func events2bits(events string) (bits uint, err error) {
 	words := strings.Split(events, ",")
 	for _, w := range words {
