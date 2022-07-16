@@ -45,8 +45,8 @@ func (r *Router) ExecuteAPI(api string, fromNUID string, rawargs string) (result
 		return "", SendLogs()
 
 	case "register":
-		// palette register {plugin} {events}
-		plugin, pok := apiargs["plugin"]
+		// palette register {pluginid} {events}
+		pluginid, pok := apiargs["pluginid"]
 		if !pok {
 			return "", fmt.Errorf("ExecuteAPI: missing plugin argument")
 		}
@@ -54,7 +54,7 @@ func (r *Router) ExecuteAPI(api string, fromNUID string, rawargs string) (result
 		if !eok {
 			return "", fmt.Errorf("ExecuteAPI: missing events argument")
 		}
-		err := r.registerPlugin(fromNUID, plugin, events)
+		err := r.registerPlugin(pluginid, events)
 		return "", err
 
 	default:
@@ -79,6 +79,8 @@ func (r *Router) ExecuteAPI(api string, fromNUID string, rawargs string) (result
 			return r.executeGlobalAPI(apisuffix, apiargs)
 		} else if apitype == "preset" {
 			return r.executePresetAPI(apisuffix, apiargs)
+		} else if apitype == "sound" {
+			return r.executeSoundAPI(apisuffix, apiargs)
 		} else {
 			return nil, fmt.Errorf("ExecuteAPI: unknown prefix on api=%s", api)
 		}
@@ -550,8 +552,8 @@ func (r *Router) executePresetAPI(api string, apiargs map[string]string) (result
 				return "", err
 			}
 			r.saveCurrentSnaps(regions)
-
 		} else {
+			// It's a region preset
 			motor, ok := r.motors[region]
 			if !ok {
 				return "", fmt.Errorf("ExecutePresetAPI, no region named %s", region)
@@ -561,8 +563,8 @@ func (r *Router) executePresetAPI(api string, apiargs map[string]string) (result
 			if err2 != nil {
 				log.Printf("error saving CurrentSnap, err=%s", err)
 			}
-			return "", err
 		}
+		return "", err
 
 	case "save":
 		preset, okpreset := apiargs["preset"]
@@ -585,7 +587,26 @@ func (r *Router) executePresetAPI(api string, apiargs map[string]string) (result
 
 	default:
 		log.Printf("Router.ExecuteAPI api=%s is not recognized\n", api)
-		err = fmt.Errorf("Router.ExecuteGlobalAPI unrecognized api=%s", api)
+		return "", fmt.Errorf("Router.ExecutePresetAPI unrecognized api=%s", api)
+	}
+}
+
+func (r *Router) executeSoundAPI(api string, apiargs map[string]string) (result string, err error) {
+
+	switch api {
+
+	case "playnote":
+		notestr, oknote := apiargs["note"]
+		if !oknote {
+			return "", fmt.Errorf("missing note parameter")
+		}
+		_ = notestr
+		log.Printf("sound.playnote API should be playing note=%s\n", notestr)
+		return "", nil
+
+	default:
+		log.Printf("Router.ExecuteAPI api=%s is not recognized\n", api)
+		err = fmt.Errorf("Router.ExecuteSoundAPI unrecognized api=%s", api)
 		result = ""
 	}
 
