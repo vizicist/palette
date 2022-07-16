@@ -45,21 +45,17 @@ func NATS() *paletteNATS {
 // PublishCursorDeviceEvent xxx
 func PublishCursorDeviceEvent(ce CursorDeviceEvent) error {
 	dt := time.Since(time0)
-	regionvalue := ""
-	if ce.Region != "" {
-		regionvalue = "\"region\": \"" + ce.Region + "\", "
-	}
-	event := "cursor_" + ce.Ddu
-	params := "{ " +
-		"\"nuid\": \"" + ce.NUID + "\", " +
-		"\"cid\": \"" + ce.CID + "\", " +
-		regionvalue +
-		"\"event\": \"" + event + "\", " +
-		"\"millisecs\": \"" + fmt.Sprintf("%d", dt.Milliseconds()) + "\", " +
-		"\"x\": \"" + fmt.Sprintf("%f", ce.X) + "\", " +
-		"\"y\": \"" + fmt.Sprintf("%f", ce.Y) + "\", " +
-		"\"z\": \"" + fmt.Sprintf("%f", ce.Z) + "\", " +
-		"\"area\": \"" + fmt.Sprintf("%f", ce.Area) + "\" }"
+	params := JsonObject(
+		"nuid", ce.NUID,
+		"cid", ce.CID,
+		"region", ce.Region,
+		"event", "cursor_"+ce.Ddu,
+		"millisecs", fmt.Sprintf("%d", dt.Milliseconds()),
+		"x", fmt.Sprintf("%f", ce.X),
+		"y", fmt.Sprintf("%f", ce.Y),
+		"z", fmt.Sprintf("%f", ce.Z),
+		"area", fmt.Sprintf("%f", ce.Area),
+	)
 
 	err := NATSPublish(PaletteEventSubject, params)
 	if err != nil {
@@ -74,14 +70,15 @@ func PublishMIDIDeviceEvent(me MIDIDeviceEvent) error {
 	// NOTE: we ignore the Timestamp on the MIDIDeviceEvent
 	// and use our own, so the timestamps are consistent with
 	// the ones on Cursor events
-	params := "{ " +
-		"\"nuid\": \"" + MyNUID() + "\", " +
-		"\"event\": \"" + "midi" + "\", " +
-		// "\"timestamp\": \"" + fmt.Sprintf("%d", me.Timestamp) + "\", " +
-		"\"millisecs\": \"" + fmt.Sprintf("%d", dt.Milliseconds()) + "\", " +
-		"\"status\": \"" + fmt.Sprintf("%d", me.Status) + "\", " +
-		"\"data1\": \"" + fmt.Sprintf("%d", me.Data1) + "\", " +
-		"\"data2\": \"" + fmt.Sprintf("%d", me.Data2) + "\" }"
+	params := JsonObject(
+		"nuid", MyNUID(),
+		"event", "midi",
+		// "timestamp", fmt.Sprintf("%d", me.Timestamp),
+		"millisecs", fmt.Sprintf("%d", dt.Milliseconds()),
+		"status", fmt.Sprintf("%d", me.Status),
+		"data1", fmt.Sprintf("%d", me.Data1),
+		"data2", fmt.Sprintf("%d", me.Data2),
+	)
 
 	err := NATSPublish(PaletteEventSubject, params)
 	if err != nil {
@@ -92,11 +89,12 @@ func PublishMIDIDeviceEvent(me MIDIDeviceEvent) error {
 
 // PublishSpriteEvent xxx
 func PublishSpriteEvent(x, y, z float32) error {
-	params := "{ " +
-		"\"nuid\": \"" + MyNUID() + "\", " +
-		"\"x\": \"" + fmt.Sprintf("%f", x) + "\", " +
-		"\"y\": \"" + fmt.Sprintf("%f", y) + "\", " +
-		"\"z\": \"" + fmt.Sprintf("%f", z) + "\" }"
+	params := JsonObject(
+		"nuid", MyNUID(),
+		"x", fmt.Sprintf("%f", x),
+		"y", fmt.Sprintf("%f", y),
+		"z", fmt.Sprintf("%f", z),
+	)
 
 	err := NATSPublish(PaletteEventSubject, params)
 	if err != nil {
@@ -107,13 +105,12 @@ func PublishSpriteEvent(x, y, z float32) error {
 
 // PublishAliveEvent xxx
 func PublishAliveEvent(secs float64, cursorCount int) error {
-	params := "{ " +
-		"\"nuid\": \"" + MyNUID() + "\", " +
-		"\"event\": \"" + "alive" + "\", " +
-		"\"seconds\": \"" + fmt.Sprintf("%f", secs) + "\", " +
-		"\"cursorcount\": \"" + fmt.Sprintf("%d", cursorCount) +
-		"\" }"
-
+	params := JsonObject(
+		"nuid", MyNUID(),
+		"event", "alive",
+		"seconds", fmt.Sprintf("%f", secs),
+		"cursorcount", fmt.Sprintf("%d", cursorCount),
+	)
 	err := NATSPublish(PaletteEventSubject, params)
 	if err != nil {
 		return err
@@ -122,17 +119,13 @@ func PublishAliveEvent(secs float64, cursorCount int) error {
 }
 
 // PublishNoteOutput xxx
-func PublishNote(ref *PluginRef, note *Note, source string) error {
-
-	notestr := note.ToString()
-	params := "{ " +
-		"\"nuid\": \"" + ref.pluginNUID + "\", " +
-		"\"source\": \"" + source + "\", " +
-		"\"note\": \"" + jsonEscape(notestr) + "\", " +
-		"\"clicks\": \"" + fmt.Sprintf("%d", note.Clicks) +
-		"\" }"
-
-	err := NATSPublish(PluginSubject(ref.pluginNUID), params)
+func PublishNote(subj string, note *Note, source string) error {
+	params := JsonObject(
+		"source", source,
+		"note", jsonEscape(note.String()),
+		"clicks", fmt.Sprintf("%d", note.Clicks),
+	)
+	err := NATSPublish(subj, params)
 	if err != nil {
 		return err
 	}
@@ -144,11 +137,11 @@ func PublishNote(ref *PluginRef, note *Note, source string) error {
 func EngineAPI(api, params string) (result string, err error) {
 	// Long timeout to better handle engine debugging
 	timeout := 60 * time.Second
-	args := "{ " +
-		"\"nuid\": \"" + MyNUID() + "\", " +
-		"\"api\": \"" + api + "\", " +
-		"\"params\": \"" + jsonEscape(params) +
-		"\" }"
+	args := JsonObject(
+		"nuid", MyNUID(),
+		"api", api,
+		"params", jsonEscape(params),
+	)
 	return NATSRequest("palette.api", args, timeout)
 }
 

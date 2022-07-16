@@ -223,9 +223,9 @@ func (n *Note) Copy() *Note {
 	return newn
 }
 
-// ToString produces a human-readable version of a Note.
+// String produces a human-readable version of a Note.
 // Note that it includes the surrounding quotes that make it look like a Phrase
-func (n *Note) ToString() string {
+func (n Note) String() string {
 
 	pitch := n.ReadablePitch()
 	if pitch == "" {

@@ -194,10 +194,9 @@ func SendNoteToSynth(note *Note) {
 	// go through Plugins and send the Note
 	for _, pluginRef := range oneRouter.plugin {
 		if (pluginRef.Events & EventNoteOutput) != 0 {
-			log.Printf("Engine is sending note=%s to plugin=%s\n", note, pluginRef.Name)
 			pluginRef.forwardToPlugin <- note
 		} else {
-			log.Printf("Engine is NOT sending note=%s to plugin=%s\n", note, pluginRef.Name)
+			log.Printf("Engine is NOT sending note=%v to plugin=%s\n", *note, pluginRef.pluginid)
 		}
 	}
 }
