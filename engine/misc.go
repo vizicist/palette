@@ -135,7 +135,7 @@ func BoundAndScaleFloat(v, vmin, vmax, outmin, outmax float32) float32 {
 
 // InitDebug xxx
 func InitDebug() {
-	debug := ConfigValue("debug")
+	debug := ConfigValueWithDefault("debug", "")
 	darr := strings.Split(debug, ",")
 	for _, d := range darr {
 		if d != "" {
@@ -574,6 +574,10 @@ var configMutex sync.Mutex
 
 // ConfigValue returns "" if there's no value.  I.e. "" and 'no value' are identical
 func ConfigValue(nm string) string {
+	return ConfigValueWithDefault(nm, "")
+}
+
+func ConfigValueWithDefault(nm string, dflt string) string {
 
 	configMutex.Lock()
 	defer configMutex.Unlock()
@@ -593,7 +597,7 @@ func ConfigValue(nm string) string {
 		return val
 	}
 	// log.Printf("There is no config value named '%s'", nm)
-	return ""
+	return dflt
 }
 
 func needFloatArg(nm string, api string, args map[string]string) (float32, error) {

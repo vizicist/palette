@@ -318,7 +318,7 @@ func NoteFromString(s string) (note *Note, err error) {
 		case 2: // after a note (a,b,c,d,...)
 			ch := scanner.ScanChar()
 			switch ch {
-			case "":
+			case "", "\x00":
 				state = endstate
 			case "-":
 				nflat = true
@@ -334,6 +334,8 @@ func NoteFromString(s string) (note *Note, err error) {
 			}
 
 		case 3:
+			// we've seen a note attribute,
+			// now scan whatever comes after it.
 			switch nattribute {
 			case "o":
 				noctave, err = scanner.ScanNumber()
