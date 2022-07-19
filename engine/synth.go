@@ -52,7 +52,7 @@ func InitSynths() {
 	}
 	json.Unmarshal(bytes, &jsynths)
 
-	synthoutput := ConfigBool("generatesound")
+	synthoutput := ConfigBoolWithDefault("generatesound", true)
 
 	for i := range jsynths.Synths {
 		nm := jsynths.Synths[i].Name
@@ -98,6 +98,10 @@ func SendANOToSynth(synthName string) {
 		// synth named synthName has already been logged.
 		return
 	}
+	if synth.midiOut.stream == nil {
+		log.Printf("SendANOToSynth: no stream for synth=%s\n", synthName)
+		return
+	}
 	status := 0xb0 | (synth.channel - 1)
 	for i := range synth.noteDown {
 		synth.noteDown[i] = false
@@ -106,10 +110,14 @@ func SendANOToSynth(synthName string) {
 	synth.midiOut.stream.WriteShort(int64(status), int64(0x7b), int64(0x00))
 }
 
-func SendControllerToSynth(sound string, cnum int, cval int) {
-	synth, ok := Synths[sound]
+func SendControllerToSynth(synthName string, cnum int, cval int) {
+	synth, ok := Synths[synthName]
 	if !ok {
-		log.Printf("SendNoteToSynth: no such synth - %s\n", sound)
+		log.Printf("SendNoteToSynth: no such synth - %s\n", synthName)
+		return
+	}
+	if synth.midiOut.stream == nil {
+		log.Printf("SendANOToSynth: no stream for synth=%s\n", synthName)
 		return
 	}
 	e := portmidi.Event{
@@ -131,15 +139,19 @@ func SendControllerToSynth(sound string, cnum int, cval int) {
 
 // SendNote sends MIDI output for a Note
 func SendNoteToSynth(note *Note) {
-	sound := note.Sound
-	synth, ok := Synths[sound]
+	synthName := note.Sound
+	synth, ok := Synths[synthName]
 	if !ok {
-		log.Printf("SendNoteToSynth: no such synth - %s\n", sound)
+		log.Printf("SendNoteToSynth: no such synth - %s\n", synthName)
 		return
 	}
 	if synth == nil {
 		// We don't complain, we assume the inability to open the
 		// synth named synthName has already been logged.
+		return
+	}
+	if synth.midiOut.stream == nil {
+		log.Printf("SendANOToSynth: no stream for synth=%s\n", synthName)
 		return
 	}
 	e := portmidi.Event{
@@ -191,12 +203,5 @@ func SendNoteToSynth(note *Note) {
 	}
 	synth.midiOut.stream.WriteShort(e.Status, e.Data1, e.Data2)
 
-	// go through Plugins and send the Note
-	for _, pluginRef := range oneRouter.plugin {
-		if (pluginRef.Events & EventNoteOutput) != 0 {
-			pluginRef.forwardToPlugin <- note
-		} else {
-			log.Printf("Engine is NOT sending note=%v to plugin=%s\n", *note, pluginRef.pluginid)
-		}
-	}
+	PublishNoteEvent(PaletteOutputEventSubject, note, "engine")
 }

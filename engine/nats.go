@@ -11,8 +11,11 @@ import (
 // PaletteAPISubject xxx
 var PaletteAPISubject = "palette.api"
 
-// PaletteEventSubject xxx
-var PaletteEventSubject = "palette.event"
+// PaletteOutputEventSubject xxx
+var PaletteOutputEventSubject = "palette.output.event"
+
+// PaletteInputEventSubject xxx
+var PaletteInputEventSubject = "palette.input.event"
 
 // PaletteNote messages are sent from the engine to plugins for output notes.
 // and also from plugins to the engine in order to play them (somehow avoiding recursion)
@@ -43,10 +46,10 @@ func NATS() *paletteNATS {
 }
 
 // PublishCursorDeviceEvent xxx
-func PublishCursorDeviceEvent(ce CursorDeviceEvent) error {
+func PublishCursorDeviceEvent(subj string, ce CursorDeviceEvent) error {
 	dt := time.Since(time0)
 	params := JsonObject(
-		"nuid", ce.NUID,
+		// "nuid", ce.NUID,
 		"cid", ce.CID,
 		"region", ce.Region,
 		"event", "cursor_"+ce.Ddu,
@@ -57,7 +60,7 @@ func PublishCursorDeviceEvent(ce CursorDeviceEvent) error {
 		"area", fmt.Sprintf("%f", ce.Area),
 	)
 
-	err := NATSPublish(PaletteEventSubject, params)
+	err := NATSPublish(subj, params)
 	if err != nil {
 		return err
 	}
@@ -65,13 +68,13 @@ func PublishCursorDeviceEvent(ce CursorDeviceEvent) error {
 }
 
 // PublishMIDIDeviceEvent xxx
-func PublishMIDIDeviceEvent(me MIDIDeviceEvent) error {
+func PublishMIDIDeviceEvent(subj string, me MIDIDeviceEvent) error {
 	dt := time.Since(time0)
 	// NOTE: we ignore the Timestamp on the MIDIDeviceEvent
 	// and use our own, so the timestamps are consistent with
 	// the ones on Cursor events
 	params := JsonObject(
-		"nuid", MyNUID(),
+		// "nuid", MyNUID(),
 		"event", "midi",
 		// "timestamp", fmt.Sprintf("%d", me.Timestamp),
 		"millisecs", fmt.Sprintf("%d", dt.Milliseconds()),
@@ -80,7 +83,7 @@ func PublishMIDIDeviceEvent(me MIDIDeviceEvent) error {
 		"data2", fmt.Sprintf("%d", me.Data2),
 	)
 
-	err := NATSPublish(PaletteEventSubject, params)
+	err := NATSPublish(subj, params)
 	if err != nil {
 		return err
 	}
@@ -88,15 +91,16 @@ func PublishMIDIDeviceEvent(me MIDIDeviceEvent) error {
 }
 
 // PublishSpriteEvent xxx
-func PublishSpriteEvent(x, y, z float32) error {
+func PublishSpriteEvent(subj string, x, y, z float32) error {
 	params := JsonObject(
-		"nuid", MyNUID(),
+		// "nuid", MyNUID(),
+		"event", "sprite",
 		"x", fmt.Sprintf("%f", x),
 		"y", fmt.Sprintf("%f", y),
 		"z", fmt.Sprintf("%f", z),
 	)
 
-	err := NATSPublish(PaletteEventSubject, params)
+	err := NATSPublish(subj, params)
 	if err != nil {
 		return err
 	}
@@ -104,24 +108,25 @@ func PublishSpriteEvent(x, y, z float32) error {
 }
 
 // PublishAliveEvent xxx
-func PublishAliveEvent(secs float64, cursorCount int) error {
+func PublishAliveEvent(subj string, secs float64, cursorCount int) error {
 	params := JsonObject(
-		"nuid", MyNUID(),
+		// "nuid", MyNUID(),
 		"event", "alive",
 		"seconds", fmt.Sprintf("%f", secs),
 		"cursorcount", fmt.Sprintf("%d", cursorCount),
 	)
-	err := NATSPublish(PaletteEventSubject, params)
+	err := NATSPublish(subj, params)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-// PublishNoteOutput xxx
-func PublishNote(subj string, note *Note, source string) error {
+// PublishNoteEvent xxx
+func PublishNoteEvent(subj string, note *Note, source string) error {
 	params := JsonObject(
 		"source", source,
+		"event", "note",
 		"note", jsonEscape(note.String()),
 		"clicks", fmt.Sprintf("%d", note.Clicks),
 	)
@@ -138,7 +143,7 @@ func EngineAPI(api, params string) (result string, err error) {
 	// Long timeout to better handle engine debugging
 	timeout := 60 * time.Second
 	args := JsonObject(
-		"nuid", MyNUID(),
+		// "nuid", MyNUID(),
 		"api", api,
 		"params", jsonEscape(params),
 	)

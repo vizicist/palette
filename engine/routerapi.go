@@ -44,19 +44,6 @@ func (r *Router) ExecuteAPI(api string, fromNUID string, rawargs string) (result
 	case "sendlogs":
 		return "", SendLogs()
 
-	case "register":
-		// palette register {pluginid} {events}
-		pluginid, pok := apiargs["pluginid"]
-		if !pok {
-			return "", fmt.Errorf("ExecuteAPI: missing plugin argument")
-		}
-		events, eok := apiargs["events"]
-		if !eok {
-			return "", fmt.Errorf("ExecuteAPI: missing events argument")
-		}
-		err := r.registerPlugin(pluginid, events)
-		return "", err
-
 	default:
 		words := strings.Split(api, ".")
 		// Singlw-word APIs are region-specific
@@ -389,7 +376,7 @@ func (r *Router) executeGlobalAPI(api string, apiargs map[string]string) (result
 			Data1:     0x10,
 			Data2:     0x10,
 		}
-		eee := PublishMIDIDeviceEvent(me)
+		eee := PublishMIDIDeviceEvent(PaletteOutputEventSubject, me)
 		if eee != nil {
 			log.Printf("InputListener: me=%+v err=%s\n", me, eee)
 		}

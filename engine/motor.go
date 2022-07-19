@@ -575,13 +575,6 @@ func (motor *Motor) clearGraphics() {
 	motor.toFreeFramePluginForLayer(osc.NewMessage("/clear"))
 }
 
-func (motor *Motor) publishSprite(id string, x, y, z float32) {
-	err := PublishSpriteEvent(x, y, z)
-	if err != nil {
-		log.Printf("publishSprite: err=%s\n", err)
-	}
-}
-
 func (motor *Motor) generateSprite(id string, x, y, z float32) {
 	if !TheRouter().generateVisuals {
 		return
@@ -1460,6 +1453,5 @@ func (motor *Motor) sendPadOneEffectOnOff(effectName string, onoff bool) {
 
 // This silliness is to avoid unused function errors from go-staticcheck
 var ss *Motor
-var _ = ss.publishSprite
 var _ = ss.cursorToDuration
 var _ = ss.loopQuant

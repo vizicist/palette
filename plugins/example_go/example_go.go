@@ -6,41 +6,54 @@ import (
 	"github.com/vizicist/palette/engine"
 )
 
-var Plugins = make(map[string]*engine.Plugin)
+func xyzToNote(x, y, z float32) *engine.Note {
+	pitch := int(x * 127.0)
+	_ = x
+	_ = y
+	_ = z
+	_ = pitch
+	s := "+b"
+	note, err := engine.NoteFromString((s))
+	if err != nil {
+		log.Printf("xyzToNote: bad note - %s\n", s)
+		note, _ = engine.NoteFromString("+a")
+	}
+	return note
+}
 
-func callback(pluginid string, eventType string, eventData interface{}) {
-	plugin, ok := Plugins[pluginid]
-	if !ok {
-		log.Printf("callback: no plugin %s\n", pluginid)
+func callback(args map[string]string) {
+	log.Printf("callback: args=%s\n", args)
+	eventType := args["event"]
+	if eventType == "" {
+		log.Printf("callback: No event value!?\n")
 		return
 	}
-	switch data := eventData.(type) {
-	case *engine.Note:
-		note := data
-		log.Printf("callbackNote: source=%s sound=%s\n", note.Source, note.Sound)
-		note.Pitch++
-		err := plugin.PlayNote(note)
+	switch eventType {
+	case "cursor_down":
+		// source := args["source"]
+		x, y, z, err := engine.GetArgsXYZ(args)
 		if err != nil {
-			log.Printf("example_go: PlayNote err=%s\n", err)
+			log.Printf("callback: bad xyz, err=%s\n", err)
+			return
+		}
+		note := xyzToNote(x, y, z)
+		log.Printf("callback: note=%s\n", note.String())
+		err = engine.PublishNoteEvent(engine.PaletteInputEventSubject, note, "example_go")
+		if err != nil {
+			log.Printf("callback: PlayNote err=%s\n", err)
 		}
 	default:
-		log.Printf("example_go: UNRECOGNIZED DATA ! data=%+v\n", eventData)
+		log.Printf("callback: ignoring eventType=%s\n", eventType)
+		return
 	}
 }
 
 func main() {
 	engine.InitLog("example_go")
-	plugin, err := engine.PluginRegister("all", callback)
+	err := engine.PluginRunForever(callback)
 	if err != nil {
-		log.Printf("Unable to register plugin?\n")
-		return
+		log.Printf("PluginRunForever: err=%s\n", err)
+	} else {
+		log.Printf("PluginRunForever: stoppeed\n")
 	}
-	Plugins[plugin.ID()] = plugin
-	log.Printf("plugin: registered pluginid=%s\n", plugin.ID())
-	if err != nil {
-		log.Printf("plugin.Register: err=%s\n", err)
-		return
-	}
-	log.Printf("plugin: blocking forever\n")
-	select {} // block forever
 }

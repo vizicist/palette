@@ -269,7 +269,7 @@ def boolValueOfString(v):
     return True if (v!=0 and v!="0" and v!="off" and v!="false" and v!="False") else False
 
 ApiLock = threading.Lock()
-PythonNUID = MyNUID() + "_python"
+PythonNUID = MyNUID()  #  + "_python"
 
 def palette_api(api, params=None):
 
@@ -429,7 +429,7 @@ def SendCursorEvent(cid,ddu,x,y,z,region="A"):
         "\"region\": \"" + region + "\", " + \
         "\"event\": \"" + event + "\", " + \
         "\"x\": \"%f\", \"y\": \"%f\", \"z\": \"%f\" }")  % (x,y,z)
-    palette_publish("palette.event",e)
+    palette_publish("palette.output.event",e)
 
 def SendSpriteEvent(cid,x,y,z,region="A"):
     event = "sprite"
@@ -438,7 +438,7 @@ def SendSpriteEvent(cid,x,y,z,region="A"):
         "\"region\": \"" + region + "\", " + \
         "\"event\": \"" + event + "\", " + \
         "\"x\": \"%f\", \"y\": \"%f\", \"z\": \"%f\" }")  % (x,y,z)
-    palette_publish("palette.event",e)
+    palette_publish("palette.output.event",e)
 
 def SendMIDIEvent(device,timesofar,msg,region="A"):
     bytestr = "0x"
@@ -453,19 +453,19 @@ def SendMIDIEvent(device,timesofar,msg,region="A"):
         "\"bytes\": \"%s\" }") % \
             (PythonNUID, device, timesofar, bytestr)
 
-    palette_publish("palette.event",e)
+    palette_publish("palette.output.event",e)
 
 def SendMIDITimeReset():
     e = ("{ \"nuid\": \"%s\", " + \
         "\"event\": \"midi_reset\" }") % \
             (PythonNUID)
-    palette_publish("palette.event",e)
+    palette_publish("palette.output.event",e)
 
 def SendMIDIAudioReset():
     e = ("{ \"nuid\": \"%s\", " + \
         "\"event\": \"audio_reset\" }") % \
             (PythonNUID)
-    palette_publish("palette.event",e)
+    palette_publish("palette.output.event",e)
 
 def IgnoreKeyboardInterrupt():
     """

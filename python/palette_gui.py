@@ -2577,7 +2577,7 @@ async def nats_listen_for_palette(loop,app):
         # log("Received a message on '{subject} {reply}': {data}".format(
         #     subject=subject, reply=reply, data=data))
 
-        if subject == "palette.event":
+        if subject == "palette.output.event":
             j = json.loads(data)
             event = j["event"]
             if event == "alive":
@@ -2590,7 +2590,7 @@ async def nats_listen_for_palette(loop,app):
 
 
     # "*" matches any token, at any level of the subject.
-    await nc.subscribe("palette.event", cb=palette_event_handler)
+    await nc.subscribe("palette.output.event", cb=palette_event_handler)
 
     # WAIT FOR INCOMING MESSAGES
     while KillNATS == False:

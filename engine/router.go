@@ -2,7 +2,6 @@ package engine
 
 import (
 	"bufio"
-	"encoding/hex"
 	"fmt"
 	"io"
 	"log"
@@ -108,7 +107,6 @@ type Router struct {
 	regionAssignedToNUID map[string]string
 	regionAssignedMutex  sync.RWMutex // covers both regionForMorph and regionAssignedToNUID
 	eventMutex           sync.RWMutex
-	plugin               map[string]*PluginRef
 }
 
 // OSCEvent is an OSC message
@@ -197,7 +195,6 @@ func TheRouter() *Router {
 		oneRouter.regionAssignedToNUID = make(map[string]string)
 		oneRouter.block = make(map[string]Block)
 		oneRouter.blockContext = make(map[string]*EContext)
-		oneRouter.plugin = make(map[string]*PluginRef)
 
 		resolumePort := 7000
 		guiPort := 3943
@@ -244,10 +241,10 @@ func TheRouter() *Router {
 			oneRouter.myHostname = hostname
 		}
 
-		oneRouter.publishCursor = ConfigBool("publishcursor")
-		oneRouter.publishMIDI = ConfigBool("publishmidi")
-		oneRouter.generateVisuals = ConfigBool("generatevisuals")
-		oneRouter.generateSound = ConfigBool("generatesound")
+		oneRouter.publishCursor = ConfigBoolWithDefault("publishcursor", true)
+		oneRouter.publishMIDI = ConfigBoolWithDefault("publishmidi", true)
+		oneRouter.generateVisuals = ConfigBoolWithDefault("generatevisuals", true)
+		oneRouter.generateSound = ConfigBoolWithDefault("generatesound", true)
 
 		for _, motor := range oneRouter.motors {
 			motor.restoreCurrentSnap()
@@ -313,9 +310,6 @@ func (r *Router) StartOSC(source string) {
 // StartNATSClient xxx
 func (r *Router) StartNATSClient() {
 
-	// ConnectToNATSServer()
-	// Hand all NATS messages to HandleAPI
-
 	log.Printf("StartNATS: Subscribing to %s\n", PaletteAPISubject)
 	SubscribeNATS(PaletteAPISubject, func(msg *nats.Msg) {
 		data := string(msg.Data)
@@ -323,16 +317,16 @@ func (r *Router) StartNATSClient() {
 		msg.Respond([]byte(response))
 	})
 
-	log.Printf("StartNATS: subscribing to %s\n", PaletteEventSubject)
-	SubscribeNATS(PaletteEventSubject, func(msg *nats.Msg) {
+	log.Printf("StartNATS: subscribing to %s\n", PaletteInputEventSubject)
+	SubscribeNATS(PaletteInputEventSubject, func(msg *nats.Msg) {
 		data := string(msg.Data)
 		args, err := StringMap(data)
 		if err != nil {
-			log.Printf("HandleSubscribedEvent: err=%s\n", err)
+			log.Printf("PaletteInputEvent: err=%s\n", err)
 		}
-		err = r.HandleEvent(args)
+		err = r.HandleInputEvent(args)
 		if err != nil {
-			log.Printf("HandleSubscribedEvent: err=%s\n", err)
+			log.Printf("HandleInputEvent: err=%s\n", err)
 		}
 	})
 }
@@ -385,7 +379,7 @@ func (r *Router) StartRealtime() {
 		// with a cursorCount since the last one
 		if int(secs) > nextAliveSecs {
 			nextAliveSecs += aliveIntervalSeconds
-			PublishAliveEvent(secs, r.cursorCount)
+			PublishAliveEvent(PaletteOutputEventSubject, secs, r.cursorCount)
 			r.cursorCount = 0
 		}
 
@@ -486,7 +480,7 @@ func (r *Router) InputListener() {
 						Data1:     event.Data1,
 						Data2:     event.Data2,
 					}
-					err := PublishMIDIDeviceEvent(me)
+					err := PublishMIDIDeviceEvent(PaletteOutputEventSubject, me)
 					if err != nil {
 						log.Printf("InputListener: me=%+v err=%s\n", me, err)
 					}
@@ -506,8 +500,8 @@ func (r *Router) InputListener() {
 	log.Printf("InputListener is being killed\n")
 }
 
-// HandleSubscribedEventArgs xxx
-func (r *Router) HandleEvent(args map[string]string) error {
+// HandleInputEvent xxx
+func (r *Router) HandleInputEvent(args map[string]string) error {
 
 	r.eventMutex.Lock()
 	defer r.eventMutex.Unlock()
@@ -518,13 +512,6 @@ func (r *Router) HandleEvent(args map[string]string) error {
 	if err != nil {
 		return err
 	}
-
-	/*
-		// Ignore anything from myself
-		if fromNUID == MyNUID() {
-			return nil
-		}
-	*/
 
 	event, err := needStringArg("event", "HandleEvent", args)
 	if err != nil {
@@ -557,10 +544,12 @@ func (r *Router) HandleEvent(args map[string]string) error {
 
 	case "cursor_down", "cursor_drag", "cursor_up":
 
-		// If we're publishing cursor events, we ignore ones from ourself
-		if r.publishCursor && fromNUID == MyNUID() {
-			return nil
-		}
+		/*
+			// If we're publishing cursor events, we ignore ones from ourself
+			if r.publishCursor && fromNUID == MyNUID() {
+				return nil
+			}
+		*/
 
 		cid := optionalStringArg("cid", args, "UnspecifiedCID")
 
@@ -571,7 +560,7 @@ func (r *Router) HandleEvent(args map[string]string) error {
 			return fmt.Errorf("handleSubscribedEvent: Unexpected cursor event type: %s", subEvent)
 		}
 
-		x, y, z, err := r.getXYZ("handleSubscribedEvent", args)
+		x, y, z, err := GetArgsXYZ(args)
 		if err != nil {
 			return err
 		}
@@ -588,19 +577,11 @@ func (r *Router) HandleEvent(args map[string]string) error {
 			Area:      0.0,
 		}
 
-		if r.publishCursor {
-			err := PublishCursorDeviceEvent(ce)
-			if err != nil {
-				log.Printf("Router.routeCursorDeviceEvent: NATS publishing err=%s\n", err)
-			}
-		}
-
-		motor.handleCursorDeviceEvent(ce)
+		r.handleCursorDeviceEvent(ce, motor)
 
 	case "sprite":
 
-		api := "event.sprite"
-		x, y, z, err := r.getXYZ(api, args)
+		x, y, z, err := GetArgsXYZ(args)
 		if err != nil {
 			return nil
 		}
@@ -615,21 +596,23 @@ func (r *Router) HandleEvent(args map[string]string) error {
 		log.Printf("HandleEvent: audio_reset!!\n")
 		go r.audioReset()
 
-	case "midi":
-		// If we're publishing midi events, we ignore ones from ourself
-		if r.publishMIDI && fromNUID == MyNUID() {
-			return nil
-		}
+		/*
+			case "midi":
+				// If we're publishing midi events, we ignore ones from ourself
+				if r.publishMIDI && fromNUID == MyNUID() {
+					return nil
+				}
 
-		bytes, err := needStringArg("bytes", "HandleEvent", args)
-		if err != nil {
-			return err
-		}
-		me, err := r.makeMIDIEvent("subscribed", bytes, args)
-		if err != nil {
-			return err
-		}
-		motor.HandleMIDIInput(*me)
+				bytes, err := needStringArg("bytes", "HandleEvent", args)
+				if err != nil {
+					return err
+				}
+				me, err := r.makeMIDIEvent("subscribed", bytes, args)
+				if err != nil {
+					return err
+				}
+				motor.HandleMIDIInput(*me)
+		*/
 	}
 
 	return nil
@@ -640,22 +623,28 @@ func (r *Router) handleCursorDeviceInput(e CursorDeviceEvent) {
 	r.eventMutex.Lock()
 	defer r.eventMutex.Unlock()
 
-	if r.publishCursor {
-		err := PublishCursorDeviceEvent(e)
-		if err != nil {
-			log.Printf("Router.routeCursorDeviceEvent: NATS publishing err=%s\n", err)
-		}
-	}
+	r.cursorCount++
 
 	motor, ok := r.motors[e.Region]
 	if !ok {
 		log.Printf("routeCursorDeviceEvent: no region named %s, unable to process ce=%+v\n", e.Region, e)
 		return
 	}
-	r.cursorCount++
-	motor.handleCursorDeviceEvent(e)
+
+	r.handleCursorDeviceEvent(e, motor)
 }
 
+func (r *Router) handleCursorDeviceEvent(ce CursorDeviceEvent, motor *Motor) {
+	if r.publishCursor {
+		err := PublishCursorDeviceEvent(PaletteOutputEventSubject, ce)
+		if err != nil {
+			log.Printf("Router.routeCursorDeviceEvent: NATS publishing err=%s\n", err)
+		}
+	}
+	motor.handleCursorDeviceEvent(ce)
+}
+
+/*
 // makeMIDIEvent xxx
 func (r *Router) makeMIDIEvent(source string, bytes string, args map[string]string) (*MidiEvent, error) {
 
@@ -724,9 +713,11 @@ func (r *Router) makeMIDIEvent(source string, bytes string, args map[string]stri
 
 	return event, nil
 }
+*/
 
-func (r *Router) getXYZ(api string, args map[string]string) (x, y, z float32, err error) {
+func GetArgsXYZ(args map[string]string) (x, y, z float32, err error) {
 
+	api := "GetArgsXYZ"
 	x, err = needFloatArg("x", api, args)
 	if err != nil {
 		return x, y, z, err
@@ -1162,7 +1153,7 @@ func (r *Router) handleMMTTCursor(msg *osc.Message) {
 	motor, mok := r.motors[region]
 	if !mok {
 		// If it's not a region, it's a button.
-		buttonDepth := ConfigFloatWithDefault("mmttbuttondepth", 0.05)
+		buttonDepth := ConfigFloatWithDefault("mmttbuttondepth", 0.002)
 		if z > buttonDepth {
 			log.Printf("NOT triggering button too deep z=%f buttonDepth=%f\n", z, buttonDepth)
 			return
@@ -1187,15 +1178,16 @@ func (r *Router) handleMMTTCursor(msg *osc.Message) {
 		Z:         z,
 		Area:      0.0,
 	}
+
 	// XXX - HACK!!
-	zfactor := ConfigFloatWithDefault("mmttzfactor", 3.0)
-	ahack := ConfigFloatWithDefault("mmttahack", 1.0)
+	zfactor := ConfigFloatWithDefault("mmttzfactor", 5.0)
+	ahack := ConfigFloatWithDefault("mmttahack", 20.0)
 	ce.Z = boundval(ahack * zfactor * ce.Z)
 
-	xexpand := ConfigFloatWithDefault("mmttxexpand", 1.0)
+	xexpand := ConfigFloatWithDefault("mmttxexpand", 1.25)
 	ce.X = boundval(((ce.X - 0.5) * xexpand) + 0.5)
 
-	yexpand := ConfigFloatWithDefault("mmttyexpand", 1.0)
+	yexpand := ConfigFloatWithDefault("mmttyexpand", 1.25)
 	ce.Y = boundval(((ce.Y - 0.5) * yexpand) + 0.5)
 
 	if Debug.MMTT && Debug.Cursor {
@@ -1244,7 +1236,7 @@ func (r *Router) handleOSCEvent(msg *osc.Message) {
 		return
 	}
 
-	err = r.HandleEvent(args)
+	err = r.HandleInputEvent(args)
 	if err != nil {
 		log.Printf("Router.handleOSCEvent: err=%s\n", err)
 		return
@@ -1291,7 +1283,7 @@ func (r *Router) handlePatchXREvent(msg *osc.Message) {
 		return
 	}
 
-	err = r.HandleEvent(args)
+	err = r.HandleInputEvent(args)
 	if err != nil {
 		log.Printf("Router.handlePatchXREvent: err=%s\n", err)
 		return
@@ -1325,7 +1317,7 @@ func (r *Router) handleOSCSpriteEvent(msg *osc.Message) {
 		return
 	}
 
-	err = r.HandleEvent(args)
+	err = r.HandleInputEvent(args)
 	if err != nil {
 		log.Printf("Router.handleOSCSpriteEvent: err=%s\n", err)
 		return
@@ -1386,101 +1378,6 @@ func (r *Router) availableRegion(source string) string {
 		log.Printf("Router.assignRegion: No regions available\n")
 	}
 	return ""
-}
-
-type PluginRef struct {
-	pluginid        string
-	Events          uint // see Event* bits
-	Active          bool
-	forwardToPlugin chan interface{}
-	killme          bool
-}
-
-func (r *Router) NewPluginRef(pluginid string, events uint) *PluginRef {
-	ref := &PluginRef{
-		pluginid:        pluginid,
-		Events:          events,
-		Active:          false,
-		forwardToPlugin: make(chan interface{}),
-		killme:          false,
-	}
-	return ref
-}
-
-/*
-func (r *Router) pluginCallback(msg *nats.Msg) {
-	data := string(msg.Data)
-	log.Printf("Router.pluginCallback: data=%s\n", data)
-	args, err := StringMap(data)
-	if err != nil {
-		log.Printf("natsCallback: err=%s\n", err)
-		return
-	}
-	notestr, err := needStringArg("note", "pluginCallback", args)
-	if err != nil {
-		log.Printf("natsCallback: err=%s\n", err)
-		return
-	}
-	log.Printf("Router.pluginCallback: note=%s\n", notestr)
-}
-*/
-
-func (r *Router) registerPlugin(pluginid string, events string) error {
-	_, pok := r.plugin[pluginid]
-	if pok {
-		return fmt.Errorf("registerPlugin: there is already a plugin %s", pluginid)
-	}
-	bits, err := events2bits(events)
-	if err != nil {
-		return err
-	}
-	log.Printf("Router.registerPlugin: pluginid=%s events=%s\n", pluginid, events)
-	p := r.NewPluginRef(pluginid, bits)
-	go r.PluginForwarder(p)
-	r.plugin[pluginid] = p
-
-	// Listen for NATS events from it
-	// SubscribeNATS(PluginInputSubject(pluginid), r.pluginCallback)
-	return nil
-}
-
-func (r *Router) PluginForwarder(ref *PluginRef) {
-	if Debug.Plugin {
-		log.Printf("PluginForwarder: plugin=%s started\n", ref.pluginid)
-	}
-	for !ref.killme {
-		// Read from forwardToPlugin and send to the plugin via NATS
-		msg := <-ref.forwardToPlugin
-		switch note := msg.(type) {
-		case *Note:
-			if Debug.Plugin {
-				log.Printf("PluginForwarder: plugin=%s note=%v\n", ref.pluginid, *note)
-			}
-			PublishNote(PluginInputSubject(ref.pluginid), note, "output.engine")
-		default:
-			log.Printf("PluginForwarder: unknown type received on forwardToPlugin\n")
-		}
-	}
-	log.Printf("PluginForwarder: plugin=%s ended\n", ref.pluginid)
-}
-
-func events2bits(events string) (bits uint, err error) {
-	words := strings.Split(events, ",")
-	for _, w := range words {
-		switch w {
-		case "midiinput":
-			bits |= EventMidiInput
-		case "midioutput":
-			bits |= EventNoteOutput
-		case "cursor":
-			bits |= EventCursor
-		case "all":
-			bits |= (EventMidiInput | EventNoteOutput | EventCursor)
-		default:
-			return 0, fmt.Errorf("unknown event name: %s", w)
-		}
-	}
-	return bits, nil
 }
 
 func (r *Router) getRegionForNUID(nuid string) string {
