@@ -136,11 +136,11 @@ func (menu *Menu) redraw() {
 	liney0 := rect.Min.Y + menu.handleHeight + menu.rowHeight/4 - 4
 	for n, item := range menu.items {
 		fore := ForeColor
-		back := BackColor
+		// back := BackColor
 		liney := liney0 + (n+1)*menu.rowHeight
 		if n == menu.itemSelected {
 			fore = BackColor
-			back = ForeColor
+			back := ForeColor
 			itemRect := image.Rect(rect.Min.X+1, liney-menu.rowHeight, rect.Max.X-1, liney)
 
 			WinDoUpstream(menu, NewSetColorCmd(back))
