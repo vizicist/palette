@@ -44,7 +44,7 @@ func BiduleInfo() *processInfo {
 	}
 	bidulefile := ConfigValue("bidulefile")
 	if bidulefile == "" {
-		bidulefile = "omnisphere.bidule"
+		bidulefile = "config.bidule"
 	}
 	arg := ConfigFilePath(bidulefile)
 	return &processInfo{exe, fullpath, arg, biduleActivate}

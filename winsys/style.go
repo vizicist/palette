@@ -3,8 +3,8 @@ package winsys
 import (
 	"image"
 	"image/color"
-	"io/ioutil"
 	"log"
+	"os"
 
 	"github.com/golang/freetype/truetype"
 	"github.com/vizicist/palette/engine"
@@ -55,7 +55,7 @@ func NewStyle(styleName string, fontHeight int) *StyleInfo {
 
 	case "fixed":
 		fontfile := engine.ConfigFilePath("consola.ttf")
-		b, err := ioutil.ReadFile(fontfile)
+		b, err := os.ReadFile(fontfile)
 		if err == nil {
 			f, _ = truetype.Parse(b)
 		}
@@ -64,7 +64,7 @@ func NewStyle(styleName string, fontHeight int) *StyleInfo {
 		// This font sucks
 		// f, err = truetype.Parse(goregular.TTF)
 		fontfile := engine.ConfigFilePath("times.ttf")
-		b, err := ioutil.ReadFile(fontfile)
+		b, err := os.ReadFile(fontfile)
 		if err == nil {
 			f, _ = truetype.Parse(b)
 		}

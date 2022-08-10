@@ -2,8 +2,8 @@ package engine
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"log"
+	"os"
 
 	"github.com/vizicist/portmidi"
 )
@@ -33,7 +33,7 @@ func InitSynths() {
 	MidiOutBankProgram = make(map[*MidiOutput]BankProgram)
 
 	filename := ConfigFilePath("synths.json")
-	bytes, err := ioutil.ReadFile(filename)
+	bytes, err := os.ReadFile(filename)
 	if err != nil {
 		log.Printf("InitSynths: ReadFile of %s failed, err=%s\n", filename, err)
 		return

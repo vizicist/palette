@@ -1,9 +1,0 @@
-# All DRUM KIT patches in Unify Standard Library
-
-1   Unify Standard Library / DRUM KIT - Airwave Trance Deluxe
-2   Unify Standard Library / DRUM KIT - Beast Drum Kit
-3   Unify Standard Library / DRUM KIT - Beast Glitch Kit
-4   Unify Standard Library / DRUM KIT - Beast Random Glitch
-5   Unify Standard Library / DRUM KIT - OMG Pop Glitch
-6   Unify Standard Library / DRUM KIT - OMG Super Pop
-7   Unify Standard Library / DRUM KIT - Vintage King

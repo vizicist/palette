@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"image"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"runtime"
@@ -124,7 +123,7 @@ func (page *Page) Do(cmd engine.Cmd) string {
 
 	case "restorefile":
 		fname := cmd.ValuesString("filename", "")
-		bytes, err := ioutil.ReadFile(fname)
+		bytes, err := os.ReadFile(fname)
 		if err != nil {
 			return engine.ErrorResult(err.Error())
 		}
@@ -144,9 +143,9 @@ func (page *Page) Do(cmd engine.Cmd) string {
 		} else {
 			ps := toPrettyJSON(state)
 			fpath := engine.ConfigFilePath(fname)
-			err := ioutil.WriteFile(fpath, []byte(ps), 0644)
+			err := os.WriteFile(fpath, []byte(ps), 0644)
 			if err != nil {
-				log.Printf(fmt.Sprintf("DumpFileMsg: err=%s", err))
+				log.Printf("DumpFileMsg: err=%s", err)
 			}
 		}
 

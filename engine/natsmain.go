@@ -67,7 +67,7 @@ func MyNUID() string {
 
 // GetNUID xxx
 func GetNUID() string {
-	nuidpath := LocalConfigFilePath("nuid.json")
+	nuidpath := ConfigFilePath("nuid.json")
 	if fileExists(nuidpath) {
 		nuidmap, err := ReadConfigFile(nuidpath)
 		if err == nil {
