@@ -4,11 +4,15 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"log"
+	"math/rand"
 	"os"
 	"os/signal"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"syscall"
+	"time"
 
 	_ "github.com/vizicist/palette/block"
 	"github.com/vizicist/palette/engine"
@@ -222,6 +226,52 @@ func CliCommand(region string, args []string) string {
 			return "Insufficient arguments"
 		}
 		return interpretApiOutput(engine.EngineAPI(args[1], args[2]))
+
+	case "test":
+		ntimes := 10
+		dt := 100 * time.Millisecond
+		cid := "0"
+		var err error
+		if len(args) > 1 {
+			ntimes, err = strconv.Atoi(args[1])
+			if err != nil {
+				return err.Error()
+			}
+			if len(args) > 2 {
+				dt, err = time.ParseDuration(args[2])
+				if err != nil {
+					return err.Error()
+				}
+			}
+		}
+		for n := 0; n < ntimes; n++ {
+			if n > 0 {
+				time.Sleep(dt)
+			}
+			region := string("ABCD"[rand.Int()%4])
+			ce := engine.CursorDeviceEvent{
+				NUID:      engine.MyNUID(),
+				Region:    region,
+				CID:       cid,
+				Timestamp: engine.CurrentMilli(),
+				Ddu:       "down",
+				X:         rand.Float32(),
+				Y:         rand.Float32(),
+				Z:         rand.Float32(),
+				Area:      0.0,
+			}
+			// ce := MakeCursorEvent(cid, "down", random.random(), random.random(), random.random()/4.0, region)
+			err := engine.PublishCursorDeviceEvent(engine.PaletteInputEventSubject, ce)
+			if err != nil {
+				log.Printf("NATS publishing err=%s\n", err)
+			}
+			time.Sleep(dt)
+			ce.Ddu = "up"
+			err = engine.PublishCursorDeviceEvent(engine.PaletteInputEventSubject, ce)
+			if err != nil {
+				log.Printf("NATS publishing err=%s\n", err)
+			}
+		}
 
 	default:
 		// NEW retmap

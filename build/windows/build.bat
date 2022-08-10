@@ -17,9 +17,7 @@ rm -fr %ship% > nul 2>&1
 mkdir %ship%
 mkdir %ship%\bin
 mkdir %ship%\bin\mmtt_kinect
-mkdir %ship%\config
 mkdir %ship%\html
-mkdir %ship%\midifiles
 mkdir %ship%\ffgl
 
 echo ================ Upgrading Python
@@ -67,20 +65,19 @@ move palette_engine.exe %bin%\palette_engine.exe > nul
 
 popd
 
-echo ================ Creating palette_gui.exe, testcursor.exe, osc.exe
+echo ================ Creating palette_gui.exe, osc.exe
 pushd %PALETTESOURCE%\python
 rm -fr dist
 rm -fr build
-pyinstaller -i ..\data\config\palette.ico palette_gui.py > pyinstaller.out 2>&1
-pyinstaller testcursor.py > pyinstaller.out 2>&1
+pyinstaller -i ..\data_default\config\palette.ico palette_gui.py > pyinstaller.out 2>&1
 pyinstaller osc.py > pyinstaller.out 2>&1
 
 echo ================ Merging python executables
 rem merge all the pyinstalled things into one
 move dist\palette_gui dist\pyinstalled >nul
-move dist\testcursor\testcursor.exe dist\pyinstalled >nul
 move dist\osc\osc.exe dist\pyinstalled >nul
 move dist\pyinstalled %bin% >nul
+echo off
 popd
 
 echo ================ Compiling FFGL plugin
@@ -113,6 +110,7 @@ echo ================ Copying misc binaries
 copy %PALETTESOURCE%\binaries\nats\nats-pub.exe %bin% >nul
 copy %PALETTESOURCE%\binaries\nats\nats-sub.exe %bin% >nul
 copy %PALETTESOURCE%\binaries\nircmdc.exe %bin% >nul
+copy %PALETTESOURCE%\binaries\tail.exe %bin% >nul
 
 echo ================ Copying scripts
 pushd %PALETTESOURCE%\scripts
@@ -120,35 +118,41 @@ copy palettetasks.bat %bin% >nul
 copy testcursor.bat %bin% >nul
 copy osc.bat %bin% >nul
 copy ipaddress.bat %bin% >nul
-copy taillog.bat %bin% >nul
+copy taillogs.bat %bin% >nul
 copy natsmon.bat %bin% >nul
 copy delay.bat %bin% >nul
 copy setpalettelogdir.bat %bin% >nul
 
 popd
 
-echo ================ Copying config
 
-copy %PALETTESOURCE%\data\config\homepage.json %ship%\config >nul
-copy %PALETTESOURCE%\data\config\ffgl.json %ship%\config >nul
-copy %PALETTESOURCE%\data\config\param*.json %ship%\config >nul
-copy %PALETTESOURCE%\data\config\resolume.json %ship%\config >nul
-copy %PALETTESOURCE%\data\config\settings.json %ship%\config >nul
-copy %PALETTESOURCE%\data\config\mmtt_*.json %ship%\config >nul
-copy %PALETTESOURCE%\data\config\synths.json %ship%\config >nul
-copy %PALETTESOURCE%\data\config\morphs.json %ship%\config >nul
-copy %PALETTESOURCE%\data\config\nats*.conf %ship%\config >nul
-copy %PALETTESOURCE%\data\config\Palette*.avc %ship%\config >nul
-copy %PALETTESOURCE%\data\config\EraeTouchLayout.emk %ship%\config >nul
-copy %PALETTESOURCE%\data\config\palette.ico %ship%\config >nul
-copy %PALETTESOURCE%\data\config\*.bidule %ship%\config >nul
-copy %PALETTESOURCE%\data\config\attractscreen.png %ship%\config >nul
-copy %PALETTESOURCE%\data\config\helpscreen.png %ship%\config >nul
-copy %PALETTESOURCE%\data\config\consola.ttf %ship%\config >nul
-copy %PALETTESOURCE%\data\config\OpenSans-Regular.ttf %ship%\config >nul
+for %%X in (data_default,data_full) DO (
+	echo ================ Copying %%X
+	mkdir %ship%\%%X\config
+	mkdir %ship%\%%X\midifiles
+	mkdir %ship%\%%X\presets
+	copy %PALETTESOURCE%\%%X\config\homepage.json %ship%\%%X\config >nul
+	copy %PALETTESOURCE%\%%X\config\ffgl.json %ship%\%%X\config >nul
+	copy %PALETTESOURCE%\%%X\config\param*.json %ship%\%%X\config >nul
+	copy %PALETTESOURCE%\%%X\config\resolume.json %ship%\%%X\config >nul
+	copy %PALETTESOURCE%\%%X\config\settings.json %ship%\%%X\config >nul
+	copy %PALETTESOURCE%\%%X\config\mmtt_*.json %ship%\%%X\config >nul
+	copy %PALETTESOURCE%\%%X\config\synths.json %ship%\%%X\config >nul
+	copy %PALETTESOURCE%\%%X\config\morphs.json %ship%\%%X\config >nul
+	copy %PALETTESOURCE%\%%X\config\nats*.conf %ship%\%%X\config >nul
+	copy %PALETTESOURCE%\%%X\config\Palette*.avc %ship%\%%X\config >nul
+	copy %PALETTESOURCE%\%%X\config\EraeTouchLayout.emk %ship%\%%X\config >nul
+	copy %PALETTESOURCE%\%%X\config\*.bidule %ship%\%%X\config >nul
+	copy %PALETTESOURCE%\%%X\config\attractscreen.png %ship%\%%X\config >nul
+	copy %PALETTESOURCE%\%%X\config\helpscreen.png %ship%\%%X\config >nul
+	copy %PALETTESOURCE%\%%X\config\consola.ttf %ship%\%%X\config >nul
+	copy %PALETTESOURCE%\%%X\config\OpenSans-Regular.ttf %ship%\%%X\config >nul
+	copy %PALETTESOURCE%\%%X\config\palette.ico %ship%\%%X\config >nul
+	copy %PALETTESOURCE%\%%X\midifiles\*.* %ship%\%%X\midifiles >nul
+	xcopy /e /y %PALETTESOURCE%\%%X\presets %ship%\%%X\presets > nul
+)
 
-echo ================ Copying midifiles
-copy %PALETTESOURCE%\data\midifiles\*.* %ship%\midifiles >nul
+echo { "datadir" : "data_default" } > %ship%\config.json
 
 echo ================ Copying windows-specific things
 copy %PALETTESOURCE%\SenselLib\x64\LibSensel.dll %bin% >nul
@@ -156,16 +160,6 @@ copy %PALETTESOURCE%\SenselLib\x64\LibSenselDecompress.dll %bin% >nul
 copy %PALETTESOURCE%\depthlib\build\x64\Release\depthlib.dll %bin% >nul
 copy vc15\bin\depthai-core.dll %bin% >nul
 copy vc15\bin\opencv_world454.dll %bin% >nul
-
-echo ================ Copying presets
-mkdir %ship%\presets
-xcopy /e /y %PALETTESOURCE%\data\presets %ship%\presets > nul
-mkdir %ship%\presets_nosuchtim
-xcopy /e /y %PALETTESOURCE%\data\presets_nosuchtim %ship%\presets_nosuchtim > nul
-mkdir %ship%\presets_subzero
-xcopy /e /y %PALETTESOURCE%\data\presets_subzero %ship%\presets_subzero > nul
-mkdir %ship%\presets_fnf
-xcopy /e /y %PALETTESOURCE%\data\presets_fnf %ship%\presets_fnf > nul
 
 echo ================ Removing unused things
 rm -fr %bin%\pyinstalled\tcl\tzdata

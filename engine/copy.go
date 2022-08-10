@@ -2,7 +2,7 @@ package engine
 
 import (
 	"io"
-	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 )
@@ -22,7 +22,7 @@ func CopyDir(src, dest string) error {
 func copy(src, dest string, info os.FileInfo) error {
 
 	if info.IsDir() {
-		return dcopy(src, dest, info)
+		return dcopy(src, dest)
 	}
 	return fcopy(src, dest, info)
 }
@@ -60,20 +60,26 @@ func fcopy(src, dest string, info os.FileInfo) (err error) {
 // dcopy is for a directory,
 // with scanning contents inside the directory
 // and pass everything to "copy" recursively.
-func dcopy(srcdir, destdir string, info os.FileInfo) (err error) {
+func dcopy(srcdir, destdir string) (err error) {
 
 	if err = os.MkdirAll(destdir, os.FileMode(0755)); err != nil {
 		return
 	}
 
-	contents, err := ioutil.ReadDir(srcdir)
+	entries, err := os.ReadDir(srcdir)
 	if err != nil {
 		return
 	}
 
-	for _, content := range contents {
-		cs, cd := filepath.Join(srcdir, content.Name()), filepath.Join(destdir, content.Name())
-		if err = copy(cs, cd, content); err != nil {
+	for _, entry := range entries {
+		einfo, err2 := entry.Info()
+		if err2 != nil {
+			log.Printf("dcopy: err=%s\n", err2)
+			continue
+		}
+		name := einfo.Name()
+		cs, cd := filepath.Join(srcdir, name), filepath.Join(destdir, name)
+		if err = copy(cs, cd, einfo); err != nil {
 			// If any error, exit immediately
 			return
 		}
