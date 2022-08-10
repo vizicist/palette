@@ -1,0 +1,23 @@
+{
+    "params":{
+        "sound.controllerchan":"1",
+        "sound.controllerstyle":"modulationonly",
+        "sound.controllerzmax":"0.300",
+        "sound.controllerzmin":"0.050",
+        "sound.inputport":"",
+        "sound.pitchmax":"72",
+        "sound.pitchmin":"25",
+        "sound.synth":"P_10_C_02",
+        "sound.timefret1q":"1.000",
+        "sound.timefret1y":"0.300",
+        "sound.timefret2q":"0.500",
+        "sound.timefret2y":"0.600",
+        "sound.timefret3q":"0.250",
+        "sound.timefret3y":"0.900",
+        "sound.timefret4q":"0.125",
+        "sound.timefret4y":"1.000",
+        "sound.xcontroller":"1",
+        "sound.ycontroller":"1",
+        "sound.zcontroller":"1"
+    }
+}

@@ -2,7 +2,6 @@ package engine
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -114,7 +113,7 @@ func presetList(apiargs map[string]string) (string, error) {
 		return nil
 	}
 
-	presetsDir1 := filepath.Join(PaletteDir(), PresetsDir())
+	presetsDir1 := filepath.Join(PaletteDataDir(), PresetsDir())
 	err := filepath.Walk(presetsDir1, walker)
 	if err != nil {
 		log.Printf("filepath.Walk: err=%s\n", err)
@@ -240,7 +239,7 @@ func (r *Router) saveQuadPreset(preset string) error {
 	}
 	s += "\n    }\n}"
 	data := []byte(s)
-	return ioutil.WriteFile(path, data, 0644)
+	return os.WriteFile(path, data, 0644)
 }
 
 func OldParameterName(nm string) bool {

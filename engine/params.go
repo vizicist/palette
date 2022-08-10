@@ -3,8 +3,8 @@ package engine
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
+	"os"
 	"strconv"
 	"strings"
 	"sync"
@@ -176,7 +176,7 @@ var ResolumeJSON map[string]interface{}
 // LoadResolumeJSON returns an unmarshalled version of the resolume.json file
 func LoadResolumeJSON() error {
 	path := ConfigFilePath("resolume.json")
-	bytes, err := ioutil.ReadFile(path)
+	bytes, err := os.ReadFile(path)
 	if err != nil {
 		return fmt.Errorf("unable to read resolume.json, err=%s", err)
 	}
@@ -222,7 +222,7 @@ func LoadParamEnums() error {
 	ParamEnums = make(map[string][]string)
 
 	path := ConfigFilePath("paramenums.json")
-	bytes, err := ioutil.ReadFile(path)
+	bytes, err := os.ReadFile(path)
 	if err != nil {
 		return fmt.Errorf("loadParamEnums: unable to read path=%s", path)
 	}
@@ -249,7 +249,7 @@ func LoadParamDefs() error {
 	ParamDefs = make(map[string]ParamDef)
 
 	path := ConfigFilePath("paramdefs.json")
-	bytes, err := ioutil.ReadFile(path)
+	bytes, err := os.ReadFile(path)
 	if err != nil {
 		return fmt.Errorf("unable to read %s, err=%s", path, err)
 	}

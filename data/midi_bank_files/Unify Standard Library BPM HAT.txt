@@ -1,7 +1,0 @@
-# All BPM HAT patches in Unify Standard Library
-
-1   Unify Standard Library / BPM HAT - 2 Notes 8th Synchro
-2   Unify Standard Library / BPM HAT - 8th Note Hats
-3   Unify Standard Library / BPM HAT - Cl Hat 16ths
-4   Unify Standard Library / BPM HAT - Cl Hat UpBeat 1
-5   Unify Standard Library / BPM HAT - Cl Hat UpBeat 2

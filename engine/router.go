@@ -21,7 +21,7 @@ const defaultClicksPerSecond = 192
 const minClicksPerSecond = (defaultClicksPerSecond / 16)
 const maxClicksPerSecond = (defaultClicksPerSecond * 16)
 
-var defaultSynth = "P_01_C_01"
+var defaultSynth = "Maldives Islands"
 var loopForever = 999999
 
 var currentMilli int64
@@ -506,22 +506,23 @@ func (r *Router) HandleInputEvent(args map[string]string) error {
 	r.eventMutex.Lock()
 	defer r.eventMutex.Unlock()
 
-	// All Events should have nuid and event values
-
-	fromNUID, err := needStringArg("nuid", "HandleEvent", args)
-	if err != nil {
-		return err
-	}
-
 	event, err := needStringArg("event", "HandleEvent", args)
 	if err != nil {
 		return err
 	}
 
-	// If no "region" argument, use one assigned to NUID
-	region := optionalStringArg("region", args, "")
-	if region == "" {
-		region = r.getRegionForNUID(fromNUID)
+	fromNUID, nuidok := args["nuid"]
+	if !nuidok {
+		// log.Printf("No nuid value assuming MyNUID()\n")
+		fromNUID = MyNUID()
+	}
+
+	// If no "region" argument, assign one
+	region, regionok := args["region"]
+	if !regionok {
+		log.Printf("No region value on input event, assuming A\n")
+		region = "A"
+		// region = r.getRegionForNUID(fromNUID)
 	} else {
 		// Remove it from the args
 		delete(args, "region")
@@ -760,8 +761,8 @@ func (r *Router) handleAPIInput(data string) (response string) {
 	}
 	fromNUID, ok := smap["nuid"]
 	if !ok {
-		response = ErrorResponse(fmt.Errorf("missing nuid parameter"))
-		return
+		// log.Printf("No nuid value assuming MyNUID()\n")
+		fromNUID = MyNUID()
 	}
 	rawargs, ok := smap["params"]
 	if !ok {
@@ -1443,3 +1444,4 @@ var _ = rr.handleOSCSpriteEvent
 var _ = rr.handleOSCAPI
 var _ = argAsInt
 var _ = argAsFloat32
+var _ = rr.getRegionForNUID

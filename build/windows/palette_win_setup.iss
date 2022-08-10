@@ -33,30 +33,9 @@ ChangesEnvironment=yes
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
-[InstallDelete]
-; Delete ALL presets in {app} of an existing installation, to control the default set of presets.
-; This should be okay because any saved/edited presets (even of the default presets) are saved in
-; the %CommonProgramFiles% directory, and we don't delete those.
-Type: files; Name:"{app}\presets\snap\*.json"
-Type: files; Name:"{app}\presets\quad\*.json"
-Type: files; Name:"{app}\presets\sound\*.json"
-Type: files; Name:"{app}\presets\effect\*.json"
-Type: files; Name:"{app}\presets\visual\*.json"
-Type: files; Name:"{app}\presets_*\snap\*.json"
-Type: files; Name:"{app}\presets_*\quad\*.json"
-Type: files; Name:"{app}\presets_*\sound\*.json"
-Type: files; Name:"{app}\presets_*\effect\*.json"
-Type: files; Name:"{app}\presets_*\visual\*.json"
-
-; Note that these directories are made writable by anyone, for local changes and config
+; Things in %CommonProgramFiles%\Palette are made writable by anyone, for local changes and config
 [Dirs]
-Name: "{commoncf64}\{#MyAppName}\logs"; Permissions: users-modify
-Name: "{commoncf64}\{#MyAppName}\config"; Permissions: users-modify
-Name: "{commoncf64}\{#MyAppName}\midifiles"; Permissions: users-modify
-Name: "{commoncf64}\{#MyAppName}\presets"; Permissions: users-modify
-Name: "{commoncf64}\{#MyAppName}\presets_nosuchtim"; Permissions: users-modify
-Name: "{commoncf64}\{#MyAppName}\presets_subzero"; Permissions: users-modify
-Name: "{commoncf64}\{#MyAppName}\presets_fnf"; Permissions: users-modify
+Name: "{commoncf64}\{#MyAppName}"; Permissions: users-modify
 
 [Files]
 Source: "ship\VERSION"; DestDir: "{app}"; Flags: ignoreversion
@@ -67,29 +46,11 @@ Source: "ship\bin\pyinstalled\*"; DestDir: "{app}\bin\pyinstalled"; Flags: ignor
 Source: "ship\bin\mmtt_kinect\*"; DestDir: "{app}\bin\mmtt_kinect"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "ship\ffgl\*"; DestDir: "{app}\ffgl"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "ship\html\*"; DestDir: "{app}\html"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "ship\presets\*"; DestDir: "{app}\presets"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "ship\presets_nosuchtim\*"; DestDir: "{app}\presets_nosuchtim"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "ship\presets_subzero\*"; DestDir: "{app}\presets_subzero"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "ship\presets_fnf\*"; DestDir: "{app}\presets_fnf"; Flags: ignoreversion recursesubdirs createallsubdirs
+
 ; NOTE - all config files go in CommonProgramFiles
-Source: "ship\config\mmtt_*.json"; DestDir: "{commoncf64}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
-Source: "ship\config\nats*.conf"; DestDir: "{commoncf64}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
-Source: "ship\config\paramdefs.json"; DestDir: "{commoncf64}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
-Source: "ship\config\paramenums.json"; DestDir: "{commoncf64}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
-Source: "ship\config\EraeTouchLayout.emk"; DestDir: "{commoncf64}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
-Source: "ship\config\attractscreen.png"; DestDir: "{commoncf64}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
-Source: "ship\config\helpscreen.png"; DestDir: "{commoncf64}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
-Source: "ship\config\Palette*.avc"; DestDir: "{commoncf64}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
-Source: "ship\config\palette.ico"; DestDir: "{commoncf64}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
-Source: "ship\config\*.bidule"; DestDir: "{commoncf64}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
-Source: "ship\config\resolume.json"; DestDir: "{commoncf64}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
-Source: "ship\config\ffgl.json"; DestDir: "{commoncf64}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
-Source: "ship\config\synths.json"; DestDir: "{commoncf64}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
-Source: "ship\config\morphs.json"; DestDir: "{commoncf64}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
-Source: "ship\config\settings.json"; DestDir: "{commoncf64}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
-Source: "ship\config\OpenSans-Regular.ttf"; DestDir: "{commoncf64}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
-Source: "ship\config\consola.ttf"; DestDir: "{commoncf64}\{#MyAppName}\config"; Flags: comparetimestamp ignoreversion
-Source: "ship\midifiles\*"; DestDir: "{commoncf64}\{#MyAppName}\midifiles"; Flags: comparetimestamp ignoreversion recursesubdirs createallsubdirs
+Source: "ship\config.json"; DestDir: "{commoncf64}\{#MyAppName}"; Flags: comparetimestamp ignoreversion; Permissions: users-modify
+Source: "ship\data_default\*"; DestDir: "{commoncf64}\{#MyAppName}\data_default"; Flags: comparetimestamp ignoreversion recursesubdirs createallsubdirs
+Source: "ship\data_full\*"; DestDir: "{commoncf64}\{#MyAppName}\data_full"; Flags: comparetimestamp ignoreversion recursesubdirs createallsubdirs
 Source: "logs_readme.txt"; DestDir: "{commoncf64}\{#MyAppName}\logs"; DestName: "readme.txt"; Flags: ignoreversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
@@ -106,7 +67,7 @@ Filename: taskkill.exe; Parameters: "/F /IM palette_gui.exe"; StatusMsg: "Making
 Name: "{group}\{cm:ProgramOnTheWeb,{#MyAppName}}"; Filename: "{#MyAppURL}"
 Name: "{group}\Start Palette"; Filename: "{app}\bin\palette.exe"; Parameters: "start"; Flags: runminimized
 Name: "{group}\Stop Palette"; Filename: "{app}\bin\palette.exe"; Parameters: "stop"; Flags: runminimized
-Name: "{group}\Config Directory"; Filename: "{win}\explorer.exe"; Parameters: "{commoncf64}\{#MyAppName}\config"
+Name: "{group}\Config Directory"; Filename: "{win}\explorer.exe"; Parameters: "{commoncf64}\{#MyAppName}"
 
 [Registry]
 Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; \

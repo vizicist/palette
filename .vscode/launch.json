@@ -37,6 +37,13 @@
             "args": ["status"]
         },
         {
+            "name": "Test",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
+            "args": ["test","5","100ms"]
+        },
+        {
             "name": "Start",
             "type": "go",
             "request": "launch",
@@ -114,10 +121,10 @@
             "args": ["api", "stop", "\"process\":\"gui\""]
         },
         {
-            "name": "run testmidi.py",
+            "name": "run testcursor.py",
             "type": "python",
             "request": "launch",
-            "program": "${env:PALETTESOURCE}/python/testmidi.py",
+            "program": "${env:PALETTESOURCE}/python/testcursor.py",
             "console": "integratedTerminal",
             "cwd": "${fileDirname}",
             "args": [""]

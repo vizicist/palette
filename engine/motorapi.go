@@ -3,8 +3,8 @@ package engine
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
+	"os"
 	"sort"
 	"strings"
 
@@ -247,11 +247,11 @@ func (motor *Motor) saveCurrentSnapInPath(path string) error {
 	s += "\n    }\n}"
 	data := []byte(s)
 	// log.Printf("SaveCurrentSnapInPath %s path=%s\n", motor.padName, path)
-	return ioutil.WriteFile(path, data, 0644)
+	return os.WriteFile(path, data, 0644)
 }
 
 func LoadParamsMap(path string) (map[string]interface{}, error) {
-	bytes, err := ioutil.ReadFile(path)
+	bytes, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}

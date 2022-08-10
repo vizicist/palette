@@ -1,0 +1,201 @@
+{
+  "host": "127.0.0.1",
+  "port": 7000,
+  "effects": {
+    "goo": {
+      "on": {
+        "addr": "/goo/bypassed",
+        "arg": 0
+      },
+      "off": {
+        "addr": "/goo/bypassed",
+        "arg": 1
+      },
+      "params": {
+        "resolution": "/goo/effect/resolution",
+        "speed": "/goo/effect/speed",
+        "maxdistortionx": "/goo/effect/maxdistortionx",
+        "maxdistortiony": "/goo/effect/maxdistortiony",
+        "maxdistortionz": "/goo/effect/maxdistortionz",
+        "shade": "/goo/effect/shade"
+      }
+    },
+    "twisted": {
+      "on": {
+        "addr": "/twisted/bypassed",
+        "arg": 0
+      },
+      "off": {
+        "addr": "/twisted/bypassed",
+        "arg": 1
+      },
+      "params": {
+        "twirl": "/twisted/effect/twirl",
+        "radius": "/twisted/effect/radius"
+      }
+    },
+    "huerotate": {
+      "on": {
+        "addr": "/huerotate/bypassed",
+        "arg": 0
+      },
+      "off": {
+        "addr": "/huerotate/bypassed",
+        "arg": 1
+      },
+      "params": {
+        "huescale": "/huerotate/effect/huescale",
+        "satscale": "/huerotate/effect/sat.scale",
+        "huerotate": "/huerotate/effect/huerotate"
+      }
+    },
+    "kaleidoscope": {
+      "on": {
+        "addr": "/kaleidoscope/bypassed",
+        "arg": 0
+      },
+      "off": {
+        "addr": "/kaleidoscope/bypassed",
+        "arg": 1
+      },
+      "params": {
+        "angles": "/kaleidoscope/effect/angles",
+        "rotation": "/kaleidoscope/effect/rotation",
+        "zoom": "/kaleidoscope/effect/zoom",
+        "inputrotation": "/kaleidoscope/effect/inputrotation",
+        "opacity": "/kaleidoscope/opacity"
+      }
+    },
+    "blur": {
+      "on": {
+        "addr": "/blur/bypassed",
+        "arg": 0
+      },
+      "off": {
+        "addr": "/blur/bypassed",
+        "arg": 1
+      },
+      "params": {
+        "blurxdistance": "/blur/effect/blurxdistance",
+        "blurydistance": "/blur/effect/blurydistance",
+        "quality": "/blur/effect/quality",
+        "gaussian": "/blur/effect/gaussian"
+      }
+    },
+    "mirrorquad": {
+      "on": {
+        "addr": "/mirrorquad/bypassed",
+        "arg": 0
+      },
+      "off": {
+        "addr": "/mirrorquad/bypassed",
+        "arg": 1
+      },
+      "params": {
+        "flipx": "/mirrorquad/effect/flipx",
+        "flipy": "/mirrorquad/effect/flipy"
+      }
+    },
+    "fragment": {
+      "on": {
+        "addr": "/fragment/bypassed",
+        "arg": 0
+      },
+      "off": {
+        "addr": "/fragment/bypassed",
+        "arg": 1
+      },
+      "params": {
+        "fragments": "/fragment/effect/fragments",
+        "distance": "/fragment/effect/distance",
+        "rotation": "/fragment/effect/rotation",
+        "fragrotationx": "/fragment/effect/fragrotationx",
+        "fragrotationy": "/fragment/effect/fragrotationy",
+        "fragrotationz": "/fragment/effect/fragrotationz",
+        "fragscale": "/fragment/effect/fragscale"
+      }
+    },
+    "posterize": {
+      "on": {
+        "addr": "/posterize/bypassed",
+        "arg": 0
+      },
+      "off": {
+        "addr": "/posterize/bypassed",
+        "arg": 1
+      },
+      "params": {
+        "posterize": "/posterize/effect/posterize"
+      }
+    },
+    "displace": {
+      "on": {
+        "addr": "/displace/bypassed",
+        "arg": 0
+      },
+      "off": {
+        "addr": "/displace/bypassed",
+        "arg": 1
+      },
+      "params": {
+        "xfactor": "/displace/effect/xfactor",
+        "yfactor": "/displace/effect/yfactor",
+        "threshold": "/displace/effect/threshold"
+      }
+    },
+    "iterate": {
+      "on": {
+        "addr": "/iterate/bypassed",
+        "arg": 0
+      },
+      "off": {
+        "addr": "/iterate/bypassed",
+        "arg": 1
+      }
+    },
+    "edgedetection": {
+      "on": {
+        "addr": "/edgedetection/bypassed",
+        "arg": 0
+      },
+      "off": {
+        "addr": "/edgedetection/bypassed",
+        "arg": 1
+      },
+      "params": {
+        "mode": "/edgedetection/effect/mode",
+        "multiplier": "/edgedetection/effect/multiplier"
+      }
+    },
+    "mirror": {
+      "on": {
+        "addr": "/mirror/bypassed",
+        "arg": 0
+      },
+      "off": {
+        "addr": "/mirror/bypassed",
+        "arg": 1
+      },
+      "params": {
+        "x": "/mirror/effect/x",
+        "y": "/mirror/effect/y",
+        "in/out": "/mirror/effect/in/out",
+        "flipx": "/mirror/effect/flipx",
+        "flipy": "/mirror/effect/flipy"
+      }
+    },
+    "trails": {
+      "on": {
+        "addr": "/trails/bypassed",
+        "arg": 0
+      },
+      "off": {
+        "addr": "/trails/bypassed",
+        "arg": 1
+      },
+      "params": {
+        "feedback": "/trails/effect/feedback"
+      }
+    }
+  }
+}

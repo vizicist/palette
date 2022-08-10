@@ -9,7 +9,6 @@ import (
 	"image"
 	"image/draw"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -219,16 +218,11 @@ func PaletteDir() string {
 
 func PaletteVersion() string {
 	path := filepath.Join(PaletteDir(), "VERSION")
-	bytes, err := ioutil.ReadFile(path)
+	bytes, err := os.ReadFile(path)
 	if err != nil {
 		return "Unknown" // It's okay if file isn't present
 	}
 	return string(bytes)
-}
-
-// ConfigFilePath xxx
-func ConfigFilePath(nm string) string {
-	return filepath.Join(LocalPaletteDir(), "config", nm)
 }
 
 // ReadablePresetFilePath xxx
@@ -243,14 +237,8 @@ func WriteablePresetFilePath(preset string) string {
 	return path
 }
 
-var presetsDir string
-
 func PresetsDir() string {
-	if presetsDir == "" {
-		// config name can be presets or presetdir
-		presetsDir = ConfigStringWithDefault("presetsdir", "presets")
-	}
-	return presetsDir
+	return "presets"
 }
 
 // presetFilePath returns the full path of a preset file.
@@ -262,12 +250,12 @@ func presetFilePath(preset string, writable bool) string {
 		preset = preset[i+1:]
 	}
 	presetjson := preset + ".json"
-	localpath := filepath.Join(LocalPaletteDir(), PresetsDir(), category, presetjson)
+	localpath := filepath.Join(PaletteDataDir(), PresetsDir(), category, presetjson)
 	// Use the local path if it exists or we want a writable path
 	if writable || FileExists(localpath) {
 		return localpath
 	}
-	return filepath.Join(PaletteDir(), PresetsDir(), category, presetjson)
+	return filepath.Join(PaletteDataDir(), PresetsDir(), category, presetjson)
 }
 
 func PresetNameSplit(preset string) (string, string) {
@@ -281,7 +269,7 @@ func PresetNameSplit(preset string) (string, string) {
 
 // MIDIFilePath xxx
 func MIDIFilePath(nm string) string {
-	return filepath.Join(LocalPaletteDir(), "midifiles", nm)
+	return filepath.Join(PaletteDataDir(), "midifiles", nm)
 }
 
 // LocalPaletteDir gets used for local (and changed) presets and config
@@ -294,12 +282,22 @@ func LocalPaletteDir() string {
 	return filepath.Join(localapp, "Palette")
 }
 
-// LocalConfigFilePath xxx
-func LocalConfigFilePath(nm string) string {
-	localdir := LocalPaletteDir()
-	if localdir == "" {
-		return ""
+// PaletteDataDir returns the datadir value in config.json
+func PaletteDataDir() string {
+	datadir := "data_default"
+	f := filepath.Join(LocalPaletteDir(), "config.json")
+	values, err := ReadConfigFile(f)
+	if err != nil {
+		log.Printf("Bad format of config.json, assuming %s\n", datadir)
+	} else {
+		datadir = values["datadir"]
 	}
+	return filepath.Join(LocalPaletteDir(), datadir)
+}
+
+// LocalConfigFilePath xxx
+func ConfigFilePath(nm string) string {
+	localdir := PaletteDataDir()
 	return filepath.Join(localdir, "config", nm)
 }
 
@@ -498,7 +496,7 @@ func (w *NoWriter) Write(p []byte) (n int, err error) {
 
 // ReadConfigFile xxx
 func ReadConfigFile(path string) (map[string]string, error) {
-	bytes, err := ioutil.ReadFile(path)
+	bytes, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}

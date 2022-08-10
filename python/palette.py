@@ -178,28 +178,43 @@ def palette_region_api(region, api, params=""):
 def palette_global_api(api, params=""):
     return palette_api("global."+api,params)
 
-def configFilePath(nm):
-    return os.path.join(paletteSubDir("config"),nm)
-
 def logFilePath(nm):
-    return os.path.join(paletteSubDir("logs"),nm)
+    return os.path.join(localPaletteDir(),"logs",nm)
 
-def paletteSubDir(subdir):
-    local = os.environ.get("CommonProgramFiles")
-    if local == None:
-        log("Expecting CommonProgramFiles to be set, assuming .")
-        local = "."
-    return os.path.join(local, "Palette", subdir)
+def configFilePath(nm):
+    return os.path.join(paletteDataDir(),"config",nm)
 
 def presetsPath():
-    presetsdir = ConfigValue("presetsdir","presets")
-    p = ConfigValue("presetspath","%CommonProgramFiles%\\Palette\\%presetsdir%;%PALETTE%\\%presetsdir%")
-    p = p.replace("%PALETTE%",PaletteDir())
-    p = p.replace("%presetsdir%",presetsdir)
-    lad = os.environ.get("CommonProgramFiles")
-    if lad != None:
-        p = p.replace("%CommonProgramFiles%",lad)
-    return p
+    return os.path.join(paletteDataDir(),"presets")
+
+def localPaletteDir():
+    common = os.environ.get("CommonProgramFiles")
+    if common == None:
+        log("Expecting CommonProgramFiles to be set, assuming .")
+        common = "."
+    return os.path.join(common,"Palette")
+
+def paletteSubDir(subdir):
+    return os.path.join(localPaletteDir(), subdir)
+
+PaletteDataDir = ""
+
+# This is the name of the data_* directory
+# under which are config and presets.
+# The value comes from the config.json file
+def paletteDataDir():
+    global PaletteDataDir
+    if PaletteDataDir != "":
+        return PaletteDataDir
+    path = os.path.join(localPaletteDir(),"config.json")
+    if not os.path.isfile(path):
+        log("Missing config.json file? path=",path)
+        PaletteDataDir = "data_default"
+    else:
+        vals = readJsonPath(path)
+        if "datadir" in vals:
+            PaletteDataDir = vals["datadir"]
+    return PaletteDataDir
 
 # Combine presets in the presetsPath list
 def presetsListAll(presetType):
@@ -429,7 +444,7 @@ def SendCursorEvent(cid,ddu,x,y,z,region="A"):
         "\"region\": \"" + region + "\", " + \
         "\"event\": \"" + event + "\", " + \
         "\"x\": \"%f\", \"y\": \"%f\", \"z\": \"%f\" }")  % (x,y,z)
-    palette_publish("palette.output.event",e)
+    palette_publish("palette.input.event",e)
 
 def SendSpriteEvent(cid,x,y,z,region="A"):
     event = "sprite"
@@ -438,7 +453,7 @@ def SendSpriteEvent(cid,x,y,z,region="A"):
         "\"region\": \"" + region + "\", " + \
         "\"event\": \"" + event + "\", " + \
         "\"x\": \"%f\", \"y\": \"%f\", \"z\": \"%f\" }")  % (x,y,z)
-    palette_publish("palette.output.event",e)
+    palette_publish("palette.input.event",e)
 
 def SendMIDIEvent(device,timesofar,msg,region="A"):
     bytestr = "0x"
@@ -453,19 +468,19 @@ def SendMIDIEvent(device,timesofar,msg,region="A"):
         "\"bytes\": \"%s\" }") % \
             (PythonNUID, device, timesofar, bytestr)
 
-    palette_publish("palette.output.event",e)
+    palette_publish("palette.input.event",e)
 
 def SendMIDITimeReset():
     e = ("{ \"nuid\": \"%s\", " + \
         "\"event\": \"midi_reset\" }") % \
             (PythonNUID)
-    palette_publish("palette.output.event",e)
+    palette_publish("palette.input.event",e)
 
 def SendMIDIAudioReset():
     e = ("{ \"nuid\": \"%s\", " + \
         "\"event\": \"audio_reset\" }") % \
             (PythonNUID)
-    palette_publish("palette.output.event",e)
+    palette_publish("palette.input.event",e)
 
 def IgnoreKeyboardInterrupt():
     """

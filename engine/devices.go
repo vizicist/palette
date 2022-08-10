@@ -3,8 +3,8 @@ package engine
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
+	"os"
 )
 
 // MIDIDeviceEvent is a single MIDI event
@@ -78,11 +78,11 @@ func LoadMorphs() error {
 	// If you have more than one morph, or
 	// want the region assignment to NOT be
 	// automatice, put them in here.
-	path := LocalConfigFilePath("morphs.json")
+	path := ConfigFilePath("morphs.json")
 	if !fileExists(path) {
 		return fmt.Errorf("unable to get path to morphs.json")
 	}
-	bytes, err := ioutil.ReadFile(path)
+	bytes, err := os.ReadFile(path)
 	if err != nil {
 		return nil // It's okay if file isn't present
 	}

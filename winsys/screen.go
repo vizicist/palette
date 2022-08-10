@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"image"
 	"image/color"
-	"io/ioutil"
 	"log"
+	"os"
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -93,7 +93,7 @@ func Run() {
 
 	// START DEBUG - do RESTORE
 	fname := engine.ConfigFilePath("homepage.json")
-	bytes, err := ioutil.ReadFile(fname)
+	bytes, err := os.ReadFile(fname)
 	if err != nil {
 		log.Printf("Run: No homepage - %s\n", fname)
 	} else {

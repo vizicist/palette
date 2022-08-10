@@ -4,9 +4,9 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"math"
+	"os"
 )
 
 // These are the values of MIDI status bytes
@@ -79,7 +79,7 @@ func (m *MIDIFile) Parse() error {
 	if m.parsed {
 		return nil
 	}
-	dat, err := ioutil.ReadFile(m.path)
+	dat, err := os.ReadFile(m.path)
 	if err != nil {
 		return fmt.Errorf("unable to read midifile: path=%s err=%s", m.path, err)
 	}
