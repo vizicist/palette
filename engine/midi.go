@@ -92,13 +92,17 @@ func InitMIDI() {
 			erae = true
 		}
 		if dev.IsOutputAvailable {
-			// log.Printf("MIDI OUTPUT device = %s  devid=%v\n", dev.Name, devid)
+			if Debug.MIDI {
+				log.Printf("MIDI OUTPUT device = %s  devid=%v\n", dev.Name, devid)
+			}
 			MIDI.outputDeviceID[dev.Name] = devid
 			MIDI.outputDeviceInfo[dev.Name] = dev
 			numOutputs++
 		}
 		if dev.IsInputAvailable {
-			// log.Printf("MIDI INPUT device = %s  devid=%v\n", dev.Name, devid)
+			if Debug.MIDI {
+				log.Printf("MIDI INPUT device = %s  devid=%v\n", dev.Name, devid)
+			}
 			MIDI.inputDeviceID[dev.Name] = devid
 			MIDI.inputDeviceInfo[dev.Name] = dev
 			numInputs++

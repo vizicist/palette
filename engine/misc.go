@@ -250,12 +250,8 @@ func presetFilePath(preset string, writable bool) string {
 		preset = preset[i+1:]
 	}
 	presetjson := preset + ".json"
-	localpath := filepath.Join(PaletteDataDir(), PresetsDir(), category, presetjson)
-	// Use the local path if it exists or we want a writable path
-	if writable || FileExists(localpath) {
-		return localpath
-	}
-	return filepath.Join(PaletteDataDir(), PresetsDir(), category, presetjson)
+	localpath := filepath.Join(PaletteDataPath(), PresetsDir(), category, presetjson)
+	return localpath
 }
 
 func PresetNameSplit(preset string) (string, string) {
@@ -269,7 +265,7 @@ func PresetNameSplit(preset string) (string, string) {
 
 // MIDIFilePath xxx
 func MIDIFilePath(nm string) string {
-	return filepath.Join(PaletteDataDir(), "midifiles", nm)
+	return filepath.Join(PaletteDataPath(), "midifiles", nm)
 }
 
 // LocalPaletteDir gets used for local (and changed) presets and config
@@ -282,23 +278,32 @@ func LocalPaletteDir() string {
 	return filepath.Join(localapp, "Palette")
 }
 
-// PaletteDataDir returns the datadir value in config.json
-func PaletteDataDir() string {
-	datadir := "data_default"
-	f := filepath.Join(LocalPaletteDir(), "config.json")
-	values, err := ReadConfigFile(f)
-	if err != nil {
-		log.Printf("Bad format of config.json, assuming %s\n", datadir)
-	} else {
-		datadir = values["datadir"]
+var paletteDataPath = ""
+
+// PaletteDataPath returns the datadir value in config.json
+func PaletteDataPath() string {
+	if paletteDataPath != "" {
+		return paletteDataPath
 	}
-	return filepath.Join(LocalPaletteDir(), datadir)
+	paletteDataPath = filepath.Join(LocalPaletteDir(), "data_default")
+	f := filepath.Join(LocalPaletteDir(), "config.json")
+	if !FileExists(f) {
+		log.Printf("No config.json file?  Asssuming datapath=%s\n", paletteDataPath)
+	} else {
+		values, err := ReadConfigFile(f)
+		if err != nil {
+			log.Printf("Bad format of config.json?  Asssuming datapath=%s\n", paletteDataPath)
+		} else {
+			paletteDataPath = values["datapath"]
+		}
+	}
+	log.Printf("Using datapath = %s\n", paletteDataPath)
+	return paletteDataPath
 }
 
 // LocalConfigFilePath xxx
 func ConfigFilePath(nm string) string {
-	localdir := PaletteDataDir()
-	return filepath.Join(localdir, "config", nm)
+	return filepath.Join(PaletteDataPath(), "config", nm)
 }
 
 // LogFilePath has a default if LocalPaletteDir fails

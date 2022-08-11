@@ -37,7 +37,7 @@ func (r *Router) ExecuteAPI(api string, fromNUID string, rawargs string) (result
 
 	case "activate":
 		go resolumeActivate()
-		go biduleActivate()
+		go VstHostActivate()
 		return "", nil
 
 	case "sendlogs":
@@ -113,7 +113,7 @@ func presetList(apiargs map[string]string) (string, error) {
 		return nil
 	}
 
-	presetsDir1 := filepath.Join(PaletteDataDir(), PresetsDir())
+	presetsDir1 := filepath.Join(PaletteDataPath(), PresetsDir())
 	err := filepath.Walk(presetsDir1, walker)
 	if err != nil {
 		log.Printf("filepath.Walk: err=%s\n", err)
