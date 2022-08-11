@@ -1,6 +1,7 @@
 import asyncio
 # from nis import match
 import nats
+
 from nats.aio.client import Client as NATS
 from nats.aio.errors import ErrTimeout, ErrNoServers
 from nats.aio.nuid import NUID
@@ -12,6 +13,7 @@ import glob
 import collections
 import time
 import signal
+import logging
 
 # try:
 #     import thread
@@ -175,6 +177,19 @@ def palette_region_api(region, api, params=""):
         params = p + "," + params
     return palette_api(api,params)
 
+def sprint(*args, end='', **kwargs):
+    sio = io.StringIO()
+    print(*args, **kwargs, end=end, file=sio)
+    return sio.getvalue()
+
+def debug(*args):
+    s = sprint(*args)
+    logging.debug(s)
+
+def log(*args):
+    s = sprint(*args)
+    logging.info(s)
+
 def palette_global_api(api, params=""):
     return palette_api("global."+api,params)
 
@@ -182,10 +197,10 @@ def logFilePath(nm):
     return os.path.join(localPaletteDir(),"logs",nm)
 
 def configFilePath(nm):
-    return os.path.join(paletteDataDir(),"config",nm)
+    return os.path.join(localPaletteDir(),PaletteDataPath(),"config",nm)
 
 def presetsPath():
-    return os.path.join(paletteDataDir(),"presets")
+    return os.path.join(localPaletteDir(),PaletteDataPath(),"presets")
 
 def localPaletteDir():
     common = os.environ.get("CommonProgramFiles")
@@ -197,24 +212,29 @@ def localPaletteDir():
 def paletteSubDir(subdir):
     return os.path.join(localPaletteDir(), subdir)
 
-PaletteDataDir = ""
+paletteDataPath = ""
 
 # This is the name of the data_* directory
 # under which are config and presets.
 # The value comes from the config.json file
-def paletteDataDir():
-    global PaletteDataDir
-    if PaletteDataDir != "":
-        return PaletteDataDir
+def PaletteDataPath():
+    global paletteDataPath
+    if paletteDataPath != "":
+        return paletteDataPath
+    paletteDataPath = os.path.join(localPaletteDir(),"data_default")
     path = os.path.join(localPaletteDir(),"config.json")
     if not os.path.isfile(path):
-        log("Missing config.json file? path=",path)
-        PaletteDataDir = "data_default"
+        log("No config.json file?  Assuming datapath=",paletteDataPath)
     else:
         vals = readJsonPath(path)
-        if "datadir" in vals:
-            PaletteDataDir = vals["datadir"]
-    return PaletteDataDir
+        if "datapath" in vals:
+            paletteDataPath = vals["datapath"]
+        else:
+            log("Bad format of %s\n",path)
+
+    log("Using data dir = ",paletteDataPath)
+
+    return paletteDataPath
 
 # Combine presets in the presetsPath list
 def presetsListAll(presetType):
@@ -495,16 +515,6 @@ def NoticeKeyboardInterrupt():
     """
     return signal.signal(signal.SIGINT, signal.default_int_handler)
 
-import logging
-
-# global palettelogger
-# global palettehandle
-
-def sprint(*args, end='', **kwargs):
-    sio = io.StringIO()
-    print(*args, **kwargs, end=end, file=sio)
-    return sio.getvalue()
-
 def loginit():
     # logging.basicConfig(filename="gui.log",encoding='utf-8', level=logging.DEBUG)
     logpath = logFilePath("gui.log")
@@ -512,23 +522,3 @@ def loginit():
         encoding='utf-8',
         format='%(asctime)s %(message)s',
         level=logging.INFO)
-
-    # global palettelogger
-    # palettelogger = logging.getLogger("palette")
-    # palettelogger.setLevel(logging.INFO)
-
-    # global palettehandle
-    # fh = logging.FileHandler(logpath)
-    # formatter = logging.Formatter("%(asctime)s %(message)s")
-    # fh.setFormatter(formatter)
-    # palettelogger.addHandler(fh)
-
-def log(*args):
-    global palettelogger
-    s = sprint(*args)
-    logging.info(s)
-
-def debug(*args):
-    global palettelogger
-    s = sprint(*args)
-    logging.debug(s)

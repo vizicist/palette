@@ -24,36 +24,39 @@ func InitProcessInfo() {
 	ProcessInfo["VSCode debugger"] = VSCodeInfo()
 	ProcessInfo["resolume"] = ResolumeInfo()
 	ProcessInfo["gui"] = GuiInfo()
-	ProcessInfo["bidule"] = BiduleInfo()
+	ProcessInfo["vsthost"] = VstHostInfo()
 	ProcessInfo["mmtt"] = MmttInfo()
 }
 
-func BiduleInfo() *processInfo {
-	fullpath := ConfigValue("bidule")
-	if fullpath == "" {
-		fullpath = "C:\\Program Files\\Plogue\\Bidule\\PlogueBidule_X64.exe"
-	}
-	if !FileExists(fullpath) {
-		log.Printf("no Bidule found, looking for %s", fullpath)
+func VstHostPath() string {
+	return ConfigValueWithDefault("vsthost", "")
+}
+
+func VstHostInfo() *processInfo {
+	path := VstHostPath()
+	if path == "" {
 		return nil
 	}
-	exe := fullpath
-	lastslash := strings.LastIndex(fullpath, "\\")
+	if !FileExists(path) {
+		log.Printf("No vsthostpath found, looking for %s", path)
+		return nil
+	}
+	exe := path
+	lastslash := strings.LastIndex(exe, "\\")
 	if lastslash > 0 {
-		exe = fullpath[lastslash+1:]
+		exe = exe[lastslash+1:]
 	}
-	bidulefile := ConfigValue("bidulefile")
-	if bidulefile == "" {
-		bidulefile = "config.bidule"
+	vsthostfile := ConfigValueWithDefault("vsthostfile", "")
+	if vsthostfile == "" {
+		vsthostfile = "default.bidule"
 	}
-	arg := ConfigFilePath(bidulefile)
-	return &processInfo{exe, fullpath, arg, biduleActivate}
+	return &processInfo{exe, path, ConfigFilePath(vsthostfile), VstHostActivate}
 }
 
 func ResolumeInfo() *processInfo {
 	fullpath := ConfigValue("resolume")
 	if fullpath != "" && !FileExists(fullpath) {
-		log.Printf("no Resolume found, looking for %s)", fullpath)
+		log.Printf("No Resolume found, looking for %s)", fullpath)
 		return nil
 	}
 	if fullpath == "" {
@@ -170,16 +173,13 @@ func IsRunning(process string) bool {
 }
 
 func CheckProcessesAndRestartIfNecessary() {
-	autostart := ConfigStringWithDefault("autostart", "all")
+	autostart := ConfigStringWithDefault("autostart", "gui")
 	if autostart == "nothing" {
 		return
 	}
 	if autostart == "all" {
-		autostart = "resolume,bidule,gui"
-		mmtt := ConfigStringWithDefault("mmtt", "")
-		if mmtt != "" {
-			autostart = autostart + ",mmtt"
-		}
+		log.Printf("autostart no longer supports all, assuming gui\n")
+		autostart = "gui"
 	}
 	processes := strings.Split(autostart, ",")
 	for _, process := range processes {
@@ -246,7 +246,12 @@ func bypassLayer(resolumeClient *osc.Client, layer int, onoff bool) {
 	_ = resolumeClient.Send(msg)
 }
 
-func biduleActivate() {
+func VstHostActivate() {
+	path := VstHostPath()
+	if !strings.Contains(path, "Bidule") {
+		log.Printf("VstHostActivate does nothing")
+		return
+	}
 	addr := "127.0.0.1"
 	bidulePort := 3210
 	biduleClient := osc.NewClient(addr, bidulePort)

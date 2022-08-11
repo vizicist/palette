@@ -48,9 +48,7 @@ Source: "ship\ffgl\*"; DestDir: "{app}\ffgl"; Flags: ignoreversion recursesubdir
 Source: "ship\html\*"; DestDir: "{app}\html"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 ; NOTE - all config files go in CommonProgramFiles
-Source: "ship\config.json"; DestDir: "{commoncf64}\{#MyAppName}"; Flags: comparetimestamp ignoreversion; Permissions: users-modify
 Source: "ship\data_default\*"; DestDir: "{commoncf64}\{#MyAppName}\data_default"; Flags: comparetimestamp ignoreversion recursesubdirs createallsubdirs
-Source: "ship\data_full\*"; DestDir: "{commoncf64}\{#MyAppName}\data_full"; Flags: comparetimestamp ignoreversion recursesubdirs createallsubdirs
 Source: "logs_readme.txt"; DestDir: "{commoncf64}\{#MyAppName}\logs"; DestName: "readme.txt"; Flags: ignoreversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
