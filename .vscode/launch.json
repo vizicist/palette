@@ -93,18 +93,18 @@
             "args": ["stop", "resolume"]
         },
         {
-            "name": "Start bidule",
+            "name": "Start vsthost",
             "type": "go",
             "request": "launch",
             "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
-            "args": ["api", "start", "\"process\":\"bidule\""]
+            "args": ["api", "start", "\"process\":\"vsthost\""]
         },
         {
-            "name": "Stop bidule",
+            "name": "Stop vsthost",
             "type": "go",
             "request": "launch",
             "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
-            "args": ["api", "stop", "\"process\":\"bidule\""]
+            "args": ["api", "stop", "\"process\":\"vsthost\""]
         },
         {
             "name": "Start gui",
