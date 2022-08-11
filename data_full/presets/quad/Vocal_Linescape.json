@@ -678,7 +678,7 @@
         "C-sound.midifile":"jsbach",
         "C-sound.pitchmax":"80",
         "C-sound.pitchmin":"33",
-        "C-sound.synth":"Adagio Singing Bell Harmonics",
+        "C-sound.synth":"P_02_C_01",
         "C-sound.timefret1q":"1.000000",
         "C-sound.timefret1y":"0.150000",
         "C-sound.timefret2q":"0.500000",

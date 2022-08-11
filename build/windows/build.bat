@@ -126,7 +126,7 @@ copy setpalettelogdir.bat %bin% >nul
 popd
 
 
-for %%X in (data_default,data_full) DO (
+for %%X in (data_default) DO (
 	echo ================ Copying %%X
 	mkdir %ship%\%%X\config
 	mkdir %ship%\%%X\midifiles
@@ -142,7 +142,6 @@ for %%X in (data_default,data_full) DO (
 	copy %PALETTESOURCE%\%%X\config\nats*.conf %ship%\%%X\config >nul
 	copy %PALETTESOURCE%\%%X\config\Palette*.avc %ship%\%%X\config >nul
 	copy %PALETTESOURCE%\%%X\config\EraeTouchLayout.emk %ship%\%%X\config >nul
-	copy %PALETTESOURCE%\%%X\config\*.bidule %ship%\%%X\config >nul
 	copy %PALETTESOURCE%\%%X\config\attractscreen.png %ship%\%%X\config >nul
 	copy %PALETTESOURCE%\%%X\config\helpscreen.png %ship%\%%X\config >nul
 	copy %PALETTESOURCE%\%%X\config\consola.ttf %ship%\%%X\config >nul
