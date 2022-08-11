@@ -310,7 +310,7 @@
         "B-sound.midifile":"jsbach",
         "B-sound.pitchmax":"80",
         "B-sound.pitchmin":"33",
-        "B-sound.synth":"P_07_C_01",
+        "B-sound.synth":"P_06_C_01",
         "B-sound.timefret1q":"1.000000",
         "B-sound.timefret1y":"0.150000",
         "B-sound.timefret2q":"0.500000",
