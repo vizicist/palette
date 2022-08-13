@@ -10,11 +10,23 @@ import (
 	"github.com/vizicist/portmidi"
 )
 
+// These are the values of MIDI status bytes
+const (
+	NoteOnStatus       byte = 0x90
+	NoteOffStatus      byte = 0x80
+	PressureStatus     byte = 0xa0
+	ControllerStatus   byte = 0xb0
+	ProgramStatus      byte = 0xc0
+	ChanPressureStatus byte = 0xd0
+	PitchbendStatus    byte = 0xe0
+)
+
 // MIDIIO encapsulate everything having to do with MIDI I/O
 type MIDIIO struct {
 	// synth name is the key in these maps
-	midiInputs  map[string]*MidiInput
-	midiOutputs map[string]*MidiOutput
+	midiInputs         map[string]*MidiInput
+	midiDeviceOutputs  map[string]*MidiDeviceOutput
+	midiChannelOutputs map[PortChannel]*MidiChannelOutput
 	// MIDI device name is the key in these maps
 	outputDeviceID     map[string]portmidi.DeviceID
 	outputDeviceInfo   map[string]*portmidi.DeviceInfo
@@ -30,11 +42,17 @@ type MidiInput struct {
 	stream   *portmidi.Stream
 }
 
-type MidiOutput struct {
+type MidiChannelOutput struct {
+	channel          int
+	bank             int
+	program          int
+	midiDeviceOutput *MidiDeviceOutput
+}
+
+type MidiDeviceOutput struct {
 	name     string
 	deviceID portmidi.DeviceID
 	stream   *portmidi.Stream
-	// channel  int // 0-15 for MIDI channels 1-16
 }
 
 type Timestamp int64
@@ -50,7 +68,7 @@ type MidiEvent struct {
 	source    string // {midiinputname} or maybe {IPaddress}.{midiinputname}
 }
 
-func (out MidiOutput) Name() string {
+func (out MidiDeviceOutput) Name() string {
 	return out.name
 }
 
@@ -68,7 +86,8 @@ func InitMIDI() {
 
 	MIDI = &MIDIIO{
 		midiInputs:         make(map[string]*MidiInput),
-		midiOutputs:        make(map[string]*MidiOutput),
+		midiDeviceOutputs:  make(map[string]*MidiDeviceOutput),
+		midiChannelOutputs: make(map[PortChannel]*MidiChannelOutput),
 		outputDeviceID:     make(map[string]portmidi.DeviceID),
 		outputDeviceInfo:   make(map[string]*portmidi.DeviceInfo),
 		outputDeviceStream: make(map[string]*portmidi.Stream),
@@ -161,10 +180,26 @@ func (m *MIDIIO) GetMidiOutput(synth string) *midiOutput {
 }
 */
 
+func (out *MidiChannelOutput) SendBankProgram(bank int, program int) {
+	if out.bank != bank {
+		log.Printf("SendBankProgram: XXX - SHOULD be sending bank=%d\n", bank)
+		out.bank = bank
+	}
+	if out.program != program {
+		if Debug.MIDI {
+			log.Printf("SendBankProgram: sending program=%d\n", program)
+		}
+		out.program = program
+		status := int64(ProgramStatus) | int64(out.channel-1)
+		data1 := int64(program - 1)
+		out.midiDeviceOutput.stream.WriteShort(status, data1, 0)
+	}
+}
+
 // WriteSysex sends one or more MIDI Events
-func (out *MidiOutput) WriteSysex(bytes []byte) {
+func (out *MidiDeviceOutput) WriteSysex(bytes []byte) {
 	if out == nil {
-		log.Printf("MidiOutput.WriteSysex: out is nil?\n")
+		log.Printf("MidiDeviceOutput.WriteSysex: out is nil?\n")
 		return
 	}
 	if Debug.MIDI {
@@ -186,9 +221,9 @@ func (out *MidiOutput) WriteSysex(bytes []byte) {
 	}
 }
 
-func (out *MidiOutput) WriteShort(status, data1, data2 int64) {
+func (out *MidiDeviceOutput) WriteShort(status, data1, data2 int64) {
 	if Debug.MIDI {
-		log.Printf("MidiOutput.WriteShort: status=0x%02x data1=%d data2=%d\n", status, data1, data2)
+		log.Printf("MidiDeviceOutput.WriteShort: status=0x%02x data1=%d data2=%d\n", status, data1, data2)
 	}
 	if out.stream == nil {
 		log.Printf("SendEvent: out.stream is nil?  port=%s\n", out.name)
@@ -244,8 +279,16 @@ func (m *MIDIIO) getInputStream(name string) (devid portmidi.DeviceID, stream *p
 	return devid, stream
 }
 
-func (m *MIDIIO) GetMidiOutput(name string) *MidiOutput {
-	midiout, ok := m.midiOutputs[name]
+func (m *MIDIIO) GetMidiChannelOutput(portchannel PortChannel) *MidiChannelOutput {
+	midiout, ok := m.midiChannelOutputs[portchannel]
+	if !ok {
+		return nil
+	}
+	return midiout
+}
+
+func (m *MIDIIO) GetMidiDeviceOutput(name string) *MidiDeviceOutput {
+	midiout, ok := m.midiDeviceOutputs[name]
 	if !ok {
 		return nil
 	}
@@ -260,19 +303,44 @@ func (m *MIDIIO) GetMidiInput(name string) *MidiInput {
 	return midiin
 }
 
-func (m *MIDIIO) openOutput(nm string) *MidiOutput {
+func (m *MIDIIO) openChannelOutput(portchannel PortChannel) *MidiChannelOutput {
+
+	output := m.openDeviceOutput(portchannel.port)
+
+	co := &MidiChannelOutput{
+		channel:          portchannel.channel,
+		bank:             0,
+		program:          0,
+		midiDeviceOutput: output,
+	}
+	return co
+}
+func (m *MIDIIO) openFakeChannelOutput(port string, channel int) *MidiChannelOutput {
+
+	output := m.openFakeDeviceOutput(port)
+
+	co := &MidiChannelOutput{
+		channel:          channel,
+		bank:             0,
+		program:          0,
+		midiDeviceOutput: output,
+	}
+	return co
+}
+
+func (m *MIDIIO) openDeviceOutput(nm string) *MidiDeviceOutput {
 	devid, stream := m.getOutputStream(nm)
 	if stream == nil {
 		log.Printf("MIDIIO.openInput: Unable to open %s\n", nm)
 		return nil
 	}
-	out := &MidiOutput{name: nm, deviceID: devid, stream: stream}
-	m.midiOutputs[nm] = out
+	out := &MidiDeviceOutput{name: nm, deviceID: devid, stream: stream}
+	m.midiDeviceOutputs[nm] = out
 	return out
 }
 
-func (m *MIDIIO) openFakeOutput(port string) *MidiOutput {
-	return &MidiOutput{name: port, deviceID: -1, stream: nil}
+func (m *MIDIIO) openFakeDeviceOutput(port string) *MidiDeviceOutput {
+	return &MidiDeviceOutput{name: port, deviceID: -1, stream: nil}
 }
 
 func (m *MIDIIO) openInput(nm string) {

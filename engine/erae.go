@@ -11,7 +11,7 @@ import (
 
 var EraeRegion = "A"
 var EraeEnabled = false
-var EraeOutput *MidiOutput
+var EraeOutput *MidiChannelOutput
 var EraeInput *MidiInput
 var MyPrefix byte = 0x55
 var EraeWidth int = 0x2a
@@ -21,9 +21,9 @@ var EraeMutex sync.RWMutex
 
 func InitErae() {
 	MIDI.openInput("Erae Touch")
-	MIDI.openOutput("Erae Touch")
+	MIDI.openDeviceOutput("Erae Touch")
 	EraeInput = MIDI.GetMidiInput("Erae Touch")
-	EraeOutput = MIDI.GetMidiOutput("Erae Touch")
+	EraeOutput = MIDI.GetMidiChannelOutput(PortChannel{"Erae Touch", 1})
 	if EraeInput == nil || EraeOutput == nil {
 		log.Printf("Unable to open Erae Touch.  Is the EraeLab application open?\n")
 		return
@@ -232,7 +232,7 @@ func handleFinger(bb []byte) {
 func EraeWriteSysex(bytes []byte) {
 	EraeMutex.Lock()
 	defer EraeMutex.Unlock()
-	EraeOutput.WriteSysex(bytes)
+	EraeOutput.midiDeviceOutput.WriteSysex(bytes)
 }
 
 func EraeApiModeEnable() {
