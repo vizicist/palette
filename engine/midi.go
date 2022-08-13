@@ -280,11 +280,20 @@ func (m *MIDIIO) getInputStream(name string) (devid portmidi.DeviceID, stream *p
 }
 
 func (m *MIDIIO) GetMidiChannelOutput(portchannel PortChannel) *MidiChannelOutput {
-	midiout, ok := m.midiChannelOutputs[portchannel]
+	mc, ok := m.midiChannelOutputs[portchannel]
 	if !ok {
+		log.Printf("GetMidiChannelOutput: no entry for port=%s channel=%d\n", portchannel.port, portchannel.channel)
 		return nil
 	}
-	return midiout
+	if mc.midiDeviceOutput == nil {
+		log.Printf("GetMidiChannelOutput: midiDeviceOutput==nil for port=%s channel=%d\n", portchannel.port, portchannel.channel)
+		return nil
+	}
+	if mc.midiDeviceOutput.stream == nil {
+		log.Printf("GetMidiChannelOutput: midiDeviceOutput.stream==nil for port=%s channel=%d\n", portchannel.port, portchannel.channel)
+		return nil
+	}
+	return mc
 }
 
 func (m *MIDIIO) GetMidiDeviceOutput(name string) *MidiDeviceOutput {
@@ -307,13 +316,14 @@ func (m *MIDIIO) openChannelOutput(portchannel PortChannel) *MidiChannelOutput {
 
 	output := m.openDeviceOutput(portchannel.port)
 
-	co := &MidiChannelOutput{
+	mc := &MidiChannelOutput{
 		channel:          portchannel.channel,
 		bank:             0,
 		program:          0,
 		midiDeviceOutput: output,
 	}
-	return co
+	m.midiChannelOutputs[portchannel] = mc
+	return mc
 }
 func (m *MIDIIO) openFakeChannelOutput(port string, channel int) *MidiChannelOutput {
 

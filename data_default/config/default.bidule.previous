@@ -767,16 +767,6 @@
 			<Parameter id="2048" userMin="0" userMax="1" lockedForRandom="false" mutationFactor="0.1">0</Parameter>
 			<CustomData name="DeviceName">01. Internal MIDI</CustomData>
 		</Bidule>
-		<Bidule id="UID_1543869640" type="com.plogue.MIDIMonitor2" displayName="Monitor" processingMode="process">
-			<Geometry x="-219.136" y="-53.1802" w="0" h="0"/>
-			<ChannelConfig numSampleIn="0" numSampleOut="0" numMidiIn="1" numMidiOut="0" numFreqIn="0" numFreqOut="0" numMagIn="0" numMagOut="0"/>
-			<Gui state="normal" hidden="false" generic="true">
-				<Geometry x="142" y="325" w="400" h="235"/>
-			</Gui>
-			<Parameter id="-9" userMin="0" userMax="0" lockedForRandom="false" mutationFactor="0.1">1.0</Parameter>
-			<Parameter id="-7" userMin="0" userMax="1" lockedForRandom="false" mutationFactor="0.1">1</Parameter>
-			<Parameter id="-2" userMin="0" userMax="2" lockedForRandom="false" mutationFactor="0.1">0.0</Parameter>
-		</Bidule>
 		<Bidule id="UID_1660316326" type="MidiOutput_0" displayName="Microsoft GS Wavetable Synth" processingMode="process">
 			<Geometry x="-138.666" y="-25.3335" w="0" h="0"/>
 			<ChannelConfig numSampleIn="0" numSampleOut="0" numMidiIn="1" numMidiOut="0" numFreqIn="0" numFreqOut="0" numMagIn="0" numMagOut="0"/>
@@ -785,8 +775,18 @@
 			<Parameter id="-2" userMin="0" userMax="2" lockedForRandom="false" mutationFactor="0.1">0.0</Parameter>
 			<CustomData name="DeviceName">Microsoft GS Wavetable Synth</CustomData>
 		</Bidule>
-		<Link producerId="UID_1451662716" producerChannel="0" listenerId="UID_1543869640" listenerChannel="0"/>
+		<Bidule id="UID_1660328572" type="com.plogue.MIDIMonitor2" displayName="MIDI Monitor 2_1" processingMode="process">
+			<Geometry x="-264.469" y="-38.5135" w="0" h="0"/>
+			<ChannelConfig numSampleIn="0" numSampleOut="0" numMidiIn="1" numMidiOut="0" numFreqIn="0" numFreqOut="0" numMagIn="0" numMagOut="0"/>
+			<Gui state="normal" hidden="false" generic="true">
+				<Geometry x="140" y="326" w="423" h="353"/>
+			</Gui>
+			<Parameter id="-9" userMin="0" userMax="0" lockedForRandom="false" mutationFactor="0.1">1.0</Parameter>
+			<Parameter id="-7" userMin="0" userMax="1" lockedForRandom="false" mutationFactor="0.1">1</Parameter>
+			<Parameter id="-2" userMin="0" userMax="2" lockedForRandom="false" mutationFactor="0.1">0.0</Parameter>
+		</Bidule>
 		<Link producerId="UID_1451662716" producerChannel="0" listenerId="UID_1660316326" listenerChannel="0"/>
+		<Link producerId="UID_1451662716" producerChannel="0" listenerId="UID_1660328572" listenerChannel="0"/>
 	</BiduleGroup>
 	<Automation id="Automation"/>
 </BoardLayout>
