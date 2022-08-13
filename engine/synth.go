@@ -16,11 +16,11 @@ type PortChannel struct {
 var PortChannels map[PortChannel]*MidiChannelOutput
 
 type Synth struct {
-	portchannel    PortChannel
-	bank           int // 0 if not set
-	program        int // 0 if note set
-	midiChannelOut *MidiChannelOutput
-	noteDown       []bool
+	portchannel PortChannel
+	bank        int // 0 if not set
+	program     int // 0 if note set
+	// midiChannelOut *MidiChannelOutput
+	noteDown []bool
 }
 
 var Synths map[string]*Synth
@@ -81,11 +81,11 @@ func NewSynth(port string, channel int, bank int, program int) *Synth {
 		return nil
 	} else {
 		return &Synth{
-			portchannel:    portchannel,
-			bank:           bank,
-			program:        program,
-			midiChannelOut: midiChannelOut,
-			noteDown:       make([]bool, 128),
+			portchannel: portchannel,
+			bank:        bank,
+			program:     program,
+			// midiChannelOut: midiChannelOut,
+			noteDown: make([]bool, 128),
 		}
 	}
 }
@@ -102,20 +102,21 @@ func SendANOToSynth(synthName string) {
 		// synth named synthName has already been logged.
 		return
 	}
-	if synth.midiChannelOut.midiDeviceOutput.stream == nil {
-		log.Printf("SendANOToSynth: no stream for synth=%s\n", synthName)
+	mc := MIDI.GetMidiChannelOutput(synth.portchannel)
+	if mc == nil {
+		// Assumes errs are logged in GetMidiChannelOutput
 		return
 	}
 
 	// This only sends the bank and/or program if they change
-	synth.midiChannelOut.SendBankProgram(synth.bank, synth.program)
+	mc.SendBankProgram(synth.bank, synth.program)
 
 	status := 0xb0 | (synth.portchannel.channel - 1)
 	for i := range synth.noteDown {
 		synth.noteDown[i] = false
 	}
 	// log.Printf("SendANOToSynth: synth=%s\n", synthName)
-	synth.midiChannelOut.midiDeviceOutput.stream.WriteShort(int64(status), int64(0x7b), int64(0x00))
+	mc.midiDeviceOutput.stream.WriteShort(int64(status), int64(0x7b), int64(0x00))
 }
 
 func SendControllerToSynth(synthName string, cnum int, cval int) {
@@ -124,13 +125,14 @@ func SendControllerToSynth(synthName string, cnum int, cval int) {
 		log.Printf("SendControllerToSynth: no such synth - %s\n", synthName)
 		return
 	}
-	if synth.midiChannelOut.midiDeviceOutput.stream == nil {
-		log.Printf("SendControllerToSynth: no stream for synth=%s\n", synthName)
+	mc := MIDI.GetMidiChannelOutput(synth.portchannel)
+	if mc == nil {
+		// Assumes errs are logged in GetMidiChannelOutput
 		return
 	}
 
 	// This only sends the bank and/or program if they change
-	synth.midiChannelOut.SendBankProgram(synth.bank, synth.program)
+	mc.SendBankProgram(synth.bank, synth.program)
 
 	e := portmidi.Event{
 		Timestamp: portmidi.Time(),
@@ -140,12 +142,12 @@ func SendControllerToSynth(synthName string, cnum int, cval int) {
 	}
 	e.Status |= 0xb0
 	if Debug.MIDI {
-		log.Printf("SendControllerToSynth: synth=%s status=0x%02x data1=%d data2=%d\n", synth.midiChannelOut.midiDeviceOutput.Name(), e.Status, e.Data1, e.Data2)
+		log.Printf("SendControllerToSynth: synth=%s status=0x%02x data1=%d data2=%d\n", mc.midiDeviceOutput.Name(), e.Status, e.Data1, e.Data2)
 	}
 	if e.Data2 > 0x7f {
 		log.Printf("SendControllerToSynth: Hey! Data2 shouldn't be > 0x7f\n")
 	} else {
-		synth.midiChannelOut.midiDeviceOutput.stream.WriteShort(e.Status, e.Data1, e.Data2)
+		mc.midiDeviceOutput.stream.WriteShort(e.Status, e.Data1, e.Data2)
 	}
 }
 
@@ -162,13 +164,14 @@ func SendNoteToSynth(note *Note) {
 		// synth named synthName has already been logged.
 		return
 	}
-	if synth.midiChannelOut.midiDeviceOutput.stream == nil {
-		log.Printf("SendANOToSynth: no stream for synth=%s\n", synthName)
+	mc := MIDI.GetMidiChannelOutput(synth.portchannel)
+	if mc == nil {
+		// Assumes errs are logged in GetMidiChannelOutput
 		return
 	}
 
 	// This only sends the bank and/or program if they change
-	synth.midiChannelOut.SendBankProgram(synth.bank, synth.program)
+	mc.SendBankProgram(synth.bank, synth.program)
 
 	e := portmidi.Event{
 		Timestamp: portmidi.Time(),
@@ -208,10 +211,10 @@ func SendNoteToSynth(note *Note) {
 	}
 
 	if Debug.MIDI {
-		log.Printf("SendNoteToSynth: synth=%s status=0x%02x data1=%d data2=%d\n", synth.midiChannelOut.midiDeviceOutput.Name(), e.Status, e.Data1, e.Data2)
+		log.Printf("SendNoteToSynth: synth=%s status=0x%02x data1=%d data2=%d\n", mc.midiDeviceOutput.Name(), e.Status, e.Data1, e.Data2)
 	}
 
-	synth.midiChannelOut.midiDeviceOutput.stream.WriteShort(e.Status, e.Data1, e.Data2)
+	mc.midiDeviceOutput.stream.WriteShort(e.Status, e.Data1, e.Data2)
 
 	PublishNoteEvent(PaletteOutputEventSubject, note, "engine")
 }
