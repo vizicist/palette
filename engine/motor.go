@@ -117,9 +117,9 @@ func (motor *Motor) SendNoteToSynth(n *Note) {
 	if ss == "midi" {
 		motor.generateSpriteFromNote(n)
 	}
-	if Debug.MIDI {
-		log.Printf("%s: n=%+v\n", CallerFunc(), *n)
-	}
+	// if Debug.MIDI {
+	// 	log.Printf("FUNC %s: n=%+v\n", CallerFunc(), *n)
+	// }
 
 	SendNoteToSynth(n)
 }
@@ -1001,9 +1001,9 @@ func (motor *Motor) nextQuant(t Clicks, q Clicks) Clicks {
 
 func (motor *Motor) sendNoteOn(a *ActiveNote) {
 
-	if Debug.MIDI {
-		log.Printf("MIDI.SendNote: noteOn pitch:%d velocity:%d sound:%s\n", a.noteOn.Pitch, a.noteOn.Velocity, a.noteOn.Sound)
-	}
+	// if Debug.MIDI {
+	// 	log.Printf("MIDI.SendNote: noteOn pitch:%d velocity:%d sound:%s\n", a.noteOn.Pitch, a.noteOn.Velocity, a.noteOn.Sound)
+	// }
 	motor.SendNoteToSynth(a.noteOn)
 
 	ss := motor.params.ParamStringValue("visual.spritesource", "")
@@ -1030,9 +1030,9 @@ func (motor *Motor) sendNoteOff(a *ActiveNote) {
 	}
 
 	noteOff := NewNoteOff(n.Pitch, n.Velocity, n.Sound)
-	if Debug.MIDI {
-		log.Printf("MIDI.SendNote: noteOff pitch:%d velocity:%d sound:%s\n", n.Pitch, n.Velocity, n.Sound)
-	}
+	// if Debug.MIDI {
+	// 	log.Printf("MIDI.SendNote: noteOff pitch:%d velocity:%d sound:%s\n", n.Pitch, n.Velocity, n.Sound)
+	// }
 	motor.SendNoteToSynth(noteOff)
 }
 
