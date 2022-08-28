@@ -1,4 +1,7 @@
 {
   "debug": "",
+  "autostart": "gui,vsthost,resolume",
+  "vsthost": "C:\\Program Files\\Plogue\\Bidule\\PlogueBidule_x64.exe",
+  "guiresize": "-800 0 800 1200",
   "this line should not end with a comma": 0
 }
