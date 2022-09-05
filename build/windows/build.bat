@@ -68,16 +68,16 @@ popd
 echo ================ Creating palette_gui.exe, osc.exe
 pushd %PALETTESOURCE%\python
 rm -fr dist
+rm -fr build\palette_gui
 rm -fr build
-pyinstaller -i ..\data_default\config\palette.ico palette_gui.py > pyinstaller.out 2>&1
-pyinstaller osc.py > pyinstaller.out 2>&1
+pyinstaller -i ..\data_default\config\palette.ico palette_gui.py > pyinstaller_gui.out 2>&1
+pyinstaller osc.py > pyinstaller_osc.out 2>&1
 
 echo ================ Merging python executables
 rem merge all the pyinstalled things into one
 move dist\palette_gui dist\pyinstalled >nul
 move dist\osc\osc.exe dist\pyinstalled >nul
 move dist\pyinstalled %bin% >nul
-echo off
 popd
 
 echo ================ Compiling FFGL plugin
@@ -126,7 +126,7 @@ copy setpalettelogdir.bat %bin% >nul
 popd
 
 
-for %%X in (data_default) DO (
+for %%X in (data_default data_surge) DO (
 	echo ================ Copying %%X
 	mkdir %ship%\%%X\config
 	mkdir %ship%\%%X\midifiles
