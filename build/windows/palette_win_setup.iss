@@ -47,8 +47,9 @@ Source: "ship\bin\mmtt_kinect\*"; DestDir: "{app}\bin\mmtt_kinect"; Flags: ignor
 Source: "ship\ffgl\*"; DestDir: "{app}\ffgl"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "ship\html\*"; DestDir: "{app}\html"; Flags: ignoreversion recursesubdirs createallsubdirs
 
-; NOTE - all config files go in CommonProgramFiles
+; NOTE - all data_* files go in CommonProgramFiles\Palette
 Source: "ship\data_default\*"; DestDir: "{commoncf64}\{#MyAppName}\data_default"; Flags: comparetimestamp ignoreversion recursesubdirs createallsubdirs
+Source: "ship\data_surge\*"; DestDir: "{commoncf64}\{#MyAppName}\data_surge"; Flags: comparetimestamp ignoreversion recursesubdirs createallsubdirs
 Source: "logs_readme.txt"; DestDir: "{commoncf64}\{#MyAppName}\logs"; DestName: "readme.txt"; Flags: ignoreversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 

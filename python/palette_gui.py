@@ -2644,6 +2644,9 @@ if __name__ == "__main__":
 
     # guiresize is of the form x,y,w,h
     guiresize = palette.ConfigValue("guiresize",defvalue="")
+    if guiresize == "palette":
+        # this is for a Space Palette Pro, putting the gui on the touchscreen
+        guiresize = "-800,0,800,1280"
 
     global PaletteApp
     PaletteApp = ProGuiApp(padname,padnames,visiblepagenames,guiresize)
