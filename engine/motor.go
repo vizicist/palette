@@ -804,17 +804,17 @@ func (motor *Motor) generateSoundFromCursor(ce CursorStepEvent) {
 
 		dz := float64(int(a.noteOn.Velocity) - int(newNoteOn.Velocity))
 		deltaz := float32(math.Abs(dz) / 128.0)
-		deltaztrig := motor.params.ParamFloatValue("sound.deltaztrig")
+		deltaztrig := motor.params.ParamFloatValue("sound._deltaztrig")
 
 		deltay := float32(math.Abs(float64(a.ce.Y - ce.Y)))
-		deltaytrig := motor.params.ParamFloatValue("sound.deltaytrig")
+		deltaytrig := motor.params.ParamFloatValue("sound._deltaytrig")
 		// log.Printf("genSound for drag!   a.noteOn.vel=%d  newNoteOn.vel=%d deltaz=%f deltaztrig=%f\n", a.noteOn.Velocity, newNoteOn.Velocity, deltaz, deltaztrig)
 
 		if motor.params.ParamStringValue("sound.controllerstyle", "nothing") == "modulationonly" {
-			zmin := motor.params.ParamFloatValue("sound.controllerzmin")
-			zmax := motor.params.ParamFloatValue("sound.controllerzmax")
-			cmin := motor.params.ParamIntValue("sound.controllermin")
-			cmax := motor.params.ParamIntValue("sound.controllermax")
+			zmin := motor.params.ParamFloatValue("sound._controllerzmin")
+			zmax := motor.params.ParamFloatValue("sound._controllerzmax")
+			cmin := motor.params.ParamIntValue("sound._controllermin")
+			cmax := motor.params.ParamIntValue("sound._controllermax")
 			oldz := a.ce.Z
 			newz := ce.Z
 			// XXX - should put the old controller value in ActiveNote so

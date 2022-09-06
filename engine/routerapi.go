@@ -545,9 +545,13 @@ func (r *Router) executePresetAPI(api string, apiargs map[string]string) (result
 				return "", fmt.Errorf("ExecutePresetAPI, no region named %s", region)
 			}
 			err = motor.loadPreset(preset)
-			err2 := motor.saveCurrentSnap()
-			if err2 != nil {
-				log.Printf("error saving CurrentSnap, err=%s", err)
+			if err != nil {
+				log.Printf("loadPreset: preset=%s, err=%s", preset, err)
+			} else {
+				err = motor.saveCurrentSnap()
+				if err != nil {
+					log.Printf("saveCurrentSnap: err=%s", err)
+				}
 			}
 		}
 		return "", err

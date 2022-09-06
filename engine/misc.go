@@ -227,12 +227,12 @@ func PaletteVersion() string {
 
 // ReadablePresetFilePath xxx
 func ReadablePresetFilePath(preset string) string {
-	return presetFilePath(preset, false)
+	return presetFilePath(preset)
 }
 
 // WritablePresetFilePath xxx
 func WriteablePresetFilePath(preset string) string {
-	path := presetFilePath(preset, true)
+	path := presetFilePath(preset)
 	os.MkdirAll(filepath.Dir(path), 0777)
 	return path
 }
@@ -242,7 +242,7 @@ func PresetsDir() string {
 }
 
 // presetFilePath returns the full path of a preset file.
-func presetFilePath(preset string, writable bool) string {
+func presetFilePath(preset string) string {
 	category := ""
 	i := strings.Index(preset, ".")
 	if i >= 0 {
