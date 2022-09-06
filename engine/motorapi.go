@@ -11,6 +11,8 @@ import (
 	"github.com/hypebeast/go-osc/osc"
 )
 
+type ParamsMap map[string]interface{}
+
 // ExecuteAPI xxx
 func (motor *Motor) ExecuteAPI(api string, args map[string]string, rawargs string) (result string, err error) {
 
@@ -158,32 +160,32 @@ func (motor *Motor) sendAllParameters() {
 
 func (motor *Motor) loadPreset(preset string) error {
 
+	presetType, _ := PresetNameSplit(preset)
+
 	path := ReadablePresetFilePath(preset)
 	log.Printf("loadPreset region=%s path=%s\n", motor.padName, path)
 	paramsmap, err := LoadParamsMap(path)
 	if err != nil {
 		return err
 	}
+	err = motor.applyParamsMap(presetType, paramsmap)
+	if err != nil {
+		return err
+	}
 
-	presetType, _ := PresetNameSplit(preset)
-	for name, ival := range paramsmap {
-		val, okval := ival.(string)
-		if !okval {
-			log.Printf("nm=%s value isn't a string in params json", name)
-		}
-		fullname := name
-		paramType, _ := PresetNameSplit(fullname)
-		if presetType != "snap" && paramType != presetType {
-			continue
-		}
-		// This is where the parameter values get applied,
-		// which may trigger things (like sending OSC)
-		err = motor.SetOneParamValue(fullname, val)
+	// If there's a _override.json file, use it
+	overridepath := ReadablePresetFilePath(presetType + "._override")
+	if fileExists(overridepath) {
+		log.Printf("loadPreset using overridepath=%s\n", overridepath)
+		overridemap, err := LoadParamsMap(overridepath)
 		if err != nil {
-			log.Printf("loadPreset: preset %s, err=%s\n", preset, err)
-			// Don't abort the whole load, i.e. we are tolerant
-			// of unknown parameters in the preset
+			return err
 		}
+		err = motor.applyParamsMap(presetType, overridemap)
+		if err != nil {
+			return err
+		}
+
 	}
 
 	// For any parameters that are in Paramdefs but are NOT in the loaded
@@ -209,8 +211,39 @@ func (motor *Motor) loadPreset(preset string) error {
 	return nil
 }
 
+func (motor *Motor) applyParamsMap(presetType string, paramsmap map[string]interface{}) error {
+
+	// Currently, no errors are ever returned, but log messages are generated.
+
+	for name, ival := range paramsmap {
+		val, okval := ival.(string)
+		if !okval {
+			log.Printf("nm=%s value isn't a string in params json", name)
+			continue
+		}
+		fullname := name
+		paramType, _ := PresetNameSplit(fullname)
+		// Only include ones that match the presetType
+		if presetType != "snap" && paramType != presetType {
+			continue
+		}
+		// This is where the parameter values get applied,
+		// which may trigger things (like sending OSC)
+		err := motor.SetOneParamValue(fullname, val)
+		if err != nil {
+			log.Printf("loadPreset: param=%s, err=%s\n", fullname, err)
+			// Don't abort the whole load, i.e. we are tolerant
+			// of unknown parameters or errors in the preset
+		}
+	}
+	return nil
+}
+
 func (motor *Motor) restoreCurrentSnap() {
-	motor.loadPreset("snap._Current_" + motor.padName)
+	err := motor.loadPreset("snap._Current_" + motor.padName)
+	if err != nil {
+		log.Printf("loadPreset: err=%s\n", err)
+	}
 }
 
 func (motor *Motor) saveCurrentAsPreset(preset string) error {

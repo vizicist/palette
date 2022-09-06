@@ -1044,6 +1044,8 @@ class ProGuiApp(tk.Tk):
 
         self.newParamNames = []
         for x in sorted(self.newParamsJson.keys()):
+            if not isVisibleParameter(x):
+                continue
             self.newParamNames.append(x)
             self.newParamsJson[x]["name"] = x
             t = self.newParamsJson[x]["paramstype"]
@@ -1272,12 +1274,12 @@ class Pad():
 
         elif name == "deltaztrig":
             palette.palette_region_api(self.name(), "set",
-                "\"name\": \"" + "sound.deltaztrig" + "\"" + \
+                "\"name\": \"" + "sound._deltaztrig" + "\"" + \
                 ", \"value\": \"" + str(val) + "\"")
 
         elif name == "deltaytrig":
             palette.palette_region_api(self.name(), "set",
-                "\"name\": \"" + "sound.deltaytrig" + "\"" + \
+                "\"name\": \"" + "sound._deltaytrig" + "\"" + \
                 ", \"value\": \"" + str(val) + "\"")
 
         elif name == "quant":
@@ -2421,6 +2423,12 @@ def afterWindowIsDisplayed(windowName,guiresize,*args):
 
     global PaletteApp
     PaletteApp.nextMode = "layout"
+
+def isVisibleParameter(name):
+    parts = name.split(".")
+    if len(parts) > 0 and parts[-1].startswith("_") :
+        return False
+    return True
 
 def padOfParam(paramname):
     pad = paramname[0]
