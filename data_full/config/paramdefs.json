@@ -71,7 +71,6 @@
 "misc.enable:visual": {"valuetype":"bool", "min":"false", "max":"true", "init":"true", "comment":"# Enable Visual" },
 "misc.logic_sound": {"valuetype":"string", "min":"logic_sound", "max":"logic_sound", "init":"true", "comment":"# Sound Logic" },
 "misc.logic_visual": {"valuetype":"string", "min":"logic_visual", "max":"logic_visual", "init":"true", "comment":"# Visual Logic" },
-"misc.loop:length": {"valuetype":"int", "min":"1", "max":"10000", "init":"100", "comment":"#" },
 "misc.midibehaviour": {"valuetype": "string", "min": "midibehaviour", "max": "midibehaviour",  "init": "default", "comment": "#" },
 "misc.pitchoffset": {"valuetype": "float", "min": "0.0", "max": "128.0",  "init": "0.0", "comment": "#" },
 "misc.pitchfactor": {"valuetype": "float", "min": "0.1", "max": "10.0",  "init": "1.0",	"comment": "#" },
