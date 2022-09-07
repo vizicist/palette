@@ -116,7 +116,6 @@
         "visual.lifetime":"6.000",
         "misc.logic_sound":"default",
         "misc.logic_visual":"maze4",
-        "misc.loop:length":"5579",
         "visual.luminance":"0.500",
         "misc.midibehaviour":"sprite",
         "sound.midifile":"jsbach",
