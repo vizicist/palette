@@ -30,7 +30,6 @@ func callback(args map[string]string) {
 	}
 	switch eventType {
 	case "cursor_down":
-		// source := args["source"]
 		x, y, z, err := engine.GetArgsXYZ(args)
 		if err != nil {
 			log.Printf("callback: bad xyz, err=%s\n", err)

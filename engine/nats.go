@@ -50,7 +50,7 @@ func PublishCursorDeviceEvent(subj string, ce CursorDeviceEvent) error {
 	dt := time.Since(time0)
 	params := JsonObject(
 		// "nuid", ce.NUID,
-		"cid", ce.CID,
+		"source", ce.Source,
 		"region", ce.Region,
 		"event", "cursor_"+ce.Ddu,
 		"millisecs", fmt.Sprintf("%d", dt.Milliseconds()),
@@ -128,7 +128,8 @@ func PublishNoteEvent(subj string, note *Note, source string) error {
 		"source", source,
 		"event", "note",
 		"note", jsonEscape(note.String()),
-		"clicks", fmt.Sprintf("%d", note.Clicks),
+		"clicks", fmt.Sprintf("%d", CurrentClick()),
+		// "clicks", fmt.Sprintf("%d", note.Clicks),
 	)
 	err := NATSPublish(subj, params)
 	if err != nil {
