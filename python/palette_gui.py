@@ -102,7 +102,7 @@ class ProGuiApp(tk.Tk):
 
         self.lastAnything = 0
         self.attractTimeout = int(palette.ConfigValue("attracttimeout",defvalue="0"))
-        if self.attractTimeout < 60:
+        if self.attractTimeout > 0 and self.attractTimeout < 60:
             log("attracttimeout = ",self.attractTimeout," is too low, setting it to 60")
             self.attractTimeout = 60
         log("attracttimeout = ",self.attractTimeout)

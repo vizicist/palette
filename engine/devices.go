@@ -19,7 +19,7 @@ type MIDIDeviceEvent struct {
 type CursorDeviceEvent struct {
 	NUID      string
 	Region    string
-	CID       string
+	Source    string
 	Timestamp int64  // milliseconds
 	Ddu       string // "down", "drag", "up" (sometimes "clear")
 	X         float32
@@ -30,7 +30,7 @@ type CursorDeviceEvent struct {
 
 // CursorStepEvent is a down, drag, or up event inside a loop step
 type CursorStepEvent struct {
-	ID        string // globally unique of the form {nuid}.{CID}[.#{instancenum}]
+	ID        string // globally unique of the form {nuid}.{Source}[.#{instancenum}]
 	X         float32
 	Y         float32
 	Z         float32
