@@ -13,7 +13,7 @@ import glob
 import collections
 import time
 import signal
-import logging
+import sys
 
 # try:
 #     import thread
@@ -166,6 +166,13 @@ GlobalPerformLabels["transposeauto"] = [
 ]
 PerformDefaultVal["transposeauto"] = 0
 
+def log(*args):
+    s = sprint(*args)
+    if s.endswith("\n"):
+        s = s[0:-1]
+    print(s)
+    sys.stdout.flush()
+
 def palette_region_api(region, api, params=""):
     if region == "":
         log("palette_region_api: no region specified?  Assuming *")
@@ -181,14 +188,6 @@ def sprint(*args, end='', **kwargs):
     sio = io.StringIO()
     print(*args, **kwargs, end=end, file=sio)
     return sio.getvalue()
-
-def debug(*args):
-    s = sprint(*args)
-    logging.debug(s)
-
-def log(*args):
-    s = sprint(*args)
-    logging.info(s)
 
 def palette_global_api(api, params=""):
     return palette_api("global."+api,params)
@@ -230,7 +229,7 @@ def PaletteDataPath():
         if "datapath" in vals:
             paletteDataPath = vals["datapath"]
         else:
-            log("Bad format of %s\n",path)
+            log("Bad format of %s",path)
 
     log("Using data dir = ",paletteDataPath)
 
@@ -329,7 +328,7 @@ def palette_publish(subject,params):
         loop.close()
 
     except ErrTimeout:
-        log("palette_event: publish timed out, subject=%s params=%s\n" % (subject,params))
+        log("palette_event: publish timed out, subject=%s params=%s" % (subject,params))
 
     ApiLock.release()
 
@@ -367,7 +366,7 @@ def invoke_jsonrpc(subject, api, params):
         loop.close()
 
     except ErrTimeout:
-        log("invoke_jsonrpc: request timed out, subject=%s api=%s\n" % (subject,api))
+        log("invoke_jsonrpc: request timed out, subject=%s api=%s" % (subject,api))
 
     ApiLock.release()
 
@@ -508,17 +507,9 @@ def IgnoreKeyboardInterrupt():
     """
     return signal.signal(signal.SIGINT,signal.SIG_IGN)
  
-def NoticeKeyboardInterrupt():
+def NoticeKeyboardInterrupt(sighandler):
     """
-    Sets the response to a SIGINT (keyboard interrupt) to the
-    default (raise KeyboardInterrupt).
+    Sets the response to a SIGINT (keyboard interrupt)
     """
-    return signal.signal(signal.SIGINT, signal.default_int_handler)
+    return signal.signal(signal.SIGINT, sighandler)
 
-def loginit():
-    # logging.basicConfig(filename="gui.log",encoding='utf-8', level=logging.DEBUG)
-    logpath = logFilePath("gui.log")
-    logging.basicConfig(filename=logpath,
-        encoding='utf-8',
-        format='%(asctime)s %(message)s',
-        level=logging.INFO)
