@@ -166,7 +166,7 @@ func handleFinger(bb []byte) {
 			ce := CursorDeviceEvent{
 				NUID:      MyNUID(),
 				Region:    EraeRegion,
-				CID:       cid,
+				Source:    cid,
 				Timestamp: CurrentMilli(),
 				Ddu:       "clear",
 			}
@@ -216,7 +216,7 @@ func handleFinger(bb []byte) {
 	ce := CursorDeviceEvent{
 		NUID:      MyNUID(),
 		Region:    EraeRegion,
-		CID:       cid,
+		Source:    cid,
 		Timestamp: CurrentMilli(),
 		Ddu:       ddu,
 		X:         x,

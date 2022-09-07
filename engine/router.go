@@ -241,7 +241,7 @@ func TheRouter() *Router {
 			oneRouter.myHostname = hostname
 		}
 
-		oneRouter.publishCursor = ConfigBoolWithDefault("publishcursor", true)
+		oneRouter.publishCursor = ConfigBoolWithDefault("publishcursor", false)
 		oneRouter.publishMIDI = ConfigBoolWithDefault("publishmidi", true)
 		oneRouter.generateVisuals = ConfigBoolWithDefault("generatevisuals", true)
 		oneRouter.generateSound = ConfigBoolWithDefault("generatesound", true)
@@ -552,7 +552,7 @@ func (r *Router) HandleInputEvent(args map[string]string) error {
 			}
 		*/
 
-		cid := optionalStringArg("cid", args, "UnspecifiedCID")
+		source := optionalStringArg("source", args, "UnspecifiedSource")
 
 		subEvent := event[7:] // assumes event is cursor_*
 		switch subEvent {
@@ -569,7 +569,7 @@ func (r *Router) HandleInputEvent(args map[string]string) error {
 		ce := CursorDeviceEvent{
 			NUID:      fromNUID,
 			Region:    region,
-			CID:       cid,
+			Source:    source,
 			Timestamp: CurrentMilli(),
 			Ddu:       subEvent,
 			X:         x,
@@ -1171,7 +1171,7 @@ func (r *Router) handleMMTTCursor(msg *osc.Message) {
 	ce := CursorDeviceEvent{
 		NUID:      MyNUID(),
 		Region:    region,
-		CID:       cid,
+		Source:    cid,
 		Timestamp: CurrentMilli(),
 		Ddu:       ddu,
 		X:         x,
@@ -1192,7 +1192,7 @@ func (r *Router) handleMMTTCursor(msg *osc.Message) {
 	ce.Y = boundval(((ce.Y - 0.5) * yexpand) + 0.5)
 
 	if Debug.MMTT && Debug.Cursor {
-		log.Printf("MMTT Cursor %s %s xyz= %f %f %f\n", ce.CID, ce.Ddu, ce.X, ce.Y, ce.Z)
+		log.Printf("MMTT Cursor %s %s xyz= %f %f %f\n", ce.Source, ce.Ddu, ce.X, ce.Y, ce.Z)
 	}
 
 	motor.handleCursorDeviceEvent(ce)

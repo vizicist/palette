@@ -230,7 +230,7 @@ func CliCommand(region string, args []string) string {
 	case "test":
 		ntimes := 10
 		dt := 100 * time.Millisecond
-		cid := "0"
+		source := "test.0"
 		var err error
 		if len(args) > 1 {
 			ntimes, err = strconv.Atoi(args[1])
@@ -252,7 +252,7 @@ func CliCommand(region string, args []string) string {
 			ce := engine.CursorDeviceEvent{
 				NUID:      engine.MyNUID(),
 				Region:    region,
-				CID:       cid,
+				Source:    source,
 				Timestamp: engine.CurrentMilli(),
 				Ddu:       "down",
 				X:         rand.Float32(),
