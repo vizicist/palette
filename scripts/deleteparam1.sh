@@ -10,7 +10,7 @@ a=$1
 f=$2
 echo "Deleting param '$a' from '$f'"
 n1=`wc -l < "$f"`
-sed -n -e "v${a}p" < "$f" > chall.tmp
+sed -e "/\"${a}\"/d" < "$f" > chall.tmp
 cp chall.tmp "$f"
 rm chall.tmp
 n2=`wc -l < "$f"`
