@@ -535,6 +535,7 @@ func (r *Router) executePresetAPI(api string, apiargs map[string]string) (result
 			}
 			err = r.loadQuadPreset(preset, regions)
 			if err != nil {
+				log.Printf("loadQuad: preset=%s, err=%s", preset, err)
 				return "", err
 			}
 			r.saveCurrentSnaps(regions)

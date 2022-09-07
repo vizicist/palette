@@ -17,7 +17,7 @@ def openFile(dir,name):
 
 def generate(homedir, force, sourcedir, floatType):
 
-	c = os.path.join(homedir,"data/config")
+	c = os.path.join(homedir,"data_default/config")
 
 	#########################################
 	## First process paramdefs.json
