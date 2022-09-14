@@ -173,8 +173,8 @@ func IsRunning(process string) bool {
 }
 
 func CheckProcessesAndRestartIfNecessary() {
-	autostart := ConfigStringWithDefault("autostart", "gui")
-	if autostart == "nothing" {
+	autostart := ConfigStringWithDefault("autostart", "")
+	if autostart == "" || autostart == "nothing" || autostart == "none" {
 		return
 	}
 	if autostart == "all" {

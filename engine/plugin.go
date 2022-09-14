@@ -13,7 +13,16 @@ import (
 // Should probably be a separate package.
 
 type Plugin struct {
-	callback PluginCallback
+	onCursorEvent func(e CursorDeviceEvent)
+}
+
+func NewPlugin() *Plugin {
+	p := &Plugin{}
+	return p
+}
+
+func (p *Plugin) OnCursorEvent(f func(e CursorDeviceEvent)) {
+	p.onCursorEvent = f
 }
 
 func PluginOutputSubject(id string) string {
@@ -22,26 +31,32 @@ func PluginOutputSubject(id string) string {
 
 type PluginCallback func(args map[string]string)
 
-func PluginRunForever(callback PluginCallback) error {
+func (p *Plugin) RunForever() error {
 
-	plugin := &Plugin{
-		callback: callback,
-	}
-	err := SubscribeNATS("palette.output.event", plugin.pluginCallback)
+	err := SubscribeNATS("palette.output.event", p.pluginNATSCallback)
 	if err != nil {
 		return err
 	}
 	select {} // block forever
 }
 
-func (plugin *Plugin) pluginCallback(msg *nats.Msg) {
+func (plugin *Plugin) pluginNATSCallback(msg *nats.Msg) {
 	data := string(msg.Data)
 	args, err := StringMap(data)
 	if err != nil {
 		log.Printf("natsCallback: err=%s\n", err)
 		return
 	}
-	plugin.callback(args)
+	if Debug.NATS {
+		log.Printf("pluginNATSCallback args=%+v\n", args)
+	}
+	switch args["event"] {
+	case "cursor_down", "cursor_drag", "cursor_up":
+		ce := ArgsToCursorDeviceEvent(args)
+		if plugin.onCursorEvent != nil {
+			plugin.onCursorEvent(ce)
+		}
+	}
 }
 
 func JsonObject(args ...string) string {

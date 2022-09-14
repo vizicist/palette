@@ -21,7 +21,7 @@ func xyzToNote(x, y, z float32) *engine.Note {
 	return note
 }
 
-func callback(args map[string]string) {
+func OLDcallback(args map[string]string) {
 	log.Printf("callback: args=%s\n", args)
 	eventType := args["event"]
 	if eventType == "" {
@@ -49,7 +49,16 @@ func callback(args map[string]string) {
 
 func main() {
 	engine.InitLog("example_go")
-	err := engine.PluginRunForever(callback)
+
+	log.Printf("example_go.go started")
+
+	plugin := engine.NewPlugin()
+
+	plugin.OnCursorEvent(func(ce engine.CursorDeviceEvent) {
+		log.Printf("OnCursorEvent in example_go called! ce=%v\n", ce)
+	})
+
+	err := plugin.RunForever()
 	if err != nil {
 		log.Printf("PluginRunForever: err=%s\n", err)
 	} else {
