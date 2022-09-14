@@ -296,8 +296,15 @@ func LocalMap() map[string]string {
 	return localMap
 }
 
+var paletteDataPath = ""
+
 // PaletteDataPath returns the datadir value in local.json
 func PaletteDataPath() string {
+
+	if paletteDataPath != "" {
+		return paletteDataPath
+	}
+
 	local := LocalMap()
 	datapath, ok := local["datapath"]
 	if !ok {
@@ -306,7 +313,7 @@ func PaletteDataPath() string {
 	if filepath.Dir(datapath) == "." {
 		datapath = filepath.Join(LocalPaletteDir(), datapath)
 	}
-	log.Printf("Using datapath = %s\n", datapath)
+	paletteDataPath = datapath
 	return datapath
 }
 

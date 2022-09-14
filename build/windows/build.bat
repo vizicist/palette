@@ -151,7 +151,7 @@ for %%X in (data_default data_surge) DO (
 	xcopy /e /y %PALETTESOURCE%\%%X\presets %ship%\%%X\presets > nul
 )
 
-echo { "datadir" : "data_default" } > %ship%\local.json
+echo { "datapath" : "data_default" } > %ship%\local.json
 
 echo ================ Copying windows-specific things
 copy %PALETTESOURCE%\SenselLib\x64\LibSensel.dll %bin% >nul
