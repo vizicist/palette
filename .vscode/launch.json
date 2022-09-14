@@ -12,6 +12,20 @@
             "args": []
         },
         {
+            "name": "Twitch test",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTESOURCE}/cmd/twitchtest/twitchtest.go",
+            "args": []
+        },
+        {
+            "name": "OBS test",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTESOURCE}/cmd/obstest/main.go",
+            "args": []
+        },
+        {
             "name": "Engine (palette_engine.go)",
             "type": "go",
             "request": "launch",
