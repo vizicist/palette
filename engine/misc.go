@@ -278,27 +278,51 @@ func LocalPaletteDir() string {
 	return filepath.Join(localapp, "Palette")
 }
 
-var paletteDataPath = ""
+var localMap map[string]string
 
-// PaletteDataPath returns the datadir value in config.json
-func PaletteDataPath() string {
-	if paletteDataPath != "" {
-		return paletteDataPath
-	}
-	paletteDataPath = filepath.Join(LocalPaletteDir(), "data_default")
-	f := filepath.Join(LocalPaletteDir(), "config.json")
-	if !FileExists(f) {
-		log.Printf("No config.json file?  Asssuming datapath=%s\n", paletteDataPath)
-	} else {
-		values, err := ReadConfigFile(f)
-		if err != nil {
-			log.Printf("Bad format of config.json?  Asssuming datapath=%s\n", paletteDataPath)
+func LocalMap() map[string]string {
+	if localMap == nil {
+		f := filepath.Join(LocalPaletteDir(), "local.json")
+		if !FileExists(f) {
+			log.Printf("No local.json file?\n")
 		} else {
-			paletteDataPath = values["datapath"]
+			var err error
+			localMap, err = ReadConfigFile(f)
+			if err != nil {
+				log.Printf("Bad format of local.json?  err=%s\n", err)
+			}
 		}
 	}
-	log.Printf("Using datapath = %s\n", paletteDataPath)
-	return paletteDataPath
+	return localMap
+}
+
+// PaletteDataPath returns the datadir value in local.json
+func PaletteDataPath() string {
+	local := LocalMap()
+	datapath, ok := local["datapath"]
+	if !ok {
+		datapath = filepath.Join(LocalPaletteDir(), "data_default")
+	}
+	if filepath.Dir(datapath) == "." {
+		datapath = filepath.Join(LocalPaletteDir(), datapath)
+	}
+	log.Printf("Using datapath = %s\n", datapath)
+	return datapath
+}
+
+// PaletteDataPath returns the datadir value in local.json
+func TwitchUser() (username string, authtoken string) {
+	local := LocalMap()
+	twitchuser, ok := local["twitchuser"]
+	if !ok {
+		twitchuser = "foo"
+	}
+	twitchtoken, ok := local["twitchtoken"]
+	if !ok {
+		twitchtoken = "foo"
+	}
+	log.Printf("TwitchUser = %s %s\n", twitchuser, twitchtoken)
+	return twitchuser, twitchtoken
 }
 
 // LocalConfigFilePath xxx

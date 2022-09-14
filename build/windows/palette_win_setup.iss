@@ -48,6 +48,7 @@ Source: "ship\ffgl\*"; DestDir: "{app}\ffgl"; Flags: ignoreversion recursesubdir
 Source: "ship\html\*"; DestDir: "{app}\html"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 ; NOTE - all data_* files go in CommonProgramFiles\Palette
+Source: "ship\local.json"; DestDir: "{commoncf64}\{#MyAppName}"; Flags: comparetimestamp ignoreversion
 Source: "ship\data_default\*"; DestDir: "{commoncf64}\{#MyAppName}\data_default"; Flags: comparetimestamp ignoreversion recursesubdirs createallsubdirs
 Source: "ship\data_surge\*"; DestDir: "{commoncf64}\{#MyAppName}\data_surge"; Flags: comparetimestamp ignoreversion recursesubdirs createallsubdirs
 Source: "logs_readme.txt"; DestDir: "{commoncf64}\{#MyAppName}\logs"; DestName: "readme.txt"; Flags: ignoreversion
