@@ -215,15 +215,15 @@ paletteDataPath = ""
 
 # This is the name of the data_* directory
 # under which are config and presets.
-# The value comes from the config.json file
+# The value comes from the local.json file
 def PaletteDataPath():
     global paletteDataPath
     if paletteDataPath != "":
         return paletteDataPath
     paletteDataPath = os.path.join(localPaletteDir(),"data_default")
-    path = os.path.join(localPaletteDir(),"config.json")
+    path = os.path.join(localPaletteDir(),"local.json")
     if not os.path.isfile(path):
-        log("No config.json file?  Assuming datapath=",paletteDataPath)
+        log("No local.json file?  Assuming datapath=",paletteDataPath)
     else:
         vals = readJsonPath(path)
         if "datapath" in vals:
