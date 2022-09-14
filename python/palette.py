@@ -220,18 +220,19 @@ def PaletteDataPath():
     global paletteDataPath
     if paletteDataPath != "":
         return paletteDataPath
-    paletteDataPath = os.path.join(localPaletteDir(),"data_default")
+
+    dir = "data_default"
+    # local.json can override it
     path = os.path.join(localPaletteDir(),"local.json")
-    if not os.path.isfile(path):
-        log("No local.json file?  Assuming datapath=",paletteDataPath)
-    else:
+    if os.path.isfile(path):
         vals = readJsonPath(path)
         if "datapath" in vals:
-            paletteDataPath = vals["datapath"]
-        else:
-            log("Bad format of %s",path)
+            dir = vals["datapath"]
 
-    log("Using data dir = ",paletteDataPath)
+    if os.path.dirname(dir) != ".":
+        paletteDataPath = dir
+    else:
+        paletteDataPath = os.path.join(localPaletteDir(),dir)
 
     return paletteDataPath
 
