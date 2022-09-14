@@ -136,7 +136,7 @@
         "sound.midifile":"jsbach",
         "sound.pitchmax":"80",
         "sound.pitchmin":"33",
-        "sound.synth":"0101 Fantasy_Bell",
+        "sound.synth":"0213 Pad 2_MW",
         "sound.velocitymax":"127",
         "sound.velocitymin":"1",
         "sound.xcontroller":"3",

@@ -3,6 +3,8 @@ module github.com/vizicist/palette
 go 1.16
 
 require (
+	github.com/andreykaipov/goobs v0.10.0
+	github.com/gempir/go-twitch-irc/v3 v3.2.0
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
 	github.com/golang/protobuf v1.4.3 // indirect
 	github.com/hajimehoshi/ebiten/v2 v2.2.1
