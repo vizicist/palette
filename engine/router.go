@@ -100,6 +100,7 @@ type Router struct {
 	cursorCount      int
 	publishCursor    bool
 	publishMIDI      bool
+	publishNote      bool
 	myHostname       string
 	generateVisuals  bool
 	generateSound    bool
@@ -246,6 +247,7 @@ func TheRouter() *Router {
 		// so the expectation is that a plugin will handle it.
 		oneRouter.publishCursor = ConfigBoolWithDefault("publishcursor", false)
 		oneRouter.publishMIDI = ConfigBoolWithDefault("publishmidi", false)
+		oneRouter.publishNote = ConfigBoolWithDefault("publishnote", false)
 		oneRouter.generateVisuals = ConfigBoolWithDefault("generatevisuals", true)
 		oneRouter.generateSound = ConfigBoolWithDefault("generatesound", true)
 
@@ -313,14 +315,14 @@ func (r *Router) StartOSC(source string) {
 // StartNATSClient xxx
 func (r *Router) StartNATSClient() {
 
-	log.Printf("StartNATS: Subscribing to %s\n", PaletteAPISubject)
+	log.Printf("StartNATSClient: Subscribing to %s\n", PaletteAPISubject)
 	SubscribeNATS(PaletteAPISubject, func(msg *nats.Msg) {
 		data := string(msg.Data)
 		response := r.handleAPIInput(data)
 		msg.Respond([]byte(response))
 	})
 
-	log.Printf("StartNATS: subscribing to %s\n", PaletteInputEventSubject)
+	log.Printf("StartNATSClient: Subscribing to %s\n", PaletteInputEventSubject)
 	SubscribeNATS(PaletteInputEventSubject, func(msg *nats.Msg) {
 		data := string(msg.Data)
 		args, err := StringMap(data)
@@ -592,6 +594,28 @@ func (r *Router) HandleInputEvent(args map[string]string) error {
 		log.Printf("HandleEvent: audio_reset!!\n")
 		go r.audioReset()
 
+	case "note":
+		notestr, err := needStringArg("note", "HandleEvent", args)
+		if err != nil {
+			return err
+		}
+		synth, err := needStringArg("synth", "HandleEvent", args)
+		if err != nil {
+			return err
+		}
+		clickstr, err := needStringArg("clicks", "HandleEvent", args)
+		if err != nil {
+			return err
+		}
+		log.Printf("HandleInputEvent: notestr=%s synth=%s clickstr=%s\n", notestr, synth, clickstr)
+		note, err := NoteFromString(notestr)
+		if err != nil {
+			return err
+		}
+		if note.Sound == "" {
+			note.Sound = synth
+		}
+		SendNoteToSynth(note)
 		/*
 			case "midi":
 				// If we're publishing midi events, we ignore ones from ourself
@@ -609,6 +633,8 @@ func (r *Router) HandleInputEvent(args map[string]string) error {
 				}
 				motor.HandleMIDIInput(*me)
 		*/
+	default:
+		log.Printf("HandleInputEvent: event not handled: %s\n", event)
 	}
 
 	return nil
@@ -631,7 +657,18 @@ func (r *Router) handleCursorDeviceInput(e CursorDeviceEvent) {
 }
 
 func (r *Router) handleCursorDeviceEvent(ce CursorDeviceEvent, motor *Motor) {
-	motor.handleCursorDeviceEvent(ce, r.publishCursor)
+
+	// If we're publishing the Cursor events, we don't give them to the motors.
+	// This means that all cursor behavior is defined by apps.
+	if r.publishCursor {
+		err := PublishCursorDeviceEvent(PaletteOutputEventSubject, ce)
+		if err != nil {
+			log.Printf("Router.routeCursorDeviceEvent: NATS publishing err=%s\n", err)
+		}
+		return
+	} else {
+		motor.handleCursorDeviceEvent(ce)
+	}
 }
 
 /*
@@ -1179,7 +1216,7 @@ func (r *Router) handleMMTTCursor(msg *osc.Message) {
 		log.Printf("MMTT Cursor %s %s xyz= %f %f %f\n", ce.Source, ce.Ddu, ce.X, ce.Y, ce.Z)
 	}
 
-	motor.handleCursorDeviceEvent(ce, r.publishCursor)
+	r.handleCursorDeviceEvent(ce, motor)
 }
 
 func boundval(v float32) float32 {
