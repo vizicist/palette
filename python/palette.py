@@ -305,11 +305,14 @@ def boolValueOfString(v):
 
 ApiLock = threading.Lock()
 PythonNUID = MyNUID()  #  + "_python"
+PaletteOutputEventSubject = "palette.output.event"
+PaletteInputEventSubject = "palette.input.event"
+PaletteAPIEventSubject = "palette.api"
 
 def palette_api(api, params=None):
 
     fullparams = "{ " + params + "}"
-    r1,err = invoke_jsonrpc("palette.api",api,fullparams)
+    r1,err = invoke_jsonrpc(PaletteAPIEventSubject,api,fullparams)
     if err != None:
         log("API of ",api," returned err=",err)
     return r1
@@ -464,7 +467,7 @@ def SendCursorEvent(cid,ddu,x,y,z,region="A"):
         "\"region\": \"" + region + "\", " + \
         "\"event\": \"" + event + "\", " + \
         "\"x\": \"%f\", \"y\": \"%f\", \"z\": \"%f\" }")  % (x,y,z)
-    palette_publish("palette.input.event",e)
+    palette_publish(PaletteInputEventSubject,e)
 
 def SendSpriteEvent(cid,x,y,z,region="A"):
     event = "sprite"
@@ -473,7 +476,7 @@ def SendSpriteEvent(cid,x,y,z,region="A"):
         "\"region\": \"" + region + "\", " + \
         "\"event\": \"" + event + "\", " + \
         "\"x\": \"%f\", \"y\": \"%f\", \"z\": \"%f\" }")  % (x,y,z)
-    palette_publish("palette.input.event",e)
+    palette_publish(PaletteInputEventSubject,e)
 
 def SendMIDIEvent(device,timesofar,msg,region="A"):
     bytestr = "0x"
@@ -488,19 +491,19 @@ def SendMIDIEvent(device,timesofar,msg,region="A"):
         "\"bytes\": \"%s\" }") % \
             (PythonNUID, device, timesofar, bytestr)
 
-    palette_publish("palette.input.event",e)
+    palette_publish(PaletteInputEventSubject,e)
 
 def SendMIDITimeReset():
     e = ("{ \"nuid\": \"%s\", " + \
         "\"event\": \"midi_reset\" }") % \
             (PythonNUID)
-    palette_publish("palette.input.event",e)
+    palette_publish(PaletteInputEventSubject,e)
 
 def SendMIDIAudioReset():
     e = ("{ \"nuid\": \"%s\", " + \
         "\"event\": \"audio_reset\" }") % \
             (PythonNUID)
-    palette_publish("palette.input.event",e)
+    palette_publish(PaletteInputEventSubject,e)
 
 def IgnoreKeyboardInterrupt():
     """

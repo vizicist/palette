@@ -237,7 +237,11 @@ func (n Note) String() string {
 	if n.TypeOf == "note" {
 		s += fmt.Sprintf("d%d", n.Duration)
 	}
-	s += fmt.Sprintf("v%dt%dS%s'", n.Velocity, n.Clicks, n.Sound)
+	s += fmt.Sprintf("v%dt%d'", n.Velocity, n.Clicks)
+	if n.Sound != "" {
+		s += fmt.Sprintf("S%s'", n.Sound)
+
+	}
 	return s
 }
 
@@ -486,7 +490,9 @@ func (p *Phrase) ToString() string {
 
 		if n.Sound != lastSound {
 			lastSound = n.Sound
-			s += fmt.Sprintf("S%s", n.Sound)
+			if n.Sound != "" {
+				s += fmt.Sprintf("S%s", n.Sound)
+			}
 		}
 
 		n = n.next
