@@ -55,7 +55,7 @@ func (riff *Riff) Do(cmd engine.Cmd) string {
 		riff.redraw()
 	case "restore":
 		riff.TextArea.Do(cmd)
-	case "clos":
+	case "close":
 		// do anything?
 	case "getstate":
 		ret := riff.TextArea.Do(engine.NewSimpleCmd("getstate"))

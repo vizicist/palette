@@ -437,17 +437,7 @@ func (motor *Motor) time() time.Time {
 	return time.Now()
 }
 
-func (motor *Motor) handleCursorDeviceEvent(e CursorDeviceEvent, publish bool) {
-
-	// If we're publishing the Cursor events, we don't handle them ourselves
-
-	if publish {
-		err := PublishCursorDeviceEvent(PaletteOutputEventSubject, e)
-		if err != nil {
-			log.Printf("Router.routeCursorDeviceEvent: NATS publishing err=%s\n", err)
-		}
-		return
-	}
+func (motor *Motor) handleCursorDeviceEvent(e CursorDeviceEvent) {
 
 	id := e.NUID + "." + e.Source
 

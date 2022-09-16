@@ -128,6 +128,7 @@ func PublishNoteEvent(subj string, note *Note, source string) error {
 		"source", source,
 		"event", "note",
 		"note", jsonEscape(note.String()),
+		"synth", note.Sound,
 		"clicks", fmt.Sprintf("%d", CurrentClick()),
 		// "clicks", fmt.Sprintf("%d", note.Clicks),
 	)
@@ -148,7 +149,7 @@ func EngineAPI(api, params string) (result string, err error) {
 		"api", api,
 		"params", jsonEscape(params),
 	)
-	return NATSRequest("palette.api", args, timeout)
+	return NATSRequest(PaletteAPISubject, args, timeout)
 }
 
 // Connect xxx

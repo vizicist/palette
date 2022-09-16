@@ -33,7 +33,7 @@ type PluginCallback func(args map[string]string)
 
 func (p *Plugin) RunForever() error {
 
-	err := SubscribeNATS("palette.output.event", p.pluginNATSCallback)
+	err := SubscribeNATS(PaletteOutputEventSubject, p.pluginNATSCallback)
 	if err != nil {
 		return err
 	}
@@ -85,6 +85,6 @@ func PlayNote(note *Note, source string) error {
 		"api", "sound.playnote",
 		"params", jsonEscape(params),
 	)
-	return NATSPublish("palette.api", args)
+	return NATSPublish(PaletteAPISubject, args)
 }
 */
