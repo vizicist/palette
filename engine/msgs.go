@@ -27,7 +27,7 @@ func NewNoteMsg(note *Note) string {
 		note.Duration,
 		note.Pitch,
 		note.Velocity,
-		note.Sound,
+		note.Synth,
 		note.BytesString())
 }
 

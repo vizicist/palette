@@ -599,21 +599,17 @@ func (r *Router) HandleInputEvent(args map[string]string) error {
 		if err != nil {
 			return err
 		}
-		synth, err := needStringArg("synth", "HandleEvent", args)
-		if err != nil {
-			return err
-		}
 		clickstr, err := needStringArg("clicks", "HandleEvent", args)
 		if err != nil {
 			return err
 		}
-		log.Printf("HandleInputEvent: notestr=%s synth=%s clickstr=%s\n", notestr, synth, clickstr)
+		log.Printf("HandleInputEvent: notestr=%s clickstr=%s\n", notestr, clickstr)
 		note, err := NoteFromString(notestr)
 		if err != nil {
 			return err
 		}
-		if note.Sound == "" {
-			note.Sound = synth
+		if note.Synth == "" {
+			note.Synth = "default"
 		}
 		SendNoteToSynth(note)
 		/*
