@@ -33,6 +33,11 @@ func main() {
 			if err != nil {
 				log.Printf("OnCursorEvent: err=%s\n", err)
 			}
+			note.TypeOf = "noteoff"
+			err = engine.PublishNoteEvent(engine.PaletteInputEventSubject, note, "example_go")
+			if err != nil {
+				log.Printf("OnCursorEvent: err=%s\n", err)
+			}
 
 		}
 		log.Printf("OnCursorEvent in example_go called! ce=%v\n", ce)

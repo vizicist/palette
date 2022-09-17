@@ -26,11 +26,11 @@ func main() {
 	flag.Parse()
 
 	// Normally, the engine should never die, but if it does,
-	// other processes (e.g. resolume, vsthost) may be left around.
+	// other processes (e.g. resolume, bidule) may be left around.
 	// So, unless told otherwise, we kill everything to get a clean start.
 	if engine.ConfigBoolWithDefault("killonstartup", true) {
 		engine.KillProcess("resolume")
-		engine.KillProcess("vsthost")
+		engine.KillProcess("bidule")
 		engine.KillProcess("gui")
 		mmtt := engine.ConfigStringWithDefault("mmtt", "")
 		if mmtt != "" {

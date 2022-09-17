@@ -141,7 +141,7 @@ func (alg *MidiManager) sendNoteOff(a *ActiveNote) {
 	if n.TypeOf != "noteon" {
 		log.Printf("HEY! sendNoteOff expects a noteon!?")
 	} else {
-		noteOff := engine.NewNoteOff(n.Pitch, n.Velocity, n.Sound)
+		noteOff := engine.NewNoteOff(n.Pitch, n.Velocity, n.Synth)
 		engine.SendNoteToSynth(noteOff)
 	}
 }

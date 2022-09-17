@@ -102,7 +102,7 @@ func (alg *MidiGen1) AcceptEngineMsg(ctx *engine.EContext, cmd engine.Cmd) strin
 				log.Printf("MidiAlg1: got cursor drag without down, cid=%s\n", id)
 			} else {
 				// Existing note during drag is ignored
-				if old.Pitch == noteon.Pitch && old.Sound == noteon.Sound {
+				if old.Pitch == noteon.Pitch && old.Synth == noteon.Synth {
 					// Identical note, do nothing
 					// log.Printf("Identical note in drag pitch=%d\n", old.Pitch)
 					noteon = nil
@@ -132,7 +132,7 @@ func (alg *MidiGen1) AcceptEngineMsg(ctx *engine.EContext, cmd engine.Cmd) strin
 }
 
 func (alg *MidiGen1) terminateNote(ctx *engine.EContext, old *engine.Note, cid string) {
-	noteoff := engine.NewNoteOff(old.Pitch, old.Velocity, old.Sound)
+	noteoff := engine.NewNoteOff(old.Pitch, old.Velocity, old.Synth)
 	ctx.PublishCmd(engine.NewNoteCmd(noteoff))
 	delete(alg.notesOn, cid)
 }

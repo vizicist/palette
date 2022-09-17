@@ -282,11 +282,12 @@ var localMap map[string]string
 
 func LocalMap() map[string]string {
 	if localMap == nil {
+		var err error
 		f := filepath.Join(LocalPaletteDir(), "local.json")
 		if !FileExists(f) {
-			log.Printf("No local.json file?\n")
+			log.Printf("No local.json file, assuming datapath is data_default\n")
+			localMap, _ = StringMap("{ \"datapath\": \"data_default\" }")
 		} else {
-			var err error
 			localMap, err = ReadConfigFile(f)
 			if err != nil {
 				log.Printf("Bad format of local.json?  err=%s\n", err)

@@ -3,7 +3,7 @@
 	<MediaPool>
 	</MediaPool>
 	<BiduleGroup id="UID_1026570522" displayName="" zoom="0.75" processingMode="process" version="0.0">
-		<Geometry x="580" y="83" w="434" h="331"/>
+		<Geometry x="63" y="83" w="434" h="331"/>
 		<Parameter id="-11" userMin="0" userMax="1" lockedForRandom="false" mutationFactor="0.1">0</Parameter>
 		<Parameter id="-9" userMin="0" userMax="0" lockedForRandom="false" mutationFactor="0.1">1.0</Parameter>
 		<Parameter id="-7" userMin="0" userMax="1" lockedForRandom="false" mutationFactor="0.1">1</Parameter>
@@ -755,7 +755,7 @@
 			<VirtualParameter id="6" source="UID_1054145534" param="0" displayName="Min Dur"/>
 			<VirtualParameter id="7" source="UID_1054145534" param="1" displayName="Max Dur"/>
 		</BiduleGroup>
-		<Bidule id="UID_1451662716" type="MidiInput_5" displayName="01. Internal MIDI" processingMode="process">
+		<Bidule id="UID_1451662716" type="MidiInput_0" displayName="01. Internal MIDI" processingMode="process">
 			<Geometry x="-154.539" y="44.7121" w="0" h="0"/>
 			<ChannelConfig numSampleIn="0" numSampleOut="0" numMidiIn="0" numMidiOut="1" numFreqIn="0" numFreqOut="0" numMagIn="0" numMagOut="0"/>
 			<Gui state="normal" hidden="true" generic="true">

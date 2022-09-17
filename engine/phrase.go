@@ -41,7 +41,7 @@ type Note struct {
 	Duration Clicks // nanoseconds, when it's a note
 	Pitch    uint8  // 0-127
 	Velocity uint8  // 0-127
-	Sound    string
+	Synth    string
 	bytes    []byte
 	next     *Note
 }
@@ -93,37 +93,37 @@ func (n *Note) Format(f fmt.State, c rune) {
 
 // NewNote create a new Note of type note, i.e. with duration
 func NewNote(pitch uint8, velocity uint8, duration Clicks, sound string) *Note {
-	return &Note{TypeOf: "note", Pitch: pitch, Velocity: velocity, Duration: duration, Sound: sound}
+	return &Note{TypeOf: "note", Pitch: pitch, Velocity: velocity, Duration: duration, Synth: sound}
 }
 
 // NewNoteOn create a new noteon
 func NewNoteOn(pitch uint8, velocity uint8, sound string) *Note {
-	return &Note{TypeOf: "noteon", Pitch: pitch, Velocity: velocity, Sound: sound}
+	return &Note{TypeOf: "noteon", Pitch: pitch, Velocity: velocity, Synth: sound}
 }
 
 // NewNoteOff create a new noteoff
 func NewNoteOff(pitch uint8, velocity uint8, sound string) *Note {
-	return &Note{TypeOf: "noteoff", Pitch: pitch, Velocity: velocity, Sound: sound}
+	return &Note{TypeOf: "noteoff", Pitch: pitch, Velocity: velocity, Synth: sound}
 }
 
 // NewController create a new noteoff
 func NewController(controller uint8, value uint8, sound string) *Note {
-	return &Note{TypeOf: "controller", Pitch: controller, Velocity: value, Sound: sound}
+	return &Note{TypeOf: "controller", Pitch: controller, Velocity: value, Synth: sound}
 }
 
 // NewProgChange xxx
 func NewProgChange(program uint8, value uint8, sound string) *Note {
-	return &Note{TypeOf: "progchange", Pitch: program, Velocity: value, Sound: sound}
+	return &Note{TypeOf: "progchange", Pitch: program, Velocity: value, Synth: sound}
 }
 
 // NewChanPressure xxx
 func NewChanPressure(data1 uint8, velocity uint8, sound string) *Note {
-	return &Note{TypeOf: "chanpressure", Pitch: data1, Velocity: velocity, Sound: sound}
+	return &Note{TypeOf: "chanpressure", Pitch: data1, Velocity: velocity, Synth: sound}
 }
 
 // NewPitchBend xxx
 func NewPitchBend(data1 uint8, data2 uint8, sound string) *Note {
-	return &Note{TypeOf: "pitchbend", Pitch: data1, Velocity: data2, Sound: sound}
+	return &Note{TypeOf: "pitchbend", Pitch: data1, Velocity: data2, Synth: sound}
 }
 
 // EndOf returns the ending time of a note
@@ -185,7 +185,7 @@ func (n *Note) Compare(n2 *Note) int {
 		return 1
 	}
 
-	if d := strings.Compare(n.Sound, n2.Sound); d < 0 {
+	if d := strings.Compare(n.Synth, n2.Synth); d < 0 {
 		return -1
 	} else if d > 0 {
 		return 1
@@ -216,7 +216,7 @@ func (n *Note) Copy() *Note {
 		Duration: n.Duration,
 		Pitch:    n.Pitch,
 		Velocity: n.Velocity,
-		Sound:    n.Sound,
+		Synth:    n.Synth,
 		bytes:    n.bytes,
 		next:     nil,
 	}
@@ -238,8 +238,8 @@ func (n Note) String() string {
 		s += fmt.Sprintf("d%d", n.Duration)
 	}
 	s += fmt.Sprintf("v%dt%d'", n.Velocity, n.Clicks)
-	if n.Sound != "" {
-		s += fmt.Sprintf("S%s'", n.Sound)
+	if n.Synth != "" {
+		s += fmt.Sprintf("S%s'", n.Synth)
 
 	}
 	return s
@@ -395,7 +395,7 @@ func NoteFromString(s string) (note *Note, err error) {
 		Duration: 0,                // nanoseconds, when it's a note
 		Pitch:    uint8(npitch),    // 0-127
 		Velocity: uint8(nvelocity), // 0-127
-		Sound:    nsound,
+		Synth:    nsound,
 	}
 	return note, nil
 }
@@ -488,10 +488,10 @@ func (p *Phrase) ToString() string {
 		}
 		lastClicks = n.Clicks
 
-		if n.Sound != lastSound {
-			lastSound = n.Sound
-			if n.Sound != "" {
-				s += fmt.Sprintf("S%s", n.Sound)
+		if n.Synth != lastSound {
+			lastSound = n.Synth
+			if n.Synth != "" {
+				s += fmt.Sprintf("S%s", n.Synth)
 			}
 		}
 

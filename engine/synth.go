@@ -153,7 +153,7 @@ func SendControllerToSynth(synthName string, cnum int, cval int) {
 
 // SendNote sends MIDI output for a Note
 func SendNoteToSynth(note *Note) {
-	synthName := note.Sound
+	synthName := note.Synth
 	if synthName == "" {
 		synthName = "default"
 	}
