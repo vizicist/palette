@@ -27,8 +27,9 @@ func (r *Router) ExecuteAPI(api string, rawargs string) (result interface{}, err
 	case "start", "stop":
 		process, ok := apiargs["process"]
 		if !ok {
-			err = fmt.Errorf("ExecuteAPI: missing process argument")
-		} else if api == "start" {
+			return "", fmt.Errorf("ExecuteAPI: missing process argument")
+		}
+		if api == "start" {
 			err = StartRunning(process)
 		} else {
 			err = StopRunning(process)
@@ -37,7 +38,7 @@ func (r *Router) ExecuteAPI(api string, rawargs string) (result interface{}, err
 
 	case "activate":
 		go resolumeActivate()
-		go VstHostActivate()
+		go biduleActivate()
 		return "", nil
 
 	case "sendlogs":

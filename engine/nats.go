@@ -128,7 +128,6 @@ func PublishNoteEvent(subj string, note *Note, source string) error {
 		"source", source,
 		"event", "note",
 		"note", jsonEscape(note.String()),
-		"synth", note.Sound,
 		"clicks", fmt.Sprintf("%d", CurrentClick()),
 		// "clicks", fmt.Sprintf("%d", note.Clicks),
 	)

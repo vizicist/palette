@@ -147,11 +147,10 @@ for %%X in (data_default data_surge) DO (
 	copy %PALETTESOURCE%\%%X\config\consola.ttf %ship%\%%X\config >nul
 	copy %PALETTESOURCE%\%%X\config\OpenSans-Regular.ttf %ship%\%%X\config >nul
 	copy %PALETTESOURCE%\%%X\config\palette.ico %ship%\%%X\config >nul
+	copy %PALETTESOURCE%\%%X\config\*.bidule %ship%\%%X\config >nul
 	copy %PALETTESOURCE%\%%X\midifiles\*.* %ship%\%%X\midifiles >nul
 	xcopy /e /y %PALETTESOURCE%\%%X\presets %ship%\%%X\presets > nul
 )
-
-echo { "datapath" : "data_default" } > %ship%\local.json
 
 echo ================ Copying windows-specific things
 copy %PALETTESOURCE%\SenselLib\x64\LibSensel.dll %bin% >nul

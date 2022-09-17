@@ -1,10 +1,8 @@
 {
-  "debug": "midi",
+  "debug": "",
   "guilevel": 1,
-  "vsthost": "C:\\Program Files\\Plogue\\Bidule\\PlogueBidule_x64.exe",
+  "bidule": "C:\\Program Files\\Plogue\\Bidule\\PlogueBidule_x64.exe",
   "resolume": "C:\\Program Files\\Resolume Avenue\\Avenue.exe",
-  "autostart": "",
-  "publishcursor": "true",
-  "publishnote": "true",
+  "autostart": "gui,bidule,resolume",
   "this line should not end with a comma": 0
 }
