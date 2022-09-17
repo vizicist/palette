@@ -24,21 +24,21 @@ func InitProcessInfo() {
 	ProcessInfo["VSCode debugger"] = VSCodeInfo()
 	ProcessInfo["resolume"] = ResolumeInfo()
 	ProcessInfo["gui"] = GuiInfo()
-	ProcessInfo["vsthost"] = VstHostInfo()
+	ProcessInfo["bidule"] = BiduleInfo()
 	ProcessInfo["mmtt"] = MmttInfo()
 }
 
-func VstHostPath() string {
-	return ConfigValueWithDefault("vsthost", "")
+func BidulePath() string {
+	return ConfigValueWithDefault("bidule", "")
 }
 
-func VstHostInfo() *processInfo {
-	path := VstHostPath()
+func BiduleInfo() *processInfo {
+	path := BidulePath()
 	if path == "" {
 		return nil
 	}
 	if !FileExists(path) {
-		log.Printf("No vsthostpath found, looking for %s", path)
+		log.Printf("No bidule found, looking for %s", path)
 		return nil
 	}
 	exe := path
@@ -46,11 +46,11 @@ func VstHostInfo() *processInfo {
 	if lastslash > 0 {
 		exe = exe[lastslash+1:]
 	}
-	vsthostfile := ConfigValueWithDefault("vsthostfile", "")
-	if vsthostfile == "" {
-		vsthostfile = "default.bidule"
+	bidulefile := ConfigValueWithDefault("bidulefile", "")
+	if bidulefile == "" {
+		bidulefile = "default.bidule"
 	}
-	return &processInfo{exe, path, ConfigFilePath(vsthostfile), VstHostActivate}
+	return &processInfo{exe, path, ConfigFilePath(bidulefile), biduleActivate}
 }
 
 func ResolumeInfo() *processInfo {
@@ -246,12 +246,7 @@ func bypassLayer(resolumeClient *osc.Client, layer int, onoff bool) {
 	_ = resolumeClient.Send(msg)
 }
 
-func VstHostActivate() {
-	path := VstHostPath()
-	if !strings.Contains(path, "Bidule") {
-		log.Printf("VstHostActivate does nothing")
-		return
-	}
+func biduleActivate() {
 	addr := "127.0.0.1"
 	bidulePort := 3210
 	biduleClient := osc.NewClient(addr, bidulePort)
