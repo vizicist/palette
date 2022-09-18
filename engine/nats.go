@@ -17,8 +17,8 @@ var PaletteOutputEventSubject = "palette.output.event"
 // PaletteInputEventSubject xxx
 var PaletteInputEventSubject = "palette.input.event"
 
-// PaletteNote messages are sent from the engine to plugins for output notes.
-// and also from plugins to the engine in order to play them (somehow avoiding recursion)
+// PaletteNote messages are sent from the engine to responders for output notes.
+// and also from responders to the engine in order to play them (somehow avoiding recursion)
 var PaletteNoteSubject = "palette.note"
 
 var time0 = time.Now()

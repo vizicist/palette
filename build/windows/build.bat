@@ -29,40 +29,26 @@ pushd ..\..\depthlib
 call build.bat > nul
 popd
 
-echo ================ Creating palette.exe
+echo ================ Creating cmds
 
+set buildcmdsout=%PALETTESOURCE%\build\windows\buildcmds.out
+
+echo ================ Compiling palette
 pushd %PALETTESOURCE%\cmd\palette
-go build palette.go > gobuild.out 2>&1
-type nul > emptyfile
-fc gobuild.out emptyfile > nul
-if errorlevel 1 goto notempty
-goto continue1
-:notempty
-echo Error in building palette.exe
-cat gobuild.out
-popd
-goto getout
-:continue1
-move palette.exe %bin%\palette.exe > nul
-
+go build palette.go >> %buildcmdsout% 2>&1
+copy palette.exe %bin%\palette.exe > nul
 popd
 
-echo ================ Creating palette_engine.exe
-
+echo ================ Compiling palette_engine
 pushd %PALETTESOURCE%\cmd\palette_engine
-go build palette_engine.go > gobuild.out 2>&1
-type nul > emptyfile
-fc gobuild.out emptyfile > nul
-if errorlevel 1 goto notempty
-goto continue1
-:notempty
-echo Error in building palette_engine.exe
-cat gobuild.out
+go build palette_engine.go >> %buildcmdsout% 2>&1
+copy palette_engine.exe %bin%\palette_engine.exe > nul
 popd
-goto getout
-:continue1
-move palette_engine.exe %bin%\palette_engine.exe > nul
 
+echo ================ Compiling app_example
+pushd %PALETTESOURCE%\cmd\app_example
+go build app_example.go >> %buildcmdsout% 2>&1
+copy app_example.exe %bin%\app_example.exe > nul
 popd
 
 echo ================ Creating palette_gui.exe, osc.exe
@@ -124,7 +110,6 @@ copy delay.bat %bin% >nul
 copy setpalettelogdir.bat %bin% >nul
 
 popd
-
 
 for %%X in (data_default data_surge) DO (
 	echo ================ Copying %%X

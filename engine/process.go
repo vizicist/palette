@@ -3,6 +3,7 @@ package engine
 import (
 	"fmt"
 	"log"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -20,26 +21,22 @@ type processInfo struct {
 var ProcessInfo = map[string](*processInfo){}
 
 func InitProcessInfo() {
-	ProcessInfo["engine"] = EngineInfo()
-	ProcessInfo["VSCode debugger"] = VSCodeInfo()
-	ProcessInfo["resolume"] = ResolumeInfo()
-	ProcessInfo["gui"] = GuiInfo()
-	ProcessInfo["bidule"] = BiduleInfo()
-	ProcessInfo["mmtt"] = MmttInfo()
+	EngineInfoInit()
+	ResolumeInfoInit()
+	GuiInfoInit()
+	BiduleInfoInit()
+	MmttInfoInit()
+	AppsInfoInit()
 }
 
-func BidulePath() string {
-	return ConfigValueWithDefault("bidule", "")
-}
-
-func BiduleInfo() *processInfo {
-	path := BidulePath()
+func BiduleInfoInit() {
+	path := ConfigValueWithDefault("bidule", "")
 	if path == "" {
-		return nil
+		return
 	}
 	if !FileExists(path) {
 		log.Printf("No bidule found, looking for %s", path)
-		return nil
+		return
 	}
 	exe := path
 	lastslash := strings.LastIndex(exe, "\\")
@@ -50,14 +47,14 @@ func BiduleInfo() *processInfo {
 	if bidulefile == "" {
 		bidulefile = "default.bidule"
 	}
-	return &processInfo{exe, path, ConfigFilePath(bidulefile), biduleActivate}
+	ProcessInfo["bidule"] = &processInfo{exe, path, ConfigFilePath(bidulefile), biduleActivate}
 }
 
-func ResolumeInfo() *processInfo {
+func ResolumeInfoInit() {
 	fullpath := ConfigValue("resolume")
 	if fullpath != "" && !FileExists(fullpath) {
 		log.Printf("No Resolume found, looking for %s)", fullpath)
-		return nil
+		return
 	}
 	if fullpath == "" {
 		fullpath = "C:\\Program Files\\Resolume Avenue\\Avenue.exe"
@@ -65,7 +62,7 @@ func ResolumeInfo() *processInfo {
 			fullpath = "C:\\Program Files\\Resolume Arena\\Arena.exe"
 			if !FileExists(fullpath) {
 				log.Printf("no Resolume found in default locations")
-				return nil
+				return
 			}
 		}
 	}
@@ -74,40 +71,57 @@ func ResolumeInfo() *processInfo {
 	if lastslash > 0 {
 		exe = fullpath[lastslash+1:]
 	}
-	return &processInfo{exe, fullpath, "", resolumeActivate}
+	ProcessInfo["resolume"] = &processInfo{exe, fullpath, "", resolumeActivate}
 }
 
-func GuiInfo() *processInfo {
+func GuiInfoInit() {
 	exe := "palette_gui.exe"
 	fullpath := filepath.Join(PaletteDir(), "bin", "pyinstalled", exe)
-	return &processInfo{exe, fullpath, "", nil}
+	ProcessInfo["gui"] = &processInfo{exe, fullpath, "", nil}
 }
 
-func EngineInfo() *processInfo {
+func EngineInfoInit() {
 	exe := "palette_engine.exe"
 	fullpath := filepath.Join(PaletteDir(), "bin", exe)
-	return &processInfo{exe, fullpath, "", nil}
+	ProcessInfo["engine"] = &processInfo{exe, fullpath, "", nil}
 }
 
-func VSCodeInfo() *processInfo {
-	exe := "__debug_bin.exe"
-	fullpath := ""
-	return &processInfo{exe, fullpath, "", nil}
-}
-
-func MmttInfo() *processInfo {
+func MmttInfoInit() {
 	// NOTE: it's inside a sub-directory of bin, so all the necessary .dll's are contained
 	mmtt := ConfigStringWithDefault("mmtt", "")
 	if mmtt == "" {
-		return nil
+		return
 	}
 	// The value of mmtt is either "kinect" or "oak"
 	fullpath := filepath.Join(PaletteDir(), "bin", "mmtt_"+mmtt, "mmtt_"+mmtt+".exe")
 	if !FileExists(fullpath) {
 		log.Printf("no mmtt executable found, looking for %s", fullpath)
+		return
+	}
+	ProcessInfo["mmtt debugger"] = &processInfo{"mmtt_" + mmtt + ".exe", fullpath, "", nil}
+}
+
+func IsAppName(nm string) bool {
+	return strings.HasPrefix(nm, "app_")
+}
+
+func AppsInfoInit() {
+	// Collect a list of all the app_*.exe files
+	binpath := filepath.Join(PaletteDir(), "bin")
+	findexe := func(path string, info os.FileInfo, err error) error {
+		if strings.HasSuffix(path, ".exe") {
+			exe := filepath.Base(path)
+			appname := strings.TrimSuffix(exe, ".exe")
+			if IsAppName(appname) {
+				ProcessInfo[appname] = &processInfo{exe, path, "", nil}
+			}
+		}
 		return nil
 	}
-	return &processInfo{"mmtt_" + mmtt + ".exe", fullpath, "", nil}
+	err := filepath.Walk(binpath, findexe)
+	if err != nil {
+		log.Printf("filepath.Walk: err=%s\n", err)
+	}
 }
 
 func getProcessInfo(process string) (*processInfo, error) {
@@ -123,35 +137,56 @@ func getProcessInfo(process string) (*processInfo, error) {
 
 func StartRunning(process string) error {
 
-	p, err := getProcessInfo(process)
-	if err != nil {
-		return fmt.Errorf("StartRunning: no info for process=%s", process)
-	}
-	if p.FullPath == "" {
-		return fmt.Errorf("StartRunning: unable to start %s, no executable path", process)
-	}
+	switch process {
+	case "all":
+		for nm := range ProcessInfo {
+			StartRunning(nm)
+		}
+	case "apps":
+		for nm := range ProcessInfo {
+			if IsAppName(nm) {
+				StartRunning(nm)
+			}
+		}
+	default:
+		p, err := getProcessInfo(process)
+		if err != nil {
+			return fmt.Errorf("StartRunning: no info for process=%s", process)
+		}
+		if p.FullPath == "" {
+			return fmt.Errorf("StartRunning: unable to start %s, no executable path", process)
+		}
 
-	log.Printf("StartRunning: path=%s\n", p.FullPath)
+		log.Printf("StartRunning: path=%s\n", p.FullPath)
 
-	err = StartExecutableLogOutput(process, p.FullPath, true, p.Arg)
-	if err != nil {
-		return fmt.Errorf("start: process=%s err=%s", process, err)
-	}
+		err = StartExecutableLogOutput(process, p.FullPath, true, p.Arg)
+		if err != nil {
+			return fmt.Errorf("start: process=%s err=%s", process, err)
+		}
 
-	if p.ActivateFunc != nil {
-		go p.ActivateFunc()
+		if p.ActivateFunc != nil {
+			go p.ActivateFunc()
+		}
 	}
 	return nil
 }
 
 // StopRunning doesn't return any errors
 func StopRunning(process string) (err error) {
-	if process == "all" {
+	switch process {
+	case "all":
 		for nm := range ProcessInfo {
 			StopRunning(nm)
 		}
 		return err
-	} else {
+	case "apps":
+		for nm := range ProcessInfo {
+			if IsAppName(nm) {
+				StopRunning(nm)
+			}
+		}
+		return err
+	default:
 		p, err := getProcessInfo(process)
 		if err != nil {
 			return err
@@ -176,10 +211,6 @@ func CheckProcessesAndRestartIfNecessary() {
 	autostart := ConfigStringWithDefault("autostart", "")
 	if autostart == "" || autostart == "nothing" || autostart == "none" {
 		return
-	}
-	if autostart == "all" {
-		log.Printf("autostart no longer supports all, assuming gui\n")
-		autostart = "gui"
 	}
 	processes := strings.Split(autostart, ",")
 	for _, process := range processes {
@@ -259,12 +290,33 @@ func biduleActivate() {
 	}
 }
 
+func KillAll() {
+	for nm, info := range ProcessInfo {
+		if nm != "engine" {
+			KillExecutable(info.Exe)
+		}
+	}
+}
+
+/*
 // KillProcess kills a process (synchronously)
 func KillProcess(process string) {
-	p, err := getProcessInfo(process)
-	if err != nil {
-		log.Printf("KillProcess: err=%s\n", err)
-		return
+	switch process {
+	case "all":
+		for _, info := range ProcessInfo {
+			KillExecutable(info.Exe)
+		}
+	case "apps":
+		for nm, info := range ProcessInfo {
+			if IsAppName(nm) {
+				KillExecutable(info.Exe)
+			}
+		}
+	default:
+		p, err := getProcessInfo(process)
+		if err != nil {
+			KillExecutable(p.Exe)
+		}
 	}
-	KillExecutable(p.Exe)
 }
+*/

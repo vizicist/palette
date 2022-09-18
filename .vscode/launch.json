@@ -5,10 +5,10 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Plugin example_go",
+            "name": "app_example",
             "type": "go",
             "request": "launch",
-            "program": "${env:PALETTESOURCE}/plugins/example_go/example_go.go",
+            "program": "${env:PALETTESOURCE}/cmd/app_example/app_example.go",
             "args": []
         },
         {
@@ -63,6 +63,13 @@
             "request": "launch",
             "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
             "args": ["start"]
+        },
+        {
+            "name": "Start Apps",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
+            "args": ["start","apps"]
         },
         {
             "name": "Stop",
