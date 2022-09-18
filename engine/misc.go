@@ -43,8 +43,8 @@ type debugFlags struct {
 	NATS      bool
 	Notify    bool
 	OSC       bool
-	Plugin    bool
 	Resolume  bool
+	Responder bool
 	Realtime  bool
 	Remote    bool
 	Router    bool
@@ -103,8 +103,8 @@ func setDebug(dtype string, b bool) error {
 		Debug.Remote = b
 	case "router":
 		Debug.Router = b
-	case "plugin":
-		Debug.Plugin = b
+	case "responder":
+		Debug.Responder = b
 	case "scale":
 		Debug.Scale = b
 	case "transpose":
@@ -285,7 +285,7 @@ func LocalMap() map[string]string {
 		var err error
 		f := filepath.Join(LocalPaletteDir(), "local.json")
 		if !FileExists(f) {
-			log.Printf("No local.json file, assuming datapath is data_default\n")
+			// log.Printf("No local.json file, assuming datapath is data_default\n")
 			localMap, _ = StringMap("{ \"datapath\": \"data_default\" }")
 		} else {
 			localMap, err = ReadConfigFile(f)
