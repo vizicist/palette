@@ -112,7 +112,7 @@ func NewMotor(pad string, resolumeLayer int, freeframeClient *osc.Client, resolu
 
 func (motor *Motor) SendNoteToSynth(n *Note) {
 
-	// XXX - eventually this should be done by a plugin?
+	// XXX - eventually this should be done by a responder?
 	ss := motor.params.ParamStringValue("visual.spritesource", "")
 	if ss == "midi" {
 		motor.generateSpriteFromNote(n)

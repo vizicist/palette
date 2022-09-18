@@ -59,7 +59,6 @@ func usage() string {
     palette [-region {region}] get {category}.{parameter}
     palette status
 	palette version
-	palette register {plugin} {events}
     palette api {api} {args}
 	
 Regions:
@@ -208,7 +207,6 @@ func CliCommand(region string, args []string) string {
 		}
 		if process == "all" {
 			engine.StopRunning("all")
-			engine.KillExecutable(engineexe)
 		} else if process == "engine" {
 			// first stop everything else, unless killonstartup is false
 			if engine.ConfigBoolWithDefault("killonstartup", true) {

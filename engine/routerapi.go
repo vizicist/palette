@@ -408,14 +408,14 @@ func (r *Router) executeGlobalAPI(api string, apiargs map[string]string) (result
 			for _, motor := range r.motors {
 				motor.TransposePitch = int(v)
 			}
-			log.Printf("set_transpose API set to %d\n", int(v))
+			// log.Printf("set_transpose API set to %d\n", int(v))
 		}
 
 	case "set_transposeauto":
 		b, err := needBoolArg("onoff", api, apiargs)
 		if err == nil {
 			r.transposeAuto = b
-			log.Printf("GlobalAPI: set_transposeauto b=%v\n", b)
+			// log.Printf("GlobalAPI: set_transposeauto b=%v\n", b)
 			// Quantizing CurrentClick() to a beat or measure might be nice
 			r.transposeNext = CurrentClick() + r.transposeBeats*oneBeat
 			for _, motor := range r.motors {
