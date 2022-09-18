@@ -8,6 +8,7 @@ import (
 
 	_ "github.com/vizicist/palette/block"
 	"github.com/vizicist/palette/engine"
+	"github.com/vizicist/palette/responder"
 	_ "github.com/vizicist/palette/window"
 	"github.com/vizicist/palette/winsys"
 )
@@ -29,13 +30,7 @@ func main() {
 	// other processes (e.g. resolume, bidule) may be left around.
 	// So, unless told otherwise, we kill everything to get a clean start.
 	if engine.ConfigBoolWithDefault("killonstartup", true) {
-		engine.KillProcess("resolume")
-		engine.KillProcess("bidule")
-		engine.KillProcess("gui")
-		mmtt := engine.ConfigStringWithDefault("mmtt", "")
-		if mmtt != "" {
-			engine.KillProcess("mmtt_" + mmtt)
-		}
+		engine.KillAll()
 	}
 
 	engine.InitMIDI()
@@ -51,6 +46,9 @@ func main() {
 	go r.StartRealtime()
 	go r.StartCursorInput()
 	go r.InputListener()
+
+	responder := responder.NewResponder_test()
+	go responder.RunForever()
 
 	if engine.ConfigBoolWithDefault("depth", false) {
 		go engine.DepthRunForever()
