@@ -18,28 +18,29 @@ func cursorToNote(ce engine.CursorDeviceEvent) *engine.Note {
 	return note
 }
 
-func NewResponder_test() *engine.Responder {
+func NewResponder_demo() *Responder {
 
-	log.Printf("NewResponder_test called\n")
+	log.Printf("NewResponder_demo called\n")
 
-	responder := engine.NewResponder()
+	responder := NewResponder()
 
 	responder.OnCursorEvent(func(ce engine.CursorDeviceEvent) {
+		log.Printf("NewResponder_demo in OnCursorEvent!\n")
 		if ce.Ddu == "down" {
 			note := cursorToNote(ce)
 			log.Printf("cursor down: publishing note=%s\n", note.String())
-			err := engine.PublishNoteEvent(engine.PaletteInputEventSubject, note, "app_example")
+			err := engine.PublishNoteEvent(engine.PaletteInputEventSubject, note, "responder_demo")
 			if err != nil {
 				log.Printf("OnCursorEvent: err=%s\n", err)
 			}
 			note.TypeOf = "noteoff"
-			err = engine.PublishNoteEvent(engine.PaletteInputEventSubject, note, "app_example")
+			err = engine.PublishNoteEvent(engine.PaletteInputEventSubject, note, "responder_demo")
 			if err != nil {
 				log.Printf("OnCursorEvent: err=%s\n", err)
 			}
 
 		}
-		log.Printf("OnCursorEvent in app_example called! ce=%v\n", ce)
+		log.Printf("OnCursorEvent in responder_demo called! ce=%v\n", ce)
 	})
 
 	return responder
