@@ -1,10 +1,11 @@
-package engine
+package responder
 
 import (
 	"fmt"
 	"log"
 
 	"github.com/nats-io/nats.go"
+	"github.com/vizicist/palette/engine"
 )
 
 // This package is the external interface that Responders use
@@ -13,7 +14,7 @@ import (
 // Should probably be a separate package.
 
 type Responder struct {
-	onCursorEvent func(e CursorDeviceEvent)
+	onCursorEvent func(e engine.CursorDeviceEvent)
 }
 
 func NewResponder() *Responder {
@@ -21,7 +22,7 @@ func NewResponder() *Responder {
 	return p
 }
 
-func (p *Responder) OnCursorEvent(f func(e CursorDeviceEvent)) {
+func (p *Responder) OnCursorEvent(f func(e engine.CursorDeviceEvent)) {
 	p.onCursorEvent = f
 }
 
@@ -33,7 +34,7 @@ type ResponderCallback func(args map[string]string)
 
 func (p *Responder) RunForever() error {
 
-	err := SubscribeNATS(PaletteOutputEventSubject, p.responderNATSCallback)
+	err := engine.SubscribeNATS(engine.PaletteOutputEventSubject, p.responderNATSCallback)
 	if err != nil {
 		return err
 	}
@@ -42,37 +43,20 @@ func (p *Responder) RunForever() error {
 
 func (responder *Responder) responderNATSCallback(msg *nats.Msg) {
 	data := string(msg.Data)
-	args, err := StringMap(data)
+	args, err := engine.StringMap(data)
+	log.Printf("responderNATSCallback: args=%v\n", args)
 	if err != nil {
 		log.Printf("natsCallback: err=%s\n", err)
 		return
 	}
-	if Debug.NATS {
-		log.Printf("responderNATSCallback args=%+v\n", args)
-	}
+	log.Printf("responderNATSCallback args=%+v\n", args)
 	switch args["event"] {
 	case "cursor_down", "cursor_drag", "cursor_up":
-		ce := ArgsToCursorDeviceEvent(args)
+		ce := engine.ArgsToCursorDeviceEvent(args)
 		if responder.onCursorEvent != nil {
 			responder.onCursorEvent(ce)
 		}
 	}
-}
-
-func JsonObject(args ...string) string {
-	if len(args)%2 != 0 {
-		log.Printf("ApiParams: odd number of arguments, args=%v\n", args)
-		return "{}"
-	}
-	params := ""
-	sep := ""
-	for n := range args {
-		if n%2 == 0 {
-			params = params + sep + "\"" + args[n] + "\": \"" + args[n+1] + "\""
-		}
-		sep = ", "
-	}
-	return "{" + params + "}"
 }
 
 /*

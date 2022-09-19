@@ -5,10 +5,10 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "app_example",
+            "name": "responder_demo",
             "type": "go",
             "request": "launch",
-            "program": "${env:PALETTESOURCE}/cmd/app_example/app_example.go",
+            "program": "${env:PALETTESOURCE}/cmd/responder_demo/responder_demo.go",
             "args": []
         },
         {

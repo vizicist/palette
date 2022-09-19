@@ -822,3 +822,19 @@ func GoroutineID() uint64 {
 	n, _ := strconv.ParseUint(string(b), 10, 64)
 	return n
 }
+
+func JsonObject(args ...string) string {
+	if len(args)%2 != 0 {
+		log.Printf("ApiParams: odd number of arguments, args=%v\n", args)
+		return "{}"
+	}
+	params := ""
+	sep := ""
+	for n := range args {
+		if n%2 == 0 {
+			params = params + sep + "\"" + args[n] + "\": \"" + args[n+1] + "\""
+		}
+		sep = ", "
+	}
+	return "{" + params + "}"
+}
