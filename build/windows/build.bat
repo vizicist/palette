@@ -36,20 +36,23 @@ set buildcmdsout=%PALETTESOURCE%\build\windows\buildcmds.out
 echo ================ Compiling palette
 pushd %PALETTESOURCE%\cmd\palette
 go build palette.go >> %buildcmdsout% 2>&1
-copy palette.exe %bin%\palette.exe > nul
+move palette.exe %bin%\palette.exe > nul
 popd
 
 echo ================ Compiling palette_engine
 pushd %PALETTESOURCE%\cmd\palette_engine
 go build palette_engine.go >> %buildcmdsout% 2>&1
-copy palette_engine.exe %bin%\palette_engine.exe > nul
+move palette_engine.exe %bin%\palette_engine.exe > nul
 popd
 
-echo ================ Compiling app_example
-pushd %PALETTESOURCE%\cmd\app_example
-go build app_example.go >> %buildcmdsout% 2>&1
-copy app_example.exe %bin%\app_example.exe > nul
+echo ================ Compiling responder_demo
+pushd %PALETTESOURCE%\cmd\responder_demo
+go build responder_demo.go >> %buildcmdsout% 2>&1
+move responder_demo.exe %bin%\responder_demo.exe > nul
 popd
+
+rem print any error messages from compiling cmds
+type %buildcmdsout%
 
 echo ================ Creating palette_gui.exe, osc.exe
 pushd %PALETTESOURCE%\python

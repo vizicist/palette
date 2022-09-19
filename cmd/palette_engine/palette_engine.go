@@ -8,7 +8,6 @@ import (
 
 	_ "github.com/vizicist/palette/block"
 	"github.com/vizicist/palette/engine"
-	"github.com/vizicist/palette/responder"
 	_ "github.com/vizicist/palette/window"
 	"github.com/vizicist/palette/winsys"
 )
@@ -47,8 +46,8 @@ func main() {
 	go r.StartCursorInput()
 	go r.InputListener()
 
-	responder := responder.NewResponder_test()
-	go responder.RunForever()
+	// resp := responder.NewResponder_demo()
+	// go resp.RunForever()
 
 	if engine.ConfigBoolWithDefault("depth", false) {
 		go engine.DepthRunForever()

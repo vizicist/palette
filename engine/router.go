@@ -326,6 +326,7 @@ func (r *Router) StartNATSClient() {
 	SubscribeNATS(PaletteInputEventSubject, func(msg *nats.Msg) {
 		data := string(msg.Data)
 		args, err := StringMap(data)
+		log.Printf("NATSClient: PaletteInputEventSubject args=%v\n", args)
 		if err != nil {
 			log.Printf("PaletteInputEvent: err=%s\n", err)
 		}
