@@ -8,9 +8,27 @@ import (
 
 	_ "github.com/vizicist/palette/block"
 	"github.com/vizicist/palette/engine"
+	"github.com/vizicist/palette/responder"
 	_ "github.com/vizicist/palette/window"
 	"github.com/vizicist/palette/winsys"
 )
+
+/*
+type TeeInfo struct {
+	subject   string
+	responder *responder.Responder
+}
+
+var Tees []TeeInfo
+
+func NATSAddInternalResponder(subject string, responder *responder.Responder) {
+	Tees = append(Tees, TeeInfo{subject: subject, responder: responder})
+}
+
+func CheckTees() {
+	log.Printf("HI from CheckTees!\n")
+}
+*/
 
 func main() {
 
@@ -46,8 +64,10 @@ func main() {
 	go r.StartCursorInput()
 	go r.InputListener()
 
-	// resp := responder.NewResponder_demo()
-	// go resp.RunForever()
+	resp := responder.NewResponder_demo_internal()
+	log.Printf("resp = %v\n", resp)
+	// NATSAddInternalResponder(engine.PaletteOutputEventSubject, resp)
+	// engine.NATSPublishAddCheck(CheckTees)
 
 	if engine.ConfigBoolWithDefault("depth", false) {
 		go engine.DepthRunForever()
