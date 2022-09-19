@@ -197,8 +197,29 @@ func NATSRequest(subj, data string, timeout time.Duration) (retdata string, err 
 	return string(msg.Data), nil
 }
 
+type InternalResponder struct {
+	subject string
+	respond func(map[string]string)
+}
+
+var internalResponders []InternalResponder
+
+func NATSPublishAddInternalResponder(subject string, f func(map[string]string)) {
+	internalResponders = append(internalResponders, InternalResponder{subject: subject, respond: f})
+}
+
 // NATSPublish xxx
 func NATSPublish(subj string, msg string) error {
+
+	for _, p := range internalResponders {
+		if subj == p.subject {
+			args, err := StringMap(msg)
+			if err != nil {
+				return err
+			}
+			p.respond(args)
+		}
+	}
 
 	vn := NATS()
 	if Debug.NATS {

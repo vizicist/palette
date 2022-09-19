@@ -18,11 +18,19 @@ func cursorToNote(ce engine.CursorDeviceEvent) *engine.Note {
 	return note
 }
 
+var DemoRespondSubject = engine.PaletteOutputEventSubject
+
+func NewResponder_demo_internal() *Responder {
+	responder := NewResponder_demo()
+	engine.NATSPublishAddInternalResponder(responder.subject, responder.Respond)
+	return responder
+}
+
 func NewResponder_demo() *Responder {
 
 	log.Printf("NewResponder_demo called\n")
 
-	responder := NewResponder()
+	responder := NewResponder(DemoRespondSubject)
 
 	responder.OnCursorEvent(func(ce engine.CursorDeviceEvent) {
 		log.Printf("NewResponder_demo in OnCursorEvent!\n")
