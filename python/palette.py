@@ -13,7 +13,7 @@ import glob
 import collections
 import time
 import signal
-import logging
+import sys
 
 # try:
 #     import thread
@@ -166,6 +166,13 @@ GlobalPerformLabels["transposeauto"] = [
 ]
 PerformDefaultVal["transposeauto"] = 0
 
+def log(*args):
+    s = sprint(*args)
+    if s.endswith("\n"):
+        s = s[0:-1]
+    print(s)
+    sys.stdout.flush()
+
 def palette_region_api(region, api, params=""):
     if region == "":
         log("palette_region_api: no region specified?  Assuming *")
@@ -181,14 +188,6 @@ def sprint(*args, end='', **kwargs):
     sio = io.StringIO()
     print(*args, **kwargs, end=end, file=sio)
     return sio.getvalue()
-
-def debug(*args):
-    s = sprint(*args)
-    logging.debug(s)
-
-def log(*args):
-    s = sprint(*args)
-    logging.info(s)
 
 def palette_global_api(api, params=""):
     return palette_api("global."+api,params)
@@ -216,23 +215,24 @@ paletteDataPath = ""
 
 # This is the name of the data_* directory
 # under which are config and presets.
-# The value comes from the config.json file
+# The value comes from the local.json file
 def PaletteDataPath():
     global paletteDataPath
     if paletteDataPath != "":
         return paletteDataPath
-    paletteDataPath = os.path.join(localPaletteDir(),"data_default")
-    path = os.path.join(localPaletteDir(),"config.json")
-    if not os.path.isfile(path):
-        log("No config.json file?  Assuming datapath=",paletteDataPath)
-    else:
+
+    dir = "data_default"
+    # local.json can override it
+    path = os.path.join(localPaletteDir(),"local.json")
+    if os.path.isfile(path):
         vals = readJsonPath(path)
         if "datapath" in vals:
-            paletteDataPath = vals["datapath"]
-        else:
-            log("Bad format of %s\n",path)
+            dir = vals["datapath"]
 
-    log("Using data dir = ",paletteDataPath)
+    if os.path.dirname(dir) != ".":
+        paletteDataPath = dir
+    else:
+        paletteDataPath = os.path.join(localPaletteDir(),dir)
 
     return paletteDataPath
 
@@ -305,11 +305,14 @@ def boolValueOfString(v):
 
 ApiLock = threading.Lock()
 PythonNUID = MyNUID()  #  + "_python"
+PaletteOutputEventSubject = "palette.output.event"
+PaletteInputEventSubject = "palette.input.event"
+PaletteAPIEventSubject = "palette.api"
 
 def palette_api(api, params=None):
 
     fullparams = "{ " + params + "}"
-    r1,err = invoke_jsonrpc("palette.api",api,fullparams)
+    r1,err = invoke_jsonrpc(PaletteAPIEventSubject,api,fullparams)
     if err != None:
         log("API of ",api," returned err=",err)
     return r1
@@ -329,7 +332,7 @@ def palette_publish(subject,params):
         loop.close()
 
     except ErrTimeout:
-        log("palette_event: publish timed out, subject=%s params=%s\n" % (subject,params))
+        log("palette_event: publish timed out, subject=%s params=%s" % (subject,params))
 
     ApiLock.release()
 
@@ -367,7 +370,7 @@ def invoke_jsonrpc(subject, api, params):
         loop.close()
 
     except ErrTimeout:
-        log("invoke_jsonrpc: request timed out, subject=%s api=%s\n" % (subject,api))
+        log("invoke_jsonrpc: request timed out, subject=%s api=%s" % (subject,api))
 
     ApiLock.release()
 
@@ -464,7 +467,7 @@ def SendCursorEvent(cid,ddu,x,y,z,region="A"):
         "\"region\": \"" + region + "\", " + \
         "\"event\": \"" + event + "\", " + \
         "\"x\": \"%f\", \"y\": \"%f\", \"z\": \"%f\" }")  % (x,y,z)
-    palette_publish("palette.input.event",e)
+    palette_publish(PaletteInputEventSubject,e)
 
 def SendSpriteEvent(cid,x,y,z,region="A"):
     event = "sprite"
@@ -473,7 +476,7 @@ def SendSpriteEvent(cid,x,y,z,region="A"):
         "\"region\": \"" + region + "\", " + \
         "\"event\": \"" + event + "\", " + \
         "\"x\": \"%f\", \"y\": \"%f\", \"z\": \"%f\" }")  % (x,y,z)
-    palette_publish("palette.input.event",e)
+    palette_publish(PaletteInputEventSubject,e)
 
 def SendMIDIEvent(device,timesofar,msg,region="A"):
     bytestr = "0x"
@@ -488,19 +491,19 @@ def SendMIDIEvent(device,timesofar,msg,region="A"):
         "\"bytes\": \"%s\" }") % \
             (PythonNUID, device, timesofar, bytestr)
 
-    palette_publish("palette.input.event",e)
+    palette_publish(PaletteInputEventSubject,e)
 
 def SendMIDITimeReset():
     e = ("{ \"nuid\": \"%s\", " + \
         "\"event\": \"midi_reset\" }") % \
             (PythonNUID)
-    palette_publish("palette.input.event",e)
+    palette_publish(PaletteInputEventSubject,e)
 
 def SendMIDIAudioReset():
     e = ("{ \"nuid\": \"%s\", " + \
         "\"event\": \"audio_reset\" }") % \
             (PythonNUID)
-    palette_publish("palette.input.event",e)
+    palette_publish(PaletteInputEventSubject,e)
 
 def IgnoreKeyboardInterrupt():
     """
@@ -508,17 +511,9 @@ def IgnoreKeyboardInterrupt():
     """
     return signal.signal(signal.SIGINT,signal.SIG_IGN)
  
-def NoticeKeyboardInterrupt():
+def NoticeKeyboardInterrupt(sighandler):
     """
-    Sets the response to a SIGINT (keyboard interrupt) to the
-    default (raise KeyboardInterrupt).
+    Sets the response to a SIGINT (keyboard interrupt)
     """
-    return signal.signal(signal.SIGINT, signal.default_int_handler)
+    return signal.signal(signal.SIGINT, sighandler)
 
-def loginit():
-    # logging.basicConfig(filename="gui.log",encoding='utf-8', level=logging.DEBUG)
-    logpath = logFilePath("gui.log")
-    logging.basicConfig(filename=logpath,
-        encoding='utf-8',
-        format='%(asctime)s %(message)s',
-        level=logging.INFO)
