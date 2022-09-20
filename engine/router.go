@@ -100,6 +100,7 @@ type Router struct {
 	cursorCount      int
 	publishCursor    bool
 	publishMIDI      bool
+	publishNote      bool
 	myHostname       string
 	generateVisuals  bool
 	generateSound    bool
@@ -241,8 +242,12 @@ func TheRouter() *Router {
 			oneRouter.myHostname = hostname
 		}
 
-		oneRouter.publishCursor = ConfigBoolWithDefault("publishcursor", true)
-		oneRouter.publishMIDI = ConfigBoolWithDefault("publishmidi", true)
+		// By default, the engine handles Cursor events internally.
+		// However, if publishcursor is set, it ONLY publishes them,
+		// so the expectation is that a plugin will handle it.
+		oneRouter.publishCursor = ConfigBoolWithDefault("publishcursor", false)
+		oneRouter.publishMIDI = ConfigBoolWithDefault("publishmidi", false)
+		oneRouter.publishNote = ConfigBoolWithDefault("publishnote", false)
 		oneRouter.generateVisuals = ConfigBoolWithDefault("generatevisuals", true)
 		oneRouter.generateSound = ConfigBoolWithDefault("generatesound", true)
 
@@ -310,17 +315,18 @@ func (r *Router) StartOSC(source string) {
 // StartNATSClient xxx
 func (r *Router) StartNATSClient() {
 
-	log.Printf("StartNATS: Subscribing to %s\n", PaletteAPISubject)
+	log.Printf("StartNATSClient: Subscribing to %s\n", PaletteAPISubject)
 	SubscribeNATS(PaletteAPISubject, func(msg *nats.Msg) {
 		data := string(msg.Data)
 		response := r.handleAPIInput(data)
 		msg.Respond([]byte(response))
 	})
 
-	log.Printf("StartNATS: subscribing to %s\n", PaletteInputEventSubject)
+	log.Printf("StartNATSClient: Subscribing to %s\n", PaletteInputEventSubject)
 	SubscribeNATS(PaletteInputEventSubject, func(msg *nats.Msg) {
 		data := string(msg.Data)
 		args, err := StringMap(data)
+		log.Printf("NATSClient: PaletteInputEventSubject args=%v\n", args)
 		if err != nil {
 			log.Printf("PaletteInputEvent: err=%s\n", err)
 		}
@@ -485,9 +491,11 @@ func (r *Router) InputListener() {
 						log.Printf("InputListener: me=%+v err=%s\n", me, err)
 					}
 				}
-			}
-			for _, motor := range r.motors {
-				motor.HandleMIDIInput(event)
+			} else {
+				log.Printf("NOT publishing MIDIDeviceEvent, handling internally!\n")
+				for _, motor := range r.motors {
+					motor.HandleMIDIInput(event)
+				}
 			}
 			if Debug.MIDI {
 				log.Printf("InputListener: MIDIInput event=0x%02x\n", event)
@@ -498,6 +506,36 @@ func (r *Router) InputListener() {
 		}
 	}
 	log.Printf("InputListener is being killed\n")
+}
+
+func ArgToFloat(nm string, args map[string]string) float32 {
+	f, err := strconv.ParseFloat(args[nm], 32)
+	if err != nil {
+		log.Printf("Unable to parse %s value (%s), assuming 0.0\n", nm, args[nm])
+		f = 0.0
+	}
+	return float32(f)
+}
+
+func ArgsToCursorDeviceEvent(args map[string]string) CursorDeviceEvent {
+	region := args["region"]
+	source := args["source"]
+	event := strings.TrimPrefix(args["event"], "cursor_")
+	x := ArgToFloat("x", args)
+	y := ArgToFloat("y", args)
+	z := ArgToFloat("z", args)
+	ce := CursorDeviceEvent{
+		NUID:      MyNUID(),
+		Region:    region,
+		Source:    source,
+		Timestamp: CurrentMilli(),
+		Ddu:       event,
+		X:         x,
+		Y:         y,
+		Z:         z,
+		Area:      0.0,
+	}
+	return ce
 }
 
 // HandleInputEvent xxx
@@ -511,18 +549,11 @@ func (r *Router) HandleInputEvent(args map[string]string) error {
 		return err
 	}
 
-	fromNUID, nuidok := args["nuid"]
-	if !nuidok {
-		// log.Printf("No nuid value assuming MyNUID()\n")
-		fromNUID = MyNUID()
-	}
-
 	// If no "region" argument, assign one
 	region, regionok := args["region"]
 	if !regionok {
 		log.Printf("No region value on input event, assuming A\n")
 		region = "A"
-		// region = r.getRegionForNUID(fromNUID)
 	} else {
 		// Remove it from the args
 		delete(args, "region")
@@ -544,40 +575,7 @@ func (r *Router) HandleInputEvent(args map[string]string) error {
 		return nil
 
 	case "cursor_down", "cursor_drag", "cursor_up":
-
-		/*
-			// If we're publishing cursor events, we ignore ones from ourself
-			if r.publishCursor && fromNUID == MyNUID() {
-				return nil
-			}
-		*/
-
-		cid := optionalStringArg("cid", args, "UnspecifiedCID")
-
-		subEvent := event[7:] // assumes event is cursor_*
-		switch subEvent {
-		case "down", "drag", "up":
-		default:
-			return fmt.Errorf("handleSubscribedEvent: Unexpected cursor event type: %s", subEvent)
-		}
-
-		x, y, z, err := GetArgsXYZ(args)
-		if err != nil {
-			return err
-		}
-
-		ce := CursorDeviceEvent{
-			NUID:      fromNUID,
-			Region:    region,
-			CID:       cid,
-			Timestamp: CurrentMilli(),
-			Ddu:       subEvent,
-			X:         x,
-			Y:         y,
-			Z:         z,
-			Area:      0.0,
-		}
-
+		ce := ArgsToCursorDeviceEvent(args)
 		r.handleCursorDeviceEvent(ce, motor)
 
 	case "sprite":
@@ -597,6 +595,24 @@ func (r *Router) HandleInputEvent(args map[string]string) error {
 		log.Printf("HandleEvent: audio_reset!!\n")
 		go r.audioReset()
 
+	case "note":
+		notestr, err := needStringArg("note", "HandleEvent", args)
+		if err != nil {
+			return err
+		}
+		clickstr, err := needStringArg("clicks", "HandleEvent", args)
+		if err != nil {
+			return err
+		}
+		log.Printf("HandleInputEvent: notestr=%s clickstr=%s\n", notestr, clickstr)
+		note, err := NoteFromString(notestr)
+		if err != nil {
+			return err
+		}
+		if note.Synth == "" {
+			note.Synth = "default"
+		}
+		SendNoteToSynth(note)
 		/*
 			case "midi":
 				// If we're publishing midi events, we ignore ones from ourself
@@ -614,6 +630,8 @@ func (r *Router) HandleInputEvent(args map[string]string) error {
 				}
 				motor.HandleMIDIInput(*me)
 		*/
+	default:
+		log.Printf("HandleInputEvent: event not handled: %s\n", event)
 	}
 
 	return nil
@@ -636,13 +654,18 @@ func (r *Router) handleCursorDeviceInput(e CursorDeviceEvent) {
 }
 
 func (r *Router) handleCursorDeviceEvent(ce CursorDeviceEvent, motor *Motor) {
+
+	// If we're publishing the Cursor events, we don't give them to the motors.
+	// This means that all cursor behavior is defined by apps.
 	if r.publishCursor {
 		err := PublishCursorDeviceEvent(PaletteOutputEventSubject, ce)
 		if err != nil {
 			log.Printf("Router.routeCursorDeviceEvent: NATS publishing err=%s\n", err)
 		}
+		return
+	} else {
+		motor.handleCursorDeviceEvent(ce)
 	}
-	motor.handleCursorDeviceEvent(ce)
 }
 
 /*
@@ -759,11 +782,6 @@ func (r *Router) handleAPIInput(data string) (response string) {
 		response = ErrorResponse(fmt.Errorf("missing api parameter"))
 		return
 	}
-	fromNUID, ok := smap["nuid"]
-	if !ok {
-		// log.Printf("No nuid value assuming MyNUID()\n")
-		fromNUID = MyNUID()
-	}
 	rawargs, ok := smap["params"]
 	if !ok {
 		response = ErrorResponse(fmt.Errorf("missing params parameter"))
@@ -772,7 +790,7 @@ func (r *Router) handleAPIInput(data string) (response string) {
 	if Debug.API {
 		log.Printf("Router.HandleAPI: api=%s args=%s\n", api, rawargs)
 	}
-	result, err := r.ExecuteAPI(api, fromNUID, rawargs)
+	result, err := r.ExecuteAPI(api, rawargs)
 	if err != nil {
 		response = ErrorResponse(err)
 	} else {
@@ -1171,7 +1189,7 @@ func (r *Router) handleMMTTCursor(msg *osc.Message) {
 	ce := CursorDeviceEvent{
 		NUID:      MyNUID(),
 		Region:    region,
-		CID:       cid,
+		Source:    cid,
 		Timestamp: CurrentMilli(),
 		Ddu:       ddu,
 		X:         x,
@@ -1192,10 +1210,10 @@ func (r *Router) handleMMTTCursor(msg *osc.Message) {
 	ce.Y = boundval(((ce.Y - 0.5) * yexpand) + 0.5)
 
 	if Debug.MMTT && Debug.Cursor {
-		log.Printf("MMTT Cursor %s %s xyz= %f %f %f\n", ce.CID, ce.Ddu, ce.X, ce.Y, ce.Z)
+		log.Printf("MMTT Cursor %s %s xyz= %f %f %f\n", ce.Source, ce.Ddu, ce.X, ce.Y, ce.Z)
 	}
 
-	motor.handleCursorDeviceEvent(ce)
+	r.handleCursorDeviceEvent(ce, motor)
 }
 
 func boundval(v float32) float32 {
@@ -1348,7 +1366,7 @@ func (r *Router) handleOSCAPI(msg *osc.Message) {
 		log.Printf("Router.handleOSCAPI: first char of args must be curly brace\n")
 		return
 	}
-	_, err = r.ExecuteAPI(api, MyNUID(), rawargs)
+	_, err = r.ExecuteAPI(api, rawargs)
 	if err != nil {
 		log.Printf("Router.handleOSCAPI: err=%s", err)
 	}

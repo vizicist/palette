@@ -59,7 +59,6 @@ func usage() string {
     palette [-region {region}] get {category}.{parameter}
     palette status
 	palette version
-	palette register {plugin} {events}
     palette api {api} {args}
 	
 Regions:
@@ -208,7 +207,6 @@ func CliCommand(region string, args []string) string {
 		}
 		if process == "all" {
 			engine.StopRunning("all")
-			engine.KillExecutable(engineexe)
 		} else if process == "engine" {
 			// first stop everything else, unless killonstartup is false
 			if engine.ConfigBoolWithDefault("killonstartup", true) {
@@ -230,7 +228,7 @@ func CliCommand(region string, args []string) string {
 	case "test":
 		ntimes := 10
 		dt := 100 * time.Millisecond
-		cid := "0"
+		source := "test.0"
 		var err error
 		if len(args) > 1 {
 			ntimes, err = strconv.Atoi(args[1])
@@ -252,7 +250,7 @@ func CliCommand(region string, args []string) string {
 			ce := engine.CursorDeviceEvent{
 				NUID:      engine.MyNUID(),
 				Region:    region,
-				CID:       cid,
+				Source:    source,
 				Timestamp: engine.CurrentMilli(),
 				Ddu:       "down",
 				X:         rand.Float32(),

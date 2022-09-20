@@ -112,7 +112,7 @@ func NewMotor(pad string, resolumeLayer int, freeframeClient *osc.Client, resolu
 
 func (motor *Motor) SendNoteToSynth(n *Note) {
 
-	// XXX - eventually this should be done by a plugin?
+	// XXX - eventually this should be done by a responder?
 	ss := motor.params.ParamStringValue("visual.spritesource", "")
 	if ss == "midi" {
 		motor.generateSpriteFromNote(n)
@@ -439,7 +439,7 @@ func (motor *Motor) time() time.Time {
 
 func (motor *Motor) handleCursorDeviceEvent(e CursorDeviceEvent) {
 
-	id := e.NUID + "." + e.CID
+	id := e.NUID + "." + e.Source
 
 	motor.deviceCursorsMutex.Lock()
 	defer motor.deviceCursorsMutex.Unlock()
@@ -804,17 +804,17 @@ func (motor *Motor) generateSoundFromCursor(ce CursorStepEvent) {
 
 		dz := float64(int(a.noteOn.Velocity) - int(newNoteOn.Velocity))
 		deltaz := float32(math.Abs(dz) / 128.0)
-		deltaztrig := motor.params.ParamFloatValue("sound.deltaztrig")
+		deltaztrig := motor.params.ParamFloatValue("sound._deltaztrig")
 
 		deltay := float32(math.Abs(float64(a.ce.Y - ce.Y)))
-		deltaytrig := motor.params.ParamFloatValue("sound.deltaytrig")
+		deltaytrig := motor.params.ParamFloatValue("sound._deltaytrig")
 		// log.Printf("genSound for drag!   a.noteOn.vel=%d  newNoteOn.vel=%d deltaz=%f deltaztrig=%f\n", a.noteOn.Velocity, newNoteOn.Velocity, deltaz, deltaztrig)
 
 		if motor.params.ParamStringValue("sound.controllerstyle", "nothing") == "modulationonly" {
-			zmin := motor.params.ParamFloatValue("sound.controllerzmin")
-			zmax := motor.params.ParamFloatValue("sound.controllerzmax")
-			cmin := motor.params.ParamIntValue("sound.controllermin")
-			cmax := motor.params.ParamIntValue("sound.controllermax")
+			zmin := motor.params.ParamFloatValue("sound._controllerzmin")
+			zmax := motor.params.ParamFloatValue("sound._controllerzmax")
+			cmin := motor.params.ParamIntValue("sound._controllermin")
+			cmax := motor.params.ParamIntValue("sound._controllermax")
 			oldz := a.ce.Z
 			newz := ce.Z
 			// XXX - should put the old controller value in ActiveNote so
@@ -823,7 +823,7 @@ func (motor *Motor) generateSoundFromCursor(ce CursorStepEvent) {
 			newzc := BoundAndScaleController(newz, zmin, zmax, cmin, cmax)
 
 			if newzc != 0 && newzc != oldzc {
-				SendControllerToSynth(a.noteOn.Sound, 1, newzc)
+				SendControllerToSynth(a.noteOn.Synth, 1, newzc)
 			}
 		}
 
@@ -1029,7 +1029,7 @@ func (motor *Motor) sendNoteOff(a *ActiveNote) {
 		return
 	}
 
-	noteOff := NewNoteOff(n.Pitch, n.Velocity, n.Sound)
+	noteOff := NewNoteOff(n.Pitch, n.Velocity, n.Synth)
 	// if Debug.MIDI {
 	// 	log.Printf("MIDI.SendNote: noteOff pitch:%d velocity:%d sound:%s\n", n.Pitch, n.Velocity, n.Sound)
 	// }
