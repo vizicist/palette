@@ -43,8 +43,8 @@ type debugFlags struct {
 	NATS      bool
 	Notify    bool
 	OSC       bool
-	Plugin    bool
 	Resolume  bool
+	Responder bool
 	Realtime  bool
 	Remote    bool
 	Router    bool
@@ -103,8 +103,8 @@ func setDebug(dtype string, b bool) error {
 		Debug.Remote = b
 	case "router":
 		Debug.Router = b
-	case "plugin":
-		Debug.Plugin = b
+	case "responder":
+		Debug.Responder = b
 	case "scale":
 		Debug.Scale = b
 	case "transpose":
@@ -227,12 +227,12 @@ func PaletteVersion() string {
 
 // ReadablePresetFilePath xxx
 func ReadablePresetFilePath(preset string) string {
-	return presetFilePath(preset, false)
+	return presetFilePath(preset)
 }
 
 // WritablePresetFilePath xxx
 func WriteablePresetFilePath(preset string) string {
-	path := presetFilePath(preset, true)
+	path := presetFilePath(preset)
 	os.MkdirAll(filepath.Dir(path), 0777)
 	return path
 }
@@ -242,7 +242,7 @@ func PresetsDir() string {
 }
 
 // presetFilePath returns the full path of a preset file.
-func presetFilePath(preset string, writable bool) string {
+func presetFilePath(preset string) string {
 	category := ""
 	i := strings.Index(preset, ".")
 	if i >= 0 {
@@ -278,27 +278,59 @@ func LocalPaletteDir() string {
 	return filepath.Join(localapp, "Palette")
 }
 
+var localMap map[string]string
+
+func LocalMap() map[string]string {
+	if localMap == nil {
+		var err error
+		f := filepath.Join(LocalPaletteDir(), "local.json")
+		if !FileExists(f) {
+			// log.Printf("No local.json file, assuming datapath is data_default\n")
+			localMap, _ = StringMap("{ \"datapath\": \"data_default\" }")
+		} else {
+			localMap, err = ReadConfigFile(f)
+			if err != nil {
+				log.Printf("Bad format of local.json?  err=%s\n", err)
+			}
+		}
+	}
+	return localMap
+}
+
 var paletteDataPath = ""
 
-// PaletteDataPath returns the datadir value in config.json
+// PaletteDataPath returns the datadir value in local.json
 func PaletteDataPath() string {
+
 	if paletteDataPath != "" {
 		return paletteDataPath
 	}
-	paletteDataPath = filepath.Join(LocalPaletteDir(), "data_default")
-	f := filepath.Join(LocalPaletteDir(), "config.json")
-	if !FileExists(f) {
-		log.Printf("No config.json file?  Asssuming datapath=%s\n", paletteDataPath)
-	} else {
-		values, err := ReadConfigFile(f)
-		if err != nil {
-			log.Printf("Bad format of config.json?  Asssuming datapath=%s\n", paletteDataPath)
-		} else {
-			paletteDataPath = values["datapath"]
-		}
+
+	local := LocalMap()
+	datapath, ok := local["datapath"]
+	if !ok {
+		datapath = filepath.Join(LocalPaletteDir(), "data_default")
 	}
-	log.Printf("Using datapath = %s\n", paletteDataPath)
-	return paletteDataPath
+	if filepath.Dir(datapath) == "." {
+		datapath = filepath.Join(LocalPaletteDir(), datapath)
+	}
+	paletteDataPath = datapath
+	return datapath
+}
+
+// PaletteDataPath returns the datadir value in local.json
+func TwitchUser() (username string, authtoken string) {
+	local := LocalMap()
+	twitchuser, ok := local["twitchuser"]
+	if !ok {
+		twitchuser = "foo"
+	}
+	twitchtoken, ok := local["twitchtoken"]
+	if !ok {
+		twitchtoken = "foo"
+	}
+	log.Printf("TwitchUser = %s %s\n", twitchuser, twitchtoken)
+	return twitchuser, twitchtoken
 }
 
 // LocalConfigFilePath xxx
@@ -789,4 +821,20 @@ func GoroutineID() uint64 {
 	b = b[:bytes.IndexByte(b, ' ')]
 	n, _ := strconv.ParseUint(string(b), 10, 64)
 	return n
+}
+
+func JsonObject(args ...string) string {
+	if len(args)%2 != 0 {
+		log.Printf("ApiParams: odd number of arguments, args=%v\n", args)
+		return "{}"
+	}
+	params := ""
+	sep := ""
+	for n := range args {
+		if n%2 == 0 {
+			params = params + sep + "\"" + args[n] + "\": \"" + args[n+1] + "\""
+		}
+		sep = ", "
+	}
+	return "{" + params + "}"
 }

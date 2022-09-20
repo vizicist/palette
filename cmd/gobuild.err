@@ -1,0 +1,2 @@
+no required module provides package .go; to add it:
+	go get .go

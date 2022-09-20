@@ -8,9 +8,27 @@ import (
 
 	_ "github.com/vizicist/palette/block"
 	"github.com/vizicist/palette/engine"
+	"github.com/vizicist/palette/responder"
 	_ "github.com/vizicist/palette/window"
 	"github.com/vizicist/palette/winsys"
 )
+
+/*
+type TeeInfo struct {
+	subject   string
+	responder *responder.Responder
+}
+
+var Tees []TeeInfo
+
+func NATSAddInternalResponder(subject string, responder *responder.Responder) {
+	Tees = append(Tees, TeeInfo{subject: subject, responder: responder})
+}
+
+func CheckTees() {
+	log.Printf("HI from CheckTees!\n")
+}
+*/
 
 func main() {
 
@@ -26,16 +44,10 @@ func main() {
 	flag.Parse()
 
 	// Normally, the engine should never die, but if it does,
-	// other processes (e.g. resolume, vsthost) may be left around.
+	// other processes (e.g. resolume, bidule) may be left around.
 	// So, unless told otherwise, we kill everything to get a clean start.
 	if engine.ConfigBoolWithDefault("killonstartup", true) {
-		engine.KillProcess("resolume")
-		engine.KillProcess("vsthost")
-		engine.KillProcess("gui")
-		mmtt := engine.ConfigStringWithDefault("mmtt", "")
-		if mmtt != "" {
-			engine.KillProcess("mmtt_" + mmtt)
-		}
+		engine.KillAll()
 	}
 
 	engine.InitMIDI()
@@ -51,6 +63,11 @@ func main() {
 	go r.StartRealtime()
 	go r.StartCursorInput()
 	go r.InputListener()
+
+	resp := responder.NewResponder_demo_internal()
+	log.Printf("resp = %v\n", resp)
+	// NATSAddInternalResponder(engine.PaletteOutputEventSubject, resp)
+	// engine.NATSPublishAddCheck(CheckTees)
 
 	if engine.ConfigBoolWithDefault("depth", false) {
 		go engine.DepthRunForever()

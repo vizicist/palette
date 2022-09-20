@@ -45,11 +45,23 @@ ColorBright = '#00ffff'
 ColorAqua = '#00ffff'
 ColorUnHigh = '#888888'
 
-signal.signal(signal.SIGINT,signal.SIG_IGN)
+def killApp():
+    global PaletteApp
+    PaletteApp.killme = True
+
+def controlCHandler(sig, frame):
+    log("controlCHandler called!")
+    killApp()
+
+palette.NoticeKeyboardInterrupt(controlCHandler)
 
 class Params():
     def __init__(self):
         pass
+
+def on_closing():
+    log("on_closing called!")
+    killApp()
 
 class ProGuiApp(tk.Tk):
 
@@ -61,6 +73,7 @@ class ProGuiApp(tk.Tk):
             ):
 
         self.isguilarge = isguilarge
+        self.killme = False
 
         self.currentMode = ""
         self.nextMode = ""
@@ -88,7 +101,11 @@ class ProGuiApp(tk.Tk):
         self.thumbFactor = 0.1
 
         self.lastAnything = 0
-        self.resetAfterInactivity = int(palette.ConfigValue("attracttimeout",defvalue="0"))
+        self.attractTimeout = int(palette.ConfigValue("attracttimeout",defvalue="0"))
+        if self.attractTimeout > 0 and self.attractTimeout < 60:
+            log("attracttimeout = ",self.attractTimeout," is too low, setting it to 60")
+            self.attractTimeout = 60
+        log("attracttimeout = ",self.attractTimeout)
 
         # These are the same in both normal and advanced
         self.selectDisplayPerRow = 3
@@ -212,7 +229,7 @@ class ProGuiApp(tk.Tk):
 
     def mainLoop(self):
         # doneLoading = False
-        while True:
+        while self.killme == False:
             try:
                 self.update_idletasks()
                 self.update()
@@ -227,7 +244,11 @@ class ProGuiApp(tk.Tk):
                 traceback.print_exc(file=sys.stdout)
                 break
     
-            time.sleep(0.001)
+            try:
+                time.sleep(0.001)
+            except:
+                log("mainLoop sleep interrupted")
+                pass
 
             now = time.time()
 
@@ -235,8 +256,9 @@ class ProGuiApp(tk.Tk):
 
                 # switch to a new Mode 
                 if self.nextMode == "layout":
-                    self.initLayout()
-                    if self.resetAfterInactivity>0:
+                    # self.initLayout()
+                    if self.attractTimeout>0:
+                        # go into attract mode right away
                         self.nextMode = "attract"
                         self.startAttractMode()
                     else:
@@ -263,7 +285,7 @@ class ProGuiApp(tk.Tk):
 
             if self.currentMode == "normal":
                 self.doSelectorAction()
-                if self.resetAfterInactivity>0 and (now - self.lastAnything) > self.resetAfterInactivity:
+                if self.attractTimeout>0 and (now - self.lastAnything) > self.attractTimeout:
                     log("No activity, starting attract mode...")
                     self.resetAll()
                     self.nextMode = "attract"
@@ -280,6 +302,8 @@ class ProGuiApp(tk.Tk):
             else:
                 log("Invalid value for currentMode: ",self.currentMode)
                 self.currentMode = ""
+
+        log("mainLoop is returning")
 
     def startNormalMode(self):
         # self.startupFrame.place_forget()
@@ -607,7 +631,7 @@ class ProGuiApp(tk.Tk):
             lastResort = pad
             if pad.name() == padName:
                 return pad
-        log("There is no Pad named",padName,", last resort, using",lastResort.name())
+        log("There is no Pad named ",padName,", last resort, using",lastResort.name())
         return lastResort
 
     def selectPage(self,pagename):
@@ -637,7 +661,7 @@ class ProGuiApp(tk.Tk):
         return self.allPadsSelected or self.currentPageName=="quad"
 
     def sendParamValues(self,values):
-        log("sendParamValues: "+str(values))
+        log("sendParamValues: ",str(values))
         for name in values:
             v = values[name]
             if self.doAllPads():
@@ -670,11 +694,11 @@ class ProGuiApp(tk.Tk):
             self.refreshPage()
 
             if self.allPadsSelected:
-                log("Sending",paramType,"params to all pads")
+                log("Sending ",paramType," params to all pads")
                 for pad in self.Pads:
                     pad.sendParamsOfType(paramType)
             else:
-                log("Sending",paramType,"params to pad",self.CurrPad.name())
+                log("Sending ",paramType," params to pad ",self.CurrPad.name())
                 self.CurrPad.sendParamsOfType(paramType)
 
             # self.saveCurrent()
@@ -764,19 +788,21 @@ class ProGuiApp(tk.Tk):
 
         # a second click on the same preset will switch to edit mode
         # (same thing as click on the page header)
-        if presettype == self.lastLoadType and presetname == self.lastLoadName:
-            self.clickPage(presettype)
+        # THIS WAS A BAD IDEA
+        # if presettype == self.lastLoadType and presetname == self.lastLoadName:
+        #     self.clickPage(presettype)
+
         self.lastLoadType = presettype
         self.lastLoadName = presetname
-        log("loadAndSend presettype="+presettype+" presetname="+presetname)
+        log("loadAndSend presettype=",presettype," presetname=",presetname)
         self.editPage[presettype].paramsnameVar.set(presetname)
-        # log("paramsnamevar="+self.editPage[presettype].paramsnameVar.get())
+        # log("paramsnamevar=",self.editPage[presettype].paramsnameVar.get())
 
         if self.currentMode != "attract":
             log("Loading",presettype,presetname)
 
         if presettype == "quad":
-            log("calling preset.load on quad preset="+presetname)
+            log("calling preset.load on quad preset=",presetname)
             if self.allPadsSelected:
                 palette.palette_api("preset.load", "\"preset\": \""+presettype+"."+str(presetname) + "\", \"regions\": \"*\"")
             else:
@@ -784,7 +810,7 @@ class ProGuiApp(tk.Tk):
                 palette.palette_api("preset.load", "\"preset\": \""+presettype+"."+str(presetname) + "\", \"regions\": \""+regions+"\"")
         elif self.allPadsSelected:
             for pad in self.Pads:
-                log("calling preset.load on pad="+pad.name()+" preset="+presetname)
+                log("calling preset.load on pad=",pad.name()," preset=",presetname)
                 palette.palette_region_api(pad.name(),"preset.load", "\"preset\": \""+presettype+"."+str(presetname) + "\"")
         else:
             region = self.CurrPad.name()
@@ -799,16 +825,13 @@ class ProGuiApp(tk.Tk):
             return
 
         presets = palette.presetsListAll(presetType)
+        npresets = len(presets)
+        if npresets == 0:
+            log("selectorLoadAndSendRand: no presets?")
+            return
         i = random.randint(0,len(presets)-1)
         presetname = presets[i]
         self.loadAndSend(presetType,presetname)
-
-#    def sendOther(self,paramType):
-#        if self.allPadsSelected:
-#            for pad in self.Pads:
-#                pad.sendParamsOfType(paramType)
-#        else:
-#            self.CurrPad.sendParamsOfType(paramType)
 
     def selectorImportAndSend(self,paramType,val):
         j = json.loads(val)
@@ -879,7 +902,7 @@ class ProGuiApp(tk.Tk):
 
         newtext = self.performPage.globalPerformText(name)
         self.performPage.performButton[name].config(text=newtext)
-        # log("sendGlobalPerformVal: Setting button name="+name+" text="+newtext)
+        # log("sendGlobalPerformVal: Setting button name=",name," text=",newtext)
 
         index = self.globalPerformIndex[name]
         val = palette.GlobalPerformLabels[name][index]["value"]
@@ -984,7 +1007,7 @@ class ProGuiApp(tk.Tk):
 
     def sendQuad(self):
         for pad in self.Pads:
-            debug("Sending all parameters for pad = ",pad.name())
+            log("Sending all parameters for pad = ",pad.name())
             for pt in ["sound","visual","effect"]:
                 paramlistjson = pad.paramListOfType(pt)
                 palette.palette_region_api(pad.name(), "setparams", paramlistjson)
@@ -1044,6 +1067,8 @@ class ProGuiApp(tk.Tk):
 
         self.newParamNames = []
         for x in sorted(self.newParamsJson.keys()):
+            if not isVisibleParameter(x):
+                continue
             self.newParamNames.append(x)
             self.newParamsJson[x]["name"] = x
             t = self.newParamsJson[x]["paramstype"]
@@ -1242,7 +1267,7 @@ class Pad():
         index = self.performIndex[name]
         labels = palette.PerformLabels[name]
         val = labels[index]["value"]
-        # log("sendPerformVal: pad="+self.padName+" name="+name+" val="+str(val))
+        # log("sendPerformVal: pad=",self.padName," name=",name," val=",str(val))
         if name == "loopingonoff":
             reconoff = False
             playonoff = False
@@ -1255,7 +1280,7 @@ class Pad():
                 reconoff = False
                 playonoff = True
             else:
-                log("Unrecognized value of loopingonoff - %s\n" % val)
+                log("Unrecognized value of loopingonoff - %s" % val)
                 return
 
             palette.palette_region_api(self.name(), "loop_recording", '"onoff": "'+str(reconoff)+'"')
@@ -1272,12 +1297,12 @@ class Pad():
 
         elif name == "deltaztrig":
             palette.palette_region_api(self.name(), "set",
-                "\"name\": \"" + "sound.deltaztrig" + "\"" + \
+                "\"name\": \"" + "sound._deltaztrig" + "\"" + \
                 ", \"value\": \"" + str(val) + "\"")
 
         elif name == "deltaytrig":
             palette.palette_region_api(self.name(), "set",
-                "\"name\": \"" + "sound.deltaytrig" + "\"" + \
+                "\"name\": \"" + "sound._deltaytrig" + "\"" + \
                 ", \"value\": \"" + str(val) + "\"")
 
         elif name == "quant":
@@ -1824,11 +1849,11 @@ class PageEditParams(tk.Frame):
             raise Exception("Unrecognized paramType value? t="+t)
 
     def checkThenGotoParamsFile(self, name):
-        log("In checkThenGoToParamsFile for name="+name)
+        log("In checkThenGoToParamsFile for name=",name)
         return
 
     def checkThenGotoParamsFileReturn(self, name):
-        log("In checkThenGoToParamsFileReturn for name="+name)
+        log("In checkThenGoToParamsFileReturn for name=",name)
         return
 
     def setPresetNameInComboBox(self,name):
@@ -2180,7 +2205,7 @@ class PagePerformMain(tk.Frame):
 
             ipady = 0
             button.config(text=text)
-            # log("setting perform button to text="+text)
+            # log("setting perform button to text=",text)
             # if text == "*Transpose\nAuto On":
             #     log("HEY, Transpose ON!??\n")
 
@@ -2238,7 +2263,7 @@ class PagePerformMain(tk.Frame):
 
             newtext = self.globalPerformCallback(name)
             self.performButton[name].config(text=newtext)
-            log("Setting performButton newtext="+newtext)
+            log("Setting performButton newtext=",newtext)
             controller.sendGlobalPerformVal(name)
 
         else:
@@ -2422,6 +2447,12 @@ def afterWindowIsDisplayed(windowName,guiresize,*args):
     global PaletteApp
     PaletteApp.nextMode = "layout"
 
+def isVisibleParameter(name):
+    parts = name.split(".")
+    if len(parts) > 0 and parts[-1].startswith("_") :
+        return False
+    return True
+
 def padOfParam(paramname):
     pad = paramname[0]
     # This code assumes that all real parameter names are lower-case
@@ -2456,6 +2487,7 @@ def CurrentPadPath(pad):
 
 def initMain(app):
     app.iconbitmap(palette.configFilePath("palette.ico"))
+    app.protocol("WM_DELETE_WINDOW", on_closing)
     app.mainLoop()
 
 def setFontSizes(isguilarge):
@@ -2551,13 +2583,11 @@ def makeStyles(app):
         )
 
 def log(*args):
-    palette.log(*args)
-
-def debug(*args):
-    palette.debug(*args)
-
-def loginit():
-    palette.loginit()
+    final = args[0]
+    if len(args) > 1:
+        for s in args[1:]:
+            final += " " + str(s)
+    palette.log(final)
 
 KillNATS = False
 
@@ -2577,20 +2607,20 @@ async def nats_listen_for_palette(loop,app):
         # log("Received a message on '{subject} {reply}': {data}".format(
         #     subject=subject, reply=reply, data=data))
 
-        if subject == "palette.output.event":
+        if subject == palette.PaletteOutputEventSubject:
             j = json.loads(data)
             event = j["event"]
             if event == "alive":
                 secs = j["seconds"]
                 count = j["cursorcount"]
                 if int(count) > 0:
-                    # log("cursor events, calling resetLastAnything!!")
+                    log("cursor events, calling resetLastAnything!!")
                     global PaletteApp
                     PaletteApp.resetLastAnything()
 
 
     # "*" matches any token, at any level of the subject.
-    await nc.subscribe("palette.output.event", cb=palette_event_handler)
+    await nc.subscribe(palette.PaletteOutputEventSubject, cb=palette_event_handler)
 
     # WAIT FOR INCOMING MESSAGES
     while KillNATS == False:
@@ -2611,9 +2641,7 @@ def background_thread(app):  # runs in background thread
 
 if __name__ == "__main__":
 
-    loginit()
-    log("")
-    log("Start GUI")
+    log("GUI started")
 
     # Default is all four pads
     pads = palette.ConfigValue("pads",defvalue="ABCD")
@@ -2644,6 +2672,9 @@ if __name__ == "__main__":
 
     # guiresize is of the form x,y,w,h
     guiresize = palette.ConfigValue("guiresize",defvalue="")
+    if guiresize == "palette":
+        # this is for a Space Palette Pro, putting the gui on the touchscreen
+        guiresize = "-800,0,800,1280"
 
     global PaletteApp
     PaletteApp = ProGuiApp(padname,padnames,visiblepagenames,guiresize)

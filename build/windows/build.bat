@@ -29,55 +29,44 @@ pushd ..\..\depthlib
 call build.bat > nul
 popd
 
-echo ================ Creating palette.exe
+echo ================ Creating cmds
 
+set buildcmdsout=%PALETTESOURCE%\build\windows\buildcmds.out
+
+echo ================ Compiling palette
 pushd %PALETTESOURCE%\cmd\palette
-go build palette.go > gobuild.out 2>&1
-type nul > emptyfile
-fc gobuild.out emptyfile > nul
-if errorlevel 1 goto notempty
-goto continue1
-:notempty
-echo Error in building palette.exe
-cat gobuild.out
-popd
-goto getout
-:continue1
+go build palette.go >> %buildcmdsout% 2>&1
 move palette.exe %bin%\palette.exe > nul
-
 popd
 
-echo ================ Creating palette_engine.exe
-
+echo ================ Compiling palette_engine
 pushd %PALETTESOURCE%\cmd\palette_engine
-go build palette_engine.go > gobuild.out 2>&1
-type nul > emptyfile
-fc gobuild.out emptyfile > nul
-if errorlevel 1 goto notempty
-goto continue1
-:notempty
-echo Error in building palette_engine.exe
-cat gobuild.out
-popd
-goto getout
-:continue1
+go build palette_engine.go >> %buildcmdsout% 2>&1
 move palette_engine.exe %bin%\palette_engine.exe > nul
-
 popd
+
+echo ================ Compiling responder_demo
+pushd %PALETTESOURCE%\cmd\responder_demo
+go build responder_demo.go >> %buildcmdsout% 2>&1
+move responder_demo.exe %bin%\responder_demo.exe > nul
+popd
+
+rem print any error messages from compiling cmds
+type %buildcmdsout%
 
 echo ================ Creating palette_gui.exe, osc.exe
 pushd %PALETTESOURCE%\python
 rm -fr dist
+rm -fr build\palette_gui
 rm -fr build
-pyinstaller -i ..\data_default\config\palette.ico palette_gui.py > pyinstaller.out 2>&1
-pyinstaller osc.py > pyinstaller.out 2>&1
+pyinstaller -i ..\data_default\config\palette.ico palette_gui.py > pyinstaller_gui.out 2>&1
+pyinstaller osc.py > pyinstaller_osc.out 2>&1
 
 echo ================ Merging python executables
 rem merge all the pyinstalled things into one
 move dist\palette_gui dist\pyinstalled >nul
 move dist\osc\osc.exe dist\pyinstalled >nul
 move dist\pyinstalled %bin% >nul
-echo off
 popd
 
 echo ================ Compiling FFGL plugin
@@ -125,8 +114,7 @@ copy setpalettelogdir.bat %bin% >nul
 
 popd
 
-
-for %%X in (data_default) DO (
+for %%X in (data_default data_surge) DO (
 	echo ================ Copying %%X
 	mkdir %ship%\%%X\config
 	mkdir %ship%\%%X\midifiles
@@ -147,11 +135,10 @@ for %%X in (data_default) DO (
 	copy %PALETTESOURCE%\%%X\config\consola.ttf %ship%\%%X\config >nul
 	copy %PALETTESOURCE%\%%X\config\OpenSans-Regular.ttf %ship%\%%X\config >nul
 	copy %PALETTESOURCE%\%%X\config\palette.ico %ship%\%%X\config >nul
+	copy %PALETTESOURCE%\%%X\config\*.bidule %ship%\%%X\config >nul
 	copy %PALETTESOURCE%\%%X\midifiles\*.* %ship%\%%X\midifiles >nul
 	xcopy /e /y %PALETTESOURCE%\%%X\presets %ship%\%%X\presets > nul
 )
-
-echo { "datadir" : "data_default" } > %ship%\config.json
 
 echo ================ Copying windows-specific things
 copy %PALETTESOURCE%\SenselLib\x64\LibSensel.dll %bin% >nul

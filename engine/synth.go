@@ -153,7 +153,10 @@ func SendControllerToSynth(synthName string, cnum int, cval int) {
 
 // SendNote sends MIDI output for a Note
 func SendNoteToSynth(note *Note) {
-	synthName := note.Sound
+	synthName := note.Synth
+	if synthName == "" {
+		synthName = "default"
+	}
 	synth, ok := Synths[synthName]
 	if !ok {
 		log.Printf("SendNoteToSynth: no such synth - %s\n", synthName)
@@ -187,9 +190,7 @@ func SendNoteToSynth(note *Note) {
 	case "noteon":
 		e.Status |= 0x90
 		if synth.noteDown[note.Pitch] {
-			if Debug.MIDI {
-				log.Printf("SendNoteToSynth: Ignoring second noteon for chan=%d pitch=%d\n", synth.portchannel.channel, note.Pitch)
-			}
+			log.Printf("SendNoteToSynth: Ignoring second noteon for chan=%d pitch=%d\n", synth.portchannel.channel, note.Pitch)
 			return
 		}
 		synth.noteDown[note.Pitch] = true
@@ -216,5 +217,8 @@ func SendNoteToSynth(note *Note) {
 
 	mc.midiDeviceOutput.stream.WriteShort(e.Status, e.Data1, e.Data2)
 
-	PublishNoteEvent(PaletteOutputEventSubject, note, "engine")
+	r := TheRouter()
+	if r.publishNote {
+		PublishNoteEvent(PaletteOutputEventSubject, note, "engine")
+	}
 }

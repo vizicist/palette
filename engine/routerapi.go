@@ -11,7 +11,7 @@ import (
 )
 
 // ExecuteAPI xxx
-func (r *Router) ExecuteAPI(api string, fromNUID string, rawargs string) (result interface{}, err error) {
+func (r *Router) ExecuteAPI(api string, rawargs string) (result interface{}, err error) {
 
 	apiargs, e := StringMap(rawargs)
 	if e != nil {
@@ -27,8 +27,9 @@ func (r *Router) ExecuteAPI(api string, fromNUID string, rawargs string) (result
 	case "start", "stop":
 		process, ok := apiargs["process"]
 		if !ok {
-			err = fmt.Errorf("ExecuteAPI: missing process argument")
-		} else if api == "start" {
+			return "", fmt.Errorf("ExecuteAPI: missing process argument")
+		}
+		if api == "start" {
 			err = StartRunning(process)
 		} else {
 			err = StopRunning(process)
@@ -37,7 +38,7 @@ func (r *Router) ExecuteAPI(api string, fromNUID string, rawargs string) (result
 
 	case "activate":
 		go resolumeActivate()
-		go VstHostActivate()
+		go biduleActivate()
 		return "", nil
 
 	case "sendlogs":
@@ -407,14 +408,14 @@ func (r *Router) executeGlobalAPI(api string, apiargs map[string]string) (result
 			for _, motor := range r.motors {
 				motor.TransposePitch = int(v)
 			}
-			log.Printf("set_transpose API set to %d\n", int(v))
+			// log.Printf("set_transpose API set to %d\n", int(v))
 		}
 
 	case "set_transposeauto":
 		b, err := needBoolArg("onoff", api, apiargs)
 		if err == nil {
 			r.transposeAuto = b
-			log.Printf("GlobalAPI: set_transposeauto b=%v\n", b)
+			// log.Printf("GlobalAPI: set_transposeauto b=%v\n", b)
 			// Quantizing CurrentClick() to a beat or measure might be nice
 			r.transposeNext = CurrentClick() + r.transposeBeats*oneBeat
 			for _, motor := range r.motors {
@@ -535,6 +536,7 @@ func (r *Router) executePresetAPI(api string, apiargs map[string]string) (result
 			}
 			err = r.loadQuadPreset(preset, regions)
 			if err != nil {
+				log.Printf("loadQuad: preset=%s, err=%s", preset, err)
 				return "", err
 			}
 			r.saveCurrentSnaps(regions)
@@ -545,9 +547,13 @@ func (r *Router) executePresetAPI(api string, apiargs map[string]string) (result
 				return "", fmt.Errorf("ExecutePresetAPI, no region named %s", region)
 			}
 			err = motor.loadPreset(preset)
-			err2 := motor.saveCurrentSnap()
-			if err2 != nil {
-				log.Printf("error saving CurrentSnap, err=%s", err)
+			if err != nil {
+				log.Printf("loadPreset: preset=%s, err=%s", preset, err)
+			} else {
+				err = motor.saveCurrentSnap()
+				if err != nil {
+					log.Printf("saveCurrentSnap: err=%s", err)
+				}
 			}
 		}
 		return "", err

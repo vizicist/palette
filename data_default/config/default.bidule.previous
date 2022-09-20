@@ -3,14 +3,14 @@
 	<MediaPool>
 	</MediaPool>
 	<BiduleGroup id="UID_1026570522" displayName="" zoom="0.75" processingMode="process" version="0.0">
-		<Geometry x="138" y="17" w="590" h="306"/>
+		<Geometry x="63" y="83" w="434" h="331"/>
 		<Parameter id="-11" userMin="0" userMax="1" lockedForRandom="false" mutationFactor="0.1">0</Parameter>
 		<Parameter id="-9" userMin="0" userMax="0" lockedForRandom="false" mutationFactor="0.1">1.0</Parameter>
 		<Parameter id="-7" userMin="0" userMax="1" lockedForRandom="false" mutationFactor="0.1">1</Parameter>
 		<Parameter id="-5" userMin="0" userMax="0" lockedForRandom="false" mutationFactor="0.1">0.0</Parameter>
 		<Parameter id="-2" userMin="0" userMax="2" lockedForRandom="false" mutationFactor="0.1">0.0</Parameter>
 		<BiduleGroup id="UID_1054145465" displayName="Stochastic MIDI Note_0" zoom="1" type="com.plogue.groups.Stochastic MIDI Note" processingMode="process" author="Plogue Art et Technologies" displayPath="MIDI\tStochastic MIDI Note" version="1.0">
-			<Geometry x="-27.3334" y="39.9998" w="0" h="0"/>
+			<Geometry x="15.3333" y="42.6665" w="0" h="0"/>
 			<Channel index="0" name="MIDI Output Port 1" direction="output" type="midi"/>
 			<Parameter id="-11" userMin="0" userMax="1" lockedForRandom="false" mutationFactor="0.1">0</Parameter>
 			<Parameter id="-9" userMin="0" userMax="0" lockedForRandom="false" mutationFactor="0.1">1.0</Parameter>
@@ -756,7 +756,7 @@
 			<VirtualParameter id="7" source="UID_1054145534" param="1" displayName="Max Dur"/>
 		</BiduleGroup>
 		<Bidule id="UID_1451662716" type="MidiInput_0" displayName="01. Internal MIDI" processingMode="process">
-			<Geometry x="-197.206" y="42.0454" w="0" h="0"/>
+			<Geometry x="-154.539" y="44.7121" w="0" h="0"/>
 			<ChannelConfig numSampleIn="0" numSampleOut="0" numMidiIn="0" numMidiOut="1" numFreqIn="0" numFreqOut="0" numMagIn="0" numMagOut="0"/>
 			<Gui state="normal" hidden="true" generic="true">
 				<Geometry x="-1" y="-1" w="0" h="0"/>
@@ -768,7 +768,7 @@
 			<CustomData name="DeviceName">01. Internal MIDI</CustomData>
 		</Bidule>
 		<Bidule id="UID_1660316326" type="MidiOutput_0" displayName="Microsoft GS Wavetable Synth" processingMode="process">
-			<Geometry x="-138.666" y="-25.3335" w="0" h="0"/>
+			<Geometry x="-95.9993" y="-22.6668" w="0" h="0"/>
 			<ChannelConfig numSampleIn="0" numSampleOut="0" numMidiIn="1" numMidiOut="0" numFreqIn="0" numFreqOut="0" numMagIn="0" numMagOut="0"/>
 			<Parameter id="-9" userMin="0" userMax="0" lockedForRandom="false" mutationFactor="0.1">1.0</Parameter>
 			<Parameter id="-7" userMin="0" userMax="1" lockedForRandom="false" mutationFactor="0.1">1</Parameter>
@@ -776,9 +776,9 @@
 			<CustomData name="DeviceName">Microsoft GS Wavetable Synth</CustomData>
 		</Bidule>
 		<Bidule id="UID_1660328572" type="com.plogue.MIDIMonitor2" displayName="MIDI Monitor 2_1" processingMode="process">
-			<Geometry x="-264.469" y="-38.5135" w="0" h="0"/>
+			<Geometry x="-221.802" y="-35.8468" w="0" h="0"/>
 			<ChannelConfig numSampleIn="0" numSampleOut="0" numMidiIn="1" numMidiOut="0" numFreqIn="0" numFreqOut="0" numMagIn="0" numMagOut="0"/>
-			<Gui state="normal" hidden="false" generic="true">
+			<Gui state="normal" hidden="true" generic="true">
 				<Geometry x="140" y="326" w="423" h="353"/>
 			</Gui>
 			<Parameter id="-9" userMin="0" userMax="0" lockedForRandom="false" mutationFactor="0.1">1.0</Parameter>

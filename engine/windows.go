@@ -16,7 +16,7 @@ func KillExecutable(executable string) {
 	log.Printf("KillExecutable: executable=%s\n", executable)
 	stdout := &NoWriter{}
 	stderr := &NoWriter{}
-	cmd, _ := StartExecutable("c:\\windows\\system32\\taskkill.exe", false, stdout, stderr, "/F", "/IM", executable)
+	cmd, _ := startExecutable("c:\\windows\\system32\\taskkill.exe", false, stdout, stderr, "/F", "/IM", executable)
 	// We don't want to complain if the executable isn't
 	// currently running, so ignore errors
 	cmd.Wait()
@@ -32,12 +32,12 @@ func StartExecutableLogOutput(logName string, fullexe string, background bool, a
 	if stderrWriter == nil {
 		stderrWriter = &NoWriter{}
 	}
-	_, err := StartExecutable(fullexe, true, stdoutWriter, stderrWriter, args...)
+	_, err := startExecutable(fullexe, true, stdoutWriter, stderrWriter, args...)
 	return err
 }
 
 // StartExecutable executes something.  If background is true, it doesn't block
-func StartExecutable(executable string, background bool, stdout io.Writer, stderr io.Writer, args ...string) (*exec.Cmd, error) {
+func startExecutable(executable string, background bool, stdout io.Writer, stderr io.Writer, args ...string) (*exec.Cmd, error) {
 
 	cmd := exec.Command(executable, args...)
 
@@ -71,7 +71,7 @@ func (writer *gatherWriter) Write(bytes []byte) (int, error) {
 func IsRunningExecutable(exe string) bool {
 	stdout := &gatherWriter{}
 	stderr := &NoWriter{}
-	cmd, err := StartExecutable("c:\\windows\\system32\\tasklist.exe", false, stdout, stderr)
+	cmd, err := startExecutable("c:\\windows\\system32\\tasklist.exe", false, stdout, stderr)
 	if err != nil {
 		log.Printf("StartExecutable: tasklist.exe err=%s\n", err)
 		return false

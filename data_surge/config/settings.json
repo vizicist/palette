@@ -1,0 +1,9 @@
+{
+  "debug": "",
+  "guilevel": 1,
+  "bidule": "C:\\Program Files\\Plogue\\Bidule\\PlogueBidule_x64.exe",
+  "resolume": "C:\\Program Files\\Resolume Avenue\\Avenue.exe",
+  "autostart": "gui,bidule,resolume",
+  "attracttimeout": "60",
+  "this line should not end with a comma": 0
+}

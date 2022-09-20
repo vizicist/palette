@@ -17,8 +17,8 @@ var PaletteOutputEventSubject = "palette.output.event"
 // PaletteInputEventSubject xxx
 var PaletteInputEventSubject = "palette.input.event"
 
-// PaletteNote messages are sent from the engine to plugins for output notes.
-// and also from plugins to the engine in order to play them (somehow avoiding recursion)
+// PaletteNote messages are sent from the engine to responders for output notes.
+// and also from responders to the engine in order to play them (somehow avoiding recursion)
 var PaletteNoteSubject = "palette.note"
 
 var time0 = time.Now()
@@ -50,7 +50,7 @@ func PublishCursorDeviceEvent(subj string, ce CursorDeviceEvent) error {
 	dt := time.Since(time0)
 	params := JsonObject(
 		// "nuid", ce.NUID,
-		"cid", ce.CID,
+		"source", ce.Source,
 		"region", ce.Region,
 		"event", "cursor_"+ce.Ddu,
 		"millisecs", fmt.Sprintf("%d", dt.Milliseconds()),
@@ -128,7 +128,8 @@ func PublishNoteEvent(subj string, note *Note, source string) error {
 		"source", source,
 		"event", "note",
 		"note", jsonEscape(note.String()),
-		"clicks", fmt.Sprintf("%d", note.Clicks),
+		"clicks", fmt.Sprintf("%d", CurrentClick()),
+		// "clicks", fmt.Sprintf("%d", note.Clicks),
 	)
 	err := NATSPublish(subj, params)
 	if err != nil {
@@ -147,7 +148,7 @@ func EngineAPI(api, params string) (result string, err error) {
 		"api", api,
 		"params", jsonEscape(params),
 	)
-	return NATSRequest("palette.api", args, timeout)
+	return NATSRequest(PaletteAPISubject, args, timeout)
 }
 
 // Connect xxx
@@ -196,8 +197,29 @@ func NATSRequest(subj, data string, timeout time.Duration) (retdata string, err 
 	return string(msg.Data), nil
 }
 
+type InternalResponder struct {
+	subject string
+	respond func(map[string]string)
+}
+
+var internalResponders []InternalResponder
+
+func NATSPublishAddInternalResponder(subject string, f func(map[string]string)) {
+	internalResponders = append(internalResponders, InternalResponder{subject: subject, respond: f})
+}
+
 // NATSPublish xxx
 func NATSPublish(subj string, msg string) error {
+
+	for _, p := range internalResponders {
+		if subj == p.subject {
+			args, err := StringMap(msg)
+			if err != nil {
+				return err
+			}
+			p.respond(args)
+		}
+	}
 
 	vn := NATS()
 	if Debug.NATS {

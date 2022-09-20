@@ -305,7 +305,8 @@ Region::instantiateSprite(TrackedCursor* c, bool throttle) {
 void
 Region::instantiateSpriteAt(std::string cid, glm::vec2 pos, float z) {
 
-	NosuchDebug( "Region::instantiateSpriteAt: Region=this=%lld  spritestyle=%s\n", (long long)this, this->params.spritestyle.c_str() );
+	// NosuchDebug( "Region::instantiateSpriteAt: Region=this=%lld  spritestyle=%s\n", (long long)this, this->params.spritestyle.c_str() );
+
 	// std::string shape = params.shape;
 	Sprite* s = makeSprite(params.shape);
 	std::string source = "instantiate_at";
