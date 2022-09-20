@@ -214,7 +214,7 @@ func (m *MIDIFile) noteoff(synth string, pitch, velocity byte) {
 	/* find the first note-on (if any) that matches this one */
 	n := m.noteq.firstnote
 	for ; n != nil; n = n.next {
-		if n.Sound == synth && n.Pitch == pitch && n.TypeOf == "noteon" {
+		if n.Synth == synth && n.Pitch == pitch && n.TypeOf == "noteon" {
 			break
 		}
 	}
@@ -293,7 +293,7 @@ func (m *MIDIFile) queuebytes(synth string, bytes []byte) {
 		TypeOf: "notebytes",
 		Clicks: m.clicks(),
 		bytes:  bytes,
-		Sound:  synth,
+		Synth:  synth,
 		next:   nil,
 	}
 	m.add2noteq(n)
@@ -340,7 +340,7 @@ func (m *MIDIFile) queuenote(synth string, pitch, velocity byte, notetype string
 		Pitch:    pitch,
 		Velocity: velocity,
 		Duration: UnfinishedDuration,
-		Sound:    synth,
+		Synth:    synth,
 		next:     nil,
 	}
 	m.add2noteq(n)

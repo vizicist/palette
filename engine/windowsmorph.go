@@ -364,7 +364,7 @@ func (m *oneMorph) readFrames(callback CursorDeviceCallbackFunc, forceFactor flo
 						ce := CursorDeviceEvent{
 							NUID:      MyNUID(),
 							Region:    m.region,
-							CID:       cid,
+							Source:    cid,
 							Timestamp: 0,
 							Ddu:       "clear",
 						}
@@ -423,7 +423,7 @@ func (m *oneMorph) readFrames(callback CursorDeviceCallbackFunc, forceFactor flo
 			ev := CursorDeviceEvent{
 				NUID:      MyNUID(),
 				Region:    m.region,
-				CID:       cid,
+				Source:    cid,
 				Timestamp: 0,
 				Ddu:       ddu,
 				X:         xNorm,

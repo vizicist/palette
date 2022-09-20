@@ -52,7 +52,7 @@ func (p *Phrase) CutSound(sound string) *Phrase {
 
 	newp := NewPhrase()
 	for n := p.firstnote; n != nil; n = n.next {
-		if n.Sound == sound {
+		if n.Synth == sound {
 			newp.CopyAndAppend(n)
 		}
 	}
