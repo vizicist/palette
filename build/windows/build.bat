@@ -114,7 +114,7 @@ copy setpalettelogdir.bat %bin% >nul
 
 popd
 
-for %%X in (data_default data_surge) DO (
+for %%X in (data_default data_surge data_moldover) DO (
 	echo ================ Copying %%X
 	mkdir %ship%\%%X\config
 	mkdir %ship%\%%X\midifiles
