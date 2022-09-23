@@ -486,7 +486,8 @@ func initialize() error {
 			// It's not explicitly present in morphs.json
 			morphtype = ConfigValue("morphtype")
 			if morphtype == "" {
-				morphtype = "corners" // default value
+				// morphtype = "corners" // default value
+				morphtype = "quadrants" // default value
 				log.Printf("Morph: serial# %s isn't in morphs.json, using morphtype = %s\n", m.serialNum, morphtype)
 			}
 		}
