@@ -50,6 +50,7 @@ Source: "ship\html\*"; DestDir: "{app}\html"; Flags: ignoreversion recursesubdir
 ; NOTE - all data_* files go in CommonProgramFiles\Palette
 Source: "ship\data_default\*"; DestDir: "{commoncf64}\{#MyAppName}\data_default"; Flags: comparetimestamp ignoreversion recursesubdirs createallsubdirs
 Source: "ship\data_surge\*"; DestDir: "{commoncf64}\{#MyAppName}\data_surge"; Flags: comparetimestamp ignoreversion recursesubdirs createallsubdirs
+Source: "ship\data_moldover\*"; DestDir: "{commoncf64}\{#MyAppName}\data_moldover"; Flags: comparetimestamp ignoreversion recursesubdirs createallsubdirs
 Source: "logs_readme.txt"; DestDir: "{commoncf64}\{#MyAppName}\logs"; DestName: "readme.txt"; Flags: ignoreversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 

@@ -8,7 +8,6 @@ import (
 
 	_ "github.com/vizicist/palette/block"
 	"github.com/vizicist/palette/engine"
-	"github.com/vizicist/palette/responder"
 	_ "github.com/vizicist/palette/window"
 	"github.com/vizicist/palette/winsys"
 )
@@ -64,8 +63,8 @@ func main() {
 	go r.StartCursorInput()
 	go r.InputListener()
 
-	resp := responder.NewResponder_demo_internal()
-	log.Printf("resp = %v\n", resp)
+	// resp := responder.NewResponder_demo_internal()
+	// log.Printf("resp = %v\n", resp)
 	// NATSAddInternalResponder(engine.PaletteOutputEventSubject, resp)
 	// engine.NATSPublishAddCheck(CheckTees)
 
