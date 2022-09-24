@@ -61,7 +61,6 @@
         "visual.bounce":"false",
         "sound.controllerchan":"1",
         "sound.controllerstyle":"modulationonly",
-        "sound.controllerzmax":"0.300",
         "visual.filled":"true",
         "visual.hue1final":"59.121",
         "visual.hue1initial":"15.181",
