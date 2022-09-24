@@ -99,7 +99,6 @@
         "visual.bounce":"true",
         "sound.controllerchan":"1",
         "sound.controllerstyle":"modulationonly",
-        "sound.controllerzmax":"0.300",
         "misc.enable:sound":"true",
         "misc.enable:visual":"true",
         "visual.filled":"true",

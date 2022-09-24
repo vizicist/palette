@@ -118,7 +118,6 @@
         "misc.scale":"newage",
         "misc.vol":"pressure",
         "sound.controllerstyle":"modulationonly",
-        "sound.controllerzmax":"0.300000",
         "sound.midifile":"jsbach",
         "sound.pitchmax":"78",
         "sound.pitchmin":"53",

@@ -119,7 +119,6 @@
         "misc.vol":"pressure",
         "sound.chromatic":"false",
         "sound.controllerstyle":"modulationonly",
-        "sound.controllerzmax":"0.600000",
         "sound.midifile":"jsbach",
         "sound.pitchmax":"95",
         "sound.pitchmin":"41",
