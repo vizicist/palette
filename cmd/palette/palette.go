@@ -14,9 +14,7 @@ import (
 	"syscall"
 	"time"
 
-	_ "github.com/vizicist/palette/block"
 	"github.com/vizicist/palette/engine"
-	_ "github.com/vizicist/palette/window"
 )
 
 func main() {

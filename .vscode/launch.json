@@ -5,27 +5,6 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "responder_demo",
-            "type": "go",
-            "request": "launch",
-            "program": "${env:PALETTESOURCE}/cmd/responder_demo/responder_demo.go",
-            "args": []
-        },
-        {
-            "name": "Twitch test",
-            "type": "go",
-            "request": "launch",
-            "program": "${env:PALETTESOURCE}/cmd/twitchtest/twitchtest.go",
-            "args": []
-        },
-        {
-            "name": "OBS test",
-            "type": "go",
-            "request": "launch",
-            "program": "${env:PALETTESOURCE}/cmd/obstest/main.go",
-            "args": []
-        },
-        {
             "name": "Engine (palette_engine.go)",
             "type": "go",
             "request": "launch",
@@ -44,18 +23,25 @@
             "args": []
         },
         {
+            "name": "Twitch test",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTESOURCE}/cmd/twitchtest/twitchtest.go",
+            "args": []
+        },
+        {
+            "name": "OBS test",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTESOURCE}/cmd/obstest/main.go",
+            "args": []
+        },
+        {
             "name": "Status",
             "type": "go",
             "request": "launch",
             "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
             "args": ["status"]
-        },
-        {
-            "name": "Test",
-            "type": "go",
-            "request": "launch",
-            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
-            "args": ["test","5","100ms"]
         },
         {
             "name": "Start",

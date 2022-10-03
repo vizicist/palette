@@ -1,4 +1,4 @@
-package winsys
+package twinsys
 
 /*
  This is the only file that should contain references to ebiten.
