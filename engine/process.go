@@ -135,72 +135,6 @@ func getProcessInfo(process string) (*processInfo, error) {
 	return p, nil
 }
 
-func StartRunning(process string) error {
-
-	switch process {
-	case "all":
-		for nm := range ProcessInfo {
-			StartRunning(nm)
-		}
-	case "apps":
-		for nm := range ProcessInfo {
-			if IsAppName(nm) {
-				StartRunning(nm)
-			}
-		}
-	default:
-		p, err := getProcessInfo(process)
-		if err != nil {
-			return fmt.Errorf("StartRunning: no info for process=%s", process)
-		}
-		if p.FullPath == "" {
-			return fmt.Errorf("StartRunning: unable to start %s, no executable path", process)
-		}
-
-		log.Printf("StartRunning: path=%s\n", p.FullPath)
-
-		err = StartExecutableLogOutput(process, p.FullPath, true, p.Arg)
-		if err != nil {
-			return fmt.Errorf("start: process=%s err=%s", process, err)
-		}
-
-		if p.ActivateFunc != nil {
-			go p.ActivateFunc()
-		}
-	}
-	return nil
-}
-
-func (e *Engine) StopMe() {
-	e.stopme = true
-}
-
-// StopRunning doesn't return any errors
-func (e *Engine) StopRunning(process string) (err error) {
-	switch process {
-	case "all":
-		for nm := range ProcessInfo {
-			e.StopRunning(nm)
-		}
-		e.StopMe()
-		return err
-	case "apps":
-		for nm := range ProcessInfo {
-			if IsAppName(nm) {
-				StopRunning(nm)
-			}
-		}
-		return err
-	default:
-		p, err := getProcessInfo(process)
-		if err != nil {
-			return err
-		}
-		KillExecutable(p.Exe)
-		return nil
-	}
-}
-
 func IsRunning(process string) bool {
 	p, err := getProcessInfo(process)
 	if err != nil {
@@ -210,22 +144,6 @@ func IsRunning(process string) bool {
 	b := IsRunningExecutable(p.Exe)
 	// log.Printf("IsRunning: process=%s exe=%s b=%v\n", process, p.Exe, b)
 	return b
-}
-
-func CheckProcessesAndRestartIfNecessary() {
-	autostart := ConfigStringWithDefault("autostart", "")
-	if autostart == "" || autostart == "nothing" || autostart == "none" {
-		return
-	}
-	processes := strings.Split(autostart, ",")
-	for _, process := range processes {
-		p, _ := getProcessInfo(process)
-		if p != nil {
-			if !IsRunning(process) {
-				go StartRunning(process)
-			}
-		}
-	}
 }
 
 func ProcessStatus() string {
