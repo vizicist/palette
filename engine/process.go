@@ -171,13 +171,18 @@ func StartRunning(process string) error {
 	return nil
 }
 
+func (e *Engine) StopMe() {
+	e.stopme = true
+}
+
 // StopRunning doesn't return any errors
-func StopRunning(process string) (err error) {
+func (e *Engine) StopRunning(process string) (err error) {
 	switch process {
 	case "all":
 		for nm := range ProcessInfo {
-			StopRunning(nm)
+			e.StopRunning(nm)
 		}
+		e.StopMe()
 		return err
 	case "apps":
 		for nm := range ProcessInfo {

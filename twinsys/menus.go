@@ -1,4 +1,4 @@
-package winsys
+package twinsys
 
 import "github.com/vizicist/palette/engine"
 

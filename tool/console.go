@@ -1,4 +1,4 @@
-package window
+package tool
 
 import (
 	"fmt"
@@ -6,45 +6,45 @@ import (
 	"log"
 
 	"github.com/vizicist/palette/engine"
-	"github.com/vizicist/palette/winsys"
+	w "github.com/vizicist/palette/twinsys"
 )
 
 func init() {
-	winsys.RegisterWindow("Console", NewConsole)
+	w.RegisterWindow("Console", NewConsole)
 	// engine.RegisterBlock("Console", NewConsole)
 }
 
 // Console is a window that has a couple of buttons
 type Console struct {
-	ctx         winsys.WinContext
-	clearButton winsys.Window
-	testButton  winsys.Window
-	threeButton winsys.Window
-	TextArea    winsys.Window
+	ctx         w.WinContext
+	clearButton w.Window
+	testButton  w.Window
+	threeButton w.Window
+	TextArea    w.Window
 }
 
 // NewConsole xxx
-func NewConsole(parent winsys.Window) winsys.WindowData {
+func NewConsole(parent w.Window) w.WindowData {
 
 	console := &Console{
-		ctx: winsys.NewWindowContext(parent),
+		ctx: w.NewWindowContext(parent),
 	}
 
-	console.clearButton = winsys.WinAddChild(console, winsys.NewButton(console, "Clear"))
+	console.clearButton = w.WinAddChild(console, w.NewButton(console, "Clear"))
 
-	console.testButton = winsys.WinAddChild(console, winsys.NewButton(console, "Test"))
+	console.testButton = w.WinAddChild(console, w.NewButton(console, "Test"))
 
-	console.threeButton = winsys.WinAddChild(console, winsys.NewButton(console, "Three"))
+	console.threeButton = w.WinAddChild(console, w.NewButton(console, "Three"))
 
-	console.TextArea = winsys.WinAddChild(console, winsys.NewScrollingText(console))
+	console.TextArea = w.WinAddChild(console, w.NewScrollingText(console))
 
-	winsys.WinSetAttValue(console, "islogger", "true")
+	w.WinSetAttValue(console, "islogger", "true")
 
-	return winsys.NewToolData(console, "Console", image.Point{})
+	return w.NewToolData(console, "Console", image.Point{})
 }
 
 // Context xxx
-func (console *Console) Context() *winsys.WinContext {
+func (console *Console) Context() *w.WinContext {
 	return &console.ctx
 }
 
@@ -53,7 +53,7 @@ func (console *Console) Do(cmd engine.Cmd) string {
 	switch cmd.Subj {
 	case "mouse":
 		pos := cmd.ValuesPos(engine.PointZero)
-		child, relpos := winsys.WinFindWindowUnder(console, pos)
+		child, relpos := w.WinFindWindowUnder(console, pos)
 		if child != nil {
 			// Note that we update the value in cmd.Values
 			cmd.ValuesSetPos(relpos)
@@ -94,34 +94,34 @@ func (console *Console) Do(cmd engine.Cmd) string {
 		}
 
 	default:
-		winsys.WinDoUpstream(console, cmd)
+		w.WinDoUpstream(console, cmd)
 	}
 	return engine.OkResult()
 }
 
 func (console *Console) addLine(s string) {
-	console.TextArea.Do(winsys.NewAddLineCmd(s))
+	console.TextArea.Do(w.NewAddLineCmd(s))
 }
 
 // Resize xxx
 func (console *Console) resize() {
 
-	styleInfo := winsys.WinStyleInfo(console)
+	styleInfo := w.WinStyleInfo(console)
 	buttHeight := styleInfo.TextHeight() + 12
-	mySize := winsys.WinGetSize(console)
+	mySize := w.WinGetSize(console)
 
 	// handle TextArea
 	y0 := buttHeight + 4
-	winsys.WinSetChildPos(console, console.TextArea, image.Point{2, y0})
+	w.WinSetChildPos(console, console.TextArea, image.Point{2, y0})
 
 	areaSize := image.Point{mySize.X - 4, mySize.Y - y0 - 2}
-	console.TextArea.Do(winsys.NewResizeCmd(areaSize))
+	console.TextArea.Do(w.NewResizeCmd(areaSize))
 
 	// If the TextArea has adjusted its size a bit, adjust our size as well
-	currsz := winsys.WinGetSize(console.TextArea)
+	currsz := w.WinGetSize(console.TextArea)
 	mySize.Y += currsz.Y - areaSize.Y
 	mySize.X += currsz.X - areaSize.X
-	winsys.WinSetSize(console, mySize)
+	w.WinSetSize(console, mySize)
 
 	buttWidth := mySize.X / 4
 	buttSize := image.Point{buttWidth, buttHeight}
@@ -129,9 +129,9 @@ func (console *Console) resize() {
 	// layout and resize all the buttons
 	// XXX - this idiom should eventually be a layout utility
 	pos := image.Point{2, 2}
-	for _, w := range []winsys.Window{console.clearButton, console.testButton, console.threeButton} {
-		winsys.WinSetChildPos(console, w, pos)
-		winsys.WinSetChildSize(w, buttSize)
+	for _, window := range []w.Window{console.clearButton, console.testButton, console.threeButton} {
+		w.WinSetChildPos(console, window, pos)
+		w.WinSetChildSize(window, buttSize)
 		// Advance the horizontal position of the next button
 		pos = pos.Add(image.Point{buttWidth, 0})
 	}
@@ -139,11 +139,11 @@ func (console *Console) resize() {
 
 // Draw xxx
 func (console *Console) redraw() {
-	size := winsys.WinGetSize(console)
+	size := w.WinGetSize(console)
 	rect := image.Rect(0, 0, size.X, size.Y)
-	winsys.WinDoUpstream(console, winsys.NewSetColorCmd(winsys.BackColor))
-	winsys.WinDoUpstream(console, winsys.NewDrawFilledRectCmd(rect.Inset(1)))
-	winsys.WinDoUpstream(console, winsys.NewSetColorCmd(winsys.ForeColor))
-	winsys.WinDoUpstream(console, winsys.NewDrawRectCmd(rect))
-	winsys.WinRedrawChildren(console)
+	w.WinDoUpstream(console, w.NewSetColorCmd(w.BackColor))
+	w.WinDoUpstream(console, w.NewDrawFilledRectCmd(rect.Inset(1)))
+	w.WinDoUpstream(console, w.NewSetColorCmd(w.ForeColor))
+	w.WinDoUpstream(console, w.NewDrawRectCmd(rect))
+	w.WinRedrawChildren(console)
 }
