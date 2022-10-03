@@ -167,25 +167,3 @@ func (cmd Cmd) ValuesString(name string, dflt string) string {
 	}
 	return s
 }
-
-func (ctx *EContext) PublishCmd(cmd Cmd) {
-	NATSPublish(cmd.Subj, cmd.ValuesToString())
-}
-
-// SendClickMsgs lets a Block turn reception of ClickMsgs on or off
-// Note: pointer semantics, since it changes the EngineContext.
-func (ctx *EContext) SendClickMsgs(onoff bool) {
-	ctx.wantsClick = onoff
-}
-
-// ConvertCursor3DDeviceInput xxx
-// func ConvertCursor3DDeviceInput(de Cursor3DDeviceMsg) Msg {
-// 	e := Cursor3DMsg{
-// 		ID:         de.ID,
-// 		X:          de.X,
-// 		Y:          de.Y,
-// 		Z:          de.Z,
-// 		DownDragUp: de.DownDragUp,
-// 	}
-// 	return e
-// }

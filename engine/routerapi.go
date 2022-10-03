@@ -30,9 +30,9 @@ func (r *Router) ExecuteAPI(api string, rawargs string) (result interface{}, err
 			return "", fmt.Errorf("ExecuteAPI: missing process argument")
 		}
 		if api == "start" {
-			err = StartRunning(process)
+			err = r.StartRunning(process)
 		} else {
-			err = StopRunning(process)
+			err = r.StopRunning(process)
 		}
 		return "", err
 

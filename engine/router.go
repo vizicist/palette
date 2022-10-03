@@ -2,6 +2,7 @@ package engine
 
 import (
 	"bufio"
+	"flag"
 	"fmt"
 	"io"
 	"log"
@@ -68,6 +69,7 @@ func SetCurrentMilli(m int64) {
 
 // Router takes events and routes them
 type Router struct {
+	stopme        bool
 	regionLetters string
 	motors        map[string]*Motor
 	// inputs        []*osc.Client
@@ -75,9 +77,11 @@ type Router struct {
 	MIDIInput chan MidiEvent
 	NoteInput chan *Note
 
-	block        map[string]Block
-	blockContext map[string]*EContext
-	layerMap     map[string]int // map of pads to resolume layer numbers
+	/*
+		block        map[string]Block
+		blockContext map[string]*EContext
+	*/
+	layerMap map[string]int // map of pads to resolume layer numbers
 
 	midiEventHandler MIDIEventHandler
 	killme           bool // true if Router should be stopped
@@ -194,8 +198,6 @@ func TheRouter() *Router {
 		oneRouter.motors = make(map[string]*Motor)
 		// oneRouter.regionForMorph = make(map[string]string)
 		oneRouter.regionAssignedToNUID = make(map[string]string)
-		oneRouter.block = make(map[string]Block)
-		oneRouter.blockContext = make(map[string]*EContext)
 
 		resolumePort := 7000
 		guiPort := 3943
@@ -258,6 +260,41 @@ func TheRouter() *Router {
 		go oneRouter.notifyGUI("restart")
 	})
 	return &oneRouter
+}
+
+func RunEngine() {
+
+	InitLog("engine")
+	InitDebug()
+	InitProcessInfo()
+
+	log.Printf("====================== Palette Engine is starting\n")
+
+	flag.Parse()
+
+	// Normally, the engine should never die, but if it does,
+	// other processes (e.g. resolume, bidule) may be left around.
+	// So, unless told otherwise, we kill everything to get a clean start.
+	if ConfigBoolWithDefault("killonstartup", true) {
+		KillAll()
+	}
+
+	InitMIDI()
+	InitSynths()
+	// InitNATS()
+	go StartNATSServer()
+
+	r := TheRouter()
+	go r.StartOSC("127.0.0.1:3333")
+	go r.StartNATSClient()
+	go r.StartMIDI()
+	go r.StartRealtime()
+	go r.StartCursorInput()
+	go r.InputListener()
+
+	if ConfigBoolWithDefault("depth", false) {
+		go DepthRunForever()
+	}
 }
 
 func (r *Router) ResolumeLayerForText() int {
@@ -395,7 +432,7 @@ func (r *Router) StartRealtime() {
 			nextCheckSecs += processcheckSeconds
 			// Put it in background, so calling
 			// tasklist or ps doesn't disrupt realtime
-			go CheckProcessesAndRestartIfNecessary()
+			go r.CheckProcessesAndRestartIfNecessary()
 		}
 
 		select {
@@ -1416,6 +1453,88 @@ func (r *Router) getRegionForNUID(nuid string) string {
 	r.regionAssignedToNUID[nuid] = region
 
 	return region
+}
+
+func (r *Router) StartRunning(process string) error {
+
+	switch process {
+	case "all":
+		for nm := range ProcessInfo {
+			r.StartRunning(nm)
+		}
+	case "apps":
+		for nm := range ProcessInfo {
+			if IsAppName(nm) {
+				r.StartRunning(nm)
+			}
+		}
+	default:
+		p, err := getProcessInfo(process)
+		if err != nil {
+			return fmt.Errorf("StartRunning: no info for process=%s", process)
+		}
+		if p.FullPath == "" {
+			return fmt.Errorf("StartRunning: unable to start %s, no executable path", process)
+		}
+
+		log.Printf("StartRunning: path=%s\n", p.FullPath)
+
+		err = StartExecutableLogOutput(process, p.FullPath, true, p.Arg)
+		if err != nil {
+			return fmt.Errorf("start: process=%s err=%s", process, err)
+		}
+
+		if p.ActivateFunc != nil {
+			go p.ActivateFunc()
+		}
+	}
+	return nil
+}
+
+func (r *Router) StopMe() {
+	r.stopme = true
+}
+
+// StopRunning doesn't return any errors
+func (r *Router) StopRunning(process string) (err error) {
+	switch process {
+	case "all":
+		for nm := range ProcessInfo {
+			r.StopRunning(nm)
+		}
+		r.StopMe()
+		return err
+	case "apps":
+		for nm := range ProcessInfo {
+			if IsAppName(nm) {
+				r.StopRunning(nm)
+			}
+		}
+		return err
+	default:
+		p, err := getProcessInfo(process)
+		if err != nil {
+			return err
+		}
+		KillExecutable(p.Exe)
+		return nil
+	}
+}
+
+func (r *Router) CheckProcessesAndRestartIfNecessary() {
+	autostart := ConfigStringWithDefault("autostart", "")
+	if autostart == "" || autostart == "nothing" || autostart == "none" {
+		return
+	}
+	processes := strings.Split(autostart, ",")
+	for _, process := range processes {
+		p, _ := getProcessInfo(process)
+		if p != nil {
+			if !IsRunning(process) {
+				go r.StartRunning(process)
+			}
+		}
+	}
 }
 
 func argAsInt(msg *osc.Message, index int) (i int, err error) {

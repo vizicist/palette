@@ -204,11 +204,11 @@ func CliCommand(region string, args []string) string {
 			process = args[1]
 		}
 		if process == "all" {
-			engine.StopRunning("all")
+			engine.TheRouter().StopRunning("all")
 		} else if process == "engine" {
 			// first stop everything else, unless killonstartup is false
 			if engine.ConfigBoolWithDefault("killonstartup", true) {
-				engine.StopRunning("all")
+				engine.TheRouter().StopRunning("all")
 			}
 			// then kill ourselves
 			engine.KillExecutable(engineexe)
