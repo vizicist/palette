@@ -3,7 +3,7 @@
 	<MediaPool>
 	</MediaPool>
 	<BiduleGroup id="UID_1026570522" displayName="" zoom="0.75" processingMode="process" version="0.0">
-		<Geometry x="63" y="83" w="434" h="331"/>
+		<Geometry x="50" y="35" w="434" h="331"/>
 		<Parameter id="-11" userMin="0" userMax="1" lockedForRandom="false" mutationFactor="0.1">0</Parameter>
 		<Parameter id="-9" userMin="0" userMax="0" lockedForRandom="false" mutationFactor="0.1">1.0</Parameter>
 		<Parameter id="-7" userMin="0" userMax="1" lockedForRandom="false" mutationFactor="0.1">1</Parameter>
