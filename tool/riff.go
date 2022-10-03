@@ -1,44 +1,44 @@
-package window
+package tool
 
 import (
 	"fmt"
 	"image"
 
 	"github.com/vizicist/palette/engine"
-	"github.com/vizicist/palette/winsys"
+	w "github.com/vizicist/palette/twinsys"
 )
 
 func init() {
-	winsys.RegisterWindow("Riff", NewRiff)
+	w.RegisterWindow("Riff", NewRiff)
 }
 
 // Riff is a window that has a couple of buttons
 type Riff struct {
-	ctx         winsys.WinContext
-	clearButton winsys.Window
-	TextArea    winsys.Window
+	ctx         w.WinContext
+	clearButton w.Window
+	TextArea    w.Window
 }
 
 // NewRiff xxx
-func NewRiff(parent winsys.Window) winsys.WindowData {
+func NewRiff(parent w.Window) w.WindowData {
 
 	riff := &Riff{
-		ctx: winsys.NewWindowContext(parent),
+		ctx: w.NewWindowContext(parent),
 	}
 
-	riff.clearButton = winsys.WinAddChild(riff, winsys.NewButton(riff, "Clear"))
+	riff.clearButton = w.WinAddChild(riff, w.NewButton(riff, "Clear"))
 
-	riff.TextArea = winsys.WinAddChild(riff, winsys.NewScrollingText(riff))
+	riff.TextArea = w.WinAddChild(riff, w.NewScrollingText(riff))
 
-	winsys.WinSetAttValue(riff, "islogger", "true")
+	w.WinSetAttValue(riff, "islogger", "true")
 
 	// engine.TheRouter().SendCursor3DDeviceEventsTo(riff.handleCursor3DDeviceInput)
 
-	return winsys.NewToolData(riff, "Riff", image.Point{})
+	return w.NewToolData(riff, "Riff", image.Point{})
 }
 
 // Context xxx
-func (riff *Riff) Context() *winsys.WinContext {
+func (riff *Riff) Context() *w.WinContext {
 	return &riff.ctx
 }
 
@@ -48,7 +48,7 @@ func (riff *Riff) Do(cmd engine.Cmd) string {
 	subj := cmd.Subj
 	switch subj {
 	case "mouse":
-		winsys.WinForwardMouse(riff, cmd)
+		w.WinForwardMouse(riff, cmd)
 	case "resize":
 		riff.resize()
 	case "redraw":
@@ -75,33 +75,33 @@ func (riff *Riff) Do(cmd engine.Cmd) string {
 	case "addline":
 		riff.TextArea.Do(cmd)
 	default:
-		winsys.WinDoUpstream(riff, cmd)
+		w.WinDoUpstream(riff, cmd)
 	}
 	return engine.OkResult()
 }
 
 func (riff *Riff) addLine(line string) {
-	riff.TextArea.Do(winsys.NewAddLineCmd(line))
+	riff.TextArea.Do(w.NewAddLineCmd(line))
 }
 
 // Resize xxx
 func (riff *Riff) resize() {
 
-	buttHeight := winsys.WinStyleInfo(riff).TextHeight() + 12
-	mySize := winsys.WinGetSize(riff)
+	buttHeight := w.WinStyleInfo(riff).TextHeight() + 12
+	mySize := w.WinGetSize(riff)
 
 	// handle TextArea
 	y0 := buttHeight + 4
-	winsys.WinSetChildPos(riff, riff.TextArea, image.Point{2, y0})
+	w.WinSetChildPos(riff, riff.TextArea, image.Point{2, y0})
 
 	areaSize := image.Point{mySize.X - 4, mySize.Y - y0 - 2}
-	riff.TextArea.Do(winsys.NewResizeCmd(areaSize))
+	riff.TextArea.Do(w.NewResizeCmd(areaSize))
 
 	// If the TextArea has adjusted its size a bit, adjust our size as well
-	currsz := winsys.WinGetSize(riff.TextArea)
+	currsz := w.WinGetSize(riff.TextArea)
 	mySize.Y += currsz.Y - areaSize.Y
 	mySize.X += currsz.X - areaSize.X
-	winsys.WinSetSize(riff, mySize)
+	w.WinSetSize(riff, mySize)
 
 	buttWidth := mySize.X / 4
 	buttSize := image.Point{buttWidth, buttHeight}
@@ -109,9 +109,9 @@ func (riff *Riff) resize() {
 	// layout and resize all the buttons
 	// XXX - this idiom should eventually be a layout utility
 	pos := image.Point{2, 2}
-	for _, w := range []winsys.Window{riff.clearButton} {
-		winsys.WinSetChildPos(riff, w, pos)
-		winsys.WinSetChildSize(w, buttSize)
+	for _, window := range []w.Window{riff.clearButton} {
+		w.WinSetChildPos(riff, window, pos)
+		w.WinSetChildSize(window, buttSize)
 		// Advance the horizontal position for the next button
 		pos = pos.Add(image.Point{buttWidth, 0})
 	}
@@ -119,11 +119,11 @@ func (riff *Riff) resize() {
 
 // Draw xxx
 func (riff *Riff) redraw() {
-	size := winsys.WinGetSize(riff)
+	size := w.WinGetSize(riff)
 	rect := image.Rect(0, 0, size.X, size.Y)
-	winsys.WinDoUpstream(riff, winsys.NewSetColorCmd(winsys.BackColor))
-	winsys.WinDoUpstream(riff, winsys.NewDrawFilledRectCmd(rect.Inset(1)))
-	winsys.WinDoUpstream(riff, winsys.NewSetColorCmd(winsys.ForeColor))
-	winsys.WinDoUpstream(riff, winsys.NewDrawRectCmd(rect))
-	winsys.WinRedrawChildren(riff)
+	w.WinDoUpstream(riff, w.NewSetColorCmd(w.BackColor))
+	w.WinDoUpstream(riff, w.NewDrawFilledRectCmd(rect.Inset(1)))
+	w.WinDoUpstream(riff, w.NewSetColorCmd(w.ForeColor))
+	w.WinDoUpstream(riff, w.NewDrawRectCmd(rect))
+	w.WinRedrawChildren(riff)
 }
