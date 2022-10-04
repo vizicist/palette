@@ -113,7 +113,6 @@
         "visual.lifetime":"3.529",
         "misc.logic_sound":"true",
         "misc.logic_visual":"true",
-        "misc.loop:length":"100",
         "visual.luminance":"0.500",
         "misc.midibehaviour":"default",
         "sound.midifile":"jsbach",
