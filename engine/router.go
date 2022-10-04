@@ -359,19 +359,21 @@ func (r *Router) StartNATSClient() {
 		msg.Respond([]byte(response))
 	})
 
-	log.Printf("StartNATSClient: Subscribing to %s\n", PaletteInputEventSubject)
-	SubscribeNATS(PaletteInputEventSubject, func(msg *nats.Msg) {
-		data := string(msg.Data)
-		args, err := StringMap(data)
-		log.Printf("NATSClient: PaletteInputEventSubject args=%v\n", args)
-		if err != nil {
-			log.Printf("PaletteInputEvent: err=%s\n", err)
-		}
-		err = r.HandleInputEvent(args)
-		if err != nil {
-			log.Printf("HandleInputEvent: err=%s\n", err)
-		}
-	})
+	/*
+		log.Printf("StartNATSClient: Subscribing to %s\n", PaletteInputEventSubject)
+		SubscribeNATS(PaletteInputEventSubject, func(msg *nats.Msg) {
+			data := string(msg.Data)
+			args, err := StringMap(data)
+			log.Printf("NATSClient: PaletteInputEventSubject args=%v\n", args)
+			if err != nil {
+				log.Printf("PaletteInputEvent: err=%s\n", err)
+			}
+			err = r.HandleInputEvent(args)
+			if err != nil {
+				log.Printf("HandleInputEvent: err=%s\n", err)
+			}
+		})
+	*/
 }
 
 // TimeString returns time and clicks
