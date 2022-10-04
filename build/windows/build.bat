@@ -45,12 +45,6 @@ go build palette_engine.go >> %buildcmdsout% 2>&1
 move palette_engine.exe %bin%\palette_engine.exe > nul
 popd
 
-echo ================ Compiling responder_demo
-pushd %PALETTESOURCE%\cmd\responder_demo
-go build responder_demo.go >> %buildcmdsout% 2>&1
-move responder_demo.exe %bin%\responder_demo.exe > nul
-popd
-
 rem print any error messages from compiling cmds
 type %buildcmdsout%
 

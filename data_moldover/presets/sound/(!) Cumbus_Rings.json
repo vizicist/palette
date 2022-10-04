@@ -110,7 +110,6 @@
         "misc.enable:visual":"true",
         "misc.logic_sound":"true",
         "misc.logic_visual":"true",
-        "misc.loop:length":"100",
         "misc.midibehaviour":"default",
         "misc.pitchfactor":"1.000000",
         "misc.pitchoffset":"0.000000",
