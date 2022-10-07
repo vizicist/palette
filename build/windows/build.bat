@@ -32,6 +32,7 @@ popd
 echo ================ Creating cmds
 
 set buildcmdsout=%PALETTESOURCE%\build\windows\buildcmds.out
+del /f /q %buildcmdsout%
 
 echo ================ Compiling palette
 pushd %PALETTESOURCE%\cmd\palette
