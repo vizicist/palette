@@ -542,7 +542,6 @@ func (m *MIDIFile) readc() (byte, error) {
 		c := m.dat[m.sofar]
 		m.sofar++
 		m.toberead--
-		// log.Printf("MIDIFILE.readc = 0x%02x\n", c)
 		return c, nil
 	}
 	return 0, io.EOF

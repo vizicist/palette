@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -72,15 +73,10 @@ type Router struct {
 	stopme        bool
 	regionLetters string
 	motors        map[string]*Motor
-	// inputs        []*osc.Client
-	OSCInput  chan OSCEvent
-	MIDIInput chan MidiEvent
-	NoteInput chan *Note
+	OSCInput      chan OSCEvent
+	MIDIInput     chan MidiEvent
+	NoteInput     chan *Note
 
-	/*
-		block        map[string]Block
-		blockContext map[string]*EContext
-	*/
 	layerMap map[string]int // map of pads to resolume layer numbers
 
 	midiEventHandler MIDIEventHandler
@@ -286,6 +282,7 @@ func RunEngine() {
 
 	r := TheRouter()
 	go r.StartOSC("127.0.0.1:3333")
+	go r.StartHTTP("127.0.0.1:5555")
 	go r.StartNATSClient()
 	go r.StartMIDI()
 	go r.StartRealtime()
@@ -349,6 +346,35 @@ func (r *Router) StartOSC(source string) {
 	server.ListenAndServe()
 }
 
+// StartHTTP xxx
+func (r *Router) StartHTTP(source string) {
+
+	http.HandleFunc("/api", func(responseWriter http.ResponseWriter, req *http.Request) {
+
+		responseWriter.Header().Set("Content-Type", "application/json")
+		responseWriter.WriteHeader(http.StatusOK)
+
+		response := ""
+		defer func() {
+			responseWriter.Write([]byte(response))
+		}()
+
+		switch req.Method {
+		case "POST":
+			body, err := io.ReadAll(req.Body)
+			if err != nil {
+				response = ErrorResponse(err)
+			} else {
+				response = r.handleRawJsonApi(string(body))
+			}
+		default:
+			response = ErrorResponse(fmt.Errorf("HTTP server unable to handle method=%s", req.Method))
+		}
+	})
+
+	http.ListenAndServe(source, nil)
+}
+
 // StartNATSClient xxx
 func (r *Router) StartNATSClient() {
 
@@ -359,21 +385,19 @@ func (r *Router) StartNATSClient() {
 		msg.Respond([]byte(response))
 	})
 
-	/*
-		log.Printf("StartNATSClient: Subscribing to %s\n", PaletteInputEventSubject)
-		SubscribeNATS(PaletteInputEventSubject, func(msg *nats.Msg) {
-			data := string(msg.Data)
-			args, err := StringMap(data)
-			log.Printf("NATSClient: PaletteInputEventSubject args=%v\n", args)
-			if err != nil {
-				log.Printf("PaletteInputEvent: err=%s\n", err)
-			}
-			err = r.HandleInputEvent(args)
-			if err != nil {
-				log.Printf("HandleInputEvent: err=%s\n", err)
-			}
-		})
-	*/
+	log.Printf("StartNATSClient: Subscribing to %s\n", PaletteInputEventSubject)
+	SubscribeNATS(PaletteInputEventSubject, func(msg *nats.Msg) {
+		data := string(msg.Data)
+		args, err := StringMap(data)
+		log.Printf("NATSClient: PaletteInputEventSubject args=%v\n", args)
+		if err != nil {
+			log.Printf("PaletteInputEvent: err=%s\n", err)
+		}
+		err = r.HandleInputEvent(args)
+		if err != nil {
+			log.Printf("HandleInputEvent: err=%s\n", err)
+		}
+	})
 }
 
 // TimeString returns time and clicks
@@ -514,37 +538,41 @@ func (r *Router) InputListener() {
 		case msg := <-r.OSCInput:
 			r.handleOSCInput(msg)
 		case event := <-r.MIDIInput:
-			if r.publishMIDI {
-				log.Printf("InputListener: publicMIDI does nothing!!\n")
-				if event.SysEx != nil {
-					// we don't publish sysex
-				} else {
-					me := MIDIDeviceEvent{
-						Timestamp: int64(event.Timestamp),
-						Status:    event.Status,
-						Data1:     event.Data1,
-						Data2:     event.Data2,
-					}
-					err := PublishMIDIDeviceEvent(PaletteOutputEventSubject, me)
-					if err != nil {
-						log.Printf("InputListener: me=%+v err=%s\n", me, err)
-					}
-				}
-			} else {
-				log.Printf("NOT publishing MIDIDeviceEvent, handling internally!\n")
-				for _, motor := range r.motors {
-					motor.HandleMIDIInput(event)
-				}
-			}
-			if Debug.MIDI {
-				log.Printf("InputListener: MIDIInput event=0x%02x\n", event)
-			}
+			r.handleMidiInput(event)
 		default:
 			// log.Printf("Sleeping 1 ms - now=%v\n", time.Now())
 			time.Sleep(time.Millisecond)
 		}
 	}
 	log.Printf("InputListener is being killed\n")
+}
+
+func (r *Router) handleMidiInput(event MidiEvent) {
+	if r.publishMIDI {
+		log.Printf("InputListener: publicMIDI does nothing!!\n")
+		if event.SysEx != nil {
+			// we don't publish sysex
+		} else {
+			me := MIDIDeviceEvent{
+				Timestamp: int64(event.Timestamp),
+				Status:    event.Status,
+				Data1:     event.Data1,
+				Data2:     event.Data2,
+			}
+			err := PublishMIDIDeviceEvent(PaletteOutputEventSubject, me)
+			if err != nil {
+				log.Printf("InputListener: me=%+v err=%s\n", me, err)
+			}
+		}
+	} else {
+		log.Printf("NOT publishing MIDIDeviceEvent, handling internally!\n")
+		for _, motor := range r.motors {
+			motor.HandleMidiInput(event)
+		}
+	}
+	if Debug.MIDI {
+		log.Printf("InputListener: MIDIInput event=0x%02x\n", event)
+	}
 }
 
 func ArgToFloat(nm string, args map[string]string) float32 {
@@ -851,10 +879,6 @@ func (r *Router) handleOSCInput(e OSCEvent) {
 
 	case "/clientrestart":
 		r.handleClientRestart(e.Msg)
-
-	case "/api":
-		log.Printf("OSC /api is not implemented\n")
-		// r.handleOSCAPI(e.Msg)
 
 	case "/event": // These messages encode the arguments as JSON
 		r.handleOSCEvent(e.Msg)
@@ -1382,33 +1406,24 @@ func (r *Router) handleOSCSpriteEvent(msg *osc.Message) {
 	}
 }
 
-// No error return because it's OSC
-func (r *Router) handleOSCAPI(msg *osc.Message) {
-	tags, _ := msg.TypeTags()
-	_ = tags
-	nargs := msg.CountArguments()
-	if nargs < 1 {
-		log.Printf("Router.handleOSCAPI: too few arguments\n")
-		return
-	}
-	api, err := argAsString(msg, 0)
+// handleRawJsonApi takes raw JSON (as a string of the form "{...}"") as an API and returns raw JSON
+func (r *Router) handleRawJsonApi(rawjson string) string {
+	args, err := StringMap(rawjson)
 	if err != nil {
-		log.Printf("Router.handleOSCAPI: err=%s\n", err)
-		return
+		return ErrorResponse(fmt.Errorf("Router.handleJSONAPI: bad format of JSON"))
 	}
-	rawargs, err := argAsString(msg, 1)
+	api, ok := args["api"]
+	if !ok {
+		return ErrorResponse(fmt.Errorf("Router.handleJSONAPI: no api value"))
+	}
+	if len(rawjson) == 0 || rawjson[0] != '{' {
+		return ErrorResponse(fmt.Errorf("Router.handleJSONAPI: first char must be curly brace"))
+	}
+	ret, err := r.ExecuteAPI(api, rawjson)
 	if err != nil {
-		log.Printf("Router.handleOSCAPI: err=%s\n", err)
-		return
+		return ErrorResponse(err)
 	}
-	if len(rawargs) == 0 || rawargs[0] != '{' {
-		log.Printf("Router.handleOSCAPI: first char of args must be curly brace\n")
-		return
-	}
-	_, err = r.ExecuteAPI(api, rawargs)
-	if err != nil {
-		log.Printf("Router.handleOSCAPI: err=%s", err)
-	}
+	return ResultResponse(ret)
 }
 
 // availableRegion - return the name of a region that hasn't been assigned to a remote yet
@@ -1580,7 +1595,6 @@ func argAsString(msg *osc.Message, index int) (s string, err error) {
 var rr *Router
 var _ = rr.recordPadAPI
 var _ = rr.handleOSCSpriteEvent
-var _ = rr.handleOSCAPI
 var _ = argAsInt
 var _ = argAsFloat32
 var _ = rr.getRegionForNUID

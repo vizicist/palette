@@ -11,7 +11,7 @@ import (
 )
 
 // ExecuteAPI xxx
-func (r *Router) ExecuteAPI(api string, rawargs string) (result interface{}, err error) {
+func (r *Router) ExecuteAPI(api string, rawargs string) (result string, err error) {
 
 	apiargs, e := StringMap(rawargs)
 	if e != nil {
@@ -69,7 +69,7 @@ func (r *Router) ExecuteAPI(api string, rawargs string) (result interface{}, err
 		} else if apitype == "sound" {
 			return r.executeSoundAPI(apisuffix, apiargs)
 		} else {
-			return nil, fmt.Errorf("ExecuteAPI: unknown prefix on api=%s", api)
+			return "", fmt.Errorf("ExecuteAPI: unknown prefix on api=%s", api)
 		}
 
 	}

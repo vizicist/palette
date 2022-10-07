@@ -348,7 +348,7 @@ func (motor *Motor) HandleMIDITimeReset() {
 }
 
 // HandleMIDIInput xxx
-func (motor *Motor) HandleMIDIInput(e MidiEvent) {
+func (motor *Motor) HandleMidiInput(e MidiEvent) {
 
 	motor.midiInputMutex.Lock()
 	defer motor.midiInputMutex.Unlock()
