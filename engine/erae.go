@@ -11,8 +11,8 @@ import (
 
 var EraeRegion = "A"
 var EraeEnabled = false
-var EraeOutput *MidiChannelOutput
-var EraeInput *MidiInput
+var EraeOutput *MIDIChannelOutput
+var EraeInput *MIDIInput
 var MyPrefix byte = 0x55
 var EraeWidth int = 0x2a
 var EraeHeight int = 0x18

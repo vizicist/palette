@@ -13,7 +13,7 @@ type PortChannel struct {
 	channel int    // 0-15 for MIDI channels 1-16
 }
 
-var PortChannels map[PortChannel]*MidiChannelOutput
+var PortChannels map[PortChannel]*MIDIChannelOutput
 
 type Synth struct {
 	portchannel PortChannel
@@ -69,7 +69,7 @@ func NewSynth(port string, channel int, bank int, program int) *Synth {
 
 	portchannel := PortChannel{port: port, channel: channel}
 
-	var midiChannelOut *MidiChannelOutput
+	var midiChannelOut *MIDIChannelOutput
 	if synthoutput {
 		midiChannelOut = MIDI.openChannelOutput(portchannel)
 	} else {

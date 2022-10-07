@@ -29,7 +29,7 @@ If you want to attempt it, these are the instructions to use:
 
 - In Resolume's <i>Preferences->OSC</i>, enable "OSC Input" with an incoming port of 7000.
 
-- Use Resolume's <i>Composition->Open</i> to open: <pre>%CommonProgramFiles%\Palette\config\PaletteABCD.avc</pre>
+- Use Resolume's <i>Composition->Open</i> to open: <pre>%CommonProgramFiles%\Palette\data_default\config\PaletteDefault.avc</pre>
   That composition contains four layers, each with a <b>Palette</b> FFGL plugin followed by several dozen other FFGL effect plugins.
   Don't worry if there's a big yellow X in the layer, it should go away the next time Resolume starts.
 
