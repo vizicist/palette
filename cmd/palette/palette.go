@@ -246,7 +246,6 @@ func CliCommand(region string, args []string) string {
 			}
 			region := string("ABCD"[rand.Int()%4])
 			ce := engine.CursorDeviceEvent{
-				NUID:      engine.MyNUID(),
 				Region:    region,
 				Source:    source,
 				Timestamp: engine.CurrentMilli(),

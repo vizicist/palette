@@ -49,7 +49,6 @@ func NATS() *paletteNATS {
 func PublishCursorDeviceEvent(subj string, ce CursorDeviceEvent) error {
 	dt := time.Since(time0)
 	params := JsonObject(
-		// "nuid", ce.NUID,
 		"source", ce.Source,
 		"region", ce.Region,
 		"event", "cursor_"+ce.Ddu,
@@ -74,7 +73,6 @@ func PublishMIDIDeviceEvent(subj string, me MIDIDeviceEvent) error {
 	// and use our own, so the timestamps are consistent with
 	// the ones on Cursor events
 	params := JsonObject(
-		// "nuid", MyNUID(),
 		"event", "midi",
 		// "timestamp", fmt.Sprintf("%d", me.Timestamp),
 		"millisecs", fmt.Sprintf("%d", dt.Milliseconds()),
@@ -93,7 +91,6 @@ func PublishMIDIDeviceEvent(subj string, me MIDIDeviceEvent) error {
 // PublishSpriteEvent xxx
 func PublishSpriteEvent(subj string, x, y, z float32) error {
 	params := JsonObject(
-		// "nuid", MyNUID(),
 		"event", "sprite",
 		"x", fmt.Sprintf("%f", x),
 		"y", fmt.Sprintf("%f", y),
@@ -110,7 +107,6 @@ func PublishSpriteEvent(subj string, x, y, z float32) error {
 // PublishAliveEvent xxx
 func PublishAliveEvent(subj string, secs float64, cursorCount int) error {
 	params := JsonObject(
-		// "nuid", MyNUID(),
 		"event", "alive",
 		"seconds", fmt.Sprintf("%f", secs),
 		"cursorcount", fmt.Sprintf("%d", cursorCount),
@@ -144,7 +140,6 @@ func EngineAPI(api, params string) (result string, err error) {
 	// Long timeout to better handle engine debugging
 	timeout := 60 * time.Second
 	args := JsonObject(
-		// "nuid", MyNUID(),
 		"api", api,
 		"params", jsonEscape(params),
 	)
@@ -278,13 +273,3 @@ func setupConnOptions(opts []nats.Option) []nats.Option {
 	}))
 	return opts
 }
-
-func handleDiscover(msg *nats.Msg) {
-	response := MyNUID()
-	if Debug.API {
-		log.Printf("handleDiscover: data=%s reply=%s response=%s\n", string(msg.Data), msg.Reply, response)
-	}
-	msg.Respond([]byte(response))
-}
-
-var _ = handleDiscover // to avoid unused error from go-staticcheck

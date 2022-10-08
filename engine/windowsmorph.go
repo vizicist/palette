@@ -362,7 +362,6 @@ func (m *oneMorph) readFrames(callback CursorDeviceCallbackFunc, forceFactor flo
 					if newregion != m.region {
 						log.Printf("Switching corners pad to region %s", m.region)
 						ce := CursorDeviceEvent{
-							NUID:      MyNUID(),
 							Region:    m.region,
 							Source:    cid,
 							Timestamp: 0,
@@ -421,7 +420,6 @@ func (m *oneMorph) readFrames(callback CursorDeviceCallbackFunc, forceFactor flo
 			}
 
 			ev := CursorDeviceEvent{
-				NUID:      MyNUID(),
 				Region:    m.region,
 				Source:    cid,
 				Timestamp: 0,

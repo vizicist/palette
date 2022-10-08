@@ -164,7 +164,6 @@ func handleFinger(bb []byte) {
 		if newregion != EraeRegion {
 			// Clear cursor state from existing region
 			ce := CursorDeviceEvent{
-				NUID:      MyNUID(),
 				Region:    EraeRegion,
 				Source:    cid,
 				Timestamp: CurrentMilli(),
@@ -214,7 +213,6 @@ func handleFinger(bb []byte) {
 	}
 
 	ce := CursorDeviceEvent{
-		NUID:      MyNUID(),
 		Region:    EraeRegion,
 		Source:    cid,
 		Timestamp: CurrentMilli(),

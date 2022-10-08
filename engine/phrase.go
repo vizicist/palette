@@ -35,7 +35,7 @@ type Phrasep *Phrase
 
 // Note is a single item in a Phrase
 type Note struct {
-	Source   string // might be based on (or equal to) NUID
+	Source   string // relative to local machine
 	TypeOf   string // note, noteon, noteoff, controller, notebytes
 	Clicks   Clicks // nanoseconds
 	Duration Clicks // nanoseconds, when it's a note
