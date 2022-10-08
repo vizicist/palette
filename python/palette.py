@@ -9,14 +9,13 @@ import time
 import signal
 import sys
 
-import _thread as thread
+# import _thread as thread
 
 import threading
 import platform
 
 DebugApi = False
 Verbose = False
-MyNuid = ""
 
 LineSep = "_"
 
@@ -164,7 +163,7 @@ def log(*args):
     print(s)
     sys.stdout.flush()
 
-def palette_region_api(region, params=""):
+def palette_region_api(region, api, params=""):
     if region == "":
         log("palette_region_api: no region specified?  Assuming *")
         region = "*"
@@ -173,7 +172,7 @@ def palette_region_api(region, params=""):
         params = p
     else:
         params = p + "," + params
-    return palette_api(params)
+    return palette_api(api,params)
 
 def sprint(*args, end='', **kwargs):
     sio = io.StringIO()
@@ -274,68 +273,40 @@ def readJsonPath(path):
     f.close()
     return j
 
-def MyNUID():
-    global MyNuid
-    if MyNuid != "":
-        return MyNuid
-    path = configFilePath("nuid.json")
-    if not os.path.isfile(path):
-        log("Missing nuid.json file? path=",path)
-        return "MissingNUIDFile"
-    nuidjson = readJsonPath(path)
-    if "nuid" in nuidjson:
-        return nuidjson["nuid"]
-    return "NoNUIDInNUIDFile"
-
-def FakeNUID(nuid):
-    global MyNuid
-    MyNuid = nuid
-
 def boolValueOfString(v):
     return True if (v!=0 and v!="0" and v!="off" and v!="false" and v!="False") else False
 
 ApiLock = threading.Lock()
-PythonNUID = MyNUID()  #  + "_python"
 PaletteOutputEventSubject = "palette.output.event"
 PaletteInputEventSubject = "palette.input.event"
 PaletteAPIEventSubject = "palette.api"
 
-def palette_api(params):
-
-    fullparams = "{ " + params + "}"
-    r1,err = invoke_jsonrpc(fullparams)
-    if err != None:
-        log("palette_api: err=",err)
-    return r1
-
-def palette_publish(subject,params):
-
-    if DebugApi:
-        log("palette_publish: params=",params)
-
-    # Acquire lock before sending
-    global ApiLock
-    ApiLock.acquire()
-
-    publish_event(params)
-
-    ApiLock.release()
-
 def publish_event(subject,params):
     log("public_event needs work params=",params.encode())
 
-def invoke_jsonrpc(params):
+def palette_event(params):
+    palette_api("event",params)
+
+def palette_api(api,params):
 
     global ApiLock
 
     result = None
+
+    if params != "" and params[0] == "{":
+        return None, "palette_api: invalid curly brace in params=%s\n" % (params)
+    else:
+        if params == "":
+            params = "{ \"api\":\""+api+"\" }"
+        else:
+            params = "{ \"api\":\""+api+"\", "+params+" }"
 
     if DebugApi:
         s = params
         lim = 100
         if len(s) > lim:
             s = s[0:lim] + " ..."
-        log("invoke_jsonrpc: params=",s)
+        log("palette_api: params=",s)
 
     # Acquire lock before sending
     ApiLock.acquire()
@@ -344,7 +315,7 @@ def invoke_jsonrpc(params):
         req = requests.post(url="http://127.0.0.1:5555/api",data=params,timeout=5.0)
         result = req.text
     except:
-        log("Timeout or other exception in invoke_jsonrpc")
+        log("Timeout or other exception in palette_api")
         result = ""
 
     ApiLock.release()
@@ -429,48 +400,39 @@ def PaletteDir():
 
 def SendCursorEvent(cid,ddu,x,y,z,region="A"):
     event = "cursor_" + ddu
-    e = ("{ \"nuid\": \"" + PythonNUID + "\", " + \
+    e = ("\"region\": \"" + region + "\", " + \
         "\"cid\": \"" + str(cid) + "\", " + \
-        "\"region\": \"" + region + "\", " + \
         "\"event\": \"" + event + "\", " + \
-        "\"x\": \"%f\", \"y\": \"%f\", \"z\": \"%f\" }")  % (x,y,z)
-    palette_publish(PaletteInputEventSubject,e)
+        "\"x\": \"%f\", \"y\": \"%f\", \"z\": \"%f\"")  % (x,y,z)
+    palette_event(e)
 
 def SendSpriteEvent(cid,x,y,z,region="A"):
     event = "sprite"
-    e = ("{ \"nuid\": \"" + PythonNUID + "\", " + \
+    e = ("\"region\": \"" + region + "\", " + \
         "\"cid\": \"" + str(cid) + "\", " + \
-        "\"region\": \"" + region + "\", " + \
         "\"event\": \"" + event + "\", " + \
-        "\"x\": \"%f\", \"y\": \"%f\", \"z\": \"%f\" }")  % (x,y,z)
-    palette_publish(PaletteInputEventSubject,e)
+        "\"x\": \"%f\", \"y\": \"%f\", \"z\": \"%f\"")  % (x,y,z)
+    palette_event(e)
 
 def SendMIDIEvent(device,timesofar,msg,region="A"):
     bytestr = "0x"
     for b in msg.bytes():
         bytestr += ("%02x" % b)
 
-    e = ("{ \"nuid\": \"%s\", " + \
-        "\"event\": \"midi\", " + \
+    e = ("\"event\": \"midi\", " + \
         "\"device\": \"%s\", " + \
         "\"region\": \"" + region + "\", " + \
         "\"time\": \"%f\", " + \
-        "\"bytes\": \"%s\" }") % \
-            (PythonNUID, device, timesofar, bytestr)
+        "\"bytes\": \"%s\"") % \
+            (device, timesofar, bytestr)
 
-    palette_publish(PaletteInputEventSubject,e)
+    palette_event(e)
 
 def SendMIDITimeReset():
-    e = ("{ \"nuid\": \"%s\", " + \
-        "\"event\": \"midi_reset\" }") % \
-            (PythonNUID)
-    palette_publish(PaletteInputEventSubject,e)
+    palette_event("\"event\": \"midi_reset\"")
 
 def SendMIDIAudioReset():
-    e = ("{ \"nuid\": \"%s\", " + \
-        "\"event\": \"audio_reset\" }") % \
-            (PythonNUID)
-    palette_publish(PaletteInputEventSubject,e)
+    palette_event("\"event\": \"audio_reset\"")
 
 def IgnoreKeyboardInterrupt():
     """
