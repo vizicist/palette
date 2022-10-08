@@ -46,7 +46,7 @@ func (r *Router) ExecuteAPI(api string, rawargs string) (result string, err erro
 
 	default:
 		words := strings.Split(api, ".")
-		// Singlw-word APIs are region-specific
+		// Singlw-word APIs (like get, set) are region-specific
 		if len(words) <= 1 {
 			region, regionok := apiargs["region"]
 			if !regionok {
@@ -130,10 +130,13 @@ func presetList(apiargs map[string]string) (string, error) {
 
 func (r *Router) executeRegionAPI(region string, api string, apiargs map[string]string, rawargs string) (result string, err error) {
 
+	// XXX - Eventually, this should allow the region value to be "*" or multi-region
+
 	switch api {
 
-	// XXX - I'm not sure there's a reason why the "set" api
-	// is handled up here instead of down in the motors.
+	case "event":
+		return "", r.HandleInputEvent(apiargs)
+
 	case "set":
 		name, ok := apiargs["name"]
 		if !ok {
@@ -158,8 +161,6 @@ func (r *Router) executeRegionAPI(region string, api string, apiargs map[string]
 		// then save it
 		return "", r.saveCurrentSnaps(region)
 
-	// XXX - I'm not sure there's a reason why the "setparams" api
-	// is handled up here instead of down in the motors.
 	case "setparams":
 		for name, value := range apiargs {
 			if name == "region" {

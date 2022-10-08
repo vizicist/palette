@@ -106,7 +106,6 @@ type Router struct {
 	generateSound    bool
 	// regionForMorph       map[string]string // for all known Morph serial#'s
 	regionAssignedToNUID map[string]string
-	regionAssignedMutex  sync.RWMutex // covers both regionForMorph and regionAssignedToNUID
 	eventMutex           sync.RWMutex
 }
 
@@ -593,7 +592,6 @@ func ArgsToCursorDeviceEvent(args map[string]string) CursorDeviceEvent {
 	y := ArgToFloat("y", args)
 	z := ArgToFloat("z", args)
 	ce := CursorDeviceEvent{
-		NUID:      MyNUID(),
 		Region:    region,
 		Source:    source,
 		Timestamp: CurrentMilli(),
@@ -617,7 +615,7 @@ func (r *Router) HandleInputEvent(args map[string]string) error {
 		return err
 	}
 
-	// If no "region" argument, assign one
+	// If no "region" argument, assign one, though it should eventually be required
 	region, regionok := args["region"]
 	if !regionok {
 		log.Printf("No region value on input event, assuming A\n")
@@ -631,6 +629,7 @@ func (r *Router) HandleInputEvent(args map[string]string) error {
 		log.Printf("Router.HandleEvent: region=%s event=%s\n", region, event)
 	}
 
+	// XXX - region value should allow "*" and other multi-region values
 	motor, ok := r.motors[region]
 	if !ok {
 		return fmt.Errorf("there is no region named %s", region)
@@ -681,23 +680,7 @@ func (r *Router) HandleInputEvent(args map[string]string) error {
 			note.Synth = "default"
 		}
 		SendNoteToSynth(note)
-		/*
-			case "midi":
-				// If we're publishing midi events, we ignore ones from ourself
-				if r.publishMIDI && fromNUID == MyNUID() {
-					return nil
-				}
 
-				bytes, err := needStringArg("bytes", "HandleEvent", args)
-				if err != nil {
-					return err
-				}
-				me, err := r.makeMIDIEvent("subscribed", bytes, args)
-				if err != nil {
-					return err
-				}
-				motor.HandleMIDIInput(*me)
-		*/
 	default:
 		log.Printf("HandleInputEvent: event not handled: %s\n", event)
 	}
@@ -1251,7 +1234,6 @@ func (r *Router) handleMMTTCursor(msg *osc.Message) {
 	}
 
 	ce := CursorDeviceEvent{
-		NUID:      MyNUID(),
 		Region:    region,
 		Source:    cid,
 		Timestamp: CurrentMilli(),
@@ -1291,7 +1273,6 @@ func boundval(v float32) float32 {
 }
 
 func (r *Router) handleOSCEvent(msg *osc.Message) {
-
 	tags, _ := msg.TypeTags()
 	_ = tags
 	nargs := msg.CountArguments()
@@ -1304,21 +1285,15 @@ func (r *Router) handleOSCEvent(msg *osc.Message) {
 		log.Printf("Router.handleOSCEvent: err=%s\n", err)
 		return
 	}
-	if len(rawargs) == 0 || rawargs[0] != '{' {
-		log.Printf("Router.handleOSCEvent: first char of args must be curly brace\n")
-		return
-	}
+	r.handleInputEventRaw(rawargs)
+}
 
-	// Add the required nuid argument, which OSC input doesn't provide.
-	// It's "unknown" because we don't have access to info about the originator.
-	fromNUID := "unknown"
-	newrawargs := "{ \"nuid\": \"" + fromNUID + "\", " + rawargs[1:]
-	var args map[string]string
-	args, err = StringMap(newrawargs)
+func (r *Router) handleInputEventRaw(rawargs string) {
+
+	args, err := StringMap(rawargs)
 	if err != nil {
 		return
 	}
-
 	err = r.HandleInputEvent(args)
 	if err != nil {
 		log.Printf("Router.handleOSCEvent: err=%s\n", err)
@@ -1336,7 +1311,6 @@ func (r *Router) handlePatchXREvent(msg *osc.Message) {
 		return
 	}
 	var err error
-	// Add the required nuid argument, which OSC input doesn't provide
 	if nargs < 3 {
 		log.Printf("handlePatchXREvent: not enough arguments\n")
 		return
@@ -1359,7 +1333,7 @@ func (r *Router) handlePatchXREvent(msg *osc.Message) {
 	x, _ := argAsFloat32(msg, 2)
 	y, _ := argAsFloat32(msg, 3)
 	z, _ := argAsFloat32(msg, 4)
-	s := fmt.Sprintf("{ \"nuid\": \"%s\", \"event\": \"cursor_drag\", \"region\": \"%s\", \"x\": \"%f\", \"y\": \"%f\", \"z\": \"%f\" }", MyNUID(), region, x, y, z)
+	s := fmt.Sprintf("\"event\": \"cursor_drag\", \"region\": \"%s\", \"x\": \"%f\", \"y\": \"%f\", \"z\": \"%f\"", region, x, y, z)
 	var args map[string]string
 	args, err = StringMap(s)
 	if err != nil {
@@ -1373,6 +1347,7 @@ func (r *Router) handlePatchXREvent(msg *osc.Message) {
 	}
 }
 
+/*
 func (r *Router) handleOSCSpriteEvent(msg *osc.Message) {
 
 	tags, _ := msg.TypeTags()
@@ -1392,11 +1367,9 @@ func (r *Router) handleOSCSpriteEvent(msg *osc.Message) {
 		return
 	}
 
-	// Add the required nuid argument, which OSC input doesn't provide
-	newrawargs := "{ \"nuid\": \"" + MyNUID() + "\", " + rawargs[1:]
-	args, err := StringMap(newrawargs)
+	args, err := StringMap(rawargs)
 	if err != nil {
-		log.Printf("Router.handleOSCSpriteEvent: Unable to process args=%s\n", newrawargs)
+		log.Printf("Router.handleOSCSpriteEvent: Unable to process args=%s\n", rawargs)
 		return
 	}
 
@@ -1406,6 +1379,7 @@ func (r *Router) handleOSCSpriteEvent(msg *osc.Message) {
 		return
 	}
 }
+*/
 
 // handleRawJsonApi takes raw JSON (as a string of the form "{...}"") as an API and returns raw JSON
 func (r *Router) handleRawJsonApi(rawjson string) string {
@@ -1425,52 +1399,6 @@ func (r *Router) handleRawJsonApi(rawjson string) string {
 		return ErrorResponse(err)
 	}
 	return ResultResponse(ret)
-}
-
-// availableRegion - return the name of a region that hasn't been assigned to a remote yet
-// It is assumed that we have a mutex on r.regionAssignedToSource
-func (r *Router) availableRegion(source string) string {
-
-	nregions := len(r.regionLetters)
-	alreadyAssigned := make([]bool, nregions)
-	for _, v := range r.regionAssignedToNUID {
-		i := strings.Index(r.regionLetters, v)
-		if i >= 0 {
-			alreadyAssigned[i] = true
-		}
-	}
-	for i, used := range alreadyAssigned {
-		if !used {
-			avail := r.regionLetters[i : i+1]
-			if Debug.Cursor {
-				log.Printf("Router.assignRegion: %s is assigned to source=%s\n", avail, source)
-			}
-			return avail
-		}
-	}
-	if Debug.Cursor {
-		log.Printf("Router.assignRegion: No regions available\n")
-	}
-	return ""
-}
-
-func (r *Router) getRegionForNUID(nuid string) string {
-
-	r.regionAssignedMutex.Lock()
-	defer r.regionAssignedMutex.Unlock()
-
-	// See if we've already assigned a region to this source
-	region, ok := r.regionAssignedToNUID[nuid]
-	if ok {
-		return region
-	}
-
-	// Hasn't been seen yet, let's get an available region
-	region = r.availableRegion(nuid)
-	// log.Printf("getRegionForNUID: Assigning region=%s to nuid=%s\n", region, nuid)
-	r.regionAssignedToNUID[nuid] = region
-
-	return region
 }
 
 func (r *Router) StartRunning(process string) error {
@@ -1595,7 +1523,5 @@ func argAsString(msg *osc.Message, index int) (s string, err error) {
 // This silliness is to avoid unused function errors from go-staticcheck
 var rr *Router
 var _ = rr.recordPadAPI
-var _ = rr.handleOSCSpriteEvent
 var _ = argAsInt
 var _ = argAsFloat32
-var _ = rr.getRegionForNUID

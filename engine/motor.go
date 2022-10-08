@@ -439,7 +439,7 @@ func (motor *Motor) time() time.Time {
 
 func (motor *Motor) handleCursorDeviceEvent(e CursorDeviceEvent) {
 
-	id := e.NUID + "." + e.Source
+	id := e.Source
 
 	motor.deviceCursorsMutex.Lock()
 	defer motor.deviceCursorsMutex.Unlock()
