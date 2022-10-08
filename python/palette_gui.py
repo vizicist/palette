@@ -785,8 +785,8 @@ class ProGuiApp(tk.Tk):
         # a second click on the same preset will switch to edit mode
         # (same thing as click on the page header)
         # THIS MAY BE A BAD IDEA
-        if presettype == self.lastLoadType and presetname == self.lastLoadName:
-            self.clickPage(presettype)
+        # if presettype == self.lastLoadType and presetname == self.lastLoadName:
+        #     self.clickPage(presettype)
 
         self.lastLoadType = presettype
         self.lastLoadName = presetname
