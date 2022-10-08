@@ -18,10 +18,6 @@ import pyperclip
 import random
 from codenamize import codenamize
 
-import asyncio
-from nats.aio.client import Client as NATS
-from nats.aio.errors import ErrConnectionClosed, ErrTimeout, ErrNoServers
-
 import palette
 
 IsQuad = False
@@ -2591,12 +2587,9 @@ def log(*args):
 
 KillNATS = False
 
-async def nats_listen_for_palette(loop,app):
+def nats_listen_for_palette():
 
-    nc = NATS()
-    await nc.connect("nats://127.0.0.1:4222", loop=loop)
-
-    async def palette_event_handler(msg):
+    def palette_event_handler(msg):
         subject = msg.subject
         reply = msg.reply
         data = msg.data.decode()
@@ -2618,25 +2611,9 @@ async def nats_listen_for_palette(loop,app):
                     global PaletteApp
                     PaletteApp.resetLastAnything()
 
-
-    # "*" matches any token, at any level of the subject.
-    await nc.subscribe(palette.PaletteOutputEventSubject, cb=palette_event_handler)
-
-    # WAIT FOR INCOMING MESSAGES
-    while KillNATS == False:
-        await asyncio.sleep(.1)
-
-    log("KillNATS caused exit")
-
-    # Gracefully close the connection.
-    await nc.drain()
-
-
 def background_thread(app):  # runs in background thread
 
-    loop = asyncio.new_event_loop()
-    loop.run_until_complete(nats_listen_for_palette(loop,app))
-    loop.close()
+    nats_listen_for_palette()
     log("background_thread has finished?")
 
 if __name__ == "__main__":
