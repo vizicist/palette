@@ -1,10 +1,4 @@
-import asyncio
-# from nis import match
-import nats
-
-from nats.aio.client import Client as NATS
-from nats.aio.errors import ErrTimeout, ErrNoServers
-from nats.aio.nuid import NUID
+import requests
 
 import os
 import io
@@ -15,9 +9,6 @@ import time
 import signal
 import sys
 
-# try:
-#     import thread
-# except ImportError:
 import _thread as thread
 
 import threading
@@ -173,7 +164,7 @@ def log(*args):
     print(s)
     sys.stdout.flush()
 
-def palette_region_api(region, api, params=""):
+def palette_region_api(region, params=""):
     if region == "":
         log("palette_region_api: no region specified?  Assuming *")
         region = "*"
@@ -182,7 +173,7 @@ def palette_region_api(region, api, params=""):
         params = p
     else:
         params = p + "," + params
-    return palette_api(api,params)
+    return palette_api(params)
 
 def sprint(*args, end='', **kwargs):
     sio = io.StringIO()
@@ -309,12 +300,12 @@ PaletteOutputEventSubject = "palette.output.event"
 PaletteInputEventSubject = "palette.input.event"
 PaletteAPIEventSubject = "palette.api"
 
-def palette_api(api, params=None):
+def palette_api(params):
 
     fullparams = "{ " + params + "}"
-    r1,err = invoke_jsonrpc(PaletteAPIEventSubject,api,fullparams)
+    r1,err = invoke_jsonrpc(fullparams)
     if err != None:
-        log("API of ",api," returned err=",err)
+        log("palette_api: err=",err)
     return r1
 
 def palette_publish(subject,params):
@@ -325,25 +316,15 @@ def palette_publish(subject,params):
     # Acquire lock before sending
     global ApiLock
     ApiLock.acquire()
-    try:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        loop.run_until_complete(publish_event(subject,params))
-        loop.close()
 
-    except ErrTimeout:
-        log("palette_event: publish timed out, subject=%s params=%s" % (subject,params))
+    publish_event(params)
 
     ApiLock.release()
 
-async def publish_event(subject,params):
-    NC = NATS()
-    await NC.connect(servers=["nats://127.0.0.1:4222"])
-    await NC.publish(subject, params.encode())
-    await NC.close()
+def publish_event(subject,params):
+    log("public_event needs work params=",params.encode())
 
-
-def invoke_jsonrpc(subject, api, params):
+def invoke_jsonrpc(params):
 
     global ApiLock
 
@@ -354,31 +335,24 @@ def invoke_jsonrpc(subject, api, params):
         lim = 100
         if len(s) > lim:
             s = s[0:lim] + " ..."
-        log("invoke_jsonrpc: api=",api," params=",s)
+        log("invoke_jsonrpc: params=",s)
 
     # Acquire lock before sending
     ApiLock.acquire()
+
     try:
-        if params == None:
-            params = "{}"
-        escaped = params.replace("\"","\\\"")
-        req = "{ \"api\": \"%s\", \"nuid\": \"%s\", \"params\": \"%s\"}" % (api,MyNUID(),escaped)
-
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        result = loop.run_until_complete(get_json_response(subject,req))
-        loop.close()
-
-    except ErrTimeout:
-        log("invoke_jsonrpc: request timed out, subject=%s api=%s" % (subject,api))
+        req = requests.post(url="http://127.0.0.1:5555/api",data=params,timeout=5.0)
+        result = req.text
+    except:
+        log("Timeout or other exception in invoke_jsonrpc")
+        result = ""
 
     ApiLock.release()
 
-    if result == None:
-        return None, "No result from calling api=%s params=%s\n" % (api,params)
+    if result == "":
+        return None, "No result from calling params=%s\n" % (params)
 
-    resultstr = result.data.decode()
-    resultjson = json.loads(resultstr)
+    resultjson = json.loads(result)
 
     err = None
     if "error" in resultjson:
@@ -388,13 +362,6 @@ def invoke_jsonrpc(subject, api, params):
         res = resultjson["result"]
 
     return (res,err)
-
-async def get_json_response(subject,req):
-    NC = NATS()
-    await NC.connect(servers=["nats://127.0.0.1:4222"])
-    response = await NC.request(subject, req.encode(), timeout=2)
-    await NC.close()
-    return response
 
 def mergeJsonParams(finalparams,tomerge):
     # The finalparams value contains just the param values, while tomerge contains objects with "value" and "enabled"

@@ -365,7 +365,8 @@ func (r *Router) StartHTTP(source string) {
 			if err != nil {
 				response = ErrorResponse(err)
 			} else {
-				response = r.handleRawJsonApi(string(body))
+				bstr := string(body)
+				response = r.handleRawJsonApi(bstr)
 			}
 		default:
 			response = ErrorResponse(fmt.Errorf("HTTP server unable to handle method=%s", req.Method))
