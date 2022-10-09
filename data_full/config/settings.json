@@ -1,6 +1,6 @@
 {
   "debug": "",
-  "guilevel", "1",
+  "guilevel": "1",
   "autostart": "gui,bidule,resolume",
   "bidule": "C:\\Program Files\\Plogue\\Bidule\\PlogueBidule_x64.exe",
   "guiresize": "-800 0 800 1200",
