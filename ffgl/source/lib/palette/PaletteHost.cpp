@@ -293,8 +293,9 @@ PaletteHost::PaletteHost()
 
 	f.open(_configFile.c_str());
 	if ( ! f.good() ) {
-		std::string err = NosuchSnprintf("No config file (%s), assuming defaults\n",_configFile.c_str());
-		NosuchDebug("%s",err.c_str());  // avoid re-interpreting %'s and \\'s in name
+		// too verbose, defaults are fine normally.
+		// std::string err = NosuchSnprintf("No config file (%s), assuming defaults\n",_configFile.c_str());
+		// NosuchDebug("%s",err.c_str());  // avoid re-interpreting %'s and \\'s in name
 		return;
 	}
 

@@ -312,10 +312,17 @@ def palette_api(api,params):
     ApiLock.acquire()
 
     try:
-        req = requests.post(url="http://127.0.0.1:5555/api",data=params,timeout=5.0)
+        url = "http://127.0.0.1:3330/api"
+        req = requests.post(url=url,data=params,timeout=10.0)
         result = req.text
+    except requests.ConnectionError:
+        log("ConnectionError for url=",url)
+        result = ""
+    except requests.Timeout:
+        log("Timeout for url=",url," api=",params)
+        result = ""
     except:
-        log("Timeout or other exception in palette_api")
+        log("Timeout or other exception in palette_api, for api=",params)
         result = ""
 
     ApiLock.release()
@@ -331,6 +338,9 @@ def palette_api(api,params):
     res = None
     if "result" in resultjson:
         res = resultjson["result"]
+
+    if err != None:
+        log("palette_api: api=%s err=%s" % (api,err))
 
     return (res,err)
 

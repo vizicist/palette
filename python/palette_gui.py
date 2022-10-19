@@ -22,6 +22,7 @@ import palette
 
 IsQuad = False
 RecMode = False
+# DoAttractStuff = False
 
 ColorWhite = '#ffffff'
 ColorBlack = '#000000'
@@ -96,12 +97,12 @@ class ProGuiApp(tk.Tk):
 
         self.thumbFactor = 0.1
 
-        self.lastAnything = 0
-        self.attractTimeout = int(palette.ConfigValue("attracttimeout",defvalue="0"))
-        if self.attractTimeout > 0 and self.attractTimeout < 60:
-            log("attracttimeout = ",self.attractTimeout," is too low, setting it to 60")
-            self.attractTimeout = 60
-        log("attracttimeout = ",self.attractTimeout)
+        # self.lastAnything = 0
+        # self.attractTimeout = int(palette.ConfigValue("attracttimeout",defvalue="0"))
+        # if self.attractTimeout > 0 and self.attractTimeout < 60:
+        #     log("attracttimeout = ",self.attractTimeout," is too low, setting it to 60")
+        #     self.attractTimeout = 60
+        # log("attracttimeout = ",self.attractTimeout)
 
         # These are the same in both normal and advanced
         self.selectDisplayPerRow = 3
@@ -250,16 +251,17 @@ class ProGuiApp(tk.Tk):
 
             if self.nextMode != "":
 
+                log("nextMode=",self.nextMode)
                 # switch to a new Mode 
                 if self.nextMode == "layout":
-                    # self.initLayout()
-                    if self.attractTimeout>0:
-                        # go into attract mode right away
-                        self.nextMode = "attract"
-                        self.startAttractMode()
-                    else:
-                        self.nextMode = "normal"
-                        self.startNormalMode()
+                    ## self.initLayout()
+
+                    # if self.attractTimeout>0:
+                    #     # go into attract mode right away
+                    #     self.startAttractMode()
+                    # else:
+
+                    self.startNormalMode()
 
                 elif self.nextMode == "help":
                     self.startHelpMode()
@@ -281,13 +283,14 @@ class ProGuiApp(tk.Tk):
 
             if self.currentMode == "normal":
                 self.doSelectorAction()
-                if self.attractTimeout>0 and (now - self.lastAnything) > self.attractTimeout:
-                    log("No activity, starting attract mode...")
-                    self.resetAll()
-                    self.nextMode = "attract"
+                # if self.attractTimeout>0 and (now - self.lastAnything) > self.attractTimeout:
+                #     log("No activity, starting attract mode...")
+                #     self.resetAll()
+                #     self.nextMode = "attract"
 
             elif self.currentMode == "attract":
-                self.doAttractAction()
+                # self.doAttractAction()
+                pass
 
             elif self.currentMode == "help":
                 self.doHelpAction()
@@ -303,12 +306,16 @@ class ProGuiApp(tk.Tk):
 
     def startNormalMode(self):
         # self.startupFrame.place_forget()
+        log("startNormalMode: setting nextMode to normal")
+        self.nextMode = "normal"
         self.attractFrame.place_forget()
         self.helpFrame.place_forget()
         self.resetVisibility()
 
     def startAttractMode(self):
 
+        log("startAttractMode: setting nextMode to attract")
+        self.nextMode = "attract"
         self.lastAttractSpriteTime = 0
         self.lastAttractPresetTime = 0
         self.selectFrame.place_forget()
@@ -316,14 +323,13 @@ class ProGuiApp(tk.Tk):
         self.padChooser.place_forget()
         self.helpFrame.place_forget()
         self.attractFrame.place(in_=self.topContainer, relx=0, rely=0, relwidth=1, relheight=1)
-        # self.selectorLoadAndSend("quad","Square_Fantasia")
-        # self.selectorLoadAndSend("quad","Circular_Garden")
-        self.attractPreset = palette.ConfigValue("attractpreset","random")
-        self.randomSpriteTime = palette.ConfigFloat("randomspritetime",0.3)
-        self.randomPresetTime = palette.ConfigFloat("randompresettime",20.0)
-        if self.attractPreset != "random":
-            self.selectorLoadAndSend("quad",self.attractPreseet)
-        self.doAttractAction()
+
+        # self.attractPreset = palette.ConfigValue("attractpreset","random")
+        # self.randomSpriteTime = palette.ConfigFloat("randomspritetime",0.3)
+        # self.randomPresetTime = palette.ConfigFloat("randompresettime",20.0)
+        # if self.attractPreset != "random":
+        #     self.selectorLoadAndSend("quad",self.attractPreseet)
+        # self.doAttractAction()
 
     def startHelpMode(self):
         self.selectFrame.place_forget()
@@ -390,31 +396,36 @@ class ProGuiApp(tk.Tk):
         z = 0.6 - random.random() / 2.0
         palette.SendSpriteEvent("0",x,y,z,region)
 
-    def doAttractAction(self):
-        now = time.time()
-        
-        if (now - self.lastAttractSpriteTime) > self.randomSpriteTime:
-            regions = ["A","B","C","D"]
-            i = int(random.random()*99) % 4
-            region = regions[i]
-            self.randomSprite(region,"down")
-            self.randomSprite(region,"up")
-            self.lastAttractSpriteTime = now
-
-            randtype = "sprite"
-            if randtype == "sprite":
-                cid = str(now)
-                palette.SendSpriteEvent(cid,random.random(),1.0-(random.random()/3.0),random.random()/4.0)
-            else:
-                cid = str(now)
-                palette.SendCursorEvent(cid,"down",random.random(),1.0-(random.random()/3.0),random.random()/4.0)
-                dt = 0.05
-                time.sleep(dt)
-                palette.SendCursorEvent(cid,"up",random.random(),random.random(),0.0)
-
-        if self.attractPreset == "random" and (now - self.lastAttractPresetTime) > self.randomPresetTime:
-            self.selectorLoadAndSendRand("quad")
-            self.lastAttractPresetTime = now
+#     def doAttractAction(self):
+# 
+#         global DoAttractStuff
+#         if DoAttractStuff == False:
+#             return
+# 
+#         now = time.time()
+#         
+#         # if self.attractPreset == "random" and (now - self.lastAttractPresetTime) > self.randomPresetTime:
+#         #     self.selectorLoadAndSendRand("quad")
+#         #     self.lastAttractPresetTime = now
+#         #
+#         # if (now - self.lastAttractSpriteTime) > self.randomSpriteTime:
+#         #     regions = ["A","B","C","D"]
+#         #     i = int(random.random()*99) % 4
+#         #     region = regions[i]
+#         #     self.randomSprite(region,"down")
+#         #     self.randomSprite(region,"up")
+#         #     self.lastAttractSpriteTime = now
+#         # 
+#         #     randtype = "sprite"
+#         #     if randtype == "sprite":
+#         #         cid = str(now)
+#         #         palette.SendSpriteEvent(cid,random.random(),1.0-(random.random()/3.0),random.random()/4.0)
+#         #     else:
+#         #         cid = str(now)
+#         #         palette.SendCursorEvent(cid,"down",random.random(),1.0-(random.random()/3.0),random.random()/4.0)
+#         #         dt = 0.05
+#         #         time.sleep(dt)
+#         #         palette.SendCursorEvent(cid,"up",random.random(),random.random(),0.0)
 
     def doHelpAction(self):
         pass
@@ -441,7 +452,8 @@ class ProGuiApp(tk.Tk):
         self.selectorAction = ""
     
     def resetLastAnything(self):
-        self.lastAnything = time.time()
+        # self.lastAnything = time.time()
+        pass
 
     def resetVisibility(self):
         for pg in self.visiblePageNames:
@@ -529,11 +541,12 @@ class ProGuiApp(tk.Tk):
         return f
 
     def unattract(self):
+        log("Screen pressed, stopping attract mode, setting nextMode to normal")
         self.nextMode = "normal"
-        log("Screen pressed, stopping attract mode...")
         self.resetLastAnything()
 
     def unhelp(self):
+        log("unhelp: setting nextMode to normal")
         self.nextMode = "normal"
         self.resetLastAnything()
 
@@ -790,27 +803,34 @@ class ProGuiApp(tk.Tk):
 
         self.lastLoadType = presettype
         self.lastLoadName = presetname
-        log("loadAndSend presettype=",presettype," presetname=",presetname)
+        fullpresetname = presettype+"."+str(presetname)
+        log("loadAndSend preset=",fullpresetname)
         self.editPage[presettype].paramsnameVar.set(presetname)
-        # log("paramsnamevar=",self.editPage[presettype].paramsnameVar.get())
 
         if self.currentMode != "attract":
             log("Loading",presettype,presetname)
 
         if presettype == "quad":
-            log("calling preset.load on quad preset=",presetname)
-            if self.allPadsSelected:
-                palette.palette_api("preset.load", "\"preset\": \""+presettype+"."+str(presetname) + "\", \"regions\": \"*\"")
+            if self.guiLevel == 0:
+                # in casual instrument mode, loading a quad will ignore the pad selections
+                # because in casual mode, the pad selectors aren't shown.
+                # So, we don't include the region parameter.
+                log("calling preset.load in guiLevel 0 on quad preset=",presetname)
+                palette.palette_api("preset.load", "\"preset\": \"" + fullpresetname + "\"")
             else:
-                regions = self.CurrPad.name()
-                palette.palette_api("preset.load", "\"preset\": \""+presettype+"."+str(presetname) + "\", \"regions\": \""+regions+"\"")
+                log("calling preset.load on quad preset=",presetname," region=")
+                if self.allPadsSelected:
+                    region = "*"
+                else:
+                    region = self.CurrPad.name()
+                palette.palette_api("preset.load", "\"preset\": \"" + fullpresetname + "\", \"region\": \""+region+"\"")
         elif self.allPadsSelected:
             for pad in self.Pads:
                 log("calling preset.load on pad=",pad.name()," preset=",presetname)
-                palette.palette_region_api(pad.name(),"preset.load", "\"preset\": \""+presettype+"."+str(presetname) + "\"")
+                palette.palette_region_api(pad.name(),"preset.load", "\"preset\": \"" + fullpresetname + "\"")
         else:
             region = self.CurrPad.name()
-            palette.palette_region_api(region,"preset.load", "\"preset\": \""+presettype+"."+str(presetname) + "\"")
+            palette.palette_region_api(region,"preset.load", "\"preset\": \"" + fullpresetname + "\"")
 
         # self.saveCurrent()
 
@@ -963,6 +983,7 @@ class ProGuiApp(tk.Tk):
             pad.sendANO()
 
     def startHelp(self):
+        log("startHelp: nextMode = help")
         self.nextMode = "help"
 
     def resetAll(self):
@@ -1744,7 +1765,13 @@ class PageEditParams(tk.Frame):
             # log("amount=",amount," mx=",mx," v=",v)
             newval = v
         elif t == "string":
-            v = str(widg.cget("text"))
+            widgtext = widg.cget("text")
+            # Not sure why cget returns different things,
+            # sometimes tuple, sometimes string
+            if type(widgtext) == type("string"):
+                v = widgtext
+            else:
+                v = str(widgtext[0])
             vals = self.controller.paramenums[self.params[name]["min"]]
             try:
                 i = vals.index(v.strip())
@@ -2442,6 +2469,7 @@ def afterWindowIsDisplayed(windowName,guiresize,*args):
 
     global PaletteApp
     PaletteApp.nextMode = "layout"
+    log("afterWindowIsDisplayed: nextMode=",PaletteApp.nextMode)
 
 def isVisibleParameter(name):
     parts = name.split(".")
@@ -2585,36 +2613,37 @@ def log(*args):
             final += " " + str(s)
     palette.log(final)
 
-KillNATS = False
-
-def nats_listen_for_palette():
-
-    def palette_event_handler(msg):
-        subject = msg.subject
-        reply = msg.reply
-        data = msg.data.decode()
-        if data == "exit":
-            global KillNATS
-            KillNATS = True
-
-        # log("Received a message on '{subject} {reply}': {data}".format(
-        #     subject=subject, reply=reply, data=data))
-
-        if subject == palette.PaletteOutputEventSubject:
-            j = json.loads(data)
-            event = j["event"]
-            if event == "alive":
-                secs = j["seconds"]
-                count = j["cursorcount"]
-                if int(count) > 0:
-                    log("cursor events, calling resetLastAnything!!")
-                    global PaletteApp
-                    PaletteApp.resetLastAnything()
-
 def background_thread(app):  # runs in background thread
 
-    nats_listen_for_palette()
+    osc_listen()
     log("background_thread has finished?")
+
+from pythonosc.dispatcher import Dispatcher
+from pythonosc import osc_server
+
+def osc_alive(unused_addr, *args):
+    if len(args) != 2:
+        log("osc_alive: wrong number of arguments?  Expecting 2, got %d\n" % len(args))
+        return
+    sofarsecs = args[0]
+    attractMode = args[1]
+    # log("osc_alive: sofarsecs=", sofarsecs, " attractMode=",attractMode)
+    if attractMode:
+        if PaletteApp.currentMode != "attract":
+            PaletteApp.nextMode = "attract"
+    else:
+        if PaletteApp.currentMode != "normal":
+            PaletteApp.nextMode = "normal"
+    # log("osc_alive: PaletteApp.nextMode = ",PaletteApp.nextMode)
+
+def osc_listen():
+    dispatcher = Dispatcher()
+    dispatcher.map("/alive", osc_alive)
+    server = osc_server.ThreadingOSCUDPServer(
+        ("127.0.0.1",3331), dispatcher)
+    log("osc_listen: starting on ",server.server_address)
+    server.serve_forever()
+    log("osc_listen: ended!?")
 
 if __name__ == "__main__":
 

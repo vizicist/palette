@@ -1,11 +1,13 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"flag"
 	"fmt"
-	"log"
+	"io"
 	"math/rand"
+	"net/http"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -122,6 +124,66 @@ func interpretApiOutput(rawresult string, err error) string {
 	return result
 }
 
+func RemoteAPI(api string, args ...string) string {
+
+	if len(args)%2 != 0 {
+		return "RemoteAPI: odd nnumber of args, should be even\n"
+	}
+	apijson := "\"api\": \"" + api + "\""
+	for n := range args {
+		if n%2 == 0 {
+			apijson = apijson + ",\"" + args[n] + "\": \"" + args[n+1] + "\""
+		}
+	}
+	output, err := RemoteAPIRaw(apijson)
+	// If err is non-nill, interpretApiOutput will include it
+	return interpretApiOutput(output, err)
+}
+
+func RemoteAPIRaw(args string) (output string, err error) {
+	url := fmt.Sprintf("http://127.0.0.1:%d/api", engine.HTTPPort)
+	postBody := []byte(args)
+	resp, err := http.Post(url, "application/json", bytes.NewBuffer(postBody))
+	if err != nil {
+		return "", fmt.Errorf("RemoteAPIRaw: Post err=%s", err)
+	}
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("RemoteAPIRaw: ReadAll err=%s", err)
+	}
+	arr, err := engine.StringMap(string(body))
+	if err != nil {
+		return "", fmt.Errorf("RemoteAPIRaw: bad format of api response body")
+	}
+	errstr, eok := arr["error"]
+	if eok {
+		return "", fmt.Errorf("RemoteAPIRaw: err=%s", errstr)
+	}
+	resultstr, rok := arr["result"]
+	if !rok {
+		return "", fmt.Errorf("RemoteAPIRaw: no result value in api response?")
+	}
+	return resultstr, nil
+
+	/*
+		resp, err := http.Get(url)
+		if err != nil {
+			return "", fmt.Errorf("PaletteAPI: err=%s", err)
+		}
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return "", fmt.Errorf("PaletteAPI: ReadAll err=%s", err)
+		}
+		if resp.StatusCode != http.StatusOK {
+			return "", fmt.Errorf("PaletteAPI: http status %d", resp.StatusCode)
+		}
+		fmt.Printf("PaletteAPI: statuscode=%d, body=%s\n", resp.StatusCode, resp.Body)
+		return string(body), nil
+	*/
+}
+
+// If it's not a region, it's a button.
 func CliCommand(region string, args []string) string {
 
 	if len(args) == 0 {
@@ -130,39 +192,36 @@ func CliCommand(region string, args []string) string {
 
 	const engineexe = "palette_engine.exe"
 
-	switch args[0] {
+	api := args[0]
+	switch api {
 
 	case "load", "save":
-		if len(args) < 1 {
-			return "Insufficient arguments"
-		}
-		apiargs := fmt.Sprintf("\"region\":\"%s\",\"preset\":\"%s\"", region, args[1])
-		return interpretApiOutput(engine.EngineAPI(args[0], apiargs))
-
-	case "get":
-		if len(args) < 1 {
-			return "Insufficient arguments"
-		}
-		apiargs := fmt.Sprintf("\"region\":\"%s\",\"name\":\"%s\"", region, args[1])
-		return interpretApiOutput(engine.EngineAPI(args[0], apiargs))
-
-	case "set":
 		if len(args) < 2 {
 			return "Insufficient arguments"
 		}
-		apiargs := fmt.Sprintf("\"region\":\"%s\",\"name\":\"%s\",\"value\":\"%s\"", region, args[1], args[2])
-		return interpretApiOutput(engine.EngineAPI(args[0], apiargs))
+		return RemoteAPI("api", api, "region", region, "preset", args[1])
+
+	case "get":
+		if len(args) < 2 {
+			return "Insufficient arguments"
+		}
+		return RemoteAPI("get", "region", region, "name", args[1])
+
+	case "set":
+		if len(args) < 3 {
+			return "Insufficient arguments"
+		}
+		return RemoteAPI("set", "region", args[1], "name", args[1], "value", args[2])
 
 	case "list":
 		category := "*"
 		if len(args) > 1 {
 			category = args[1]
 		}
-		args := fmt.Sprintf("\"category\":\"%s\"", category)
-		return interpretApiOutput(engine.EngineAPI("list", args))
+		return RemoteAPI("list", "category", category)
 
 	case "sendlogs":
-		return interpretApiOutput(engine.EngineAPI("global.sendlogs", ""))
+		return RemoteAPI("global.sendlogs")
 
 	case "status", "tasks":
 		return engine.ProcessStatus()
@@ -171,7 +230,7 @@ func CliCommand(region string, args []string) string {
 		return engine.PaletteVersion()
 
 	case "activate":
-		return interpretApiOutput(engine.EngineAPI("activate", ""))
+		return RemoteAPI("activate")
 
 	case "start":
 		process := "engine"
@@ -194,8 +253,7 @@ func CliCommand(region string, args []string) string {
 			return "Engine started\n"
 		} else {
 			// Start a specific process
-			args := fmt.Sprintf("\"process\":\"%s\"", process)
-			return interpretApiOutput(engine.EngineAPI("start", args))
+			return RemoteAPI("start", "process", process)
 		}
 
 	case "stop":
@@ -213,15 +271,14 @@ func CliCommand(region string, args []string) string {
 			// then kill ourselves
 			engine.KillExecutable(engineexe)
 		} else {
-			args := fmt.Sprintf("\"process\":\"%s\"", process)
-			return interpretApiOutput(engine.EngineAPI("stop", args))
+			return RemoteAPI("stop", "process", process)
 		}
 
 	case "api":
 		if len(args) < 2 {
 			return "Insufficient arguments"
 		}
-		return interpretApiOutput(engine.EngineAPI(args[1], args[2]))
+		return RemoteAPI("api", args[1])
 
 	case "test":
 		ntimes := 10
@@ -245,27 +302,23 @@ func CliCommand(region string, args []string) string {
 				time.Sleep(dt)
 			}
 			region := string("ABCD"[rand.Int()%4])
-			ce := engine.CursorDeviceEvent{
-				Region:    region,
-				Source:    source,
-				Timestamp: engine.CurrentMilli(),
-				Ddu:       "down",
-				X:         rand.Float32(),
-				Y:         rand.Float32(),
-				Z:         rand.Float32(),
-				Area:      0.0,
-			}
-			// ce := MakeCursorEvent(cid, "down", random.random(), random.random(), random.random()/4.0, region)
-			err := engine.PublishCursorDeviceEvent(engine.PaletteInputEventSubject, ce)
-			if err != nil {
-				log.Printf("NATS publishing err=%s\n", err)
-			}
+			RemoteAPI("event",
+				"region", region,
+				"source", source,
+				"event", "cursor_down",
+				"x", fmt.Sprintf("%f", rand.Float32()),
+				"y", fmt.Sprintf("%f", rand.Float32()),
+				"z", fmt.Sprintf("%f", rand.Float32()),
+			)
 			time.Sleep(dt)
-			ce.Ddu = "up"
-			err = engine.PublishCursorDeviceEvent(engine.PaletteInputEventSubject, ce)
-			if err != nil {
-				log.Printf("NATS publishing err=%s\n", err)
-			}
+			RemoteAPI("event",
+				"region", region,
+				"source", source,
+				"event", "cursor_up",
+				"x", fmt.Sprintf("%f", rand.Float32()),
+				"y", fmt.Sprintf("%f", rand.Float32()),
+				"z", fmt.Sprintf("%f", rand.Float32()),
+			)
 		}
 
 	default:

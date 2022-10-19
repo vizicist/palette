@@ -1,9 +1,12 @@
 {
-  "debug": "",
+  "debug": "realtime",
   "guilevel": "1",
   "bidule": "C:\\Program Files\\Plogue\\Bidule\\PlogueBidule_x64.exe",
   "resolume": "C:\\Program Files\\Resolume Avenue\\Avenue.exe",
-  "autostart": "gui,bidule,resolume",
-  "attracttimeout": "300",
+  "autostart": "gui,resolume,bidule",
+  "attractgestureduration": "1.0",
+  "attractpresetduration": "15.0",
+  "attractidlesecs": "0",
+  "processchecksecs": "60",
   "this line should not end with a comma": 0
 }

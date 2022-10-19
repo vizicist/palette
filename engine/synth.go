@@ -20,7 +20,8 @@ type Synth struct {
 	bank        int // 0 if not set
 	program     int // 0 if note set
 	// midiChannelOut *MidiChannelOutput
-	noteDown []bool
+	noteDown      []bool
+	noteDownCount []int
 }
 
 var Synths map[string]*Synth
@@ -61,6 +62,14 @@ func InitSynths() {
 	log.Printf("Synths loaded, len=%d\n", len(Synths))
 }
 
+func (synth *Synth) ClearNoteDowns() {
+	// log.Printf("ClearNoteDowns: clearing noteDowns for synth=%p port=%s chan=%d prog=%d bank=%d\n", synth, synth.portchannel.port, synth.portchannel.channel, synth.program, synth.bank)
+	for i := range synth.noteDown {
+		synth.noteDown[i] = false
+		synth.noteDownCount[i] = 0
+	}
+}
+
 func NewSynth(port string, channel int, bank int, program int) *Synth {
 
 	synthoutput := ConfigBoolWithDefault("generatesound", true)
@@ -80,13 +89,16 @@ func NewSynth(port string, channel int, bank int, program int) *Synth {
 		log.Printf("InitSynths: Unable to open midi port=%s\n", port)
 		return nil
 	} else {
-		return &Synth{
+		sp := &Synth{
 			portchannel: portchannel,
 			bank:        bank,
 			program:     program,
 			// midiChannelOut: midiChannelOut,
-			noteDown: make([]bool, 128),
+			noteDown:      make([]bool, 128),
+			noteDownCount: make([]int, 128),
 		}
+		sp.ClearNoteDowns() // debugging, shouldn't be needed
+		return sp
 	}
 }
 
@@ -112,9 +124,11 @@ func SendANOToSynth(synthName string) {
 	mc.SendBankProgram(synth.bank, synth.program)
 
 	status := 0xb0 | (synth.portchannel.channel - 1)
-	for i := range synth.noteDown {
-		synth.noteDown[i] = false
-	}
+
+	synth.ClearNoteDowns()
+	// for i := range synth.noteDown {
+	// 	synth.noteDown[i] = false
+	// }
 	// log.Printf("SendANOToSynth: synth=%s\n", synthName)
 	mc.midiDeviceOutput.stream.WriteShort(int64(status), int64(0x7b), int64(0x00))
 }
@@ -189,15 +203,28 @@ func SendNoteToSynth(note *Note) {
 	switch note.TypeOf {
 	case "noteon":
 		e.Status |= 0x90
-		if synth.noteDown[note.Pitch] {
-			log.Printf("SendNoteToSynth: Ignoring second noteon for chan=%d pitch=%d\n", synth.portchannel.channel, note.Pitch)
-			return
-		}
+
+		// We now allow multiple notes with the same pitch,
+		// which assumes the synth handles it okay.
+		// There might need to be an option to
+		// automatically send a noteOff before sending the noteOn.
+		// if synth.noteDown[note.Pitch] {
+		//     log.Printf("SendNoteToSynth: Ignoring second noteon for synth=%p synth=%s chan=%d pitch=%d\n", synth, synthName, synth.portchannel.channel, note.Pitch)
+		// }
+
 		synth.noteDown[note.Pitch] = true
+		synth.noteDownCount[note.Pitch]++
+		if Debug.MIDI {
+			log.Printf("SendNoteToSynth: synth=%p noteon noteCount>0 chan=%d pitch=%d downcount=%d\n", synth, synth.portchannel.channel, note.Pitch, synth.noteDownCount[note.Pitch])
+		}
 	case "noteoff":
 		e.Status |= 0x80
 		e.Data2 = 0
 		synth.noteDown[note.Pitch] = false
+		synth.noteDownCount[note.Pitch]--
+		if Debug.MIDI {
+			log.Printf("SendNoteToSynth: synth=%p noteoff pitch=%d downcount is now %d\n", synth, note.Pitch, synth.noteDownCount[note.Pitch])
+		}
 	case "controller":
 		e.Status |= 0xB0
 	case "progchange":
@@ -216,9 +243,4 @@ func SendNoteToSynth(note *Note) {
 	}
 
 	mc.midiDeviceOutput.stream.WriteShort(e.Status, e.Data1, e.Data2)
-
-	r := TheRouter()
-	if r.publishNote {
-		PublishNoteEvent(PaletteOutputEventSubject, note, "engine")
-	}
 }

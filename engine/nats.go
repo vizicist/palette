@@ -1,5 +1,6 @@
 package engine
 
+/*
 import (
 	"fmt"
 	"log"
@@ -136,7 +137,7 @@ func PublishNoteEvent(subj string, note *Note, source string) error {
 
 // EngineAPI result is json with either a "result" or "error" value.
 // The err return value is an internal error, not from the API.
-func EngineAPI(api, params string) (result string, err error) {
+func NATSEngineAPI(api, params string) (result string, err error) {
 	// Long timeout to better handle engine debugging
 	timeout := 60 * time.Second
 	args := JsonObject(
@@ -273,3 +274,5 @@ func setupConnOptions(opts []nats.Option) []nats.Option {
 	}))
 	return opts
 }
+
+*/

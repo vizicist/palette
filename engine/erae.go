@@ -169,7 +169,7 @@ func handleFinger(bb []byte) {
 				Timestamp: CurrentMilli(),
 				Ddu:       "clear",
 			}
-			router.handleCursorDeviceInput(ce)
+			router.handleCursorDeviceEventWithLock(ce)
 			if Debug.Erae {
 				log.Printf("Switching Erae to region %s", newregion)
 			}
@@ -224,7 +224,7 @@ func handleFinger(bb []byte) {
 	}
 	// XXX - should Fresh be true???
 
-	router.handleCursorDeviceInput(ce)
+	router.handleCursorDeviceEventWithLock(ce)
 }
 
 func EraeWriteSysex(bytes []byte) {

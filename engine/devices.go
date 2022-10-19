@@ -66,7 +66,7 @@ func (r *Router) StartCursorInput() {
 	if err != nil {
 		log.Printf("StartCursorInput: LoadMorphs err=%s\n", err)
 	}
-	go StartMorph(r.handleCursorDeviceInput, 1.0)
+	go StartMorph(r.handleCursorDeviceEventWithLock, 1.0)
 }
 
 // LoadMorphs initializes the list of morphs

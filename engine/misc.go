@@ -27,10 +27,12 @@ var Debug = debugFlags{}
 type debugFlags struct {
 	Advance   bool
 	API       bool
+	Attract   bool
 	Config    bool
 	Drawing   bool
 	Cursor    bool
 	Erae      bool
+	Exec      bool
 	GenSound  bool
 	GenVisual bool
 	Go        bool
@@ -43,6 +45,7 @@ type debugFlags struct {
 	NATS      bool
 	Notify    bool
 	OSC       bool
+	Preset    bool
 	Resolume  bool
 	Responder bool
 	Realtime  bool
@@ -60,6 +63,8 @@ func setDebug(dtype string, b bool) error {
 		Debug.Advance = b
 	case "api":
 		Debug.API = b
+	case "attract":
+		Debug.Attract = b
 	case "config":
 		Debug.Config = b
 	case "cursor":
@@ -68,9 +73,11 @@ func setDebug(dtype string, b bool) error {
 		Debug.Drawing = b
 	case "erae":
 		Debug.Erae = b
+	case "exec":
+		Debug.Exec = b
 	case "executeapi":
 		Debug.MotorAPI = b
-	case "gen":
+	case "generated":
 		Debug.GenSound = b
 		Debug.GenVisual = b
 	case "gensound":
@@ -95,6 +102,11 @@ func setDebug(dtype string, b bool) error {
 		Debug.Notify = b
 	case "osc":
 		Debug.OSC = b
+	case "output":
+		Debug.GenSound = b
+		Debug.GenVisual = b
+	case "preset":
+		Debug.Preset = b
 	case "resolume":
 		Debug.Resolume = b
 	case "realtime":
@@ -355,6 +367,16 @@ func FileExists(filepath string) bool {
 	}
 	// Return false if the fileinfo says the file path is a directory.
 	return !fileinfo.IsDir()
+}
+
+func MapString(amap map[string]string) string {
+	final := ""
+	sep := ""
+	for _, val := range amap {
+		final = final + sep + "\"" + val + "\""
+		sep = ","
+	}
+	return final
 }
 
 // StringMap takes a JSON string and returns a map of elements
@@ -824,6 +846,10 @@ func GoroutineID() uint64 {
 }
 
 func JsonObject(args ...string) string {
+	return JsonString(args...)
+}
+
+func JsonString(args ...string) string {
 	if len(args)%2 != 0 {
 		log.Printf("ApiParams: odd number of arguments, args=%v\n", args)
 		return "{}"
@@ -836,5 +862,5 @@ func JsonObject(args ...string) string {
 		}
 		sep = ", "
 	}
-	return "{" + params + "}"
+	return params
 }

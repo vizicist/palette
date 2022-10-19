@@ -23,6 +23,13 @@
             "args": []
         },
         {
+            "name": "Test 10",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
+            "args": ["test","10"]
+        },
+        {
             "name": "Twitch test",
             "type": "go",
             "request": "launch",

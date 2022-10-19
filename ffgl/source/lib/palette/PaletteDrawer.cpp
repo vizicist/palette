@@ -403,7 +403,7 @@ FFResult PaletteDrawer::InitGL( const FFGLViewportStruct* vp )
 {
 	m_vp = *vp;
 
-	NosuchDebug( "PaletteDrawer::InitGL: m_vp = w,h=%d,%d  xy=%d,%d\n", m_vp.height, m_vp.width, m_vp.x, m_vp.y );
+	// NosuchDebug( "PaletteDrawer::InitGL: m_vp = w,h=%d,%d  xy=%d,%d\n", m_vp.height, m_vp.width, m_vp.x, m_vp.y );
 
 	if( !m_shader_gradient.Compile( vertexShaderPalette, fragmentShaderPalette ) )
 	{

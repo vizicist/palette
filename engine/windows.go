@@ -39,7 +39,9 @@ func StartExecutableLogOutput(logName string, fullexe string, background bool, a
 // StartExecutable executes something.  If background is true, it doesn't block
 func startExecutable(executable string, background bool, stdout io.Writer, stderr io.Writer, args ...string) (*exec.Cmd, error) {
 
-	log.Printf("startExecutable: %s\n", executable)
+	if Debug.Exec {
+		log.Printf("startExecutable: %s\n", executable)
+	}
 	cmd := exec.Command(executable, args...)
 
 	// This is done so that ctrl-C doesn't kill things
@@ -74,7 +76,7 @@ func IsRunningExecutable(exe string) bool {
 	stderr := &NoWriter{}
 	cmd, err := startExecutable("c:\\windows\\system32\\tasklist.exe", false, stdout, stderr)
 	if err != nil {
-		log.Printf("StartExecutable: tasklist.exe err=%s\n", err)
+		log.Printf("IsRunningExecutable: tasklist.exe err=%s\n", err)
 		return false
 	}
 	cmd.Wait()

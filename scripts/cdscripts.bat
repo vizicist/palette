@@ -1,1 +1,1 @@
-cd %PALETTESOURCE%
+cd %PALETTESOURCE%/scripts
