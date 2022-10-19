@@ -3,6 +3,7 @@ package engine
 import (
 	"fmt"
 	"log"
+	"math/rand"
 	"os"
 	"path/filepath"
 	"sort"
@@ -13,12 +14,17 @@ import (
 // ExecuteAPI xxx
 func (r *Router) ExecuteAPI(api string, rawargs string) (result string, err error) {
 
-	apiargs, e := StringMap(rawargs)
+	argsmap, e := StringMap(rawargs)
 	if e != nil {
 		result = ErrorResponse(fmt.Errorf("Router.ExecuteAPI: Unable to interpret value - %s", rawargs))
 		log.Printf("Router.ExecuteAPI: bad rawargs value = %s\n", rawargs)
 		return result, e
 	}
+	return r.ExecuteAPIAsMap(api, argsmap)
+}
+
+// ExecuteAPI xxx
+func (r *Router) ExecuteAPIAsMap(api string, apiargs map[string]string) (result string, err error) {
 
 	result = "" // pre-populate most common result
 
@@ -52,7 +58,7 @@ func (r *Router) ExecuteAPI(api string, rawargs string) (result string, err erro
 			if !regionok {
 				region = "*"
 			}
-			result, err = r.executeRegionAPI(region, api, apiargs, rawargs)
+			result, err = r.executeRegionAPI(region, api, apiargs)
 			return result, err
 		}
 		// Other APIs are of the form {apitype}.{api}
@@ -73,6 +79,51 @@ func (r *Router) ExecuteAPI(api string, rawargs string) (result string, err erro
 		}
 
 	}
+}
+
+func presetArray(wantCategory string) ([]string, error) {
+
+	result := make([]string, 0)
+
+	walker := func(path string, info os.FileInfo, err error) error {
+		// log.Printf("Crawling: %#v\n", path)
+		if err != nil {
+			return err
+		}
+		if info.IsDir() {
+			return nil
+		}
+		// Only look at .json files
+		if !strings.HasSuffix(path, ".json") {
+			return nil
+		}
+		path = strings.TrimSuffix(path, ".json")
+		// the last two components of the path are category and preset
+		thisCategory := ""
+		thisPreset := ""
+		lastslash2 := -1
+		lastslash := strings.LastIndex(path, "\\")
+		if lastslash >= 0 {
+			thisPreset = path[lastslash+1:]
+			path2 := path[0:lastslash]
+			lastslash2 = strings.LastIndex(path2, "\\")
+			if lastslash2 >= 0 {
+				thisCategory = path2[lastslash2+1:]
+			}
+		}
+		if wantCategory == "*" || thisCategory == wantCategory {
+			result = append(result, thisCategory+"."+thisPreset)
+		}
+		return nil
+	}
+
+	presetsDir1 := filepath.Join(PaletteDataPath(), PresetsDir())
+	err := filepath.Walk(presetsDir1, walker)
+	if err != nil {
+		log.Printf("filepath.Walk: err=%s\n", err)
+		return nil, err
+	}
+	return result, nil
 }
 
 func presetList(apiargs map[string]string) (string, error) {
@@ -119,30 +170,25 @@ func presetList(apiargs map[string]string) (string, error) {
 	if err != nil {
 		log.Printf("filepath.Walk: err=%s\n", err)
 	}
-	presetsDir2 := filepath.Join(LocalPaletteDir(), PresetsDir())
-	err = filepath.Walk(presetsDir2, walker)
-	if err != nil {
-		log.Printf("filepath.Walk: err=%s\n", err)
-	}
 	result += "]"
 	return result, nil
 }
 
-func (r *Router) executeRegionAPI(region string, api string, apiargs map[string]string, rawargs string) (result string, err error) {
+func (r *Router) executeRegionAPI(region string, api string, argsmap map[string]string) (result string, err error) {
 
 	// XXX - Eventually, this should allow the region value to be "*" or multi-region
 
 	switch api {
 
 	case "event":
-		return "", r.HandleInputEvent(apiargs)
+		return "", r.HandleInputEvent(argsmap)
 
 	case "set":
-		name, ok := apiargs["name"]
+		name, ok := argsmap["name"]
 		if !ok {
 			return "", fmt.Errorf("executeRegionAPI: missing name argument")
 		}
-		value, ok := apiargs["value"]
+		value, ok := argsmap["value"]
 		if !ok {
 			return "", fmt.Errorf("executeRegionAPI: missing value argument")
 		}
@@ -162,7 +208,7 @@ func (r *Router) executeRegionAPI(region string, api string, apiargs map[string]
 		return "", r.saveCurrentSnaps(region)
 
 	case "setparams":
-		for name, value := range apiargs {
+		for name, value := range argsmap {
 			if name == "region" {
 				continue
 			}
@@ -181,7 +227,7 @@ func (r *Router) executeRegionAPI(region string, api string, apiargs map[string]
 		return "", nil
 
 	case "get":
-		name, ok := apiargs["name"]
+		name, ok := argsmap["name"]
 		if !ok {
 			return "", fmt.Errorf("executeRegionAPI: missing name argument")
 		}
@@ -201,7 +247,7 @@ func (r *Router) executeRegionAPI(region string, api string, apiargs map[string]
 		// region can be A, B, C, D, or *
 		for tmpRegion, motor := range r.motors {
 			if region == "*" || tmpRegion == region {
-				_, err := motor.ExecuteAPI(api, apiargs, rawargs)
+				_, err := motor.ExecuteAPI(api, argsmap, "")
 				if err != nil {
 					return "", err
 				}
@@ -247,13 +293,28 @@ func (r *Router) saveQuadPreset(preset string) error {
 func OldParameterName(nm string) bool {
 	return nm == "sound.controller" || nm == "sound.controllerchan"
 }
-func (r *Router) loadQuadPreset(preset string, regions string) error {
+
+func (r *Router) loadQuadPresetRand() {
+
+	arr, err := presetArray("quad")
+	if err != nil {
+		log.Printf("loadQuadPresetRand: err=%s\n", err)
+		return
+	}
+	rn := rand.Uint64() % uint64(len(arr))
+	log.Printf("loadQuadPresetRand: preset=%s", arr[rn])
+	r.loadQuadPreset(arr[rn], "*")
+}
+
+func (r *Router) loadQuadPreset(preset string, applyToRegion string) error {
 
 	path := ReadablePresetFilePath(preset)
 	paramsmap, err := LoadParamsMap(path)
 	if err != nil {
 		return err
 	}
+
+	log.Printf("loadQuadPreset: preset=%s\n", preset)
 
 	// Here's where the params get applied,
 	// which among other things
@@ -266,23 +327,23 @@ func (r *Router) loadQuadPreset(preset string, regions string) error {
 		// In a quad file, the parameter names are of the form:
 		// {region}-{parametername}
 		words := strings.SplitN(name, "-", 2)
-		region := words[0]
-		motor, ok := r.motors[region]
+		regionOfParam := words[0]
+		motor, ok := r.motors[regionOfParam]
 		if !ok {
-			return fmt.Errorf("no region named %s", region)
+			return fmt.Errorf("no region named %s", regionOfParam)
 		}
-		if regions != "*" && regions != region {
+		if applyToRegion != "*" && applyToRegion != regionOfParam {
 			continue
 		}
+		// use words[1] so the motor doesn't see the region name
+		parameterName := words[1]
 		// We expect the parameter to be of the form
 		// {category}.{parameter}, but old "quad" files
 		// didn't include the category.
-		parameterName := words[1]
 		if !strings.Contains(parameterName, ".") {
 			log.Printf("loadQuadPreset: preset=%s parameter=%s is in OLD format, not supported", preset, parameterName)
 			return fmt.Errorf("")
 		}
-		// use words[1] so the motor doesn't see the region name
 		err = motor.SetOneParamValue(parameterName, value)
 		if err != nil {
 			if !OldParameterName(parameterName) {
@@ -369,25 +430,6 @@ func (r *Router) executeGlobalAPI(api string, apiargs map[string]string) (result
 		}
 		result = value
 
-	case "fakemidi":
-		// publish fake event for testing
-		me := MIDIDeviceEvent{
-			Timestamp: int64(0),
-			Status:    0x90,
-			Data1:     0x10,
-			Data2:     0x10,
-		}
-		eee := PublishMIDIDeviceEvent(PaletteOutputEventSubject, me)
-		if eee != nil {
-			log.Printf("InputListener: me=%+v err=%s\n", me, eee)
-		}
-		/*
-			d := time.Duration(secs) * time.Second
-			log.Printf("hang: d=%+v\n", d)
-			time.Sleep(d)
-			log.Printf("hang is done\n")
-		*/
-
 	case "debug":
 		s, err := needStringArg("debug", api, apiargs)
 		if err == nil {
@@ -418,7 +460,7 @@ func (r *Router) executeGlobalAPI(api string, apiargs map[string]string) (result
 			r.transposeAuto = b
 			// log.Printf("GlobalAPI: set_transposeauto b=%v\n", b)
 			// Quantizing CurrentClick() to a beat or measure might be nice
-			r.transposeNext = CurrentClick() + r.transposeBeats*oneBeat
+			r.transposeNext = CurrentClick() + r.transposeClicks*oneBeat
 			for _, motor := range r.motors {
 				motor.TransposePitch = 0
 			}
@@ -526,21 +568,15 @@ func (r *Router) executePresetAPI(api string, apiargs map[string]string) (result
 		prefix, _ := PresetNameSplit(preset)
 		region, okregion := apiargs["region"]
 		if !okregion {
-			// It should be a quad preset, then.
-			if prefix != "quad" {
-				return "", fmt.Errorf("expecting a quad.* preset when no region supplied")
-			}
-			regions, okregions := apiargs["regions"]
-			if !okregions {
-				log.Printf("Hmmm, no regions value on quad load?\n")
-				regions = "*"
-			}
-			err = r.loadQuadPreset(preset, regions)
+			region = "*"
+		}
+		if prefix == "quad" {
+			err = r.loadQuadPreset(preset, region)
 			if err != nil {
 				log.Printf("loadQuad: preset=%s, err=%s", preset, err)
 				return "", err
 			}
-			r.saveCurrentSnaps(regions)
+			r.saveCurrentSnaps(region)
 		} else {
 			// It's a region preset
 			motor, ok := r.motors[region]
