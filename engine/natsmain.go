@@ -1,5 +1,6 @@
 package engine
 
+/*
 import (
 	"flag"
 	"fmt"
@@ -50,3 +51,5 @@ func StartNATSServer() {
 	}
 	s.WaitForShutdown()
 }
+
+*/

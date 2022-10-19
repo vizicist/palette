@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math/rand"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -15,7 +16,6 @@ import (
 	"time"
 
 	"github.com/hypebeast/go-osc/osc"
-	nats "github.com/nats-io/nats.go"
 )
 
 // CurrentMilli is the time from the start, in milliseconds
@@ -88,7 +88,7 @@ type Router struct {
 	killPlayback     bool
 	transposeAuto    bool
 	transposeNext    Clicks
-	transposeBeats   Clicks // time between auto transpose changes
+	transposeClicks  Clicks // time between auto transpose changes
 	transposeIndex   int    // current place in tranposeValues
 	transposeValues  []int
 	recordingOn      bool
@@ -97,14 +97,25 @@ type Router struct {
 	resolumeClient   *osc.Client
 	guiClient        *osc.Client
 	plogueClient     *osc.Client
-	cursorCount      int
-	publishCursor    bool
-	publishMIDI      bool
-	publishNote      bool
-	myHostname       string
-	generateVisuals  bool
-	generateSound    bool
-	// regionForMorph       map[string]string // for all known Morph serial#'s
+	attractClient    *osc.Client
+
+	attractModeIsOn        bool
+	lastAttractGestureTime time.Time
+	lastAttractPresetTime  time.Time
+	attractGestureDuration time.Duration
+	attractNoteDuration    time.Duration
+	attractPresetDuration  time.Duration
+	attractPreset          string
+
+	lastAttractChange float64
+	attractCheckSecs  float64
+	attractIdleSecs   float64
+	processCheckSecs  float64
+	aliveSecs         float64
+
+	myHostname           string
+	generateVisuals      bool
+	generateSound        bool
 	regionAssignedToNUID map[string]string
 	eventMutex           sync.RWMutex
 }
@@ -164,13 +175,20 @@ func recordingsFile(nm string) string {
 	return ConfigFilePath(filepath.Join("recordings", nm))
 }
 
+var HTTPPort = 3330
+var OSCPort = 3333
+var AliveOutputPort = 3331
+var ResolumePort = 3334
+
 // TheRouter returns a pointer to the one-and-only Router
 func TheRouter() *Router {
 	onceRouter.Do(func() {
 
 		oneRouter.regionLetters = ConfigValue("pads")
 		if oneRouter.regionLetters == "" {
-			log.Printf("No value for pads, assuming ABCD")
+			if Debug.Morph {
+				log.Printf("No value for pads, assuming ABCD")
+			}
 			oneRouter.regionLetters = "ABCD"
 		}
 
@@ -206,7 +224,7 @@ func TheRouter() *Router {
 
 		for i, c := range oneRouter.regionLetters {
 			resolumeLayer := oneRouter.ResolumeLayerForPad(string(c))
-			ffglPort := 3334 + i
+			ffglPort := ResolumePort + i
 			ch := string(c)
 			freeframeClient := osc.NewClient("127.0.0.1", ffglPort)
 			log.Printf("OSC freeframeClient: port=%d layer=%d\n", ffglPort, resolumeLayer)
@@ -221,9 +239,9 @@ func TheRouter() *Router {
 
 		// Transpose control
 		oneRouter.transposeAuto = ConfigBoolWithDefault("transposeauto", true)
-		log.Printf("oneRouter.transposeAuto=%v\n", oneRouter.transposeAuto)
-		oneRouter.transposeBeats = Clicks(ConfigIntWithDefault("transposebeats", 48))
-		oneRouter.transposeNext = oneRouter.transposeBeats * oneBeat // first one
+		// log.Printf("oneRouter.transposeAuto=%v\n", oneRouter.transposeAuto)
+		oneRouter.transposeClicks = Clicks(ConfigIntWithDefault("transposebeats", 48))
+		oneRouter.transposeNext = oneRouter.transposeClicks * oneBeat // first one
 
 		// NOTE: the order of values here needs to match the
 		// order in palette.py
@@ -242,9 +260,6 @@ func TheRouter() *Router {
 		// By default, the engine handles Cursor events internally.
 		// However, if publishcursor is set, it ONLY publishes them,
 		// so the expectation is that a plugin will handle it.
-		oneRouter.publishCursor = ConfigBoolWithDefault("publishcursor", false)
-		oneRouter.publishMIDI = ConfigBoolWithDefault("publishmidi", false)
-		oneRouter.publishNote = ConfigBoolWithDefault("publishnote", false)
 		oneRouter.generateVisuals = ConfigBoolWithDefault("generatevisuals", true)
 		oneRouter.generateSound = ConfigBoolWithDefault("generatesound", true)
 
@@ -277,12 +292,12 @@ func RunEngine() {
 	InitMIDI()
 	InitSynths()
 	// InitNATS()
-	go StartNATSServer()
+	// go StartNATSServer()
 
 	r := TheRouter()
-	go r.StartOSC("127.0.0.1:3333")
-	go r.StartHTTP("127.0.0.1:5555")
-	go r.StartNATSClient()
+	go r.StartOSC(OSCPort)
+	go r.StartHTTP(HTTPPort)
+	// go r.StartNATSClient()
 	go r.StartMIDI()
 	go r.StartRealtime()
 	go r.StartCursorInput()
@@ -319,15 +334,16 @@ func (r *Router) ResolumeLayerForPad(pad string) int {
 		r.layerMap["C"], _ = strconv.Atoi(layers[2])
 		r.layerMap["D"], _ = strconv.Atoi(layers[3])
 
-		log.Printf("Router: Resolume layerMap = %+v\n", r.layerMap)
+		// log.Printf("Router: Resolume layerMap = %+v\n", r.layerMap)
 	}
 	return r.layerMap[pad]
 }
 
 // StartOSC xxx
-func (r *Router) StartOSC(source string) {
+func (r *Router) StartOSC(port int) {
 
 	handler := r.OSCInput
+	source := fmt.Sprintf("127.0.0.1:%d", port)
 
 	d := osc.NewStandardDispatcher()
 
@@ -346,9 +362,12 @@ func (r *Router) StartOSC(source string) {
 }
 
 // StartHTTP xxx
-func (r *Router) StartHTTP(source string) {
+func (r *Router) StartHTTP(port int) {
 
 	http.HandleFunc("/api", func(responseWriter http.ResponseWriter, req *http.Request) {
+
+		// vals := req.URL.Query()
+		// log.Printf("/api vals=%v\n", vals)
 
 		responseWriter.Header().Set("Content-Type", "application/json")
 		responseWriter.WriteHeader(http.StatusOK)
@@ -365,16 +384,23 @@ func (r *Router) StartHTTP(source string) {
 				response = ErrorResponse(err)
 			} else {
 				bstr := string(body)
-				response = r.handleRawJsonApi(bstr)
+				resp, err := r.ExecuteAPIAsJson(bstr)
+				if err != nil {
+					response = ErrorResponse(err)
+				} else {
+					response = ResultResponse(resp)
+				}
 			}
 		default:
 			response = ErrorResponse(fmt.Errorf("HTTP server unable to handle method=%s", req.Method))
 		}
 	})
 
+	source := fmt.Sprintf("127.0.0.1:%d", port)
 	http.ListenAndServe(source, nil)
 }
 
+/*
 // StartNATSClient xxx
 func (r *Router) StartNATSClient() {
 
@@ -399,14 +425,29 @@ func (r *Router) StartNATSClient() {
 		}
 	})
 }
+*/
 
 // TimeString returns time and clicks
 func TimeString() string {
 	r := TheRouter()
-	sofar := r.time.Sub(r.time0)
-	click := Seconds2Clicks(sofar.Seconds())
-	return fmt.Sprintf("sofar=%f click=%d", sofar.Seconds(), click)
+	uptime := r.time.Sub(r.time0)
+	click := Seconds2Clicks(uptime.Seconds())
+	return fmt.Sprintf("uptime=%f click=%d", uptime.Seconds(), click)
 
+}
+
+func (r *Router) AttractMode(on bool) {
+	if r.attractModeIsOn == on {
+		// no change
+		return
+	}
+	log.Printf("AttractMode: changing to %v\n", on)
+	r.attractModeIsOn = on
+	r.lastAttractChange = r.Uptime()
+}
+
+func (r *Router) Uptime() float64 {
+	return r.time.Sub(r.time0).Seconds()
 }
 
 // StartRealtime runs the looper and never returns
@@ -418,23 +459,35 @@ func (r *Router) StartRealtime() {
 	tick := time.NewTicker(2 * time.Millisecond)
 	r.time0 = <-tick.C
 
-	var nextAliveSecs int
-
 	// Don't start checking processes right away, after killing them on a restart,
 	// they may still be running for a bit
-	var nextCheckSecs int = 2
+	r.processCheckSecs = float64(ConfigFloatWithDefault("processchecksecs", 60))
+	r.attractCheckSecs = float64(ConfigFloatWithDefault("attractchecksecs", 2))
+	r.aliveSecs = float64(ConfigFloatWithDefault("alivesecs", 5))
+	r.attractIdleSecs = float64(ConfigFloatWithDefault("attractidlesecs", 0))
 
-	var aliveIntervalSeconds = ConfigIntWithDefault("aliveinterval", 30)
-	var processcheckSeconds = ConfigIntWithDefault("processcheckinterval", 60)
+	secs1 := ConfigFloatWithDefault("attractpresetduration", 30)
+	r.attractPresetDuration = time.Duration(int(secs1 * float32(time.Second)))
+
+	secs := ConfigFloatWithDefault("attractgestureduration", 0.5)
+	r.attractGestureDuration = time.Duration(int(secs * float32(time.Second)))
+
+	secs = ConfigFloatWithDefault("attractnoteduration", 0.2)
+	r.attractNoteDuration = time.Duration(int(secs * float32(time.Second)))
+
+	r.attractPreset = ConfigStringWithDefault("attractpreset", "random")
+
+	var lastAttractCheck float64
+	var lastProcessCheck float64
+	var lastAlive float64
 
 	// By reading from tick.C, we wake up every 2 milliseconds
 	for now := range tick.C {
 		// log.Printf("Realtime loop now=%v\n", time.Now())
 		r.time = now
-		sofar := now.Sub(r.time0)
-		secs := sofar.Seconds()
-		newclick := Seconds2Clicks(secs)
-		SetCurrentMilli(int64(secs * 1000.0))
+		uptimesecs := r.Uptime()
+		newclick := Seconds2Clicks(uptimesecs)
+		SetCurrentMilli(int64(uptimesecs * 1000.0))
 
 		currentClick := CurrentClick()
 		if newclick > currentClick {
@@ -444,21 +497,43 @@ func (r *Router) StartRealtime() {
 			SetCurrentClick(newclick)
 		}
 
-		// every so often send out an "alive" event
-		// with a cursorCount since the last one
-		if int(secs) > nextAliveSecs {
-			nextAliveSecs += aliveIntervalSeconds
-			PublishAliveEvent(PaletteOutputEventSubject, secs, r.cursorCount)
-			r.cursorCount = 0
+		// Every so often we check to see if attract mode should be turned on
+		attractModeEnabled := r.attractIdleSecs > 0
+		sinceLastAttractChange := uptimesecs - r.lastAttractChange
+		sinceLastAttractCheck := uptimesecs - lastAttractCheck
+		if attractModeEnabled && sinceLastAttractCheck > r.attractCheckSecs {
+			lastAttractCheck = uptimesecs
+			// There's a delay when checking cursor activity to turn attract mod on.
+			// Non-internal cursor activity turns attract mode off instantly.
+			if !r.attractModeIsOn && sinceLastAttractChange > r.attractIdleSecs {
+				// Nothing happening for a while, turn attract mode on
+				r.AttractMode(true)
+			}
 		}
 
-		// Every so often check to see if necessary
-		// processes (like Resolume) are still running
-		if processcheckSeconds > 0 && int(secs) > nextCheckSecs {
-			nextCheckSecs += processcheckSeconds
+		sinceLastAlive := uptimesecs - lastAlive
+		if sinceLastAlive > r.aliveSecs {
+			r.publishOscAlive(uptimesecs)
+			lastAlive = uptimesecs
+		}
+
+		if r.attractModeIsOn {
+			r.doAttractAction()
+		}
+
+		// At the beginning (lastProcessCheck==0)
+		// and then every so often (ie. processCheckSecs)
+		// we check to see if necessary processes are still running
+		sinceLastProcessCheck := uptimesecs - lastProcessCheck
+		processCheckEnabled := r.processCheckSecs > 0
+		if processCheckEnabled && (lastProcessCheck == 0 || sinceLastProcessCheck > r.processCheckSecs) {
 			// Put it in background, so calling
 			// tasklist or ps doesn't disrupt realtime
+			if Debug.Realtime {
+				log.Printf("StartRealtime: checking processes\n")
+			}
 			go r.CheckProcessesAndRestartIfNecessary()
+			lastProcessCheck = uptimesecs
 		}
 
 		select {
@@ -471,9 +546,88 @@ func (r *Router) StartRealtime() {
 	log.Println("StartRealtime ends")
 }
 
+func (r *Router) publishOscAlive(uptimesecs float64) {
+	attractMode := r.attractModeIsOn
+	if Debug.Attract {
+		log.Printf("publishOscAlive: uptime=%v attract=%v\n", uptimesecs, attractMode)
+	}
+	if r.attractClient == nil {
+		r.attractClient = osc.NewClient("127.0.0.1", 3331)
+	}
+	msg := osc.NewMessage("/alive")
+	msg.Append(float32(uptimesecs))
+	msg.Append(attractMode)
+	err := r.attractClient.Send(msg)
+	if err != nil {
+		log.Printf("publishOscAlive: Send err=%s\n", err)
+	}
+}
+
+func (r *Router) doAttractAction() {
+
+	now := time.Now()
+	dt := now.Sub(r.lastAttractGestureTime)
+	if dt > r.attractGestureDuration {
+		regions := []string{"A", "B", "C", "D"}
+		i := uint64(rand.Uint64()*99) % 4
+		region := regions[i]
+		r.lastAttractGestureTime = now
+
+		cid := fmt.Sprintf("%d", time.Now().UnixNano())
+
+		x0 := rand.Float32()
+		y0 := rand.Float32()
+		z0 := rand.Float32() / 2.0
+
+		x1 := rand.Float32()
+		y1 := rand.Float32()
+		z1 := rand.Float32() / 2.0
+
+		go r.doCursorGesture(region, cid, x0, y0, z0, x1, y1, z1)
+		r.lastAttractGestureTime = now
+	}
+
+	dp := now.Sub(r.lastAttractPresetTime)
+	if r.attractPreset == "random" && dp > r.attractPresetDuration {
+		r.loadQuadPresetRand()
+		r.lastAttractPresetTime = now
+	}
+}
+
+func (r *Router) doCursorGesture(region string, cid string, x0, y0, z0, x1, y1, z1 float32) {
+	ce := CursorDeviceEvent{
+		Region:    region,
+		Source:    "internal",
+		Timestamp: 0,
+		Ddu:       "",
+		X:         x0,
+		Y:         y0,
+		Z:         z0,
+		Area:      0,
+	}
+	ce.Ddu = "down"
+	r.handleCursorDeviceEventWithLock(ce)
+	if Debug.Cursor {
+		log.Printf("doCursorGesture: down ce=%+v\n", ce)
+	}
+
+	// secs := float32(3.0)
+	secs := float32(r.attractNoteDuration)
+	dt := time.Duration(int(secs * float32(time.Second)))
+	time.Sleep(dt)
+	ce.Ddu = "up"
+	ce.X = x1
+	ce.Y = y1
+	ce.Z = z1
+	r.handleCursorDeviceEventWithLock(ce)
+	if Debug.Cursor {
+		log.Printf("doCursorGesture: up ce=%+v\n", ce)
+	}
+}
+
 func (r *Router) advanceTransposeTo(newclick Clicks) {
 	if r.transposeAuto && r.transposeNext < newclick {
-		r.transposeNext += (r.transposeBeats * oneBeat)
+		r.transposeNext += (r.transposeClicks * oneBeat)
 		r.transposeIndex = (r.transposeIndex + 1) % len(r.transposeValues)
 		transposePitch := r.transposeValues[r.transposeIndex]
 		if Debug.Transpose {
@@ -548,30 +702,8 @@ func (r *Router) InputListener() {
 }
 
 func (r *Router) handleMidiInput(event MidiEvent) {
-	if r.publishMIDI {
-		log.Printf("InputListener: publicMIDI does nothing!!\n")
-		if event.SysEx != nil {
-			// we don't publish sysex
-		} else {
-			me := MIDIDeviceEvent{
-				Timestamp: int64(event.Timestamp),
-				Status:    event.Status,
-				Data1:     event.Data1,
-				Data2:     event.Data2,
-			}
-			err := PublishMIDIDeviceEvent(PaletteOutputEventSubject, me)
-			if err != nil {
-				log.Printf("InputListener: me=%+v err=%s\n", me, err)
-			}
-		}
-	} else {
-		log.Printf("NOT publishing MIDIDeviceEvent, handling internally!\n")
-		for _, motor := range r.motors {
-			motor.HandleMidiInput(event)
-		}
-	}
-	if Debug.MIDI {
-		log.Printf("InputListener: MIDIInput event=0x%02x\n", event)
+	for _, motor := range r.motors {
+		motor.HandleMidiInput(event)
 	}
 }
 
@@ -618,11 +750,7 @@ func (r *Router) HandleInputEvent(args map[string]string) error {
 	// If no "region" argument, assign one, though it should eventually be required
 	region, regionok := args["region"]
 	if !regionok {
-		log.Printf("No region value on input event, assuming A\n")
-		region = "A"
-	} else {
-		// Remove it from the args
-		delete(args, "region")
+		return fmt.Errorf("HandleInputEvent: No region value")
 	}
 
 	if Debug.Router {
@@ -643,7 +771,7 @@ func (r *Router) HandleInputEvent(args map[string]string) error {
 
 	case "cursor_down", "cursor_drag", "cursor_up":
 		ce := ArgsToCursorDeviceEvent(args)
-		r.handleCursorDeviceEvent(ce, motor)
+		r.handleCursorDeviceEventNoLock(ce)
 
 	case "sprite":
 
@@ -688,32 +816,21 @@ func (r *Router) HandleInputEvent(args map[string]string) error {
 	return nil
 }
 
-func (r *Router) handleCursorDeviceInput(e CursorDeviceEvent) {
-
+func (r *Router) handleCursorDeviceEventWithLock(ce CursorDeviceEvent) {
 	r.eventMutex.Lock()
 	defer r.eventMutex.Unlock()
-
-	r.cursorCount++
-
-	motor, ok := r.motors[e.Region]
-	if !ok {
-		log.Printf("routeCursorDeviceEvent: no region named %s, unable to process ce=%+v\n", e.Region, e)
-		return
-	}
-
-	r.handleCursorDeviceEvent(e, motor)
+	r.handleCursorDeviceEventNoLock(ce)
 }
 
-func (r *Router) handleCursorDeviceEvent(ce CursorDeviceEvent, motor *Motor) {
+func (r *Router) handleCursorDeviceEventNoLock(ce CursorDeviceEvent) {
 
-	// If we're publishing the Cursor events, we don't give them to the motors.
-	// This means that all cursor behavior is defined by apps.
-	if r.publishCursor {
-		err := PublishCursorDeviceEvent(PaletteOutputEventSubject, ce)
-		if err != nil {
-			log.Printf("Router.routeCursorDeviceEvent: NATS publishing err=%s\n", err)
-		}
-		return
+	if ce.Source != "internal" {
+		r.AttractMode(false)
+	}
+
+	motor, ok := r.motors[ce.Region]
+	if !ok {
+		log.Printf("routeCursorDeviceEvent: no region named %s\n", ce.Region)
 	} else {
 		motor.handleCursorDeviceEvent(ce)
 	}
@@ -810,6 +927,7 @@ func GetArgsXYZ(args map[string]string) (x, y, z float32, err error) {
 	return x, y, z, err
 }
 
+/*
 // HandleAPIInput xxx
 func (r *Router) handleAPIInput(data string) (response string) {
 
@@ -849,6 +967,7 @@ func (r *Router) handleAPIInput(data string) (response string) {
 	}
 	return
 }
+*/
 
 // HandleOSCInput xxx
 func (r *Router) handleOSCInput(e OSCEvent) {
@@ -1216,7 +1335,7 @@ func (r *Router) handleMMTTCursor(msg *osc.Message) {
 		return
 	}
 
-	motor, mok := r.motors[region]
+	_, mok := r.motors[region]
 	if !mok {
 		// If it's not a region, it's a button.
 		buttonDepth := ConfigFloatWithDefault("mmttbuttondepth", 0.002)
@@ -1259,7 +1378,7 @@ func (r *Router) handleMMTTCursor(msg *osc.Message) {
 		log.Printf("MMTT Cursor %s %s xyz= %f %f %f\n", ce.Source, ce.Ddu, ce.X, ce.Y, ce.Z)
 	}
 
-	r.handleCursorDeviceEvent(ce, motor)
+	r.handleCursorDeviceEventWithLock(ce)
 }
 
 func boundval(v float32) float32 {
@@ -1347,7 +1466,6 @@ func (r *Router) handlePatchXREvent(msg *osc.Message) {
 	}
 }
 
-/*
 func (r *Router) handleOSCSpriteEvent(msg *osc.Message) {
 
 	tags, _ := msg.TypeTags()
@@ -1379,26 +1497,18 @@ func (r *Router) handleOSCSpriteEvent(msg *osc.Message) {
 		return
 	}
 }
-*/
 
 // handleRawJsonApi takes raw JSON (as a string of the form "{...}"") as an API and returns raw JSON
-func (r *Router) handleRawJsonApi(rawjson string) string {
+func (r *Router) ExecuteAPIAsJson(rawjson string) (string, error) {
 	args, err := StringMap(rawjson)
 	if err != nil {
-		return ErrorResponse(fmt.Errorf("Router.handleJSONAPI: bad format of JSON"))
+		return "", fmt.Errorf("Router.ExecuteAPIAsJson: bad format of JSON")
 	}
 	api, ok := args["api"]
 	if !ok {
-		return ErrorResponse(fmt.Errorf("Router.handleJSONAPI: no api value"))
+		return "", fmt.Errorf("Router.ExecuteAPIAsJson: no api value")
 	}
-	if len(rawjson) == 0 || rawjson[0] != '{' {
-		return ErrorResponse(fmt.Errorf("Router.handleJSONAPI: first char must be curly brace"))
-	}
-	ret, err := r.ExecuteAPI(api, rawjson)
-	if err != nil {
-		return ErrorResponse(err)
-	}
-	return ResultResponse(ret)
+	return r.ExecuteAPIAsMap(api, args)
 }
 
 func (r *Router) StartRunning(process string) error {
@@ -1523,5 +1633,6 @@ func argAsString(msg *osc.Message, index int) (s string, err error) {
 // This silliness is to avoid unused function errors from go-staticcheck
 var rr *Router
 var _ = rr.recordPadAPI
+var _ = rr.handleOSCSpriteEvent
 var _ = argAsInt
 var _ = argAsFloat32

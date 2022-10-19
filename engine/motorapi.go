@@ -17,7 +17,11 @@ type ParamsMap map[string]interface{}
 func (motor *Motor) ExecuteAPI(api string, args map[string]string, rawargs string) (result string, err error) {
 
 	if Debug.MotorAPI {
-		log.Printf("MotorAPI: api=%s rawargs=%s\n", api, rawargs)
+		log.Printf("MotorAPI: api=%s args=%v\n", api, args)
+	}
+	// The caller can provide rawargs if it's already known, but if not provided, we create it
+	if rawargs == "" {
+		rawargs = MapString(args)
 	}
 
 	// ALL visual.* APIs get forwarded to the FreeFrame plugin inside Resolume
@@ -176,7 +180,9 @@ func (motor *Motor) loadPreset(preset string) error {
 	// If there's a _override.json file, use it
 	overridepath := ReadablePresetFilePath(presetType + "._override")
 	if fileExists(overridepath) {
-		log.Printf("loadPreset using overridepath=%s\n", overridepath)
+		if Debug.Preset {
+			log.Printf("loadPreset using overridepath=%s\n", overridepath)
+		}
 		overridemap, err := LoadParamsMap(overridepath)
 		if err != nil {
 			return err
