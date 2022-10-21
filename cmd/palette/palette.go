@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
@@ -11,7 +10,6 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
-	"sort"
 	"strconv"
 	"syscall"
 	"time"
@@ -32,17 +30,6 @@ func main() {
 
 	flag.Parse()
 	out := CliCommand(*regionPtr, flag.Args())
-	// If the output starts with [ or {,
-	// we assume it's a json array or object,
-	// and print it out more readably.
-	if out != "" {
-		switch out[0] {
-		case '[':
-			out = readableArray(out)
-		case '{':
-			out = readableObject(out)
-		}
-	}
 	os.Stdout.WriteString(out)
 }
 
@@ -71,55 +58,16 @@ Categories:
     quad, snap, sound, visual, effect`
 }
 
-func readableArray(s string) string {
-	var arr []string
-	err := json.Unmarshal([]byte(s), &arr)
-	if err != nil {
-		return fmt.Sprintf("Unable to print API array output? err=%s s=%s", err, s)
-	}
-	sort.Strings(arr)
-	out := ""
-	for _, val := range arr {
-		out += fmt.Sprintf("%s\n", val)
-	}
-	return out
-}
-
-func readableObject(s string) string {
-	objmap, err := engine.StringMap(s)
-	if err != nil {
-		return fmt.Sprintf("Unable to parse json: %s", s)
-	}
-
-	arr := make([]string, 0, len(objmap))
-	for key, val := range objmap {
-		arr = append(arr, fmt.Sprintf("%s %s\n", key, val))
-	}
-	sort.Strings(arr)
-	out := ""
-	for _, val := range arr {
-		out += fmt.Sprintf("%s\n", val)
-	}
-	return out
-}
-
-// interpretApiOutput takes the result of an API invocation and
+// humanReadableApiOutput takes the result of an API invocation and
 // produces what will appear in visible output from a CLI command.
-func interpretApiOutput(rawresult string, err error) string {
-	if err != nil {
-		return fmt.Sprintf("Internal error: %s", err)
-	}
-	retmap, err2 := engine.StringMap(rawresult)
-	if err2 != nil {
-		return fmt.Sprintf("API produced non-json output: %s", rawresult)
-	}
-	e, eok := retmap["error"]
+func humanReadableApiOutput(output map[string]string) string {
+	e, eok := output["error"]
 	if eok {
-		return fmt.Sprintf("API error: %s", e)
+		return fmt.Sprintf("Error: api err=%s", e)
 	}
-	result, rok := retmap["result"]
+	result, rok := output["result"]
 	if !rok {
-		return "API produced no error or result"
+		return "Error: unexpected - no result or error in API output?"
 	}
 	return result
 }
@@ -135,52 +83,30 @@ func RemoteAPI(api string, args ...string) string {
 			apijson = apijson + ",\"" + args[n] + "\": \"" + args[n+1] + "\""
 		}
 	}
-	output, err := RemoteAPIRaw(apijson)
-	// If err is non-nill, interpretApiOutput will include it
-	return interpretApiOutput(output, err)
+	resultMap := RemoteAPIRaw(apijson)
+	// result should be a json string
+	return humanReadableApiOutput(resultMap)
 }
 
-func RemoteAPIRaw(args string) (output string, err error) {
+func RemoteAPIRaw(args string) map[string]string {
 	url := fmt.Sprintf("http://127.0.0.1:%d/api", engine.HTTPPort)
 	postBody := []byte(args)
 	resp, err := http.Post(url, "application/json", bytes.NewBuffer(postBody))
 	if err != nil {
-		return "", fmt.Errorf("RemoteAPIRaw: Post err=%s", err)
+		output := make(map[string]string)
+		output["error"] = fmt.Sprintf("RemoteAPIRaw: Post err=%s", err)
+		return output
 	}
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", fmt.Errorf("RemoteAPIRaw: ReadAll err=%s", err)
+		return map[string]string{"error": fmt.Sprintf("RemoteAPIRaw: ReadAll err=%s", err)}
 	}
-	arr, err := engine.StringMap(string(body))
+	output, err := engine.StringMap(string(body))
 	if err != nil {
-		return "", fmt.Errorf("RemoteAPIRaw: bad format of api response body")
+		return map[string]string{"error": fmt.Sprintf("RemoteAPIRaw: unable to interpret output, err=%s", err)}
 	}
-	errstr, eok := arr["error"]
-	if eok {
-		return "", fmt.Errorf("RemoteAPIRaw: err=%s", errstr)
-	}
-	resultstr, rok := arr["result"]
-	if !rok {
-		return "", fmt.Errorf("RemoteAPIRaw: no result value in api response?")
-	}
-	return resultstr, nil
-
-	/*
-		resp, err := http.Get(url)
-		if err != nil {
-			return "", fmt.Errorf("PaletteAPI: err=%s", err)
-		}
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return "", fmt.Errorf("PaletteAPI: ReadAll err=%s", err)
-		}
-		if resp.StatusCode != http.StatusOK {
-			return "", fmt.Errorf("PaletteAPI: http status %d", resp.StatusCode)
-		}
-		fmt.Printf("PaletteAPI: statuscode=%d, body=%s\n", resp.StatusCode, resp.Body)
-		return string(body), nil
-	*/
+	return output
 }
 
 // If it's not a region, it's a button.
@@ -213,12 +139,12 @@ func CliCommand(region string, args []string) string {
 		}
 		return RemoteAPI("set", "region", args[1], "name", args[1], "value", args[2])
 
-	case "list":
+	case "preset.list":
 		category := "*"
 		if len(args) > 1 {
 			category = args[1]
 		}
-		return RemoteAPI("list", "category", category)
+		return RemoteAPI("preset.list", "category", category)
 
 	case "sendlogs":
 		return RemoteAPI("global.sendlogs")
@@ -231,6 +157,9 @@ func CliCommand(region string, args []string) string {
 
 	case "activate":
 		return RemoteAPI("activate")
+
+	case "nextalive":
+		return RemoteAPI("nextalive")
 
 	case "start":
 		process := "engine"
