@@ -23,6 +23,20 @@
             "args": []
         },
         {
+            "name": "Test alive",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
+            "args": ["nextalive"]
+        },
+        {
+            "name": "Test preset.list",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
+            "args": ["preset.list"]
+        },
+        {
             "name": "Test 10",
             "type": "go",
             "request": "launch",

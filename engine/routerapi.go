@@ -5,28 +5,15 @@ import (
 	"log"
 	"math/rand"
 	"os"
-	"path/filepath"
 	"sort"
 	"strings"
 	"time"
 )
 
 // ExecuteAPI xxx
-func (r *Router) ExecuteAPI(api string, rawargs string) (result string, err error) {
+func (r *Router) ExecuteAPIFromMap(api string, apiargs map[string]string) (result string, err error) {
 
-	argsmap, e := StringMap(rawargs)
-	if e != nil {
-		result = ErrorResponse(fmt.Errorf("Router.ExecuteAPI: Unable to interpret value - %s", rawargs))
-		log.Printf("Router.ExecuteAPI: bad rawargs value = %s\n", rawargs)
-		return result, e
-	}
-	return r.ExecuteAPIAsMap(api, argsmap)
-}
-
-// ExecuteAPI xxx
-func (r *Router) ExecuteAPIAsMap(api string, apiargs map[string]string) (result string, err error) {
-
-	result = "" // pre-populate most common result
+	result = "" // pre-populate the most common result, when no err
 
 	switch api {
 
@@ -42,6 +29,17 @@ func (r *Router) ExecuteAPIAsMap(api string, apiargs map[string]string) (result 
 		}
 		return "", err
 
+	case "nextalive":
+		// acts like a timer, but it could wait for
+		// some event if necessary
+		time.Sleep(2 * time.Second)
+		js := JsonObject(
+			"event", "alive",
+			"seconds", fmt.Sprintf("%f", r.aliveSecs),
+			"attractmode", fmt.Sprintf("%v", r.attractModeIsOn),
+		)
+		return js, nil
+
 	case "activate":
 		go resolumeActivate()
 		go biduleActivate()
@@ -52,7 +50,8 @@ func (r *Router) ExecuteAPIAsMap(api string, apiargs map[string]string) (result 
 
 	default:
 		words := strings.Split(api, ".")
-		// Singlw-word APIs (like get, set) are region-specific
+		// Any other single-word APIs (like get, set, load, etc)
+		// are region-specific
 		if len(words) <= 1 {
 			region, regionok := apiargs["region"]
 			if !regionok {
@@ -61,117 +60,21 @@ func (r *Router) ExecuteAPIAsMap(api string, apiargs map[string]string) (result 
 			result, err = r.executeRegionAPI(region, api, apiargs)
 			return result, err
 		}
-		// Other APIs are of the form {apitype}.{api}
+		// Here we handle APIs of the form {apitype}.{apisuffix}
 		apitype := words[0]
-		apisuffix := ""
-		if len(words) > 1 {
-			apisuffix = words[1]
-		}
-		// So far there's only global.* APIs.
-		if apitype == "global" {
+		apisuffix := words[1]
+		switch apitype {
+		case "global":
 			return r.executeGlobalAPI(apisuffix, apiargs)
-		} else if apitype == "preset" {
+		case "preset":
 			return r.executePresetAPI(apisuffix, apiargs)
-		} else if apitype == "sound" {
+		case "sound":
 			return r.executeSoundAPI(apisuffix, apiargs)
-		} else {
+		default:
 			return "", fmt.Errorf("ExecuteAPI: unknown prefix on api=%s", api)
 		}
-
 	}
-}
-
-func presetArray(wantCategory string) ([]string, error) {
-
-	result := make([]string, 0)
-
-	walker := func(path string, info os.FileInfo, err error) error {
-		// log.Printf("Crawling: %#v\n", path)
-		if err != nil {
-			return err
-		}
-		if info.IsDir() {
-			return nil
-		}
-		// Only look at .json files
-		if !strings.HasSuffix(path, ".json") {
-			return nil
-		}
-		path = strings.TrimSuffix(path, ".json")
-		// the last two components of the path are category and preset
-		thisCategory := ""
-		thisPreset := ""
-		lastslash2 := -1
-		lastslash := strings.LastIndex(path, "\\")
-		if lastslash >= 0 {
-			thisPreset = path[lastslash+1:]
-			path2 := path[0:lastslash]
-			lastslash2 = strings.LastIndex(path2, "\\")
-			if lastslash2 >= 0 {
-				thisCategory = path2[lastslash2+1:]
-			}
-		}
-		if wantCategory == "*" || thisCategory == wantCategory {
-			result = append(result, thisCategory+"."+thisPreset)
-		}
-		return nil
-	}
-
-	presetsDir1 := filepath.Join(PaletteDataPath(), PresetsDir())
-	err := filepath.Walk(presetsDir1, walker)
-	if err != nil {
-		log.Printf("filepath.Walk: err=%s\n", err)
-		return nil, err
-	}
-	return result, nil
-}
-
-func presetList(apiargs map[string]string) (string, error) {
-
-	wantCategory := optionalStringArg("category", apiargs, "")
-	result := "["
-	sep := ""
-
-	walker := func(path string, info os.FileInfo, err error) error {
-		// log.Printf("Crawling: %#v\n", path)
-		if err != nil {
-			return err
-		}
-		if info.IsDir() {
-			return nil
-		}
-		// Only look at .json files
-		if !strings.HasSuffix(path, ".json") {
-			return nil
-		}
-		path = strings.TrimSuffix(path, ".json")
-		// the last two components of the path are category and preset
-		thisCategory := ""
-		thisPreset := ""
-		lastslash2 := -1
-		lastslash := strings.LastIndex(path, "\\")
-		if lastslash >= 0 {
-			thisPreset = path[lastslash+1:]
-			path2 := path[0:lastslash]
-			lastslash2 = strings.LastIndex(path2, "\\")
-			if lastslash2 >= 0 {
-				thisCategory = path2[lastslash2+1:]
-			}
-		}
-		if wantCategory == "*" || thisCategory == wantCategory {
-			result += sep + "\"" + thisCategory + "." + thisPreset + "\""
-			sep = ","
-		}
-		return nil
-	}
-
-	presetsDir1 := filepath.Join(PaletteDataPath(), PresetsDir())
-	err := filepath.Walk(presetsDir1, walker)
-	if err != nil {
-		log.Printf("filepath.Walk: err=%s\n", err)
-	}
-	result += "]"
-	return result, nil
+	// unreachable
 }
 
 func (r *Router) executeRegionAPI(region string, api string, argsmap map[string]string) (result string, err error) {
@@ -296,7 +199,7 @@ func OldParameterName(nm string) bool {
 
 func (r *Router) loadQuadPresetRand() {
 
-	arr, err := presetArray("quad")
+	arr, err := PresetArray("quad")
 	if err != nil {
 		log.Printf("loadQuadPresetRand: err=%s\n", err)
 		return
@@ -558,7 +461,7 @@ func (r *Router) executePresetAPI(api string, apiargs map[string]string) (result
 	switch api {
 
 	case "list":
-		return presetList(apiargs)
+		return PresetList(apiargs)
 
 	case "load":
 		preset, okpreset := apiargs["preset"]
