@@ -76,6 +76,7 @@ type Router struct {
 	OSCInput      chan OSCEvent
 	MIDIInput     chan MidiEvent
 	NoteInput     chan *Note
+	AliveWaiters  map[string]chan string
 
 	layerMap map[string]int // map of pads to resolume layer numbers
 
@@ -124,6 +125,11 @@ type Router struct {
 type OSCEvent struct {
 	Msg    *osc.Message
 	Source string
+}
+
+type HeartbeatEvent struct {
+	UpTime      time.Duration
+	CursorCount int
 }
 
 // Command is sent on the control channel of the Router
@@ -384,7 +390,7 @@ func (r *Router) StartHTTP(port int) {
 				response = ErrorResponse(err)
 			} else {
 				bstr := string(body)
-				resp, err := r.ExecuteAPIAsJson(bstr)
+				resp, err := r.ExecuteAPIFromJson(bstr)
 				if err != nil {
 					response = ErrorResponse(err)
 				} else {
@@ -441,8 +447,8 @@ func (r *Router) AttractMode(on bool) {
 		// no change
 		return
 	}
-	log.Printf("AttractMode: changing to %v\n", on)
 	r.attractModeIsOn = on
+	log.Printf("AttractMode: changing to %v\n", on)
 	r.lastAttractChange = r.Uptime()
 }
 
@@ -926,48 +932,6 @@ func GetArgsXYZ(args map[string]string) (x, y, z float32, err error) {
 	}
 	return x, y, z, err
 }
-
-/*
-// HandleAPIInput xxx
-func (r *Router) handleAPIInput(data string) (response string) {
-
-	r.eventMutex.Lock()
-	defer r.eventMutex.Unlock()
-
-	smap, err := StringMap(data)
-
-	defer func() {
-		if Debug.API {
-			log.Printf("Router.HandleAPI: response=%s\n", response)
-		}
-	}()
-
-	if err != nil {
-		response = ErrorResponse(err)
-		return
-	}
-	api, ok := smap["api"]
-	if !ok {
-		response = ErrorResponse(fmt.Errorf("missing api parameter"))
-		return
-	}
-	rawargs, ok := smap["params"]
-	if !ok {
-		response = ErrorResponse(fmt.Errorf("missing params parameter"))
-		return
-	}
-	if Debug.API {
-		log.Printf("Router.HandleAPI: api=%s args=%s\n", api, rawargs)
-	}
-	result, err := r.ExecuteAPI(api, rawargs)
-	if err != nil {
-		response = ErrorResponse(err)
-	} else {
-		response = ResultResponse(result)
-	}
-	return
-}
-*/
 
 // HandleOSCInput xxx
 func (r *Router) handleOSCInput(e OSCEvent) {
@@ -1499,7 +1463,7 @@ func (r *Router) handleOSCSpriteEvent(msg *osc.Message) {
 }
 
 // handleRawJsonApi takes raw JSON (as a string of the form "{...}"") as an API and returns raw JSON
-func (r *Router) ExecuteAPIAsJson(rawjson string) (string, error) {
+func (r *Router) ExecuteAPIFromJson(rawjson string) (string, error) {
 	args, err := StringMap(rawjson)
 	if err != nil {
 		return "", fmt.Errorf("Router.ExecuteAPIAsJson: bad format of JSON")
@@ -1508,7 +1472,7 @@ func (r *Router) ExecuteAPIAsJson(rawjson string) (string, error) {
 	if !ok {
 		return "", fmt.Errorf("Router.ExecuteAPIAsJson: no api value")
 	}
-	return r.ExecuteAPIAsMap(api, args)
+	return r.ExecuteAPIFromMap(api, args)
 }
 
 func (r *Router) StartRunning(process string) error {
