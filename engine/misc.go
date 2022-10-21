@@ -275,6 +275,87 @@ func PresetNameSplit(preset string) (string, string) {
 	}
 }
 
+// PresetMap returns a map of preset names to file paths
+func PresetMap(wantCategory string) (map[string]string, error) {
+
+	result := make(map[string]string, 0)
+
+	walker := func(walkedpath string, info os.FileInfo, err error) error {
+		// log.Printf("Crawling: %#v\n", path)
+		if err != nil {
+			return err
+		}
+		if info.IsDir() {
+			return nil
+		}
+		// Only look at .json files
+		if !strings.HasSuffix(walkedpath, ".json") {
+			return nil
+		}
+		path := strings.TrimSuffix(walkedpath, ".json")
+		// the last two components of the path are category and preset
+		thisCategory := ""
+		thisPreset := ""
+		lastslash2 := -1
+		lastslash := strings.LastIndex(path, "\\")
+		if lastslash >= 0 {
+			thisPreset = path[lastslash+1:]
+			path2 := path[0:lastslash]
+			lastslash2 = strings.LastIndex(path2, "\\")
+			if lastslash2 >= 0 {
+				thisCategory = path2[lastslash2+1:]
+			}
+		}
+		if wantCategory == "*" || thisCategory == wantCategory {
+			result[thisCategory+"."+thisPreset] = walkedpath
+		}
+		return nil
+	}
+
+	presetsDir1 := filepath.Join(PaletteDataPath(), PresetsDir())
+	err := filepath.Walk(presetsDir1, walker)
+	if err != nil {
+		log.Printf("filepath.Walk: err=%s\n", err)
+		return nil, err
+	}
+	return result, nil
+}
+
+// PresetArray returns a list of preset filenames, wantCategory can be "*"
+func PresetArray(wantCategory string) ([]string, error) {
+
+	presetMap, err := PresetMap(wantCategory)
+	if err != nil {
+		return nil, err
+	}
+	result := make([]string, 0)
+	for name := range presetMap {
+		result = append(result, name)
+	}
+	return result, nil
+}
+
+func PresetList(apiargs map[string]string) (string, error) {
+
+	wantCategory := optionalStringArg("category", apiargs, "*")
+	result := "["
+	sep := ""
+
+	presetMap, err := PresetMap(wantCategory)
+	if err != nil {
+		return "", err
+	}
+	for name := range presetMap {
+		thisCategory, _ := PresetNameSplit(name)
+		if wantCategory == "*" || thisCategory == wantCategory {
+			result += sep + "\"" + name + "\""
+			sep = ","
+		}
+	}
+	result += "]"
+	return result, nil
+}
+
 // MIDIFilePath xxx
 func MIDIFilePath(nm string) string {
 	return filepath.Join(PaletteDataPath(), "midifiles", nm)
@@ -846,13 +927,14 @@ func GoroutineID() uint64 {
 }
 
 func JsonObject(args ...string) string {
-	return JsonString(args...)
+	s := JsonString(args...)
+	return "{ " + s + " }"
 }
 
 func JsonString(args ...string) string {
 	if len(args)%2 != 0 {
 		log.Printf("ApiParams: odd number of arguments, args=%v\n", args)
-		return "{}"
+		return ""
 	}
 	params := ""
 	sep := ""

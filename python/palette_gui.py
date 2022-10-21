@@ -2613,37 +2613,57 @@ def log(*args):
             final += " " + str(s)
     palette.log(final)
 
-def background_thread(app):  # runs in background thread
+# def osc_listen_thread(app):  # runs in background thread
+#     osc_listen()
+#     log("osc_listen_thread: finished?")
 
-    osc_listen()
-    log("background_thread has finished?")
+def alive_thread(app):  # runs in background thread
+    while True:
+        time.sleep(2.0)
+
+        alive, err = palette.palette_api("nextalive","")
+        if err != None:
+            log("alive_thread: err=",err)
+            continue
+
+        jalive = json.loads(alive)
+        attractMode = jalive["attractmode"]
+        log("attractdMode from API is ",attractMode)
+        if attractMode == "true":
+            if PaletteApp.currentMode != "attract":
+                log("Turning Attract Mode On!")
+                PaletteApp.nextMode = "attract"
+        else:
+            if PaletteApp.currentMode != "normal":
+                log("Turning Attract Mode Off!")
+                PaletteApp.nextMode = "normal"
 
 from pythonosc.dispatcher import Dispatcher
 from pythonosc import osc_server
 
-def osc_alive(unused_addr, *args):
-    if len(args) != 2:
-        log("osc_alive: wrong number of arguments?  Expecting 2, got %d\n" % len(args))
-        return
-    sofarsecs = args[0]
-    attractMode = args[1]
-    # log("osc_alive: sofarsecs=", sofarsecs, " attractMode=",attractMode)
-    if attractMode:
-        if PaletteApp.currentMode != "attract":
-            PaletteApp.nextMode = "attract"
-    else:
-        if PaletteApp.currentMode != "normal":
-            PaletteApp.nextMode = "normal"
-    # log("osc_alive: PaletteApp.nextMode = ",PaletteApp.nextMode)
+# def osc_alive(unused_addr, *args):
+#     if len(args) != 2:
+#         log("osc_alive: wrong number of arguments?  Expecting 2, got %d\n" % len(args))
+#         return
+#     sofarsecs = args[0]
+#     attractMode = args[1]
+#     # log("osc_alive: sofarsecs=", sofarsecs, " attractMode=",attractMode)
+#     if attractMode:
+#         if PaletteApp.currentMode != "attract":
+#             PaletteApp.nextMode = "attract"
+#     else:
+#         if PaletteApp.currentMode != "normal":
+#             PaletteApp.nextMode = "normal"
+#     # log("osc_alive: PaletteApp.nextMode = ",PaletteApp.nextMode)
 
-def osc_listen():
-    dispatcher = Dispatcher()
-    dispatcher.map("/alive", osc_alive)
-    server = osc_server.ThreadingOSCUDPServer(
-        ("127.0.0.1",3331), dispatcher)
-    log("osc_listen: starting on ",server.server_address)
-    server.serve_forever()
-    log("osc_listen: ended!?")
+# def osc_listen():
+#     dispatcher = Dispatcher()
+#     dispatcher.map("/alive", osc_alive)
+#     server = osc_server.ThreadingOSCUDPServer(
+#         ("127.0.0.1",3331), dispatcher)
+#     log("osc_listen: starting on ",server.server_address)
+#     server.serve_forever()
+#     log("osc_listen: ended!?")
 
 if __name__ == "__main__":
 
@@ -2701,8 +2721,12 @@ if __name__ == "__main__":
 
     threading.Timer(0.0, afterWindowIsDisplayed, args=[PaletteApp.windowName,guiresize], kwargs=None).start()
 
-    thd = threading.Thread(target=background_thread,args=(PaletteApp,))   # timer thread
-    thd.daemon = True
-    thd.start()  # start timer loop
+    # thd = threading.Thread(target=osc_listen_thread,args=(PaletteApp,))   # timer thread
+    # thd.daemon = True
+    # thd.start()  # start timer loop
+
+    aliveThread = threading.Thread(target=alive_thread,args=(PaletteApp,))   # timer thread
+    aliveThread.daemon = True
+    aliveThread.start()  # start timer loop
 
     initMain(PaletteApp)
