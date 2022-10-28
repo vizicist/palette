@@ -22,9 +22,9 @@ func main() {
 
 	flag.Parse()
 
-	r := engine.TheRouter()
-	go r.StartMIDI()
-	go r.InputListener() // never returns
+	e := engine.NewEngine("erae")
+	go e.StartMIDI()
+	go e.InputListener() // never returns
 
 	log.Printf("Blocking forever....\n")
 	select {} // block forever

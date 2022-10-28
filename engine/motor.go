@@ -302,7 +302,7 @@ func (motor *Motor) AdvanceByOneClick() {
 					// Graphics and GUI stuff
 					ss := motor.params.ParamStringValue("visual.spritesource", "")
 					if ss == "cursor" {
-						if TheRouter().generateVisuals && Debug.Loop {
+						if TheEngine.Router.generateVisuals && Debug.Loop {
 							log.Printf("Motor.advanceClickBy1: stepnum=%d generateVisuals ce=%+v\n", stepnum, ce)
 						}
 						motor.generateVisualsFromCursor(ce)
@@ -576,7 +576,7 @@ func (motor *Motor) clearGraphics() {
 }
 
 func (motor *Motor) generateSprite(id string, x, y, z float32) {
-	if !TheRouter().generateVisuals {
+	if !TheEngine.Router.generateVisuals {
 		return
 	}
 	// send an OSC message to Resolume
@@ -589,7 +589,7 @@ func (motor *Motor) generateSprite(id string, x, y, z float32) {
 }
 
 func (motor *Motor) generateVisualsFromCursor(ce CursorStepEvent) {
-	if !TheRouter().generateVisuals {
+	if !TheEngine.Router.generateVisuals {
 		return
 	}
 	// send an OSC message to Resolume
@@ -734,7 +734,7 @@ func (motor *Motor) getScale() *Scale {
 }
 
 func (motor *Motor) generateSoundFromCursor(ce CursorStepEvent) {
-	if !TheRouter().generateSound {
+	if !TheEngine.Router.generateSound {
 		return
 	}
 	a := motor.getActiveNote(ce.ID)
@@ -1037,7 +1037,7 @@ func (motor *Motor) sendNoteOff(a *ActiveNote) {
 }
 
 func (motor *Motor) sendANO() {
-	if !TheRouter().generateSound {
+	if !TheEngine.Router.generateSound {
 		return
 	}
 	synth := motor.params.ParamStringValue("sound.synth", defaultSynth)

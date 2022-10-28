@@ -60,15 +60,6 @@ type CursorDeviceCallbackFunc func(e CursorDeviceEvent)
 // MorphDefs xxx
 var MorphDefs map[string]string
 
-// StartCursorInput xxx
-func (r *Router) StartCursorInput() {
-	err := LoadMorphs()
-	if err != nil {
-		log.Printf("StartCursorInput: LoadMorphs err=%s\n", err)
-	}
-	go StartMorph(r.handleCursorDeviceEventWithLock, 1.0)
-}
-
 // LoadMorphs initializes the list of morphs
 func LoadMorphs() error {
 

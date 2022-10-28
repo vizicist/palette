@@ -144,18 +144,6 @@ func BoundAndScaleFloat(v, vmin, vmax, outmin, outmax float32) float32 {
 	return out
 }
 
-// InitDebug xxx
-func InitDebug() {
-	debug := ConfigValueWithDefault("debug", "")
-	darr := strings.Split(debug, ",")
-	for _, d := range darr {
-		if d != "" {
-			log.Printf("Turning Debug ON for %s\n", d)
-			setDebug(d, true)
-		}
-	}
-}
-
 type logWriter struct {
 	file *os.File
 }
@@ -180,25 +168,6 @@ func (writer logWriter) Write(bytes []byte) (int, error) {
 	}
 	bb := []byte(s)
 	return writer.file.Write(bb)
-}
-
-// InitLog xxx
-func InitLog(logname string) {
-
-	defaultLogger := log.Default()
-	defaultLogger.SetFlags(0)
-
-	logfile := logname + ".log"
-	logpath := LogFilePath(logfile)
-	file, err := os.OpenFile(logpath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
-	if err != nil {
-		fmt.Printf("InitLog: Unable to open logfile=%s logpath=%s err=%s", logfile, logpath, err)
-		return
-	}
-	log.SetFlags(0)
-	logger := logWriter{file: file}
-	log.SetFlags(0)
-	log.SetOutput(logger)
 }
 
 // fileExists checks if a file exists
@@ -595,7 +564,6 @@ type FileWriter struct {
 
 var NoWriterInstance io.Writer
 
-// InitLog xxx
 func MakeFileWriter(path string) io.Writer {
 
 	file, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
