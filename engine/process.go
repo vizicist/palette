@@ -3,7 +3,6 @@ package engine
 import (
 	"fmt"
 	"log"
-	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -18,18 +17,53 @@ type processInfo struct {
 	ActivateFunc func()
 }
 
-var ProcessInfo = map[string](*processInfo){}
-
-func InitProcessInfo() {
-	EngineInfoInit()
-	ResolumeInfoInit()
-	GuiInfoInit()
-	BiduleInfoInit()
-	MmttInfoInit()
-	AppsInfoInit()
+type ProcessManager struct {
+	info map[string]*processInfo
 }
 
-func BiduleInfoInit() {
+func NewProcessManager() *ProcessManager {
+	pm := &ProcessManager{
+		info: make(map[string]*processInfo),
+	}
+	pm.EngineInfoInit()
+	pm.ResolumeInfoInit()
+	pm.GuiInfoInit()
+	pm.BiduleInfoInit()
+	pm.MmttInfoInit()
+	return pm
+}
+
+func (pm ProcessManager) StartRunning(process string) error {
+
+	switch process {
+	case "all":
+		for nm := range pm.info {
+			pm.StartRunning(nm)
+		}
+	default:
+		p, err := pm.getProcessInfo(process)
+		if err != nil {
+			return fmt.Errorf("StartRunning: no info for process=%s", process)
+		}
+		if p.FullPath == "" {
+			return fmt.Errorf("StartRunning: unable to start %s, no executable path", process)
+		}
+
+		log.Printf("StartRunning: path=%s\n", p.FullPath)
+
+		err = StartExecutableLogOutput(process, p.FullPath, true, p.Arg)
+		if err != nil {
+			return fmt.Errorf("start: process=%s err=%s", process, err)
+		}
+
+		if p.ActivateFunc != nil {
+			go p.ActivateFunc()
+		}
+	}
+	return nil
+}
+
+func (pm ProcessManager) BiduleInfoInit() {
 	path := ConfigValueWithDefault("bidule", "")
 	if path == "" {
 		return
@@ -47,10 +81,10 @@ func BiduleInfoInit() {
 	if bidulefile == "" {
 		bidulefile = "default.bidule"
 	}
-	ProcessInfo["bidule"] = &processInfo{exe, path, ConfigFilePath(bidulefile), biduleActivate}
+	pm.info["bidule"] = &processInfo{exe, path, ConfigFilePath(bidulefile), biduleActivate}
 }
 
-func ResolumeInfoInit() {
+func (pm ProcessManager) ResolumeInfoInit() {
 	fullpath := ConfigValue("resolume")
 	if fullpath != "" && !FileExists(fullpath) {
 		log.Printf("No Resolume found, looking for %s)", fullpath)
@@ -71,22 +105,22 @@ func ResolumeInfoInit() {
 	if lastslash > 0 {
 		exe = fullpath[lastslash+1:]
 	}
-	ProcessInfo["resolume"] = &processInfo{exe, fullpath, "", resolumeActivate}
+	pm.info["resolume"] = &processInfo{exe, fullpath, "", resolumeActivate}
 }
 
-func GuiInfoInit() {
+func (pm ProcessManager) GuiInfoInit() {
 	exe := "palette_gui.exe"
 	fullpath := filepath.Join(PaletteDir(), "bin", "pyinstalled", exe)
-	ProcessInfo["gui"] = &processInfo{exe, fullpath, "", nil}
+	pm.info["gui"] = &processInfo{exe, fullpath, "", nil}
 }
 
-func EngineInfoInit() {
+func (pm ProcessManager) EngineInfoInit() {
 	exe := "palette_engine.exe"
 	fullpath := filepath.Join(PaletteDir(), "bin", exe)
-	ProcessInfo["engine"] = &processInfo{exe, fullpath, "", nil}
+	pm.info["engine"] = &processInfo{exe, fullpath, "", nil}
 }
 
-func MmttInfoInit() {
+func (pm ProcessManager) MmttInfoInit() {
 	// NOTE: it's inside a sub-directory of bin, so all the necessary .dll's are contained
 	mmtt := ConfigStringWithDefault("mmtt", "")
 	if mmtt == "" {
@@ -98,34 +132,11 @@ func MmttInfoInit() {
 		log.Printf("no mmtt executable found, looking for %s", fullpath)
 		return
 	}
-	ProcessInfo["mmtt debugger"] = &processInfo{"mmtt_" + mmtt + ".exe", fullpath, "", nil}
+	pm.info["mmtt debugger"] = &processInfo{"mmtt_" + mmtt + ".exe", fullpath, "", nil}
 }
 
-func IsAppName(nm string) bool {
-	return strings.HasPrefix(nm, "app_")
-}
-
-func AppsInfoInit() {
-	// Collect a list of all the app_*.exe files
-	binpath := filepath.Join(PaletteDir(), "bin")
-	findexe := func(path string, info os.FileInfo, err error) error {
-		if strings.HasSuffix(path, ".exe") {
-			exe := filepath.Base(path)
-			appname := strings.TrimSuffix(exe, ".exe")
-			if IsAppName(appname) {
-				ProcessInfo[appname] = &processInfo{exe, path, "", nil}
-			}
-		}
-		return nil
-	}
-	err := filepath.Walk(binpath, findexe)
-	if err != nil {
-		log.Printf("filepath.Walk: err=%s\n", err)
-	}
-}
-
-func getProcessInfo(process string) (*processInfo, error) {
-	p, ok := ProcessInfo[process]
+func (pm ProcessManager) getProcessInfo(process string) (*processInfo, error) {
+	p, ok := pm.info[process]
 	if !ok {
 		return nil, fmt.Errorf("getProcessInfo: no process %s", process)
 	}
@@ -135,8 +146,8 @@ func getProcessInfo(process string) (*processInfo, error) {
 	return p, nil
 }
 
-func IsRunning(process string) bool {
-	p, err := getProcessInfo(process)
+func (pm ProcessManager) IsRunning(process string) bool {
+	p, err := pm.getProcessInfo(process)
 	if err != nil {
 		log.Printf("IsRunning: no process named %s\n", process)
 		return false
@@ -146,10 +157,10 @@ func IsRunning(process string) bool {
 	return b
 }
 
-func ProcessStatus() string {
+func (pm ProcessManager) ProcessStatus() string {
 	s := ""
-	for name := range ProcessInfo {
-		if IsRunning(name) {
+	for name := range pm.info {
+		if pm.IsRunning(name) {
 			s += fmt.Sprintf("%s is running\n", name)
 		}
 	}
@@ -161,14 +172,14 @@ func resolumeActivate() {
 	addr := "127.0.0.1"
 	resolumePort := 7000
 	resolumeClient := osc.NewClient(addr, resolumePort)
-	textLayer := oneRouter.ResolumeLayerForText()
+	textLayer := TheEngine.Router.ResolumeLayerForText()
 	clipnum := 1
 
 	// do it a few times, in case Resolume hasn't started up
 	for i := 0; i < 4; i++ {
 		time.Sleep(5 * time.Second)
-		for _, pad := range oneRouter.regionLetters {
-			layernum := oneRouter.ResolumeLayerForPad(string(pad))
+		for _, pad := range TheEngine.Router.regionLetters {
+			layernum := TheEngine.Router.ResolumeLayerForPad(string(pad))
 			if Debug.Resolume {
 				log.Printf("Activating Resolume layer %d, clip %d\n", layernum, clipnum)
 			}
@@ -213,10 +224,45 @@ func biduleActivate() {
 	}
 }
 
-func KillAll() {
-	for nm, info := range ProcessInfo {
+func (pm ProcessManager) KillAll() {
+	for nm, info := range pm.info {
 		if nm != "engine" {
 			KillExecutable(info.Exe)
+		}
+	}
+}
+
+// StopRunning doesn't return any errors
+func (pm ProcessManager) StopRunning(process string) (err error) {
+	switch process {
+	case "all":
+		for nm := range pm.info {
+			pm.StopRunning(nm)
+		}
+		TheEngine.StopMe()
+		return err
+	default:
+		p, err := pm.getProcessInfo(process)
+		if err != nil {
+			return err
+		}
+		KillExecutable(p.Exe)
+		return nil
+	}
+}
+
+func (pm ProcessManager) CheckProcessesAndRestartIfNecessary() {
+	autostart := ConfigStringWithDefault("autostart", "")
+	if autostart == "" || autostart == "nothing" || autostart == "none" {
+		return
+	}
+	processes := strings.Split(autostart, ",")
+	for _, process := range processes {
+		p, _ := pm.getProcessInfo(process)
+		if p != nil {
+			if !pm.IsRunning(process) {
+				go pm.StartRunning(process)
+			}
 		}
 	}
 }
