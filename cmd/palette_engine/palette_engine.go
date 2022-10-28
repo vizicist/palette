@@ -16,8 +16,10 @@ func main() {
 	signal.Ignore(syscall.SIGINT)
 
 	r := responder.NewResponder_demo()
-	engine.AddResponder("demo", r)
-	engine.RunEngine()
+	e := engine.NewEngine("engine")
+
+	e.Router.AddResponder("demo", r)
+	e.Start()
 
 	if engine.ConfigBoolWithDefault("twinsys", false) {
 		twinsys.Run()
