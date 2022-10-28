@@ -1,0 +1,215 @@
+package engine
+
+import (
+	"fmt"
+	"io"
+	"log"
+	"net/http"
+	"os"
+	"strings"
+	"time"
+
+	"github.com/hypebeast/go-osc/osc"
+)
+
+type Engine struct {
+	ProcessManager *ProcessManager
+	Router         *Router
+	Scheduler      *Scheduler
+	killme         bool // true if Engine should be stopped
+}
+
+var TheEngine *Engine
+
+func NewEngine(logname string) *Engine {
+	e := &Engine{}
+	e.initLog(logname)
+	e.initDebug()
+	e.ProcessManager = NewProcessManager()
+	e.Router = NewRouter()
+	e.Scheduler = NewScheduler()
+	TheEngine = e
+	return e
+}
+
+func (e *Engine) Start() {
+
+	log.Printf("====================== Palette Engine is starting\n")
+
+	// Normally, the engine should never die, but if it does,
+	// other processes (e.g. resolume, bidule) may be left around.
+	// So, unless told otherwise, we kill everything to get a clean start.
+	if ConfigBoolWithDefault("killonstartup", true) {
+		e.ProcessManager.KillAll()
+	}
+
+	InitMIDI()
+	InitSynths()
+
+	go e.StartOSC(OSCPort)
+	go e.StartHTTP(HTTPPort)
+	// go r.StartNATSClient()
+	go e.StartMIDI()
+	go e.Scheduler.Start()
+	// go r.StartRealtime()
+	go e.StartCursorInput()
+	go e.InputListener()
+
+	if ConfigBoolWithDefault("depth", false) {
+		go DepthRunForever()
+	}
+}
+
+func (e *Engine) StopMe() {
+	e.killme = true
+}
+
+func (e *Engine) initLog(logname string) {
+
+	defaultLogger := log.Default()
+	defaultLogger.SetFlags(-2)
+
+	logfile := logname + ".log"
+	logpath := LogFilePath(logfile)
+	file, err := os.OpenFile(logpath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0642)
+	if err != nil {
+		fmt.Printf("InitLog: Unable to open logfile=%s logpath=%s err=%s", logfile, logpath, err)
+		return
+	}
+	log.SetFlags(-2)
+	logger := logWriter{file: file}
+	log.SetFlags(-2)
+	log.SetOutput(logger)
+}
+
+func (e *Engine) initDebug() {
+	debug := ConfigValueWithDefault("debug", "")
+	darr := strings.Split(debug, ",")
+	for _, d := range darr {
+		if d != "" {
+			log.Printf("Turning Debug ON for %s\n", d)
+			setDebug(d, true)
+		}
+	}
+}
+
+// InputListener listens for local device inputs (OSC, MIDI)
+// We could have separate goroutines for the different inputs, but doing
+// them in a single select eliminates some need for locking.
+func (e *Engine) InputListener() {
+	for !e.killme {
+		select {
+		case msg := <-e.Router.OSCInput:
+			e.Router.handleOSCInput(msg)
+		case event := <-e.Router.MIDIInput:
+			e.Router.handleMidiInput(event)
+		default:
+			// log.Printf("Sleeping 1 ms - now=%v\n", time.Now())
+			time.Sleep(time.Millisecond)
+		}
+	}
+	log.Printf("InputListener is being killed\n")
+}
+
+// StartCursorInput xxx
+func (e *Engine) StartCursorInput() {
+	err := LoadMorphs()
+	if err != nil {
+		log.Printf("StartCursorInput: LoadMorphs err=%s\n", err)
+	}
+	go StartMorph(e.Router.handleCursorDeviceEventWithLock, 1.0)
+}
+
+// StartMIDI listens for MIDI events and sends their bytes to the MIDIInput chan
+func (e *Engine) StartMIDI() {
+	if EraeEnabled {
+		e.Router.SetMIDIEventHandler(HandleEraeMIDI)
+	}
+	inputs := MIDI.InputMap()
+	for {
+		for nm, input := range inputs {
+			hasinput, err := input.Poll()
+			if err != nil {
+				log.Printf("StartMIDI: Poll input=%s err=%s\n", nm, err)
+				continue
+			}
+			if !hasinput {
+				continue
+			}
+			events, err := input.ReadEvents()
+			if err != nil {
+				log.Printf("StartMIDI: ReadEvent input=%s err=%s\n", nm, err)
+				continue
+			}
+			// Feed the MIDI bytes to r.MIDIInput one byte at a time
+			for _, event := range events {
+				e.Router.MIDIInput <- event
+				if e.Router.midiEventHandler != nil {
+					e.Router.midiEventHandler(event)
+				}
+			}
+		}
+		time.Sleep(2 * time.Millisecond)
+	}
+}
+
+// StartOSC xxx
+func (e *Engine) StartOSC(port int) {
+
+	handler := e.Router.OSCInput
+	source := fmt.Sprintf("127.0.0.1:%d", port)
+
+	d := osc.NewStandardDispatcher()
+
+	err := d.AddMsgHandler("*", func(msg *osc.Message) {
+		handler <- OSCEvent{Msg: msg, Source: source}
+	})
+	if err != nil {
+		log.Printf("ERROR! %s\n", err.Error())
+	}
+
+	server := &osc.Server{
+		Addr:       source,
+		Dispatcher: d,
+	}
+	server.ListenAndServe()
+}
+
+// StartHTTP xxx
+func (e *Engine) StartHTTP(port int) {
+
+	http.HandleFunc("/api", func(responseWriter http.ResponseWriter, req *http.Request) {
+
+		// vals := req.URL.Query()
+		// log.Printf("/api vals=%v\n", vals)
+
+		responseWriter.Header().Set("Content-Type", "application/json")
+		responseWriter.WriteHeader(http.StatusOK)
+
+		response := ""
+		defer func() {
+			responseWriter.Write([]byte(response))
+		}()
+
+		switch req.Method {
+		case "POST":
+			body, err := io.ReadAll(req.Body)
+			if err != nil {
+				response = ErrorResponse(err)
+			} else {
+				bstr := string(body)
+				resp, err := e.ExecuteAPIFromJson(bstr)
+				if err != nil {
+					response = ErrorResponse(err)
+				} else {
+					response = ResultResponse(resp)
+				}
+			}
+		default:
+			response = ErrorResponse(fmt.Errorf("HTTP server unable to handle method=%s", req.Method))
+		}
+	})
+
+	source := fmt.Sprintf("127.0.0.1:%d", port)
+	http.ListenAndServe(source, nil)
+}

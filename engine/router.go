@@ -1,14 +1,9 @@
 package engine
 
 import (
-	"bufio"
-	"flag"
 	"fmt"
-	"io"
 	"log"
-	"net/http"
 	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -19,7 +14,6 @@ import (
 
 // Router takes events and routes them
 type Router struct {
-	stopme        bool
 	regionLetters string
 	motors        map[string]*Motor
 	OSCInput      chan OSCEvent
@@ -31,29 +25,42 @@ type Router struct {
 	layerMap map[string]int // map of pads to resolume layer numbers
 
 	midiEventHandler MIDIEventHandler
-	killme           bool // true if Router should be stopped
 	// lastClick        Clicks
 	// control chan Command
 	// time             time.Time
 	// time0            time.Time
-	killPlayback    bool
-	transposeAuto   bool
-	transposeNext   Clicks
-	transposeClicks Clicks // time between auto transpose changes
-	transposeIndex  int    // current place in tranposeValues
-	transposeValues []int
-	recordingOn     bool
-	recordingFile   *os.File
-	recordingBegun  time.Time
-	resolumeClient  *osc.Client
-	guiClient       *osc.Client
-	plogueClient    *osc.Client
+	// killPlayback bool
+	// recordingOn    bool
+	// recordingFile  *os.File
+	// recordingBegun time.Time
+
+	resolumeClient *osc.Client
+	guiClient      *osc.Client
+	plogueClient   *osc.Client
 
 	myHostname           string
 	generateVisuals      bool
 	generateSound        bool
 	regionAssignedToNUID map[string]string
 	eventMutex           sync.RWMutex
+
+	responders map[string]Responder
+}
+
+type Responder interface {
+	OnCursorDeviceEvent(e CursorDeviceEvent)
+}
+
+func (r *Router) AddResponder(name string, resp Responder) {
+	log.Printf("AddResponder: r=%v\n", r)
+	r.responders[name] = resp
+}
+
+func (r *Router) CallResponders(e CursorDeviceEvent) {
+	for name, responder := range r.responders {
+		log.Printf("CallResponders: name=%s\n", name)
+		responder.OnCursorDeviceEvent(e)
+	}
 }
 
 // OSCEvent is an OSC message
@@ -89,7 +96,6 @@ type APIEvent struct {
 	method  string
 	args    []string
 }
-*/
 
 // PlaybackEvent is a time-tagged cursor or API event
 type PlaybackEvent struct {
@@ -100,9 +106,11 @@ type PlaybackEvent struct {
 	args      map[string]string
 	rawargs   string
 }
+func recordingsFile(nm string) string {
+	return ConfigFilePath(filepath.Join("recordings", nm))
+}
 
-var onceRouter sync.Once
-var oneRouter Router
+*/
 
 // APIExecutorFunc xxx
 type APIExecutorFunc func(api string, nuid string, rawargs string) (result interface{}, err error)
@@ -112,142 +120,92 @@ func CallAPI(method string, args []string) {
 	log.Printf("CallAPI method=%s", method)
 }
 
-func recordingsFile(nm string) string {
-	return ConfigFilePath(filepath.Join("recordings", nm))
-}
-
 var HTTPPort = 3330
 var OSCPort = 3333
 var AliveOutputPort = 3331
 var ResolumePort = 3334
 
-// TheRouter returns a pointer to the one-and-only Router
-func TheRouter() *Router {
-	onceRouter.Do(func() {
+func NewRouter() *Router {
 
-		oneRouter.regionLetters = ConfigValue("pads")
-		if oneRouter.regionLetters == "" {
-			if Debug.Morph {
-				log.Printf("No value for pads, assuming ABCD")
-			}
-			oneRouter.regionLetters = "ABCD"
+	r := Router{}
+
+	r.responders = make(map[string]Responder)
+
+	r.regionLetters = ConfigValue("pads")
+	if r.regionLetters == "" {
+		if Debug.Morph {
+			log.Printf("No value for pads, assuming ABCD")
 		}
-
-		err := LoadParamEnums()
-		if err != nil {
-			log.Printf("LoadParamEnums: err=%s\n", err)
-			// might be fatal, but try to continue
-		}
-		err = LoadParamDefs()
-		if err != nil {
-			log.Printf("LoadParamDefs: err=%s\n", err)
-			// might be fatal, but try to continue
-		}
-		err = LoadResolumeJSON()
-		if err != nil {
-			log.Printf("LoadResolumeJSON: err=%s\n", err)
-			// might be fatal, but try to continue
-		}
-
-		oneRouter.motors = make(map[string]*Motor)
-		// oneRouter.regionForMorph = make(map[string]string)
-		oneRouter.regionAssignedToNUID = make(map[string]string)
-
-		resolumePort := 7000
-		guiPort := 3943
-		ploguePort := 3210
-
-		oneRouter.resolumeClient = osc.NewClient("127.0.0.1", resolumePort)
-		oneRouter.guiClient = osc.NewClient("127.0.0.1", guiPort)
-		oneRouter.plogueClient = osc.NewClient("127.0.0.1", ploguePort)
-
-		log.Printf("OSC client ports: resolume=%d gui=%d plogue=%d\n", resolumePort, guiPort, ploguePort)
-
-		for i, c := range oneRouter.regionLetters {
-			resolumeLayer := oneRouter.ResolumeLayerForPad(string(c))
-			ffglPort := ResolumePort + i
-			ch := string(c)
-			freeframeClient := osc.NewClient("127.0.0.1", ffglPort)
-			log.Printf("OSC freeframeClient: port=%d layer=%d\n", ffglPort, resolumeLayer)
-			oneRouter.motors[ch] = NewMotor(ch, resolumeLayer, freeframeClient, oneRouter.resolumeClient, oneRouter.guiClient)
-			// log.Printf("Pad %s created, resolumeLayer=%d resolumePort=%d\n", ch, resolumeLayer, resolumePort)
-		}
-
-		oneRouter.OSCInput = make(chan OSCEvent)
-		oneRouter.MIDIInput = make(chan MidiEvent)
-		oneRouter.NoteInput = make(chan *Note)
-		oneRouter.recordingOn = false
-
-		// Transpose control
-		oneRouter.transposeAuto = ConfigBoolWithDefault("transposeauto", true)
-		// log.Printf("oneRouter.transposeAuto=%v\n", oneRouter.transposeAuto)
-		oneRouter.transposeClicks = Clicks(ConfigIntWithDefault("transposebeats", 48))
-		oneRouter.transposeNext = oneRouter.transposeClicks * oneBeat // first one
-
-		// NOTE: the order of values here needs to match the
-		// order in palette.py
-		oneRouter.transposeValues = []int{0, -2, 3, -5}
-
-		oneRouter.myHostname = ConfigValue("hostname")
-		if oneRouter.myHostname == "" {
-			hostname, err := os.Hostname()
-			if err != nil {
-				log.Printf("os.Hostname: err=%s\n", err)
-				hostname = "unknown"
-			}
-			oneRouter.myHostname = hostname
-		}
-
-		// By default, the engine handles Cursor events internally.
-		// However, if publishcursor is set, it ONLY publishes them,
-		// so the expectation is that a plugin will handle it.
-		oneRouter.generateVisuals = ConfigBoolWithDefault("generatevisuals", true)
-		oneRouter.generateSound = ConfigBoolWithDefault("generatesound", true)
-
-		for _, motor := range oneRouter.motors {
-			motor.restoreCurrentSnap()
-		}
-
-		go oneRouter.notifyGUI("restart")
-	})
-	return &oneRouter
-}
-
-func RunEngine() {
-
-	InitLog("engine")
-	InitDebug()
-	InitProcessInfo()
-
-	log.Printf("====================== Palette Engine is starting\n")
-
-	flag.Parse()
-
-	// Normally, the engine should never die, but if it does,
-	// other processes (e.g. resolume, bidule) may be left around.
-	// So, unless told otherwise, we kill everything to get a clean start.
-	if ConfigBoolWithDefault("killonstartup", true) {
-		KillAll()
+		r.regionLetters = "ABCD"
 	}
 
-	InitMIDI()
-	InitSynths()
-	// InitNATS()
-	// go StartNATSServer()
-
-	r := TheRouter()
-	go r.StartOSC(OSCPort)
-	go r.StartHTTP(HTTPPort)
-	// go r.StartNATSClient()
-	go r.StartMIDI()
-	go NewScheduler().Start()
-	// go r.StartRealtime()
-	go r.StartCursorInput()
-	go r.InputListener()
-
-	if ConfigBoolWithDefault("depth", false) {
-		go DepthRunForever()
+	err := LoadParamEnums()
+	if err != nil {
+		log.Printf("LoadParamEnums: err=%s\n", err)
+		// might be fatal, but try to continue
 	}
+	err = LoadParamDefs()
+	if err != nil {
+		log.Printf("LoadParamDefs: err=%s\n", err)
+		// might be fatal, but try to continue
+	}
+	err = LoadResolumeJSON()
+	if err != nil {
+		log.Printf("LoadResolumeJSON: err=%s\n", err)
+		// might be fatal, but try to continue
+	}
+
+	r.motors = make(map[string]*Motor)
+	// oneRouter.regionForMorph = make(map[string]string)
+	r.regionAssignedToNUID = make(map[string]string)
+
+	resolumePort := 7000
+	guiPort := 3943
+	ploguePort := 3210
+
+	r.resolumeClient = osc.NewClient("127.0.0.1", resolumePort)
+	r.guiClient = osc.NewClient("127.0.0.1", guiPort)
+	r.plogueClient = osc.NewClient("127.0.0.1", ploguePort)
+
+	log.Printf("OSC client ports: resolume=%d gui=%d plogue=%d\n", resolumePort, guiPort, ploguePort)
+
+	for i, c := range r.regionLetters {
+		resolumeLayer := r.ResolumeLayerForPad(string(c))
+		ffglPort := ResolumePort + i
+		ch := string(c)
+		freeframeClient := osc.NewClient("127.0.0.1", ffglPort)
+		log.Printf("OSC freeframeClient: port=%d layer=%d\n", ffglPort, resolumeLayer)
+		r.motors[ch] = NewMotor(ch, resolumeLayer, freeframeClient, r.resolumeClient, r.guiClient)
+		// log.Printf("Pad %s created, resolumeLayer=%d resolumePort=%d\n", ch, resolumeLayer, resolumePort)
+	}
+
+	r.OSCInput = make(chan OSCEvent)
+	r.MIDIInput = make(chan MidiEvent)
+	r.NoteInput = make(chan *Note)
+	// r.recordingOn = false
+
+	r.myHostname = ConfigValue("hostname")
+	if r.myHostname == "" {
+		hostname, err := os.Hostname()
+		if err != nil {
+			log.Printf("os.Hostname: err=%s\n", err)
+			hostname = "unknown"
+		}
+		r.myHostname = hostname
+	}
+
+	// By default, the engine handles Cursor events internally.
+	// However, if publishcursor is set, it ONLY publishes them,
+	// so the expectation is that a plugin will handle it.
+	r.generateVisuals = ConfigBoolWithDefault("generatevisuals", true)
+	r.generateSound = ConfigBoolWithDefault("generatesound", true)
+
+	for _, motor := range r.motors {
+		motor.restoreCurrentSnap()
+	}
+
+	go r.notifyGUI("restart")
+	return &r
 }
 
 func (r *Router) ResolumeLayerForText() int {
@@ -281,67 +239,6 @@ func (r *Router) ResolumeLayerForPad(pad string) int {
 	return r.layerMap[pad]
 }
 
-// StartOSC xxx
-func (r *Router) StartOSC(port int) {
-
-	handler := r.OSCInput
-	source := fmt.Sprintf("127.0.0.1:%d", port)
-
-	d := osc.NewStandardDispatcher()
-
-	err := d.AddMsgHandler("*", func(msg *osc.Message) {
-		handler <- OSCEvent{Msg: msg, Source: source}
-	})
-	if err != nil {
-		log.Printf("ERROR! %s\n", err.Error())
-	}
-
-	server := &osc.Server{
-		Addr:       source,
-		Dispatcher: d,
-	}
-	server.ListenAndServe()
-}
-
-// StartHTTP xxx
-func (r *Router) StartHTTP(port int) {
-
-	http.HandleFunc("/api", func(responseWriter http.ResponseWriter, req *http.Request) {
-
-		// vals := req.URL.Query()
-		// log.Printf("/api vals=%v\n", vals)
-
-		responseWriter.Header().Set("Content-Type", "application/json")
-		responseWriter.WriteHeader(http.StatusOK)
-
-		response := ""
-		defer func() {
-			responseWriter.Write([]byte(response))
-		}()
-
-		switch req.Method {
-		case "POST":
-			body, err := io.ReadAll(req.Body)
-			if err != nil {
-				response = ErrorResponse(err)
-			} else {
-				bstr := string(body)
-				resp, err := r.ExecuteAPIFromJson(bstr)
-				if err != nil {
-					response = ErrorResponse(err)
-				} else {
-					response = ResultResponse(resp)
-				}
-			}
-		default:
-			response = ErrorResponse(fmt.Errorf("HTTP server unable to handle method=%s", req.Method))
-		}
-	})
-
-	source := fmt.Sprintf("127.0.0.1:%d", port)
-	http.ListenAndServe(source, nil)
-}
-
 func (r *Router) doCursorGesture(region string, cid string, x0, y0, z0, x1, y1, z1 float32) {
 	log.Printf("doCursorGesture: start\n")
 	ce := CursorDeviceEvent{
@@ -361,7 +258,7 @@ func (r *Router) doCursorGesture(region string, cid string, x0, y0, z0, x1, y1, 
 	}
 
 	// secs := float32(3.0)
-	secs := float32(r.attractNoteDuration)
+	secs := float32(TheEngine.Scheduler.attractNoteDuration)
 	dt := time.Duration(int(secs * float32(time.Second)))
 	time.Sleep(dt)
 	ce.Ddu = "up"
@@ -375,80 +272,10 @@ func (r *Router) doCursorGesture(region string, cid string, x0, y0, z0, x1, y1, 
 	log.Printf("doCursorGesture: end\n")
 }
 
-func (r *Router) advanceTransposeTo(newclick Clicks) {
-	if r.transposeAuto && r.transposeNext < newclick {
-		r.transposeNext += (r.transposeClicks * oneBeat)
-		r.transposeIndex = (r.transposeIndex + 1) % len(r.transposeValues)
-		transposePitch := r.transposeValues[r.transposeIndex]
-		if Debug.Transpose {
-			log.Printf("advanceTransposeTo: newclick=%d transposePitch=%d\n", newclick, transposePitch)
-		}
-		for _, motor := range r.motors {
-			// motor.clearDown()
-			if Debug.Transpose {
-				log.Printf("  setting transposepitch in motor pad=%s trans=%d activeNotes=%d\n", motor.padName, transposePitch, len(motor.activeNotes))
-			}
-			motor.terminateActiveNotes()
-			motor.TransposePitch = transposePitch
-		}
-	}
-}
-
 type MIDIEventHandler func(MidiEvent)
 
 func (r *Router) SetMIDIEventHandler(handler MIDIEventHandler) {
 	r.midiEventHandler = handler
-}
-
-// StartMIDI listens for MIDI events and sends their bytes to the MIDIInput chan
-func (r *Router) StartMIDI() {
-	if EraeEnabled {
-		r.SetMIDIEventHandler(HandleEraeMIDI)
-	}
-	inputs := MIDI.InputMap()
-	for {
-		for nm, input := range inputs {
-			hasinput, err := input.Poll()
-			if err != nil {
-				log.Printf("StartMIDI: Poll input=%s err=%s\n", nm, err)
-				continue
-			}
-			if !hasinput {
-				continue
-			}
-			events, err := input.ReadEvents()
-			if err != nil {
-				log.Printf("StartMIDI: ReadEvent input=%s err=%s\n", nm, err)
-				continue
-			}
-			// Feed the MIDI bytes to r.MIDIInput one byte at a time
-			for _, event := range events {
-				r.MIDIInput <- event
-				if r.midiEventHandler != nil {
-					r.midiEventHandler(event)
-				}
-			}
-		}
-		time.Sleep(2 * time.Millisecond)
-	}
-}
-
-// InputListener listens for local device inputs (OSC, MIDI)
-// We could have separate goroutines for the different inputs, but doing
-// them in a single select eliminates some need for locking.
-func (r *Router) InputListener() {
-	for !r.killme {
-		select {
-		case msg := <-r.OSCInput:
-			r.handleOSCInput(msg)
-		case event := <-r.MIDIInput:
-			r.handleMidiInput(event)
-		default:
-			// log.Printf("Sleeping 1 ms - now=%v\n", time.Now())
-			time.Sleep(time.Millisecond)
-		}
-	}
-	log.Printf("InputListener is being killed\n")
 }
 
 func (r *Router) handleMidiInput(event MidiEvent) {
@@ -575,10 +402,10 @@ func (r *Router) handleCursorDeviceEventWithLock(ce CursorDeviceEvent) {
 func (r *Router) handleCursorDeviceEventNoLock(ce CursorDeviceEvent) {
 
 	if ce.Source != "internal" {
-		r.AttractMode(false)
+		TheEngine.Scheduler.AttractMode(false)
 	}
 
-	CallResponders(ce)
+	r.CallResponders(ce)
 
 	motor, ok := r.motors[ce.Region]
 	if !ok {
@@ -724,23 +551,7 @@ func (r *Router) audioReset() {
 	r.plogueClient.Send(msg)
 }
 
-func (r *Router) advanceClickTo(toClick Clicks) {
-
-	// Don't let events get handled while we're advancing
-	r.eventMutex.Lock()
-	defer r.eventMutex.Unlock()
-
-	for clk := r.lastClick; clk < toClick; clk++ {
-		for _, motor := range r.motors {
-			if (clk % oneBeat) == 0 {
-				motor.checkCursorUp()
-			}
-			motor.AdvanceByOneClick()
-		}
-	}
-	r.lastClick = toClick
-}
-
+/*
 func (r *Router) recordEvent(eventType string, pad string, method string, args string) {
 	if !r.recordingOn {
 		log.Printf("HEY! recordEvent called when recordingOn is false!?\n")
@@ -797,25 +608,6 @@ func (r *Router) recordingPlaybackStop() {
 	r.killPlayback = true
 	r.sendANO()
 }
-
-func (r *Router) sendANO() {
-	for _, motor := range r.motors {
-		motor.sendANO()
-	}
-}
-
-func (r *Router) notifyGUI(eventName string) {
-	if !ConfigBool("notifygui") {
-		return
-	}
-	msg := osc.NewMessage("/notify")
-	msg.Append(eventName)
-	r.guiClient.Send(msg)
-	if Debug.OSC {
-		log.Printf("Router.notifyGUI: msg=%v\n", msg)
-	}
-}
-
 func (r *Router) recordingPlayback(events []*PlaybackEvent) error {
 
 	// XXX - WARNING, this code hasn't been exercised in a LONG time,
@@ -930,6 +722,25 @@ func (r *Router) recordingLoad(name string) ([]*PlaybackEvent, error) {
 	}
 	log.Printf("Number of playback events is %d, lines is %d\n", len(events), nlines)
 	return events, nil
+}
+
+func (r *Router) sendANO() {
+	for _, motor := range r.motors {
+		motor.sendANO()
+	}
+}
+*/
+
+func (r *Router) notifyGUI(eventName string) {
+	if !ConfigBool("notifygui") {
+		return
+	}
+	msg := osc.NewMessage("/notify")
+	msg.Append(eventName)
+	r.guiClient.Send(msg)
+	if Debug.OSC {
+		log.Printf("Router.notifyGUI: msg=%v\n", msg)
+	}
 }
 
 func (r *Router) handleMMTTButton(butt string) {
@@ -1208,101 +1019,6 @@ func (r *Router) handleOSCSpriteEvent(msg *osc.Message) {
 	}
 }
 
-// handleRawJsonApi takes raw JSON (as a string of the form "{...}"") as an API and returns raw JSON
-func (r *Router) ExecuteAPIFromJson(rawjson string) (string, error) {
-	args, err := StringMap(rawjson)
-	if err != nil {
-		return "", fmt.Errorf("Router.ExecuteAPIAsJson: bad format of JSON")
-	}
-	api, ok := args["api"]
-	if !ok {
-		return "", fmt.Errorf("Router.ExecuteAPIAsJson: no api value")
-	}
-	return r.ExecuteAPIFromMap(api, args)
-}
-
-func (r *Router) StartRunning(process string) error {
-
-	switch process {
-	case "all":
-		for nm := range ProcessInfo {
-			r.StartRunning(nm)
-		}
-	case "apps":
-		for nm := range ProcessInfo {
-			if IsAppName(nm) {
-				r.StartRunning(nm)
-			}
-		}
-	default:
-		p, err := getProcessInfo(process)
-		if err != nil {
-			return fmt.Errorf("StartRunning: no info for process=%s", process)
-		}
-		if p.FullPath == "" {
-			return fmt.Errorf("StartRunning: unable to start %s, no executable path", process)
-		}
-
-		log.Printf("StartRunning: path=%s\n", p.FullPath)
-
-		err = StartExecutableLogOutput(process, p.FullPath, true, p.Arg)
-		if err != nil {
-			return fmt.Errorf("start: process=%s err=%s", process, err)
-		}
-
-		if p.ActivateFunc != nil {
-			go p.ActivateFunc()
-		}
-	}
-	return nil
-}
-
-func (r *Router) StopMe() {
-	r.stopme = true
-}
-
-// StopRunning doesn't return any errors
-func (r *Router) StopRunning(process string) (err error) {
-	switch process {
-	case "all":
-		for nm := range ProcessInfo {
-			r.StopRunning(nm)
-		}
-		r.StopMe()
-		return err
-	case "apps":
-		for nm := range ProcessInfo {
-			if IsAppName(nm) {
-				r.StopRunning(nm)
-			}
-		}
-		return err
-	default:
-		p, err := getProcessInfo(process)
-		if err != nil {
-			return err
-		}
-		KillExecutable(p.Exe)
-		return nil
-	}
-}
-
-func (r *Router) CheckProcessesAndRestartIfNecessary() {
-	autostart := ConfigStringWithDefault("autostart", "")
-	if autostart == "" || autostart == "nothing" || autostart == "none" {
-		return
-	}
-	processes := strings.Split(autostart, ",")
-	for _, process := range processes {
-		p, _ := getProcessInfo(process)
-		if p != nil {
-			if !IsRunning(process) {
-				go r.StartRunning(process)
-			}
-		}
-	}
-}
-
 func argAsInt(msg *osc.Message, index int) (i int, err error) {
 	arg := msg.Arguments[index]
 	switch v := arg.(type) {
@@ -1342,7 +1058,8 @@ func argAsString(msg *osc.Message, index int) (s string, err error) {
 
 // This silliness is to avoid unused function errors from go-staticcheck
 var rr *Router
-var _ = rr.recordPadAPI
+
+// var _ = rr.recordPadAPI
 var _ = rr.handleOSCSpriteEvent
 var _ = argAsInt
 var _ = argAsFloat32

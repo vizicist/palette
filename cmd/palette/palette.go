@@ -22,13 +22,11 @@ func main() {
 	signal.Ignore(syscall.SIGHUP)
 	signal.Ignore(syscall.SIGINT)
 
-	engine.InitLog("palette")
-	engine.InitDebug()
-	engine.InitProcessInfo()
+	// Does anything need to be initia
+	flag.Parse()
 
 	regionPtr := flag.String("region", "*", "Region name or *")
 
-	flag.Parse()
 	out := CliCommand(*regionPtr, flag.Args())
 	os.Stdout.WriteString(out)
 }
@@ -150,7 +148,7 @@ func CliCommand(region string, args []string) string {
 		return RemoteAPI("global.sendlogs")
 
 	case "status", "tasks":
-		return engine.ProcessStatus()
+		return engine.TheEngine.ProcessManager.ProcessStatus()
 
 	case "version":
 		return engine.PaletteVersion()
@@ -191,11 +189,11 @@ func CliCommand(region string, args []string) string {
 			process = args[1]
 		}
 		if process == "all" {
-			engine.TheRouter().StopRunning("all")
+			engine.TheEngine.ProcessManager.StopRunning("all")
 		} else if process == "engine" {
 			// first stop everything else, unless killonstartup is false
 			if engine.ConfigBoolWithDefault("killonstartup", true) {
-				engine.TheRouter().StopRunning("all")
+				engine.TheEngine.ProcessManager.StopRunning("all")
 			}
 			// then kill ourselves
 			engine.KillExecutable(engineexe)
