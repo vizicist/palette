@@ -170,7 +170,7 @@ class ProGuiApp(tk.Tk):
         for padName in self.PadNames:
             p = Pad(self,padName)
             self.Pads[p] = padName
-            # p.loadPreset("_Current_"+padName)
+            # p.applyPreset("_Current_"+padName)
 
         # This guarantees that there will be _Current_[ABCD] in the Common Files area
         # self.saveCurrent()
@@ -1177,7 +1177,7 @@ class Pad():
         return self.paramValues
 
 #     def loadValues(self,paramType,presetname):
-#         self.loadPresetValues(paramType,presetname)
+#         self.applyPresetValues(paramType,presetname)
 #         self.saveCurrent()
  
 #        path = self.snapPath
@@ -1186,7 +1186,7 @@ class Pad():
 #        else:
 #            log("Loaded",self.name(),"from",path)
 
-#    def loadPresetValues(self,paramType,presetName):
+#    def applyPresetValues(self,paramType,presetName):
 #        fpath = palette.searchPresetsFilePath(paramType, presetName)
 #        if not self.loadFile(fpath):
 #            log("Unable to load preset file: ",fpath)

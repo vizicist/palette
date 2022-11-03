@@ -15,10 +15,9 @@ func main() {
 	signal.Ignore(syscall.SIGHUP)
 	signal.Ignore(syscall.SIGINT)
 
-	r := responder.NewResponder_demo()
+	r := responder.NewResponder_default()
 	e := engine.NewEngine("engine")
-
-	e.Router.AddResponder("demo", r)
+	e.CursorManager.AddCursorResponder("default", r)
 	e.Start()
 
 	if engine.ConfigBoolWithDefault("twinsys", false) {

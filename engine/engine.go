@@ -16,8 +16,14 @@ type Engine struct {
 	ProcessManager *ProcessManager
 	Router         *Router
 	Scheduler      *Scheduler
+	CursorManager  *CursorManager
 	killme         bool // true if Engine should be stopped
 }
+
+var HTTPPort = 3330
+var OSCPort = 3333
+var AliveOutputPort = 3331
+var ResolumePort = 3334
 
 var TheEngine *Engine
 
@@ -28,8 +34,13 @@ func NewEngine(logname string) *Engine {
 	e.ProcessManager = NewProcessManager()
 	e.Router = NewRouter()
 	e.Scheduler = NewScheduler()
+	e.CursorManager = NewCursorManager()
 	TheEngine = e
 	return e
+}
+
+func (e *Engine) AddCursorResponder(name string, r CursorResponder) {
+	e.CursorManager.AddCursorResponder("demo", r)
 }
 
 func (e *Engine) Start() {
@@ -40,7 +51,7 @@ func (e *Engine) Start() {
 	// other processes (e.g. resolume, bidule) may be left around.
 	// So, unless told otherwise, we kill everything to get a clean start.
 	if ConfigBoolWithDefault("killonstartup", true) {
-		e.ProcessManager.KillAll()
+		e.ProcessManager.killAll()
 	}
 
 	InitMIDI()
@@ -51,7 +62,6 @@ func (e *Engine) Start() {
 	// go r.StartNATSClient()
 	go e.StartMIDI()
 	go e.Scheduler.Start()
-	// go r.StartRealtime()
 	go e.StartCursorInput()
 	go e.InputListener()
 
@@ -103,6 +113,8 @@ func (e *Engine) InputListener() {
 			e.Router.handleOSCInput(msg)
 		case event := <-e.Router.MIDIInput:
 			e.Router.handleMidiInput(event)
+		case event := <-e.Router.CursorDeviceInput:
+			e.CursorManager.handleCursorDeviceEvent(event, true)
 		default:
 			// log.Printf("Sleeping 1 ms - now=%v\n", time.Now())
 			time.Sleep(time.Millisecond)
@@ -117,7 +129,7 @@ func (e *Engine) StartCursorInput() {
 	if err != nil {
 		log.Printf("StartCursorInput: LoadMorphs err=%s\n", err)
 	}
-	go StartMorph(e.Router.handleCursorDeviceEventWithLock, 1.0)
+	go StartMorph(e.CursorManager.handleCursorDeviceEvent, 1.0)
 }
 
 // StartMIDI listens for MIDI events and sends their bytes to the MIDIInput chan
@@ -198,6 +210,7 @@ func (e *Engine) StartHTTP(port int) {
 				response = ErrorResponse(err)
 			} else {
 				bstr := string(body)
+				_ = bstr
 				resp, err := e.ExecuteAPIFromJson(bstr)
 				if err != nil {
 					response = ErrorResponse(err)

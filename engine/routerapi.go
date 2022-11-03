@@ -6,7 +6,6 @@ import (
 	"math/rand"
 	"os"
 	"sort"
-	"strings"
 )
 
 func (r *Router) executeRegionAPI(region string, api string, argsmap map[string]string) (result string, err error) {
@@ -92,14 +91,15 @@ func (r *Router) executeRegionAPI(region string, api string, argsmap map[string]
 	}
 }
 
-func (r *Router) saveQuadPreset(preset string) error {
+func (r *Router) saveQuadPreset(presetName string) error {
 
+	preset := GetPreset(presetName)
 	// wantCategory is sound, visual, effect, snap, or quad
-	path := WriteablePresetFilePath(preset)
+	path := preset.WriteableFilePath()
 	s := "{\n    \"params\": {\n"
 
 	sep := ""
-	log.Printf("saveQuadPreset preset=%s\n", preset)
+	log.Printf("saveQuadPreset preset=%s\n", presetName)
 	for _, motor := range r.motors {
 		log.Printf("starting motor=%s\n", motor.padName)
 		// Print the parameter values sorted by name
@@ -138,85 +138,8 @@ func (r *Router) loadQuadPresetRand() {
 	}
 	rn := rand.Uint64() % uint64(len(arr))
 	log.Printf("loadQuadPresetRand: preset=%s", arr[rn])
-	r.loadQuadPreset(arr[rn], "*")
-}
-
-func (r *Router) loadQuadPreset(preset string, applyToRegion string) error {
-
-	path := ReadablePresetFilePath(preset)
-	paramsmap, err := LoadParamsMap(path)
-	if err != nil {
-		return err
-	}
-
-	log.Printf("loadQuadPreset: preset=%s\n", preset)
-
-	// Here's where the params get applied,
-	// which among other things
-	// may result in sending OSC messages out.
-	for name, ival := range paramsmap {
-		value, ok := ival.(string)
-		if !ok {
-			return fmt.Errorf("value of name=%s isn't a string", name)
-		}
-		// In a quad file, the parameter names are of the form:
-		// {region}-{parametername}
-		words := strings.SplitN(name, "-", 2)
-		regionOfParam := words[0]
-		motor, ok := r.motors[regionOfParam]
-		if !ok {
-			return fmt.Errorf("no region named %s", regionOfParam)
-		}
-		if applyToRegion != "*" && applyToRegion != regionOfParam {
-			continue
-		}
-		// use words[1] so the motor doesn't see the region name
-		parameterName := words[1]
-		// We expect the parameter to be of the form
-		// {category}.{parameter}, but old "quad" files
-		// didn't include the category.
-		if !strings.Contains(parameterName, ".") {
-			log.Printf("loadQuadPreset: preset=%s parameter=%s is in OLD format, not supported", preset, parameterName)
-			return fmt.Errorf("")
-		}
-		err = motor.SetOneParamValue(parameterName, value)
-		if err != nil {
-			if !OldParameterName(parameterName) {
-				log.Printf("loadQuadPreset: name=%s err=%s\n", parameterName, err)
-			}
-			// Don't fail completely on individual failures,
-			// some might be for parameters that no longer exist.
-		}
-	}
-
-	// For any parameters that are in Paramdefs but are NOT in the loaded
-	// preset, we put out the "init" values.  This happens when new parameters
-	// are added which don't exist in existing preset files.
-	// This is similar to code in Motor.loadPreset, except we
-	// have to do it for all for pads
-	for _, c := range r.regionLetters {
-		padName := string(c)
-		motor := r.motors[padName]
-		for nm, def := range ParamDefs {
-			paramName := string(padName) + "-" + nm
-			_, found := paramsmap[paramName]
-			if !found {
-				init := def.Init
-				err = motor.SetOneParamValue(nm, init)
-				if err != nil {
-					// a hack to eliminate errors on a parameter that
-					// still exists in some presets.
-					if !OldParameterName(nm) {
-						log.Printf("loadQuadPreset: %s, param=%s, init=%s, err=%s\n", preset, nm, init, err)
-					}
-					// Don't fail completely on individual failures,
-					// some might be for parameters that no longer exist.
-				}
-			}
-		}
-	}
-
-	return nil
+	preset := GetPreset(arr[rn])
+	preset.loadQuadPreset("*")
 }
 
 /*

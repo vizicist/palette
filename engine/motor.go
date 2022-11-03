@@ -3,25 +3,25 @@ package engine
 import (
 	"fmt"
 	"log"
-	"math"
 	"math/rand"
-	"runtime"
 	"strconv"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/hypebeast/go-osc/osc"
 )
 
+/*
 var uniqueIndex = 0
 
 // ActiveNote is a currently active MIDI note
 type ActiveNote struct {
 	id     int
 	noteOn *Note
-	ce     CursorStepEvent // the one that triggered the note
+	ce     CursorDeviceEvent // the one that triggered the note
 }
+
+*/
 
 // Motor is an entity that that reacts to things (cursor events, apis) and generates output (midi, graphics)
 type Motor struct {
@@ -30,13 +30,13 @@ type Motor struct {
 	freeframeClient *osc.Client
 	resolumeClient  *osc.Client
 	guiClient       *osc.Client
-	lastActiveID    int
+	// lastActiveID    int
 
 	// tempoFactor            float64
-	loop            *StepLoop
-	loopIsRecording bool
-	loopIsPlaying   bool
-	fadeLoop        float32
+	// loop            *StepLoop
+	// loopIsRecording bool
+	// loopIsPlaying   bool
+	// fadeLoop        float32
 	// lastCursorStepEvent    CursorStepEvent
 	// lastUnQuantizedStepNum Clicks
 
@@ -44,20 +44,8 @@ type Motor struct {
 	params *ParamValues
 
 	// paramsMutex               sync.RWMutex
-	activeNotes               map[string]*ActiveNote
-	activeNotesMutex          sync.RWMutex
-	activeCursors             map[string]*ActiveStepCursor
-	activeCursorsMutex        sync.RWMutex
-	permInstanceIDMutex       sync.RWMutex
-	permInstanceIDQuantized   map[string]string // map incoming IDs to permInstanceIDs in the steploop
-	permInstanceIDUnquantized map[string]string // map incoming IDs to permInstanceIDs in the steploop
-	permInstanceIDDownClick   map[string]Clicks // map permInstanceIDs to quantized stepnum of the down event
-	permInstanceIDDownQuant   map[string]Clicks // map permInstanceIDs to quantize value of the "down" event
-	permInstanceIDDragOK      map[string]bool
-	deviceCursors             map[string]*DeviceCursor
-	deviceCursorsMutex        sync.RWMutex
-
-	activePhrasesManager *ActivePhrasesManager
+	// activeNotes      map[string]*ActiveNote
+	// activeNotesMutex sync.RWMutex
 
 	// Things moved over from Router
 	MIDINumDown      int
@@ -82,18 +70,9 @@ func NewMotor(pad string, resolumeLayer int, freeframeClient *osc.Client, resolu
 		guiClient:       guiClient,
 		// tempoFactor:         1.0,
 		// params:                         make(map[string]interface{}),
-		params:                    NewParamValues(),
-		activeNotes:               make(map[string]*ActiveNote),
-		activeCursors:             make(map[string]*ActiveStepCursor),
-		permInstanceIDQuantized:   make(map[string]string),
-		permInstanceIDUnquantized: make(map[string]string),
-		permInstanceIDDownClick:   make(map[string]Clicks),
-		permInstanceIDDownQuant:   make(map[string]Clicks),
-		permInstanceIDDragOK:      make(map[string]bool),
-		fadeLoop:                  0.5,
-		loop:                      NewLoop(oneBeat * 8), // matches default in GUI
-		deviceCursors:             make(map[string]*DeviceCursor),
-		activePhrasesManager:      NewActivePhrasesManager(),
+		params: NewParamValues(),
+		// activeNotes: make(map[string]*ActiveNote),
+		// fadeLoop:    0.5,
 
 		MIDIOctaveShift:  0,
 		MIDIThru:         true,
@@ -168,179 +147,16 @@ func (motor *Motor) PassThruMIDI(e MidiEvent) {
 	}
 }
 
+/*
 // AdvanceByOneClick advances time by 1 click in a StepLoop
 func (motor *Motor) AdvanceByOneClick() {
 
 	motor.deviceCursorsMutex.Lock()
 	defer motor.deviceCursorsMutex.Unlock()
 
-	// motor.activeCursorsMutex.Lock()
-	// defer motor.activeCursorsMutex.Unlock()
-
-	// motor.activeNotesMutex.Lock()
-	// defer motor.activeNotesMutex.Unlock()
-
 	motor.activePhrasesManager.AdvanceByOneClick()
-
-	loop := motor.loop
-
-	loop.stepsMutex.Lock()
-	defer loop.stepsMutex.Unlock()
-
-	stepnum := loop.currentStep
-
-	if Debug.Transpose {
-		log.Printf("Advance 1 click stepnum=%d\n", stepnum)
-	}
-
-	if Debug.Advance {
-		if stepnum%20 == 0 {
-			log.Printf("advanceClickby1 start stepnum=%d\n", stepnum)
-		}
-	}
-
-	step := loop.steps[stepnum]
-
-	var removeCids []string
-	if step != nil && step.events != nil && len(step.events) > 0 {
-		for _, event := range step.events {
-
-			ce := event.cursorStepEvent
-
-			if Debug.Advance {
-				log.Printf("Motor.advanceClickBy1: pad=%s stepnum=%d ce=%+v\n", motor.padName, stepnum, ce)
-			}
-
-			ac := motor.getActiveStepCursor(ce)
-			ac.x = ce.X
-			ac.y = ce.Y
-			ac.z = ce.Z
-
-			wasFresh := ce.Fresh
-
-			// Freshly added things ALWAYS get played.
-			playit := false
-			if ce.Fresh || motor.loopIsPlaying {
-				playit = true
-			}
-			event.cursorStepEvent.Fresh = false
-			ce.Fresh = false // needed?
-
-			// Note that we fade the z values in CursorStepEvent, not ActiveStepCursor,
-			// because ActiveStepCursor goes away when the gesture ends,
-			// while CursorStepEvents in the loop stick around.
-			event.cursorStepEvent.Z = event.cursorStepEvent.Z * motor.fadeLoop // fade it
-			event.cursorStepEvent.LoopsLeft--
-			ce.LoopsLeft--
-
-			minz := float32(0.001)
-
-			// Keep track of the maximum z value for an ActiveCursor,
-			// so we know (when get the UP) whether we should
-			// delete this gesture.
-			switch {
-			case ce.Ddu == "down":
-				ac.maxzSoFar = -1.0
-				ac.lastDrag = -1
-			case ce.Ddu == "drag" && ce.Z > ac.maxzSoFar:
-				// log.Printf("Saving ce.Z as ac.maxz = %v\n", ce.Z)
-				ac.maxzSoFar = ce.Z
-			default:
-				// log.Printf("up!\n")
-			}
-
-			// See if this cursor should be removed
-			if ce.Ddu == "up" && (ce.LoopsLeft < 0 || (ce.Z < minz) ||
-				(ac.maxzSoFar > 0.0 && ac.maxzSoFar < minz) ||
-				(ac.maxzSoFar < 0.0 && ac.downEvent.Z < minz)) {
-
-				removeCids = append(removeCids, ce.ID)
-				// if Debug.Cursor {
-				// 	log.Printf("Adding ce.ID=%s to removeCids\n", ce.ID)
-				// }
-				// NOTE: playit should still be left true for this UP event
-			} else {
-				// Don't play any events in this step with an id that we're getting ready to remove
-				for _, cid := range removeCids {
-					if ce.ID == cid {
-						playit = false
-					}
-				}
-			}
-
-			if playit {
-
-				// XXX - eventually, a parameter should allow
-				// either of MIDI or Graphics to be quantized,
-				// but for the moment, it's hardcoded that
-				// MIDI things are generated from quantized events
-				// and Graphic things from unquantized events.
-
-				// We actually get two virtually-identical events
-				// for each incoming cursor event.  One is unquantized,
-				// and one is time-quantized
-
-				if ce.Quantized {
-					// MIDI stuff
-					if ce.Ddu == "drag" {
-						currentClick := CurrentClick()
-						dclick := currentClick - ac.lastDrag
-						if ac.lastDrag < 0 || dclick >= oneBeat/32 {
-							ac.lastDrag = currentClick
-							if Debug.GenSound {
-								log.Printf("generateSoundFromCursor: ddu=%s stepnum=%d ce.ID=%s\n", ce.Ddu, stepnum, ce.ID)
-							}
-							motor.generateSoundFromCursor(ce)
-						}
-					} else {
-						if Debug.GenSound {
-							log.Printf("generateSoundFromCursor: ddu=%s stepnum=%d ce.ID=%s\n", ce.Ddu, stepnum, ce.ID)
-						}
-						motor.generateSoundFromCursor(ce)
-					}
-				} else {
-					// Graphics and GUI stuff
-					ss := motor.params.ParamStringValue("visual.spritesource", "")
-					if ss == "cursor" {
-						if TheEngine.Router.generateVisuals && Debug.Loop {
-							log.Printf("Motor.advanceClickBy1: stepnum=%d generateVisuals ce=%+v\n", stepnum, ce)
-						}
-						motor.generateVisualsFromCursor(ce)
-					}
-					motor.notifyGUI(ce, wasFresh)
-				}
-			}
-		}
-	}
-	if len(removeCids) > 0 {
-		for _, removeID := range removeCids {
-			for _, step := range loop.steps {
-				// We want to delete all events from this step that have removeId
-
-				// This method of deleting things from an array without
-				// allocating a new array is found on this page:
-				// https://vbauerster.github.io/2017/04/removing-items-from-a-slice-while-iterating-in-go/
-				// log.Printf("Before deleting id=%s  events=%v\n", id, step.events)
-				newevents := step.events[:0]
-				for _, event := range step.events {
-					if event.cursorStepEvent.ID != removeID {
-						// Include this event
-						newevents = append(newevents, event)
-					}
-				}
-				step.events = newevents
-			}
-		}
-	}
-
-	loop.currentStep++
-	if loop.currentStep >= loop.length {
-		// if engine.Debug.MIDI {
-		// 	log.Printf("Motor.AdvanceClickBy1: region=%s Loop length=%d wrapping around to step 0\n", r.padName, loop.length)
-		// }
-		loop.currentStep = 0
-	}
 }
+*/
 
 // HandleMIDITimeReset xxx
 func (motor *Motor) HandleMIDITimeReset() {
@@ -363,6 +179,8 @@ func (motor *Motor) HandleMidiInput(e MidiEvent) {
 		motor.handleMIDISetScaleNote(e)
 	}
 }
+
+/*
 func CallerPackageAndFunc() (string, string) {
 	pc, _, _, _ := runtime.Caller(1)
 
@@ -384,6 +202,7 @@ func CallerFunc() string {
 	funcname := funcName[lastSlash+1:]
 	return funcname
 }
+*/
 
 func (motor *Motor) SetOneParamValue(fullname, value string) error {
 
@@ -432,11 +251,7 @@ func (motor *Motor) setExternalScale(pitch int, on bool) {
 	}
 }
 
-// Time returns the current time
-func (motor *Motor) time() time.Time {
-	return time.Now()
-}
-
+/*
 func (motor *Motor) handleCursorDeviceEvent(e CursorDeviceEvent) {
 
 	id := e.Source
@@ -498,34 +313,6 @@ func (motor *Motor) handleCursorDeviceEvent(e CursorDeviceEvent) {
 	}
 }
 
-// checkDelay is the Duration that has to pass
-// before we decide a cursor is no longer present,
-// resulting in a cursor UP event.
-var checkDelay time.Duration = 0
-
-func (motor *Motor) checkCursorUp() {
-	now := motor.time()
-
-	if checkDelay == 0 {
-		milli := ConfigIntWithDefault("upcheckmillisecs", 1000)
-		checkDelay = time.Duration(milli) * time.Millisecond
-	}
-
-	motor.deviceCursorsMutex.Lock()
-	defer motor.deviceCursorsMutex.Unlock()
-
-	for id, c := range motor.deviceCursors {
-		elapsed := now.Sub(c.lastTouch)
-		if elapsed > checkDelay {
-			motor.executeIncomingCursor(CursorStepEvent{ID: id, Ddu: "up"})
-			if Debug.Cursor {
-				log.Printf("Motor.checkCursorUp: deleting cursor id=%s elapsed=%v\n", id, elapsed)
-			}
-			delete(motor.deviceCursors, id)
-		}
-	}
-}
-
 func (motor *Motor) getActiveNote(id string) *ActiveNote {
 	motor.activeNotesMutex.RLock()
 	a, ok := motor.activeNotes[id]
@@ -569,11 +356,14 @@ func (motor *Motor) terminateActiveNotes() {
 	}
 	motor.activeNotesMutex.RUnlock()
 }
+*/
 
+/*
 func (motor *Motor) clearGraphics() {
 	// send an OSC message to Resolume
 	motor.toFreeFramePluginForLayer(osc.NewMessage("/clear"))
 }
+*/
 
 func (motor *Motor) generateSprite(id string, x, y, z float32) {
 	if !TheEngine.Router.generateVisuals {
@@ -588,7 +378,8 @@ func (motor *Motor) generateSprite(id string, x, y, z float32) {
 	motor.toFreeFramePluginForLayer(msg)
 }
 
-func (motor *Motor) generateVisualsFromCursor(ce CursorStepEvent) {
+/*
+func (motor *Motor) generateVisualsFromCursor(ce CursorDeviceEvent) {
 	if !TheEngine.Router.generateVisuals {
 		return
 	}
@@ -600,10 +391,11 @@ func (motor *Motor) generateVisualsFromCursor(ce CursorStepEvent) {
 	msg.Append(float32(ce.Y))
 	msg.Append(float32(ce.Z))
 	if Debug.GenVisual {
-		log.Printf("Motor.generateVisuals: pad=%s click=%d stepnum=%d OSC message = %+v\n", motor.padName, CurrentClick(), motor.loop.currentStep, msg)
+		log.Printf("Motor.generateVisuals: pad=%s click=%d OSC message = %+v\n", motor.padName, CurrentClick(), msg)
 	}
 	motor.toFreeFramePluginForLayer(msg)
 }
+*/
 
 func (motor *Motor) generateSpriteFromNote(n *Note) {
 
@@ -661,7 +453,8 @@ func (motor *Motor) generateSpriteFromNote(n *Note) {
 	motor.toFreeFramePluginForLayer(msg)
 }
 
-func (motor *Motor) notifyGUI(ce CursorStepEvent, wasFresh bool) {
+/*
+func (motor *Motor) notifyGUI(ce CursorDeviceEvent, wasFresh bool) {
 	if !ConfigBool("notifygui") {
 		return
 	}
@@ -679,6 +472,7 @@ func (motor *Motor) notifyGUI(ce CursorStepEvent, wasFresh bool) {
 		log.Printf("Motor.notifyGUI: msg=%v\n", msg)
 	}
 }
+*/
 
 func (motor *Motor) toFreeFramePluginForLayer(msg *osc.Message) {
 	motor.freeframeClient.Send(msg)
@@ -733,30 +527,31 @@ func (motor *Motor) getScale() *Scale {
 	return scale
 }
 
-func (motor *Motor) generateSoundFromCursor(ce CursorStepEvent) {
+/*
+func (motor *Motor) generateSoundFromCursor(ce CursorDeviceEvent) {
 	if !TheEngine.Router.generateSound {
 		return
 	}
 	a := motor.getActiveNote(ce.ID)
-	if Debug.Transpose {
-		log.Printf("Motor.gen: pad=%s ntsactive=%d ce.id=%s ddu=%s\n",
-			motor.padName, len(motor.activeNotes), ce.ID, ce.Ddu)
-		if a == nil {
-			log.Printf("   a is nil\n")
-		} else {
-			if a.noteOn == nil {
-				log.Printf("   a.id=%d a.noteOn=nil\n", a.id)
+		if Debug.Transpose {
+			log.Printf("Motor.gen: pad=%s ntsactive=%d ce.id=%s ddu=%s\n",
+				motor.padName, len(motor.activeNotes), ce.ID, ce.Ddu)
+			if a == nil {
+				log.Printf("   a is nil\n")
 			} else {
-				s := fmt.Sprintf("   a.id=%d a.noteOn=%+v\n", a.id, *(a.noteOn))
-				if strings.Contains(s, "PANIC") {
-					log.Printf("HEY, PANIC?\n")
+				if a.noteOn == nil {
+					log.Printf("   a.id=%d a.noteOn=nil\n", a.id)
 				} else {
-					log.Printf("%s\n", s)
+					s := fmt.Sprintf("   a.id=%d a.noteOn=%+v\n", a.id, *(a.noteOn))
+					if strings.Contains(s, "PANIC") {
+						log.Printf("HEY, PANIC?\n")
+					} else {
+						log.Printf("%s\n", s)
 
+					}
 				}
 			}
 		}
-	}
 	switch ce.Ddu {
 	case "down":
 		// Send noteoff for current note
@@ -769,15 +564,6 @@ func (motor *Motor) generateSoundFromCursor(ce CursorStepEvent) {
 		}
 		a.noteOn = motor.cursorToNoteOn(ce)
 		a.ce = ce
-		if Debug.Transpose {
-			s := fmt.Sprintf("Setting a.noteOn to %+v!\n", *(a.noteOn))
-			if strings.Contains(s, "PANIC") {
-				log.Printf("PANIC, a.noteOn?\n")
-			} else {
-				log.Printf("%s\n", s)
-			}
-			log.Printf("generateMIDI sending NoteOn for down\n")
-		}
 		motor.sendNoteOn(a)
 	case "drag":
 		if a.noteOn == nil {
@@ -859,128 +645,17 @@ func (motor *Motor) generateSoundFromCursor(ce CursorStepEvent) {
 		motor.activeNotesMutex.Unlock()
 	}
 }
+*/
 
-func (motor *Motor) executeIncomingCursor(ce CursorStepEvent) {
-
-	// Every cursor event actually gets added to the step loop,
-	// even if we're not recording a loop.  That way, everything gets
-	// step-quantized and played back identically, looped or not.
-
-	if motor.loopIsRecording {
-		ce.LoopsLeft = loopForever
-	} else {
-		ce.LoopsLeft = 0
-	}
-
-	if Debug.Transpose {
-		log.Printf("MOTOR.INCOMINGCURSOR: ce.id=%s ddu=%s\n", ce.ID, ce.Ddu)
-	}
-
+/*
+// XXXXXXXXXX This is a Responder!
+func (router *Router) executeIncomingCursor(ce CursorStepEvent) {
 	q := motor.cursorToQuant(ce)
-
-	quantizedStepnum := motor.nextQuant(motor.loop.currentStep, q)
-	for quantizedStepnum >= motor.loop.length {
-		quantizedStepnum -= motor.loop.length
-	}
-
-	// log.Printf("Quantizing currentClick=%d r.loop.currentStep=%d q=%d quantizedStepnum=%d\n",
-	// 	currentClick, r.loop.currentStep, q, quantizedStepnum)
-
-	// We create a new "permanent" id for each incoming ce.id,
-	// so that all of that id's CursorEvents (from down through UP)
-	// in the steps of the loop will have a unique id.
-
-	motor.permInstanceIDMutex.RLock()
-	permInstanceIDQuantized, ok1 := motor.permInstanceIDQuantized[ce.ID]
-	permInstanceIDUnquantized, ok2 := motor.permInstanceIDUnquantized[ce.ID]
-	motor.permInstanceIDMutex.RUnlock()
-
-	if (!ok1 || !ok2) && ce.Ddu != "down" {
-		log.Printf("Motor.executeIncomingCursor: drag or up event didn't find ce.ID=%s in incomingIDToPermSid*\n", ce.ID)
-		return
-	}
-
-	if ce.Ddu == "down" {
-		// Whether or not this ce.id is in incomingIDToPermSid,
-		// we create a new permanent id.  I.e. every
-		// gesture added to the loop has a unique permanent id.
-		// We also keep track of the quantized down step, so that
-		// any drag and UP things (which aren't quantized)
-		// aren't added before or on that step.
-
-		motor.permInstanceIDMutex.Lock()
-
-		permInstanceIDQuantized = fmt.Sprintf("%s#%d", ce.ID, uniqueIndex)
-		uniqueIndex++
-		permInstanceIDUnquantized = fmt.Sprintf("%s#%d", ce.ID, uniqueIndex)
-		uniqueIndex++
-
-		motor.permInstanceIDQuantized[ce.ID] = permInstanceIDQuantized
-		motor.permInstanceIDUnquantized[ce.ID] = permInstanceIDUnquantized
-
-		motor.permInstanceIDDownClick[permInstanceIDQuantized] = motor.nextQuant(CurrentClick(), q)
-		motor.permInstanceIDDownQuant[permInstanceIDQuantized] = q
-		motor.permInstanceIDDragOK[permInstanceIDQuantized] = false
-
-		motor.permInstanceIDMutex.Unlock()
-	}
-
-	// We don't want to quantize drag events, but we also don't want them to do anything
-	// before the down event (which is quantized), so we only turn on DragOK when we see
-	// a drag event come in shortly after the down event.
-
-	if !motor.permInstanceIDDragOK[permInstanceIDQuantized] && ce.Ddu == "drag" {
-		if CurrentClick() <= motor.permInstanceIDDownClick[permInstanceIDQuantized] {
-			return
-		}
-		motor.permInstanceIDDragOK[permInstanceIDQuantized] = true
-	}
-
-	ce.ID = permInstanceIDQuantized
-	ce.Fresh = true
-	ce.Quantized = true
-
-	// Make a separate CursorEvent for the unquantized event
-	ceUnquantized := CursorStepEvent{
-		ID:        permInstanceIDUnquantized,
-		X:         ce.X,
-		Y:         ce.Y,
-		Z:         ce.Z,
-		LoopsLeft: ce.LoopsLeft,
-		Ddu:       ce.Ddu,
-		Quantized: false,
-		Fresh:     true,
-	}
-
-	if ce.Ddu == "up" {
-		// The up event always has a Y value of 0 (someday this may, change, but for now...)
-		// So, use the quantize value of the down event
-		downQuant := motor.permInstanceIDDownQuant[permInstanceIDQuantized]
-		quantizedStepnum = motor.nextQuant(motor.loop.currentStep, downQuant)
-		if Debug.Loop {
-			log.Printf("UP event: qsn1=%d loopleng=%d\n", quantizedStepnum, motor.loop.length)
-		}
-		for quantizedStepnum >= motor.loop.length {
-			quantizedStepnum -= motor.loop.length
-			if Debug.Loop {
-				log.Printf("   quantizedStepnum2=%d\n", quantizedStepnum)
-			}
-		}
-
-		// If the up happens too quickly,
-		// the graphics don't have time to fire,
-		// so push the up event out a few steps.
-		magicUpDelayClicks := Clicks(8)
-		quantizedStepnum = (quantizedStepnum + magicUpDelayClicks) % motor.loop.length
-		if Debug.Loop {
-			log.Printf("   FINAL quantizedStepnum2=%d\n", quantizedStepnum)
-		}
-	}
-
-	motor.loop.AddToStep(ce, quantizedStepnum)
-	motor.loop.AddToStep(ceUnquantized, motor.loop.currentStep)
+	log.Printf("Should be scheduling a note here!  q=%d\n",q)
 }
+*/
 
+/*
 func (motor *Motor) nextQuant(t Clicks, q Clicks) Clicks {
 	// the algorithm below is the same as KeyKit's nextquant
 	if q <= 1 {
@@ -1035,6 +710,7 @@ func (motor *Motor) sendNoteOff(a *ActiveNote) {
 	// }
 	motor.SendNoteToSynth(noteOff)
 }
+*/
 
 func (motor *Motor) sendANO() {
 	if !TheEngine.Router.generateSound {
@@ -1067,6 +743,7 @@ func (r *Motor) paramIntValue(paramname string) int {
 }
 */
 
+/*
 func (motor *Motor) cursorToNoteOn(ce CursorStepEvent) *Note {
 	pitch := motor.cursorToPitch(ce)
 	// log.Printf("cursorToNoteOn pitch=%v trans=%v", pitch, r.TransposePitch)
@@ -1075,7 +752,9 @@ func (motor *Motor) cursorToNoteOn(ce CursorStepEvent) *Note {
 	// log.Printf("cursorToNoteOn x=%.5f y=%.5f z=%.5f pitch=%d velocity=%d\n", ce.x, ce.y, ce.z, pitch, velocity)
 	return NewNoteOn(pitch, velocity, synth)
 }
+*/
 
+/*
 func (motor *Motor) cursorToPitch(ce CursorStepEvent) uint8 {
 	pitchmin := motor.params.ParamIntValue("sound.pitchmin")
 	pitchmax := motor.params.ParamIntValue("sound.pitchmax")
@@ -1099,7 +778,9 @@ func (motor *Motor) cursorToPitch(ce CursorStepEvent) uint8 {
 	}
 	return p
 }
+*/
 
+/*
 func (motor *Motor) cursorToVelocity(ce CursorStepEvent) uint8 {
 	vol := motor.params.ParamStringValue("misc.vol", "fixed")
 	velocitymin := motor.params.ParamIntValue("sound.velocitymin")
@@ -1130,7 +811,9 @@ func (motor *Motor) cursorToVelocity(ce CursorStepEvent) uint8 {
 	vel := uint8(velocitymin + p1%dv)
 	return uint8(vel)
 }
+*/
 
+/*
 func (motor *Motor) cursorToDuration(ce CursorStepEvent) int {
 	return 92
 }
@@ -1170,7 +853,9 @@ func (motor *Motor) cursorToQuant(ce CursorStepEvent) Clicks {
 	// log.Printf("Quant q=%d tempofactor=%f\n", q, TempoFactor)
 	return q
 }
+*/
 
+/*
 func (motor *Motor) loopComb() {
 
 	motor.loop.stepsMutex.Lock()
@@ -1261,6 +946,7 @@ func (motor *Motor) loopQuant() {
 		}
 	}
 }
+*/
 
 func (motor *Motor) sendEffectParam(name string, value string) {
 	// Effect parameters that have ":" in their name are plugin parameters
@@ -1451,7 +1137,11 @@ func (motor *Motor) sendPadOneEffectOnOff(effectName string, onoff bool) {
 	motor.toResolume(msg)
 }
 
-// This silliness is to avoid unused function errors from go-staticcheck
-var ss *Motor
-var _ = ss.cursorToDuration
-var _ = ss.loopQuant
+func MotorForRegion(region string) *Motor {
+	motor, ok := TheEngine.Router.motors[region]
+	if !ok {
+		return nil
+	} else {
+		return motor
+	}
+}
