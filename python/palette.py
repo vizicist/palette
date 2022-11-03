@@ -163,11 +163,11 @@ def log(*args):
     print(s)
     sys.stdout.flush()
 
-def palette_region_api(region, api, params=""):
-    if region == "":
-        log("palette_region_api: no region specified?  Assuming *")
-        region = "*"
-    p = "\"region\":\""+region+"\""
+def palette_player_api(player, api, params=""):
+    if player == "":
+        log("palette_player_api: no player specified?  Assuming *")
+        player = "*"
+    p = "\"player\":\""+player+"\""
     if params == "":
         params = p
     else:
@@ -408,30 +408,30 @@ def PaletteDir():
     return paletteDir
 
 
-def SendCursorEvent(cid,ddu,x,y,z,region="A"):
+def SendCursorEvent(cid,ddu,x,y,z,player="A"):
     event = "cursor_" + ddu
-    e = ("\"region\": \"" + region + "\", " + \
+    e = ("\"player\": \"" + player + "\", " + \
         "\"cid\": \"" + str(cid) + "\", " + \
         "\"event\": \"" + event + "\", " + \
         "\"x\": \"%f\", \"y\": \"%f\", \"z\": \"%f\"")  % (x,y,z)
     palette_event(e)
 
-def SendSpriteEvent(cid,x,y,z,region="A"):
+def SendSpriteEvent(cid,x,y,z,player="A"):
     event = "sprite"
-    e = ("\"region\": \"" + region + "\", " + \
+    e = ("\"player\": \"" + player + "\", " + \
         "\"cid\": \"" + str(cid) + "\", " + \
         "\"event\": \"" + event + "\", " + \
         "\"x\": \"%f\", \"y\": \"%f\", \"z\": \"%f\"")  % (x,y,z)
     palette_event(e)
 
-def SendMIDIEvent(device,timesofar,msg,region="A"):
+def SendMIDIEvent(device,timesofar,msg,player="A"):
     bytestr = "0x"
     for b in msg.bytes():
         bytestr += ("%02x" % b)
 
     e = ("\"event\": \"midi\", " + \
         "\"device\": \"%s\", " + \
-        "\"region\": \"" + region + "\", " + \
+        "\"player\": \"" + player + "\", " + \
         "\"time\": \"%f\", " + \
         "\"bytes\": \"%s\"") % \
             (device, timesofar, bytestr)

@@ -42,7 +42,7 @@
     "",
     "DummyWave"
   ],
-  "regionport": [
+  "midiport": [
     "01. Internal MIDI",
     "02. Internal MIDI",
     "03. Internal MIDI",

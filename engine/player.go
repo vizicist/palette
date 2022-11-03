@@ -23,8 +23,8 @@ type ActiveNote struct {
 
 */
 
-// Motor is an entity that that reacts to things (cursor events, apis) and generates output (midi, graphics)
-type Motor struct {
+// Player is an entity that that reacts to things (cursor events, apis) and generates output (midi, graphics)
+type Player struct {
 	padName         string
 	resolumeLayer   int // see ResolumeLayerForPad
 	freeframeClient *osc.Client
@@ -60,9 +60,9 @@ type Motor struct {
 	externalScale    *Scale
 }
 
-// NewMotor makes a new Motor
-func NewMotor(pad string, resolumeLayer int, freeframeClient *osc.Client, resolumeClient *osc.Client, guiClient *osc.Client) *Motor {
-	r := &Motor{
+// NewPlayer makes a new Player
+func NewPlayer(pad string, resolumeLayer int, freeframeClient *osc.Client, resolumeClient *osc.Client, guiClient *osc.Client) *Player {
+	r := &Player{
 		padName:         pad,
 		resolumeLayer:   resolumeLayer,
 		freeframeClient: freeframeClient,
@@ -89,12 +89,12 @@ func NewMotor(pad string, resolumeLayer int, freeframeClient *osc.Client, resolu
 	return r
 }
 
-func (motor *Motor) SendNoteToSynth(n *Note) {
+func (player *Player) SendNoteToSynth(n *Note) {
 
 	// XXX - eventually this should be done by a responder?
-	ss := motor.params.ParamStringValue("visual.spritesource", "")
+	ss := player.params.ParamStringValue("visual.spritesource", "")
 	if ss == "midi" {
-		motor.generateSpriteFromNote(n)
+		player.generateSpriteFromNote(n)
 	}
 	// if Debug.MIDI {
 	// 	log.Printf("FUNC %s: n=%+v\n", CallerFunc(), *n)
@@ -104,24 +104,24 @@ func (motor *Motor) SendNoteToSynth(n *Note) {
 }
 
 // PassThruMIDI xxx
-func (motor *Motor) PassThruMIDI(e MidiEvent) {
+func (player *Player) PassThruMIDI(e MidiEvent) {
 
 	if Debug.MIDI {
-		log.Printf("Motor.PassThruMIDI e=%+v\n", e)
+		log.Printf("Player.PassThruMIDI e=%+v\n", e)
 	}
 
 	// channel on incoming MIDI is ignored
-	// it uses whatever sound the Motor is using
+	// it uses whatever sound the Player is using
 	status := e.Status & 0xf0
 
 	data1 := uint8(e.Data1)
 	data2 := uint8(e.Data2)
 	pitch := data1
 
-	synth := motor.params.ParamStringValue("sound.synth", defaultSynth)
+	synth := player.params.ParamStringValue("sound.synth", defaultSynth)
 	var n *Note
-	if (status == 0x90 || status == 0x80) && motor.MIDIThruScadjust {
-		scale := motor.getScale()
+	if (status == 0x90 || status == 0x80) && player.MIDIThruScadjust {
+		scale := player.getScale()
 		pitch = scale.ClosestTo(pitch)
 	}
 	switch status {
@@ -143,40 +143,40 @@ func (motor *Motor) PassThruMIDI(e MidiEvent) {
 	}
 	if n != nil {
 		// log.Printf("PassThruMIDI sending note=%v\n", *n)
-		motor.SendNoteToSynth(n)
+		player.SendNoteToSynth(n)
 	}
 }
 
 /*
 // AdvanceByOneClick advances time by 1 click in a StepLoop
-func (motor *Motor) AdvanceByOneClick() {
+func (player *Player) AdvanceByOneClick() {
 
-	motor.deviceCursorsMutex.Lock()
-	defer motor.deviceCursorsMutex.Unlock()
+	player.deviceCursorsMutex.Lock()
+	defer player.deviceCursorsMutex.Unlock()
 
-	motor.activePhrasesManager.AdvanceByOneClick()
+	player.activePhrasesManager.AdvanceByOneClick()
 }
 */
 
 // HandleMIDITimeReset xxx
-func (motor *Motor) HandleMIDITimeReset() {
+func (player *Player) HandleMIDITimeReset() {
 	log.Printf("HandleMIDITimeReset!! needs implementation\n")
 }
 
 // HandleMIDIInput xxx
-func (motor *Motor) HandleMidiInput(e MidiEvent) {
+func (player *Player) HandleMidiInput(e MidiEvent) {
 
-	motor.midiInputMutex.Lock()
-	defer motor.midiInputMutex.Unlock()
+	player.midiInputMutex.Lock()
+	defer player.midiInputMutex.Unlock()
 
 	if Debug.MIDI {
 		log.Printf("Router.HandleMIDIInput: event=%+v\n", e)
 	}
-	if motor.MIDIThru {
-		motor.PassThruMIDI(e)
+	if player.MIDIThru {
+		player.PassThruMIDI(e)
 	}
-	if motor.MIDISetScale {
-		motor.handleMIDISetScaleNote(e)
+	if player.MIDISetScale {
+		player.handleMIDISetScaleNote(e)
 	}
 }
 
@@ -204,12 +204,12 @@ func CallerFunc() string {
 }
 */
 
-func (motor *Motor) SetOneParamValue(fullname, value string) error {
+func (player *Player) SetOneParamValue(fullname, value string) error {
 
 	if Debug.Values {
-		log.Printf("SetOneParamValue motor=%s %s %s\n", motor.padName, fullname, value)
+		log.Printf("SetOneParamValue player=%s %s %s\n", player.padName, fullname, value)
 	}
-	err := motor.params.SetParamValueWithString(fullname, value, nil)
+	err := player.params.SetParamValueWithString(fullname, value, nil)
 	if err != nil {
 		return err
 	}
@@ -220,58 +220,58 @@ func (motor *Motor) SetOneParamValue(fullname, value string) error {
 		msg.Append("set_params")
 		args := fmt.Sprintf("{\"%s\":\"%s\"}", name, value)
 		msg.Append(args)
-		motor.toFreeFramePluginForLayer(msg)
+		player.toFreeFramePluginForLayer(msg)
 	}
 
 	if strings.HasPrefix(fullname, "effect.") {
 		name := strings.TrimPrefix(fullname, "effect.")
 		// Effect parameters get sent to Resolume
-		motor.sendEffectParam(name, value)
+		player.sendEffectParam(name, value)
 	}
 
 	return nil
 }
 
 // ClearExternalScale xxx
-func (motor *Motor) clearExternalScale() {
+func (player *Player) clearExternalScale() {
 	if Debug.Scale {
-		log.Printf("clearExternalScale pad=%s", motor.padName)
+		log.Printf("clearExternalScale pad=%s", player.padName)
 	}
-	motor.externalScale = MakeScale()
+	player.externalScale = MakeScale()
 }
 
 // SetExternalScale xxx
-func (motor *Motor) setExternalScale(pitch int, on bool) {
-	s := motor.externalScale
+func (player *Player) setExternalScale(pitch int, on bool) {
+	s := player.externalScale
 	for p := pitch; p < 128; p += 12 {
 		s.HasNote[p] = on
 	}
 	if Debug.Scale {
-		log.Printf("setExternalScale pad=%s pitch=%v on=%v", motor.padName, pitch, on)
+		log.Printf("setExternalScale pad=%s pitch=%v on=%v", player.padName, pitch, on)
 	}
 }
 
 /*
-func (motor *Motor) handleCursorDeviceEvent(e CursorDeviceEvent) {
+func (player *Player) handleCursorDeviceEvent(e CursorDeviceEvent) {
 
 	id := e.Source
 
-	motor.deviceCursorsMutex.Lock()
-	defer motor.deviceCursorsMutex.Unlock()
+	player.deviceCursorsMutex.Lock()
+	defer player.deviceCursorsMutex.Unlock()
 
 	// log.Printf("handleCursorDeviceEvent e=%v\n", e)
 
 	// Special event to clear cursors (by sending them "up" events)
 	if e.Ddu == "clear" {
-		for id, c := range motor.deviceCursors {
+		for id, c := range player.deviceCursors {
 			if !c.downed {
 				log.Printf("Hmmm, why is a cursor not downed?\n")
 			} else {
-				motor.executeIncomingCursor(CursorStepEvent{ID: id, Ddu: "up"})
+				player.executeIncomingCursor(CursorStepEvent{ID: id, Ddu: "up"})
 				if Debug.Cursor {
 					log.Printf("Clearing cursor id=%s\n", id)
 				}
-				delete(motor.deviceCursors, id)
+				delete(player.deviceCursors, id)
 			}
 		}
 		return
@@ -279,13 +279,13 @@ func (motor *Motor) handleCursorDeviceEvent(e CursorDeviceEvent) {
 
 	// e.Ddu is "down", "drag", or "up"
 
-	tc, ok := motor.deviceCursors[id]
+	tc, ok := player.deviceCursors[id]
 	if !ok {
 		// new DeviceCursor
 		tc = &DeviceCursor{}
-		motor.deviceCursors[id] = tc
+		player.deviceCursors[id] = tc
 	}
-	tc.lastTouch = motor.time()
+	tc.lastTouch = player.time()
 
 	// If it's a new (downed==false) cursor, make sure the first step event is "down
 	if !tc.downed {
@@ -300,72 +300,72 @@ func (motor *Motor) handleCursorDeviceEvent(e CursorDeviceEvent) {
 		Ddu: e.Ddu,
 	}
 	if Debug.Cursor {
-		log.Printf("Motor.handleCursorDeviceEvent: pad=%s id=%s ddu=%s xyz=%.4f,%.4f,%.4f\n", motor.padName, id, e.Ddu, e.X, e.Y, e.Z)
+		log.Printf("Player.handleCursorDeviceEvent: pad=%s id=%s ddu=%s xyz=%.4f,%.4f,%.4f\n", player.padName, id, e.Ddu, e.X, e.Y, e.Z)
 	}
 
-	motor.executeIncomingCursor(cse)
+	player.executeIncomingCursor(cse)
 
 	if e.Ddu == "up" {
 		// if Debug.Cursor {
 		// 	log.Printf("Router.handleCursorDeviceEvent: deleting cursor id=%s\n", id)
 		// }
-		delete(motor.deviceCursors, id)
+		delete(player.deviceCursors, id)
 	}
 }
 
-func (motor *Motor) getActiveNote(id string) *ActiveNote {
-	motor.activeNotesMutex.RLock()
-	a, ok := motor.activeNotes[id]
-	motor.activeNotesMutex.RUnlock()
+func (player *Player) getActiveNote(id string) *ActiveNote {
+	player.activeNotesMutex.RLock()
+	a, ok := player.activeNotes[id]
+	player.activeNotesMutex.RUnlock()
 	if !ok {
-		motor.lastActiveID++
+		player.lastActiveID++
 		a = &ActiveNote{
-			id:     motor.lastActiveID,
+			id:     player.lastActiveID,
 			noteOn: nil,
 		}
-		motor.activeNotesMutex.Lock()
-		motor.activeNotes[id] = a
-		motor.activeNotesMutex.Unlock()
+		player.activeNotesMutex.Lock()
+		player.activeNotes[id] = a
+		player.activeNotesMutex.Unlock()
 	}
 	return a
 }
 
-func (motor *Motor) getActiveStepCursor(ce CursorStepEvent) *ActiveStepCursor {
+func (player *Player) getActiveStepCursor(ce CursorStepEvent) *ActiveStepCursor {
 	sid := ce.ID
-	motor.activeCursorsMutex.RLock()
-	ac, ok := motor.activeCursors[sid]
-	motor.activeCursorsMutex.RUnlock()
+	player.activeCursorsMutex.RLock()
+	ac, ok := player.activeCursors[sid]
+	player.activeCursorsMutex.RUnlock()
 	if !ok {
 		ac = &ActiveStepCursor{downEvent: ce}
-		motor.activeCursorsMutex.Lock()
-		motor.activeCursors[sid] = ac
-		motor.activeCursorsMutex.Unlock()
+		player.activeCursorsMutex.Lock()
+		player.activeCursors[sid] = ac
+		player.activeCursorsMutex.Unlock()
 	}
 	return ac
 }
 
-func (motor *Motor) terminateActiveNotes() {
-	motor.activeNotesMutex.RLock()
-	for id, a := range motor.activeNotes {
+func (player) *Player) terminateActiveNotes() {
+	player.activeNotesMutex.RLock()
+	for id, a := range player.activeNotes {
 		// log.Printf("terminateActiveNotes n=%v\n", a.currentNoteOn)
 		if a != nil {
-			motor.sendNoteOff(a)
+			player.sendNoteOff(a)
 		} else {
 			log.Printf("Hey, activeNotes entry for id=%s\n", id)
 		}
 	}
-	motor.activeNotesMutex.RUnlock()
+	player.activeNotesMutex.RUnlock()
 }
 */
 
 /*
-func (motor *Motor) clearGraphics() {
+func (player) *Player) clearGraphics() {
 	// send an OSC message to Resolume
-	motor.toFreeFramePluginForLayer(osc.NewMessage("/clear"))
+	player.toFreeFramePluginForLayer(osc.NewMessage("/clear"))
 }
 */
 
-func (motor *Motor) generateSprite(id string, x, y, z float32) {
+func (player *Player) generateSprite(id string, x, y, z float32) {
 	if !TheEngine.Router.generateVisuals {
 		return
 	}
@@ -375,11 +375,11 @@ func (motor *Motor) generateSprite(id string, x, y, z float32) {
 	msg.Append(y)
 	msg.Append(z)
 	msg.Append(id)
-	motor.toFreeFramePluginForLayer(msg)
+	player.toFreeFramePluginForLayer(msg)
 }
 
 /*
-func (motor *Motor) generateVisualsFromCursor(ce CursorDeviceEvent) {
+func (player *Player) generateVisualsFromCursor(ce CursorDeviceEvent) {
 	if !TheEngine.Router.generateVisuals {
 		return
 	}
@@ -391,20 +391,20 @@ func (motor *Motor) generateVisualsFromCursor(ce CursorDeviceEvent) {
 	msg.Append(float32(ce.Y))
 	msg.Append(float32(ce.Z))
 	if Debug.GenVisual {
-		log.Printf("Motor.generateVisuals: pad=%s click=%d OSC message = %+v\n", motor.padName, CurrentClick(), msg)
+		log.Printf("Player.generateVisuals: pad=%s click=%d OSC message = %+v\n", player.padName, CurrentClick(), msg)
 	}
-	motor.toFreeFramePluginForLayer(msg)
+	player.toFreeFramePluginForLayer(msg)
 }
 */
 
-func (motor *Motor) generateSpriteFromNote(n *Note) {
+func (player *Player) generateSpriteFromNote(n *Note) {
 
 	if n.TypeOf != "noteon" {
 		return
 	}
 
-	pitchmin := uint8(motor.params.ParamIntValue("sound.pitchmin"))
-	pitchmax := uint8(motor.params.ParamIntValue("sound.pitchmax"))
+	pitchmin := uint8(player.params.ParamIntValue("sound.pitchmin"))
+	pitchmax := uint8(player.params.ParamIntValue("sound.pitchmax"))
 	if n.Pitch < pitchmin || n.Pitch > pitchmax {
 		log.Printf("Unexpected value of n.Pitch=%d, not between %d and %d\n", n.Pitch, pitchmin, pitchmax)
 		return
@@ -412,7 +412,7 @@ func (motor *Motor) generateSpriteFromNote(n *Note) {
 
 	var x float32
 	var y float32
-	switch motor.params.ParamStringValue("visual.placement", "random") {
+	switch player.params.ParamStringValue("visual.placement", "random") {
 	case "random":
 		x = rand.Float32()
 		y = rand.Float32()
@@ -450,11 +450,11 @@ func (motor *Motor) generateSpriteFromNote(n *Note) {
 	msg.Append(fmt.Sprintf("%d@localhost", n.Pitch))
 
 	// log.Printf("generateSprite msg=%+v\n", msg)
-	motor.toFreeFramePluginForLayer(msg)
+	player.toFreeFramePluginForLayer(msg)
 }
 
 /*
-func (motor *Motor) notifyGUI(ce CursorDeviceEvent, wasFresh bool) {
+func (player *Player) notifyGUI(ce CursorDeviceEvent, wasFresh bool) {
 	if !ConfigBool("notifygui") {
 		return
 	}
@@ -465,77 +465,77 @@ func (motor *Motor) notifyGUI(ce CursorDeviceEvent, wasFresh bool) {
 	msg.Append(float32(ce.X))
 	msg.Append(float32(ce.Y))
 	msg.Append(float32(ce.Z))
-	msg.Append(int32(motor.resolumeLayer))
+	msg.Append(int32(player.resolumeLayer))
 	msg.Append(wasFresh)
-	motor.guiClient.Send(msg)
+	player.guiClient.Send(msg)
 	if Debug.Notify {
-		log.Printf("Motor.notifyGUI: msg=%v\n", msg)
+		log.Printf("Player.notifyGUI: msg=%v\n", msg)
 	}
 }
 */
 
-func (motor *Motor) toFreeFramePluginForLayer(msg *osc.Message) {
-	motor.freeframeClient.Send(msg)
+func (player *Player) toFreeFramePluginForLayer(msg *osc.Message) {
+	player.freeframeClient.Send(msg)
 	if Debug.OSC {
-		log.Printf("Motor.toFreeFramePlugin: layer=%d port=%d msg=%v\n", motor.resolumeLayer, motor.freeframeClient.Port(), msg)
+		log.Printf("Player.toFreeFramePlugin: layer=%d port=%d msg=%v\n", player.resolumeLayer, player.freeframeClient.Port(), msg)
 	}
 }
 
-func (motor *Motor) toResolume(msg *osc.Message) {
-	motor.resolumeClient.Send(msg)
+func (player *Player) toResolume(msg *osc.Message) {
+	player.resolumeClient.Send(msg)
 	if Debug.OSC || Debug.Resolume {
-		log.Printf("Motor.toResolume: msg=%v\n", msg)
+		log.Printf("Player.toResolume: msg=%v\n", msg)
 	}
 }
 
-func (motor *Motor) handleMIDISetScaleNote(e MidiEvent) {
+func (player *Player) handleMIDISetScaleNote(e MidiEvent) {
 	status := e.Status & 0xf0
 	pitch := int(e.Data1)
 	if status == 0x90 {
 		// If there are no notes held down (i.e. this is the first), clear the scale
-		if motor.MIDINumDown < 0 {
+		if player.MIDINumDown < 0 {
 			// this can happen when there's a Read error that misses a noteon
-			motor.MIDINumDown = 0
+			player.MIDINumDown = 0
 		}
-		if motor.MIDINumDown == 0 {
-			motor.clearExternalScale()
+		if player.MIDINumDown == 0 {
+			player.clearExternalScale()
 		}
-		motor.setExternalScale(pitch%12, true)
-		motor.MIDINumDown++
+		player.setExternalScale(pitch%12, true)
+		player.MIDINumDown++
 		if pitch < 60 {
-			motor.MIDIOctaveShift = -1
+			player.MIDIOctaveShift = -1
 		} else if pitch > 72 {
-			motor.MIDIOctaveShift = 1
+			player.MIDIOctaveShift = 1
 		} else {
-			motor.MIDIOctaveShift = 0
+			player.MIDIOctaveShift = 0
 		}
 	} else if status == 0x80 {
-		motor.MIDINumDown--
+		player.MIDINumDown--
 	}
 }
 
 // getScale xxx
-func (motor *Motor) getScale() *Scale {
+func (player *Player) getScale() *Scale {
 	var scaleName string
 	var scale *Scale
-	if motor.MIDIUseScale {
-		scale = motor.externalScale
+	if player.MIDIUseScale {
+		scale = player.externalScale
 	} else {
-		scaleName = motor.params.ParamStringValue("misc.scale", "newage")
+		scaleName = player.params.ParamStringValue("misc.scale", "newage")
 		scale = GlobalScale(scaleName)
 	}
 	return scale
 }
 
 /*
-func (motor *Motor) generateSoundFromCursor(ce CursorDeviceEvent) {
+func (player *Player) generateSoundFromCursor(ce CursorDeviceEvent) {
 	if !TheEngine.Router.generateSound {
 		return
 	}
-	a := motor.getActiveNote(ce.ID)
+	a := player.getActiveNote(ce.ID)
 		if Debug.Transpose {
-			log.Printf("Motor.gen: pad=%s ntsactive=%d ce.id=%s ddu=%s\n",
-				motor.padName, len(motor.activeNotes), ce.ID, ce.Ddu)
+			log.Printf("Player.gen: pad=%s ntsactive=%d ce.id=%s ddu=%s\n",
+				player.padName, len(player.activeNotes), ce.ID, ce.Ddu)
 			if a == nil {
 				log.Printf("   a is nil\n")
 			} else {
@@ -560,11 +560,11 @@ func (motor *Motor) generateSoundFromCursor(ce CursorDeviceEvent) {
 			// faster than the checkDelay can generate the UP event.
 			log.Printf("Unexpected down when currentNoteOn is non-nil!? currentNoteOn=%+v\n", a)
 			// log.Printf("generateMIDI sending NoteOff before down note\n")
-			motor.sendNoteOff(a)
+			player.sendNoteOff(a)
 		}
-		a.noteOn = motor.cursorToNoteOn(ce)
+		a.noteOn = player.cursorToNoteOn(ce)
 		a.ce = ce
-		motor.sendNoteOn(a)
+		player.sendNoteOn(a)
 	case "drag":
 		if a.noteOn == nil {
 			// if we turn on playing in the middle of an existing loop,
@@ -577,7 +577,7 @@ func (motor *Motor) generateSoundFromCursor(ce CursorDeviceEvent) {
 			}
 			return
 		}
-		newNoteOn := motor.cursorToNoteOn(ce)
+		newNoteOn := player.cursorToNoteOn(ce)
 		oldpitch := a.noteOn.Pitch
 		newpitch := newNoteOn.Pitch
 		// We only turn off the existing note (for a given Cursor ID)
@@ -590,17 +590,17 @@ func (motor *Motor) generateSoundFromCursor(ce CursorDeviceEvent) {
 
 		dz := float64(int(a.noteOn.Velocity) - int(newNoteOn.Velocity))
 		deltaz := float32(math.Abs(dz) / 128.0)
-		deltaztrig := motor.params.ParamFloatValue("sound._deltaztrig")
+		deltaztrig := player.params.ParamFloatValue("sound._deltaztrig")
 
 		deltay := float32(math.Abs(float64(a.ce.Y - ce.Y)))
-		deltaytrig := motor.params.ParamFloatValue("sound._deltaytrig")
+		deltaytrig := player.params.ParamFloatValue("sound._deltaytrig")
 		// log.Printf("genSound for drag!   a.noteOn.vel=%d  newNoteOn.vel=%d deltaz=%f deltaztrig=%f\n", a.noteOn.Velocity, newNoteOn.Velocity, deltaz, deltaztrig)
 
-		if motor.params.ParamStringValue("sound.controllerstyle", "nothing") == "modulationonly" {
-			zmin := motor.params.ParamFloatValue("sound._controllerzmin")
-			zmax := motor.params.ParamFloatValue("sound._controllerzmax")
-			cmin := motor.params.ParamIntValue("sound._controllermin")
-			cmax := motor.params.ParamIntValue("sound._controllermax")
+		if player.params.ParamStringValue("sound.controllerstyle", "nothing") == "modulationonly" {
+			zmin := player.params.ParamFloatValue("sound._controllerzmin")
+			zmax := player.params.ParamFloatValue("sound._controllerzmax")
+			cmin := player.params.ParamIntValue("sound._controllermin")
+			cmax := player.params.ParamIntValue("sound._controllermax")
 			oldz := a.ce.Z
 			newz := ce.Z
 			// XXX - should put the old controller value in ActiveNote so
@@ -614,11 +614,11 @@ func (motor *Motor) generateSoundFromCursor(ce CursorDeviceEvent) {
 		}
 
 		if newpitch != oldpitch || deltaz > deltaztrig || deltay > deltaytrig {
-			motor.sendNoteOff(a)
+			player.sendNoteOff(a)
 			a.noteOn = newNoteOn
 			a.ce = ce
 			if Debug.Transpose {
-				s := fmt.Sprintf("r=%s drag Setting currentNoteOn to %+v\n", motor.padName, *(a.noteOn))
+				s := fmt.Sprintf("r=%s drag Setting currentNoteOn to %+v\n", player.padName, *(a.noteOn))
 				if strings.Contains(s, "PANIC") {
 					log.Printf("PANIC? setting currentNoteOn\n")
 				} else {
@@ -626,23 +626,23 @@ func (motor *Motor) generateSoundFromCursor(ce CursorDeviceEvent) {
 				}
 				log.Printf("generateMIDI sending NoteOn\n")
 			}
-			motor.sendNoteOn(a)
+			player.sendNoteOn(a)
 		}
 	case "up":
 		if a.noteOn == nil {
 			// not sure why this happens, yet
-			log.Printf("r=%s Unexpected UP when currentNoteOn is nil?\n", motor.padName)
+			log.Printf("r=%s Unexpected UP when currentNoteOn is nil?\n", player.padName)
 		} else {
 			// log.Printf("generateMIDI sending NoteOff for UP\n")
-			motor.sendNoteOff(a)
+			player.sendNoteOff(a)
 
 			a.noteOn = nil
 			a.ce = ce // Hmmmm, might be useful, or wrong
 			// log.Printf("r=%s UP Setting currentNoteOn to nil!\n", r.padName)
 		}
-		motor.activeNotesMutex.Lock()
-		delete(motor.activeNotes, ce.ID)
-		motor.activeNotesMutex.Unlock()
+		player.activeNotesMutex.Lock()
+		delete(player.activeNotes, ce.ID)
+		player.activeNotesMutex.Unlock()
 	}
 }
 */
@@ -650,13 +650,13 @@ func (motor *Motor) generateSoundFromCursor(ce CursorDeviceEvent) {
 /*
 // XXXXXXXXXX This is a Responder!
 func (router *Router) executeIncomingCursor(ce CursorStepEvent) {
-	q := motor.cursorToQuant(ce)
+	q := player.cursorToQuant(ce)
 	log.Printf("Should be scheduling a note here!  q=%d\n",q)
 }
 */
 
 /*
-func (motor *Motor) nextQuant(t Clicks, q Clicks) Clicks {
+func (player *Player) nextQuant(t Clicks, q Clicks) Clicks {
 	// the algorithm below is the same as KeyKit's nextquant
 	if q <= 1 {
 		return t
@@ -674,24 +674,24 @@ func (motor *Motor) nextQuant(t Clicks, q Clicks) Clicks {
 	return tq
 }
 
-func (motor *Motor) sendNoteOn(a *ActiveNote) {
+func (player *Player) sendNoteOn(a *ActiveNote) {
 
 	// if Debug.MIDI {
 	// 	log.Printf("MIDI.SendNote: noteOn pitch:%d velocity:%d sound:%s\n", a.noteOn.Pitch, a.noteOn.Velocity, a.noteOn.Sound)
 	// }
-	motor.SendNoteToSynth(a.noteOn)
+	player.SendNoteToSynth(a.noteOn)
 
-	ss := motor.params.ParamStringValue("visual.spritesource", "")
+	ss := player.params.ParamStringValue("visual.spritesource", "")
 	if ss == "midi" {
 		n := a.noteOn
-		motor.generateSpriteFromNote(n)
+		player.generateSpriteFromNote(n)
 	}
 }
 
-// func (motor *Motor) sendController(a *ActiveNote) {
+// func (player *Player) sendController(a *ActiveNote) {
 // }
 
-func (motor *Motor) sendNoteOff(a *ActiveNote) {
+func (player *Player) sendNoteOff(a *ActiveNote) {
 	n := a.noteOn
 	if n == nil {
 		// Not sure why this sometimes happens
@@ -708,20 +708,20 @@ func (motor *Motor) sendNoteOff(a *ActiveNote) {
 	// if Debug.MIDI {
 	// 	log.Printf("MIDI.SendNote: noteOff pitch:%d velocity:%d sound:%s\n", n.Pitch, n.Velocity, n.Sound)
 	// }
-	motor.SendNoteToSynth(noteOff)
+	player.SendNoteToSynth(noteOff)
 }
 */
 
-func (motor *Motor) sendANO() {
+func (player *Player) sendANO() {
 	if !TheEngine.Router.generateSound {
 		return
 	}
-	synth := motor.params.ParamStringValue("sound.synth", defaultSynth)
+	synth := player.params.ParamStringValue("sound.synth", defaultSynth)
 	SendANOToSynth(synth)
 }
 
 /*
-func (r *Motor) paramStringValue(paramname string, def string) string {
+func (r *Player) paramStringValue(paramname string, def string) string {
 	r.paramsMutex.RLock()
 	param, ok := r.params[paramname]
 	r.paramsMutex.RUnlock()
@@ -731,7 +731,7 @@ func (r *Motor) paramStringValue(paramname string, def string) string {
 	return r.params.param).(paramValString).value
 }
 
-func (r *Motor) paramIntValue(paramname string) int {
+func (r *Player) paramIntValue(paramname string) int {
 	r.paramsMutex.RLock()
 	param, ok := r.params[paramname]
 	r.paramsMutex.RUnlock()
@@ -744,47 +744,47 @@ func (r *Motor) paramIntValue(paramname string) int {
 */
 
 /*
-func (motor *Motor) cursorToNoteOn(ce CursorStepEvent) *Note {
-	pitch := motor.cursorToPitch(ce)
+func (player) *Player) cursorToNoteOn(ce CursorStepEvent) *Note {
+	pitch := player.cursorToPitch(ce)
 	// log.Printf("cursorToNoteOn pitch=%v trans=%v", pitch, r.TransposePitch)
-	velocity := motor.cursorToVelocity(ce)
-	synth := motor.params.ParamStringValue("sound.synth", defaultSynth)
+	velocity := player.cursorToVelocity(ce)
+	synth := player.params.ParamStringValue("sound.synth", defaultSynth)
 	// log.Printf("cursorToNoteOn x=%.5f y=%.5f z=%.5f pitch=%d velocity=%d\n", ce.x, ce.y, ce.z, pitch, velocity)
 	return NewNoteOn(pitch, velocity, synth)
 }
 */
 
 /*
-func (motor *Motor) cursorToPitch(ce CursorStepEvent) uint8 {
-	pitchmin := motor.params.ParamIntValue("sound.pitchmin")
-	pitchmax := motor.params.ParamIntValue("sound.pitchmax")
+func (player) *Player) cursorToPitch(ce CursorStepEvent) uint8 {
+	pitchmin := player.params.ParamIntValue("sound.pitchmin")
+	pitchmax := player.params.ParamIntValue("sound.pitchmax")
 	dp := pitchmax - pitchmin + 1
 	p1 := int(ce.X * float32(dp))
 	p := uint8(pitchmin + p1%dp)
 	// log.Printf("cursorToPitch: X=%f p=%d\n", ce.X, p)
-	chromatic := motor.params.ParamBoolValue("sound.chromatic")
+	chromatic := player.params.ParamBoolValue("sound.chromatic")
 	if !chromatic {
-		scale := motor.getScale()
+		scale := player.getScale()
 		p = scale.ClosestTo(p)
 		// MIDIOctaveShift might be negative
-		i := int(p) + 12*motor.MIDIOctaveShift
+		i := int(p) + 12*player.MIDIOctaveShift
 		for i < 0 {
 			i += 12
 		}
 		for i > 127 {
 			i -= 12
 		}
-		p = uint8(i + motor.TransposePitch)
+		p = uint8(i + player.TransposePitch)
 	}
 	return p
 }
 */
 
 /*
-func (motor *Motor) cursorToVelocity(ce CursorStepEvent) uint8 {
-	vol := motor.params.ParamStringValue("misc.vol", "fixed")
-	velocitymin := motor.params.ParamIntValue("sound.velocitymin")
-	velocitymax := motor.params.ParamIntValue("sound.velocitymax")
+func (player) *Player) cursorToVelocity(ce CursorStepEvent) uint8 {
+	vol := player.params.ParamStringValue("misc.vol", "fixed")
+	velocitymin := player.params.ParamIntValue("sound.velocitymin")
+	velocitymax := player.params.ParamIntValue("sound.velocitymax")
 	// bogus, when values in json are missing
 	if velocitymin == 0 && velocitymax == 0 {
 		velocitymin = 0
@@ -814,12 +814,12 @@ func (motor *Motor) cursorToVelocity(ce CursorStepEvent) uint8 {
 */
 
 /*
-func (motor *Motor) cursorToDuration(ce CursorStepEvent) int {
+func (player) *Player) cursorToDuration(ce CursorStepEvent) int {
 	return 92
 }
 
-func (motor *Motor) cursorToQuant(ce CursorStepEvent) Clicks {
-	quant := motor.params.ParamStringValue("misc.quant", "fixed")
+func (player) *Player) cursorToQuant(ce CursorStepEvent) Clicks {
+	quant := player.params.ParamStringValue("misc.quant", "fixed")
 
 	q := Clicks(1)
 	if quant == "none" || quant == "" {
@@ -856,14 +856,14 @@ func (motor *Motor) cursorToQuant(ce CursorStepEvent) Clicks {
 */
 
 /*
-func (motor *Motor) loopComb() {
+func (player) *Player) loopComb() {
 
-	motor.loop.stepsMutex.Lock()
-	defer motor.loop.stepsMutex.Unlock()
+	player.loop.stepsMutex.Lock()
+	defer player.loop.stepsMutex.Unlock()
 
 	// Create a map of the UP cursor events, so we only do completed notes
 	upEvents := make(map[string]CursorStepEvent)
-	for _, step := range motor.loop.steps {
+	for _, step := range player.loop.steps {
 		if step.events != nil && len(step.events) > 0 {
 			for _, event := range step.events {
 				if event.cursorStepEvent.Ddu == "up" {
@@ -878,18 +878,18 @@ func (motor *Motor) loopComb() {
 	for id := range upEvents {
 		// log.Printf("AT END id = %s\n", id)
 		if combme == 0 {
-			motor.loop.ClearID(id)
+			player.loop.ClearID(id)
 			// log.Printf("loopComb, ClearID id=%s upEvents[id]=%+v\n", id, upEvents[id])
-			motor.generateSoundFromCursor(upEvents[id])
+			player.generateSoundFromCursor(upEvents[id])
 		}
 		combme = (combme + 1) % combmod
 	}
 }
 
-func (motor *Motor) loopQuant() {
+func (player) *Player) loopQuant() {
 
-	motor.loop.stepsMutex.Lock()
-	defer motor.loop.stepsMutex.Unlock()
+	player.loop.stepsMutex.Lock()
+	defer player.loop.stepsMutex.Unlock()
 
 	// XXX - Need to make sure we have mutex for changing loop steps
 	// XXX - DOES THIS EVEN WORK?
@@ -902,7 +902,7 @@ func (motor *Motor) loopQuant() {
 	upEvents := make(map[string]CursorStepEvent)
 	downEvents := make(map[string]CursorStepEvent)
 	shiftOf := make(map[string]Clicks)
-	for stepnum, step := range motor.loop.steps {
+	for stepnum, step := range player.loop.steps {
 		if step.events != nil && len(step.events) > 0 {
 			for _, e := range step.events {
 				switch e.cursorStepEvent.Ddu {
@@ -910,7 +910,7 @@ func (motor *Motor) loopQuant() {
 					upEvents[e.cursorStepEvent.ID] = e.cursorStepEvent
 				case "down":
 					downEvents[e.cursorStepEvent.ID] = e.cursorStepEvent
-					shift := motor.nextQuant(Clicks(stepnum), quant)
+					shift := player.nextQuant(Clicks(stepnum), quant)
 					log.Printf("Down, shift=%d\n", shift)
 					shiftOf[e.cursorStepEvent.ID] = Clicks(shift)
 				}
@@ -923,8 +923,8 @@ func (motor *Motor) loopQuant() {
 	}
 
 	// We're going to create a brand new steps array
-	newsteps := make([]*Step, len(motor.loop.steps))
-	for stepnum, step := range motor.loop.steps {
+	newsteps := make([]*Step, len(player.loop.steps))
+	for stepnum, step := range player.loop.steps {
 		if step.events == nil || len(step.events) == 0 {
 			continue
 		}
@@ -939,7 +939,7 @@ func (motor *Motor) loopQuant() {
 				// It's shifted
 				if ok {
 					shiftStep := Clicks(stepnum) + shift
-					newstepnum = int(shiftStep) % len(motor.loop.steps)
+					newstepnum = int(shiftStep) % len(player.loop.steps)
 				}
 				newsteps[newstepnum].events = append(newsteps[newstepnum].events, e)
 			}
@@ -948,26 +948,26 @@ func (motor *Motor) loopQuant() {
 }
 */
 
-func (motor *Motor) sendEffectParam(name string, value string) {
+func (player *Player) sendEffectParam(name string, value string) {
 	// Effect parameters that have ":" in their name are plugin parameters
 	i := strings.Index(name, ":")
 	if i > 0 {
 		effectName := name[0:i]
 		paramName := name[i+1:]
-		motor.sendPadOneEffectParam(effectName, paramName, value)
+		player.sendPadOneEffectParam(effectName, paramName, value)
 	} else {
 		onoff, err := strconv.ParseBool(value)
 		if err != nil {
 			log.Printf("Unable to parse bool!? value=%s\n", value)
 			onoff = false
 		}
-		motor.sendPadOneEffectOnOff(name, onoff)
+		player.sendPadOneEffectOnOff(name, onoff)
 	}
 }
 
 // getEffectMap returns the resolume.json map for a given effect
 // and map type ("on", "off", or "params")
-func (motor *Motor) getEffectMap(effectName string, mapType string) (map[string]interface{}, string, int, error) {
+func (player *Player) getEffectMap(effectName string, mapType string) (map[string]interface{}, string, int, error) {
 	if effectName[1] != '-' {
 		err := fmt.Errorf("no dash in effect, name=%s", effectName)
 		return nil, "", 0, err
@@ -1000,7 +1000,7 @@ func (motor *Motor) getEffectMap(effectName string, mapType string) (map[string]
 	return mapValue.(map[string]interface{}), realEffectName, effnum, nil
 }
 
-func (motor *Motor) addLayerAndClipNums(addr string, layerNum int, clipNum int) string {
+func (player *Player) addLayerAndClipNums(addr string, layerNum int, clipNum int) string {
 	if addr[0] != '/' {
 		log.Printf("WARNING, addr in resolume.json doesn't start with / : %s", addr)
 		addr = "/" + addr
@@ -1009,16 +1009,16 @@ func (motor *Motor) addLayerAndClipNums(addr string, layerNum int, clipNum int) 
 	return addr
 }
 
-func (motor *Motor) resolumeEffectNameOf(name string, num int) string {
+func (player *Player) resolumeEffectNameOf(name string, num int) string {
 	if num == 1 {
 		return name
 	}
 	return fmt.Sprintf("%s%d", name, num)
 }
 
-func (motor *Motor) sendPadOneEffectParam(effectName string, paramName string, value string) {
+func (player *Player) sendPadOneEffectParam(effectName string, paramName string, value string) {
 	fullName := "effect" + "." + effectName + ":" + paramName
-	paramsMap, realEffectName, realEffectNum, err := motor.getEffectMap(effectName, "params")
+	paramsMap, realEffectName, realEffectNum, err := player.getEffectMap(effectName, "params")
 	if err != nil {
 		log.Printf("sendPadOneEffectParam: err=%s\n", err)
 		return
@@ -1040,9 +1040,9 @@ func (motor *Motor) sendPadOneEffectParam(effectName string, paramName string, v
 	}
 
 	addr := oneParam.(string)
-	resEffectName := motor.resolumeEffectNameOf(realEffectName, realEffectNum)
+	resEffectName := player.resolumeEffectNameOf(realEffectName, realEffectNum)
 	addr = strings.Replace(addr, realEffectName, resEffectName, 1)
-	addr = motor.addLayerAndClipNums(addr, motor.resolumeLayer, 1)
+	addr = player.addLayerAndClipNums(addr, player.resolumeLayer, 1)
 
 	msg := osc.NewMessage(addr)
 
@@ -1088,10 +1088,10 @@ func (motor *Motor) sendPadOneEffectParam(effectName string, paramName string, v
 		return
 	}
 
-	motor.toResolume(msg)
+	player.toResolume(msg)
 }
 
-func (motor *Motor) addEffectNum(addr string, effect string, num int) string {
+func (player *Player) addEffectNum(addr string, effect string, num int) string {
 	if num == 1 {
 		return addr
 	}
@@ -1099,7 +1099,7 @@ func (motor *Motor) addEffectNum(addr string, effect string, num int) string {
 	return strings.Replace(addr, effect, fmt.Sprintf("%s%d", effect, num), 1)
 }
 
-func (motor *Motor) sendPadOneEffectOnOff(effectName string, onoff bool) {
+func (player *Player) sendPadOneEffectOnOff(effectName string, onoff bool) {
 	var mapType string
 	if onoff {
 		mapType = "on"
@@ -1107,7 +1107,7 @@ func (motor *Motor) sendPadOneEffectOnOff(effectName string, onoff bool) {
 		mapType = "off"
 	}
 
-	onoffMap, realEffectName, realEffectNum, err := motor.getEffectMap(effectName, mapType)
+	onoffMap, realEffectName, realEffectNum, err := player.getEffectMap(effectName, mapType)
 	if err != nil {
 		log.Printf("SendPadOneEffectOnOff: err=%s\n", err)
 		return
@@ -1128,20 +1128,20 @@ func (motor *Motor) sendPadOneEffectOnOff(effectName string, onoff bool) {
 		return
 	}
 	addr := onoffAddr.(string)
-	addr = motor.addEffectNum(addr, realEffectName, realEffectNum)
-	addr = motor.addLayerAndClipNums(addr, motor.resolumeLayer, 1)
+	addr = player.addEffectNum(addr, realEffectName, realEffectNum)
+	addr = player.addLayerAndClipNums(addr, player.resolumeLayer, 1)
 	onoffValue := int(onoffArg.(float64))
 
 	msg := osc.NewMessage(addr)
 	msg.Append(int32(onoffValue))
-	motor.toResolume(msg)
+	player.toResolume(msg)
 }
 
-func MotorForRegion(region string) *Motor {
-	motor, ok := TheEngine.Router.motors[region]
+func GetPlayer(playerName string) *Player {
+	player, ok := TheEngine.Router.players[playerName]
 	if !ok {
 		return nil
 	} else {
-		return motor
+		return player
 	}
 }

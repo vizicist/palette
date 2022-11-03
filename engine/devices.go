@@ -69,7 +69,7 @@ func LoadMorphs() error {
 	MorphDefs = make(map[string]string)
 
 	// If you have more than one morph, or
-	// want the region assignment to NOT be
+	// want the player assignment to NOT be
 	// automatice, put them in here.
 	path := ConfigFilePath("morphs.json")
 	if !fileExists(path) {
@@ -86,13 +86,13 @@ func LoadMorphs() error {
 	}
 	toplevel := f.(map[string]interface{})
 
-	for serialnum, regioninfo := range toplevel {
-		regionname := regioninfo.(string)
+	for serialnum, playerinfo := range toplevel {
+		playername := playerinfo.(string)
 		if Debug.Morph {
-			log.Printf("Setting Morph serial=%s region=%s\n", serialnum, regionname)
+			log.Printf("Setting Morph serial=%s player=%s\n", serialnum, playername)
 		}
-		MorphDefs[serialnum] = regionname
-		// TheRouter().setRegionForMorph(serialnum, regionname)
+		MorphDefs[serialnum] = playername
+		// TheRouter().setPlayerForMorph(serialnum, playername)
 	}
 	return nil
 }

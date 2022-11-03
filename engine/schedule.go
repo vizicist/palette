@@ -222,7 +222,7 @@ func (sched *Scheduler) Start() {
 			// Non-internal cursor activity turns attract mode off instantly.
 			if !sched.attractModeIsOn && sinceLastAttractChange > sched.attractIdleSecs {
 				// Nothing happening for a while, turn attract mode on
-				sched.AttractMode(true)
+				sched.SetAttractMode(true)
 			}
 		}
 
@@ -299,7 +299,7 @@ func (sched *Scheduler) checkCursorUp(cm *CursorManager) {
 */
 
 /*
-func (motor *Motor) handleCursorDeviceEvent(e CursorDeviceEvent) {
+func (player *Player) handleCursorDeviceEvent(e CursorDeviceEvent) {
 
 	id := e.Source
 
@@ -309,13 +309,13 @@ func (motor *Motor) handleCursorDeviceEvent(e CursorDeviceEvent) {
 
 	// e.Ddu is "down", "drag", or "up"
 
-	tc, ok := motor.deviceCursors[id]
+	tc, ok := player.deviceCursors[id]
 	if !ok {
 		// new DeviceCursor
 		tc = &DeviceCursor{}
-		motor.deviceCursors[id] = tc
+		player.deviceCursors[id] = tc
 	}
-	tc.lastTouch = motor.time()
+	tc.lastTouch = player.time()
 
 	// If it's a new (downed==false) cursor, make sure the first step event is "down
 	if !tc.downed {
@@ -330,21 +330,25 @@ func (motor *Motor) handleCursorDeviceEvent(e CursorDeviceEvent) {
 		Ddu: e.Ddu,
 	}
 	if Debug.Cursor {
-		log.Printf("Motor.handleCursorDeviceEvent: pad=%s id=%s ddu=%s xyz=%.4f,%.4f,%.4f\n", motor.padName, id, e.Ddu, e.X, e.Y, e.Z)
+		log.Printf("Player.handleCursorDeviceEvent: pad=%s id=%s ddu=%s xyz=%.4f,%.4f,%.4f\n", player.padName, id, e.Ddu, e.X, e.Y, e.Z)
 	}
 
-	motor.executeIncomingCursor(cse)
+	player.executeIncomingCursor(cse)
 
 	if e.Ddu == "up" {
 		// if Debug.Cursor {
 		// 	log.Printf("Router.handleCursorDeviceEvent: deleting cursor id=%s\n", id)
 		// }
-		delete(motor.deviceCursors, id)
+		delete(player.deviceCursors, id)
 	}
 }
 */
 
-func (sched *Scheduler) AttractMode(on bool) {
+func (sched *Scheduler) GetAttractMode() bool {
+	return sched.attractModeIsOn
+}
+
+func (sched *Scheduler) SetAttractMode(on bool) {
 	if sched.attractModeIsOn == on {
 		// no change
 		return
@@ -381,9 +385,9 @@ func (sched *Scheduler) doAttractAction() {
 	dt := now.Sub(sched.lastAttractGestureTime)
 	if sched.attractModeIsOn && dt > sched.attractGestureDuration {
 		log.Printf("doAttractAction: doing stuff\n")
-		regions := []string{"A", "B", "C", "D"}
+		playerNames := []string{"A", "B", "C", "D"}
 		i := uint64(rand.Uint64()*99) % 4
-		region := regions[i]
+		player := playerNames[i]
 		sched.lastAttractGestureTime = now
 
 		cid := fmt.Sprintf("%d", time.Now().UnixNano())
@@ -396,7 +400,7 @@ func (sched *Scheduler) doAttractAction() {
 		y1 := rand.Float32()
 		z1 := rand.Float32() / 2.0
 
-		go TheEngine.CursorManager.doCursorGesture(region, cid, x0, y0, z0, x1, y1, z1)
+		go TheEngine.CursorManager.doCursorGesture(player, cid, x0, y0, z0, x1, y1, z1)
 		sched.lastAttractGestureTime = now
 	}
 
@@ -416,12 +420,12 @@ func (sched *Scheduler) advanceTransposeTo(newclick Clicks) {
 			log.Printf("advanceTransposeTo: newclick=%d transposePitch=%d\n", newclick, transposePitch)
 		}
 		/*
-			for _, motor := range TheEngine.Router.motors {
-				// motor.clearDown()
+			for _, player := range TheEngine.Router.players {
+				// player.clearDown()
 				if Debug.Transpose {
-					log.Printf("  setting transposepitch in motor pad=%s trans=%d activeNotes=%d\n", motor.padName, transposePitch, len(motor.activeNotes))
+					log.Printf("  setting transposepitch in player pad=%s trans=%d activeNotes=%d\n", player.padName, transposePitch, len(player.activeNotes))
 				}
-				motor.TransposePitch = transposePitch
+				player.TransposePitch = transposePitch
 			}
 		*/
 		sched.activePhrasesManager.terminateActiveNotes()

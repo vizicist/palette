@@ -8,9 +8,7 @@ import (
 	"sort"
 )
 
-func (r *Router) executeRegionAPI(region string, api string, argsmap map[string]string) (result string, err error) {
-
-	// XXX - Eventually, this should allow the region value to be "*" or multi-region
+func (r *Router) executePlayerAPI(playerName string, api string, argsmap map[string]string) (result string, err error) {
 
 	switch api {
 
@@ -20,18 +18,18 @@ func (r *Router) executeRegionAPI(region string, api string, argsmap map[string]
 	case "set":
 		name, ok := argsmap["name"]
 		if !ok {
-			return "", fmt.Errorf("executeRegionAPI: missing name argument")
+			return "", fmt.Errorf("executePlayerAPI: missing name argument")
 		}
 		value, ok := argsmap["value"]
 		if !ok {
-			return "", fmt.Errorf("executeRegionAPI: missing value argument")
+			return "", fmt.Errorf("executePlayerAPI: missing value argument")
 		}
 		// Set value first
-		for thisRegion, motor := range r.motors {
-			if region == "*" || region == thisRegion {
-				err = motor.SetOneParamValue(name, value)
+		for thisPlayerName, player := range r.players {
+			if playerName == "*" || playerName == thisPlayerName {
+				err = player.SetOneParamValue(name, value)
 				if err != nil {
-					log.Printf("executeRegionAPI: set of %s failed, err=%s\n", name, err)
+					log.Printf("executePlayerAPI: set of %s failed, err=%s\n", name, err)
 					// But don't fail completely, this might be for
 					// parameters that no longer exist, and a hard failure may
 					// cause more problems.
@@ -39,18 +37,18 @@ func (r *Router) executeRegionAPI(region string, api string, argsmap map[string]
 			}
 		}
 		// then save it
-		return "", r.saveCurrentSnaps(region)
+		return "", r.saveCurrentSnaps(playerName)
 
 	case "setparams":
 		for name, value := range argsmap {
-			if name == "region" {
+			if name == "player" {
 				continue
 			}
-			for thisRegion, motor := range r.motors {
-				if region == "*" || region == thisRegion {
-					err = motor.SetOneParamValue(name, value)
+			for thisPlayerName, player := range r.players {
+				if playerName == "*" || playerName == thisPlayerName {
+					err = player.SetOneParamValue(name, value)
 					if err != nil {
-						log.Printf("executeRegionAPI: set of %s failed, err=%s\n", name, err)
+						log.Printf("executePlayerAPI: set of %s failed, err=%s\n", name, err)
 						// But don't fail completely, this might be for
 						// parameters that no longer exist, and a hard failure may
 						// cause more problems.
@@ -63,25 +61,25 @@ func (r *Router) executeRegionAPI(region string, api string, argsmap map[string]
 	case "get":
 		name, ok := argsmap["name"]
 		if !ok {
-			return "", fmt.Errorf("executeRegionAPI: missing name argument")
+			return "", fmt.Errorf("executePlayerAPI: missing name argument")
 		}
-		if region == "*" {
-			return "", fmt.Errorf("executeRegionAPI: get can't handle *")
+		if playerName == "*" {
+			return "", fmt.Errorf("executePlayerAPI: get can't handle *")
 		}
-		motor, ok := r.motors[region]
+		player, ok := r.players[playerName]
 		if !ok {
-			return "", fmt.Errorf("ExecuteRegionAPI: no region named %s", region)
+			return "", fmt.Errorf("ExecutePlayerAPI: no player named %s", playerName)
 		}
-		return motor.params.paramValueAsString(name)
+		return player.params.paramValueAsString(name)
 
 	default:
-		// The region-specific APIs above are handled
+		// The player-specific APIs above are handled
 		// here in the Router context, but for everything else,
-		// we punt down to the region's motor.
-		// region can be A, B, C, D, or *
-		for tmpRegion, motor := range r.motors {
-			if region == "*" || tmpRegion == region {
-				_, err := motor.ExecuteAPI(api, argsmap, "")
+		// we punt down to the player's player.
+		// player can be A, B, C, D, or *
+		for tmpPlayerName, player := range r.players {
+			if playerName == "*" || tmpPlayerName == playerName {
+				_, err := player.ExecuteAPI(api, argsmap, "")
 				if err != nil {
 					return "", err
 				}
@@ -100,10 +98,10 @@ func (r *Router) saveQuadPreset(presetName string) error {
 
 	sep := ""
 	log.Printf("saveQuadPreset preset=%s\n", presetName)
-	for _, motor := range r.motors {
-		log.Printf("starting motor=%s\n", motor.padName)
+	for _, player := range r.players {
+		log.Printf("starting player=%s\n", player.padName)
 		// Print the parameter values sorted by name
-		fullNames := motor.params.values
+		fullNames := player.params.values
 		sortedNames := make([]string, 0, len(fullNames))
 		for k := range fullNames {
 			sortedNames = append(sortedNames, k)
@@ -111,12 +109,12 @@ func (r *Router) saveQuadPreset(presetName string) error {
 		sort.Strings(sortedNames)
 
 		for _, fullName := range sortedNames {
-			valstring, e := motor.params.paramValueAsString(fullName)
+			valstring, e := player.params.paramValueAsString(fullName)
 			if e != nil {
 				log.Printf("Unexepected error from paramValueAsString for nm=%s\n", fullName)
 				continue
 			}
-			s += fmt.Sprintf("%s        \"%s-%s\":\"%s\"", sep, motor.padName, fullName, valstring)
+			s += fmt.Sprintf("%s        \"%s-%s\":\"%s\"", sep, player.padName, fullName, valstring)
 			sep = ",\n"
 		}
 	}
@@ -174,21 +172,21 @@ func (r *Router) executeProcessAPI(api string, apiargs map[string]string) (resul
 }
 */
 
-func (r *Router) saveCurrentSnaps(region string) error {
-	// log.Printf("saveCurrentSnaps region=%s\n", region)
-	if region == "*" {
-		for _, motor := range r.motors {
-			err := motor.saveCurrentSnap()
+func (r *Router) saveCurrentSnaps(playerName string) error {
+	// log.Printf("saveCurrentSnaps player=%s\n", playerName)
+	if playerName == "*" {
+		for _, player := range r.players {
+			err := player.saveCurrentSnap()
 			if err != nil {
 				return err
 			}
 		}
 	} else {
-		motor, ok := r.motors[region]
+		player, ok := r.players[playerName]
 		if !ok {
-			return fmt.Errorf("saveCurrentSnaps: no region named %s", region)
+			return fmt.Errorf("saveCurrentSnaps: no player named %s", playerName)
 		}
-		return motor.saveCurrentSnap()
+		return player.saveCurrentSnap()
 
 	}
 	return nil

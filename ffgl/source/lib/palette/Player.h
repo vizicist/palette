@@ -1,5 +1,5 @@
-#ifndef _REGION_H
-#define _REGION_H
+#ifndef _PLAYER_H
+#define _PLAYER_H
 
 #include <list>
 
@@ -12,31 +12,27 @@ class PaletteDrawer;
 class TrackedCursor;
 class GraphicBehaviour;
 
-#define DEFAULT_SHAPE "square"
-#define MAX_REGION_ID 22
-#define PORT_NEEDS_LOOKUP -99
+#define DECLARE_TYPES(t) extern std::vector<std::string> PlayerParams_##t##Types;
+#include "PlayerParams_typesdeclare.h"
+void PlayerParams_InitializeTypes();
 
-#define DECLARE_TYPES(t) extern std::vector<std::string> RegionParams_##t##Types;
-#include "RegionParams_typesdeclare.h"
-void RegionParams_InitializeTypes();
+class Player;
 
-class Region;
-
-class RegionParams : public Params {
+class PlayerParams : public Params {
 public:
-	RegionParams() {
+	PlayerParams() {
 #undef INIT_PARAM
 #define INIT_PARAM( name, def ) ; name = ##def ;
-#include "RegionParams_init.h"
+#include "PlayerParams_init.h"
 	}
 
 	static void Initialize() {
-		RegionParams_InitializeTypes();
+		PlayerParams_InitializeTypes();
 	}
 
 	std::string JsonString(std::string pre, std::string indent, std::string post) {
 		char* names[] = {
-#include "RegionParams_list.h"
+#include "PlayerParams_list.h"
 			NULL
 		};
 		return JsonList(names,pre,indent,post);
@@ -52,10 +48,10 @@ public:
 #define SET_STR_PARAM(name) else if ( nm == #name ) (name = val),(stringval=true)
 
 		if ( false ) { }
-#include "RegionParams_set.h"
+#include "PlayerParams_set.h"
 		else {
-			if (nm != "source" && nm != "region" && nm != "nuid") {
-				NosuchDebug("RegionParams::Set unrecognized param name - %s",nm.c_str());
+			if (nm != "source" && nm != "player" && nm != "nuid") {
+				NosuchDebug("PlayerParams::Set unrecognized param name - %s",nm.c_str());
 			}
 		}
 
@@ -69,18 +65,18 @@ public:
 #define INC_DBL_PARAM(name,mn,mx) else if (nm==#name)name=adjust(name,amount,mn,mx)
 #define INC_FLT_PARAM(name,mn,mx) else if (nm==#name)name=adjust(name,amount,mn,mx)
 #define INC_INT_PARAM(name,mn,mx) else if (nm==#name)name=adjust(name,amount,mn,mx)
-#define INC_STR_PARAM(name,vals) else if (nm==#name)name=Params::adjust(name,amount,RegionParams_ ## vals ## Types)
+#define INC_STR_PARAM(name,vals) else if (nm==#name)name=Params::adjust(name,amount,PlayerParams_ ## vals ## Types)
 #define INC_BOOL_PARAM(name) else if (nm==#name)name=adjust(name,amount)
 #define INC_NO_PARAM(name) else if (nm==#name)name=name
 
 		if (false) {}
-#include "RegionParams_increment.h"
+#include "PlayerParams_increment.h"
 	}
 	void Toggle(std::string nm) {
 		// Just the boolean values
 #define TOGGLE_PARAM(name) else if ( nm == #name ) name = ! name
 		if ( false ) { }
-#include "RegionParams_toggle.h"
+#include "PlayerParams_toggle.h"
 		else { NosuchDebug("No Toggle implemented for %s",nm.c_str()); }
 	}
 	std::string Get(std::string nm) {
@@ -92,32 +88,32 @@ public:
 #define GET_STR_PARAM(name) else if(nm==#name)return name
 
 		if ( false ) { }
-#include "RegionParams_get.h"
+#include "PlayerParams_get.h"
 		return "";
 	}
 
-#include "RegionParams_declare.h"
+#include "PlayerParams_declare.h"
 
 	bool IsSpriteParam(std::string nm) {
 
 #define IS_SPRITE_PARAM(name) if( nm == #name ) { return true; }
 
-#include "RegionParams_issprite.h"
+#include "PlayerParams_issprite.h"
 		return false;
 	}
 
 
 };
 
-void copyParamValues( RegionParams* from, RegionParams* to );
+void copyParamValues( PlayerParams* from, PlayerParams* to );
 
-class Region {
+class Player {
 
 public:
-	Region();
-	~Region();
+	Player();
+	~Player();
 
-	RegionParams params;
+	PlayerParams params;
 
 	void initParams();
 	void setTrackedCursor(Palette* palette, std::string cid, std::string cidsource, glm::vec2 pos, float z);
@@ -157,7 +153,7 @@ private:
 
 	std::list<TrackedCursor*> _cursors;
 
-	pthread_mutex_t _region_mutex;
+	pthread_mutex_t _player_mutex;
 	pthread_rwlock_t _cursorlist_rwlock;
 
 	// Access to these lists need to be thread-safe

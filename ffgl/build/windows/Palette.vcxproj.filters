@@ -131,9 +131,6 @@
     <ClCompile Include="..\..\source\lib\palette\Scheduler.cpp">
       <Filter>lib\palette</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\source\lib\palette\Region.cpp">
-      <Filter>lib\palette</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\source\lib\osc\src\OscBundle.cpp">
       <Filter>lib\osc</Filter>
     </ClCompile>
@@ -177,6 +174,9 @@
       <Filter>lib\ffglex</Filter>
     </ClCompile>
     <ClCompile Include="..\..\source\lib\palette\PaletteDrawer.cpp">
+      <Filter>lib\palette</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\lib\palette\Player.cpp">
       <Filter>lib\palette</Filter>
     </ClCompile>
   </ItemGroup>
@@ -311,9 +311,6 @@
     <ClInclude Include="..\..\source\lib\palette\Params.h">
       <Filter>lib\palette</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\source\lib\palette\Region.h">
-      <Filter>lib\palette</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\source\lib\palette\Scheduler.h">
       <Filter>lib\palette</Filter>
     </ClInclude>
@@ -340,6 +337,9 @@
     </ClInclude>
     <ClInclude Include="..\..\source\lib\nosuch\NosuchException.h">
       <Filter>lib\nosuch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\lib\palette\Player.h">
+      <Filter>lib\palette</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
