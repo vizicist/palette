@@ -259,7 +259,7 @@ type oneMorph struct {
 	fwVersionRelease uint8
 	deviceID         int
 	morphtype        string // "corners", "quadrants"
-	region           string // "A", "B", "C", "D"
+	playerName       string // "A", "B", "C", "D"
 }
 
 var morphMaxForce float32 = 1000.0
@@ -346,24 +346,24 @@ func (m *oneMorph) readFrames(callback CursorDeviceCallbackFunc, forceFactor flo
 
 			case "corners":
 				// If the position is in one of the corners,
-				// we change the region to that corner.
+				// we change the player to that corner.
 				edge := float32(0.075)
-				newregion := ""
+				newPlayerName := ""
 				if xNorm < edge && yNorm < edge {
-					newregion = "A"
+					newPlayerName = "A"
 				} else if xNorm < edge && yNorm > (1.0-edge) {
-					newregion = "B"
+					newPlayerName = "B"
 				} else if xNorm > (1.0-edge) && yNorm > (1.0-edge) {
-					newregion = "C"
+					newPlayerName = "C"
 				} else if xNorm > (1.0-edge) && yNorm < edge {
-					newregion = "D"
+					newPlayerName = "D"
 				}
-				if newregion != "" {
-					if newregion != m.region {
-						log.Printf("Switching corners pad to region %s", m.region)
+				if newPlayerName != "" {
+					if newPlayerName != m.playerName {
+						log.Printf("Switching corners pad to player %s", newPlayerName)
 						ce := CursorDeviceEvent{
 							ID:        fmt.Sprintf("%d", m.idx),
-							Source:    m.region,
+							Source:    newPlayerName,
 							Timestamp: time.Now(),
 							Ddu:       "clear",
 							X:         xNorm,
@@ -371,8 +371,8 @@ func (m *oneMorph) readFrames(callback CursorDeviceCallbackFunc, forceFactor flo
 							Z:         zNorm,
 							Area:      area,
 						}
+						m.playerName = newPlayerName
 						callback(ce, true)
-						m.region = newregion
 					}
 					// We don't pass corner things through
 					continue // the loop
@@ -384,19 +384,19 @@ func (m *oneMorph) readFrames(callback CursorDeviceCallbackFunc, forceFactor flo
 				// full range 0-1 within each quadrant.
 				switch {
 				case xNorm < 0.5 && yNorm < 0.5:
-					m.region = "A"
+					m.playerName = "A"
 				case xNorm < 0.5 && yNorm >= 0.5:
-					m.region = "B"
+					m.playerName = "B"
 					yNorm = yNorm - 0.5
 				case xNorm >= 0.5 && yNorm >= 0.5:
-					m.region = "C"
+					m.playerName = "C"
 					xNorm = xNorm - 0.5
 					yNorm = yNorm - 0.5
 				case xNorm >= 0.5 && yNorm < 0.5:
-					m.region = "D"
+					m.playerName = "D"
 					xNorm = xNorm - 0.5
 				default:
-					log.Printf("Morph: unable to find QUAD region for x/y=%f,%f\n", xNorm, yNorm)
+					log.Printf("Morph: unable to find QUAD player for x/y=%f,%f\n", xNorm, yNorm)
 					continue
 				}
 				xNorm *= 2.0
@@ -404,8 +404,8 @@ func (m *oneMorph) readFrames(callback CursorDeviceCallbackFunc, forceFactor flo
 			}
 
 			if Debug.Morph {
-				log.Printf("Morph: region=%s contact_id=%d idx=%d n=%d state=%d xyzNorm=%f %f %f\n",
-					m.region, contact.id, m.idx, n, contact.state, xNorm, yNorm, zNorm)
+				log.Printf("Morph: player=%s contact_id=%d idx=%d n=%d state=%d xyzNorm=%f %f %f\n",
+					m.playerName, contact.id, m.idx, n, contact.state, xNorm, yNorm, zNorm)
 			}
 
 			// make the coordinate space match OpenGL and Freeframe
@@ -425,7 +425,7 @@ func (m *oneMorph) readFrames(callback CursorDeviceCallbackFunc, forceFactor flo
 
 			ev := CursorDeviceEvent{
 				ID:        cid,
-				Source:    m.region,
+				Source:    m.playerName,
 				Timestamp: time.Now(),
 				Ddu:       ddu,
 				X:         xNorm,
@@ -497,9 +497,9 @@ func initialize() error {
 		m.morphtype = morphtype
 		switch m.morphtype {
 		case "corners", "quadrants":
-			m.region = "A"
+			m.playerName = "A"
 		case "A", "B", "C", "D":
-			m.region = morphtype
+			m.playerName = morphtype
 		default:
 			log.Printf("Unexpected morphtype, got %s, expecting one of A,B,C,D,corners,quadrants", morphtype)
 		}

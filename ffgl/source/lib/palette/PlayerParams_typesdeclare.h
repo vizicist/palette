@@ -16,4 +16,4 @@ DECLARE_TYPES(midibehaviour);
 DECLARE_TYPES(scale);
 DECLARE_TYPES(inputport);
 DECLARE_TYPES(synth);
-DECLARE_TYPES(regionport);
+DECLARE_TYPES(midiport);

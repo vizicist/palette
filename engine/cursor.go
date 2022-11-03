@@ -54,8 +54,10 @@ func (cm *CursorManager) handleCursorDeviceEvent(ce CursorDeviceEvent, lockit bo
 		defer cm.mutex.Unlock()
 	}
 
+	// As soon as there's any non-internal cursor event,
+	// we turn attract mode off.
 	if ce.Source != "internal" {
-		TheEngine.Scheduler.AttractMode(false)
+		TheEngine.Scheduler.SetAttractMode(false)
 	}
 
 	switch ce.Ddu {
@@ -145,7 +147,7 @@ func (cm *CursorManager) CheckCursorUp(now time.Time) {
 		if elapsed > checkDelay {
 			cm.handleCursorDeviceEvent(CursorDeviceEvent{Source: "checkCursorUp", Ddu: "up"}, false)
 			if Debug.Cursor {
-				log.Printf("Motor.checkCursorUp: deleting cursor id=%s elapsed=%v\n", id, elapsed)
+				log.Printf("Player.checkCursorUp: deleting cursor id=%s elapsed=%v\n", id, elapsed)
 			}
 			delete(cm.cursors, id)
 		}

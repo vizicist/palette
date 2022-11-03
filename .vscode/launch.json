@@ -23,6 +23,13 @@
             "args": []
         },
         {
+            "name": "Stop",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
+            "args": ["stop"]
+        },
+        {
             "name": "Test alive",
             "type": "go",
             "request": "launch",
@@ -77,13 +84,6 @@
             "request": "launch",
             "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
             "args": ["start","apps"]
-        },
-        {
-            "name": "Stop",
-            "type": "go",
-            "request": "launch",
-            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
-            "args": ["stop"]
         },
         {
             "name": "Stop Engine",
