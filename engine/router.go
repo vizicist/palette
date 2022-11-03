@@ -14,8 +14,8 @@ import (
 
 // Router takes events and routes them
 type Router struct {
-	regionLetters     string
-	motors            map[string]*Motor
+	playerLetters     string
+	players           map[string]*Player
 	OSCInput          chan OSCEvent
 	MIDIInput         chan MidiEvent
 	NoteInput         chan *Note
@@ -42,7 +42,7 @@ type Router struct {
 	myHostname           string
 	generateVisuals      bool
 	generateSound        bool
-	regionAssignedToNUID map[string]string
+	playerAssignedToNUID map[string]string
 	eventMutex           sync.RWMutex
 
 	// responders map[string]Responder
@@ -113,12 +113,12 @@ func NewRouter() *Router {
 	// r.activeCursors = make(map[string]*ActiveStepCursor)
 	// r.responders = make(map[string]Responder)
 
-	r.regionLetters = ConfigValue("pads")
-	if r.regionLetters == "" {
+	r.playerLetters = ConfigValue("pads")
+	if r.playerLetters == "" {
 		if Debug.Morph {
 			log.Printf("No value for pads, assuming ABCD")
 		}
-		r.regionLetters = "ABCD"
+		r.playerLetters = "ABCD"
 	}
 
 	err := LoadParamEnums()
@@ -137,9 +137,8 @@ func NewRouter() *Router {
 		// might be fatal, but try to continue
 	}
 
-	r.motors = make(map[string]*Motor)
-	// oneRouter.regionForMorph = make(map[string]string)
-	r.regionAssignedToNUID = make(map[string]string)
+	r.players = make(map[string]*Player)
+	r.playerAssignedToNUID = make(map[string]string)
 
 	resolumePort := 7000
 	guiPort := 3943
@@ -151,13 +150,13 @@ func NewRouter() *Router {
 
 	log.Printf("OSC client ports: resolume=%d gui=%d plogue=%d\n", resolumePort, guiPort, ploguePort)
 
-	for i, c := range r.regionLetters {
+	for i, c := range r.playerLetters {
 		resolumeLayer := r.ResolumeLayerForPad(string(c))
 		ffglPort := ResolumePort + i
 		ch := string(c)
 		freeframeClient := osc.NewClient("127.0.0.1", ffglPort)
 		log.Printf("OSC freeframeClient: port=%d layer=%d\n", ffglPort, resolumeLayer)
-		r.motors[ch] = NewMotor(ch, resolumeLayer, freeframeClient, r.resolumeClient, r.guiClient)
+		r.players[ch] = NewPlayer(ch, resolumeLayer, freeframeClient, r.resolumeClient, r.guiClient)
 		// log.Printf("Pad %s created, resolumeLayer=%d resolumePort=%d\n", ch, resolumeLayer, resolumePort)
 	}
 
@@ -182,8 +181,8 @@ func NewRouter() *Router {
 	r.generateVisuals = ConfigBoolWithDefault("generatevisuals", true)
 	r.generateSound = ConfigBoolWithDefault("generatesound", true)
 
-	for _, motor := range r.motors {
-		motor.restoreCurrentSnap()
+	for _, player := range r.players {
+		player.restoreCurrentSnap()
 	}
 
 	go r.notifyGUI("restart")
@@ -203,12 +202,12 @@ func (r *Router) ResolumeLayerForText() int {
 
 func (r *Router) ResolumeLayerForPad(pad string) int {
 	if r.layerMap == nil {
-		regionLayers := "1,2,3,4"
-		s := ConfigStringWithDefault("regionlayers", regionLayers)
+		playerLayers := "1,2,3,4"
+		s := ConfigStringWithDefault("playerLayers", playerLayers)
 		layers := strings.Split(s, ",")
 		if len(layers) != 4 {
-			log.Printf("ResolumeLayerForPad: regionlayers value needs 4 values\n")
-			layers = strings.Split(regionLayers, ",")
+			log.Printf("ResolumeLayerForPad: playerLayers value needs 4 values\n")
+			layers = strings.Split(playerLayers, ",")
 		}
 		r.layerMap = make(map[string]int)
 		r.layerMap["A"], _ = strconv.Atoi(layers[0])
@@ -230,8 +229,8 @@ func (r *Router) SetMIDIEventHandler(handler MIDIEventHandler) {
 func (r *Router) handleMidiInput(event MidiEvent) {
 	log.Printf("Router.handleMidiInput is disabled\n")
 	/*
-		for _, motor := range r.motors {
-			motor.HandleMidiInput(event)
+		for _, player := range r.players {
+			player.HandleMidiInput(event)
 		}
 	*/
 }
@@ -276,20 +275,20 @@ func (r *Router) HandleInputEvent(args map[string]string) error {
 		return err
 	}
 
-	// If no "region" argument, assign one, though it should eventually be required
-	region, regionok := args["region"]
-	if !regionok {
-		return fmt.Errorf("HandleInputEvent: No region value")
+	// If no "player" argument, assign one, though it should eventually be required
+	playerName, playerok := args["player"]
+	if !playerok {
+		return fmt.Errorf("HandleInputEvent: No player value")
 	}
 
 	if Debug.Router {
-		log.Printf("Router.HandleEvent: region=%s event=%s\n", region, event)
+		log.Printf("Router.HandleEvent: player=%s event=%s\n", playerName, event)
 	}
 
-	// XXX - region value should allow "*" and other multi-region values
-	motor, ok := r.motors[region]
+	// XXX - player value should allow "*" and other multi-player values
+	player, ok := r.players[playerName]
 	if !ok {
-		return fmt.Errorf("there is no region named %s", region)
+		return fmt.Errorf("there is no player named %s", playerName)
 	}
 
 	switch event {
@@ -308,12 +307,12 @@ func (r *Router) HandleInputEvent(args map[string]string) error {
 		if err != nil {
 			return nil
 		}
-		motor.generateSprite("dummy", x, y, z)
+		player.generateSprite("dummy", x, y, z)
 
 	case "midi_reset":
 		log.Printf("HandleEvent: midi_reset, sending ANO\n")
-		motor.HandleMIDITimeReset()
-		motor.sendANO()
+		player.HandleMIDITimeReset()
+		player.sendANO()
 
 	case "audio_reset":
 		log.Printf("HandleEvent: audio_reset!!\n")
@@ -562,9 +561,9 @@ func (r *Router) recordingPlayback(events []*PlaybackEvent) error {
 			}
 			eventType := (*pe).eventType
 			pad := (*pe).pad
-			var motor *Motor
+			var player *Player
 			if pad != "*" {
-				motor = r.motors[pad]
+				player = r.players[pad]
 			}
 			method := (*pe).method
 			// time := (*pe).time
@@ -581,7 +580,7 @@ func (r *Router) recordingPlayback(events []*PlaybackEvent) error {
 				xf, _ := ParseFloat32(x, "cursor.x")
 				yf, _ := ParseFloat32(y, "cursor.y")
 				zf, _ := ParseFloat32(z, "cursor.z")
-				motor.executeIncomingCursor(CursorStepEvent{
+				player.executeIncomingCursor(CursorStepEvent{
 					ID:  id,
 					X:   xf,
 					Y:   yf,
@@ -590,7 +589,7 @@ func (r *Router) recordingPlayback(events []*PlaybackEvent) error {
 				})
 			case "api":
 				// since we already have args
-				motor.ExecuteAPI(method, args, rawargs)
+				player.ExecuteAPI(method, args, rawargs)
 			case "global":
 				log.Printf("NOT doing anying for global playback, method=%s\n", method)
 			default:
@@ -655,8 +654,8 @@ func (r *Router) recordingLoad(name string) ([]*PlaybackEvent, error) {
 }
 
 func (r *Router) sendANO() {
-	for _, motor := range r.motors {
-		motor.sendANO()
+	for _, player := range r.players {
+		player.sendANO()
 	}
 }
 */
@@ -731,15 +730,15 @@ func (r *Router) handleClientRestart(msg *osc.Message) {
 		log.Printf("Router.handleOSCEvent: Atoi err=%s\n", err)
 		return
 	}
-	var found *Motor
-	for _, motor := range r.motors {
-		if motor.freeframeClient.Port() == portnum {
-			found = motor
+	var found *Player
+	for _, player := range r.players {
+		if player.freeframeClient.Port() == portnum {
+			found = player
 			break
 		}
 	}
 	if found == nil {
-		log.Printf("handleClientRestart unable to find Motor with portnum=%d\n", portnum)
+		log.Printf("handleClientRestart unable to find Player with portnum=%d\n", portnum)
 	} else {
 		found.sendAllParameters()
 	}
@@ -766,10 +765,10 @@ func (r *Router) handleMMTTCursor(msg *osc.Message) {
 		log.Printf("Router.handleMMTTEvent: err=%s\n", err)
 		return
 	}
-	region := "A"
+	player := "A"
 	words := strings.Split(cid, ".")
 	if len(words) > 1 {
-		region = words[0]
+		player = words[0]
 	}
 	x, err := argAsFloat32(msg, 2)
 	if err != nil {
@@ -787,9 +786,9 @@ func (r *Router) handleMMTTCursor(msg *osc.Message) {
 		return
 	}
 
-	_, mok := r.motors[region]
+	_, mok := r.players[player]
 	if !mok {
-		// If it's not a region, it's a button.
+		// If it's not a player, it's a button.
 		buttonDepth := ConfigFloatWithDefault("mmttbuttondepth", 0.002)
 		if z > buttonDepth {
 			log.Printf("NOT triggering button too deep z=%f buttonDepth=%f\n", z, buttonDepth)
@@ -799,7 +798,7 @@ func (r *Router) handleMMTTCursor(msg *osc.Message) {
 			if Debug.MMTT {
 				log.Printf("MMT BUTTON TRIGGERED buttonDepth=%f  z=%f\n", buttonDepth, z)
 			}
-			r.handleMMTTButton(region)
+			r.handleMMTTButton(player)
 		}
 		return
 	}
@@ -887,7 +886,7 @@ func (r *Router) handlePatchXREvent(msg *osc.Message) {
 		return
 	}
 	action, _ := argAsString(msg, 0)
-	region, _ := argAsString(msg, 1)
+	playerName, _ := argAsString(msg, 1)
 	switch action {
 	case "cursordown":
 		log.Printf("handlePatchXREvent: cursordown ignored\n")
@@ -904,7 +903,7 @@ func (r *Router) handlePatchXREvent(msg *osc.Message) {
 	x, _ := argAsFloat32(msg, 2)
 	y, _ := argAsFloat32(msg, 3)
 	z, _ := argAsFloat32(msg, 4)
-	s := fmt.Sprintf("\"event\": \"cursor_drag\", \"region\": \"%s\", \"x\": \"%f\", \"y\": \"%f\", \"z\": \"%f\"", region, x, y, z)
+	s := fmt.Sprintf("\"event\": \"cursor_drag\", \"player\": \"%s\", \"x\": \"%f\", \"y\": \"%f\", \"z\": \"%f\"", playerName, x, y, z)
 	var args map[string]string
 	args, err = StringMap(s)
 	if err != nil {

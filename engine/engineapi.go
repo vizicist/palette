@@ -48,13 +48,13 @@ func (e *Engine) ExecuteAPIFromMap(api string, apiargs map[string]string) (resul
 	default:
 		words := strings.Split(api, ".")
 		// Any other single-word APIs (like get, set, load, etc)
-		// are region-specific
+		// are player-specific
 		if len(words) <= 1 {
-			region, regionok := apiargs["region"]
-			if !regionok {
-				region = "*"
+			player, playerok := apiargs["player"]
+			if !playerok {
+				player = "*"
 			}
-			result, err = e.Router.executeRegionAPI(region, api, apiargs)
+			result, err = e.Router.executePlayerAPI(player, api, apiargs)
 			return result, err
 		}
 		// Here we handle APIs of the form {apitype}.{apisuffix}
@@ -120,8 +120,8 @@ func (e *Engine) executeGlobalAPI(api string, apiargs map[string]string) (result
 					case "set_transpose":
 						v, err := needFloatArg("value", api, apiargs)
 						if err == nil {
-							for _, motor := range e.Router.motors {
-								motor.TransposePitch = int(v)
+							for _, player := range e.Router.players {
+								player.TransposePitch = int(v)
 							}
 							// log.Printf("set_transpose API set to %d\n", int(v))
 						}
@@ -133,16 +133,16 @@ func (e *Engine) executeGlobalAPI(api string, apiargs map[string]string) (result
 					// log.Printf("GlobalAPI: set_transposeauto b=%v\n", b)
 					// Quantizing CurrentClick() to a beat or measure might be nice
 					e.Scheduler.transposeNext = CurrentClick() + e.Scheduler.transposeClicks*oneBeat
-					for _, motor := range e.Router.motors {
-						motor.TransposePitch = 0
+					for _, player := range e.Router.players {
+						player.TransposePitch = 0
 					}
 				}
 
 			case "set_scale":
 				v, err := needStringArg("value", api, apiargs)
 				if err == nil {
-					for _, motor := range e.Router.motors {
-						err = motor.SetOneParamValue("misc.scale", v)
+					for _, player := range e.Router.players {
+						err = player.SetOneParamValue("misc.scale", v)
 						if err != nil {
 							break
 						}
@@ -221,28 +221,28 @@ func (e *Engine) executePresetAPI(api string, apiargs map[string]string) (result
 			return "", fmt.Errorf("missing preset parameter")
 		}
 		preset := GetPreset(presetName)
-		region, okregion := apiargs["region"]
-		if !okregion {
-			region = "*"
+		playerName, okplayer := apiargs["player"]
+		if !okplayer {
+			playerName = "*"
 		}
 		if preset.category == "quad" {
-			err = preset.loadQuadPreset(region)
+			err = preset.loadQuadPreset(playerName)
 			if err != nil {
 				log.Printf("loadQuad: preset=%s, err=%s", presetName, err)
 				return "", err
 			}
-			e.Router.saveCurrentSnaps(region)
+			e.Router.saveCurrentSnaps(playerName)
 		} else {
-			// It's a region preset
-			motor, ok := e.Router.motors[region]
+			// It's a player preset
+			player, ok := e.Router.players[playerName]
 			if !ok {
-				return "", fmt.Errorf("ExecutePresetAPI, no region named %s", region)
+				return "", fmt.Errorf("ExecutePresetAPI, no player named %s", playerName)
 			}
-			err = motor.applyPreset(preset)
+			err = player.applyPreset(preset)
 			if err != nil {
 				log.Printf("applyPreset: preset=%s, err=%s", presetName, err)
 			} else {
-				err = motor.saveCurrentSnap()
+				err = player.saveCurrentSnap()
 				if err != nil {
 					log.Printf("saveCurrentSnap: err=%s", err)
 				}
@@ -255,18 +255,18 @@ func (e *Engine) executePresetAPI(api string, apiargs map[string]string) (result
 		if !okpreset {
 			return "", fmt.Errorf("missing preset parameter")
 		}
-		region, okregion := apiargs["region"]
-		if !okregion {
-			return "", fmt.Errorf("missing region parameter")
+		playerName, okplayer := apiargs["player"]
+		if !okplayer {
+			return "", fmt.Errorf("missing player parameter")
 		}
-		motor, ok := e.Router.motors[region]
+		player, ok := e.Router.players[playerName]
 		if !ok {
-			return "", fmt.Errorf("no motor named %s", region)
+			return "", fmt.Errorf("no player named %s", playerName)
 		}
 		if strings.HasPrefix(presetName, "quad.") {
 			return "", e.Router.saveQuadPreset(presetName)
 		} else {
-			return "", motor.saveCurrentAsPreset(presetName)
+			return "", player.saveCurrentAsPreset(presetName)
 		}
 
 	default:

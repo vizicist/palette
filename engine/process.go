@@ -197,7 +197,7 @@ func resolumeActivate() {
 	// do it a few times, in case Resolume hasn't started up
 	for i := 0; i < 4; i++ {
 		time.Sleep(5 * time.Second)
-		for _, pad := range TheEngine.Router.regionLetters {
+		for _, pad := range TheEngine.Router.playerLetters {
 			layernum := TheEngine.Router.ResolumeLayerForPad(string(pad))
 			if Debug.Resolume {
 				log.Printf("Activating Resolume layer %d, clip %d\n", layernum, clipnum)

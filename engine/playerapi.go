@@ -13,10 +13,10 @@ import (
 type ParamsMap map[string]interface{}
 
 // ExecuteAPI xxx
-func (motor *Motor) ExecuteAPI(api string, args map[string]string, rawargs string) (result string, err error) {
+func (player *Player) ExecuteAPI(api string, args map[string]string, rawargs string) (result string, err error) {
 
-	if Debug.MotorAPI {
-		log.Printf("MotorAPI: api=%s args=%v\n", api, args)
+	if Debug.PlayerAPI {
+		log.Printf("PlayerAPI: api=%s args=%v\n", api, args)
 	}
 	// The caller can provide rawargs if it's already known, but if not provided, we create it
 	if rawargs == "" {
@@ -28,48 +28,48 @@ func (motor *Motor) ExecuteAPI(api string, args map[string]string, rawargs strin
 		msg := osc.NewMessage("/api")
 		msg.Append(strings.TrimPrefix(api, "visual."))
 		msg.Append(rawargs)
-		motor.toFreeFramePluginForLayer(msg)
+		player.toFreeFramePluginForLayer(msg)
 	}
 
 	switch api {
 
 	case "send":
-		log.Printf("API send should be sending all parameters for region=%s\n", motor.padName)
-		motor.sendAllParameters()
+		log.Printf("API send should be sending all parameters for player=%s\n", player.padName)
+		player.sendAllParameters()
 		return "", err
 
 		/*
 			case "loop_recording":
 				v, e := needBoolArg("onoff", api, args)
 				if e == nil {
-					motor.loopIsRecording = v
+					player.loopIsRecording = v
 				} else {
 					err = e
 				}
 
 			case "loop_playing":
 				v, e := needBoolArg("onoff", api, args)
-				if e == nil && v != motor.loopIsPlaying {
-					motor.loopIsPlaying = v
-					motor.terminateActiveNotes()
+				if e == nil && v != player.loopIsPlaying {
+					player.loopIsPlaying = v
+					player.terminateActiveNotes()
 				} else {
 					err = e
 				}
 
 			case "loop_clear":
-				motor.loop.Clear()
-				motor.clearGraphics()
-				motor.sendANO()
+				player.loop.Clear()
+				player.clearGraphics()
+				player.sendANO()
 
 			case "loop_comb":
-				motor.loopComb()
+				player.loopComb()
 
 			case "loop_length":
 				i, e := needIntArg("value", api, args)
 				if e == nil {
 					nclicks := Clicks(i)
-					if nclicks != motor.loop.length {
-						motor.loop.SetLength(nclicks)
+					if nclicks != player.loop.length {
+						player.loop.SetLength(nclicks)
 					}
 				} else {
 					err = e
@@ -78,19 +78,19 @@ func (motor *Motor) ExecuteAPI(api string, args map[string]string, rawargs strin
 			case "loop_fade":
 				f, e := needFloatArg("fade", api, args)
 				if e == nil {
-					motor.fadeLoop = f
+					player.fadeLoop = f
 				} else {
 					err = e
 				}
 		*/
 
 	case "ANO":
-		motor.sendANO()
+		player.sendANO()
 
 	case "midi_thru":
 		v, e := needBoolArg("onoff", api, args)
 		if e == nil {
-			motor.MIDIThru = v
+			player.MIDIThru = v
 		} else {
 			err = e
 		}
@@ -98,7 +98,7 @@ func (motor *Motor) ExecuteAPI(api string, args map[string]string, rawargs strin
 	case "midi_setscale":
 		v, e := needBoolArg("onoff", api, args)
 		if e == nil {
-			motor.MIDISetScale = v
+			player.MIDISetScale = v
 		} else {
 			err = e
 		}
@@ -106,25 +106,25 @@ func (motor *Motor) ExecuteAPI(api string, args map[string]string, rawargs strin
 	case "midi_usescale":
 		v, e := needBoolArg("onoff", api, args)
 		if e == nil {
-			motor.MIDIUseScale = v
+			player.MIDIUseScale = v
 		} else {
 			err = e
 		}
 
 	case "clearexternalscale":
-		motor.clearExternalScale()
-		motor.MIDINumDown = 0
+		player.clearExternalScale()
+		player.MIDINumDown = 0
 
 	case "midi_quantized":
 		v, err := needBoolArg("onoff", api, args)
 		if err == nil {
-			motor.MIDIQuantized = v
+			player.MIDIQuantized = v
 		}
 
 	case "midi_thruscadjust":
 		v, e := needBoolArg("onoff", api, args)
 		if e == nil {
-			motor.MIDIThruScadjust = v
+			player.MIDIThruScadjust = v
 		} else {
 			err = e
 		}
@@ -132,22 +132,22 @@ func (motor *Motor) ExecuteAPI(api string, args map[string]string, rawargs strin
 	case "set_transpose":
 		v, e := needIntArg("value", api, args)
 		if e == nil {
-			motor.TransposePitch = v
-			log.Printf("motor API set_transpose TransposePitch=%v", v)
+			player.TransposePitch = v
+			log.Printf("player API set_transpose TransposePitch=%v", v)
 		} else {
 			err = e
 		}
 
 	default:
-		err = fmt.Errorf("Motor.ExecuteAPI: unknown api=%s", api)
+		err = fmt.Errorf("Player.ExecuteAPI: unknown api=%s", api)
 	}
 
 	return result, err
 }
 
-func (motor *Motor) sendAllParameters() {
-	for nm := range motor.params.values {
-		val, e := motor.params.paramValueAsString(nm)
+func (player *Player) sendAllParameters() {
+	for nm := range player.params.values {
+		val, e := player.params.paramValueAsString(nm)
 		if e != nil {
 			log.Printf("Unexepected error from paramValueAsString for nm=%s\n", nm)
 			// Keep going
@@ -155,7 +155,7 @@ func (motor *Motor) sendAllParameters() {
 		}
 		// This assumes that if you set a parameter to the same value,
 		// that it will re-send the mesasges to Resolume for visual.* params
-		err := motor.SetOneParamValue(nm, val)
+		err := player.SetOneParamValue(nm, val)
 		if err != nil {
 			log.Printf("sendAllParameters nm=%s val=%s err=%s\n", nm, val, err)
 			// Don't fail completely
@@ -163,15 +163,15 @@ func (motor *Motor) sendAllParameters() {
 	}
 }
 
-func (motor *Motor) applyPreset(preset *Preset) error {
+func (player *Player) applyPreset(preset *Preset) error {
 
 	path := preset.readableFilePath()
-	log.Printf("applyPreset region=%s path=%s\n", motor.padName, path)
+	log.Printf("applyPreset player=%s path=%s\n", player.padName, path)
 	paramsmap, err := LoadParamsMap(path)
 	if err != nil {
 		return err
 	}
-	err = motor.applyParamsMap(preset.category, paramsmap)
+	err = player.applyParamsMap(preset.category, paramsmap)
 	if err != nil {
 		return err
 	}
@@ -187,7 +187,7 @@ func (motor *Motor) applyPreset(preset *Preset) error {
 		if err != nil {
 			return err
 		}
-		err = motor.applyParamsMap(preset.category, overridemap)
+		err = player.applyParamsMap(preset.category, overridemap)
 		if err != nil {
 			return err
 		}
@@ -206,7 +206,7 @@ func (motor *Motor) applyPreset(preset *Preset) error {
 		_, found := paramsmap[nm]
 		if !found {
 			init := def.Init
-			err = motor.SetOneParamValue(nm, init)
+			err = player.SetOneParamValue(nm, init)
 			if err != nil {
 				log.Printf("Loading preset %s, param=%s, init=%s, err=%s\n", path, nm, init, err)
 				// Don't fail completely
@@ -217,7 +217,7 @@ func (motor *Motor) applyPreset(preset *Preset) error {
 	return nil
 }
 
-func (motor *Motor) applyParamsMap(presetType string, paramsmap map[string]interface{}) error {
+func (player *Player) applyParamsMap(presetType string, paramsmap map[string]interface{}) error {
 
 	// Currently, no errors are ever returned, but log messages are generated.
 
@@ -235,7 +235,7 @@ func (motor *Motor) applyParamsMap(presetType string, paramsmap map[string]inter
 		}
 		// This is where the parameter values get applied,
 		// which may trigger things (like sending OSC)
-		err := motor.SetOneParamValue(fullname, val)
+		err := player.SetOneParamValue(fullname, val)
 		if err != nil {
 			log.Printf("applyPreset: param=%s, err=%s\n", fullname, err)
 			// Don't abort the whole load, i.e. we are tolerant
@@ -245,30 +245,30 @@ func (motor *Motor) applyParamsMap(presetType string, paramsmap map[string]inter
 	return nil
 }
 
-func (motor *Motor) restoreCurrentSnap() {
-	preset := GetPreset("snap._Current_" + motor.padName)
-	err := motor.applyPreset(preset)
+func (player *Player) restoreCurrentSnap() {
+	preset := GetPreset("snap._Current_" + player.padName)
+	err := player.applyPreset(preset)
 	if err != nil {
 		log.Printf("applyPreset: err=%s\n", err)
 	}
 }
 
-func (motor *Motor) saveCurrentAsPreset(presetName string) error {
+func (player *Player) saveCurrentAsPreset(presetName string) error {
 	preset := GetPreset(presetName)
 	path := preset.WriteableFilePath()
-	return motor.saveCurrentSnapInPath(path)
+	return player.saveCurrentSnapInPath(path)
 }
 
-func (motor *Motor) saveCurrentSnap() error {
-	return motor.saveCurrentAsPreset("snap._Current_" + motor.padName)
+func (player *Player) saveCurrentSnap() error {
+	return player.saveCurrentAsPreset("snap._Current_" + player.padName)
 }
 
-func (motor *Motor) saveCurrentSnapInPath(path string) error {
+func (player *Player) saveCurrentSnapInPath(path string) error {
 
 	s := "{\n    \"params\": {\n"
 
 	// Print the parameter values sorted by name
-	fullNames := motor.params.values
+	fullNames := player.params.values
 	sortedNames := make([]string, 0, len(fullNames))
 	for k := range fullNames {
 		sortedNames = append(sortedNames, k)
@@ -277,7 +277,7 @@ func (motor *Motor) saveCurrentSnapInPath(path string) error {
 
 	sep := ""
 	for _, fullName := range sortedNames {
-		valstring, e := motor.params.paramValueAsString(fullName)
+		valstring, e := player.params.paramValueAsString(fullName)
 		if e != nil {
 			log.Printf("Unexepected error from paramValueAsString for nm=%s\n", fullName)
 			continue
@@ -287,6 +287,6 @@ func (motor *Motor) saveCurrentSnapInPath(path string) error {
 	}
 	s += "\n    }\n}"
 	data := []byte(s)
-	// log.Printf("SaveCurrentSnapInPath %s path=%s\n", motor.padName, path)
+	// log.Printf("SaveCurrentSnapInPath %s path=%s\n", player.padName, path)
 	return os.WriteFile(path, data, 0644)
 }

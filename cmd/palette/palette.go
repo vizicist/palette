@@ -25,9 +25,11 @@ func main() {
 	// Does anything need to be initia
 	flag.Parse()
 
-	regionPtr := flag.String("region", "*", "Region name or *")
+	playerPtr := flag.String("player", "*", "Region name or *")
 
-	out := CliCommand(*regionPtr, flag.Args())
+	e := engine.NewEngine("engine")
+	_ = e
+	out := CliCommand(*playerPtr, flag.Args())
 	os.Stdout.WriteString(out)
 }
 
@@ -38,10 +40,10 @@ func usage() string {
     palette activate
     palette sendlogs
     palette list [{category}]
-    palette [-region={region}] load {category}.{preset}
-    palette [-region {region}] save {category}.{preset}
-    palette [-region {region}] set {category}.{parameter} [{value}]
-    palette [-region {region}] get {category}.{parameter}
+    palette [-player={player}] load {category}.{preset}
+    palette [-player {player}] save {category}.{preset}
+    palette [-player {player}] set {category}.{parameter} [{value}]
+    palette [-player {player}] get {category}.{parameter}
     palette status
 	palette version
     palette api {api} {args}
@@ -107,8 +109,8 @@ func RemoteAPIRaw(args string) map[string]string {
 	return output
 }
 
-// If it's not a region, it's a button.
-func CliCommand(region string, args []string) string {
+// If it's not a player, it's a button.
+func CliCommand(player string, args []string) string {
 
 	if len(args) == 0 {
 		return usage()
@@ -123,19 +125,19 @@ func CliCommand(region string, args []string) string {
 		if len(args) < 2 {
 			return "Insufficient arguments"
 		}
-		return RemoteAPI("api", api, "region", region, "preset", args[1])
+		return RemoteAPI("api", api, "player", player, "preset", args[1])
 
 	case "get":
 		if len(args) < 2 {
 			return "Insufficient arguments"
 		}
-		return RemoteAPI("get", "region", region, "name", args[1])
+		return RemoteAPI("get", "player", player, "name", args[1])
 
 	case "set":
 		if len(args) < 3 {
 			return "Insufficient arguments"
 		}
-		return RemoteAPI("set", "region", args[1], "name", args[1], "value", args[2])
+		return RemoteAPI("set", "player", args[1], "name", args[1], "value", args[2])
 
 	case "preset.list":
 		category := "*"
@@ -228,9 +230,9 @@ func CliCommand(region string, args []string) string {
 			if n > 0 {
 				time.Sleep(dt)
 			}
-			region := string("ABCD"[rand.Int()%4])
+			player := string("ABCD"[rand.Int()%4])
 			RemoteAPI("event",
-				"region", region,
+				"player", player,
 				"source", source,
 				"event", "cursor_down",
 				"x", fmt.Sprintf("%f", rand.Float32()),
@@ -239,14 +241,14 @@ func CliCommand(region string, args []string) string {
 			)
 			time.Sleep(dt)
 			RemoteAPI("event",
-				"region", region,
+				"player", player,
 				"source", source,
 				"event", "cursor_up",
 				"x", fmt.Sprintf("%f", rand.Float32()),
 				"y", fmt.Sprintf("%f", rand.Float32()),
 				"z", fmt.Sprintf("%f", rand.Float32()),
 			)
-		}
+	}
 
 	default:
 		// NEW retmap

@@ -390,11 +390,11 @@ class ProGuiApp(tk.Tk):
     def doStartupAction(self):
         pass
 
-    def randomSprite(self,region,downup):
+    def randomSprite(self,player,downup):
         x = random.random()
         y = random.random()
         z = 0.6 - random.random() / 2.0
-        palette.SendSpriteEvent("0",x,y,z,region)
+        palette.SendSpriteEvent("0",x,y,z,player)
 
 #     def doAttractAction(self):
 # 
@@ -409,11 +409,11 @@ class ProGuiApp(tk.Tk):
 #         #     self.lastAttractPresetTime = now
 #         #
 #         # if (now - self.lastAttractSpriteTime) > self.randomSpriteTime:
-#         #     regions = ["A","B","C","D"]
+#         #     players = ["A","B","C","D"]
 #         #     i = int(random.random()*99) % 4
-#         #     region = regions[i]
-#         #     self.randomSprite(region,"down")
-#         #     self.randomSprite(region,"up")
+#         #     player = players[i]
+#         #     self.randomSprite(player,"down")
+#         #     self.randomSprite(player,"up")
 #         #     self.lastAttractSpriteTime = now
 #         # 
 #         #     randtype = "sprite"
@@ -627,7 +627,7 @@ class ProGuiApp(tk.Tk):
             ptype = self.paramTypeOf[name]
             if pagename != "snap" and ptype != pagename:
                 continue
-            value = palette.palette_region_api(pad.name(), "get",
+            value = palette.palette_player_api(pad.name(), "get",
                 "\"name\": \"" + name + "\"")
             w = page.paramValueWidget[name]
             w.config(text=value)
@@ -814,23 +814,23 @@ class ProGuiApp(tk.Tk):
             if self.guiLevel == 0:
                 # in casual instrument mode, loading a quad will ignore the pad selections
                 # because in casual mode, the pad selectors aren't shown.
-                # So, we don't include the region parameter.
+                # So, we don't include the player parameter.
                 log("calling preset.load in guiLevel 0 on quad preset=",presetname)
                 palette.palette_api("preset.load", "\"preset\": \"" + fullpresetname + "\"")
             else:
-                log("calling preset.load on quad preset=",presetname," region=")
+                log("calling preset.load on quad preset=",presetname)
                 if self.allPadsSelected:
-                    region = "*"
+                    player = "*"
                 else:
-                    region = self.CurrPad.name()
-                palette.palette_api("preset.load", "\"preset\": \"" + fullpresetname + "\", \"region\": \""+region+"\"")
+                    player = self.CurrPad.name()
+                palette.palette_api("preset.load", "\"preset\": \"" + fullpresetname + "\", \"player\": \""+player+"\"")
         elif self.allPadsSelected:
             for pad in self.Pads:
                 log("calling preset.load on pad=",pad.name()," preset=",presetname)
-                palette.palette_region_api(pad.name(),"preset.load", "\"preset\": \"" + fullpresetname + "\"")
+                palette.palette_player_api(pad.name(),"preset.load", "\"preset\": \"" + fullpresetname + "\"")
         else:
-            region = self.CurrPad.name()
-            palette.palette_region_api(region,"preset.load", "\"preset\": \"" + fullpresetname + "\"")
+            player = self.CurrPad.name()
+            palette.palette_player_api(player,"preset.load", "\"preset\": \"" + fullpresetname + "\"")
 
         # self.saveCurrent()
 
@@ -933,7 +933,7 @@ class ProGuiApp(tk.Tk):
             palette.palette_global_api("set_transposeauto", "\"onoff\": \""+str(val) + "\"")
 
     def combPadLoop(self,pad):
-        palette.palette_region_api(self.CurrPad.name(), "loop_comb", "")
+        palette.palette_player_api(self.CurrPad.name(), "loop_comb", "")
 
     def combLoop(self):
         self.resetLastAnything()
@@ -1027,7 +1027,7 @@ class ProGuiApp(tk.Tk):
             log("Sending all parameters for pad = ",pad.name())
             for pt in ["sound","visual","effect"]:
                 paramlistjson = pad.paramListOfType(pt)
-                palette.palette_region_api(pad.name(), "setparams", paramlistjson)
+                palette.palette_player_api(pad.name(), "setparams", paramlistjson)
 
     def synthesizeParamsJson(self):
 
@@ -1207,11 +1207,11 @@ class Pad():
     #     return "snap._Current_"+self.name()
 
     # def saveCurrent(self):
-    #     palette.palette_region_api(self.name(),"preset.save",
+    #     palette.palette_player_api(self.name(),"preset.save",
     #         "\"preset\": \"" + self.currentSnapName() + "\"")
 
     # def loadCurrent(self):
-    #     palette.palette_region_api(self.name(),"preset.load",
+    #     palette.palette_player_api(self.name(),"preset.load",
     #         "\"preset\": \"" + self.currentSnapName() + "\"")
 
     def loadJson(self,j):
@@ -1244,7 +1244,7 @@ class Pad():
         paramType = self.controller.paramTypeOf[paramName]
         # fullParamName = paramType + "." + paramName
         fullParamName = paramName
-        palette.palette_region_api(self.name(),"set",
+        palette.palette_player_api(self.name(),"set",
             "\"name\": \"" + fullParamName + "\"" + \
             ", \"value\": \"" + str(val) + "\"" )
 
@@ -1252,7 +1252,7 @@ class Pad():
         for pt in ["sound","visual","effect"]:
             if paramType == "snap" or paramType == pt:
                 paramlistjson = self.paramListOfType(pt)
-                palette.palette_region_api(self.name(), "setparams", paramlistjson)
+                palette.palette_player_api(self.name(), "setparams", paramlistjson)
 
         if paramType == "snap":
             self.sendPerformVals()
@@ -1272,13 +1272,13 @@ class Pad():
         self.performIndex[name] = index
 
     def sendANO(self):
-        palette.palette_region_api(self.name(), "ANO")
+        palette.palette_player_api(self.name(), "ANO")
 
     def clearExternalScale(self):
-        palette.palette_region_api(self.name(), "clearexternalscale")
+        palette.palette_player_api(self.name(), "clearexternalscale")
 
     def useExternalScale(self,onoff):
-        palette.palette_region_api(self.name(), "midi_usescale", "\"onoff\": \"" + str(onoff) + "\"")
+        palette.palette_player_api(self.name(), "midi_usescale", "\"onoff\": \"" + str(onoff) + "\"")
 
     def sendPerformVal(self,name):
         index = self.performIndex[name]
@@ -1300,62 +1300,62 @@ class Pad():
                 log("Unrecognized value of loopingonoff - %s" % val)
                 return
 
-            palette.palette_region_api(self.name(), "loop_recording", '"onoff": "'+str(reconoff)+'"')
-            palette.palette_region_api(self.name(), "loop_playing", '"onoff": "'+str(playonoff)+'"')
+            palette.palette_player_api(self.name(), "loop_recording", '"onoff": "'+str(reconoff)+'"')
+            palette.palette_player_api(self.name(), "loop_playing", '"onoff": "'+str(playonoff)+'"')
 
         elif name == "loopinglength":
-            palette.palette_region_api(self.name(), "loop_length", '"value": "'+str(val)+'"')
+            palette.palette_player_api(self.name(), "loop_length", '"value": "'+str(val)+'"')
 
         elif name == "loopingfade":
-            palette.palette_region_api(self.name(), "loop_fade", '"fade": "'+str(val)+'"')
+            palette.palette_player_api(self.name(), "loop_fade", '"fade": "'+str(val)+'"')
 
         elif name == "loopingset":
-            palette.palette_region_api(self.name(), "loop_set", '"set": "'+str(val)+'"')
+            palette.palette_player_api(self.name(), "loop_set", '"set": "'+str(val)+'"')
 
         elif name == "deltaztrig":
-            palette.palette_region_api(self.name(), "set",
+            palette.palette_player_api(self.name(), "set",
                 "\"name\": \"" + "sound._deltaztrig" + "\"" + \
                 ", \"value\": \"" + str(val) + "\"")
 
         elif name == "deltaytrig":
-            palette.palette_region_api(self.name(), "set",
+            palette.palette_player_api(self.name(), "set",
                 "\"name\": \"" + "sound._deltaytrig" + "\"" + \
                 ", \"value\": \"" + str(val) + "\"")
 
         elif name == "quant":
-            palette.palette_region_api(self.name(), "set",
+            palette.palette_player_api(self.name(), "set",
                 "\"name\": \"" + "misc.quant" + "\"" + \
                 ", \"value\": \"" + str(val) + "\"")
         elif name == "scale":
-            palette.palette_region_api(self.name(), "set",
+            palette.palette_player_api(self.name(), "set",
                 "\"name\": \"" + "misc.scale" + "\"" + \
                 ", \"value\": \"" + str(val) + "\"")
 
         elif name == "vol":
             # NOTE: "voltype" here rather than "vol" - should make consistent someday
-            palette.palette_region_api(self.name(), "set",
+            palette.palette_player_api(self.name(), "set",
                 "\"name\": \"" + "misc.vol" + "\"" + \
                 ", \"value\": \"" + str(val) + "\"")
 
         elif name == "comb":
             val = 1.0
-            palette.palette_region_api(self.name(), "loop_comb",
+            palette.palette_player_api(self.name(), "loop_comb",
                 "\"value\": \"" + str(val) + "\"")
 
         elif name == "midithru":
-            palette.palette_region_api(self.name(), "midi_thru", "\"onoff\": \"" + str(val) + "\"")
+            palette.palette_player_api(self.name(), "midi_thru", "\"onoff\": \"" + str(val) + "\"")
 
         elif name == "midisetscale":
-            palette.palette_region_api(self.name(), "midi_setscale", "\"onoff\": \"" + str(val) + "\"")
+            palette.palette_player_api(self.name(), "midi_setscale", "\"onoff\": \"" + str(val) + "\"")
 
         elif name == "midiusescale":
             self.useExternalScale(val)
 
         elif name == "midiquantized":
-            palette.palette_region_api(self.name(), "midi_quantized", "\"onoff\": \"" + str(val) + "\"")
+            palette.palette_player_api(self.name(), "midi_quantized", "\"onoff\": \"" + str(val) + "\"")
 
         elif name == "midithruscadjust":
-            palette.palette_region_api(self.name(), "midi_thruscadjust", "\"onoff\": \"" + str(val) + "\"")
+            palette.palette_player_api(self.name(), "midi_thruscadjust", "\"onoff\": \"" + str(val) + "\"")
 
         elif name == "transpose":
             log("HEY, transpose shouldn't be here")
@@ -1365,7 +1365,7 @@ class Pad():
             log("SendPerformVal: unhandled name=",name)
 
     def clearLoop(self):
-        palette.palette_region_api(self.name(), "loop_clear", "")
+        palette.palette_player_api(self.name(), "loop_clear", "")
  
     def paramListOfType(self,paramType):
         paramlist = ""
@@ -2010,7 +2010,7 @@ class PageEditParams(tk.Frame):
 
         pad = self.controller.CurrPad.name()
         result = palette.palette_api("preset.save",
-                "\"region\": \"" + pad + "\","+
+                "\"player\": \"" + pad + "\","+
                 "\"preset\": \"" + preset + "\"")
         if result != "":
             log("result of save for preset=",preset," has non-empty result=",result)

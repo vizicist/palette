@@ -40,7 +40,7 @@ type debugFlags struct {
 	MIDI      bool
 	MMTT      bool
 	Morph     bool
-	MotorAPI  bool
+	PlayerAPI bool
 	Mouse     bool
 	NATS      bool
 	Notify    bool
@@ -76,7 +76,7 @@ func setDebug(dtype string, b bool) error {
 	case "exec":
 		Debug.Exec = b
 	case "executeapi":
-		Debug.MotorAPI = b
+		Debug.PlayerAPI = b
 	case "generated":
 		Debug.GenSound = b
 		Debug.GenVisual = b

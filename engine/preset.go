@@ -31,7 +31,7 @@ func GetPreset(name string) *Preset {
 	return p
 }
 
-func (p *Preset) loadQuadPreset(applyToRegion string) error {
+func (p *Preset) loadQuadPreset(applyToPlayer string) error {
 
 	path := p.readableFilePath()
 	paramsmap, err := LoadParamsMap(path)
@@ -50,17 +50,17 @@ func (p *Preset) loadQuadPreset(applyToRegion string) error {
 			return fmt.Errorf("value of name=%s isn't a string", name)
 		}
 		// In a quad file, the parameter names are of the form:
-		// {region}-{parametername}
+		// {player}-{parametername}
 		words := strings.SplitN(name, "-", 2)
-		regionOfParam := words[0]
-		motor := MotorForRegion(regionOfParam)
-		if motor == nil {
-			return fmt.Errorf("Preset.loadQuadPreset: no region named %s", regionOfParam)
+		playerOfParam := words[0]
+		player := GetPlayer(playerOfParam)
+		if player == nil {
+			return fmt.Errorf("Preset.loadQuadPreset: no player named %s", playerOfParam)
 		}
-		if applyToRegion != "*" && applyToRegion != regionOfParam {
+		if applyToPlayer != "*" && applyToPlayer != playerOfParam {
 			continue
 		}
-		// use words[1] so the motor doesn't see the region name
+		// use words[1] so the player doesn't see the player name
 		parameterName := words[1]
 		// We expect the parameter to be of the form
 		// {category}.{parameter}, but old "quad" files
@@ -69,7 +69,7 @@ func (p *Preset) loadQuadPreset(applyToRegion string) error {
 			log.Printf("loadQuadPreset: path=%s parameter=%s is in OLD format, not supported", path, parameterName)
 			return fmt.Errorf("")
 		}
-		err = motor.SetOneParamValue(parameterName, value)
+		err = player.SetOneParamValue(parameterName, value)
 		if err != nil {
 			if !OldParameterName(parameterName) {
 				log.Printf("loadQuadPreset: name=%s err=%s\n", parameterName, err)
@@ -82,17 +82,17 @@ func (p *Preset) loadQuadPreset(applyToRegion string) error {
 	// For any parameters that are in Paramdefs but are NOT in the loaded
 	// preset, we put out the "init" values.  This happens when new parameters
 	// are added which don't exist in existing preset files.
-	// This is similar to code in Motor.applyPreset, except we
+	// This is similar to code in Player.applyPreset, except we
 	// have to do it for all for pads
-	for _, c := range TheEngine.Router.regionLetters {
+	for _, c := range TheEngine.Router.playerLetters {
 		padName := string(c)
-		motor := MotorForRegion(padName)
+		player := GetPlayer(padName)
 		for nm, def := range ParamDefs {
 			paramName := string(padName) + "-" + nm
 			_, found := paramsmap[paramName]
 			if !found {
 				init := def.Init
-				err = motor.SetOneParamValue(nm, init)
+				err = player.SetOneParamValue(nm, init)
 				if err != nil {
 					// a hack to eliminate errors on a parameter that
 					// still exists in some presets.

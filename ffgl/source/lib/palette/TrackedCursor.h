@@ -5,7 +5,7 @@
 #define SPRITE_THROTTLE_MS_PER_CURSOR 20
 
 class Palette;
-class Region;
+class Player;
 
 class TrackedCursor {
 
@@ -15,14 +15,14 @@ public:
 	static bool initialized;
 	static void initialize();
 
-	TrackedCursor(Palette* palette_, std::string cid, std::string cidsource, Region* region_, glm::vec2 pos_, float z);
+	TrackedCursor(Palette* palette_, std::string cid, std::string cidsource, Player* player_, glm::vec2 pos_, float z);
 	~TrackedCursor();
 	float radian2degree(float r) {
 		return r * 360.0f / (2.0f * (float)M_PI);
 	}
-	bool rotauto() { return _region->params.rotauto; }
+	bool rotauto() { return _player->params.rotauto; }
 
-	Region* region() { return _region; }
+	Player* player() { return _player; }
 	Palette* palette() { return _palette; }
 	int touched() { return _touched; }
 	void touch() { _touched = Scheduler::CurrentMilli; }
@@ -78,7 +78,7 @@ private:
 	int _last_tm;	   // milliseconds
 	long _touched;   // milliseconds
 	long _last_instantiate;
-	Region* _region;
+	Player* _player;
 	Palette* _palette;
 	long _lastalive;
 	std::string _cid; // This is a long string, globally unique
