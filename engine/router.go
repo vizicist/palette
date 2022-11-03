@@ -14,11 +14,12 @@ import (
 
 // Router takes events and routes them
 type Router struct {
-	regionLetters string
-	motors        map[string]*Motor
-	OSCInput      chan OSCEvent
-	MIDIInput     chan MidiEvent
-	NoteInput     chan *Note
+	regionLetters     string
+	motors            map[string]*Motor
+	OSCInput          chan OSCEvent
+	MIDIInput         chan MidiEvent
+	NoteInput         chan *Note
+	CursorDeviceInput chan CursorDeviceEvent
 
 	AliveWaiters map[string]chan string
 
@@ -44,23 +45,7 @@ type Router struct {
 	regionAssignedToNUID map[string]string
 	eventMutex           sync.RWMutex
 
-	responders map[string]Responder
-}
-
-type Responder interface {
-	OnCursorDeviceEvent(e CursorDeviceEvent)
-}
-
-func (r *Router) AddResponder(name string, resp Responder) {
-	log.Printf("AddResponder: r=%v\n", r)
-	r.responders[name] = resp
-}
-
-func (r *Router) CallResponders(e CursorDeviceEvent) {
-	for name, responder := range r.responders {
-		log.Printf("CallResponders: name=%s\n", name)
-		responder.OnCursorDeviceEvent(e)
-	}
+	// responders map[string]Responder
 }
 
 // OSCEvent is an OSC message
@@ -120,16 +105,13 @@ func CallAPI(method string, args []string) {
 	log.Printf("CallAPI method=%s", method)
 }
 
-var HTTPPort = 3330
-var OSCPort = 3333
-var AliveOutputPort = 3331
-var ResolumePort = 3334
-
 func NewRouter() *Router {
 
 	r := Router{}
 
-	r.responders = make(map[string]Responder)
+	// r.deviceCursors = make(map[string]*DeviceCursor)
+	// r.activeCursors = make(map[string]*ActiveStepCursor)
+	// r.responders = make(map[string]Responder)
 
 	r.regionLetters = ConfigValue("pads")
 	if r.regionLetters == "" {
@@ -239,39 +221,6 @@ func (r *Router) ResolumeLayerForPad(pad string) int {
 	return r.layerMap[pad]
 }
 
-func (r *Router) doCursorGesture(region string, cid string, x0, y0, z0, x1, y1, z1 float32) {
-	log.Printf("doCursorGesture: start\n")
-	ce := CursorDeviceEvent{
-		Region:    region,
-		Source:    "internal",
-		Timestamp: 0,
-		Ddu:       "",
-		X:         x0,
-		Y:         y0,
-		Z:         z0,
-		Area:      0,
-	}
-	ce.Ddu = "down"
-	r.handleCursorDeviceEventWithLock(ce)
-	if Debug.Cursor {
-		log.Printf("doCursorGesture: down ce=%+v\n", ce)
-	}
-
-	// secs := float32(3.0)
-	secs := float32(TheEngine.Scheduler.attractNoteDuration)
-	dt := time.Duration(int(secs * float32(time.Second)))
-	time.Sleep(dt)
-	ce.Ddu = "up"
-	ce.X = x1
-	ce.Y = y1
-	ce.Z = z1
-	r.handleCursorDeviceEventWithLock(ce)
-	if Debug.Cursor {
-		log.Printf("doCursorGesture: up ce=%+v\n", ce)
-	}
-	log.Printf("doCursorGesture: end\n")
-}
-
 type MIDIEventHandler func(MidiEvent)
 
 func (r *Router) SetMIDIEventHandler(handler MIDIEventHandler) {
@@ -279,9 +228,12 @@ func (r *Router) SetMIDIEventHandler(handler MIDIEventHandler) {
 }
 
 func (r *Router) handleMidiInput(event MidiEvent) {
-	for _, motor := range r.motors {
-		motor.HandleMidiInput(event)
-	}
+	log.Printf("Router.handleMidiInput is disabled\n")
+	/*
+		for _, motor := range r.motors {
+			motor.HandleMidiInput(event)
+		}
+	*/
 }
 
 func ArgToFloat(nm string, args map[string]string) float32 {
@@ -294,16 +246,16 @@ func ArgToFloat(nm string, args map[string]string) float32 {
 }
 
 func ArgsToCursorDeviceEvent(args map[string]string) CursorDeviceEvent {
-	region := args["region"]
+	id := args["id"]
 	source := args["source"]
 	event := strings.TrimPrefix(args["event"], "cursor_")
 	x := ArgToFloat("x", args)
 	y := ArgToFloat("y", args)
 	z := ArgToFloat("z", args)
 	ce := CursorDeviceEvent{
-		Region:    region,
+		ID:        id,
 		Source:    source,
-		Timestamp: CurrentMilli(),
+		Timestamp: time.Now(),
 		Ddu:       event,
 		X:         x,
 		Y:         y,
@@ -348,7 +300,7 @@ func (r *Router) HandleInputEvent(args map[string]string) error {
 
 	case "cursor_down", "cursor_drag", "cursor_up":
 		ce := ArgsToCursorDeviceEvent(args)
-		r.handleCursorDeviceEventNoLock(ce)
+		TheEngine.CursorManager.handleCursorDeviceEvent(ce, true)
 
 	case "sprite":
 
@@ -391,28 +343,6 @@ func (r *Router) HandleInputEvent(args map[string]string) error {
 	}
 
 	return nil
-}
-
-func (r *Router) handleCursorDeviceEventWithLock(ce CursorDeviceEvent) {
-	r.eventMutex.Lock()
-	defer r.eventMutex.Unlock()
-	r.handleCursorDeviceEventNoLock(ce)
-}
-
-func (r *Router) handleCursorDeviceEventNoLock(ce CursorDeviceEvent) {
-
-	if ce.Source != "internal" {
-		TheEngine.Scheduler.AttractMode(false)
-	}
-
-	r.CallResponders(ce)
-
-	motor, ok := r.motors[ce.Region]
-	if !ok {
-		log.Printf("routeCursorDeviceEvent: no region named %s\n", ce.Region)
-	} else {
-		motor.handleCursorDeviceEvent(ce)
-	}
 }
 
 /*
@@ -744,19 +674,20 @@ func (r *Router) notifyGUI(eventName string) {
 }
 
 func (r *Router) handleMMTTButton(butt string) {
-	preset := ConfigStringWithDefault(butt, "")
-	if preset == "" {
+	presetName := ConfigStringWithDefault(butt, "")
+	if presetName == "" {
 		log.Printf("No Preset assigned to BUTTON %s, using Perky_Shapes\n", butt)
-		preset = "Perky_Shapes"
+		presetName = "Perky_Shapes"
 		return
 	}
-	log.Printf("Router.handleMMTTButton: butt=%s preset=%s\n", butt, preset)
-	err := r.loadQuadPreset("quad."+preset, "*")
+	preset := GetPreset("quad." + presetName)
+	log.Printf("Router.handleMMTTButton: butt=%s preset=%s\n", butt, presetName)
+	err := preset.loadQuadPreset("*")
 	if err != nil {
-		log.Printf("handleMMTTButton: preset=%s err=%s\n", preset, err)
+		log.Printf("handleMMTTButton: preset=%s err=%s\n", presetName, err)
 	}
 
-	text := strings.ReplaceAll(preset, "_", "\n")
+	text := strings.ReplaceAll(presetName, "_", "\n")
 	go r.showText(text)
 }
 
@@ -874,9 +805,9 @@ func (r *Router) handleMMTTCursor(msg *osc.Message) {
 	}
 
 	ce := CursorDeviceEvent{
-		Region:    region,
-		Source:    cid,
-		Timestamp: CurrentMilli(),
+		ID:        cid,
+		Source:    "mmtt",
+		Timestamp: time.Now(),
 		Ddu:       ddu,
 		X:         x,
 		Y:         y,
@@ -899,7 +830,7 @@ func (r *Router) handleMMTTCursor(msg *osc.Message) {
 		log.Printf("MMTT Cursor %s %s xyz= %f %f %f\n", ce.Source, ce.Ddu, ce.X, ce.Y, ce.Z)
 	}
 
-	r.handleCursorDeviceEventWithLock(ce)
+	TheEngine.CursorManager.handleCursorDeviceEvent(ce, true)
 }
 
 func boundval(v float32) float32 {

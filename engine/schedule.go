@@ -15,7 +15,9 @@ type Scheduler struct {
 	nextItem int
 	// mutex    sync.RWMutex
 
-	time      time.Time
+	activePhrasesManager *ActivePhrasesManager
+
+	now       time.Time
 	time0     time.Time
 	lastClick Clicks
 	control   chan Command
@@ -56,7 +58,8 @@ const minClicksPerSecond = (defaultClicksPerSecond / 16)
 const maxClicksPerSecond = (defaultClicksPerSecond * 16)
 
 var defaultSynth = "default"
-var loopForever = 999999
+
+// var loopForever = 999999
 
 // Bits for Events
 const EventMidiInput = 0x01
@@ -76,6 +79,49 @@ func SetCurrentClick(clk Clicks) {
 	currentClickMutex.Unlock()
 }
 
+// InitializeClicksPerSecond initializes
+func InitializeClicksPerSecond(clkpersec int) {
+	clicksPerSecond = clkpersec
+	currentMilliOffset = 0
+	currentClickOffset = 0
+	oneBeat = Clicks(clicksPerSecond / 2) // i.e. 120bpm
+}
+
+// ChangeClicksPerSecond is what you use to change the tempo
+func ChangeClicksPerSecond(factor float64) {
+	TempoFactor = factor
+	clkpersec := int(defaultClicksPerSecond * factor)
+	if clkpersec < minClicksPerSecond {
+		clkpersec = minClicksPerSecond
+	}
+	if clkpersec > maxClicksPerSecond {
+		clkpersec = maxClicksPerSecond
+	}
+	currentMilliOffset = CurrentMilli()
+	currentClickOffset = CurrentClick()
+	clicksPerSecond = clkpersec
+	oneBeat = Clicks(clicksPerSecond / 2)
+}
+
+// Seconds2Clicks converts a Time value (elapsed seconds) to Clicks
+func Seconds2Clicks(tm float64) Clicks {
+	return currentClickOffset + Clicks(0.5+float64(tm*1000-float64(currentMilliOffset))*(float64(clicksPerSecond)/1000.0))
+}
+
+// Clicks2Seconds converts Clicks to Time (seconds), relative
+func Clicks2Seconds(clk Clicks) float64 {
+	return float64(clk) / float64(clicksPerSecond)
+}
+
+// Clicks2Seconds converts Clicks to Time (seconds), absolute
+func Clicks2SecondsAbsolute(clk Clicks) float64 {
+	// Take current*Offset values into account
+	clk -= currentClickOffset
+	secs := float64(clk) / float64(clicksPerSecond)
+	secs -= (float64(currentMilliOffset) * 1000.0)
+	return secs
+}
+
 // TempoFactor xxx
 var TempoFactor = float64(1.0)
 
@@ -91,8 +137,16 @@ func SetCurrentMilli(m int64) {
 	currentMilliMutex.Unlock()
 }
 
+type PhraseIter struct {
+}
+
 type SchedItem struct {
 	ClickStart Clicks
+	PhraseIter *PhraseIter
+}
+
+func (sched *Scheduler) InsertAtClick(clk Clicks) {
+
 }
 
 func NewScheduler() *Scheduler {
@@ -103,12 +157,11 @@ func NewScheduler() *Scheduler {
 		transposeAuto:   ConfigBoolWithDefault("transposeauto", true),
 		transposeClicks: transposebeats,
 		transposeNext:   transposebeats * oneBeat, // first one
+		// NOTE: the order in transposeValues needs to match the
+		// order in palette.py
+		transposeValues:      []int{0, -2, 3, -5},
+		activePhrasesManager: NewActivePhrasesManager(),
 	}
-
-	// NOTE: the order of values here needs to match the
-	// order in palette.py
-	s.transposeValues = []int{0, -2, 3, -5}
-
 	return s
 }
 
@@ -146,7 +199,7 @@ func (sched *Scheduler) Start() {
 	// By reading from tick.C, we wake up every 2 milliseconds
 	for now := range tick.C {
 		// log.Printf("Realtime loop now=%v\n", time.Now())
-		sched.time = now
+		sched.now = now
 		uptimesecs := sched.Uptime()
 		newclick := Seconds2Clicks(uptimesecs)
 		SetCurrentMilli(int64(uptimesecs * 1000.0))
@@ -194,7 +247,7 @@ func (sched *Scheduler) Start() {
 			if Debug.Realtime {
 				log.Printf("StartRealtime: checking processes\n")
 			}
-			go TheEngine.ProcessManager.CheckProcessesAndRestartIfNecessary()
+			go TheEngine.ProcessManager.checkProcessesAndRestartIfNecessary()
 			lastProcessCheck = uptimesecs
 		}
 
@@ -215,15 +268,81 @@ func (sched *Scheduler) advanceClickTo(toClick Clicks) {
 	defer TheEngine.Router.eventMutex.Unlock()
 
 	for clk := sched.lastClick; clk < toClick; clk++ {
-		for _, motor := range TheEngine.Router.motors {
-			if (clk % oneBeat) == 0 {
-				motor.checkCursorUp()
-			}
-			motor.AdvanceByOneClick()
-		}
+		sched.activePhrasesManager.AdvanceByOneClick()
+		TheEngine.CursorManager.CheckCursorUp(time.Now())
 	}
 	sched.lastClick = toClick
 }
+
+/*
+func (sched *Scheduler) advanceByOneClick() {
+}
+*/
+
+// checkDelay is the Duration that has to pass
+// before we decide a cursor is no longer present,
+// resulting in a cursor UP event.
+var checkDelay time.Duration = 0
+
+/*
+// Time returns the current time
+func (sched *Scheduler) time() time.Time {
+	return time.Now()
+}
+*/
+
+/*
+func (sched *Scheduler) checkCursorUp(cm *CursorManager) {
+	now := sched.now
+	cm.CheckCursorUp(now)
+}
+*/
+
+/*
+func (motor *Motor) handleCursorDeviceEvent(e CursorDeviceEvent) {
+
+	id := e.Source
+
+	router := TheEngine.Router
+	router.deviceCursorsMutex.Lock()
+	defer router.deviceCursorsMutex.Unlock()
+
+	// e.Ddu is "down", "drag", or "up"
+
+	tc, ok := motor.deviceCursors[id]
+	if !ok {
+		// new DeviceCursor
+		tc = &DeviceCursor{}
+		motor.deviceCursors[id] = tc
+	}
+	tc.lastTouch = motor.time()
+
+	// If it's a new (downed==false) cursor, make sure the first step event is "down
+	if !tc.downed {
+		e.Ddu = "down"
+		tc.downed = true
+	}
+	cse := CursorStepEvent{
+		ID:  id,
+		X:   e.X,
+		Y:   e.Y,
+		Z:   e.Z,
+		Ddu: e.Ddu,
+	}
+	if Debug.Cursor {
+		log.Printf("Motor.handleCursorDeviceEvent: pad=%s id=%s ddu=%s xyz=%.4f,%.4f,%.4f\n", motor.padName, id, e.Ddu, e.X, e.Y, e.Z)
+	}
+
+	motor.executeIncomingCursor(cse)
+
+	if e.Ddu == "up" {
+		// if Debug.Cursor {
+		// 	log.Printf("Router.handleCursorDeviceEvent: deleting cursor id=%s\n", id)
+		// }
+		delete(motor.deviceCursors, id)
+	}
+}
+*/
 
 func (sched *Scheduler) AttractMode(on bool) {
 	if sched.attractModeIsOn == on {
@@ -236,7 +355,7 @@ func (sched *Scheduler) AttractMode(on bool) {
 }
 
 func (sched *Scheduler) Uptime() float64 {
-	return sched.time.Sub(sched.time0).Seconds()
+	return sched.now.Sub(sched.time0).Seconds()
 }
 
 func (sched *Scheduler) publishOscAlive(uptimesecs float64) {
@@ -277,7 +396,7 @@ func (sched *Scheduler) doAttractAction() {
 		y1 := rand.Float32()
 		z1 := rand.Float32() / 2.0
 
-		go TheEngine.Router.doCursorGesture(region, cid, x0, y0, z0, x1, y1, z1)
+		go TheEngine.CursorManager.doCursorGesture(region, cid, x0, y0, z0, x1, y1, z1)
 		sched.lastAttractGestureTime = now
 	}
 
@@ -296,13 +415,15 @@ func (sched *Scheduler) advanceTransposeTo(newclick Clicks) {
 		if Debug.Transpose {
 			log.Printf("advanceTransposeTo: newclick=%d transposePitch=%d\n", newclick, transposePitch)
 		}
-		for _, motor := range TheEngine.Router.motors {
-			// motor.clearDown()
-			if Debug.Transpose {
-				log.Printf("  setting transposepitch in motor pad=%s trans=%d activeNotes=%d\n", motor.padName, transposePitch, len(motor.activeNotes))
+		/*
+			for _, motor := range TheEngine.Router.motors {
+				// motor.clearDown()
+				if Debug.Transpose {
+					log.Printf("  setting transposepitch in motor pad=%s trans=%d activeNotes=%d\n", motor.padName, transposePitch, len(motor.activeNotes))
+				}
+				motor.TransposePitch = transposePitch
 			}
-			motor.terminateActiveNotes()
-			motor.TransposePitch = transposePitch
-		}
+		*/
+		sched.activePhrasesManager.terminateActiveNotes()
 	}
 }

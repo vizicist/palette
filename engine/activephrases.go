@@ -15,9 +15,9 @@ type ActivePhrase struct {
 
 // ActivePhrasesManager manages ActivePhrases
 type ActivePhrasesManager struct {
-	ActivePhrasesMutex sync.RWMutex
-	activePhrases      map[string]*ActivePhrase // map of cursor ids to ActivePhrases
-	outputCallbacks    []*NoteOutputCallback
+	mutex           sync.RWMutex
+	activePhrases   map[string]*ActivePhrase // map of cursor ids to ActivePhrases
+	outputCallbacks []*NoteOutputCallback
 }
 
 // NewActivePhrase constructs a new ActivePhrase for a Phrase
@@ -47,10 +47,10 @@ func (a *ActivePhrase) start() {
 
 // sendNoteOffs returns true if all of the pending notes and notesoff have been processed,
 // i.e. the ActivePhrase can be removed
-func (a *ActivePhrase) sendNoteOffs(due Clicks, debug bool, callbacks []*NoteOutputCallback) bool {
+func (a *ActivePhrase) sendPendingNoteOffs(due Clicks) bool {
 
 	if a.phrase == nil {
-		log.Printf("ActivePhrase.sendNoteOffs got unexpected nil phrase value\n")
+		log.Printf("ActivePhrase.sendPendingNoteOffs got unexpected nil phrase value\n")
 		return true // pretend we're all done, so the broken ActivePhrase will get removed
 	}
 
@@ -68,7 +68,7 @@ func (a *ActivePhrase) sendNoteOffs(due Clicks, debug bool, callbacks []*NoteOut
 }
 
 // StartPhrase xxx
-// NOTE: startPhrase assumes that the r.activePhrasesMutex is held for writing
+// NOTE: startPhrase assumes that the mgr.mutex is held for writing
 func (mgr *ActivePhrasesManager) StartPhrase(p *Phrase, cid string) {
 	active, ok := mgr.activePhrases[cid]
 	if !ok {
@@ -78,7 +78,7 @@ func (mgr *ActivePhrasesManager) StartPhrase(p *Phrase, cid string) {
 		// for this this cid.
 		if active.phrase != nil {
 			// This happens a lot when we get drag events
-			mgr.StopPhrase(cid, active, false)
+			mgr.StopPhrase(cid, active)
 			// Don't need to remove it from r.activePhrases, the code below replaces it
 		}
 		active.phrase = p
@@ -89,8 +89,8 @@ func (mgr *ActivePhrasesManager) StartPhrase(p *Phrase, cid string) {
 }
 
 // StopPhrase xxx
-// NOTE: stopPhrase assumes that the r.activePhrasesMutex is held for writing
-func (mgr *ActivePhrasesManager) StopPhrase(cid string, active *ActivePhrase, forceDelete bool) {
+// NOTE: stopPhrase assumes that the mgr.mutex is held for writing
+func (mgr *ActivePhrasesManager) StopPhrase(cid string, active *ActivePhrase) {
 
 	// If not provided in the arguments, look it up.
 	if active == nil {
@@ -103,8 +103,8 @@ func (mgr *ActivePhrasesManager) StopPhrase(cid string, active *ActivePhrase, fo
 		}
 	}
 
-	readyToDelete := active.sendNoteOffs(MaxClicks, Debug.MIDI, mgr.outputCallbacks)
-	if readyToDelete || forceDelete {
+	readyToDelete := active.sendPendingNoteOffs(MaxClicks)
+	if readyToDelete {
 		delete(mgr.activePhrases, cid)
 	}
 }
@@ -149,13 +149,13 @@ func (mgr *ActivePhrasesManager) CallbackOnOutput(callback NoteOutputCallbackFun
 // AdvanceByOneClick xxx
 func (mgr *ActivePhrasesManager) AdvanceByOneClick() {
 
-	mgr.ActivePhrasesMutex.Lock()
-	defer mgr.ActivePhrasesMutex.Unlock()
+	mgr.mutex.Lock()
+	defer mgr.mutex.Unlock()
 
 	for cid, a := range mgr.activePhrases {
 		if a.phrase == nil {
 			log.Printf("advanceactivePhrases, unexpected phrase is nil for cid=%s?  deleting it\n", cid)
-			if a.sendNoteOffs(MaxClicks, Debug.MIDI, mgr.outputCallbacks) {
+			if a.sendPendingNoteOffs(MaxClicks) {
 				delete(mgr.activePhrases, cid)
 			}
 			continue
@@ -188,9 +188,22 @@ func (mgr *ActivePhrasesManager) AdvanceByOneClick() {
 
 		// Send whatever NOTEOFFs are due to be sent, and if everything has
 		// been processed, delete it from the activePhrases
-		if a.sendNoteOffs(a.clickSoFar, Debug.MIDI, mgr.outputCallbacks) {
+		if a.sendPendingNoteOffs(a.clickSoFar) {
 			delete(mgr.activePhrases, cid)
 		}
 		a.clickSoFar++
 	}
+}
+
+func (mgr *ActivePhrasesManager) terminateActiveNotes() {
+	mgr.mutex.RLock()
+	for id, a := range mgr.activePhrases {
+		// log.Printf("terminateActiveNotes n=%v\n", a.currentNoteOn)
+		if a != nil {
+			a.sendPendingNoteOffs(a.clickSoFar)
+		} else {
+			log.Printf("Hey, activeNotes entry for id=%s\n", id)
+		}
+	}
+	mgr.mutex.RUnlock()
 }

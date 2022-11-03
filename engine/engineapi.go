@@ -116,37 +116,39 @@ func (e *Engine) executeGlobalAPI(api string, apiargs map[string]string) (result
 			ChangeClicksPerSecond(float64(v))
 		}
 
-	case "set_transpose":
-		v, err := needFloatArg("value", api, apiargs)
-		if err == nil {
-			for _, motor := range e.Router.motors {
-				motor.TransposePitch = int(v)
-			}
-			// log.Printf("set_transpose API set to %d\n", int(v))
-		}
+		/*
+					case "set_transpose":
+						v, err := needFloatArg("value", api, apiargs)
+						if err == nil {
+							for _, motor := range e.Router.motors {
+								motor.TransposePitch = int(v)
+							}
+							// log.Printf("set_transpose API set to %d\n", int(v))
+						}
 
-	case "set_transposeauto":
-		b, err := needBoolArg("onoff", api, apiargs)
-		if err == nil {
-			e.Scheduler.transposeAuto = b
-			// log.Printf("GlobalAPI: set_transposeauto b=%v\n", b)
-			// Quantizing CurrentClick() to a beat or measure might be nice
-			e.Scheduler.transposeNext = CurrentClick() + e.Scheduler.transposeClicks*oneBeat
-			for _, motor := range e.Router.motors {
-				motor.TransposePitch = 0
-			}
-		}
-
-	case "set_scale":
-		v, err := needStringArg("value", api, apiargs)
-		if err == nil {
-			for _, motor := range e.Router.motors {
-				err = motor.SetOneParamValue("misc.scale", v)
-				if err != nil {
-					break
+			case "set_transposeauto":
+				b, err := needBoolArg("onoff", api, apiargs)
+				if err == nil {
+					e.Scheduler.transposeAuto = b
+					// log.Printf("GlobalAPI: set_transposeauto b=%v\n", b)
+					// Quantizing CurrentClick() to a beat or measure might be nice
+					e.Scheduler.transposeNext = CurrentClick() + e.Scheduler.transposeClicks*oneBeat
+					for _, motor := range e.Router.motors {
+						motor.TransposePitch = 0
+					}
 				}
-			}
-		}
+
+			case "set_scale":
+				v, err := needStringArg("value", api, apiargs)
+				if err == nil {
+					for _, motor := range e.Router.motors {
+						err = motor.SetOneParamValue("misc.scale", v)
+						if err != nil {
+							break
+						}
+					}
+				}
+		*/
 
 	case "audio_reset":
 		go e.Router.audioReset()
@@ -214,19 +216,19 @@ func (e *Engine) executePresetAPI(api string, apiargs map[string]string) (result
 		return PresetList(apiargs)
 
 	case "load":
-		preset, okpreset := apiargs["preset"]
+		presetName, okpreset := apiargs["preset"]
 		if !okpreset {
 			return "", fmt.Errorf("missing preset parameter")
 		}
-		prefix, _ := PresetNameSplit(preset)
+		preset := GetPreset(presetName)
 		region, okregion := apiargs["region"]
 		if !okregion {
 			region = "*"
 		}
-		if prefix == "quad" {
-			err = e.Router.loadQuadPreset(preset, region)
+		if preset.category == "quad" {
+			err = preset.loadQuadPreset(region)
 			if err != nil {
-				log.Printf("loadQuad: preset=%s, err=%s", preset, err)
+				log.Printf("loadQuad: preset=%s, err=%s", presetName, err)
 				return "", err
 			}
 			e.Router.saveCurrentSnaps(region)
@@ -236,9 +238,9 @@ func (e *Engine) executePresetAPI(api string, apiargs map[string]string) (result
 			if !ok {
 				return "", fmt.Errorf("ExecutePresetAPI, no region named %s", region)
 			}
-			err = motor.loadPreset(preset)
+			err = motor.applyPreset(preset)
 			if err != nil {
-				log.Printf("loadPreset: preset=%s, err=%s", preset, err)
+				log.Printf("applyPreset: preset=%s, err=%s", presetName, err)
 			} else {
 				err = motor.saveCurrentSnap()
 				if err != nil {
@@ -249,7 +251,7 @@ func (e *Engine) executePresetAPI(api string, apiargs map[string]string) (result
 		return "", err
 
 	case "save":
-		preset, okpreset := apiargs["preset"]
+		presetName, okpreset := apiargs["preset"]
 		if !okpreset {
 			return "", fmt.Errorf("missing preset parameter")
 		}
@@ -261,10 +263,10 @@ func (e *Engine) executePresetAPI(api string, apiargs map[string]string) (result
 		if !ok {
 			return "", fmt.Errorf("no motor named %s", region)
 		}
-		if strings.HasPrefix(preset, "quad.") {
-			return "", e.Router.saveQuadPreset(preset)
+		if strings.HasPrefix(presetName, "quad.") {
+			return "", e.Router.saveQuadPreset(presetName)
 		} else {
-			return "", motor.saveCurrentAsPreset(preset)
+			return "", motor.saveCurrentAsPreset(presetName)
 		}
 
 	default:

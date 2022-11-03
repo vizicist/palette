@@ -197,132 +197,13 @@ func PaletteDir() string {
 	return paletteRoot
 }
 
-func PaletteVersion() string {
+func GetPaletteVersion() string {
 	path := filepath.Join(PaletteDir(), "VERSION")
 	bytes, err := os.ReadFile(path)
 	if err != nil {
 		return "Unknown" // It's okay if file isn't present
 	}
 	return string(bytes)
-}
-
-// ReadablePresetFilePath xxx
-func ReadablePresetFilePath(preset string) string {
-	return presetFilePath(preset)
-}
-
-// WritablePresetFilePath xxx
-func WriteablePresetFilePath(preset string) string {
-	path := presetFilePath(preset)
-	os.MkdirAll(filepath.Dir(path), 0777)
-	return path
-}
-
-func PresetsDir() string {
-	return "presets"
-}
-
-// presetFilePath returns the full path of a preset file.
-func presetFilePath(preset string) string {
-	category := ""
-	i := strings.Index(preset, ".")
-	if i >= 0 {
-		category = preset[0:i]
-		preset = preset[i+1:]
-	}
-	presetjson := preset + ".json"
-	localpath := filepath.Join(PaletteDataPath(), PresetsDir(), category, presetjson)
-	return localpath
-}
-
-func PresetNameSplit(preset string) (string, string) {
-	words := strings.SplitN(preset, ".", 2)
-	if len(words) == 1 {
-		return "", words[0]
-	} else {
-		return words[0], words[1]
-	}
-}
-
-// PresetMap returns a map of preset names to file paths
-func PresetMap(wantCategory string) (map[string]string, error) {
-
-	result := make(map[string]string, 0)
-
-	walker := func(walkedpath string, info os.FileInfo, err error) error {
-		// log.Printf("Crawling: %#v\n", path)
-		if err != nil {
-			return err
-		}
-		if info.IsDir() {
-			return nil
-		}
-		// Only look at .json files
-		if !strings.HasSuffix(walkedpath, ".json") {
-			return nil
-		}
-		path := strings.TrimSuffix(walkedpath, ".json")
-		// the last two components of the path are category and preset
-		thisCategory := ""
-		thisPreset := ""
-		lastslash2 := -1
-		lastslash := strings.LastIndex(path, "\\")
-		if lastslash >= 0 {
-			thisPreset = path[lastslash+1:]
-			path2 := path[0:lastslash]
-			lastslash2 = strings.LastIndex(path2, "\\")
-			if lastslash2 >= 0 {
-				thisCategory = path2[lastslash2+1:]
-			}
-		}
-		if wantCategory == "*" || thisCategory == wantCategory {
-			result[thisCategory+"."+thisPreset] = walkedpath
-		}
-		return nil
-	}
-
-	presetsDir1 := filepath.Join(PaletteDataPath(), PresetsDir())
-	err := filepath.Walk(presetsDir1, walker)
-	if err != nil {
-		log.Printf("filepath.Walk: err=%s\n", err)
-		return nil, err
-	}
-	return result, nil
-}
-
-// PresetArray returns a list of preset filenames, wantCategory can be "*"
-func PresetArray(wantCategory string) ([]string, error) {
-
-	presetMap, err := PresetMap(wantCategory)
-	if err != nil {
-		return nil, err
-	}
-	result := make([]string, 0)
-	for name := range presetMap {
-		result = append(result, name)
-	}
-	return result, nil
-}
-
-func PresetList(apiargs map[string]string) (string, error) {
-
-	wantCategory := optionalStringArg("category", apiargs, "*")
-	result := "["
-	sep := ""
-
-	presetMap, err := PresetMap(wantCategory)
-	if err != nil {
-		return "", err
-	}
-	for name := range presetMap {
-		thisCategory, _ := PresetNameSplit(name)
-		if wantCategory == "*" || thisCategory == wantCategory {
-			result += sep + "\"" + name + "\""
-			sep = ","
-		}
-	}
-	result += "]"
-	return result, nil
 }
 
 // MIDIFilePath xxx

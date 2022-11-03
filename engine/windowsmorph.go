@@ -362,12 +362,16 @@ func (m *oneMorph) readFrames(callback CursorDeviceCallbackFunc, forceFactor flo
 					if newregion != m.region {
 						log.Printf("Switching corners pad to region %s", m.region)
 						ce := CursorDeviceEvent{
-							Region:    m.region,
-							Source:    cid,
-							Timestamp: 0,
+							ID:        fmt.Sprintf("%d", m.idx),
+							Source:    m.region,
+							Timestamp: time.Now(),
 							Ddu:       "clear",
+							X:         xNorm,
+							Y:         yNorm,
+							Z:         zNorm,
+							Area:      area,
 						}
-						callback(ce)
+						callback(ce, true)
 						m.region = newregion
 					}
 					// We don't pass corner things through
@@ -420,16 +424,16 @@ func (m *oneMorph) readFrames(callback CursorDeviceCallbackFunc, forceFactor flo
 			}
 
 			ev := CursorDeviceEvent{
-				Region:    m.region,
-				Source:    cid,
-				Timestamp: 0,
+				ID:        cid,
+				Source:    m.region,
+				Timestamp: time.Now(),
 				Ddu:       ddu,
 				X:         xNorm,
 				Y:         yNorm,
 				Z:         zNorm,
 				Area:      area,
 			}
-			callback(ev)
+			callback(ev, true)
 		}
 	}
 }
