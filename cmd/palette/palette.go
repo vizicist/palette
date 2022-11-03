@@ -151,7 +151,7 @@ func CliCommand(region string, args []string) string {
 		return engine.TheEngine.ProcessManager.ProcessStatus()
 
 	case "version":
-		return engine.PaletteVersion()
+		return engine.GetPaletteVersion()
 
 	case "activate":
 		return RemoteAPI("activate")

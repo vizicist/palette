@@ -10,18 +10,18 @@ import (
 type Responder_demo struct {
 }
 
-func NewResponder_demo() Responder_demo {
-	p := Responder_demo{}
+func NewResponder_demo() *Responder_demo {
+	p := &Responder_demo{}
 	return p
 }
 
 /////////////////////////// external interface
 
-func (r Responder_demo) OnCursorDeviceEvent(ce engine.CursorDeviceEvent) {
+func (r *Responder_demo) OnCursorDeviceEvent(ce engine.CursorDeviceEvent) {
 	log.Printf("NewResponder_demo in OnCursorEvent!\n")
 	if ce.Ddu == "down" {
 		go func() {
-			note := cursorToNote(ce)
+			note := r.cursorToNote(ce)
 			log.Printf("cursor down: publishing note=%s\n", note.String())
 			engine.SendNoteToSynth(note)
 			time.Sleep(2 * time.Second)
@@ -34,7 +34,7 @@ func (r Responder_demo) OnCursorDeviceEvent(ce engine.CursorDeviceEvent) {
 
 /////////////////////////// internal things
 
-func cursorToNote(ce engine.CursorDeviceEvent) *engine.Note {
+func (r *Responder_demo) cursorToNote(ce engine.CursorDeviceEvent) *engine.Note {
 	pitch := int(ce.X * 126.0)
 	_ = pitch
 	s := "+b"

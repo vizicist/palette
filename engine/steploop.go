@@ -1,10 +1,6 @@
 package engine
 
-import (
-	"log"
-	"sync"
-)
-
+/*
 // LoopEvent is what gets played back in a loop
 type LoopEvent struct {
 	hasCursor       bool
@@ -203,3 +199,5 @@ func Clicks2SecondsAbsolute(clk Clicks) float64 {
 	secs -= (float64(currentMilliOffset) * 1000.0)
 	return secs
 }
+
+*/

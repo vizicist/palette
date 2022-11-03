@@ -162,12 +162,12 @@ func handleFinger(bb []byte) {
 		if newregion != EraeRegion {
 			// Clear cursor state from existing region
 			ce := CursorDeviceEvent{
-				Region:    EraeRegion,
-				Source:    cid,
-				Timestamp: CurrentMilli(),
+				ID:        cid,
+				Source:    "erae",
+				Timestamp: time.Now(),
 				Ddu:       "clear",
 			}
-			TheEngine.Router.handleCursorDeviceEventWithLock(ce)
+			TheEngine.CursorManager.handleCursorDeviceEvent(ce, true)
 			if Debug.Erae {
 				log.Printf("Switching Erae to region %s", newregion)
 			}
@@ -211,9 +211,9 @@ func handleFinger(bb []byte) {
 	}
 
 	ce := CursorDeviceEvent{
-		Region:    EraeRegion,
-		Source:    cid,
-		Timestamp: CurrentMilli(),
+		ID:        cid,
+		Source:    "erae",
+		Timestamp: time.Now(),
 		Ddu:       ddu,
 		X:         x,
 		Y:         y,
@@ -222,7 +222,7 @@ func handleFinger(bb []byte) {
 	}
 	// XXX - should Fresh be true???
 
-	TheEngine.Router.handleCursorDeviceEventWithLock(ce)
+	TheEngine.CursorManager.handleCursorDeviceEvent(ce, true)
 }
 
 func EraeWriteSysex(bytes []byte) {
