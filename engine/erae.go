@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-var EraeRegion = "A"
+var EraePlayer = "A"
 var EraeEnabled = false
 var EraeOutput *MIDIChannelOutput
 var EraeInput *MIDIInput
@@ -85,12 +85,12 @@ func EraeFingerIndicator(zone, x, y byte) {
 	recth := byte(2)
 	dim := 1.0
 	for dim > 0 {
-		// Should set color based on EraeRegion
+		// Should set color based on EraePlayer
 		red := byte(0)
 		green := byte(0)
 		blue := byte(0)
 		alpha := byte(0x7f * dim)
-		switch EraeRegion {
+		switch EraePlayer {
 		case "A":
 			red = alpha
 		case "B":
@@ -144,23 +144,23 @@ func handleFinger(bb []byte) {
 	}
 
 	// If the position is in one of the corners,
-	// we change the region to that corner.
+	// we change the player to that corner.
 
 	edge := float32(0.1)
-	newregion := ""
+	newplayer := ""
 	if x < edge && y < edge {
-		newregion = "A"
+		newplayer = "A"
 	} else if x < edge && y > (1.0-edge) {
-		newregion = "B"
+		newplayer = "B"
 	} else if x > (1.0-edge) && y > (1.0-edge) {
-		newregion = "C"
+		newplayer = "C"
 	} else if x > (1.0-edge) && y < edge {
-		newregion = "D"
+		newplayer = "D"
 	}
 
-	if newregion != "" {
-		if newregion != EraeRegion {
-			// Clear cursor state from existing region
+	if newplayer != "" {
+		if newplayer != EraePlayer {
+			// Clear cursor state from existing player
 			ce := CursorDeviceEvent{
 				ID:        cid,
 				Source:    "erae",
@@ -169,11 +169,11 @@ func handleFinger(bb []byte) {
 			}
 			TheEngine.CursorManager.handleCursorDeviceEvent(ce, true)
 			if Debug.Erae {
-				log.Printf("Switching Erae to region %s", newregion)
+				log.Printf("Switching Erae to player %s", newplayer)
 			}
-			EraeRegion = newregion
+			EraePlayer = newplayer
 		}
-		// We don't pass corner things through, even if we haven't changed the region
+		// We don't pass corner things through, even if we haven't changed the player
 		return
 	}
 

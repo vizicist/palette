@@ -17,7 +17,7 @@
 
 class Scheduler;
 class TrackedCursor;
-class Region;
+class Player;
 class Palette;
 
 typedef int click_t;

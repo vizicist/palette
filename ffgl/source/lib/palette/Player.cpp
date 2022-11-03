@@ -5,15 +5,15 @@
 
 #include "PaletteAll.h"
 
-#define DEFINE_TYPES(t) std::vector<std::string> RegionParams_##t##Types;
-#include "RegionParams_types.h"
+#define DEFINE_TYPES(t) std::vector<std::string> PlayerParams_##t##Types;
+#include "PlayerParams_types.h"
 
-Region::Region() {
+Player::Player() {
 
 	_spritelist = new SpriteList();
 	_spritelistbg = new SpriteList();
 
-	NosuchLockInit(&_region_mutex,"region");
+	NosuchLockInit(&_player_mutex,"player");
 	_cursorlist_rwlock = PTHREAD_RWLOCK_INITIALIZER;
 	int rc = pthread_rwlock_init(&_cursorlist_rwlock, NULL);
 	if ( rc ) {
@@ -29,17 +29,17 @@ Region::Region() {
 
 }
 
-void copyParamValues(RegionParams *from, RegionParams *to) {
+void copyParamValues(PlayerParams *from, PlayerParams *to) {
 #undef INIT_PARAM
 #define INIT_PARAM(name,def) to->name = from->name;
-#include "RegionParams_init.h"
+#include "PlayerParams_init.h"
 }
 
-Region::~Region() {
-	NosuchDebug(1,"Region DESTRUCTOR!");
+Player::~Player() {
+	NosuchDebug(1,"Player DESTRUCTOR!");
 }
 
-void Region::initParams() {
+void Player::initParams() {
 	numalive = 0;
 	debugcount = 0;
 	last_tm = 0;
@@ -49,7 +49,7 @@ void Region::initParams() {
 	onoff = 0;
 }
 
-TrackedCursor* Region::_getTrackedCursor(std::string cid, std::string cidsource) {
+TrackedCursor* Player::_getTrackedCursor(std::string cid, std::string cidsource) {
 	TrackedCursor* retc = NULL;
 
 	for ( std::list<TrackedCursor*>::iterator i = _cursors.begin(); i!=_cursors.end(); i++ ) {
@@ -63,7 +63,7 @@ TrackedCursor* Region::_getTrackedCursor(std::string cid, std::string cidsource)
 	return retc;
 }
 
-float Region::_maxCursorDepth() {
+float Player::_maxCursorDepth() {
 	// We assume the cursorlist is locked
 	float maxval = 0;
 	for ( std::list<TrackedCursor*>::iterator i = _cursors.begin(); i!=_cursors.end(); i++ ) {
@@ -77,7 +77,7 @@ float Region::_maxCursorDepth() {
 }
 
 void
-Region::setTrackedCursor(Palette* palette, std::string cid, std::string cidsource, glm::vec2 pos, float z) {
+Player::setTrackedCursor(Palette* palette, std::string cid, std::string cidsource, glm::vec2 pos, float z) {
 
 	if ( pos.x < x_min || pos.x > x_max || pos.y < y_min || pos.y > y_max ) {
 		NosuchDebug("Ignoring out-of-bounds cursor pos=%f,%f,%f\n",pos.x,pos.y);
@@ -85,7 +85,7 @@ Region::setTrackedCursor(Palette* palette, std::string cid, std::string cidsourc
 	}
 
 	if ( ! cursorlist_lock_write() ) {
-		NosuchDebug("Region::setTrackedCursor, unable to lock cursorlist");
+		NosuchDebug("Player::setTrackedCursor, unable to lock cursorlist");
 		return;
 	}
 
@@ -97,7 +97,7 @@ Region::setTrackedCursor(Palette* palette, std::string cid, std::string cidsourc
 	} else {
 		c = new TrackedCursor(palette, cid, cidsource, this, pos, z);
 		if (NosuchDebugCursor) {
-			NosuchDebug("Region.setTrackedCursor: new TrackedCursor cid=%s", cid.c_str());
+			NosuchDebug("Player.setTrackedCursor: new TrackedCursor cid=%s", cid.c_str());
 		}
 		_cursors.push_back(c);
 	}
@@ -108,7 +108,7 @@ Region::setTrackedCursor(Palette* palette, std::string cid, std::string cidsourc
 	return;
 }
 
-float Region::getMoveDir(std::string movedirtype) {
+float Player::getMoveDir(std::string movedirtype) {
 	if ( movedirtype == "left" ) {
 		return 180.0f;
 	}
@@ -137,26 +137,26 @@ float Region::getMoveDir(std::string movedirtype) {
 	throw NosuchBadValueException();
 }
 
-void Region::doCursorUp(Palette* palette, std::string cid) {
+void Player::doCursorUp(Palette* palette, std::string cid) {
 
 	if (!cursorlist_lock_write()) {
-		NosuchDebug("Region::doCursorUp, unable to lock cursorlist");
+		NosuchDebug("Player::doCursorUp, unable to lock cursorlist");
 		return;
 	}
 	bool found = false;
 	if (NosuchDebugCursor) {
-		NosuchDebug("Region.doCursorUp cid=%s\n", cid.c_str());
+		NosuchDebug("Player.doCursorUp cid=%s\n", cid.c_str());
 	}
 	for (std::list<TrackedCursor*>::iterator i = _cursors.begin(); i != _cursors.end(); ) {
 		TrackedCursor* c = *i;
 		NosuchAssert(c);
 		if (NosuchDebugCursor) {
-			NosuchDebug("Region.doCursorUp TrackedCursor loop c->cid=%s\n", c->cid().c_str());
+			NosuchDebug("Player.doCursorUp TrackedCursor loop c->cid=%s\n", c->cid().c_str());
 		}
 		if (c->cid() == cid) {
 			found = true;
 			if (NosuchDebugCursor) {
-				NosuchDebug("Region.doCursorUp: deleting cid=%s",cid.c_str());
+				NosuchDebug("Player.doCursorUp: deleting cid=%s",cid.c_str());
 			}
 			i = _cursors.erase(i);
 			delete c;
@@ -166,17 +166,17 @@ void Region::doCursorUp(Palette* palette, std::string cid) {
 	}
 	if (NosuchDebugCursor) {
 		if (!found) {
-			NosuchDebug("Region.doCursorUp: didn't find cursor cid=%s", cid.c_str());
+			NosuchDebug("Player.doCursorUp: didn't find cursor cid=%s", cid.c_str());
 		}
 		NosuchDebug("End of doCursorUp, _cursors.size = %d", _cursors.size());
 	}
 	cursorlist_unlock();
 }
 
-void Region::clearCursors() {
+void Player::clearCursors() {
 
 	if (!cursorlist_lock_write()) {
-		NosuchDebug("Region::clearCursors, unable to lock cursorlist");
+		NosuchDebug("Player::clearCursors, unable to lock cursorlist");
 		return;
 	}
 	// NosuchDebug("Begin clearCursors, _cursors.size = %d",_cursors.size());
@@ -184,7 +184,7 @@ void Region::clearCursors() {
 		TrackedCursor* c = *i;
 		NosuchAssert(c);
 		if (NosuchDebugCursor) {
-			NosuchDebug("Region.clearCursor: deleting cid=%s",c->cid().c_str());
+			NosuchDebug("Player.clearCursor: deleting cid=%s",c->cid().c_str());
 		}
 		i = _cursors.erase(i);
 		delete c;
@@ -194,7 +194,7 @@ void Region::clearCursors() {
 }
 
 float
-Region::spriteMoveDir(TrackedCursor* c)
+Player::spriteMoveDir(TrackedCursor* c)
 {
 	float dir;
 	if (params.movedir == "cursor") {
@@ -204,7 +204,7 @@ Region::spriteMoveDir(TrackedCursor* c)
 		else {
 			dir = 360.0f * RANDFLOAT;
 		}
-		// NosuchDebug("Region::spriteMoveDir cursor! dir=%f", dir);
+		// NosuchDebug("Player::spriteMoveDir cursor! dir=%f", dir);
 		// NosuchDebug("spriteMoveDir cursor degrees = %f",c->curr_degrees);
 		// not sure why I have to reverse it - the cursor values are probably reversed
 		dir -= 90.0;
@@ -214,14 +214,14 @@ Region::spriteMoveDir(TrackedCursor* c)
 	}
 	else {
 		dir = getMoveDir(params.movedir);
-		// NosuchDebug("Region::spriteMoveDir movedir=%s dir=%f", params.movedir.c_str(), dir);
+		// NosuchDebug("Player::spriteMoveDir movedir=%s dir=%f", params.movedir.c_str(), dir);
 	}
 	// NosuchDebug("spriteMoveDir dir=%f movedir=%s", dir, params.movedir.c_str());
 	return dir;
 }
 
 Sprite*
-Region::makeSprite(std::string shape) {
+Player::makeSprite(std::string shape) {
 
 	Sprite* s = NULL;
 	if (shape == "square") {
@@ -247,7 +247,7 @@ Region::makeSprite(std::string shape) {
 }
 
 void
-Region::instantiateSprite(TrackedCursor* c, bool throttle) {
+Player::instantiateSprite(TrackedCursor* c, bool throttle) {
 
 	std::string shape = params.shape;
 
@@ -296,16 +296,16 @@ Region::instantiateSprite(TrackedCursor* c, bool throttle) {
 		s->initState(c->cid(), c->cidsource(), pos, spriteMoveDir(c), c->curr_raw_depth, anginit);
 		c->set_last_instantiate(tm);
 		if ( NosuchDebugSprite ) {
-			NosuchDebug("Region.instantiateSprite: cid=%s", c->cid().c_str());
+			NosuchDebug("Player.instantiateSprite: cid=%s", c->cid().c_str());
 		}
 		_spritelist->add(s,params.nsprites);
 	}
 }
 
 void
-Region::instantiateSpriteAt(std::string cid, glm::vec2 pos, float z) {
+Player::instantiateSpriteAt(std::string cid, glm::vec2 pos, float z) {
 
-	// NosuchDebug( "Region::instantiateSpriteAt: Region=this=%lld  spritestyle=%s\n", (long long)this, this->params.spritestyle.c_str() );
+	// NosuchDebug( "Player::instantiateSpriteAt: Player=this=%lld  spritestyle=%s\n", (long long)this, this->params.spritestyle.c_str() );
 
 	// std::string shape = params.shape;
 	Sprite* s = makeSprite(params.shape);
@@ -315,19 +315,19 @@ Region::instantiateSpriteAt(std::string cid, glm::vec2 pos, float z) {
 		float anginit = s->params.rotanginit;
 		s->initState(cid, source, pos, spriteMoveDir(NULL), z, anginit);
 		if (NosuchDebugSprite) {
-			NosuchDebug("Region.instantiateSpriteAt: cid=%s pos=%f,%f", cid.c_str(), pos.x, pos.y);
+			NosuchDebug("Player.instantiateSpriteAt: cid=%s pos=%f,%f", cid.c_str(), pos.x, pos.y);
 		}
 		_spritelist->add(s, params.nsprites);
 	}
 }
 
 void
-Region::instantiateSpriteBg() {
+Player::instantiateSpriteBg() {
 
 	if( _spritelistbg->size() != 0 ) {
 		return;
 	}
-	NosuchDebug( "Region::instantiateSpriteBg: creating square sprite for bg\n" );
+	NosuchDebug( "Player::instantiateSpriteBg: creating square sprite for bg\n" );
 	Sprite* s = makeSprite("square");
 	std::string source = "bg_source";
 	std::string cid = "bg_cid";
@@ -338,7 +338,7 @@ Region::instantiateSpriteBg() {
 		float z = 0.0f;
 		s->initState(cid, source, pos, spriteMoveDir(NULL), 0.5, anginit);
 		if (NosuchDebugSprite) {
-			NosuchDebug("Region.instantiateSpriteBg: cid=%s pos=%f,%f", cid.c_str(), pos.x, pos.y);
+			NosuchDebug("Player.instantiateSpriteBg: cid=%s pos=%f,%f", cid.c_str(), pos.x, pos.y);
 		}
 		s->params.spritestyle = "texture";
 		s->params.aspect      = 0.527f;
@@ -347,7 +347,7 @@ Region::instantiateSpriteBg() {
 	}
 }
 
-bool Region::cursorlist_lock_read() {
+bool Player::cursorlist_lock_read() {
 	int e = pthread_rwlock_rdlock(&_cursorlist_rwlock);
 	if (e != 0) {
 		NosuchDebug("_cursorlist_rwlock for read failed!? e=%d", e);
@@ -357,7 +357,7 @@ bool Region::cursorlist_lock_read() {
 	return true;
 }
 
-bool Region::cursorlist_lock_write() {
+bool Player::cursorlist_lock_write() {
 	int e = pthread_rwlock_wrlock(&_cursorlist_rwlock);
 	if (e != 0) {
 		NosuchDebug("_cursorlist_rwlock for write failed!? e=%d", e);
@@ -367,7 +367,7 @@ bool Region::cursorlist_lock_write() {
 	return true;
 }
 
-void Region::cursorlist_unlock() {
+void Player::cursorlist_unlock() {
 	int e = pthread_rwlock_unlock(&_cursorlist_rwlock);
 	if (e != 0) {
 		NosuchDebug("_cursorlist_rwlock unlock failed!? e=%d", e);
@@ -376,15 +376,15 @@ void Region::cursorlist_unlock() {
 	NosuchDebug(2, "_cursorlist_rwlock unlock succeeded");
 }
 
-void Region::draw(PaletteDrawer* b) {
+void Player::draw(PaletteDrawer* b) {
 	_spritelist->lock_read();
 	_spritelist->draw(b);
 	_spritelist->unlock();
 }
 
-void Region::drawbg(PaletteDrawer* drawer) {
+void Player::drawbg(PaletteDrawer* drawer) {
 	if( params.inputbackground ) {
-		Region::instantiateSpriteBg();
+		Player::instantiateSpriteBg();
 		// Only 1 sprite in _spritelistbg, so far
 		// _spritelistbg->lock_read();
 		_spritelistbg->draw(drawer);
@@ -392,20 +392,20 @@ void Region::drawbg(PaletteDrawer* drawer) {
 	}
 }
 
-void Region::clear() {
+void Player::clear() {
 	_spritelist->clear();
-	// NosuchDebug( "Region::clear is NOT (yet) clearing _spritelistbg\n" );
+	// NosuchDebug( "Player::clear is NOT (yet) clearing _spritelistbg\n" );
 	clearCursors();
 }
 
-void Region::advanceTo(int tm) {
+void Player::advanceTo(int tm) {
 
 	_spritelist->advanceTo(tm, params.gravity);
 
 	if (last_tm > 0) {
 		int dt = leftover_tm + tm - last_tm;
 		if (dt > fire_period) {
-			// NosuchDebug("Region %d calling behave->periodicFire now=%d",this->id,Palette::now);
+			// NosuchDebug("Player %d calling behave->periodicFire now=%d",this->id,Palette::now);
 			advanceCursorsTo(tm);
 			dt -= fire_period;
 		}
@@ -414,7 +414,7 @@ void Region::advanceTo(int tm) {
 	last_tm = tm;
 }
 
-void Region::advanceCursorsTo(int tm) {
+void Player::advanceCursorsTo(int tm) {
 
 	if (!cursorlist_lock_read()) {
 		NosuchDebug("Graphic->advanceTo returns, unable to lock cursorlist");
@@ -426,7 +426,7 @@ void Region::advanceCursorsTo(int tm) {
 		if (NosuchDebugCursor) {
 			int sz = (int)cursors().size();
 			if (sz > 0) {
-				NosuchDebug("Region.advanceCursorsTo: tm=%d cursors.size=%d  sprites.size=%d", tm, cursors().size(), _spritelist->size());
+				NosuchDebug("Player.advanceCursorsTo: tm=%d cursors.size=%d  sprites.size=%d", tm, cursors().size(), _spritelist->size());
 			}
 		}
 		*/
@@ -455,7 +455,7 @@ void Region::advanceCursorsTo(int tm) {
 	cursorlist_unlock();
 }
 
-void Region::deleteOldCursors(Palette* palette) {
+void Player::deleteOldCursors(Palette* palette) {
 
 	// Ideally, should only lock it for reading, and then then only lock it
 	// for writing when we find an old cursor
@@ -473,7 +473,7 @@ void Region::deleteOldCursors(Palette* palette) {
 			int too_idle = 10 * 1000;
 			if ( palette->now > (c->touched() + too_idle) ) {
 				if (NosuchDebugCursor) {
-					NosuchDebug("Region.deleteOldCursors: deleting cid=%s\n", c->cid().c_str());
+					NosuchDebug("Player.deleteOldCursors: deleting cid=%s\n", c->cid().c_str());
 				}
 				i = _cursors.erase(i);
 				delete c;
@@ -493,4 +493,4 @@ void Region::deleteOldCursors(Palette* palette) {
 }
 
 
-// Scheduler* Region::scheduler() { return palette->paletteHost()->scheduler(); }
+// Scheduler* Player::scheduler() { return palette->paletteHost()->scheduler(); }

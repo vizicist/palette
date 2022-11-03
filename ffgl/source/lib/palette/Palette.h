@@ -67,7 +67,7 @@ public:
 	void LoadParamPush(cJSON* sound, cJSON* visual);
 	std::string loadParamPushReal(cJSON* sound, cJSON* visual);
 
-	Region region;
+	Player player;
 
 	PaletteDrawer* Drawer() { return _drawer; }
 
