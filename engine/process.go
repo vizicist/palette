@@ -25,11 +25,11 @@ func NewProcessManager() *ProcessManager {
 	pm := &ProcessManager{
 		info: make(map[string]*processInfo),
 	}
-	pm.EngineInfoInit()
-	pm.ResolumeInfoInit()
-	pm.GuiInfoInit()
-	pm.BiduleInfoInit()
-	pm.MmttInfoInit()
+	pm.engineInfoInit()
+	pm.resolumeInfoInit()
+	pm.guiInfoInit()
+	pm.biduleInfoInit()
+	pm.mmttInfoInit()
 	return pm
 }
 
@@ -63,7 +63,36 @@ func (pm ProcessManager) StartRunning(process string) error {
 	return nil
 }
 
-func (pm ProcessManager) BiduleInfoInit() {
+// StopRunning doesn't return any errors
+func (pm ProcessManager) StopRunning(process string) (err error) {
+	switch process {
+	case "all":
+		for nm := range pm.info {
+			pm.StopRunning(nm)
+		}
+		TheEngine.StopMe()
+		return err
+	default:
+		p, err := pm.getProcessInfo(process)
+		if err != nil {
+			return err
+		}
+		KillExecutable(p.Exe)
+		return nil
+	}
+}
+
+func (pm ProcessManager) ProcessStatus() string {
+	s := ""
+	for name := range pm.info {
+		if pm.isRunning(name) {
+			s += fmt.Sprintf("%s is running\n", name)
+		}
+	}
+	return s
+}
+
+func (pm ProcessManager) biduleInfoInit() {
 	path := ConfigValueWithDefault("bidule", "")
 	if path == "" {
 		return
@@ -84,7 +113,7 @@ func (pm ProcessManager) BiduleInfoInit() {
 	pm.info["bidule"] = &processInfo{exe, path, ConfigFilePath(bidulefile), biduleActivate}
 }
 
-func (pm ProcessManager) ResolumeInfoInit() {
+func (pm ProcessManager) resolumeInfoInit() {
 	fullpath := ConfigValue("resolume")
 	if fullpath != "" && !FileExists(fullpath) {
 		log.Printf("No Resolume found, looking for %s)", fullpath)
@@ -108,19 +137,19 @@ func (pm ProcessManager) ResolumeInfoInit() {
 	pm.info["resolume"] = &processInfo{exe, fullpath, "", resolumeActivate}
 }
 
-func (pm ProcessManager) GuiInfoInit() {
+func (pm ProcessManager) guiInfoInit() {
 	exe := "palette_gui.exe"
 	fullpath := filepath.Join(PaletteDir(), "bin", "pyinstalled", exe)
 	pm.info["gui"] = &processInfo{exe, fullpath, "", nil}
 }
 
-func (pm ProcessManager) EngineInfoInit() {
+func (pm ProcessManager) engineInfoInit() {
 	exe := "palette_engine.exe"
 	fullpath := filepath.Join(PaletteDir(), "bin", exe)
 	pm.info["engine"] = &processInfo{exe, fullpath, "", nil}
 }
 
-func (pm ProcessManager) MmttInfoInit() {
+func (pm ProcessManager) mmttInfoInit() {
 	// NOTE: it's inside a sub-directory of bin, so all the necessary .dll's are contained
 	mmtt := ConfigStringWithDefault("mmtt", "")
 	if mmtt == "" {
@@ -146,7 +175,7 @@ func (pm ProcessManager) getProcessInfo(process string) (*processInfo, error) {
 	return p, nil
 }
 
-func (pm ProcessManager) IsRunning(process string) bool {
+func (pm ProcessManager) isRunning(process string) bool {
 	p, err := pm.getProcessInfo(process)
 	if err != nil {
 		log.Printf("IsRunning: no process named %s\n", process)
@@ -155,16 +184,6 @@ func (pm ProcessManager) IsRunning(process string) bool {
 	b := IsRunningExecutable(p.Exe)
 	// log.Printf("IsRunning: process=%s exe=%s b=%v\n", process, p.Exe, b)
 	return b
-}
-
-func (pm ProcessManager) ProcessStatus() string {
-	s := ""
-	for name := range pm.info {
-		if pm.IsRunning(name) {
-			s += fmt.Sprintf("%s is running\n", name)
-		}
-	}
-	return s
 }
 
 func resolumeActivate() {
@@ -224,7 +243,7 @@ func biduleActivate() {
 	}
 }
 
-func (pm ProcessManager) KillAll() {
+func (pm ProcessManager) killAll() {
 	for nm, info := range pm.info {
 		if nm != "engine" {
 			KillExecutable(info.Exe)
@@ -232,26 +251,7 @@ func (pm ProcessManager) KillAll() {
 	}
 }
 
-// StopRunning doesn't return any errors
-func (pm ProcessManager) StopRunning(process string) (err error) {
-	switch process {
-	case "all":
-		for nm := range pm.info {
-			pm.StopRunning(nm)
-		}
-		TheEngine.StopMe()
-		return err
-	default:
-		p, err := pm.getProcessInfo(process)
-		if err != nil {
-			return err
-		}
-		KillExecutable(p.Exe)
-		return nil
-	}
-}
-
-func (pm ProcessManager) CheckProcessesAndRestartIfNecessary() {
+func (pm ProcessManager) checkProcessesAndRestartIfNecessary() {
 	autostart := ConfigStringWithDefault("autostart", "")
 	if autostart == "" || autostart == "nothing" || autostart == "none" {
 		return
@@ -260,7 +260,7 @@ func (pm ProcessManager) CheckProcessesAndRestartIfNecessary() {
 	for _, process := range processes {
 		p, _ := pm.getProcessInfo(process)
 		if p != nil {
-			if !pm.IsRunning(process) {
+			if !pm.isRunning(process) {
 				go pm.StartRunning(process)
 			}
 		}

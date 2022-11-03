@@ -24,6 +24,7 @@ const MaxClicks = Clicks(math.MaxInt64)
 // Phrase is a time-ordered list of Notes
 // which are MIDI messages and other realtime events).
 type Phrase struct {
+	// readonly  bool
 	rwmutex   *sync.RWMutex
 	firstnote *Note
 	lastnote  *Note

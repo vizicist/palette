@@ -1,7 +1,6 @@
 package engine
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -39,49 +38,51 @@ func (motor *Motor) ExecuteAPI(api string, args map[string]string, rawargs strin
 		motor.sendAllParameters()
 		return "", err
 
-	case "loop_recording":
-		v, e := needBoolArg("onoff", api, args)
-		if e == nil {
-			motor.loopIsRecording = v
-		} else {
-			err = e
-		}
+		/*
+			case "loop_recording":
+				v, e := needBoolArg("onoff", api, args)
+				if e == nil {
+					motor.loopIsRecording = v
+				} else {
+					err = e
+				}
 
-	case "loop_playing":
-		v, e := needBoolArg("onoff", api, args)
-		if e == nil && v != motor.loopIsPlaying {
-			motor.loopIsPlaying = v
-			motor.terminateActiveNotes()
-		} else {
-			err = e
-		}
+			case "loop_playing":
+				v, e := needBoolArg("onoff", api, args)
+				if e == nil && v != motor.loopIsPlaying {
+					motor.loopIsPlaying = v
+					motor.terminateActiveNotes()
+				} else {
+					err = e
+				}
 
-	case "loop_clear":
-		motor.loop.Clear()
-		motor.clearGraphics()
-		motor.sendANO()
+			case "loop_clear":
+				motor.loop.Clear()
+				motor.clearGraphics()
+				motor.sendANO()
 
-	case "loop_comb":
-		motor.loopComb()
+			case "loop_comb":
+				motor.loopComb()
 
-	case "loop_length":
-		i, e := needIntArg("value", api, args)
-		if e == nil {
-			nclicks := Clicks(i)
-			if nclicks != motor.loop.length {
-				motor.loop.SetLength(nclicks)
-			}
-		} else {
-			err = e
-		}
+			case "loop_length":
+				i, e := needIntArg("value", api, args)
+				if e == nil {
+					nclicks := Clicks(i)
+					if nclicks != motor.loop.length {
+						motor.loop.SetLength(nclicks)
+					}
+				} else {
+					err = e
+				}
 
-	case "loop_fade":
-		f, e := needFloatArg("fade", api, args)
-		if e == nil {
-			motor.fadeLoop = f
-		} else {
-			err = e
-		}
+			case "loop_fade":
+				f, e := needFloatArg("fade", api, args)
+				if e == nil {
+					motor.fadeLoop = f
+				} else {
+					err = e
+				}
+		*/
 
 	case "ANO":
 		motor.sendANO()
@@ -162,32 +163,31 @@ func (motor *Motor) sendAllParameters() {
 	}
 }
 
-func (motor *Motor) loadPreset(preset string) error {
+func (motor *Motor) applyPreset(preset *Preset) error {
 
-	presetType, _ := PresetNameSplit(preset)
-
-	path := ReadablePresetFilePath(preset)
-	log.Printf("loadPreset region=%s path=%s\n", motor.padName, path)
+	path := preset.readableFilePath()
+	log.Printf("applyPreset region=%s path=%s\n", motor.padName, path)
 	paramsmap, err := LoadParamsMap(path)
 	if err != nil {
 		return err
 	}
-	err = motor.applyParamsMap(presetType, paramsmap)
+	err = motor.applyParamsMap(preset.category, paramsmap)
 	if err != nil {
 		return err
 	}
 
 	// If there's a _override.json file, use it
-	overridepath := ReadablePresetFilePath(presetType + "._override")
+	override := GetPreset(preset.category + "._override")
+	overridepath := override.readableFilePath()
 	if fileExists(overridepath) {
 		if Debug.Preset {
-			log.Printf("loadPreset using overridepath=%s\n", overridepath)
+			log.Printf("applyPreset using overridepath=%s\n", overridepath)
 		}
 		overridemap, err := LoadParamsMap(overridepath)
 		if err != nil {
 			return err
 		}
-		err = motor.applyParamsMap(presetType, overridemap)
+		err = motor.applyParamsMap(preset.category, overridemap)
 		if err != nil {
 			return err
 		}
@@ -199,8 +199,8 @@ func (motor *Motor) loadPreset(preset string) error {
 	// are added which don't exist in existing preset files.
 	for nm, def := range ParamDefs {
 		// Only include parameters of the desired type
-		paramType, _ := PresetNameSplit(nm)
-		if presetType != "snap" && paramType != presetType {
+		thisCategory, _ := PresetNameSplit(nm)
+		if preset.category != "snap" && preset.category != thisCategory {
 			continue
 		}
 		_, found := paramsmap[nm]
@@ -208,7 +208,7 @@ func (motor *Motor) loadPreset(preset string) error {
 			init := def.Init
 			err = motor.SetOneParamValue(nm, init)
 			if err != nil {
-				log.Printf("Loading preset %s, param=%s, init=%s, err=%s\n", preset, nm, init, err)
+				log.Printf("Loading preset %s, param=%s, init=%s, err=%s\n", path, nm, init, err)
 				// Don't fail completely
 			}
 		}
@@ -228,16 +228,16 @@ func (motor *Motor) applyParamsMap(presetType string, paramsmap map[string]inter
 			continue
 		}
 		fullname := name
-		paramType, _ := PresetNameSplit(fullname)
+		thisCategory, _ := PresetNameSplit(fullname)
 		// Only include ones that match the presetType
-		if presetType != "snap" && paramType != presetType {
+		if presetType != "snap" && thisCategory != presetType {
 			continue
 		}
 		// This is where the parameter values get applied,
 		// which may trigger things (like sending OSC)
 		err := motor.SetOneParamValue(fullname, val)
 		if err != nil {
-			log.Printf("loadPreset: param=%s, err=%s\n", fullname, err)
+			log.Printf("applyPreset: param=%s, err=%s\n", fullname, err)
 			// Don't abort the whole load, i.e. we are tolerant
 			// of unknown parameters or errors in the preset
 		}
@@ -246,14 +246,16 @@ func (motor *Motor) applyParamsMap(presetType string, paramsmap map[string]inter
 }
 
 func (motor *Motor) restoreCurrentSnap() {
-	err := motor.loadPreset("snap._Current_" + motor.padName)
+	preset := GetPreset("snap._Current_" + motor.padName)
+	err := motor.applyPreset(preset)
 	if err != nil {
-		log.Printf("loadPreset: err=%s\n", err)
+		log.Printf("applyPreset: err=%s\n", err)
 	}
 }
 
-func (motor *Motor) saveCurrentAsPreset(preset string) error {
-	path := WriteablePresetFilePath(preset)
+func (motor *Motor) saveCurrentAsPreset(presetName string) error {
+	preset := GetPreset(presetName)
+	path := preset.WriteableFilePath()
 	return motor.saveCurrentSnapInPath(path)
 }
 
@@ -287,30 +289,4 @@ func (motor *Motor) saveCurrentSnapInPath(path string) error {
 	data := []byte(s)
 	// log.Printf("SaveCurrentSnapInPath %s path=%s\n", motor.padName, path)
 	return os.WriteFile(path, data, 0644)
-}
-
-func LoadParamsMap(path string) (map[string]interface{}, error) {
-	bytes, err := os.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
-	var f interface{}
-	err = json.Unmarshal(bytes, &f)
-	if err != nil {
-		return nil, fmt.Errorf("unable to Unmarshal path=%s, err=%s", path, err)
-	}
-	toplevel, ok := f.(map[string]interface{})
-	if !ok {
-		return nil, fmt.Errorf("unable to convert params to map[string]interface{}")
-
-	}
-	params, okparams := toplevel["params"]
-	if !okparams {
-		return nil, fmt.Errorf("no params value in json")
-	}
-	paramsmap, okmap := params.(map[string]interface{})
-	if !okmap {
-		return nil, fmt.Errorf("params value is not a map[string]string in jsom")
-	}
-	return paramsmap, nil
 }
