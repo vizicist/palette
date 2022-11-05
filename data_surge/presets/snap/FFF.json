@@ -116,7 +116,6 @@
         "misc.quant":"fixed",
         "misc.scale":"newage",
         "misc.vol":"fixed",
-        "sound.controllerchan":"1",
         "sound.controllerstyle":"modulationonly",
         "sound._controllerzmax":"0.300000",
         "sound._controllerzmin":"0.050000",

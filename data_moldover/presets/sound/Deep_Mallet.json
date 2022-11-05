@@ -1,6 +1,5 @@
 {
     "params":{
-        "sound.controllerchan":"1",
         "sound.controllerstyle":"modulationonly",
         "sound.pitchmax":"78",
         "sound.pitchmin":"31",

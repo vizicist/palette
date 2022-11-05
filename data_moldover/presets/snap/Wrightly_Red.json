@@ -97,7 +97,6 @@
         "visual.alphatime":"4.957",
         "visual.aspect":"0.508",
         "visual.bounce":"true",
-        "sound.controllerchan":"1",
         "sound.controllerstyle":"modulationonly",
         "misc.enable:sound":"true",
         "misc.enable:visual":"true",

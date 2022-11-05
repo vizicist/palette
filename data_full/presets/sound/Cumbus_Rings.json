@@ -1,6 +1,5 @@
 {
     "params":{
-        "sound.controllerchan":"1",
         "sound.controllerstyle":"modulationonly",
         "sound._controllerzmax":"0.300",
         "sound._controllerzmin":"0.050",
