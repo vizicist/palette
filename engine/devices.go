@@ -20,8 +20,8 @@ type MIDIDeviceEvent struct {
 type CursorDeviceEvent struct {
 	ID        string
 	Source    string
-	Timestamp time.Time // milliseconds
-	Ddu       string    // "down", "drag", "up" (sometimes "clear")
+	Timestamp time.Time
+	Ddu       string // "down", "drag", "up" (sometimes "clear")
 	X         float32
 	Y         float32
 	Z         float32

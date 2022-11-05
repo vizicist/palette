@@ -299,7 +299,7 @@ func (r *Router) HandleInputEvent(args map[string]string) error {
 
 	case "cursor_down", "cursor_drag", "cursor_up":
 		ce := ArgsToCursorDeviceEvent(args)
-		TheEngine.CursorManager.handleCursorDeviceEvent(ce, true)
+		TheEngine.handleCursorDeviceEvent(ce)
 
 	case "sprite":
 
