@@ -8,7 +8,14 @@ import (
 	"sort"
 )
 
-func (r *Router) executePlayerAPI(playerName string, api string, argsmap map[string]string) (result string, err error) {
+func (r *Router) executePlayerAPI(api string, argsmap map[string]string) (result string, err error) {
+
+	playerName, playerok := argsmap["player"]
+	if !playerok {
+		playerName = "*"
+	} else {
+		delete(argsmap, "player")
+	}
 
 	switch api {
 
@@ -24,39 +31,14 @@ func (r *Router) executePlayerAPI(playerName string, api string, argsmap map[str
 		if !ok {
 			return "", fmt.Errorf("executePlayerAPI: missing value argument")
 		}
-		// Set value first
-		for thisPlayerName, player := range r.players {
-			if playerName == "*" || playerName == thisPlayerName {
-				err = player.SetOneParamValue(name, value)
-				if err != nil {
-					log.Printf("executePlayerAPI: set of %s failed, err=%s\n", name, err)
-					// But don't fail completely, this might be for
-					// parameters that no longer exist, and a hard failure may
-					// cause more problems.
-				}
-			}
-		}
-		// then save it
+		r.SetPlayerParamValue(playerName, name, value)
 		return "", r.saveCurrentSnaps(playerName)
 
 	case "setparams":
 		for name, value := range argsmap {
-			if name == "player" {
-				continue
-			}
-			for thisPlayerName, player := range r.players {
-				if playerName == "*" || playerName == thisPlayerName {
-					err = player.SetOneParamValue(name, value)
-					if err != nil {
-						log.Printf("executePlayerAPI: set of %s failed, err=%s\n", name, err)
-						// But don't fail completely, this might be for
-						// parameters that no longer exist, and a hard failure may
-						// cause more problems.
-					}
-				}
-			}
+			r.SetPlayerParamValue(playerName, name, value)
 		}
-		return "", nil
+		return "", r.saveCurrentSnaps(playerName)
 
 	case "get":
 		name, ok := argsmap["name"]
@@ -77,16 +59,26 @@ func (r *Router) executePlayerAPI(playerName string, api string, argsmap map[str
 		// here in the Router context, but for everything else,
 		// we punt down to the player's player.
 		// player can be A, B, C, D, or *
-		for tmpPlayerName, player := range r.players {
-			if playerName == "*" || tmpPlayerName == playerName {
-				_, err := player.ExecuteAPI(api, argsmap, "")
-				if err != nil {
-					return "", err
-				}
+		r.applyToPlayers(playerName, func(player *Player) {
+			_, err := player.ExecuteAPI(api, argsmap, "")
+			if err != nil {
+				log.Printf("Player.ExecuteAPI: player=%s err=%s\n", player.padName, err)
 			}
-		}
+		})
 		return "", nil
 	}
+}
+
+func (r *Router) SetPlayerParamValue(playerName string, name string, value string) {
+	r.applyToPlayers(playerName, func(player *Player) {
+		err := player.SetOneParamValue(name, value)
+		if err != nil {
+			log.Printf("executePlayerAPI: set of %s failed, err=%s\n", name, err)
+			// But don't fail completely, this might be for
+			// parameters that no longer exist, and a hard failure would
+			// cause more problems.
+		}
+	})
 }
 
 func (r *Router) saveQuadPreset(presetName string) error {

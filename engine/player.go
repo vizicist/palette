@@ -366,7 +366,7 @@ func (player) *Player) clearGraphics() {
 */
 
 func (player *Player) generateSprite(id string, x, y, z float32) {
-	if !TheEngine.Router.generateVisuals {
+	if !TheEngine().Router.generateVisuals {
 		return
 	}
 	// send an OSC message to Resolume
@@ -380,7 +380,7 @@ func (player *Player) generateSprite(id string, x, y, z float32) {
 
 /*
 func (player *Player) generateVisualsFromCursor(ce CursorDeviceEvent) {
-	if !TheEngine.Router.generateVisuals {
+	if !TheEngine().Router.generateVisuals {
 		return
 	}
 	// send an OSC message to Resolume
@@ -529,7 +529,7 @@ func (player *Player) getScale() *Scale {
 
 /*
 func (player *Player) generateSoundFromCursor(ce CursorDeviceEvent) {
-	if !TheEngine.Router.generateSound {
+	if !TheEngine().Router.generateSound {
 		return
 	}
 	a := player.getActiveNote(ce.ID)
@@ -713,7 +713,7 @@ func (player *Player) sendNoteOff(a *ActiveNote) {
 */
 
 func (player *Player) sendANO() {
-	if !TheEngine.Router.generateSound {
+	if !TheEngine().Router.generateSound {
 		return
 	}
 	synth := player.params.ParamStringValue("sound.synth", defaultSynth)
@@ -1138,7 +1138,7 @@ func (player *Player) sendPadOneEffectOnOff(effectName string, onoff bool) {
 }
 
 func GetPlayer(playerName string) *Player {
-	player, ok := TheEngine.Router.players[playerName]
+	player, ok := TheEngine().Router.players[playerName]
 	if !ok {
 		return nil
 	} else {

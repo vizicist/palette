@@ -43,6 +43,15 @@ func (rm *ResponderManager) ActivateResponder(name string) error {
 	return nil
 }
 
+func (rm *ResponderManager) DeactivateResponder(name string) error {
+	_, ok := rm.responders[name]
+	if !ok {
+		return fmt.Errorf("DeactivateResponder: no responder named %s", name)
+	}
+	delete(rm.activeResponders, name)
+	return nil
+}
+
 func (rm *ResponderManager) handleCursorDeviceEvent(ce CursorDeviceEvent) {
 	for name, responder := range rm.responders {
 		log.Printf("CallResponders: name=%s\n", name)
