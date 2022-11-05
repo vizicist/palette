@@ -71,9 +71,7 @@ func (p *Preset) loadQuadPreset(applyToPlayer string) error {
 		}
 		err = player.SetOneParamValue(parameterName, value)
 		if err != nil {
-			if !OldParameterName(parameterName) {
-				log.Printf("loadQuadPreset: name=%s err=%s\n", parameterName, err)
-			}
+			log.Printf("loadQuadPreset: name=%s err=%s\n", parameterName, err)
 			// Don't fail completely on individual failures,
 			// some might be for parameters that no longer exist.
 		}
@@ -96,9 +94,7 @@ func (p *Preset) loadQuadPreset(applyToPlayer string) error {
 				if err != nil {
 					// a hack to eliminate errors on a parameter that
 					// still exists in some presets.
-					if !OldParameterName(nm) {
-						log.Printf("loadQuadPreset: %s, param=%s, init=%s, err=%s\n", path, nm, init, err)
-					}
+					log.Printf("loadQuadPreset: %s, param=%s, init=%s, err=%s\n", path, nm, init, err)
 					// Don't fail completely on individual failures,
 					// some might be for parameters that no longer exist.
 				}
