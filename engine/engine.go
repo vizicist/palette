@@ -13,11 +13,12 @@ import (
 )
 
 type Engine struct {
-	ProcessManager *ProcessManager
-	Router         *Router
-	Scheduler      *Scheduler
-	CursorManager  *CursorManager
-	killme         bool // true if Engine should be stopped
+	ProcessManager   *ProcessManager
+	Router           *Router
+	Scheduler        *Scheduler
+	CursorManager    *CursorManager
+	responderManager *ResponderManager
+	killme           bool // true if Engine should be stopped
 }
 
 var HTTPPort = 3330
@@ -35,12 +36,22 @@ func NewEngine(logname string) *Engine {
 	e.Router = NewRouter()
 	e.Scheduler = NewScheduler()
 	e.CursorManager = NewCursorManager()
+	e.responderManager = NewResponderManager()
 	TheEngine = e
 	return e
 }
 
-func (e *Engine) AddCursorResponder(name string, r CursorResponder) {
-	e.CursorManager.AddCursorResponder("demo", r)
+func (e *Engine) AddResponder(name string, resp Responder) {
+	e.responderManager.AddResponder(name, resp)
+}
+
+func (e *Engine) ActivateResponder(name string) {
+	e.responderManager.ActivateResponder(name)
+}
+
+func (e *Engine) handleCursorDeviceEvent(ce CursorDeviceEvent) {
+	TheEngine.CursorManager.handleCursorDeviceEvent(ce, true)
+	TheEngine.responderManager.handleCursorDeviceEvent(ce)
 }
 
 func (e *Engine) Start() {
