@@ -47,15 +47,9 @@ func (e *Engine) ExecuteAPIFromMap(api string, apiargs map[string]string) (resul
 
 	default:
 		words := strings.Split(api, ".")
-		// Any other single-word APIs (like get, set, load, etc)
-		// are player-specific
+		// Single-word APIs (like get, set, load, etc) are player APIs
 		if len(words) <= 1 {
-			player, playerok := apiargs["player"]
-			if !playerok {
-				player = "*"
-			}
-			result, err = e.Router.executePlayerAPI(player, api, apiargs)
-			return result, err
+			return e.Router.executePlayerAPI(api, apiargs)
 		}
 		// Here we handle APIs of the form {apitype}.{apisuffix}
 		apitype := words[0]
@@ -226,6 +220,8 @@ func (e *Engine) executePresetAPI(api string, apiargs map[string]string) (result
 			playerName = "*"
 		}
 		if preset.category == "quad" {
+			// The playerName might be only a single player, and loadQuadPreset
+			// will only load that one player from the quad preset
 			err = preset.loadQuadPreset(playerName)
 			if err != nil {
 				log.Printf("loadQuad: preset=%s, err=%s", presetName, err)
@@ -233,19 +229,13 @@ func (e *Engine) executePresetAPI(api string, apiargs map[string]string) (result
 			}
 			e.Router.saveCurrentSnaps(playerName)
 		} else {
-			// It's a player preset
-			player, ok := e.Router.players[playerName]
-			if !ok {
-				return "", fmt.Errorf("ExecutePresetAPI, no player named %s", playerName)
-			}
-			err = player.applyPreset(preset)
+			// It's a non-quad preset for a single player.
+			// However, the playerName can still be "*" to apply to all players.
+			err = preset.applyPreset(playerName)
 			if err != nil {
 				log.Printf("applyPreset: preset=%s, err=%s", presetName, err)
 			} else {
-				err = player.saveCurrentSnap()
-				if err != nil {
-					log.Printf("saveCurrentSnap: err=%s", err)
-				}
+				e.Router.saveCurrentSnaps(playerName)
 			}
 		}
 		return "", err

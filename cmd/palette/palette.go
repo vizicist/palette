@@ -27,8 +27,7 @@ func main() {
 
 	playerPtr := flag.String("player", "*", "Region name or *")
 
-	e := engine.NewEngine("engine")
-	_ = e
+	// e := engine.TheEngine()
 	out := CliCommand(*playerPtr, flag.Args())
 	os.Stdout.WriteString(out)
 }
@@ -125,7 +124,7 @@ func CliCommand(player string, args []string) string {
 		if len(args) < 2 {
 			return "Insufficient arguments"
 		}
-		return RemoteAPI("api", api, "player", player, "preset", args[1])
+		return RemoteAPI(api, "player", player, "preset", args[1])
 
 	case "get":
 		if len(args) < 2 {
@@ -150,7 +149,7 @@ func CliCommand(player string, args []string) string {
 		return RemoteAPI("global.sendlogs")
 
 	case "status", "tasks":
-		return engine.TheEngine.ProcessManager.ProcessStatus()
+		return engine.ProcessStatus()
 
 	case "version":
 		return engine.GetPaletteVersion()
@@ -191,11 +190,11 @@ func CliCommand(player string, args []string) string {
 			process = args[1]
 		}
 		if process == "all" {
-			engine.TheEngine.ProcessManager.StopRunning("all")
+			engine.StopRunning("all")
 		} else if process == "engine" {
 			// first stop everything else, unless killonstartup is false
 			if engine.ConfigBoolWithDefault("killonstartup", true) {
-				engine.TheEngine.ProcessManager.StopRunning("all")
+				engine.StopRunning("all")
 			}
 			// then kill ourselves
 			engine.KillExecutable(engineexe)
@@ -207,7 +206,7 @@ func CliCommand(player string, args []string) string {
 		if len(args) < 2 {
 			return "Insufficient arguments"
 		}
-		return RemoteAPI("api", args[1])
+		return RemoteAPI(args[1])
 
 	case "test":
 		ntimes := 10
@@ -248,7 +247,7 @@ func CliCommand(player string, args []string) string {
 				"y", fmt.Sprintf("%f", rand.Float32()),
 				"z", fmt.Sprintf("%f", rand.Float32()),
 			)
-	}
+		}
 
 	default:
 		// NEW retmap

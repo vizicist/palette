@@ -15,9 +15,9 @@ func main() {
 	signal.Ignore(syscall.SIGHUP)
 	signal.Ignore(syscall.SIGINT)
 
-	e := engine.NewEngine("engine")
-	e.ActivateResponder("default")
-	e.Start()
+	engine.ActivateResponder("default")
+
+	engine.TheEngine().Start()
 
 	if engine.ConfigBoolWithDefault("twinsys", false) {
 		twinsys.Run()

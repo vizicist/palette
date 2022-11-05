@@ -1,10 +1,10 @@
 {
-  "debug": "realtime,midi",
+  "debug": "",
   "guilevel": "1",
   "bidule": "C:\\Program Files\\Plogue\\Bidule\\Bidule.exe",
   "resolume": "C:\\Program Files\\Resolume Avenue\\Avenue.exe",
-  "autostartnothing": "",
-  "autostart": "gui,resolume,bidule",
+  "autostart": "",
+  "autostartOLD": "gui,resolume,bidule",
   "attractgestureduration": "1.0",
   "attractpresetduration": "15.0",
   "attractidlesecs": "0",

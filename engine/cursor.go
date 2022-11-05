@@ -47,7 +47,7 @@ func (cm *CursorManager) handleCursorDeviceEvent(ce CursorDeviceEvent, lockit bo
 	// As soon as there's any non-internal cursor event,
 	// we turn attract mode off.
 	if ce.Source != "internal" {
-		TheEngine.Scheduler.SetAttractMode(false)
+		TheEngine().Scheduler.SetAttractMode(false)
 	}
 
 	switch ce.Ddu {
@@ -104,7 +104,7 @@ func (cm *CursorManager) doCursorGesture(source string, cid string, x0, y0, z0, 
 	}
 
 	// secs := float32(3.0)
-	secs := float32(TheEngine.Scheduler.attractNoteDuration)
+	secs := float32(TheEngine().Scheduler.attractNoteDuration)
 	dt := time.Duration(int(secs * float32(time.Second)))
 	time.Sleep(dt)
 	ce.Ddu = "up"

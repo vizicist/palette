@@ -181,12 +181,21 @@ func NewRouter() *Router {
 	r.generateVisuals = ConfigBoolWithDefault("generatevisuals", true)
 	r.generateSound = ConfigBoolWithDefault("generatesound", true)
 
+	return &r
+}
+
+func (r *Router) Restart() {
 	for _, player := range r.players {
 		player.restoreCurrentSnap()
 	}
 
 	go r.notifyGUI("restart")
-	return &r
+}
+
+func (r *Router) applyToPlayers(playerName string, f func(player *Player)) {
+	for _, player := range r.players {
+		f(player)
+	}
 }
 
 func (r *Router) ResolumeLayerForText() int {
@@ -299,7 +308,7 @@ func (r *Router) HandleInputEvent(args map[string]string) error {
 
 	case "cursor_down", "cursor_drag", "cursor_up":
 		ce := ArgsToCursorDeviceEvent(args)
-		TheEngine.handleCursorDeviceEvent(ce)
+		TheEngine().handleCursorDeviceEvent(ce)
 
 	case "sprite":
 
@@ -731,12 +740,11 @@ func (r *Router) handleClientRestart(msg *osc.Message) {
 		return
 	}
 	var found *Player
-	for _, player := range r.players {
+	r.applyToPlayers("*", func(player *Player) {
 		if player.freeframeClient.Port() == portnum {
 			found = player
-			break
 		}
-	}
+	})
 	if found == nil {
 		log.Printf("handleClientRestart unable to find Player with portnum=%d\n", portnum)
 	} else {
@@ -829,7 +837,7 @@ func (r *Router) handleMMTTCursor(msg *osc.Message) {
 		log.Printf("MMTT Cursor %s %s xyz= %f %f %f\n", ce.Source, ce.Ddu, ce.X, ce.Y, ce.Z)
 	}
 
-	TheEngine.CursorManager.handleCursorDeviceEvent(ce, true)
+	TheEngine().CursorManager.handleCursorDeviceEvent(ce, true)
 }
 
 func boundval(v float32) float32 {

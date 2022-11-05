@@ -20,7 +20,7 @@ func NewResponder_default() *Responder_default {
 
 /////////////////////////// external interface
 
-func (r *Responder_default) OnCursorDeviceEvent(ce engine.CursorDeviceEvent, cm *engine.CursorManager) {
+func (r *Responder_default) OnCursorDeviceEvent(ce engine.CursorDeviceEvent, cm *engine.ResponderManager) {
 	log.Printf("Responder_default.OnCursorDeviceEvent: ce=%v\n", ce)
 	// nt := r.cursorToNote(ce)
 

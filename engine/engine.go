@@ -26,37 +26,64 @@ var OSCPort = 3333
 var AliveOutputPort = 3331
 var ResolumePort = 3334
 
-var TheEngine *Engine
+var theEngine *Engine
+var logInitialized = false
 
-func NewEngine(logname string) *Engine {
+func TheEngine() *Engine {
+	if theEngine == nil {
+		theEngine = newEngine("engine")
+	}
+	return theEngine
+}
+
+func newEngine(logname string) *Engine {
 	e := &Engine{}
-	e.initLog(logname)
+	if !logInitialized {
+		initLogname(logname)
+	}
 	e.initDebug()
 	e.ProcessManager = NewProcessManager()
 	e.Router = NewRouter()
 	e.Scheduler = NewScheduler()
 	e.CursorManager = NewCursorManager()
 	e.responderManager = NewResponderManager()
-	TheEngine = e
 	return e
 }
 
-func (e *Engine) AddResponder(name string, resp Responder) {
-	e.responderManager.AddResponder(name, resp)
+func SetLogname(logname string) {
+	initLogname(logname)
 }
 
-func (e *Engine) ActivateResponder(name string) {
-	e.responderManager.ActivateResponder(name)
+func ProcessStatus() string {
+	return TheEngine().ProcessManager.ProcessStatus()
+}
+
+func StopRunning(what string) {
+	TheEngine().ProcessManager.StopRunning(what)
+}
+
+func AddResponder(name string, resp Responder) {
+	TheEngine().responderManager.AddResponder(name, resp)
+}
+
+func ActivateResponder(name string) {
+	TheEngine().responderManager.ActivateResponder(name)
+}
+
+func DeactivateResponder(name string) {
+	TheEngine().responderManager.DeactivateResponder(name)
 }
 
 func (e *Engine) handleCursorDeviceEvent(ce CursorDeviceEvent) {
-	TheEngine.CursorManager.handleCursorDeviceEvent(ce, true)
-	TheEngine.responderManager.handleCursorDeviceEvent(ce)
+	TheEngine().CursorManager.handleCursorDeviceEvent(ce, true)
+	TheEngine().responderManager.handleCursorDeviceEvent(ce)
 }
 
 func (e *Engine) Start() {
 
 	log.Printf("====================== Palette Engine is starting\n")
+
+	e.Router.Restart()
 
 	// Normally, the engine should never die, but if it does,
 	// other processes (e.g. resolume, bidule) may be left around.
@@ -85,7 +112,7 @@ func (e *Engine) StopMe() {
 	e.killme = true
 }
 
-func (e *Engine) initLog(logname string) {
+func initLogname(logname string) {
 
 	defaultLogger := log.Default()
 	defaultLogger.SetFlags(-2)
@@ -101,6 +128,7 @@ func (e *Engine) initLog(logname string) {
 	logger := logWriter{file: file}
 	log.SetFlags(-2)
 	log.SetOutput(logger)
+	logInitialized = true
 }
 
 func (e *Engine) initDebug() {

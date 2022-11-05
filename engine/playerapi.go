@@ -163,60 +163,6 @@ func (player *Player) sendAllParameters() {
 	}
 }
 
-func (player *Player) applyPreset(preset *Preset) error {
-
-	path := preset.readableFilePath()
-	log.Printf("applyPreset player=%s path=%s\n", player.padName, path)
-	paramsmap, err := LoadParamsMap(path)
-	if err != nil {
-		return err
-	}
-	err = player.applyParamsMap(preset.category, paramsmap)
-	if err != nil {
-		return err
-	}
-
-	// If there's a _override.json file, use it
-	override := GetPreset(preset.category + "._override")
-	overridepath := override.readableFilePath()
-	if fileExists(overridepath) {
-		if Debug.Preset {
-			log.Printf("applyPreset using overridepath=%s\n", overridepath)
-		}
-		overridemap, err := LoadParamsMap(overridepath)
-		if err != nil {
-			return err
-		}
-		err = player.applyParamsMap(preset.category, overridemap)
-		if err != nil {
-			return err
-		}
-
-	}
-
-	// For any parameters that are in Paramdefs but are NOT in the loaded
-	// preset, we put out the "init" values.  This happens when new parameters
-	// are added which don't exist in existing preset files.
-	for nm, def := range ParamDefs {
-		// Only include parameters of the desired type
-		thisCategory, _ := PresetNameSplit(nm)
-		if preset.category != "snap" && preset.category != thisCategory {
-			continue
-		}
-		_, found := paramsmap[nm]
-		if !found {
-			init := def.Init
-			err = player.SetOneParamValue(nm, init)
-			if err != nil {
-				log.Printf("Loading preset %s, param=%s, init=%s, err=%s\n", path, nm, init, err)
-				// Don't fail completely
-			}
-		}
-	}
-
-	return nil
-}
-
 func (player *Player) applyParamsMap(presetType string, paramsmap map[string]interface{}) error {
 
 	// Currently, no errors are ever returned, but log messages are generated.
@@ -246,8 +192,9 @@ func (player *Player) applyParamsMap(presetType string, paramsmap map[string]int
 }
 
 func (player *Player) restoreCurrentSnap() {
-	preset := GetPreset("snap._Current_" + player.padName)
-	err := player.applyPreset(preset)
+	playerName := player.padName
+	preset := GetPreset("snap._Current_" + playerName)
+	err := preset.applyPreset(playerName)
 	if err != nil {
 		log.Printf("applyPreset: err=%s\n", err)
 	}

@@ -247,7 +247,7 @@ func (sched *Scheduler) Start() {
 			if Debug.Realtime {
 				log.Printf("StartRealtime: checking processes\n")
 			}
-			go TheEngine.ProcessManager.checkProcessesAndRestartIfNecessary()
+			go TheEngine().ProcessManager.checkProcessesAndRestartIfNecessary()
 			lastProcessCheck = uptimesecs
 		}
 
@@ -264,12 +264,12 @@ func (sched *Scheduler) Start() {
 func (sched *Scheduler) advanceClickTo(toClick Clicks) {
 
 	// Don't let events get handled while we're advancing
-	TheEngine.Router.eventMutex.Lock()
-	defer TheEngine.Router.eventMutex.Unlock()
+	TheEngine().Router.eventMutex.Lock()
+	defer TheEngine().Router.eventMutex.Unlock()
 
 	for clk := sched.lastClick; clk < toClick; clk++ {
 		sched.activePhrasesManager.AdvanceByOneClick()
-		TheEngine.CursorManager.CheckCursorUp(time.Now())
+		TheEngine().CursorManager.CheckCursorUp(time.Now())
 	}
 	sched.lastClick = toClick
 }
@@ -303,7 +303,7 @@ func (player *Player) handleCursorDeviceEvent(e CursorDeviceEvent) {
 
 	id := e.Source
 
-	router := TheEngine.Router
+	router := TheEngine().Router
 	router.deviceCursorsMutex.Lock()
 	defer router.deviceCursorsMutex.Unlock()
 
@@ -400,13 +400,13 @@ func (sched *Scheduler) doAttractAction() {
 		y1 := rand.Float32()
 		z1 := rand.Float32() / 2.0
 
-		go TheEngine.CursorManager.doCursorGesture(player, cid, x0, y0, z0, x1, y1, z1)
+		go TheEngine().CursorManager.doCursorGesture(player, cid, x0, y0, z0, x1, y1, z1)
 		sched.lastAttractGestureTime = now
 	}
 
 	dp := now.Sub(sched.lastAttractPresetTime)
-	if sched.attractPreset == "random" && dp > TheEngine.Scheduler.attractPresetDuration {
-		TheEngine.Router.loadQuadPresetRand()
+	if sched.attractPreset == "random" && dp > TheEngine().Scheduler.attractPresetDuration {
+		TheEngine().Router.loadQuadPresetRand()
 		sched.lastAttractPresetTime = now
 	}
 }
@@ -420,7 +420,7 @@ func (sched *Scheduler) advanceTransposeTo(newclick Clicks) {
 			log.Printf("advanceTransposeTo: newclick=%d transposePitch=%d\n", newclick, transposePitch)
 		}
 		/*
-			for _, player := range TheEngine.Router.players {
+			for _, player := range TheEngine().Router.players {
 				// player.clearDown()
 				if Debug.Transpose {
 					log.Printf("  setting transposepitch in player pad=%s trans=%d activeNotes=%d\n", player.padName, transposePitch, len(player.activeNotes))
