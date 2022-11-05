@@ -115,10 +115,6 @@ func (r *Router) saveQuadPreset(presetName string) error {
 	return os.WriteFile(path, data, 0644)
 }
 
-func OldParameterName(nm string) bool {
-	return nm == "sound.controller" || nm == "sound.controllerchan"
-}
-
 func (r *Router) loadQuadPresetRand() {
 
 	arr, err := PresetArray("quad")
