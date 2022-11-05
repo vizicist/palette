@@ -19,12 +19,13 @@ func main() {
 	signal.Ignore(syscall.SIGINT)
 
 	engine.InitMIDI()
+	engine.SetLogname("erae")
 
 	flag.Parse()
 
-	e := engine.NewEngine("erae")
+	e := engine.TheEngine()
 	go e.StartMIDI()
-	go e.InputListener() // never returns
+	go e.InputListener()
 
 	log.Printf("Blocking forever....\n")
 	select {} // block forever

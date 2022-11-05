@@ -84,7 +84,7 @@ func (p *Preset) loadQuadPreset(applyToPlayer string) error {
 	// are added which don't exist in existing preset files.
 	// This is similar to code in Player.applyPreset, except we
 	// have to do it for all for pads
-	for _, c := range TheEngine.Router.playerLetters {
+	for _, c := range TheEngine().Router.playerLetters {
 		padName := string(c)
 		player := GetPlayer(padName)
 		for nm, def := range ParamDefs {
@@ -103,6 +103,63 @@ func (p *Preset) loadQuadPreset(applyToPlayer string) error {
 					// some might be for parameters that no longer exist.
 				}
 			}
+		}
+	}
+
+	return nil
+}
+
+func (p *Preset) applyPreset(playerName string) error {
+
+	path := p.readableFilePath()
+	log.Printf("applyPreset player=%s path=%s\n", playerName, path)
+	paramsmap, err := LoadParamsMap(path)
+	if err != nil {
+		return err
+	}
+
+	TheEngine().Router.applyToPlayers(playerName, func(player *Player) {
+		err = player.applyParamsMap(p.category, paramsmap)
+		if err != nil {
+			log.Printf("Preset.applyPreset: playerName=%s err=%s\n", playerName, err)
+		}
+	})
+
+	// If there's a _override.json file, use it
+	override := GetPreset(p.category + "._override")
+	overridepath := override.readableFilePath()
+	if fileExists(overridepath) {
+		if Debug.Preset {
+			log.Printf("applyPreset using overridepath=%s\n", overridepath)
+		}
+		overridemap, err := LoadParamsMap(overridepath)
+		if err != nil {
+			return err
+		}
+		TheEngine().Router.applyToPlayers(playerName, func(player *Player) {
+			player.applyParamsMap(p.category, overridemap)
+		})
+	}
+
+	// For any parameters that are in Paramdefs but are NOT in the loaded
+	// preset, we put out the "init" values.  This happens when new parameters
+	// are added which don't exist in existing preset files.
+	for nm, def := range ParamDefs {
+		// Only include parameters of the desired type
+		thisCategory, _ := PresetNameSplit(nm)
+		if p.category != "snap" && p.category != thisCategory {
+			continue
+		}
+		_, found := paramsmap[nm]
+		if !found {
+			init := def.Init
+			TheEngine().Router.applyToPlayers(playerName, func(player *Player) {
+				err = player.SetOneParamValue(nm, init)
+				if err != nil {
+					log.Printf("Loading preset %s, param=%s, init=%s, err=%s\n", path, nm, init, err)
+					// Don't fail completely
+				}
+			})
 		}
 	}
 
