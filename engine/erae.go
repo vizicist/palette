@@ -167,7 +167,7 @@ func handleFinger(bb []byte) {
 				Timestamp: time.Now(),
 				Ddu:       "clear",
 			}
-			TheEngine.CursorManager.handleCursorDeviceEvent(ce, true)
+			TheEngine.handleCursorDeviceEvent(ce)
 			if Debug.Erae {
 				log.Printf("Switching Erae to player %s", newplayer)
 			}
@@ -222,7 +222,7 @@ func handleFinger(bb []byte) {
 	}
 	// XXX - should Fresh be true???
 
-	TheEngine.CursorManager.handleCursorDeviceEvent(ce, true)
+	TheEngine.handleCursorDeviceEvent(ce)
 }
 
 func EraeWriteSysex(bytes []byte) {

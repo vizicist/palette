@@ -6,21 +6,16 @@ import (
 	"time"
 )
 
-type CursorResponder interface {
-	OnCursorDeviceEvent(e CursorDeviceEvent, cm *CursorManager)
-}
-
 type CursorManager struct {
-	cursors    map[string]*DeviceCursor
-	mutex      sync.RWMutex
-	responders map[string]CursorResponder
+	cursors map[string]*DeviceCursor
+	mutex   sync.RWMutex
 }
 
 func NewCursorManager() *CursorManager {
 	return &CursorManager{
-		cursors:    map[string]*DeviceCursor{},
-		mutex:      sync.RWMutex{},
-		responders: make(map[string]CursorResponder),
+		cursors: map[string]*DeviceCursor{},
+		mutex:   sync.RWMutex{},
+		// responders: make(map[string]CursorResponder),
 	}
 }
 
@@ -40,11 +35,6 @@ func (cm *CursorManager) ClearCursors() {
 			delete(cm.cursors, id)
 		}
 	}
-}
-
-func (cm *CursorManager) AddCursorResponder(name string, resp CursorResponder) {
-	log.Printf("AddResponder: cm=%v\n", cm)
-	cm.responders[name] = resp
 }
 
 func (cm *CursorManager) handleCursorDeviceEvent(ce CursorDeviceEvent, lockit bool) {
@@ -89,10 +79,6 @@ func (cm *CursorManager) handleCursorDeviceEvent(ce CursorDeviceEvent, lockit bo
 
 		if ce.Ddu == "up" {
 			delete(cm.cursors, ce.ID)
-		}
-		for name, responder := range cm.responders {
-			log.Printf("CallResponders: name=%s\n", name)
-			responder.OnCursorDeviceEvent(ce, cm)
 		}
 	}
 }

@@ -1,0 +1,51 @@
+package engine
+
+import (
+	"fmt"
+	"log"
+	"sync"
+)
+
+type ResponderManager struct {
+	responders       map[string]Responder
+	activeResponders map[string]Responder
+	mutex            sync.RWMutex
+}
+
+type Responder interface {
+	OnCursorDeviceEvent(e CursorDeviceEvent, rm *ResponderManager)
+}
+
+func NewResponderManager() *ResponderManager {
+	return &ResponderManager{
+		responders:       make(map[string]Responder),
+		activeResponders: make(map[string]Responder),
+		mutex:            sync.RWMutex{},
+	}
+}
+
+func (rm *ResponderManager) AddResponder(name string, resp Responder) {
+	_, ok := rm.responders[name]
+	if !ok {
+		rm.responders[name] = resp
+	} else {
+		log.Printf("Warning: ResponderManager.AddResponder is overwriting old name=%s\n", name)
+	}
+}
+
+func (rm *ResponderManager) ActivateResponder(name string) error {
+	resp, ok := rm.responders[name]
+	if !ok {
+		return fmt.Errorf("no responder named %s", name)
+	}
+	log.Printf("ActivateResponder: name=%s\n", name)
+	rm.activeResponders[name] = resp
+	return nil
+}
+
+func (rm *ResponderManager) handleCursorDeviceEvent(ce CursorDeviceEvent) {
+	for name, responder := range rm.responders {
+		log.Printf("CallResponders: name=%s\n", name)
+		responder.OnCursorDeviceEvent(ce, rm)
+	}
+}
