@@ -308,27 +308,26 @@ def palette_api(api,params):
             s = s[0:lim] + " ..."
         log("palette_api: params=",s)
 
-    # Acquire lock before sending
-    ApiLock.acquire()
+    success = False
+    while not success:
+        # Acquire lock before sending
+        ApiLock.acquire()
 
-    try:
-        url = "http://127.0.0.1:3330/api"
-        req = requests.post(url=url,data=params,timeout=10.0)
-        result = req.text
-    except requests.ConnectionError:
-        log("ConnectionError for url=",url)
-        result = ""
-    except requests.Timeout:
-        log("Timeout for url=",url," api=",params)
-        result = ""
-    except:
-        log("Timeout or other exception in palette_api, for api=",params)
-        result = ""
+        requestError = None
+        try:
+            url = "http://127.0.0.1:3330/api"
+            req = requests.post(url=url,data=params,timeout=10.0)
+            result = req.text
+        except (requests.ConnectionError,requests.Timeout,Exception) as err:
+            requestError = err
+    
+        ApiLock.release()
 
-    ApiLock.release()
-
-    if result == "":
-        return None, "No result from calling params=%s\n" % (params)
+        if requestError == None:
+            success = True
+        else:
+            # log("palette_api: Exception = "+str(requestError))
+            log("palette_api: failed connection, api=%s is being retried" % api)
 
     resultjson = json.loads(result)
 
