@@ -6,6 +6,10 @@ import (
 	"github.com/vizicist/palette/engine"
 )
 
+func init() {
+	engine.AddResponder("default", NewResponder_default())
+}
+
 type Responder_default struct {
 }
 
@@ -19,6 +23,7 @@ func NewResponder_default() *Responder_default {
 func (r *Responder_default) OnCursorDeviceEvent(ce engine.CursorDeviceEvent, cm *engine.CursorManager) {
 	log.Printf("Responder_default.OnCursorDeviceEvent: ce=%v\n", ce)
 	// nt := r.cursorToNote(ce)
+
 }
 
 /////////////////////////// internal things
