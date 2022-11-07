@@ -11,6 +11,7 @@ func init() {
 }
 
 type Responder_default struct {
+	// ctx *engine.ResponderContext
 }
 
 func NewResponder_default() *Responder_default {
@@ -20,9 +21,14 @@ func NewResponder_default() *Responder_default {
 
 /////////////////////////// external interface
 
-func (r *Responder_default) OnCursorEvent(ce engine.CursorEvent, cm *engine.ResponderManager) {
+func (r *Responder_default) OnCursorEvent(ctx *engine.ResponderContext, ce engine.CursorEvent) {
 	log.Printf("Responder_default.OnCursorEvent: ce=%v\n", ce)
-	// nt := r.cursorToNote(ce)
+	nt1 := r.cursorToNote(ce)
+	nt2, _ := engine.NoteFromString("c")
+
+	clicks := ctx.CurrentClick()
+	ctx.ScheduleNoteNow(nt1)
+	ctx.ScheduleNoteAt(nt2, clicks)
 
 }
 
@@ -31,11 +37,10 @@ func (r *Responder_default) OnCursorEvent(ce engine.CursorEvent, cm *engine.Resp
 func (r *Responder_default) cursorToNote(ce engine.CursorEvent) *engine.Note {
 	pitch := int(ce.X * 126.0)
 	_ = pitch
-	s := "+b"
-	note, err := engine.NoteFromString((s))
+	note, err := engine.NoteFromString("g")
 	if err != nil {
-		log.Printf("xyzToNote: bad note - %s\n", s)
-		note, _ = engine.NoteFromString("+a")
+		log.Printf("xyzToNote: bad note - err=%s\n", err)
+		return nil
 	}
 	return note
 }

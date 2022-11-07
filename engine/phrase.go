@@ -25,7 +25,7 @@ const MaxClicks = Clicks(math.MaxInt64)
 // which are MIDI messages and other realtime events).
 type Phrase struct {
 	// readonly  bool
-	rwmutex   *sync.RWMutex
+	rwmutex   sync.RWMutex
 	firstnote *Note
 	lastnote  *Note
 	Length    Clicks
@@ -60,7 +60,7 @@ func (n Note) Data2() uint8 {
 // NewPhrase returns a new Phrase
 func NewPhrase() *Phrase {
 	return &Phrase{
-		rwmutex: new(sync.RWMutex),
+		// rwmutex: new(sync.RWMutex),
 	}
 }
 
