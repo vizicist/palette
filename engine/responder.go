@@ -13,7 +13,7 @@ type ResponderManager struct {
 }
 
 type Responder interface {
-	OnCursorDeviceEvent(e CursorDeviceEvent, rm *ResponderManager)
+	OnCursorEvent(e CursorEvent, rm *ResponderManager)
 }
 
 func NewResponderManager() *ResponderManager {
@@ -52,9 +52,9 @@ func (rm *ResponderManager) DeactivateResponder(name string) error {
 	return nil
 }
 
-func (rm *ResponderManager) handleCursorDeviceEvent(ce CursorDeviceEvent) {
+func (rm *ResponderManager) handleCursorEvent(ce CursorEvent) {
 	for name, responder := range rm.responders {
 		log.Printf("CallResponders: name=%s\n", name)
-		responder.OnCursorDeviceEvent(ce, rm)
+		responder.OnCursorEvent(ce, rm)
 	}
 }

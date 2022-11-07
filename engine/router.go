@@ -14,12 +14,12 @@ import (
 
 // Router takes events and routes them
 type Router struct {
-	playerLetters     string
-	players           map[string]*Player
-	OSCInput          chan OSCEvent
-	MIDIInput         chan MidiEvent
-	NoteInput         chan *Note
-	CursorDeviceInput chan CursorDeviceEvent
+	playerLetters string
+	players       map[string]*Player
+	OSCInput      chan OSCEvent
+	MIDIInput     chan MidiEvent
+	NoteInput     chan *Note
+	CursorInput   chan CursorEvent
 
 	AliveWaiters map[string]chan string
 
@@ -253,14 +253,14 @@ func ArgToFloat(nm string, args map[string]string) float32 {
 	return float32(f)
 }
 
-func ArgsToCursorDeviceEvent(args map[string]string) CursorDeviceEvent {
+func ArgsToCursorEvent(args map[string]string) CursorEvent {
 	id := args["id"]
 	source := args["source"]
 	event := strings.TrimPrefix(args["event"], "cursor_")
 	x := ArgToFloat("x", args)
 	y := ArgToFloat("y", args)
 	z := ArgToFloat("z", args)
-	ce := CursorDeviceEvent{
+	ce := CursorEvent{
 		ID:        id,
 		Source:    source,
 		Timestamp: time.Now(),
@@ -274,20 +274,26 @@ func ArgsToCursorDeviceEvent(args map[string]string) CursorDeviceEvent {
 }
 
 // HandleInputEvent xxx
-func (r *Router) HandleInputEvent(args map[string]string) error {
-
+func (r *Router) HandleInputEvent(playerName string, args map[string]string) error {
 	r.eventMutex.Lock()
-	defer r.eventMutex.Unlock()
+	/*
+		tried := r.eventMutex.TryLock()
+		if !tried {
+			log.Printf("Hey! Unable to lock eventMutex?! now try Lock\n")
+			r.eventMutex.Lock()
+			log.Printf("LOCK OBTAINED!\n")
+			// return fmt.Errorf("unable to lock eventMutex")
+		} else {
+			log.Printf("TryLock got the lock\n")
+		}
+	*/
+	defer func() {
+		r.eventMutex.Unlock()
+	}()
 
 	event, err := needStringArg("event", "HandleEvent", args)
 	if err != nil {
 		return err
-	}
-
-	// If no "player" argument, assign one, though it should eventually be required
-	playerName, playerok := args["player"]
-	if !playerok {
-		return fmt.Errorf("HandleInputEvent: No player value")
 	}
 
 	if Debug.Router {
@@ -307,8 +313,8 @@ func (r *Router) HandleInputEvent(args map[string]string) error {
 		return nil
 
 	case "cursor_down", "cursor_drag", "cursor_up":
-		ce := ArgsToCursorDeviceEvent(args)
-		TheEngine().handleCursorDeviceEvent(ce)
+		ce := ArgsToCursorEvent(args)
+		TheEngine().handleCursorEvent(ce)
 
 	case "sprite":
 
@@ -752,8 +758,7 @@ func (r *Router) handleClientRestart(msg *osc.Message) {
 	}
 }
 
-// handleMMTTCursor handles messages from MMTT and reformats them
-// as a standard cursor event before sending them to r.HandleEvent
+// handleMMTTCursor handles messages from MMTT, reformating them as a standard cursor event
 func (r *Router) handleMMTTCursor(msg *osc.Message) {
 
 	tags, _ := msg.TypeTags()
@@ -811,7 +816,7 @@ func (r *Router) handleMMTTCursor(msg *osc.Message) {
 		return
 	}
 
-	ce := CursorDeviceEvent{
+	ce := CursorEvent{
 		ID:        cid,
 		Source:    "mmtt",
 		Timestamp: time.Now(),
@@ -837,7 +842,7 @@ func (r *Router) handleMMTTCursor(msg *osc.Message) {
 		log.Printf("MMTT Cursor %s %s xyz= %f %f %f\n", ce.Source, ce.Ddu, ce.X, ce.Y, ce.Z)
 	}
 
-	TheEngine().CursorManager.handleCursorDeviceEvent(ce, true)
+	TheEngine().handleCursorEvent(ce)
 }
 
 func boundval(v float32) float32 {
@@ -872,7 +877,8 @@ func (r *Router) handleInputEventRaw(rawargs string) {
 	if err != nil {
 		return
 	}
-	err = r.HandleInputEvent(args)
+	playerName := extractPlayer(args)
+	err = r.HandleInputEvent(playerName, args)
 	if err != nil {
 		log.Printf("Router.handleOSCEvent: err=%s\n", err)
 		return
@@ -911,14 +917,15 @@ func (r *Router) handlePatchXREvent(msg *osc.Message) {
 	x, _ := argAsFloat32(msg, 2)
 	y, _ := argAsFloat32(msg, 3)
 	z, _ := argAsFloat32(msg, 4)
-	s := fmt.Sprintf("\"event\": \"cursor_drag\", \"player\": \"%s\", \"x\": \"%f\", \"y\": \"%f\", \"z\": \"%f\"", playerName, x, y, z)
+	s := fmt.Sprintf("\"event\": \"cursor_drag\", \"x\": \"%f\", \"y\": \"%f\", \"z\": \"%f\"", x, y, z)
 	var args map[string]string
 	args, err = StringMap(s)
 	if err != nil {
 		return
 	}
 
-	err = r.HandleInputEvent(args)
+	// we didn't add "player" to the args, no need for extractPlayer
+	err = r.HandleInputEvent(playerName, args)
 	if err != nil {
 		log.Printf("Router.handlePatchXREvent: err=%s\n", err)
 		return
@@ -950,7 +957,8 @@ func (r *Router) handleOSCSpriteEvent(msg *osc.Message) {
 		return
 	}
 
-	err = r.HandleInputEvent(args)
+	playerName := extractPlayer(args)
+	err = r.HandleInputEvent(playerName, args)
 	if err != nil {
 		log.Printf("Router.handleOSCSpriteEvent: err=%s\n", err)
 		return

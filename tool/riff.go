@@ -32,8 +32,6 @@ func NewRiff(parent w.Window) w.WindowData {
 
 	w.WinSetAttValue(riff, "islogger", "true")
 
-	// engine.TheRouter().SendCursor3DDeviceEventsTo(riff.handleCursor3DDeviceInput)
-
 	return w.NewToolData(riff, "Riff", image.Point{})
 }
 

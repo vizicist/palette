@@ -267,7 +267,7 @@ var morphMaxForce float32 = 1000.0
 var allMorphs []*oneMorph
 
 // StartMorph xxx
-func StartMorph(callback CursorDeviceCallbackFunc, forceFactor float32) {
+func StartMorph(callback CursorCallbackFunc, forceFactor float32) {
 	err := initialize()
 	if err != nil {
 		log.Printf("Morph.Initialize: err=%s\n", err)
@@ -294,7 +294,7 @@ const (
 	CursorUp   = 3
 )
 
-func (m *oneMorph) readFrames(callback CursorDeviceCallbackFunc, forceFactor float32) {
+func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float32) {
 	status := C.SenselReadSensor(C.uchar(m.idx))
 	if status != C.SENSEL_OK {
 		log.Printf("Morph: SenselReadSensor for idx=%d returned %d\n", m.idx, status)
@@ -361,7 +361,7 @@ func (m *oneMorph) readFrames(callback CursorDeviceCallbackFunc, forceFactor flo
 				if newPlayerName != "" {
 					if newPlayerName != m.playerName {
 						log.Printf("Switching corners pad to player %s", newPlayerName)
-						ce := CursorDeviceEvent{
+						ce := CursorEvent{
 							ID:        fmt.Sprintf("%d", m.idx),
 							Source:    newPlayerName,
 							Timestamp: time.Now(),
@@ -372,7 +372,7 @@ func (m *oneMorph) readFrames(callback CursorDeviceCallbackFunc, forceFactor flo
 							Area:      area,
 						}
 						m.playerName = newPlayerName
-						callback(ce, true)
+						callback(ce)
 					}
 					// We don't pass corner things through
 					continue // the loop
@@ -423,7 +423,7 @@ func (m *oneMorph) readFrames(callback CursorDeviceCallbackFunc, forceFactor flo
 				xNorm = 1.0
 			}
 
-			ev := CursorDeviceEvent{
+			ev := CursorEvent{
 				ID:        cid,
 				Source:    m.playerName,
 				Timestamp: time.Now(),
@@ -433,7 +433,7 @@ func (m *oneMorph) readFrames(callback CursorDeviceCallbackFunc, forceFactor flo
 				Z:         zNorm,
 				Area:      area,
 			}
-			callback(ev, true)
+			callback(ev)
 		}
 	}
 }

@@ -20,7 +20,7 @@ type Scheduler struct {
 	now       time.Time
 	time0     time.Time
 	lastClick Clicks
-	control   chan Command
+	Control   chan Command
 
 	transposeAuto   bool
 	transposeNext   Clicks
@@ -222,7 +222,8 @@ func (sched *Scheduler) Start() {
 			// Non-internal cursor activity turns attract mode off instantly.
 			if !sched.attractModeIsOn && sinceLastAttractChange > sched.attractIdleSecs {
 				// Nothing happening for a while, turn attract mode on
-				sched.SetAttractMode(true)
+				sched.Control <- Command{"attractmode", true}
+				// sched.SetAttractMode(true)
 			}
 		}
 
@@ -252,9 +253,16 @@ func (sched *Scheduler) Start() {
 		}
 
 		select {
-		case cmd := <-sched.control:
-			_ = cmd
-			log.Println("Realtime got command on control channel: ", cmd)
+		case cmd := <-sched.Control:
+			log.Printf("Realtime.Control: cmd=%v\n", cmd)
+			switch cmd.Action {
+			case "attractmode":
+				onoff := cmd.Arg.(bool)
+				if sched.attractModeIsOn != onoff {
+					sched.attractModeIsOn = onoff
+					sched.lastAttractChange = sched.Uptime()
+				}
+			}
 		default:
 		}
 	}
@@ -264,12 +272,16 @@ func (sched *Scheduler) Start() {
 func (sched *Scheduler) advanceClickTo(toClick Clicks) {
 
 	// Don't let events get handled while we're advancing
+	// log.Printf("Scheduler.advanceClickTo: A\n")
 	TheEngine().Router.eventMutex.Lock()
-	defer TheEngine().Router.eventMutex.Unlock()
+	defer func() {
+		TheEngine().Router.eventMutex.Unlock()
+	}()
+	// log.Printf("Scheduler.advanceClickTo: B\n")
 
 	for clk := sched.lastClick; clk < toClick; clk++ {
 		sched.activePhrasesManager.AdvanceByOneClick()
-		TheEngine().CursorManager.CheckCursorUp(time.Now())
+		TheEngine().CursorManager.checkCursorUp(time.Now())
 	}
 	sched.lastClick = toClick
 }
@@ -299,7 +311,7 @@ func (sched *Scheduler) checkCursorUp(cm *CursorManager) {
 */
 
 /*
-func (player *Player) handleCursorDeviceEvent(e CursorDeviceEvent) {
+func (player *Player) handleCursorEvent(e CursorEvent) {
 
 	id := e.Source
 
@@ -330,14 +342,14 @@ func (player *Player) handleCursorDeviceEvent(e CursorDeviceEvent) {
 		Ddu: e.Ddu,
 	}
 	if Debug.Cursor {
-		log.Printf("Player.handleCursorDeviceEvent: pad=%s id=%s ddu=%s xyz=%.4f,%.4f,%.4f\n", player.padName, id, e.Ddu, e.X, e.Y, e.Z)
+		log.Printf("Player.handleCursorEvent: pad=%s id=%s ddu=%s xyz=%.4f,%.4f,%.4f\n", player.padName, id, e.Ddu, e.X, e.Y, e.Z)
 	}
 
 	player.executeIncomingCursor(cse)
 
 	if e.Ddu == "up" {
 		// if Debug.Cursor {
-		// 	log.Printf("Router.handleCursorDeviceEvent: deleting cursor id=%s\n", id)
+		// 	log.Printf("Router.handleCursorEvent: deleting cursor id=%s\n", id)
 		// }
 		delete(player.deviceCursors, id)
 	}
@@ -348,13 +360,14 @@ func (sched *Scheduler) GetAttractMode() bool {
 	return sched.attractModeIsOn
 }
 
-func (sched *Scheduler) SetAttractMode(on bool) {
-	if sched.attractModeIsOn == on {
+func (sched *Scheduler) SetAttractMode(onoff bool) {
+	if sched.attractModeIsOn == onoff {
+		log.Printf("SetAttractMode: no change, IsOn=%v\n", onoff)
 		// no change
 		return
 	}
-	sched.attractModeIsOn = on
-	log.Printf("AttractMode: changing to %v\n", on)
+	sched.attractModeIsOn = onoff
+	log.Printf("AttractMode: changing to %v\n", onoff)
 	sched.lastAttractChange = sched.Uptime()
 }
 

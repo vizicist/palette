@@ -2626,9 +2626,10 @@ def alive_thread(app):  # runs in background thread
             log("alive_thread: err=",err)
             continue
 
+        log("nextalive = "+alive)
         jalive = json.loads(alive)
         attractMode = jalive["attractmode"]
-        log("attractdMode from API is ",attractMode)
+        # log("attractMode from API is ",attractMode)
         if attractMode == "true":
             if PaletteApp.currentMode != "attract":
                 log("Turning Attract Mode On!")

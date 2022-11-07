@@ -7,23 +7,24 @@ import (
 	"math"
 	"sync"
 	"time"
+
+	"gitlab.com/gomidi/midi/v2/drivers"
 )
 
 var EraePlayer = "A"
 var EraeEnabled = false
-var EraeOutput *MIDIChannelOutput
-var EraeInput *MIDIInput
 var MyPrefix byte = 0x55
 var EraeWidth int = 0x2a
+var EraeInput drivers.In
+var EraeOutput drivers.Out
+
 var EraeHeight int = 0x18
 var EraeZone byte = 1
 var EraeMutex sync.RWMutex
 
 func InitErae() {
-	MIDI.openInput("Erae Touch")
-	MIDI.openDeviceOutput("Erae Touch")
-	EraeInput = MIDI.GetMidiInput("Erae Touch")
-	EraeOutput = MIDI.GetMidiChannelOutput(PortChannel{"Erae Touch", 1})
+	// MIDI.openInput("Erae Touch")
+	// MIDI.openDeviceOutput("Erae Touch")
 	if EraeInput == nil || EraeOutput == nil {
 		log.Printf("Unable to open Erae Touch.  Is the EraeLab application open?\n")
 		return
@@ -45,14 +46,14 @@ func HandleEraeMIDI(event MidiEvent) {
 			log.Printf("HandleEraeMIDI: bytes = %s\n", s)
 		}
 		if bb[1] == MyPrefix {
-			handleEraeSysex(bb)
+			handleEraeSysEx(bb)
 		}
 	} else {
 		log.Printf("HandleEraeMIDI: no action for event=%+v\n", event)
 	}
 }
 
-func handleEraeSysex(bb []byte) {
+func handleEraeSysEx(bb []byte) {
 	// This assumes the RECEIVER PREFIX BYTES is exactly 1 byte
 	if bb[2] == 0x7f {
 		handleBoundary(bb)
@@ -161,13 +162,13 @@ func handleFinger(bb []byte) {
 	if newplayer != "" {
 		if newplayer != EraePlayer {
 			// Clear cursor state from existing player
-			ce := CursorDeviceEvent{
+			ce := CursorEvent{
 				ID:        cid,
 				Source:    "erae",
 				Timestamp: time.Now(),
 				Ddu:       "clear",
 			}
-			TheEngine().handleCursorDeviceEvent(ce)
+			TheEngine().handleCursorEvent(ce)
 			if Debug.Erae {
 				log.Printf("Switching Erae to player %s", newplayer)
 			}
@@ -210,7 +211,7 @@ func handleFinger(bb []byte) {
 		return
 	}
 
-	ce := CursorDeviceEvent{
+	ce := CursorEvent{
 		ID:        cid,
 		Source:    "erae",
 		Timestamp: time.Now(),
@@ -220,49 +221,52 @@ func handleFinger(bb []byte) {
 		Z:         z,
 		Area:      0.0,
 	}
-	// XXX - should Fresh be true???
+	// XXX - should Fresh be trued???
 
-	TheEngine().handleCursorDeviceEvent(ce)
+	TheEngine().handleCursorEvent(ce)
 }
 
-func EraeWriteSysex(bytes []byte) {
+func EraeWriteSysEx(bytes []byte) {
 	EraeMutex.Lock()
 	defer EraeMutex.Unlock()
-	EraeOutput.midiDeviceOutput.WriteSysex(bytes)
+	err := EraeOutput.Send(bytes)
+	if err != nil {
+		log.Printf("EraeWriteSysEx: err=%s\n", err)
+	}
 }
 
 func EraeApiModeEnable() {
 	bytes := []byte{0xf0, 0x00, 0x21, 0x50, 0x00, 0x01, 0x00, 0x01,
 		0x01, 0x01, 0x04, 0x01,
 		MyPrefix, 0xf7}
-	EraeWriteSysex(bytes)
+	EraeWriteSysEx(bytes)
 }
 
 func EraeApiModeDisable() {
 	bytes := []byte{0xf0, 0x00, 0x21, 0x50, 0x00, 0x01, 0x00, 0x01,
 		0x01, 0x01, 0x04, 0x02, 0xf7}
-	EraeWriteSysex(bytes)
+	EraeWriteSysEx(bytes)
 }
 
 func EraeZoneBoundaryRequest(zone byte) {
 	bytes := []byte{0xf0, 0x00, 0x21, 0x50, 0x00, 0x01, 0x00, 0x01,
 		0x01, 0x01, 0x04, 0x10,
 		byte(zone), 0xf7}
-	EraeWriteSysex(bytes)
+	EraeWriteSysEx(bytes)
 }
 
 func EraeZoneClearDisplay(zone byte) {
 	bytes := []byte{0xf0, 0x00, 0x21, 0x50, 0x00, 0x01, 0x00, 0x01,
 		0x01, 0x01, 0x04, 0x20,
 		byte(zone), 0xf7}
-	EraeWriteSysex(bytes)
+	EraeWriteSysEx(bytes)
 }
 
 func EraeZoneClearPixel(zone, x, y, r, g, b byte) {
 	bytes := []byte{0xf0, 0x00, 0x21, 0x50, 0x00, 0x01, 0x00, 0x01,
 		0x01, 0x01, 0x04, 0x21,
 		byte(zone), x, y, r, g, b, 0xf7}
-	EraeWriteSysex(bytes)
+	EraeWriteSysEx(bytes)
 }
 
 func EraeZoneRectangle(zone, x, y, w, h, r, g, b byte) {
@@ -272,7 +276,7 @@ func EraeZoneRectangle(zone, x, y, w, h, r, g, b byte) {
 		byte(zone), x, y, w, h, r, g, b,
 		0xf7,
 	}
-	EraeWriteSysex(bytes)
+	EraeWriteSysEx(bytes)
 }
 
 /**

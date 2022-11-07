@@ -84,20 +84,17 @@ func NewParamValues() *ParamValues {
 // SetDefaultValues xxx
 func (vals *ParamValues) SetDefaultValues() {
 	vals.mutex.Lock()
+	defer vals.mutex.Unlock()
 	for nm, d := range ParamDefs {
-		// log.Printf("setDefault nm=%s val=%v\n", nm, d.Init)
-		vals.realSetParamValueWithString(nm, d.Init, nil, false /*no lock*/)
+		err := vals.internalSetParamValueWithString(nm, d.Init, nil, false)
+		if err != nil {
+			log.Printf("ParamValues.SetDefaultValues: err=%s\n", err)
+		}
 	}
-	vals.mutex.Unlock()
 }
 
 // ParamCallback is the callback when setting parameter values
 type ParamCallback func(name string, value string) error
-
-// SetParamValueWithString xxx
-func (vals *ParamValues) SetParamValueWithString(name, value string, callback ParamCallback) error {
-	return vals.realSetParamValueWithString(name, value, callback, true)
-}
 
 func (vals *ParamValues) paramDefOf(name string) (ParamDef, error) {
 	p, ok := ParamDefs[name]
@@ -108,10 +105,13 @@ func (vals *ParamValues) paramDefOf(name string) (ParamDef, error) {
 	}
 }
 
-// realSetParamValueWithString xxx
-func (vals *ParamValues) realSetParamValueWithString(origname, value string, callback ParamCallback, lockit bool) (err error) {
+// SetParamValueWithString xxx
+func (vals *ParamValues) SetParamValueWithString(name, value string, callback ParamCallback) error {
+	return vals.internalSetParamValueWithString(name, value, callback, true)
+}
 
-	// log.Printf("realSetParamValueWithString: %s %s\n", name, value)
+func (vals *ParamValues) internalSetParamValueWithString(origname, value string, callback ParamCallback, lockit bool) (err error) {
+
 	if origname == "pad" {
 		return fmt.Errorf("ParamValues.SetParamValueWithString rejects setting of pad value")
 	}
@@ -159,11 +159,9 @@ func (vals *ParamValues) realSetParamValueWithString(origname, value string, cal
 
 	if lockit {
 		vals.mutex.Lock()
+		defer vals.mutex.Unlock()
 	}
 	vals.values[origname] = paramVal
-	if lockit {
-		vals.mutex.Unlock()
-	}
 	return nil
 }
 

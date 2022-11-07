@@ -16,8 +16,8 @@ type MIDIDeviceEvent struct {
 	Data2     int64
 }
 
-// CursorDeviceEvent is a single CursorDevice event
-type CursorDeviceEvent struct {
+// CursorEvent is a single Cursor event
+type CursorEvent struct {
 	ID        string
 	Source    string
 	Timestamp time.Time
@@ -28,37 +28,8 @@ type CursorDeviceEvent struct {
 	Area      float32
 }
 
-/*
-// CursorStepEvent is a down, drag, or up event inside a loop step
-type CursorStepEvent struct {
-	ID        string // globally unique of the form {Source}[.#{instancenum}]
-	X         float32
-	Y         float32
-	Z         float32
-	Ddu       string
-	LoopsLeft int
-	Fresh     bool
-	Quantized bool
-	Finished  bool
-}
-
-// ActiveStepCursor is a currently active (i.e. down) cursor
-// NOTE: these are the cursors caused by CursorStepEvents,
-// not the cursors caused by CursorDeviceEvents.
-type ActiveStepCursor struct {
-	// id        string
-	x float32
-	y float32
-	z float32
-	// loopsLeft int
-	maxzSoFar float32
-	lastDrag  Clicks // to filter MIDI events for drag
-	downEvent CursorStepEvent
-}
-*/
-
 // CursorDeviceCallbackFunc xxx
-type CursorDeviceCallbackFunc func(e CursorDeviceEvent, lockit bool)
+type CursorCallbackFunc func(e CursorEvent)
 
 // MorphDefs xxx
 var MorphDefs map[string]string

@@ -74,9 +74,9 @@ func DeactivateResponder(name string) {
 	TheEngine().responderManager.DeactivateResponder(name)
 }
 
-func (e *Engine) handleCursorDeviceEvent(ce CursorDeviceEvent) {
-	TheEngine().CursorManager.handleCursorDeviceEvent(ce, true)
-	TheEngine().responderManager.handleCursorDeviceEvent(ce)
+func (e *Engine) handleCursorEvent(ce CursorEvent) {
+	TheEngine().CursorManager.handleCursorEvent(ce)
+	TheEngine().responderManager.handleCursorEvent(ce)
 }
 
 func (e *Engine) Start() {
@@ -152,8 +152,8 @@ func (e *Engine) InputListener() {
 			e.Router.handleOSCInput(msg)
 		case event := <-e.Router.MIDIInput:
 			e.Router.handleMidiInput(event)
-		case event := <-e.Router.CursorDeviceInput:
-			e.CursorManager.handleCursorDeviceEvent(event, true)
+		case event := <-e.Router.CursorInput:
+			e.CursorManager.handleCursorEvent(event)
 		default:
 			// log.Printf("Sleeping 1 ms - now=%v\n", time.Now())
 			time.Sleep(time.Millisecond)
@@ -168,40 +168,22 @@ func (e *Engine) StartCursorInput() {
 	if err != nil {
 		log.Printf("StartCursorInput: LoadMorphs err=%s\n", err)
 	}
-	go StartMorph(e.CursorManager.handleCursorDeviceEvent, 1.0)
+	go StartMorph(e.CursorManager.handleCursorEvent, 1.0)
 }
 
 // StartMIDI listens for MIDI events and sends their bytes to the MIDIInput chan
 func (e *Engine) StartMIDI() {
+
+	if MIDI.Input == nil {
+		log.Printf("StartMIDI: there is no MIDI input\n")
+	}
+
 	if EraeEnabled {
 		e.Router.SetMIDIEventHandler(HandleEraeMIDI)
 	}
-	inputs := MIDI.InputMap()
-	for {
-		for nm, input := range inputs {
-			hasinput, err := input.Poll()
-			if err != nil {
-				log.Printf("StartMIDI: Poll input=%s err=%s\n", nm, err)
-				continue
-			}
-			if !hasinput {
-				continue
-			}
-			events, err := input.ReadEvents()
-			if err != nil {
-				log.Printf("StartMIDI: ReadEvent input=%s err=%s\n", nm, err)
-				continue
-			}
-			// Feed the MIDI bytes to r.MIDIInput one byte at a time
-			for _, event := range events {
-				e.Router.MIDIInput <- event
-				if e.Router.midiEventHandler != nil {
-					e.Router.midiEventHandler(event)
-				}
-			}
-		}
-		time.Sleep(2 * time.Millisecond)
-	}
+	log.Printf("Before MIDI.Start\n")
+	MIDI.Start()
+	log.Printf("After MIDI.Start\n")
 }
 
 // StartOSC xxx

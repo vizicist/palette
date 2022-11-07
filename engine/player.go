@@ -18,7 +18,7 @@ var uniqueIndex = 0
 type ActiveNote struct {
 	id     int
 	noteOn *Note
-	ce     CursorDeviceEvent // the one that triggered the note
+	ce     CursorEvent // the one that triggered the note
 }
 
 */
@@ -252,67 +252,6 @@ func (player *Player) setExternalScale(pitch int, on bool) {
 }
 
 /*
-func (player *Player) handleCursorDeviceEvent(e CursorDeviceEvent) {
-
-	id := e.Source
-
-	player.deviceCursorsMutex.Lock()
-	defer player.deviceCursorsMutex.Unlock()
-
-	// log.Printf("handleCursorDeviceEvent e=%v\n", e)
-
-	// Special event to clear cursors (by sending them "up" events)
-	if e.Ddu == "clear" {
-		for id, c := range player.deviceCursors {
-			if !c.downed {
-				log.Printf("Hmmm, why is a cursor not downed?\n")
-			} else {
-				player.executeIncomingCursor(CursorStepEvent{ID: id, Ddu: "up"})
-				if Debug.Cursor {
-					log.Printf("Clearing cursor id=%s\n", id)
-				}
-				delete(player.deviceCursors, id)
-			}
-		}
-		return
-	}
-
-	// e.Ddu is "down", "drag", or "up"
-
-	tc, ok := player.deviceCursors[id]
-	if !ok {
-		// new DeviceCursor
-		tc = &DeviceCursor{}
-		player.deviceCursors[id] = tc
-	}
-	tc.lastTouch = player.time()
-
-	// If it's a new (downed==false) cursor, make sure the first step event is "down
-	if !tc.downed {
-		e.Ddu = "down"
-		tc.downed = true
-	}
-	cse := CursorStepEvent{
-		ID:  id,
-		X:   e.X,
-		Y:   e.Y,
-		Z:   e.Z,
-		Ddu: e.Ddu,
-	}
-	if Debug.Cursor {
-		log.Printf("Player.handleCursorDeviceEvent: pad=%s id=%s ddu=%s xyz=%.4f,%.4f,%.4f\n", player.padName, id, e.Ddu, e.X, e.Y, e.Z)
-	}
-
-	player.executeIncomingCursor(cse)
-
-	if e.Ddu == "up" {
-		// if Debug.Cursor {
-		// 	log.Printf("Router.handleCursorDeviceEvent: deleting cursor id=%s\n", id)
-		// }
-		delete(player.deviceCursors, id)
-	}
-}
-
 func (player *Player) getActiveNote(id string) *ActiveNote {
 	player.activeNotesMutex.RLock()
 	a, ok := player.activeNotes[id]
@@ -328,20 +267,6 @@ func (player *Player) getActiveNote(id string) *ActiveNote {
 		player.activeNotesMutex.Unlock()
 	}
 	return a
-}
-
-func (player *Player) getActiveStepCursor(ce CursorStepEvent) *ActiveStepCursor {
-	sid := ce.ID
-	player.activeCursorsMutex.RLock()
-	ac, ok := player.activeCursors[sid]
-	player.activeCursorsMutex.RUnlock()
-	if !ok {
-		ac = &ActiveStepCursor{downEvent: ce}
-		player.activeCursorsMutex.Lock()
-		player.activeCursors[sid] = ac
-		player.activeCursorsMutex.Unlock()
-	}
-	return ac
 }
 
 func (player) *Player) terminateActiveNotes() {
@@ -379,7 +304,7 @@ func (player *Player) generateSprite(id string, x, y, z float32) {
 }
 
 /*
-func (player *Player) generateVisualsFromCursor(ce CursorDeviceEvent) {
+func (player *Player) generateVisualsFromCursor(ce CursorEvent) {
 	if !TheEngine().Router.generateVisuals {
 		return
 	}
@@ -454,7 +379,7 @@ func (player *Player) generateSpriteFromNote(n *Note) {
 }
 
 /*
-func (player *Player) notifyGUI(ce CursorDeviceEvent, wasFresh bool) {
+func (player *Player) notifyGUI(ce CursorEvent, wasFresh bool) {
 	if !ConfigBool("notifygui") {
 		return
 	}
@@ -528,7 +453,7 @@ func (player *Player) getScale() *Scale {
 }
 
 /*
-func (player *Player) generateSoundFromCursor(ce CursorDeviceEvent) {
+func (player *Player) generateSoundFromCursor(ce CursorEvent) {
 	if !TheEngine().Router.generateSound {
 		return
 	}

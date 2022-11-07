@@ -8,19 +8,24 @@ import (
 	"sort"
 )
 
-func (r *Router) executePlayerAPI(api string, argsmap map[string]string) (result string, err error) {
-
+func extractPlayer(argsmap map[string]string) string {
 	playerName, playerok := argsmap["player"]
 	if !playerok {
 		playerName = "*"
 	} else {
 		delete(argsmap, "player")
 	}
+	return playerName
+}
+
+func (r *Router) executePlayerAPI(api string, argsmap map[string]string) (result string, err error) {
+
+	playerName := extractPlayer(argsmap)
 
 	switch api {
 
 	case "event":
-		return "", r.HandleInputEvent(argsmap)
+		return "", r.HandleInputEvent(playerName, argsmap)
 
 	case "set":
 		name, ok := argsmap["name"]
