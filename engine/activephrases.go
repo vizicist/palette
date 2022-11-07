@@ -197,6 +197,7 @@ func (mgr *ActivePhrasesManager) AdvanceByOneClick() {
 
 func (mgr *ActivePhrasesManager) terminateActiveNotes() {
 	mgr.mutex.RLock()
+	defer mgr.mutex.RUnlock()
 	for id, a := range mgr.activePhrases {
 		// log.Printf("terminateActiveNotes n=%v\n", a.currentNoteOn)
 		if a != nil {
@@ -205,5 +206,4 @@ func (mgr *ActivePhrasesManager) terminateActiveNotes() {
 			log.Printf("Hey, activeNotes entry for id=%s\n", id)
 		}
 	}
-	mgr.mutex.RUnlock()
 }

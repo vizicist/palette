@@ -17,7 +17,7 @@ func NewResponder_demo() *Responder_demo {
 
 /////////////////////////// external interface
 
-func (r *Responder_demo) OnCursorDeviceEvent(ce engine.CursorDeviceEvent) {
+func (r *Responder_demo) OnCursorEvent(ce engine.CursorEvent) {
 	log.Printf("NewResponder_demo in OnCursorEvent!\n")
 	if ce.Ddu == "down" {
 		go func() {
@@ -34,7 +34,7 @@ func (r *Responder_demo) OnCursorDeviceEvent(ce engine.CursorDeviceEvent) {
 
 /////////////////////////// internal things
 
-func (r *Responder_demo) cursorToNote(ce engine.CursorDeviceEvent) *engine.Note {
+func (r *Responder_demo) cursorToNote(ce engine.CursorEvent) *engine.Note {
 	pitch := int(ce.X * 126.0)
 	_ = pitch
 	s := "+b"

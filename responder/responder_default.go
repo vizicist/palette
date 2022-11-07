@@ -20,15 +20,15 @@ func NewResponder_default() *Responder_default {
 
 /////////////////////////// external interface
 
-func (r *Responder_default) OnCursorDeviceEvent(ce engine.CursorDeviceEvent, cm *engine.ResponderManager) {
-	log.Printf("Responder_default.OnCursorDeviceEvent: ce=%v\n", ce)
+func (r *Responder_default) OnCursorEvent(ce engine.CursorEvent, cm *engine.ResponderManager) {
+	log.Printf("Responder_default.OnCursorEvent: ce=%v\n", ce)
 	// nt := r.cursorToNote(ce)
 
 }
 
 /////////////////////////// internal things
 
-func (r *Responder_default) cursorToNote(ce engine.CursorDeviceEvent) *engine.Note {
+func (r *Responder_default) cursorToNote(ce engine.CursorEvent) *engine.Note {
 	pitch := int(ce.X * 126.0)
 	_ = pitch
 	s := "+b"
