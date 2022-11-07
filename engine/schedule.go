@@ -137,16 +137,17 @@ func SetCurrentMilli(m int64) {
 	currentMilliMutex.Unlock()
 }
 
-type PhraseIter struct {
+type PhraseRef struct {
+	phrase *Phrase
 }
 
 type SchedItem struct {
 	ClickStart Clicks
-	PhraseIter *PhraseIter
+	PhraseIter *PhraseRef
 }
 
-func (sched *Scheduler) InsertAtClick(clk Clicks) {
-
+func (sched *Scheduler) ScheduleNoteAt(nt *Note, clk Clicks) {
+	log.Printf("Scheduler.ScheduleNoteAt: nt=%s clk=%d\n", nt, clk)
 }
 
 func NewScheduler() *Scheduler {

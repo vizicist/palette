@@ -62,8 +62,10 @@ func StopRunning(what string) {
 	TheEngine().ProcessManager.StopRunning(what)
 }
 
-func AddResponder(name string, resp Responder) {
-	TheEngine().responderManager.AddResponder(name, resp)
+type CreateResponderFunc func(*ResponderContext) Responder
+
+func AddResponder(name string, responder Responder) {
+	TheEngine().responderManager.AddResponder(name, responder)
 }
 
 func ActivateResponder(name string) {

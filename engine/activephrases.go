@@ -20,6 +20,18 @@ type ActivePhrasesManager struct {
 	outputCallbacks []*NoteOutputCallback
 }
 
+// CallbackID xxx
+type CallbackID int
+
+// NoteOutputCallback is a call
+type NoteOutputCallback struct {
+	id       CallbackID
+	Callback func(n *Note)
+}
+
+// NoteOutputCallbackFunc xxx
+type NoteOutputCallbackFunc func(n *Note)
+
 // NewActivePhrase constructs a new ActivePhrase for a Phrase
 func NewActivePhrase(p *Phrase) *ActivePhrase {
 	return &ActivePhrase{
@@ -108,18 +120,6 @@ func (mgr *ActivePhrasesManager) StopPhrase(cid string, active *ActivePhrase) {
 		delete(mgr.activePhrases, cid)
 	}
 }
-
-// CallbackID xxx
-type CallbackID int
-
-// NoteOutputCallback is a call
-type NoteOutputCallback struct {
-	id       CallbackID
-	Callback func(n *Note)
-}
-
-// NoteOutputCallbackFunc xxx
-type NoteOutputCallbackFunc func(n *Note)
 
 // UncallbackOnOutput xxx
 func (mgr *ActivePhrasesManager) UncallbackOnOutput(id CallbackID) {
