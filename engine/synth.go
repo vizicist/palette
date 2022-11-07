@@ -4,8 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"os"
-
-	"github.com/vizicist/portmidi"
+	// "github.com/vizicist/portmidi"
 )
 
 type PortChannel struct {
@@ -123,14 +122,16 @@ func SendANOToSynth(synthName string) {
 	// This only sends the bank and/or program if they change
 	mc.SendBankProgram(synth.bank, synth.program)
 
-	status := 0xb0 | (synth.portchannel.channel - 1)
-
 	synth.ClearNoteDowns()
 	// for i := range synth.noteDown {
 	// 	synth.noteDown[i] = false
 	// }
 	// log.Printf("SendANOToSynth: synth=%s\n", synthName)
-	mc.midiDeviceOutput.stream.WriteShort(int64(status), int64(0x7b), int64(0x00))
+	log.Printf("SendANOToSynth needs work\n")
+	/*
+		status := 0xb0 | (synth.portchannel.channel - 1)
+		mc.midiDeviceOutput.stream.WriteShort(int64(status), int64(0x7b), int64(0x00))
+	*/
 }
 
 func SendControllerToSynth(synthName string, cnum int, cval int) {
@@ -148,21 +149,24 @@ func SendControllerToSynth(synthName string, cnum int, cval int) {
 	// This only sends the bank and/or program if they change
 	mc.SendBankProgram(synth.bank, synth.program)
 
-	e := portmidi.Event{
-		Timestamp: portmidi.Time(),
-		Status:    int64(synth.portchannel.channel - 1),
-		Data1:     int64(cnum),
-		Data2:     int64(cval),
-	}
-	e.Status |= 0xb0
-	if Debug.MIDI {
-		log.Printf("SendControllerToSynth: synth=%s status=0x%02x data1=%d data2=%d\n", mc.midiDeviceOutput.Name(), e.Status, e.Data1, e.Data2)
-	}
-	if e.Data2 > 0x7f {
-		log.Printf("SendControllerToSynth: Hey! Data2 shouldn't be > 0x7f\n")
-	} else {
-		mc.midiDeviceOutput.stream.WriteShort(e.Status, e.Data1, e.Data2)
-	}
+	log.Printf("SendControlToSynth needs work\n")
+	/*
+		e := portmidi.Event{
+			Timestamp: time.Now(),
+			Status:    int64(synth.portchannel.channel - 1),
+			Data1:     int64(cnum),
+			Data2:     int64(cval),
+		}
+		e.Status |= 0xb0
+		if Debug.MIDI {
+			log.Printf("SendControllerToSynth: synth=%s status=0x%02x data1=%d data2=%d\n", mc.midiDeviceOutput.Name(), e.Status, e.Data1, e.Data2)
+		}
+		if e.Data2 > 0x7f {
+			log.Printf("SendControllerToSynth: Hey! Data2 shouldn't be > 0x7f\n")
+		} else {
+			mc.midiDeviceOutput.stream.WriteShort(e.Status, e.Data1, e.Data2)
+		}
+	*/
 }
 
 // SendNote sends MIDI output for a Note
@@ -190,57 +194,60 @@ func SendNoteToSynth(note *Note) {
 	// This only sends the bank and/or program if they change
 	mc.SendBankProgram(synth.bank, synth.program)
 
-	e := portmidi.Event{
-		Timestamp: portmidi.Time(),
-		Status:    int64(synth.portchannel.channel - 1),
-		Data1:     int64(note.Pitch),
-		Data2:     int64(note.Velocity),
-	}
-	if note.TypeOf == "noteon" && note.Velocity == 0 {
-		log.Printf("MIDIIO.SendNote: noteon with velocity==0 is changed to a noteoff\n")
-		note.TypeOf = "noteoff"
-	}
-	switch note.TypeOf {
-	case "noteon":
-		e.Status |= 0x90
-
-		// We now allow multiple notes with the same pitch,
-		// which assumes the synth handles it okay.
-		// There might need to be an option to
-		// automatically send a noteOff before sending the noteOn.
-		// if synth.noteDown[note.Pitch] {
-		//     log.Printf("SendNoteToSynth: Ignoring second noteon for synth=%p synth=%s chan=%d pitch=%d\n", synth, synthName, synth.portchannel.channel, note.Pitch)
-		// }
-
-		synth.noteDown[note.Pitch] = true
-		synth.noteDownCount[note.Pitch]++
-		if Debug.MIDI {
-			log.Printf("SendNoteToSynth: synth=%p noteon noteCount>0 chan=%d pitch=%d downcount=%d\n", synth, synth.portchannel.channel, note.Pitch, synth.noteDownCount[note.Pitch])
+	log.Printf("SendNoteToSynth needs work\n")
+	/*
+		e := portmidi.Event{
+			Timestamp: time.Now(),
+			Status:    int64(synth.portchannel.channel - 1),
+			Data1:     int64(note.Pitch),
+			Data2:     int64(note.Velocity),
 		}
-	case "noteoff":
-		e.Status |= 0x80
-		e.Data2 = 0
-		synth.noteDown[note.Pitch] = false
-		synth.noteDownCount[note.Pitch]--
-		if Debug.MIDI {
-			log.Printf("SendNoteToSynth: synth=%p noteoff pitch=%d downcount is now %d\n", synth, note.Pitch, synth.noteDownCount[note.Pitch])
+		if note.TypeOf == "noteon" && note.Velocity == 0 {
+			log.Printf("MIDIIO.SendNote: noteon with velocity==0 is changed to a noteoff\n")
+			note.TypeOf = "noteoff"
 		}
-	case "controller":
-		e.Status |= 0xB0
-	case "progchange":
-		e.Status |= 0xC0
-	case "chanpressure":
-		e.Status |= 0xD0
-	case "pitchbend":
-		e.Status |= 0xE0
-	default:
-		log.Printf("SendNoteToSynth: can't handle Note TypeOf=%v\n", note.TypeOf)
-		return
-	}
+		switch note.TypeOf {
+		case "noteon":
+			e.Status |= 0x90
 
-	if Debug.MIDI {
-		log.Printf("SendNoteToSynth: synth=%s status=0x%02x data1=%d data2=%d\n", mc.midiDeviceOutput.Name(), e.Status, e.Data1, e.Data2)
-	}
+			// We now allow multiple notes with the same pitch,
+			// which assumes the synth handles it okay.
+			// There might need to be an option to
+			// automatically send a noteOff before sending the noteOn.
+			// if synth.noteDown[note.Pitch] {
+			//     log.Printf("SendNoteToSynth: Ignoring second noteon for synth=%p synth=%s chan=%d pitch=%d\n", synth, synthName, synth.portchannel.channel, note.Pitch)
+			// }
 
-	mc.midiDeviceOutput.stream.WriteShort(e.Status, e.Data1, e.Data2)
+			synth.noteDown[note.Pitch] = true
+			synth.noteDownCount[note.Pitch]++
+			if Debug.MIDI {
+				log.Printf("SendNoteToSynth: synth=%p noteon noteCount>0 chan=%d pitch=%d downcount=%d\n", synth, synth.portchannel.channel, note.Pitch, synth.noteDownCount[note.Pitch])
+			}
+		case "noteoff":
+			e.Status |= 0x80
+			e.Data2 = 0
+			synth.noteDown[note.Pitch] = false
+			synth.noteDownCount[note.Pitch]--
+			if Debug.MIDI {
+				log.Printf("SendNoteToSynth: synth=%p noteoff pitch=%d downcount is now %d\n", synth, note.Pitch, synth.noteDownCount[note.Pitch])
+			}
+		case "controller":
+			e.Status |= 0xB0
+		case "progchange":
+			e.Status |= 0xC0
+		case "chanpressure":
+			e.Status |= 0xD0
+		case "pitchbend":
+			e.Status |= 0xE0
+		default:
+			log.Printf("SendNoteToSynth: can't handle Note TypeOf=%v\n", note.TypeOf)
+			return
+		}
+
+		if Debug.MIDI {
+			log.Printf("SendNoteToSynth: synth=%s status=0x%02x data1=%d data2=%d\n", mc.midiDeviceOutput.Name(), e.Status, e.Data1, e.Data2)
+		}
+
+		mc.midiDeviceOutput.stream.WriteShort(e.Status, e.Data1, e.Data2)
+	*/
 }

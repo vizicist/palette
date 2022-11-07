@@ -23,6 +23,20 @@
             "args": []
         },
         {
+            "name": "MIDI test",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTESOURCE}/cmd/miditest/miditest.go",
+            "args": [""]
+        },
+        {
+            "name": "WASM test",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTESOURCE}/../midi/examples/webmidi/main.go",
+            "args": [""]
+        },
+        {
             "name": "Stop",
             "type": "go",
             "request": "launch",
