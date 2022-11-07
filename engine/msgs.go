@@ -3,8 +3,6 @@ package engine
 import (
 	"fmt"
 	"log"
-
-	"github.com/vizicist/portmidi"
 )
 
 //////////////////////////////////////////////////////////////////
@@ -30,62 +28,6 @@ func NewNoteMsg(note *Note) string {
 		note.Synth,
 		note.BytesString())
 }
-
-// MIDIDeviceMsg is a single MIDI event
-type MIDIDeviceMsg struct {
-	Timestamp int64 // milliseconds
-	Status    int64
-	Data1     int64
-	Data2     int64
-}
-
-func NewMIDIDeviceMsg(e portmidi.Event) string {
-	return fmt.Sprintf(
-		`{"timestamp":"%d","status":"%d","data1":"%d","data2":"%d"}`,
-		e.Timestamp, e.Status, e.Data1, e.Data2)
-}
-
-// Cursor3DDeviceMsg is a single Cursor3DDevice event
-type Cursor3DDeviceMsg struct {
-	Region     string
-	ID         string
-	Timestamp  int64  // milliseconds, absolute
-	DownDragUp string // "down", "drag", "up"
-	X          float32
-	Y          float32
-	Z          float32
-	Area       float32
-}
-
-// Cursor3DMsg is a down, drag, or up event inside a loop step
-type Cursor3DMsg struct {
-	ID         string // globally unique?  All Msgs for a given Cursor3D have the same ID
-	X          float32
-	Y          float32
-	Z          float32
-	DownDragUp string
-	LoopsLeft  int
-	Fresh      bool
-	Quantized  bool
-	Finished   bool
-}
-
-// ActiveStepCursor3D is a currently active (i.e. down) cursor
-// NOTE: these are the cursors caused by Cursor3DMsgs,
-// not the cursors caused by Cursor3DDeviceMsgs.
-// type ActiveStepCursor3D struct {
-// 	id        string
-// 	x         float32
-// 	y         float32
-// 	z         float32
-// 	loopsLeft int
-// 	maxz      float32
-// 	lastDrag  Clicks // to filter MIDI events for drag
-// 	downMsg   Cursor3DMsg
-// }
-
-// Cursor3DDeviceCallbackFunc xxx
-type Cursor3DDeviceCallbackFunc func(e Cursor3DDeviceMsg)
 
 func NewSimpleCmd(subj string) Cmd {
 	return Cmd{Subj: subj, Values: nil}
