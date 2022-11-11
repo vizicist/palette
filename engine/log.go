@@ -29,5 +29,5 @@ func InitLog(logname string) {
 	logger := fileLogger(logpath)
 	Log = logger.Sugar()
 	defer logger.Sync() // flushes buffer, if any
-	Log.Debug("Hello from zap logger")
+	Log.Debugf("Hello from zap logger")
 }

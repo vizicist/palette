@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"image"
 	"image/color"
-	"log"
 	"strings"
 
 	"github.com/vizicist/palette/engine"
@@ -212,7 +211,7 @@ type StateDataMsg struct {
 func ToRect(arg interface{}) image.Rectangle {
 	r, ok := arg.(image.Rectangle)
 	if !ok {
-		log.Printf("Unable to convert interface to Rect!\n")
+		engine.Log.Debugf("Unable to convert interface to Rect!\n")
 		r = image.Rect(0, 0, 0, 0)
 	}
 	return r
@@ -222,7 +221,7 @@ func ToRect(arg interface{}) image.Rectangle {
 func ToPoint(arg interface{}) image.Point {
 	p, ok := arg.(image.Point)
 	if !ok {
-		log.Printf("Unable to convert interface to Point!\n")
+		engine.Log.Debugf("Unable to convert interface to Point!\n")
 		p = image.Point{0, 0}
 	}
 	return p
@@ -232,7 +231,7 @@ func ToPoint(arg interface{}) image.Point {
 func ToMenu(arg interface{}) *Menu {
 	r, ok := arg.(*Menu)
 	if !ok {
-		log.Printf("Unable to convert interface to Menu!\n")
+		engine.Log.Debugf("Unable to convert interface to Menu!\n")
 		r = nil
 	}
 	return r
@@ -242,7 +241,7 @@ func ToMenu(arg interface{}) *Menu {
 func ToDrawLine(arg interface{}) DrawLineMsg {
 	r, ok := arg.(DrawLineMsg)
 	if !ok {
-		log.Printf("Unable to convert interface to DrawLineMsg!\n")
+		engine.Log.Debugf("Unable to convert interface to DrawLineMsg!\n")
 		r = DrawLineMsg{}
 	}
 	return r
@@ -252,7 +251,7 @@ func ToDrawLine(arg interface{}) DrawLineMsg {
 func ToDrawText(arg interface{}) DrawTextMsg {
 	r, ok := arg.(DrawTextMsg)
 	if !ok {
-		log.Printf("Unable to convert interface to DrawTextMsg!\n")
+		engine.Log.Debugf("Unable to convert interface to DrawTextMsg!\n")
 		r = DrawTextMsg{}
 	}
 	return r
@@ -262,7 +261,7 @@ func ToDrawText(arg interface{}) DrawTextMsg {
 func ToMouse(arg interface{}) MouseMsg {
 	r, ok := arg.(MouseMsg)
 	if !ok {
-		log.Printf("Unable to convert interface to MouseMsg!\n")
+		engine.Log.Debugf("Unable to convert interface to MouseMsg!\n")
 		r = MouseMsg{}
 	}
 	return r
@@ -273,7 +272,7 @@ func ToMouse(arg interface{}) MouseMsg {
 func ToColor(arg interface{}) color.RGBA {
 	r, ok := arg.(color.RGBA)
 	if !ok {
-		log.Printf("Unable to convert interface to Color!\n")
+		engine.Log.Debugf("Unable to convert interface to Color!\n")
 		r = color.RGBA{0x00, 0x00, 0x00, 0xff}
 	}
 	return r
@@ -283,7 +282,7 @@ func ToColor(arg interface{}) color.RGBA {
 func ToBool(arg interface{}) bool {
 	r, ok := arg.(bool)
 	if !ok {
-		log.Printf("Unable to convert interface to bool!\n")
+		engine.Log.Debugf("Unable to convert interface to bool!\n")
 		r = false
 	}
 	return r
@@ -296,7 +295,7 @@ func ToString(arg interface{}) string {
 	}
 	r, ok := arg.(string)
 	if !ok {
-		log.Printf("Unable to convert interface to string!\n")
+		engine.Log.Debugf("Unable to convert interface to string!\n")
 		r = ""
 	}
 	return r
@@ -309,7 +308,7 @@ func ToWindow(arg interface{}) Window {
 	}
 	r, ok := arg.(Window)
 	if !ok {
-		log.Printf("Unable to convert interface to Window!\n")
+		engine.Log.Debugf("Unable to convert interface to Window!\n")
 		r = nil
 	}
 	return r
@@ -329,11 +328,11 @@ func PointString(p image.Point) string {
 func StringToRect(s string) (r image.Rectangle) {
 	n, err := fmt.Sscanf(s, "%d,%d,%d,%d", &r.Min.X, &r.Min.Y, &r.Max.X, &r.Max.Y)
 	if err != nil {
-		log.Printf("StringRect: Bad format: %s\n", s)
+		engine.Log.Debugf("StringRect: Bad format: %s\n", s)
 		return image.Rectangle{}
 	}
 	if n != 4 {
-		log.Printf("StringRect: Bad format: %s\n", s)
+		engine.Log.Debugf("StringRect: Bad format: %s\n", s)
 		return image.Rectangle{}
 	}
 	return r
@@ -343,11 +342,11 @@ func StringToRect(s string) (r image.Rectangle) {
 func StringToPoint(s string) (p image.Point) {
 	n, err := fmt.Sscanf(s, "%d,%d", &p.X, &p.Y)
 	if err != nil {
-		log.Printf("StringPoint: Bad format: %s\n", s)
+		engine.Log.Debugf("StringPoint: Bad format: %s\n", s)
 		return image.Point{}
 	}
 	if n != 2 {
-		log.Printf("StringPoint: Bad format: %s\n", s)
+		engine.Log.Debugf("StringPoint: Bad format: %s\n", s)
 		return image.Point{}
 	}
 	return p

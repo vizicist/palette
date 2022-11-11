@@ -2,7 +2,6 @@ package engine
 
 import (
 	"encoding/json"
-	"log"
 	"os"
 	// "github.com/vizicist/portmidi"
 )
@@ -32,7 +31,7 @@ func InitSynths() {
 	filename := ConfigFilePath("synths.json")
 	bytes, err := os.ReadFile(filename)
 	if err != nil {
-		log.Printf("InitSynths: ReadFile of %s failed, err=%s\n", filename, err)
+		Log.Debugf("InitSynths: ReadFile of %s failed, err=%s\n", filename, err)
 		return
 	}
 
@@ -58,11 +57,11 @@ func InitSynths() {
 
 		Synths[nm] = NewSynth(port, channel, bank, program)
 	}
-	log.Printf("Synths loaded, len=%d\n", len(Synths))
+	Log.Debugf("Synths loaded, len=%d\n", len(Synths))
 }
 
 func (synth *Synth) ClearNoteDowns() {
-	// log.Printf("ClearNoteDowns: clearing noteDowns for synth=%p port=%s chan=%d prog=%d bank=%d\n", synth, synth.portchannel.port, synth.portchannel.channel, synth.program, synth.bank)
+	// Log.Debugf("ClearNoteDowns: clearing noteDowns for synth=%p port=%s chan=%d prog=%d bank=%d\n", synth, synth.portchannel.port, synth.portchannel.channel, synth.program, synth.bank)
 	for i := range synth.noteDown {
 		synth.noteDown[i] = false
 		synth.noteDownCount[i] = 0
@@ -85,7 +84,7 @@ func NewSynth(port string, channel int, bank int, program int) *Synth {
 	}
 
 	if midiChannelOut == nil {
-		log.Printf("InitSynths: Unable to open port=%s\n", port)
+		Log.Debugf("InitSynths: Unable to open port=%s\n", port)
 		return nil
 	}
 	sp := &Synth{
@@ -104,7 +103,7 @@ func NewSynth(port string, channel int, bank int, program int) *Synth {
 func SendANOToSynth(synthName string) {
 	synth, ok := Synths[synthName]
 	if !ok {
-		log.Printf("SendANOToSynth: no such synth - %s\n", synthName)
+		Log.Debugf("SendANOToSynth: no such synth - %s\n", synthName)
 		return
 	}
 	if synth == nil {
@@ -125,8 +124,8 @@ func SendANOToSynth(synthName string) {
 	// for i := range synth.noteDown {
 	// 	synth.noteDown[i] = false
 	// }
-	// log.Printf("SendANOToSynth: synth=%s\n", synthName)
-	log.Printf("SendANOToSynth needs work\n")
+	// Log.Debugf("SendANOToSynth: synth=%s\n", synthName)
+	Log.Debugf("SendANOToSynth needs work\n")
 	/*
 		status := 0xb0 | (synth.portchannel.channel - 1)
 		mc.midiDeviceOutput.stream.WriteShort(int64(status), int64(0x7b), int64(0x00))
@@ -136,7 +135,7 @@ func SendANOToSynth(synthName string) {
 func SendControllerToSynth(synthName string, cnum int, cval int) {
 	synth, ok := Synths[synthName]
 	if !ok {
-		log.Printf("SendControllerToSynth: no such synth - %s\n", synthName)
+		Log.Debugf("SendControllerToSynth: no such synth - %s\n", synthName)
 		return
 	}
 	mc := MIDI.GetMidiChannelOutput(synth.portchannel)
@@ -148,7 +147,7 @@ func SendControllerToSynth(synthName string, cnum int, cval int) {
 	// This only sends the bank and/or program if they change
 	mc.SendBankProgram(synth.bank, synth.program)
 
-	log.Printf("SendControlToSynth needs work\n")
+	Log.Debugf("SendControlToSynth needs work\n")
 	/*
 		e := portmidi.Event{
 			Timestamp: time.Now(),
@@ -158,10 +157,10 @@ func SendControllerToSynth(synthName string, cnum int, cval int) {
 		}
 		e.Status |= 0xb0
 		if Debug.MIDI {
-			log.Printf("SendControllerToSynth: synth=%s status=0x%02x data1=%d data2=%d\n", mc.midiDeviceOutput.Name(), e.Status, e.Data1, e.Data2)
+			Log.Debugf("SendControllerToSynth: synth=%s status=0x%02x data1=%d data2=%d\n", mc.midiDeviceOutput.Name(), e.Status, e.Data1, e.Data2)
 		}
 		if e.Data2 > 0x7f {
-			log.Printf("SendControllerToSynth: Hey! Data2 shouldn't be > 0x7f\n")
+			Log.Debugf("SendControllerToSynth: Hey! Data2 shouldn't be > 0x7f\n")
 		} else {
 			mc.midiDeviceOutput.stream.WriteShort(e.Status, e.Data1, e.Data2)
 		}
@@ -176,7 +175,7 @@ func SendNoteToSynth(note *Note) {
 	}
 	synth, ok := Synths[synthName]
 	if !ok {
-		log.Printf("SendNoteToSynth: no such synth - %s\n", synthName)
+		Log.Debugf("SendNoteToSynth: no such synth - %s\n", synthName)
 		return
 	}
 	if synth == nil {
@@ -197,7 +196,7 @@ func SendNoteToSynth(note *Note) {
 	data1 := byte(note.Pitch)
 	data2 := byte(note.Velocity)
 	if note.TypeOf == "noteon" && note.Velocity == 0 {
-		log.Printf("MIDIIO.SendNote: noteon with velocity==0 is changed to a noteoff\n")
+		Log.Debugf("MIDIIO.SendNote: noteon with velocity==0 is changed to a noteoff\n")
 		note.TypeOf = "noteoff"
 	}
 	switch note.TypeOf {
@@ -209,13 +208,13 @@ func SendNoteToSynth(note *Note) {
 		// There might need to be an option to
 		// automatically send a noteOff before sending the noteOn.
 		// if synth.noteDown[note.Pitch] {
-		//     log.Printf("SendNoteToSynth: Ignoring second noteon for synth=%p synth=%s chan=%d pitch=%d\n", synth, synthName, synth.portchannel.channel, note.Pitch)
+		//     Log.Debugf("SendNoteToSynth: Ignoring second noteon for synth=%p synth=%s chan=%d pitch=%d\n", synth, synthName, synth.portchannel.channel, note.Pitch)
 		// }
 
 		synth.noteDown[note.Pitch] = true
 		synth.noteDownCount[note.Pitch]++
 		if Debug.MIDI {
-			log.Printf("SendNoteToSynth: synth=%p noteon noteCount>0 chan=%d pitch=%d downcount=%d\n", synth, synth.portchannel.channel, note.Pitch, synth.noteDownCount[note.Pitch])
+			Log.Debugf("SendNoteToSynth: synth=%p noteon noteCount>0 chan=%d pitch=%d downcount=%d\n", synth, synth.portchannel.channel, note.Pitch, synth.noteDownCount[note.Pitch])
 		}
 	case "noteoff":
 		status |= 0x80
@@ -223,7 +222,7 @@ func SendNoteToSynth(note *Note) {
 		synth.noteDown[note.Pitch] = false
 		synth.noteDownCount[note.Pitch]--
 		if Debug.MIDI {
-			log.Printf("SendNoteToSynth: synth=%p noteoff pitch=%d downcount is now %d\n", synth, note.Pitch, synth.noteDownCount[note.Pitch])
+			Log.Debugf("SendNoteToSynth: synth=%p noteoff pitch=%d downcount is now %d\n", synth, note.Pitch, synth.noteDownCount[note.Pitch])
 		}
 	case "controller":
 		status |= 0xB0
@@ -234,17 +233,17 @@ func SendNoteToSynth(note *Note) {
 	case "pitchbend":
 		status |= 0xE0
 	default:
-		log.Printf("SendNoteToSynth: can't handle Note TypeOf=%v\n", note.TypeOf)
+		Log.Debugf("SendNoteToSynth: can't handle Note TypeOf=%v\n", note.TypeOf)
 		return
 	}
 
 	if Debug.MIDI {
-		log.Printf("SendNoteToSynth: synth=%s status=0x%02x data1=%d data2=%d\n", mc.output.String(), status, data1, data2)
+		Log.Debugf("SendNoteToSynth: synth=%s status=0x%02x data1=%d data2=%d\n", mc.output.String(), status, data1, data2)
 	}
 
 	err := mc.output.Send([]byte{status, data1, data2})
 	if err != nil {
-		log.Printf("output.Send: err=%s\n", err)
+		Log.Debugf("output.Send: err=%s\n", err)
 	}
 	// mc.midiDeviceOutput.stream.WriteShort(e.Status, e.Data1, e.Data2)
 }

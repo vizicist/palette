@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"log"
 	"os/signal"
 	"syscall"
 
@@ -27,6 +26,6 @@ func main() {
 	go e.StartMIDI()
 	go e.InputListener()
 
-	log.Printf("Blocking forever....\n")
+	engine.Log.Debugf("Blocking forever....\n")
 	select {} // block forever
 }

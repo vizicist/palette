@@ -2,7 +2,6 @@ package engine
 
 import (
 	"fmt"
-	"log"
 	"math/rand"
 	"os"
 	"sort"
@@ -67,7 +66,7 @@ func (r *Router) executePlayerAPI(api string, argsmap map[string]string) (result
 		r.applyToPlayers(playerName, func(player *Player) {
 			_, err := player.ExecuteAPI(api, argsmap, "")
 			if err != nil {
-				log.Printf("Player.ExecuteAPI: player=%s err=%s\n", player.padName, err)
+				Log.Debugf("Player.ExecuteAPI: player=%s err=%s\n", player.padName, err)
 			}
 		})
 		return "", nil
@@ -78,7 +77,7 @@ func (r *Router) SetPlayerParamValue(playerName string, name string, value strin
 	r.applyToPlayers(playerName, func(player *Player) {
 		err := player.SetOneParamValue(name, value)
 		if err != nil {
-			log.Printf("executePlayerAPI: set of %s failed, err=%s\n", name, err)
+			Log.Debugf("executePlayerAPI: set of %s failed, err=%s\n", name, err)
 			// But don't fail completely, this might be for
 			// parameters that no longer exist, and a hard failure would
 			// cause more problems.
@@ -94,9 +93,9 @@ func (r *Router) saveQuadPreset(presetName string) error {
 	s := "{\n    \"params\": {\n"
 
 	sep := ""
-	log.Printf("saveQuadPreset preset=%s\n", presetName)
+	Log.Debugf("saveQuadPreset preset=%s\n", presetName)
 	for _, player := range r.players {
-		log.Printf("starting player=%s\n", player.padName)
+		Log.Debugf("starting player=%s\n", player.padName)
 		// Print the parameter values sorted by name
 		fullNames := player.params.values
 		sortedNames := make([]string, 0, len(fullNames))
@@ -108,7 +107,7 @@ func (r *Router) saveQuadPreset(presetName string) error {
 		for _, fullName := range sortedNames {
 			valstring, e := player.params.paramValueAsString(fullName)
 			if e != nil {
-				log.Printf("Unexepected error from paramValueAsString for nm=%s\n", fullName)
+				Log.Debugf("Unexepected error from paramValueAsString for nm=%s\n", fullName)
 				continue
 			}
 			s += fmt.Sprintf("%s        \"%s-%s\":\"%s\"", sep, player.padName, fullName, valstring)
@@ -124,11 +123,11 @@ func (r *Router) loadQuadPresetRand() {
 
 	arr, err := PresetArray("quad")
 	if err != nil {
-		log.Printf("loadQuadPresetRand: err=%s\n", err)
+		Log.Debugf("loadQuadPresetRand: err=%s\n", err)
 		return
 	}
 	rn := rand.Uint64() % uint64(len(arr))
-	log.Printf("loadQuadPresetRand: preset=%s", arr[rn])
+	Log.Debugf("loadQuadPresetRand: preset=%s", arr[rn])
 	preset := GetPreset(arr[rn])
 	preset.loadQuadPreset("*")
 }
@@ -166,7 +165,7 @@ func (r *Router) executeProcessAPI(api string, apiargs map[string]string) (resul
 */
 
 func (r *Router) saveCurrentSnaps(playerName string) error {
-	// log.Printf("saveCurrentSnaps player=%s\n", playerName)
+	// Log.Debugf("saveCurrentSnaps player=%s\n", playerName)
 	if playerName == "*" {
 		for _, player := range r.players {
 			err := player.saveCurrentSnap()

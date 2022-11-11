@@ -1,7 +1,5 @@
 package engine
 
-import "log"
-
 // Scale says whether a pitch is in a scale
 type Scale struct {
 	HasNote [128]bool
@@ -14,7 +12,7 @@ var Scales map[string]*Scale
 func GlobalScale(name string) *Scale {
 	s, ok := Scales[name]
 	if !ok {
-		log.Printf("No scale named %s, assuming newage\n", name)
+		Log.Debugf("No scale named %s, assuming newage\n", name)
 		s = Scales["newage"]
 	}
 	return s

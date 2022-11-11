@@ -1,8 +1,6 @@
 package responder
 
 import (
-	"log"
-
 	"github.com/vizicist/palette/engine"
 )
 
@@ -24,9 +22,9 @@ func NewResponder_default() *Responder_default {
 func (r *Responder_default) OnCursorEvent(ctx *engine.ResponderContext, ce engine.CursorEvent) {
 	clicks := ctx.CurrentClick()
 	nt := r.cursorToNote(ce)
-	log.Printf("Responder_default.OnCursorEvent: ce=%s nt=%s\n", ce, nt)
+	engine.Log.Debugf("Responder_default.OnCursorEvent: ce=%s nt=%s\n", ce, nt)
 	ctx.ScheduleNoteAt(nt, clicks)
-	log.Printf("Schedule is now: %s\n", ctx.ScheduleDebug())
+	engine.Log.Debugf("Schedule is now: %s\n", ctx.ScheduleDebug())
 
 }
 

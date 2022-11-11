@@ -2,7 +2,6 @@ package engine
 
 import (
 	"fmt"
-	"log"
 	"sync"
 )
 
@@ -46,28 +45,28 @@ func (ctx *ResponderContext) ScheduleDebug() string {
 
 func (ctx *ResponderContext) ScheduleNoteNow(nt *Note) {
 	click := CurrentClick()
-	log.Printf("ResponderContext.ScheduleNow: nt=%s clk=%d\n", nt, click)
+	Log.Debugf("ResponderContext.ScheduleNow: nt=%s clk=%d\n", nt, click)
 	ctx.scheduler.ScheduleNoteAt(nt, click)
 }
 
 func (ctx *ResponderContext) ScheduleNoteAt(nt *Note, click Clicks) {
 	if nt == nil {
-		log.Printf("ResponderContext.ScheduleNoteAt: nt == nil?\n")
+		Log.Debugf("ResponderContext.ScheduleNoteAt: nt == nil?\n")
 		return
 	}
-	log.Printf("ResponderContext.ScheduleAt: nt=%s clicks=%d\n", nt, click)
+	Log.Debugf("ResponderContext.ScheduleAt: nt=%s clicks=%d\n", nt, click)
 	ctx.scheduler.ScheduleNoteAt(nt, click)
 }
 
 func (rm *ResponderManager) AddResponder(name string, responder Responder) {
 	_, ok := rm.responders[name]
 	if !ok {
-		log.Printf("ResponderManager.AddResponder: name=%s\n", name)
+		Log.Debugf("ResponderManager.AddResponder: name=%s\n", name)
 		rc := NewResponderContext()
 		rm.responders[name] = responder
 		rm.respondersContext[name] = rc
 	} else {
-		log.Printf("Warning: ResponderManager.AddResponder can't overwriting existing responder=%s\n", name)
+		Log.Debugf("Warning: ResponderManager.AddResponder can't overwriting existing responder=%s\n", name)
 	}
 }
 
@@ -76,7 +75,7 @@ func (rm *ResponderManager) ActivateResponder(name string) error {
 	if !ok {
 		return fmt.Errorf("no responder named %s", name)
 	}
-	log.Printf("ActivateResponder: name=%s\n", name)
+	Log.Debugf("ActivateResponder: name=%s\n", name)
 	rm.activeResponders[name] = resp
 	return nil
 }
@@ -92,10 +91,10 @@ func (rm *ResponderManager) DeactivateResponder(name string) error {
 
 func (rm *ResponderManager) handleCursorEvent(ce CursorEvent) {
 	for name, responder := range rm.responders {
-		log.Printf("CallResponders: name=%s\n", name)
+		Log.Debugf("CallResponders: name=%s\n", name)
 		context, ok := rm.respondersContext[name]
 		if !ok {
-			log.Printf("ResponderManager.handle: no context for name=%s\n", name)
+			Log.Debugf("ResponderManager.handle: no context for name=%s\n", name)
 		} else {
 			responder.OnCursorEvent(context, ce)
 		}

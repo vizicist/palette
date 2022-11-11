@@ -2,7 +2,6 @@ package engine
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"sort"
 	"strings"
@@ -16,7 +15,7 @@ type ParamsMap map[string]interface{}
 func (player *Player) ExecuteAPI(api string, args map[string]string, rawargs string) (result string, err error) {
 
 	if Debug.PlayerAPI {
-		log.Printf("PlayerAPI: api=%s args=%v\n", api, args)
+		Log.Debugf("PlayerAPI: api=%s args=%v\n", api, args)
 	}
 	// The caller can provide rawargs if it's already known, but if not provided, we create it
 	if rawargs == "" {
@@ -34,7 +33,7 @@ func (player *Player) ExecuteAPI(api string, args map[string]string, rawargs str
 	switch api {
 
 	case "send":
-		log.Printf("API send should be sending all parameters for player=%s\n", player.padName)
+		Log.Debugf("API send should be sending all parameters for player=%s\n", player.padName)
 		player.sendAllParameters()
 		return "", err
 
@@ -133,7 +132,7 @@ func (player *Player) ExecuteAPI(api string, args map[string]string, rawargs str
 		v, e := needIntArg("value", api, args)
 		if e == nil {
 			player.TransposePitch = v
-			log.Printf("player API set_transpose TransposePitch=%v", v)
+			Log.Debugf("player API set_transpose TransposePitch=%v", v)
 		} else {
 			err = e
 		}
@@ -149,7 +148,7 @@ func (player *Player) sendAllParameters() {
 	for nm := range player.params.values {
 		val, e := player.params.paramValueAsString(nm)
 		if e != nil {
-			log.Printf("Unexepected error from paramValueAsString for nm=%s\n", nm)
+			Log.Debugf("Unexepected error from paramValueAsString for nm=%s\n", nm)
 			// Keep going
 			continue
 		}
@@ -157,7 +156,7 @@ func (player *Player) sendAllParameters() {
 		// that it will re-send the mesasges to Resolume for visual.* params
 		err := player.SetOneParamValue(nm, val)
 		if err != nil {
-			log.Printf("sendAllParameters nm=%s val=%s err=%s\n", nm, val, err)
+			Log.Debugf("sendAllParameters nm=%s val=%s err=%s\n", nm, val, err)
 			// Don't fail completely
 		}
 	}
@@ -170,7 +169,7 @@ func (player *Player) applyParamsMap(presetType string, paramsmap map[string]int
 	for name, ival := range paramsmap {
 		val, okval := ival.(string)
 		if !okval {
-			log.Printf("nm=%s value isn't a string in params json", name)
+			Log.Debugf("nm=%s value isn't a string in params json", name)
 			continue
 		}
 		fullname := name
@@ -183,7 +182,7 @@ func (player *Player) applyParamsMap(presetType string, paramsmap map[string]int
 		// which may trigger things (like sending OSC)
 		err := player.SetOneParamValue(fullname, val)
 		if err != nil {
-			log.Printf("applyPreset: param=%s, err=%s\n", fullname, err)
+			Log.Debugf("applyPreset: param=%s, err=%s\n", fullname, err)
 			// Don't abort the whole load, i.e. we are tolerant
 			// of unknown parameters or errors in the preset
 		}
@@ -196,7 +195,7 @@ func (player *Player) restoreCurrentSnap() {
 	preset := GetPreset("snap._Current_" + playerName)
 	err := preset.applyPreset(playerName)
 	if err != nil {
-		log.Printf("applyPreset: err=%s\n", err)
+		Log.Debugf("applyPreset: err=%s\n", err)
 	}
 }
 
@@ -226,7 +225,7 @@ func (player *Player) saveCurrentSnapInPath(path string) error {
 	for _, fullName := range sortedNames {
 		valstring, e := player.params.paramValueAsString(fullName)
 		if e != nil {
-			log.Printf("Unexepected error from paramValueAsString for nm=%s\n", fullName)
+			Log.Debugf("Unexepected error from paramValueAsString for nm=%s\n", fullName)
 			continue
 		}
 		s += fmt.Sprintf("%s        \"%s\":\"%s\"", sep, fullName, valstring)
@@ -234,6 +233,6 @@ func (player *Player) saveCurrentSnapInPath(path string) error {
 	}
 	s += "\n    }\n}"
 	data := []byte(s)
-	// log.Printf("SaveCurrentSnapInPath %s path=%s\n", player.padName, path)
+	// Log.Debugf("SaveCurrentSnapInPath %s path=%s\n", player.padName, path)
 	return os.WriteFile(path, data, 0644)
 }

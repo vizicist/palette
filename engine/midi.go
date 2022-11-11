@@ -5,7 +5,6 @@ package engine
 
 import (
 	"fmt"
-	"log"
 	"strings"
 	"time"
 
@@ -86,7 +85,7 @@ func InitMIDI() {
 	// We only open a single input, though midiInputs is an array
 	for _, inp := range inports {
 		name := inp.String()
-		log.Printf("input port = %s\n", name)
+		Log.Debugf("input port = %s\n", name)
 		if name == "Erae Touch" {
 			erae = true
 			EraeInput = inp
@@ -99,7 +98,7 @@ func InitMIDI() {
 	for _, outp := range outports {
 		name := outp.String()
 		// NOTE: name is the port name followed by an index
-		log.Printf("output port = %s\n", outp.String())
+		Log.Debugf("output port = %s\n", outp.String())
 		if strings.Contains(name, "Erae Touch") {
 			EraeOutput = outp
 		}
@@ -115,7 +114,7 @@ func InitMIDI() {
 			}
 			if dev.IsOutputAvailable {
 				if Debug.MIDI {
-					log.Printf("MIDI OUTPUT device = %s  devid=%v\n", dev.Name, devid)
+					Log.Debugf("MIDI OUTPUT device = %s  devid=%v\n", dev.Name, devid)
 				}
 				MIDI.outputDeviceID[dev.Name] = devid
 				MIDI.outputDeviceInfo[dev.Name] = dev
@@ -123,7 +122,7 @@ func InitMIDI() {
 			}
 			if dev.IsInputAvailable {
 				if Debug.MIDI {
-					log.Printf("MIDI INPUT device = %s  devid=%v\n", dev.Name, devid)
+					Log.Debugf("MIDI INPUT device = %s  devid=%v\n", dev.Name, devid)
 				}
 				MIDI.inputDeviceID[dev.Name] = devid
 				MIDI.inputDeviceInfo[dev.Name] = dev
@@ -132,15 +131,15 @@ func InitMIDI() {
 		}
 
 		if erae {
-			log.Printf("Erae Touch input is being enabled\n")
+			Log.Debugf("Erae Touch input is being enabled\n")
 			InitErae()
 		}
 
-		log.Printf("MIDI devices (%d inputs, %d outputs) have been initialized\n", numInputs, numOutputs)
+		Log.Debugf("MIDI devices (%d inputs, %d outputs) have been initialized\n", numInputs, numOutputs)
 	*/
 
 	if erae {
-		log.Printf("Erae Touch input is being enabled\n")
+		Log.Debugf("Erae Touch input is being enabled\n")
 		InitErae()
 	}
 }
@@ -223,20 +222,20 @@ func (m *MIDIInput) ReadEvents() ([]MidiEvent, error) {
 				source:    m.Name(),
 			}
 		}
-		// log.Printf("\nmidiInput len(events)=%d\n", len(events))
+		// Log.Debugf("\nmidiInput len(events)=%d\n", len(events))
 	return events, err
 }
 */
 
 func (mc *MIDIChannelOutput) SendBankProgram(bank int, program int) {
 	if mc.bank != bank {
-		log.Printf("SendBankProgram: needs work\n")
-		log.Printf("SendBankProgram: XXX - SHOULD be sending bank=%d\n", bank)
+		Log.Debugf("SendBankProgram: needs work\n")
+		Log.Debugf("SendBankProgram: XXX - SHOULD be sending bank=%d\n", bank)
 		mc.bank = bank
 	}
 	if mc.program != program {
 		if Debug.MIDI {
-			log.Printf("SendBankProgram: sending program=%d\n", program)
+			Log.Debugf("SendBankProgram: sending program=%d\n", program)
 		}
 		mc.program = program
 		status := byte(int64(ProgramStatus) | int64(mc.channel-1))
@@ -248,9 +247,9 @@ func (mc *MIDIChannelOutput) SendBankProgram(bank int, program int) {
 // WriteSysEx sends one or more MIDI Events
 /*
 func (out *MIDIChannelOutput) WriteSysEx(bytes []byte) {
-	log.Printf("WriteSysEx needs work\n")
+	Log.Debugf("WriteSysEx needs work\n")
 		if out == nil {
-			log.Printf("MIDIDeviceOutput.WriteSysEx: out is nil?\n")
+			Log.Debugf("MIDIDeviceOutput.WriteSysEx: out is nil?\n")
 			return
 		}
 		if Debug.MIDI {
@@ -259,32 +258,32 @@ func (out *MIDIChannelOutput) WriteSysEx(bytes []byte) {
 				s += fmt.Sprintf(" 0x%02x", b)
 			}
 			s += " ]"
-			log.Printf("WriteSysEx: bytes = %s\n", s)
+			Log.Debugf("WriteSysEx: bytes = %s\n", s)
 		}
 		if out.stream == nil {
-			log.Printf("WriteSysEx: out.stream is nil?  port=%s\n", out.name)
+			Log.Debugf("WriteSysEx: out.stream is nil?  port=%s\n", out.name)
 			return
 		}
 		tm := time.Now()
 		if err := out.stream.WriteSysExBytes(tm, bytes); err != nil {
-			log.Printf("WriteSysExBytes: err=%s\n", err)
+			Log.Debugf("WriteSysExBytes: err=%s\n", err)
 			return
 		}
 }
 */
 
 func (out *MIDIChannelOutput) WriteShort(status, data1, data2 int64) {
-	log.Printf("WriteShort needs work\n")
+	Log.Debugf("WriteShort needs work\n")
 	/*
 		if Debug.MIDI {
-			log.Printf("MIDIDeviceOutput.WriteShort: status=0x%02x data1=%d data2=%d\n", status, data1, data2)
+			Log.Debugf("MIDIDeviceOutput.WriteShort: status=0x%02x data1=%d data2=%d\n", status, data1, data2)
 		}
 		if out.stream == nil {
-			log.Printf("SendEvent: out.stream is nil?  port=%s\n", out.name)
+			Log.Debugf("SendEvent: out.stream is nil?  port=%s\n", out.name)
 			return
 		}
 		if err := out.stream.WriteShort(status, data1, data2); err != nil {
-			log.Printf("out.stream.WriteShort: err=%s\n", err)
+			Log.Debugf("out.stream.WriteShort: err=%s\n", err)
 			return
 		}
 	*/
@@ -297,16 +296,16 @@ func (m *MIDIIO) getOutputStream(name string) (devid portmidi.DeviceID, stream *
 	var present bool
 	devid, present = m.outputDeviceID[name]
 	if !present {
-		log.Printf("getOutputStream: No such MIDI Output (%s)\n", name)
+		Log.Debugf("getOutputStream: No such MIDI Output (%s)\n", name)
 		return -1, nil
 	}
 	var err error
 	stream, present = m.outputDeviceStream[name]
 	if !present {
-		log.Printf("Opening MIDI Output: %s\n", name)
+		Log.Debugf("Opening MIDI Output: %s\n", name)
 		m.outputDeviceStream[name], err = portmidi.NewOutputStream(devid, 1, 0)
 		if err != nil {
-			log.Printf("getOutputStream: Unable to create NewOutputStream for %s\n", name)
+			Log.Debugf("getOutputStream: Unable to create NewOutputStream for %s\n", name)
 			return -1, nil
 		}
 		stream = m.outputDeviceStream[name]
@@ -324,10 +323,10 @@ func (m *MIDIIO) getInputStream(name string) (devid portmidi.DeviceID, stream *p
 	var err error
 	stream, present = m.inputDeviceStream[name]
 	if !present {
-		log.Printf("Opening MIDI Input: %s\n", name)
+		Log.Debugf("Opening MIDI Input: %s\n", name)
 		m.inputDeviceStream[name], err = portmidi.NewInputStream(devid, 1024)
 		if err != nil {
-			log.Printf("portmidi.NewInputStream: err=%s\n", err)
+			Log.Debugf("portmidi.NewInputStream: err=%s\n", err)
 			return -1, nil
 		}
 		stream = m.inputDeviceStream[name]
@@ -339,17 +338,17 @@ func (m *MIDIIO) getInputStream(name string) (devid portmidi.DeviceID, stream *p
 func (m *MIDIIO) GetMidiChannelOutput(portchannel PortChannel) *MIDIChannelOutput {
 	mc, ok := m.midiChannelOutputs[portchannel]
 	if !ok {
-		log.Printf("GetMidiChannelOutput: no entry for port=%s channel=%d\n", portchannel.port, portchannel.channel)
+		Log.Debugf("GetMidiChannelOutput: no entry for port=%s channel=%d\n", portchannel.port, portchannel.channel)
 		return nil
 	}
 	if mc.output == nil {
-		log.Printf("GetMidiChannelOutput: midiDeviceOutput==nil for port=%s channel=%d\n", portchannel.port, portchannel.channel)
+		Log.Debugf("GetMidiChannelOutput: midiDeviceOutput==nil for port=%s channel=%d\n", portchannel.port, portchannel.channel)
 		return nil
 	}
 	if !mc.isopen {
 		e := mc.output.Open()
 		if e != nil {
-			log.Printf("GetMidiChannelOutput: can't open %s - err=%s\n", mc.output.String(), e)
+			Log.Debugf("GetMidiChannelOutput: can't open %s - err=%s\n", mc.output.String(), e)
 			return nil
 		}
 	}
@@ -374,7 +373,7 @@ func (m *MIDIIO) openChannelOutput(portchannel PortChannel) *MIDIChannelOutput {
 		}
 	}
 	if output == nil {
-		log.Printf("No output found matching %s\n", portName)
+		Log.Debugf("No output found matching %s\n", portName)
 		return nil
 	}
 
@@ -403,7 +402,7 @@ func (m *MIDIIO) openFakeChannelOutput(port string, channel int) *MIDIChannelOut
 /*
 	devid, stream := m.getOutputStream(nm)
 	if stream == nil {
-		log.Printf("MIDIIO.openInput: Unable to open %s\n", nm)
+		Log.Debugf("MIDIIO.openInput: Unable to open %s\n", nm)
 		return nil
 	}
 	out := &MIDIDeviceOutput{name: nm, deviceID: devid, stream: stream}
@@ -413,12 +412,12 @@ func (m *MIDIIO) openFakeChannelOutput(port string, channel int) *MIDIChannelOut
 
 /*
 func (m *MIDIIO) openInput(nm string) {
-	log.Printf("MIDIIO.openInput: needs work\n")
+	Log.Debugf("MIDIIO.openInput: needs work\n")
 		devid, stream := m.getInputStream(nm)
 		if stream != nil {
 			m.midiInputs[nm] = &MIDIInput{name: nm, deviceID: devid, stream: stream}
 		} else {
-			log.Printf("MIDIIO.openInput: Unable to open %s\n", nm)
+			Log.Debugf("MIDIIO.openInput: Unable to open %s\n", nm)
 		}
 }
 */

@@ -2,7 +2,6 @@ package engine
 
 import (
 	"fmt"
-	"log"
 	"strings"
 	"time"
 )
@@ -117,14 +116,14 @@ func (e *Engine) executeGlobalAPI(api string, apiargs map[string]string) (result
 							for _, player := range e.Router.players {
 								player.TransposePitch = int(v)
 							}
-							// log.Printf("set_transpose API set to %d\n", int(v))
+							// Log.Debugf("set_transpose API set to %d\n", int(v))
 						}
 
 			case "set_transposeauto":
 				b, err := needBoolArg("onoff", api, apiargs)
 				if err == nil {
 					e.Scheduler.transposeAuto = b
-					// log.Printf("GlobalAPI: set_transposeauto b=%v\n", b)
+					// Log.Debugf("GlobalAPI: set_transposeauto b=%v\n", b)
 					// Quantizing CurrentClick() to a beat or measure might be nice
 					e.Scheduler.transposeNext = CurrentClick() + e.Scheduler.transposeClicks*oneBeat
 					for _, player := range e.Router.players {
@@ -151,7 +150,7 @@ func (e *Engine) executeGlobalAPI(api string, apiargs map[string]string) (result
 			case "recordingStart":
 				r.recordingOn = true
 				if r.recordingFile != nil {
-					log.Printf("Hey, recordingFile wasn't nil?\n")
+					Log.Debugf("Hey, recordingFile wasn't nil?\n")
 					r.recordingFile.Close()
 				}
 				r.recordingFile, err = os.Create(recordingsFile("LastRecording.json"))
@@ -194,7 +193,7 @@ func (e *Engine) executeGlobalAPI(api string, apiargs map[string]string) (result
 		*/
 
 	default:
-		log.Printf("Router.ExecuteAPI api=%s is not recognized\n", api)
+		Log.Debugf("Router.ExecuteAPI api=%s is not recognized\n", api)
 		err = fmt.Errorf("Router.ExecuteGlobalAPI unrecognized api=%s", api)
 		result = ""
 	}
@@ -224,7 +223,7 @@ func (e *Engine) executePresetAPI(api string, apiargs map[string]string) (result
 			// will only load that one player from the quad preset
 			err = preset.loadQuadPreset(playerName)
 			if err != nil {
-				log.Printf("loadQuad: preset=%s, err=%s", presetName, err)
+				Log.Debugf("loadQuad: preset=%s, err=%s", presetName, err)
 				return "", err
 			}
 			e.Router.saveCurrentSnaps(playerName)
@@ -233,7 +232,7 @@ func (e *Engine) executePresetAPI(api string, apiargs map[string]string) (result
 			// However, the playerName can still be "*" to apply to all players.
 			err = preset.applyPreset(playerName)
 			if err != nil {
-				log.Printf("applyPreset: preset=%s, err=%s", presetName, err)
+				Log.Debugf("applyPreset: preset=%s, err=%s", presetName, err)
 			} else {
 				e.Router.saveCurrentSnaps(playerName)
 			}
@@ -260,7 +259,7 @@ func (e *Engine) executePresetAPI(api string, apiargs map[string]string) (result
 		}
 
 	default:
-		log.Printf("Router.ExecuteAPI api=%s is not recognized\n", api)
+		Log.Debugf("Router.ExecuteAPI api=%s is not recognized\n", api)
 		return "", fmt.Errorf("Router.ExecutePresetAPI unrecognized api=%s", api)
 	}
 }
@@ -275,11 +274,11 @@ func (e *Engine) executeSoundAPI(api string, apiargs map[string]string) (result 
 			return "", fmt.Errorf("missing note parameter")
 		}
 		_ = notestr
-		log.Printf("sound.playnote API should be playing note=%s\n", notestr)
+		Log.Debugf("sound.playnote API should be playing note=%s\n", notestr)
 		return "", nil
 
 	default:
-		log.Printf("Router.ExecuteAPI api=%s is not recognized\n", api)
+		Log.Debugf("Router.ExecuteAPI api=%s is not recognized\n", api)
 		err = fmt.Errorf("Router.ExecuteSoundAPI unrecognized api=%s", api)
 		result = ""
 	}
