@@ -3,7 +3,6 @@ package twinsys
 import (
 	"fmt"
 	"image"
-	"log"
 
 	"github.com/vizicist/palette/engine"
 )
@@ -47,7 +46,7 @@ func newWindowContextNoParent() WinContext {
 func NewWindowContext(parent Window) WinContext {
 	var style string
 	if parent == nil {
-		log.Printf("NewWindowContext: unexpected parent == nil?\n")
+		engine.Log.Debugf("NewWindowContext: unexpected parent == nil?\n")
 		style = parent.Context().styleName
 	}
 	return realNewWindowContext(parent, style)
@@ -99,7 +98,7 @@ func WinAddChild(parent Window, td WindowData) Window {
 	child := td.w
 	cc := child.Context()
 	if !cc.initialized {
-		log.Printf("AddChild: child.Context not initialized!\n")
+		engine.Log.Debugf("AddChild: child.Context not initialized!\n")
 		return nil
 	}
 	cc.minSize = td.minSize
@@ -108,7 +107,7 @@ func WinAddChild(parent Window, td WindowData) Window {
 
 	pc := parent.Context()
 	if !pc.initialized {
-		log.Printf("AddChild: parent.Data not initialized!?\n")
+		engine.Log.Debugf("AddChild: parent.Data not initialized!?\n")
 		return nil
 	}
 
@@ -116,7 +115,7 @@ func WinAddChild(parent Window, td WindowData) Window {
 	wname := fmt.Sprintf("%s.%d", td.toolType, pc.lastChildID)
 	_, ok := pc.childWindow[wname]
 	if ok {
-		log.Printf("AddChild: there's already a child with name=%s ??\n", wname)
+		engine.Log.Debugf("AddChild: there's already a child with name=%s ??\n", wname)
 		return nil
 	}
 
@@ -127,7 +126,7 @@ func WinAddChild(parent Window, td WindowData) Window {
 	pc.childName[child] = wname
 	pc.childPos[child] = image.Point{0, 0}
 	if debugChild {
-		log.Printf("AddChild: wname=%s child=%p\n", wname, child)
+		engine.Log.Debugf("AddChild: wname=%s child=%p\n", wname, child)
 	}
 
 	return child
@@ -137,18 +136,18 @@ func WinAddChild(parent Window, td WindowData) Window {
 func WinRemoveChild(parent Window, child Window) {
 
 	if child == nil {
-		log.Printf("RemoveChild: child=nil?\n")
+		engine.Log.Debugf("RemoveChild: child=nil?\n")
 	}
 	pc := parent.Context()
 	childName, ok := pc.childName[child]
 	if !ok {
 		// XXX - this happens when you're restoring, not sure why,
 		// XXX - but for the moment I'll just ignore it silently
-		// log.Printf("RemoveChild: no window child=%v\n", child)
+		// engine.Log.Debugf("RemoveChild: no window child=%v\n", child)
 		return
 	}
 	if debugChild {
-		log.Printf("RemoveChild: removing wid=%s\n", childName)
+		engine.Log.Debugf("RemoveChild: removing wid=%s\n", childName)
 	}
 
 	delete(pc.childName, child)
@@ -170,7 +169,7 @@ func winMoveWindow(parent Window, child Window, delta image.Point) {
 	pc := parent.Context()
 	childPos, ok := pc.childPos[child]
 	if !ok {
-		log.Printf("WinMoveWindow: w not in parent childPos?\n")
+		engine.Log.Debugf("WinMoveWindow: w not in parent childPos?\n")
 		return
 	}
 	pc.childPos[child] = childPos.Add(delta)
@@ -179,7 +178,7 @@ func winMoveWindow(parent Window, child Window, delta image.Point) {
 // WinRedrawChildren xxx
 func WinRedrawChildren(parent Window) {
 	if parent == nil {
-		log.Printf("RedrawChildren: parent==nil?\n")
+		engine.Log.Debugf("RedrawChildren: parent==nil?\n")
 		return
 	}
 	pc := parent.Context()
@@ -213,10 +212,10 @@ func getAndAdjustXY01(cmd engine.Cmd, adjust image.Point) engine.Cmd {
 // WinDoUpstream xxx
 func WinDoUpstream(w Window, cmd engine.Cmd) {
 	subj := cmd.Subj
-	// log.Printf("DoUpstream: cmd=%s arg=%v\n", cmd, arg)
+	// engine.Log.Debugf("DoUpstream: cmd=%s arg=%v\n", cmd, arg)
 	parent := WinParent(w)
 	if parent == nil {
-		log.Printf("DoUpstream: no parent for w=%v\n", w)
+		engine.Log.Debugf("DoUpstream: no parent for w=%v\n", w)
 		return
 	}
 
@@ -284,14 +283,14 @@ func winToolType(w Window) string {
 
 func winSaveTransient(parent Window, w Window) {
 	if debugChild {
-		log.Printf("winSaveTransient: w=%p\n", w)
+		engine.Log.Debugf("winSaveTransient: w=%p\n", w)
 	}
 	parent.Context().transients[w] = "dummy"
 }
 
 func winMakePermanent(parent Window, w Window) {
 	if debugChild {
-		log.Printf("winMakePermanent: w=%p\n", w)
+		engine.Log.Debugf("winMakePermanent: w=%p\n", w)
 	}
 	delete(parent.Context().transients, w)
 }
@@ -307,7 +306,7 @@ func winRemoveTransients(parent Window, exceptMenu Window) {
 	for w := range wc.transients {
 		if w != exceptMenu {
 			if debugChild {
-				log.Printf("winRemoveTransients: about to remove wid=%s\n", WinChildName(parent, w))
+				engine.Log.Debugf("winRemoveTransients: about to remove wid=%s\n", WinChildName(parent, w))
 			}
 			WinRemoveChild(parent, w)
 			delete(wc.transients, w)
@@ -329,7 +328,7 @@ func WinSetSize(w Window, size image.Point) {
 // WinSetChildSize xxx
 func WinSetChildSize(w Window, size image.Point) {
 	if size.X == 0 || size.Y == 0 {
-		log.Printf("WinSetChildSize: too small, setting to 100,100\n")
+		engine.Log.Debugf("WinSetChildSize: too small, setting to 100,100\n")
 		size = image.Point{100, 100}
 	}
 	w.Context().currSz = size
@@ -339,7 +338,7 @@ func WinSetChildSize(w Window, size image.Point) {
 // WinSetChildPos xxx
 func WinSetChildPos(parent Window, child Window, pos image.Point) {
 	if parent == nil {
-		log.Printf("WinSeetChildPos: parent is nil?\n")
+		engine.Log.Debugf("WinSeetChildPos: parent is nil?\n")
 		return
 	}
 	parent.Context().childPos[child] = pos
@@ -348,12 +347,12 @@ func WinSetChildPos(parent Window, child Window, pos image.Point) {
 // WinChildPos xxx
 func WinChildPos(parent Window, child Window) (p image.Point) {
 	if parent == nil {
-		log.Printf("WinChildPos: parent is nil?\n")
+		engine.Log.Debugf("WinChildPos: parent is nil?\n")
 		return
 	}
 	childPos, ok := parent.Context().childPos[child]
 	if !ok {
-		log.Printf("WinChildPos: w not in parent childPos?\n")
+		engine.Log.Debugf("WinChildPos: w not in parent childPos?\n")
 		return
 	}
 	return childPos
@@ -372,12 +371,12 @@ func WinChildRect(parent, child Window) (r image.Rectangle) {
 // WinChildName xxx
 func WinChildName(parent Window, child Window) string {
 	if parent == nil {
-		log.Printf("WinChildID: parent is nil?\n")
+		engine.Log.Debugf("WinChildID: parent is nil?\n")
 		return ""
 	}
 	id, ok := parent.Context().childName[child]
 	if !ok {
-		// log.Printf("WinChildID: w not in parent childName?\n")
+		// engine.Log.Debugf("WinChildID: w not in parent childName?\n")
 		return ""
 	}
 	return id
@@ -386,7 +385,7 @@ func WinChildName(parent Window, child Window) string {
 // WinChildNamed xxx
 func WinChildNamed(parent Window, name string) Window {
 	if parent == nil {
-		log.Printf("WinChildNamed: parent is nil?\n")
+		engine.Log.Debugf("WinChildNamed: parent is nil?\n")
 		return nil
 	}
 	for w, nm := range parent.Context().childName {
@@ -394,7 +393,7 @@ func WinChildNamed(parent Window, name string) Window {
 			return w
 		}
 	}
-	log.Printf("WinChildNamed: no child named %s\n", name)
+	engine.Log.Debugf("WinChildNamed: no child named %s\n", name)
 	return nil
 }
 
@@ -407,7 +406,7 @@ func WinMinSize(w Window) (r image.Point) {
 func WinParent(w Window) Window {
 	parent := w.Context().parent
 	if parent == nil {
-		log.Printf("Hey, why is WinParent being called for WorldWindow\n")
+		engine.Log.Debugf("Hey, why is WinParent being called for WorldWindow\n")
 	}
 	return parent
 }
@@ -425,7 +424,7 @@ func WinStyleName(w Window) string {
 		return ctx.styleName // Window has its own style
 	}
 	if ctx.parent == nil {
-		log.Printf("WinStye: using DefaultStyle because no parent for w=%v\n", w)
+		engine.Log.Debugf("WinStye: using DefaultStyle because no parent for w=%v\n", w)
 		return DefaultStyleName()
 	}
 	return WinStyleName(ctx.parent) // use the parent's style

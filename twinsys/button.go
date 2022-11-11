@@ -2,7 +2,6 @@ package twinsys
 
 import (
 	"image"
-	"log"
 
 	"github.com/vizicist/palette/engine"
 )
@@ -71,7 +70,7 @@ func (button *Button) Do(cmd engine.Cmd) string {
 		currRect := image.Rect(0, 0, currSize.X, currSize.Y)
 		pos := cmd.ValuesPos(image.Point{0, 0})
 		if !pos.In(currRect) {
-			log.Printf("button: pos not in Rect?\n")
+			engine.Log.Debugf("button: pos not in Rect?\n")
 			break
 		}
 		ddu := cmd.ValuesString("ddu", "")

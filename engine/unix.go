@@ -1,10 +1,10 @@
+//go:build !windows
 // +build !windows
 
 package engine
 
 import (
 	"io"
-	"log"
 	"os/exec"
 	"syscall"
 )
@@ -31,10 +31,10 @@ func Spawn(executable string, background bool, stdout io.Writer, stderr io.Write
 	}
 	if err != nil {
 		// Don't do Fatal here - some commands like taskkill will fail harmlessly
-		log.Printf("Spawn: cmd=%s err=%s\n", cmd, err)
+		Log.Debugf("Spawn: cmd=%s err=%s\n", cmd, err)
 		return err
 	}
-	log.Printf("Spawn: bg=%v cmd=%s\n", background, cmd)
+	Log.Debugf("Spawn: bg=%v cmd=%s\n", background, cmd)
 	return nil
 }
 
@@ -47,6 +47,6 @@ func StartDeviceInput() {
 
 // KillProcess kills a process (synchronously)
 func KillProcess(exe string) {
-	log.Printf("WARNING - KillProcess in unix.go not tested: exe=%s\n", exe)
+	Log.Debugf("WARNING - KillProcess in unix.go not tested: exe=%s\n", exe)
 	Spawn("pkill", false, noWriter, noWriter, exe)
 }

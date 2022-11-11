@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"image"
-	"log"
 	"strings"
 
 	"github.com/vizicist/palette/engine"
@@ -158,7 +157,7 @@ func (st *ScrollingText) Do(cmd engine.Cmd) string {
 		st.AddLine(line)
 
 	default:
-		log.Printf("ScrollingText: didn't handle %s\n", cmd.Subj)
+		engine.Log.Debugf("ScrollingText: didn't handle %s\n", cmd.Subj)
 	}
 	return engine.OkResult()
 }

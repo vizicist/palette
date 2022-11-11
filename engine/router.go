@@ -2,7 +2,6 @@ package engine
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -102,7 +101,7 @@ type APIExecutorFunc func(api string, nuid string, rawargs string) (result inter
 
 // CallAPI calls an API in the Palette Freeframe plugin running in Resolume
 func CallAPI(method string, args []string) {
-	log.Printf("CallAPI method=%s", method)
+	Log.Debugf("CallAPI method=%s", method)
 }
 
 func NewRouter() *Router {
@@ -116,24 +115,24 @@ func NewRouter() *Router {
 	r.playerLetters = ConfigValue("pads")
 	if r.playerLetters == "" {
 		if Debug.Morph {
-			log.Printf("No value for pads, assuming ABCD")
+			Log.Debugf("No value for pads, assuming ABCD")
 		}
 		r.playerLetters = "ABCD"
 	}
 
 	err := LoadParamEnums()
 	if err != nil {
-		log.Printf("LoadParamEnums: err=%s\n", err)
+		Log.Debugf("LoadParamEnums: err=%s\n", err)
 		// might be fatal, but try to continue
 	}
 	err = LoadParamDefs()
 	if err != nil {
-		log.Printf("LoadParamDefs: err=%s\n", err)
+		Log.Debugf("LoadParamDefs: err=%s\n", err)
 		// might be fatal, but try to continue
 	}
 	err = LoadResolumeJSON()
 	if err != nil {
-		log.Printf("LoadResolumeJSON: err=%s\n", err)
+		Log.Debugf("LoadResolumeJSON: err=%s\n", err)
 		// might be fatal, but try to continue
 	}
 
@@ -148,16 +147,16 @@ func NewRouter() *Router {
 	r.guiClient = osc.NewClient("127.0.0.1", guiPort)
 	r.plogueClient = osc.NewClient("127.0.0.1", ploguePort)
 
-	log.Printf("OSC client ports: resolume=%d gui=%d plogue=%d\n", resolumePort, guiPort, ploguePort)
+	Log.Debugf("OSC client ports: resolume=%d gui=%d plogue=%d\n", resolumePort, guiPort, ploguePort)
 
 	for i, c := range r.playerLetters {
 		resolumeLayer := r.ResolumeLayerForPad(string(c))
 		ffglPort := ResolumePort + i
 		ch := string(c)
 		freeframeClient := osc.NewClient("127.0.0.1", ffglPort)
-		log.Printf("OSC freeframeClient: port=%d layer=%d\n", ffglPort, resolumeLayer)
+		Log.Debugf("OSC freeframeClient: port=%d layer=%d\n", ffglPort, resolumeLayer)
 		r.players[ch] = NewPlayer(ch, resolumeLayer, freeframeClient, r.resolumeClient, r.guiClient)
-		// log.Printf("Pad %s created, resolumeLayer=%d resolumePort=%d\n", ch, resolumeLayer, resolumePort)
+		// Log.Debugf("Pad %s created, resolumeLayer=%d resolumePort=%d\n", ch, resolumeLayer, resolumePort)
 	}
 
 	r.OSCInput = make(chan OSCEvent)
@@ -169,7 +168,7 @@ func NewRouter() *Router {
 	if r.myHostname == "" {
 		hostname, err := os.Hostname()
 		if err != nil {
-			log.Printf("os.Hostname: err=%s\n", err)
+			Log.Debugf("os.Hostname: err=%s\n", err)
 			hostname = "unknown"
 		}
 		r.myHostname = hostname
@@ -203,7 +202,7 @@ func (r *Router) ResolumeLayerForText() int {
 	s := ConfigStringWithDefault("textlayer", defLayer)
 	layernum, err := strconv.Atoi(s)
 	if err != nil {
-		log.Printf("Bad format for textlayer value")
+		Log.Debugf("Bad format for textlayer value")
 		layernum, _ = strconv.Atoi(defLayer)
 	}
 	return layernum
@@ -215,7 +214,7 @@ func (r *Router) ResolumeLayerForPad(pad string) int {
 		s := ConfigStringWithDefault("playerLayers", playerLayers)
 		layers := strings.Split(s, ",")
 		if len(layers) != 4 {
-			log.Printf("ResolumeLayerForPad: playerLayers value needs 4 values\n")
+			Log.Debugf("ResolumeLayerForPad: playerLayers value needs 4 values\n")
 			layers = strings.Split(playerLayers, ",")
 		}
 		r.layerMap = make(map[string]int)
@@ -224,7 +223,7 @@ func (r *Router) ResolumeLayerForPad(pad string) int {
 		r.layerMap["C"], _ = strconv.Atoi(layers[2])
 		r.layerMap["D"], _ = strconv.Atoi(layers[3])
 
-		// log.Printf("Router: Resolume layerMap = %+v\n", r.layerMap)
+		// Log.Debugf("Router: Resolume layerMap = %+v\n", r.layerMap)
 	}
 	return r.layerMap[pad]
 }
@@ -236,7 +235,7 @@ func (r *Router) SetMIDIEventHandler(handler MIDIEventHandler) {
 }
 
 func (r *Router) handleMidiInput(event MidiEvent) {
-	log.Printf("Router.handleMidiInput is disabled\n")
+	Log.Debugf("Router.handleMidiInput is disabled\n")
 	/*
 		for _, player := range r.players {
 			player.HandleMidiInput(event)
@@ -247,7 +246,7 @@ func (r *Router) handleMidiInput(event MidiEvent) {
 func ArgToFloat(nm string, args map[string]string) float32 {
 	f, err := strconv.ParseFloat(args[nm], 32)
 	if err != nil {
-		log.Printf("Unable to parse %s value (%s), assuming 0.0\n", nm, args[nm])
+		Log.Debugf("Unable to parse %s value (%s), assuming 0.0\n", nm, args[nm])
 		f = 0.0
 	}
 	return float32(f)
@@ -279,12 +278,12 @@ func (r *Router) HandleInputEvent(playerName string, args map[string]string) err
 	/*
 		tried := r.eventMutex.TryLock()
 		if !tried {
-			log.Printf("Hey! Unable to lock eventMutex?! now try Lock\n")
+			Log.Debugf("Hey! Unable to lock eventMutex?! now try Lock\n")
 			r.eventMutex.Lock()
-			log.Printf("LOCK OBTAINED!\n")
+			Log.Debugf("LOCK OBTAINED!\n")
 			// return fmt.Errorf("unable to lock eventMutex")
 		} else {
-			log.Printf("TryLock got the lock\n")
+			Log.Debugf("TryLock got the lock\n")
 		}
 	*/
 	defer func() {
@@ -297,7 +296,7 @@ func (r *Router) HandleInputEvent(playerName string, args map[string]string) err
 	}
 
 	if Debug.Router {
-		log.Printf("Router.HandleEvent: player=%s event=%s\n", playerName, event)
+		Log.Debugf("Router.HandleEvent: player=%s event=%s\n", playerName, event)
 	}
 
 	// XXX - player value should allow "*" and other multi-player values
@@ -309,7 +308,7 @@ func (r *Router) HandleInputEvent(playerName string, args map[string]string) err
 	switch event {
 
 	case "engine":
-		log.Printf("Router: ignoring engine event\n")
+		Log.Debugf("Router: ignoring engine event\n")
 		return nil
 
 	case "cursor_down", "cursor_drag", "cursor_up":
@@ -325,12 +324,12 @@ func (r *Router) HandleInputEvent(playerName string, args map[string]string) err
 		player.generateSprite("dummy", x, y, z)
 
 	case "midi_reset":
-		log.Printf("HandleEvent: midi_reset, sending ANO\n")
+		Log.Debugf("HandleEvent: midi_reset, sending ANO\n")
 		player.HandleMIDITimeReset()
 		player.sendANO()
 
 	case "audio_reset":
-		log.Printf("HandleEvent: audio_reset!!\n")
+		Log.Debugf("HandleEvent: audio_reset!!\n")
 		go r.audioReset()
 
 	case "note":
@@ -342,7 +341,7 @@ func (r *Router) HandleInputEvent(playerName string, args map[string]string) err
 		if err != nil {
 			return err
 		}
-		log.Printf("HandleInputEvent: notestr=%s clickstr=%s\n", notestr, clickstr)
+		Log.Debugf("HandleInputEvent: notestr=%s clickstr=%s\n", notestr, clickstr)
 		note, err := NoteFromString(notestr)
 		if err != nil {
 			return err
@@ -353,7 +352,7 @@ func (r *Router) HandleInputEvent(playerName string, args map[string]string) err
 		SendNoteToSynth(note)
 
 	default:
-		log.Printf("HandleInputEvent: event not handled: %s\n", event)
+		Log.Debugf("HandleInputEvent: event not handled: %s\n", event)
 	}
 
 	return nil
@@ -457,7 +456,7 @@ func (r *Router) handleOSCInput(e OSCEvent) {
 	// defer r.eventMutex.Unlock()
 
 	if Debug.OSC {
-		log.Printf("Router.HandleOSCInput: msg=%s\n", e.Msg.String())
+		Log.Debugf("Router.HandleOSCInput: msg=%s\n", e.Msg.String())
 	}
 	switch e.Msg.Address {
 
@@ -474,7 +473,7 @@ func (r *Router) handleOSCInput(e OSCEvent) {
 		r.handlePatchXREvent(e.Msg)
 
 	default:
-		log.Printf("Router.HandleOSCInput: Unrecognized OSC message source=%s msg=%s\n", e.Source, e.Msg)
+		Log.Debugf("Router.HandleOSCInput: Unrecognized OSC message source=%s msg=%s\n", e.Source, e.Msg)
 	}
 }
 
@@ -498,15 +497,15 @@ func (r *Router) audioReset() {
 /*
 func (r *Router) recordEvent(eventType string, pad string, method string, args string) {
 	if !r.recordingOn {
-		log.Printf("HEY! recordEvent called when recordingOn is false!?\n")
+		Log.Debugf("HEY! recordEvent called when recordingOn is false!?\n")
 		return
 	}
 	if r.recordingFile == nil {
-		log.Printf("HEY! recordEvent called when recordingFile is nil!?\n")
+		Log.Debugf("HEY! recordEvent called when recordingFile is nil!?\n")
 		return
 	}
 	if args[0] != '{' {
-		log.Printf("HEY! first char of args in recordEvent needs to be a curly brace!\n")
+		Log.Debugf("HEY! first char of args in recordEvent needs to be a curly brace!\n")
 		return
 	}
 	if r.recordingFile != nil {
@@ -544,7 +543,7 @@ func (r *Router) recordingSave(name string) error {
 	if err != nil {
 		return err
 	}
-	log.Printf("nbytes copied = %d\n", nBytes)
+	Log.Debugf("nbytes copied = %d\n", nBytes)
 	return nil
 }
 
@@ -556,7 +555,7 @@ func (r *Router) recordingPlayback(events []*PlaybackEvent) error {
 
 	// XXX - WARNING, this code hasn't been exercised in a LONG time,
 	// XXX - someday it'll probably be resurrected.
-	log.Printf("recordingPlay, #events = %d\n", len(events))
+	Log.Debugf("recordingPlay, #events = %d\n", len(events))
 	r.killPlayback = false
 
 	r.notifyGUI("start")
@@ -565,7 +564,7 @@ func (r *Router) recordingPlayback(events []*PlaybackEvent) error {
 
 	for _, pe := range events {
 		if r.killPlayback {
-			log.Printf("killPlayback!\n")
+			Log.Debugf("killPlayback!\n")
 			r.sendANO()
 			break
 		}
@@ -584,7 +583,7 @@ func (r *Router) recordingPlayback(events []*PlaybackEvent) error {
 			// time := (*pe).time
 			args := (*pe).args
 			rawargs := (*pe).rawargs
-			// log.Printf("eventType=%s method=%s\n", eventType, method)
+			// Log.Debugf("eventType=%s method=%s\n", eventType, method)
 			switch eventType {
 			case "cursor":
 				id := args["id"]
@@ -606,13 +605,13 @@ func (r *Router) recordingPlayback(events []*PlaybackEvent) error {
 				// since we already have args
 				player.ExecuteAPI(method, args, rawargs)
 			case "global":
-				log.Printf("NOT doing anying for global playback, method=%s\n", method)
+				Log.Debugf("NOT doing anying for global playback, method=%s\n", method)
 			default:
-				log.Printf("Unknown eventType=%s in recordingPlay\n", eventType)
+				Log.Debugf("Unknown eventType=%s in recordingPlay\n", eventType)
 			}
 		}
 	}
-	log.Printf("recordingPlay has finished!\n")
+	Log.Debugf("recordingPlay has finished!\n")
 	r.notifyGUI("stop")
 	return nil
 }
@@ -635,12 +634,12 @@ func (r *Router) recordingLoad(name string) ([]*PlaybackEvent, error) {
 		nlines++
 		words := strings.SplitN(line, " ", 5)
 		if len(words) < 4 {
-			log.Printf("recordings line has less than 3 words? line=%s\n", line)
+			Log.Debugf("recordings line has less than 3 words? line=%s\n", line)
 			continue
 		}
 		evTime, err := strconv.ParseFloat(words[0], 64)
 		if err != nil {
-			log.Printf("Unable to convert time in playback file: %s\n", words[0])
+			Log.Debugf("Unable to convert time in playback file: %s\n", words[0])
 			continue
 		}
 		playbackType := words[1]
@@ -651,20 +650,20 @@ func (r *Router) recordingLoad(name string) ([]*PlaybackEvent, error) {
 			rawargs := words[4]
 			args, err := StringMap(rawargs)
 			if err != nil {
-				log.Printf("Unable to parse JSON: %s\n", rawargs)
+				Log.Debugf("Unable to parse JSON: %s\n", rawargs)
 				continue
 			}
 			pe := &PlaybackEvent{time: evTime, eventType: playbackType, pad: pad, method: method, args: args, rawargs: rawargs}
 			events = append(events, pe)
 		default:
-			log.Printf("Unknown playbackType in playback file: %s\n", playbackType)
+			Log.Debugf("Unknown playbackType in playback file: %s\n", playbackType)
 			continue
 		}
 	}
 	if err != io.EOF {
 		return nil, err
 	}
-	log.Printf("Number of playback events is %d, lines is %d\n", len(events), nlines)
+	Log.Debugf("Number of playback events is %d, lines is %d\n", len(events), nlines)
 	return events, nil
 }
 
@@ -683,22 +682,22 @@ func (r *Router) notifyGUI(eventName string) {
 	msg.Append(eventName)
 	r.guiClient.Send(msg)
 	if Debug.OSC {
-		log.Printf("Router.notifyGUI: msg=%v\n", msg)
+		Log.Debugf("Router.notifyGUI: msg=%v\n", msg)
 	}
 }
 
 func (r *Router) handleMMTTButton(butt string) {
 	presetName := ConfigStringWithDefault(butt, "")
 	if presetName == "" {
-		log.Printf("No Preset assigned to BUTTON %s, using Perky_Shapes\n", butt)
+		Log.Debugf("No Preset assigned to BUTTON %s, using Perky_Shapes\n", butt)
 		presetName = "Perky_Shapes"
 		return
 	}
 	preset := GetPreset("quad." + presetName)
-	log.Printf("Router.handleMMTTButton: butt=%s preset=%s\n", butt, presetName)
+	Log.Debugf("Router.handleMMTTButton: butt=%s preset=%s\n", butt, presetName)
 	err := preset.loadQuadPreset("*")
 	if err != nil {
-		log.Printf("handleMMTTButton: preset=%s err=%s\n", presetName, err)
+		Log.Debugf("handleMMTTButton: preset=%s err=%s\n", presetName, err)
 	}
 
 	text := strings.ReplaceAll(presetName, "_", "\n")
@@ -730,19 +729,19 @@ func (r *Router) handleClientRestart(msg *osc.Message) {
 	_ = tags
 	nargs := msg.CountArguments()
 	if nargs < 1 {
-		log.Printf("Router.handleOSCEvent: too few arguments\n")
+		Log.Debugf("Router.handleOSCEvent: too few arguments\n")
 		return
 	}
 	// Even though the argument is an integer port number,
 	// it's a string in the OSC message sent from the Palette FFGL plugin.
 	s, err := argAsString(msg, 0)
 	if err != nil {
-		log.Printf("Router.handleOSCEvent: err=%s\n", err)
+		Log.Debugf("Router.handleOSCEvent: err=%s\n", err)
 		return
 	}
 	portnum, err := strconv.Atoi(s)
 	if err != nil {
-		log.Printf("Router.handleOSCEvent: Atoi err=%s\n", err)
+		Log.Debugf("Router.handleOSCEvent: Atoi err=%s\n", err)
 		return
 	}
 	var found *Player
@@ -752,7 +751,7 @@ func (r *Router) handleClientRestart(msg *osc.Message) {
 		}
 	})
 	if found == nil {
-		log.Printf("handleClientRestart unable to find Player with portnum=%d\n", portnum)
+		Log.Debugf("handleClientRestart unable to find Player with portnum=%d\n", portnum)
 	} else {
 		found.sendAllParameters()
 	}
@@ -765,17 +764,17 @@ func (r *Router) handleMMTTCursor(msg *osc.Message) {
 	_ = tags
 	nargs := msg.CountArguments()
 	if nargs < 1 {
-		log.Printf("Router.handleMMTTCursor: too few arguments\n")
+		Log.Debugf("Router.handleMMTTCursor: too few arguments\n")
 		return
 	}
 	ddu, err := argAsString(msg, 0)
 	if err != nil {
-		log.Printf("Router.handleMMTTEvent: err=%s\n", err)
+		Log.Debugf("Router.handleMMTTEvent: err=%s\n", err)
 		return
 	}
 	cid, err := argAsString(msg, 1)
 	if err != nil {
-		log.Printf("Router.handleMMTTEvent: err=%s\n", err)
+		Log.Debugf("Router.handleMMTTEvent: err=%s\n", err)
 		return
 	}
 	player := "A"
@@ -785,17 +784,17 @@ func (r *Router) handleMMTTCursor(msg *osc.Message) {
 	}
 	x, err := argAsFloat32(msg, 2)
 	if err != nil {
-		log.Printf("Router.handleMMTTEvent: x err=%s\n", err)
+		Log.Debugf("Router.handleMMTTEvent: x err=%s\n", err)
 		return
 	}
 	y, err := argAsFloat32(msg, 3)
 	if err != nil {
-		log.Printf("Router.handleMMTTEvent: y err=%s\n", err)
+		Log.Debugf("Router.handleMMTTEvent: y err=%s\n", err)
 		return
 	}
 	z, err := argAsFloat32(msg, 4)
 	if err != nil {
-		log.Printf("Router.handleMMTTEvent: z err=%s\n", err)
+		Log.Debugf("Router.handleMMTTEvent: z err=%s\n", err)
 		return
 	}
 
@@ -804,12 +803,12 @@ func (r *Router) handleMMTTCursor(msg *osc.Message) {
 		// If it's not a player, it's a button.
 		buttonDepth := ConfigFloatWithDefault("mmttbuttondepth", 0.002)
 		if z > buttonDepth {
-			log.Printf("NOT triggering button too deep z=%f buttonDepth=%f\n", z, buttonDepth)
+			Log.Debugf("NOT triggering button too deep z=%f buttonDepth=%f\n", z, buttonDepth)
 			return
 		}
 		if ddu == "down" {
 			if Debug.MMTT {
-				log.Printf("MMT BUTTON TRIGGERED buttonDepth=%f  z=%f\n", buttonDepth, z)
+				Log.Debugf("MMT BUTTON TRIGGERED buttonDepth=%f  z=%f\n", buttonDepth, z)
 			}
 			r.handleMMTTButton(player)
 		}
@@ -839,7 +838,7 @@ func (r *Router) handleMMTTCursor(msg *osc.Message) {
 	ce.Y = boundval(((ce.Y - 0.5) * yexpand) + 0.5)
 
 	if Debug.MMTT && Debug.Cursor {
-		log.Printf("MMTT Cursor %s %s xyz= %f %f %f\n", ce.Source, ce.Ddu, ce.X, ce.Y, ce.Z)
+		Log.Debugf("MMTT Cursor %s %s xyz= %f %f %f\n", ce.Source, ce.Ddu, ce.X, ce.Y, ce.Z)
 	}
 
 	TheEngine().handleCursorEvent(ce)
@@ -860,12 +859,12 @@ func (r *Router) handleOSCEvent(msg *osc.Message) {
 	_ = tags
 	nargs := msg.CountArguments()
 	if nargs < 1 {
-		log.Printf("Router.handleOSCEvent: too few arguments\n")
+		Log.Debugf("Router.handleOSCEvent: too few arguments\n")
 		return
 	}
 	rawargs, err := argAsString(msg, 0)
 	if err != nil {
-		log.Printf("Router.handleOSCEvent: err=%s\n", err)
+		Log.Debugf("Router.handleOSCEvent: err=%s\n", err)
 		return
 	}
 	r.handleInputEventRaw(rawargs)
@@ -880,7 +879,7 @@ func (r *Router) handleInputEventRaw(rawargs string) {
 	playerName := extractPlayer(args)
 	err = r.HandleInputEvent(playerName, args)
 	if err != nil {
-		log.Printf("Router.handleOSCEvent: err=%s\n", err)
+		Log.Debugf("Router.handleOSCEvent: err=%s\n", err)
 		return
 	}
 }
@@ -891,27 +890,27 @@ func (r *Router) handlePatchXREvent(msg *osc.Message) {
 	_ = tags
 	nargs := msg.CountArguments()
 	if nargs < 1 {
-		log.Printf("Router.handlePatchXREvent: too few arguments\n")
+		Log.Debugf("Router.handlePatchXREvent: too few arguments\n")
 		return
 	}
 	var err error
 	if nargs < 3 {
-		log.Printf("handlePatchXREvent: not enough arguments\n")
+		Log.Debugf("handlePatchXREvent: not enough arguments\n")
 		return
 	}
 	action, _ := argAsString(msg, 0)
 	playerName, _ := argAsString(msg, 1)
 	switch action {
 	case "cursordown":
-		log.Printf("handlePatchXREvent: cursordown ignored\n")
+		Log.Debugf("handlePatchXREvent: cursordown ignored\n")
 		return
 	case "cursorup":
-		log.Printf("handlePatchXREvent: cursorup ignored\n")
+		Log.Debugf("handlePatchXREvent: cursorup ignored\n")
 		return
 	}
 	// drag
 	if nargs < 5 {
-		log.Printf("Not enough arguments for drag\n")
+		Log.Debugf("Not enough arguments for drag\n")
 		return
 	}
 	x, _ := argAsFloat32(msg, 2)
@@ -927,7 +926,7 @@ func (r *Router) handlePatchXREvent(msg *osc.Message) {
 	// we didn't add "player" to the args, no need for extractPlayer
 	err = r.HandleInputEvent(playerName, args)
 	if err != nil {
-		log.Printf("Router.handlePatchXREvent: err=%s\n", err)
+		Log.Debugf("Router.handlePatchXREvent: err=%s\n", err)
 		return
 	}
 }
@@ -938,29 +937,29 @@ func (r *Router) handleOSCSpriteEvent(msg *osc.Message) {
 	_ = tags
 	nargs := msg.CountArguments()
 	if nargs < 1 {
-		log.Printf("Router.handleOSCSpriteEvent: too few arguments\n")
+		Log.Debugf("Router.handleOSCSpriteEvent: too few arguments\n")
 		return
 	}
 	rawargs, err := argAsString(msg, 0)
 	if err != nil {
-		log.Printf("Router.handleOSCSpriteEvent: err=%s\n", err)
+		Log.Debugf("Router.handleOSCSpriteEvent: err=%s\n", err)
 		return
 	}
 	if len(rawargs) == 0 || rawargs[0] != '{' {
-		log.Printf("Router.handleOSCSpriteEvent: first char of args must be curly brace\n")
+		Log.Debugf("Router.handleOSCSpriteEvent: first char of args must be curly brace\n")
 		return
 	}
 
 	args, err := StringMap(rawargs)
 	if err != nil {
-		log.Printf("Router.handleOSCSpriteEvent: Unable to process args=%s\n", rawargs)
+		Log.Debugf("Router.handleOSCSpriteEvent: Unable to process args=%s\n", rawargs)
 		return
 	}
 
 	playerName := extractPlayer(args)
 	err = r.HandleInputEvent(playerName, args)
 	if err != nil {
-		log.Printf("Router.handleOSCSpriteEvent: err=%s\n", err)
+		Log.Debugf("Router.handleOSCSpriteEvent: err=%s\n", err)
 		return
 	}
 }
