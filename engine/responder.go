@@ -40,6 +40,10 @@ func (ctx *ResponderContext) CurrentClick() Clicks {
 	return CurrentClick()
 }
 
+func (ctx *ResponderContext) ScheduleDebug() string {
+	return fmt.Sprintf("%s", ctx.scheduler)
+}
+
 func (ctx *ResponderContext) ScheduleNoteNow(nt *Note) {
 	click := CurrentClick()
 	log.Printf("ResponderContext.ScheduleNow: nt=%s clk=%d\n", nt, click)
@@ -52,6 +56,7 @@ func (ctx *ResponderContext) ScheduleNoteAt(nt *Note, click Clicks) {
 		return
 	}
 	log.Printf("ResponderContext.ScheduleAt: nt=%s clicks=%d\n", nt, click)
+	ctx.scheduler.ScheduleNoteAt(nt, click)
 }
 
 func (rm *ResponderManager) AddResponder(name string, responder Responder) {
