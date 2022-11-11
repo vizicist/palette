@@ -22,25 +22,20 @@ func NewResponder_default() *Responder_default {
 /////////////////////////// external interface
 
 func (r *Responder_default) OnCursorEvent(ctx *engine.ResponderContext, ce engine.CursorEvent) {
-	log.Printf("Responder_default.OnCursorEvent: ce=%v\n", ce)
-	nt1 := r.cursorToNote(ce)
-	nt2, _ := engine.NoteFromString("c")
-
 	clicks := ctx.CurrentClick()
-	ctx.ScheduleNoteNow(nt1)
-	ctx.ScheduleNoteAt(nt2, clicks)
+	nt := r.cursorToNote(ce)
+	log.Printf("Responder_default.OnCursorEvent: ce=%s nt=%s\n", ce, nt)
+	ctx.ScheduleNoteAt(nt, clicks)
+	log.Printf("Schedule is now: %s\n", ctx.ScheduleDebug())
 
 }
 
 /////////////////////////// internal things
 
 func (r *Responder_default) cursorToNote(ce engine.CursorEvent) *engine.Note {
-	pitch := int(ce.X * 126.0)
-	_ = pitch
-	note, err := engine.NoteFromString("g")
-	if err != nil {
-		log.Printf("xyzToNote: bad note - err=%s\n", err)
-		return nil
-	}
-	return note
+	pitch := uint8(ce.X * 126.0)
+	velocity := uint8(ce.Z * 128.0)
+	duration := 2 * engine.QuarterNote
+	synth := "0103 Ambient_E-Guitar"
+	return engine.NewNote(pitch, velocity, duration, synth)
 }

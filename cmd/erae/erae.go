@@ -18,8 +18,8 @@ func main() {
 	signal.Ignore(syscall.SIGHUP)
 	signal.Ignore(syscall.SIGINT)
 
+	engine.InitLog("erae")
 	engine.InitMIDI()
-	engine.SetLogname("erae")
 
 	flag.Parse()
 

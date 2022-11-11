@@ -85,20 +85,19 @@ func NewSynth(port string, channel int, bank int, program int) *Synth {
 	}
 
 	if midiChannelOut == nil {
-		log.Printf("InitSynths: Unable to open midi port=%s\n", port)
+		log.Printf("InitSynths: Unable to open port=%s\n", port)
 		return nil
-	} else {
-		sp := &Synth{
-			portchannel: portchannel,
-			bank:        bank,
-			program:     program,
-			// midiChannelOut: midiChannelOut,
-			noteDown:      make([]bool, 128),
-			noteDownCount: make([]int, 128),
-		}
-		sp.ClearNoteDowns() // debugging, shouldn't be needed
-		return sp
 	}
+	sp := &Synth{
+		portchannel: portchannel,
+		bank:        bank,
+		program:     program,
+		// midiChannelOut: midiChannelOut,
+		noteDown:      make([]bool, 128),
+		noteDownCount: make([]int, 128),
+	}
+	sp.ClearNoteDowns() // debugging, shouldn't be needed
+	return sp
 }
 
 // SendANO sends all-notes-off
@@ -194,60 +193,58 @@ func SendNoteToSynth(note *Note) {
 	// This only sends the bank and/or program if they change
 	mc.SendBankProgram(synth.bank, synth.program)
 
-	log.Printf("SendNoteToSynth needs work\n")
-	/*
-		e := portmidi.Event{
-			Timestamp: time.Now(),
-			Status:    int64(synth.portchannel.channel - 1),
-			Data1:     int64(note.Pitch),
-			Data2:     int64(note.Velocity),
-		}
-		if note.TypeOf == "noteon" && note.Velocity == 0 {
-			log.Printf("MIDIIO.SendNote: noteon with velocity==0 is changed to a noteoff\n")
-			note.TypeOf = "noteoff"
-		}
-		switch note.TypeOf {
-		case "noteon":
-			e.Status |= 0x90
+	status := byte(synth.portchannel.channel - 1)
+	data1 := byte(note.Pitch)
+	data2 := byte(note.Velocity)
+	if note.TypeOf == "noteon" && note.Velocity == 0 {
+		log.Printf("MIDIIO.SendNote: noteon with velocity==0 is changed to a noteoff\n")
+		note.TypeOf = "noteoff"
+	}
+	switch note.TypeOf {
+	case "noteon":
+		status |= 0x90
 
-			// We now allow multiple notes with the same pitch,
-			// which assumes the synth handles it okay.
-			// There might need to be an option to
-			// automatically send a noteOff before sending the noteOn.
-			// if synth.noteDown[note.Pitch] {
-			//     log.Printf("SendNoteToSynth: Ignoring second noteon for synth=%p synth=%s chan=%d pitch=%d\n", synth, synthName, synth.portchannel.channel, note.Pitch)
-			// }
+		// We now allow multiple notes with the same pitch,
+		// which assumes the synth handles it okay.
+		// There might need to be an option to
+		// automatically send a noteOff before sending the noteOn.
+		// if synth.noteDown[note.Pitch] {
+		//     log.Printf("SendNoteToSynth: Ignoring second noteon for synth=%p synth=%s chan=%d pitch=%d\n", synth, synthName, synth.portchannel.channel, note.Pitch)
+		// }
 
-			synth.noteDown[note.Pitch] = true
-			synth.noteDownCount[note.Pitch]++
-			if Debug.MIDI {
-				log.Printf("SendNoteToSynth: synth=%p noteon noteCount>0 chan=%d pitch=%d downcount=%d\n", synth, synth.portchannel.channel, note.Pitch, synth.noteDownCount[note.Pitch])
-			}
-		case "noteoff":
-			e.Status |= 0x80
-			e.Data2 = 0
-			synth.noteDown[note.Pitch] = false
-			synth.noteDownCount[note.Pitch]--
-			if Debug.MIDI {
-				log.Printf("SendNoteToSynth: synth=%p noteoff pitch=%d downcount is now %d\n", synth, note.Pitch, synth.noteDownCount[note.Pitch])
-			}
-		case "controller":
-			e.Status |= 0xB0
-		case "progchange":
-			e.Status |= 0xC0
-		case "chanpressure":
-			e.Status |= 0xD0
-		case "pitchbend":
-			e.Status |= 0xE0
-		default:
-			log.Printf("SendNoteToSynth: can't handle Note TypeOf=%v\n", note.TypeOf)
-			return
-		}
-
+		synth.noteDown[note.Pitch] = true
+		synth.noteDownCount[note.Pitch]++
 		if Debug.MIDI {
-			log.Printf("SendNoteToSynth: synth=%s status=0x%02x data1=%d data2=%d\n", mc.midiDeviceOutput.Name(), e.Status, e.Data1, e.Data2)
+			log.Printf("SendNoteToSynth: synth=%p noteon noteCount>0 chan=%d pitch=%d downcount=%d\n", synth, synth.portchannel.channel, note.Pitch, synth.noteDownCount[note.Pitch])
 		}
+	case "noteoff":
+		status |= 0x80
+		data2 = 0
+		synth.noteDown[note.Pitch] = false
+		synth.noteDownCount[note.Pitch]--
+		if Debug.MIDI {
+			log.Printf("SendNoteToSynth: synth=%p noteoff pitch=%d downcount is now %d\n", synth, note.Pitch, synth.noteDownCount[note.Pitch])
+		}
+	case "controller":
+		status |= 0xB0
+	case "progchange":
+		status |= 0xC0
+	case "chanpressure":
+		status |= 0xD0
+	case "pitchbend":
+		status |= 0xE0
+	default:
+		log.Printf("SendNoteToSynth: can't handle Note TypeOf=%v\n", note.TypeOf)
+		return
+	}
 
-		mc.midiDeviceOutput.stream.WriteShort(e.Status, e.Data1, e.Data2)
-	*/
+	if Debug.MIDI {
+		log.Printf("SendNoteToSynth: synth=%s status=0x%02x data1=%d data2=%d\n", mc.output.String(), status, data1, data2)
+	}
+
+	err := mc.output.Send([]byte{status, data1, data2})
+	if err != nil {
+		log.Printf("output.Send: err=%s\n", err)
+	}
+	// mc.midiDeviceOutput.stream.WriteShort(e.Status, e.Data1, e.Data2)
 }

@@ -4,16 +4,16 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
-	"sync"
 	"time"
 
 	"github.com/hypebeast/go-osc/osc"
 )
 
 type Scheduler struct {
-	Items    []SchedItem
-	nextItem int
+	firstItem *SchedItem
+	lastItem  *SchedItem
 	// mutex    sync.RWMutex
+	nextSid int
 
 	activePhrasesManager *ActivePhrasesManager
 
@@ -43,118 +43,83 @@ type Scheduler struct {
 	aliveSecs              float64
 }
 
-var currentMilli int64
-var currentMilliMutex sync.Mutex
-var currentMilliOffset int64
-var currentClickOffset Clicks
-var clicksPerSecond int
-var currentClick Clicks
-var oneBeat Clicks
-var currentClickMutex sync.Mutex
-
-// CurrentMilli is the time from the start, in milliseconds
-const defaultClicksPerSecond = 192
-const minClicksPerSecond = (defaultClicksPerSecond / 16)
-const maxClicksPerSecond = (defaultClicksPerSecond * 16)
-
-var defaultSynth = "default"
-
-// var loopForever = 999999
-
-// Bits for Events
-const EventMidiInput = 0x01
-const EventNoteOutput = 0x02
-const EventCursor = 0x04
-const EventAll = EventMidiInput | EventNoteOutput | EventCursor
-
-func CurrentClick() Clicks {
-	currentClickMutex.Lock()
-	defer currentClickMutex.Unlock()
-	return currentClick
-}
-
-func SetCurrentClick(clk Clicks) {
-	currentClickMutex.Lock()
-	currentClick = clk
-	currentClickMutex.Unlock()
-}
-
-// InitializeClicksPerSecond initializes
-func InitializeClicksPerSecond(clkpersec int) {
-	clicksPerSecond = clkpersec
-	currentMilliOffset = 0
-	currentClickOffset = 0
-	oneBeat = Clicks(clicksPerSecond / 2) // i.e. 120bpm
-}
-
-// ChangeClicksPerSecond is what you use to change the tempo
-func ChangeClicksPerSecond(factor float64) {
-	TempoFactor = factor
-	clkpersec := int(defaultClicksPerSecond * factor)
-	if clkpersec < minClicksPerSecond {
-		clkpersec = minClicksPerSecond
-	}
-	if clkpersec > maxClicksPerSecond {
-		clkpersec = maxClicksPerSecond
-	}
-	currentMilliOffset = CurrentMilli()
-	currentClickOffset = CurrentClick()
-	clicksPerSecond = clkpersec
-	oneBeat = Clicks(clicksPerSecond / 2)
-}
-
-// Seconds2Clicks converts a Time value (elapsed seconds) to Clicks
-func Seconds2Clicks(tm float64) Clicks {
-	return currentClickOffset + Clicks(0.5+float64(tm*1000-float64(currentMilliOffset))*(float64(clicksPerSecond)/1000.0))
-}
-
-// Clicks2Seconds converts Clicks to Time (seconds), relative
-func Clicks2Seconds(clk Clicks) float64 {
-	return float64(clk) / float64(clicksPerSecond)
-}
-
-// Clicks2Seconds converts Clicks to Time (seconds), absolute
-func Clicks2SecondsAbsolute(clk Clicks) float64 {
-	// Take current*Offset values into account
-	clk -= currentClickOffset
-	secs := float64(clk) / float64(clicksPerSecond)
-	secs -= (float64(currentMilliOffset) * 1000.0)
-	return secs
-}
-
-// TempoFactor xxx
-var TempoFactor = float64(1.0)
-
-func CurrentMilli() int64 {
-	currentMilliMutex.Lock()
-	defer currentMilliMutex.Unlock()
-	return int64(currentMilli)
-}
-
-func SetCurrentMilli(m int64) {
-	currentMilliMutex.Lock()
-	currentMilli = m
-	currentMilliMutex.Unlock()
-}
-
-type PhraseRef struct {
-	phrase *Phrase
-}
-
 type SchedItem struct {
-	ClickStart Clicks
-	PhraseIter *PhraseRef
+	clickStart Clicks
+	ID         string
+	phrase     *Phrase
+	prev       *SchedItem
+	next       *SchedItem
 }
 
-func (sched *Scheduler) ScheduleNoteAt(nt *Note, clk Clicks) {
-	log.Printf("Scheduler.ScheduleNoteAt: nt=%s clk=%d\n", nt, clk)
+func (sched *Scheduler) FindInsert(click Clicks) *SchedItem {
+	si := sched.firstItem
+	for si != nil {
+		if si.clickStart >= click {
+			return si
+		}
+		si = si.next
+	}
+	return nil
+}
+
+func (sched *Scheduler) Format(f fmt.State, c rune) {
+	s := "Schedule{"
+	for si := sched.firstItem; si != nil; si = si.next {
+		s += fmt.Sprintf("(%d,%s,%s)", si.clickStart, si.ID, si.phrase)
+	}
+	s += "}"
+	f.Write([]byte(s))
+}
+
+func (sched *Scheduler) ScheduleNoteAt(nt *Note, click Clicks) (id string) {
+	log.Printf("Scheduler.ScheduleNoteAt: nt=%s click=%d\n", nt, click)
+	phr := NewPhrase().InsertNote(nt)
+	id = fmt.Sprintf("%d", sched.nextSid)
+	newItem := &SchedItem{
+		clickStart: click,
+		phrase:     phr,
+		prev:       nil,
+		next:       nil,
+		ID:         id,
+	}
+	sched.nextSid += 1
+	// empty list
+	if sched.firstItem == nil {
+		sched.firstItem = newItem
+		sched.lastItem = newItem
+		return
+	}
+	// Quick check for common situation, adding after lastItem
+	if sched.lastItem.clickStart <= click {
+		lastlast := sched.lastItem
+		sched.lastItem = newItem
+		newItem.prev = lastlast
+		lastlast.next = newItem
+		return
+	}
+	// otherwise, find the item before which will insert this newItem
+	insertBefore := sched.FindInsert(click)
+	if insertBefore == nil {
+		// The common situation should have already handled this
+		log.Printf("ScheduleNoteAt: Unexpected insert = nil?\n")
+		return
+	}
+	newItem.prev = insertBefore.prev
+	newItem.next = insertBefore
+	if insertBefore.prev == nil {
+		// it's the new first item
+		sched.firstItem = newItem
+	}
+	insertBefore.prev.next = newItem
+	insertBefore.prev = newItem
+	return
 }
 
 func NewScheduler() *Scheduler {
 	transposebeats := Clicks(ConfigIntWithDefault("transposebeats", 48))
 	s := &Scheduler{
-		Items:           []SchedItem{},
-		nextItem:        -1,
+		firstItem:       nil,
+		lastItem:        nil,
 		transposeAuto:   ConfigBoolWithDefault("transposeauto", true),
 		transposeClicks: transposebeats,
 		transposeNext:   transposebeats * oneBeat, // first one
@@ -223,7 +188,9 @@ func (sched *Scheduler) Start() {
 			// Non-internal cursor activity turns attract mode off instantly.
 			if !sched.attractModeIsOn && sinceLastAttractChange > sched.attractIdleSecs {
 				// Nothing happening for a while, turn attract mode on
-				sched.Control <- Command{"attractmode", true}
+				go func() {
+					sched.Control <- Command{"attractmode", true}
+				}()
 				// sched.SetAttractMode(true)
 			}
 		}
@@ -278,9 +245,14 @@ func (sched *Scheduler) advanceClickTo(toClick Clicks) {
 	defer func() {
 		TheEngine().Router.eventMutex.Unlock()
 	}()
-	// log.Printf("Scheduler.advanceClickTo: B\n")
+	// log.Printf("Scheduler.advanceClickTo: toClick=%d sched=%s\n", toClick, sched)
 
 	for clk := sched.lastClick; clk < toClick; clk++ {
+		for si := sched.firstItem; si != nil; si = si.next {
+			if si.clickStart <= clk {
+				sched.activePhrasesManager.StartPhraseAt(si.clickStart, si.phrase, si.ID)
+			}
+		}
 		sched.activePhrasesManager.AdvanceByOneClick()
 		TheEngine().CursorManager.checkCursorUp(time.Now())
 	}
@@ -357,6 +329,7 @@ func (player *Player) handleCursorEvent(e CursorEvent) {
 }
 */
 
+/*
 func (sched *Scheduler) GetAttractMode() bool {
 	return sched.attractModeIsOn
 }
@@ -371,6 +344,7 @@ func (sched *Scheduler) SetAttractMode(onoff bool) {
 	log.Printf("AttractMode: changing to %v\n", onoff)
 	sched.lastAttractChange = sched.Uptime()
 }
+*/
 
 func (sched *Scheduler) Uptime() float64 {
 	return sched.now.Sub(sched.time0).Seconds()

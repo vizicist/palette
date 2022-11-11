@@ -18,6 +18,14 @@ import (
 // XXX - used as absolute time versus Clicks that are step numbers
 type Clicks int64
 
+const ClicksPerQuarterNote = 24 // constant, not based on defaultClicksPerSecond or anything that changes
+const WholeNote = Clicks(96)
+const HalfNote = Clicks(48)
+const QuarterNote = Clicks(24)
+const EighthNote = Clicks(12)
+const SixteenthNote = Clicks(6)
+const ThirtySecondNote = Clicks(3)
+
 // MaxClicks is the high-possible value for Clicks
 const MaxClicks = Clicks(math.MaxInt64)
 
@@ -86,10 +94,7 @@ func (p *Phrase) RUnlock() {
 
 // Format xxx
 func (n *Note) Format(f fmt.State, c rune) {
-	p := &Phrase{}
-	p.InsertNoLock(n)
-	s := p.ToString()
-	f.Write([]byte(s))
+	f.Write([]byte(n.String()))
 }
 
 // NewNote create a new Note of type note, i.e. with duration
@@ -238,11 +243,12 @@ func (n Note) String() string {
 	if n.TypeOf == "note" {
 		s += fmt.Sprintf("d%d", n.Duration)
 	}
-	s += fmt.Sprintf("v%dt%d'", n.Velocity, n.Clicks)
+	s += fmt.Sprintf("v%dt%d", n.Velocity, n.Clicks)
 	if n.Synth != "" {
-		s += fmt.Sprintf("S%s'", n.Synth)
+		s += fmt.Sprintf("S%s", n.Synth)
 
 	}
+	s += "'"
 	return s
 }
 

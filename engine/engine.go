@@ -5,7 +5,6 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 
@@ -27,20 +26,17 @@ var AliveOutputPort = 3331
 var ResolumePort = 3334
 
 var theEngine *Engine
-var logInitialized = false
 
 func TheEngine() *Engine {
 	if theEngine == nil {
-		theEngine = newEngine("engine")
+		InitLog("engine")
+		theEngine = newEngine()
 	}
 	return theEngine
 }
 
-func newEngine(logname string) *Engine {
+func newEngine() *Engine {
 	e := &Engine{}
-	if !logInitialized {
-		initLogname(logname)
-	}
 	e.initDebug()
 	e.ProcessManager = NewProcessManager()
 	e.Router = NewRouter()
@@ -48,10 +44,6 @@ func newEngine(logname string) *Engine {
 	e.CursorManager = NewCursorManager()
 	e.responderManager = NewResponderManager()
 	return e
-}
-
-func SetLogname(logname string) {
-	initLogname(logname)
 }
 
 func ProcessStatus() string {
@@ -114,25 +106,6 @@ func (e *Engine) StopMe() {
 	e.killme = true
 }
 
-func initLogname(logname string) {
-
-	defaultLogger := log.Default()
-	defaultLogger.SetFlags(-2)
-
-	logfile := logname + ".log"
-	logpath := LogFilePath(logfile)
-	file, err := os.OpenFile(logpath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0642)
-	if err != nil {
-		fmt.Printf("InitLog: Unable to open logfile=%s logpath=%s err=%s", logfile, logpath, err)
-		return
-	}
-	log.SetFlags(-2)
-	logger := logWriter{file: file}
-	log.SetFlags(-2)
-	log.SetOutput(logger)
-	logInitialized = true
-}
-
 func (e *Engine) initDebug() {
 	debug := ConfigValueWithDefault("debug", "")
 	darr := strings.Split(debug, ",")
@@ -183,9 +156,7 @@ func (e *Engine) StartMIDI() {
 	if EraeEnabled {
 		e.Router.SetMIDIEventHandler(HandleEraeMIDI)
 	}
-	log.Printf("Before MIDI.Start\n")
 	MIDI.Start()
-	log.Printf("After MIDI.Start\n")
 }
 
 // StartOSC xxx
