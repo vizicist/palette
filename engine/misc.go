@@ -144,11 +144,7 @@ func BoundAndScaleFloat(v, vmin, vmax, outmin, outmax float32) float32 {
 	return out
 }
 
-type logWriter struct {
-	file *os.File
-}
-
-func (writer logWriter) Write(bytes []byte) (int, error) {
+func SaveLogWrite(bytes []byte) {
 
 	t := time.Now()
 	year, month, day := t.Date()
@@ -166,8 +162,7 @@ func (writer logWriter) Write(bytes []byte) (int, error) {
 			year, month, day, hour, min, sec, micro, bytes)
 
 	}
-	bb := []byte(s)
-	return writer.file.Write(bb)
+	_ = s
 }
 
 // fileExists checks if a file exists

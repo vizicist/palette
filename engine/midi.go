@@ -6,6 +6,7 @@ package engine
 import (
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	midi "gitlab.com/gomidi/midi/v2"
@@ -43,10 +44,11 @@ type MIDIIO struct {
 }
 
 type MIDIChannelOutput struct {
-	channel          int
-	bank             int
-	program          int
-	midiDeviceOutput drivers.Out
+	channel int // 1-based, 1-16
+	bank    int // 1-based, 1-whatever
+	program int // 1-based, 1-128
+	output  drivers.Out
+	isopen  bool
 }
 
 type MidiEvent struct {
@@ -96,8 +98,9 @@ func InitMIDI() {
 
 	for _, outp := range outports {
 		name := outp.String()
+		// NOTE: name is the port name followed by an index
 		log.Printf("output port = %s\n", outp.String())
-		if name == "Erae Touch" {
+		if strings.Contains(name, "Erae Touch") {
 			EraeOutput = outp
 		}
 		MIDI.midiOutputs[name] = outp
@@ -144,7 +147,7 @@ func InitMIDI() {
 
 func (m *MIDIIO) Start() {
 	if MIDI.Input == nil {
-		log.Printf("MIDIIO.Start: no Midi input\n")
+		// Assumes higher-level code chooses whether or not to complain visibly
 		return
 	}
 	stop, err := midi.ListenTo(MIDI.Input, func(msg midi.Message, timestampms int32) {
@@ -225,23 +228,21 @@ func (m *MIDIInput) ReadEvents() ([]MidiEvent, error) {
 }
 */
 
-func (out *MIDIChannelOutput) SendBankProgram(bank int, program int) {
-	log.Printf("SendBankProgram needs work\n")
-	/*
-		if out.bank != bank {
-			log.Printf("SendBankProgram: XXX - SHOULD be sending bank=%d\n", bank)
-			out.bank = bank
+func (mc *MIDIChannelOutput) SendBankProgram(bank int, program int) {
+	if mc.bank != bank {
+		log.Printf("SendBankProgram: needs work\n")
+		log.Printf("SendBankProgram: XXX - SHOULD be sending bank=%d\n", bank)
+		mc.bank = bank
+	}
+	if mc.program != program {
+		if Debug.MIDI {
+			log.Printf("SendBankProgram: sending program=%d\n", program)
 		}
-		if out.program != program {
-			if Debug.MIDI {
-				log.Printf("SendBankProgram: sending program=%d\n", program)
-			}
-			out.program = program
-			status := int64(ProgramStatus) | int64(out.channel-1)
-			data1 := int64(program - 1)
-			out.midiDeviceOutput.stream.WriteShort(status, data1, 0)
-		}
-	*/
+		mc.program = program
+		status := byte(int64(ProgramStatus) | int64(mc.channel-1))
+		data1 := byte(program - 1)
+		mc.output.Send([]byte{status, data1})
+	}
 }
 
 // WriteSysEx sends one or more MIDI Events
@@ -341,29 +342,48 @@ func (m *MIDIIO) GetMidiChannelOutput(portchannel PortChannel) *MIDIChannelOutpu
 		log.Printf("GetMidiChannelOutput: no entry for port=%s channel=%d\n", portchannel.port, portchannel.channel)
 		return nil
 	}
-	if mc.midiDeviceOutput == nil {
+	if mc.output == nil {
 		log.Printf("GetMidiChannelOutput: midiDeviceOutput==nil for port=%s channel=%d\n", portchannel.port, portchannel.channel)
 		return nil
 	}
-	log.Printf("GetMidiChannelOutput needs work\n")
-	/*
-		if mc.midiDeviceOutput.stream == nil {
-			log.Printf("GetMidiChannelOutput: midiDeviceOutput.stream==nil for port=%s channel=%d\n", portchannel.port, portchannel.channel)
+	if !mc.isopen {
+		e := mc.output.Open()
+		if e != nil {
+			log.Printf("GetMidiChannelOutput: can't open %s - err=%s\n", mc.output.String(), e)
 			return nil
 		}
-	*/
+	}
+	mc.isopen = true
 	return mc
 }
 
 func (m *MIDIIO) openChannelOutput(portchannel PortChannel) *MIDIChannelOutput {
 
-	output := m.midiOutputs[portchannel.port]
+	portName := portchannel.port
+	// The portName in portchannel is from Synths.json, while
+	// names in midiOutputs are from the gomidi/midi package.
+	// For example, portchannel.port might be "01. Internal MIDI",
+	// while the gomidi/midi name might be "01. Internal MIDI 1".
+	// We assume that the Synths.json value is contained in the
+	// drivers.Out name, and we search for that.
+	var output drivers.Out = nil
+	for name, outp := range m.midiOutputs {
+		if strings.Contains(name, portName) {
+			output = outp
+			break
+		}
+	}
+	if output == nil {
+		log.Printf("No output found matching %s\n", portName)
+		return nil
+	}
 
 	mc := &MIDIChannelOutput{
-		channel:          portchannel.channel,
-		bank:             0,
-		program:          0,
-		midiDeviceOutput: output,
+		channel: portchannel.channel,
+		bank:    0,
+		program: 0,
+		output:  output,
+		isopen:  false,
 	}
 	m.midiChannelOutputs[portchannel] = mc
 	return mc
@@ -371,10 +391,11 @@ func (m *MIDIIO) openChannelOutput(portchannel PortChannel) *MIDIChannelOutput {
 func (m *MIDIIO) openFakeChannelOutput(port string, channel int) *MIDIChannelOutput {
 
 	co := &MIDIChannelOutput{
-		channel:          channel,
-		bank:             0,
-		program:          0,
-		midiDeviceOutput: nil,
+		channel: channel,
+		bank:    0,
+		program: 0,
+		output:  nil,
+		isopen:  false,
 	}
 	return co
 }

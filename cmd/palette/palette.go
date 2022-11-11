@@ -25,9 +25,10 @@ func main() {
 	// Does anything need to be initia
 	flag.Parse()
 
+	engine.InitLog("palette")
+
 	playerPtr := flag.String("player", "*", "Region name or *")
 
-	// e := engine.TheEngine()
 	out := CliCommand(*playerPtr, flag.Args())
 	os.Stdout.WriteString(out)
 }

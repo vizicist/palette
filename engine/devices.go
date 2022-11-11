@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"time"
 )
 
 // MIDIDeviceEvent is a single MIDI event
@@ -15,21 +14,6 @@ type MIDIDeviceEvent struct {
 	Data1     int64
 	Data2     int64
 }
-
-// CursorEvent is a single Cursor event
-type CursorEvent struct {
-	ID        string
-	Source    string
-	Timestamp time.Time
-	Ddu       string // "down", "drag", "up" (sometimes "clear")
-	X         float32
-	Y         float32
-	Z         float32
-	Area      float32
-}
-
-// CursorDeviceCallbackFunc xxx
-type CursorCallbackFunc func(e CursorEvent)
 
 // MorphDefs xxx
 var MorphDefs map[string]string
