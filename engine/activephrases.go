@@ -8,6 +8,7 @@ import (
 // ActivePhrase is a currently active MIDI phrase
 type ActivePhrase struct {
 	phrase          *Phrase
+	startClick      Clicks
 	clickSoFar      Clicks
 	nextnote        *Note
 	pendingNoteOffs *Phrase
@@ -51,7 +52,7 @@ func NewActivePhrasesManager() *ActivePhrasesManager {
 
 func (a *ActivePhrase) start() {
 	if a.phrase == nil {
-		log.Printf("ActivePhrase.start: Unexpected nil value for active.phrase\n")
+		Log.Debug("ActivePhrase.start: Unexpected nil value for active.phrase\n")
 	}
 	a.clickSoFar = 0
 	a.nextnote = a.phrase.firstnote // could be nil
@@ -59,7 +60,7 @@ func (a *ActivePhrase) start() {
 
 // sendNoteOffs returns true if all of the pending notes and notesoff have been processed,
 // i.e. the ActivePhrase can be removed
-func (a *ActivePhrase) sendPendingNoteOffs(due Clicks) bool {
+func (a *ActivePhrase) sendPendingNoteOffs(dueBy Clicks) bool {
 
 	if a.phrase == nil {
 		log.Printf("ActivePhrase.sendPendingNoteOffs got unexpected nil phrase value\n")
@@ -68,7 +69,9 @@ func (a *ActivePhrase) sendPendingNoteOffs(due Clicks) bool {
 
 	// See if any of the Notes currently down are due, ie. occur before a.clickSoFar
 	ntoff := a.pendingNoteOffs.firstnote
-	for ; ntoff != nil && ntoff.EndOf() < due; ntoff = ntoff.next {
+	// XXX - not sure why it's "< dueBy", though it might be to
+	// ensure that 0-duration notes don't send the ntoff on the same click as the nton.
+	for ; ntoff != nil && ntoff.EndOf() < dueBy; ntoff = ntoff.next {
 
 		SendNoteToSynth(ntoff)
 
@@ -81,29 +84,32 @@ func (a *ActivePhrase) sendPendingNoteOffs(due Clicks) bool {
 
 // StartPhrase xxx
 // NOTE: startPhrase assumes that the mgr.mutex is held for writing
-func (mgr *ActivePhrasesManager) StartPhrase(p *Phrase, cid string) {
-	active, ok := mgr.activePhrases[cid]
+func (mgr *ActivePhrasesManager) StartPhraseAt(click Clicks, phrase *Phrase, cid string) {
+	log.Printf("StartPhrase: cid=%s click=%d\n", cid, click)
+	activePhrase, ok := mgr.activePhrases[cid]
 	if !ok {
-		active = NewActivePhrase(p)
+		activePhrase = NewActivePhrase(phrase)
 	} else {
 		// If active.note is non-nil, then we haven't sent the NoteOff
 		// for this this cid.
-		if active.phrase != nil {
+		if activePhrase.phrase != nil {
 			// This happens a lot when we get drag events
-			mgr.StopPhrase(cid, active)
+			mgr.StopPhrase(cid, activePhrase)
 			// Don't need to remove it from r.activePhrases, the code below replaces it
 		}
-		active.phrase = p
+		activePhrase.phrase = phrase
 	}
-	active.nextnote = p.firstnote // might be nil
-	mgr.activePhrases[cid] = active
-	active.start()
+	activePhrase.startClick = click
+	activePhrase.nextnote = phrase.firstnote // might be nil
+	mgr.activePhrases[cid] = activePhrase
+	activePhrase.start()
 }
 
 // StopPhrase xxx
 // NOTE: stopPhrase assumes that the mgr.mutex is held for writing
 func (mgr *ActivePhrasesManager) StopPhrase(cid string, active *ActivePhrase) {
 
+	log.Printf("StopPhrase: cid=%s\n", cid)
 	// If not provided in the arguments, look it up.
 	if active == nil {
 		var ok bool
@@ -152,18 +158,18 @@ func (mgr *ActivePhrasesManager) AdvanceByOneClick() {
 	mgr.mutex.Lock()
 	defer mgr.mutex.Unlock()
 
-	for cid, a := range mgr.activePhrases {
-		if a.phrase == nil {
+	for cid, activePhrase := range mgr.activePhrases {
+		if activePhrase.phrase == nil {
 			log.Printf("advanceactivePhrases, unexpected phrase is nil for cid=%s?  deleting it\n", cid)
-			if a.sendPendingNoteOffs(MaxClicks) {
+			if activePhrase.sendPendingNoteOffs(MaxClicks) {
 				delete(mgr.activePhrases, cid)
 			}
 			continue
 		}
 
-		n := a.nextnote // n might be nil
-		// See if any notes in the Phrase are due to be put out
-		for ; n != nil && n.Clicks <= a.clickSoFar; n = n.next {
+		n := activePhrase.nextnote // n might be nil
+		// See if any notes in the Phrase are due to be put out.
+		for ; n != nil && n.Clicks <= activePhrase.clickSoFar; n = n.next {
 			switch n.TypeOf {
 			case "noteon":
 				log.Printf("ActivePhrasesManager.advanceActivePhrasesByOneStep can't handle NOTEON notes yet\n")
@@ -177,21 +183,21 @@ func (mgr *ActivePhrasesManager) AdvanceByOneClick() {
 
 				nd.TypeOf = "noteoff"
 				nd.Clicks = n.EndOf()
-				a.pendingNoteOffs.InsertNote(nd)
+				activePhrase.pendingNoteOffs.InsertNote(nd)
 
 			default:
 				log.Printf("advanceActivePhrase unable to handle n.Typeof=%s n=%s\n", n.TypeOf, n)
 			}
 			// advance to the next note in the ActivePhrase
-			a.nextnote = n.next
+			activePhrase.nextnote = n.next
 		}
 
 		// Send whatever NOTEOFFs are due to be sent, and if everything has
 		// been processed, delete it from the activePhrases
-		if a.sendPendingNoteOffs(a.clickSoFar) {
+		if activePhrase.sendPendingNoteOffs(activePhrase.clickSoFar) {
 			delete(mgr.activePhrases, cid)
 		}
-		a.clickSoFar++
+		activePhrase.clickSoFar++
 	}
 }
 

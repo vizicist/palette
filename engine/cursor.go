@@ -1,14 +1,36 @@
 package engine
 
 import (
+	"fmt"
 	"log"
 	"sync"
 	"time"
 )
 
+// CursorDeviceCallbackFunc xxx
+type CursorCallbackFunc func(e CursorEvent)
+
+// CursorEvent is a single Cursor event
+type CursorEvent struct {
+	ID        string
+	Source    string
+	Timestamp time.Time
+	Ddu       string // "down", "drag", "up" (sometimes "clear")
+	X         float32
+	Y         float32
+	Z         float32
+	Area      float32
+}
+
 type CursorManager struct {
 	cursors map[string]*DeviceCursor
 	mutex   sync.RWMutex
+}
+
+// Format xxx
+func (ce CursorEvent) Format(f fmt.State, c rune) {
+	s := fmt.Sprintf("(CursorEvent{%f,%f,%f})", ce.X, ce.Y, ce.Z)
+	f.Write([]byte(s))
 }
 
 func NewCursorManager() *CursorManager {
