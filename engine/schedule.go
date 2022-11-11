@@ -2,7 +2,6 @@ package engine
 
 import (
 	"fmt"
-	"log"
 	"math/rand"
 	"time"
 
@@ -72,7 +71,7 @@ func (sched *Scheduler) Format(f fmt.State, c rune) {
 }
 
 func (sched *Scheduler) ScheduleNoteAt(nt *Note, click Clicks) (id string) {
-	log.Printf("Scheduler.ScheduleNoteAt: nt=%s click=%d\n", nt, click)
+	Log.Debugf("Scheduler.ScheduleNoteAt: nt=%s click=%d\n", nt, click)
 	phr := NewPhrase().InsertNote(nt)
 	id = fmt.Sprintf("%d", sched.nextSid)
 	newItem := &SchedItem{
@@ -101,7 +100,7 @@ func (sched *Scheduler) ScheduleNoteAt(nt *Note, click Clicks) (id string) {
 	insertBefore := sched.FindInsert(click)
 	if insertBefore == nil {
 		// The common situation should have already handled this
-		log.Printf("ScheduleNoteAt: Unexpected insert = nil?\n")
+		Log.Debugf("ScheduleNoteAt: Unexpected insert = nil?\n")
 		return
 	}
 	newItem.prev = insertBefore.prev
@@ -134,7 +133,7 @@ func NewScheduler() *Scheduler {
 // Start runs the scheduler and never returns
 func (sched *Scheduler) Start() {
 
-	log.Println("Scheduler begins")
+	Log.Debugf("Scheduler begins")
 
 	// Wake up every 2 milliseconds and check looper events
 	tick := time.NewTicker(2 * time.Millisecond)
@@ -164,7 +163,7 @@ func (sched *Scheduler) Start() {
 
 	// By reading from tick.C, we wake up every 2 milliseconds
 	for now := range tick.C {
-		// log.Printf("Realtime loop now=%v\n", time.Now())
+		// Log.Debugf("Realtime loop now=%v\n", time.Now())
 		sched.now = now
 		uptimesecs := sched.Uptime()
 		newclick := Seconds2Clicks(uptimesecs)
@@ -172,7 +171,7 @@ func (sched *Scheduler) Start() {
 
 		currentClick := CurrentClick()
 		if newclick > currentClick {
-			// log.Printf("ADVANCING CLICK now=%v click=%d\n", time.Now(), newclick)
+			// Log.Debugf("ADVANCING CLICK now=%v click=%d\n", time.Now(), newclick)
 			sched.advanceTransposeTo(newclick)
 			sched.advanceClickTo(currentClick)
 			SetCurrentClick(newclick)
@@ -214,7 +213,7 @@ func (sched *Scheduler) Start() {
 			// Put it in background, so calling
 			// tasklist or ps doesn't disrupt realtime
 			if Debug.Realtime {
-				log.Printf("StartRealtime: checking processes\n")
+				Log.Debugf("StartRealtime: checking processes\n")
 			}
 			go TheEngine().ProcessManager.checkProcessesAndRestartIfNecessary()
 			lastProcessCheck = uptimesecs
@@ -222,7 +221,7 @@ func (sched *Scheduler) Start() {
 
 		select {
 		case cmd := <-sched.Control:
-			log.Printf("Realtime.Control: cmd=%v\n", cmd)
+			Log.Debugf("Realtime.Control: cmd=%v\n", cmd)
 			switch cmd.Action {
 			case "attractmode":
 				onoff := cmd.Arg.(bool)
@@ -234,18 +233,18 @@ func (sched *Scheduler) Start() {
 		default:
 		}
 	}
-	log.Println("StartRealtime ends")
+	Log.Debugf("StartRealtime ends")
 }
 
 func (sched *Scheduler) advanceClickTo(toClick Clicks) {
 
 	// Don't let events get handled while we're advancing
-	// log.Printf("Scheduler.advanceClickTo: A\n")
+	// Log.Debugf("Scheduler.advanceClickTo: A\n")
 	TheEngine().Router.eventMutex.Lock()
 	defer func() {
 		TheEngine().Router.eventMutex.Unlock()
 	}()
-	// log.Printf("Scheduler.advanceClickTo: toClick=%d sched=%s\n", toClick, sched)
+	// Log.Debugf("Scheduler.advanceClickTo: toClick=%d sched=%s\n", toClick, sched)
 
 	for clk := sched.lastClick; clk < toClick; clk++ {
 		for si := sched.firstItem; si != nil; si = si.next {
@@ -315,14 +314,14 @@ func (player *Player) handleCursorEvent(e CursorEvent) {
 		Ddu: e.Ddu,
 	}
 	if Debug.Cursor {
-		log.Printf("Player.handleCursorEvent: pad=%s id=%s ddu=%s xyz=%.4f,%.4f,%.4f\n", player.padName, id, e.Ddu, e.X, e.Y, e.Z)
+		Log.Debugf("Player.handleCursorEvent: pad=%s id=%s ddu=%s xyz=%.4f,%.4f,%.4f\n", player.padName, id, e.Ddu, e.X, e.Y, e.Z)
 	}
 
 	player.executeIncomingCursor(cse)
 
 	if e.Ddu == "up" {
 		// if Debug.Cursor {
-		// 	log.Printf("Router.handleCursorEvent: deleting cursor id=%s\n", id)
+		// 	Log.Debugf("Router.handleCursorEvent: deleting cursor id=%s\n", id)
 		// }
 		delete(player.deviceCursors, id)
 	}
@@ -336,12 +335,12 @@ func (sched *Scheduler) GetAttractMode() bool {
 
 func (sched *Scheduler) SetAttractMode(onoff bool) {
 	if sched.attractModeIsOn == onoff {
-		log.Printf("SetAttractMode: no change, IsOn=%v\n", onoff)
+		Log.Debugf("SetAttractMode: no change, IsOn=%v\n", onoff)
 		// no change
 		return
 	}
 	sched.attractModeIsOn = onoff
-	log.Printf("AttractMode: changing to %v\n", onoff)
+	Log.Debugf("AttractMode: changing to %v\n", onoff)
 	sched.lastAttractChange = sched.Uptime()
 }
 */
@@ -353,7 +352,7 @@ func (sched *Scheduler) Uptime() float64 {
 func (sched *Scheduler) publishOscAlive(uptimesecs float64) {
 	attractMode := sched.attractModeIsOn
 	if Debug.Attract {
-		log.Printf("publishOscAlive: uptime=%v attract=%v\n", uptimesecs, attractMode)
+		Log.Debugf("publishOscAlive: uptime=%v attract=%v\n", uptimesecs, attractMode)
 	}
 	if sched.attractClient == nil {
 		sched.attractClient = osc.NewClient("127.0.0.1", 3331)
@@ -363,7 +362,7 @@ func (sched *Scheduler) publishOscAlive(uptimesecs float64) {
 	msg.Append(attractMode)
 	err := sched.attractClient.Send(msg)
 	if err != nil {
-		log.Printf("publishOscAlive: Send err=%s\n", err)
+		Log.Debugf("publishOscAlive: Send err=%s\n", err)
 	}
 }
 
@@ -372,7 +371,7 @@ func (sched *Scheduler) doAttractAction() {
 	now := time.Now()
 	dt := now.Sub(sched.lastAttractGestureTime)
 	if sched.attractModeIsOn && dt > sched.attractGestureDuration {
-		log.Printf("doAttractAction: doing stuff\n")
+		Log.Debugf("doAttractAction: doing stuff\n")
 		playerNames := []string{"A", "B", "C", "D"}
 		i := uint64(rand.Uint64()*99) % 4
 		player := playerNames[i]
@@ -405,13 +404,13 @@ func (sched *Scheduler) advanceTransposeTo(newclick Clicks) {
 		sched.transposeIndex = (sched.transposeIndex + 1) % len(sched.transposeValues)
 		transposePitch := sched.transposeValues[sched.transposeIndex]
 		if Debug.Transpose {
-			log.Printf("advanceTransposeTo: newclick=%d transposePitch=%d\n", newclick, transposePitch)
+			Log.Debugf("advanceTransposeTo: newclick=%d transposePitch=%d\n", newclick, transposePitch)
 		}
 		/*
 			for _, player := range TheEngine().Router.players {
 				// player.clearDown()
 				if Debug.Transpose {
-					log.Printf("  setting transposepitch in player pad=%s trans=%d activeNotes=%d\n", player.padName, transposePitch, len(player.activeNotes))
+					Log.Debugf("  setting transposepitch in player pad=%s trans=%d activeNotes=%d\n", player.padName, transposePitch, len(player.activeNotes))
 				}
 				player.TransposePitch = transposePitch
 			}

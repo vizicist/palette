@@ -3,7 +3,6 @@ package twinsys
 import (
 	"image"
 	"image/color"
-	"log"
 	"os"
 
 	"github.com/golang/freetype/truetype"
@@ -44,7 +43,7 @@ func DefaultStyleName() string {
 func NewStyle(styleName string, fontHeight int) *StyleInfo {
 
 	if fontHeight <= 0 {
-		log.Printf("NewStyle: invalid fontHeight, using 12\n")
+		engine.Log.Debugf("NewStyle: invalid fontHeight, using 12\n")
 		fontHeight = 12
 	}
 
@@ -70,14 +69,14 @@ func NewStyle(styleName string, fontHeight int) *StyleInfo {
 		}
 
 	default:
-		log.Printf("NewStyle: unrecognized fontname=%s, using gomono\n", styleName)
+		engine.Log.Debugf("NewStyle: unrecognized fontname=%s, using gomono\n", styleName)
 	}
 
 	if err != nil {
-		log.Printf("NewStyle: unable to get font=%s, resorting to gomono, err=%s\n", styleName, err)
+		engine.Log.Debugf("NewStyle: unable to get font=%s, resorting to gomono, err=%s\n", styleName, err)
 		f, _ = truetype.Parse(gomono.TTF) // last resort
 	} else if f == nil {
-		log.Printf("NewStyle: unable to get font=%s, f is nil?\n", styleName)
+		engine.Log.Debugf("NewStyle: unable to get font=%s, f is nil?\n", styleName)
 		f, _ = truetype.Parse(gomono.TTF) // last resort
 	}
 	face := truetype.NewFace(f, &truetype.Options{Size: float64(fontHeight)})

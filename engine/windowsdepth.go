@@ -13,7 +13,6 @@ extern void DepthCallback(char *subj, char *msg);
 */
 import "C"
 import (
-	"log"
 	"unsafe"
 )
 
@@ -21,12 +20,12 @@ import (
 func DepthCallback(subj *C.char, msg *C.char) {
 	gosubj := C.GoString(subj)
 	gomsg := C.GoString(msg)
-	log.Printf("GO DepthCallback! subj=%s msg=%s\n", gosubj, gomsg)
+	Log.Debugf("GO DepthCallback! subj=%s msg=%s\n", gosubj, gomsg)
 }
 
 func DepthRunForever() {
-	log.Printf("Calling C.DepthRun\n")
+	Log.Debugf("Calling C.DepthRun\n")
 	show := 1
 	i := C.DepthRun((C.DepthCallbackFunc)(unsafe.Pointer(C.DepthCallback)), C.int(show))
-	log.Printf("C.DepthRun returned? i = %d\n", i)
+	Log.Debugf("C.DepthRun returned? i = %d\n", i)
 }

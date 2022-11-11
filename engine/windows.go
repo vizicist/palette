@@ -6,14 +6,13 @@ package engine
 import (
 	"bufio"
 	"io"
-	"log"
 	"os/exec"
 	"strings"
 	"syscall"
 )
 
 func KillExecutable(executable string) {
-	log.Printf("KillExecutable: executable=%s\n", executable)
+	Log.Debugf("KillExecutable: executable=%s\n", executable)
 	stdout := &NoWriter{}
 	stderr := &NoWriter{}
 	cmd, _ := startExecutable("c:\\windows\\system32\\taskkill.exe", false, stdout, stderr, "/F", "/IM", executable)
@@ -40,7 +39,7 @@ func StartExecutableLogOutput(logName string, fullexe string, background bool, a
 func startExecutable(executable string, background bool, stdout io.Writer, stderr io.Writer, args ...string) (*exec.Cmd, error) {
 
 	if Debug.Exec {
-		log.Printf("startExecutable: %s\n", executable)
+		Log.Debugf("startExecutable: %s\n", executable)
 	}
 	cmd := exec.Command(executable, args...)
 
@@ -76,7 +75,7 @@ func IsRunningExecutable(exe string) bool {
 	stderr := &NoWriter{}
 	cmd, err := startExecutable("c:\\windows\\system32\\tasklist.exe", false, stdout, stderr)
 	if err != nil {
-		log.Printf("IsRunningExecutable: tasklist.exe err=%s\n", err)
+		Log.Debugf("IsRunningExecutable: tasklist.exe err=%s\n", err)
 		return false
 	}
 	cmd.Wait()

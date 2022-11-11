@@ -3,7 +3,6 @@ package engine
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 )
 
@@ -44,7 +43,7 @@ func LoadMorphs() error {
 	for serialnum, playerinfo := range toplevel {
 		playername := playerinfo.(string)
 		if Debug.Morph {
-			log.Printf("Setting Morph serial=%s player=%s\n", serialnum, playername)
+			Log.Debugf("Setting Morph serial=%s player=%s\n", serialnum, playername)
 		}
 		MorphDefs[serialnum] = playername
 		// TheRouter().setPlayerForMorph(serialnum, playername)

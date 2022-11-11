@@ -2,7 +2,6 @@ package engine
 
 import (
 	"fmt"
-	"log"
 )
 
 //////////////////////////////////////////////////////////////////
@@ -56,7 +55,7 @@ func NewClickMsg(click Clicks) string {
 func ToBool(arg interface{}) bool {
 	r, ok := arg.(bool)
 	if !ok {
-		log.Printf("Unable to convert interface to bool!\n")
+		Log.Debugf("Unable to convert interface to bool!\n")
 		r = false
 	}
 	return r
@@ -69,7 +68,7 @@ func ToString(arg interface{}) string {
 	}
 	r, ok := arg.(string)
 	if !ok {
-		log.Printf("Unable to convert interface to string!\n")
+		Log.Debugf("Unable to convert interface to string!\n")
 		r = ""
 	}
 	return r

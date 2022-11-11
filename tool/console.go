@@ -3,7 +3,6 @@ package tool
 import (
 	"fmt"
 	"image"
-	"log"
 
 	"github.com/vizicist/palette/engine"
 	w "github.com/vizicist/palette/twinsys"
@@ -58,7 +57,7 @@ func (console *Console) Do(cmd engine.Cmd) string {
 			// Note that we update the value in cmd.Values
 			cmd.ValuesSetPos(relpos)
 			if engine.Debug.Mouse {
-				log.Printf("Console Do mouse cmd=%v\n", cmd)
+				engine.Log.Debugf("Console Do mouse cmd=%v\n", cmd)
 			}
 			child.Do(cmd)
 		}

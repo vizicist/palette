@@ -243,7 +243,6 @@ import "C"
 
 import (
 	"fmt"
-	"log"
 	"time"
 )
 
@@ -270,11 +269,11 @@ var allMorphs []*oneMorph
 func StartMorph(callback CursorCallbackFunc, forceFactor float32) {
 	err := initialize()
 	if err != nil {
-		log.Printf("Morph.Initialize: err=%s\n", err)
+		Log.Debugf("Morph.Initialize: err=%s\n", err)
 		return
 	}
 	if len(allMorphs) == 0 {
-		log.Printf("No Morphs were found\n")
+		Log.Debugf("No Morphs were found\n")
 		return
 	}
 	for {
@@ -297,21 +296,21 @@ const (
 func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float32) {
 	status := C.SenselReadSensor(C.uchar(m.idx))
 	if status != C.SENSEL_OK {
-		log.Printf("Morph: SenselReadSensor for idx=%d returned %d\n", m.idx, status)
-		log.Printf("Morph: %s has been disabled due to SenselReadSensor errors\n", m.serialNum)
+		Log.Debugf("Morph: SenselReadSensor for idx=%d returned %d\n", m.idx, status)
+		Log.Debugf("Morph: %s has been disabled due to SenselReadSensor errors\n", m.serialNum)
 		m.opened = false
 	}
 	numFrames := C.SenselGetNumAvailableFrames(C.uchar(m.idx))
 	if numFrames <= 0 {
 		return
 	}
-	// log.Printf("Morph: FRAMES ARE AVAILABLE!! idx=%d numFrames=%d\n", m.idx, numFrames)
+	// Log.Debugf("Morph: FRAMES ARE AVAILABLE!! idx=%d numFrames=%d\n", m.idx, numFrames)
 	nf := int(numFrames)
 	for n := 0; n < nf; n++ {
 		var frame C.struct_goSenselFrameData
 		status := C.SenselGetFrame(C.uchar(m.idx), &frame)
 		if status != C.SENSEL_OK {
-			log.Printf("Morph: SenselGetFrame of idx=%d returned %d\n", m.idx, status)
+			Log.Debugf("Morph: SenselGetFrame of idx=%d returned %d\n", m.idx, status)
 			continue
 		}
 		nc := int(frame.n_contacts)
@@ -319,7 +318,7 @@ func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float32) 
 			var contact C.struct_goSenselContact
 			status = C.SenselGetContact(C.uchar(m.idx), C.uchar(n), &contact)
 			if status != C.SENSEL_OK {
-				log.Printf("Morph: SenselGetContact of morph_idx=%d n=%d returned %d\n", m.idx, n, status)
+				Log.Debugf("Morph: SenselGetContact of morph_idx=%d n=%d returned %d\n", m.idx, n, status)
 				continue
 			}
 			xNorm := float32(contact.x_pos) / m.width
@@ -336,7 +335,7 @@ func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float32) 
 			case CursorUp:
 				ddu = "up"
 			default:
-				log.Printf("Morph: Invalid value for contact.state - %d\n", contact.state)
+				Log.Debugf("Morph: Invalid value for contact.state - %d\n", contact.state)
 				continue
 			}
 
@@ -360,7 +359,7 @@ func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float32) 
 				}
 				if newPlayerName != "" {
 					if newPlayerName != m.playerName {
-						log.Printf("Switching corners pad to player %s", newPlayerName)
+						Log.Debugf("Switching corners pad to player %s", newPlayerName)
 						ce := CursorEvent{
 							ID:        fmt.Sprintf("%d", m.idx),
 							Source:    newPlayerName,
@@ -396,7 +395,7 @@ func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float32) 
 					m.playerName = "D"
 					xNorm = xNorm - 0.5
 				default:
-					log.Printf("Morph: unable to find QUAD player for x/y=%f,%f\n", xNorm, yNorm)
+					Log.Debugf("Morph: unable to find QUAD player for x/y=%f,%f\n", xNorm, yNorm)
 					continue
 				}
 				xNorm *= 2.0
@@ -404,7 +403,7 @@ func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float32) 
 			}
 
 			if Debug.Morph {
-				log.Printf("Morph: player=%s contact_id=%d idx=%d n=%d state=%d xyzNorm=%f %f %f\n",
+				Log.Debugf("Morph: player=%s contact_id=%d idx=%d n=%d state=%d xyzNorm=%f %f %f\n",
 					m.playerName, contact.id, m.idx, n, contact.state, xNorm, yNorm, zNorm)
 			}
 
@@ -490,7 +489,7 @@ func initialize() error {
 			if morphtype == "" {
 				// morphtype = "corners" // default value
 				morphtype = "quadrants" // default value
-				log.Printf("Morph: serial# %s isn't in morphs.json, using morphtype = %s\n", m.serialNum, morphtype)
+				Log.Debugf("Morph: serial# %s isn't in morphs.json, using morphtype = %s\n", m.serialNum, morphtype)
 			}
 		}
 
@@ -501,11 +500,11 @@ func initialize() error {
 		case "A", "B", "C", "D":
 			m.playerName = morphtype
 		default:
-			log.Printf("Unexpected morphtype, got %s, expecting one of A,B,C,D,corners,quadrants", morphtype)
+			Log.Debugf("Unexpected morphtype, got %s, expecting one of A,B,C,D,corners,quadrants", morphtype)
 		}
 
 		// Don't use Debug.Morph, this should always gets logged
-		log.Printf("Morph Opened and Started: idx=%d serial=%s firmware=%d.%d.%d suceeded\n",
+		Log.Debugf("Morph Opened and Started: idx=%d serial=%s firmware=%d.%d.%d suceeded\n",
 			m.idx, m.serialNum, m.fwVersionMajor, m.fwVersionMinor, m.fwVersionBuild)
 	}
 	return nil

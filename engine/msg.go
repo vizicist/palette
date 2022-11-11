@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"image"
 	"image/color"
-	"log"
 	"strconv"
 )
 
@@ -54,7 +53,7 @@ func (cmd Cmd) ValuesBool(name string, dflt bool) bool {
 	}
 	b, err := strconv.ParseBool(v)
 	if err != nil {
-		log.Printf("ValuesBool: bad value - %s\n", v)
+		Log.Debugf("ValuesBool: bad value - %s\n", v)
 		b = dflt
 	}
 	return b
@@ -120,11 +119,11 @@ func (cmd Cmd) ValuesXY(xyname string, dflt image.Point) image.Point {
 	var x, y int
 	n, err := fmt.Sscanf(xystr, "%d,%d", &x, &y)
 	if err != nil {
-		log.Printf("ValuesXY failed to parse - %s\n", xystr)
+		Log.Debugf("ValuesXY failed to parse - %s\n", xystr)
 		return dflt
 	}
 	if n != 2 {
-		log.Printf("ValuesXY didn't parse - %s\n", xystr)
+		Log.Debugf("ValuesXY didn't parse - %s\n", xystr)
 		return dflt
 	}
 	return image.Point{x, y}
@@ -154,7 +153,7 @@ func (cmd Cmd) ValuesInt(name string, dflt int) int {
 	}
 	i, err := strconv.Atoi(v)
 	if err != nil {
-		log.Printf("ValuesInt: %s isn't an int? (%s)\n", name, v)
+		Log.Debugf("ValuesInt: %s isn't an int? (%s)\n", name, v)
 		return dflt
 	}
 	return i

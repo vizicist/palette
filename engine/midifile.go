@@ -4,7 +4,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
-	"log"
 	"math"
 	"os"
 )
@@ -94,7 +93,7 @@ func (m *MIDIFile) Parse() error {
 
 	// Expect an EOF if we try to read more
 	if m.readTrack() != io.EOF {
-		log.Printf("Hmmm, there's extra stuff in the MIDIFile after reading all tracks!\n")
+		Log.Debugf("Hmmm, there's extra stuff in the MIDIFile after reading all tracks!\n")
 	}
 
 	m.parsed = true
@@ -185,7 +184,7 @@ func (m *MIDIFile) putallnotes() {
 func (m *MIDIFile) endtrack() {
 	m.putallnotes()
 	if m.currentTrackPhrase == nil {
-		log.Printf("unexpected nil value of m.currentTrackPhrase\n")
+		Log.Debugf("unexpected nil value of m.currentTrackPhrase\n")
 	} else {
 		m.tracks = append(m.tracks, m.currentTrackPhrase)
 		m.currentTrackPhrase = nil
@@ -401,12 +400,12 @@ func (m *MIDIFile) readTrack() error {
 		}
 
 		if sysexcontinue && c != 0xf7 {
-			log.Printf("Didn't find expected continuation of a sysex?\n")
+			Log.Debugf("Didn't find expected continuation of a sysex?\n")
 		}
 
 		if (c & 0x80) == 0 { /* running status? */
 			if status == 0 {
-				log.Printf("Unexpected running status\n")
+				Log.Debugf("Unexpected running status\n")
 			}
 			running = true
 		} else {
@@ -529,7 +528,7 @@ func (m *MIDIFile) readTrack() error {
 			}
 
 		default:
-			log.Printf("unexpected midi byte: 0x%02x", c)
+			Log.Debugf("unexpected midi byte: 0x%02x", c)
 		}
 	}
 	m.endtrack()

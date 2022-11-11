@@ -60,22 +60,22 @@ func (loop *StepLoop) ClearID(id string) {
 	defer loop.stepsMutex.Unlock()
 
 	if Debug.Cursor {
-		log.Printf("StepLoop.ClearID: START ClearID for id=%s\n", id)
+		Log.Debugf("StepLoop.ClearID: START ClearID for id=%s\n", id)
 	}
 	for _, step := range loop.steps {
 		// This method of deleting things from an array without
 		// allocating a new array is found on this page:
 		// https://vbauerster.github.io/2017/04/removing-items-from-a-slice-while-iterating-in-go/
-		// log.Printf("Before deleting id=%s  events=%v\n", id, step.events)
+		// Log.Debugf("Before deleting id=%s  events=%v\n", id, step.events)
 		newevents := step.events[:0]
 		for _, event := range step.events {
 			if event.cursorStepEvent.ID != id {
 				newevents = append(newevents, event)
-				// log.Printf("Should be deleting cursorStepEvent = %v\n", event.cursorStepEvent)
+				// Log.Debugf("Should be deleting cursorStepEvent = %v\n", event.cursorStepEvent)
 			}
 		}
 		step.events = newevents
-		// log.Printf("After deleting id=%s  events=%v\n", id, step.events)
+		// Log.Debugf("After deleting id=%s  events=%v\n", id, step.events)
 	}
 }
 
@@ -86,7 +86,7 @@ func (loop *StepLoop) AddToStep(ce CursorStepEvent, stepnum Clicks) {
 	defer loop.stepsMutex.Unlock()
 
 	if Debug.Loop {
-		log.Printf("StepLoop.AddToStep: stepnum=%d ddu=%s cid=%s\n", stepnum, ce.Ddu, ce.ID)
+		Log.Debugf("StepLoop.AddToStep: stepnum=%d ddu=%s cid=%s\n", stepnum, ce.Ddu, ce.ID)
 	}
 
 	step := loop.steps[stepnum]
@@ -103,7 +103,7 @@ func (loop *StepLoop) AddToStep(ce CursorStepEvent, stepnum Clicks) {
 				continue
 			}
 			if e.cursorStepEvent.Ddu == "up" {
-				log.Printf("Hey, need to handle when up and down/drag are on same step\n")
+				Log.Debugf("Hey, need to handle when up and down/drag are on same step\n")
 				continue
 			}
 			// adding a drag, and finding an existing "down"...
@@ -118,20 +118,20 @@ func (loop *StepLoop) AddToStep(ce CursorStepEvent, stepnum Clicks) {
 			}
 			// adding a down, and finding an existing "down"...
 			if ce.Ddu == "down" && e.cursorStepEvent.Ddu == "down" {
-				log.Printf("Hey, down with down in same step!? ce.ID=%s\n", ce.ID)
+				Log.Debugf("Hey, down with down in same step!? ce.ID=%s\n", ce.ID)
 				replace = i
 				break
 			}
 			// adding a down, and finding an existing "drag"...
 			if ce.Ddu == "down" && e.cursorStepEvent.Ddu == "drag" {
-				log.Printf("Hey, down with drag in same step!? ce.ID=%s\n", ce.ID)
+				Log.Debugf("Hey, down with drag in same step!? ce.ID=%s\n", ce.ID)
 				replace = i
 				break
 			}
 		}
 		if replace >= 0 {
 			if Debug.Loop {
-				log.Printf("Replacing %s event %d in stepnum=%d\n", ce.Ddu, replace, stepnum)
+				Log.Debugf("Replacing %s event %d in stepnum=%d\n", ce.Ddu, replace, stepnum)
 			}
 			step.events[replace] = le
 			return

@@ -3,7 +3,6 @@ package twinsys
 import (
 	"image"
 	"image/color"
-	"log"
 	"strings"
 
 	"github.com/vizicist/palette/engine"
@@ -216,7 +215,7 @@ func (menu *Menu) Do(cmd engine.Cmd) string {
 	switch cmd.Subj {
 
 	case "close":
-		log.Printf("menu.Do: close needs work?  Maybe not\n")
+		engine.Log.Debugf("menu.Do: close needs work?  Maybe not\n")
 
 	case "resize":
 		size := cmd.ValuesXY("size", engine.PointZero)
