@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"io"
-	"log"
 	"math"
 	"strconv"
 	"strings"
@@ -235,7 +234,7 @@ func (n Note) String() string {
 
 	pitch := n.ReadablePitch()
 	if pitch == "" {
-		log.Printf("Note.ToString unable to handle n.Typeof=%s\n", n.TypeOf)
+		Log.Debugf("Note.ToString unable to handle n.Typeof=%s\n", n.TypeOf)
 		return "''"
 	}
 	octave := -2 + int(n.Pitch)/12 // MIDI octave
@@ -464,7 +463,7 @@ func (p *Phrase) ToString() string {
 
 		pitch := n.ReadablePitch()
 		if pitch == "" {
-			log.Printf("Phrase.ToString unable to handle n.Typeof=%s, using c\n", n.TypeOf)
+			Log.Debugf("Phrase.ToString unable to handle n.Typeof=%s, using c\n", n.TypeOf)
 			pitch = "c"
 		}
 		s += pitch
@@ -544,7 +543,7 @@ func (p *Phrase) Append(n *Note) {
 		p.lastnote = n
 	} else {
 		if p.lastnote.Clicks > n.Clicks {
-			log.Printf("Hey, Append detects an out-of-order usage\n")
+			Log.Debugf("Hey, Append detects an out-of-order usage\n")
 		}
 		p.lastnote.next = n
 		p.lastnote = n
@@ -554,9 +553,9 @@ func (p *Phrase) Append(n *Note) {
 // InsertNoLock adds a Note to a Phrase
 func (p *Phrase) InsertNoLock(note *Note) *Phrase {
 
-	// log.Printf("Phrase.Insert note=%+v\n", note)
+	// Log.Debugf("Phrase.Insert note=%+v\n", note)
 	if note.next != nil {
-		log.Printf("Unexpected note.next!=nil in Phrase.InsertNoLock")
+		Log.Debugf("Unexpected note.next!=nil in Phrase.InsertNoLock")
 		return p
 	}
 
@@ -568,7 +567,7 @@ func (p *Phrase) InsertNoLock(note *Note) *Phrase {
 	}
 
 	if p.lastnote == nil {
-		log.Printf("Expected lastnote to be not-nil when firstnote is not nil!?")
+		Log.Debugf("Expected lastnote to be not-nil when firstnote is not nil!?")
 		// try to fix it up
 		p.lastnote = p.firstnote
 		return p

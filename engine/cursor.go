@@ -2,7 +2,6 @@ package engine
 
 import (
 	"fmt"
-	"log"
 	"sync"
 	"time"
 )
@@ -48,11 +47,11 @@ func (cm *CursorManager) clearCursors() {
 
 	for id, c := range cm.cursors {
 		if !c.downed {
-			log.Printf("Hmmm, why is a cursor not downed?\n")
+			Log.Debugf("Hmmm, why is a cursor not downed?\n")
 		} else {
 			cm.handleCursorEventNoLock(CursorEvent{Source: id, Ddu: "up"})
 			if Debug.Cursor {
-				log.Printf("Clearing cursor id=%s\n", id)
+				Log.Debugf("Clearing cursor id=%s\n", id)
 			}
 			delete(cm.cursors, id)
 		}
@@ -102,7 +101,7 @@ func (cm *CursorManager) handleCursorEventNoLock(ce CursorEvent) {
 			c.downed = true
 		}
 		if Debug.Cursor {
-			log.Printf("CursorManager.handleCursorEvent: id=%s ddu=%s xyz=%.4f,%.4f,%.4f\n", ce.ID, ce.Ddu, ce.X, ce.Y, ce.Z)
+			Log.Debugf("CursorManager.handleCursorEvent: id=%s ddu=%s xyz=%.4f,%.4f,%.4f\n", ce.ID, ce.Ddu, ce.X, ce.Y, ce.Z)
 		}
 
 		if ce.Ddu == "up" {
@@ -112,7 +111,7 @@ func (cm *CursorManager) handleCursorEventNoLock(ce CursorEvent) {
 }
 
 func (cm *CursorManager) doCursorGesture(source string, cid string, x0, y0, z0, x1, y1, z1 float32) {
-	log.Printf("doCursorGesture: start\n")
+	Log.Debugf("doCursorGesture: start\n")
 
 	cm.mutex.Lock()
 	defer cm.mutex.Unlock()
@@ -128,7 +127,7 @@ func (cm *CursorManager) doCursorGesture(source string, cid string, x0, y0, z0, 
 	}
 	cm.handleCursorEventNoLock(ce)
 	if Debug.Cursor {
-		log.Printf("doCursorGesture: down ce=%+v\n", ce)
+		Log.Debugf("doCursorGesture: down ce=%+v\n", ce)
 	}
 
 	// secs := float32(3.0)
@@ -141,9 +140,9 @@ func (cm *CursorManager) doCursorGesture(source string, cid string, x0, y0, z0, 
 	ce.Z = z1
 	cm.handleCursorEventNoLock(ce)
 	if Debug.Cursor {
-		log.Printf("doCursorGesture: up ce=%+v\n", ce)
+		Log.Debugf("doCursorGesture: up ce=%+v\n", ce)
 	}
-	log.Printf("doCursorGesture: end\n")
+	Log.Debugf("doCursorGesture: end\n")
 }
 
 func (cm *CursorManager) checkCursorUp(now time.Time) {
@@ -161,7 +160,7 @@ func (cm *CursorManager) checkCursorUp(now time.Time) {
 		if elapsed > checkDelay {
 			cm.handleCursorEventNoLock(CursorEvent{Source: "checkCursorUp", Ddu: "up"})
 			if Debug.Cursor {
-				log.Printf("Player.checkCursorUp: deleting cursor id=%s elapsed=%v\n", id, elapsed)
+				Log.Debugf("Player.checkCursorUp: deleting cursor id=%s elapsed=%v\n", id, elapsed)
 			}
 			delete(cm.cursors, id)
 		}

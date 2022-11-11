@@ -2,7 +2,6 @@ package engine
 
 import (
 	"fmt"
-	"log"
 	"strings"
 	"time"
 
@@ -21,83 +20,83 @@ func StartTwitch() {
 	// client := twitch.NewAnonymousClient()
 
 	client.OnConnect(func() {
-		log.Println("ONCONNECT!!")
+		Log.Debugf("ONCONNECT!!")
 		client.Say("photonsalon", fmt.Sprintf("Hello World OnConnect time=%s!", time.Now().String()))
 	})
 	client.OnWhisperMessage(func(message twitch.WhisperMessage) {
-		log.Println("OnWhisperMessage")
+		Log.Debugf("OnWhisperMessage")
 	})
 	client.OnPrivateMessage(func(message twitch.PrivateMessage) {
-		log.Printf("OnPrivateMessage raw=%s\n", message.Raw)
+		Log.Debugf("OnPrivateMessage raw=%s\n", message.Raw)
 		msg := strings.ToLower(message.Message)
 		if strings.HasPrefix(msg, "p ") {
 			client.Say("photonsalon", fmt.Sprintf("got p msg time=%s!", time.Now().String()))
 		}
 		if strings.Contains(msg, "ping") {
-			log.Println(message.User.Name, "PONG", message.Message)
+			Log.Debugf(message.User.Name, "PONG", message.Message)
 		}
 	})
 	client.OnClearChatMessage(func(message twitch.ClearChatMessage) {
-		log.Println("OnClearChatMessage")
+		Log.Debugf("OnClearChatMessage")
 	})
 	client.OnClearMessage(func(message twitch.ClearMessage) {
-		log.Println("OnClearMessage")
+		Log.Debugf("OnClearMessage")
 	})
 	client.OnRoomStateMessage(func(message twitch.RoomStateMessage) {
-		log.Printf("OnRoomStateMessage raw=%s\n", message.Raw)
+		Log.Debugf("OnRoomStateMessage raw=%s\n", message.Raw)
 	})
 	client.OnUserNoticeMessage(func(message twitch.UserNoticeMessage) {
-		log.Println("OnUserNoticeMessage")
+		Log.Debugf("OnUserNoticeMessage")
 	})
 	client.OnUserStateMessage(func(message twitch.UserStateMessage) {
-		log.Printf("OnUserStateMessage raw=%s", message.Raw)
+		Log.Debugf("OnUserStateMessage raw=%s", message.Raw)
 	})
 	client.OnGlobalUserStateMessage(func(message twitch.GlobalUserStateMessage) {
-		log.Printf("OnGlobalUserStateMessage raw=%s\n", message.Raw)
+		Log.Debugf("OnGlobalUserStateMessage raw=%s\n", message.Raw)
 	})
 	client.OnNoticeMessage(func(message twitch.NoticeMessage) {
-		log.Printf("OnNoticeMessage message=%s", message.Message)
+		Log.Debugf("OnNoticeMessage message=%s", message.Message)
 	})
 	client.OnUserJoinMessage(func(message twitch.UserJoinMessage) {
-		log.Println("OnUserJoingMessage")
+		Log.Debugf("OnUserJoingMessage")
 	})
 	client.OnUserPartMessage(func(message twitch.UserPartMessage) {
-		log.Println("OnUserPartgMessage")
+		Log.Debugf("OnUserPartgMessage")
 	})
 	client.OnSelfJoinMessage(func(message twitch.UserJoinMessage) {
-		log.Printf("onSelfJoinMessage raw=%s\n", message.Raw)
+		Log.Debugf("onSelfJoinMessage raw=%s\n", message.Raw)
 	})
 	client.OnSelfPartMessage(func(message twitch.UserPartMessage) {
-		log.Println("OnSelfPartMessage")
+		Log.Debugf("OnSelfPartMessage")
 	})
 	client.OnReconnectMessage(func(message twitch.ReconnectMessage) {
-		log.Println("OnReconnectMessage")
+		Log.Debugf("OnReconnectMessage")
 	})
 	client.OnNamesMessage(func(message twitch.NamesMessage) {
-		log.Println("OnNamesMessage")
+		Log.Debugf("OnNamesMessage")
 	})
 	client.OnPingMessage(func(message twitch.PingMessage) {
-		log.Println("OnPingMessage")
+		Log.Debugf("OnPingMessage")
 	})
 	client.OnPongMessage(func(message twitch.PongMessage) {
-		log.Println("OnPongMessage")
+		Log.Debugf("OnPongMessage")
 	})
 	client.OnUnsetMessage(func(message twitch.RawMessage) {
-		log.Printf("OnUnsetMessage raw=%s\n", message.Raw)
+		Log.Debugf("OnUnsetMessage raw=%s\n", message.Raw)
 	})
 	client.OnPingSent(func() {
-		log.Println("OnPingSent")
+		Log.Debugf("OnPingSent")
 	})
 
 	client.Join("photonsalon")
 
 	err := client.Connect()
-	log.Println("MAIN 5")
+	Log.Debugf("MAIN 5")
 	if err != nil {
-		log.Println("MAIN 6")
+		Log.Debugf("MAIN 6")
 		panic(err)
 	}
-	log.Println("MAIN 7!!!")
+	Log.Debugf("MAIN 7!!!")
 	select {}
 	// unreachable
 }

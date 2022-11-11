@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"image"
 	"io"
-	"log"
 	"os"
 	"runtime"
 	"strings"
@@ -57,9 +56,8 @@ func NewPage(parent Window, name string) WindowData {
 		logFile:          &os.File{},
 	}
 	page.mouseHandler = page.defaultHandler
-	page.logWriter = PageLogWriter{page: page}
-
-	log.SetOutput(page.logWriter)
+	// page.logWriter = PageLogWriter{page: page}
+	// log.SetOutput(page.logWriter)
 
 	// Putting things in page.log is a last-resort,
 	// since sometimes there's no Console up
@@ -69,7 +67,7 @@ func NewPage(parent Window, name string) WindowData {
 		fmt.Printf("NewPage: Unable to open %s err=%s", path, err)
 	}
 	page.logFile = f // could be nil
-	log.Printf("Page logs are being saved in %s\n", path)
+	engine.Log.Debugf("Page logs are being saved in %s\n", path)
 
 	return NewToolData(page, "Page", image.Point{640, 480})
 }
@@ -135,17 +133,17 @@ func (page *Page) Do(cmd engine.Cmd) string {
 	case "dumpfile":
 		fname := cmd.ValuesString("filename", "")
 		retmsg := page.Do(engine.NewSimpleCmd("getstate"))
-		log.Printf("dumpfile, retmsg=%s\n", retmsg)
+		engine.Log.Debugf("dumpfile, retmsg=%s\n", retmsg)
 		m, _ := engine.StringMap(retmsg)
 		state, ok := m["state"]
 		if !ok {
-			log.Printf("DumpFileMsg didn't receive valid StateDatamsg\n")
+			engine.Log.Debugf("DumpFileMsg didn't receive valid StateDatamsg\n")
 		} else {
 			ps := toPrettyJSON(state)
 			fpath := engine.ConfigFilePath(fname)
 			err := os.WriteFile(fpath, []byte(ps), 0644)
 			if err != nil {
-				log.Printf("DumpFileMsg: err=%s", err)
+				engine.Log.Debugf("DumpFileMsg: err=%s", err)
 			}
 		}
 
@@ -154,7 +152,7 @@ func (page *Page) Do(cmd engine.Cmd) string {
 		if err == nil {
 			return state
 		}
-		log.Printf("GetStateMsg: err=%s", err)
+		engine.Log.Debugf("GetStateMsg: err=%s", err)
 
 	case "resize":
 		page.resize()
@@ -190,7 +188,7 @@ func (page *Page) Do(cmd engine.Cmd) string {
 		pos := image.Point{lastMenuX + 4, page.lastPos.Y}
 		_, err := page.AddTool(submenutype, pos, image.Point{})
 		if err != nil {
-			log.Printf("Page.Do: submenu AddTool err=%s\n", err)
+			engine.Log.Debugf("Page.Do: submenu AddTool err=%s\n", err)
 		}
 
 	case "sweeptool":
@@ -247,11 +245,11 @@ func (page *Page) restoreState(s string) error {
 	sz := dat["size"].(string)
 	size := StringToPoint(sz)
 
-	log.Printf("restore name=%s size=%v\n", name, size)
+	engine.Log.Debugf("restore name=%s size=%v\n", name, size)
 
 	WinDoUpstream(page, NewResizeMeCmd(size))
 
-	log.Printf("HEY!! restoreState needs work!\n")
+	engine.Log.Debugf("HEY!! restoreState needs work!\n")
 
 	children := dat["children"].([]interface{})
 	for _, ch := range children {
@@ -265,7 +263,7 @@ func (page *Page) restoreState(s string) error {
 		// Create the window
 		childW, err := page.AddTool(toolType, pos, size)
 		if err != nil {
-			log.Printf("Page.restoreState: AddTool fails for toolType=%s, err=%s\n", toolType, err)
+			engine.Log.Debugf("Page.restoreState: AddTool fails for toolType=%s, err=%s\n", toolType, err)
 			continue
 		}
 		// restore state
@@ -335,7 +333,7 @@ func (page *Page) AddTool(name string, pos image.Point, size image.Point) (Windo
 		size = td.minSize
 	}
 	WinSetChildSize(child, size)
-	log.Printf("Page.AddTool: %s pos=%d,%d size=%d,%d\n", name, pos.X, pos.Y, size.X, size.Y)
+	engine.Log.Debugf("Page.AddTool: %s pos=%d,%d size=%d,%d\n", name, pos.X, pos.Y, size.X, size.Y)
 	return child, nil
 }
 
@@ -379,7 +377,7 @@ func (page *Page) drawPickMouse() {
 func (page *Page) resize() {
 	size := WinGetSize(page)
 	WinSetSize(page, size)
-	log.Printf("Page.Resize: should be doing menus (and other things)?")
+	engine.Log.Debugf("Page.Resize: should be doing menus (and other things)?")
 }
 
 func (page *Page) defaultHandler(cmd engine.Cmd) {
@@ -413,7 +411,7 @@ func (page *Page) defaultHandler(cmd engine.Cmd) {
 		} else {
 			w, err := page.AddTool("PageMenu", pos, image.Point{})
 			if err != nil {
-				log.Printf("defaultHandler: unable to create PageMenu err=%s\n", err)
+				engine.Log.Debugf("defaultHandler: unable to create PageMenu err=%s\n", err)
 			} else {
 				page.pageMenu = w
 			}
@@ -453,12 +451,12 @@ func (page *Page) sweepHandler(cmd engine.Cmd) {
 		case "resize":
 			wname := page.targetWindowName
 			if wname == "" {
-				log.Printf("Page.sweepHandler: no targetWindow?\n")
+				engine.Log.Debugf("Page.sweepHandler: no targetWindow?\n")
 				return
 			}
 			w := WinChildNamed(page, wname)
 			if w == nil {
-				log.Printf("Page.sweepHandler: no window named %s\n", wname)
+				engine.Log.Debugf("Page.sweepHandler: no window named %s\n", wname)
 				return
 			}
 			// If you don't sweep out anything, look for
@@ -468,7 +466,7 @@ func (page *Page) sweepHandler(cmd engine.Cmd) {
 				// If there's a window (other than the one we're resizing)
 				// underneath the point, then don't do anything
 				if under != nil && under != w {
-					log.Printf("Page.sweepHandler: can't resize above a Window\n")
+					engine.Log.Debugf("Page.sweepHandler: can't resize above a Window\n")
 					return
 				}
 				foundRect := page.findSpace(r.Min, w)
@@ -492,7 +490,7 @@ func (page *Page) sweepHandler(cmd engine.Cmd) {
 			}
 			child, err := page.AddTool(page.sweepToolName, toolPos, toolSize)
 			if err != nil {
-				log.Printf("AddTool: err=%s\n", err)
+				engine.Log.Debugf("AddTool: err=%s\n", err)
 			} else {
 				WinSetChildSize(child, toolSize)
 			}
@@ -608,7 +606,7 @@ func (page *Page) pickHandler(cmd engine.Cmd) {
 			WinRemoveChild(page, child)
 			page.resetHandlers()
 		default:
-			log.Printf("Unrecognized currentAction=%s\n", page.currentAction)
+			engine.Log.Debugf("Unrecognized currentAction=%s\n", page.currentAction)
 		}
 	}
 }

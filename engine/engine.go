@@ -3,7 +3,6 @@ package engine
 import (
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -75,7 +74,7 @@ func (e *Engine) handleCursorEvent(ce CursorEvent) {
 
 func (e *Engine) Start() {
 
-	log.Printf("====================== Palette Engine is starting\n")
+	Log.Debugf("====================== Palette Engine is starting\n")
 
 	e.Router.Restart()
 
@@ -111,7 +110,7 @@ func (e *Engine) initDebug() {
 	darr := strings.Split(debug, ",")
 	for _, d := range darr {
 		if d != "" {
-			log.Printf("Turning Debug ON for %s\n", d)
+			Log.Debugf("Turning Debug ON for %s\n", d)
 			setDebug(d, true)
 		}
 	}
@@ -130,18 +129,18 @@ func (e *Engine) InputListener() {
 		case event := <-e.Router.CursorInput:
 			e.CursorManager.handleCursorEvent(event)
 		default:
-			// log.Printf("Sleeping 1 ms - now=%v\n", time.Now())
+			// Log.Debugf("Sleeping 1 ms - now=%v\n", time.Now())
 			time.Sleep(time.Millisecond)
 		}
 	}
-	log.Printf("InputListener is being killed\n")
+	Log.Debugf("InputListener is being killed\n")
 }
 
 // StartCursorInput xxx
 func (e *Engine) StartCursorInput() {
 	err := LoadMorphs()
 	if err != nil {
-		log.Printf("StartCursorInput: LoadMorphs err=%s\n", err)
+		Log.Debugf("StartCursorInput: LoadMorphs err=%s\n", err)
 	}
 	go StartMorph(e.CursorManager.handleCursorEvent, 1.0)
 }
@@ -150,7 +149,7 @@ func (e *Engine) StartCursorInput() {
 func (e *Engine) StartMIDI() {
 
 	if MIDI.Input == nil {
-		log.Printf("StartMIDI: there is no MIDI input\n")
+		Log.Debugf("StartMIDI: there is no MIDI input\n")
 	}
 
 	if EraeEnabled {
@@ -171,7 +170,7 @@ func (e *Engine) StartOSC(port int) {
 		handler <- OSCEvent{Msg: msg, Source: source}
 	})
 	if err != nil {
-		log.Printf("ERROR! %s\n", err.Error())
+		Log.Debugf("ERROR! %s\n", err.Error())
 	}
 
 	server := &osc.Server{
@@ -187,7 +186,7 @@ func (e *Engine) StartHTTP(port int) {
 	http.HandleFunc("/api", func(responseWriter http.ResponseWriter, req *http.Request) {
 
 		// vals := req.URL.Query()
-		// log.Printf("/api vals=%v\n", vals)
+		// Log.Debugf("/api vals=%v\n", vals)
 
 		responseWriter.Header().Set("Content-Type", "application/json")
 		responseWriter.WriteHeader(http.StatusOK)
