@@ -26,6 +26,6 @@ func main() {
 	go e.StartMIDI()
 	go e.InputListener()
 
-	engine.Log.Debugf("Blocking forever....\n")
+	engine.Info("Blocking forever....")
 	select {} // block forever
 }

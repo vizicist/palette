@@ -38,7 +38,7 @@ func (p *Preset) loadQuadPreset(applyToPlayer string) error {
 		return err
 	}
 
-	Log.Debugf("loadQuadPreset: path=%s\n", path)
+	Info("loadQuadPreset", "path", path)
 
 	// Here's where the params get applied,
 	// which among other things
@@ -65,12 +65,12 @@ func (p *Preset) loadQuadPreset(applyToPlayer string) error {
 		// {category}.{parameter}, but old "quad" files
 		// didn't include the category.
 		if !strings.Contains(parameterName, ".") {
-			Log.Debugf("loadQuadPreset: path=%s parameter=%s is in OLD format, not supported", path, parameterName)
+			Warn("loadQuadPreset: OLD format, not supported", "path", path)
 			return fmt.Errorf("")
 		}
 		err = player.SetOneParamValue(parameterName, value)
 		if err != nil {
-			Log.Debugf("loadQuadPreset: name=%s err=%s\n", parameterName, err)
+			Warn("loadQuadPreset", "name", parameterName, "err", err)
 			// Don't fail completely on individual failures,
 			// some might be for parameters that no longer exist.
 		}
@@ -93,7 +93,7 @@ func (p *Preset) loadQuadPreset(applyToPlayer string) error {
 				if err != nil {
 					// a hack to eliminate errors on a parameter that
 					// still exists in some presets.
-					Log.Debugf("loadQuadPreset: %s, param=%s, init=%s, err=%s\n", path, nm, init, err)
+					Warn("loadQuadPreset", "path", path, "nm", nm, "err", err)
 					// Don't fail completely on individual failures,
 					// some might be for parameters that no longer exist.
 				}
@@ -107,7 +107,7 @@ func (p *Preset) loadQuadPreset(applyToPlayer string) error {
 func (p *Preset) applyPreset(playerName string) error {
 
 	path := p.readableFilePath()
-	Log.Debugf("applyPreset player=%s path=%s\n", playerName, path)
+	Info("applyPreset", "player", playerName, "path", path)
 	paramsmap, err := LoadParamsMap(path)
 	if err != nil {
 		return err
@@ -116,7 +116,7 @@ func (p *Preset) applyPreset(playerName string) error {
 	TheEngine().Router.applyToPlayers(playerName, func(player *Player) {
 		err = player.applyParamsMap(p.category, paramsmap)
 		if err != nil {
-			Log.Debugf("Preset.applyPreset: playerName=%s err=%s\n", playerName, err)
+			Warn("Preset.applyPreset", "player", playerName, "err", err)
 		}
 	})
 
@@ -124,9 +124,7 @@ func (p *Preset) applyPreset(playerName string) error {
 	override := GetPreset(p.category + "._override")
 	overridepath := override.readableFilePath()
 	if fileExists(overridepath) {
-		if Debug.Preset {
-			Log.Debugf("applyPreset using overridepath=%s\n", overridepath)
-		}
+		DebugLogOfType("preset", "applyPreset using", "overridepath", overridepath)
 		overridemap, err := LoadParamsMap(overridepath)
 		if err != nil {
 			return err
@@ -151,7 +149,7 @@ func (p *Preset) applyPreset(playerName string) error {
 			TheEngine().Router.applyToPlayers(playerName, func(player *Player) {
 				err = player.SetOneParamValue(nm, init)
 				if err != nil {
-					Log.Debugf("Loading preset %s, param=%s, init=%s, err=%s\n", path, nm, init, err)
+					Warn("Loading preset", "preset", nm, "path", path, "err", err)
 					// Don't fail completely
 				}
 			})
@@ -199,7 +197,6 @@ func PresetMap(wantCategory string) (map[string]string, error) {
 	result := make(map[string]string, 0)
 
 	walker := func(walkedpath string, info os.FileInfo, err error) error {
-		// Log.Debugf("Crawling: %#v\n", path)
 		if err != nil {
 			return err
 		}
@@ -233,7 +230,7 @@ func PresetMap(wantCategory string) (map[string]string, error) {
 	presetsDir1 := filepath.Join(PaletteDataPath(), PresetsDir())
 	err := filepath.Walk(presetsDir1, walker)
 	if err != nil {
-		Log.Debugf("filepath.Walk: err=%s\n", err)
+		Warn("filepath.Walk", "err", err)
 		return nil, err
 	}
 	return result, nil

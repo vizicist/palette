@@ -22,9 +22,9 @@ func NewResponder_default() *Responder_default {
 func (r *Responder_default) OnCursorEvent(ctx *engine.ResponderContext, ce engine.CursorEvent) {
 	clicks := ctx.CurrentClick()
 	nt := r.cursorToNote(ce)
-	engine.Log.Debugf("Responder_default.OnCursorEvent: ce=%s nt=%s\n", ce, nt)
+	engine.Info("Responder_default.OnCursorEvent", "ce", ce, "note", nt)
 	ctx.ScheduleNoteAt(nt, clicks)
-	engine.Log.Debugf("Schedule is now: %s\n", ctx.ScheduleDebug())
+	engine.Info("Schedule is now", "schedule", ctx.ScheduleDebug())
 
 }
 

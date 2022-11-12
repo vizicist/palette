@@ -51,7 +51,7 @@ func NewActivePhrasesManager() *ActivePhrasesManager {
 
 func (a *ActivePhrase) start() {
 	if a.phrase == nil {
-		Log.Debugf("ActivePhrase.start: Unexpected nil value for active.phrase\n")
+		Warn("ActivePhrase.start: Unexpected nil value for active.phrase")
 	}
 	a.clickSoFar = 0
 	a.nextnote = a.phrase.firstnote // could be nil
@@ -62,7 +62,7 @@ func (a *ActivePhrase) start() {
 func (a *ActivePhrase) sendPendingNoteOffs(dueBy Clicks) bool {
 
 	if a.phrase == nil {
-		Log.Debugf("ActivePhrase.sendPendingNoteOffs got unexpected nil phrase value\n")
+		Warn("ActivePhrase.sendPendingNoteOffs got unexpected nil phrase value")
 		return true // pretend we're all done, so the broken ActivePhrase will get removed
 	}
 
@@ -84,7 +84,7 @@ func (a *ActivePhrase) sendPendingNoteOffs(dueBy Clicks) bool {
 // StartPhrase xxx
 // NOTE: startPhrase assumes that the mgr.mutex is held for writing
 func (mgr *ActivePhrasesManager) StartPhraseAt(click Clicks, phrase *Phrase, cid string) {
-	Log.Debugf("StartPhrase: cid=%s click=%d\n", cid, click)
+	DebugLogOfType("phrase", "StartPhrase", "cid", cid)
 	activePhrase, ok := mgr.activePhrases[cid]
 	if !ok {
 		activePhrase = NewActivePhrase(phrase)
@@ -107,8 +107,7 @@ func (mgr *ActivePhrasesManager) StartPhraseAt(click Clicks, phrase *Phrase, cid
 // StopPhrase xxx
 // NOTE: stopPhrase assumes that the mgr.mutex is held for writing
 func (mgr *ActivePhrasesManager) StopPhrase(cid string, active *ActivePhrase) {
-
-	Log.Debugf("StopPhrase: cid=%s\n", cid)
+	DebugLogOfType("phrase", "StopPhrase", "cid", cid)
 	// If not provided in the arguments, look it up.
 	if active == nil {
 		var ok bool
@@ -159,7 +158,7 @@ func (mgr *ActivePhrasesManager) AdvanceByOneClick() {
 
 	for cid, activePhrase := range mgr.activePhrases {
 		if activePhrase.phrase == nil {
-			Log.Debugf("advanceactivePhrases, unexpected phrase is nil for cid=%s?  deleting it\n", cid)
+			Warn("advanceactivePhrases, unexpected phrase is nil", "cid", cid)
 			if activePhrase.sendPendingNoteOffs(MaxClicks) {
 				delete(mgr.activePhrases, cid)
 			}
@@ -171,9 +170,9 @@ func (mgr *ActivePhrasesManager) AdvanceByOneClick() {
 		for ; n != nil && n.Clicks <= activePhrase.clickSoFar; n = n.next {
 			switch n.TypeOf {
 			case "noteon":
-				Log.Debugf("ActivePhrasesManager.advanceActivePhrasesByOneStep can't handle NOTEON notes yet\n")
+				Warn("ActivePhrasesManager.advanceActivePhrasesByOneStep can't handle NOTEON notes yet")
 			case "noteoff":
-				Log.Debugf("ActivePhrasesManager.advanceActivePhrasesByOneStep can't handle NOTEOFF notes yet\n")
+				Warn("ActivePhrasesManager.advanceActivePhrasesByOneStep can't handle NOTEOFF notes yet")
 			case "note":
 
 				nd := n.Copy()
@@ -185,7 +184,7 @@ func (mgr *ActivePhrasesManager) AdvanceByOneClick() {
 				activePhrase.pendingNoteOffs.InsertNote(nd)
 
 			default:
-				Log.Debugf("advanceActivePhrase unable to handle n.Typeof=%s n=%s\n", n.TypeOf, n)
+				Warn("advanceActivePhrase unable to handle", "typeof", n.TypeOf)
 			}
 			// advance to the next note in the ActivePhrase
 			activePhrase.nextnote = n.next
@@ -204,11 +203,10 @@ func (mgr *ActivePhrasesManager) terminateActiveNotes() {
 	mgr.mutex.RLock()
 	defer mgr.mutex.RUnlock()
 	for id, a := range mgr.activePhrases {
-		// Log.Debugf("terminateActiveNotes n=%v\n", a.currentNoteOn)
 		if a != nil {
 			a.sendPendingNoteOffs(a.clickSoFar)
 		} else {
-			Log.Debugf("Hey, activeNotes entry for id=%s\n", id)
+			Warn("Hey, nil activeNotes entry", "id", id)
 		}
 	}
 }
