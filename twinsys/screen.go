@@ -58,7 +58,7 @@ func Run() {
 		var ysize int
 		n, err := fmt.Sscanf(winsize, "%d,%d", &xsize, &ysize)
 		if err != nil || n != 2 {
-			engine.Log.Debugf("Run: bad format of winsize")
+			engine.Warn("Run: bad format of winsize", "winsize", winsize)
 		} else {
 			minSize.X = xsize
 			minSize.Y = ysize
@@ -91,21 +91,26 @@ func Run() {
 	screen.currentPage = WinAddChild(screen, td)
 
 	// START DEBUG - do RESTORE
-	fname := engine.ConfigFilePath("homepage.json")
-	bytes, err := os.ReadFile(fname)
-	if err != nil {
-		engine.Log.Debugf("Run: No homepage - %s\n", fname)
+	path := engine.ConfigFilePath("homepage.json")
+	if !engine.FileExists(path) {
+		engine.Info("No homepage.json")
 	} else {
-		page := td.w.(*Page)
-		err = page.restoreState(string(bytes))
+		bytes, err := os.ReadFile(path)
 		if err != nil {
-			engine.Log.Debugf("Unable to restoreState: %s\n", err)
+			engine.LogError(err)
+		} else {
+			page := td.w.(*Page)
+			err = page.restoreState(string(bytes))
+			if err != nil {
+				engine.LogError(err)
+			}
 		}
 	}
 
 	// This is it!  RunGame runs forever
 	if err := ebiten.RunGame(screen); err != nil {
-		engine.Log.Fatal(err)
+		engine.LogError(err)
+		// Should be fatal?
 	}
 }
 
@@ -144,13 +149,13 @@ func (screen *Screen) Do(cmd engine.Cmd) string {
 			ebiten.SetCursorMode(ebiten.CursorModeHidden)
 		}
 	case "closeme":
-		engine.Log.Debugf("screen.runMsgs: SHOULD NOT BE GETTING CloseMeMsg!?\n")
+		engine.Warn("screen.runMsgs: should not be getting CloseMeMsg!?")
 	case "resizeme":
 		size := cmd.ValuesSize(engine.PointZero)
 		ebiten.SetWindowSize(size.X, size.Y)
 
 	default:
-		engine.Log.Debugf("screen.runMsgs: UNRECOGNIZED msg=%T\n", cmd.Subj)
+		engine.Warn("screen.runMsgs: unrecognized", "msg", cmd.Subj)
 	}
 	return ""
 }
@@ -158,7 +163,7 @@ func (screen *Screen) Do(cmd engine.Cmd) string {
 // Layout satisfies the ebiten.Game interface
 func (screen *Screen) Layout(width, height int) (int, int) {
 	if screen == nil {
-		engine.Log.Debugf("Screen.Layout: Hey, screen shouldn't be nil!\n")
+		engine.Warn("Screen.Layout: Hey, screen shouldn't be nil!")
 		return width, height
 	}
 	currSize := WinGetSize(screen)
@@ -173,7 +178,6 @@ func (screen *Screen) Layout(width, height int) (int, int) {
 // Update satisfies the ebiten.Game interface
 func (screen *Screen) Update() (err error) {
 
-	// engine.Log.Debugf("Screen.Update! -------------------\n")
 	x, y := ebiten.CursorPosition()
 	newPos := image.Point{x, y}
 
@@ -224,9 +228,7 @@ func (screen *Screen) drawRect(rect image.Rectangle) {
 	y0 := rect.Min.Y
 	x1 := rect.Max.X
 	y1 := rect.Max.Y
-	if engine.Debug.Drawing {
-		engine.Log.Debugf("drawRect: xy0=%d,%d xy1=%d,%d\n", x0, y0, x1, y1)
-	}
+	engine.DebugLogOfType("drawing", "drawRect", "x0", x0, "y0", y0, "x1", x1, "y1", y1)
 	screen.drawLine(image.Point{x0, y0}, image.Point{x1, y0})
 	screen.drawLine(image.Point{x1, y0}, image.Point{x1, y1})
 	screen.drawLine(image.Point{x1, y1}, image.Point{x0, y1})
@@ -235,27 +237,21 @@ func (screen *Screen) drawRect(rect image.Rectangle) {
 
 // drawLine xxx
 func (screen *Screen) drawLine(xy0, xy1 image.Point) {
-	if engine.Debug.Drawing {
-		engine.Log.Debugf("drawLine: xy0=%d,%d xy1=%d,%d color=%+v\n", xy0.X, xy0.Y, xy1.X, xy1.Y, screen.foreColor)
-	}
+	engine.DebugLogOfType("drawing", "drawLine", "x0", xy0.X, "y0", xy0.Y, "x1", xy1.X, "y1", xy1.Y, "color", screen.foreColor)
 	ebitenutil.DrawLine(screen.eimage,
 		float64(xy0.X), float64(xy0.Y), float64(xy1.X), float64(xy1.Y), screen.foreColor)
 }
 
 func (screen *Screen) drawText(s string, styleName string, pos image.Point) {
 	styleInfo := Styles[styleName]
-	if engine.Debug.Drawing {
-		engine.Log.Debugf("drawText: s=%s pos=%d,%d\n", s, pos.X, pos.Y)
-	}
+	engine.DebugLogOfType("drawing", "drawText", "s", s, "x", pos.X, "y", pos.Y)
 	text.Draw(screen.eimage, s, styleInfo.fontFace, pos.X, pos.Y, screen.foreColor)
 }
 
 func (screen *Screen) drawFilledRect(rect image.Rectangle) {
 	w := rect.Max.X - rect.Min.X
 	h := rect.Max.Y - rect.Min.Y
-	if engine.Debug.Drawing {
-		engine.Log.Debugf("drawFilledRect: xy=%d,%d wh=%d,%d\n", rect.Min.X, rect.Min.Y, w, h)
-	}
+	engine.DebugLogOfType("drawing", "drawFilledRect", "x0", rect.Min.X)
 	ebitenutil.DrawRect(screen.eimage, float64(rect.Min.X), float64(rect.Min.Y), float64(w), float64(h), screen.foreColor)
 }
 

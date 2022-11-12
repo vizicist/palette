@@ -215,7 +215,7 @@ func (menu *Menu) Do(cmd engine.Cmd) string {
 	switch cmd.Subj {
 
 	case "close":
-		engine.Log.Debugf("menu.Do: close needs work?  Maybe not\n")
+		engine.Warn("menu.Do: close needs work?  Maybe not")
 
 	case "resize":
 		size := cmd.ValuesXY("size", engine.PointZero)
