@@ -4,7 +4,6 @@
 package engine
 
 import (
-	"fmt"
 	"strings"
 	"time"
 
@@ -85,7 +84,7 @@ func InitMIDI() {
 	// We only open a single input, though midiInputs is an array
 	for _, inp := range inports {
 		name := inp.String()
-		Log.Debugf("input port = %s\n", name)
+		Info("MIDI input", "port", name)
 		if name == "Erae Touch" {
 			erae = true
 			EraeInput = inp
@@ -98,48 +97,15 @@ func InitMIDI() {
 	for _, outp := range outports {
 		name := outp.String()
 		// NOTE: name is the port name followed by an index
-		Log.Debugf("output port = %s\n", outp.String())
+		Info("MIDI output", "port", outp.String())
 		if strings.Contains(name, "Erae Touch") {
 			EraeOutput = outp
 		}
 		MIDI.midiOutputs[name] = outp
 	}
 
-	/*
-		// for n := 0; n < ndevices; n++ {
-			devid := portmidi.DeviceID(n)
-			dev := portmidi.Info(devid)
-			if dev.Name == "Erae Touch" {
-				erae = true
-			}
-			if dev.IsOutputAvailable {
-				if Debug.MIDI {
-					Log.Debugf("MIDI OUTPUT device = %s  devid=%v\n", dev.Name, devid)
-				}
-				MIDI.outputDeviceID[dev.Name] = devid
-				MIDI.outputDeviceInfo[dev.Name] = dev
-				numOutputs++
-			}
-			if dev.IsInputAvailable {
-				if Debug.MIDI {
-					Log.Debugf("MIDI INPUT device = %s  devid=%v\n", dev.Name, devid)
-				}
-				MIDI.inputDeviceID[dev.Name] = devid
-				MIDI.inputDeviceInfo[dev.Name] = dev
-				numInputs++
-			}
-		}
-
-		if erae {
-			Log.Debugf("Erae Touch input is being enabled\n")
-			InitErae()
-		}
-
-		Log.Debugf("MIDI devices (%d inputs, %d outputs) have been initialized\n", numInputs, numOutputs)
-	*/
-
 	if erae {
-		Log.Debugf("Erae Touch input is being enabled\n")
+		Info("Erae Touch input is being enabled")
 		InitErae()
 	}
 }
@@ -154,11 +120,11 @@ func (m *MIDIIO) Start() {
 		var ch, key, vel uint8
 		switch {
 		case msg.GetSysEx(&bt):
-			fmt.Printf("got sysex: % X\n", bt)
+			Info("got sysex", "bt", bt)
 		case msg.GetNoteStart(&ch, &key, &vel):
-			fmt.Printf("starting note %s on channel %v with velocity %v\n", midi.Note(key), ch, vel)
+			Info("starting note on channel with velocity\n", "note", midi.Note(key), "channel", ch, "velocity", vel)
 		case msg.GetNoteEnd(&ch, &key):
-			fmt.Printf("ending note %s on channel %v\n", midi.Note(key), ch)
+			Info("ending note on channel", "note", midi.Note(key), "channel", ch)
 		default:
 			// ignore
 		}
@@ -174,7 +140,7 @@ func (m *MIDIIO) Start() {
 	}, midi.UseSysEx())
 
 	if err != nil {
-		fmt.Printf("ERROR: %s\n", err)
+		LogError(err)
 		return
 	}
 	MIDI.stop = stop
@@ -222,21 +188,17 @@ func (m *MIDIInput) ReadEvents() ([]MidiEvent, error) {
 				source:    m.Name(),
 			}
 		}
-		// Log.Debugf("\nmidiInput len(events)=%d\n", len(events))
 	return events, err
 }
 */
 
 func (mc *MIDIChannelOutput) SendBankProgram(bank int, program int) {
 	if mc.bank != bank {
-		Log.Debugf("SendBankProgram: needs work\n")
-		Log.Debugf("SendBankProgram: XXX - SHOULD be sending bank=%d\n", bank)
+		Warn("SendBankProgram: XXX - SHOULD be sending", "bank", bank)
 		mc.bank = bank
 	}
 	if mc.program != program {
-		if Debug.MIDI {
-			Log.Debugf("SendBankProgram: sending program=%d\n", program)
-		}
+		DebugLogOfType("midi", "SendBankProgram: sending", "program", program)
 		mc.program = program
 		status := byte(int64(ProgramStatus) | int64(mc.channel-1))
 		data1 := byte(program - 1)
@@ -244,111 +206,24 @@ func (mc *MIDIChannelOutput) SendBankProgram(bank int, program int) {
 	}
 }
 
-// WriteSysEx sends one or more MIDI Events
-/*
-func (out *MIDIChannelOutput) WriteSysEx(bytes []byte) {
-	Log.Debugf("WriteSysEx needs work\n")
-		if out == nil {
-			Log.Debugf("MIDIDeviceOutput.WriteSysEx: out is nil?\n")
-			return
-		}
-		if Debug.MIDI {
-			s := "["
-			for _, b := range bytes {
-				s += fmt.Sprintf(" 0x%02x", b)
-			}
-			s += " ]"
-			Log.Debugf("WriteSysEx: bytes = %s\n", s)
-		}
-		if out.stream == nil {
-			Log.Debugf("WriteSysEx: out.stream is nil?  port=%s\n", out.name)
-			return
-		}
-		tm := time.Now()
-		if err := out.stream.WriteSysExBytes(tm, bytes); err != nil {
-			Log.Debugf("WriteSysExBytes: err=%s\n", err)
-			return
-		}
-}
-*/
-
 func (out *MIDIChannelOutput) WriteShort(status, data1, data2 int64) {
-	Log.Debugf("WriteShort needs work\n")
-	/*
-		if Debug.MIDI {
-			Log.Debugf("MIDIDeviceOutput.WriteShort: status=0x%02x data1=%d data2=%d\n", status, data1, data2)
-		}
-		if out.stream == nil {
-			Log.Debugf("SendEvent: out.stream is nil?  port=%s\n", out.name)
-			return
-		}
-		if err := out.stream.WriteShort(status, data1, data2); err != nil {
-			Log.Debugf("out.stream.WriteShort: err=%s\n", err)
-			return
-		}
-	*/
+	Warn("WriteShort needs work")
 }
-
-/*
-// GetOutputStream gets the Stream for a named port.  There can be multiple writers to an
-// output stream; a cache of per-port output streams is kept in MIDIIO.outputDeviceStream
-func (m *MIDIIO) getOutputStream(name string) (devid portmidi.DeviceID, stream *portmidi.Stream) {
-	var present bool
-	devid, present = m.outputDeviceID[name]
-	if !present {
-		Log.Debugf("getOutputStream: No such MIDI Output (%s)\n", name)
-		return -1, nil
-	}
-	var err error
-	stream, present = m.outputDeviceStream[name]
-	if !present {
-		Log.Debugf("Opening MIDI Output: %s\n", name)
-		m.outputDeviceStream[name], err = portmidi.NewOutputStream(devid, 1, 0)
-		if err != nil {
-			Log.Debugf("getOutputStream: Unable to create NewOutputStream for %s\n", name)
-			return -1, nil
-		}
-		stream = m.outputDeviceStream[name]
-	}
-	return devid, stream
-}
-
-// getInputStream gets the Stream for a named port
-func (m *MIDIIO) getInputStream(name string) (devid portmidi.DeviceID, stream *portmidi.Stream) {
-	var present bool
-	devid, present = m.inputDeviceID[name]
-	if !present {
-		return -1, nil
-	}
-	var err error
-	stream, present = m.inputDeviceStream[name]
-	if !present {
-		Log.Debugf("Opening MIDI Input: %s\n", name)
-		m.inputDeviceStream[name], err = portmidi.NewInputStream(devid, 1024)
-		if err != nil {
-			Log.Debugf("portmidi.NewInputStream: err=%s\n", err)
-			return -1, nil
-		}
-		stream = m.inputDeviceStream[name]
-	}
-	return devid, stream
-}
-*/
 
 func (m *MIDIIO) GetMidiChannelOutput(portchannel PortChannel) *MIDIChannelOutput {
 	mc, ok := m.midiChannelOutputs[portchannel]
 	if !ok {
-		Log.Debugf("GetMidiChannelOutput: no entry for port=%s channel=%d\n", portchannel.port, portchannel.channel)
+		Warn("GetMidiChannelOutput: no entry", "port", portchannel.port, "channel", portchannel.channel)
 		return nil
 	}
 	if mc.output == nil {
-		Log.Debugf("GetMidiChannelOutput: midiDeviceOutput==nil for port=%s channel=%d\n", portchannel.port, portchannel.channel)
+		Warn("GetMidiChannelOutput: midiDeviceOutput==nil", "port", portchannel.port, "channel", portchannel.channel)
 		return nil
 	}
 	if !mc.isopen {
 		e := mc.output.Open()
 		if e != nil {
-			Log.Debugf("GetMidiChannelOutput: can't open %s - err=%s\n", mc.output.String(), e)
+			LogError(e, "output", mc.output.String())
 			return nil
 		}
 	}
@@ -373,7 +248,7 @@ func (m *MIDIIO) openChannelOutput(portchannel PortChannel) *MIDIChannelOutput {
 		}
 	}
 	if output == nil {
-		Log.Debugf("No output found matching %s\n", portName)
+		Warn("No output found matching", "port", portName)
 		return nil
 	}
 
@@ -398,26 +273,3 @@ func (m *MIDIIO) openFakeChannelOutput(port string, channel int) *MIDIChannelOut
 	}
 	return co
 }
-
-/*
-	devid, stream := m.getOutputStream(nm)
-	if stream == nil {
-		Log.Debugf("MIDIIO.openInput: Unable to open %s\n", nm)
-		return nil
-	}
-	out := &MIDIDeviceOutput{name: nm, deviceID: devid, stream: stream}
-	m.midiDeviceOutputs[nm] = out
-	return out
-*/
-
-/*
-func (m *MIDIIO) openInput(nm string) {
-	Log.Debugf("MIDIIO.openInput: needs work\n")
-		devid, stream := m.getInputStream(nm)
-		if stream != nil {
-			m.midiInputs[nm] = &MIDIInput{name: nm, deviceID: devid, stream: stream}
-		} else {
-			Log.Debugf("MIDIIO.openInput: Unable to open %s\n", nm)
-		}
-}
-*/

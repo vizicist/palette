@@ -17,18 +17,18 @@ func NewResponder_demo() *Responder_demo {
 /////////////////////////// external interface
 
 func (r *Responder_demo) OnCursorEvent(ce engine.CursorEvent) {
-	engine.Log.Debugf("NewResponder_demo in OnCursorEvent!\n")
+	engine.Info("NewResponder_demo in OnCursorEvent!")
 	if ce.Ddu == "down" {
 		go func() {
 			note := r.cursorToNote(ce)
-			engine.Log.Debugf("cursor down: publishing note=%s\n", note.String())
+			engine.Info("cursor down: publishing", "note", note.String())
 			engine.SendNoteToSynth(note)
 			time.Sleep(2 * time.Second)
 			note.TypeOf = "noteoff"
 			engine.SendNoteToSynth(note)
 		}()
 	}
-	engine.Log.Debugf("OnCursorEvent in responder_demo called! ce=%v\n", ce)
+	engine.Info("OnCursorEvent in responder_demo called!", "ce", ce)
 }
 
 /////////////////////////// internal things
@@ -39,7 +39,7 @@ func (r *Responder_demo) cursorToNote(ce engine.CursorEvent) *engine.Note {
 	s := "+b"
 	note, err := engine.NoteFromString((s))
 	if err != nil {
-		engine.Log.Debugf("xyzToNote: bad note - %s\n", s)
+		engine.LogError(err)
 		note, _ = engine.NoteFromString("+a")
 	}
 	return note

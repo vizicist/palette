@@ -20,114 +20,6 @@ import (
 	"gopkg.in/gomail.v2"
 )
 
-// Debug controls debugging
-var Debug = debugFlags{}
-
-type debugFlags struct {
-	Advance   bool
-	API       bool
-	Attract   bool
-	Config    bool
-	Drawing   bool
-	Cursor    bool
-	Erae      bool
-	Exec      bool
-	GenSound  bool
-	GenVisual bool
-	Go        bool
-	Loop      bool
-	MIDI      bool
-	MMTT      bool
-	Morph     bool
-	PlayerAPI bool
-	Mouse     bool
-	NATS      bool
-	Notify    bool
-	OSC       bool
-	Preset    bool
-	Resolume  bool
-	Responder bool
-	Realtime  bool
-	Remote    bool
-	Router    bool
-	Scale     bool
-	Transpose bool
-	Values    bool
-}
-
-func setDebug(dtype string, b bool) error {
-	d := strings.ToLower(dtype)
-	switch d {
-	case "advance":
-		Debug.Advance = b
-	case "api":
-		Debug.API = b
-	case "attract":
-		Debug.Attract = b
-	case "config":
-		Debug.Config = b
-	case "cursor":
-		Debug.Cursor = b
-	case "drawing":
-		Debug.Drawing = b
-	case "erae":
-		Debug.Erae = b
-	case "exec":
-		Debug.Exec = b
-	case "executeapi":
-		Debug.PlayerAPI = b
-	case "generated":
-		Debug.GenSound = b
-		Debug.GenVisual = b
-	case "gensound":
-		Debug.GenSound = b
-	case "genvisual":
-		Debug.GenVisual = b
-	case "go":
-		Debug.Go = b
-	case "loop":
-		Debug.Loop = b
-	case "midi":
-		Debug.MIDI = b
-	case "mmtt":
-		Debug.MMTT = b
-	case "morph":
-		Debug.Morph = b
-	case "mouse":
-		Debug.Mouse = b
-	case "nats":
-		Debug.NATS = b
-	case "notify":
-		Debug.Notify = b
-	case "osc":
-		Debug.OSC = b
-	case "output":
-		Debug.GenSound = b
-		Debug.GenVisual = b
-	case "preset":
-		Debug.Preset = b
-	case "resolume":
-		Debug.Resolume = b
-	case "realtime":
-		Debug.Realtime = b
-	case "remote":
-		Debug.Remote = b
-	case "router":
-		Debug.Router = b
-	case "responder":
-		Debug.Responder = b
-	case "scale":
-		Debug.Scale = b
-	case "transpose":
-		Debug.Transpose = b
-	case "values":
-		Debug.Values = b
-	default:
-		return fmt.Errorf("setDebug: unrecognized debug type=%s", dtype)
-	}
-	return nil
-}
-
 func BoundAndScaleController(v, vmin, vmax float32, cmin, cmax int) int {
 	newv := BoundAndScaleFloat(v, vmin, vmax, float32(cmin), float32(cmax))
 	return int(newv)
@@ -151,7 +43,7 @@ func SaveLogWrite(bytes []byte) {
 	micro := t.Nanosecond() / 1e3
 
 	var s string
-	if Debug.Go {
+	if IsLogging("go") {
 		goid := GoroutineID()
 		// Add GO# to log to indicate Goroutine
 		s = fmt.Sprintf("%04d/%02d/%02d %02d:%02d:%02d.%06d GO#%d %s",
@@ -172,7 +64,7 @@ func fileExists(filename string) bool {
 			return false
 		}
 		// complain but still act as if it doesn't exist
-		Log.Debugf("fileExists: err=%s\n", err)
+		LogError(err)
 		return false
 	}
 	return true
@@ -185,7 +77,7 @@ func PaletteDir() string {
 	if paletteRoot == "" {
 		paletteRoot = os.Getenv("PALETTE")
 		if paletteRoot == "" {
-			Log.Panicf("PALETTE environment variable needs to be set.")
+			Warn("PALETTE environment variable needs to be set.")
 		}
 	}
 	return paletteRoot
@@ -209,7 +101,7 @@ func MIDIFilePath(nm string) string {
 func LocalPaletteDir() string {
 	localapp := os.Getenv("CommonProgramFiles")
 	if localapp == "" {
-		Log.Debugf("Expecting CommonProgramFiles to be set.")
+		Warn("Expecting CommonProgramFiles to be set.")
 		return ""
 	}
 	return filepath.Join(localapp, "Palette")
@@ -222,12 +114,11 @@ func LocalMap() map[string]string {
 		var err error
 		f := filepath.Join(LocalPaletteDir(), "local.json")
 		if !FileExists(f) {
-			// Log.Debugf("No local.json file, assuming datapath is data_default\n")
 			localMap, _ = StringMap("{ \"datapath\": \"data_default\" }")
 		} else {
 			localMap, err = ReadConfigFile(f)
 			if err != nil {
-				Log.Debugf("Bad format of local.json?  err=%s\n", err)
+				LogError(err)
 			}
 		}
 	}
@@ -266,7 +157,7 @@ func TwitchUser() (username string, authtoken string) {
 	if !ok {
 		twitchtoken = "foo"
 	}
-	Log.Debugf("TwitchUser = %s %s\n", twitchuser, twitchtoken)
+	Info("TwitchUser", "user", twitchuser, "token", twitchtoken)
 	return twitchuser, twitchtoken
 }
 
@@ -279,7 +170,7 @@ func ConfigFilePath(nm string) string {
 func LogFilePath(nm string) string {
 	localdir := LocalPaletteDir()
 	if localdir == "" {
-		Log.Debugf("Warning - using c:/windows/tmp for log directory.\n")
+		Warn("using c:/windows/tmp for log directory.")
 		return filepath.Join("C:/windows/tmp", nm)
 	}
 	return filepath.Join(localdir, "logs", nm)
@@ -316,7 +207,7 @@ func StringMap(params string) (map[string]string, error) {
 		return nil, err
 	}
 	if t != json.Delim('{') {
-		Log.Debugf("StringMap: no curly - %s\n", params)
+		Warn("no curly", "params", params)
 		return nil, errors.New("expected '{' delimiter")
 	}
 	values := make(map[string]string)
@@ -344,7 +235,7 @@ func StringMap(params string) (map[string]string, error) {
 func ResultResponse(resultObj interface{}) string {
 	bytes, err := json.Marshal(resultObj)
 	if err != nil {
-		Log.Debugf("ResultResponse: unable to marshal resultObj\n")
+		Warn("ResultResponse: unable to marshal resultObj")
 		return ""
 	}
 	result := string(bytes)
@@ -443,23 +334,11 @@ func MakeFileWriter(path string) io.Writer {
 
 	file, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
 	if err != nil {
-		fmt.Printf("MakeFileWriter: Unable to open path=%s err=%s", path, err)
+		LogError(err)
 		return nil
 	}
-	_ = file
 	return &FileWriter{File: file}
-	// return &FileWriter{File: file}
 }
-
-/*
-func (w *FileWriter) Close() {
-	err := w.File.Close()
-	if err != nil {
-		// doing a Log.Debug here might be a recursive error
-		// Log.Debugf("FileWriter.Close: err=%s\n", err)
-	}
-}
-*/
 
 func (w *FileWriter) Write(p []byte) (n int, err error) {
 	s := string(p)
@@ -498,7 +377,7 @@ func ConfigBool(nm string) bool {
 	}
 	b, err := IsTrueValue(v)
 	if err != nil {
-		Log.Debugf("Config value of %s (%s) is invalid, assuming false\n", nm, v)
+		LogError(err)
 		return false
 	}
 	return b
@@ -522,7 +401,7 @@ func ConfigIntWithDefault(nm string, dflt int) int {
 	var val int
 	nfound, err := fmt.Sscanf(s, "%d", &val)
 	if nfound == 0 || err != nil {
-		Log.Debugf("Config value of %s isn't an integer (%s)\n", nm, s)
+		LogError(err)
 		return dflt
 	}
 	return val
@@ -536,7 +415,7 @@ func ConfigFloatWithDefault(nm string, dflt float32) float32 {
 	var f float64
 	f, err := strconv.ParseFloat(s, 32)
 	if err != nil {
-		Log.Debugf("Unable to parse config value of %s\n", s)
+		LogError(err)
 		return dflt
 	}
 	return float32(f)
@@ -569,7 +448,7 @@ func ConfigValueWithDefault(nm string, dflt string) string {
 		var err error
 		configMap, err = ReadConfigFile(path) // make sure you're setting global configMap
 		if err != nil {
-			Log.Debugf("ReadConfigFile: path=%s err=%s", path, err)
+			LogError(err)
 			return ""
 		}
 	}
@@ -577,7 +456,6 @@ func ConfigValueWithDefault(nm string, dflt string) string {
 	if ok {
 		return val
 	}
-	// Log.Debugf("There is no config value named '%s'", nm)
 	return dflt
 }
 
@@ -644,7 +522,6 @@ func ziplogs(logsdir string, zipfile string) error {
 	defer w.Close()
 
 	walker := func(path string, info os.FileInfo, err error) error {
-		// Log.Debugf("Crawling: %#v\n", path)
 		if err != nil {
 			return err
 		}
@@ -677,7 +554,7 @@ func ziplogs(logsdir string, zipfile string) error {
 	}
 	err = filepath.Walk(logsdir, walker)
 	if err != nil {
-		Log.Debugf("filepath.Walk: err=%s\n", err)
+		LogError(err)
 	}
 	return err
 }
@@ -687,7 +564,7 @@ func SendLogs() error {
 	recipient := ConfigValue("emailto")
 	if recipient == "" {
 		msg := "SendLogs: not sending, no emailto in settings"
-		Log.Debugf("%s\n", msg)
+		Warn(msg)
 		return fmt.Errorf(msg)
 	}
 
@@ -711,7 +588,7 @@ func SendLogs() error {
 	if err != nil {
 		return fmt.Errorf("sendLogs: err=%s", err)
 	} else {
-		Log.Debugf("SendLogs: zipfile=%s\n", zipfile)
+		Info("SendLogs", "zipfile", zipfile)
 	}
 	body := fmt.Sprintf("host=%s palette logfiles attached\n", Hostname())
 	return SendMailWithAttachment(body, zipfile)
@@ -720,7 +597,7 @@ func SendLogs() error {
 func Hostname() string {
 	hostname, err := os.Hostname()
 	if err != nil {
-		Log.Debugf("SendMail: hostname err=%s\n", err)
+		LogError(err)
 		hostname = "Unknown"
 	}
 	return hostname
@@ -740,7 +617,7 @@ func SendMailWithAttachment(body, attachfile string) error {
 	if recipient == "" {
 		return fmt.Errorf("sendMail: not sending, no emailto in settings")
 	}
-	Log.Debugf("SendMail: recipient=%s\n", recipient)
+	Info("SendMail", "recipient", recipient)
 
 	smtpHost := "smtp.gmail.com"
 	smtpPort := 587
@@ -776,7 +653,7 @@ func JsonObject(args ...string) string {
 
 func JsonString(args ...string) string {
 	if len(args)%2 != 0 {
-		Log.Debugf("ApiParams: odd number of arguments, args=%v\n", args)
+		Warn("ApiParams: odd number of arguments", "args", args)
 		return ""
 	}
 	params := ""

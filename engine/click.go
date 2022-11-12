@@ -11,7 +11,7 @@ var currentClickOffset Clicks
 var clicksPerSecond int
 var currentClick Clicks
 var oneBeat Clicks
-var currentClickMutex sync.Mutex
+var currentClickMutex sync.RWMutex
 
 // CurrentMilli is the time from the start, in milliseconds
 const defaultClicksPerSecond = 192
@@ -29,15 +29,15 @@ const EventCursor = 0x04
 const EventAll = EventMidiInput | EventNoteOutput | EventCursor
 
 func CurrentClick() Clicks {
-	currentClickMutex.Lock()
-	defer currentClickMutex.Unlock()
+	currentClickMutex.RLock()
+	defer currentClickMutex.RUnlock()
 	return currentClick
 }
 
 func SetCurrentClick(clk Clicks) {
 	currentClickMutex.Lock()
+	defer currentClickMutex.Unlock()
 	currentClick = clk
-	currentClickMutex.Unlock()
 }
 
 // InitializeClicksPerSecond initializes
@@ -94,6 +94,6 @@ func CurrentMilli() int64 {
 
 func SetCurrentMilli(m int64) {
 	currentMilliMutex.Lock()
+	defer currentMilliMutex.Unlock()
 	currentMilli = m
-	currentMilliMutex.Unlock()
 }
