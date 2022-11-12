@@ -12,7 +12,7 @@ var Scales map[string]*Scale
 func GlobalScale(name string) *Scale {
 	s, ok := Scales[name]
 	if !ok {
-		Log.Debugf("No scale named %s, assuming newage\n", name)
+		Warn("No such scale", "name", name)
 		s = Scales["newage"]
 	}
 	return s

@@ -71,7 +71,7 @@ func (sched *Scheduler) Format(f fmt.State, c rune) {
 }
 
 func (sched *Scheduler) ScheduleNoteAt(nt *Note, click Clicks) (id string) {
-	Log.Debugf("Scheduler.ScheduleNoteAt: nt=%s click=%d\n", nt, click)
+	Info("Scheduler.ScheduleNoteAt", "nt", nt, "click", click)
 	phr := NewPhrase().InsertNote(nt)
 	id = fmt.Sprintf("%d", sched.nextSid)
 	newItem := &SchedItem{
@@ -100,7 +100,7 @@ func (sched *Scheduler) ScheduleNoteAt(nt *Note, click Clicks) (id string) {
 	insertBefore := sched.FindInsert(click)
 	if insertBefore == nil {
 		// The common situation should have already handled this
-		Log.Debugf("ScheduleNoteAt: Unexpected insert = nil?\n")
+		Warn("ScheduleNoteAt: Unexpected insert = nil?")
 		return
 	}
 	newItem.prev = insertBefore.prev
@@ -117,15 +117,32 @@ func (sched *Scheduler) ScheduleNoteAt(nt *Note, click Clicks) (id string) {
 func NewScheduler() *Scheduler {
 	transposebeats := Clicks(ConfigIntWithDefault("transposebeats", 48))
 	s := &Scheduler{
-		firstItem:       nil,
-		lastItem:        nil,
-		transposeAuto:   ConfigBoolWithDefault("transposeauto", true),
-		transposeClicks: transposebeats,
-		transposeNext:   transposebeats * oneBeat, // first one
-		// NOTE: the order in transposeValues needs to match the
-		// order in palette.py
-		transposeValues:      []int{0, -2, 3, -5},
-		activePhrasesManager: NewActivePhrasesManager(),
+		firstItem:              nil,
+		lastItem:               nil,
+		nextSid:                0,
+		activePhrasesManager:   NewActivePhrasesManager(),
+		now:                    time.Time{},
+		time0:                  time.Time{},
+		lastClick:              0,
+		Control:                make(chan Command),
+		transposeAuto:          ConfigBoolWithDefault("transposeauto", true),
+		transposeNext:          transposebeats * oneBeat,
+		transposeClicks:        transposebeats,
+		transposeIndex:         0,
+		transposeValues:        []int{0, -2, 3, -5},
+		attractModeIsOn:        false,
+		lastAttractGestureTime: time.Time{},
+		lastAttractPresetTime:  time.Time{},
+		attractGestureDuration: 0,
+		attractNoteDuration:    0,
+		attractPresetDuration:  0,
+		attractPreset:          "",
+		attractClient:          &osc.Client{},
+		lastAttractChange:      0,
+		attractCheckSecs:       0,
+		attractIdleSecs:        0,
+		processCheckSecs:       0,
+		aliveSecs:              0,
 	}
 	return s
 }
@@ -133,7 +150,7 @@ func NewScheduler() *Scheduler {
 // Start runs the scheduler and never returns
 func (sched *Scheduler) Start() {
 
-	Log.Debugf("Scheduler begins")
+	Info("Scheduler begins")
 
 	// Wake up every 2 milliseconds and check looper events
 	tick := time.NewTicker(2 * time.Millisecond)
@@ -163,7 +180,6 @@ func (sched *Scheduler) Start() {
 
 	// By reading from tick.C, we wake up every 2 milliseconds
 	for now := range tick.C {
-		// Log.Debugf("Realtime loop now=%v\n", time.Now())
 		sched.now = now
 		uptimesecs := sched.Uptime()
 		newclick := Seconds2Clicks(uptimesecs)
@@ -171,7 +187,6 @@ func (sched *Scheduler) Start() {
 
 		currentClick := CurrentClick()
 		if newclick > currentClick {
-			// Log.Debugf("ADVANCING CLICK now=%v click=%d\n", time.Now(), newclick)
 			sched.advanceTransposeTo(newclick)
 			sched.advanceClickTo(currentClick)
 			SetCurrentClick(newclick)
@@ -188,6 +203,7 @@ func (sched *Scheduler) Start() {
 			if !sched.attractModeIsOn && sinceLastAttractChange > sched.attractIdleSecs {
 				// Nothing happening for a while, turn attract mode on
 				go func() {
+					Info("sending attractmode true to sched.Control")
 					sched.Control <- Command{"attractmode", true}
 				}()
 				// sched.SetAttractMode(true)
@@ -212,16 +228,14 @@ func (sched *Scheduler) Start() {
 		if processCheckEnabled && (lastProcessCheck == 0 || sinceLastProcessCheck > sched.processCheckSecs) {
 			// Put it in background, so calling
 			// tasklist or ps doesn't disrupt realtime
-			if Debug.Realtime {
-				Log.Debugf("StartRealtime: checking processes\n")
-			}
+			DebugLogOfType("realtime", "StartRealtime: checking processes")
 			go TheEngine().ProcessManager.checkProcessesAndRestartIfNecessary()
 			lastProcessCheck = uptimesecs
 		}
 
 		select {
 		case cmd := <-sched.Control:
-			Log.Debugf("Realtime.Control: cmd=%v\n", cmd)
+			Info("Realtime.Control", "cmd", cmd)
 			switch cmd.Action {
 			case "attractmode":
 				onoff := cmd.Arg.(bool)
@@ -233,18 +247,16 @@ func (sched *Scheduler) Start() {
 		default:
 		}
 	}
-	Log.Debugf("StartRealtime ends")
+	Info("StartRealtime ends")
 }
 
 func (sched *Scheduler) advanceClickTo(toClick Clicks) {
 
 	// Don't let events get handled while we're advancing
-	// Log.Debugf("Scheduler.advanceClickTo: A\n")
 	TheEngine().Router.eventMutex.Lock()
 	defer func() {
 		TheEngine().Router.eventMutex.Unlock()
 	}()
-	// Log.Debugf("Scheduler.advanceClickTo: toClick=%d sched=%s\n", toClick, sched)
 
 	for clk := sched.lastClick; clk < toClick; clk++ {
 		for si := sched.firstItem; si != nil; si = si.next {
@@ -301,7 +313,7 @@ func (player *Player) handleCursorEvent(e CursorEvent) {
 	}
 	tc.lastTouch = player.time()
 
-	// If it's a new (downed==false) cursor, make sure the first step event is "down
+	// If it's a new (downed==false) cursor, make sure the first step event is "down"
 	if !tc.downed {
 		e.Ddu = "down"
 		tc.downed = true
@@ -313,35 +325,12 @@ func (player *Player) handleCursorEvent(e CursorEvent) {
 		Z:   e.Z,
 		Ddu: e.Ddu,
 	}
-	if Debug.Cursor {
-		Log.Debugf("Player.handleCursorEvent: pad=%s id=%s ddu=%s xyz=%.4f,%.4f,%.4f\n", player.padName, id, e.Ddu, e.X, e.Y, e.Z)
-	}
 
 	player.executeIncomingCursor(cse)
 
 	if e.Ddu == "up" {
-		// if Debug.Cursor {
-		// 	Log.Debugf("Router.handleCursorEvent: deleting cursor id=%s\n", id)
-		// }
 		delete(player.deviceCursors, id)
 	}
-}
-*/
-
-/*
-func (sched *Scheduler) GetAttractMode() bool {
-	return sched.attractModeIsOn
-}
-
-func (sched *Scheduler) SetAttractMode(onoff bool) {
-	if sched.attractModeIsOn == onoff {
-		Log.Debugf("SetAttractMode: no change, IsOn=%v\n", onoff)
-		// no change
-		return
-	}
-	sched.attractModeIsOn = onoff
-	Log.Debugf("AttractMode: changing to %v\n", onoff)
-	sched.lastAttractChange = sched.Uptime()
 }
 */
 
@@ -351,9 +340,7 @@ func (sched *Scheduler) Uptime() float64 {
 
 func (sched *Scheduler) publishOscAlive(uptimesecs float64) {
 	attractMode := sched.attractModeIsOn
-	if Debug.Attract {
-		Log.Debugf("publishOscAlive: uptime=%v attract=%v\n", uptimesecs, attractMode)
-	}
+	DebugLogOfType("attract", "publishOscAlive", "uptimesecs", uptimesecs, "attract", attractMode)
 	if sched.attractClient == nil {
 		sched.attractClient = osc.NewClient("127.0.0.1", 3331)
 	}
@@ -362,7 +349,7 @@ func (sched *Scheduler) publishOscAlive(uptimesecs float64) {
 	msg.Append(attractMode)
 	err := sched.attractClient.Send(msg)
 	if err != nil {
-		Log.Debugf("publishOscAlive: Send err=%s\n", err)
+		Warn("publishOscAlive", "err", err)
 	}
 }
 
@@ -371,7 +358,6 @@ func (sched *Scheduler) doAttractAction() {
 	now := time.Now()
 	dt := now.Sub(sched.lastAttractGestureTime)
 	if sched.attractModeIsOn && dt > sched.attractGestureDuration {
-		Log.Debugf("doAttractAction: doing stuff\n")
 		playerNames := []string{"A", "B", "C", "D"}
 		i := uint64(rand.Uint64()*99) % 4
 		player := playerNames[i]
@@ -403,15 +389,11 @@ func (sched *Scheduler) advanceTransposeTo(newclick Clicks) {
 		sched.transposeNext += (sched.transposeClicks * oneBeat)
 		sched.transposeIndex = (sched.transposeIndex + 1) % len(sched.transposeValues)
 		transposePitch := sched.transposeValues[sched.transposeIndex]
-		if Debug.Transpose {
-			Log.Debugf("advanceTransposeTo: newclick=%d transposePitch=%d\n", newclick, transposePitch)
-		}
+		DebugLogOfType("transpose", "advanceTransposeTo", "newclick", newclick, "transposePitch", transposePitch)
 		/*
 			for _, player := range TheEngine().Router.players {
 				// player.clearDown()
-				if Debug.Transpose {
-					Log.Debugf("  setting transposepitch in player pad=%s trans=%d activeNotes=%d\n", player.padName, transposePitch, len(player.activeNotes))
-				}
+				LogOfType("transpose","setting transposepitch in player","pad", player.padName, "transposePitch",transposePitch, "nactive",len(player.activeNotes))
 				player.TransposePitch = transposePitch
 			}
 		*/

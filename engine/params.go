@@ -87,7 +87,7 @@ func (vals *ParamValues) SetDefaultValues() {
 	for nm, d := range ParamDefs {
 		err := vals.internalSetParamValueWithString(nm, d.Init, nil, false)
 		if err != nil {
-			Log.Debugf("ParamValues.SetDefaultValues: err=%s\n", err)
+			LogError(err)
 		}
 	}
 }
@@ -144,8 +144,9 @@ func (vals *ParamValues) internalSetParamValueWithString(origname, value string,
 		}
 		paramVal = paramValFloat{def: d, value: float32(v)}
 	default:
-		Log.Debugf("SetParamValueWithString: unknown type of ParamDef for name=%s", origname)
-		return fmt.Errorf("SetParamValueWithString: unknown type of ParamDef for name=%s", origname)
+		e := fmt.Errorf("SetParamValueWithString: unknown type of ParamDef for name=%s", origname)
+		LogError(e)
+		return e
 	}
 
 	// Perhaps the callback should be inside the Lock?
@@ -376,7 +377,7 @@ func (vals *ParamValues) ParamStringValue(name string, def string) string {
 func (vals *ParamValues) ParamIntValue(name string) int {
 	param := vals.paramValue(name)
 	if param == nil {
-		Log.Debugf("**** No existing int value for param name=%s ??\n", name)
+		Warn("**** No existing int value for param", "name", name)
 		return 0
 	}
 	return param.(paramValInt).value
@@ -386,12 +387,12 @@ func (vals *ParamValues) ParamIntValue(name string) int {
 func (vals *ParamValues) ParamFloatValue(name string) float32 {
 	param := vals.paramValue(name)
 	if param == nil {
-		Log.Debugf("**** No existing float value for param name=%s ??\n", name)
+		Warn("No existing float value for param", "name", name)
 		pd, ok := ParamDefs[name]
 		if ok {
 			f, err := strconv.ParseFloat(pd.Init, 64)
 			if err == nil {
-				Log.Debugf("Using pd.Init=%f\n", f)
+				LogError(err)
 				return float32(f)
 			}
 		}
@@ -405,7 +406,7 @@ func (vals *ParamValues) ParamFloatValue(name string) float32 {
 func (vals *ParamValues) ParamBoolValue(name string) bool {
 	param := vals.paramValue(name)
 	if param == nil {
-		Log.Debugf("**** No existing paramvalue for %s ??\n", name)
+		Warn("No existing paramvalue for", "name", name)
 		return false
 	}
 	return (param).(paramValBool).value

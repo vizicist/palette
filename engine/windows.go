@@ -12,7 +12,7 @@ import (
 )
 
 func KillExecutable(executable string) {
-	Log.Debugf("KillExecutable: executable=%s\n", executable)
+	Info("KillExecutable", "executable", executable)
 	stdout := &NoWriter{}
 	stderr := &NoWriter{}
 	cmd, _ := startExecutable("c:\\windows\\system32\\taskkill.exe", false, stdout, stderr, "/F", "/IM", executable)
@@ -38,9 +38,8 @@ func StartExecutableLogOutput(logName string, fullexe string, background bool, a
 // StartExecutable executes something.  If background is true, it doesn't block
 func startExecutable(executable string, background bool, stdout io.Writer, stderr io.Writer, args ...string) (*exec.Cmd, error) {
 
-	if Debug.Exec {
-		Log.Debugf("startExecutable: %s\n", executable)
-	}
+	Info("startExecutable", "executable", executable)
+
 	cmd := exec.Command(executable, args...)
 
 	// This is done so that ctrl-C doesn't kill things
@@ -75,7 +74,7 @@ func IsRunningExecutable(exe string) bool {
 	stderr := &NoWriter{}
 	cmd, err := startExecutable("c:\\windows\\system32\\tasklist.exe", false, stdout, stderr)
 	if err != nil {
-		Log.Debugf("IsRunningExecutable: tasklist.exe err=%s\n", err)
+		Warn("IsRunningExecutable tasklist.exe", "err", err)
 		return false
 	}
 	cmd.Wait()

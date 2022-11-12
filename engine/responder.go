@@ -45,28 +45,26 @@ func (ctx *ResponderContext) ScheduleDebug() string {
 
 func (ctx *ResponderContext) ScheduleNoteNow(nt *Note) {
 	click := CurrentClick()
-	Log.Debugf("ResponderContext.ScheduleNow: nt=%s clk=%d\n", nt, click)
 	ctx.scheduler.ScheduleNoteAt(nt, click)
 }
 
 func (ctx *ResponderContext) ScheduleNoteAt(nt *Note, click Clicks) {
 	if nt == nil {
-		Log.Debugf("ResponderContext.ScheduleNoteAt: nt == nil?\n")
+		Warn("ResponderContext.ScheduleNoteAt: nt == nil?")
 		return
 	}
-	Log.Debugf("ResponderContext.ScheduleAt: nt=%s clicks=%d\n", nt, click)
 	ctx.scheduler.ScheduleNoteAt(nt, click)
 }
 
 func (rm *ResponderManager) AddResponder(name string, responder Responder) {
 	_, ok := rm.responders[name]
 	if !ok {
-		Log.Debugf("ResponderManager.AddResponder: name=%s\n", name)
+		Info("Adding new Responder", "name", name)
 		rc := NewResponderContext()
 		rm.responders[name] = responder
 		rm.respondersContext[name] = rc
 	} else {
-		Log.Debugf("Warning: ResponderManager.AddResponder can't overwriting existing responder=%s\n", name)
+		Warn("ResponderManager.AddResponder can't overwriting existing", "responder", name)
 	}
 }
 
@@ -75,7 +73,7 @@ func (rm *ResponderManager) ActivateResponder(name string) error {
 	if !ok {
 		return fmt.Errorf("no responder named %s", name)
 	}
-	Log.Debugf("ActivateResponder: name=%s\n", name)
+	Info("ActivateResponder", "name", name)
 	rm.activeResponders[name] = resp
 	return nil
 }
@@ -91,10 +89,10 @@ func (rm *ResponderManager) DeactivateResponder(name string) error {
 
 func (rm *ResponderManager) handleCursorEvent(ce CursorEvent) {
 	for name, responder := range rm.responders {
-		Log.Debugf("CallResponders: name=%s\n", name)
+		Info("CallResponders", "name", name)
 		context, ok := rm.respondersContext[name]
 		if !ok {
-			Log.Debugf("ResponderManager.handle: no context for name=%s\n", name)
+			Warn("ResponderManager.handle: no context", "name", name)
 		} else {
 			responder.OnCursorEvent(context, ce)
 		}

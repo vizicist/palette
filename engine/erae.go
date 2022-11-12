@@ -25,7 +25,7 @@ func InitErae() {
 	// MIDI.openInput("Erae Touch")
 	// MIDI.openDeviceOutput("Erae Touch")
 	if EraeInput == nil || EraeOutput == nil {
-		Log.Debugf("Unable to open Erae Touch.  Is the EraeLab application open?\n")
+		Warn("Unable to open Erae Touch.  Is the EraeLab application open?")
 		return
 	}
 	EraeEnabled = true
@@ -37,18 +37,16 @@ func InitErae() {
 func HandleEraeMIDI(event MidiEvent) {
 	if event.SysEx != nil {
 		bb := event.SysEx
-		if Debug.Erae {
-			s := ""
-			for _, b := range bb {
-				s += fmt.Sprintf(" 0x%02x", b)
-			}
-			Log.Debugf("HandleEraeMIDI: bytes = %s\n", s)
+		s := ""
+		for _, b := range bb {
+			s += fmt.Sprintf(" 0x%02x", b)
 		}
+		Info("HandleEraeMIDI", "bytes", s)
 		if bb[1] == MyPrefix {
 			handleEraeSysEx(bb)
 		}
 	} else {
-		Log.Debugf("HandleEraeMIDI: no action for event=%+v\n", event)
+		Warn("HandleEraeMIDI: no action for", "event", event)
 	}
 }
 
@@ -64,13 +62,13 @@ func handleEraeSysEx(bb []byte) {
 func handleBoundary(bb []byte) {
 	expected := 7
 	if len(bb) != expected {
-		Log.Debugf("handleBoundary: bad reply message, length isn't %d bytes\n", expected)
+		Warn("handleBoundary: bad reply message", "expectedbytes", expected)
 		return
 	}
 	zone := bb[3]
 	width := bb[4]
 	height := bb[5]
-	Log.Debugf("BOUNDARY REPLY zone=%d width=%d height=%d\n", zone, width, height)
+	Info("BOUNDARY REPLY", "zone", zone, "width", width, "height", height)
 }
 
 var lastX float32
@@ -78,9 +76,7 @@ var lastY float32
 var lastZ float32
 
 func EraeFingerIndicator(zone, x, y byte) {
-	if Debug.Erae {
-		Log.Debugf("EraeFingerIndicator!!   x,y=%d,%d\n", x, y)
-	}
+	DebugLogOfType("erae", "EraeFingerIndicator", "x", x, "y", y)
 	rectw := byte(2)
 	recth := byte(2)
 	dim := 1.0
@@ -121,7 +117,7 @@ func handleFinger(bb []byte) {
 	chksum := bb[18]
 	realbytes, chk := EraeUnbitize7chksum(xyzbytes)
 	if chk != chksum {
-		Log.Debugf("handleFinger: chksum didn't match!  Ignoring finger message\n")
+		Warn("handleFinger: chksum didn't match!  Ignoring finger message")
 		return
 	}
 	rawx := Float32frombytes(realbytes[0:4])
@@ -133,11 +129,16 @@ func handleFinger(bb []byte) {
 	y := rawy / float32(EraeHeight)
 	z := rawz
 
-	if Debug.Erae {
+	if IsLogging("erae") {
 		dx := lastX - x
 		dy := lastY - y
 		dz := lastZ - z
-		Log.Debugf("FINGER finger=%d action=%d zone=%d x=%f y=%f z=%f   dx=%f dy=%f dz=%f\n", finger, action, zone, x, y, z, dx, dy, dz)
+		DebugLogOfType("erae", "FINGER",
+			"finger", finger,
+			"action", action,
+			"zone", zone,
+			"x", x, "y", y, "z", z,
+			"dx", dx, "dy", dy, "dz", dz)
 		lastX = x
 		lastY = y
 		lastZ = z
@@ -168,9 +169,7 @@ func handleFinger(bb []byte) {
 				Ddu:       "clear",
 			}
 			TheEngine().handleCursorEvent(ce)
-			if Debug.Erae {
-				Log.Debugf("Switching Erae to player %s", newplayer)
-			}
+			DebugLogOfType("erae", "Switching Erae to", "player", newplayer)
 			EraePlayer = newplayer
 		}
 		// We don't pass corner things through, even if we haven't changed the player
@@ -206,7 +205,7 @@ func handleFinger(bb []byte) {
 	case 2:
 		ddu = "up"
 	default:
-		Log.Debugf("handleFinger: invalid value for action = %d\n", action)
+		Warn("handleFinger: invalid value for", "action", action)
 		return
 	}
 
@@ -230,7 +229,7 @@ func EraeWriteSysEx(bytes []byte) {
 	defer EraeMutex.Unlock()
 	err := EraeOutput.Send(bytes)
 	if err != nil {
-		Log.Debugf("EraeWriteSysEx: err=%s\n", err)
+		LogError(err)
 	}
 }
 
@@ -329,7 +328,7 @@ func EraeUnbitize7chksum(in []byte) ([]byte, byte) {
 
 func Float32frombytes(bytes []byte) float32 {
 	if len(bytes) != 4 {
-		Log.Debugf("Float32frombytes: length of bytes is not 4\n")
+		Warn("Float32frombytes: length of bytes is not 4")
 		return 0
 	}
 	bits := binary.LittleEndian.Uint32(bytes)
