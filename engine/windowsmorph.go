@@ -269,11 +269,11 @@ var allMorphs []*oneMorph
 func StartMorph(callback CursorCallbackFunc, forceFactor float32) {
 	err := initialize()
 	if err != nil {
-		Log.Debugf("Morph.Initialize: err=%s\n", err)
+		LogError(err)
 		return
 	}
 	if len(allMorphs) == 0 {
-		Log.Debugf("No Morphs were found\n")
+		Info("No Morphs were found")
 		return
 	}
 	for {
@@ -296,21 +296,20 @@ const (
 func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float32) {
 	status := C.SenselReadSensor(C.uchar(m.idx))
 	if status != C.SENSEL_OK {
-		Log.Debugf("Morph: SenselReadSensor for idx=%d returned %d\n", m.idx, status)
-		Log.Debugf("Morph: %s has been disabled due to SenselReadSensor errors\n", m.serialNum)
+		Warn("SenselReadSensor for", "idx", m.idx, "status", status)
+		Warn("Morph has been disabled due to SenselReadSensor errors", "serialnum", m.serialNum)
 		m.opened = false
 	}
 	numFrames := C.SenselGetNumAvailableFrames(C.uchar(m.idx))
 	if numFrames <= 0 {
 		return
 	}
-	// Log.Debugf("Morph: FRAMES ARE AVAILABLE!! idx=%d numFrames=%d\n", m.idx, numFrames)
 	nf := int(numFrames)
 	for n := 0; n < nf; n++ {
 		var frame C.struct_goSenselFrameData
 		status := C.SenselGetFrame(C.uchar(m.idx), &frame)
 		if status != C.SENSEL_OK {
-			Log.Debugf("Morph: SenselGetFrame of idx=%d returned %d\n", m.idx, status)
+			Warn("SenselGetFrame", "idx", m.idx, "status", status)
 			continue
 		}
 		nc := int(frame.n_contacts)
@@ -318,7 +317,7 @@ func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float32) 
 			var contact C.struct_goSenselContact
 			status = C.SenselGetContact(C.uchar(m.idx), C.uchar(n), &contact)
 			if status != C.SENSEL_OK {
-				Log.Debugf("Morph: SenselGetContact of morph_idx=%d n=%d returned %d\n", m.idx, n, status)
+				Warn("SenselGetContact of morph", "idx", m.idx, "n", n, "status", status)
 				continue
 			}
 			xNorm := float32(contact.x_pos) / m.width
@@ -335,7 +334,7 @@ func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float32) 
 			case CursorUp:
 				ddu = "up"
 			default:
-				Log.Debugf("Morph: Invalid value for contact.state - %d\n", contact.state)
+				Warn("Invalid value", "state", contact.state)
 				continue
 			}
 
@@ -359,7 +358,7 @@ func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float32) 
 				}
 				if newPlayerName != "" {
 					if newPlayerName != m.playerName {
-						Log.Debugf("Switching corners pad to player %s", newPlayerName)
+						Info("Switching corners pad", "player", newPlayerName)
 						ce := CursorEvent{
 							ID:        fmt.Sprintf("%d", m.idx),
 							Source:    newPlayerName,
@@ -395,17 +394,22 @@ func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float32) 
 					m.playerName = "D"
 					xNorm = xNorm - 0.5
 				default:
-					Log.Debugf("Morph: unable to find QUAD player for x/y=%f,%f\n", xNorm, yNorm)
+					Warn("unable to find QUAD player", "x", xNorm, "y", yNorm)
 					continue
 				}
 				xNorm *= 2.0
 				yNorm *= 2.0
 			}
 
-			if Debug.Morph {
-				Log.Debugf("Morph: player=%s contact_id=%d idx=%d n=%d state=%d xyzNorm=%f %f %f\n",
-					m.playerName, contact.id, m.idx, n, contact.state, xNorm, yNorm, zNorm)
-			}
+			DebugLogOfType("morph", "Morph",
+				"player", m.playerName,
+				"contactid", contact.id,
+				"idx", m.idx,
+				"n", n,
+				"contactstate", contact.state,
+				"xNorm", xNorm,
+				"yNorm", yNorm,
+				"zNorm", zNorm)
 
 			// make the coordinate space match OpenGL and Freeframe
 			yNorm = 1.0 - yNorm
@@ -489,7 +493,7 @@ func initialize() error {
 			if morphtype == "" {
 				// morphtype = "corners" // default value
 				morphtype = "quadrants" // default value
-				Log.Debugf("Morph: serial# %s isn't in morphs.json, using morphtype = %s\n", m.serialNum, morphtype)
+				Warn("serial# isn't in morphs.json", "serialnum", m.serialNum)
 			}
 		}
 
@@ -500,12 +504,12 @@ func initialize() error {
 		case "A", "B", "C", "D":
 			m.playerName = morphtype
 		default:
-			Log.Debugf("Unexpected morphtype, got %s, expecting one of A,B,C,D,corners,quadrants", morphtype)
+			Warn("Unexpected morphtype", "morphtype", morphtype)
 		}
 
 		// Don't use Debug.Morph, this should always gets logged
-		Log.Debugf("Morph Opened and Started: idx=%d serial=%s firmware=%d.%d.%d suceeded\n",
-			m.idx, m.serialNum, m.fwVersionMajor, m.fwVersionMinor, m.fwVersionBuild)
+		firmware := fmt.Sprintf("%d.%d.%d", m.fwVersionMajor, m.fwVersionMinor, m.fwVersionBuild)
+		Info("Morph Opened and Started", "idx", m.idx, "serial", m.serialNum, "firmware", firmware)
 	}
 	return nil
 }

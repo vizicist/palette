@@ -70,7 +70,7 @@ func (button *Button) Do(cmd engine.Cmd) string {
 		currRect := image.Rect(0, 0, currSize.X, currSize.Y)
 		pos := cmd.ValuesPos(image.Point{0, 0})
 		if !pos.In(currRect) {
-			engine.Log.Debugf("button: pos not in Rect?\n")
+			engine.Warn("button: pos not in Rect?")
 			break
 		}
 		ddu := cmd.ValuesString("ddu", "")

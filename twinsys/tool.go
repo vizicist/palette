@@ -29,7 +29,6 @@ var WindowMakers = make(map[string]WindowMaker)
 // RegisterWindow xxx
 func RegisterWindow(name string, newfunc WindowMaker) {
 	WindowMakers[name] = newfunc
-	// Log.Debugf("Registered Tool %s maker=%T\n", name, newfunc)
 }
 
 // RegisterDefaultTools xxx

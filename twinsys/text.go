@@ -157,7 +157,7 @@ func (st *ScrollingText) Do(cmd engine.Cmd) string {
 		st.AddLine(line)
 
 	default:
-		engine.Log.Debugf("ScrollingText: didn't handle %s\n", cmd.Subj)
+		engine.Warn("ScrollingText: didn't handle", "subj", cmd.Subj)
 	}
 	return engine.OkResult()
 }

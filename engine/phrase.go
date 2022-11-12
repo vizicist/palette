@@ -45,10 +45,10 @@ type Phrasep *Phrase
 type Note struct {
 	Source   string // relative to local machine
 	TypeOf   string // note, noteon, noteoff, controller, notebytes
-	Clicks   Clicks // nanoseconds
-	Duration Clicks // nanoseconds, when it's a note
-	Pitch    uint8  // 0-127
-	Velocity uint8  // 0-127
+	Clicks   Clicks
+	Duration Clicks
+	Pitch    uint8 // 0-127
+	Velocity uint8 // 0-127
 	Synth    string
 	bytes    []byte
 	next     *Note
@@ -234,7 +234,7 @@ func (n Note) String() string {
 
 	pitch := n.ReadablePitch()
 	if pitch == "" {
-		Log.Debugf("Note.ToString unable to handle n.Typeof=%s\n", n.TypeOf)
+		Warn("Note.ToString unable to handle", "typeof", n.TypeOf)
 		return "''"
 	}
 	octave := -2 + int(n.Pitch)/12 // MIDI octave
@@ -463,7 +463,7 @@ func (p *Phrase) ToString() string {
 
 		pitch := n.ReadablePitch()
 		if pitch == "" {
-			Log.Debugf("Phrase.ToString unable to handle n.Typeof=%s, using c\n", n.TypeOf)
+			Warn("Phrase.ToString unable to handle, using c", "typeof", n.TypeOf)
 			pitch = "c"
 		}
 		s += pitch
@@ -543,7 +543,7 @@ func (p *Phrase) Append(n *Note) {
 		p.lastnote = n
 	} else {
 		if p.lastnote.Clicks > n.Clicks {
-			Log.Debugf("Hey, Append detects an out-of-order usage\n")
+			Warn("Hey, Append detects an out-of-order usage")
 		}
 		p.lastnote.next = n
 		p.lastnote = n
@@ -553,9 +553,8 @@ func (p *Phrase) Append(n *Note) {
 // InsertNoLock adds a Note to a Phrase
 func (p *Phrase) InsertNoLock(note *Note) *Phrase {
 
-	// Log.Debugf("Phrase.Insert note=%+v\n", note)
 	if note.next != nil {
-		Log.Debugf("Unexpected note.next!=nil in Phrase.InsertNoLock")
+		Warn("Unexpected note.next!=nil in Phrase.InsertNoLock")
 		return p
 	}
 
@@ -567,7 +566,7 @@ func (p *Phrase) InsertNoLock(note *Note) *Phrase {
 	}
 
 	if p.lastnote == nil {
-		Log.Debugf("Expected lastnote to be not-nil when firstnote is not nil!?")
+		Warn("Expected lastnote to be not-nil when firstnote is not nil!?")
 		// try to fix it up
 		p.lastnote = p.firstnote
 		return p

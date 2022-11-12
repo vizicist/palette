@@ -48,7 +48,7 @@ func (pm ProcessManager) StartRunning(process string) error {
 			return fmt.Errorf("StartRunning: unable to start %s, no executable path", process)
 		}
 
-		Log.Debugf("StartRunning: path=%s\n", p.FullPath)
+		Info("StartRunning", "path", p.FullPath)
 
 		err = StartExecutableLogOutput(process, p.FullPath, true, p.Arg)
 		if err != nil {
@@ -97,7 +97,7 @@ func (pm ProcessManager) biduleInfoInit() {
 		return
 	}
 	if !FileExists(path) {
-		Log.Debugf("No bidule found, looking for %s", path)
+		Warn("No bidule found, looking for", "path", path)
 		return
 	}
 	exe := path
@@ -115,7 +115,7 @@ func (pm ProcessManager) biduleInfoInit() {
 func (pm ProcessManager) resolumeInfoInit() {
 	fullpath := ConfigValue("resolume")
 	if fullpath != "" && !FileExists(fullpath) {
-		Log.Debugf("No Resolume found, looking for %s)", fullpath)
+		Warn("No Resolume found, looking for", "path", fullpath)
 		return
 	}
 	if fullpath == "" {
@@ -123,7 +123,7 @@ func (pm ProcessManager) resolumeInfoInit() {
 		if !FileExists(fullpath) {
 			fullpath = "C:\\Program Files\\Resolume Arena\\Arena.exe"
 			if !FileExists(fullpath) {
-				Log.Debugf("no Resolume found in default locations")
+				Warn("Resolume not found in default locations")
 				return
 			}
 		}
@@ -157,7 +157,7 @@ func (pm ProcessManager) mmttInfoInit() {
 	// The value of mmtt is either "kinect" or "oak"
 	fullpath := filepath.Join(PaletteDir(), "bin", "mmtt_"+mmtt, "mmtt_"+mmtt+".exe")
 	if !FileExists(fullpath) {
-		Log.Debugf("no mmtt executable found, looking for %s", fullpath)
+		Warn("no mmtt executable found, looking for", "path", fullpath)
 		return
 	}
 	pm.info["mmtt debugger"] = &processInfo{"mmtt_" + mmtt + ".exe", fullpath, "", nil}
@@ -177,11 +177,10 @@ func (pm ProcessManager) getProcessInfo(process string) (*processInfo, error) {
 func (pm ProcessManager) isRunning(process string) bool {
 	p, err := pm.getProcessInfo(process)
 	if err != nil {
-		Log.Debugf("IsRunning: no process named %s\n", process)
+		Warn("IsRunning: no process named", "process", process)
 		return false
 	}
 	b := IsRunningExecutable(p.Exe)
-	// Log.Debugf("IsRunning: process=%s exe=%s b=%v\n", process, p.Exe, b)
 	return b
 }
 
@@ -198,9 +197,7 @@ func resolumeActivate() {
 		time.Sleep(5 * time.Second)
 		for _, pad := range TheEngine().Router.playerLetters {
 			layernum := TheEngine().Router.ResolumeLayerForPad(string(pad))
-			if Debug.Resolume {
-				Log.Debugf("Activating Resolume layer %d, clip %d\n", layernum, clipnum)
-			}
+			DebugLogOfType("resolume", "Activating Resolume", "layer", layernum, "clipnum", clipnum)
 			connectClip(resolumeClient, layernum, clipnum)
 		}
 		if textLayer >= 1 {

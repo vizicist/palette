@@ -31,10 +31,10 @@ func Spawn(executable string, background bool, stdout io.Writer, stderr io.Write
 	}
 	if err != nil {
 		// Don't do Fatal here - some commands like taskkill will fail harmlessly
-		Log.Debugf("Spawn: cmd=%s err=%s\n", cmd, err)
+		LogError(err)
 		return err
 	}
-	Log.Debugf("Spawn: bg=%v cmd=%s\n", background, cmd)
+	Info("Spawn", "bg", background, "cmd")
 	return nil
 }
 
@@ -47,6 +47,6 @@ func StartDeviceInput() {
 
 // KillProcess kills a process (synchronously)
 func KillProcess(exe string) {
-	Log.Debugf("WARNING - KillProcess in unix.go not tested: exe=%s\n", exe)
+	Warn("KillProcess in unix.go not tested", "exe", exe)
 	Spawn("pkill", false, noWriter, noWriter, exe)
 }
