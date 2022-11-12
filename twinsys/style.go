@@ -43,7 +43,7 @@ func DefaultStyleName() string {
 func NewStyle(styleName string, fontHeight int) *StyleInfo {
 
 	if fontHeight <= 0 {
-		engine.Log.Debugf("NewStyle: invalid fontHeight, using 12\n")
+		engine.Warn("NewStyle: invalid fontHeight, using 12")
 		fontHeight = 12
 	}
 
@@ -69,14 +69,14 @@ func NewStyle(styleName string, fontHeight int) *StyleInfo {
 		}
 
 	default:
-		engine.Log.Debugf("NewStyle: unrecognized fontname=%s, using gomono\n", styleName)
+		engine.Warn("NewStyle: unrecognized fontname", "fontname", styleName)
 	}
 
 	if err != nil {
-		engine.Log.Debugf("NewStyle: unable to get font=%s, resorting to gomono, err=%s\n", styleName, err)
+		engine.LogError(err)
 		f, _ = truetype.Parse(gomono.TTF) // last resort
 	} else if f == nil {
-		engine.Log.Debugf("NewStyle: unable to get font=%s, f is nil?\n", styleName)
+		engine.Warn("NewStyle: unable to get font", "font", styleName)
 		f, _ = truetype.Parse(gomono.TTF) // last resort
 	}
 	face := truetype.NewFace(f, &truetype.Options{Size: float64(fontHeight)})

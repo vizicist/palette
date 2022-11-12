@@ -74,7 +74,7 @@ func (e *Engine) handleCursorEvent(ce CursorEvent) {
 
 func (e *Engine) Start() {
 
-	Log.Debugf("====================== Palette Engine is starting\n")
+	Info("====================== Palette Engine is starting")
 
 	e.Router.Restart()
 
@@ -106,12 +106,16 @@ func (e *Engine) StopMe() {
 }
 
 func (e *Engine) initDebug() {
-	debug := ConfigValueWithDefault("debug", "")
-	darr := strings.Split(debug, ",")
+	logtypes := ConfigValueWithDefault("debug", "")
+	// Migrate to using log rather than debug
+	if logtypes == "" {
+		logtypes = ConfigValueWithDefault("log", "")
+	}
+	darr := strings.Split(logtypes, ",")
 	for _, d := range darr {
 		if d != "" {
-			Log.Debugf("Turning Debug ON for %s\n", d)
-			setDebug(d, true)
+			Info("Turning logging ON for", "logtype", d)
+			SetLogTypeEnabled(d, true)
 		}
 	}
 }
@@ -129,18 +133,17 @@ func (e *Engine) InputListener() {
 		case event := <-e.Router.CursorInput:
 			e.CursorManager.handleCursorEvent(event)
 		default:
-			// Log.Debugf("Sleeping 1 ms - now=%v\n", time.Now())
 			time.Sleep(time.Millisecond)
 		}
 	}
-	Log.Debugf("InputListener is being killed\n")
+	Info("InputListener is being killed")
 }
 
 // StartCursorInput xxx
 func (e *Engine) StartCursorInput() {
 	err := LoadMorphs()
 	if err != nil {
-		Log.Debugf("StartCursorInput: LoadMorphs err=%s\n", err)
+		Warn("StartCursorInput: LoadMorphs", "err", err)
 	}
 	go StartMorph(e.CursorManager.handleCursorEvent, 1.0)
 }
@@ -149,7 +152,7 @@ func (e *Engine) StartCursorInput() {
 func (e *Engine) StartMIDI() {
 
 	if MIDI.Input == nil {
-		Log.Debugf("StartMIDI: there is no MIDI input\n")
+		Warn("StartMIDI: there is no MIDI input")
 	}
 
 	if EraeEnabled {
@@ -170,7 +173,7 @@ func (e *Engine) StartOSC(port int) {
 		handler <- OSCEvent{Msg: msg, Source: source}
 	})
 	if err != nil {
-		Log.Debugf("ERROR! %s\n", err.Error())
+		Warn("StartOSC", "err", err)
 	}
 
 	server := &osc.Server{
@@ -184,9 +187,6 @@ func (e *Engine) StartOSC(port int) {
 func (e *Engine) StartHTTP(port int) {
 
 	http.HandleFunc("/api", func(responseWriter http.ResponseWriter, req *http.Request) {
-
-		// vals := req.URL.Query()
-		// Log.Debugf("/api vals=%v\n", vals)
 
 		responseWriter.Header().Set("Content-Type", "application/json")
 		responseWriter.WriteHeader(http.StatusOK)

@@ -5,6 +5,9 @@
 		},
 		{
 			"path": "../midi"
+		},
+		{
+			"path": "../zap"
 		}
 	],
 	"settings": {

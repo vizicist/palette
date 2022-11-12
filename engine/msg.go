@@ -53,7 +53,7 @@ func (cmd Cmd) ValuesBool(name string, dflt bool) bool {
 	}
 	b, err := strconv.ParseBool(v)
 	if err != nil {
-		Log.Debugf("ValuesBool: bad value - %s\n", v)
+		LogError(err)
 		b = dflt
 	}
 	return b
@@ -119,11 +119,11 @@ func (cmd Cmd) ValuesXY(xyname string, dflt image.Point) image.Point {
 	var x, y int
 	n, err := fmt.Sscanf(xystr, "%d,%d", &x, &y)
 	if err != nil {
-		Log.Debugf("ValuesXY failed to parse - %s\n", xystr)
+		LogError(err)
 		return dflt
 	}
 	if n != 2 {
-		Log.Debugf("ValuesXY didn't parse - %s\n", xystr)
+		Warn("ValuesXY didn't parse", "xystr", xystr)
 		return dflt
 	}
 	return image.Point{x, y}
@@ -153,7 +153,7 @@ func (cmd Cmd) ValuesInt(name string, dflt int) int {
 	}
 	i, err := strconv.Atoi(v)
 	if err != nil {
-		Log.Debugf("ValuesInt: %s isn't an int? (%s)\n", name, v)
+		LogError(err)
 		return dflt
 	}
 	return i

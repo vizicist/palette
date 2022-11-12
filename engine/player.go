@@ -95,9 +95,6 @@ func (player *Player) SendNoteToSynth(n *Note) {
 	if ss == "midi" {
 		player.generateSpriteFromNote(n)
 	}
-	// if Debug.MIDI {
-	// 	Log.Debugf("FUNC %s: n=%+v\n", CallerFunc(), *n)
-	// }
 
 	SendNoteToSynth(n)
 }
@@ -105,9 +102,7 @@ func (player *Player) SendNoteToSynth(n *Note) {
 // PassThruMIDI xxx
 func (player *Player) PassThruMIDI(e MidiEvent) {
 
-	if Debug.MIDI {
-		Log.Debugf("Player.PassThruMIDI e=%+v\n", e)
-	}
+	DebugLogOfType("midi", "Player.PassThruMIDI", "e", e)
 
 	// channel on incoming MIDI is ignored
 	// it uses whatever sound the Player is using
@@ -137,11 +132,10 @@ func (player *Player) PassThruMIDI(e MidiEvent) {
 	case 0xE0:
 		n = NewPitchBend(data1, data2, synth)
 	default:
-		Log.Debugf("PassThruMIDI unable to handle status=0x%02x\n", status)
+		Warn("PassThruMIDI unable to handle", "status", status)
 		return
 	}
 	if n != nil {
-		// Log.Debugf("PassThruMIDI sending note=%v\n", *n)
 		player.SendNoteToSynth(n)
 	}
 }
@@ -159,7 +153,7 @@ func (player *Player) AdvanceByOneClick() {
 
 // HandleMIDITimeReset xxx
 func (player *Player) HandleMIDITimeReset() {
-	Log.Debugf("HandleMIDITimeReset!! needs implementation\n")
+	Warn("HandleMIDITimeReset!! needs implementation")
 }
 
 // HandleMIDIInput xxx
@@ -168,9 +162,8 @@ func (player *Player) HandleMidiInput(e MidiEvent) {
 	player.midiInputMutex.Lock()
 	defer player.midiInputMutex.Unlock()
 
-	if Debug.MIDI {
-		Log.Debugf("Router.HandleMIDIInput: event=%+v\n", e)
-	}
+	DebugLogOfType("midi", "Router.HandleMIDIInput", "event", e)
+
 	if player.MIDIThru {
 		player.PassThruMIDI(e)
 	}
@@ -205,9 +198,7 @@ func CallerFunc() string {
 
 func (player *Player) SetOneParamValue(fullname, value string) error {
 
-	if Debug.Values {
-		Log.Debugf("SetOneParamValue player=%s %s %s\n", player.padName, fullname, value)
-	}
+	DebugLogOfType("value", "SetOneParamValue", "player", player.padName, "fullname", fullname, "value", value)
 	err := player.params.SetParamValueWithString(fullname, value, nil)
 	if err != nil {
 		return err
@@ -233,9 +224,7 @@ func (player *Player) SetOneParamValue(fullname, value string) error {
 
 // ClearExternalScale xxx
 func (player *Player) clearExternalScale() {
-	if Debug.Scale {
-		Log.Debugf("clearExternalScale pad=%s", player.padName)
-	}
+	DebugLogOfType("scale", "clearExternalScale", "pad", player.padName)
 	player.externalScale = MakeScale()
 }
 
@@ -244,9 +233,6 @@ func (player *Player) setExternalScale(pitch int, on bool) {
 	s := player.externalScale
 	for p := pitch; p < 128; p += 12 {
 		s.HasNote[p] = on
-	}
-	if Debug.Scale {
-		Log.Debugf("setExternalScale pad=%s pitch=%v on=%v", player.padName, pitch, on)
 	}
 }
 
@@ -271,11 +257,10 @@ func (player *Player) getActiveNote(id string) *ActiveNote {
 func (player) *Player) terminateActiveNotes() {
 	player.activeNotesMutex.RLock()
 	for id, a := range player.activeNotes {
-		// Log.Debugf("terminateActiveNotes n=%v\n", a.currentNoteOn)
 		if a != nil {
 			player.sendNoteOff(a)
 		} else {
-			Log.Debugf("Hey, activeNotes entry for id=%s\n", id)
+			Warn("Hey, activeNotes entry for","id",id)
 		}
 	}
 	player.activeNotesMutex.RUnlock()
@@ -314,9 +299,6 @@ func (player *Player) generateVisualsFromCursor(ce CursorEvent) {
 	msg.Append(float32(ce.X))
 	msg.Append(float32(ce.Y))
 	msg.Append(float32(ce.Z))
-	if Debug.GenVisual {
-		Log.Debugf("Player.generateVisuals: pad=%s click=%d OSC message = %+v\n", player.padName, CurrentClick(), msg)
-	}
 	player.toFreeFramePluginForLayer(msg)
 }
 */
@@ -330,7 +312,7 @@ func (player *Player) generateSpriteFromNote(n *Note) {
 	pitchmin := uint8(player.params.ParamIntValue("sound.pitchmin"))
 	pitchmax := uint8(player.params.ParamIntValue("sound.pitchmax"))
 	if n.Pitch < pitchmin || n.Pitch > pitchmax {
-		Log.Debugf("Unexpected value of n.Pitch=%d, not between %d and %d\n", n.Pitch, pitchmin, pitchmax)
+		Warn("Unexpected value", "pitch", n.Pitch)
 		return
 	}
 
@@ -373,7 +355,6 @@ func (player *Player) generateSpriteFromNote(n *Note) {
 	// XXX - Set sprite ID to pitch, is this right?
 	msg.Append(fmt.Sprintf("%d@localhost", n.Pitch))
 
-	// Log.Debugf("generateSprite msg=%+v\n", msg)
 	player.toFreeFramePluginForLayer(msg)
 }
 
@@ -392,24 +373,17 @@ func (player *Player) notifyGUI(ce CursorEvent, wasFresh bool) {
 	msg.Append(int32(player.resolumeLayer))
 	msg.Append(wasFresh)
 	player.guiClient.Send(msg)
-	if Debug.Notify {
-		Log.Debugf("Player.notifyGUI: msg=%v\n", msg)
-	}
 }
 */
 
 func (player *Player) toFreeFramePluginForLayer(msg *osc.Message) {
 	player.freeframeClient.Send(msg)
-	if Debug.OSC {
-		Log.Debugf("Player.toFreeFramePlugin: layer=%d port=%d msg=%v\n", player.resolumeLayer, player.freeframeClient.Port(), msg)
-	}
+	DebugLogOfType("osc", "Player.toFreeFramePlugin", "layer", player.resolumeLayer, "port", player.freeframeClient.Port(), "osc.message", msg)
 }
 
 func (player *Player) toResolume(msg *osc.Message) {
 	player.resolumeClient.Send(msg)
-	if Debug.OSC || Debug.Resolume {
-		Log.Debugf("Player.toResolume: msg=%v\n", msg)
-	}
+	DebugLogOfType("osc", "Player.toResolume", "msg", msg)
 }
 
 func (player *Player) handleMIDISetScaleNote(e MidiEvent) {
@@ -458,19 +432,17 @@ func (player *Player) generateSoundFromCursor(ce CursorEvent) {
 	}
 	a := player.getActiveNote(ce.ID)
 		if Debug.Transpose {
-			Log.Debugf("Player.gen: pad=%s ntsactive=%d ce.id=%s ddu=%s\n",
-				player.padName, len(player.activeNotes), ce.ID, ce.Ddu)
 			if a == nil {
-				Log.Debugf("   a is nil\n")
+				Warn("a is nil")
 			} else {
 				if a.noteOn == nil {
-					Log.Debugf("   a.id=%d a.noteOn=nil\n", a.id)
+					Warn("a.noteOn=nil","a.id", a.id)
 				} else {
 					s := fmt.Sprintf("   a.id=%d a.noteOn=%+v\n", a.id, *(a.noteOn))
 					if strings.Contains(s, "PANIC") {
-						Log.Debugf("HEY, PANIC?\n")
+						Warn("HEY, PANIC?")
 					} else {
-						Log.Debugf("%s\n", s)
+						Warn(s)
 
 					}
 				}
@@ -482,8 +454,6 @@ func (player *Player) generateSoundFromCursor(ce CursorEvent) {
 		if a.noteOn != nil {
 			// I think this happens if we get things coming in
 			// faster than the checkDelay can generate the UP event.
-			Log.Debugf("Unexpected down when currentNoteOn is non-nil!? currentNoteOn=%+v\n", a)
-			// Log.Debugf("generateMIDI sending NoteOff before down note\n")
 			player.sendNoteOff(a)
 		}
 		a.noteOn = player.cursorToNoteOn(ce)
@@ -497,7 +467,7 @@ func (player *Player) generateSoundFromCursor(ce CursorEvent) {
 			// not really sure what the underlying reason is,
 			// but it seems to be harmless at the moment.
 			if Debug.Router {
-				Log.Debugf("=============== HEY! drag event, a.currentNoteOn == nil?\n")
+				Warn("=============== HEY! drag event, a.currentNoteOn == nil?\n")
 			}
 			return
 		}
@@ -518,7 +488,6 @@ func (player *Player) generateSoundFromCursor(ce CursorEvent) {
 
 		deltay := float32(math.Abs(float64(a.ce.Y - ce.Y)))
 		deltaytrig := player.params.ParamFloatValue("sound._deltaytrig")
-		// Log.Debugf("genSound for drag!   a.noteOn.vel=%d  newNoteOn.vel=%d deltaz=%f deltaztrig=%f\n", a.noteOn.Velocity, newNoteOn.Velocity, deltaz, deltaztrig)
 
 		if player.params.ParamStringValue("sound.controllerstyle", "nothing") == "modulationonly" {
 			zmin := player.params.ParamFloatValue("sound._controllerzmin")
@@ -544,38 +513,28 @@ func (player *Player) generateSoundFromCursor(ce CursorEvent) {
 			if Debug.Transpose {
 				s := fmt.Sprintf("r=%s drag Setting currentNoteOn to %+v\n", player.padName, *(a.noteOn))
 				if strings.Contains(s, "PANIC") {
-					Log.Debugf("PANIC? setting currentNoteOn\n")
+					Warn("PANIC? setting currentNoteOn")
 				} else {
-					Log.Debugf("%s\n", s)
+					Warn(s)
 				}
-				Log.Debugf("generateMIDI sending NoteOn\n")
+				Info("generateMIDI sending NoteOn")
 			}
 			player.sendNoteOn(a)
 		}
 	case "up":
 		if a.noteOn == nil {
 			// not sure why this happens, yet
-			Log.Debugf("r=%s Unexpected UP when currentNoteOn is nil?\n", player.padName)
+			Warn("Unexpected UP when currentNoteOn is nil?", "player",player.padName)
 		} else {
-			// Log.Debugf("generateMIDI sending NoteOff for UP\n")
 			player.sendNoteOff(a)
 
 			a.noteOn = nil
 			a.ce = ce // Hmmmm, might be useful, or wrong
-			// Log.Debugf("r=%s UP Setting currentNoteOn to nil!\n", r.padName)
 		}
 		player.activeNotesMutex.Lock()
 		delete(player.activeNotes, ce.ID)
 		player.activeNotesMutex.Unlock()
 	}
-}
-*/
-
-/*
-// XXXXXXXXXX This is a Responder!
-func (router *Router) executeIncomingCursor(ce CursorStepEvent) {
-	q := player.cursorToQuant(ce)
-	Log.Debugf("Should be scheduling a note here!  q=%d\n",q)
 }
 */
 
@@ -600,9 +559,6 @@ func (player *Player) nextQuant(t Clicks, q Clicks) Clicks {
 
 func (player *Player) sendNoteOn(a *ActiveNote) {
 
-	// if Debug.MIDI {
-	// 	Log.Debugf("MIDI.SendNote: noteOn pitch:%d velocity:%d sound:%s\n", a.noteOn.Pitch, a.noteOn.Velocity, a.noteOn.Sound)
-	// }
 	player.SendNoteToSynth(a.noteOn)
 
 	ss := player.params.ParamStringValue("visual.spritesource", "")
@@ -619,19 +575,15 @@ func (player *Player) sendNoteOff(a *ActiveNote) {
 	n := a.noteOn
 	if n == nil {
 		// Not sure why this sometimes happens
-		// Log.Debugf("HEY! sendNoteOff got a nil?\n")
 		return
 	}
 	// the Note coming in should be a noteon or noteoff
 	if n.TypeOf != "noteon" && n.TypeOf != "noteoff" {
-		Log.Debugf("HEY! sendNoteOff didn't get a noteon or noteoff!?")
+		Warn("HEY! sendNoteOff didn't get a noteon or noteoff!?")
 		return
 	}
 
 	noteOff := NewNoteOff(n.Pitch, n.Velocity, n.Synth)
-	// if Debug.MIDI {
-	// 	Log.Debugf("MIDI.SendNote: noteOff pitch:%d velocity:%d sound:%s\n", n.Pitch, n.Velocity, n.Sound)
-	// }
 	player.SendNoteToSynth(noteOff)
 }
 */
@@ -660,7 +612,7 @@ func (r *Player) paramIntValue(paramname string) int {
 	param, ok := r.params[paramname]
 	r.paramsMutex.RUnlock()
 	if !ok {
-		Log.Debugf("No param named %s?\n", paramname)
+		Warn("No param named","paramname", paramname)
 		return 0
 	}
 	return (param).(paramValInt).value
@@ -670,10 +622,8 @@ func (r *Player) paramIntValue(paramname string) int {
 /*
 func (player) *Player) cursorToNoteOn(ce CursorStepEvent) *Note {
 	pitch := player.cursorToPitch(ce)
-	// Log.Debugf("cursorToNoteOn pitch=%v trans=%v", pitch, r.TransposePitch)
 	velocity := player.cursorToVelocity(ce)
 	synth := player.params.ParamStringValue("sound.synth", defaultSynth)
-	// Log.Debugf("cursorToNoteOn x=%.5f y=%.5f z=%.5f pitch=%d velocity=%d\n", ce.x, ce.y, ce.z, pitch, velocity)
 	return NewNoteOn(pitch, velocity, synth)
 }
 */
@@ -685,7 +635,6 @@ func (player) *Player) cursorToPitch(ce CursorStepEvent) uint8 {
 	dp := pitchmax - pitchmin + 1
 	p1 := int(ce.X * float32(dp))
 	p := uint8(pitchmin + p1%dp)
-	// Log.Debugf("cursorToPitch: X=%f p=%d\n", ce.X, p)
 	chromatic := player.params.ParamBoolValue("sound.chromatic")
 	if !chromatic {
 		scale := player.getScale()
@@ -728,7 +677,7 @@ func (player) *Player) cursorToVelocity(ce CursorStepEvent) uint8 {
 	case "fixed":
 		// do nothing
 	default:
-		Log.Debugf("Unrecognized vol value: %s, assuming %f\n", vol, v)
+		Warn("Unrecognized vol value","vol",vol)
 	}
 	dv := velocitymax - velocitymin + 1
 	p1 := int(v * float32(dv))
@@ -771,10 +720,9 @@ func (player) *Player) cursorToQuant(ce CursorStepEvent) Clicks {
 			q = oneBeat
 		}
 	} else {
-		Log.Debugf("Unrecognized quant: %s\n", quant)
+		Warn("Unrecognized quant","quant", quant)
 	}
 	q = Clicks(float64(q) / TempoFactor)
-	// Log.Debugf("Quant q=%d tempofactor=%f\n", q, TempoFactor)
 	return q
 }
 */
@@ -796,14 +744,11 @@ func (player) *Player) loopComb() {
 			}
 		}
 	}
-	// Log.Debugf("loopComb, len(upEvents)=%d\n", len(upEvents))
 	combme := 0
 	combmod := 2 // should be a parameter
 	for id := range upEvents {
-		// Log.Debugf("AT END id = %s\n", id)
 		if combme == 0 {
 			player.loop.ClearID(id)
-			// Log.Debugf("loopComb, ClearID id=%s upEvents[id]=%+v\n", id, upEvents[id])
 			player.generateSoundFromCursor(upEvents[id])
 		}
 		combme = (combme + 1) % combmod
@@ -818,7 +763,7 @@ func (player) *Player) loopQuant() {
 	// XXX - Need to make sure we have mutex for changing loop steps
 	// XXX - DOES THIS EVEN WORK?
 
-	Log.Debugf("DOES LOOPQUANT WORK????\n")
+	Info("DOES LOOPQUANT WORK????")
 
 	// Create a map of the UP cursor events, so we only do completed notes
 	// Create a map of the DOWN events so we know how much to shift that cursor.
@@ -835,7 +780,6 @@ func (player) *Player) loopQuant() {
 				case "down":
 					downEvents[e.cursorStepEvent.ID] = e.cursorStepEvent
 					shift := player.nextQuant(Clicks(stepnum), quant)
-					Log.Debugf("Down, shift=%d\n", shift)
 					shiftOf[e.cursorStepEvent.ID] = Clicks(shift)
 				}
 			}
@@ -856,7 +800,7 @@ func (player) *Player) loopQuant() {
 			if !e.hasCursor {
 				newsteps[stepnum].events = append(newsteps[stepnum].events, e)
 			} else {
-				Log.Debugf("IS THIS CODE EVER EXECUTED?\n")
+				Info("IS THIS CODE EVER EXECUTED?")
 				id := e.cursorStepEvent.ID
 				newstepnum := stepnum
 				shift, ok := shiftOf[id]
@@ -882,7 +826,7 @@ func (player *Player) sendEffectParam(name string, value string) {
 	} else {
 		onoff, err := strconv.ParseBool(value)
 		if err != nil {
-			Log.Debugf("Unable to parse bool!? value=%s\n", value)
+			LogError(err)
 			onoff = false
 		}
 		player.sendPadOneEffectOnOff(name, onoff)
@@ -926,7 +870,7 @@ func (player *Player) getEffectMap(effectName string, mapType string) (map[strin
 
 func (player *Player) addLayerAndClipNums(addr string, layerNum int, clipNum int) string {
 	if addr[0] != '/' {
-		Log.Debugf("WARNING, addr in resolume.json doesn't start with / : %s", addr)
+		Warn("addr in resolume.json doesn't start with /", "addr", addr)
 		addr = "/" + addr
 	}
 	addr = fmt.Sprintf("/composition/layers/%d/clips/%d/video/effects%s", layerNum, clipNum, addr)
@@ -944,22 +888,22 @@ func (player *Player) sendPadOneEffectParam(effectName string, paramName string,
 	fullName := "effect" + "." + effectName + ":" + paramName
 	paramsMap, realEffectName, realEffectNum, err := player.getEffectMap(effectName, "params")
 	if err != nil {
-		Log.Debugf("sendPadOneEffectParam: err=%s\n", err)
+		LogError(err)
 		return
 	}
 	if paramsMap == nil {
-		Log.Debugf("No params value for effect=%s\n", effectName)
+		Warn("No params value for", "effecdt", effectName)
 		return
 	}
 	oneParam, ok := paramsMap[paramName]
 	if !ok {
-		Log.Debugf("No params value for param=%s in effect=%s\n", paramName, effectName)
+		Warn("No params value for", "param", paramName, "effect", effectName)
 		return
 	}
 
 	oneDef, ok := ParamDefs[fullName]
 	if !ok {
-		Log.Debugf("No paramdef value for param=%s in effect=%s\n", paramName, effectName)
+		Warn("No paramdef value for", "param", paramName, "effect", effectName)
 		return
 	}
 
@@ -977,7 +921,7 @@ func (player *Player) sendPadOneEffectParam(effectName string, paramName string,
 	case paramDefInt:
 		valint, err := strconv.Atoi(value)
 		if err != nil {
-			Log.Debugf("paramDefInt conversion err=%s", err)
+			LogError(err)
 			valint = 0
 		}
 		msg.Append(int32(valint))
@@ -985,7 +929,7 @@ func (player *Player) sendPadOneEffectParam(effectName string, paramName string,
 	case paramDefBool:
 		valbool, err := strconv.ParseBool(value)
 		if err != nil {
-			Log.Debugf("paramDefBool conversion err=%s", err)
+			LogError(err)
 			valbool = false
 		}
 		onoffValue := 0
@@ -1002,13 +946,13 @@ func (player *Player) sendPadOneEffectParam(effectName string, paramName string,
 		var valfloat float32
 		valfloat, err := ParseFloat32(value, resEffectName)
 		if err != nil {
-			Log.Debugf("paramDefFloat conversion err=%s", err)
+			LogError(err)
 			valfloat = 0.0
 		}
 		msg.Append(float32(valfloat))
 
 	default:
-		Log.Debugf("SetParamValueWithString: unknown type of ParamDef for name=%s", fullName)
+		Warn("SetParamValueWithString: unknown type of ParamDef for", "name", fullName)
 		return
 	}
 
@@ -1033,22 +977,23 @@ func (player *Player) sendPadOneEffectOnOff(effectName string, onoff bool) {
 
 	onoffMap, realEffectName, realEffectNum, err := player.getEffectMap(effectName, mapType)
 	if err != nil {
-		Log.Debugf("SendPadOneEffectOnOff: err=%s\n", err)
+		LogError(err)
 		return
 	}
+
 	if onoffMap == nil {
-		Log.Debugf("No %s value for effect=%s\n", mapType, effectName)
+		Warn("No onoffMap value for", "effect", effectName, "maptype", mapType, effectName)
 		return
 	}
 
 	onoffAddr, ok := onoffMap["addr"]
 	if !ok {
-		Log.Debugf("No addr value in onoff for effect=%s\n", effectName)
+		Warn("No addr value in onoff", "effect", effectName)
 		return
 	}
 	onoffArg, ok := onoffMap["arg"]
 	if !ok {
-		Log.Debugf("No arg valuei in onoff for effect=%s\n", effectName)
+		Warn("No arg valuei in onoff for", "effect", effectName)
 		return
 	}
 	addr := onoffAddr.(string)

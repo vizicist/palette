@@ -47,12 +47,10 @@ func (cm *CursorManager) clearCursors() {
 
 	for id, c := range cm.cursors {
 		if !c.downed {
-			Log.Debugf("Hmmm, why is a cursor not downed?\n")
+			Warn("Hmmm, why is a cursor not downed?")
 		} else {
 			cm.handleCursorEventNoLock(CursorEvent{Source: id, Ddu: "up"})
-			if Debug.Cursor {
-				Log.Debugf("Clearing cursor id=%s\n", id)
-			}
+			DebugLogOfType("cursor", "Clearing cursor", "id", id)
 			delete(cm.cursors, id)
 		}
 	}
@@ -72,6 +70,7 @@ func (cm *CursorManager) handleCursorEventNoLock(ce CursorEvent) {
 	// we turn attract mode off.
 	if ce.Source != "internal" {
 		go func() {
+			Info("sending attractmode false to Scheduler.Control")
 			TheEngine().Scheduler.Control <- Command{"attractmode", false}
 		}()
 		// TheEngine().Scheduler.SetAttractMode(false)
@@ -95,15 +94,12 @@ func (cm *CursorManager) handleCursorEventNoLock(ce CursorEvent) {
 		}
 		c.lastTouch = time.Now()
 
-		// If it's a new (downed==false) cursor, make sure the first event is "down"
+		// If it's a new (downed==false) cur"sor, make sure the first event is "down"
 		if !c.downed {
 			ce.Ddu = "down"
 			c.downed = true
 		}
-		if Debug.Cursor {
-			Log.Debugf("CursorManager.handleCursorEvent: id=%s ddu=%s xyz=%.4f,%.4f,%.4f\n", ce.ID, ce.Ddu, ce.X, ce.Y, ce.Z)
-		}
-
+		Info("CursorManager.handleCursorEvent", "id", ce.ID, "ddu", ce.Ddu, "x", ce.X, "y", ce.Y, "z", ce.Z)
 		if ce.Ddu == "up" {
 			delete(cm.cursors, ce.ID)
 		}
@@ -111,7 +107,7 @@ func (cm *CursorManager) handleCursorEventNoLock(ce CursorEvent) {
 }
 
 func (cm *CursorManager) doCursorGesture(source string, cid string, x0, y0, z0, x1, y1, z1 float32) {
-	Log.Debugf("doCursorGesture: start\n")
+	Info("doCursorGesture: start")
 
 	cm.mutex.Lock()
 	defer cm.mutex.Unlock()
@@ -126,9 +122,7 @@ func (cm *CursorManager) doCursorGesture(source string, cid string, x0, y0, z0, 
 		Area:      0,
 	}
 	cm.handleCursorEventNoLock(ce)
-	if Debug.Cursor {
-		Log.Debugf("doCursorGesture: down ce=%+v\n", ce)
-	}
+	Info("doCursorGesture", "ddu", "down", "ce", ce)
 
 	// secs := float32(3.0)
 	secs := float32(TheEngine().Scheduler.attractNoteDuration)
@@ -139,10 +133,7 @@ func (cm *CursorManager) doCursorGesture(source string, cid string, x0, y0, z0, 
 	ce.Y = y1
 	ce.Z = z1
 	cm.handleCursorEventNoLock(ce)
-	if Debug.Cursor {
-		Log.Debugf("doCursorGesture: up ce=%+v\n", ce)
-	}
-	Log.Debugf("doCursorGesture: end\n")
+	Info("doCursorGesture end", "ddu", "up", "ce", ce)
 }
 
 func (cm *CursorManager) checkCursorUp(now time.Time) {
@@ -159,9 +150,7 @@ func (cm *CursorManager) checkCursorUp(now time.Time) {
 		elapsed := now.Sub(c.lastTouch)
 		if elapsed > checkDelay {
 			cm.handleCursorEventNoLock(CursorEvent{Source: "checkCursorUp", Ddu: "up"})
-			if Debug.Cursor {
-				Log.Debugf("Player.checkCursorUp: deleting cursor id=%s elapsed=%v\n", id, elapsed)
-			}
+			Info("Player.checkCursorUp: deleting cursor", "id", id, "elapsed", elapsed)
 			delete(cm.cursors, id)
 		}
 	}

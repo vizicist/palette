@@ -42,11 +42,7 @@ func LoadMorphs() error {
 
 	for serialnum, playerinfo := range toplevel {
 		playername := playerinfo.(string)
-		if Debug.Morph {
-			Log.Debugf("Setting Morph serial=%s player=%s\n", serialnum, playername)
-		}
 		MorphDefs[serialnum] = playername
-		// TheRouter().setPlayerForMorph(serialnum, playername)
 	}
 	return nil
 }

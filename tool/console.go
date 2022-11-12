@@ -56,9 +56,7 @@ func (console *Console) Do(cmd engine.Cmd) string {
 		if child != nil {
 			// Note that we update the value in cmd.Values
 			cmd.ValuesSetPos(relpos)
-			if engine.Debug.Mouse {
-				engine.Log.Debugf("Console Do mouse cmd=%v\n", cmd)
-			}
+			engine.DebugLogOfType("mouse", "Console Do mouse", "cmd", cmd)
 			child.Do(cmd)
 		}
 
