@@ -13,13 +13,6 @@ type ActivePhrase struct {
 	pendingNoteOffs *Phrase
 }
 
-// ActivePhrasesManager manages ActivePhrases
-type ActivePhrasesManager struct {
-	mutex           sync.RWMutex
-	activePhrases   map[string]*ActivePhrase // map of cursor ids to ActivePhrases
-	outputCallbacks []*NoteOutputCallback
-}
-
 // CallbackID xxx
 type CallbackID int
 
@@ -40,15 +33,6 @@ func NewActivePhrase(p *Phrase) *ActivePhrase {
 	}
 }
 
-// NewActivePhrasesManager xxx
-func NewActivePhrasesManager() *ActivePhrasesManager {
-	mgr := &ActivePhrasesManager{
-		activePhrases:   make(map[string]*ActivePhrase),
-		outputCallbacks: make([]*NoteOutputCallback, 0),
-	}
-	return mgr
-}
-
 func (a *ActivePhrase) start() {
 	if a.phrase == nil {
 		Warn("ActivePhrase.start: Unexpected nil value for active.phrase")
@@ -57,9 +41,47 @@ func (a *ActivePhrase) start() {
 	a.nextnote = a.phrase.firstnote // could be nil
 }
 
+func (a *ActivePhrase) AdvanceByOneClick() (isDone bool) {
+
+	thisClick := a.clickSoFar
+	Info("ActivePhrase being looked at", "phrase", a.phrase.ToString(), "started", a.startClick, "sofarclick", a.clickSoFar)
+	// See if any notes in the Phrase are due to be put out.
+
+	// NOTE: we only send stuff when thisClick is exactly the click it's scheduled at
+	for n := a.nextnote; n != nil && n.Clicks == thisClick; n = n.next {
+		switch n.TypeOf {
+		case "noteon":
+			Warn("ActivePhrasesManager.advanceActivePhrasesByOneStep can't handle NOTEON notes yet")
+		case "noteoff":
+			Warn("ActivePhrasesManager.advanceActivePhrasesByOneStep can't handle NOTEOFF notes yet")
+		case "note":
+
+			nd := n.Copy()
+			nd.TypeOf = "noteon"
+			SendNoteToSynth(nd)
+
+			nd.TypeOf = "noteoff"
+			nd.Clicks = n.EndOf()
+			a.pendingNoteOffs.InsertNote(nd)
+			Info("pendingNoteOffs after insert", "phrase", a.pendingNoteOffs.ToString())
+
+		default:
+			Warn("advanceActivePhrase unable to handle", "typeof", n.TypeOf)
+		}
+		// advance to the next note in the ActivePhrase
+		a.nextnote = n.next
+	}
+
+	// Send whatever NOTEOFFs are due to be sent, and if everything has
+	// been processed, delete it from the activePhrases
+	isDone = a.sendPendingNoteOffs(thisClick)
+	a.clickSoFar++
+	return isDone
+}
+
 // sendNoteOffs returns true if all of the pending notes and notesoff have been processed,
 // i.e. the ActivePhrase can be removed
-func (a *ActivePhrase) sendPendingNoteOffs(dueBy Clicks) bool {
+func (a *ActivePhrase) sendPendingNoteOffs(dueBy Clicks) (isDone bool) {
 
 	if a.phrase == nil {
 		Warn("ActivePhrase.sendPendingNoteOffs got unexpected nil phrase value")
@@ -79,6 +101,22 @@ func (a *ActivePhrase) sendPendingNoteOffs(dueBy Clicks) bool {
 	}
 	// Return true if there's nothing left to be processed in this ActivePhrase
 	return (a.nextnote == nil && a.pendingNoteOffs.firstnote == nil)
+}
+
+// ActivePhrasesManager manages ActivePhrases
+type ActivePhrasesManager struct {
+	mutex           sync.RWMutex
+	activePhrases   map[string]*ActivePhrase // map of cursor ids to ActivePhrases
+	outputCallbacks []*NoteOutputCallback
+}
+
+// NewActivePhrasesManager xxx
+func NewActivePhrasesManager() *ActivePhrasesManager {
+	mgr := &ActivePhrasesManager{
+		activePhrases:   make(map[string]*ActivePhrase),
+		outputCallbacks: make([]*NoteOutputCallback, 0),
+	}
+	return mgr
 }
 
 // StartPhrase xxx
@@ -159,43 +197,15 @@ func (mgr *ActivePhrasesManager) AdvanceByOneClick() {
 	for cid, activePhrase := range mgr.activePhrases {
 		if activePhrase.phrase == nil {
 			Warn("advanceactivePhrases, unexpected phrase is nil", "cid", cid)
-			if activePhrase.sendPendingNoteOffs(MaxClicks) {
+			// if activePhrase.sendPendingNoteOffs(MaxClicks) {
+			// 	delete(mgr.activePhrases, cid)
+			// }
+		} else {
+			isDone := activePhrase.AdvanceByOneClick()
+			if isDone {
 				delete(mgr.activePhrases, cid)
 			}
-			continue
 		}
-
-		n := activePhrase.nextnote // n might be nil
-		// See if any notes in the Phrase are due to be put out.
-		for ; n != nil && n.Clicks <= activePhrase.clickSoFar; n = n.next {
-			switch n.TypeOf {
-			case "noteon":
-				Warn("ActivePhrasesManager.advanceActivePhrasesByOneStep can't handle NOTEON notes yet")
-			case "noteoff":
-				Warn("ActivePhrasesManager.advanceActivePhrasesByOneStep can't handle NOTEOFF notes yet")
-			case "note":
-
-				nd := n.Copy()
-				nd.TypeOf = "noteon"
-				SendNoteToSynth(nd)
-
-				nd.TypeOf = "noteoff"
-				nd.Clicks = n.EndOf()
-				activePhrase.pendingNoteOffs.InsertNote(nd)
-
-			default:
-				Warn("advanceActivePhrase unable to handle", "typeof", n.TypeOf)
-			}
-			// advance to the next note in the ActivePhrase
-			activePhrase.nextnote = n.next
-		}
-
-		// Send whatever NOTEOFFs are due to be sent, and if everything has
-		// been processed, delete it from the activePhrases
-		if activePhrase.sendPendingNoteOffs(activePhrase.clickSoFar) {
-			delete(mgr.activePhrases, cid)
-		}
-		activePhrase.clickSoFar++
 	}
 }
 

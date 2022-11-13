@@ -1,6 +1,8 @@
 package engine
 
 import (
+	"fmt"
+	"math"
 	"os"
 	"strings"
 	"time"
@@ -10,11 +12,18 @@ import (
 )
 
 var TheLog *zap.SugaredLogger
+var Time0Nanoseconds = time.Now().UnixNano()
 
 func myTimeEncoder(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
-	nanos := t.UnixNano()
+	nanos := t.UnixNano() - Time0Nanoseconds
 	sec := float64(nanos) / float64(time.Second)
-	enc.AppendFloat64(sec)
+	// For some reason a %04.4f format doesn't seem to work,
+	// so I do it manuall.
+	leftpart := int(math.Trunc(sec))
+	rf := sec - float64(leftpart)
+	rightpart := int(rf * 1000)
+	s := fmt.Sprintf("%06d,%04d.%04d", CurrentClick(), leftpart, rightpart)
+	enc.AppendString(s)
 }
 
 func fileLogger(path string) *zap.Logger {
@@ -23,7 +32,7 @@ func fileLogger(path string) *zap.Logger {
 		MessageKey:     "msg",
 		LevelKey:       "",
 		NameKey:        "name",
-		TimeKey:        "time",
+		TimeKey:        "click",
 		CallerKey:      "", // "caller",
 		FunctionKey:    "", // "function",
 		StacktraceKey:  "stacktrace",
