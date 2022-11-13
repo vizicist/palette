@@ -178,18 +178,27 @@ func (sched *Scheduler) Start() {
 	var lastProcessCheck float64
 	var lastAlive float64
 
+	nonRealtime := true
 	// By reading from tick.C, we wake up every 2 milliseconds
 	for now := range tick.C {
 		sched.now = now
 		uptimesecs := sched.Uptime()
-		newclick := Seconds2Clicks(uptimesecs)
+		currentClick := CurrentClick()
+		var newclick Clicks
+		if nonRealtime {
+			newclick = currentClick + 1
+		} else {
+			newclick = Seconds2Clicks(uptimesecs)
+		}
 		SetCurrentMilli(int64(uptimesecs * 1000.0))
 
-		currentClick := CurrentClick()
+		Info("SCHEDULER TOP OF LOOP","currentClick",currentClick,"newclick",newclick)
 		if newclick > currentClick {
 			sched.advanceTransposeTo(newclick)
 			sched.advanceClickTo(currentClick)
 			SetCurrentClick(newclick)
+		} else {
+			Info("SCHEDULER skipping to next loop, newclick is unchanged")
 		}
 
 		// Every so often we check to see if attract mode should be turned on
@@ -235,7 +244,7 @@ func (sched *Scheduler) Start() {
 
 		select {
 		case cmd := <-sched.Control:
-			Info("Realtime.Control", "cmd", cmd)
+			// Info("Realtime.Control", "cmd", cmd)
 			switch cmd.Action {
 			case "attractmode":
 				onoff := cmd.Arg.(bool)
@@ -252,6 +261,8 @@ func (sched *Scheduler) Start() {
 
 func (sched *Scheduler) advanceClickTo(toClick Clicks) {
 
+	Info("Scheduler.advanceClickTo","toClick",tocClick)
+
 	// Don't let events get handled while we're advancing
 	TheEngine().Router.eventMutex.Lock()
 	defer func() {
@@ -260,7 +271,7 @@ func (sched *Scheduler) advanceClickTo(toClick Clicks) {
 
 	for clk := sched.lastClick; clk < toClick; clk++ {
 		for si := sched.firstItem; si != nil; si = si.next {
-			if si.clickStart <= clk {
+			if si.clickStart == clk {
 				sched.activePhrasesManager.StartPhraseAt(si.clickStart, si.phrase, si.ID)
 			}
 		}

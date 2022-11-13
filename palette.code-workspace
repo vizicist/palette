@@ -2,12 +2,6 @@
 	"folders": [
 		{
 			"path": "."
-		},
-		{
-			"path": "../midi"
-		},
-		{
-			"path": "../zap"
 		}
 	],
 	"settings": {
