@@ -58,11 +58,11 @@
             "args": ["preset.list"]
         },
         {
-            "name": "Test 2",
+            "name": "Test 1",
             "type": "go",
             "request": "launch",
             "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
-            "args": ["test","2"]
+            "args": ["test","1"]
         },
         {
             "name": "Twitch test",
