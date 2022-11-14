@@ -136,7 +136,7 @@ func (cm *CursorManager) doCursorGesture(source string, cid string, x0, y0, z0, 
 	Info("doCursorGesture end", "ddu", "up", "ce", ce)
 }
 
-func (cm *CursorManager) checkCursorUp(now time.Time) {
+func (cm *CursorManager) autoCursorUp(now time.Time) {
 
 	if checkDelay == 0 {
 		milli := ConfigIntWithDefault("upcheckmillisecs", 1000)

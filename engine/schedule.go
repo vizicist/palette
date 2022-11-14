@@ -1,20 +1,23 @@
 package engine
 
 import (
+	"container/list"
 	"fmt"
 	"math/rand"
+	"sync"
 	"time"
 
 	"github.com/hypebeast/go-osc/osc"
 )
 
 type Scheduler struct {
-	firstItem *SchedItem
-	lastItem  *SchedItem
+	mutex         sync.RWMutex
+	schedule      *list.List // time-ordered by Clicks
+	activePhrases *list.List // time-ordered by Clicks
 	// mutex    sync.RWMutex
 	nextSid int
 
-	activePhrasesManager *ActivePhrasesManager
+	// activePhrasesManager *ActivePhrasesManager
 
 	now       time.Time
 	time0     time.Time
@@ -46,81 +49,14 @@ type SchedItem struct {
 	clickStart Clicks
 	ID         string
 	phrase     *Phrase
-	prev       *SchedItem
-	next       *SchedItem
-}
-
-func (sched *Scheduler) FindInsert(click Clicks) *SchedItem {
-	si := sched.firstItem
-	for si != nil {
-		if si.clickStart >= click {
-			return si
-		}
-		si = si.next
-	}
-	return nil
-}
-
-func (sched *Scheduler) Format(f fmt.State, c rune) {
-	s := "Schedule{"
-	for si := sched.firstItem; si != nil; si = si.next {
-		s += fmt.Sprintf("(%d,%s,%s)", si.clickStart, si.ID, si.phrase)
-	}
-	s += "}"
-	f.Write([]byte(s))
-}
-
-func (sched *Scheduler) ScheduleNoteAt(nt *Note, click Clicks) (id string) {
-	Info("Scheduler.ScheduleNoteAt", "nt", nt, "click", click)
-	phr := NewPhrase().InsertNote(nt)
-	id = fmt.Sprintf("%d", sched.nextSid)
-	newItem := &SchedItem{
-		clickStart: click,
-		phrase:     phr,
-		prev:       nil,
-		next:       nil,
-		ID:         id,
-	}
-	sched.nextSid += 1
-	// empty list
-	if sched.firstItem == nil {
-		sched.firstItem = newItem
-		sched.lastItem = newItem
-		return
-	}
-	// Quick check for common situation, adding after lastItem
-	if sched.lastItem.clickStart <= click {
-		lastlast := sched.lastItem
-		sched.lastItem = newItem
-		newItem.prev = lastlast
-		lastlast.next = newItem
-		return
-	}
-	// otherwise, find the item before which will insert this newItem
-	insertBefore := sched.FindInsert(click)
-	if insertBefore == nil {
-		// The common situation should have already handled this
-		Warn("ScheduleNoteAt: Unexpected insert = nil?")
-		return
-	}
-	newItem.prev = insertBefore.prev
-	newItem.next = insertBefore
-	if insertBefore.prev == nil {
-		// it's the new first item
-		sched.firstItem = newItem
-	}
-	insertBefore.prev.next = newItem
-	insertBefore.prev = newItem
-	return
 }
 
 func NewScheduler() *Scheduler {
 	transposebeats := Clicks(ConfigIntWithDefault("transposebeats", 48))
 	s := &Scheduler{
-		firstItem:              nil,
-		lastItem:               nil,
+		schedule:               list.New(),
+		activePhrases:          list.New(),
 		nextSid:                0,
-		activePhrasesManager:   NewActivePhrasesManager(),
 		now:                    time.Time{},
 		time0:                  time.Time{},
 		lastClick:              0,
@@ -179,6 +115,7 @@ func (sched *Scheduler) Start() {
 	var lastAlive float64
 
 	nonRealtime := true
+
 	// By reading from tick.C, we wake up every 2 milliseconds
 	for now := range tick.C {
 		sched.now = now
@@ -192,14 +129,15 @@ func (sched *Scheduler) Start() {
 		}
 		SetCurrentMilli(int64(uptimesecs * 1000.0))
 
-		Info("SCHEDULER TOP OF LOOP","currentClick",currentClick,"newclick",newclick)
-		if newclick > currentClick {
-			sched.advanceTransposeTo(newclick)
-			sched.advanceClickTo(currentClick)
-			SetCurrentClick(newclick)
-		} else {
+		// Info("SCHEDULER TOP OF LOOP", "currentClick", currentClick, "newclick", newclick)
+
+		if newclick <= currentClick {
 			Info("SCHEDULER skipping to next loop, newclick is unchanged")
+			continue
 		}
+		sched.advanceTransposeTo(newclick)
+		sched.advanceClickTo(currentClick)
+		SetCurrentClick(newclick)
 
 		// Every so often we check to see if attract mode should be turned on
 		attractModeEnabled := sched.attractIdleSecs > 0
@@ -261,7 +199,7 @@ func (sched *Scheduler) Start() {
 
 func (sched *Scheduler) advanceClickTo(toClick Clicks) {
 
-	Info("Scheduler.advanceClickTo","toClick",tocClick)
+	// Info("Scheduler.advanceClickTo", "toClick", toClick, "schedule", sched.ToString())
 
 	// Don't let events get handled while we're advancing
 	TheEngine().Router.eventMutex.Lock()
@@ -269,22 +207,29 @@ func (sched *Scheduler) advanceClickTo(toClick Clicks) {
 		TheEngine().Router.eventMutex.Unlock()
 	}()
 
+	// Info("sched.advanceClickTo")
+	doAutoCursorUp := false
 	for clk := sched.lastClick; clk < toClick; clk++ {
-		for si := sched.firstItem; si != nil; si = si.next {
+		for i := sched.schedule.Front(); i != nil; i = i.Next() {
+			si := i.Value.(*SchedItem)
 			if si.clickStart == clk {
-				sched.activePhrasesManager.StartPhraseAt(si.clickStart, si.phrase, si.ID)
+				sched.StartPhraseAt(si.clickStart, si.phrase, si.ID)
 			}
 		}
-		sched.activePhrasesManager.AdvanceByOneClick()
-		TheEngine().CursorManager.checkCursorUp(time.Now())
+		sched.AdvanceByOneClick()
+		if doAutoCursorUp {
+			TheEngine().CursorManager.autoCursorUp(time.Now())
+		}
+	}
+	// Remove old things from the schedule
+	for i := sched.schedule.Front(); i != nil; i = i.Next() {
+		si := i.Value.(*SchedItem)
+		if si.clickStart < toClick {
+			sched.schedule.Remove(i)
+		}
 	}
 	sched.lastClick = toClick
 }
-
-/*
-func (sched *Scheduler) advanceByOneClick() {
-}
-*/
 
 // checkDelay is the Duration that has to pass
 // before we decide a cursor is no longer present,
@@ -295,53 +240,6 @@ var checkDelay time.Duration = 0
 // Time returns the current time
 func (sched *Scheduler) time() time.Time {
 	return time.Now()
-}
-*/
-
-/*
-func (sched *Scheduler) checkCursorUp(cm *CursorManager) {
-	now := sched.now
-	cm.CheckCursorUp(now)
-}
-*/
-
-/*
-func (player *Player) handleCursorEvent(e CursorEvent) {
-
-	id := e.Source
-
-	router := TheEngine().Router
-	router.deviceCursorsMutex.Lock()
-	defer router.deviceCursorsMutex.Unlock()
-
-	// e.Ddu is "down", "drag", or "up"
-
-	tc, ok := player.deviceCursors[id]
-	if !ok {
-		// new DeviceCursor
-		tc = &DeviceCursor{}
-		player.deviceCursors[id] = tc
-	}
-	tc.lastTouch = player.time()
-
-	// If it's a new (downed==false) cursor, make sure the first step event is "down"
-	if !tc.downed {
-		e.Ddu = "down"
-		tc.downed = true
-	}
-	cse := CursorStepEvent{
-		ID:  id,
-		X:   e.X,
-		Y:   e.Y,
-		Z:   e.Z,
-		Ddu: e.Ddu,
-	}
-
-	player.executeIncomingCursor(cse)
-
-	if e.Ddu == "up" {
-		delete(player.deviceCursors, id)
-	}
 }
 */
 
@@ -408,6 +306,105 @@ func (sched *Scheduler) advanceTransposeTo(newclick Clicks) {
 				player.TransposePitch = transposePitch
 			}
 		*/
-		sched.activePhrasesManager.terminateActiveNotes()
+		sched.terminateActiveNotes()
 	}
+}
+
+// StartPhrase xxx
+func (sched *Scheduler) StartPhraseAt(click Clicks, phrase *Phrase, sid string) {
+	DebugLogOfType("phrase", "StartPhrase", "sid", sid)
+	activePhrase := NewActivePhrase(phrase, click, sid)
+	activePhrase.start()
+}
+
+// StopPhrase xxx
+func (sched *Scheduler) StopPhrase(sid string, active *ActivePhrase) {
+	DebugLogOfType("phrase", "StopPhrase", "sid", sid)
+	for i := sched.activePhrases.Front(); i != nil; i = i.Next() {
+		ap := i.Value.(*ActivePhrase)
+		if ap.sid == sid {
+			readyToDelete := ap.sendPendingNoteOffs(MaxClicks)
+			if !readyToDelete {
+				Warn("StopPhrase, why isn't ap ready to delete?", "sid", sid)
+			} else {
+				sched.activePhrases.Remove(i)
+			}
+		}
+	}
+}
+
+// AdvanceByOneClick xxx
+func (sched *Scheduler) AdvanceByOneClick() {
+
+	sched.mutex.Lock()
+	defer sched.mutex.Unlock()
+
+	for i := sched.activePhrases.Front(); i != nil; i = i.Next() {
+		ap := i.Value.(*ActivePhrase)
+		if ap.phrase == nil {
+			Warn("advanceactivePhrases, unexpected phrase is nil", "sid", ap.sid)
+			sched.activePhrases.Remove(i)
+		} else {
+			if ap.AdvanceByOneClick() {
+				sched.activePhrases.Remove(i)
+			}
+		}
+	}
+}
+
+func (sched *Scheduler) terminateActiveNotes() {
+	sched.mutex.RLock()
+	defer sched.mutex.RUnlock()
+
+	for i := sched.activePhrases.Front(); i != nil; i = i.Next() {
+		// for id, a := range sched.activePhrases {
+		ap := i.Value.(*ActivePhrase)
+		if ap != nil {
+			ap.sendPendingNoteOffs(ap.clickSoFar)
+		} else {
+			Warn("Hey, nil activeNotes entry", "sid", ap.sid)
+		}
+	}
+}
+
+func (sched *Scheduler) ToString() string {
+	s := "Schedule{"
+	for i := sched.schedule.Front(); i != nil; i = i.Next() {
+		si := i.Value.(*SchedItem)
+		s += fmt.Sprintf("(%d,%s,%s)", si.clickStart, si.ID, si.phrase)
+	}
+	s += "}"
+	return s
+}
+
+func (sched *Scheduler) Format(f fmt.State, c rune) {
+	s := sched.ToString()
+	f.Write([]byte(s))
+}
+
+func (sched *Scheduler) ScheduleNoteAt(nt *Note, click Clicks) (id string) {
+	schedule := sched.schedule
+	Info("Scheduler.ScheduleNoteAt", "nt", nt, "click", click)
+	phr := NewPhrase().InsertNote(nt)
+	id = fmt.Sprintf("%d", sched.nextSid)
+	sched.nextSid += 1
+	newItem := &SchedItem{
+		clickStart: click,
+		phrase:     phr,
+		ID:         id,
+	}
+	i := schedule.Front()
+	if i == nil {
+		schedule.PushFront(newItem)
+	} else if schedule.Back().Value.(*SchedItem).clickStart <= newItem.clickStart {
+		schedule.PushBack(newItem)
+	} else {
+		for ; i != nil; i = i.Next() {
+			si := i.Value.(*SchedItem)
+			if si.clickStart > click {
+				schedule.InsertBefore(newItem, i)
+			}
+		}
+	}
+	return id
 }

@@ -21,10 +21,12 @@ func NewResponder_default() *Responder_default {
 
 func (r *Responder_default) OnCursorEvent(ctx *engine.ResponderContext, ce engine.CursorEvent) {
 	clicks := ctx.CurrentClick()
-	nt := r.cursorToNote(ce)
-	engine.Info("Responder_default.OnCursorEvent", "ce", ce, "note", nt)
-	ctx.ScheduleNoteAt(nt, clicks)
-	engine.Info("Schedule is now", "schedule", ctx.ScheduleDebug())
+	if ce.Ddu == "down" || ce.Ddu == "drag" {
+		nt := r.cursorToNote(ce)
+		engine.Info("Responder_default.OnCursorEvent", "ce", ce, "note", nt)
+		ctx.ScheduleNoteAt(nt, clicks)
+		engine.Info("Schedule is now", "schedule", ctx.ScheduleDebug())
+	}
 
 }
 
