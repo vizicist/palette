@@ -42,7 +42,7 @@ type Router struct {
 	generateVisuals      bool
 	generateSound        bool
 	playerAssignedToNUID map[string]string
-	eventMutex           sync.RWMutex
+	inputEventMutex      sync.RWMutex
 
 	// responders map[string]Responder
 }
@@ -265,9 +265,9 @@ func ArgsToCursorEvent(args map[string]string) CursorEvent {
 
 // HandleInputEvent xxx
 func (r *Router) HandleInputEvent(playerName string, args map[string]string) error {
-	r.eventMutex.Lock()
+	r.inputEventMutex.Lock()
 	defer func() {
-		r.eventMutex.Unlock()
+		r.inputEventMutex.Unlock()
 	}()
 
 	event, err := needStringArg("event", "HandleEvent", args)

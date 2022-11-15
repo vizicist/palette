@@ -2,14 +2,12 @@ package engine
 
 import (
 	"fmt"
-	"sync"
 )
 
 type ResponderManager struct {
 	responders        map[string]Responder
 	respondersContext map[string]*ResponderContext
 	activeResponders  map[string]Responder
-	mutex             sync.RWMutex
 }
 
 type ResponderContext struct {
@@ -25,7 +23,6 @@ func NewResponderManager() *ResponderManager {
 		responders:        make(map[string]Responder),
 		respondersContext: make(map[string]*ResponderContext),
 		activeResponders:  make(map[string]Responder),
-		mutex:             sync.RWMutex{},
 	}
 }
 
