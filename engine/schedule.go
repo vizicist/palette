@@ -11,10 +11,11 @@ import (
 )
 
 type Scheduler struct {
-	mutex         sync.RWMutex
-	schedule      *list.List // time-ordered by Clicks
-	activePhrases *list.List // time-ordered by Clicks
-	// mutex    sync.RWMutex
+	schedule *list.List // time-ordered by Clicks
+
+	activePhrasesMutex sync.RWMutex
+	activePhrases      *list.List // time-ordered by Clicks
+
 	nextSid int
 
 	// activePhrasesManager *ActivePhrasesManager
@@ -151,7 +152,7 @@ func (sched *Scheduler) Start() {
 		}
 
 		sched.advanceTransposeTo(newclick)
-		sched.advanceClickTo(currentClick)
+		sched.advanceClickTo(newclick)
 		SetCurrentClick(newclick)
 
 		// Every so often we check to see if attract mode should be turned on
@@ -223,47 +224,36 @@ func (sched *Scheduler) advanceClickTo(toClick Clicks) {
 	// Don't let events get handled while we're advancing
 	// XXX - this might not be needed if all communication/syncing
 	// is done only from the schedule loop
-	TheEngine().Router.eventMutex.Lock()
+	TheEngine().Router.inputEventMutex.Lock()
 	defer func() {
-		TheEngine().Router.eventMutex.Unlock()
+		TheEngine().Router.inputEventMutex.Unlock()
 	}()
 
-	// if (toClick - sched.lastClick) != 1 {
-	// 	Warn("Hey, does this happen?", "toClick", toClick, "lastClick", sched.lastClick)
-	// }
-	// Info("sched.advanceClickTo")
-
 	doAutoCursorUp := false
-	for clk := sched.lastClick; clk < toClick; clk++ {
-		// See if anything scheduled items are due
-		for i := sched.schedule.Front(); i != nil; {
-			nexti := i.Next()
-			si := i.Value.(*SchedItem)
-			if si.clickStart <= clk {
-				sched.AddActivePhraseAt(si.clickStart, si.phrase, si.ID)
-
-				// XXX - this is (maybe) where looping happens
-				// by rescheduling things rather than removing
-				sched.schedule.Remove(i)
-
-			}
-			i = nexti
-		}
-
+	sched.lastClick += 1
+	for clk := sched.lastClick; clk <= toClick; clk++ {
+		sched.triggerItemsScheduledAt(clk)
 		sched.advanceActivePhrasesByOneClick()
-
 		if doAutoCursorUp {
 			TheEngine().CursorManager.autoCursorUp(time.Now())
 		}
 	}
-	// Remove old things from the schedule
-	for i := sched.schedule.Front(); i != nil; i = i.Next() {
+	sched.lastClick = toClick
+}
+
+func (sched *Scheduler) triggerItemsScheduledAt(clk Clicks) {
+	for i := sched.schedule.Front(); i != nil; {
+		nexti := i.Next()
 		si := i.Value.(*SchedItem)
-		if si.clickStart < toClick {
+		if si.clickStart <= clk {
+			sched.AddActivePhraseAt(si.clickStart, si.phrase, si.ID)
+
+			// XXX - this is (maybe) where looping happens
+			// by rescheduling things rather than removing
 			sched.schedule.Remove(i)
 		}
+		i = nexti
 	}
-	sched.lastClick = toClick
 }
 
 // checkDelay is the Duration that has to pass
@@ -351,7 +341,7 @@ func (sched *Scheduler) AddActivePhraseAt(click Clicks, phrase *Phrase, sid stri
 		Warn("AddActivePhraseAt: Unexpected nil phrase")
 		return
 	}
-	DebugLogOfType("phrase", "StartPhrase", "sid", sid)
+	DebugLogOfType("phrase", "StartPhrase", "sid", sid, "phrase", phrase)
 	newItem := &ActivePhrase{
 		phrase:          phrase,
 		clickStart:      click,
@@ -360,24 +350,25 @@ func (sched *Scheduler) AddActivePhraseAt(click Clicks, phrase *Phrase, sid stri
 		pendingNoteOffs: NewPhrase(),
 		sid:             sid,
 	}
-	activePhrases := sched.activePhrases
+
+	sched.activePhrasesMutex.Lock()
+	defer sched.activePhrasesMutex.Unlock()
 
 	// Insert accoring to click
 	// XXX - should be generic-ized
-	i := activePhrases.Front()
+	i := sched.activePhrases.Front()
 	if i == nil {
-		activePhrases.PushFront(newItem)
-	} else if activePhrases.Back().Value.(*ActivePhrase).clickStart <= newItem.clickStart {
-		activePhrases.PushBack(newItem)
+		sched.activePhrases.PushFront(newItem)
+	} else if sched.activePhrases.Back().Value.(*ActivePhrase).clickStart <= newItem.clickStart {
+		sched.activePhrases.PushBack(newItem)
 	} else {
 		for ; i != nil; i = i.Next() {
 			ap := i.Value.(*ActivePhrase)
 			if ap.clickStart > click {
-				activePhrases.InsertBefore(newItem, i)
+				sched.activePhrases.InsertBefore(newItem, i)
 			}
 		}
 	}
-
 }
 
 // StopPhrase xxx
@@ -399,8 +390,8 @@ func (sched *Scheduler) StopPhrase(sid string, active *ActivePhrase) {
 // AdvanceByOneClick xxx
 func (sched *Scheduler) advanceActivePhrasesByOneClick() {
 
-	sched.mutex.Lock()
-	defer sched.mutex.Unlock()
+	sched.activePhrasesMutex.Lock()
+	defer sched.activePhrasesMutex.Unlock()
 
 	currentClick := CurrentClick()
 	for i := sched.activePhrases.Front(); i != nil; i = i.Next() {
@@ -419,8 +410,9 @@ func (sched *Scheduler) advanceActivePhrasesByOneClick() {
 }
 
 func (sched *Scheduler) terminateActiveNotes() {
-	sched.mutex.RLock()
-	defer sched.mutex.RUnlock()
+
+	sched.activePhrasesMutex.RLock()
+	defer sched.activePhrasesMutex.RUnlock()
 
 	for i := sched.activePhrases.Front(); i != nil; i = i.Next() {
 		// for id, a := range sched.activePhrases {
