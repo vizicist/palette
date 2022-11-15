@@ -3,7 +3,7 @@ package engine
 // ActivePhrase is a currently active MIDI phrase
 type ActivePhrase struct {
 	phrase          *Phrase
-	startClick      Clicks
+	clickStart      Clicks
 	clickSoFar      Clicks
 	nextnote        *Note
 	pendingNoteOffs *Phrase
@@ -16,28 +16,12 @@ type CallbackID int
 // NoteOutputCallbackFunc xxx
 type NoteOutputCallbackFunc func(n *Note)
 
-// NewActivePhrase constructs a new ActivePhrase for a Phrase
-func NewActivePhrase(p *Phrase, click Clicks, sid string) *ActivePhrase {
-	return &ActivePhrase{
-		phrase:          p,
-		startClick:      click,
-		sid:             sid,
-		pendingNoteOffs: NewPhrase(),
-	}
-}
-
-func (a *ActivePhrase) start() {
-	if a.phrase == nil {
-		Warn("ActivePhrase.start: Unexpected nil value for active.phrase")
-	}
-	a.clickSoFar = 0
-	a.nextnote = a.phrase.firstnote // could be nil
-}
-
 func (a *ActivePhrase) AdvanceByOneClick() (isDone bool) {
 
 	thisClick := a.clickSoFar
-	Info("ActivePhrase being looked at", "phrase", a.phrase.ToString(), "started", a.startClick, "sofarclick", a.clickSoFar)
+
+	DebugLogOfType("realtime", "ActivePhrase being looked at", "phrase", a.phrase.ToString(), "started", a.clickStart, "sofarclick", a.clickSoFar)
+
 	// See if any notes in the Phrase are due to be put out.
 
 	// NOTE: we only send stuff when thisClick is exactly the click it's scheduled at

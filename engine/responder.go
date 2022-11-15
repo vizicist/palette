@@ -43,17 +43,19 @@ func (ctx *ResponderContext) ScheduleDebug() string {
 	return fmt.Sprintf("%s", ctx.scheduler)
 }
 
-func (ctx *ResponderContext) ScheduleNoteNow(nt *Note) {
+func (ctx *ResponderContext) SchedulePhraseNow(phr *Phrase) {
 	click := CurrentClick()
-	ctx.scheduler.ScheduleNoteAt(nt, click)
+	ctx.SchedulePhraseAt(phr, click)
 }
 
-func (ctx *ResponderContext) ScheduleNoteAt(nt *Note, click Clicks) {
-	if nt == nil {
-		Warn("ResponderContext.ScheduleNoteAt: nt == nil?")
+func (ctx *ResponderContext) SchedulePhraseAt(phr *Phrase, click Clicks) {
+	if phr == nil {
+		Warn("ResponderContext.SchedulePhraseAt: phr == nil?")
 		return
 	}
-	ctx.scheduler.ScheduleNoteAt(nt, click)
+	go func() {
+		ctx.scheduler.cmdInput <- SchedulePhraseCmd{phr, click}
+	}()
 }
 
 func (rm *ResponderManager) AddResponder(name string, responder Responder) {

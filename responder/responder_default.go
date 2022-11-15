@@ -24,7 +24,8 @@ func (r *Responder_default) OnCursorEvent(ctx *engine.ResponderContext, ce engin
 	if ce.Ddu == "down" || ce.Ddu == "drag" {
 		nt := r.cursorToNote(ce)
 		engine.Info("Responder_default.OnCursorEvent", "ce", ce, "note", nt)
-		ctx.ScheduleNoteAt(nt, clicks)
+		phr := engine.NewPhrase().InsertNote(nt)
+		ctx.SchedulePhraseAt(phr, clicks)
 		engine.Info("Schedule is now", "schedule", ctx.ScheduleDebug())
 	}
 
@@ -35,7 +36,8 @@ func (r *Responder_default) OnCursorEvent(ctx *engine.ResponderContext, ce engin
 func (r *Responder_default) cursorToNote(ce engine.CursorEvent) *engine.Note {
 	pitch := uint8(ce.X * 126.0)
 	velocity := uint8(ce.Z * 128.0)
-	duration := 2 * engine.QuarterNote
+	duration := engine.QuarterNote / 4
+	// duration := engine.Clicks(24)
 	synth := "0103 Ambient_E-Guitar"
 	return engine.NewNote(pitch, velocity, duration, synth)
 }

@@ -70,10 +70,8 @@ func (cm *CursorManager) handleCursorEventNoLock(ce CursorEvent) {
 	// we turn attract mode off.
 	if ce.Source != "internal" {
 		go func() {
-			// Info("sending attractmode false to Scheduler.Control")
-			TheEngine().Scheduler.Control <- Command{"attractmode", false}
+			TheEngine().Scheduler.cmdInput <- AttractModeCmd{false}
 		}()
-		// TheEngine().Scheduler.SetAttractMode(false)
 	}
 
 	switch ce.Ddu {

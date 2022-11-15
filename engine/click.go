@@ -6,11 +6,13 @@ import (
 
 var currentMilli int64
 var currentMilliMutex sync.Mutex
+
 var currentMilliOffset int64
 var currentClickOffset Clicks
 var clicksPerSecond int
-var currentClick Clicks
 var oneBeat Clicks
+
+var currentClick Clicks
 var currentClickMutex sync.Mutex
 
 // CurrentMilli is the time from the start, in milliseconds
@@ -74,6 +76,7 @@ func Clicks2Seconds(clk Clicks) float64 {
 	return float64(clk) / float64(clicksPerSecond)
 }
 
+/*
 // Clicks2Seconds converts Clicks to Time (seconds), absolute
 func Clicks2SecondsAbsolute(clk Clicks) float64 {
 	// Take current*Offset values into account
@@ -82,6 +85,7 @@ func Clicks2SecondsAbsolute(clk Clicks) float64 {
 	secs -= (float64(currentMilliOffset) * 1000.0)
 	return secs
 }
+*/
 
 // TempoFactor xxx
 var TempoFactor = float64(1.0)

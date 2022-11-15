@@ -58,12 +58,6 @@ type HeartbeatEvent struct {
 	CursorCount int
 }
 
-// Command is sent on the control channel of the Router
-type Command struct {
-	Action string // e.g. "addmidi"
-	Arg    interface{}
-}
-
 // DeviceCursor purpose is to know when it
 // hasn't been seen for a while,
 // in order to generate an UP event
