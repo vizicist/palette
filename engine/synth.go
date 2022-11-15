@@ -2,6 +2,7 @@ package engine
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	// "github.com/vizicist/portmidi"
 )
@@ -208,20 +209,25 @@ func SendNoteToSynth(note *Note) {
 
 		synth.noteDown[note.Pitch] = true
 		synth.noteDownCount[note.Pitch]++
-		DebugLogOfType("midi", "SendNoteToSynth",
+
+		DebugLogOfType("midi", "SendNoteOnToSynth",
 			"synth", synth,
 			"channel", synth.portchannel.channel,
 			"pitch", note.Pitch,
 			"notedowncount", synth.noteDownCount[note.Pitch])
+
 	case "noteoff":
 		status |= 0x80
 		data2 = 0
 		synth.noteDown[note.Pitch] = false
 		synth.noteDownCount[note.Pitch]--
-		DebugLogOfType("midi", "SendNoteToSynth",
+
+		DebugLogOfType("midi", "SendNoteOffToSynth",
 			"synth", synth,
-			"noteoffpitch", note.Pitch,
+			"channel", synth.portchannel.channel,
+			"pitch", note.Pitch,
 			"notedowncount", synth.noteDownCount[note.Pitch])
+
 	case "controller":
 		status |= 0xB0
 	case "progchange":
@@ -235,11 +241,19 @@ func SendNoteToSynth(note *Note) {
 		return
 	}
 
-	DebugLogOfType("midi", "SendNoteToSynth", "synth", synth, "status", status, "data1", data1, "data2", data2)
+	DebugLogOfType("midi", "Raw MIDI Output",
+		"synth", synth,
+		"status", hexString(status),
+		"data1", hexString(data1),
+		"data2", hexString(data2))
 
 	err := mc.output.Send([]byte{status, data1, data2})
 	if err != nil {
 		Warn("output.Send", "err", err)
 	}
 	// mc.midiDeviceOutput.stream.WriteShort(e.Status, e.Data1, e.Data2)
+}
+
+func hexString(b byte) string {
+	return fmt.Sprintf("%02x", b)
 }
