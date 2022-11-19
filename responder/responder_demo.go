@@ -28,7 +28,7 @@ func (r *Responder_demo) OnCursorEvent(ce engine.CursorEvent) {
 			engine.SendNoteToSynth(note)
 		}()
 	}
-	engine.Info("OnCursorEvent in responder_demo called!", "ce", ce)
+	// engine.Info("OnCursorEvent in responder_demo called!", "ce", ce)
 }
 
 /////////////////////////// internal things
