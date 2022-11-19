@@ -20,7 +20,7 @@ func (a *ActivePhrase) AdvanceByOneClick() (isDone bool) {
 
 	thisClick := a.clickSoFar
 
-	DebugLogOfType("realtime", "ActivePhrase being looked at", "phrase", a.phrase.ToString(), "started", a.clickStart, "sofarclick", a.clickSoFar)
+	DebugLogOfType("realtime", "ActivePhrase being looked at", "phrase", a.phrase, "started", a.clickStart, "sofarclick", a.clickSoFar)
 
 	// See if any notes in the Phrase are due to be put out.
 
@@ -40,7 +40,6 @@ func (a *ActivePhrase) AdvanceByOneClick() (isDone bool) {
 			nd.TypeOf = "noteoff"
 			nd.Clicks = n.EndOf()
 			a.pendingNoteOffs.InsertNote(nd)
-			Info("pendingNoteOffs after insert", "phrase", a.pendingNoteOffs.ToString())
 
 		default:
 			Warn("advanceActivePhrase unable to handle", "typeof", n.TypeOf)

@@ -11,28 +11,35 @@ import (
 	"github.com/hypebeast/go-osc/osc"
 )
 
+var HTTPPort = 3330
+var OSCPort = 3333
+var AliveOutputPort = 3331
+
+// var FFGLPort = 3334
+var LocalAddress = "127.0.0.1"
+var ResolumePort = 7000
+var GuiPort = 3943
+var PloguePort = 3210
+
 // Router takes events and routes them
 type Router struct {
+	PlayerManager *PlayerManager
 	playerLetters string
-	players       map[string]*Player
+
 	OSCInput      chan OSCEvent
-	MIDIInput     chan MidiEvent
+	midiInputChan chan MidiEvent
 	NoteInput     chan *Note
 	CursorInput   chan CursorEvent
+
+	CursorManager *CursorManager
+	killme        bool
 
 	AliveWaiters map[string]chan string
 
 	layerMap map[string]int // map of pads to resolume layer numbers
 
 	midiEventHandler MIDIEventHandler
-	// lastClick        Clicks
-	// control chan Command
-	// time             time.Time
-	// time0            time.Time
-	// killPlayback bool
-	// recordingOn    bool
-	// recordingFile  *os.File
-	// recordingBegun time.Time
+	responderManager *ResponderManager
 
 	resolumeClient *osc.Client
 	guiClient      *osc.Client
@@ -43,9 +50,9 @@ type Router struct {
 	generateSound        bool
 	playerAssignedToNUID map[string]string
 	inputEventMutex      sync.RWMutex
-
-	// responders map[string]Responder
 }
+
+type MIDIEventHandler func(MidiEvent)
 
 // OSCEvent is an OSC message
 type OSCEvent struct {
@@ -90,21 +97,14 @@ func recordingsFile(nm string) string {
 
 */
 
-// APIExecutorFunc xxx
 type APIExecutorFunc func(api string, nuid string, rawargs string) (result interface{}, err error)
-
-// CallAPI calls an API in the Palette Freeframe plugin running in Resolume
-// func CallAPI(method string, args []string) {
-// 	Warn("CallAPI","method",method)
-// }
 
 func NewRouter() *Router {
 
 	r := Router{}
 
-	// r.deviceCursors = make(map[string]*DeviceCursor)
-	// r.activeCursors = make(map[string]*ActiveStepCursor)
-	// r.responders = make(map[string]Responder)
+	r.CursorManager = NewCursorManager()
+	r.PlayerManager = NewPlayerManager()
 
 	r.playerLetters = ConfigValue("pads")
 	if r.playerLetters == "" {
@@ -128,31 +128,26 @@ func NewRouter() *Router {
 		// might be fatal, but try to continue
 	}
 
-	r.players = make(map[string]*Player)
 	r.playerAssignedToNUID = make(map[string]string)
 
-	resolumePort := 7000
-	guiPort := 3943
-	ploguePort := 3210
+	r.resolumeClient = osc.NewClient(LocalAddress, ResolumePort)
+	r.guiClient = osc.NewClient(LocalAddress, GuiPort)
+	r.plogueClient = osc.NewClient(LocalAddress, PloguePort)
 
-	r.resolumeClient = osc.NewClient("127.0.0.1", resolumePort)
-	r.guiClient = osc.NewClient("127.0.0.1", guiPort)
-	r.plogueClient = osc.NewClient("127.0.0.1", ploguePort)
-
-	Info("OSC client ports", "resolume", resolumePort, "gui", guiPort, "plogue", ploguePort)
-
-	for i, c := range r.playerLetters {
-		resolumeLayer := r.ResolumeLayerForPad(string(c))
-		ffglPort := ResolumePort + i
-		ch := string(c)
-		freeframeClient := osc.NewClient("127.0.0.1", ffglPort)
-		Info("OSC freeframeClient", "ffglPort", ffglPort, "resolumeLayer", resolumeLayer)
-		r.players[ch] = NewPlayer(ch, resolumeLayer, freeframeClient, r.resolumeClient, r.guiClient)
-		Info("Pad created", "pad", ch, "resolumeLayer", resolumeLayer, "resolumePort", resolumePort)
-	}
+	/*
+		for i, c := range r.playerLetters {
+			resolumeLayer := r.ResolumeLayerForPad(string(c))
+			ffglPort := ResolumePort + i
+			ch := string(c)
+			freeframeClient := osc.NewClient("127.0.0.1", ffglPort)
+			Info("OSC freeframeClient", "ffglPort", ffglPort, "resolumeLayer", resolumeLayer)
+			r.players[ch] = NewPlayer(ch, resolumeLayer, freeframeClient, r.resolumeClient, r.guiClient)
+			Info("Pad created", "pad", ch, "resolumeLayer", resolumeLayer, "resolumePort", resolumePort)
+		}
+	*/
 
 	r.OSCInput = make(chan OSCEvent)
-	r.MIDIInput = make(chan MidiEvent)
+	r.midiInputChan = make(chan MidiEvent)
 	r.NoteInput = make(chan *Note)
 	// r.recordingOn = false
 
@@ -172,22 +167,58 @@ func NewRouter() *Router {
 	r.generateVisuals = ConfigBoolWithDefault("generatevisuals", true)
 	r.generateSound = ConfigBoolWithDefault("generatesound", true)
 
+	r.responderManager = NewResponderManager()
+
 	return &r
 }
 
-func (r *Router) Restart() {
-	for _, player := range r.players {
-		player.restoreCurrentSnap()
-	}
+func (r *Router) Start() {
 
 	go r.notifyGUI("restart")
+	go r.InputListener()
+
+	err := LoadMorphs()
+	if err != nil {
+		Warn("StartCursorInput: LoadMorphs", "err", err)
+	}
+
+	go StartMorph(r.CursorManager.handleCursorEvent, 1.0)
 }
 
-func (r *Router) applyToPlayers(playerName string, f func(player *Player)) {
-	for _, player := range r.players {
-		f(player)
+// InputListener listens for local device inputs (OSC, MIDI)
+// We could have separate goroutines for the different inputs, but doing
+// them in a single select eliminates some need for locking.
+func (r *Router) InputListener() {
+	for !r.killme {
+		select {
+		case msg := <-r.OSCInput:
+			r.handleOSCInput(msg)
+		case event := <-r.midiInputChan:
+			r.PlayerManager.handleMidiEvent(event)
+		case event := <-r.CursorInput:
+			r.CursorManager.handleCursorEvent(event)
+		default:
+			time.Sleep(time.Millisecond)
+		}
 	}
+	Info("InputListener is being killed")
 }
+
+/*
+func (r *Router) handleCursorEvent(ce CursorEvent) {
+	Info("Router.handleCursorEvent needs work", "ce", ce)
+	r.responderManager.handleCursorEvent(ce)
+}
+*/
+
+/*
+func (r *Router) handleMidiEvent(me MidiEvent) {
+	if EraeEnabled {
+		HandleEraeMIDI(me)
+	}
+	r.responderManager.handleMidiEvent(me)
+}
+*/
 
 func (r *Router) ResolumeLayerForText() int {
 	defLayer := "5"
@@ -219,19 +250,8 @@ func (r *Router) ResolumeLayerForPad(pad string) int {
 	return r.layerMap[pad]
 }
 
-type MIDIEventHandler func(MidiEvent)
-
 func (r *Router) SetMIDIEventHandler(handler MIDIEventHandler) {
 	r.midiEventHandler = handler
-}
-
-func (r *Router) handleMidiInput(event MidiEvent) {
-	Warn("Router.handleMidiInput is disabled")
-	/*
-		for _, player := range r.players {
-			player.HandleMidiInput(event)
-		}
-	*/
 }
 
 func ArgToFloat(nm string, args map[string]string) float32 {
@@ -265,6 +285,7 @@ func ArgsToCursorEvent(args map[string]string) CursorEvent {
 
 // HandleInputEvent xxx
 func (r *Router) HandleInputEvent(playerName string, args map[string]string) error {
+
 	r.inputEventMutex.Lock()
 	defer func() {
 		r.inputEventMutex.Unlock()
@@ -278,9 +299,9 @@ func (r *Router) HandleInputEvent(playerName string, args map[string]string) err
 	DebugLogOfType("router", "Router.HandleEvent", "player", playerName, "event", event)
 
 	// XXX - player value should allow "*" and other multi-player values
-	player, ok := r.players[playerName]
-	if !ok {
-		return fmt.Errorf("there is no player named %s", playerName)
+	player, err := r.PlayerManager.GetPlayer(playerName)
+	if err != nil {
+		return err
 	}
 
 	switch event {
@@ -291,7 +312,7 @@ func (r *Router) HandleInputEvent(playerName string, args map[string]string) err
 
 	case "cursor_down", "cursor_drag", "cursor_up":
 		ce := ArgsToCursorEvent(args)
-		TheEngine().handleCursorEvent(ce)
+		player.HandleCursorEvent(ce)
 
 	case "sprite":
 
@@ -430,9 +451,6 @@ func GetArgsXYZ(args map[string]string) (x, y, z float32, err error) {
 // HandleOSCInput xxx
 func (r *Router) handleOSCInput(e OSCEvent) {
 
-	// r.eventMutex.Lock()
-	// defer r.eventMutex.Unlock()
-
 	DebugLogOfType("osc", "Router.HandleOSCInput", "msg", e.Msg.String())
 	switch e.Msg.Address {
 
@@ -451,23 +469,6 @@ func (r *Router) handleOSCInput(e OSCEvent) {
 	default:
 		Warn("Router.HandleOSCInput: Unrecognized OSC message", "source", e.Source, "msg", e.Msg)
 	}
-}
-
-var audioResetMutex sync.Mutex
-
-func (r *Router) audioReset() {
-
-	audioResetMutex.Lock()
-	defer audioResetMutex.Unlock()
-
-	msg := osc.NewMessage("/play")
-	msg.Append(int32(0))
-	r.plogueClient.Send(msg)
-	// Give Plogue time to react
-	time.Sleep(400 * time.Millisecond)
-	msg = osc.NewMessage("/play")
-	msg.Append(int32(1))
-	r.plogueClient.Send(msg)
 }
 
 func (r *Router) notifyGUI(eventName string) {
@@ -539,7 +540,7 @@ func (r *Router) handleClientRestart(msg *osc.Message) {
 		return
 	}
 	var found *Player
-	r.applyToPlayers("*", func(player *Player) {
+	r.PlayerManager.ApplyToAllPlayers(func(player *Player) {
 		if player.freeframeClient.Port() == portnum {
 			found = player
 		}
@@ -571,10 +572,10 @@ func (r *Router) handleMMTTCursor(msg *osc.Message) {
 		LogError(err)
 		return
 	}
-	player := "A"
+	playerName := "A"
 	words := strings.Split(cid, ".")
 	if len(words) > 1 {
-		player = words[0]
+		playerName = words[0]
 	}
 	x, err := argAsFloat32(msg, 2)
 	if err != nil {
@@ -592,8 +593,8 @@ func (r *Router) handleMMTTCursor(msg *osc.Message) {
 		return
 	}
 
-	_, mok := r.players[player]
-	if !mok {
+	player, err := r.PlayerManager.GetPlayer(playerName)
+	if err != nil {
 		// If it's not a player, it's a button.
 		buttonDepth := ConfigFloatWithDefault("mmttbuttondepth", 0.002)
 		if z > buttonDepth {
@@ -602,7 +603,7 @@ func (r *Router) handleMMTTCursor(msg *osc.Message) {
 		}
 		if ddu == "down" {
 			DebugLogOfType("mmtt", "MMT BUTTON TRIGGERED", "buttonDepth", buttonDepth, "z", z)
-			r.handleMMTTButton(player)
+			r.handleMMTTButton(playerName)
 		}
 		return
 	}
@@ -631,17 +632,7 @@ func (r *Router) handleMMTTCursor(msg *osc.Message) {
 
 	DebugLogOfType("mmtt", "MMTT Cursor", "source", ce.Source, "ddu", ce.Ddu, "x", ce.X, "y", ce.Y, "z", ce.Z)
 
-	TheEngine().handleCursorEvent(ce)
-}
-
-func boundval(v float32) float32 {
-	if v < 0.0 {
-		return 0.0
-	}
-	if v > 1.0 {
-		return 1.0
-	}
-	return v
+	player.HandleCursorEvent(ce)
 }
 
 func (r *Router) handleOSCEvent(msg *osc.Message) {
@@ -667,11 +658,7 @@ func (r *Router) handleInputEventRaw(rawargs string) {
 		return
 	}
 	playerName := extractPlayer(args)
-	err = r.HandleInputEvent(playerName, args)
-	if err != nil {
-		Warn("Router.handleOSCEvent", "err", err)
-		return
-	}
+	r.HandleInputEvent(playerName,args)
 }
 
 func (r *Router) handlePatchXREvent(msg *osc.Message) {
@@ -789,6 +776,23 @@ func argAsString(msg *osc.Message, index int) (s string, err error) {
 		err = fmt.Errorf("expected a string in OSC argument index=%d", index)
 	}
 	return s, err
+}
+
+var audioResetMutex sync.Mutex
+
+func (r *Router) audioReset() {
+
+	audioResetMutex.Lock()
+	defer audioResetMutex.Unlock()
+
+	msg := osc.NewMessage("/play")
+	msg.Append(int32(0))
+	r.plogueClient.Send(msg)
+	// Give Plogue time to react
+	time.Sleep(400 * time.Millisecond)
+	msg = osc.NewMessage("/play")
+	msg.Append(int32(1))
+	r.plogueClient.Send(msg)
 }
 
 // This silliness is to avoid unused function errors from go-staticcheck

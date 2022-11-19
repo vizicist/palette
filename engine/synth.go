@@ -247,6 +247,7 @@ func SendNoteToSynth(note *Note) {
 		"data1", hexString(data1),
 		"data2", hexString(data2))
 
+	Info("SendNote:", "status", hexString(status), "data1", hexString(data1), "data2", hexString(data2))
 	err := mc.output.Send([]byte{status, data1, data2})
 	if err != nil {
 		Warn("output.Send", "err", err)
