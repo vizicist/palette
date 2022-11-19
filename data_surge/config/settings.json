@@ -1,14 +1,14 @@
 {
-  "debug": "midi,morph,cursor",
+  "debug": "cursor",
   "midiinput": "16. Internal MIDI",
   "guilevel": "1",
   "bidule": "C:\\Program Files\\Plogue\\Bidule\\Bidule.exe",
   "resolume": "C:\\Program Files\\Resolume Avenue\\Avenue.exe",
+  "autostartALL": "gui,resolume,bidule",
   "autostart": "",
-  "autostartOLD": "gui,resolume,bidule",
   "attractgestureduration": "1.0",
   "attractpresetduration": "15.0",
   "attractidlesecs": "0",
-  "processchecksecs": "0",
+  "processchecksecs": "60",
   "this line should not end with a comma": 0
 }

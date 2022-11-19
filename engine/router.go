@@ -182,7 +182,8 @@ func (r *Router) Start() {
 		Warn("StartCursorInput: LoadMorphs", "err", err)
 	}
 
-	go StartMorph(r.CursorManager.handleCursorEvent, 1.0)
+	Info("Router is NOT starting Morph")
+	// go StartMorph(r.CursorManager.handleCursorEvent, 1.0)
 }
 
 // InputListener listens for local device inputs (OSC, MIDI)
@@ -488,9 +489,13 @@ func (r *Router) handleMMTTButton(butt string) {
 		presetName = "Perky_Shapes"
 		return
 	}
-	preset := GetPreset("quad." + presetName)
+	preset, err := LoadPreset("quad." + presetName)
+	if err != nil {
+		LogError(err)
+		return
+	}
 	Info("Router.handleMMTTButton", "butt", butt, "preset", presetName)
-	err := preset.loadQuadPreset("*")
+	err = preset.applyQuadPresetToPlayer("*")
 	if err != nil {
 		Warn("handleMMTTButton", "preset", presetName, "err", err)
 	}
@@ -658,7 +663,7 @@ func (r *Router) handleInputEventRaw(rawargs string) {
 		return
 	}
 	playerName := extractPlayer(args)
-	r.HandleInputEvent(playerName,args)
+	r.HandleInputEvent(playerName, args)
 }
 
 func (r *Router) handlePatchXREvent(msg *osc.Message) {

@@ -52,6 +52,9 @@ func main() {
 		players[playerName] = p
 	}
 
+	done := make(chan bool)
+	e.Start(done)
+
 	go func() {
 		e.WaitTillDone()
 		if doProfile {
@@ -59,8 +62,6 @@ func main() {
 		}
 		os.Exit(0)
 	}()
-
-	e.Start()
 
 	if engine.ConfigBoolWithDefault("twinsys", false) {
 		twinsys.Run()

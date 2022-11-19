@@ -27,7 +27,7 @@ func (r *Responder_default) OnCursorEvent(ctx *engine.ResponderContext, ce engin
 		synth := "0103 Ambient_E-Guitar"
 		nt := engine.NewNote(pitch, velocity, duration, synth)
 
-		engine.Info("Responder_default.OnCursorEvent", "ce", ce, "nt", nt)
+		ctx.Log("Responder_default.OnCursorEvent", "pitch", pitch, "vel", velocity, "dur", duration)
 
 		phr := engine.NewPhrase().InsertNote(nt)
 		ctx.SchedulePhraseNow(phr)

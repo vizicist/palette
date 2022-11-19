@@ -243,6 +243,7 @@ import "C"
 
 import (
 	"fmt"
+	"log"
 	"time"
 )
 
@@ -267,7 +268,9 @@ var allMorphs []*oneMorph
 
 // StartMorph xxx
 func StartMorph(callback CursorCallbackFunc, forceFactor float32) {
-	err := initialize()
+	Info("StartMorph!")
+	err := WinMorphInitialize()
+	Info("StartMorph after initialize!")
 	if err != nil {
 		LogError(err)
 		return
@@ -442,14 +445,20 @@ func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float32) 
 }
 
 // Initialize xxx
-func initialize() error {
+func WinMorphInitialize() error {
 
+	log.Printf("This is going to the log\n")
+	Info("windowsmorph.go:initialize()")
+
+	Info("Why does this not appear?")
 	numdevices := int(C.SenselNumDevices())
-
+	Info("Again does this not appear?")
 	allMorphs = make([]*oneMorph, numdevices)
 
+	Info("windowsmorph.go:initialize() 3")
 	for idx := uint8(0); idx < uint8(numdevices); idx++ {
 
+		Info("windowsmorph.go:initialize() 4")
 		m := &oneMorph{}
 		allMorphs[idx] = m
 		m.idx = idx
@@ -497,6 +506,7 @@ func initialize() error {
 			}
 		}
 
+		Info("windowsmorph.go:initialize() 5")
 		m.morphtype = morphtype
 		switch m.morphtype {
 		case "corners", "quadrants":
@@ -507,9 +517,11 @@ func initialize() error {
 			Warn("Unexpected morphtype", "morphtype", morphtype)
 		}
 
+		Info("windowsmorph.go:initialize() 6")
 		// Don't use Debug.Morph, this should always gets logged
 		firmware := fmt.Sprintf("%d.%d.%d", m.fwVersionMajor, m.fwVersionMinor, m.fwVersionBuild)
 		Info("Morph Opened and Started", "idx", m.idx, "serial", m.serialNum, "firmware", firmware)
+		Info("Morph Opened and Started 2")
 	}
 	return nil
 }

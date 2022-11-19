@@ -15,6 +15,10 @@ func NewResponderContext() *ResponderContext {
 	}
 }
 
+func (ctx *ResponderContext) Log(msg string, keysAndValues ...interface{}) {
+	Info(msg, keysAndValues...)
+}
+
 func (ctx *ResponderContext) CurrentClick() Clicks {
 	return CurrentClick()
 }

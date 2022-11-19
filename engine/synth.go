@@ -121,14 +121,10 @@ func SendANOToSynth(synthName string) {
 	mc.SendBankProgram(synth.bank, synth.program)
 
 	synth.ClearNoteDowns()
-	// for i := range synth.noteDown {
-	// 	synth.noteDown[i] = false
-	// }
-	Warn("SendANOToSynth needs work")
-	/*
-		status := 0xb0 | (synth.portchannel.channel - 1)
-		mc.midiDeviceOutput.stream.WriteShort(int64(status), int64(0x7b), int64(0x00))
-	*/
+
+	// send All Notes Off
+	status := 0xb0 | byte(synth.portchannel.channel-1)
+	mc.output.Send([]byte{status, 0x7b, 0x00})
 }
 
 func SendControllerToSynth(synthName string, cnum int, cval int) {
@@ -247,7 +243,6 @@ func SendNoteToSynth(note *Note) {
 		"data1", hexString(data1),
 		"data2", hexString(data2))
 
-	Info("SendNote:", "status", hexString(status), "data1", hexString(data1), "data2", hexString(data2))
 	err := mc.output.Send([]byte{status, data1, data2})
 	if err != nil {
 		Warn("output.Send", "err", err)

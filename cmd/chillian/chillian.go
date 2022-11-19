@@ -50,14 +50,13 @@ func main() {
 	playerA.AllowSource("A")
 	playerB.AllowSource("B")
 
-	go func() {
-		e.WaitTillDone()
-		if doProfile {
-			pprof.StopCPUProfile()
-		}
-		os.Exit(0)
-	}()
+	done := make(chan bool)
+	e.Start(done)
+	e.WaitTillDone()
+	if doProfile {
+		pprof.StopCPUProfile()
+	}
+	os.Exit(0)
 
-	e.Start()
-	select {}
+	// select {}
 }
