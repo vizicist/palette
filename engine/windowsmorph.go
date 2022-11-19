@@ -493,7 +493,7 @@ func initialize() error {
 			if morphtype == "" {
 				// morphtype = "corners" // default value
 				morphtype = "quadrants" // default value
-				Warn("serial# isn't in morphs.json", "serialnum", m.serialNum)
+				Info("serial# isn't in morphs.json", "serialnum", m.serialNum, "morphtype", morphtype)
 			}
 		}
 

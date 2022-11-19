@@ -5,6 +5,16 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Chillian",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${env:PALETTESOURCE}/cmd/chillian/chillian.go",
+            "env": {
+                "Path": "${env:Path};${workspaceFolder};c:/Users/me/Documents/github/vizicist/palette/SenselLib/x64;"             },
+            "args": []
+        },
+        {
             "name": "Engine (palette_engine.go)",
             "type": "go",
             "request": "launch",

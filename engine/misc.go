@@ -668,3 +668,13 @@ func JsonString(args ...string) string {
 	}
 	return params
 }
+
+func boundval(v float32) float32 {
+	if v < 0.0 {
+		return 0.0
+	}
+	if v > 1.0 {
+		return 1.0
+	}
+	return v
+}

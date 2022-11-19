@@ -150,6 +150,7 @@ var LogEnabled = map[string]bool{
 	"remote":    false,
 	"router":    false,
 	"scale":     false,
+	"schedule":     false,
 	"transpose": false,
 	"value":     false,
 }

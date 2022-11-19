@@ -13,6 +13,11 @@ func (e *Engine) ExecuteAPIFromMap(api string, apiargs map[string]string) (resul
 
 	switch api {
 
+	case "exit":
+		e.StopMe()
+		// notreached
+		return "", nil
+
 	case "start", "stop":
 		process, ok := apiargs["process"]
 		if !ok {
@@ -227,7 +232,7 @@ func (e *Engine) executePresetAPI(api string, apiargs map[string]string) (result
 		} else {
 			// It's a non-quad preset for a single player.
 			// However, the playerName can still be "*" to apply to all players.
-			err = preset.applyPreset(playerName)
+			err = preset.ApplyTo(playerName)
 			if err != nil {
 				LogError(err, "presetName", presetName)
 			} else {
@@ -245,9 +250,9 @@ func (e *Engine) executePresetAPI(api string, apiargs map[string]string) (result
 		if !okplayer {
 			return "", fmt.Errorf("missing player parameter")
 		}
-		player, ok := e.Router.players[playerName]
-		if !ok {
-			return "", fmt.Errorf("no player named %s", playerName)
+		player, err := e.Router.PlayerManager.GetPlayer(playerName)
+		if err != nil {
+			return "", err
 		}
 		if strings.HasPrefix(presetName, "quad.") {
 			return "", e.Router.saveQuadPreset(presetName)

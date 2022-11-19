@@ -98,6 +98,11 @@ type SchedulePhraseCmd struct {
 	click  Clicks
 }
 
+type ScheduleBytesCmd struct {
+	bytes []byte
+	click Clicks
+}
+
 // Start runs the scheduler and never returns
 func (sched *Scheduler) Start() {
 
@@ -190,7 +195,7 @@ func (sched *Scheduler) Start() {
 		if processCheckEnabled && (lastProcessCheck == 0 || sinceLastProcessCheck > sched.processCheckSecs) {
 			// Put it in background, so calling
 			// tasklist or ps doesn't disrupt realtime
-			DebugLogOfType("realtime", "StartRealtime: checking processes")
+			DebugLogOfType("schedule", "StartRealtime: checking processes")
 			go TheEngine().ProcessManager.checkProcessesAndRestartIfNecessary()
 			lastProcessCheck = uptimesecs
 		}
@@ -206,10 +211,13 @@ func (sched *Scheduler) Start() {
 					sched.lastAttractChange = sched.Uptime()
 				}
 			case SchedulePhraseCmd:
-				phr := v.phrase
-				click := v.click
-				sched.schedulePhraseAt(phr, click)
-				Info("SchedulePhraseCmd sched is now", "schedule", sched.ToString())
+				sched.schedulePhraseAt(v.phrase, v.click)
+			case ScheduleBytesCmd:
+				nt := NewBytes(v.bytes)
+				phr := NewPhrase().InsertNote(nt)
+				sched.schedulePhraseAt(phr, v.click)
+			default:
+				Warn("Unexpected type", "type", fmt.Sprintf("%T", v))
 			}
 		default:
 		}
@@ -219,14 +227,14 @@ func (sched *Scheduler) Start() {
 
 func (sched *Scheduler) advanceClickTo(toClick Clicks) {
 
-	// Info("Scheduler.advanceClickTo", "toClick", toClick, "schedule", sched.ToString())
+	DebugLogOfType("schedule", "Scheduler.advanceClickTo", "toClick", toClick, "schedule", sched)
 
 	// Don't let events get handled while we're advancing
 	// XXX - this might not be needed if all communication/syncing
 	// is done only from the schedule loop
-	TheEngine().Router.inputEventMutex.Lock()
+	TheRouter().inputEventMutex.Lock()
 	defer func() {
-		TheEngine().Router.inputEventMutex.Unlock()
+		TheRouter().inputEventMutex.Unlock()
 	}()
 
 	doAutoCursorUp := false
@@ -235,7 +243,7 @@ func (sched *Scheduler) advanceClickTo(toClick Clicks) {
 		sched.triggerItemsScheduledAt(clk)
 		sched.advanceActivePhrasesByOneClick()
 		if doAutoCursorUp {
-			TheEngine().CursorManager.autoCursorUp(time.Now())
+			TheRouter().CursorManager.autoCursorUp(time.Now())
 		}
 	}
 	sched.lastClick = toClick
@@ -276,7 +284,7 @@ func (sched *Scheduler) publishOscAlive(uptimesecs float64) {
 	attractMode := sched.attractModeIsOn
 	DebugLogOfType("attract", "publishOscAlive", "uptimesecs", uptimesecs, "attract", attractMode)
 	if sched.attractClient == nil {
-		sched.attractClient = osc.NewClient("127.0.0.1", 3331)
+		sched.attractClient = osc.NewClient(LocalAddress, AliveOutputPort)
 	}
 	msg := osc.NewMessage("/alive")
 	msg.Append(float32(uptimesecs))
@@ -307,31 +315,14 @@ func (sched *Scheduler) doAttractAction() {
 		y1 := rand.Float32()
 		z1 := rand.Float32() / 2.0
 
-		go TheEngine().CursorManager.doCursorGesture(player, cid, x0, y0, z0, x1, y1, z1)
+		go TheRouter().CursorManager.generateCursorGestureesture(player, cid, x0, y0, z0, x1, y1, z1)
 		sched.lastAttractGestureTime = now
 	}
 
 	dp := now.Sub(sched.lastAttractPresetTime)
 	if sched.attractPreset == "random" && dp > TheEngine().Scheduler.attractPresetDuration {
-		TheEngine().Router.loadQuadPresetRand()
+		TheRouter().loadQuadPresetRand()
 		sched.lastAttractPresetTime = now
-	}
-}
-
-func (sched *Scheduler) advanceTransposeTo(newclick Clicks) {
-	if sched.transposeAuto && sched.transposeNext < newclick {
-		sched.transposeNext += (sched.transposeClicks * oneBeat)
-		sched.transposeIndex = (sched.transposeIndex + 1) % len(sched.transposeValues)
-		transposePitch := sched.transposeValues[sched.transposeIndex]
-		DebugLogOfType("transpose", "advanceTransposeTo", "newclick", newclick, "transposePitch", transposePitch)
-		/*
-			for _, player := range TheEngine().Router.players {
-				// player.clearDown()
-				LogOfType("transpose","setting transposepitch in player","pad", player.padName, "transposePitch",transposePitch, "nactive",len(player.activeNotes))
-				player.TransposePitch = transposePitch
-			}
-		*/
-		sched.terminateActiveNotes()
 	}
 }
 
@@ -442,7 +433,7 @@ func (sched *Scheduler) Format(f fmt.State, c rune) {
 
 func (sched *Scheduler) schedulePhraseAt(phr *Phrase, click Clicks) (id string) {
 	schedule := sched.schedule
-	Info("Scheduler.SchedulePhraseAt", "phrase", phr.ToString(), "click", click)
+	DebugLogOfType("schedule", "Scheduler.SchedulePhraseAt", "phrase", phr, "click", click)
 	id = fmt.Sprintf("%d", sched.nextSid)
 	sched.nextSid += 1
 	newItem := &SchedItem{
@@ -470,4 +461,21 @@ func (sched *Scheduler) schedulePhraseAt(phr *Phrase, click Clicks) (id string) 
 		}
 	}
 	return id
+}
+
+func (sched *Scheduler) advanceTransposeTo(newclick Clicks) {
+	if sched.transposeAuto && sched.transposeNext < newclick {
+		sched.transposeNext += (sched.transposeClicks * oneBeat)
+		sched.transposeIndex = (sched.transposeIndex + 1) % len(sched.transposeValues)
+		transposePitch := sched.transposeValues[sched.transposeIndex]
+		DebugLogOfType("transpose", "advanceTransposeTo", "newclick", newclick, "transposePitch", transposePitch)
+		/*
+			for _, player := range TheRouter().players {
+				// player.clearDown()
+				LogOfType("transpose","setting transposepitch in player","pad", player.padName, "transposePitch",transposePitch, "nactive",len(player.activeNotes))
+				player.TransposePitch = transposePitch
+			}
+		*/
+		sched.terminateActiveNotes()
+	}
 }

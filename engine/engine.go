@@ -5,24 +5,16 @@ import (
 	"io"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/hypebeast/go-osc/osc"
 )
 
 type Engine struct {
-	ProcessManager   *ProcessManager
-	Router           *Router
-	Scheduler        *Scheduler
-	CursorManager    *CursorManager
-	responderManager *ResponderManager
-	killme           bool // true if Engine should be stopped
+	ProcessManager *ProcessManager
+	Router         *Router
+	Scheduler      *Scheduler
+	done           chan bool
 }
-
-var HTTPPort = 3330
-var OSCPort = 3333
-var AliveOutputPort = 3331
-var ResolumePort = 3334
 
 var theEngine *Engine
 
@@ -34,15 +26,21 @@ func TheEngine() *Engine {
 	return theEngine
 }
 
+func TheRouter() *Router {
+	return TheEngine().Router
+}
+
 func newEngine() *Engine {
 	e := &Engine{}
 	e.initDebug()
 	e.ProcessManager = NewProcessManager()
 	e.Router = NewRouter()
 	e.Scheduler = NewScheduler()
-	e.CursorManager = NewCursorManager()
-	e.responderManager = NewResponderManager()
 	return e
+}
+
+func GetResponder(name string) Responder {
+	return TheRouter().responderManager.GetResponder(name)
 }
 
 func ProcessStatus() string {
@@ -56,27 +54,29 @@ func StopRunning(what string) {
 type CreateResponderFunc func(*ResponderContext) Responder
 
 func AddResponder(name string, responder Responder) {
-	TheEngine().responderManager.AddResponder(name, responder)
+	TheRouter().responderManager.AddResponder(name, responder)
 }
 
+/*
 func ActivateResponder(name string) {
-	TheEngine().responderManager.ActivateResponder(name)
+	TheRouter().responderManager.ActivateResponder(name)
 }
 
 func DeactivateResponder(name string) {
-	TheEngine().responderManager.DeactivateResponder(name)
+	TheRouter().responderManager.DeactivateResponder(name)
 }
+*/
 
-func (e *Engine) handleCursorEvent(ce CursorEvent) {
-	TheEngine().CursorManager.handleCursorEvent(ce)
-	TheEngine().responderManager.handleCursorEvent(ce)
-}
+// func (e *Engine) handleCursorEvent(ce CursorEvent) {
+// 	TheEngine().CursorManager.handleCursorEvent(ce)
+// 	TheEngine().responderManager.handleCursorEvent(ce)
+// }
 
 func (e *Engine) Start() {
 
-	Info("====================== Palette Engine is starting")
+	e.done = make(chan bool)
 
-	e.Router.Restart()
+	Info("====================== Palette Engine is starting")
 
 	// Normally, the engine should never die, but if it does,
 	// other processes (e.g. resolume, bidule) may be left around.
@@ -93,16 +93,19 @@ func (e *Engine) Start() {
 	// go r.StartNATSClient()
 	go e.StartMIDI()
 	go e.Scheduler.Start()
-	go e.StartCursorInput()
-	go e.InputListener()
+	go e.Router.Start()
 
 	if ConfigBoolWithDefault("depth", false) {
 		go DepthRunForever()
 	}
 }
 
+func (e *Engine) WaitTillDone() {
+	<-e.done
+}
+
 func (e *Engine) StopMe() {
-	e.killme = true
+	e.done <- true
 }
 
 func (e *Engine) initDebug() {
@@ -120,57 +123,27 @@ func (e *Engine) initDebug() {
 	}
 }
 
-// InputListener listens for local device inputs (OSC, MIDI)
-// We could have separate goroutines for the different inputs, but doing
-// them in a single select eliminates some need for locking.
-func (e *Engine) InputListener() {
-	for !e.killme {
-		select {
-		case msg := <-e.Router.OSCInput:
-			e.Router.handleOSCInput(msg)
-		case event := <-e.Router.MIDIInput:
-			e.Router.handleMidiInput(event)
-		case event := <-e.Router.CursorInput:
-			e.CursorManager.handleCursorEvent(event)
-		default:
-			time.Sleep(time.Millisecond)
-		}
-	}
-	Info("InputListener is being killed")
-}
-
-// StartCursorInput xxx
-func (e *Engine) StartCursorInput() {
-	err := LoadMorphs()
-	if err != nil {
-		Warn("StartCursorInput: LoadMorphs", "err", err)
-	}
-	go StartMorph(e.CursorManager.handleCursorEvent, 1.0)
-}
-
 // StartMIDI listens for MIDI events and sends their bytes to the MIDIInput chan
 func (e *Engine) StartMIDI() {
 
-	if MIDI.Input == nil {
+	if MIDI.midiInput == nil {
 		Warn("StartMIDI: there is no MIDI input")
+	} else {
+		Info("StartMIDI: MIDI input", "midiinput", MIDI.midiInput.String())
 	}
 
-	if EraeEnabled {
-		e.Router.SetMIDIEventHandler(HandleEraeMIDI)
-	}
-	MIDI.Start()
+	MIDI.Start(e.Router.midiInputChan)
 }
 
 // StartOSC xxx
 func (e *Engine) StartOSC(port int) {
 
-	handler := e.Router.OSCInput
-	source := fmt.Sprintf("127.0.0.1:%d", port)
+	source := fmt.Sprintf("%s:%d", LocalAddress, port)
 
 	d := osc.NewStandardDispatcher()
 
 	err := d.AddMsgHandler("*", func(msg *osc.Message) {
-		handler <- OSCEvent{Msg: msg, Source: source}
+		e.Router.OSCInput <- OSCEvent{Msg: msg, Source: source}
 	})
 	if err != nil {
 		Warn("StartOSC", "err", err)

@@ -186,17 +186,15 @@ func (pm ProcessManager) isRunning(process string) bool {
 
 func resolumeActivate() {
 	// handle_activate sends OSC messages to start the layers in Resolume,
-	addr := "127.0.0.1"
-	resolumePort := 7000
-	resolumeClient := osc.NewClient(addr, resolumePort)
-	textLayer := TheEngine().Router.ResolumeLayerForText()
+	resolumeClient := osc.NewClient(LocalAddress, ResolumePort)
+	textLayer := TheRouter().ResolumeLayerForText()
 	clipnum := 1
 
 	// do it a few times, in case Resolume hasn't started up
 	for i := 0; i < 4; i++ {
 		time.Sleep(5 * time.Second)
-		for _, pad := range TheEngine().Router.playerLetters {
-			layernum := TheEngine().Router.ResolumeLayerForPad(string(pad))
+		for _, pad := range TheRouter().playerLetters {
+			layernum := TheRouter().ResolumeLayerForPad(string(pad))
 			DebugLogOfType("resolume", "Activating Resolume", "layer", layernum, "clipnum", clipnum)
 			connectClip(resolumeClient, layernum, clipnum)
 		}

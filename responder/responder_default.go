@@ -5,39 +5,31 @@ import (
 )
 
 func init() {
-	engine.AddResponder("default", NewResponder_default())
+	// engine.AddResponder("default", NewResponder_default))
+	engine.AddResponder("default", &Responder_default{})
 }
 
 type Responder_default struct {
-	// ctx *engine.ResponderContext
 }
 
-func NewResponder_default() *Responder_default {
-	p := &Responder_default{}
-	return p
+func (r *Responder_default) OnMidiEvent(ctx *engine.ResponderContext, me engine.MidiEvent) {
+	engine.DebugLogOfType("midi", "Responder_default.onMidiEvent", "me", me)
+	// just echo it back out
+	ctx.ScheduleBytesNow(me.Bytes)
 }
-
-/////////////////////////// external interface
 
 func (r *Responder_default) OnCursorEvent(ctx *engine.ResponderContext, ce engine.CursorEvent) {
-	clicks := ctx.CurrentClick()
 	if ce.Ddu == "down" || ce.Ddu == "drag" {
-		nt := r.cursorToNote(ce)
-		engine.Info("Responder_default.OnCursorEvent", "ce", ce, "note", nt)
+
+		pitch := uint8(ce.X * 126.0)
+		velocity := uint8(ce.Z * 1280)
+		duration := engine.QuarterNote
+		synth := "0103 Ambient_E-Guitar"
+		nt := engine.NewNote(pitch, velocity, duration, synth)
+
+		engine.Info("Responder_default.OnCursorEvent", "ce", ce, "nt", nt)
+
 		phr := engine.NewPhrase().InsertNote(nt)
-		ctx.SchedulePhraseAt(phr, clicks)
-		engine.Info("Schedule is now", "schedule", ctx.ScheduleDebug())
+		ctx.SchedulePhraseNow(phr)
 	}
-
-}
-
-/////////////////////////// internal things
-
-func (r *Responder_default) cursorToNote(ce engine.CursorEvent) *engine.Note {
-	pitch := uint8(ce.X * 126.0)
-	velocity := uint8(ce.Z * 128.0)
-	duration := engine.QuarterNote / 4
-	// duration := engine.Clicks(24)
-	synth := "0103 Ambient_E-Guitar"
-	return engine.NewNote(pitch, velocity, duration, synth)
 }

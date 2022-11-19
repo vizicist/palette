@@ -22,8 +22,9 @@ type CursorEvent struct {
 }
 
 type CursorManager struct {
-	cursors      map[string]*DeviceCursor
-	cursorsMutex sync.RWMutex
+	cursors            map[string]*DeviceCursor
+	cursorsMutex       sync.RWMutex
+	lastAttractCommand time.Time
 }
 
 // Format xxx
@@ -36,7 +37,6 @@ func NewCursorManager() *CursorManager {
 	return &CursorManager{
 		cursors:      map[string]*DeviceCursor{},
 		cursorsMutex: sync.RWMutex{},
-		// responders: make(map[string]CursorResponder),
 	}
 }
 
@@ -49,7 +49,7 @@ func (cm *CursorManager) clearCursors() {
 		if !c.downed {
 			Warn("Hmmm, why is a cursor not downed?")
 		} else {
-			cm.internalCursorEvent(CursorEvent{Source: id, Ddu: "up"})
+			cm.handleCursorEvent(CursorEvent{Source: id, Ddu: "up"})
 			DebugLogOfType("cursor", "Clearing cursor", "id", id)
 			delete(cm.cursors, id)
 		}
@@ -57,17 +57,16 @@ func (cm *CursorManager) clearCursors() {
 }
 
 func (cm *CursorManager) handleCursorEvent(ce CursorEvent) {
-	cm.internalCursorEvent(ce)
-}
-
-func (cm *CursorManager) internalCursorEvent(ce CursorEvent) {
 
 	// As soon as there's any non-internal cursor event,
 	// we turn attract mode off.
 	if ce.Source != "internal" {
-		go func() {
-			TheEngine().Scheduler.cmdInput <- AttractModeCmd{false}
-		}()
+		if time.Since(cm.lastAttractCommand) > time.Second {
+			go func() {
+				TheEngine().Scheduler.cmdInput <- AttractModeCmd{false}
+			}()
+			cm.lastAttractCommand = time.Now()
+		}
 	}
 
 	switch ce.Ddu {
@@ -81,8 +80,8 @@ func (cm *CursorManager) internalCursorEvent(ce CursorEvent) {
 	}
 }
 
-func (cm *CursorManager) doCursorGesture(source string, cid string, x0, y0, z0, x1, y1, z1 float32) {
-	Info("doCursorGesture: start")
+func (cm *CursorManager) generateCursorGestureesture(source string, cid string, x0, y0, z0, x1, y1, z1 float32) {
+	Info("generateCursorGestureesture: start")
 
 	ce := CursorEvent{
 		Source:    source,
@@ -93,8 +92,8 @@ func (cm *CursorManager) doCursorGesture(source string, cid string, x0, y0, z0, 
 		Z:         z0,
 		Area:      0,
 	}
-	cm.internalCursorEvent(ce)
-	Info("doCursorGesture", "ddu", "down", "ce", ce)
+	cm.handleCursorEvent(ce)
+	Info("generateCursorGestureesture", "ddu", "down", "ce", ce)
 
 	// secs := float32(3.0)
 	secs := float32(TheEngine().Scheduler.attractNoteDuration)
@@ -104,8 +103,8 @@ func (cm *CursorManager) doCursorGesture(source string, cid string, x0, y0, z0, 
 	ce.X = x1
 	ce.Y = y1
 	ce.Z = z1
-	cm.internalCursorEvent(ce)
-	Info("doCursorGesture end", "ddu", "up", "ce", ce)
+	cm.handleCursorEvent(ce)
+	Info("generateCursorGestureesture end", "ddu", "up", "ce", ce)
 }
 
 func (cm *CursorManager) handleDownDragUp(ce CursorEvent) {
@@ -128,7 +127,11 @@ func (cm *CursorManager) handleDownDragUp(ce CursorEvent) {
 		ce.Ddu = "down"
 		c.downed = true
 	}
-	Info("CursorManager.handleDownDragUp", "id", ce.ID, "ddu", ce.Ddu, "x", ce.X, "y", ce.Y, "z", ce.Z)
+
+	// See which player wants this input
+	TheRouter().PlayerManager.handleCursorEvent(ce)
+
+	DebugLogOfType("cursor", "CursorManager.handleDownDragUp", "id", ce.ID, "ddu", ce.Ddu, "x", ce.X, "y", ce.Y, "z", ce.Z)
 	if ce.Ddu == "up" {
 		delete(cm.cursors, ce.ID)
 	}
@@ -147,7 +150,7 @@ func (cm *CursorManager) autoCursorUp(now time.Time) {
 	for id, c := range cm.cursors {
 		elapsed := now.Sub(c.lastTouch)
 		if elapsed > checkDelay {
-			cm.internalCursorEvent(CursorEvent{Source: "checkCursorUp", Ddu: "up"})
+			cm.handleCursorEvent(CursorEvent{Source: "checkCursorUp", Ddu: "up"})
 			Info("Player.checkCursorUp: deleting cursor", "id", id, "elapsed", elapsed)
 			delete(cm.cursors, id)
 		}
