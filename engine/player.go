@@ -22,14 +22,14 @@ type Player struct {
 	responders        []Responder
 	respondersContext []*ResponderContext
 
-	// guiClient       *osc.Client
 	// lastActiveID    int
 
 	// tempoFactor            float64
 	// loop            *StepLoop
-	// loopIsRecording bool
-	// loopIsPlaying   bool
-	// fadeLoop        float32
+	loopLength      Clicks
+	loopIsRecording bool
+	loopIsPlaying   bool
+	fadeLoop        float32
 	// lastCursorStepEvent    CursorStepEvent
 	// lastUnQuantizedStepNum Clicks
 
@@ -51,9 +51,13 @@ type Player struct {
 	externalScale    *Scale
 }
 
-func (p *Player) ApplyPreset(presetName string) {
-	preset := GetPreset(presetName)
+func (p *Player) ApplyPreset(presetName string) error {
+	preset, err := LoadPreset(presetName)
+	if err != nil {
+		return err
+	}
 	preset.ApplyTo(p.playerName)
+	return nil
 }
 
 func (p *Player) SavePreset(presetName string) error {
@@ -87,13 +91,12 @@ func (p *Player) SetResolumeLayer(layernum int, ffglport int) {
 }
 
 // NewPlayer makes a new Player
-func NewPlayer(pad string) *Player {
-	r := &Player{
-		playerName:      pad,
+func NewPlayer(playerName string) *Player {
+	p := &Player{
+		playerName:      playerName,
 		resolumeLayer:   0,
 		freeframeClient: nil,
 		resolumeClient:  nil,
-		// guiClient:       guiClient,
 		// tempoFactor:         1.0,
 		// params:                         make(map[string]interface{}),
 		params: NewParamValues(),
@@ -109,11 +112,13 @@ func NewPlayer(pad string) *Player {
 		MIDIQuantized:    false,
 		TransposePitch:   0,
 	}
-	r.params.SetDefaultValues()
-	r.clearExternalScale()
-	r.setExternalScale(60%12, true) // Middle C
+	p.params.SetDefaultValues()
+	p.clearExternalScale()
+	p.setExternalScale(60%12, true) // Middle C
 
-	return r
+	TheRouter().PlayerManager.AddPlayer(p)
+
+	return p
 }
 
 func (player *Player) SendNoteToSynth(n *Note) {
@@ -175,7 +180,7 @@ func (player *Player) HandleMIDITimeReset() {
 
 // HandleMIDIInput xxx
 func (player *Player) HandleCursorEvent(ce CursorEvent) {
-	Info("Player.HandleCursorEvent", "ce", ce)
+	DebugLogOfType("cursor", "Player.HandleCursorEvent", "ce", ce)
 	for n, responder := range player.responders {
 		ctx := player.respondersContext[n]
 		responder.OnCursorEvent(ctx, ce)
@@ -403,24 +408,6 @@ func (player *Player) generateSpriteFromNote(n *Note) {
 
 	player.toFreeFramePluginForLayer(msg)
 }
-
-/*
-func (player *Player) notifyGUI(ce CursorEvent, wasFresh bool) {
-	if !ConfigBool("notifygui") {
-		return
-	}
-	// send an OSC message to GUI
-	msg := osc.NewMessage("/notify")
-	msg.Append(ce.Ddu)
-	msg.Append(ce.ID)
-	msg.Append(float32(ce.X))
-	msg.Append(float32(ce.Y))
-	msg.Append(float32(ce.Z))
-	msg.Append(int32(player.resolumeLayer))
-	msg.Append(wasFresh)
-	player.guiClient.Send(msg)
-}
-*/
 
 func (player *Player) toFreeFramePluginForLayer(msg *osc.Message) {
 	player.freeframeClient.Send(msg)

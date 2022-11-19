@@ -14,7 +14,7 @@ type ParamsMap map[string]interface{}
 // ExecuteAPI xxx
 func (player *Player) ExecuteAPI(api string, args map[string]string, rawargs string) (result string, err error) {
 
-	DebugLogOfType("player", "PlayerAPI", "api", api, "args", args)
+	DebugLogOfType("api", "PlayerAPI", "api", api, "args", args)
 	// The caller can provide rawargs if it's already known, but if not provided, we create it
 	if rawargs == "" {
 		rawargs = MapString(args)
@@ -35,51 +35,47 @@ func (player *Player) ExecuteAPI(api string, args map[string]string, rawargs str
 		player.sendAllParameters()
 		return "", err
 
-		/*
-			case "loop_recording":
-				v, e := needBoolArg("onoff", api, args)
-				if e == nil {
-					player.loopIsRecording = v
-				} else {
-					err = e
-				}
+	case "loop_recording":
+		v, e := needBoolArg("onoff", api, args)
+		if e == nil {
+			player.loopIsRecording = v
+		} else {
+			err = e
+		}
 
-			case "loop_playing":
-				v, e := needBoolArg("onoff", api, args)
-				if e == nil && v != player.loopIsPlaying {
-					player.loopIsPlaying = v
-					player.terminateActiveNotes()
-				} else {
-					err = e
-				}
+	case "loop_playing":
+		v, e := needBoolArg("onoff", api, args)
+		if e == nil && v != player.loopIsPlaying {
+			player.loopIsPlaying = v
+			TheEngine().Scheduler.terminateActiveNotes()
+		} else {
+			err = e
+		}
 
-			case "loop_clear":
-				player.loop.Clear()
-				player.clearGraphics()
-				player.sendANO()
+	case "loop_clear":
+		// player.loop.Clear()
+		// player.clearGraphics()
+		player.sendANO()
 
-			case "loop_comb":
-				player.loopComb()
+	case "loop_length":
+		i, e := needIntArg("value", api, args)
+		if e == nil {
+			nclicks := Clicks(i)
+			if nclicks != player.loopLength {
+				player.loopLength = nclicks
+				// player.loopSetLength(nclicks)
+			}
+		} else {
+			err = e
+		}
 
-			case "loop_length":
-				i, e := needIntArg("value", api, args)
-				if e == nil {
-					nclicks := Clicks(i)
-					if nclicks != player.loop.length {
-						player.loop.SetLength(nclicks)
-					}
-				} else {
-					err = e
-				}
-
-			case "loop_fade":
-				f, e := needFloatArg("fade", api, args)
-				if e == nil {
-					player.fadeLoop = f
-				} else {
-					err = e
-				}
-		*/
+	case "loop_fade":
+		f, e := needFloatArg("fade", api, args)
+		if e == nil {
+			player.fadeLoop = f
+		} else {
+			err = e
+		}
 
 	case "ANO":
 		player.sendANO()
@@ -190,15 +186,22 @@ func (player *Player) applyParamsMap(presetType string, paramsmap map[string]int
 
 func (player *Player) restoreCurrentSnap() {
 	playerName := player.playerName
-	preset := GetPreset("snap._Current_" + playerName)
-	err := preset.ApplyTo(playerName)
+	preset, err := LoadPreset("snap._Current_" + playerName)
+	if err != nil {
+		LogError(err)
+		return
+	}
+	err = preset.ApplyTo(playerName)
 	if err != nil {
 		LogError(err)
 	}
 }
 
 func (player *Player) saveCurrentAsPreset(presetName string) error {
-	preset := GetPreset(presetName)
+	preset, err := LoadPreset(presetName)
+	if err != nil {
+		return err
+	}
 	path := preset.WriteableFilePath()
 	return player.saveCurrentSnapInPath(path)
 }

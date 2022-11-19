@@ -9,10 +9,22 @@ type PlayerManager struct {
 	players map[string]*Player
 }
 
+func ApplyToAllPlayers(f func(player *Player)) {
+	TheRouter().PlayerManager.ApplyToAllPlayers(f)
+}
+
+func ApplyToPlayersNamed(playerName string, f func(player *Player)) {
+	TheRouter().PlayerManager.ApplyToPlayersNamed(playerName, f)
+}
+
 func NewPlayerManager() *PlayerManager {
 	return &PlayerManager{
 		players: map[string]*Player{},
 	}
+}
+
+func (pm *PlayerManager) AddPlayer(p *Player) {
+	pm.players[p.playerName] = p
 }
 
 func (pm *PlayerManager) Start() {

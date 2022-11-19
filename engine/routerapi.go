@@ -74,7 +74,7 @@ func (r *Router) executePlayerAPI(api string, argsmap map[string]string) (result
 }
 
 func (r *Router) SetPlayerParamValue(playerName string, name string, value string) {
-	r.PlayerManager.ApplyToPlayersNamed(playerName, func(player *Player) {
+	ApplyToPlayersNamed(playerName, func(player *Player) {
 		err := player.SetOneParamValue(name, value)
 		if err != nil {
 			LogError(err)
@@ -87,7 +87,10 @@ func (r *Router) SetPlayerParamValue(playerName string, name string, value strin
 
 func (r *Router) saveQuadPreset(presetName string) error {
 
-	preset := GetPreset(presetName)
+	preset, err := LoadPreset(presetName)
+	if err != nil {
+		return err
+	}
 	// wantCategory is sound, visual, effect, snap, or quad
 	path := preset.WriteableFilePath()
 	s := "{\n    \"params\": {\n"
@@ -129,8 +132,12 @@ func (r *Router) loadQuadPresetRand() {
 	}
 	rn := rand.Uint64() % uint64(len(arr))
 	Info("loadQuadPresetRand", "preset", arr[rn])
-	preset := GetPreset(arr[rn])
-	preset.loadQuadPreset("*")
+	preset, err := LoadPreset(arr[rn])
+	if err != nil {
+		LogError(err)
+	} else {
+		preset.applyQuadPresetToPlayer("*")
+	}
 }
 
 /*
@@ -166,7 +173,7 @@ func (r *Router) executeProcessAPI(api string, apiargs map[string]string) (resul
 */
 
 func (r *Router) saveCurrentSnaps(playerName string) error {
-	r.PlayerManager.ApplyToPlayersNamed(playerName, func(player *Player) {
+	ApplyToPlayersNamed(playerName, func(player *Player) {
 		err := player.saveCurrentSnap()
 		if err != nil {
 			Warn("saveCurrentSnaps", "err", err)
