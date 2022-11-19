@@ -72,10 +72,9 @@ func DeactivateResponder(name string) {
 // 	TheEngine().responderManager.handleCursorEvent(ce)
 // }
 
-func (e *Engine) Start() {
+func (e *Engine) Start(done chan bool) {
 
-	e.done = make(chan bool)
-
+	e.done = done
 	Info("====================== Palette Engine is starting")
 
 	// Normally, the engine should never die, but if it does,

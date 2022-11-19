@@ -81,7 +81,7 @@ func LogError(err error, keysAndValues ...interface{}) {
 	keysAndValues = append(keysAndValues, "err")
 	keysAndValues = append(keysAndValues, err)
 	caller := "LogError"
-	Warn(caller, keysAndValues)
+	Warn(caller, keysAndValues...)
 }
 
 func DebugLogOfType(logtype string, msg string, keysAndValues ...interface{}) {
@@ -150,7 +150,7 @@ var LogEnabled = map[string]bool{
 	"remote":    false,
 	"router":    false,
 	"scale":     false,
-	"schedule":     false,
+	"schedule":  false,
 	"transpose": false,
 	"value":     false,
 }

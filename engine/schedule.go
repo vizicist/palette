@@ -68,7 +68,7 @@ func NewScheduler() *Scheduler {
 		lastClick:              -1,
 		cmdInput:               make(chan interface{}),
 		transposeAuto:          ConfigBoolWithDefault("transposeauto", true),
-		transposeNext:          transposebeats * oneBeat,
+		transposeNext:          transposebeats * OneBeat,
 		transposeClicks:        transposebeats,
 		transposeIndex:         0,
 		transposeValues:        []int{0, -2, 3, -5},
@@ -140,24 +140,31 @@ func (sched *Scheduler) Start() {
 	for now := range tick.C {
 		sched.now = now
 		uptimesecs := sched.Uptime()
-		currentClick := CurrentClick()
+
+		// XXX - lock from here
+		GlobaclCurrentClickMutex.Lock()
+
+		thisClick := CurrentClick()
 		var newclick Clicks
 		if nonRealtime {
-			newclick = currentClick + 1
+			newclick = thisClick + 1
 		} else {
 			newclick = Seconds2Clicks(uptimesecs)
 		}
 		SetCurrentMilli(int64(uptimesecs * 1000.0))
 
+		GlobaclCurrentClickMutex.Unlock()
+
 		// Info("SCHEDULER TOP OF LOOP", "currentClick", currentClick, "newclick", newclick)
 
-		if newclick <= currentClick {
+		if newclick <= thisClick {
 			// Info("SCHEDULER skipping to next loop, newclick is unchanged","newclick",newclick,"currentClick",currentClick)
 			continue
 		}
 
 		sched.advanceTransposeTo(newclick)
 		sched.advanceClickTo(newclick)
+
 		SetCurrentClick(newclick)
 
 		// Every so often we check to see if attract mode should be turned on
@@ -465,7 +472,7 @@ func (sched *Scheduler) schedulePhraseAt(phr *Phrase, click Clicks) (id string) 
 
 func (sched *Scheduler) advanceTransposeTo(newclick Clicks) {
 	if sched.transposeAuto && sched.transposeNext < newclick {
-		sched.transposeNext += (sched.transposeClicks * oneBeat)
+		sched.transposeNext += (sched.transposeClicks * OneBeat)
 		sched.transposeIndex = (sched.transposeIndex + 1) % len(sched.transposeValues)
 		transposePitch := sched.transposeValues[sched.transposeIndex]
 		DebugLogOfType("transpose", "advanceTransposeTo", "newclick", newclick, "transposePitch", transposePitch)

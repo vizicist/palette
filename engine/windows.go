@@ -31,14 +31,13 @@ func StartExecutableLogOutput(logName string, fullexe string, background bool, a
 	if stderrWriter == nil {
 		stderrWriter = &NoWriter{}
 	}
+	Info("startExecutable", "executable", fullexe)
 	_, err := startExecutable(fullexe, true, stdoutWriter, stderrWriter, args...)
 	return err
 }
 
 // StartExecutable executes something.  If background is true, it doesn't block
 func startExecutable(executable string, background bool, stdout io.Writer, stderr io.Writer, args ...string) (*exec.Cmd, error) {
-
-	Info("startExecutable", "executable", executable)
 
 	cmd := exec.Command(executable, args...)
 
