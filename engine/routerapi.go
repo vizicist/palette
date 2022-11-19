@@ -52,9 +52,9 @@ func (r *Router) executePlayerAPI(api string, argsmap map[string]string) (result
 		if playerName == "*" {
 			return "", fmt.Errorf("executePlayerAPI: get can't handle *")
 		}
-		player, ok := r.players[playerName]
-		if !ok {
-			return "", fmt.Errorf("ExecutePlayerAPI: no player named %s", playerName)
+		player, err := r.PlayerManager.GetPlayer(playerName)
+		if err != nil {
+			return "", err
 		}
 		return player.params.paramValueAsString(name)
 
@@ -63,7 +63,7 @@ func (r *Router) executePlayerAPI(api string, argsmap map[string]string) (result
 		// here in the Router context, but for everything else,
 		// we punt down to the player's player.
 		// player can be A, B, C, D, or *
-		r.applyToPlayers(playerName, func(player *Player) {
+		r.PlayerManager.ApplyToAllPlayers(func(player *Player) {
 			_, err := player.ExecuteAPI(api, argsmap, "")
 			if err != nil {
 				LogError(err)
@@ -74,7 +74,7 @@ func (r *Router) executePlayerAPI(api string, argsmap map[string]string) (result
 }
 
 func (r *Router) SetPlayerParamValue(playerName string, name string, value string) {
-	r.applyToPlayers(playerName, func(player *Player) {
+	r.PlayerManager.ApplyToPlayersNamed(playerName, func(player *Player) {
 		err := player.SetOneParamValue(name, value)
 		if err != nil {
 			LogError(err)
@@ -94,8 +94,9 @@ func (r *Router) saveQuadPreset(presetName string) error {
 
 	sep := ""
 	Info("saveQuadPreset", "preset", presetName)
-	for _, player := range r.players {
-		Info("starting", "player", player.padName)
+
+	for _, player := range r.PlayerManager.players {
+		Info("starting", "player", player.playerName)
 		// Print the parameter values sorted by name
 		fullNames := player.params.values
 		sortedNames := make([]string, 0, len(fullNames))
@@ -110,7 +111,7 @@ func (r *Router) saveQuadPreset(presetName string) error {
 				LogError(err)
 				continue
 			}
-			s += fmt.Sprintf("%s        \"%s-%s\":\"%s\"", sep, player.padName, fullName, valstring)
+			s += fmt.Sprintf("%s        \"%s-%s\":\"%s\"", sep, player.playerName, fullName, valstring)
 			sep = ",\n"
 		}
 	}
@@ -165,20 +166,11 @@ func (r *Router) executeProcessAPI(api string, apiargs map[string]string) (resul
 */
 
 func (r *Router) saveCurrentSnaps(playerName string) error {
-	if playerName == "*" {
-		for _, player := range r.players {
-			err := player.saveCurrentSnap()
-			if err != nil {
-				return err
-			}
+	r.PlayerManager.ApplyToPlayersNamed(playerName, func(player *Player) {
+		err := player.saveCurrentSnap()
+		if err != nil {
+			Warn("saveCurrentSnaps", "err", err)
 		}
-	} else {
-		player, ok := r.players[playerName]
-		if !ok {
-			return fmt.Errorf("saveCurrentSnaps: no player named %s", playerName)
-		}
-		return player.saveCurrentSnap()
-
-	}
+	})
 	return nil
 }

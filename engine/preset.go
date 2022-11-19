@@ -30,7 +30,7 @@ func GetPreset(name string) *Preset {
 	return p
 }
 
-func (p *Preset) loadQuadPreset(applyToPlayer string) error {
+func (p *Preset) loadQuadPreset(playerName string) error {
 
 	path := p.readableFilePath()
 	paramsmap, err := LoadParamsMap(path)
@@ -52,11 +52,11 @@ func (p *Preset) loadQuadPreset(applyToPlayer string) error {
 		// {player}-{parametername}
 		words := strings.SplitN(name, "-", 2)
 		playerOfParam := words[0]
-		player := GetPlayer(playerOfParam)
-		if player == nil {
-			return fmt.Errorf("Preset.loadQuadPreset: no player named %s", playerOfParam)
+		player, err := TheRouter().PlayerManager.GetPlayer(playerOfParam)
+		if err != nil {
+			return err
 		}
-		if applyToPlayer != "*" && applyToPlayer != playerOfParam {
+		if playerName != "*" && playerName != playerOfParam {
 			continue
 		}
 		// use words[1] so the player doesn't see the player name
@@ -81,9 +81,12 @@ func (p *Preset) loadQuadPreset(applyToPlayer string) error {
 	// are added which don't exist in existing preset files.
 	// This is similar to code in Player.applyPreset, except we
 	// have to do it for all for pads
-	for _, c := range TheEngine().Router.playerLetters {
+	for _, c := range TheRouter().playerLetters {
 		padName := string(c)
-		player := GetPlayer(padName)
+		player, err := TheRouter().PlayerManager.GetPlayer(padName)
+		if err != nil {
+			Warn("loadQuadPreseplayert: no player named", "player", padName)
+		}
 		for nm, def := range ParamDefs {
 			paramName := string(padName) + "-" + nm
 			_, found := paramsmap[paramName]
@@ -104,19 +107,18 @@ func (p *Preset) loadQuadPreset(applyToPlayer string) error {
 	return nil
 }
 
-func (p *Preset) applyPreset(playerName string) error {
+func (p *Preset) ApplyTo(playerName string) error {
 
 	path := p.readableFilePath()
-	Info("applyPreset", "player", playerName, "path", path)
 	paramsmap, err := LoadParamsMap(path)
 	if err != nil {
 		return err
 	}
 
-	TheEngine().Router.applyToPlayers(playerName, func(player *Player) {
+	TheRouter().PlayerManager.ApplyToAllPlayers(func(player *Player) {
 		err = player.applyParamsMap(p.category, paramsmap)
 		if err != nil {
-			Warn("Preset.applyPreset", "player", playerName, "err", err)
+			Warn("Preset.ApplyTo", "player", player.playerName, "err", err)
 		}
 	})
 
@@ -129,7 +131,7 @@ func (p *Preset) applyPreset(playerName string) error {
 		if err != nil {
 			return err
 		}
-		TheEngine().Router.applyToPlayers(playerName, func(player *Player) {
+		TheRouter().PlayerManager.ApplyToAllPlayers(func(player *Player) {
 			player.applyParamsMap(p.category, overridemap)
 		})
 	}
@@ -146,7 +148,7 @@ func (p *Preset) applyPreset(playerName string) error {
 		_, found := paramsmap[nm]
 		if !found {
 			init := def.Init
-			TheEngine().Router.applyToPlayers(playerName, func(player *Player) {
+			TheRouter().PlayerManager.ApplyToAllPlayers(func(player *Player) {
 				err = player.SetOneParamValue(nm, init)
 				if err != nil {
 					Warn("Loading preset", "preset", nm, "path", path, "err", err)

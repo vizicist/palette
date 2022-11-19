@@ -6,7 +6,6 @@ package engine
 import (
 	"fmt"
 	"strings"
-	"time"
 
 	midi "gitlab.com/gomidi/midi/v2"
 	"gitlab.com/gomidi/midi/v2/drivers"
@@ -26,22 +25,16 @@ const (
 
 // MIDIIO encapsulate everything having to do with MIDI I/O
 type MIDIIO struct {
-	// synth name is the key in these maps
-	Input              drivers.In
-	midiOutputs        map[string]drivers.Out
+	midiInput          drivers.In
+	midiOutputs        map[string]drivers.Out // synth name is the key
 	midiChannelOutputs map[PortChannel]*MIDIChannelOutput
+	midiInputChan      chan MidiEvent
 	stop               func()
-	/*
-		// MIDI device name is the key in these maps
-		outputDeviceID     map[string]portmidi.DeviceID
-		outputDeviceInfo   map[string]*portmidi.DeviceInfo
-		outputDeviceStream map[string]*portmidi.Stream
-		inputDeviceID      map[string]portmidi.DeviceID
-		inputDeviceInfo    map[string]*portmidi.DeviceInfo
-		inputDeviceStream  map[string]*portmidi.Stream
-	*/
 }
 
+// MIDIChannelOutput is used to remember the last
+// bank and program values for a particular output,
+// so they're only sent out when they've changed.
 type MIDIChannelOutput struct {
 	channel int // 1-based, 1-16
 	bank    int // 1-based, 1-whatever
@@ -51,11 +44,11 @@ type MIDIChannelOutput struct {
 }
 
 type MidiEvent struct {
-	Timestamp time.Time
-	Status    int64 // if == 0xF0, use SysEx, otherwise Data1 and Data2.
-	Data1     int64
-	Data2     int64
-	SysEx     []byte
+	// Timestamp time.Time
+	Status byte // if == 0xF0, use SysEx, otherwise Data1 and Data2.
+	Data1  byte
+	Data2  byte
+	Bytes  []byte
 	// source    string // {midiinputname} or maybe {IPaddress}.{midiinputname}
 }
 
@@ -68,7 +61,7 @@ func InitMIDI() {
 	InitializeClicksPerSecond(defaultClicksPerSecond)
 
 	MIDI = &MIDIIO{
-		Input:              nil,
+		midiInput:          nil,
 		midiOutputs:        make(map[string]drivers.Out),
 		midiChannelOutputs: make(map[PortChannel]*MIDIChannelOutput),
 		stop:               nil,
@@ -82,16 +75,19 @@ func InitMIDI() {
 
 	midiInputName := ConfigValue("midiinput")
 
-	// We only open a single input, though midiInputs is an array
+	// device names is done with strings.Contain	// Note: name matching of MIDI s
+	// beause gomidi/midi appends an index value to the strings
+
 	for _, inp := range inports {
 		name := inp.String()
 		Info("MIDI input", "port", name)
-		if name == "Erae Touch" {
+		if strings.Contains(name, "Erae Touch") {
 			erae = true
 			EraeInput = inp
 		}
-		if name == midiInputName {
-			MIDI.Input = inp
+		if strings.Contains(name, midiInputName) {
+			// We only open a single input, though midiInputs is an array
+			MIDI.midiInput = inp
 		}
 	}
 
@@ -111,47 +107,46 @@ func InitMIDI() {
 	}
 }
 
-func (m *MIDIIO) Start() {
-	if MIDI.Input == nil {
-		// Assumes higher-level code chooses whether or not to complain visibly
-		return
-	}
-	stop, err := midi.ListenTo(MIDI.Input, func(msg midi.Message, timestampms int32) {
-		var bt []byte
-		var ch, key, vel uint8
-		switch {
-		case msg.GetSysEx(&bt):
-			fmt.Printf("got sysex: % X\n", bt)
-		case msg.GetNoteStart(&ch, &key, &vel):
-			fmt.Printf("starting note %s on channel %v with velocity %v\n", midi.Note(key), ch, vel)
-		case msg.GetNoteEnd(&ch, &key):
-			fmt.Printf("ending note %s on channel %v\n", midi.Note(key), ch)
-		default:
-			// ignore
-		}
-		// Feed the MIDI bytes to r.MIDIInput one byte at a time
-		/*
-			for _, event := range events {
-				e.Router.MIDIInput <- event
-				if e.Router.midiEventHandler != nil {
-					e.Router.midiEventHandler(event)
-				}
-			}
-		*/
-	}, midi.UseSysEx())
+type MidiHandlerFunc func(midi.Message, int32)
 
+func (m *MIDIIO) Start(inChan chan MidiEvent) {
+	m.midiInputChan = inChan
+	stop, err := midi.ListenTo(m.midiInput, m.handleMidiInput, midi.UseSysEx())
 	if err != nil {
-		fmt.Printf("ERROR: %s\n", err)
+		Warn("midi.ListenTo", "err", err)
 		return
 	}
-	MIDI.stop = stop
+	m.stop = stop
 
 	select {}
 }
 
-// func (mco *MIDIChannelOutput) xWriteSysEx(bb []byte) {
-// 	mco.WriteSysEx(bb)
-// }
+func (m *MIDIIO) handleMidiInput(msg midi.Message, timestamp int32) {
+	var bt []byte
+	var ch, key, vel uint8
+	DebugLogOfType("midi", "handleMidiInput", "msg", msg)
+	switch {
+	case msg.GetSysEx(&bt):
+		DebugLogOfType("midi", "midi.ListenTo sysex", "bt", bt)
+	case msg.GetNoteStart(&ch, &key, &vel):
+		DebugLogOfType("midi", "midi.ListenTo notestart", "bt", bt)
+		fmt.Printf("starting note %s on channel %v with velocity %v\n", midi.Note(key), ch, vel)
+		bytes := msg.Bytes()
+		me := MidiEvent{
+			// Timestamp: time.Time{},
+			Status: bytes[0],
+			Data1:  bytes[1],
+			Data2:  bytes[2],
+			Bytes:  []byte{},
+		}
+		m.midiInputChan <- me
+	case msg.GetNoteEnd(&ch, &key):
+		DebugLogOfType("midi", "midi.ListenTo noteend", "bt", bt)
+		fmt.Printf("ending note %s on channel %v\n", midi.Note(key), ch)
+	default:
+		Warn("Unable to handle MIDI input", "msg", msg)
+	}
+}
 
 /*
 func (m* EraeWriteSysEx(bytes []byte) {
@@ -161,48 +156,16 @@ func (m* EraeWriteSysEx(bytes []byte) {
 }
 */
 
-/*
-func (m *MIDIInput) Poll() (bool, error) {
-	/*
-		return m.stream.Poll()
-	return false, nil
-}
-*/
-
-/*
-func (m *MIDIInput) ReadEvents() ([]MidiEvent, error) {
-	events := make([]MidiEvent, 0)
-	var err error
-		// If you increase the value here,
-		// be sure to actually handle all the events that come back
-		rawEvents, err := m.stream.Read(1024)
-		if err != nil {
-			return nil, err
-		}
-		for n, e := range rawEvents {
-			events[n] = MidiEvent{
-				Timestamp: e.Timestamp,
-				Status:    e.Status,
-				Data1:     e.Data1,
-				Data2:     e.Data2,
-				SysEx:     e.SysEx,
-				source:    m.Name(),
-			}
-		}
-	return events, err
-}
-*/
-
 func (mc *MIDIChannelOutput) SendBankProgram(bank int, program int) {
 	if mc.bank != bank {
 		Warn("SendBankProgram: XXX - SHOULD be sending", "bank", bank)
 		mc.bank = bank
 	}
 	if mc.program != program {
-		DebugLogOfType("midi", "SendBankProgram: sending", "program", program)
 		mc.program = program
 		status := byte(int64(ProgramStatus) | int64(mc.channel-1))
 		data1 := byte(program - 1)
+		Info("SendBankProgram: MIDI", "status", hexString(status), "program", hexString(data1))
 		mc.output.Send([]byte{status, data1})
 	}
 }

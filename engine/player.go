@@ -5,30 +5,24 @@ import (
 	"math/rand"
 	"strconv"
 	"strings"
-	"sync"
 
 	"github.com/hypebeast/go-osc/osc"
 )
 
-/*
-var uniqueIndex = 0
-
-// ActiveNote is a currently active MIDI note
-type ActiveNote struct {
-	id     int
-	noteOn *Note
-	ce     CursorEvent // the one that triggered the note
-}
-
-*/
-
 // Player is an entity that that reacts to things (cursor events, apis) and generates output (midi, graphics)
 type Player struct {
-	padName         string
+	playerName      string
 	resolumeLayer   int // see ResolumeLayerForPad
 	freeframeClient *osc.Client
 	resolumeClient  *osc.Client
-	guiClient       *osc.Client
+
+	params  *ParamValues // across all presets
+	sources map[string]string
+
+	responders        []Responder
+	respondersContext []*ResponderContext
+
+	// guiClient       *osc.Client
 	// lastActiveID    int
 
 	// tempoFactor            float64
@@ -40,7 +34,6 @@ type Player struct {
 	// lastUnQuantizedStepNum Clicks
 
 	// params                         map[string]interface{}
-	params *ParamValues
 
 	// paramsMutex               sync.RWMutex
 	// activeNotes      map[string]*ActiveNote
@@ -55,23 +48,58 @@ type Player struct {
 	MIDIQuantized    bool
 	MIDIUseScale     bool // if true, scadjust uses "external" Scale
 	TransposePitch   int
-	midiInputMutex   sync.RWMutex
 	externalScale    *Scale
 }
 
+func (p *Player) ApplyPreset(presetName string) {
+	preset := GetPreset(presetName)
+	preset.ApplyTo(p.playerName)
+}
+
+func (p *Player) SavePreset(presetName string) error {
+	return p.saveCurrentAsPreset(presetName)
+}
+
+func (p *Player) IsSourceAllowed(source string) bool {
+	_, ok := p.sources[source]
+	return ok
+}
+
+func (p *Player) AllowSource(source string) {
+	var ok bool
+	_, ok = p.sources[source]
+	if ok {
+		Info("Player.AttachSource already has input", "source", source)
+	} else {
+		p.sources[source] = source
+	}
+}
+
+func (p *Player) AttachResponder(responder Responder) {
+	p.responders = append(p.responders, responder)
+	p.respondersContext = append(p.respondersContext, NewResponderContext())
+}
+
+func (p *Player) SetResolumeLayer(layernum int, ffglport int) {
+	p.resolumeLayer = layernum
+	p.resolumeClient = osc.NewClient(LocalAddress, ResolumePort)
+	p.freeframeClient = osc.NewClient(LocalAddress, ffglport)
+}
+
 // NewPlayer makes a new Player
-func NewPlayer(pad string, resolumeLayer int, freeframeClient *osc.Client, resolumeClient *osc.Client, guiClient *osc.Client) *Player {
+func NewPlayer(pad string) *Player {
 	r := &Player{
-		padName:         pad,
-		resolumeLayer:   resolumeLayer,
-		freeframeClient: freeframeClient,
-		resolumeClient:  resolumeClient,
-		guiClient:       guiClient,
+		playerName:      pad,
+		resolumeLayer:   0,
+		freeframeClient: nil,
+		resolumeClient:  nil,
+		// guiClient:       guiClient,
 		// tempoFactor:         1.0,
 		// params:                         make(map[string]interface{}),
 		params: NewParamValues(),
 		// activeNotes: make(map[string]*ActiveNote),
 		// fadeLoop:    0.5,
+		sources: map[string]string{},
 
 		MIDIOctaveShift:  0,
 		MIDIThru:         true,
@@ -140,36 +168,41 @@ func (player *Player) PassThruMIDI(e MidiEvent) {
 	}
 }
 
-/*
-// AdvanceByOneClick advances time by 1 click in a StepLoop
-func (player *Player) AdvanceByOneClick() {
-
-	player.deviceCursorsMutex.Lock()
-	defer player.deviceCursorsMutex.Unlock()
-
-	player.activePhrasesManager.AdvanceByOneClick()
-}
-*/
-
 // HandleMIDITimeReset xxx
 func (player *Player) HandleMIDITimeReset() {
 	Warn("HandleMIDITimeReset!! needs implementation")
 }
 
 // HandleMIDIInput xxx
-func (player *Player) HandleMidiInput(e MidiEvent) {
-
-	player.midiInputMutex.Lock()
-	defer player.midiInputMutex.Unlock()
-
-	DebugLogOfType("midi", "Router.HandleMIDIInput", "event", e)
-
-	if player.MIDIThru {
-		player.PassThruMIDI(e)
+func (player *Player) HandleCursorEvent(ce CursorEvent) {
+	Info("Player.HandleCursorEvent", "ce", ce)
+	for n, responder := range player.responders {
+		ctx := player.respondersContext[n]
+		responder.OnCursorEvent(ctx, ce)
 	}
-	if player.MIDISetScale {
-		player.handleMIDISetScaleNote(e)
+}
+
+// HandleMIDIInput xxx
+func (player *Player) HandleMidiEvent(me MidiEvent) {
+	Info("Player.HandleMidiEvent", "me", me)
+	for n, responder := range player.responders {
+		ctx := player.respondersContext[n]
+		responder.OnMidiEvent(ctx, me)
 	}
+
+	/*
+		player.midiInputMutex.Lock()
+		defer player.midiInputMutex.Unlock()
+
+		DebugLogOfType("midi", "Router.HandleMIDIInput", "event", e)
+
+		if player.MIDIThru {
+			player.PassThruMIDI(e)
+		}
+		if player.MIDISetScale {
+			player.handleMIDISetScaleNote(e)
+		}
+	*/
 }
 
 /*
@@ -196,9 +229,13 @@ func CallerFunc() string {
 }
 */
 
+func (player *Player) SetParam(fullname, value string) error {
+	return player.SetOneParamValue(fullname, value)
+}
+
 func (player *Player) SetOneParamValue(fullname, value string) error {
 
-	DebugLogOfType("value", "SetOneParamValue", "player", player.padName, "fullname", fullname, "value", value)
+	DebugLogOfType("value", "SetOneParamValue", "player", player.playerName, "fullname", fullname, "value", value)
 	err := player.params.SetParamValueWithString(fullname, value, nil)
 	if err != nil {
 		return err
@@ -224,7 +261,7 @@ func (player *Player) SetOneParamValue(fullname, value string) error {
 
 // ClearExternalScale xxx
 func (player *Player) clearExternalScale() {
-	DebugLogOfType("scale", "clearExternalScale", "pad", player.padName)
+	DebugLogOfType("scale", "clearExternalScale", "pad", player.playerName)
 	player.externalScale = MakeScale()
 }
 
@@ -237,6 +274,15 @@ func (player *Player) setExternalScale(pitch int, on bool) {
 }
 
 /*
+var uniqueIndex = 0
+
+// ActiveNote is a currently active MIDI note
+type ActiveNote struct {
+	id     int
+	noteOn *Note
+	ce     CursorEvent // the one that triggered the note
+}
+
 func (player *Player) getActiveNote(id string) *ActiveNote {
 	player.activeNotesMutex.RLock()
 	a, ok := player.activeNotes[id]
@@ -275,7 +321,7 @@ func (player) *Player) clearGraphics() {
 */
 
 func (player *Player) generateSprite(id string, x, y, z float32) {
-	if !TheEngine().Router.generateVisuals {
+	if !TheRouter().generateVisuals {
 		return
 	}
 	// send an OSC message to Resolume
@@ -289,7 +335,7 @@ func (player *Player) generateSprite(id string, x, y, z float32) {
 
 /*
 func (player *Player) generateVisualsFromCursor(ce CursorEvent) {
-	if !TheEngine().Router.generateVisuals {
+	if !TheRouter().generateVisuals {
 		return
 	}
 	// send an OSC message to Resolume
@@ -412,6 +458,10 @@ func (player *Player) handleMIDISetScaleNote(e MidiEvent) {
 	}
 }
 
+// to avoid unused warning
+var p *Player
+var _ = p.handleMIDISetScaleNote
+
 // getScale xxx
 func (player *Player) getScale() *Scale {
 	var scaleName string
@@ -427,7 +477,7 @@ func (player *Player) getScale() *Scale {
 
 /*
 func (player *Player) generateSoundFromCursor(ce CursorEvent) {
-	if !TheEngine().Router.generateSound {
+	if !TheRouter().generateSound {
 		return
 	}
 	a := player.getActiveNote(ce.ID)
@@ -589,7 +639,7 @@ func (player *Player) sendNoteOff(a *ActiveNote) {
 */
 
 func (player *Player) sendANO() {
-	if !TheEngine().Router.generateSound {
+	if !TheRouter().generateSound {
 		return
 	}
 	synth := player.params.ParamStringValue("sound.synth", defaultSynth)
@@ -1004,13 +1054,4 @@ func (player *Player) sendPadOneEffectOnOff(effectName string, onoff bool) {
 	msg := osc.NewMessage(addr)
 	msg.Append(int32(onoffValue))
 	player.toResolume(msg)
-}
-
-func GetPlayer(playerName string) *Player {
-	player, ok := TheEngine().Router.players[playerName]
-	if !ok {
-		return nil
-	} else {
-		return player
-	}
 }
