@@ -10,7 +10,8 @@ import (
 	"gitlab.com/gomidi/midi/v2/drivers"
 )
 
-var EraePlayer = "A"
+var EraePlayerName = "A"
+var EraePlayer *Player
 var EraeEnabled = false
 var MyPrefix byte = 0x55
 var EraeWidth int = 0x2a
@@ -35,8 +36,8 @@ func InitErae() {
 }
 
 func HandleEraeMIDI(event MidiEvent) {
-	if event.SysEx != nil {
-		bb := event.SysEx
+	if event.Bytes != nil {
+		bb := event.Bytes
 		s := ""
 		for _, b := range bb {
 			s += fmt.Sprintf(" 0x%02x", b)
@@ -86,7 +87,7 @@ func EraeFingerIndicator(zone, x, y byte) {
 		green := byte(0)
 		blue := byte(0)
 		alpha := byte(0x7f * dim)
-		switch EraePlayer {
+		switch EraePlayerName {
 		case "A":
 			red = alpha
 		case "B":
@@ -148,19 +149,24 @@ func handleFinger(bb []byte) {
 	// we change the player to that corner.
 
 	edge := float32(0.1)
-	newplayer := ""
+	newplayerName := ""
 	if x < edge && y < edge {
-		newplayer = "A"
+		newplayerName = "A"
 	} else if x < edge && y > (1.0-edge) {
-		newplayer = "B"
+		newplayerName = "B"
 	} else if x > (1.0-edge) && y > (1.0-edge) {
-		newplayer = "C"
+		newplayerName = "C"
 	} else if x > (1.0-edge) && y < edge {
-		newplayer = "D"
+		newplayerName = "D"
 	}
 
-	if newplayer != "" {
-		if newplayer != EraePlayer {
+	if newplayerName != "" {
+		player, err := TheRouter().PlayerManager.GetPlayer(newplayerName)
+		if err != nil {
+			Warn("player not found", "player", newplayerName)
+			return
+		}
+		if newplayerName != EraePlayerName {
 			// Clear cursor state from existing player
 			ce := CursorEvent{
 				ID:        cid,
@@ -168,9 +174,10 @@ func handleFinger(bb []byte) {
 				Timestamp: time.Now(),
 				Ddu:       "clear",
 			}
-			TheEngine().handleCursorEvent(ce)
-			DebugLogOfType("erae", "Switching Erae to", "player", newplayer)
-			EraePlayer = newplayer
+			player.HandleCursorEvent(ce)
+			DebugLogOfType("erae", "Switching Erae to", "player", newplayerName)
+			EraePlayerName = newplayerName
+			EraePlayer = player
 		}
 		// We don't pass corner things through, even if we haven't changed the player
 		return
@@ -221,7 +228,7 @@ func handleFinger(bb []byte) {
 	}
 	// XXX - should Fresh be trued???
 
-	TheEngine().handleCursorEvent(ce)
+	EraePlayer.HandleCursorEvent(ce)
 }
 
 func EraeWriteSysEx(bytes []byte) {

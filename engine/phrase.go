@@ -45,10 +45,10 @@ type Phrasep *Phrase
 type Note struct {
 	Source   string // relative to local machine
 	TypeOf   string // note, noteon, noteoff, controller, notebytes
-	Clicks   Clicks // nanoseconds
-	Duration Clicks // nanoseconds, when it's a note
-	Pitch    uint8  // 0-127
-	Velocity uint8  // 0-127
+	Clicks   Clicks
+	Duration Clicks
+	Pitch    uint8 // 0-127
+	Velocity uint8 // 0-127
 	Synth    string
 	bytes    []byte
 	next     *Note
@@ -99,6 +99,10 @@ func (n *Note) Format(f fmt.State, c rune) {
 // NewNote create a new Note of type note, i.e. with duration
 func NewNote(pitch uint8, velocity uint8, duration Clicks, sound string) *Note {
 	return &Note{TypeOf: "note", Pitch: pitch, Velocity: velocity, Duration: duration, Synth: sound}
+}
+
+func NewBytes(bytes []byte) *Note {
+	return &Note{TypeOf: "notebytes", bytes: bytes}
 }
 
 // NewNoteOn create a new noteon

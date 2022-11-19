@@ -31,7 +31,7 @@ func (player *Player) ExecuteAPI(api string, args map[string]string, rawargs str
 	switch api {
 
 	case "send":
-		DebugLogOfType("*", "API send should be sending all parameters", "player", player.padName)
+		DebugLogOfType("*", "API send should be sending all parameters", "player", player.playerName)
 		player.sendAllParameters()
 		return "", err
 
@@ -189,9 +189,9 @@ func (player *Player) applyParamsMap(presetType string, paramsmap map[string]int
 }
 
 func (player *Player) restoreCurrentSnap() {
-	playerName := player.padName
+	playerName := player.playerName
 	preset := GetPreset("snap._Current_" + playerName)
-	err := preset.applyPreset(playerName)
+	err := preset.ApplyTo(playerName)
 	if err != nil {
 		LogError(err)
 	}
@@ -204,7 +204,7 @@ func (player *Player) saveCurrentAsPreset(presetName string) error {
 }
 
 func (player *Player) saveCurrentSnap() error {
-	return player.saveCurrentAsPreset("snap._Current_" + player.padName)
+	return player.saveCurrentAsPreset("snap._Current_" + player.playerName)
 }
 
 func (player *Player) saveCurrentSnapInPath(path string) error {
