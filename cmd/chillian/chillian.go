@@ -7,6 +7,9 @@ import (
 	"syscall"
 
 	"github.com/vizicist/palette/engine"
+	"github.com/vizicist/palette/responder"
+
+	// _ "github.com/vizicist/palette/responder"
 	_ "github.com/vizicist/palette/tool"
 )
 
@@ -38,9 +41,9 @@ func main() {
 	playerA.SavePreset("visual.TestingSquare")
 	playerB.SavePreset("visual.TestingCircle")
 
-	respondDefault := engine.GetResponder("default")
-	respondLogger := engine.GetResponder("logger")
-	respondChillian := engine.GetResponder("chillian")
+	respondDefault := responder.GetResponder("default")
+	respondLogger := responder.GetResponder("logger")
+	respondChillian := responder.GetResponder("chillian")
 
 	playerA.AttachResponder(respondDefault)
 	playerA.AttachResponder(respondLogger)
