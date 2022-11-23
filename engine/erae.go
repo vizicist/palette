@@ -36,18 +36,14 @@ func InitErae() {
 }
 
 func HandleEraeMIDI(event MidiEvent) {
-	if event.msg.Bytes != nil {
-		bb := event.msg.Bytes()
-		s := ""
-		for _, b := range bb {
-			s += fmt.Sprintf(" 0x%02x", b)
-		}
-		Info("HandleEraeMIDI", "bytes", s)
-		if bb[1] == MyPrefix {
-			handleEraeSysEx(bb)
-		}
-	} else {
-		Warn("HandleEraeMIDI: no action for", "event", event)
+	bb := event.msg.Bytes()
+	s := ""
+	for _, b := range bb {
+		s += fmt.Sprintf(" 0x%02x", b)
+	}
+	Info("HandleEraeMIDI", "bytes", s)
+	if bb[1] == MyPrefix {
+		handleEraeSysEx(bb)
 	}
 }
 
