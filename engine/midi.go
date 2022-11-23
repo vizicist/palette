@@ -44,13 +44,7 @@ type MIDIChannelOutput struct {
 }
 
 type MidiEvent struct {
-	source string
 	msg    midi.Message
-	// Status byte // if == 0xF0, use SysEx, otherwise Data1 and Data2.
-	// Data1  byte
-	// Data2  byte
-	// Bytes  []byte
-	// source    string // {midiinputname} or maybe {IPaddress}.{midiinputname}
 }
 
 // MIDI is a pointer to

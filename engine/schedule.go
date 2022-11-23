@@ -217,14 +217,8 @@ func (sched *Scheduler) Start() {
 					sched.attractModeIsOn = onoff
 					sched.lastAttractChange = sched.Uptime()
 				}
-			case SchedulePhraseCmd:
-				sched.schedulePhraseAt(v.phrase, v.click)
-				/*
-					case ScheduleBytesCmd:
-						nt := NewBytes(v.bytes)
-						phr := NewPhrase().InsertNote(nt)
-						sched.schedulePhraseAt(phr, v.click)
-				*/
+			case SchedulePhraseElementCmd:
+				sched.schedulePhraseElementAt(v.element, v.click)
 			default:
 				Warn("Unexpected type", "type", fmt.Sprintf("%T", v))
 			}
@@ -434,7 +428,7 @@ func (sched *Scheduler) ToString() string {
 		switch v := pe.Value.(type) {
 		case *Phrase:
 			phr := v
-			s += fmt.Sprintf("(%d,%s)", pe.AtClick, phr)
+			s += fmt.Sprintf("(%d,%v)", pe.AtClick, phr)
 		default:
 			s += "(Unknown Sched Type)"
 		}
@@ -448,33 +442,27 @@ func (sched *Scheduler) Format(f fmt.State, c rune) {
 	f.Write([]byte(s))
 }
 
-func (sched *Scheduler) schedulePhraseAt(phr *Phrase, click Clicks) (id string) {
+func (sched *Scheduler) schedulePhraseElementAt(pe *PhraseElement, click Clicks) {
 	schedule := sched.schedule
-	DebugLogOfType("schedule", "Scheduler.SchedulePhraseAt", "phrase", phr, "click", click)
-	newElement := &PhraseElement{
-		AtClick: click,
-		Value:   phr,
-	}
-
+	DebugLogOfType("schedule", "Scheduler.SchedulePhraseElementAt", "pe", pe, "click", click)
 	// Insert newElement sorted by time
 	// XXX - could be generic-ized with identical code for activePhrase
 	i := schedule.list.Front()
 	if i == nil {
 		// new list
-		schedule.list.PushFront(newElement)
-	} else if schedule.list.Back().Value.(*PhraseElement).AtClick <= newElement.AtClick {
-		// newItem is later than all existing things
-		schedule.list.PushBack(newElement)
+		schedule.list.PushFront(pe)
+	} else if schedule.list.Back().Value.(*PhraseElement).AtClick <= pe.AtClick {
+		// pe is later than all existing things
+		schedule.list.PushBack(pe)
 	} else {
 		// use click to find place to insert
 		for ; i != nil; i = i.Next() {
-			si := i.Value.(*PhraseElement)
-			if si.AtClick > click {
-				schedule.list.InsertBefore(newElement, i)
+			if i.Value.(*PhraseElement).AtClick > click {
+				schedule.list.InsertBefore(pe, i)
+				break
 			}
 		}
 	}
-	return id
 }
 
 func (sched *Scheduler) advanceTransposeTo(newclick Clicks) {

@@ -27,14 +27,11 @@ func (r *Responder_default) OnCursorEvent(ctx *engine.ResponderContext, ce engin
 		velocity := uint8(ce.Z * 1280)
 		duration := engine.QuarterNote
 		synth := "0103 Ambient_E-Guitar"
-		nt := engine.NewNoteFull(pitch, velocity, duration, synth)
 		pe := &engine.PhraseElement{
 			AtClick: ctx.CurrentClick(),
 			Source:  "default",
-			Value:   nt,
+			Value:   engine.NewNoteFull(pitch, velocity, duration, synth),
 		}
-		phr := engine.NewPhrase().InsertElement(pe)
-		ctx.Log("Responder_default.OnCursorEvent", "pitch", pitch, "vel", velocity, "dur", duration)
-		ctx.SchedulePhraseNow(phr)
+		ctx.SchedulePhraseElementNow(pe)
 	}
 }

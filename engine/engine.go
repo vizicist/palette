@@ -39,10 +39,6 @@ func newEngine() *Engine {
 	return e
 }
 
-func xGetResponder(name string) Responder {
-	return TheRouter().responderManager.xGetResponder(name)
-}
-
 func ProcessStatus() string {
 	return TheEngine().ProcessManager.ProcessStatus()
 }
@@ -180,7 +176,7 @@ func (e *Engine) StartHTTP(port int) {
 				if err != nil {
 					response = ErrorResponse(err)
 				} else {
-					response = ResultResponse(resp)
+					response = resp
 				}
 			}
 		default:
@@ -188,6 +184,6 @@ func (e *Engine) StartHTTP(port int) {
 		}
 	})
 
-	source := fmt.Sprintf("127.0.0.1:%d", port)
+	source := fmt.Sprintf("127.0.0.1%d", port)
 	http.ListenAndServe(source, nil)
 }

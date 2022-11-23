@@ -88,7 +88,7 @@ func NewNoteBytes(bytes []byte) *NoteBytes {
 }
 
 func (n *NoteBytes) String() string {
-	return fmt.Sprintf("(NoteBytes)")
+	return fmt.Sprintf("(NoteBytes %v)", n.bytes)
 }
 
 type NoteSystem struct {
@@ -182,7 +182,7 @@ func (pe *PhraseElement) Copy() *PhraseElement {
 // NewPhrase returns a new Phrase
 func NewPhrase() *Phrase {
 	return &Phrase{
-		list:  list.New(),
+		list: list.New(),
 		// rwmutex: new(sync.RWMutex),
 	}
 }
@@ -215,9 +215,8 @@ func (pi *PhraseElement) Format(f fmt.State, c rune) {
 		valstr = v.String()
 	default:
 		valstr = "UNKNOWNTYPE"
-
 	}
-	final := fmt.Sprintf("(PhraseElement AtClick=%d Value=%)", pi.AtClick, valstr)
+	final := fmt.Sprintf("(PhraseElement AtClick=%d Value=%s)", pi.AtClick, valstr)
 	f.Write([]byte(final))
 }
 
