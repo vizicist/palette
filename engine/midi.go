@@ -4,7 +4,6 @@
 package engine
 
 import (
-	"fmt"
 	"strings"
 
 	midi "gitlab.com/gomidi/midi/v2"
@@ -14,6 +13,7 @@ import (
 
 // These are the values of MIDI status bytes
 const (
+	// NoteOn
 	NoteOnStatus       byte = 0x90
 	NoteOffStatus      byte = 0x80
 	PressureStatus     byte = 0xa0
@@ -44,11 +44,12 @@ type MIDIChannelOutput struct {
 }
 
 type MidiEvent struct {
-	// Timestamp time.Time
-	Status byte // if == 0xF0, use SysEx, otherwise Data1 and Data2.
-	Data1  byte
-	Data2  byte
-	Bytes  []byte
+	source string
+	msg    midi.Message
+	// Status byte // if == 0xF0, use SysEx, otherwise Data1 and Data2.
+	// Data1  byte
+	// Data2  byte
+	// Bytes  []byte
 	// source    string // {midiinputname} or maybe {IPaddress}.{midiinputname}
 }
 
@@ -128,21 +129,14 @@ func (m *MIDIIO) handleMidiInput(msg midi.Message, timestamp int32) {
 	switch {
 	case msg.GetSysEx(&bt):
 		DebugLogOfType("midi", "midi.ListenTo sysex", "bt", bt)
-	case msg.GetNoteStart(&ch, &key, &vel):
+
+	case msg.GetNoteOn(&ch, &key, &vel):
 		DebugLogOfType("midi", "midi.ListenTo notestart", "bt", bt)
-		fmt.Printf("starting note %s on channel %v with velocity %v\n", midi.Note(key), ch, vel)
-		bytes := msg.Bytes()
-		me := MidiEvent{
-			// Timestamp: time.Time{},
-			Status: bytes[0],
-			Data1:  bytes[1],
-			Data2:  bytes[2],
-			Bytes:  []byte{},
-		}
-		m.midiInputChan <- me
-	case msg.GetNoteEnd(&ch, &key):
+		m.midiInputChan <- MidiEvent{msg: msg}
+
+	case msg.GetNoteOff(&ch, &key, &vel):
 		DebugLogOfType("midi", "midi.ListenTo noteend", "bt", bt)
-		fmt.Printf("ending note %s on channel %v\n", midi.Note(key), ch)
+		m.midiInputChan <- MidiEvent{msg: msg}
 	default:
 		Warn("Unable to handle MIDI input", "msg", msg)
 	}
@@ -226,6 +220,7 @@ func (m *MIDIIO) openChannelOutput(portchannel PortChannel) *MIDIChannelOutput {
 	m.midiChannelOutputs[portchannel] = mc
 	return mc
 }
+
 func (m *MIDIIO) openFakeChannelOutput(port string, channel int) *MIDIChannelOutput {
 
 	co := &MIDIChannelOutput{

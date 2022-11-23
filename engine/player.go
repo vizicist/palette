@@ -81,7 +81,7 @@ func (p *Player) AllowSource(source string) {
 
 func (p *Player) AttachResponder(responder Responder) {
 	p.responders = append(p.responders, responder)
-	p.respondersContext = append(p.respondersContext, NewResponderContext())
+	p.respondersContext = append(p.respondersContext, NewResponderContext(p))
 }
 
 func (p *Player) SetResolumeLayer(layernum int, ffglport int) {
@@ -121,56 +121,84 @@ func NewPlayer(playerName string) *Player {
 	return p
 }
 
-func (player *Player) SendNoteToSynth(n *Note) {
+func (player *Player) SendPhraseElementToSynth(pe *PhraseElement) {
 
 	// XXX - eventually this should be done by a responder?
 	ss := player.params.ParamStringValue("visual.spritesource", "")
 	if ss == "midi" {
-		player.generateSpriteFromNote(n)
+		player.generateSpriteFromPhraseElement(pe)
 	}
 
-	SendNoteToSynth(n)
+	SendPhraseElementToSynth(pe)
 }
 
-// PassThruMIDI xxx
-func (player *Player) PassThruMIDI(e MidiEvent) {
+func (player *Player) MidiEventToPhraseElement(me MidiEvent) (*PhraseElement, error) {
 
-	DebugLogOfType("midi", "Player.PassThruMIDI", "e", e)
-
-	// channel on incoming MIDI is ignored
-	// it uses whatever sound the Player is using
-	status := e.Status & 0xf0
-
-	data1 := uint8(e.Data1)
-	data2 := uint8(e.Data2)
-	pitch := data1
+	bytes := me.msg.Bytes()
+	lng := len(bytes)
+	if lng == 0 {
+		err := fmt.Errorf("no bytes in midi.Message")
+		LogError(err)
+		return nil, err
+	}
+	if lng == 1 {
+		return &PhraseElement{Value: NewNoteSystem(bytes[0])}, nil
+	}
 
 	synth := player.params.ParamStringValue("sound.synth", defaultSynth)
-	var n *Note
+
+	var data1, data2 byte
+	// NOTE: channel on incoming MIDI is ignored
+	// it uses whatever sound the Player is using.
+	status := bytes[0] & 0xf0
+	if lng == 2 {
+		switch status {
+		case 0xd0: // channel pressure
+			return &PhraseElement{Value: NewChanPressure(bytes[1], synth)}, nil
+		}
+
+	}
+
+	switch len(bytes) {
+	case 0:
+	case 1:
+		status = bytes[0] & 0xf0
+	case 2:
+		status = bytes[0]
+		data1 = bytes[1]
+	case 3:
+		status = bytes[0]
+		data1 = bytes[1]
+		data2 = bytes[2]
+	default:
+	}
+	pitch := data1
+
 	if (status == 0x90 || status == 0x80) && player.MIDIThruScadjust {
 		scale := player.getScale()
 		pitch = scale.ClosestTo(pitch)
 	}
+	var val interface{}
 	switch status {
 	case 0x90:
-		n = NewNoteOn(pitch, data2, synth)
+		val = NewNoteOn(pitch, data2, synth)
 	case 0x80:
-		n = NewNoteOff(pitch, data2, synth)
+		val = NewNoteOff(pitch, data2, synth)
 	case 0xB0:
-		n = NewController(data1, data2, synth)
+		val = NewController(data1, data2, synth)
 	case 0xC0:
-		n = NewProgChange(data1, data2, synth)
+		val = NewProgramChange(data1)
 	case 0xD0:
-		n = NewChanPressure(data1, data2, synth)
+		val = NewChanPressure(data1, synth)
 	case 0xE0:
-		n = NewPitchBend(data1, data2, synth)
+		val = NewPitchBend(data1, data2)
 	default:
-		Warn("PassThruMIDI unable to handle", "status", status)
-		return
+		err := fmt.Errorf("MidiEventToPhraseElement: unable to handle status=0x%02x", status)
+		LogError(err, "status", status)
+		return nil, err
 	}
-	if n != nil {
-		player.SendNoteToSynth(n)
-	}
+
+	return &PhraseElement{Value: val}, nil
 }
 
 // HandleMIDITimeReset xxx
@@ -354,16 +382,29 @@ func (player *Player) generateVisualsFromCursor(ce CursorEvent) {
 }
 */
 
-func (player *Player) generateSpriteFromNote(n *Note) {
+func (player *Player) generateSpriteFromPhraseElement(pe *PhraseElement) {
 
-	if n.TypeOf != "noteon" {
+	var pitch uint8
+	var velocity uint8
+
+	switch v := pe.Value.(type) {
+	case *NoteOn:
+		pitch = v.Pitch
+		velocity = v.Velocity
+	case *NoteOff:
+		pitch = v.Pitch
+		velocity = v.Velocity
+	case *NoteFull:
+		pitch = v.Pitch
+		velocity = v.Velocity
+	default:
 		return
 	}
 
 	pitchmin := uint8(player.params.ParamIntValue("sound.pitchmin"))
 	pitchmax := uint8(player.params.ParamIntValue("sound.pitchmax"))
-	if n.Pitch < pitchmin || n.Pitch > pitchmax {
-		Warn("Unexpected value", "pitch", n.Pitch)
+	if pitch < pitchmin || pitch > pitchmax {
+		Warn("Unexpected value", "pitch", pitch)
 		return
 	}
 
@@ -375,21 +416,21 @@ func (player *Player) generateSpriteFromNote(n *Note) {
 		y = rand.Float32()
 	case "linear":
 		y = 0.5
-		x = float32(n.Pitch-pitchmin) / float32(pitchmax-pitchmin)
+		x = float32(pitch-pitchmin) / float32(pitchmax-pitchmin)
 	case "cursor":
 		x = rand.Float32()
 		y = rand.Float32()
 	case "top":
 		y = 1.0
-		x = float32(n.Pitch-pitchmin) / float32(pitchmax-pitchmin)
+		x = float32(pitch-pitchmin) / float32(pitchmax-pitchmin)
 	case "bottom":
 		y = 0.0
-		x = float32(n.Pitch-pitchmin) / float32(pitchmax-pitchmin)
+		x = float32(pitch-pitchmin) / float32(pitchmax-pitchmin)
 	case "left":
-		y = float32(n.Pitch-pitchmin) / float32(pitchmax-pitchmin)
+		y = float32(pitch-pitchmin) / float32(pitchmax-pitchmin)
 		x = 0.0
 	case "right":
-		y = float32(n.Pitch-pitchmin) / float32(pitchmax-pitchmin)
+		y = float32(pitch-pitchmin) / float32(pitchmax-pitchmin)
 		x = 1.0
 	default:
 		x = rand.Float32()
@@ -400,11 +441,11 @@ func (player *Player) generateSpriteFromNote(n *Note) {
 	msg := osc.NewMessage("/sprite")
 	msg.Append(x)
 	msg.Append(y)
-	msg.Append(float32(n.Velocity) / 127.0)
+	msg.Append(float32(velocity) / 127.0)
 
 	// Someday localhost should be changed to the actual IP address.
 	// XXX - Set sprite ID to pitch, is this right?
-	msg.Append(fmt.Sprintf("%d@localhost", n.Pitch))
+	msg.Append(fmt.Sprintf("%d@localhost", pitch))
 
 	player.toFreeFramePluginForLayer(msg)
 }
@@ -420,29 +461,32 @@ func (player *Player) toResolume(msg *osc.Message) {
 }
 
 func (player *Player) handleMIDISetScaleNote(e MidiEvent) {
-	status := e.Status & 0xf0
-	pitch := int(e.Data1)
-	if status == 0x90 {
-		// If there are no notes held down (i.e. this is the first), clear the scale
-		if player.MIDINumDown < 0 {
-			// this can happen when there's a Read error that misses a noteon
-			player.MIDINumDown = 0
+	Info("handleMIDISetScaleNote needs work")
+	/*
+		status := e.Status & 0xf0
+		pitch := int(e.Data1)
+		if status == 0x90 {
+			// If there are no notes held down (i.e. this is the first), clear the scale
+			if player.MIDINumDown < 0 {
+				// this can happen when there's a Read error that misses a noteon
+				player.MIDINumDown = 0
+			}
+			if player.MIDINumDown == 0 {
+				player.clearExternalScale()
+			}
+			player.setExternalScale(pitch%12, true)
+			player.MIDINumDown++
+			if pitch < 60 {
+				player.MIDIOctaveShift = -1
+			} else if pitch > 72 {
+				player.MIDIOctaveShift = 1
+			} else {
+				player.MIDIOctaveShift = 0
+			}
+		} else if status == 0x80 {
+			player.MIDINumDown--
 		}
-		if player.MIDINumDown == 0 {
-			player.clearExternalScale()
-		}
-		player.setExternalScale(pitch%12, true)
-		player.MIDINumDown++
-		if pitch < 60 {
-			player.MIDIOctaveShift = -1
-		} else if pitch > 72 {
-			player.MIDIOctaveShift = 1
-		} else {
-			player.MIDIOctaveShift = 0
-		}
-	} else if status == 0x80 {
-		player.MIDINumDown--
-	}
+	*/
 }
 
 // to avoid unused warning
@@ -596,7 +640,7 @@ func (player *Player) nextQuant(t Clicks, q Clicks) Clicks {
 
 func (player *Player) sendNoteOn(a *ActiveNote) {
 
-	player.SendNoteToSynth(a.noteOn)
+	player.SendPhraseElementToSynth(a.noteOn)
 
 	ss := player.params.ParamStringValue("visual.spritesource", "")
 	if ss == "midi" {
@@ -621,7 +665,7 @@ func (player *Player) sendNoteOff(a *ActiveNote) {
 	}
 
 	noteOff := NewNoteOff(n.Pitch, n.Velocity, n.Synth)
-	player.SendNoteToSynth(noteOff)
+	player.SendPhraseElementToSynth(noteOff)
 }
 */
 
