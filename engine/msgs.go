@@ -6,10 +6,13 @@ import (
 
 //////////////////////////////////////////////////////////////////
 
+/*
 func (note *Note) BytesString() string {
 	return "BytesStringNeedsImplementing"
 }
+*/
 
+/*
 func NewNoteMsg(note *Note) string {
 	return fmt.Sprintf(
 		"\"type\":\"%s\","+
@@ -27,15 +30,10 @@ func NewNoteMsg(note *Note) string {
 		note.Synth,
 		note.BytesString())
 }
+*/
 
 func NewSimpleCmd(subj string) Cmd {
 	return Cmd{Subj: subj, Values: nil}
-}
-
-func NewNoteCmd(note *Note) Cmd {
-	values := make(map[string]string)
-	values["note"] = note.String()
-	return Cmd{Subj: "note", Values: values}
 }
 
 func NewSetParamMsg(name string, value string) string {
@@ -61,8 +59,8 @@ func ToBool(arg interface{}) bool {
 	return r
 }
 
-// ToString xxx
-func ToString(arg interface{}) string {
+// String xxx
+func String(arg interface{}) string {
 	if arg == nil {
 		return ""
 	}

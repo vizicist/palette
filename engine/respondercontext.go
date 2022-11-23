@@ -6,17 +6,29 @@ import (
 
 type ResponderContext struct {
 	scheduler *Scheduler
+	player    *Player
 	// state     interface{} // for future responder-specific state
 }
 
-func NewResponderContext() *ResponderContext {
+func NewResponderContext(player *Player) *ResponderContext {
 	return &ResponderContext{
 		scheduler: TheEngine().Scheduler,
+		player:    player,
 	}
 }
 
 func (ctx *ResponderContext) Log(msg string, keysAndValues ...interface{}) {
 	Info(msg, keysAndValues...)
+}
+
+func (ctx *ResponderContext) MidiEventToPhraseElement(me MidiEvent) *PhraseElement {
+	nt, err := ctx.player.MidiEventToPhraseElement(me)
+	if err != nil {
+		LogError(err)
+		return nil
+	} else {
+		return nt
+	}
 }
 
 func (ctx *ResponderContext) CurrentClick() Clicks {
@@ -31,8 +43,8 @@ func (ctx *ResponderContext) SchedulePhraseNow(phr *Phrase) {
 	ctx.SchedulePhraseAt(phr, CurrentClick())
 }
 
-func (ctx *ResponderContext) ScheduleNoteNow(nt *Note) {
-	ctx.ScheduleNoteAt(nt, CurrentClick())
+func (ctx *ResponderContext) SchedulePhraseElementNow(pe *PhraseElement) {
+	ctx.SchedulePhraseElementAt(pe, CurrentClick())
 }
 
 func (ctx *ResponderContext) SchedulePhraseAt(phr *Phrase, click Clicks) {
@@ -45,14 +57,13 @@ func (ctx *ResponderContext) SchedulePhraseAt(phr *Phrase, click Clicks) {
 	}()
 }
 
-func (ctx *ResponderContext) ScheduleNoteAt(nt *Note, click Clicks) {
-	if nt == nil {
+func (ctx *ResponderContext) SchedulePhraseElementAt(pe *PhraseElement, click Clicks) {
+	if pe == nil {
 		Warn("ResponderContext.ScheduleNoteAt: nt == nil?")
 		return
 	}
-	phr := NewPhrase().InsertNote(nt)
 	go func() {
-		ctx.scheduler.cmdInput <- SchedulePhraseCmd{phr, click}
+		ctx.scheduler.cmdInput <- SchedulePhraseElementCmd{pe, click}
 	}()
 }
 

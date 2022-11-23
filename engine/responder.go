@@ -19,7 +19,7 @@ func NewResponderManager() *ResponderManager {
 	}
 }
 
-func (rm *ResponderManager) GetResponder(name string) Responder {
+func (rm *ResponderManager) xGetResponder(name string) Responder {
 	r, ok := rm.responders[name]
 	if !ok {
 		return nil

@@ -160,16 +160,42 @@ func SendControllerToSynth(synthName string, cnum int, cval int) {
 }
 
 // SendNote sends MIDI output for a Note
-func SendNoteToSynth(note *Note) {
-	synthName := note.Synth
+func SendPhraseElementToSynth(pe *PhraseElement) {
+
+	var pitch uint8
+	var velocity uint8
+	var synthName string
+
+	switch v := pe.Value.(type) {
+	case *NoteOn:
+		pitch = v.Pitch
+		synthName = v.Synth
+		velocity = v.Velocity
+		if velocity == 0 {
+			Info("MIDIIO.SendNote: noteon with velocity==0 NOT changed to a noteoff")
+		}
+	case *NoteOff:
+		pitch = v.Pitch
+		synthName = v.Synth
+		velocity = v.Velocity
+	case *NoteFull:
+		pitch = v.Pitch
+		synthName = v.Synth
+		velocity = v.Velocity
+	default:
+		Warn("SendPhraseElementToSynth: doesn't handle", "type", fmt.Sprintf("%T", v))
+		return
+	}
+
 	if synthName == "" {
 		synthName = "default"
 	}
 	synth, ok := Synths[synthName]
 	if !ok {
-		Warn("SendNoteToSynth: no such", "synth", synthName)
+		Warn("SendPhraseElementToSynth: no such", "synth", synthName)
 		return
 	}
+
 	if synth == nil {
 		// We don't complain, we assume the inability to open the
 		// synth named synthName has already been logged.
@@ -185,14 +211,10 @@ func SendNoteToSynth(note *Note) {
 	mc.SendBankProgram(synth.bank, synth.program)
 
 	status := byte(synth.portchannel.channel - 1)
-	data1 := byte(note.Pitch)
-	data2 := byte(note.Velocity)
-	if note.TypeOf == "noteon" && note.Velocity == 0 {
-		Info("MIDIIO.SendNote: noteon with velocity==0 is changed to a noteoff")
-		note.TypeOf = "noteoff"
-	}
-	switch note.TypeOf {
-	case "noteon":
+	data1 := pitch
+	data2 := velocity
+	switch pe.Value.(type) {
+	case *NoteOn:
 		status |= 0x90
 
 		// We now allow multiple notes with the same pitch,
@@ -200,40 +222,41 @@ func SendNoteToSynth(note *Note) {
 		// There might need to be an option to
 		// automatically send a noteOff before sending the noteOn.
 		// if synth.noteDown[note.Pitch] {
-		//     Warn("SendNoteToSynth: Ignoring second noteon")
+		//     Warn("SendPhraseElementToSynth: Ignoring second noteon")
 		// }
 
-		synth.noteDown[note.Pitch] = true
-		synth.noteDownCount[note.Pitch]++
+		synth.noteDown[pitch] = true
+		synth.noteDownCount[pitch]++
 
 		DebugLogOfType("midi", "SendNoteOnToSynth",
 			"synth", synth,
 			"channel", synth.portchannel.channel,
-			"pitch", note.Pitch,
-			"notedowncount", synth.noteDownCount[note.Pitch])
+			"pitch", pitch,
+			"notedowncount", synth.noteDownCount[pitch])
 
-	case "noteoff":
+	case *NoteOff:
 		status |= 0x80
 		data2 = 0
-		synth.noteDown[note.Pitch] = false
-		synth.noteDownCount[note.Pitch]--
+		synth.noteDown[pitch] = false
+		synth.noteDownCount[pitch]--
 
 		DebugLogOfType("midi", "SendNoteOffToSynth",
 			"synth", synth,
 			"channel", synth.portchannel.channel,
-			"pitch", note.Pitch,
-			"notedowncount", synth.noteDownCount[note.Pitch])
+			"pitch", pitch,
+			"notedowncount", synth.noteDownCount[pitch])
 
-	case "controller":
-		status |= 0xB0
-	case "progchange":
-		status |= 0xC0
-	case "chanpressure":
-		status |= 0xD0
-	case "pitchbend":
-		status |= 0xE0
+	// case "controller":
+	// 	status |= 0xB0
+	// case "progchange":
+	// 	status |= 0xC0
+	// case "chanpressure":
+	// 	status |= 0xD0
+	// case "pitchbend":
+	// 	status |= 0xE0
+
 	default:
-		Warn("SendNoteToSynth: can't handle Note TypeOf=%v\n", note.TypeOf)
+		Warn("SendPhraseElementToSynth: can't handle", "type", fmt.Sprintf("%T", pe.Value))
 		return
 	}
 
@@ -247,7 +270,6 @@ func SendNoteToSynth(note *Note) {
 	if err != nil {
 		Warn("output.Send", "err", err)
 	}
-	// mc.midiDeviceOutput.stream.WriteShort(e.Status, e.Data1, e.Data2)
 }
 
 func hexString(b byte) string {

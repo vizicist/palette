@@ -28,7 +28,6 @@ type Router struct {
 
 	OSCInput      chan OSCEvent
 	midiInputChan chan MidiEvent
-	NoteInput     chan *Note
 	CursorInput   chan CursorEvent
 
 	CursorManager *CursorManager
@@ -148,7 +147,6 @@ func NewRouter() *Router {
 
 	r.OSCInput = make(chan OSCEvent)
 	r.midiInputChan = make(chan MidiEvent)
-	r.NoteInput = make(chan *Note)
 	// r.recordingOn = false
 
 	r.myHostname = ConfigValue("hostname")
@@ -182,8 +180,7 @@ func (r *Router) Start() {
 		Warn("StartCursorInput: LoadMorphs", "err", err)
 	}
 
-	Info("Router is NOT starting Morph")
-	// go StartMorph(r.CursorManager.handleCursorEvent, 1.0)
+	go StartMorph(r.CursorManager.handleCursorEvent, 1.0)
 }
 
 // InputListener listens for local device inputs (OSC, MIDI)
@@ -342,14 +339,11 @@ func (r *Router) HandleInputEvent(playerName string, args map[string]string) err
 			return err
 		}
 		Info("HandleInputEvent", "notestr", notestr, "clickstr", clickstr)
-		note, err := NoteFromString(notestr)
+		note, err := PhraseElementFromString(notestr)
 		if err != nil {
 			return err
 		}
-		if note.Synth == "" {
-			note.Synth = "default"
-		}
-		SendNoteToSynth(note)
+		SendPhraseElementToSynth(note)
 
 	default:
 		Info("HandleInputEvent: event not handled", "event", event)

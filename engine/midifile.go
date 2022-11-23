@@ -1,6 +1,8 @@
 package engine
 
+/*
 import (
+	"container/list"
 	"encoding/binary"
 	"fmt"
 	"io"
@@ -30,9 +32,10 @@ type MIDIFile struct {
 	currtime           int
 	dosysexcontinue    bool
 	bytes              []byte
-	noteq              *Phrase // noteons to be completed when noteoffs found
-	onoffmerge         bool
-	numq               int
+	// noteq              *Phrase // noteons to be completed when noteoffs found
+	noteq      *list.List
+	onoffmerge bool
+	numq       int
 }
 
 // NewMIDIFile creates a MIDIFile
@@ -132,7 +135,7 @@ func (m *MIDIFile) readHeader() error {
 	var clicks float32 = 96 // constant, not based on defaultClicksPerSecond or anything that changes
 	var tempo float32 = 500000
 	if (0x8000 & m.division) != 0 {
-		/* It's SMPTE, frame-per-second and ticks per frame */
+		// It's SMPTE, frame-per-second and ticks per frame
 		framesPerSecond := (m.division >> 8) & 0x7f
 		ticksPerFrame := m.division & 0xff
 		m.clickfactor = (float32)(framesPerSecond*ticksPerFrame) / (clicks * (1000000.0 / tempo))
@@ -150,22 +153,14 @@ func (m *MIDIFile) readHeader() error {
 
 func (m *MIDIFile) starttrack() {
 	m.currentTrackPhrase = NewPhrase()
-	m.noteq = NewPhrase()
+	m.noteq = list.New()
 }
 
 // output the top Noteq and remove it from the list
 func (m *MIDIFile) putnfree() {
-	n := m.noteq.firstnote
-	nxt := n.next
-	n.next = nil
+	n := m.noteq.Remove(m.noteq.Front())
 
-	m.noteq.firstnote = nxt // remove from list
 	m.numq--
-
-	// If the one we removed was also the last note, update lastnote
-	if n == m.noteq.lastnote {
-		m.noteq.lastnote = nxt
-	}
 
 	if n.Duration == UnfinishedDuration {
 		n.Duration = m.clicks() - n.Clicks
@@ -176,7 +171,7 @@ func (m *MIDIFile) putnfree() {
 }
 
 func (m *MIDIFile) putallnotes() {
-	for m.noteq.firstnote != nil {
+	for m.noteq.Front() != nil {
 		m.putnfree()
 	}
 }
@@ -208,60 +203,61 @@ func (m *MIDIFile) noteon(synth string, pitch, velocity byte) {
 		m.queuenote(synth, pitch, velocity, "noteon")
 	}
 }
+
 func (m *MIDIFile) noteoff(synth string, pitch, velocity byte) {
 
-	/* find the first note-on (if any) that matches this one */
-	n := m.noteq.firstnote
-	for ; n != nil; n = n.next {
-		if n.Synth == synth && n.Pitch == pitch && n.TypeOf == "noteon" {
+	// find the first note-on (if any) that matches this one
+	n := m.noteq.Front()
+	for ; n != nil; n = n.Next() {
+		if n.Synth() == synth && n.Pitch() == pitch && n.TypeOf() == "noteon" {
 			break
 		}
 	}
 	if n == nil {
-		/* it's an isolated note-off */
+		// it's an isolated note-off
 		n = m.queuenote(synth, pitch, velocity, "noteoff")
 		n.Duration = 0
 	} else if !m.onoffmerge && velocity != defaultReleaseVelocity {
-		/* If the note-off matches a previous note-on, but has a */
-		/* non-default velocity, then we have to turn it into a */
-		/* separate keykit note-off, instead of merging it with */
-		/* the note-on into a single note. */
+		// If the note-off matches a previous note-on, but has a
+		// non-default velocity, then we have to turn it into a
+		// separate keykit note-off, instead of merging it with
+		// the note-on into a single note.
 		o := m.queuenote(synth, pitch, velocity, "noteoff")
 		n.Duration = 0
 		o.Duration = 0
 	} else {
-		/* A completed note. */
+		// A completed note.
 		n.TypeOf = "note"
 		n.Duration = m.clicks() - n.Clicks
 
-		/* If the MIDI File contains negative delta times (which */
-		/* probably aren't legal!) the duration turns out to be */
-		/* negative.  Here we deal with that. */
+		// If the MIDI File contains negative delta times (which
+		// probably aren't legal!) the duration turns out to be
+		// negative.  Here we deal with that.
 		if n.Duration < 0 {
 			n.Clicks = n.Clicks + n.Duration
 			n.Duration = -n.Duration
 		}
 	}
 
-	/* Now start at the beginning of the list and put out any */
-	/* notes we've completed.  This guarantees that the starting */
-	/* times of the notes are in the proper (ie. monotonically */
-	/* progressing) order. */
+	// Now start at the beginning of the list and put out any
+	// notes we've completed.  This guarantees that the starting
+	// times of the notes are in the proper (ie. monotonically
+	// progressing) order.
 
 	for {
-		n := m.noteq.firstnote
+		n := m.noteq.Front()
 		if n == nil {
 			break
 		}
-		/* quit when we get to the first unfinished note */
+		// quit when we get to the first unfinished note
 		if n.TypeOf != "notebytes" && n.Duration == UnfinishedDuration {
 			break
 		}
 		m.putnfree()
 	}
-	/* If the number of notes int Noteq gets too big, then we're */
-	/* probably suffering from a note-on that never had a note-off.*/
-	/* Force it out. */
+	// If the number of notes int Noteq gets too big, then we're
+	// probably suffering from a note-on that never had a note-off
+	// Force it out.
 	if m.numq > 1024 {
 		m.putnfree()
 	}
@@ -355,12 +351,12 @@ func (m *MIDIFile) add2noteq(n *Note) {
 
 func (m *MIDIFile) readTrack() error {
 
-	/* This array is indexed by the high half of a status byte.  It's */
-	/* value is either the number of bytes needed (1 or 2) for a channel */
-	/* message, or 0 (meaning it's not  a channel message). */
+	// This array is indexed by the high half of a status byte.  It's
+	// value is either the number of bytes needed (1 or 2) for a channel
+	// message, or 0 (meaning it's not  a channel message).
 	chantype := []int{
-		0, 0, 0, 0, 0, 0, 0, 0, /* 0x00 through 0x70 */
-		2, 2, 2, 2, 1, 1, 2, 0, /* 0x80 through 0xf0 */
+		0, 0, 0, 0, 0, 0, 0, 0, // 0x00 through 0x70
+		2, 2, 2, 2, 1, 1, 2, 0, // 0x80 through 0xf0
 	}
 
 	sysexcontinue := false // if last message was an unfinished sysex
@@ -403,7 +399,7 @@ func (m *MIDIFile) readTrack() error {
 			Warn("Didn't find expected continuation of a sysex?")
 		}
 
-		if (c & 0x80) == 0 { /* running status? */
+		if (c & 0x80) == 0 { // running status?
 			if status == 0 {
 				Warn("Unexpected running status")
 			}
@@ -415,7 +411,7 @@ func (m *MIDIFile) readTrack() error {
 
 		needed := chantype[(status>>4)&0xf]
 
-		if needed != 0 { /* ie. is it a channel message? */
+		if needed != 0 { // ie. is it a channel message?
 
 			var c1 byte
 			if running {
@@ -428,10 +424,10 @@ func (m *MIDIFile) readTrack() error {
 				c1 = c1 & 0x7f
 			}
 
-			/* The &0xf7 here may seem unnecessary, but I've seen */
-			/* 'bad' midi files that had, e.g., volume bytes */
-			/* with the upper bit set.  This code should not harm */
-			/* proper data. */
+			// The &0xf7 here may seem unnecessary, but I've seen
+			// 'bad' midi files that had, e.g., volume bytes
+			// with the upper bit set.  This code should not harm
+			// proper data.
 
 			if needed == 1 {
 				m.chanmessage(status, c1, 0)
@@ -450,13 +446,13 @@ func (m *MIDIFile) readTrack() error {
 
 		// Non-channel messages end up here
 		switch c {
-		case 0xff: /* meta event */
+		case 0xff: // meta event
 
 			metatype, err := m.readc()
 			if err != nil {
 				return err
 			}
-			/* watch out - Don't combine the next 2 statements */
+			// watch out - Don't combine the next 2 statements
 			lng, err := m.readvarinum()
 			if err != nil {
 				return err
@@ -474,9 +470,9 @@ func (m *MIDIFile) readTrack() error {
 
 			m.metaevent(metatype)
 
-		case 0xf0: /* start of system exclusive */
+		case 0xf0: // start of system exclusive
 
-			/* watch out - Don't combine the next 2 statements */
+			// watch out - Don't combine the next 2 statements
 			lng, err := m.readvarinum()
 			if err != nil {
 				return err
@@ -499,9 +495,9 @@ func (m *MIDIFile) readTrack() error {
 				sysexcontinue = true
 			}
 
-		case 0xf7: /* sysex continuation or arbitrary stuff */
+		case 0xf7: // sysex continuation or arbitrary stuff
 
-			/* watch out - Don't combine the next 2 statements */
+			// watch out - Don't combine the next 2 statements
 			lng, err := m.readvarinum()
 			if err != nil {
 				return err
@@ -591,3 +587,5 @@ func (m *MIDIFile) readvarinum() (int, error) {
 	}
 	return value, nil
 }
+
+*/

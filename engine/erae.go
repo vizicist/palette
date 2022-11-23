@@ -36,8 +36,8 @@ func InitErae() {
 }
 
 func HandleEraeMIDI(event MidiEvent) {
-	if event.Bytes != nil {
-		bb := event.Bytes
+	if event.msg.Bytes != nil {
+		bb := event.msg.Bytes()
 		s := ""
 		for _, b := range bb {
 			s += fmt.Sprintf(" 0x%02x", b)

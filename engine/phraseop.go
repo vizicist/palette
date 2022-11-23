@@ -6,25 +6,29 @@ func (p *Phrase) Copy() *Phrase {
 	p.RLock()
 	defer p.RUnlock()
 
-	r := NewPhrase()
-	for n := p.firstnote; n != nil; n = n.next {
-		nn := n.Copy()
-		r.InsertNote(nn)
-	}
-	r.Length = p.Length
-	return r
+	Info("Phrase.Copy needs work")
+	return p
+	/*
+		r := NewPhrase()
+		for n := p.list.Front(); n != nil; n = n.Next() {
+			nn := n.Copy()
+			r.InsertNote(nn)
+		}
+		r.Length = p.Length
+		return r
+	*/
 }
 
 // CopyAndAppend makes a copy of a Note and appends it to the Phrase
-func (p *Phrase) CopyAndAppend(n *Note) *Note {
-	newn := n.Copy()
-	if p.firstnote == nil {
-		p.firstnote = newn
+func (p *Phrase) CopyAndAppend(elem *PhraseElement) *PhraseElement {
+	Info("Phrase.CopyAndAppend needs work")
+	newe := elem.Copy()
+	if p.list.Front() == nil {
+		p.list.PushFront(newe)
 	} else {
-		p.lastnote.next = newn
+		p.list.PushBack(newe)
 	}
-	p.lastnote = newn
-	return newn
+	return newe
 }
 
 // CutTime creates a new Phrase with notes in a given time range
@@ -34,9 +38,10 @@ func (p *Phrase) CutTime(fromclick, toclick Clicks) *Phrase {
 	defer p.RUnlock()
 
 	newp := NewPhrase()
-	for n := p.firstnote; n != nil; n = n.next {
-		if n.Clicks >= fromclick && n.Clicks < toclick {
-			newp.CopyAndAppend(n)
+	for e := p.list.Front(); e != nil; e = e.Next() {
+		pe := e.Value.(*PhraseElement)
+		if pe.AtClick >= fromclick && pe.AtClick < toclick {
+			newp.CopyAndAppend(pe)
 		}
 	}
 	newp.ResetLengthNoLock()
@@ -50,15 +55,20 @@ func (p *Phrase) CutSound(sound string) *Phrase {
 	p.RLock()
 	defer p.RUnlock()
 
-	newp := NewPhrase()
-	for n := p.firstnote; n != nil; n = n.next {
-		if n.Synth == sound {
-			newp.CopyAndAppend(n)
-		}
-	}
-	newp.ResetLengthNoLock()
+	Info("Phrase.CutSound needs work")
+	return nil
 
-	return newp
+	/*
+		newp := NewPhrase()
+		for n := p.list.Front(); n != nil; n = n.Next() {
+			if n.Synth == sound {
+				newp.CopyAndAppend(n)
+			}
+		}
+		newp.ResetLengthNoLock()
+
+		return newp
+	*/
 }
 
 // AdjustTimes returns a new Phrase shifted by shift Clicks
@@ -68,9 +78,10 @@ func (p *Phrase) AdjustTimes(shift Clicks) *Phrase {
 	defer p.RUnlock()
 
 	ret := NewPhrase()
-	for n := p.firstnote; n != nil; n = n.next {
-		newn := ret.CopyAndAppend(n)
-		newn.Clicks += shift
+	for i := p.list.Front(); i != nil; i = i.Next() {
+		pe := i.Value.(*PhraseElement)
+		newpi := ret.CopyAndAppend(pe)
+		newpi.AtClick += shift
 	}
 	ret.ResetLengthNoLock()
 
@@ -85,9 +96,10 @@ func (p *Phrase) Merge(fromPhrase *Phrase) *Phrase {
 	p.Lock() // write lock, we're changing p
 	defer p.Unlock()
 
-	for nt := fromPhrase.firstnote; nt != nil; nt = nt.next {
-		nn := nt.Copy()
-		p.InsertNote(nn)
+	for e := fromPhrase.list.Front(); e != nil; e = e.Next() {
+		pe := e.Value.(PhraseElement)
+		newpe := pe.Copy()
+		p.InsertElement(newpe)
 	}
 	p.ResetLengthNoLock()
 	return p
@@ -103,15 +115,20 @@ func (p *Phrase) Arpeggio() *Phrase {
 
 	lastend := Clicks(0)
 	r := NewPhrase()
-	for nt := p.firstnote; nt != nil; nt = nt.next {
-		nn := nt.Copy()
-		nn.Clicks = lastend
-		r.InsertNote(nn)
-		d := nt.Duration
-		if d == 0 {
-			d = 1
+	for i := p.list.Front(); i != nil; i = i.Next() {
+		pi := i.Value.(PhraseElement)
+		newElement := pi.Copy()
+		newElement.AtClick = lastend
+		r.InsertElement(newElement)
+		switch v := pi.Value.(type) {
+		case NoteFull:
+			d := v.Duration
+			if d == 0 {
+				d = 1
+			}
+			lastend += d
+		default:
 		}
-		lastend += d
 	}
 	r.Length = lastend
 	return r
@@ -127,18 +144,23 @@ func (p *Phrase) Step(stepsize Clicks) *Phrase {
 	lasttime := Clicks(0)
 	steptime := Clicks(0)
 	r := NewPhrase()
-	for nt := p.firstnote; nt != nil; nt = nt.next {
+	for i := p.list.Front(); i != nil; i = i.Next() {
+		pi := i.Value.(PhraseElement)
 		// Notes that are at the same time (like chords)
 		// are still at the same time.
-		if !first && nt.Clicks != lasttime {
+		if !first && pi.AtClick != lasttime {
 			steptime += stepsize
-			lasttime = nt.Clicks
+			lasttime = pi.AtClick
 		}
 		first = false
-		newnt := nt.Copy()
-		newnt.Clicks = steptime
-		newnt.Duration = stepsize
-		r.InsertNote(newnt)
+		newElement := pi.Copy()
+		newElement.AtClick = steptime
+		switch v := newElement.Value.(type) {
+		case *NoteFull:
+			v.Duration = stepsize
+		default:
+		}
+		r.InsertElement(newElement)
 	}
 	r.Length = steptime + stepsize
 	return (r)
@@ -151,9 +173,17 @@ func (p *Phrase) Transpose(delta int) *Phrase {
 	defer p.RUnlock()
 
 	r := NewPhrase()
-	for nt := p.firstnote; nt != nil; nt = nt.next {
-		newnt := r.CopyAndAppend(nt)
-		newnt.Pitch = uint8(int(newnt.Pitch) + delta)
+	for e := p.list.Front(); e != nil; e = e.Next() {
+		pe := e.Value.(*PhraseElement)
+		newElement := r.CopyAndAppend(pe)
+		switch v := newElement.Value.(type) {
+		case *NoteOn:
+			v.Pitch = uint8(int(v.Pitch) + delta)
+		case *NoteOff:
+			v.Pitch = uint8(int(v.Pitch) + delta)
+		case *NoteFull:
+			v.Pitch = uint8(int(v.Pitch) + delta)
+		}
 	}
 	return r
 }
@@ -165,9 +195,21 @@ func (p *Phrase) LowestPitch(delta int) uint8 {
 	defer p.RUnlock()
 
 	lowest := uint8(127)
-	for nt := p.firstnote; nt != nil; nt = nt.next {
-		if nt.Pitch < lowest {
-			lowest = nt.Pitch
+	for i := p.list.Front(); i != nil; i = i.Next() {
+		pi := i.Value.(PhraseElement)
+		switch v := pi.Value.(type) {
+		case *NoteOn:
+			if v.Pitch < lowest {
+				lowest = v.Pitch
+			}
+		case *NoteOff:
+			if v.Pitch < lowest {
+				lowest = v.Pitch
+			}
+		case *NoteFull:
+			if v.Pitch < lowest {
+				lowest = v.Pitch
+			}
 		}
 	}
 	return lowest
@@ -177,12 +219,14 @@ func (p *Phrase) LowestPitch(delta int) uint8 {
 // Doesn't modify the duration of the last note.
 func (p *Phrase) Legato() *Phrase {
 	r := p.Copy()
-	for nt := r.firstnote; nt != nil; nt = nt.next {
-		if nt.IsNote() {
-			nextt := r.NextTime(nt.Clicks)
+	for i := r.list.Front(); i != nil; i = i.Next() {
+		pi := i.Value.(PhraseElement)
+		switch v := pi.Value.(type) {
+		case *NoteFull:
+			nextt := r.NextTime(pi.AtClick)
 			// notes at the end of the phrase aren't touched
 			if nextt >= 0 {
-				nt.Duration = nextt - nt.Clicks
+				v.Duration = nextt - pi.AtClick
 			}
 		}
 	}
@@ -190,18 +234,20 @@ func (p *Phrase) Legato() *Phrase {
 }
 
 // AtTime returns those notes in the specified phrase that are
-//sounding at the specified time.  If a note ends exactly
-//at the specified time, it is not included.
+// sounding at the specified time.  If a note ends exactly
+// at the specified time, it is not included.
 func (p *Phrase) AtTime(tm Clicks) *Phrase {
 
 	p.RLock()
 	defer p.RUnlock()
 
 	newp := NewPhrase()
-	for n := p.firstnote; n != nil; n = n.next {
-		if n.Clicks <= tm && n.EndOf() > tm {
+	for i := p.list.Front(); i != nil; i = i.Next() {
+		pi := i.Value.(PhraseElement)
+		endof := pi.EndOf()
+		if pi.AtClick <= tm && endof > tm {
 			// Assumes Phrase is already sorted, so always append to end of new phrase
-			newp.Append(n.Copy())
+			newp.list.PushBack(pi.Copy())
 		}
 	}
 	newp.ResetLengthNoLock()
@@ -215,9 +261,10 @@ func (p *Phrase) NextTime(st Clicks) Clicks {
 	defer p.RUnlock()
 
 	nexttime := Clicks(-1)
-	for nt := p.firstnote; nt != nil; nt = nt.next {
-		if nt.Clicks > st {
-			nexttime = nt.Clicks
+	for i := p.list.Front(); i != nil; i = i.Next() {
+		pi := i.Value.(PhraseElement)
+		if pi.AtClick > st {
+			nexttime = pi.AtClick
 			break
 		}
 	}

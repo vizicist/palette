@@ -5,17 +5,19 @@ import (
 )
 
 func init() {
-	// engine.AddResponder("default", NewResponder_default))
 	engine.AddResponder("default", &Responder_default{})
+	AllResponders["default"] = &Responder_default{}
 }
 
 type Responder_default struct {
 }
 
 func (r *Responder_default) OnMidiEvent(ctx *engine.ResponderContext, me engine.MidiEvent) {
-	engine.DebugLogOfType("midi", "Responder_default.onMidiEvent", "me", me)
-	// just echo it back out
-	ctx.ScheduleBytesNow(me.Bytes)
+	pe := ctx.MidiEventToPhraseElement(me)
+	ctx.Log("Responder_default.onMidiEvent", "me", me)
+	if pe != nil {
+		ctx.SchedulePhraseElementNow(pe)
+	}
 }
 
 func (r *Responder_default) OnCursorEvent(ctx *engine.ResponderContext, ce engine.CursorEvent) {
@@ -25,11 +27,14 @@ func (r *Responder_default) OnCursorEvent(ctx *engine.ResponderContext, ce engin
 		velocity := uint8(ce.Z * 1280)
 		duration := engine.QuarterNote
 		synth := "0103 Ambient_E-Guitar"
-		nt := engine.NewNote(pitch, velocity, duration, synth)
-
+		nt := engine.NewNoteFull(pitch, velocity, duration, synth)
+		pe := &engine.PhraseElement{
+			AtClick: ctx.CurrentClick(),
+			Source:  "default",
+			Value:   nt,
+		}
+		phr := engine.NewPhrase().InsertElement(pe)
 		ctx.Log("Responder_default.OnCursorEvent", "pitch", pitch, "vel", velocity, "dur", duration)
-
-		phr := engine.NewPhrase().InsertNote(nt)
 		ctx.SchedulePhraseNow(phr)
 	}
 }

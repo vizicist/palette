@@ -2,12 +2,16 @@ package engine
 
 import (
 	"bufio"
+	"container/list"
 	"fmt"
 	"io"
 	"math"
 	"strconv"
 	"strings"
 	"sync"
+
+	midi "gitlab.com/gomidi/midi/v2"
+	_ "gitlab.com/gomidi/midi/v2/drivers/rtmididrv" // autoregisters driver
 )
 
 // Clicks is a time or duration value.
@@ -28,45 +32,157 @@ const ThirtySecondNote = Clicks(3)
 // MaxClicks is the high-possible value for Clicks
 const MaxClicks = Clicks(math.MaxInt64)
 
-// Phrase is a time-ordered list of Notes
-// which are MIDI messages and other realtime events).
-type Phrase struct {
-	// readonly  bool
-	rwmutex   sync.RWMutex
-	firstnote *Note
-	lastnote  *Note
-	Length    Clicks
-}
-type Phrasep *Phrase
-
-// Note should be an interface?
-
-// Note is a single item in a Phrase
-type Note struct {
-	Source   string // relative to local machine
-	TypeOf   string // note, noteon, noteoff, controller, notebytes
-	Clicks   Clicks
-	Duration Clicks
-	Pitch    uint8 // 0-127
-	Velocity uint8 // 0-127
+type NoteOn struct {
 	Synth    string
+	Pitch    uint8
+	Velocity uint8
+}
+
+func (n *NoteOn) String() string {
+	return fmt.Sprintf("(NoteOn Synth=%s Pitch=%d)", n.Synth, n.Pitch)
+}
+
+type NoteOff struct {
+	Synth    string
+	Pitch    uint8
+	Velocity uint8
+}
+
+func (n NoteOff) String() string {
+	return fmt.Sprintf("(NoteOff Synth=%s Pitch=%d)", n.Synth, n.Pitch)
+}
+
+// NoteFull has a duration, i.e. it's a combination of a NoteOn and NoteOff
+type NoteFull struct {
+	Synth    string
+	Duration Clicks
+	Pitch    uint8
+	Velocity uint8
+	msg      midi.Message
 	bytes    []byte
-	next     *Note
 }
 
-// Data1 xxx
-func (n Note) Data1() uint8 {
-	return n.Pitch
+func NewNoteFull(pitch, velocity uint8, duration Clicks, synth string) *NoteFull {
+	return &NoteFull{
+		Synth:    synth,
+		Duration: duration,
+		Pitch:    pitch,
+		Velocity: velocity,
+		msg:      []byte{},
+		bytes:    []byte{},
+	}
 }
 
-// Data2 xxx
-func (n Note) Data2() uint8 {
-	return n.Velocity
+func (n *NoteFull) String() string {
+	return fmt.Sprintf("(NoteFull Synth=%s Pitch=%d Duration=%d)", n.Synth, n.Pitch, n.Duration)
+}
+
+type NoteBytes struct {
+	bytes []byte
+}
+
+func NewNoteBytes(bytes []byte) *NoteBytes {
+	return &NoteBytes{
+		bytes: bytes,
+	}
+}
+
+func (n *NoteBytes) String() string {
+	return fmt.Sprintf("(NoteBytes)")
+}
+
+type NoteSystem struct {
+	system byte
+}
+
+func NewNoteSystem(system byte) *NoteSystem {
+	return &NoteSystem{system: system}
+}
+
+func (n *NoteSystem) String() string {
+	return fmt.Sprintf("(NoteSystem byte=0%02x)", n.system)
+}
+
+type ProgramChange struct {
+	Program uint8
+}
+
+func NewProgramChange(program uint8) *ProgramChange {
+	return &ProgramChange{Program: program}
+}
+
+func (n *ProgramChange) String() string {
+	return fmt.Sprintf("(ProgramChange program=%d)", n.Program)
+}
+
+type ChanPressure struct {
+	Synth    string
+	Pressure uint8
+}
+
+func NewChanPressure(pressure uint8, synth string) *ChanPressure {
+	return &ChanPressure{Pressure: pressure, Synth: synth}
+}
+
+func (n *ChanPressure) String() string {
+	return fmt.Sprintf("(ChanPressure pressure=%d)", n.Pressure)
+}
+
+type Controller struct {
+	Controller uint8
+	Value      uint8
+	Synth      string
+}
+
+// NewController create a new noteoff
+func NewController(controller uint8, value uint8, synth string) *Controller {
+	return &Controller{Controller: controller, Value: value, Synth: synth}
+}
+
+func (n *Controller) String() string {
+	return fmt.Sprintf("(Controller controller=%d value=%d)", n.Controller, n.Value)
+}
+
+type PitchBend struct {
+	data1 uint8
+	data2 uint8
+}
+
+func NewPitchBend(data1 uint8, data2 uint8) *PitchBend {
+	return &PitchBend{data1: data1, data2: data2}
+}
+
+func (n *PitchBend) String() string {
+	return fmt.Sprintf("(PitchBend data1=%d data2=%d)", n.data1, n.data2)
+}
+
+// Phrase is a time-ordered list of PhraseElements
+type Phrase struct {
+	rwmutex sync.RWMutex
+	list    *list.List
+	Source  string
+	Length  Clicks
+}
+
+type PhraseElement struct {
+	AtClick Clicks
+	Source  string      // relative to Phrase's Source
+	Value   interface{} // things like *NoteFull, *NoteOn, *NoteOff, etc
+}
+
+func (pe *PhraseElement) Copy() *PhraseElement {
+	newpe := &PhraseElement{
+		AtClick: pe.AtClick,
+		Source:  pe.Source,
+		Value:   pe.Value,
+	}
+	return newpe
 }
 
 // NewPhrase returns a new Phrase
 func NewPhrase() *Phrase {
 	return &Phrase{
+		list:  list.New(),
 		// rwmutex: new(sync.RWMutex),
 	}
 }
@@ -92,10 +208,20 @@ func (p *Phrase) RUnlock() {
 }
 
 // Format xxx
-func (n *Note) Format(f fmt.State, c rune) {
-	f.Write([]byte(n.String()))
+func (pi *PhraseElement) Format(f fmt.State, c rune) {
+	var valstr string
+	switch v := pi.Value.(type) {
+	case *NoteOn:
+		valstr = v.String()
+	default:
+		valstr = "UNKNOWNTYPE"
+
+	}
+	final := fmt.Sprintf("(PhraseElement AtClick=%d Value=%)", pi.AtClick, valstr)
+	f.Write([]byte(final))
 }
 
+/*
 // NewNote create a new Note of type note, i.e. with duration
 func NewNote(pitch uint8, velocity uint8, duration Clicks, sound string) *Note {
 	return &Note{TypeOf: "note", Pitch: pitch, Velocity: velocity, Duration: duration, Synth: sound}
@@ -104,63 +230,51 @@ func NewNote(pitch uint8, velocity uint8, duration Clicks, sound string) *Note {
 func NewBytes(bytes []byte) *Note {
 	return &Note{TypeOf: "notebytes", bytes: bytes}
 }
+*/
+
+/*
+command	meaning	# param
+0xF0	start of system exclusive message	variable
+0xF1	MIDI Time Code Quarter Frame (Sys Common)
+0xF2	Song Position Pointer (Sys Common)
+0xF3	Song Select (Sys Common)
+0xF4	???
+0xF5	???
+0xF6	Tune Request (Sys Common)
+0xF7	end of system exclusive message	0
+0xF8	Timing Clock (Sys Realtime)
+0xFA	Start (Sys Realtime)
+0xFB	Continue (Sys Realtime)
+0xFC	Stop (Sys Realtime)
+0xFD	???
+0xFE	Active Sensing (Sys Realtime)
+0xFF	System Reset (Sys Realtime)
+*/
 
 // NewNoteOn create a new noteon
-func NewNoteOn(pitch uint8, velocity uint8, sound string) *Note {
-	return &Note{TypeOf: "noteon", Pitch: pitch, Velocity: velocity, Synth: sound}
+func NewNoteOn(pitch uint8, velocity uint8, synth string) *NoteOn {
+	return &NoteOn{Pitch: pitch, Velocity: velocity, Synth: synth}
 }
 
 // NewNoteOff create a new noteoff
-func NewNoteOff(pitch uint8, velocity uint8, sound string) *Note {
-	return &Note{TypeOf: "noteoff", Pitch: pitch, Velocity: velocity, Synth: sound}
+func NewNoteOff(pitch uint8, velocity uint8, synth string) *NoteOff {
+	return &NoteOff{Pitch: pitch, Velocity: velocity, Synth: synth}
 }
 
-// NewController create a new noteoff
-func NewController(controller uint8, value uint8, sound string) *Note {
-	return &Note{TypeOf: "controller", Pitch: controller, Velocity: value, Synth: sound}
-}
-
-// NewProgChange xxx
-func NewProgChange(program uint8, value uint8, sound string) *Note {
-	return &Note{TypeOf: "progchange", Pitch: program, Velocity: value, Synth: sound}
-}
-
-// NewChanPressure xxx
-func NewChanPressure(data1 uint8, velocity uint8, sound string) *Note {
-	return &Note{TypeOf: "chanpressure", Pitch: data1, Velocity: velocity, Synth: sound}
-}
-
-// NewPitchBend xxx
-func NewPitchBend(data1 uint8, data2 uint8, sound string) *Note {
-	return &Note{TypeOf: "pitchbend", Pitch: data1, Velocity: data2, Synth: sound}
-}
-
-// EndOf returns the ending time of a note
-func (n *Note) EndOf() Clicks {
-	if n.TypeOf == "note" {
-		return n.Clicks + n.Duration
-	}
-	return n.Clicks
-}
-
-// IsNote returns true if the note is a note, noteon, or noteoff
-func (n *Note) IsNote() bool {
-	if n.TypeOf == "note" || n.TypeOf == "noteon" || n.TypeOf == "noteoff" {
-		return true
-	}
-	return false
-}
-
+/*
 // ReadablePitch returns a readable string for a note pitch
 // Note that it also includes a + or - if it's a noteon or noteoff.
 // If it's not a NOTE-type note, "" is returned
-func (n *Note) ReadablePitch() string {
+func (n *PhraseAble) ReadablePitch() string {
 	scachars := []string{
 		"c", "c+", "d", "e-", "e", "f", "f+",
 		"g", "a-", "a", "b-", "b", "c",
 	}
 
 	pre := ""
+	switch n.(type) {
+	case NoteOn:
+	}
 	if n.TypeOf == "noteon" {
 		pre = "+"
 	} else if n.TypeOf == "noteoff" {
@@ -170,9 +284,11 @@ func (n *Note) ReadablePitch() string {
 	}
 	return fmt.Sprintf("%s%s", pre, scachars[n.Pitch%12])
 }
+*/
 
+/*
 // Compare is used to determine Note ordering
-func (n *Note) Compare(n2 *Note) int {
+func (n Note) Compare(n2 *Note) int {
 
 	// Compare attributes in the following order:
 	// Clicks, Typeof, Pitch, Sound, Velocity, Duration
@@ -218,20 +334,25 @@ func (n *Note) Compare(n2 *Note) int {
 }
 
 // Copy a Note.  NOTE: the next value is cleared
-func (n *Note) Copy() *Note {
-	newn := &Note{
-		TypeOf:   n.TypeOf,
-		Clicks:   n.Clicks,
-		Duration: n.Duration,
-		Pitch:    n.Pitch,
-		Velocity: n.Velocity,
-		Synth:    n.Synth,
-		bytes:    n.bytes,
-		next:     nil,
-	}
-	return newn
+func (n Note) Copy() *Note {
+	Warn("Note.Copy needs work")
+	return nil
+	/*
+		newn := &Note{
+			TypeOf:   n.TypeOf,
+			Clicks:   n.Clicks,
+			Duration: n.Duration,
+			Pitch:    n.Pitch,
+			Velocity: n.Velocity,
+			Synth:    n.Synth,
+			bytes:    n.bytes,
+			next:     nil,
+		}
+		return newn
 }
+*/
 
+/*
 // String produces a human-readable version of a Note.
 // Note that it includes the surrounding quotes that make it look like a Phrase
 func (n Note) String() string {
@@ -254,11 +375,12 @@ func (n Note) String() string {
 	s += "'"
 	return s
 }
+*/
 
-// NoteFromString interprets keykit-like note strings
-func NoteFromString(s string) (note *Note, err error) {
+// PhraseElementFromString interprets keykit-like note strings
+func PhraseElementFromString(s string) (e *PhraseElement, err error) {
 	if s == "" {
-		return nil, fmt.Errorf("NoteFromString: bad format - %s", s)
+		return nil, fmt.Errorf("PhraseElementFromString: bad format - %s", s)
 	}
 	ntype := "note"
 	reader := strings.NewReader(s)
@@ -267,7 +389,9 @@ func NoteFromString(s string) (note *Note, err error) {
 	npitch := -1
 	nflat := false
 	nsharp := false
+	ndur := -1
 	noctave := 3 // Note: default octave is 3
+	atclick := Clicks(0)
 	nsound := ""
 	endstate := 99
 	nattribute := ""
@@ -340,7 +464,7 @@ func NoteFromString(s string) (note *Note, err error) {
 			case "+":
 				nsharp = true
 				// stay in state 2
-			case "o", "v", "t", "S": // octave
+			case "d", "o", "v", "t", "S": // octave
 				nattribute = ch
 				state = 3
 			default:
@@ -351,6 +475,12 @@ func NoteFromString(s string) (note *Note, err error) {
 			// we've seen a note attribute,
 			// now scan whatever comes after it.
 			switch nattribute {
+			case "d":
+				ndur, err = scanner.ScanNumber()
+				if err != nil {
+					return nil, err
+				}
+
 			case "o":
 				noctave, err = scanner.ScanNumber()
 				if err != nil {
@@ -371,10 +501,11 @@ func NoteFromString(s string) (note *Note, err error) {
 				}
 
 			case "t": // time
-				noctave, err = scanner.ScanNumber()
+				number, err := scanner.ScanNumber()
 				if err != nil {
 					return nil, err
 				}
+				atclick = Clicks(number)
 
 			default:
 				return nil, fmt.Errorf("bad attribute: %s", nattribute)
@@ -397,19 +528,50 @@ func NoteFromString(s string) (note *Note, err error) {
 		npitch++
 	}
 	npitch = npitch + noctave*12
-	nvelocity := 64
-	note = &Note{
-		Source:   "",               // might be based on (or equal to) NUID
-		TypeOf:   ntype,            // note, noteon, noteoff, controller, notebytes
-		Clicks:   0,                // nanoseconds
-		Duration: 0,                // nanoseconds, when it's a note
-		Pitch:    uint8(npitch),    // 0-127
-		Velocity: uint8(nvelocity), // 0-127
-		Synth:    nsound,
+	if npitch > 127 {
+		return nil, fmt.Errorf("pitch > 127")
 	}
-	return note, nil
+	if npitch < 0 {
+		return nil, fmt.Errorf("pitch < 0")
+	}
+	nvelocity := 64
+
+	var val interface{}
+	switch ntype {
+	case "note":
+		val = &NoteFull{
+			Synth:    nsound,
+			Duration: Clicks(ndur),
+			Pitch:    uint8(npitch),
+			Velocity: uint8(nvelocity),
+		}
+	case "noteon":
+		val = &NoteOn{
+			Synth:    nsound,
+			Pitch:    uint8(npitch),
+			Velocity: uint8(nvelocity),
+		}
+	case "noteoff":
+		val = &NoteOff{
+			Synth:    nsound,
+			Pitch:    uint8(npitch),
+			Velocity: uint8(nvelocity),
+		}
+	default:
+		err := fmt.Errorf("unknown ntype = %s", ntype)
+		return nil, err
+	}
+
+	pi := &PhraseElement{
+		AtClick: atclick,
+		Source:  "fromstring",
+		Value:   val,
+	}
+
+	return pi, nil
 }
 
+/*
 ////////////////////// Phrase methods /////////////////////////
 
 // NumNotes returns the number of notes in a Phrase
@@ -425,8 +587,8 @@ func (p *Phrase) NumNotes() int {
 	return nnotes
 }
 
-// ToString returns a human-readable version of a Phrase
-func (p *Phrase) ToString() string {
+// String returns a human-readable version of a Phrase
+func (p *Phrase) String() string {
 
 	p.RLock()
 	defer p.RUnlock()
@@ -521,24 +683,28 @@ func (p *Phrase) ToString() string {
 
 // Format lets you conveniently print a Phrase with fmt functions
 func (p *Phrase) Format(f fmt.State, c rune) {
-	f.Write([]byte(p.ToString()))
+	f.Write([]byte(p.String()))
 }
+*/
 
 // ResetLengthNoLock sets the length of a Phrase to the end of the lastnote
 func (p *Phrase) ResetLengthNoLock() {
 
-	if p.lastnote == nil {
+	lasti := p.list.Back()
+	if lasti == nil {
 		p.Length = 0
-	} else {
-		n := p.lastnote
-		if n.TypeOf == "note" {
-			p.Length = n.Clicks + n.Duration
-		} else {
-			p.Length = n.Clicks
-		}
+		return
+	}
+	pi := lasti.Value.(PhraseElement)
+	switch v := pi.Value.(type) {
+	case NoteFull:
+		p.Length = pi.AtClick + v.Duration
+	case NoteOn, NoteOff:
+		p.Length = pi.AtClick
 	}
 }
 
+/*
 // Append appends a note to the end of a Phrase, assuming that the last
 // note in the Phrase is before or at the same time as tne appended note.
 func (p *Phrase) Append(n *Note) {
@@ -553,53 +719,51 @@ func (p *Phrase) Append(n *Note) {
 		p.lastnote = n
 	}
 }
+*/
+
+func (pe *PhraseElement) EndOf() Clicks {
+	endof := pe.AtClick
+	switch v := pe.Value.(type) {
+	case *NoteFull:
+		endof += v.Duration
+	}
+	return endof
+}
+
+func (pe *PhraseElement) IsNote() bool {
+	switch pe.Value.(type) {
+	case *NoteOn, *NoteOff, *NoteFull:
+		return true
+	default:
+		return false
+	}
+}
 
 // InsertNoLock adds a Note to a Phrase
-func (p *Phrase) InsertNoLock(note *Note) *Phrase {
+func (p *Phrase) InsertNoLock(pe *PhraseElement) *Phrase {
 
-	if note.next != nil {
-		Warn("Unexpected note.next!=nil in Phrase.InsertNoLock")
+	if p.list.Front() == nil {
+		p.list.PushFront(pe)
 		return p
 	}
-
-	// Empty phrase, just set it
-	if p.firstnote == nil {
-		p.firstnote = note
-		p.lastnote = note
-		return p
-	}
-
-	if p.lastnote == nil {
-		Warn("Expected lastnote to be not-nil when firstnote is not nil!?")
-		// try to fix it up
-		p.lastnote = p.firstnote
-		return p
-	}
+	click := pe.AtClick
 
 	// If it's after or equal to the last note, just append it
-	if note.Compare(p.lastnote) >= 0 {
-		p.lastnote.next = note
-		p.lastnote = note
+	laste := p.list.Back()
+	lastpe := laste.Value.(*PhraseElement)
+	lastclick := lastpe.AtClick
+
+	if click >= lastclick {
+		p.list.PushBack(pe)
 		return p
 	}
 
-	var prevnt *Note
-	nt := p.firstnote
-	// insert it just before the first note in the phrase that it is less-than
-	for nt != nil {
-		if note.Compare(nt) < 0 {
-			// insert it before nt
-			if prevnt == nil {
-				note.next = p.firstnote
-				p.firstnote = note
-			} else {
-				note.next = nt
-				prevnt.next = note
-			}
-			return p
+	for e := p.list.Front(); e != nil; e = e.Next() {
+		thisClick := e.Value.(PhraseElement).AtClick
+		if click < thisClick {
+			p.list.InsertBefore(pe, e)
+			break
 		}
-		prevnt = nt
-		nt = nt.next
 	}
 	return p
 }
@@ -636,9 +800,8 @@ func isNumber(ch rune) bool {
 }
 
 // InsertNote inserts a note into a Phrase
-// NOTE: it's assumed that the Phrase is already locked for writing.
-func (p *Phrase) InsertNote(nt *Note) *Phrase {
-	return p.InsertNoLock(nt)
+func (p *Phrase) InsertElement(item *PhraseElement) *Phrase {
+	return p.InsertNoLock(item)
 }
 
 // PhraseScanner represents a lexical scanner for phrase constants

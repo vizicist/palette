@@ -1,57 +1,58 @@
 package engine
 
+import (
+	"container/list"
+	"fmt"
+)
+
 // ActivePhrase is a currently active MIDI phrase
 type ActivePhrase struct {
+	AtClick         Clicks
+	SofarClick      Clicks
 	phrase          *Phrase
-	clickStart      Clicks
-	clickSoFar      Clicks
-	nextnote        *Note
+	nextElement     *list.Element
 	pendingNoteOffs *Phrase
-	sid             string
 }
 
 // CallbackID xxx
 type CallbackID int
 
-// NoteOutputCallbackFunc xxx
-type NoteOutputCallbackFunc func(n *Note)
+func (ap *ActivePhrase) AdvanceByOneClick() (isDone bool) {
 
-func (a *ActivePhrase) AdvanceByOneClick() (isDone bool) {
+	thisClick := ap.SofarClick
 
-	thisClick := a.clickSoFar
+	// See if any notes are due to be put out.
 
-	DebugLogOfType("realtime", "ActivePhrase being looked at", "phrase", a.phrase, "started", a.clickStart, "sofarclick", a.clickSoFar)
+	// NOTE: we only send stuff if nextElement matches thisClick exactly
+	for ; ap.nextElement != nil; ap.nextElement = ap.nextElement.Next() {
 
-	// See if any notes in the Phrase are due to be put out.
+		pe := ap.nextElement.Value.(*PhraseElement)
+		if pe.AtClick != thisClick {
+			break
+		}
 
-	// NOTE: we only send stuff when thisClick is exactly the click it's scheduled at
-	for n := a.nextnote; n != nil && n.Clicks == thisClick; n = n.next {
-		switch n.TypeOf {
-		case "noteon":
-			Warn("ActivePhrasesManager.advanceActivePhrasesByOneStep can't handle NOTEON notes yet")
-		case "noteoff":
-			Warn("ActivePhrasesManager.advanceActivePhrasesByOneStep can't handle NOTEOFF notes yet")
-		case "note":
+		switch v := ap.nextElement.Value.(type) {
+		case *NoteOn:
+			Warn("advanceByOneClick can't handle NOTEON notes yet")
+		case *NoteOff:
+			Warn("advanceByOneClick can't handle NOTEOFF notes yet")
+		case *NoteFull:
+			newElement := pe.Copy()
+			SendPhraseElementToSynth(newElement)
 
-			nd := n.Copy()
-			nd.TypeOf = "noteon"
-			SendNoteToSynth(nd)
-
-			nd.TypeOf = "noteoff"
-			nd.Clicks = n.EndOf()
-			a.pendingNoteOffs.InsertNote(nd)
+			newElement.AtClick = pe.AtClick + v.Duration
+			ap.pendingNoteOffs.InsertElement(newElement)
 
 		default:
-			Warn("advanceActivePhrase unable to handle", "typeof", n.TypeOf)
+			tstr := fmt.Sprintf("%T", v)
+			Warn("advanceByOneClick unable to handle", "type", tstr)
 		}
-		// advance to the next note in the ActivePhrase
-		a.nextnote = n.next
 	}
 
 	// Send whatever NOTEOFFs are due to be sent, and if everything has
-	// been processed, delete it from the activePhrases
-	isDone = a.sendPendingNoteOffs(thisClick)
-	a.clickSoFar++
+	// been processed, delete it from the activePhrase
+	isDone = ap.sendPendingNoteOffs(thisClick)
+	ap.SofarClick++
 	return isDone
 }
 
@@ -65,16 +66,20 @@ func (a *ActivePhrase) sendPendingNoteOffs(dueBy Clicks) (isDone bool) {
 	}
 
 	// See if any of the Notes currently down are due, ie. occur before a.clickSoFar
-	ntoff := a.pendingNoteOffs.firstnote
-	// XXX - not sure why it's "< dueBy", though it might be to
-	// ensure that 0-duration notes don't send the ntoff on the same click as the nton.
-	for ; ntoff != nil && ntoff.EndOf() < dueBy; ntoff = ntoff.next {
+	e := a.pendingNoteOffs.list.Front()
+	for ; e != nil; e = e.Next() {
 
-		SendNoteToSynth(ntoff)
+		pe := e.Value.(*PhraseElement)
 
-		// Remove it from the notesDown phrase
-		a.pendingNoteOffs.firstnote = ntoff.next
+		// It's ">= dueBy" so that 0-duration NoteFulls don't send NoteOff on the same click as the NoteOn
+		if pe.EndOf() >= dueBy {
+			break
+		}
+
+		SendPhraseElementToSynth(pe)
+
+		a.pendingNoteOffs.list.Remove(e)
 	}
 	// Return true if there's nothing left to be processed in this ActivePhrase
-	return (a.nextnote == nil && a.pendingNoteOffs.firstnote == nil)
+	return (a.phrase.list.Front() == nil && a.pendingNoteOffs.list.Front() == nil)
 }

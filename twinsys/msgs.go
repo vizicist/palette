@@ -206,114 +206,6 @@ type StateDataMsg struct {
 // DownDragUp xxx
 // /type DownDragUp int
 
-/*
-// ToRect xxx
-func ToRect(arg interface{}) image.Rectangle {
-	r, ok := arg.(image.Rectangle)
-	if !ok {
-		Warn("Unable to convert interface to Rect!")
-		r = image.Rect(0, 0, 0, 0)
-	}
-	return r
-}
-
-// ToPoint xxx
-func ToPoint(arg interface{}) image.Point {
-	p, ok := arg.(image.Point)
-	if !ok {
-		Warn("Unable to convert interface to Point!")
-		p = image.Point{0, 0}
-	}
-	return p
-}
-
-// ToMenu xxx
-func ToMenu(arg interface{}) *Menu {
-	r, ok := arg.(*Menu)
-	if !ok {
-		Warn("Unable to convert interface to Menu!")
-		r = nil
-	}
-	return r
-}
-
-// ToDrawLine xxx
-func ToDrawLine(arg interface{}) DrawLineMsg {
-	r, ok := arg.(DrawLineMsg)
-	if !ok {
-		Warn("Unable to convert interface to DrawLineMsg!")
-		r = DrawLineMsg{}
-	}
-	return r
-}
-
-// ToDrawText xxx
-func ToDrawText(arg interface{}) DrawTextMsg {
-	r, ok := arg.(DrawTextMsg)
-	if !ok {
-		Warn("Unable to convert interface to DrawTextMsg!")
-		r = DrawTextMsg{}
-	}
-	return r
-}
-
-// ToMouse xxx
-func ToMouse(arg interface{}) MouseMsg {
-	r, ok := arg.(MouseMsg)
-	if !ok {
-		Warn("Unable to convert interface to MouseMsg!")
-		r = MouseMsg{}
-	}
-	return r
-}
-*/
-
-// ToColor xxx
-func ToColor(arg interface{}) color.RGBA {
-	r, ok := arg.(color.RGBA)
-	if !ok {
-		engine.Warn("Unable to convert interface to Color!")
-		r = color.RGBA{0x00, 0x00, 0x00, 0xff}
-	}
-	return r
-}
-
-// ToBool xxx
-func ToBool(arg interface{}) bool {
-	r, ok := arg.(bool)
-	if !ok {
-		engine.Warn("Unable to convert interface to bool!")
-		r = false
-	}
-	return r
-}
-
-// ToString xxx
-func ToString(arg interface{}) string {
-	if arg == nil {
-		return ""
-	}
-	r, ok := arg.(string)
-	if !ok {
-		engine.Warn("Unable to convert interface to string!\n")
-		r = ""
-	}
-	return r
-}
-
-// ToWindow xxx
-func ToWindow(arg interface{}) Window {
-	if arg == nil {
-		return nil
-	}
-	r, ok := arg.(Window)
-	if !ok {
-		engine.Warn("Unable to convert interface to Window!\n")
-		r = nil
-	}
-	return r
-}
-
 // RectString xxx
 func RectString(r image.Rectangle) string {
 	return fmt.Sprintf("%d,%d,%d,%d", r.Min.X, r.Min.Y, r.Max.X, r.Max.Y)
@@ -338,7 +230,7 @@ func StringToRect(s string) (r image.Rectangle) {
 	return r
 }
 
-// StringToPoint xxx
+// StringToPoint converts strings of the form "###,###" to an image.Point
 func StringToPoint(s string) (p image.Point) {
 	n, err := fmt.Sscanf(s, "%d,%d", &p.X, &p.Y)
 	if err != nil {
