@@ -7,7 +7,7 @@ import (
 	"syscall"
 
 	"github.com/vizicist/palette/engine"
-	_ "github.com/vizicist/palette/responder"
+	"github.com/vizicist/palette/responder"
 	_ "github.com/vizicist/palette/tool"
 	"github.com/vizicist/palette/twinsys"
 )
@@ -39,7 +39,7 @@ func main() {
 		"D": "line",
 	}
 
-	respondDefault := engine.GetResponder("default")
+	respondDefault := responder.GetResponder("default")
 
 	for n, playerName := range []string{"A", "B", "C", "D"} {
 		p := engine.NewPlayer(playerName)

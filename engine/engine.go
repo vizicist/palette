@@ -39,8 +39,8 @@ func newEngine() *Engine {
 	return e
 }
 
-func GetResponder(name string) Responder {
-	return TheRouter().responderManager.GetResponder(name)
+func xGetResponder(name string) Responder {
+	return TheRouter().responderManager.xGetResponder(name)
 }
 
 func ProcessStatus() string {

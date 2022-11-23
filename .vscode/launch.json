@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Chillian",
+            "name": "Chillian Engine",
             "type": "go",
             "request": "launch",
             "mode": "auto",
@@ -15,7 +15,7 @@
             "args": []
         },
         {
-            "name": "Engine (palette_engine.go)",
+            "name": "Default Engine",
             "type": "go",
             "request": "launch",
             "mode": "auto",

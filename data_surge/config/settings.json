@@ -1,11 +1,11 @@
 {
-  "debug": "cursor",
+  "debug": "cursor,midi,morph",
   "midiinput": "16. Internal MIDI",
   "guilevel": "1",
   "bidule": "C:\\Program Files\\Plogue\\Bidule\\Bidule.exe",
   "resolume": "C:\\Program Files\\Resolume Avenue\\Avenue.exe",
   "autostartALL": "gui,resolume,bidule",
-  "autostart": "",
+  "autostart": "bidule",
   "attractgestureduration": "1.0",
   "attractpresetduration": "15.0",
   "attractidlesecs": "0",
