@@ -159,14 +159,14 @@ func SendControllerToSynth(synthName string, cnum int, cval int) {
 	*/
 }
 
-// SendNote sends MIDI output for a Note
-func SendPhraseElementToSynth(pe *PhraseElement) {
+// SendNote handles NoteOn, NoteOff, Controller, etc.
+func SendToSynth(value interface{}) {
 
 	var pitch uint8
 	var velocity uint8
 	var synthName string
 
-	switch v := pe.Value.(type) {
+	switch v := value.(type) {
 	case *NoteOn:
 		pitch = v.Pitch
 		synthName = v.Synth
@@ -183,7 +183,7 @@ func SendPhraseElementToSynth(pe *PhraseElement) {
 		synthName = v.Synth
 		velocity = v.Velocity
 	default:
-		Warn("SendPhraseElementToSynth: doesn't handle", "type", fmt.Sprintf("%T", v))
+		Warn("SendToSynth: doesn't handle", "type", fmt.Sprintf("%T", v))
 		return
 	}
 
@@ -213,7 +213,7 @@ func SendPhraseElementToSynth(pe *PhraseElement) {
 	status := byte(synth.portchannel.channel - 1)
 	data1 := pitch
 	data2 := velocity
-	switch pe.Value.(type) {
+	switch value.(type) {
 	case *NoteOn:
 		status |= 0x90
 
@@ -256,7 +256,7 @@ func SendPhraseElementToSynth(pe *PhraseElement) {
 	// 	status |= 0xE0
 
 	default:
-		Warn("SendPhraseElementToSynth: can't handle", "type", fmt.Sprintf("%T", pe.Value))
+		Warn("SendToSynth: can't handle", "type", fmt.Sprintf("%T", value))
 		return
 	}
 
