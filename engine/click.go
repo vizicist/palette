@@ -1,8 +1,25 @@
 package engine
 
 import (
+	"math"
 	"sync"
 )
+
+// Clicks is a time or duration value.
+// NOTE: A Clicks value can be negative because
+// it's sometimes relative to the starting time of a Phrase.
+// XXX - possiblycould have a type to distinguish Clicks that are
+// XXX - used as absolute time versus Clicks that are step numbers
+type Clicks int64
+
+const ClicksPerQuarterNote = 24 // constant, not based on defaultClicksPerSecond or anything that changes
+const QuarterNote = Clicks(24)
+const EighthNote = Clicks(12)
+const SixteenthNote = Clicks(6)
+const ThirtySecondNote = Clicks(3)
+
+// MaxClicks is the high-possible value for Clicks
+const MaxClicks = Clicks(math.MaxInt64)
 
 // XXX - having Mutexes for all of these values
 // is probably silly, should be simplified

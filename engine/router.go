@@ -343,7 +343,7 @@ func (r *Router) HandleInputEvent(playerName string, args map[string]string) err
 		if err != nil {
 			return err
 		}
-		SendPhraseElementToSynth(note)
+		SendToSynth(note)
 
 	default:
 		Info("HandleInputEvent: event not handled", "event", event)
