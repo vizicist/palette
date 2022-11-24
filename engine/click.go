@@ -81,17 +81,6 @@ func Clicks2Seconds(clk Clicks) float64 {
 	return float64(clk) / float64(globalClicksPerSecond)
 }
 
-/*
-// Clicks2Seconds converts Clicks to Time (seconds), absolute
-func Clicks2SecondsAbsolute(clk Clicks) float64 {
-	// Take current*Offset values into account
-	clk -= currentClickOffset
-	secs := float64(clk) / float64(clicksPerSecond)
-	secs -= (float64(currentMilliOffset) * 1000.0)
-	return secs
-}
-*/
-
 // TempoFactor xxx
 var TempoFactor = float64(1.0)
 
