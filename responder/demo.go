@@ -31,15 +31,15 @@ func (r *Responder_demo) OnCursorEvent(ctx *engine.ResponderContext, ce engine.C
 			pe := r.cursorToPhraseElement(ce)
 			switch v := pe.Value.(type) {
 			case *engine.NoteOn:
-				engine.SendPhraseElementToSynth(pe)
+				engine.SendToSynth(pe)
 			case *engine.NoteOff:
-				engine.SendPhraseElementToSynth(pe)
+				engine.SendToSynth(pe)
 			case *engine.NoteFull:
-				engine.SendPhraseElementToSynth(pe)
+				engine.SendToSynth(pe)
 				time.Sleep(2 * time.Second)
 				noff := engine.NewNoteOff(v.Pitch, v.Velocity, v.Synth)
 				peoff := &engine.PhraseElement{Value: noff}
-				engine.SendPhraseElementToSynth(peoff)
+				engine.SendToSynth(peoff)
 			}
 		}()
 	}

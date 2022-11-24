@@ -47,7 +47,7 @@ func (player *Player) ExecuteAPI(api string, args map[string]string, rawargs str
 		v, e := needBoolArg("onoff", api, args)
 		if e == nil && v != player.loopIsPlaying {
 			player.loopIsPlaying = v
-			TheEngine().Scheduler.terminateActiveNotes()
+			TheEngine().Scheduler.SendAllPendingNoteoffs()
 		} else {
 			err = e
 		}

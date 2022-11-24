@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"container/list"
 	"fmt"
 	"math/rand"
 	"time"
@@ -9,10 +10,8 @@ import (
 )
 
 type Scheduler struct {
-	schedule     *Phrase
-	activePhrase *Phrase
-
-	// activePhraseManager *ActivePhrasesManager
+	schedule        *Phrase
+	pendingNoteOffs *Phrase
 
 	now       time.Time
 	time0     time.Time
@@ -55,7 +54,7 @@ func NewScheduler() *Scheduler {
 	transposebeats := Clicks(ConfigIntWithDefault("transposebeats", 48))
 	s := &Scheduler{
 		schedule:               NewPhrase(),
-		activePhrase:           NewPhrase(),
+		pendingNoteOffs:        NewPhrase(),
 		now:                    time.Time{},
 		time0:                  time.Time{},
 		lastClick:              -1,
@@ -93,12 +92,12 @@ type SchedulePhraseCmd struct {
 
 type SchedulePhraseElementCmd struct {
 	element *PhraseElement
-	click   Clicks
+	AtClick Clicks
 }
 
 type ScheduleBytesCmd struct {
-	bytes []byte
-	click Clicks
+	bytes   []byte
+	AtClick Clicks
 }
 
 // Start runs the scheduler and never returns
@@ -218,7 +217,7 @@ func (sched *Scheduler) Start() {
 					sched.lastAttractChange = sched.Uptime()
 				}
 			case SchedulePhraseElementCmd:
-				sched.schedulePhraseElementAt(v.element, v.click)
+				sched.schedulePhraseElementAt(v.element, v.AtClick)
 			default:
 				Warn("Unexpected type", "type", fmt.Sprintf("%T", v))
 			}
@@ -244,7 +243,7 @@ func (sched *Scheduler) advanceClickTo(toClick Clicks) {
 	sched.lastClick += 1
 	for clk := sched.lastClick; clk <= toClick; clk++ {
 		sched.triggerItemsScheduledAt(clk)
-		sched.advanceActivePhrasesByOneClick()
+		sched.advancePendingNoteOffsByOneClick()
 		if doAutoCursorUp {
 			TheRouter().CursorManager.autoCursorUp(time.Now())
 		}
@@ -253,21 +252,32 @@ func (sched *Scheduler) advanceClickTo(toClick Clicks) {
 }
 
 func (sched *Scheduler) triggerItemsScheduledAt(clk Clicks) {
-	for i := sched.schedule.list.Front(); i != nil; {
-		nexti := i.Next()
+	var nexti *list.Element
+	for i := sched.schedule.list.Front(); i != nil; i = nexti {
+		nexti = i.Next()
 		pe := i.Value.(*PhraseElement)
 		if pe.AtClick <= clk {
+			Info("triggerItemsAt", "click", clk, "pe", pe)
 			switch v := pe.Value.(type) {
+			case *NoteOn:
+				SendToSynth(v)
+			case *NoteOff:
+				SendToSynth(v)
+			case *NoteFull:
+				noteon := NewNoteOn(v.Pitch, v.Velocity, v.Synth)
+				SendToSynth(noteon)
+				noteoff := NewNoteOff(v.Pitch, v.Velocity, v.Synth)
+				newpe := &PhraseElement{AtClick: pe.AtClick + v.Duration, Value: noteoff}
+				sched.pendingNoteOffs.InsertElement(newpe)
+
 			case *Phrase:
-				phrase := v
-				sched.AddActivePhraseAt(pe.AtClick, phrase, "")
+				Warn("triggerItemsScheduleAt: needs work for Phrase")
 			}
 
 			// XXX - this is (maybe) where looping happens
 			// by rescheduling things rather than removing
 			sched.schedule.list.Remove(i)
 		}
-		i = nexti
 	}
 }
 
@@ -333,6 +343,7 @@ func (sched *Scheduler) doAttractAction() {
 	}
 }
 
+/*
 // StartPhrase xxx
 func (sched *Scheduler) AddActivePhraseAt(click Clicks, phrase *Phrase, sid string) {
 	if phrase == nil {
@@ -347,71 +358,79 @@ func (sched *Scheduler) AddActivePhraseAt(click Clicks, phrase *Phrase, sid stri
 		pendingNoteOffs: NewPhrase(),
 	}
 
-	sched.activePhrase.rwmutex.Lock()
-	defer sched.activePhrase.rwmutex.Unlock()
+	sched.pendingNoteOffs.rwmutex.Lock()
+	defer sched.pendingNoteOffs.rwmutex.Unlock()
 
 	// Insert accoring to click
 	// XXX - should be generic-ized
-	i := sched.activePhrase.list.Front()
+	i := sched.pendingNoteOffs.list.Front()
 	if i == nil {
-		sched.activePhrase.list.PushFront(newItem)
-	} else if sched.activePhrase.list.Back().Value.(*ActivePhrase).AtClick <= newItem.AtClick {
-		sched.activePhrase.list.PushBack(newItem)
+		sched.pendingNoteOffs.list.PushFront(newItem)
+	} else if sched.pendingNoteOffs.list.Back().Value.(*ActivePhrase).AtClick <= newItem.AtClick {
+		sched.pendingNoteOffs.list.PushBack(newItem)
 	} else {
 		for ; i != nil; i = i.Next() {
 			ap := i.Value.(*ActivePhrase)
 			if ap.AtClick > click {
-				sched.activePhrase.list.InsertBefore(newItem, i)
+				sched.pendingNoteOffs.list.InsertBefore(newItem, i)
 			}
 		}
 	}
 }
+*/
 
 // StopPhrase xxx
-func (sched *Scheduler) StopPhrase(source string, active *ActivePhrase) {
-	DebugLogOfType("phrase", "StopPhrase", "source", source)
-	for i := sched.activePhrase.list.Front(); i != nil; i = i.Next() {
-		ap := i.Value.(*ActivePhrase)
-		if ap.phrase.Source == source {
-			readyToDelete := ap.sendPendingNoteOffs(MaxClicks)
-			if !readyToDelete {
-				Warn("StopPhrase, why isn't ap ready to delete?", "source", source)
-			} else {
-				sched.activePhrase.list.Remove(i)
-			}
+func (sched *Scheduler) SendAllPendingNoteoffs() {
+
+	sched.pendingNoteOffs.rwmutex.Lock()
+	defer sched.pendingNoteOffs.rwmutex.Unlock()
+
+	var nexti *list.Element
+	for i := sched.pendingNoteOffs.list.Front(); i != nil; i = nexti {
+		nexti = i.Next()
+		noff, ok := i.Value.(*NoteOff)
+		if !ok {
+			Warn("Non-NoteOff in activeNotes!?")
+			continue
 		}
+		SendToSynth(noff)
+		sched.pendingNoteOffs.list.Remove(i)
 	}
 }
 
 // AdvanceByOneClick xxx
-func (sched *Scheduler) advanceActivePhrasesByOneClick() {
+func (sched *Scheduler) advancePendingNoteOffsByOneClick() {
 
-	sched.activePhrase.rwmutex.Lock()
-	defer sched.activePhrase.rwmutex.Unlock()
+	sched.pendingNoteOffs.rwmutex.Lock()
+	defer sched.pendingNoteOffs.rwmutex.Unlock()
 
 	currentClick := CurrentClick()
-	for i := sched.activePhrase.list.Front(); i != nil; i = i.Next() {
-		ap := i.Value.(*ActivePhrase)
-		if ap.phrase == nil {
-			Warn("advanceactivePhrase, unexpected phrase is nil")
-			sched.activePhrase.list.Remove(i)
-		} else if ap.AtClick > currentClick {
-			Warn("Scheduler.AdvanceByOneClick: clickStart > currentClick?")
+	var nexti *list.Element
+	for i := sched.pendingNoteOffs.list.Front(); i != nil; i = nexti {
+		nexti = i.Next()
+		pe := i.Value.(*PhraseElement)
+		ntoff, ok := pe.Value.(*NoteOff)
+		if !ok {
+			Warn("Non NoteOff in pendingNoteOffs?")
+			sched.pendingNoteOffs.list.Remove(i)
+			continue
+		}
+		if pe.AtClick > currentClick {
+			Warn("Scheduler.advancePendingNoteOffsByOneClick: clickStart > currentClick?")
 		} else {
-			if ap.AdvanceByOneClick() {
-				sched.activePhrase.list.Remove(i)
-			}
+			SendToSynth(ntoff)
+			sched.pendingNoteOffs.list.Remove(i)
 		}
 	}
 }
 
+/*
 func (sched *Scheduler) terminateActiveNotes() {
 
-	sched.activePhrase.rwmutex.RLock()
-	defer sched.activePhrase.rwmutex.RUnlock()
+	sched.activeNotes.rwmutex.RLock()
+	defer sched.activeNotes.rwmutex.RUnlock()
 
-	for i := sched.activePhrase.list.Front(); i != nil; i = i.Next() {
-		// for id, a := range sched.activePhrase {
+	for i := sched.activeNotes.list.Front(); i != nil; i = i.Next() {
 		ap := i.Value.(*ActivePhrase)
 		if ap != nil {
 			ap.sendPendingNoteOffs(ap.SofarClick)
@@ -420,6 +439,7 @@ func (sched *Scheduler) terminateActiveNotes() {
 		}
 	}
 }
+*/
 
 func (sched *Scheduler) ToString() string {
 	s := "Schedule{"
@@ -463,6 +483,8 @@ func (sched *Scheduler) schedulePhraseElementAt(pe *PhraseElement, click Clicks)
 			}
 		}
 	}
+	Info("SchedulePhraseItemAt", "lenschedule", schedule.list.Len())
+	Info("SchedulePhraseItemAt", "lenschedschedulelist", sched.schedule.list.Len())
 }
 
 func (sched *Scheduler) advanceTransposeTo(newclick Clicks) {
@@ -478,6 +500,6 @@ func (sched *Scheduler) advanceTransposeTo(newclick Clicks) {
 				player.TransposePitch = transposePitch
 			}
 		*/
-		sched.terminateActiveNotes()
+		sched.SendAllPendingNoteoffs()
 	}
 }
