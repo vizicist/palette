@@ -128,8 +128,7 @@ func (player *Player) SendPhraseElementToSynth(pe *PhraseElement) {
 	if ss == "midi" {
 		player.generateSpriteFromPhraseElement(pe)
 	}
-
-	SendPhraseElementToSynth(pe)
+	SendToSynth(pe)
 }
 
 func (player *Player) MidiEventToPhraseElement(me MidiEvent) (*PhraseElement, error) {
