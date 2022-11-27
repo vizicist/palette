@@ -1,5 +1,5 @@
 {
-  "debug": "schedule,midi",
+  "debug": "",
   "midiinput": "16. Internal MIDI",
   "guilevel": "1",
   "bidule": "C:\\Program Files\\Plogue\\Bidule\\Bidule.exe",

@@ -40,7 +40,7 @@ func (ctx *ResponderContext) ScheduleDebug() string {
 }
 
 func (ctx *ResponderContext) ScheduleNoteNow(pitch uint8, velocity uint8, duration Clicks, synth string) {
-	Info("ctx.ScheduleNoteNow", "pitch", pitch)
+	DebugLogOfType("schedule", "ctx.ScheduleNoteNow", "pitch", pitch)
 	pe := &PhraseElement{Value: NewNoteFull(pitch, velocity, duration, synth)}
 	phr := NewPhrase().InsertElement(pe)
 	ctx.SchedulePhraseAt(phr, CurrentClick())
@@ -55,7 +55,7 @@ func (ctx *ResponderContext) SchedulePhraseAt(phr *Phrase, click Clicks) {
 		Warn("ResponderContext.SchedulePhraseAt: phr == nil?")
 		return
 	}
-	Info("ctx.SchedulePhraseAt", "click", click)
+	DebugLogOfType("schedule", "ctx.SchedulePhraseAt", "click", click)
 	go func() {
 		se := &SchedElement{
 			AtClick: click,
