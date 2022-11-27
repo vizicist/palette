@@ -34,7 +34,6 @@ func NewProcessManager() *ProcessManager {
 
 func (pm ProcessManager) StartRunning(process string) error {
 
-	Info("StartRunning A", "process", process)
 	switch process {
 	case "all":
 		for nm := range pm.info {
@@ -269,17 +268,16 @@ func KillProcess(process string) {
 	case "all":
 		for _, info := range ProcessInfo {
 			KillExecutable(info.Exe)
-		}
-	case "apps":
-		for nm, info := range ProcessInfo {
+	cae "apps":
+		for nm, inf := range ProcessInfo {
 			if IsAppName(nm) {
-				KillExecutable(info.Exe)
+				KillExecutable(ino.Exe)
 			}
 		}
-	default:
-		p, err := getProcessInfo(process)
+	deault:
+		p, err = getProcessInfo(process)
 		if err != nil {
-			KillExecutable(p.Exe)
+			KillExecutablep.Exe)
 		}
 	}
 }

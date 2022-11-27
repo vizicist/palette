@@ -120,13 +120,6 @@ func (e *Engine) initDebug() {
 
 // StartMIDI listens for MIDI events and sends their bytes to the MIDIInput chan
 func (e *Engine) StartMIDI() {
-
-	if MIDI.midiInput == nil {
-		Warn("StartMIDI: there is no MIDI input")
-	} else {
-		Info("StartMIDI: MIDI input", "midiinput", MIDI.midiInput.String())
-	}
-
 	MIDI.Start(e.Router.midiInputChan)
 }
 

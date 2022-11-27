@@ -654,6 +654,9 @@ func isNumber(ch rune) bool {
 
 // InsertNote inserts a note into a Phrase
 func (p *Phrase) InsertElement(item *PhraseElement) *Phrase {
+	// XXX - should lock here?
+	// p.Lock()
+	// defer p.Unlock()
 	return p.InsertNoLock(item)
 }
 

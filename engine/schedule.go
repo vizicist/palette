@@ -122,6 +122,8 @@ func (sched *Scheduler) Start() {
 	var lastProcessCheck float64
 	var lastAlive float64
 
+	processCheckEnabled := sched.processCheckSecs > 0
+
 	nonRealtime := false
 
 	// By reading from tick.C, we wake up every 2 milliseconds
@@ -181,17 +183,22 @@ func (sched *Scheduler) Start() {
 		// we check to see if necessary processes are still running
 		firstTime := (lastProcessCheck == 0)
 		sinceLastProcessCheck := uptimesecs - lastProcessCheck
-		processCheckEnabled := sched.processCheckSecs > 0
 		if processCheckEnabled && (firstTime || sinceLastProcessCheck > sched.processCheckSecs) {
 			// Put it in background, so calling
 			// tasklist or ps doesn't disrupt realtime
-			DebugLogOfType("schedule", "StartRealtime: checking processes")
-			go TheEngine().ProcessManager.checkProcessesAndRestartIfNecessary()
+			// The sleep here is because if you kill something and
+			// immediately check to see if it's running, it reports that
+			// it's stil running.
+			go func() {
+				DebugLogOfType("schedule", "Scheduler: checking processes")
+				time.Sleep(2 * time.Second)
+				TheEngine().ProcessManager.checkProcessesAndRestartIfNecessary()
+			}()
+			lastProcessCheck = uptimesecs
 		}
 		if !processCheckEnabled && firstTime {
 			Info("Process Checking is disabled.")
 		}
-		lastProcessCheck = uptimesecs
 
 		select {
 		case cmd := <-sched.cmdInput:
@@ -273,7 +280,7 @@ func (sched *Scheduler) triggerPhraseElementsAt(phr *Phrase, clk Clicks, dclick 
 			break
 		}
 		if pe.AtClick <= dclick {
-			Info("triggerPhraseElementAt", "click", clk, "dclick", dclick, "pe.AtClick", pe.AtClick)
+			// Info("triggerPhraseElementAt", "click", clk, "dclick", dclick, "pe.AtClick", pe.AtClick)
 			switch v := pe.Value.(type) {
 			case *NoteOn:
 				SendToSynth(v)
@@ -403,7 +410,7 @@ func (sched *Scheduler) SendAllPendingNoteoffs() {
 		nexti = i.Next()
 		noff, ok := i.Value.(*NoteOff)
 		if !ok {
-			Warn("Non-NoteOff in activeNotes!?")
+			Warn("Non-NoteOff in activeNotes!?", "value", i.Value)
 			continue
 		}
 		SendToSynth(noff)
