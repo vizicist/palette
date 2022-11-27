@@ -7,8 +7,7 @@ import (
 )
 
 func init() {
-	engine.AddResponder("demo", &Responder_demo{})
-	AllResponders["demo"] = &Responder_demo{}
+	RegisterResponder("demo", &Responder_demo{})
 }
 
 type Responder_demo struct {

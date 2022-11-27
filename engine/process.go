@@ -34,6 +34,7 @@ func NewProcessManager() *ProcessManager {
 
 func (pm ProcessManager) StartRunning(process string) error {
 
+	Info("StartRunning A", "process", process)
 	switch process {
 	case "all":
 		for nm := range pm.info {

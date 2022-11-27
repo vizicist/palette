@@ -11,6 +11,10 @@ func GetResponder(name string) engine.Responder {
 	}
 	return r
 }
+func RegisterResponder(name string, responder engine.Responder) {
+	engine.AddResponder(name, responder)
+	AllResponders[name] = responder
+}
 
 func init() {
 }

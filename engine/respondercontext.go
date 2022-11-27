@@ -21,13 +21,13 @@ func (ctx *ResponderContext) Log(msg string, keysAndValues ...interface{}) {
 	Info(msg, keysAndValues...)
 }
 
-func (ctx *ResponderContext) MidiEventToPhraseElement(me MidiEvent) *PhraseElement {
-	nt, err := ctx.player.MidiEventToPhraseElement(me)
+func (ctx *ResponderContext) MidiEventToPhrase(me MidiEvent) *Phrase {
+	phr, err := ctx.player.MidiEventToPhrase(me)
 	if err != nil {
 		LogError(err)
 		return nil
 	} else {
-		return nt
+		return phr
 	}
 }
 
@@ -39,12 +39,15 @@ func (ctx *ResponderContext) ScheduleDebug() string {
 	return fmt.Sprintf("%s", ctx.scheduler)
 }
 
-func (ctx *ResponderContext) SchedulePhraseNow(phr *Phrase) {
+func (ctx *ResponderContext) ScheduleNoteNow(pitch uint8, velocity uint8, duration Clicks, synth string) {
+	Info("ctx.ScheduleNoteNow", "pitch", pitch)
+	pe := &PhraseElement{Value: NewNoteFull(pitch, velocity, duration, synth)}
+	phr := NewPhrase().InsertElement(pe)
 	ctx.SchedulePhraseAt(phr, CurrentClick())
 }
 
-func (ctx *ResponderContext) SchedulePhraseElementNow(pe *PhraseElement) {
-	ctx.SchedulePhraseElementAt(pe, CurrentClick())
+func (ctx *ResponderContext) SchedulePhraseNow(phr *Phrase) {
+	ctx.SchedulePhraseAt(phr, CurrentClick())
 }
 
 func (ctx *ResponderContext) SchedulePhraseAt(phr *Phrase, click Clicks) {
@@ -52,29 +55,12 @@ func (ctx *ResponderContext) SchedulePhraseAt(phr *Phrase, click Clicks) {
 		Warn("ResponderContext.SchedulePhraseAt: phr == nil?")
 		return
 	}
+	Info("ctx.SchedulePhraseAt", "click", click)
 	go func() {
-		ctx.scheduler.cmdInput <- SchedulePhraseCmd{phr, click}
-	}()
-}
-
-func (ctx *ResponderContext) SchedulePhraseElementAt(pe *PhraseElement, click Clicks) {
-	if pe == nil {
-		Warn("ResponderContext.ScheduleNoteAt: nt == nil?")
-		return
-	}
-	go func() {
-		ctx.scheduler.cmdInput <- SchedulePhraseElementCmd{pe, click}
-	}()
-}
-
-func (ctx *ResponderContext) ScheduleBytesAt(bytes []byte, click Clicks) {
-	go func() {
-		ctx.scheduler.cmdInput <- ScheduleBytesCmd{bytes, click}
-	}()
-}
-
-func (ctx *ResponderContext) ScheduleBytesNow(bytes []byte) {
-	go func() {
-		ctx.scheduler.cmdInput <- ScheduleBytesCmd{bytes, ctx.CurrentClick()}
+		se := &SchedElement{
+			AtClick: click,
+			Value:   phr,
+		}
+		ctx.scheduler.cmdInput <- ScheduleElementCmd{se}
 	}()
 }

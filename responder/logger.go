@@ -5,8 +5,7 @@ import (
 )
 
 func init() {
-	engine.AddResponder("logger", &Responder_logger{})
-	AllResponders["logger"] = &Responder_logger{}
+	RegisterResponder("logger", &Responder_logger{})
 }
 
 type Responder_logger struct{}

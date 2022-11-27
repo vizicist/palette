@@ -42,13 +42,11 @@ func main() {
 	playerB.SavePreset("visual.TestingCircle")
 
 	respondDefault := responder.GetResponder("default")
-	respondLogger := responder.GetResponder("logger")
+	// respondLogger := responder.GetResponder("logger")
 	respondChillian := responder.GetResponder("chillian")
 
-	playerA.AttachResponder(respondDefault)
-	playerA.AttachResponder(respondLogger)
-
-	playerB.AttachResponder(respondChillian)
+	playerA.AttachResponder(respondChillian)
+	playerB.AttachResponder(respondDefault)
 
 	playerA.AllowSource("A")
 	playerB.AllowSource("B")

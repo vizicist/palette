@@ -10,7 +10,9 @@ import (
 )
 
 type Scheduler struct {
-	schedule        *Phrase
+	schedList *list.List // of *SchedElements
+	// schedMutex sync.RWMutex
+
 	pendingNoteOffs *Phrase
 
 	now       time.Time
@@ -44,16 +46,16 @@ type Command struct {
 	Arg    interface{}
 }
 
-// type SchedItem struct {
-// 	clickStart Clicks
-// 	ID         string
-// 	Value      interface{}
-// }
+type SchedElement struct {
+	AtClick   Clicks
+	Value     interface{} // currently just *Phrase values, but others should be possible
+	triggered bool
+}
 
 func NewScheduler() *Scheduler {
 	transposebeats := Clicks(ConfigIntWithDefault("transposebeats", 48))
 	s := &Scheduler{
-		schedule:               NewPhrase(),
+		schedList:              list.New(),
 		pendingNoteOffs:        NewPhrase(),
 		now:                    time.Time{},
 		time0:                  time.Time{},
@@ -85,19 +87,8 @@ type AttractModeCmd struct {
 	onoff bool
 }
 
-type SchedulePhraseCmd struct {
-	phrase *Phrase
-	click  Clicks
-}
-
-type SchedulePhraseElementCmd struct {
-	element *PhraseElement
-	AtClick Clicks
-}
-
-type ScheduleBytesCmd struct {
-	bytes   []byte
-	AtClick Clicks
+type ScheduleElementCmd struct {
+	element *SchedElement
 }
 
 // Start runs the scheduler and never returns
@@ -148,10 +139,6 @@ func (sched *Scheduler) Start() {
 			newclick = Seconds2Clicks(uptimesecs)
 		}
 		SetCurrentMilli(int64(uptimesecs * 1000.0))
-
-		// XXX - should unlock here?
-
-		// Info("SCHEDULER TOP OF LOOP", "currentClick", currentClick, "newclick", newclick)
 
 		if newclick <= thisClick {
 			// Info("SCHEDULER skipping to next loop, newclick is unchanged","newclick",newclick,"currentClick",currentClick)
@@ -216,8 +203,8 @@ func (sched *Scheduler) Start() {
 					sched.attractModeIsOn = onoff
 					sched.lastAttractChange = sched.Uptime()
 				}
-			case SchedulePhraseElementCmd:
-				sched.schedulePhraseElementAt(v.element, v.AtClick)
+			case ScheduleElementCmd:
+				sched.scheduleElement(v.element)
 			default:
 				Warn("Unexpected type", "type", fmt.Sprintf("%T", v))
 			}
@@ -229,7 +216,7 @@ func (sched *Scheduler) Start() {
 
 func (sched *Scheduler) advanceClickTo(toClick Clicks) {
 
-	DebugLogOfType("schedule", "Scheduler.advanceClickTo", "toClick", toClick, "schedule", sched)
+	// DebugLogOfType("schedule", "Scheduler.advanceClickTo", "toClick", toClick, "schedule", sched)
 
 	// Don't let events get handled while we're advancing
 	// XXX - this might not be needed if all communication/syncing
@@ -253,11 +240,40 @@ func (sched *Scheduler) advanceClickTo(toClick Clicks) {
 
 func (sched *Scheduler) triggerItemsScheduledAt(clk Clicks) {
 	var nexti *list.Element
-	for i := sched.schedule.list.Front(); i != nil; i = nexti {
+	for i := sched.schedList.Front(); i != nil; i = nexti {
 		nexti = i.Next()
-		pe := i.Value.(*PhraseElement)
-		if pe.AtClick <= clk {
-			Info("triggerItemsAt", "click", clk, "pe", pe)
+		se := i.Value.(*SchedElement)
+		dclick := clk - se.AtClick
+		if dclick >= 0 {
+			switch v := se.Value.(type) {
+			case *Phrase:
+				if !se.triggered {
+					se.triggered = true
+					sched.triggerPhraseElementsAt(v, clk, dclick)
+				} else {
+					Warn("SchedElement already triggered?")
+				}
+			default:
+				msg := fmt.Sprintf("triggerItemsScheduleAt: unexpected Value type=%T", v)
+				Warn(msg)
+			}
+
+			// XXX - this is (maybe) where looping happens
+			// by rescheduling things rather than removing
+			sched.schedList.Remove(i)
+		}
+	}
+}
+
+func (sched *Scheduler) triggerPhraseElementsAt(phr *Phrase, clk Clicks, dclick Clicks) {
+	for i := phr.list.Front(); i != nil; i = i.Next() {
+		pe, ok := i.Value.(*PhraseElement)
+		if !ok {
+			Warn("Unexpected value in Phrase list")
+			break
+		}
+		if pe.AtClick <= dclick {
+			Info("triggerPhraseElementAt", "click", clk, "dclick", dclick, "pe.AtClick", pe.AtClick)
 			switch v := pe.Value.(type) {
 			case *NoteOn:
 				SendToSynth(v)
@@ -267,16 +283,13 @@ func (sched *Scheduler) triggerItemsScheduledAt(clk Clicks) {
 				noteon := NewNoteOn(v.Pitch, v.Velocity, v.Synth)
 				SendToSynth(noteon)
 				noteoff := NewNoteOff(v.Pitch, v.Velocity, v.Synth)
-				newpe := &PhraseElement{AtClick: pe.AtClick + v.Duration, Value: noteoff}
+				offClick := clk + pe.AtClick + v.Duration
+				newpe := &PhraseElement{AtClick: offClick, Value: noteoff}
 				sched.pendingNoteOffs.InsertElement(newpe)
-
-			case *Phrase:
-				Warn("triggerItemsScheduleAt: needs work for Phrase")
+			default:
+				msg := fmt.Sprintf("triggerPhraseElementsAt: unexpected Value type=%T", v)
+				Warn(msg)
 			}
-
-			// XXX - this is (maybe) where looping happens
-			// by rescheduling things rather than removing
-			sched.schedule.list.Remove(i)
 		}
 	}
 }
@@ -376,7 +389,7 @@ func (sched *Scheduler) AddActivePhraseAt(click Clicks, phrase *Phrase, sid stri
 			}
 		}
 	}
-}
+
 */
 
 // StopPhrase xxx
@@ -416,7 +429,7 @@ func (sched *Scheduler) advancePendingNoteOffsByOneClick() {
 			continue
 		}
 		if pe.AtClick > currentClick {
-			Warn("Scheduler.advancePendingNoteOffsByOneClick: clickStart > currentClick?")
+			// Warn("Scheduler.advancePendingNoteOffsByOneClick: clickStart > currentClick?")
 		} else {
 			SendToSynth(ntoff)
 			sched.pendingNoteOffs.list.Remove(i)
@@ -443,14 +456,14 @@ func (sched *Scheduler) terminateActiveNotes() {
 
 func (sched *Scheduler) ToString() string {
 	s := "Schedule{"
-	for i := sched.schedule.list.Front(); i != nil; i = i.Next() {
-		pe := i.Value.(*PhraseElement)
+	for i := sched.schedList.Front(); i != nil; i = i.Next() {
+		pe := i.Value.(*SchedElement)
 		switch v := pe.Value.(type) {
 		case *Phrase:
 			phr := v
 			s += fmt.Sprintf("(%d,%v)", pe.AtClick, phr)
 		default:
-			s += "(Unknown Sched Type)"
+			s += "(Unknown SchedElement Type)"
 		}
 	}
 	s += "}"
@@ -462,29 +475,26 @@ func (sched *Scheduler) Format(f fmt.State, c rune) {
 	f.Write([]byte(s))
 }
 
-func (sched *Scheduler) schedulePhraseElementAt(pe *PhraseElement, click Clicks) {
-	schedule := sched.schedule
-	DebugLogOfType("schedule", "Scheduler.SchedulePhraseElementAt", "pe", pe, "click", click)
+func (sched *Scheduler) scheduleElement(se *SchedElement) {
+	schedClick := se.AtClick
+	DebugLogOfType("schedule", "Scheduler.scheduleElement", "se", se, "click", schedClick)
 	// Insert newElement sorted by time
-	// XXX - could be generic-ized with identical code for activePhrase
-	i := schedule.list.Front()
+	i := sched.schedList.Front()
 	if i == nil {
 		// new list
-		schedule.list.PushFront(pe)
-	} else if schedule.list.Back().Value.(*PhraseElement).AtClick <= pe.AtClick {
+		sched.schedList.PushFront(se)
+	} else if sched.schedList.Back().Value.(*SchedElement).AtClick <= schedClick {
 		// pe is later than all existing things
-		schedule.list.PushBack(pe)
+		sched.schedList.PushBack(se)
 	} else {
 		// use click to find place to insert
 		for ; i != nil; i = i.Next() {
-			if i.Value.(*PhraseElement).AtClick > click {
-				schedule.list.InsertBefore(pe, i)
+			if i.Value.(*SchedElement).AtClick > schedClick {
+				sched.schedList.InsertBefore(se, i)
 				break
 			}
 		}
 	}
-	Info("SchedulePhraseItemAt", "lenschedule", schedule.list.Len())
-	Info("SchedulePhraseItemAt", "lenschedschedulelist", sched.schedule.list.Len())
 }
 
 func (sched *Scheduler) advanceTransposeTo(newclick Clicks) {
