@@ -44,7 +44,7 @@ type MIDIChannelOutput struct {
 }
 
 type MidiEvent struct {
-	msg    midi.Message
+	msg midi.Message
 }
 
 // MIDI is a pointer to
@@ -75,7 +75,7 @@ func InitMIDI() {
 
 	for _, inp := range inports {
 		name := inp.String()
-		Info("MIDI input", "port", name)
+		DebugLogOfType("midiports", "MIDI input", "port", name)
 		if strings.Contains(name, "Erae Touch") {
 			erae = true
 			EraeInput = inp
@@ -83,18 +83,21 @@ func InitMIDI() {
 		if strings.Contains(name, midiInputName) {
 			// We only open a single input, though midiInputs is an array
 			MIDI.midiInput = inp
+			Info("Using MIDI input", "midiinput", name)
 		}
 	}
 
 	for _, outp := range outports {
 		name := outp.String()
 		// NOTE: name is the port name followed by an index
-		Info("MIDI output", "port", outp.String())
+		DebugLogOfType("midiports", "MIDI output", "port", outp.String())
 		if strings.Contains(name, "Erae Touch") {
 			EraeOutput = outp
 		}
 		MIDI.midiOutputs[name] = outp
 	}
+
+	Info("Initialized MIDI outputs", "len", len(outports))
 
 	if erae {
 		Info("Erae Touch input is being enabled")

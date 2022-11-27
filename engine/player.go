@@ -131,7 +131,16 @@ func (player *Player) SendPhraseElementToSynth(pe *PhraseElement) {
 	SendToSynth(pe)
 }
 
-func (player *Player) MidiEventToPhraseElement(me MidiEvent) (*PhraseElement, error) {
+func (player *Player) MidiEventToPhrase(me MidiEvent) (*Phrase, error) {
+	pe, err := player.midiEventToPhraseElement(me)
+	if err != nil {
+		return nil, err
+	}
+	phr := NewPhrase().InsertElement(pe)
+	return phr, nil
+}
+
+func (player *Player) midiEventToPhraseElement(me MidiEvent) (*PhraseElement, error) {
 
 	bytes := me.msg.Bytes()
 	lng := len(bytes)

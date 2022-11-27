@@ -548,7 +548,7 @@ func (p *Phrase) ResetLengthNoLock() {
 		p.Length = 0
 		return
 	}
-	pi := lasti.Value.(PhraseElement)
+	pi := lasti.Value.(*PhraseElement)
 	switch v := pi.Value.(type) {
 	case NoteFull:
 		p.Length = pi.AtClick + v.Duration
@@ -612,7 +612,7 @@ func (p *Phrase) InsertNoLock(pe *PhraseElement) *Phrase {
 	}
 
 	for e := p.list.Front(); e != nil; e = e.Next() {
-		thisClick := e.Value.(PhraseElement).AtClick
+		thisClick := e.Value.(*PhraseElement).AtClick
 		if click < thisClick {
 			p.list.InsertBefore(pe, e)
 			break
