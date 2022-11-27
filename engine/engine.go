@@ -71,7 +71,7 @@ func DeactivateResponder(name string) {
 func (e *Engine) Start(done chan bool) {
 
 	e.done = done
-	Info("====================== Palette Engine is starting")
+	Info("Engine.Start")
 
 	// Normally, the engine should never die, but if it does,
 	// other processes (e.g. resolume, bidule) may be left around.

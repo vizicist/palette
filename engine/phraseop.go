@@ -97,7 +97,7 @@ func (p *Phrase) Merge(fromPhrase *Phrase) *Phrase {
 	defer p.Unlock()
 
 	for e := fromPhrase.list.Front(); e != nil; e = e.Next() {
-		pe := e.Value.(PhraseElement)
+		pe := e.Value.(*PhraseElement)
 		newpe := pe.Copy()
 		p.InsertElement(newpe)
 	}
@@ -116,7 +116,7 @@ func (p *Phrase) Arpeggio() *Phrase {
 	lastend := Clicks(0)
 	r := NewPhrase()
 	for i := p.list.Front(); i != nil; i = i.Next() {
-		pi := i.Value.(PhraseElement)
+		pi := i.Value.(*PhraseElement)
 		newElement := pi.Copy()
 		newElement.AtClick = lastend
 		r.InsertElement(newElement)
@@ -145,7 +145,7 @@ func (p *Phrase) Step(stepsize Clicks) *Phrase {
 	steptime := Clicks(0)
 	r := NewPhrase()
 	for i := p.list.Front(); i != nil; i = i.Next() {
-		pi := i.Value.(PhraseElement)
+		pi := i.Value.(*PhraseElement)
 		// Notes that are at the same time (like chords)
 		// are still at the same time.
 		if !first && pi.AtClick != lasttime {
@@ -196,7 +196,7 @@ func (p *Phrase) LowestPitch(delta int) uint8 {
 
 	lowest := uint8(127)
 	for i := p.list.Front(); i != nil; i = i.Next() {
-		pi := i.Value.(PhraseElement)
+		pi := i.Value.(*PhraseElement)
 		switch v := pi.Value.(type) {
 		case *NoteOn:
 			if v.Pitch < lowest {
@@ -220,7 +220,7 @@ func (p *Phrase) LowestPitch(delta int) uint8 {
 func (p *Phrase) Legato() *Phrase {
 	r := p.Copy()
 	for i := r.list.Front(); i != nil; i = i.Next() {
-		pi := i.Value.(PhraseElement)
+		pi := i.Value.(*PhraseElement)
 		switch v := pi.Value.(type) {
 		case *NoteFull:
 			nextt := r.NextTime(pi.AtClick)
@@ -243,7 +243,7 @@ func (p *Phrase) AtTime(tm Clicks) *Phrase {
 
 	newp := NewPhrase()
 	for i := p.list.Front(); i != nil; i = i.Next() {
-		pi := i.Value.(PhraseElement)
+		pi := i.Value.(*PhraseElement)
 		endof := pi.EndOf()
 		if pi.AtClick <= tm && endof > tm {
 			// Assumes Phrase is already sorted, so always append to end of new phrase
@@ -262,7 +262,7 @@ func (p *Phrase) NextTime(st Clicks) Clicks {
 
 	nexttime := Clicks(-1)
 	for i := p.list.Front(); i != nil; i = i.Next() {
-		pi := i.Value.(PhraseElement)
+		pi := i.Value.(*PhraseElement)
 		if pi.AtClick > st {
 			nexttime = pi.AtClick
 			break
