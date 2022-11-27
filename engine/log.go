@@ -65,7 +65,7 @@ func InitLog(logname string) {
 	logger := fileLogger(logpath)
 	TheLog = logger.Sugar()
 	defer logger.Sync() // flushes buffer, if any
-	Info("InitLog", "logname", logname)
+	Info("InitLog ===========================", "logname", logname)
 }
 
 func IsLogging(logtype string) bool {
@@ -135,6 +135,7 @@ var LogEnabled = map[string]bool{
 	"go":        false,
 	"loop":      false,
 	"midi":      false,
+	"midiports": false,
 	"mmtt":      false,
 	"morph":     false,
 	"phrase":    false,
