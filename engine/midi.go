@@ -83,7 +83,6 @@ func InitMIDI() {
 		if strings.Contains(name, midiInputName) {
 			// We only open a single input, though midiInputs is an array
 			MIDI.midiInput = inp
-			Info("Using MIDI input", "midiinput", name)
 		}
 	}
 
@@ -97,7 +96,7 @@ func InitMIDI() {
 		MIDI.midiOutputs[name] = outp
 	}
 
-	Info("Initialized MIDI outputs", "len", len(outports))
+	Info("Initialized MIDI", "outports", outports, "midiInputName", midiInputName)
 
 	if erae {
 		Info("Erae Touch input is being enabled")

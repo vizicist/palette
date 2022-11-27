@@ -20,11 +20,11 @@ func (r *Responder_default) OnMidiEvent(ctx *engine.ResponderContext, me engine.
 }
 
 func (r *Responder_default) OnCursorEvent(ctx *engine.ResponderContext, ce engine.CursorEvent) {
-	if ce.Ddu == "down" { // || ce.Ddu == "drag" {
+	if ce.Ddu == "down" || ce.Ddu == "drag" {
 
 		pitch := uint8(ce.X * 126.0)
 		velocity := uint8(ce.Z * 1280)
-		duration := engine.QuarterNote
+		duration := 2 * engine.QuarterNote
 		synth := "0103 Ambient_E-Guitar"
 		ctx.ScheduleNoteNow(pitch, velocity, duration, synth)
 	}
