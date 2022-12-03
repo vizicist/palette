@@ -6,10 +6,10 @@ import (
 	"runtime/pprof"
 	"syscall"
 
+	"github.com/vizicist/palette/agent"
 	"github.com/vizicist/palette/engine"
-	"github.com/vizicist/palette/responder"
 
-	// _ "github.com/vizicist/palette/responder"
+	// _ "github.com/vizicist/palette/agent"
 	_ "github.com/vizicist/palette/tool"
 )
 
@@ -41,12 +41,12 @@ func main() {
 	playerA.SavePreset("visual.TestingSquare")
 	playerB.SavePreset("visual.TestingCircle")
 
-	respondDefault := responder.GetResponder("default")
-	// respondLogger := responder.GetResponder("logger")
-	respondChillian := responder.GetResponder("chillian")
+	respondDefault := agent.GetAgent("default")
+	// respondLogger := agent.GetAgent("logger")
+	respondChillian := agent.GetAgent("chillian")
 
-	playerA.AttachResponder(respondChillian)
-	playerB.AttachResponder(respondDefault)
+	playerA.AttachAgent(respondChillian)
+	playerB.AttachAgent(respondDefault)
 
 	playerA.AllowSource("A")
 	playerB.AllowSource("B")

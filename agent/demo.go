@@ -1,4 +1,4 @@
-package responder
+package agent
 
 import (
 	"time"
@@ -7,24 +7,24 @@ import (
 )
 
 func init() {
-	RegisterResponder("demo", &Responder_demo{})
+	RegisterAgent("demo", &Agent_demo{})
 }
 
-type Responder_demo struct {
+type Agent_demo struct {
 }
 
-func NewResponder_demo() *Responder_demo {
-	p := &Responder_demo{}
+func NewAgent_demo() *Agent_demo {
+	p := &Agent_demo{}
 	return p
 }
 
 /////////////////////////// external interface
 
-func (r *Responder_demo) OnMidiEvent(ctx *engine.ResponderContext, me engine.MidiEvent) {
+func (r *Agent_demo) OnMidiEvent(ctx *engine.AgentContext, me engine.MidiEvent) {
 }
 
-func (r *Responder_demo) OnCursorEvent(ctx *engine.ResponderContext, ce engine.CursorEvent) {
-	engine.Info("NewResponder_demo in OnCursorEvent!")
+func (r *Agent_demo) OnCursorEvent(ctx *engine.AgentContext, ce engine.CursorEvent) {
+	engine.Info("NewAgent_demo in OnCursorEvent!")
 	if ce.Ddu == "down" {
 		go func() {
 			pe := r.cursorToPhraseElement(ce)
@@ -42,12 +42,12 @@ func (r *Responder_demo) OnCursorEvent(ctx *engine.ResponderContext, ce engine.C
 			}
 		}()
 	}
-	// engine.Info("OnCursorEvent in responder_demo called!", "ce", ce)
+	// engine.Info("OnCursorEvent in agent_demo called!", "ce", ce)
 }
 
 /////////////////////////// internal things
 
-func (r *Responder_demo) cursorToPhraseElement(ce engine.CursorEvent) *engine.PhraseElement {
+func (r *Agent_demo) cursorToPhraseElement(ce engine.CursorEvent) *engine.PhraseElement {
 	pitch := int(ce.X * 126.0)
 	_ = pitch
 	s := "+b"

@@ -6,8 +6,8 @@ import (
 	"runtime/pprof"
 	"syscall"
 
+	"github.com/vizicist/palette/agent"
 	"github.com/vizicist/palette/engine"
-	"github.com/vizicist/palette/responder"
 	_ "github.com/vizicist/palette/tool"
 	"github.com/vizicist/palette/twinsys"
 )
@@ -25,7 +25,6 @@ func main() {
 
 	e := engine.TheEngine()
 
-	players := map[string]*engine.Player{}
 	presets := map[string]string{
 		"A": "snap.Yellow_Spheres",
 		"B": "snap.Blue_Spheres",
@@ -39,7 +38,7 @@ func main() {
 		"D": "line",
 	}
 
-	respondDefault := responder.GetResponder("default")
+	respondDefault := agent.GetAgent("default")
 
 	for n, playerName := range []string{"A", "B", "C", "D"} {
 		p := engine.NewPlayer(playerName)
@@ -47,9 +46,8 @@ func main() {
 		p.ApplyPreset(presets[playerName])
 		p.SetParam("visual.shape", shapes[playerName])
 		p.SavePreset(presets[playerName] + "_test")
-		p.AttachResponder(respondDefault)
+		p.AttachAgent(respondDefault)
 		p.AllowSource(playerName)
-		players[playerName] = p
 	}
 
 	done := make(chan bool)

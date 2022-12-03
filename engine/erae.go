@@ -10,8 +10,9 @@ import (
 	"gitlab.com/gomidi/midi/v2/drivers"
 )
 
-var EraePlayerName = "A"
-var EraePlayer *Player
+var EraeLayerName = "A"
+var EraeAgent Agent
+var EraeAgentContext *AgentContext
 var EraeEnabled = false
 var MyPrefix byte = 0x55
 var EraeWidth int = 0x2a
@@ -83,7 +84,8 @@ func EraeFingerIndicator(zone, x, y byte) {
 		green := byte(0)
 		blue := byte(0)
 		alpha := byte(0x7f * dim)
-		switch EraePlayerName {
+
+		switch EraeLayerName {
 		case "A":
 			red = alpha
 		case "B":
@@ -145,24 +147,19 @@ func handleFinger(bb []byte) {
 	// we change the player to that corner.
 
 	edge := float32(0.1)
-	newplayerName := ""
+	newLayerName := ""
 	if x < edge && y < edge {
-		newplayerName = "A"
+		newLayerName = "A"
 	} else if x < edge && y > (1.0-edge) {
-		newplayerName = "B"
+		newLayerName = "B"
 	} else if x > (1.0-edge) && y > (1.0-edge) {
-		newplayerName = "C"
+		newLayerName = "C"
 	} else if x > (1.0-edge) && y < edge {
-		newplayerName = "D"
+		newLayerName = "D"
 	}
 
-	if newplayerName != "" {
-		player, err := TheRouter().PlayerManager.GetPlayer(newplayerName)
-		if err != nil {
-			Warn("player not found", "player", newplayerName)
-			return
-		}
-		if newplayerName != EraePlayerName {
+	if newLayerName != "" {
+		if newLayerName != EraeLayerName {
 			// Clear cursor state from existing player
 			ce := CursorEvent{
 				ID:        cid,
@@ -170,10 +167,9 @@ func handleFinger(bb []byte) {
 				Timestamp: time.Now(),
 				Ddu:       "clear",
 			}
-			player.HandleCursorEvent(ce)
-			DebugLogOfType("erae", "Switching Erae to", "player", newplayerName)
-			EraePlayerName = newplayerName
-			EraePlayer = player
+			EraeAgent.OnCursorEvent(EraeAgentContext, ce)
+			DebugLogOfType("erae", "Switching Erae to", "layer", newLayerName)
+			EraeLayerName = newLayerName
 		}
 		// We don't pass corner things through, even if we haven't changed the player
 		return
@@ -224,7 +220,7 @@ func handleFinger(bb []byte) {
 	}
 	// XXX - should Fresh be trued???
 
-	EraePlayer.HandleCursorEvent(ce)
+	EraeAgent.OnCursorEvent(EraeAgentContext, ce)
 }
 
 func EraeWriteSysEx(bytes []byte) {

@@ -228,3 +228,21 @@ func (m *MIDIIO) openFakeChannelOutput(port string, channel int) *MIDIChannelOut
 	}
 	return co
 }
+
+func (me MidiEvent) Status() uint8 {
+	bytes := me.msg.Bytes()
+	if len(bytes) == 0 {
+		Warn("Empty bytes in MidiEvent?")
+		return 0
+	}
+	return bytes[0]
+}
+
+func (me MidiEvent) Data1() uint8 {
+	bytes := me.msg.Bytes()
+	if len(bytes) < 2 {
+		Warn("No Data1 byte in MidiEvent?")
+		return 0
+	}
+	return bytes[1]
+}

@@ -52,121 +52,127 @@ func (p *Preset) loadPreset() error {
 }
 
 func (p *Preset) applyQuadPresetToPlayer(playerName string) error {
-	// Here's where the params get applied,
-	// which among other things
-	// may result in sending OSC messages out.
-	for name, ival := range p.paramsmap {
-		value, ok := ival.(string)
-		if !ok {
-			return fmt.Errorf("value of name=%s isn't a string", name)
-		}
-		// In a quad file, the parameter names are of the form:
-		// {player}-{parametername}
-		words := strings.SplitN(name, "-", 2)
-		playerOfParam := words[0]
-		player, err := TheRouter().PlayerManager.GetPlayer(playerOfParam)
-		if err != nil {
-			return err
-		}
-		if playerName != "*" && playerName != playerOfParam {
-			continue
-		}
-		// use words[1] so the player doesn't see the player name
-		parameterName := words[1]
-		// We expect the parameter to be of the form
-		// {category}.{parameter}, but old "quad" files
-		// didn't include the category.
-		if !strings.Contains(parameterName, ".") {
-			Warn("applyQuadPreset: OLD format, not supported")
-			return fmt.Errorf("")
-		}
-		err = player.SetOneParamValue(parameterName, value)
-		if err != nil {
-			Warn("applyQuadPreset", "name", parameterName, "err", err)
-			// Don't fail completely on individual failures,
-			// some might be for parameters that no longer exist.
-		}
-	}
+	return fmt.Errorf("applyQuadPreset needs work")
 
-	// For any parameters that are in Paramdefs but are NOT in the loaded
-	// preset, we put out the "init" values.  This happens when new parameters
-	// are added which don't exist in existing preset files.
-	// This is similar to code in Player.applyPreset, except we
-	// have to do it for all for pads
-	for _, c := range TheRouter().playerLetters {
-		playerName := string(c)
-		player, err := TheRouter().PlayerManager.GetPlayer(playerName)
-		if err != nil {
-			Warn("applyQuadPreset: no player named", "player", playerName)
+	/*
+		// Here's where the params get applied,
+		// which among other things
+		// may result in sending OSC messages out.
+		for name, ival := range p.paramsmap {
+			value, ok := ival.(string)
+			if !ok {
+				return fmt.Errorf("value of name=%s isn't a string", name)
+			}
+			// In a quad file, the parameter names are of the form:
+			// {player}-{parametername}
+			words := strings.SplitN(name, "-", 2)
+			layerOfParam := words[0]
+			ctx, err := TheRouter().AgentManager.GetAgentContext(layerOfParam)
+			if err != nil {
+				return err
+			}
+			if layerName != layerOfParam {
+				continue
+			}
+			// use words[1] so the player doesn't see the player name
+			parameterName := words[1]
+			// We expect the parameter to be of the form
+			// {category}.{parameter}, but old "quad" files
+			// didn't include the category.
+			if !strings.Contains(parameterName, ".") {
+				Warn("applyQuadPreset: OLD format, not supported")
+				return fmt.Errorf("")
+			}
+			err = player.SetOneParamValue(parameterName, value)
+			if err != nil {
+				Warn("applyQuadPreset", "name", parameterName, "err", err)
+				// Don't fail completely on individual failures,
+				// some might be for parameters that no longer exist.
+			}
 		}
-		for nm, def := range ParamDefs {
-			paramName := string(playerName) + "-" + nm
-			_, found := p.paramsmap[paramName]
-			if !found {
-				init := def.Init
-				err = player.SetOneParamValue(nm, init)
-				if err != nil {
-					// a hack to eliminate errors on a parameter that
-					// still exists in some presets.
-					Warn("applyQuadPreset", "nm", nm, "err", err)
-					// Don't fail completely on individual failures,
-					// some might be for parameters that no longer exist.
+
+		// For any parameters that are in Paramdefs but are NOT in the loaded
+		// preset, we put out the "init" values.  This happens when new parameters
+		// are added which don't exist in existing preset files.
+		// This is similar to code in Player.applyPreset, except we
+		// have to do it for all for pads
+		for _, c := range TheRouter().playerLetters {
+			playerName := string(c)
+			player, err := TheRouter().AgentManager.GetPlayer(playerName)
+			if err != nil {
+				Warn("applyQuadPreset: no player named", "player", playerName)
+			}
+			for nm, def := range ParamDefs {
+				paramName := string(playerName) + "-" + nm
+				_, found := p.paramsmap[paramName]
+				if !found {
+					init := def.Init
+					err = player.SetOneParamValue(nm, init)
+					if err != nil {
+						// a hack to eliminate errors on a parameter that
+						// still exists in some presets.
+						Warn("applyQuadPreset", "nm", nm, "err", err)
+						// Don't fail completely on individual failures,
+						// some might be for parameters that no longer exist.
+					}
 				}
 			}
 		}
-	}
 
-	return nil
+		return nil
+	*/
 }
 
-func (p *Preset) ApplyTo(playerName string) error {
-	ApplyToAllPlayers(func(player *Player) {
-		err := player.applyParamsMap(p.category, p.paramsmap)
+func (p *Preset) ApplyTo(ctx *AgentContext) error {
+	return fmt.Errorf("applyTo needs work")
+	/*
+		err := ctx.applyParamsMap(p.category, p.paramsmap)
 		if err != nil {
-			Warn("Preset.ApplyTo", "player", player.playerName, "err", err)
+			Warn("Preset.ApplyTo", "agent", ctx.Name, "err", err)
 		}
-	})
 
-	// If there's a _override.json file, use it
-	override, err := LoadPreset(p.category + "._override")
-	if err != nil {
-		return err
-	}
-	overridepath := override.readableFilePath()
-	if fileExists(overridepath) {
-		DebugLogOfType("preset", "applyPreset using", "overridepath", overridepath)
-		overridemap, err := LoadParamsMap(overridepath)
+		// If there's a _override.json file, use it
+		override, err := LoadPreset(p.category + "._override")
 		if err != nil {
 			return err
 		}
-		ApplyToAllPlayers(func(player *Player) {
-			player.applyParamsMap(p.category, overridemap)
-		})
-	}
-
-	// For any parameters that are in Paramdefs but are NOT in the loaded
-	// preset, we put out the "init" values.  This happens when new parameters
-	// are added which don't exist in existing preset files.
-	for nm, def := range ParamDefs {
-		// Only include parameters of the desired type
-		thisCategory, _ := PresetNameSplit(nm)
-		if p.category != "snap" && p.category != thisCategory {
-			continue
+		overridepath := override.readableFilePath()
+		if fileExists(overridepath) {
+			DebugLogOfType("preset", "applyPreset using", "overridepath", overridepath)
+			overridemap, err := LoadParamsMap(overridepath)
+			if err != nil {
+				return err
+			}
+			err := ctx.applyParamsMap(p.category, p.paramsmap)
+			if err != nil {
+				return err
+			}
 		}
-		_, found := p.paramsmap[nm]
-		if !found {
-			init := def.Init
-			ApplyToAllPlayers(func(player *Player) {
-				err := player.SetOneParamValue(nm, init)
-				if err != nil {
-					Warn("Loading preset", "preset", nm, "err", err)
-					// Don't fail completely
+
+		// For any parameters that are in Paramdefs but are NOT in the loaded
+		// preset, we put out the "init" values.  This happens when new parameters
+		// are added which don't exist in existing preset files.
+		for nm, def := range ParamDefs {
+			// Only include parameters of the desired type
+			thisCategory, _ := PresetNameSplit(nm)
+			if p.category != "snap" && p.category != thisCategory {
+				continue
+			}
+			_, found := p.paramsmap[nm]
+			if !found {
+				init := def.Init
+				for _, ctx := range am.agentsContext {
+					err := ctx.SetOneParamValue(nm, init)
+					if err != nil {
+						Warn("Loading preset", "preset", nm, "err", err)
+						// Don't fail completely
+					}
 				}
-			})
+			}
 		}
-	}
 
-	return nil
+		return nil
+	*/
 }
 
 // ReadablePresetFilePath xxx

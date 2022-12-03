@@ -47,25 +47,25 @@ func StopRunning(what string) {
 	TheEngine().ProcessManager.StopRunning(what)
 }
 
-type CreateResponderFunc func(*ResponderContext) Responder
+type CreateAgentFunc func(*AgentContext) Agent
 
-func AddResponder(name string, responder Responder) {
-	TheRouter().responderManager.AddResponder(name, responder)
+func AddAgent(name string, agent Agent) {
+	TheRouter().agentManager.AddAgent(name, agent)
 }
 
 /*
-func ActivateResponder(name string) {
-	TheRouter().responderManager.ActivateResponder(name)
+func ActivateAgent(name string) {
+	TheRouter().agentManager.ActivateAgent(name)
 }
 
-func DeactivateResponder(name string) {
-	TheRouter().responderManager.DeactivateResponder(name)
+func DeactivateAgent(name string) {
+	TheRouter().agentManager.DeactivateAgent(name)
 }
 */
 
 // func (e *Engine) handleCursorEvent(ce CursorEvent) {
 // 	TheEngine().CursorManager.handleCursorEvent(ce)
-// 	TheEngine().responderManager.handleCursorEvent(ce)
+// 	TheEngine().agentManager.handleCursorEvent(ce)
 // }
 
 func (e *Engine) Start(done chan bool) {

@@ -1,23 +1,23 @@
-package responder
+package agent
 
 import (
 	"github.com/vizicist/palette/engine"
 )
 
 func init() {
-	RegisterResponder("chillian", &Responder_chillian{})
+	RegisterAgent("chillian", &Agent_chillian{})
 }
 
-type Responder_chillian struct {
+type Agent_chillian struct {
 }
 
-func (r *Responder_chillian) OnMidiEvent(ctx *engine.ResponderContext, me engine.MidiEvent) {
-	ctx.Log("Responder_chillian.onMidiEvent", "me", me)
+func (r *Agent_chillian) OnMidiEvent(ctx *engine.AgentContext, me engine.MidiEvent) {
+	ctx.Log("Agent_chillian.onMidiEvent", "me", me)
 	// just echo it back out
 	// ctx.ScheduleBytesNow(me.Bytes)
 }
 
-func (r *Responder_chillian) OnCursorEvent(ctx *engine.ResponderContext, ce engine.CursorEvent) {
+func (r *Agent_chillian) OnCursorEvent(ctx *engine.AgentContext, ce engine.CursorEvent) {
 	if ce.Ddu == "down" { // || ce.Ddu == "drag" {
 
 		pitch := uint8(ce.X * 126.0)
@@ -26,7 +26,7 @@ func (r *Responder_chillian) OnCursorEvent(ctx *engine.ResponderContext, ce engi
 		synth := "0103 Ambient_E-Guitar"
 		nt := engine.NewNoteFull(pitch, velocity, duration, synth)
 
-		ctx.Log("Responder_chillian.OnCursorEvent", "pitch", pitch, "vel", velocity, "dur", duration)
+		ctx.Log("Agent_chillian.OnCursorEvent", "pitch", pitch, "vel", velocity, "dur", duration)
 
 		pe := &engine.PhraseElement{
 			AtClick: ctx.CurrentClick(),
