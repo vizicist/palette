@@ -105,13 +105,13 @@ command	meaning	# param
 */
 
 // NewNoteOn create a new noteon
-func NewNoteOn(pitch uint8, velocity uint8, synth string) *NoteOn {
-	return &NoteOn{Pitch: pitch, Velocity: velocity, Synth: synth}
+func NewNoteOn(channel, pitch, velocity uint8) *NoteOn {
+	return &NoteOn{Pitch: pitch, Velocity: velocity, Channel: channel}
 }
 
 // NewNoteOff create a new noteoff
-func NewNoteOff(pitch uint8, velocity uint8, synth string) *NoteOff {
-	return &NoteOff{Pitch: pitch, Velocity: velocity, Synth: synth}
+func NewNoteOff(channel, pitch, velocity uint8) *NoteOff {
+	return &NoteOff{Pitch: pitch, Velocity: velocity, Channel: channel}
 }
 
 /*
@@ -245,7 +245,7 @@ func PhraseElementFromString(s string) (e *PhraseElement, err error) {
 	ndur := -1
 	noctave := 3 // Note: default octave is 3
 	atclick := Clicks(0)
-	nsound := ""
+	nchannel := 0
 	endstate := 99
 	nattribute := ""
 	for state != endstate {
@@ -340,11 +340,10 @@ func PhraseElementFromString(s string) (e *PhraseElement, err error) {
 					return nil, err
 				}
 
-			case "S": // sound
-				var tok Token
-				tok, nsound = scanner.ScanWord()
-				if tok != WORD {
-					return nil, fmt.Errorf("unexpected non-WORD: sound=%s", nsound)
+			case "c": // sound
+				nchannel, err = scanner.ScanNumber()
+				if err != nil {
+					return nil, err
 				}
 
 			case "v": // velocity
@@ -393,20 +392,20 @@ func PhraseElementFromString(s string) (e *PhraseElement, err error) {
 	switch ntype {
 	case "note":
 		val = &NoteFull{
-			Synth:    nsound,
+			Channel:  uint8(nchannel),
 			Duration: Clicks(ndur),
 			Pitch:    uint8(npitch),
 			Velocity: uint8(nvelocity),
 		}
 	case "noteon":
 		val = &NoteOn{
-			Synth:    nsound,
+			Channel:  uint8(nchannel),
 			Pitch:    uint8(npitch),
 			Velocity: uint8(nvelocity),
 		}
 	case "noteoff":
 		val = &NoteOff{
-			Synth:    nsound,
+			Channel:  uint8(nchannel),
 			Pitch:    uint8(npitch),
 			Velocity: uint8(nvelocity),
 		}

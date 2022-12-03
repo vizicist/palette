@@ -258,7 +258,7 @@ func (e *Engine) executePresetAPI(api string, apiargs map[string]string) (result
 			if !okplayer {
 				return "", fmt.Errorf("missing agent parameter")
 			}
-			ctx, err := e.Router.AgentManager.GetAgentContext(agentName)
+			ctx, err := e.Router.agentManager.GetAgentContext(agentName)
 			if err != nil {
 				return "", err
 			}

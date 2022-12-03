@@ -129,7 +129,7 @@ func (cm *CursorManager) handleDownDragUp(ce CursorEvent) {
 	}
 
 	// See which player wants this input
-	TheRouter().AgentManager.handleCursorEvent(ce)
+	TheRouter().agentManager.handleCursorEvent(ce)
 
 	DebugLogOfType("cursor", "CursorManager.handleDownDragUp", "id", ce.ID, "ddu", ce.Ddu, "x", ce.X, "y", ce.Y, "z", ce.Z)
 	if ce.Ddu == "up" {

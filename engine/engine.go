@@ -49,8 +49,8 @@ func StopRunning(what string) {
 
 type CreateAgentFunc func(*AgentContext) Agent
 
-func AddAgent(name string, agent Agent) {
-	TheRouter().agentManager.AddAgent(name, agent)
+func RegisterAgent(name string, agent Agent) {
+	TheRouter().agentManager.RegisterAgent(name, agent)
 }
 
 /*
@@ -64,9 +64,13 @@ func DeactivateAgent(name string) {
 */
 
 // func (e *Engine) handleCursorEvent(ce CursorEvent) {
-// 	TheEngine().CursorManager.handleCursorEvent(ce)
+// 	TheEngine().cursorManager.handleCursorEvent(ce)
 // 	TheEngine().agentManager.handleCursorEvent(ce)
 // }
+
+func (e *Engine) StartAgent(name string) {
+	e.Router.agentManager.StartAgent(name)
+}
 
 func (e *Engine) Start(done chan bool) {
 

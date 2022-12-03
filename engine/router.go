@@ -23,22 +23,22 @@ var PloguePort = 3210
 
 // Router takes events and routes them
 type Router struct {
-	AgentManager *AgentManager
-	// playerLetters string
+	playerLetters string
 
 	OSCInput      chan OSCEvent
 	midiInputChan chan MidiEvent
-	CursorInput   chan CursorEvent
+	cursorInput   chan CursorEvent
 
-	CursorManager *CursorManager
-	killme        bool
+	cursorManager *CursorManager
+	agentManager  *AgentManager
+
+	killme bool
 
 	AliveWaiters map[string]chan string
 
 	layerMap map[string]int // map of pads to resolume layer numbers
 
 	midiEventHandler MIDIEventHandler
-	agentManager     *AgentManager
 
 	resolumeClient *osc.Client
 	guiClient      *osc.Client
@@ -102,16 +102,14 @@ func NewRouter() *Router {
 
 	r := Router{}
 
-	r.CursorManager = NewCursorManager()
-	r.AgentManager = NewAgentManager()
+	r.cursorManager = NewCursorManager()
+	r.agentManager = NewAgentManager()
 
-	/*
-		r.playerLetters = ConfigValue("pads")
-		if r.playerLetters == "" {
-			DebugLogOfType("morph", "No value for pads, assuming ABCD")
-			r.playerLetters = "ABCD"
-		}
-	*/
+	r.playerLetters = ConfigValue("pads")
+	if r.playerLetters == "" {
+		DebugLogOfType("morph", "No value for pads, assuming ABCD")
+		r.playerLetters = "ABCD"
+	}
 
 	err := LoadParamEnums()
 	if err != nil {
@@ -167,8 +165,6 @@ func NewRouter() *Router {
 	r.generateVisuals = ConfigBoolWithDefault("generatevisuals", true)
 	r.generateSound = ConfigBoolWithDefault("generatesound", true)
 
-	r.agentManager = NewAgentManager()
-
 	return &r
 }
 
@@ -182,7 +178,7 @@ func (r *Router) Start() {
 		Warn("StartCursorInput: LoadMorphs", "err", err)
 	}
 
-	go StartMorph(r.CursorManager.handleCursorEvent, 1.0)
+	go StartMorph(r.cursorManager.handleCursorEvent, 1.0)
 }
 
 // InputListener listens for local device inputs (OSC, MIDI)
@@ -194,9 +190,9 @@ func (r *Router) InputListener() {
 		case msg := <-r.OSCInput:
 			r.handleOSCInput(msg)
 		case event := <-r.midiInputChan:
-			r.PlayerManager.handleMidiEvent(event)
-		case event := <-r.CursorInput:
-			r.CursorManager.handleCursorEvent(event)
+			r.agentManager.handleMidiEvent(event)
+		case event := <-r.cursorInput:
+			r.cursorManager.handleCursorEvent(event)
 		default:
 			time.Sleep(time.Millisecond)
 		}
@@ -284,7 +280,7 @@ func ArgsToCursorEvent(args map[string]string) CursorEvent {
 }
 
 // HandleInputEvent xxx
-func (r *Router) HandleInputEvent(playerName string, args map[string]string) error {
+func (r *Router) HandleInputEvent(agentName string, args map[string]string) error {
 
 	r.inputEventMutex.Lock()
 	defer func() {
@@ -296,10 +292,9 @@ func (r *Router) HandleInputEvent(playerName string, args map[string]string) err
 		return err
 	}
 
-	DebugLogOfType("router", "Router.HandleEvent", "player", playerName, "event", event)
+	DebugLogOfType("router", "Router.HandleEvent", "agent", agentName, "event", event)
 
-	// XXX - player value should allow "*" and other multi-player values
-	player, err := r.PlayerManager.GetPlayer(playerName)
+	ctx, err := r.agentManager.GetAgentContext(agentName)
 	if err != nil {
 		return err
 	}
@@ -312,7 +307,7 @@ func (r *Router) HandleInputEvent(playerName string, args map[string]string) err
 
 	case "cursor_down", "cursor_drag", "cursor_up":
 		ce := ArgsToCursorEvent(args)
-		player.HandleCursorEvent(ce)
+		ctx.agent.OnCursorEvent(ctx, ce)
 
 	case "sprite":
 
@@ -320,12 +315,12 @@ func (r *Router) HandleInputEvent(playerName string, args map[string]string) err
 		if err != nil {
 			return nil
 		}
-		player.generateSprite("dummy", x, y, z)
+		ctx.generateSprite("dummy", x, y, z)
 
 	case "midi_reset":
 		Info("HandleEvent: midi_reset, sending ANO")
-		player.HandleMIDITimeReset()
-		player.sendANO()
+		ctx.HandleMIDITimeReset()
+		ctx.sendANO()
 
 	case "audio_reset":
 		Info("HandleEvent: audio_reset!!")
@@ -457,8 +452,10 @@ func (r *Router) handleOSCInput(e OSCEvent) {
 	case "/event": // These messages encode the arguments as JSON
 		r.handleOSCEvent(e.Msg)
 
-	case "/cursor":
-		r.handleMMTTCursor(e.Msg)
+		/*
+			case "/cursor":
+				r.handleMMTTCursor(e.Msg)
+		*/
 
 	case "/patchxr":
 		r.handlePatchXREvent(e.Msg)
@@ -478,6 +475,7 @@ func (r *Router) notifyGUI(eventName string) {
 	DebugLogOfType("osc", "Router.notifyGUI", "msg", msg)
 }
 
+/*
 func (r *Router) handleMMTTButton(butt string) {
 	presetName := ConfigStringWithDefault(butt, "")
 	if presetName == "" {
@@ -499,6 +497,7 @@ func (r *Router) handleMMTTButton(butt string) {
 	text := strings.ReplaceAll(presetName, "_", "\n")
 	go r.showText(text)
 }
+*/
 
 func (r *Router) showText(text string) {
 
@@ -521,119 +520,124 @@ func (r *Router) showText(text string) {
 
 func (r *Router) handleClientRestart(msg *osc.Message) {
 
-	tags, _ := msg.TypeTags()
-	_ = tags
-	nargs := msg.CountArguments()
-	if nargs < 1 {
-		Warn("Router.handleOSCEvent: too few arguments")
-		return
-	}
-	// Even though the argument is an integer port number,
-	// it's a string in the OSC message sent from the Palette FFGL plugin.
-	s, err := argAsString(msg, 0)
-	if err != nil {
-		LogError(err)
-		return
-	}
-	portnum, err := strconv.Atoi(s)
-	if err != nil {
-		LogError(err)
-		return
-	}
-	var found *Player
-	r.PlayerManager.ApplyToAllPlayers(func(player *Player) {
-		if player.freeframeClient.Port() == portnum {
-			found = player
+	Warn("Router.handleClientRestart needs work")
+	/*
+		tags, _ := msg.TypeTags()
+		_ = tags
+		nargs := msg.CountArguments()
+		if nargs < 1 {
+			Warn("Router.handleOSCEvent: too few arguments")
+			return
 		}
-	})
-	if found == nil {
-		Warn("handleClientRestart unable to find Player with", "portnum", portnum)
-	} else {
-		found.sendAllParameters()
-	}
+		// Even though the argument is an integer port number,
+		// it's a string in the OSC message sent from the Palette FFGL plugin.
+		s, err := argAsString(msg, 0)
+		if err != nil {
+			LogError(err)
+			return
+		}
+		portnum, err := strconv.Atoi(s)
+		if err != nil {
+			LogError(err)
+			return
+		}
+		var found *Player
+		r.PlayerManager.ApplyToAllPlayers(func(player *Player) {
+			if player.freeframeClient.Port() == portnum {
+				found = player
+			}
+		})
+		if found == nil {
+			Warn("handleClientRestart unable to find Player with", "portnum", portnum)
+		} else {
+			found.sendAllParameters()
+		}
+	*/
 }
 
 // handleMMTTCursor handles messages from MMTT, reformating them as a standard cursor event
 func (r *Router) handleMMTTCursor(msg *osc.Message) {
-
-	tags, _ := msg.TypeTags()
-	_ = tags
-	nargs := msg.CountArguments()
-	if nargs < 1 {
-		Warn("Router.handleMMTTCursor: too few arguments")
-		return
-	}
-	ddu, err := argAsString(msg, 0)
-	if err != nil {
-		LogError(err)
-		return
-	}
-	cid, err := argAsString(msg, 1)
-	if err != nil {
-		LogError(err)
-		return
-	}
-	playerName := "A"
-	words := strings.Split(cid, ".")
-	if len(words) > 1 {
-		playerName = words[0]
-	}
-	x, err := argAsFloat32(msg, 2)
-	if err != nil {
-		LogError(err)
-		return
-	}
-	y, err := argAsFloat32(msg, 3)
-	if err != nil {
-		LogError(err)
-		return
-	}
-	z, err := argAsFloat32(msg, 4)
-	if err != nil {
-		LogError(err)
-		return
-	}
-
-	player, err := r.PlayerManager.GetPlayer(playerName)
-	if err != nil {
-		// If it's not a player, it's a button.
-		buttonDepth := ConfigFloatWithDefault("mmttbuttondepth", 0.002)
-		if z > buttonDepth {
-			Warn("NOT triggering button too deep", "z", z, "buttonDepth", buttonDepth)
+	Warn("Router.handleMMTTCursor needs work")
+	/*
+		tags, _ := msg.TypeTags()
+		_ = tags
+		nargs := msg.CountArguments()
+		if nargs < 1 {
+			Warn("Router.handleMMTTCursor: too few arguments")
 			return
 		}
-		if ddu == "down" {
-			DebugLogOfType("mmtt", "MMT BUTTON TRIGGERED", "buttonDepth", buttonDepth, "z", z)
-			r.handleMMTTButton(playerName)
+		ddu, err := argAsString(msg, 0)
+		if err != nil {
+			LogError(err)
+			return
 		}
-		return
-	}
+		cid, err := argAsString(msg, 1)
+		if err != nil {
+			LogError(err)
+			return
+		}
+		playerName := "A"
+		words := strings.Split(cid, ".")
+		if len(words) > 1 {
+			playerName = words[0]
+		}
+		x, err := argAsFloat32(msg, 2)
+		if err != nil {
+			LogError(err)
+			return
+		}
+		y, err := argAsFloat32(msg, 3)
+		if err != nil {
+			LogError(err)
+			return
+		}
+		z, err := argAsFloat32(msg, 4)
+		if err != nil {
+			LogError(err)
+			return
+		}
 
-	ce := CursorEvent{
-		ID:        cid,
-		Source:    "mmtt",
-		Timestamp: time.Now(),
-		Ddu:       ddu,
-		X:         x,
-		Y:         y,
-		Z:         z,
-		Area:      0.0,
-	}
+		player, err := r.PlayerManager.GetPlayer(playerName)
+		if err != nil {
+			// If it's not a player, it's a button.
+			buttonDepth := ConfigFloatWithDefault("mmttbuttondepth", 0.002)
+			if z > buttonDepth {
+				Warn("NOT triggering button too deep", "z", z, "buttonDepth", buttonDepth)
+				return
+			}
+			if ddu == "down" {
+				DebugLogOfType("mmtt", "MMT BUTTON TRIGGERED", "buttonDepth", buttonDepth, "z", z)
+				r.handleMMTTButton(playerName)
+			}
+			return
+		}
 
-	// XXX - HACK!!
-	zfactor := ConfigFloatWithDefault("mmttzfactor", 5.0)
-	ahack := ConfigFloatWithDefault("mmttahack", 20.0)
-	ce.Z = boundval(ahack * zfactor * ce.Z)
+		ce := CursorEvent{
+			ID:        cid,
+			Source:    "mmtt",
+			Timestamp: time.Now(),
+			Ddu:       ddu,
+			X:         x,
+			Y:         y,
+			Z:         z,
+			Area:      0.0,
+		}
 
-	xexpand := ConfigFloatWithDefault("mmttxexpand", 1.25)
-	ce.X = boundval(((ce.X - 0.5) * xexpand) + 0.5)
+		// XXX - HACK!!
+		zfactor := ConfigFloatWithDefault("mmttzfactor", 5.0)
+		ahack := ConfigFloatWithDefault("mmttahack", 20.0)
+		ce.Z = boundval(ahack * zfactor * ce.Z)
 
-	yexpand := ConfigFloatWithDefault("mmttyexpand", 1.25)
-	ce.Y = boundval(((ce.Y - 0.5) * yexpand) + 0.5)
+		xexpand := ConfigFloatWithDefault("mmttxexpand", 1.25)
+		ce.X = boundval(((ce.X - 0.5) * xexpand) + 0.5)
 
-	DebugLogOfType("mmtt", "MMTT Cursor", "source", ce.Source, "ddu", ce.Ddu, "x", ce.X, "y", ce.Y, "z", ce.Z)
+		yexpand := ConfigFloatWithDefault("mmttyexpand", 1.25)
+		ce.Y = boundval(((ce.Y - 0.5) * yexpand) + 0.5)
 
-	player.HandleCursorEvent(ce)
+		DebugLogOfType("mmtt", "MMTT Cursor", "source", ce.Source, "ddu", ce.Ddu, "x", ce.X, "y", ce.Y, "z", ce.Z)
+
+		player.HandleCursorEvent(ce)
+	*/
 }
 
 func (r *Router) handleOSCEvent(msg *osc.Message) {
@@ -658,8 +662,8 @@ func (r *Router) handleInputEventRaw(rawargs string) {
 	if err != nil {
 		return
 	}
-	playerName := extractPlayer(args)
-	r.HandleInputEvent(playerName, args)
+	agentName := extractAgent(args)
+	r.HandleInputEvent(agentName, args)
 }
 
 func (r *Router) handlePatchXREvent(msg *osc.Message) {
@@ -734,7 +738,7 @@ func (r *Router) handleOSCSpriteEvent(msg *osc.Message) {
 		return
 	}
 
-	playerName := extractPlayer(args)
+	playerName := extractAgent(args)
 	err = r.HandleInputEvent(playerName, args)
 	if err != nil {
 		Warn("Router.handleOSCSpriteEvent", "err", err)

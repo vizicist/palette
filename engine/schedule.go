@@ -239,7 +239,7 @@ func (sched *Scheduler) advanceClickTo(toClick Clicks) {
 		sched.triggerItemsScheduledAt(clk)
 		sched.advancePendingNoteOffsByOneClick()
 		if doAutoCursorUp {
-			TheRouter().CursorManager.autoCursorUp(time.Now())
+			TheRouter().cursorManager.autoCursorUp(time.Now())
 		}
 	}
 	sched.lastClick = toClick
@@ -287,9 +287,9 @@ func (sched *Scheduler) triggerPhraseElementsAt(phr *Phrase, clk Clicks, dclick 
 			case *NoteOff:
 				SendToSynth(v)
 			case *NoteFull:
-				noteon := NewNoteOn(v.Pitch, v.Velocity, v.Synth)
+				noteon := NewNoteOn(v.Channel, v.Pitch, v.Velocity)
 				SendToSynth(noteon)
-				noteoff := NewNoteOff(v.Pitch, v.Velocity, v.Synth)
+				noteoff := NewNoteOff(v.Channel, v.Pitch, v.Velocity)
 				offClick := clk + pe.AtClick + v.Duration
 				newpe := &PhraseElement{AtClick: offClick, Value: noteoff}
 				sched.pendingNoteOffs.InsertElement(newpe)
@@ -352,7 +352,7 @@ func (sched *Scheduler) doAttractAction() {
 		y1 := rand.Float32()
 		z1 := rand.Float32() / 2.0
 
-		go TheRouter().CursorManager.generateCursorGestureesture(player, cid, x0, y0, z0, x1, y1, z1)
+		go TheRouter().cursorManager.generateCursorGestureesture(player, cid, x0, y0, z0, x1, y1, z1)
 		sched.lastAttractGestureTime = now
 	}
 
