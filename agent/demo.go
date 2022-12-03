@@ -13,12 +13,10 @@ func init() {
 type Agent_demo struct {
 }
 
-func NewAgent_demo() *Agent_demo {
-	p := &Agent_demo{}
-	return p
-}
-
 /////////////////////////// external interface
+
+func (r *Agent_demo) Start(ctx *engine.AgentContext) {
+}
 
 func (r *Agent_demo) OnMidiEvent(ctx *engine.AgentContext, me engine.MidiEvent) {
 }

@@ -1,7 +1,7 @@
 package engine
 
 type AgentManager struct {
-	agents        map[string]Agent
+	// agents        map[string]Agent
 	agentsContext map[string]*AgentContext
 	// activeAgents  map[string]Agent
 }
@@ -9,25 +9,24 @@ type AgentManager struct {
 type Agent interface {
 	OnCursorEvent(ctx *AgentContext, e CursorEvent)
 	OnMidiEvent(ctx *AgentContext, e MidiEvent)
+	Start(ctx *AgentContext)
 }
 
 func NewAgentManager() *AgentManager {
 	return &AgentManager{
-		agents:        make(map[string]Agent),
+		// agents:        make(map[string]Agent),
 		agentsContext: make(map[string]*AgentContext),
 		// activeAgents:  make(map[string]Agent),
 	}
 }
 
-func (rm *AgentManager) AddAgent(name string, agent Agent) {
-	_, ok := rm.agents[name]
+func (rm *AgentManager) RegisterAgent(agentName string, agent Agent) {
+	_, ok := rm.agentsContext[agentName]
 	if !ok {
-		Info("Adding new Agent", "name", name)
-		rm.agents[name] = agent
-		// rc := NewAgentContext()
-		// rm.agentsContext[name] = rc
+		Info("Registering Agent", "agent", agentName)
+		rm.agentsContext[agentName] = NewAgentContext(agent)
 	} else {
-		Warn("AgentManager.AddAgent can't overwriting existing", "agent", name)
+		Warn("AgentManager.AddAgent can't overwriting existing", "agent", agentName)
 	}
 }
 

@@ -140,8 +140,8 @@ func (ctx *AgentContext) ExecuteAPI(api string, args map[string]string, rawargs 
 }
 
 func (ctx *AgentContext) sendAllParameters() {
-	for nm := range ctx.params.values {
-		val, err := ctx.params.paramValueAsString(nm)
+	for nm := range ctx.agentParams.values {
+		val, err := ctx.agentParams.paramValueAsString(nm)
 		if err != nil {
 			LogError(err)
 			// Don't fail completely
@@ -211,7 +211,7 @@ func (ctx *AgentContext) saveCurrentSnapInPath(path string) error {
 	s := "{\n    \"params\": {\n"
 
 	// Print the parameter values sorted by name
-	fullNames := ctx.params.values
+	fullNames := ctx.agentParams.values
 	sortedNames := make([]string, 0, len(fullNames))
 	for k := range fullNames {
 		sortedNames = append(sortedNames, k)
@@ -220,7 +220,7 @@ func (ctx *AgentContext) saveCurrentSnapInPath(path string) error {
 
 	sep := ""
 	for _, fullName := range sortedNames {
-		valstring, e := ctx.params.paramValueAsString(fullName)
+		valstring, e := ctx.agentParams.paramValueAsString(fullName)
 		if e != nil {
 			LogError(e)
 			continue

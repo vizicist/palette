@@ -11,6 +11,10 @@ func init() {
 type Agent_chillian struct {
 }
 
+func (r *Agent_chillian) Start(ctx *engine.AgentContext) {
+	engine.Info("Agent_chillian.Start")
+}
+
 func (r *Agent_chillian) OnMidiEvent(ctx *engine.AgentContext, me engine.MidiEvent) {
 	ctx.Log("Agent_chillian.onMidiEvent", "me", me)
 	// just echo it back out

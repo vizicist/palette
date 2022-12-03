@@ -3,11 +3,9 @@ package engine
 import (
 	"fmt"
 	"math/rand"
-	"os"
-	"sort"
 )
 
-func extractPlayer(argsmap map[string]string) string {
+func extractAgent(argsmap map[string]string) string {
 	playerName, playerok := argsmap["player"]
 	if !playerok {
 		playerName = "*"
@@ -19,60 +17,64 @@ func extractPlayer(argsmap map[string]string) string {
 
 func (r *Router) executePlayerAPI(api string, argsmap map[string]string) (result string, err error) {
 
-	playerName := extractPlayer(argsmap)
+	return "", fmt.Errorf("executePlayerAPI needs work")
+	/*
+		playerName := extractPlayer(argsmap)
 
-	switch api {
+		switch api {
 
-	case "event":
-		return "", r.HandleInputEvent(playerName, argsmap)
+		case "event":
+			return "", r.HandleInputEvent(playerName, argsmap)
 
-	case "set":
-		name, ok := argsmap["name"]
-		if !ok {
-			return "", fmt.Errorf("executePlayerAPI: missing name argument")
-		}
-		value, ok := argsmap["value"]
-		if !ok {
-			return "", fmt.Errorf("executePlayerAPI: missing value argument")
-		}
-		r.SetPlayerParamValue(playerName, name, value)
-		return "", r.saveCurrentSnaps(playerName)
-
-	case "setparams":
-		for name, value := range argsmap {
-			r.SetPlayerParamValue(playerName, name, value)
-		}
-		return "", r.saveCurrentSnaps(playerName)
-
-	case "get":
-		name, ok := argsmap["name"]
-		if !ok {
-			return "", fmt.Errorf("executePlayerAPI: missing name argument")
-		}
-		if playerName == "*" {
-			return "", fmt.Errorf("executePlayerAPI: get can't handle *")
-		}
-		player, err := r.PlayerManager.GetPlayer(playerName)
-		if err != nil {
-			return "", err
-		}
-		return player.params.paramValueAsString(name)
-
-	default:
-		// The player-specific APIs above are handled
-		// here in the Router context, but for everything else,
-		// we punt down to the player's player.
-		// player can be A, B, C, D, or *
-		r.PlayerManager.ApplyToAllPlayers(func(player *Player) {
-			_, err := player.ExecuteAPI(api, argsmap, "")
-			if err != nil {
-				LogError(err)
+		case "set":
+			name, ok := argsmap["name"]
+			if !ok {
+				return "", fmt.Errorf("executePlayerAPI: missing name argument")
 			}
-		})
-		return "", nil
-	}
+			value, ok := argsmap["value"]
+			if !ok {
+				return "", fmt.Errorf("executePlayerAPI: missing value argument")
+			}
+			r.SetPlayerParamValue(playerName, name, value)
+			return "", r.saveCurrentSnaps(playerName)
+
+		case "setparams":
+			for name, value := range argsmap {
+				r.SetPlayerParamValue(playerName, name, value)
+			}
+			return "", r.saveCurrentSnaps(playerName)
+
+		case "get":
+			name, ok := argsmap["name"]
+			if !ok {
+				return "", fmt.Errorf("executePlayerAPI: missing name argument")
+			}
+			if playerName == "*" {
+				return "", fmt.Errorf("executePlayerAPI: get can't handle *")
+			}
+			player, err := r.PlayerManager.GetPlayer(playerName)
+			if err != nil {
+				return "", err
+			}
+			return player.params.paramValueAsString(name)
+
+		default:
+			// The player-specific APIs above are handled
+			// here in the Router context, but for everything else,
+			// we punt down to the player's player.
+			// player can be A, B, C, D, or *
+			r.PlayerManager.ApplyToAllPlayers(func(player *Player) {
+				_, err := player.ExecuteAPI(api, argsmap, "")
+				if err != nil {
+					LogError(err)
+				}
+			})
+			return "", nil
+		}
+	*/
 }
 
+/*
 func (r *Router) SetPlayerParamValue(playerName string, name string, value string) {
 	ApplyToPlayersNamed(playerName, func(player *Player) {
 		err := player.SetOneParamValue(name, value)
@@ -84,43 +86,48 @@ func (r *Router) SetPlayerParamValue(playerName string, name string, value strin
 		}
 	})
 }
+*/
 
 func (r *Router) saveQuadPreset(presetName string) error {
 
-	preset, err := LoadPreset(presetName)
-	if err != nil {
-		return err
-	}
-	// wantCategory is sound, visual, effect, snap, or quad
-	path := preset.WriteableFilePath()
-	s := "{\n    \"params\": {\n"
-
-	sep := ""
-	Info("saveQuadPreset", "preset", presetName)
-
-	for _, player := range r.PlayerManager.players {
-		Info("starting", "player", player.playerName)
-		// Print the parameter values sorted by name
-		fullNames := player.params.values
-		sortedNames := make([]string, 0, len(fullNames))
-		for k := range fullNames {
-			sortedNames = append(sortedNames, k)
+	Warn("Router.saveQuadPreset needs work")
+	return nil
+	/*
+		preset, err := LoadPreset(presetName)
+		if err != nil {
+			return err
 		}
-		sort.Strings(sortedNames)
+		// wantCategory is sound, visual, effect, snap, or quad
+		path := preset.WriteableFilePath()
+		s := "{\n    \"params\": {\n"
 
-		for _, fullName := range sortedNames {
-			valstring, err := player.params.paramValueAsString(fullName)
-			if err != nil {
-				LogError(err)
-				continue
+		sep := ""
+		Info("saveQuadPreset", "preset", presetName)
+
+			for _, ctx := range r.agentManager.agentsContext {
+				Info("starting", "agent", player.playerName)
+				// Print the parameter values sorted by name
+				fullNames := player.params.values
+				sortedNames := make([]string, 0, len(fullNames))
+				for k := range fullNames {
+					sortedNames = append(sortedNames, k)
+				}
+				sort.Strings(sortedNames)
+
+				for _, fullName := range sortedNames {
+					valstring, err := player.params.paramValueAsString(fullName)
+					if err != nil {
+						LogError(err)
+						continue
+					}
+					s += fmt.Sprintf("%s        \"%s-%s\":\"%s\"", sep, player.playerName, fullName, valstring)
+					sep = ",\n"
+				}
 			}
-			s += fmt.Sprintf("%s        \"%s-%s\":\"%s\"", sep, player.playerName, fullName, valstring)
-			sep = ",\n"
-		}
-	}
-	s += "\n    }\n}"
-	data := []byte(s)
-	return os.WriteFile(path, data, 0644)
+			s += "\n    }\n}"
+			data := []byte(s)
+			return os.WriteFile(path, data, 0644)
+	*/
 }
 
 func (r *Router) loadQuadPresetRand() {
@@ -172,6 +179,7 @@ func (r *Router) executeProcessAPI(api string, apiargs map[string]string) (resul
 }
 */
 
+/*
 func (r *Router) saveCurrentSnaps(playerName string) error {
 	ApplyToPlayersNamed(playerName, func(player *Player) {
 		err := player.saveCurrentSnap()
@@ -181,3 +189,4 @@ func (r *Router) saveCurrentSnaps(playerName string) error {
 	})
 	return nil
 }
+*/

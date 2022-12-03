@@ -11,6 +11,9 @@ func init() {
 type Agent_default struct {
 	ctx *engine.AgentContext
 
+	layers      []string
+	layerParams map[string]*ParamValues
+
 	MIDIOctaveShift  int
 	MIDINumDown      int
 	MIDIThru         bool
@@ -20,6 +23,41 @@ type Agent_default struct {
 	MIDIUseScale     bool // if true, scadjust uses "external" Scale
 	TransposePitch   int
 	// externalScale    *engine.Scale
+}
+
+func (a *Agent_default) Start(ctx *engine.AgentContext) {
+
+	r.layers = []string{"A","B","C","D"}
+	for s in range(r.layers) {
+		a.layerParams = NewParamValues()
+	}
+
+	engine.Info("Agent_default.Start")
+
+	presets := map[string]string{
+		"A": "snap.Yellow_Spheres",
+		"B": "snap.Blue_Spheres",
+		"C": "snap.Orange_Spheres",
+		"D": "snap.Pink_Spheres",
+	}
+	shapes := map[string]string{
+		"A": "square",
+		"B": "circle",
+		"C": "triangle",
+		"D": "line",
+	}
+
+	ctx.AllowSource("A")
+	ctx.LayerSetParam("A","visual.resolumeport", 3334)
+	ctx.LayerSetParam("A","visual.shape", "circle")
+	ctx.LayerApplyPreset("A","snap.Yellow_Spheres")
+	// ctx.LayerSavePreset("A","snap.Yellow_Spheres")
+
+	ctx.AllowSource("B")
+	ctx.LayerSetParam("B","visual.resolumeport", 3335)
+	ctx.LayerSetParam("B","visual.shape", "square")
+
+	ctx.ApplyPreset("quad.Quick Scat_Circles")
 }
 
 func (r *Agent_default) OnMidiEvent(ctx *engine.AgentContext, me engine.MidiEvent) {
@@ -33,7 +71,10 @@ func (r *Agent_default) OnMidiEvent(ctx *engine.AgentContext, me engine.MidiEven
 		}
 	*/
 	ctx.Log("Agent_default.onMidiEvent", "me", me)
-	phr := ctx.MidiEventToPhrase(me)
+	phr, err := ctx.MidiEventToPhrase(me)
+	if err != nil {
+		engine.LogError(err)
+	}
 	if phr != nil {
 		ctx.SchedulePhraseNow(phr)
 	}

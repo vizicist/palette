@@ -4,22 +4,26 @@ import (
 	"fmt"
 )
 
-func (pm *AgentManager) Start() {
-	/*
-		for _, agent := range pm.agents {
-			agent.restoreCurrentSnap()
-		}
-	*/
+func (pm *AgentManager) StartAgent(name string) {
+	ctx, ok := pm.agentsContext[name]
+	if !ok {
+		Warn("StartAgent no such Agent", "agent", name)
+	} else {
+		ctx.agent.Start(ctx)
+	}
 }
 
+/*
 func (pm *AgentManager) ApplyToAllAgents(f func(agent Agent)) {
 	for _, agent := range pm.agents {
 		f(agent)
 	}
 }
+*/
 
+/*
 func (pm *AgentManager) ApplyToAgentsNamed(agentName string, f func(agent Agent)) {
-	for name, agent := range pm.agents {
+	for name, ctx := range pm.agentsContext {
 		if agentName == name {
 			f(agent)
 		}
@@ -34,6 +38,7 @@ func (pm *AgentManager) GetAgent(agentName string) (Agent, error) {
 		return agent, nil
 	}
 }
+*/
 
 func (pm *AgentManager) GetAgentContext(agentName string) (*AgentContext, error) {
 	ctx, ok := pm.agentsContext[agentName]
@@ -50,18 +55,16 @@ func (ctx *AgentContext) IsSourceAllowed(source string) bool {
 }
 
 func (pm *AgentManager) handleCursorEvent(ce CursorEvent) {
-	for name, agent := range pm.agents {
-		ctx := pm.agentsContext[name]
+	for _, ctx := range pm.agentsContext {
 		_, allowed := ctx.sources[ce.Source]
 		if allowed {
-			agent.OnCursorEvent(ctx, ce)
+			ctx.agent.OnCursorEvent(ctx, ce)
 		}
 	}
 }
 
 func (pm *AgentManager) handleMidiEvent(me MidiEvent) {
-	for name, agent := range pm.agents {
-		ctx := pm.agentsContext[name]
-		agent.OnMidiEvent(ctx, me)
+	for _, ctx := range pm.agentsContext {
+		ctx.agent.OnMidiEvent(ctx, me)
 	}
 }

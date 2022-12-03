@@ -162,34 +162,32 @@ func SendControllerToSynth(synthName string, cnum int, cval int) {
 // SendNote handles NoteOn, NoteOff, Controller, etc.
 func SendToSynth(value interface{}) {
 
+	var channel uint8
 	var pitch uint8
 	var velocity uint8
-	var synthName string
 
 	switch v := value.(type) {
 	case *NoteOn:
+		channel = v.Channel
 		pitch = v.Pitch
-		synthName = v.Synth
 		velocity = v.Velocity
 		if velocity == 0 {
 			Info("MIDIIO.SendNote: noteon with velocity==0 NOT changed to a noteoff")
 		}
 	case *NoteOff:
+		channel = v.Channel
 		pitch = v.Pitch
-		synthName = v.Synth
 		velocity = v.Velocity
 	case *NoteFull:
+		channel = v.Channel
 		pitch = v.Pitch
-		synthName = v.Synth
 		velocity = v.Velocity
 	default:
 		Warn("SendToSynth: doesn't handle", "type", fmt.Sprintf("%T", v))
 		return
 	}
 
-	if synthName == "" {
-		synthName = "default"
-	}
+	synthName := fmt.Sprintf("P_01_C_%02d", channel)
 	synth, ok := Synths[synthName]
 	if !ok {
 		Warn("SendPhraseElementToSynth: no such", "synth", synthName)

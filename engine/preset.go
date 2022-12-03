@@ -67,7 +67,7 @@ func (p *Preset) applyQuadPresetToPlayer(playerName string) error {
 			// {player}-{parametername}
 			words := strings.SplitN(name, "-", 2)
 			layerOfParam := words[0]
-			ctx, err := TheRouter().AgentManager.GetAgentContext(layerOfParam)
+			ctx, err := TheRouter().agentManager.GetAgentContext(layerOfParam)
 			if err != nil {
 				return err
 			}
@@ -98,7 +98,7 @@ func (p *Preset) applyQuadPresetToPlayer(playerName string) error {
 		// have to do it for all for pads
 		for _, c := range TheRouter().playerLetters {
 			playerName := string(c)
-			player, err := TheRouter().AgentManager.GetPlayer(playerName)
+			player, err := TheRouter().agentManager.GetPlayer(playerName)
 			if err != nil {
 				Warn("applyQuadPreset: no player named", "player", playerName)
 			}
