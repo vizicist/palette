@@ -113,35 +113,37 @@ func (e *Engine) executeGlobalAPI(api string, apiargs map[string]string) (result
 		if err == nil {
 			ChangeClicksPerSecond(float64(v))
 		}
-	case "set_transpose":
-		v, err := needFloatArg("value", api, apiargs)
-		if err == nil {
-			ApplyToAllPlayers(func(player *Player) {
-				player.TransposePitch = int(v)
-			})
-		}
+		/*
+					case "set_transpose":
+						v, err := needFloatArg("value", api, apiargs)
+						if err == nil {
+							ApplyToAllPlayers(func(player *Player) {
+								player.TransposePitch = int(v)
+							})
+						}
 
-	case "set_transposeauto":
-		b, err := needBoolArg("onoff", api, apiargs)
-		if err == nil {
-			e.Scheduler.transposeAuto = b
-			// Quantizing CurrentClick() to a beat or measure might be nice
-			e.Scheduler.transposeNext = CurrentClick() + e.Scheduler.transposeClicks*OneBeat
-			ApplyToAllPlayers(func(player *Player) {
-				player.TransposePitch = 0
-			})
-		}
-
-	case "set_scale":
-		v, err := needStringArg("value", api, apiargs)
-		if err == nil {
-			ApplyToAllPlayers(func(player *Player) {
-				err = player.SetOneParamValue("misc.scale", v)
-				if err != nil {
-					LogError(err)
+			case "set_transposeauto":
+				b, err := needBoolArg("onoff", api, apiargs)
+				if err == nil {
+					e.Scheduler.transposeAuto = b
+					// Quantizing CurrentClick() to a beat or measure might be nice
+					e.Scheduler.transposeNext = CurrentClick() + e.Scheduler.transposeClicks*OneBeat
+					ApplyToAllPlayers(func(player *Player) {
+						player.TransposePitch = 0
+					})
 				}
-			})
-		}
+
+			case "set_scale":
+				v, err := needStringArg("value", api, apiargs)
+				if err == nil {
+					ApplyToAllPlayers(func(player *Player) {
+						err = player.SetOneParamValue("misc.scale", v)
+						if err != nil {
+							LogError(err)
+						}
+					})
+				}
+		*/
 
 	case "audio_reset":
 		go e.Router.audioReset()
@@ -208,57 +210,60 @@ func (e *Engine) executePresetAPI(api string, apiargs map[string]string) (result
 		return PresetList(apiargs)
 
 	case "load":
-		presetName, okpreset := apiargs["preset"]
-		if !okpreset {
-			return "", fmt.Errorf("missing preset parameter")
-		}
-		preset, err := LoadPreset(presetName)
-		if err != nil {
-			return "", err
-		}
-		playerName, okplayer := apiargs["player"]
-		if !okplayer {
-			playerName = "*"
-		}
-		if preset.category == "quad" {
-			// The playerName might be only a single player, and loadQuadPreset
-			// will only load that one player from the quad preset
-			err = preset.applyQuadPresetToPlayer(playerName)
+		return "", fmt.Errorf("executePresetAPI needs work")
+		/*
+			presetName, okpreset := apiargs["preset"]
+			if !okpreset {
+				return "", fmt.Errorf("missing preset parameter")
+			}
+			preset, err := LoadPreset(presetNeame)
 			if err != nil {
-				LogError(err)
 				return "", err
 			}
-			e.Router.saveCurrentSnaps(playerName)
-		} else {
-			// It's a non-quad preset for a single player.
-			// However, the playerName can still be "*" to apply to all players.
-			err = preset.ApplyTo(playerName)
-			if err != nil {
-				LogError(err, "presetName", presetName)
-			} else {
-				e.Router.saveCurrentSnaps(playerName)
+
+			agentName, okplayer := apiargs["agent"]
+			if !okplayer {
+				agentName = "*"
 			}
-		}
-		return "", err
+			if preset.category == "quad" {
+				// The playerName might be only a single player, and loadQuadPreset
+				// will only load that one player from the quad preset
+				err = preset.applyQuadPresetToPlayer(playerName)
+				if err != nil {
+					LogError(err)
+					return "", err
+				}
+				e.Router.saveCurrentSnaps(playerName)
+			} else {
+				// It's a non-quad preset for a single player.
+				// However, the playerName can still be "*" to apply to all players.
+				err = preset.ApplyTo(playerName)
+				if err != nil {
+					LogError(err, "presetName", presetName)
+				} else {
+					e.Router.saveCurrentSnaps(playerName)
+				}
+			}
+			return "", err
+		*/
 
 	case "save":
-		presetName, okpreset := apiargs["preset"]
-		if !okpreset {
-			return "", fmt.Errorf("missing preset parameter")
-		}
-		playerName, okplayer := apiargs["player"]
-		if !okplayer {
-			return "", fmt.Errorf("missing player parameter")
-		}
-		player, err := e.Router.PlayerManager.GetPlayer(playerName)
-		if err != nil {
-			return "", err
-		}
-		if strings.HasPrefix(presetName, "quad.") {
-			return "", e.Router.saveQuadPreset(presetName)
-		} else {
-			return "", player.saveCurrentAsPreset(presetName)
-		}
+		return "", fmt.Errorf("executePresetAPI needs work")
+		/*
+			presetName, okpreset := apiargs["preset"]
+			if !okpreset {
+				return "", fmt.Errorf("missing preset parameter")
+			}
+			agentName, okplayer := apiargs["agent"]
+			if !okplayer {
+				return "", fmt.Errorf("missing agent parameter")
+			}
+			ctx, err := e.Router.AgentManager.GetAgentContext(agentName)
+			if err != nil {
+				return "", err
+			}
+			return "", ctx.saveCurrentAsPreset(presetName)
+		*/
 
 	default:
 		Warn("Router.ExecuteAPI api is not recognized\n", "api", api)
