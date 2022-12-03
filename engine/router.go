@@ -23,8 +23,8 @@ var PloguePort = 3210
 
 // Router takes events and routes them
 type Router struct {
-	PlayerManager *PlayerManager
-	playerLetters string
+	AgentManager *AgentManager
+	// playerLetters string
 
 	OSCInput      chan OSCEvent
 	midiInputChan chan MidiEvent
@@ -38,7 +38,7 @@ type Router struct {
 	layerMap map[string]int // map of pads to resolume layer numbers
 
 	midiEventHandler MIDIEventHandler
-	responderManager *ResponderManager
+	agentManager     *AgentManager
 
 	resolumeClient *osc.Client
 	guiClient      *osc.Client
@@ -103,13 +103,15 @@ func NewRouter() *Router {
 	r := Router{}
 
 	r.CursorManager = NewCursorManager()
-	r.PlayerManager = NewPlayerManager()
+	r.AgentManager = NewAgentManager()
 
-	r.playerLetters = ConfigValue("pads")
-	if r.playerLetters == "" {
-		DebugLogOfType("morph", "No value for pads, assuming ABCD")
-		r.playerLetters = "ABCD"
-	}
+	/*
+		r.playerLetters = ConfigValue("pads")
+		if r.playerLetters == "" {
+			DebugLogOfType("morph", "No value for pads, assuming ABCD")
+			r.playerLetters = "ABCD"
+		}
+	*/
 
 	err := LoadParamEnums()
 	if err != nil {
@@ -165,7 +167,7 @@ func NewRouter() *Router {
 	r.generateVisuals = ConfigBoolWithDefault("generatevisuals", true)
 	r.generateSound = ConfigBoolWithDefault("generatesound", true)
 
-	r.responderManager = NewResponderManager()
+	r.agentManager = NewAgentManager()
 
 	return &r
 }
@@ -205,7 +207,7 @@ func (r *Router) InputListener() {
 /*
 func (r *Router) handleCursorEvent(ce CursorEvent) {
 	Info("Router.handleCursorEvent needs work", "ce", ce)
-	r.responderManager.handleCursorEvent(ce)
+	r.agentManager.handleCursorEvent(ce)
 }
 */
 
@@ -214,7 +216,7 @@ func (r *Router) handleMidiEvent(me MidiEvent) {
 	if EraeEnabled {
 		HandleEraeMIDI(me)
 	}
-	r.responderManager.handleMidiEvent(me)
+	r.agentManager.handleMidiEvent(me)
 }
 */
 
