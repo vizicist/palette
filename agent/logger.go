@@ -10,6 +10,9 @@ func init() {
 
 type Agent_logger struct{}
 
+func (r *Agent_logger) Start(ctx *engine.AgentContext) {
+}
+
 func (r *Agent_logger) OnMidiEvent(ctx *engine.AgentContext, me engine.MidiEvent) {
 	engine.Info("Agent_logger.onMidiEvent", "me", me)
 }

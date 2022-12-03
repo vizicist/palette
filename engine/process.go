@@ -94,7 +94,8 @@ func (pm ProcessManager) ProcessStatus() string {
 func (pm ProcessManager) biduleInfoInit() {
 	path := ConfigValueWithDefault("bidule", "")
 	if path == "" {
-		return
+		path = "C:\\Program Files\\Plogue\\Bidule\\Bidule.exe"
+		Warn("No bidule value in settings, using default", "path", path)
 	}
 	if !FileExists(path) {
 		Warn("No bidule found, looking for", "path", path)

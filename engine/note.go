@@ -6,28 +6,28 @@ import (
 )
 
 type NoteOn struct {
-	Synth    string
+	Channel  uint8
 	Pitch    uint8
 	Velocity uint8
 }
 
 func (n *NoteOn) String() string {
-	return fmt.Sprintf("(NoteOn Synth=%s Pitch=%d)", n.Synth, n.Pitch)
+	return fmt.Sprintf("(NoteOn Channel=%s Pitch=%d)", n.Channel, n.Pitch)
 }
 
 type NoteOff struct {
-	Synth    string
+	Channel  uint8
 	Pitch    uint8
 	Velocity uint8
 }
 
 func (n NoteOff) String() string {
-	return fmt.Sprintf("(NoteOff Synth=%s Pitch=%d)", n.Synth, n.Pitch)
+	return fmt.Sprintf("(NoteOff Channel=%s Pitch=%d)", n.Channel, n.Pitch)
 }
 
 // NoteFull has a duration, i.e. it's a combination of a NoteOn and NoteOff
 type NoteFull struct {
-	Synth    string
+	Channel  uint8
 	Duration Clicks
 	Pitch    uint8
 	Velocity uint8
@@ -35,19 +35,17 @@ type NoteFull struct {
 	// bytes    []byte
 }
 
-func NewNoteFull(pitch, velocity uint8, duration Clicks, synth string) *NoteFull {
+func NewNoteFull(channel, pitch, velocity uint8, duration Clicks) *NoteFull {
 	return &NoteFull{
-		Synth:    synth,
+		Channel:  channel,
 		Duration: duration,
 		Pitch:    pitch,
 		Velocity: velocity,
-		// msg:      []byte{},
-		// bytes:    []byte{},
 	}
 }
 
 func (n *NoteFull) String() string {
-	return fmt.Sprintf("(NoteFull Synth=%s Pitch=%d Duration=%d)", n.Synth, n.Pitch, n.Duration)
+	return fmt.Sprintf("(NoteFull Channel=%s Pitch=%d Duration=%d)", n.Channel, n.Pitch, n.Duration)
 }
 
 type NoteBytes struct {
@@ -77,11 +75,12 @@ func (n *NoteSystem) String() string {
 }
 
 type ProgramChange struct {
+	Channel uint8
 	Program uint8
 }
 
-func NewProgramChange(program uint8) *ProgramChange {
-	return &ProgramChange{Program: program}
+func NewProgramChange(channel, program uint8) *ProgramChange {
+	return &ProgramChange{Channel: channel, Program: program}
 }
 
 func (n *ProgramChange) String() string {
@@ -89,12 +88,12 @@ func (n *ProgramChange) String() string {
 }
 
 type ChanPressure struct {
-	Synth    string
+	Channel  uint8
 	Pressure uint8
 }
 
-func NewChanPressure(pressure uint8, synth string) *ChanPressure {
-	return &ChanPressure{Pressure: pressure, Synth: synth}
+func NewChanPressure(channel, pressure uint8) *ChanPressure {
+	return &ChanPressure{Pressure: pressure, Channel: channel}
 }
 
 func (n *ChanPressure) String() string {
@@ -104,12 +103,12 @@ func (n *ChanPressure) String() string {
 type Controller struct {
 	Controller uint8
 	Value      uint8
-	Synth      string
+	Channel    uint8
 }
 
 // NewController create a new noteoff
-func NewController(controller uint8, value uint8, synth string) *Controller {
-	return &Controller{Controller: controller, Value: value, Synth: synth}
+func NewController(channel, controller, value uint8) *Controller {
+	return &Controller{Controller: controller, Value: value, Channel: channel}
 }
 
 func (n *Controller) String() string {
@@ -117,12 +116,13 @@ func (n *Controller) String() string {
 }
 
 type PitchBend struct {
+	data0 uint8
 	data1 uint8
 	data2 uint8
 }
 
-func NewPitchBend(data1 uint8, data2 uint8) *PitchBend {
-	return &PitchBend{data1: data1, data2: data2}
+func NewPitchBend(data0, data1, data2 uint8) *PitchBend {
+	return &PitchBend{data0: data0, data1: data1, data2: data2}
 }
 
 func (n *PitchBend) String() string {

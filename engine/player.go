@@ -1,12 +1,5 @@
 package engine
 
-import (
-	"fmt"
-	"math/rand"
-
-	"github.com/hypebeast/go-osc/osc"
-)
-
 /*
 // Player is an entity that that reacts to things (cursor events, apis) and generates output (midi, graphics)
 type Player struct {
@@ -52,15 +45,6 @@ type Player struct {
 */
 
 /*
-func (p *Player) ApplyPreset(presetName string) error {
-	preset, err := LoadPreset(presetName)
-	if err != nil {
-		return err
-	}
-	preset.ApplyTo(p.playerName)
-	return nil
-}
-
 func (p *Player) SavePreset(presetName string) error {
 	return p.saveCurrentAsPreset(presetName)
 }
@@ -68,16 +52,6 @@ func (p *Player) SavePreset(presetName string) error {
 func (p *Player) IsSourceAllowed(source string) bool {
 	_, ok := p.sources[source]
 	return ok
-}
-
-func (p *Player) AllowSource(source string) {
-	var ok bool
-	_, ok = p.sources[source]
-	if ok {
-		Info("Player.AttachSource already has input", "source", source)
-	} else {
-		p.sources[source] = source
-	}
 }
 
 func (p *Player) AttachAgent(agent Agent) {
@@ -118,7 +92,7 @@ func NewPlayer(playerName string) *Player {
 	//p.clearExternalScale()
 	//p.setExternalScale(60%12, true) // Middle C
 
-	TheRouter().AgentManager.AddAgent(p)
+	TheRouter().agentManager.AddAgent(p)
 
 	return p
 }
@@ -144,13 +118,6 @@ func (player *Player) MidiEventToPhrase(me MidiEvent) (*Phrase, error) {
 	return phr, nil
 }
 
-
-// HandleMIDITimeReset xxx
-func (player *Player) HandleMIDITimeReset() {
-	Warn("HandleMIDITimeReset!! needs implementation")
-}
-
-// HandleMIDIInput xxx
 func (player *Player) HandleCursorEvent(ce CursorEvent) {
 	DebugLogOfType("cursor", "Player.HandleCursorEvent", "ce", ce)
 	for n, agent := range player.agents {
@@ -297,18 +264,6 @@ func (player) *Player) clearGraphics() {
 */
 
 /*
-func (player *Player) generateSprite(id string, x, y, z float32) {
-	if !TheRouter().generateVisuals {
-		return
-	}
-	// send an OSC message to Resolume
-	msg := osc.NewMessage("/sprite")
-	msg.Append(x)
-	msg.Append(y)
-	msg.Append(z)
-	msg.Append(id)
-	player.toFreeFramePluginForLayer(msg)
-}
 
 /*
 func (player *Player) generateVisualsFromCursor(ce CursorEvent) {
@@ -325,7 +280,6 @@ func (player *Player) generateVisualsFromCursor(ce CursorEvent) {
 	player.toFreeFramePluginForLayer(msg)
 }
 */
-
 
 /*
 func (player *Player) generateSoundFromCursor(ce CursorEvent) {
@@ -487,16 +441,6 @@ func (player *Player) sendNoteOff(a *ActiveNote) {
 
 	noteOff := NewNoteOff(n.Pitch, n.Velocity, n.Synth)
 	player.SendPhraseElementToSynth(noteOff)
-}
-*/
-
-/*
-func (player *Player) sendANO() {
-	if !TheRouter().generateSound {
-		return
-	}
-	synth := player.params.ParamStringValue("sound.synth", defaultSynth)
-	SendANOToSynth(synth)
 }
 */
 
@@ -722,4 +666,4 @@ func (player) *Player) loopQuant() {
 
 /*
 
-*/
+ */
