@@ -12,7 +12,8 @@ import (
 type AgentContext struct {
 	agent           Agent
 	scheduler       *Scheduler
-	params          *ParamValues
+	agentParams     *ParamValues
+	layerParams     map[string]*ParamValues
 	scale           *Scale
 	sources         map[string]bool
 	freeframeClient *osc.Client
@@ -26,9 +27,9 @@ func NewAgentContext(agent Agent) *AgentContext {
 	return &AgentContext{
 		scheduler: TheEngine().Scheduler,
 		agent:     agent,
-		params:    NewParamValues(),
-		scale:     &Scale{},
-		sources:   map[string]bool{},
+		// params:    NewParamValues(),
+		scale:   &Scale{},
+		sources: map[string]bool{},
 	}
 }
 
@@ -62,16 +63,14 @@ func (ctx *AgentContext) midiEventToPhraseElement(me MidiEvent) (*PhraseElement,
 		return &PhraseElement{Value: NewNoteSystem(bytes[0])}, nil
 	}
 
-	synth := ctx.params.ParamStringValue("sound.synth", defaultSynth)
-
-	var data1, data2 byte
+	var data0, data1, data2 byte
 	// NOTE: channel on incoming MIDI is ignored
 	// it uses whatever sound the ctx is using.
 	status := bytes[0] & 0xf0
 	if lng == 2 {
 		switch status {
 		case 0xd0: // channel pressure
-			return &PhraseElement{Value: NewChanPressure(bytes[1], synth)}, nil
+			return &PhraseElement{Value: NewChanPressure(bytes[0], bytes[1])}, nil
 		}
 
 	}
@@ -79,17 +78,19 @@ func (ctx *AgentContext) midiEventToPhraseElement(me MidiEvent) (*PhraseElement,
 	switch len(bytes) {
 	case 0:
 	case 1:
+		data0 = bytes[0]
 		status = bytes[0] & 0xf0
 	case 2:
+		data0 = bytes[0]
 		status = bytes[0]
 		data1 = bytes[1]
 	case 3:
+		data0 = bytes[0]
 		status = bytes[0]
 		data1 = bytes[1]
 		data2 = bytes[2]
 	default:
 	}
-	pitch := data1
 
 	//	if (status == 0x90 || status == 0x80) && ctx.MIDIThruScadjust {
 	//		scale := ctx.getScale()
@@ -99,17 +100,17 @@ func (ctx *AgentContext) midiEventToPhraseElement(me MidiEvent) (*PhraseElement,
 	var val interface{}
 	switch status {
 	case 0x90:
-		val = NewNoteOn(pitch, data2, synth)
+		val = NewNoteOn(data0, data1, data2)
 	case 0x80:
-		val = NewNoteOff(pitch, data2, synth)
+		val = NewNoteOff(data0, data1, data2)
 	case 0xB0:
-		val = NewController(data1, data2, synth)
+		val = NewController(data0, data1, data2)
 	case 0xC0:
-		val = NewProgramChange(data1)
+		val = NewProgramChange(data0, data1)
 	case 0xD0:
-		val = NewChanPressure(data1, synth)
+		val = NewChanPressure(data0, data1)
 	case 0xE0:
-		val = NewPitchBend(data1, data2)
+		val = NewPitchBend(data0, data1, data2)
 	default:
 		err := fmt.Errorf("MidiEventToPhraseElement: unable to handle status=0x%02x", status)
 		LogError(err, "status", status)
@@ -127,9 +128,9 @@ func (ctx *AgentContext) ScheduleDebug() string {
 	return fmt.Sprintf("%s", ctx.scheduler)
 }
 
-func (ctx *AgentContext) ScheduleNoteNow(pitch uint8, velocity uint8, duration Clicks, synth string) {
+func (ctx *AgentContext) ScheduleNoteNow(channel, pitch, velocity uint8, duration Clicks) {
 	DebugLogOfType("schedule", "ctx.ScheduleNoteNow", "pitch", pitch)
-	pe := &PhraseElement{Value: NewNoteFull(pitch, velocity, duration, synth)}
+	pe := &PhraseElement{Value: NewNoteFull(channel, pitch, velocity, duration)}
 	phr := NewPhrase().InsertElement(pe)
 	ctx.SchedulePhraseAt(phr, CurrentClick())
 }
@@ -154,11 +155,11 @@ func (ctx *AgentContext) SchedulePhraseAt(phr *Phrase, click Clicks) {
 }
 
 func (ctx *AgentContext) ParamIntValue(name string) int {
-	return ctx.params.ParamIntValue(name)
+	return ctx.agentParams.ParamIntValue(name)
 }
 
 func (ctx *AgentContext) ParamBoolValue(name string) bool {
-	return ctx.params.ParamBoolValue(name)
+	return ctx.agentParams.ParamBoolValue(name)
 }
 
 func (ctx *AgentContext) GetScale() *Scale {
@@ -171,7 +172,7 @@ func (ctx *AgentContext) SetParam(fullname, value string) error {
 
 func (ctx *AgentContext) SetOneParamValue(fullname, value string) error {
 
-	err := ctx.params.SetParamValueWithString(fullname, value, nil)
+	err := ctx.agentParams.SetParamValueWithString(fullname, value, nil)
 	if err != nil {
 		return err
 	}
@@ -294,6 +295,19 @@ func (ctx *AgentContext) toResolume(msg *osc.Message) {
 	ctx.resolumeClient.Send(msg)
 }
 
+func (ctx *AgentContext) generateSprite(id string, x, y, z float32) {
+	if !TheRouter().generateVisuals {
+		return
+	}
+	// send an OSC message to Resolume
+	msg := osc.NewMessage("/sprite")
+	msg.Append(x)
+	msg.Append(y)
+	msg.Append(z)
+	msg.Append(id)
+	ctx.toFreeFramePluginForLayer(msg)
+}
+
 func (ctx *AgentContext) generateSpriteFromPhraseElement(pe *PhraseElement) {
 
 	var pitch uint8
@@ -313,8 +327,8 @@ func (ctx *AgentContext) generateSpriteFromPhraseElement(pe *PhraseElement) {
 		return
 	}
 
-	pitchmin := uint8(ctx.params.ParamIntValue("sound.pitchmin"))
-	pitchmax := uint8(ctx.params.ParamIntValue("sound.pitchmax"))
+	pitchmin := uint8(ctx.agentParams.ParamIntValue("sound.pitchmin"))
+	pitchmax := uint8(ctx.agentParams.ParamIntValue("sound.pitchmax"))
 	if pitch < pitchmin || pitch > pitchmax {
 		Warn("Unexpected value", "pitch", pitch)
 		return
@@ -322,7 +336,7 @@ func (ctx *AgentContext) generateSpriteFromPhraseElement(pe *PhraseElement) {
 
 	var x float32
 	var y float32
-	switch ctx.params.ParamStringValue("visual.placement", "random") {
+	switch ctx.agentParams.ParamStringValue("visual.placement", "random") {
 	case "random":
 		x = rand.Float32()
 		y = rand.Float32()
@@ -373,7 +387,7 @@ func (ctx *AgentContext) getScale() *Scale {
 	// if player.MIDIUseScale {
 	// 	scale = player.externalScale
 	// } else {
-	scaleName = ctx.params.ParamStringValue("misc.scale", "newage")
+	scaleName = ctx.agentParams.ParamStringValue("misc.scale", "newage")
 	scale = GlobalScale(scaleName)
 	// }
 	return scale
@@ -572,3 +586,37 @@ func (ctx *AgentContext) sendPadOneEffectParam(effectName string, paramName stri
 	ctx.toResolume(msg)
 }
 */
+
+func (ctx *AgentContext) HandleMIDITimeReset() {
+	Warn("HandleMIDITimeReset!! needs implementation")
+}
+
+func (ctx *AgentContext) sendANO() {
+	if !TheRouter().generateSound {
+		return
+	}
+	synth := ctx.agentParams.ParamStringValue("sound.synth", defaultSynth)
+	SendANOToSynth(synth)
+}
+
+func (ctx *AgentContext) AllowSource(source string) {
+	var ok bool
+	_, ok = ctx.sources[source]
+	if ok {
+		Info("AllowSource already set", "source", source)
+	} else {
+		ctx.sources[source] = true
+	}
+}
+
+func (ctx *AgentContext) ApplyPreset(presetName string) error {
+	return fmt.Errorf("ApplyPreset needs work")
+	/*
+		preset, err := LoadPreset(presetName)
+		if err != nil {
+			return err
+		}
+		// preset.ApplyTo(p.playerName)
+		return nil
+	*/
+}
