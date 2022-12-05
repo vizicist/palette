@@ -7,8 +7,8 @@ type AgentManager struct {
 }
 
 type Agent interface {
-	OnCursorEvent(ctx *AgentContext, e CursorEvent)
-	OnMidiEvent(ctx *AgentContext, e MidiEvent)
+	OnCursorEvent(ce CursorEvent)
+	OnMidiEvent(me MidiEvent)
 	Start(ctx *AgentContext)
 }
 
