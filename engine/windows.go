@@ -74,7 +74,9 @@ func IsRunningExecutable(exe string) bool {
 	cmd, err := StartExecutable("c:\\windows\\system32\\tasklist.exe", false, stdout, stderr)
 	if err != nil {
 		log.Printf("StartExecutable: tasklist.exe err=%s\n", err)
-		return false
+		log.Printf("StartExecutable: assuming that %s is running\n", exe)
+		// assume it's running, to avoid staring multiples
+		return true
 	}
 	cmd.Wait()
 
