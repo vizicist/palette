@@ -58,13 +58,13 @@ func (pm *AgentManager) handleCursorEvent(ce CursorEvent) {
 	for _, ctx := range pm.agentsContext {
 		_, allowed := ctx.sources[ce.Source]
 		if allowed {
-			ctx.agent.OnCursorEvent(ctx, ce)
+			ctx.agent.OnCursorEvent(ce)
 		}
 	}
 }
 
 func (pm *AgentManager) handleMidiEvent(me MidiEvent) {
 	for _, ctx := range pm.agentsContext {
-		ctx.agent.OnMidiEvent(ctx, me)
+		ctx.agent.OnMidiEvent(me)
 	}
 }

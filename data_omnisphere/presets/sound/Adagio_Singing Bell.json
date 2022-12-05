@@ -1,0 +1,29 @@
+{
+    "params": {
+        "sound._controllermax":"127",
+        "sound._controllermin":"1",
+        "sound.controllerstyle":"modulationonly",
+        "sound._controllerzmax":"0.600000",
+        "sound._controllerzmin":"0.050000",
+        "sound._deltaytrig":"1.000000",
+        "sound._deltaztrig":"0.100000",
+        "sound._inputport":"",
+        "sound.midifile":"jsbach",
+        "sound.pitchmax":"90",
+        "sound.pitchmin":"25",
+        "sound.synth":"P_02_C_01",
+        "sound._timefret1q":"1.000000",
+        "sound._timefret1y":"0.150000",
+        "sound._timefret2q":"0.500000",
+        "sound._timefret2y":"0.500000",
+        "sound._timefret3q":"0.250000",
+        "sound._timefret3y":"0.800000",
+        "sound._timefret4q":"0.125000",
+        "sound._timefret4y":"1.000000",
+        "sound.velocitymax":"126",
+        "sound.velocitymin":"48",
+        "sound.xcontroller":"3",
+        "sound.ycontroller":"2",
+        "sound.zcontroller":"1"
+    }
+}

@@ -123,56 +123,53 @@ func (p *Preset) applyQuadPresetToPlayer(playerName string) error {
 	*/
 }
 
-func (p *Preset) ApplyTo(ctx *AgentContext) error {
-	return fmt.Errorf("applyTo needs work")
-	/*
-		err := ctx.applyParamsMap(p.category, p.paramsmap)
-		if err != nil {
-			Warn("Preset.ApplyTo", "agent", ctx.Name, "err", err)
-		}
+func (p *Preset) ApplyTo(params *ParamValues) error {
 
-		// If there's a _override.json file, use it
-		override, err := LoadPreset(p.category + "._override")
+	err := ApplyParamsMap(p.category, p.paramsmap, params)
+	if err != nil {
+		LogError(err)
+		return err
+	}
+
+	// If there's a _override.json file, use it
+	override, err := LoadPreset(p.category + "._override")
+	if err != nil {
+		return err
+	}
+	overridepath := override.readableFilePath()
+	if fileExists(overridepath) {
+		DebugLogOfType("preset", "applyPreset using", "overridepath", overridepath)
+		overridemap, err := LoadParamsMap(overridepath)
 		if err != nil {
 			return err
 		}
-		overridepath := override.readableFilePath()
-		if fileExists(overridepath) {
-			DebugLogOfType("preset", "applyPreset using", "overridepath", overridepath)
-			overridemap, err := LoadParamsMap(overridepath)
+		err = ApplyParamsMap(p.category, overridemap, params)
+		if err != nil {
+			return err
+		}
+	}
+
+	// For any parameters that are in Paramdefs but are NOT in the loaded
+	// preset, we put out the "init" values.  This happens when new parameters
+	// are added which don't exist in existing preset files.
+	for nm, def := range ParamDefs {
+		// Only include parameters of the desired type
+		thisCategory, _ := PresetNameSplit(nm)
+		if p.category != "snap" && p.category != thisCategory {
+			continue
+		}
+		_, found := p.paramsmap[nm]
+		if !found {
+			init := def.Init
+			err := SetOneParamValue(params, nm, init)
 			if err != nil {
-				return err
-			}
-			err := ctx.applyParamsMap(p.category, p.paramsmap)
-			if err != nil {
-				return err
+				Warn("Loading preset", "preset", nm, "err", err)
+				// Don't fail completely
 			}
 		}
+	}
 
-		// For any parameters that are in Paramdefs but are NOT in the loaded
-		// preset, we put out the "init" values.  This happens when new parameters
-		// are added which don't exist in existing preset files.
-		for nm, def := range ParamDefs {
-			// Only include parameters of the desired type
-			thisCategory, _ := PresetNameSplit(nm)
-			if p.category != "snap" && p.category != thisCategory {
-				continue
-			}
-			_, found := p.paramsmap[nm]
-			if !found {
-				init := def.Init
-				for _, ctx := range am.agentsContext {
-					err := ctx.SetOneParamValue(nm, init)
-					if err != nil {
-						Warn("Loading preset", "preset", nm, "err", err)
-						// Don't fail completely
-					}
-				}
-			}
-		}
-
-		return nil
-	*/
+	return nil
 }
 
 // ReadablePresetFilePath xxx

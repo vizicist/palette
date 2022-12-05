@@ -74,7 +74,13 @@ func IsLogging(logtype string) bool {
 
 }
 
+// LogError will accept a nil value and do nothing
 func LogError(err error, keysAndValues ...interface{}) {
+
+	if err == nil {
+		return
+	}
+
 	if (len(keysAndValues) % 2) != 0 {
 		Warn("LogOfType function given bad number of arguments")
 	}

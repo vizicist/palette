@@ -1,18 +1,23 @@
 package agent
 
 import (
+	"fmt"
+
 	"github.com/vizicist/palette/engine"
 )
 
 func init() {
-	RegisterAgent("default", &Agent_default{})
+	RegisterAgent("default", &Agent_default{
+		layer: map[string]*engine.Layer{},
+	})
 }
 
 type Agent_default struct {
-	ctx *engine.AgentContext
+	ctx   *engine.AgentContext
+	layer map[string]*engine.Layer
 
-	layers      []string
-	layerParams map[string]*ParamValues
+	// layers      []string
+	// layerParams map[string]*engine.ParamValues
 
 	MIDIOctaveShift  int
 	MIDINumDown      int
@@ -25,42 +30,64 @@ type Agent_default struct {
 	// externalScale    *engine.Scale
 }
 
-func (a *Agent_default) Start(ctx *engine.AgentContext) {
-
-	r.layers = []string{"A","B","C","D"}
-	for s in range(r.layers) {
-		a.layerParams = NewParamValues()
-	}
+func (agent *Agent_default) Start(ctx *engine.AgentContext) {
 
 	engine.Info("Agent_default.Start")
 
-	presets := map[string]string{
-		"A": "snap.Yellow_Spheres",
-		"B": "snap.Blue_Spheres",
-		"C": "snap.Orange_Spheres",
-		"D": "snap.Pink_Spheres",
-	}
-	shapes := map[string]string{
-		"A": "square",
-		"B": "circle",
-		"C": "triangle",
-		"D": "line",
-	}
+	/*
+		presets := map[string]string{
+			"A": "snap.Yellow_Spheres",
+			"B": "snap.Blue_Spheres",
+			"C": "snap.Orange_Spheres",
+			"D": "snap.Pink_Spheres",
+		}
+		shapes := map[string]string{
+			"A": "square",
+			"B": "circle",
+			"C": "triangle",
+			"D": "line",
+		}
+	*/
 
-	ctx.AllowSource("A")
-	ctx.LayerSetParam("A","visual.resolumeport", 3334)
-	ctx.LayerSetParam("A","visual.shape", "circle")
-	ctx.LayerApplyPreset("A","snap.Yellow_Spheres")
-	// ctx.LayerSavePreset("A","snap.Yellow_Spheres")
+	ctx.AllowSource("A", "B", "C", "D")
 
-	ctx.AllowSource("B")
-	ctx.LayerSetParam("B","visual.resolumeport", 3335)
-	ctx.LayerSetParam("B","visual.shape", "square")
+	a := ctx.MakeLayer("layerA")
+	a.Set("visual.resolumeport", "3334")
+	a.Set("visual.shape", "circle")
+	a.Apply(ctx.GetPreset("snap.White_Ghosts"))
+	agent.layer["a"] = a
+
+	b := ctx.MakeLayer("layerB")
+	b.Set("visual.resolumeport", "3335")
+	b.Set("visual.shape", "square")
+	b.Apply(ctx.GetPreset("snap.Concentric_Squares"))
+	agent.layer["b"] = b
+
+	c := ctx.MakeLayer("layerC")
+	c.Set("visual.resolumeport", "3336")
+	c.Set("visual.shape", "square")
+	c.Apply(ctx.GetPreset("snap.Circular_Moire"))
+	agent.layer["c"] = c
+
+	d := ctx.MakeLayer("layerD")
+	d.Set("visual.resolumeport", "3337")
+	d.Set("visual.shape", "square")
+	d.Apply(ctx.GetPreset("snap.Diagonal_Mirror"))
+	agent.layer["d"] = d
 
 	ctx.ApplyPreset("quad.Quick Scat_Circles")
+
+	agent.ctx = ctx
 }
 
-func (r *Agent_default) OnMidiEvent(ctx *engine.AgentContext, me engine.MidiEvent) {
+func (agent *Agent_default) OnMidiEvent(me engine.MidiEvent) {
+
+	if agent.ctx == nil {
+		engine.LogError(fmt.Errorf("OnMidiEvent: Start needs to be called before this"))
+		return
+	}
+
+	ctx := agent.ctx
 
 	/*
 		if r.ctx.MIDIThru {
@@ -80,22 +107,31 @@ func (r *Agent_default) OnMidiEvent(ctx *engine.AgentContext, me engine.MidiEven
 	}
 }
 
-func (r *Agent_default) OnCursorEvent(ctx *engine.AgentContext, ce engine.CursorEvent) {
-	r.ctx = ctx
-	if ce.Ddu == "down" || ce.Ddu == "drag" {
+func (agent *Agent_default) OnCursorEvent(ce engine.CursorEvent) {
 
-		// pitch := uint8(ce.X * 126.0)
-		pitch := r.cursorToPitch(ce)
+	if agent.ctx == nil {
+		engine.LogError(fmt.Errorf("OnMidiEvent: Start needs to be called before this"))
+		return
+	}
+
+	ctx := agent.ctx
+
+	if ce.Ddu == "down" || ce.Ddu == "drag" {
+		channel := agent.cursorToChannel(ce)
+		pitch := agent.cursorToPitch(ce)
 		velocity := uint8(ce.Z * 1280)
 		duration := 2 * engine.QuarterNote
-		synth := "0103 Ambient_E-Guitar"
-		ctx.ScheduleNoteNow(pitch, velocity, duration, synth)
+		ctx.ScheduleNoteNow(channel, pitch, velocity, duration)
 	}
 }
 
-func (r *Agent_default) cursorToPitch(ce engine.CursorEvent) uint8 {
-	pitchmin := r.ctx.ParamIntValue("sound.pitchmin")
-	pitchmax := r.ctx.ParamIntValue("sound.pitchmax")
+func (agent *Agent_default) cursorToChannel(ce engine.CursorEvent) uint8 {
+	return 0
+}
+
+func (agent *Agent_default) cursorToPitch(ce engine.CursorEvent) uint8 {
+	pitchmin := agent.ctx.ParamIntValue("sound.pitchmin")
+	pitchmax := agent.ctx.ParamIntValue("sound.pitchmax")
 	dp := pitchmax - pitchmin + 1
 	p1 := int(ce.X * float32(dp))
 	p := uint8(pitchmin + p1%dp)

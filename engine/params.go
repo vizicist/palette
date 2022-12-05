@@ -38,6 +38,8 @@ type paramDefString struct {
 	values []string
 }
 
+type ParamsMap map[string]interface{}
+
 // ParamDefs is the set of all parameter definitions
 var ParamDefs map[string]ParamDef
 
@@ -73,11 +75,9 @@ type ParamValues struct {
 	values map[string]ParamValue
 }
 
-// NewParamValues creates a new ParamValues
 func NewParamValues() *ParamValues {
-	return &ParamValues{
-		values: make(map[string]ParamValue),
-	}
+	// Note: it's ParamValue (not a pointer)
+	return &ParamValues{values: make(map[string]ParamValue)}
 }
 
 // SetDefaultValues xxx
@@ -90,6 +90,10 @@ func (vals *ParamValues) SetDefaultValues() {
 			LogError(err)
 		}
 	}
+}
+
+func (vals *ParamValues) Set(name, value string) error {
+	return vals.SetParamValueWithString(name, value, nil)
 }
 
 // ParamCallback is the callback when setting parameter values
@@ -377,7 +381,7 @@ func (vals *ParamValues) ParamStringValue(name string, def string) string {
 func (vals *ParamValues) ParamIntValue(name string) int {
 	param := vals.paramValue(name)
 	if param == nil {
-		Warn("**** No existing int value for param", "name", name)
+		// Warn("No existing int value for param", "name", name)
 		return 0
 	}
 	return param.(paramValInt).value
@@ -387,7 +391,7 @@ func (vals *ParamValues) ParamIntValue(name string) int {
 func (vals *ParamValues) ParamFloatValue(name string) float32 {
 	param := vals.paramValue(name)
 	if param == nil {
-		Warn("No existing float value for param", "name", name)
+		// Warn("No existing float value for param", "name", name)
 		pd, ok := ParamDefs[name]
 		if ok {
 			f, err := strconv.ParseFloat(pd.Init, 64)
@@ -406,7 +410,7 @@ func (vals *ParamValues) ParamFloatValue(name string) float32 {
 func (vals *ParamValues) ParamBoolValue(name string) bool {
 	param := vals.paramValue(name)
 	if param == nil {
-		Warn("No existing paramvalue for", "name", name)
+		// Warn("No existing paramvalue for", "name", name)
 		return false
 	}
 	return (param).(paramValBool).value

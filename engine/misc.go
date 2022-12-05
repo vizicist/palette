@@ -109,12 +109,20 @@ func LocalPaletteDir() string {
 
 var localMap map[string]string
 
+func DefaultDatapath() string {
+	v := os.Getenv("PALETTE_DATAPATH")
+	if v == "" {
+		v = "data_default"
+	}
+	return v
+}
+
 func LocalMap() map[string]string {
 	if localMap == nil {
 		var err error
 		f := filepath.Join(LocalPaletteDir(), "local.json")
 		if !FileExists(f) {
-			localMap, _ = StringMap("{ \"datapath\": \"data_default\" }")
+			localMap, _ = StringMap("{ \"datapath\": \"" + DefaultDatapath() + "\" }")
 		} else {
 			localMap, err = ReadConfigFile(f)
 			if err != nil {
@@ -137,7 +145,7 @@ func PaletteDataPath() string {
 	local := LocalMap()
 	datapath, ok := local["datapath"]
 	if !ok {
-		datapath = filepath.Join(LocalPaletteDir(), "data_default")
+		datapath = filepath.Join(LocalPaletteDir(), DefaultDatapath())
 	}
 	if filepath.Dir(datapath) == "." {
 		datapath = filepath.Join(LocalPaletteDir(), datapath)

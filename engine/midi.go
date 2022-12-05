@@ -44,7 +44,7 @@ type MIDIChannelOutput struct {
 }
 
 type MidiEvent struct {
-	msg midi.Message
+	Msg midi.Message
 }
 
 // MIDI is a pointer to
@@ -64,7 +64,7 @@ func InitMIDI() {
 
 	// util.InitScales()
 
-	erae := false
+	// erae := false
 	inports := midi.GetInPorts()
 	outports := midi.GetOutPorts()
 
@@ -77,8 +77,8 @@ func InitMIDI() {
 		name := inp.String()
 		DebugLogOfType("midiports", "MIDI input", "port", name)
 		if strings.Contains(name, "Erae Touch") {
-			erae = true
-			EraeInput = inp
+			// erae = true
+			// EraeInput = inp
 		}
 		if strings.Contains(name, midiInputName) {
 			// We only open a single input, though midiInputs is an array
@@ -90,18 +90,18 @@ func InitMIDI() {
 		name := outp.String()
 		// NOTE: name is the port name followed by an index
 		DebugLogOfType("midiports", "MIDI output", "port", outp.String())
-		if strings.Contains(name, "Erae Touch") {
-			EraeOutput = outp
-		}
+		// if strings.Contains(name, "Erae Touch") {
+		// 	EraeOutput = outp
+		// }
 		MIDI.midiOutputs[name] = outp
 	}
 
 	Info("Initialized MIDI", "outports", outports, "midiInputName", midiInputName)
 
-	if erae {
-		Info("Erae Touch input is being enabled")
-		InitErae()
-	}
+	// if erae {
+	// 	Info("Erae Touch input is being enabled")
+	// 	InitErae()
+	// }
 }
 
 type MidiHandlerFunc func(midi.Message, int32)
@@ -128,11 +128,11 @@ func (m *MIDIIO) handleMidiInput(msg midi.Message, timestamp int32) {
 
 	case msg.GetNoteOn(&ch, &key, &vel):
 		DebugLogOfType("midi", "midi.ListenTo notestart", "bt", bt)
-		m.midiInputChan <- MidiEvent{msg: msg}
+		m.midiInputChan <- MidiEvent{Msg: msg}
 
 	case msg.GetNoteOff(&ch, &key, &vel):
 		DebugLogOfType("midi", "midi.ListenTo noteend", "bt", bt)
-		m.midiInputChan <- MidiEvent{msg: msg}
+		m.midiInputChan <- MidiEvent{Msg: msg}
 	default:
 		Warn("Unable to handle MIDI input", "msg", msg)
 	}
@@ -230,7 +230,7 @@ func (m *MIDIIO) openFakeChannelOutput(port string, channel int) *MIDIChannelOut
 }
 
 func (me MidiEvent) Status() uint8 {
-	bytes := me.msg.Bytes()
+	bytes := me.Msg.Bytes()
 	if len(bytes) == 0 {
 		Warn("Empty bytes in MidiEvent?")
 		return 0
@@ -239,7 +239,7 @@ func (me MidiEvent) Status() uint8 {
 }
 
 func (me MidiEvent) Data1() uint8 {
-	bytes := me.msg.Bytes()
+	bytes := me.Msg.Bytes()
 	if len(bytes) < 2 {
 		Warn("No Data1 byte in MidiEvent?")
 		return 0

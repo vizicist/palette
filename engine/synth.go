@@ -187,7 +187,7 @@ func SendToSynth(value interface{}) {
 		return
 	}
 
-	synthName := fmt.Sprintf("P_01_C_%02d", channel)
+	synthName := fmt.Sprintf("P_01_C_%02d", channel+1)
 	synth, ok := Synths[synthName]
 	if !ok {
 		Warn("SendPhraseElementToSynth: no such", "synth", synthName)
