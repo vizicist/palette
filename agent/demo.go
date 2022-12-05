@@ -11,17 +11,19 @@ func init() {
 }
 
 type Agent_demo struct {
+	ctx *engine.AgentContext
 }
 
 /////////////////////////// external interface
 
 func (r *Agent_demo) Start(ctx *engine.AgentContext) {
+	r.ctx = ctx
 }
 
-func (r *Agent_demo) OnMidiEvent(ctx *engine.AgentContext, me engine.MidiEvent) {
+func (r *Agent_demo) OnMidiEvent(me engine.MidiEvent) {
 }
 
-func (r *Agent_demo) OnCursorEvent(ctx *engine.AgentContext, ce engine.CursorEvent) {
+func (r *Agent_demo) OnCursorEvent(ce engine.CursorEvent) {
 	engine.Info("NewAgent_demo in OnCursorEvent!")
 	if ce.Ddu == "down" {
 		go func() {
@@ -34,7 +36,7 @@ func (r *Agent_demo) OnCursorEvent(ctx *engine.AgentContext, ce engine.CursorEve
 			case *engine.NoteFull:
 				engine.SendToSynth(pe)
 				time.Sleep(2 * time.Second)
-				noff := engine.NewNoteOff(v.Pitch, v.Velocity, v.Synth)
+				noff := engine.NewNoteOff(v.Channel, v.Pitch, v.Velocity)
 				peoff := &engine.PhraseElement{Value: noff}
 				engine.SendToSynth(peoff)
 			}

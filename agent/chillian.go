@@ -9,26 +9,31 @@ func init() {
 }
 
 type Agent_chillian struct {
+	ctx *engine.AgentContext
 }
 
-func (r *Agent_chillian) Start(ctx *engine.AgentContext) {
+func (agent *Agent_chillian) Start(ctx *engine.AgentContext) {
 	engine.Info("Agent_chillian.Start")
+	agent.ctx = ctx
 }
 
-func (r *Agent_chillian) OnMidiEvent(ctx *engine.AgentContext, me engine.MidiEvent) {
+func (agent *Agent_chillian) OnMidiEvent(me engine.MidiEvent) {
+	ctx := agent.ctx
 	ctx.Log("Agent_chillian.onMidiEvent", "me", me)
 	// just echo it back out
 	// ctx.ScheduleBytesNow(me.Bytes)
 }
 
-func (r *Agent_chillian) OnCursorEvent(ctx *engine.AgentContext, ce engine.CursorEvent) {
+func (agent *Agent_chillian) OnCursorEvent(ce engine.CursorEvent) {
+	ctx := agent.ctx
 	if ce.Ddu == "down" { // || ce.Ddu == "drag" {
 
+		channel := uint8(0)
 		pitch := uint8(ce.X * 126.0)
 		velocity := uint8(ce.Z * 1280)
 		duration := 2 * engine.QuarterNote
-		synth := "0103 Ambient_E-Guitar"
-		nt := engine.NewNoteFull(pitch, velocity, duration, synth)
+		// synth := "0103 Ambient_E-Guitar"
+		nt := engine.NewNoteFull(channel, pitch, velocity, duration)
 
 		ctx.Log("Agent_chillian.OnCursorEvent", "pitch", pitch, "vel", velocity, "dur", duration)
 
