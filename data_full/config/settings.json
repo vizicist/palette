@@ -1,8 +1,0 @@
-{
-  "debug": "morph,cursor,midi",
-  "guilevel": "1",
-  "autostart": "gui,bidule",
-  "bidule": "C:\\Program Files\\Plogue\\Bidule\\Bidule.exe",
-  "guiresize": "-800 0 800 1200",
-  "this line should not end with a comma": 0
-}

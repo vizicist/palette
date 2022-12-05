@@ -307,7 +307,7 @@ func (r *Router) HandleInputEvent(agentName string, args map[string]string) erro
 
 	case "cursor_down", "cursor_drag", "cursor_up":
 		ce := ArgsToCursorEvent(args)
-		ctx.agent.OnCursorEvent(ctx, ce)
+		ctx.agent.OnCursorEvent(ce)
 
 	case "sprite":
 
@@ -315,7 +315,7 @@ func (r *Router) HandleInputEvent(agentName string, args map[string]string) erro
 		if err != nil {
 			return nil
 		}
-		ctx.generateSprite("dummy", x, y, z)
+		ctx.generateSpriteForLayer("A", "dummy", x, y, z)
 
 	case "midi_reset":
 		Info("HandleEvent: midi_reset, sending ANO")

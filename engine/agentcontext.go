@@ -3,10 +3,13 @@ package engine
 import (
 	"fmt"
 	"math/rand"
+	"os"
+	"sort"
 	"strconv"
 	"strings"
 
 	"github.com/hypebeast/go-osc/osc"
+	"gitlab.com/gomidi/midi/v2/drivers"
 )
 
 type AgentContext struct {
@@ -25,16 +28,21 @@ type AgentContext struct {
 
 func NewAgentContext(agent Agent) *AgentContext {
 	return &AgentContext{
-		scheduler: TheEngine().Scheduler,
-		agent:     agent,
-		// params:    NewParamValues(),
-		scale:   &Scale{},
-		sources: map[string]bool{},
+		scheduler:   TheEngine().Scheduler,
+		agent:       agent,
+		agentParams: NewParamValues(),
+		layerParams: map[string]*ParamValues{},
+		scale:       &Scale{},
+		sources:     map[string]bool{},
 	}
 }
 
 func (ctx *AgentContext) Log(msg string, keysAndValues ...interface{}) {
 	Info(msg, keysAndValues...)
+}
+
+func (ctx *AgentContext) MakeLayer(name string) *Layer {
+	return MakeLayer(name)
 }
 
 func (ctx *AgentContext) saveCurrentAsPrefix(presetName string) error {
@@ -52,7 +60,7 @@ func (ctx *AgentContext) MidiEventToPhrase(me MidiEvent) (*Phrase, error) {
 
 func (ctx *AgentContext) midiEventToPhraseElement(me MidiEvent) (*PhraseElement, error) {
 
-	bytes := me.msg.Bytes()
+	bytes := me.Msg.Bytes()
 	lng := len(bytes)
 	if lng == 0 {
 		err := fmt.Errorf("no bytes in midi.Message")
@@ -166,13 +174,23 @@ func (ctx *AgentContext) GetScale() *Scale {
 	return ctx.scale
 }
 
-func (ctx *AgentContext) SetParam(fullname, value string) error {
-	return ctx.SetOneParamValue(fullname, value)
+func (ctx *AgentContext) LayerParams(layerName string) *ParamValues {
+	params, ok := ctx.layerParams[layerName]
+	if !ok {
+		params = NewParamValues()
+		ctx.layerParams[layerName] = params
+	}
+	return params
 }
 
-func (ctx *AgentContext) SetOneParamValue(fullname, value string) error {
+func SetOneParamValue(params *ParamValues, fullname, value string) error {
+	return params.SetParamValueWithString(fullname, value, nil)
+}
 
-	err := ctx.agentParams.SetParamValueWithString(fullname, value, nil)
+func (ctx *AgentContext) setOneLayerParamValue(layer, fullname, value string) error {
+
+	params := ctx.LayerParams(layer)
+	err := params.SetParamValueWithString(fullname, value, nil)
 	if err != nil {
 		return err
 	}
@@ -183,36 +201,36 @@ func (ctx *AgentContext) SetOneParamValue(fullname, value string) error {
 		msg.Append("set_params")
 		args := fmt.Sprintf("{\"%s\":\"%s\"}", name, value)
 		msg.Append(args)
-		ctx.toFreeFramePluginForLayer(msg)
+		ctx.toFreeFramePluginForLayer(layer, msg)
 	}
 
 	if strings.HasPrefix(fullname, "effect.") {
 		name := strings.TrimPrefix(fullname, "effect.")
 		// Effect parameters get sent to Resolume
-		ctx.sendEffectParam(name, value)
+		ctx.sendEffectParam(layer, name, value)
 	}
 
 	return nil
 }
 
-func (ctx *AgentContext) sendEffectParam(name string, value string) {
+func (ctx *AgentContext) sendEffectParam(layer string, name string, value string) {
 	// Effect parameters that have ":" in their name are plugin parameters
 	i := strings.Index(name, ":")
 	if i > 0 {
 		effectName := name[0:i]
 		paramName := name[i+1:]
-		ctx.sendPadOneEffectParam(effectName, paramName, value)
+		ctx.sendPadOneEffectParam(layer, effectName, paramName, value)
 	} else {
 		onoff, err := strconv.ParseBool(value)
 		if err != nil {
 			LogError(err)
 			onoff = false
 		}
-		ctx.sendPadOneEffectOnOff(name, onoff)
+		ctx.sendPadOneEffectOnOff(layer, name, onoff)
 	}
 }
 
-func (ctx *AgentContext) sendPadOneEffectParam(effectName string, paramName string, value string) {
+func (ctx *AgentContext) sendPadOneEffectParam(layer string, effectName string, paramName string, value string) {
 	fullName := "effect" + "." + effectName + ":" + paramName
 	paramsMap, realEffectName, realEffectNum, err := getEffectMap(effectName, "params")
 	if err != nil {
@@ -287,15 +305,27 @@ func (ctx *AgentContext) sendPadOneEffectParam(effectName string, paramName stri
 	ctx.toResolume(msg)
 }
 
-func (ctx *AgentContext) toFreeFramePluginForLayer(msg *osc.Message) {
+func ffglPortForLayer(layer string) int {
+	layers := "ABCDEFGH"
+	i := strings.Index(layers, layer)
+	return 3334 + i
+}
+
+func (ctx *AgentContext) toFreeFramePluginForLayer(layer string, msg *osc.Message) {
+	if ctx.freeframeClient == nil {
+		ctx.freeframeClient = osc.NewClient(LocalAddress, ffglPortForLayer(layer))
+	}
 	ctx.freeframeClient.Send(msg)
 }
 
 func (ctx *AgentContext) toResolume(msg *osc.Message) {
+	if ctx.resolumeClient == nil {
+		ctx.resolumeClient = osc.NewClient(LocalAddress, ResolumePort)
+	}
 	ctx.resolumeClient.Send(msg)
 }
 
-func (ctx *AgentContext) generateSprite(id string, x, y, z float32) {
+func (ctx *AgentContext) generateSpriteForLayer(layer string, id string, x, y, z float32) {
 	if !TheRouter().generateVisuals {
 		return
 	}
@@ -305,22 +335,26 @@ func (ctx *AgentContext) generateSprite(id string, x, y, z float32) {
 	msg.Append(y)
 	msg.Append(z)
 	msg.Append(id)
-	ctx.toFreeFramePluginForLayer(msg)
+	ctx.toFreeFramePluginForLayer(layer, msg)
 }
 
 func (ctx *AgentContext) generateSpriteFromPhraseElement(pe *PhraseElement) {
 
+	var channel uint8
 	var pitch uint8
 	var velocity uint8
 
 	switch v := pe.Value.(type) {
 	case *NoteOn:
+		channel = v.Channel
 		pitch = v.Pitch
 		velocity = v.Velocity
 	case *NoteOff:
+		channel = v.Channel
 		pitch = v.Pitch
 		velocity = v.Velocity
 	case *NoteFull:
+		channel = v.Channel
 		pitch = v.Pitch
 		velocity = v.Velocity
 	default:
@@ -373,7 +407,8 @@ func (ctx *AgentContext) generateSpriteFromPhraseElement(pe *PhraseElement) {
 	// XXX - Set sprite ID to pitch, is this right?
 	msg.Append(fmt.Sprintf("%d@localhost", pitch))
 
-	ctx.toFreeFramePluginForLayer(msg)
+	layer := string("ABCDEFGH"[channel])
+	ctx.toFreeFramePluginForLayer(layer, msg)
 }
 
 // to avoid unused warning
@@ -393,7 +428,7 @@ func (ctx *AgentContext) getScale() *Scale {
 	return scale
 }
 
-func (ctx *AgentContext) sendPadOneEffectOnOff(effectName string, onoff bool) {
+func (ctx *AgentContext) sendPadOneEffectOnOff(layer string, effectName string, onoff bool) {
 	var mapType string
 	if onoff {
 		mapType = "on"
@@ -599,24 +634,276 @@ func (ctx *AgentContext) sendANO() {
 	SendANOToSynth(synth)
 }
 
-func (ctx *AgentContext) AllowSource(source string) {
+func (ctx *AgentContext) AllowSource(source ...string) {
 	var ok bool
-	_, ok = ctx.sources[source]
-	if ok {
-		Info("AllowSource already set", "source", source)
-	} else {
-		ctx.sources[source] = true
+	for _, name := range source {
+		_, ok = ctx.sources[name]
+		if ok {
+			Info("AllowSource: already set?", "source", name)
+		} else {
+			ctx.sources[name] = true
+		}
 	}
 }
 
-func (ctx *AgentContext) ApplyPreset(presetName string) error {
-	return fmt.Errorf("ApplyPreset needs work")
-	/*
-		preset, err := LoadPreset(presetName)
+/*
+func (ctx *AgentContext) LayerApplyPreset(layerName, presetName string) error {
+	preset, err := LoadPreset(presetName)
+	if err != nil {
+		LogError(err, "preset", presetName)
+		return err
+	}
+	preset.ApplyTo(ctx.LayerParams(layerName))
+	return fmt.Errorf("LayerApplyPreset needs work")
+}
+*/
+
+func (ctx *AgentContext) OpenMIDIOutput(name string) drivers.In {
+	return nil
+}
+
+// GetPreset is guaranteed to return non=nil
+func (ctx *AgentContext) GetPreset(presetName string) *Preset {
+	preset, err := LoadPreset(presetName)
+	if err != nil {
+		LogError(err)
+		preset, err = LoadPreset("")
 		if err != nil {
-			return err
+			LogError(err)
 		}
-		// preset.ApplyTo(p.playerName)
-		return nil
-	*/
+	}
+	return preset
+}
+
+func (ctx *AgentContext) ApplyPreset(presetName string) error {
+	preset, err := LoadPreset(presetName)
+	if err != nil {
+		return err
+	}
+	return preset.ApplyTo(ctx.agentParams)
+}
+
+// ExecuteAPI xxx
+func (ctx *AgentContext) ExecuteAPI(api string, args map[string]string, rawargs string) (result string, err error) {
+
+	DebugLogOfType("api", "Agent.ExecutAPI called", "api", api, "args", args)
+	// The caller can provide rawargs if it's already known, but if not provided, we create it
+	if rawargs == "" {
+		rawargs = MapString(args)
+	}
+
+	// ALL visual.* APIs get forwarded to the FreeFrame plugin inside Resolume
+	if strings.HasPrefix(api, "visual.") {
+		msg := osc.NewMessage("/api")
+		msg.Append(strings.TrimPrefix(api, "visual."))
+		msg.Append(rawargs)
+		layer := "A"
+		ctx.toFreeFramePluginForLayer(layer, msg)
+	}
+
+	switch api {
+
+	case "send":
+		ctx.sendAllParameters()
+		return "", err
+
+		//	case "loop_recording":
+		//		v, e := needBoolArg("onoff", api, args)
+		//		if e == nil {
+		//			ctx.loopIsRecording = v
+		//		} else {
+		//			err = e
+		//		}
+		//
+		//	case "loop_playing":
+		//		v, e := needBoolArg("onoff", api, args)
+		//		if e == nil && v != player.loopIsPlaying {
+		//			player.loopIsPlaying = v
+		//			TheEngine().Scheduler.SendAllPendingNoteoffs()
+		//		} else {
+		//			err = e
+		//		}
+		//
+		//	case "loop_clear":
+		//		// player.loop.Clear()
+		//		// player.clearGraphics()
+		//		player.sendANO()
+		//
+		//	case "loop_length":
+		//		i, e := needIntArg("value", api, args)
+		//		if e == nil {
+		//			nclicks := Clicks(i)
+		//			if nclicks != player.loopLength {
+		//				player.loopLength = nclicks
+		//				// player.loopSetLength(nclicks)
+		//			}
+		//		} else {
+		//			err = e
+		//		}
+		//
+		//	case "loop_fade":
+		//		f, e := needFloatArg("fade", api, args)
+		//		if e == nil {
+		//			player.fadeLoop = f
+		//		} else {
+		//			err = e
+		//		}
+		//
+		//	case "ANO":
+		//		player.sendANO()
+
+		/*
+			case "midi_thru":
+				v, e := needBoolArg("onoff", api, args)
+				if e == nil {
+					player.MIDIThru = v
+				} else {
+					err = e
+				}
+
+			case "midi_setscale":
+				v, e := needBoolArg("onoff", api, args)
+				if e == nil {
+					player.MIDISetScale = v
+				} else {
+					err = e
+				}
+
+			case "midi_usescale":
+				v, e := needBoolArg("onoff", api, args)
+				if e == nil {
+					player.MIDIUseScale = v
+				} else {
+					err = e
+				}
+
+			case "clearexternalscale":
+				player.clearExternalScale()
+				player.MIDINumDown = 0
+
+			case "midi_quantized":
+				v, err := needBoolArg("onoff", api, args)
+				if err == nil {
+					player.MIDIQuantized = v
+				}
+
+			case "midi_thruscadjust":
+				v, e := needBoolArg("onoff", api, args)
+				if e == nil {
+					player.MIDIThruScadjust = v
+				} else {
+					err = e
+				}
+
+			case "set_transpose":
+				v, e := needIntArg("value", api, args)
+				if e == nil {
+					player.TransposePitch = v
+					Info("player API set_transpose", "pitch", v)
+				} else {
+					err = e
+				}
+		*/
+
+	default:
+		err = fmt.Errorf("Player.ExecuteAPI: unknown api=%s", api)
+	}
+
+	return result, err
+}
+
+func (ctx *AgentContext) sendAllParameters() {
+	for nm := range ctx.agentParams.values {
+		val, err := ctx.agentParams.paramValueAsString(nm)
+		if err != nil {
+			LogError(err)
+			// Don't fail completely
+			continue
+		}
+		// This assumes that if you set a parameter to the same value,
+		// that it will re-send the mesasges to Resolume for visual.* params
+		err = SetOneParamValue(ctx.agentParams, nm, val)
+		if err != nil {
+			LogError(err)
+			// Don't fail completely
+		}
+	}
+}
+
+func ApplyParamsMap(presetType string, paramsmap map[string]interface{}, params *ParamValues) error {
+
+	// Currently, no errors are ever returned, but log messages are generated.
+
+	for name, ival := range paramsmap {
+		val, okval := ival.(string)
+		if !okval {
+			Warn("value isn't a string in params json", "name", name, "value", val)
+			continue
+		}
+		fullname := name
+		thisCategory, _ := PresetNameSplit(fullname)
+		// Only include ones that match the presetType
+		if presetType != "snap" && thisCategory != presetType {
+			continue
+		}
+		// This is where the parameter values get applied,
+		// which may trigger things (like sending OSC)
+		err := SetOneParamValue(params, fullname, val)
+		if err != nil {
+			LogError(err)
+			// Don't abort the whole load, i.e. we are tolerant
+			// of unknown parameters or errors in the preset
+		}
+	}
+	return nil
+}
+
+/*
+func (ctx *AgentContext) restoreCurrentSnap(layerName string) {
+	preset, err := LoadPreset("snap._Current_" + layerName)
+	if err != nil {
+		LogError(err)
+		return
+	}
+	err = preset.ApplyTo(ctx.agentParams)
+	if err != nil {
+		LogError(err)
+	}
+}
+*/
+
+func (ctx *AgentContext) saveCurrentAsPreset(presetName string) error {
+	preset, err := LoadPreset(presetName)
+	if err != nil {
+		return err
+	}
+	path := preset.WriteableFilePath()
+	return ctx.saveCurrentSnapInPath(path)
+}
+
+func (ctx *AgentContext) saveCurrentSnapInPath(path string) error {
+
+	s := "{\n    \"params\": {\n"
+
+	// Print the parameter values sorted by name
+	fullNames := ctx.agentParams.values
+	sortedNames := make([]string, 0, len(fullNames))
+	for k := range fullNames {
+		sortedNames = append(sortedNames, k)
+	}
+	sort.Strings(sortedNames)
+
+	sep := ""
+	for _, fullName := range sortedNames {
+		valstring, e := ctx.agentParams.paramValueAsString(fullName)
+		if e != nil {
+			LogError(e)
+			continue
+		}
+		s += fmt.Sprintf("%s        \"%s\":\"%s\"", sep, fullName, valstring)
+		sep = ",\n"
+	}
+	s += "\n    }\n}"
+	data := []byte(s)
+	return os.WriteFile(path, data, 0644)
 }
