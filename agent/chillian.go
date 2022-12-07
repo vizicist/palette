@@ -39,7 +39,6 @@ func (agent *Agent_chillian) OnCursorEvent(ce engine.CursorEvent) {
 
 		pe := &engine.PhraseElement{
 			AtClick: ctx.CurrentClick(),
-			Source:  "chillian",
 			Value:   nt,
 		}
 		phr := engine.NewPhrase().InsertElement(pe)

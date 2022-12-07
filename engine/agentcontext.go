@@ -2,7 +2,6 @@ package engine
 
 import (
 	"fmt"
-	"math/rand"
 	"os"
 	"sort"
 	"strconv"
@@ -41,13 +40,27 @@ func (ctx *AgentContext) Log(msg string, keysAndValues ...interface{}) {
 	Info(msg, keysAndValues...)
 }
 
+func (ctx *AgentContext) NewLayer() *Layer {
+	return NewLayer()
+}
+
+func (ctx *AgentContext) AllowSource(source ...string) {
+	var ok bool
+	for _, name := range source {
+		_, ok = ctx.sources[name]
+		if ok {
+			Info("AllowSource: already set?", "source", name)
+		} else {
+			ctx.sources[name] = true
+		}
+	}
+}
+
+/*
 func (ctx *AgentContext) MakeLayer(name string) *Layer {
 	return MakeLayer(name)
 }
-
-func (ctx *AgentContext) saveCurrentAsPrefix(presetName string) error {
-	return fmt.Errorf("saveCurrentAsPrefix needs work")
-}
+*/
 
 func (ctx *AgentContext) MidiEventToPhrase(me MidiEvent) (*Phrase, error) {
 	pe, err := ctx.midiEventToPhraseElement(me)
@@ -136,23 +149,12 @@ func (ctx *AgentContext) ScheduleDebug() string {
 	return fmt.Sprintf("%s", ctx.scheduler)
 }
 
-func (ctx *AgentContext) ScheduleNoteNow(channel, pitch, velocity uint8, duration Clicks) {
-	DebugLogOfType("schedule", "ctx.ScheduleNoteNow", "pitch", pitch)
-	pe := &PhraseElement{Value: NewNoteFull(channel, pitch, velocity, duration)}
-	phr := NewPhrase().InsertElement(pe)
-	ctx.SchedulePhraseAt(phr, CurrentClick())
-}
-
-func (ctx *AgentContext) SchedulePhraseNow(phr *Phrase) {
-	ctx.SchedulePhraseAt(phr, CurrentClick())
-}
-
-func (ctx *AgentContext) SchedulePhraseAt(phr *Phrase, click Clicks) {
+func (ctx *AgentContext) SchedulePhrase(phr *Phrase, click Clicks, dest string) {
 	if phr == nil {
-		Warn("AgentContext.SchedulePhraseAt: phr == nil?")
+		Warn("AgentContext.SchedulePhrase: phr == nil?")
 		return
 	}
-	DebugLogOfType("schedule", "ctx.SchedulePhraseAt", "click", click)
+	// ctx.SchedulePhraseAt(phr, CurrentClick())
 	go func() {
 		se := &SchedElement{
 			AtClick: click,
@@ -338,6 +340,7 @@ func (ctx *AgentContext) generateSpriteForLayer(layer string, id string, x, y, z
 	ctx.toFreeFramePluginForLayer(layer, msg)
 }
 
+/*
 func (ctx *AgentContext) generateSpriteFromPhraseElement(pe *PhraseElement) {
 
 	var channel uint8
@@ -410,6 +413,7 @@ func (ctx *AgentContext) generateSpriteFromPhraseElement(pe *PhraseElement) {
 	layer := string("ABCDEFGH"[channel])
 	ctx.toFreeFramePluginForLayer(layer, msg)
 }
+*/
 
 // to avoid unused warning
 // var p *Player
@@ -622,7 +626,7 @@ func (ctx *AgentContext) sendPadOneEffectParam(effectName string, paramName stri
 }
 */
 
-func (ctx *AgentContext) HandleMIDITimeReset() {
+func (ctx *AgentContext) handleMIDITimeReset() {
 	Warn("HandleMIDITimeReset!! needs implementation")
 }
 
@@ -632,18 +636,6 @@ func (ctx *AgentContext) sendANO() {
 	}
 	synth := ctx.agentParams.ParamStringValue("sound.synth", defaultSynth)
 	SendANOToSynth(synth)
-}
-
-func (ctx *AgentContext) AllowSource(source ...string) {
-	var ok bool
-	for _, name := range source {
-		_, ok = ctx.sources[name]
-		if ok {
-			Info("AllowSource: already set?", "source", name)
-		} else {
-			ctx.sources[name] = true
-		}
-	}
 }
 
 /*

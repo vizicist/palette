@@ -96,6 +96,15 @@ func (vals *ParamValues) Set(name, value string) error {
 	return vals.SetParamValueWithString(name, value, nil)
 }
 
+// returns "" if parameter doesn't exist
+func (vals *ParamValues) Get(name string) string {
+	v, err := vals.paramValueAsString(name)
+	if err != nil {
+		v = ""
+	}
+	return v
+}
+
 // ParamCallback is the callback when setting parameter values
 type ParamCallback func(name string, value string) error
 
