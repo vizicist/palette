@@ -10,24 +10,23 @@ import (
 	"sync"
 )
 
-// Phrase is a time-ordered list of PhraseElements
+// Phrase is a time-ordered list of *PhraseElements
 type Phrase struct {
-	rwmutex sync.RWMutex
-	list    *list.List
-	Source  string
-	Length  Clicks
+	rwmutex     sync.RWMutex
+	list        *list.List
+	Source      string
+	Destination string
+	Length      Clicks
 }
 
 type PhraseElement struct {
 	AtClick Clicks
-	Source  string      // relative to Phrase's Source
 	Value   interface{} // things like *NoteFull, *NoteOn, *NoteOff, etc
 }
 
 func (pe *PhraseElement) Copy() *PhraseElement {
 	newpe := &PhraseElement{
 		AtClick: pe.AtClick,
-		Source:  pe.Source,
 		Value:   pe.Value,
 	}
 	return newpe
@@ -416,7 +415,6 @@ func PhraseElementFromString(s string) (e *PhraseElement, err error) {
 
 	pi := &PhraseElement{
 		AtClick: atclick,
-		Source:  "fromstring",
 		Value:   val,
 	}
 

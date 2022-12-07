@@ -34,42 +34,27 @@ func (agent *Agent_default) Start(ctx *engine.AgentContext) {
 
 	engine.Info("Agent_default.Start")
 
-	/*
-		presets := map[string]string{
-			"A": "snap.Yellow_Spheres",
-			"B": "snap.Blue_Spheres",
-			"C": "snap.Orange_Spheres",
-			"D": "snap.Pink_Spheres",
-		}
-		shapes := map[string]string{
-			"A": "square",
-			"B": "circle",
-			"C": "triangle",
-			"D": "line",
-		}
-	*/
-
 	ctx.AllowSource("A", "B", "C", "D")
 
-	a := ctx.MakeLayer("layerA")
+	a := ctx.NewLayer()
 	a.Set("visual.resolumeport", "3334")
 	a.Set("visual.shape", "circle")
 	a.Apply(ctx.GetPreset("snap.White_Ghosts"))
 	agent.layer["a"] = a
 
-	b := ctx.MakeLayer("layerB")
+	b := ctx.NewLayer()
 	b.Set("visual.resolumeport", "3335")
 	b.Set("visual.shape", "square")
 	b.Apply(ctx.GetPreset("snap.Concentric_Squares"))
 	agent.layer["b"] = b
 
-	c := ctx.MakeLayer("layerC")
+	c := ctx.NewLayer()
 	c.Set("visual.resolumeport", "3336")
 	c.Set("visual.shape", "square")
 	c.Apply(ctx.GetPreset("snap.Circular_Moire"))
 	agent.layer["c"] = c
 
-	d := ctx.MakeLayer("layerD")
+	d := ctx.NewLayer()
 	d.Set("visual.resolumeport", "3337")
 	d.Set("visual.shape", "square")
 	d.Apply(ctx.GetPreset("snap.Diagonal_Mirror"))
@@ -114,24 +99,38 @@ func (agent *Agent_default) OnCursorEvent(ce engine.CursorEvent) {
 		return
 	}
 
-	ctx := agent.ctx
+	// ctx := agent.ctx
 
-	if ce.Ddu == "down" || ce.Ddu == "drag" {
-		channel := agent.cursorToChannel(ce)
+	if ce.Ddu == "down" { // || ce.Ddu == "drag" {
+		engine.Info("OnCursorEvent", "ce", ce)
+		layer := agent.cursorToLayer(ce)
 		pitch := agent.cursorToPitch(ce)
 		velocity := uint8(ce.Z * 1280)
-		duration := 2 * engine.QuarterNote
-		ctx.ScheduleNoteNow(channel, pitch, velocity, duration)
+		duration := 4 * engine.QuarterNote
+		dest := layer.Get("sound.synth")
+		agent.scheduleNoteNow(dest, pitch, velocity, duration)
 	}
 }
 
-func (agent *Agent_default) cursorToChannel(ce engine.CursorEvent) uint8 {
-	return 0
+func (agent *Agent_default) scheduleNoteNow(dest string, pitch, velocity uint8, duration engine.Clicks) {
+	pe := &engine.PhraseElement{Value: engine.NewNoteFull(channel, pitch, velocity, duration)}
+	phr := NewPhrase().InsertElement(pe)
+	phr.Destination = dest
+	ctx.SchedulePhrase(phr, CurrentClick())
+}
+
+func (agent *Agent_default) channelToDestination(channel int) string {
+	return fmt.Sprintf("P_03_C_%02d", channel)
+}
+
+func (agent *Agent_default) cursorToLayer(ce engine.CursorEvent) *Layer {
+	return agent.layer["a"]
 }
 
 func (agent *Agent_default) cursorToPitch(ce engine.CursorEvent) uint8 {
-	pitchmin := agent.ctx.ParamIntValue("sound.pitchmin")
-	pitchmax := agent.ctx.ParamIntValue("sound.pitchmax")
+	a := agent.layer["a"]
+	pitchmin := a.GetInt("sound.pitchmin")
+	pitchmax := a.GetInt("sound.pitchmax")
 	dp := pitchmax - pitchmin + 1
 	p1 := int(ce.X * float32(dp))
 	p := uint8(pitchmin + p1%dp)
