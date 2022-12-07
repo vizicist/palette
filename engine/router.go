@@ -317,10 +317,12 @@ func (r *Router) HandleInputEvent(agentName string, args map[string]string) erro
 		}
 		ctx.generateSpriteForLayer("A", "dummy", x, y, z)
 
+		/*
 	case "midi_reset":
 		Info("HandleEvent: midi_reset, sending ANO")
-		ctx.HandleMIDITimeReset()
+		ctx.handleMIDITimeReset()
 		ctx.sendANO()
+		*/
 
 	case "audio_reset":
 		Info("HandleEvent: audio_reset!!")
