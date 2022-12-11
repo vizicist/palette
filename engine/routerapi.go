@@ -2,7 +2,6 @@ package engine
 
 import (
 	"fmt"
-	"math/rand"
 )
 
 func extractAgent(argsmap map[string]string) string {
@@ -104,8 +103,8 @@ func (r *Router) saveQuadPreset(presetName string) error {
 		sep := ""
 		Info("saveQuadPreset", "preset", presetName)
 
-			for _, ctx := range r.agentManager.agentsContext {
-				Info("starting", "agent", player.playerName)
+			for _, ctx := range r.taskManager.agentsContext {
+				Info("starting", "player", player.playerName)
 				// Print the parameter values sorted by name
 				fullNames := player.params.values
 				sortedNames := make([]string, 0, len(fullNames))
@@ -128,23 +127,6 @@ func (r *Router) saveQuadPreset(presetName string) error {
 			data := []byte(s)
 			return os.WriteFile(path, data, 0644)
 	*/
-}
-
-func (r *Router) loadQuadPresetRand() {
-
-	arr, err := PresetArray("quad")
-	if err != nil {
-		LogError(err)
-		return
-	}
-	rn := rand.Uint64() % uint64(len(arr))
-	Info("loadQuadPresetRand", "preset", arr[rn])
-	preset, err := LoadPreset(arr[rn])
-	if err != nil {
-		LogError(err)
-	} else {
-		preset.applyQuadPresetToPlayer("*")
-	}
 }
 
 /*

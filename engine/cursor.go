@@ -80,7 +80,7 @@ func (cm *CursorManager) handleCursorEvent(ce CursorEvent) {
 	}
 }
 
-func (cm *CursorManager) generateCursorGestureesture(source string, cid string, x0, y0, z0, x1, y1, z1 float32) {
+func (cm *CursorManager) generateCursorGestureesture(source string, cid string, noteDuration time.Duration, x0, y0, z0, x1, y1, z1 float32) {
 	Info("generateCursorGestureesture: start")
 
 	ce := CursorEvent{
@@ -96,7 +96,7 @@ func (cm *CursorManager) generateCursorGestureesture(source string, cid string, 
 	Info("generateCursorGestureesture", "ddu", "down", "ce", ce)
 
 	// secs := float32(3.0)
-	secs := float32(TheEngine().Scheduler.attractNoteDuration)
+	secs := float32(noteDuration)
 	dt := time.Duration(int(secs * float32(time.Second)))
 	time.Sleep(dt)
 	ce.Ddu = "up"
@@ -129,7 +129,7 @@ func (cm *CursorManager) handleDownDragUp(ce CursorEvent) {
 	}
 
 	// See which player wants this input
-	TheRouter().agentManager.handleCursorEvent(ce)
+	TheRouter().taskManager.handleCursorEvent(ce)
 
 	DebugLogOfType("cursor", "CursorManager.handleDownDragUp", "id", ce.ID, "ddu", ce.Ddu, "x", ce.X, "y", ce.Y, "z", ce.Z)
 	if ce.Ddu == "up" {

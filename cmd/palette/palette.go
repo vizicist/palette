@@ -27,9 +27,9 @@ func main() {
 
 	engine.InitLog("palette")
 
-	playerPtr := flag.String("player", "*", "Region name or *")
+	layerPtr := flag.String("layer", "*", "Region name or *")
 
-	out := CliCommand(*playerPtr, flag.Args())
+	out := CliCommand(*layerPtr, flag.Args())
 	os.Stdout.WriteString(out)
 }
 
@@ -40,10 +40,10 @@ func usage() string {
     palette activate
     palette sendlogs
     palette list [{category}]
-    palette [-player={player}] load {category}.{preset}
-    palette [-player {player}] save {category}.{preset}
-    palette [-player {player}] set {category}.{parameter} [{value}]
-    palette [-player {player}] get {category}.{parameter}
+    palette [-layer={layer}] load {category}.{preset}
+    palette [-layer {layer}] save {category}.{preset}
+    palette [-layer {layer}] set {category}.{parameter} [{value}]
+    palette [-layer {layer}] get {category}.{parameter}
     palette status
 	palette version
     palette api {api} {args}
@@ -109,8 +109,8 @@ func RemoteAPIRaw(args string) map[string]string {
 	return output
 }
 
-// If it's not a player, it's a button.
-func CliCommand(player string, args []string) string {
+// If it's not a layer, it's a button.
+func CliCommand(layer string, args []string) string {
 
 	if len(args) == 0 {
 		return usage()
@@ -125,19 +125,19 @@ func CliCommand(player string, args []string) string {
 		if len(args) < 2 {
 			return "Insufficient arguments"
 		}
-		return RemoteAPI(api, "player", player, "preset", args[1])
+		return RemoteAPI(api, "layer", layer, "preset", args[1])
 
 	case "get":
 		if len(args) < 2 {
 			return "Insufficient arguments"
 		}
-		return RemoteAPI("get", "player", player, "name", args[1])
+		return RemoteAPI("get", "layer", layer, "name", args[1])
 
 	case "set":
 		if len(args) < 3 {
 			return "Insufficient arguments"
 		}
-		return RemoteAPI("set", "player", args[1], "name", args[1], "value", args[2])
+		return RemoteAPI("set", "layer", args[1], "name", args[1], "value", args[2])
 
 	case "preset.list":
 		category := "*"
@@ -230,9 +230,9 @@ func CliCommand(player string, args []string) string {
 			if n > 0 {
 				time.Sleep(dt)
 			}
-			player := string("ABCD"[rand.Int()%4])
+			layer := string("ABCD"[rand.Int()%4])
 			RemoteAPI("event",
-				"player", player,
+				"layer", layer,
 				"source", source,
 				"event", "cursor_down",
 				"x", fmt.Sprintf("%f", rand.Float32()),
@@ -241,7 +241,7 @@ func CliCommand(player string, args []string) string {
 			)
 			time.Sleep(dt)
 			RemoteAPI("event",
-				"player", player,
+				"layer", layer,
 				"source", source,
 				"event", "cursor_up",
 				"x", fmt.Sprintf("%f", rand.Float32()),

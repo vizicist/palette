@@ -6,10 +6,10 @@ import (
 	"runtime/pprof"
 	"syscall"
 
-	"github.com/vizicist/palette/agent"
 	"github.com/vizicist/palette/engine"
+	agent "github.com/vizicist/palette/task"
 
-	// _ "github.com/vizicist/palette/agent"
+	// _ "github.com/vizicist/palette/task"
 	_ "github.com/vizicist/palette/tool"
 )
 
@@ -26,30 +26,30 @@ func main() {
 
 	e := engine.TheEngine()
 
-	playerA := engine.NewPlayer("A")
-	playerB := engine.NewPlayer("B")
+	layerA := engine.NewLayer("A")
+	layerB := engine.NewLayer("B")
 
-	playerA.SetResolumeLayer(1, 3334)
-	playerB.SetResolumeLayer(2, 3335)
+	layerA.SetResolumeLayer(1, 3334)
+	layerB.SetResolumeLayer(2, 3335)
 
-	playerA.ApplyPreset("snap.Yellow_Spheres")
-	playerB.ApplyPreset("snap.Aurora_Borealis")
+	layerA.ApplyPreset("snap.Yellow_Spheres")
+	layerB.ApplyPreset("snap.Aurora_Borealis")
 
-	playerA.SetParam("visual.shape", "square")
-	playerB.SetParam("visual.shape", "circle")
+	layerA.SetParam("visual.shape", "square")
+	layerB.SetParam("visual.shape", "circle")
 
-	playerA.SavePreset("visual.TestingSquare")
-	playerB.SavePreset("visual.TestingCircle")
+	layerA.SavePreset("visual.TestingSquare")
+	layerB.SavePreset("visual.TestingCircle")
 
 	respondDefault := agent.GetAgent("default")
 	// respondLogger := agent.GetAgent("logger")
 	respondChillian := agent.GetAgent("chillian")
 
-	playerA.AttachAgent(respondChillian)
-	playerB.AttachAgent(respondDefault)
+	layerA.AttachAgent(respondChillian)
+	layerB.AttachAgent(respondDefault)
 
-	playerA.AllowSource("A")
-	playerB.AllowSource("B")
+	layerA.AllowSource("A")
+	layerB.AllowSource("B")
 
 	done := make(chan bool)
 	e.Start(done)

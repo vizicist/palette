@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -14,6 +15,19 @@ type Engine struct {
 	Router         *Router
 	Scheduler      *Scheduler
 	done           chan bool
+}
+
+type TaskContext struct {
+	context.Context
+	*Engine
+	scheduler *Scheduler
+	taskFunc  TaskFunc
+	taskData  TaskData
+	// taskContext *context.Context
+	// agentParams     *ParamValues
+	// layerParams     map[string]*ParamValues
+	// scale           *Scale
+	sources map[string]bool
 }
 
 var theEngine *Engine
@@ -47,29 +61,28 @@ func StopRunning(what string) {
 	TheEngine().ProcessManager.StopRunning(what)
 }
 
-type CreateAgentFunc func(*AgentContext) Agent
-
-func RegisterAgent(name string, agent Agent) {
-	TheRouter().agentManager.RegisterAgent(name, agent)
+func RegisterTask(name string, f TaskFunc, taskContext context.Context) {
+	TheRouter().taskManager.RegisterTask(name, f, taskContext)
 }
 
 /*
 func ActivateAgent(name string) {
-	TheRouter().agentManager.ActivateAgent(name)
+	TheRouter().taskManager.ActivateAgent(name)
 }
 
 func DeactivateAgent(name string) {
-	TheRouter().agentManager.DeactivateAgent(name)
+	TheRouter().taskManager.DeactivateAgent(name)
 }
 */
 
 // func (e *Engine) handleCursorEvent(ce CursorEvent) {
 // 	TheEngine().cursorManager.handleCursorEvent(ce)
-// 	TheEngine().agentManager.handleCursorEvent(ce)
+// 	TheEngine().taskManager.handleCursorEvent(ce)
 // }
 
-func (e *Engine) StartAgent(name string) {
-	e.Router.agentManager.StartAgent(name)
+func (e *Engine) StartTask(name string) {
+	Info("Engine.StartTask needs work", "task", name)
+	// e.Router.taskManager.StartTask(name)
 }
 
 func (e *Engine) Start(done chan bool) {
@@ -91,7 +104,7 @@ func (e *Engine) Start(done chan bool) {
 	go e.StartHTTP(HTTPPort)
 	// go r.StartNATSClient()
 	go e.StartMIDI()
-	go e.Scheduler.Start()
+	go e.Scheduler.Start(e.Scheduler.DefaultOnClick)
 	go e.Router.Start()
 
 	if ConfigBoolWithDefault("depth", false) {
@@ -181,6 +194,6 @@ func (e *Engine) StartHTTP(port int) {
 		}
 	})
 
-	source := fmt.Sprintf("127.0.0.1%d", port)
+	source := fmt.Sprintf("127.0.0.1:%d", port)
 	http.ListenAndServe(source, nil)
 }
