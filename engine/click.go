@@ -58,7 +58,8 @@ const EventCursor = 0x04
 const EventAll = EventMidiInput | EventNoteOutput | EventCursor
 
 type ClickEvent struct {
-	click Clicks
+	Click  Clicks
+	Uptime float64
 }
 
 // InitializeClicksPerSecond initializes
