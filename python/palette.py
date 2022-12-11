@@ -21,6 +21,8 @@ LineSep = "_"
 
 OneBeat = 96
 
+AgentName = "default"
+
 PerformLabels = {}
 GlobalPerformLabels = {}
 
@@ -163,16 +165,20 @@ def log(*args):
     print(s)
     sys.stdout.flush()
 
+def add_to_params(params,p):
+    if params == "":
+        return p
+    return p + "," + params
+
 def palette_player_api(player, api, params=""):
     if player == "":
         log("palette_player_api: no player specified?  Assuming *")
         player = "*"
-    p = "\"player\":\""+player+"\""
-    if params == "":
-        params = p
-    else:
-        params = p + "," + params
-    return palette_api(api,params)
+    return palette_api(api,add_to_params(params,"\"player\":\""+player+"\""))
+
+def palette_agent_api(api, params=""):
+    return palette_api("agent."+api,add_to_params(params,"\"agent\":\""+AgentName+"\""))
+
 
 def sprint(*args, end='', **kwargs):
     sio = io.StringIO()
@@ -329,6 +335,10 @@ def palette_api(api,params):
             # log("palette_api: Exception = "+str(requestError))
             log("palette_api: failed connection, api=%s is being retried" % api)
 
+    if result == "":
+        log("palette_api: result is empty?")
+        result = "{}"
+
     resultjson = json.loads(result)
 
     err = None
@@ -405,7 +415,6 @@ def PaletteDir():
             log("PALETTE environment variable needs to be defined.")
             exit()
     return paletteDir
-
 
 def SendCursorEvent(cid,ddu,x,y,z,player="A"):
     event = "cursor_" + ddu

@@ -3,7 +3,6 @@ package engine
 import (
 	"fmt"
 	"strings"
-	"time"
 )
 
 // ExecuteAPI xxx
@@ -30,17 +29,6 @@ func (e *Engine) ExecuteAPIFromMap(api string, apiargs map[string]string) (resul
 		}
 		return "", err
 
-	case "nextalive":
-		// acts like a timer, but it could wait for
-		// some event if necessary
-		time.Sleep(2 * time.Second)
-		js := JsonObject(
-			"event", "alive",
-			"seconds", fmt.Sprintf("%f", e.Scheduler.aliveSecs),
-			"attractmode", fmt.Sprintf("%v", e.Scheduler.attractModeIsOn),
-		)
-		return js, nil
-
 	case "activate":
 		go resolumeActivate()
 		go biduleActivate()
@@ -63,6 +51,8 @@ func (e *Engine) ExecuteAPIFromMap(api string, apiargs map[string]string) (resul
 			return e.executeGlobalAPI(apisuffix, apiargs)
 		case "preset":
 			return e.executePresetAPI(apisuffix, apiargs)
+		case "task":
+			return e.executeTaskAPI(apisuffix, apiargs)
 		case "sound":
 			return e.executeSoundAPI(apisuffix, apiargs)
 		default:
@@ -208,67 +198,27 @@ func (e *Engine) executePresetAPI(api string, apiargs map[string]string) (result
 
 	case "list":
 		return PresetList(apiargs)
-
-	case "load":
-		return "", fmt.Errorf("executePresetAPI needs work")
-		/*
-			presetName, okpreset := apiargs["preset"]
-			if !okpreset {
-				return "", fmt.Errorf("missing preset parameter")
-			}
-			preset, err := LoadPreset(presetNeame)
-			if err != nil {
-				return "", err
-			}
-
-			agentName, okplayer := apiargs["agent"]
-			if !okplayer {
-				agentName = "*"
-			}
-			if preset.category == "quad" {
-				// The playerName might be only a single player, and loadQuadPreset
-				// will only load that one player from the quad preset
-				err = preset.applyQuadPresetToPlayer(playerName)
-				if err != nil {
-					LogError(err)
-					return "", err
-				}
-				e.Router.saveCurrentSnaps(playerName)
-			} else {
-				// It's a non-quad preset for a single player.
-				// However, the playerName can still be "*" to apply to all players.
-				err = preset.ApplyTo(playerName)
-				if err != nil {
-					LogError(err, "presetName", presetName)
-				} else {
-					e.Router.saveCurrentSnaps(playerName)
-				}
-			}
-			return "", err
-		*/
-
-	case "save":
-		return "", fmt.Errorf("executePresetAPI needs work")
-		/*
-			presetName, okpreset := apiargs["preset"]
-			if !okpreset {
-				return "", fmt.Errorf("missing preset parameter")
-			}
-			agentName, okplayer := apiargs["agent"]
-			if !okplayer {
-				return "", fmt.Errorf("missing agent parameter")
-			}
-			ctx, err := e.Router.agentManager.GetAgentContext(agentName)
-			if err != nil {
-				return "", err
-			}
-			return "", ctx.saveCurrentAsPreset(presetName)
-		*/
-
 	default:
-		Warn("Router.ExecuteAPI api is not recognized\n", "api", api)
+		Warn("api is not recognized\n", "api", api)
 		return "", fmt.Errorf("Router.ExecutePresetAPI unrecognized api=%s", api)
 	}
+}
+
+type ApiEvent struct {
+	api     string
+	apiargs map[string]string
+}
+
+func (e *Engine) executeTaskAPI(api string, apiargs map[string]string) (result string, err error) {
+
+	taskName, okTask := apiargs["task"]
+	if !okTask {
+		return "", fmt.Errorf("missing agent parameter")
+	}
+	ctx, err := TheRouter().taskManager.GetTaskContext(taskName)
+
+	return ctx.taskFunc(ctx,ApiEvent{api, apiargs})
+
 }
 
 func (e *Engine) executeSoundAPI(api string, apiargs map[string]string) (result string, err error) {

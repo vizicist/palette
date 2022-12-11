@@ -1,1 +1,1 @@
-cd %PALETTESOURCE%\data_surge\config
+cd %PALETTESOURCE%\data_omnisphere\config

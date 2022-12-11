@@ -33,6 +33,13 @@
             "args": []
         },
         {
+            "name": "Agent API",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
+            "args": ["api", "agent.echo", "\"agent\":\"default\""]
+        },
+        {
             "name": "MIDI test",
             "type": "go",
             "request": "launch",

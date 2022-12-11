@@ -1,33 +1,35 @@
 package agent
 
+/*
 import (
+	"fmt"
 	"time"
 
 	"github.com/vizicist/palette/engine"
 )
 
 func init() {
-	RegisterAgent("demo", &Agent_demo{})
+	RegisterTask("demo", &Agent_demo{})
 }
 
 type Agent_demo struct {
-	ctx *engine.AgentContext
+	ctx *engine.EngineContext
 }
 
 /////////////////////////// external interface
 
-func (r *Agent_demo) Start(ctx *engine.AgentContext) {
-	r.ctx = ctx
+func (agent *Agent_demo) Start(ctx *engine.EngineContext) {
+	agent.ctx = ctx
 }
 
-func (r *Agent_demo) OnMidiEvent(me engine.MidiEvent) {
+func (agent *Agent_demo) OnMidiEvent(me engine.MidiEvent) {
 }
 
-func (r *Agent_demo) OnCursorEvent(ce engine.CursorEvent) {
+func (agent *Agent_demo) OnCursorEvent(ce engine.CursorEvent) {
 	engine.Info("NewAgent_demo in OnCursorEvent!")
 	if ce.Ddu == "down" {
 		go func() {
-			pe := r.cursorToPhraseElement(ce)
+			pe := agent.cursorToPhraseElement(ce)
 			switch v := pe.Value.(type) {
 			case *engine.NoteOn:
 				engine.SendToSynth(pe)
@@ -47,7 +49,7 @@ func (r *Agent_demo) OnCursorEvent(ce engine.CursorEvent) {
 
 /////////////////////////// internal things
 
-func (r *Agent_demo) cursorToPhraseElement(ce engine.CursorEvent) *engine.PhraseElement {
+func (agent *Agent_demo) cursorToPhraseElement(ce engine.CursorEvent) *engine.PhraseElement {
 	pitch := int(ce.X * 126.0)
 	_ = pitch
 	s := "+b"
@@ -58,3 +60,5 @@ func (r *Agent_demo) cursorToPhraseElement(ce engine.CursorEvent) *engine.Phrase
 	}
 	return pe
 }
+
+*/

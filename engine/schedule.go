@@ -3,11 +3,10 @@ package engine
 import (
 	"container/list"
 	"fmt"
-	"math/rand"
 	"time"
-
-	"github.com/hypebeast/go-osc/osc"
 )
+
+type Event interface{}
 
 type Scheduler struct {
 	schedList *list.List // of *SchedElements
@@ -26,19 +25,10 @@ type Scheduler struct {
 	transposeIndex  int    // current place in tranposeValues
 	transposeValues []int
 
-	attractModeIsOn        bool
-	lastAttractGestureTime time.Time
-	lastAttractPresetTime  time.Time
-	attractGestureDuration time.Duration
-	attractNoteDuration    time.Duration
-	attractPresetDuration  time.Duration
-	attractPreset          string
-	attractClient          *osc.Client
-	lastAttractChange      float64
-	attractCheckSecs       float64
-	attractIdleSecs        float64
-	processCheckSecs       float64
-	aliveSecs              float64
+	lastProcessCheck float64
+	processCheckSecs float64
+	aliveSecs        float64
+	lastAlive        float64
 }
 
 type Command struct {
@@ -55,30 +45,22 @@ type SchedElement struct {
 func NewScheduler() *Scheduler {
 	transposebeats := Clicks(ConfigIntWithDefault("transposebeats", 48))
 	s := &Scheduler{
-		schedList:              list.New(),
-		pendingNoteOffs:        NewPhrase(),
-		now:                    time.Time{},
-		time0:                  time.Time{},
-		lastClick:              -1,
-		cmdInput:               make(chan interface{}),
-		transposeAuto:          ConfigBoolWithDefault("transposeauto", true),
-		transposeNext:          transposebeats * OneBeat,
-		transposeClicks:        transposebeats,
-		transposeIndex:         0,
-		transposeValues:        []int{0, -2, 3, -5},
-		attractModeIsOn:        false,
-		lastAttractGestureTime: time.Time{},
-		lastAttractPresetTime:  time.Time{},
-		attractGestureDuration: 0,
-		attractNoteDuration:    0,
-		attractPresetDuration:  0,
-		attractPreset:          "",
-		attractClient:          &osc.Client{},
-		lastAttractChange:      0,
-		attractCheckSecs:       0,
-		attractIdleSecs:        0,
-		processCheckSecs:       0,
-		aliveSecs:              0,
+		schedList:       list.New(),
+		pendingNoteOffs: NewPhrase(),
+		now:             time.Time{},
+		time0:           time.Time{},
+		lastClick:       -1,
+		cmdInput:        make(chan interface{}),
+		transposeAuto:   ConfigBoolWithDefault("transposeauto", true),
+		transposeNext:   transposebeats * OneBeat,
+		transposeClicks: transposebeats,
+		transposeIndex:  0,
+		transposeValues: []int{0, -2, 3, -5},
+
+		lastProcessCheck: 0,
+		processCheckSecs: 0,
+		aliveSecs:        0,
+		lastAlive:        0,
 	}
 	return s
 }
@@ -92,7 +74,7 @@ type ScheduleElementCmd struct {
 }
 
 // Start runs the scheduler and never returns
-func (sched *Scheduler) Start() {
+func (sched *Scheduler) Start(onClick func(click ClickEvent)) {
 
 	Info("Scheduler begins")
 
@@ -103,26 +85,8 @@ func (sched *Scheduler) Start() {
 	// Don't start checking processes right away, after killing them on a restart,
 	// they may still be running for a bit
 	sched.processCheckSecs = float64(ConfigFloatWithDefault("processchecksecs", 60))
-	sched.attractCheckSecs = float64(ConfigFloatWithDefault("attractchecksecs", 2))
+
 	sched.aliveSecs = float64(ConfigFloatWithDefault("alivesecs", 5))
-	sched.attractIdleSecs = float64(ConfigFloatWithDefault("attractidlesecs", 0))
-
-	secs1 := ConfigFloatWithDefault("attractpresetduration", 30)
-	sched.attractPresetDuration = time.Duration(int(secs1 * float32(time.Second)))
-
-	secs := ConfigFloatWithDefault("attractgestureduration", 0.5)
-	sched.attractGestureDuration = time.Duration(int(secs * float32(time.Second)))
-
-	secs = ConfigFloatWithDefault("attractnoteduration", 0.2)
-	sched.attractNoteDuration = time.Duration(int(secs * float32(time.Second)))
-
-	sched.attractPreset = ConfigStringWithDefault("attractpreset", "random")
-
-	var lastAttractCheck float64
-	var lastProcessCheck float64
-	var lastAlive float64
-
-	processCheckEnabled := sched.processCheckSecs > 0
 
 	nonRealtime := false
 
@@ -146,43 +110,36 @@ func (sched *Scheduler) Start() {
 			// Info("SCHEDULER skipping to next loop, newclick is unchanged","newclick",newclick,"currentClick",currentClick)
 			continue
 		}
+		onClick(ClickEvent{click: newclick})
+	}
+	Info("StartRealtime ends")
+}
 
-		sched.advanceTransposeTo(newclick)
-		sched.advanceClickTo(newclick)
+func (sched *Scheduler) DefaultOnClick(ce ClickEvent) {
 
-		SetCurrentClick(newclick)
+	newclick := ce.click
 
-		// Every so often we check to see if attract mode should be turned on
-		attractModeEnabled := sched.attractIdleSecs > 0
-		sinceLastAttractChange := uptimesecs - sched.lastAttractChange
-		sinceLastAttractCheck := uptimesecs - lastAttractCheck
-		if attractModeEnabled && sinceLastAttractCheck > sched.attractCheckSecs {
-			lastAttractCheck = uptimesecs
-			// There's a delay when checking cursor activity to turn attract mod on.
-			// Non-internal cursor activity turns attract mode off instantly.
-			if !sched.attractModeIsOn && sinceLastAttractChange > sched.attractIdleSecs {
-				// Nothing happening for a while, turn attract mode on
-				go func() {
-					sched.cmdInput <- Command{"attractmode", true}
-				}()
-				// sched.SetAttractMode(true)
-			}
-		}
+	sched.advanceTransposeTo(newclick)
+	sched.advanceClickTo(newclick)
 
-		sinceLastAlive := uptimesecs - lastAlive
+	SetCurrentClick(newclick)
+
+	/*
+		uptimesecs := sched.Uptime()
+		sinceLastAlive := uptimesecs - sched.lastAlive
 		if sinceLastAlive > sched.aliveSecs {
 			sched.publishOscAlive(uptimesecs)
-			lastAlive = uptimesecs
+			sched.lastAlive = uptimesecs
 		}
+	*/
 
-		if sched.attractModeIsOn {
-			sched.doAttractAction()
-		}
+	/*
+		processCheckEnabled := sched.processCheckSecs > 0
 
 		// At the beginning and then every processCheckSecs seconds
 		// we check to see if necessary processes are still running
-		firstTime := (lastProcessCheck == 0)
-		sinceLastProcessCheck := uptimesecs - lastProcessCheck
+		firstTime := (sched.lastProcessCheck == 0)
+		sinceLastProcessCheck := uptimesecs - sched.lastProcessCheck
 		if processCheckEnabled && (firstTime || sinceLastProcessCheck > sched.processCheckSecs) {
 			// Put it in background, so calling
 			// tasklist or ps doesn't disrupt realtime
@@ -194,31 +151,32 @@ func (sched *Scheduler) Start() {
 				time.Sleep(2 * time.Second)
 				TheEngine().ProcessManager.checkProcessesAndRestartIfNecessary()
 			}()
-			lastProcessCheck = uptimesecs
+			sched.lastProcessCheck = uptimesecs
 		}
 		if !processCheckEnabled && firstTime {
 			Info("Process Checking is disabled.")
 		}
+	*/
 
-		select {
-		case cmd := <-sched.cmdInput:
-			// Info("Realtime.Control", "cmd", cmd)
-			switch v := cmd.(type) {
-			case AttractModeCmd:
-				onoff := v.onoff
-				if sched.attractModeIsOn != onoff {
-					sched.attractModeIsOn = onoff
-					sched.lastAttractChange = sched.Uptime()
-				}
-			case ScheduleElementCmd:
-				sched.scheduleElement(v.element)
-			default:
-				Warn("Unexpected type", "type", fmt.Sprintf("%T", v))
+	select {
+	case cmd := <-sched.cmdInput:
+		// Info("Realtime.Control", "cmd", cmd)
+		switch v := cmd.(type) {
+			/*
+		case AttractModeCmd:
+			onoff := v.onoff
+			if sched.attractModeIsOn != onoff {
+				sched.attractModeIsOn = onoff
+				sched.lastAttractChange = sched.Uptime()
 			}
+			*/
+		case ScheduleElementCmd:
+			sched.scheduleElement(v.element)
 		default:
+			Warn("Unexpected type", "type", fmt.Sprintf("%T", v))
 		}
+	default:
 	}
-	Info("StartRealtime ends")
 }
 
 func (sched *Scheduler) advanceClickTo(toClick Clicks) {
@@ -317,52 +275,6 @@ func (sched *Scheduler) Uptime() float64 {
 	return sched.now.Sub(sched.time0).Seconds()
 }
 
-func (sched *Scheduler) publishOscAlive(uptimesecs float64) {
-	attractMode := sched.attractModeIsOn
-	DebugLogOfType("attract", "publishOscAlive", "uptimesecs", uptimesecs, "attract", attractMode)
-	if sched.attractClient == nil {
-		sched.attractClient = osc.NewClient(LocalAddress, AliveOutputPort)
-	}
-	msg := osc.NewMessage("/alive")
-	msg.Append(float32(uptimesecs))
-	msg.Append(attractMode)
-	err := sched.attractClient.Send(msg)
-	if err != nil {
-		Warn("publishOscAlive", "err", err)
-	}
-}
-
-func (sched *Scheduler) doAttractAction() {
-
-	now := time.Now()
-	dt := now.Sub(sched.lastAttractGestureTime)
-	if sched.attractModeIsOn && dt > sched.attractGestureDuration {
-		playerNames := []string{"A", "B", "C", "D"}
-		i := uint64(rand.Uint64()*99) % 4
-		player := playerNames[i]
-		sched.lastAttractGestureTime = now
-
-		cid := fmt.Sprintf("%d", time.Now().UnixNano())
-
-		x0 := rand.Float32()
-		y0 := rand.Float32()
-		z0 := rand.Float32() / 2.0
-
-		x1 := rand.Float32()
-		y1 := rand.Float32()
-		z1 := rand.Float32() / 2.0
-
-		go TheRouter().cursorManager.generateCursorGestureesture(player, cid, x0, y0, z0, x1, y1, z1)
-		sched.lastAttractGestureTime = now
-	}
-
-	dp := now.Sub(sched.lastAttractPresetTime)
-	if sched.attractPreset == "random" && dp > TheEngine().Scheduler.attractPresetDuration {
-		TheRouter().loadQuadPresetRand()
-		sched.lastAttractPresetTime = now
-	}
-}
-
 /*
 // StartPhrase xxx
 func (sched *Scheduler) AddActivePhraseAt(click Clicks, phrase *Phrase, sid string) {
@@ -396,6 +308,7 @@ func (sched *Scheduler) AddActivePhraseAt(click Clicks, phrase *Phrase, sid stri
 			}
 		}
 	}
+}
 
 */
 
@@ -505,18 +418,16 @@ func (sched *Scheduler) scheduleElement(se *SchedElement) {
 }
 
 func (sched *Scheduler) advanceTransposeTo(newclick Clicks) {
-	if sched.transposeAuto && sched.transposeNext < newclick {
-		sched.transposeNext += (sched.transposeClicks * OneBeat)
-		sched.transposeIndex = (sched.transposeIndex + 1) % len(sched.transposeValues)
-		transposePitch := sched.transposeValues[sched.transposeIndex]
-		DebugLogOfType("transpose", "advanceTransposeTo", "newclick", newclick, "transposePitch", transposePitch)
-		/*
-			for _, player := range TheRouter().players {
-				// player.clearDown()
-				LogOfType("transpose","setting transposepitch in player","pad", player.padName, "transposePitch",transposePitch, "nactive",len(player.activeNotes))
-				player.TransposePitch = transposePitch
-			}
-		*/
-		sched.SendAllPendingNoteoffs()
-	}
+	sched.transposeNext += (sched.transposeClicks * OneBeat)
+	sched.transposeIndex = (sched.transposeIndex + 1) % len(sched.transposeValues)
+	transposePitch := sched.transposeValues[sched.transposeIndex]
+	DebugLogOfType("transpose", "advanceTransposeTo", "newclick", newclick, "transposePitch", transposePitch)
+	/*
+		fr _, player := range TheRouter().players {
+			// player.clearDown()
+			LogOfType("transpose""setting transposepitch in player","pad", player.padName, "transposePitch",transposePitch, "nactive",len(player.activeNotes))
+			player.TransposePitch = transposePitch
+		}
+	*/
+	sched.SendAllPendingNoteoffs()
 }

@@ -9,7 +9,7 @@ import (
 )
 
 type Preset struct {
-	category  string
+	Category  string
 	filename  string
 	paramsmap map[string]interface{}
 }
@@ -22,7 +22,7 @@ func GetPreset(name string) *Preset {
 	if !ok {
 		category, filename := PresetNameSplit(name)
 		p = &Preset{
-			category:  category,
+			Category:  category,
 			filename:  filename,
 			paramsmap: make(map[string]interface{}),
 		}
@@ -51,88 +51,17 @@ func (p *Preset) loadPreset() error {
 	return nil
 }
 
-func (p *Preset) applyQuadPresetToPlayer(playerName string) error {
-	return fmt.Errorf("applyQuadPreset needs work")
-
-	/*
-		// Here's where the params get applied,
-		// which among other things
-		// may result in sending OSC messages out.
-		for name, ival := range p.paramsmap {
-			value, ok := ival.(string)
-			if !ok {
-				return fmt.Errorf("value of name=%s isn't a string", name)
-			}
-			// In a quad file, the parameter names are of the form:
-			// {player}-{parametername}
-			words := strings.SplitN(name, "-", 2)
-			layerOfParam := words[0]
-			ctx, err := TheRouter().agentManager.GetAgentContext(layerOfParam)
-			if err != nil {
-				return err
-			}
-			if layerName != layerOfParam {
-				continue
-			}
-			// use words[1] so the player doesn't see the player name
-			parameterName := words[1]
-			// We expect the parameter to be of the form
-			// {category}.{parameter}, but old "quad" files
-			// didn't include the category.
-			if !strings.Contains(parameterName, ".") {
-				Warn("applyQuadPreset: OLD format, not supported")
-				return fmt.Errorf("")
-			}
-			err = player.SetOneParamValue(parameterName, value)
-			if err != nil {
-				Warn("applyQuadPreset", "name", parameterName, "err", err)
-				// Don't fail completely on individual failures,
-				// some might be for parameters that no longer exist.
-			}
-		}
-
-		// For any parameters that are in Paramdefs but are NOT in the loaded
-		// preset, we put out the "init" values.  This happens when new parameters
-		// are added which don't exist in existing preset files.
-		// This is similar to code in Player.applyPreset, except we
-		// have to do it for all for pads
-		for _, c := range TheRouter().playerLetters {
-			playerName := string(c)
-			player, err := TheRouter().agentManager.GetPlayer(playerName)
-			if err != nil {
-				Warn("applyQuadPreset: no player named", "player", playerName)
-			}
-			for nm, def := range ParamDefs {
-				paramName := string(playerName) + "-" + nm
-				_, found := p.paramsmap[paramName]
-				if !found {
-					init := def.Init
-					err = player.SetOneParamValue(nm, init)
-					if err != nil {
-						// a hack to eliminate errors on a parameter that
-						// still exists in some presets.
-						Warn("applyQuadPreset", "nm", nm, "err", err)
-						// Don't fail completely on individual failures,
-						// some might be for parameters that no longer exist.
-					}
-				}
-			}
-		}
-
-		return nil
-	*/
-}
 
 func (p *Preset) ApplyTo(params *ParamValues) error {
 
-	err := ApplyParamsMap(p.category, p.paramsmap, params)
+	err := ApplyParamsMap(p.Category, p.paramsmap, params)
 	if err != nil {
 		LogError(err)
 		return err
 	}
 
 	// If there's a _override.json file, use it
-	override, err := LoadPreset(p.category + "._override")
+	override, err := LoadPreset(p.Category + "._override")
 	if err != nil {
 		return err
 	}
@@ -143,7 +72,7 @@ func (p *Preset) ApplyTo(params *ParamValues) error {
 		if err != nil {
 			return err
 		}
-		err = ApplyParamsMap(p.category, overridemap, params)
+		err = ApplyParamsMap(p.Category, overridemap, params)
 		if err != nil {
 			return err
 		}
@@ -155,13 +84,13 @@ func (p *Preset) ApplyTo(params *ParamValues) error {
 	for nm, def := range ParamDefs {
 		// Only include parameters of the desired type
 		thisCategory, _ := PresetNameSplit(nm)
-		if p.category != "snap" && p.category != thisCategory {
+		if p.Category != "snap" && p.Category != thisCategory {
 			continue
 		}
 		_, found := p.paramsmap[nm]
 		if !found {
 			init := def.Init
-			err := SetOneParamValue(params, nm, init)
+			err := params.Set(nm, init)
 			if err != nil {
 				Warn("Loading preset", "preset", nm, "err", err)
 				// Don't fail completely
@@ -191,7 +120,7 @@ func PresetsDir() string {
 // presetFilePath returns the full path of a preset file.
 func (p *Preset) presetFilePath() string {
 	jsonfile := p.filename + ".json"
-	localpath := filepath.Join(PaletteDataPath(), PresetsDir(), p.category, jsonfile)
+	localpath := filepath.Join(PaletteDataPath(), PresetsDir(), p.Category, jsonfile)
 	return localpath
 }
 

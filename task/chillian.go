@@ -1,20 +1,27 @@
 package agent
 
+/*
 import (
+	"fmt"
+
 	"github.com/vizicist/palette/engine"
 )
 
 func init() {
-	RegisterAgent("chillian", &Agent_chillian{})
+	RegisterTask("chillian", &Agent_chillian{})
 }
 
 type Agent_chillian struct {
-	ctx *engine.AgentContext
+	ctx *engine.EngineContext
 }
 
-func (agent *Agent_chillian) Start(ctx *engine.AgentContext) {
+func (agent *Agent_chillian) Start(ctx *engine.EngineContext) {
 	engine.Info("Agent_chillian.Start")
 	agent.ctx = ctx
+}
+
+func (agent *Agent_chillian) Api(api string, apiargs map[string]string) (string, error) {
+	return "", fmt.Errorf("Api in Chillian needs work")
 }
 
 func (agent *Agent_chillian) OnMidiEvent(me engine.MidiEvent) {
@@ -41,7 +48,10 @@ func (agent *Agent_chillian) OnCursorEvent(ce engine.CursorEvent) {
 			AtClick: ctx.CurrentClick(),
 			Value:   nt,
 		}
+		synth := "P_03_C_03"
 		phr := engine.NewPhrase().InsertElement(pe)
-		ctx.SchedulePhraseNow(phr)
+		ctx.SchedulePhrase(phr, ctx.CurrentClick(), synth)
 	}
 }
+
+*/

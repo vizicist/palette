@@ -1,5 +1,6 @@
 package agent
 
+/*
 import (
 	"encoding/binary"
 	"fmt"
@@ -11,7 +12,7 @@ import (
 )
 
 func init() {
-	RegisterAgent("erae", &Agent_erae{
+	RegisterTask("erae", &Agent_erae{
 		layerName: "A",
 		enabled:   false,
 		prefix:    0x55,
@@ -22,7 +23,7 @@ func init() {
 }
 
 type Agent_erae struct {
-	ctx       *engine.AgentContext
+	ctx       *engine.EngineContext
 	layerName string
 	enabled   bool
 	prefix    byte
@@ -32,10 +33,14 @@ type Agent_erae struct {
 	output    drivers.In
 }
 
-func (agent *Agent_erae) Start(ctx *engine.AgentContext) {
+func (agent *Agent_erae) Start(ctx *engine.EngineContext) {
 	agent.EraeZoneClearDisplay(agent.zone)
 	agent.output = ctx.OpenMIDIOutput("erae")
 	agent.ctx = ctx
+}
+
+func (agent *Agent_erae) Api(api string, apiargs map[string]string) (string, error) {
+	return "", fmt.Errorf("Api needs work")
 }
 
 func (agent *Agent_erae) OnCursorEvent(ce engine.CursorEvent) {
@@ -281,11 +286,9 @@ func (agent *Agent_erae) EraeZoneRectangle(zone, x, y, w, h, r, g, b byte) {
 	agent.EraeWriteSysEx(bytes)
 }
 
-/**
-* 7-bitize an array of bytes and get the resulting checksum
-* Algorithm taken from Erae documentation.
-* Return value is the output bytes and checksum
- */
+// 7-bitize an array of bytes and get the resulting checksum
+// Algorithm taken from Erae documentation.
+// Return value is the output bytes and checksum
 func EraeBitize7chksum(in []byte) (out []byte, chksum byte) {
 	chksum = 0
 	i := 0
@@ -306,11 +309,9 @@ func EraeBitize7chksum(in []byte) (out []byte, chksum byte) {
 	return out[0:outsize], chksum
 }
 
-/*
-* 7-unbitize an array of bytes and get the incomming checksum
-* Algorithm taken from Erae documentation.
-* Return value is the output bytes and checksum
- */
+// 7-unbitize an array of bytes and get the incomming checksum
+// Algorithm taken from Erae documentation.
+// Return value is the output bytes and checksum
 func EraeUnbitize7chksum(in []byte) ([]byte, byte) {
 	inlen := len(in)
 	chksum := byte(0)
@@ -347,11 +348,11 @@ func Float32bytes(float float32) []byte {
 	return bytes
 }
 
-/*
 func testmain() {
 	bytes := Float64bytes(math.Pi)
 	fmt.Println(bytes)
 	float := Float64frombytes(bytes)
 	fmt.Println(float)
 }
+
 */
