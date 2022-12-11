@@ -5,30 +5,36 @@ import (
 	"fmt"
 )
 
-type TaskFunc func(ctx *TaskContext, e Event) (string, error)
+// type TaskInfo struct {
+// }
 
-type TaskData any
+func NewTask(methods TaskMethods) *Task {
+	return &Task{
+		methods:   methods,
+		sources:   map[string]bool{},
+		scheduler: NewScheduler(),
+		params:    NewParamValues(),
+	}
+}
 
 type TaskManager struct {
-	tasks       map[string]TaskFunc
-	taskContext map[string]*TaskContext
-	// activeAgents  map[string]Agent
+	tasks map[string]*Task
 }
 
 func NewTaskManager() *TaskManager {
 	return &TaskManager{
-		tasks:       make(map[string]TaskFunc),
-		taskContext: make(map[string]*TaskContext),
+		tasks: make(map[string]*Task),
+		// taskContext: make(map[string]*TaskContext),
 	}
 }
 
-func (rm *TaskManager) RegisterTask(taskName string, task TaskFunc, taskContext context.Context) {
-	_, ok := rm.taskContext[taskName]
-	if !ok {
-		Info("Registering Task", "task", taskName)
-		rm.taskContext[taskName] = NewEngineContext(task, taskContext)
+func (rm *TaskManager) RegisterTask(name string, methods TaskMethods) {
+	_, ok := rm.tasks[name]
+	if ok {
+		Warn("RegisterTask: existing task", "task", name)
 	} else {
-		Warn("RegisterTask can't overwriting existing", "task", taskName)
+		rm.tasks[name] = NewTask(methods)
+		Info("Registering Task", "task", name)
 	}
 }
 
@@ -95,25 +101,31 @@ func (pm *TaskManager) GetAgent(taskName string) (Agent, error) {
 }
 */
 
-func (pm *TaskManager) GetTaskContext(taskName string) (*TaskContext, error) {
-	ctx, ok := pm.taskContext[taskName]
+func (pm *TaskManager) GetTask(name string) (*Task, error) {
+	ctx, ok := pm.tasks[name]
 	if !ok {
-		return nil, fmt.Errorf("no agent named %s", taskName)
+		return nil, fmt.Errorf("no task named %s", name)
 	} else {
 		return ctx, nil
 	}
 }
 
-func (pm *TaskManager) handleCursorEvent(ce CursorEvent) {
-	for _, ctx := range pm.taskContext {
-		if ctx.IsSourceAllowed(ce.Source) {
-			ctx.taskFunc(ctx, ctx.taskData)
+func (pm *TaskManager) handleCursorEvent(e CursorEvent) {
+	for _, task := range pm.tasks {
+		if task.IsSourceAllowed(e.Source) {
+			task.methods.OnEvent(context.Background(), task, e)
 		}
 	}
 }
 
-func (pm *TaskManager) handleMidiEvent(me MidiEvent) {
-	for _, ctx := range pm.taskContext {
-		ctx.taskFunc(ctx,ctx.taskData)
+func (pm *TaskManager) handleMidiEvent(e MidiEvent) {
+	for _, task := range pm.tasks {
+		task.methods.OnEvent(context.Background(), task, e)
+	}
+}
+
+func (pm *TaskManager) handleClickEvent(e ClickEvent) {
+	for _, task := range pm.tasks {
+		task.methods.OnEvent(context.Background(), task, e)
 	}
 }
