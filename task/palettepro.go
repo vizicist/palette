@@ -1,7 +1,6 @@
 package agent
 
 import (
-	"context"
 	"fmt"
 	"math/rand"
 	"time"
@@ -9,6 +8,8 @@ import (
 	"github.com/hypebeast/go-osc/osc"
 	"github.com/vizicist/palette/engine"
 )
+
+var AliveOutputPort = 3331
 
 type PalettePro struct {
 	layer map[string]*engine.Layer
@@ -21,7 +22,7 @@ type PalettePro struct {
 	MIDIQuantized    bool
 	MIDIUseScale     bool // if true, scadjust uses "external" Scale
 	TransposePitch   int
-	// externalScale    *engine.Scale
+	externalScale    *engine.Scale
 
 	attractModeIsOn        bool
 	lastAttractGestureTime time.Time
@@ -32,8 +33,12 @@ type PalettePro struct {
 	attractPreset          string
 	attractClient          *osc.Client
 	lastAttractChange      float64
+	lastAttractCheck       float64
 	attractCheckSecs       float64
 	attractIdleSecs        float64
+	aliveSecs              float64
+	lastAlive              float64
+	scale                  *engine.Scale
 }
 
 func init() {
@@ -48,102 +53,106 @@ func init() {
 		attractClient:          &osc.Client{},
 		lastAttractChange:      0,
 		attractCheckSecs:       0,
+		lastAttractCheck:       0,
 		attractIdleSecs:        0,
+		aliveSecs:              float64(engine.ConfigFloatWithDefault("alivesecs", 5)),
+		lastAlive:              0,
+		scale:                  nil,
 	}
 	RegisterTask("palettepro", ppro)
 }
 
-func (ppro *PalettePro) Start(ctx context.Context, task *Task) {
+func (ppro *PalettePro) Start(task *engine.Task) {
 
 	engine.Info("PalettePro.Start")
 
 	task.AllowSource("A", "B", "C", "D")
 
-	a := ctx.GetLayer("a")
+	a := task.GetLayer("a")
 	a.Set("visual.ffglport", "3334")
 	a.Set("visual.shape", "circle")
-	a.Apply(ctx.GetPreset("snap.White_Ghosts"))
+	a.Apply(task.GetPreset("snap.White_Ghosts"))
 
-	b := ctx.GetLayer("b")
+	b := task.GetLayer("b")
 	b.Set("visual.ffglport", "3335")
 	b.Set("visual.shape", "square")
-	b.Apply(ctx.GetPreset("snap.Concentric_Squares"))
+	b.Apply(task.GetPreset("snap.Concentric_Squares"))
 
-	c := ctx.GetLayer("c")
+	c := task.GetLayer("c")
 	c.Set("visual.ffglport", "3336")
 	c.Set("visual.shape", "square")
-	c.Apply(ctx.GetPreset("snap.Circular_Moire"))
+	c.Apply(task.GetPreset("snap.Circular_Moire"))
 
-	d := ctx.GetLayer("d")
+	d := task.GetLayer("d")
 	d.Set("visual.resolumeport", "3337")
 	d.Set("visual.shape", "square")
-	d.Apply(ctx.GetPreset("snap.Diagonal_Mirror"))
+	d.Apply(task.GetPreset("snap.Diagonal_Mirror"))
 
 	//ctx.ApplyPreset("quad.Quick Scat_Circles")
 
-	task.attractCheckSecs = float64(engine.ConfigFloatWithDefault("attractchecksecs", 2))
-	task.attractIdleSecs = float64(engine.ConfigFloatWithDefault("attractidlesecs", 0))
+	ppro.attractCheckSecs = float64(engine.ConfigFloatWithDefault("attractchecksecs", 2))
+	ppro.attractIdleSecs = float64(engine.ConfigFloatWithDefault("attractidlesecs", 0))
 
 	secs1 := engine.ConfigFloatWithDefault("attractpresetduration", 30)
-	task.attractPresetDuration = time.Duration(int(secs1 * float32(time.Second)))
+	ppro.attractPresetDuration = time.Duration(int(secs1 * float32(time.Second)))
 
 	secs := engine.ConfigFloatWithDefault("attractgestureduration", 0.5)
-	task.attractGestureDuration = time.Duration(int(secs * float32(time.Second)))
+	ppro.attractGestureDuration = time.Duration(int(secs * float32(time.Second)))
 
 	secs = engine.ConfigFloatWithDefault("attractnoteduration", 0.2)
-	task.attractNoteDuration = time.Duration(int(secs * float32(time.Second)))
+	ppro.attractNoteDuration = time.Duration(int(secs * float32(time.Second)))
 
-	task.attractPreset = engine.ConfigStringWithDefault("attractpreset", "random")
+	ppro.attractPreset = engine.ConfigStringWithDefault("attractpreset", "random")
 
-	// var lastAttractCheck float64
-
-	// task.ctx = ctx
 }
 
-func (task *PalettePro) OnEvent(ctx *engine.TaskContext, me engine.Event) (string, error) {
-	engine.Info("PalettePro.OnEvent", "me", me)
-	switch e := me.(type) {
+func (ppro *PalettePro) Stop(task *engine.Task) {
+}
+
+func (ppro *PalettePro) OnEvent(task *engine.Task, event engine.Event) {
+	task.LogInfo("PalettePro.OnEvent", "event", event)
+	switch e := event.(type) {
 	case engine.ClickEvent:
-		task.OnClick(e)
+		ppro.OnClick(task, e)
 	case engine.MidiEvent:
-		task.OnMidiEvent(e)
+		ppro.OnMidiEvent(task, e)
 	case engine.CursorEvent:
-		task.OnCursorEvent(e)
+		ppro.OnCursorEvent(task, e)
 	}
-	return "", nil
 }
 
-func (task *PalettePro) OnClick(ce engine.ClickEvent) {
+func (ppro *PalettePro) OnClick(task *engine.Task, ce engine.ClickEvent) {
+	uptimesecs := task.Uptime()
 	// Every so often we check to see if attract mode should be turned on
-	attractModeEnabled := task.attractIdleSecs > 0
-	sinceLastAttractChange := uptimesecs - task.lastAttractChange
-	sinceLastAttractCheck := uptimesecs - lastAttractCheck
-	if attractModeEnabled && sinceLastAttractCheck > task.attractCheckSecs {
-		lastAttractCheck = uptimesecs
+	attractModeEnabled := ppro.attractIdleSecs > 0
+	sinceLastAttractChange := uptimesecs - ppro.lastAttractChange
+	sinceLastAttractCheck := uptimesecs - ppro.lastAttractCheck
+	if attractModeEnabled && sinceLastAttractCheck > ppro.attractCheckSecs {
+		ppro.lastAttractCheck = uptimesecs
 		// There's a delay when checking cursor activity to turn attract mod on.
 		// Non-internal cursor activity turns attract mode off instantly.
-		if !task.attractModeIsOn && sinceLastAttractChange > task.attractIdleSecs {
+		if !ppro.attractModeIsOn && sinceLastAttractChange > ppro.attractIdleSecs {
 			// Nothing happening for a while, turn attract mode on
-			go func() {
-				task.cmdInput <- Command{"attractmode", true}
-			}()
+			task.LogWarn("PalettePro.OnClick: attract needs work")
+			// go func() {
+			// 	task.cmdInput <- Command{"attractmode", true}
+			// }()
 			// sched.SetAttractMode(true)
 		}
 	}
 
-	if task.attractModeIsOn {
-		task.doAttractAction()
+	if ppro.attractModeIsOn {
+		ppro.doAttractAction(task)
+	}
+
+	sinceLastAlive := uptimesecs - ppro.lastAlive
+	if sinceLastAlive > ppro.aliveSecs {
+		ppro.publishOscAlive(task, uptimesecs)
+		ppro.lastAlive = uptimesecs
 	}
 }
 
-func (agent *PalettePro) OnMidiEvent(me engine.MidiEvent) {
-
-	if agent.ctx == nil {
-		engine.LogError(fmt.Errorf("OnMidiEvent: Start needs to be called before this"))
-		return
-	}
-
-	ctx := agent.ctx
+func (ppro *PalettePro) OnMidiEvent(task *engine.Task, me engine.MidiEvent) {
 
 	//if r.ctx.MIDIThru {
 	//layer.PassThruMIDI(e)
@@ -152,17 +161,17 @@ func (agent *PalettePro) OnMidiEvent(me engine.MidiEvent) {
 	//r.handleMIDISetScaleNote(e)
 	//}
 
-	ctx.Log("PalettePro.onMidiEvent", "me", me)
-	phr, err := ctx.MidiEventToPhrase(me)
+	task.LogInfo("PalettePro.onMidiEvent", "me", me)
+	phr, err := task.MidiEventToPhrase(me)
 	if err != nil {
 		engine.LogError(err)
 	}
 	if phr != nil {
-		ctx.SchedulePhrase(phr, ctx.CurrentClick(), "P_04_C_04")
+		task.SchedulePhrase(phr, task.CurrentClick(), "P_04_C_04")
 	}
 }
 
-func (agent *PalettePro) Api(api string, apiargs map[string]string) (result string, err error) {
+func (ppro *PalettePro) Api(task *engine.Task, api string, apiargs map[string]string) (result string, err error) {
 
 	switch api {
 
@@ -170,10 +179,10 @@ func (agent *PalettePro) Api(api string, apiargs map[string]string) (result stri
 		// acts like a timer, but it could wait for
 		// some event if necessary
 		time.Sleep(2 * time.Second)
-		js := JsonObject(
+		js := engine.JsonObject(
 			"event", "alive",
-			"seconds", fmt.Sprintf("%f", e.Scheduler.aliveSecs),
-			"attractmode", fmt.Sprintf("%v", e.Scheduler.attractModeIsOn),
+			"seconds", fmt.Sprintf("%f", task.Uptime()),
+			"attractmode", fmt.Sprintf("%v", ppro.attractModeIsOn),
 		)
 		return js, nil
 
@@ -198,237 +207,184 @@ func (agent *PalettePro) Api(api string, apiargs map[string]string) (result stri
 			if layerName == "*" {
 				return "", fmt.Errorf("load of quad needs work")
 			}
-			layer := agent.layer[layerName]
-			err = layer.applyQuadPreset(preset)
+			layer := ppro.layer[layerName]
+			err = layer.ApplyQuadPreset(preset, layerName)
 			if err != nil {
-				engine.LogError(err)
+				task.LogError(err)
 				return "", err
 			}
-			agent.ctx.SaveCurrentSnaps(layerName)
+			ppro.SaveCurrentSnaps(task)
 		} else {
 			// It's a non-quad preset for a single layer.
 			// However, the layerName can still be "*" to apply to all layers.
-			err = preset.ApplyTo(layerName)
-			if err != nil {
-				LogError(err, "presetName", presetName)
-			} else {
-				agent.ctx.SaveCurrentSnaps(layerName)
-			}
+			layer := ppro.layer[layerName]
+			layer.Apply(preset)
+			ppro.SaveCurrentSnaps(task)
 		}
 		return "", err
 
 	case "save":
-		return "", fmt.Errorf("executePresetAPI needs work")
+		// return "", fmt.Errorf("executePresetAPI needs work")
 		presetName, okpreset := apiargs["preset"]
 		if !okpreset {
 			return "", fmt.Errorf("missing preset parameter")
 		}
-		taskName, okplayer := apiargs["agent"]
-		if !okplayer {
-			return "", fmt.Errorf("missing agent parameter")
-		}
-		ctx, err := e.Router.taskManager.GetEngineContext(taskName)
-		if err != nil {
-			return "", err
-		}
-		return "", ctx.saveCurrentAsPreset(presetName)
+		return "", task.SaveCurrentAsPreset(presetName)
 
 	default:
-		Warn("Router.ExecuteAPI api is not recognized\n", "api", api)
+		task.LogWarn("Router.ExecuteAPI api is not recognized\n", "api", api)
 		return "", fmt.Errorf("Router.ExecutePresetAPI unrecognized api=%s", api)
 	}
-
-	switch api {
-
-	case "load":
-		return "", fmt.Errorf("executePresetAPI needs work")
-		presetName, okpreset := apiargs["preset"]
-		if !okpreset {
-			return "", fmt.Errorf("missing preset parameter")
-		}
-		preset, err := LoadPreset(presetNeame)
-		if err != nil {
-			return "", err
-		}
-
-		taskName, okLayer := apiargs["agent"]
-		if !okLayer {
-			taskName = "*"
-		}
-		if preset.category == "quad" {
-			// The layerName might be only a single layer, and loadQuadPreset
-			// will only load that one layer from the quad preset
-			err = preset.applyQuadPresetToLayer(layerName)
-			if err != nil {
-				LogError(err)
-				return "", err
-			}
-			e.Router.SaveCurrentSnaps(layerName)
-		} else {
-			// It's a non-quad preset for a single layer.
-			// However, the layerName can still be "*" to apply to all layers.
-			err = preset.ApplyTo(layerName)
-			if err != nil {
-				LogError(err, "presetName", presetName)
-			} else {
-				e.Router.SaveCurrentSnaps(layerName)
-			}
-		}
-		return "", err
-
-	case "save":
-		return "", fmt.Errorf("executePresetAPI needs work")
-		presetName, okpreset := apiargs["preset"]
-		if !okpreset {
-			return "", fmt.Errorf("missing preset parameter")
-		}
-		taskName, okLayer := apiargs["agent"]
-		if !okLayer {
-			return "", fmt.Errorf("missing agent parameter")
-		}
-		ctx, err := e.Router.taskManager.GetEngineContext(taskName)
-		if err != nil {
-			return "", err
-		}
-		return "", ctx.saveCurrentAsPreset(presetName)
-
-	default:
-		engine.Warn("Router.ExecuteAPI api is not recognized\n", "api", api)
-		return "", fmt.Errorf("Router.ExecutePresetAPI unrecognized api=%s", api)
-	}
-
 }
 
-func (agent *PalettePro) loadQuadPresetRand() {
+func (ppro *PalettePro) SaveCurrentSnaps(task *engine.Task) {
+	for _, layer := range ppro.layer {
+		err := layer.SaveCurrentSnap()
+		if err != nil {
+			task.LogError(err)
+		}
+	}
+}
 
-	arr, err := PresetArray("quad")
+func (ppro *PalettePro) loadQuadPresetRand(task *engine.Task) {
+
+	arr, err := engine.PresetArray("quad")
 	if err != nil {
-		LogError(err)
+		task.LogError(err)
 		return
 	}
 	rn := rand.Uint64() % uint64(len(arr))
-	Info("loadQuadPresetRand", "preset", arr[rn])
-	preset, err := LoadPreset(arr[rn])
+	task.LogInfo("loadQuadPresetRand", "preset", arr[rn])
+	preset := task.GetPreset(arr[rn])
+	ppro.loadQuadPreset(task, preset)
 	if err != nil {
-		LogError(err)
-	} else {
-		preset.applyQuadPresetToPlayer("*")
+		task.LogError(err)
 	}
 }
 
-func (agent *PalettePro) OnCursorEvent(ce engine.CursorEvent) {
-
-	if agent.ctx == nil {
-		engine.LogError(fmt.Errorf("OnMidiEvent: Start needs to be called before this"))
-		return
+func (ppro *PalettePro) loadQuadPreset(task *engine.Task, preset *engine.Preset) {
+	for layerName, layer := range ppro.layer {
+		layer.ApplyQuadPreset(preset, layerName)
 	}
+}
 
-	// ctx := agent.ctx
+func (ppro *PalettePro) OnCursorEvent(task *engine.Task, ce engine.CursorEvent) {
 
 	if ce.Ddu == "down" { // || ce.Ddu == "drag" {
 		engine.Info("OnCursorEvent", "ce", ce)
-		layer := agent.cursorToLayer(ce)
-		pitch := agent.cursorToPitch(ce)
+		layer := ppro.cursorToLayer(ce)
+		pitch := ppro.cursorToPitch(task, ce)
 		velocity := uint8(ce.Z * 1280)
 		duration := 4 * engine.QuarterNote
 		dest := layer.Get("sound.synth")
-		agent.scheduleNoteNow(dest, pitch, velocity, duration)
+		ppro.scheduleNoteNow(task, dest, pitch, velocity, duration)
 	}
 }
 
-func (agent *PalettePro) scheduleNoteNow(dest string, pitch, velocity uint8, duration engine.Clicks) {
+func (ppro *PalettePro) scheduleNoteNow(task *engine.Task, dest string, pitch, velocity uint8, duration engine.Clicks) {
 	engine.Info("PalettePro.scheculeNoteNow", "dest", dest, "pitch", pitch)
-	ctx := agent.ctx
 	pe := &engine.PhraseElement{Value: engine.NewNoteFull(0, pitch, velocity, duration)}
 	phr := engine.NewPhrase().InsertElement(pe)
 	phr.Destination = dest
-	ctx.SchedulePhrase(phr, ctx.CurrentClick(), dest)
+	task.SchedulePhrase(phr, task.CurrentClick(), dest)
 }
 
-func (agent *PalettePro) channelToDestination(channel int) string {
+func (ppro *PalettePro) channelToDestination(channel int) string {
 	return fmt.Sprintf("P_03_C_%02d", channel)
 }
 
-func (agent *PalettePro) cursorToLayer(ce engine.CursorEvent) *engine.Layer {
-	return agent.layer["a"]
+func (ppro *PalettePro) cursorToLayer(ce engine.CursorEvent) *engine.Layer {
+	return ppro.layer["a"]
 }
 
-func (agent *PalettePro) cursorToPitch(ce engine.CursorEvent) uint8 {
-	a := agent.layer["a"]
+func (ppro *PalettePro) cursorToPitch(task *engine.Task, ce engine.CursorEvent) uint8 {
+	a := ppro.layer["a"]
 	pitchmin := a.GetInt("sound.pitchmin")
 	pitchmax := a.GetInt("sound.pitchmax")
 	dp := pitchmax - pitchmin + 1
 	p1 := int(ce.X * float32(dp))
 	p := uint8(pitchmin + p1%dp)
 
-	chromatic := r.ctx.ParamBoolValue("sound.chromatic")
+	// layer := task.GetLayer("a")
+
+	chromatic := task.ParamBoolValue("sound.chromatic")
 	if !chromatic {
-		scale := r.ctx.GetScale()
+		scale := ppro.scale
 		p = scale.ClosestTo(p)
 		// MIDIOctaveShift might be negative
-		i := int(p) + 12*layer.MIDIOctaveShift
+		i := int(p) + 12*ppro.MIDIOctaveShift
 		for i < 0 {
 			i += 12
 		}
 		for i > 127 {
 			i -= 12
 		}
-		p = uint8(i + layer.TransposePitch)
+		p = uint8(i + ppro.TransposePitch)
 	}
 	return p
 }
 
-/*
-func (r *PalettePro) handleMIDISetScaleNote(e engine.MidiEvent) {
-	status := e.Status() & 0xf0
-	pitch := int(e.Data1())
-	if status == 0x90 {
-		/		// If there are no notes held down (i.e. this is the first), clear the scale
-		if layer.MIDINumDown < 0 {
-			// this can happen when there's a Read error that misses a noteon
-			layer.MIDINumDown = 0
-		}
-		if layer.MIDINumDown == 0 {
-			layer.clearExternalScale()
-		}
-		layer.setExternalScale(pitch%12, true)
-		layer.MIDINumDown++
-		if pitch < 60 {
-			layer.MIDIOctaveShift = -1
-		} else if pitch > 72 {
-			layer.MIDIOctaveShift = 1
-		} else {
-			layer.MIDIOctaveShift = 0
-		}
-	} else if status == 0x80 {
-		layer.MIDINumDown--
+func (ppro *PalettePro) clearExternalScale() {
+	ppro.externalScale = engine.MakeScale()
+}
+
+// SetExternalScale xxx
+func (ppro *PalettePro) setExternalScale(pitch int, on bool) {
+	s := ppro.externalScale
+	for p := pitch; p < 128; p += 12 {
+		s.HasNote[p] = on
 	}
 }
 
-func (agent *PalettePro) publishOscAlive(uptimesecs float64) {
-	attractMode := agent.attractModeIsOn
-	DebugLogOfType("attract", "publishOscAlive", "uptimesecs", uptimesecs, "attract", attractMode)
-	if agent.attractClient == nil {
-		agent.attractClient = osc.NewClient(LocalAddress, AliveOutputPort)
+func (ppro *PalettePro) handleMIDISetScaleNote(e engine.MidiEvent) {
+	status := e.Status() & 0xf0
+	pitch := int(e.Data1())
+	if status == 0x90 {
+		// If there are no notes held down (i.e. this is the first), clear the scale
+		if ppro.MIDINumDown < 0 {
+			// this can happen when there's a Read error that misses a noteon
+			ppro.MIDINumDown = 0
+		}
+		if ppro.MIDINumDown == 0 {
+			ppro.clearExternalScale()
+		}
+		ppro.setExternalScale(pitch%12, true)
+		ppro.MIDINumDown++
+		if pitch < 60 {
+			ppro.MIDIOctaveShift = -1
+		} else if pitch > 72 {
+			ppro.MIDIOctaveShift = 1
+		} else {
+			ppro.MIDIOctaveShift = 0
+		}
+	} else if status == 0x80 {
+		ppro.MIDINumDown--
+	}
+}
+
+func (ppro *PalettePro) publishOscAlive(task *engine.Task, uptimesecs float64) {
+	attractMode := ppro.attractModeIsOn
+	if ppro.attractClient == nil {
+		ppro.attractClient = osc.NewClient(engine.LocalAddress, AliveOutputPort)
 	}
 	msg := osc.NewMessage("/alive")
 	msg.Append(float32(uptimesecs))
 	msg.Append(attractMode)
-	err := agent.attractClient.Send(msg)
+	err := ppro.attractClient.Send(msg)
 	if err != nil {
-		Warn("publishOscAlive", "err", err)
+		task.LogWarn("publishOscAlive", "err", err)
 	}
 }
 
-func (agent *PalettePro) doAttractAction() {
+func (ppro *PalettePro) doAttractAction(task *engine.Task) {
 
 	now := time.Now()
-	dt := now.Sub(sched.lastAttractGestureTime)
-	if sched.attractModeIsOn && dt > sched.attractGestureDuration {
+	dt := now.Sub(ppro.lastAttractGestureTime)
+	if ppro.attractModeIsOn && dt > ppro.attractGestureDuration {
 		playerNames := []string{"A", "B", "C", "D"}
 		i := uint64(rand.Uint64()*99) % 4
 		player := playerNames[i]
-		sched.lastAttractGestureTime = now
+		ppro.lastAttractGestureTime = now
 
 		cid := fmt.Sprintf("%d", time.Now().UnixNano())
 
@@ -441,15 +397,13 @@ func (agent *PalettePro) doAttractAction() {
 		z1 := rand.Float32() / 2.0
 
 		noteDuration := time.Second
-		go TheRouter().cursorManager.generateCursorGestureesture(player, cid, noteDuration, x0, y0, z0, x1, y1, z1)
-		sched.lastAttractGestureTime = now
+		go task.GenerateCursorGestureesture(player, cid, noteDuration, x0, y0, z0, x1, y1, z1)
+		ppro.lastAttractGestureTime = now
 	}
 
-	dp := now.Sub(sched.lastAttractPresetTime)
-	if sched.attractPreset == "random" && dp > TheEngine().Scheduler.attractPresetDuration {
-		TheRouter().loadQuadPresetRand()
-		sched.lastAttractPresetTime = now
+	dp := now.Sub(ppro.lastAttractPresetTime)
+	if ppro.attractPreset == "random" && dp > ppro.attractPresetDuration {
+		ppro.loadQuadPresetRand(task)
+		ppro.lastAttractPresetTime = now
 	}
 }
-
-*/
