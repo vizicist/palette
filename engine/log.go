@@ -152,7 +152,7 @@ var LogEnabled = map[string]bool{
 	"osc":       false,
 	"preset":    false,
 	"resolume":  false,
-	"agent":     false,
+	"task":     false,
 	"realtime":  false,
 	"remote":    false,
 	"router":    false,

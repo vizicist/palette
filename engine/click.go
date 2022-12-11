@@ -57,6 +57,10 @@ const EventNoteOutput = 0x02
 const EventCursor = 0x04
 const EventAll = EventMidiInput | EventNoteOutput | EventCursor
 
+type ClickEvent struct {
+	click Clicks
+}
+
 // InitializeClicksPerSecond initializes
 func InitializeClicksPerSecond(clkpersec int) {
 	// no locks needed here
