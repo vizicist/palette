@@ -247,12 +247,6 @@ func (layer *Layer) applyQuadPreset(preset *Preset, layerToApply string) error {
 		// {layer}-{parametername}
 		words := strings.SplitN(name, "-", 2)
 		layerOfParam := words[0]
-		/*
-			ctx, err := TheRouter().taskManager.GetEngineContext(layerOfParam)
-			if err != nil {
-				return err
-			}
-		*/
 		if layerToApply != layerOfParam {
 			continue
 		}

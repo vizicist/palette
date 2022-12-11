@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"strings"
@@ -8,53 +9,49 @@ import (
 	"gitlab.com/gomidi/midi/v2/drivers"
 )
 
-func NewEngineContext(taskFunc TaskFunc, taskData TaskData) *TaskContext {
-	return &TaskContext{
-		scheduler: TheEngine().Scheduler,
-		taskFunc:  taskFunc,
-		taskData:  taskData,
-		// agent:     agent,
-		// taskContext: nil,
-		// agentParams: NewParamValues(),
-		// layerParams: map[string]*ParamValues{},
-		// scale:       &Scale{},
-		sources: map[string]bool{},
-	}
+type Task struct {
+	// None of these get exported, only the methods
+	methods   TaskMethods
+	scheduler *Scheduler
+	params    *ParamValues
+	sources   map[string]bool
+}
+type TaskMethods interface {
+	Start(ctx context.Context, task *Task)
+	OnEvent(ctx context.Context, task *Task, e Event) (string, error)
+	Api(ctx context.Context, task *Task, apiargs map[string]string) (string, error)
+	Stop(ctx context.Context, task *Task) (string, error)
 }
 
-func (ctx *TaskContext) Log(msg string, keysAndValues ...interface{}) {
+// type TaskFunc func(ctx context.Context, e Event) (string, error)
+
+func (task *Task) Log(msg string, keysAndValues ...interface{}) {
 	Info(msg, keysAndValues...)
 }
 
-func (ctx *TaskContext) GetLayer(layerName string) *Layer {
+func (task *Task) GetLayer(layerName string) *Layer {
 	return GetLayer(layerName)
 }
 
-func (ctx *TaskContext) AllowSource(source ...string) {
+func (task *Task) AllowSource(source ...string) {
 	var ok bool
 	for _, name := range source {
-		_, ok = ctx.sources[name]
+		_, ok = task.sources[name]
 		if ok {
 			Info("AllowSource: already set?", "source", name)
 		} else {
-			ctx.sources[name] = true
+			task.sources[name] = true
 		}
 	}
 }
 
-func (ctx *TaskContext) IsSourceAllowed(source string) bool {
-	_, ok := ctx.sources[source]
+func (task *Task) IsSourceAllowed(source string) bool {
+	_, ok := task.sources[source]
 	return ok
 }
 
-/*
-func (ctx *EngineContext) MakeLayer(name string) *Layer {
-	return MakeLayer(name)
-}
-*/
-
-func (ctx *TaskContext) MidiEventToPhrase(me MidiEvent) (*Phrase, error) {
-	pe, err := ctx.midiEventToPhraseElement(me)
+func (task *Task) MidiEventToPhrase(me MidiEvent) (*Phrase, error) {
+	pe, err := task.midiEventToPhraseElement(me)
 	if err != nil {
 		return nil, err
 	}
@@ -62,7 +59,7 @@ func (ctx *TaskContext) MidiEventToPhrase(me MidiEvent) (*Phrase, error) {
 	return phr, nil
 }
 
-func (ctx *TaskContext) midiEventToPhraseElement(me MidiEvent) (*PhraseElement, error) {
+func (task *Task) midiEventToPhraseElement(me MidiEvent) (*PhraseElement, error) {
 
 	bytes := me.Msg.Bytes()
 	lng := len(bytes)
@@ -132,15 +129,15 @@ func (ctx *TaskContext) midiEventToPhraseElement(me MidiEvent) (*PhraseElement, 
 	return &PhraseElement{Value: val}, nil
 }
 
-func (ctx *TaskContext) CurrentClick() Clicks {
+func (task *Task) CurrentClick() Clicks {
 	return CurrentClick()
 }
 
-func (ctx *TaskContext) ScheduleDebug() string {
-	return fmt.Sprintf("%s", ctx.scheduler)
+func (task *Task) ScheduleDebug() string {
+	return fmt.Sprintf("%s", task.scheduler)
 }
 
-func (ctx *TaskContext) SchedulePhrase(phr *Phrase, click Clicks, dest string) {
+func (task *Task) SchedulePhrase(phr *Phrase, click Clicks, dest string) {
 	if phr == nil {
 		Warn("EngineContext.SchedulePhrase: phr == nil?")
 		return
@@ -151,13 +148,13 @@ func (ctx *TaskContext) SchedulePhrase(phr *Phrase, click Clicks, dest string) {
 			AtClick: click,
 			Value:   phr,
 		}
-		ctx.scheduler.cmdInput <- ScheduleElementCmd{se}
+		task.scheduler.cmdInput <- SchedulerElementCmd{se}
 	}()
 }
 
-func (ctx *TaskContext) SubmitCommand(command Command) {
+func (task *Task) SubmitCommand(command Command) {
 	go func() {
-		ctx.scheduler.cmdInput <- Command{"attractmode", true}
+		task.scheduler.cmdInput <- Command{"attractmode", true}
 	}()
 }
 
@@ -454,7 +451,7 @@ func (ctx *EngineContext) sendPadOneEffectParam(effectName string, paramName str
 }
 */
 
-func (ctx *TaskContext) handleMIDITimeReset() {
+func (task *Task) handleMIDITimeReset() {
 	Warn("HandleMIDITimeReset!! needs implementation")
 }
 
@@ -480,12 +477,12 @@ func (ctx *EngineContext) LayerApplyPreset(layerName, presetName string) error {
 }
 */
 
-func (ctx *TaskContext) OpenMIDIOutput(name string) drivers.In {
+func (task *Task) OpenMIDIOutput(name string) drivers.In {
 	return nil
 }
 
 // GetPreset is guaranteed to return non=nil
-func (ctx *TaskContext) GetPreset(presetName string) *Preset {
+func (task *Task) GetPreset(presetName string) *Preset {
 	preset, err := LoadPreset(presetName)
 	if err != nil {
 		LogError(err)
@@ -508,7 +505,7 @@ func (ctx *EngineContext) ApplyPreset(presetName string) error {
 */
 
 // ExecuteAPI xxx
-func (ctx *TaskContext) ExecuteAPI(api string, args map[string]string, rawargs string) (result string, err error) {
+func (task *Task) ExecuteAPI(api string, args map[string]string, rawargs string) (result string, err error) {
 
 	DebugLogOfType("api", "Agent.ExecutAPI called", "api", api, "args", args)
 	// The caller can provide rawargs if it's already known, but if not provided, we create it

@@ -1,7 +1,6 @@
 package engine
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -17,18 +16,19 @@ type Engine struct {
 	done           chan bool
 }
 
+/*
 type TaskContext struct {
 	context.Context
 	*Engine
 	scheduler *Scheduler
 	taskFunc  TaskFunc
 	taskData  TaskData
-	// taskContext *context.Context
 	// agentParams     *ParamValues
 	// layerParams     map[string]*ParamValues
 	// scale           *Scale
 	sources map[string]bool
 }
+*/
 
 var theEngine *Engine
 
@@ -61,8 +61,8 @@ func StopRunning(what string) {
 	TheEngine().ProcessManager.StopRunning(what)
 }
 
-func RegisterTask(name string, f TaskFunc, taskContext context.Context) {
-	TheRouter().taskManager.RegisterTask(name, f, taskContext)
+func RegisterTask(name string, task TaskMethods) {
+	TheRouter().taskManager.RegisterTask(name, task)
 }
 
 /*
