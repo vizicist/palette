@@ -235,7 +235,7 @@ func (page *Page) restoreState(s string) error {
 		WinRemoveChild(page, w)
 	}
 
-	var dat map[string]interface{}
+	var dat map[string]any
 	// var dat map[string]string
 	if err := json.Unmarshal([]byte(s), &dat); err != nil {
 		return err
@@ -251,10 +251,10 @@ func (page *Page) restoreState(s string) error {
 
 	engine.Warn("HEY!! restoreState needs work!")
 
-	children := dat["children"].([]interface{})
+	children := dat["children"].([]any)
 	for _, ch := range children {
 
-		childmap := ch.(map[string]interface{})
+		childmap := ch.(map[string]any)
 		toolType := childmap["tooltype"].(string)
 		pos := StringToPoint(childmap["pos"].(string))
 		size := StringToPoint(childmap["size"].(string))
@@ -337,7 +337,7 @@ func (page *Page) AddTool(name string, pos image.Point, size image.Point) (Windo
 	return child, nil
 }
 
-func (page *Page) log(format string, v ...interface{}) {
+func (page *Page) log(format string, v ...any) {
 	wc := page.Context()
 	for _, w := range wc.childWindow {
 		if WinGetAttValue(w, "islogger") == "true" {

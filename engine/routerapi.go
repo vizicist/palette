@@ -160,15 +160,3 @@ func (r *Router) executeProcessAPI(api string, apiargs map[string]string) (resul
 	}
 }
 */
-
-/*
-func (r *Router) saveCurrentSnaps(playerName string) error {
-	ApplyToPlayersNamed(playerName, func(player *Player) {
-		err := player.saveCurrentSnap()
-		if err != nil {
-			Warn("saveCurrentSnaps", "err", err)
-		}
-	})
-	return nil
-}
-*/

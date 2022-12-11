@@ -1,32 +1,48 @@
 package engine
 
 import (
-	"context"
 	"fmt"
+	"os"
+	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"gitlab.com/gomidi/midi/v2/drivers"
 )
 
 type Task struct {
 	// None of these get exported, only the methods
-	methods   TaskMethods
-	scheduler *Scheduler
-	params    *ParamValues
-	sources   map[string]bool
+	methods       TaskMethods
+	scheduler     *Scheduler
+	cursorManager *CursorManager
+	params        *ParamValues
+	sources       map[string]bool
 }
+
 type TaskMethods interface {
-	Start(ctx context.Context, task *Task)
-	OnEvent(ctx context.Context, task *Task, e Event) (string, error)
-	Api(ctx context.Context, task *Task, apiargs map[string]string) (string, error)
-	Stop(ctx context.Context, task *Task) (string, error)
+	Start(task *Task)
+	OnEvent(task *Task, e Event)
+	Api(task *Task, api string, apiargs map[string]string) (string, error)
+	Stop(task *Task)
 }
 
 // type TaskFunc func(ctx context.Context, e Event) (string, error)
 
-func (task *Task) Log(msg string, keysAndValues ...interface{}) {
+func (task *Task) Uptime() float64 {
+	return task.scheduler.Uptime()
+}
+
+func (task *Task) LogInfo(msg string, keysAndValues ...any) {
 	Info(msg, keysAndValues...)
+}
+
+func (task *Task) LogWarn(msg string, keysAndValues ...any) {
+	Warn(msg, keysAndValues...)
+}
+
+func (task *Task) LogError(err error, keysAndValues ...any) {
+	LogError(err, keysAndValues...)
 }
 
 func (task *Task) GetLayer(layerName string) *Layer {
@@ -106,7 +122,7 @@ func (task *Task) midiEventToPhraseElement(me MidiEvent) (*PhraseElement, error)
 	//		pitch = scale.ClosestTo(pitch)
 	//	}
 
-	var val interface{}
+	var val any
 	switch status {
 	case 0x90:
 		val = NewNoteOn(data0, data1, data2)
@@ -158,15 +174,15 @@ func (task *Task) SubmitCommand(command Command) {
 	}()
 }
 
+func (task *Task) ParamIntValue(name string) int {
+	return task.params.ParamIntValue(name)
+}
+
+func (task *Task) ParamBoolValue(name string) bool {
+	return task.params.ParamBoolValue(name)
+}
+
 /*
-func (ctx *EngineContext) ParamIntValue(name string) int {
-	return ctx.agentParams.ParamIntValue(name)
-}
-
-func (ctx *EngineContext) ParamBoolValue(name string) bool {
-	return ctx.agentParams.ParamBoolValue(name)
-}
-
 func (ctx *EngineContext) GetScale() *Scale {
 	return ctx.scale
 }
@@ -325,7 +341,7 @@ func (ctx *EngineContext) sendEffectParam(name string, value string) {
 
 // getEffectMap returns the resolume.json map for a given effect
 // and map type ("on", "off", or "params")
-func getEffectMap(effectName string, mapType string) (map[string]interface{}, string, int, error) {
+func getEffectMap(effectName string, mapType string) (map[string]any, string, int, error) {
 	if effectName[1] != '-' {
 		err := fmt.Errorf("no dash in effect, name=%s", effectName)
 		return nil, "", 0, err
@@ -343,19 +359,19 @@ func getEffectMap(effectName string, mapType string) (map[string]interface{}, st
 	}
 	effnum := int(n)
 
-	effectsmap := effects.(map[string]interface{})
+	effectsmap := effects.(map[string]any)
 	oneEffect, ok := effectsmap[realEffectName]
 	if !ok {
 		err := fmt.Errorf("no effects value for effect=%s", effectName)
 		return nil, "", 0, err
 	}
-	oneEffectMap := oneEffect.(map[string]interface{})
+	oneEffectMap := oneEffect.(map[string]any)
 	mapValue, ok := oneEffectMap[mapType]
 	if !ok {
 		err := fmt.Errorf("no params value for effect=%s", effectName)
 		return nil, "", 0, err
 	}
-	return mapValue.(map[string]interface{}), realEffectName, effnum, nil
+	return mapValue.(map[string]any), realEffectName, effnum, nil
 }
 
 func addLayerAndClipNums(addr string, layerNum int, clipNum int) string {
@@ -657,7 +673,7 @@ func (ctx *EngineContext) sendAllParameters() {
 }
 */
 
-func ApplyParamsMap(presetType string, paramsmap map[string]interface{}, params *ParamValues) error {
+func ApplyParamsMap(presetType string, paramsmap map[string]any, params *ParamValues) error {
 
 	// Currently, no errors are ever returned, but log messages are generated.
 
@@ -699,22 +715,25 @@ func (ctx *EngineContext) restoreCurrentSnap(layerName string) {
 }
 */
 
-/*
-func (ctx *EngineContext) saveCurrentAsPreset(presetName string) error {
+func (task *Task) SaveCurrentAsPreset(presetName string) error {
 	preset, err := LoadPreset(presetName)
 	if err != nil {
 		return err
 	}
 	path := preset.WriteableFilePath()
-	return ctx.SaveCurrentSnapInPath(path)
+	return task.SaveCurrentSnapInPath(path)
 }
 
-func (ctx *EngineContext) SaveCurrentSnapInPath(path string) error {
+func (task *Task) GenerateCursorGestureesture(source string, cid string, noteDuration time.Duration, x0, y0, z0, x1, y1, z1 float32) {
+	task.cursorManager.generateCursorGestureesture(source, cid, noteDuration, x0, y0, z0, x1, y1, z1)
+}
+
+func (task *Task) SaveCurrentSnapInPath(path string) error {
 
 	s := "{\n    \"params\": {\n"
 
 	// Print the parameter values sorted by name
-	fullNames := ctx.agentParams.values
+	fullNames := task.params.values
 	sortedNames := make([]string, 0, len(fullNames))
 	for k := range fullNames {
 		sortedNames = append(sortedNames, k)
@@ -723,7 +742,7 @@ func (ctx *EngineContext) SaveCurrentSnapInPath(path string) error {
 
 	sep := ""
 	for _, fullName := range sortedNames {
-		valstring, e := ctx.agentParams.paramValueAsString(fullName)
+		valstring, e := task.params.paramValueAsString(fullName)
 		if e != nil {
 			LogError(e)
 			continue
@@ -735,5 +754,3 @@ func (ctx *EngineContext) SaveCurrentSnapInPath(path string) error {
 	data := []byte(s)
 	return os.WriteFile(path, data, 0644)
 }
-
-*/

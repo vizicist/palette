@@ -11,7 +11,7 @@ import (
 type Preset struct {
 	Category  string
 	filename  string
-	paramsmap map[string]interface{}
+	paramsmap map[string]any
 }
 
 var Presets = make(map[string]*Preset)
@@ -24,7 +24,7 @@ func GetPreset(name string) *Preset {
 		p = &Preset{
 			Category:  category,
 			filename:  filename,
-			paramsmap: make(map[string]interface{}),
+			paramsmap: make(map[string]any),
 		}
 		Presets[name] = p
 	}
@@ -50,7 +50,6 @@ func (p *Preset) loadPreset() error {
 	p.paramsmap = paramsmap
 	return nil
 }
-
 
 func (p *Preset) ApplyTo(params *ParamValues) error {
 
@@ -213,26 +212,26 @@ func PresetList(apiargs map[string]string) (string, error) {
 	return result, nil
 }
 
-func LoadParamsMap(path string) (map[string]interface{}, error) {
+func LoadParamsMap(path string) (map[string]any, error) {
 	bytes, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
-	var f interface{}
+	var f any
 	err = json.Unmarshal(bytes, &f)
 	if err != nil {
 		return nil, fmt.Errorf("unable to Unmarshal path=%s, err=%s", path, err)
 	}
-	toplevel, ok := f.(map[string]interface{})
+	toplevel, ok := f.(map[string]any)
 	if !ok {
-		return nil, fmt.Errorf("unable to convert params to map[string]interface{}")
+		return nil, fmt.Errorf("unable to convert params to map[string]any")
 
 	}
 	params, okparams := toplevel["params"]
 	if !okparams {
 		return nil, fmt.Errorf("no params value in json")
 	}
-	paramsmap, okmap := params.(map[string]interface{})
+	paramsmap, okmap := params.(map[string]any)
 	if !okmap {
 		return nil, fmt.Errorf("params value is not a map[string]string in jsom")
 	}

@@ -33,12 +33,12 @@ func LoadMorphs() error {
 	if err != nil {
 		return nil // It's okay if file isn't present
 	}
-	var f interface{}
+	var f any
 	err = json.Unmarshal(bytes, &f)
 	if err != nil {
 		return fmt.Errorf("unable to Unmarshal %s, err=%s", path, err)
 	}
-	toplevel := f.(map[string]interface{})
+	toplevel := f.(map[string]any)
 
 	for serialnum, playerinfo := range toplevel {
 		playername := playerinfo.(string)

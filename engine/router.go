@@ -13,7 +13,6 @@ import (
 
 var HTTPPort = 3330
 var OSCPort = 3333
-var AliveOutputPort = 3331
 
 // var FFGLPort = 3334
 var LocalAddress = "127.0.0.1"
@@ -96,7 +95,7 @@ func recordingsFile(nm string) string {
 
 */
 
-type APIExecutorFunc func(api string, nuid string, rawargs string) (result interface{}, err error)
+type APIExecutorFunc func(api string, nuid string, rawargs string) (result any, err error)
 
 func NewRouter() *Router {
 
@@ -295,10 +294,10 @@ func (r *Router) HandleInputEvent(taskName string, args map[string]string) error
 	DebugLogOfType("router", "Router.HandleEvent", "task", taskName, "event", event)
 
 	/*
-	ctx, err := r.taskManager.GetTaskContext(taskName)
-	if err != nil {
-		return err
-	}
+		ctx, err := r.taskManager.GetTaskContext(taskName)
+		if err != nil {
+			return err
+		}
 	*/
 
 	switch event {

@@ -50,7 +50,7 @@ func NewClickMsg(click Clicks) string {
 //////////////////////////////////////////////////////////////////
 
 // ToBool xxx
-func ToBool(arg interface{}) bool {
+func ToBool(arg any) bool {
 	r, ok := arg.(bool)
 	if !ok {
 		Warn("Unable to convert interface to bool!")
@@ -60,7 +60,7 @@ func ToBool(arg interface{}) bool {
 }
 
 // String xxx
-func String(arg interface{}) string {
+func String(arg any) string {
 	if arg == nil {
 		return ""
 	}
