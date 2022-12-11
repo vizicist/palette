@@ -12,7 +12,7 @@ type Player struct {
 	sources map[string]string
 
 	agents        []Agent
-	agentsContext []*AgentContext
+	agentsContext []*EngineContext
 
 	// lastActiveID    int
 
@@ -56,7 +56,7 @@ func (p *Player) IsSourceAllowed(source string) bool {
 
 func (p *Player) AttachAgent(agent Agent) {
 	p.agents = append(p.agents, agent)
-	p.agentsContext = append(p.agentsContext, NewAgentContext(p))
+	p.agentsContext = append(p.agentsContext, NewEngineContext(p))
 }
 
 func (p *Player) SetResolumeLayer(layernum int, ffglport int) {
@@ -92,7 +92,7 @@ func NewPlayer(playerName string) *Player {
 	//p.clearExternalScale()
 	//p.setExternalScale(60%12, true) // Middle C
 
-	TheRouter().agentManager.AddAgent(p)
+	TheRouter().taskManager.AddAgent(p)
 
 	return p
 }
