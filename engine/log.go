@@ -75,7 +75,7 @@ func IsLogging(logtype string) bool {
 }
 
 // LogError will accept a nil value and do nothing
-func LogError(err error, keysAndValues ...interface{}) {
+func LogError(err error, keysAndValues ...any) {
 
 	if err == nil {
 		return
@@ -90,7 +90,7 @@ func LogError(err error, keysAndValues ...interface{}) {
 	Warn(caller, keysAndValues...)
 }
 
-func DebugLogOfType(logtype string, msg string, keysAndValues ...interface{}) {
+func DebugLogOfType(logtype string, msg string, keysAndValues ...any) {
 	if (len(keysAndValues) % 2) != 0 {
 		Warn("LogOfType function given bad number of arguments")
 	}
@@ -106,7 +106,7 @@ func DebugLogOfType(logtype string, msg string, keysAndValues ...interface{}) {
 	}
 }
 
-func Warn(msg string, keysAndValues ...interface{}) {
+func Warn(msg string, keysAndValues ...any) {
 	if (len(keysAndValues) % 2) != 0 {
 		Warn("Warn function given bad number of arguments")
 	} else {
@@ -116,7 +116,7 @@ func Warn(msg string, keysAndValues ...interface{}) {
 	}
 }
 
-func Info(msg string, keysAndValues ...interface{}) {
+func Info(msg string, keysAndValues ...any) {
 	if (len(keysAndValues) % 2) != 0 {
 		Warn("LogOfType function given bad number of arguments")
 	}
@@ -152,12 +152,12 @@ var LogEnabled = map[string]bool{
 	"osc":       false,
 	"preset":    false,
 	"resolume":  false,
-	"task":     false,
+	"task":      false,
 	"realtime":  false,
 	"remote":    false,
 	"router":    false,
 	"scale":     false,
-	"scheduler":  false,
+	"scheduler": false,
 	"transpose": false,
 	"value":     false,
 }

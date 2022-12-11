@@ -200,7 +200,7 @@ type StateDataMsg struct {
 // type SweepCallbackMsg struct {
 // 	// callbackWindow Window
 // 	callbackMsg string
-// 	callbackArg interface{}
+// 	callbackArg any
 // }
 
 // DownDragUp xxx

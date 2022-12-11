@@ -160,7 +160,7 @@ func SendControllerToSynth(synthName string, cnum int, cval int) {
 }
 
 // SendNote handles NoteOn, NoteOff, Controller, etc.
-func SendToSynth(value interface{}) {
+func SendToSynth(value any) {
 
 	var channel uint8
 	var pitch uint8

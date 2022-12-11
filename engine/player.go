@@ -25,7 +25,7 @@ type Player struct {
 	// lastCursorStepEvent    CursorStepEvent
 	// lastUnQuantizedStepNum Clicks
 
-	// params                         map[string]interface{}
+	// params                         map[string]any
 
 	// paramsMutex               sync.RWMutex
 	// activeNotes      map[string]*ActiveNote
@@ -75,7 +75,7 @@ func NewPlayer(playerName string) *Player {
 		freeframeClient: nil,
 		resolumeClient:  nil,
 		// tempoFactor:         1.0,
-		// params:                         make(map[string]interface{}),
+		// params:                         make(map[string]any),
 		params: NewParamValues(),
 		// activeNotes: make(map[string]*ActiveNote),
 		// fadeLoop:    0.5,
@@ -205,14 +205,6 @@ func (player *Player) SetOneParamValue(fullname, value string) error {
 func (player *Player) clearExternalScale() {
 	DebugLogOfType("scale", "clearExternalScale", "pad", player.playerName)
 	player.externalScale = MakeScale()
-}
-
-// SetExternalScale xxx
-func (player *Player) setExternalScale(pitch int, on bool) {
-	s := player.externalScale
-	for p := pitch; p < 128; p += 12 {
-		s.HasNote[p] = on
-	}
 }
 */
 

@@ -21,7 +21,7 @@ type Phrase struct {
 
 type PhraseElement struct {
 	AtClick Clicks
-	Value   interface{} // things like *NoteFull, *NoteOn, *NoteOff, etc
+	Value   any // things like *NoteFull, *NoteOn, *NoteOff, etc
 }
 
 func (pe *PhraseElement) Copy() *PhraseElement {
@@ -387,7 +387,7 @@ func PhraseElementFromString(s string) (e *PhraseElement, err error) {
 	}
 	nvelocity := 64
 
-	var val interface{}
+	var val any
 	switch ntype {
 	case "note":
 		val = &NoteFull{

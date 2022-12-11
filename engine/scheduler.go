@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-type Event interface{}
+type Event any
 
 type Scheduler struct {
 	schedList *list.List // of *SchedElements
@@ -17,7 +17,7 @@ type Scheduler struct {
 	now       time.Time
 	time0     time.Time
 	lastClick Clicks
-	cmdInput  chan interface{}
+	cmdInput  chan any
 
 	transposeAuto   bool
 	transposeNext   Clicks
@@ -27,18 +27,16 @@ type Scheduler struct {
 
 	lastProcessCheck float64
 	processCheckSecs float64
-	aliveSecs        float64
-	lastAlive        float64
 }
 
 type Command struct {
 	Action string // e.g. "addmidi"
-	Arg    interface{}
+	Arg    any
 }
 
 type SchedElement struct {
 	AtClick   Clicks
-	Value     interface{} // currently just *Phrase values, but others should be possible
+	Value     any // currently just *Phrase values, but others should be possible
 	triggered bool
 }
 
@@ -50,7 +48,7 @@ func NewScheduler() *Scheduler {
 		now:             time.Time{},
 		time0:           time.Time{},
 		lastClick:       -1,
-		cmdInput:        make(chan interface{}),
+		cmdInput:        make(chan any),
 		transposeAuto:   ConfigBoolWithDefault("transposeauto", true),
 		transposeNext:   transposebeats * OneBeat,
 		transposeClicks: transposebeats,
@@ -59,8 +57,6 @@ func NewScheduler() *Scheduler {
 
 		lastProcessCheck: 0,
 		processCheckSecs: 0,
-		aliveSecs:        0,
-		lastAlive:        0,
 	}
 	return s
 }
@@ -85,8 +81,6 @@ func (sched *Scheduler) Start(onClick func(click ClickEvent)) {
 	// Don't start checking processes right away, after killing them on a restart,
 	// they may still be running for a bit
 	sched.processCheckSecs = float64(ConfigFloatWithDefault("processchecksecs", 60))
-
-	sched.aliveSecs = float64(ConfigFloatWithDefault("alivesecs", 5))
 
 	nonRealtime := false
 
@@ -126,15 +120,6 @@ func (sched *Scheduler) DefaultOnClick(ce ClickEvent) {
 	sched.advanceClickTo(newclick)
 
 	SetCurrentClick(newclick)
-
-	/*
-		uptimesecs := sched.Uptime()
-		sinceLastAlive := uptimesecs - sched.lastAlive
-		if sinceLastAlive > sched.aliveSecs {
-			sched.publishOscAlive(uptimesecs)
-			sched.lastAlive = uptimesecs
-		}
-	*/
 
 	/*
 		processCheckEnabled := sched.processCheckSecs > 0

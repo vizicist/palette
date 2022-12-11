@@ -1,7 +1,6 @@
 package engine
 
 import (
-	"context"
 	"fmt"
 	"strings"
 )
@@ -218,8 +217,7 @@ func (e *Engine) executeTaskAPI(api string, apiargs map[string]string) (result s
 	}
 	task, err := TheRouter().taskManager.GetTask(taskName)
 
-	ctx := context.Background()
-	return task.methods.OnEvent(ctx, task, ApiEvent{api, apiargs})
+	return task.methods.Api(task, api, apiargs)
 
 }
 

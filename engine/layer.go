@@ -207,6 +207,10 @@ func (layer *Layer) Apply(preset *Preset) {
 	preset.ApplyTo(layer.params)
 }
 
+func (layer *Layer) SaveCurrentSnap() error {
+	return fmt.Errorf("Layer.SaveCurrentSnap needs work")
+}
+
 func (layer *Layer) SaveCurrentPreset(path string) error {
 
 	s := "{\n    \"params\": {\n"
@@ -234,7 +238,7 @@ func (layer *Layer) SaveCurrentPreset(path string) error {
 	return os.WriteFile(path, data, 0644)
 }
 
-func (layer *Layer) applyQuadPreset(preset *Preset, layerToApply string) error {
+func (layer *Layer) ApplyQuadPreset(preset *Preset, layerToApply string) error {
 	// Here's where the params get applied,
 	// which among other things
 	// may result in sending OSC messages out.

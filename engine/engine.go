@@ -16,20 +16,6 @@ type Engine struct {
 	done           chan bool
 }
 
-/*
-type TaskContext struct {
-	context.Context
-	*Engine
-	scheduler *Scheduler
-	taskFunc  TaskFunc
-	taskData  TaskData
-	// agentParams     *ParamValues
-	// layerParams     map[string]*ParamValues
-	// scale           *Scale
-	sources map[string]bool
-}
-*/
-
 var theEngine *Engine
 
 func TheEngine() *Engine {

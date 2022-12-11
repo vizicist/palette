@@ -1,7 +1,6 @@
 package engine
 
 import (
-	"context"
 	"fmt"
 )
 
@@ -64,17 +63,6 @@ func (rm *TaskManager) handleMidiEvent(me MidiEvent) {
 */
 
 /*
-func (pm *TaskManager) StartTask(name string) {
-	ctx, ok := pm.agentsContext[name]
-	if !ok {
-		Warn("StartTask no such Agent", "agent", name)
-	} else {
-		ctx.agent.Start(ctx)
-	}
-}
-*/
-
-/*
 func (pm *TaskManager) ApplyToAllAgents(f func(agent Agent)) {
 	for _, agent := range pm.agents {
 		f(agent)
@@ -113,19 +101,19 @@ func (pm *TaskManager) GetTask(name string) (*Task, error) {
 func (pm *TaskManager) handleCursorEvent(e CursorEvent) {
 	for _, task := range pm.tasks {
 		if task.IsSourceAllowed(e.Source) {
-			task.methods.OnEvent(context.Background(), task, e)
+			task.methods.OnEvent(task, e)
 		}
 	}
 }
 
 func (pm *TaskManager) handleMidiEvent(e MidiEvent) {
 	for _, task := range pm.tasks {
-		task.methods.OnEvent(context.Background(), task, e)
+		task.methods.OnEvent(task, e)
 	}
 }
 
 func (pm *TaskManager) handleClickEvent(e ClickEvent) {
 	for _, task := range pm.tasks {
-		task.methods.OnEvent(context.Background(), task, e)
+		task.methods.OnEvent(task, e)
 	}
 }

@@ -1,20 +1,26 @@
 package agent
 
 import (
-	"context"
+	"fmt"
 
 	"github.com/vizicist/palette/engine"
 )
 
 func init() {
-	RegisterTask("spawner", &Spawner{}, nil)
+	RegisterTask("spawner", &Spawner{})
 }
 
 type Spawner struct{}
 
-func (spawner *Spawner) OnEvent(ctx context.Context, task engine.TaskInterface, e engine.Event) (string, error) {
+func (spawner *Spawner) OnEvent(task *engine.Task, e engine.Event) {
 	if ce, ok := e.(engine.ClickEvent); ok {
-		task.Info("Agent_processes.OnEvent", "click", ce.Click)
+		task.LogInfo("Agent_processes.OnEvent", "click", ce.Click)
 	}
-	return "", nil
+}
+func (spawner *Spawner) Start(task *engine.Task) {
+}
+func (spawner *Spawner) Stop(task *engine.Task) {
+}
+func (spawner *Spawner) Api(task *engine.Task, api string, apiargs map[string]string) (string, error) {
+	return "", fmt.Errorf("Spawner.Api: no apis")
 }

@@ -13,7 +13,7 @@ import (
 
 // ParamDef is a single parameter definition.
 type ParamDef struct {
-	typedParamDef interface{}
+	typedParamDef any
 	Category      string
 	Init          string
 	comment       string
@@ -38,7 +38,7 @@ type paramDefString struct {
 	values []string
 }
 
-type ParamsMap map[string]interface{}
+type ParamsMap map[string]any
 
 // ParamDefs is the set of all parameter definitions
 var ParamDefs map[string]ParamDef
@@ -47,7 +47,7 @@ var ParamDefs map[string]ParamDef
 
 // ParamValue is a single parameter value
 // which could be any of the param*Value types
-type ParamValue interface{}
+type ParamValue any
 
 type paramValString struct {
 	def   paramDefString
@@ -182,7 +182,7 @@ func (vals *ParamValues) internalSetParamValueWithString(origname, value string,
 var ParamEnums map[string][]string
 
 // ResolumeJSON is an unmarshalled version of the resolume.json file
-var ResolumeJSON map[string]interface{}
+var ResolumeJSON map[string]any
 
 // LoadResolumeJSON returns an unmarshalled version of the resolume.json file
 func LoadResolumeJSON() error {
@@ -191,12 +191,12 @@ func LoadResolumeJSON() error {
 	if err != nil {
 		return fmt.Errorf("unable to read resolume.json, err=%s", err)
 	}
-	var f interface{}
+	var f any
 	err = json.Unmarshal(bytes, &f)
 	if err != nil {
 		return fmt.Errorf("unable to Unmarshal %s", path)
 	}
-	ResolumeJSON = f.(map[string]interface{})
+	ResolumeJSON = f.(map[string]any)
 	return nil
 }
 
@@ -237,16 +237,16 @@ func LoadParamEnums() error {
 	if err != nil {
 		return fmt.Errorf("loadParamEnums: unable to read path=%s", path)
 	}
-	var f interface{}
+	var f any
 	err = json.Unmarshal(bytes, &f)
 	if err != nil {
 		return fmt.Errorf("loadParamEnums: unable to Unmarshal path=%s", path)
 	}
-	toplevel := f.(map[string]interface{})
+	toplevel := f.(map[string]any)
 
 	for enumName, enumList := range toplevel {
 		var enums []string
-		for _, e := range enumList.([]interface{}) {
+		for _, e := range enumList.([]any) {
 			enums = append(enums, e.(string))
 		}
 		ParamEnums[enumName] = enums
@@ -264,19 +264,19 @@ func LoadParamDefs() error {
 	if err != nil {
 		return fmt.Errorf("unable to read %s, err=%s", path, err)
 	}
-	var f interface{}
+	var f any
 	err = json.Unmarshal(bytes, &f)
 	if err != nil {
 		return fmt.Errorf("unable to Unmarshal %s, err=%s", path, err)
 	}
-	params := f.(map[string]interface{})
+	params := f.(map[string]any)
 	for name, dat := range params {
 		w := strings.SplitN(name, ".", 2)
 		if len(w) != 2 {
 			return fmt.Errorf("LoadParamDefs: parameter has no category - %s", name)
 		}
 		category := w[0]
-		jmap := dat.(map[string]interface{})
+		jmap := dat.(map[string]any)
 		min := jmap["min"].(string)
 		max := jmap["max"].(string)
 		valuetype := jmap["valuetype"].(string)

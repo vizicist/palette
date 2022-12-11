@@ -240,7 +240,7 @@ func StringMap(params string) (map[string]string, error) {
 }
 
 // ResultResponse returns a JSON 2.0 result response
-func ResultResponse(resultObj interface{}) string {
+func ResultResponse(resultObj any) string {
 	bytes, err := json.Marshal(resultObj)
 	if err != nil {
 		Warn("ResultResponse: unable to marshal resultObj")
