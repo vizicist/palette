@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"context"
 	"fmt"
 	"strings"
 )
@@ -215,9 +216,10 @@ func (e *Engine) executeTaskAPI(api string, apiargs map[string]string) (result s
 	if !okTask {
 		return "", fmt.Errorf("missing agent parameter")
 	}
-	ctx, err := TheRouter().taskManager.GetTaskContext(taskName)
+	task, err := TheRouter().taskManager.GetTask(taskName)
 
-	return ctx.taskFunc(ctx,ApiEvent{api, apiargs})
+	ctx := context.Background()
+	return task.methods.OnEvent(ctx, task, ApiEvent{api, apiargs})
 
 }
 

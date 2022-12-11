@@ -69,7 +69,7 @@ type AttractModeCmd struct {
 	onoff bool
 }
 
-type ScheduleElementCmd struct {
+type SchedulerElementCmd struct {
 	element *SchedElement
 }
 
@@ -110,14 +110,17 @@ func (sched *Scheduler) Start(onClick func(click ClickEvent)) {
 			// Info("SCHEDULER skipping to next loop, newclick is unchanged","newclick",newclick,"currentClick",currentClick)
 			continue
 		}
-		onClick(ClickEvent{click: newclick})
+		ce := ClickEvent{Click: newclick, Uptime: uptimesecs}
+		onClick(ce)
+
+		TheRouter().taskManager.handleClickEvent(ce)
 	}
 	Info("StartRealtime ends")
 }
 
 func (sched *Scheduler) DefaultOnClick(ce ClickEvent) {
 
-	newclick := ce.click
+	newclick := ce.Click
 
 	sched.advanceTransposeTo(newclick)
 	sched.advanceClickTo(newclick)
@@ -147,7 +150,7 @@ func (sched *Scheduler) DefaultOnClick(ce ClickEvent) {
 			// immediately check to see if it's running, it reports that
 			// it's stil running.
 			go func() {
-				DebugLogOfType("schedule", "Scheduler: checking processes")
+				DebugLogOfType("scheduler", "Scheduler: checking processes")
 				time.Sleep(2 * time.Second)
 				TheEngine().ProcessManager.checkProcessesAndRestartIfNecessary()
 			}()
@@ -162,15 +165,15 @@ func (sched *Scheduler) DefaultOnClick(ce ClickEvent) {
 	case cmd := <-sched.cmdInput:
 		// Info("Realtime.Control", "cmd", cmd)
 		switch v := cmd.(type) {
-			/*
-		case AttractModeCmd:
-			onoff := v.onoff
-			if sched.attractModeIsOn != onoff {
-				sched.attractModeIsOn = onoff
-				sched.lastAttractChange = sched.Uptime()
-			}
-			*/
-		case ScheduleElementCmd:
+		/*
+			case AttractModeCmd:
+				onoff := v.onoff
+				if sched.attractModeIsOn != onoff {
+					sched.attractModeIsOn = onoff
+					sched.lastAttractChange = sched.Uptime()
+				}
+		*/
+		case SchedulerElementCmd:
 			sched.scheduleElement(v.element)
 		default:
 			Warn("Unexpected type", "type", fmt.Sprintf("%T", v))
@@ -181,11 +184,11 @@ func (sched *Scheduler) DefaultOnClick(ce ClickEvent) {
 
 func (sched *Scheduler) advanceClickTo(toClick Clicks) {
 
-	// DebugLogOfType("schedule", "Scheduler.advanceClickTo", "toClick", toClick, "schedule", sched)
+	// DebugLogOfType("scheduler", "Scheduler.advanceClickTo", "toClick", toClick, "scheduler", sched)
 
 	// Don't let events get handled while we're advancing
 	// XXX - this might not be needed if all communication/syncing
-	// is done only from the schedule loop
+	// is done only from the scheduler loop
 	TheRouter().inputEventMutex.Lock()
 	defer func() {
 		TheRouter().inputEventMutex.Unlock()
@@ -375,7 +378,7 @@ func (sched *Scheduler) terminateActiveNotes() {
 */
 
 func (sched *Scheduler) ToString() string {
-	s := "Schedule{"
+	s := "Scheduler{"
 	for i := sched.schedList.Front(); i != nil; i = i.Next() {
 		pe := i.Value.(*SchedElement)
 		switch v := pe.Value.(type) {
@@ -397,7 +400,7 @@ func (sched *Scheduler) Format(f fmt.State, c rune) {
 
 func (sched *Scheduler) scheduleElement(se *SchedElement) {
 	schedClick := se.AtClick
-	DebugLogOfType("schedule", "Scheduler.scheduleElement", "se", se, "click", schedClick)
+	DebugLogOfType("scheduler", "Scheduler.scheduleElement", "se", se, "click", schedClick)
 	// Insert newElement sorted by time
 	i := sched.schedList.Front()
 	if i == nil {
