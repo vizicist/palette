@@ -59,12 +59,12 @@ func init() {
 		lastAlive:              0,
 		scale:                  nil,
 	}
-	RegisterTask("palettepro", ppro)
+	RegisterTask("ppro", ppro)
 }
 
 func (ppro *PalettePro) Start(task *engine.Task) {
 
-	engine.Info("PalettePro.Start")
+	engine.LogInfo("PalettePro.Start")
 
 	task.AllowSource("A", "B", "C", "D")
 
@@ -110,7 +110,6 @@ func (ppro *PalettePro) Stop(task *engine.Task) {
 }
 
 func (ppro *PalettePro) OnEvent(task *engine.Task, event engine.Event) {
-	task.LogInfo("PalettePro.OnEvent", "event", event)
 	switch e := event.(type) {
 	case engine.ClickEvent:
 		ppro.OnClick(task, e)
@@ -175,6 +174,13 @@ func (ppro *PalettePro) Api(task *engine.Task, api string, apiargs map[string]st
 
 	switch api {
 
+	case "echo":
+		value, ok := apiargs["value"]
+		if !ok {
+			value = "ECHO!"
+		}
+		return value, nil
+
 	case "nextalive":
 		// acts like a timer, but it could wait for
 		// some event if necessary
@@ -191,24 +197,21 @@ func (ppro *PalettePro) Api(task *engine.Task, api string, apiargs map[string]st
 		if !okpreset {
 			return "", fmt.Errorf("missing preset parameter")
 		}
-		preset, err := engine.LoadPreset(presetName)
+		preset := engine.GetPreset(presetName)
+		err := preset.LoadPreset()
 		if err != nil {
 			return "", err
 		}
 
-		layerName, okLayer := apiargs["layer"]
-		if !okLayer {
-			layerName = "*"
+		layer, err := ppro.extractLayer(task, apiargs)
+		if err != nil {
+			return "", err
 		}
 
 		if preset.Category == "quad" {
 			// The layerName might be only a single layer, and loadQuadPreset
 			// will only load that one layer from the quad preset
-			if layerName == "*" {
-				return "", fmt.Errorf("load of quad needs work")
-			}
-			layer := ppro.layer[layerName]
-			err = layer.ApplyQuadPreset(preset, layerName)
+			err = layer.ApplyQuadPreset(preset, layer.Name())
 			if err != nil {
 				task.LogError(err)
 				return "", err
@@ -217,25 +220,163 @@ func (ppro *PalettePro) Api(task *engine.Task, api string, apiargs map[string]st
 		} else {
 			// It's a non-quad preset for a single layer.
 			// However, the layerName can still be "*" to apply to all layers.
-			layer := ppro.layer[layerName]
 			layer.Apply(preset)
-			ppro.SaveCurrentSnaps(task)
+			err := layer.SaveCurrentSnap()
+			if err != nil {
+				return "", err
+			}
 		}
 		return "", err
 
 	case "save":
-		// return "", fmt.Errorf("executePresetAPI needs work")
+		layer, err := ppro.extractLayer(task, apiargs)
+		if err != nil {
+			return "", err
+		}
 		presetName, okpreset := apiargs["preset"]
 		if !okpreset {
 			return "", fmt.Errorf("missing preset parameter")
 		}
-		return "", task.SaveCurrentAsPreset(presetName)
+		preset := task.GetPreset(presetName)
+		path := preset.WritableFilePath()
+		return "", layer.SavePresetInPath(path)
+
+	case "set":
+		layer, err := ppro.extractLayer(task, apiargs)
+		if err != nil {
+			return "", err
+		}
+		name, ok := apiargs["name"]
+		if !ok {
+			return "", fmt.Errorf("executePlayerAPI: missing name argument")
+		}
+		value, ok := apiargs["value"]
+		if !ok {
+			return "", fmt.Errorf("executePlayerAPI: missing value argument")
+		}
+		layer.Set(name, value)
+		return "", layer.SaveCurrentSnap()
+
+	case "setparams":
+		layer, err := ppro.extractLayer(task, apiargs)
+		if err != nil {
+			return "", err
+		}
+		for name, value := range apiargs {
+			layer.Set(name, value)
+		}
+		return "", layer.SaveCurrentSnap()
+
+	case "get":
+		layer, err := ppro.extractLayer(task, apiargs)
+		if err != nil {
+			return "", err
+		}
+		name, ok := apiargs["name"]
+		if !ok {
+			return "", fmt.Errorf("executePlayerAPI: missing name argument")
+		}
+		return layer.Get(name), nil
+
+		/*
+			default:
+				// The player-specific APIs above are handled
+				// here in the Router context, but for everything else,
+				// we punt down to the player's player.
+				// player can be A, B, C, D, or *
+				r.PlayerManager.ApplyToAllPlayers(func(player *Player) {
+					_, err := player.ExecuteAPI(api, apiargs, "")
+					if err != nil {
+						LogError(err)
+					}
+				})
+				return "", nil
+		*/
 
 	default:
-		task.LogWarn("Router.ExecuteAPI api is not recognized\n", "api", api)
+		task.LogWarn("Pro.ExecuteAPI api is not recognized\n", "api", api)
 		return "", fmt.Errorf("Router.ExecutePresetAPI unrecognized api=%s", api)
 	}
 }
+
+// NOTE: this function deletes the "task" element of apiargs before returning it
+func (ppro *PalettePro) extractLayer(task *engine.Task, apiargs map[string]string) (*engine.Layer, error) {
+	layerName, ok := apiargs["layer"]
+	if !ok {
+		return nil, fmt.Errorf("PalettePro: no layer parameter")
+	}
+	delete(apiargs, "layer")
+	return task.GetLayer(layerName), nil
+}
+
+// NOTE: this function deletes the "task" element of apiargs before returning it
+func extractTask(apiargs map[string]string) string {
+	taskName, ok := apiargs["task"]
+	if !ok {
+		taskName = "*"
+	} else {
+		delete(apiargs, "task")
+	}
+	return taskName
+}
+
+/*
+func (ppro *PalettePro) OLDexecutePlayerAPI(api string, argsmap map[string]string) (result string, err error) {
+
+	playerName := extractPlayer(argsmap)
+
+	switch api {
+
+	// case "event":
+	//	return "", r.HandleInputEvent(playerName, argsmap)
+
+	case "set":
+		name, ok := argsmap["name"]
+		if !ok {
+			return "", fmt.Errorf("executePlayerAPI: missing name argument")
+		}
+		value, ok := argsmap["value"]
+		if !ok {
+			return "", fmt.Errorf("executePlayerAPI: missing value argument")
+		}
+		r.SetPlayerParamValue(playerName, name, value)
+		return "", r.saveCurrentSnaps(playerName)
+
+	case "setparams":
+		for name, value := range argsmap {
+			r.SetPlayerParamValue(playerName, name, value)
+		}
+		return "", r.saveCurrentSnaps(playerName)
+
+	case "get":
+		name, ok := argsmap["name"]
+		if !ok {
+			return "", fmt.Errorf("executePlayerAPI: missing name argument")
+		}
+		if playerName == "*" {
+			return "", fmt.Errorf("executePlayerAPI: get can't handle *")
+		}
+		player, err := r.PlayerManager.GetPlayer(playerName)
+		if err != nil {
+			return "", err
+		}
+		return player.params.paramValueAsString(name)
+
+	default:
+		// The player-specific APIs above are handled
+		// here in the Router context, but for everything else,
+		// we punt down to the player's player.
+		// player can be A, B, C, D, or *
+		r.PlayerManager.ApplyToAllPlayers(func(player *Player) {
+			_, err := player.ExecuteAPI(api, argsmap, "")
+			if err != nil {
+				LogError(err)
+			}
+		})
+		return "", nil
+	}
+}
+*/
 
 func (ppro *PalettePro) SaveCurrentSnaps(task *engine.Task) {
 	for _, layer := range ppro.layer {
@@ -271,7 +412,7 @@ func (ppro *PalettePro) loadQuadPreset(task *engine.Task, preset *engine.Preset)
 func (ppro *PalettePro) OnCursorEvent(task *engine.Task, ce engine.CursorEvent) {
 
 	if ce.Ddu == "down" { // || ce.Ddu == "drag" {
-		engine.Info("OnCursorEvent", "ce", ce)
+		engine.LogInfo("OnCursorEvent", "ce", ce)
 		layer := ppro.cursorToLayer(ce)
 		pitch := ppro.cursorToPitch(task, ce)
 		velocity := uint8(ce.Z * 1280)
@@ -282,7 +423,7 @@ func (ppro *PalettePro) OnCursorEvent(task *engine.Task, ce engine.CursorEvent) 
 }
 
 func (ppro *PalettePro) scheduleNoteNow(task *engine.Task, dest string, pitch, velocity uint8, duration engine.Clicks) {
-	engine.Info("PalettePro.scheculeNoteNow", "dest", dest, "pitch", pitch)
+	engine.LogInfo("PalettePro.scheculeNoteNow", "dest", dest, "pitch", pitch)
 	pe := &engine.PhraseElement{Value: engine.NewNoteFull(0, pitch, velocity, duration)}
 	phr := engine.NewPhrase().InsertElement(pe)
 	phr.Destination = dest

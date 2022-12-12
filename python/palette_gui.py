@@ -627,7 +627,7 @@ class ProGuiApp(tk.Tk):
             ptype = self.paramTypeOf[name]
             if pagename != "snap" and ptype != pagename:
                 continue
-            value = palette.palette_player_api(layer.name(), "get",
+            value = palette.palette_layer_api(layer.name(), "get",
                 "\"name\": \"" + name + "\"")
             w = page.paramValueWidget[name]
             w.config(text=value)
@@ -830,7 +830,7 @@ class ProGuiApp(tk.Tk):
                 palette.palette_agent_api("load", "\"preset\": \"" + fullpresetname + "\", \"layer\": \""+layer.name()+"\"")
         else:
             player = self.CurrLayer.name()
-            palette.palette_player_api(player,"preset.load", "\"preset\": \"" + fullpresetname + "\"")
+            palette.palette_layer_api(player,"preset.load", "\"preset\": \"" + fullpresetname + "\"")
 
         # self.saveCurrent()
 
@@ -933,7 +933,7 @@ class ProGuiApp(tk.Tk):
             palette.palette_global_api("set_transposeauto", "\"onoff\": \""+str(val) + "\"")
 
     def combLayerLoop(self,layer):
-        palette.palette_player_api(self.CurrLayer.name(), "loop_comb", "")
+        palette.palette_layer_api(self.CurrLayer.name(), "loop_comb", "")
 
     def combLoop(self):
         self.resetLastAnything()
@@ -1027,7 +1027,7 @@ class ProGuiApp(tk.Tk):
             log("Sending all parameters for layer = ",layer.name())
             for pt in ["sound","visual","effect"]:
                 paramlistjson = layer.paramListOfType(pt)
-                palette.palette_player_api(layer.name(), "setparams", paramlistjson)
+                palette.palette_layer_api(layer.name(), "setparams", paramlistjson)
 
     def synthesizeParamsJson(self):
 
@@ -1240,7 +1240,7 @@ class Layer():
         paramType = self.controller.paramTypeOf[paramName]
         # fullParamName = paramType + "." + paramName
         fullParamName = paramName
-        palette.palette_player_api(self.name(),"set",
+        palette.palette_layer_api(self.name(),"set",
             "\"name\": \"" + fullParamName + "\"" + \
             ", \"value\": \"" + str(val) + "\"" )
 
@@ -1248,7 +1248,7 @@ class Layer():
         for pt in ["sound","visual","effect"]:
             if paramType == "snap" or paramType == pt:
                 paramlistjson = self.paramListOfType(pt)
-                palette.palette_player_api(self.name(), "setparams", paramlistjson)
+                palette.palette_layer_api(self.name(), "setparams", paramlistjson)
 
         if paramType == "snap":
             self.sendPerformVals()
@@ -1268,13 +1268,13 @@ class Layer():
         self.performIndex[name] = index
 
     def sendANO(self):
-        palette.palette_player_api(self.name(), "ANO")
+        palette.palette_layer_api(self.name(), "ANO")
 
     def clearExternalScale(self):
-        palette.palette_player_api(self.name(), "clearexternalscale")
+        palette.palette_layer_api(self.name(), "clearexternalscale")
 
     def useExternalScale(self,onoff):
-        palette.palette_player_api(self.name(), "midi_usescale", "\"onoff\": \"" + str(onoff) + "\"")
+        palette.palette_layer_api(self.name(), "midi_usescale", "\"onoff\": \"" + str(onoff) + "\"")
 
     def sendPerformVal(self,name):
         index = self.performIndex[name]
@@ -1296,62 +1296,62 @@ class Layer():
                 log("Unrecognized value of loopingonoff - %s" % val)
                 return
 
-            palette.palette_player_api(self.name(), "loop_recording", '"onoff": "'+str(reconoff)+'"')
-            palette.palette_player_api(self.name(), "loop_playing", '"onoff": "'+str(playonoff)+'"')
+            palette.palette_layer_api(self.name(), "loop_recording", '"onoff": "'+str(reconoff)+'"')
+            palette.palette_layer_api(self.name(), "loop_playing", '"onoff": "'+str(playonoff)+'"')
 
         elif name == "loopinglength":
-            palette.palette_player_api(self.name(), "loop_length", '"value": "'+str(val)+'"')
+            palette.palette_layer_api(self.name(), "loop_length", '"value": "'+str(val)+'"')
 
         elif name == "loopingfade":
-            palette.palette_player_api(self.name(), "loop_fade", '"fade": "'+str(val)+'"')
+            palette.palette_layer_api(self.name(), "loop_fade", '"fade": "'+str(val)+'"')
 
         elif name == "loopingset":
-            palette.palette_player_api(self.name(), "loop_set", '"set": "'+str(val)+'"')
+            palette.palette_layer_api(self.name(), "loop_set", '"set": "'+str(val)+'"')
 
         elif name == "deltaztrig":
-            palette.palette_player_api(self.name(), "set",
+            palette.palette_layer_api(self.name(), "set",
                 "\"name\": \"" + "sound._deltaztrig" + "\"" + \
                 ", \"value\": \"" + str(val) + "\"")
 
         elif name == "deltaytrig":
-            palette.palette_player_api(self.name(), "set",
+            palette.palette_layer_api(self.name(), "set",
                 "\"name\": \"" + "sound._deltaytrig" + "\"" + \
                 ", \"value\": \"" + str(val) + "\"")
 
         elif name == "quant":
-            palette.palette_player_api(self.name(), "set",
+            palette.palette_layer_api(self.name(), "set",
                 "\"name\": \"" + "misc.quant" + "\"" + \
                 ", \"value\": \"" + str(val) + "\"")
         elif name == "scale":
-            palette.palette_player_api(self.name(), "set",
+            palette.palette_layer_api(self.name(), "set",
                 "\"name\": \"" + "misc.scale" + "\"" + \
                 ", \"value\": \"" + str(val) + "\"")
 
         elif name == "vol":
             # NOTE: "voltype" here rather than "vol" - should make consistent someday
-            palette.palette_player_api(self.name(), "set",
+            palette.palette_layer_api(self.name(), "set",
                 "\"name\": \"" + "misc.vol" + "\"" + \
                 ", \"value\": \"" + str(val) + "\"")
 
         elif name == "comb":
             val = 1.0
-            palette.palette_player_api(self.name(), "loop_comb",
+            palette.palette_layer_api(self.name(), "loop_comb",
                 "\"value\": \"" + str(val) + "\"")
 
         elif name == "midithru":
-            palette.palette_player_api(self.name(), "midi_thru", "\"onoff\": \"" + str(val) + "\"")
+            palette.palette_layer_api(self.name(), "midi_thru", "\"onoff\": \"" + str(val) + "\"")
 
         elif name == "midisetscale":
-            palette.palette_player_api(self.name(), "midi_setscale", "\"onoff\": \"" + str(val) + "\"")
+            palette.palette_layer_api(self.name(), "midi_setscale", "\"onoff\": \"" + str(val) + "\"")
 
         elif name == "midiusescale":
             self.useExternalScale(val)
 
         elif name == "midiquantized":
-            palette.palette_player_api(self.name(), "midi_quantized", "\"onoff\": \"" + str(val) + "\"")
+            palette.palette_layer_api(self.name(), "midi_quantized", "\"onoff\": \"" + str(val) + "\"")
 
         elif name == "midithruscadjust":
-            palette.palette_player_api(self.name(), "midi_thruscadjust", "\"onoff\": \"" + str(val) + "\"")
+            palette.palette_layer_api(self.name(), "midi_thruscadjust", "\"onoff\": \"" + str(val) + "\"")
 
         elif name == "transpose":
             log("HEY, transpose shouldn't be here")
@@ -1361,7 +1361,7 @@ class Layer():
             log("SendPerformVal: unhandled name=",name)
 
     def clearLoop(self):
-        palette.palette_player_api(self.name(), "loop_clear", "")
+        palette.palette_layer_api(self.name(), "loop_clear", "")
  
     def paramListOfType(self,paramType):
         paramlist = ""

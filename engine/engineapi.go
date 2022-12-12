@@ -41,14 +41,15 @@ func (e *Engine) ExecuteAPIFromMap(api string, apiargs map[string]string) (resul
 		words := strings.Split(api, ".")
 		// Single-word APIs (like get, set, load, etc) are player APIs
 		if len(words) <= 1 {
-			return e.Router.executePlayerAPI(api, apiargs)
+			return "", fmt.Errorf("single-word APIs no longer work")
+			// return e.Router.executePlayerAPI(api, apiargs)
 		}
 		// Here we handle APIs of the form {apitype}.{apisuffix}
 		apitype := words[0]
 		apisuffix := words[1]
 		switch apitype {
-		case "global":
-			return e.executeGlobalAPI(apisuffix, apiargs)
+		case "engine":
+			return e.executeEngineAPI(apisuffix, apiargs)
 		case "preset":
 			return e.executePresetAPI(apisuffix, apiargs)
 		case "task":
@@ -75,7 +76,7 @@ func (e *Engine) ExecuteAPIFromJson(rawjson string) (string, error) {
 	return e.ExecuteAPIFromMap(api, args)
 }
 
-func (e *Engine) executeGlobalAPI(api string, apiargs map[string]string) (result string, err error) {
+func (e *Engine) executeEngineAPI(api string, apiargs map[string]string) (result string, err error) {
 
 	switch api {
 
@@ -184,7 +185,7 @@ func (e *Engine) executeGlobalAPI(api string, apiargs map[string]string) (result
 		*/
 
 	default:
-		Warn("Router.ExecuteAPI api is not recognized\n", "api", api)
+		LogWarn("Router.ExecuteAPI api is not recognized\n", "api", api)
 		err = fmt.Errorf("Router.ExecuteGlobalAPI unrecognized api=%s", api)
 		result = ""
 	}
@@ -199,23 +200,21 @@ func (e *Engine) executePresetAPI(api string, apiargs map[string]string) (result
 	case "list":
 		return PresetList(apiargs)
 	default:
-		Warn("api is not recognized\n", "api", api)
+		LogWarn("api is not recognized\n", "api", api)
 		return "", fmt.Errorf("Router.ExecutePresetAPI unrecognized api=%s", api)
 	}
-}
-
-type ApiEvent struct {
-	api     string
-	apiargs map[string]string
 }
 
 func (e *Engine) executeTaskAPI(api string, apiargs map[string]string) (result string, err error) {
 
 	taskName, okTask := apiargs["task"]
 	if !okTask {
-		return "", fmt.Errorf("missing agent parameter")
+		return "", fmt.Errorf("missing task parameter")
 	}
 	task, err := TheRouter().taskManager.GetTask(taskName)
+	if err != nil {
+		return "", fmt.Errorf("task error, err=%s", err)
+	}
 
 	return task.methods.Api(task, api, apiargs)
 
@@ -230,11 +229,11 @@ func (e *Engine) executeSoundAPI(api string, apiargs map[string]string) (result 
 		if !oknote {
 			return "", fmt.Errorf("missing note parameter")
 		}
-		Info("sound.playnote API should be playing", "note", notestr)
+		LogInfo("sound.playnote API should be playing", "note", notestr)
 		return "", nil
 
 	default:
-		Warn("Router.ExecuteAPI api is not recognized\n", "api", api)
+		LogWarn("Router.ExecuteAPI api is not recognized\n", "api", api)
 		err = fmt.Errorf("Router.ExecuteSoundAPI unrecognized api=%s", api)
 		result = ""
 	}

@@ -33,11 +33,11 @@
             "args": []
         },
         {
-            "name": "Agent API",
+            "name": "Task API",
             "type": "go",
             "request": "launch",
             "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
-            "args": ["api", "agent.echo", "\"agent\":\"default\""]
+            "args": ["api", "task.echo", "task", "ppro", "value", "foobar"]
         },
         {
             "name": "MIDI test",

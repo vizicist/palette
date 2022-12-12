@@ -53,7 +53,7 @@ func NewClickMsg(click Clicks) string {
 func ToBool(arg any) bool {
 	r, ok := arg.(bool)
 	if !ok {
-		Warn("Unable to convert interface to bool!")
+		LogWarn("Unable to convert interface to bool!")
 		r = false
 	}
 	return r
@@ -66,7 +66,7 @@ func String(arg any) string {
 	}
 	r, ok := arg.(string)
 	if !ok {
-		Warn("Unable to convert interface to string!")
+		LogWarn("Unable to convert interface to string!")
 		r = ""
 	}
 	return r

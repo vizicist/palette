@@ -35,27 +35,6 @@ func BoundAndScaleFloat(v, vmin, vmax, outmin, outmax float32) float32 {
 	return out
 }
 
-func SaveLogWrite(bytes []byte) {
-
-	t := time.Now()
-	year, month, day := t.Date()
-	hour, min, sec := t.Clock()
-	micro := t.Nanosecond() / 1e3
-
-	var s string
-	if IsLogging("go") {
-		goid := GoroutineID()
-		// Add GO# to log to indicate Goroutine
-		s = fmt.Sprintf("%04d/%02d/%02d %02d:%02d:%02d.%06d GO#%d %s",
-			year, month, day, hour, min, sec, micro, goid, bytes)
-	} else {
-		s = fmt.Sprintf("%04d/%02d/%02d %02d:%02d:%02d.%06d %s",
-			year, month, day, hour, min, sec, micro, bytes)
-
-	}
-	_ = s
-}
-
 // fileExists checks if a file exists
 func fileExists(filename string) bool {
 	_, err := os.Stat(filename)
@@ -77,7 +56,7 @@ func PaletteDir() string {
 	if paletteRoot == "" {
 		paletteRoot = os.Getenv("PALETTE")
 		if paletteRoot == "" {
-			Warn("PALETTE environment variable needs to be set.")
+			LogWarn("PALETTE environment variable needs to be set.")
 		}
 	}
 	return paletteRoot
@@ -101,7 +80,7 @@ func MIDIFilePath(nm string) string {
 func LocalPaletteDir() string {
 	localapp := os.Getenv("CommonProgramFiles")
 	if localapp == "" {
-		Warn("Expecting CommonProgramFiles to be set.")
+		LogWarn("Expecting CommonProgramFiles to be set.")
 		return ""
 	}
 	return filepath.Join(localapp, "Palette")
@@ -165,7 +144,7 @@ func TwitchUser() (username string, authtoken string) {
 	if !ok {
 		twitchtoken = "foo"
 	}
-	Info("TwitchUser", "user", twitchuser, "token", twitchtoken)
+	LogInfo("TwitchUser", "user", twitchuser, "token", twitchtoken)
 	return twitchuser, twitchtoken
 }
 
@@ -178,7 +157,7 @@ func ConfigFilePath(nm string) string {
 func LogFilePath(nm string) string {
 	localdir := LocalPaletteDir()
 	if localdir == "" {
-		Warn("using c:/windows/tmp for log directory.")
+		LogWarn("using c:/windows/tmp for log directory.")
 		return filepath.Join("C:/windows/tmp", nm)
 	}
 	return filepath.Join(localdir, "logs", nm)
@@ -215,7 +194,7 @@ func StringMap(params string) (map[string]string, error) {
 		return nil, err
 	}
 	if t != json.Delim('{') {
-		Warn("no curly", "params", params)
+		LogWarn("no curly", "params", params)
 		return nil, errors.New("expected '{' delimiter")
 	}
 	values := make(map[string]string)
@@ -243,7 +222,7 @@ func StringMap(params string) (map[string]string, error) {
 func ResultResponse(resultObj any) string {
 	bytes, err := json.Marshal(resultObj)
 	if err != nil {
-		Warn("ResultResponse: unable to marshal resultObj")
+		LogWarn("ResultResponse: unable to marshal resultObj")
 		return ""
 	}
 	result := string(bytes)
@@ -574,7 +553,7 @@ func SendLogs() error {
 	recipient := ConfigValue("emailto")
 	if recipient == "" {
 		msg := "SendLogs: not sending, no emailto in settings"
-		Warn(msg)
+		LogWarn(msg)
 		return fmt.Errorf(msg)
 	}
 
@@ -598,7 +577,7 @@ func SendLogs() error {
 	if err != nil {
 		return fmt.Errorf("sendLogs: err=%s", err)
 	} else {
-		Info("SendLogs", "zipfile", zipfile)
+		LogInfo("SendLogs", "zipfile", zipfile)
 	}
 	body := fmt.Sprintf("host=%s palette logfiles attached\n", Hostname())
 	return SendMailWithAttachment(body, zipfile)
@@ -627,7 +606,7 @@ func SendMailWithAttachment(body, attachfile string) error {
 	if recipient == "" {
 		return fmt.Errorf("sendMail: not sending, no emailto in settings")
 	}
-	Info("SendMail", "recipient", recipient)
+	LogInfo("SendMail", "recipient", recipient)
 
 	smtpHost := "smtp.gmail.com"
 	smtpPort := 587
@@ -663,7 +642,7 @@ func JsonObject(args ...string) string {
 
 func JsonString(args ...string) string {
 	if len(args)%2 != 0 {
-		Warn("ApiParams: odd number of arguments", "args", args)
+		LogWarn("ApiParams: odd number of arguments", "args", args)
 		return ""
 	}
 	params := ""
