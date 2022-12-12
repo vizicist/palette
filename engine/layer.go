@@ -11,7 +11,7 @@ import (
 )
 
 type Layer struct {
-	// name   string
+	name            string
 	params          *ParamValues
 	freeframeClient *osc.Client
 	resolumeClient  *osc.Client
@@ -23,10 +23,14 @@ var Layers = map[string]*Layer{}
 func GetLayer(layerName string) *Layer {
 	layer, ok := Layers[layerName]
 	if !ok {
-		layer = &Layer{params: NewParamValues()}
+		layer = &Layer{name: layerName, params: NewParamValues()}
 		Layers[layerName] = layer
 	}
 	return layer
+}
+
+func (layer *Layer) Name() string {
+	return layer.name
 }
 
 func (layer *Layer) toFreeFramePlugin(msg *osc.Message) {
@@ -62,18 +66,18 @@ func (layer *Layer) sendPadOneEffectParam(effectName string, paramName string, v
 		return
 	}
 	if paramsMap == nil {
-		Warn("No params value for", "effecdt", effectName)
+		LogWarn("No params value for", "effecdt", effectName)
 		return
 	}
 	oneParam, ok := paramsMap[paramName]
 	if !ok {
-		Warn("No params value for", "param", paramName, "effect", effectName)
+		LogWarn("No params value for", "param", paramName, "effect", effectName)
 		return
 	}
 
 	oneDef, ok := ParamDefs[fullName]
 	if !ok {
-		Warn("No paramdef value for", "param", paramName, "effect", effectName)
+		LogWarn("No paramdef value for", "param", paramName, "effect", effectName)
 		return
 	}
 
@@ -122,7 +126,7 @@ func (layer *Layer) sendPadOneEffectParam(effectName string, paramName string, v
 		msg.Append(float32(valfloat))
 
 	default:
-		Warn("SetParamValueWithString: unknown type of ParamDef for", "name", fullName)
+		LogWarn("SetParamValueWithString: unknown type of ParamDef for", "name", fullName)
 		return
 	}
 
@@ -144,18 +148,18 @@ func (layer *Layer) sendPadOneEffectOnOff(effectName string, onoff bool) {
 	}
 
 	if onoffMap == nil {
-		Warn("No onoffMap value for", "effect", effectName, "maptype", mapType, effectName)
+		LogWarn("No onoffMap value for", "effect", effectName, "maptype", mapType, effectName)
 		return
 	}
 
 	onoffAddr, ok := onoffMap["addr"]
 	if !ok {
-		Warn("No addr value in onoff", "effect", effectName)
+		LogWarn("No addr value in onoff", "effect", effectName)
 		return
 	}
 	onoffArg, ok := onoffMap["arg"]
 	if !ok {
-		Warn("No arg valuei in onoff for", "effect", effectName)
+		LogWarn("No arg valuei in onoff for", "effect", effectName)
 		return
 	}
 	addr := onoffAddr.(string)
@@ -211,7 +215,7 @@ func (layer *Layer) SaveCurrentSnap() error {
 	return fmt.Errorf("Layer.SaveCurrentSnap needs work")
 }
 
-func (layer *Layer) SaveCurrentPreset(path string) error {
+func (layer *Layer) SavePresetInPath(path string) error {
 
 	s := "{\n    \"params\": {\n"
 
@@ -260,12 +264,12 @@ func (layer *Layer) ApplyQuadPreset(preset *Preset, layerToApply string) error {
 		// {category}.{parameter}, but old "quad" files
 		// didn't include the category.
 		if !strings.Contains(parameterName, ".") {
-			Warn("applyQuadPreset: OLD format, not supported")
+			LogWarn("applyQuadPreset: OLD format, not supported")
 			return fmt.Errorf("")
 		}
 		err := layer.Set(parameterName, value)
 		if err != nil {
-			Warn("applyQuadPreset", "name", parameterName, "err", err)
+			LogWarn("applyQuadPreset", "name", parameterName, "err", err)
 			// Don't fail completely on individual failures,
 			// some might be for parameters that no longer exist.
 		}
@@ -287,7 +291,7 @@ func (layer *Layer) ApplyQuadPreset(preset *Preset, layerToApply string) error {
 				if err != nil {
 					// a hack to eliminate errors on a parameter that
 					// still exists in some presets.
-					Warn("applyQuadPreset", "nm", nm, "err", err)
+					LogWarn("applyQuadPreset", "nm", nm, "err", err)
 					// Don't fail completely on individual failures,
 					// some might be for parameters that no longer exist.
 				}

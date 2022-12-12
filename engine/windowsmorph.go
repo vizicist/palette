@@ -273,7 +273,7 @@ func StartMorph(callback CursorCallbackFunc, forceFactor float32) {
 		return
 	}
 	if len(allMorphs) == 0 {
-		Info("No Morphs were found")
+		LogInfo("No Morphs were found")
 		return
 	}
 	for {
@@ -296,8 +296,8 @@ const (
 func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float32) {
 	status := C.SenselReadSensor(C.uchar(m.idx))
 	if status != C.SENSEL_OK {
-		Warn("SenselReadSensor for", "idx", m.idx, "status", status)
-		Warn("Morph has been disabled due to SenselReadSensor errors", "serialnum", m.serialNum)
+		LogWarn("SenselReadSensor for", "idx", m.idx, "status", status)
+		LogWarn("Morph has been disabled due to SenselReadSensor errors", "serialnum", m.serialNum)
 		m.opened = false
 	}
 	numFrames := C.SenselGetNumAvailableFrames(C.uchar(m.idx))
@@ -309,7 +309,7 @@ func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float32) 
 		var frame C.struct_goSenselFrameData
 		status := C.SenselGetFrame(C.uchar(m.idx), &frame)
 		if status != C.SENSEL_OK {
-			Warn("SenselGetFrame", "idx", m.idx, "status", status)
+			LogWarn("SenselGetFrame", "idx", m.idx, "status", status)
 			continue
 		}
 		nc := int(frame.n_contacts)
@@ -317,7 +317,7 @@ func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float32) 
 			var contact C.struct_goSenselContact
 			status = C.SenselGetContact(C.uchar(m.idx), C.uchar(n), &contact)
 			if status != C.SENSEL_OK {
-				Warn("SenselGetContact of morph", "idx", m.idx, "n", n, "status", status)
+				LogWarn("SenselGetContact of morph", "idx", m.idx, "n", n, "status", status)
 				continue
 			}
 			xNorm := float32(contact.x_pos) / m.width
@@ -334,7 +334,7 @@ func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float32) 
 			case CursorUp:
 				ddu = "up"
 			default:
-				Warn("Invalid value", "state", contact.state)
+				LogWarn("Invalid value", "state", contact.state)
 				continue
 			}
 
@@ -358,7 +358,7 @@ func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float32) 
 				}
 				if newPlayerName != "" {
 					if newPlayerName != m.playerName {
-						Info("Switching corners pad", "player", newPlayerName)
+						LogInfo("Switching corners pad", "player", newPlayerName)
 						ce := CursorEvent{
 							ID:        fmt.Sprintf("%d", m.idx),
 							Source:    newPlayerName,
@@ -394,7 +394,7 @@ func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float32) 
 					m.playerName = "D"
 					xNorm = xNorm - 0.5
 				default:
-					Warn("unable to find QUAD player", "x", xNorm, "y", yNorm)
+					LogWarn("unable to find QUAD player", "x", xNorm, "y", yNorm)
 					continue
 				}
 				xNorm *= 2.0
@@ -492,7 +492,7 @@ func WinMorphInitialize() error {
 			if morphtype == "" {
 				// morphtype = "corners" // default value
 				morphtype = "quadrants" // default value
-				Info("serial# isn't in morphs.json", "serialnum", m.serialNum, "morphtype", morphtype)
+				LogInfo("serial# isn't in morphs.json", "serialnum", m.serialNum, "morphtype", morphtype)
 			}
 		}
 
@@ -503,12 +503,12 @@ func WinMorphInitialize() error {
 		case "A", "B", "C", "D":
 			m.playerName = morphtype
 		default:
-			Warn("Unexpected morphtype", "morphtype", morphtype)
+			LogWarn("Unexpected morphtype", "morphtype", morphtype)
 		}
 
 		// Don't use Debug.Morph, this should always gets logged
 		firmware := fmt.Sprintf("%d.%d.%d", m.fwVersionMajor, m.fwVersionMinor, m.fwVersionBuild)
-		Info("Morph Opened and Started", "idx", m.idx, "serial", m.serialNum, "firmware", firmware)
+		LogInfo("Morph Opened and Started", "idx", m.idx, "serial", m.serialNum, "firmware", firmware)
 	}
 	return nil
 }

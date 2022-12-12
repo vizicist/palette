@@ -58,7 +58,7 @@ func InitSynths() {
 
 		Synths[nm] = NewSynth(port, channel, bank, program)
 	}
-	Info("Synths loaded", "len", len(Synths))
+	LogInfo("Synths loaded", "len", len(Synths))
 }
 
 func (synth *Synth) ClearNoteDowns() {
@@ -84,7 +84,7 @@ func NewSynth(port string, channel int, bank int, program int) *Synth {
 	}
 
 	if midiChannelOut == nil {
-		Warn("InitSynths: Unable to open", "port", port)
+		LogWarn("InitSynths: Unable to open", "port", port)
 		return nil
 	}
 	sp := &Synth{
@@ -103,7 +103,7 @@ func NewSynth(port string, channel int, bank int, program int) *Synth {
 func SendANOToSynth(synthName string) {
 	synth, ok := Synths[synthName]
 	if !ok {
-		Warn("SendANOToSynth: no such", "synth", synthName)
+		LogWarn("SendANOToSynth: no such", "synth", synthName)
 		return
 	}
 	if synth == nil {
@@ -130,7 +130,7 @@ func SendANOToSynth(synthName string) {
 func SendControllerToSynth(synthName string, cnum int, cval int) {
 	synth, ok := Synths[synthName]
 	if !ok {
-		Warn("SendControllerToSynth: no such", "synth", synthName)
+		LogWarn("SendControllerToSynth: no such", "synth", synthName)
 		return
 	}
 	mc := MIDI.GetMidiChannelOutput(synth.portchannel)
@@ -142,7 +142,7 @@ func SendControllerToSynth(synthName string, cnum int, cval int) {
 	// This only sends the bank and/or program if they change
 	mc.SendBankProgram(synth.bank, synth.program)
 
-	Warn("SendControlToSynth needs work")
+	LogWarn("SendControlToSynth needs work")
 	/*
 		e := portmidi.Event{
 			Timestamp: time.Now(),
@@ -172,7 +172,7 @@ func SendToSynth(value any) {
 		pitch = v.Pitch
 		velocity = v.Velocity
 		if velocity == 0 {
-			Info("MIDIIO.SendNote: noteon with velocity==0 NOT changed to a noteoff")
+			LogInfo("MIDIIO.SendNote: noteon with velocity==0 NOT changed to a noteoff")
 		}
 	case *NoteOff:
 		channel = v.Channel
@@ -183,14 +183,14 @@ func SendToSynth(value any) {
 		pitch = v.Pitch
 		velocity = v.Velocity
 	default:
-		Warn("SendToSynth: doesn't handle", "type", fmt.Sprintf("%T", v))
+		LogWarn("SendToSynth: doesn't handle", "type", fmt.Sprintf("%T", v))
 		return
 	}
 
 	synthName := fmt.Sprintf("P_01_C_%02d", channel+1)
 	synth, ok := Synths[synthName]
 	if !ok {
-		Warn("SendPhraseElementToSynth: no such", "synth", synthName)
+		LogWarn("SendPhraseElementToSynth: no such", "synth", synthName)
 		return
 	}
 
@@ -254,7 +254,7 @@ func SendToSynth(value any) {
 	// 	status |= 0xE0
 
 	default:
-		Warn("SendToSynth: can't handle", "type", fmt.Sprintf("%T", value))
+		LogWarn("SendToSynth: can't handle", "type", fmt.Sprintf("%T", value))
 		return
 	}
 
@@ -266,7 +266,7 @@ func SendToSynth(value any) {
 
 	err := mc.output.Send([]byte{status, data1, data2})
 	if err != nil {
-		Warn("output.Send", "err", err)
+		LogWarn("output.Send", "err", err)
 	}
 }
 
