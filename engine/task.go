@@ -45,9 +45,11 @@ func (task *Task) LogError(err error, keysAndValues ...any) {
 	LogError(err, keysAndValues...)
 }
 
+/*
 func (task *Task) GetLayer(layerName string) *Layer {
 	return GetLayer(layerName)
 }
+*/
 
 func (task *Task) AllowSource(source ...string) {
 	var ok bool
