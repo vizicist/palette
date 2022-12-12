@@ -1,78 +1,5 @@
 package engine
 
-import (
-	"fmt"
-)
-
-func extractAgent(argsmap map[string]string) string {
-	playerName, playerok := argsmap["player"]
-	if !playerok {
-		playerName = "*"
-	} else {
-		delete(argsmap, "player")
-	}
-	return playerName
-}
-
-func (r *Router) executePlayerAPI(api string, argsmap map[string]string) (result string, err error) {
-
-	return "", fmt.Errorf("executePlayerAPI needs work")
-	/*
-		playerName := extractPlayer(argsmap)
-
-		switch api {
-
-		case "event":
-			return "", r.HandleInputEvent(playerName, argsmap)
-
-		case "set":
-			name, ok := argsmap["name"]
-			if !ok {
-				return "", fmt.Errorf("executePlayerAPI: missing name argument")
-			}
-			value, ok := argsmap["value"]
-			if !ok {
-				return "", fmt.Errorf("executePlayerAPI: missing value argument")
-			}
-			r.SetPlayerParamValue(playerName, name, value)
-			return "", r.saveCurrentSnaps(playerName)
-
-		case "setparams":
-			for name, value := range argsmap {
-				r.SetPlayerParamValue(playerName, name, value)
-			}
-			return "", r.saveCurrentSnaps(playerName)
-
-		case "get":
-			name, ok := argsmap["name"]
-			if !ok {
-				return "", fmt.Errorf("executePlayerAPI: missing name argument")
-			}
-			if playerName == "*" {
-				return "", fmt.Errorf("executePlayerAPI: get can't handle *")
-			}
-			player, err := r.PlayerManager.GetPlayer(playerName)
-			if err != nil {
-				return "", err
-			}
-			return player.params.paramValueAsString(name)
-
-		default:
-			// The player-specific APIs above are handled
-			// here in the Router context, but for everything else,
-			// we punt down to the player's player.
-			// player can be A, B, C, D, or *
-			r.PlayerManager.ApplyToAllPlayers(func(player *Player) {
-				_, err := player.ExecuteAPI(api, argsmap, "")
-				if err != nil {
-					LogError(err)
-				}
-			})
-			return "", nil
-		}
-	*/
-}
-
 /*
 func (r *Router) SetPlayerParamValue(playerName string, name string, value string) {
 	ApplyToPlayersNamed(playerName, func(player *Player) {
@@ -89,7 +16,7 @@ func (r *Router) SetPlayerParamValue(playerName string, name string, value strin
 
 func (r *Router) saveQuadPreset(presetName string) error {
 
-	Warn("Router.saveQuadPreset needs work")
+	LogWarn("Router.saveQuadPreset needs work")
 	return nil
 	/*
 		preset, err := LoadPreset(presetName)

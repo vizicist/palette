@@ -207,7 +207,7 @@ func CliCommand(layer string, args []string) string {
 		if len(args) < 2 {
 			return "Insufficient arguments"
 		}
-		return RemoteAPI(args[1])
+		return RemoteAPI(args[1], args[2:]...)
 
 	case "test":
 		ntimes := 10

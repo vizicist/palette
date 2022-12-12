@@ -72,7 +72,7 @@ type SchedulerElementCmd struct {
 // Start runs the scheduler and never returns
 func (sched *Scheduler) Start(onClick func(click ClickEvent)) {
 
-	Info("Scheduler begins")
+	LogInfo("Scheduler begins")
 
 	// Wake up every 2 milliseconds and check looper events
 	tick := time.NewTicker(2 * time.Millisecond)
@@ -87,7 +87,7 @@ func (sched *Scheduler) Start(onClick func(click ClickEvent)) {
 	// By reading from tick.C, we wake up every 2 milliseconds
 	for now := range tick.C {
 		sched.now = now
-		uptimesecs := sched.Uptime()
+		uptimesecs := Uptime()
 
 		// XXX - should lock from here?
 
@@ -109,7 +109,7 @@ func (sched *Scheduler) Start(onClick func(click ClickEvent)) {
 
 		TheRouter().taskManager.handleClickEvent(ce)
 	}
-	Info("StartRealtime ends")
+	LogInfo("StartRealtime ends")
 }
 
 func (sched *Scheduler) DefaultOnClick(ce ClickEvent) {
@@ -155,13 +155,13 @@ func (sched *Scheduler) DefaultOnClick(ce ClickEvent) {
 				onoff := v.onoff
 				if sched.attractModeIsOn != onoff {
 					sched.attractModeIsOn = onoff
-					sched.lastAttractChange = sched.Uptime()
+					sched.lastAttractChange = Uptime()
 				}
 		*/
 		case SchedulerElementCmd:
 			sched.scheduleElement(v.element)
 		default:
-			Warn("Unexpected type", "type", fmt.Sprintf("%T", v))
+			LogWarn("Unexpected type", "type", fmt.Sprintf("%T", v))
 		}
 	default:
 	}
@@ -204,11 +204,11 @@ func (sched *Scheduler) triggerItemsScheduledAt(clk Clicks) {
 					se.triggered = true
 					sched.triggerPhraseElementsAt(v, clk, dclick)
 				} else {
-					Warn("SchedElement already triggered?")
+					LogWarn("SchedElement already triggered?")
 				}
 			default:
 				msg := fmt.Sprintf("triggerItemsScheduleAt: unexpected Value type=%T", v)
-				Warn(msg)
+				LogWarn(msg)
 			}
 
 			// XXX - this is (maybe) where looping happens
@@ -222,7 +222,7 @@ func (sched *Scheduler) triggerPhraseElementsAt(phr *Phrase, clk Clicks, dclick 
 	for i := phr.list.Front(); i != nil; i = i.Next() {
 		pe, ok := i.Value.(*PhraseElement)
 		if !ok {
-			Warn("Unexpected value in Phrase list")
+			LogWarn("Unexpected value in Phrase list")
 			break
 		}
 		if pe.AtClick <= dclick {
@@ -241,7 +241,7 @@ func (sched *Scheduler) triggerPhraseElementsAt(phr *Phrase, clk Clicks, dclick 
 				sched.pendingNoteOffs.InsertElement(newpe)
 			default:
 				msg := fmt.Sprintf("triggerPhraseElementsAt: unexpected Value type=%T", v)
-				Warn(msg)
+				LogWarn(msg)
 			}
 		}
 	}
@@ -259,9 +259,11 @@ func (sched *Scheduler) time() time.Time {
 }
 */
 
+/*
 func (sched *Scheduler) Uptime() float64 {
 	return sched.now.Sub(sched.time0).Seconds()
 }
+*/
 
 /*
 // StartPhrase xxx
@@ -311,7 +313,7 @@ func (sched *Scheduler) SendAllPendingNoteoffs() {
 		nexti = i.Next()
 		noff, ok := i.Value.(*NoteOff)
 		if !ok {
-			Warn("Non-NoteOff in activeNotes!?", "value", i.Value)
+			LogWarn("Non-NoteOff in activeNotes!?", "value", i.Value)
 			continue
 		}
 		SendToSynth(noff)
@@ -332,7 +334,7 @@ func (sched *Scheduler) advancePendingNoteOffsByOneClick() {
 		pe := i.Value.(*PhraseElement)
 		ntoff, ok := pe.Value.(*NoteOff)
 		if !ok {
-			Warn("Non NoteOff in pendingNoteOffs?")
+			LogWarn("Non NoteOff in pendingNoteOffs?")
 			sched.pendingNoteOffs.list.Remove(i)
 			continue
 		}

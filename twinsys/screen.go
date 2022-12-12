@@ -58,7 +58,7 @@ func Run() {
 		var ysize int
 		n, err := fmt.Sscanf(winsize, "%d,%d", &xsize, &ysize)
 		if err != nil || n != 2 {
-			engine.Warn("Run: bad format of winsize", "winsize", winsize)
+			engine.LogWarn("Run: bad format of winsize", "winsize", winsize)
 		} else {
 			minSize.X = xsize
 			minSize.Y = ysize
@@ -145,13 +145,13 @@ func (screen *Screen) Do(cmd engine.Cmd) string {
 			ebiten.SetCursorMode(ebiten.CursorModeHidden)
 		}
 	case "closeme":
-		engine.Warn("screen.runMsgs: should not be getting CloseMeMsg!?")
+		engine.LogWarn("screen.runMsgs: should not be getting CloseMeMsg!?")
 	case "resizeme":
 		size := cmd.ValuesSize(engine.PointZero)
 		ebiten.SetWindowSize(size.X, size.Y)
 
 	default:
-		engine.Warn("screen.runMsgs: unrecognized", "msg", cmd.Subj)
+		engine.LogWarn("screen.runMsgs: unrecognized", "msg", cmd.Subj)
 	}
 	return ""
 }
@@ -159,7 +159,7 @@ func (screen *Screen) Do(cmd engine.Cmd) string {
 // Layout satisfies the ebiten.Game interface
 func (screen *Screen) Layout(width, height int) (int, int) {
 	if screen == nil {
-		engine.Warn("Screen.Layout: Hey, screen shouldn't be nil!")
+		engine.LogWarn("Screen.Layout: Hey, screen shouldn't be nil!")
 		return width, height
 	}
 	currSize := WinGetSize(screen)

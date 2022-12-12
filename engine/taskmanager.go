@@ -30,10 +30,10 @@ func NewTaskManager() *TaskManager {
 func (rm *TaskManager) RegisterTask(name string, methods TaskMethods) {
 	_, ok := rm.tasks[name]
 	if ok {
-		Warn("RegisterTask: existing task", "task", name)
+		LogWarn("RegisterTask: existing task", "task", name)
 	} else {
 		rm.tasks[name] = NewTask(methods)
-		Info("Registering Task", "task", name)
+		LogInfo("Registering Task", "task", name)
 	}
 }
 

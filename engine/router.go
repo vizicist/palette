@@ -112,17 +112,17 @@ func NewRouter() *Router {
 
 	err := LoadParamEnums()
 	if err != nil {
-		Warn("LoadParamEnums", "err", err)
+		LogWarn("LoadParamEnums", "err", err)
 		// might be fatal, but try to continue
 	}
 	err = LoadParamDefs()
 	if err != nil {
-		Warn("LoadParamDefs", "err", err)
+		LogWarn("LoadParamDefs", "err", err)
 		// might be fatal, but try to continue
 	}
 	err = LoadResolumeJSON()
 	if err != nil {
-		Warn("LoadResolumeJSON", "err", err)
+		LogWarn("LoadResolumeJSON", "err", err)
 		// might be fatal, but try to continue
 	}
 
@@ -174,7 +174,7 @@ func (r *Router) Start() {
 
 	err := LoadMorphs()
 	if err != nil {
-		Warn("StartCursorInput: LoadMorphs", "err", err)
+		LogWarn("StartCursorInput: LoadMorphs", "err", err)
 	}
 
 	go StartMorph(r.cursorManager.handleCursorEvent, 1.0)
@@ -196,7 +196,7 @@ func (r *Router) InputListener() {
 			time.Sleep(time.Millisecond)
 		}
 	}
-	Info("InputListener is being killed")
+	LogInfo("InputListener is being killed")
 }
 
 /*
@@ -232,7 +232,7 @@ func (r *Router) ResolumeLayerForPad(pad string) int {
 		s := ConfigStringWithDefault("playerLayers", playerLayers)
 		layers := strings.Split(s, ",")
 		if len(layers) != 4 {
-			Warn("ResolumeLayerForPad: playerLayers value needs 4 values")
+			LogWarn("ResolumeLayerForPad: playerLayers value needs 4 values")
 			layers = strings.Split(playerLayers, ",")
 		}
 		r.layerMap = make(map[string]int)
@@ -303,11 +303,11 @@ func (r *Router) HandleInputEvent(taskName string, args map[string]string) error
 	switch event {
 
 	case "engine":
-		Info("Router: ignoring engine event")
+		LogInfo("Router: ignoring engine event")
 		return nil
 
 	case "cursor_down", "cursor_drag", "cursor_up":
-		Warn("HandleInputEvent needs work for cursor_*")
+		LogWarn("HandleInputEvent needs work for cursor_*")
 		// ce := ArgsToCursorEvent(args)
 		// ctx.taskFunc(ctx.taskContext,ce)
 		// ctx.agent.OnCursorEvent(ce)
@@ -329,7 +329,7 @@ func (r *Router) HandleInputEvent(taskName string, args map[string]string) error
 		*/
 
 	case "audio_reset":
-		Info("HandleEvent: audio_reset!!")
+		LogInfo("HandleEvent: audio_reset!!")
 		go r.audioReset()
 
 	case "note":
@@ -341,7 +341,7 @@ func (r *Router) HandleInputEvent(taskName string, args map[string]string) error
 		if err != nil {
 			return err
 		}
-		Info("HandleInputEvent", "notestr", notestr, "clickstr", clickstr)
+		LogInfo("HandleInputEvent", "notestr", notestr, "clickstr", clickstr)
 		note, err := PhraseElementFromString(notestr)
 		if err != nil {
 			return err
@@ -349,7 +349,7 @@ func (r *Router) HandleInputEvent(taskName string, args map[string]string) error
 		SendToSynth(note)
 
 	default:
-		Info("HandleInputEvent: event not handled", "event", event)
+		LogInfo("HandleInputEvent: event not handled", "event", event)
 	}
 
 	return nil
@@ -467,7 +467,7 @@ func (r *Router) handleOSCInput(e OSCEvent) {
 		r.handlePatchXREvent(e.Msg)
 
 	default:
-		Warn("Router.HandleOSCInput: Unrecognized OSC message", "source", e.Source, "msg", e.Msg)
+		LogWarn("Router.HandleOSCInput: Unrecognized OSC message", "source", e.Source, "msg", e.Msg)
 	}
 }
 
@@ -526,7 +526,7 @@ func (r *Router) showText(text string) {
 
 func (r *Router) handleClientRestart(msg *osc.Message) {
 
-	Warn("Router.handleClientRestart needs work")
+	LogWarn("Router.handleClientRestart needs work")
 	/*
 		tags, _ := msg.TypeTags()
 		_ = tags
@@ -563,7 +563,7 @@ func (r *Router) handleClientRestart(msg *osc.Message) {
 
 // handleMMTTCursor handles messages from MMTT, reformating them as a standard cursor event
 func (r *Router) handleMMTTCursor(msg *osc.Message) {
-	Warn("Router.handleMMTTCursor needs work")
+	LogWarn("Router.handleMMTTCursor needs work")
 	/*
 		tags, _ := msg.TypeTags()
 		_ = tags
@@ -651,15 +651,25 @@ func (r *Router) handleOSCEvent(msg *osc.Message) {
 	_ = tags
 	nargs := msg.CountArguments()
 	if nargs < 1 {
-		Warn("Router.handleOSCEvent: too few arguments")
+		LogWarn("Router.handleOSCEvent: too few arguments")
 		return
 	}
 	rawargs, err := argAsString(msg, 0)
 	if err != nil {
-		Warn("Router.handleOSCEvent", "err", err)
+		LogWarn("Router.handleOSCEvent", "err", err)
 		return
 	}
 	r.handleInputEventRaw(rawargs)
+}
+
+func extractTask(argsmap map[string]string) string {
+	taskName, ok := argsmap["task"]
+	if !ok {
+		taskName = "*"
+	} else {
+		delete(argsmap, "task")
+	}
+	return taskName
 }
 
 func (r *Router) handleInputEventRaw(rawargs string) {
@@ -668,7 +678,7 @@ func (r *Router) handleInputEventRaw(rawargs string) {
 	if err != nil {
 		return
 	}
-	taskName := extractAgent(args)
+	taskName := extractTask(args)
 	r.HandleInputEvent(taskName, args)
 }
 
@@ -678,27 +688,27 @@ func (r *Router) handlePatchXREvent(msg *osc.Message) {
 	_ = tags
 	nargs := msg.CountArguments()
 	if nargs < 1 {
-		Warn("Router.handlePatchXREvent: too few arguments")
+		LogWarn("Router.handlePatchXREvent: too few arguments")
 		return
 	}
 	var err error
 	if nargs < 3 {
-		Warn("handlePatchXREvent: not enough arguments")
+		LogWarn("handlePatchXREvent: not enough arguments")
 		return
 	}
 	action, _ := argAsString(msg, 0)
 	playerName, _ := argAsString(msg, 1)
 	switch action {
 	case "cursordown":
-		Warn("handlePatchXREvent: cursordown ignored")
+		LogWarn("handlePatchXREvent: cursordown ignored")
 		return
 	case "cursorup":
-		Warn("handlePatchXREvent: cursorup ignored")
+		LogWarn("handlePatchXREvent: cursorup ignored")
 		return
 	}
 	// drag
 	if nargs < 5 {
-		Warn("Not enough arguments for drag")
+		LogWarn("Not enough arguments for drag")
 		return
 	}
 	x, _ := argAsFloat32(msg, 2)
@@ -714,7 +724,7 @@ func (r *Router) handlePatchXREvent(msg *osc.Message) {
 	// we didn't add "player" to the args, no need for extractPlayer
 	err = r.HandleInputEvent(playerName, args)
 	if err != nil {
-		Warn("Router.handlePatchXREvent", "err", err)
+		LogWarn("Router.handlePatchXREvent", "err", err)
 		return
 	}
 }
@@ -725,29 +735,29 @@ func (r *Router) handleOSCSpriteEvent(msg *osc.Message) {
 	_ = tags
 	nargs := msg.CountArguments()
 	if nargs < 1 {
-		Warn("Router.handleOSCSpriteEvent: too few arguments")
+		LogWarn("Router.handleOSCSpriteEvent: too few arguments")
 		return
 	}
 	rawargs, err := argAsString(msg, 0)
 	if err != nil {
-		Warn("Router.handleOSCSpriteEvent", "err", err)
+		LogWarn("Router.handleOSCSpriteEvent", "err", err)
 		return
 	}
 	if len(rawargs) == 0 || rawargs[0] != '{' {
-		Warn("Router.handleOSCSpriteEvent: first char of args must be curly brace")
+		LogWarn("Router.handleOSCSpriteEvent: first char of args must be curly brace")
 		return
 	}
 
 	args, err := StringMap(rawargs)
 	if err != nil {
-		Warn("Router.handleOSCSpriteEvent: Unable to process", "args", rawargs)
+		LogWarn("Router.handleOSCSpriteEvent: Unable to process", "args", rawargs)
 		return
 	}
 
-	playerName := extractAgent(args)
-	err = r.HandleInputEvent(playerName, args)
+	taskName := extractTask(args)
+	err = r.HandleInputEvent(taskName, args)
 	if err != nil {
-		Warn("Router.handleOSCSpriteEvent", "err", err)
+		LogWarn("Router.handleOSCSpriteEvent", "err", err)
 		return
 	}
 }
