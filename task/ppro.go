@@ -68,22 +68,22 @@ func (ppro *PalettePro) Start(task *engine.Task) {
 
 	task.AllowSource("A", "B", "C", "D")
 
-	a := task.GetLayer("a")
+	a := engine.GetLayer("a")
 	a.Set("visual.ffglport", "3334")
 	a.Set("visual.shape", "circle")
 	a.Apply(task.GetPreset("snap.White_Ghosts"))
 
-	b := task.GetLayer("b")
+	b := engine.GetLayer("b")
 	b.Set("visual.ffglport", "3335")
 	b.Set("visual.shape", "square")
 	b.Apply(task.GetPreset("snap.Concentric_Squares"))
 
-	c := task.GetLayer("c")
+	c := engine.GetLayer("c")
 	c.Set("visual.ffglport", "3336")
 	c.Set("visual.shape", "square")
 	c.Apply(task.GetPreset("snap.Circular_Moire"))
 
-	d := task.GetLayer("d")
+	d := engine.GetLayer("d")
 	d.Set("visual.resolumeport", "3337")
 	d.Set("visual.shape", "square")
 	d.Apply(task.GetPreset("snap.Diagonal_Mirror"))
@@ -192,92 +192,6 @@ func (ppro *PalettePro) Api(task *engine.Task, api string, apiargs map[string]st
 		)
 		return js, nil
 
-	case "load":
-		presetName, okpreset := apiargs["preset"]
-		if !okpreset {
-			return "", fmt.Errorf("missing preset parameter")
-		}
-		preset := engine.GetPreset(presetName)
-		err := preset.LoadPreset()
-		if err != nil {
-			return "", err
-		}
-
-		layer, err := ppro.extractLayer(task, apiargs)
-		if err != nil {
-			return "", err
-		}
-
-		if preset.Category == "quad" {
-			// The layerName might be only a single layer, and loadQuadPreset
-			// will only load that one layer from the quad preset
-			err = layer.ApplyQuadPreset(preset, layer.Name())
-			if err != nil {
-				task.LogError(err)
-				return "", err
-			}
-			ppro.SaveCurrentSnaps(task)
-		} else {
-			// It's a non-quad preset for a single layer.
-			// However, the layerName can still be "*" to apply to all layers.
-			layer.Apply(preset)
-			err := layer.SaveCurrentSnap()
-			if err != nil {
-				return "", err
-			}
-		}
-		return "", err
-
-	case "save":
-		layer, err := ppro.extractLayer(task, apiargs)
-		if err != nil {
-			return "", err
-		}
-		presetName, okpreset := apiargs["preset"]
-		if !okpreset {
-			return "", fmt.Errorf("missing preset parameter")
-		}
-		preset := task.GetPreset(presetName)
-		path := preset.WritableFilePath()
-		return "", layer.SavePresetInPath(path)
-
-	case "set":
-		layer, err := ppro.extractLayer(task, apiargs)
-		if err != nil {
-			return "", err
-		}
-		name, ok := apiargs["name"]
-		if !ok {
-			return "", fmt.Errorf("executePlayerAPI: missing name argument")
-		}
-		value, ok := apiargs["value"]
-		if !ok {
-			return "", fmt.Errorf("executePlayerAPI: missing value argument")
-		}
-		layer.Set(name, value)
-		return "", layer.SaveCurrentSnap()
-
-	case "setparams":
-		layer, err := ppro.extractLayer(task, apiargs)
-		if err != nil {
-			return "", err
-		}
-		for name, value := range apiargs {
-			layer.Set(name, value)
-		}
-		return "", layer.SaveCurrentSnap()
-
-	case "get":
-		layer, err := ppro.extractLayer(task, apiargs)
-		if err != nil {
-			return "", err
-		}
-		name, ok := apiargs["name"]
-		if !ok {
-			return "", fmt.Errorf("executePlayerAPI: missing name argument")
-		}
-		return layer.Get(name), nil
-
 		/*
 			default:
 				// The player-specific APIs above are handled
@@ -299,16 +213,7 @@ func (ppro *PalettePro) Api(task *engine.Task, api string, apiargs map[string]st
 	}
 }
 
-// NOTE: this function deletes the "task" element of apiargs before returning it
-func (ppro *PalettePro) extractLayer(task *engine.Task, apiargs map[string]string) (*engine.Layer, error) {
-	layerName, ok := apiargs["layer"]
-	if !ok {
-		return nil, fmt.Errorf("PalettePro: no layer parameter")
-	}
-	delete(apiargs, "layer")
-	return task.GetLayer(layerName), nil
-}
-
+/*
 // NOTE: this function deletes the "task" element of apiargs before returning it
 func extractTask(apiargs map[string]string) string {
 	taskName, ok := apiargs["task"]
@@ -319,6 +224,7 @@ func extractTask(apiargs map[string]string) string {
 	}
 	return taskName
 }
+*/
 
 /*
 func (ppro *PalettePro) OLDexecutePlayerAPI(api string, argsmap map[string]string) (result string, err error) {
