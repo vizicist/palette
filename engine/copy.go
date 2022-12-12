@@ -73,7 +73,7 @@ func dcopy(srcdir, destdir string) (err error) {
 	for _, entry := range entries {
 		einfo, err2 := entry.Info()
 		if err2 != nil {
-			Warn("dcopy", "err", err2)
+			LogWarn("dcopy", "err", err2)
 			continue
 		}
 		name := einfo.Name()

@@ -51,30 +51,20 @@ func RegisterTask(name string, task TaskMethods) {
 	TheRouter().taskManager.RegisterTask(name, task)
 }
 
-/*
-func ActivateAgent(name string) {
-	TheRouter().taskManager.ActivateAgent(name)
-}
-
-func DeactivateAgent(name string) {
-	TheRouter().taskManager.DeactivateAgent(name)
-}
-*/
-
 // func (e *Engine) handleCursorEvent(ce CursorEvent) {
 // 	TheEngine().cursorManager.handleCursorEvent(ce)
 // 	TheEngine().taskManager.handleCursorEvent(ce)
 // }
 
 func (e *Engine) StartTask(name string) {
-	Info("Engine.StartTask needs work", "task", name)
+	LogInfo("Engine.StartTask needs work", "task", name)
 	// e.Router.taskManager.StartTask(name)
 }
 
 func (e *Engine) Start(done chan bool) {
 
 	e.done = done
-	Info("Engine.Start")
+	LogInfo("Engine.Start")
 
 	// Normally, the engine should never die, but if it does,
 	// other processes (e.g. resolume, bidule) may be left around.
@@ -115,7 +105,7 @@ func (e *Engine) initDebug() {
 	darr := strings.Split(logtypes, ",")
 	for _, d := range darr {
 		if d != "" {
-			Info("Turning logging ON for", "logtype", d)
+			LogInfo("Turning logging ON for", "logtype", d)
 			SetLogTypeEnabled(d, true)
 		}
 	}
@@ -137,7 +127,7 @@ func (e *Engine) StartOSC(port int) {
 		e.Router.OSCInput <- OSCEvent{Msg: msg, Source: source}
 	})
 	if err != nil {
-		Warn("StartOSC", "err", err)
+		LogWarn("StartOSC", "err", err)
 	}
 
 	server := &osc.Server{
@@ -172,7 +162,7 @@ func (e *Engine) StartHTTP(port int) {
 				if err != nil {
 					response = ErrorResponse(err)
 				} else {
-					response = resp
+					response = ResultResponse(resp)
 				}
 			}
 		default:

@@ -47,7 +47,7 @@ func (cm *CursorManager) clearCursors() {
 
 	for id, c := range cm.cursors {
 		if !c.downed {
-			Warn("Hmmm, why is a cursor not downed?")
+			LogWarn("Hmmm, why is a cursor not downed?")
 		} else {
 			cm.handleCursorEvent(CursorEvent{Source: id, Ddu: "up"})
 			DebugLogOfType("cursor", "Clearing cursor", "id", id)
@@ -81,7 +81,7 @@ func (cm *CursorManager) handleCursorEvent(ce CursorEvent) {
 }
 
 func (cm *CursorManager) generateCursorGestureesture(source string, cid string, noteDuration time.Duration, x0, y0, z0, x1, y1, z1 float32) {
-	Info("generateCursorGestureesture: start")
+	LogInfo("generateCursorGestureesture: start")
 
 	ce := CursorEvent{
 		Source:    source,
@@ -93,7 +93,7 @@ func (cm *CursorManager) generateCursorGestureesture(source string, cid string, 
 		Area:      0,
 	}
 	cm.handleCursorEvent(ce)
-	Info("generateCursorGestureesture", "ddu", "down", "ce", ce)
+	LogInfo("generateCursorGestureesture", "ddu", "down", "ce", ce)
 
 	// secs := float32(3.0)
 	secs := float32(noteDuration)
@@ -104,7 +104,7 @@ func (cm *CursorManager) generateCursorGestureesture(source string, cid string, 
 	ce.Y = y1
 	ce.Z = z1
 	cm.handleCursorEvent(ce)
-	Info("generateCursorGestureesture end", "ddu", "up", "ce", ce)
+	LogInfo("generateCursorGestureesture end", "ddu", "up", "ce", ce)
 }
 
 func (cm *CursorManager) handleDownDragUp(ce CursorEvent) {
@@ -151,7 +151,7 @@ func (cm *CursorManager) autoCursorUp(now time.Time) {
 		elapsed := now.Sub(c.lastTouch)
 		if elapsed > checkDelay {
 			cm.handleCursorEvent(CursorEvent{Source: "checkCursorUp", Ddu: "up"})
-			Info("Player.checkCursorUp: deleting cursor", "id", id, "elapsed", elapsed)
+			LogInfo("Player.checkCursorUp: deleting cursor", "id", id, "elapsed", elapsed)
 			delete(cm.cursors, id)
 		}
 	}

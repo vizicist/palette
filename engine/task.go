@@ -30,15 +30,15 @@ type TaskMethods interface {
 // type TaskFunc func(ctx context.Context, e Event) (string, error)
 
 func (task *Task) Uptime() float64 {
-	return task.scheduler.Uptime()
+	return Uptime()
 }
 
 func (task *Task) LogInfo(msg string, keysAndValues ...any) {
-	Info(msg, keysAndValues...)
+	LogInfo(msg, keysAndValues...)
 }
 
 func (task *Task) LogWarn(msg string, keysAndValues ...any) {
-	Warn(msg, keysAndValues...)
+	LogWarn(msg, keysAndValues...)
 }
 
 func (task *Task) LogError(err error, keysAndValues ...any) {
@@ -54,7 +54,7 @@ func (task *Task) AllowSource(source ...string) {
 	for _, name := range source {
 		_, ok = task.sources[name]
 		if ok {
-			Info("AllowSource: already set?", "source", name)
+			LogInfo("AllowSource: already set?", "source", name)
 		} else {
 			task.sources[name] = true
 		}
@@ -155,7 +155,7 @@ func (task *Task) ScheduleDebug() string {
 
 func (task *Task) SchedulePhrase(phr *Phrase, click Clicks, dest string) {
 	if phr == nil {
-		Warn("EngineContext.SchedulePhrase: phr == nil?")
+		LogWarn("EngineContext.SchedulePhrase: phr == nil?")
 		return
 	}
 	// ctx.SchedulePhraseAt(phr, CurrentClick())
@@ -376,7 +376,7 @@ func getEffectMap(effectName string, mapType string) (map[string]any, string, in
 
 func addLayerAndClipNums(addr string, layerNum int, clipNum int) string {
 	if addr[0] != '/' {
-		Warn("addr in resolume.json doesn't start with /", "addr", addr)
+		LogWarn("addr in resolume.json doesn't start with /", "addr", addr)
 		addr = "/" + addr
 	}
 	addr = fmt.Sprintf("/composition/layers/%d/clips/%d/video/effects%s", layerNum, clipNum, addr)
@@ -468,7 +468,7 @@ func (ctx *EngineContext) sendPadOneEffectParam(effectName string, paramName str
 */
 
 func (task *Task) handleMIDITimeReset() {
-	Warn("HandleMIDITimeReset!! needs implementation")
+	LogWarn("HandleMIDITimeReset!! needs implementation")
 }
 
 /*
@@ -499,16 +499,21 @@ func (task *Task) OpenMIDIOutput(name string) drivers.In {
 
 // GetPreset is guaranteed to return non=nil
 func (task *Task) GetPreset(presetName string) *Preset {
-	preset, err := LoadPreset(presetName)
-	if err != nil {
-		LogError(err)
+	preset := GetPreset(presetName)
+	return preset
+}
+
+/*
+// LoadPreset is guaranteed to return non=nil
+func (task *Task) LoadPreset(presetName string) *Preset {
+	preset := GetPreset(presetName)
 		preset, err = LoadPreset("")
 		if err != nil {
 			LogError(err)
 		}
 	}
-	return preset
 }
+*/
 
 /*
 func (ctx *EngineContext) ApplyPreset(presetName string) error {
@@ -531,7 +536,7 @@ func (task *Task) ExecuteAPI(api string, args map[string]string, rawargs string)
 
 	// ALL visual.* APIs get forwarded to the FreeFrame plugin inside Resolume
 	if strings.HasPrefix(api, "visual.") {
-		Info("ExecuteAPI: visual.* apis need work")
+		LogInfo("ExecuteAPI: visual.* apis need work")
 		/*
 			msg := osc.NewMessage("/api")
 			msg.Append(strings.TrimPrefix(api, "visual."))
@@ -680,7 +685,7 @@ func ApplyParamsMap(presetType string, paramsmap map[string]any, params *ParamVa
 	for name, ival := range paramsmap {
 		val, okval := ival.(string)
 		if !okval {
-			Warn("value isn't a string in params json", "name", name, "value", val)
+			LogWarn("value isn't a string in params json", "name", name, "value", val)
 			continue
 		}
 		fullname := name
@@ -716,11 +721,8 @@ func (ctx *EngineContext) restoreCurrentSnap(layerName string) {
 */
 
 func (task *Task) SaveCurrentAsPreset(presetName string) error {
-	preset, err := LoadPreset(presetName)
-	if err != nil {
-		return err
-	}
-	path := preset.WriteableFilePath()
+	preset := task.GetPreset(presetName)
+	path := preset.WritableFilePath()
 	return task.SaveCurrentSnapInPath(path)
 }
 

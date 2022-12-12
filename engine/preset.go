@@ -31,6 +31,7 @@ func GetPreset(name string) *Preset {
 	return p
 }
 
+/*
 func LoadPreset(name string) (*Preset, error) {
 	p := GetPreset(name)
 	err := p.loadPreset()
@@ -39,8 +40,9 @@ func LoadPreset(name string) (*Preset, error) {
 	}
 	return p, nil
 }
+*/
 
-func (p *Preset) loadPreset() error {
+func (p *Preset) LoadPreset() error {
 
 	path := p.readableFilePath()
 	paramsmap, err := LoadParamsMap(path)
@@ -60,11 +62,8 @@ func (p *Preset) ApplyTo(params *ParamValues) error {
 	}
 
 	// If there's a _override.json file, use it
-	override, err := LoadPreset(p.Category + "._override")
-	if err != nil {
-		return err
-	}
-	overridepath := override.readableFilePath()
+	overridePreset := GetPreset(p.Category + "._override")
+	overridepath := overridePreset.readableFilePath()
 	if fileExists(overridepath) {
 		DebugLogOfType("preset", "applyPreset using", "overridepath", overridepath)
 		overridemap, err := LoadParamsMap(overridepath)
@@ -91,7 +90,7 @@ func (p *Preset) ApplyTo(params *ParamValues) error {
 			init := def.Init
 			err := params.Set(nm, init)
 			if err != nil {
-				Warn("Loading preset", "preset", nm, "err", err)
+				LogWarn("Loading preset", "preset", nm, "err", err)
 				// Don't fail completely
 			}
 		}
@@ -106,7 +105,7 @@ func (p *Preset) readableFilePath() string {
 }
 
 // WritablePresetFilePath xxx
-func (p *Preset) WriteableFilePath() string {
+func (p *Preset) WritableFilePath() string {
 	path := p.presetFilePath()
 	os.MkdirAll(filepath.Dir(path), 0777)
 	return path
@@ -171,7 +170,7 @@ func PresetMap(wantCategory string) (map[string]string, error) {
 	presetsDir1 := filepath.Join(PaletteDataPath(), PresetsDir())
 	err := filepath.Walk(presetsDir1, walker)
 	if err != nil {
-		Warn("filepath.Walk", "err", err)
+		LogWarn("filepath.Walk", "err", err)
 		return nil, err
 	}
 	return result, nil

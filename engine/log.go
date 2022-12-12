@@ -2,7 +2,6 @@ package engine
 
 import (
 	"fmt"
-	"math"
 	"os"
 	"strings"
 	"time"
@@ -13,16 +12,28 @@ import (
 
 var TheLog *zap.SugaredLogger
 var Time0Nanoseconds = time.Now().UnixNano()
+var Time0 = time.Time{}
+var FirstTime = true
+
+func Uptime() float64 {
+	now := time.Now()
+	if FirstTime {
+		FirstTime = false
+		Time0 = now
+	}
+	return now.Sub(Time0).Seconds()
+}
 
 func myTimeEncoder(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
-	nanos := t.UnixNano() - Time0Nanoseconds
-	sec := float64(nanos) / float64(time.Second)
+	// nanos := t.UnixNano() - Time0Nanoseconds
+	// sec := float64(nanos) / float64(time.Second)
 	// For some reason a %04.4f format doesn't seem to work,
 	// so I do it manuall.
-	leftpart := int(math.Trunc(sec))
-	rf := sec - float64(leftpart)
-	rightpart := int(rf * 1000)
-	s := fmt.Sprintf("%06d,%04d.%04d", CurrentClick(), leftpart, rightpart)
+	// leftpart := int(math.Trunc(sec))
+	// rf := sec - float64(leftpart)
+	// rightpart := int(rf * 1000)
+	// s := fmt.Sprintf("%06d,%04d.%04d", CurrentClick(), leftpart, rightpart)
+	s := fmt.Sprintf("%.6f", Uptime())
 	enc.AppendString(s)
 }
 
@@ -32,7 +43,7 @@ func fileLogger(path string) *zap.Logger {
 		MessageKey:     "msg",
 		LevelKey:       "",
 		NameKey:        "name",
-		TimeKey:        "click",
+		TimeKey:        "uptime",
 		CallerKey:      "", // "caller",
 		FunctionKey:    "", // "function",
 		StacktraceKey:  "stacktrace",
@@ -65,7 +76,7 @@ func InitLog(logname string) {
 	logger := fileLogger(logpath)
 	TheLog = logger.Sugar()
 	defer logger.Sync() // flushes buffer, if any
-	Info("InitLog ===========================", "logname", logname)
+	LogInfo("InitLog ===========================", "logname", logname)
 }
 
 func IsLogging(logtype string) bool {
@@ -82,44 +93,53 @@ func LogError(err error, keysAndValues ...any) {
 	}
 
 	if (len(keysAndValues) % 2) != 0 {
-		Warn("LogOfType function given bad number of arguments")
+		LogWarn("LogOfType function given bad number of arguments")
 	}
 	keysAndValues = append(keysAndValues, "err")
 	keysAndValues = append(keysAndValues, err)
 	caller := "LogError"
-	Warn(caller, keysAndValues...)
+	LogWarn(caller, keysAndValues...)
+}
+
+func appendExtraValues(keysAndValues []any) []any {
+	keysAndValues = append(keysAndValues, "click")
+	keysAndValues = append(keysAndValues, int64(CurrentClick()))
+	keysAndValues = append(keysAndValues, "goroutine")
+	keysAndValues = append(keysAndValues, fmt.Sprintf("%d", GoroutineID()))
+	return keysAndValues
 }
 
 func DebugLogOfType(logtype string, msg string, keysAndValues ...any) {
 	if (len(keysAndValues) % 2) != 0 {
-		Warn("LogOfType function given bad number of arguments")
+		LogWarn("LogOfType function given bad number of arguments")
 	}
-	isdebugging, ok := LogEnabled[logtype]
+	isEnabled, ok := LogEnabled[logtype]
 	keysAndValues = append(keysAndValues, "logtype")
 	keysAndValues = append(keysAndValues, logtype)
 	if !ok {
-		Warn("logtype not recognized", keysAndValues...)
-	} else if isdebugging {
-		keysAndValues = append(keysAndValues, "click")
-		keysAndValues = append(keysAndValues, int64(CurrentClick()))
+		LogWarn("logtype not recognized", keysAndValues...)
+	} else if isEnabled {
+		keysAndValues = appendExtraValues(keysAndValues)
 		TheLog.Infow(msg, keysAndValues...)
 	}
 }
 
-func Warn(msg string, keysAndValues ...any) {
+func LogWarn(msg string, keysAndValues ...any) {
 	if (len(keysAndValues) % 2) != 0 {
-		Warn("Warn function given bad number of arguments")
+		LogWarn("Warn function given bad number of arguments")
 	} else {
+		keysAndValues = appendExtraValues(keysAndValues)
 		keysAndValues = append(keysAndValues, "loglevel")
 		keysAndValues = append(keysAndValues, "warn")
 		TheLog.Warnw(msg, keysAndValues...)
 	}
 }
 
-func Info(msg string, keysAndValues ...any) {
+func LogInfo(msg string, keysAndValues ...any) {
 	if (len(keysAndValues) % 2) != 0 {
-		Warn("LogOfType function given bad number of arguments")
+		LogWarn("LogOfType function given bad number of arguments")
 	}
+	keysAndValues = appendExtraValues(keysAndValues)
 	keysAndValues = append(keysAndValues, "loglevel")
 	keysAndValues = append(keysAndValues, "info")
 	TheLog.Infow(msg, keysAndValues...)

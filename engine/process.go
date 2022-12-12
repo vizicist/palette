@@ -48,7 +48,7 @@ func (pm ProcessManager) StartRunning(process string) error {
 			return fmt.Errorf("StartRunning: unable to start %s, no executable path", process)
 		}
 
-		Info("StartRunning", "path", p.FullPath)
+		LogInfo("StartRunning", "path", p.FullPath)
 
 		err = StartExecutableLogOutput(process, p.FullPath, true, p.Arg)
 		if err != nil {
@@ -95,10 +95,10 @@ func (pm ProcessManager) biduleInfoInit() {
 	path := ConfigValueWithDefault("bidule", "")
 	if path == "" {
 		path = "C:\\Program Files\\Plogue\\Bidule\\Bidule.exe"
-		Warn("No bidule value in settings, using default", "path", path)
+		LogWarn("No bidule value in settings, using default", "path", path)
 	}
 	if !FileExists(path) {
-		Warn("No bidule found, looking for", "path", path)
+		LogWarn("No bidule found, looking for", "path", path)
 		return
 	}
 	exe := path
@@ -116,7 +116,7 @@ func (pm ProcessManager) biduleInfoInit() {
 func (pm ProcessManager) resolumeInfoInit() {
 	fullpath := ConfigValue("resolume")
 	if fullpath != "" && !FileExists(fullpath) {
-		Warn("No Resolume found, looking for", "path", fullpath)
+		LogWarn("No Resolume found, looking for", "path", fullpath)
 		return
 	}
 	if fullpath == "" {
@@ -124,7 +124,7 @@ func (pm ProcessManager) resolumeInfoInit() {
 		if !FileExists(fullpath) {
 			fullpath = "C:\\Program Files\\Resolume Arena\\Arena.exe"
 			if !FileExists(fullpath) {
-				Warn("Resolume not found in default locations")
+				LogWarn("Resolume not found in default locations")
 				return
 			}
 		}
@@ -158,7 +158,7 @@ func (pm ProcessManager) mmttInfoInit() {
 	// The value of mmtt is either "kinect" or "oak"
 	fullpath := filepath.Join(PaletteDir(), "bin", "mmtt_"+mmtt, "mmtt_"+mmtt+".exe")
 	if !FileExists(fullpath) {
-		Warn("no mmtt executable found, looking for", "path", fullpath)
+		LogWarn("no mmtt executable found, looking for", "path", fullpath)
 		return
 	}
 	pm.info["mmtt debugger"] = &processInfo{"mmtt_" + mmtt + ".exe", fullpath, "", nil}
@@ -178,7 +178,7 @@ func (pm ProcessManager) getProcessInfo(process string) (*processInfo, error) {
 func (pm ProcessManager) isRunning(process string) bool {
 	p, err := pm.getProcessInfo(process)
 	if err != nil {
-		Warn("IsRunning: no process named", "process", process)
+		LogWarn("IsRunning: no process named", "process", process)
 		return false
 	}
 	b := IsRunningExecutable(p.Exe)

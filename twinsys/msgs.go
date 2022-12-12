@@ -224,7 +224,7 @@ func StringToRect(s string) (r image.Rectangle) {
 		return image.Rectangle{}
 	}
 	if n != 4 {
-		engine.Warn("StringRect: Bad format", "s", s)
+		engine.LogWarn("StringRect: Bad format", "s", s)
 		return image.Rectangle{}
 	}
 	return r
@@ -238,7 +238,7 @@ func StringToPoint(s string) (p image.Point) {
 		return image.Point{}
 	}
 	if n != 2 {
-		engine.Warn("StringPoint: Bad format", "s", s)
+		engine.LogWarn("StringPoint: Bad format", "s", s)
 		return image.Point{}
 	}
 	return p

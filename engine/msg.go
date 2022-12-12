@@ -123,7 +123,7 @@ func (cmd Cmd) ValuesXY(xyname string, dflt image.Point) image.Point {
 		return dflt
 	}
 	if n != 2 {
-		Warn("ValuesXY didn't parse", "xystr", xystr)
+		LogWarn("ValuesXY didn't parse", "xystr", xystr)
 		return dflt
 	}
 	return image.Point{x, y}

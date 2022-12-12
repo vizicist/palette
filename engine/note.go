@@ -12,7 +12,7 @@ type NoteOn struct {
 }
 
 func (n *NoteOn) String() string {
-	return fmt.Sprintf("(NoteOn Channel=%s Pitch=%d)", n.Channel, n.Pitch)
+	return fmt.Sprintf("(NoteOn Channel=%d Pitch=%d)", n.Channel, n.Pitch)
 }
 
 type NoteOff struct {
@@ -22,7 +22,7 @@ type NoteOff struct {
 }
 
 func (n NoteOff) String() string {
-	return fmt.Sprintf("(NoteOff Channel=%s Pitch=%d)", n.Channel, n.Pitch)
+	return fmt.Sprintf("(NoteOff Channel=%d Pitch=%d)", n.Channel, n.Pitch)
 }
 
 // NoteFull has a duration, i.e. it's a combination of a NoteOn and NoteOff
@@ -45,7 +45,7 @@ func NewNoteFull(channel, pitch, velocity uint8, duration Clicks) *NoteFull {
 }
 
 func (n *NoteFull) String() string {
-	return fmt.Sprintf("(NoteFull Channel=%s Pitch=%d Duration=%d)", n.Channel, n.Pitch, n.Duration)
+	return fmt.Sprintf("(NoteFull Channel=%d Pitch=%d Duration=%d)", n.Channel, n.Pitch, n.Duration)
 }
 
 type NoteBytes struct {

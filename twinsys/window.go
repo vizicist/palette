@@ -46,7 +46,7 @@ func newWindowContextNoParent() WinContext {
 func NewWindowContext(parent Window) WinContext {
 	var style string
 	if parent == nil {
-		engine.Warn("NewWindowContext: unexpected parent == nil?")
+		engine.LogWarn("NewWindowContext: unexpected parent == nil?")
 		style = parent.Context().styleName
 	}
 	return realNewWindowContext(parent, style)
@@ -96,7 +96,7 @@ func WinAddChild(parent Window, td WindowData) Window {
 	child := td.w
 	cc := child.Context()
 	if !cc.initialized {
-		engine.Warn("AddChild: child.Context not initialized!")
+		engine.LogWarn("AddChild: child.Context not initialized!")
 		return nil
 	}
 	cc.minSize = td.minSize
@@ -105,7 +105,7 @@ func WinAddChild(parent Window, td WindowData) Window {
 
 	pc := parent.Context()
 	if !pc.initialized {
-		engine.Warn("AddChild: parent.Data not initialized!?")
+		engine.LogWarn("AddChild: parent.Data not initialized!?")
 		return nil
 	}
 
@@ -113,7 +113,7 @@ func WinAddChild(parent Window, td WindowData) Window {
 	wname := fmt.Sprintf("%s.%d", td.toolType, pc.lastChildID)
 	_, ok := pc.childWindow[wname]
 	if ok {
-		engine.Warn("AddChild: there's already a child with", "name", wname)
+		engine.LogWarn("AddChild: there's already a child with", "name", wname)
 		return nil
 	}
 
@@ -131,7 +131,7 @@ func WinAddChild(parent Window, td WindowData) Window {
 func WinRemoveChild(parent Window, child Window) {
 
 	if child == nil {
-		engine.Warn("RemoveChild: child=nil?")
+		engine.LogWarn("RemoveChild: child=nil?")
 	}
 	pc := parent.Context()
 	childName, ok := pc.childName[child]
@@ -160,7 +160,7 @@ func winMoveWindow(parent Window, child Window, delta image.Point) {
 	pc := parent.Context()
 	childPos, ok := pc.childPos[child]
 	if !ok {
-		engine.Warn("WinMoveWindow: w not in parent childPos?")
+		engine.LogWarn("WinMoveWindow: w not in parent childPos?")
 		return
 	}
 	pc.childPos[child] = childPos.Add(delta)
@@ -169,7 +169,7 @@ func winMoveWindow(parent Window, child Window, delta image.Point) {
 // WinRedrawChildren xxx
 func WinRedrawChildren(parent Window) {
 	if parent == nil {
-		engine.Warn("RedrawChildren: parent==nil?")
+		engine.LogWarn("RedrawChildren: parent==nil?")
 		return
 	}
 	pc := parent.Context()
@@ -206,7 +206,7 @@ func WinDoUpstream(w Window, cmd engine.Cmd) {
 	// engine.Info("DoUpstream","cmd",cmd,"arg",arg)
 	parent := WinParent(w)
 	if parent == nil {
-		engine.Warn("DoUpstream: no parent", "w", w)
+		engine.LogWarn("DoUpstream: no parent", "w", w)
 		return
 	}
 
@@ -310,7 +310,7 @@ func WinSetSize(w Window, size image.Point) {
 // WinSetChildSize xxx
 func WinSetChildSize(w Window, size image.Point) {
 	if size.X == 0 || size.Y == 0 {
-		engine.Warn("WinSetChildSize: too small, setting to 100,100")
+		engine.LogWarn("WinSetChildSize: too small, setting to 100,100")
 		size = image.Point{100, 100}
 	}
 	w.Context().currSz = size
@@ -320,7 +320,7 @@ func WinSetChildSize(w Window, size image.Point) {
 // WinSetChildPos xxx
 func WinSetChildPos(parent Window, child Window, pos image.Point) {
 	if parent == nil {
-		engine.Warn("WinSeetChildPos: parent is nil?")
+		engine.LogWarn("WinSeetChildPos: parent is nil?")
 		return
 	}
 	parent.Context().childPos[child] = pos
@@ -329,12 +329,12 @@ func WinSetChildPos(parent Window, child Window, pos image.Point) {
 // WinChildPos xxx
 func WinChildPos(parent Window, child Window) (p image.Point) {
 	if parent == nil {
-		engine.Warn("WinChildPos: parent is nil?")
+		engine.LogWarn("WinChildPos: parent is nil?")
 		return
 	}
 	childPos, ok := parent.Context().childPos[child]
 	if !ok {
-		engine.Warn("WinChildPos: w not in parent childPos?")
+		engine.LogWarn("WinChildPos: w not in parent childPos?")
 		return
 	}
 	return childPos
@@ -353,7 +353,7 @@ func WinChildRect(parent, child Window) (r image.Rectangle) {
 // WinChildName xxx
 func WinChildName(parent Window, child Window) string {
 	if parent == nil {
-		engine.Warn("WinChildID: parent is nil?")
+		engine.LogWarn("WinChildID: parent is nil?")
 		return ""
 	}
 	id, ok := parent.Context().childName[child]
@@ -367,7 +367,7 @@ func WinChildName(parent Window, child Window) string {
 // WinChildNamed xxx
 func WinChildNamed(parent Window, name string) Window {
 	if parent == nil {
-		engine.Warn("WinChildNamed: parent is nil?")
+		engine.LogWarn("WinChildNamed: parent is nil?")
 		return nil
 	}
 	for w, nm := range parent.Context().childName {
@@ -375,7 +375,7 @@ func WinChildNamed(parent Window, name string) Window {
 			return w
 		}
 	}
-	engine.Warn("WinChildNamed: no child with name", "name", name)
+	engine.LogWarn("WinChildNamed: no child with name", "name", name)
 	return nil
 }
 
@@ -388,7 +388,7 @@ func WinMinSize(w Window) (r image.Point) {
 func WinParent(w Window) Window {
 	parent := w.Context().parent
 	if parent == nil {
-		engine.Warn("Hey, why is WinParent being called for WorldWindow")
+		engine.LogWarn("Hey, why is WinParent being called for WorldWindow")
 	}
 	return parent
 }
@@ -406,7 +406,7 @@ func WinStyleName(w Window) string {
 		return ctx.styleName // Window has its own style
 	}
 	if ctx.parent == nil {
-		engine.Warn("WinStye: using DefaultStyle because no parent", "w", w)
+		engine.LogWarn("WinStye: using DefaultStyle because no parent", "w", w)
 		return DefaultStyleName()
 	}
 	return WinStyleName(ctx.parent) // use the parent's style

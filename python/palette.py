@@ -170,11 +170,10 @@ def add_to_params(params,p):
         return p
     return p + "," + params
 
-def palette_player_api(player, api, params=""):
-    if player == "":
-        log("palette_player_api: no player specified?  Assuming *")
-        player = "*"
-    return palette_api(api,add_to_params(params,"\"player\":\""+player+"\""))
+def palette_layer_api(layer, api, params=""):
+    if layer == "":
+        log("palette_layer_api: no layer specified?")
+    return palette_api(api,add_to_params(params,"\"player\":\""+layer+"\""))
 
 def palette_agent_api(api, params=""):
     return palette_api("agent."+api,add_to_params(params,"\"agent\":\""+AgentName+"\""))

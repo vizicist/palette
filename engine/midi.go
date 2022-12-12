@@ -76,10 +76,10 @@ func InitMIDI() {
 	for _, inp := range inports {
 		name := inp.String()
 		DebugLogOfType("midiports", "MIDI input", "port", name)
-		if strings.Contains(name, "Erae Touch") {
-			// erae = true
-			// EraeInput = inp
-		}
+		// if strings.Contains(name, "Erae Touch") {
+		// 	erae = true
+		// 	EraeInput = inp
+		// }
 		if strings.Contains(name, midiInputName) {
 			// We only open a single input, though midiInputs is an array
 			MIDI.midiInput = inp
@@ -96,7 +96,7 @@ func InitMIDI() {
 		MIDI.midiOutputs[name] = outp
 	}
 
-	Info("Initialized MIDI", "outports", outports, "midiInputName", midiInputName)
+	LogInfo("Initialized MIDI", "outports", outports, "midiInputName", midiInputName)
 
 	// if erae {
 	// 	Info("Erae Touch input is being enabled")
@@ -110,7 +110,7 @@ func (m *MIDIIO) Start(inChan chan MidiEvent) {
 	m.midiInputChan = inChan
 	stop, err := midi.ListenTo(m.midiInput, m.handleMidiInput, midi.UseSysEx())
 	if err != nil {
-		Warn("midi.ListenTo", "err", err)
+		LogWarn("midi.ListenTo", "err", err)
 		return
 	}
 	m.stop = stop
@@ -134,7 +134,7 @@ func (m *MIDIIO) handleMidiInput(msg midi.Message, timestamp int32) {
 		DebugLogOfType("midi", "midi.ListenTo noteend", "bt", bt)
 		m.midiInputChan <- MidiEvent{Msg: msg}
 	default:
-		Warn("Unable to handle MIDI input", "msg", msg)
+		LogWarn("Unable to handle MIDI input", "msg", msg)
 	}
 }
 
@@ -148,30 +148,30 @@ func (m* EraeWriteSysEx(bytes []byte) {
 
 func (mc *MIDIChannelOutput) SendBankProgram(bank int, program int) {
 	if mc.bank != bank {
-		Warn("SendBankProgram: XXX - SHOULD be sending", "bank", bank)
+		LogWarn("SendBankProgram: XXX - SHOULD be sending", "bank", bank)
 		mc.bank = bank
 	}
 	if mc.program != program {
 		mc.program = program
 		status := byte(int64(ProgramStatus) | int64(mc.channel-1))
 		data1 := byte(program - 1)
-		Info("SendBankProgram: MIDI", "status", hexString(status), "program", hexString(data1))
+		LogInfo("SendBankProgram: MIDI", "status", hexString(status), "program", hexString(data1))
 		mc.output.Send([]byte{status, data1})
 	}
 }
 
 func (out *MIDIChannelOutput) WriteShort(status, data1, data2 int64) {
-	Warn("WriteShort needs work")
+	LogWarn("WriteShort needs work")
 }
 
 func (m *MIDIIO) GetMidiChannelOutput(portchannel PortChannel) *MIDIChannelOutput {
 	mc, ok := m.midiChannelOutputs[portchannel]
 	if !ok {
-		Warn("GetMidiChannelOutput: no entry", "port", portchannel.port, "channel", portchannel.channel)
+		LogWarn("GetMidiChannelOutput: no entry", "port", portchannel.port, "channel", portchannel.channel)
 		return nil
 	}
 	if mc.output == nil {
-		Warn("GetMidiChannelOutput: midiDeviceOutput==nil", "port", portchannel.port, "channel", portchannel.channel)
+		LogWarn("GetMidiChannelOutput: midiDeviceOutput==nil", "port", portchannel.port, "channel", portchannel.channel)
 		return nil
 	}
 	if !mc.isopen {
@@ -202,7 +202,7 @@ func (m *MIDIIO) openChannelOutput(portchannel PortChannel) *MIDIChannelOutput {
 		}
 	}
 	if output == nil {
-		Warn("No output found matching", "port", portName)
+		LogWarn("No output found matching", "port", portName)
 		return nil
 	}
 
@@ -232,7 +232,7 @@ func (m *MIDIIO) openFakeChannelOutput(port string, channel int) *MIDIChannelOut
 func (me MidiEvent) Status() uint8 {
 	bytes := me.Msg.Bytes()
 	if len(bytes) == 0 {
-		Warn("Empty bytes in MidiEvent?")
+		LogWarn("Empty bytes in MidiEvent?")
 		return 0
 	}
 	return bytes[0]
@@ -241,7 +241,7 @@ func (me MidiEvent) Status() uint8 {
 func (me MidiEvent) Data1() uint8 {
 	bytes := me.Msg.Bytes()
 	if len(bytes) < 2 {
-		Warn("No Data1 byte in MidiEvent?")
+		LogWarn("No Data1 byte in MidiEvent?")
 		return 0
 	}
 	return bytes[1]

@@ -6,7 +6,7 @@ func (p *Phrase) Copy() *Phrase {
 	p.RLock()
 	defer p.RUnlock()
 
-	Info("Phrase.Copy needs work")
+	LogInfo("Phrase.Copy needs work")
 	return p
 	/*
 		r := NewPhrase()
@@ -21,7 +21,7 @@ func (p *Phrase) Copy() *Phrase {
 
 // CopyAndAppend makes a copy of a Note and appends it to the Phrase
 func (p *Phrase) CopyAndAppend(elem *PhraseElement) *PhraseElement {
-	Info("Phrase.CopyAndAppend needs work")
+	LogInfo("Phrase.CopyAndAppend needs work")
 	newe := elem.Copy()
 	if p.list.Front() == nil {
 		p.list.PushFront(newe)
@@ -55,7 +55,7 @@ func (p *Phrase) CutSound(sound string) *Phrase {
 	p.RLock()
 	defer p.RUnlock()
 
-	Info("Phrase.CutSound needs work")
+	LogInfo("Phrase.CutSound needs work")
 	return nil
 
 	/*

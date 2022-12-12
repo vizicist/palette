@@ -12,7 +12,7 @@ import (
 )
 
 func KillExecutable(executable string) {
-	Info("KillExecutable", "executable", executable)
+	LogInfo("KillExecutable", "executable", executable)
 	stdout := &NoWriter{}
 	stderr := &NoWriter{}
 	cmd, _ := startExecutable("c:\\windows\\system32\\taskkill.exe", false, stdout, stderr, "/F", "/IM", executable)
@@ -31,7 +31,7 @@ func StartExecutableLogOutput(logName string, fullexe string, background bool, a
 	if stderrWriter == nil {
 		stderrWriter = &NoWriter{}
 	}
-	Info("startExecutable", "executable", fullexe)
+	LogInfo("startExecutable", "executable", fullexe)
 	_, err := startExecutable(fullexe, true, stdoutWriter, stderrWriter, args...)
 	return err
 }
@@ -73,7 +73,7 @@ func IsRunningExecutable(exe string) bool {
 	stderr := &NoWriter{}
 	cmd, err := startExecutable("c:\\windows\\system32\\tasklist.exe", false, stdout, stderr)
 	if err != nil {
-		Warn("IsRunningExecutable tasklist.exe", "err", err)
+		LogWarn("IsRunningExecutable tasklist.exe", "err", err)
 		return false
 	}
 	cmd.Wait()
