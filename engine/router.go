@@ -662,23 +662,13 @@ func (r *Router) handleOSCEvent(msg *osc.Message) {
 	r.handleInputEventRaw(rawargs)
 }
 
-func extractTask(argsmap map[string]string) string {
-	taskName, ok := argsmap["task"]
-	if !ok {
-		taskName = "*"
-	} else {
-		delete(argsmap, "task")
-	}
-	return taskName
-}
-
 func (r *Router) handleInputEventRaw(rawargs string) {
 
 	args, err := StringMap(rawargs)
 	if err != nil {
 		return
 	}
-	taskName := extractTask(args)
+	taskName := ExtractAndRemoveValue("task", args)
 	r.HandleInputEvent(taskName, args)
 }
 
@@ -754,7 +744,10 @@ func (r *Router) handleOSCSpriteEvent(msg *osc.Message) {
 		return
 	}
 
-	taskName := extractTask(args)
+	taskName := ExtractAndRemoveValue("task", args)
+	if taskName == "" {
+		LogError(fmt.Errorf("No value for task"))
+	}
 	err = r.HandleInputEvent(taskName, args)
 	if err != nil {
 		LogWarn("Router.handleOSCSpriteEvent", "err", err)
