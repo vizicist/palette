@@ -153,12 +153,13 @@ func (ppro *PalettePro) OnClick(task *engine.Task, ce engine.ClickEvent) {
 
 func (ppro *PalettePro) OnMidiEvent(task *engine.Task, me engine.MidiEvent) {
 
-	//if r.ctx.MIDIThru {
-	//layer.PassThruMIDI(e)
-	//}
-	//if layer.MIDISetScale {
-	//r.handleMIDISetScaleNote(e)
-	//}
+	if ppro.MIDIThru {
+		engine.LogWarn("PassThruMIDI needs work")
+		// ppro.PassThruMIDI(e)
+	}
+	if ppro.MIDISetScale {
+		ppro.handleMIDISetScaleNote(me)
+	}
 
 	task.LogInfo("PalettePro.onMidiEvent", "me", me)
 	phr, err := task.MidiEventToPhrase(me)
@@ -213,83 +214,25 @@ func (ppro *PalettePro) Api(task *engine.Task, api string, apiargs map[string]st
 	}
 }
 
-/*
-// NOTE: this function deletes the "task" element of apiargs before returning it
-func extractTask(apiargs map[string]string) string {
-	taskName, ok := apiargs["task"]
-	if !ok {
-		taskName = "*"
-	} else {
-		delete(apiargs, "task")
-	}
-	return taskName
-}
-*/
-
-/*
-func (ppro *PalettePro) OLDexecutePlayerAPI(api string, argsmap map[string]string) (result string, err error) {
-
-	playerName := extractPlayer(argsmap)
-
-	switch api {
-
-	// case "event":
-	//	return "", r.HandleInputEvent(playerName, argsmap)
-
-	case "set":
-		name, ok := argsmap["name"]
-		if !ok {
-			return "", fmt.Errorf("executePlayerAPI: missing name argument")
-		}
-		value, ok := argsmap["value"]
-		if !ok {
-			return "", fmt.Errorf("executePlayerAPI: missing value argument")
-		}
-		r.SetPlayerParamValue(playerName, name, value)
-		return "", r.saveCurrentSnaps(playerName)
-
-	case "setparams":
-		for name, value := range argsmap {
-			r.SetPlayerParamValue(playerName, name, value)
-		}
-		return "", r.saveCurrentSnaps(playerName)
-
-	case "get":
-		name, ok := argsmap["name"]
-		if !ok {
-			return "", fmt.Errorf("executePlayerAPI: missing name argument")
-		}
-		if playerName == "*" {
-			return "", fmt.Errorf("executePlayerAPI: get can't handle *")
-		}
-		player, err := r.PlayerManager.GetPlayer(playerName)
-		if err != nil {
-			return "", err
-		}
-		return player.params.paramValueAsString(name)
-
-	default:
-		// The player-specific APIs above are handled
-		// here in the Router context, but for everything else,
-		// we punt down to the player's player.
-		// player can be A, B, C, D, or *
-		r.PlayerManager.ApplyToAllPlayers(func(player *Player) {
-			_, err := player.ExecuteAPI(api, argsmap, "")
-			if err != nil {
-				LogError(err)
-			}
-		})
-		return "", nil
-	}
-}
-*/
-
 func (ppro *PalettePro) SaveCurrentSnaps(task *engine.Task) {
 	for _, layer := range ppro.layer {
 		err := layer.SaveCurrentSnap()
 		if err != nil {
 			task.LogError(err)
 		}
+	}
+}
+
+func (ppro *PalettePro) OnCursorEvent(task *engine.Task, ce engine.CursorEvent) {
+
+	if ce.Ddu == "down" { // || ce.Ddu == "drag" {
+		engine.LogInfo("OnCursorEvent", "ce", ce)
+		layer := ppro.cursorToLayer(ce)
+		pitch := ppro.cursorToPitch(task, ce)
+		velocity := uint8(ce.Z * 1280)
+		duration := 3 * engine.QuarterNote
+		dest := layer.Get("sound.synth")
+		ppro.scheduleNoteNow(task, dest, pitch, velocity, duration)
 	}
 }
 
@@ -315,19 +258,6 @@ func (ppro *PalettePro) loadQuadPreset(task *engine.Task, preset *engine.Preset)
 	}
 }
 
-func (ppro *PalettePro) OnCursorEvent(task *engine.Task, ce engine.CursorEvent) {
-
-	if ce.Ddu == "down" { // || ce.Ddu == "drag" {
-		engine.LogInfo("OnCursorEvent", "ce", ce)
-		layer := ppro.cursorToLayer(ce)
-		pitch := ppro.cursorToPitch(task, ce)
-		velocity := uint8(ce.Z * 1280)
-		duration := 4 * engine.QuarterNote
-		dest := layer.Get("sound.synth")
-		ppro.scheduleNoteNow(task, dest, pitch, velocity, duration)
-	}
-}
-
 func (ppro *PalettePro) scheduleNoteNow(task *engine.Task, dest string, pitch, velocity uint8, duration engine.Clicks) {
 	engine.LogInfo("PalettePro.scheculeNoteNow", "dest", dest, "pitch", pitch)
 	pe := &engine.PhraseElement{Value: engine.NewNoteFull(0, pitch, velocity, duration)}
@@ -336,9 +266,11 @@ func (ppro *PalettePro) scheduleNoteNow(task *engine.Task, dest string, pitch, v
 	task.SchedulePhrase(phr, task.CurrentClick(), dest)
 }
 
+/*
 func (ppro *PalettePro) channelToDestination(channel int) string {
 	return fmt.Sprintf("P_03_C_%02d", channel)
 }
+*/
 
 func (ppro *PalettePro) cursorToLayer(ce engine.CursorEvent) *engine.Layer {
 	return ppro.layer["a"]
