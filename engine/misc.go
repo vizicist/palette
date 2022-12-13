@@ -218,6 +218,15 @@ func StringMap(params string) (map[string]string, error) {
 	return values, nil
 }
 
+func ExtractAndRemoveValue(valName string, argsmap map[string]string) string {
+	val, ok := argsmap[valName]
+	if !ok {
+		val = ""
+	}
+	delete(argsmap, valName)
+	return val
+}
+
 // ResultResponse returns a JSON 2.0 result response
 func ResultResponse(resultObj any) string {
 	bytes, err := json.Marshal(resultObj)

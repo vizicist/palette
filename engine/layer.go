@@ -33,6 +33,80 @@ func (layer *Layer) Name() string {
 	return layer.name
 }
 
+func (layer *Layer) Api(api string, apiargs map[string]string) (string, error) {
+
+	switch api {
+
+	case "load":
+		presetName, okpreset := apiargs["preset"]
+		if !okpreset {
+			return "", fmt.Errorf("missing preset parameter")
+		}
+		preset := GetPreset(presetName)
+		err := preset.LoadPreset()
+		if err != nil {
+			return "", err
+		}
+
+		if preset.Category == "quad" {
+			// ApplyQuadPreset will only load that one layer from the quad preset
+			err = layer.ApplyQuadPreset(preset, layer.Name())
+			if err != nil {
+				LogError(err)
+				return "", err
+			}
+			layer.SaveCurrentSnap()
+		} else {
+			// It's a non-quad preset for a single layer.
+			layer.Apply(preset)
+			err := layer.SaveCurrentSnap()
+			if err != nil {
+				return "", err
+			}
+		}
+		return "", err
+
+	case "save":
+		presetName, okpreset := apiargs["preset"]
+		if !okpreset {
+			return "", fmt.Errorf("missing preset parameter")
+		}
+		preset := GetPreset(presetName)
+		path := preset.WritableFilePath()
+		return "", layer.SavePresetInPath(path)
+
+	case "set":
+		name, ok := apiargs["name"]
+		if !ok {
+			return "", fmt.Errorf("executePlayerAPI: missing name argument")
+		}
+		value, ok := apiargs["value"]
+		if !ok {
+			return "", fmt.Errorf("executePlayerAPI: missing value argument")
+		}
+		layer.Set(name, value)
+		return "", layer.SaveCurrentSnap()
+
+	case "setparams":
+		for name, value := range apiargs {
+			layer.Set(name, value)
+		}
+		return "", layer.SaveCurrentSnap()
+
+	case "get":
+		name, ok := apiargs["name"]
+		if !ok {
+			return "", fmt.Errorf("executePlayerAPI: missing name argument")
+		}
+		return layer.Get(name), nil
+
+	default:
+		err := fmt.Errorf("Layer.API: unrecognized api=%s", api)
+		LogError(err)
+		return "", err
+	}
+}
+
 func (layer *Layer) toFreeFramePlugin(msg *osc.Message) {
 	if layer.freeframeClient == nil {
 		ffglPort := layer.GetInt("visual.ffglport")

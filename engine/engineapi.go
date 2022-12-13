@@ -57,7 +57,13 @@ func (e *Engine) ExecuteAPIFromMap(api string, apiargs map[string]string) (resul
 		case "sound":
 			return e.executeSoundAPI(apisuffix, apiargs)
 		case "layer":
-			return e.executeLayerAPI(apisuffix, apiargs)
+			layerName := ExtractAndRemoveValue("layer", apiargs)
+			if layerName == "" {
+				return "", fmt.Errorf("No layer value")
+			}
+			layer := GetLayer(layerName)
+			return layer.Api(apisuffix, apiargs)
+
 		default:
 			return "", fmt.Errorf("ExecuteAPI: unknown prefix on api=%s", api)
 		}
@@ -237,99 +243,6 @@ func (e *Engine) executeSoundAPI(api string, apiargs map[string]string) (result 
 	default:
 		LogWarn("Router.ExecuteAPI api is not recognized\n", "api", api)
 		err = fmt.Errorf("Router.ExecuteSoundAPI unrecognized api=%s", api)
-		result = ""
-	}
-
-	return result, err
-}
-
-// NOTE: this function deletes the "task" element of apiargs before returning it
-func (e *Engine) extractLayer(apiargs map[string]string) (*Layer, error) {
-	layerName, ok := apiargs["layer"]
-	if !ok {
-		return nil, fmt.Errorf("PalettePro: no layer parameter")
-	}
-	delete(apiargs, "layer")
-	return GetLayer(layerName), nil
-}
-
-func (e *Engine) executeLayerAPI(api string, apiargs map[string]string) (result string, err error) {
-
-	layer, err := e.extractLayer(apiargs)
-	if err != nil {
-		return "", err
-	}
-
-	switch api {
-
-	case "load":
-		presetName, okpreset := apiargs["preset"]
-		if !okpreset {
-			return "", fmt.Errorf("missing preset parameter")
-		}
-		preset := GetPreset(presetName)
-		err := preset.LoadPreset()
-		if err != nil {
-			return "", err
-		}
-
-		if preset.Category == "quad" {
-			// The layerName might be only a single layer, and loadQuadPreset
-			// will only load that one layer from the quad preset
-			err = layer.ApplyQuadPreset(preset, layer.Name())
-			if err != nil {
-				LogError(err)
-				return "", err
-			}
-			layer.SaveCurrentSnap()
-		} else {
-			// It's a non-quad preset for a single layer.
-			// However, the layerName can still be "*" to apply to all layers.
-			layer.Apply(preset)
-			err := layer.SaveCurrentSnap()
-			if err != nil {
-				return "", err
-			}
-		}
-		return "", err
-
-	case "save":
-		presetName, okpreset := apiargs["preset"]
-		if !okpreset {
-			return "", fmt.Errorf("missing preset parameter")
-		}
-		preset := GetPreset(presetName)
-		path := preset.WritableFilePath()
-		return "", layer.SavePresetInPath(path)
-
-	case "set":
-		name, ok := apiargs["name"]
-		if !ok {
-			return "", fmt.Errorf("executePlayerAPI: missing name argument")
-		}
-		value, ok := apiargs["value"]
-		if !ok {
-			return "", fmt.Errorf("executePlayerAPI: missing value argument")
-		}
-		layer.Set(name, value)
-		return "", layer.SaveCurrentSnap()
-
-	case "setparams":
-		for name, value := range apiargs {
-			layer.Set(name, value)
-		}
-		return "", layer.SaveCurrentSnap()
-
-	case "get":
-		name, ok := apiargs["name"]
-		if !ok {
-			return "", fmt.Errorf("executePlayerAPI: missing name argument")
-		}
-		return layer.Get(name), nil
-
-	default:
-		err = fmt.Errorf("Engine.executeLayerAPI unrecognized api=%s", api)
-		LogError(err)
 		result = ""
 	}
 
