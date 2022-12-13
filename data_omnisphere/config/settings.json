@@ -1,5 +1,5 @@
 {
-  "debug": "morph,cursor,midi",
+  "debug": "cursor,midi",
   "guilevel": "1",
   "autostart": "bidule,gui",
   "bidule": "C:\\Program Files\\Plogue\\Bidule\\Bidule.exe",
