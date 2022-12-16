@@ -30,19 +30,21 @@ func (e *Engine) ExecuteAPIFromMap(api string, apiargs map[string]string) (resul
 		return "", err
 
 	case "activate":
-		go resolumeActivate()
-		go biduleActivate()
-		return "", nil
+		pproTask, err := TheTaskManager().GetTask("ppro")
+		if err != nil {
+			return "", err
+		}
+		return pproTask.methods.Api(pproTask, "activate", nil)
 
 	case "sendlogs":
 		return "", SendLogs()
 
 	default:
 		words := strings.Split(api, ".")
-		// Single-word APIs (like get, set, load, etc) are player APIs
+		// Single-word APIs (like get, set, load, etc) are layer APIs
 		if len(words) <= 1 {
 			return "", fmt.Errorf("single-word APIs no longer work")
-			// return e.Router.executePlayerAPI(api, apiargs)
+			// return e.Router.executeLayerAPI(api, apiargs)
 		}
 		// Here we handle APIs of the form {apitype}.{apisuffix}
 		apitype := words[0]
@@ -59,9 +61,12 @@ func (e *Engine) ExecuteAPIFromMap(api string, apiargs map[string]string) (resul
 		case "layer":
 			layerName := ExtractAndRemoveValue("layer", apiargs)
 			if layerName == "" {
-				return "", fmt.Errorf("No layer value")
+				return "", fmt.Errorf("no layer value")
 			}
 			layer := GetLayer(layerName)
+			if layer == nil {
+				return "", fmt.Errorf("no such layer: %s", layerName)
+			}
 			return layer.Api(apisuffix, apiargs)
 
 		default:
@@ -116,8 +121,8 @@ func (e *Engine) executeEngineAPI(api string, apiargs map[string]string) (result
 					case "set_transpose":
 						v, err := needFloatArg("value", api, apiargs)
 						if err == nil {
-							ApplyToAllPlayers(func(player *Player) {
-								player.TransposePitch = int(v)
+							ApplyToAllLayers(func(layer *Layer) {
+								layer.TransposePitch = int(v)
 							})
 						}
 
@@ -127,16 +132,16 @@ func (e *Engine) executeEngineAPI(api string, apiargs map[string]string) (result
 					e.Scheduler.transposeAuto = b
 					// Quantizing CurrentClick() to a beat or measure might be nice
 					e.Scheduler.transposeNext = CurrentClick() + e.Scheduler.transposeClicks*OneBeat
-					ApplyToAllPlayers(func(player *Player) {
-						player.TransposePitch = 0
+					ApplyToAllLayers(func(layer *Layer) {
+						layer.TransposePitch = 0
 					})
 				}
 
 			case "set_scale":
 				v, err := needStringArg("value", api, apiargs)
 				if err == nil {
-					ApplyToAllPlayers(func(player *Player) {
-						err = player.SetOneParamValue("misc.scale", v)
+					ApplyToAllLayers(func(layer *Layer) {
+						err = layer.SetOneParamValue("misc.scale", v)
 						if err != nil {
 							LogError(err)
 						}
@@ -145,7 +150,7 @@ func (e *Engine) executeEngineAPI(api string, apiargs map[string]string) (result
 		*/
 
 	case "audio_reset":
-		go e.Router.audioReset()
+		go e.bidule.Reset()
 
 		/*
 			case "recordingStart":
@@ -159,7 +164,7 @@ func (e *Engine) executeEngineAPI(api string, apiargs map[string]string) (result
 				}
 				r.recordingBegun = time.Now()
 				if r.recordingOn {
-					r.recordEvent("global", "*", "start", "{}")
+					r.recordEvent("engine", "*", "start", "{}")
 				}
 			case "recordingSave":
 				var name string
@@ -170,7 +175,7 @@ func (e *Engine) executeEngineAPI(api string, apiargs map[string]string) (result
 
 			case "recordingStop":
 				if r.recordingOn {
-					r.recordEvent("global", "*", "stop", "{}")
+					r.recordEvent("engine", "*", "stop", "{}")
 				}
 				if r.recordingFile != nil {
 					r.recordingFile.Close()
@@ -194,7 +199,7 @@ func (e *Engine) executeEngineAPI(api string, apiargs map[string]string) (result
 
 	default:
 		LogWarn("Router.ExecuteAPI api is not recognized\n", "api", api)
-		err = fmt.Errorf("Router.ExecuteGlobalAPI unrecognized api=%s", api)
+		err = fmt.Errorf("ExecuteEngineAPI: unrecognized api=%s", api)
 		result = ""
 	}
 
@@ -219,7 +224,7 @@ func (e *Engine) executeTaskAPI(api string, apiargs map[string]string) (result s
 	if !okTask {
 		return "", fmt.Errorf("missing task parameter")
 	}
-	task, err := TheRouter().taskManager.GetTask(taskName)
+	task, err := TheTaskManager().GetTask(taskName)
 	if err != nil {
 		return "", fmt.Errorf("task error, err=%s", err)
 	}

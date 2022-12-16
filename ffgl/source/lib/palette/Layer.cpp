@@ -5,15 +5,15 @@
 
 #include "PaletteAll.h"
 
-#define DEFINE_TYPES(t) std::vector<std::string> PlayerParams_##t##Types;
-#include "PlayerParams_types.h"
+#define DEFINE_TYPES(t) std::vector<std::string> LayerParams_##t##Types;
+#include "LayerParams_types.h"
 
-Player::Player() {
+Layer::Layer() {
 
 	_spritelist = new SpriteList();
 	_spritelistbg = new SpriteList();
 
-	NosuchLockInit(&_player_mutex,"player");
+	NosuchLockInit(&_layer_mutex,"layer");
 	_cursorlist_rwlock = PTHREAD_RWLOCK_INITIALIZER;
 	int rc = pthread_rwlock_init(&_cursorlist_rwlock, NULL);
 	if ( rc ) {
@@ -29,17 +29,17 @@ Player::Player() {
 
 }
 
-void copyParamValues(PlayerParams *from, PlayerParams *to) {
+void copyParamValues(LayerParams *from, LayerParams *to) {
 #undef INIT_PARAM
 #define INIT_PARAM(name,def) to->name = from->name;
-#include "PlayerParams_init.h"
+#include "LayerParams_init.h"
 }
 
-Player::~Player() {
-	NosuchDebug(1,"Player DESTRUCTOR!");
+Layer::~Layer() {
+	NosuchDebug(1,"Layer DESTRUCTOR!");
 }
 
-void Player::initParams() {
+void Layer::initParams() {
 	numalive = 0;
 	debugcount = 0;
 	last_tm = 0;
@@ -49,7 +49,7 @@ void Player::initParams() {
 	onoff = 0;
 }
 
-TrackedCursor* Player::_getTrackedCursor(std::string cid, std::string cidsource) {
+TrackedCursor* Layer::_getTrackedCursor(std::string cid, std::string cidsource) {
 	TrackedCursor* retc = NULL;
 
 	for ( std::list<TrackedCursor*>::iterator i = _cursors.begin(); i!=_cursors.end(); i++ ) {
@@ -63,7 +63,7 @@ TrackedCursor* Player::_getTrackedCursor(std::string cid, std::string cidsource)
 	return retc;
 }
 
-float Player::_maxCursorDepth() {
+float Layer::_maxCursorDepth() {
 	// We assume the cursorlist is locked
 	float maxval = 0;
 	for ( std::list<TrackedCursor*>::iterator i = _cursors.begin(); i!=_cursors.end(); i++ ) {
@@ -77,7 +77,7 @@ float Player::_maxCursorDepth() {
 }
 
 void
-Player::setTrackedCursor(Palette* palette, std::string cid, std::string cidsource, glm::vec2 pos, float z) {
+Layer::setTrackedCursor(Palette* palette, std::string cid, std::string cidsource, glm::vec2 pos, float z) {
 
 	if ( pos.x < x_min || pos.x > x_max || pos.y < y_min || pos.y > y_max ) {
 		NosuchDebug("Ignoring out-of-bounds cursor pos=%f,%f,%f\n",pos.x,pos.y);
@@ -85,7 +85,7 @@ Player::setTrackedCursor(Palette* palette, std::string cid, std::string cidsourc
 	}
 
 	if ( ! cursorlist_lock_write() ) {
-		NosuchDebug("Player::setTrackedCursor, unable to lock cursorlist");
+		NosuchDebug("Layer::setTrackedCursor, unable to lock cursorlist");
 		return;
 	}
 
@@ -97,7 +97,7 @@ Player::setTrackedCursor(Palette* palette, std::string cid, std::string cidsourc
 	} else {
 		c = new TrackedCursor(palette, cid, cidsource, this, pos, z);
 		if (NosuchDebugCursor) {
-			NosuchDebug("Player.setTrackedCursor: new TrackedCursor cid=%s", cid.c_str());
+			NosuchDebug("Layer.setTrackedCursor: new TrackedCursor cid=%s", cid.c_str());
 		}
 		_cursors.push_back(c);
 	}
@@ -108,7 +108,7 @@ Player::setTrackedCursor(Palette* palette, std::string cid, std::string cidsourc
 	return;
 }
 
-float Player::getMoveDir(std::string movedirtype) {
+float Layer::getMoveDir(std::string movedirtype) {
 	if ( movedirtype == "left" ) {
 		return 180.0f;
 	}
@@ -137,26 +137,26 @@ float Player::getMoveDir(std::string movedirtype) {
 	throw NosuchBadValueException();
 }
 
-void Player::doCursorUp(Palette* palette, std::string cid) {
+void Layer::doCursorUp(Palette* palette, std::string cid) {
 
 	if (!cursorlist_lock_write()) {
-		NosuchDebug("Player::doCursorUp, unable to lock cursorlist");
+		NosuchDebug("Layer::doCursorUp, unable to lock cursorlist");
 		return;
 	}
 	bool found = false;
 	if (NosuchDebugCursor) {
-		NosuchDebug("Player.doCursorUp cid=%s\n", cid.c_str());
+		NosuchDebug("Layer.doCursorUp cid=%s\n", cid.c_str());
 	}
 	for (std::list<TrackedCursor*>::iterator i = _cursors.begin(); i != _cursors.end(); ) {
 		TrackedCursor* c = *i;
 		NosuchAssert(c);
 		if (NosuchDebugCursor) {
-			NosuchDebug("Player.doCursorUp TrackedCursor loop c->cid=%s\n", c->cid().c_str());
+			NosuchDebug("Layer.doCursorUp TrackedCursor loop c->cid=%s\n", c->cid().c_str());
 		}
 		if (c->cid() == cid) {
 			found = true;
 			if (NosuchDebugCursor) {
-				NosuchDebug("Player.doCursorUp: deleting cid=%s",cid.c_str());
+				NosuchDebug("Layer.doCursorUp: deleting cid=%s",cid.c_str());
 			}
 			i = _cursors.erase(i);
 			delete c;
@@ -166,17 +166,17 @@ void Player::doCursorUp(Palette* palette, std::string cid) {
 	}
 	if (NosuchDebugCursor) {
 		if (!found) {
-			NosuchDebug("Player.doCursorUp: didn't find cursor cid=%s", cid.c_str());
+			NosuchDebug("Layer.doCursorUp: didn't find cursor cid=%s", cid.c_str());
 		}
 		NosuchDebug("End of doCursorUp, _cursors.size = %d", _cursors.size());
 	}
 	cursorlist_unlock();
 }
 
-void Player::clearCursors() {
+void Layer::clearCursors() {
 
 	if (!cursorlist_lock_write()) {
-		NosuchDebug("Player::clearCursors, unable to lock cursorlist");
+		NosuchDebug("Layer::clearCursors, unable to lock cursorlist");
 		return;
 	}
 	// NosuchDebug("Begin clearCursors, _cursors.size = %d",_cursors.size());
@@ -184,7 +184,7 @@ void Player::clearCursors() {
 		TrackedCursor* c = *i;
 		NosuchAssert(c);
 		if (NosuchDebugCursor) {
-			NosuchDebug("Player.clearCursor: deleting cid=%s",c->cid().c_str());
+			NosuchDebug("Layer.clearCursor: deleting cid=%s",c->cid().c_str());
 		}
 		i = _cursors.erase(i);
 		delete c;
@@ -194,7 +194,7 @@ void Player::clearCursors() {
 }
 
 float
-Player::spriteMoveDir(TrackedCursor* c)
+Layer::spriteMoveDir(TrackedCursor* c)
 {
 	float dir;
 	if (params.movedir == "cursor") {
@@ -204,7 +204,7 @@ Player::spriteMoveDir(TrackedCursor* c)
 		else {
 			dir = 360.0f * RANDFLOAT;
 		}
-		// NosuchDebug("Player::spriteMoveDir cursor! dir=%f", dir);
+		// NosuchDebug("Layer::spriteMoveDir cursor! dir=%f", dir);
 		// NosuchDebug("spriteMoveDir cursor degrees = %f",c->curr_degrees);
 		// not sure why I have to reverse it - the cursor values are probably reversed
 		dir -= 90.0;
@@ -214,14 +214,14 @@ Player::spriteMoveDir(TrackedCursor* c)
 	}
 	else {
 		dir = getMoveDir(params.movedir);
-		// NosuchDebug("Player::spriteMoveDir movedir=%s dir=%f", params.movedir.c_str(), dir);
+		// NosuchDebug("Layer::spriteMoveDir movedir=%s dir=%f", params.movedir.c_str(), dir);
 	}
 	// NosuchDebug("spriteMoveDir dir=%f movedir=%s", dir, params.movedir.c_str());
 	return dir;
 }
 
 Sprite*
-Player::makeSprite(std::string shape) {
+Layer::makeSprite(std::string shape) {
 
 	Sprite* s = NULL;
 	if (shape == "square") {
@@ -247,7 +247,7 @@ Player::makeSprite(std::string shape) {
 }
 
 void
-Player::instantiateSprite(TrackedCursor* c, bool throttle) {
+Layer::instantiateSprite(TrackedCursor* c, bool throttle) {
 
 	std::string shape = params.shape;
 
@@ -296,16 +296,16 @@ Player::instantiateSprite(TrackedCursor* c, bool throttle) {
 		s->initState(c->cid(), c->cidsource(), pos, spriteMoveDir(c), c->curr_raw_depth, anginit);
 		c->set_last_instantiate(tm);
 		if ( NosuchDebugSprite ) {
-			NosuchDebug("Player.instantiateSprite: cid=%s", c->cid().c_str());
+			NosuchDebug("Layer.instantiateSprite: cid=%s", c->cid().c_str());
 		}
 		_spritelist->add(s,params.nsprites);
 	}
 }
 
 void
-Player::instantiateSpriteAt(std::string cid, glm::vec2 pos, float z) {
+Layer::instantiateSpriteAt(std::string cid, glm::vec2 pos, float z) {
 
-	// NosuchDebug( "Player::instantiateSpriteAt: Player=this=%lld  spritestyle=%s\n", (long long)this, this->params.spritestyle.c_str() );
+	// NosuchDebug( "Layer::instantiateSpriteAt: Layer=this=%lld  spritestyle=%s\n", (long long)this, this->params.spritestyle.c_str() );
 
 	// std::string shape = params.shape;
 	Sprite* s = makeSprite(params.shape);
@@ -315,19 +315,19 @@ Player::instantiateSpriteAt(std::string cid, glm::vec2 pos, float z) {
 		float anginit = s->params.rotanginit;
 		s->initState(cid, source, pos, spriteMoveDir(NULL), z, anginit);
 		if (NosuchDebugSprite) {
-			NosuchDebug("Player.instantiateSpriteAt: cid=%s pos=%f,%f", cid.c_str(), pos.x, pos.y);
+			NosuchDebug("Layer.instantiateSpriteAt: cid=%s pos=%f,%f", cid.c_str(), pos.x, pos.y);
 		}
 		_spritelist->add(s, params.nsprites);
 	}
 }
 
 void
-Player::instantiateSpriteBg() {
+Layer::instantiateSpriteBg() {
 
 	if( _spritelistbg->size() != 0 ) {
 		return;
 	}
-	NosuchDebug( "Player::instantiateSpriteBg: creating square sprite for bg\n" );
+	NosuchDebug( "Layer::instantiateSpriteBg: creating square sprite for bg\n" );
 	Sprite* s = makeSprite("square");
 	std::string source = "bg_source";
 	std::string cid = "bg_cid";
@@ -338,7 +338,7 @@ Player::instantiateSpriteBg() {
 		float z = 0.0f;
 		s->initState(cid, source, pos, spriteMoveDir(NULL), 0.5, anginit);
 		if (NosuchDebugSprite) {
-			NosuchDebug("Player.instantiateSpriteBg: cid=%s pos=%f,%f", cid.c_str(), pos.x, pos.y);
+			NosuchDebug("Layer.instantiateSpriteBg: cid=%s pos=%f,%f", cid.c_str(), pos.x, pos.y);
 		}
 		s->params.spritestyle = "texture";
 		s->params.aspect      = 0.527f;
@@ -347,7 +347,7 @@ Player::instantiateSpriteBg() {
 	}
 }
 
-bool Player::cursorlist_lock_read() {
+bool Layer::cursorlist_lock_read() {
 	int e = pthread_rwlock_rdlock(&_cursorlist_rwlock);
 	if (e != 0) {
 		NosuchDebug("_cursorlist_rwlock for read failed!? e=%d", e);
@@ -357,7 +357,7 @@ bool Player::cursorlist_lock_read() {
 	return true;
 }
 
-bool Player::cursorlist_lock_write() {
+bool Layer::cursorlist_lock_write() {
 	int e = pthread_rwlock_wrlock(&_cursorlist_rwlock);
 	if (e != 0) {
 		NosuchDebug("_cursorlist_rwlock for write failed!? e=%d", e);
@@ -367,7 +367,7 @@ bool Player::cursorlist_lock_write() {
 	return true;
 }
 
-void Player::cursorlist_unlock() {
+void Layer::cursorlist_unlock() {
 	int e = pthread_rwlock_unlock(&_cursorlist_rwlock);
 	if (e != 0) {
 		NosuchDebug("_cursorlist_rwlock unlock failed!? e=%d", e);
@@ -376,15 +376,15 @@ void Player::cursorlist_unlock() {
 	NosuchDebug(2, "_cursorlist_rwlock unlock succeeded");
 }
 
-void Player::draw(PaletteDrawer* b) {
+void Layer::draw(PaletteDrawer* b) {
 	_spritelist->lock_read();
 	_spritelist->draw(b);
 	_spritelist->unlock();
 }
 
-void Player::drawbg(PaletteDrawer* drawer) {
+void Layer::drawbg(PaletteDrawer* drawer) {
 	if( params.inputbackground ) {
-		Player::instantiateSpriteBg();
+		Layer::instantiateSpriteBg();
 		// Only 1 sprite in _spritelistbg, so far
 		// _spritelistbg->lock_read();
 		_spritelistbg->draw(drawer);
@@ -392,20 +392,20 @@ void Player::drawbg(PaletteDrawer* drawer) {
 	}
 }
 
-void Player::clear() {
+void Layer::clear() {
 	_spritelist->clear();
-	// NosuchDebug( "Player::clear is NOT (yet) clearing _spritelistbg\n" );
+	// NosuchDebug( "Layer::clear is NOT (yet) clearing _spritelistbg\n" );
 	clearCursors();
 }
 
-void Player::advanceTo(int tm) {
+void Layer::advanceTo(int tm) {
 
 	_spritelist->advanceTo(tm, params.gravity);
 
 	if (last_tm > 0) {
 		int dt = leftover_tm + tm - last_tm;
 		if (dt > fire_period) {
-			// NosuchDebug("Player %d calling behave->periodicFire now=%d",this->id,Palette::now);
+			// NosuchDebug("Layer %d calling behave->periodicFire now=%d",this->id,Palette::now);
 			advanceCursorsTo(tm);
 			dt -= fire_period;
 		}
@@ -414,7 +414,7 @@ void Player::advanceTo(int tm) {
 	last_tm = tm;
 }
 
-void Player::advanceCursorsTo(int tm) {
+void Layer::advanceCursorsTo(int tm) {
 
 	if (!cursorlist_lock_read()) {
 		NosuchDebug("Graphic->advanceTo returns, unable to lock cursorlist");
@@ -426,7 +426,7 @@ void Player::advanceCursorsTo(int tm) {
 		if (NosuchDebugCursor) {
 			int sz = (int)cursors().size();
 			if (sz > 0) {
-				NosuchDebug("Player.advanceCursorsTo: tm=%d cursors.size=%d  sprites.size=%d", tm, cursors().size(), _spritelist->size());
+				NosuchDebug("Layer.advanceCursorsTo: tm=%d cursors.size=%d  sprites.size=%d", tm, cursors().size(), _spritelist->size());
 			}
 		}
 		*/
@@ -455,7 +455,7 @@ void Player::advanceCursorsTo(int tm) {
 	cursorlist_unlock();
 }
 
-void Player::deleteOldCursors(Palette* palette) {
+void Layer::deleteOldCursors(Palette* palette) {
 
 	// Ideally, should only lock it for reading, and then then only lock it
 	// for writing when we find an old cursor
@@ -473,7 +473,7 @@ void Player::deleteOldCursors(Palette* palette) {
 			int too_idle = 10 * 1000;
 			if ( palette->now > (c->touched() + too_idle) ) {
 				if (NosuchDebugCursor) {
-					NosuchDebug("Player.deleteOldCursors: deleting cid=%s\n", c->cid().c_str());
+					NosuchDebug("Layer.deleteOldCursors: deleting cid=%s\n", c->cid().c_str());
 				}
 				i = _cursors.erase(i);
 				delete c;
@@ -493,4 +493,4 @@ void Player::deleteOldCursors(Palette* palette) {
 }
 
 
-// Scheduler* Player::scheduler() { return palette->paletteHost()->scheduler(); }
+// Scheduler* Layer::scheduler() { return palette->paletteHost()->scheduler(); }

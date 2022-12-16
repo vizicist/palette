@@ -61,16 +61,12 @@ func NewScheduler() *Scheduler {
 	return s
 }
 
-type AttractModeCmd struct {
-	onoff bool
-}
-
 type SchedulerElementCmd struct {
 	element *SchedElement
 }
 
 // Start runs the scheduler and never returns
-func (sched *Scheduler) Start(onClick func(click ClickEvent)) {
+func (sched *Scheduler) Start() {
 
 	LogInfo("Scheduler begins")
 
@@ -104,22 +100,21 @@ func (sched *Scheduler) Start(onClick func(click ClickEvent)) {
 			// Info("SCHEDULER skipping to next loop, newclick is unchanged","newclick",newclick,"currentClick",currentClick)
 			continue
 		}
-		ce := ClickEvent{Click: newclick, Uptime: uptimesecs}
-		onClick(ce)
 
-		TheRouter().taskManager.handleClickEvent(ce)
+		sched.advanceTransposeTo(newclick)
+		sched.advanceClickTo(newclick)
+
+		SetCurrentClick(newclick)
+
+		sched.checkInput()
+
+		ce := ClickEvent{Click: newclick, Uptime: uptimesecs}
+		TheTaskManager().handleClickEvent(ce)
 	}
 	LogInfo("StartRealtime ends")
 }
 
-func (sched *Scheduler) DefaultOnClick(ce ClickEvent) {
-
-	newclick := ce.Click
-
-	sched.advanceTransposeTo(newclick)
-	sched.advanceClickTo(newclick)
-
-	SetCurrentClick(newclick)
+func (sched *Scheduler) checkInput() {
 
 	/*
 		processCheckEnabled := sched.processCheckSecs > 0
@@ -148,16 +143,8 @@ func (sched *Scheduler) DefaultOnClick(ce ClickEvent) {
 
 	select {
 	case cmd := <-sched.cmdInput:
-		// Info("Realtime.Control", "cmd", cmd)
+		LogInfo("Scheduler.cmdInput", "cmd", cmd)
 		switch v := cmd.(type) {
-		/*
-			case AttractModeCmd:
-				onoff := v.onoff
-				if sched.attractModeIsOn != onoff {
-					sched.attractModeIsOn = onoff
-					sched.lastAttractChange = Uptime()
-				}
-		*/
 		case SchedulerElementCmd:
 			sched.scheduleElement(v.element)
 		default:
@@ -311,7 +298,13 @@ func (sched *Scheduler) SendAllPendingNoteoffs() {
 	var nexti *list.Element
 	for i := sched.pendingNoteOffs.list.Front(); i != nil; i = nexti {
 		nexti = i.Next()
-		noff, ok := i.Value.(*NoteOff)
+		pe, ok := i.Value.(*PhraseElement)
+		if !ok {
+			LogWarn("Non-PhraseElement in activeNotes!?", "value", i.Value)
+			continue
+
+		}
+		noff, ok := pe.Value.(*NoteOff)
 		if !ok {
 			LogWarn("Non-NoteOff in activeNotes!?", "value", i.Value)
 			continue
@@ -413,10 +406,10 @@ func (sched *Scheduler) advanceTransposeTo(newclick Clicks) {
 	transposePitch := sched.transposeValues[sched.transposeIndex]
 	DebugLogOfType("transpose", "advanceTransposeTo", "newclick", newclick, "transposePitch", transposePitch)
 	/*
-		fr _, player := range TheRouter().players {
-			// player.clearDown()
-			LogOfType("transpose""setting transposepitch in player","pad", player.padName, "transposePitch",transposePitch, "nactive",len(player.activeNotes))
-			player.TransposePitch = transposePitch
+		fr _, layer := range TheRouter().layers {
+			// layer.clearDown()
+			LogOfType("transpose""setting transposepitch in layer","pad", layer.padName, "transposePitch",transposePitch, "nactive",len(layer.activeNotes))
+			layer.TransposePitch = transposePitch
 		}
 	*/
 	sched.SendAllPendingNoteoffs()
