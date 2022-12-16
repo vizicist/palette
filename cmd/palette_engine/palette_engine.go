@@ -25,7 +25,7 @@ func main() {
 
 	e := engine.TheEngine()
 
-	e.StartTask("default")
+	e.StartTask("ppro")
 
 	done := make(chan bool)
 	e.Start(done)

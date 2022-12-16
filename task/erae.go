@@ -90,7 +90,7 @@ func (agent *Agent_erae) EraeFingerIndicator(zone, x, y byte) {
 	recth := byte(2)
 	dim := 1.0
 	for dim > 0 {
-		// Should set color based on EraePlayer
+		// Should set color based on EraeLayer
 		red := byte(0)
 		green := byte(0)
 		blue := byte(0)

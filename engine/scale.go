@@ -8,8 +8,8 @@ type Scale struct {
 // Scales maps a name to a Scale
 var Scales map[string]*Scale
 
-// GlobalScale xxx
-func GlobalScale(name string) *Scale {
+// GetScale xxx
+func GetScale(name string) *Scale {
 	s, ok := Scales[name]
 	if !ok {
 		LogWarn("No such scale", "name", name)
