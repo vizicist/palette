@@ -151,6 +151,7 @@ func (mc *MIDIChannelOutput) SendBankProgram(bank int, program int) {
 		LogWarn("SendBankProgram: XXX - SHOULD be sending", "bank", bank)
 		mc.bank = bank
 	}
+	// if the requested program doesn't match the current one, send it
 	if mc.program != program {
 		mc.program = program
 		status := byte(int64(ProgramStatus) | int64(mc.channel-1))

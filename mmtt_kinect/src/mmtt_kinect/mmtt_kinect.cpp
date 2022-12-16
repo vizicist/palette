@@ -183,7 +183,7 @@ KinectDepthCamera::processRawDepth(const NUI_DEPTH_IMAGE_PIXEL *depth)
 		// This is a bottleneck
 #ifdef USE_NUIDEPTHPIXELTODEPTH
 		uint16_t mm = NuiDepthPixelToDepth(d);
-		// Not totally sure why, but I think this is needed due to the 3-bit shift for the player index?
+		// Not totally sure why, but I think this is needed due to the 3-bit shift for the layer index?
 		// Otherwise, the millimeter values don't seem to make sense.
 		mm *= 8;
 #else

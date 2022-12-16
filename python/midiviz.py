@@ -12,11 +12,11 @@ print("mid = ",mid)
 playbacktimefactor = 0.5
 mididevice = "testmidi"
 
-def doNote(msg,msgtimesofar,player):
-    palette.SendMIDIEvent(mididevice,msgtimesofar,msg,player)
+def doNote(msg,msgtimesofar,layer):
+    palette.SendMIDIEvent(mididevice,msgtimesofar,msg,layer)
 
 reg = 0
-players = "ABCD"
+layers = "ABCD"
 for i in range(1000):
     msgtimesofar = 0.0
     for msg in mid:
@@ -25,7 +25,7 @@ for i in range(1000):
         print("msg.bytes=",msg.bytes())
         arr = msg.bytes()
         ch = arr[0] & 0xf
-        player = "ABCD"[ch%4]
+        layer = "ABCD"[ch%4]
         print("arr = ",arr)
         s = ""
         for b in arr:
@@ -35,5 +35,5 @@ for i in range(1000):
         time.sleep(tosleep)
 
         if msg.type == "note_on" or msg.type == "note_off":
-            doNote(msg,msgtimesofar,player)
+            doNote(msg,msgtimesofar,layer)
 

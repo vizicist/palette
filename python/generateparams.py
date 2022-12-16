@@ -1,6 +1,6 @@
 #
 # This script takes a Params.list file and generates all the .h files
-# for Player and Sprite parameters.  This allows new parameters to be added
+# for Layer and Sprite parameters.  This allows new parameters to be added
 # just by editing the Params.list file and re-running this script.
 # Originally the parameters were represented in generalized lists,
 # but looking them up at execution time was expensive (as determined
@@ -31,7 +31,7 @@ def generate(homedir, force, sourcedir, floatType):
 	enummtime = os.path.getmtime(enumfile)
 
 	try:
-		outputmtime = os.path.getmtime(os.path.join(sourcedir,"PlayerParams_declare.h"))
+		outputmtime = os.path.getmtime(os.path.join(sourcedir,"LayerParams_declare.h"))
 		jsonupdated = outputmtime < jsonmtime 
 		enumupdated = outputmtime < enummtime
 	except:
@@ -55,14 +55,14 @@ def generate(homedir, force, sourcedir, floatType):
 		print("Unable to open "+jsonfile)
 		sys.exit(1)
 
-	out_rp_declare = openFile(sourcedir,"PlayerParams_declare.h")
-	out_rp_get = openFile(sourcedir,"PlayerParams_get.h")
-	out_rp_increment = openFile(sourcedir,"PlayerParams_increment.h")
-	out_rp_init = openFile(sourcedir,"PlayerParams_init.h")
-	out_rp_issprite = openFile(sourcedir,"PlayerParams_issprite.h")
-	out_rp_list = openFile(sourcedir,"PlayerParams_list.h")
-	out_rp_set = openFile(sourcedir,"PlayerParams_set.h")
-	out_rp_toggle = openFile(sourcedir,"PlayerParams_toggle.h")
+	out_rp_declare = openFile(sourcedir,"LayerParams_declare.h")
+	out_rp_get = openFile(sourcedir,"LayerParams_get.h")
+	out_rp_increment = openFile(sourcedir,"LayerParams_increment.h")
+	out_rp_init = openFile(sourcedir,"LayerParams_init.h")
+	out_rp_issprite = openFile(sourcedir,"LayerParams_issprite.h")
+	out_rp_list = openFile(sourcedir,"LayerParams_list.h")
+	out_rp_set = openFile(sourcedir,"LayerParams_set.h")
+	out_rp_toggle = openFile(sourcedir,"LayerParams_toggle.h")
 
 	j = json.load(f)
 
@@ -87,14 +87,14 @@ def generate(homedir, force, sourcedir, floatType):
 		captype = types[typ]
 		realtype = rtypes[typ]
 
-		is_player_param = (paramtype == "sprite" or paramtype == "visual" or paramtype == "NO_MORE_SOUND_PARAMS_sound")
+		is_layer_param = (paramtype == "sprite" or paramtype == "visual" or paramtype == "NO_MORE_SOUND_PARAMS_sound")
 		
 		if realtype == "float" and floatType == "float":
 			fsuffix = "f"
 		else:
 			fsuffix = ""
 
-		if is_player_param:
+		if is_layer_param:
 
 			out_rp_declare.write("%s %s;\n"%(realtype,basename))
 			out_rp_get.write("GET_%s_PARAM(%s);\n"%(captype,basename))
@@ -139,24 +139,24 @@ def generate(homedir, force, sourcedir, floatType):
 		print("Unable to open "+enumfile)
 		sys.exit(1)
 
-	out_rp_types = openFile(sourcedir,"PlayerParams_types.h")
-	out_rp_typesdeclare = openFile(sourcedir,"PlayerParams_typesdeclare.h")
+	out_rp_types = openFile(sourcedir,"LayerParams_types.h")
+	out_rp_typesdeclare = openFile(sourcedir,"LayerParams_typesdeclare.h")
 	enumj = json.load(enumf)
 
 	for name in enumj:
 		out_rp_typesdeclare.write("DECLARE_TYPES(%s);\n"%(name))
 		out_rp_types.write("DEFINE_TYPES(%s);\n"%(name))
 
-	# define the PlayerParams_Initializeypes() function
+	# define the LayerParams_Initializeypes() function
 	out_rp_types.write("\n")
 	out_rp_types.write("void\n")
-	out_rp_types.write("PlayerParams_InitializeTypes() {\n")
+	out_rp_types.write("LayerParams_InitializeTypes() {\n")
 
 	for name in enumj:
 		arr = enumj[name]
 		out_rp_types.write("\n")
 		for a in arr:
-			out_rp_types.write("\tPlayerParams_%sTypes.push_back(\"%s\");\n"%(name,a))
+			out_rp_types.write("\tLayerParams_%sTypes.push_back(\"%s\");\n"%(name,a))
 
 	out_rp_types.write("};\n")
 

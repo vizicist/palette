@@ -176,7 +176,7 @@
     <ClCompile Include="..\..\source\lib\palette\PaletteDrawer.cpp">
       <Filter>lib\palette</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\source\lib\palette\Player.cpp">
+    <ClCompile Include="..\..\source\lib\palette\Layer.cpp">
       <Filter>lib\palette</Filter>
     </ClCompile>
   </ItemGroup>
@@ -338,7 +338,7 @@
     <ClInclude Include="..\..\source\lib\nosuch\NosuchException.h">
       <Filter>lib\nosuch</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\source\lib\palette\Player.h">
+    <ClInclude Include="..\..\source\lib\palette\Layer.h">
       <Filter>lib\palette</Filter>
     </ClInclude>
   </ItemGroup>

@@ -4,16 +4,12 @@ import (
 	"fmt"
 	"path/filepath"
 	"strings"
-	"time"
-
-	"github.com/hypebeast/go-osc/osc"
 )
 
 type processInfo struct {
-	Exe          string // just the last part
-	FullPath     string
-	Arg          string
-	ActivateFunc func()
+	Exe      string // just the last part
+	FullPath string
+	Arg      string
 }
 
 type ProcessManager struct {
@@ -53,10 +49,6 @@ func (pm ProcessManager) StartRunning(process string) error {
 		err = StartExecutableLogOutput(process, p.FullPath, true, p.Arg)
 		if err != nil {
 			return fmt.Errorf("start: process=%s err=%s", process, err)
-		}
-
-		if p.ActivateFunc != nil {
-			go p.ActivateFunc()
 		}
 	}
 	return nil
@@ -110,7 +102,7 @@ func (pm ProcessManager) biduleInfoInit() {
 	if bidulefile == "" {
 		bidulefile = "default.bidule"
 	}
-	pm.info["bidule"] = &processInfo{exe, path, ConfigFilePath(bidulefile), biduleActivate}
+	pm.info["bidule"] = &processInfo{exe, path, ConfigFilePath(bidulefile)}
 }
 
 func (pm ProcessManager) resolumeInfoInit() {
@@ -134,19 +126,19 @@ func (pm ProcessManager) resolumeInfoInit() {
 	if lastslash > 0 {
 		exe = fullpath[lastslash+1:]
 	}
-	pm.info["resolume"] = &processInfo{exe, fullpath, "", resolumeActivate}
+	pm.info["resolume"] = &processInfo{exe, fullpath, ""}
 }
 
 func (pm ProcessManager) guiInfoInit() {
 	exe := "palette_gui.exe"
 	fullpath := filepath.Join(PaletteDir(), "bin", "pyinstalled", exe)
-	pm.info["gui"] = &processInfo{exe, fullpath, "", nil}
+	pm.info["gui"] = &processInfo{exe, fullpath, ""}
 }
 
 func (pm ProcessManager) engineInfoInit() {
 	exe := "palette_engine.exe"
 	fullpath := filepath.Join(PaletteDir(), "bin", exe)
-	pm.info["engine"] = &processInfo{exe, fullpath, "", nil}
+	pm.info["engine"] = &processInfo{exe, fullpath, ""}
 }
 
 func (pm ProcessManager) mmttInfoInit() {
@@ -161,7 +153,7 @@ func (pm ProcessManager) mmttInfoInit() {
 		LogWarn("no mmtt executable found, looking for", "path", fullpath)
 		return
 	}
-	pm.info["mmtt debugger"] = &processInfo{"mmtt_" + mmtt + ".exe", fullpath, "", nil}
+	pm.info["mmtt debugger"] = &processInfo{"mmtt_" + mmtt + ".exe", fullpath, ""}
 }
 
 func (pm ProcessManager) getProcessInfo(process string) (*processInfo, error) {
@@ -183,59 +175,6 @@ func (pm ProcessManager) isRunning(process string) bool {
 	}
 	b := IsRunningExecutable(p.Exe)
 	return b
-}
-
-func resolumeActivate() {
-	// handle_activate sends OSC messages to start the layers in Resolume,
-	resolumeClient := osc.NewClient(LocalAddress, ResolumePort)
-	textLayer := TheRouter().ResolumeLayerForText()
-	clipnum := 1
-
-	// do it a few times, in case Resolume hasn't started up
-	for i := 0; i < 4; i++ {
-		time.Sleep(5 * time.Second)
-		for _, pad := range TheRouter().playerLetters {
-			layernum := TheRouter().ResolumeLayerForPad(string(pad))
-			DebugLogOfType("resolume", "Activating Resolume", "layer", layernum, "clipnum", clipnum)
-			connectClip(resolumeClient, layernum, clipnum)
-		}
-		if textLayer >= 1 {
-			connectClip(resolumeClient, textLayer, clipnum)
-		}
-	}
-}
-
-func connectClip(resolumeClient *osc.Client, layer int, clip int) {
-	addr := fmt.Sprintf("/composition/layers/%d/clips/%d/connect", layer, clip)
-	msg := osc.NewMessage(addr)
-	// Note: sending 0 doesn't seem to disable a clip; you need to
-	// bypass the layer to turn it off
-	msg.Append(int32(1))
-	_ = resolumeClient.Send(msg)
-}
-
-func bypassLayer(resolumeClient *osc.Client, layer int, onoff bool) {
-	addr := fmt.Sprintf("/composition/layers/%d/bypassed", layer)
-	msg := osc.NewMessage(addr)
-	v := 0
-	if onoff {
-		v = 1
-	}
-	msg.Append(int32(v))
-	_ = resolumeClient.Send(msg)
-}
-
-func biduleActivate() {
-	addr := "127.0.0.1"
-	bidulePort := 3210
-	biduleClient := osc.NewClient(addr, bidulePort)
-	msg := osc.NewMessage("/play")
-	msg.Append(int32(1)) // turn it on
-	for i := 0; i < 10; i++ {
-		dt := 5 * time.Second
-		time.Sleep(dt)
-		_ = biduleClient.Send(msg)
-	}
 }
 
 func (pm ProcessManager) killAll() {

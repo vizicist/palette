@@ -1,9 +1,9 @@
 package engine
 
 /*
-func (r *Router) SetPlayerParamValue(playerName string, name string, value string) {
-	ApplyToPlayersNamed(playerName, func(player *Player) {
-		err := player.SetOneParamValue(name, value)
+func (r *Router) SetLayerParamValue(layerName string, name string, value string) {
+	ApplyToLayersNamed(layerName, func(layer *Layer) {
+		err := layer.SetOneParamValue(name, value)
 		if err != nil {
 			LogError(err)
 			// But don't fail completely, this might be for
@@ -31,9 +31,9 @@ func (r *Router) saveQuadPreset(presetName string) error {
 		Info("saveQuadPreset", "preset", presetName)
 
 			for _, ctx := range r.taskManager.agentsContext {
-				Info("starting", "player", player.playerName)
+				Info("starting", "layer", layer.layerName)
 				// Print the parameter values sorted by name
-				fullNames := player.params.values
+				fullNames := layer.params.values
 				sortedNames := make([]string, 0, len(fullNames))
 				for k := range fullNames {
 					sortedNames = append(sortedNames, k)
@@ -41,12 +41,12 @@ func (r *Router) saveQuadPreset(presetName string) error {
 				sort.Strings(sortedNames)
 
 				for _, fullName := range sortedNames {
-					valstring, err := player.params.paramValueAsString(fullName)
+					valstring, err := layer.params.paramValueAsString(fullName)
 					if err != nil {
 						LogError(err)
 						continue
 					}
-					s += fmt.Sprintf("%s        \"%s-%s\":\"%s\"", sep, player.playerName, fullName, valstring)
+					s += fmt.Sprintf("%s        \"%s-%s\":\"%s\"", sep, layer.layerName, fullName, valstring)
 					sep = ",\n"
 				}
 			}

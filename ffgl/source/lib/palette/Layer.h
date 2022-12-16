@@ -1,5 +1,5 @@
-#ifndef _PLAYER_H
-#define _PLAYER_H
+#ifndef _layer_H
+#define _layer_H
 
 #include <list>
 
@@ -12,27 +12,27 @@ class PaletteDrawer;
 class TrackedCursor;
 class GraphicBehaviour;
 
-#define DECLARE_TYPES(t) extern std::vector<std::string> PlayerParams_##t##Types;
-#include "PlayerParams_typesdeclare.h"
-void PlayerParams_InitializeTypes();
+#define DECLARE_TYPES(t) extern std::vector<std::string> LayerParams_##t##Types;
+#include "LayerParams_typesdeclare.h"
+void LayerParams_InitializeTypes();
 
-class Player;
+class Layer;
 
-class PlayerParams : public Params {
+class LayerParams : public Params {
 public:
-	PlayerParams() {
+	LayerParams() {
 #undef INIT_PARAM
 #define INIT_PARAM( name, def ) ; name = ##def ;
-#include "PlayerParams_init.h"
+#include "LayerParams_init.h"
 	}
 
 	static void Initialize() {
-		PlayerParams_InitializeTypes();
+		LayerParams_InitializeTypes();
 	}
 
 	std::string JsonString(std::string pre, std::string indent, std::string post) {
 		char* names[] = {
-#include "PlayerParams_list.h"
+#include "LayerParams_list.h"
 			NULL
 		};
 		return JsonList(names,pre,indent,post);
@@ -48,10 +48,10 @@ public:
 #define SET_STR_PARAM(name) else if ( nm == #name ) (name = val),(stringval=true)
 
 		if ( false ) { }
-#include "PlayerParams_set.h"
+#include "LayerParams_set.h"
 		else {
-			if (nm != "source" && nm != "player" && nm != "nuid") {
-				NosuchDebug("PlayerParams::Set unrecognized param name - %s",nm.c_str());
+			if (nm != "source" && nm != "layer" && nm != "nuid") {
+				NosuchDebug("LayerParams::Set unrecognized param name - %s",nm.c_str());
 			}
 		}
 
@@ -65,18 +65,18 @@ public:
 #define INC_DBL_PARAM(name,mn,mx) else if (nm==#name)name=adjust(name,amount,mn,mx)
 #define INC_FLT_PARAM(name,mn,mx) else if (nm==#name)name=adjust(name,amount,mn,mx)
 #define INC_INT_PARAM(name,mn,mx) else if (nm==#name)name=adjust(name,amount,mn,mx)
-#define INC_STR_PARAM(name,vals) else if (nm==#name)name=Params::adjust(name,amount,PlayerParams_ ## vals ## Types)
+#define INC_STR_PARAM(name,vals) else if (nm==#name)name=Params::adjust(name,amount,LayerParams_ ## vals ## Types)
 #define INC_BOOL_PARAM(name) else if (nm==#name)name=adjust(name,amount)
 #define INC_NO_PARAM(name) else if (nm==#name)name=name
 
 		if (false) {}
-#include "PlayerParams_increment.h"
+#include "LayerParams_increment.h"
 	}
 	void Toggle(std::string nm) {
 		// Just the boolean values
 #define TOGGLE_PARAM(name) else if ( nm == #name ) name = ! name
 		if ( false ) { }
-#include "PlayerParams_toggle.h"
+#include "LayerParams_toggle.h"
 		else { NosuchDebug("No Toggle implemented for %s",nm.c_str()); }
 	}
 	std::string Get(std::string nm) {
@@ -88,32 +88,32 @@ public:
 #define GET_STR_PARAM(name) else if(nm==#name)return name
 
 		if ( false ) { }
-#include "PlayerParams_get.h"
+#include "LayerParams_get.h"
 		return "";
 	}
 
-#include "PlayerParams_declare.h"
+#include "LayerParams_declare.h"
 
 	bool IsSpriteParam(std::string nm) {
 
 #define IS_SPRITE_PARAM(name) if( nm == #name ) { return true; }
 
-#include "PlayerParams_issprite.h"
+#include "LayerParams_issprite.h"
 		return false;
 	}
 
 
 };
 
-void copyParamValues( PlayerParams* from, PlayerParams* to );
+void copyParamValues( LayerParams* from, LayerParams* to );
 
-class Player {
+class Layer {
 
 public:
-	Player();
-	~Player();
+	Layer();
+	~Layer();
 
-	PlayerParams params;
+	LayerParams params;
 
 	void initParams();
 	void setTrackedCursor(Palette* palette, std::string cid, std::string cidsource, glm::vec2 pos, float z);
@@ -153,7 +153,7 @@ private:
 
 	std::list<TrackedCursor*> _cursors;
 
-	pthread_mutex_t _player_mutex;
+	pthread_mutex_t _layer_mutex;
 	pthread_rwlock_t _cursorlist_rwlock;
 
 	// Access to these lists need to be thread-safe

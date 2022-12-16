@@ -6,13 +6,16 @@ import (
 
 // type TaskInfo struct {
 // }
+func TheTaskManager() *TaskManager {
+	return TheEngine().TaskManager
+}
 
 func NewTask(methods TaskMethods) *Task {
 	return &Task{
-		methods:   methods,
-		sources:   map[string]bool{},
-		scheduler: NewScheduler(),
-		params:    NewParamValues(),
+		methods: methods,
+		sources: map[string]bool{},
+		// scheduler: NewScheduler(),
+		params: NewParamValues(),
 	}
 }
 
@@ -27,14 +30,23 @@ func NewTaskManager() *TaskManager {
 	}
 }
 
-func (rm *TaskManager) RegisterTask(name string, methods TaskMethods) {
-	_, ok := rm.tasks[name]
+func (tm *TaskManager) RegisterTask(name string, methods TaskMethods) {
+	_, ok := tm.tasks[name]
 	if ok {
 		LogWarn("RegisterTask: existing task", "task", name)
 	} else {
-		rm.tasks[name] = NewTask(methods)
+		tm.tasks[name] = NewTask(methods)
 		LogInfo("Registering Task", "task", name)
 	}
+}
+
+func (tm *TaskManager) StartTask(name string) error {
+	task, err := tm.GetTask(name)
+	if err != nil {
+		return err
+	}
+	task.methods.Start(task)
+	return nil
 }
 
 /*
@@ -98,22 +110,22 @@ func (pm *TaskManager) GetTask(name string) (*Task, error) {
 	}
 }
 
-func (pm *TaskManager) handleCursorEvent(e CursorEvent) {
-	for _, task := range pm.tasks {
+func (tm *TaskManager) handleCursorEvent(e CursorEvent) {
+	for _, task := range tm.tasks {
 		if task.IsSourceAllowed(e.Source) {
 			task.methods.OnEvent(task, e)
 		}
 	}
 }
 
-func (pm *TaskManager) handleMidiEvent(e MidiEvent) {
-	for _, task := range pm.tasks {
+func (tm *TaskManager) handleMidiEvent(e MidiEvent) {
+	for _, task := range tm.tasks {
 		task.methods.OnEvent(task, e)
 	}
 }
 
-func (pm *TaskManager) handleClickEvent(e ClickEvent) {
-	for _, task := range pm.tasks {
+func (tm *TaskManager) handleClickEvent(e ClickEvent) {
+	for _, task := range tm.tasks {
 		task.methods.OnEvent(task, e)
 	}
 }

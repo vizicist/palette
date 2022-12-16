@@ -22,9 +22,8 @@ type CursorEvent struct {
 }
 
 type CursorManager struct {
-	cursors            map[string]*DeviceCursor
-	cursorsMutex       sync.RWMutex
-	lastAttractCommand time.Time
+	cursors      map[string]*DeviceCursor
+	cursorsMutex sync.RWMutex
 }
 
 // Format xxx
@@ -57,17 +56,6 @@ func (cm *CursorManager) clearCursors() {
 }
 
 func (cm *CursorManager) handleCursorEvent(ce CursorEvent) {
-
-	// As soon as there's any non-internal cursor event,
-	// we turn attract mode off.
-	if ce.Source != "internal" {
-		if time.Since(cm.lastAttractCommand) > time.Second {
-			go func() {
-				TheEngine().Scheduler.cmdInput <- AttractModeCmd{false}
-			}()
-			cm.lastAttractCommand = time.Now()
-		}
-	}
 
 	switch ce.Ddu {
 
@@ -128,8 +116,8 @@ func (cm *CursorManager) handleDownDragUp(ce CursorEvent) {
 		c.downed = true
 	}
 
-	// See which player wants this input
-	TheRouter().taskManager.handleCursorEvent(ce)
+	// See which layer wants this input
+	TheTaskManager().handleCursorEvent(ce)
 
 	DebugLogOfType("cursor", "CursorManager.handleDownDragUp", "id", ce.ID, "ddu", ce.Ddu, "x", ce.X, "y", ce.Y, "z", ce.Z)
 	if ce.Ddu == "up" {
@@ -151,7 +139,7 @@ func (cm *CursorManager) autoCursorUp(now time.Time) {
 		elapsed := now.Sub(c.lastTouch)
 		if elapsed > checkDelay {
 			cm.handleCursorEvent(CursorEvent{Source: "checkCursorUp", Ddu: "up"})
-			LogInfo("Player.checkCursorUp: deleting cursor", "id", id, "elapsed", elapsed)
+			LogInfo("Layer.checkCursorUp: deleting cursor", "id", id, "elapsed", elapsed)
 			delete(cm.cursors, id)
 		}
 	}

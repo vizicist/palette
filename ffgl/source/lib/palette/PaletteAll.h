@@ -22,7 +22,7 @@
 #include "Params.h"
 #include "PaletteUtil.h"
 #include "PaletteOscInput.h"
-#include "Player.h"
+#include "Layer.h"
 #include "Scheduler.h"
 #include "TrackedCursor.h"
 #include "Palette.h"

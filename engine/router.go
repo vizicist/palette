@@ -18,18 +18,17 @@ var OSCPort = 3333
 var LocalAddress = "127.0.0.1"
 var ResolumePort = 7000
 var GuiPort = 3943
-var PloguePort = 3210
 
 // Router takes events and routes them
 type Router struct {
-	playerLetters string
+	layerLetters string
 
 	OSCInput      chan OSCEvent
 	midiInputChan chan MidiEvent
 	cursorInput   chan CursorEvent
 
 	cursorManager *CursorManager
-	taskManager   *TaskManager
+	// taskManager   *TaskManager
 
 	killme bool
 
@@ -39,15 +38,14 @@ type Router struct {
 
 	midiEventHandler MIDIEventHandler
 
-	resolumeClient *osc.Client
-	guiClient      *osc.Client
-	plogueClient   *osc.Client
+	// resolumeClient *osc.Client
+	guiClient *osc.Client
 
-	myHostname           string
-	generateVisuals      bool
-	generateSound        bool
-	playerAssignedToNUID map[string]string
-	inputEventMutex      sync.RWMutex
+	myHostname          string
+	generateVisuals     bool
+	generateSound       bool
+	layerAssignedToNUID map[string]string
+	inputEventMutex     sync.RWMutex
 }
 
 type MIDIEventHandler func(MidiEvent)
@@ -102,12 +100,11 @@ func NewRouter() *Router {
 	r := Router{}
 
 	r.cursorManager = NewCursorManager()
-	r.taskManager = NewTaskManager()
 
-	r.playerLetters = ConfigValue("pads")
-	if r.playerLetters == "" {
+	r.layerLetters = ConfigValue("pads")
+	if r.layerLetters == "" {
 		DebugLogOfType("morph", "No value for pads, assuming ABCD")
-		r.playerLetters = "ABCD"
+		r.layerLetters = "ABCD"
 	}
 
 	err := LoadParamEnums()
@@ -126,20 +123,18 @@ func NewRouter() *Router {
 		// might be fatal, but try to continue
 	}
 
-	r.playerAssignedToNUID = make(map[string]string)
+	r.layerAssignedToNUID = make(map[string]string)
 
-	r.resolumeClient = osc.NewClient(LocalAddress, ResolumePort)
 	r.guiClient = osc.NewClient(LocalAddress, GuiPort)
-	r.plogueClient = osc.NewClient(LocalAddress, PloguePort)
 
 	/*
-		for i, c := range r.playerLetters {
+		for i, c := range r.layerLetters {
 			resolumeLayer := r.ResolumeLayerForPad(string(c))
 			ffglPort := ResolumePort + i
 			ch := string(c)
 			freeframeClient := osc.NewClient("127.0.0.1", ffglPort)
 			Info("OSC freeframeClient", "ffglPort", ffglPort, "resolumeLayer", resolumeLayer)
-			r.players[ch] = NewPlayer(ch, resolumeLayer, freeframeClient, r.resolumeClient, r.guiClient)
+			r.layers[ch] = NewLayer(ch, resolumeLayer, freeframeClient, r.resolumeClient, r.guiClient)
 			Info("Pad created", "pad", ch, "resolumeLayer", resolumeLayer, "resolumePort", resolumePort)
 		}
 	*/
@@ -189,7 +184,7 @@ func (r *Router) InputListener() {
 		case msg := <-r.OSCInput:
 			r.handleOSCInput(msg)
 		case event := <-r.midiInputChan:
-			r.taskManager.handleMidiEvent(event)
+			TheTaskManager().handleMidiEvent(event)
 		case event := <-r.cursorInput:
 			r.cursorManager.handleCursorEvent(event)
 		default:
@@ -215,25 +210,14 @@ func (r *Router) handleMidiEvent(me MidiEvent) {
 }
 */
 
-func (r *Router) ResolumeLayerForText() int {
-	defLayer := "5"
-	s := ConfigStringWithDefault("textlayer", defLayer)
-	layernum, err := strconv.Atoi(s)
-	if err != nil {
-		LogError(err)
-		layernum, _ = strconv.Atoi(defLayer)
-	}
-	return layernum
-}
-
 func (r *Router) ResolumeLayerForPad(pad string) int {
 	if r.layerMap == nil {
-		playerLayers := "1,2,3,4"
-		s := ConfigStringWithDefault("playerLayers", playerLayers)
+		layerLayers := "1,2,3,4"
+		s := ConfigStringWithDefault("layerLayers", layerLayers)
 		layers := strings.Split(s, ",")
 		if len(layers) != 4 {
-			LogWarn("ResolumeLayerForPad: playerLayers value needs 4 values")
-			layers = strings.Split(playerLayers, ",")
+			LogWarn("ResolumeLayerForPad: layerLayers value needs 4 values")
+			layers = strings.Split(layerLayers, ",")
 		}
 		r.layerMap = make(map[string]int)
 		r.layerMap["A"], _ = strconv.Atoi(layers[0])
@@ -327,10 +311,6 @@ func (r *Router) HandleInputEvent(taskName string, args map[string]string) error
 				ctx.handleMIDITimeReset()
 				ctx.sendANO()
 		*/
-
-	case "audio_reset":
-		LogInfo("HandleEvent: audio_reset!!")
-		go r.audioReset()
 
 	case "note":
 		notestr, err := needStringArg("note", "HandleEvent", args)
@@ -495,7 +475,7 @@ func (r *Router) handleMMTTButton(butt string) {
 		return
 	}
 	Info("Router.handleMMTTButton", "butt", butt, "preset", presetName)
-	err = preset.applyQuadPresetToPlayer("*")
+	err = preset.applyQuadPresetToLayer("*")
 	if err != nil {
 		Warn("handleMMTTButton", "preset", presetName, "err", err)
 	}
@@ -504,25 +484,6 @@ func (r *Router) handleMMTTButton(butt string) {
 	go r.showText(text)
 }
 */
-
-func (r *Router) showText(text string) {
-
-	textLayerNum := r.ResolumeLayerForText()
-
-	// disable the text display by bypassing the layer
-	bypassLayer(r.resolumeClient, textLayerNum, true)
-
-	addr := fmt.Sprintf("/composition/layers/%d/clips/1/video/source/textgenerator/text/params/lines", textLayerNum)
-	msg := osc.NewMessage(addr)
-	msg.Append(text)
-	_ = r.resolumeClient.Send(msg)
-
-	// give it time to "sink in", otherwise the previous text displays briefly
-	time.Sleep(150 * time.Millisecond)
-
-	connectClip(r.resolumeClient, textLayerNum, 1)
-	bypassLayer(r.resolumeClient, textLayerNum, false)
-}
 
 func (r *Router) handleClientRestart(msg *osc.Message) {
 
@@ -547,14 +508,14 @@ func (r *Router) handleClientRestart(msg *osc.Message) {
 			LogError(err)
 			return
 		}
-		var found *Player
-		r.PlayerManager.ApplyToAllPlayers(func(player *Player) {
-			if player.freeframeClient.Port() == portnum {
-				found = player
+		var found *Layer
+		r.LayerManager.ApplyToAllLayers(func(layer *Layer) {
+			if layer.freeframeClient.Port() == portnum {
+				found = layer
 			}
 		})
 		if found == nil {
-			Warn("handleClientRestart unable to find Player with", "portnum", portnum)
+			Warn("handleClientRestart unable to find Layer with", "portnum", portnum)
 		} else {
 			found.sendAllParameters()
 		}
@@ -582,10 +543,10 @@ func (r *Router) handleMMTTCursor(msg *osc.Message) {
 			LogError(err)
 			return
 		}
-		playerName := "A"
+		layerName := "A"
 		words := strings.Split(cid, ".")
 		if len(words) > 1 {
-			playerName = words[0]
+			layerName = words[0]
 		}
 		x, err := argAsFloat32(msg, 2)
 		if err != nil {
@@ -603,9 +564,9 @@ func (r *Router) handleMMTTCursor(msg *osc.Message) {
 			return
 		}
 
-		player, err := r.PlayerManager.GetPlayer(playerName)
+		layer, err := r.LayerManager.GetLayer(layerName)
 		if err != nil {
-			// If it's not a player, it's a button.
+			// If it's not a layer, it's a button.
 			buttonDepth := ConfigFloatWithDefault("mmttbuttondepth", 0.002)
 			if z > buttonDepth {
 				Warn("NOT triggering button too deep", "z", z, "buttonDepth", buttonDepth)
@@ -613,7 +574,7 @@ func (r *Router) handleMMTTCursor(msg *osc.Message) {
 			}
 			if ddu == "down" {
 				DebugLogOfType("mmtt", "MMT BUTTON TRIGGERED", "buttonDepth", buttonDepth, "z", z)
-				r.handleMMTTButton(playerName)
+				r.handleMMTTButton(layerName)
 			}
 			return
 		}
@@ -642,7 +603,7 @@ func (r *Router) handleMMTTCursor(msg *osc.Message) {
 
 		DebugLogOfType("mmtt", "MMTT Cursor", "source", ce.Source, "ddu", ce.Ddu, "x", ce.X, "y", ce.Y, "z", ce.Z)
 
-		player.HandleCursorEvent(ce)
+		layer.HandleCursorEvent(ce)
 	*/
 }
 
@@ -687,7 +648,7 @@ func (r *Router) handlePatchXREvent(msg *osc.Message) {
 		return
 	}
 	action, _ := argAsString(msg, 0)
-	playerName, _ := argAsString(msg, 1)
+	layerName, _ := argAsString(msg, 1)
 	switch action {
 	case "cursordown":
 		LogWarn("handlePatchXREvent: cursordown ignored")
@@ -711,8 +672,8 @@ func (r *Router) handlePatchXREvent(msg *osc.Message) {
 		return
 	}
 
-	// we didn't add "player" to the args, no need for extractPlayer
-	err = r.HandleInputEvent(playerName, args)
+	// we didn't add "layer" to the args, no need for extractLayer
+	err = r.HandleInputEvent(layerName, args)
 	if err != nil {
 		LogWarn("Router.handlePatchXREvent", "err", err)
 		return
@@ -746,7 +707,7 @@ func (r *Router) handleOSCSpriteEvent(msg *osc.Message) {
 
 	taskName := ExtractAndRemoveValue("task", args)
 	if taskName == "" {
-		LogError(fmt.Errorf("No value for task"))
+		LogError(fmt.Errorf("no value for task"))
 	}
 	err = r.HandleInputEvent(taskName, args)
 	if err != nil {
@@ -790,23 +751,6 @@ func argAsString(msg *osc.Message, index int) (s string, err error) {
 		err = fmt.Errorf("expected a string in OSC argument index=%d", index)
 	}
 	return s, err
-}
-
-var audioResetMutex sync.Mutex
-
-func (r *Router) audioReset() {
-
-	audioResetMutex.Lock()
-	defer audioResetMutex.Unlock()
-
-	msg := osc.NewMessage("/play")
-	msg.Append(int32(0))
-	r.plogueClient.Send(msg)
-	// Give Plogue time to react
-	time.Sleep(400 * time.Millisecond)
-	msg = osc.NewMessage("/play")
-	msg.Append(int32(1))
-	r.plogueClient.Send(msg)
 }
 
 // This silliness is to avoid unused function errors from go-staticcheck

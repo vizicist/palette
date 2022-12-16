@@ -12,7 +12,8 @@ import (
 var AliveOutputPort = 3331
 
 type PalettePro struct {
-	layer map[string]*engine.Layer
+	layer    map[string]*engine.Layer
+	resolume *engine.Resolume
 
 	MIDIOctaveShift  int
 	MIDINumDown      int
@@ -25,6 +26,7 @@ type PalettePro struct {
 	externalScale    *engine.Scale
 
 	attractModeIsOn        bool
+	lastAttractCommand     time.Time
 	lastAttractGestureTime time.Time
 	lastAttractPresetTime  time.Time
 	attractGestureDuration time.Duration
@@ -43,7 +45,10 @@ type PalettePro struct {
 
 func init() {
 	ppro := &PalettePro{
+		resolume:               engine.NewResolume(),
+		layer:                  map[string]*engine.Layer{},
 		attractModeIsOn:        false,
+		lastAttractCommand:     time.Time{},
 		lastAttractGestureTime: time.Time{},
 		lastAttractPresetTime:  time.Time{},
 		attractGestureDuration: 0,
@@ -57,34 +62,30 @@ func init() {
 		attractIdleSecs:        0,
 		aliveSecs:              float64(engine.ConfigFloatWithDefault("alivesecs", 5)),
 		lastAlive:              0,
-		scale:                  nil,
+		scale:                  engine.GetScale("newage"),
 	}
 	RegisterTask("ppro", ppro)
 }
 
-func (ppro *PalettePro) Start(task *engine.Task) {
+func (ppro *PalettePro) Start(task *engine.Task) error {
 
 	engine.LogInfo("PalettePro.Start")
 
 	task.AllowSource("A", "B", "C", "D")
 
-	a := engine.GetLayer("a")
-	a.Set("visual.ffglport", "3334")
+	a := ppro.addLayer(task, "a")
 	a.Set("visual.shape", "circle")
 	a.Apply(task.GetPreset("snap.White_Ghosts"))
 
-	b := engine.GetLayer("b")
-	b.Set("visual.ffglport", "3335")
+	b := ppro.addLayer(task, "b")
 	b.Set("visual.shape", "square")
 	b.Apply(task.GetPreset("snap.Concentric_Squares"))
 
-	c := engine.GetLayer("c")
-	c.Set("visual.ffglport", "3336")
+	c := ppro.addLayer(task, "c")
 	c.Set("visual.shape", "square")
 	c.Apply(task.GetPreset("snap.Circular_Moire"))
 
-	d := engine.GetLayer("d")
-	d.Set("visual.resolumeport", "3337")
+	d := ppro.addLayer(task, "d")
 	d.Set("visual.shape", "square")
 	d.Apply(task.GetPreset("snap.Diagonal_Mirror"))
 
@@ -104,6 +105,15 @@ func (ppro *PalettePro) Start(task *engine.Task) {
 
 	ppro.attractPreset = engine.ConfigStringWithDefault("attractpreset", "random")
 
+	ppro.activate()
+
+	return nil
+}
+
+func (ppro *PalettePro) addLayer(task *engine.Task, name string) *engine.Layer {
+	layer := engine.NewLayer(name)
+	ppro.layer[name] = layer
+	return layer
 }
 
 func (ppro *PalettePro) Stop(task *engine.Task) {
@@ -132,11 +142,8 @@ func (ppro *PalettePro) OnClick(task *engine.Task, ce engine.ClickEvent) {
 		// Non-internal cursor activity turns attract mode off instantly.
 		if !ppro.attractModeIsOn && sinceLastAttractChange > ppro.attractIdleSecs {
 			// Nothing happening for a while, turn attract mode on
-			task.LogWarn("PalettePro.OnClick: attract needs work")
-			// go func() {
-			// 	task.cmdInput <- Command{"attractmode", true}
-			// }()
-			// sched.SetAttractMode(true)
+			task.LogWarn("PalettePro.OnClick: should be turning attractmode on")
+			ppro.lastAttractCommand = time.Now()
 		}
 	}
 
@@ -171,6 +178,11 @@ func (ppro *PalettePro) OnMidiEvent(task *engine.Task, me engine.MidiEvent) {
 	}
 }
 
+func (ppro *PalettePro) activate() {
+	go engine.TheResolume().Activate()
+	go ppro.biduleActivate()
+}
+
 func (ppro *PalettePro) Api(task *engine.Task, api string, apiargs map[string]string) (result string, err error) {
 
 	switch api {
@@ -181,6 +193,28 @@ func (ppro *PalettePro) Api(task *engine.Task, api string, apiargs map[string]st
 			value = "ECHO!"
 		}
 		return value, nil
+
+	case "activate":
+		ppro.activate()
+		return "", nil
+
+	case "event":
+		event, ok := apiargs["event"]
+		if !ok {
+			return "", fmt.Errorf("PalettePro.Api: Missing value argument")
+		}
+		switch event {
+		case "cursor_down", "cursor_drag", "cursor_up":
+			x, y, z, err := engine.GetArgsXYZ(apiargs)
+			if err != nil {
+				return "", err
+			}
+			task.LogInfo("PalettePro.API: xyz=%f,%f,%f", x, y, z)
+			return "", nil
+		default:
+			task.LogWarn("PalettePro.API: unhandled api=%s", api)
+			return "", fmt.Errorf("unhandled event=%s", event)
+		}
 
 	case "nextalive":
 		// acts like a timer, but it could wait for
@@ -195,12 +229,12 @@ func (ppro *PalettePro) Api(task *engine.Task, api string, apiargs map[string]st
 
 		/*
 			default:
-				// The player-specific APIs above are handled
+				// The layer-specific APIs above are handled
 				// here in the Router context, but for everything else,
-				// we punt down to the player's player.
-				// player can be A, B, C, D, or *
-				r.PlayerManager.ApplyToAllPlayers(func(player *Player) {
-					_, err := player.ExecuteAPI(api, apiargs, "")
+				// we punt down to the layer's layer.
+				// layer can be A, B, C, D, or *
+				r.LayerManager.ApplyToAllLayers(func(layer *Layer) {
+					_, err := layer.ExecuteAPI(api, apiargs, "")
 					if err != nil {
 						LogError(err)
 					}
@@ -233,6 +267,15 @@ func (ppro *PalettePro) OnCursorEvent(task *engine.Task, ce engine.CursorEvent) 
 		duration := 3 * engine.QuarterNote
 		dest := layer.Get("sound.synth")
 		ppro.scheduleNoteNow(task, dest, pitch, velocity, duration)
+	}
+
+	// Any non-internal cursor will turn attract mode off.
+	if ce.Source != "internal" {
+		if time.Since(ppro.lastAttractCommand) > time.Second {
+			engine.LogInfo("PalettePro: shouold be turning attract mode OFF")
+			ppro.lastAttractCommand = time.Now()
+		}
+
 	}
 }
 
@@ -277,9 +320,9 @@ func (ppro *PalettePro) cursorToLayer(ce engine.CursorEvent) *engine.Layer {
 }
 
 func (ppro *PalettePro) cursorToPitch(task *engine.Task, ce engine.CursorEvent) uint8 {
-	a := ppro.layer["a"]
-	pitchmin := a.GetInt("sound.pitchmin")
-	pitchmax := a.GetInt("sound.pitchmax")
+	layer := ppro.cursorToLayer(ce)
+	pitchmin := layer.GetInt("sound.pitchmin")
+	pitchmax := layer.GetInt("sound.pitchmax")
 	dp := pitchmax - pitchmin + 1
 	p1 := int(ce.X * float32(dp))
 	p := uint8(pitchmin + p1%dp)
@@ -360,9 +403,9 @@ func (ppro *PalettePro) doAttractAction(task *engine.Task) {
 	now := time.Now()
 	dt := now.Sub(ppro.lastAttractGestureTime)
 	if ppro.attractModeIsOn && dt > ppro.attractGestureDuration {
-		playerNames := []string{"A", "B", "C", "D"}
+		layerNames := []string{"A", "B", "C", "D"}
 		i := uint64(rand.Uint64()*99) % 4
-		player := playerNames[i]
+		layer := layerNames[i]
 		ppro.lastAttractGestureTime = now
 
 		cid := fmt.Sprintf("%d", time.Now().UnixNano())
@@ -376,7 +419,7 @@ func (ppro *PalettePro) doAttractAction(task *engine.Task) {
 		z1 := rand.Float32() / 2.0
 
 		noteDuration := time.Second
-		go task.GenerateCursorGestureesture(player, cid, noteDuration, x0, y0, z0, x1, y1, z1)
+		go task.GenerateCursorGestureesture(layer, cid, noteDuration, x0, y0, z0, x1, y1, z1)
 		ppro.lastAttractGestureTime = now
 	}
 
@@ -384,5 +427,18 @@ func (ppro *PalettePro) doAttractAction(task *engine.Task) {
 	if ppro.attractPreset == "random" && dp > ppro.attractPresetDuration {
 		ppro.loadQuadPresetRand(task)
 		ppro.lastAttractPresetTime = now
+	}
+}
+
+func (ppro *PalettePro) biduleActivate() {
+	addr := "127.0.0.1"
+	bidulePort := 3210
+	biduleClient := osc.NewClient(addr, bidulePort)
+	msg := osc.NewMessage("/play")
+	msg.Append(int32(1)) // turn it on
+	for i := 0; i < 10; i++ {
+		dt := 5 * time.Second
+		time.Sleep(dt)
+		_ = biduleClient.Send(msg)
 	}
 }

@@ -13,15 +13,15 @@ import (
 
 type Task struct {
 	// None of these get exported, only the methods
-	methods       TaskMethods
-	scheduler     *Scheduler
+	methods TaskMethods
+	// scheduler     *Scheduler
 	cursorManager *CursorManager
 	params        *ParamValues
 	sources       map[string]bool
 }
 
 type TaskMethods interface {
-	Start(task *Task)
+	Start(task *Task) error
 	OnEvent(task *Task, e Event)
 	Api(task *Task, api string, apiargs map[string]string) (string, error)
 	Stop(task *Task)
@@ -45,11 +45,9 @@ func (task *Task) LogError(err error, keysAndValues ...any) {
 	LogError(err, keysAndValues...)
 }
 
-/*
 func (task *Task) GetLayer(layerName string) *Layer {
 	return GetLayer(layerName)
 }
-*/
 
 func (task *Task) AllowSource(source ...string) {
 	var ok bool
@@ -151,10 +149,6 @@ func (task *Task) CurrentClick() Clicks {
 	return CurrentClick()
 }
 
-func (task *Task) ScheduleDebug() string {
-	return fmt.Sprintf("%s", task.scheduler)
-}
-
 func (task *Task) SchedulePhrase(phr *Phrase, click Clicks, dest string) {
 	if phr == nil {
 		LogWarn("EngineContext.SchedulePhrase: phr == nil?")
@@ -166,13 +160,13 @@ func (task *Task) SchedulePhrase(phr *Phrase, click Clicks, dest string) {
 			AtClick: click,
 			Value:   phr,
 		}
-		task.scheduler.cmdInput <- SchedulerElementCmd{se}
+		TheEngine().Scheduler.cmdInput <- SchedulerElementCmd{se}
 	}()
 }
 
 func (task *Task) SubmitCommand(command Command) {
 	go func() {
-		task.scheduler.cmdInput <- Command{"attractmode", true}
+		TheEngine().Scheduler.cmdInput <- command
 	}()
 }
 
@@ -531,10 +525,11 @@ func (ctx *EngineContext) ApplyPreset(presetName string) error {
 func (task *Task) ExecuteAPI(api string, args map[string]string, rawargs string) (result string, err error) {
 
 	DebugLogOfType("api", "Agent.ExecutAPI called", "api", api, "args", args)
+
 	// The caller can provide rawargs if it's already known, but if not provided, we create it
-	if rawargs == "" {
-		rawargs = MapString(args)
-	}
+	// if rawargs == "" {
+	// 	rawargs = MapString(args)
+	// }
 
 	// ALL visual.* APIs get forwarded to the FreeFrame plugin inside Resolume
 	if strings.HasPrefix(api, "visual.") {

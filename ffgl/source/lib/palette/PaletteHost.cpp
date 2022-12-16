@@ -419,7 +419,7 @@ bool PaletteHost::initStuff() {
 	try {
 
 		// static initializations
-		PlayerParams::Initialize();
+		LayerParams::Initialize();
 		TrackedCursor::initialize();
 		Sprite::initialize();
 		Palette::initialize();
@@ -707,7 +707,7 @@ std::string PaletteHost::ExecuteJson(std::string meth, cJSON *params, const char
 	if (meth == "set_param") {
 		std::string param = needString(meth,params,"param");
 		std::string value = needString(meth,params,"value");
-		_palette->player.params.Set(param, value);
+		_palette->layer.params.Set(param, value);
 		return jsonIntResult(0,id);
 	}
 	if (meth == "set_params") {
@@ -716,7 +716,7 @@ std::string PaletteHost::ExecuteJson(std::string meth, cJSON *params, const char
 				std::string nm = item->string;
 				std::string val = item->valuestring;
 				// NosuchDebug("set %s %s\n", nm.c_str(), val.c_str());
-				_palette->player.params.Set(nm, val);
+				_palette->layer.params.Set(nm, val);
 			}
 		}
 		return jsonIntResult(0, id);
@@ -814,7 +814,7 @@ ArgAsString(const osc::ReceivedMessage& m, unsigned n)
 void
 PaletteHost::SetCursorCid(std::string cid, std::string cidsource, glm::vec2 point, float z, bool recordable )
 {
-	_palette->player.setTrackedCursor(_palette,cid, cidsource, point, z);
+	_palette->layer.setTrackedCursor(_palette,cid, cidsource, point, z);
 }
 
 void PaletteHost::ProcessOscMessage( std::string source, const osc::ReceivedMessage& m) {
@@ -843,7 +843,7 @@ void PaletteHost::ProcessOscMessage( std::string source, const osc::ReceivedMess
 				if (NosuchDebugCursor) {
 					NosuchDebug("GOT /cursor %s cid=%s x,y=%.4f,%.4f", cmd.c_str(), cid.c_str(), x, y);
 				}
-				_palette->player.doCursorUp(_palette, cid);
+				_palette->layer.doCursorUp(_palette, cid);
 			}
 			return;
 		}
@@ -853,7 +853,7 @@ void PaletteHost::ProcessOscMessage( std::string source, const osc::ReceivedMess
 			float z = ArgAsFloat(m,2);
 			std::string cid = ArgAsString(m,3);
 			NosuchDebug(1,"GOT /spriteon x,y,z=%.4f,%.4f,%.4f id=%s\n",x,y,z,cid.c_str());
-			palette()->player.instantiateSpriteAt(cid,glm::vec2(x, y), z);
+			palette()->layer.instantiateSpriteAt(cid,glm::vec2(x, y), z);
 
 			return;
 		}

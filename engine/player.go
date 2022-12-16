@@ -1,9 +1,9 @@
 package engine
 
 /*
-// Player is an entity that that reacts to things (cursor events, apis) and generates output (midi, graphics)
-type Player struct {
-	playerName      string
+// Layer is an entity that that reacts to things (cursor events, apis) and generates output (midi, graphics)
+type Layer struct {
+	layerName      string
 	resolumeLayer   int // see ResolumeLayerForPad
 	freeframeClient *osc.Client
 	resolumeClient  *osc.Client
@@ -45,21 +45,21 @@ type Player struct {
 */
 
 /*
-func (p *Player) SavePreset(presetName string) error {
+func (p *Layer) SavePreset(presetName string) error {
 	return p.saveCurrentAsPreset(presetName)
 }
 
-func (p *Player) IsSourceAllowed(source string) bool {
+func (p *Layer) IsSourceAllowed(source string) bool {
 	_, ok := p.sources[source]
 	return ok
 }
 
-func (p *Player) AttachAgent(agent Agent) {
+func (p *Layer) AttachAgent(agent Agent) {
 	p.agents = append(p.agents, agent)
 	p.agentsContext = append(p.agentsContext, NewEngineContext(p))
 }
 
-func (p *Player) SetResolumeLayer(layernum int, ffglport int) {
+func (p *Layer) SetResolumeLayer(layernum int, ffglport int) {
 	p.resolumeLayer = layernum
 	p.resolumeClient = osc.NewClient(LocalAddress, ResolumePort)
 	p.freeframeClient = osc.NewClient(LocalAddress, ffglport)
@@ -67,10 +67,10 @@ func (p *Player) SetResolumeLayer(layernum int, ffglport int) {
 */
 
 /*
-// NewPlayer makes a new Player
-func NewPlayer(playerName string) *Player {
-	p := &Player{
-		playerName:      playerName,
+// NewLayer makes a new Layer
+func NewLayer(layerName string) *Layer {
+	p := &Layer{
+		layerName:      layerName,
 		resolumeLayer:   0,
 		freeframeClient: nil,
 		resolumeClient:  nil,
@@ -99,18 +99,18 @@ func NewPlayer(playerName string) *Player {
 */
 
 /*
-func (player *Player) SendPhraseElementToSynth(pe *PhraseElement) {
+func (layer *Layer) SendPhraseElementToSynth(pe *PhraseElement) {
 
 	// XXX - eventually this should be done by a agent?
-	ss := player.params.ParamStringValue("visual.spritesource", "")
+	ss := layer.params.ParamStringValue("visual.spritesource", "")
 	if ss == "midi" {
-		player.generateSpriteFromPhraseElement(pe)
+		layer.generateSpriteFromPhraseElement(pe)
 	}
 	SendToSynth(pe)
 }
 
-func (player *Player) MidiEventToPhrase(me MidiEvent) (*Phrase, error) {
-	pe, err := player.midiEventToPhraseElement(me)
+func (layer *Layer) MidiEventToPhrase(me MidiEvent) (*Phrase, error) {
+	pe, err := layer.midiEventToPhraseElement(me)
 	if err != nil {
 		return nil, err
 	}
@@ -118,32 +118,32 @@ func (player *Player) MidiEventToPhrase(me MidiEvent) (*Phrase, error) {
 	return phr, nil
 }
 
-func (player *Player) HandleCursorEvent(ce CursorEvent) {
-	DebugLogOfType("cursor", "Player.HandleCursorEvent", "ce", ce)
-	for n, agent := range player.agents {
-		ctx := player.agentsContext[n]
+func (layer *Layer) HandleCursorEvent(ce CursorEvent) {
+	DebugLogOfType("cursor", "Layer.HandleCursorEvent", "ce", ce)
+	for n, agent := range layer.agents {
+		ctx := layer.agentsContext[n]
 		agent.OnCursorEvent(ctx, ce)
 	}
 }
 
 // HandleMIDIInput xxx
-func (player *Player) HandleMidiEvent(me MidiEvent) {
-	Info("Player.HandleMidiEvent", "me", me)
-	for n, agent := range player.agents {
-		ctx := player.agentsContext[n]
+func (layer *Layer) HandleMidiEvent(me MidiEvent) {
+	Info("Layer.HandleMidiEvent", "me", me)
+	for n, agent := range layer.agents {
+		ctx := layer.agentsContext[n]
 		agent.OnMidiEvent(ctx, me)
 	}
 
-		player.midiInputMutex.Lock()
-		defer player.midiInputMutex.Unlock()
+		layer.midiInputMutex.Lock()
+		defer layer.midiInputMutex.Unlock()
 
 		DebugLogOfType("midi", "Router.HandleMIDIInput", "event", e)
 
-		if player.MIDIThru {
-			player.PassThruMIDI(e)
+		if layer.MIDIThru {
+			layer.PassThruMIDI(e)
 		}
-		if player.MIDISetScale {
-			player.handleMIDISetScaleNote(e)
+		if layer.MIDISetScale {
+			layer.handleMIDISetScaleNote(e)
 		}
 }
 
@@ -170,14 +170,14 @@ func CallerFunc() string {
 	return funcname
 }
 
-func (player *Player) SetParam(fullname, value string) error {
-	return player.SetOneParamValue(fullname, value)
+func (layer *Layer) SetParam(fullname, value string) error {
+	return layer.SetOneParamValue(fullname, value)
 }
 
-func (player *Player) SetOneParamValue(fullname, value string) error {
+func (layer *Layer) SetOneParamValue(fullname, value string) error {
 
-	DebugLogOfType("value", "SetOneParamValue", "player", player.playerName, "fullname", fullname, "value", value)
-	err := player.params.SetParamValueWithString(fullname, value, nil)
+	DebugLogOfType("value", "SetOneParamValue", "layer", layer.layerName, "fullname", fullname, "value", value)
+	err := layer.params.SetParamValueWithString(fullname, value, nil)
 	if err != nil {
 		return err
 	}
@@ -188,13 +188,13 @@ func (player *Player) SetOneParamValue(fullname, value string) error {
 		msg.Append("set_params")
 		args := fmt.Sprintf("{\"%s\":\"%s\"}", name, value)
 		msg.Append(args)
-		player.toFreeFramePluginForLayer(msg)
+		layer.toFreeFramePluginForLayer(msg)
 	}
 
 	if strings.HasPrefix(fullname, "effect.") {
 		name := strings.TrimPrefix(fullname, "effect.")
 		// Effect parameters get sent to Resolume
-		player.sendEffectParam(name, value)
+		layer.sendEffectParam(name, value)
 	}
 
 	return nil
@@ -202,9 +202,9 @@ func (player *Player) SetOneParamValue(fullname, value string) error {
 
 /*
 // ClearExternalScale xxx
-func (player *Player) clearExternalScale() {
-	DebugLogOfType("scale", "clearExternalScale", "pad", player.playerName)
-	player.externalScale = MakeScale()
+func (layer *Layer) clearExternalScale() {
+	DebugLogOfType("scale", "clearExternalScale", "pad", layer.layerName)
+	layer.externalScale = MakeScale()
 }
 */
 
@@ -218,47 +218,47 @@ type ActiveNote struct {
 	ce     CursorEvent // the one that triggered the note
 }
 
-func (player *Player) getActiveNote(id string) *ActiveNote {
-	player.activeNotesMutex.RLock()
-	a, ok := player.activeNotes[id]
-	player.activeNotesMutex.RUnlock()
+func (layer *Layer) getActiveNote(id string) *ActiveNote {
+	layer.activeNotesMutex.RLock()
+	a, ok := layer.activeNotes[id]
+	layer.activeNotesMutex.RUnlock()
 	if !ok {
-		player.lastActiveID++
+		layer.lastActiveID++
 		a = &ActiveNote{
-			id:     player.lastActiveID,
+			id:     layer.lastActiveID,
 			noteOn: nil,
 		}
-		player.activeNotesMutex.Lock()
-		player.activeNotes[id] = a
-		player.activeNotesMutex.Unlock()
+		layer.activeNotesMutex.Lock()
+		layer.activeNotes[id] = a
+		layer.activeNotesMutex.Unlock()
 	}
 	return a
 }
 
-func (player) *Player) terminateActiveNotes() {
-	player.activeNotesMutex.RLock()
-	for id, a := range player.activeNotes {
+func (layer) *Layer) terminateActiveNotes() {
+	layer.activeNotesMutex.RLock()
+	for id, a := range layer.activeNotes {
 		if a != nil {
-			player.sendNoteOff(a)
+			layer.sendNoteOff(a)
 		} else {
 			Warn("Hey, activeNotes entry for","id",id)
 		}
 	}
-	player.activeNotesMutex.RUnlock()
+	layer.activeNotesMutex.RUnlock()
 }
 */
 
 /*
-func (player) *Player) clearGraphics() {
+func (layer) *Layer) clearGraphics() {
 	// send an OSC message to Resolume
-	player.toFreeFramePluginForLayer(osc.NewMessage("/clear"))
+	layer.toFreeFramePluginForLayer(osc.NewMessage("/clear"))
 }
 */
 
 /*
 
 /*
-func (player *Player) generateVisualsFromCursor(ce CursorEvent) {
+func (layer *Layer) generateVisualsFromCursor(ce CursorEvent) {
 	if !TheRouter().generateVisuals {
 		return
 	}
@@ -269,16 +269,16 @@ func (player *Player) generateVisualsFromCursor(ce CursorEvent) {
 	msg.Append(float32(ce.X))
 	msg.Append(float32(ce.Y))
 	msg.Append(float32(ce.Z))
-	player.toFreeFramePluginForLayer(msg)
+	layer.toFreeFramePluginForLayer(msg)
 }
 */
 
 /*
-func (player *Player) generateSoundFromCursor(ce CursorEvent) {
+func (layer *Layer) generateSoundFromCursor(ce CursorEvent) {
 	if !TheRouter().generateSound {
 		return
 	}
-	a := player.getActiveNote(ce.ID)
+	a := layer.getActiveNote(ce.ID)
 		if Debug.Transpose {
 			if a == nil {
 				Warn("a is nil")
@@ -302,11 +302,11 @@ func (player *Player) generateSoundFromCursor(ce CursorEvent) {
 		if a.noteOn != nil {
 			// I think this happens if we get things coming in
 			// faster than the checkDelay can generate the UP event.
-			player.sendNoteOff(a)
+			layer.sendNoteOff(a)
 		}
-		a.noteOn = player.cursorToNoteOn(ce)
+		a.noteOn = layer.cursorToNoteOn(ce)
 		a.ce = ce
-		player.sendNoteOn(a)
+		layer.sendNoteOn(a)
 	case "drag":
 		if a.noteOn == nil {
 			// if we turn on playing in the middle of an existing loop,
@@ -319,7 +319,7 @@ func (player *Player) generateSoundFromCursor(ce CursorEvent) {
 			}
 			return
 		}
-		newNoteOn := player.cursorToNoteOn(ce)
+		newNoteOn := layer.cursorToNoteOn(ce)
 		oldpitch := a.noteOn.Pitch
 		newpitch := newNoteOn.Pitch
 		// We only turn off the existing note (for a given Cursor ID)
@@ -332,16 +332,16 @@ func (player *Player) generateSoundFromCursor(ce CursorEvent) {
 
 		dz := float64(int(a.noteOn.Velocity) - int(newNoteOn.Velocity))
 		deltaz := float32(math.Abs(dz) / 128.0)
-		deltaztrig := player.params.ParamFloatValue("sound._deltaztrig")
+		deltaztrig := layer.params.ParamFloatValue("sound._deltaztrig")
 
 		deltay := float32(math.Abs(float64(a.ce.Y - ce.Y)))
-		deltaytrig := player.params.ParamFloatValue("sound._deltaytrig")
+		deltaytrig := layer.params.ParamFloatValue("sound._deltaytrig")
 
-		if player.params.ParamStringValue("sound.controllerstyle", "nothing") == "modulationonly" {
-			zmin := player.params.ParamFloatValue("sound._controllerzmin")
-			zmax := player.params.ParamFloatValue("sound._controllerzmax")
-			cmin := player.params.ParamIntValue("sound._controllermin")
-			cmax := player.params.ParamIntValue("sound._controllermax")
+		if layer.params.ParamStringValue("sound.controllerstyle", "nothing") == "modulationonly" {
+			zmin := layer.params.ParamFloatValue("sound._controllerzmin")
+			zmax := layer.params.ParamFloatValue("sound._controllerzmax")
+			cmin := layer.params.ParamIntValue("sound._controllermin")
+			cmax := layer.params.ParamIntValue("sound._controllermax")
 			oldz := a.ce.Z
 			newz := ce.Z
 			// XXX - should put the old controller value in ActiveNote so
@@ -355,11 +355,11 @@ func (player *Player) generateSoundFromCursor(ce CursorEvent) {
 		}
 
 		if newpitch != oldpitch || deltaz > deltaztrig || deltay > deltaytrig {
-			player.sendNoteOff(a)
+			layer.sendNoteOff(a)
 			a.noteOn = newNoteOn
 			a.ce = ce
 			if Debug.Transpose {
-				s := fmt.Sprintf("r=%s drag Setting currentNoteOn to %+v\n", player.padName, *(a.noteOn))
+				s := fmt.Sprintf("r=%s drag Setting currentNoteOn to %+v\n", layer.padName, *(a.noteOn))
 				if strings.Contains(s, "PANIC") {
 					Warn("PANIC? setting currentNoteOn")
 				} else {
@@ -367,27 +367,27 @@ func (player *Player) generateSoundFromCursor(ce CursorEvent) {
 				}
 				Info("generateMIDI sending NoteOn")
 			}
-			player.sendNoteOn(a)
+			layer.sendNoteOn(a)
 		}
 	case "up":
 		if a.noteOn == nil {
 			// not sure why this happens, yet
-			Warn("Unexpected UP when currentNoteOn is nil?", "player",player.padName)
+			Warn("Unexpected UP when currentNoteOn is nil?", "layer",layer.padName)
 		} else {
-			player.sendNoteOff(a)
+			layer.sendNoteOff(a)
 
 			a.noteOn = nil
 			a.ce = ce // Hmmmm, might be useful, or wrong
 		}
-		player.activeNotesMutex.Lock()
-		delete(player.activeNotes, ce.ID)
-		player.activeNotesMutex.Unlock()
+		layer.activeNotesMutex.Lock()
+		delete(layer.activeNotes, ce.ID)
+		layer.activeNotesMutex.Unlock()
 	}
 }
 */
 
 /*
-func (player *Player) nextQuant(t Clicks, q Clicks) Clicks {
+func (layer *Layer) nextQuant(t Clicks, q Clicks) Clicks {
 	// the algorithm below is the same as KeyKit's nextquant
 	if q <= 1 {
 		return t
@@ -405,21 +405,21 @@ func (player *Player) nextQuant(t Clicks, q Clicks) Clicks {
 	return tq
 }
 
-func (player *Player) sendNoteOn(a *ActiveNote) {
+func (layer *Layer) sendNoteOn(a *ActiveNote) {
 
-	player.SendPhraseElementToSynth(a.noteOn)
+	layer.SendPhraseElementToSynth(a.noteOn)
 
-	ss := player.params.ParamStringValue("visual.spritesource", "")
+	ss := layer.params.ParamStringValue("visual.spritesource", "")
 	if ss == "midi" {
 		n := a.noteOn
-		player.generateSpriteFromNote(n)
+		layer.generateSpriteFromNote(n)
 	}
 }
 
-// func (player *Player) sendController(a *ActiveNote) {
+// func (layer *Layer) sendController(a *ActiveNote) {
 // }
 
-func (player *Player) sendNoteOff(a *ActiveNote) {
+func (layer *Layer) sendNoteOff(a *ActiveNote) {
 	n := a.noteOn
 	if n == nil {
 		// Not sure why this sometimes happens
@@ -432,12 +432,12 @@ func (player *Player) sendNoteOff(a *ActiveNote) {
 	}
 
 	noteOff := NewNoteOff(n.Pitch, n.Velocity, n.Synth)
-	player.SendPhraseElementToSynth(noteOff)
+	layer.SendPhraseElementToSynth(noteOff)
 }
 */
 
 /*
-func (r *Player) paramStringValue(paramname string, def string) string {
+func (r *Layer) paramStringValue(paramname string, def string) string {
 	r.paramsMutex.RLock()
 	param, ok := r.params[paramname]
 	r.paramsMutex.RUnlock()
@@ -447,7 +447,7 @@ func (r *Player) paramStringValue(paramname string, def string) string {
 	return r.params.param).(paramValString).value
 }
 
-func (r *Player) paramIntValue(paramname string) int {
+func (r *Layer) paramIntValue(paramname string) int {
 	r.paramsMutex.RLock()
 	param, ok := r.params[paramname]
 	r.paramsMutex.RUnlock()
@@ -460,44 +460,44 @@ func (r *Player) paramIntValue(paramname string) int {
 */
 
 /*
-func (player) *Player) cursorToNoteOn(ce CursorStepEvent) *Note {
-	pitch := player.cursorToPitch(ce)
-	velocity := player.cursorToVelocity(ce)
-	synth := player.params.ParamStringValue("sound.synth", defaultSynth)
+func (layer) *Layer) cursorToNoteOn(ce CursorStepEvent) *Note {
+	pitch := layer.cursorToPitch(ce)
+	velocity := layer.cursorToVelocity(ce)
+	synth := layer.params.ParamStringValue("sound.synth", defaultSynth)
 	return NewNoteOn(pitch, velocity, synth)
 }
 */
 
 /*
-func (player) *Player) cursorToPitch(ce CursorStepEvent) uint8 {
-	pitchmin := player.params.ParamIntValue("sound.pitchmin")
-	pitchmax := player.params.ParamIntValue("sound.pitchmax")
+func (layer) *Layer) cursorToPitch(ce CursorStepEvent) uint8 {
+	pitchmin := layer.params.ParamIntValue("sound.pitchmin")
+	pitchmax := layer.params.ParamIntValue("sound.pitchmax")
 	dp := pitchmax - pitchmin + 1
 	p1 := int(ce.X * float32(dp))
 	p := uint8(pitchmin + p1%dp)
-	chromatic := player.params.ParamBoolValue("sound.chromatic")
+	chromatic := layer.params.ParamBoolValue("sound.chromatic")
 	if !chromatic {
-		scale := player.getScale()
+		scale := layer.getScale()
 		p = scale.ClosestTo(p)
 		// MIDIOctaveShift might be negative
-		i := int(p) + 12*player.MIDIOctaveShift
+		i := int(p) + 12*layer.MIDIOctaveShift
 		for i < 0 {
 			i += 12
 		}
 		for i > 127 {
 			i -= 12
 		}
-		p = uint8(i + player.TransposePitch)
+		p = uint8(i + layer.TransposePitch)
 	}
 	return p
 }
 */
 
 /*
-func (player) *Player) cursorToVelocity(ce CursorStepEvent) uint8 {
-	vol := player.params.ParamStringValue("misc.vol", "fixed")
-	velocitymin := player.params.ParamIntValue("sound.velocitymin")
-	velocitymax := player.params.ParamIntValue("sound.velocitymax")
+func (layer) *Layer) cursorToVelocity(ce CursorStepEvent) uint8 {
+	vol := layer.params.ParamStringValue("misc.vol", "fixed")
+	velocitymin := layer.params.ParamIntValue("sound.velocitymin")
+	velocitymax := layer.params.ParamIntValue("sound.velocitymax")
 	// bogus, when values in json are missing
 	if velocitymin == 0 && velocitymax == 0 {
 		velocitymin = 0
@@ -527,12 +527,12 @@ func (player) *Player) cursorToVelocity(ce CursorStepEvent) uint8 {
 */
 
 /*
-func (player) *Player) cursorToDuration(ce CursorStepEvent) int {
+func (layer) *Layer) cursorToDuration(ce CursorStepEvent) int {
 	return 92
 }
 
-func (player) *Player) cursorToQuant(ce CursorStepEvent) Clicks {
-	quant := player.params.ParamStringValue("misc.quant", "fixed")
+func (layer) *Layer) cursorToQuant(ce CursorStepEvent) Clicks {
+	quant := layer.params.ParamStringValue("misc.quant", "fixed")
 
 	q := Clicks(1)
 	if quant == "none" || quant == "" {
@@ -568,14 +568,14 @@ func (player) *Player) cursorToQuant(ce CursorStepEvent) Clicks {
 */
 
 /*
-func (player) *Player) loopComb() {
+func (layer) *Layer) loopComb() {
 
-	player.loop.stepsMutex.Lock()
-	defer player.loop.stepsMutex.Unlock()
+	layer.loop.stepsMutex.Lock()
+	defer layer.loop.stepsMutex.Unlock()
 
 	// Create a map of the UP cursor events, so we only do completed notes
 	upEvents := make(map[string]CursorStepEvent)
-	for _, step := range player.loop.steps {
+	for _, step := range layer.loop.steps {
 		if step.events != nil && len(step.events) > 0 {
 			for _, event := range step.events {
 				if event.cursorStepEvent.Ddu == "up" {
@@ -588,17 +588,17 @@ func (player) *Player) loopComb() {
 	combmod := 2 // should be a parameter
 	for id := range upEvents {
 		if combme == 0 {
-			player.loop.ClearID(id)
-			player.generateSoundFromCursor(upEvents[id])
+			layer.loop.ClearID(id)
+			layer.generateSoundFromCursor(upEvents[id])
 		}
 		combme = (combme + 1) % combmod
 	}
 }
 
-func (player) *Player) loopQuant() {
+func (layer) *Layer) loopQuant() {
 
-	player.loop.stepsMutex.Lock()
-	defer player.loop.stepsMutex.Unlock()
+	layer.loop.stepsMutex.Lock()
+	defer layer.loop.stepsMutex.Unlock()
 
 	// XXX - Need to make sure we have mutex for changing loop steps
 	// XXX - DOES THIS EVEN WORK?
@@ -611,7 +611,7 @@ func (player) *Player) loopQuant() {
 	upEvents := make(map[string]CursorStepEvent)
 	downEvents := make(map[string]CursorStepEvent)
 	shiftOf := make(map[string]Clicks)
-	for stepnum, step := range player.loop.steps {
+	for stepnum, step := range layer.loop.steps {
 		if step.events != nil && len(step.events) > 0 {
 			for _, e := range step.events {
 				switch e.cursorStepEvent.Ddu {
@@ -619,7 +619,7 @@ func (player) *Player) loopQuant() {
 					upEvents[e.cursorStepEvent.ID] = e.cursorStepEvent
 				case "down":
 					downEvents[e.cursorStepEvent.ID] = e.cursorStepEvent
-					shift := player.nextQuant(Clicks(stepnum), quant)
+					shift := layer.nextQuant(Clicks(stepnum), quant)
 					shiftOf[e.cursorStepEvent.ID] = Clicks(shift)
 				}
 			}
@@ -631,8 +631,8 @@ func (player) *Player) loopQuant() {
 	}
 
 	// We're going to create a brand new steps array
-	newsteps := make([]*Step, len(player.loop.steps))
-	for stepnum, step := range player.loop.steps {
+	newsteps := make([]*Step, len(layer.loop.steps))
+	for stepnum, step := range layer.loop.steps {
 		if step.events == nil || len(step.events) == 0 {
 			continue
 		}
@@ -647,7 +647,7 @@ func (player) *Player) loopQuant() {
 				// It's shifted
 				if ok {
 					shiftStep := Clicks(stepnum) + shift
-					newstepnum = int(shiftStep) % len(player.loop.steps)
+					newstepnum = int(shiftStep) % len(layer.loop.steps)
 				}
 				newsteps[newstepnum].events = append(newsteps[newstepnum].events, e)
 			}

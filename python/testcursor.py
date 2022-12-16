@@ -15,9 +15,9 @@ else:
 
 cid = "0"
 for n in range(ntimes):
-        # Random player
-        player = "ABCD"[random.randint(0,3)]
-        palette.SendCursorEvent(cid,"down",random.random(),random.random(),random.random()/4.0,player=player)
+        # Random layer
+        layer = "ABCD"[random.randint(0,3)]
+        palette.SendCursorEvent(cid,"down",random.random(),random.random(),random.random()/4.0,layer=layer)
         time.sleep(dt)
-        palette.SendCursorEvent(cid,"up",random.random(),random.random(),0.0,player=player)
+        palette.SendCursorEvent(cid,"up",random.random(),random.random(),0.0,layer=layer)
         time.sleep(dt)

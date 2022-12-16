@@ -13,6 +13,9 @@ type Engine struct {
 	ProcessManager *ProcessManager
 	Router         *Router
 	Scheduler      *Scheduler
+	TaskManager    *TaskManager
+	CursorManager  *CursorManager
+	bidule         *Bidule
 	done           chan bool
 }
 
@@ -36,6 +39,8 @@ func newEngine() *Engine {
 	e.ProcessManager = NewProcessManager()
 	e.Router = NewRouter()
 	e.Scheduler = NewScheduler()
+	e.bidule = NewBidule()
+	e.TaskManager = NewTaskManager()
 	return e
 }
 
@@ -48,7 +53,7 @@ func StopRunning(what string) {
 }
 
 func RegisterTask(name string, task TaskMethods) {
-	TheRouter().taskManager.RegisterTask(name, task)
+	TheTaskManager().RegisterTask(name, task)
 }
 
 // func (e *Engine) handleCursorEvent(ce CursorEvent) {
@@ -57,8 +62,10 @@ func RegisterTask(name string, task TaskMethods) {
 // }
 
 func (e *Engine) StartTask(name string) {
-	LogInfo("Engine.StartTask needs work", "task", name)
-	// e.Router.taskManager.StartTask(name)
+	err := e.TaskManager.StartTask(name)
+	if err != nil {
+		LogError(err)
+	}
 }
 
 func (e *Engine) Start(done chan bool) {
@@ -80,7 +87,7 @@ func (e *Engine) Start(done chan bool) {
 	go e.StartHTTP(HTTPPort)
 	// go r.StartNATSClient()
 	go e.StartMIDI()
-	go e.Scheduler.Start(e.Scheduler.DefaultOnClick)
+	go e.Scheduler.Start()
 	go e.Router.Start()
 
 	if ConfigBoolWithDefault("depth", false) {

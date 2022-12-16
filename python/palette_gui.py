@@ -390,11 +390,11 @@ class ProGuiApp(tk.Tk):
     def doStartupAction(self):
         pass
 
-    def randomSprite(self,player,downup):
+    def randomSprite(self,layer,downup):
         x = random.random()
         y = random.random()
         z = 0.6 - random.random() / 2.0
-        palette.SendSpriteEvent("0",x,y,z,player)
+        palette.SendSpriteEvent("0",x,y,z,layer)
 
 #     def doAttractAction(self):
 # 
@@ -409,11 +409,11 @@ class ProGuiApp(tk.Tk):
 #         #     self.lastAttractPresetTime = now
 #         #
 #         # if (now - self.lastAttractSpriteTime) > self.randomSpriteTime:
-#         #     players = ["A","B","C","D"]
+#         #     layers = ["A","B","C","D"]
 #         #     i = int(random.random()*99) % 4
-#         #     player = players[i]
-#         #     self.randomSprite(player,"down")
-#         #     self.randomSprite(player,"up")
+#         #     layer = layers[i]
+#         #     self.randomSprite(layer,"down")
+#         #     self.randomSprite(layer,"up")
 #         #     self.lastAttractSpriteTime = now
 #         # 
 #         #     randtype = "sprite"
@@ -814,23 +814,23 @@ class ProGuiApp(tk.Tk):
             if self.guiLevel == 0:
                 # in casual instrument mode, loading a quad will ignore the layer selections
                 # because in casual mode, the layer selectors aren't shown.
-                # So, we don't include the player parameter.
+                # So, we don't include the layer parameter.
                 log("doing full load of ",fullpresetname)
-                palette.palette_agent_api("load", "\"preset\": \"" + fullpresetname + "\"")
+                palette.palette_task_api("load", "\"preset\": \"" + fullpresetname + "\"")
             else:
                 log("doing layer-specific load of ",fullpresetname)
                 if self.allLayersSelected:
                     layer = "*"
                 else:
                     layer = self.CurrLayer.name()
-                palette.palette_agent_api("load", "\"preset\": \"" + fullpresetname + "\", \"layer\": \""+layer+"\"")
+                palette.palette_task_api("load", "\"preset\": \"" + fullpresetname + "\", \"layer\": \""+layer+"\"")
         elif self.allLayersSelected:
             for layer in self.Layers:
                 log("calling preset.load on layer=",layer.name()," preset=",presetname)
-                palette.palette_agent_api("load", "\"preset\": \"" + fullpresetname + "\", \"layer\": \""+layer.name()+"\"")
+                palette.palette_task_api("load", "\"preset\": \"" + fullpresetname + "\", \"layer\": \""+layer.name()+"\"")
         else:
-            player = self.CurrLayer.name()
-            palette.palette_layer_api(player,"preset.load", "\"preset\": \"" + fullpresetname + "\"")
+            layer = self.CurrLayer.name()
+            palette.palette_layer_api(layer,"preset.load", "\"preset\": \"" + fullpresetname + "\"")
 
         # self.saveCurrent()
 
@@ -924,13 +924,13 @@ class ProGuiApp(tk.Tk):
         val = palette.GlobalPerformLabels[name][index]["value"]
 
         if name == "tempo":
-            palette.palette_global_api("set_tempo_factor", "\"value\": \""+str(val) + "\"")
+            palette.palette_engine_api("set_tempo_factor", "\"value\": \""+str(val) + "\"")
         elif name == "transpose":
-            palette.palette_global_api("set_transpose", "\"value\": \""+str(val) + "\"")
+            palette.palette_engine_api("set_transpose", "\"value\": \""+str(val) + "\"")
         elif name == "scale":
-            palette.palette_global_api("set_scale", "\"value\": \""+str(val) + "\"")
+            palette.palette_engine_api("set_scale", "\"value\": \""+str(val) + "\"")
         elif name == "transposeauto":
-            palette.palette_global_api("set_transposeauto", "\"onoff\": \""+str(val) + "\"")
+            palette.palette_engine_api("set_transposeauto", "\"onoff\": \""+str(val) + "\"")
 
     def combLayerLoop(self,layer):
         palette.palette_layer_api(self.CurrLayer.name(), "loop_comb", "")
@@ -946,7 +946,7 @@ class ProGuiApp(tk.Tk):
             for layer in self.Layers:
                 layer.clearLoop()
             # Extra clearing (on/off) of Bidule
-            palette.palette_global_api("audio_reset")
+            palette.palette_engine_api("audio_reset")
         else:
             self.CurrLayer.clearLoop()
         self.checkEscape()
@@ -990,7 +990,7 @@ class ProGuiApp(tk.Tk):
 
         log("ResetAll")
 
-        palette.palette_global_api("audio_reset")
+        palette.palette_engine_api("audio_reset")
 
         self.setGuiLevel(self.defaultGuiLevel)
         self.resetLastAnything()
@@ -1207,7 +1207,7 @@ class Layer():
     #     return "snap._Current_"+self.name()
 
     # def saveCurrent(self):
-    #     palette.palette_player_api(self.name(),"preset.save",
+    #     palette.palette_layer_api(self.name(),"preset.save",
     #         "\"preset\": \"" + self.currentSnapName() + "\"")
 
     def loadJson(self,j):
@@ -2005,7 +2005,7 @@ class PageEditParams(tk.Frame):
             return
 
         layer = self.controller.CurrLayer.name()
-        result = palette.palette_agent_api("save",
+        result = palette.palette_task_api("save",
                 "\"layer\": \"" + layer + "\","+
                 "\"preset\": \"" + preset + "\"")
         if result != "":

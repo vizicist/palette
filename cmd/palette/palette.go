@@ -147,7 +147,7 @@ func CliCommand(layer string, args []string) string {
 		return RemoteAPI("preset.list", "category", category)
 
 	case "sendlogs":
-		return RemoteAPI("global.sendlogs")
+		return RemoteAPI("engine.sendlogs")
 
 	case "status", "tasks":
 		return engine.ProcessStatus()

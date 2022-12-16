@@ -3,26 +3,26 @@
 
 class SpriteDrawer;
 
-#define SpriteParams PlayerParams
+#define SpriteParams LayerParams
 
 #if NOLONGERNEEDED
-// Note - this Params class is different from PaletteParams and PlayerParams because
+// Note - this Params class is different from PaletteParams and LayerParams because
 // it doesn't need the Set/Increment/Toggle methods.
 
 class SpriteParams {
 
 public:
 
-	void initValues(Player* r) {
+	void initValues(Layer* r) {
 
-		PlayerParams& rp = r->params;
+		LayerParams& rp = r->params;
 
 #undef INIT_PARAM
 #define INIT_PARAM(name,def) name = rp.##name;
-#include "PlayerParams_init.h"
+#include "LayerParams_init.h"
 	}
 
-#include "PlayerParams_declare.h"
+#include "LayerParams_declare.h"
 };
 #endif
 
