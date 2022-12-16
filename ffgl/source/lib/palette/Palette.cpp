@@ -141,22 +141,22 @@ std::string Palette::loadParamPushReal(cJSON* sound, cJSON* visual)
 	for ( j=sound->child; j!=NULL; j=j->next ) {
 		std::string key = j->string;
 		std::string val = jsonValueString(j) ;
-		player.params.Set(key,val);
+		layer.params.Set(key,val);
 	}
 	for ( j=visual->child; j!=NULL; j=j->next ) {
 		std::string key = j->string;
 		std::string val = jsonValueString(j) ;
 		// NosuchDebug("loadParamPushReal region=%s key=%s val=%s", region->name.c_str(),key.c_str(), val.c_str());
-		player.params.Set(key,val);
+		layer.params.Set(key,val);
 	}
-	// ResetPlayerParams();
+	// ResetLayerParams();
 	return "";
 }
 
 void Palette::clear() {
 	NosuchDebug(1,"===================== Palette::clear");
 	LockPalette();
-	player.clear();
+	layer.clear();
 	UnlockPalette();
 }
 
@@ -165,8 +165,8 @@ void Palette::advanceTo(int tm) {
 	NosuchDebug(2,"===================== Palette::advanceTo tm=%d setting now",tm);
 	now = tm;
 	LockPalette();
-	player.advanceTo(now);
-	player.deleteOldCursors(this);
+	layer.advanceTo(now);
+	layer.deleteOldCursors(this);
 	UnlockPalette();
 
 	if (params.showfps) {
@@ -189,13 +189,13 @@ int Palette::draw() {
 	// pthread_t thr = pthread_self ();
 	// NosuchDebug("Palette::draw start thr=%d,%d",(int)(thr.p),thr.x);
 
-	player.draw(_drawer);
+	layer.draw(_drawer);
 
 	return 0;
 }
 
 int Palette::drawbg() {
-	player.drawbg(_drawer);
+	layer.drawbg(_drawer);
 	return 0;
 }
 

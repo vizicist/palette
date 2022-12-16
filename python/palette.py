@@ -21,7 +21,7 @@ LineSep = "_"
 
 OneBeat = 96
 
-AgentName = "default"
+TaskName = "default"
 
 PerformLabels = {}
 GlobalPerformLabels = {}
@@ -173,10 +173,10 @@ def add_to_params(params,p):
 def palette_layer_api(layer, api, params=""):
     if layer == "":
         log("palette_layer_api: no layer specified?")
-    return palette_api(api,add_to_params(params,"\"player\":\""+layer+"\""))
+    return palette_api(api,add_to_params(params,"\"layer\":\""+layer+"\""))
 
-def palette_agent_api(api, params=""):
-    return palette_api("agent."+api,add_to_params(params,"\"agent\":\""+AgentName+"\""))
+def palette_task_api(api, params=""):
+    return palette_api("task."+api,add_to_params(params,"\"task\":\""+TaskName+"\""))
 
 
 def sprint(*args, end='', **kwargs):
@@ -184,8 +184,8 @@ def sprint(*args, end='', **kwargs):
     print(*args, **kwargs, end=end, file=sio)
     return sio.getvalue()
 
-def palette_global_api(api, params=""):
-    return palette_api("global."+api,params)
+def palette_engine_api(api, params=""):
+    return palette_api("engine."+api,params)
 
 def logFilePath(nm):
     return os.path.join(localPaletteDir(),"logs",nm)
@@ -415,30 +415,30 @@ def PaletteDir():
             exit()
     return paletteDir
 
-def SendCursorEvent(cid,ddu,x,y,z,player="A"):
+def SendCursorEvent(cid,ddu,x,y,z,layer="A"):
     event = "cursor_" + ddu
-    e = ("\"player\": \"" + player + "\", " + \
+    e = ("\"layer\": \"" + layer + "\", " + \
         "\"cid\": \"" + str(cid) + "\", " + \
         "\"event\": \"" + event + "\", " + \
         "\"x\": \"%f\", \"y\": \"%f\", \"z\": \"%f\"")  % (x,y,z)
     palette_event(e)
 
-def SendSpriteEvent(cid,x,y,z,player="A"):
+def SendSpriteEvent(cid,x,y,z,layer="A"):
     event = "sprite"
-    e = ("\"player\": \"" + player + "\", " + \
+    e = ("\"layer\": \"" + layer + "\", " + \
         "\"cid\": \"" + str(cid) + "\", " + \
         "\"event\": \"" + event + "\", " + \
         "\"x\": \"%f\", \"y\": \"%f\", \"z\": \"%f\"")  % (x,y,z)
     palette_event(e)
 
-def SendMIDIEvent(device,timesofar,msg,player="A"):
+def SendMIDIEvent(device,timesofar,msg,layer="A"):
     bytestr = "0x"
     for b in msg.bytes():
         bytestr += ("%02x" % b)
 
     e = ("\"event\": \"midi\", " + \
         "\"device\": \"%s\", " + \
-        "\"player\": \"" + player + "\", " + \
+        "\"layer\": \"" + layer + "\", " + \
         "\"time\": \"%f\", " + \
         "\"bytes\": \"%s\"") % \
             (device, timesofar, bytestr)

@@ -4,27 +4,31 @@ import (
 	"fmt"
 	"os"
 	"sort"
-	"strconv"
 	"strings"
 
 	"github.com/hypebeast/go-osc/osc"
 )
 
 type Layer struct {
-	name            string
-	params          *ParamValues
-	freeframeClient *osc.Client
-	resolumeClient  *osc.Client
-	resolumeLayer   int // see ResolumeLayerForPad
+	name   string
+	params *ParamValues
 }
 
 var Layers = map[string]*Layer{}
 
+func NewLayer(layerName string) *Layer {
+	layer := &Layer{
+		name:   layerName,
+		params: NewParamValues(),
+	}
+	Layers[layerName] = layer
+	return layer
+}
+
 func GetLayer(layerName string) *Layer {
 	layer, ok := Layers[layerName]
 	if !ok {
-		layer = &Layer{name: layerName, params: NewParamValues()}
-		Layers[layerName] = layer
+		return nil
 	}
 	return layer
 }
@@ -78,11 +82,11 @@ func (layer *Layer) Api(api string, apiargs map[string]string) (string, error) {
 	case "set":
 		name, ok := apiargs["name"]
 		if !ok {
-			return "", fmt.Errorf("executePlayerAPI: missing name argument")
+			return "", fmt.Errorf("executeLayerAPI: missing name argument")
 		}
 		value, ok := apiargs["value"]
 		if !ok {
-			return "", fmt.Errorf("executePlayerAPI: missing value argument")
+			return "", fmt.Errorf("executeLayerAPI: missing value argument")
 		}
 		layer.Set(name, value)
 		return "", layer.SaveCurrentSnap()
@@ -96,7 +100,7 @@ func (layer *Layer) Api(api string, apiargs map[string]string) (string, error) {
 	case "get":
 		name, ok := apiargs["name"]
 		if !ok {
-			return "", fmt.Errorf("executePlayerAPI: missing name argument")
+			return "", fmt.Errorf("executeLayerAPI: missing name argument")
 		}
 		return layer.Get(name), nil
 
@@ -105,153 +109,6 @@ func (layer *Layer) Api(api string, apiargs map[string]string) (string, error) {
 		LogError(err)
 		return "", err
 	}
-}
-
-func (layer *Layer) toFreeFramePlugin(msg *osc.Message) {
-	if layer.freeframeClient == nil {
-		ffglPort := layer.GetInt("visual.ffglport")
-		layer.freeframeClient = osc.NewClient(LocalAddress, ffglPort)
-	}
-	layer.freeframeClient.Send(msg)
-}
-
-func (layer *Layer) sendEffectParam(name string, value string) {
-	// Effect parameters that have ":" in their name are plugin parameters
-	i := strings.Index(name, ":")
-	if i > 0 {
-		effectName := name[0:i]
-		paramName := name[i+1:]
-		layer.sendPadOneEffectParam(effectName, paramName, value)
-	} else {
-		onoff, err := strconv.ParseBool(value)
-		if err != nil {
-			LogError(err)
-			onoff = false
-		}
-		layer.sendPadOneEffectOnOff(name, onoff)
-	}
-}
-
-func (layer *Layer) sendPadOneEffectParam(effectName string, paramName string, value string) {
-	fullName := "effect" + "." + effectName + ":" + paramName
-	paramsMap, realEffectName, realEffectNum, err := getEffectMap(effectName, "params")
-	if err != nil {
-		LogError(err)
-		return
-	}
-	if paramsMap == nil {
-		LogWarn("No params value for", "effecdt", effectName)
-		return
-	}
-	oneParam, ok := paramsMap[paramName]
-	if !ok {
-		LogWarn("No params value for", "param", paramName, "effect", effectName)
-		return
-	}
-
-	oneDef, ok := ParamDefs[fullName]
-	if !ok {
-		LogWarn("No paramdef value for", "param", paramName, "effect", effectName)
-		return
-	}
-
-	addr := oneParam.(string)
-	resEffectName := resolumeEffectNameOf(realEffectName, realEffectNum)
-	addr = strings.Replace(addr, realEffectName, resEffectName, 1)
-	addr = addLayerAndClipNums(addr, layer.resolumeLayer, 1)
-
-	msg := osc.NewMessage(addr)
-
-	// Append the value to the message, depending on the type of the parameter
-
-	switch oneDef.typedParamDef.(type) {
-
-	case paramDefInt:
-		valint, err := strconv.Atoi(value)
-		if err != nil {
-			LogError(err)
-			valint = 0
-		}
-		msg.Append(int32(valint))
-
-	case paramDefBool:
-		valbool, err := strconv.ParseBool(value)
-		if err != nil {
-			LogError(err)
-			valbool = false
-		}
-		onoffValue := 0
-		if valbool {
-			onoffValue = 1
-		}
-		msg.Append(int32(onoffValue))
-
-	case paramDefString:
-		valstr := value
-		msg.Append(valstr)
-
-	case paramDefFloat:
-		var valfloat float32
-		valfloat, err := ParseFloat32(value, resEffectName)
-		if err != nil {
-			LogError(err)
-			valfloat = 0.0
-		}
-		msg.Append(float32(valfloat))
-
-	default:
-		LogWarn("SetParamValueWithString: unknown type of ParamDef for", "name", fullName)
-		return
-	}
-
-	layer.toResolume(msg)
-}
-
-func (layer *Layer) sendPadOneEffectOnOff(effectName string, onoff bool) {
-	var mapType string
-	if onoff {
-		mapType = "on"
-	} else {
-		mapType = "off"
-	}
-
-	onoffMap, realEffectName, realEffectNum, err := getEffectMap(effectName, mapType)
-	if err != nil {
-		LogError(err)
-		return
-	}
-
-	if onoffMap == nil {
-		LogWarn("No onoffMap value for", "effect", effectName, "maptype", mapType, effectName)
-		return
-	}
-
-	onoffAddr, ok := onoffMap["addr"]
-	if !ok {
-		LogWarn("No addr value in onoff", "effect", effectName)
-		return
-	}
-	onoffArg, ok := onoffMap["arg"]
-	if !ok {
-		LogWarn("No arg valuei in onoff for", "effect", effectName)
-		return
-	}
-	addr := onoffAddr.(string)
-	addr = layer.addEffectNum(addr, realEffectName, realEffectNum)
-	addr = addLayerAndClipNums(addr, layer.resolumeLayer, 1)
-	onoffValue := int(onoffArg.(float64))
-
-	msg := osc.NewMessage(addr)
-	msg.Append(int32(onoffValue))
-	layer.toResolume(msg)
-}
-
-func (layer *Layer) addEffectNum(addr string, effect string, num int) string {
-	if num == 1 {
-		return addr
-	}
-	// e.g. "blur" becomes "blur2"
-	return strings.Replace(addr, effect, fmt.Sprintf("%s%d", effect, num), 1)
 }
 
 /*
@@ -268,7 +125,31 @@ func MakeLayer(name string) *Layer {
 */
 
 func (layer *Layer) Set(paramName string, paramValue string) error {
-	return layer.params.Set(paramName, paramValue)
+
+	err := layer.params.Set(paramName, paramValue)
+	if err != nil {
+		return err
+	}
+
+	resolume := TheResolume()
+	layerName := layer.name
+
+	if strings.HasPrefix(paramName, "visual.") {
+		name := strings.TrimPrefix(paramName, "visual.")
+		msg := osc.NewMessage("/api")
+		msg.Append("set_params")
+		args := fmt.Sprintf("{\"%s\":\"%s\"}", name, paramValue)
+		msg.Append(args)
+		resolume.toFreeFramePlugin(layerName,msg)
+	}
+
+	if strings.HasPrefix(paramName, "effect.") {
+		name := strings.TrimPrefix(paramName, "effect.")
+		// Effect parameters get sent to Resolume
+		resolume.sendEffectParam(layerName, name, paramValue)
+	}
+
+	return nil
 }
 
 // If no such parameter, return ""
@@ -354,10 +235,10 @@ func (layer *Layer) ApplyQuadPreset(preset *Preset, layerToApply string) error {
 	// are added which don't exist in existing preset files.
 	// This is similar to code in Layer.applyPreset, except we
 	// have to do it for all for pads
-	for _, c := range TheRouter().playerLetters {
-		playerName := string(c)
+	for _, c := range TheRouter().layerLetters {
+		layerName := string(c)
 		for nm, def := range ParamDefs {
-			paramName := string(playerName) + "-" + nm
+			paramName := string(layerName) + "-" + nm
 			_, found := preset.paramsmap[paramName]
 			if !found {
 				init := def.Init
@@ -384,13 +265,6 @@ func (layer *Layer) ffglPort() int {
 }
 */
 
-func (layer *Layer) toResolume(msg *osc.Message) {
-	if layer.resolumeClient == nil {
-		layer.resolumeClient = osc.NewClient(LocalAddress, ResolumePort)
-	}
-	layer.resolumeClient.Send(msg)
-}
-
 func (layer *Layer) generateSprite(id string, x, y, z float32) {
 	if !TheRouter().generateVisuals {
 		return
@@ -401,5 +275,6 @@ func (layer *Layer) generateSprite(id string, x, y, z float32) {
 	msg.Append(y)
 	msg.Append(z)
 	msg.Append(id)
-	layer.toFreeFramePlugin(msg)
+
+	TheResolume().toFreeFramePlugin(layer.name, msg)
 }

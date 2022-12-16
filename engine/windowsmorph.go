@@ -346,22 +346,22 @@ func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float32) 
 				// If the position is in one of the corners,
 				// we change the player to that corner.
 				edge := float32(0.075)
-				newPlayerName := ""
+				newLayerName := ""
 				if xNorm < edge && yNorm < edge {
-					newPlayerName = "A"
+					newLayerName = "A"
 				} else if xNorm < edge && yNorm > (1.0-edge) {
-					newPlayerName = "B"
+					newLayerName = "B"
 				} else if xNorm > (1.0-edge) && yNorm > (1.0-edge) {
-					newPlayerName = "C"
+					newLayerName = "C"
 				} else if xNorm > (1.0-edge) && yNorm < edge {
-					newPlayerName = "D"
+					newLayerName = "D"
 				}
-				if newPlayerName != "" {
-					if newPlayerName != m.playerName {
-						LogInfo("Switching corners pad", "player", newPlayerName)
+				if newLayerName != "" {
+					if newLayerName != m.playerName {
+						LogInfo("Switching corners pad", "player", newLayerName)
 						ce := CursorEvent{
 							ID:        fmt.Sprintf("%d", m.idx),
-							Source:    newPlayerName,
+							Source:    newLayerName,
 							Timestamp: time.Now(),
 							Ddu:       "clear",
 							X:         xNorm,
@@ -369,7 +369,7 @@ func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float32) 
 							Z:         zNorm,
 							Area:      area,
 						}
-						m.playerName = newPlayerName
+						m.playerName = newLayerName
 						callback(ce)
 					}
 					// We don't pass corner things through

@@ -23,7 +23,7 @@ func LoadMorphs() error {
 	MorphDefs = make(map[string]string)
 
 	// If you have more than one morph, or
-	// want the player assignment to NOT be
+	// want the layer assignment to NOT be
 	// automatice, put them in here.
 	path := ConfigFilePath("morphs.json")
 	if !fileExists(path) {
@@ -40,9 +40,9 @@ func LoadMorphs() error {
 	}
 	toplevel := f.(map[string]any)
 
-	for serialnum, playerinfo := range toplevel {
-		playername := playerinfo.(string)
-		MorphDefs[serialnum] = playername
+	for serialnum, layerinfo := range toplevel {
+		layername := layerinfo.(string)
+		MorphDefs[serialnum] = layername
 	}
 	return nil
 }

@@ -5,7 +5,7 @@ bool TrackedCursor::Debug = false;
 
 // std::vector<std::string> TrackedCursor::behaviourTypes;
 
-TrackedCursor::TrackedCursor(Palette* palette_, std::string cid, std::string cidsource, Player* player_, glm::vec2 pos_, float z) {
+TrackedCursor::TrackedCursor(Palette* palette_, std::string cid, std::string cidsource, Layer* layer_, glm::vec2 pos_, float z) {
 	// _area = area_;
 	_palette = palette_;
 	// _last_pitches.clear();
@@ -13,10 +13,10 @@ TrackedCursor::TrackedCursor(Palette* palette_, std::string cid, std::string cid
 	// _last_click = -1;
 	_cidsource = cidsource;
 	_cid = cid;
-	_player = player_;
+	_layer = layer_;
 
 	if ( Debug) {
-		NosuchDebug("NEW TrackedCursor player=%d cid=%s source=%s",_player, cid.c_str(),_cidsource.c_str());
+		NosuchDebug("NEW TrackedCursor layer=%d cid=%s source=%s",_layer, cid.c_str(),_cidsource.c_str());
 	}
 
 	curr_raw_pos = pos_;
@@ -104,7 +104,7 @@ void TrackedCursor::advanceTo( int tm )
 
 	_last_raw_pos = curr_raw_pos;
 
-	int smoothxyz_factor = 1 + player()->params.smoothxyz;
+	int smoothxyz_factor = 1 + layer()->params.smoothxyz;
 
 	dpos = glm::normalize( dpos );
 
