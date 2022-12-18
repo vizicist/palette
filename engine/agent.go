@@ -4,70 +4,105 @@ import (
 	"fmt"
 	"os"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
 
 	"gitlab.com/gomidi/midi/v2/drivers"
 )
 
-type Task struct {
+type Agent struct {
 	// None of these get exported, only the methods
-	methods TaskMethods
+	methods AgentMethods
 	// scheduler     *Scheduler
 	cursorManager *CursorManager
 	params        *ParamValues
 	sources       map[string]bool
 }
 
-type TaskMethods interface {
-	Start(task *Task) error
-	OnEvent(task *Task, e Event)
-	Api(task *Task, api string, apiargs map[string]string) (string, error)
-	Stop(task *Task)
+type AgentMethods interface {
+	Start(agent *Agent) error
+	OnEvent(agent *Agent, e Event)
+	Api(agent *Agent, api string, apiargs map[string]string) (string, error)
+	Stop(agent *Agent)
 }
 
-// type TaskFunc func(ctx context.Context, e Event) (string, error)
+// type AgentFunc func(ctx context.Context, e Event) (string, error)
 
-func (task *Task) Uptime() float64 {
+func (agent *Agent) Uptime() float64 {
 	return Uptime()
 }
 
-func (task *Task) LogInfo(msg string, keysAndValues ...any) {
+func (agent *Agent) LogInfo(msg string, keysAndValues ...any) {
 	LogInfo(msg, keysAndValues...)
 }
 
-func (task *Task) LogWarn(msg string, keysAndValues ...any) {
+func (agent *Agent) LogWarn(msg string, keysAndValues ...any) {
 	LogWarn(msg, keysAndValues...)
 }
 
-func (task *Task) LogError(err error, keysAndValues ...any) {
+func (agent *Agent) LogError(err error, keysAndValues ...any) {
 	LogError(err, keysAndValues...)
 }
 
-func (task *Task) GetLayer(layerName string) *Layer {
+func (agent *Agent) PaletteDir() string {
+	return PaletteDir()
+}
+
+func (agent *Agent) ConfigValueWithDefault(name, dflt string) string {
+	return ConfigValueWithDefault(name, dflt)
+}
+
+func (agent *Agent) ConfigBoolWithDefault(name string, dflt bool) bool {
+	return ConfigBoolWithDefault(name, dflt)
+}
+
+func (agent *Agent) ConfigValue(name string) string {
+	return ConfigValue(name)
+}
+
+func (agent *Agent) ConfigFilePath(name string) string {
+	return ConfigFilePath(name)
+}
+
+func (agent *Agent) StartExecutableLogOutput(logName string, fullexe string, background bool, args ...string) error {
+	return StartExecutableLogOutput(logName, fullexe, background, args...)
+}
+
+func (agent *Agent) KillExecutable(exe string) {
+	KillExecutable(exe)
+}
+
+func (agent *Agent) IsRunningExecutable(exe string) bool {
+	return IsRunningExecutable(exe)
+}
+
+func (agent *Agent) FileExists(path string) bool {
+	return FileExists(path)
+}
+
+func (agent *Agent) GetLayer(layerName string) *Layer {
 	return GetLayer(layerName)
 }
 
-func (task *Task) AllowSource(source ...string) {
+func (agent *Agent) AllowSource(source ...string) {
 	var ok bool
 	for _, name := range source {
-		_, ok = task.sources[name]
+		_, ok = agent.sources[name]
 		if ok {
 			LogInfo("AllowSource: already set?", "source", name)
 		} else {
-			task.sources[name] = true
+			agent.sources[name] = true
 		}
 	}
 }
 
-func (task *Task) IsSourceAllowed(source string) bool {
-	_, ok := task.sources[source]
+func (agent *Agent) IsSourceAllowed(source string) bool {
+	_, ok := agent.sources[source]
 	return ok
 }
 
-func (task *Task) MidiEventToPhrase(me MidiEvent) (*Phrase, error) {
-	pe, err := task.midiEventToPhraseElement(me)
+func (agent *Agent) MidiEventToPhrase(me MidiEvent) (*Phrase, error) {
+	pe, err := agent.midiEventToPhraseElement(me)
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +110,7 @@ func (task *Task) MidiEventToPhrase(me MidiEvent) (*Phrase, error) {
 	return phr, nil
 }
 
-func (task *Task) midiEventToPhraseElement(me MidiEvent) (*PhraseElement, error) {
+func (agent *Agent) midiEventToPhraseElement(me MidiEvent) (*PhraseElement, error) {
 
 	bytes := me.Msg.Bytes()
 	lng := len(bytes)
@@ -145,11 +180,11 @@ func (task *Task) midiEventToPhraseElement(me MidiEvent) (*PhraseElement, error)
 	return &PhraseElement{Value: val}, nil
 }
 
-func (task *Task) CurrentClick() Clicks {
+func (agent *Agent) CurrentClick() Clicks {
 	return CurrentClick()
 }
 
-func (task *Task) SchedulePhrase(phr *Phrase, click Clicks, dest string) {
+func (agent *Agent) SchedulePhrase(phr *Phrase, click Clicks, dest string) {
 	if phr == nil {
 		LogWarn("EngineContext.SchedulePhrase: phr == nil?")
 		return
@@ -164,18 +199,18 @@ func (task *Task) SchedulePhrase(phr *Phrase, click Clicks, dest string) {
 	}()
 }
 
-func (task *Task) SubmitCommand(command Command) {
+func (agent *Agent) SubmitCommand(command Command) {
 	go func() {
 		TheEngine().Scheduler.cmdInput <- command
 	}()
 }
 
-func (task *Task) ParamIntValue(name string) int {
-	return task.params.ParamIntValue(name)
+func (agent *Agent) ParamIntValue(name string) int {
+	return agent.params.ParamIntValue(name)
 }
 
-func (task *Task) ParamBoolValue(name string) bool {
-	return task.params.ParamBoolValue(name)
+func (agent *Agent) ParamBoolValue(name string) bool {
+	return agent.params.ParamBoolValue(name)
 }
 
 /*
@@ -335,135 +370,7 @@ func (ctx *EngineContext) sendEffectParam(name string, value string) {
 }
 */
 
-// getEffectMap returns the resolume.json map for a given effect
-// and map type ("on", "off", or "params")
-func getEffectMap(effectName string, mapType string) (map[string]any, string, int, error) {
-	if effectName[1] != '-' {
-		err := fmt.Errorf("no dash in effect, name=%s", effectName)
-		return nil, "", 0, err
-	}
-	effects, ok := ResolumeJSON["effects"]
-	if !ok {
-		err := fmt.Errorf("no effects value in resolume.json?")
-		return nil, "", 0, err
-	}
-	realEffectName := effectName[2:]
-
-	n, err := strconv.Atoi(effectName[0:1])
-	if err != nil {
-		return nil, "", 0, fmt.Errorf("bad format of effectName=%s", effectName)
-	}
-	effnum := int(n)
-
-	effectsmap := effects.(map[string]any)
-	oneEffect, ok := effectsmap[realEffectName]
-	if !ok {
-		err := fmt.Errorf("no effects value for effect=%s", effectName)
-		return nil, "", 0, err
-	}
-	oneEffectMap := oneEffect.(map[string]any)
-	mapValue, ok := oneEffectMap[mapType]
-	if !ok {
-		err := fmt.Errorf("no params value for effect=%s", effectName)
-		return nil, "", 0, err
-	}
-	return mapValue.(map[string]any), realEffectName, effnum, nil
-}
-
-func addLayerAndClipNums(addr string, layerNum int, clipNum int) string {
-	if addr[0] != '/' {
-		LogWarn("addr in resolume.json doesn't start with /", "addr", addr)
-		addr = "/" + addr
-	}
-	addr = fmt.Sprintf("/composition/layers/%d/clips/%d/video/effects%s", layerNum, clipNum, addr)
-	return addr
-}
-
-func resolumeEffectNameOf(name string, num int) string {
-	if num == 1 {
-		return name
-	}
-	return fmt.Sprintf("%s%d", name, num)
-}
-
-/*
-func (ctx *EngineContext) sendPadOneEffectParam(effectName string, paramName string, value string) {
-	fullName := "effect" + "." + effectName + ":" + paramName
-	paramsMap, realEffectName, realEffectNum, err := layer.getEffectMap(effectName, "params")
-	if err != nil {
-		LogError(err)
-		return
-	}
-	if paramsMap == nil {
-		Warn("No params value for", "effecdt", effectName)
-		return
-	}
-	oneParam, ok := paramsMap[paramName]
-	if !ok {
-		Warn("No params value for", "param", paramName, "effect", effectName)
-		return
-	}
-
-	oneDef, ok := ParamDefs[fullName]
-	if !ok {
-		Warn("No paramdef value for", "param", paramName, "effect", effectName)
-		return
-	}
-
-	addr := oneParam.(string)
-	resEffectName := ctx.resolumeEffectNameOf(realEffectName, realEffectNum)
-	addr = strings.Replace(addr, realEffectName, resEffectName, 1)
-	addr = addLayerAndClipNums(addr, layer.resolumeLayer, 1)
-
-	msg := osc.NewMessage(addr)
-
-	// Append the value to the message, depending on the type of the parameter
-
-	switch oneDef.typedParamDef.(type) {
-
-	case paramDefInt:
-		valint, err := strconv.Atoi(value)
-		if err != nil {
-			LogError(err)
-			valint = 0
-		}
-		msg.Append(int32(valint))
-
-	case paramDefBool:
-		valbool, err := strconv.ParseBool(value)
-		if err != nil {
-			LogError(err)
-			valbool = false
-		}
-		onoffValue := 0
-		if valbool {
-			onoffValue = 1
-		}
-		msg.Append(int32(onoffValue))
-
-	case paramDefString:
-		valstr := value
-		msg.Append(valstr)
-
-	case paramDefFloat:
-		var valfloat float32
-		valfloat, err := ParseFloat32(value, resEffectName)
-		if err != nil {
-			LogError(err)
-			valfloat = 0.0
-		}
-		msg.Append(float32(valfloat))
-
-	default:
-		Warn("SetParamValueWithString: unknown type of ParamDef for", "name", fullName)
-		return
-	}
-
-	ctx.toResolume(msg)
-}
-*/
-
-func (task *Task) handleMIDITimeReset() {
+func (agent *Agent) handleMIDITimeReset() {
 	LogWarn("HandleMIDITimeReset!! needs implementation")
 }
 
@@ -489,19 +396,19 @@ func (ctx *EngineContext) LayerApplyPreset(layerName, presetName string) error {
 }
 */
 
-func (task *Task) OpenMIDIOutput(name string) drivers.In {
+func (agent *Agent) OpenMIDIOutput(name string) drivers.In {
 	return nil
 }
 
 // GetPreset is guaranteed to return non=nil
-func (task *Task) GetPreset(presetName string) *Preset {
+func (agent *Agent) GetPreset(presetName string) *Preset {
 	preset := GetPreset(presetName)
 	return preset
 }
 
 /*
 // LoadPreset is guaranteed to return non=nil
-func (task *Task) LoadPreset(presetName string) *Preset {
+func (agent *Agent) LoadPreset(presetName string) *Preset {
 	preset := GetPreset(presetName)
 		preset, err = LoadPreset("")
 		if err != nil {
@@ -522,7 +429,7 @@ func (ctx *EngineContext) ApplyPreset(presetName string) error {
 */
 
 // ExecuteAPI xxx
-func (task *Task) ExecuteAPI(api string, args map[string]string, rawargs string) (result string, err error) {
+func (agent *Agent) ExecuteAPI(api string, args map[string]string, rawargs string) (result string, err error) {
 
 	DebugLogOfType("api", "Agent.ExecutAPI called", "api", api, "args", args)
 
@@ -717,22 +624,22 @@ func (ctx *EngineContext) restoreCurrentSnap(layerName string) {
 }
 */
 
-func (task *Task) SaveCurrentAsPreset(presetName string) error {
-	preset := task.GetPreset(presetName)
+func (agent *Agent) SaveCurrentAsPreset(presetName string) error {
+	preset := agent.GetPreset(presetName)
 	path := preset.WritableFilePath()
-	return task.SaveCurrentSnapInPath(path)
+	return agent.SaveCurrentSnapInPath(path)
 }
 
-func (task *Task) GenerateCursorGestureesture(source string, cid string, noteDuration time.Duration, x0, y0, z0, x1, y1, z1 float32) {
-	task.cursorManager.generateCursorGestureesture(source, cid, noteDuration, x0, y0, z0, x1, y1, z1)
+func (agent *Agent) GenerateCursorGestureesture(source string, cid string, noteDuration time.Duration, x0, y0, z0, x1, y1, z1 float32) {
+	agent.cursorManager.generateCursorGestureesture(source, cid, noteDuration, x0, y0, z0, x1, y1, z1)
 }
 
-func (task *Task) SaveCurrentSnapInPath(path string) error {
+func (agent *Agent) SaveCurrentSnapInPath(path string) error {
 
 	s := "{\n    \"params\": {\n"
 
 	// Print the parameter values sorted by name
-	fullNames := task.params.values
+	fullNames := agent.params.values
 	sortedNames := make([]string, 0, len(fullNames))
 	for k := range fullNames {
 		sortedNames = append(sortedNames, k)
@@ -741,7 +648,7 @@ func (task *Task) SaveCurrentSnapInPath(path string) error {
 
 	sep := ""
 	for _, fullName := range sortedNames {
-		valstring, e := task.params.paramValueAsString(fullName)
+		valstring, e := agent.params.paramValueAsString(fullName)
 		if e != nil {
 			LogError(e)
 			continue

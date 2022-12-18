@@ -13,28 +13,28 @@ import (
 
 // ParamDef is a single parameter definition.
 type ParamDef struct {
-	typedParamDef any
+	TypedParamDef any
 	Category      string
 	Init          string
 	comment       string
 }
 
-type paramDefFloat struct {
+type ParamDefFloat struct {
 	min  float32
 	max  float32
 	Init string
 	// comment string
 }
 
-type paramDefInt struct {
+type ParamDefInt struct {
 	min int
 	max int
 }
 
-type paramDefBool struct {
+type ParamDefBool struct {
 }
 
-type paramDefString struct {
+type ParamDefString struct {
 	values []string
 }
 
@@ -50,22 +50,22 @@ var ParamDefs map[string]ParamDef
 type ParamValue any
 
 type paramValString struct {
-	def   paramDefString
+	def   ParamDefString
 	value string
 }
 
 type paramValInt struct {
-	def   paramDefInt
+	def   ParamDefInt
 	value int
 }
 
 type paramValFloat struct {
-	def   paramDefFloat
+	def   ParamDefFloat
 	value float32
 }
 
 type paramValBool struct {
-	def   paramDefBool
+	def   ParamDefBool
 	value bool
 }
 
@@ -134,22 +134,22 @@ func (vals *ParamValues) internalSetParamValueWithString(origname, value string,
 	}
 
 	var paramVal ParamValue
-	switch d := def.typedParamDef.(type) {
-	case paramDefInt:
+	switch d := def.TypedParamDef.(type) {
+	case ParamDefInt:
 		valint, err := strconv.Atoi(value)
 		if err != nil {
 			return err
 		}
 		paramVal = paramValInt{def: d, value: valint}
-	case paramDefBool:
+	case ParamDefBool:
 		v, err := strconv.ParseBool(value)
 		if err != nil {
 			return err
 		}
 		paramVal = paramValBool{def: d, value: v}
-	case paramDefString:
+	case ParamDefString:
 		paramVal = paramValString{def: d, value: value}
-	case paramDefFloat:
+	case ParamDefFloat:
 		var v float32
 		v, err := ParseFloat32(value, origname)
 		if err != nil {
@@ -180,25 +180,6 @@ func (vals *ParamValues) internalSetParamValueWithString(origname, value string,
 
 // ParamEnums contains the lists of enumerated values for string parameters
 var ParamEnums map[string][]string
-
-// ResolumeJSON is an unmarshalled version of the resolume.json file
-var ResolumeJSON map[string]any
-
-// LoadResolumeJSON returns an unmarshalled version of the resolume.json file
-func LoadResolumeJSON() error {
-	path := ConfigFilePath("resolume.json")
-	bytes, err := os.ReadFile(path)
-	if err != nil {
-		return fmt.Errorf("unable to read resolume.json, err=%s", err)
-	}
-	var f any
-	err = json.Unmarshal(bytes, &f)
-	if err != nil {
-		return fmt.Errorf("unable to Unmarshal %s", path)
-	}
-	ResolumeJSON = f.(map[string]any)
-	return nil
-}
 
 // ParseFloat32 xxx
 func ParseFloat32(s string, name string) (float32, error) {
@@ -297,7 +278,7 @@ func LoadParamDefs() error {
 			if err != nil {
 				return err
 			}
-			pd.typedParamDef = paramDefFloat{
+			pd.TypedParamDef = ParamDefFloat{
 				min: fmin,
 				max: fmax,
 			}
@@ -311,13 +292,13 @@ func LoadParamDefs() error {
 			if err != nil {
 				return err
 			}
-			pd.typedParamDef = paramDefInt{
+			pd.TypedParamDef = ParamDefInt{
 				min: imin,
 				max: imax,
 			}
 
 		case "bool":
-			pd.typedParamDef = paramDefBool{}
+			pd.TypedParamDef = ParamDefBool{}
 
 		case "string":
 			// A bit of a hack - the "min" value of a
@@ -325,7 +306,7 @@ func LoadParamDefs() error {
 			// is actually an "enum" type name
 			enumName := min
 			values := ParamEnums[enumName]
-			pd.typedParamDef = paramDefString{
+			pd.TypedParamDef = ParamDefString{
 				values: values,
 			}
 		}
