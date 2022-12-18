@@ -30,7 +30,7 @@ func (r *Router) saveQuadPreset(presetName string) error {
 		sep := ""
 		Info("saveQuadPreset", "preset", presetName)
 
-			for _, ctx := range r.taskManager.agentsContext {
+			for _, ctx := range r.agentManager.agentsContext {
 				Info("starting", "layer", layer.layerName)
 				// Print the parameter values sorted by name
 				fullNames := layer.params.values

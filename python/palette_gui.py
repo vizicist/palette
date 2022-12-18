@@ -816,18 +816,18 @@ class ProGuiApp(tk.Tk):
                 # because in casual mode, the layer selectors aren't shown.
                 # So, we don't include the layer parameter.
                 log("doing full load of ",fullpresetname)
-                palette.palette_task_api("load", "\"preset\": \"" + fullpresetname + "\"")
+                palette.palette_agent_api("load", "\"preset\": \"" + fullpresetname + "\"")
             else:
                 log("doing layer-specific load of ",fullpresetname)
                 if self.allLayersSelected:
                     layer = "*"
                 else:
                     layer = self.CurrLayer.name()
-                palette.palette_task_api("load", "\"preset\": \"" + fullpresetname + "\", \"layer\": \""+layer+"\"")
+                palette.palette_agent_api("load", "\"preset\": \"" + fullpresetname + "\", \"layer\": \""+layer+"\"")
         elif self.allLayersSelected:
             for layer in self.Layers:
                 log("calling preset.load on layer=",layer.name()," preset=",presetname)
-                palette.palette_task_api("load", "\"preset\": \"" + fullpresetname + "\", \"layer\": \""+layer.name()+"\"")
+                palette.palette_agent_api("load", "\"preset\": \"" + fullpresetname + "\", \"layer\": \""+layer.name()+"\"")
         else:
             layer = self.CurrLayer.name()
             palette.palette_layer_api(layer,"preset.load", "\"preset\": \"" + fullpresetname + "\"")
@@ -2005,7 +2005,7 @@ class PageEditParams(tk.Frame):
             return
 
         layer = self.controller.CurrLayer.name()
-        result = palette.palette_task_api("save",
+        result = palette.palette_agent_api("save",
                 "\"layer\": \"" + layer + "\","+
                 "\"preset\": \"" + preset + "\"")
         if result != "":

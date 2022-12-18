@@ -8,7 +8,7 @@ import (
 )
 
 func init() {
-	RegisterTask("chillian", &Agent_chillian{})
+	RegisterAgent("chillian", &Agent_chillian{})
 }
 
 type Agent_chillian struct {

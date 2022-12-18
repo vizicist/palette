@@ -9,7 +9,7 @@ import (
 )
 
 func init() {
-	RegisterTask("demo", &Agent_demo{})
+	RegisterAgent("demo", &Agent_demo{})
 }
 
 type Agent_demo struct {

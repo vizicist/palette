@@ -7,9 +7,9 @@ import (
 	"syscall"
 
 	"github.com/vizicist/palette/engine"
-	agent "github.com/vizicist/palette/task"
+	agent "github.com/vizicist/palette/agent"
 
-	// _ "github.com/vizicist/palette/task"
+	// _ "github.com/vizicist/palette/agent"
 	_ "github.com/vizicist/palette/tool"
 )
 

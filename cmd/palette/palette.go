@@ -149,9 +149,6 @@ func CliCommand(layer string, args []string) string {
 	case "sendlogs":
 		return RemoteAPI("engine.sendlogs")
 
-	case "status", "tasks":
-		return engine.ProcessStatus()
-
 	case "version":
 		return engine.GetPaletteVersion()
 
@@ -186,22 +183,12 @@ func CliCommand(layer string, args []string) string {
 		}
 
 	case "stop":
-		process := "engine"
 		if len(args) > 1 {
-			process = args[1]
+			return RemoteAPI("stop", "agent", args[1])
 		}
-		if process == "all" {
-			engine.StopRunning("all")
-		} else if process == "engine" {
-			// first stop everything else, unless killonstartup is false
-			if engine.ConfigBoolWithDefault("killonstartup", true) {
-				engine.StopRunning("all")
-			}
-			// then kill ourselves
-			engine.KillExecutable(engineexe)
-		} else {
-			return RemoteAPI("stop", "process", process)
-		}
+		// kill ourselves
+		engine.KillExecutable(engineexe)
+		return ""
 
 	case "api":
 		if len(args) < 2 {

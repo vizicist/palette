@@ -149,6 +149,7 @@ var LogEnabled = map[string]bool{
 	"*":         false,
 	"info":      false,
 	"advance":   false,
+	"agent":     false,
 	"api":       false,
 	"config":    false,
 	"drawing":   false,

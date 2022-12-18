@@ -12,7 +12,7 @@ import (
 )
 
 func init() {
-	RegisterTask("erae", &Agent_erae{
+	RegisterAgent("erae", &Agent_erae{
 		layerName: "A",
 		enabled:   false,
 		prefix:    0x55,

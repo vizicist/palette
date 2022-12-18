@@ -16,7 +16,6 @@ var OSCPort = 3333
 
 // var FFGLPort = 3334
 var LocalAddress = "127.0.0.1"
-var ResolumePort = 7000
 var GuiPort = 3943
 
 // Router takes events and routes them
@@ -28,7 +27,7 @@ type Router struct {
 	cursorInput   chan CursorEvent
 
 	cursorManager *CursorManager
-	// taskManager   *TaskManager
+	// agentManager   *AgentManager
 
 	killme bool
 
@@ -117,11 +116,6 @@ func NewRouter() *Router {
 		LogWarn("LoadParamDefs", "err", err)
 		// might be fatal, but try to continue
 	}
-	err = LoadResolumeJSON()
-	if err != nil {
-		LogWarn("LoadResolumeJSON", "err", err)
-		// might be fatal, but try to continue
-	}
 
 	r.layerAssignedToNUID = make(map[string]string)
 
@@ -184,7 +178,7 @@ func (r *Router) InputListener() {
 		case msg := <-r.OSCInput:
 			r.handleOSCInput(msg)
 		case event := <-r.midiInputChan:
-			TheTaskManager().handleMidiEvent(event)
+			TheAgentManager().handleMidiEvent(event)
 		case event := <-r.cursorInput:
 			r.cursorManager.handleCursorEvent(event)
 		default:
@@ -197,7 +191,7 @@ func (r *Router) InputListener() {
 /*
 func (r *Router) handleCursorEvent(ce CursorEvent) {
 	Info("Router.handleCursorEvent needs work", "ce", ce)
-	r.taskManager.handleCursorEvent(ce)
+	r.agentManager.handleCursorEvent(ce)
 }
 */
 
@@ -206,7 +200,7 @@ func (r *Router) handleMidiEvent(me MidiEvent) {
 	if EraeEnabled {
 		HandleEraeMIDI(me)
 	}
-	r.taskManager.handleMidiEvent(me)
+	r.agentManager.handleMidiEvent(me)
 }
 */
 
@@ -263,7 +257,7 @@ func ArgsToCursorEvent(args map[string]string) CursorEvent {
 }
 
 // HandleInputEvent xxx
-func (r *Router) HandleInputEvent(taskName string, args map[string]string) error {
+func (r *Router) HandleInputEvent(agentName string, args map[string]string) error {
 
 	r.inputEventMutex.Lock()
 	defer func() {
@@ -275,10 +269,10 @@ func (r *Router) HandleInputEvent(taskName string, args map[string]string) error
 		return err
 	}
 
-	DebugLogOfType("router", "Router.HandleEvent", "task", taskName, "event", event)
+	DebugLogOfType("router", "Router.HandleEvent", "agent", agentName, "event", event)
 
 	/*
-		ctx, err := r.taskManager.GetTaskContext(taskName)
+		ctx, err := r.agentManager.GetAgentContext(agentName)
 		if err != nil {
 			return err
 		}
@@ -293,7 +287,7 @@ func (r *Router) HandleInputEvent(taskName string, args map[string]string) error
 	case "cursor_down", "cursor_drag", "cursor_up":
 		LogWarn("HandleInputEvent needs work for cursor_*")
 		// ce := ArgsToCursorEvent(args)
-		// ctx.taskFunc(ctx.taskContext,ce)
+		// ctx.agentFunc(ctx.agentContext,ce)
 		// ctx.agent.OnCursorEvent(ce)
 
 	case "sprite":
@@ -629,8 +623,8 @@ func (r *Router) handleInputEventRaw(rawargs string) {
 	if err != nil {
 		return
 	}
-	taskName := ExtractAndRemoveValue("task", args)
-	r.HandleInputEvent(taskName, args)
+	agentName := ExtractAndRemoveValue("agent", args)
+	r.HandleInputEvent(agentName, args)
 }
 
 func (r *Router) handlePatchXREvent(msg *osc.Message) {
@@ -705,11 +699,11 @@ func (r *Router) handleOSCSpriteEvent(msg *osc.Message) {
 		return
 	}
 
-	taskName := ExtractAndRemoveValue("task", args)
-	if taskName == "" {
-		LogError(fmt.Errorf("no value for task"))
+	agentName := ExtractAndRemoveValue("agent", args)
+	if agentName == "" {
+		LogError(fmt.Errorf("no value for agent"))
 	}
-	err = r.HandleInputEvent(taskName, args)
+	err = r.HandleInputEvent(agentName, args)
 	if err != nil {
 		LogWarn("Router.handleOSCSpriteEvent", "err", err)
 		return
