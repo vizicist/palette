@@ -8,7 +8,7 @@ import (
 )
 
 func init() {
-	RegisterTask("logger", &Agent_logger{})
+	RegisterAgent("logger", &Agent_logger{})
 }
 
 type Agent_logger struct {

@@ -6,8 +6,8 @@ import (
 	"runtime/pprof"
 	"syscall"
 
+	_ "github.com/vizicist/palette/agent"
 	"github.com/vizicist/palette/engine"
-	_ "github.com/vizicist/palette/task"
 	_ "github.com/vizicist/palette/tool"
 	"github.com/vizicist/palette/twinsys"
 )
@@ -25,7 +25,7 @@ func main() {
 
 	e := engine.TheEngine()
 
-	e.StartTask("ppro")
+	e.StartAgent("ppro")
 
 	done := make(chan bool)
 	e.Start(done)

@@ -10,16 +10,23 @@ import (
 )
 
 type Layer struct {
-	name   string
-	params *ParamValues
+	name     string
+	params   *ParamValues
+	callback LayerCallbackMethods
+}
+
+type LayerCallbackMethods interface {
+	OnParamSet(layer *Layer, paramName string, paramValue string)
+	OnSpriteGen(layer *Layer, id string, x, y, z float32)
 }
 
 var Layers = map[string]*Layer{}
 
-func NewLayer(layerName string) *Layer {
+func NewLayer(layerName string, cb LayerCallbackMethods) *Layer {
 	layer := &Layer{
-		name:   layerName,
-		params: NewParamValues(),
+		name:     layerName,
+		params:   NewParamValues(),
+		callback: cb,
 	}
 	Layers[layerName] = layer
 	return layer
@@ -131,22 +138,8 @@ func (layer *Layer) Set(paramName string, paramValue string) error {
 		return err
 	}
 
-	resolume := TheResolume()
-	layerName := layer.name
-
-	if strings.HasPrefix(paramName, "visual.") {
-		name := strings.TrimPrefix(paramName, "visual.")
-		msg := osc.NewMessage("/api")
-		msg.Append("set_params")
-		args := fmt.Sprintf("{\"%s\":\"%s\"}", name, paramValue)
-		msg.Append(args)
-		resolume.toFreeFramePlugin(layerName,msg)
-	}
-
-	if strings.HasPrefix(paramName, "effect.") {
-		name := strings.TrimPrefix(paramName, "effect.")
-		// Effect parameters get sent to Resolume
-		resolume.sendEffectParam(layerName, name, paramValue)
+	if layer.callback != nil {
+		layer.callback.OnParamSet(layer, paramName, paramValue)
 	}
 
 	return nil
@@ -276,5 +269,7 @@ func (layer *Layer) generateSprite(id string, x, y, z float32) {
 	msg.Append(z)
 	msg.Append(id)
 
-	TheResolume().toFreeFramePlugin(layer.name, msg)
+	if layer.callback != nil {
+		layer.callback.OnSpriteGen(layer, id, x, y, z)
+	}
 }

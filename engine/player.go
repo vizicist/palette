@@ -92,7 +92,7 @@ func NewLayer(layerName string) *Layer {
 	//p.clearExternalScale()
 	//p.setExternalScale(60%12, true) // Middle C
 
-	TheRouter().taskManager.AddAgent(p)
+	TheRouter().agentManager.AddAgent(p)
 
 	return p
 }

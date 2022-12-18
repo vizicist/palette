@@ -313,7 +313,7 @@ NosuchHttp::Check()
 
 	        // An error normally means that the socket has a problem -> abort the loop.
 	        // A few errors should not abort the processing:
-	        if (u32_Err != WSAECONNABORTED && // e.g. after the other side was killed in TaskManager
+	        if (u32_Err != WSAECONNABORTED && // e.g. after the other side was killed in AgentManager
 	                u32_Err != WSAECONNRESET   && // Connection reset by peer.
 	                u32_Err != WSAECONNREFUSED && // FD_ACCEPT with already 62 clients connected
 	                u32_Err != WSAESHUTDOWN) {      // Sending data to a socket just in the short timespan

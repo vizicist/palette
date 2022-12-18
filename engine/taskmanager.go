@@ -4,14 +4,14 @@ import (
 	"fmt"
 )
 
-// type TaskInfo struct {
+// type AgentInfo struct {
 // }
-func TheTaskManager() *TaskManager {
-	return TheEngine().TaskManager
+func TheAgentManager() *AgentManager {
+	return TheEngine().AgentManager
 }
 
-func NewTask(methods TaskMethods) *Task {
-	return &Task{
+func NewAgent(methods AgentMethods) *Agent {
+	return &Agent{
 		methods: methods,
 		sources: map[string]bool{},
 		// scheduler: NewScheduler(),
@@ -19,54 +19,54 @@ func NewTask(methods TaskMethods) *Task {
 	}
 }
 
-type TaskManager struct {
-	tasks map[string]*Task
+type AgentManager struct {
+	agents map[string]*Agent
 }
 
-func NewTaskManager() *TaskManager {
-	return &TaskManager{
-		tasks: make(map[string]*Task),
-		// taskContext: make(map[string]*TaskContext),
+func NewAgentManager() *AgentManager {
+	return &AgentManager{
+		agents: make(map[string]*Agent),
+		// agentContext: make(map[string]*AgentContext),
 	}
 }
 
-func (tm *TaskManager) RegisterTask(name string, methods TaskMethods) {
-	_, ok := tm.tasks[name]
+func (tm *AgentManager) RegisterAgent(name string, methods AgentMethods) {
+	_, ok := tm.agents[name]
 	if ok {
-		LogWarn("RegisterTask: existing task", "task", name)
+		LogWarn("RegisterAgent: existing agent", "agent", name)
 	} else {
-		tm.tasks[name] = NewTask(methods)
-		LogInfo("Registering Task", "task", name)
+		tm.agents[name] = NewAgent(methods)
+		LogInfo("Registering Agent", "agent", name)
 	}
 }
 
-func (tm *TaskManager) StartTask(name string) error {
-	task, err := tm.GetTask(name)
+func (tm *AgentManager) StartAgent(name string) error {
+	agent, err := tm.GetAgent(name)
 	if err != nil {
 		return err
 	}
-	task.methods.Start(task)
+	agent.methods.Start(agent)
 	return nil
 }
 
 /*
-func (rm *TaskManager) handleCursorEvent(ce CursorEvent) {
+func (rm *AgentManager) handleCursorEvent(ce CursorEvent) {
 	for name, agent := range rm.agents {
 		DebugLogOfType("agent", "CallAgents", "name", name)
 		context, ok := rm.agentsContext[name]
 		if !ok {
-			Warn("TaskManager.handle: no context", "name", name)
+			Warn("AgentManager.handle: no context", "name", name)
 		} else {
 			agent.OnCursorEvent(context, ce)
 		}
 	}
 }
 
-func (rm *TaskManager) handleMidiEvent(me MidiEvent) {
+func (rm *AgentManager) handleMidiEvent(me MidiEvent) {
 	for name, agent := range rm.agents {
 		context, ok := rm.agentsContext[name]
 		if !ok {
-			Warn("TaskManager.handle: no context", "name", name)
+			Warn("AgentManager.handle: no context", "name", name)
 		} else {
 			agent.OnMidiEvent(context, me)
 		}
@@ -75,7 +75,7 @@ func (rm *TaskManager) handleMidiEvent(me MidiEvent) {
 */
 
 /*
-func (pm *TaskManager) ApplyToAllAgents(f func(agent Agent)) {
+func (pm *AgentManager) ApplyToAllAgents(f func(agent Agent)) {
 	for _, agent := range pm.agents {
 		f(agent)
 	}
@@ -83,49 +83,49 @@ func (pm *TaskManager) ApplyToAllAgents(f func(agent Agent)) {
 */
 
 /*
-func (pm *TaskManager) ApplyToAgentsNamed(taskName string, f func(agent Agent)) {
+func (pm *AgentManager) ApplyToAgentsNamed(agentName string, f func(agent Agent)) {
 	for name, ctx := range pm.agentsContext {
-		if taskName == name {
+		if agentName == name {
 			f(agent)
 		}
 	}
 }
 
-func (pm *TaskManager) GetAgent(taskName string) (Agent, error) {
-	agent, ok := pm.agents[taskName]
+func (pm *AgentManager) GetAgent(agentName string) (Agent, error) {
+	agent, ok := pm.agents[agentName]
 	if !ok {
-		return nil, fmt.Errorf("no agent named %s", taskName)
+		return nil, fmt.Errorf("no agent named %s", agentName)
 	} else {
 		return agent, nil
 	}
 }
 */
 
-func (pm *TaskManager) GetTask(name string) (*Task, error) {
-	ctx, ok := pm.tasks[name]
+func (pm *AgentManager) GetAgent(name string) (*Agent, error) {
+	ctx, ok := pm.agents[name]
 	if !ok {
-		return nil, fmt.Errorf("no task named %s", name)
+		return nil, fmt.Errorf("no agent named %s", name)
 	} else {
 		return ctx, nil
 	}
 }
 
-func (tm *TaskManager) handleCursorEvent(e CursorEvent) {
-	for _, task := range tm.tasks {
-		if task.IsSourceAllowed(e.Source) {
-			task.methods.OnEvent(task, e)
+func (tm *AgentManager) handleCursorEvent(e CursorEvent) {
+	for _, agent := range tm.agents {
+		if agent.IsSourceAllowed(e.Source) {
+			agent.methods.OnEvent(agent, e)
 		}
 	}
 }
 
-func (tm *TaskManager) handleMidiEvent(e MidiEvent) {
-	for _, task := range tm.tasks {
-		task.methods.OnEvent(task, e)
+func (tm *AgentManager) handleMidiEvent(e MidiEvent) {
+	for _, agent := range tm.agents {
+		agent.methods.OnEvent(agent, e)
 	}
 }
 
-func (tm *TaskManager) handleClickEvent(e ClickEvent) {
-	for _, task := range tm.tasks {
-		task.methods.OnEvent(task, e)
+func (tm *AgentManager) handleClickEvent(e ClickEvent) {
+	for _, agent := range tm.agents {
+		agent.methods.OnEvent(agent, e)
 	}
 }

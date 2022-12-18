@@ -10,13 +10,12 @@ import (
 )
 
 type Engine struct {
-	ProcessManager *ProcessManager
-	Router         *Router
-	Scheduler      *Scheduler
-	TaskManager    *TaskManager
-	CursorManager  *CursorManager
-	bidule         *Bidule
-	done           chan bool
+	// ProcessManager *ProcessManager
+	Router        *Router
+	Scheduler     *Scheduler
+	AgentManager  *AgentManager
+	CursorManager *CursorManager
+	done          chan bool
 }
 
 var theEngine *Engine
@@ -36,33 +35,28 @@ func TheRouter() *Router {
 func newEngine() *Engine {
 	e := &Engine{}
 	e.initDebug()
-	e.ProcessManager = NewProcessManager()
+	// e.ProcessManager = NewProcessManager()
 	e.Router = NewRouter()
 	e.Scheduler = NewScheduler()
-	e.bidule = NewBidule()
-	e.TaskManager = NewTaskManager()
+	e.AgentManager = NewAgentManager()
 	return e
 }
 
-func ProcessStatus() string {
-	return TheEngine().ProcessManager.ProcessStatus()
-}
+// func StopRunning(what string) {
+// 	TheEngine().ProcessManager.StopRunning(what)
+// }
 
-func StopRunning(what string) {
-	TheEngine().ProcessManager.StopRunning(what)
-}
-
-func RegisterTask(name string, task TaskMethods) {
-	TheTaskManager().RegisterTask(name, task)
+func RegisterAgent(name string, agent AgentMethods) {
+	TheAgentManager().RegisterAgent(name, agent)
 }
 
 // func (e *Engine) handleCursorEvent(ce CursorEvent) {
 // 	TheEngine().cursorManager.handleCursorEvent(ce)
-// 	TheEngine().taskManager.handleCursorEvent(ce)
+// 	TheEngine().agentManager.handleCursorEvent(ce)
 // }
 
-func (e *Engine) StartTask(name string) {
-	err := e.TaskManager.StartTask(name)
+func (e *Engine) StartAgent(name string) {
+	err := e.AgentManager.StartAgent(name)
 	if err != nil {
 		LogError(err)
 	}
@@ -72,13 +66,6 @@ func (e *Engine) Start(done chan bool) {
 
 	e.done = done
 	LogInfo("Engine.Start")
-
-	// Normally, the engine should never die, but if it does,
-	// other processes (e.g. resolume, bidule) may be left around.
-	// So, unless told otherwise, we kill everything to get a clean start.
-	if ConfigBoolWithDefault("killonstartup", true) {
-		e.ProcessManager.killAll()
-	}
 
 	InitMIDI()
 	InitSynths()
