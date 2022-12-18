@@ -24,9 +24,6 @@ type Scheduler struct {
 	transposeClicks Clicks // time between auto transpose changes
 	transposeIndex  int    // current place in tranposeValues
 	transposeValues []int
-
-	lastProcessCheck float64
-	processCheckSecs float64
 }
 
 type Command struct {
@@ -55,8 +52,6 @@ func NewScheduler() *Scheduler {
 		transposeIndex:  0,
 		transposeValues: []int{0, -2, 3, -5},
 
-		lastProcessCheck: 0,
-		processCheckSecs: 0,
 	}
 	return s
 }
@@ -73,10 +68,6 @@ func (sched *Scheduler) Start() {
 	// Wake up every 2 milliseconds and check looper events
 	tick := time.NewTicker(2 * time.Millisecond)
 	sched.time0 = <-tick.C
-
-	// Don't start checking processes right away, after killing them on a restart,
-	// they may still be running for a bit
-	sched.processCheckSecs = float64(ConfigFloatWithDefault("processchecksecs", 60))
 
 	nonRealtime := false
 
@@ -109,37 +100,12 @@ func (sched *Scheduler) Start() {
 		sched.checkInput()
 
 		ce := ClickEvent{Click: newclick, Uptime: uptimesecs}
-		TheTaskManager().handleClickEvent(ce)
+		TheAgentManager().handleClickEvent(ce)
 	}
 	LogInfo("StartRealtime ends")
 }
 
 func (sched *Scheduler) checkInput() {
-
-	/*
-		processCheckEnabled := sched.processCheckSecs > 0
-
-		// At the beginning and then every processCheckSecs seconds
-		// we check to see if necessary processes are still running
-		firstTime := (sched.lastProcessCheck == 0)
-		sinceLastProcessCheck := uptimesecs - sched.lastProcessCheck
-		if processCheckEnabled && (firstTime || sinceLastProcessCheck > sched.processCheckSecs) {
-			// Put it in background, so calling
-			// tasklist or ps doesn't disrupt realtime
-			// The sleep here is because if you kill something and
-			// immediately check to see if it's running, it reports that
-			// it's stil running.
-			go func() {
-				DebugLogOfType("scheduler", "Scheduler: checking processes")
-				time.Sleep(2 * time.Second)
-				TheEngine().ProcessManager.checkProcessesAndRestartIfNecessary()
-			}()
-			sched.lastProcessCheck = uptimesecs
-		}
-		if !processCheckEnabled && firstTime {
-			Info("Process Checking is disabled.")
-		}
-	*/
 
 	select {
 	case cmd := <-sched.cmdInput:

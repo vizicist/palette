@@ -21,7 +21,7 @@ LineSep = "_"
 
 OneBeat = 96
 
-TaskName = "default"
+AgentName = "default"
 
 PerformLabels = {}
 GlobalPerformLabels = {}
@@ -175,8 +175,8 @@ def palette_layer_api(layer, api, params=""):
         log("palette_layer_api: no layer specified?")
     return palette_api(api,add_to_params(params,"\"layer\":\""+layer+"\""))
 
-def palette_task_api(api, params=""):
-    return palette_api("task."+api,add_to_params(params,"\"task\":\""+TaskName+"\""))
+def palette_agent_api(api, params=""):
+    return palette_api("agent."+api,add_to_params(params,"\"agent\":\""+AgentName+"\""))
 
 
 def sprint(*args, end='', **kwargs):

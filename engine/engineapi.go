@@ -17,25 +17,6 @@ func (e *Engine) ExecuteAPIFromMap(api string, apiargs map[string]string) (resul
 		// notreached
 		return "", nil
 
-	case "start", "stop":
-		process, ok := apiargs["process"]
-		if !ok {
-			return "", fmt.Errorf("ExecuteAPI: missing process argument")
-		}
-		if api == "start" {
-			err = e.ProcessManager.StartRunning(process)
-		} else {
-			err = e.ProcessManager.StopRunning(process)
-		}
-		return "", err
-
-	case "activate":
-		pproTask, err := TheTaskManager().GetTask("ppro")
-		if err != nil {
-			return "", err
-		}
-		return pproTask.methods.Api(pproTask, "activate", nil)
-
 	case "sendlogs":
 		return "", SendLogs()
 
@@ -54,8 +35,8 @@ func (e *Engine) ExecuteAPIFromMap(api string, apiargs map[string]string) (resul
 			return e.executeEngineAPI(apisuffix, apiargs)
 		case "preset":
 			return e.executePresetAPI(apisuffix, apiargs)
-		case "task":
-			return e.executeTaskAPI(apisuffix, apiargs)
+		case "agent":
+			return e.executeAgentAPI(apisuffix, apiargs)
 		case "sound":
 			return e.executeSoundAPI(apisuffix, apiargs)
 		case "layer":
@@ -149,8 +130,8 @@ func (e *Engine) executeEngineAPI(api string, apiargs map[string]string) (result
 				}
 		*/
 
-	case "audio_reset":
-		go e.bidule.Reset()
+	// case "audio_reset":
+	// 	go e.bidule.Reset()
 
 		/*
 			case "recordingStart":
@@ -218,18 +199,18 @@ func (e *Engine) executePresetAPI(api string, apiargs map[string]string) (result
 	}
 }
 
-func (e *Engine) executeTaskAPI(api string, apiargs map[string]string) (result string, err error) {
+func (e *Engine) executeAgentAPI(api string, apiargs map[string]string) (result string, err error) {
 
-	taskName, okTask := apiargs["task"]
-	if !okTask {
-		return "", fmt.Errorf("missing task parameter")
+	agentName, okagent := apiargs["agent"]
+	if !okagent {
+		return "", fmt.Errorf("missing agent parameter")
 	}
-	task, err := TheTaskManager().GetTask(taskName)
+	agent, err := TheAgentManager().GetAgent(agentName)
 	if err != nil {
-		return "", fmt.Errorf("task error, err=%s", err)
+		return "", fmt.Errorf("agent error, err=%s", err)
 	}
 
-	return task.methods.Api(task, api, apiargs)
+	return agent.methods.Api(agent, api, apiargs)
 
 }
 
