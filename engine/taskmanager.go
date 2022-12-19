@@ -10,9 +10,9 @@ func TheAgentManager() *AgentManager {
 	return TheEngine().AgentManager
 }
 
-func NewAgent(methods AgentMethods) *Agent {
-	return &Agent{
-		methods: methods,
+func NewAgent(apiFunc AgentFunc) *AgentContext {
+	return &AgentContext{
+		api:     apiFunc,
 		sources: map[string]bool{},
 		// scheduler: NewScheduler(),
 		params: NewParamValues(),
@@ -20,22 +20,22 @@ func NewAgent(methods AgentMethods) *Agent {
 }
 
 type AgentManager struct {
-	agents map[string]*Agent
+	agents map[string]*AgentContext
 }
 
 func NewAgentManager() *AgentManager {
 	return &AgentManager{
-		agents: make(map[string]*Agent),
+		agents: make(map[string]*AgentContext),
 		// agentContext: make(map[string]*AgentContext),
 	}
 }
 
-func (tm *AgentManager) RegisterAgent(name string, methods AgentMethods) {
+func (tm *AgentManager) RegisterAgent(name string, apiFunc AgentFunc) {
 	_, ok := tm.agents[name]
 	if ok {
 		LogWarn("RegisterAgent: existing agent", "agent", name)
 	} else {
-		tm.agents[name] = NewAgent(methods)
+		tm.agents[name] = NewAgent(apiFunc)
 		LogInfo("Registering Agent", "agent", name)
 	}
 }
@@ -45,8 +45,8 @@ func (tm *AgentManager) StartAgent(name string) error {
 	if err != nil {
 		return err
 	}
-	agent.methods.Start(agent)
-	return nil
+	_, err = agent.api(agent, "start", nil)
+	return err
 }
 
 /*
@@ -101,7 +101,7 @@ func (pm *AgentManager) GetAgent(agentName string) (Agent, error) {
 }
 */
 
-func (pm *AgentManager) GetAgent(name string) (*Agent, error) {
+func (pm *AgentManager) GetAgent(name string) (*AgentContext, error) {
 	ctx, ok := pm.agents[name]
 	if !ok {
 		return nil, fmt.Errorf("no agent named %s", name)
@@ -113,19 +113,19 @@ func (pm *AgentManager) GetAgent(name string) (*Agent, error) {
 func (tm *AgentManager) handleCursorEvent(e CursorEvent) {
 	for _, agent := range tm.agents {
 		if agent.IsSourceAllowed(e.Source) {
-			agent.methods.OnEvent(agent, e)
+			agent.api(agent, "event", e.ToMap())
 		}
 	}
 }
 
 func (tm *AgentManager) handleMidiEvent(e MidiEvent) {
 	for _, agent := range tm.agents {
-		agent.methods.OnEvent(agent, e)
+		agent.api(agent, "event", e.ToMap())
 	}
 }
 
 func (tm *AgentManager) handleClickEvent(e ClickEvent) {
 	for _, agent := range tm.agents {
-		agent.methods.OnEvent(agent, e)
+		agent.api(agent, "event", e.ToMap())
 	}
 }

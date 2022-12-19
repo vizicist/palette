@@ -2,6 +2,7 @@ package engine
 
 import (
 	"math"
+	"strconv"
 	"sync"
 )
 
@@ -12,14 +13,15 @@ import (
 // XXX - used as absolute time versus Clicks that are step numbers
 type Clicks int64
 
-const ClicksPerQuarterNote = 24 // constant, not based on defaultClicksPerSecond or anything that changes
-const QuarterNote = Clicks(24)
-const EighthNote = Clicks(12)
-const SixteenthNote = Clicks(6)
-const ThirtySecondNote = Clicks(3)
+var WholeNote = Clicks(96)
+var HalfNote = Clicks(48)
+var QuarterNote = Clicks(24)
+var EighthNote = Clicks(12)
+var SixteenthNote = Clicks(6)
+var ThirtySecondNote = Clicks(3)
 
 // MaxClicks is the high-possible value for Clicks
-const MaxClicks = Clicks(math.MaxInt64)
+var MaxClicks = Clicks(math.MaxInt64)
 
 // XXX - having Mutexes for all of these values
 // is probably silly, should be simplified
@@ -33,7 +35,7 @@ var globalCurrentMilliOffsetMutex sync.RWMutex
 var globalCurrentClickOffset Clicks
 var globalCurrentClickOffsetMutex sync.RWMutex
 
-var globalClicksPerSecond int
+var globalClicksPerSecond Clicks
 var globalClicksPerSecondMutex sync.RWMutex
 
 var globalCurrentClick Clicks
@@ -43,7 +45,7 @@ var OneBeat Clicks
 var OneBeatMutex sync.RWMutex
 
 // CurrentMilli is the time from the start, in milliseconds
-const defaultClicksPerSecond = 192
+const defaultClicksPerSecond = Clicks(192)
 const minClicksPerSecond = (defaultClicksPerSecond / 16)
 const maxClicksPerSecond = (defaultClicksPerSecond * 16)
 
@@ -62,8 +64,15 @@ type ClickEvent struct {
 	Uptime float64
 }
 
+func (ce ClickEvent) ToMap() map[string]string {
+	return map[string]string{
+		"click":  strconv.FormatInt(int64(ce.Click), 10),
+		"uptime": strconv.FormatFloat(ce.Uptime, 'f', 6, 64),
+	}
+}
+
 // InitializeClicksPerSecond initializes
-func InitializeClicksPerSecond(clkpersec int) {
+func InitializeClicksPerSecond(clkpersec Clicks) {
 	// no locks needed here
 	globalClicksPerSecond = clkpersec
 	globalCurrentMilliOffset = 0
@@ -74,7 +83,8 @@ func InitializeClicksPerSecond(clkpersec int) {
 // ChangeClicksPerSecond is what you use to change the tempo
 func ChangeClicksPerSecond(factor float64) {
 	TempoFactor = factor
-	clkpersec := int(defaultClicksPerSecond * factor)
+	cpsf := float64(defaultClicksPerSecond)
+	clkpersec := Clicks(cpsf * factor)
 	if clkpersec < minClicksPerSecond {
 		clkpersec = minClicksPerSecond
 	}
@@ -94,13 +104,17 @@ func Seconds2Clicks(tm float64) Clicks {
 	clickOffset := CurrentClickOffset()
 	cps := ClicksPerSecond()
 	milliOffset := CurrentMilliOffset()
-	click := clickOffset + Clicks(0.5+float64(tm*1000-float64(milliOffset))*(float64(cps)/1000.0))
+	cpsf := float64(cps)
+	var tmpclicks = Clicks(0.5 + float64(tm*1000-float64(milliOffset))*(cpsf/1000.0))
+	click := clickOffset + tmpclicks
 	return click
 }
 
 // Clicks2Seconds converts Clicks to Time (seconds), relative
 func Clicks2Seconds(clk Clicks) float64 {
-	return float64(clk) / float64(globalClicksPerSecond)
+	cps := globalClicksPerSecond
+	clkf := float64(clk)
+	return clkf / float64(cps)
 }
 
 // TempoFactor xxx
@@ -136,13 +150,13 @@ func SetCurrentMilliOffset(milli int64) {
 
 //  ClicksPerSecond
 
-func ClicksPerSecond() int {
+func ClicksPerSecond() Clicks {
 	globalClicksPerSecondMutex.RLock()
 	defer globalClicksPerSecondMutex.RUnlock()
-	return globalClicksPerSecond
+	return Clicks(globalClicksPerSecond)
 }
 
-func SetClicksPerSecond(cps int) {
+func SetClicksPerSecond(cps Clicks) {
 	globalClicksPerSecondMutex.Lock()
 	globalClicksPerSecond = cps
 	globalClicksPerSecondMutex.Unlock()

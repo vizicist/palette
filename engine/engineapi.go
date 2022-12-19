@@ -133,50 +133,50 @@ func (e *Engine) executeEngineAPI(api string, apiargs map[string]string) (result
 	// case "audio_reset":
 	// 	go e.bidule.Reset()
 
-		/*
-			case "recordingStart":
-				r.recordingOn = true
-				if r.recordingFile != nil {
-					r.recordingFile.Close()
-				}
-				r.recordingFile, err = os.Create(recordingsFile("LastRecording.json"))
-				if err != nil {
-					return "", err
-				}
-				r.recordingBegun = time.Now()
-				if r.recordingOn {
-					r.recordEvent("engine", "*", "start", "{}")
-				}
-			case "recordingSave":
-				var name string
-				name, err = needStringArg("name", api, apiargs)
+	/*
+		case "recordingStart":
+			r.recordingOn = true
+			if r.recordingFile != nil {
+				r.recordingFile.Close()
+			}
+			r.recordingFile, err = os.Create(recordingsFile("LastRecording.json"))
+			if err != nil {
+				return "", err
+			}
+			r.recordingBegun = time.Now()
+			if r.recordingOn {
+				r.recordEvent("engine", "*", "start", "{}")
+			}
+		case "recordingSave":
+			var name string
+			name, err = needStringArg("name", api, apiargs)
+			if err == nil {
+				err = r.recordingSave(name)
+			}
+
+		case "recordingStop":
+			if r.recordingOn {
+				r.recordEvent("engine", "*", "stop", "{}")
+			}
+			if r.recordingFile != nil {
+				r.recordingFile.Close()
+				r.recordingFile = nil
+			}
+			r.recordingOn = false
+
+		case "recordingPlay":
+			name, err := needStringArg("name", api, apiargs)
+			if err == nil {
+				events, err := r.recordingLoad(name)
 				if err == nil {
-					err = r.recordingSave(name)
+					r.sendANO()
+					go r.recordingPlayback(events)
 				}
+			}
 
-			case "recordingStop":
-				if r.recordingOn {
-					r.recordEvent("engine", "*", "stop", "{}")
-				}
-				if r.recordingFile != nil {
-					r.recordingFile.Close()
-					r.recordingFile = nil
-				}
-				r.recordingOn = false
-
-			case "recordingPlay":
-				name, err := needStringArg("name", api, apiargs)
-				if err == nil {
-					events, err := r.recordingLoad(name)
-					if err == nil {
-						r.sendANO()
-						go r.recordingPlayback(events)
-					}
-				}
-
-			case "recordingPlaybackStop":
-				r.recordingPlaybackStop()
-		*/
+		case "recordingPlaybackStop":
+			r.recordingPlaybackStop()
+	*/
 
 	default:
 		LogWarn("Router.ExecuteAPI api is not recognized\n", "api", api)
@@ -210,7 +210,7 @@ func (e *Engine) executeAgentAPI(api string, apiargs map[string]string) (result 
 		return "", fmt.Errorf("agent error, err=%s", err)
 	}
 
-	return agent.methods.Api(agent, api, apiargs)
+	return agent.api(agent, api, apiargs)
 
 }
 

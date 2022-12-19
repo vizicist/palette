@@ -360,14 +360,14 @@ func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float32) 
 					if newLayerName != m.playerName {
 						LogInfo("Switching corners pad", "player", newLayerName)
 						ce := CursorEvent{
-							ID:        fmt.Sprintf("%d", m.idx),
-							Source:    newLayerName,
-							Timestamp: time.Now(),
-							Ddu:       "clear",
-							X:         xNorm,
-							Y:         yNorm,
-							Z:         zNorm,
-							Area:      area,
+							ID:     fmt.Sprintf("%d", m.idx),
+							Source: newLayerName,
+							// Timestamp: time.Now(),
+							Ddu:  "clear",
+							X:    xNorm,
+							Y:    yNorm,
+							Z:    zNorm,
+							Area: area,
 						}
 						m.playerName = newLayerName
 						callback(ce)
@@ -427,14 +427,14 @@ func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float32) 
 			}
 
 			ev := CursorEvent{
-				ID:        cid,
-				Source:    m.playerName,
-				Timestamp: time.Now(),
-				Ddu:       ddu,
-				X:         xNorm,
-				Y:         yNorm,
-				Z:         zNorm,
-				Area:      area,
+				ID:     cid,
+				Source: m.playerName,
+				// Timestamp: time.Now(),
+				Ddu:  ddu,
+				X:    xNorm,
+				Y:    yNorm,
+				Z:    zNorm,
+				Area: area,
 			}
 			callback(ev)
 		}
