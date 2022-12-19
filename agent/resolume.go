@@ -15,7 +15,7 @@ import (
 var ResolumePort = 7000
 
 type Resolume struct {
-	agent            *engine.Agent
+	agent            *engine.AgentContext
 	resolumeClient   *osc.Client
 	freeframeClients map[string]*osc.Client
 }
@@ -23,7 +23,7 @@ type Resolume struct {
 // ResolumeJSON is an unmarshalled version of the resolume.json file
 var ResolumeJSON map[string]any
 
-func NewResolume(agent *engine.Agent) *Resolume {
+func NewResolume(agent *engine.AgentContext) *Resolume {
 	r := &Resolume{
 		agent:            agent,
 		resolumeClient:   osc.NewClient(engine.LocalAddress, ResolumePort),
@@ -62,12 +62,12 @@ func (r *Resolume) infoForLayer(layerName string) (portNum, layerNum int) {
 	case "d":
 		return 3337, 4
 	default:
-		r.agent.LogError(fmt.Errorf("no port for layer %s", layerName))
+		engine.LogError(fmt.Errorf("no port for layer %s", layerName))
 		return 0, 0
 	}
 }
 
-func (r *Resolume) clientFor(layerName string) *osc.Client {
+func (r *Resolume) freeframeClientFor(layerName string) *osc.Client {
 	ff, ok := r.freeframeClients[layerName]
 	if !ok {
 		portNum, _ := r.infoForLayer(layerName)
@@ -81,7 +81,8 @@ func (r *Resolume) clientFor(layerName string) *osc.Client {
 }
 
 func (r *Resolume) toFreeFramePlugin(layerName string, msg *osc.Message) {
-	ff := r.clientFor(layerName)
+	engine.DebugLogOfType("freeframe", "toFreeframe", "layer", layerName, "msg", msg)
+	ff := r.freeframeClientFor(layerName)
 	if ff == nil {
 		engine.LogError(fmt.Errorf("no freeframe client for layer"), "layer", layerName)
 		return
@@ -92,7 +93,7 @@ func (r *Resolume) toFreeFramePlugin(layerName string, msg *osc.Message) {
 func (r *Resolume) sendEffectParam(layerName string, name string, value string) {
 	portNum, layerNum := r.infoForLayer(layerName)
 	if portNum == 0 {
-		r.agent.LogError(fmt.Errorf("no such layer"), "name", layerName)
+		engine.LogError(fmt.Errorf("no such layer"), "name", layerName)
 		return
 	}
 	// Effect parameters that have ":" in their name are plugin parameters
@@ -104,7 +105,7 @@ func (r *Resolume) sendEffectParam(layerName string, name string, value string) 
 	} else {
 		onoff, err := strconv.ParseBool(value)
 		if err != nil {
-			r.agent.LogError(err)
+			engine.LogError(err)
 			onoff = false
 		}
 		r.sendPadOneEffectOnOff(layerNum, name, onoff)
@@ -115,22 +116,22 @@ func (r *Resolume) sendPadOneEffectParam(layerNum int, effectName string, paramN
 	fullName := "effect" + "." + effectName + ":" + paramName
 	paramsMap, realEffectName, realEffectNum, err := r.getEffectMap(effectName, "params")
 	if err != nil {
-		r.agent.LogError(err)
+		engine.LogError(err)
 		return
 	}
 	if paramsMap == nil {
-		r.agent.LogWarn("No params value for", "effecdt", effectName)
+		engine.LogWarn("No params value for", "effecdt", effectName)
 		return
 	}
 	oneParam, ok := paramsMap[paramName]
 	if !ok {
-		r.agent.LogWarn("No params value for", "param", paramName, "effect", effectName)
+		engine.LogWarn("No params value for", "param", paramName, "effect", effectName)
 		return
 	}
 
 	oneDef, ok := engine.ParamDefs[fullName]
 	if !ok {
-		r.agent.LogWarn("No paramdef value for", "param", paramName, "effect", effectName)
+		engine.LogWarn("No paramdef value for", "param", paramName, "effect", effectName)
 		return
 	}
 
@@ -148,7 +149,7 @@ func (r *Resolume) sendPadOneEffectParam(layerNum int, effectName string, paramN
 	case engine.ParamDefInt:
 		valint, err := strconv.Atoi(value)
 		if err != nil {
-			r.agent.LogError(err)
+			engine.LogError(err)
 			valint = 0
 		}
 		msg.Append(int32(valint))
@@ -156,7 +157,7 @@ func (r *Resolume) sendPadOneEffectParam(layerNum int, effectName string, paramN
 	case engine.ParamDefBool:
 		valbool, err := strconv.ParseBool(value)
 		if err != nil {
-			r.agent.LogError(err)
+			engine.LogError(err)
 			valbool = false
 		}
 		onoffValue := 0
@@ -173,13 +174,13 @@ func (r *Resolume) sendPadOneEffectParam(layerNum int, effectName string, paramN
 		var valfloat float32
 		valfloat, err := engine.ParseFloat32(value, resEffectName)
 		if err != nil {
-			r.agent.LogError(err)
+			engine.LogError(err)
 			valfloat = 0.0
 		}
 		msg.Append(float32(valfloat))
 
 	default:
-		r.agent.LogWarn("SetParamValueWithString: unknown type of ParamDef for", "name", fullName)
+		engine.LogWarn("SetParamValueWithString: unknown type of ParamDef for", "name", fullName)
 		return
 	}
 
@@ -200,23 +201,23 @@ func (r *Resolume) sendPadOneEffectOnOff(layerNum int, effectName string, onoff 
 
 	onoffMap, realEffectName, realEffectNum, err := r.getEffectMap(effectName, mapType)
 	if err != nil {
-		r.agent.LogError(err)
+		engine.LogError(err)
 		return
 	}
 
 	if onoffMap == nil {
-		r.agent.LogWarn("No onoffMap value for", "effect", effectName, "maptype", mapType, effectName)
+		engine.LogWarn("No onoffMap value for", "effect", effectName, "maptype", mapType, effectName)
 		return
 	}
 
 	onoffAddr, ok := onoffMap["addr"]
 	if !ok {
-		r.agent.LogWarn("No addr value in onoff", "effect", effectName)
+		engine.LogWarn("No addr value in onoff", "effect", effectName)
 		return
 	}
 	onoffArg, ok := onoffMap["arg"]
 	if !ok {
-		r.agent.LogWarn("No arg valuei in onoff for", "effect", effectName)
+		engine.LogWarn("No arg valuei in onoff for", "effect", effectName)
 		return
 	}
 	addr := onoffAddr.(string)
@@ -261,7 +262,7 @@ func (r *Resolume) ResolumeLayerForText() int {
 	s := engine.ConfigStringWithDefault("textlayer", defLayer)
 	layernum, err := strconv.Atoi(s)
 	if err != nil {
-		r.agent.LogError(err)
+		engine.LogError(err)
 		layernum, _ = strconv.Atoi(defLayer)
 	}
 	return layernum
@@ -270,7 +271,7 @@ func (r *Resolume) ResolumeLayerForText() int {
 func (r *Resolume) ProcessInfo() *processInfo {
 	fullpath := engine.ConfigValue("resolume")
 	if fullpath != "" && !r.agent.FileExists(fullpath) {
-		r.agent.LogWarn("No Resolume found, looking for", "path", fullpath)
+		engine.LogWarn("No Resolume found, looking for", "path", fullpath)
 		return nil
 	}
 	if fullpath == "" {
@@ -278,7 +279,7 @@ func (r *Resolume) ProcessInfo() *processInfo {
 		if !r.agent.FileExists(fullpath) {
 			fullpath = "C:\\Program Files\\Resolume Arena\\Arena.exe"
 			if !r.agent.FileExists(fullpath) {
-				r.agent.LogWarn("Resolume not found in default locations")
+				engine.LogWarn("Resolume not found in default locations")
 				return nil
 			}
 		}

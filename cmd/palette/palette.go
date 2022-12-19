@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"strconv"
 	"syscall"
 	"time"
@@ -33,7 +32,12 @@ func main() {
 	os.Stdout.WriteString(out)
 }
 
+// Usage for controlling the "ppro" (PalettePro) agent
 func usage() string {
+	return `Commands:
+	palette {agent} {api} {args}
+	palette {agent} {api} {args}
+	`
 	return `Commands:
     palette start [process]
     palette stop [process]
@@ -158,37 +162,45 @@ func CliCommand(layer string, args []string) string {
 	case "nextalive":
 		return RemoteAPI("nextalive")
 
-	case "start":
-		process := "engine"
-		if len(args) > 1 {
-			process = args[1]
-		}
-		if process == "engine" {
-
-			// Kill any currently-running engine.
-			// The other processes will be killed by
-			// the engine when it starts up.
-			engine.KillExecutable(engineexe)
-
-			// Start the engine (which also starts up other processes)
-			fullexe := filepath.Join(engine.PaletteDir(), "bin", engineexe)
-			err := engine.StartExecutableLogOutput("engine", fullexe, true, "")
-			if err != nil {
-				return fmt.Sprintf("Engine not started: err=%s\n", err)
-			}
-			return "Engine started\n"
-		} else {
-			// Start a specific process
-			return RemoteAPI("start", "process", process)
-		}
-
 	case "stop":
-		if len(args) > 1 {
-			return RemoteAPI("stop", "agent", args[1])
-		}
-		// kill ourselves
-		engine.KillExecutable(engineexe)
-		return ""
+		return RemoteAPI("stop")
+
+	case "start":
+		return RemoteAPI("start")
+
+		/*
+			case "start":
+				process := "engine"
+				if len(args) > 1 {
+					process = args[1]
+				}
+				if process == "engine" {
+
+					// Kill any currently-running engine.
+					// The other processes will be killed by
+					// the engine when it starts up.
+					engine.KillExecutable(engineexe)
+
+					// Start the engine (which also starts up other processes)
+					fullexe := filepath.Join(engine.PaletteDir(), "bin", engineexe)
+					err := engine.StartExecutableLogOutput("engine", fullexe, true, "")
+					if err != nil {
+						return fmt.Sprintf("Engine not started: err=%s\n", err)
+					}
+					return "Engine started\n"
+				} else {
+					// Start a specific process
+					return RemoteAPI("start", "process", process)
+				}
+
+			case "stop":
+				if len(args) > 1 {
+					return RemoteAPI("stop", "agent", args[1])
+				}
+				// kill ourselves
+				engine.KillExecutable(engineexe)
+				return ""
+		*/
 
 	case "api":
 		if len(args) < 2 {

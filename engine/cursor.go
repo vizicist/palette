@@ -2,6 +2,7 @@ package engine
 
 import (
 	"fmt"
+	"strconv"
 	"sync"
 	"time"
 )
@@ -11,19 +12,32 @@ type CursorCallbackFunc func(e CursorEvent)
 
 // CursorEvent is a single Cursor event
 type CursorEvent struct {
-	ID        string
-	Source    string
-	Timestamp time.Time
-	Ddu       string // "down", "drag", "up" (sometimes "clear")
-	X         float32
-	Y         float32
-	Z         float32
-	Area      float32
+	ID     string
+	Source string
+	// Timestamp time.Time
+	Ddu  string // "down", "drag", "up" (sometimes "clear")
+	X    float32
+	Y    float32
+	Z    float32
+	Area float32
 }
 
 type CursorManager struct {
 	cursors      map[string]*DeviceCursor
 	cursorsMutex sync.RWMutex
+}
+
+func (ce CursorEvent) ToMap() map[string]string {
+	return map[string]string{
+		"id":     ce.ID,
+		"source": ce.Source,
+		// Timestamp time.Time
+		"Ddu":  ce.Ddu,
+		"X":    strconv.FormatFloat(float64(ce.X), 'f', 6, 32),
+		"Y":    strconv.FormatFloat(float64(ce.Y), 'f', 6, 32),
+		"Z":    strconv.FormatFloat(float64(ce.Z), 'f', 6, 32),
+		"area": strconv.FormatFloat(float64(ce.Area), 'f', 6, 32),
+	}
 }
 
 // Format xxx
@@ -73,7 +87,7 @@ func (cm *CursorManager) generateCursorGestureesture(source string, cid string, 
 
 	ce := CursorEvent{
 		Source:    source,
-		Timestamp: time.Now(),
+		// Timestamp: time.Now(),
 		Ddu:       "down",
 		X:         x0,
 		Y:         y0,

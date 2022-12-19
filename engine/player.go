@@ -45,19 +45,6 @@ type Layer struct {
 */
 
 /*
-func (p *Layer) SavePreset(presetName string) error {
-	return p.saveCurrentAsPreset(presetName)
-}
-
-func (p *Layer) IsSourceAllowed(source string) bool {
-	_, ok := p.sources[source]
-	return ok
-}
-
-func (p *Layer) AttachAgent(agent Agent) {
-	p.agents = append(p.agents, agent)
-	p.agentsContext = append(p.agentsContext, NewEngineContext(p))
-}
 
 func (p *Layer) SetResolumeLayer(layernum int, ffglport int) {
 	p.resolumeLayer = layernum

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -71,38 +72,169 @@ func init() {
 		processCheckSecs:       0,
 		scale:                  engine.GetScale("newage"),
 	}
-	RegisterAgent("ppro", ppro)
+	ppro.clearExternalScale()
+	RegisterAgent("ppro", ppro.Api)
+}
+func (ppro *PalettePro) Api(ctx *engine.AgentContext, api string, apiargs map[string]string) (result string, err error) {
+
+	switch api {
+
+	case "onparamset":
+		layerName, ok := apiargs["layer"]
+		if !ok {
+			return "", fmt.Errorf("PalettePro.Api: Missing layer argument")
+		}
+		name, ok := apiargs["name"]
+		if !ok {
+			return "", fmt.Errorf("PalettePro.Api: Missing name argument")
+		}
+		value, ok := apiargs["value"]
+		if !ok {
+			return "", fmt.Errorf("PalettePro.Api: Missing value argument")
+		}
+		ppro.onParamSet(layerName, name, value)
+		return "", nil
+
+	case "onspritegen":
+		layerName, ok := apiargs["layer"]
+		if !ok {
+			return "", fmt.Errorf("PalettePro.Api: Missing layer argument")
+		}
+		id, ok := apiargs["id"]
+		if !ok {
+			return "", fmt.Errorf("PalettePro.Api: Missing id argument")
+		}
+		x, ok := apiargs["x"]
+		if !ok {
+			return "", fmt.Errorf("PalettePro.Api: Missing x argument")
+		}
+		y, ok := apiargs["y"]
+		if !ok {
+			return "", fmt.Errorf("PalettePro.Api: Missing y argument")
+		}
+		z, ok := apiargs["z"]
+		if !ok {
+			return "", fmt.Errorf("PalettePro.Api: Missing z argument")
+		}
+		xf, err := strconv.ParseFloat(x, 32)
+		if err != nil {
+			return "", fmt.Errorf("PalettePro.Api: Bad format for x argument")
+		}
+		yf, err := strconv.ParseFloat(y, 32)
+		if err != nil {
+			return "", fmt.Errorf("PalettePro.Api: Bad format for y argument")
+		}
+		zf, err := strconv.ParseFloat(z, 64)
+		if err != nil {
+			return "", fmt.Errorf("PalettePro.Api: Bad format for z argument")
+		}
+		ppro.onSpriteGen(layerName, id, float32(xf), float32(yf), float32(zf))
+		return "", nil
+
+	case "start":
+		ppro.start(ctx)
+		return "", nil
+
+	case "echo":
+		value, ok := apiargs["value"]
+		if !ok {
+			value = "ECHO!"
+		}
+		return value, nil
+
+	case "startprocess":
+		process, ok := apiargs["process"]
+		if !ok {
+			err = fmt.Errorf("ExecuteAPI: missing process argument")
+		} else {
+			err = ppro.processManager.StartRunning(process)
+		}
+		return "", err
+
+	case "stop":
+		process, ok := apiargs["process"]
+		if !ok {
+			return "", fmt.Errorf("ExecuteAPI: missing process argument")
+		} else {
+			return "", ppro.processManager.StopRunning(process)
+		}
+
+	case "activate":
+		for _, pi := range ppro.processManager.info {
+			if pi.Activate != nil {
+				pi.Activate()
+			}
+		}
+		return "", nil
+
+	case "killall":
+		ppro.processManager.killAll()
+		return "", nil
+
+	case "event":
+		eventName, ok := apiargs["event"]
+		if !ok {
+			return "", fmt.Errorf("PalettePro: Missing event argument")
+		}
+		switch eventName {
+		case "click":
+			return ppro.onClick(ctx, apiargs)
+		case "midi":
+			return ppro.onMidiEvent(ctx, apiargs)
+		case "cursor":
+			return ppro.onCursorEvent(ctx, apiargs)
+		default:
+			return "", fmt.Errorf("PalettePro: Unhandled event type %s", eventName)
+		}
+
+	case "nextalive":
+		// acts like a timer, but it could wait for
+		// some event if necessary
+		time.Sleep(1 * time.Second)
+		result = engine.JsonObject(
+			"event", "alive",
+			"seconds", fmt.Sprintf("%f", ctx.Uptime()),
+			"attractmode", fmt.Sprintf("%v", ppro.attractModeIsOn),
+		)
+		return result, nil
+
+	default:
+		ctx.LogWarn("Pro.ExecuteAPI api is not recognized\n", "api", api)
+		return "", fmt.Errorf("Router.ExecutePresetAPI unrecognized api=%s", api)
+	}
+
+	// return result, err
 }
 
-func (ppro *PalettePro) Start(agent *engine.Agent) error {
+func (ppro *PalettePro) start(ctx *engine.AgentContext) error {
 
-	ppro.resolume = NewResolume(agent)
-	ppro.bidule = NewBidule(agent)
+	ppro.resolume = NewResolume(ctx)
+	ppro.bidule = NewBidule(ctx)
 
-	ppro.processManager = NewProcessManager(agent)
+	ppro.processManager = NewProcessManager(ctx)
 
 	ppro.processManager.AddProcess("resolume", ppro.resolume.ProcessInfo())
 	ppro.processManager.AddProcess("bidule", ppro.bidule.ProcessInfo())
 	ppro.processManager.AddProcess("gui", ppro.guiInfo())
 	ppro.processManager.AddProcess("mmtt", ppro.mmttInfo())
 
-	agent.AllowSource("A", "B", "C", "D")
+	ctx.AllowSource("A", "B", "C", "D")
 
-	layerA := ppro.addLayer(agent, "a")
+	layerA := ppro.addLayer(ctx, "a")
 	layerA.Set("visual.shape", "circle")
-	layerA.Apply(agent.GetPreset("snap.White_Ghosts"))
+	layerA.Apply(ctx.GetPreset("snap.White_Ghosts"))
 
-	layerB := ppro.addLayer(agent, "b")
+	layerB := ppro.addLayer(ctx, "b")
 	layerB.Set("visual.shape", "square")
-	layerB.Apply(agent.GetPreset("snap.Concentric_Squares"))
+	layerB.Apply(ctx.GetPreset("snap.Concentric_Squares"))
 
-	layerC := ppro.addLayer(agent, "c")
+	layerC := ppro.addLayer(ctx, "c")
 	layerC.Set("visual.shape", "square")
-	layerC.Apply(agent.GetPreset("snap.Circular_Moire"))
+	layerC.Apply(ctx.GetPreset("snap.Circular_Moire"))
 
-	layerD := ppro.addLayer(agent, "d")
+	layerD := ppro.addLayer(ctx, "d")
 	layerD.Set("visual.shape", "square")
-	layerD.Apply(agent.GetPreset("snap.Diagonal_Mirror"))
+	layerD.Apply(ctx.GetPreset("snap.Diagonal_Mirror"))
 
 	//ctx.ApplyPreset("quad.Quick Scat_Circles")
 
@@ -127,49 +259,9 @@ func (ppro *PalettePro) Start(agent *engine.Agent) error {
 	return nil
 }
 
-func (ppro *PalettePro) mmttInfo() *processInfo {
+func (ppro *PalettePro) onParamSet(layerName string, paramName string, paramValue string) {
 
-	// NOTE: it's inside a sub-directory of bin, so all the necessary .dll's are contained
-
-	// The value of mmtt is either "kinect" or "oak"
-	mmtt := engine.ConfigValueWithDefault("mmtt", "kinect")
-	fullpath := filepath.Join(engine.PaletteDir(), "bin", "mmtt_"+mmtt, "mmtt_"+mmtt+".exe")
-	if !engine.FileExists(fullpath) {
-		engine.LogWarn("no mmtt executable found, looking for", "path", fullpath)
-		fullpath = ""
-	}
-	return &processInfo{"mmtt_" + mmtt + ".exe", fullpath, "", nil}
-}
-
-func (ppro *PalettePro) guiInfo() *processInfo {
-	exe := "palette_gui.exe"
-	fullpath := filepath.Join(engine.PaletteDir(), "bin", "pyinstalled", exe)
-	return &processInfo{exe, fullpath, "", nil}
-}
-
-func (ppro *PalettePro) checkProcessesAndRestartIfNecessary() {
-	autostart := engine.ConfigValueWithDefault("autostart", "")
-	if autostart == "" || autostart == "nothing" || autostart == "none" {
-		return
-	}
-	processes := strings.Split(autostart, ",")
-	pm := ppro.processManager
-	for _, processName := range processes {
-		p, _ := pm.getProcessInfo(processName)
-		if p != nil {
-			if !pm.isRunning(processName) {
-				go func(name string) {
-					pm.StartRunning(name)
-					pm.Activate(name)
-				}(processName)
-			}
-		}
-	}
-
-}
-
-func (ppro *PalettePro) OnParamSet(layer *engine.Layer, paramName string, paramValue string) {
-
+	layer := engine.GetLayer(layerName)
 	if strings.HasPrefix(paramName, "visual.") {
 		name := strings.TrimPrefix(paramName, "visual.")
 		msg := osc.NewMessage("/api")
@@ -186,39 +278,21 @@ func (ppro *PalettePro) OnParamSet(layer *engine.Layer, paramName string, paramV
 	}
 }
 
-func (ppro *PalettePro) OnSpriteGen(layer *engine.Layer, id string, x, y, z float32) {
+func (ppro *PalettePro) onSpriteGen(layerName string, id string, x, y, z float32) {
 	msg := osc.NewMessage("/sprite")
 	msg.Append(x)
 	msg.Append(y)
 	msg.Append(z)
 	msg.Append(id)
-	ppro.resolume.toFreeFramePlugin(layer.Name(), msg)
+	ppro.resolume.toFreeFramePlugin(layerName, msg)
 }
 
-func (ppro *PalettePro) addLayer(agent *engine.Agent, name string) *engine.Layer {
-	layer := engine.NewLayer(name, ppro)
-	ppro.layer[name] = layer
-	return layer
+func (ppro *PalettePro) stop(ctx *engine.AgentContext) {
 }
 
-func (ppro *PalettePro) Stop(agent *engine.Agent) {
-}
+func (ppro *PalettePro) onClick(ctx *engine.AgentContext, apiargs map[string]string) (string, error) {
 
-func (ppro *PalettePro) OnEvent(agent *engine.Agent, event engine.Event) {
-	switch e := event.(type) {
-	case engine.ClickEvent:
-		ppro.OnClick(agent, e)
-	case engine.MidiEvent:
-		ppro.OnMidiEvent(agent, e)
-	case engine.CursorEvent:
-		ppro.OnCursorEvent(agent, e)
-	default:
-		engine.LogWarn("PalettePro: Unhandled event type", "event", event)
-	}
-}
-
-func (ppro *PalettePro) OnClick(agent *engine.Agent, ce engine.ClickEvent) {
-	uptimesecs := agent.Uptime()
+	uptimesecs := ctx.Uptime()
 	// Every so often we check to see if attract mode should be turned on
 	attractModeEnabled := ppro.attractIdleSecs > 0
 	sinceLastAttractChange := uptimesecs - ppro.lastAttractChange
@@ -229,18 +303,18 @@ func (ppro *PalettePro) OnClick(agent *engine.Agent, ce engine.ClickEvent) {
 		// Non-internal cursor activity turns attract mode off instantly.
 		if !ppro.attractModeIsOn && sinceLastAttractChange > ppro.attractIdleSecs {
 			// Nothing happening for a while, turn attract mode on
-			agent.LogWarn("PalettePro.OnClick: should be turning attractmode on")
+			ctx.LogWarn("PalettePro.OnClick: should be turning attractmode on")
 			ppro.lastAttractCommand = time.Now()
 		}
 	}
 
 	if ppro.attractModeIsOn {
-		ppro.doAttractAction(agent)
+		ppro.doAttractAction(ctx)
 	}
 
 	sinceLastAlive := uptimesecs - ppro.lastAlive
 	if sinceLastAlive > ppro.aliveSecs {
-		ppro.publishOscAlive(agent, uptimesecs)
+		ppro.publishOscAlive(ctx, uptimesecs)
 		ppro.lastAlive = uptimesecs
 	}
 
@@ -266,163 +340,135 @@ func (ppro *PalettePro) OnClick(agent *engine.Agent, ce engine.ClickEvent) {
 	if !processCheckEnabled && firstTime {
 		engine.LogInfo("Process Checking is disabled.")
 	}
-
+	return "", nil
 }
 
-func (ppro *PalettePro) OnMidiEvent(agent *engine.Agent, me engine.MidiEvent) {
+func (ppro *PalettePro) onMidiEvent(ctx *engine.AgentContext, apiargs map[string]string) (string, error) {
+
+	me, err := engine.MidiEventFromMap(apiargs)
+	if err != nil {
+		return "", err
+	}
 
 	if ppro.MIDIThru {
-		agent.LogWarn("PassThruMIDI needs work")
+		ctx.LogWarn("PassThruMIDI needs work")
 		// ppro.PassThruMIDI(e)
 	}
 	if ppro.MIDISetScale {
 		ppro.handleMIDISetScaleNote(me)
 	}
 
-	agent.LogInfo("PalettePro.onMidiEvent", "me", me)
-	phr, err := agent.MidiEventToPhrase(me)
+	ctx.LogInfo("PalettePro.onMidiEvent", "me", me)
+	phr, err := ctx.MidiEventToPhrase(me)
 	if err != nil {
-		agent.LogError(err)
+		return "", err
 	}
 	if phr != nil {
-		agent.SchedulePhrase(phr, agent.CurrentClick(), "P_04_C_04")
+		ctx.SchedulePhrase(phr, ctx.CurrentClick(), "P_04_C_04")
 	}
+	return "", nil
 }
 
-func (ppro *PalettePro) Api(agent *engine.Agent, api string, apiargs map[string]string) (result string, err error) {
-
-	switch api {
-
-	case "echo":
-		value, ok := apiargs["value"]
-		if !ok {
-			value = "ECHO!"
-		}
-		result = value
-
-	case "start":
-		process, ok := apiargs["process"]
-		if !ok {
-			err = fmt.Errorf("ExecuteAPI: missing process argument")
-		} else {
-			err = ppro.processManager.StartRunning(process)
-		}
-
-	case "stop":
-		process, ok := apiargs["process"]
-		if !ok {
-			err = fmt.Errorf("ExecuteAPI: missing process argument")
-		} else {
-			err = ppro.processManager.StopRunning(process)
-		}
-
-	case "activate":
-		for _, pi := range ppro.processManager.info {
-			if pi.Activate != nil {
-				pi.Activate()
-			}
-		}
-
-	case "killall":
-		ppro.processManager.killAll()
-
-	case "event":
-		event, ok := apiargs["event"]
-		if !ok {
-			err = fmt.Errorf("PalettePro.Api: Missing value argument")
-			break
-		}
-
-		switch event {
-		case "cursor_down", "cursor_drag", "cursor_up":
-			x, y, z, e := engine.GetArgsXYZ(apiargs)
-			if e != nil {
-				err = e
-			}
-			agent.LogInfo("PalettePro.API: xyz=%f,%f,%f", x, y, z)
-
-		default:
-			agent.LogWarn("PalettePro.API: unhandled api=%s", api)
-			err = fmt.Errorf("unhandled event=%s", event)
-		}
-
-	case "nextalive":
-		// acts like a timer, but it could wait for
-		// some event if necessary
-		time.Sleep(2 * time.Second)
-		result = engine.JsonObject(
-			"event", "alive",
-			"seconds", fmt.Sprintf("%f", agent.Uptime()),
-			"attractmode", fmt.Sprintf("%v", ppro.attractModeIsOn),
-		)
-
-	default:
-		agent.LogWarn("Pro.ExecuteAPI api is not recognized\n", "api", api)
-		err = fmt.Errorf("Router.ExecutePresetAPI unrecognized api=%s", api)
-	}
-
-	return result, err
-}
-
-func (ppro *PalettePro) SaveCurrentSnaps(agent *engine.Agent) {
+func (ppro *PalettePro) saveCurrentSnaps(ctx *engine.AgentContext) {
 	for _, layer := range ppro.layer {
 		err := layer.SaveCurrentSnap()
 		if err != nil {
-			agent.LogError(err)
+			ctx.LogError(err)
 		}
 	}
 }
 
-func (ppro *PalettePro) OnCursorEvent(agent *engine.Agent, ce engine.CursorEvent) {
+func (ppro *PalettePro) onCursorEvent(ctx *engine.AgentContext, apiargs map[string]string) (string, error) {
 
-	if ce.Ddu == "down" { // || ce.Ddu == "drag" {
-		agent.LogInfo("OnCursorEvent", "ce", ce)
-		layer := ppro.cursorToLayer(ce)
-		pitch := ppro.cursorToPitch(agent, ce)
-		velocity := uint8(ce.Z * 1280)
-		duration := 3 * engine.QuarterNote
-		dest := layer.Get("sound.synth")
-		ppro.scheduleNoteNow(agent, dest, pitch, velocity, duration)
+	ddu, ok := apiargs["ddu"]
+	if !ok {
+		return "", fmt.Errorf("PalettePro: Missing ddu argument")
+	}
+
+	if ddu == "clear" {
+		ctx.ClearCursors()
+		return "", nil
+	}
+
+	x, y, z, err := ctx.GetArgsXYZ(apiargs)
+	if err != nil {
+		return "", err
+	}
+
+	source, ok := apiargs["source"]
+	if !ok {
+		source = ""
+	}
+
+	id, ok := apiargs["id"]
+	if !ok {
+		id = ""
+	}
+
+	ce := engine.CursorEvent{
+		ID:     id,
+		Source: source,
+		Ddu:    ddu,
+		X:      x,
+		Y:      y,
+		Z:      z,
 	}
 
 	// Any non-internal cursor will turn attract mode off.
-	if ce.Source != "internal" {
+	if source != "internal" {
 		if time.Since(ppro.lastAttractCommand) > time.Second {
-			agent.LogInfo("PalettePro: shouold be turning attract mode OFF")
+			ctx.LogInfo("PalettePro: shouold be turning attract mode OFF")
 			ppro.lastAttractCommand = time.Now()
 		}
 
 	}
+
+	layer := ppro.cursorToLayer(ce)
+	msg := osc.NewMessage("/sprite")
+	msg.Append(ce.X)
+	msg.Append(ce.Y)
+	msg.Append(ce.Z)
+	msg.Append(ce.ID)
+	ppro.resolume.toFreeFramePlugin(layer.Name(), msg)
+
+	return "", nil
 }
 
-func (ppro *PalettePro) loadQuadPresetRand(agent *engine.Agent) {
+func (ppro *PalettePro) loadQuadPresetRand(ctx *engine.AgentContext) {
 
 	arr, err := engine.PresetArray("quad")
 	if err != nil {
-		agent.LogError(err)
+		ctx.LogError(err)
 		return
 	}
 	rn := rand.Uint64() % uint64(len(arr))
-	agent.LogInfo("loadQuadPresetRand", "preset", arr[rn])
-	preset := agent.GetPreset(arr[rn])
-	ppro.loadQuadPreset(agent, preset)
+	ctx.LogInfo("loadQuadPresetRand", "preset", arr[rn])
+	preset := ctx.GetPreset(arr[rn])
+	ppro.loadQuadPreset(ctx, preset)
 	if err != nil {
-		agent.LogError(err)
+		ctx.LogError(err)
 	}
 }
 
-func (ppro *PalettePro) loadQuadPreset(agent *engine.Agent, preset *engine.Preset) {
+func (ppro *PalettePro) loadQuadPreset(ctx *engine.AgentContext, preset *engine.Preset) {
 	for layerName, layer := range ppro.layer {
 		layer.ApplyQuadPreset(preset, layerName)
 	}
 }
 
-func (ppro *PalettePro) scheduleNoteNow(agent *engine.Agent, dest string, pitch, velocity uint8, duration engine.Clicks) {
-	agent.LogInfo("PalettePro.scheculeNoteNow", "dest", dest, "pitch", pitch)
+func (ppro *PalettePro) addLayer(ctx *engine.AgentContext, name string) *engine.Layer {
+	layer := engine.NewLayer(name)
+	layer.AddListener(ctx)
+	ppro.layer[name] = layer
+	return layer
+}
+
+func (ppro *PalettePro) scheduleNoteNow(ctx *engine.AgentContext, dest string, pitch, velocity uint8, duration engine.Clicks) {
+	ctx.LogInfo("PalettePro.scheculeNoteNow", "dest", dest, "pitch", pitch)
 	pe := &engine.PhraseElement{Value: engine.NewNoteFull(0, pitch, velocity, duration)}
 	phr := engine.NewPhrase().InsertElement(pe)
 	phr.Destination = dest
-	agent.SchedulePhrase(phr, agent.CurrentClick(), dest)
+	ctx.SchedulePhrase(phr, ctx.CurrentClick(), dest)
 }
 
 /*
@@ -435,7 +481,7 @@ func (ppro *PalettePro) cursorToLayer(ce engine.CursorEvent) *engine.Layer {
 	return ppro.layer["a"]
 }
 
-func (ppro *PalettePro) cursorToPitch(agent *engine.Agent, ce engine.CursorEvent) uint8 {
+func (ppro *PalettePro) cursorToPitch(ctx *engine.AgentContext, ce engine.CursorEvent) uint8 {
 	layer := ppro.cursorToLayer(ce)
 	pitchmin := layer.GetInt("sound.pitchmin")
 	pitchmax := layer.GetInt("sound.pitchmax")
@@ -443,9 +489,7 @@ func (ppro *PalettePro) cursorToPitch(agent *engine.Agent, ce engine.CursorEvent
 	p1 := int(ce.X * float32(dp))
 	p := uint8(pitchmin + p1%dp)
 
-	// layer := agent.GetLayer("a")
-
-	chromatic := agent.ParamBoolValue("sound.chromatic")
+	chromatic := ctx.ParamBoolValue("sound.chromatic")
 	if !chromatic {
 		scale := ppro.scale
 		p = scale.ClosestTo(p)
@@ -500,7 +544,7 @@ func (ppro *PalettePro) handleMIDISetScaleNote(e engine.MidiEvent) {
 	}
 }
 
-func (ppro *PalettePro) publishOscAlive(agent *engine.Agent, uptimesecs float64) {
+func (ppro *PalettePro) publishOscAlive(ctx *engine.AgentContext, uptimesecs float64) {
 	attractMode := ppro.attractModeIsOn
 	if ppro.attractClient == nil {
 		ppro.attractClient = osc.NewClient(engine.LocalAddress, AliveOutputPort)
@@ -510,11 +554,11 @@ func (ppro *PalettePro) publishOscAlive(agent *engine.Agent, uptimesecs float64)
 	msg.Append(attractMode)
 	err := ppro.attractClient.Send(msg)
 	if err != nil {
-		agent.LogWarn("publishOscAlive", "err", err)
+		ctx.LogWarn("publishOscAlive", "err", err)
 	}
 }
 
-func (ppro *PalettePro) doAttractAction(agent *engine.Agent) {
+func (ppro *PalettePro) doAttractAction(ctx *engine.AgentContext) {
 
 	now := time.Now()
 	dt := now.Sub(ppro.lastAttractGestureTime)
@@ -535,13 +579,54 @@ func (ppro *PalettePro) doAttractAction(agent *engine.Agent) {
 		z1 := rand.Float32() / 2.0
 
 		noteDuration := time.Second
-		go agent.GenerateCursorGestureesture(layer, cid, noteDuration, x0, y0, z0, x1, y1, z1)
+		go ctx.GenerateCursorGestureesture(layer, cid, noteDuration, x0, y0, z0, x1, y1, z1)
 		ppro.lastAttractGestureTime = now
 	}
 
 	dp := now.Sub(ppro.lastAttractPresetTime)
 	if ppro.attractPreset == "random" && dp > ppro.attractPresetDuration {
-		ppro.loadQuadPresetRand(agent)
+		ppro.loadQuadPresetRand(ctx)
 		ppro.lastAttractPresetTime = now
 	}
+}
+
+func (ppro *PalettePro) mmttInfo() *processInfo {
+
+	// NOTE: it's inside a sub-directory of bin, so all the necessary .dll's are contained
+
+	// The value of mmtt is either "kinect" or "oak"
+	mmtt := engine.ConfigValueWithDefault("mmtt", "kinect")
+	fullpath := filepath.Join(engine.PaletteDir(), "bin", "mmtt_"+mmtt, "mmtt_"+mmtt+".exe")
+	if !engine.FileExists(fullpath) {
+		engine.LogWarn("no mmtt executable found, looking for", "path", fullpath)
+		fullpath = ""
+	}
+	return &processInfo{"mmtt_" + mmtt + ".exe", fullpath, "", nil}
+}
+
+func (ppro *PalettePro) guiInfo() *processInfo {
+	exe := "palette_gui.exe"
+	fullpath := filepath.Join(engine.PaletteDir(), "bin", "pyinstalled", exe)
+	return &processInfo{exe, fullpath, "", nil}
+}
+
+func (ppro *PalettePro) checkProcessesAndRestartIfNecessary() {
+	autostart := engine.ConfigValueWithDefault("autostart", "")
+	if autostart == "" || autostart == "nothing" || autostart == "none" {
+		return
+	}
+	processes := strings.Split(autostart, ",")
+	pm := ppro.processManager
+	for _, processName := range processes {
+		p, _ := pm.getProcessInfo(processName)
+		if p != nil {
+			if !pm.isRunning(processName) {
+				go func(name string) {
+					pm.StartRunning(name)
+					pm.Activate(name)
+				}(processName)
+			}
+		}
+	}
+
 }

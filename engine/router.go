@@ -68,30 +68,6 @@ type DeviceCursor struct {
 	downed    bool // true if cursor down event has been generated
 }
 
-/*
-// APIEvent is an API invocation
-type APIEvent struct {
-	apiType string // sound, visual, effect, global
-	pad     string
-	method  string
-	args    []string
-}
-
-// PlaybackEvent is a time-tagged cursor or API event
-type PlaybackEvent struct {
-	time      float64
-	eventType string
-	pad       string
-	method    string
-	args      map[string]string
-	rawargs   string
-}
-func recordingsFile(nm string) string {
-	return ConfigFilePath(filepath.Join("recordings", nm))
-}
-
-*/
-
 type APIExecutorFunc func(api string, nuid string, rawargs string) (result any, err error)
 
 func NewRouter() *Router {
@@ -244,19 +220,20 @@ func ArgsToCursorEvent(args map[string]string) CursorEvent {
 	y := ArgToFloat("y", args)
 	z := ArgToFloat("z", args)
 	ce := CursorEvent{
-		ID:        id,
-		Source:    source,
-		Timestamp: time.Now(),
-		Ddu:       event,
-		X:         x,
-		Y:         y,
-		Z:         z,
-		Area:      0.0,
+		ID:     id,
+		Source: source,
+		// Timestamp: time.Now(),
+		Ddu:  event,
+		X:    x,
+		Y:    y,
+		Z:    z,
+		Area: 0.0,
 	}
 	return ce
 }
 
-// HandleInputEvent xxx
+// HandleInputEvent is NOT used for CursorEvent input.
+// CursorEvents are handled by the CursorManager.
 func (r *Router) HandleInputEvent(agentName string, args map[string]string) error {
 
 	r.inputEventMutex.Lock()
@@ -264,31 +241,24 @@ func (r *Router) HandleInputEvent(agentName string, args map[string]string) erro
 		r.inputEventMutex.Unlock()
 	}()
 
-	event, err := needStringArg("event", "HandleEvent", args)
+	event, err := needStringArg("event", "HandleInputEvent", args)
 	if err != nil {
 		return err
 	}
 
+	layerName, err := needStringArg("layer", "HandleInputEvent", args)
+	if err != nil {
+		return err
+	}
+
+	layer := GetLayer(layerName)
+	if layer == nil {
+		return fmt.Errorf("HandleInputEvent: layer not found: %s", layerName)
+	}
+
 	DebugLogOfType("router", "Router.HandleEvent", "agent", agentName, "event", event)
 
-	/*
-		ctx, err := r.agentManager.GetAgentContext(agentName)
-		if err != nil {
-			return err
-		}
-	*/
-
 	switch event {
-
-	case "engine":
-		LogInfo("Router: ignoring engine event")
-		return nil
-
-	case "cursor_down", "cursor_drag", "cursor_up":
-		LogWarn("HandleInputEvent needs work for cursor_*")
-		// ce := ArgsToCursorEvent(args)
-		// ctx.agentFunc(ctx.agentContext,ce)
-		// ctx.agent.OnCursorEvent(ce)
 
 	case "sprite":
 
@@ -296,7 +266,6 @@ func (r *Router) HandleInputEvent(agentName string, args map[string]string) erro
 		if err != nil {
 			return nil
 		}
-		layer := GetLayer("a")
 		layer.generateSprite("dummy", x, y, z)
 
 		/*
