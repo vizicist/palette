@@ -11,14 +11,14 @@ import (
 
 type Bidule struct {
 	mutex  sync.Mutex
-	agent  *engine.Agent
+	agent  *engine.AgentContext
 	client *osc.Client
 	port   int
 }
 
 const BidulePort = 3210
 
-func NewBidule(agent *engine.Agent) *Bidule {
+func NewBidule(agent *engine.AgentContext) *Bidule {
 	return &Bidule{
 		agent:  agent,
 		client: osc.NewClient(engine.LocalAddress, BidulePort),

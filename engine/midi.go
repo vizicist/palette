@@ -4,6 +4,7 @@
 package engine
 
 import (
+	"fmt"
 	"strings"
 
 	midi "gitlab.com/gomidi/midi/v2"
@@ -45,6 +46,24 @@ type MIDIChannelOutput struct {
 
 type MidiEvent struct {
 	Msg midi.Message
+}
+
+func MidiEventFromMap(args map[string]string) (MidiEvent, error) {
+
+	msg, ok := args["msg"]
+	if !ok {
+		return MidiEvent{}, fmt.Errorf("Missing msg argument")
+	}
+	_ = msg
+	return MidiEvent{}, fmt.Errorf("MakeMidiEvent needs work")
+	// var me MidiEvent
+	// me.Msg = midi.MessageFromString(msg)
+}
+
+func (me MidiEvent) ToMap() map[string]string {
+	return map[string]string{
+		"msg": me.Msg.String(),
+	}
 }
 
 // MIDI is a pointer to
