@@ -42,11 +42,7 @@ func newEngine() *Engine {
 	return e
 }
 
-// func StopRunning(what string) {
-// 	TheEngine().ProcessManager.StopRunning(what)
-// }
-
-func RegisterAgent(name string, agent AgentMethods) {
+func RegisterAgent(name string, agent AgentFunc) {
 	TheAgentManager().RegisterAgent(name, agent)
 }
 

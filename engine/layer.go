@@ -4,30 +4,32 @@ import (
 	"fmt"
 	"os"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/hypebeast/go-osc/osc"
 )
 
 type Layer struct {
-	name     string
-	params   *ParamValues
-	callback LayerCallbackMethods
+	name      string
+	params    *ParamValues
+	listeners []*AgentContext
 }
 
-type LayerCallbackMethods interface {
-	OnParamSet(layer *Layer, paramName string, paramValue string)
-	OnSpriteGen(layer *Layer, id string, x, y, z float32)
-}
+// type LayerCallbackMethods interface {
+// 	OnParamSet(layer *Layer, paramName string, paramValue string)
+// 	OnSpriteGen(layer *Layer, id string, x, y, z float32)
+// }
 
 var Layers = map[string]*Layer{}
 
-func NewLayer(layerName string, cb LayerCallbackMethods) *Layer {
+func NewLayer(layerName string) *Layer {
 	layer := &Layer{
-		name:     layerName,
-		params:   NewParamValues(),
-		callback: cb,
+		name:      layerName,
+		params:    NewParamValues(),
+		listeners: []*AgentContext{},
 	}
+	layer.params.SetDefaultValues()
 	Layers[layerName] = layer
 	return layer
 }
@@ -38,6 +40,10 @@ func GetLayer(layerName string) *Layer {
 		return nil
 	}
 	return layer
+}
+
+func (layer *Layer) AddListener(agent *AgentContext) {
+	layer.listeners = append(layer.listeners, agent)
 }
 
 func (layer *Layer) Name() string {
@@ -138,8 +144,9 @@ func (layer *Layer) Set(paramName string, paramValue string) error {
 		return err
 	}
 
-	if layer.callback != nil {
-		layer.callback.OnParamSet(layer, paramName, paramValue)
+	for _, listener := range layer.listeners {
+		args := map[string]string{"name": paramName, "value": paramValue}
+		listener.api(listener, "onparamset", args)
 	}
 
 	return nil
@@ -269,7 +276,13 @@ func (layer *Layer) generateSprite(id string, x, y, z float32) {
 	msg.Append(z)
 	msg.Append(id)
 
-	if layer.callback != nil {
-		layer.callback.OnSpriteGen(layer, id, x, y, z)
+	for _, listener := range layer.listeners {
+		args := map[string]string{
+			"id": id,
+			"x":  strconv.FormatFloat(float64(x), 'f', 6, 32),
+			"y":  strconv.FormatFloat(float64(y), 'f', 6, 32),
+			"z":  strconv.FormatFloat(float64(z), 'f', 6, 32),
+		}
+		listener.api(listener, "onspritegen", args)
 	}
 }

@@ -14,11 +14,11 @@ type processInfo struct {
 }
 
 type ProcessManager struct {
-	agent *engine.Agent
+	agent *engine.AgentContext
 	info  map[string]*processInfo
 }
 
-func NewProcessManager(agent *engine.Agent) *ProcessManager {
+func NewProcessManager(agent *engine.AgentContext) *ProcessManager {
 	return &ProcessManager{
 		agent: agent,
 		info:  make(map[string]*processInfo),

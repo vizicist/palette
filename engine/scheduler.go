@@ -14,8 +14,8 @@ type Scheduler struct {
 
 	pendingNoteOffs *Phrase
 
-	now       time.Time
-	time0     time.Time
+	// now       time.Time
+	// time0     time.Time
 	lastClick Clicks
 	cmdInput  chan any
 
@@ -42,8 +42,8 @@ func NewScheduler() *Scheduler {
 	s := &Scheduler{
 		schedList:       list.New(),
 		pendingNoteOffs: NewPhrase(),
-		now:             time.Time{},
-		time0:           time.Time{},
+		// now:             time.Time{},
+		// time0:           time.Time{},
 		lastClick:       -1,
 		cmdInput:        make(chan any),
 		transposeAuto:   ConfigBoolWithDefault("transposeauto", true),
@@ -51,7 +51,6 @@ func NewScheduler() *Scheduler {
 		transposeClicks: transposebeats,
 		transposeIndex:  0,
 		transposeValues: []int{0, -2, 3, -5},
-
 	}
 	return s
 }
@@ -67,13 +66,13 @@ func (sched *Scheduler) Start() {
 
 	// Wake up every 2 milliseconds and check looper events
 	tick := time.NewTicker(2 * time.Millisecond)
-	sched.time0 = <-tick.C
+	// sched.time0 = <-tick.C
 
 	nonRealtime := false
 
 	// By reading from tick.C, we wake up every 2 milliseconds
-	for now := range tick.C {
-		sched.now = now
+	for range tick.C {
+		// sched.now = now
 		uptimesecs := Uptime()
 
 		// XXX - should lock from here?
