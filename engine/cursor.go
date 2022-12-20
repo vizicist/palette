@@ -86,13 +86,13 @@ func (cm *CursorManager) generateCursorGestureesture(source string, cid string, 
 	LogInfo("generateCursorGestureesture: start")
 
 	ce := CursorEvent{
-		Source:    source,
+		Source: source,
 		// Timestamp: time.Now(),
-		Ddu:       "down",
-		X:         x0,
-		Y:         y0,
-		Z:         z0,
-		Area:      0,
+		Ddu:  "down",
+		X:    x0,
+		Y:    y0,
+		Z:    z0,
+		Area: 0,
 	}
 	cm.handleCursorEvent(ce)
 	LogInfo("generateCursorGestureesture", "ddu", "down", "ce", ce)
@@ -131,7 +131,7 @@ func (cm *CursorManager) handleDownDragUp(ce CursorEvent) {
 	}
 
 	// See which layer wants this input
-	TheAgentManager().handleCursorEvent(ce)
+	ThePluginManager().handleCursorEvent(ce)
 
 	DebugLogOfType("cursor", "CursorManager.handleDownDragUp", "id", ce.ID, "ddu", ce.Ddu, "x", ce.X, "y", ce.Y, "z", ce.Z)
 	if ce.Ddu == "up" {

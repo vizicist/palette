@@ -1,4 +1,4 @@
-package agent
+package plugin
 
 import (
 	"fmt"
@@ -14,13 +14,13 @@ type processInfo struct {
 }
 
 type ProcessManager struct {
-	agent *engine.AgentContext
+	ctx *engine.PluginContext
 	info  map[string]*processInfo
 }
 
-func NewProcessManager(ctx *engine.AgentContext) *ProcessManager {
+func NewProcessManager(ctx *engine.PluginContext) *ProcessManager {
 	return &ProcessManager{
-		agent: ctx,
+		ctx: ctx,
 		info:  make(map[string]*processInfo),
 	}
 }
@@ -56,9 +56,9 @@ func (pm ProcessManager) StartRunning(process string) error {
 			return fmt.Errorf("StartRunning: unable to start %s, no executable path", process)
 		}
 
-		pm.agent.LogInfo("StartRunning", "path", p.FullPath)
+		pm.ctx.LogInfo("StartRunning", "path", p.FullPath)
 
-		err = pm.agent.StartExecutableLogOutput(process, p.FullPath, true, p.Arg)
+		err = pm.ctx.StartExecutableLogOutput(process, p.FullPath, true, p.Arg)
 		if err != nil {
 			return fmt.Errorf("start: process=%s err=%s", process, err)
 		}
@@ -80,7 +80,7 @@ func (pm ProcessManager) StopRunning(process string) (err error) {
 		if err != nil {
 			return err
 		}
-		pm.agent.KillExecutable(p.Exe)
+		pm.ctx.KillExecutable(p.Exe)
 		return nil
 	}
 }
@@ -123,17 +123,17 @@ func (pm ProcessManager) getProcessInfo(process string) (*processInfo, error) {
 func (pm ProcessManager) isRunning(process string) bool {
 	p, err := pm.getProcessInfo(process)
 	if err != nil {
-		pm.agent.LogWarn("IsRunning: no process named", "process", process)
+		pm.ctx.LogWarn("IsRunning: no process named", "process", process)
 		return false
 	}
-	b := pm.agent.IsRunningExecutable(p.Exe)
+	b := pm.ctx.IsRunningExecutable(p.Exe)
 	return b
 }
 
 func (pm ProcessManager) killAll() {
 	for nm, info := range pm.info {
 		if nm != "engine" {
-			pm.agent.KillExecutable(info.Exe)
+			pm.ctx.KillExecutable(info.Exe)
 		}
 	}
 }
