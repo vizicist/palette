@@ -11,16 +11,16 @@ import (
 
 type Bidule struct {
 	mutex  sync.Mutex
-	agent  *engine.AgentContext
+	ctx  *engine.AgentContext
 	client *osc.Client
 	port   int
 }
 
 const BidulePort = 3210
 
-func NewBidule(agent *engine.AgentContext) *Bidule {
+func NewBidule(ctx *engine.AgentContext) *Bidule {
 	return &Bidule{
-		agent:  agent,
+		ctx:  ctx,
 		client: osc.NewClient(engine.LocalAddress, BidulePort),
 		port:   3210,
 	}
@@ -40,7 +40,7 @@ func (b *Bidule) Activate() {
 }
 
 func (b *Bidule) ProcessInfo() *processInfo {
-	agent := b.agent
+	agent := b.ctx
 	bidulePath := agent.ConfigValueWithDefault("bidule", "")
 	if bidulePath == "" {
 		bidulePath = "C:\\Program Files\\Plogue\\Bidule\\Bidule.exe"
