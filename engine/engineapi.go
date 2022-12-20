@@ -12,20 +12,10 @@ func (e *Engine) ExecuteAPIFromMap(api string, apiargs map[string]string) (resul
 
 	switch api {
 
-	case "exit":
-		e.StopMe()
-		// notreached
-		return "", nil
-
-	case "sendlogs":
-		return "", SendLogs()
-
 	default:
 		words := strings.Split(api, ".")
-		// Single-word APIs (like get, set, load, etc) are layer APIs
 		if len(words) <= 1 {
 			return "", fmt.Errorf("single-word APIs no longer work")
-			// return e.Router.executeLayerAPI(api, apiargs)
 		}
 		// Here we handle APIs of the form {apitype}.{apisuffix}
 		apitype := words[0]
@@ -35,8 +25,6 @@ func (e *Engine) ExecuteAPIFromMap(api string, apiargs map[string]string) (resul
 			return e.executeEngineAPI(apisuffix, apiargs)
 		case "preset":
 			return e.executePresetAPI(apisuffix, apiargs)
-		case "agent":
-			return e.executeAgentAPI(apisuffix, apiargs)
 		case "sound":
 			return e.executeSoundAPI(apisuffix, apiargs)
 		case "layer":
@@ -51,7 +39,12 @@ func (e *Engine) ExecuteAPIFromMap(api string, apiargs map[string]string) (resul
 			return layer.Api(apisuffix, apiargs)
 
 		default:
-			return "", fmt.Errorf("ExecuteAPI: unknown prefix on api=%s", api)
+			// If it's not one of the reserved aent names, see if it's a registered one
+			ctx, err := e.AgentManager.GetAgentContext(apitype)
+			if err != nil {
+				return "", err
+			}
+			return ctx.api(ctx, apisuffix, apiargs)
 		}
 	}
 	// unreachable
@@ -73,6 +66,13 @@ func (e *Engine) ExecuteAPIFromJson(rawjson string) (string, error) {
 func (e *Engine) executeEngineAPI(api string, apiargs map[string]string) (result string, err error) {
 
 	switch api {
+
+	case "exit":
+		e.StopMe()
+		return "", nil
+
+	case "sendlogs":
+		return "", SendLogs()
 
 	case "midi_midifile":
 		return "", fmt.Errorf("midi_midifile API has been removed")
@@ -197,21 +197,6 @@ func (e *Engine) executePresetAPI(api string, apiargs map[string]string) (result
 		LogWarn("api is not recognized\n", "api", api)
 		return "", fmt.Errorf("Router.ExecutePresetAPI unrecognized api=%s", api)
 	}
-}
-
-func (e *Engine) executeAgentAPI(api string, apiargs map[string]string) (result string, err error) {
-
-	agentName, okagent := apiargs["agent"]
-	if !okagent {
-		return "", fmt.Errorf("missing agent parameter")
-	}
-	agent, err := TheAgentManager().GetAgent(agentName)
-	if err != nil {
-		return "", fmt.Errorf("agent error, err=%s", err)
-	}
-
-	return agent.api(agent, api, apiargs)
-
 }
 
 func (e *Engine) executeSoundAPI(api string, apiargs map[string]string) (result string, err error) {

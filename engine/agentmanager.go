@@ -10,12 +10,12 @@ func TheAgentManager() *AgentManager {
 	return TheEngine().AgentManager
 }
 
-func NewAgent(apiFunc AgentFunc) *AgentContext {
+func NewAgentContext(apiFunc AgentFunc) *AgentContext {
 	return &AgentContext{
-		api:     apiFunc,
-		sources: map[string]bool{},
-		// scheduler: NewScheduler(),
-		params: NewParamValues(),
+		api:           apiFunc,
+		cursorManager: NewCursorManager(),
+		params:        NewParamValues(),
+		sources:       map[string]bool{},
 	}
 }
 
@@ -35,13 +35,13 @@ func (tm *AgentManager) RegisterAgent(name string, apiFunc AgentFunc) {
 	if ok {
 		LogWarn("RegisterAgent: existing agent", "agent", name)
 	} else {
-		tm.agents[name] = NewAgent(apiFunc)
+		tm.agents[name] = NewAgentContext(apiFunc)
 		LogInfo("Registering Agent", "agent", name)
 	}
 }
 
 func (tm *AgentManager) StartAgent(name string) error {
-	agent, err := tm.GetAgent(name)
+	agent, err := tm.GetAgentContext(name)
 	if err != nil {
 		return err
 	}
@@ -101,7 +101,7 @@ func (pm *AgentManager) GetAgent(agentName string) (Agent, error) {
 }
 */
 
-func (pm *AgentManager) GetAgent(name string) (*AgentContext, error) {
+func (pm *AgentManager) GetAgentContext(name string) (*AgentContext, error) {
 	ctx, ok := pm.agents[name]
 	if !ok {
 		return nil, fmt.Errorf("no agent named %s", name)
@@ -111,21 +111,21 @@ func (pm *AgentManager) GetAgent(name string) (*AgentContext, error) {
 }
 
 func (tm *AgentManager) handleCursorEvent(e CursorEvent) {
-	for _, agent := range tm.agents {
-		if agent.IsSourceAllowed(e.Source) {
-			agent.api(agent, "event", e.ToMap())
+	for _, ctx := range tm.agents {
+		if ctx.IsSourceAllowed(e.Source) {
+			ctx.api(ctx, "event", e.ToMap())
 		}
 	}
 }
 
 func (tm *AgentManager) handleMidiEvent(e MidiEvent) {
-	for _, agent := range tm.agents {
-		agent.api(agent, "event", e.ToMap())
+	for _, ctx := range tm.agents {
+		ctx.api(ctx, "event", e.ToMap())
 	}
 }
 
 func (tm *AgentManager) handleClickEvent(e ClickEvent) {
-	for _, agent := range tm.agents {
-		agent.api(agent, "event", e.ToMap())
+	for _, ctx := range tm.agents {
+		ctx.api(ctx, "event", e.ToMap())
 	}
 }

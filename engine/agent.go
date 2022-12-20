@@ -10,7 +10,7 @@ import (
 	"gitlab.com/gomidi/midi/v2/drivers"
 )
 
-type AgentFunc func(agent *AgentContext, api string, apiargs map[string]string) (string, error)
+type AgentFunc func(ctx *AgentContext, api string, apiargs map[string]string) (string, error)
 
 type AgentContext struct {
 	api           AgentFunc
@@ -19,89 +19,89 @@ type AgentContext struct {
 	sources       map[string]bool
 }
 
-func (agent *AgentContext) Uptime() float64 {
+func (ctx *AgentContext) Uptime() float64 {
 	return Uptime()
 }
 
-func (agent *AgentContext) GetArgsXYZ(args map[string]string) (x, y, z float32, err error) {
+func (ctx *AgentContext) GetArgsXYZ(args map[string]string) (x, y, z float32, err error) {
 	return GetArgsXYZ(args)
 }
 
-func (agent *AgentContext) ClearCursors() {
-	agent.cursorManager.clearCursors()
+func (ctx *AgentContext) ClearCursors() {
+	ctx.cursorManager.clearCursors()
 }
 
-func (agent *AgentContext) LogInfo(msg string, keysAndValues ...any) {
+func (ctx *AgentContext) LogInfo(msg string, keysAndValues ...any) {
 	LogInfo(msg, keysAndValues...)
 }
 
-func (agent *AgentContext) LogWarn(msg string, keysAndValues ...any) {
+func (ctx *AgentContext) LogWarn(msg string, keysAndValues ...any) {
 	LogWarn(msg, keysAndValues...)
 }
 
-func (agent *AgentContext) LogError(err error, keysAndValues ...any) {
+func (ctx *AgentContext) LogError(err error, keysAndValues ...any) {
 	LogError(err, keysAndValues...)
 }
 
-func (agent *AgentContext) PaletteDir() string {
+func (ctx *AgentContext) PaletteDir() string {
 	return PaletteDir()
 }
 
-func (agent *AgentContext) ConfigValueWithDefault(name, dflt string) string {
+func (ctx *AgentContext) ConfigValueWithDefault(name, dflt string) string {
 	return ConfigValueWithDefault(name, dflt)
 }
 
-func (agent *AgentContext) ConfigBoolWithDefault(name string, dflt bool) bool {
+func (ctx *AgentContext) ConfigBoolWithDefault(name string, dflt bool) bool {
 	return ConfigBoolWithDefault(name, dflt)
 }
 
-func (agent *AgentContext) ConfigValue(name string) string {
+func (ctx *AgentContext) ConfigValue(name string) string {
 	return ConfigValue(name)
 }
 
-func (agent *AgentContext) ConfigFilePath(name string) string {
+func (ctx *AgentContext) ConfigFilePath(name string) string {
 	return ConfigFilePath(name)
 }
 
-func (agent *AgentContext) StartExecutableLogOutput(logName string, fullexe string, background bool, args ...string) error {
+func (ctx *AgentContext) StartExecutableLogOutput(logName string, fullexe string, background bool, args ...string) error {
 	return StartExecutableLogOutput(logName, fullexe, background, args...)
 }
 
-func (agent *AgentContext) KillExecutable(exe string) {
+func (ctx *AgentContext) KillExecutable(exe string) {
 	KillExecutable(exe)
 }
 
-func (agent *AgentContext) IsRunningExecutable(exe string) bool {
+func (ctx *AgentContext) IsRunningExecutable(exe string) bool {
 	return IsRunningExecutable(exe)
 }
 
-func (agent *AgentContext) FileExists(path string) bool {
+func (ctx *AgentContext) FileExists(path string) bool {
 	return FileExists(path)
 }
 
-func (agent *AgentContext) GetLayer(layerName string) *Layer {
+func (ctx *AgentContext) GetLayer(layerName string) *Layer {
 	return GetLayer(layerName)
 }
 
-func (agent *AgentContext) AllowSource(source ...string) {
+func (ctx *AgentContext) AllowSource(source ...string) {
 	var ok bool
 	for _, name := range source {
-		_, ok = agent.sources[name]
+		_, ok = ctx.sources[name]
 		if ok {
 			LogInfo("AllowSource: already set?", "source", name)
 		} else {
-			agent.sources[name] = true
+			ctx.sources[name] = true
 		}
 	}
 }
 
-func (agent *AgentContext) IsSourceAllowed(source string) bool {
-	_, ok := agent.sources[source]
+func (ctx *AgentContext) IsSourceAllowed(source string) bool {
+	_, ok := ctx.sources[source]
 	return ok
 }
 
-func (agent *AgentContext) MidiEventToPhrase(me MidiEvent) (*Phrase, error) {
-	pe, err := agent.midiEventToPhraseElement(me)
+func (ctx *AgentContext) MidiEventToPhrase(me MidiEvent) (*Phrase, error) {
+	pe, err := ctx.midiEventToPhraseElement(me)
 	if err != nil {
 		return nil, err
 	}
@@ -109,7 +109,7 @@ func (agent *AgentContext) MidiEventToPhrase(me MidiEvent) (*Phrase, error) {
 	return phr, nil
 }
 
-func (agent *AgentContext) midiEventToPhraseElement(me MidiEvent) (*PhraseElement, error) {
+func (ctx *AgentContext) midiEventToPhraseElement(me MidiEvent) (*PhraseElement, error) {
 
 	bytes := me.Msg.Bytes()
 	lng := len(bytes)
@@ -179,11 +179,11 @@ func (agent *AgentContext) midiEventToPhraseElement(me MidiEvent) (*PhraseElemen
 	return &PhraseElement{Value: val}, nil
 }
 
-func (agent *AgentContext) CurrentClick() Clicks {
+func (ctx *AgentContext) CurrentClick() Clicks {
 	return CurrentClick()
 }
 
-func (agent *AgentContext) SchedulePhrase(phr *Phrase, click Clicks, dest string) {
+func (ctx *AgentContext) SchedulePhrase(phr *Phrase, click Clicks, dest string) {
 	if phr == nil {
 		LogWarn("EngineContext.SchedulePhrase: phr == nil?")
 		return
@@ -198,18 +198,18 @@ func (agent *AgentContext) SchedulePhrase(phr *Phrase, click Clicks, dest string
 	}()
 }
 
-func (agent *AgentContext) SubmitCommand(command Command) {
+func (ctx *AgentContext) SubmitCommand(command Command) {
 	go func() {
 		TheEngine().Scheduler.cmdInput <- command
 	}()
 }
 
-func (agent *AgentContext) ParamIntValue(name string) int {
-	return agent.params.ParamIntValue(name)
+func (ctx *AgentContext) ParamIntValue(name string) int {
+	return ctx.params.ParamIntValue(name)
 }
 
-func (agent *AgentContext) ParamBoolValue(name string) bool {
-	return agent.params.ParamBoolValue(name)
+func (ctx *AgentContext) ParamBoolValue(name string) bool {
+	return ctx.params.ParamBoolValue(name)
 }
 
 /*
@@ -369,7 +369,7 @@ func (ctx *EngineContext) sendEffectParam(name string, value string) {
 }
 */
 
-func (agent *AgentContext) handleMIDITimeReset() {
+func (ctx *AgentContext) handleMIDITimeReset() {
 	LogWarn("HandleMIDITimeReset!! needs implementation")
 }
 
@@ -395,40 +395,18 @@ func (ctx *EngineContext) LayerApplyPreset(layerName, presetName string) error {
 }
 */
 
-func (agent *AgentContext) OpenMIDIOutput(name string) drivers.In {
+func (ctx *AgentContext) OpenMIDIOutput(name string) drivers.In {
 	return nil
 }
 
 // GetPreset is guaranteed to return non=nil
-func (agent *AgentContext) GetPreset(presetName string) *Preset {
+func (ctx *AgentContext) GetPreset(presetName string) *Preset {
 	preset := GetPreset(presetName)
 	return preset
 }
 
-/*
-// LoadPreset is guaranteed to return non=nil
-func (agent *Agent) LoadPreset(presetName string) *Preset {
-	preset := GetPreset(presetName)
-		preset, err = LoadPreset("")
-		if err != nil {
-			LogError(err)
-		}
-	}
-}
-*/
-
-/*
-func (ctx *EngineContext) ApplyPreset(presetName string) error {
-	preset, err := LoadPreset(presetName)
-	if err != nil {
-		return err
-	}
-	return preset.ApplyTo(ctx.agentParams)
-}
-*/
-
 // ExecuteAPI xxx
-func (agent *AgentContext) ExecuteAPI(api string, args map[string]string, rawargs string) (result string, err error) {
+func (ctx *AgentContext) ExecuteAPI(api string, args map[string]string, rawargs string) (result string, err error) {
 
 	DebugLogOfType("api", "Agent.ExecutAPI called", "api", api, "args", args)
 
@@ -623,22 +601,22 @@ func (ctx *EngineContext) restoreCurrentSnap(layerName string) {
 }
 */
 
-func (agent *AgentContext) SaveCurrentAsPreset(presetName string) error {
-	preset := agent.GetPreset(presetName)
+func (ctx *AgentContext) SaveCurrentAsPreset(presetName string) error {
+	preset := ctx.GetPreset(presetName)
 	path := preset.WritableFilePath()
-	return agent.SaveCurrentSnapInPath(path)
+	return ctx.SaveCurrentSnapInPath(path)
 }
 
-func (agent *AgentContext) GenerateCursorGestureesture(source string, cid string, noteDuration time.Duration, x0, y0, z0, x1, y1, z1 float32) {
-	agent.cursorManager.generateCursorGestureesture(source, cid, noteDuration, x0, y0, z0, x1, y1, z1)
+func (ctx *AgentContext) GenerateCursorGestureesture(source string, cid string, noteDuration time.Duration, x0, y0, z0, x1, y1, z1 float32) {
+	ctx.cursorManager.generateCursorGestureesture(source, cid, noteDuration, x0, y0, z0, x1, y1, z1)
 }
 
-func (agent *AgentContext) SaveCurrentSnapInPath(path string) error {
+func (ctx *AgentContext) SaveCurrentSnapInPath(path string) error {
 
 	s := "{\n    \"params\": {\n"
 
 	// Print the parameter values sorted by name
-	fullNames := agent.params.values
+	fullNames := ctx.params.values
 	sortedNames := make([]string, 0, len(fullNames))
 	for k := range fullNames {
 		sortedNames = append(sortedNames, k)
@@ -647,7 +625,7 @@ func (agent *AgentContext) SaveCurrentSnapInPath(path string) error {
 
 	sep := ""
 	for _, fullName := range sortedNames {
-		valstring, e := agent.params.paramValueAsString(fullName)
+		valstring, e := ctx.params.paramValueAsString(fullName)
 		if e != nil {
 			LogError(e)
 			continue

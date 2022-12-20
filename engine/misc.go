@@ -68,7 +68,7 @@ func GetPaletteVersion() string {
 	if err != nil {
 		return "Unknown" // It's okay if file isn't present
 	}
-	return string(bytes)
+	return strings.TrimSuffix(string(bytes), "\n")
 }
 
 // MIDIFilePath xxx

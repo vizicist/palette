@@ -9,7 +9,9 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
@@ -21,45 +23,22 @@ func main() {
 	signal.Ignore(syscall.SIGHUP)
 	signal.Ignore(syscall.SIGINT)
 
-	// Does anything need to be initia
 	flag.Parse()
 
 	engine.InitLog("palette")
 
-	layerPtr := flag.String("layer", "*", "Region name or *")
-
-	out := CliCommand(*layerPtr, flag.Args())
+	out := CliCommand(flag.Args())
 	os.Stdout.WriteString(out)
 }
 
 // Usage for controlling the "ppro" (PalettePro) agent
 func usage() string {
 	return `Commands:
-	palette {agent} {api} {args}
-	palette {agent} {api} {args}
-	`
-	return `Commands:
-    palette start [process]
-    palette stop [process]
-    palette activate
-    palette sendlogs
-    palette list [{category}]
-    palette [-layer={layer}] load {category}.{preset}
-    palette [-layer {layer}] save {category}.{preset}
-    palette [-layer {layer}] set {category}.{parameter} [{value}]
-    palette [-layer {layer}] get {category}.{parameter}
-    palette status
+	palette start
+	palette stop
 	palette version
-    palette api {api} {args}
-	
-Regions:
-    A, B, C, D, *
-
-Events:
-    midiin, midiout, cursor
-
-Categories:
-    quad, snap, sound, visual, effect`
+	palette {agent}.{api} [ {argname} {argvalue} ] ...
+	`
 }
 
 // humanReadableApiOutput takes the result of an API invocation and
@@ -73,13 +52,17 @@ func humanReadableApiOutput(output map[string]string) string {
 	if !rok {
 		return "Error: unexpected - no result or error in API output?"
 	}
+	if result == "" {
+		result = "OK"
+	}
+
 	return result
 }
 
 func RemoteAPI(api string, args ...string) string {
 
 	if len(args)%2 != 0 {
-		return "RemoteAPI: odd nnumber of args, should be even\n"
+		return "RemoteAPI: odd nnumber of args, should be even"
 	}
 	apijson := "\"api\": \"" + api + "\""
 	for n := range args {
@@ -114,7 +97,9 @@ func RemoteAPIRaw(args string) map[string]string {
 }
 
 // If it's not a layer, it's a button.
-func CliCommand(layer string, args []string) string {
+func CliCommand(args []string) string {
+
+	var err error
 
 	if len(args) == 0 {
 		return usage()
@@ -123,135 +108,100 @@ func CliCommand(layer string, args []string) string {
 	const engineexe = "palette_engine.exe"
 
 	api := args[0]
+
 	switch api {
 
-	case "load", "save":
-		if len(args) < 2 {
-			return "Insufficient arguments"
+	case "status":
+		if engine.IsRunningExecutable(engineexe) {
+			return "Engine is running."
+		} else {
+			return "Engine is stopped."
 		}
-		return RemoteAPI(api, "layer", layer, "preset", args[1])
 
-	case "get":
-		if len(args) < 2 {
-			return "Insufficient arguments"
+	case "start":
+
+		if engine.IsRunningExecutable(engineexe) {
+			return "Engine is already running?"
 		}
-		return RemoteAPI("get", "layer", layer, "name", args[1])
 
-	case "set":
-		if len(args) < 3 {
-			return "Insufficient arguments"
+		// Kill any currently-running engine.
+		// The other processes will be killed by
+		// the engine when it starts up.
+		engine.KillExecutable(engineexe)
+
+		// Start the engine (which also starts up other processes)
+		fullexe := filepath.Join(engine.PaletteDir(), "bin", engineexe)
+		err = engine.StartExecutableLogOutput("engine", fullexe, true, "")
+		if err != nil {
+			return fmt.Sprintf("Engine not started: err=%s", err)
 		}
-		return RemoteAPI("set", "layer", args[1], "name", args[1], "value", args[2])
+		return "Engine has been started."
 
-	case "preset.list":
-		category := "*"
-		if len(args) > 1 {
-			category = args[1]
-		}
-		return RemoteAPI("preset.list", "category", category)
-
-	case "sendlogs":
-		return RemoteAPI("engine.sendlogs")
+	case "stop":
+		// kill ourselves
+		engine.KillExecutable(engineexe)
+		return "Engine has been stopped."
 
 	case "version":
 		return engine.GetPaletteVersion()
 
-	case "activate":
-		return RemoteAPI("activate")
-
-	case "nextalive":
-		return RemoteAPI("nextalive")
-
-	case "stop":
-		return RemoteAPI("stop")
-
-	case "start":
-		return RemoteAPI("start")
-
-		/*
-			case "start":
-				process := "engine"
-				if len(args) > 1 {
-					process = args[1]
-				}
-				if process == "engine" {
-
-					// Kill any currently-running engine.
-					// The other processes will be killed by
-					// the engine when it starts up.
-					engine.KillExecutable(engineexe)
-
-					// Start the engine (which also starts up other processes)
-					fullexe := filepath.Join(engine.PaletteDir(), "bin", engineexe)
-					err := engine.StartExecutableLogOutput("engine", fullexe, true, "")
-					if err != nil {
-						return fmt.Sprintf("Engine not started: err=%s\n", err)
-					}
-					return "Engine started\n"
-				} else {
-					// Start a specific process
-					return RemoteAPI("start", "process", process)
-				}
-
-			case "stop":
-				if len(args) > 1 {
-					return RemoteAPI("stop", "agent", args[1])
-				}
-				// kill ourselves
-				engine.KillExecutable(engineexe)
-				return ""
-		*/
-
-	case "api":
-		if len(args) < 2 {
-			return "Insufficient arguments"
+	case "sendlogs":
+		err = engine.SendLogs()
+		if err != nil {
+			return err.Error()
 		}
-		return RemoteAPI(args[1], args[2:]...)
+		return "Logs have been sent."
 
 	case "test":
-		ntimes := 10
-		dt := 100 * time.Millisecond
-		source := "test.0"
-		var err error
+		var ntimes = 10 // default
+		var dt = 100 * time.Millisecond
 		if len(args) > 1 {
 			ntimes, err = strconv.Atoi(args[1])
 			if err != nil {
 				return err.Error()
 			}
-			if len(args) > 2 {
-				dt, err = time.ParseDuration(args[2])
-				if err != nil {
-					return err.Error()
-				}
+		}
+		if len(args) > 2 {
+			dt, err = time.ParseDuration(args[2])
+			if err != nil {
+				return err.Error()
 			}
 		}
-		for n := 0; n < ntimes; n++ {
-			if n > 0 {
-				time.Sleep(dt)
-			}
-			layer := string("ABCD"[rand.Int()%4])
-			RemoteAPI("event",
-				"layer", layer,
-				"source", source,
-				"event", "cursor_down",
-				"x", fmt.Sprintf("%f", rand.Float32()),
-				"y", fmt.Sprintf("%f", rand.Float32()),
-				"z", fmt.Sprintf("%f", rand.Float32()),
-			)
-			time.Sleep(dt)
-			RemoteAPI("event",
-				"layer", layer,
-				"source", source,
-				"event", "cursor_up",
-				"x", fmt.Sprintf("%f", rand.Float32()),
-				"y", fmt.Sprintf("%f", rand.Float32()),
-				"z", fmt.Sprintf("%f", rand.Float32()),
-			)
-		}
+		doTest(ntimes, dt)
+		return "Test is complete."
 
 	default:
-		// NEW retmap
-		return fmt.Sprintf("Unrecognized command: %s", args[0])
+		words := strings.Split(api, ".")
+		if len(words) != 2 {
+			return "Invalid api format, expecting {agent}.{api}"
+		}
+		return RemoteAPI(api, args[1:]...)
 	}
-	return ""
+}
+
+func doTest(ntimes int, dt time.Duration) {
+	source := "test.0"
+	for n := 0; n < ntimes; n++ {
+		if n > 0 {
+			time.Sleep(dt)
+		}
+		layer := string("ABCD"[rand.Int()%4])
+		RemoteAPI("event",
+			"layer", layer,
+			"source", source,
+			"event", "cursor_down",
+			"x", fmt.Sprintf("%f", rand.Float32()),
+			"y", fmt.Sprintf("%f", rand.Float32()),
+			"z", fmt.Sprintf("%f", rand.Float32()),
+		)
+		time.Sleep(dt)
+		RemoteAPI("event",
+			"layer", layer,
+			"source", source,
+			"event", "cursor_up",
+			"x", fmt.Sprintf("%f", rand.Float32()),
+			"y", fmt.Sprintf("%f", rand.Float32()),
+			"z", fmt.Sprintf("%f", rand.Float32()),
+		)
+	}
 }
