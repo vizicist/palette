@@ -13,7 +13,7 @@ import (
 type Layer struct {
 	name      string
 	params    *ParamValues
-	listeners []*AgentContext
+	listeners []*PluginContext
 }
 
 // type LayerCallbackMethods interface {
@@ -27,7 +27,7 @@ func NewLayer(layerName string) *Layer {
 	layer := &Layer{
 		name:      layerName,
 		params:    NewParamValues(),
-		listeners: []*AgentContext{},
+		listeners: []*PluginContext{},
 	}
 	DebugLogOfType("layer", "NewLayer", "layer", layerName)
 	layer.params.SetDefaultValues()
@@ -43,7 +43,7 @@ func GetLayer(layerName string) *Layer {
 	return layer
 }
 
-func (layer *Layer) AddListener(ctx *AgentContext) {
+func (layer *Layer) AddListener(ctx *PluginContext) {
 	layer.listeners = append(layer.listeners, ctx)
 }
 
@@ -73,11 +73,11 @@ func (layer *Layer) Api(api string, apiargs map[string]string) (string, error) {
 				LogError(err)
 				return "", err
 			}
-			layer.SaveCurrentSnap()
+			layer.SaveCurrentParams()
 		} else {
 			// It's a non-quad preset for a single layer.
 			layer.Apply(preset)
-			err := layer.SaveCurrentSnap()
+			err := layer.SaveCurrentParams()
 			if err != nil {
 				return "", err
 			}
@@ -103,13 +103,13 @@ func (layer *Layer) Api(api string, apiargs map[string]string) (string, error) {
 			return "", fmt.Errorf("executeLayerAPI: missing value argument")
 		}
 		layer.Set(name, value)
-		return "", layer.SaveCurrentSnap()
+		return "", layer.SaveCurrentParams()
 
 	case "setparams":
 		for name, value := range apiargs {
 			layer.Set(name, value)
 		}
-		return "", layer.SaveCurrentSnap()
+		return "", layer.SaveCurrentParams()
 
 	case "get":
 		name, ok := apiargs["name"]
@@ -175,8 +175,8 @@ func (layer *Layer) Apply(preset *Preset) {
 	preset.ApplyTo(layer.params)
 }
 
-func (layer *Layer) SaveCurrentSnap() error {
-	return fmt.Errorf("Layer.SaveCurrentSnap needs work")
+func (layer *Layer) SaveCurrentParams() error {
+	return fmt.Errorf("Layer.SaveCurrentParams needs work")
 }
 
 func (layer *Layer) SavePresetInPath(path string) error {

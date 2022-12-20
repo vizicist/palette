@@ -1,4 +1,4 @@
-package agent
+package plugin
 
 import (
 	"encoding/json"
@@ -15,7 +15,7 @@ import (
 var ResolumePort = 7000
 
 type Resolume struct {
-	agent            *engine.AgentContext
+	agent            *engine.PluginContext
 	resolumeClient   *osc.Client
 	freeframeClients map[string]*osc.Client
 }
@@ -23,7 +23,7 @@ type Resolume struct {
 // ResolumeJSON is an unmarshalled version of the resolume.json file
 var ResolumeJSON map[string]any
 
-func NewResolume(agent *engine.AgentContext) *Resolume {
+func NewResolume(agent *engine.PluginContext) *Resolume {
 	r := &Resolume{
 		agent:            agent,
 		resolumeClient:   osc.NewClient(engine.LocalAddress, ResolumePort),
