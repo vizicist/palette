@@ -1,4 +1,4 @@
-package agent
+package plugin
 
 import (
 	"strings"
@@ -11,16 +11,16 @@ import (
 
 type Bidule struct {
 	mutex  sync.Mutex
-	ctx  *engine.AgentContext
+	ctx    *engine.PluginContext
 	client *osc.Client
 	port   int
 }
 
 const BidulePort = 3210
 
-func NewBidule(ctx *engine.AgentContext) *Bidule {
+func NewBidule(ctx *engine.PluginContext) *Bidule {
 	return &Bidule{
-		ctx:  ctx,
+		ctx:    ctx,
 		client: osc.NewClient(engine.LocalAddress, BidulePort),
 		port:   3210,
 	}
@@ -40,14 +40,14 @@ func (b *Bidule) Activate() {
 }
 
 func (b *Bidule) ProcessInfo() *processInfo {
-	agent := b.ctx
-	bidulePath := agent.ConfigValueWithDefault("bidule", "")
+	ctx := b.ctx
+	bidulePath := ctx.ConfigValueWithDefault("bidule", "")
 	if bidulePath == "" {
 		bidulePath = "C:\\Program Files\\Plogue\\Bidule\\Bidule.exe"
-		agent.LogWarn("No bidule value in settings, using default", "path", bidulePath)
+		ctx.LogWarn("No bidule value in settings, using default", "path", bidulePath)
 	}
-	if !agent.FileExists(bidulePath) {
-		agent.LogWarn("No bidule found, looking for", "path", bidulePath)
+	if !ctx.FileExists(bidulePath) {
+		ctx.LogWarn("No bidule found, looking for", "path", bidulePath)
 		return nil
 	}
 	exe := bidulePath
@@ -55,11 +55,11 @@ func (b *Bidule) ProcessInfo() *processInfo {
 	if lastslash > 0 {
 		exe = exe[lastslash+1:]
 	}
-	bidulefile := agent.ConfigValueWithDefault("bidulefile", "")
+	bidulefile := ctx.ConfigValueWithDefault("bidulefile", "")
 	if bidulefile == "" {
 		bidulefile = "default.bidule"
 	}
-	filepath := agent.ConfigFilePath(bidulefile)
+	filepath := ctx.ConfigFilePath(bidulefile)
 	return &processInfo{exe, bidulePath, filepath, b.Activate}
 }
 

@@ -1,4 +1,4 @@
-package agent
+package plugin
 
 import (
 	"fmt"
@@ -74,9 +74,9 @@ func init() {
 		scale:                  engine.GetScale("newage"),
 	}
 	ppro.clearExternalScale()
-	RegisterAgent("ppro", ppro.Api)
+	RegisterPlugin("ppro", ppro.Api)
 }
-func (ppro *PalettePro) Api(ctx *engine.AgentContext, api string, apiargs map[string]string) (result string, err error) {
+func (ppro *PalettePro) Api(ctx *engine.PluginContext, api string, apiargs map[string]string) (result string, err error) {
 
 	switch api {
 
@@ -209,7 +209,7 @@ func (ppro *PalettePro) Api(ctx *engine.AgentContext, api string, apiargs map[st
 	// return result, err
 }
 
-func (ppro *PalettePro) start(ctx *engine.AgentContext) error {
+func (ppro *PalettePro) start(ctx *engine.PluginContext) error {
 
 	if ppro.started {
 		return fmt.Errorf("PalettePro: already started")
@@ -294,7 +294,7 @@ func (ppro *PalettePro) onSpriteGen(layerName string, id string, x, y, z float32
 	ppro.resolume.toFreeFramePlugin(layerName, msg)
 }
 
-func (ppro *PalettePro) onClick(ctx *engine.AgentContext, apiargs map[string]string) (string, error) {
+func (ppro *PalettePro) onClick(ctx *engine.PluginContext, apiargs map[string]string) (string, error) {
 
 	uptimesecs := ctx.Uptime()
 	// Every so often we check to see if attract mode should be turned on
@@ -347,12 +347,19 @@ func (ppro *PalettePro) onClick(ctx *engine.AgentContext, apiargs map[string]str
 	return "", nil
 }
 
-func (ppro *PalettePro) onMidiEvent(ctx *engine.AgentContext, apiargs map[string]string) (string, error) {
+func (ppro *PalettePro) onMidiEvent(ctx *engine.PluginContext, apiargs map[string]string) (string, error) {
 
 	me, err := engine.MidiEventFromMap(apiargs)
 	if err != nil {
 		return "", err
 	}
+
+	/*
+		// XXX - this should be done in the erae plugin
+			if EraeEnabled {
+				HandleEraeMIDI(me)
+			}
+	*/
 
 	if ppro.MIDIThru {
 		ctx.LogWarn("PassThruMIDI needs work")
@@ -373,16 +380,16 @@ func (ppro *PalettePro) onMidiEvent(ctx *engine.AgentContext, apiargs map[string
 	return "", nil
 }
 
-func (ppro *PalettePro) saveCurrentSnaps(ctx *engine.AgentContext) {
+func (ppro *PalettePro) saveCurrentParams(ctx *engine.PluginContext) {
 	for _, layer := range ppro.layer {
-		err := layer.SaveCurrentSnap()
+		err := layer.SaveCurrentParams()
 		if err != nil {
 			ctx.LogError(err)
 		}
 	}
 }
 
-func (ppro *PalettePro) onCursorEvent(ctx *engine.AgentContext, apiargs map[string]string) (string, error) {
+func (ppro *PalettePro) onCursorEvent(ctx *engine.PluginContext, apiargs map[string]string) (string, error) {
 
 	ddu, ok := apiargs["ddu"]
 	if !ok {
@@ -438,7 +445,7 @@ func (ppro *PalettePro) onCursorEvent(ctx *engine.AgentContext, apiargs map[stri
 	return "", nil
 }
 
-func (ppro *PalettePro) loadQuadPresetRand(ctx *engine.AgentContext) {
+func (ppro *PalettePro) loadQuadPresetRand(ctx *engine.PluginContext) {
 
 	arr, err := engine.PresetArray("quad")
 	if err != nil {
@@ -454,20 +461,20 @@ func (ppro *PalettePro) loadQuadPresetRand(ctx *engine.AgentContext) {
 	}
 }
 
-func (ppro *PalettePro) loadQuadPreset(ctx *engine.AgentContext, preset *engine.Preset) {
+func (ppro *PalettePro) loadQuadPreset(ctx *engine.PluginContext, preset *engine.Preset) {
 	for layerName, layer := range ppro.layer {
 		layer.ApplyQuadPreset(preset, layerName)
 	}
 }
 
-func (ppro *PalettePro) addLayer(ctx *engine.AgentContext, name string) *engine.Layer {
+func (ppro *PalettePro) addLayer(ctx *engine.PluginContext, name string) *engine.Layer {
 	layer := engine.NewLayer(name)
 	layer.AddListener(ctx)
 	ppro.layer[name] = layer
 	return layer
 }
 
-func (ppro *PalettePro) scheduleNoteNow(ctx *engine.AgentContext, dest string, pitch, velocity uint8, duration engine.Clicks) {
+func (ppro *PalettePro) scheduleNoteNow(ctx *engine.PluginContext, dest string, pitch, velocity uint8, duration engine.Clicks) {
 	ctx.LogInfo("PalettePro.scheculeNoteNow", "dest", dest, "pitch", pitch)
 	pe := &engine.PhraseElement{Value: engine.NewNoteFull(0, pitch, velocity, duration)}
 	phr := engine.NewPhrase().InsertElement(pe)
@@ -485,7 +492,7 @@ func (ppro *PalettePro) cursorToLayer(ce engine.CursorEvent) *engine.Layer {
 	return ppro.layer["a"]
 }
 
-func (ppro *PalettePro) cursorToPitch(ctx *engine.AgentContext, ce engine.CursorEvent) uint8 {
+func (ppro *PalettePro) cursorToPitch(ctx *engine.PluginContext, ce engine.CursorEvent) uint8 {
 	layer := ppro.cursorToLayer(ce)
 	pitchmin := layer.GetInt("sound.pitchmin")
 	pitchmax := layer.GetInt("sound.pitchmax")
@@ -548,7 +555,7 @@ func (ppro *PalettePro) handleMIDISetScaleNote(e engine.MidiEvent) {
 	}
 }
 
-func (ppro *PalettePro) publishOscAlive(ctx *engine.AgentContext, uptimesecs float64) {
+func (ppro *PalettePro) publishOscAlive(ctx *engine.PluginContext, uptimesecs float64) {
 	attractMode := ppro.attractModeIsOn
 	if ppro.attractClient == nil {
 		ppro.attractClient = osc.NewClient(engine.LocalAddress, AliveOutputPort)
@@ -562,7 +569,7 @@ func (ppro *PalettePro) publishOscAlive(ctx *engine.AgentContext, uptimesecs flo
 	}
 }
 
-func (ppro *PalettePro) doAttractAction(ctx *engine.AgentContext) {
+func (ppro *PalettePro) doAttractAction(ctx *engine.PluginContext) {
 
 	now := time.Now()
 	dt := now.Sub(ppro.lastAttractGestureTime)

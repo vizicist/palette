@@ -40,7 +40,7 @@ func (e *Engine) ExecuteAPIFromMap(api string, apiargs map[string]string) (resul
 
 		default:
 			// If it's not one of the reserved aent names, see if it's a registered one
-			ctx, err := e.AgentManager.GetAgentContext(apitype)
+			ctx, err := e.PluginManager.GetPluginContext(apitype)
 			if err != nil {
 				return "", err
 			}

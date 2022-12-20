@@ -4,11 +4,10 @@ import (
 	"os"
 	"os/signal"
 	"runtime/pprof"
-	"strings"
 	"syscall"
 
-	_ "github.com/vizicist/palette/agent"
 	"github.com/vizicist/palette/engine"
+	_ "github.com/vizicist/palette/plugin"
 	_ "github.com/vizicist/palette/tool"
 	"github.com/vizicist/palette/twinsys"
 )
@@ -26,14 +25,7 @@ func main() {
 
 	e := engine.TheEngine()
 
-	// Eventually the defult should be ""
-	agents := engine.ConfigStringWithDefault("agents", "ppro")
-	for _, agentName := range strings.Split(agents, ",") {
-		e.StartAgent(agentName)
-	}
-
-	done := make(chan bool)
-	e.Start(done)
+	e.Start()
 
 	go func() {
 		e.WaitTillDone()

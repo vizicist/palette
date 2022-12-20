@@ -31,13 +31,13 @@ func main() {
 	os.Stdout.WriteString(out)
 }
 
-// Usage for controlling the "ppro" (PalettePro) agent
+// Usage for controlling the "ppro" (PalettePro) plugin
 func usage() string {
 	return `Commands:
 	palette start
 	palette stop
 	palette version
-	palette {agent}.{api} [ {argname} {argvalue} ] ...
+	palette {plugin}.{api} [ {argname} {argvalue} ] ...
 	`
 }
 
@@ -173,7 +173,7 @@ func CliCommand(args []string) string {
 	default:
 		words := strings.Split(api, ".")
 		if len(words) != 2 {
-			return "Invalid api format, expecting {agent}.{api}"
+			return "Invalid api format, expecting {plugin}.{api}"
 		}
 		return RemoteAPI(api, args[1:]...)
 	}

@@ -1,4 +1,4 @@
-package agent
+package plugin
 
 /*
 import (
@@ -9,24 +9,24 @@ import (
 )
 
 func init() {
-	RegisterAgent("demo", &Agent_demo{})
+	RegisterPlugin("demo", &Plugin_demo{})
 }
 
-type Agent_demo struct {
+type Plugin_demo struct {
 	ctx *engine.EngineContext
 }
 
 /////////////////////////// external interface
 
-func (agent *Agent_demo) Start(ctx *engine.EngineContext) {
+func (agent *Plugin_demo) Start(ctx *engine.EngineContext) {
 	agent.ctx = ctx
 }
 
-func (agent *Agent_demo) OnMidiEvent(me engine.MidiEvent) {
+func (agent *Plugin_demo) OnMidiEvent(me engine.MidiEvent) {
 }
 
-func (agent *Agent_demo) OnCursorEvent(ce engine.CursorEvent) {
-	engine.Info("NewAgent_demo in OnCursorEvent!")
+func (agent *Plugin_demo) OnCursorEvent(ce engine.CursorEvent) {
+	engine.Info("NewPlugin_demo in OnCursorEvent!")
 	if ce.Ddu == "down" {
 		go func() {
 			pe := agent.cursorToPhraseElement(ce)
@@ -49,7 +49,7 @@ func (agent *Agent_demo) OnCursorEvent(ce engine.CursorEvent) {
 
 /////////////////////////// internal things
 
-func (agent *Agent_demo) cursorToPhraseElement(ce engine.CursorEvent) *engine.PhraseElement {
+func (agent *Plugin_demo) cursorToPhraseElement(ce engine.CursorEvent) *engine.PhraseElement {
 	pitch := int(ce.X * 126.0)
 	_ = pitch
 	s := "+b"

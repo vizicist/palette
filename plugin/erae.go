@@ -1,4 +1,4 @@
-package agent
+package plugin
 
 /*
 import (
@@ -12,7 +12,7 @@ import (
 )
 
 func init() {
-	RegisterAgent("erae", &Agent_erae{
+	RegisterPlugin("erae", &Plugin_erae{
 		layerName: "A",
 		enabled:   false,
 		prefix:    0x55,
@@ -22,7 +22,7 @@ func init() {
 	})
 }
 
-type Agent_erae struct {
+type Plugin_erae struct {
 	ctx       *engine.EngineContext
 	layerName string
 	enabled   bool
@@ -33,21 +33,21 @@ type Agent_erae struct {
 	output    drivers.In
 }
 
-func (agent *Agent_erae) Start(ctx *engine.EngineContext) {
+func (agent *Plugin_erae) Start(ctx *engine.EngineContext) {
 	agent.EraeZoneClearDisplay(agent.zone)
 	agent.output = ctx.OpenMIDIOutput("erae")
 	agent.ctx = ctx
 }
 
-func (agent *Agent_erae) Api(api string, apiargs map[string]string) (string, error) {
+func (agent *Plugin_erae) Api(api string, apiargs map[string]string) (string, error) {
 	return "", fmt.Errorf("Api needs work")
 }
 
-func (agent *Agent_erae) OnCursorEvent(ce engine.CursorEvent) {
-	engine.Info("Agent_erae.onCursorEvent", "ce", ce)
+func (agent *Plugin_erae) OnCursorEvent(ce engine.CursorEvent) {
+	engine.Info("Plugin_erae.onCursorEvent", "ce", ce)
 }
 
-func (agent *Agent_erae) OnMidiEvent(me engine.MidiEvent) {
+func (agent *Plugin_erae) OnMidiEvent(me engine.MidiEvent) {
 	bb := me.Msg.Bytes()
 	s := ""
 	for _, b := range bb {
@@ -59,7 +59,7 @@ func (agent *Agent_erae) OnMidiEvent(me engine.MidiEvent) {
 	}
 }
 
-func (agent *Agent_erae) handleEraeSysEx(bb []byte) {
+func (agent *Plugin_erae) handleEraeSysEx(bb []byte) {
 	// This assumes the RECEIVER PREFIX BYTES is exactly 1 byte
 	if bb[2] == 0x7f {
 		agent.handleBoundary(bb)
@@ -68,7 +68,7 @@ func (agent *Agent_erae) handleEraeSysEx(bb []byte) {
 	}
 }
 
-func (agent *Agent_erae) handleBoundary(bb []byte) {
+func (agent *Plugin_erae) handleBoundary(bb []byte) {
 	expected := 7
 	if len(bb) != expected {
 		engine.Warn("handleBoundary: bad reply message", "expectedbytes", expected)
@@ -84,7 +84,7 @@ var lastX float32
 var lastY float32
 var lastZ float32
 
-func (agent *Agent_erae) EraeFingerIndicator(zone, x, y byte) {
+func (agent *Plugin_erae) EraeFingerIndicator(zone, x, y byte) {
 	engine.DebugLogOfType("erae", "EraeFingerIndicator", "x", x, "y", y)
 	rectw := byte(2)
 	recth := byte(2)
@@ -118,7 +118,7 @@ func (agent *Agent_erae) EraeFingerIndicator(zone, x, y byte) {
 	agent.EraeZoneRectangle(zone, x, y, rectw, recth, 0x00, 0x00, 0x00)
 }
 
-func (agent *Agent_erae) handleFinger(bb []byte) {
+func (agent *Plugin_erae) handleFinger(bb []byte) {
 
 	finger := bb[2] & 0x0f
 	action := (bb[2] & 0xf0) >> 4
@@ -234,49 +234,49 @@ func (agent *Agent_erae) handleFinger(bb []byte) {
 	agent.OnCursorEvent(ce)
 }
 
-func (agent *Agent_erae) EraeWriteSysEx(bytes []byte) {
-	engine.Warn("Agent_erae.EraeWriteSysex needs work")
+func (agent *Plugin_erae) EraeWriteSysEx(bytes []byte) {
+	engine.Warn("Plugin_erae.EraeWriteSysex needs work")
 	// err := agent.output.Send(bytes)
 	// if err != nil {
 	// 	engine.LogError(err)
 	// }
 }
 
-func (agent *Agent_erae) EraeApiModeEnable() {
+func (agent *Plugin_erae) EraeApiModeEnable() {
 	bytes := []byte{0xf0, 0x00, 0x21, 0x50, 0x00, 0x01, 0x00, 0x01,
 		0x01, 0x01, 0x04, 0x01,
 		agent.prefix, 0xf7}
 	agent.EraeWriteSysEx(bytes)
 }
 
-func (agent *Agent_erae) EraeApiModeDisable() {
+func (agent *Plugin_erae) EraeApiModeDisable() {
 	bytes := []byte{0xf0, 0x00, 0x21, 0x50, 0x00, 0x01, 0x00, 0x01,
 		0x01, 0x01, 0x04, 0x02, 0xf7}
 	agent.EraeWriteSysEx(bytes)
 }
 
-func (agent *Agent_erae) EraeZoneBoundaryRequest(zone byte) {
+func (agent *Plugin_erae) EraeZoneBoundaryRequest(zone byte) {
 	bytes := []byte{0xf0, 0x00, 0x21, 0x50, 0x00, 0x01, 0x00, 0x01,
 		0x01, 0x01, 0x04, 0x10,
 		byte(zone), 0xf7}
 	agent.EraeWriteSysEx(bytes)
 }
 
-func (agent *Agent_erae) EraeZoneClearDisplay(zone byte) {
+func (agent *Plugin_erae) EraeZoneClearDisplay(zone byte) {
 	bytes := []byte{0xf0, 0x00, 0x21, 0x50, 0x00, 0x01, 0x00, 0x01,
 		0x01, 0x01, 0x04, 0x20,
 		byte(zone), 0xf7}
 	agent.EraeWriteSysEx(bytes)
 }
 
-func (agent *Agent_erae) EraeZoneClearPixel(zone, x, y, r, g, b byte) {
+func (agent *Plugin_erae) EraeZoneClearPixel(zone, x, y, r, g, b byte) {
 	bytes := []byte{0xf0, 0x00, 0x21, 0x50, 0x00, 0x01, 0x00, 0x01,
 		0x01, 0x01, 0x04, 0x21,
 		byte(zone), x, y, r, g, b, 0xf7}
 	agent.EraeWriteSysEx(bytes)
 }
 
-func (agent *Agent_erae) EraeZoneRectangle(zone, x, y, w, h, r, g, b byte) {
+func (agent *Plugin_erae) EraeZoneRectangle(zone, x, y, w, h, r, g, b byte) {
 	bytes := []byte{
 		0xf0, 0x00, 0x21, 0x50, 0x00, 0x01, 0x00, 0x01,
 		0x01, 0x01, 0x04, 0x22,

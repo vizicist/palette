@@ -10,80 +10,80 @@ import (
 	"gitlab.com/gomidi/midi/v2/drivers"
 )
 
-type AgentFunc func(ctx *AgentContext, api string, apiargs map[string]string) (string, error)
+type PluginFunc func(ctx *PluginContext, api string, apiargs map[string]string) (string, error)
 
-type AgentContext struct {
-	api           AgentFunc
+type PluginContext struct {
+	api           PluginFunc
 	cursorManager *CursorManager
 	params        *ParamValues
 	sources       map[string]bool
 }
 
-func (ctx *AgentContext) Uptime() float64 {
+func (ctx *PluginContext) Uptime() float64 {
 	return Uptime()
 }
 
-func (ctx *AgentContext) GetArgsXYZ(args map[string]string) (x, y, z float32, err error) {
+func (ctx *PluginContext) GetArgsXYZ(args map[string]string) (x, y, z float32, err error) {
 	return GetArgsXYZ(args)
 }
 
-func (ctx *AgentContext) ClearCursors() {
+func (ctx *PluginContext) ClearCursors() {
 	ctx.cursorManager.clearCursors()
 }
 
-func (ctx *AgentContext) LogInfo(msg string, keysAndValues ...any) {
+func (ctx *PluginContext) LogInfo(msg string, keysAndValues ...any) {
 	LogInfo(msg, keysAndValues...)
 }
 
-func (ctx *AgentContext) LogWarn(msg string, keysAndValues ...any) {
+func (ctx *PluginContext) LogWarn(msg string, keysAndValues ...any) {
 	LogWarn(msg, keysAndValues...)
 }
 
-func (ctx *AgentContext) LogError(err error, keysAndValues ...any) {
+func (ctx *PluginContext) LogError(err error, keysAndValues ...any) {
 	LogError(err, keysAndValues...)
 }
 
-func (ctx *AgentContext) PaletteDir() string {
+func (ctx *PluginContext) PaletteDir() string {
 	return PaletteDir()
 }
 
-func (ctx *AgentContext) ConfigValueWithDefault(name, dflt string) string {
+func (ctx *PluginContext) ConfigValueWithDefault(name, dflt string) string {
 	return ConfigValueWithDefault(name, dflt)
 }
 
-func (ctx *AgentContext) ConfigBoolWithDefault(name string, dflt bool) bool {
+func (ctx *PluginContext) ConfigBoolWithDefault(name string, dflt bool) bool {
 	return ConfigBoolWithDefault(name, dflt)
 }
 
-func (ctx *AgentContext) ConfigValue(name string) string {
+func (ctx *PluginContext) ConfigValue(name string) string {
 	return ConfigValue(name)
 }
 
-func (ctx *AgentContext) ConfigFilePath(name string) string {
+func (ctx *PluginContext) ConfigFilePath(name string) string {
 	return ConfigFilePath(name)
 }
 
-func (ctx *AgentContext) StartExecutableLogOutput(logName string, fullexe string, background bool, args ...string) error {
+func (ctx *PluginContext) StartExecutableLogOutput(logName string, fullexe string, background bool, args ...string) error {
 	return StartExecutableLogOutput(logName, fullexe, background, args...)
 }
 
-func (ctx *AgentContext) KillExecutable(exe string) {
+func (ctx *PluginContext) KillExecutable(exe string) {
 	KillExecutable(exe)
 }
 
-func (ctx *AgentContext) IsRunningExecutable(exe string) bool {
+func (ctx *PluginContext) IsRunningExecutable(exe string) bool {
 	return IsRunningExecutable(exe)
 }
 
-func (ctx *AgentContext) FileExists(path string) bool {
+func (ctx *PluginContext) FileExists(path string) bool {
 	return FileExists(path)
 }
 
-func (ctx *AgentContext) GetLayer(layerName string) *Layer {
+func (ctx *PluginContext) GetLayer(layerName string) *Layer {
 	return GetLayer(layerName)
 }
 
-func (ctx *AgentContext) AllowSource(source ...string) {
+func (ctx *PluginContext) AllowSource(source ...string) {
 	var ok bool
 	for _, name := range source {
 		_, ok = ctx.sources[name]
@@ -95,12 +95,12 @@ func (ctx *AgentContext) AllowSource(source ...string) {
 	}
 }
 
-func (ctx *AgentContext) IsSourceAllowed(source string) bool {
+func (ctx *PluginContext) IsSourceAllowed(source string) bool {
 	_, ok := ctx.sources[source]
 	return ok
 }
 
-func (ctx *AgentContext) MidiEventToPhrase(me MidiEvent) (*Phrase, error) {
+func (ctx *PluginContext) MidiEventToPhrase(me MidiEvent) (*Phrase, error) {
 	pe, err := ctx.midiEventToPhraseElement(me)
 	if err != nil {
 		return nil, err
@@ -109,7 +109,7 @@ func (ctx *AgentContext) MidiEventToPhrase(me MidiEvent) (*Phrase, error) {
 	return phr, nil
 }
 
-func (ctx *AgentContext) midiEventToPhraseElement(me MidiEvent) (*PhraseElement, error) {
+func (ctx *PluginContext) midiEventToPhraseElement(me MidiEvent) (*PhraseElement, error) {
 
 	bytes := me.Msg.Bytes()
 	lng := len(bytes)
@@ -179,11 +179,11 @@ func (ctx *AgentContext) midiEventToPhraseElement(me MidiEvent) (*PhraseElement,
 	return &PhraseElement{Value: val}, nil
 }
 
-func (ctx *AgentContext) CurrentClick() Clicks {
+func (ctx *PluginContext) CurrentClick() Clicks {
 	return CurrentClick()
 }
 
-func (ctx *AgentContext) SchedulePhrase(phr *Phrase, click Clicks, dest string) {
+func (ctx *PluginContext) SchedulePhrase(phr *Phrase, click Clicks, dest string) {
 	if phr == nil {
 		LogWarn("EngineContext.SchedulePhrase: phr == nil?")
 		return
@@ -198,17 +198,17 @@ func (ctx *AgentContext) SchedulePhrase(phr *Phrase, click Clicks, dest string) 
 	}()
 }
 
-func (ctx *AgentContext) SubmitCommand(command Command) {
+func (ctx *PluginContext) SubmitCommand(command Command) {
 	go func() {
 		TheEngine().Scheduler.cmdInput <- command
 	}()
 }
 
-func (ctx *AgentContext) ParamIntValue(name string) int {
+func (ctx *PluginContext) ParamIntValue(name string) int {
 	return ctx.params.ParamIntValue(name)
 }
 
-func (ctx *AgentContext) ParamBoolValue(name string) bool {
+func (ctx *PluginContext) ParamBoolValue(name string) bool {
 	return ctx.params.ParamBoolValue(name)
 }
 
@@ -280,8 +280,8 @@ func (ctx *EngineContext) generateSpriteFromPhraseElement(pe *PhraseElement) {
 		return
 	}
 
-	pitchmin := uint8(ctx.agentParams.ParamIntValue("sound.pitchmin"))
-	pitchmax := uint8(ctx.agentParams.ParamIntValue("sound.pitchmax"))
+	pitchmin := uint8(ctx.pluginParams.ParamIntValue("sound.pitchmin"))
+	pitchmax := uint8(ctx.pluginParams.ParamIntValue("sound.pitchmax"))
 	if pitch < pitchmin || pitch > pitchmax {
 		Warn("Unexpected value", "pitch", pitch)
 		return
@@ -289,7 +289,7 @@ func (ctx *EngineContext) generateSpriteFromPhraseElement(pe *PhraseElement) {
 
 	var x float32
 	var y float32
-	switch ctx.agentParams.ParamStringValue("visual.placement", "random") {
+	switch ctx.pluginParams.ParamStringValue("visual.placement", "random") {
 	case "random":
 		x = rand.Float32()
 		y = rand.Float32()
@@ -343,7 +343,7 @@ func (ctx *EngineContext) getScale() *Scale {
 	// if Layer.MIDIUseScale {
 	// 	scale = Layer.externalScale
 	// } else {
-	scaleName = ctx.agentParams.ParamStringValue("misc.scale", "newage")
+	scaleName = ctx.pluginParams.ParamStringValue("misc.scale", "newage")
 	scale = GlobalScale(scaleName)
 	// }
 	return scale
@@ -369,7 +369,7 @@ func (ctx *EngineContext) sendEffectParam(name string, value string) {
 }
 */
 
-func (ctx *AgentContext) handleMIDITimeReset() {
+func (ctx *PluginContext) handleMIDITimeReset() {
 	LogWarn("HandleMIDITimeReset!! needs implementation")
 }
 
@@ -378,7 +378,7 @@ func (ctx *EngineContext) sendANO() {
 	if !TheRouter().generateSound {
 		return
 	}
-	synth := ctx.agentParams.ParamStringValue("sound.synth", defaultSynth)
+	synth := ctx.pluginParams.ParamStringValue("sound.synth", defaultSynth)
 	SendANOToSynth(synth)
 }
 */
@@ -395,20 +395,20 @@ func (ctx *EngineContext) LayerApplyPreset(layerName, presetName string) error {
 }
 */
 
-func (ctx *AgentContext) OpenMIDIOutput(name string) drivers.In {
+func (ctx *PluginContext) OpenMIDIOutput(name string) drivers.In {
 	return nil
 }
 
 // GetPreset is guaranteed to return non=nil
-func (ctx *AgentContext) GetPreset(presetName string) *Preset {
+func (ctx *PluginContext) GetPreset(presetName string) *Preset {
 	preset := GetPreset(presetName)
 	return preset
 }
 
 // ExecuteAPI xxx
-func (ctx *AgentContext) ExecuteAPI(api string, args map[string]string, rawargs string) (result string, err error) {
+func (ctx *PluginContext) ExecuteAPI(api string, args map[string]string, rawargs string) (result string, err error) {
 
-	DebugLogOfType("api", "Agent.ExecutAPI called", "api", api, "args", args)
+	DebugLogOfType("api", "Plugin.ExecutAPI called", "api", api, "args", args)
 
 	// The caller can provide rawargs if it's already known, but if not provided, we create it
 	// if rawargs == "" {
@@ -541,8 +541,8 @@ func (ctx *AgentContext) ExecuteAPI(api string, args map[string]string, rawargs 
 
 /*
 func (ctx *EngineContext) sendAllParameters() {
-	for nm := range ctx.agentParams.values {
-		val, err := ctx.agentParams.paramValueAsString(nm)
+	for nm := range ctx.pluginParams.values {
+		val, err := ctx.pluginParams.paramValueAsString(nm)
 		if err != nil {
 			LogError(err)
 			// Don't fail completely
@@ -550,7 +550,7 @@ func (ctx *EngineContext) sendAllParameters() {
 		}
 		// This assumes that if you set a parameter to the same value,
 		// that it will re-send the mesasges to Resolume for visual.* params
-		err = SetOneParamValue(ctx.agentParams, nm, val)
+		err = SetOneParamValue(ctx.pluginParams, nm, val)
 		if err != nil {
 			LogError(err)
 			// Don't fail completely
@@ -589,29 +589,29 @@ func ApplyParamsMap(presetType string, paramsmap map[string]any, params *ParamVa
 
 /*
 func (ctx *EngineContext) restoreCurrentSnap(layerName string) {
-	preset, err := LoadPreset("snap._Current_" + layerName)
+	tSnapeset, err := LoadPreset("snap._Current_" + layerName)
 	if err != nil {
 		LogError(err)
 		return
 	}
-	err = preset.ApplyTo(ctx.agentParams)
+	err = preset.ApplyTo(ctx.pluginParams)
 	if err != nil {
 		LogError(err)
 	}
 }
 */
 
-func (ctx *AgentContext) SaveCurrentAsPreset(presetName string) error {
+func (ctx *PluginContext) SaveCurrentAsPreset(presetName string) error {
 	preset := ctx.GetPreset(presetName)
 	path := preset.WritableFilePath()
 	return ctx.SaveCurrentSnapInPath(path)
 }
 
-func (ctx *AgentContext) GenerateCursorGestureesture(source string, cid string, noteDuration time.Duration, x0, y0, z0, x1, y1, z1 float32) {
+func (ctx *PluginContext) GenerateCursorGestureesture(source string, cid string, noteDuration time.Duration, x0, y0, z0, x1, y1, z1 float32) {
 	ctx.cursorManager.generateCursorGestureesture(source, cid, noteDuration, x0, y0, z0, x1, y1, z1)
 }
 
-func (ctx *AgentContext) SaveCurrentSnapInPath(path string) error {
+func (ctx *PluginContext) SaveCurrentSnapInPath(path string) error {
 
 	s := "{\n    \"params\": {\n"
 

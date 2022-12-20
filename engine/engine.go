@@ -13,7 +13,7 @@ type Engine struct {
 	// ProcessManager *ProcessManager
 	Router        *Router
 	Scheduler     *Scheduler
-	AgentManager  *AgentManager
+	PluginManager *PluginManager
 	CursorManager *CursorManager
 	done          chan bool
 }
@@ -38,12 +38,12 @@ func newEngine() *Engine {
 	// e.ProcessManager = NewProcessManager()
 	e.Router = NewRouter()
 	e.Scheduler = NewScheduler()
-	e.AgentManager = NewAgentManager()
+	e.PluginManager = NewPluginManager()
 	return e
 }
 
-func RegisterAgent(name string, agent AgentFunc) {
-	TheAgentManager().RegisterAgent(name, agent)
+func RegisterPlugin(name string, plugin PluginFunc) {
+	ThePluginManager().RegisterPlugin(name, plugin)
 }
 
 // func (e *Engine) handleCursorEvent(ce CursorEvent) {
@@ -51,16 +51,16 @@ func RegisterAgent(name string, agent AgentFunc) {
 // 	TheEngine().agentManager.handleCursorEvent(ce)
 // }
 
-func (e *Engine) StartAgent(name string) {
-	err := e.AgentManager.StartAgent(name)
+func (e *Engine) StartPlugin(name string) {
+	err := e.PluginManager.StartPlugin(name)
 	if err != nil {
 		LogError(err)
 	}
 }
 
-func (e *Engine) Start(done chan bool) {
+func (e *Engine) Start() {
 
-	e.done = done
+	e.done = make(chan bool)
 	LogInfo("Engine.Start")
 
 	InitMIDI()
@@ -76,6 +76,13 @@ func (e *Engine) Start(done chan bool) {
 	if ConfigBoolWithDefault("depth", false) {
 		go DepthRunForever()
 	}
+
+	// Eventually the defult should be ""
+	plugins := ConfigStringWithDefault("plugins", "ppro")
+	for _, nm := range strings.Split(plugins, ",") {
+		e.StartPlugin(nm)
+	}
+
 }
 
 func (e *Engine) WaitTillDone() {
