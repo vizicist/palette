@@ -15,6 +15,7 @@ import (
 var AliveOutputPort = 3331
 
 type PalettePro struct {
+	started        bool
 	layer          map[string]*engine.Layer
 	resolume       *Resolume
 	bidule         *Bidule
@@ -79,6 +80,12 @@ func (ppro *PalettePro) Api(ctx *engine.AgentContext, api string, apiargs map[st
 
 	switch api {
 
+	case "start":
+		return "", ppro.start(ctx)
+
+	case "stop":
+		return "", fmt.Errorf("ppro.stop doesn't do anything")
+
 	case "onparamset":
 		layerName, ok := apiargs["layer"]
 		if !ok {
@@ -131,10 +138,6 @@ func (ppro *PalettePro) Api(ctx *engine.AgentContext, api string, apiargs map[st
 		ppro.onSpriteGen(layerName, id, float32(xf), float32(yf), float32(zf))
 		return "", nil
 
-	case "start":
-		ppro.start(ctx)
-		return "", nil
-
 	case "echo":
 		value, ok := apiargs["value"]
 		if !ok {
@@ -151,7 +154,7 @@ func (ppro *PalettePro) Api(ctx *engine.AgentContext, api string, apiargs map[st
 		}
 		return "", err
 
-	case "stop":
+	case "stopprocess":
 		process, ok := apiargs["process"]
 		if !ok {
 			return "", fmt.Errorf("ExecuteAPI: missing process argument")
@@ -208,6 +211,10 @@ func (ppro *PalettePro) Api(ctx *engine.AgentContext, api string, apiargs map[st
 
 func (ppro *PalettePro) start(ctx *engine.AgentContext) error {
 
+	if ppro.started {
+		return fmt.Errorf("PalettePro: already started")
+	}
+	ppro.started = true
 	ppro.resolume = NewResolume(ctx)
 	ppro.bidule = NewBidule(ctx)
 
@@ -285,9 +292,6 @@ func (ppro *PalettePro) onSpriteGen(layerName string, id string, x, y, z float32
 	msg.Append(z)
 	msg.Append(id)
 	ppro.resolume.toFreeFramePlugin(layerName, msg)
-}
-
-func (ppro *PalettePro) stop(ctx *engine.AgentContext) {
 }
 
 func (ppro *PalettePro) onClick(ctx *engine.AgentContext, apiargs map[string]string) (string, error) {

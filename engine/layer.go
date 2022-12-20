@@ -29,6 +29,7 @@ func NewLayer(layerName string) *Layer {
 		params:    NewParamValues(),
 		listeners: []*AgentContext{},
 	}
+	DebugLogOfType("layer", "NewLayer", "layer", layerName)
 	layer.params.SetDefaultValues()
 	Layers[layerName] = layer
 	return layer
@@ -42,8 +43,8 @@ func GetLayer(layerName string) *Layer {
 	return layer
 }
 
-func (layer *Layer) AddListener(agent *AgentContext) {
-	layer.listeners = append(layer.listeners, agent)
+func (layer *Layer) AddListener(ctx *AgentContext) {
+	layer.listeners = append(layer.listeners, ctx)
 }
 
 func (layer *Layer) Name() string {
@@ -117,6 +118,9 @@ func (layer *Layer) Api(api string, apiargs map[string]string) (string, error) {
 		}
 		return layer.Get(name), nil
 
+	case "list":
+		return layer.List(), nil
+
 	default:
 		err := fmt.Errorf("Layer.API: unrecognized api=%s", api)
 		LogError(err)
@@ -155,6 +159,11 @@ func (layer *Layer) Set(paramName string, paramValue string) error {
 // If no such parameter, return ""
 func (layer *Layer) Get(paramName string) string {
 	return layer.params.Get(paramName)
+}
+
+// If no such parameter, return ""
+func (layer *Layer) List() string {
+	return layer.params.List()
 }
 
 // If no such parameter, return ""
