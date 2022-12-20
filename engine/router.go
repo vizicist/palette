@@ -27,7 +27,6 @@ type Router struct {
 	cursorInput   chan CursorEvent
 
 	cursorManager *CursorManager
-	// agentManager   *AgentManager
 
 	killme bool
 
@@ -154,7 +153,7 @@ func (r *Router) InputListener() {
 		case msg := <-r.OSCInput:
 			r.handleOSCInput(msg)
 		case event := <-r.midiInputChan:
-			TheAgentManager().handleMidiEvent(event)
+			ThePluginManager().handleMidiEvent(event)
 		case event := <-r.cursorInput:
 			r.cursorManager.handleCursorEvent(event)
 		default:
@@ -163,22 +162,6 @@ func (r *Router) InputListener() {
 	}
 	LogInfo("InputListener is being killed")
 }
-
-/*
-func (r *Router) handleCursorEvent(ce CursorEvent) {
-	Info("Router.handleCursorEvent needs work", "ce", ce)
-	r.agentManager.handleCursorEvent(ce)
-}
-*/
-
-/*
-func (r *Router) handleMidiEvent(me MidiEvent) {
-	if EraeEnabled {
-		HandleEraeMIDI(me)
-	}
-	r.agentManager.handleMidiEvent(me)
-}
-*/
 
 func (r *Router) ResolumeLayerForPad(pad string) int {
 	if r.layerMap == nil {
@@ -234,7 +217,7 @@ func ArgsToCursorEvent(args map[string]string) CursorEvent {
 
 // HandleInputEvent is NOT used for CursorEvent input.
 // CursorEvents are handled by the CursorManager.
-func (r *Router) HandleInputEvent(agentName string, args map[string]string) error {
+func (r *Router) HandleInputEvent(pluginName string, args map[string]string) error {
 
 	r.inputEventMutex.Lock()
 	defer func() {
@@ -256,7 +239,7 @@ func (r *Router) HandleInputEvent(agentName string, args map[string]string) erro
 		return fmt.Errorf("HandleInputEvent: layer not found: %s", layerName)
 	}
 
-	DebugLogOfType("router", "Router.HandleEvent", "agent", agentName, "event", event)
+	DebugLogOfType("router", "Router.HandleEvent", "plugin", pluginName, "event", event)
 
 	switch event {
 
@@ -592,8 +575,8 @@ func (r *Router) handleInputEventRaw(rawargs string) {
 	if err != nil {
 		return
 	}
-	agentName := ExtractAndRemoveValue("agent", args)
-	r.HandleInputEvent(agentName, args)
+	pluginName := ExtractAndRemoveValue("plugin", args)
+	r.HandleInputEvent(pluginName, args)
 }
 
 func (r *Router) handlePatchXREvent(msg *osc.Message) {
@@ -668,11 +651,11 @@ func (r *Router) handleOSCSpriteEvent(msg *osc.Message) {
 		return
 	}
 
-	agentName := ExtractAndRemoveValue("agent", args)
-	if agentName == "" {
-		LogError(fmt.Errorf("no value for agent"))
+	pluginName := ExtractAndRemoveValue("plugin", args)
+	if pluginName == "" {
+		LogError(fmt.Errorf("no value for plugin"))
 	}
-	err = r.HandleInputEvent(agentName, args)
+	err = r.HandleInputEvent(pluginName, args)
 	if err != nil {
 		LogWarn("Router.handleOSCSpriteEvent", "err", err)
 		return

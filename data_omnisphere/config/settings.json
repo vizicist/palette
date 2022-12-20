@@ -1,5 +1,6 @@
 {
   "debug": "cursor,midi,freeframe",
+  "plugins": "ppro",
   "guilevel": "1",
   "autostart": "",
   "bidule": "C:\\Program Files\\Plogue\\Bidule\\Bidule.exe",
