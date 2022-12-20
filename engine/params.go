@@ -80,6 +80,17 @@ func NewParamValues() *ParamValues {
 	return &ParamValues{values: make(map[string]ParamValue)}
 }
 
+func (vals *ParamValues) List() string {
+	s := ""
+	sep := ""
+	for nm := range vals.values {
+		valstr, _ := vals.paramValueAsString(nm) // error shouldn't happen
+		s = s + sep + "\"" + nm + "\":\"" + valstr + "\""
+		sep = ","
+	}
+	return "{ " + s + " }"
+}
+
 // SetDefaultValues xxx
 func (vals *ParamValues) SetDefaultValues() {
 	vals.mutex.Lock()
