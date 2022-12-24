@@ -185,8 +185,8 @@ func doTest(ntimes int, dt time.Duration) {
 		if n > 0 {
 			time.Sleep(dt)
 		}
-		layer := string("ABCD"[rand.Int()%4])
-		RemoteAPI("event",
+		layer := string("abcd"[rand.Int()%4])
+		RemoteAPI("ppro.event",
 			"layer", layer,
 			"source", source,
 			"event", "cursor_down",
