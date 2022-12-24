@@ -20,8 +20,6 @@ var GuiPort = 3943
 
 // Router takes events and routes them
 type Router struct {
-	layerLetters string
-
 	OSCInput      chan OSCEvent
 	midiInputChan chan MidiEvent
 	cursorInput   chan CursorEvent
@@ -39,9 +37,9 @@ type Router struct {
 	// resolumeClient *osc.Client
 	guiClient *osc.Client
 
-	myHostname          string
-	generateVisuals     bool
-	generateSound       bool
+	myHostname string
+	// generateVisuals     bool
+	// generateSound       bool
 	layerAssignedToNUID map[string]string
 	inputEventMutex     sync.RWMutex
 }
@@ -75,12 +73,6 @@ func NewRouter() *Router {
 
 	r.cursorManager = NewCursorManager()
 
-	r.layerLetters = ConfigValue("pads")
-	if r.layerLetters == "" {
-		DebugLogOfType("morph", "No value for pads, assuming ABCD")
-		r.layerLetters = "ABCD"
-	}
-
 	err := LoadParamEnums()
 	if err != nil {
 		LogWarn("LoadParamEnums", "err", err)
@@ -93,21 +85,7 @@ func NewRouter() *Router {
 	}
 
 	r.layerAssignedToNUID = make(map[string]string)
-
 	r.guiClient = osc.NewClient(LocalAddress, GuiPort)
-
-	/*
-		for i, c := range r.layerLetters {
-			resolumeLayer := r.ResolumeLayerForPad(string(c))
-			ffglPort := ResolumePort + i
-			ch := string(c)
-			freeframeClient := osc.NewClient("127.0.0.1", ffglPort)
-			Info("OSC freeframeClient", "ffglPort", ffglPort, "resolumeLayer", resolumeLayer)
-			r.layers[ch] = NewLayer(ch, resolumeLayer, freeframeClient, r.resolumeClient, r.guiClient)
-			Info("Pad created", "pad", ch, "resolumeLayer", resolumeLayer, "resolumePort", resolumePort)
-		}
-	*/
-
 	r.OSCInput = make(chan OSCEvent)
 	r.midiInputChan = make(chan MidiEvent)
 	// r.recordingOn = false
@@ -125,8 +103,6 @@ func NewRouter() *Router {
 	// By default, the engine handles Cursor events internally.
 	// However, if publishcursor is set, it ONLY publishes them,
 	// so the expectation is that a plugin will handle it.
-	r.generateVisuals = ConfigBoolWithDefault("generatevisuals", true)
-	r.generateSound = ConfigBoolWithDefault("generatesound", true)
 
 	return &r
 }
@@ -243,6 +219,7 @@ func (r *Router) HandleInputEvent(pluginName string, args map[string]string) err
 
 	switch event {
 
+		/*
 	case "sprite":
 
 		x, y, z, err := GetArgsXYZ(args)

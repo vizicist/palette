@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"sort"
-	"strings"
 	"time"
 
 	"gitlab.com/gomidi/midi/v2/drivers"
@@ -257,78 +256,6 @@ func (ctx *EngineContext) setOneLayerParamValue(layerName, fullname, value strin
 */
 
 /*
-func (ctx *EngineContext) generateSpriteFromPhraseElement(pe *PhraseElement) {
-
-	var channel uint8
-	var pitch uint8
-	var velocity uint8
-
-	switch v := pe.Value.(type) {
-	case *NoteOn:
-		channel = v.Channel
-		pitch = v.Pitch
-		velocity = v.Velocity
-	case *NoteOff:
-		channel = v.Channel
-		pitch = v.Pitch
-		velocity = v.Velocity
-	case *NoteFull:
-		channel = v.Channel
-		pitch = v.Pitch
-		velocity = v.Velocity
-	default:
-		return
-	}
-
-	pitchmin := uint8(ctx.pluginParams.ParamIntValue("sound.pitchmin"))
-	pitchmax := uint8(ctx.pluginParams.ParamIntValue("sound.pitchmax"))
-	if pitch < pitchmin || pitch > pitchmax {
-		Warn("Unexpected value", "pitch", pitch)
-		return
-	}
-
-	var x float32
-	var y float32
-	switch ctx.pluginParams.ParamStringValue("visual.placement", "random") {
-	case "random":
-		x = rand.Float32()
-		y = rand.Float32()
-	case "linear":
-		y = 0.5
-		x = float32(pitch-pitchmin) / float32(pitchmax-pitchmin)
-	case "cursor":
-		x = rand.Float32()
-		y = rand.Float32()
-	case "top":
-		y = 1.0
-		x = float32(pitch-pitchmin) / float32(pitchmax-pitchmin)
-	case "bottom":
-		y = 0.0
-		x = float32(pitch-pitchmin) / float32(pitchmax-pitchmin)
-	case "left":
-		y = float32(pitch-pitchmin) / float32(pitchmax-pitchmin)
-		x = 0.0
-	case "right":
-		y = float32(pitch-pitchmin) / float32(pitchmax-pitchmin)
-		x = 1.0
-	default:
-		x = rand.Float32()
-		y = rand.Float32()
-	}
-
-	// send an OSC message to Resolume
-	msg := osc.NewMessage("/sprite")
-	msg.Append(x)
-	msg.Append(y)
-	msg.Append(float32(velocity) / 127.0)
-
-	// Someday localhost should be changed to the actual IP address.
-	// XXX - Set sprite ID to pitch, is this right?
-	msg.Append(fmt.Sprintf("%d@localhost", pitch))
-
-	layer := string("ABCDEFGH"[channel])
-	ctx.toFreeFramePluginForLayer(layer, msg)
-}
 */
 
 // to avoid unused warning
@@ -373,6 +300,10 @@ func (ctx *PluginContext) handleMIDITimeReset() {
 	LogWarn("HandleMIDITimeReset!! needs implementation")
 }
 
+func (ctx *PluginContext) GetSynth(synthName string) *Synth {
+	return GetSynth(synthName)
+}
+
 /*
 func (ctx *EngineContext) sendANO() {
 	if !TheRouter().generateSound {
@@ -405,6 +336,7 @@ func (ctx *PluginContext) GetPreset(presetName string) *Preset {
 	return preset
 }
 
+/*
 // ExecuteAPI xxx
 func (ctx *PluginContext) ExecuteAPI(api string, args map[string]string, rawargs string) (result string, err error) {
 
@@ -418,13 +350,11 @@ func (ctx *PluginContext) ExecuteAPI(api string, args map[string]string, rawargs
 	// ALL visual.* APIs get forwarded to the FreeFrame plugin inside Resolume
 	if strings.HasPrefix(api, "visual.") {
 		LogInfo("ExecuteAPI: visual.* apis need work")
-		/*
-			msg := osc.NewMessage("/api")
-			msg.Append(strings.TrimPrefix(api, "visual."))
-			msg.Append(rawargs)
-			layer := "A"
-			ctx.toFreeFramePluginForLayer(layer, msg)
-		*/
+		// msg := osc.NewMessage("/api")
+		// msg.Append(strings.TrimPrefix(api, "visual."))
+		// msg.Append(rawargs)
+		// layer := "A"
+		// ctx.toFreeFramePluginForLayer(layer, msg)
 	}
 
 	switch api {
@@ -479,7 +409,6 @@ func (ctx *PluginContext) ExecuteAPI(api string, args map[string]string, rawargs
 	//	case "ANO":
 	//		layer.sendANO()
 
-	/*
 		case "midi_thru":
 			v, e := needBoolArg("onoff", api, args)
 			if e == nil {
@@ -530,7 +459,6 @@ func (ctx *PluginContext) ExecuteAPI(api string, args map[string]string, rawargs
 			} else {
 				err = e
 			}
-	*/
 
 	default:
 		err = fmt.Errorf("Layer.ExecuteAPI: unknown api=%s", api)
@@ -538,6 +466,7 @@ func (ctx *PluginContext) ExecuteAPI(api string, args map[string]string, rawargs
 
 	return result, err
 }
+*/
 
 /*
 func (ctx *EngineContext) sendAllParameters() {

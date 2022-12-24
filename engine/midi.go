@@ -52,7 +52,7 @@ func MidiEventFromMap(args map[string]string) (MidiEvent, error) {
 
 	msg, ok := args["msg"]
 	if !ok {
-		return MidiEvent{}, fmt.Errorf("Missing msg argument")
+		return MidiEvent{}, fmt.Errorf("missing msg argument")
 	}
 	_ = msg
 	return MidiEvent{}, fmt.Errorf("MakeMidiEvent needs work")
@@ -62,7 +62,8 @@ func MidiEventFromMap(args map[string]string) (MidiEvent, error) {
 
 func (me MidiEvent) ToMap() map[string]string {
 	return map[string]string{
-		"msg": me.Msg.String(),
+		"event": "midi",
+		"msg":   me.Msg.String(),
 	}
 }
 

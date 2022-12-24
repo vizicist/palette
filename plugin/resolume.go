@@ -301,10 +301,7 @@ func (r *Resolume) Activate() {
 	for i := 0; i < 4; i++ {
 		time.Sleep(5 * time.Second)
 
-		// XXX - this assumes there are 4 layers named a,b,c,d
-		// XXX - shouldn't be hardcoded here
-		layerNames := []string{"a", "b", "c", "d"}
-
+		layerNames := engine.LayerNames()
 		for _, pad := range layerNames {
 			_, layerNum := r.infoForLayer(string(pad))
 			engine.DebugLogOfType("resolume", "Activating Resolume", "layer", layerNum, "clipnum", clipnum)

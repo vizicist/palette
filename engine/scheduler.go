@@ -18,12 +18,6 @@ type Scheduler struct {
 	// time0     time.Time
 	lastClick Clicks
 	cmdInput  chan any
-
-	transposeAuto   bool
-	transposeNext   Clicks
-	transposeClicks Clicks // time between auto transpose changes
-	transposeIndex  int    // current place in tranposeValues
-	transposeValues []int
 }
 
 type Command struct {
@@ -38,19 +32,13 @@ type SchedElement struct {
 }
 
 func NewScheduler() *Scheduler {
-	transposebeats := Clicks(ConfigIntWithDefault("transposebeats", 48))
 	s := &Scheduler{
 		schedList:       list.New(),
 		pendingNoteOffs: NewPhrase(),
 		// now:             time.Time{},
 		// time0:           time.Time{},
-		lastClick:       -1,
-		cmdInput:        make(chan any),
-		transposeAuto:   ConfigBoolWithDefault("transposeauto", true),
-		transposeNext:   transposebeats * OneBeat,
-		transposeClicks: transposebeats,
-		transposeIndex:  0,
-		transposeValues: []int{0, -2, 3, -5},
+		lastClick: -1,
+		cmdInput:  make(chan any),
 	}
 	return s
 }
@@ -91,7 +79,6 @@ func (sched *Scheduler) Start() {
 			continue
 		}
 
-		sched.advanceTransposeTo(newclick)
 		sched.advanceClickTo(newclick)
 
 		SetCurrentClick(newclick)
@@ -305,23 +292,6 @@ func (sched *Scheduler) advancePendingNoteOffsByOneClick() {
 	}
 }
 
-/*
-func (sched *Scheduler) terminateActiveNotes() {
-
-	sched.activeNotes.rwmutex.RLock()
-	defer sched.activeNotes.rwmutex.RUnlock()
-
-	for i := sched.activeNotes.list.Front(); i != nil; i = i.Next() {
-		ap := i.Value.(*ActivePhrase)
-		if ap != nil {
-			ap.sendPendingNoteOffs(ap.SofarClick)
-		} else {
-			Warn("Hey, nil activeNotes entry")
-		}
-	}
-}
-*/
-
 func (sched *Scheduler) ToString() string {
 	s := "Scheduler{"
 	for i := sched.schedList.Front(); i != nil; i = i.Next() {
@@ -363,19 +333,4 @@ func (sched *Scheduler) scheduleElement(se *SchedElement) {
 			}
 		}
 	}
-}
-
-func (sched *Scheduler) advanceTransposeTo(newclick Clicks) {
-	sched.transposeNext += (sched.transposeClicks * OneBeat)
-	sched.transposeIndex = (sched.transposeIndex + 1) % len(sched.transposeValues)
-	transposePitch := sched.transposeValues[sched.transposeIndex]
-	DebugLogOfType("transpose", "advanceTransposeTo", "newclick", newclick, "transposePitch", transposePitch)
-	/*
-		fr _, layer := range TheRouter().layers {
-			// layer.clearDown()
-			LogOfType("transpose""setting transposepitch in layer","pad", layer.padName, "transposePitch",transposePitch, "nactive",len(layer.activeNotes))
-			layer.TransposePitch = transposePitch
-		}
-	*/
-	sched.SendAllPendingNoteoffs()
 }

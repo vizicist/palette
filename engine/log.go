@@ -159,6 +159,7 @@ var LogEnabled = map[string]bool{
 	"gensound":  false,
 	"genvisual": false,
 	"go":        false,
+	"layer":     false,
 	"loop":      false,
 	"midi":      false,
 	"midiports": false,
