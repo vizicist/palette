@@ -61,11 +61,23 @@ func InitSynths() {
 	LogInfo("Synths loaded", "len", len(Synths))
 }
 
+func (synth *Synth) Channel() uint8 {
+	return uint8(synth.portchannel.channel)
+}
+
 func (synth *Synth) ClearNoteDowns() {
 	for i := range synth.noteDown {
 		synth.noteDown[i] = false
 		synth.noteDownCount[i] = 0
 	}
+}
+
+func GetSynth(synthName string) *Synth {
+	synth, ok := Synths[synthName]
+	if !ok {
+		return nil
+	}
+	return synth
 }
 
 func NewSynth(port string, channel int, bank int, program int) *Synth {
@@ -127,12 +139,7 @@ func SendANOToSynth(synthName string) {
 	mc.output.Send([]byte{status, 0x7b, 0x00})
 }
 
-func SendControllerToSynth(synthName string, cnum int, cval int) {
-	synth, ok := Synths[synthName]
-	if !ok {
-		LogWarn("SendControllerToSynth: no such", "synth", synthName)
-		return
-	}
+func (synth *Synth) SendController(cnum int, cval int) {
 	mc := MIDI.GetMidiChannelOutput(synth.portchannel)
 	if mc == nil {
 		// Assumes errs are logged in GetMidiChannelOutput
@@ -159,7 +166,6 @@ func SendControllerToSynth(synthName string, cnum int, cval int) {
 	*/
 }
 
-// SendNote handles NoteOn, NoteOff, Controller, etc.
 func SendToSynth(value any) {
 
 	var channel uint8
@@ -272,4 +278,102 @@ func SendToSynth(value any) {
 
 func hexString(b byte) string {
 	return fmt.Sprintf("%02x", b)
+}
+
+func (synth *Synth) SendTo(value any) {
+
+	// var channel uint8
+	var pitch uint8
+	var velocity uint8
+
+	switch v := value.(type) {
+	case *NoteOn:
+		// channel = v.Channel
+		pitch = v.Pitch
+		velocity = v.Velocity
+		if velocity == 0 {
+			LogInfo("MIDIIO.SendNote: noteon with velocity==0 NOT changed to a noteoff")
+		}
+	case *NoteOff:
+		// channel = v.Channel
+		pitch = v.Pitch
+		velocity = v.Velocity
+	case *NoteFull:
+		// channel = v.Channel
+		pitch = v.Pitch
+		velocity = v.Velocity
+	default:
+		LogWarn("SendToSynth: doesn't handle", "type", fmt.Sprintf("%T", v))
+		return
+	}
+
+	mc := MIDI.GetMidiChannelOutput(synth.portchannel)
+	if mc == nil {
+		// Assumes errs are logged in GetMidiChannelOutput
+		return
+	}
+
+	// This only sends the bank and/or program if they change
+	mc.SendBankProgram(synth.bank, synth.program)
+
+	status := byte(synth.portchannel.channel - 1)
+	data1 := pitch
+	data2 := velocity
+	switch value.(type) {
+	case *NoteOn:
+		status |= 0x90
+
+		// We now allow multiple notes with the same pitch,
+		// which assumes the synth handles it okay.
+		// There might need to be an option to
+		// automatically send a noteOff before sending the noteOn.
+		// if synth.noteDown[note.Pitch] {
+		//     Warn("SendPhraseElementToSynth: Ignoring second noteon")
+		// }
+
+		synth.noteDown[pitch] = true
+		synth.noteDownCount[pitch]++
+
+		DebugLogOfType("midi", "SendNoteOnToSynth",
+			"synth", synth,
+			"channel", synth.portchannel.channel,
+			"pitch", pitch,
+			"notedowncount", synth.noteDownCount[pitch])
+
+	case *NoteOff:
+		status |= 0x80
+		data2 = 0
+		synth.noteDown[pitch] = false
+		synth.noteDownCount[pitch]--
+
+		DebugLogOfType("midi", "SendNoteOffToSynth",
+			"synth", synth,
+			"channel", synth.portchannel.channel,
+			"pitch", pitch,
+			"notedowncount", synth.noteDownCount[pitch])
+
+	// case "controller":
+	// 	status |= 0xB0
+	// case "progchange":
+	// 	status |= 0xC0
+	// case "chanpressure":
+	// 	status |= 0xD0
+	// case "pitchbend":
+	// 	status |= 0xE0
+
+	default:
+		LogWarn("SendToSynth: can't handle", "type", fmt.Sprintf("%T", value))
+		return
+	}
+
+	DebugLogOfType("midi", "Raw MIDI Output",
+		"synth", synth,
+		"status", hexString(status),
+		"data1", hexString(data1),
+		"data2", hexString(data2))
+
+	err := mc.output.Send([]byte{status, data1, data2})
+	if err != nil {
+		LogWarn("output.Send", "err", err)
+	}
 }

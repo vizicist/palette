@@ -20,21 +20,6 @@ import (
 	"gopkg.in/gomail.v2"
 )
 
-func BoundAndScaleController(v, vmin, vmax float32, cmin, cmax int) int {
-	newv := BoundAndScaleFloat(v, vmin, vmax, float32(cmin), float32(cmax))
-	return int(newv)
-}
-
-func BoundAndScaleFloat(v, vmin, vmax, outmin, outmax float32) float32 {
-	if v < vmin {
-		v = vmin
-	} else if v > vmax {
-		v = vmax
-	}
-	out := outmin + (outmax-outmin)*((v-vmin)/(vmax-vmin))
-	return out
-}
-
 // fileExists checks if a file exists
 func fileExists(filename string) bool {
 	_, err := os.Stat(filename)

@@ -14,34 +14,7 @@ type Layer struct {
 	agents        []Agent
 	agentsContext []*EngineContext
 
-	// lastActiveID    int
 
-	// tempoFactor            float64
-	// loop            *StepLoop
-	loopLength      Clicks
-	loopIsRecording bool
-	loopIsPlaying   bool
-	fadeLoop        float32
-	// lastCursorStepEvent    CursorStepEvent
-	// lastUnQuantizedStepNum Clicks
-
-	// params                         map[string]any
-
-	// paramsMutex               sync.RWMutex
-	// activeNotes      map[string]*ActiveNote
-	// activeNotesMutex sync.RWMutex
-
-	// Things moved over from Router
-
-	// MIDINumDown      int
-	// MIDIThru         bool
-	// MIDIThruScadjust bool
-	// MIDISetScale     bool
-	// MIDIQuantized    bool
-	// MIDIUseScale     bool // if true, scadjust uses "external" Scale
-	// TransposePitch   int
-	// externalScale    *Scale
-}
 */
 
 /*
@@ -86,25 +59,6 @@ func NewLayer(layerName string) *Layer {
 */
 
 /*
-func (layer *Layer) SendPhraseElementToSynth(pe *PhraseElement) {
-
-	// XXX - eventually this should be done by a agent?
-	ss := layer.params.ParamStringValue("visual.spritesource", "")
-	if ss == "midi" {
-		layer.generateSpriteFromPhraseElement(pe)
-	}
-	SendToSynth(pe)
-}
-
-func (layer *Layer) MidiEventToPhrase(me MidiEvent) (*Phrase, error) {
-	pe, err := layer.midiEventToPhraseElement(me)
-	if err != nil {
-		return nil, err
-	}
-	phr := NewPhrase().InsertElement(pe)
-	return phr, nil
-}
-
 func (layer *Layer) HandleCursorEvent(ce CursorEvent) {
 	DebugLogOfType("cursor", "Layer.HandleCursorEvent", "ce", ce)
 	for n, agent := range layer.agents {
@@ -198,51 +152,6 @@ func (layer *Layer) clearExternalScale() {
 /*
 var uniqueIndex = 0
 
-// ActiveNote is a currently active MIDI note
-type ActiveNote struct {
-	id     int
-	noteOn *Note
-	ce     CursorEvent // the one that triggered the note
-}
-
-func (layer *Layer) getActiveNote(id string) *ActiveNote {
-	layer.activeNotesMutex.RLock()
-	a, ok := layer.activeNotes[id]
-	layer.activeNotesMutex.RUnlock()
-	if !ok {
-		layer.lastActiveID++
-		a = &ActiveNote{
-			id:     layer.lastActiveID,
-			noteOn: nil,
-		}
-		layer.activeNotesMutex.Lock()
-		layer.activeNotes[id] = a
-		layer.activeNotesMutex.Unlock()
-	}
-	return a
-}
-
-func (layer) *Layer) terminateActiveNotes() {
-	layer.activeNotesMutex.RLock()
-	for id, a := range layer.activeNotes {
-		if a != nil {
-			layer.sendNoteOff(a)
-		} else {
-			Warn("Hey, activeNotes entry for","id",id)
-		}
-	}
-	layer.activeNotesMutex.RUnlock()
-}
-*/
-
-/*
-func (layer) *Layer) clearGraphics() {
-	// send an OSC message to Resolume
-	layer.toFreeFramePluginForLayer(osc.NewMessage("/clear"))
-}
-*/
-
-/*
 
 /*
 func (layer *Layer) generateVisualsFromCursor(ce CursorEvent) {
@@ -261,167 +170,11 @@ func (layer *Layer) generateVisualsFromCursor(ce CursorEvent) {
 */
 
 /*
-func (layer *Layer) generateSoundFromCursor(ce CursorEvent) {
-	if !TheRouter().generateSound {
-		return
-	}
-	a := layer.getActiveNote(ce.ID)
-		if Debug.Transpose {
-			if a == nil {
-				Warn("a is nil")
-			} else {
-				if a.noteOn == nil {
-					Warn("a.noteOn=nil","a.id", a.id)
-				} else {
-					s := fmt.Sprintf("   a.id=%d a.noteOn=%+v\n", a.id, *(a.noteOn))
-					if strings.Contains(s, "PANIC") {
-						Warn("HEY, PANIC?")
-					} else {
-						Warn(s)
 
-					}
-				}
-			}
-		}
-	switch ce.Ddu {
-	case "down":
-		// Send noteoff for current note
-		if a.noteOn != nil {
-			// I think this happens if we get things coming in
-			// faster than the checkDelay can generate the UP event.
-			layer.sendNoteOff(a)
-		}
-		a.noteOn = layer.cursorToNoteOn(ce)
-		a.ce = ce
-		layer.sendNoteOn(a)
-	case "drag":
-		if a.noteOn == nil {
-			// if we turn on playing in the middle of an existing loop,
-			// we may see some drag events without a down.
-			// Also, I'm seeing this pretty commonly in other situations,
-			// not really sure what the underlying reason is,
-			// but it seems to be harmless at the moment.
-			if Debug.Router {
-				Warn("=============== HEY! drag event, a.currentNoteOn == nil?\n")
-			}
-			return
-		}
-		newNoteOn := layer.cursorToNoteOn(ce)
-		oldpitch := a.noteOn.Pitch
-		newpitch := newNoteOn.Pitch
-		// We only turn off the existing note (for a given Cursor ID)
-		// and start the new one if the pitch changes
-
-		// Also do this if the Z/Velocity value changes more than the trigger value
-
-		// NOTE: this could and perhaps should use a.ce.Z now that we're
-		// saving a.ce, like the deltay value
-
-		dz := float64(int(a.noteOn.Velocity) - int(newNoteOn.Velocity))
-		deltaz := float32(math.Abs(dz) / 128.0)
-		deltaztrig := layer.params.ParamFloatValue("sound._deltaztrig")
-
-		deltay := float32(math.Abs(float64(a.ce.Y - ce.Y)))
-		deltaytrig := layer.params.ParamFloatValue("sound._deltaytrig")
-
-		if layer.params.ParamStringValue("sound.controllerstyle", "nothing") == "modulationonly" {
-			zmin := layer.params.ParamFloatValue("sound._controllerzmin")
-			zmax := layer.params.ParamFloatValue("sound._controllerzmax")
-			cmin := layer.params.ParamIntValue("sound._controllermin")
-			cmax := layer.params.ParamIntValue("sound._controllermax")
-			oldz := a.ce.Z
-			newz := ce.Z
-			// XXX - should put the old controller value in ActiveNote so
-			// it doesn't need to be computed every time
-			oldzc := BoundAndScaleController(oldz, zmin, zmax, cmin, cmax)
-			newzc := BoundAndScaleController(newz, zmin, zmax, cmin, cmax)
-
-			if newzc != 0 && newzc != oldzc {
-				SendControllerToSynth(a.noteOn.Synth, 1, newzc)
-			}
-		}
-
-		if newpitch != oldpitch || deltaz > deltaztrig || deltay > deltaytrig {
-			layer.sendNoteOff(a)
-			a.noteOn = newNoteOn
-			a.ce = ce
-			if Debug.Transpose {
-				s := fmt.Sprintf("r=%s drag Setting currentNoteOn to %+v\n", layer.padName, *(a.noteOn))
-				if strings.Contains(s, "PANIC") {
-					Warn("PANIC? setting currentNoteOn")
-				} else {
-					Warn(s)
-				}
-				Info("generateMIDI sending NoteOn")
-			}
-			layer.sendNoteOn(a)
-		}
-	case "up":
-		if a.noteOn == nil {
-			// not sure why this happens, yet
-			Warn("Unexpected UP when currentNoteOn is nil?", "layer",layer.padName)
-		} else {
-			layer.sendNoteOff(a)
-
-			a.noteOn = nil
-			a.ce = ce // Hmmmm, might be useful, or wrong
-		}
-		layer.activeNotesMutex.Lock()
-		delete(layer.activeNotes, ce.ID)
-		layer.activeNotesMutex.Unlock()
-	}
-}
-*/
+ */
 
 /*
-func (layer *Layer) nextQuant(t Clicks, q Clicks) Clicks {
-	// the algorithm below is the same as KeyKit's nextquant
-	if q <= 1 {
-		return t
-	}
-	tq := t
-	rem := tq % q
-	if (rem * 2) > q {
-		tq += (q - rem)
-	} else {
-		tq -= rem
-	}
-	if tq < t {
-		tq += q
-	}
-	return tq
-}
-
-func (layer *Layer) sendNoteOn(a *ActiveNote) {
-
-	layer.SendPhraseElementToSynth(a.noteOn)
-
-	ss := layer.params.ParamStringValue("visual.spritesource", "")
-	if ss == "midi" {
-		n := a.noteOn
-		layer.generateSpriteFromNote(n)
-	}
-}
-
-// func (layer *Layer) sendController(a *ActiveNote) {
-// }
-
-func (layer *Layer) sendNoteOff(a *ActiveNote) {
-	n := a.noteOn
-	if n == nil {
-		// Not sure why this sometimes happens
-		return
-	}
-	// the Note coming in should be a noteon or noteoff
-	if n.TypeOf != "noteon" && n.TypeOf != "noteoff" {
-		Warn("HEY! sendNoteOff didn't get a noteon or noteoff!?")
-		return
-	}
-
-	noteOff := NewNoteOff(n.Pitch, n.Velocity, n.Synth)
-	layer.SendPhraseElementToSynth(noteOff)
-}
-*/
+ */
 
 /*
 func (r *Layer) paramStringValue(paramname string, def string) string {
@@ -447,13 +200,7 @@ func (r *Layer) paramIntValue(paramname string) int {
 */
 
 /*
-func (layer) *Layer) cursorToNoteOn(ce CursorStepEvent) *Note {
-	pitch := layer.cursorToPitch(ce)
-	velocity := layer.cursorToVelocity(ce)
-	synth := layer.params.ParamStringValue("sound.synth", defaultSynth)
-	return NewNoteOn(pitch, velocity, synth)
-}
-*/
+ */
 
 /*
 func (layer) *Layer) cursorToPitch(ce CursorStepEvent) uint8 {
@@ -481,37 +228,7 @@ func (layer) *Layer) cursorToPitch(ce CursorStepEvent) uint8 {
 */
 
 /*
-func (layer) *Layer) cursorToVelocity(ce CursorStepEvent) uint8 {
-	vol := layer.params.ParamStringValue("misc.vol", "fixed")
-	velocitymin := layer.params.ParamIntValue("sound.velocitymin")
-	velocitymax := layer.params.ParamIntValue("sound.velocitymax")
-	// bogus, when values in json are missing
-	if velocitymin == 0 && velocitymax == 0 {
-		velocitymin = 0
-		velocitymax = 127
-	}
-	if velocitymin > velocitymax {
-		t := velocitymin
-		velocitymin = velocitymax
-		velocitymax = t
-	}
-	v := float32(0.8) // default and fixed value
-	switch vol {
-	case "frets":
-		v = 1.0 - ce.Y
-	case "pressure":
-		v = ce.Z * 4.0
-	case "fixed":
-		// do nothing
-	default:
-		Warn("Unrecognized vol value","vol",vol)
-	}
-	dv := velocitymax - velocitymin + 1
-	p1 := int(v * float32(dv))
-	vel := uint8(velocitymin + p1%dv)
-	return uint8(vel)
-}
-*/
+ */
 
 /*
 func (layer) *Layer) cursorToDuration(ce CursorStepEvent) int {

@@ -66,6 +66,7 @@ type ClickEvent struct {
 
 func (ce ClickEvent) ToMap() map[string]string {
 	return map[string]string{
+		"event":  "click",
 		"click":  strconv.FormatInt(int64(ce.Click), 10),
 		"uptime": strconv.FormatFloat(ce.Uptime, 'f', 6, 64),
 	}

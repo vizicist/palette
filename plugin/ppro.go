@@ -2,10 +2,11 @@ package plugin
 
 import (
 	"fmt"
+	"math"
 	"math/rand"
 	"path/filepath"
-	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/hypebeast/go-osc/osc"
@@ -17,9 +18,13 @@ var AliveOutputPort = 3331
 type PalettePro struct {
 	started        bool
 	layer          map[string]*engine.Layer
+	logic          map[string]*LayerLogic
 	resolume       *Resolume
 	bidule         *Bidule
 	processManager *ProcessManager
+
+	generateVisuals bool
+	generateSound   bool
 
 	MIDIOctaveShift  int
 	MIDINumDown      int
@@ -49,12 +54,56 @@ type PalettePro struct {
 	lastProcessCheck       float64
 	processCheckSecs       float64
 	scale                  *engine.Scale
+
+	transposeAuto   bool
+	transposeNext   engine.Clicks
+	transposeClicks engine.Clicks // time between auto transpose changes
+	transposeIndex  int           // current place in tranposeValues
+	transposeValues []int
+}
+
+type LayerLogic struct {
+	ppro         *PalettePro
+	layer        *engine.Layer
+	synth        *engine.Synth
+	lastActiveID int
+
+	// tempoFactor            float64
+	// loop            *StepLoop
+	loopLength      engine.Clicks
+	loopIsRecording bool
+	loopIsPlaying   bool
+	fadeLoop        float32
+	// lastCursorStepEvent    CursorStepEvent
+	// lastUnQuantizedStepNum Clicks
+
+	// params                         map[string]any
+
+	// paramsMutex               sync.RWMutex
+	activeNotes      map[string]*ActiveNote
+	activeNotesMutex sync.RWMutex
+
+	// Things moved over from Router
+
+	// MIDINumDown      int
+	// MIDIThru         bool
+	// MIDIThruScadjust bool
+	// MIDISetScale     bool
+	// MIDIQuantized    bool
+	// MIDIUseScale     bool // if true, scadjust uses "external" Scale
+	// TransposePitch   int
+	// externalScale    *Scale
 }
 
 func init() {
+	transposebeats := engine.Clicks(engine.ConfigIntWithDefault("transposebeats", 48))
 	ppro := &PalettePro{
-		layer:                  map[string]*engine.Layer{},
-		attractModeIsOn:        false,
+		layer:           map[string]*engine.Layer{},
+		logic:           map[string]*LayerLogic{},
+		attractModeIsOn: false,
+		generateVisuals: engine.ConfigBoolWithDefault("generatevisuals", true),
+		generateSound:   engine.ConfigBoolWithDefault("generatesound", true),
+
 		lastAttractCommand:     time.Time{},
 		lastAttractGestureTime: time.Time{},
 		lastAttractPresetTime:  time.Time{},
@@ -72,9 +121,15 @@ func init() {
 		lastProcessCheck:       0,
 		processCheckSecs:       0,
 		scale:                  engine.GetScale("newage"),
+
+		transposeAuto:   engine.ConfigBoolWithDefault("transposeauto", true),
+		transposeNext:   transposebeats * engine.OneBeat,
+		transposeClicks: transposebeats,
+		transposeIndex:  0,
+		transposeValues: []int{0, -2, 3, -5},
 	}
 	ppro.clearExternalScale()
-	RegisterPlugin("ppro", ppro.Api)
+	engine.RegisterPlugin("ppro", ppro.Api)
 }
 func (ppro *PalettePro) Api(ctx *engine.PluginContext, api string, apiargs map[string]string) (result string, err error) {
 
@@ -99,43 +154,7 @@ func (ppro *PalettePro) Api(ctx *engine.PluginContext, api string, apiargs map[s
 		if !ok {
 			return "", fmt.Errorf("PalettePro.Api: Missing value argument")
 		}
-		ppro.onParamSet(layerName, name, value)
-		return "", nil
-
-	case "onspritegen":
-		layerName, ok := apiargs["layer"]
-		if !ok {
-			return "", fmt.Errorf("PalettePro.Api: Missing layer argument")
-		}
-		id, ok := apiargs["id"]
-		if !ok {
-			return "", fmt.Errorf("PalettePro.Api: Missing id argument")
-		}
-		x, ok := apiargs["x"]
-		if !ok {
-			return "", fmt.Errorf("PalettePro.Api: Missing x argument")
-		}
-		y, ok := apiargs["y"]
-		if !ok {
-			return "", fmt.Errorf("PalettePro.Api: Missing y argument")
-		}
-		z, ok := apiargs["z"]
-		if !ok {
-			return "", fmt.Errorf("PalettePro.Api: Missing z argument")
-		}
-		xf, err := strconv.ParseFloat(x, 32)
-		if err != nil {
-			return "", fmt.Errorf("PalettePro.Api: Bad format for x argument")
-		}
-		yf, err := strconv.ParseFloat(y, 32)
-		if err != nil {
-			return "", fmt.Errorf("PalettePro.Api: Bad format for y argument")
-		}
-		zf, err := strconv.ParseFloat(z, 64)
-		if err != nil {
-			return "", fmt.Errorf("PalettePro.Api: Bad format for z argument")
-		}
-		ppro.onSpriteGen(layerName, id, float32(xf), float32(yf), float32(zf))
+		ppro.onParamSet(ctx, layerName, name, value)
 		return "", nil
 
 	case "echo":
@@ -266,9 +285,14 @@ func (ppro *PalettePro) start(ctx *engine.PluginContext) error {
 	return nil
 }
 
-func (ppro *PalettePro) onParamSet(layerName string, paramName string, paramValue string) {
+func (ppro *PalettePro) onParamSet(ctx *engine.PluginContext, layerName string, paramName string, paramValue string) {
 
-	layer := engine.GetLayer(layerName)
+	layer, ok := ppro.layer[layerName]
+	if !ok {
+		ctx.LogWarn("No layer named", "layer", layerName)
+		return
+	}
+
 	if strings.HasPrefix(paramName, "visual.") {
 		name := strings.TrimPrefix(paramName, "visual.")
 		msg := osc.NewMessage("/api")
@@ -283,6 +307,15 @@ func (ppro *PalettePro) onParamSet(layerName string, paramName string, paramValu
 		// Effect parameters get sent to Resolume
 		ppro.resolume.sendEffectParam(layer.Name(), name, paramValue)
 	}
+
+	if paramName == "sound.synth" {
+		synth := ctx.GetSynth(paramValue)
+		if synth == nil {
+			ctx.LogWarn("PalettePro: no synth named", "synth", paramValue)
+		}
+		ppro.logic[layerName].synth = synth
+	}
+
 }
 
 func (ppro *PalettePro) onSpriteGen(layerName string, id string, x, y, z float32) {
@@ -435,6 +468,9 @@ func (ppro *PalettePro) onCursorEvent(ctx *engine.PluginContext, apiargs map[str
 	}
 
 	layer := ppro.cursorToLayer(ce)
+	if layer == nil {
+		return "", fmt.Errorf("PalettePro: No layer for cursor ce=%+v", ce)
+	}
 	msg := osc.NewMessage("/sprite")
 	msg.Append(ce.X)
 	msg.Append(ce.Y)
@@ -444,7 +480,6 @@ func (ppro *PalettePro) onCursorEvent(ctx *engine.PluginContext, apiargs map[str
 
 	return "", nil
 }
-
 func (ppro *PalettePro) loadQuadPresetRand(ctx *engine.PluginContext) {
 
 	arr, err := engine.PresetArray("quad")
@@ -462,8 +497,8 @@ func (ppro *PalettePro) loadQuadPresetRand(ctx *engine.PluginContext) {
 }
 
 func (ppro *PalettePro) loadQuadPreset(ctx *engine.PluginContext, preset *engine.Preset) {
-	for layerName, layer := range ppro.layer {
-		layer.ApplyQuadPreset(preset, layerName)
+	for _, layer := range ppro.layer {
+		layer.ApplyQuadPreset(preset)
 	}
 }
 
@@ -471,6 +506,10 @@ func (ppro *PalettePro) addLayer(ctx *engine.PluginContext, name string) *engine
 	layer := engine.NewLayer(name)
 	layer.AddListener(ctx)
 	ppro.layer[name] = layer
+	ppro.logic[name] = &LayerLogic{
+		layer: layer,
+		ppro:  ppro,
+	}
 	return layer
 }
 
@@ -489,11 +528,43 @@ func (ppro *PalettePro) channelToDestination(channel int) string {
 */
 
 func (ppro *PalettePro) cursorToLayer(ce engine.CursorEvent) *engine.Layer {
-	return ppro.layer["a"]
+	// For the moment, the Source to layer mapping is 1-to-1.
+	// and the corresponding layers are abcd.
+	switch ce.Source {
+	case "A":
+		return ppro.layer["a"]
+	case "B":
+		return ppro.layer["b"]
+	case "C":
+		return ppro.layer["c"]
+	case "D":
+		return ppro.layer["d"]
+	default:
+		return nil
+	}
 }
 
-func (ppro *PalettePro) cursorToPitch(ctx *engine.PluginContext, ce engine.CursorEvent) uint8 {
-	layer := ppro.cursorToLayer(ce)
+func (logic *LayerLogic) cursorToNoteOn(ctx *engine.PluginContext, ce engine.CursorEvent) *engine.NoteOn {
+	pitch := logic.cursorToPitch(ctx, ce)
+	velocity := logic.cursorToVelocity(ctx, ce)
+	channel := logic.cursorToChannel(ctx, ce)
+	return engine.NewNoteOn(channel, pitch, velocity)
+}
+
+func (logic *LayerLogic) cursorToChannel(ctx *engine.PluginContext, ce engine.CursorEvent) (channel uint8) {
+	synth := logic.synth
+	if synth == nil {
+		ctx.LogWarn("cursorToChannel: No synth?")
+		channel = 1
+	} else {
+		channel = synth.Channel()
+	}
+	return channel
+}
+
+func (logic *LayerLogic) cursorToPitch(ctx *engine.PluginContext, ce engine.CursorEvent) uint8 {
+	layer := logic.layer
+	ppro := logic.ppro
 	pitchmin := layer.GetInt("sound.pitchmin")
 	pitchmax := layer.GetInt("sound.pitchmax")
 	dp := pitchmax - pitchmin + 1
@@ -515,6 +586,38 @@ func (ppro *PalettePro) cursorToPitch(ctx *engine.PluginContext, ce engine.Curso
 		p = uint8(i + ppro.TransposePitch)
 	}
 	return p
+}
+
+func (logic *LayerLogic) cursorToVelocity(ctx *engine.PluginContext, ce engine.CursorEvent) uint8 {
+	layer := logic.layer
+	vol := layer.Get("misc.vol")
+	velocitymin := layer.GetInt("sound.velocitymin")
+	velocitymax := layer.GetInt("sound.velocitymax")
+	// bogus, when values in json are missing
+	if velocitymin == 0 && velocitymax == 0 {
+		velocitymin = 0
+		velocitymax = 127
+	}
+	if velocitymin > velocitymax {
+		t := velocitymin
+		velocitymin = velocitymax
+		velocitymax = t
+	}
+	v := float32(0.8) // default and fixed value
+	switch vol {
+	case "frets":
+		v = 1.0 - ce.Y
+	case "pressure":
+		v = ce.Z * 4.0
+	case "fixed":
+		// do nothing
+	default:
+		ctx.LogWarn("Unrecognized vol value", "vol", vol)
+	}
+	dv := velocitymax - velocitymin + 1
+	p1 := int(v * float32(dv))
+	vel := uint8(velocitymin + p1%dv)
+	return uint8(vel)
 }
 
 func (ppro *PalettePro) clearExternalScale() {
@@ -574,7 +677,7 @@ func (ppro *PalettePro) doAttractAction(ctx *engine.PluginContext) {
 	now := time.Now()
 	dt := now.Sub(ppro.lastAttractGestureTime)
 	if ppro.attractModeIsOn && dt > ppro.attractGestureDuration {
-		layerNames := []string{"A", "B", "C", "D"}
+		layerNames := []string{"LA", "LB", "LC", "LD"}
 		i := uint64(rand.Uint64()*99) % 4
 		layer := layerNames[i]
 		ppro.lastAttractGestureTime = now
@@ -640,4 +743,292 @@ func (ppro *PalettePro) checkProcessesAndRestartIfNecessary() {
 		}
 	}
 
+}
+
+func (logic *LayerLogic) generateSoundFromCursor(ctx *engine.PluginContext, ce engine.CursorEvent) {
+	layer := logic.layer
+	a := logic.getActiveNote(ce.ID)
+	switch ce.Ddu {
+	case "down":
+		// Send noteoff for current note
+		if a.noteOn != nil {
+			// I think this happens if we get things coming in
+			// faster than the checkDelay can generate the UP event.
+			logic.sendNoteOff(a)
+		}
+		a.noteOn = logic.cursorToNoteOn(ctx, ce)
+		a.ce = ce
+		logic.sendNoteOn(ctx, a)
+	case "drag":
+		if a.noteOn == nil {
+			// if we turn on playing in the middle of an existing loop,
+			// we may see some drag events without a down.
+			// Also, I'm seeing this pretty commonly in other situations,
+			// not really sure what the underlying reason is,
+			// but it seems to be harmless at the moment.
+			ctx.LogWarn("=============== HEY! drag event, a.currentNoteOn == nil?\n")
+			return
+		}
+		newNoteOn := logic.cursorToNoteOn(ctx, ce)
+		oldpitch := a.noteOn.Pitch
+		newpitch := newNoteOn.Pitch
+		// We only turn off the existing note (for a given Cursor ID)
+		// and start the new one if the pitch changes
+
+		// Also do this if the Z/Velocity value changes more than the trigger value
+
+		// NOTE: this could and perhaps should use a.ce.Z now that we're
+		// saving a.ce, like the deltay value
+
+		dz := float64(int(a.noteOn.Velocity) - int(newNoteOn.Velocity))
+		deltaz := float32(math.Abs(dz) / 128.0)
+		deltaztrig := layer.GetFloat("sound._deltaztrig")
+
+		deltay := float32(math.Abs(float64(a.ce.Y - ce.Y)))
+		deltaytrig := layer.GetFloat("sound._deltaytrig")
+
+		if layer.Get("sound.controllerstyle") == "modulationonly" {
+			zmin := layer.GetFloat("sound._controllerzmin")
+			zmax := layer.GetFloat("sound._controllerzmax")
+			cmin := layer.GetInt("sound._controllermin")
+			cmax := layer.GetInt("sound._controllermax")
+			oldz := a.ce.Z
+			newz := ce.Z
+			// XXX - should put the old controller value in ActiveNote so
+			// it doesn't need to be computed every time
+			oldzc := BoundAndScaleController(oldz, zmin, zmax, cmin, cmax)
+			newzc := BoundAndScaleController(newz, zmin, zmax, cmin, cmax)
+
+			if newzc != 0 && newzc != oldzc {
+				logic.synth.SendController(1, newzc)
+			}
+		}
+
+		if newpitch != oldpitch || deltaz > deltaztrig || deltay > deltaytrig {
+			logic.sendNoteOff(a)
+			a.noteOn = newNoteOn
+			a.ce = ce
+			logic.sendNoteOn(ctx, a)
+		}
+	case "up":
+		if a.noteOn == nil {
+			// not sure why this happens, yet
+			ctx.LogWarn("Unexpected UP when currentNoteOn is nil?", "layer", layer.Name())
+		} else {
+			logic.sendNoteOff(a)
+
+			a.noteOn = nil
+			a.ce = ce // Hmmmm, might be useful, or wrong
+		}
+		logic.activeNotesMutex.Lock()
+		delete(logic.activeNotes, ce.ID)
+		logic.activeNotesMutex.Unlock()
+	}
+}
+
+// ActiveNote is a currently active MIDI note
+type ActiveNote struct {
+	id     int
+	noteOn *engine.NoteOn
+	ce     engine.CursorEvent // the one that triggered the note
+}
+
+func (logic *LayerLogic) getActiveNote(id string) *ActiveNote {
+	logic.activeNotesMutex.RLock()
+	a, ok := logic.activeNotes[id]
+	logic.activeNotesMutex.RUnlock()
+	if !ok {
+		logic.lastActiveID++
+		a = &ActiveNote{
+			id:     logic.lastActiveID,
+			noteOn: nil,
+		}
+		logic.activeNotesMutex.Lock()
+		logic.activeNotes[id] = a
+		logic.activeNotesMutex.Unlock()
+	}
+	return a
+}
+
+func (logic *LayerLogic) terminateActiveNotes(ctx *engine.PluginContext) {
+	logic.activeNotesMutex.RLock()
+	for id, a := range logic.activeNotes {
+		if a != nil {
+			logic.sendNoteOff(a)
+		} else {
+			ctx.LogWarn("Hey, nil activeNotes entry for", "id", id)
+		}
+	}
+	logic.activeNotesMutex.RUnlock()
+}
+
+func (logic *LayerLogic) clearGraphics() {
+	// send an OSC message to Resolume
+	logic.ppro.resolume.toFreeFramePlugin(logic.layer.Name(), osc.NewMessage("/clear"))
+}
+
+func (logic *LayerLogic) nextQuant(t engine.Clicks, q engine.Clicks) engine.Clicks {
+	// the algorithm below is the same as KeyKit's nextquant
+	if q <= 1 {
+		return t
+	}
+	tq := t
+	rem := tq % q
+	if (rem * 2) > q {
+		tq += (q - rem)
+	} else {
+		tq -= rem
+	}
+	if tq < t {
+		tq += q
+	}
+	return tq
+}
+
+func (logic *LayerLogic) sendNoteOn(ctx *engine.PluginContext, a *ActiveNote) {
+
+	pe := &engine.PhraseElement{Value: a.noteOn}
+	logic.SendPhraseElementToSynth(ctx, pe)
+
+	ss := logic.layer.Get("visual.spritesource")
+	if ss == "midi" {
+		logic.generateSpriteFromPhraseElement(ctx, pe)
+	}
+}
+
+func (logic *LayerLogic) generateSprite(id string, x, y, z float32) {
+
+	// send an OSC message to Resolume
+	msg := osc.NewMessage("/sprite")
+	msg.Append(x)
+	msg.Append(y)
+	msg.Append(z)
+	msg.Append(id)
+	logic.ppro.resolume.toFreeFramePlugin(logic.layer.Name(), msg)
+}
+
+func (logic *LayerLogic) SendPhraseElementToSynth(ctx *engine.PluginContext, pe *engine.PhraseElement) {
+
+	ss := logic.layer.Get("visual.spritesource")
+	if ss == "midi" {
+		logic.generateSpriteFromPhraseElement(ctx, pe)
+	}
+	logic.synth.SendTo(pe)
+}
+
+func (logic *LayerLogic) generateSpriteFromPhraseElement(ctx *engine.PluginContext, pe *engine.PhraseElement) {
+
+	layer := logic.layer
+
+	// var channel uint8
+	var pitch uint8
+	var velocity uint8
+
+	switch v := pe.Value.(type) {
+	case *engine.NoteOn:
+		// channel = v.Channel
+		pitch = v.Pitch
+		velocity = v.Velocity
+	case *engine.NoteOff:
+		// channel = v.Channel
+		pitch = v.Pitch
+		velocity = v.Velocity
+	case *engine.NoteFull:
+		// channel = v.Channel
+		pitch = v.Pitch
+		velocity = v.Velocity
+	default:
+		return
+	}
+
+	pitchmin := uint8(layer.GetInt("sound.pitchmin"))
+	pitchmax := uint8(layer.GetInt("sound.pitchmax"))
+	if pitch < pitchmin || pitch > pitchmax {
+		ctx.LogWarn("Unexpected value", "pitch", pitch)
+		return
+	}
+
+	var x float32
+	var y float32
+	switch layer.Get("visual.placement") {
+	case "random", "":
+		x = rand.Float32()
+		y = rand.Float32()
+	case "linear":
+		y = 0.5
+		x = float32(pitch-pitchmin) / float32(pitchmax-pitchmin)
+	case "cursor":
+		x = rand.Float32()
+		y = rand.Float32()
+	case "top":
+		y = 1.0
+		x = float32(pitch-pitchmin) / float32(pitchmax-pitchmin)
+	case "bottom":
+		y = 0.0
+		x = float32(pitch-pitchmin) / float32(pitchmax-pitchmin)
+	case "left":
+		y = float32(pitch-pitchmin) / float32(pitchmax-pitchmin)
+		x = 0.0
+	case "right":
+		y = float32(pitch-pitchmin) / float32(pitchmax-pitchmin)
+		x = 1.0
+	default:
+		x = rand.Float32()
+		y = rand.Float32()
+	}
+
+	// send an OSC message to Resolume
+	msg := osc.NewMessage("/sprite")
+	msg.Append(x)
+	msg.Append(y)
+	msg.Append(float32(velocity) / 127.0)
+
+	// Someday localhost should be changed to the actual IP address.
+	// XXX - Set sprite ID to pitch, is this right?
+	msg.Append(fmt.Sprintf("%d@localhost", pitch))
+
+	logic.ppro.resolume.toFreeFramePlugin(layer.Name(), msg)
+}
+
+func (logic *LayerLogic) sendNoteOff(a *ActiveNote) {
+	n := a.noteOn
+	if n == nil {
+		// Not sure why this sometimes happens
+		return
+	}
+	noteOff := engine.NewNoteOff(n.Channel, n.Pitch, n.Velocity)
+	pe := &engine.PhraseElement{Value: noteOff}
+	logic.synth.SendTo(pe)
+	// layer.SendPhraseElementToSynth(pe)
+}
+
+func (logic *LayerLogic) advanceTransposeTo(newclick engine.Clicks) {
+
+	ppro := logic.ppro
+	ppro.transposeNext += (ppro.transposeClicks * engine.OneBeat)
+	ppro.transposeIndex = (ppro.transposeIndex + 1) % len(ppro.transposeValues)
+	/*
+			transposePitch := ppro.transposeValues[ppro.transposeIndex]
+				fr _, layer := range TheRouter().layers {
+					// layer.clearDown()
+					LogOfType("transpose""setting transposepitch in layer","pad", layer.padName, "transposePitch",transposePitch, "nactive",len(layer.activeNotes))
+					layer.TransposePitch = transposePitch
+				}
+		sched.SendAllPendingNoteoffs()
+	*/
+}
+
+func BoundAndScaleController(v, vmin, vmax float32, cmin, cmax int) int {
+	newv := BoundAndScaleFloat(v, vmin, vmax, float32(cmin), float32(cmax))
+	return int(newv)
+}
+
+func BoundAndScaleFloat(v, vmin, vmax, outmin, outmax float32) float32 {
+	if v < vmin {
+		v = vmin
+	} else if v > vmax {
+		v = vmax
+	}
+	out := outmin + (outmax-outmin)*((v-vmin)/(vmax-vmin))
+	return out
 }

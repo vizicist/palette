@@ -29,13 +29,14 @@ type CursorManager struct {
 
 func (ce CursorEvent) ToMap() map[string]string {
 	return map[string]string{
+		"event":  "cursor",
 		"id":     ce.ID,
 		"source": ce.Source,
 		// Timestamp time.Time
-		"Ddu":  ce.Ddu,
-		"X":    strconv.FormatFloat(float64(ce.X), 'f', 6, 32),
-		"Y":    strconv.FormatFloat(float64(ce.Y), 'f', 6, 32),
-		"Z":    strconv.FormatFloat(float64(ce.Z), 'f', 6, 32),
+		"ddu":  ce.Ddu,
+		"x":    strconv.FormatFloat(float64(ce.X), 'f', 6, 32),
+		"y":    strconv.FormatFloat(float64(ce.Y), 'f', 6, 32),
+		"z":    strconv.FormatFloat(float64(ce.Z), 'f', 6, 32),
 		"area": strconv.FormatFloat(float64(ce.Area), 'f', 6, 32),
 	}
 }

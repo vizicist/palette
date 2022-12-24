@@ -21,8 +21,6 @@ LineSep = "_"
 
 OneBeat = 96
 
-AgentName = "default"
-
 PerformLabels = {}
 GlobalPerformLabels = {}
 
@@ -173,11 +171,10 @@ def add_to_params(params,p):
 def palette_layer_api(layer, api, params=""):
     if layer == "":
         log("palette_layer_api: no layer specified?")
-    return palette_api(api,add_to_params(params,"\"layer\":\""+layer+"\""))
+    return palette_api("layer."+api,add_to_params(params,"\"layer\":\""+layer+"\""))
 
-def palette_agent_api(api, params=""):
-    return palette_api("agent."+api,add_to_params(params,"\"agent\":\""+AgentName+"\""))
-
+def palette_ppro_api(api, params=""):
+    return palette_api("ppro."+api,params)
 
 def sprint(*args, end='', **kwargs):
     sio = io.StringIO()
@@ -288,9 +285,6 @@ PaletteAPIEventSubject = "palette.api"
 
 def publish_event(subject,params):
     log("public_event needs work params=",params.encode())
-
-def palette_event(params):
-    palette_api("event",params)
 
 def palette_api(api,params):
 
@@ -414,42 +408,6 @@ def PaletteDir():
             log("PALETTE environment variable needs to be defined.")
             exit()
     return paletteDir
-
-def SendCursorEvent(cid,ddu,x,y,z,layer="A"):
-    event = "cursor_" + ddu
-    e = ("\"layer\": \"" + layer + "\", " + \
-        "\"cid\": \"" + str(cid) + "\", " + \
-        "\"event\": \"" + event + "\", " + \
-        "\"x\": \"%f\", \"y\": \"%f\", \"z\": \"%f\"")  % (x,y,z)
-    palette_event(e)
-
-def SendSpriteEvent(cid,x,y,z,layer="A"):
-    event = "sprite"
-    e = ("\"layer\": \"" + layer + "\", " + \
-        "\"cid\": \"" + str(cid) + "\", " + \
-        "\"event\": \"" + event + "\", " + \
-        "\"x\": \"%f\", \"y\": \"%f\", \"z\": \"%f\"")  % (x,y,z)
-    palette_event(e)
-
-def SendMIDIEvent(device,timesofar,msg,layer="A"):
-    bytestr = "0x"
-    for b in msg.bytes():
-        bytestr += ("%02x" % b)
-
-    e = ("\"event\": \"midi\", " + \
-        "\"device\": \"%s\", " + \
-        "\"layer\": \"" + layer + "\", " + \
-        "\"time\": \"%f\", " + \
-        "\"bytes\": \"%s\"") % \
-            (device, timesofar, bytestr)
-
-    palette_event(e)
-
-def SendMIDITimeReset():
-    palette_event("\"event\": \"midi_reset\"")
-
-def SendMIDIAudioReset():
-    palette_event("\"event\": \"audio_reset\"")
 
 def IgnoreKeyboardInterrupt():
     """

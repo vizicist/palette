@@ -16,7 +16,7 @@ def doNote(msg,msgtimesofar,layer):
     palette.SendMIDIEvent(mididevice,msgtimesofar,msg,layer)
 
 reg = 0
-layers = "ABCD"
+layers = "abcd"
 for i in range(1000):
     msgtimesofar = 0.0
     for msg in mid:
@@ -25,7 +25,7 @@ for i in range(1000):
         print("msg.bytes=",msg.bytes())
         arr = msg.bytes()
         ch = arr[0] & 0xf
-        layer = "ABCD"[ch%4]
+        layer = layers[ch%4]
         print("arr = ",arr)
         s = ""
         for b in arr:
