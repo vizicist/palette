@@ -4,10 +4,7 @@ import (
 	"fmt"
 	"os"
 	"sort"
-	"strconv"
 	"strings"
-
-	"github.com/hypebeast/go-osc/osc"
 )
 
 type Layer struct {
@@ -22,6 +19,14 @@ type Layer struct {
 // }
 
 var Layers = map[string]*Layer{}
+
+func LayerNames() []string {
+	arr := []string{}
+	for nm := range Layers {
+		arr = append(arr, nm)
+	}
+	return arr
+}
 
 func NewLayer(layerName string) *Layer {
 	layer := &Layer{
@@ -68,7 +73,7 @@ func (layer *Layer) Api(api string, apiargs map[string]string) (string, error) {
 
 		if preset.Category == "quad" {
 			// ApplyQuadPreset will only load that one layer from the quad preset
-			err = layer.ApplyQuadPreset(preset, layer.Name())
+			err = layer.ApplyQuadPreset(preset)
 			if err != nil {
 				LogError(err)
 				return "", err
@@ -161,14 +166,16 @@ func (layer *Layer) Get(paramName string) string {
 	return layer.params.Get(paramName)
 }
 
-// If no such parameter, return ""
 func (layer *Layer) List() string {
 	return layer.params.List()
 }
 
-// If no such parameter, return ""
 func (layer *Layer) GetInt(paramName string) int {
 	return layer.params.ParamIntValue(paramName)
+}
+
+func (layer *Layer) GetFloat(paramName string) float32 {
+	return layer.params.ParamFloatValue(paramName)
 }
 
 func (layer *Layer) Apply(preset *Preset) {
@@ -206,7 +213,7 @@ func (layer *Layer) SavePresetInPath(path string) error {
 	return os.WriteFile(path, data, 0644)
 }
 
-func (layer *Layer) ApplyQuadPreset(preset *Preset, layerToApply string) error {
+func (layer *Layer) ApplyQuadPreset(preset *Preset) error {
 	// Here's where the params get applied,
 	// which among other things
 	// may result in sending OSC messages out.
@@ -219,7 +226,7 @@ func (layer *Layer) ApplyQuadPreset(preset *Preset, layerToApply string) error {
 		// {layer}-{parametername}
 		words := strings.SplitN(name, "-", 2)
 		layerOfParam := words[0]
-		if layerToApply != layerOfParam {
+		if layer.Name() != layerOfParam {
 			continue
 		}
 		// use words[1] so the layer doesn't see the layer name
@@ -244,54 +251,21 @@ func (layer *Layer) ApplyQuadPreset(preset *Preset, layerToApply string) error {
 	// are added which don't exist in existing preset files.
 	// This is similar to code in Layer.applyPreset, except we
 	// have to do it for all for pads
-	for _, c := range TheRouter().layerLetters {
-		layerName := string(c)
-		for nm, def := range ParamDefs {
-			paramName := string(layerName) + "-" + nm
-			_, found := preset.paramsmap[paramName]
-			if !found {
-				init := def.Init
-				err := layer.Set(nm, init)
-				if err != nil {
-					// a hack to eliminate errors on a parameter that
-					// still exists in some presets.
-					LogWarn("applyQuadPreset", "nm", nm, "err", err)
-					// Don't fail completely on individual failures,
-					// some might be for parameters that no longer exist.
-				}
+	for nm, def := range ParamDefs {
+		paramName := layer.Name() + "-" + nm
+		_, found := preset.paramsmap[paramName]
+		if !found {
+			init := def.Init
+			err := layer.Set(nm, init)
+			if err != nil {
+				// a hack to eliminate errors on a parameter that
+				// still exists in some presets.
+				LogWarn("applyQuadPreset", "nm", nm, "err", err)
+				// Don't fail completely on individual failures,
+				// some might be for parameters that no longer exist.
 			}
 		}
 	}
 
 	return nil
-}
-
-/*
-func (layer *Layer) ffglPort() int {
-	layers := "ABCDEFGH"
-	i := strings.Index(layers, layerName)
-	return 3334 + i
-}
-*/
-
-func (layer *Layer) generateSprite(id string, x, y, z float32) {
-	if !TheRouter().generateVisuals {
-		return
-	}
-	// send an OSC message to Resolume
-	msg := osc.NewMessage("/sprite")
-	msg.Append(x)
-	msg.Append(y)
-	msg.Append(z)
-	msg.Append(id)
-
-	for _, listener := range layer.listeners {
-		args := map[string]string{
-			"id": id,
-			"x":  strconv.FormatFloat(float64(x), 'f', 6, 32),
-			"y":  strconv.FormatFloat(float64(y), 'f', 6, 32),
-			"z":  strconv.FormatFloat(float64(z), 'f', 6, 32),
-		}
-		listener.api(listener, "onspritegen", args)
-	}
 }
