@@ -51,7 +51,7 @@ func (r *Resolume) loadResolumeJSON() error {
 	return nil
 }
 
-func (r *Resolume) infoForLayer(layerName string) (portNum, layerNum int) {
+func (r *Resolume) PortAndLayerNumForLayer(layerName string) (portNum, layerNum int) {
 	switch layerName {
 	case "a":
 		return 3334, 1
@@ -67,10 +67,21 @@ func (r *Resolume) infoForLayer(layerName string) (portNum, layerNum int) {
 	}
 }
 
+/*
+func (r *Resolume) ClientWithPort(portnum int) *engine.Layer {
+	for nm, ff := range r.freeframeClients {
+		if ff.Port() == portnum {
+			return engine.GetLayer(nm)
+		}
+	}
+	return nil
+}
+*/
+
 func (r *Resolume) freeframeClientFor(layerName string) *osc.Client {
 	ff, ok := r.freeframeClients[layerName]
 	if !ok {
-		portNum, _ := r.infoForLayer(layerName)
+		portNum, _ := r.PortAndLayerNumForLayer(layerName)
 		if portNum == 0 {
 			return nil
 		}
@@ -91,7 +102,7 @@ func (r *Resolume) toFreeFramePlugin(layerName string, msg *osc.Message) {
 }
 
 func (r *Resolume) sendEffectParam(layerName string, name string, value string) {
-	portNum, layerNum := r.infoForLayer(layerName)
+	portNum, layerNum := r.PortAndLayerNumForLayer(layerName)
 	if portNum == 0 {
 		engine.LogError(fmt.Errorf("no such layer"), "name", layerName)
 		return
@@ -242,9 +253,10 @@ func (r *Resolume) showText(text string) {
 
 	textLayerNum := r.ResolumeLayerForText()
 
-	// disable the text display by bypassing the layer
+	// make sure the layer is not displayed before changing it
 	r.bypassLayer(textLayerNum, true)
 
+	// the first clip is the textgenerator clip
 	addr := fmt.Sprintf("/composition/layers/%d/clips/1/video/source/textgenerator/text/params/lines", textLayerNum)
 	msg := osc.NewMessage(addr)
 	msg.Append(text)
@@ -253,8 +265,8 @@ func (r *Resolume) showText(text string) {
 	// give it time to "sink in", otherwise the previous text displays briefly
 	time.Sleep(150 * time.Millisecond)
 
-	r.connectClip(textLayerNum, 1)
-	r.bypassLayer(textLayerNum, false)
+	r.connectClip(textLayerNum, 1)     // activate that clip
+	r.bypassLayer(textLayerNum, false) // show the layer
 }
 
 func (r *Resolume) ResolumeLayerForText() int {
@@ -303,7 +315,7 @@ func (r *Resolume) Activate() {
 
 		layerNames := engine.LayerNames()
 		for _, pad := range layerNames {
-			_, layerNum := r.infoForLayer(string(pad))
+			_, layerNum := r.PortAndLayerNumForLayer(string(pad))
 			engine.DebugLogOfType("resolume", "Activating Resolume", "layer", layerNum, "clipnum", clipnum)
 			r.connectClip(layerNum, clipnum)
 		}

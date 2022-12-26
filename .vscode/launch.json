@@ -5,21 +5,11 @@
     "version": "0.2.0",
     "configurations": [
        {
-            "name": "Engine Start",
+            "name": "palette_engine.go",
             "type": "go",
             "request": "launch",
             "mode": "auto",
             "program": "${env:PALETTESOURCE}/cmd/palette_engine/palette_engine.go",
-            "env": {
-                "Path": "${env:Path};${workspaceFolder};c:/Users/me/Documents/github/vizicist/palette/SenselLib/x64;"             },
-            "args": []
-        },
-        {
-            "name": "Chillian Start",
-            "type": "go",
-            "request": "launch",
-            "mode": "auto",
-            "program": "${env:PALETTESOURCE}/cmd/chillian/chillian.go",
             "env": {
                 "Path": "${env:Path};${workspaceFolder};c:/Users/me/Documents/github/vizicist/palette/SenselLib/x64;"             },
             "args": []
@@ -33,18 +23,18 @@
             "args": []
         },
         {
-            "name": "palette start",
+            "name": "palette engine.start",
             "type": "go",
             "request": "launch",
             "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
-            "args": ["start"]
+            "args": ["engine.start"]
         },
         {
-            "name": "palette stop",
+            "name": "palette engine.stop",
             "type": "go",
             "request": "launch",
             "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
-            "args": ["stop"]
+            "args": ["engine.stop"]
         },
         {
             "name": "palette ppro.start",
@@ -52,6 +42,16 @@
             "request": "launch",
             "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
             "args": ["ppro.start"]
+        },
+        {
+            "name": "Chillian Start",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${env:PALETTESOURCE}/cmd/chillian/chillian.go",
+            "env": {
+                "Path": "${env:Path};${workspaceFolder};c:/Users/me/Documents/github/vizicist/palette/SenselLib/x64;"             },
+            "args": []
         },
         {
             "name": "MIDI test",
