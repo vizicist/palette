@@ -2,6 +2,7 @@ package engine
 
 import (
 	"fmt"
+	"os"
 	"strings"
 )
 
@@ -66,6 +67,15 @@ func (e *Engine) ExecuteAPIFromJson(rawjson string) (string, error) {
 func (e *Engine) executeEngineAPI(api string, apiargs map[string]string) (result string, err error) {
 
 	switch api {
+
+	case "stop":
+		e.stop()
+		return "", nil
+
+	case "stopall":
+		CallApiOnAllPlugins("stop", map[string]string{})
+		e.stop()
+		return "", nil
 
 	case "exit":
 		e.StopMe()
@@ -197,6 +207,11 @@ func (e *Engine) executePresetAPI(api string, apiargs map[string]string) (result
 		LogWarn("api is not recognized\n", "api", api)
 		return "", fmt.Errorf("Router.ExecutePresetAPI unrecognized api=%s", api)
 	}
+}
+
+func (e *Engine) stop() {
+	LogInfo("Engine.stop: calling os.Exit(0)")
+	os.Exit(0)
 }
 
 func (e *Engine) executeSoundAPI(api string, apiargs map[string]string) (result string, err error) {

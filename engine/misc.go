@@ -9,6 +9,7 @@ import (
 	"image"
 	"image/draw"
 	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -19,6 +20,31 @@ import (
 
 	"gopkg.in/gomail.v2"
 )
+
+var EngineExe = "palette_engine.exe"
+var EngineExeDebug = "__debug_bin.exe"
+
+func IsEngineRunning() bool {
+	return IsRunningExecutable(EngineExe) || IsRunningExecutable(EngineExeDebug)
+}
+
+func StartEngine() error {
+	// Start the engine (which also starts up other processes)
+	fullexe := filepath.Join(PaletteDir(), "bin", EngineExe)
+	return StartExecutableLogOutput("engine", fullexe, true, "")
+}
+
+func KillEngine() error {
+	err1 := KillExecutable(EngineExe)
+	err2 := KillExecutable(EngineExeDebug)
+	if err1 != nil {
+		return err1
+	}
+	if err2 != nil {
+		return err2
+	}
+	return nil
+}
 
 // fileExists checks if a file exists
 func fileExists(filename string) bool {
@@ -540,6 +566,40 @@ func ziplogs(logsdir string, zipfile string) error {
 		LogError(err)
 	}
 	return err
+}
+
+func RemoteAPI(api string, args ...string) (map[string]string, error) {
+
+	if len(args)%2 != 0 {
+		return nil, fmt.Errorf("RemoteAPI: odd nnumber of args, should be even")
+	}
+	apijson := "\"api\": \"" + api + "\""
+	for n := range args {
+		if n%2 == 0 {
+			apijson = apijson + ",\"" + args[n] + "\": \"" + args[n+1] + "\""
+		}
+	}
+	return RemoteAPIRaw(apijson)
+}
+
+func RemoteAPIRaw(args string) (map[string]string, error) {
+	url := fmt.Sprintf("http://127.0.0.1:%d/api", HTTPPort)
+	postBody := []byte(args)
+	resp, err := http.Post(url, "application/json", bytes.NewBuffer(postBody))
+	if err != nil {
+		return nil, fmt.Errorf("RemoteAPIRaw: http.Post err=%s", err)
+	}
+
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("RemoteAPIRaw: ReadAll err=%s", err)
+	}
+	output, err := StringMap(string(body))
+	if err != nil {
+		return nil, fmt.Errorf("RemoteAPIRaw: unable to interpret output, err=%s", err)
+	}
+	return output, nil
 }
 
 func SendLogs() error {

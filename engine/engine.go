@@ -66,6 +66,16 @@ func (e *Engine) Start() {
 	InitMIDI()
 	InitSynths()
 
+	// Eventually the defult should be "" rather than "ppro"
+	plugins := ConfigStringWithDefault("plugins", "ppro")
+
+	// Plugins should be started before anything,
+	// to guarante that the "start" event will be the first
+
+	for _, nm := range strings.Split(plugins, ",") {
+		e.StartPlugin(nm)
+	}
+
 	go e.StartOSC(OSCPort)
 	go e.StartHTTP(HTTPPort)
 	// go r.StartNATSClient()
@@ -75,12 +85,6 @@ func (e *Engine) Start() {
 
 	if ConfigBoolWithDefault("depth", false) {
 		go DepthRunForever()
-	}
-
-	// Eventually the defult should be ""
-	plugins := ConfigStringWithDefault("plugins", "ppro")
-	for _, nm := range strings.Split(plugins, ",") {
-		e.StartPlugin(nm)
 	}
 
 }

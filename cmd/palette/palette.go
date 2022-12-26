@@ -1,19 +1,12 @@
 package main
 
 import (
-	"bytes"
 	"flag"
 	"fmt"
-	"io"
-	"math/rand"
-	"net/http"
 	"os"
 	"os/signal"
-	"path/filepath"
-	"strconv"
 	"strings"
 	"syscall"
-	"time"
 
 	"github.com/vizicist/palette/engine"
 )
@@ -59,41 +52,22 @@ func humanReadableApiOutput(output map[string]string) string {
 	return result
 }
 
-func RemoteAPI(api string, args ...string) string {
+func engineStop(stopOrStopAll string) string {
 
-	if len(args)%2 != 0 {
-		return "RemoteAPI: odd nnumber of args, should be even"
+	if !engine.IsEngineRunning() {
+		return "Engine is not running."
 	}
-	apijson := "\"api\": \"" + api + "\""
-	for n := range args {
-		if n%2 == 0 {
-			apijson = apijson + ",\"" + args[n] + "\": \"" + args[n+1] + "\""
-		}
-	}
-	resultMap := RemoteAPIRaw(apijson)
-	// result should be a json string
-	return humanReadableApiOutput(resultMap)
-}
 
-func RemoteAPIRaw(args string) map[string]string {
-	url := fmt.Sprintf("http://127.0.0.1:%d/api", engine.HTTPPort)
-	postBody := []byte(args)
-	resp, err := http.Post(url, "application/json", bytes.NewBuffer(postBody))
+	_, err := engine.RemoteAPI("engine." + stopOrStopAll)
 	if err != nil {
-		output := make(map[string]string)
-		output["error"] = fmt.Sprintf("RemoteAPIRaw: Post err=%s", err)
-		return output
+		return fmt.Sprintf("RemoteAPI: err=%s\n", err)
 	}
-	defer resp.Body.Close()
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return map[string]string{"error": fmt.Sprintf("RemoteAPIRaw: ReadAll err=%s", err)}
+
+	if stopOrStopAll == "stopall" {
+		return "Engine and Plugins have been stopped."
+	} else {
+		return "Engine has been stopped."
 	}
-	output, err := engine.StringMap(string(body))
-	if err != nil {
-		return map[string]string{"error": fmt.Sprintf("RemoteAPIRaw: unable to interpret output, err=%s", err)}
-	}
-	return output
 }
 
 // If it's not a layer, it's a button.
@@ -105,42 +79,42 @@ func CliCommand(args []string) string {
 		return usage()
 	}
 
-	const engineexe = "palette_engine.exe"
-
 	api := args[0]
 
 	switch api {
 
 	case "status":
-		if engine.IsRunningExecutable(engineexe) {
+		if engine.IsEngineRunning() {
 			return "Engine is running."
 		} else {
 			return "Engine is stopped."
 		}
 
-	case "start":
+	case "start", "engine.start":
+		return doStart()
 
-		if engine.IsRunningExecutable(engineexe) {
-			return "Engine is already running?"
-		}
+	case "startall", "engine.startall":
+		// Someday it should make a difference, so "start" doesn't start the plugins.
+		return doStart()
 
-		// Kill any currently-running engine.
-		// The other processes will be killed by
-		// the engine when it starts up.
-		engine.KillExecutable(engineexe)
+	case "stop", "engine.stop":
+		return engineStop("stop")
 
-		// Start the engine (which also starts up other processes)
-		fullexe := filepath.Join(engine.PaletteDir(), "bin", engineexe)
-		err = engine.StartExecutableLogOutput("engine", fullexe, true, "")
-		if err != nil {
-			return fmt.Sprintf("Engine not started: err=%s", err)
-		}
-		return "Engine has been started."
+	case "stopall", "engine.stopall":
+		return engineStop("stopall")
 
-	case "stop":
-		// kill ourselves
-		engine.KillExecutable(engineexe)
-		return "Engine has been stopped."
+		/*
+			errpart1 := "Engine is still running after engine.stop?"
+			err = engine.KillEngine()
+			if err != nil {
+				return errpart1 + " ; " + err.Error()
+			}
+			// Should have been killed, let's see...
+			if engine.IsEngineRunning() {
+				return errpart1 + "Engine is still running after several attempts to kill it."
+			}
+			result = "Engine has been stopped."
+		*/
 
 	case "version":
 		return engine.GetPaletteVersion()
@@ -152,56 +126,33 @@ func CliCommand(args []string) string {
 		}
 		return "Logs have been sent."
 
-	case "test":
-		var ntimes = 10 // default
-		var dt = 100 * time.Millisecond
-		if len(args) > 1 {
-			ntimes, err = strconv.Atoi(args[1])
-			if err != nil {
-				return err.Error()
-			}
-		}
-		if len(args) > 2 {
-			dt, err = time.ParseDuration(args[2])
-			if err != nil {
-				return err.Error()
-			}
-		}
-		doTest(ntimes, dt)
-		return "Test is complete."
-
 	default:
 		words := strings.Split(api, ".")
 		if len(words) != 2 {
 			return "Invalid api format, expecting {plugin}.{api}"
 		}
-		return RemoteAPI(api, args[1:]...)
+		resultMap, err := engine.RemoteAPI(api, args[1:]...)
+		if err != nil {
+			return fmt.Sprintf("RemoteAPI: err=%s\n", err)
+		}
+		return humanReadableApiOutput(resultMap)
 	}
 }
 
-func doTest(ntimes int, dt time.Duration) {
-	source := "test.0"
-	for n := 0; n < ntimes; n++ {
-		if n > 0 {
-			time.Sleep(dt)
-		}
-		layer := string("abcd"[rand.Int()%4])
-		RemoteAPI("ppro.event",
-			"layer", layer,
-			"source", source,
-			"event", "cursor_down",
-			"x", fmt.Sprintf("%f", rand.Float32()),
-			"y", fmt.Sprintf("%f", rand.Float32()),
-			"z", fmt.Sprintf("%f", rand.Float32()),
-		)
-		time.Sleep(dt)
-		RemoteAPI("event",
-			"layer", layer,
-			"source", source,
-			"event", "cursor_up",
-			"x", fmt.Sprintf("%f", rand.Float32()),
-			"y", fmt.Sprintf("%f", rand.Float32()),
-			"z", fmt.Sprintf("%f", rand.Float32()),
-		)
+func doStart() string {
+
+	if engine.IsEngineRunning() {
+		return "Engine is already running?"
 	}
+
+	// err := engine.KillEngine()
+	// if err != nil {
+	// 	return fmt.Sprintf("engine.KillEngine: err=%s", err)
+	// }
+
+	err := engine.StartEngine()
+	if err != nil {
+		return fmt.Sprintf("engine.StartEngine: err=%s", err)
+	}
+	return "Engine has been started."
 }

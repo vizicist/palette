@@ -14,14 +14,14 @@ type processInfo struct {
 }
 
 type ProcessManager struct {
-	ctx *engine.PluginContext
-	info  map[string]*processInfo
+	ctx  *engine.PluginContext
+	info map[string]*processInfo
 }
 
 func NewProcessManager(ctx *engine.PluginContext) *ProcessManager {
 	return &ProcessManager{
-		ctx: ctx,
-		info:  make(map[string]*processInfo),
+		ctx:  ctx,
+		info: make(map[string]*processInfo),
 	}
 }
 
@@ -66,23 +66,26 @@ func (pm ProcessManager) StartRunning(process string) error {
 	return nil
 }
 
-// StopRunning doesn't return any errors
 func (pm ProcessManager) StopRunning(process string) (err error) {
-	switch process {
-	case "all":
+	if process == "all" {
 		for nm := range pm.info {
-			pm.StopRunning(nm)
+			e := pm.killProcess(nm)
+			if e != nil {
+				err = e
+			}
 		}
-		// TheEngine().StopMe()
 		return err
-	default:
-		p, err := pm.getProcessInfo(process)
-		if err != nil {
-			return err
-		}
-		pm.ctx.KillExecutable(p.Exe)
-		return nil
+	} else {
+		return pm.killProcess(process)
 	}
+}
+
+func (pm ProcessManager) killProcess(process string) error {
+	p, err := pm.getProcessInfo(process)
+	if err != nil {
+		return err
+	}
+	return pm.ctx.KillExecutable(p.Exe)
 }
 
 func (pm ProcessManager) ProcessStatus() string {
@@ -130,12 +133,16 @@ func (pm ProcessManager) isRunning(process string) bool {
 	return b
 }
 
-func (pm ProcessManager) killAll() {
+func (pm ProcessManager) killAll() error {
 	for nm, info := range pm.info {
 		if nm != "engine" {
-			pm.ctx.KillExecutable(info.Exe)
+			err := pm.ctx.KillExecutable(info.Exe)
+			if err != nil {
+				return err
+			}
 		}
 	}
+	return nil
 }
 
 /*

@@ -48,6 +48,31 @@ func GetLayer(layerName string) *Layer {
 	return layer
 }
 
+func ApplyToAllLayers(f func(layer *Layer)) {
+	for _, layer := range Layers {
+		f(layer)
+	}
+}
+
+func (layer *Layer) ResendAllParameters() {
+	params := layer.params
+	for nm := range params.values {
+		val, err := params.paramValueAsString(nm)
+		if err != nil {
+			LogError(err)
+			// Don't fail completely
+			continue
+		}
+		// This assumes that if you set a parameter to the same value,
+		// that it will re-send the mesasges to Resolume for visual.* params
+		err = layer.Set(nm, val)
+		if err != nil {
+			LogError(err)
+			// Don't fail completely
+		}
+	}
+}
+
 func (layer *Layer) AddListener(ctx *PluginContext) {
 	layer.listeners = append(layer.listeners, ctx)
 }

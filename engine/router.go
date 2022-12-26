@@ -219,21 +219,21 @@ func (r *Router) HandleInputEvent(pluginName string, args map[string]string) err
 
 	switch event {
 
-		/*
-	case "sprite":
+	/*
+		case "sprite":
 
-		x, y, z, err := GetArgsXYZ(args)
-		if err != nil {
-			return nil
-		}
-		layer.generateSprite("dummy", x, y, z)
+			x, y, z, err := GetArgsXYZ(args)
+			if err != nil {
+				return nil
+			}
+			layer.generateSprite("dummy", x, y, z)
 
-		/*
-			case "midi_reset":
-				Info("HandleEvent: midi_reset, sending ANO")
-				ctx.handleMIDITimeReset()
-				ctx.sendANO()
-		*/
+			/*
+				case "midi_reset":
+					Info("HandleEvent: midi_reset, sending ANO")
+					ctx.handleMIDITimeReset()
+					ctx.sendANO()
+	*/
 
 	case "note":
 		notestr, err := needStringArg("note", "HandleEvent", args)
@@ -356,6 +356,7 @@ func (r *Router) handleOSCInput(e OSCEvent) {
 	switch e.Msg.Address {
 
 	case "/clientrestart":
+		// This message currently comes from the FFGL plugins in Resolume
 		r.handleClientRestart(e.Msg)
 
 	case "/event": // These messages encode the arguments as JSON
@@ -410,39 +411,21 @@ func (r *Router) handleMMTTButton(butt string) {
 
 func (r *Router) handleClientRestart(msg *osc.Message) {
 
-	LogWarn("Router.handleClientRestart needs work")
-	/*
-		tags, _ := msg.TypeTags()
-		_ = tags
-		nargs := msg.CountArguments()
-		if nargs < 1 {
-			Warn("Router.handleOSCEvent: too few arguments")
-			return
-		}
-		// Even though the argument is an integer port number,
-		// it's a string in the OSC message sent from the Palette FFGL plugin.
-		s, err := argAsString(msg, 0)
-		if err != nil {
-			LogError(err)
-			return
-		}
-		portnum, err := strconv.Atoi(s)
-		if err != nil {
-			LogError(err)
-			return
-		}
-		var found *Layer
-		r.LayerManager.ApplyToAllLayers(func(layer *Layer) {
-			if layer.freeframeClient.Port() == portnum {
-				found = layer
-			}
-		})
-		if found == nil {
-			Warn("handleClientRestart unable to find Layer with", "portnum", portnum)
-		} else {
-			found.sendAllParameters()
-		}
-	*/
+	tags, _ := msg.TypeTags()
+	_ = tags
+	nargs := msg.CountArguments()
+	if nargs < 1 {
+		LogWarn("Router.handleOSCEvent: too few arguments")
+		return
+	}
+	// Even though the argument is an integer port number,
+	// it's a string in the OSC message sent from the Palette FFGL plugin.
+	s, err := argAsString(msg, 0)
+	if err != nil {
+		LogError(err)
+		return
+	}
+	CallApiOnAllPlugins("event", map[string]string{"event": "clientrestart", "portnum": s})
 }
 
 // handleMMTTCursor handles messages from MMTT, reformating them as a standard cursor event

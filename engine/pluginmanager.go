@@ -48,6 +48,13 @@ func (tm *PluginManager) StartPlugin(name string) error {
 	return err
 }
 
+func CallApiOnAllPlugins(api string, apiargs map[string]string) {
+	pm := ThePluginManager()
+	for _, plugin := range pm.plugins {
+		plugin.api(plugin, api, apiargs)
+	}
+}
+
 /*
 func (rm *PluginManager) handleCursorEvent(ce CursorEvent) {
 	for name, plugin := range rm.plugins {
@@ -69,14 +76,6 @@ func (rm *PluginManager) handleMidiEvent(me MidiEvent) {
 		} else {
 			plugin.OnMidiEvent(context, me)
 		}
-	}
-}
-*/
-
-/*
-func (pm *PluginManager) ApplyToAllPlugins(f func(plugin Plugin)) {
-	for _, plugin := range pm.plugins {
-		f(plugin)
 	}
 }
 */
