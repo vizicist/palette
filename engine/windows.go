@@ -11,14 +11,13 @@ import (
 	"syscall"
 )
 
-func KillExecutable(executable string) {
+func KillExecutable(executable string) error {
+	// os.Stderr.WriteString("KillExecutable " + executable + "\n")
 	LogInfo("KillExecutable", "executable", executable)
-	stdout := &NoWriter{}
-	stderr := &NoWriter{}
-	cmd, _ := startExecutable("c:\\windows\\system32\\taskkill.exe", false, stdout, stderr, "/F", "/IM", executable)
-	// We don't want to complain if the executable isn't
-	// currently running, so ignore errors
-	cmd.Wait()
+	// NOTE: do NOT use taskkill.exe instead of taskkill, it doesn't work.
+	cmd := exec.Command("taskkill", "/F", "/IM", executable)
+	// os.Stderr.WriteString(fmt.Sprintf("cmd = %#v\n", cmd))
+	return cmd.Run()
 }
 
 // StartExecutable executes something.  If background is true, it doesn't block
@@ -69,10 +68,12 @@ func (writer *gatherWriter) Write(bytes []byte) (int, error) {
 }
 
 func IsRunningExecutable(exe string) bool {
+	// os.Stdout.WriteString("IsRunningExecutable exe=" + exe + "\n")
 	stdout := &gatherWriter{}
 	stderr := &NoWriter{}
 	cmd, err := startExecutable("c:\\windows\\system32\\tasklist.exe", false, stdout, stderr)
 	if err != nil {
+		// os.Stdout.WriteString("IsRunningExecutable A err=" + err.Error() + "\n")
 		LogWarn("IsRunningExecutable tasklist.exe", "err", err)
 		return false
 	}
@@ -83,12 +84,16 @@ func IsRunningExecutable(exe string) bool {
 	exe = strings.ToLower(exe)
 	for scanner.Scan() {
 		line := scanner.Text()
+		// os.Stdout.WriteString("Scanning line=" + line + "\n")
 		words := strings.Fields(line)
 		if len(words) > 0 {
+			// os.Stdout.WriteString("words0=" + words[0] + " exe=" + exe + "\n")
 			if strings.ToLower(words[0]) == exe {
+				// os.Stdout.WriteString("IsRunningExecutable " + exe + " returning true\n")
 				return true
 			}
 		}
 	}
+	// os.Stdout.WriteString("IsRunningExecutable " + exe + " returning false\n")
 	return false
 }

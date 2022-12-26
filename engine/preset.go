@@ -99,6 +99,34 @@ func (p *Preset) ApplyTo(params *ParamValues) error {
 	return nil
 }
 
+func ApplyParamsMap(presetType string, paramsmap map[string]any, params *ParamValues) error {
+
+	// Currently, no errors are ever returned, but log messages are generated.
+
+	for name, ival := range paramsmap {
+		val, okval := ival.(string)
+		if !okval {
+			LogWarn("value isn't a string in params json", "name", name, "value", val)
+			continue
+		}
+		fullname := name
+		thisCategory, _ := PresetNameSplit(fullname)
+		// Only include ones that match the presetType
+		if presetType != "snap" && thisCategory != presetType {
+			continue
+		}
+		// This is where the parameter values get applied,
+		// which may trigger things (like sending OSC)
+		err := params.Set(fullname, val)
+		if err != nil {
+			LogError(err)
+			// Don't abort the whole load, i.e. we are tolerant
+			// of unknown parameters or errors in the preset
+		}
+	}
+	return nil
+}
+
 // ReadablePresetFilePath xxx
 func (p *Preset) readableFilePath() string {
 	return p.presetFilePath()

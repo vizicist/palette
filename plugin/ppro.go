@@ -5,6 +5,7 @@ import (
 	"math"
 	"math/rand"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -139,7 +140,25 @@ func (ppro *PalettePro) Api(ctx *engine.PluginContext, api string, apiargs map[s
 		return "", ppro.start(ctx)
 
 	case "stop":
-		return "", fmt.Errorf("ppro.stop doesn't do anything")
+		return "", ppro.processManager.StopRunning("all")
+
+	case "event":
+		eventName, ok := apiargs["event"]
+		if !ok {
+			return "", fmt.Errorf("PalettePro: Missing event argument")
+		}
+		switch eventName {
+		case "click":
+			return ppro.onClick(ctx, apiargs)
+		case "midi":
+			return ppro.onMidiEvent(ctx, apiargs)
+		case "cursor":
+			return ppro.onCursorEvent(ctx, apiargs)
+		case "clientrestart":
+			return ppro.onClientRestart(ctx, apiargs)
+		default:
+			return "", fmt.Errorf("PalettePro: Unhandled event type %s", eventName)
+		}
 
 	case "onparamset":
 		layerName, ok := apiargs["layer"]
@@ -190,24 +209,7 @@ func (ppro *PalettePro) Api(ctx *engine.PluginContext, api string, apiargs map[s
 		return "", nil
 
 	case "killall":
-		ppro.processManager.killAll()
-		return "", nil
-
-	case "event":
-		eventName, ok := apiargs["event"]
-		if !ok {
-			return "", fmt.Errorf("PalettePro: Missing event argument")
-		}
-		switch eventName {
-		case "click":
-			return ppro.onClick(ctx, apiargs)
-		case "midi":
-			return ppro.onMidiEvent(ctx, apiargs)
-		case "cursor":
-			return ppro.onCursorEvent(ctx, apiargs)
-		default:
-			return "", fmt.Errorf("PalettePro: Unhandled event type %s", eventName)
-		}
+		return "", ppro.processManager.killAll()
 
 	case "nextalive":
 		// acts like a timer, but it could wait for
@@ -219,6 +221,28 @@ func (ppro *PalettePro) Api(ctx *engine.PluginContext, api string, apiargs map[s
 			"attractmode", fmt.Sprintf("%v", ppro.attractModeIsOn),
 		)
 		return result, nil
+
+	case "test":
+		var ntimes = 10                    // default
+		var delta = 500 * time.Millisecond // default
+		count, ok := apiargs["count"]
+		if ok {
+			tmp, err := strconv.ParseInt(count, 10, 64)
+			if err != nil {
+				return "", err
+			}
+			ntimes = int(tmp)
+		}
+		dur, ok := apiargs["delta"]
+		if ok {
+			tmp, err := time.ParseDuration(dur)
+			if err != nil {
+				return "", err
+			}
+			delta = tmp
+		}
+		doTest(ctx, ntimes, delta)
+		return "", nil
 
 	default:
 		ctx.LogWarn("Pro.ExecuteAPI api is not recognized\n", "api", api)
@@ -283,6 +307,27 @@ func (ppro *PalettePro) start(ctx *engine.PluginContext) error {
 	ppro.attractPreset = engine.ConfigStringWithDefault("attractpreset", "random")
 
 	return nil
+}
+
+func (ppro *PalettePro) onClientRestart(ctx *engine.PluginContext, apiargs map[string]string) (string, error) {
+	// These are messages from the Palette FFGL plugins in Resolume,
+	// telling us that they have restarted, and we should resend all parameters
+	apiportnum, ok := apiargs["portnum"]
+	if !ok {
+		return "", fmt.Errorf("PalettePro: Missing portnum argument")
+	}
+	apipnum, err := strconv.Atoi(apiportnum)
+	if err != nil {
+		return "", err
+	}
+	ctx.LogInfo("ppro got clientrestart", "apipnum", apipnum)
+	for nm, layer := range ppro.layer {
+		portnum, _ := ppro.resolume.PortAndLayerNumForLayer(nm)
+		if portnum == apipnum {
+			layer.ResendAllParameters()
+		}
+	}
+	return "", nil
 }
 
 func (ppro *PalettePro) onParamSet(ctx *engine.PluginContext, layerName string, paramName string, paramValue string) {
@@ -411,6 +456,41 @@ func (ppro *PalettePro) onMidiEvent(ctx *engine.PluginContext, apiargs map[strin
 		ctx.SchedulePhrase(phr, ctx.CurrentClick(), "P_04_C_04")
 	}
 	return "", nil
+}
+
+func doTest(ctx *engine.PluginContext, ntimes int, dt time.Duration) {
+	source := "test.0"
+	for n := 0; n < ntimes; n++ {
+		if n > 0 {
+			time.Sleep(dt)
+		}
+		layer := string("abcd"[rand.Int()%4])
+		_, err := engine.RemoteAPI("ppro.event",
+			"layer", layer,
+			"source", source,
+			"event", "cursor_down",
+			"x", fmt.Sprintf("%f", rand.Float32()),
+			"y", fmt.Sprintf("%f", rand.Float32()),
+			"z", fmt.Sprintf("%f", rand.Float32()),
+		)
+		if err != nil {
+			ctx.LogError(err)
+			return
+		}
+		time.Sleep(dt)
+		_, err = engine.RemoteAPI("event",
+			"layer", layer,
+			"source", source,
+			"event", "cursor_up",
+			"x", fmt.Sprintf("%f", rand.Float32()),
+			"y", fmt.Sprintf("%f", rand.Float32()),
+			"z", fmt.Sprintf("%f", rand.Float32()),
+		)
+		if err != nil {
+			ctx.LogError(err)
+			return
+		}
+	}
 }
 
 func (ppro *PalettePro) saveCurrentParams(ctx *engine.PluginContext) {

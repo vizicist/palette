@@ -66,8 +66,8 @@ func (ctx *PluginContext) StartExecutableLogOutput(logName string, fullexe strin
 	return StartExecutableLogOutput(logName, fullexe, background, args...)
 }
 
-func (ctx *PluginContext) KillExecutable(exe string) {
-	KillExecutable(exe)
+func (ctx *PluginContext) KillExecutable(exe string) error {
+	return KillExecutable(exe)
 }
 
 func (ctx *PluginContext) IsRunningExecutable(exe string) bool {
@@ -256,7 +256,7 @@ func (ctx *EngineContext) setOneLayerParamValue(layerName, fullname, value strin
 */
 
 /*
-*/
+ */
 
 // to avoid unused warning
 // var p *Layer
@@ -467,54 +467,6 @@ func (ctx *PluginContext) ExecuteAPI(api string, args map[string]string, rawargs
 	return result, err
 }
 */
-
-/*
-func (ctx *EngineContext) sendAllParameters() {
-	for nm := range ctx.pluginParams.values {
-		val, err := ctx.pluginParams.paramValueAsString(nm)
-		if err != nil {
-			LogError(err)
-			// Don't fail completely
-			continue
-		}
-		// This assumes that if you set a parameter to the same value,
-		// that it will re-send the mesasges to Resolume for visual.* params
-		err = SetOneParamValue(ctx.pluginParams, nm, val)
-		if err != nil {
-			LogError(err)
-			// Don't fail completely
-		}
-	}
-}
-*/
-
-func ApplyParamsMap(presetType string, paramsmap map[string]any, params *ParamValues) error {
-
-	// Currently, no errors are ever returned, but log messages are generated.
-
-	for name, ival := range paramsmap {
-		val, okval := ival.(string)
-		if !okval {
-			LogWarn("value isn't a string in params json", "name", name, "value", val)
-			continue
-		}
-		fullname := name
-		thisCategory, _ := PresetNameSplit(fullname)
-		// Only include ones that match the presetType
-		if presetType != "snap" && thisCategory != presetType {
-			continue
-		}
-		// This is where the parameter values get applied,
-		// which may trigger things (like sending OSC)
-		err := params.Set(fullname, val)
-		if err != nil {
-			LogError(err)
-			// Don't abort the whole load, i.e. we are tolerant
-			// of unknown parameters or errors in the preset
-		}
-	}
-	return nil
-}
 
 /*
 func (ctx *EngineContext) restoreCurrentSnap(layerName string) {
