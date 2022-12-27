@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 )
 
 // ExecuteAPI xxx
@@ -69,12 +70,12 @@ func (e *Engine) executeEngineAPI(api string, apiargs map[string]string) (result
 	switch api {
 
 	case "stop":
-		e.stop()
+		go e.stopAfterDelay()
 		return "", nil
 
 	case "stopall":
 		CallApiOnAllPlugins("stop", map[string]string{})
-		e.stop()
+		go e.stopAfterDelay()
 		return "", nil
 
 	case "exit":
@@ -209,7 +210,8 @@ func (e *Engine) executePresetAPI(api string, apiargs map[string]string) (result
 	}
 }
 
-func (e *Engine) stop() {
+func (e *Engine) stopAfterDelay() {
+	time.Sleep(500 * time.Millisecond)
 	LogInfo("Engine.stop: calling os.Exit(0)")
 	os.Exit(0)
 }
