@@ -53,13 +53,13 @@ func (r *Resolume) loadResolumeJSON() error {
 
 func (r *Resolume) PortAndLayerNumForLayer(layerName string) (portNum, layerNum int) {
 	switch layerName {
-	case "a":
+	case "A":
 		return 3334, 1
-	case "b":
+	case "B":
 		return 3335, 2
-	case "c":
+	case "C":
 		return 3336, 3
-	case "d":
+	case "D":
 		return 3337, 4
 	default:
 		engine.LogError(fmt.Errorf("no port for layer %s", layerName))

@@ -270,21 +270,21 @@ func (ppro *PalettePro) start(ctx *engine.PluginContext) error {
 
 	ctx.AllowSource("A", "B", "C", "D")
 
-	layerA := ppro.addLayer(ctx, "a")
+	layerA := ppro.addLayer(ctx, "A")
 	layerA.Set("visual.shape", "circle")
-	layerA.Apply(ctx.GetPreset("snap.White_Ghosts"))
+	layerA.ApplyPreset("snap.White_Ghosts")
 
-	layerB := ppro.addLayer(ctx, "b")
+	layerB := ppro.addLayer(ctx, "B")
 	layerB.Set("visual.shape", "square")
-	layerB.Apply(ctx.GetPreset("snap.Concentric_Squares"))
+	layerB.ApplyPreset("snap.Concentric_Squares")
 
-	layerC := ppro.addLayer(ctx, "c")
+	layerC := ppro.addLayer(ctx, "C")
 	layerC.Set("visual.shape", "square")
-	layerC.Apply(ctx.GetPreset("snap.Circular_Moire"))
+	layerC.ApplyPreset("snap.Circular_Moire")
 
-	layerD := ppro.addLayer(ctx, "d")
+	layerD := ppro.addLayer(ctx, "D")
 	layerD.Set("visual.shape", "square")
-	layerD.Apply(ctx.GetPreset("snap.Diagonal_Mirror"))
+	layerD.ApplyPreset("snap.Diagonal_Mirror")
 
 	//ctx.ApplyPreset("quad.Quick Scat_Circles")
 
@@ -464,7 +464,7 @@ func doTest(ctx *engine.PluginContext, ntimes int, dt time.Duration) {
 		if n > 0 {
 			time.Sleep(dt)
 		}
-		layer := string("abcd"[rand.Int()%4])
+		layer := string("ABCD"[rand.Int()%4])
 		_, err := engine.RemoteAPI("ppro.event",
 			"layer", layer,
 			"source", source,
@@ -569,17 +569,21 @@ func (ppro *PalettePro) loadQuadPresetRand(ctx *engine.PluginContext) {
 	}
 	rn := rand.Uint64() % uint64(len(arr))
 	ctx.LogInfo("loadQuadPresetRand", "preset", arr[rn])
-	preset := ctx.GetPreset(arr[rn])
-	ppro.loadQuadPreset(ctx, preset)
+	ppro.loadQuadPreset(ctx, arr[rn])
 	if err != nil {
 		ctx.LogError(err)
 	}
 }
 
-func (ppro *PalettePro) loadQuadPreset(ctx *engine.PluginContext, preset *engine.Preset) {
+func (ppro *PalettePro) loadQuadPreset(ctx *engine.PluginContext, presetName string) (err error) {
 	for _, layer := range ppro.layer {
-		layer.ApplyQuadPreset(preset)
+		e := layer.ApplyQuadPreset(presetName)
+		if e != nil {
+			ctx.LogError(e)
+			err = e
+		}
 	}
+	return err
 }
 
 func (ppro *PalettePro) addLayer(ctx *engine.PluginContext, name string) *engine.Layer {
@@ -609,19 +613,11 @@ func (ppro *PalettePro) channelToDestination(channel int) string {
 
 func (ppro *PalettePro) cursorToLayer(ce engine.CursorEvent) *engine.Layer {
 	// For the moment, the Source to layer mapping is 1-to-1.
-	// and the corresponding layers are abcd.
-	switch ce.Source {
-	case "A":
-		return ppro.layer["a"]
-	case "B":
-		return ppro.layer["b"]
-	case "C":
-		return ppro.layer["c"]
-	case "D":
-		return ppro.layer["d"]
-	default:
+	layer, ok := ppro.layer[ce.Source]
+	if !ok {
 		return nil
 	}
+	return layer
 }
 
 func (logic *LayerLogic) cursorToNoteOn(ctx *engine.PluginContext, ce engine.CursorEvent) *engine.NoteOn {
