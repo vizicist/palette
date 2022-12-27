@@ -64,9 +64,9 @@ func engineStop(stopOrStopAll string) string {
 	}
 
 	if stopOrStopAll == "stopall" {
-		return "Engine and Plugins have been stopped."
+		return "Engine and Plugins are being stopped."
 	} else {
-		return "Engine has been stopped."
+		return "Engine is being stopped."
 	}
 }
 
@@ -102,19 +102,6 @@ func CliCommand(args []string) string {
 
 	case "stopall", "engine.stopall":
 		return engineStop("stopall")
-
-		/*
-			errpart1 := "Engine is still running after engine.stop?"
-			err = engine.KillEngine()
-			if err != nil {
-				return errpart1 + " ; " + err.Error()
-			}
-			// Should have been killed, let's see...
-			if engine.IsEngineRunning() {
-				return errpart1 + "Engine is still running after several attempts to kill it."
-			}
-			result = "Engine has been stopped."
-		*/
 
 	case "version":
 		return engine.GetPaletteVersion()
