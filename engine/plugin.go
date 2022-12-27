@@ -330,11 +330,13 @@ func (ctx *PluginContext) OpenMIDIOutput(name string) drivers.In {
 	return nil
 }
 
+/*
 // GetPreset is guaranteed to return non=nil
-func (ctx *PluginContext) GetPreset(presetName string) *Preset {
+func (ctx *PluginContext) GetPreset(presetName string) *OldPreset {
 	preset := GetPreset(presetName)
 	return preset
 }
+*/
 
 /*
 // ExecuteAPI xxx
@@ -482,11 +484,13 @@ func (ctx *EngineContext) restoreCurrentSnap(layerName string) {
 }
 */
 
+/*
 func (ctx *PluginContext) SaveCurrentAsPreset(presetName string) error {
 	preset := ctx.GetPreset(presetName)
 	path := preset.WritableFilePath()
 	return ctx.SaveCurrentSnapInPath(path)
 }
+*/
 
 func (ctx *PluginContext) GenerateCursorGestureesture(source string, cid string, noteDuration time.Duration, x0, y0, z0, x1, y1, z1 float32) {
 	ctx.cursorManager.generateCursorGestureesture(source, cid, noteDuration, x0, y0, z0, x1, y1, z1)
