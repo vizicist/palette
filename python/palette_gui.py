@@ -820,17 +820,17 @@ class ProGuiApp(tk.Tk):
             else:
                 log("doing layer-specific load of ",fullpresetname)
                 if self.allLayersSelected:
-                    layer = "*"
+                    log("Is layer=* still used in palette_gui.py?")
                 else:
                     layer = self.CurrLayer.name()
-                palette.palette_ppro_api("load", "\"preset\": \"" + fullpresetname + "\", \"layer\": \""+layer+"\"")
+                    palette.palette_layer_api(layer, "load", "\"preset\": \"" + fullpresetname + "\"")
         elif self.allLayersSelected:
             for layer in self.Layers:
                 log("calling preset.load on layer=",layer.name()," preset=",presetname)
-                palette.palette_ppro_api("load", "\"preset\": \"" + fullpresetname + "\", \"layer\": \""+layer.name()+"\"")
+                palette.palette_layer_api(layer.name(), "load", "\"preset\": \"" + fullpresetname + "\"")
         else:
             layer = self.CurrLayer.name()
-            palette.palette_layer_api(layer,"preset.load", "\"preset\": \"" + fullpresetname + "\"")
+            palette.palette_layer_api(layer,"load", "\"preset\": \"" + fullpresetname + "\"")
 
         # self.saveCurrent()
 
@@ -1495,7 +1495,7 @@ class LayerChooser(tk.Frame):
         for pad in self.layerFrame:
             if e.widget == self.layerFrame[pad]:
                 self.controller.allLayersSelected = False
-                self.controller.padChooserCallback(pad)
+                self.controller.layerChooserCallback(pad)
                 self.refreshColors()
                 return
         log("No pad found in padCallback!?")
@@ -1713,6 +1713,12 @@ class PageEditParams(tk.Frame):
     def valueClicked(self,name):
         log("valueClicked! name=",name)
 
+    def widg_cget(self,widg, name):
+        cg = widg.cget(name)
+        if isinstance(cg,tuple):
+            return cg[0]
+        return cg
+
     def adjustValue(self,row,amount):
         # log("adjustValue valuesDisplayOffset=",self.valuesDisplayOffset)
         paramrow = row + self.valuesDisplayOffset
@@ -1725,7 +1731,7 @@ class PageEditParams(tk.Frame):
         if t == "bool":
             newval = True if amount>0 else False
         elif t == "int":
-            txt = widg.cget("text")
+            txt = self.widg_cget(widg,"text")
             if txt == "":
                 txt = self.params[name]["init"]
             v = int(txt)
@@ -1744,7 +1750,8 @@ class PageEditParams(tk.Frame):
                 v = v + (dv/10)
             newval = v
         elif t == "double" or t == "float":
-            v = float(widg.cget("text"))
+            cg = self.widg_cget(widg,"text")
+            v = float(cg)
             dv = float(mx) - float(mn)
             if amount == -3:
                 v = v - (dv/10)
@@ -1761,7 +1768,7 @@ class PageEditParams(tk.Frame):
             # log("amount=",amount," mx=",mx," v=",v)
             newval = v
         elif t == "string":
-            widgtext = widg.cget("text")
+            widgtext = self.widg_cget(widg,"text")
             # Not sure why cget returns different things,
             # sometimes tuple, sometimes string
             if type(widgtext) == type("string"):
@@ -1812,7 +1819,7 @@ class PageEditParams(tk.Frame):
     def getValue(self,name):
         t = self.controller.paramValueTypeOf[name]
         widg = self.paramValueWidget[name]
-        s = widg.cget("text")
+        s = self.widg_cget(widg,"text")
         if t == "bool":
             if s == "":
                 b = False
@@ -2203,6 +2210,12 @@ class PagePerformMain(tk.Frame):
         self.advancedButtons[name] = 0
         self.makePerformButton(name,f)
 
+    def button_cget(self,button,name):
+        text = button.cget(name)
+        if isinstance(text,tuple):
+            return text[0]
+        return text
+
     def updatePerformButtonLabels(self,pad):
         # self.controller.performButtonsPerRow = 5
         col = 0
@@ -2217,7 +2230,7 @@ class PagePerformMain(tk.Frame):
                 index = self.controller.globalPerformIndex[name]
                 text = palette.GlobalPerformLabels[name][index]["label"]
             else:
-                text = button.cget("text")
+                text = self.button_cget(button,"text")
 
             if isTwoLine(text):
                 text = text.replace(palette.LineSep,"\n",1)
@@ -2671,7 +2684,7 @@ if __name__ == "__main__":
     log("GUI started")
 
     # Default is all four layers
-    layers = palette.ConfigValue("layers",defvalue="abcd")
+    layers = palette.ConfigValue("layers",defvalue="ABCD")
     nlayers = len(layers)
     if nlayers == 1:
         # You can set layers to "B", for example
