@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -114,6 +115,33 @@ func (vals *ParamValues) Get(name string) string {
 		v = ""
 	}
 	return v
+}
+
+func (vals *ParamValues) SaveInPath(path string) error {
+
+	s := "{\n    \"params\": {\n"
+
+	// Print the parameter values sorted by name
+	fullNames := vals.values
+	sortedNames := make([]string, 0, len(fullNames))
+	for k := range fullNames {
+		sortedNames = append(sortedNames, k)
+	}
+	sort.Strings(sortedNames)
+
+	sep := ""
+	for _, fullName := range sortedNames {
+		valstring, e := vals.paramValueAsString(fullName)
+		if e != nil {
+			LogError(e)
+			continue
+		}
+		s += fmt.Sprintf("%s        \"%s\":\"%s\"", sep, fullName, valstring)
+		sep = ",\n"
+	}
+	s += "\n    }\n}"
+	data := []byte(s)
+	return os.WriteFile(path, data, 0644)
 }
 
 // ParamCallback is the callback when setting parameter values

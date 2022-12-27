@@ -8,20 +8,21 @@ import (
 	"strings"
 )
 
-type Preset struct {
+/*
+type OldPreset struct {
 	Category  string
 	filename  string
 	paramsmap map[string]any
 }
 
-var Presets = make(map[string]*Preset)
+var Presets = make(map[string]*OldPreset)
 
-func GetPreset(name string) *Preset {
+func GetPreset(name string) *OldPreset {
 
 	p, ok := Presets[name]
 	if !ok {
 		category, filename := PresetNameSplit(name)
-		p = &Preset{
+		p = &OldPreset{
 			Category:  category,
 			filename:  filename,
 			paramsmap: make(map[string]any),
@@ -30,6 +31,7 @@ func GetPreset(name string) *Preset {
 	}
 	return p
 }
+*/
 
 /*
 func LoadPreset(name string) (*Preset, error) {
@@ -41,63 +43,6 @@ func LoadPreset(name string) (*Preset, error) {
 	return p, nil
 }
 */
-
-func (p *Preset) LoadPreset() error {
-
-	path := p.readableFilePath()
-	paramsmap, err := LoadParamsMap(path)
-	if err != nil {
-		return err
-	}
-	p.paramsmap = paramsmap
-	return nil
-}
-
-func (p *Preset) ApplyTo(params *ParamValues) error {
-
-	err := ApplyParamsMap(p.Category, p.paramsmap, params)
-	if err != nil {
-		LogError(err)
-		return err
-	}
-
-	// If there's a _override.json file, use it
-	overridePreset := GetPreset(p.Category + "._override")
-	overridepath := overridePreset.readableFilePath()
-	if fileExists(overridepath) {
-		DebugLogOfType("preset", "applyPreset using", "overridepath", overridepath)
-		overridemap, err := LoadParamsMap(overridepath)
-		if err != nil {
-			return err
-		}
-		err = ApplyParamsMap(p.Category, overridemap, params)
-		if err != nil {
-			return err
-		}
-	}
-
-	// For any parameters that are in Paramdefs but are NOT in the loaded
-	// preset, we put out the "init" values.  This happens when new parameters
-	// are added which don't exist in existing preset files.
-	for nm, def := range ParamDefs {
-		// Only include parameters of the desired type
-		thisCategory, _ := PresetNameSplit(nm)
-		if p.Category != "snap" && p.Category != thisCategory {
-			continue
-		}
-		_, found := p.paramsmap[nm]
-		if !found {
-			init := def.Init
-			err := params.Set(nm, init)
-			if err != nil {
-				LogWarn("Loading preset", "preset", nm, "err", err)
-				// Don't fail completely
-			}
-		}
-	}
-
-	return nil
-}
 
 func ApplyParamsMap(presetType string, paramsmap map[string]any, params *ParamValues) error {
 
@@ -127,27 +72,8 @@ func ApplyParamsMap(presetType string, paramsmap map[string]any, params *ParamVa
 	return nil
 }
 
-// ReadablePresetFilePath xxx
-func (p *Preset) readableFilePath() string {
-	return p.presetFilePath()
-}
-
-// WritablePresetFilePath xxx
-func (p *Preset) WritableFilePath() string {
-	path := p.presetFilePath()
-	os.MkdirAll(filepath.Dir(path), 0777)
-	return path
-}
-
 func PresetsDir() string {
 	return "presets"
-}
-
-// presetFilePath returns the full path of a preset file.
-func (p *Preset) presetFilePath() string {
-	jsonfile := p.filename + ".json"
-	localpath := filepath.Join(PaletteDataPath(), PresetsDir(), p.Category, jsonfile)
-	return localpath
 }
 
 func PresetNameSplit(preset string) (string, string) {
@@ -263,4 +189,11 @@ func LoadParamsMap(path string) (map[string]any, error) {
 		return nil, fmt.Errorf("params value is not a map[string]string in jsom")
 	}
 	return paramsmap, nil
+}
+
+// PresetFilePath returns the full path of a preset file.
+func PresetFilePath(category string, filename string) string {
+	jsonfile := filename + ".json"
+	localpath := filepath.Join(PaletteDataPath(), PresetsDir(), category, jsonfile)
+	return localpath
 }

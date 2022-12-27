@@ -80,25 +80,6 @@ func (rm *PluginManager) handleMidiEvent(me MidiEvent) {
 }
 */
 
-/*
-func (pm *PluginManager) ApplyToPluginsNamed(pluginName string, f func(plugin Plugin)) {
-	for name, ctx := range pm.pluginsContext {
-		if pluginName == name {
-			f(plugin)
-		}
-	}
-}
-
-func (pm *PluginManager) GetPlugin(pluginName string) (Plugin, error) {
-	plugin, ok := pm.plugins[pluginName]
-	if !ok {
-		return nil, fmt.Errorf("no plugin named %s", pluginName)
-	} else {
-		return plugin, nil
-	}
-}
-*/
-
 func (pm *PluginManager) GetPluginContext(name string) (*PluginContext, error) {
 	ctx, ok := pm.plugins[name]
 	if !ok {

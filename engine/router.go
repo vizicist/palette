@@ -14,7 +14,6 @@ import (
 var HTTPPort = 3330
 var OSCPort = 3333
 
-// var FFGLPort = 3334
 var LocalAddress = "127.0.0.1"
 var GuiPort = 3943
 
