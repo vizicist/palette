@@ -627,9 +627,15 @@ class ProGuiApp(tk.Tk):
             ptype = self.paramTypeOf[name]
             if pagename != "snap" and ptype != pagename:
                 continue
-            value = palette.palette_layer_api(layer.name(), "get",
+            value, err = palette.palette_layer_api(layer.name(), "get",
                 "\"name\": \"" + name + "\"")
+            if err != None:
+                log("Error in getting value of "+name)
+                continue
+            if isinstance(value,tuple):
+                value = value[0]
             w = page.paramValueWidget[name]
+            value = page.normalizeJsonValue(name,value)
             w.config(text=value)
             # Need to set the value in local params values 
             layer.setValue("",name,value)
@@ -2012,12 +2018,13 @@ class PageEditParams(tk.Frame):
             return
 
         layer = self.controller.CurrLayer.name()
-        result = palette.palette_ppro_api("save",
+        result, err = palette.palette_ppro_api("save",
                 "\"layer\": \"" + layer + "\","+
                 "\"preset\": \"" + preset + "\"")
+        if err != None:
+            log("Error saving preset:",preset," err=",err)
         if result != "":
             log("result of save for preset=",preset," has non-empty result=",result)
-
 
 #    def saveJson(self,section,fname,suffix=".json"):
 #
