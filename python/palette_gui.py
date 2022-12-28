@@ -2017,14 +2017,22 @@ class PageEditParams(tk.Frame):
             self.controller.popup(msg)
             return
 
-        layer = self.controller.CurrLayer.name()
-        result, err = palette.palette_ppro_api("save",
-                "\"layer\": \"" + layer + "\","+
-                "\"preset\": \"" + preset + "\"")
-        if err != None:
-            log("Error saving preset:",preset," err=",err)
-        if result != "":
-            log("result of save for preset=",preset," has non-empty result=",result)
+        if self.pagename == "quad":
+            result, err = palette.palette_ppro_api("save",
+                    "\"preset\": \"" + preset + "\"")
+            if err != None:
+                log("Error saving preset:",preset," err=",err)
+            if result != "":
+                log("result of save for preset=",preset," has non-empty result=",result)
+
+        else:
+            layer = self.controller.CurrLayer.name()
+            result, err = palette.palette_layer_api(layer,"save",
+                    "\"preset\": \"" + preset + "\"")
+            if err != None:
+                log("Error saving preset:",preset," err=",err)
+            if result != "":
+                log("result of save for preset=",preset," has non-empty result=",result)
 
 #    def saveJson(self,section,fname,suffix=".json"):
 #
