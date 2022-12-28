@@ -30,6 +30,7 @@ func (ctx *PluginContext) ClearCursors() {
 	ctx.cursorManager.clearCursors()
 }
 
+/*
 func (ctx *PluginContext) LogInfo(msg string, keysAndValues ...any) {
 	LogInfo(msg, keysAndValues...)
 }
@@ -41,6 +42,7 @@ func (ctx *PluginContext) LogWarn(msg string, keysAndValues ...any) {
 func (ctx *PluginContext) LogError(err error, keysAndValues ...any) {
 	LogError(err, keysAndValues...)
 }
+*/
 
 func (ctx *PluginContext) PaletteDir() string {
 	return PaletteDir()
@@ -204,11 +206,11 @@ func (ctx *PluginContext) SubmitCommand(command Command) {
 }
 
 func (ctx *PluginContext) ParamIntValue(name string) int {
-	return ctx.params.ParamIntValue(name)
+	return ctx.params.GetIntValue(name)
 }
 
 func (ctx *PluginContext) ParamBoolValue(name string) bool {
-	return ctx.params.ParamBoolValue(name)
+	return ctx.params.GetBoolValue(name)
 }
 
 /*

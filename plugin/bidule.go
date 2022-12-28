@@ -11,16 +11,14 @@ import (
 
 type Bidule struct {
 	mutex  sync.Mutex
-	ctx    *engine.PluginContext
 	client *osc.Client
 	port   int
 }
 
 const BidulePort = 3210
 
-func NewBidule(ctx *engine.PluginContext) *Bidule {
+func NewBidule() *Bidule {
 	return &Bidule{
-		ctx:    ctx,
 		client: osc.NewClient(engine.LocalAddress, BidulePort),
 		port:   3210,
 	}
@@ -40,14 +38,13 @@ func (b *Bidule) Activate() {
 }
 
 func (b *Bidule) ProcessInfo() *processInfo {
-	ctx := b.ctx
-	bidulePath := ctx.ConfigValueWithDefault("bidule", "")
+	bidulePath := engine.ConfigValueWithDefault("bidule", "")
 	if bidulePath == "" {
 		bidulePath = "C:\\Program Files\\Plogue\\Bidule\\Bidule.exe"
-		ctx.LogWarn("No bidule value in settings, using default", "path", bidulePath)
+		engine.LogWarn("No bidule value in settings, using default", "path", bidulePath)
 	}
-	if !ctx.FileExists(bidulePath) {
-		ctx.LogWarn("No bidule found, looking for", "path", bidulePath)
+	if !engine.FileExists(bidulePath) {
+		engine.LogWarn("No bidule found, looking for", "path", bidulePath)
 		return nil
 	}
 	exe := bidulePath
@@ -55,12 +52,12 @@ func (b *Bidule) ProcessInfo() *processInfo {
 	if lastslash > 0 {
 		exe = exe[lastslash+1:]
 	}
-	bidulefile := ctx.ConfigValueWithDefault("bidulefile", "")
+	bidulefile := engine.ConfigValueWithDefault("bidulefile", "")
 	if bidulefile == "" {
 		bidulefile = "default.bidule"
 	}
-	filepath := ctx.ConfigFilePath(bidulefile)
-	return &processInfo{exe, bidulePath, filepath, b.Activate}
+	filepath := engine.ConfigFilePath(bidulefile)
+	return NewProcessInfo(exe, bidulePath, filepath, b.Activate)
 }
 
 func (b *Bidule) Reset() {
