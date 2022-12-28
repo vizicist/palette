@@ -23,6 +23,13 @@
             "args": []
         },
         {
+            "name": "palette gui",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
+            "args": ["gui"]
+        },
+        {
             "name": "palette engine.start",
             "type": "go",
             "request": "launch",

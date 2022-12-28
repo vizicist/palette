@@ -113,17 +113,24 @@ func CliCommand(args []string) string {
 		}
 		return "Logs have been sent."
 
+	case "gui":
+		return doApi("ppro.startprocess", "process", "gui")
+
 	default:
 		words := strings.Split(api, ".")
 		if len(words) != 2 {
 			return "Invalid api format, expecting {plugin}.{api}"
 		}
-		resultMap, err := engine.RemoteAPI(api, args[1:]...)
-		if err != nil {
-			return fmt.Sprintf("RemoteAPI: err=%s\n", err)
-		}
-		return humanReadableApiOutput(resultMap)
+		return doApi(api, args[1:]...)
 	}
+}
+
+func doApi(api string, apiargs ...string) string {
+	resultMap, err := engine.RemoteAPI(api, apiargs...)
+	if err != nil {
+		return fmt.Sprintf("RemoteAPI: err=%s\n", err)
+	}
+	return humanReadableApiOutput(resultMap)
 }
 
 func doStart() string {
@@ -131,11 +138,6 @@ func doStart() string {
 	if engine.IsEngineRunning() {
 		return "Engine is already running?"
 	}
-
-	// err := engine.KillEngine()
-	// if err != nil {
-	// 	return fmt.Sprintf("engine.KillEngine: err=%s", err)
-	// }
 
 	err := engine.StartEngine()
 	if err != nil {

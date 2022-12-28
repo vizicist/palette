@@ -376,6 +376,12 @@ PaletteHost::LoadPaletteConfig(cJSON* c)
 	if ( (j=getString(c,"debugcursor")) != NULL ) {
 		NosuchDebugCursor = istrue(j->valuestring);
 	}
+	if ( (j=getString(c,"debugapi")) != NULL ) {
+		NosuchDebugAPI = istrue(j->valuestring);
+	}
+	if ( (j=getString(c,"debugparam")) != NULL ) {
+		NosuchDebugParam = istrue(j->valuestring);
+	}
 	if ( (j=getString(c,"debugsprite")) != NULL ) {
 		NosuchDebugSprite = istrue(j->valuestring);
 	}
@@ -707,6 +713,9 @@ std::string PaletteHost::ExecuteJson(std::string meth, cJSON *params, const char
 	if (meth == "set_param") {
 		std::string param = needString(meth,params,"param");
 		std::string value = needString(meth,params,"value");
+		if ( NosuchDebugParam == TRUE ) {
+			NosuchDebug("set_param %s %s\n", param.c_str(), value.c_str());
+		}
 		_palette->layer.params.Set(param, value);
 		return jsonIntResult(0,id);
 	}
@@ -716,6 +725,9 @@ std::string PaletteHost::ExecuteJson(std::string meth, cJSON *params, const char
 				std::string nm = item->string;
 				std::string val = item->valuestring;
 				// NosuchDebug("set %s %s\n", nm.c_str(), val.c_str());
+				if ( NosuchDebugParam == TRUE ) {
+					NosuchDebug("set_params %s %s\n", nm.c_str(), val.c_str());
+				}
 				_palette->layer.params.Set(nm, val);
 			}
 		}
