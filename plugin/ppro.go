@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"os"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -204,6 +205,13 @@ func (ppro *PalettePro) Api(ctx *engine.PluginContext, api string, apiargs map[s
 		}
 		return "", err
 
+	case "save":
+		presetName, okpreset := apiargs["preset"]
+		if !okpreset {
+			return "", fmt.Errorf("missing preset parameter")
+		}
+		return "", ppro.saveQuadPreset(presetName)
+
 	case "startprocess":
 		process, ok := apiargs["process"]
 		if !ok {
@@ -217,9 +225,8 @@ func (ppro *PalettePro) Api(ctx *engine.PluginContext, api string, apiargs map[s
 		process, ok := apiargs["process"]
 		if !ok {
 			return "", fmt.Errorf("ExecuteAPI: missing process argument")
-		} else {
-			return "", ppro.processManager.StopRunning(ctx, process)
 		}
+		return "", ppro.processManager.StopRunning(ctx, process)
 
 	case "activate":
 		// Force Activate even if already activated
@@ -266,8 +273,6 @@ func (ppro *PalettePro) Api(ctx *engine.PluginContext, api string, apiargs map[s
 		engine.LogWarn("Pro.ExecuteAPI api is not recognized\n", "api", api)
 		return "", fmt.Errorf("Router.ExecutePresetAPI unrecognized api=%s", api)
 	}
-
-	// return result, err
 }
 
 func (ppro *PalettePro) start(ctx *engine.PluginContext) error {
@@ -628,7 +633,13 @@ func (ppro *PalettePro) saveQuadPreset(presetName string) error {
 	sep := ""
 	engine.LogInfo("saveQuadPreset", "preset", presetName)
 
+	sortedLayerNames := []string{}
 	for _, layer := range ppro.layer {
+		sortedLayerNames = append(sortedLayerNames, layer.Name())
+	}
+	sort.Strings(sortedLayerNames)
+	for _, layerName := range sortedLayerNames {
+		layer := ppro.layer[layerName]
 		engine.LogInfo("starting", "layer", layer.Name())
 		sortedNames := layer.ParamNames()
 		for _, fullName := range sortedNames {
