@@ -13,6 +13,7 @@ using namespace std;
 int NosuchDebugLevel = 0;
 bool NosuchDebugCursor = false;
 bool NosuchDebugAPI = false;
+bool NosuchDebugParam = false;
 bool NosuchDebugSprite = false;
 bool NosuchDebugTimeTag = true;
 bool NosuchDebugToLog = true;

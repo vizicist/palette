@@ -141,12 +141,17 @@ std::string Palette::loadParamPushReal(cJSON* sound, cJSON* visual)
 	for ( j=sound->child; j!=NULL; j=j->next ) {
 		std::string key = j->string;
 		std::string val = jsonValueString(j) ;
+		if ( NosuchDebugParam == TRUE ) {
+			NosuchDebug("loadParamsPushReal sound %s %s\n", key.c_str(), val.c_str());
+		}
 		layer.params.Set(key,val);
 	}
 	for ( j=visual->child; j!=NULL; j=j->next ) {
 		std::string key = j->string;
 		std::string val = jsonValueString(j) ;
-		// NosuchDebug("loadParamPushReal region=%s key=%s val=%s", region->name.c_str(),key.c_str(), val.c_str());
+		if ( NosuchDebugParam == TRUE ) {
+			NosuchDebug("loadParamsPushReal visual %s %s\n", key.c_str(), val.c_str());
+		}
 		layer.params.Set(key,val);
 	}
 	// ResetLayerParams();
