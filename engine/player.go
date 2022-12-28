@@ -154,22 +154,6 @@ var uniqueIndex = 0
 
 
 /*
-func (layer *Layer) generateVisualsFromCursor(ce CursorEvent) {
-	if !TheRouter().generateVisuals {
-		return
-	}
-	// send an OSC message to Resolume
-	msg := osc.NewMessage("/cursor")
-	msg.Append(ce.Ddu)
-	msg.Append(ce.ID)
-	msg.Append(float32(ce.X))
-	msg.Append(float32(ce.Y))
-	msg.Append(float32(ce.Z))
-	layer.toFreeFramePluginForLayer(msg)
-}
-*/
-
-/*
 
  */
 
@@ -272,33 +256,6 @@ func (layer) *Layer) cursorToQuant(ce CursorStepEvent) Clicks {
 */
 
 /*
-func (layer) *Layer) loopComb() {
-
-	layer.loop.stepsMutex.Lock()
-	defer layer.loop.stepsMutex.Unlock()
-
-	// Create a map of the UP cursor events, so we only do completed notes
-	upEvents := make(map[string]CursorStepEvent)
-	for _, step := range layer.loop.steps {
-		if step.events != nil && len(step.events) > 0 {
-			for _, event := range step.events {
-				if event.cursorStepEvent.Ddu == "up" {
-					upEvents[event.cursorStepEvent.ID] = event.cursorStepEvent
-				}
-			}
-		}
-	}
-	combme := 0
-	combmod := 2 // should be a parameter
-	for id := range upEvents {
-		if combme == 0 {
-			layer.loop.ClearID(id)
-			layer.generateSoundFromCursor(upEvents[id])
-		}
-		combme = (combme + 1) % combmod
-	}
-}
-
 func (layer) *Layer) loopQuant() {
 
 	layer.loop.stepsMutex.Lock()
