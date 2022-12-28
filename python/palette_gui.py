@@ -810,33 +810,33 @@ class ProGuiApp(tk.Tk):
         self.lastLoadType = presettype
         self.lastLoadName = presetname
         fullpresetname = presettype+"."+str(presetname)
-        log("loadAndSend preset=",fullpresetname)
         self.editPage[presettype].paramsnameVar.set(presetname)
 
-        if self.currentMode != "attract":
-            log("Loading",presettype,presetname)
+        # if self.currentMode != "attract":
+        #     log("Loading","preset",fullpresetname)
 
         if presettype == "quad":
-            if self.guiLevel == 0:
+            if self.guiLevel == 0 or self.allLayersSelected:
                 # in casual instrument mode, loading a quad will ignore the layer selections
                 # because in casual mode, the layer selectors aren't shown.
-                # So, we don't include the layer parameter.
-                log("doing full load of ",fullpresetname)
+                # In non-casual mode (guiLevel>0) we do this if allLayersSelected
+                log("Loading","preset",fullpresetname)
                 palette.palette_ppro_api("load", "\"preset\": \"" + fullpresetname + "\"")
             else:
-                log("doing layer-specific load of ",fullpresetname)
-                if self.allLayersSelected:
-                    log("Is layer=* still used in palette_gui.py?")
-                else:
-                    layer = self.CurrLayer.name()
-                    palette.palette_layer_api(layer, "load", "\"preset\": \"" + fullpresetname + "\"")
+                # Otherwise, the quad preset is loaded only in a single layer
+                layerName = self.CurrLayer.name()
+                log("Loading","layer",layerName,"preset",fullpresetname)
+                palette.palette_layer_api(layerName, "load", "\"preset\": \"" + fullpresetname + "\"")
+
         elif self.allLayersSelected:
             for layer in self.Layers:
-                log("calling preset.load on layer=",layer.name()," preset=",presetname)
+                log("Loading","layer",layer.name(),"preset",fullpresetname)
                 palette.palette_layer_api(layer.name(), "load", "\"preset\": \"" + fullpresetname + "\"")
+
         else:
-            layer = self.CurrLayer.name()
-            palette.palette_layer_api(layer,"load", "\"preset\": \"" + fullpresetname + "\"")
+            layerName = self.CurrLayer.name()
+            log("Loading","layer",layerName,"preset",fullpresetname)
+            palette.palette_layer_api(layerName,"load", "\"preset\": \"" + fullpresetname + "\"")
 
         # self.saveCurrent()
 
