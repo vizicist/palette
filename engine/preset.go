@@ -33,17 +33,6 @@ func GetPreset(name string) *OldPreset {
 }
 */
 
-/*
-func LoadPreset(name string) (*Preset, error) {
-	p := GetPreset(name)
-	err := p.loadPreset()
-	if err != nil {
-		return nil, err
-	}
-	return p, nil
-}
-*/
-
 func ApplyParamsMap(presetType string, paramsmap map[string]any, params *ParamValues) error {
 
 	// Currently, no errors are ever returned, but log messages are generated.
@@ -196,4 +185,11 @@ func PresetFilePath(category string, filename string) string {
 	jsonfile := filename + ".json"
 	localpath := filepath.Join(PaletteDataPath(), PresetsDir(), category, jsonfile)
 	return localpath
+}
+
+// WritablePresetFilePath xxx
+func WritableFilePath(category string, filename string) string {
+	path := PresetFilePath(category, filename)
+	os.MkdirAll(filepath.Dir(path), 0777)
+	return path
 }

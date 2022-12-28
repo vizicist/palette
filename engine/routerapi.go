@@ -14,47 +14,6 @@ func (r *Router) SetLayerParamValue(layerName string, name string, value string)
 }
 */
 
-func (r *Router) saveQuadPreset(presetName string) error {
-
-	LogWarn("Router.saveQuadPreset needs work")
-	return nil
-	/*
-		preset, err := LoadPreset(presetName)
-		if err != nil {
-			return err
-		}
-		// wantCategory is sound, visual, effect, snap, or quad
-		path := preset.WriteableFilePath()
-		s := "{\n    \"params\": {\n"
-
-		sep := ""
-		Info("saveQuadPreset", "preset", presetName)
-
-			for _, ctx := range r.pluginManager.pluginsContext {
-				Info("starting", "layer", layer.layerName)
-				// Print the parameter values sorted by name
-				fullNames := layer.params.values
-				sortedNames := make([]string, 0, len(fullNames))
-				for k := range fullNames {
-					sortedNames = append(sortedNames, k)
-				}
-				sort.Strings(sortedNames)
-
-				for _, fullName := range sortedNames {
-					valstring, err := layer.params.paramValueAsString(fullName)
-					if err != nil {
-						LogError(err)
-						continue
-					}
-					s += fmt.Sprintf("%s        \"%s-%s\":\"%s\"", sep, layer.layerName, fullName, valstring)
-					sep = ",\n"
-				}
-			}
-			s += "\n    }\n}"
-			data := []byte(s)
-			return os.WriteFile(path, data, 0644)
-	*/
-}
 
 /*
 func (r *Router) executeProcessAPI(api string, apiargs map[string]string) (result string, err error) {

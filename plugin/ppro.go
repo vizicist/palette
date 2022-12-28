@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
+	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -140,7 +141,8 @@ func (ppro *PalettePro) Api(ctx *engine.PluginContext, api string, apiargs map[s
 		return "", ppro.start(ctx)
 
 	case "stop":
-		return "", ppro.processManager.StopRunning("all")
+		ppro.started = false
+		return "", ppro.processManager.StopRunning(ctx, "all")
 
 	case "event":
 		eventName, ok := apiargs["event"]
@@ -183,12 +185,31 @@ func (ppro *PalettePro) Api(ctx *engine.PluginContext, api string, apiargs map[s
 		}
 		return value, nil
 
+	case "load":
+		presetName, okpreset := apiargs["preset"]
+		if !okpreset {
+			return "", fmt.Errorf("missing preset parameter")
+		}
+
+		err := ppro.loadQuadPreset(presetName)
+		if err != nil {
+			return "", err
+		}
+		err = nil
+		for _, layer := range ppro.layer {
+			e := layer.SaveCurrentParams()
+			if e != nil {
+				err = e
+			}
+		}
+		return "", err
+
 	case "startprocess":
 		process, ok := apiargs["process"]
 		if !ok {
 			err = fmt.Errorf("ExecuteAPI: missing process argument")
 		} else {
-			err = ppro.processManager.StartRunning(process)
+			err = ppro.processManager.StartRunning(ctx, process)
 		}
 		return "", err
 
@@ -197,19 +218,16 @@ func (ppro *PalettePro) Api(ctx *engine.PluginContext, api string, apiargs map[s
 		if !ok {
 			return "", fmt.Errorf("ExecuteAPI: missing process argument")
 		} else {
-			return "", ppro.processManager.StopRunning(process)
+			return "", ppro.processManager.StopRunning(ctx, process)
 		}
 
 	case "activate":
-		for _, pi := range ppro.processManager.info {
-			if pi.Activate != nil {
-				pi.Activate()
-			}
-		}
+		// Force Activate even if already activated
+		ppro.processManager.ActivateAll()
 		return "", nil
 
 	case "killall":
-		return "", ppro.processManager.killAll()
+		return "", ppro.processManager.killAll(ctx)
 
 	case "nextalive":
 		// acts like a timer, but it could wait for
@@ -245,7 +263,7 @@ func (ppro *PalettePro) Api(ctx *engine.PluginContext, api string, apiargs map[s
 		return "", nil
 
 	default:
-		ctx.LogWarn("Pro.ExecuteAPI api is not recognized\n", "api", api)
+		engine.LogWarn("Pro.ExecuteAPI api is not recognized\n", "api", api)
 		return "", fmt.Errorf("Router.ExecutePresetAPI unrecognized api=%s", api)
 	}
 
@@ -258,12 +276,12 @@ func (ppro *PalettePro) start(ctx *engine.PluginContext) error {
 		return fmt.Errorf("PalettePro: already started")
 	}
 	ppro.started = true
-	ppro.resolume = NewResolume(ctx)
-	ppro.bidule = NewBidule(ctx)
+	ppro.resolume = NewResolume()
+	ppro.bidule = NewBidule()
 
-	ppro.processManager = NewProcessManager(ctx)
+	ppro.processManager = NewProcessManager()
 
-	ppro.processManager.AddProcess("resolume", ppro.resolume.ProcessInfo())
+	ppro.processManager.AddProcess("resolume", ppro.resolume.ProcessInfo(ctx))
 	ppro.processManager.AddProcess("bidule", ppro.bidule.ProcessInfo())
 	ppro.processManager.AddProcess("gui", ppro.guiInfo())
 	ppro.processManager.AddProcess("mmtt", ppro.mmttInfo())
@@ -272,19 +290,19 @@ func (ppro *PalettePro) start(ctx *engine.PluginContext) error {
 
 	layerA := ppro.addLayer(ctx, "A")
 	layerA.Set("visual.shape", "circle")
-	layerA.ApplyPreset("snap.White_Ghosts")
+	layerA.LoadPreset("snap.White_Ghosts")
 
 	layerB := ppro.addLayer(ctx, "B")
 	layerB.Set("visual.shape", "square")
-	layerB.ApplyPreset("snap.Concentric_Squares")
+	layerB.LoadPreset("snap.Concentric_Squares")
 
 	layerC := ppro.addLayer(ctx, "C")
 	layerC.Set("visual.shape", "square")
-	layerC.ApplyPreset("snap.Circular_Moire")
+	layerC.LoadPreset("snap.Circular_Moire")
 
 	layerD := ppro.addLayer(ctx, "D")
 	layerD.Set("visual.shape", "square")
-	layerD.ApplyPreset("snap.Diagonal_Mirror")
+	layerD.LoadPreset("snap.Diagonal_Mirror")
 
 	//ctx.ApplyPreset("quad.Quick Scat_Circles")
 
@@ -320,7 +338,7 @@ func (ppro *PalettePro) onClientRestart(ctx *engine.PluginContext, apiargs map[s
 	if err != nil {
 		return "", err
 	}
-	ctx.LogInfo("ppro got clientrestart", "apipnum", apipnum)
+	engine.LogInfo("ppro got clientrestart", "apipnum", apipnum)
 	for nm, layer := range ppro.layer {
 		portnum, _ := ppro.resolume.PortAndLayerNumForLayer(nm)
 		if portnum == apipnum {
@@ -334,7 +352,7 @@ func (ppro *PalettePro) onParamSet(ctx *engine.PluginContext, layerName string, 
 
 	layer, ok := ppro.layer[layerName]
 	if !ok {
-		ctx.LogWarn("No layer named", "layer", layerName)
+		engine.LogWarn("No layer named", "layer", layerName)
 		return
 	}
 
@@ -356,7 +374,7 @@ func (ppro *PalettePro) onParamSet(ctx *engine.PluginContext, layerName string, 
 	if paramName == "sound.synth" {
 		synth := ctx.GetSynth(paramValue)
 		if synth == nil {
-			ctx.LogWarn("PalettePro: no synth named", "synth", paramValue)
+			engine.LogWarn("PalettePro: no synth named", "synth", paramValue)
 		}
 		ppro.logic[layerName].synth = synth
 	}
@@ -385,7 +403,7 @@ func (ppro *PalettePro) onClick(ctx *engine.PluginContext, apiargs map[string]st
 		// Non-internal cursor activity turns attract mode off instantly.
 		if !ppro.attractModeIsOn && sinceLastAttractChange > ppro.attractIdleSecs {
 			// Nothing happening for a while, turn attract mode on
-			ctx.LogWarn("PalettePro.OnClick: should be turning attractmode on")
+			engine.LogWarn("PalettePro.OnClick: should be turning attractmode on")
 			ppro.lastAttractCommand = time.Now()
 		}
 	}
@@ -415,7 +433,7 @@ func (ppro *PalettePro) onClick(ctx *engine.PluginContext, apiargs map[string]st
 		go func() {
 			engine.DebugLogOfType("scheduler", "Scheduler: checking processes")
 			time.Sleep(2 * time.Second)
-			ppro.checkProcessesAndRestartIfNecessary()
+			ppro.processManager.checkAutostartProcesses(ctx)
 		}()
 		ppro.lastProcessCheck = uptimesecs
 	}
@@ -440,14 +458,14 @@ func (ppro *PalettePro) onMidiEvent(ctx *engine.PluginContext, apiargs map[strin
 	*/
 
 	if ppro.MIDIThru {
-		ctx.LogWarn("PassThruMIDI needs work")
+		engine.LogWarn("PassThruMIDI needs work")
 		// ppro.PassThruMIDI(e)
 	}
 	if ppro.MIDISetScale {
 		ppro.handleMIDISetScaleNote(me)
 	}
 
-	ctx.LogInfo("PalettePro.onMidiEvent", "me", me)
+	engine.LogInfo("PalettePro.onMidiEvent", "me", me)
 	phr, err := ctx.MidiEventToPhrase(me)
 	if err != nil {
 		return "", err
@@ -474,7 +492,7 @@ func doTest(ctx *engine.PluginContext, ntimes int, dt time.Duration) {
 			"z", fmt.Sprintf("%f", rand.Float32()),
 		)
 		if err != nil {
-			ctx.LogError(err)
+			engine.LogError(err)
 			return
 		}
 		time.Sleep(dt)
@@ -487,7 +505,7 @@ func doTest(ctx *engine.PluginContext, ntimes int, dt time.Duration) {
 			"z", fmt.Sprintf("%f", rand.Float32()),
 		)
 		if err != nil {
-			ctx.LogError(err)
+			engine.LogError(err)
 			return
 		}
 	}
@@ -497,7 +515,7 @@ func (ppro *PalettePro) saveCurrentParams(ctx *engine.PluginContext) {
 	for _, layer := range ppro.layer {
 		err := layer.SaveCurrentParams()
 		if err != nil {
-			ctx.LogError(err)
+			engine.LogError(err)
 		}
 	}
 }
@@ -541,7 +559,7 @@ func (ppro *PalettePro) onCursorEvent(ctx *engine.PluginContext, apiargs map[str
 	// Any non-internal cursor will turn attract mode off.
 	if source != "internal" {
 		if time.Since(ppro.lastAttractCommand) > time.Second {
-			ctx.LogInfo("PalettePro: shouold be turning attract mode OFF")
+			engine.LogInfo("PalettePro: shouold be turning attract mode OFF")
 			ppro.lastAttractCommand = time.Now()
 		}
 
@@ -560,30 +578,68 @@ func (ppro *PalettePro) onCursorEvent(ctx *engine.PluginContext, apiargs map[str
 
 	return "", nil
 }
-func (ppro *PalettePro) loadQuadPresetRand(ctx *engine.PluginContext) {
+
+func (ppro *PalettePro) loadQuadPresetRand() {
 
 	arr, err := engine.PresetArray("quad")
 	if err != nil {
-		ctx.LogError(err)
+		engine.LogError(err)
 		return
 	}
 	rn := rand.Uint64() % uint64(len(arr))
-	ctx.LogInfo("loadQuadPresetRand", "preset", arr[rn])
-	ppro.loadQuadPreset(ctx, arr[rn])
+	engine.LogInfo("loadQuadPresetRand", "preset", arr[rn])
+	ppro.loadQuadPreset(arr[rn])
 	if err != nil {
-		ctx.LogError(err)
+		engine.LogError(err)
 	}
 }
 
-func (ppro *PalettePro) loadQuadPreset(ctx *engine.PluginContext, presetName string) (err error) {
+func (ppro *PalettePro) loadQuadPreset(presetName string) (err error) {
+
+	category, filename := engine.PresetNameSplit(presetName)
+	if category != "quad" {
+		return fmt.Errorf("PalettePro.loadQuadPreset: not a quad preset", "preset", presetName)
+	}
+	path := engine.PresetFilePath(category, filename)
+	paramsMap, err := engine.LoadParamsMap(path)
+	if err != nil {
+		return err
+	}
 	for _, layer := range ppro.layer {
-		e := layer.ApplyQuadPreset(presetName)
+		e := layer.ApplyQuadPresetMap(paramsMap)
 		if e != nil {
-			ctx.LogError(e)
+			engine.LogError(e)
 			err = e
 		}
 	}
 	return err
+}
+
+func (ppro *PalettePro) saveQuadPreset(presetName string) error {
+
+	// wantCategory is sound, visual, effect, snap, or quad
+	category, filename := engine.PresetNameSplit(presetName)
+	if category != "quad" {
+		return fmt.Errorf("PalettePro.saveQuadPreset: not a quad preset", "preset", presetName)
+	}
+	path := engine.WritableFilePath(category, filename)
+	s := "{\n    \"params\": {\n"
+
+	sep := ""
+	engine.LogInfo("saveQuadPreset", "preset", presetName)
+
+	for _, layer := range ppro.layer {
+		engine.LogInfo("starting", "layer", layer.Name())
+		sortedNames := layer.ParamNames()
+		for _, fullName := range sortedNames {
+			valstring := layer.Get(fullName)
+			s += fmt.Sprintf("%s        \"%s-%s\":\"%s\"", sep, layer.Name(), fullName, valstring)
+			sep = ",\n"
+		}
+	}
+	s += "\n    }\n}"
+	data := []byte(s)
+	return os.WriteFile(path, data, 0644)
 }
 
 func (ppro *PalettePro) addLayer(ctx *engine.PluginContext, name string) *engine.Layer {
@@ -598,7 +654,7 @@ func (ppro *PalettePro) addLayer(ctx *engine.PluginContext, name string) *engine
 }
 
 func (ppro *PalettePro) scheduleNoteNow(ctx *engine.PluginContext, dest string, pitch, velocity uint8, duration engine.Clicks) {
-	ctx.LogInfo("PalettePro.scheculeNoteNow", "dest", dest, "pitch", pitch)
+	engine.LogInfo("PalettePro.scheculeNoteNow", "dest", dest, "pitch", pitch)
 	pe := &engine.PhraseElement{Value: engine.NewNoteFull(0, pitch, velocity, duration)}
 	phr := engine.NewPhrase().InsertElement(pe)
 	phr.Destination = dest
@@ -630,7 +686,7 @@ func (logic *LayerLogic) cursorToNoteOn(ctx *engine.PluginContext, ce engine.Cur
 func (logic *LayerLogic) cursorToChannel(ctx *engine.PluginContext, ce engine.CursorEvent) (channel uint8) {
 	synth := logic.synth
 	if synth == nil {
-		ctx.LogWarn("cursorToChannel: No synth?")
+		engine.LogWarn("cursorToChannel: No synth?")
 		channel = 1
 	} else {
 		channel = synth.Channel()
@@ -688,7 +744,7 @@ func (logic *LayerLogic) cursorToVelocity(ctx *engine.PluginContext, ce engine.C
 	case "fixed":
 		// do nothing
 	default:
-		ctx.LogWarn("Unrecognized vol value", "vol", vol)
+		engine.LogWarn("Unrecognized vol value", "vol", vol)
 	}
 	dv := velocitymax - velocitymin + 1
 	p1 := int(v * float32(dv))
@@ -744,7 +800,7 @@ func (ppro *PalettePro) publishOscAlive(ctx *engine.PluginContext, uptimesecs fl
 	msg.Append(attractMode)
 	err := ppro.attractClient.Send(msg)
 	if err != nil {
-		ctx.LogWarn("publishOscAlive", "err", err)
+		engine.LogWarn("publishOscAlive", "err", err)
 	}
 }
 
@@ -775,7 +831,7 @@ func (ppro *PalettePro) doAttractAction(ctx *engine.PluginContext) {
 
 	dp := now.Sub(ppro.lastAttractPresetTime)
 	if ppro.attractPreset == "random" && dp > ppro.attractPresetDuration {
-		ppro.loadQuadPresetRand(ctx)
+		ppro.loadQuadPresetRand()
 		ppro.lastAttractPresetTime = now
 	}
 }
@@ -791,34 +847,13 @@ func (ppro *PalettePro) mmttInfo() *processInfo {
 		engine.LogWarn("no mmtt executable found, looking for", "path", fullpath)
 		fullpath = ""
 	}
-	return &processInfo{"mmtt_" + mmtt + ".exe", fullpath, "", nil}
+	return NewProcessInfo("mmtt_"+mmtt+".exe", fullpath, "", nil)
 }
 
 func (ppro *PalettePro) guiInfo() *processInfo {
 	exe := "palette_gui.exe"
 	fullpath := filepath.Join(engine.PaletteDir(), "bin", "pyinstalled", exe)
-	return &processInfo{exe, fullpath, "", nil}
-}
-
-func (ppro *PalettePro) checkProcessesAndRestartIfNecessary() {
-	autostart := engine.ConfigValueWithDefault("autostart", "")
-	if autostart == "" || autostart == "nothing" || autostart == "none" {
-		return
-	}
-	processes := strings.Split(autostart, ",")
-	pm := ppro.processManager
-	for _, processName := range processes {
-		p, _ := pm.getProcessInfo(processName)
-		if p != nil {
-			if !pm.isRunning(processName) {
-				go func(name string) {
-					pm.StartRunning(name)
-					pm.Activate(name)
-				}(processName)
-			}
-		}
-	}
-
+	return NewProcessInfo(exe, fullpath, "", nil)
 }
 
 func (logic *LayerLogic) generateSoundFromCursor(ctx *engine.PluginContext, ce engine.CursorEvent) {
@@ -842,7 +877,7 @@ func (logic *LayerLogic) generateSoundFromCursor(ctx *engine.PluginContext, ce e
 			// Also, I'm seeing this pretty commonly in other situations,
 			// not really sure what the underlying reason is,
 			// but it seems to be harmless at the moment.
-			ctx.LogWarn("=============== HEY! drag event, a.currentNoteOn == nil?\n")
+			engine.LogWarn("=============== HEY! drag event, a.currentNoteOn == nil?\n")
 			return
 		}
 		newNoteOn := logic.cursorToNoteOn(ctx, ce)
@@ -889,7 +924,7 @@ func (logic *LayerLogic) generateSoundFromCursor(ctx *engine.PluginContext, ce e
 	case "up":
 		if a.noteOn == nil {
 			// not sure why this happens, yet
-			ctx.LogWarn("Unexpected UP when currentNoteOn is nil?", "layer", layer.Name())
+			engine.LogWarn("Unexpected UP when currentNoteOn is nil?", "layer", layer.Name())
 		} else {
 			logic.sendNoteOff(a)
 
@@ -932,7 +967,7 @@ func (logic *LayerLogic) terminateActiveNotes(ctx *engine.PluginContext) {
 		if a != nil {
 			logic.sendNoteOff(a)
 		} else {
-			ctx.LogWarn("Hey, nil activeNotes entry for", "id", id)
+			engine.LogWarn("Hey, nil activeNotes entry for", "id", id)
 		}
 	}
 	logic.activeNotesMutex.RUnlock()
@@ -1020,7 +1055,7 @@ func (logic *LayerLogic) generateSpriteFromPhraseElement(ctx *engine.PluginConte
 	pitchmin := uint8(layer.GetInt("sound.pitchmin"))
 	pitchmax := uint8(layer.GetInt("sound.pitchmax"))
 	if pitch < pitchmin || pitch > pitchmax {
-		ctx.LogWarn("Unexpected value", "pitch", pitch)
+		engine.LogWarn("Unexpected value", "pitch", pitch)
 		return
 	}
 

@@ -8,7 +8,9 @@ import (
 )
 
 // ExecuteAPI xxx
-func (e *Engine) ExecuteAPIFromMap(api string, apiargs map[string]string) (result string, err error) {
+func (e *Engine) ExecuteAPI(api string, apiargs map[string]string) (result string, err error) {
+
+	DebugLogOfType("api", "ExecuteAPI", "api", api, "apiargs", apiargs)
 
 	result = "" // pre-populate the most common result, when no err
 
@@ -62,7 +64,7 @@ func (e *Engine) ExecuteAPIFromJson(rawjson string) (string, error) {
 	if !ok {
 		return "", fmt.Errorf("Router.ExecuteAPIAsJson: no api value")
 	}
-	return e.ExecuteAPIFromMap(api, args)
+	return e.ExecuteAPI(api, args)
 }
 
 func (e *Engine) executeEngineAPI(api string, apiargs map[string]string) (result string, err error) {

@@ -97,7 +97,7 @@ func (vals *ParamValues) SetDefaultValues() {
 	vals.mutex.Lock()
 	defer vals.mutex.Unlock()
 	for nm, d := range ParamDefs {
-		err := vals.internalSetParamValueWithString(nm, d.Init, nil, false)
+		err := vals.setParamValueWithString(nm, d.Init, nil, false)
 		if err != nil {
 			LogError(err)
 		}
@@ -105,7 +105,7 @@ func (vals *ParamValues) SetDefaultValues() {
 }
 
 func (vals *ParamValues) Set(name, value string) error {
-	return vals.SetParamValueWithString(name, value, nil)
+	return vals.setParamValueWithString(name, value, nil, true)
 }
 
 // returns "" if parameter doesn't exist
@@ -115,6 +115,50 @@ func (vals *ParamValues) Get(name string) string {
 		v = ""
 	}
 	return v
+}
+
+func (vals *ParamValues) GetStringValue(name string, def string) string {
+	val := vals.paramValue(name)
+	if val == nil {
+		return def
+	}
+	return val.(paramValString).value
+}
+
+func (vals *ParamValues) GetIntValue(name string) int {
+	param := vals.paramValue(name)
+	if param == nil {
+		// Warn("No existing int value for param", "name", name)
+		return 0
+	}
+	return param.(paramValInt).value
+}
+
+func (vals *ParamValues) GetFloatValue(name string) float32 {
+	param := vals.paramValue(name)
+	if param == nil {
+		// Warn("No existing float value for param", "name", name)
+		pd, ok := ParamDefs[name]
+		if ok {
+			f, err := strconv.ParseFloat(pd.Init, 64)
+			if err == nil {
+				LogError(err)
+				return float32(f)
+			}
+		}
+		return 0.0
+	}
+	f := (param).(paramValFloat).value
+	return f
+}
+
+func (vals *ParamValues) GetBoolValue(name string) bool {
+	param := vals.paramValue(name)
+	if param == nil {
+		// Warn("No existing paramvalue for", "name", name)
+		return false
+	}
+	return (param).(paramValBool).value
 }
 
 func (vals *ParamValues) SaveInPath(path string) error {
@@ -156,12 +200,7 @@ func (vals *ParamValues) paramDefOf(name string) (ParamDef, error) {
 	}
 }
 
-// SetParamValueWithString xxx
-func (vals *ParamValues) SetParamValueWithString(name, value string, callback ParamCallback) error {
-	return vals.internalSetParamValueWithString(name, value, callback, true)
-}
-
-func (vals *ParamValues) internalSetParamValueWithString(origname, value string, callback ParamCallback, lockit bool) (err error) {
+func (vals *ParamValues) setParamValueWithString(origname, value string, callback ParamCallback, lockit bool) (err error) {
 
 	if origname == "pad" {
 		return fmt.Errorf("ParamValues.SetParamValueWithString rejects setting of pad value")
@@ -395,52 +434,4 @@ func (vals *ParamValues) paramValueAsString(name string) (string, error) {
 		s = "BADVALUETYPE"
 	}
 	return s, nil
-}
-
-// ParamStringValue xxx
-func (vals *ParamValues) ParamStringValue(name string, def string) string {
-	val := vals.paramValue(name)
-	if val == nil {
-		return def
-	}
-	return val.(paramValString).value
-}
-
-// ParamIntValue xxx
-func (vals *ParamValues) ParamIntValue(name string) int {
-	param := vals.paramValue(name)
-	if param == nil {
-		// Warn("No existing int value for param", "name", name)
-		return 0
-	}
-	return param.(paramValInt).value
-}
-
-// ParamFloatValue xxx
-func (vals *ParamValues) ParamFloatValue(name string) float32 {
-	param := vals.paramValue(name)
-	if param == nil {
-		// Warn("No existing float value for param", "name", name)
-		pd, ok := ParamDefs[name]
-		if ok {
-			f, err := strconv.ParseFloat(pd.Init, 64)
-			if err == nil {
-				LogError(err)
-				return float32(f)
-			}
-		}
-		return 0.0
-	}
-	f := (param).(paramValFloat).value
-	return f
-}
-
-// ParamBoolValue xxx
-func (vals *ParamValues) ParamBoolValue(name string) bool {
-	param := vals.paramValue(name)
-	if param == nil {
-		// Warn("No existing paramvalue for", "name", name)
-		return false
-	}
-	return (param).(paramValBool).value
 }

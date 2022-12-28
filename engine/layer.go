@@ -2,8 +2,7 @@ package engine
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
+	"sort"
 	"strings"
 )
 
@@ -91,33 +90,26 @@ func (layer *Layer) Api(api string, apiargs map[string]string) (string, error) {
 			return "", fmt.Errorf("missing preset parameter")
 		}
 
-		category, filename := PresetNameSplit(presetName)
-		path := layer.readableFilePath(category, filename)
-		paramsMap, err := LoadParamsMap(path)
+		err := layer.LoadPreset(presetName)
 		if err != nil {
 			return "", err
 		}
-		err = ApplyParamsMap(category, paramsMap, layer.params)
-		if err != nil {
-			return "", err
-		}
+		return "", layer.SaveCurrentParams()
 
-		if category == "quad" {
-			// ApplyQuadPreset will only load that one layer from the quad preset
-			err = layer.ApplyQuadPresetMap(paramsMap)
-			if err != nil {
-				LogError(err)
-				return "", err
-			}
-			layer.SaveCurrentParams()
-		} else {
-			// It's a non-quad preset for a single layer.
-			err := layer.SaveCurrentParams()
+		/*
+			category, filename := PresetNameSplit(presetName)
+			path := layer.readableFilePath(category, filename)
+			paramsMap, err := LoadParamsMap(path)
 			if err != nil {
 				return "", err
 			}
-		}
-		return "", err
+			err = ApplyParamsMap(category, paramsMap, layer.params)
+			if err != nil {
+				return "", err
+			}
+
+			return "", err
+		*/
 
 	case "save":
 		presetName, okpreset := apiargs["preset"]
@@ -126,7 +118,7 @@ func (layer *Layer) Api(api string, apiargs map[string]string) (string, error) {
 		}
 
 		category, filename := PresetNameSplit(presetName)
-		path := layer.WritableFilePath(category, filename)
+		path := WritableFilePath(category, filename)
 		return "", layer.params.SaveInPath(path)
 
 	case "set":
@@ -197,22 +189,37 @@ func (layer *Layer) Get(paramName string) string {
 	return layer.params.Get(paramName)
 }
 
+// func (layer *Layer) Params() *ParamValues {
+// 	return layer.params
+// }
+
+func (layer *Layer) ParamNames() []string {
+	// Print the parameter values sorted by name
+	fullNames := layer.params.values
+	sortedNames := make([]string, 0, len(fullNames))
+	for k := range fullNames {
+		sortedNames = append(sortedNames, k)
+	}
+	sort.Strings(sortedNames)
+	return sortedNames
+}
+
 func (layer *Layer) List() string {
 	return layer.params.List()
 }
 
 func (layer *Layer) GetInt(paramName string) int {
-	return layer.params.ParamIntValue(paramName)
+	return layer.params.GetIntValue(paramName)
 }
 
 func (layer *Layer) GetFloat(paramName string) float32 {
-	return layer.params.ParamFloatValue(paramName)
+	return layer.params.GetFloatValue(paramName)
 }
 
 func (layer *Layer) SaveCurrentParams() error {
 	presetName := "snap._Current_" + layer.name
 	category, filename := PresetNameSplit(presetName)
-	path := layer.WritableFilePath(category, filename)
+	path := WritableFilePath(category, filename)
 	return layer.params.SaveInPath(path)
 }
 
@@ -282,32 +289,12 @@ func (layer *Layer) ApplyQuadPresetMap(paramsmap map[string]any) error {
 	return nil
 }
 
-// WritablePresetFilePath xxx
-func (layer *Layer) WritableFilePath(category string, filename string) string {
-	path := PresetFilePath(category, filename)
-	os.MkdirAll(filepath.Dir(path), 0777)
-	return path
-}
-
 // ReadablePresetFilePath xxx
 func (layer *Layer) readableFilePath(category string, filename string) string {
 	return PresetFilePath(category, filename)
 }
 
-/*
-func (layer *Layer) LoadPreset(path string) error {
-
-	// path := p.readableFilePath()
-	paramsmap, err := LoadParamsMap(path)
-	if err != nil {
-		return err
-	}
-	layer.paramsmap = paramsmap
-	return nil
-}
-*/
-
-func (layer *Layer) ApplyPreset(presetName string) error {
+func (layer *Layer) LoadPreset(presetName string) error {
 
 	category, filename := PresetNameSplit(presetName)
 	path := layer.readableFilePath(category, filename)
@@ -317,10 +304,19 @@ func (layer *Layer) ApplyPreset(presetName string) error {
 		return err
 	}
 	params := layer.params
-	err = ApplyParamsMap(category, paramsmap, params)
-	if err != nil {
-		LogError(err)
-		return err
+	if category == "quad" {
+		// ApplyQuadPreset will only load that one layer from the quad preset
+		err = layer.ApplyQuadPresetMap(paramsmap)
+		if err != nil {
+			LogError(err)
+			return err
+		}
+	} else {
+		err = ApplyParamsMap(category, paramsmap, params)
+		if err != nil {
+			LogError(err)
+			return err
+		}
 	}
 
 	// If there's a _override.json file, use it
@@ -357,6 +353,5 @@ func (layer *Layer) ApplyPreset(presetName string) error {
 			}
 		}
 	}
-
 	return nil
 }

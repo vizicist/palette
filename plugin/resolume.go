@@ -15,7 +15,6 @@ import (
 var ResolumePort = 7000
 
 type Resolume struct {
-	agent            *engine.PluginContext
 	resolumeClient   *osc.Client
 	freeframeClients map[string]*osc.Client
 }
@@ -23,9 +22,8 @@ type Resolume struct {
 // ResolumeJSON is an unmarshalled version of the resolume.json file
 var ResolumeJSON map[string]any
 
-func NewResolume(agent *engine.PluginContext) *Resolume {
+func NewResolume() *Resolume {
 	r := &Resolume{
-		agent:            agent,
 		resolumeClient:   osc.NewClient(engine.LocalAddress, ResolumePort),
 		freeframeClients: map[string]*osc.Client{},
 	}
@@ -280,17 +278,17 @@ func (r *Resolume) ResolumeLayerForText() int {
 	return layernum
 }
 
-func (r *Resolume) ProcessInfo() *processInfo {
+func (r *Resolume) ProcessInfo(ctx *engine.PluginContext) *processInfo {
 	fullpath := engine.ConfigValue("resolume")
-	if fullpath != "" && !r.agent.FileExists(fullpath) {
+	if fullpath != "" && !ctx.FileExists(fullpath) {
 		engine.LogWarn("No Resolume found, looking for", "path", fullpath)
 		return nil
 	}
 	if fullpath == "" {
 		fullpath = "C:\\Program Files\\Resolume Avenue\\Avenue.exe"
-		if !r.agent.FileExists(fullpath) {
+		if !ctx.FileExists(fullpath) {
 			fullpath = "C:\\Program Files\\Resolume Arena\\Arena.exe"
-			if !r.agent.FileExists(fullpath) {
+			if !ctx.FileExists(fullpath) {
 				engine.LogWarn("Resolume not found in default locations")
 				return nil
 			}
@@ -301,7 +299,7 @@ func (r *Resolume) ProcessInfo() *processInfo {
 	if lastslash > 0 {
 		exe = fullpath[lastslash+1:]
 	}
-	return &processInfo{exe, fullpath, "", r.Activate}
+	return NewProcessInfo(exe, fullpath, "", r.Activate)
 }
 
 func (r *Resolume) Activate() {

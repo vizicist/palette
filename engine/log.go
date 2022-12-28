@@ -39,6 +39,11 @@ func myTimeEncoder(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
 
 func fileLogger(path string) *zap.Logger {
 
+	stacktraceKey := ""
+	if ConfigBoolWithDefault("stacktrace", false) {
+		stacktraceKey = "stacktrace"
+	}
+
 	config := zapcore.EncoderConfig{
 		MessageKey:     "msg",
 		LevelKey:       "",
@@ -46,7 +51,7 @@ func fileLogger(path string) *zap.Logger {
 		TimeKey:        "uptime",
 		CallerKey:      "", // "caller",
 		FunctionKey:    "", // "function",
-		StacktraceKey:  "stacktrace",
+		StacktraceKey:  stacktraceKey,
 		LineEnding:     "\n",
 		EncodeTime:     myTimeEncoder,
 		EncodeLevel:    zapcore.LowercaseLevelEncoder,
