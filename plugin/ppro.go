@@ -424,10 +424,9 @@ func (ppro *PalettePro) onMidiEvent(ctx *engine.PluginContext, apiargs map[strin
 	}
 
 	/*
-		// XXX - this should be done in the erae plugin
-			if EraeEnabled {
-				HandleEraeMIDI(me)
-			}
+		if EraeEnabled {
+			HandleEraeMIDI(me)
+		}
 	*/
 
 	if ppro.MIDIThru {
@@ -439,12 +438,13 @@ func (ppro *PalettePro) onMidiEvent(ctx *engine.PluginContext, apiargs map[strin
 	}
 
 	engine.LogInfo("PalettePro.onMidiEvent", "me", me)
-	phr, err := ctx.MidiEventToPhrase(me)
+	note, err := ctx.MidiEventToNote(me)
 	if err != nil {
 		return "", err
 	}
-	if phr != nil {
-		ctx.SchedulePhrase(phr, ctx.CurrentClick(), "P_04_C_04")
+	if note != nil {
+		layer := ppro.channelToLayer(1)
+		ctx.ScheduleNote(layer, note, ctx.CurrentClick())
 	}
 	return "", nil
 }
@@ -566,7 +566,7 @@ func (ppro *PalettePro) onCursorEvent(ctx *engine.PluginContext, apiargs map[str
 
 func (ppro *PalettePro) loadQuadPresetRand() {
 
-	arr, err := engine.PresetArray("quad")
+	arr, err := engine.PresetArray("layer")
 	if err != nil {
 		engine.LogError(err)
 		return
@@ -582,7 +582,7 @@ func (ppro *PalettePro) loadQuadPresetRand() {
 func (ppro *PalettePro) loadQuadPreset(presetName string) (err error) {
 
 	category, filename := engine.PresetNameSplit(presetName)
-	if category != "quad" {
+	if category != "layer" {
 		return fmt.Errorf("PalettePro.loadQuadPreset: not a quad preset", "preset", presetName)
 	}
 	path := engine.PresetFilePath(category, filename)
@@ -604,7 +604,7 @@ func (ppro *PalettePro) saveQuadPreset(presetName string) error {
 
 	// wantCategory is sound, visual, effect, snap, or quad
 	category, filename := engine.PresetNameSplit(presetName)
-	if category != "quad" {
+	if category != "layer" {
 		return fmt.Errorf("PalettePro.saveQuadPreset: not a quad preset=%s", presetName)
 	}
 	path := engine.WritableFilePath(category, filename)
@@ -641,6 +641,7 @@ func (ppro *PalettePro) addLayer(ctx *engine.PluginContext, name string) *engine
 	return layer
 }
 
+/*
 func (ppro *PalettePro) scheduleNoteNow(ctx *engine.PluginContext, dest string, pitch, velocity uint8, duration engine.Clicks) {
 	engine.LogInfo("PalettePro.scheculeNoteNow", "dest", dest, "pitch", pitch)
 	pe := &engine.PhraseElement{Value: engine.NewNoteFull(0, pitch, velocity, duration)}
@@ -648,6 +649,7 @@ func (ppro *PalettePro) scheduleNoteNow(ctx *engine.PluginContext, dest string, 
 	phr.Destination = dest
 	ctx.SchedulePhrase(phr, ctx.CurrentClick(), dest)
 }
+*/
 
 /*
 func (ppro *PalettePro) channelToDestination(channel int) string {
@@ -671,6 +673,24 @@ func (ppro *PalettePro) cursorToLayer(ce engine.CursorEvent) *engine.Layer {
 	layer, ok := ppro.layer[ce.Source]
 	if !ok {
 		return nil
+	}
+	return layer
+}
+
+func (ppro *PalettePro) channelToLayer(channel int) *engine.Layer {
+	// For the moment, the cursor to layer mapping is 1-to-1.
+	// I.e. ce.Source of "a" maps to layer "a"
+	ch2lay := map[int]string{
+		1: "A", 2: "B", 3: "C", 4: "D",
+		5: "E", 6: "F", 7: "G", 8: "H",
+	}
+	layerName, ok := ch2lay[channel]
+	if !ok {
+		return ppro.layer["A"]
+	}
+	layer, ok := ppro.layer[layerName]
+	if !ok {
+		return ppro.layer["A"]
 	}
 	return layer
 }
