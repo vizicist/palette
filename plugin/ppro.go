@@ -149,6 +149,10 @@ func (ppro *PalettePro) Api(ctx *engine.PluginContext, api string, apiargs map[s
 		ppro.onParamSet(ctx, layerName, name, value)
 		return "", nil
 
+	case "clearexternalscale":
+		ppro.clearExternalScale()
+		return "", nil
+
 	case "echo":
 		value, ok := apiargs["value"]
 		if !ok {
@@ -354,7 +358,7 @@ func (ppro *PalettePro) onParamSet(ctx *engine.PluginContext, layerName string, 
 		if synth == nil {
 			engine.LogWarn("PalettePro: no synth named", "synth", paramValue)
 		}
-		ppro.logic[layerName].synth = synth
+		ppro.layer[layerName].Synth = synth
 	}
 
 }
@@ -545,16 +549,16 @@ func (ppro *PalettePro) onCursorEvent(ctx *engine.PluginContext, apiargs map[str
 	}
 
 	/*
-	layer := ppro.cursorToLayer(ce)
-	if layer == nil {
-		return "", fmt.Errorf("PalettePro: No layer for cursor ce=%+v", ce)
-	}
-	msg := osc.NewMessage("/sprite")
-	msg.Append(ce.X)
-	msg.Append(ce.Y)
-	msg.Append(ce.Z)
-	msg.Append(ce.ID)
-	ppro.resolume.toFreeFramePlugin(layer.Name(), msg)
+		layer := ppro.cursorToLayer(ce)
+		if layer == nil {
+			return "", fmt.Errorf("PalettePro: No layer for cursor ce=%+v", ce)
+		}
+		msg := osc.NewMessage("/sprite")
+		msg.Append(ce.X)
+		msg.Append(ce.Y)
+		msg.Append(ce.Z)
+		msg.Append(ce.ID)
+		ppro.resolume.toFreeFramePlugin(layer.Name(), msg)
 	*/
 
 	return "", nil
@@ -601,7 +605,7 @@ func (ppro *PalettePro) saveQuadPreset(presetName string) error {
 	// wantCategory is sound, visual, effect, snap, or quad
 	category, filename := engine.PresetNameSplit(presetName)
 	if category != "quad" {
-		return fmt.Errorf("PalettePro.saveQuadPreset: not a quad preset", "preset", presetName)
+		return fmt.Errorf("PalettePro.saveQuadPreset: not a quad preset=%s", presetName)
 	}
 	path := engine.WritableFilePath(category, filename)
 	s := "{\n    \"params\": {\n"

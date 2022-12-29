@@ -57,6 +57,12 @@ func InitSynths() {
 
 		Synths[nm] = NewSynth(port, channel, bank, program)
 	}
+
+	_, ok := Synths["default"]
+	if !ok {
+		LogError(fmt.Errorf("InitSynths: no default synth"))
+	}
+
 	LogInfo("Synths loaded", "len", len(Synths))
 }
 

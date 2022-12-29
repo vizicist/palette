@@ -1,5 +1,7 @@
 { "synths" : [
 
+{"name": "default", "port":"01. Internal MIDI", "channel":1, "program": 1},
+
 {"name": "0101 Fantasy_Bell", "port":"01. Internal MIDI", "channel":1, "program": 1},
 {"name": "0102 Attacky", "port":"01. Internal MIDI", "channel":2, "program": 1},
 {"name": "0103 Ambient_E-Guitar", "port":"01. Internal MIDI", "channel":3, "program": 1},

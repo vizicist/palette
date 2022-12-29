@@ -13,7 +13,6 @@ import (
 type LayerLogic struct {
 	ppro             *PalettePro
 	layer            *engine.Layer
-	synth            *engine.Synth
 	lastActiveID     int
 	activeNotes      map[string]*ActiveNote
 	activeNotesMutex sync.RWMutex
@@ -47,7 +46,6 @@ func NewLayerLogic(ppro *PalettePro, layer *engine.Layer) *LayerLogic {
 	logic := &LayerLogic{
 		ppro:         ppro,
 		layer:        layer,
-		synth:        nil,
 		lastActiveID: 0,
 		activeNotes:  make(map[string]*ActiveNote),
 	}
@@ -57,19 +55,8 @@ func NewLayerLogic(ppro *PalettePro, layer *engine.Layer) *LayerLogic {
 func (logic *LayerLogic) cursorToNoteOn(ctx *engine.PluginContext, ce engine.CursorEvent) *engine.NoteOn {
 	pitch := logic.cursorToPitch(ctx, ce)
 	velocity := logic.cursorToVelocity(ctx, ce)
-	channel := logic.cursorToChannel(ctx, ce)
+	channel := logic.layer.MIDIChannel()
 	return engine.NewNoteOn(channel, pitch, velocity)
-}
-
-func (logic *LayerLogic) cursorToChannel(ctx *engine.PluginContext, ce engine.CursorEvent) (channel uint8) {
-	synth := logic.synth
-	if synth == nil {
-		engine.LogWarn("cursorToChannel: No synth?")
-		channel = 1
-	} else {
-		channel = synth.Channel()
-	}
-	return channel
 }
 
 func (logic *LayerLogic) cursorToPitch(ctx *engine.PluginContext, ce engine.CursorEvent) uint8 {
@@ -196,11 +183,7 @@ func (logic *LayerLogic) generateSoundFromCursor(ctx *engine.PluginContext, ce e
 			newzc := BoundAndScaleController(newz, zmin, zmax, cmin, cmax)
 
 			if newzc != 0 && newzc != oldzc {
-				if logic.synth != nil {
-					logic.synth.SendController(1, newzc)
-				} else {
-					engine.LogWarn("synth is nil, not sending Controller")
-				}
+				logic.layer.Synth.SendController(1, newzc)
 			}
 		}
 
@@ -287,27 +270,24 @@ func (logic *LayerLogic) nextQuant(t engine.Clicks, q engine.Clicks) engine.Clic
 
 func (logic *LayerLogic) sendNoteOn(ctx *engine.PluginContext, a *ActiveNote) {
 
-	pe := &engine.PhraseElement{Value: a.noteOn}
-	logic.SendPhraseElementToSynth(ctx, pe)
+	logic.layer.Synth.SendTo(a.noteOn)
 
-	ss := logic.layer.Get("visual.spritesource")
-	if ss == "midi" {
-		logic.generateSpriteFromPhraseElement(ctx, pe)
-	}
+	// ss := logic.layer.Get("visual.spritesource")
+	// if ss == "midi" {
+	// 	logic.generateSpriteFromPhraseElement(ctx, pe)
+	// }
 }
 
+/*
 func (logic *LayerLogic) SendPhraseElementToSynth(ctx *engine.PluginContext, pe *engine.PhraseElement) {
 
 	ss := logic.layer.Get("visual.spritesource")
 	if ss == "midi" {
 		logic.generateSpriteFromPhraseElement(ctx, pe)
 	}
-	if logic.synth != nil {
-		logic.synth.SendTo(pe)
-	} else {
-		engine.LogWarn("synth is nil, not sending PhraseElement")
-	}
+	logic.layer.Synth.SendTo(pe)
 }
+*/
 
 func (logic *LayerLogic) generateSpriteFromPhraseElement(ctx *engine.PluginContext, pe *engine.PhraseElement) {
 
@@ -390,12 +370,8 @@ func (logic *LayerLogic) sendNoteOff(a *ActiveNote) {
 		return
 	}
 	noteOff := engine.NewNoteOff(n.Channel, n.Pitch, n.Velocity)
-	pe := &engine.PhraseElement{Value: noteOff}
-	if logic.synth != nil {
-		logic.synth.SendTo(pe)
-	} else {
-		engine.LogWarn("synth is nil, not sending NoteOff")
-	}
+	// pe := &engine.PhraseElement{Value: noteOff}
+	logic.layer.Synth.SendTo(noteOff)
 	// layer.SendPhraseElementToSynth(pe)
 }
 

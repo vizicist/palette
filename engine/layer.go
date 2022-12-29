@@ -7,6 +7,7 @@ import (
 )
 
 type Layer struct {
+	Synth     *Synth
 	name      string
 	params    *ParamValues
 	listeners []*PluginContext
@@ -29,6 +30,7 @@ func LayerNames() []string {
 
 func NewLayer(layerName string) *Layer {
 	layer := &Layer{
+		Synth:     GetSynth("default"),
 		name:      layerName,
 		params:    NewParamValues(),
 		listeners: []*PluginContext{},
@@ -51,6 +53,10 @@ func ApplyToAllLayers(f func(layer *Layer)) {
 	for _, layer := range Layers {
 		f(layer)
 	}
+}
+
+func (layer *Layer) MIDIChannel() uint8 {
+	return layer.Synth.Channel()
 }
 
 func (layer *Layer) ResendAllParameters() {
@@ -151,6 +157,10 @@ func (layer *Layer) Api(api string, apiargs map[string]string) (string, error) {
 		return layer.List(), nil
 
 	default:
+		// ignore errors on these for the moment
+		if strings.HasPrefix(api, "loop_") || strings.HasPrefix(api, "midi_") {
+			return "", nil
+		}
 		err := fmt.Errorf("Layer.API: unrecognized api=%s", api)
 		LogError(err)
 		return "", err
