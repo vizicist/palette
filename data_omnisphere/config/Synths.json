@@ -1,4 +1,5 @@
 { "synths" : [
+	{"name": "default", "port":"01. Internal MIDI", "channel":1},
 	{"name": "P_01_C_01", "port":"01. Internal MIDI", "channel":1},
 	{"name": "P_01_C_02", "port":"01. Internal MIDI", "channel":2},
 	{"name": "P_01_C_03", "port":"01. Internal MIDI", "channel":3},
