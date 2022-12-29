@@ -197,6 +197,9 @@ func (r *Resolume) sendPadOneEffectParam(layerNum int, effectName string, paramN
 }
 
 func (r *Resolume) toResolume(msg *osc.Message) {
+	if engine.IsLogging("resolume") {
+		engine.LogInfo("Resolume.toResolume", "msg", msg)
+	}
 	r.resolumeClient.Send(msg)
 }
 

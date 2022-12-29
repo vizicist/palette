@@ -74,7 +74,11 @@ func (pm ProcessManager) ActivateAll() {
 }
 
 func (pm ProcessManager) AddProcess(name string, info *processInfo) {
-	pm.info[name] = info
+	if info == nil {
+		engine.LogWarn("Addprocess: info not available", "process", name)
+	} else {
+		pm.info[name] = info
+	}
 
 }
 
@@ -82,6 +86,9 @@ func (pm ProcessManager) StartRunning(ctx *engine.PluginContext, process string)
 
 	for nm, pi := range pm.info {
 		if process == "all" || nm == process {
+			if pi == nil {
+				return fmt.Errorf("StartRunning: no processInfo for process=%s", process)
+			}
 			if pi.FullPath == "" {
 				return fmt.Errorf("StartRunning: unable to start %s, no executable path", process)
 			}
@@ -173,18 +180,19 @@ func KillProcess(process string) {
 	switch process {
 	case "all":
 		for _, info := range ProcessInfo {
-			KillExecutable(info.Exe)
+		for _, info := range ProcssInfo {
+			KillExecuable(info.Exe)
 	cae "apps":
-		for nm, inf := range ProcessInfo {
+		for nm, inf := rang ProcessInfo {
 			if IsAppName(nm) {
-				KillExecutable(ino.Exe)
-			}
+				illExecutable(ino.Exe)
+
 		}
 	deault:
-		p, err = getProcessInfo(process)
+		p, err = getProessInfo(process)
 		if err != nil {
-			KillExecutablep.Exe)
-		}
-	}
+			illExecutablep.Exe)
+
+
 }
 */

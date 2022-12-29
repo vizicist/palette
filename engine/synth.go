@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	// "github.com/vizicist/portmidi"
 )
 
 type PortChannel struct {
@@ -149,21 +148,25 @@ func (synth *Synth) SendController(cnum int, cval int) {
 	// This only sends the bank and/or program if they change
 	mc.SendBankProgram(synth.bank, synth.program)
 
-	LogWarn("SendControlToSynth needs work")
-	/*
-		e := portmidi.Event{
-			Timestamp: time.Now(),
-			Status:    int64(synth.portchannel.channel - 1),
-			Data1:     int64(cnum),
-			Data2:     int64(cval),
-		}
-		e.Status |= 0xb0
-		if e.Data2 > 0x7f {
-			Warn("SendControllerToSynth: Hey! Data2 shouldn't be > 0x7f")
-		} else {
-			mc.midiDeviceOutput.stream.WriteShort(e.Status, e.Data1, e.Data2)
-		}
-	*/
+	// e := portmidi.Event{
+	// 	Timestamp: time.Now(),
+	// 	Status:    int64(synth.portchannel.channel - 1),
+	// 	Data1:     int64(cnum),
+	// 	Data2:     int64(cval),
+	// }
+	// e.Status |= 0xb0
+	if cnum > 0x7f {
+		LogWarn("SendControllerToSynth: invalid value", "cnum", cnum)
+		return
+	}
+	if cval > 0x7f {
+		LogWarn("SendControllerToSynth: invalid value", "cval", cval)
+		return
+	}
+	status := byte(synth.portchannel.channel - 1)
+	data1 := byte(cnum)
+	data2 := byte(cval)
+	mc.output.Send([]byte{status, data1, data2})
 }
 
 func SendToSynth(value any) {

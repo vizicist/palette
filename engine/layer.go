@@ -94,6 +94,7 @@ func (layer *Layer) Api(api string, apiargs map[string]string) (string, error) {
 		if err != nil {
 			return "", err
 		}
+		layer.ResendAllParameters()
 		return "", layer.SaveCurrentParams()
 
 		/*
@@ -177,7 +178,10 @@ func (layer *Layer) Set(paramName string, paramValue string) error {
 	}
 
 	for _, listener := range layer.listeners {
-		args := map[string]string{"name": paramName, "value": paramValue}
+		args := map[string]string{
+			"name": paramName, "value": paramValue,
+			"layer": layer.Name(),
+		}
 		listener.api(listener, "onparamset", args)
 	}
 
