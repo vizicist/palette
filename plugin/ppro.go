@@ -336,6 +336,9 @@ func (ppro *PalettePro) onParamSet(ctx *engine.PluginContext, layerName string, 
 		msg := osc.NewMessage("/api")
 		msg.Append("set_params")
 		args := fmt.Sprintf("{\"%s\":\"%s\"}", name, paramValue)
+		if name == "ffglport" {
+			engine.LogInfo("ffglport seen")
+		}
 		msg.Append(args)
 		ppro.resolume.toFreeFramePlugin(layer.Name(), msg)
 	}

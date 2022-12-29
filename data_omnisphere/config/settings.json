@@ -1,8 +1,8 @@
 {
-  "debug": "cursor,midi,freeframe",
+  "debug": "",
   "plugins": "ppro",
   "guilevel": "1",
-  "autostart": "bidule,resolume",
+  "autostart": "gui,bidule,resolume",
   "bidule": "C:\\Program Files\\Plogue\\Bidule\\Bidule.exe",
   "OLDguiresize": "-800 0 800 1200",
   "this line should not end with a comma": 0

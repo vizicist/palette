@@ -141,6 +141,7 @@ RealNosuchDebugInit() {
 	}
 
 	NosuchDebug( "NosuchDebugInit: debuglevel=%d log=%s\n", NosuchDebugLevel, NosuchDebugLogPath.c_str() );
+	NosuchDebug( "NosuchDebugInit: DebugCursor=%d Param=%d API=%d\n", NosuchDebugCursor , NosuchDebugParam, NosuchDebugAPI);
 
 	err = _dupenv_s( &pValue, &len, "PALETTE" );
 	if( err || pValue == NULL )
