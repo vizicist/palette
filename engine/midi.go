@@ -44,6 +44,10 @@ type MIDIChannelOutput struct {
 	isopen  bool
 }
 
+func DefaultMIDIChannelOutput() *MIDIChannelOutput {
+	return &MIDIChannelOutput{}
+}
+
 type MidiEvent struct {
 	Msg midi.Message
 }

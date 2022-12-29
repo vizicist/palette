@@ -49,8 +49,6 @@ const defaultClicksPerSecond = Clicks(192)
 const minClicksPerSecond = (defaultClicksPerSecond / 16)
 const maxClicksPerSecond = (defaultClicksPerSecond * 16)
 
-// var defaultSynth = "default"
-
 // var loopForever = 999999
 
 // Bits for Events
