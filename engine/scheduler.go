@@ -27,14 +27,15 @@ type Command struct {
 
 type SchedElement struct {
 	AtClick   Clicks
+	layer     *Layer
 	Value     any // currently just *Phrase values, but others should be possible
 	triggered bool
 }
 
 func NewScheduler() *Scheduler {
 	s := &Scheduler{
-		schedList:       list.New(),
-		pendingNoteOffs: NewPhrase(),
+		schedList: list.New(),
+		// pendingNoteOffs: NewPhrase(),
 		// now:             time.Time{},
 		// time0:           time.Time{},
 		lastClick: -1,
@@ -122,7 +123,7 @@ func (sched *Scheduler) advanceClickTo(toClick Clicks) {
 	sched.lastClick += 1
 	for clk := sched.lastClick; clk <= toClick; clk++ {
 		sched.triggerItemsScheduledAt(clk)
-		sched.advancePendingNoteOffsByOneClick()
+		// sched.advancePendingNoteOffsByOneClick()
 		if doAutoCursorUp {
 			TheRouter().cursorManager.autoCursorUp(time.Now())
 		}
@@ -168,16 +169,19 @@ func (sched *Scheduler) triggerPhraseElementsAt(phr *Phrase, clk Clicks, dclick 
 			// Info("triggerPhraseElementAt", "click", clk, "dclick", dclick, "pe.AtClick", pe.AtClick)
 			switch v := pe.Value.(type) {
 			case *NoteOn:
-				SendToSynth(v)
+				LogWarn("triggerPhraseElementsAt: NoteOn not handled")
+				// SendToSynth(v)
 			case *NoteOff:
-				SendToSynth(v)
+				LogWarn("triggerPhraseElementsAt: NoteOff not handled")
+				// SendToSynth(v)
 			case *NoteFull:
-				noteon := NewNoteOn(v.Channel, v.Pitch, v.Velocity)
-				SendToSynth(noteon)
-				noteoff := NewNoteOff(v.Channel, v.Pitch, v.Velocity)
-				offClick := clk + pe.AtClick + v.Duration
-				newpe := &PhraseElement{AtClick: offClick, Value: noteoff}
-				sched.pendingNoteOffs.InsertElement(newpe)
+				LogWarn("triggerPhraseElementsAt: NoteFull not handled")
+				// noteon := NewNoteOn(v.Channel, v.Pitch, v.Velocity)
+				// SendToSynth(noteon)
+				// noteoff := NewNoteOff(v.Channel, v.Pitch, v.Velocity)
+				// offClick := clk + pe.AtClick + v.Duration
+				// newpe := &PhraseElement{AtClick: offClick, Value: noteoff}
+				// sched.pendingNoteOffs.InsertElement(newpe)
 			default:
 				msg := fmt.Sprintf("triggerPhraseElementsAt: unexpected Value type=%T", v)
 				LogWarn(msg)
@@ -247,23 +251,26 @@ func (sched *Scheduler) SendAllPendingNoteoffs() {
 	sched.pendingNoteOffs.rwmutex.Lock()
 	defer sched.pendingNoteOffs.rwmutex.Unlock()
 
-	var nexti *list.Element
-	for i := sched.pendingNoteOffs.list.Front(); i != nil; i = nexti {
-		nexti = i.Next()
-		pe, ok := i.Value.(*PhraseElement)
-		if !ok {
-			LogWarn("Non-PhraseElement in activeNotes!?", "value", i.Value)
-			continue
+	LogWarn("SendAllPendingNoteoffs needs work")
+	/*
+		var nexti *list.Element
+		for i := sched.pendingNoteOffs.list.Front(); i != nil; i = nexti {
+			nexti = i.Next()
+			pe, ok := i.Value.(*PhraseElement)
+			if !ok {
+				LogWarn("Non-PhraseElement in activeNotes!?", "value", i.Value)
+				continue
 
+			}
+			noff, ok := pe.Value.(*NoteOff)
+			if !ok {
+				LogWarn("Non-NoteOff in activeNotes!?", "value", i.Value)
+				continue
+			}
+			SendToSynth(noff)
+			sched.pendingNoteOffs.list.Remove(i)
 		}
-		noff, ok := pe.Value.(*NoteOff)
-		if !ok {
-			LogWarn("Non-NoteOff in activeNotes!?", "value", i.Value)
-			continue
-		}
-		SendToSynth(noff)
-		sched.pendingNoteOffs.list.Remove(i)
-	}
+	*/
 }
 
 // AdvanceByOneClick xxx
@@ -272,24 +279,27 @@ func (sched *Scheduler) advancePendingNoteOffsByOneClick() {
 	sched.pendingNoteOffs.rwmutex.Lock()
 	defer sched.pendingNoteOffs.rwmutex.Unlock()
 
-	currentClick := CurrentClick()
-	var nexti *list.Element
-	for i := sched.pendingNoteOffs.list.Front(); i != nil; i = nexti {
-		nexti = i.Next()
-		pe := i.Value.(*PhraseElement)
-		ntoff, ok := pe.Value.(*NoteOff)
-		if !ok {
-			LogWarn("Non NoteOff in pendingNoteOffs?")
-			sched.pendingNoteOffs.list.Remove(i)
-			continue
+	LogWarn("advancePendingNoteoffs needs work")
+	/*
+		currentClick := CurrentClick()
+		var nexti *list.Element
+		for i := sched.pendingNoteOffs.list.Front(); i != nil; i = nexti {
+			nexti = i.Next()
+			pe := i.Value.(*PhraseElement)
+			ntoff, ok := pe.Value.(*NoteOff)
+			if !ok {
+				LogWarn("Non NoteOff in pendingNoteOffs?")
+				sched.pendingNoteOffs.list.Remove(i)
+				continue
+			}
+			if pe.AtClick > currentClick {
+				// Warn("Scheduler.advancePendingNoteOffsByOneClick: clickStart > currentClick?")
+			} else {
+				SendToSynth(ntoff)
+				sched.pendingNoteOffs.list.Remove(i)
+			}
 		}
-		if pe.AtClick > currentClick {
-			// Warn("Scheduler.advancePendingNoteOffsByOneClick: clickStart > currentClick?")
-		} else {
-			SendToSynth(ntoff)
-			sched.pendingNoteOffs.list.Remove(i)
-		}
-	}
+	*/
 }
 
 func (sched *Scheduler) ToString() string {

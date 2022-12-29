@@ -248,7 +248,7 @@ func (r *Router) HandleInputEvent(pluginName string, args map[string]string) err
 		if err != nil {
 			return err
 		}
-		SendToSynth(pe.Value)
+		layer.Synth.SendTo(pe.Value)
 
 	default:
 		LogInfo("HandleInputEvent: event not handled", "event", event)

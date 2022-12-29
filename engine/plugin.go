@@ -101,7 +101,8 @@ func (ctx *PluginContext) IsSourceAllowed(source string) bool {
 	return ok
 }
 
-func (ctx *PluginContext) MidiEventToPhrase(me MidiEvent) (*Phrase, error) {
+/*
+func (ctx *PluginContext) MidiEventToNote(me MidiEvent) (note any, error) {
 	pe, err := ctx.midiEventToPhraseElement(me)
 	if err != nil {
 		return nil, err
@@ -109,8 +110,9 @@ func (ctx *PluginContext) MidiEventToPhrase(me MidiEvent) (*Phrase, error) {
 	phr := NewPhrase().InsertElement(pe)
 	return phr, nil
 }
+*/
 
-func (ctx *PluginContext) midiEventToPhraseElement(me MidiEvent) (*PhraseElement, error) {
+func (ctx *PluginContext) MidiEventToNote(me MidiEvent) (any, error) {
 
 	bytes := me.Msg.Bytes()
 	lng := len(bytes)
@@ -177,33 +179,31 @@ func (ctx *PluginContext) midiEventToPhraseElement(me MidiEvent) (*PhraseElement
 		return nil, err
 	}
 
-	return &PhraseElement{Value: val}, nil
+	return val, nil
 }
 
 func (ctx *PluginContext) CurrentClick() Clicks {
 	return CurrentClick()
 }
 
-func (ctx *PluginContext) SchedulePhrase(phr *Phrase, click Clicks, dest string) {
-	if phr == nil {
-		LogWarn("EngineContext.SchedulePhrase: phr == nil?")
-		return
-	}
-	// ctx.SchedulePhraseAt(phr, CurrentClick())
+func (ctx *PluginContext) ScheduleNote(layer *Layer, note any, click Clicks) {
 	go func() {
 		se := &SchedElement{
 			AtClick: click,
-			Value:   phr,
+			layer:   layer,
+			Value:   note,
 		}
 		TheEngine().Scheduler.cmdInput <- SchedulerElementCmd{se}
 	}()
 }
 
+/*
 func (ctx *PluginContext) SubmitCommand(command Command) {
 	go func() {
 		TheEngine().Scheduler.cmdInput <- command
 	}()
 }
+*/
 
 func (ctx *PluginContext) ParamIntValue(name string) int {
 	return ctx.params.GetIntValue(name)

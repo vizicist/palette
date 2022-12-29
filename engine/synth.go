@@ -175,6 +175,7 @@ func (synth *Synth) SendController(cnum int, cval int) {
 	mc.output.Send([]byte{status, data1, data2})
 }
 
+/*
 func SendToSynth(value any) {
 
 	var channel uint8
@@ -284,6 +285,7 @@ func SendToSynth(value any) {
 		LogWarn("output.Send", "err", err)
 	}
 }
+*/
 
 func hexString(b byte) string {
 	return fmt.Sprintf("%02x", b)

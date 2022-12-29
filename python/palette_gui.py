@@ -1274,13 +1274,13 @@ class Layer():
         self.performIndex[name] = index
 
     def sendANO(self):
-        palette.palette_layer_api(self.name(), "ANO")
+        palette.palette_ppro_api(self.name(), "ANO")
 
     def clearExternalScale(self):
-        palette.palette_layer_api(self.name(), "clearexternalscale")
+        palette.palette_ppro_api(self.name(), "clearexternalscale")
 
     def useExternalScale(self,onoff):
-        palette.palette_layer_api(self.name(), "midi_usescale", "\"onoff\": \"" + str(onoff) + "\"")
+        palette.palette_ppro_api(self.name(), "midi_usescale", "\"onoff\": \"" + str(onoff) + "\"")
 
     def sendPerformVal(self,name):
         index = self.performIndex[name]
