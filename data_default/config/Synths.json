@@ -1,5 +1,4 @@
 { "synths" : [
-
 {"name": "default", "port":"01. Internal MIDI", "channel":1, "program": 1},
 {"name": "001 Acoustic Grand Piano", "port":"01. Internal MIDI", "channel":1, "program": 1},
 {"name": "002 Bright Acoustic Piano", "port":"01. Internal MIDI", "channel":1, "program": 2},

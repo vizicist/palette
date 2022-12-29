@@ -244,11 +244,11 @@ func (r *Router) HandleInputEvent(pluginName string, args map[string]string) err
 			return err
 		}
 		LogInfo("HandleInputEvent", "notestr", notestr, "clickstr", clickstr)
-		note, err := PhraseElementFromString(notestr)
+		pe, err := PhraseElementFromString(notestr)
 		if err != nil {
 			return err
 		}
-		SendToSynth(note)
+		SendToSynth(pe.Value)
 
 	default:
 		LogInfo("HandleInputEvent: event not handled", "event", event)
