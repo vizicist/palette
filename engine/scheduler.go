@@ -4,6 +4,8 @@ import (
 	"container/list"
 	"fmt"
 	"time"
+
+	midi "gitlab.com/gomidi/midi/v2"
 )
 
 type Event any
@@ -28,8 +30,12 @@ type Command struct {
 type SchedElement struct {
 	AtClick   Clicks
 	layer     *Layer
-	Value     any // currently just *Phrase values, but others should be possible
+	Value     any // ...SchedValue things
 	triggered bool
+}
+
+type MidiSchedValue struct {
+	msg midi.Message
 }
 
 func NewScheduler() *Scheduler {

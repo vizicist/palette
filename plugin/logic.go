@@ -68,7 +68,7 @@ func (logic *LayerLogic) cursorToPitch(ctx *engine.PluginContext, ce engine.Curs
 	p1 := int(ce.X * float32(dp))
 	p := uint8(pitchmin + p1%dp)
 
-	chromatic := ctx.ParamBoolValue("sound.chromatic")
+	chromatic := ppro.params.GetBoolValue("sound.chromatic")
 	if !chromatic {
 		scale := ppro.scale
 		p = scale.ClosestTo(p)

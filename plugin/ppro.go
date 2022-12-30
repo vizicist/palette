@@ -17,12 +17,19 @@ import (
 var AliveOutputPort = 3331
 
 type PalettePro struct {
+
+	// Per-layer things
+	layer map[string]*engine.Layer
+	logic map[string]*LayerLogic
+
+	// PalettePro parameters
+	params *engine.ParamValues
+
 	started        bool
-	layer          map[string]*engine.Layer
-	logic          map[string]*LayerLogic
 	resolume       *Resolume
 	bidule         *Bidule
 	processManager *ProcessManager
+	midiinputlayer *engine.Layer
 
 	generateVisuals bool
 	generateSound   bool
@@ -66,8 +73,10 @@ type PalettePro struct {
 func init() {
 	transposebeats := engine.Clicks(engine.ConfigIntWithDefault("transposebeats", 48))
 	ppro := &PalettePro{
-		layer:           map[string]*engine.Layer{},
-		logic:           map[string]*LayerLogic{},
+		layer:  map[string]*engine.Layer{},
+		logic:  map[string]*LayerLogic{},
+		params: engine.NewParamValues(),
+
 		attractModeIsOn: false,
 		generateVisuals: engine.ConfigBoolWithDefault("generatevisuals", true),
 		generateSound:   engine.ConfigBoolWithDefault("generatesound", true),
@@ -100,10 +109,6 @@ func init() {
 	engine.RegisterPlugin("ppro", ppro.Api)
 }
 
-func (ppro *PalettePro) clearExternalScale() {
-	ppro.externalScale = engine.MakeScale()
-}
-
 func (ppro *PalettePro) Api(ctx *engine.PluginContext, api string, apiargs map[string]string) (result string, err error) {
 
 	switch api {
@@ -115,39 +120,34 @@ func (ppro *PalettePro) Api(ctx *engine.PluginContext, api string, apiargs map[s
 		ppro.started = false
 		return "", ppro.processManager.StopRunning(ctx, "all")
 
+	case "set":
+		return ppro.onSet(ctx, apiargs)
+
+	case "get":
+		return ppro.onGet(ctx, apiargs)
+
 	case "event":
 		eventName, ok := apiargs["event"]
 		if !ok {
 			return "", fmt.Errorf("PalettePro: Missing event argument")
 		}
-		switch eventName {
-		case "click":
+		if eventName == "click" {
 			return ppro.onClick(ctx, apiargs)
+		}
+
+		// engine.LogInfo("Ppro.event", "eventName", eventName)
+		switch eventName {
 		case "midi":
 			return ppro.onMidiEvent(ctx, apiargs)
 		case "cursor":
 			return ppro.onCursorEvent(ctx, apiargs)
 		case "clientrestart":
 			return ppro.onClientRestart(ctx, apiargs)
+		case "layerset":
+			return ppro.onLayerSet(ctx, apiargs)
 		default:
 			return "", fmt.Errorf("PalettePro: Unhandled event type %s", eventName)
 		}
-
-	case "onparamset":
-		layerName, ok := apiargs["layer"]
-		if !ok {
-			return "", fmt.Errorf("PalettePro.Api: Missing layer argument")
-		}
-		name, ok := apiargs["name"]
-		if !ok {
-			return "", fmt.Errorf("PalettePro.Api: Missing name argument")
-		}
-		value, ok := apiargs["value"]
-		if !ok {
-			return "", fmt.Errorf("PalettePro.Api: Missing value argument")
-		}
-		ppro.onParamSet(ctx, layerName, name, value)
-		return "", nil
 
 	case "clearexternalscale":
 		ppro.clearExternalScale()
@@ -163,7 +163,7 @@ func (ppro *PalettePro) Api(ctx *engine.PluginContext, api string, apiargs map[s
 	case "load":
 		filename, oksaved := apiargs["filename"]
 		if !oksaved {
-			return "", fmt.Errorf("missing preset parameter")
+			return "", fmt.Errorf("missing filename parameter")
 		}
 
 		err := ppro.loadPreset(filename)
@@ -222,25 +222,25 @@ func (ppro *PalettePro) Api(ctx *engine.PluginContext, api string, apiargs map[s
 		return result, nil
 
 	case "test":
-		var ntimes = 10                    // default
-		var delta = 500 * time.Millisecond // default
-		count, ok := apiargs["count"]
+		var ntimes = 10                 // default
+		var dt = 500 * time.Millisecond // default
+		s, ok := apiargs["ntimes"]
 		if ok {
-			tmp, err := strconv.ParseInt(count, 10, 64)
+			tmp, err := strconv.ParseInt(s, 10, 64)
 			if err != nil {
 				return "", err
 			}
 			ntimes = int(tmp)
 		}
-		dur, ok := apiargs["delta"]
+		s, ok = apiargs["dt"]
 		if ok {
-			tmp, err := time.ParseDuration(dur)
+			tmp, err := time.ParseDuration(s)
 			if err != nil {
 				return "", err
 			}
-			delta = tmp
+			dt = tmp
 		}
-		doTest(ctx, ntimes, delta)
+		go ppro.doTest(ctx, ntimes, dt)
 		return "", nil
 
 	default:
@@ -306,6 +306,10 @@ func (ppro *PalettePro) start(ctx *engine.PluginContext) error {
 	return nil
 }
 
+func (ppro *PalettePro) clearExternalScale() {
+	ppro.externalScale = engine.MakeScale()
+}
+
 func (ppro *PalettePro) onClientRestart(ctx *engine.PluginContext, apiargs map[string]string) (string, error) {
 	// These are messages from the Palette FFGL plugins in Resolume,
 	// telling us that they have restarted, and we should resend all parameters
@@ -327,12 +331,51 @@ func (ppro *PalettePro) onClientRestart(ctx *engine.PluginContext, apiargs map[s
 	return "", nil
 }
 
-func (ppro *PalettePro) onParamSet(ctx *engine.PluginContext, layerName string, paramName string, paramValue string) {
+func (ppro *PalettePro) onSet(ctx *engine.PluginContext, apiargs map[string]string) (result string, err error) {
+	paramName, ok := apiargs["name"]
+	if !ok {
+		return "", fmt.Errorf("PalettePro.onSet: Missing name argument")
+	}
+	paramValue, ok := apiargs["value"]
+	if !ok {
+		return "", fmt.Errorf("PalettePro.onSet: Missing value argument")
+	}
+	ppro.params.Set(paramName, paramValue)
+	engine.LogInfo("PalettePro.onSet", "name", paramName, "value", paramValue)
+	return "", nil
+}
 
+func (ppro *PalettePro) onGet(ctx *engine.PluginContext, apiargs map[string]string) (result string, err error) {
+	paramName, ok := apiargs["name"]
+	if !ok {
+		return "", fmt.Errorf("PalettePro.onLayerSet: Missing name argument")
+	}
+	paramValue := ppro.params.Get(paramName)
+	engine.LogInfo("PalettePro.onGet", "name", paramName, "value", paramValue)
+	return paramValue, nil
+}
+
+func (ppro *PalettePro) onLayerSet(ctx *engine.PluginContext, apiargs map[string]string) (result string, err error) {
+	layerName, ok := apiargs["layer"]
+	if !ok {
+		return "", fmt.Errorf("PalettePro.onLayerSet: Missing layer argument")
+	}
+	paramName, ok := apiargs["name"]
+	if !ok {
+		return "", fmt.Errorf("PalettePro.onLayerSet: Missing name argument")
+	}
+	paramValue, ok := apiargs["value"]
+	if !ok {
+		return "", fmt.Errorf("PalettePro.onLayerSet: Missing value argument")
+	}
 	layer, ok := ppro.layer[layerName]
 	if !ok {
-		engine.LogWarn("No layer named", "layer", layerName)
+		engine.LogWarn("PalettePro.onLayerSet: No layer named", "layer", layerName)
 		return
+	}
+
+	if paramName == "misc.midiinputlayer" {
+		ppro.midiinputlayer = ctx.GetLayer(layerName)
 	}
 
 	if strings.HasPrefix(paramName, "visual.") {
@@ -360,7 +403,7 @@ func (ppro *PalettePro) onParamSet(ctx *engine.PluginContext, layerName string, 
 		}
 		ppro.layer[layerName].Synth = synth
 	}
-
+	return "", nil
 }
 
 func (ppro *PalettePro) onClick(ctx *engine.PluginContext, apiargs map[string]string) (string, error) {
@@ -423,74 +466,64 @@ func (ppro *PalettePro) onMidiEvent(ctx *engine.PluginContext, apiargs map[strin
 		return "", err
 	}
 
+	engine.LogInfo("PalettePro.onMidiEvent", "me", me)
+
 	/*
 		if EraeEnabled {
 			HandleEraeMIDI(me)
 		}
 	*/
+	layerName := ppro.params.GetStringValue("misc.midiinputlayer", "A")
+	layer := ctx.GetLayer(layerName)
 
 	if ppro.MIDIThru {
-		engine.LogWarn("PassThruMIDI needs work")
-		// ppro.PassThruMIDI(e)
+		engine.LogInfo("PassThruMIDI", "msg", me.Msg)
+		ctx.ScheduleMidi(layer, me.Msg, ctx.CurrentClick())
 	}
 	if ppro.MIDISetScale {
 		ppro.handleMIDISetScaleNote(me)
 	}
 
-	engine.LogInfo("PalettePro.onMidiEvent", "me", me)
-	note, err := ctx.MidiEventToNote(me)
-	if err != nil {
-		return "", err
-	}
-	if note != nil {
-		layer := ppro.channelToLayer(1)
-		ctx.ScheduleNote(layer, note, ctx.CurrentClick())
-	}
 	return "", nil
 }
 
-func doTest(ctx *engine.PluginContext, ntimes int, dt time.Duration) {
-	source := "test.0"
+func (ppro *PalettePro) doTest(ctx *engine.PluginContext, ntimes int, dt time.Duration) {
+	// func (ppro *PalettePro) Api(ctx *engine.PluginContext, api string, apiargs map[string]string) (result string, err error) {
+	engine.LogInfo("doTest start", "ntimes", ntimes, "dt", dt)
 	for n := 0; n < ntimes; n++ {
 		if n > 0 {
 			time.Sleep(dt)
 		}
-		layer := string("ABCD"[rand.Int()%4])
-		_, err := engine.RemoteAPI("ppro.event",
-			"layer", layer,
-			"source", source,
-			"event", "cursor_down",
-			"x", fmt.Sprintf("%f", rand.Float32()),
-			"y", fmt.Sprintf("%f", rand.Float32()),
-			"z", fmt.Sprintf("%f", rand.Float32()),
-		)
+		source := string("ABCD"[rand.Int()%4])
+		thismap := map[string]string{
+			"source": source,
+			"event":  "cursor",
+			"ddu":    "down",
+			"x":      fmt.Sprintf("%f", rand.Float32()),
+			"y":      fmt.Sprintf("%f", rand.Float32()),
+			"z":      fmt.Sprintf("%f", rand.Float32()),
+		}
+		_, err := ppro.Api(ctx, "event", thismap)
 		if err != nil {
 			engine.LogError(err)
 			return
 		}
 		time.Sleep(dt)
-		_, err = engine.RemoteAPI("event",
-			"layer", layer,
-			"source", source,
-			"event", "cursor_up",
-			"x", fmt.Sprintf("%f", rand.Float32()),
-			"y", fmt.Sprintf("%f", rand.Float32()),
-			"z", fmt.Sprintf("%f", rand.Float32()),
-		)
+		thismap = map[string]string{
+			"source": source,
+			"event":  "cursor",
+			"ddu":    "up",
+			"x":      fmt.Sprintf("%f", rand.Float32()),
+			"y":      fmt.Sprintf("%f", rand.Float32()),
+			"z":      fmt.Sprintf("%f", rand.Float32()),
+		}
+		_, err = ppro.Api(ctx, "event", thismap)
 		if err != nil {
 			engine.LogError(err)
 			return
 		}
 	}
-}
-
-func (ppro *PalettePro) saveCurrentParams(ctx *engine.PluginContext) {
-	for _, layer := range ppro.layer {
-		err := layer.SaveCurrentParams()
-		if err != nil {
-			engine.LogError(err)
-		}
-	}
+	engine.LogInfo("doTest end")
 }
 
 func (ppro *PalettePro) onCursorEvent(ctx *engine.PluginContext, apiargs map[string]string) (string, error) {
@@ -541,7 +574,10 @@ func (ppro *PalettePro) onCursorEvent(ctx *engine.PluginContext, apiargs map[str
 	logic := ppro.cursorToLogic(ce)
 	if logic != nil {
 		if ppro.generateSound {
-			logic.generateSoundFromCursor(ctx, ce)
+			// XXX - HACK
+			if ce.Ddu != "drag" {
+				logic.generateSoundFromCursor(ctx, ce)
+			}
 		}
 		if ppro.generateVisuals {
 			logic.generateVisualsFromCursor(ce)
@@ -603,7 +639,6 @@ func (ppro *PalettePro) savePreset(presetName string) error {
 	path := engine.WritableFilePath(category, presetName)
 	s := "{\n    \"params\": {\n"
 
-	sep := ""
 	engine.LogInfo("savePreset", "preset", presetName)
 
 	sortedLayerNames := []string{}
@@ -611,6 +646,7 @@ func (ppro *PalettePro) savePreset(presetName string) error {
 		sortedLayerNames = append(sortedLayerNames, layer.Name())
 	}
 	sort.Strings(sortedLayerNames)
+	sep := ""
 	for _, layerName := range sortedLayerNames {
 		layer := ppro.layer[layerName]
 		engine.LogInfo("starting", "layer", layer.Name())
@@ -621,6 +657,14 @@ func (ppro *PalettePro) savePreset(presetName string) error {
 			sep = ",\n"
 		}
 	}
+	s += sep + ppro.params.JsonValues()
+	/*
+		for name := range ppro.params.values {
+			val := ppro.params.Get(name)
+			s += fmt.Sprintf("%s        \"%s\":\"%s\"", sep, name, val)
+			sep = ",\n"
+		}
+	*/
 	s += "\n    }\n}"
 	data := []byte(s)
 	return os.WriteFile(path, data, 0644)

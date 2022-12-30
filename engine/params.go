@@ -78,10 +78,20 @@ type ParamValues struct {
 
 func NewParamValues() *ParamValues {
 	// Note: it's ParamValue (not a pointer)
-	return &ParamValues{values: make(map[string]ParamValue)}
+	return &ParamValues{values: map[string]ParamValue{}}
 }
 
-func (vals *ParamValues) List() string {
+func (vals *ParamValues) DoForAllParams(f func(string, ParamValue)) {
+	vals.mutex.Lock()
+	defer vals.mutex.Unlock()
+	for nm, val := range vals.values {
+		f(nm, val)
+	}
+}
+
+func (vals *ParamValues) JsonValues() string {
+	vals.mutex.RLock()
+	defer vals.mutex.RUnlock()
 	s := ""
 	sep := ""
 	for nm := range vals.values {
@@ -89,7 +99,7 @@ func (vals *ParamValues) List() string {
 		s = s + sep + "\"" + nm + "\":\"" + valstr + "\""
 		sep = ","
 	}
-	return "{ " + s + " }"
+	return s
 }
 
 // SetDefaultValues xxx
@@ -97,7 +107,7 @@ func (vals *ParamValues) SetDefaultValues() {
 	vals.mutex.Lock()
 	defer vals.mutex.Unlock()
 	for nm, d := range ParamDefs {
-		err := vals.setParamValueWithString(nm, d.Init, nil, false)
+		err := vals.setParamValueWithString(nm, d.Init, nil)
 		if err != nil {
 			LogError(err)
 		}
@@ -105,7 +115,9 @@ func (vals *ParamValues) SetDefaultValues() {
 }
 
 func (vals *ParamValues) Set(name, value string) error {
-	return vals.setParamValueWithString(name, value, nil, true)
+	vals.mutex.Lock()
+	defer vals.mutex.Unlock()
+	return vals.setParamValueWithString(name, value, nil)
 }
 
 // returns "" if parameter doesn't exist
@@ -200,7 +212,7 @@ func (vals *ParamValues) paramDefOf(name string) (ParamDef, error) {
 	}
 }
 
-func (vals *ParamValues) setParamValueWithString(origname, value string, callback ParamCallback, lockit bool) (err error) {
+func (vals *ParamValues) setParamValueWithString(origname, value string, callback ParamCallback) (err error) {
 
 	if origname == "pad" {
 		return fmt.Errorf("ParamValues.SetParamValueWithString rejects setting of pad value")
@@ -248,10 +260,6 @@ func (vals *ParamValues) setParamValueWithString(origname, value string, callbac
 		}
 	}
 
-	if lockit {
-		vals.mutex.Lock()
-		defer vals.mutex.Unlock()
-	}
 	vals.values[origname] = paramVal
 	return nil
 }
@@ -406,9 +414,7 @@ func LoadParamDefs() error {
 }
 
 func (vals *ParamValues) paramValue(name string) ParamValue {
-	vals.mutex.RLock()
 	val, ok := vals.values[name]
-	vals.mutex.RUnlock()
 	if !ok {
 		return nil
 	}

@@ -13,6 +13,7 @@ DECLARE_TYPES(placement);
 DECLARE_TYPES(spritesource);
 DECLARE_TYPES(spritestyle);
 DECLARE_TYPES(midibehaviour);
+DECLARE_TYPES(layer);
 DECLARE_TYPES(scale);
 DECLARE_TYPES(inputport);
 DECLARE_TYPES(synth);
