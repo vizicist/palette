@@ -317,14 +317,14 @@ func (ctx *EngineContext) sendANO() {
 */
 
 /*
-func (ctx *EngineContext) LayerApplyPreset(layerName, presetName string) error {
-	preset, err := LoadPreset(presetName)
+func (ctx *EngineContext) LayerApplySaved(layerName, savedName string) error {
+	saved, err := LoadSaved(savedName)
 	if err != nil {
-		LogError(err, "preset", presetName)
+		LogError(err, "saved", savedName)
 		return err
 	}
-	preset.ApplyTo(ctx.LayerParams(layerName))
-	return fmt.Errorf("LayerApplyPreset needs work")
+	saved.ApplyTo(ctx.LayerParams(layerName))
+	return fmt.Errorf("LayerApplySaved needs work")
 }
 */
 
@@ -333,10 +333,10 @@ func (ctx *PluginContext) OpenMIDIOutput(name string) drivers.In {
 }
 
 /*
-// GetPreset is guaranteed to return non=nil
-func (ctx *PluginContext) GetPreset(presetName string) *OldPreset {
-	preset := GetPreset(presetName)
-	return preset
+// GetSaved is guaranteed to return non=nil
+func (ctx *PluginContext) GetSaved(savedName string) *OldSaved {
+	saved := GetSaved(savedName)
+	return saved
 }
 */
 
@@ -474,12 +474,12 @@ func (ctx *PluginContext) ExecuteAPI(api string, args map[string]string, rawargs
 
 /*
 func (ctx *EngineContext) restoreCurrentSnap(layerName string) {
-	tSnapeset, err := LoadPreset("snap._Current_" + layerName)
+	tSnapeset, err := LoadSaved("layer._Current_" + layerName)
 	if err != nil {
 		LogError(err)
 		return
 	}
-	err = preset.ApplyTo(ctx.pluginParams)
+	err = saved.ApplyTo(ctx.pluginParams)
 	if err != nil {
 		LogError(err)
 	}
@@ -487,9 +487,9 @@ func (ctx *EngineContext) restoreCurrentSnap(layerName string) {
 */
 
 /*
-func (ctx *PluginContext) SaveCurrentAsPreset(presetName string) error {
-	preset := ctx.GetPreset(presetName)
-	path := preset.WritableFilePath()
+func (ctx *PluginContext) SaveCurrentAsSaved(savedName string) error {
+	saved := ctx.GetSaved(savedName)
+	path := saved.WritableFilePath()
 	return ctx.SaveCurrentSnapInPath(path)
 }
 */

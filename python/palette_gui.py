@@ -20,7 +20,7 @@ from codenamize import codenamize
 
 import palette
 
-IsQuad = False
+IsPreset = False
 RecMode = False
 # DoAttractStuff = False
 
@@ -121,7 +121,7 @@ class ProGuiApp(tk.Tk):
             self.performButtonPady = 2
             self.performButtonsPerRow = 6
             self.selectDisplayRowsAdvanced = 10
-            self.selectDisplayRowsAdvancedQuad = 12
+            self.selectDisplayRowsAdvancedPreset = 12
         else:
             self.paramDisplayRows = 18
             self.frameSizeOfControlNormal = 0.085
@@ -136,7 +136,7 @@ class ProGuiApp(tk.Tk):
             self.performButtonsPerRow = 6
             self.selectDisplayRowsAdvanced = 9
 
-        self.frameSizeOfSelectAdvancedQuad = self.frameSizeOfSelectAdvanced + self.frameSizeOfLayerChooserAdvanced
+        self.frameSizeOfSelectAdvancedPreset = self.frameSizeOfSelectAdvanced + self.frameSizeOfLayerChooserAdvanced
         if (self.frameSizeOfSelectAdvanced + self.frameSizeOfControlAdvanced + self.frameSizeOfLayerChooserAdvanced) != 1.0:
             log("Hey, page sizes don't add up to 1.0")
 
@@ -149,8 +149,9 @@ class ProGuiApp(tk.Tk):
         tk.Tk.__init__(self)
 
         self.AllPageNames = {
-                "quad":0,
-                "snap":0,
+                "global":0,
+                "preset":0,
+                "layer":0,
                 "sound":0,
                 "visual":0,
                 "effect":0,
@@ -170,10 +171,6 @@ class ProGuiApp(tk.Tk):
         for layerName in self.LayerNames:
             p = Layer(self,layerName)
             self.Layers[p] = layerName
-            # p.applyPreset("_Current_"+layer)
-
-        # This guarantees that there will be _Current_[ABCD] in the Common Files area
-        # self.saveCurrent()
 
         self.frames = {}
         self.editPage = {}
@@ -251,7 +248,7 @@ class ProGuiApp(tk.Tk):
 
             if self.nextMode != "":
 
-                log("nextMode=",self.nextMode)
+                # log("nextMode=",self.nextMode)
                 # switch to a new Mode 
                 if self.nextMode == "layout":
                     ## self.initLayout()
@@ -324,13 +321,6 @@ class ProGuiApp(tk.Tk):
         self.helpFrame.place_forget()
         self.attractFrame.place(in_=self.topContainer, relx=0, rely=0, relwidth=1, relheight=1)
 
-        # self.attractPreset = palette.ConfigValue("attractpreset","random")
-        # self.randomSpriteTime = palette.ConfigFloat("randomspritetime",0.3)
-        # self.randomPresetTime = palette.ConfigFloat("randompresettime",20.0)
-        # if self.attractPreset != "random":
-        #     self.selectorLoadAndSend("quad",self.attractPreseet)
-        # self.doAttractAction()
-
     def startHelpMode(self):
         self.selectFrame.place_forget()
         self.performFrame.place_forget()
@@ -360,7 +350,7 @@ class ProGuiApp(tk.Tk):
 
         self.performPage.pack(side=tk.TOP,fill=tk.BOTH,expand=True)
 
-        # self.selectPage("snap")
+        # self.selectPage("layer")
         self.resetVisibility()
 
         # select the initial layer
@@ -395,37 +385,6 @@ class ProGuiApp(tk.Tk):
         y = random.random()
         z = 0.6 - random.random() / 2.0
         palette.SendSpriteEvent("0",x,y,z,layer)
-
-#     def doAttractAction(self):
-# 
-#         global DoAttractStuff
-#         if DoAttractStuff == False:
-#             return
-# 
-#         now = time.time()
-#         
-#         # if self.attractPreset == "random" and (now - self.lastAttractPresetTime) > self.randomPresetTime:
-#         #     self.selectorLoadAndSendRand("quad")
-#         #     self.lastAttractPresetTime = now
-#         #
-#         # if (now - self.lastAttractSpriteTime) > self.randomSpriteTime:
-#         #     layers = ["A","B","C","D"]
-#         #     i = int(random.random()*99) % 4
-#         #     layer = layers[i]
-#         #     self.randomSprite(layer,"down")
-#         #     self.randomSprite(layer,"up")
-#         #     self.lastAttractSpriteTime = now
-#         # 
-#         #     randtype = "sprite"
-#         #     if randtype == "sprite":
-#         #         cid = str(now)
-#         #         palette.SendSpriteEvent(cid,random.random(),1.0-(random.random()/3.0),random.random()/4.0)
-#         #     else:
-#         #         cid = str(now)
-#         #         palette.SendCursorEvent(cid,"down",random.random(),1.0-(random.random()/3.0),random.random()/4.0)
-#         #         dt = 0.05
-#         #         time.sleep(dt)
-#         #         palette.SendCursorEvent(cid,"up",random.random(),random.random(),0.0)
 
     def doHelpAction(self):
         pass
@@ -464,10 +423,10 @@ class ProGuiApp(tk.Tk):
 
         self.editMode = False
         self.setFrameSizes()
-        if IsQuad and self.guiLevel == 0:
-            self.selectPage("quad")
+        if IsPreset and self.guiLevel == 0:
+            self.selectPage("preset")
         else:
-            self.selectPage("snap")
+            self.selectPage("layer")
 
         self.placeFrames()
 
@@ -491,7 +450,7 @@ class ProGuiApp(tk.Tk):
             self.frameSizeOfLayerChooser = self.frameSizeOfLayerChooserNormal
             self.selectDisplayRows = self.selectDisplayRowsNormal
 
-        elif self.currentPageName == "quad":
+        elif self.currentPageName == "preset":
             # quad page layout used to omit the LayerChooser,
             # but I put it back, so this is the same as below
             self.frameSizeOfControl = self.frameSizeOfControlAdvanced
@@ -531,9 +490,9 @@ class ProGuiApp(tk.Tk):
         self.pageHeader = PageHeader(parent=f, controller=self)
         self.pageHeader.pack(side=tk.TOP,fill=tk.BOTH)
 
-        # These are the pages of buttons for selecting set/patch/sound/visual/etc..
-        # Each one has a SelectorPage with the preset buttons,
-        # and an EditPage with all the parameters of the preset
+        # These are the pages of buttons for selecting preset/misc/layer/sound/visual/etc..
+        # Each one has a SelectorPage with the saved buttons,
+        # and an EditPage with all the parameters
         for pagename in self.visiblePageNames:
             self.makeSelectorPage(f, pagename, PageSelector)
             self.makeEditPage(f,pagename)
@@ -581,7 +540,7 @@ class ProGuiApp(tk.Tk):
         page.doLayout()
        
     def makeSelectorPage(self,parent,pagename,pagemaker):
-        vals = palette.presetsListAll(pagename)
+        vals = palette.savedListAll(pagename)
 
         page = pagemaker(parent, self, vals, pagename)
 
@@ -609,7 +568,7 @@ class ProGuiApp(tk.Tk):
         self.lastLoadType = ""
         self.lastLoadName = ""
 
-        if self.editMode and pagename != "quad":
+        if self.editMode and pagename != "layer":
             if self.allLayersSelected:
                 layer = self.layerNamed("A")
             else:
@@ -625,7 +584,7 @@ class ProGuiApp(tk.Tk):
         page = self.editPage[pagename]
         for name in layer.params:
             ptype = self.paramTypeOf[name]
-            if pagename != "snap" and ptype != pagename:
+            if pagename != "layer" and ptype != pagename:
                 continue
             value, err = palette.palette_layer_api(layer.name(), "get",
                 "\"name\": \"" + name + "\"")
@@ -673,7 +632,7 @@ class ProGuiApp(tk.Tk):
         page.tkraise()
 
     def doAllLayers(self):
-        return self.allLayersSelected or self.currentPageName=="quad"
+        return self.allLayersSelected or self.currentPageName=="layer"
 
     def sendParamValues(self,values):
         log("sendParamValues: ",str(values))
@@ -701,8 +660,8 @@ class ProGuiApp(tk.Tk):
             log("Hmmm, selectorAply should only be called in editMode")
             return
 
-        if paramType == "quad":
-            log("selectorApply not implemented on quad")
+        if paramType == "layer":
+            log("selectorApply not implemented on layer")
         else:
 
             self.applyToAllParams(apply,paramType)
@@ -716,13 +675,11 @@ class ProGuiApp(tk.Tk):
                 log("Sending ",paramType," params to layer ",self.CurrLayer.name())
                 self.CurrLayer.sendParamsOfType(paramType)
 
-            # self.saveCurrent()
-
     def applyToAllParams(self,apply,paramType):
         # loop through all the parameters of a given type
         for name in self.allParamsJson:
             j = self.allParamsJson[name]
-            if paramType != "snap" and j["paramstype"] != paramType:
+            if paramType != "layer" and j["paramstype"] != paramType:
                 continue
             valuetype = j["valuetype"]
             (p,basename) = layerOfParam(name)
@@ -782,78 +739,67 @@ class ProGuiApp(tk.Tk):
             if v != "":
                 self.changeAndSendValue(paramType,basename,v)
 
-    # def loadCurrent(self):
-    #     for layer in self.Layers:
-    #         layer.loadCurrent()
-
-    # def saveCurrent(self):
-    #     if self.allLayersSelected:
-    #         for layer in self.Layers:
-    #             layer.saveCurrent()
-    #     else:
-    #         self.CurrLayer.saveCurrent()
-
-    def selectorLoadAndSend(self,paramType,presetname):
+    def selectorLoadAndSend(self,paramType,savedname):
         if self.editMode:
             log("HEY!! selectorLoadAndSend shouldn't be used in editMode?")
             return
-        self.loadAndSend(paramType,presetname)
+        self.loadAndSend(paramType,savedname)
 
-    def loadAndSend(self,presettype,presetname):
+    def loadAndSend(self,category,filename):
 
-        # a second click on the same preset will switch to edit mode
+        # a second click on the same saved will switch to edit mode
         # (same thing as click on the page header)
         # THIS MAY BE A BAD IDEA
-        # if presettype == self.lastLoadType and presetname == self.lastLoadName:
-        #     self.clickPage(presettype)
+        # if savedtype == self.lastLoadType and savedname == self.lastLoadName:
+        #     self.clickPage(savedtype)
 
-        self.lastLoadType = presettype
-        self.lastLoadName = presetname
-        fullpresetname = presettype+"."+str(presetname)
-        self.editPage[presettype].paramsnameVar.set(presetname)
+        self.lastLoadType = category
+        self.lastLoadName = filename
+        fullsavedname = category+"."+str(filename)
+        self.editPage[category].paramsnameVar.set(filename)
 
         # if self.currentMode != "attract":
-        #     log("Loading","preset",fullpresetname)
+        #     log("Loading","preset",fullsavedname)
 
-        if presettype == "quad":
+        if category == "preset":
             if self.guiLevel == 0 or self.allLayersSelected:
-                # in casual instrument mode, loading a quad will ignore the layer selections
+                # in casual instrument mode, loading a preset will ignore the layer selections
                 # because in casual mode, the layer selectors aren't shown.
                 # In non-casual mode (guiLevel>0) we do this if allLayersSelected
-                log("Loading","preset",fullpresetname)
-                palette.palette_ppro_api("load", "\"preset\": \"" + fullpresetname + "\"")
+                log("Loading","preset",filename)
+                palette.palette_ppro_api("load", "\"filename\": \"" + filename + "\"")
             else:
-                # Otherwise, the quad preset is loaded only in a single layer
+                # Otherwise, the quad saved is loaded only in a single layer
                 layerName = self.CurrLayer.name()
-                log("Loading","layer",layerName,"preset",fullpresetname)
-                palette.palette_layer_api(layerName, "load", "\"preset\": \"" + fullpresetname + "\"")
+                self.layerLoad(layerName,category,filename)
 
         elif self.allLayersSelected:
             for layer in self.Layers:
-                log("Loading","layer",layer.name(),"preset",fullpresetname)
-                palette.palette_layer_api(layer.name(), "load", "\"preset\": \"" + fullpresetname + "\"")
-
+                self.layerLoad(layer.name(),category,filename)
         else:
             layerName = self.CurrLayer.name()
-            log("Loading","layer",layerName,"preset",fullpresetname)
-            palette.palette_layer_api(layerName,"load", "\"preset\": \"" + fullpresetname + "\"")
+            self.layerLoad(layerName,category,filename)
 
-        # self.saveCurrent()
+    def layerLoad(self,layerName,category,filename):
+        log("layerLoad","layer",layerName,"category",category," filename",filename)
+        palette.palette_layer_api(layerName, "load",
+            "\"category\": \"" + category + "\""
+            ", \"filename\": \"" + filename + "\"")
 
-    def selectorLoadAndSendRand(self,presetType):
+    def selectorLoadAndSendRand(self,savedType):
 
         if self.editMode:
             log("HEY!! selectorLoadAndSendRand shouldn't be used in editMode?")
             return
 
-        presets = palette.presetsListAll(presetType)
-        npresets = len(presets)
-        if npresets == 0:
-            log("selectorLoadAndSendRand: no presets?")
+        saved = palette.savedListAll(savedType)
+        nsaved = len(saved)
+        if nsaved == 0:
+            log("selectorLoadAndSendRand: no saved of type "+savedType+"?")
             return
-        i = random.randint(0,len(presets)-1)
-        presetname = presets[i]
-        self.loadAndSend(presetType,presetname)
+        i = random.randint(0,nsaved-1)
+        savedname = saved[i]
+        self.loadAndSend(savedType,savedname)
 
     def selectorImportAndSend(self,paramType,val):
         j = json.loads(val)
@@ -867,13 +813,13 @@ class ProGuiApp(tk.Tk):
             log("Mismatched paramstype in JSON!")
             return
 
-        if paramType == "snap":
-            self.loadPageJson(self.editPage["snap"],j)
-            self.sendPage(self.editPage["snap"])
-        elif paramType == "quad":
-            log("Hey, does quad need work here?  FFF")
+        if paramType == "layer":
+            self.loadPageJson(self.editPage["layer"],j)
+            self.sendPage(self.editPage["layer"])
+        elif paramType == "preset":
+            log("Hey, does preset need work here?  FFF")
         else:
-            self.readOtherParamsJsonIntoSnapAndQuad(paramType,j)
+            self.readOtherParamsJsonIntoSnapAndPreset(paramType,j)
             log("Sending",paramType,"params to layer",self.CurrLayer.name())
             self.CurrLayer.sendParamsOfType(paramType)
 
@@ -898,18 +844,18 @@ class ProGuiApp(tk.Tk):
         for nm in layerValues:
             page.changeValueText(nm,layerValues[nm])
 
-    def loadOther(self,paramType,presetname):
+    def loadOther(self,paramType,savedname):
 
         # Load values into the params of the currently-selected Layers
         if self.allLayersSelected:
             for layer in self.Layers:
-                layer.loadValues(paramType,presetname)
+                layer.loadValues(paramType,savedname)
         else:
-            self.CurrLayer.loadValues(paramType,presetname)
+            self.CurrLayer.loadValues(paramType,savedname)
 
         # load values into the edit page
         # page = self.editPage[pagename]
-        # page.loadOtherPreset(presetname)
+        # page.loadOtherSaved(savedname)
 
     def refreshPage(self):
         if self.editMode:
@@ -946,8 +892,6 @@ class ProGuiApp(tk.Tk):
         self.combLayerLoop(self.CurrLayer.name())
 
     def clear(self):
-        # Even on the "quad" page,
-        # it pays attention to the chooser
         if self.allLayersSelected:
             for layer in self.Layers:
                 layer.clearLoop()
@@ -1028,7 +972,7 @@ class ProGuiApp(tk.Tk):
 
         self.resetVisibility()
 
-    def sendQuad(self):
+    def sendPreset(self):
         for layer in self.Layers:
             log("Sending all parameters for layer = ",layer.name())
             for pt in ["sound","visual","effect"]:
@@ -1099,28 +1043,28 @@ class ProGuiApp(tk.Tk):
                 self.paramsOfType[t][x] = self.newParamsJson[x]
                 self.paramTypeOf[x] = self.newParamsJson[x]["paramstype"]
 
-        # In addition to creating parameters for "snap",
-        # we create all the parameters for the "quad" settings by
+        # In addition to creating parameters for "layer",
+        # we create all the parameters for the "preset" settings by
         # duplicating all the parameters for each layer (A,B,C,D).
         for name in self.newParamNames:
             self.paramValueTypeOf[name] = self.newParamsJson[name]["valuetype"]
-            self.paramsOfType["snap"][name] = self.newParamsJson[name]
+            self.paramsOfType["layer"][name] = self.newParamsJson[name]
 
-            if IsQuad:
+            if IsPreset:
                 # We prepend A-, B-, etc to the parameter name for quad parameters,
-                # to create entries for "quad" things
-                # in paramValueTypeOf and paramsOfType["quad"]
+                # to create entries for "preset" things
+                # in paramValueTypeOf and paramsOfType["preset"]
                 for layer in self.LayerNames:
                     quadName = LayerParamName(layer,name)
                     self.paramValueTypeOf[quadName] = self.newParamsJson[name]["valuetype"]
-                    self.paramsOfType["quad"][quadName] = self.newParamsJson[name]
+                    self.paramsOfType["preset"][quadName] = self.newParamsJson[name]
 
         # The things here get ADDED to the ones already read in from paramenums.json
         for pt in {"sound", "visual", "effect"}:
             if pt in self.paramenums:
                 log("WARNING! pt=",pt," is already in paramenums.json!")
             else:
-                self.paramenums[pt] = palette.presetsListAll(pt)
+                self.paramenums[pt] = palette.savedListAll(pt)
 
         j = palette.readJsonPath(palette.configFilePath("synths.json"))
 
@@ -1156,9 +1100,9 @@ class Layer():
     def __init__(self, controller, layerName):
         self.paramValues = {}
         self.controller = controller
-        self.params = self.controller.paramsOfType["snap"]
+        self.params = self.controller.paramsOfType["layer"]
         self.setInitValues()
-        self.snapPath = CurrentLayerPath(layerName)
+        # self.snapPath = CurrentLayerPath(layerName)
         self.layerName = layerName
         self.setDefaultPerform()
 
@@ -1181,40 +1125,6 @@ class Layer():
 
     def getValues(self):
         return self.paramValues
-
-#     def loadValues(self,paramType,presetname):
-#         self.applyPresetValues(paramType,presetname)
-#         self.saveCurrent()
- 
-#        path = self.snapPath
-#        if not self.loadFile(path):
-#            debug("No Current settings for layer=",self.name()," path=",path)
-#        else:
-#            log("Loaded",self.name(),"from",path)
-
-#    def applyPresetValues(self,paramType,presetName):
-#        fpath = palette.searchPresetsFilePath(paramType, presetName)
-#        if not self.loadFile(fpath):
-#            log("Unable to load preset file: ",fpath)
-#        else:
-#            log("Loaded",self.name(),"from",fpath)
-
-#    def loadFile(self,path):
-#        try:
-#            f = open(path)
-#            j = json.load(f)
-#            self.loadJson(j)
-#            f.close()
-#            return True
-#        except:
-#            return False
-
-    # def currentSnapName(self):
-    #     return "snap._Current_"+self.name()
-
-    # def saveCurrent(self):
-    #     palette.palette_layer_api(self.name(),"preset.save",
-    #         "\"preset\": \"" + self.currentSnapName() + "\"")
 
     def loadJson(self,j):
         # the self.params has all (i.e. snap) parameters, but
@@ -1252,11 +1162,11 @@ class Layer():
 
     def sendParamsOfType(self,paramType):
         for pt in ["sound","visual","effect"]:
-            if paramType == "snap" or paramType == pt:
+            if paramType == "layer" or paramType == pt:
                 paramlistjson = self.paramListOfType(pt)
                 palette.palette_layer_api(self.name(), "setparams", paramlistjson)
 
-        if paramType == "snap":
+        if paramType == "layer":
             self.sendPerformVals()
 
     def sendPerformVals(self):
@@ -1274,13 +1184,13 @@ class Layer():
         self.performIndex[name] = index
 
     def sendANO(self):
-        palette.palette_ppro_api(self.name(), "ANO")
+        palette.palette_ppro_api("ANO")
 
     def clearExternalScale(self):
-        palette.palette_ppro_api(self.name(), "clearexternalscale")
+        palette.palette_ppro_api("clearexternalscale")
 
     def useExternalScale(self,onoff):
-        palette.palette_ppro_api(self.name(), "midi_usescale", "\"onoff\": \"" + str(onoff) + "\"")
+        palette.palette_ppro_api("midi_usescale", "\"onoff\": \"" + str(onoff) + "\"")
 
     def sendPerformVal(self,name):
         index = self.performIndex[name]
@@ -1375,7 +1285,7 @@ class Layer():
         # XXX - should this use self.params ?
         for name in self.controller.newParamsJson:
             j = self.controller.newParamsJson[name]
-            if paramType == "snap" or j["paramstype"] == paramType:
+            if paramType == "layer" or j["paramstype"] == paramType:
                 # paramname = layer + "_" + name
                 paramname = name
                 v = self.getValue(paramname)
@@ -1546,8 +1456,8 @@ class PageHeader(tk.Frame):
             for pageName in self.controller.visiblePageNames:
                 self.pageButton[pageName].pack_forget()
         else:
-            self.PaletteTitle.config(text="  Presets:  ",justify=tk.LEFT)
-            self.PaletteTitle.pack(side=tk.LEFT,pady=10)
+            # self.PaletteTitle.config(text="Global",justify=tk.LEFT)
+            # self.PaletteTitle.pack(side=tk.LEFT,pady=10)
             for pageName in self.controller.visiblePageNames:
                 self.pageButton[pageName].pack(side=tk.LEFT,padx=5)
             
@@ -1575,23 +1485,23 @@ class PageEditParams(tk.Frame):
         saveArea = self.makeButtonArea()
         saveArea.pack(side=tk.TOP, fill=tk.X)
 
-        self.updatePresetNames()
+        self.updateSavedNames()
         self.paramsFrame = self.makeParamsArea(self)
         self.scrollbar = ScrollBar(parent=self, notify=self)
 
-        # On the "quad" page, the parameter values aren't shown,
+        # On the "preset" page, the parameter values aren't shown,
         # just the buttons to import/export/save
-        if pagename != "quad":
+        if pagename != "preset":
             self.paramsFrame.pack(side=tk.LEFT, pady=0)
             self.scrollbar.pack(side=tk.LEFT, fill=tk.Y, expand=True, pady=10, padx=5)
             self.updateParamView()
 
         defname = self.controller.selectorPage[pagename].defaultVal()
-        self.setPresetNameInComboBox(defname)
+        self.setSavedNameInComboBox(defname)
 
-    def updatePresetNames(self):
-        self.presetNames = palette.presetsListAll(self.pagename)
-        self.comboParamsname.configure(values=self.presetNames)
+    def updateSavedNames(self):
+        self.savedNames = palette.savedListAll(self.pagename)
+        self.comboParamsname.configure(values=self.savedNames)
 
     def makeParamsArea(self,container):
 
@@ -1639,7 +1549,7 @@ class PageEditParams(tk.Frame):
     def makeButtonArea(self):
         f = tk.Frame(self, background=ColorBg)
 
-        if self.pagename != "quad" and self.pagename != "snap":
+        if self.pagename != "preset" and self.pagename != "layer":
             self.initButton = ttk.Label(f, text="Init", style='RandEtcButton.TLabel')
             self.initButton.bind("<Button-1>", lambda event:self.initCallback())
             self.initButton.bind("<ButtonRelease-1>", lambda event:self.initRelease())
@@ -1817,8 +1727,6 @@ class PageEditParams(tk.Frame):
         paramType = self.controller.paramTypeOf[name]
         self.controller.changeAndSendValue(paramType,name,newval)
 
-        # self.controller.saveCurrent()
-
     def listOfType(self,typesname):
         return self.controller.paramenums[typesname]
 
@@ -1888,37 +1796,37 @@ class PageEditParams(tk.Frame):
         log("In checkThenGoToParamsFileReturn for name=",name)
         return
 
-    def setPresetNameInComboBox(self,name):
+    def setSavedNameInComboBox(self,name):
         self.paramsname = name
         try:
-            n = self.presetNames.index(name)
+            n = self.savedNames.index(name)
             self.comboParamsname.current(n)
         except:
             pass
 
-#     def loadOtherPreset(self,name):
+#     def loadOtherSaved(self,name):
 # 
-#         path = palette.searchPresetsFilePath(self.pagename,name)
+#         path = palette.searchSavedFilePath(self.pagename,name)
 #         try:
 #             f = open(path)
 #         except:
-#             log("Unable to load preset: ",path)
+#             log("Unable to load saved: ",path)
 #             return
 # 
 #         j = json.load(f)
-#         presetvals = j["params"]
+#         savedvals = j["params"]
 # 
-#         self.controller.sendParamValues(presetvals)
+#         self.controller.sendParamValues(savedvals)
 # 
 #     def loadSnapNamed(self,name,doLift=True):
 # 
 #         log("\n=== loadSnapNamed ",name)
 # 
-#         self.controller.readSnapParamsFileIntoPage(name,"snap")
+#         self.controller.readSnapParamsFileIntoPage(name,"layer")
 # 
 #         self.comboParamsname.configure(values=self.paramFiles)
 # 
-#         self.setPresetNameInComboBox(name)
+#         self.setSavedNameInComboBox(name)
 # 
 #         for p in self.params:
 #             self.changeValue(p,self.getValue(p))
@@ -1929,15 +1837,15 @@ class PageEditParams(tk.Frame):
 #     def oldstartEditing(self,name,doLift=True):
 # 
 #         log("=== startEditing pagename=%s name=%s" % (self.pagename,name))
-#         if self.pagename == "quad":
+#         if self.pagename == "preset":
 #             log("Are you getting here?")
-#             # self.controller.readQuadPreset(name)
+#             # self.controller.readPresetSaved(name)
 #         else:
 #             self.controller.readSnapParamsFileIntoPage(name,self.pagename)
 # 
 #         self.comboParamsname.configure(values=self.paramFiles)
 # 
-#         self.setPresetNameInComboBox(name)
+#         self.setSavedNameInComboBox(name)
 # 
 #         # self.oldStartEditing()
 
@@ -2004,41 +1912,42 @@ class PageEditParams(tk.Frame):
 
     def saveOkCallback(self):
         name = self.paramsnameVar.get()
-        self.savePreset(self.pagename + "." + name)
+        self.saveSaved(name)
 
-        self.updatePresetNames()
-        self.controller.updateSelectorPage(self.pagename,self.presetNames)
+        self.updateSavedNames()
+        self.controller.updateSelectorPage(self.pagename,self.savedNames)
         self.saveCancelCallback()
 
-    def savePreset(self,preset):
+    def saveSaved(self,filename):
 
-        if self.pagename != "quad" and self.controller.allLayersSelected:
-            msg = "\n   You can't save a "+self.pagename+" preset when all four layers are selected.   \n\nPlease select the single pad you want to save as a preset.\n"
+        if self.pagename != "preset" and self.controller.allLayersSelected:
+            msg = "\n   You can't save a "+self.pagename+" saved when all four layers are selected.   \n\nPlease select the single pad you want to save as a saved.\n"
             self.controller.popup(msg)
             return
 
-        if self.pagename == "quad":
+        if self.pagename == "preset":
             result, err = palette.palette_ppro_api("save",
-                    "\"preset\": \"" + preset + "\"")
+                    "\"filename\": \"" + filename + "\"")
             if err != None:
-                log("Error saving preset:",preset," err=",err)
+                log("Error saving saved:",filename," err=",err)
             if result != "":
-                log("result of save for preset=",preset," has non-empty result=",result)
+                log("result of save for saved=",filename," has non-empty result=",result)
 
         else:
             layer = self.controller.CurrLayer.name()
             result, err = palette.palette_layer_api(layer,"save",
-                    "\"preset\": \"" + preset + "\"")
+                    "\"category\": \"" + self.pagename + "\""
+                    ", \"filename\": \"" + filename + "\"")
             if err != None:
-                log("Error saving preset:",preset," err=",err)
+                log("Error saving saved:",filename," err=",err)
             if result != "":
-                log("result of save for preset=",preset," has non-empty result=",result)
+                log("result of save for saved=",filename," has non-empty result=",result)
 
 #    def saveJson(self,section,fname,suffix=".json"):
 #
-#        # Note: saving always happens in the localPresetsFilePath,
+#        # Note: saving always happens in the localSavedFilePath,
 #        # even if the original one was loaded from a different directory
-#        fpath = palette.localPresetsFilePath(section,fname,suffix)
+#        fpath = palette.localSavedFilePath(section,fname,suffix)
 #        j = self.jsonParamDump(section)
 #        log("Edit page is saving JSON in:",fpath)
 #        SaveJsonInPath(j,fpath)
@@ -2046,7 +1955,7 @@ class PageEditParams(tk.Frame):
     def jsonParamDump(self,section):
         newjson = {}
         newjson["params"] = {}
-        if section == "snap":
+        if section == "layer":
             for name in self.params:
                 newjson["params"][name] = {}
                 w = self.paramValueWidget[name]
@@ -2396,11 +2305,11 @@ class PageSelector(tk.Frame):
         padx = self.controller.selectButtonPadx
         pady = self.controller.selectButtonPady
 
-        # if self.controller.guiLevel == 0 or self.pagename == "quad":
+        # if self.controller.guiLevel == 0 or self.pagename == "preset":
         if self.controller.guiLevel == 0:
             nrows = self.controller.selectDisplayRowsNormal
         else:
-            if self.pagename == "quad":
+            if self.pagename == "preset":
                 nrows = self.controller.selectDisplayRowsAdvanced - 4
             else:
                 nrows = self.controller.selectDisplayRowsAdvanced
@@ -2435,11 +2344,11 @@ class PageSelector(tk.Frame):
                     selectButtonText = self.vals[valindex]
                     istwo = isTwoLine(selectButtonText)
                     if istwo:
-                        style='PresetButton.TLabel'
+                        style='SavedButton.TLabel'
                         selectButtonText = selectButtonText.replace(palette.LineSep,"\n",1)
                         selectButtonText = selectButtonText.replace(palette.LineSep," ")
                     else:
-                        style='PresetButton.TLabel'
+                        style='SavedButton.TLabel'
                         selectButtonText = selectButtonText + "\n"
 
                     # First time here, we create the Button
@@ -2467,9 +2376,9 @@ class PageSelector(tk.Frame):
         self.controller.selectorButtonIndex = buttoni
         for i in self.selectButtons:
             if i == buttoni:
-                s = 'PresetButtonHighlight.TLabel'
+                s = 'SavedButtonHighlight.TLabel'
             else:
-                s = 'PresetButton.TLabel'
+                s = 'SavedButton.TLabel'
             self.selectButtons[i].config(style=s)
 
 def afterWindowIsDisplayed(windowName,guiresize,*args):
@@ -2516,12 +2425,12 @@ def LayerParamName(layer,param):
 def isTwoLine(text):
     return text.find(palette.LineSep) >= 0 or text.find("\n") >= 0
 
-def CurrentLayerFilename(pad):
-    return "CurrentLayer_"+pad
+# def CurrentLayerFilename(pad):
+#     return "CurrentLayer_"+pad
 
-def CurrentLayerPath(layer):
-    nm = CurrentLayerFilename(layer)
-    return palette.configFilePath(nm+".json")
+# def CurrentLayerPath(layer):
+#     nm = CurrentLayerFilename(layer)
+#     return palette.configFilePath(nm+".json")
 
 # def SaveJsonInPath(j,fpath):
 #     f = open(fpath,"w")
@@ -2539,14 +2448,14 @@ def initMain(app):
     app.mainLoop()
 
 def setFontSizes(isguilarge):
-    global presetButtonFont, largestFont
+    global savedButtonFont, largestFont
     global hugeFont, comboFont, largerFont, largeFont, performButtonFont
     global layerLabelFont, paramNameFont, paramValueFont, paramAdjustFont
 
     f = 'Open Sans Regular'
 
     if isguilarge:
-        presetButtonFont = (f, int(20))
+        savedButtonFont = (f, int(20))
         largestFont = (f, int(24))
         hugeFont = (f, int(36))
         comboFont = (f, int(20))
@@ -2558,7 +2467,7 @@ def setFontSizes(isguilarge):
         paramValueFont = (f, int(18))
         paramAdjustFont = (f, int(20))
     else:
-        presetButtonFont = (f, int(10))
+        savedButtonFont = (f, int(10))
         largestFont = (f, int(12))
         hugeFont = (f, int(18))
         comboFont = (f, int(10))
@@ -2595,8 +2504,8 @@ def makeStyles(app):
     s.configure('Attract.TLabel', background=ColorBg, foreground=ColorWhite, relief="flat", justify=tk.CENTER, align=tk.CENTER, font=largestFont)
     s.configure('PerformHeader.TLabel', background=ColorButton, foreground=ColorBright, relief="flat", justify=tk.CENTER, align=tk.CENTER, font=performButtonFont)
 
-    s.configure('PresetButton.TLabel', foreground=ColorText, font=presetButtonFont, background=ColorButton, anchor=tk.CENTER, justify=tk.CENTER)
-    s.configure('PresetButtonHighlight.TLabel', foreground=ColorText, font=presetButtonFont, background=ColorHigh, anchor=tk.CENTER, justify=tk.CENTER)
+    s.configure('SavedButton.TLabel', foreground=ColorText, font=savedButtonFont, background=ColorButton, anchor=tk.CENTER, justify=tk.CENTER)
+    s.configure('SavedButtonHighlight.TLabel', foreground=ColorText, font=savedButtonFont, background=ColorHigh, anchor=tk.CENTER, justify=tk.CENTER)
 
     s.configure('RecordingButton.TLabel', background=ColorRed, relief="flat", justify=tk.CENTER, align=tk.CENTER, font=largeFont)
 
@@ -2613,7 +2522,7 @@ def makeStyles(app):
                     ('pressed', ColorHigh),
                     ('active', ColorButton)]
         )
-    s.map('PresetButton.TLabel',
+    s.map('SavedButton.TLabel',
         foreground=[('disabled', 'yellow'),
                     ('pressed', ColorText),
                     ('active', ColorText)],
@@ -2705,25 +2614,22 @@ if __name__ == "__main__":
         # You can set layers to "B", for example
         layername = layers[0]
         layernames = layers
-        visiblepagenames = {
-            "snap":"Layer",
-            "sound":"Sound",
-            "visual":"Visual",
-            "effect":"Effect",
-        }
     elif nlayers == 4:
         layername = layers[0]
         layernames = layers
-        IsQuad = True
-        visiblepagenames = {
-            "quad":"Quad",
-            "snap":"Layer",
-            "sound":"Sound",
-            "visual":"Visual",
-            "effect":"Effect",
-        }
+        IsPreset = True
     else:
         log("Unexpected number of layers: ",layers)
+
+    visiblepagenames = {
+        "global":"Global",
+        "preset":"Preset",
+        "misc":"Misc",
+        "layer":"Layer",
+        "sound":"Sound",
+        "visual":"Visual",
+        "effect":"Effect",
+    }
 
     # guiresize is of the form x,y,w,h
     guiresize = palette.ConfigValue("guiresize",defvalue="")

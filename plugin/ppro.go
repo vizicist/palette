@@ -40,7 +40,7 @@ type PalettePro struct {
 	attractModeIsOn        bool
 	lastAttractCommand     time.Time
 	lastAttractGestureTime time.Time
-	lastAttractPresetTime  time.Time
+	lastAttractRandTime    time.Time
 	attractGestureDuration time.Duration
 	attractNoteDuration    time.Duration
 	attractPresetDuration  time.Duration
@@ -74,7 +74,7 @@ func init() {
 
 		lastAttractCommand:     time.Time{},
 		lastAttractGestureTime: time.Time{},
-		lastAttractPresetTime:  time.Time{},
+		lastAttractRandTime:    time.Time{},
 		attractGestureDuration: 0,
 		attractNoteDuration:    0,
 		attractPresetDuration:  0,
@@ -161,12 +161,12 @@ func (ppro *PalettePro) Api(ctx *engine.PluginContext, api string, apiargs map[s
 		return value, nil
 
 	case "load":
-		presetName, okpreset := apiargs["preset"]
-		if !okpreset {
+		filename, oksaved := apiargs["filename"]
+		if !oksaved {
 			return "", fmt.Errorf("missing preset parameter")
 		}
 
-		err := ppro.loadQuadPreset(presetName)
+		err := ppro.loadPreset(filename)
 		if err != nil {
 			return "", err
 		}
@@ -180,11 +180,11 @@ func (ppro *PalettePro) Api(ctx *engine.PluginContext, api string, apiargs map[s
 		return "", err
 
 	case "save":
-		presetName, okpreset := apiargs["preset"]
-		if !okpreset {
-			return "", fmt.Errorf("missing preset parameter")
+		filename, oksaved := apiargs["filename"]
+		if !oksaved {
+			return "", fmt.Errorf("missing filename parameter")
 		}
-		return "", ppro.saveQuadPreset(presetName)
+		return "", ppro.savePreset(filename)
 
 	case "startprocess":
 		process, ok := apiargs["process"]
@@ -245,7 +245,7 @@ func (ppro *PalettePro) Api(ctx *engine.PluginContext, api string, apiargs map[s
 
 	default:
 		engine.LogWarn("Pro.ExecuteAPI api is not recognized\n", "api", api)
-		return "", fmt.Errorf("Router.ExecutePresetAPI unrecognized api=%s", api)
+		return "", fmt.Errorf("Router.ExecuteSavedAPI unrecognized api=%s", api)
 	}
 }
 
@@ -269,21 +269,21 @@ func (ppro *PalettePro) start(ctx *engine.PluginContext) error {
 
 	layerA := ppro.addLayer(ctx, "A")
 	layerA.Set("visual.shape", "circle")
-	layerA.LoadPreset("snap.White_Ghosts")
+	layerA.LoadSaved("layer", "White_Ghosts")
 
 	layerB := ppro.addLayer(ctx, "B")
 	layerB.Set("visual.shape", "square")
-	layerB.LoadPreset("snap.Concentric_Squares")
+	layerB.LoadSaved("layer", "Concentric_Squares")
 
 	layerC := ppro.addLayer(ctx, "C")
 	layerC.Set("visual.shape", "square")
-	layerC.LoadPreset("snap.Circular_Moire")
+	layerC.LoadSaved("layer", "Circular_Moire")
 
 	layerD := ppro.addLayer(ctx, "D")
 	layerD.Set("visual.shape", "square")
-	layerD.LoadPreset("snap.Diagonal_Mirror")
+	layerD.LoadSaved("layer", "Diagonal_Mirror")
 
-	//ctx.ApplyPreset("quad.Quick Scat_Circles")
+	//ctx.ApplySaved("saved.Quick Scat_Circles")
 
 	// Don't start checking processes right away, after killing them on a restart,
 	// they may still be running for a bit
@@ -564,34 +564,30 @@ func (ppro *PalettePro) onCursorEvent(ctx *engine.PluginContext, apiargs map[str
 	return "", nil
 }
 
-func (ppro *PalettePro) loadQuadPresetRand() {
+func (ppro *PalettePro) loadPresetRand() {
 
-	arr, err := engine.PresetArray("layer")
+	arr, err := engine.SavedArray("preset")
 	if err != nil {
 		engine.LogError(err)
 		return
 	}
 	rn := rand.Uint64() % uint64(len(arr))
-	engine.LogInfo("loadQuadPresetRand", "preset", arr[rn])
-	ppro.loadQuadPreset(arr[rn])
+	engine.LogInfo("loadPresetRand", "saved", arr[rn])
+	ppro.loadPreset(arr[rn])
 	if err != nil {
 		engine.LogError(err)
 	}
 }
 
-func (ppro *PalettePro) loadQuadPreset(presetName string) (err error) {
+func (ppro *PalettePro) loadPreset(presetName string) (err error) {
 
-	category, filename := engine.PresetNameSplit(presetName)
-	if category != "layer" {
-		return fmt.Errorf("PalettePro.loadQuadPreset: not a quad preset", "preset", presetName)
-	}
-	path := engine.PresetFilePath(category, filename)
+	path := engine.SavedFilePath("preset", presetName)
 	paramsMap, err := engine.LoadParamsMap(path)
 	if err != nil {
 		return err
 	}
 	for _, layer := range ppro.layer {
-		e := layer.ApplyQuadPresetMap(paramsMap)
+		e := layer.ApplyPresetSavedMap(paramsMap)
 		if e != nil {
 			engine.LogError(e)
 			err = e
@@ -600,18 +596,15 @@ func (ppro *PalettePro) loadQuadPreset(presetName string) (err error) {
 	return err
 }
 
-func (ppro *PalettePro) saveQuadPreset(presetName string) error {
+func (ppro *PalettePro) savePreset(presetName string) error {
 
 	// wantCategory is sound, visual, effect, snap, or quad
-	category, filename := engine.PresetNameSplit(presetName)
-	if category != "layer" {
-		return fmt.Errorf("PalettePro.saveQuadPreset: not a quad preset=%s", presetName)
-	}
-	path := engine.WritableFilePath(category, filename)
+	category := "preset"
+	path := engine.WritableFilePath(category, presetName)
 	s := "{\n    \"params\": {\n"
 
 	sep := ""
-	engine.LogInfo("saveQuadPreset", "preset", presetName)
+	engine.LogInfo("savePreset", "preset", presetName)
 
 	sortedLayerNames := []string{}
 	for _, layer := range ppro.layer {
@@ -768,10 +761,10 @@ func (ppro *PalettePro) doAttractAction(ctx *engine.PluginContext) {
 		ppro.lastAttractGestureTime = now
 	}
 
-	dp := now.Sub(ppro.lastAttractPresetTime)
+	dp := now.Sub(ppro.lastAttractRandTime)
 	if ppro.attractPreset == "random" && dp > ppro.attractPresetDuration {
-		ppro.loadQuadPresetRand()
-		ppro.lastAttractPresetTime = now
+		ppro.loadPresetRand()
+		ppro.lastAttractRandTime = now
 	}
 }
 
