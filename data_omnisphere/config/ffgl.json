@@ -1,6 +1,6 @@
 {
   "debugsprite": "false",
-  "debugcursor": "false",
-  "debugapi": "false",
-  "debugparam": "false"
+  "debugcursor": "true",
+  "debugapi": "true",
+  "debugparam": "true"
 }

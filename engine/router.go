@@ -386,24 +386,24 @@ func (r *Router) notifyGUI(eventName string) {
 
 /*
 func (r *Router) handleMMTTButton(butt string) {
-	presetName := ConfigStringWithDefault(butt, "")
-	if presetName == "" {
-		Warn("No Preset assigned to BUTTON, using Perky_Shapes", "butt", butt)
-		presetName = "Perky_Shapes"
+	savedName := ConfigStringWithDefault(butt, "")
+	if savedName == "" {
+		Warn("No Saved assigned to BUTTON, using Perky_Shapes", "butt", butt)
+		savedName = "Perky_Shapes"
 		return
 	}
-	preset, err := LoadPreset("quad." + presetName)
+	saved, err := LoadSaved("saved." + savedName)
 	if err != nil {
 		LogError(err)
 		return
 	}
-	Info("Router.handleMMTTButton", "butt", butt, "preset", presetName)
-	err = preset.applyQuadPresetToLayer("*")
+	Info("Router.handleMMTTButton", "butt", butt, "saved", savedName)
+	err = saved.applyPresetSavedToLayer("*")
 	if err != nil {
-		Warn("handleMMTTButton", "preset", presetName, "err", err)
+		Warn("handleMMTTButton", "saved", savedName, "err", err)
 	}
 
-	text := strings.ReplaceAll(presetName, "_", "\n")
+	text := strings.ReplaceAll(savedName, "_", "\n")
 	go r.showText(text)
 }
 */
