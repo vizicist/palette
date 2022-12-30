@@ -173,6 +173,7 @@ var LogEnabled = map[string]bool{
 	"morph":     false,
 	"mouse":     false,
 	"nats":      false,
+	"note":      false,
 	"notify":    false,
 	"osc":       false,
 	"phrase":    false,

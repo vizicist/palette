@@ -90,7 +90,7 @@ func (r *Resolume) freeframeClientFor(layerName string) *osc.Client {
 }
 
 func (r *Resolume) toFreeFramePlugin(layerName string, msg *osc.Message) {
-	engine.DebugLogOfType("freeframe", "toFreeframe", "layer", layerName, "msg", msg)
+	engine.DebugLogOfType("freeframe", "Resolume.toFreeframe", "layer", layerName, "msg", msg)
 	ff := r.freeframeClientFor(layerName)
 	if ff == nil {
 		engine.LogError(fmt.Errorf("no freeframe client for layer"), "layer", layerName)
@@ -197,7 +197,7 @@ func (r *Resolume) sendPadOneEffectParam(layerNum int, effectName string, paramN
 }
 
 func (r *Resolume) toResolume(msg *osc.Message) {
-	if engine.IsLogging("resolume") {
+	if engine.IsLogging("resolume") || engine.IsLogging("freeframe") {
 		engine.LogInfo("Resolume.toResolume", "msg", msg)
 	}
 	r.resolumeClient.Send(msg)
