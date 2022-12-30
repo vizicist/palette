@@ -70,6 +70,7 @@
 "misc.logic_sound": {"valuetype":"string", "min":"logic_sound", "max":"logic_sound", "init":"true", "comment":"# Sound Logic" },
 "misc.logic_visual": {"valuetype":"string", "min":"logic_visual", "max":"logic_visual", "init":"true", "comment":"# Visual Logic" },
 "misc.midibehaviour": {"valuetype": "string", "min": "midibehaviour", "max": "midibehaviour",  "init": "default", "comment": "#" },
+"misc.midiinputlayer": {"valuetype":"string", "min":"layer", "max":"layer", "init":"A", "comment":"# Layer receiving MIDI Input" },
 
 "global.enable:sound": {"valuetype":"bool", "min":"false", "max":"true", "init":"true", "comment":"# Enable Sound" },
 "global.enable:visual": {"valuetype":"bool", "min":"false", "max":"true", "init":"true", "comment":"# Enable Visual" },

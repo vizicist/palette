@@ -18,6 +18,12 @@
     "none",
     "sprite"
   ],
+  "layer": [
+    "A",
+    "B",
+    "C",
+    "D"
+  ],
   "scale": [
     "external",
     "newage",

@@ -1,5 +1,5 @@
 {
-  "debug": "",
+  "debug": "midi",
   "plugins": "ppro",
   "guilevel": "1",
   "autostart": "gui,bidule,resolume",

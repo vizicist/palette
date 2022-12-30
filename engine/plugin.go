@@ -2,10 +2,9 @@ package engine
 
 import (
 	"fmt"
-	"os"
-	"sort"
 	"time"
 
+	midi "gitlab.com/gomidi/midi/v2"
 	"gitlab.com/gomidi/midi/v2/drivers"
 )
 
@@ -14,7 +13,7 @@ type PluginFunc func(ctx *PluginContext, api string, apiargs map[string]string) 
 type PluginContext struct {
 	api           PluginFunc
 	cursorManager *CursorManager
-	params        *ParamValues
+	// params        *ParamValues
 	sources       map[string]bool
 }
 
@@ -186,12 +185,12 @@ func (ctx *PluginContext) CurrentClick() Clicks {
 	return CurrentClick()
 }
 
-func (ctx *PluginContext) ScheduleNote(layer *Layer, note any, click Clicks) {
+func (ctx *PluginContext) ScheduleMidi(layer *Layer, msg midi.Message, click Clicks) {
 	go func() {
 		se := &SchedElement{
 			AtClick: click,
 			layer:   layer,
-			Value:   note,
+			Value:   MidiSchedValue{msg},
 		}
 		TheEngine().Scheduler.cmdInput <- SchedulerElementCmd{se}
 	}()
@@ -205,6 +204,7 @@ func (ctx *PluginContext) SubmitCommand(command Command) {
 }
 */
 
+/*
 func (ctx *PluginContext) ParamIntValue(name string) int {
 	return ctx.params.GetIntValue(name)
 }
@@ -212,6 +212,7 @@ func (ctx *PluginContext) ParamIntValue(name string) int {
 func (ctx *PluginContext) ParamBoolValue(name string) bool {
 	return ctx.params.GetBoolValue(name)
 }
+*/
 
 /*
 func (ctx *EngineContext) GetScale() *Scale {
@@ -498,12 +499,13 @@ func (ctx *PluginContext) GenerateCursorGestureesture(source string, cid string,
 	ctx.cursorManager.generateCursorGestureesture(source, cid, noteDuration, x0, y0, z0, x1, y1, z1)
 }
 
+/*
 func (ctx *PluginContext) SaveCurrentSnapInPath(path string) error {
 
 	s := "{\n    \"params\": {\n"
 
 	// Print the parameter values sorted by name
-	fullNames := ctx.params.values
+	fullNames := ctx.params.Values
 	sortedNames := make([]string, 0, len(fullNames))
 	for k := range fullNames {
 		sortedNames = append(sortedNames, k)
@@ -524,3 +526,4 @@ func (ctx *PluginContext) SaveCurrentSnapInPath(path string) error {
 	data := []byte(s)
 	return os.WriteFile(path, data, 0644)
 }
+*/

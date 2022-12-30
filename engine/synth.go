@@ -345,7 +345,7 @@ func (synth *Synth) SendTo(value any) {
 		synth.noteDown[pitch] = true
 		synth.noteDownCount[pitch]++
 
-		DebugLogOfType("midi", "SendNoteOnToSynth",
+		DebugLogOfType("note", "SendNoteOnToSynth",
 			"synth", synth,
 			"channel", synth.portchannel.channel,
 			"pitch", pitch,
@@ -357,7 +357,7 @@ func (synth *Synth) SendTo(value any) {
 		synth.noteDown[pitch] = false
 		synth.noteDownCount[pitch]--
 
-		DebugLogOfType("midi", "SendNoteOffToSynth",
+		DebugLogOfType("note", "SendNoteOffToSynth",
 			"synth", synth,
 			"channel", synth.portchannel.channel,
 			"pitch", pitch,
