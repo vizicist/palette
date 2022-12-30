@@ -190,8 +190,8 @@ def logFilePath(nm):
 def configFilePath(nm):
     return os.path.join(localPaletteDir(),PaletteDataPath(),"config",nm)
 
-def presetsPath():
-    return os.path.join(localPaletteDir(),PaletteDataPath(),"presets")
+def savedPath():
+    return os.path.join(localPaletteDir(),PaletteDataPath(),"saved")
 
 def localPaletteDir():
     common = os.environ.get("CommonProgramFiles")
@@ -206,14 +206,14 @@ def paletteSubDir(subdir):
 paletteDataPath = ""
 
 # This is the name of the data_* directory
-# under which are config and presets.
+# under which are config and saved.
 # The value comes from the local.json file
 def PaletteDataPath():
     global paletteDataPath
     if paletteDataPath != "":
         return paletteDataPath
 
-    dir = "data_default"
+    dir = "data_omnisphere"
     # local.json can override it
     path = os.path.join(localPaletteDir(),"local.json")
     if os.path.isfile(path):
@@ -228,15 +228,15 @@ def PaletteDataPath():
 
     return paletteDataPath
 
-# Combine presets in the presetsPath list
-def presetsListAll(presetType):
-    presetspath = presetsPath()
-    paths = presetspath.split(";")
+# Combine saved in the savedPath list
+def savedListAll(savedType):
+    savedpath = savedPath()
+    paths = savedpath.split(";")
     allvals = []
     for dir in paths:
-        presetdir = os.path.join(dir,presetType)
-        if os.path.isdir(presetdir):
-            vals = listOfJsonFiles(presetdir)
+        saveddir = os.path.join(dir,savedType)
+        if os.path.isdir(saveddir):
+            vals = listOfJsonFiles(saveddir)
             for v in vals:
                 if not v in allvals and v[0] != "_":
                     allvals.append(v)
@@ -245,26 +245,26 @@ def presetsListAll(presetType):
         sortvals.append(v)
     return sortvals
 
-# This one always returns the local (first) directory in the presetspath,
+# This one always returns the local (first) directory in the savedpath,
 # which is usually the user's CommonProgramFiles version
-def localPresetsFilePath(presetType, nm, suffix=".json"):
-    presetspath = presetsPath()
-    paths = presetspath.split(";")
+def localSavedFilePath(savedType, nm, suffix=".json"):
+    savedpath = savedPath()
+    paths = savedpath.split(";")
     localdir = paths[0]
     if not os.path.isdir(localdir):
-        log("No presets directory?  dir=",localdir)
+        log("No saved directory?  dir=",localdir)
         localdir = "."
-    return os.path.join(localdir,presetType, nm+suffix)
+    return os.path.join(localdir,savedType, nm+suffix)
 
-# Look through all the directories in presetspath to find file
-def searchPresetsFilePath(presetType, nm, suffix=".json"):
-    presetspath = presetsPath()
-    paths = presetspath.split(";")
-    # the local presets directory is the first one in the path
+# Look through all the directories in savedpath to find file
+def searchSavedFilePath(savedType, nm, suffix=".json"):
+    savedpath = savedPath()
+    paths = savedpath.split(";")
+    # the local saved directory is the first one in the path
     finalpath = "."
     for dir in paths:
         if os.path.isdir(dir):
-            finalpath = os.path.join(dir,presetType, nm+suffix)
+            finalpath = os.path.join(dir,savedType, nm+suffix)
             if os.path.exists(finalpath):
                 break
     return finalpath

@@ -173,7 +173,7 @@ def changeeffects(paramfile):
             print("HEY! name="+name+" not handled? is it a new parameter?")
 
 
-    newparamfile = paramfile.replace("presets_original","presets_original_converted")
+    newparamfile = paramfile.replace("saved_original","saved_original_converted")
     print("Writing ",newparamfile)
     f = open(newparamfile,"w")
     f.write(json.dumps(params, sort_keys=True, indent=4, separators=(',',':'))) 
@@ -183,9 +183,9 @@ def changeeffects(paramfile):
 homedir = os.getenv("PALETTESOURCE")
 
 
-# This can be used on either "effect" or "snap"
+# This can be used on either "effect" or "layer"
 
-files = glob.glob(os.path.join(homedir,"data","presets_original","effect",'*.json'))
+files = glob.glob(os.path.join(homedir,"data","saved_original","effect",'*.json'))
 for s in files:
     print("file = ",s)
     changeeffects(s)

@@ -76,12 +76,12 @@ def changehue(paramfile):
 
 homedir = os.getenv("PALETTESOURCE")
 
-files = glob.glob(os.path.join(homedir,"data","presets","visual",'*.json'))
+files = glob.glob(os.path.join(homedir,"data","saved","visual",'*.json'))
 for s in files:
     print("file = ",s)
     changehue(s)
 
-files = glob.glob(os.path.join(homedir,"data","presets","snap",'*.json'))
+files = glob.glob(os.path.join(homedir,"data","saved","layer",'*.json'))
 for s in files:
     print("file = ",s)
     changehue(s)
