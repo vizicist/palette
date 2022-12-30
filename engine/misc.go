@@ -599,6 +599,10 @@ func RemoteAPIRaw(args string) (map[string]string, error) {
 	if err != nil {
 		return nil, fmt.Errorf("RemoteAPIRaw: unable to interpret output, err=%s", err)
 	}
+	errstr, haserror := output["error"]
+	if haserror {
+		return map[string]string{}, fmt.Errorf("RemoteApiRaw: error=%s", errstr)
+	}
 	return output, nil
 }
 

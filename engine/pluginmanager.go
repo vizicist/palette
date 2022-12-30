@@ -14,8 +14,8 @@ func NewPluginContext(apiFunc PluginFunc) *PluginContext {
 	return &PluginContext{
 		api:           apiFunc,
 		cursorManager: NewCursorManager(),
-		params:        NewParamValues(),
-		sources:       map[string]bool{},
+		// params:        NewParamValues(),
+		sources: map[string]bool{},
 	}
 }
 

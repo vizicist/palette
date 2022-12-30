@@ -60,22 +60,24 @@ func (layer *Layer) MIDIChannel() uint8 {
 }
 
 func (layer *Layer) ResendAllParameters() {
+
 	params := layer.params
-	for nm := range params.values {
-		val, err := params.paramValueAsString(nm)
+	params.DoForAllParams(func(name string, val ParamValue) {
+		valstr, err := params.paramValueAsString(name)
 		if err != nil {
 			LogError(err)
-			// Don't fail completely
-			continue
+			return
 		}
+
 		// This assumes that if you set a parameter to the same value,
 		// that it will re-send the mesasges to Resolume for visual.* params
-		err = layer.Set(nm, val)
+
+		// Don't use Set, we don't want to lock
+		err = layer.params.setParamValueWithString(name, valstr, nil)
 		if err != nil {
 			LogError(err)
-			// Don't fail completely
 		}
-	}
+	})
 }
 
 func (layer *Layer) AddListener(ctx *PluginContext) {
@@ -160,9 +162,6 @@ func (layer *Layer) Api(api string, apiargs map[string]string) (string, error) {
 		}
 		return layer.Get(name), nil
 
-	case "list":
-		return layer.List(), nil
-
 	default:
 		// ignore errors on these for the moment
 		if strings.HasPrefix(api, "loop_") || strings.HasPrefix(api, "midi_") {
@@ -196,10 +195,11 @@ func (layer *Layer) Set(paramName string, paramValue string) error {
 
 	for _, listener := range layer.listeners {
 		args := map[string]string{
-			"name": paramName, "value": paramValue,
+			"event": "layerset",
+			"name":  paramName, "value": paramValue,
 			"layer": layer.Name(),
 		}
-		listener.api(listener, "onparamset", args)
+		listener.api(listener, "event", args)
 	}
 
 	return nil
@@ -223,10 +223,6 @@ func (layer *Layer) ParamNames() []string {
 	}
 	sort.Strings(sortedNames)
 	return sortedNames
-}
-
-func (layer *Layer) List() string {
-	return layer.params.List()
 }
 
 func (layer *Layer) GetInt(paramName string) int {

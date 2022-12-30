@@ -13,6 +13,7 @@ DEFINE_TYPES(placement);
 DEFINE_TYPES(spritesource);
 DEFINE_TYPES(spritestyle);
 DEFINE_TYPES(midibehaviour);
+DEFINE_TYPES(layer);
 DEFINE_TYPES(scale);
 DEFINE_TYPES(inputport);
 DEFINE_TYPES(synth);
@@ -100,6 +101,11 @@ LayerParams_InitializeTypes() {
 	LayerParams_midibehaviourTypes.push_back("scalecapture");
 	LayerParams_midibehaviourTypes.push_back("none");
 	LayerParams_midibehaviourTypes.push_back("sprite");
+
+	LayerParams_layerTypes.push_back("A");
+	LayerParams_layerTypes.push_back("B");
+	LayerParams_layerTypes.push_back("C");
+	LayerParams_layerTypes.push_back("D");
 
 	LayerParams_scaleTypes.push_back("external");
 	LayerParams_scaleTypes.push_back("newage");
