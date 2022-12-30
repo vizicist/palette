@@ -67,13 +67,14 @@
 "misc.quant": {"valuetype":"string", "min":"quant", "max":"quant", "init":"frets", "comment":"# Quantization style" },
 "misc.scale": {"valuetype":"string", "min":"scale", "max":"scale", "randmax":"newage", "init":"newage", "comment":"# Quantization style" },
 "misc.vol": {"valuetype":"string", "min":"vol", "max":"vol", "init":"pressure", "comment":"# Velocity style" },
-"misc.enable:sound": {"valuetype":"bool", "min":"false", "max":"true", "init":"true", "comment":"# Enable Sound" },
-"misc.enable:visual": {"valuetype":"bool", "min":"false", "max":"true", "init":"true", "comment":"# Enable Visual" },
 "misc.logic_sound": {"valuetype":"string", "min":"logic_sound", "max":"logic_sound", "init":"true", "comment":"# Sound Logic" },
 "misc.logic_visual": {"valuetype":"string", "min":"logic_visual", "max":"logic_visual", "init":"true", "comment":"# Visual Logic" },
 "misc.midibehaviour": {"valuetype": "string", "min": "midibehaviour", "max": "midibehaviour",  "init": "default", "comment": "#" },
-"misc.pitchoffset": {"valuetype": "float", "min": "0.0", "max": "128.0",  "init": "0.0", "comment": "#" },
-"misc.pitchfactor": {"valuetype": "float", "min": "0.1", "max": "10.0",  "init": "1.0",	"comment": "#" },
+
+"global.enable:sound": {"valuetype":"bool", "min":"false", "max":"true", "init":"true", "comment":"# Enable Sound" },
+"global.enable:visual": {"valuetype":"bool", "min":"false", "max":"true", "init":"true", "comment":"# Enable Visual" },
+"global.pitchoffset": {"valuetype": "float", "min": "0.0", "max": "128.0",  "init": "0.0", "comment": "#" },
+"global.pitchfactor": {"valuetype": "float", "min": "0.1", "max": "10.0",  "init": "1.0",	"comment": "#" },
 
 "visual.noisevertex": {"valuetype":"float", "min":"0.0", "max":"1.0", "randmin":"0.0", "randmax":"0.0", "init":"0.0", "comment":"# 0-1" },
 "visual.cursorsprites": {"valuetype":"bool", "min":"false", "max":"true", "init":"false", "comment":"#" },

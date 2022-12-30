@@ -8,7 +8,7 @@ type Layer struct {
 	freeframeClient *osc.Client
 	resolumeClient  *osc.Client
 
-	params  *ParamValues // across all presets
+	params  *ParamValues // sound/visual/effect values
 	sources map[string]string
 
 	agents        []Agent
@@ -155,7 +155,7 @@ var uniqueIndex = 0
 
 /*
 
- */
+*/
 
 /*
  */

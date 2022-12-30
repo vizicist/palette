@@ -27,8 +27,8 @@ func (e *Engine) ExecuteAPI(api string, apiargs map[string]string) (result strin
 		switch apitype {
 		case "engine":
 			return e.executeEngineAPI(apisuffix, apiargs)
-		case "preset":
-			return e.executePresetAPI(apisuffix, apiargs)
+		case "saved":
+			return e.executeSavedAPI(apisuffix, apiargs)
 		case "sound":
 			return e.executeSoundAPI(apisuffix, apiargs)
 		case "layer":
@@ -200,15 +200,15 @@ func (e *Engine) executeEngineAPI(api string, apiargs map[string]string) (result
 	return result, err
 }
 
-func (e *Engine) executePresetAPI(api string, apiargs map[string]string) (result string, err error) {
+func (e *Engine) executeSavedAPI(api string, apiargs map[string]string) (result string, err error) {
 
 	switch api {
 
 	case "list":
-		return PresetList(apiargs)
+		return SavedList(apiargs)
 	default:
 		LogWarn("api is not recognized\n", "api", api)
-		return "", fmt.Errorf("Router.ExecutePresetAPI unrecognized api=%s", api)
+		return "", fmt.Errorf("Router.ExecuteSavedAPI unrecognized api=%s", api)
 	}
 }
 

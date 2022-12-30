@@ -177,7 +177,7 @@ var LogEnabled = map[string]bool{
 	"osc":       false,
 	"phrase":    false,
 	"plugin":    false,
-	"preset":    false,
+	"saved":     false,
 	"realtime":  false,
 	"resolume":  false,
 	"remote":    false,

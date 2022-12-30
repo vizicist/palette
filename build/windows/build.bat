@@ -54,7 +54,7 @@ pushd %PALETTESOURCE%\python
 rm -fr dist
 rm -fr build\palette_gui
 rm -fr build
-pyinstaller -i ..\data_default\config\palette.ico palette_gui.py > pyinstaller_gui.out 2>&1
+pyinstaller -i ..\data_omnisphere\config\palette.ico palette_gui.py > pyinstaller_gui.out 2>&1
 pyinstaller osc.py > pyinstaller_osc.out 2>&1
 
 echo ================ Merging python executables
@@ -109,11 +109,11 @@ copy setpalettelogdir.bat %bin% >nul
 
 popd
 
-for %%X in (data_default data_surge data_moldover) DO (
+for %%X in (data_omnisphere) DO (
 	echo ================ Copying %%X
 	mkdir %ship%\%%X\config
 	mkdir %ship%\%%X\midifiles
-	mkdir %ship%\%%X\presets
+	mkdir %ship%\%%X\saved
 	copy %PALETTESOURCE%\%%X\config\homepage.json %ship%\%%X\config >nul
 	copy %PALETTESOURCE%\%%X\config\ffgl.json %ship%\%%X\config >nul
 	copy %PALETTESOURCE%\%%X\config\param*.json %ship%\%%X\config >nul
@@ -132,7 +132,7 @@ for %%X in (data_default data_surge data_moldover) DO (
 	copy %PALETTESOURCE%\%%X\config\palette.ico %ship%\%%X\config >nul
 	copy %PALETTESOURCE%\%%X\config\*.bidule %ship%\%%X\config >nul
 	copy %PALETTESOURCE%\%%X\midifiles\*.* %ship%\%%X\midifiles >nul
-	xcopy /e /y %PALETTESOURCE%\%%X\presets %ship%\%%X\presets > nul
+	xcopy /e /y %PALETTESOURCE%\%%X\saved %ship%\%%X\saved > nul
 )
 
 echo ================ Copying windows-specific things

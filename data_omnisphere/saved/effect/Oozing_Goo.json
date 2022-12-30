@@ -115,6 +115,6 @@
         "misc.pitchoffset":"0.000000",
         "misc.quant":"frets",
         "misc.scale":"newage",
-        "misc.vol":"pressure",
+        "misc.vol":"pressure"
     }
 }

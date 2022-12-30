@@ -91,12 +91,16 @@ func (layer *Layer) Api(api string, apiargs map[string]string) (string, error) {
 	switch api {
 
 	case "load":
-		presetName, okpreset := apiargs["preset"]
-		if !okpreset {
-			return "", fmt.Errorf("missing preset parameter")
+		filename, okfilename := apiargs["filename"]
+		if !okfilename {
+			return "", fmt.Errorf("missing filename parameter")
+		}
+		category, okcategory := apiargs["category"]
+		if !okcategory {
+			return "", fmt.Errorf("missing category parameter")
 		}
 
-		err := layer.LoadPreset(presetName)
+		err := layer.LoadSaved(category, filename)
 		if err != nil {
 			return "", err
 		}
@@ -104,7 +108,7 @@ func (layer *Layer) Api(api string, apiargs map[string]string) (string, error) {
 		return "", layer.SaveCurrentParams()
 
 		/*
-			category, filename := PresetNameSplit(presetName)
+			category, filename := SavedNameSplit(savedName)
 			path := layer.readableFilePath(category, filename)
 			paramsMap, err := LoadParamsMap(path)
 			if err != nil {
@@ -119,12 +123,15 @@ func (layer *Layer) Api(api string, apiargs map[string]string) (string, error) {
 		*/
 
 	case "save":
-		presetName, okpreset := apiargs["preset"]
-		if !okpreset {
-			return "", fmt.Errorf("missing preset parameter")
+		filename, okfilename := apiargs["filename"]
+		if !okfilename {
+			return "", fmt.Errorf("missing filename parameter")
 		}
-
-		category, filename := PresetNameSplit(presetName)
+		category, okcategory := apiargs["category"]
+		if !okcategory {
+			return "", fmt.Errorf("missing category parameter")
+		}
+		// category, filename := SavedNameSplit(savedName)
 		path := WritableFilePath(category, filename)
 		return "", layer.params.SaveInPath(path)
 
@@ -231,31 +238,31 @@ func (layer *Layer) GetFloat(paramName string) float32 {
 }
 
 func (layer *Layer) SaveCurrentParams() error {
-	presetName := "snap._Current_" + layer.name
-	category, filename := PresetNameSplit(presetName)
+	savedName := "layer._Current_" + layer.name
+	category, filename := SavedNameSplit(savedName)
 	path := WritableFilePath(category, filename)
 	return layer.params.SaveInPath(path)
 }
 
-func (layer *Layer) ApplyQuadPreset(presetName string) error {
-	category, filename := PresetNameSplit(presetName)
+func (layer *Layer) ApplyPresetSaved(savedName string) error {
+	category, filename := SavedNameSplit(savedName)
 	path := layer.readableFilePath(category, filename)
 	paramsMap, err := LoadParamsMap(path)
 	if err != nil {
 		LogError(err)
 		return err
 	}
-	return layer.ApplyQuadPresetMap(paramsMap)
+	return layer.ApplyPresetSavedMap(paramsMap)
 }
 
-func (layer *Layer) ApplyQuadPresetMap(paramsmap map[string]any) error {
+func (layer *Layer) ApplyPresetSavedMap(paramsmap map[string]any) error {
 
 	for name, ival := range paramsmap {
 		value, ok := ival.(string)
 		if !ok {
 			return fmt.Errorf("value of name=%s isn't a string", name)
 		}
-		// In a quad file, the parameter names are of the form:
+		// In a preset file, the parameter names are of the form:
 		// {layer}-{parametername}
 		words := strings.SplitN(name, "-", 2)
 		layerOfParam := words[0]
@@ -265,24 +272,24 @@ func (layer *Layer) ApplyQuadPresetMap(paramsmap map[string]any) error {
 		// use words[1] so the layer doesn't see the layer name
 		parameterName := words[1]
 		// We expect the parameter to be of the form
-		// {category}.{parameter}, but old "quad" files
+		// {category}.{parameter}, but old "saved" files
 		// didn't include the category.
 		if !strings.Contains(parameterName, ".") {
-			LogWarn("applyQuadPreset: OLD format, not supported")
+			LogWarn("applyPresetSaved: OLD format, not supported")
 			return fmt.Errorf("")
 		}
 		err := layer.Set(parameterName, value)
 		if err != nil {
-			LogWarn("applyQuadPreset", "name", parameterName, "err", err)
+			LogWarn("applyPresetSaved", "name", parameterName, "err", err)
 			// Don't fail completely on individual failures,
 			// some might be for parameters that no longer exist.
 		}
 	}
 
 	// For any parameters that are in Paramdefs but are NOT in the loaded
-	// preset, we put out the "init" values.  This happens when new parameters
-	// are added which don't exist in existing preset files.
-	// This is similar to code in Layer.applyPreset, except we
+	// saved, we put out the "init" values.  This happens when new parameters
+	// are added which don't exist in existing saved files.
+	// This is similar to code in Layer.applySaved, except we
 	// have to do it for all for pads
 	for nm, def := range ParamDefs {
 		paramName := layer.Name() + "-" + nm
@@ -291,9 +298,8 @@ func (layer *Layer) ApplyQuadPresetMap(paramsmap map[string]any) error {
 			init := def.Init
 			err := layer.Set(nm, init)
 			if err != nil {
-				// a hack to eliminate errors on a parameter that
-				// still exists in some presets.
-				LogWarn("applyQuadPreset", "nm", nm, "err", err)
+				// a hack to eliminate errors on a parameter that still exists somewhere
+				LogWarn("applyPresetSaved", "nm", nm, "err", err)
 				// Don't fail completely on individual failures,
 				// some might be for parameters that no longer exist.
 			}
@@ -303,14 +309,14 @@ func (layer *Layer) ApplyQuadPresetMap(paramsmap map[string]any) error {
 	return nil
 }
 
-// ReadablePresetFilePath xxx
+// ReadableSavedFilePath xxx
 func (layer *Layer) readableFilePath(category string, filename string) string {
-	return PresetFilePath(category, filename)
+	return SavedFilePath(category, filename)
 }
 
-func (layer *Layer) LoadPreset(presetName string) error {
+func (layer *Layer) LoadSaved(category string, filename string) error {
 
-	category, filename := PresetNameSplit(presetName)
+	// category, filename := SavedNameSplit(savedName)
 	path := layer.readableFilePath(category, filename)
 	paramsmap, err := LoadParamsMap(path)
 	if err != nil {
@@ -318,9 +324,9 @@ func (layer *Layer) LoadPreset(presetName string) error {
 		return err
 	}
 	params := layer.params
-	if category == "quad" {
-		// ApplyQuadPreset will only load that one layer from the quad preset
-		err = layer.ApplyQuadPresetMap(paramsmap)
+	if category == "saved" {
+		// ApplyPresetSaved will only load that one layer from the preset
+		err = layer.ApplyPresetSavedMap(paramsmap)
 		if err != nil {
 			LogError(err)
 			return err
@@ -337,7 +343,7 @@ func (layer *Layer) LoadPreset(presetName string) error {
 	overrideFilename := "._override"
 	overridepath := layer.readableFilePath(category, overrideFilename)
 	if fileExists(overridepath) {
-		DebugLogOfType("preset", "applyPreset using", "overridepath", overridepath)
+		DebugLogOfType("saved", "applySaved using", "overridepath", overridepath)
 		overridemap, err := LoadParamsMap(overridepath)
 		if err != nil {
 			return err
@@ -349,12 +355,12 @@ func (layer *Layer) LoadPreset(presetName string) error {
 	}
 
 	// For any parameters that are in Paramdefs but are NOT in the loaded
-	// preset, we put out the "init" values.  This happens when new parameters
-	// are added which don't exist in existing preset files.
+	// saved, we put out the "init" values.  This happens when new parameters
+	// are added which don't exist in existing saved files.
 	for nm, def := range ParamDefs {
 		// Only include parameters of the desired type
-		thisCategory, _ := PresetNameSplit(nm)
-		if category != "snap" && category != thisCategory {
+		thisCategory, _ := SavedNameSplit(nm)
+		if category != "layer" && category != thisCategory {
 			continue
 		}
 		_, found := paramsmap[nm]
@@ -362,7 +368,7 @@ func (layer *Layer) LoadPreset(presetName string) error {
 			init := def.Init
 			err := params.Set(nm, init)
 			if err != nil {
-				LogWarn("Loading preset", "preset", nm, "err", err)
+				LogWarn("Loading saved", "saved", nm, "err", err)
 				// Don't fail completely
 			}
 		}

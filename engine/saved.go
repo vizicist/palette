@@ -9,31 +9,31 @@ import (
 )
 
 /*
-type OldPreset struct {
+type OldSaved struct {
 	Category  string
 	filename  string
 	paramsmap map[string]any
 }
 
-var Presets = make(map[string]*OldPreset)
+var Saved = make(map[string]*OldSaved)
 
-func GetPreset(name string) *OldPreset {
+func GetSaved(name string) *OldSaved {
 
-	p, ok := Presets[name]
+	p, ok := Saved[name]
 	if !ok {
-		category, filename := PresetNameSplit(name)
-		p = &OldPreset{
+		category, filename := SavedNameSplit(name)
+		p = &OldSaved{
 			Category:  category,
 			filename:  filename,
 			paramsmap: make(map[string]any),
 		}
-		Presets[name] = p
+		Saved[name] = p
 	}
 	return p
 }
 */
 
-func ApplyParamsMap(presetType string, paramsmap map[string]any, params *ParamValues) error {
+func ApplyParamsMap(savedType string, paramsmap map[string]any, params *ParamValues) error {
 
 	// Currently, no errors are ever returned, but log messages are generated.
 
@@ -44,9 +44,9 @@ func ApplyParamsMap(presetType string, paramsmap map[string]any, params *ParamVa
 			continue
 		}
 		fullname := name
-		thisCategory, _ := PresetNameSplit(fullname)
-		// Only include ones that match the presetType
-		if presetType != "snap" && thisCategory != presetType {
+		thisCategory, _ := SavedNameSplit(fullname)
+		// Only include ones that match the savedType
+		if savedType != "layer" && thisCategory != savedType {
 			continue
 		}
 		// This is where the parameter values get applied,
@@ -55,18 +55,18 @@ func ApplyParamsMap(presetType string, paramsmap map[string]any, params *ParamVa
 		if err != nil {
 			LogError(err)
 			// Don't abort the whole load, i.e. we are tolerant
-			// of unknown parameters or errors in the preset
+			// of unknown parameters or errors in the saved
 		}
 	}
 	return nil
 }
 
-func PresetsDir() string {
-	return "presets"
+func SavedDir() string {
+	return "saved"
 }
 
-func PresetNameSplit(preset string) (string, string) {
-	words := strings.SplitN(preset, ".", 2)
+func SavedNameSplit(saved string) (string, string) {
+	words := strings.SplitN(saved, ".", 2)
 	if len(words) == 1 {
 		return "", words[0]
 	} else {
@@ -74,8 +74,8 @@ func PresetNameSplit(preset string) (string, string) {
 	}
 }
 
-// PresetMap returns a map of preset names to file paths
-func PresetMap(wantCategory string) (map[string]string, error) {
+// SavedMap returns a map of saved names to file paths
+func SavedMap(wantCategory string) (map[string]string, error) {
 
 	result := make(map[string]string, 0)
 
@@ -91,13 +91,13 @@ func PresetMap(wantCategory string) (map[string]string, error) {
 			return nil
 		}
 		path := strings.TrimSuffix(walkedpath, ".json")
-		// the last two components of the path are category and preset
+		// the last two components of the path are category and saved
 		thisCategory := ""
-		thisPreset := ""
+		thisSaved := ""
 		lastslash2 := -1
 		lastslash := strings.LastIndex(path, "\\")
 		if lastslash >= 0 {
-			thisPreset = path[lastslash+1:]
+			thisSaved = path[lastslash+1:]
 			path2 := path[0:lastslash]
 			lastslash2 = strings.LastIndex(path2, "\\")
 			if lastslash2 >= 0 {
@@ -105,13 +105,13 @@ func PresetMap(wantCategory string) (map[string]string, error) {
 			}
 		}
 		if wantCategory == "*" || thisCategory == wantCategory {
-			result[thisCategory+"."+thisPreset] = walkedpath
+			result[thisCategory+"."+thisSaved] = walkedpath
 		}
 		return nil
 	}
 
-	presetsDir1 := filepath.Join(PaletteDataPath(), PresetsDir())
-	err := filepath.Walk(presetsDir1, walker)
+	savedDir1 := filepath.Join(PaletteDataPath(), SavedDir())
+	err := filepath.Walk(savedDir1, walker)
 	if err != nil {
 		LogWarn("filepath.Walk", "err", err)
 		return nil, err
@@ -119,32 +119,32 @@ func PresetMap(wantCategory string) (map[string]string, error) {
 	return result, nil
 }
 
-// PresetArray returns a list of preset filenames, wantCategory can be "*"
-func PresetArray(wantCategory string) ([]string, error) {
+// SavedArray returns a list of saved filenames, wantCategory can be "*"
+func SavedArray(wantCategory string) ([]string, error) {
 
-	presetMap, err := PresetMap(wantCategory)
+	savedMap, err := SavedMap(wantCategory)
 	if err != nil {
 		return nil, err
 	}
 	result := make([]string, 0)
-	for name := range presetMap {
+	for name := range savedMap {
 		result = append(result, name)
 	}
 	return result, nil
 }
 
-func PresetList(apiargs map[string]string) (string, error) {
+func SavedList(apiargs map[string]string) (string, error) {
 
 	wantCategory := optionalStringArg("category", apiargs, "*")
 	result := "["
 	sep := ""
 
-	presetMap, err := PresetMap(wantCategory)
+	savedMap, err := SavedMap(wantCategory)
 	if err != nil {
 		return "", err
 	}
-	for name := range presetMap {
-		thisCategory, _ := PresetNameSplit(name)
+	for name := range savedMap {
+		thisCategory, _ := SavedNameSplit(name)
 		if wantCategory == "*" || thisCategory == wantCategory {
 			result += sep + "\"" + name + "\""
 			sep = ","
@@ -180,16 +180,16 @@ func LoadParamsMap(path string) (map[string]any, error) {
 	return paramsmap, nil
 }
 
-// PresetFilePath returns the full path of a preset file.
-func PresetFilePath(category string, filename string) string {
+// SavedFilePath returns the full path of a saved file.
+func SavedFilePath(category string, filename string) string {
 	jsonfile := filename + ".json"
-	localpath := filepath.Join(PaletteDataPath(), PresetsDir(), category, jsonfile)
+	localpath := filepath.Join(PaletteDataPath(), SavedDir(), category, jsonfile)
 	return localpath
 }
 
-// WritablePresetFilePath xxx
+// WritableSavedFilePath xxx
 func WritableFilePath(category string, filename string) string {
-	path := PresetFilePath(category, filename)
+	path := SavedFilePath(category, filename)
 	os.MkdirAll(filepath.Dir(path), 0777)
 	return path
 }
