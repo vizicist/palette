@@ -1,8 +1,6 @@
 package engine
 
 import (
-	"encoding/json"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -119,18 +117,18 @@ func SavedMap(wantCategory string) (map[string]string, error) {
 	return result, nil
 }
 
-// SavedArray returns a list of saved filenames, wantCategory can be "*"
-func SavedArray(wantCategory string) ([]string, error) {
+// SavedArray returns a list of saved filenames, category can be "*"
+func SavedFileList(category string) ([]string, error) {
 
-	savedMap, err := SavedMap(wantCategory)
+	savedMap, err := SavedMap(category)
 	if err != nil {
 		return nil, err
 	}
-	result := make([]string, 0)
+	filelist := make([]string, 0)
 	for name := range savedMap {
-		result = append(result, name)
+		filelist = append(filelist, name)
 	}
-	return result, nil
+	return filelist, nil
 }
 
 func SavedList(apiargs map[string]string) (string, error) {
@@ -152,32 +150,6 @@ func SavedList(apiargs map[string]string) (string, error) {
 	}
 	result += "]"
 	return result, nil
-}
-
-func LoadParamsMap(path string) (map[string]any, error) {
-	bytes, err := os.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
-	var f any
-	err = json.Unmarshal(bytes, &f)
-	if err != nil {
-		return nil, fmt.Errorf("unable to Unmarshal path=%s, err=%s", path, err)
-	}
-	toplevel, ok := f.(map[string]any)
-	if !ok {
-		return nil, fmt.Errorf("unable to convert params to map[string]any")
-
-	}
-	params, okparams := toplevel["params"]
-	if !okparams {
-		return nil, fmt.Errorf("no params value in json")
-	}
-	paramsmap, okmap := params.(map[string]any)
-	if !okmap {
-		return nil, fmt.Errorf("params value is not a map[string]string in jsom")
-	}
-	return paramsmap, nil
 }
 
 // SavedFilePath returns the full path of a saved file.

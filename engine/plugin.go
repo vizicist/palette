@@ -499,6 +499,10 @@ func (ctx *PluginContext) GenerateCursorGestureesture(source string, cid string,
 	ctx.cursorManager.generateCursorGestureesture(source, cid, noteDuration, x0, y0, z0, x1, y1, z1)
 }
 
+func (ctx *PluginContext) GetCursorState(cid string) *CursorState {
+	return ctx.cursorManager.GetCursorState(cid)
+}
+
 /*
 func (ctx *PluginContext) SaveCurrentSnapInPath(path string) error {
 

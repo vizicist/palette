@@ -19,8 +19,8 @@ var AliveOutputPort = 3331
 type PalettePro struct {
 
 	// Per-layer things
-	layer map[string]*engine.Layer
-	logic map[string]*LayerLogic
+	layer      map[string]*engine.Layer
+	layerLogic map[string]*LayerLogic
 
 	// PalettePro parameters
 	params *engine.ParamValues
@@ -49,7 +49,6 @@ type PalettePro struct {
 	lastAttractGestureTime time.Time
 	lastAttractRandTime    time.Time
 	attractGestureDuration time.Duration
-	attractNoteDuration    time.Duration
 	attractPresetDuration  time.Duration
 	attractPreset          string
 	attractClient          *osc.Client
@@ -73,9 +72,9 @@ type PalettePro struct {
 func init() {
 	transposebeats := engine.Clicks(engine.ConfigIntWithDefault("transposebeats", 48))
 	ppro := &PalettePro{
-		layer:  map[string]*engine.Layer{},
-		logic:  map[string]*LayerLogic{},
-		params: engine.NewParamValues(),
+		layer:      map[string]*engine.Layer{},
+		layerLogic: map[string]*LayerLogic{},
+		params:     engine.NewParamValues(),
 
 		attractModeIsOn: false,
 		generateVisuals: engine.ConfigBoolWithDefault("generatevisuals", true),
@@ -85,7 +84,6 @@ func init() {
 		lastAttractGestureTime: time.Time{},
 		lastAttractRandTime:    time.Time{},
 		attractGestureDuration: 0,
-		attractNoteDuration:    0,
 		attractPresetDuration:  0,
 		attractPreset:          "",
 		attractClient:          &osc.Client{},
@@ -93,11 +91,12 @@ func init() {
 		attractCheckSecs:       0,
 		lastAttractCheck:       0,
 		attractIdleSecs:        0,
-		aliveSecs:              float64(engine.ConfigFloatWithDefault("alivesecs", 5)),
-		lastAlive:              0,
-		lastProcessCheck:       0,
-		processCheckSecs:       0,
-		scale:                  engine.GetScale("newage"),
+
+		aliveSecs:        float64(engine.ConfigFloatWithDefault("alivesecs", 5)),
+		lastAlive:        0,
+		lastProcessCheck: 0,
+		processCheckSecs: 0,
+		scale:            engine.GetScale("newage"),
 
 		transposeAuto:   engine.ConfigBoolWithDefault("transposeauto", true),
 		transposeNext:   transposebeats * engine.OneBeat,
@@ -298,12 +297,76 @@ func (ppro *PalettePro) start(ctx *engine.PluginContext) error {
 	secs := engine.ConfigFloatWithDefault("attractgestureduration", 0.5)
 	ppro.attractGestureDuration = time.Duration(int(secs * float32(time.Second)))
 
-	secs = engine.ConfigFloatWithDefault("attractnoteduration", 0.2)
-	ppro.attractNoteDuration = time.Duration(int(secs * float32(time.Second)))
-
 	ppro.attractPreset = engine.ConfigStringWithDefault("attractpreset", "random")
 
 	return nil
+}
+
+func (ppro *PalettePro) onCursorEvent(ctx *engine.PluginContext, apiargs map[string]string) (string, error) {
+
+	ddu, ok := apiargs["ddu"]
+	if !ok {
+		return "", fmt.Errorf("PalettePro: Missing ddu argument")
+	}
+
+	if ddu == "clear" {
+		ctx.ClearCursors()
+		return "", nil
+	}
+
+	x, y, z, err := ctx.GetArgsXYZ(apiargs)
+	if err != nil {
+		return "", err
+	}
+
+	source, ok := apiargs["source"]
+	if !ok {
+		source = ""
+	}
+
+	cid, ok := apiargs["cid"]
+	if !ok {
+		cid = ""
+	}
+
+	ce := engine.CursorEvent{
+		Cid:    cid,
+		Click:  0,
+		Source: source,
+		Ddu:    ddu,
+		X:      x,
+		Y:      y,
+		Z:      z,
+		Area:   0,
+	}
+
+	// Any non-internal cursor will turn attract mode off.
+	if source != "internal" {
+		if time.Since(ppro.lastAttractCommand) > time.Second {
+			engine.LogInfo("PalettePro: shouold be turning attract mode OFF")
+			ppro.lastAttractCommand = time.Now()
+		}
+
+	}
+
+	// For the moment, the cursor to layerLogic mapping is 1-to-1.
+	// I.e. ce.Source of "a" maps to layerLogic "a"
+	layerLogic, ok := ppro.layerLogic[ce.Source]
+	if !ok {
+		return "", nil
+	}
+	if layerLogic != nil {
+		if ppro.generateSound {
+			// XXX - HACK
+			if ce.Ddu != "drag" {
+				layerLogic.generateSoundFromCursor(ctx, ce)
+			}
+		}
+		if ppro.generateVisuals {
+			layerLogic.generateVisualsFromCursor(ce)
+		}
+	}
+	return "", nil
 }
 
 func (ppro *PalettePro) clearExternalScale() {
@@ -447,7 +510,6 @@ func (ppro *PalettePro) onClick(ctx *engine.PluginContext, apiargs map[string]st
 		// immediately check to see if it's running, it reports that
 		// it's stil running.
 		go func() {
-			engine.DebugLogOfType("scheduler", "Scheduler: checking processes")
 			time.Sleep(2 * time.Second)
 			ppro.processManager.checkAutostartProcesses(ctx)
 		}()
@@ -526,83 +588,9 @@ func (ppro *PalettePro) doTest(ctx *engine.PluginContext, ntimes int, dt time.Du
 	engine.LogInfo("doTest end")
 }
 
-func (ppro *PalettePro) onCursorEvent(ctx *engine.PluginContext, apiargs map[string]string) (string, error) {
-
-	ddu, ok := apiargs["ddu"]
-	if !ok {
-		return "", fmt.Errorf("PalettePro: Missing ddu argument")
-	}
-
-	if ddu == "clear" {
-		ctx.ClearCursors()
-		return "", nil
-	}
-
-	x, y, z, err := ctx.GetArgsXYZ(apiargs)
-	if err != nil {
-		return "", err
-	}
-
-	source, ok := apiargs["source"]
-	if !ok {
-		source = ""
-	}
-
-	id, ok := apiargs["id"]
-	if !ok {
-		id = ""
-	}
-
-	ce := engine.CursorEvent{
-		ID:     id,
-		Source: source,
-		Ddu:    ddu,
-		X:      x,
-		Y:      y,
-		Z:      z,
-	}
-
-	// Any non-internal cursor will turn attract mode off.
-	if source != "internal" {
-		if time.Since(ppro.lastAttractCommand) > time.Second {
-			engine.LogInfo("PalettePro: shouold be turning attract mode OFF")
-			ppro.lastAttractCommand = time.Now()
-		}
-
-	}
-
-	logic := ppro.cursorToLogic(ce)
-	if logic != nil {
-		if ppro.generateSound {
-			// XXX - HACK
-			if ce.Ddu != "drag" {
-				logic.generateSoundFromCursor(ctx, ce)
-			}
-		}
-		if ppro.generateVisuals {
-			logic.generateVisualsFromCursor(ce)
-		}
-	}
-
-	/*
-		layer := ppro.cursorToLayer(ce)
-		if layer == nil {
-			return "", fmt.Errorf("PalettePro: No layer for cursor ce=%+v", ce)
-		}
-		msg := osc.NewMessage("/sprite")
-		msg.Append(ce.X)
-		msg.Append(ce.Y)
-		msg.Append(ce.Z)
-		msg.Append(ce.ID)
-		ppro.resolume.toFreeFramePlugin(layer.Name(), msg)
-	*/
-
-	return "", nil
-}
-
 func (ppro *PalettePro) loadPresetRand() {
 
-	arr, err := engine.SavedArray("preset")
+	arr, err := engine.SavedFileList("preset")
 	if err != nil {
 		engine.LogError(err)
 		return
@@ -674,7 +662,7 @@ func (ppro *PalettePro) addLayer(ctx *engine.PluginContext, name string) *engine
 	layer := engine.NewLayer(name)
 	layer.AddListener(ctx)
 	ppro.layer[name] = layer
-	ppro.logic[name] = NewLayerLogic(ppro, layer)
+	ppro.layerLogic[name] = NewLayerLogic(ppro, layer)
 	return layer
 }
 
@@ -693,16 +681,6 @@ func (ppro *PalettePro) channelToDestination(channel int) string {
 	return fmt.Sprintf("P_03_C_%02d", channel)
 }
 */
-
-func (ppro *PalettePro) cursorToLogic(ce engine.CursorEvent) *LayerLogic {
-	// For the moment, the cursor to logic mapping is 1-to-1.
-	// I.e. ce.Source of "a" maps to logic "a"
-	logic, ok := ppro.logic[ce.Source]
-	if !ok {
-		return nil
-	}
-	return logic
-}
 
 func (ppro *PalettePro) cursorToLayer(ce engine.CursorEvent) *engine.Layer {
 	// For the moment, the cursor to layer mapping is 1-to-1.

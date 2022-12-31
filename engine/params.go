@@ -212,6 +212,32 @@ func (vals *ParamValues) paramDefOf(name string) (ParamDef, error) {
 	}
 }
 
+func LoadParamsMap(path string) (ParamsMap, error) {
+	bytes, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	var f any
+	err = json.Unmarshal(bytes, &f)
+	if err != nil {
+		return nil, fmt.Errorf("unable to Unmarshal path=%s, err=%s", path, err)
+	}
+	toplevel, ok := f.(map[string]any)
+	if !ok {
+		return nil, fmt.Errorf("unable to convert params to map[string]any")
+
+	}
+	params, okparams := toplevel["params"]
+	if !okparams {
+		return nil, fmt.Errorf("no params value in json")
+	}
+	paramsmap, okmap := params.(map[string]any)
+	if !okmap {
+		return nil, fmt.Errorf("params value is not a map[string]string in jsom")
+	}
+	return paramsmap, nil
+}
+
 func (vals *ParamValues) setParamValueWithString(origname, value string, callback ParamCallback) (err error) {
 
 	if origname == "pad" {

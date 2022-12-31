@@ -196,11 +196,6 @@ func (sched *Scheduler) triggerPhraseElementsAt(phr *Phrase, clk Clicks, dclick 
 	}
 }
 
-// checkDelay is the Duration that has to pass
-// before we decide a cursor is no longer present,
-// resulting in a cursor UP event.
-var checkDelay time.Duration = 0
-
 /*
 // Time returns the current time
 func (sched *Scheduler) time() time.Time {

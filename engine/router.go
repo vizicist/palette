@@ -56,14 +56,6 @@ type HeartbeatEvent struct {
 	CursorCount int
 }
 
-// DeviceCursor purpose is to know when it
-// hasn't been seen for a while,
-// in order to generate an UP event
-type DeviceCursor struct {
-	lastTouch time.Time
-	downed    bool // true if cursor down event has been generated
-}
-
 type APIExecutorFunc func(api string, nuid string, rawargs string) (result any, err error)
 
 func NewRouter() *Router {
@@ -116,7 +108,7 @@ func (r *Router) Start() {
 		LogWarn("StartCursorInput: LoadMorphs", "err", err)
 	}
 
-	go StartMorph(r.cursorManager.handleCursorEvent, 1.0)
+	go StartMorph(r.cursorManager.HandleCursorEvent, 1.0)
 }
 
 // InputListener listens for local device inputs (OSC, MIDI)
@@ -130,7 +122,7 @@ func (r *Router) InputListener() {
 		case event := <-r.midiInputChan:
 			ThePluginManager().handleMidiEvent(event)
 		case event := <-r.cursorInput:
-			r.cursorManager.handleCursorEvent(event)
+			r.cursorManager.HandleCursorEvent(event)
 		default:
 			time.Sleep(time.Millisecond)
 		}
@@ -171,14 +163,14 @@ func ArgToFloat(nm string, args map[string]string) float32 {
 }
 
 func ArgsToCursorEvent(args map[string]string) CursorEvent {
-	id := args["id"]
+	cid := args["cid"]
 	source := args["source"]
 	event := strings.TrimPrefix(args["event"], "cursor_")
 	x := ArgToFloat("x", args)
 	y := ArgToFloat("y", args)
 	z := ArgToFloat("z", args)
 	ce := CursorEvent{
-		ID:     id,
+		Cid:    cid,
 		Source: source,
 		// Timestamp: time.Now(),
 		Ddu:  event,

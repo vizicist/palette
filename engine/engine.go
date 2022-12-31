@@ -46,9 +46,9 @@ func RegisterPlugin(name string, plugin PluginFunc) {
 	ThePluginManager().RegisterPlugin(name, plugin)
 }
 
-// func (e *Engine) handleCursorEvent(ce CursorEvent) {
-// 	TheEngine().cursorManager.handleCursorEvent(ce)
-// 	TheEngine().agentManager.handleCursorEvent(ce)
+// func (e *Engine) HandleCursorEvent(ce CursorEvent) {
+// 	TheEngine().cursorManager.HandleCursorEvent(ce)
+// 	TheEngine().agentManager.HandleCursorEvent(ce)
 // }
 
 func (e *Engine) StartPlugin(name string) {
