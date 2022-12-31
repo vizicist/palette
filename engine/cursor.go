@@ -12,25 +12,31 @@ type CursorCallbackFunc func(e CursorEvent)
 
 // CursorEvent is a single Cursor event
 type CursorEvent struct {
-	ID     string
+	Cid    string
+	Click  Clicks // absolute, I think
 	Source string
-	// Timestamp time.Time
-	Ddu  string // "down", "drag", "up" (sometimes "clear")
-	X    float32
-	Y    float32
-	Z    float32
-	Area float32
+	Ddu    string // "down", "drag", "up" (sometimes "clear")
+	X      float32
+	Y      float32
+	Z      float32
+	Area   float32
+}
+
+type CursorState struct {
+	Current  CursorEvent
+	Previous CursorEvent
+	// Data     any // Plugins can use this to store data
 }
 
 type CursorManager struct {
-	cursors      map[string]*DeviceCursor
+	cursors      map[string]*CursorState
 	cursorsMutex sync.RWMutex
 }
 
 func (ce CursorEvent) ToMap() map[string]string {
 	return map[string]string{
 		"event":  "cursor",
-		"id":     ce.ID,
+		"cid":    ce.Cid,
 		"source": ce.Source,
 		// Timestamp time.Time
 		"ddu":  ce.Ddu,
@@ -49,9 +55,17 @@ func (ce CursorEvent) Format(f fmt.State, c rune) {
 
 func NewCursorManager() *CursorManager {
 	return &CursorManager{
-		cursors:      map[string]*DeviceCursor{},
+		cursors:      map[string]*CursorState{},
 		cursorsMutex: sync.RWMutex{},
 	}
+}
+
+func (cm *CursorManager) GetCursorState(cid string) *CursorState {
+	cs, ok := cm.cursors[cid]
+	if !ok {
+		return nil
+	}
+	return cs
 }
 
 func (cm *CursorManager) clearCursors() {
@@ -59,18 +73,18 @@ func (cm *CursorManager) clearCursors() {
 	cm.cursorsMutex.Lock()
 	defer cm.cursorsMutex.Unlock()
 
-	for id, c := range cm.cursors {
-		if !c.downed {
-			LogWarn("Hmmm, why is a cursor not downed?")
-		} else {
-			cm.handleCursorEvent(CursorEvent{Source: id, Ddu: "up"})
-			DebugLogOfType("cursor", "Clearing cursor", "id", id)
-			delete(cm.cursors, id)
-		}
+	currentClick := CurrentClick()
+	for cid, cs := range cm.cursors {
+		ce := cs.Current
+		ce.Click = currentClick
+		ce.Ddu = "up"
+		cm.HandleCursorEvent(ce)
+		DebugLogOfType("cursor", "Clearing cursor", "cid", cid)
+		delete(cm.cursors, cid)
 	}
 }
 
-func (cm *CursorManager) handleCursorEvent(ce CursorEvent) {
+func (cm *CursorManager) HandleCursorEvent(ce CursorEvent) {
 
 	switch ce.Ddu {
 
@@ -87,15 +101,16 @@ func (cm *CursorManager) generateCursorGestureesture(source string, cid string, 
 	LogInfo("generateCursorGestureesture: start")
 
 	ce := CursorEvent{
+		Cid:    "",
+		Click:  CurrentClick(),
 		Source: source,
-		// Timestamp: time.Now(),
-		Ddu:  "down",
-		X:    x0,
-		Y:    y0,
-		Z:    z0,
-		Area: 0,
+		Ddu:    "down",
+		X:      x0,
+		Y:      y0,
+		Z:      z0,
+		Area:   0,
 	}
-	cm.handleCursorEvent(ce)
+	cm.HandleCursorEvent(ce)
 	LogInfo("generateCursorGestureesture", "ddu", "down", "ce", ce)
 
 	// secs := float32(3.0)
@@ -106,7 +121,7 @@ func (cm *CursorManager) generateCursorGestureesture(source string, cid string, 
 	ce.X = x1
 	ce.Y = y1
 	ce.Z = z1
-	cm.handleCursorEvent(ce)
+	cm.HandleCursorEvent(ce)
 	LogInfo("generateCursorGestureesture end", "ddu", "up", "ce", ce)
 }
 
@@ -117,45 +132,57 @@ func (cm *CursorManager) handleDownDragUp(ce CursorEvent) {
 		cm.cursorsMutex.Unlock()
 	}()
 
-	c, ok := cm.cursors[ce.ID]
-	if !ok {
-		// new DeviceCursor
-		c = &DeviceCursor{}
-		cm.cursors[ce.ID] = c
+	if ce.Click == 0 {
+		ce.Click = CurrentClick()
 	}
-	c.lastTouch = time.Now()
 
-	// If it's a new (downed==false) cur"sor, make sure the first event is "down"
-	if !c.downed {
-		ce.Ddu = "down"
-		c.downed = true
+	cursorState, ok := cm.cursors[ce.Cid]
+	if !ok {
+		// new CursorState
+		// Make sure the first ddu is "down"
+		if ce.Ddu != "down" {
+			LogWarn("handleDownDragUp: first ddu is not down", "cid", ce.Cid, "ddu", ce.Ddu)
+			ce.Ddu = "down"
+		}
+		cursorState = &CursorState{
+			Current:  ce,
+			Previous: ce,
+		}
+		cm.cursors[ce.Cid] = cursorState
+	} else {
+		// existing CursorState
+		cursorState.Previous = cursorState.Current
+		cursorState.Current = ce
 	}
+	cursorState.Current.Click = CurrentClick()
 
 	// See which layer wants this input
-	ThePluginManager().handleCursorEvent(ce)
+	ThePluginManager().HandleCursorEvent(cursorState.Current)
 
-	DebugLogOfType("cursor", "CursorManager.handleDownDragUp", "id", ce.ID, "ddu", ce.Ddu, "x", ce.X, "y", ce.Y, "z", ce.Z)
+	DebugLogOfType("cursor", "CursorManager.handleDownDragUp", "cid", ce.Cid, "ddu", ce.Ddu, "x", ce.X, "y", ce.Y, "z", ce.Z)
 	if ce.Ddu == "up" {
-		delete(cm.cursors, ce.ID)
+		delete(cm.cursors, ce.Cid)
 	}
 }
 
 func (cm *CursorManager) autoCursorUp(now time.Time) {
 
-	if checkDelay == 0 {
-		milli := ConfigIntWithDefault("upcheckmillisecs", 1000)
-		checkDelay = time.Duration(milli) * time.Millisecond
-	}
-
 	cm.cursorsMutex.Lock()
 	defer cm.cursorsMutex.Unlock()
 
-	for id, c := range cm.cursors {
-		elapsed := now.Sub(c.lastTouch)
-		if elapsed > checkDelay {
-			cm.handleCursorEvent(CursorEvent{Source: "checkCursorUp", Ddu: "up"})
-			LogInfo("Layer.checkCursorUp: deleting cursor", "id", id, "elapsed", elapsed)
-			delete(cm.cursors, id)
+	// checkDelay is the number of CLicks that has to pass
+	// before we decide a cursor is no longer present,
+	// resulting in an "up" event.
+	checkDelay := 8 * OneBeat
+
+	for cid, cursorState := range cm.cursors {
+		dclick := cursorState.Previous.Click - cursorState.Current.Click
+		if dclick > checkDelay {
+			ce := cursorState.Current
+			ce.Ddu = "up"
+			cm.HandleCursorEvent(ce)
+			LogInfo("Layer.checkCursorUp: deleting cursor", "cid", cid, "dclick", dclick)
+			delete(cm.cursors, cid)
 		}
 	}
 }
