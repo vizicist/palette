@@ -4,19 +4,16 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
-	"sync"
 
 	"github.com/hypebeast/go-osc/osc"
 	"github.com/vizicist/palette/engine"
 )
 
 type LayerLogic struct {
-	ppro             *PalettePro
-	layer            *engine.Layer
-	lastActiveID     int
-	activeNotes      map[string]*ActiveNote
-	activeNotesMutex sync.RWMutex
+	ppro  *PalettePro
+	layer *engine.Layer
 
+	cursorNote map[string]*engine.NoteOn
 	// tempoFactor            float64
 	// loop            *StepLoop
 	// loopLength      engine.Clicks
@@ -44,10 +41,8 @@ type LayerLogic struct {
 
 func NewLayerLogic(ppro *PalettePro, layer *engine.Layer) *LayerLogic {
 	logic := &LayerLogic{
-		ppro:         ppro,
-		layer:        layer,
-		lastActiveID: 0,
-		activeNotes:  make(map[string]*ActiveNote),
+		ppro:  ppro,
+		layer: layer,
 	}
 	return logic
 }
@@ -121,7 +116,7 @@ func (logic *LayerLogic) generateVisualsFromCursor(ce engine.CursorEvent) {
 	// send an OSC message to Resolume
 	msg := osc.NewMessage("/cursor")
 	msg.Append(ce.Ddu)
-	msg.Append(ce.ID)
+	msg.Append(ce.Cid)
 	msg.Append(float32(ce.X))
 	msg.Append(float32(ce.Y))
 	msg.Append(float32(ce.Z))
@@ -129,31 +124,28 @@ func (logic *LayerLogic) generateVisualsFromCursor(ce engine.CursorEvent) {
 }
 
 func (logic *LayerLogic) generateSoundFromCursor(ctx *engine.PluginContext, ce engine.CursorEvent) {
+
+	cursorState := ctx.GetCursorState(ce.Cid)
+
 	layer := logic.layer
-	a := logic.getActiveNote(ce.ID)
 	switch ce.Ddu {
 	case "down":
-		// Send noteoff for current note
-		if a.noteOn != nil {
-			// I think this happens if we get things coming in
-			// faster than the checkDelay can generate the UP event.
-			logic.sendNoteOff(a)
-		}
-		a.noteOn = logic.cursorToNoteOn(ctx, ce)
-		a.ce = ce
-		logic.sendNoteOn(ctx, a)
+		noteOn := logic.cursorToNoteOn(ctx, cursorState.Current)
+		logic.sendNoteOn(noteOn)
+		logic.cursorNote[ce.Cid] = noteOn
 	case "drag":
-		if a.noteOn == nil {
-			// if we turn on playing in the middle of an existing loop,
-			// we may see some drag events without a down.
-			// Also, I'm seeing this pretty commonly in other situations,
-			// not really sure what the underlying reason is,
-			// but it seems to be harmless at the moment.
-			engine.LogWarn("=============== HEY! drag event, a.currentNoteOn == nil?\n")
+		cursorState := ctx.GetCursorState(ce.Cid)
+		if cursorState == nil {
+			engine.LogWarn("generateSoundFromCursor: cursorState is nil", "cid", ce.Cid)
+			return
+		}
+		oldNoteOn, ok := logic.cursorNote[ce.Cid]
+		if !ok {
+			engine.LogWarn("generateSoundFromCursor: no cursorNote", "cid", ce.Cid)
 			return
 		}
 		newNoteOn := logic.cursorToNoteOn(ctx, ce)
-		oldpitch := a.noteOn.Pitch
+		oldpitch := oldNoteOn.Pitch
 		newpitch := newNoteOn.Pitch
 		// We only turn off the existing note (for a given Cursor ID)
 		// and start the new one if the pitch changes
@@ -163,11 +155,11 @@ func (logic *LayerLogic) generateSoundFromCursor(ctx *engine.PluginContext, ce e
 		// NOTE: this could and perhaps should use a.ce.Z now that we're
 		// saving a.ce, like the deltay value
 
-		dz := float64(int(a.noteOn.Velocity) - int(newNoteOn.Velocity))
+		dz := float64(int(oldNoteOn.Velocity) - int(newNoteOn.Velocity))
 		deltaz := float32(math.Abs(dz) / 128.0)
 		deltaztrig := layer.GetFloat("sound._deltaztrig")
 
-		deltay := float32(math.Abs(float64(a.ce.Y - ce.Y)))
+		deltay := float32(math.Abs(float64(cursorState.Previous.Y - ce.Y)))
 		deltaytrig := layer.GetFloat("sound._deltaytrig")
 
 		if layer.Get("sound.controllerstyle") == "modulationonly" {
@@ -175,7 +167,7 @@ func (logic *LayerLogic) generateSoundFromCursor(ctx *engine.PluginContext, ce e
 			zmax := layer.GetFloat("sound._controllerzmax")
 			cmin := layer.GetInt("sound._controllermin")
 			cmax := layer.GetInt("sound._controllermax")
-			oldz := a.ce.Z
+			oldz := cursorState.Previous.Z
 			newz := ce.Z
 			// XXX - should put the old controller value in ActiveNote so
 			// it doesn't need to be computed every time
@@ -188,61 +180,26 @@ func (logic *LayerLogic) generateSoundFromCursor(ctx *engine.PluginContext, ce e
 		}
 
 		if newpitch != oldpitch || deltaz > deltaztrig || deltay > deltaytrig {
-			logic.sendNoteOff(a)
-			a.noteOn = newNoteOn
-			a.ce = ce
-			logic.sendNoteOn(ctx, a)
+			// Turn off existing note
+			logic.sendNoteOff(oldNoteOn)
+			logic.cursorNote[ce.Cid] = newNoteOn
+			logic.sendNoteOn(newNoteOn)
 		}
 	case "up":
-		if a.noteOn == nil {
+		cursorState := ctx.GetCursorState(ce.Cid)
+		if cursorState == nil {
+			engine.LogWarn("generateSoundFromCursor: cursorState is nil", "cid", ce.Cid)
+			return
+		}
+		oldNoteOn, ok := logic.cursorNote[ce.Cid]
+		if !ok {
 			// not sure why this happens, yet
-			engine.LogWarn("Unexpected UP when currentNoteOn is nil?", "layer", layer.Name())
+			engine.LogWarn("Unexpected UP, no cursorNote", "cid", ce.Cid)
 		} else {
-			logic.sendNoteOff(a)
-
-			a.noteOn = nil
-			a.ce = ce // Hmmmm, might be useful, or wrong
-		}
-		logic.activeNotesMutex.Lock()
-		delete(logic.activeNotes, ce.ID)
-		logic.activeNotesMutex.Unlock()
-	}
-}
-
-// ActiveNote is a currently active MIDI note
-type ActiveNote struct {
-	id     int
-	noteOn *engine.NoteOn
-	ce     engine.CursorEvent // the one that triggered the note
-}
-
-func (logic *LayerLogic) getActiveNote(id string) *ActiveNote {
-	logic.activeNotesMutex.RLock()
-	a, ok := logic.activeNotes[id]
-	logic.activeNotesMutex.RUnlock()
-	if !ok {
-		logic.lastActiveID++
-		a = &ActiveNote{
-			id:     logic.lastActiveID,
-			noteOn: nil,
-		}
-		logic.activeNotesMutex.Lock()
-		logic.activeNotes[id] = a
-		logic.activeNotesMutex.Unlock()
-	}
-	return a
-}
-
-func (logic *LayerLogic) terminateActiveNotes(ctx *engine.PluginContext) {
-	logic.activeNotesMutex.RLock()
-	for id, a := range logic.activeNotes {
-		if a != nil {
-			logic.sendNoteOff(a)
-		} else {
-			engine.LogWarn("Hey, nil activeNotes entry for", "id", id)
+			logic.sendNoteOff(oldNoteOn)
+			delete(logic.cursorNote, ce.Cid)
 		}
 	}
-	logic.activeNotesMutex.RUnlock()
 }
 
 func (logic *LayerLogic) clearGraphics() {
@@ -268,9 +225,9 @@ func (logic *LayerLogic) nextQuant(t engine.Clicks, q engine.Clicks) engine.Clic
 	return tq
 }
 
-func (logic *LayerLogic) sendNoteOn(ctx *engine.PluginContext, a *ActiveNote) {
+func (logic *LayerLogic) sendNoteOn(note any) {
 
-	logic.layer.Synth.SendTo(a.noteOn)
+	logic.layer.Synth.SendTo(note)
 
 	// ss := logic.layer.Get("visual.spritesource")
 	// if ss == "midi" {
@@ -363,8 +320,7 @@ func (logic *LayerLogic) generateSpriteFromPhraseElement(ctx *engine.PluginConte
 	logic.ppro.resolume.toFreeFramePlugin(layer.Name(), msg)
 }
 
-func (logic *LayerLogic) sendNoteOff(a *ActiveNote) {
-	n := a.noteOn
+func (logic *LayerLogic) sendNoteOff(n *engine.NoteOn) {
 	if n == nil {
 		// Not sure why this sometimes happens
 		return
