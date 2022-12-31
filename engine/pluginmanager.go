@@ -56,7 +56,7 @@ func CallApiOnAllPlugins(api string, apiargs map[string]string) {
 }
 
 /*
-func (rm *PluginManager) handleCursorEvent(ce CursorEvent) {
+func (rm *PluginManager) HandleCursorEvent(ce CursorEvent) {
 	for name, plugin := range rm.plugins {
 		DebugLogOfType("plugin", "CallPlugins", "name", name)
 		context, ok := rm.pluginsContext[name]
@@ -89,10 +89,10 @@ func (pm *PluginManager) GetPluginContext(name string) (*PluginContext, error) {
 	}
 }
 
-func (tm *PluginManager) handleCursorEvent(e CursorEvent) {
+func (tm *PluginManager) HandleCursorEvent(ce CursorEvent) {
 	for _, ctx := range tm.plugins {
-		if ctx.IsSourceAllowed(e.Source) {
-			ctx.api(ctx, "event", e.ToMap())
+		if ctx.IsSourceAllowed(ce.Source) {
+			ctx.api(ctx, "event", ce.ToMap())
 		}
 	}
 }
