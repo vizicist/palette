@@ -259,6 +259,7 @@ type oneMorph struct {
 	deviceID         int
 	morphtype        string // "corners", "quadrants"
 	sourceName       string // "A", "B", "C", "D"
+	contactToSource  map[int]string
 }
 
 var morphMaxForce float32 = 1000.0
@@ -339,11 +340,9 @@ func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float32) 
 			}
 
 			newSourceName := ""
-			doit := true
 
-			switch m.morphtype {
+			if m.morphtype == "corners" {
 
-			case "corners":
 				// If the position is in one of the corners,
 				// we change the source to that corner.
 				edge := float32(0.075)
@@ -356,11 +355,22 @@ func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float32) 
 				} else if xNorm > (1.0-edge) && yNorm < edge {
 					newSourceName = "D"
 				}
-				if newSourceName != "" {
-					doit = false // We don't pass corner things through
+				if newSourceName != m.sourceName {
+					LogInfo("Switching corners pad", "source", newSourceName)
+					ce := CursorEvent{
+						Cid:  "clear",
+						Ddu:  "clear",
+						X:    xNorm,
+						Y:    yNorm,
+						Z:    zNorm,
+						Area: area,
+					}
+					callback(ce)
+					continue // loop
 				}
+			}
 
-			case "quadrants":
+			if m.morphtype == "quadrants" {
 				// This method splits a single pad into quadrants.
 				// Adjust the xNorm and yNorm values to provide
 				// full range 0-1 within each quadrant.
@@ -385,7 +395,9 @@ func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float32) 
 				yNorm *= 2.0
 			}
 
-			if newSourceName != m.sourceName {
+			contactid := int(contact.id)
+			oldSource, ok := m.contactToSource[contactid]
+			if ok && newSourceName != oldSource {
 				LogInfo("Switching corners pad", "source", newSourceName)
 				ce := CursorEvent{
 					Cid:  "clear",
@@ -398,11 +410,8 @@ func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float32) 
 				callback(ce)
 			}
 
+			m.contactToSource[contactid] = newSourceName
 			m.sourceName = newSourceName
-
-			if !doit {
-				continue
-			}
 
 			DebugLogOfType("morph", "Morph",
 				"source", m.sourceName,
@@ -450,7 +459,9 @@ func WinMorphInitialize() error {
 
 	for idx := uint8(0); idx < uint8(numdevices); idx++ {
 
-		m := &oneMorph{}
+		m := &oneMorph{
+			contactToSource:  map[int]string{},
+		}
 		allMorphs[idx] = m
 		m.idx = idx
 		m.serialNum = C.GoString(C.SenselDeviceSerialNum(C.uchar(idx)))
