@@ -82,8 +82,8 @@ func NewParamValues() *ParamValues {
 }
 
 func (vals *ParamValues) DoForAllParams(f func(string, ParamValue)) {
-	vals.mutex.Lock()
-	defer vals.mutex.Unlock()
+	vals.mutex.RLock()
+	defer vals.mutex.RUnlock()
 	for nm, val := range vals.values {
 		f(nm, val)
 	}
@@ -440,7 +440,9 @@ func LoadParamDefs() error {
 }
 
 func (vals *ParamValues) paramValue(name string) ParamValue {
+	// vals.mutex.RLock()
 	val, ok := vals.values[name]
+	// vals.mutex.RUnlock()
 	if !ok {
 		return nil
 	}

@@ -258,7 +258,7 @@ type oneMorph struct {
 	fwVersionRelease uint8
 	deviceID         int
 	morphtype        string // "corners", "quadrants"
-	playerName       string // "A", "B", "C", "D"
+	sourceName       string // "A", "B", "C", "D"
 }
 
 var morphMaxForce float32 = 1000.0
@@ -338,42 +338,26 @@ func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float32) 
 				continue
 			}
 
-			cid := fmt.Sprintf("%d", contact.id)
+			newSourceName := ""
+			doit := true
 
 			switch m.morphtype {
 
 			case "corners":
 				// If the position is in one of the corners,
-				// we change the player to that corner.
+				// we change the source to that corner.
 				edge := float32(0.075)
-				newLayerName := ""
 				if xNorm < edge && yNorm < edge {
-					newLayerName = "A"
+					newSourceName = "A"
 				} else if xNorm < edge && yNorm > (1.0-edge) {
-					newLayerName = "B"
+					newSourceName = "B"
 				} else if xNorm > (1.0-edge) && yNorm > (1.0-edge) {
-					newLayerName = "C"
+					newSourceName = "C"
 				} else if xNorm > (1.0-edge) && yNorm < edge {
-					newLayerName = "D"
+					newSourceName = "D"
 				}
-				if newLayerName != "" {
-					if newLayerName != m.playerName {
-						LogInfo("Switching corners pad", "player", newLayerName)
-						ce := CursorEvent{
-							Cid:    fmt.Sprintf("%d", m.idx),
-							Source: newLayerName,
-							// Timestamp: time.Now(),
-							Ddu:  "clear",
-							X:    xNorm,
-							Y:    yNorm,
-							Z:    zNorm,
-							Area: area,
-						}
-						m.playerName = newLayerName
-						callback(ce)
-					}
-					// We don't pass corner things through
-					continue // the loop
+				if newSourceName != "" {
+					doit = false // We don't pass corner things through
 				}
 
 			case "quadrants":
@@ -382,27 +366,46 @@ func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float32) 
 				// full range 0-1 within each quadrant.
 				switch {
 				case xNorm < 0.5 && yNorm < 0.5:
-					m.playerName = "A"
+					newSourceName = "A"
 				case xNorm < 0.5 && yNorm >= 0.5:
-					m.playerName = "B"
+					newSourceName = "B"
 					yNorm = yNorm - 0.5
 				case xNorm >= 0.5 && yNorm >= 0.5:
-					m.playerName = "C"
+					newSourceName = "C"
 					xNorm = xNorm - 0.5
 					yNorm = yNorm - 0.5
 				case xNorm >= 0.5 && yNorm < 0.5:
-					m.playerName = "D"
+					newSourceName = "D"
 					xNorm = xNorm - 0.5
 				default:
-					LogWarn("unable to find QUAD player", "x", xNorm, "y", yNorm)
+					LogWarn("unable to find QUAD source", "x", xNorm, "y", yNorm)
 					continue
 				}
 				xNorm *= 2.0
 				yNorm *= 2.0
 			}
 
+			if newSourceName != m.sourceName {
+				LogInfo("Switching corners pad", "source", newSourceName)
+				ce := CursorEvent{
+					Cid:  "clear",
+					Ddu:  "clear",
+					X:    xNorm,
+					Y:    yNorm,
+					Z:    zNorm,
+					Area: area,
+				}
+				callback(ce)
+			}
+
+			m.sourceName = newSourceName
+
+			if !doit {
+				continue
+			}
+
 			DebugLogOfType("morph", "Morph",
-				"player", m.playerName,
+				"source", m.sourceName,
 				"contactid", contact.id,
 				"idx", m.idx,
 				"n", n,
@@ -427,9 +430,7 @@ func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float32) 
 			}
 
 			ev := CursorEvent{
-				Cid:    cid,
-				Source: m.playerName,
-				// Timestamp: time.Now(),
+				Cid:  fmt.Sprintf("%s#%d", m.sourceName, contact.id),
 				Ddu:  ddu,
 				X:    xNorm,
 				Y:    yNorm,
@@ -499,9 +500,9 @@ func WinMorphInitialize() error {
 		m.morphtype = morphtype
 		switch m.morphtype {
 		case "corners", "quadrants":
-			m.playerName = "A"
+			m.sourceName = "A"
 		case "A", "B", "C", "D":
-			m.playerName = morphtype
+			m.sourceName = morphtype
 		default:
 			LogWarn("Unexpected morphtype", "morphtype", morphtype)
 		}
