@@ -41,8 +41,9 @@ type LayerLogic struct {
 
 func NewLayerLogic(ppro *PalettePro, layer *engine.Layer) *LayerLogic {
 	logic := &LayerLogic{
-		ppro:  ppro,
-		layer: layer,
+		ppro:       ppro,
+		layer:      layer,
+		cursorNote: map[string]*engine.NoteOn{},
 	}
 	return logic
 }
@@ -125,13 +126,16 @@ func (logic *LayerLogic) generateVisualsFromCursor(ce engine.CursorEvent) {
 
 func (logic *LayerLogic) generateSoundFromCursor(ctx *engine.PluginContext, ce engine.CursorEvent) {
 
-	cursorState := ctx.GetCursorState(ce.Cid)
-
 	layer := logic.layer
 	switch ce.Ddu {
 	case "down":
-		noteOn := logic.cursorToNoteOn(ctx, cursorState.Current)
+		_, ok := logic.cursorNote[ce.Cid]
+		if ok {
+			engine.LogWarn("generateSoundFromCursor: cursorNote already exists", "cid", ce.Cid)
+		}
+		noteOn := logic.cursorToNoteOn(ctx, ce)
 		logic.sendNoteOn(noteOn)
+		engine.LogInfo("Adding to cursorNote", "cid", ce.Cid)
 		logic.cursorNote[ce.Cid] = noteOn
 	case "drag":
 		cursorState := ctx.GetCursorState(ce.Cid)
@@ -182,6 +186,7 @@ func (logic *LayerLogic) generateSoundFromCursor(ctx *engine.PluginContext, ce e
 		if newpitch != oldpitch || deltaz > deltaztrig || deltay > deltaytrig {
 			// Turn off existing note
 			logic.sendNoteOff(oldNoteOn)
+			engine.LogInfo("Replacing cursorNote", "cid", ce.Cid)
 			logic.cursorNote[ce.Cid] = newNoteOn
 			logic.sendNoteOn(newNoteOn)
 		}
@@ -197,6 +202,7 @@ func (logic *LayerLogic) generateSoundFromCursor(ctx *engine.PluginContext, ce e
 			engine.LogWarn("Unexpected UP, no cursorNote", "cid", ce.Cid)
 		} else {
 			logic.sendNoteOff(oldNoteOn)
+			engine.LogInfo("Deleting from cursorNote", "cid", ce.Cid)
 			delete(logic.cursorNote, ce.Cid)
 		}
 	}

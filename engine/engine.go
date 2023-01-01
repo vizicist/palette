@@ -14,7 +14,7 @@ type Engine struct {
 	Router        *Router
 	Scheduler     *Scheduler
 	PluginManager *PluginManager
-	CursorManager *CursorManager
+	// CursorManager *CursorManager
 	done          chan bool
 }
 

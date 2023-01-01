@@ -108,6 +108,7 @@ func (r *Router) Start() {
 		LogWarn("StartCursorInput: LoadMorphs", "err", err)
 	}
 
+	// go StartMorph(r.cursorManager.HandleCursorEvent, 1.0)
 	go StartMorph(r.cursorManager.HandleCursorEvent, 1.0)
 }
 
@@ -164,14 +165,14 @@ func ArgToFloat(nm string, args map[string]string) float32 {
 
 func ArgsToCursorEvent(args map[string]string) CursorEvent {
 	cid := args["cid"]
-	source := args["source"]
+	// source := args["source"]
 	event := strings.TrimPrefix(args["event"], "cursor_")
 	x := ArgToFloat("x", args)
 	y := ArgToFloat("y", args)
 	z := ArgToFloat("z", args)
 	ce := CursorEvent{
 		Cid:    cid,
-		Source: source,
+		// Source: source,
 		// Timestamp: time.Now(),
 		Ddu:  event,
 		X:    x,
