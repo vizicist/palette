@@ -2,6 +2,7 @@ package engine
 
 import (
 	"fmt"
+	"sync"
 )
 
 // type PluginInfo struct {
@@ -13,14 +14,13 @@ func ThePluginManager() *PluginManager {
 func NewPluginContext(apiFunc PluginFunc) *PluginContext {
 	return &PluginContext{
 		api:           apiFunc,
-		cursorManager: NewCursorManager(),
-		// params:        NewParamValues(),
-		sources: map[string]bool{},
+		sources:       map[string]bool{},
 	}
 }
 
 type PluginManager struct {
 	plugins map[string]*PluginContext
+	mutex sync.Mutex
 }
 
 func NewPluginManager() *PluginManager {
@@ -90,8 +90,12 @@ func (pm *PluginManager) GetPluginContext(name string) (*PluginContext, error) {
 }
 
 func (tm *PluginManager) HandleCursorEvent(ce CursorEvent) {
+	// LogInfo("PluginManager.HandleCursorEvent", "ce", ce)
+	tm.mutex.Lock()
+	defer tm.mutex.Unlock()
+	source := ce.Source()
 	for _, ctx := range tm.plugins {
-		if ctx.IsSourceAllowed(ce.Source) {
+		if ctx.IsSourceAllowed(source) {
 			ctx.api(ctx, "event", ce.ToMap())
 		}
 	}

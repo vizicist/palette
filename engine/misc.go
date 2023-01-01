@@ -328,7 +328,6 @@ func IsTrueValue(value string) (bool, error) {
 }
 
 type NoWriter struct {
-	// Source string
 }
 
 type FileWriter struct {
