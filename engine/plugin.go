@@ -11,10 +11,9 @@ import (
 type PluginFunc func(ctx *PluginContext, api string, apiargs map[string]string) (string, error)
 
 type PluginContext struct {
-	api           PluginFunc
-	cursorManager *CursorManager
+	api PluginFunc
 	// params        *ParamValues
-	sources       map[string]bool
+	sources map[string]bool
 }
 
 func (ctx *PluginContext) Uptime() float64 {
@@ -26,7 +25,7 @@ func (ctx *PluginContext) GetArgsXYZ(args map[string]string) (x, y, z float32, e
 }
 
 func (ctx *PluginContext) ClearCursors() {
-	ctx.cursorManager.clearCursors()
+	TheRouter().cursorManager.clearCursors()
 }
 
 /*
@@ -495,12 +494,12 @@ func (ctx *PluginContext) SaveCurrentAsSaved(savedName string) error {
 }
 */
 
-func (ctx *PluginContext) GenerateCursorGestureesture(source string, cid string, noteDuration time.Duration, x0, y0, z0, x1, y1, z1 float32) {
-	ctx.cursorManager.generateCursorGestureesture(source, cid, noteDuration, x0, y0, z0, x1, y1, z1)
+func (ctx *PluginContext) GenerateCursorGesture(cid string, noteDuration time.Duration, x0, y0, z0, x1, y1, z1 float32) {
+	TheRouter().cursorManager.generateCursorGestureesture(cid, noteDuration, x0, y0, z0, x1, y1, z1)
 }
 
 func (ctx *PluginContext) GetCursorState(cid string) *CursorState {
-	return ctx.cursorManager.GetCursorState(cid)
+	return TheRouter().cursorManager.GetCursorState(cid)
 }
 
 /*

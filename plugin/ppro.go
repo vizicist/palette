@@ -319,10 +319,10 @@ func (ppro *PalettePro) onCursorEvent(ctx *engine.PluginContext, apiargs map[str
 		return "", err
 	}
 
-	source, ok := apiargs["source"]
-	if !ok {
-		source = ""
-	}
+	// source, ok := apiargs["source"]
+	// if !ok {
+	// 	source = ""
+	// }
 
 	cid, ok := apiargs["cid"]
 	if !ok {
@@ -330,18 +330,17 @@ func (ppro *PalettePro) onCursorEvent(ctx *engine.PluginContext, apiargs map[str
 	}
 
 	ce := engine.CursorEvent{
-		Cid:    cid,
-		Click:  0,
-		Source: source,
-		Ddu:    ddu,
-		X:      x,
-		Y:      y,
-		Z:      z,
-		Area:   0,
+		Cid:   cid,
+		Click: 0,
+		Ddu:   ddu,
+		X:     x,
+		Y:     y,
+		Z:     z,
+		Area:  0,
 	}
 
 	// Any non-internal cursor will turn attract mode off.
-	if source != "internal" {
+	if ce.Source() != "internal" {
 		if time.Since(ppro.lastAttractCommand) > time.Second {
 			engine.LogInfo("PalettePro: shouold be turning attract mode OFF")
 			ppro.lastAttractCommand = time.Now()
@@ -350,8 +349,8 @@ func (ppro *PalettePro) onCursorEvent(ctx *engine.PluginContext, apiargs map[str
 	}
 
 	// For the moment, the cursor to layerLogic mapping is 1-to-1.
-	// I.e. ce.Source of "a" maps to layerLogic "a"
-	layerLogic, ok := ppro.layerLogic[ce.Source]
+	// I.e. ce.Source of "A" maps to layerLogic "A"
+	layerLogic, ok := ppro.layerLogic[ce.Source()]
 	if !ok {
 		return "", nil
 	}
@@ -557,13 +556,14 @@ func (ppro *PalettePro) doTest(ctx *engine.PluginContext, ntimes int, dt time.Du
 			time.Sleep(dt)
 		}
 		source := string("ABCD"[rand.Int()%4])
+		cid := source + "#0"
 		thismap := map[string]string{
-			"source": source,
-			"event":  "cursor",
-			"ddu":    "down",
-			"x":      fmt.Sprintf("%f", rand.Float32()),
-			"y":      fmt.Sprintf("%f", rand.Float32()),
-			"z":      fmt.Sprintf("%f", rand.Float32()),
+			"cid":   cid,
+			"event": "cursor",
+			"ddu":   "down",
+			"x":     fmt.Sprintf("%f", rand.Float32()),
+			"y":     fmt.Sprintf("%f", rand.Float32()),
+			"z":     fmt.Sprintf("%f", rand.Float32()),
 		}
 		_, err := ppro.Api(ctx, "event", thismap)
 		if err != nil {
@@ -572,12 +572,12 @@ func (ppro *PalettePro) doTest(ctx *engine.PluginContext, ntimes int, dt time.Du
 		}
 		time.Sleep(dt)
 		thismap = map[string]string{
-			"source": source,
-			"event":  "cursor",
-			"ddu":    "up",
-			"x":      fmt.Sprintf("%f", rand.Float32()),
-			"y":      fmt.Sprintf("%f", rand.Float32()),
-			"z":      fmt.Sprintf("%f", rand.Float32()),
+			"cid":   cid,
+			"event": "cursor",
+			"ddu":   "up",
+			"x":     fmt.Sprintf("%f", rand.Float32()),
+			"y":     fmt.Sprintf("%f", rand.Float32()),
+			"z":     fmt.Sprintf("%f", rand.Float32()),
 		}
 		_, err = ppro.Api(ctx, "event", thismap)
 		if err != nil {
@@ -682,10 +682,11 @@ func (ppro *PalettePro) channelToDestination(channel int) string {
 }
 */
 
+/*
 func (ppro *PalettePro) cursorToLayer(ce engine.CursorEvent) *engine.Layer {
 	// For the moment, the cursor to layer mapping is 1-to-1.
 	// I.e. ce.Source of "a" maps to layer "a"
-	layer, ok := ppro.layer[ce.Source]
+	layer, ok := ppro.layer[ce.Source()]
 	if !ok {
 		return nil
 	}
@@ -709,6 +710,7 @@ func (ppro *PalettePro) channelToLayer(channel int) *engine.Layer {
 	}
 	return layer
 }
+*/
 
 // SetExternalScale xxx
 func (ppro *PalettePro) setExternalScale(pitch int, on bool) {
@@ -768,7 +770,7 @@ func (ppro *PalettePro) doAttractAction(ctx *engine.PluginContext) {
 		layer := layerNames[i]
 		ppro.lastAttractGestureTime = now
 
-		cid := fmt.Sprintf("%d", time.Now().UnixNano())
+		cid := fmt.Sprintf("%s#%d", layer, time.Now().UnixNano())
 
 		x0 := rand.Float32()
 		y0 := rand.Float32()
@@ -779,7 +781,7 @@ func (ppro *PalettePro) doAttractAction(ctx *engine.PluginContext) {
 		z1 := rand.Float32() / 2.0
 
 		noteDuration := time.Second
-		go ctx.GenerateCursorGestureesture(layer, cid, noteDuration, x0, y0, z0, x1, y1, z1)
+		go ctx.GenerateCursorGesture(cid, noteDuration, x0, y0, z0, x1, y1, z1)
 		ppro.lastAttractGestureTime = now
 	}
 
