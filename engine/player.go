@@ -1,91 +1,25 @@
 package engine
 
 /*
-// Layer is an entity that that reacts to things (cursor events, apis) and generates output (midi, graphics)
-type Layer struct {
-	layerName      string
-	resolumeLayer   int // see ResolumeLayerForPad
-	freeframeClient *osc.Client
-	resolumeClient  *osc.Client
-
-	params  *ParamValues // sound/visual/effect values
-	sources map[string]string
-
-	agents        []Agent
-	agentsContext []*EngineContext
-
-
-*/
-
-/*
-
-func (p *Layer) SetResolumeLayer(layernum int, ffglport int) {
-	p.resolumeLayer = layernum
-	p.resolumeClient = osc.NewClient(LocalAddress, ResolumePort)
-	p.freeframeClient = osc.NewClient(LocalAddress, ffglport)
-}
-*/
-
-/*
-// NewLayer makes a new Layer
-func NewLayer(layerName string) *Layer {
-	p := &Layer{
-		layerName:      layerName,
-		resolumeLayer:   0,
-		freeframeClient: nil,
-		resolumeClient:  nil,
-		// tempoFactor:         1.0,
-		// params:                         make(map[string]any),
-		params: NewParamValues(),
-		// activeNotes: make(map[string]*ActiveNote),
-		// fadeLoop:    0.5,
-		sources: map[string]string{},
-
-		// MIDIThru:         true,
-		// MIDISetScale:     false,
-		// MIDIThruScadjust: false,
-		// MIDIUseScale:     false,
-		// MIDIQuantized:    false,
-		// TransposePitch:   0,
-	}
-	p.params.SetDefaultValues()
-	//p.clearExternalScale()
-	//p.setExternalScale(60%12, true) // Middle C
-
-	TheRouter().agentManager.AddAgent(p)
-
-	return p
-}
-*/
-
-/*
-func (layer *Layer) HandleCursorEvent(ce CursorEvent) {
-	DebugLogOfType("cursor", "Layer.HandleCursorEvent", "ce", ce)
-	for n, agent := range layer.agents {
-		ctx := layer.agentsContext[n]
-		agent.OnCursorEvent(ctx, ce)
-	}
-}
-
 // HandleMIDIInput xxx
 func (layer *Layer) HandleMidiEvent(me MidiEvent) {
-	Info("Layer.HandleMidiEvent", "me", me)
+	LogInfo("Layer.HandleMidiEvent", "me", me)
 	for n, agent := range layer.agents {
 		ctx := layer.agentsContext[n]
 		agent.OnMidiEvent(ctx, me)
 	}
 
-		layer.midiInputMutex.Lock()
-		defer layer.midiInputMutex.Unlock()
+	layer.midiInputMutex.Lock()
+	defer layer.midiInputMutex.Unlock()
 
-		DebugLogOfType("midi", "Router.HandleMIDIInput", "event", e)
+	DebugLogOfType("midi", "Router.HandleMIDIInput", "event", e)
 
-		if layer.MIDIThru {
-			layer.PassThruMIDI(e)
-		}
-		if layer.MIDISetScale {
-			layer.handleMIDISetScaleNote(e)
-		}
+	if layer.MIDIThru {
+		layer.PassThruMIDI(e)
+	}
+	if layer.MIDISetScale {
+		layer.handleMIDISetScaleNote(e)
+	}
 }
 
 /*
@@ -118,7 +52,7 @@ func (layer *Layer) SetParam(fullname, value string) error {
 func (layer *Layer) SetOneParamValue(fullname, value string) error {
 
 	DebugLogOfType("value", "SetOneParamValue", "layer", layer.layerName, "fullname", fullname, "value", value)
-	err := layer.params.SetParamValueWithString(fullname, value, nil)
+	err := layer.params.SetParamValueWithString(fullname, value)
 	if err != nil {
 		return err
 	}
@@ -146,40 +80,6 @@ func (layer *Layer) SetOneParamValue(fullname, value string) error {
 func (layer *Layer) clearExternalScale() {
 	DebugLogOfType("scale", "clearExternalScale", "pad", layer.layerName)
 	layer.externalScale = MakeScale()
-}
-*/
-
-/*
-var uniqueIndex = 0
-
-
-/*
-
-*/
-
-/*
- */
-
-/*
-func (r *Layer) paramStringValue(paramname string, def string) string {
-	r.paramsMutex.RLock()
-	param, ok := r.params[paramname]
-	r.paramsMutex.RUnlock()
-	if !ok {
-		return def
-	}
-	return r.params.param).(paramValString).value
-}
-
-func (r *Layer) paramIntValue(paramname string) int {
-	r.paramsMutex.RLock()
-	param, ok := r.params[paramname]
-	r.paramsMutex.RUnlock()
-	if !ok {
-		Warn("No param named","paramname", paramname)
-		return 0
-	}
-	return (param).(paramValInt).value
 }
 */
 

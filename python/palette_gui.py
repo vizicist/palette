@@ -767,7 +767,9 @@ class ProGuiApp(tk.Tk):
                 # because in casual mode, the layer selectors aren't shown.
                 # In non-casual mode (guiLevel>0) we do this if allLayersSelected
                 log("Loading","preset",filename)
-                palette.palette_ppro_api("load", "\"filename\": \"" + filename + "\"")
+                palette.palette_ppro_api("load",
+                    "\"filename\": \"" + filename + "\""
+                    ", \"category\": \"" + category + "\"")
             else:
                 # Otherwise, the quad saved is loaded only in a single layer
                 layerName = self.CurrLayer.name()
@@ -883,13 +885,6 @@ class ProGuiApp(tk.Tk):
             palette.palette_engine_api("set_scale", "\"value\": \""+str(val) + "\"")
         elif name == "transposeauto":
             palette.palette_engine_api("set_transposeauto", "\"onoff\": \""+str(val) + "\"")
-
-    def combLayerLoop(self,layer):
-        palette.palette_layer_api(self.CurrLayer.name(), "loop_comb", "")
-
-    def combLoop(self):
-        self.resetLastAnything()
-        self.combLayerLoop(self.CurrLayer.name())
 
     def clear(self):
         if self.allLayersSelected:
@@ -1235,24 +1230,19 @@ class Layer():
                 ", \"value\": \"" + str(val) + "\"")
 
         elif name == "quant":
-            palette.palette_layer_api(self.name(), "set",
+            palette.palette_ppro_api("set",
                 "\"name\": \"" + "misc.quant" + "\"" + \
                 ", \"value\": \"" + str(val) + "\"")
         elif name == "scale":
-            palette.palette_layer_api(self.name(), "set",
+            palette.palette_ppro_api("set",
                 "\"name\": \"" + "misc.scale" + "\"" + \
                 ", \"value\": \"" + str(val) + "\"")
 
         elif name == "vol":
             # NOTE: "voltype" here rather than "vol" - should make consistent someday
-            palette.palette_layer_api(self.name(), "set",
+            palette.palette_ppro_api("set",
                 "\"name\": \"" + "misc.vol" + "\"" + \
                 ", \"value\": \"" + str(val) + "\"")
-
-        elif name == "comb":
-            val = 1.0
-            palette.palette_layer_api(self.name(), "loop_comb",
-                "\"value\": \"" + str(val) + "\"")
 
         elif name == "midithru":
             palette.palette_layer_api(self.name(), "midi_thru", "\"onoff\": \"" + str(val) + "\"")
@@ -2127,8 +2117,6 @@ class PagePerformMain(tk.Frame):
         self.makePerformButtonAdvanced("midithruscadjust",None)
         self.makePerformButtonAdvanced("midiquantized",None)
         self.makePerformButtonAdvanced("tempo",None)
-
-        ### self.makePerformButtonAdvanced("Comb_Notes", self.controller.combLoop)
 
     def makePerformButtonAdvanced(self,name,f):
         self.advancedButtons[name] = 0

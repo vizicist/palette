@@ -31,32 +31,28 @@ func GetSaved(name string) *OldSaved {
 }
 */
 
-func ApplyParamsMap(savedType string, paramsmap map[string]any, params *ParamValues) error {
+// Currently, no errors are ever returned, but log messages are generated.
+func (params *ParamValues) ApplyParamsMap(category string, paramsmap map[string]any) {
 
-	// Currently, no errors are ever returned, but log messages are generated.
-
-	for name, ival := range paramsmap {
+	for fullname, ival := range paramsmap {
 		val, okval := ival.(string)
 		if !okval {
-			LogWarn("value isn't a string in params json", "name", name, "value", val)
+			LogWarn("value isn't a string in params json", "name", fullname, "value", val)
 			continue
 		}
-		fullname := name
-		thisCategory, _ := SavedNameSplit(fullname)
-		// Only include ones that match the savedType
-		if savedType != "layer" && thisCategory != savedType {
-			continue
-		}
-		// This is where the parameter values get applied,
-		// which may trigger things (like sending OSC)
-		err := params.Set(fullname, val)
-		if err != nil {
-			LogError(err)
-			// Don't abort the whole load, i.e. we are tolerant
-			// of unknown parameters or errors in the saved
+		paramCategory, _ := SavedNameSplit(fullname)
+		// Only include ones that match the category
+		if paramCategory == category {
+			// This is where the parameter values get applied,
+			// which may trigger things (like sending OSC)
+			err := params.Set(fullname, val)
+			if err != nil {
+				LogError(err)
+				// Don't abort the whole load, i.e. we are tolerant
+				// of unknown parameters or errors in the saved
+			}
 		}
 	}
-	return nil
 }
 
 func SavedDir() string {

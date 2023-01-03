@@ -35,7 +35,6 @@ type LayerLogic struct {
 	// MIDIThruScadjust bool
 	// MIDISetScale     bool
 	// MIDIQuantized    bool
-	// MIDIUseScale     bool // if true, scadjust uses "external" Scale
 	// TransposePitch   int
 }
 
@@ -64,9 +63,11 @@ func (logic *LayerLogic) cursorToPitch(ctx *engine.PluginContext, ce engine.Curs
 	p1 := int(ce.X * float32(dp))
 	p := uint8(pitchmin + p1%dp)
 
-	chromatic := ppro.params.GetBoolValue("sound.chromatic")
-	if !chromatic {
-		scale := ppro.scale
+	usescale := layer.GetBool("misc.usescale")
+	chromatic := layer.GetBool("sound.chromatic")
+	if !chromatic && usescale {
+		scaleName := layer.GetString("misc.scale")
+		scale := engine.GetScale(scaleName)
 		p = scale.ClosestTo(p)
 		// MIDIOctaveShift might be negative
 		i := int(p) + 12*ppro.MIDIOctaveShift
@@ -135,7 +136,6 @@ func (logic *LayerLogic) generateSoundFromCursor(ctx *engine.PluginContext, ce e
 		}
 		noteOn := logic.cursorToNoteOn(ctx, ce)
 		logic.sendNoteOn(noteOn)
-		engine.LogInfo("Adding to cursorNote", "cid", ce.Cid)
 		logic.cursorNote[ce.Cid] = noteOn
 	case "drag":
 		cursorState := ctx.GetCursorState(ce.Cid)
@@ -202,7 +202,6 @@ func (logic *LayerLogic) generateSoundFromCursor(ctx *engine.PluginContext, ce e
 			engine.LogWarn("Unexpected UP, no cursorNote", "cid", ce.Cid)
 		} else {
 			logic.sendNoteOff(oldNoteOn)
-			engine.LogInfo("Deleting from cursorNote", "cid", ce.Cid)
 			delete(logic.cursorNote, ce.Cid)
 		}
 	}
@@ -337,12 +336,13 @@ func (logic *LayerLogic) sendNoteOff(n *engine.NoteOn) {
 	// layer.SendPhraseElementToSynth(pe)
 }
 
+/*
 func (logic *LayerLogic) advanceTransposeTo(newclick engine.Clicks) {
 
 	ppro := logic.ppro
 	ppro.transposeNext += (ppro.transposeClicks * engine.OneBeat)
 	ppro.transposeIndex = (ppro.transposeIndex + 1) % len(ppro.transposeValues)
-	/*
+
 			transposePitch := ppro.transposeValues[ppro.transposeIndex]
 				fr _, layer := range TheRouter().layers {
 					// layer.clearDown()
@@ -350,8 +350,8 @@ func (logic *LayerLogic) advanceTransposeTo(newclick engine.Clicks) {
 					layer.TransposePitch = transposePitch
 				}
 		sched.SendAllPendingNoteoffs()
-	*/
 }
+*/
 
 func BoundAndScaleController(v, vmin, vmax float32, cmin, cmax int) int {
 	newv := BoundAndScaleFloat(v, vmin, vmax, float32(cmin), float32(cmax))

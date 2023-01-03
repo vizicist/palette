@@ -36,7 +36,7 @@ func NewLayer(layerName string) *Layer {
 		listeners: []*PluginContext{},
 	}
 	DebugLogOfType("layer", "NewLayer", "layer", layerName)
-	layer.params.SetDefaultValues()
+	layer.SetDefaultValues()
 	Layers[layerName] = layer
 	return layer
 }
@@ -49,9 +49,39 @@ func GetLayer(layerName string) *Layer {
 	return layer
 }
 
+func IsPerLayerParam(name string) bool {
+	// Layer params are sound.*, visual.* and effect.*
+	if strings.HasPrefix(name, "misc.") || strings.HasPrefix(name, "global.") {
+		return false
+	}
+	return true
+}
+
+func IsPerPresetParam(name string) bool {
+	// Preset params are everything but global.*,
+	// i.e. misc.*, sound.*, visual.* and effect.*
+	if strings.HasPrefix(name, "global.") {
+		return false
+	}
+	return true
+}
+
 func ApplyToAllLayers(f func(layer *Layer)) {
 	for _, layer := range Layers {
 		f(layer)
+	}
+}
+
+// SetDefaultValues xxx
+func (layer *Layer) SetDefaultValues() {
+	for nm, d := range ParamDefs {
+		if IsPerLayerParam(nm) {
+			err := layer.Set(nm, d.Init)
+			// err := layer.params.SetParamValueWithString(nm, d.Init)
+			if err != nil {
+				LogError(err)
+			}
+		}
 	}
 }
 
@@ -59,24 +89,20 @@ func (layer *Layer) MIDIChannel() uint8 {
 	return layer.Synth.Channel()
 }
 
-func (layer *Layer) ResendAllParameters() {
+func (layer *Layer) ReAlertAllParameters() {
 
 	params := layer.params
-	params.DoForAllParams(func(name string, val ParamValue) {
-		valstr, err := params.paramValueAsString(name)
+	params.DoForAllParams(func(paramName string, paramValue ParamValue) {
+		if !IsPerLayerParam(paramName) {
+			LogWarn("ResendAllParameters: skipping param %s", paramName)
+			return
+		}
+		valstr, err := params.paramValueAsString(paramName)
 		if err != nil {
 			LogError(err)
 			return
 		}
-
-		// This assumes that if you set a parameter to the same value,
-		// that it will re-send the mesasges to Resolume for visual.* params
-
-		// Don't use Set, we don't want to lock
-		err = layer.params.setParamValueWithString(name, valstr, nil)
-		if err != nil {
-			LogError(err)
-		}
+		layer.alertListeners(paramName, valstr)
 	})
 }
 
@@ -102,12 +128,12 @@ func (layer *Layer) Api(api string, apiargs map[string]string) (string, error) {
 			return "", fmt.Errorf("missing category parameter")
 		}
 
-		err := layer.LoadSaved(category, filename)
+		err := layer.Load(category, filename)
 		if err != nil {
 			return "", err
 		}
-		layer.ResendAllParameters()
-		return "", layer.SaveCurrentParams()
+		layer.ReAlertAllParameters()
+		return "", layer.SaveCurrent()
 
 		/*
 			category, filename := SavedNameSplit(savedName)
@@ -116,7 +142,7 @@ func (layer *Layer) Api(api string, apiargs map[string]string) (string, error) {
 			if err != nil {
 				return "", err
 			}
-			err = ApplyParamsMap(category, paramsMap, layer.params)
+			err = layer.parms.ApplyParamsMap(category, paramsMap)
 			if err != nil {
 				return "", err
 			}
@@ -134,26 +160,21 @@ func (layer *Layer) Api(api string, apiargs map[string]string) (string, error) {
 			return "", fmt.Errorf("missing category parameter")
 		}
 		// category, filename := SavedNameSplit(savedName)
-		path := WritableFilePath(category, filename)
-		return "", layer.params.SaveInPath(path)
+		return "", layer.params.Save(category, filename)
 
 	case "set":
-		name, ok := apiargs["name"]
-		if !ok {
-			return "", fmt.Errorf("executeLayerAPI: missing name argument")
-		}
-		value, ok := apiargs["value"]
-		if !ok {
-			return "", fmt.Errorf("executeLayerAPI: missing value argument")
+		name, value, err := GetNameValue(apiargs)
+		if err != nil {
+			return "", fmt.Errorf("executeLayerAPI: err=%s", err)
 		}
 		layer.Set(name, value)
-		return "", layer.SaveCurrentParams()
+		return "", layer.SaveCurrent()
 
 	case "setparams":
 		for name, value := range apiargs {
 			layer.Set(name, value)
 		}
-		return "", layer.SaveCurrentParams()
+		return "", layer.SaveCurrent()
 
 	case "get":
 		name, ok := apiargs["name"]
@@ -173,36 +194,31 @@ func (layer *Layer) Api(api string, apiargs map[string]string) (string, error) {
 	}
 }
 
-/*
-func MakeLayer(name string) *Layer {
-	layer, ok := Layers[name]
-	if !ok {
-		layer = &Layer{name: name, params: NewParamValues()}
-		Layers[name] = layer
-	} else {
-		Warn("MakeLayer: layer already exists?", "layer", layer)
-	}
-	return layer
-}
-*/
-
 func (layer *Layer) Set(paramName string, paramValue string) error {
 
+	if !IsPerLayerParam(paramName) {
+		return fmt.Errorf("Layer.Set: not a per-layer param")
+	}
 	err := layer.params.Set(paramName, paramValue)
 	if err != nil {
 		return err
 	}
+	LogInfo("Layer.Set: alerting listeners for %s=%s", paramName, paramValue)
+	layer.alertListeners(paramName, paramValue)
+	return nil
+}
+
+func (layer *Layer) alertListeners(paramName string, paramValue string) {
 
 	for _, listener := range layer.listeners {
 		args := map[string]string{
 			"event": "layerset",
-			"name":  paramName, "value": paramValue,
+			"name":  paramName,
+			"value": paramValue,
 			"layer": layer.Name(),
 		}
 		listener.api(listener, "event", args)
 	}
-
-	return nil
 }
 
 // If no such parameter, return ""
@@ -219,25 +235,32 @@ func (layer *Layer) ParamNames() []string {
 	fullNames := layer.params.values
 	sortedNames := make([]string, 0, len(fullNames))
 	for k := range fullNames {
-		sortedNames = append(sortedNames, k)
+		if IsPerLayerParam(k) {
+			sortedNames = append(sortedNames, k)
+		}
 	}
 	sort.Strings(sortedNames)
 	return sortedNames
+}
+
+func (layer *Layer) GetString(paramName string) string {
+	return layer.params.GetStringValue(paramName, "")
 }
 
 func (layer *Layer) GetInt(paramName string) int {
 	return layer.params.GetIntValue(paramName)
 }
 
+func (layer *Layer) GetBool(paramName string) bool {
+	return layer.params.GetBoolValue(paramName)
+}
+
 func (layer *Layer) GetFloat(paramName string) float32 {
 	return layer.params.GetFloatValue(paramName)
 }
 
-func (layer *Layer) SaveCurrentParams() error {
-	savedName := "layer._Current_" + layer.name
-	category, filename := SavedNameSplit(savedName)
-	path := WritableFilePath(category, filename)
-	return layer.params.SaveInPath(path)
+func (layer *Layer) SaveCurrent() error {
+	return layer.params.Save("layer", "_Current")
 }
 
 func (layer *Layer) ApplyPresetSaved(savedName string) error {
@@ -254,6 +277,9 @@ func (layer *Layer) ApplyPresetSaved(savedName string) error {
 func (layer *Layer) ApplyPresetSavedMap(paramsmap map[string]any) error {
 
 	for name, ival := range paramsmap {
+		if !IsPerLayerParam(name) {
+			LogWarn("ApplyPresetSavedMap: phase 1 ignoring non-layer param", "name", name)
+		}
 		value, ok := ival.(string)
 		if !ok {
 			return fmt.Errorf("value of name=%s isn't a string", name)
@@ -287,15 +313,18 @@ func (layer *Layer) ApplyPresetSavedMap(paramsmap map[string]any) error {
 	// are added which don't exist in existing saved files.
 	// This is similar to code in Layer.applySaved, except we
 	// have to do it for all for pads
-	for nm, def := range ParamDefs {
-		paramName := layer.Name() + "-" + nm
-		_, found := paramsmap[paramName]
+	for paramName, def := range ParamDefs {
+		if !IsPerLayerParam(paramName) {
+			continue
+		}
+		layerParamName := layer.Name() + "-" + paramName
+		_, found := paramsmap[layerParamName]
 		if !found {
 			init := def.Init
-			err := layer.Set(nm, init)
+			err := layer.Set(paramName, init)
 			if err != nil {
 				// a hack to eliminate errors on a parameter that still exists somewhere
-				LogWarn("applyPresetSaved", "nm", nm, "err", err)
+				LogWarn("applyPresetSaved", "nm", paramName, "err", err)
 				// Don't fail completely on individual failures,
 				// some might be for parameters that no longer exist.
 			}
@@ -310,7 +339,7 @@ func (layer *Layer) readableFilePath(category string, filename string) string {
 	return SavedFilePath(category, filename)
 }
 
-func (layer *Layer) LoadSaved(category string, filename string) error {
+func (layer *Layer) Load(category string, filename string) error {
 
 	// category, filename := SavedNameSplit(savedName)
 	path := layer.readableFilePath(category, filename)
@@ -320,7 +349,7 @@ func (layer *Layer) LoadSaved(category string, filename string) error {
 		return err
 	}
 	params := layer.params
-	if category == "saved" {
+	if category == "preset" {
 		// ApplyPresetSaved will only load that one layer from the preset
 		err = layer.ApplyPresetSavedMap(paramsmap)
 		if err != nil {
@@ -328,11 +357,7 @@ func (layer *Layer) LoadSaved(category string, filename string) error {
 			return err
 		}
 	} else {
-		err = ApplyParamsMap(category, paramsmap, params)
-		if err != nil {
-			LogError(err)
-			return err
-		}
+		params.ApplyParamsMap(category, paramsmap)
 	}
 
 	// If there's a _override.json file, use it
@@ -344,30 +369,29 @@ func (layer *Layer) LoadSaved(category string, filename string) error {
 		if err != nil {
 			return err
 		}
-		err = ApplyParamsMap(category, overridemap, params)
-		if err != nil {
-			return err
-		}
+		params.ApplyParamsMap(category, overridemap)
 	}
 
 	// For any parameters that are in Paramdefs but are NOT in the loaded
 	// saved, we put out the "init" values.  This happens when new parameters
 	// are added which don't exist in existing saved files.
-	for nm, def := range ParamDefs {
+	for paramName, def := range ParamDefs {
 		// Only include parameters of the desired type
-		thisCategory, _ := SavedNameSplit(nm)
+		thisCategory, _ := SavedNameSplit(paramName)
 		if category != "layer" && category != thisCategory {
 			continue
 		}
-		_, found := paramsmap[nm]
+		_, found := paramsmap[paramName]
 		if !found {
-			init := def.Init
-			err := params.Set(nm, init)
+			paramValue := def.Init
+			err := layer.Set(paramName, paramValue)
+			// err := params.Set(paramName, paramValue)
 			if err != nil {
-				LogWarn("Loading saved", "saved", nm, "err", err)
+				LogWarn("Loading saved", "saved", paramName, "err", err)
 				// Don't fail completely
 			}
 		}
 	}
+	layer.ReAlertAllParameters()
 	return nil
 }
