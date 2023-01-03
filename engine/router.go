@@ -183,73 +183,6 @@ func ArgsToCursorEvent(args map[string]string) CursorEvent {
 	return ce
 }
 
-// HandleInputEvent is NOT used for CursorEvent input.
-// CursorEvents are handled by the CursorManager.
-func (r *Router) HandleInputEvent(pluginName string, args map[string]string) error {
-
-	r.inputEventMutex.Lock()
-	defer func() {
-		r.inputEventMutex.Unlock()
-	}()
-
-	event, err := needStringArg("event", "HandleInputEvent", args)
-	if err != nil {
-		return err
-	}
-
-	layerName, err := needStringArg("layer", "HandleInputEvent", args)
-	if err != nil {
-		return err
-	}
-
-	layer := GetLayer(layerName)
-	if layer == nil {
-		return fmt.Errorf("HandleInputEvent: layer not found: %s", layerName)
-	}
-
-	DebugLogOfType("router", "Router.HandleEvent", "plugin", pluginName, "event", event)
-
-	switch event {
-
-	/*
-		case "sprite":
-
-			x, y, z, err := GetArgsXYZ(args)
-			if err != nil {
-				return nil
-			}
-			layer.generateSprite("dummy", x, y, z)
-
-			/*
-				case "midi_reset":
-					Info("HandleEvent: midi_reset, sending ANO")
-					ctx.handleMIDITimeReset()
-					ctx.sendANO()
-	*/
-
-	case "note":
-		notestr, err := needStringArg("note", "HandleEvent", args)
-		if err != nil {
-			return err
-		}
-		clickstr, err := needStringArg("clicks", "HandleEvent", args)
-		if err != nil {
-			return err
-		}
-		LogInfo("HandleInputEvent", "notestr", notestr, "clickstr", clickstr)
-		pe, err := PhraseElementFromString(notestr)
-		if err != nil {
-			return err
-		}
-		layer.Synth.SendTo(pe.Value)
-
-	default:
-		LogInfo("HandleInputEvent: event not handled", "event", event)
-	}
-
-	return nil
-}
-
 /*
 // makeMIDIEvent xxx
 func (r *Router) makeMIDIEvent(source string, bytes string, args map[string]string) (*MidiEvent, error) {
@@ -358,9 +291,6 @@ func (r *Router) handleOSCInput(e OSCEvent) {
 			case "/cursor":
 				r.handleMMTTCursor(e.Msg)
 		*/
-
-	case "/patchxr":
-		r.handlePatchXREvent(e.Msg)
 
 	default:
 		LogWarn("Router.HandleOSCInput: Unrecognized OSC message", "source", e.Source, "msg", e.Msg)
@@ -513,105 +443,13 @@ func (r *Router) handleOSCEvent(msg *osc.Message) {
 		LogWarn("Router.handleOSCEvent: too few arguments")
 		return
 	}
-	rawargs, err := argAsString(msg, 0)
-	if err != nil {
-		LogWarn("Router.handleOSCEvent", "err", err)
-		return
-	}
-	r.handleInputEventRaw(rawargs)
-}
-
-func (r *Router) handleInputEventRaw(rawargs string) {
-
-	args, err := StringMap(rawargs)
-	if err != nil {
-		return
-	}
-	pluginName := ExtractAndRemoveValue("plugin", args)
-	r.HandleInputEvent(pluginName, args)
-}
-
-func (r *Router) handlePatchXREvent(msg *osc.Message) {
-
-	tags, _ := msg.TypeTags()
-	_ = tags
-	nargs := msg.CountArguments()
-	if nargs < 1 {
-		LogWarn("Router.handlePatchXREvent: too few arguments")
-		return
-	}
-	var err error
-	if nargs < 3 {
-		LogWarn("handlePatchXREvent: not enough arguments")
-		return
-	}
-	action, _ := argAsString(msg, 0)
-	layerName, _ := argAsString(msg, 1)
-	switch action {
-	case "cursordown":
-		LogWarn("handlePatchXREvent: cursordown ignored")
-		return
-	case "cursorup":
-		LogWarn("handlePatchXREvent: cursorup ignored")
-		return
-	}
-	// drag
-	if nargs < 5 {
-		LogWarn("Not enough arguments for drag")
-		return
-	}
-	x, _ := argAsFloat32(msg, 2)
-	y, _ := argAsFloat32(msg, 3)
-	z, _ := argAsFloat32(msg, 4)
-	s := fmt.Sprintf("\"event\": \"cursor_drag\", \"x\": \"%f\", \"y\": \"%f\", \"z\": \"%f\"", x, y, z)
-	var args map[string]string
-	args, err = StringMap(s)
-	if err != nil {
-		return
-	}
-
-	// we didn't add "layer" to the args, no need for extractLayer
-	err = r.HandleInputEvent(layerName, args)
-	if err != nil {
-		LogWarn("Router.handlePatchXREvent", "err", err)
-		return
-	}
-}
-
-func (r *Router) handleOSCSpriteEvent(msg *osc.Message) {
-
-	tags, _ := msg.TypeTags()
-	_ = tags
-	nargs := msg.CountArguments()
-	if nargs < 1 {
-		LogWarn("Router.handleOSCSpriteEvent: too few arguments")
-		return
-	}
-	rawargs, err := argAsString(msg, 0)
-	if err != nil {
-		LogWarn("Router.handleOSCSpriteEvent", "err", err)
-		return
-	}
-	if len(rawargs) == 0 || rawargs[0] != '{' {
-		LogWarn("Router.handleOSCSpriteEvent: first char of args must be curly brace")
-		return
-	}
-
-	args, err := StringMap(rawargs)
-	if err != nil {
-		LogWarn("Router.handleOSCSpriteEvent: Unable to process", "args", rawargs)
-		return
-	}
-
-	pluginName := ExtractAndRemoveValue("plugin", args)
-	if pluginName == "" {
-		LogError(fmt.Errorf("no value for plugin"))
-	}
-	err = r.HandleInputEvent(pluginName, args)
-	if err != nil {
-		LogWarn("Router.handleOSCSpriteEvent", "err", err)
-		return
-	}
+	LogWarn("Router.handleOSCEvent needs work")
+	// rawargs, err := argAsString(msg, 0)
+	// if err != nil {
+	// 	LogWarn("Router.handleOSCEvent", "err", err)
+	// 	return
+	// }
+	// r.handleInputEventRaw(rawargs)
 }
 
 func argAsInt(msg *osc.Message, index int) (i int, err error) {
@@ -655,6 +493,5 @@ func argAsString(msg *osc.Message, index int) (s string, err error) {
 var rr *Router
 
 // var _ = rr.recordPadAPI
-var _ = rr.handleOSCSpriteEvent
 var _ = argAsInt
 var _ = argAsFloat32

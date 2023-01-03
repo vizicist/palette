@@ -82,6 +82,10 @@ func (ctx *PluginContext) GetLayer(layerName string) *Layer {
 	return GetLayer(layerName)
 }
 
+func (ctx *PluginContext) SaveParams(params *ParamValues, category string, filename string) error {
+	return params.Save(category, filename)
+}
+
 func (ctx *PluginContext) AllowSource(source ...string) {
 	var ok bool
 	for _, name := range source {
@@ -233,7 +237,7 @@ func (ctx *EngineContext) setOneLayerParamValue(layerName, fullname, value strin
 
 	layer := GetLayer(layerName)
 	params := layer.params
-	err := params.SetParamValueWithString(fullname, value, nil)
+	err := params.SetParamValueWithString(fullname, value)
 	if err != nil {
 		return err
 	}
@@ -429,14 +433,6 @@ func (ctx *PluginContext) ExecuteAPI(api string, args map[string]string, rawargs
 				err = e
 			}
 
-		case "midi_usescale":
-			v, e := needBoolArg("onoff", api, args)
-			if e == nil {
-				layer.MIDIUseScale = v
-			} else {
-				err = e
-			}
-
 		case "clearexternalscale":
 			layer.clearExternalScale()
 			layer.MIDINumDown = 0
@@ -469,28 +465,6 @@ func (ctx *PluginContext) ExecuteAPI(api string, args map[string]string, rawargs
 	}
 
 	return result, err
-}
-*/
-
-/*
-func (ctx *EngineContext) restoreCurrentSnap(layerName string) {
-	tSnapeset, err := LoadSaved("layer._Current_" + layerName)
-	if err != nil {
-		LogError(err)
-		return
-	}
-	err = saved.ApplyTo(ctx.pluginParams)
-	if err != nil {
-		LogError(err)
-	}
-}
-*/
-
-/*
-func (ctx *PluginContext) SaveCurrentAsSaved(savedName string) error {
-	saved := ctx.GetSaved(savedName)
-	path := saved.WritableFilePath()
-	return ctx.SaveCurrentSnapInPath(path)
 }
 */
 

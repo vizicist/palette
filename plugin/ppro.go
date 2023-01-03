@@ -23,7 +23,8 @@ type PalettePro struct {
 	layerLogic map[string]*LayerLogic
 
 	// PalettePro parameters
-	params *engine.ParamValues
+	miscparams   *engine.ParamValues
+	globalparams *engine.ParamValues
 
 	started        bool
 	resolume       *Resolume
@@ -40,7 +41,6 @@ type PalettePro struct {
 	MIDIThruScadjust bool
 	MIDISetScale     bool
 	MIDIQuantized    bool
-	MIDIUseScale     bool // if true, scadjust uses "external" Scale
 	TransposePitch   int
 	externalScale    *engine.Scale
 
@@ -60,7 +60,6 @@ type PalettePro struct {
 	lastAlive              float64
 	lastProcessCheck       float64
 	processCheckSecs       float64
-	scale                  *engine.Scale
 
 	transposeAuto   bool
 	transposeNext   engine.Clicks
@@ -72,9 +71,10 @@ type PalettePro struct {
 func init() {
 	transposebeats := engine.Clicks(engine.ConfigIntWithDefault("transposebeats", 48))
 	ppro := &PalettePro{
-		layer:      map[string]*engine.Layer{},
-		layerLogic: map[string]*LayerLogic{},
-		params:     engine.NewParamValues(),
+		layer:        map[string]*engine.Layer{},
+		layerLogic:   map[string]*LayerLogic{},
+		miscparams:   engine.NewParamValues(),
+		globalparams: engine.NewParamValues(),
 
 		attractModeIsOn: false,
 		generateVisuals: engine.ConfigBoolWithDefault("generatevisuals", true),
@@ -96,7 +96,6 @@ func init() {
 		lastAlive:        0,
 		lastProcessCheck: 0,
 		processCheckSecs: 0,
-		scale:            engine.GetScale("newage"),
 
 		transposeAuto:   engine.ConfigBoolWithDefault("transposeauto", true),
 		transposeNext:   transposebeats * engine.OneBeat,
@@ -105,6 +104,20 @@ func init() {
 		transposeValues: []int{0, -2, 3, -5},
 	}
 	ppro.clearExternalScale()
+	for nm, pd := range engine.ParamDefs {
+		if pd.Category == "misc" {
+			err := ppro.miscparams.SetParamValueWithString(nm, pd.Init)
+			if err != nil {
+				engine.LogError(err)
+			}
+		}
+		if pd.Category == "global" {
+			err := ppro.globalparams.SetParamValueWithString(nm, pd.Init)
+			if err != nil {
+				engine.LogError(err)
+			}
+		}
+	}
 	engine.RegisterPlugin("ppro", ppro.Api)
 }
 
@@ -120,10 +133,10 @@ func (ppro *PalettePro) Api(ctx *engine.PluginContext, api string, apiargs map[s
 		return "", ppro.processManager.StopRunning(ctx, "all")
 
 	case "set":
-		return ppro.onSet(ctx, apiargs)
+		return ppro.onSet(apiargs)
 
 	case "get":
-		return ppro.onGet(ctx, apiargs)
+		return ppro.onGet(apiargs)
 
 	case "event":
 		eventName, ok := apiargs["event"]
@@ -160,30 +173,26 @@ func (ppro *PalettePro) Api(ctx *engine.PluginContext, api string, apiargs map[s
 		return value, nil
 
 	case "load":
+		category, oksaved := apiargs["category"]
+		if !oksaved {
+			return "", fmt.Errorf("missing category parameter")
+		}
 		filename, oksaved := apiargs["filename"]
 		if !oksaved {
 			return "", fmt.Errorf("missing filename parameter")
 		}
-
-		err := ppro.loadPreset(filename)
-		if err != nil {
-			return "", err
-		}
-		err = nil
-		for _, layer := range ppro.layer {
-			e := layer.SaveCurrentParams()
-			if e != nil {
-				err = e
-			}
-		}
-		return "", err
+		return "", ppro.Load(category, filename)
 
 	case "save":
+		category, oksaved := apiargs["category"]
+		if !oksaved {
+			return "", fmt.Errorf("missing category parameter")
+		}
 		filename, oksaved := apiargs["filename"]
 		if !oksaved {
 			return "", fmt.Errorf("missing filename parameter")
 		}
-		return "", ppro.savePreset(filename)
+		return "", ppro.Save(category, filename)
 
 	case "startprocess":
 		process, ok := apiargs["process"]
@@ -266,21 +275,24 @@ func (ppro *PalettePro) start(ctx *engine.PluginContext) error {
 
 	ctx.AllowSource("A", "B", "C", "D")
 
+	ppro.Load("misc", "_Current")
+	ppro.Load("global", "_Current")
+
 	layerA := ppro.addLayer(ctx, "A")
 	layerA.Set("visual.shape", "circle")
-	layerA.LoadSaved("layer", "White_Ghosts")
+	layerA.Load("layer", "_Current_A")
 
 	layerB := ppro.addLayer(ctx, "B")
 	layerB.Set("visual.shape", "square")
-	layerB.LoadSaved("layer", "Concentric_Squares")
+	layerB.Load("layer", "_Current_A")
 
 	layerC := ppro.addLayer(ctx, "C")
 	layerC.Set("visual.shape", "square")
-	layerC.LoadSaved("layer", "Circular_Moire")
+	layerC.Load("layer", "_Current_A")
 
 	layerD := ppro.addLayer(ctx, "D")
 	layerD.Set("visual.shape", "square")
-	layerD.LoadSaved("layer", "Diagonal_Mirror")
+	layerD.Load("layer", "_Current_A")
 
 	//ctx.ApplySaved("saved.Quick Scat_Circles")
 
@@ -387,34 +399,42 @@ func (ppro *PalettePro) onClientRestart(ctx *engine.PluginContext, apiargs map[s
 	for nm, layer := range ppro.layer {
 		portnum, _ := ppro.resolume.PortAndLayerNumForLayer(nm)
 		if portnum == apipnum {
-			layer.ResendAllParameters()
+			layer.ReAlertAllParameters()
 		}
 	}
 	return "", nil
 }
 
-func (ppro *PalettePro) onSet(ctx *engine.PluginContext, apiargs map[string]string) (result string, err error) {
-	paramName, ok := apiargs["name"]
-	if !ok {
-		return "", fmt.Errorf("PalettePro.onSet: Missing name argument")
+func (ppro *PalettePro) onSet(apiargs map[string]string) (result string, err error) {
+	paramName, paramValue, err := engine.GetNameValue(apiargs)
+	if err != nil {
+		return "", fmt.Errorf("PalettePro.onSet: %s", err)
 	}
-	paramValue, ok := apiargs["value"]
-	if !ok {
-		return "", fmt.Errorf("PalettePro.onSet: Missing value argument")
+
+	if strings.HasPrefix(paramName, "misc.") {
+		err = ppro.miscparams.Set(paramName, paramValue)
+		ppro.Save("misc", "_Current")
+	} else if strings.HasPrefix(paramName, "global") {
+		err = ppro.globalparams.Set(paramName, paramValue)
+		ppro.Save("global", "_Current")
+	} else {
+		err = fmt.Errorf("PalettePro.onSet: can't handle parameter %s", paramName)
 	}
-	ppro.params.Set(paramName, paramValue)
-	engine.LogInfo("PalettePro.onSet", "name", paramName, "value", paramValue)
-	return "", nil
+	return result, err
 }
 
-func (ppro *PalettePro) onGet(ctx *engine.PluginContext, apiargs map[string]string) (result string, err error) {
+func (ppro *PalettePro) onGet(apiargs map[string]string) (result string, err error) {
 	paramName, ok := apiargs["name"]
 	if !ok {
 		return "", fmt.Errorf("PalettePro.onLayerSet: Missing name argument")
 	}
-	paramValue := ppro.params.Get(paramName)
-	engine.LogInfo("PalettePro.onGet", "name", paramName, "value", paramValue)
-	return paramValue, nil
+	if strings.HasPrefix(paramName, "misc") {
+		return ppro.miscparams.Get(paramName), nil
+	} else if strings.HasPrefix(paramName, "global") {
+		return ppro.globalparams.Get(paramName), nil
+	} else {
+		return "", fmt.Errorf("PalettePro.onGet: can't handle parameter %s", paramName)
+	}
 }
 
 func (ppro *PalettePro) onLayerSet(ctx *engine.PluginContext, apiargs map[string]string) (result string, err error) {
@@ -422,13 +442,9 @@ func (ppro *PalettePro) onLayerSet(ctx *engine.PluginContext, apiargs map[string
 	if !ok {
 		return "", fmt.Errorf("PalettePro.onLayerSet: Missing layer argument")
 	}
-	paramName, ok := apiargs["name"]
-	if !ok {
-		return "", fmt.Errorf("PalettePro.onLayerSet: Missing name argument")
-	}
-	paramValue, ok := apiargs["value"]
-	if !ok {
-		return "", fmt.Errorf("PalettePro.onLayerSet: Missing value argument")
+	paramName, paramValue, err := engine.GetNameValue(apiargs)
+	if err != nil {
+		return "", fmt.Errorf("PalettePro.onLayerSet: err=%s", err)
 	}
 	layer, ok := ppro.layer[layerName]
 	if !ok {
@@ -534,7 +550,7 @@ func (ppro *PalettePro) onMidiEvent(ctx *engine.PluginContext, apiargs map[strin
 			HandleEraeMIDI(me)
 		}
 	*/
-	layerName := ppro.params.GetStringValue("misc.midiinputlayer", "A")
+	layerName := ppro.miscparams.GetStringValue("misc.midiinputlayer", "A")
 	layer := ctx.GetLayer(layerName)
 
 	if ppro.MIDIThru {
@@ -597,35 +613,96 @@ func (ppro *PalettePro) loadPresetRand() {
 	}
 	rn := rand.Uint64() % uint64(len(arr))
 	engine.LogInfo("loadPresetRand", "saved", arr[rn])
-	ppro.loadPreset(arr[rn])
+	ppro.Load("preset", arr[rn])
 	if err != nil {
 		engine.LogError(err)
 	}
 }
 
-func (ppro *PalettePro) loadPreset(presetName string) (err error) {
+func (ppro *PalettePro) Load(category string, filename string) (err error) {
 
-	path := engine.SavedFilePath("preset", presetName)
+	path := engine.SavedFilePath(category, filename)
 	paramsMap, err := engine.LoadParamsMap(path)
 	if err != nil {
+		engine.LogError(err)
 		return err
 	}
-	for _, layer := range ppro.layer {
-		e := layer.ApplyPresetSavedMap(paramsMap)
-		if e != nil {
-			engine.LogError(e)
-			err = e
+
+	engine.LogInfo("PalettePro.Load", "category", category, "filename", filename)
+
+	// Don't save any _Current files we load
+	saveit := !strings.HasPrefix(filename, "_Current")
+
+	switch category {
+	case "global":
+		ppro.globalparams.ApplyParamsMap("global", paramsMap)
+		if saveit {
+			ppro.Save("global", "_Current")
 		}
+
+	case "misc":
+		ppro.miscparams.ApplyParamsMap("misc", paramsMap)
+		if saveit {
+			ppro.Save("misc", "_Current")
+		}
+
+	case "preset":
+		// The Preset has one copy of misc.* params, and 4 layers of sound/visual/effect params
+		for nm, val := range paramsMap {
+			valstr, ok := val.(string)
+			if !ok {
+				engine.LogWarn("non-string value?", "nm", nm, "val", val)
+				continue
+			}
+			if strings.HasPrefix(nm, "misc.") {
+				ppro.miscparams.Set(nm, valstr)
+			}
+		}
+
+		for _, layer := range ppro.layer {
+			e := layer.ApplyPresetSavedMap(paramsMap)
+			if e != nil {
+				err = e
+			}
+		}
+		if saveit {
+			ppro.savePreset("_Current")
+		}
+
+	case "layer", "sound", "visual", "effect":
+		engine.LogWarn("PalettePro.Load: unhandled", "category", category, "filename", filename)
+	default:
+		engine.LogWarn("PalettePro.Load: other unhandled", "category", category, "filename", filename)
+	}
+	if err != nil {
+		engine.LogError(err)
+	}
+	return err
+}
+
+func (ppro *PalettePro) Save(category string, filename string) (err error) {
+
+	engine.LogInfo("PalettePro.Save", "category", category, "filename", filename)
+
+	if category == "misc" {
+		err = ppro.miscparams.Save("misc", filename)
+	} else if category == "global" {
+		err = ppro.globalparams.Save("global", filename)
+	} else if category == "preset" {
+		err = ppro.savePreset(filename)
+	} else {
+		err = fmt.Errorf("PalettePro.Api: unhandled save category %s", category)
+	}
+	if err != nil {
+		engine.LogError(err)
 	}
 	return err
 }
 
 func (ppro *PalettePro) savePreset(presetName string) error {
 
-	// wantCategory is sound, visual, effect, snap, or quad
 	category := "preset"
 	path := engine.WritableFilePath(category, presetName)
-	s := "{\n    \"params\": {\n"
 
 	engine.LogInfo("savePreset", "preset", presetName)
 
@@ -634,6 +711,8 @@ func (ppro *PalettePro) savePreset(presetName string) error {
 		sortedLayerNames = append(sortedLayerNames, layer.Name())
 	}
 	sort.Strings(sortedLayerNames)
+
+	s := "{\n    \"params\": {\n"
 	sep := ""
 	for _, layerName := range sortedLayerNames {
 		layer := ppro.layer[layerName]
@@ -645,18 +724,25 @@ func (ppro *PalettePro) savePreset(presetName string) error {
 			sep = ",\n"
 		}
 	}
-	s += sep + ppro.params.JsonValues()
-	/*
-		for name := range ppro.params.values {
-			val := ppro.params.Get(name)
-			s += fmt.Sprintf("%s        \"%s\":\"%s\"", sep, name, val)
-			sep = ",\n"
-		}
-	*/
+	// ppro.params contains the misc.* params
+	s += sep + ppro.miscparams.JsonValues()
 	s += "\n    }\n}"
 	data := []byte(s)
 	return os.WriteFile(path, data, 0644)
 }
+
+// func (ppro *PalettePro) saveMisc() error {
+// 	return ctx.SaveParams(ppro.miscparams, "misc", "_Current")
+// }
+
+/*
+	s := "{\n    \"params\": {\n"
+	s += ppro.miscparams.JsonValues()
+	s += "\n    }\n}"
+	data := []byte(s)
+	return os.WriteFile(path, data, 0644)
+}
+*/
 
 func (ppro *PalettePro) addLayer(ctx *engine.PluginContext, name string) *engine.Layer {
 	layer := engine.NewLayer(name)
