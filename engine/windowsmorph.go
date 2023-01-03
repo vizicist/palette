@@ -398,7 +398,7 @@ func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float32) 
 			contactid := int(contact.id)
 			oldSource, ok := m.contactToSource[contactid]
 			if ok && newSourceName != oldSource {
-				LogInfo("Switching corners pad", "source", newSourceName)
+				DebugLogOfType("cursor", "Switching cursor source, sending clear", "source", newSourceName)
 				ce := CursorEvent{
 					Cid:  "clear",
 					Ddu:  "clear",
@@ -460,7 +460,7 @@ func WinMorphInitialize() error {
 	for idx := uint8(0); idx < uint8(numdevices); idx++ {
 
 		m := &oneMorph{
-			contactToSource:  map[int]string{},
+			contactToSource: map[int]string{},
 		}
 		allMorphs[idx] = m
 		m.idx = idx

@@ -105,16 +105,6 @@
         "effect.2-trails:feedback":"0.736000",
         "effect.2-twisted":"false",
         "effect.2-twisted:radius":"0.649465",
-        "effect.2-twisted:twirl":"0.717561",
-        "misc.enable:sound":"true",
-        "misc.enable:visual":"true",
-        "misc.logic_sound":"true",
-        "misc.logic_visual":"true",
-        "misc.midibehaviour":"default",
-        "misc.pitchfactor":"1.000000",
-        "misc.pitchoffset":"0.000000",
-        "misc.quant":"frets",
-        "misc.scale":"newage",
-        "misc.vol":"pressure"
+        "effect.2-twisted:twirl":"0.717561"
     }
 }
