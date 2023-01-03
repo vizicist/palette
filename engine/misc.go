@@ -722,3 +722,17 @@ func boundval(v float32) float32 {
 	}
 	return v
 }
+
+func GetNameValue(apiargs map[string]string) (name string, value string, err error) {
+	name, ok := apiargs["name"]
+	if !ok {
+		err = fmt.Errorf("missing name argument")
+		return
+	}
+	value, ok = apiargs["value"]
+	if !ok {
+		err = fmt.Errorf("missing value argument")
+		return
+	}
+	return
+}

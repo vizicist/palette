@@ -66,6 +66,7 @@
 
 "misc.quant": {"valuetype":"string", "min":"quant", "max":"quant", "init":"frets", "comment":"# Quantization style" },
 "misc.scale": {"valuetype":"string", "min":"scale", "max":"scale", "randmax":"newage", "init":"newage", "comment":"# Quantization style" },
+"misc.usescale": {"valuetype":"bool", "min":"false", "max":"true", "init":"true", "comment":"# Use Scale" },
 "misc.vol": {"valuetype":"string", "min":"vol", "max":"vol", "init":"pressure", "comment":"# Velocity style" },
 "misc.logic_sound": {"valuetype":"string", "min":"logic_sound", "max":"logic_sound", "init":"true", "comment":"# Sound Logic" },
 "misc.logic_visual": {"valuetype":"string", "min":"logic_visual", "max":"logic_visual", "init":"true", "comment":"# Visual Logic" },

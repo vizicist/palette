@@ -75,7 +75,6 @@ func (cm *CursorManager) GetCursorState(cid string) *CursorState {
 	cm.cursorsMutex.Lock()
 	defer cm.cursorsMutex.Unlock()
 
-	LogInfo("GetCursorState", "cid", cid, "ncursors", len(cm.cursors))
 	cs, ok := cm.cursors[cid]
 	if !ok {
 		return nil

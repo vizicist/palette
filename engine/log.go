@@ -85,8 +85,12 @@ func InitLog(logname string) {
 }
 
 func IsLogging(logtype string) bool {
-	_, ok := LogEnabled[logtype]
-	return ok
+	b, ok := LogEnabled[logtype]
+	if !ok {
+		LogError(fmt.Errorf("IsLogging: logtype not recognized"), "logtype", logtype)
+		return false
+	}
+	return b
 
 }
 
@@ -118,12 +122,10 @@ func DebugLogOfType(logtype string, msg string, keysAndValues ...any) {
 	if (len(keysAndValues) % 2) != 0 {
 		LogWarn("LogOfType function given bad number of arguments")
 	}
-	isEnabled, ok := LogEnabled[logtype]
+	isEnabled := IsLogging(logtype)
 	keysAndValues = append(keysAndValues, "logtype")
 	keysAndValues = append(keysAndValues, logtype)
-	if !ok {
-		LogWarn("logtype not recognized", keysAndValues...)
-	} else if isEnabled {
+	if isEnabled {
 		keysAndValues = appendExtraValues(keysAndValues)
 		TheLog.Infow(msg, keysAndValues...)
 	}
@@ -192,5 +194,10 @@ var LogEnabled = map[string]bool{
 
 func SetLogTypeEnabled(dtype string, b bool) {
 	d := strings.ToLower(dtype)
+	_, ok := LogEnabled[d]
+	if !ok {
+		LogError(fmt.Errorf("SetLogTypeEnabled: logtype not recognized"), "logtype", d)
+		return
+	}
 	LogEnabled[d] = b
 }

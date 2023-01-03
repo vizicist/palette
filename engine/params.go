@@ -44,8 +44,6 @@ type ParamsMap map[string]any
 // ParamDefs is the set of all parameter definitions
 var ParamDefs map[string]ParamDef
 
-// parameter values
-
 // ParamValue is a single parameter value
 // which could be any of the param*Value types
 type ParamValue any
@@ -96,28 +94,16 @@ func (vals *ParamValues) JsonValues() string {
 	sep := ""
 	for nm := range vals.values {
 		valstr, _ := vals.paramValueAsString(nm) // error shouldn't happen
-		s = s + sep + "\"" + nm + "\":\"" + valstr + "\""
-		sep = ","
+		s = s + sep + "        \"" + nm + "\":\"" + valstr + "\""
+		sep = ",\n"
 	}
 	return s
-}
-
-// SetDefaultValues xxx
-func (vals *ParamValues) SetDefaultValues() {
-	vals.mutex.Lock()
-	defer vals.mutex.Unlock()
-	for nm, d := range ParamDefs {
-		err := vals.setParamValueWithString(nm, d.Init, nil)
-		if err != nil {
-			LogError(err)
-		}
-	}
 }
 
 func (vals *ParamValues) Set(name, value string) error {
 	vals.mutex.Lock()
 	defer vals.mutex.Unlock()
-	return vals.setParamValueWithString(name, value, nil)
+	return vals.SetParamValueWithString(name, value)
 }
 
 // returns "" if parameter doesn't exist
@@ -173,15 +159,33 @@ func (vals *ParamValues) GetBoolValue(name string) bool {
 	return (param).(paramValBool).value
 }
 
-func (vals *ParamValues) SaveInPath(path string) error {
+func (vals *ParamValues) Save(category string, filename string) error {
+
+	LogInfo("ParamValues.Save", "category", category, "filename", filename)
+
+	path := WritableFilePath(category, filename)
 
 	s := "{\n    \"params\": {\n"
 
 	// Print the parameter values sorted by name
 	fullNames := vals.values
 	sortedNames := make([]string, 0, len(fullNames))
-	for k := range fullNames {
-		sortedNames = append(sortedNames, k)
+	// lookfor := category + "."
+	for paramName := range fullNames {
+		w := strings.SplitN(paramName, ".", 2)
+		paramCategory := w[0]
+		// Decide if this parameter should be included in the file
+		if category == paramCategory {
+			sortedNames = append(sortedNames, paramName)
+		} else {
+			paramIsLayerCategory := (paramCategory == "visual" || paramCategory == "sound" || paramCategory == "effect")
+			if category == "layer" && paramIsLayerCategory {
+				sortedNames = append(sortedNames, paramName)
+			}
+			if category == "preset" && (paramIsLayerCategory || paramCategory == "misc") {
+				sortedNames = append(sortedNames, paramName)
+			}
+		}
 	}
 	sort.Strings(sortedNames)
 
@@ -199,9 +203,6 @@ func (vals *ParamValues) SaveInPath(path string) error {
 	data := []byte(s)
 	return os.WriteFile(path, data, 0644)
 }
-
-// ParamCallback is the callback when setting parameter values
-type ParamCallback func(name string, value string) error
 
 func (vals *ParamValues) paramDefOf(name string) (ParamDef, error) {
 	p, ok := ParamDefs[name]
@@ -238,7 +239,7 @@ func LoadParamsMap(path string) (ParamsMap, error) {
 	return paramsmap, nil
 }
 
-func (vals *ParamValues) setParamValueWithString(origname, value string, callback ParamCallback) (err error) {
+func (vals *ParamValues) SetParamValueWithString(origname, value string) (err error) {
 
 	if origname == "pad" {
 		return fmt.Errorf("ParamValues.SetParamValueWithString rejects setting of pad value")
@@ -276,14 +277,6 @@ func (vals *ParamValues) setParamValueWithString(origname, value string, callbac
 		e := fmt.Errorf("SetParamValueWithString: unknown type of ParamDef for name=%s", origname)
 		LogError(e)
 		return e
-	}
-
-	// Perhaps the callback should be inside the Lock?
-	if callback != nil {
-		err := callback(origname, value)
-		if err != nil {
-			return err
-		}
 	}
 
 	vals.values[origname] = paramVal

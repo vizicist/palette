@@ -315,7 +315,7 @@ def palette_api(api,params):
         requestError = None
         try:
             url = "http://127.0.0.1:3330/api"
-            req = requests.post(url=url,data=params,timeout=10.0)
+            req = requests.post(url=url,data=params,timeout=600.0)
             result = req.text
         except (requests.ConnectionError,requests.Timeout,Exception) as err:
             requestError = err
