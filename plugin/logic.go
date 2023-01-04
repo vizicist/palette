@@ -85,6 +85,9 @@ func (logic *LayerLogic) cursorToPitch(ctx *engine.PluginContext, ce engine.Curs
 func (logic *LayerLogic) cursorToVelocity(ctx *engine.PluginContext, ce engine.CursorEvent) uint8 {
 	layer := logic.layer
 	vol := layer.Get("misc.vol")
+	if vol == "" {
+		vol = "pressure"
+	}
 	velocitymin := layer.GetInt("sound.velocitymin")
 	velocitymax := layer.GetInt("sound.velocitymax")
 	// bogus, when values in json are missing

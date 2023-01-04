@@ -85,7 +85,7 @@ var lastY float32
 var lastZ float32
 
 func (agent *Plugin_erae) EraeFingerIndicator(zone, x, y byte) {
-	engine.DebugLogOfType("erae", "EraeFingerIndicator", "x", x, "y", y)
+	engine.LogOfType("erae", "EraeFingerIndicator", "x", x, "y", y)
 	rectw := byte(2)
 	recth := byte(2)
 	dim := 1.0
@@ -143,7 +143,7 @@ func (agent *Plugin_erae) handleFinger(bb []byte) {
 		dx := lastX - x
 		dy := lastY - y
 		dz := lastZ - z
-		engine.DebugLogOfType("erae", "FINGER",
+		engine.LogOfType("erae", "FINGER",
 			"finger", finger,
 			"action", action,
 			"zone", zone,
@@ -179,7 +179,7 @@ func (agent *Plugin_erae) handleFinger(bb []byte) {
 				Ddu:       "clear",
 			}
 			agent.OnCursorEvent(ce)
-			engine.DebugLogOfType("erae", "Switching Erae to", "layer", newLayerName)
+			engine.LogOfType("erae", "Switching Erae to", "layer", newLayerName)
 			agent.layerName = newLayerName
 		}
 		// We don't pass corner things through, even if we haven't changed the player
