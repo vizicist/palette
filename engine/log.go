@@ -81,7 +81,7 @@ func InitLog(logname string) {
 	logger := fileLogger(logpath)
 	TheLog = logger.Sugar()
 	defer logger.Sync() // flushes buffer, if any
-	LogInfo("InitLog ===========================", "logname", logname)
+	LogInfo("InitLog ==============================================", "logname", logname)
 }
 
 func IsLogging(logtype string) bool {
@@ -118,7 +118,7 @@ func appendExtraValues(keysAndValues []any) []any {
 	return keysAndValues
 }
 
-func DebugLogOfType(logtype string, msg string, keysAndValues ...any) {
+func LogOfType(logtype string, msg string, keysAndValues ...any) {
 	if (len(keysAndValues) % 2) != 0 {
 		LogWarn("LogOfType function given bad number of arguments")
 	}
@@ -178,6 +178,7 @@ var LogEnabled = map[string]bool{
 	"note":      false,
 	"notify":    false,
 	"osc":       false,
+	"paramvals": false,
 	"phrase":    false,
 	"plugin":    false,
 	"saved":     false,

@@ -242,7 +242,7 @@ func SendToSynth(value any) {
 		synth.noteDown[pitch] = true
 		synth.noteDownCount[pitch]++
 
-		DebugLogOfType("midi", "SendNoteOnToSynth",
+		LogOfType("midi", "SendNoteOnToSynth",
 			"synth", synth,
 			"channel", synth.portchannel.channel,
 			"pitch", pitch,
@@ -254,7 +254,7 @@ func SendToSynth(value any) {
 		synth.noteDown[pitch] = false
 		synth.noteDownCount[pitch]--
 
-		DebugLogOfType("midi", "SendNoteOffToSynth",
+		LogOfType("midi", "SendNoteOffToSynth",
 			"synth", synth,
 			"channel", synth.portchannel.channel,
 			"pitch", pitch,
@@ -274,7 +274,7 @@ func SendToSynth(value any) {
 		return
 	}
 
-	DebugLogOfType("midi", "Raw MIDI Output",
+	LogOfType("midi", "Raw MIDI Output",
 		"synth", synth,
 		"status", hexString(status),
 		"data1", hexString(data1),
@@ -345,7 +345,7 @@ func (synth *Synth) SendTo(value any) {
 		synth.noteDown[pitch] = true
 		synth.noteDownCount[pitch]++
 
-		DebugLogOfType("note", "SendNoteOnToSynth",
+		LogOfType("note", "SendNoteOnToSynth",
 			"synth", synth,
 			"channel", synth.portchannel.channel,
 			"pitch", pitch,
@@ -357,7 +357,7 @@ func (synth *Synth) SendTo(value any) {
 		synth.noteDown[pitch] = false
 		synth.noteDownCount[pitch]--
 
-		DebugLogOfType("note", "SendNoteOffToSynth",
+		LogOfType("note", "SendNoteOffToSynth",
 			"synth", synth,
 			"channel", synth.portchannel.channel,
 			"pitch", pitch,
@@ -377,7 +377,7 @@ func (synth *Synth) SendTo(value any) {
 		return
 	}
 
-	DebugLogOfType("midi", "Raw MIDI Output",
+	LogOfType("midi", "Raw MIDI Output",
 		"synth", synth,
 		"status", hexString(status),
 		"data1", hexString(data1),

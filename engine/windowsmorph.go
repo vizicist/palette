@@ -398,7 +398,7 @@ func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float32) 
 			contactid := int(contact.id)
 			oldSource, ok := m.contactToSource[contactid]
 			if ok && newSourceName != oldSource {
-				DebugLogOfType("cursor", "Switching cursor source, sending clear", "source", newSourceName)
+				LogOfType("cursor", "Switching cursor source, sending clear", "source", newSourceName)
 				ce := CursorEvent{
 					Cid:  "clear",
 					Ddu:  "clear",
@@ -413,7 +413,7 @@ func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float32) 
 			m.contactToSource[contactid] = newSourceName
 			m.sourceName = newSourceName
 
-			DebugLogOfType("morph", "Morph",
+			LogOfType("morph", "Morph",
 				"source", m.sourceName,
 				"contactid", contact.id,
 				"idx", m.idx,
@@ -504,7 +504,7 @@ func WinMorphInitialize() error {
 			if morphtype == "" {
 				// morphtype = "corners" // default value
 				morphtype = "quadrants" // default value
-				LogInfo("serial# isn't in morphs.json", "serialnum", m.serialNum, "morphtype", morphtype)
+				LogInfo("Morph serial# isn't in morphs.json", "serialnum", m.serialNum, "morphtype", morphtype)
 			}
 		}
 

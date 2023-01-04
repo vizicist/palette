@@ -90,7 +90,7 @@ func (r *Resolume) freeframeClientFor(layerName string) *osc.Client {
 }
 
 func (r *Resolume) toFreeFramePlugin(layerName string, msg *osc.Message) {
-	engine.DebugLogOfType("freeframe", "Resolume.toFreeframe", "layer", layerName, "msg", msg)
+	engine.LogOfType("freeframe", "Resolume.toFreeframe", "layer", layerName, "msg", msg)
 	ff := r.freeframeClientFor(layerName)
 	if ff == nil {
 		engine.LogError(fmt.Errorf("no freeframe client for layer"), "layer", layerName)
@@ -197,9 +197,7 @@ func (r *Resolume) sendPadOneEffectParam(layerNum int, effectName string, paramN
 }
 
 func (r *Resolume) toResolume(msg *osc.Message) {
-	if engine.IsLogging("resolume") || engine.IsLogging("freeframe") {
-		engine.LogInfo("Resolume.toResolume", "msg", msg)
-	}
+	engine.LogOfType("resolume", "Resolume.toResolume", "msg", msg)
 	r.resolumeClient.Send(msg)
 }
 
@@ -317,7 +315,7 @@ func (r *Resolume) Activate() {
 		layerNames := engine.LayerNames()
 		for _, pad := range layerNames {
 			_, layerNum := r.PortAndLayerNumForLayer(string(pad))
-			engine.DebugLogOfType("resolume", "Activating Resolume", "layer", layerNum, "clipnum", clipnum)
+			engine.LogOfType("resolume", "Activating Resolume", "layer", layerNum, "clipnum", clipnum)
 			r.connectClip(layerNum, clipnum)
 		}
 		if textLayer >= 1 {
