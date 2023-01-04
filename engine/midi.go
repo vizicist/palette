@@ -99,7 +99,7 @@ func InitMIDI() {
 
 	for _, inp := range inports {
 		name := inp.String()
-		DebugLogOfType("midiports", "MIDI input", "port", name)
+		LogOfType("midiports", "MIDI input", "port", name)
 		// if strings.Contains(name, "Erae Touch") {
 		// 	erae = true
 		// 	EraeInput = inp
@@ -113,7 +113,7 @@ func InitMIDI() {
 	for _, outp := range outports {
 		name := outp.String()
 		// NOTE: name is the port name followed by an index
-		DebugLogOfType("midiports", "MIDI output", "port", outp.String())
+		LogOfType("midiports", "MIDI output", "port", outp.String())
 		// if strings.Contains(name, "Erae Touch") {
 		// 	EraeOutput = outp
 		// }
@@ -145,17 +145,17 @@ func (m *MIDIIO) Start(inChan chan MidiEvent) {
 func (m *MIDIIO) handleMidiInput(msg midi.Message, timestamp int32) {
 	var bt []byte
 	var ch, key, vel uint8
-	DebugLogOfType("midi", "handleMidiInput", "msg", msg)
+	LogOfType("midi", "handleMidiInput", "msg", msg)
 	switch {
 	case msg.GetSysEx(&bt):
-		DebugLogOfType("midi", "midi.ListenTo sysex", "bt", bt)
+		LogOfType("midi", "midi.ListenTo sysex", "bt", bt)
 
 	case msg.GetNoteOn(&ch, &key, &vel):
-		DebugLogOfType("midi", "midi.ListenTo notestart", "bt", bt)
+		LogOfType("midi", "midi.ListenTo notestart", "bt", bt)
 		m.midiInputChan <- MidiEvent{Msg: msg}
 
 	case msg.GetNoteOff(&ch, &key, &vel):
-		DebugLogOfType("midi", "midi.ListenTo noteend", "bt", bt)
+		LogOfType("midi", "midi.ListenTo noteend", "bt", bt)
 		m.midiInputChan <- MidiEvent{Msg: msg}
 	default:
 		LogWarn("Unable to handle MIDI input", "msg", msg)
