@@ -115,7 +115,7 @@ func (sched *Scheduler) checkInput() {
 
 func (sched *Scheduler) advanceClickTo(toClick Clicks) {
 
-	// DebugLogOfType("scheduler", "Scheduler.advanceClickTo", "toClick", toClick, "scheduler", sched)
+	// LogOfType("scheduler", "Scheduler.advanceClickTo", "toClick", toClick, "scheduler", sched)
 
 	// Don't let events get handled while we're advancing
 	// XXX - this might not be needed if all communication/syncing
@@ -216,7 +216,7 @@ func (sched *Scheduler) AddActivePhraseAt(click Clicks, phrase *Phrase, sid stri
 		Warn("AddActivePhraseAt: Unexpected nil phrase")
 		return
 	}
-	DebugLogOfType("phrase", "StartPhrase", "sid", sid, "phrase", phrase)
+	LogOfType("phrase", "StartPhrase", "sid", sid, "phrase", phrase)
 	newItem := &ActivePhrase{
 		phrase:          phrase,
 		AtClick:         click,
@@ -326,7 +326,7 @@ func (sched *Scheduler) Format(f fmt.State, c rune) {
 
 func (sched *Scheduler) scheduleElement(se *SchedElement) {
 	schedClick := se.AtClick
-	DebugLogOfType("scheduler", "Scheduler.scheduleElement", "se", se, "click", schedClick)
+	LogOfType("scheduler", "Scheduler.scheduleElement", "se", se, "click", schedClick)
 	// Insert newElement sorted by time
 	i := sched.schedList.Front()
 	if i == nil {

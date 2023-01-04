@@ -171,7 +171,7 @@ func ArgsToCursorEvent(args map[string]string) CursorEvent {
 	y := ArgToFloat("y", args)
 	z := ArgToFloat("z", args)
 	ce := CursorEvent{
-		Cid:    cid,
+		Cid: cid,
 		// Source: source,
 		// Timestamp: time.Now(),
 		Ddu:  event,
@@ -277,7 +277,7 @@ func GetArgsXYZ(args map[string]string) (x, y, z float32, err error) {
 // HandleOSCInput xxx
 func (r *Router) handleOSCInput(e OSCEvent) {
 
-	DebugLogOfType("osc", "Router.HandleOSCInput", "msg", e.Msg.String())
+	LogOfType("osc", "Router.HandleOSCInput", "msg", e.Msg.String())
 	switch e.Msg.Address {
 
 	case "/clientrestart":
@@ -304,7 +304,7 @@ func (r *Router) notifyGUI(eventName string) {
 	msg := osc.NewMessage("/notify")
 	msg.Append(eventName)
 	r.guiClient.Send(msg)
-	DebugLogOfType("osc", "Router.notifyGUI", "msg", msg)
+	LogOfType("osc", "Router.notifyGUI", "msg", msg)
 }
 
 /*
@@ -401,7 +401,7 @@ func (r *Router) handleMMTTCursor(msg *osc.Message) {
 				return
 			}
 			if ddu == "down" {
-				DebugLogOfType("mmtt", "MMT BUTTON TRIGGERED", "buttonDepth", buttonDepth, "z", z)
+				LogOfType("mmtt", "MMT BUTTON TRIGGERED", "buttonDepth", buttonDepth, "z", z)
 				r.handleMMTTButton(layerName)
 			}
 			return
@@ -429,7 +429,7 @@ func (r *Router) handleMMTTCursor(msg *osc.Message) {
 		yexpand := ConfigFloatWithDefault("mmttyexpand", 1.25)
 		ce.Y = boundval(((ce.Y - 0.5) * yexpand) + 0.5)
 
-		DebugLogOfType("mmtt", "MMTT Cursor", "source", ce.Source, "ddu", ce.Ddu, "x", ce.X, "y", ce.Y, "z", ce.Z)
+		LogOfType("mmtt", "MMTT Cursor", "source", ce.Source, "ddu", ce.Ddu, "x", ce.X, "y", ce.Y, "z", ce.Z)
 
 		layer.HandleCursorEvent(ce)
 	*/

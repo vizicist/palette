@@ -12,7 +12,7 @@ func (layer *Layer) HandleMidiEvent(me MidiEvent) {
 	layer.midiInputMutex.Lock()
 	defer layer.midiInputMutex.Unlock()
 
-	DebugLogOfType("midi", "Router.HandleMIDIInput", "event", e)
+	LogOfType("midi", "Router.HandleMIDIInput", "event", e)
 
 	if layer.MIDIThru {
 		layer.PassThruMIDI(e)
@@ -51,7 +51,7 @@ func (layer *Layer) SetParam(fullname, value string) error {
 
 func (layer *Layer) SetOneParamValue(fullname, value string) error {
 
-	DebugLogOfType("value", "SetOneParamValue", "layer", layer.layerName, "fullname", fullname, "value", value)
+	LogOfType("value", "SetOneParamValue", "layer", layer.layerName, "fullname", fullname, "value", value)
 	err := layer.params.SetParamValueWithString(fullname, value)
 	if err != nil {
 		return err
@@ -78,7 +78,7 @@ func (layer *Layer) SetOneParamValue(fullname, value string) error {
 /*
 // ClearExternalScale xxx
 func (layer *Layer) clearExternalScale() {
-	DebugLogOfType("scale", "clearExternalScale", "pad", layer.layerName)
+	LogOfType("scale", "clearExternalScale", "pad", layer.layerName)
 	layer.externalScale = MakeScale()
 }
 */

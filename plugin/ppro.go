@@ -284,15 +284,15 @@ func (ppro *PalettePro) start(ctx *engine.PluginContext) error {
 
 	layerB := ppro.addLayer(ctx, "B")
 	layerB.Set("visual.shape", "square")
-	layerB.Load("layer", "_Current_A")
+	layerB.Load("layer", "_Current_B")
 
 	layerC := ppro.addLayer(ctx, "C")
-	layerC.Set("visual.shape", "square")
-	layerC.Load("layer", "_Current_A")
+	layerC.Set("visual.shape", "triangle")
+	layerC.Load("layer", "_Current_C")
 
 	layerD := ppro.addLayer(ctx, "D")
-	layerD.Set("visual.shape", "square")
-	layerD.Load("layer", "_Current_A")
+	layerD.Set("visual.shape", "line")
+	layerD.Load("layer", "_Current_D")
 
 	//ctx.ApplySaved("saved.Quick Scat_Circles")
 
@@ -682,7 +682,7 @@ func (ppro *PalettePro) Load(category string, filename string) (err error) {
 
 func (ppro *PalettePro) Save(category string, filename string) (err error) {
 
-	engine.LogInfo("PalettePro.Save", "category", category, "filename", filename)
+	engine.LogOfType("paramvals", "PalettePro.Save", "category", category, "filename", filename)
 
 	if category == "misc" {
 		err = ppro.miscparams.Save("misc", filename)

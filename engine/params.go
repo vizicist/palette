@@ -161,7 +161,7 @@ func (vals *ParamValues) GetBoolValue(name string) bool {
 
 func (vals *ParamValues) Save(category string, filename string) error {
 
-	LogInfo("ParamValues.Save", "category", category, "filename", filename)
+	LogOfType("paramvals", "ParamValues.Save", "category", category, "filename", filename)
 
 	path := WritableFilePath(category, filename)
 

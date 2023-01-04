@@ -97,7 +97,7 @@ func (cm *CursorManager) clearCursors() {
 		cm.HandleCursorEvent(ce)
 		cm.cursorsMutex.RLock()
 
-		DebugLogOfType("cursor", "Clearing cursor", "cid", cid)
+		LogOfType("cursor", "Clearing cursor", "cid", cid)
 
 		cidsToDelete = append(cidsToDelete, cid)
 	}
@@ -189,10 +189,10 @@ func (cm *CursorManager) handleDownDragUp(ce CursorEvent) {
 	// See which layer wants this input, but don't hold the Lock
 	ThePluginManager().HandleCursorEvent(ce)
 
-	DebugLogOfType("cursor", "CursorManager.handleDownDragUp", "ce", ce)
+	LogOfType("cursor", "CursorManager.handleDownDragUp", "ce", ce)
 
 	if ce.Ddu == "up" {
-		DebugLogOfType("cursor", "handleDownDragUp up is deleting cid", "cid", ce.Cid, "ddu", ce.Ddu)
+		LogOfType("cursor", "handleDownDragUp up is deleting cid", "cid", ce.Cid, "ddu", ce.Ddu)
 
 		cm.cursorsMutex.Lock()
 		delete(cm.cursors, ce.Cid)

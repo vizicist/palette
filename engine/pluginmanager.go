@@ -58,7 +58,7 @@ func CallApiOnAllPlugins(api string, apiargs map[string]string) {
 /*
 func (rm *PluginManager) HandleCursorEvent(ce CursorEvent) {
 	for name, plugin := range rm.plugins {
-		DebugLogOfType("plugin", "CallPlugins", "name", name)
+		LogOfType("plugin", "CallPlugins", "name", name)
 		context, ok := rm.pluginsContext[name]
 		if !ok {
 			Warn("PluginManager.handle: no context", "name", name)

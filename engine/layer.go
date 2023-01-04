@@ -35,7 +35,7 @@ func NewLayer(layerName string) *Layer {
 		params:    NewParamValues(),
 		listeners: []*PluginContext{},
 	}
-	DebugLogOfType("layer", "NewLayer", "layer", layerName)
+	LogOfType("layer", "NewLayer", "layer", layerName)
 	layer.SetDefaultValues()
 	Layers[layerName] = layer
 	return layer
@@ -60,10 +60,7 @@ func IsPerLayerParam(name string) bool {
 func IsPerPresetParam(name string) bool {
 	// Preset params are everything but global.*,
 	// i.e. misc.*, sound.*, visual.* and effect.*
-	if strings.HasPrefix(name, "global.") {
-		return false
-	}
-	return true
+	return !strings.HasPrefix(name, "global.")
 }
 
 func ApplyToAllLayers(f func(layer *Layer)) {
@@ -203,7 +200,6 @@ func (layer *Layer) Set(paramName string, paramValue string) error {
 	if err != nil {
 		return err
 	}
-	LogInfo("Layer.Set: alerting listeners for %s=%s", paramName, paramValue)
 	layer.alertListeners(paramName, paramValue)
 	return nil
 }
@@ -364,7 +360,7 @@ func (layer *Layer) Load(category string, filename string) error {
 	overrideFilename := "._override"
 	overridepath := layer.readableFilePath(category, overrideFilename)
 	if fileExists(overridepath) {
-		DebugLogOfType("saved", "applySaved using", "overridepath", overridepath)
+		LogOfType("saved", "applySaved using", "overridepath", overridepath)
 		overridemap, err := LoadParamsMap(overridepath)
 		if err != nil {
 			return err
@@ -376,9 +372,8 @@ func (layer *Layer) Load(category string, filename string) error {
 	// saved, we put out the "init" values.  This happens when new parameters
 	// are added which don't exist in existing saved files.
 	for paramName, def := range ParamDefs {
-		// Only include parameters of the desired type
-		thisCategory, _ := SavedNameSplit(paramName)
-		if category != "layer" && category != thisCategory {
+		// Only include layer parameters
+		if !IsPerLayerParam(paramName) {
 			continue
 		}
 		_, found := paramsmap[paramName]

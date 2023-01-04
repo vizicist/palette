@@ -348,7 +348,7 @@ func (ctx *PluginContext) GetSaved(savedName string) *OldSaved {
 // ExecuteAPI xxx
 func (ctx *PluginContext) ExecuteAPI(api string, args map[string]string, rawargs string) (result string, err error) {
 
-	DebugLogOfType("api", "Plugin.ExecutAPI called", "api", api, "args", args)
+	LogOfType("api", "Plugin.ExecutAPI called", "api", api, "args", args)
 
 	// The caller can provide rawargs if it's already known, but if not provided, we create it
 	// if rawargs == "" {

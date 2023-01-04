@@ -41,10 +41,9 @@ func (params *ParamValues) ApplyParamsMap(category string, paramsmap map[string]
 			continue
 		}
 		paramCategory, _ := SavedNameSplit(fullname)
+
 		// Only include ones that match the category
-		if paramCategory == category {
-			// This is where the parameter values get applied,
-			// which may trigger things (like sending OSC)
+		if (category == "layer" && IsPerLayerParam(fullname)) || category == paramCategory {
 			err := params.Set(fullname, val)
 			if err != nil {
 				LogError(err)

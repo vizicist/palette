@@ -224,7 +224,7 @@ func (screen *Screen) drawRect(rect image.Rectangle) {
 	y0 := rect.Min.Y
 	x1 := rect.Max.X
 	y1 := rect.Max.Y
-	engine.DebugLogOfType("drawing", "drawRect", "x0", x0, "y0", y0, "x1", x1, "y1", y1)
+	engine.LogOfType("drawing", "drawRect", "x0", x0, "y0", y0, "x1", x1, "y1", y1)
 	screen.drawLine(image.Point{x0, y0}, image.Point{x1, y0})
 	screen.drawLine(image.Point{x1, y0}, image.Point{x1, y1})
 	screen.drawLine(image.Point{x1, y1}, image.Point{x0, y1})
@@ -233,21 +233,21 @@ func (screen *Screen) drawRect(rect image.Rectangle) {
 
 // drawLine xxx
 func (screen *Screen) drawLine(xy0, xy1 image.Point) {
-	engine.DebugLogOfType("drawing", "drawLine", "x0", xy0.X, "y0", xy0.Y, "x1", xy1.X, "y1", xy1.Y, "color", screen.foreColor)
+	engine.LogOfType("drawing", "drawLine", "x0", xy0.X, "y0", xy0.Y, "x1", xy1.X, "y1", xy1.Y, "color", screen.foreColor)
 	ebitenutil.DrawLine(screen.eimage,
 		float64(xy0.X), float64(xy0.Y), float64(xy1.X), float64(xy1.Y), screen.foreColor)
 }
 
 func (screen *Screen) drawText(s string, styleName string, pos image.Point) {
 	styleInfo := Styles[styleName]
-	engine.DebugLogOfType("drawing", "drawText", "s", s, "x", pos.X, "y", pos.Y)
+	engine.LogOfType("drawing", "drawText", "s", s, "x", pos.X, "y", pos.Y)
 	text.Draw(screen.eimage, s, styleInfo.fontFace, pos.X, pos.Y, screen.foreColor)
 }
 
 func (screen *Screen) drawFilledRect(rect image.Rectangle) {
 	w := rect.Max.X - rect.Min.X
 	h := rect.Max.Y - rect.Min.Y
-	engine.DebugLogOfType("drawing", "drawFilledRect", "x0", rect.Min.X)
+	engine.LogOfType("drawing", "drawFilledRect", "x0", rect.Min.X)
 	ebitenutil.DrawRect(screen.eimage, float64(rect.Min.X), float64(rect.Min.Y), float64(w), float64(h), screen.foreColor)
 }
 

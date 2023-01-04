@@ -10,7 +10,7 @@ import (
 // ExecuteAPI xxx
 func (e *Engine) ExecuteAPI(api string, apiargs map[string]string) (result string, err error) {
 
-	DebugLogOfType("api", "ExecuteAPI", "api", api, "apiargs", apiargs)
+	LogOfType("api", "ExecuteAPI", "api", api, "apiargs", apiargs)
 
 	result = "" // pre-populate the most common result, when no err
 
@@ -19,7 +19,7 @@ func (e *Engine) ExecuteAPI(api string, apiargs map[string]string) (result strin
 	default:
 		words := strings.Split(api, ".")
 		if len(words) <= 1 {
-			return "", fmt.Errorf("single-word APIs no longer work, api=%s",api)
+			return "", fmt.Errorf("single-word APIs no longer work, api=%s", api)
 		}
 		// Here we handle APIs of the form {apitype}.{apisuffix}
 		apitype := words[0]
