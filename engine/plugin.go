@@ -66,12 +66,28 @@ func (ctx *PluginContext) StartExecutableLogOutput(logName string, fullexe strin
 	return StartExecutableLogOutput(logName, fullexe, background, args...)
 }
 
+func (ctx *PluginContext) AddProcess(process string, info *ProcessInfo) {
+	TheEngine().ProcessManager.AddProcess(process, info)
+}
+
+func (ctx *PluginContext) CheckAutostartProcesses() {
+	TheEngine().ProcessManager.CheckAutostartProcesses()
+}
+
+func (ctx *PluginContext) StartRunning(process string) error {
+	return TheEngine().ProcessManager.StartRunning(process)
+}
+
+func (ctx *PluginContext) StopRunning(process string) error {
+	return TheEngine().ProcessManager.StopRunning(process)
+}
+
 func (ctx *PluginContext) KillExecutable(exe string) error {
-	return KillExecutable(exe)
+	return killExecutable(exe)
 }
 
 func (ctx *PluginContext) IsRunningExecutable(exe string) bool {
-	return IsRunningExecutable(exe)
+	return isRunningExecutable(exe)
 }
 
 func (ctx *PluginContext) FileExists(path string) bool {
@@ -475,32 +491,3 @@ func (ctx *PluginContext) GenerateCursorGesture(cid string, noteDuration time.Du
 func (ctx *PluginContext) GetCursorState(cid string) *CursorState {
 	return TheRouter().cursorManager.GetCursorState(cid)
 }
-
-/*
-func (ctx *PluginContext) SaveCurrentSnapInPath(path string) error {
-
-	s := "{\n    \"params\": {\n"
-
-	// Print the parameter values sorted by name
-	fullNames := ctx.params.Values
-	sortedNames := make([]string, 0, len(fullNames))
-	for k := range fullNames {
-		sortedNames = append(sortedNames, k)
-	}
-	sort.Strings(sortedNames)
-
-	sep := ""
-	for _, fullName := range sortedNames {
-		valstring, e := ctx.params.paramValueAsString(fullName)
-		if e != nil {
-			LogError(e)
-			continue
-		}
-		s += fmt.Sprintf("%s        \"%s\":\"%s\"", sep, fullName, valstring)
-		sep = ",\n"
-	}
-	s += "\n    }\n}"
-	data := []byte(s)
-	return os.WriteFile(path, data, 0644)
-}
-*/

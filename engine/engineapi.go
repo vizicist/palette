@@ -84,6 +84,11 @@ func (e *Engine) executeEngineAPI(api string, apiargs map[string]string) (result
 		e.StopMe()
 		return "", nil
 
+	case "activate":
+		// Force Activate even if already activated
+		e.ProcessManager.ActivateAll()
+		return "", nil
+
 	case "sendlogs":
 		return "", SendLogs()
 

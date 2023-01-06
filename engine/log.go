@@ -168,6 +168,7 @@ var LogEnabled = map[string]bool{
 	"info":      false,
 	"layer":     false,
 	"layerapi":  false,
+	"listeners": false,
 	"loop":      false,
 	"midi":      false,
 	"midiports": false,

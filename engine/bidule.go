@@ -1,4 +1,4 @@
-package plugin
+package engine
 
 import (
 	"strings"
@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/hypebeast/go-osc/osc"
-	"github.com/vizicist/palette/engine"
 )
 
 type Bidule struct {
@@ -19,7 +18,7 @@ const BidulePort = 3210
 
 func NewBidule() *Bidule {
 	return &Bidule{
-		client: osc.NewClient(engine.LocalAddress, BidulePort),
+		client: osc.NewClient(LocalAddress, BidulePort),
 		port:   3210,
 	}
 }
@@ -37,14 +36,14 @@ func (b *Bidule) Activate() {
 	}
 }
 
-func (b *Bidule) ProcessInfo() *processInfo {
-	bidulePath := engine.ConfigValueWithDefault("bidule", "")
+func (b *Bidule) ProcessInfo() *ProcessInfo {
+	bidulePath := ConfigValueWithDefault("bidule", "")
 	if bidulePath == "" {
 		bidulePath = "C:\\Program Files\\Plogue\\Bidule\\Bidule.exe"
-		engine.LogWarn("No bidule value in settings, using default", "path", bidulePath)
+		LogWarn("No bidule value in settings, using default", "path", bidulePath)
 	}
-	if !engine.FileExists(bidulePath) {
-		engine.LogWarn("No bidule found, looking for", "path", bidulePath)
+	if !FileExists(bidulePath) {
+		LogWarn("No bidule found, looking for", "path", bidulePath)
 		return nil
 	}
 	exe := bidulePath
@@ -52,11 +51,11 @@ func (b *Bidule) ProcessInfo() *processInfo {
 	if lastslash > 0 {
 		exe = exe[lastslash+1:]
 	}
-	bidulefile := engine.ConfigValueWithDefault("bidulefile", "")
+	bidulefile := ConfigValueWithDefault("bidulefile", "")
 	if bidulefile == "" {
 		bidulefile = "default.bidule"
 	}
-	filepath := engine.ConfigFilePath(bidulefile)
+	filepath := ConfigFilePath(bidulefile)
 	return NewProcessInfo(exe, bidulePath, filepath, b.Activate)
 }
 

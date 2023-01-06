@@ -1,13 +1,11 @@
-package plugin
+package engine
 
 import (
 	"fmt"
 	"strings"
-
-	"github.com/vizicist/palette/engine"
 )
 
-type processInfo struct {
+type ProcessInfo struct {
 	Exe       string // just the last part
 	FullPath  string
 	Arg       string
@@ -17,11 +15,11 @@ type processInfo struct {
 
 type ProcessManager struct {
 	// ctx  *engine.PluginContext
-	info map[string]*processInfo
+	info map[string]*ProcessInfo
 }
 
-func NewProcessInfo(exe, fullPath, arg string, activate func()) *processInfo {
-	return &processInfo{
+func NewProcessInfo(exe, fullPath, arg string, activate func()) *ProcessInfo {
+	return &ProcessInfo{
 		Exe:       exe,
 		FullPath:  fullPath,
 		Arg:       arg,
@@ -32,12 +30,12 @@ func NewProcessInfo(exe, fullPath, arg string, activate func()) *processInfo {
 
 func NewProcessManager() *ProcessManager {
 	return &ProcessManager{
-		info: make(map[string]*processInfo),
+		info: make(map[string]*ProcessInfo),
 	}
 }
 
-func (pm *ProcessManager) checkAutostartProcesses(ctx *engine.PluginContext) {
-	autostart := engine.ConfigValueWithDefault("autostart", "")
+func (pm *ProcessManager) CheckAutostartProcesses() {
+	autostart := ConfigValueWithDefault("autostart", "")
 	if autostart == "" || autostart == "nothing" || autostart == "none" {
 		return
 	}
@@ -47,15 +45,15 @@ func (pm *ProcessManager) checkAutostartProcesses(ctx *engine.PluginContext) {
 	for _, autoName := range processes {
 		for processName, pi := range pm.info {
 			if autoName == "*" || autoName == "all" || autoName == processName {
-				if !pm.isRunning(ctx, processName) {
-					pm.StartRunning(ctx, processName)
+				if !pm.IsRunning(processName) {
+					pm.StartRunning(processName)
 					pi.Activated = false
 				}
 				// Even if it's already running, we
 				// want to Activate it the first time we check.
 				// Also, if we restart it
 				if pi.Activate != nil && !pi.Activated {
-					engine.LogInfo("Calling Activate", "process", processName)
+					LogInfo("Calling Activate", "process", processName)
 					go pi.Activate()
 					pi.Activated = true
 				}
@@ -73,29 +71,29 @@ func (pm ProcessManager) ActivateAll() {
 	}
 }
 
-func (pm ProcessManager) AddProcess(name string, info *processInfo) {
+func (pm ProcessManager) AddProcess(name string, info *ProcessInfo) {
 	if info == nil {
-		engine.LogWarn("Addprocess: info not available", "process", name)
+		LogWarn("Addprocess: info not available", "process", name)
 	} else {
 		pm.info[name] = info
 	}
 
 }
 
-func (pm ProcessManager) StartRunning(ctx *engine.PluginContext, process string) error {
+func (pm ProcessManager) StartRunning(process string) error {
 
 	for nm, pi := range pm.info {
 		if process == "all" || nm == process {
 			if pi == nil {
-				return fmt.Errorf("StartRunning: no processInfo for process=%s", process)
+				return fmt.Errorf("StartRunning: no ProcessInfo for process=%s", process)
 			}
 			if pi.FullPath == "" {
 				return fmt.Errorf("StartRunning: unable to start %s, no executable path", process)
 			}
 
-			engine.LogInfo("StartRunning", "path", pi.FullPath)
+			LogInfo("StartRunning", "path", pi.FullPath)
 
-			err := ctx.StartExecutableLogOutput(process, pi.FullPath, true, pi.Arg)
+			err := StartExecutableLogOutput(process, pi.FullPath, true, pi.Arg)
 			if err != nil {
 				return fmt.Errorf("start: process=%s err=%s", process, err)
 			}
@@ -104,10 +102,10 @@ func (pm ProcessManager) StartRunning(ctx *engine.PluginContext, process string)
 	return nil
 }
 
-func (pm ProcessManager) StopRunning(ctx *engine.PluginContext, process string) (err error) {
+func (pm ProcessManager) StopRunning(process string) (err error) {
 	for nm, pi := range pm.info {
 		if process == "all" || nm == process {
-			e := ctx.KillExecutable(pi.Exe)
+			e := killExecutable(pi.Exe)
 			if e != nil {
 				err = e
 			}
@@ -117,10 +115,10 @@ func (pm ProcessManager) StopRunning(ctx *engine.PluginContext, process string) 
 	return err
 }
 
-func (pm ProcessManager) ProcessStatus(ctx *engine.PluginContext) string {
+func (pm ProcessManager) ProcessStatus() string {
 	s := ""
 	for name := range pm.info {
-		if pm.isRunning(ctx, name) {
+		if pm.IsRunning(name) {
 			s += fmt.Sprintf("%s is running\n", name)
 		}
 	}
@@ -134,14 +132,14 @@ func (pm ProcessManager) resolumeActivate() {
 */
 
 /*
-func (pm ProcessManager) engineInfoInit() *processInfo {
+func (pm ProcessManager) engineInfoInit() *ProcessInfo {
 	exe := "palette_engine.exe"
 	fullpath := filepath.Join(pm.agent.PaletteDir(), "bin", exe)
-	return &processInfo{exe, fullpath, "", nil}
+	return &ProcessInfo{exe, fullpath, "", nil}
 }
 */
 
-func (pm ProcessManager) getProcessInfo(process string) (*processInfo, error) {
+func (pm ProcessManager) getProcessInfo(process string) (*ProcessInfo, error) {
 	p, ok := pm.info[process]
 	if !ok {
 		return nil, fmt.Errorf("getProcessInfo: no process %s", process)
@@ -152,17 +150,18 @@ func (pm ProcessManager) getProcessInfo(process string) (*processInfo, error) {
 	return p, nil
 }
 
-func (pm ProcessManager) isRunning(ctx *engine.PluginContext, process string) bool {
+func (pm ProcessManager) IsRunning(process string) bool {
 	pi, err := pm.getProcessInfo(process)
 	if err != nil {
-		engine.LogWarn("IsRunning: no process named", "process", process)
+		LogWarn("IsRunning: no process named", "process", process)
 		return false
 	}
-	b := ctx.IsRunningExecutable(pi.Exe)
+	b := isRunningExecutable(pi.Exe)
 	return b
 }
 
-func (pm ProcessManager) killAll(ctx *engine.PluginContext) error {
+/*
+func (pm ProcessManager) KillAll(ctx *PluginContext) error {
 	for nm, pi := range pm.info {
 		if nm != "engine" {
 			err := ctx.KillExecutable(pi.Exe)
@@ -173,6 +172,7 @@ func (pm ProcessManager) killAll(ctx *engine.PluginContext) error {
 	}
 	return nil
 }
+*/
 
 /*
 // KillProcess kills a process (synchronously)

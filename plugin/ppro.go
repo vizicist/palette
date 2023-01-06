@@ -28,8 +28,7 @@ type PalettePro struct {
 
 	started        bool
 	resolume       *Resolume
-	bidule         *Bidule
-	processManager *ProcessManager
+	bidule         *engine.Bidule
 	midiinputlayer *engine.Layer
 
 	generateVisuals bool
@@ -130,7 +129,7 @@ func (ppro *PalettePro) Api(ctx *engine.PluginContext, api string, apiargs map[s
 
 	case "stop":
 		ppro.started = false
-		return "", ppro.processManager.StopRunning(ctx, "all")
+		return "", ctx.StopRunning("all")
 
 	case "set":
 		return ppro.onSet(apiargs)
@@ -157,6 +156,8 @@ func (ppro *PalettePro) Api(ctx *engine.PluginContext, api string, apiargs map[s
 			return ppro.onClientRestart(ctx, apiargs)
 		case "layerset":
 			return ppro.onLayerSet(ctx, apiargs)
+		case "presetsave":
+			return ppro.onPresetSave()
 		default:
 			return "", fmt.Errorf("PalettePro: Unhandled event type %s", eventName)
 		}
@@ -192,14 +193,14 @@ func (ppro *PalettePro) Api(ctx *engine.PluginContext, api string, apiargs map[s
 		if !oksaved {
 			return "", fmt.Errorf("missing filename parameter")
 		}
-		return "", ppro.Save(category, filename)
+		return "", ppro.save(category, filename)
 
 	case "startprocess":
 		process, ok := apiargs["process"]
 		if !ok {
 			err = fmt.Errorf("ExecuteAPI: missing process argument")
 		} else {
-			err = ppro.processManager.StartRunning(ctx, process)
+			err = ctx.StartRunning(process)
 		}
 		return "", err
 
@@ -208,15 +209,7 @@ func (ppro *PalettePro) Api(ctx *engine.PluginContext, api string, apiargs map[s
 		if !ok {
 			return "", fmt.Errorf("ExecuteAPI: missing process argument")
 		}
-		return "", ppro.processManager.StopRunning(ctx, process)
-
-	case "activate":
-		// Force Activate even if already activated
-		ppro.processManager.ActivateAll()
-		return "", nil
-
-	case "killall":
-		return "", ppro.processManager.killAll(ctx)
+		return "", ctx.StopRunning(process)
 
 	case "nextalive":
 		// acts like a timer, but it could wait for
@@ -264,37 +257,22 @@ func (ppro *PalettePro) start(ctx *engine.PluginContext) error {
 	}
 	ppro.started = true
 	ppro.resolume = NewResolume()
-	ppro.bidule = NewBidule()
+	ppro.bidule = engine.NewBidule()
 
-	ppro.processManager = NewProcessManager()
-
-	ppro.processManager.AddProcess("resolume", ppro.resolume.ProcessInfo(ctx))
-	ppro.processManager.AddProcess("bidule", ppro.bidule.ProcessInfo())
-	ppro.processManager.AddProcess("gui", ppro.guiInfo())
-	ppro.processManager.AddProcess("mmtt", ppro.mmttInfo())
+	ctx.AddProcess("resolume", ppro.resolume.ProcessInfo(ctx))
+	ctx.AddProcess("bidule", ppro.bidule.ProcessInfo())
+	ctx.AddProcess("gui", ppro.guiInfo())
+	ctx.AddProcess("mmtt", ppro.mmttInfo())
 
 	ctx.AllowSource("A", "B", "C", "D")
 
-	ppro.Load("misc", "_Current")
+	_ = ppro.addLayer(ctx, "A")
+	_ = ppro.addLayer(ctx, "B")
+	_ = ppro.addLayer(ctx, "C")
+	_ = ppro.addLayer(ctx, "D")
+
 	ppro.Load("global", "_Current")
-
-	layerA := ppro.addLayer(ctx, "A")
-	layerA.Set("visual.shape", "circle")
-	layerA.Load("layer", "_Current_A")
-
-	layerB := ppro.addLayer(ctx, "B")
-	layerB.Set("visual.shape", "square")
-	layerB.Load("layer", "_Current_B")
-
-	layerC := ppro.addLayer(ctx, "C")
-	layerC.Set("visual.shape", "triangle")
-	layerC.Load("layer", "_Current_C")
-
-	layerD := ppro.addLayer(ctx, "D")
-	layerD.Set("visual.shape", "line")
-	layerD.Load("layer", "_Current_D")
-
-	//ctx.ApplySaved("saved.Quick Scat_Circles")
+	ppro.Load("preset", "_Current")
 
 	// Don't start checking processes right away, after killing them on a restart,
 	// they may still be running for a bit
@@ -399,12 +377,14 @@ func (ppro *PalettePro) onClientRestart(ctx *engine.PluginContext, apiargs map[s
 	for nm, layer := range ppro.layer {
 		portnum, _ := ppro.resolume.PortAndLayerNumForLayer(nm)
 		if portnum == apipnum {
-			layer.ReAlertAllParameters()
+			layer.ReAlertListenersOnAllParameters()
 		}
 	}
 	return "", nil
 }
 
+// onSet is only used for parameters in a Preset that are not in its layers.
+// NOTE: this routine does not automatically persist the values to disk.
 func (ppro *PalettePro) onSet(apiargs map[string]string) (result string, err error) {
 	paramName, paramValue, err := engine.GetNameValue(apiargs)
 	if err != nil {
@@ -413,14 +393,23 @@ func (ppro *PalettePro) onSet(apiargs map[string]string) (result string, err err
 
 	if strings.HasPrefix(paramName, "misc.") {
 		err = ppro.miscparams.Set(paramName, paramValue)
-		ppro.Save("misc", "_Current")
+		if err != nil {
+			return "", err
+		}
 	} else if strings.HasPrefix(paramName, "global") {
 		err = ppro.globalparams.Set(paramName, paramValue)
-		ppro.Save("global", "_Current")
+		if err != nil {
+			return "", err
+		}
 	} else {
 		err = fmt.Errorf("PalettePro.onSet: can't handle parameter %s", paramName)
 	}
 	return result, err
+}
+
+// Events from listeners in the Layers will trigger saving of the entire Preset
+func (ppro *PalettePro) onPresetSave() (result string, err error) {
+	return "", ppro.presetSave("_Current")
 }
 
 func (ppro *PalettePro) onGet(apiargs map[string]string) (result string, err error) {
@@ -526,7 +515,7 @@ func (ppro *PalettePro) onClick(ctx *engine.PluginContext, apiargs map[string]st
 		// it's stil running.
 		go func() {
 			time.Sleep(2 * time.Second)
-			ppro.processManager.checkAutostartProcesses(ctx)
+			ctx.CheckAutostartProcesses()
 		}()
 		ppro.lastProcessCheck = uptimesecs
 	}
@@ -619,7 +608,7 @@ func (ppro *PalettePro) loadPresetRand() {
 	}
 }
 
-func (ppro *PalettePro) Load(category string, filename string) (err error) {
+func (ppro *PalettePro) Load(category string, filename string) error {
 
 	path := engine.SavedFilePath(category, filename)
 	paramsMap, err := engine.LoadParamsMap(path)
@@ -630,21 +619,14 @@ func (ppro *PalettePro) Load(category string, filename string) (err error) {
 
 	engine.LogInfo("PalettePro.Load", "category", category, "filename", filename)
 
-	// Don't save any _Current files we load
-	saveit := !strings.HasPrefix(filename, "_Current")
+	var lasterr error
 
 	switch category {
 	case "global":
-		ppro.globalparams.ApplyParamsMap("global", paramsMap)
-		if saveit {
-			ppro.Save("global", "_Current")
-		}
+		ppro.globalparams.ApplyParamsTo("global", paramsMap)
 
 	case "misc":
-		ppro.miscparams.ApplyParamsMap("misc", paramsMap)
-		if saveit {
-			ppro.Save("misc", "_Current")
-		}
+		ppro.miscparams.ApplyParamsTo("misc", paramsMap)
 
 	case "preset":
 		// The Preset has one copy of misc.* params, and 4 layers of sound/visual/effect params
@@ -660,13 +642,11 @@ func (ppro *PalettePro) Load(category string, filename string) (err error) {
 		}
 
 		for _, layer := range ppro.layer {
-			e := layer.ApplyPresetSavedMap(paramsMap)
-			if e != nil {
-				err = e
+			err := layer.ApplyPresetTo(paramsMap)
+			if err != nil {
+				engine.LogError(err)
+				lasterr = err
 			}
-		}
-		if saveit {
-			ppro.savePreset("_Current")
 		}
 
 	case "layer", "sound", "visual", "effect":
@@ -674,22 +654,39 @@ func (ppro *PalettePro) Load(category string, filename string) (err error) {
 	default:
 		engine.LogWarn("PalettePro.Load: other unhandled", "category", category, "filename", filename)
 	}
+
+	// Decide what _Current things we should save
+	// when we load something.  E.g. if we're
+	// loading a layer with something, we want to
+	// then save the entire preset in preset._Current
+	err = nil
+	switch category {
+	case "global":
+		if filename == "_Current" {
+			err = ppro.save("global", "_Current")
+		}
+	case "layer", "sound", "visual", "effect":
+		if filename != "_Current" {
+			err = ppro.presetSave("_Current")
+		}
+	}
 	if err != nil {
 		engine.LogError(err)
+		lasterr = err
 	}
-	return err
+	return lasterr
 }
 
-func (ppro *PalettePro) Save(category string, filename string) (err error) {
+func (ppro *PalettePro) save(category string, filename string) (err error) {
 
-	engine.LogOfType("paramvals", "PalettePro.Save", "category", category, "filename", filename)
+	engine.LogInfo("PalettePro.Save", "category", category, "filename", filename)
 
 	if category == "misc" {
 		err = ppro.miscparams.Save("misc", filename)
 	} else if category == "global" {
 		err = ppro.globalparams.Save("global", filename)
 	} else if category == "preset" {
-		err = ppro.savePreset(filename)
+		err = ppro.presetSave(filename)
 	} else {
 		err = fmt.Errorf("PalettePro.Api: unhandled save category %s", category)
 	}
@@ -699,12 +696,12 @@ func (ppro *PalettePro) Save(category string, filename string) (err error) {
 	return err
 }
 
-func (ppro *PalettePro) savePreset(presetName string) error {
+func (ppro *PalettePro) presetSave(presetName string) error {
 
 	category := "preset"
 	path := engine.WritableFilePath(category, presetName)
 
-	engine.LogInfo("savePreset", "preset", presetName)
+	engine.LogInfo("presetSave", "preset", presetName)
 
 	sortedLayerNames := []string{}
 	for _, layer := range ppro.layer {
@@ -716,7 +713,6 @@ func (ppro *PalettePro) savePreset(presetName string) error {
 	sep := ""
 	for _, layerName := range sortedLayerNames {
 		layer := ppro.layer[layerName]
-		engine.LogInfo("starting", "layer", layer.Name())
 		sortedNames := layer.ParamNames()
 		for _, fullName := range sortedNames {
 			valstring := layer.Get(fullName)
@@ -878,7 +874,7 @@ func (ppro *PalettePro) doAttractAction(ctx *engine.PluginContext) {
 	}
 }
 
-func (ppro *PalettePro) mmttInfo() *processInfo {
+func (ppro *PalettePro) mmttInfo() *engine.ProcessInfo {
 
 	// NOTE: it's inside a sub-directory of bin, so all the necessary .dll's are contained
 
@@ -889,11 +885,11 @@ func (ppro *PalettePro) mmttInfo() *processInfo {
 		engine.LogWarn("no mmtt executable found, looking for", "path", fullpath)
 		fullpath = ""
 	}
-	return NewProcessInfo("mmtt_"+mmtt+".exe", fullpath, "", nil)
+	return engine.NewProcessInfo("mmtt_"+mmtt+".exe", fullpath, "", nil)
 }
 
-func (ppro *PalettePro) guiInfo() *processInfo {
+func (ppro *PalettePro) guiInfo() *engine.ProcessInfo {
 	exe := "palette_gui.exe"
 	fullpath := filepath.Join(engine.PaletteDir(), "bin", "pyinstalled", exe)
-	return NewProcessInfo(exe, fullpath, "", nil)
+	return engine.NewProcessInfo(exe, fullpath, "", nil)
 }
