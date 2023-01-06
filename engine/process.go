@@ -80,6 +80,16 @@ func (pm ProcessManager) AddProcess(name string, info *ProcessInfo) {
 
 }
 
+func (pm ProcessManager) AddProcessBuiltIn(process string) {
+
+	switch process {
+	case "bidule":
+		pm.AddProcess(process, TheBidule().ProcessInfo())
+	case "resolume":
+		pm.AddProcess(process, TheResolume().ProcessInfo())
+	}
+}
+
 func (pm ProcessManager) StartRunning(process string) error {
 
 	for nm, pi := range pm.info {

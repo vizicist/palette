@@ -27,8 +27,6 @@ type PalettePro struct {
 	globalparams *engine.ParamValues
 
 	started        bool
-	resolume       *Resolume
-	bidule         *engine.Bidule
 	midiinputlayer *engine.Layer
 
 	generateVisuals bool
@@ -256,11 +254,9 @@ func (ppro *PalettePro) start(ctx *engine.PluginContext) error {
 		return fmt.Errorf("PalettePro: already started")
 	}
 	ppro.started = true
-	ppro.resolume = NewResolume()
-	ppro.bidule = engine.NewBidule()
 
-	ctx.AddProcess("resolume", ppro.resolume.ProcessInfo(ctx))
-	ctx.AddProcess("bidule", ppro.bidule.ProcessInfo())
+	ctx.AddProcessBuiltIn("resolume")
+	ctx.AddProcessBuiltIn("bidule")
 	ctx.AddProcess("gui", ppro.guiInfo())
 	ctx.AddProcess("mmtt", ppro.mmttInfo())
 
@@ -375,7 +371,7 @@ func (ppro *PalettePro) onClientRestart(ctx *engine.PluginContext, apiargs map[s
 	}
 	engine.LogInfo("ppro got clientrestart", "apipnum", apipnum)
 	for nm, layer := range ppro.layer {
-		portnum, _ := ppro.resolume.PortAndLayerNumForLayer(nm)
+		portnum, _ := engine.TheResolume().PortAndLayerNumForLayer(nm)
 		if portnum == apipnum {
 			layer.ReAlertListenersOnAllParameters()
 		}
@@ -454,13 +450,13 @@ func (ppro *PalettePro) onLayerSet(ctx *engine.PluginContext, apiargs map[string
 			engine.LogInfo("ffglport seen")
 		}
 		msg.Append(args)
-		ppro.resolume.toFreeFramePlugin(layer.Name(), msg)
+		engine.TheResolume().ToFreeFramePlugin(layer.Name(), msg)
 	}
 
 	if strings.HasPrefix(paramName, "effect.") {
 		name := strings.TrimPrefix(paramName, "effect.")
 		// Effect parameters get sent to Resolume
-		ppro.resolume.sendEffectParam(layer.Name(), name, paramValue)
+		engine.TheResolume().SendEffectParam(layer.Name(), name, paramValue)
 	}
 
 	if paramName == "sound.synth" {

@@ -16,11 +16,16 @@ type Bidule struct {
 
 const BidulePort = 3210
 
-func NewBidule() *Bidule {
-	return &Bidule{
-		client: osc.NewClient(LocalAddress, BidulePort),
-		port:   3210,
+var theBidule *Bidule
+
+func TheBidule() *Bidule {
+	if theBidule == nil {
+		theBidule = &Bidule{
+			client: osc.NewClient(LocalAddress, BidulePort),
+			port:   3210,
+		}
 	}
+	return theBidule
 }
 
 func (b *Bidule) Activate() {
