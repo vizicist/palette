@@ -328,6 +328,10 @@ func (logic *LayerLogic) generateSpriteFromPhraseElement(ctx *engine.PluginConte
 	engine.TheResolume().ToFreeFramePlugin(layer.Name(), msg)
 }
 
+// func (logic *LayerLogic) sendANO() {
+// 	logic.layer.Synth.SendANO()
+// }
+
 func (logic *LayerLogic) sendNoteOff(n *engine.NoteOn) {
 	if n == nil {
 		// Not sure why this sometimes happens

@@ -331,16 +331,6 @@ func (ctx *PluginContext) GetSynth(synthName string) *Synth {
 }
 
 /*
-func (ctx *EngineContext) sendANO() {
-	if !TheRouter().generateSound {
-		return
-	}
-	synth := ctx.pluginParams.ParamStringValue("sound.synth", defaultSynth)
-	SendANOToSynth(synth)
-}
-*/
-
-/*
 func (ctx *EngineContext) LayerApplySaved(layerName, savedName string) error {
 	saved, err := LoadSaved(savedName)
 	if err != nil {
