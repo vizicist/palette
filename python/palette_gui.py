@@ -20,7 +20,7 @@ from codenamize import codenamize
 
 import palette
 
-IsPreset = False
+FourLayers = False
 RecMode = False
 # DoAttractStuff = False
 
@@ -350,7 +350,6 @@ class ProGuiApp(tk.Tk):
 
         self.performPage.pack(side=tk.TOP,fill=tk.BOTH,expand=True)
 
-        # self.selectPage("layer")
         self.resetVisibility()
 
         # select the initial layer
@@ -423,10 +422,9 @@ class ProGuiApp(tk.Tk):
 
         self.editMode = False
         self.setFrameSizes()
-        if IsPreset and self.guiLevel == 0:
-            self.selectPage("preset")
-        else:
-            self.selectPage("layer")
+
+        # default page selection
+        self.selectPage("preset")
 
         self.placeFrames()
 
@@ -644,14 +642,28 @@ class ProGuiApp(tk.Tk):
             else:
                 self.CurrLayer.sendParamValue(name,v)
 
-    def changeAndSendValue(self,paramType,basename,newval):
-        if self.doAllLayers():
+    def changeAndSendValue(self,paramType,basename,value):
+
+        if paramType == "global":
+            self.changeGlobalValue(basename,value)
+
+        elif self.doAllLayers():
             for layer in self.Layers:
-                layer.setValue(paramType,basename,newval)
+                layer.setValue(paramType,basename,value)
                 layer.sendValue(paramType,basename)
+
         else:
-            self.CurrLayer.setValue(paramType,basename,newval)
+            self.CurrLayer.setValue(paramType,basename,value)
             self.CurrLayer.sendValue(paramType,basename)
+
+    def changeGlobalValue(self,basename,value):
+
+        palette.palette_ppro_api("set",
+            "\"name\": \"" + basename + "\"" + \
+            ", \"value\": \"" + str(value) + "\"" )
+        palette.palette_ppro_api("save",
+            "\"category\": \"" + "global" + "\"" + \
+            ", \"filename\": \"" + "_Current" + "\"")
 
     def selectorApply(self,apply,paramType):
 
@@ -761,12 +773,17 @@ class ProGuiApp(tk.Tk):
         # if self.currentMode != "attract":
         #     log("Loading","preset",fullsavedname)
 
-        if category == "preset":
+        if category == "global":
+            log("Loading","category","global","filename",filename)
+            palette.palette_ppro_api("load",
+                "\"filename\": \"" + filename + "\""
+                ", \"category\": \"" + category + "\"")
+        elif category == "preset":
             if self.guiLevel == 0 or self.allLayersSelected:
                 # in casual instrument mode, loading a preset will ignore the layer selections
                 # because in casual mode, the layer selectors aren't shown.
                 # In non-casual mode (guiLevel>0) we do this if allLayersSelected
-                log("Loading","preset",filename)
+                log("Loading","category","preset","filename",filename)
                 palette.palette_ppro_api("load",
                     "\"filename\": \"" + filename + "\""
                     ", \"category\": \"" + category + "\"")
@@ -783,7 +800,7 @@ class ProGuiApp(tk.Tk):
             self.layerLoad(layerName,category,filename)
 
     def layerLoad(self,layerName,category,filename):
-        log("layerLoad","layer",layerName,"category",category," filename",filename)
+        log("layerLoad","layer",layerName,"category",category,"filename",filename)
         palette.palette_layer_api(layerName, "load",
             "\"category\": \"" + category + "\""
             ", \"filename\": \"" + filename + "\"")
@@ -1045,7 +1062,7 @@ class ProGuiApp(tk.Tk):
             self.paramValueTypeOf[name] = self.newParamsJson[name]["valuetype"]
             self.paramsOfType["layer"][name] = self.newParamsJson[name]
 
-            if IsPreset:
+            if FourLayers:
                 # We prepend A-, B-, etc to the parameter name for quad parameters,
                 # to create entries for "preset" things
                 # in paramValueTypeOf and paramsOfType["preset"]
@@ -2605,7 +2622,7 @@ if __name__ == "__main__":
     elif nlayers == 4:
         layername = layers[0]
         layernames = layers
-        IsPreset = True
+        FourLayers = True
     else:
         log("Unexpected number of layers: ",layers)
 

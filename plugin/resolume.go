@@ -279,7 +279,7 @@ func (r *Resolume) ResolumeLayerForText() int {
 	return layernum
 }
 
-func (r *Resolume) ProcessInfo(ctx *engine.PluginContext) *processInfo {
+func (r *Resolume) ProcessInfo(ctx *engine.PluginContext) *engine.ProcessInfo {
 	fullpath := engine.ConfigValue("resolume")
 	if fullpath != "" && !ctx.FileExists(fullpath) {
 		engine.LogWarn("No Resolume found, looking for", "path", fullpath)
@@ -300,7 +300,7 @@ func (r *Resolume) ProcessInfo(ctx *engine.PluginContext) *processInfo {
 	if lastslash > 0 {
 		exe = fullpath[lastslash+1:]
 	}
-	return NewProcessInfo(exe, fullpath, "", r.Activate)
+	return engine.NewProcessInfo(exe, fullpath, "", r.Activate)
 }
 
 func (r *Resolume) Activate() {

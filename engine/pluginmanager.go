@@ -5,8 +5,6 @@ import (
 	"sync"
 )
 
-// type PluginInfo struct {
-// }
 func ThePluginManager() *PluginManager {
 	return TheEngine().PluginManager
 }

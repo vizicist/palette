@@ -25,7 +25,7 @@ var EngineExe = "palette_engine.exe"
 var EngineExeDebug = "__debug_bin.exe"
 
 func IsEngineRunning() bool {
-	return IsRunningExecutable(EngineExe) || IsRunningExecutable(EngineExeDebug)
+	return isRunningExecutable(EngineExe) || isRunningExecutable(EngineExeDebug)
 }
 
 func StartEngine() error {
@@ -35,8 +35,8 @@ func StartEngine() error {
 }
 
 func KillEngine() error {
-	err1 := KillExecutable(EngineExe)
-	err2 := KillExecutable(EngineExeDebug)
+	err1 := killExecutable(EngineExe)
+	err2 := killExecutable(EngineExeDebug)
 	if err1 != nil {
 		return err1
 	}
