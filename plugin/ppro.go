@@ -160,6 +160,12 @@ func (ppro *PalettePro) Api(ctx *engine.PluginContext, api string, apiargs map[s
 			return "", fmt.Errorf("PalettePro: Unhandled event type %s", eventName)
 		}
 
+	case "ANO":
+		for _, layer := range ppro.layer {
+			layer.Synth.SendANO()
+		}
+		return "", nil
+
 	case "clearexternalscale":
 		ppro.clearExternalScale()
 		return "", nil
@@ -697,7 +703,7 @@ func (ppro *PalettePro) presetSave(presetName string) error {
 	category := "preset"
 	path := engine.WritableFilePath(category, presetName)
 
-	engine.LogInfo("presetSave", "preset", presetName)
+	engine.LogOfType("saved", "PalettePro.presetSave", "preset", presetName)
 
 	sortedLayerNames := []string{}
 	for _, layer := range ppro.layer {
