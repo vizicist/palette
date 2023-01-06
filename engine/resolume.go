@@ -1,4 +1,4 @@
-package plugin
+package engine
 
 import (
 	"encoding/json"
@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/hypebeast/go-osc/osc"
-	"github.com/vizicist/palette/engine"
 )
 
 var ResolumePort = 7000
@@ -19,23 +18,28 @@ type Resolume struct {
 	freeframeClients map[string]*osc.Client
 }
 
+var theResolume *Resolume
+
+func TheResolume() *Resolume {
+	if theResolume == nil {
+		theResolume = &Resolume{
+			resolumeClient:   osc.NewClient(LocalAddress, ResolumePort),
+			freeframeClients: map[string]*osc.Client{},
+		}
+		err := theResolume.loadResolumeJSON()
+		if err != nil {
+			LogError(err)
+		}
+	}
+	return theResolume
+}
+
 // ResolumeJSON is an unmarshalled version of the resolume.json file
 var ResolumeJSON map[string]any
 
-func NewResolume() *Resolume {
-	r := &Resolume{
-		resolumeClient:   osc.NewClient(engine.LocalAddress, ResolumePort),
-		freeframeClients: map[string]*osc.Client{},
-	}
-	if err := r.loadResolumeJSON(); err != nil {
-		engine.LogError(err)
-	}
-	return r
-}
-
 // LoadResolumeJSON returns an unmarshalled version of the resolume.json file
 func (r *Resolume) loadResolumeJSON() error {
-	path := engine.ConfigFilePath("resolume.json")
+	path := ConfigFilePath("resolume.json")
 	bytes, err := os.ReadFile(path)
 	if err != nil {
 		return fmt.Errorf("unable to read resolume.json, err=%s", err)
@@ -60,16 +64,16 @@ func (r *Resolume) PortAndLayerNumForLayer(layerName string) (portNum, layerNum 
 	case "D":
 		return 3337, 4
 	default:
-		engine.LogError(fmt.Errorf("no port for layer %s", layerName))
+		LogError(fmt.Errorf("no port for layer %s", layerName))
 		return 0, 0
 	}
 }
 
 /*
-func (r *Resolume) ClientWithPort(portnum int) *engine.Layer {
+func (r *Resolume) ClientWithPort(portnum int) *Layer {
 	for nm, ff := range r.freeframeClients {
 		if ff.Port() == portnum {
-			return engine.GetLayer(nm)
+			return GetLayer(nm)
 		}
 	}
 	return nil
@@ -83,26 +87,26 @@ func (r *Resolume) freeframeClientFor(layerName string) *osc.Client {
 		if portNum == 0 {
 			return nil
 		}
-		ff = osc.NewClient(engine.LocalAddress, portNum)
+		ff = osc.NewClient(LocalAddress, portNum)
 		r.freeframeClients[layerName] = ff
 	}
 	return ff
 }
 
-func (r *Resolume) toFreeFramePlugin(layerName string, msg *osc.Message) {
-	engine.LogOfType("freeframe", "Resolume.toFreeframe", "layer", layerName, "msg", msg)
+func (r *Resolume) ToFreeFramePlugin(layerName string, msg *osc.Message) {
+	LogOfType("freeframe", "Resolume.toFreeframe", "layer", layerName, "msg", msg)
 	ff := r.freeframeClientFor(layerName)
 	if ff == nil {
-		engine.LogError(fmt.Errorf("no freeframe client for layer"), "layer", layerName)
+		LogError(fmt.Errorf("no freeframe client for layer"), "layer", layerName)
 		return
 	}
 	ff.Send(msg)
 }
 
-func (r *Resolume) sendEffectParam(layerName string, name string, value string) {
+func (r *Resolume) SendEffectParam(layerName string, name string, value string) {
 	portNum, layerNum := r.PortAndLayerNumForLayer(layerName)
 	if portNum == 0 {
-		engine.LogError(fmt.Errorf("no such layer"), "name", layerName)
+		LogError(fmt.Errorf("no such layer"), "name", layerName)
 		return
 	}
 	// Effect parameters that have ":" in their name are plugin parameters
@@ -114,7 +118,7 @@ func (r *Resolume) sendEffectParam(layerName string, name string, value string) 
 	} else {
 		onoff, err := strconv.ParseBool(value)
 		if err != nil {
-			engine.LogError(err)
+			LogError(err)
 			onoff = false
 		}
 		r.sendPadOneEffectOnOff(layerNum, name, onoff)
@@ -125,22 +129,22 @@ func (r *Resolume) sendPadOneEffectParam(layerNum int, effectName string, paramN
 	fullName := "effect" + "." + effectName + ":" + paramName
 	paramsMap, realEffectName, realEffectNum, err := r.getEffectMap(effectName, "params")
 	if err != nil {
-		engine.LogError(err)
+		LogError(err)
 		return
 	}
 	if paramsMap == nil {
-		engine.LogWarn("No params value for", "effecdt", effectName)
+		LogWarn("No params value for", "effecdt", effectName)
 		return
 	}
 	oneParam, ok := paramsMap[paramName]
 	if !ok {
-		engine.LogWarn("No params value for", "param", paramName, "effect", effectName)
+		LogWarn("No params value for", "param", paramName, "effect", effectName)
 		return
 	}
 
-	oneDef, ok := engine.ParamDefs[fullName]
+	oneDef, ok := ParamDefs[fullName]
 	if !ok {
-		engine.LogWarn("No paramdef value for", "param", paramName, "effect", effectName)
+		LogWarn("No paramdef value for", "param", paramName, "effect", effectName)
 		return
 	}
 
@@ -155,18 +159,18 @@ func (r *Resolume) sendPadOneEffectParam(layerNum int, effectName string, paramN
 
 	switch oneDef.TypedParamDef.(type) {
 
-	case engine.ParamDefInt:
+	case ParamDefInt:
 		valint, err := strconv.Atoi(value)
 		if err != nil {
-			engine.LogError(err)
+			LogError(err)
 			valint = 0
 		}
 		msg.Append(int32(valint))
 
-	case engine.ParamDefBool:
+	case ParamDefBool:
 		valbool, err := strconv.ParseBool(value)
 		if err != nil {
-			engine.LogError(err)
+			LogError(err)
 			valbool = false
 		}
 		onoffValue := 0
@@ -175,21 +179,21 @@ func (r *Resolume) sendPadOneEffectParam(layerNum int, effectName string, paramN
 		}
 		msg.Append(int32(onoffValue))
 
-	case engine.ParamDefString:
+	case ParamDefString:
 		valstr := value
 		msg.Append(valstr)
 
-	case engine.ParamDefFloat:
+	case ParamDefFloat:
 		var valfloat float32
-		valfloat, err := engine.ParseFloat32(value, resEffectName)
+		valfloat, err := ParseFloat32(value, resEffectName)
 		if err != nil {
-			engine.LogError(err)
+			LogError(err)
 			valfloat = 0.0
 		}
 		msg.Append(float32(valfloat))
 
 	default:
-		engine.LogWarn("SetParamValueWithString: unknown type of ParamDef for", "name", fullName)
+		LogWarn("SetParamValueWithString: unknown type of ParamDef for", "name", fullName)
 		return
 	}
 
@@ -197,7 +201,7 @@ func (r *Resolume) sendPadOneEffectParam(layerNum int, effectName string, paramN
 }
 
 func (r *Resolume) toResolume(msg *osc.Message) {
-	engine.LogOfType("resolume", "Resolume.toResolume", "msg", msg)
+	LogOfType("resolume", "Resolume.toResolume", "msg", msg)
 	r.resolumeClient.Send(msg)
 }
 
@@ -211,23 +215,23 @@ func (r *Resolume) sendPadOneEffectOnOff(layerNum int, effectName string, onoff 
 
 	onoffMap, realEffectName, realEffectNum, err := r.getEffectMap(effectName, mapType)
 	if err != nil {
-		engine.LogError(err)
+		LogError(err)
 		return
 	}
 
 	if onoffMap == nil {
-		engine.LogWarn("No onoffMap value for", "effect", effectName, "maptype", mapType, effectName)
+		LogWarn("No onoffMap value for", "effect", effectName, "maptype", mapType, effectName)
 		return
 	}
 
 	onoffAddr, ok := onoffMap["addr"]
 	if !ok {
-		engine.LogWarn("No addr value in onoff", "effect", effectName)
+		LogWarn("No addr value in onoff", "effect", effectName)
 		return
 	}
 	onoffArg, ok := onoffMap["arg"]
 	if !ok {
-		engine.LogWarn("No arg valuei in onoff for", "effect", effectName)
+		LogWarn("No arg valuei in onoff for", "effect", effectName)
 		return
 	}
 	addr := onoffAddr.(string)
@@ -270,27 +274,27 @@ func (r *Resolume) showText(text string) {
 
 func (r *Resolume) ResolumeLayerForText() int {
 	defLayer := "5"
-	s := engine.ConfigStringWithDefault("textlayer", defLayer)
+	s := ConfigStringWithDefault("textlayer", defLayer)
 	layernum, err := strconv.Atoi(s)
 	if err != nil {
-		engine.LogError(err)
+		LogError(err)
 		layernum, _ = strconv.Atoi(defLayer)
 	}
 	return layernum
 }
 
-func (r *Resolume) ProcessInfo(ctx *engine.PluginContext) *engine.ProcessInfo {
-	fullpath := engine.ConfigValue("resolume")
-	if fullpath != "" && !ctx.FileExists(fullpath) {
-		engine.LogWarn("No Resolume found, looking for", "path", fullpath)
+func (r *Resolume) ProcessInfo() *ProcessInfo {
+	fullpath := ConfigValue("resolume")
+	if fullpath != "" && !FileExists(fullpath) {
+		LogWarn("No Resolume found, looking for", "path", fullpath)
 		return nil
 	}
 	if fullpath == "" {
 		fullpath = "C:\\Program Files\\Resolume Avenue\\Avenue.exe"
-		if !ctx.FileExists(fullpath) {
+		if !FileExists(fullpath) {
 			fullpath = "C:\\Program Files\\Resolume Arena\\Arena.exe"
-			if !ctx.FileExists(fullpath) {
-				engine.LogWarn("Resolume not found in default locations")
+			if !FileExists(fullpath) {
+				LogWarn("Resolume not found in default locations")
 				return nil
 			}
 		}
@@ -300,7 +304,7 @@ func (r *Resolume) ProcessInfo(ctx *engine.PluginContext) *engine.ProcessInfo {
 	if lastslash > 0 {
 		exe = fullpath[lastslash+1:]
 	}
-	return engine.NewProcessInfo(exe, fullpath, "", r.Activate)
+	return NewProcessInfo(exe, fullpath, "", r.Activate)
 }
 
 func (r *Resolume) Activate() {
@@ -312,10 +316,10 @@ func (r *Resolume) Activate() {
 	for i := 0; i < 4; i++ {
 		time.Sleep(5 * time.Second)
 
-		layerNames := engine.LayerNames()
+		layerNames := LayerNames()
 		for _, pad := range layerNames {
 			_, layerNum := r.PortAndLayerNumForLayer(string(pad))
-			engine.LogOfType("resolume", "Activating Resolume", "layer", layerNum, "clipnum", clipnum)
+			LogOfType("resolume", "Activating Resolume", "layer", layerNum, "clipnum", clipnum)
 			r.connectClip(layerNum, clipnum)
 		}
 		if textLayer >= 1 {
@@ -381,7 +385,7 @@ func (r *Resolume) getEffectMap(effectName string, mapType string) (map[string]a
 
 func addLayerAndClipNums(addr string, layerNum int, clipNum int) string {
 	if addr[0] != '/' {
-		engine.LogWarn("addr in resolume.json doesn't start with /", "addr", addr)
+		LogWarn("addr in resolume.json doesn't start with /", "addr", addr)
 		addr = "/" + addr
 	}
 	addr = fmt.Sprintf("/composition/layers/%d/clips/%d/video/effects%s", layerNum, clipNum, addr)
