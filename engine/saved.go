@@ -32,7 +32,7 @@ func GetSaved(name string) *OldSaved {
 */
 
 // Currently, no errors are ever returned, but log messages are generated.
-func (params *ParamValues) ApplyParamsMap(category string, paramsmap map[string]any) {
+func (params *ParamValues) ApplyParamsTo(category string, paramsmap map[string]any) {
 
 	for fullname, ival := range paramsmap {
 		val, okval := ival.(string)

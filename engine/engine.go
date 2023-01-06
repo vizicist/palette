@@ -14,6 +14,7 @@ type Engine struct {
 	Router        *Router
 	Scheduler     *Scheduler
 	PluginManager *PluginManager
+	ProcessManager *ProcessManager
 	// CursorManager *CursorManager
 	done          chan bool
 }
@@ -35,7 +36,7 @@ func TheRouter() *Router {
 func newEngine() *Engine {
 	e := &Engine{}
 	e.initDebug()
-	// e.ProcessManager = NewProcessManager()
+	e.ProcessManager = NewProcessManager()
 	e.Router = NewRouter()
 	e.Scheduler = NewScheduler()
 	e.PluginManager = NewPluginManager()
