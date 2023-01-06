@@ -11,7 +11,7 @@ import (
 	"syscall"
 )
 
-func KillExecutable(executable string) error {
+func killExecutable(executable string) error {
 	// os.Stderr.WriteString("KillExecutable " + executable + "\n")
 	LogInfo("KillExecutable", "executable", executable)
 	// NOTE: do NOT use taskkill.exe instead of taskkill, it doesn't work.
@@ -67,7 +67,7 @@ func (writer *gatherWriter) Write(bytes []byte) (int, error) {
 	return len(bytes), nil
 }
 
-func IsRunningExecutable(exe string) bool {
+func isRunningExecutable(exe string) bool {
 	// os.Stdout.WriteString("IsRunningExecutable exe=" + exe + "\n")
 	stdout := &gatherWriter{}
 	stderr := &NoWriter{}

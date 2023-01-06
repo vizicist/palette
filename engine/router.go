@@ -490,8 +490,5 @@ func argAsString(msg *osc.Message, index int) (s string, err error) {
 }
 
 // This silliness is to avoid unused function errors from go-staticcheck
-var rr *Router
-
-// var _ = rr.recordPadAPI
 var _ = argAsInt
 var _ = argAsFloat32
