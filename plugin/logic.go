@@ -125,7 +125,7 @@ func (logic *LayerLogic) generateVisualsFromCursor(ce engine.CursorEvent) {
 	msg.Append(float32(ce.X))
 	msg.Append(float32(ce.Y))
 	msg.Append(float32(ce.Z))
-	logic.ppro.resolume.toFreeFramePlugin(logic.layer.Name(), msg)
+	engine.TheResolume().ToFreeFramePlugin(logic.layer.Name(), msg)
 }
 
 func (logic *LayerLogic) generateSoundFromCursor(ctx *engine.PluginContext, ce engine.CursorEvent) {
@@ -212,7 +212,7 @@ func (logic *LayerLogic) generateSoundFromCursor(ctx *engine.PluginContext, ce e
 
 func (logic *LayerLogic) clearGraphics() {
 	// send an OSC message to Resolume
-	logic.ppro.resolume.toFreeFramePlugin(logic.layer.Name(), osc.NewMessage("/clear"))
+	engine.TheResolume().ToFreeFramePlugin(logic.layer.Name(), osc.NewMessage("/clear"))
 }
 
 func (logic *LayerLogic) nextQuant(t engine.Clicks, q engine.Clicks) engine.Clicks {
@@ -325,7 +325,7 @@ func (logic *LayerLogic) generateSpriteFromPhraseElement(ctx *engine.PluginConte
 	// XXX - Set sprite ID to pitch, is this right?
 	msg.Append(fmt.Sprintf("%d@localhost", pitch))
 
-	logic.ppro.resolume.toFreeFramePlugin(layer.Name(), msg)
+	engine.TheResolume().ToFreeFramePlugin(layer.Name(), msg)
 }
 
 func (logic *LayerLogic) sendNoteOff(n *engine.NoteOn) {
