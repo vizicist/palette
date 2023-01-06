@@ -117,17 +117,7 @@ func NewSynth(port string, channel int, bank int, program int) *Synth {
 }
 
 // SendANO sends all-notes-off
-func SendANOToSynth(synthName string) {
-	synth, ok := Synths[synthName]
-	if !ok {
-		LogWarn("SendANOToSynth: no such", "synth", synthName)
-		return
-	}
-	if synth == nil {
-		// We don't complain, we assume the inability to open the
-		// synth named synthName has already been logged.
-		return
-	}
+func (synth *Synth) SendANO() {
 	mc := MIDI.GetMidiChannelOutput(synth.portchannel)
 	if mc == nil {
 		// Assumes errs are logged in GetMidiChannelOutput
