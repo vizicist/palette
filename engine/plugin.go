@@ -70,6 +70,10 @@ func (ctx *PluginContext) AddProcess(process string, info *ProcessInfo) {
 	TheEngine().ProcessManager.AddProcess(process, info)
 }
 
+func (ctx *PluginContext) AddProcessBuiltIn(process string) {
+	TheEngine().ProcessManager.AddProcessBuiltIn(process)
+}
+
 func (ctx *PluginContext) CheckAutostartProcesses() {
 	TheEngine().ProcessManager.CheckAutostartProcesses()
 }
