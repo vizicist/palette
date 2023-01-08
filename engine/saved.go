@@ -68,6 +68,8 @@ func SavedNameSplit(saved string) (string, string) {
 }
 
 // SavedMap returns a map of saved names to file paths
+// The saved names are of the form "category.name".
+// If wantCategory is "*", all categories are returned
 func SavedMap(wantCategory string) (map[string]string, error) {
 
 	result := make(map[string]string, 0)
@@ -112,7 +114,7 @@ func SavedMap(wantCategory string) (map[string]string, error) {
 	return result, nil
 }
 
-// SavedArray returns a list of saved filenames, category can be "*"
+// SavedArray returns a list of saved filenames for a particular category.
 func SavedFileList(category string) ([]string, error) {
 
 	savedMap, err := SavedMap(category)
@@ -121,6 +123,7 @@ func SavedFileList(category string) ([]string, error) {
 	}
 	filelist := make([]string, 0)
 	for name := range savedMap {
+		name = strings.TrimPrefix(name, category+".")
 		filelist = append(filelist, name)
 	}
 	return filelist, nil
