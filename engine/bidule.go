@@ -22,22 +22,20 @@ func TheBidule() *Bidule {
 	if theBidule == nil {
 		theBidule = &Bidule{
 			client: osc.NewClient(LocalAddress, BidulePort),
-			port:   3210,
+			port:   BidulePort,
 		}
 	}
 	return theBidule
 }
 
 func (b *Bidule) Activate() {
-	addr := "127.0.0.1"
-	bidulePort := 3210
-	biduleClient := osc.NewClient(addr, bidulePort)
 	msg := osc.NewMessage("/play")
 	msg.Append(int32(1)) // turn it on
 	for i := 0; i < 10; i++ {
 		dt := 5 * time.Second
 		time.Sleep(dt)
-		_ = biduleClient.Send(msg)
+		LogInfo("Bidule.Activate is sending", "msg", msg)
+		_ = b.client.Send(msg)
 	}
 }
 
@@ -71,10 +69,12 @@ func (b *Bidule) Reset() {
 
 	msg := osc.NewMessage("/play")
 	msg.Append(int32(0))
+	LogInfo("Bidule.Reset is sending", "msg", msg)
 	b.client.Send(msg)
 	// Give Bidule time to react
 	time.Sleep(400 * time.Millisecond)
 	msg = osc.NewMessage("/play")
 	msg.Append(int32(1))
+	LogInfo("Bidule.Reset is sending", "msg", msg)
 	b.client.Send(msg)
 }

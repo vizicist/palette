@@ -54,6 +54,10 @@ func (ce CursorEvent) Format(f fmt.State, c rune) {
 	f.Write([]byte(s))
 }
 
+func (ce CursorEvent) IsInternal() bool {
+	return strings.Index(ce.Cid, "internal") >= 0
+}
+
 func (ce CursorEvent) Source() string {
 	if ce.Cid == "" {
 		LogWarn("CursorEvent.Source: empty cid", "ce", ce)
@@ -123,9 +127,9 @@ func (cm *CursorManager) HandleCursorEvent(ce CursorEvent) {
 	}
 }
 
-func (cm *CursorManager) generateCursorGestureesture(cid string, noteDuration time.Duration, x0, y0, z0, x1, y1, z1 float32) {
-	LogInfo("generateCursorGestureesture: start")
+func (cm *CursorManager) generateCursorGesture(cid string, noteDuration time.Duration, x0, y0, z0, x1, y1, z1 float32) {
 
+	LogOfType("cursor", "generateCursorGesture start", "cid", cid, "noteDuration", noteDuration, "x0", x0, "y0", y0, "z0", z0, "x1", x1, "y1", y1, "z1", z1)
 	ce := CursorEvent{
 		Cid:   cid,
 		Click: CurrentClick(),
@@ -137,18 +141,13 @@ func (cm *CursorManager) generateCursorGestureesture(cid string, noteDuration ti
 		Area: 0,
 	}
 	cm.HandleCursorEvent(ce)
-	LogInfo("generateCursorGestureesture", "ddu", "down", "ce", ce)
-
-	// secs := float32(3.0)
-	secs := float32(noteDuration)
-	dt := time.Duration(int(secs * float32(time.Second)))
-	time.Sleep(dt)
+	time.Sleep(noteDuration)
 	ce.Ddu = "up"
 	ce.X = x1
 	ce.Y = y1
 	ce.Z = z1
 	cm.HandleCursorEvent(ce)
-	LogInfo("generateCursorGestureesture end", "ddu", "up", "ce", ce)
+	LogOfType("cursor", "generateCursorGesture end", "cid", cid, "noteDuration", noteDuration, "x0", x0, "y0", y0, "z0", z0, "x1", x1, "y1", y1, "z1", z1)
 }
 
 func (cm *CursorManager) getCursorFor(cid string) (*CursorState, bool) {
@@ -192,8 +191,7 @@ func (cm *CursorManager) handleDownDragUp(ce CursorEvent) {
 	LogOfType("cursor", "CursorManager.handleDownDragUp", "ce", ce)
 
 	if ce.Ddu == "up" {
-		LogOfType("cursor", "handleDownDragUp up is deleting cid", "cid", ce.Cid, "ddu", ce.Ddu)
-
+		// LogOfType("cursor", "handleDownDragUp up is deleting cid", "cid", ce.Cid, "ddu", ce.Ddu)
 		cm.cursorsMutex.Lock()
 		delete(cm.cursors, ce.Cid)
 		cm.cursorsMutex.Unlock()

@@ -479,7 +479,7 @@ func (ctx *PluginContext) ExecuteAPI(api string, args map[string]string, rawargs
 */
 
 func (ctx *PluginContext) GenerateCursorGesture(cid string, noteDuration time.Duration, x0, y0, z0, x1, y1, z1 float32) {
-	TheRouter().cursorManager.generateCursorGestureesture(cid, noteDuration, x0, y0, z0, x1, y1, z1)
+	TheRouter().cursorManager.generateCursorGesture(cid, noteDuration, x0, y0, z0, x1, y1, z1)
 }
 
 func (ctx *PluginContext) GetCursorState(cid string) *CursorState {

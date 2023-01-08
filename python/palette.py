@@ -173,8 +173,21 @@ def palette_layer_api(layer, api, params=""):
         log("palette_layer_api: no layer specified?")
     return palette_api("layer."+api,add_to_params(params,"\"layer\":\""+layer+"\""))
 
+def palette_layer_set(layer, name, value):
+    if layer == "":
+        log("palette_layer_set: no layer specified?")
+    return palette_api("layer.set",
+            "\"layer\": \"" + layer + "\"" + \
+            ", \"name\": \"" + name + "\"" + \
+            ", \"value\": \"" + str(value) + "\"")
+
 def palette_ppro_api(api, params=""):
     return palette_api("ppro."+api,params)
+
+def palette_ppro_set(name, value):
+    return palette_api("ppro.set",
+            "\"name\": \"" + name + "\"" + \
+            ", \"value\": \"" + str(value) + "\"")
 
 def sprint(*args, end='', **kwargs):
     sio = io.StringIO()

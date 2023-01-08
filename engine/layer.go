@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+
+	"github.com/hypebeast/go-osc/osc"
 )
 
 type Layer struct {
@@ -77,7 +79,7 @@ func ApplyToAllLayers(f func(layer *Layer)) {
 func (layer *Layer) SetDefaultValues() {
 	for nm, d := range ParamDefs {
 		if IsPerLayerParam(nm) {
-			err := layer.Set(nm, d.Init)
+			err := layer.SetNoAlert(nm, d.Init)
 			// err := layer.params.SetParamValueWithString(nm, d.Init)
 			if err != nil {
 				LogError(err)
@@ -90,21 +92,15 @@ func (layer *Layer) MIDIChannel() uint8 {
 	return layer.Synth.Channel()
 }
 
-func (layer *Layer) ReAlertListenersOnAllParameters() {
+// func (layer *Layer) ReAlertListenersOnAllParameters() {
+// 	layer.AlertListenersToRefreshAll()
+// }
 
-	params := layer.params
-	params.DoForAllParams(func(paramName string, paramValue ParamValue) {
-		if !IsPerLayerParam(paramName) {
-			LogWarn("ResendAllParameters: skipping param %s", paramName)
-			return
-		}
-		valstr, err := params.paramValueAsString(paramName)
-		if err != nil {
-			LogError(err)
-			return
-		}
-		layer.AlertListenersOfSet(paramName, valstr)
-	})
+func (layer *Layer) RefreshAllIfPortnumMatches(ffglportnum int) {
+	portnum, _ := TheResolume().PortAndLayerNumForLayer(layer.name)
+	if portnum == ffglportnum {
+		layer.AlertListenersToRefreshAll()
+	}
 }
 
 func (layer *Layer) AlertListenersOfSet(paramName string, paramValue string) {
@@ -112,9 +108,21 @@ func (layer *Layer) AlertListenersOfSet(paramName string, paramValue string) {
 	LogOfType("listeners", "AlertListenersOf", "param", paramName, "value", paramValue, "layer", layer.Name())
 	for _, listener := range layer.listeners {
 		args := map[string]string{
-			"event": "layerset",
+			"event": "notification_of_layer_set",
 			"name":  paramName,
 			"value": paramValue,
+			"layer": layer.Name(),
+		}
+		listener.api(listener, "event", args)
+	}
+}
+
+func (layer *Layer) AlertListenersToRefreshAll() {
+
+	LogOfType("listeners", "AlertListenersToRefreshAll", "layer", layer.Name())
+	for _, listener := range layer.listeners {
+		args := map[string]string{
+			"event": "notification_of_layer_refresh_all",
 			"layer": layer.Name(),
 		}
 		listener.api(listener, "event", args)
@@ -181,18 +189,19 @@ func (layer *Layer) Api(api string, apiargs map[string]string) (string, error) {
 		if err != nil {
 			return "", fmt.Errorf("executeLayerAPI: err=%s", err)
 		}
-		err = layer.Set(name, value)
+		err = layer.SetAndAlert(name, value)
 		layer.SaveCurrent()
 		return "", err
 
 	case "setparams":
 		var err error
 		for name, value := range apiargs {
-			e := layer.Set(name, value)
+			e := layer.SetNoAlert(name, value)
 			if e != nil {
 				err = e
 			}
 		}
+		layer.AlertListenersToRefreshAll()
 		layer.SaveCurrent()
 		return "", err
 
@@ -202,6 +211,11 @@ func (layer *Layer) Api(api string, apiargs map[string]string) (string, error) {
 			return "", fmt.Errorf("executeLayerAPI: missing name argument")
 		}
 		return layer.Get(name), nil
+
+	case "clear":
+		layer.clearGraphics()
+
+		return "", nil
 
 	default:
 		// ignore errors on these for the moment
@@ -214,16 +228,28 @@ func (layer *Layer) Api(api string, apiargs map[string]string) (string, error) {
 	}
 }
 
-func (layer *Layer) Set(paramName string, paramValue string) error {
+func (layer *Layer) SetNoAlert(paramName string, paramValue string) error {
+	return layer.set(paramName, paramValue, false)
+}
+
+func (layer *Layer) SetAndAlert(paramName string, paramValue string) error {
+	return layer.set(paramName, paramValue, true)
+}
+
+func (layer *Layer) set(paramName string, paramValue string, alert bool) error {
 
 	if !IsPerLayerParam(paramName) {
-		return fmt.Errorf("Layer.Set: not a per-layer param")
+		err := fmt.Errorf("Layer.Set: not per-layer param=%s", paramName)
+		LogError(err)
+		return err
 	}
 	err := layer.params.Set(paramName, paramValue)
 	if err != nil {
 		return err
 	}
-	layer.AlertListenersOfSet(paramName, paramValue)
+	if alert {
+		layer.AlertListenersOfSet(paramName, paramValue)
+	}
 	return nil
 }
 
@@ -320,7 +346,7 @@ func (layer *Layer) ApplyPresetTo(paramsmap map[string]any) error {
 		if !ok {
 			return fmt.Errorf("value of name=%s isn't a string", fullParamName)
 		}
-		err := layer.Set(paramName, value)
+		err := layer.SetNoAlert(paramName, value)
 		if err != nil {
 			LogWarn("applyPresetSaved", "name", paramName, "err", err)
 			// Don't fail completely on individual failures,
@@ -341,7 +367,7 @@ func (layer *Layer) ApplyPresetTo(paramsmap map[string]any) error {
 		_, found := paramsmap[layerParamName]
 		if !found {
 			init := def.Init
-			err := layer.Set(paramName, init)
+			err := layer.SetNoAlert(paramName, init)
 			if err != nil {
 				// a hack to eliminate errors on a parameter that still exists somewhere
 				LogWarn("applyPresetSaved", "nm", paramName, "err", err)
@@ -350,6 +376,8 @@ func (layer *Layer) ApplyPresetTo(paramsmap map[string]any) error {
 			}
 		}
 	}
+
+	// layer.AlertListenersToRefreshAll()
 
 	return nil
 }
@@ -406,7 +434,7 @@ func (layer *Layer) Load(category string, filename string) error {
 		_, found := paramsmap[paramName]
 		if !found {
 			paramValue := def.Init
-			err := layer.Set(paramName, paramValue)
+			err := layer.SetNoAlert(paramName, paramValue)
 			// err := params.Set(paramName, paramValue)
 			if err != nil {
 				LogWarn("layer.Set error", "saved", paramName, "err", err)
@@ -414,10 +442,11 @@ func (layer *Layer) Load(category string, filename string) error {
 			}
 		}
 	}
-	// For anything that was loaded, alert the listeners
-	for paramName := range paramsmap {
-		paramValue := layer.params.Get(paramName)
-		layer.AlertListenersOfSet(paramName, paramValue)
-	}
+	layer.AlertListenersToRefreshAll()
 	return nil
+}
+
+func (layer *Layer) clearGraphics() {
+	// send an OSC message to Resolume
+	TheResolume().ToFreeFramePlugin(layer.Name(), osc.NewMessage("/clear"))
 }

@@ -14,8 +14,6 @@ import (
 	"github.com/vizicist/palette/engine"
 )
 
-var AliveOutputPort = 3331
-
 type PalettePro struct {
 
 	// Per-layer things
@@ -40,23 +38,24 @@ type PalettePro struct {
 	MIDIQuantized    bool
 	TransposePitch   int
 	externalScale    *engine.Scale
+	nextCursorNum    int
 
-	attractModeIsOn        bool
-	lastAttractCommand     time.Time
-	lastAttractGestureTime time.Time
-	lastAttractRandTime    time.Time
-	attractGestureDuration time.Duration
-	attractPresetDuration  time.Duration
+	attractModeIsOn         bool
+	lastAttractModeChange   time.Time
+	lastAttractGestureTime  time.Time
+	lastAttractPresetChange time.Time
+
+	// parameters
+	attractGestureInterval float64
+	attractPresetInterval  float64
 	attractPreset          string
-	attractClient          *osc.Client
-	lastAttractChange      float64
-	lastAttractCheck       float64
-	attractCheckSecs       float64
-	attractIdleSecs        float64
-	aliveSecs              float64
-	lastAlive              float64
-	lastProcessCheck       float64
-	processCheckSecs       float64
+
+	lastAttractCheck time.Time
+	lastProcessCheck time.Time
+
+	attractCheckSecs float64
+	attractIdleSecs  float64
+	processCheckSecs float64
 
 	transposeAuto   bool
 	transposeNext   engine.Clicks
@@ -66,7 +65,6 @@ type PalettePro struct {
 }
 
 func init() {
-	transposebeats := engine.Clicks(engine.ConfigIntWithDefault("transposebeats", 48))
 	ppro := &PalettePro{
 		layer:        map[string]*engine.Layer{},
 		layerLogic:   map[string]*LayerLogic{},
@@ -74,46 +72,28 @@ func init() {
 		globalparams: engine.NewParamValues(),
 
 		attractModeIsOn: false,
-		generateVisuals: engine.ConfigBoolWithDefault("generatevisuals", true),
-		generateSound:   engine.ConfigBoolWithDefault("generatesound", true),
+		generateVisuals: true,
+		generateSound:   true,
 
-		lastAttractCommand:     time.Time{},
-		lastAttractGestureTime: time.Time{},
-		lastAttractRandTime:    time.Time{},
-		attractGestureDuration: 0,
-		attractPresetDuration:  0,
+		lastAttractModeChange:   time.Now(),
+		lastAttractGestureTime:  time.Now(),
+		lastAttractPresetChange: time.Now(),
+		lastAttractCheck:        time.Now(),
+		lastProcessCheck:        time.Now(),
+
+		attractGestureInterval: 0,
+		attractPresetInterval:  0,
 		attractPreset:          "",
-		attractClient:          &osc.Client{},
-		lastAttractChange:      0,
 		attractCheckSecs:       0,
-		lastAttractCheck:       0,
-		attractIdleSecs:        0,
+		attractIdleSecs:        0, // default is no attract mode
 
-		aliveSecs:        float64(engine.ConfigFloatWithDefault("alivesecs", 5)),
-		lastAlive:        0,
-		lastProcessCheck: 0,
 		processCheckSecs: 0,
 
-		transposeAuto:   engine.ConfigBoolWithDefault("transposeauto", true),
-		transposeNext:   transposebeats * engine.OneBeat,
-		transposeClicks: transposebeats,
+		transposeAuto:   true,
+		transposeNext:   0,
+		transposeClicks: 0,
 		transposeIndex:  0,
 		transposeValues: []int{0, -2, 3, -5},
-	}
-	ppro.clearExternalScale()
-	for nm, pd := range engine.ParamDefs {
-		if pd.Category == "misc" {
-			err := ppro.miscparams.SetParamValueWithString(nm, pd.Init)
-			if err != nil {
-				engine.LogError(err)
-			}
-		}
-		if pd.Category == "global" {
-			err := ppro.globalparams.SetParamValueWithString(nm, pd.Init)
-			if err != nil {
-				engine.LogError(err)
-			}
-		}
 	}
 	engine.RegisterPlugin("ppro", ppro.Api)
 }
@@ -130,7 +110,7 @@ func (ppro *PalettePro) Api(ctx *engine.PluginContext, api string, apiargs map[s
 		return "", ctx.StopRunning("all")
 
 	case "set":
-		return ppro.onSet(apiargs)
+		return ppro.onSet(ctx, apiargs)
 
 	case "get":
 		return ppro.onGet(apiargs)
@@ -152,10 +132,14 @@ func (ppro *PalettePro) Api(ctx *engine.PluginContext, api string, apiargs map[s
 			return ppro.onCursorEvent(ctx, apiargs)
 		case "clientrestart":
 			return ppro.onClientRestart(ctx, apiargs)
-		case "layerset":
+		case "notification_of_layer_set":
 			return ppro.onLayerSet(ctx, apiargs)
+		case "notification_of_layer_refresh_all":
+			return ppro.onLayerRefreshAll(ctx, apiargs)
 		case "presetsave":
-			return ppro.onPresetSave()
+			// Events from listeners in the Layers
+			// will trigger saving of the entire Preset
+			return "", ppro.presetSave("_Current")
 		default:
 			return "", fmt.Errorf("PalettePro: Unhandled event type %s", eventName)
 		}
@@ -186,7 +170,8 @@ func (ppro *PalettePro) Api(ctx *engine.PluginContext, api string, apiargs map[s
 		if !oksaved {
 			return "", fmt.Errorf("missing filename parameter")
 		}
-		return "", ppro.Load(category, filename)
+		ppro.disableAttractMode()
+		return "", ppro.Load(ctx, category, filename)
 
 	case "save":
 		category, oksaved := apiargs["category"]
@@ -215,13 +200,9 @@ func (ppro *PalettePro) Api(ctx *engine.PluginContext, api string, apiargs map[s
 		}
 		return "", ctx.StopRunning(process)
 
-	case "nextalive":
-		// acts like a timer, but it could wait for
-		// some event if necessary
-		time.Sleep(1 * time.Second)
+	case "status":
 		result = engine.JsonObject(
-			"event", "alive",
-			"seconds", fmt.Sprintf("%f", ctx.Uptime()),
+			"uptime", fmt.Sprintf("%f", ctx.Uptime()),
 			"attractmode", fmt.Sprintf("%v", ppro.attractModeIsOn),
 		)
 		return result, nil
@@ -249,8 +230,8 @@ func (ppro *PalettePro) Api(ctx *engine.PluginContext, api string, apiargs map[s
 		return "", nil
 
 	default:
-		engine.LogWarn("Pro.ExecuteAPI api is not recognized\n", "api", api)
-		return "", fmt.Errorf("Router.ExecuteSavedAPI unrecognized api=%s", api)
+		engine.LogWarn("PalettePro.ExecuteAPI api is not recognized\n", "api", api)
+		return "", fmt.Errorf("PalettePro.Api unrecognized api=%s", api)
 	}
 }
 
@@ -260,6 +241,30 @@ func (ppro *PalettePro) start(ctx *engine.PluginContext) error {
 		return fmt.Errorf("PalettePro: already started")
 	}
 	ppro.started = true
+
+	ppro.clearExternalScale()
+	for nm, pd := range engine.ParamDefs {
+		if pd.Category == "misc" {
+			err := ppro.miscparams.SetParamValueWithString(nm, pd.Init)
+			if err != nil {
+				engine.LogError(err)
+			}
+		}
+		if pd.Category == "global" {
+			err := ppro.globalparams.SetParamValueWithString(nm, pd.Init)
+			if err != nil {
+				engine.LogError(err)
+			}
+		}
+	}
+
+	transposebeats := engine.Clicks(engine.ConfigIntWithDefault("transposebeats", 48))
+	ppro.transposeNext = transposebeats * engine.OneBeat
+	ppro.transposeClicks = transposebeats
+
+	ppro.generateVisuals = engine.ConfigBoolWithDefault("generatevisuals", true)
+	ppro.generateSound = engine.ConfigBoolWithDefault("generatesound", true)
+	ppro.transposeAuto = engine.ConfigBoolWithDefault("transposeauto", true)
 
 	ctx.AddProcessBuiltIn("resolume")
 	ctx.AddProcessBuiltIn("bidule")
@@ -273,21 +278,18 @@ func (ppro *PalettePro) start(ctx *engine.PluginContext) error {
 	_ = ppro.addLayer(ctx, "C")
 	_ = ppro.addLayer(ctx, "D")
 
-	ppro.Load("global", "_Current")
-	ppro.Load("preset", "_Current")
+	ppro.Load(ctx, "global", "_Current")
+	ppro.Load(ctx, "preset", "_Current")
 
 	// Don't start checking processes right away, after killing them on a restart,
 	// they may still be running for a bit
-	ppro.processCheckSecs = float64(engine.ConfigFloatWithDefault("processchecksecs", 60))
+	ppro.processCheckSecs = engine.ConfigFloatWithDefault("processchecksecs", 60)
 
-	ppro.attractCheckSecs = float64(engine.ConfigFloatWithDefault("attractchecksecs", 2))
-	ppro.attractIdleSecs = float64(engine.ConfigFloatWithDefault("attractidlesecs", 0))
+	ppro.attractCheckSecs = engine.ConfigFloatWithDefault("attractchecksecs", 2)
+	ppro.attractIdleSecs = engine.ConfigFloatWithDefault("attractidlesecs", 0)
 
-	secs1 := engine.ConfigFloatWithDefault("attractpresetduration", 30)
-	ppro.attractPresetDuration = time.Duration(int(secs1 * float32(time.Second)))
-
-	secs := engine.ConfigFloatWithDefault("attractgestureduration", 0.5)
-	ppro.attractGestureDuration = time.Duration(int(secs * float32(time.Second)))
+	ppro.attractPresetInterval = engine.ConfigFloatWithDefault("attractpresetinterval", 30)
+	ppro.attractGestureInterval = engine.ConfigFloatWithDefault("attractgestureinterval", 0.5)
 
 	ppro.attractPreset = engine.ConfigStringWithDefault("attractpreset", "random")
 
@@ -332,12 +334,8 @@ func (ppro *PalettePro) onCursorEvent(ctx *engine.PluginContext, apiargs map[str
 	}
 
 	// Any non-internal cursor will turn attract mode off.
-	if ce.Source() != "internal" {
-		if time.Since(ppro.lastAttractCommand) > time.Second {
-			engine.LogInfo("PalettePro: shouold be turning attract mode OFF")
-			ppro.lastAttractCommand = time.Now()
-		}
-
+	if !ce.IsInternal() {
+		ppro.disableAttractMode()
 	}
 
 	// For the moment, the cursor to layerLogic mapping is 1-to-1.
@@ -347,8 +345,7 @@ func (ppro *PalettePro) onCursorEvent(ctx *engine.PluginContext, apiargs map[str
 		return "", nil
 	}
 	if layerLogic != nil {
-		if ppro.generateSound {
-			// XXX - HACK
+		if ppro.generateSound && !ppro.attractModeIsOn {
 			if ce.Ddu != "drag" {
 				layerLogic.generateSoundFromCursor(ctx, ce)
 			}
@@ -360,6 +357,23 @@ func (ppro *PalettePro) onCursorEvent(ctx *engine.PluginContext, apiargs map[str
 	return "", nil
 }
 
+func (ppro *PalettePro) disableAttractMode() {
+
+	if !ppro.attractModeIsOn {
+		// already off
+		return
+	}
+
+	// Throttle it a bit
+	secondsSince := time.Since(ppro.lastAttractModeChange).Seconds()
+
+	if secondsSince > 1.0 {
+		engine.LogInfo("PalettePro: turning attract mode off")
+		ppro.attractModeIsOn = false
+		ppro.lastAttractModeChange = time.Now()
+	}
+}
+
 func (ppro *PalettePro) clearExternalScale() {
 	ppro.externalScale = engine.MakeScale()
 }
@@ -367,51 +381,52 @@ func (ppro *PalettePro) clearExternalScale() {
 func (ppro *PalettePro) onClientRestart(ctx *engine.PluginContext, apiargs map[string]string) (string, error) {
 	// These are messages from the Palette FFGL plugins in Resolume,
 	// telling us that they have restarted, and we should resend all parameters
-	apiportnum, ok := apiargs["portnum"]
+	portnum, ok := apiargs["portnum"]
 	if !ok {
 		return "", fmt.Errorf("PalettePro: Missing portnum argument")
 	}
-	apipnum, err := strconv.Atoi(apiportnum)
+	ffglportnum, err := strconv.Atoi(portnum)
 	if err != nil {
 		return "", err
 	}
-	engine.LogInfo("ppro got clientrestart", "apipnum", apipnum)
-	for nm, layer := range ppro.layer {
-		portnum, _ := engine.TheResolume().PortAndLayerNumForLayer(nm)
-		if portnum == apipnum {
-			layer.ReAlertListenersOnAllParameters()
-		}
+	engine.LogInfo("ppro got clientrestart", "portnum", portnum)
+	// The restart message contains the
+	// portnum of the plugin that restarted.
+	for _, layer := range ppro.layer {
+		layer.RefreshAllIfPortnumMatches(ffglportnum)
 	}
 	return "", nil
 }
 
 // onSet is only used for parameters in a Preset that are not in its layers.
 // NOTE: this routine does not automatically persist the values to disk.
-func (ppro *PalettePro) onSet(apiargs map[string]string) (result string, err error) {
+func (ppro *PalettePro) onSet(ctx *engine.PluginContext, apiargs map[string]string) (result string, err error) {
+
 	paramName, paramValue, err := engine.GetNameValue(apiargs)
 	if err != nil {
 		return "", fmt.Errorf("PalettePro.onSet: %s", err)
 	}
 
-	if strings.HasPrefix(paramName, "misc.") {
-		err = ppro.miscparams.Set(paramName, paramValue)
-		if err != nil {
-			return "", err
-		}
-	} else if strings.HasPrefix(paramName, "global") {
-		err = ppro.globalparams.Set(paramName, paramValue)
-		if err != nil {
-			return "", err
-		}
-	} else {
-		err = fmt.Errorf("PalettePro.onSet: can't handle parameter %s", paramName)
-	}
-	return result, err
-}
+	switch {
 
-// Events from listeners in the Layers will trigger saving of the entire Preset
-func (ppro *PalettePro) onPresetSave() (result string, err error) {
-	return "", ppro.presetSave("_Current")
+	case strings.HasPrefix(paramName, "misc."):
+
+		if paramName == "misc.midiinputlayer" {
+			layer := ctx.GetLayer(paramValue)
+			if layer == nil {
+				return "", fmt.Errorf("PalettePro.onSet: misc.midiinputlayer value is not a layer %s", paramValue)
+			}
+			ppro.midiinputlayer = layer
+		}
+
+		return "", ppro.miscparams.Set(paramName, paramValue)
+
+	case strings.HasPrefix(paramName, "global"):
+		return "", ppro.globalparams.Set(paramName, paramValue)
+
+	default:
+		return "", fmt.Errorf("PalettePro.onSet: can't handle parameter %s", paramName)
+	}
 }
 
 func (ppro *PalettePro) onGet(apiargs map[string]string) (result string, err error) {
@@ -428,6 +443,26 @@ func (ppro *PalettePro) onGet(apiargs map[string]string) (result string, err err
 	}
 }
 
+func (ppro *PalettePro) onLayerRefreshAll(ctx *engine.PluginContext, apiargs map[string]string) (result string, err error) {
+	layerName, ok := apiargs["layer"]
+	if !ok {
+		return "", fmt.Errorf("PalettePro.onLayerRefreshAll: Missing layer argument")
+	}
+	layer, ok := ppro.layer[layerName]
+	if !ok {
+		return "", fmt.Errorf("PalettePro.onLayerRefreshAll: No layer named %s", layerName)
+	}
+	ppro.refreshAllLayerValues(ctx, layer)
+	return "", nil
+}
+
+func (ppro *PalettePro) refreshAllLayerValues(ctx *engine.PluginContext, layer *engine.Layer) {
+	for _, paramName := range layer.ParamNames() {
+		paramValue := layer.Get(paramName)
+		ppro.refreshLayerValue(ctx, layer, paramName, paramValue)
+	}
+}
+
 func (ppro *PalettePro) onLayerSet(ctx *engine.PluginContext, apiargs map[string]string) (result string, err error) {
 	layerName, ok := apiargs["layer"]
 	if !ok {
@@ -439,22 +474,19 @@ func (ppro *PalettePro) onLayerSet(ctx *engine.PluginContext, apiargs map[string
 	}
 	layer, ok := ppro.layer[layerName]
 	if !ok {
-		engine.LogWarn("PalettePro.onLayerSet: No layer named", "layer", layerName)
-		return
+		return "", fmt.Errorf("PalettePro.onLayerSet: No layer named", "layer", layerName)
 	}
+	ppro.refreshLayerValue(ctx, layer, paramName, paramValue)
+	return "", nil
+}
 
-	if paramName == "misc.midiinputlayer" {
-		ppro.midiinputlayer = ctx.GetLayer(layerName)
-	}
+func (ppro *PalettePro) refreshLayerValue(ctx *engine.PluginContext, layer *engine.Layer, paramName string, paramValue string) {
 
 	if strings.HasPrefix(paramName, "visual.") {
 		name := strings.TrimPrefix(paramName, "visual.")
 		msg := osc.NewMessage("/api")
 		msg.Append("set_params")
 		args := fmt.Sprintf("{\"%s\":\"%s\"}", name, paramValue)
-		if name == "ffglport" {
-			engine.LogInfo("ffglport seen")
-		}
 		msg.Append(args)
 		engine.TheResolume().ToFreeFramePlugin(layer.Name(), msg)
 	}
@@ -470,45 +502,31 @@ func (ppro *PalettePro) onLayerSet(ctx *engine.PluginContext, apiargs map[string
 		if synth == nil {
 			engine.LogWarn("PalettePro: no synth named", "synth", paramValue)
 		}
-		ppro.layer[layerName].Synth = synth
+		layer.Synth = synth
 	}
-	return "", nil
 }
 
 func (ppro *PalettePro) onClick(ctx *engine.PluginContext, apiargs map[string]string) (string, error) {
+	ppro.checkAttract(ctx)
+	ppro.checkProcess(ctx)
+	return "", nil
+}
 
-	uptimesecs := ctx.Uptime()
-	// Every so often we check to see if attract mode should be turned on
-	attractModeEnabled := ppro.attractIdleSecs > 0
-	sinceLastAttractChange := uptimesecs - ppro.lastAttractChange
-	sinceLastAttractCheck := uptimesecs - ppro.lastAttractCheck
-	if attractModeEnabled && sinceLastAttractCheck > ppro.attractCheckSecs {
-		ppro.lastAttractCheck = uptimesecs
-		// There's a delay when checking cursor activity to turn attract mod on.
-		// Non-internal cursor activity turns attract mode off instantly.
-		if !ppro.attractModeIsOn && sinceLastAttractChange > ppro.attractIdleSecs {
-			// Nothing happening for a while, turn attract mode on
-			engine.LogWarn("PalettePro.OnClick: should be turning attractmode on")
-			ppro.lastAttractCommand = time.Now()
-		}
-	}
+func (ppro *PalettePro) checkProcess(ctx *engine.PluginContext) {
 
-	if ppro.attractModeIsOn {
-		ppro.doAttractAction(ctx)
-	}
+	firstTime := (ppro.lastProcessCheck == time.Time{})
 
-	sinceLastAlive := uptimesecs - ppro.lastAlive
-	if sinceLastAlive > ppro.aliveSecs {
-		ppro.publishOscAlive(ctx, uptimesecs)
-		ppro.lastAlive = uptimesecs
-	}
-
+	// If processCheckSecs is 0, process checking is disabled
 	processCheckEnabled := ppro.processCheckSecs > 0
+	if !processCheckEnabled {
+		if firstTime {
+			engine.LogInfo("Process Checking is disabled.")
+		}
+		return
+	}
 
-	// At the beginning and then every processCheckSecs seconds
-	// we check to see if necessary processes are still running
-	firstTime := (ppro.lastProcessCheck == 0)
-	sinceLastProcessCheck := uptimesecs - ppro.lastProcessCheck
+	now := time.Now()
+	sinceLastProcessCheck := now.Sub(ppro.lastProcessCheck).Seconds()
 	if processCheckEnabled && (firstTime || sinceLastProcessCheck > ppro.processCheckSecs) {
 		// Put it in background, so calling
 		// tasklist or ps doesn't disrupt realtime
@@ -519,12 +537,32 @@ func (ppro *PalettePro) onClick(ctx *engine.PluginContext, apiargs map[string]st
 			time.Sleep(2 * time.Second)
 			ctx.CheckAutostartProcesses()
 		}()
-		ppro.lastProcessCheck = uptimesecs
+		ppro.lastProcessCheck = now
 	}
-	if !processCheckEnabled && firstTime {
-		engine.LogInfo("Process Checking is disabled.")
+}
+
+func (ppro *PalettePro) checkAttract(ctx *engine.PluginContext) {
+
+	// Every so often we check to see if attract mode should be turned on
+	now := time.Now()
+	attractModeEnabled := ppro.attractIdleSecs > -1
+	sinceLastAttractCheck := now.Sub(ppro.lastAttractCheck).Seconds()
+	if attractModeEnabled && sinceLastAttractCheck > ppro.attractCheckSecs {
+		ppro.lastAttractCheck = now
+		// There's a delay when checking cursor activity to turn attract mod on.
+		// Non-internal cursor activity turns attract mode off instantly.
+		sinceLastAttractModeChange := time.Since(ppro.lastAttractModeChange).Seconds()
+		if !ppro.attractModeIsOn && sinceLastAttractModeChange > ppro.attractIdleSecs {
+			// Nothing happening for a while, turn attract mode on
+			engine.LogInfo("PalettePro: turning attractmode on")
+			ppro.attractModeIsOn = true
+			ppro.lastAttractModeChange = now
+		}
 	}
-	return "", nil
+
+	if ppro.attractModeIsOn {
+		ppro.doAttractAction(ctx)
+	}
 }
 
 func (ppro *PalettePro) onMidiEvent(ctx *engine.PluginContext, apiargs map[string]string) (string, error) {
@@ -556,7 +594,6 @@ func (ppro *PalettePro) onMidiEvent(ctx *engine.PluginContext, apiargs map[strin
 }
 
 func (ppro *PalettePro) doTest(ctx *engine.PluginContext, ntimes int, dt time.Duration) {
-	// func (ppro *PalettePro) Api(ctx *engine.PluginContext, api string, apiargs map[string]string) (result string, err error) {
 	engine.LogInfo("doTest start", "ntimes", ntimes, "dt", dt)
 	for n := 0; n < ntimes; n++ {
 		if n > 0 {
@@ -595,7 +632,7 @@ func (ppro *PalettePro) doTest(ctx *engine.PluginContext, ntimes int, dt time.Du
 	engine.LogInfo("doTest end")
 }
 
-func (ppro *PalettePro) loadPresetRand() {
+func (ppro *PalettePro) loadPresetRand(ctx *engine.PluginContext) {
 
 	arr, err := engine.SavedFileList("preset")
 	if err != nil {
@@ -603,14 +640,19 @@ func (ppro *PalettePro) loadPresetRand() {
 		return
 	}
 	rn := rand.Uint64() % uint64(len(arr))
-	engine.LogInfo("loadPresetRand", "saved", arr[rn])
-	ppro.Load("preset", arr[rn])
+	engine.LogInfo("loadPresetRand", "preset", arr[rn])
+	ppro.Load(ctx, "preset", arr[rn])
+
+	for _, layer := range ppro.layer {
+		layer.AlertListenersToRefreshAll()
+	}
+
 	if err != nil {
 		engine.LogError(err)
 	}
 }
 
-func (ppro *PalettePro) Load(category string, filename string) error {
+func (ppro *PalettePro) Load(ctx *engine.PluginContext, category string, filename string) error {
 
 	path := engine.SavedFilePath(category, filename)
 	paramsMap, err := engine.LoadParamsMap(path)
@@ -649,6 +691,7 @@ func (ppro *PalettePro) Load(category string, filename string) error {
 				engine.LogError(err)
 				lasterr = err
 			}
+			ppro.refreshAllLayerValues(ctx,layer)
 		}
 
 	case "layer", "sound", "visual", "effect":
@@ -830,31 +873,19 @@ func (ppro *PalettePro) handleMIDISetScaleNote(e engine.MidiEvent) {
 	}
 }
 
-func (ppro *PalettePro) publishOscAlive(ctx *engine.PluginContext, uptimesecs float64) {
-	attractMode := ppro.attractModeIsOn
-	if ppro.attractClient == nil {
-		ppro.attractClient = osc.NewClient(engine.LocalAddress, AliveOutputPort)
-	}
-	msg := osc.NewMessage("/alive")
-	msg.Append(float32(uptimesecs))
-	msg.Append(attractMode)
-	err := ppro.attractClient.Send(msg)
-	if err != nil {
-		engine.LogWarn("publishOscAlive", "err", err)
-	}
-}
-
 func (ppro *PalettePro) doAttractAction(ctx *engine.PluginContext) {
 
 	now := time.Now()
-	dt := now.Sub(ppro.lastAttractGestureTime)
-	if ppro.attractModeIsOn && dt > ppro.attractGestureDuration {
-		layerNames := []string{"LA", "LB", "LC", "LD"}
+	dt := now.Sub(ppro.lastAttractGestureTime).Seconds()
+	if ppro.attractModeIsOn && dt > ppro.attractGestureInterval {
+
+		sourceNames := []string{"A", "B", "C", "D"}
 		i := uint64(rand.Uint64()*99) % 4
-		layer := layerNames[i]
+		source := sourceNames[i]
 		ppro.lastAttractGestureTime = now
 
-		cid := fmt.Sprintf("%s#%d", layer, time.Now().UnixNano())
+		cid := fmt.Sprintf("%s#%d,internal", source, ppro.nextCursorNum)
+		ppro.nextCursorNum++
 
 		x0 := rand.Float32()
 		y0 := rand.Float32()
@@ -869,10 +900,10 @@ func (ppro *PalettePro) doAttractAction(ctx *engine.PluginContext) {
 		ppro.lastAttractGestureTime = now
 	}
 
-	dp := now.Sub(ppro.lastAttractRandTime)
-	if ppro.attractPreset == "random" && dp > ppro.attractPresetDuration {
-		ppro.loadPresetRand()
-		ppro.lastAttractRandTime = now
+	dp := now.Sub(ppro.lastAttractPresetChange).Seconds()
+	if ppro.attractPreset == "random" && dp > ppro.attractPresetInterval {
+		ppro.loadPresetRand(ctx)
+		ppro.lastAttractPresetChange = now
 	}
 }
 
