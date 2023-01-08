@@ -210,11 +210,6 @@ func (logic *LayerLogic) generateSoundFromCursor(ctx *engine.PluginContext, ce e
 	}
 }
 
-func (logic *LayerLogic) clearGraphics() {
-	// send an OSC message to Resolume
-	engine.TheResolume().ToFreeFramePlugin(logic.layer.Name(), osc.NewMessage("/clear"))
-}
-
 func (logic *LayerLogic) nextQuant(t engine.Clicks, q engine.Clicks) engine.Clicks {
 	// the algorithm below is the same as KeyKit's nextquant
 	if q <= 1 {

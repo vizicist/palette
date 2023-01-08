@@ -19,7 +19,9 @@ func (e *Engine) ExecuteAPI(api string, apiargs map[string]string) (result strin
 	default:
 		words := strings.Split(api, ".")
 		if len(words) <= 1 {
-			return "", fmt.Errorf("single-word APIs no longer work, api=%s", api)
+			err = fmt.Errorf("single-word APIs no longer work, api=%s", api)
+			LogError(err)
+			return "", err
 		}
 		// Here we handle APIs of the form {apitype}.{apisuffix}
 		apitype := words[0]
@@ -89,6 +91,9 @@ func (e *Engine) executeEngineAPI(api string, apiargs map[string]string) (result
 		e.ProcessManager.ActivateAll()
 		return "", nil
 
+	case "audio_reset":
+		go TheBidule().Reset()
+
 	case "sendlogs":
 		return "", SendLogs()
 
@@ -116,40 +121,41 @@ func (e *Engine) executeEngineAPI(api string, apiargs map[string]string) (result
 		if err == nil {
 			ChangeClicksPerSecond(float64(v))
 		}
+
+	case "set_transpose":
+		LogWarn("set_transpose API needs work")
+		// v, err := needFloatArg("value", api, apiargs)
+		// if err == nil {
+		// ApplyToAllLayers(func(layer *Layer) {
+		// 	layer.TransposePitch = int(v)
+		// })
+		// }
+
+	case "set_transposeauto":
+		LogWarn("set_transposeauto API needs work")
+		// b, err := needBoolArg("onoff", api, apiargs)
+		// if err == nil {
+		// 	e.Scheduler.transposeAuto = b
+		// 	// Quantizing CurrentClick() to a beat or measure might be nice
+		// 	e.Scheduler.transposeNext = CurrentClick() + e.Scheduler.transposeClicks*OneBeat
+		// 	ApplyToAllLayers(func(layer *Layer) {
+		// 		layer.TransposePitch = 0
+		// 	})
+		// }
+
+	case "set_scale":
+		LogWarn("set_scale API needs work")
 		/*
-					case "set_transpose":
-						v, err := needFloatArg("value", api, apiargs)
-						if err == nil {
-							ApplyToAllLayers(func(layer *Layer) {
-								layer.TransposePitch = int(v)
-							})
-						}
-
-			case "set_transposeauto":
-				b, err := needBoolArg("onoff", api, apiargs)
-				if err == nil {
-					e.Scheduler.transposeAuto = b
-					// Quantizing CurrentClick() to a beat or measure might be nice
-					e.Scheduler.transposeNext = CurrentClick() + e.Scheduler.transposeClicks*OneBeat
-					ApplyToAllLayers(func(layer *Layer) {
-						layer.TransposePitch = 0
-					})
-				}
-
-			case "set_scale":
-				v, err := needStringArg("value", api, apiargs)
-				if err == nil {
-					ApplyToAllLayers(func(layer *Layer) {
-						err = layer.SetOneParamValue("misc.scale", v)
-						if err != nil {
-							LogError(err)
-						}
-					})
-				}
+			v, err := needStringArg("value", api, apiargs)
+			if err == nil {
+				ApplyToAllLayers(func(layer *Layer) {
+					err = layer.SetOneParamValue("misc.scale", v)
+					if err != nil {
+						LogError(err)
+					}
+				})
+			}
 		*/
-
-	// case "audio_reset":
-	// 	go e.bidule.Reset()
 
 	/*
 		case "recordingStart":
