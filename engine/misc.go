@@ -415,7 +415,7 @@ func ConfigIntWithDefault(nm string, dflt int) int {
 	return val
 }
 
-func ConfigFloatWithDefault(nm string, dflt float32) float32 {
+func ConfigFloatWithDefault(nm string, dflt float64) float64 {
 	s := ConfigValue(nm)
 	if s == "" {
 		return dflt
@@ -426,7 +426,7 @@ func ConfigFloatWithDefault(nm string, dflt float32) float32 {
 		LogError(err)
 		return dflt
 	}
-	return float32(f)
+	return f
 }
 
 func ConfigStringWithDefault(nm string, dflt string) string {

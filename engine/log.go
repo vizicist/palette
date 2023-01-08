@@ -11,10 +11,10 @@ import (
 )
 
 var TheLog *zap.SugaredLogger
-var Time0Nanoseconds = time.Now().UnixNano()
 var Time0 = time.Time{}
 var FirstTime = true
 
+// Uptime returns the number of seconds since the program started.
 func Uptime() float64 {
 	now := time.Now()
 	if FirstTime {

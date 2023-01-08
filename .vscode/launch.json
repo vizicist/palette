@@ -75,13 +75,6 @@
             "args": [""]
         },
         {
-            "name": "Test alive",
-            "type": "go",
-            "request": "launch",
-            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
-            "args": ["nextalive"]
-        },
-        {
             "name": "Test 1",
             "type": "go",
             "request": "launch",

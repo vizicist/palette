@@ -303,7 +303,7 @@ class ProGuiApp(tk.Tk):
 
     def startNormalMode(self):
         # self.startupFrame.place_forget()
-        log("startNormalMode: setting nextMode to normal")
+        # log("startNormalMode: setting nextMode to normal")
         self.nextMode = "normal"
         self.attractFrame.place_forget()
         self.helpFrame.place_forget()
@@ -311,7 +311,7 @@ class ProGuiApp(tk.Tk):
 
     def startAttractMode(self):
 
-        log("startAttractMode: setting nextMode to attract")
+        # log("startAttractMode: setting nextMode to attract")
         self.nextMode = "attract"
         self.lastAttractSpriteTime = 0
         self.lastAttractPresetTime = 0
@@ -950,7 +950,7 @@ class ProGuiApp(tk.Tk):
 
     def resetAll(self):
 
-        log("ResetAll")
+        # log("ResetAll")
 
         palette.palette_engine_api("audio_reset")
 
@@ -1202,7 +1202,8 @@ class Layer():
         palette.palette_ppro_api("clearexternalscale")
 
     def useExternalScale(self,onoff):
-        palette.palette_ppro_api("midi_usescale", "\"onoff\": \"" + str(onoff) + "\"")
+        # palette.palette_ppro_api("midi_usescale", "\"onoff\": \"" + str(onoff) + "\"")
+        palette.palette_ppro_set("misc.usescale",str(onoff))
 
     def sendPerformVal(self,name):
         index = self.performIndex[name]
@@ -1229,52 +1230,33 @@ class Layer():
 
         elif name == "loopinglength":
             palette.palette_layer_api(self.name(), "loop_length", '"value": "'+str(val)+'"')
-
         elif name == "loopingfade":
             palette.palette_layer_api(self.name(), "loop_fade", '"fade": "'+str(val)+'"')
-
         elif name == "loopingset":
             palette.palette_layer_api(self.name(), "loop_set", '"set": "'+str(val)+'"')
-
-        elif name == "deltaztrig":
-            palette.palette_layer_api(self.name(), "set",
-                "\"name\": \"" + "sound._deltaztrig" + "\"" + \
-                ", \"value\": \"" + str(val) + "\"")
-
-        elif name == "deltaytrig":
-            palette.palette_layer_api(self.name(), "set",
-                "\"name\": \"" + "sound._deltaytrig" + "\"" + \
-                ", \"value\": \"" + str(val) + "\"")
-
-        elif name == "quant":
-            palette.palette_ppro_api("set",
-                "\"name\": \"" + "misc.quant" + "\"" + \
-                ", \"value\": \"" + str(val) + "\"")
-        elif name == "scale":
-            palette.palette_ppro_api("set",
-                "\"name\": \"" + "misc.scale" + "\"" + \
-                ", \"value\": \"" + str(val) + "\"")
-
-        elif name == "vol":
-            # NOTE: "voltype" here rather than "vol" - should make consistent someday
-            palette.palette_ppro_api("set",
-                "\"name\": \"" + "misc.vol" + "\"" + \
-                ", \"value\": \"" + str(val) + "\"")
-
         elif name == "midithru":
             palette.palette_layer_api(self.name(), "midi_thru", "\"onoff\": \"" + str(val) + "\"")
-
         elif name == "midisetscale":
             palette.palette_layer_api(self.name(), "midi_setscale", "\"onoff\": \"" + str(val) + "\"")
+        elif name == "midiquantized":
+            palette.palette_layer_api(self.name(), "midi_quantized", "\"onoff\": \"" + str(val) + "\"")
+        elif name == "midithruscadjust":
+            palette.palette_layer_api(self.name(), "midi_thruscadjust", "\"onoff\": \"" + str(val) + "\"")
+
+        elif name == "deltaztrig":
+            palette.palette_layer_set(self.name(), "sound._deltaztrig",val)
+        elif name == "deltaytrig":
+            palette.palette_layer_set(self.name(), "sound._deltaytrig",val)
+
+        elif name == "quant":
+            palette.palette_ppro_set("misc.quant",val)
+        elif name == "scale":
+            palette.palette_ppro_set("misc.scale",val)
+        elif name == "vol":
+            palette.palette_ppro_set("misc.vol",val)
 
         elif name == "midiusescale":
             self.useExternalScale(val)
-
-        elif name == "midiquantized":
-            palette.palette_layer_api(self.name(), "midi_quantized", "\"onoff\": \"" + str(val) + "\"")
-
-        elif name == "midithruscadjust":
-            palette.palette_layer_api(self.name(), "midi_thruscadjust", "\"onoff\": \"" + str(val) + "\"")
 
         elif name == "transpose":
             log("HEY, transpose shouldn't be here")
@@ -2407,7 +2389,6 @@ def afterWindowIsDisplayed(windowName,guiresize,*args):
 
     global PaletteApp
     PaletteApp.nextMode = "layout"
-    log("afterWindowIsDisplayed: nextMode=",PaletteApp.nextMode)
 
 def isVisibleParameter(name):
     parts = name.split(".")
@@ -2551,27 +2532,24 @@ def log(*args):
             final += " " + str(s)
     palette.log(final)
 
-# def osc_listen_thread(app):  # runs in background thread
-#     osc_listen()
-#     log("osc_listen_thread: finished?")
+def status_thread(app):  # runs in background thread
 
-def alive_thread(app):  # runs in background thread
     while True:
-        time.sleep(2.0)
 
-        alive, err = palette.palette_api("nextalive","")
+        time.sleep(5.0)
+
+        status, err = palette.palette_ppro_api("status","")
         if err != None:
-            log("alive_thread: err=",err)
+            log("ppro.status: err=",err)
             continue
 
-        if alive == None:
-            log("Hey, output of nextalive is None?")
+        if status == None:
+            log("Hey, output of status is None?")
             continue
 
-        log("nextalive = "+alive)
-        jalive = json.loads(alive)
-        attractMode = jalive["attractmode"]
-        # log("attractMode from API is ",attractMode)
+        # log("status is ",status)
+        jstatus = json.loads(status)
+        attractMode = jstatus["attractmode"]
         if attractMode == "true":
             if PaletteApp.currentMode != "attract":
                 log("Turning Attract Mode On!")
@@ -2580,33 +2558,6 @@ def alive_thread(app):  # runs in background thread
             if PaletteApp.currentMode != "normal":
                 log("Turning Attract Mode Off!")
                 PaletteApp.nextMode = "normal"
-
-from pythonosc.dispatcher import Dispatcher
-from pythonosc import osc_server
-
-# def osc_alive(unused_addr, *args):
-#     if len(args) != 2:
-#         log("osc_alive: wrong number of arguments?  Expecting 2, got %d\n" % len(args))
-#         return
-#     sofarsecs = args[0]
-#     attractMode = args[1]
-#     # log("osc_alive: sofarsecs=", sofarsecs, " attractMode=",attractMode)
-#     if attractMode:
-#         if PaletteApp.currentMode != "attract":
-#             PaletteApp.nextMode = "attract"
-#     else:
-#         if PaletteApp.currentMode != "normal":
-#             PaletteApp.nextMode = "normal"
-#     # log("osc_alive: PaletteApp.nextMode = ",PaletteApp.nextMode)
-
-# def osc_listen():
-#     dispatcher = Dispatcher()
-#     dispatcher.map("/alive", osc_alive)
-#     server = osc_server.ThreadingOSCUDPServer(
-#         ("127.0.0.1",3331), dispatcher)
-#     log("osc_listen: starting on ",server.server_address)
-#     server.serve_forever()
-#     log("osc_listen: ended!?")
 
 if __name__ == "__main__":
 
@@ -2661,12 +2612,8 @@ if __name__ == "__main__":
 
     threading.Timer(0.0, afterWindowIsDisplayed, args=[PaletteApp.windowName,guiresize], kwargs=None).start()
 
-    # thd = threading.Thread(target=osc_listen_thread,args=(PaletteApp,))   # timer thread
-    # thd.daemon = True
-    # thd.start()  # start timer loop
-
-    # aliveThread = threading.Thread(target=alive_thread,args=(PaletteApp,))   # timer thread
-    # aliveThread.daemon = True
-    # aliveThread.start()  # start timer loop
+    statusThread = threading.Thread(target=status_thread,args=(PaletteApp,))   # timer thread
+    statusThread.daemon = True
+    statusThread.start()  # start timer loop
 
     initMain(PaletteApp)
