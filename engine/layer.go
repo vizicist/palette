@@ -113,7 +113,10 @@ func (layer *Layer) AlertListenersOfSet(paramName string, paramValue string) {
 			"value": paramValue,
 			"layer": layer.Name(),
 		}
-		listener.api(listener, "event", args)
+		_, err := listener.api(listener, "event", args)
+		if err != nil {
+			LogError(err)
+		}
 	}
 }
 
@@ -125,7 +128,10 @@ func (layer *Layer) AlertListenersToRefreshAll() {
 			"event": "notification_of_layer_refresh_all",
 			"layer": layer.Name(),
 		}
-		listener.api(listener, "event", args)
+		_, err := listener.api(listener, "event", args)
+		if err != nil {
+			LogError(err)
+		}
 	}
 }
 
@@ -136,7 +142,10 @@ func (layer *Layer) AlertListenersToSavePreset() {
 		args := map[string]string{
 			"event": "presetsave",
 		}
-		listener.api(listener, "event", args)
+		_, err := listener.api(listener, "event", args)
+		if err != nil {
+			LogError(err)
+		}
 	}
 }
 

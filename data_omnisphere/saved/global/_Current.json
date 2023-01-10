@@ -1,6 +1,6 @@
 {
     "params": {
-        "global.enable:sound":"false",
+        "global.enable:sound":"true",
         "global.enable:visual":"true"
     }
 }

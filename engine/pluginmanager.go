@@ -11,14 +11,14 @@ func ThePluginManager() *PluginManager {
 
 func NewPluginContext(apiFunc PluginFunc) *PluginContext {
 	return &PluginContext{
-		api:           apiFunc,
-		sources:       map[string]bool{},
+		api:     apiFunc,
+		sources: map[string]bool{},
 	}
 }
 
 type PluginManager struct {
 	plugins map[string]*PluginContext
-	mutex sync.Mutex
+	mutex   sync.Mutex
 }
 
 func NewPluginManager() *PluginManager {
@@ -49,7 +49,10 @@ func (tm *PluginManager) StartPlugin(name string) error {
 func CallApiOnAllPlugins(api string, apiargs map[string]string) {
 	pm := ThePluginManager()
 	for _, plugin := range pm.plugins {
-		plugin.api(plugin, api, apiargs)
+		_, err := plugin.api(plugin, api, apiargs)
+		if err != nil {
+			LogError(err)
+		}
 	}
 }
 
@@ -94,19 +97,22 @@ func (tm *PluginManager) HandleCursorEvent(ce CursorEvent) {
 	source := ce.Source()
 	for _, ctx := range tm.plugins {
 		if ctx.IsSourceAllowed(source) {
-			ctx.api(ctx, "event", ce.ToMap())
+			_, err := ctx.api(ctx, "event", ce.ToMap())
+			LogError(err)
 		}
 	}
 }
 
 func (tm *PluginManager) handleMidiEvent(e MidiEvent) {
 	for _, ctx := range tm.plugins {
-		ctx.api(ctx, "event", e.ToMap())
+		_, err := ctx.api(ctx, "event", e.ToMap())
+		LogError(err)
 	}
 }
 
 func (tm *PluginManager) handleClickEvent(e ClickEvent) {
 	for _, ctx := range tm.plugins {
-		ctx.api(ctx, "event", e.ToMap())
+		_, err := ctx.api(ctx, "event", e.ToMap())
+		LogError(err)
 	}
 }
