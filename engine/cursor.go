@@ -55,7 +55,7 @@ func (ce CursorEvent) Format(f fmt.State, c rune) {
 }
 
 func (ce CursorEvent) IsInternal() bool {
-	return strings.Index(ce.Cid, "internal") >= 0
+	return strings.Contains(ce.Cid, "internal")
 }
 
 func (ce CursorEvent) Source() string {

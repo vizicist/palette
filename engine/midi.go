@@ -181,7 +181,7 @@ func (mc *MIDIChannelOutput) SendBankProgram(bank int, program int) {
 		status := byte(int64(ProgramStatus) | int64(mc.channel-1))
 		data1 := byte(program - 1)
 		LogInfo("SendBankProgram: MIDI", "status", hexString(status), "program", hexString(data1))
-		mc.output.Send([]byte{status, data1})
+		LogError(mc.output.Send([]byte{status, data1}))
 	}
 }
 

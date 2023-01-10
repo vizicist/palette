@@ -79,7 +79,7 @@ func init() {
 		lastAttractGestureTime:  time.Now(),
 		lastAttractPresetChange: time.Now(),
 		lastAttractCheck:        time.Now(),
-		lastProcessCheck:        time.Now(),
+		lastProcessCheck:        time.Time{},
 
 		attractGestureInterval: 0,
 		attractPresetInterval:  0,
@@ -150,6 +150,18 @@ func (ppro *PalettePro) Api(ctx *engine.PluginContext, api string, apiargs map[s
 		}
 		return "", nil
 
+	case "attract":
+		onoffstr, ok := apiargs["onoff"]
+		if !ok {
+			return "", fmt.Errorf("missing onoff parameter")
+		}
+		onoff, err := engine.IsTrueValue(onoffstr)
+		if err != nil {
+			return "", err
+		}
+		ppro.setAttractMode(onoff)
+		return "", nil
+
 	case "clearexternalscale":
 		ppro.clearExternalScale()
 		return "", nil
@@ -170,7 +182,7 @@ func (ppro *PalettePro) Api(ctx *engine.PluginContext, api string, apiargs map[s
 		if !oksaved {
 			return "", fmt.Errorf("missing filename parameter")
 		}
-		ppro.disableAttractMode()
+		ppro.setAttractMode(false)
 		return "", ppro.Load(ctx, category, filename)
 
 	case "save":
@@ -278,8 +290,8 @@ func (ppro *PalettePro) start(ctx *engine.PluginContext) error {
 	_ = ppro.addLayer(ctx, "C")
 	_ = ppro.addLayer(ctx, "D")
 
-	ppro.Load(ctx, "global", "_Current")
-	ppro.Load(ctx, "preset", "_Current")
+	engine.LogError(ppro.Load(ctx, "global", "_Current"))
+	engine.LogError(ppro.Load(ctx, "preset", "_Current"))
 
 	// Don't start checking processes right away, after killing them on a restart,
 	// they may still be running for a bit
@@ -335,7 +347,7 @@ func (ppro *PalettePro) onCursorEvent(ctx *engine.PluginContext, apiargs map[str
 
 	// Any non-internal cursor will turn attract mode off.
 	if !ce.IsInternal() {
-		ppro.disableAttractMode()
+		ppro.setAttractMode(false)
 	}
 
 	// For the moment, the cursor to layerLogic mapping is 1-to-1.
@@ -357,19 +369,16 @@ func (ppro *PalettePro) onCursorEvent(ctx *engine.PluginContext, apiargs map[str
 	return "", nil
 }
 
-func (ppro *PalettePro) disableAttractMode() {
+func (ppro *PalettePro) setAttractMode(onoff bool) {
 
-	if !ppro.attractModeIsOn {
-		// already off
-		return
+	if onoff == ppro.attractModeIsOn {
+		return // already in that mode
 	}
-
 	// Throttle it a bit
 	secondsSince := time.Since(ppro.lastAttractModeChange).Seconds()
-
 	if secondsSince > 1.0 {
-		engine.LogInfo("PalettePro: turning attract mode off")
-		ppro.attractModeIsOn = false
+		engine.LogOfType("attract", "PalettePro: changing attract", "onoff", onoff)
+		ppro.attractModeIsOn = onoff
 		ppro.lastAttractModeChange = time.Now()
 	}
 }
@@ -474,7 +483,7 @@ func (ppro *PalettePro) onLayerSet(ctx *engine.PluginContext, apiargs map[string
 	}
 	layer, ok := ppro.layer[layerName]
 	if !ok {
-		return "", fmt.Errorf("PalettePro.onLayerSet: No layer named", "layer", layerName)
+		return "", fmt.Errorf("PalettePro.onLayerSet: No layer named %s", layerName)
 	}
 	ppro.refreshLayerValue(ctx, layer, paramName, paramValue)
 	return "", nil
@@ -554,9 +563,7 @@ func (ppro *PalettePro) checkAttract(ctx *engine.PluginContext) {
 		sinceLastAttractModeChange := time.Since(ppro.lastAttractModeChange).Seconds()
 		if !ppro.attractModeIsOn && sinceLastAttractModeChange > ppro.attractIdleSecs {
 			// Nothing happening for a while, turn attract mode on
-			engine.LogInfo("PalettePro: turning attractmode on")
-			ppro.attractModeIsOn = true
-			ppro.lastAttractModeChange = now
+			ppro.setAttractMode(true)
 		}
 	}
 
@@ -641,7 +648,8 @@ func (ppro *PalettePro) loadPresetRand(ctx *engine.PluginContext) {
 	}
 	rn := rand.Uint64() % uint64(len(arr))
 	engine.LogInfo("loadPresetRand", "preset", arr[rn])
-	ppro.Load(ctx, "preset", arr[rn])
+
+	engine.LogError(ppro.Load(ctx, "preset", arr[rn]))
 
 	for _, layer := range ppro.layer {
 		layer.AlertListenersToRefreshAll()
@@ -681,7 +689,7 @@ func (ppro *PalettePro) Load(ctx *engine.PluginContext, category string, filenam
 				continue
 			}
 			if strings.HasPrefix(nm, "misc.") {
-				ppro.miscparams.Set(nm, valstr)
+				engine.LogError(ppro.miscparams.Set(nm, valstr))
 			}
 		}
 
@@ -691,7 +699,7 @@ func (ppro *PalettePro) Load(ctx *engine.PluginContext, category string, filenam
 				engine.LogError(err)
 				lasterr = err
 			}
-			ppro.refreshAllLayerValues(ctx,layer)
+			ppro.refreshAllLayerValues(ctx, layer)
 		}
 
 	case "layer", "sound", "visual", "effect":

@@ -26,6 +26,9 @@ func TheResolume() *Resolume {
 			resolumeClient:   osc.NewClient(LocalAddress, ResolumePort),
 			freeframeClients: map[string]*osc.Client{},
 		}
+
+		_ = theResolume.bypassLayer // to avoid unused error
+
 		err := theResolume.loadResolumeJSON()
 		if err != nil {
 			LogError(err)
@@ -100,7 +103,7 @@ func (r *Resolume) ToFreeFramePlugin(layerName string, msg *osc.Message) {
 		LogError(fmt.Errorf("no freeframe client for layer"), "layer", layerName)
 		return
 	}
-	ff.Send(msg)
+	LogError(ff.Send(msg))
 }
 
 func (r *Resolume) SendEffectParam(layerName string, name string, value string) {
@@ -202,7 +205,7 @@ func (r *Resolume) sendPadOneEffectParam(layerNum int, effectName string, paramN
 
 func (r *Resolume) toResolume(msg *osc.Message) {
 	LogOfType("resolume", "Resolume.toResolume", "msg", msg)
-	r.resolumeClient.Send(msg)
+	LogError(r.resolumeClient.Send(msg))
 }
 
 func (r *Resolume) sendPadOneEffectOnOff(layerNum int, effectName string, onoff bool) {

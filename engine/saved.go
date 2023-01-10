@@ -89,12 +89,11 @@ func SavedMap(wantCategory string) (map[string]string, error) {
 		// the last two components of the path are category and saved
 		thisCategory := ""
 		thisSaved := ""
-		lastslash2 := -1
 		lastslash := strings.LastIndex(path, "\\")
 		if lastslash >= 0 {
 			thisSaved = path[lastslash+1:]
 			path2 := path[0:lastslash]
-			lastslash2 = strings.LastIndex(path2, "\\")
+			lastslash2 := strings.LastIndex(path2, "\\")
 			if lastslash2 >= 0 {
 				thisCategory = path2[lastslash2+1:]
 			}
@@ -160,6 +159,6 @@ func SavedFilePath(category string, filename string) string {
 // WritableSavedFilePath xxx
 func WritableFilePath(category string, filename string) string {
 	path := SavedFilePath(category, filename)
-	os.MkdirAll(filepath.Dir(path), 0777)
+	LogError(os.MkdirAll(filepath.Dir(path), 0777))
 	return path
 }
