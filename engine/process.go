@@ -46,7 +46,7 @@ func (pm *ProcessManager) CheckAutostartProcesses() {
 		for processName, pi := range pm.info {
 			if autoName == "*" || autoName == "all" || autoName == processName {
 				if !pm.IsRunning(processName) {
-					pm.StartRunning(processName)
+					LogError(pm.StartRunning(processName))
 					pi.Activated = false
 				}
 				// Even if it's already running, we

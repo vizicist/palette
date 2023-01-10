@@ -285,12 +285,19 @@ func (r *Router) handleOSCInput(e OSCEvent) {
 		r.handleClientRestart(e.Msg)
 
 	case "/event": // These messages encode the arguments as JSON
-		r.handleOSCEvent(e.Msg)
+		LogError(fmt.Errorf("/event OSC message should no longer be used"))
+		// r.handleOSCEvent(e.Msg)
 
-		/*
-			case "/cursor":
-				r.handleMMTTCursor(e.Msg)
-		*/
+	case "/button":
+		r.handleMMTTButton(e.Msg)
+
+	case "/cursor":
+		// This message comes from the mmtt_kinect process,
+		// and is the way other cursor servers can convey
+		// cursor down/drag/up input.  This is kinda like TUIO,
+		// except that it's not a polling interface - servers
+		// need to send explicit events, including a reliable "up".
+		r.handleMMTTCursor(e.Msg)
 
 	default:
 		LogWarn("Router.HandleOSCInput: Unrecognized OSC message", "source", e.Source, "msg", e.Msg)
@@ -303,38 +310,23 @@ func (r *Router) notifyGUI(eventName string) {
 	}
 	msg := osc.NewMessage("/notify")
 	msg.Append(eventName)
-	r.guiClient.Send(msg)
+	LogError(r.guiClient.Send(msg))
 	LogOfType("osc", "Router.notifyGUI", "msg", msg)
 }
 
-/*
-func (r *Router) handleMMTTButton(butt string) {
-	savedName := ConfigStringWithDefault(butt, "")
-	if savedName == "" {
-		Warn("No Saved assigned to BUTTON, using Perky_Shapes", "butt", butt)
-		savedName = "Perky_Shapes"
-		return
-	}
-	saved, err := LoadSaved("saved." + savedName)
+func (r *Router) handleMMTTButton(msg *osc.Message) {
+	buttName, err := argAsString(msg, 0)
 	if err != nil {
 		LogError(err)
 		return
 	}
-	Info("Router.handleMMTTButton", "butt", butt, "saved", savedName)
-	err = saved.applyPresetSavedToLayer("*")
-	if err != nil {
-		Warn("handleMMTTButton", "saved", savedName, "err", err)
-	}
-
-	text := strings.ReplaceAll(savedName, "_", "\n")
-	go r.showText(text)
+	LogWarn("Router.handleMMTTButton needs work", "buttname", buttName)
+	// text := strings.ReplaceAll(savedName, "_", "\n")
+	// go r.showText(text)
 }
-*/
 
 func (r *Router) handleClientRestart(msg *osc.Message) {
 
-	tags, _ := msg.TypeTags()
-	_ = tags
 	nargs := msg.CountArguments()
 	if nargs < 1 {
 		LogWarn("Router.handleOSCEvent: too few arguments")
@@ -352,47 +344,40 @@ func (r *Router) handleClientRestart(msg *osc.Message) {
 
 // handleMMTTCursor handles messages from MMTT, reformating them as a standard cursor event
 func (r *Router) handleMMTTCursor(msg *osc.Message) {
-	LogWarn("Router.handleMMTTCursor needs work")
-	/*
-		tags, _ := msg.TypeTags()
-		_ = tags
-		nargs := msg.CountArguments()
-		if nargs < 1 {
-			Warn("Router.handleMMTTCursor: too few arguments")
-			return
-		}
-		ddu, err := argAsString(msg, 0)
-		if err != nil {
-			LogError(err)
-			return
-		}
-		cid, err := argAsString(msg, 1)
-		if err != nil {
-			LogError(err)
-			return
-		}
-		layerName := "A"
-		words := strings.Split(cid, ".")
-		if len(words) > 1 {
-			layerName = words[0]
-		}
-		x, err := argAsFloat32(msg, 2)
-		if err != nil {
-			LogError(err)
-			return
-		}
-		y, err := argAsFloat32(msg, 3)
-		if err != nil {
-			LogError(err)
-			return
-		}
-		z, err := argAsFloat32(msg, 4)
-		if err != nil {
-			LogError(err)
-			return
-		}
 
-		layer, err := r.LayerManager.GetLayer(layerName)
+	nargs := msg.CountArguments()
+	if nargs < 1 {
+		LogWarn("Router.handleMMTTCursor: too few arguments")
+		return
+	}
+	ddu, err := argAsString(msg, 0)
+	if err != nil {
+		LogError(err)
+		return
+	}
+	cid, err := argAsString(msg, 1)
+	if err != nil {
+		LogError(err)
+		return
+	}
+	x, err := argAsFloat32(msg, 2)
+	if err != nil {
+		LogError(err)
+		return
+	}
+	y, err := argAsFloat32(msg, 3)
+	if err != nil {
+		LogError(err)
+		return
+	}
+	z, err := argAsFloat32(msg, 4)
+	if err != nil {
+		LogError(err)
+		return
+	}
+
+	/*
+		layer, err := r.LayerManager.GetLayer(sourceName)
 		if err != nil {
 			// If it's not a layer, it's a button.
 			buttonDepth := ConfigFloatWithDefault("mmttbuttondepth", 0.002)
@@ -402,37 +387,47 @@ func (r *Router) handleMMTTCursor(msg *osc.Message) {
 			}
 			if ddu == "down" {
 				LogOfType("mmtt", "MMT BUTTON TRIGGERED", "buttonDepth", buttonDepth, "z", z)
-				r.handleMMTTButton(layerName)
+				r.handleMMTTButton(sourceName)
 			}
 			return
 		}
-
-		ce := CursorEvent{
-			ID:        cid,
-			Source:    "mmtt",
-			Timestamp: time.Now(),
-			Ddu:       ddu,
-			X:         x,
-			Y:         y,
-			Z:         z,
-			Area:      0.0,
-		}
-
-		// XXX - HACK!!
-		zfactor := ConfigFloatWithDefault("mmttzfactor", 5.0)
-		ahack := ConfigFloatWithDefault("mmttahack", 20.0)
-		ce.Z = boundval(ahack * zfactor * ce.Z)
-
-		xexpand := ConfigFloatWithDefault("mmttxexpand", 1.25)
-		ce.X = boundval(((ce.X - 0.5) * xexpand) + 0.5)
-
-		yexpand := ConfigFloatWithDefault("mmttyexpand", 1.25)
-		ce.Y = boundval(((ce.Y - 0.5) * yexpand) + 0.5)
-
-		LogOfType("mmtt", "MMTT Cursor", "source", ce.Source, "ddu", ce.Ddu, "x", ce.X, "y", ce.Y, "z", ce.Z)
-
-		layer.HandleCursorEvent(ce)
 	*/
+
+	ce := CursorEvent{
+		Cid:   cid + ",mmtt", // NOTE: we add an mmmtt tag
+		Click: CurrentClick(),
+		Ddu:   ddu,
+		X:     x,
+		Y:     y,
+		Z:     z,
+		Area:  0.0,
+	}
+
+	// XXX - HACK!!
+	zfactor := ConfigFloatWithDefault("mmttzfactor", 5.0)
+	ahack := ConfigFloatWithDefault("mmttahack", 20.0)
+	ce.Z = boundval32(ahack * zfactor * float64(ce.Z))
+
+	xexpand := ConfigFloatWithDefault("mmttxexpand", 1.25)
+	ce.X = boundval32(((float64(ce.X) - 0.5) * xexpand) + 0.5)
+
+	yexpand := ConfigFloatWithDefault("mmttyexpand", 1.25)
+	ce.Y = boundval32(((float64(ce.Y) - 0.5) * yexpand) + 0.5)
+
+	LogOfType("mmtt", "MMTT Cursor", "source", ce.Source, "ddu", ce.Ddu, "x", ce.X, "y", ce.Y, "z", ce.Z)
+
+	r.cursorManager.HandleCursorEvent(ce)
+}
+
+/*
+func (r *Router) handleInputEventRaw(rawargs string) {
+
+	args, err := StringMap(rawargs)
+	if err != nil {
+		return
+	}
+	pluginName := ExtractAndRemoveValue("plugin", args)
+	r.CursorManager.HandleCursorEvent(args)
 }
 
 func (r *Router) handleOSCEvent(msg *osc.Message) {
@@ -443,14 +438,14 @@ func (r *Router) handleOSCEvent(msg *osc.Message) {
 		LogWarn("Router.handleOSCEvent: too few arguments")
 		return
 	}
-	LogWarn("Router.handleOSCEvent needs work")
-	// rawargs, err := argAsString(msg, 0)
-	// if err != nil {
-	// 	LogWarn("Router.handleOSCEvent", "err", err)
-	// 	return
-	// }
-	// r.handleInputEventRaw(rawargs)
+	rawargs, err := argAsString(msg, 0)
+	if err != nil {
+		LogWarn("Router.handleOSCEvent", "err", err)
+		return
+	}
+	r.handleInputEventRaw(rawargs)
 }
+*/
 
 func argAsInt(msg *osc.Message, index int) (i int, err error) {
 	arg := msg.Arguments[index]

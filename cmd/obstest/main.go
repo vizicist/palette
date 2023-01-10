@@ -12,7 +12,9 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer client.Disconnect()
+	defer func(){
+		_ = client.Disconnect()
+	}()
 
 	version, _ := client.General.GetVersion()
 	fmt.Printf("OBS Studio version: %s\n", version.ObsVersion)

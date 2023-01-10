@@ -80,7 +80,7 @@ func InitLog(logname string) {
 	logpath := LogFilePath(logname + ".log")
 	logger := fileLogger(logpath)
 	TheLog = logger.Sugar()
-	defer logger.Sync() // flushes buffer, if any
+	defer LogError(logger.Sync()) // flushes buffer, if any
 	LogInfo("InitLog ==============================================", "logname", logname)
 }
 
@@ -156,6 +156,7 @@ var LogEnabled = map[string]bool{
 	"*":         false,
 	"advance":   false,
 	"api":       false,
+	"attract":   false,
 	"config":    false,
 	"cursor":    false,
 	"drawing":   false,

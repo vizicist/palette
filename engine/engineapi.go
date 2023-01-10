@@ -92,7 +92,7 @@ func (e *Engine) executeEngineAPI(api string, apiargs map[string]string) (result
 		return "", nil
 
 	case "audio_reset":
-		go TheBidule().Reset()
+		go LogError(TheBidule().Reset())
 
 	case "sendlogs":
 		return "", SendLogs()

@@ -14,8 +14,6 @@ type Scheduler struct {
 	schedList *list.List // of *SchedElements
 	// schedMutex sync.RWMutex
 
-	pendingNoteOffs *Phrase
-
 	// now       time.Time
 	// time0     time.Time
 	lastClick Clicks
@@ -41,9 +39,6 @@ type MidiSchedValue struct {
 func NewScheduler() *Scheduler {
 	s := &Scheduler{
 		schedList: list.New(),
-		// pendingNoteOffs: NewPhrase(),
-		// now:             time.Time{},
-		// time0:           time.Time{},
 		lastClick: -1,
 		cmdInput:  make(chan any),
 	}
@@ -208,100 +203,6 @@ func (sched *Scheduler) Uptime() float64 {
 	return sched.now.Sub(sched.time0).Seconds()
 }
 */
-
-/*
-// StartPhrase xxx
-func (sched *Scheduler) AddActivePhraseAt(click Clicks, phrase *Phrase, sid string) {
-	if phrase == nil {
-		Warn("AddActivePhraseAt: Unexpected nil phrase")
-		return
-	}
-	LogOfType("phrase", "StartPhrase", "sid", sid, "phrase", phrase)
-	newItem := &ActivePhrase{
-		phrase:          phrase,
-		AtClick:         click,
-		SofarClick:      0,
-		pendingNoteOffs: NewPhrase(),
-	}
-
-	sched.pendingNoteOffs.rwmutex.Lock()
-	defer sched.pendingNoteOffs.rwmutex.Unlock()
-
-	// Insert accoring to click
-	// XXX - should be generic-ized
-	i := sched.pendingNoteOffs.list.Front()
-	if i == nil {
-		sched.pendingNoteOffs.list.PushFront(newItem)
-	} else if sched.pendingNoteOffs.list.Back().Value.(*ActivePhrase).AtClick <= newItem.AtClick {
-		sched.pendingNoteOffs.list.PushBack(newItem)
-	} else {
-		for ; i != nil; i = i.Next() {
-			ap := i.Value.(*ActivePhrase)
-			if ap.AtClick > click {
-				sched.pendingNoteOffs.list.InsertBefore(newItem, i)
-			}
-		}
-	}
-}
-
-*/
-
-// StopPhrase xxx
-func (sched *Scheduler) SendAllPendingNoteoffs() {
-
-	sched.pendingNoteOffs.rwmutex.Lock()
-	defer sched.pendingNoteOffs.rwmutex.Unlock()
-
-	LogWarn("SendAllPendingNoteoffs needs work")
-	/*
-		var nexti *list.Element
-		for i := sched.pendingNoteOffs.list.Front(); i != nil; i = nexti {
-			nexti = i.Next()
-			pe, ok := i.Value.(*PhraseElement)
-			if !ok {
-				LogWarn("Non-PhraseElement in activeNotes!?", "value", i.Value)
-				continue
-
-			}
-			noff, ok := pe.Value.(*NoteOff)
-			if !ok {
-				LogWarn("Non-NoteOff in activeNotes!?", "value", i.Value)
-				continue
-			}
-			SendToSynth(noff)
-			sched.pendingNoteOffs.list.Remove(i)
-		}
-	*/
-}
-
-// AdvanceByOneClick xxx
-func (sched *Scheduler) advancePendingNoteOffsByOneClick() {
-
-	sched.pendingNoteOffs.rwmutex.Lock()
-	defer sched.pendingNoteOffs.rwmutex.Unlock()
-
-	LogWarn("advancePendingNoteoffs needs work")
-	/*
-		currentClick := CurrentClick()
-		var nexti *list.Element
-		for i := sched.pendingNoteOffs.list.Front(); i != nil; i = nexti {
-			nexti = i.Next()
-			pe := i.Value.(*PhraseElement)
-			ntoff, ok := pe.Value.(*NoteOff)
-			if !ok {
-				LogWarn("Non NoteOff in pendingNoteOffs?")
-				sched.pendingNoteOffs.list.Remove(i)
-				continue
-			}
-			if pe.AtClick > currentClick {
-				// Warn("Scheduler.advancePendingNoteOffsByOneClick: clickStart > currentClick?")
-			} else {
-				SendToSynth(ntoff)
-				sched.pendingNoteOffs.list.Remove(i)
-			}
-		}
-	*/
-}
 
 func (sched *Scheduler) ToString() string {
 	s := "Scheduler{"

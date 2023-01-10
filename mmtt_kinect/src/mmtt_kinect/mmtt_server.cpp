@@ -2223,7 +2223,7 @@ MmttServer::addCursorEvent(OscBundle &bundle, std::string downdragup, std::strin
 	msg.clear();
 	msg.setAddress("/cursor");
 	msg.addStringArg(downdragup);
-	std::string cid = NosuchSnprintf("%s.%d",region.c_str(),sid);
+	std::string cid = NosuchSnprintf("%s#%d",region.c_str(),sid);
 	msg.addStringArg(cid);
 	msg.addFloatArg(x);      // x (position)
 	msg.addFloatArg(y);      // y (position)

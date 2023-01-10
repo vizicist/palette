@@ -97,13 +97,6 @@ class ProGuiApp(tk.Tk):
 
         self.thumbFactor = 0.1
 
-        # self.lastAnything = 0
-        # self.attractTimeout = int(palette.ConfigValue("attracttimeout",defvalue="0"))
-        # if self.attractTimeout > 0 and self.attractTimeout < 60:
-        #     log("attracttimeout = ",self.attractTimeout," is too low, setting it to 60")
-        #     self.attractTimeout = 60
-        # log("attracttimeout = ",self.attractTimeout)
-
         # These are the same in both normal and advanced
         self.selectDisplayPerRow = 3
 
@@ -251,13 +244,6 @@ class ProGuiApp(tk.Tk):
                 # log("nextMode=",self.nextMode)
                 # switch to a new Mode 
                 if self.nextMode == "layout":
-                    ## self.initLayout()
-
-                    # if self.attractTimeout>0:
-                    #     # go into attract mode right away
-                    #     self.startAttractMode()
-                    # else:
-
                     self.startNormalMode()
 
                 elif self.nextMode == "help":
@@ -499,6 +485,8 @@ class ProGuiApp(tk.Tk):
 
     def unattract(self):
         log("Screen pressed, stopping attract mode, setting nextMode to normal")
+        palette.palette_ppro_api("attract",
+            "\"onoff\": \"false\"")
         self.nextMode = "normal"
         self.resetLastAnything()
 
@@ -2556,8 +2544,11 @@ def status_thread(app):  # runs in background thread
                 PaletteApp.nextMode = "attract"
         else:
             if PaletteApp.currentMode != "normal":
-                log("Turning Attract Mode Off!")
-                PaletteApp.nextMode = "normal"
+                if PaletteApp.currentMode == "help":
+                    log("NOT turning attract mode off because we're in help mode")
+                else:
+                    log("Turning Attract Mode Off!")
+                    PaletteApp.nextMode = "normal"
 
 if __name__ == "__main__":
 

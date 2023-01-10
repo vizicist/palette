@@ -62,7 +62,7 @@ func (b *Bidule) ProcessInfo() *ProcessInfo {
 	return NewProcessInfo(exe, bidulePath, filepath, b.Activate)
 }
 
-func (b *Bidule) Reset() {
+func (b *Bidule) Reset() error {
 
 	b.mutex.Lock()
 	defer b.mutex.Unlock()
@@ -70,11 +70,14 @@ func (b *Bidule) Reset() {
 	msg := osc.NewMessage("/play")
 	msg.Append(int32(0))
 	LogInfo("Bidule.Reset is sending", "msg", msg)
-	b.client.Send(msg)
+	err := b.client.Send(msg)
+	if err != nil {
+		return err
+	}
 	// Give Bidule time to react
 	time.Sleep(400 * time.Millisecond)
 	msg = osc.NewMessage("/play")
 	msg.Append(int32(1))
 	LogInfo("Bidule.Reset is sending", "msg", msg)
-	b.client.Send(msg)
+	return b.client.Send(msg)
 }

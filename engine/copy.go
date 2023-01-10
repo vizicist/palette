@@ -29,31 +29,31 @@ func copy(src, dest string, info os.FileInfo) error {
 // fcopy is for just a file,
 // with considering existence of parent directory
 // and file permission.
-func fcopy(src, dest string, info os.FileInfo) (err error) {
+func fcopy(src, dest string, info os.FileInfo) error {
 
-	if err = os.MkdirAll(filepath.Dir(dest), os.ModePerm); err != nil {
-		return
+	err := os.MkdirAll(filepath.Dir(dest), os.ModePerm)
+	if err != nil {
+		return err
 	}
 
 	f, err := os.Create(dest)
 	if err != nil {
-		return
+		return err
 	}
 	defer fclose(f, &err)
 
 	s, err := os.Open(src)
 	if err != nil {
-		return
+		return err
 	}
 	defer fclose(s, &err)
 
-	if _, err = io.Copy(f, s); err != nil {
-		return
+	_, err = io.Copy(f, s)
+	if err != nil {
+		return err
 	}
 
-	f.Sync() // needed?
-
-	return
+	return f.Sync() // needed?
 }
 
 // dcopy is for a directory,

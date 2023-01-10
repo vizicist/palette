@@ -355,7 +355,10 @@ func (w *FileWriter) Write(p []byte) (n int, err error) {
 		newline = "\n"
 	}
 	final := fmt.Sprintf("%s%s", s, newline)
-	w.File.Write([]byte(final))
+	n, err = w.File.Write([]byte(final))
+	if err != nil {
+		return n, err
+	}
 	return len(p), nil
 }
 
@@ -495,6 +498,7 @@ func needStringArg(nm string, api string, args map[string]string) (string, error
 	return val, nil
 }
 
+/*
 func needIntArg(nm string, api string, args map[string]string) (int, error) {
 	val, ok := args[nm]
 	if !ok {
@@ -506,6 +510,7 @@ func needIntArg(nm string, api string, args map[string]string) (int, error) {
 	}
 	return int(v), nil
 }
+*/
 
 func needBoolArg(nm string, api string, args map[string]string) (bool, error) {
 	val, ok := args[nm]
@@ -713,14 +718,14 @@ func JsonString(args ...string) string {
 	return params
 }
 
-func boundval(v float32) float32 {
+func boundval32(v float64) float32 {
 	if v < 0.0 {
 		return 0.0
 	}
 	if v > 1.0 {
 		return 1.0
 	}
-	return v
+	return float32(v)
 }
 
 func GetNameValue(apiargs map[string]string) (name string, value string, err error) {

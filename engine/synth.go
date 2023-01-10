@@ -46,7 +46,7 @@ func InitSynths() {
 	var jsynths struct {
 		Synths []synth `json:"synths"`
 	}
-	json.Unmarshal(bytes, &jsynths)
+	LogError(json.Unmarshal(bytes, &jsynths))
 
 	for i := range jsynths.Synths {
 		nm := jsynths.Synths[i].Name
@@ -131,7 +131,7 @@ func (synth *Synth) SendANO() {
 
 	// send All Notes Off
 	status := 0xb0 | byte(synth.portchannel.channel-1)
-	mc.output.Send([]byte{status, 0x7b, 0x00})
+	LogError(mc.output.Send([]byte{status, 0x7b, 0x00}))
 }
 
 func (synth *Synth) SendController(cnum int, cval int) {
@@ -162,7 +162,7 @@ func (synth *Synth) SendController(cnum int, cval int) {
 	status := byte(synth.portchannel.channel - 1)
 	data1 := byte(cnum)
 	data2 := byte(cval)
-	mc.output.Send([]byte{status, data1, data2})
+	LogError(mc.output.Send([]byte{status, data1, data2}))
 }
 
 /*
