@@ -94,7 +94,8 @@ func (w PageLogWriter) Write(p []byte) (n int, err error) {
 
 func (page *Page) logToFile(s string) {
 	if page.logFile != nil {
-		page.logFile.WriteString(s)
+		_, err := page.logFile.WriteString(s)
+		engine.LogError(err)
 	}
 }
 
@@ -141,18 +142,15 @@ func (page *Page) Do(cmd engine.Cmd) string {
 		} else {
 			ps := toPrettyJSON(state)
 			fpath := engine.ConfigFilePath(fname)
-			err := os.WriteFile(fpath, []byte(ps), 0644)
-			if err != nil {
-				engine.LogError(err)
-			}
+			engine.LogError(os.WriteFile(fpath, []byte(ps), 0644))
 		}
 
 	case "getstate":
 		state, err := page.dumpState()
+		engine.LogError(err)
 		if err == nil {
 			return state
 		}
-		engine.LogError(err)
 
 	case "resize":
 		page.resize()

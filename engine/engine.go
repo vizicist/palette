@@ -11,12 +11,12 @@ import (
 
 type Engine struct {
 	// ProcessManager *ProcessManager
-	Router        *Router
-	Scheduler     *Scheduler
-	PluginManager *PluginManager
+	Router         *Router
+	Scheduler      *Scheduler
+	PluginManager  *PluginManager
 	ProcessManager *ProcessManager
 	// CursorManager *CursorManager
-	done          chan bool
+	done chan bool
 }
 
 var theEngine *Engine
@@ -129,14 +129,17 @@ func (e *Engine) StartOSC(port int) {
 		e.Router.OSCInput <- OSCEvent{Msg: msg, Source: source}
 	})
 	if err != nil {
-		LogWarn("StartOSC", "err", err)
+		LogError(err)
 	}
 
 	server := &osc.Server{
 		Addr:       source,
 		Dispatcher: d,
 	}
-	server.ListenAndServe()
+	err = server.ListenAndServe()
+	if err != nil {
+		LogError(err)
+	}
 }
 
 // StartHTTP xxx
@@ -149,7 +152,10 @@ func (e *Engine) StartHTTP(port int) {
 
 		response := ""
 		defer func() {
-			responseWriter.Write([]byte(response))
+			_, err := responseWriter.Write([]byte(response))
+			if err != nil {
+				LogError(err)
+			}
 		}()
 
 		switch req.Method {
@@ -173,5 +179,8 @@ func (e *Engine) StartHTTP(port int) {
 	})
 
 	source := fmt.Sprintf("127.0.0.1:%d", port)
-	http.ListenAndServe(source, nil)
+	err := http.ListenAndServe(source, nil)
+	if err != nil {
+		LogError(err)
+	}
 }

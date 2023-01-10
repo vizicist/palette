@@ -77,7 +77,7 @@ func isRunningExecutable(exe string) bool {
 		LogWarn("IsRunningExecutable tasklist.exe", "err", err)
 		return false
 	}
-	cmd.Wait()
+	_ = cmd.Wait() // ignore "Wait was already called"
 
 	scanner := bufio.NewScanner(strings.NewReader(stdout.gathered))
 	scanner.Split(bufio.ScanLines)
