@@ -5,7 +5,7 @@
         "misc.logic_sound":"true",
         "misc.logic_visual":"true",
         "misc.midibehaviour":"default",
-        "misc.midiinputlayer":"A",
+        "misc.midiinputpatch":"A",
         "misc.quant":"frets",
         "misc.scale":"newage",
         "misc.vol":"pressure"

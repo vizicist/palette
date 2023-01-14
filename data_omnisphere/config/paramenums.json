@@ -10,6 +10,7 @@
   "mirror": [ "none", "vertical", "horizontal", "four" ],
   "justification": [ "center", "left", "right", "top", "bottom", "topleft", "topright", "bottomleft", "bottomright" ],
   "controllerstyle": [ "modulationonly", "allcontrollers", "pitchYZ", "nothing" ],
+  "cursorstyle": [ "downonly", "retrigger" ],
   "placement": [ "random", "linear", "cursor", "top", "bottom", "left", "right" ],
   "spritesource": [ "cursor", "midi", "none" ],
   "spritestyle": [ "hue", "texture" ],
@@ -18,7 +19,7 @@
     "none",
     "sprite"
   ],
-  "layer": [
+  "patch": [
     "A",
     "B",
     "C",

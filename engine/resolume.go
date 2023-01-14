@@ -56,8 +56,8 @@ func (r *Resolume) loadResolumeJSON() error {
 	return nil
 }
 
-func (r *Resolume) PortAndLayerNumForLayer(layerName string) (portNum, layerNum int) {
-	switch layerName {
+func (r *Resolume) PortAndLayerNumForPatch(patchName string) (portNum, layerNum int) {
+	switch patchName {
 	case "A":
 		return 3334, 1
 	case "B":
@@ -67,49 +67,38 @@ func (r *Resolume) PortAndLayerNumForLayer(layerName string) (portNum, layerNum 
 	case "D":
 		return 3337, 4
 	default:
-		LogError(fmt.Errorf("no port for layer %s", layerName))
+		LogError(fmt.Errorf("no port for layer %s", patchName))
 		return 0, 0
 	}
 }
 
-/*
-func (r *Resolume) ClientWithPort(portnum int) *Layer {
-	for nm, ff := range r.freeframeClients {
-		if ff.Port() == portnum {
-			return GetLayer(nm)
-		}
-	}
-	return nil
-}
-*/
-
-func (r *Resolume) freeframeClientFor(layerName string) *osc.Client {
-	ff, ok := r.freeframeClients[layerName]
+func (r *Resolume) freeframeClientFor(patchName string) *osc.Client {
+	ff, ok := r.freeframeClients[patchName]
 	if !ok {
-		portNum, _ := r.PortAndLayerNumForLayer(layerName)
+		portNum, _ := r.PortAndLayerNumForPatch(patchName)
 		if portNum == 0 {
 			return nil
 		}
 		ff = osc.NewClient(LocalAddress, portNum)
-		r.freeframeClients[layerName] = ff
+		r.freeframeClients[patchName] = ff
 	}
 	return ff
 }
 
-func (r *Resolume) ToFreeFramePlugin(layerName string, msg *osc.Message) {
-	LogOfType("freeframe", "Resolume.toFreeframe", "layer", layerName, "msg", msg)
-	ff := r.freeframeClientFor(layerName)
+func (r *Resolume) ToFreeFramePlugin(patchName string, msg *osc.Message) {
+	LogOfType("freeframe", "Resolume.toFreeframe", "patch", patchName, "msg", msg)
+	ff := r.freeframeClientFor(patchName)
 	if ff == nil {
-		LogError(fmt.Errorf("no freeframe client for layer"), "layer", layerName)
+		LogError(fmt.Errorf("no freeframe client for layer"), "patch", patchName)
 		return
 	}
 	LogError(ff.Send(msg))
 }
 
-func (r *Resolume) SendEffectParam(layerName string, name string, value string) {
-	portNum, layerNum := r.PortAndLayerNumForLayer(layerName)
+func (r *Resolume) SendEffectParam(patchName string, name string, value string) {
+	portNum, layerNum := r.PortAndLayerNumForPatch(patchName)
 	if portNum == 0 {
-		LogError(fmt.Errorf("no such layer"), "name", layerName)
+		LogError(fmt.Errorf("no such layer"), "name", patchName)
 		return
 	}
 	// Effect parameters that have ":" in their name are plugin parameters
@@ -319,10 +308,9 @@ func (r *Resolume) Activate() {
 	for i := 0; i < 4; i++ {
 		time.Sleep(5 * time.Second)
 
-		layerNames := LayerNames()
-		for _, pad := range layerNames {
-			_, layerNum := r.PortAndLayerNumForLayer(string(pad))
-			LogOfType("resolume", "Activating Resolume", "layer", layerNum, "clipnum", clipnum)
+		for _, patch := range PatchNames() {
+			_, layerNum := r.PortAndLayerNumForPatch(string(patch))
+			LogOfType("resolume", "Activating Resolume", "patch", layerNum, "clipnum", clipnum)
 			r.connectClip(layerNum, clipnum)
 		}
 		if textLayer >= 1 {

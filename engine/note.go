@@ -6,38 +6,43 @@ import (
 )
 
 type NoteOn struct {
-	Channel  uint8
+	// Channel  uint8
+	Synth    *Synth
 	Pitch    uint8
 	Velocity uint8
 }
 
 func (n *NoteOn) String() string {
-	return fmt.Sprintf("(NoteOn Channel=%d Pitch=%d)", n.Channel, n.Pitch)
+	return fmt.Sprintf("(NoteOn Synth=%s Pitch=%d)", n.Synth.name, n.Pitch)
 }
 
 type NoteOff struct {
-	Channel  uint8
+	// Channel  uint8
+	Synth    *Synth
 	Pitch    uint8
 	Velocity uint8
 }
 
 func (n NoteOff) String() string {
-	return fmt.Sprintf("(NoteOff Channel=%d Pitch=%d)", n.Channel, n.Pitch)
+	return fmt.Sprintf("(NoteOff Synth=%s Pitch=%d)", n.Synth.name, n.Pitch)
 }
 
 // NoteFull has a duration, i.e. it's a combination of a NoteOn and NoteOff
 type NoteFull struct {
-	Channel  uint8
-	Duration Clicks
-	Pitch    uint8
-	Velocity uint8
+	// Channel  uint8
+	Synth     *Synth
+	Duration  Clicks
+	SynthName string
+	Pitch     uint8
+	Velocity  uint8
 	// msg      midi.Message
 	// bytes    []byte
 }
 
-func NewNoteFull(channel, pitch, velocity uint8, duration Clicks) *NoteFull {
+func NewNoteFull(synth *Synth, pitch, velocity uint8, duration Clicks) *NoteFull {
 	return &NoteFull{
-		Channel:  channel,
+		// Channel:  channel,
+		Synth:    synth,
 		Duration: duration,
 		Pitch:    pitch,
 		Velocity: velocity,
@@ -45,7 +50,7 @@ func NewNoteFull(channel, pitch, velocity uint8, duration Clicks) *NoteFull {
 }
 
 func (n *NoteFull) String() string {
-	return fmt.Sprintf("(NoteFull Channel=%d Pitch=%d Duration=%d)", n.Channel, n.Pitch, n.Duration)
+	return fmt.Sprintf("(NoteFull Synth=%s Pitch=%d Duration=%d)", n.Synth.name, n.Pitch, n.Duration)
 }
 
 type NoteBytes struct {

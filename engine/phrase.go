@@ -104,13 +104,18 @@ command	meaning	# param
 */
 
 // NewNoteOn create a new noteon
-func NewNoteOn(channel, pitch, velocity uint8) *NoteOn {
-	return &NoteOn{Pitch: pitch, Velocity: velocity, Channel: channel}
+func NewNoteOn(synth *Synth, pitch, velocity uint8) *NoteOn {
+	return &NoteOn{Pitch: pitch, Velocity: velocity, Synth: synth}
 }
 
 // NewNoteOff create a new noteoff
-func NewNoteOff(channel, pitch, velocity uint8) *NoteOff {
-	return &NoteOff{Pitch: pitch, Velocity: velocity, Channel: channel}
+func NewNoteOff(synth *Synth, pitch, velocity uint8) *NoteOff {
+	return &NoteOff{Pitch: pitch, Velocity: velocity, Synth: synth}
+}
+
+// NewNoteOff create a new NoteOff from a NoteOn
+func NewNoteOffFromNoteOn(nt *NoteOn) *NoteOff {
+	return &NoteOff{Pitch: nt.Pitch, Velocity: nt.Velocity, Synth: nt.Synth}
 }
 
 /*
@@ -229,10 +234,10 @@ func (n Note) String() string {
 }
 */
 
-// PhraseElementFromString interprets keykit-like note strings
-func PhraseElementFromString(s string) (e *PhraseElement, err error) {
+func SchedElementFromString(s string) (se *SchedElement, err error) {
+
 	if s == "" {
-		return nil, fmt.Errorf("PhraseElementFromString: bad format - %s", s)
+		return nil, fmt.Errorf("NoteOnOffFromString: bad format - %s", s)
 	}
 	ntype := "note"
 	reader := strings.NewReader(s)
@@ -241,12 +246,13 @@ func PhraseElementFromString(s string) (e *PhraseElement, err error) {
 	npitch := -1
 	nflat := false
 	nsharp := false
-	ndur := -1
+	// ndur := -1
 	noctave := 3 // Note: default octave is 3
 	atclick := Clicks(0)
-	nchannel := 0
+	// nchannel := 0
 	endstate := 99
 	nattribute := ""
+	synthName := "default"
 	for state != endstate {
 
 		// At the beginning (state 0) we only want 1 character
@@ -327,11 +333,13 @@ func PhraseElementFromString(s string) (e *PhraseElement, err error) {
 			// we've seen a note attribute,
 			// now scan whatever comes after it.
 			switch nattribute {
-			case "d":
-				ndur, err = scanner.ScanNumber()
-				if err != nil {
-					return nil, err
-				}
+			/*
+				case "d":
+					ndur, err = scanner.ScanNumber()
+					if err != nil {
+						return nil, err
+					}
+			*/
 
 			case "o":
 				noctave, err = scanner.ScanNumber()
@@ -339,8 +347,16 @@ func PhraseElementFromString(s string) (e *PhraseElement, err error) {
 					return nil, err
 				}
 
-			case "c": // sound
-				nchannel, err = scanner.ScanNumber()
+				/*
+					case "c": // channel
+						nchannel, err = scanner.ScanNumber()
+						if err != nil {
+							return nil, err
+						}
+				*/
+
+			case "S": // channel
+				_, synthName = scanner.ScanWord()
 				if err != nil {
 					return nil, err
 				}
@@ -387,24 +403,28 @@ func PhraseElementFromString(s string) (e *PhraseElement, err error) {
 	}
 	nvelocity := 64
 
+	synth := GetSynth(synthName)
+
 	var val any
 	switch ntype {
-	case "note":
-		val = &NoteFull{
-			Channel:  uint8(nchannel),
-			Duration: Clicks(ndur),
-			Pitch:    uint8(npitch),
-			Velocity: uint8(nvelocity),
-		}
+	/*
+		case "note":
+			val = &NoteFull{
+				Channel:  uint8(nchannel),
+				Duration: Clicks(ndur),
+				Pitch:    uint8(npitch),
+				Velocity: uint8(nvelocity),
+			}
+	*/
 	case "noteon":
 		val = &NoteOn{
-			Channel:  uint8(nchannel),
+			Synth:    synth,
 			Pitch:    uint8(npitch),
 			Velocity: uint8(nvelocity),
 		}
 	case "noteoff":
 		val = &NoteOff{
-			Channel:  uint8(nchannel),
+			Synth:    synth,
 			Pitch:    uint8(npitch),
 			Velocity: uint8(nvelocity),
 		}
@@ -413,12 +433,12 @@ func PhraseElementFromString(s string) (e *PhraseElement, err error) {
 		return nil, err
 	}
 
-	pi := &PhraseElement{
+	se = &SchedElement{
 		AtClick: atclick,
 		Value:   val,
 	}
 
-	return pi, nil
+	return se, nil
 }
 
 /*

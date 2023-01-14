@@ -10,7 +10,7 @@ def changeparam(paramfile,paramname,oldval,newval):
 
     for pad in {"A","B","C","D"}:
 
-        # In presets, sound and visual parameters are {pad}-{paramname}
+        # In a quad, sound and visual parameters are {pad}-{paramname}
         fullname = pad + "-" + paramname
         if fullname in params["params"]:
             if params["params"][fullname] == oldval:
@@ -25,7 +25,7 @@ def changeparam(paramfile,paramname,oldval,newval):
                     print(paramfile,": Changing param=",fullname)
                     params["params"][fullname] = str(newval)
 
-    # In other of presets, the parameter is just the {paramname}
+    # In other saved things, the parameter is just the {paramname}
     if paramname in params["params"]:
         if params["params"][paramname] == oldval:
             print("Changing parmname=",paramname)

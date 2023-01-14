@@ -1,10 +1,8 @@
 package engine
 
 import (
-	"fmt"
 	"time"
 
-	midi "gitlab.com/gomidi/midi/v2"
 	"gitlab.com/gomidi/midi/v2/drivers"
 )
 
@@ -98,8 +96,8 @@ func (ctx *PluginContext) FileExists(path string) bool {
 	return FileExists(path)
 }
 
-func (ctx *PluginContext) GetLayer(layerName string) *Layer {
-	return GetLayer(layerName)
+func (ctx *PluginContext) GetPatch(patchName string) *Patch {
+	return GetPatch(patchName)
 }
 
 func (ctx *PluginContext) SaveParams(params *ParamValues, category string, filename string) error {
@@ -134,6 +132,7 @@ func (ctx *PluginContext) MidiEventToNote(me MidiEvent) (note any, error) {
 }
 */
 
+/*
 func (ctx *PluginContext) MidiEventToNote(me MidiEvent) (any, error) {
 
 	bytes := me.Msg.Bytes()
@@ -203,21 +202,31 @@ func (ctx *PluginContext) MidiEventToNote(me MidiEvent) (any, error) {
 
 	return val, nil
 }
+*/
 
 func (ctx *PluginContext) CurrentClick() Clicks {
 	return CurrentClick()
 }
 
-func (ctx *PluginContext) ScheduleMidi(layer *Layer, msg midi.Message, click Clicks) {
+func (ctx *PluginContext) ScheduleAt(value any, click Clicks) {
+	se := &SchedElement{
+		AtClick: click,
+		Value:   value,
+	}
+	TheEngine().Scheduler.insertScheduleElement(se)
+}
+
+/*
+func (ctx *PluginContext) ScheduleMidi(msg midi.Message, click Clicks) {
 	go func() {
 		se := &SchedElement{
 			AtClick: click,
-			layer:   layer,
 			Value:   MidiSchedValue{msg},
 		}
 		TheEngine().Scheduler.cmdInput <- SchedulerElementCmd{se}
 	}()
 }
+*/
 
 /*
 func (ctx *PluginContext) SubmitCommand(command Command) {
@@ -242,20 +251,20 @@ func (ctx *EngineContext) GetScale() *Scale {
 	return ctx.scale
 }
 
-func (ctx *EngineContext) LayerParams(layerName string) *ParamValues {
-	params, ok := ctx.layerParams[layerName]
+func (ctx *EngineContext) PatchParams(patchName string) *ParamValues {
+	params, ok := ctx.layerParams[patchName]
 	if !ok {
 		params = NewParamValues()
-		ctx.layerParams[layerName] = params
+		ctx.layerParams[patchName] = params
 	}
 	return params
 }
 */
 
 /*
-func (ctx *EngineContext) setOneLayerParamValue(layerName, fullname, value string) error {
+func (ctx *EngineContext) setOnePatchParamValue(patchName, fullname, value string) error {
 
-	layer := GetLayer(layerName)
+	layer := GetPatch(patchName)
 	params := layer.params
 	err := params.SetParamValueWithString(fullname, value)
 	if err != nil {
@@ -285,7 +294,7 @@ func (ctx *EngineContext) setOneLayerParamValue(layerName, fullname, value strin
  */
 
 // to avoid unused warning
-// var p *Layer
+// var p *Patch
 
 /*
 // getScale xxx
@@ -293,8 +302,8 @@ func (ctx *EngineContext) getScale() *Scale {
 	var scaleName string
 	var scale *Scale
 
-	// if Layer.MIDIUseScale {
-	// 	scale = Layer.externalScale
+	// if Patch.MIDIUseScale {
+	// 	scale = Patch.externalScale
 	// } else {
 	scaleName = ctx.pluginParams.ParamStringValue("misc.scale", "newage")
 	scale = GlobalScale(scaleName)
@@ -322,23 +331,25 @@ func (ctx *EngineContext) sendEffectParam(name string, value string) {
 }
 */
 
+/*
 func (ctx *PluginContext) handleMIDITimeReset() {
 	LogWarn("HandleMIDITimeReset!! needs implementation")
 }
+*/
 
 func (ctx *PluginContext) GetSynth(synthName string) *Synth {
 	return GetSynth(synthName)
 }
 
 /*
-func (ctx *EngineContext) LayerApplySaved(layerName, savedName string) error {
+func (ctx *EngineContext) PatchApplySaved(patchName, savedName string) error {
 	saved, err := LoadSaved(savedName)
 	if err != nil {
 		LogError(err, "saved", savedName)
 		return err
 	}
-	saved.ApplyTo(ctx.LayerParams(layerName))
-	return fmt.Errorf("LayerApplySaved needs work")
+	saved.ApplyTo(ctx.PatchParams(patchName))
+	return fmt.Errorf("PatchApplySaved needs work")
 }
 */
 
@@ -372,7 +383,7 @@ func (ctx *PluginContext) ExecuteAPI(api string, args map[string]string, rawargs
 		// msg.Append(strings.TrimPrefix(api, "visual."))
 		// msg.Append(rawargs)
 		// layer := "A"
-		// ctx.toFreeFramePluginForLayer(layer, msg)
+		// ctx.toFreeFramePluginForPatch(layer, msg)
 	}
 
 	switch api {
@@ -471,7 +482,7 @@ func (ctx *PluginContext) ExecuteAPI(api string, args map[string]string, rawargs
 			}
 
 	default:
-		err = fmt.Errorf("Layer.ExecuteAPI: unknown api=%s", api)
+		err = fmt.Errorf("Patch.ExecuteAPI: unknown api=%s", api)
 	}
 
 	return result, err

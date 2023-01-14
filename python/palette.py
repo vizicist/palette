@@ -168,16 +168,17 @@ def add_to_params(params,p):
         return p
     return p + "," + params
 
-def palette_layer_api(layer, api, params=""):
-    if layer == "":
-        log("palette_layer_api: no layer specified?")
-    return palette_api("layer."+api,add_to_params(params,"\"layer\":\""+layer+"\""))
+def palette_patch_api(patch, api, params=""):
+    if patch == "":
+        log("palette_patch_api: no patch specified?")
+    log("palette_patch_api: patch="+patch+" api="+api+" params="+params)
+    return palette_api("patch."+api,add_to_params(params,"\"patch\":\""+patch+"\""))
 
-def palette_layer_set(layer, name, value):
-    if layer == "":
-        log("palette_layer_set: no layer specified?")
-    return palette_api("layer.set",
-            "\"layer\": \"" + layer + "\"" + \
+def palette_patch_set(patch, name, value):
+    if patch == "":
+        log("palette_patch_set: no patch specified?")
+    return palette_api("patch.set",
+            "\"patch\": \"" + patch + "\"" + \
             ", \"name\": \"" + name + "\"" + \
             ", \"value\": \"" + str(value) + "\"")
 
