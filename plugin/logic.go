@@ -1,19 +1,19 @@
 package plugin
 
 import (
-	"fmt"
 	"math"
-	"math/rand"
+	"sync"
 
 	"github.com/hypebeast/go-osc/osc"
 	"github.com/vizicist/palette/engine"
 )
 
-type LayerLogic struct {
+type PatchLogic struct {
 	ppro  *PalettePro
-	layer *engine.Layer
+	layer *engine.Patch
 
 	cursorNote map[string]*engine.NoteOn
+	mutex      sync.Mutex
 	// tempoFactor            float64
 	// loop            *StepLoop
 	// loopLength      engine.Clicks
@@ -38,8 +38,8 @@ type LayerLogic struct {
 	// TransposePitch   int
 }
 
-func NewLayerLogic(ppro *PalettePro, layer *engine.Layer) *LayerLogic {
-	logic := &LayerLogic{
+func NewPatchLogic(ppro *PalettePro, layer *engine.Patch) *PatchLogic {
+	logic := &PatchLogic{
 		ppro:       ppro,
 		layer:      layer,
 		cursorNote: map[string]*engine.NoteOn{},
@@ -47,14 +47,14 @@ func NewLayerLogic(ppro *PalettePro, layer *engine.Layer) *LayerLogic {
 	return logic
 }
 
-func (logic *LayerLogic) cursorToNoteOn(ctx *engine.PluginContext, ce engine.CursorEvent) *engine.NoteOn {
+func (logic *PatchLogic) cursorToNoteOn(ctx *engine.PluginContext, ce engine.CursorEvent) *engine.NoteOn {
 	pitch := logic.cursorToPitch(ctx, ce)
 	velocity := logic.cursorToVelocity(ctx, ce)
-	channel := logic.layer.MIDIChannel()
-	return engine.NewNoteOn(channel, pitch, velocity)
+	synth := logic.layer.Synth
+	return engine.NewNoteOn(synth, pitch, velocity)
 }
 
-func (logic *LayerLogic) cursorToPitch(ctx *engine.PluginContext, ce engine.CursorEvent) uint8 {
+func (logic *PatchLogic) cursorToPitch(ctx *engine.PluginContext, ce engine.CursorEvent) uint8 {
 	layer := logic.layer
 	ppro := logic.ppro
 	pitchmin := layer.GetInt("sound.pitchmin")
@@ -82,7 +82,7 @@ func (logic *LayerLogic) cursorToPitch(ctx *engine.PluginContext, ce engine.Curs
 	return p
 }
 
-func (logic *LayerLogic) cursorToVelocity(ctx *engine.PluginContext, ce engine.CursorEvent) uint8 {
+func (logic *PatchLogic) cursorToVelocity(ctx *engine.PluginContext, ce engine.CursorEvent) uint8 {
 	layer := logic.layer
 	vol := layer.Get("misc.vol")
 	if vol == "" {
@@ -117,7 +117,7 @@ func (logic *LayerLogic) cursorToVelocity(ctx *engine.PluginContext, ce engine.C
 	return uint8(vel)
 }
 
-func (logic *LayerLogic) generateVisualsFromCursor(ce engine.CursorEvent) {
+func (logic *PatchLogic) generateVisualsFromCursor(ce engine.CursorEvent) {
 	// send an OSC message to Resolume
 	msg := osc.NewMessage("/cursor")
 	msg.Append(ce.Ddu)
@@ -128,19 +128,58 @@ func (logic *LayerLogic) generateVisualsFromCursor(ce engine.CursorEvent) {
 	engine.TheResolume().ToFreeFramePlugin(logic.layer.Name(), msg)
 }
 
-func (logic *LayerLogic) generateSoundFromCursor(ctx *engine.PluginContext, ce engine.CursorEvent) {
+func (logic *PatchLogic) generateSoundFromCursor(ctx *engine.PluginContext, ce engine.CursorEvent, cursorStyle string) {
+
+	switch cursorStyle {
+	case "", "downonly":
+		logic.generateSoundFromCursorDownOnly(ctx, ce)
+	case "retrigger":
+		logic.generateSoundFromCursorRetrigger(ctx, ce)
+	}
+}
+
+func (logic *PatchLogic) generateSoundFromCursorDownOnly(ctx *engine.PluginContext, ce engine.CursorEvent) {
+
+	logic.mutex.Lock()
+	defer logic.mutex.Unlock()
+
+	switch ce.Ddu {
+	case "down":
+		noteOn := logic.cursorToNoteOn(ctx, ce)
+		click := logic.nextQuant(ctx.CurrentClick(), engine.EighthNote)
+
+		ctx.ScheduleAt(noteOn, click)
+		click += engine.QuarterNote
+		noteOff := engine.NewNoteOffFromNoteOn(noteOn)
+		ctx.ScheduleAt(noteOff, click)
+
+	case "drag":
+		// do nothing
+
+	case "up":
+		// do nothing
+	}
+}
+
+func (logic *PatchLogic) generateSoundFromCursorRetrigger(ctx *engine.PluginContext, ce engine.CursorEvent) {
+
+	logic.mutex.Lock()
+	defer logic.mutex.Unlock()
 
 	layer := logic.layer
 	switch ce.Ddu {
 	case "down":
+		engine.LogInfo("CURSOR down event for cursor", "cid", ce.Cid)
 		_, ok := logic.cursorNote[ce.Cid]
 		if ok {
 			engine.LogWarn("generateSoundFromCursor: cursorNote already exists", "cid", ce.Cid)
 		}
 		noteOn := logic.cursorToNoteOn(ctx, ce)
-		logic.sendNoteOn(noteOn)
+		ctx.ScheduleAt(noteOn, ctx.CurrentClick())
+		// logic.sendNoteOn(noteOn)
 		logic.cursorNote[ce.Cid] = noteOn
 	case "drag":
+		engine.LogInfo("CURSOR drag event for cursor", "cid", ce.Cid)
 		cursorState := ctx.GetCursorState(ce.Cid)
 		if cursorState == nil {
 			engine.LogWarn("generateSoundFromCursor: cursorState is nil", "cid", ce.Cid)
@@ -169,48 +208,60 @@ func (logic *LayerLogic) generateSoundFromCursor(ctx *engine.PluginContext, ce e
 		deltay := float32(math.Abs(float64(cursorState.Previous.Y - ce.Y)))
 		deltaytrig := layer.GetFloat("sound._deltaytrig")
 
-		if layer.Get("sound.controllerstyle") == "modulationonly" {
-			zmin := layer.GetFloat("sound._controllerzmin")
-			zmax := layer.GetFloat("sound._controllerzmax")
-			cmin := layer.GetInt("sound._controllermin")
-			cmax := layer.GetInt("sound._controllermax")
-			oldz := cursorState.Previous.Z
-			newz := ce.Z
-			// XXX - should put the old controller value in ActiveNote so
-			// it doesn't need to be computed every time
-			oldzc := BoundAndScaleController(oldz, zmin, zmax, cmin, cmax)
-			newzc := BoundAndScaleController(newz, zmin, zmax, cmin, cmax)
-
-			if newzc != 0 && newzc != oldzc {
-				logic.layer.Synth.SendController(1, newzc)
-			}
-		}
+		logic.generateController(ctx, cursorState)
 
 		if newpitch != oldpitch || deltaz > deltaztrig || deltay > deltaytrig {
 			// Turn off existing note
-			logic.sendNoteOff(oldNoteOn)
-			engine.LogInfo("Replacing cursorNote", "cid", ce.Cid)
+			noteOff := engine.NewNoteOffFromNoteOn(oldNoteOn)
+			ctx.ScheduleAt(noteOff, ctx.CurrentClick())
+			engine.LogInfo("newNoteOn for cursor", "cid", ce.Cid)
 			logic.cursorNote[ce.Cid] = newNoteOn
-			logic.sendNoteOn(newNoteOn)
+			ctx.ScheduleAt(newNoteOn, ctx.CurrentClick())
 		}
+
 	case "up":
-		cursorState := ctx.GetCursorState(ce.Cid)
-		if cursorState == nil {
-			engine.LogWarn("generateSoundFromCursor: cursorState is nil", "cid", ce.Cid)
-			return
-		}
+		/*
+			cursorState := ctx.GetCursorState(ce.Cid)
+			if cursorState == nil {
+				engine.LogWarn("generateSoundFromCursor: cursorState is nil", "cid", ce.Cid)
+				return
+			}
+		*/
+		engine.LogInfo("CURSOR up event for cursor", "cid", ce.Cid)
 		oldNoteOn, ok := logic.cursorNote[ce.Cid]
 		if !ok {
 			// not sure why this happens, yet
 			engine.LogWarn("Unexpected UP, no cursorNote", "cid", ce.Cid)
 		} else {
-			logic.sendNoteOff(oldNoteOn)
+			noteOff := engine.NewNoteOffFromNoteOn(oldNoteOn)
+			ctx.ScheduleAt(noteOff, ctx.CurrentClick())
+			// logic.sendNoteOff(oldNoteOn)
 			delete(logic.cursorNote, ce.Cid)
 		}
 	}
 }
 
-func (logic *LayerLogic) nextQuant(t engine.Clicks, q engine.Clicks) engine.Clicks {
+func (logic *PatchLogic) generateController(ctx *engine.PluginContext, cursorState *engine.CursorState) {
+
+	if logic.layer.Get("sound.controllerstyle") == "modulationonly" {
+		zmin := logic.layer.GetFloat("sound._controllerzmin")
+		zmax := logic.layer.GetFloat("sound._controllerzmax")
+		cmin := logic.layer.GetInt("sound._controllermin")
+		cmax := logic.layer.GetInt("sound._controllermax")
+		oldz := cursorState.Previous.Z
+		newz := cursorState.Current.Z
+		// XXX - should put the old controller value in ActiveNote so
+		// it doesn't need to be computed every time
+		oldzc := BoundAndScaleController(oldz, zmin, zmax, cmin, cmax)
+		newzc := BoundAndScaleController(newz, zmin, zmax, cmin, cmax)
+
+		if newzc != 0 && newzc != oldzc {
+			logic.layer.Synth.SendController(1, newzc)
+		}
+	}
+}
+
+func (logic *PatchLogic) nextQuant(t engine.Clicks, q engine.Clicks) engine.Clicks {
 	// the algorithm below is the same as KeyKit's nextquant
 	if q <= 1 {
 		return t
@@ -228,18 +279,20 @@ func (logic *LayerLogic) nextQuant(t engine.Clicks, q engine.Clicks) engine.Clic
 	return tq
 }
 
-func (logic *LayerLogic) sendNoteOn(note any) {
+/*
+func (logic *PatchLogic) oldsendNoteOn(note any) {
 
-	logic.layer.Synth.SendTo(note)
+	logic.layer.Synth.SendNoteToMidiOutput(note)
 
 	// ss := logic.layer.Get("visual.spritesource")
 	// if ss == "midi" {
 	// 	logic.generateSpriteFromPhraseElement(ctx, pe)
 	// }
 }
+*/
 
 /*
-func (logic *LayerLogic) SendPhraseElementToSynth(ctx *engine.PluginContext, pe *engine.PhraseElement) {
+func (logic *PatchLogic) SendPhraseElementToSynth(ctx *engine.PluginContext, pe *engine.PhraseElement) {
 
 	ss := logic.layer.Get("visual.spritesource")
 	if ss == "midi" {
@@ -249,7 +302,8 @@ func (logic *LayerLogic) SendPhraseElementToSynth(ctx *engine.PluginContext, pe 
 }
 */
 
-func (logic *LayerLogic) generateSpriteFromPhraseElement(ctx *engine.PluginContext, pe *engine.PhraseElement) {
+/*
+func (logic *PatchLogic) generateSpriteFromPhraseElement(ctx *engine.PluginContext, pe *engine.PhraseElement) {
 
 	layer := logic.layer
 
@@ -322,24 +376,27 @@ func (logic *LayerLogic) generateSpriteFromPhraseElement(ctx *engine.PluginConte
 
 	engine.TheResolume().ToFreeFramePlugin(layer.Name(), msg)
 }
+*/
 
-// func (logic *LayerLogic) sendANO() {
+// func (logic *PatchLogic) sendANO() {
 // 	logic.layer.Synth.SendANO()
 // }
 
-func (logic *LayerLogic) sendNoteOff(n *engine.NoteOn) {
+/*
+func (logic *PatchLogic) sendNoteOff(n *engine.NoteOn) {
 	if n == nil {
 		// Not sure why this sometimes happens
 		return
 	}
 	noteOff := engine.NewNoteOff(n.Channel, n.Pitch, n.Velocity)
 	// pe := &engine.PhraseElement{Value: noteOff}
-	logic.layer.Synth.SendTo(noteOff)
+	logic.layer.Synth.SendNoteToMidiOutput(noteOff)
 	// layer.SendPhraseElementToSynth(pe)
 }
+*/
 
 /*
-func (logic *LayerLogic) advanceTransposeTo(newclick engine.Clicks) {
+func (logic *PatchLogic) advanceTransposeTo(newclick engine.Clicks) {
 
 	ppro := logic.ppro
 	ppro.transposeNext += (ppro.transposeClicks * engine.OneBeat)

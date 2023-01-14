@@ -159,6 +159,13 @@ func (vals *ParamValues) GetBoolValue(name string) bool {
 	return (param).(paramValBool).value
 }
 
+func IsPatchCategory(category string) bool {
+	return (category == "visual" ||
+		category == "sound" ||
+		category == "effect" ||
+		category == "misc")
+}
+
 func (vals *ParamValues) Save(category string, filename string) error {
 
 	LogOfType("paramvals", "ParamValues.Save", "category", category, "filename", filename)
@@ -178,11 +185,7 @@ func (vals *ParamValues) Save(category string, filename string) error {
 		if category == paramCategory {
 			sortedNames = append(sortedNames, paramName)
 		} else {
-			paramIsLayerCategory := (paramCategory == "visual" || paramCategory == "sound" || paramCategory == "effect")
-			if category == "layer" && paramIsLayerCategory {
-				sortedNames = append(sortedNames, paramName)
-			}
-			if category == "preset" && (paramIsLayerCategory || paramCategory == "misc") {
+			if category == "patch" && IsPatchCategory(paramCategory) {
 				sortedNames = append(sortedNames, paramName)
 			}
 		}

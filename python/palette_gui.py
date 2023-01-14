@@ -20,7 +20,7 @@ from codenamize import codenamize
 
 import palette
 
-FourLayers = False
+FourPatches = False
 RecMode = False
 # DoAttractStuff = False
 
@@ -64,7 +64,7 @@ class ProGuiApp(tk.Tk):
 
     def __init__(self,
             layername,
-            layernames,
+            patchnames,
             visiblepagenames,
             isguilarge
             ):
@@ -105,32 +105,32 @@ class ProGuiApp(tk.Tk):
             self.paramDisplayRows = 19
             self.frameSizeOfControlNormal = 0.06
             self.frameSizeOfSelectNormal = 1.0 - self.frameSizeOfControlNormal
-            self.frameSizeOfLayerChooserNormal = 0.0
+            self.frameSizeOfPatchChooserNormal = 0.0
             self.selectDisplayRowsNormal = 15
             self.frameSizeOfControlAdvanced = 0.15
-            self.frameSizeOfLayerChooserAdvanced = 0.13
-            self.frameSizeOfSelectAdvanced = 1.0 - self.frameSizeOfControlAdvanced - self.frameSizeOfLayerChooserAdvanced
+            self.frameSizeOfPatchChooserAdvanced = 0.13
+            self.frameSizeOfSelectAdvanced = 1.0 - self.frameSizeOfControlAdvanced - self.frameSizeOfPatchChooserAdvanced
             self.performButtonPadx = 3
             self.performButtonPady = 2
             self.performButtonsPerRow = 6
             self.selectDisplayRowsAdvanced = 10
-            self.selectDisplayRowsAdvancedPreset = 12
+            self.selectDisplayRowsAdvancedQuad = 12
         else:
             self.paramDisplayRows = 18
             self.frameSizeOfControlNormal = 0.085
             self.frameSizeOfSelectNormal = 1.0 - self.frameSizeOfControlNormal
-            self.frameSizeOfLayerChooserNormal = 0.0
+            self.frameSizeOfPatchChooserNormal = 0.0
             self.selectDisplayRowsNormal = 13
             self.frameSizeOfControlAdvanced = 0.19
-            self.frameSizeOfLayerChooserAdvanced = 0.14
-            self.frameSizeOfSelectAdvanced = 1.0 - self.frameSizeOfControlAdvanced - self.frameSizeOfLayerChooserAdvanced
+            self.frameSizeOfPatchChooserAdvanced = 0.14
+            self.frameSizeOfSelectAdvanced = 1.0 - self.frameSizeOfControlAdvanced - self.frameSizeOfPatchChooserAdvanced
             self.performButtonPadx = 3
             self.performButtonPady = 3
             self.performButtonsPerRow = 6
             self.selectDisplayRowsAdvanced = 9
 
-        self.frameSizeOfSelectAdvancedPreset = self.frameSizeOfSelectAdvanced + self.frameSizeOfLayerChooserAdvanced
-        if (self.frameSizeOfSelectAdvanced + self.frameSizeOfControlAdvanced + self.frameSizeOfLayerChooserAdvanced) != 1.0:
+        self.frameSizeOfSelectAdvancedQuad = self.frameSizeOfSelectAdvanced + self.frameSizeOfPatchChooserAdvanced
+        if (self.frameSizeOfSelectAdvanced + self.frameSizeOfControlAdvanced + self.frameSizeOfPatchChooserAdvanced) != 1.0:
             log("Hey, page sizes don't add up to 1.0")
 
 
@@ -143,27 +143,27 @@ class ProGuiApp(tk.Tk):
 
         self.AllPageNames = {
                 "global":0,
-                "preset":0,
-                "layer":0,
+                "quad":0,
+                "patch":0,
                 "sound":0,
                 "visual":0,
                 "effect":0,
                 "misc":0}
 
         self.visiblePageNames = visiblepagenames
-        self.LayerNames = collections.OrderedDict()
+        self.PatchNames = collections.OrderedDict()
         num = 1
-        for ch in layernames:
-            self.LayerNames[ch] = num
+        for ch in patchnames:
+            self.PatchNames[ch] = num
             num = num + 1
 
         self.readParamDefs()
 
-        self.allLayersSelected = True
-        self.Layers = {}
-        for layerName in self.LayerNames:
-            p = Layer(self,layerName)
-            self.Layers[p] = layerName
+        self.allPatchesSelected = True
+        self.Patches = {}
+        for patchName in self.PatchNames:
+            p = Patch(self,patchName)
+            self.Patches[p] = patchName
 
         self.frames = {}
         self.editPage = {}
@@ -176,7 +176,7 @@ class ProGuiApp(tk.Tk):
         self.activeTime = {}
         self.editMode = False
         self.showSound = False
-        self.showLayerFeedback = True
+        self.showPatchFeedback = True
         self.showCursorFeedback = False
 
         self.windowName = "Palette Control"
@@ -198,14 +198,14 @@ class ProGuiApp(tk.Tk):
             palette.GlobalPerformLabels["scale"] = palette.PerformScales
         self.globalPerformIndex["scale"] = palette.PerformDefaultVal["scale"]
 
-    def placeLayerChooser(self):
+    def placePatchChooser(self):
         if self.guiLevel > 0:
-            self.layerChooser.place(in_=self.topContainer, relx=0, rely=self.layerChooserPageY, relwidth=1, relheight=self.frameSizeOfLayerChooser)
+            self.patchChooser.place(in_=self.topContainer, relx=0, rely=self.patchChooserPageY, relwidth=1, relheight=self.frameSizeOfPatchChooser)
         else:
-            self.layerChooser.place_forget()
+            self.patchChooser.place_forget()
 
-    def forgetLayerChooser(self):
-        self.layerChooser.place_forget()
+    def forgetPatchChooser(self):
+        self.patchChooser.place_forget()
 
     def scrollWheel(self,event):
         if self.editMode:
@@ -300,17 +300,16 @@ class ProGuiApp(tk.Tk):
         # log("startAttractMode: setting nextMode to attract")
         self.nextMode = "attract"
         self.lastAttractSpriteTime = 0
-        self.lastAttractPresetTime = 0
         self.selectFrame.place_forget()
         self.performFrame.place_forget()
-        self.layerChooser.place_forget()
+        self.patchChooser.place_forget()
         self.helpFrame.place_forget()
         self.attractFrame.place(in_=self.topContainer, relx=0, rely=0, relwidth=1, relheight=1)
 
     def startHelpMode(self):
         self.selectFrame.place_forget()
         self.performFrame.place_forget()
-        self.layerChooser.place_forget()
+        self.patchChooser.place_forget()
         self.attractFrame.place_forget()
         self.helpFrame.place(in_=self.topContainer, relx=0, rely=0, relwidth=1, relheight=1)
 
@@ -327,7 +326,7 @@ class ProGuiApp(tk.Tk):
         self.performFrame = self.makePerformFrame(self.topContainer)
         self.attractFrame = self.makeAttractFrame(self.topContainer)
         self.helpFrame = self.makeHelpFrame(self.topContainer)
-        self.layerChooser = self.makeLayerChooserFrame(parent=self.topContainer,controller=self)
+        self.patchChooser = self.makePatchChooserFrame(parent=self.topContainer,controller=self)
 
         self.performPage = PagePerformMain(parent=self.performFrame, controller=self)
 
@@ -339,9 +338,9 @@ class ProGuiApp(tk.Tk):
         self.resetVisibility()
 
         # select the initial layer
-        self.layerChooserCallback(layername)
-        self.allLayersSelected = True
-        self.layerChooser.refreshColors()
+        self.patchChooserCallback(layername)
+        self.allPatchesSelected = True
+        self.patchChooser.refreshColors()
 
     def popup(self,msg):
         usemessagebox = True
@@ -410,7 +409,7 @@ class ProGuiApp(tk.Tk):
         self.setFrameSizes()
 
         # default page selection
-        self.selectPage("preset")
+        self.selectPage("quad")
 
         self.placeFrames()
 
@@ -420,45 +419,45 @@ class ProGuiApp(tk.Tk):
         if self.guiLevel == 0:
             self.performFrame.place(in_=self.topContainer, relx=0, rely=self.performPageY, relwidth=1, relheight=self.frameSizeOfControl)
             self.selectFrame.place(in_=self.topContainer, relx=0, rely=0, relwidth=1, relheight=self.frameSizeOfSelect)
-            self.placeLayerChooser()
+            self.placePatchChooser()
         else:
             self.performFrame.place(in_=self.topContainer, relx=0, rely=self.performPageY, relwidth=1, relheight=self.frameSizeOfControl)
             self.selectFrame.place(in_=self.topContainer, relx=0, rely=0, relwidth=1, relheight=self.frameSizeOfSelect)
-            self.placeLayerChooser()
+            self.placePatchChooser()
 
     def setFrameSizes(self):
 
         if self.guiLevel == 0:
             self.frameSizeOfControl = self.frameSizeOfControlNormal
             self.frameSizeOfSelect = self.frameSizeOfSelectNormal
-            self.frameSizeOfLayerChooser = self.frameSizeOfLayerChooserNormal
+            self.frameSizeOfPatchChooser = self.frameSizeOfPatchChooserNormal
             self.selectDisplayRows = self.selectDisplayRowsNormal
 
-        elif self.currentPageName == "preset":
-            # quad page layout used to omit the LayerChooser,
+        elif self.currentPageName == "quad":
+            # quad page layout used to omit the PatchChooser,
             # but I put it back, so this is the same as below
             self.frameSizeOfControl = self.frameSizeOfControlAdvanced
             self.frameSizeOfSelect = self.frameSizeOfSelectAdvanced
-            self.frameSizeOfLayerChooser = self.frameSizeOfLayerChooserAdvanced
+            self.frameSizeOfPatchChooser = self.frameSizeOfPatchChooserAdvanced
             self.selectDisplayRows = self.selectDisplayRowsAdvanced
 
         else:
             # Advanced is any guiLevel>0
             self.frameSizeOfControl = self.frameSizeOfControlAdvanced
             self.frameSizeOfSelect = self.frameSizeOfSelectAdvanced
-            self.frameSizeOfLayerChooser = self.frameSizeOfLayerChooserAdvanced
+            self.frameSizeOfPatchChooser = self.frameSizeOfPatchChooserAdvanced
             self.selectDisplayRows = self.selectDisplayRowsAdvanced
 
         y = 0
         self.selectPageY = y
         y += self.frameSizeOfSelect
-        self.layerChooserPageY = y
-        y += self.frameSizeOfLayerChooser
+        self.patchChooserPageY = y
+        y += self.frameSizeOfPatchChooser
         self.performPageY = y
         y += self.frameSizeOfControl
  
-    def makeLayerChooserFrame(self,parent,controller):
-        f = LayerChooser(parent,controller)
+    def makePatchChooserFrame(self,parent,controller):
+        f = PatchChooser(parent,controller)
         f.config(background=ColorBg)
         return f
 
@@ -474,7 +473,7 @@ class ProGuiApp(tk.Tk):
         self.pageHeader = PageHeader(parent=f, controller=self)
         self.pageHeader.pack(side=tk.TOP,fill=tk.BOTH)
 
-        # These are the pages of buttons for selecting preset/misc/layer/sound/visual/etc..
+        # These are the pages of buttons for selecting sound/visual/effect/misc/etc..
         # Each one has a SelectorPage with the saved buttons,
         # and an EditPage with all the parameters
         for pagename in self.visiblePageNames:
@@ -554,11 +553,11 @@ class ProGuiApp(tk.Tk):
         self.lastLoadType = ""
         self.lastLoadName = ""
 
-        if self.editMode and pagename != "layer":
-            if self.allLayersSelected:
-                layer = self.layerNamed("A")
+        if self.editMode and pagename != "patch":
+            if self.allPatchesSelected:
+                layer = self.patchNamed("A")
             else:
-                layer = self.CurrLayer
+                layer = self.CurrPatch
 
             # page.setValues(pad.getValues())
             self.refreshValues(pagename,layer)
@@ -570,9 +569,9 @@ class ProGuiApp(tk.Tk):
         page = self.editPage[pagename]
         for name in layer.params:
             ptype = self.paramTypeOf[name]
-            if pagename != "layer" and ptype != pagename:
+            if pagename != "patch" and ptype != pagename:
                 continue
-            value, err = palette.palette_layer_api(layer.name(), "get",
+            value, err = palette.palette_patch_api(layer.name(), "get",
                 "\"name\": \"" + name + "\"")
             if err != None:
                 log("Error in getting value of "+name)
@@ -585,13 +584,13 @@ class ProGuiApp(tk.Tk):
             # Need to set the value in local params values 
             layer.setValue("",name,value)
 
-    def layerNamed(self,layerName):
+    def patchNamed(self,patchName):
         lastResort = None
-        for layer in self.Layers:
-            lastResort = layer
-            if layer.name() == layerName:
-                return layer
-        log("There is no Layer named ",layerName,", last resort, using",lastResort.name())
+        for patch in self.Patches:
+            lastResort = patch
+            if patch.name() == patchName:
+                return patch
+        log("There is no Patch named ",patchName,", last resort, using",lastResort.name())
         return lastResort
 
     def selectPage(self,pagename):
@@ -602,7 +601,7 @@ class ProGuiApp(tk.Tk):
         self.forgetPages(self.selectorPage)
         self.forgetPages(self.editPage)
 
-        self.placeLayerChooser()
+        self.placePatchChooser()
 
         if self.guiLevel > 0 and self.editMode:
             page = self.editPage[pagename]
@@ -617,41 +616,41 @@ class ProGuiApp(tk.Tk):
         page.pack(side=tk.TOP,fill=tk.BOTH,expand=True)
         page.tkraise()
 
-    def doAllLayers(self):
-        return self.allLayersSelected or self.currentPageName=="layer"
+    def doAllPatches(self):
+        return self.allPatchesSelected or self.currentPageName=="patch"
 
     def sendParamValues(self,values):
         log("sendParamValues: ",str(values))
         for name in values:
             v = values[name]
-            if self.doAllLayers():
-                for layer in self.Layers:
+            if self.doAllPatches():
+                for layer in self.Patches:
                     layer.sendParamValue(name,v)
             else:
-                self.CurrLayer.sendParamValue(name,v)
+                self.CurrPatch.sendParamValue(name,v)
 
     def changeAndSendValue(self,paramType,basename,value):
 
         if paramType == "global":
             self.changeGlobalValue(basename,value)
 
-        elif self.doAllLayers():
-            for layer in self.Layers:
+        elif self.doAllPatches():
+            for layer in self.Patches:
                 layer.setValue(paramType,basename,value)
                 layer.sendValue(paramType,basename)
 
         else:
-            self.CurrLayer.setValue(paramType,basename,value)
-            self.CurrLayer.sendValue(paramType,basename)
+            self.CurrPatch.setValue(paramType,basename,value)
+            self.CurrPatch.sendValue(paramType,basename)
 
     def changeGlobalValue(self,basename,value):
 
         palette.palette_ppro_api("set",
             "\"name\": \"" + basename + "\"" + \
             ", \"value\": \"" + str(value) + "\"" )
-        palette.palette_ppro_api("save",
-            "\"category\": \"" + "global" + "\"" + \
-            ", \"filename\": \"" + "_Current" + "\"")
+        # palette.palette_ppro_api("save",
+        #     "\"category\": \"" + "global" + "\"" + \
+        #     ", \"filename\": \"" + "_Current" + "\"")
 
     def selectorApply(self,apply,paramType):
 
@@ -660,29 +659,29 @@ class ProGuiApp(tk.Tk):
             log("Hmmm, selectorAply should only be called in editMode")
             return
 
-        if paramType == "layer":
+        if paramType == "patch":
             log("selectorApply not implemented on layer")
         else:
 
             self.applyToAllParams(apply,paramType)
             self.refreshPage()
 
-            if self.allLayersSelected:
+            if self.allPatchesSelected:
                 log("Sending ",paramType," params to all layers")
-                for layer in self.Layers:
+                for layer in self.Patches:
                     layer.sendParamsOfType(paramType)
             else:
-                log("Sending ",paramType," params to layer ",self.CurrLayer.name())
-                self.CurrLayer.sendParamsOfType(paramType)
+                log("Sending ",paramType," params to layer ",self.CurrPatch.name())
+                self.CurrPatch.sendParamsOfType(paramType)
 
     def applyToAllParams(self,apply,paramType):
         # loop through all the parameters of a given type
         for name in self.allParamsJson:
             j = self.allParamsJson[name]
-            if paramType != "layer" and j["paramstype"] != paramType:
+            if paramType != "patch" and j["paramstype"] != paramType:
                 continue
             valuetype = j["valuetype"]
-            (p,basename) = layerOfParam(name)
+            (p,basename) = patchOfParam(name)
             if p != None:
                 log("Unexpected layer in param value?")
                 continue
@@ -758,38 +757,35 @@ class ProGuiApp(tk.Tk):
         fullsavedname = category+"."+str(filename)
         self.editPage[category].paramsnameVar.set(filename)
 
-        # if self.currentMode != "attract":
-        #     log("Loading","preset",fullsavedname)
-
         if category == "global":
             log("Loading","category","global","filename",filename)
             palette.palette_ppro_api("load",
                 "\"filename\": \"" + filename + "\""
                 ", \"category\": \"" + category + "\"")
-        elif category == "preset":
-            if self.guiLevel == 0 or self.allLayersSelected:
-                # in casual instrument mode, loading a preset will ignore the layer selections
+        elif category == "quad":
+            if self.guiLevel == 0 or self.allPatchesSelected:
+                # in casual instrument mode, loading a quad will ignore the layer selections
                 # because in casual mode, the layer selectors aren't shown.
-                # In non-casual mode (guiLevel>0) we do this if allLayersSelected
-                log("Loading","category","preset","filename",filename)
+                # In non-casual mode (guiLevel>0) we do this if allPatchesSelected
+                log("Loading","category","quad","filename",filename)
                 palette.palette_ppro_api("load",
                     "\"filename\": \"" + filename + "\""
                     ", \"category\": \"" + category + "\"")
             else:
                 # Otherwise, the quad saved is loaded only in a single layer
-                layerName = self.CurrLayer.name()
-                self.layerLoad(layerName,category,filename)
+                patchName = self.CurrPatch.name()
+                self.patchLoad(patchName,category,filename)
 
-        elif self.allLayersSelected:
-            for layer in self.Layers:
-                self.layerLoad(layer.name(),category,filename)
+        elif self.allPatchesSelected:
+            for layer in self.Patches:
+                self.patchLoad(layer.name(),category,filename)
         else:
-            layerName = self.CurrLayer.name()
-            self.layerLoad(layerName,category,filename)
+            patchName = self.CurrPatch.name()
+            self.patchLoad(patchName,category,filename)
 
-    def layerLoad(self,layerName,category,filename):
-        log("layerLoad","layer",layerName,"category",category,"filename",filename)
-        palette.palette_layer_api(layerName, "load",
+    def patchLoad(self,patchName,category,filename):
+        log("layerLoad","patch",patchName,"category",category,"filename",filename)
+        palette.palette_patch_api(patchName, "load",
             "\"category\": \"" + category + "\""
             ", \"filename\": \"" + filename + "\"")
 
@@ -820,58 +816,46 @@ class ProGuiApp(tk.Tk):
             log("Mismatched paramstype in JSON!")
             return
 
-        if paramType == "layer":
-            self.loadPageJson(self.editPage["layer"],j)
-            self.sendPage(self.editPage["layer"])
-        elif paramType == "preset":
-            log("Hey, does preset need work here?  FFF")
+        if paramType == "patch":
+            self.loadPageJson(self.editPage["patch"],j)
+            self.sendPage(self.editPage["patch"])
+        elif paramType == "quad":
+            log("Hey, does quad need work here?  FFF")
         else:
-            self.readOtherParamsJsonIntoSnapAndPreset(paramType,j)
-            log("Sending",paramType,"params to layer",self.CurrLayer.name())
-            self.CurrLayer.sendParamsOfType(paramType)
+            log("Hey, Is this code obsolete, paramType="+paramType)
+            # self.readOtherParamsJsonIntoSnapAndPreset(paramType,j)
+            # log("Sending",paramType,"params to layer",self.CurrPatch.name())
+            # self.CurrPatch.sendParamsOfType(paramType)
 
-    def layerChooserCallback(self,layerName):
-        self.CurrLayer = self.layerNamed(layerName)
+    def patchChooserCallback(self,patchName):
+        self.CurrPatch = self.patchNamed(patchName)
 
-        self.allLayersSelected = False
+        self.allPatchesSelected = False
 
-        if len(self.LayerNames) > 1:
-            self.layerChooser.refreshLayerColors()
+        if len(self.PatchNames) > 1:
+            self.patchChooser.refreshPatchColors()
 
         self.refreshPage()
 
-        self.performPage.updatePerformButtonLabels(self.CurrLayer)
-        self.CurrLayer.sendPerformVals()
+        self.performPage.updatePerformButtonLabels(self.CurrPatch)
+        self.CurrPatch.sendPerformVals()
 
         self.editPage[self.currentPageName].updateParamView()
 
-    def copyLayerToPage(self,layer,pageName):
-        layerValues = layer.getValues()
+    def copyPatchToPage(self,patch,pageName):
+        patchValues = patch.getValues()
         page = self.editPage[pageName]
-        for nm in layerValues:
-            page.changeValueText(nm,layerValues[nm])
-
-    def loadOther(self,paramType,savedname):
-
-        # Load values into the params of the currently-selected Layers
-        if self.allLayersSelected:
-            for layer in self.Layers:
-                layer.loadValues(paramType,savedname)
-        else:
-            self.CurrLayer.loadValues(paramType,savedname)
-
-        # load values into the edit page
-        # page = self.editPage[pagename]
-        # page.loadOtherSaved(savedname)
+        for nm in patchValues:
+            page.changeValueText(nm,patchValues[nm])
 
     def refreshPage(self):
         if self.editMode:
             # If we're in edit mode,
-            # make sure the values are updated from the Layer values
-            if self.allLayersSelected:
-                self.copyLayerToPage(self.layerNamed("A"),self.currentPageName)
+            # make sure the values are updated from the Patch values
+            if self.allPatchesSelected:
+                self.copyPatchToPage(self.patchNamed("A"),self.currentPageName)
             else:
-                self.copyLayerToPage(self.CurrLayer,self.currentPageName)
+                self.copyPatchToPage(self.CurrPatch,self.currentPageName)
 
     def sendGlobalPerformVal(self,name):
 
@@ -892,13 +876,13 @@ class ProGuiApp(tk.Tk):
             palette.palette_engine_api("set_transposeauto", "\"onoff\": \""+str(val) + "\"")
 
     def clear(self):
-        if self.allLayersSelected:
-            for layer in self.Layers:
+        if self.allPatchesSelected:
+            for layer in self.Patches:
                 layer.clearLoop()
             # Extra clearing (on/off) of Bidule
             palette.palette_engine_api("audio_reset")
         else:
-            self.CurrLayer.clearLoop()
+            self.CurrPatch.clearLoop()
         self.checkEscape()
  
     def checkEscape(self):
@@ -921,7 +905,7 @@ class ProGuiApp(tk.Tk):
         # cycle through 0,1 (used to be more levels)
         self.setGuiLevel((self.guiLevel + 1) % 2)
         self.resetVisibility()
-        self.performPage.updatePerformButtonLabels(self.CurrLayer)
+        self.performPage.updatePerformButtonLabels(self.CurrPatch)
         log("GuiLevel",self.guiLevel)
 
     def setGuiLevel(self,level):
@@ -929,7 +913,7 @@ class ProGuiApp(tk.Tk):
         self.setScaleList()
 
     def sendANO(self):
-        for layer in self.Layers:
+        for layer in self.Patches:
             layer.sendANO()
 
     def startHelp(self):
@@ -945,12 +929,12 @@ class ProGuiApp(tk.Tk):
         self.setGuiLevel(self.defaultGuiLevel)
         self.resetLastAnything()
 
-        self.allLayersSelected = True
-        self.CurrLayer = self.layerNamed("A")
-        self.layerChooser.refreshLayerColors()
+        self.allPatchesSelected = True
+        self.CurrPatch = self.patchNamed("A")
+        self.patchChooser.refreshPatchColors()
         self.sendANO()
 
-        for layer in self.Layers:
+        for layer in self.Patches:
             layer.useExternalScale(False)
             layer.clearExternalScale()
 
@@ -963,21 +947,14 @@ class ProGuiApp(tk.Tk):
         for name in palette.GlobalPerformLabels:
             self.sendGlobalPerformVal(name)
 
-        for layer in self.Layers:
+        for layer in self.Patches:
             layer.clearLoop()
             layer.setDefaultPerform()
             layer.sendPerformVals()
 
-        self.performPage.updatePerformButtonLabels(self.CurrLayer)
+        self.performPage.updatePerformButtonLabels(self.CurrPatch)
 
         self.resetVisibility()
-
-    def sendPreset(self):
-        for layer in self.Layers:
-            log("Sending all parameters for layer = ",layer.name())
-            for pt in ["sound","visual","effect"]:
-                paramlistjson = layer.paramListOfType(pt)
-                palette.palette_layer_api(layer.name(), "setparams", paramlistjson)
 
     def synthesizeParamsJson(self):
 
@@ -1043,21 +1020,29 @@ class ProGuiApp(tk.Tk):
                 self.paramsOfType[t][x] = self.newParamsJson[x]
                 self.paramTypeOf[x] = self.newParamsJson[x]["paramstype"]
 
-        # In addition to creating parameters for "layer",
-        # we create all the parameters for the "preset" settings by
-        # duplicating all the parameters for each layer (A,B,C,D).
+        # In addition to creating parameters for "patch",
+        # we create all the parameters for the "quad" settings by
+        # duplicating all the parameters for each layer (A,B,C,D)
+        # and including the misc.* parameters.
         for name in self.newParamNames:
-            self.paramValueTypeOf[name] = self.newParamsJson[name]["valuetype"]
-            self.paramsOfType["layer"][name] = self.newParamsJson[name]
 
-            if FourLayers:
+            self.paramValueTypeOf[name] = self.newParamsJson[name]["valuetype"]
+            if "misc." in name:
+                ptype = "patch"  # misc parameters are layer parameters
+            elif "global." in name:
+                ptype = "global"
+            else:
+                ptype = "patch"
+            self.paramsOfType[ptype][name] = self.newParamsJson[name]
+
+            if FourPatches:
                 # We prepend A-, B-, etc to the parameter name for quad parameters,
-                # to create entries for "preset" things
-                # in paramValueTypeOf and paramsOfType["preset"]
-                for layer in self.LayerNames:
-                    quadName = LayerParamName(layer,name)
+                # to create entries for "quad" things
+                # in paramValueTypeOf and paramsOfType["quad"]
+                for layer in self.PatchNames:
+                    quadName = PatchParamName(layer,name)
                     self.paramValueTypeOf[quadName] = self.newParamsJson[name]["valuetype"]
-                    self.paramsOfType["preset"][quadName] = self.newParamsJson[name]
+                    self.paramsOfType["quad"][quadName] = self.newParamsJson[name]
 
         # The things here get ADDED to the ones already read in from paramenums.json
         for pt in {"sound", "visual", "effect"}:
@@ -1095,15 +1080,14 @@ class ProGuiApp(tk.Tk):
 
         return allparamsjson
 
-class Layer():
+class Patch():
 
-    def __init__(self, controller, layerName):
+    def __init__(self, controller, patchName):
         self.paramValues = {}
         self.controller = controller
-        self.params = self.controller.paramsOfType["layer"]
+        self.params = self.controller.paramsOfType["patch"]
         self.setInitValues()
-        # self.snapPath = CurrentLayerPath(layerName)
-        self.layerName = layerName
+        self.patchName = patchName
         self.setDefaultPerform()
 
     def setDefaultPerform(self):
@@ -1117,7 +1101,7 @@ class Layer():
             self.performIndex[name] = palette.PerformDefaultVal[name]
 
     def name(self):
-        return self.layerName
+        return self.patchName
 
     def setInitValues(self):
         for paramName in self.params:
@@ -1156,17 +1140,17 @@ class Layer():
         paramType = self.controller.paramTypeOf[paramName]
         # fullParamName = paramType + "." + paramName
         fullParamName = paramName
-        palette.palette_layer_api(self.name(),"set",
+        palette.palette_patch_api(self.name(),"set",
             "\"name\": \"" + fullParamName + "\"" + \
             ", \"value\": \"" + str(val) + "\"" )
 
     def sendParamsOfType(self,paramType):
         for pt in ["sound","visual","effect"]:
-            if paramType == "layer" or paramType == pt:
+            if paramType == "patch" or paramType == pt:
                 paramlistjson = self.paramListOfType(pt)
-                palette.palette_layer_api(self.name(), "setparams", paramlistjson)
+                palette.palette_patch_api(self.name(), "setparams", paramlistjson)
 
-        if paramType == "layer":
+        if paramType == "patch":
             self.sendPerformVals()
 
     def sendPerformVals(self):
@@ -1191,13 +1175,12 @@ class Layer():
 
     def useExternalScale(self,onoff):
         # palette.palette_ppro_api("midi_usescale", "\"onoff\": \"" + str(onoff) + "\"")
-        palette.palette_ppro_set("misc.usescale",str(onoff))
+        palette.palette_patch_set(self.name(), "misc.usescale",str(onoff))
 
     def sendPerformVal(self,name):
         index = self.performIndex[name]
         labels = palette.PerformLabels[name]
         val = labels[index]["value"]
-        # log("sendPerformVal: layer=",self.layerName," name=",name," val=",str(val))
         if name == "loopingonoff":
             reconoff = False
             playonoff = False
@@ -1213,35 +1196,35 @@ class Layer():
                 log("Unrecognized value of loopingonoff - %s" % val)
                 return
 
-            palette.palette_layer_api(self.name(), "loop_recording", '"onoff": "'+str(reconoff)+'"')
-            palette.palette_layer_api(self.name(), "loop_playing", '"onoff": "'+str(playonoff)+'"')
+            palette.palette_patch_api(self.name(), "loop_recording", '"onoff": "'+str(reconoff)+'"')
+            palette.palette_patch_api(self.name(), "loop_playing", '"onoff": "'+str(playonoff)+'"')
 
         elif name == "loopinglength":
-            palette.palette_layer_api(self.name(), "loop_length", '"value": "'+str(val)+'"')
+            palette.palette_patch_api(self.name(), "loop_length", '"value": "'+str(val)+'"')
         elif name == "loopingfade":
-            palette.palette_layer_api(self.name(), "loop_fade", '"fade": "'+str(val)+'"')
+            palette.palette_patch_api(self.name(), "loop_fade", '"fade": "'+str(val)+'"')
         elif name == "loopingset":
-            palette.palette_layer_api(self.name(), "loop_set", '"set": "'+str(val)+'"')
+            palette.palette_patch_api(self.name(), "loop_set", '"set": "'+str(val)+'"')
         elif name == "midithru":
-            palette.palette_layer_api(self.name(), "midi_thru", "\"onoff\": \"" + str(val) + "\"")
+            palette.palette_patch_api(self.name(), "midi_thru", "\"onoff\": \"" + str(val) + "\"")
         elif name == "midisetscale":
-            palette.palette_layer_api(self.name(), "midi_setscale", "\"onoff\": \"" + str(val) + "\"")
+            palette.palette_patch_api(self.name(), "midi_setscale", "\"onoff\": \"" + str(val) + "\"")
         elif name == "midiquantized":
-            palette.palette_layer_api(self.name(), "midi_quantized", "\"onoff\": \"" + str(val) + "\"")
+            palette.palette_patch_api(self.name(), "midi_quantized", "\"onoff\": \"" + str(val) + "\"")
         elif name == "midithruscadjust":
-            palette.palette_layer_api(self.name(), "midi_thruscadjust", "\"onoff\": \"" + str(val) + "\"")
+            palette.palette_patch_api(self.name(), "midi_thruscadjust", "\"onoff\": \"" + str(val) + "\"")
 
         elif name == "deltaztrig":
-            palette.palette_layer_set(self.name(), "sound._deltaztrig",val)
+            palette.palette_patch_set(self.name(), "sound._deltaztrig",val)
         elif name == "deltaytrig":
-            palette.palette_layer_set(self.name(), "sound._deltaytrig",val)
+            palette.palette_patch_set(self.name(), "sound._deltaytrig",val)
 
         elif name == "quant":
-            palette.palette_ppro_set("misc.quant",val)
+            palette.palette_patch_set(self.name(), "misc.quant",val)
         elif name == "scale":
-            palette.palette_ppro_set("misc.scale",val)
+            palette.palette_patch_set(self.name(), "misc.scale",val)
         elif name == "vol":
-            palette.palette_ppro_set("misc.vol",val)
+            palette.palette_patch_set(self.name(), "misc.vol",val)
 
         elif name == "midiusescale":
             self.useExternalScale(val)
@@ -1254,7 +1237,7 @@ class Layer():
             log("SendPerformVal: unhandled name=",name)
 
     def clearLoop(self):
-        palette.palette_layer_api(self.name(), "loop_clear", "")
+        palette.palette_patch_api(self.name(), "loop_clear", "")
  
     def paramListOfType(self,paramType):
         paramlist = ""
@@ -1262,8 +1245,7 @@ class Layer():
         # XXX - should this use self.params ?
         for name in self.controller.newParamsJson:
             j = self.controller.newParamsJson[name]
-            if paramType == "layer" or j["paramstype"] == paramType:
-                # paramname = layer + "_" + name
+            if paramType == "patch" or j["paramstype"] == paramType:
                 paramname = name
                 v = self.getValue(paramname)
                 paramlist = paramlist + sep + "\"" + name + "\" : \"" + str(v) + "\""
@@ -1272,52 +1254,52 @@ class Layer():
         return paramlist
 
 
-class LayerChooser(tk.Frame):
+class PatchChooser(tk.Frame):
 
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
 
         self.controller = controller
         self.parent = parent
-        self.layerLabel = {}
-        self.layerFrame = {}
-        self.layerCanvas = {}
+        self.patchLabel = {}
+        self.patchFrame = {}
+        self.patchCanvas = {}
         self.canvasHeight = 60
         self.canvasWidth = 200
-        self.LayerNum2Name = ["X","A","B","C","D"]
+        self.PatchNum2Name = ["X","A","B","C","D"]
 
-        self.makeLayerFrame(self,"A",0.05,0.07)
-        self.makeLayerFrame(self,"B",0.15,0.53)
-        self.makeLayerFrame(self,"C",0.55,0.53)
-        self.makeLayerFrame(self,"D",0.65,0.07)
+        self.makePatchFrame(self,"A",0.05,0.07)
+        self.makePatchFrame(self,"B",0.15,0.53)
+        self.makePatchFrame(self,"C",0.55,0.53)
+        self.makePatchFrame(self,"D",0.65,0.07)
 
         self.makeAllButton(self,0.5,0.15)
 
         self.config(background=ColorBg)
 
-    def makeLayerFrame(self,parent,layer,x0,y0):
+    def makePatchFrame(self,parent,layer,x0,y0):
 
-        self.layerFrame[layer] = tk.Frame(self)
-        self.layerFrame[layer].place(relx=x0,rely=y0,relwidth=0.3,relheight=0.4)
-        self.layerFrame[layer].config(borderwidth=2,relief="solid",background=ColorUnHigh)
-        self.layerFrame[layer].bind("<Button-1>", lambda p=layer: self.layerCallback(p))
+        self.patchFrame[layer] = tk.Frame(self)
+        self.patchFrame[layer].place(relx=x0,rely=y0,relwidth=0.3,relheight=0.4)
+        self.patchFrame[layer].config(borderwidth=2,relief="solid",background=ColorUnHigh)
+        self.patchFrame[layer].bind("<Button-1>", lambda p=layer: self.layerCallback(p))
 
         if self.controller.showCursorFeedback:
-            self.layerCanvas[layer] = tk.Canvas(self.layerFrame[layer], width=self.canvasWidth, height=self.canvasHeight, border=0)
-            self.layerCanvas[layer].pack(side=tk.TOP)
-            self.layerCanvas[layer].config(background=ColorUnHigh)
+            self.patchCanvas[layer] = tk.Canvas(self.patchFrame[layer], width=self.canvasWidth, height=self.canvasHeight, border=0)
+            self.patchCanvas[layer].pack(side=tk.TOP)
+            self.patchCanvas[layer].config(background=ColorUnHigh)
 
     def makeAllButton(self,parent,x0,y0):
 
-        self.layerAllButton = tk.Frame(self)
-        self.layerAllButton.place(relx=x0-0.05,rely=y0-0.05,relwidth=0.1,relheight=0.275)
-        self.layerAllButton.config(borderwidth=2,relief="solid",background=ColorUnHigh)
-        self.layerAllButton.bind("<Button-1>", self.globalCallback)
+        self.patchAllButton = tk.Frame(self)
+        self.patchAllButton.place(relx=x0-0.05,rely=y0-0.05,relwidth=0.1,relheight=0.275)
+        self.patchAllButton.config(borderwidth=2,relief="solid",background=ColorUnHigh)
+        self.patchAllButton.bind("<Button-1>", self.globalCallback)
 
-        self.layerGlobalLabel = ttk.Label(self.layerAllButton, text="*")
-        self.layerGlobalLabel.pack(side=tk.TOP)
-        self.layerGlobalLabel.configure(style='GlobalButton.TLabel')
-        self.layerGlobalLabel.bind("<Button-1>", self.globalCallback)
+        self.patchGlobalLabel = ttk.Label(self.patchAllButton, text="*")
+        self.patchGlobalLabel.pack(side=tk.TOP)
+        self.patchGlobalLabel.configure(style='GlobalButton.TLabel')
+        self.patchGlobalLabel.bind("<Button-1>", self.globalCallback)
 
     def globalCallback(self,e):
 
@@ -1338,33 +1320,33 @@ class LayerChooser(tk.Frame):
         if self.controller.guiLevel==0:
             return
 
-        self.controller.allLayersSelected = not self.controller.allLayersSelected
+        self.controller.allPatchesSelected = not self.controller.allPatchesSelected
         self.refreshColors()
 
     def refreshColors(self):
-        if self.controller.allLayersSelected:
+        if self.controller.allPatchesSelected:
             color = ColorHigh
         else:
             color = ColorUnHigh
-        self.layerAllButton.config(background=color)
-        self.layerGlobalLabel.config(background=color)
-        for layer in self.controller.Layers:
-            if self.controller.allLayersSelected or layer != self.controller.CurrLayer:
-                self.colorLayer(layer.name(),color)
+        self.patchAllButton.config(background=color)
+        self.patchGlobalLabel.config(background=color)
+        for patch in self.controller.Patches:
+            if self.controller.allPatchesSelected or patch != self.controller.CurrPatch:
+                self.colorPatch(patch.name(),color)
             else:
-                self.colorLayer(layer.name(),ColorHigh)
+                self.colorPatch(patch.name(),ColorHigh)
 
-    def colorLayer(self,layerName,color):
-        self.layerFrame[layerName].config(background=color)
+    def colorPatch(self,patchName,color):
+        self.patchFrame[patchName].config(background=color)
         if self.controller.showCursorFeedback:
-            self.layerCanvas[layerName].config(background=color)
+            self.patchCanvas[patchName].config(background=color)
 
-    def highlightLayerBorder(self,layer,highlighted):
+    def highlightPatchBorder(self,patch,highlighted):
         if highlighted:
             w = 4
         else:
             w = 2
-        self.layerFrame[layer].config(borderwidth=w)
+        self.patchFrame[patch].config(borderwidth=w)
 
     def drawOval(self,layer,highlighted,x,y,z):
         log("drawOval x=",x," y=",y," z=",z)
@@ -1380,32 +1362,32 @@ class LayerChooser(tk.Frame):
             color = ColorRed
         else:
             color = self.controller.layerColor(layer)
-        self.layerCanvas[layer].create_oval(x-z,y-z,x+z,y+z,outline=color)
+        self.patchCanvas[layer].create_oval(x-z,y-z,x+z,y+z,outline=color)
 
     def layerCallback(self,e):
         if self.controller.guiLevel==0:
             return
-        for pad in self.layerFrame:
-            if e.widget == self.layerFrame[pad]:
-                self.controller.allLayersSelected = False
-                self.controller.layerChooserCallback(pad)
+        for pad in self.patchFrame:
+            if e.widget == self.patchFrame[pad]:
+                self.controller.allPatchesSelected = False
+                self.controller.patchChooserCallback(pad)
                 self.refreshColors()
                 return
         log("No pad found in padCallback!?")
 
-    def refreshLayerColors(self):
-        if self.controller.allLayersSelected:
+    def refreshPatchColors(self):
+        if self.controller.allPatchesSelected:
             color = ColorHigh
         else:
             color = ColorUnHigh
-        self.layerAllButton.config(background=color)
-        self.layerGlobalLabel.config(background=color)
+        self.patchAllButton.config(background=color)
+        self.patchGlobalLabel.config(background=color)
 
-        for pad in self.controller.Layers:
-            if self.controller.allLayersSelected or pad != self.controller.CurrLayer:
-                self.colorLayer(pad.name(),color)
+        for pad in self.controller.Patches:
+            if self.controller.allPatchesSelected or pad != self.controller.CurrPatch:
+                self.colorPatch(pad.name(),color)
             else:
-                self.colorLayer(pad.name(),ColorHigh)
+                self.colorPatch(pad.name(),ColorHigh)
 
 class PageHeader(tk.Frame):
 
@@ -1429,12 +1411,10 @@ class PageHeader(tk.Frame):
     def repack(self):
         if self.controller.guiLevel == 0:
             self.PaletteTitle.config(text="Space Palette Pro",justify=tk.CENTER)
-            self.PaletteTitle.pack(side=tk.TOP,pady=10)
+            self.PaletteTitle.pack(side=tk.TOP,pady=0)
             for pageName in self.controller.visiblePageNames:
                 self.pageButton[pageName].pack_forget()
         else:
-            # self.PaletteTitle.config(text="Global",justify=tk.LEFT)
-            # self.PaletteTitle.pack(side=tk.LEFT,pady=10)
             for pageName in self.controller.visiblePageNames:
                 self.pageButton[pageName].pack(side=tk.LEFT,padx=5)
             
@@ -1466,9 +1446,9 @@ class PageEditParams(tk.Frame):
         self.paramsFrame = self.makeParamsArea(self)
         self.scrollbar = ScrollBar(parent=self, notify=self)
 
-        # On the "preset" page, the parameter values aren't shown,
+        # On the "quad" editing page, the parameter values aren't shown,
         # just the buttons to import/export/save
-        if pagename != "preset":
+        if pagename != "quad":
             self.paramsFrame.pack(side=tk.LEFT, pady=0)
             self.scrollbar.pack(side=tk.LEFT, fill=tk.Y, expand=True, pady=10, padx=5)
             self.updateParamView()
@@ -1526,7 +1506,7 @@ class PageEditParams(tk.Frame):
     def makeButtonArea(self):
         f = tk.Frame(self, background=ColorBg)
 
-        if self.pagename != "preset" and self.pagename != "layer":
+        if self.pagename != "quad" and self.pagename != "patch":
             self.initButton = ttk.Label(f, text="Init", style='RandEtcButton.TLabel')
             self.initButton.bind("<Button-1>", lambda event:self.initCallback())
             self.initButton.bind("<ButtonRelease-1>", lambda event:self.initRelease())
@@ -1799,7 +1779,7 @@ class PageEditParams(tk.Frame):
 # 
 #         log("\n=== loadSnapNamed ",name)
 # 
-#         self.controller.readSnapParamsFileIntoPage(name,"layer")
+#         self.controller.readSnapParamsFileIntoPage(name,"patch")
 # 
 #         self.comboParamsname.configure(values=self.paramFiles)
 # 
@@ -1814,7 +1794,7 @@ class PageEditParams(tk.Frame):
 #     def oldstartEditing(self,name,doLift=True):
 # 
 #         log("=== startEditing pagename=%s name=%s" % (self.pagename,name))
-#         if self.pagename == "preset":
+#         if self.pagename == "quad":
 #             log("Are you getting here?")
 #             # self.controller.readPresetSaved(name)
 #         else:
@@ -1897,12 +1877,12 @@ class PageEditParams(tk.Frame):
 
     def saveSaved(self,filename):
 
-        if self.pagename != "preset" and self.controller.allLayersSelected:
+        if self.pagename != "quad" and self.controller.allPatchesSelected:
             msg = "\n   You can't save a "+self.pagename+" saved when all four layers are selected.   \n\nPlease select the single pad you want to save as a saved.\n"
             self.controller.popup(msg)
             return
 
-        if self.pagename == "preset":
+        if self.pagename == "quad":
             result, err = palette.palette_ppro_api("save",
                     "\"filename\": \"" + filename + "\"")
             if err != None:
@@ -1911,8 +1891,8 @@ class PageEditParams(tk.Frame):
                 log("result of save for saved=",filename," has non-empty result=",result)
 
         else:
-            layer = self.controller.CurrLayer.name()
-            result, err = palette.palette_layer_api(layer,"save",
+            patch = self.controller.CurrPatch.name()
+            result, err = palette.palette_patch_api(patch,"save",
                     "\"category\": \"" + self.pagename + "\""
                     ", \"filename\": \"" + filename + "\"")
             if err != None:
@@ -1920,19 +1900,10 @@ class PageEditParams(tk.Frame):
             if result != "":
                 log("result of save for saved=",filename," has non-empty result=",result)
 
-#    def saveJson(self,section,fname,suffix=".json"):
-#
-#        # Note: saving always happens in the localSavedFilePath,
-#        # even if the original one was loaded from a different directory
-#        fpath = palette.localSavedFilePath(section,fname,suffix)
-#        j = self.jsonParamDump(section)
-#        log("Edit page is saving JSON in:",fpath)
-#        SaveJsonInPath(j,fpath)
-
     def jsonParamDump(self,section):
         newjson = {}
         newjson["params"] = {}
-        if section == "layer":
+        if section == "patch":
             for name in self.params:
                 newjson["params"][name] = {}
                 w = self.paramValueWidget[name]
@@ -2176,17 +2147,17 @@ class PagePerformMain(tk.Frame):
         log("Perform Button Pressed",name)
         if name in palette.PerformLabels:
 
-            if controller.allLayersSelected:
-                # We do the CurrLayer and then force all of the
+            if controller.allPatchesSelected:
+                # We do the CurrPatch and then force all of the
                 # other layers to whatever the newindex is for that one
-                newtext = self.padPerformCallback(controller.CurrLayer,name)
-                newindex = controller.CurrLayer.getPerformIndex(name)
-                for pad in controller.Layers:
+                newtext = self.padPerformCallback(controller.CurrPatch,name)
+                newindex = controller.CurrPatch.getPerformIndex(name)
+                for pad in controller.Patches:
                     pad.setPerformIndex(name,newindex)
                     pad.sendPerformVal(name)
             else:
-                newtext = self.padPerformCallback(controller.CurrLayer,name)
-                controller.CurrLayer.sendPerformVal(name)
+                newtext = self.padPerformCallback(controller.CurrPatch,name)
+                controller.CurrPatch.sendPerformVal(name)
 
             self.performButton[name].config(text=newtext)
 
@@ -2280,11 +2251,10 @@ class PageSelector(tk.Frame):
         padx = self.controller.selectButtonPadx
         pady = self.controller.selectButtonPady
 
-        # if self.controller.guiLevel == 0 or self.pagename == "preset":
         if self.controller.guiLevel == 0:
             nrows = self.controller.selectDisplayRowsNormal
         else:
-            if self.pagename == "preset":
+            if self.pagename == "quad":
                 nrows = self.controller.selectDisplayRowsAdvanced - 4
             else:
                 nrows = self.controller.selectDisplayRowsAdvanced
@@ -2306,7 +2276,7 @@ class PageSelector(tk.Frame):
 
         # log("doLayout page=",self.pagename," nbuttons=",nbuttons, "nvals=",nvals, "nrows=",nrows,"buttonwidth=",buttonwidth)
 
-        self.valsframe.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, pady=10)
+        self.valsframe.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, pady=5)
 
         for i in self.selectButtons:
             self.selectButtons[i].grid_forget()
@@ -2384,7 +2354,7 @@ def isVisibleParameter(name):
         return False
     return True
 
-def layerOfParam(paramname):
+def patchOfParam(paramname):
     pad = paramname[0]
     # This code assumes that all real parameter names are lower-case
     if pad == "A" or pad == "B" or pad == "C" or pad == "D":
@@ -2393,28 +2363,11 @@ def layerOfParam(paramname):
     else:
         return (None,paramname)
 
-def LayerParamName(layer,param):
+def PatchParamName(layer,param):
     return layer + "-" + param
 
 def isTwoLine(text):
     return text.find(palette.LineSep) >= 0 or text.find("\n") >= 0
-
-# def CurrentLayerFilename(pad):
-#     return "CurrentLayer_"+pad
-
-# def CurrentLayerPath(layer):
-#     nm = CurrentLayerFilename(layer)
-#     return palette.configFilePath(nm+".json")
-
-# def SaveJsonInPath(j,fpath):
-#     f = open(fpath,"w")
-#     if not f:
-#         log("SaveJsonInPath: unable to open path=",fpath)
-#         return
-#     f.write(json.dumps(j, sort_keys=True, indent=4, separators=(',',':')))
-#     # To avoid complaints from editors, add a final newline
-#     f.write("\n")
-#     f.close()
 
 def initMain(app):
     app.iconbitmap(palette.configFilePath("palette.ico"))
@@ -2564,15 +2517,15 @@ if __name__ == "__main__":
     elif nlayers == 4:
         layername = layers[0]
         layernames = layers
-        FourLayers = True
+        FourPatches = True
     else:
         log("Unexpected number of layers: ",layers)
 
     visiblepagenames = {
         "global":"Global",
-        "preset":"Preset",
+        "quad":"Quad",
+        "patch":"Patch",
         "misc":"Misc",
-        "layer":"Layer",
         "sound":"Sound",
         "visual":"Visual",
         "effect":"Effect",

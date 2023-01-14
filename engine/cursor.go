@@ -168,7 +168,7 @@ func (cm *CursorManager) handleDownDragUp(ce CursorEvent) {
 		// new CursorState
 		// Make sure the first ddu is "down"
 		if ce.Ddu != "down" {
-			LogWarn("handleDownDragUp: first ddu is not down", "cid", ce.Cid, "ddu", ce.Ddu)
+			// LogWarn("handleDownDragUp: first ddu is not down", "cid", ce.Cid, "ddu", ce.Ddu)
 			ce.Ddu = "down"
 		}
 		cursorState = &CursorState{
@@ -185,7 +185,7 @@ func (cm *CursorManager) handleDownDragUp(ce CursorEvent) {
 	}
 	cursorState.Current.Click = CurrentClick()
 
-	// See which layer wants this input, but don't hold the Lock
+	// See who wants this cinput, but don't hold the Lock
 	ThePluginManager().HandleCursorEvent(ce)
 
 	LogOfType("cursor", "CursorManager.handleDownDragUp", "ce", ce)
@@ -213,7 +213,7 @@ func (cm *CursorManager) autoCursorUp(now time.Time) {
 		if dclick > checkDelay {
 			ce := cursorState.Current
 			ce.Ddu = "up"
-			LogInfo("Layer.autoCursorUp: before handleDownDragUp", "cid", cid)
+			LogInfo("autoCursorUp: before handleDownDragUp", "cid", cid)
 
 			cm.cursorsMutex.RUnlock()
 			cm.handleDownDragUp(ce)
@@ -226,7 +226,7 @@ func (cm *CursorManager) autoCursorUp(now time.Time) {
 
 	for _, cid := range cidsToDelete {
 		cm.cursorsMutex.Lock()
-		LogInfo("Layer.autoCursorUp: deleting cursor", "cid", cid)
+		LogInfo("autoCursorUp: deleting cursor", "cid", cid)
 		delete(cm.cursors, cid)
 		cm.cursorsMutex.Unlock()
 	}

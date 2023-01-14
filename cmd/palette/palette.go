@@ -70,7 +70,6 @@ func engineStop(stopOrStopAll string) string {
 	}
 }
 
-// If it's not a layer, it's a button.
 func CliCommand(args []string) string {
 
 	var err error

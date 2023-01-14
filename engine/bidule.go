@@ -34,8 +34,8 @@ func (b *Bidule) Activate() {
 	for i := 0; i < 10; i++ {
 		dt := 5 * time.Second
 		time.Sleep(dt)
-		LogInfo("Bidule.Activate is sending", "msg", msg)
-		_ = b.client.Send(msg)
+		LogOfType("bidule", "Bidule.Activate is sending", "msg", msg)
+		LogError(b.client.Send(msg))
 	}
 }
 
@@ -69,7 +69,7 @@ func (b *Bidule) Reset() error {
 
 	msg := osc.NewMessage("/play")
 	msg.Append(int32(0))
-	LogInfo("Bidule.Reset is sending", "msg", msg)
+	LogOfType("bidule", "Bidule.Reset is sending", "msg", msg)
 	err := b.client.Send(msg)
 	if err != nil {
 		return err
@@ -78,6 +78,6 @@ func (b *Bidule) Reset() error {
 	time.Sleep(400 * time.Millisecond)
 	msg = osc.NewMessage("/play")
 	msg.Append(int32(1))
-	LogInfo("Bidule.Reset is sending", "msg", msg)
+	LogOfType("bidule", "Bidule.Reset is sending", "msg", msg)
 	return b.client.Send(msg)
 }

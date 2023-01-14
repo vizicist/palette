@@ -183,7 +183,7 @@ def changeeffects(paramfile):
 homedir = os.getenv("PALETTESOURCE")
 
 
-# This can be used on either "effect" or "layer"
+# This can be used on either "effect" or "patch"
 
 files = glob.glob(os.path.join(homedir,"data","saved_original","effect",'*.json'))
 for s in files:

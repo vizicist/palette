@@ -2,8 +2,8 @@ package engine
 
 /*
 // HandleMIDIInput xxx
-func (layer *Layer) HandleMidiEvent(me MidiEvent) {
-	LogInfo("Layer.HandleMidiEvent", "me", me)
+func (layer *Patch) HandleMidiEvent(me MidiEvent) {
+	LogInfo("Patch.HandleMidiEvent", "me", me)
 	for n, agent := range layer.agents {
 		ctx := layer.agentsContext[n]
 		agent.OnMidiEvent(ctx, me)
@@ -45,13 +45,13 @@ func CallerFunc() string {
 	return funcname
 }
 
-func (layer *Layer) SetParam(fullname, value string) error {
+func (layer *Patch) SetParam(fullname, value string) error {
 	return layer.SetOneParamValue(fullname, value)
 }
 
-func (layer *Layer) SetOneParamValue(fullname, value string) error {
+func (layer *Patch) SetOneParamValue(fullname, value string) error {
 
-	LogOfType("value", "SetOneParamValue", "layer", layer.layerName, "fullname", fullname, "value", value)
+	LogOfType("value", "SetOneParamValue", "patch", layer.patchName, "fullname", fullname, "value", value)
 	err := layer.params.SetParamValueWithString(fullname, value)
 	if err != nil {
 		return err
@@ -77,8 +77,8 @@ func (layer *Layer) SetOneParamValue(fullname, value string) error {
 
 /*
 // ClearExternalScale xxx
-func (layer *Layer) clearExternalScale() {
-	LogOfType("scale", "clearExternalScale", "pad", layer.layerName)
+func (layer *Patch) clearExternalScale() {
+	LogOfType("scale", "clearExternalScale", "pad", layer.patchName)
 	layer.externalScale = MakeScale()
 }
 */
@@ -87,7 +87,7 @@ func (layer *Layer) clearExternalScale() {
  */
 
 /*
-func (layer) *Layer) cursorToPitch(ce CursorStepEvent) uint8 {
+func (layer) *Patch) cursorToPitch(ce CursorStepEvent) uint8 {
 	pitchmin := layer.params.ParamIntValue("sound.pitchmin")
 	pitchmax := layer.params.ParamIntValue("sound.pitchmax")
 	dp := pitchmax - pitchmin + 1
@@ -115,11 +115,11 @@ func (layer) *Layer) cursorToPitch(ce CursorStepEvent) uint8 {
  */
 
 /*
-func (layer) *Layer) cursorToDuration(ce CursorStepEvent) int {
+func (layer) *Patch) cursorToDuration(ce CursorStepEvent) int {
 	return 92
 }
 
-func (layer) *Layer) cursorToQuant(ce CursorStepEvent) Clicks {
+func (layer) *Patch) cursorToQuant(ce CursorStepEvent) Clicks {
 	quant := layer.params.ParamStringValue("misc.quant", "fixed")
 
 	q := Clicks(1)
@@ -156,7 +156,7 @@ func (layer) *Layer) cursorToQuant(ce CursorStepEvent) Clicks {
 */
 
 /*
-func (layer) *Layer) loopQuant() {
+func (layer) *Patch) loopQuant() {
 
 	layer.loop.stepsMutex.Lock()
 	defer layer.loop.stepsMutex.Unlock()

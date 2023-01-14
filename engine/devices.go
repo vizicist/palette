@@ -23,8 +23,8 @@ func LoadMorphs() error {
 	MorphDefs = make(map[string]string)
 
 	// If you have more than one morph, or
-	// want the layer assignment to NOT be
-	// automatice, put them in here.
+	// want the patch assignment to NOT be
+	// automatic, put them in here.
 	path := ConfigFilePath("morphs.json")
 	if !fileExists(path) {
 		return fmt.Errorf("unable to get path to morphs.json")
@@ -40,9 +40,9 @@ func LoadMorphs() error {
 	}
 	toplevel := f.(map[string]any)
 
-	for serialnum, layerinfo := range toplevel {
-		layername := layerinfo.(string)
-		MorphDefs[serialnum] = layername
+	for serialnum, patchinfo := range toplevel {
+		patchname := patchinfo.(string)
+		MorphDefs[serialnum] = patchname
 	}
 	return nil
 }

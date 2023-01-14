@@ -1,8 +1,8 @@
 {
-  "debug": "",
+  "debug": "midi,scheduler",
   "plugins": "ppro",
-  "guilevel": "0",
-  "attractidlesecs": "60",
+  "guilevel": "1",
+  "attractidlesecs": "300",
   "autostart": "gui,bidule,resolume",
   "bidule": "C:\\Program Files\\Plogue\\Bidule\\Bidule.exe",
   "OLDguiresize": "-800 0 800 1200",
