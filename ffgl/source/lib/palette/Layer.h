@@ -50,7 +50,7 @@ public:
 		if ( false ) { }
 #include "LayerParams_set.h"
 		else {
-			if (nm != "source" && nm != "layer" && nm != "nuid") {
+			if (nm != "source" && nm != "patch" && nm != "nuid") {
 				NosuchDebug("LayerParams::Set unrecognized param name - %s",nm.c_str());
 			}
 		}

@@ -16,16 +16,16 @@ import (
 
 type PalettePro struct {
 
-	// Per-layer things
-	layer      map[string]*engine.Layer
-	layerLogic map[string]*LayerLogic
+	// Per-patch things
+	patch      map[string]*engine.Patch
+	patchLogic map[string]*PatchLogic
 
 	// PalettePro parameters
-	miscparams   *engine.ParamValues
+	// miscparams   *engine.ParamValues
 	globalparams *engine.ParamValues
 
 	started        bool
-	midiinputlayer *engine.Layer
+	// midiinputpatch *engine.Patch
 
 	generateVisuals bool
 	generateSound   bool
@@ -40,15 +40,14 @@ type PalettePro struct {
 	externalScale    *engine.Scale
 	nextCursorNum    int
 
-	attractModeIsOn         bool
-	lastAttractModeChange   time.Time
-	lastAttractGestureTime  time.Time
-	lastAttractPresetChange time.Time
+	attractModeIsOn        bool
+	lastAttractModeChange  time.Time
+	lastAttractGestureTime time.Time
+	lastAttractChange      time.Time
 
 	// parameters
 	attractGestureInterval float64
-	attractPresetInterval  float64
-	attractPreset          string
+	attractChangeInterval  float64
 
 	lastAttractCheck time.Time
 	lastProcessCheck time.Time
@@ -66,24 +65,23 @@ type PalettePro struct {
 
 func init() {
 	ppro := &PalettePro{
-		layer:        map[string]*engine.Layer{},
-		layerLogic:   map[string]*LayerLogic{},
-		miscparams:   engine.NewParamValues(),
+		patch:      map[string]*engine.Patch{},
+		patchLogic: map[string]*PatchLogic{},
+		// miscparams:   engine.NewParamValues(),
 		globalparams: engine.NewParamValues(),
 
 		attractModeIsOn: false,
 		generateVisuals: true,
 		generateSound:   true,
 
-		lastAttractModeChange:   time.Now(),
-		lastAttractGestureTime:  time.Now(),
-		lastAttractPresetChange: time.Now(),
-		lastAttractCheck:        time.Now(),
-		lastProcessCheck:        time.Time{},
+		lastAttractModeChange:  time.Now(),
+		lastAttractGestureTime: time.Now(),
+		lastAttractChange:      time.Now(),
+		lastAttractCheck:       time.Now(),
+		lastProcessCheck:       time.Time{},
 
 		attractGestureInterval: 0,
-		attractPresetInterval:  0,
-		attractPreset:          "",
+		attractChangeInterval:  0,
 		attractCheckSecs:       0,
 		attractIdleSecs:        0, // default is no attract mode
 
@@ -132,21 +130,20 @@ func (ppro *PalettePro) Api(ctx *engine.PluginContext, api string, apiargs map[s
 			return ppro.onCursorEvent(ctx, apiargs)
 		case "clientrestart":
 			return ppro.onClientRestart(ctx, apiargs)
-		case "notification_of_layer_set":
-			return ppro.onLayerSet(ctx, apiargs)
-		case "notification_of_layer_refresh_all":
-			return ppro.onLayerRefreshAll(ctx, apiargs)
-		case "presetsave":
-			// Events from listeners in the Layers
-			// will trigger saving of the entire Preset
-			return "", ppro.presetSave("_Current")
+		case "notification_of_patch_set":
+			return ppro.onPatchSet(ctx, apiargs)
+		case "notification_of_patch_refresh_all":
+			return ppro.onPatchRefreshAll(ctx, apiargs)
+		case "alertonsave":
+			// This events from a listener will trigger saving of the entire Quad
+			return "", ppro.saveQuad("_Current")
 		default:
 			return "", fmt.Errorf("PalettePro: Unhandled event type %s", eventName)
 		}
 
 	case "ANO":
-		for _, layer := range ppro.layer {
-			layer.Synth.SendANO()
+		for _, patch := range ppro.patch {
+			patch.Synth.SendANO()
 		}
 		return "", nil
 
@@ -256,12 +253,6 @@ func (ppro *PalettePro) start(ctx *engine.PluginContext) error {
 
 	ppro.clearExternalScale()
 	for nm, pd := range engine.ParamDefs {
-		if pd.Category == "misc" {
-			err := ppro.miscparams.SetParamValueWithString(nm, pd.Init)
-			if err != nil {
-				engine.LogError(err)
-			}
-		}
 		if pd.Category == "global" {
 			err := ppro.globalparams.SetParamValueWithString(nm, pd.Init)
 			if err != nil {
@@ -285,13 +276,13 @@ func (ppro *PalettePro) start(ctx *engine.PluginContext) error {
 
 	ctx.AllowSource("A", "B", "C", "D")
 
-	_ = ppro.addLayer(ctx, "A")
-	_ = ppro.addLayer(ctx, "B")
-	_ = ppro.addLayer(ctx, "C")
-	_ = ppro.addLayer(ctx, "D")
+	_ = ppro.addPatch(ctx, "A")
+	_ = ppro.addPatch(ctx, "B")
+	_ = ppro.addPatch(ctx, "C")
+	_ = ppro.addPatch(ctx, "D")
 
 	engine.LogError(ppro.Load(ctx, "global", "_Current"))
-	engine.LogError(ppro.Load(ctx, "preset", "_Current"))
+	engine.LogError(ppro.Load(ctx, "quad", "_Current"))
 
 	// Don't start checking processes right away, after killing them on a restart,
 	// they may still be running for a bit
@@ -300,10 +291,8 @@ func (ppro *PalettePro) start(ctx *engine.PluginContext) error {
 	ppro.attractCheckSecs = engine.ConfigFloatWithDefault("attractchecksecs", 2)
 	ppro.attractIdleSecs = engine.ConfigFloatWithDefault("attractidlesecs", 0)
 
-	ppro.attractPresetInterval = engine.ConfigFloatWithDefault("attractpresetinterval", 30)
+	ppro.attractChangeInterval = engine.ConfigFloatWithDefault("attractchangeinterval", 30)
 	ppro.attractGestureInterval = engine.ConfigFloatWithDefault("attractgestureinterval", 0.5)
-
-	ppro.attractPreset = engine.ConfigStringWithDefault("attractpreset", "random")
 
 	return nil
 }
@@ -350,21 +339,18 @@ func (ppro *PalettePro) onCursorEvent(ctx *engine.PluginContext, apiargs map[str
 		ppro.setAttractMode(false)
 	}
 
-	// For the moment, the cursor to layerLogic mapping is 1-to-1.
-	// I.e. ce.Source of "A" maps to layerLogic "A"
-	layerLogic, ok := ppro.layerLogic[ce.Source()]
-	if !ok {
+	// For the moment, the cursor to patchLogic mapping is 1-to-1.
+	// I.e. ce.Source of "A" maps to patchLogic "A"
+	patchLogic, ok := ppro.patchLogic[ce.Source()]
+	if !ok || patchLogic == nil {
 		return "", nil
 	}
-	if layerLogic != nil {
-		if ppro.generateSound && !ppro.attractModeIsOn {
-			if ce.Ddu != "drag" {
-				layerLogic.generateSoundFromCursor(ctx, ce)
-			}
-		}
-		if ppro.generateVisuals {
-			layerLogic.generateVisualsFromCursor(ce)
-		}
+	cursorStyle := ppro.globalparams.Get("misc.cursorstyle")
+	if ppro.generateSound && !ppro.attractModeIsOn {
+		patchLogic.generateSoundFromCursor(ctx, ce, cursorStyle)
+	}
+	if ppro.generateVisuals {
+		patchLogic.generateVisualsFromCursor(ce)
 	}
 	return "", nil
 }
@@ -401,13 +387,13 @@ func (ppro *PalettePro) onClientRestart(ctx *engine.PluginContext, apiargs map[s
 	engine.LogInfo("ppro got clientrestart", "portnum", portnum)
 	// The restart message contains the
 	// portnum of the plugin that restarted.
-	for _, layer := range ppro.layer {
-		layer.RefreshAllIfPortnumMatches(ffglportnum)
+	for _, patch := range ppro.patch {
+		patch.RefreshAllIfPortnumMatches(ffglportnum)
 	}
 	return "", nil
 }
 
-// onSet is only used for parameters in a Preset that are not in its layers.
+// onSet is only used for parameters that are not in patches.
 // NOTE: this routine does not automatically persist the values to disk.
 func (ppro *PalettePro) onSet(ctx *engine.PluginContext, apiargs map[string]string) (result string, err error) {
 
@@ -417,19 +403,6 @@ func (ppro *PalettePro) onSet(ctx *engine.PluginContext, apiargs map[string]stri
 	}
 
 	switch {
-
-	case strings.HasPrefix(paramName, "misc."):
-
-		if paramName == "misc.midiinputlayer" {
-			layer := ctx.GetLayer(paramValue)
-			if layer == nil {
-				return "", fmt.Errorf("PalettePro.onSet: misc.midiinputlayer value is not a layer %s", paramValue)
-			}
-			ppro.midiinputlayer = layer
-		}
-
-		return "", ppro.miscparams.Set(paramName, paramValue)
-
 	case strings.HasPrefix(paramName, "global"):
 		return "", ppro.globalparams.Set(paramName, paramValue)
 
@@ -441,55 +414,53 @@ func (ppro *PalettePro) onSet(ctx *engine.PluginContext, apiargs map[string]stri
 func (ppro *PalettePro) onGet(apiargs map[string]string) (result string, err error) {
 	paramName, ok := apiargs["name"]
 	if !ok {
-		return "", fmt.Errorf("PalettePro.onLayerSet: Missing name argument")
+		return "", fmt.Errorf("PalettePro.onPatchSet: Missing name argument")
 	}
-	if strings.HasPrefix(paramName, "misc") {
-		return ppro.miscparams.Get(paramName), nil
-	} else if strings.HasPrefix(paramName, "global") {
+	if strings.HasPrefix(paramName, "global") {
 		return ppro.globalparams.Get(paramName), nil
 	} else {
 		return "", fmt.Errorf("PalettePro.onGet: can't handle parameter %s", paramName)
 	}
 }
 
-func (ppro *PalettePro) onLayerRefreshAll(ctx *engine.PluginContext, apiargs map[string]string) (result string, err error) {
-	layerName, ok := apiargs["layer"]
+func (ppro *PalettePro) onPatchRefreshAll(ctx *engine.PluginContext, apiargs map[string]string) (result string, err error) {
+	patchName, ok := apiargs["patch"]
 	if !ok {
-		return "", fmt.Errorf("PalettePro.onLayerRefreshAll: Missing layer argument")
+		return "", fmt.Errorf("PalettePro.onPatchRefreshAll: Missing patch argument")
 	}
-	layer, ok := ppro.layer[layerName]
+	patch, ok := ppro.patch[patchName]
 	if !ok {
-		return "", fmt.Errorf("PalettePro.onLayerRefreshAll: No layer named %s", layerName)
+		return "", fmt.Errorf("PalettePro.onPatchRefreshAll: No patch named %s", patchName)
 	}
-	ppro.refreshAllLayerValues(ctx, layer)
+	ppro.refreshAllPatchValues(ctx, patch)
 	return "", nil
 }
 
-func (ppro *PalettePro) refreshAllLayerValues(ctx *engine.PluginContext, layer *engine.Layer) {
-	for _, paramName := range layer.ParamNames() {
-		paramValue := layer.Get(paramName)
-		ppro.refreshLayerValue(ctx, layer, paramName, paramValue)
+func (ppro *PalettePro) refreshAllPatchValues(ctx *engine.PluginContext, patch *engine.Patch) {
+	for _, paramName := range patch.ParamNames() {
+		paramValue := patch.Get(paramName)
+		ppro.refreshPatchValue(ctx, patch, paramName, paramValue)
 	}
 }
 
-func (ppro *PalettePro) onLayerSet(ctx *engine.PluginContext, apiargs map[string]string) (result string, err error) {
-	layerName, ok := apiargs["layer"]
+func (ppro *PalettePro) onPatchSet(ctx *engine.PluginContext, apiargs map[string]string) (result string, err error) {
+	patchName, ok := apiargs["patch"]
 	if !ok {
-		return "", fmt.Errorf("PalettePro.onLayerSet: Missing layer argument")
+		return "", fmt.Errorf("PalettePro.onPatchSet: Missing patch argument")
 	}
 	paramName, paramValue, err := engine.GetNameValue(apiargs)
 	if err != nil {
-		return "", fmt.Errorf("PalettePro.onLayerSet: err=%s", err)
+		return "", fmt.Errorf("PalettePro.onPatchSet: err=%s", err)
 	}
-	layer, ok := ppro.layer[layerName]
+	patch, ok := ppro.patch[patchName]
 	if !ok {
-		return "", fmt.Errorf("PalettePro.onLayerSet: No layer named %s", layerName)
+		return "", fmt.Errorf("PalettePro.onPatchSet: No patch named %s", patchName)
 	}
-	ppro.refreshLayerValue(ctx, layer, paramName, paramValue)
+	ppro.refreshPatchValue(ctx, patch, paramName, paramValue)
 	return "", nil
 }
 
-func (ppro *PalettePro) refreshLayerValue(ctx *engine.PluginContext, layer *engine.Layer, paramName string, paramValue string) {
+func (ppro *PalettePro) refreshPatchValue(ctx *engine.PluginContext, patch *engine.Patch, paramName string, paramValue string) {
 
 	if strings.HasPrefix(paramName, "visual.") {
 		name := strings.TrimPrefix(paramName, "visual.")
@@ -497,13 +468,13 @@ func (ppro *PalettePro) refreshLayerValue(ctx *engine.PluginContext, layer *engi
 		msg.Append("set_params")
 		args := fmt.Sprintf("{\"%s\":\"%s\"}", name, paramValue)
 		msg.Append(args)
-		engine.TheResolume().ToFreeFramePlugin(layer.Name(), msg)
+		engine.TheResolume().ToFreeFramePlugin(patch.Name(), msg)
 	}
 
 	if strings.HasPrefix(paramName, "effect.") {
 		name := strings.TrimPrefix(paramName, "effect.")
 		// Effect parameters get sent to Resolume
-		engine.TheResolume().SendEffectParam(layer.Name(), name, paramValue)
+		engine.TheResolume().SendEffectParam(patch.Name(), name, paramValue)
 	}
 
 	if paramName == "sound.synth" {
@@ -511,7 +482,7 @@ func (ppro *PalettePro) refreshLayerValue(ctx *engine.PluginContext, layer *engi
 		if synth == nil {
 			engine.LogWarn("PalettePro: no synth named", "synth", paramValue)
 		}
-		layer.Synth = synth
+		patch.Synth = synth
 	}
 }
 
@@ -586,12 +557,11 @@ func (ppro *PalettePro) onMidiEvent(ctx *engine.PluginContext, apiargs map[strin
 			HandleEraeMIDI(me)
 		}
 	*/
-	layerName := ppro.miscparams.GetStringValue("misc.midiinputlayer", "A")
-	layer := ctx.GetLayer(layerName)
 
 	if ppro.MIDIThru {
 		engine.LogInfo("PassThruMIDI", "msg", me.Msg)
-		ctx.ScheduleMidi(layer, me.Msg, ctx.CurrentClick())
+		// ctx.ScheduleMidi(patch, me.Msg, ctx.CurrentClick())
+		ctx.ScheduleAt(me.Msg, ctx.CurrentClick())
 	}
 	if ppro.MIDISetScale {
 		ppro.handleMIDISetScaleNote(me)
@@ -639,20 +609,20 @@ func (ppro *PalettePro) doTest(ctx *engine.PluginContext, ntimes int, dt time.Du
 	engine.LogInfo("doTest end")
 }
 
-func (ppro *PalettePro) loadPresetRand(ctx *engine.PluginContext) {
+func (ppro *PalettePro) loadQuadRand(ctx *engine.PluginContext) {
 
-	arr, err := engine.SavedFileList("preset")
+	arr, err := engine.SavedFileList("quad")
 	if err != nil {
 		engine.LogError(err)
 		return
 	}
 	rn := rand.Uint64() % uint64(len(arr))
-	engine.LogInfo("loadPresetRand", "preset", arr[rn])
+	engine.LogInfo("loadQuadRand", "quad", arr[rn])
 
-	engine.LogError(ppro.Load(ctx, "preset", arr[rn]))
+	engine.LogError(ppro.Load(ctx, "quad", arr[rn]))
 
-	for _, layer := range ppro.layer {
-		layer.AlertListenersToRefreshAll()
+	for _, patch := range ppro.patch {
+		patch.AlertListenersToRefreshAll()
 	}
 
 	if err != nil {
@@ -677,50 +647,33 @@ func (ppro *PalettePro) Load(ctx *engine.PluginContext, category string, filenam
 	case "global":
 		ppro.globalparams.ApplyParamsTo("global", paramsMap)
 
-	case "misc":
-		ppro.miscparams.ApplyParamsTo("misc", paramsMap)
-
-	case "preset":
-		// The Preset has one copy of misc.* params, and 4 layers of sound/visual/effect params
-		for nm, val := range paramsMap {
-			valstr, ok := val.(string)
-			if !ok {
-				engine.LogWarn("non-string value?", "nm", nm, "val", val)
-				continue
-			}
-			if strings.HasPrefix(nm, "misc.") {
-				engine.LogError(ppro.miscparams.Set(nm, valstr))
-			}
-		}
-
-		for _, layer := range ppro.layer {
-			err := layer.ApplyPresetTo(paramsMap)
+	case "quad":
+		for _, patch := range ppro.patch {
+			err := patch.ApplyQuadValuesFrom(paramsMap)
 			if err != nil {
 				engine.LogError(err)
 				lasterr = err
 			}
-			ppro.refreshAllLayerValues(ctx, layer)
+			ppro.refreshAllPatchValues(ctx, patch)
 		}
 
-	case "layer", "sound", "visual", "effect":
-		engine.LogWarn("PalettePro.Load: unhandled", "category", category, "filename", filename)
 	default:
-		engine.LogWarn("PalettePro.Load: other unhandled", "category", category, "filename", filename)
+		engine.LogWarn("PalettePro.Load: unhandled", "category", category, "filename", filename)
 	}
 
 	// Decide what _Current things we should save
 	// when we load something.  E.g. if we're
-	// loading a layer with something, we want to
-	// then save the entire preset in preset._Current
+	// loading a patch with something, we want to
+	// then save the entire quad
 	err = nil
 	switch category {
 	case "global":
 		if filename == "_Current" {
 			err = ppro.save("global", "_Current")
 		}
-	case "layer", "sound", "visual", "effect":
+	case "patch", "sound", "visual", "effect", "misc":
 		if filename != "_Current" {
-			err = ppro.presetSave("_Current")
+			err = ppro.saveQuad("_Current")
 		}
 	}
 	if err != nil {
@@ -734,12 +687,10 @@ func (ppro *PalettePro) save(category string, filename string) (err error) {
 
 	engine.LogInfo("PalettePro.Save", "category", category, "filename", filename)
 
-	if category == "misc" {
-		err = ppro.miscparams.Save("misc", filename)
-	} else if category == "global" {
+	if category == "global" {
 		err = ppro.globalparams.Save("global", filename)
-	} else if category == "preset" {
-		err = ppro.presetSave(filename)
+	} else if category == "quad" {
+		err = ppro.saveQuad(filename)
 	} else {
 		err = fmt.Errorf("PalettePro.Api: unhandled save category %s", category)
 	}
@@ -749,56 +700,41 @@ func (ppro *PalettePro) save(category string, filename string) (err error) {
 	return err
 }
 
-func (ppro *PalettePro) presetSave(presetName string) error {
+func (ppro *PalettePro) saveQuad(quadName string) error {
 
-	category := "preset"
-	path := engine.WritableFilePath(category, presetName)
+	category := "quad"
+	path := engine.WritableFilePath(category, quadName)
 
-	engine.LogOfType("saved", "PalettePro.presetSave", "preset", presetName)
+	engine.LogOfType("saved", "PalettePro.saveQuad", "quad", quadName)
 
-	sortedLayerNames := []string{}
-	for _, layer := range ppro.layer {
-		sortedLayerNames = append(sortedLayerNames, layer.Name())
+	sortedPatchNames := []string{}
+	for _, patch := range ppro.patch {
+		sortedPatchNames = append(sortedPatchNames, patch.Name())
 	}
-	sort.Strings(sortedLayerNames)
+	sort.Strings(sortedPatchNames)
 
 	s := "{\n    \"params\": {\n"
 	sep := ""
-	for _, layerName := range sortedLayerNames {
-		layer := ppro.layer[layerName]
-		sortedNames := layer.ParamNames()
+	for _, patchName := range sortedPatchNames {
+		patch := ppro.patch[patchName]
+		sortedNames := patch.ParamNames()
 		for _, fullName := range sortedNames {
-			valstring := layer.Get(fullName)
-			s += fmt.Sprintf("%s        \"%s-%s\":\"%s\"", sep, layer.Name(), fullName, valstring)
+			valstring := patch.Get(fullName)
+			s += fmt.Sprintf("%s        \"%s-%s\":\"%s\"", sep, patch.Name(), fullName, valstring)
 			sep = ",\n"
 		}
 	}
-	// ppro.params contains the misc.* params
-	s += sep + ppro.miscparams.JsonValues()
 	s += "\n    }\n}"
 	data := []byte(s)
 	return os.WriteFile(path, data, 0644)
 }
 
-// func (ppro *PalettePro) saveMisc() error {
-// 	return ctx.SaveParams(ppro.miscparams, "misc", "_Current")
-// }
-
-/*
-	s := "{\n    \"params\": {\n"
-	s += ppro.miscparams.JsonValues()
-	s += "\n    }\n}"
-	data := []byte(s)
-	return os.WriteFile(path, data, 0644)
-}
-*/
-
-func (ppro *PalettePro) addLayer(ctx *engine.PluginContext, name string) *engine.Layer {
-	layer := engine.NewLayer(name)
-	layer.AddListener(ctx)
-	ppro.layer[name] = layer
-	ppro.layerLogic[name] = NewLayerLogic(ppro, layer)
-	return layer
+func (ppro *PalettePro) addPatch(ctx *engine.PluginContext, name string) *engine.Patch {
+	patch := engine.NewPatch(name)
+	patch.AddListener(ctx)
+	ppro.patch[name] = patch
+	ppro.patchLogic[name] = NewPatchLogic(ppro, patch)
+	return patch
 }
 
 /*
@@ -808,42 +744,6 @@ func (ppro *PalettePro) scheduleNoteNow(ctx *engine.PluginContext, dest string, 
 	phr := engine.NewPhrase().InsertElement(pe)
 	phr.Destination = dest
 	ctx.SchedulePhrase(phr, ctx.CurrentClick(), dest)
-}
-*/
-
-/*
-func (ppro *PalettePro) channelToDestination(channel int) string {
-	return fmt.Sprintf("P_03_C_%02d", channel)
-}
-*/
-
-/*
-func (ppro *PalettePro) cursorToLayer(ce engine.CursorEvent) *engine.Layer {
-	// For the moment, the cursor to layer mapping is 1-to-1.
-	// I.e. ce.Source of "a" maps to layer "a"
-	layer, ok := ppro.layer[ce.Source()]
-	if !ok {
-		return nil
-	}
-	return layer
-}
-
-func (ppro *PalettePro) channelToLayer(channel int) *engine.Layer {
-	// For the moment, the cursor to layer mapping is 1-to-1.
-	// I.e. ce.Source of "a" maps to layer "a"
-	ch2lay := map[int]string{
-		1: "A", 2: "B", 3: "C", 4: "D",
-		5: "E", 6: "F", 7: "G", 8: "H",
-	}
-	layerName, ok := ch2lay[channel]
-	if !ok {
-		return ppro.layer["A"]
-	}
-	layer, ok := ppro.layer[layerName]
-	if !ok {
-		return ppro.layer["A"]
-	}
-	return layer
 }
 */
 
@@ -908,10 +808,10 @@ func (ppro *PalettePro) doAttractAction(ctx *engine.PluginContext) {
 		ppro.lastAttractGestureTime = now
 	}
 
-	dp := now.Sub(ppro.lastAttractPresetChange).Seconds()
-	if ppro.attractPreset == "random" && dp > ppro.attractPresetInterval {
-		ppro.loadPresetRand(ctx)
-		ppro.lastAttractPresetChange = now
+	dp := now.Sub(ppro.lastAttractChange).Seconds()
+	if dp > ppro.attractChangeInterval {
+		ppro.loadQuadRand(ctx)
+		ppro.lastAttractChange = now
 	}
 }
 

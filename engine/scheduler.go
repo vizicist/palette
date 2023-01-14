@@ -3,21 +3,19 @@ package engine
 import (
 	"container/list"
 	"fmt"
+	"sync"
 	"time"
-
-	midi "gitlab.com/gomidi/midi/v2"
 )
 
 type Event any
 
 type Scheduler struct {
 	schedList *list.List // of *SchedElements
-	// schedMutex sync.RWMutex
-
+	mutex     sync.RWMutex
 	// now       time.Time
 	// time0     time.Time
 	lastClick Clicks
-	cmdInput  chan any
+	// cmdInput  chan any
 }
 
 type Command struct {
@@ -26,28 +24,27 @@ type Command struct {
 }
 
 type SchedElement struct {
-	AtClick   Clicks
-	layer     *Layer
-	Value     any // ...SchedValue things
-	triggered bool
+	AtClick Clicks
+	Value   any // ...SchedValue things
+	// triggered bool
 }
 
-type MidiSchedValue struct {
-	msg midi.Message
-}
+// type MidiSchedValue struct {
+// 	msg midi.Message
+// }
 
 func NewScheduler() *Scheduler {
 	s := &Scheduler{
 		schedList: list.New(),
 		lastClick: -1,
-		cmdInput:  make(chan any),
+		// cmdInput:  make(chan any),
 	}
 	return s
 }
 
-type SchedulerElementCmd struct {
-	element *SchedElement
-}
+// type SchedulerElementCmd struct {
+// 	element *SchedElement
+// }
 
 // Start runs the scheduler and never returns
 func (sched *Scheduler) Start() {
@@ -85,7 +82,7 @@ func (sched *Scheduler) Start() {
 
 		SetCurrentClick(newclick)
 
-		sched.checkInput()
+		// sched.checkInput()
 
 		ce := ClickEvent{Click: newclick, Uptime: uptimesecs}
 		ThePluginManager().handleClickEvent(ce)
@@ -93,6 +90,7 @@ func (sched *Scheduler) Start() {
 	LogInfo("StartRealtime ends")
 }
 
+/*
 func (sched *Scheduler) checkInput() {
 
 	select {
@@ -100,13 +98,14 @@ func (sched *Scheduler) checkInput() {
 		LogInfo("Scheduler.cmdInput", "cmd", cmd)
 		switch v := cmd.(type) {
 		case SchedulerElementCmd:
-			sched.scheduleElement(v.element)
+			sched.insertScheduleElement(v.element)
 		default:
 			LogWarn("Unexpected type", "type", fmt.Sprintf("%T", v))
 		}
 	default:
 	}
 }
+*/
 
 func (sched *Scheduler) advanceClickTo(toClick Clicks) {
 
@@ -123,7 +122,7 @@ func (sched *Scheduler) advanceClickTo(toClick Clicks) {
 	doAutoCursorUp := false
 	sched.lastClick += 1
 	for clk := sched.lastClick; clk <= toClick; clk++ {
-		sched.triggerItemsScheduledAt(clk)
+		sched.triggerItemsScheduledAtOrBefore(clk)
 		// sched.advancePendingNoteOffsByOneClick()
 		if doAutoCursorUp {
 			TheRouter().cursorManager.autoCursorUp(time.Now())
@@ -132,7 +131,11 @@ func (sched *Scheduler) advanceClickTo(toClick Clicks) {
 	sched.lastClick = toClick
 }
 
-func (sched *Scheduler) triggerItemsScheduledAt(clk Clicks) {
+func (sched *Scheduler) triggerItemsScheduledAtOrBefore(clk Clicks) {
+
+	sched.mutex.Lock()
+	defer sched.mutex.Unlock()
+
 	var nexti *list.Element
 	for i := sched.schedList.Front(); i != nil; i = nexti {
 		nexti = i.Next()
@@ -140,25 +143,38 @@ func (sched *Scheduler) triggerItemsScheduledAt(clk Clicks) {
 		dclick := clk - se.AtClick
 		if dclick >= 0 {
 			switch v := se.Value.(type) {
-			case *Phrase:
-				if !se.triggered {
-					se.triggered = true
-					sched.triggerPhraseElementsAt(v, clk, dclick)
-				} else {
-					LogWarn("SchedElement already triggered?")
-				}
+			/*
+				case *Phrase:
+					if !se.triggered {
+						se.triggered = true
+						sched.triggerPhraseElementsAt(v, clk, dclick)
+					} else {
+						LogWarn("SchedElement already triggered?")
+					}
+			*/
+
+			case *NoteOn:
+				LogOfType("scheduler", "triggerItemsScheduleAt: NoteOn", "note", v.String())
+				v.Synth.SendNoteToMidiOutput(v)
+
+			case *NoteOff:
+				LogOfType("scheduler", "triggerItemsScheduleAt: NoteOff", "note", v.String())
+				v.Synth.SendNoteToMidiOutput(v)
+
 			default:
-				msg := fmt.Sprintf("triggerItemsScheduleAt: unexpected Value type=%T", v)
-				LogWarn(msg)
+				LogError(fmt.Errorf("triggerItemsScheduleAt: unhandled Value type=%T", v))
 			}
 
 			// XXX - this is (maybe) where looping happens
 			// by rescheduling things rather than removing
 			sched.schedList.Remove(i)
+
+			// LogInfo("After Removing from schedList", "i", i, "Len", sched.schedList.Len())
 		}
 	}
 }
 
+/*
 func (sched *Scheduler) triggerPhraseElementsAt(phr *Phrase, clk Clicks, dclick Clicks) {
 	for i := phr.list.Front(); i != nil; i = i.Next() {
 		pe, ok := i.Value.(*PhraseElement)
@@ -190,6 +206,7 @@ func (sched *Scheduler) triggerPhraseElementsAt(phr *Phrase, clk Clicks, dclick 
 		}
 	}
 }
+*/
 
 /*
 // Time returns the current time
@@ -205,15 +222,25 @@ func (sched *Scheduler) Uptime() float64 {
 */
 
 func (sched *Scheduler) ToString() string {
+
+	// sched.mutex.Lock()
+	// defer sched.mutex.Unlock()
+
 	s := "Scheduler{"
 	for i := sched.schedList.Front(); i != nil; i = i.Next() {
 		pe := i.Value.(*SchedElement)
 		switch v := pe.Value.(type) {
-		case *Phrase:
-			phr := v
-			s += fmt.Sprintf("(%d,%v)", pe.AtClick, phr)
+		/*
+			case *Phrase:
+				phr := v
+				s += fmt.Sprintf("(%d,%v)", pe.AtClick, phr)
+		*/
+		case *NoteOn:
+			s += fmt.Sprintf("(%d,%s)", pe.AtClick, v.String())
+		case *NoteOff:
+			s += fmt.Sprintf("(%d,%s)", pe.AtClick, v.String())
 		default:
-			s += "(Unknown SchedElement Type)"
+			s += fmt.Sprintf("(Unknown SchedElement Type=%T)", v)
 		}
 	}
 	s += "}"
@@ -225,14 +252,18 @@ func (sched *Scheduler) Format(f fmt.State, c rune) {
 	f.Write([]byte(s))
 }
 
-func (sched *Scheduler) scheduleElement(se *SchedElement) {
+func (sched *Scheduler) insertScheduleElement(se *SchedElement) {
+
+	sched.mutex.Lock()
+
 	schedClick := se.AtClick
-	LogOfType("scheduler", "Scheduler.scheduleElement", "se", se, "click", schedClick)
+	LogOfType("scheduler", "Scheduler.insertScheduleElement", "value", se.Value, "click", se.AtClick, "beforelen", sched.schedList.Len())
 	// Insert newElement sorted by time
 	i := sched.schedList.Front()
 	if i == nil {
 		// new list
 		sched.schedList.PushFront(se)
+		LogInfo("After PushFront", "Front", sched.schedList.Front())
 	} else if sched.schedList.Back().Value.(*SchedElement).AtClick <= schedClick {
 		// pe is later than all existing things
 		sched.schedList.PushBack(se)
@@ -245,4 +276,11 @@ func (sched *Scheduler) scheduleElement(se *SchedElement) {
 			}
 		}
 	}
+
+	LogInfo("After unlock", "Front", sched.schedList.Front(), "Len", sched.schedList.Len())
+
+	LogOfType("scheduler", "Scheduler.insertScheduleElement", "value", se.Value, "click", se.AtClick, "afterlen", sched.schedList.Len())
+	LogOfType("scheduler", "schedList", "sched", sched.ToString())
+
+	sched.mutex.Unlock()
 }

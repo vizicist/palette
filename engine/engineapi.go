@@ -33,16 +33,16 @@ func (e *Engine) ExecuteAPI(api string, apiargs map[string]string) (result strin
 			return e.executeSavedAPI(apisuffix, apiargs)
 		case "sound":
 			return e.executeSoundAPI(apisuffix, apiargs)
-		case "layer":
-			layerName := ExtractAndRemoveValue("layer", apiargs)
-			if layerName == "" {
-				return "", fmt.Errorf("no layer value")
+		case "patch":
+			patchName := ExtractAndRemoveValue("patch", apiargs)
+			if patchName == "" {
+				return "", fmt.Errorf("no patch value")
 			}
-			layer := GetLayer(layerName)
-			if layer == nil {
-				return "", fmt.Errorf("no such layer: %s", layerName)
+			patch := GetPatch(patchName)
+			if patch == nil {
+				return "", fmt.Errorf("no such patch: %s", patchName)
 			}
-			return layer.Api(apisuffix, apiargs)
+			return patch.Api(apisuffix, apiargs)
 
 		default:
 			// If it's not one of the reserved aent names, see if it's a registered one
@@ -126,8 +126,8 @@ func (e *Engine) executeEngineAPI(api string, apiargs map[string]string) (result
 		LogWarn("set_transpose API needs work")
 		// v, err := needFloatArg("value", api, apiargs)
 		// if err == nil {
-		// ApplyToAllLayers(func(layer *Layer) {
-		// 	layer.TransposePitch = int(v)
+		// ApplyToAllPatchs(func(patch *Patch) {
+		// 	patch.TransposePitch = int(v)
 		// })
 		// }
 
@@ -138,8 +138,8 @@ func (e *Engine) executeEngineAPI(api string, apiargs map[string]string) (result
 		// 	e.Scheduler.transposeAuto = b
 		// 	// Quantizing CurrentClick() to a beat or measure might be nice
 		// 	e.Scheduler.transposeNext = CurrentClick() + e.Scheduler.transposeClicks*OneBeat
-		// 	ApplyToAllLayers(func(layer *Layer) {
-		// 		layer.TransposePitch = 0
+		// 	ApplyToAllPatchs(func(patch *Patch) {
+		// 		patch.TransposePitch = 0
 		// 	})
 		// }
 
@@ -148,8 +148,8 @@ func (e *Engine) executeEngineAPI(api string, apiargs map[string]string) (result
 		/*
 			v, err := needStringArg("value", api, apiargs)
 			if err == nil {
-				ApplyToAllLayers(func(layer *Layer) {
-					err = layer.SetOneParamValue("misc.scale", v)
+				ApplyToAllPatchs(func(patch *Patch) {
+					err = patch.SetOneParamValue("misc.scale", v)
 					if err != nil {
 						LogError(err)
 					}

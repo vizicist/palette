@@ -13,7 +13,7 @@ import (
 
 func init() {
 	RegisterPlugin("erae", &Plugin_erae{
-		layerName: "A",
+		patchName: "A",
 		enabled:   false,
 		prefix:    0x55,
 		width:     0x2a,
@@ -24,7 +24,7 @@ func init() {
 
 type Plugin_erae struct {
 	ctx       *engine.EngineContext
-	layerName string
+	patchName string
 	enabled   bool
 	prefix    byte
 	width     int
@@ -90,13 +90,13 @@ func (agent *Plugin_erae) EraeFingerIndicator(zone, x, y byte) {
 	recth := byte(2)
 	dim := 1.0
 	for dim > 0 {
-		// Should set color based on EraeLayer
+		// Should set color based on EraePatch
 		red := byte(0)
 		green := byte(0)
 		blue := byte(0)
 		alpha := byte(0x7f * dim)
 
-		switch agent.layerName {
+		switch agent.patchName {
 		case "A":
 			red = alpha
 		case "B":
@@ -155,23 +155,23 @@ func (agent *Plugin_erae) handleFinger(bb []byte) {
 	}
 
 	// If the position is in one of the corners,
-	// we change the player to that corner.
+	// we change the patch to that corner.
 
 	edge := float32(0.1)
-	newLayerName := ""
+	newPatchName := ""
 	if x < edge && y < edge {
-		newLayerName = "A"
+		newPatchName = "A"
 	} else if x < edge && y > (1.0-edge) {
-		newLayerName = "B"
+		newPatchName = "B"
 	} else if x > (1.0-edge) && y > (1.0-edge) {
-		newLayerName = "C"
+		newPatchName = "C"
 	} else if x > (1.0-edge) && y < edge {
-		newLayerName = "D"
+		newPatchName = "D"
 	}
 
-	if newLayerName != "" {
-		if newLayerName != agent.layerName {
-			// Clear cursor state from existing player
+	if newPatchName != "" {
+		if newPatchName != agent.patchName {
+			// Clear cursor state
 			ce := engine.CursorEvent{
 				ID:        cid,
 				Source:    "erae",
@@ -179,8 +179,8 @@ func (agent *Plugin_erae) handleFinger(bb []byte) {
 				Ddu:       "clear",
 			}
 			agent.OnCursorEvent(ce)
-			engine.LogOfType("erae", "Switching Erae to", "layer", newLayerName)
-			agent.layerName = newLayerName
+			engine.LogOfType("erae", "Switching Erae to", "patch", newPatchName)
+			agent.patchName = newPatchName
 		}
 		// We don't pass corner things through, even if we haven't changed the player
 		return

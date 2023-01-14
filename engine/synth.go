@@ -14,6 +14,7 @@ type PortChannel struct {
 var PortChannels map[PortChannel]*MIDIChannelOutput
 
 type Synth struct {
+	name        string
 	portchannel PortChannel
 	bank        int // 0 if not set
 	program     int // 0 if note set
@@ -55,7 +56,7 @@ func InitSynths() {
 		bank := jsynths.Synths[i].Bank
 		program := jsynths.Synths[i].Program
 
-		Synths[nm] = NewSynth(port, channel, bank, program)
+		Synths[nm] = NewSynth(nm, port, channel, bank, program)
 	}
 
 	_, ok := Synths["default"]
@@ -85,7 +86,7 @@ func GetSynth(synthName string) *Synth {
 	return synth
 }
 
-func NewSynth(port string, channel int, bank int, program int) *Synth {
+func NewSynth(name string, port string, channel int, bank int, program int) *Synth {
 
 	synthoutput := ConfigBoolWithDefault("generatesound", true)
 
@@ -105,6 +106,7 @@ func NewSynth(port string, channel int, bank int, program int) *Synth {
 		return nil
 	}
 	sp := &Synth{
+		name:        name,
 		portchannel: portchannel,
 		bank:        bank,
 		program:     program,
@@ -281,13 +283,14 @@ func hexString(b byte) string {
 	return fmt.Sprintf("%02x", b)
 }
 
-func (synth *Synth) SendTo(value any) {
+func (synth *Synth) SendNoteToMidiOutput(value any) {
 
 	// var channel uint8
 	var pitch uint8
 	var velocity uint8
 
 	switch v := value.(type) {
+
 	case *NoteOn:
 		// channel = v.Channel
 		pitch = v.Pitch
@@ -295,14 +298,17 @@ func (synth *Synth) SendTo(value any) {
 		if velocity == 0 {
 			LogInfo("MIDIIO.SendNote: noteon with velocity==0 NOT changed to a noteoff")
 		}
+
 	case *NoteOff:
 		// channel = v.Channel
 		pitch = v.Pitch
 		velocity = v.Velocity
-	case *NoteFull:
-		// channel = v.Channel
-		pitch = v.Pitch
-		velocity = v.Velocity
+
+	// case *NoteFull:
+	// 	// channel = v.Channel
+	// 	pitch = v.Pitch
+	// 	velocity = v.Velocity
+
 	default:
 		LogWarn("SendToSynth: doesn't handle", "type", fmt.Sprintf("%T", v))
 		return
