@@ -33,6 +33,10 @@ func TheRouter() *Router {
 	return TheEngine().Router
 }
 
+func TheScheduler() *Scheduler {
+	return TheEngine().Scheduler
+}
+
 func newEngine() *Engine {
 	e := &Engine{}
 	e.initDebug()

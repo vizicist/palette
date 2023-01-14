@@ -3,6 +3,7 @@ package engine
 import (
 	"fmt"
 	"strings"
+	"sync"
 )
 
 type ProcessInfo struct {
@@ -15,7 +16,8 @@ type ProcessInfo struct {
 
 type ProcessManager struct {
 	// ctx  *engine.PluginContext
-	info map[string]*ProcessInfo
+	info  map[string]*ProcessInfo
+	mutex sync.Mutex
 }
 
 func NewProcessInfo(exe, fullPath, arg string, activate func()) *ProcessInfo {
@@ -35,6 +37,10 @@ func NewProcessManager() *ProcessManager {
 }
 
 func (pm *ProcessManager) CheckAutostartProcesses() {
+
+	pm.mutex.Lock()
+	defer pm.mutex.Unlock()
+
 	autostart := ConfigValueWithDefault("autostart", "")
 	if autostart == "" || autostart == "nothing" || autostart == "none" {
 		return
@@ -62,7 +68,7 @@ func (pm *ProcessManager) CheckAutostartProcesses() {
 	}
 }
 
-func (pm ProcessManager) ActivateAll() {
+func (pm *ProcessManager) ActivateAll() {
 	for _, pi := range pm.info {
 		if pi.Activate != nil {
 			go pi.Activate()
@@ -71,7 +77,7 @@ func (pm ProcessManager) ActivateAll() {
 	}
 }
 
-func (pm ProcessManager) AddProcess(name string, info *ProcessInfo) {
+func (pm *ProcessManager) AddProcess(name string, info *ProcessInfo) {
 	if info == nil {
 		LogWarn("Addprocess: info not available", "process", name)
 	} else {
@@ -80,7 +86,7 @@ func (pm ProcessManager) AddProcess(name string, info *ProcessInfo) {
 
 }
 
-func (pm ProcessManager) AddProcessBuiltIn(process string) {
+func (pm *ProcessManager) AddProcessBuiltIn(process string) {
 
 	switch process {
 	case "bidule":
@@ -90,7 +96,7 @@ func (pm ProcessManager) AddProcessBuiltIn(process string) {
 	}
 }
 
-func (pm ProcessManager) StartRunning(process string) error {
+func (pm *ProcessManager) StartRunning(process string) error {
 
 	for nm, pi := range pm.info {
 		if process == "all" || nm == process {
@@ -112,7 +118,7 @@ func (pm ProcessManager) StartRunning(process string) error {
 	return nil
 }
 
-func (pm ProcessManager) StopRunning(process string) (err error) {
+func (pm *ProcessManager) StopRunning(process string) (err error) {
 	for nm, pi := range pm.info {
 		if process == "all" || nm == process {
 			e := killExecutable(pi.Exe)
@@ -125,7 +131,7 @@ func (pm ProcessManager) StopRunning(process string) (err error) {
 	return err
 }
 
-func (pm ProcessManager) ProcessStatus() string {
+func (pm *ProcessManager) ProcessStatus() string {
 	s := ""
 	for name := range pm.info {
 		if pm.IsRunning(name) {
@@ -135,21 +141,7 @@ func (pm ProcessManager) ProcessStatus() string {
 	return s
 }
 
-/*
-func (pm ProcessManager) resolumeActivate() {
-	pm.agent.ActivateResolume()
-}
-*/
-
-/*
-func (pm ProcessManager) engineInfoInit() *ProcessInfo {
-	exe := "palette_engine.exe"
-	fullpath := filepath.Join(pm.agent.PaletteDir(), "bin", exe)
-	return &ProcessInfo{exe, fullpath, "", nil}
-}
-*/
-
-func (pm ProcessManager) getProcessInfo(process string) (*ProcessInfo, error) {
+func (pm *ProcessManager) getProcessInfo(process string) (*ProcessInfo, error) {
 	p, ok := pm.info[process]
 	if !ok {
 		return nil, fmt.Errorf("getProcessInfo: no process %s", process)
@@ -160,7 +152,7 @@ func (pm ProcessManager) getProcessInfo(process string) (*ProcessInfo, error) {
 	return p, nil
 }
 
-func (pm ProcessManager) IsRunning(process string) bool {
+func (pm *ProcessManager) IsRunning(process string) bool {
 	pi, err := pm.getProcessInfo(process)
 	if err != nil {
 		LogWarn("IsRunning: no process named", "process", process)

@@ -9,11 +9,12 @@ DEFINE_TYPES(rotangdir);
 DEFINE_TYPES(mirror);
 DEFINE_TYPES(justification);
 DEFINE_TYPES(controllerstyle);
+DEFINE_TYPES(cursorstyle);
 DEFINE_TYPES(placement);
 DEFINE_TYPES(spritesource);
 DEFINE_TYPES(spritestyle);
 DEFINE_TYPES(midibehaviour);
-DEFINE_TYPES(layer);
+DEFINE_TYPES(patch);
 DEFINE_TYPES(scale);
 DEFINE_TYPES(inputport);
 DEFINE_TYPES(synth);
@@ -83,6 +84,9 @@ LayerParams_InitializeTypes() {
 	LayerParams_controllerstyleTypes.push_back("pitchYZ");
 	LayerParams_controllerstyleTypes.push_back("nothing");
 
+	LayerParams_cursorstyleTypes.push_back("downonly");
+	LayerParams_cursorstyleTypes.push_back("retrigger");
+
 	LayerParams_placementTypes.push_back("random");
 	LayerParams_placementTypes.push_back("linear");
 	LayerParams_placementTypes.push_back("cursor");
@@ -102,10 +106,10 @@ LayerParams_InitializeTypes() {
 	LayerParams_midibehaviourTypes.push_back("none");
 	LayerParams_midibehaviourTypes.push_back("sprite");
 
-	LayerParams_layerTypes.push_back("A");
-	LayerParams_layerTypes.push_back("B");
-	LayerParams_layerTypes.push_back("C");
-	LayerParams_layerTypes.push_back("D");
+	LayerParams_patchTypes.push_back("A");
+	LayerParams_patchTypes.push_back("B");
+	LayerParams_patchTypes.push_back("C");
+	LayerParams_patchTypes.push_back("D");
 
 	LayerParams_scaleTypes.push_back("external");
 	LayerParams_scaleTypes.push_back("newage");

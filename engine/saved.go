@@ -43,7 +43,7 @@ func (params *ParamValues) ApplyParamsTo(category string, paramsmap map[string]a
 		paramCategory, _ := SavedNameSplit(fullname)
 
 		// Only include ones that match the category
-		if (category == "layer" && IsPerLayerParam(fullname)) || category == paramCategory {
+		if (category == "patch" && IsPerPatchParam(fullname)) || category == paramCategory {
 			err := params.Set(fullname, val)
 			if err != nil {
 				LogError(err)

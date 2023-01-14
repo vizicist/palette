@@ -13,7 +13,7 @@ Layer::Layer() {
 	_spritelist = new SpriteList();
 	_spritelistbg = new SpriteList();
 
-	NosuchLockInit(&_layer_mutex,"layer");
+	NosuchLockInit(&_layer_mutex,"patch");
 	_cursorlist_rwlock = PTHREAD_RWLOCK_INITIALIZER;
 	int rc = pthread_rwlock_init(&_cursorlist_rwlock, NULL);
 	if ( rc ) {

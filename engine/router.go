@@ -29,7 +29,7 @@ type Router struct {
 
 	AliveWaiters map[string]chan string
 
-	layerMap map[string]int // map of pads to resolume layer numbers
+	// layerMap map[string]int // map of pads to resolume layer numbers
 
 	midiEventHandler MIDIEventHandler
 
@@ -129,25 +129,6 @@ func (r *Router) InputListener() {
 		}
 	}
 	LogInfo("InputListener is being killed")
-}
-
-func (r *Router) ResolumeLayerForPad(pad string) int {
-	if r.layerMap == nil {
-		layerLayers := "1,2,3,4"
-		s := ConfigStringWithDefault("layerLayers", layerLayers)
-		layers := strings.Split(s, ",")
-		if len(layers) != 4 {
-			LogWarn("ResolumeLayerForPad: layerLayers value needs 4 values")
-			layers = strings.Split(layerLayers, ",")
-		}
-		r.layerMap = make(map[string]int)
-		r.layerMap["A"], _ = strconv.Atoi(layers[0])
-		r.layerMap["B"], _ = strconv.Atoi(layers[1])
-		r.layerMap["C"], _ = strconv.Atoi(layers[2])
-		r.layerMap["D"], _ = strconv.Atoi(layers[3])
-
-	}
-	return r.layerMap[pad]
 }
 
 func (r *Router) SetMIDIEventHandler(handler MIDIEventHandler) {
@@ -320,9 +301,8 @@ func (r *Router) handleMMTTButton(msg *osc.Message) {
 		LogError(err)
 		return
 	}
-	LogWarn("Router.handleMMTTButton needs work", "buttname", buttName)
-	// text := strings.ReplaceAll(savedName, "_", "\n")
-	// go r.showText(text)
+	text := strings.ReplaceAll(buttName, "_", "\n")
+	go TheResolume().showText(text)
 }
 
 func (r *Router) handleClientRestart(msg *osc.Message) {
@@ -375,23 +355,6 @@ func (r *Router) handleMMTTCursor(msg *osc.Message) {
 		LogError(err)
 		return
 	}
-
-	/*
-		layer, err := r.LayerManager.GetLayer(sourceName)
-		if err != nil {
-			// If it's not a layer, it's a button.
-			buttonDepth := ConfigFloatWithDefault("mmttbuttondepth", 0.002)
-			if z > buttonDepth {
-				Warn("NOT triggering button too deep", "z", z, "buttonDepth", buttonDepth)
-				return
-			}
-			if ddu == "down" {
-				LogOfType("mmtt", "MMT BUTTON TRIGGERED", "buttonDepth", buttonDepth, "z", z)
-				r.handleMMTTButton(sourceName)
-			}
-			return
-		}
-	*/
 
 	ce := CursorEvent{
 		Cid:   cid + ",mmtt", // NOTE: we add an mmmtt tag
