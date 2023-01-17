@@ -10,7 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hypebeast/go-osc/osc"
 	"github.com/vizicist/palette/engine"
 )
 
@@ -24,7 +23,7 @@ type PalettePro struct {
 	// miscparams   *engine.ParamValues
 	globalparams *engine.ParamValues
 
-	started        bool
+	started bool
 	// midiinputpatch *engine.Patch
 
 	generateVisuals bool
@@ -130,13 +129,16 @@ func (ppro *PalettePro) Api(ctx *engine.PluginContext, api string, apiargs map[s
 			return ppro.onCursorEvent(ctx, apiargs)
 		case "clientrestart":
 			return ppro.onClientRestart(ctx, apiargs)
-		case "notification_of_patch_set":
-			return ppro.onPatchSet(ctx, apiargs)
-		case "notification_of_patch_refresh_all":
-			return ppro.onPatchRefreshAll(ctx, apiargs)
-		case "alertonsave":
-			// This events from a listener will trigger saving of the entire Quad
+
+		case "quad_save_current":
 			return "", ppro.saveQuad("_Current")
+
+		case "patch_set":
+			return "", ppro.onPatchSet(ctx, apiargs)
+
+		case "patch_refresh_all":
+			return "", ppro.onPatchRefreshAll(apiargs)
+
 		default:
 			return "", fmt.Errorf("PalettePro: Unhandled event type %s", eventName)
 		}
@@ -242,6 +244,19 @@ func (ppro *PalettePro) Api(ctx *engine.PluginContext, api string, apiargs map[s
 		engine.LogWarn("PalettePro.ExecuteAPI api is not recognized\n", "api", api)
 		return "", fmt.Errorf("PalettePro.Api unrecognized api=%s", api)
 	}
+}
+
+func (ppro *PalettePro) onPatchRefreshAll(apiargs map[string]string) error {
+	patchName, ok := apiargs["patch"]
+	if !ok {
+		return fmt.Errorf("PalettePro.onSet: no patch argument")
+	}
+	patch := engine.GetPatch(patchName)
+	if patch == nil {
+		return fmt.Errorf("no such patch: %s", patchName)
+	}
+	patch.RefreshAllPatchValues()
+	return nil
 }
 
 func (ppro *PalettePro) start(ctx *engine.PluginContext) error {
@@ -388,13 +403,32 @@ func (ppro *PalettePro) onClientRestart(ctx *engine.PluginContext, apiargs map[s
 	// The restart message contains the
 	// portnum of the plugin that restarted.
 	for _, patch := range ppro.patch {
-		patch.RefreshAllIfPortnumMatches(ffglportnum)
+		e := patch.RefreshAllIfPortnumMatches(ffglportnum)
+		if e != nil {
+			engine.LogError(e)
+			err = e
+		}
 	}
-	return "", nil
+	return "", err
 }
 
-// onSet is only used for parameters that are not in patches.
-// NOTE: this routine does not automatically persist the values to disk.
+func (ppro *PalettePro) onPatchSet(ctx *engine.PluginContext, apiargs map[string]string) error {
+	paramName, paramValue, err := engine.GetNameValue(apiargs)
+	if err != nil {
+		return fmt.Errorf("PalettePro.onSet: %s", err)
+	}
+	patchName, ok := apiargs["patch"]
+	if !ok {
+		return fmt.Errorf("PalettePro.onSet: no patch argument")
+	}
+	patch := engine.GetPatch(patchName)
+	if patch == nil {
+		return fmt.Errorf("no such patch: %s", patchName)
+	}
+	return patch.Set(paramName, paramValue)
+}
+
+// onSet is only used for global parameters.
 func (ppro *PalettePro) onSet(ctx *engine.PluginContext, apiargs map[string]string) (result string, err error) {
 
 	paramName, paramValue, err := engine.GetNameValue(apiargs)
@@ -402,87 +436,21 @@ func (ppro *PalettePro) onSet(ctx *engine.PluginContext, apiargs map[string]stri
 		return "", fmt.Errorf("PalettePro.onSet: %s", err)
 	}
 
-	switch {
-	case strings.HasPrefix(paramName, "global"):
+	if strings.HasPrefix(paramName, "global") {
 		return "", ppro.globalparams.Set(paramName, paramValue)
-
-	default:
-		return "", fmt.Errorf("PalettePro.onSet: can't handle parameter %s", paramName)
 	}
+	return "", fmt.Errorf("PalettePro.onSet: can't handle non-global parameter %s", paramName)
 }
 
 func (ppro *PalettePro) onGet(apiargs map[string]string) (result string, err error) {
 	paramName, ok := apiargs["name"]
 	if !ok {
-		return "", fmt.Errorf("PalettePro.onPatchSet: Missing name argument")
+		return "", fmt.Errorf("PalettePro.onPatchGet: Missing name argument")
 	}
 	if strings.HasPrefix(paramName, "global") {
 		return ppro.globalparams.Get(paramName), nil
 	} else {
 		return "", fmt.Errorf("PalettePro.onGet: can't handle parameter %s", paramName)
-	}
-}
-
-func (ppro *PalettePro) onPatchRefreshAll(ctx *engine.PluginContext, apiargs map[string]string) (result string, err error) {
-	patchName, ok := apiargs["patch"]
-	if !ok {
-		return "", fmt.Errorf("PalettePro.onPatchRefreshAll: Missing patch argument")
-	}
-	patch, ok := ppro.patch[patchName]
-	if !ok {
-		return "", fmt.Errorf("PalettePro.onPatchRefreshAll: No patch named %s", patchName)
-	}
-	ppro.refreshAllPatchValues(ctx, patch)
-	return "", nil
-}
-
-func (ppro *PalettePro) refreshAllPatchValues(ctx *engine.PluginContext, patch *engine.Patch) {
-	for _, paramName := range patch.ParamNames() {
-		paramValue := patch.Get(paramName)
-		ppro.refreshPatchValue(ctx, patch, paramName, paramValue)
-	}
-}
-
-func (ppro *PalettePro) onPatchSet(ctx *engine.PluginContext, apiargs map[string]string) (result string, err error) {
-	patchName, ok := apiargs["patch"]
-	if !ok {
-		return "", fmt.Errorf("PalettePro.onPatchSet: Missing patch argument")
-	}
-	paramName, paramValue, err := engine.GetNameValue(apiargs)
-	if err != nil {
-		return "", fmt.Errorf("PalettePro.onPatchSet: err=%s", err)
-	}
-	patch, ok := ppro.patch[patchName]
-	if !ok {
-		return "", fmt.Errorf("PalettePro.onPatchSet: No patch named %s", patchName)
-	}
-	ppro.refreshPatchValue(ctx, patch, paramName, paramValue)
-	return "", nil
-}
-
-func (ppro *PalettePro) refreshPatchValue(ctx *engine.PluginContext, patch *engine.Patch, paramName string, paramValue string) {
-
-	if strings.HasPrefix(paramName, "visual.") {
-		name := strings.TrimPrefix(paramName, "visual.")
-		msg := osc.NewMessage("/api")
-		msg.Append("set_params")
-		args := fmt.Sprintf("{\"%s\":\"%s\"}", name, paramValue)
-		msg.Append(args)
-		engine.TheResolume().ToFreeFramePlugin(patch.Name(), msg)
-	}
-
-	if strings.HasPrefix(paramName, "effect.") {
-		name := strings.TrimPrefix(paramName, "effect.")
-		// Effect parameters get sent to Resolume
-		engine.TheResolume().SendEffectParam(patch.Name(), name, paramValue)
-	}
-
-	if paramName == "sound.synth" {
-		synth := ctx.GetSynth(paramValue)
-		if synth == nil {
-			engine.LogWarn("PalettePro: no synth named", "synth", paramValue)
-		}
-		patch.Synth = synth
 	}
 }
 
@@ -525,7 +493,7 @@ func (ppro *PalettePro) checkAttract(ctx *engine.PluginContext) {
 
 	// Every so often we check to see if attract mode should be turned on
 	now := time.Now()
-	attractModeEnabled := ppro.attractIdleSecs > -1
+	attractModeEnabled := ppro.attractIdleSecs > 0
 	sinceLastAttractCheck := now.Sub(ppro.lastAttractCheck).Seconds()
 	if attractModeEnabled && sinceLastAttractCheck > ppro.attractCheckSecs {
 		ppro.lastAttractCheck = now
@@ -609,12 +577,11 @@ func (ppro *PalettePro) doTest(ctx *engine.PluginContext, ntimes int, dt time.Du
 	engine.LogInfo("doTest end")
 }
 
-func (ppro *PalettePro) loadQuadRand(ctx *engine.PluginContext) {
+func (ppro *PalettePro) loadQuadRand(ctx *engine.PluginContext) error {
 
 	arr, err := engine.SavedFileList("quad")
 	if err != nil {
-		engine.LogError(err)
-		return
+		return err
 	}
 	rn := rand.Uint64() % uint64(len(arr))
 	engine.LogInfo("loadQuadRand", "quad", arr[rn])
@@ -622,12 +589,9 @@ func (ppro *PalettePro) loadQuadRand(ctx *engine.PluginContext) {
 	engine.LogError(ppro.Load(ctx, "quad", arr[rn]))
 
 	for _, patch := range ppro.patch {
-		patch.AlertListenersToRefreshAll()
+		patch.RefreshAllPatchValues()
 	}
-
-	if err != nil {
-		engine.LogError(err)
-	}
+	return nil
 }
 
 func (ppro *PalettePro) Load(ctx *engine.PluginContext, category string, filename string) error {
@@ -654,7 +618,7 @@ func (ppro *PalettePro) Load(ctx *engine.PluginContext, category string, filenam
 				engine.LogError(err)
 				lasterr = err
 			}
-			ppro.refreshAllPatchValues(ctx, patch)
+			patch.RefreshAllPatchValues()
 		}
 
 	default:
@@ -668,10 +632,17 @@ func (ppro *PalettePro) Load(ctx *engine.PluginContext, category string, filenam
 	err = nil
 	switch category {
 	case "global":
-		if filename == "_Current" {
+		if filename != "_Current" {
+			// No need to save _Current if we're loading it
 			err = ppro.save("global", "_Current")
 		}
+	case "quad":
+		if filename != "_Current" {
+			err = ppro.saveQuad("_Current")
+		}
 	case "patch", "sound", "visual", "effect", "misc":
+		// If we're loading a patch (or something inside a patch, like sound, visual, etc),
+		// we save the entire quad, since that's our real persistent state
 		if filename != "_Current" {
 			err = ppro.saveQuad("_Current")
 		}
@@ -685,7 +656,7 @@ func (ppro *PalettePro) Load(ctx *engine.PluginContext, category string, filenam
 
 func (ppro *PalettePro) save(category string, filename string) (err error) {
 
-	engine.LogInfo("PalettePro.Save", "category", category, "filename", filename)
+	engine.LogOfType("saved", "PalettePro.save", "category", category, "filename", filename)
 
 	if category == "global" {
 		err = ppro.globalparams.Save("global", filename)
@@ -810,7 +781,10 @@ func (ppro *PalettePro) doAttractAction(ctx *engine.PluginContext) {
 
 	dp := now.Sub(ppro.lastAttractChange).Seconds()
 	if dp > ppro.attractChangeInterval {
-		ppro.loadQuadRand(ctx)
+		err := ppro.loadQuadRand(ctx)
+		if err != nil {
+			engine.LogError(err)
+		}
 		ppro.lastAttractChange = now
 	}
 }
