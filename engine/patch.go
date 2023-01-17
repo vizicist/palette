@@ -64,8 +64,7 @@ func ApplyToAllPatchs(f func(patch *Patch)) {
 func (patch *Patch) SetDefaultValues() {
 	for nm, d := range ParamDefs {
 		if IsPerPatchParam(nm) {
-			err := patch.SetNoAlert(nm, d.Init)
-			// err := patch.params.SetParamValueWithString(nm, d.Init)
+			err := patch.Set(nm, d.Init)
 			if err != nil {
 				LogError(err)
 			}
@@ -77,61 +76,96 @@ func (patch *Patch) MIDIChannel() uint8 {
 	return patch.Synth.Channel()
 }
 
-// func (patch *Patch) ReAlertListenersOnAllParameters() {
-// 	patch.AlertListenersToRefreshAll()
-// }
-
-func (patch *Patch) RefreshAllIfPortnumMatches(ffglportnum int) {
+func (patch *Patch) RefreshAllIfPortnumMatches(ffglportnum int) error {
 	portnum, _ := TheResolume().PortAndLayerNumForPatch(patch.name)
-	if portnum == ffglportnum {
-		patch.AlertListenersToRefreshAll()
+	if portnum != ffglportnum {
+		return nil
+	}
+	return patch.AlertListeners("patch_refresh_all")
+}
+
+func (patch *Patch) RefreshAllPatchValues() {
+	for _, paramName := range patch.ParamNames() {
+		paramValue := patch.Get(paramName)
+		patch.refreshValue(paramName, paramValue)
 	}
 }
 
-func (patch *Patch) AlertListenersOfSet(paramName string, paramValue string) {
+func (patch *Patch) refreshValue(paramName string, paramValue string) {
+
+	if strings.HasPrefix(paramName, "visual.") {
+		name := strings.TrimPrefix(paramName, "visual.")
+		msg := osc.NewMessage("/api")
+		msg.Append("set_params")
+		args := fmt.Sprintf("{\"%s\":\"%s\"}", name, paramValue)
+		msg.Append(args)
+		TheResolume().ToFreeFramePlugin(patch.Name(), msg)
+	}
+
+	if strings.HasPrefix(paramName, "effect.") {
+		name := strings.TrimPrefix(paramName, "effect.")
+		// Effect parameters get sent to Resolume
+		TheResolume().SendEffectParam(patch.Name(), name, paramValue)
+	}
+
+	if paramName == "sound.synth" {
+		synth := GetSynth(paramValue)
+		if synth == nil {
+			LogWarn("PalettePro: no synth named", "synth", paramValue)
+		}
+		patch.Synth = synth
+	}
+}
+
+func (patch *Patch) AlertListeners(event string) error {
+
+	LogOfType("listeners", "AlertListeners", "patch", patch.Name(), "event", event)
+	args := map[string]string{
+		"event": event,
+		"patch": patch.Name(),
+	}
+	return patch.AlertListenersOf(args)
+}
+
+func (patch *Patch) AlertListenersOf(args map[string]string) error {
+	var err error
+	for _, listener := range patch.listeners {
+		_, e := listener.api(listener, "event", args)
+		if e != nil {
+			LogError(e) // make sure multiple ones are all logged
+			err = e
+		}
+	}
+	return err
+}
+
+func (patch *Patch) AlertListenersOfSet(paramName string, paramValue string) error {
 
 	LogOfType("listeners", "AlertListenersOf", "param", paramName, "value", paramValue, "patch", patch.Name())
-	for _, listener := range patch.listeners {
-		args := map[string]string{
-			"event": "notification_of_patch_set",
-			"name":  paramName,
-			"value": paramValue,
-			"patch": patch.Name(),
-		}
-		_, err := listener.api(listener, "event", args)
-		if err != nil {
-			LogError(err)
-		}
+	args := map[string]string{
+		"event": "patch_set",
+		"name":  paramName,
+		"value": paramValue,
+		"patch": patch.Name(),
 	}
+	return patch.AlertListenersOf(args)
 }
 
-func (patch *Patch) AlertListenersToRefreshAll() {
+func (patch *Patch) SaveAndAlert(category string, filename string) error {
 
-	LogOfType("listeners", "AlertListenersToRefreshAll", "patch", patch.Name())
-	for _, listener := range patch.listeners {
-		args := map[string]string{
-			"event": "notification_of_patch_refresh_all",
-			"patch": patch.Name(),
-		}
-		_, err := listener.api(listener, "event", args)
-		if err != nil {
-			LogError(err)
-		}
+	LogOfType("saved", "Patch.SaveAndAlert", "category", category, "filename", filename)
+
+	if filename == "_Current" && category != "quad" {
+		err := fmt.Errorf("Hey, we're only saving _Current in quad (and global)")
+		LogError(err)
+		return err
 	}
-}
-
-func (patch *Patch) AlertListenersOnSave() {
-
-	LogOfType("listeners", "AlertListenersOnSave")
-	for _, listener := range patch.listeners {
-		args := map[string]string{
-			"event": "alertonsave",
-		}
-		_, err := listener.api(listener, "event", args)
-		if err != nil {
-			LogError(err)
-		}
+	err := patch.params.Save(category, filename)
+	if err != nil {
+		LogError(err)
+		return err
 	}
+	return patch.AlertListeners("patch_refresh_all")
 }
 
 func (patch *Patch) AddListener(ctx *PluginContext) {
@@ -156,12 +190,14 @@ func (patch *Patch) Api(api string, apiargs map[string]string) (string, error) {
 			return "", fmt.Errorf("missing category parameter")
 		}
 
+		// Note that if it's a "quad" file,
+		// we're only loading the items
+		// in that quad that match the patch
 		err := patch.Load(category, filename)
 		if err != nil {
 			return "", err
 		}
-		patch.SaveCurrent()
-		return "", nil
+		return "", patch.SaveQuadAndAlert()
 
 	case "save":
 		// This is a save of a single patch (in saved/patch/*)
@@ -173,31 +209,36 @@ func (patch *Patch) Api(api string, apiargs map[string]string) (string, error) {
 		if !okcategory {
 			return "", fmt.Errorf("missing category parameter")
 		}
-		// Doing SaveCurrent here might be superfluous, since any
-		// other change to a patch's settings should already invoke SaveCurrent.
-		patch.SaveCurrent()
-		return "", patch.params.Save(category, filename)
+		return "", patch.SaveAndAlert(category, filename)
 
 	case "set":
 		name, value, err := GetNameValue(apiargs)
 		if err != nil {
 			return "", fmt.Errorf("executePatchAPI: err=%s", err)
 		}
-		err = patch.SetAndAlert(name, value)
-		patch.SaveCurrent()
-		return "", err
+		err = patch.Set(name, value)
+		if err != nil {
+			return "", err
+		}
+		err = patch.AlertListenersOfSet(name, value)
+		if err != nil {
+			return "", err
+		}
+		return "", patch.SaveQuadAndAlert()
 
 	case "setparams":
 		var err error
 		for name, value := range apiargs {
-			e := patch.SetNoAlert(name, value)
+			e := patch.Set(name, value)
 			if e != nil {
+				LogError(e)
 				err = e
 			}
 		}
-		patch.AlertListenersToRefreshAll()
-		patch.SaveCurrent()
-		return "", err
+		if err != nil {
+			return "", err
+		}
+		return "", patch.SaveQuadAndAlert()
 
 	case "get":
 		name, ok := apiargs["name"]
@@ -222,39 +263,24 @@ func (patch *Patch) Api(api string, apiargs map[string]string) (string, error) {
 	}
 }
 
-func (patch *Patch) SetNoAlert(paramName string, paramValue string) error {
-	return patch.set(paramName, paramValue, false)
+func (patch *Patch) SaveQuadAndAlert() error {
+	return patch.AlertListeners("quad_save_current")
 }
 
-func (patch *Patch) SetAndAlert(paramName string, paramValue string) error {
-	return patch.set(paramName, paramValue, true)
-}
-
-func (patch *Patch) set(paramName string, paramValue string, alert bool) error {
+func (patch *Patch) Set(paramName string, paramValue string) error {
 
 	if !IsPerPatchParam(paramName) {
 		err := fmt.Errorf("Patch.Set: not per-patch param=%s", paramName)
 		LogError(err)
 		return err
 	}
-	err := patch.params.Set(paramName, paramValue)
-	if err != nil {
-		return err
-	}
-	if alert {
-		patch.AlertListenersOfSet(paramName, paramValue)
-	}
-	return nil
+	return patch.params.Set(paramName, paramValue)
 }
 
 // If no such parameter, return ""
 func (patch *Patch) Get(paramName string) string {
 	return patch.params.Get(paramName)
 }
-
-// func (patch *Patch) Params() *ParamValues {
-// 	return patch.params
-// }
 
 func (patch *Patch) ParamNames() []string {
 	// Print the parameter values sorted by name
@@ -283,14 +309,6 @@ func (patch *Patch) GetBool(paramName string) bool {
 
 func (patch *Patch) GetFloat(paramName string) float32 {
 	return patch.params.GetFloatValue(paramName)
-}
-
-func (patch *Patch) SaveCurrent() {
-	patch.AlertListenersOnSave()
-	// We don't really need to save patch._Current because
-	// quad._Current is being saved and restored.
-	// However, if there's only one Patch, patch._Current may be needed.
-	//  patch.params.Save("patch", "_Current")
 }
 
 func (patch *Patch) ApplyQuadValuesFrom(paramsmap map[string]any) error {
@@ -331,7 +349,7 @@ func (patch *Patch) ApplyQuadValuesFrom(paramsmap map[string]any) error {
 		if !ok {
 			return fmt.Errorf("value of name=%s isn't a string", fullParamName)
 		}
-		err := patch.SetNoAlert(paramName, value)
+		err := patch.Set(paramName, value)
 		if err != nil {
 			LogWarn("applyQuadValuesFrom", "name", paramName, "err", err)
 			// Don't fail completely on individual failures,
@@ -350,7 +368,7 @@ func (patch *Patch) ApplyQuadValuesFrom(paramsmap map[string]any) error {
 		_, found := paramsmap[patchParamName]
 		if !found {
 			init := def.Init
-			err := patch.SetNoAlert(paramName, init)
+			err := patch.Set(paramName, init)
 			if err != nil {
 				// a hack to eliminate errors on a parameter that still exists somewhere
 				LogWarn("applyQuadValuesFrom", "nm", paramName, "err", err)
@@ -359,9 +377,6 @@ func (patch *Patch) ApplyQuadValuesFrom(paramsmap map[string]any) error {
 			}
 		}
 	}
-
-	// patch.AlertListenersToRefreshAll()
-
 	return nil
 }
 
@@ -371,6 +386,8 @@ func (patch *Patch) readableFilePath(category string, filename string) string {
 }
 
 func (patch *Patch) Load(category string, filename string) error {
+
+	LogOfType("saved", "patch.Load", "patch", patch.Name(), "category", category, "filename", filename)
 
 	// category, filename := SavedNameSplit(savedName)
 	path := patch.readableFilePath(category, filename)
@@ -417,7 +434,7 @@ func (patch *Patch) Load(category string, filename string) error {
 		_, found := paramsmap[paramName]
 		if !found {
 			paramValue := def.Init
-			err := patch.SetNoAlert(paramName, paramValue)
+			err := patch.Set(paramName, paramValue)
 			// err := params.Set(paramName, paramValue)
 			if err != nil {
 				LogWarn("patch.Set error", "saved", paramName, "err", err)
@@ -425,8 +442,7 @@ func (patch *Patch) Load(category string, filename string) error {
 			}
 		}
 	}
-	patch.AlertListenersToRefreshAll()
-	return nil
+	return patch.AlertListeners("patch_refresh_all")
 }
 
 func (patch *Patch) clearGraphics() {

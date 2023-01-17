@@ -49,32 +49,6 @@ func (layer *Patch) SetParam(fullname, value string) error {
 	return layer.SetOneParamValue(fullname, value)
 }
 
-func (layer *Patch) SetOneParamValue(fullname, value string) error {
-
-	LogOfType("value", "SetOneParamValue", "patch", layer.patchName, "fullname", fullname, "value", value)
-	err := layer.params.SetParamValueWithString(fullname, value)
-	if err != nil {
-		return err
-	}
-
-	if strings.HasPrefix(fullname, "visual.") {
-		name := strings.TrimPrefix(fullname, "visual.")
-		msg := osc.NewMessage("/api")
-		msg.Append("set_params")
-		args := fmt.Sprintf("{\"%s\":\"%s\"}", name, value)
-		msg.Append(args)
-		layer.toFreeFramePluginForLayer(msg)
-	}
-
-	if strings.HasPrefix(fullname, "effect.") {
-		name := strings.TrimPrefix(fullname, "effect.")
-		// Effect parameters get sent to Resolume
-		layer.sendEffectParam(name, value)
-	}
-
-	return nil
-}
-
 /*
 // ClearExternalScale xxx
 func (layer *Patch) clearExternalScale() {

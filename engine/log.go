@@ -169,6 +169,7 @@ var LogEnabled = map[string]bool{
 	"go":        false,
 	"info":      false,
 	"patch":     false,
+	"process":   false,
 	"layerapi":  false,
 	"listeners": false,
 	"load":      false,

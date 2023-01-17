@@ -168,7 +168,7 @@ func IsPatchCategory(category string) bool {
 
 func (vals *ParamValues) Save(category string, filename string) error {
 
-	LogOfType("paramvals", "ParamValues.Save", "category", category, "filename", filename)
+	LogOfType("saved", "ParamValues.Save", "category", category, "filename", filename)
 
 	path := WritableFilePath(category, filename)
 
@@ -194,6 +194,11 @@ func (vals *ParamValues) Save(category string, filename string) error {
 
 	sep := ""
 	for _, fullName := range sortedNames {
+		// The names are of the form "category.name",
+		// and any parameters with a name starting with "_" are not saved.
+		if strings.Contains(fullName, "._") {
+			continue
+		}
 		valstring, e := vals.paramValueAsString(fullName)
 		if e != nil {
 			LogError(e)
