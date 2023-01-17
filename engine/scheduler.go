@@ -263,7 +263,6 @@ func (sched *Scheduler) insertScheduleElement(se *SchedElement) {
 	if i == nil {
 		// new list
 		sched.schedList.PushFront(se)
-		LogInfo("After PushFront", "Front", sched.schedList.Front())
 	} else if sched.schedList.Back().Value.(*SchedElement).AtClick <= schedClick {
 		// pe is later than all existing things
 		sched.schedList.PushBack(se)
@@ -277,10 +276,7 @@ func (sched *Scheduler) insertScheduleElement(se *SchedElement) {
 		}
 	}
 
-	LogInfo("After unlock", "Front", sched.schedList.Front(), "Len", sched.schedList.Len())
-
-	LogOfType("scheduler", "Scheduler.insertScheduleElement", "value", se.Value, "click", se.AtClick, "afterlen", sched.schedList.Len())
-	LogOfType("scheduler", "schedList", "sched", sched.ToString())
+	LogOfType("scheduler", "Scheduler.insertScheduleElement", "value", se.Value, "click", se.AtClick, "schedafter", sched.ToString())
 
 	sched.mutex.Unlock()
 }

@@ -73,8 +73,8 @@ func isRunningExecutable(exe string) bool {
 	stderr := &NoWriter{}
 	cmd, err := startExecutable("c:\\windows\\system32\\tasklist.exe", false, stdout, stderr)
 	if err != nil {
-		// os.Stdout.WriteString("IsRunningExecutable A err=" + err.Error() + "\n")
 		LogWarn("IsRunningExecutable tasklist.exe", "err", err)
+		LogOfType("process", "IsRunningExecutable", "exe", exe, "returning", "true")
 		return false
 	}
 	_ = cmd.Wait() // ignore "Wait was already called"
@@ -90,10 +90,11 @@ func isRunningExecutable(exe string) bool {
 			// os.Stdout.WriteString("words0=" + words[0] + " exe=" + exe + "\n")
 			if strings.ToLower(words[0]) == exe {
 				// os.Stdout.WriteString("IsRunningExecutable " + exe + " returning true\n")
+				LogOfType("process", "IsRunningExecutable", "exe", exe, "returning", "true")
 				return true
 			}
 		}
 	}
-	// os.Stdout.WriteString("IsRunningExecutable " + exe + " returning false\n")
+	LogOfType("process", "IsRunningExecutable", "exe", exe, "returning", "false")
 	return false
 }
