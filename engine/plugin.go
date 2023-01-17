@@ -100,9 +100,12 @@ func (ctx *PluginContext) GetPatch(patchName string) *Patch {
 	return GetPatch(patchName)
 }
 
+/*
 func (ctx *PluginContext) SaveParams(params *ParamValues, category string, filename string) error {
+	LogOfType("saved", "PluginContext.SaveParams", "category", category, "filename", filename)
 	return params.Save(category, filename)
 }
+*/
 
 func (ctx *PluginContext) AllowSource(source ...string) {
 	var ok bool
@@ -258,35 +261,6 @@ func (ctx *EngineContext) PatchParams(patchName string) *ParamValues {
 		ctx.layerParams[patchName] = params
 	}
 	return params
-}
-*/
-
-/*
-func (ctx *EngineContext) setOnePatchParamValue(patchName, fullname, value string) error {
-
-	layer := GetPatch(patchName)
-	params := layer.params
-	err := params.SetParamValueWithString(fullname, value)
-	if err != nil {
-		return err
-	}
-
-	if strings.HasPrefix(fullname, "visual.") {
-		name := strings.TrimPrefix(fullname, "visual.")
-		msg := osc.NewMessage("/api")
-		msg.Append("set_params")
-		args := fmt.Sprintf("{\"%s\":\"%s\"}", name, value)
-		msg.Append(args)
-		layer.toFreeFramePlugin(msg)
-	}
-
-	if strings.HasPrefix(fullname, "effect.") {
-		name := strings.TrimPrefix(fullname, "effect.")
-		// Effect parameters get sent to Resolume
-		ctx.sendEffectParam(layer, name, value)
-	}
-
-	return nil
 }
 */
 

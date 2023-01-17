@@ -43,7 +43,6 @@ func (e *Engine) ExecuteAPI(api string, apiargs map[string]string) (result strin
 				return "", fmt.Errorf("no such patch: %s", patchName)
 			}
 			return patch.Api(apisuffix, apiargs)
-
 		default:
 			// If it's not one of the reserved aent names, see if it's a registered one
 			ctx, err := e.PluginManager.GetPluginContext(apitype)

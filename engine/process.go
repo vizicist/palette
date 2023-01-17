@@ -69,8 +69,10 @@ func (pm *ProcessManager) CheckAutostartProcesses() {
 }
 
 func (pm *ProcessManager) ActivateAll() {
-	for _, pi := range pm.info {
+
+	for process, pi := range pm.info {
 		if pi.Activate != nil {
+			LogOfType("process", "ActivateAll", "process", process)
 			go pi.Activate()
 			pi.Activated = true
 		}
@@ -98,6 +100,8 @@ func (pm *ProcessManager) AddProcessBuiltIn(process string) {
 
 func (pm *ProcessManager) StartRunning(process string) error {
 
+	LogOfType("process", "StartRunning", "process", process)
+
 	for nm, pi := range pm.info {
 		if process == "all" || nm == process {
 			if pi == nil {
@@ -119,6 +123,9 @@ func (pm *ProcessManager) StartRunning(process string) error {
 }
 
 func (pm *ProcessManager) StopRunning(process string) (err error) {
+
+	LogOfType("process", "StopRunning", "process", process)
+
 	for nm, pi := range pm.info {
 		if process == "all" || nm == process {
 			e := killExecutable(pi.Exe)
