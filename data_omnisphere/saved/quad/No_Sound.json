@@ -630,7 +630,7 @@
         "D-visual.zmin":"0.010000",
         "misc.midiinputpatch":"A",
         "misc.enable:visual":"true",
-        "misc.quant":"frets",
+        "misc.quantstyle":"frets",
         "misc.logic_visual":"true",
         "misc.logic_sound":"true",
         "misc.vol":"pressure",

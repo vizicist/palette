@@ -19,6 +19,7 @@ func main() {
 	flag.Parse()
 
 	engine.InitLog("palette")
+	engine.LogInfo("Palette InitLog", "args", flag.Args())
 
 	out := CliCommand(flag.Args())
 	os.Stdout.WriteString(out)

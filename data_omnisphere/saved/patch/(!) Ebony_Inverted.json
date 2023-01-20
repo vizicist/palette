@@ -113,7 +113,7 @@
         "misc.midibehaviour":"sprite",
         "misc.pitchfactor":"3.584000",
         "misc.pitchoffset":"59.005001",
-        "misc.quant":"fixed",
+        "misc.quantstyle":"fixed",
         "misc.scale":"newage",
         "misc.vol":"fixed",
         "sound.chromatic":"false",

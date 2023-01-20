@@ -34,7 +34,7 @@ func (e *Engine) ExecuteAPI(api string, apiargs map[string]string) (result strin
 		case "sound":
 			return e.executeSoundAPI(apisuffix, apiargs)
 		case "patch":
-			patchName := ExtractAndRemoveValue("patch", apiargs)
+			patchName := ExtractAndRemoveValueOf("patch", apiargs)
 			if patchName == "" {
 				return "", fmt.Errorf("no patch value")
 			}
@@ -61,8 +61,8 @@ func (e *Engine) ExecuteAPIFromJson(rawjson string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("Router.ExecuteAPIAsJson: bad format of JSON")
 	}
-	api, ok := args["api"]
-	if !ok {
+	api := ExtractAndRemoveValueOf("api", args)
+	if api == "" {
 		return "", fmt.Errorf("Router.ExecuteAPIAsJson: no api value")
 	}
 	return e.ExecuteAPI(api, args)

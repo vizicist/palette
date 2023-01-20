@@ -125,7 +125,7 @@
         "sound.pitchmin":"33",
         "misc.pitchoffset":"0.000",
         "visual.placement":"cursor",
-        "misc.quant":"frets",
+        "misc.quantstyle":"frets",
         "visual.rotangdir":"left",
         "visual.rotanginit":"126.840",
         "visual.rotangspeed":"25.680",

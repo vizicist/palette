@@ -1,13 +1,17 @@
 {
     "params": {
+        "misc.cursorstyle":{"value":"downonly","randomize":"true","enabled":"false"},
         "misc.enable:sound":"true",
         "misc.enable:visual":"true",
         "misc.logic_sound":"true",
         "misc.logic_visual":"true",
         "misc.midibehaviour":"default",
         "misc.midiinputpatch":"A",
-        "misc.quant":"frets",
+        "misc.pitchfactor":"1.000000",
+        "misc.pitchoffset":"0.000000",
+        "misc.quantstyle":"frets",
         "misc.scale":"newage",
+        "misc.usescale":"true",
         "misc.vol":"pressure"
     }
 }
