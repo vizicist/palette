@@ -106,6 +106,41 @@ func (vals *ParamValues) Set(name, value string) error {
 	return vals.SetParamValueWithString(name, value)
 }
 
+// Currently, no errors are ever returned, but log messages are generated.
+func (params *ParamValues) ApplyPatchValuesFromMap(category string, paramsmap map[string]any) {
+
+	for fullname, ival := range paramsmap {
+		var value string
+		value, ok := ival.(string)
+		if !ok {
+			// map value format is like {"value": "0.5", "enabled": "true", ...}
+			mapval, ok := ival.(map[string]interface{})
+			if !ok {
+				LogWarn("value isn't a string or map in params json", "name", fullname, "value", ival)
+				continue
+			}
+			value, ok = mapval["value"].(string)
+			if !ok {
+				LogWarn("No value entry in mapval", "name", fullname, "mapval", mapval)
+				continue
+			}
+			LogInfo("New value format", "name", fullname, "value", value)
+		}
+		paramCategory, _ := SavedNameSplit(fullname)
+
+		// Only include ones that match the category.
+		// If the category is "patch", match any of sound/visual/effect/misc.
+		if category == paramCategory || (category == "patch" && IsPerPatchParam(fullname)) {
+			err := params.Set(fullname, value)
+			if err != nil {
+				LogError(err)
+				// Don't abort the whole load, i.e. we are tolerant
+				// of unknown parameters or errors in the saved
+			}
+		}
+	}
+}
+
 // returns "" if parameter doesn't exist
 func (vals *ParamValues) Get(name string) string {
 	v, err := vals.paramValueAsString(name)
@@ -159,13 +194,6 @@ func (vals *ParamValues) GetBoolValue(name string) bool {
 	return (param).(paramValBool).value
 }
 
-func IsPatchCategory(category string) bool {
-	return (category == "visual" ||
-		category == "sound" ||
-		category == "effect" ||
-		category == "misc")
-}
-
 func (vals *ParamValues) Save(category string, filename string) error {
 
 	LogOfType("saved", "ParamValues.Save", "category", category, "filename", filename)
@@ -212,13 +240,11 @@ func (vals *ParamValues) Save(category string, filename string) error {
 	return os.WriteFile(path, data, 0644)
 }
 
-func (vals *ParamValues) paramDefOf(name string) (ParamDef, error) {
-	p, ok := ParamDefs[name]
-	if !ok {
-		return ParamDef{}, fmt.Errorf("paramDefOf: no parameter named %s", name)
-	} else {
-		return p, nil
-	}
+func IsPatchCategory(category string) bool {
+	return (category == "visual" ||
+		category == "sound" ||
+		category == "effect" ||
+		category == "misc")
 }
 
 func LoadParamsMap(path string) (ParamsMap, error) {
@@ -469,4 +495,13 @@ func (vals *ParamValues) paramValueAsString(name string) (string, error) {
 		s = "BADVALUETYPE"
 	}
 	return s, nil
+}
+
+func (vals *ParamValues) paramDefOf(name string) (ParamDef, error) {
+	p, ok := ParamDefs[name]
+	if !ok {
+		return ParamDef{}, fmt.Errorf("paramDefOf: no parameter named %s", name)
+	} else {
+		return p, nil
+	}
 }

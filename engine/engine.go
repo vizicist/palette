@@ -24,6 +24,7 @@ var theEngine *Engine
 func TheEngine() *Engine {
 	if theEngine == nil {
 		InitLog("engine")
+		LogInfo("Engine InitLog ==============================================")
 		theEngine = newEngine()
 	}
 	return theEngine

@@ -64,7 +64,7 @@
 "effect.goo:maxdistortionz": {"valuetype": "float", "min": "0.0", "max": "1.0", "randmin":"0.0", "randmax":"1.0", "init": "1.0", "comment": "#" },
 "effect.goo:shade": {"valuetype": "float", "min": "0.0", "max": "1.0", "randmin":"0.0", "randmax":"1.0", "init": "1.0", "comment": "#" },
 
-"misc.quant": {"valuetype":"string", "min":"quant", "max":"quant", "init":"frets", "comment":"# Quantization style" },
+"misc.quantstyle": {"valuetype":"string", "min":"quant", "max":"quant", "init":"frets", "comment":"# Quantization style" },
 "misc.scale": {"valuetype":"string", "min":"scale", "max":"scale", "randmax":"newage", "init":"newage", "comment":"# Quantization style" },
 "misc.vol": {"valuetype":"string", "min":"vol", "max":"vol", "init":"pressure", "comment":"# Velocity style" },
 "misc.enable:sound": {"valuetype":"bool", "min":"false", "max":"true", "init":"true", "comment":"# Enable Sound" },
