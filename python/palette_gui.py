@@ -559,7 +559,6 @@ class ProGuiApp(tk.Tk):
             else:
                 patch = self.CurrPatch
 
-            # page.setValues(pad.getValues())
             self.refreshValues(pagename,patch)
 
         self.setFrameSizes()
@@ -651,7 +650,7 @@ class ProGuiApp(tk.Tk):
 
     def selectorApply(self,apply,paramType):
 
-        log("selectorApply 1")
+        # log("selectorApply 1")
         if not self.editMode:
             log("Hmmm, selectorAply should only be called in editMode")
             return
@@ -1085,6 +1084,7 @@ class Patch():
 
     def __init__(self, controller, patchName):
         self.paramValues = {}
+        self.paramEnabled = {}
         self.controller = controller
         self.params = self.controller.paramsOfType["patch"]
         self.setInitValues()
@@ -1111,12 +1111,6 @@ class Patch():
     def getValues(self):
         return self.paramValues
 
-    def loadJson(self,j):
-        # the self.params has all (i.e. snap) parameters, but
-        # we only want to load whatever's in the json we're given.
-        for paramName in j["params"]:
-            self.setValue("",paramName,j["params"][paramName])
-
     def setValue(self,paramType,paramName,val):
         if not paramType == "" and not paramName.startswith(paramType):
             paramName = paramType + "." + paramName
@@ -1141,9 +1135,7 @@ class Patch():
         paramType = self.controller.paramTypeOf[paramName]
         # fullParamName = paramType + "." + paramName
         fullParamName = paramName
-        palette.palette_patch_api(self.name(),"set",
-            "\"name\": \"" + fullParamName + "\"" + \
-            ", \"value\": \"" + str(val) + "\"" )
+        palette.palette_patch_set(self.name(),fullParamName , str(val) )
 
     def sendParamsOfType(self,paramType):
         for pt in ["sound","visual","effect","misc"]:
@@ -1221,19 +1213,18 @@ class Patch():
         elif name == "deltaytrig":
             palette.palette_patch_set(self.name(), "sound._deltaytrig",val)
 
-        elif name == "quant":
-            palette.palette_patch_set(self.name(), "misc.quant",val)
+        elif name == "quantstyle":
+            palette.palette_patch_set(self.name(), "misc.quantstyle",val)
         elif name == "scale":
             palette.palette_patch_set(self.name(), "misc.scale",val)
-        elif name == "vol":
-            palette.palette_patch_set(self.name(), "misc.vol",val)
+        elif name == "volstyle":
+            palette.palette_patch_set(self.name(), "misc.volstyle",val)
 
         elif name == "midiusescale":
             self.useExternalScale(val)
 
         elif name == "transpose":
             log("HEY, transpose shouldn't be here")
-            # palette.palette_global_api(self.name(), "set_transpose", "\"value\": \""+str(val) + "\"")
 
         else:
             log("SendPerformVal: unhandled name=",name)
@@ -1488,6 +1479,8 @@ class PageEditParams(tk.Frame):
             self.paramRowName.append(name)
             self.paramLabelWidget[name] = ttk.Label(f, width=20, text=name, style='ParamName.TLabel')
             self.paramLabelWidget[name].config()
+            self.paramLabelWidget[name].bind("<Button-1>", lambda event,nm=name: self.nameClicked(nm))
+            # self.paramEnabled[name] = True
 
             self.paramValueWidget[name] = ttk.Label(f, width=10, anchor=tk.E, style='ParamValue.TLabel')
             self.paramValueWidget[name].bind("<Button-1>", lambda event,nm=name: self.valueClicked(nm))
@@ -1587,6 +1580,14 @@ class PageEditParams(tk.Frame):
 
     def valueClicked(self,name):
         log("valueClicked! name=",name)
+
+    def nameClicked(self,name):
+        log("nameClicked! name=",name)
+        # self.paramEnabled[name] = not self.paramEnabled[name]
+        # if self.paramEnabled[name]:
+        #     self.paramLabelWidget[name].config(background=ColorBg)
+        # else:
+        #     self.paramLabelWidget[name].config(background=ColorRed)
 
     def widg_cget(self,widg, name):
         cg = widg.cget(name)
@@ -1712,12 +1713,6 @@ class PageEditParams(tk.Frame):
 
     def hasParameter(self,name):
         return (name in self.paramValueWidget)
-
-    def setValues(self,values):
-        # log("Edit page, changing ALL parameters in setValues")
-        for name in self.params:
-            if name in values:
-                self.changeValueText(name,values[name])
 
     def changeValueText(self,name,v):
         # log("CHANGE VALUE LABEL EDIT PAGE=",self.pagename," name=",name," v=",v)
@@ -1880,7 +1875,7 @@ class PageEditParams(tk.Frame):
     def saveSaved(self,filename):
 
         if self.pagename != "quad" and self.controller.allPatchesSelected:
-            msg = "\n   You can't save a "+self.pagename+" saved when all four patches are selected.   \n\nPlease select the single pad you want to save as a saved.\n"
+            msg = "\n   You can't save a "+self.pagename+" when more than one patch is selected.   \n\nPlease select the patch you want to save.\n"
             self.controller.popup(msg)
             return
 
@@ -2067,8 +2062,8 @@ class PagePerformMain(tk.Frame):
         self.makePerformButtonAdvanced("transposeauto",None)
         self.makePerformButtonAdvanced("Notes_Off", self.controller.sendANO)
 
-        self.makePerformButtonAdvanced("quant",None)
-        self.makePerformButtonAdvanced("vol",None)
+        self.makePerformButtonAdvanced("quantstyle",None)
+        self.makePerformButtonAdvanced("volstyle",None)
         # self.makePerformButtonAdvanced("deltaztrig",None)
         # self.makePerformButtonAdvanced("deltaytrig",None)
         self.makePerformButtonAdvanced("midithru",None)

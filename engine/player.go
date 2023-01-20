@@ -93,40 +93,6 @@ func (layer) *Patch) cursorToDuration(ce CursorStepEvent) int {
 	return 92
 }
 
-func (layer) *Patch) cursorToQuant(ce CursorStepEvent) Clicks {
-	quant := layer.params.ParamStringValue("misc.quant", "fixed")
-
-	q := Clicks(1)
-	if quant == "none" || quant == "" {
-		// q is 1
-	} else if quant == "frets" {
-		if ce.Y > 0.85 {
-			q = oneBeat / 8
-		} else if ce.Y > 0.55 {
-			q = oneBeat / 4
-		} else if ce.Y > 0.25 {
-			q = oneBeat / 2
-		} else {
-			q = oneBeat
-		}
-	} else if quant == "fixed" {
-		q = oneBeat / 4
-	} else if quant == "pressure" {
-		if ce.Z > 0.20 {
-			q = oneBeat / 8
-		} else if ce.Z > 0.10 {
-			q = oneBeat / 4
-		} else if ce.Z > 0.05 {
-			q = oneBeat / 2
-		} else {
-			q = oneBeat
-		}
-	} else {
-		Warn("Unrecognized quant","quant", quant)
-	}
-	q = Clicks(float64(q) / TempoFactor)
-	return q
-}
 */
 
 /*

@@ -128,7 +128,7 @@
         "sound.pitchmin":"25",
         "misc.pitchoffset":"59.005",
         "visual.placement":"cursor",
-        "misc.quant":"fixed",
+        "misc.quantstyle":"fixed",
         "visual.rotangdir":"left",
         "visual.rotanginit":"90.000",
         "visual.rotangspeed":"24.000",

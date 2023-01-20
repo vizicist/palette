@@ -176,6 +176,48 @@ func (patch *Patch) Name() string {
 	return patch.name
 }
 
+func (patch *Patch) CursorToQuant(ce CursorEvent) Clicks {
+
+	quantStyle := patch.GetString("misc.quantstyle")
+
+	q := Clicks(1)
+	switch quantStyle {
+
+	case "none", "":
+		// q is 1
+
+	case "frets":
+		if ce.Y > 0.85 {
+			q = OneBeat / 8
+		} else if ce.Y > 0.55 {
+			q = OneBeat / 4
+		} else if ce.Y > 0.25 {
+			q = OneBeat / 2
+		} else {
+			q = OneBeat
+		}
+
+	case "fixed":
+		q = OneBeat / 4
+
+	case "pressure":
+		if ce.Z > 0.20 {
+			q = OneBeat / 8
+		} else if ce.Z > 0.10 {
+			q = OneBeat / 4
+		} else if ce.Z > 0.05 {
+			q = OneBeat / 2
+		} else {
+			q = OneBeat
+		}
+
+	default:
+		LogWarn("Unrecognized quant", "quantstyle", quantStyle)
+	}
+	q = Clicks(float64(q) / TempoFactor)
+	return q
+}
+
 func (patch *Patch) Api(api string, apiargs map[string]string) (string, error) {
 
 	switch api {
@@ -311,7 +353,7 @@ func (patch *Patch) GetFloat(paramName string) float32 {
 	return patch.params.GetFloatValue(paramName)
 }
 
-func (patch *Patch) ApplyQuadValuesFrom(paramsmap map[string]any) error {
+func (patch *Patch) ApplyPatchValuesFromQuadMap(paramsmap map[string]any) error {
 
 	for fullParamName, paramValue := range paramsmap {
 
@@ -347,6 +389,7 @@ func (patch *Patch) ApplyQuadValuesFrom(paramsmap map[string]any) error {
 
 		value, ok := paramValue.(string)
 		if !ok {
+			LogError(fmt.Errorf("ApplyPatchValuesFromQuadMap: Needs to handle new value format"))
 			return fmt.Errorf("value of name=%s isn't a string", fullParamName)
 		}
 		err := patch.Set(paramName, value)
@@ -396,16 +439,15 @@ func (patch *Patch) Load(category string, filename string) error {
 		LogError(err)
 		return err
 	}
-	// params := patch.params
 	if category == "quad" {
 		// this will only load things to this one patch
-		err = patch.ApplyQuadValuesFrom(paramsmap)
+		err = patch.ApplyPatchValuesFromQuadMap(paramsmap)
 		if err != nil {
 			LogError(err)
 			return err
 		}
 	} else {
-		patch.params.ApplyParamsTo(category, paramsmap)
+		patch.params.ApplyPatchValuesFromMap(category, paramsmap)
 	}
 
 	// If there's a _override.json file, use it
@@ -417,7 +459,7 @@ func (patch *Patch) Load(category string, filename string) error {
 		if err != nil {
 			return err
 		}
-		patch.params.ApplyParamsTo(category, overridemap)
+		patch.params.ApplyPatchValuesFromMap(category, overridemap)
 	}
 
 	// For any parameters that are in Paramdefs but are NOT in the loaded

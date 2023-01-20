@@ -115,7 +115,7 @@
         "misc.midiinputpatch":"A",
         "misc.pitchfactor":"1.000000",
         "misc.pitchoffset":"0.000000",
-        "misc.quant":"frets",
+        "misc.quantstyle":"frets",
         "misc.scale":"newage",
         "misc.usescale":"false",
         "misc.vol":"pressure",

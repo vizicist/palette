@@ -65,13 +65,13 @@ PerformScales = [
 ]
 PerformDefaultVal["scale"] = 0
 
-PerformLabels["quant"] = [
+PerformLabels["quantstyle"] = [
     {"label":"Fret_Quantize", "value":"frets"},
     {"label":"Pressure_Quantize", "value":"pressure"},
     {"label":"Fixed_Time Quant", "value":"fixed"},
     {"label":"No_Quant",  "value":"none"},
 ]
-PerformLabels["vol"] = [
+PerformLabels["volstyle"] = [
     {"label":"Pressure_Velocity", "value":"pressure"},
     {"label":"Fixed_Vol", "value":"fixed"},
 ]
@@ -171,7 +171,8 @@ def add_to_params(params,p):
 def palette_patch_api(patch, api, params=""):
     if patch == "":
         log("palette_patch_api: no patch specified?")
-    log("palette_patch_api: patch="+patch+" api="+api+" params="+params)
+    if DebugApi:
+        log("palette_patch_api: patch="+patch+" api="+api+" params="+params)
     return palette_api("patch."+api,add_to_params(params,"\"patch\":\""+patch+"\""))
 
 def palette_patch_set(patch, name, value):
@@ -227,19 +228,14 @@ def PaletteDataPath():
     if paletteDataPath != "":
         return paletteDataPath
 
-    dir = "data_omnisphere"
-    # local.json can override it
-    path = os.path.join(localPaletteDir(),"local.json")
-    if os.path.isfile(path):
-        vals = readJsonPath(path)
+    datapath = os.path.join(localPaletteDir(),"data_omnisphere")
+    localjsonpath = os.path.join(localPaletteDir(),"local.json")
+    if os.path.isfile(localjsonpath):
+        vals = readJsonPath(localjsonpath)
         if "datapath" in vals:
-            dir = vals["datapath"]
+            datapath = vals["datapath"]
 
-    if os.path.dirname(dir) != ".":
-        paletteDataPath = dir
-    else:
-        paletteDataPath = os.path.join(localPaletteDir(),dir)
-
+    paletteDataPath = datapath
     return paletteDataPath
 
 # Combine saved in the savedPath list

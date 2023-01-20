@@ -389,7 +389,7 @@ func (r *Router) handleInputEventRaw(rawargs string) {
 	if err != nil {
 		return
 	}
-	pluginName := ExtractAndRemoveValue("plugin", args)
+	pluginName := ExtractAndRemoveValueOf("plugin", args)
 	r.CursorManager.HandleCursorEvent(args)
 }
 

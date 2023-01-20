@@ -31,28 +31,6 @@ func GetSaved(name string) *OldSaved {
 }
 */
 
-// Currently, no errors are ever returned, but log messages are generated.
-func (params *ParamValues) ApplyParamsTo(category string, paramsmap map[string]any) {
-
-	for fullname, ival := range paramsmap {
-		val, okval := ival.(string)
-		if !okval {
-			LogWarn("value isn't a string in params json", "name", fullname, "value", val)
-			continue
-		}
-		paramCategory, _ := SavedNameSplit(fullname)
-
-		// Only include ones that match the category
-		if (category == "patch" && IsPerPatchParam(fullname)) || category == paramCategory {
-			err := params.Set(fullname, val)
-			if err != nil {
-				LogError(err)
-				// Don't abort the whole load, i.e. we are tolerant
-				// of unknown parameters or errors in the saved
-			}
-		}
-	}
-}
 
 func SavedDir() string {
 	return "saved"

@@ -229,7 +229,9 @@ func StringMap(params string) (map[string]string, error) {
 	return values, nil
 }
 
-func ExtractAndRemoveValue(valName string, argsmap map[string]string) string {
+// ExtractAndRemoveValueOf removes a named value from a map and returns it.
+// If the value doesn't exist, "" is returned.
+func ExtractAndRemoveValueOf(valName string, argsmap map[string]string) string {
 	val, ok := argsmap[valName]
 	if !ok {
 		val = ""

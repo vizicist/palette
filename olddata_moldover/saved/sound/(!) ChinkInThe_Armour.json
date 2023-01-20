@@ -113,7 +113,7 @@
         "misc.midibehaviour":"sprite",
         "misc.pitchfactor":"3.584000",
         "misc.pitchoffset":"59.005001",
-        "misc.quant":"frets",
+        "misc.quantstyle":"frets",
         "misc.scale":"newage",
         "misc.vol":"pressure",
         "sound.chromatic":"false",

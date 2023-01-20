@@ -81,7 +81,6 @@ func InitLog(logname string) {
 	logger := fileLogger(logpath)
 	TheLog = logger.Sugar()
 	defer LogError(logger.Sync()) // flushes buffer, if any
-	LogInfo("InitLog ==============================================", "logname", logname)
 }
 
 func IsLogging(logtype string) bool {
