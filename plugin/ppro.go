@@ -267,6 +267,9 @@ func (ppro *PalettePro) start(ctx *engine.PluginContext) error {
 	ppro.started = true
 
 	ppro.clearExternalScale()
+
+	// Make sure all the global parameters are set to their initial values
+	// XXX - Is this right?  Don't they get read in from global._Current.json ?
 	for nm, pd := range engine.ParamDefs {
 		if pd.Category == "global" {
 			err := ppro.globalparams.SetParamValueWithString(nm, pd.Init)
@@ -609,11 +612,11 @@ func (ppro *PalettePro) Load(ctx *engine.PluginContext, category string, filenam
 
 	switch category {
 	case "global":
-		ppro.globalparams.ApplyParamsTo("global", paramsMap)
+		ppro.globalparams.ApplyPatchValuesFromMap("global", paramsMap)
 
 	case "quad":
 		for _, patch := range ppro.patch {
-			err := patch.ApplyQuadValuesFrom(paramsMap)
+			err := patch.ApplyPatchValuesFromQuadMap(paramsMap)
 			if err != nil {
 				engine.LogError(err)
 				lasterr = err

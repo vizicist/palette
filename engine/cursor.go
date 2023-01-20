@@ -24,9 +24,10 @@ type CursorEvent struct {
 }
 
 type CursorState struct {
-	Current  CursorEvent
-	Previous CursorEvent
-	// Data     any // Plugins can use this to store data
+	Current     CursorEvent
+	Previous    CursorEvent
+	NoteOn      *NoteOn
+	NoteOnClick Clicks
 }
 
 type CursorManager struct {
@@ -107,11 +108,7 @@ func (cm *CursorManager) clearCursors() {
 	}
 	cm.cursorsMutex.RUnlock()
 
-	cm.cursorsMutex.Lock()
-	for _, cid := range cidsToDelete {
-		delete(cm.cursors, cid)
-	}
-	cm.cursorsMutex.Unlock()
+	cm.deleteCids(cidsToDelete)
 }
 
 func (cm *CursorManager) HandleCursorEvent(ce CursorEvent) {
@@ -224,10 +221,14 @@ func (cm *CursorManager) autoCursorUp(now time.Time) {
 	}
 	cm.cursorsMutex.RUnlock()
 
+	cm.deleteCids(cidsToDelete)
+}
+
+func (cm *CursorManager) deleteCids(cidsToDelete []string) {
+	cm.cursorsMutex.Lock()
 	for _, cid := range cidsToDelete {
-		cm.cursorsMutex.Lock()
-		LogInfo("autoCursorUp: deleting cursor", "cid", cid)
+		// LogInfo("autoCursorUp: deleting cursor", "cid", cd)
 		delete(cm.cursors, cid)
-		cm.cursorsMutex.Unlock()
 	}
+	cm.cursorsMutex.Unlock()
 }
