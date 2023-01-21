@@ -85,7 +85,7 @@ func (sched *Scheduler) Start() {
 		// sched.checkInput()
 
 		ce := ClickEvent{Click: newclick, Uptime: uptimesecs}
-		ThePluginManager().handleClickEvent(ce)
+		PluginsHandleClickEvent(ce)
 	}
 	LogInfo("StartRealtime ends")
 }

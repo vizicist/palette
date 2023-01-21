@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
+	"sync"
 	"strings"
 
 	"github.com/hypebeast/go-osc/osc"
@@ -11,54 +13,61 @@ import (
 
 type Engine struct {
 	// ProcessManager *ProcessManager
+	params         *ParamValues
 	Router         *Router
 	Scheduler      *Scheduler
-	PluginManager  *PluginManager
 	ProcessManager *ProcessManager
 	// CursorManager *CursorManager
 	done chan bool
 }
 
-var theEngine *Engine
+var TheEngine *Engine
+var engineSysex sync.Mutex
 
-func TheEngine() *Engine {
-	if theEngine == nil {
-		InitLog("engine")
-		LogInfo("Engine InitLog ==============================================")
-		theEngine = newEngine()
+func NewEngine() *Engine {
+
+	if TheEngine != nil {
+		LogError(fmt.Errorf("TheEngine already exists, there can be only one"))
+		return TheEngine
 	}
-	return theEngine
+
+	engineSysex.Lock()
+	defer engineSysex.Unlock()
+
+	InitLog("engine")
+	TheEngine = &Engine{
+		params:         NewParamValues(),
+		Router:         NewRouter(),
+		Scheduler:      NewScheduler(),
+		ProcessManager: NewProcessManager(),
+		done:           make(chan bool),
+	}
+	TheEngine.SetLogTypes()
+	LogInfo("Engine InitLog ==============================================")
+	TheEngine.SetDefaultValues()
+	err := TheEngine.LoadCurrent()
+	if err != nil {
+		LogError(err)
+		// but keep going
+	}
+	return TheEngine
 }
 
 func TheRouter() *Router {
-	return TheEngine().Router
+	return TheEngine.Router
 }
 
 func TheScheduler() *Scheduler {
-	return TheEngine().Scheduler
-}
-
-func newEngine() *Engine {
-	e := &Engine{}
-	e.initDebug()
-	e.ProcessManager = NewProcessManager()
-	e.Router = NewRouter()
-	e.Scheduler = NewScheduler()
-	e.PluginManager = NewPluginManager()
-	return e
-}
-
-func RegisterPlugin(name string, plugin PluginFunc) {
-	ThePluginManager().RegisterPlugin(name, plugin)
+	return TheEngine.Scheduler
 }
 
 // func (e *Engine) HandleCursorEvent(ce CursorEvent) {
-// 	TheEngine().cursorManager.HandleCursorEvent(ce)
-// 	TheEngine().agentManager.HandleCursorEvent(ce)
+// 	TheEngine.cursorManager.HandleCursorEvent(ce)
+// 	TheEngine.agentManager.HandleCursorEvent(ce)
 // }
 
 func (e *Engine) StartPlugin(name string) {
-	err := e.PluginManager.StartPlugin(name)
+	err := PluginsStartPlugin(name)
 	if err != nil {
 		LogError(err)
 	}
@@ -72,8 +81,8 @@ func (e *Engine) Start() {
 	InitMIDI()
 	InitSynths()
 
-	// Eventually the defult should be "" rather than "ppro"
-	plugins := ConfigStringWithDefault("plugins", "ppro")
+	// Eventually the defult should be "" rather than "quadpro"
+	plugins := e.GetWithDefault("plugins", "quadpro")
 
 	// Plugins should be started before anything,
 	// to guarante that the "start" event will be the first
@@ -92,7 +101,19 @@ func (e *Engine) Start() {
 	if ConfigBoolWithDefault("depth", false) {
 		go DepthRunForever()
 	}
+}
 
+func (e *Engine) SetDefaultValues() {
+	LogInfo("SetDefaultValues start")
+	for nm, pd := range ParamDefs {
+		if pd.Category == "engine" {
+			err := e.params.SetParamValueWithString(nm, pd.Init)
+			if err != nil {
+				LogError(err)
+			}
+			LogInfo("SetDefaultValues", "name", nm, "value", pd.Init)
+		}
+	}
 }
 
 func (e *Engine) WaitTillDone() {
@@ -103,17 +124,15 @@ func (e *Engine) StopMe() {
 	e.done <- true
 }
 
-func (e *Engine) initDebug() {
-	logtypes := ConfigValueWithDefault("debug", "")
-	// Migrate to using log rather than debug
-	if logtypes == "" {
-		logtypes = ConfigValueWithDefault("log", "")
-	}
-	darr := strings.Split(logtypes, ",")
-	for _, d := range darr {
-		if d != "" {
-			LogInfo("Turning logging ON for", "logtype", d)
-			SetLogTypeEnabled(d, true)
+func (e *Engine) SetLogTypes() {
+	logtypes := os.Getenv("PALETTE_LOG")
+	if logtypes != "" {
+		darr := strings.Split(logtypes, ",")
+		for _, d := range darr {
+			if d != "" {
+				LogInfo("Turning logging ON for", "logtype", d)
+				SetLogTypeEnabled(d, true)
+			}
 		}
 	}
 }
