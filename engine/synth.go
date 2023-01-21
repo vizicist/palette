@@ -146,13 +146,6 @@ func (synth *Synth) SendController(cnum int, cval int) {
 	// This only sends the bank and/or program if they change
 	mc.SendBankProgram(synth.bank, synth.program)
 
-	// e := portmidi.Event{
-	// 	Timestamp: time.Now(),
-	// 	Status:    int64(synth.portchannel.channel - 1),
-	// 	Data1:     int64(cnum),
-	// 	Data2:     int64(cval),
-	// }
-	// e.Status |= 0xb0
 	if cnum > 0x7f {
 		LogWarn("SendControllerToSynth: invalid value", "cnum", cnum)
 		return
@@ -161,7 +154,7 @@ func (synth *Synth) SendController(cnum int, cval int) {
 		LogWarn("SendControllerToSynth: invalid value", "cval", cval)
 		return
 	}
-	status := byte(synth.portchannel.channel - 1)
+	status := 0xb0 | byte(synth.portchannel.channel-1)
 	data1 := byte(cnum)
 	data2 := byte(cval)
 	LogError(mc.output.Send([]byte{status, data1, data2}))

@@ -77,7 +77,7 @@ class ProGuiApp(tk.Tk):
         self.lastLoadType = ""
         self.lastLoadName = ""
 
-        self.defaultGuiLevel = int(palette.ConfigValue("guilevel",defvalue="0"))
+        self.defaultGuiLevel = int(os.environ.get("PALETTE_GUI_LEVEL","0"))
 
         self.currentPageName = None
 
@@ -86,11 +86,8 @@ class ProGuiApp(tk.Tk):
         self.globalPerformIndex = {}
         for name in palette.GlobalPerformLabels:
             self.globalPerformIndex[name] = palette.PerformDefaultVal[name]
-        b = palette.ConfigValue("transposeauto",defvalue="true")
-        if b == "true":
-            self.globalPerformIndex["transposeauto"] = 0
-        else:
-            self.globalPerformIndex["transposeauto"] = 1
+
+        self.globalPerformIndex["transposeauto"] = 1  # default is off
         self.globalPerformIndex["transpose"] = 0
 
         self.setGuiLevel(self.defaultGuiLevel)
@@ -142,7 +139,7 @@ class ProGuiApp(tk.Tk):
         tk.Tk.__init__(self)
 
         self.AllPageNames = {
-                "global":0,
+                "engine":0,
                 "quad":0,
                 "patch":0,
                 "sound":0,
@@ -484,7 +481,7 @@ class ProGuiApp(tk.Tk):
 
     def unattract(self):
         log("Screen pressed, stopping attract mode, setting nextMode to normal")
-        palette.palette_ppro_api("attract",
+        palette.palette_quadpro_api("attract",
             "\"onoff\": \"false\"")
         self.nextMode = "normal"
         self.resetLastAnything()
@@ -630,7 +627,7 @@ class ProGuiApp(tk.Tk):
 
     def changeAndSendValue(self,paramType,basename,value):
 
-        if paramType == "global":
+        if paramType == "engine":
             self.changeGlobalValue(basename,value)
 
         elif self.doAllPatches():
@@ -644,7 +641,7 @@ class ProGuiApp(tk.Tk):
 
     def changeGlobalValue(self,basename,value):
 
-        palette.palette_ppro_api("set",
+        palette.palette_engine_api("set",
             "\"name\": \"" + basename + "\"" + \
             ", \"value\": \"" + str(value) + "\"" )
 
@@ -753,9 +750,9 @@ class ProGuiApp(tk.Tk):
         fullsavedname = category+"."+str(filename)
         self.editPage[category].paramsnameVar.set(filename)
 
-        if category == "global":
-            log("Loading","category","global","filename",filename)
-            palette.palette_ppro_api("load",
+        if category == "engine":
+            log("Loading","category","engine","filename",filename)
+            palette.palette_quadpro_api("load",
                 "\"filename\": \"" + filename + "\""
                 ", \"category\": \"" + category + "\"")
         elif category == "quad":
@@ -764,14 +761,14 @@ class ProGuiApp(tk.Tk):
                 # because in casual mode, the patch selectors aren't shown.
                 # In non-casual mode (guiLevel>0) we do this if allPatchesSelected
                 log("Loading","category","quad","filename",filename)
-                palette.palette_ppro_api("load",
+                palette.palette_quadpro_api("load",
                     "\"filename\": \"" + filename + "\""
                     ", \"category\": \"" + category + "\"")
             else:
                 # Otherwise, the quad saved is loaded only in a single patch
                 patchName = self.CurrPatch.name()
                 self.patchLoad(patchName,category,filename)
-                # palette.palette_ppro_api("save",
+                # palette.palette_quadpro_api("save",
                 #     "\"filename\": \"" + "_Current" + "\""
                 #     ", \"category\": \"" + "quad" + "\"")
 
@@ -1029,8 +1026,8 @@ class ProGuiApp(tk.Tk):
             self.paramValueTypeOf[name] = self.newParamsJson[name]["valuetype"]
             if "misc." in name:
                 ptype = "patch"  # misc parameters are patch parameters
-            elif "global." in name:
-                ptype = "global"
+            elif "engine." in name:
+                ptype = "engine"
             else:
                 ptype = "patch"
             self.paramsOfType[ptype][name] = self.newParamsJson[name]
@@ -1162,13 +1159,13 @@ class Patch():
         self.performIndex[name] = index
 
     def sendANO(self):
-        palette.palette_ppro_api("ANO")
+        palette.palette_quadpro_api("ANO")
 
     def clearExternalScale(self):
-        palette.palette_ppro_api("clearexternalscale")
+        palette.palette_quadpro_api("clearexternalscale")
 
     def useExternalScale(self,onoff):
-        # palette.palette_ppro_api("midi_usescale", "\"onoff\": \"" + str(onoff) + "\"")
+        # palette.palette_quadpro_api("midi_usescale", "\"onoff\": \"" + str(onoff) + "\"")
         palette.palette_patch_set(self.name(), "misc.usescale",str(onoff))
 
     def sendPerformVal(self,name):
@@ -1611,36 +1608,41 @@ class PageEditParams(tk.Frame):
             if txt == "":
                 txt = self.params[name]["init"]
             v = int(txt)
-            dv = int(mx) - int(mn)
+            vrange = int(mx) - int(mn)
             if amount == -3:
-                v = v - (dv/10)
+                delta = -int(vrange/10)
             if amount == -2:
-                v = v - (dv/100)
+                delta = -int(vrange/100)
+                if delta == 0:
+                    delta = -1
             if amount == -1:
-                v = v - 1
+                delta = -1
             if amount == 1:
-                v = v + 1
+                delta = 1
             if amount == 2:
-                v = v + (dv/100)
+                delta = int(vrange/100)
+                if delta == 0:
+                    delta = 1
             if amount == 3:
-                v = v + (dv/10)
-            newval = v
+                delta = int(vrange/10)
+
+            newval = v + delta
         elif t == "double" or t == "float":
             cg = self.widg_cget(widg,"text")
             v = float(cg)
-            dv = float(mx) - float(mn)
+            vrange = float(mx) - float(mn)
             if amount == -3:
-                v = v - (dv/10)
+                v = v - (vrange/10)
             if amount == -2:
-                v = v - (dv/100)
+                v = v - (vrange/100)
             if amount == -1:
-                v = v - (dv/1000)
+                v = v - (vrange/1000)
             if amount == 1:
-                v = v + (dv/1000)
+                v = v + (vrange/1000)
             if amount == 2:
-                v = v + (dv/100)
+                v = v + (vrange/100)
             if amount == 3:
-                v = v + (dv/10)
+                v = v + (vrange/10)
             # log("amount=",amount," mx=",mx," v=",v)
             newval = v
         elif t == "string":
@@ -1874,28 +1876,32 @@ class PageEditParams(tk.Frame):
 
     def saveSaved(self,filename):
 
-        if self.pagename != "quad" and self.controller.allPatchesSelected:
-            msg = "\n   You can't save a "+self.pagename+" when more than one patch is selected.   \n\nPlease select the patch you want to save.\n"
-            self.controller.popup(msg)
-            return
-
         if self.pagename == "quad":
-            result, err = palette.palette_ppro_api("save",
+            result, err = palette.palette_quadpro_api("save",
                     "\"filename\": \"" + filename + "\"")
             if err != None:
                 log("Error saving saved:",filename," err=",err)
-            if result != "":
-                log("result of save for saved=",filename," has non-empty result=",result)
+
+        elif self.pagename == "engine":
+            result, err = palette.palette_engine_api("save",
+                    "\"filename\": \"" + filename + "\"")
+            if err != None:
+                log("Error saving saved:",filename," err=",err)
+
 
         else:
+            # Patch-specific pages
+            if self.controller.allPatchesSelected:
+                msg = "\n   You can't save a "+self.pagename+" when more than one patch is selected.   \n\nPlease select the patch you want to save.\n"
+                self.controller.popup(msg)
+                return
+
             patch = self.controller.CurrPatch.name()
             result, err = palette.palette_patch_api(patch,"save",
                     "\"category\": \"" + self.pagename + "\""
                     ", \"filename\": \"" + filename + "\"")
             if err != None:
                 log("Error saving saved:",filename," err=",err)
-            if result != "":
-                log("result of save for saved=",filename," has non-empty result=",result)
 
     def jsonParamDump(self,section):
         newjson = {}
@@ -2335,7 +2341,7 @@ def afterWindowIsDisplayed(windowName,guiresize,*args):
         os.system(cmd)
 
         # By default, remove the title bar and maximize it
-        guimaximize = palette.ConfigValue("guimaximize",defvalue="true")
+        guimaximize = os.environ.get("PALETTE_GUI_MAXIMIZE","true")
         if guimaximize == "true":
             cmd = "nircmdc.exe win -style stitle \""+windowName+"\" 0x00CA0000"
             os.system(cmd)
@@ -2476,9 +2482,9 @@ def status_thread(app):  # runs in background thread
 
         time.sleep(5.0)
 
-        status, err = palette.palette_ppro_api("status","")
+        status, err = palette.palette_quadpro_api("status","")
         if err != None:
-            log("ppro.status: err=",err)
+            log("quadpro.status: err=",err)
             continue
 
         if status == None:
@@ -2505,7 +2511,7 @@ if __name__ == "__main__":
     log("GUI started")
 
     # Default is all four patches
-    patches = palette.ConfigValue("patches",defvalue="ABCD")
+    patches = os.environ.get("PALETTE_PATCHES","ABCD")
     npatches = len(patches)
     if npatches == 1:
         # You can set patchs to "B", for example
@@ -2519,7 +2525,7 @@ if __name__ == "__main__":
         log("Unexpected number of patches: ",patches)
 
     visiblepagenames = {
-        "global":"Global",
+        "engine":"Engine",
         "quad":"Quad",
         "patch":"Patch",
         "misc":"Misc",
@@ -2529,9 +2535,10 @@ if __name__ == "__main__":
     }
 
     # guiresize is of the form x,y,w,h
-    guiresize = palette.ConfigValue("guiresize",defvalue="")
+    guiresize = os.environ.get("PALETTE_GUI_RESIZE","")
     if guiresize == "palette":
-        # this is for a Space Palette Pro, putting the gui on the touchscreen
+        # this is a special value for a Space Palette Pro
+        # putting the gui on the touchscreen
         guiresize = "-800,0,800,1280"
 
     global PaletteApp
@@ -2539,13 +2546,13 @@ if __name__ == "__main__":
 
     makeStyles(PaletteApp)
 
-    # If guiresize is specified in the settings.json,
-    # we assume it's the "large" version of the gui
+    # If guiresize is specified, we assume it's the "large" version
     if guiresize != "":
         # Fixed size - the guiresize is really only used to reposition it.
         # Should check to see whether the resize matches the 800x1280 expectation
         PaletteApp.wm_geometry("%dx%d" % (800,1280))  # LARGE VERSION
     else:
+        # is this even used??
         PaletteApp.wm_geometry("%dx%d" % (400,640))   # SMALL VERSION
 
     PaletteApp.nextMode = ""

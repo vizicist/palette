@@ -14,7 +14,7 @@ func main() {
 	signal.Ignore(syscall.SIGHUP)
 	signal.Ignore(syscall.SIGINT)
 
-	e := engine.TheEngine()
+	e := engine.TheEngine
 
 	e.StartPlugin("chillian")
 

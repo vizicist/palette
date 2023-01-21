@@ -266,7 +266,7 @@ func (r *Resolume) showText(text string) {
 
 func (r *Resolume) ResolumeLayerForText() int {
 	defLayer := "5"
-	s := ConfigStringWithDefault("textlayer", defLayer)
+	s := TheEngine.GetWithDefault("textlayer", defLayer)
 	layernum, err := strconv.Atoi(s)
 	if err != nil {
 		LogError(err)

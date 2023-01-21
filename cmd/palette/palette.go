@@ -25,11 +25,11 @@ func main() {
 	os.Stdout.WriteString(out)
 }
 
-// Usage for controlling the "ppro" (PalettePro) plugin
+// Usage for controlling the "quadpro" (QuadPro) plugin
 func usage() string {
 	return `Commands:
-	palette start
-	palette stop
+	palette start [ engine | gui | bidule | resolume ]
+	palette stop [ engine | gui | bidule | resolume ]
 	palette version
 	palette {plugin}.{api} [ {argname} {argvalue} ] ...
 	`
@@ -53,24 +53,6 @@ func humanReadableApiOutput(output map[string]string) string {
 	return result
 }
 
-func engineStop(stopOrStopAll string) string {
-
-	if !engine.IsEngineRunning() {
-		return "Engine is not running."
-	}
-
-	_, err := engine.RemoteAPI("engine." + stopOrStopAll)
-	if err != nil {
-		return fmt.Sprintf("RemoteAPI: err=%s\n", err)
-	}
-
-	if stopOrStopAll == "stopall" {
-		return "Engine and Plugins are being stopped."
-	} else {
-		return "Engine is being stopped."
-	}
-}
-
 func CliCommand(args []string) string {
 
 	var err error
@@ -80,6 +62,7 @@ func CliCommand(args []string) string {
 	}
 
 	api := args[0]
+	arg1 := args[1]
 
 	switch api {
 
@@ -90,18 +73,63 @@ func CliCommand(args []string) string {
 			return "Engine is stopped."
 		}
 
-	case "start", "engine.start":
-		return doStart()
+	case "start":
 
-	case "startall", "engine.startall":
-		// Someday it should make a difference, so "start" doesn't start the plugins.
-		return doStart()
+		switch arg1 {
 
-	case "stop", "engine.stop":
-		return engineStop("stop")
+		case "engine":
+			return doStartEngine()
 
-	case "stopall", "engine.stopall":
-		return engineStop("stopall")
+		case "gui":
+			return doApi("quadpro.startprocess", "process", "gui")
+
+		case "bidule":
+			return doApi("quadpro.startprocess", "process", "bidule")
+
+		case "resolume":
+			return doApi("quadpro.startprocess", "process", "resolume")
+
+		case "all":
+			s1 := doStartEngine()
+			s2 := doApi("quadpro.startprocess", "process", "all")
+			return s1 + "\n" + s2
+
+		default:
+			return usage()
+		}
+
+	case "stop":
+
+		if !engine.IsEngineRunning() {
+			return "Engine is not running."
+		}
+
+		switch arg1 {
+
+		case "engine":
+			_, err := engine.RemoteAPI("engine.stop")
+			if err != nil {
+				return fmt.Sprintf("RemoteAPI: err=%s\n", err)
+			}
+			return ""
+
+		case "gui":
+			return doApi("quadpro.startprocess", "process", "gui")
+
+		case "bidule":
+			return doApi("quadpro.startprocess", "process", "bidule")
+
+		case "resolume":
+			return doApi("quadpro.startprocess", "process", "resolume")
+
+		case "all":
+			s1 := doStartEngine()
+			s2 := doApi("quadpro.startprocess", "process", "all")
+			return s1 + "\n" + s2
+
+		default:
+			return usage()
+		}
 
 	case "version":
 		return engine.GetPaletteVersion()
@@ -114,7 +142,7 @@ func CliCommand(args []string) string {
 		return "Logs have been sent."
 
 	case "gui":
-		return doApi("ppro.startprocess", "process", "gui")
+		return doApi("quadpro.startprocess", "process", "gui")
 
 	default:
 		words := strings.Split(api, ".")
@@ -133,7 +161,7 @@ func doApi(api string, apiargs ...string) string {
 	return humanReadableApiOutput(resultMap)
 }
 
-func doStart() string {
+func doStartEngine() string {
 
 	if engine.IsEngineRunning() {
 		return "Engine is already running?"

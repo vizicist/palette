@@ -183,11 +183,11 @@ def palette_patch_set(patch, name, value):
             ", \"name\": \"" + name + "\"" + \
             ", \"value\": \"" + str(value) + "\"")
 
-def palette_ppro_api(api, params=""):
-    return palette_api("ppro."+api,params)
+def palette_quadpro_api(api, params=""):
+    return palette_api("quadpro."+api,params)
 
-def palette_ppro_set(name, value):
-    return palette_api("ppro.set",
+def palette_quadpro_set(name, value):
+    return palette_api("quadpro.set",
             "\"name\": \"" + name + "\"" + \
             ", \"value\": \"" + str(value) + "\"")
 
@@ -204,6 +204,9 @@ def logFilePath(nm):
 
 def configFilePath(nm):
     return os.path.join(localPaletteDir(),PaletteDataPath(),"config",nm)
+
+def engineFilePath(nm):
+    return os.path.join(savedPath(),"engine",nm)
 
 def savedPath():
     return os.path.join(localPaletteDir(),PaletteDataPath(),"saved")
@@ -390,7 +393,7 @@ LocalSettingsJson = None
 def ConfigValue(s,defvalue=""):
     global SettingsJson
     if SettingsJson == None:
-        path = configFilePath("settings.json")
+        path = engineFilePath("default.json")
         if not os.path.isfile(path):
             log("No file? path=",path)
             return defvalue
@@ -398,16 +401,10 @@ def ConfigValue(s,defvalue=""):
             log("Loading ",path)
         SettingsJson = readJsonPath(path)
 
-    if SettingsJson != None and s in SettingsJson:
+    if SettingsJson != None and "params" in SettingsJson and s in SettingsJson["params"]:
         return SettingsJson[s]
     else:
         return defvalue
-
-def ConfigFloat(s,defvalue=0.0):
-    s = ConfigValue(s)
-    if s == "":
-        s = str(defvalue)
-    return float(s)
 
 paletteDir = None
 def PaletteDir():

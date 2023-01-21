@@ -1,4 +1,10 @@
 {
+  "debug": [ "midi", "cursor", "saved", "api", "scheduler", "process", "attract" ],
+  "plugins": [ "quadpro", "" ],
+  "guilevel": [ "0", "1", "2" ],
+  "guiresize": [ "-800 0 800 1200", "" ],
+  "autostart": [ "gui,bidule,resolume", "bidule,resolume", "none" ],
+  "bidule": ["C:\\Program Files\\Plogue\\Bidule\\Bidule.exe", ""],
 	"destination": [ ".", "A", "B", "C", "D" ],
 	"logic_sound": [ "default", "midigrid" ],
 	"logic_visual": [ "default", "maze", "maze4", "maze33" ],

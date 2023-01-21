@@ -51,7 +51,7 @@ func GetPatch(patchName string) *Patch {
 }
 
 func IsPerPatchParam(name string) bool {
-	return !strings.HasPrefix(name, "global.")
+	return !strings.HasPrefix(name, "engine.")
 }
 
 func ApplyToAllPatchs(f func(patch *Patch)) {
@@ -111,7 +111,7 @@ func (patch *Patch) refreshValue(paramName string, paramValue string) {
 	if paramName == "sound.synth" {
 		synth := GetSynth(paramValue)
 		if synth == nil {
-			LogWarn("PalettePro: no synth named", "synth", paramValue)
+			LogWarn("QuadPro. no synth named", "synth", paramValue)
 		}
 		patch.Synth = synth
 	}
@@ -447,7 +447,7 @@ func (patch *Patch) Load(category string, filename string) error {
 			return err
 		}
 	} else {
-		patch.params.ApplyPatchValuesFromMap(category, paramsmap)
+		patch.params.ApplyValuesFromMap(category, paramsmap)
 	}
 
 	// If there's a _override.json file, use it
@@ -459,7 +459,7 @@ func (patch *Patch) Load(category string, filename string) error {
 		if err != nil {
 			return err
 		}
-		patch.params.ApplyPatchValuesFromMap(category, overridemap)
+		patch.params.ApplyValuesFromMap(category, overridemap)
 	}
 
 	// For any parameters that are in Paramdefs but are NOT in the loaded

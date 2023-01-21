@@ -44,20 +44,8 @@ func (ctx *PluginContext) PaletteDir() string {
 	return PaletteDir()
 }
 
-func (ctx *PluginContext) ConfigValueWithDefault(name, dflt string) string {
-	return ConfigValueWithDefault(name, dflt)
-}
-
-func (ctx *PluginContext) ConfigBoolWithDefault(name string, dflt bool) bool {
-	return ConfigBoolWithDefault(name, dflt)
-}
-
 func (ctx *PluginContext) ConfigValue(name string) string {
 	return ConfigValue(name)
-}
-
-func (ctx *PluginContext) ConfigFilePath(name string) string {
-	return ConfigFilePath(name)
 }
 
 func (ctx *PluginContext) StartExecutableLogOutput(logName string, fullexe string, background bool, args ...string) error {
@@ -65,23 +53,23 @@ func (ctx *PluginContext) StartExecutableLogOutput(logName string, fullexe strin
 }
 
 func (ctx *PluginContext) AddProcess(process string, info *ProcessInfo) {
-	TheEngine().ProcessManager.AddProcess(process, info)
+	TheEngine.ProcessManager.AddProcess(process, info)
 }
 
 func (ctx *PluginContext) AddProcessBuiltIn(process string) {
-	TheEngine().ProcessManager.AddProcessBuiltIn(process)
+	TheEngine.ProcessManager.AddProcessBuiltIn(process)
 }
 
 func (ctx *PluginContext) CheckAutostartProcesses() {
-	TheEngine().ProcessManager.CheckAutostartProcesses()
+	TheEngine.ProcessManager.CheckAutostartProcesses()
 }
 
 func (ctx *PluginContext) StartRunning(process string) error {
-	return TheEngine().ProcessManager.StartRunning(process)
+	return TheEngine.ProcessManager.StartRunning(process)
 }
 
 func (ctx *PluginContext) StopRunning(process string) error {
-	return TheEngine().ProcessManager.StopRunning(process)
+	return TheEngine.ProcessManager.StopRunning(process)
 }
 
 func (ctx *PluginContext) KillExecutable(exe string) error {
@@ -216,7 +204,7 @@ func (ctx *PluginContext) ScheduleAt(value any, click Clicks) {
 		AtClick: click,
 		Value:   value,
 	}
-	TheEngine().Scheduler.insertScheduleElement(se)
+	TheEngine.Scheduler.insertScheduleElement(se)
 }
 
 /*
@@ -226,7 +214,7 @@ func (ctx *PluginContext) ScheduleMidi(msg midi.Message, click Clicks) {
 			AtClick: click,
 			Value:   MidiSchedValue{msg},
 		}
-		TheEngine().Scheduler.cmdInput <- SchedulerElementCmd{se}
+		TheEngine.Scheduler.cmdInput <- SchedulerElementCmd{se}
 	}()
 }
 */
@@ -234,7 +222,7 @@ func (ctx *PluginContext) ScheduleMidi(msg midi.Message, click Clicks) {
 /*
 func (ctx *PluginContext) SubmitCommand(command Command) {
 	go func() {
-		TheEngine().Scheduler.cmdInput <- command
+		TheEngine.Scheduler.cmdInput <- command
 	}()
 }
 */
@@ -379,7 +367,7 @@ func (ctx *PluginContext) ExecuteAPI(api string, args map[string]string, rawargs
 	//		v, e := needBoolArg("onoff", api, args)
 	//		if e == nil && v != layer.loopIsPlaying {
 	//			layer.loopIsPlaying = v
-	//			TheEngine().Scheduler.SendAllPendingNoteoffs()
+	//			TheEngine.Scheduler.SendAllPendingNoteoffs()
 	//		} else {
 	//			err = e
 	//		}

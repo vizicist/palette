@@ -107,7 +107,7 @@ func (vals *ParamValues) Set(name, value string) error {
 }
 
 // Currently, no errors are ever returned, but log messages are generated.
-func (params *ParamValues) ApplyPatchValuesFromMap(category string, paramsmap map[string]any) {
+func (params *ParamValues) ApplyValuesFromMap(category string, paramsmap map[string]any) {
 
 	for fullname, ival := range paramsmap {
 		var value string
@@ -474,6 +474,11 @@ func (vals *ParamValues) paramValue(name string) ParamValue {
 		return nil
 	}
 	return val
+}
+
+func (vals *ParamValues) Exists(name string) bool {
+	_, exists := vals.values[name]
+	return exists
 }
 
 func (vals *ParamValues) paramValueAsString(name string) (string, error) {

@@ -1,8 +1,14 @@
+DEFINE_TYPES(debug);
+DEFINE_TYPES(plugins);
+DEFINE_TYPES(guilevel);
+DEFINE_TYPES(guiresize);
+DEFINE_TYPES(autostart);
+DEFINE_TYPES(bidule);
 DEFINE_TYPES(destination);
 DEFINE_TYPES(logic_sound);
 DEFINE_TYPES(logic_visual);
-DEFINE_TYPES(quant);
-DEFINE_TYPES(vol);
+DEFINE_TYPES(quantstyle);
+DEFINE_TYPES(volstyle);
 DEFINE_TYPES(shape);
 DEFINE_TYPES(movedir);
 DEFINE_TYPES(rotangdir);
@@ -23,6 +29,31 @@ DEFINE_TYPES(midiport);
 void
 LayerParams_InitializeTypes() {
 
+	LayerParams_debugTypes.push_back("midi");
+	LayerParams_debugTypes.push_back("cursor");
+	LayerParams_debugTypes.push_back("saved");
+	LayerParams_debugTypes.push_back("api");
+	LayerParams_debugTypes.push_back("scheduler");
+	LayerParams_debugTypes.push_back("process");
+	LayerParams_debugTypes.push_back("attract");
+
+	LayerParams_pluginsTypes.push_back("quadpro");
+	LayerParams_pluginsTypes.push_back("");
+
+	LayerParams_guilevelTypes.push_back("0");
+	LayerParams_guilevelTypes.push_back("1");
+	LayerParams_guilevelTypes.push_back("2");
+
+	LayerParams_guiresizeTypes.push_back("-800 0 800 1200");
+	LayerParams_guiresizeTypes.push_back("");
+
+	LayerParams_autostartTypes.push_back("gui,bidule,resolume");
+	LayerParams_autostartTypes.push_back("bidule,resolume");
+	LayerParams_autostartTypes.push_back("none");
+
+	LayerParams_biduleTypes.push_back("C:\Program Files\Plogue\Bidule\Bidule.exe");
+	LayerParams_biduleTypes.push_back("");
+
 	LayerParams_destinationTypes.push_back(".");
 	LayerParams_destinationTypes.push_back("A");
 	LayerParams_destinationTypes.push_back("B");
@@ -37,13 +68,13 @@ LayerParams_InitializeTypes() {
 	LayerParams_logic_visualTypes.push_back("maze4");
 	LayerParams_logic_visualTypes.push_back("maze33");
 
-	LayerParams_quantTypes.push_back("none");
-	LayerParams_quantTypes.push_back("frets");
-	LayerParams_quantTypes.push_back("fixed");
-	LayerParams_quantTypes.push_back("pressure");
+	LayerParams_quantstyleTypes.push_back("none");
+	LayerParams_quantstyleTypes.push_back("frets");
+	LayerParams_quantstyleTypes.push_back("fixed");
+	LayerParams_quantstyleTypes.push_back("pressure");
 
-	LayerParams_volTypes.push_back("fixed");
-	LayerParams_volTypes.push_back("pressure");
+	LayerParams_volstyleTypes.push_back("fixed");
+	LayerParams_volstyleTypes.push_back("pressure");
 
 	LayerParams_shapeTypes.push_back("line");
 	LayerParams_shapeTypes.push_back("triangle");

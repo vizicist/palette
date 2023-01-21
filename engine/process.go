@@ -41,7 +41,7 @@ func (pm *ProcessManager) CheckAutostartProcesses() {
 	pm.mutex.Lock()
 	defer pm.mutex.Unlock()
 
-	autostart := ConfigValueWithDefault("autostart", "")
+	autostart := TheEngine.Get("engine.autostart")
 	if autostart == "" || autostart == "nothing" || autostart == "none" {
 		return
 	}

@@ -81,7 +81,7 @@ func NewRouter() *Router {
 	r.midiInputChan = make(chan MidiEvent)
 	// r.recordingOn = false
 
-	r.myHostname = ConfigValue("hostname")
+	r.myHostname = os.Getenv("PALETTE_HOSTNAME")
 	if r.myHostname == "" {
 		hostname, err := os.Hostname()
 		if err != nil {
@@ -121,7 +121,7 @@ func (r *Router) InputListener() {
 		case msg := <-r.OSCInput:
 			r.handleOSCInput(msg)
 		case event := <-r.midiInputChan:
-			ThePluginManager().handleMidiEvent(event)
+			PluginsHandleMidiEvent(event)
 		case event := <-r.cursorInput:
 			r.cursorManager.HandleCursorEvent(event)
 		default:

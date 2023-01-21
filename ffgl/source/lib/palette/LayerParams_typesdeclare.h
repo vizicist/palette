@@ -1,8 +1,14 @@
+DECLARE_TYPES(debug);
+DECLARE_TYPES(plugins);
+DECLARE_TYPES(guilevel);
+DECLARE_TYPES(guiresize);
+DECLARE_TYPES(autostart);
+DECLARE_TYPES(bidule);
 DECLARE_TYPES(destination);
 DECLARE_TYPES(logic_sound);
 DECLARE_TYPES(logic_visual);
-DECLARE_TYPES(quant);
-DECLARE_TYPES(vol);
+DECLARE_TYPES(quantstyle);
+DECLARE_TYPES(volstyle);
 DECLARE_TYPES(shape);
 DECLARE_TYPES(movedir);
 DECLARE_TYPES(rotangdir);
