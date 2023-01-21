@@ -285,7 +285,7 @@ func (quadpro *QuadPro) start(ctx *engine.PluginContext) error {
 	ctx.AddProcessBuiltIn("resolume")
 	ctx.AddProcessBuiltIn("bidule")
 	ctx.AddProcess("gui", quadpro.guiInfo())
-	ctx.AddProcess("mmtt", quadpro.mmttInfo())
+	// ctx.AddProcess("mmtt", quadpro.mmttInfo())
 
 	ctx.AllowSource("A", "B", "C", "D")
 
