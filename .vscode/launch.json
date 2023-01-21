@@ -27,28 +27,7 @@
             "type": "go",
             "request": "launch",
             "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
-            "args": ["gui"]
-        },
-        {
-            "name": "palette engine.start",
-            "type": "go",
-            "request": "launch",
-            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
-            "args": ["engine.start"]
-        },
-        {
-            "name": "palette engine.stop",
-            "type": "go",
-            "request": "launch",
-            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
-            "args": ["engine.stop"]
-        },
-        {
-            "name": "palette ppro.start",
-            "type": "go",
-            "request": "launch",
-            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
-            "args": ["ppro.start"]
+            "args": ["start","gui"]
         },
         {
             "name": "Chillian Start",

@@ -26,19 +26,19 @@ var MaxClicks = Clicks(math.MaxInt64)
 // XXX - having Mutexes for all of these values
 // is probably silly, should be simplified
 
-var globalCurrentMilli int64
-var globalCurrentMilliMutex sync.RWMutex
+var engineCurrentMilli int64
+var engineCurrentMilliMutex sync.RWMutex
 
-var globalCurrentMilliOffset int64
-var globalCurrentMilliOffsetMutex sync.RWMutex
+var engineCurrentMilliOffset int64
+var engineCurrentMilliOffsetMutex sync.RWMutex
 
-var globalCurrentClickOffset Clicks
-var globalCurrentClickOffsetMutex sync.RWMutex
+var engineCurrentClickOffset Clicks
+var engineCurrentClickOffsetMutex sync.RWMutex
 
-var globalClicksPerSecond Clicks
-var globalClicksPerSecondMutex sync.RWMutex
+var engineClicksPerSecond Clicks
+var engineClicksPerSecondMutex sync.RWMutex
 
-var globalCurrentClick Clicks
+var engineCurrentClick Clicks
 var globaclCurrentClickMutex sync.RWMutex
 
 var OneBeat Clicks
@@ -73,10 +73,10 @@ func (ce ClickEvent) ToMap() map[string]string {
 // InitializeClicksPerSecond initializes
 func InitializeClicksPerSecond(clkpersec Clicks) {
 	// no locks needed here
-	globalClicksPerSecond = clkpersec
-	globalCurrentMilliOffset = 0
-	globalCurrentClickOffset = 0
-	OneBeat = Clicks(globalClicksPerSecond / 2) // i.e. 120bpm
+	engineClicksPerSecond = clkpersec
+	engineCurrentMilliOffset = 0
+	engineCurrentClickOffset = 0
+	OneBeat = Clicks(engineClicksPerSecond / 2) // i.e. 120bpm
 }
 
 // ChangeClicksPerSecond is what you use to change the tempo
@@ -111,7 +111,7 @@ func Seconds2Clicks(tm float64) Clicks {
 
 // Clicks2Seconds converts Clicks to Time (seconds), relative
 func Clicks2Seconds(clk Clicks) float64 {
-	cps := globalClicksPerSecond
+	cps := engineClicksPerSecond
 	clkf := float64(clk)
 	return clkf / float64(cps)
 }
@@ -122,43 +122,43 @@ var TempoFactor = float64(1.0)
 // CurrentMilli
 
 func CurrentMilli() int64 {
-	globalCurrentMilliMutex.RLock()
-	defer globalCurrentMilliMutex.RUnlock()
-	return globalCurrentMilli
+	engineCurrentMilliMutex.RLock()
+	defer engineCurrentMilliMutex.RUnlock()
+	return engineCurrentMilli
 }
 
 func SetCurrentMilli(milli int64) {
-	globalCurrentMilliMutex.Lock()
-	globalCurrentMilli = milli
-	globalCurrentMilliMutex.Unlock()
+	engineCurrentMilliMutex.Lock()
+	engineCurrentMilli = milli
+	engineCurrentMilliMutex.Unlock()
 }
 
 //  CurrentMilliOffset
 
 func CurrentMilliOffset() int64 {
-	globalCurrentMilliOffsetMutex.RLock()
-	defer globalCurrentMilliOffsetMutex.RUnlock()
-	return globalCurrentMilliOffset
+	engineCurrentMilliOffsetMutex.RLock()
+	defer engineCurrentMilliOffsetMutex.RUnlock()
+	return engineCurrentMilliOffset
 }
 
 func SetCurrentMilliOffset(milli int64) {
-	globalCurrentMilliOffsetMutex.Lock()
-	globalCurrentMilliOffset = milli
-	globalCurrentMilliOffsetMutex.Unlock()
+	engineCurrentMilliOffsetMutex.Lock()
+	engineCurrentMilliOffset = milli
+	engineCurrentMilliOffsetMutex.Unlock()
 }
 
 //  ClicksPerSecond
 
 func ClicksPerSecond() Clicks {
-	globalClicksPerSecondMutex.RLock()
-	defer globalClicksPerSecondMutex.RUnlock()
-	return Clicks(globalClicksPerSecond)
+	engineClicksPerSecondMutex.RLock()
+	defer engineClicksPerSecondMutex.RUnlock()
+	return Clicks(engineClicksPerSecond)
 }
 
 func SetClicksPerSecond(cps Clicks) {
-	globalClicksPerSecondMutex.Lock()
-	globalClicksPerSecond = cps
-	globalClicksPerSecondMutex.Unlock()
+	engineClicksPerSecondMutex.Lock()
+	engineClicksPerSecond = cps
+	engineClicksPerSecondMutex.Unlock()
 }
 
 // CurrentClick
@@ -166,25 +166,25 @@ func SetClicksPerSecond(cps Clicks) {
 func CurrentClick() Clicks {
 	globaclCurrentClickMutex.RLock()
 	defer globaclCurrentClickMutex.RUnlock()
-	return globalCurrentClick
+	return engineCurrentClick
 }
 
 func SetCurrentClick(click Clicks) {
 	globaclCurrentClickMutex.Lock()
-	globalCurrentClick = click
+	engineCurrentClick = click
 	globaclCurrentClickMutex.Unlock()
 }
 
 // CurrentClickOffset
 
 func CurrentClickOffset() Clicks {
-	globalCurrentClickOffsetMutex.RLock()
-	defer globalCurrentClickOffsetMutex.RUnlock()
-	return globalCurrentClickOffset
+	engineCurrentClickOffsetMutex.RLock()
+	defer engineCurrentClickOffsetMutex.RUnlock()
+	return engineCurrentClickOffset
 }
 
 func SetCurrentClickOffset(click Clicks) {
-	globalCurrentClickOffsetMutex.Lock()
-	globalCurrentClickOffset = click
-	globalCurrentClickOffsetMutex.Unlock()
+	engineCurrentClickOffsetMutex.Lock()
+	engineCurrentClickOffset = click
+	engineCurrentClickOffsetMutex.Unlock()
 }

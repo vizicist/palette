@@ -13,18 +13,13 @@ import (
 	"github.com/vizicist/palette/engine"
 )
 
-type PalettePro struct {
+type QuadPro struct {
 
 	// Per-patch things
 	patch      map[string]*engine.Patch
 	patchLogic map[string]*PatchLogic
 
-	// PalettePro parameters
-	// miscparams   *engine.ParamValues
-	globalparams *engine.ParamValues
-
 	started bool
-	// midiinputpatch *engine.Patch
 
 	generateVisuals bool
 	generateSound   bool
@@ -63,11 +58,11 @@ type PalettePro struct {
 }
 
 func init() {
-	ppro := &PalettePro{
+	quadpro := &QuadPro{
 		patch:      map[string]*engine.Patch{},
 		patchLogic: map[string]*PatchLogic{},
 		// miscparams:   engine.NewParamValues(),
-		globalparams: engine.NewParamValues(),
+		// engineClicks: engine.NewParamValues(),
 
 		attractModeIsOn: false,
 		generateVisuals: true,
@@ -92,59 +87,59 @@ func init() {
 		transposeIndex:  0,
 		transposeValues: []int{0, -2, 3, -5},
 	}
-	engine.RegisterPlugin("ppro", ppro.Api)
+	engine.RegisterPlugin("quadpro", quadpro.Api)
 }
 
-func (ppro *PalettePro) Api(ctx *engine.PluginContext, api string, apiargs map[string]string) (result string, err error) {
+func (quadpro *QuadPro) Api(ctx *engine.PluginContext, api string, apiargs map[string]string) (result string, err error) {
 
 	switch api {
 
 	case "start":
-		return "", ppro.start(ctx)
+		return "", quadpro.start(ctx)
 
 	case "stop":
-		ppro.started = false
+		quadpro.started = false
 		return "", ctx.StopRunning("all")
 
 	case "set":
-		return ppro.onSet(ctx, apiargs)
+		return quadpro.onSet(ctx, apiargs)
 
 	case "get":
-		return ppro.onGet(apiargs)
+		return quadpro.onGet(apiargs)
 
 	case "event":
 		eventName, ok := apiargs["event"]
 		if !ok {
-			return "", fmt.Errorf("PalettePro: Missing event argument")
+			return "", fmt.Errorf("QuadPro. Missing event argument")
 		}
 		if eventName == "click" {
-			return ppro.onClick(ctx, apiargs)
+			return quadpro.onClick(ctx, apiargs)
 		}
 
 		// engine.LogInfo("Ppro.event", "eventName", eventName)
 		switch eventName {
 		case "midi":
-			return ppro.onMidiEvent(ctx, apiargs)
+			return quadpro.onMidiEvent(ctx, apiargs)
 		case "cursor":
-			return ppro.onCursorEvent(ctx, apiargs)
+			return quadpro.onCursorEvent(ctx, apiargs)
 		case "clientrestart":
-			return ppro.onClientRestart(ctx, apiargs)
+			return quadpro.onClientRestart(ctx, apiargs)
 
 		case "quad_save_current":
-			return "", ppro.saveQuad("_Current")
+			return "", quadpro.saveQuad("_Current")
 
 		case "patch_set":
-			return "", ppro.onPatchSet(ctx, apiargs)
+			return "", quadpro.onPatchSet(ctx, apiargs)
 
 		case "patch_refresh_all":
-			return "", ppro.onPatchRefreshAll(apiargs)
+			return "", quadpro.onPatchRefreshAll(apiargs)
 
 		default:
-			return "", fmt.Errorf("PalettePro: Unhandled event type %s", eventName)
+			return "", fmt.Errorf("QuadPro. Unhandled event type %s", eventName)
 		}
 
 	case "ANO":
-		for _, patch := range ppro.patch {
+		for _, patch := range quadpro.patch {
 			patch.Synth.SendANO()
 		}
 		return "", nil
@@ -158,11 +153,11 @@ func (ppro *PalettePro) Api(ctx *engine.PluginContext, api string, apiargs map[s
 		if err != nil {
 			return "", err
 		}
-		ppro.setAttractMode(onoff)
+		quadpro.setAttractMode(onoff)
 		return "", nil
 
 	case "clearexternalscale":
-		ppro.clearExternalScale()
+		quadpro.clearExternalScale()
 		return "", nil
 
 	case "echo":
@@ -181,8 +176,8 @@ func (ppro *PalettePro) Api(ctx *engine.PluginContext, api string, apiargs map[s
 		if !oksaved {
 			return "", fmt.Errorf("missing filename parameter")
 		}
-		ppro.setAttractMode(false)
-		return "", ppro.Load(ctx, category, filename)
+		quadpro.setAttractMode(false)
+		return "", quadpro.Load(ctx, category, filename)
 
 	case "save":
 		category, oksaved := apiargs["category"]
@@ -193,7 +188,7 @@ func (ppro *PalettePro) Api(ctx *engine.PluginContext, api string, apiargs map[s
 		if !oksaved {
 			return "", fmt.Errorf("missing filename parameter")
 		}
-		return "", ppro.save(category, filename)
+		return "", quadpro.save(category, filename)
 
 	case "startprocess":
 		process, ok := apiargs["process"]
@@ -204,7 +199,7 @@ func (ppro *PalettePro) Api(ctx *engine.PluginContext, api string, apiargs map[s
 		}
 		return "", err
 
-	case "stopprocess":
+	case "stoquadprocess":
 		process, ok := apiargs["process"]
 		if !ok {
 			return "", fmt.Errorf("ExecuteAPI: missing process argument")
@@ -214,7 +209,7 @@ func (ppro *PalettePro) Api(ctx *engine.PluginContext, api string, apiargs map[s
 	case "status":
 		result = engine.JsonObject(
 			"uptime", fmt.Sprintf("%f", ctx.Uptime()),
-			"attractmode", fmt.Sprintf("%v", ppro.attractModeIsOn),
+			"attractmode", fmt.Sprintf("%v", quadpro.attractModeIsOn),
 		)
 		return result, nil
 
@@ -237,19 +232,19 @@ func (ppro *PalettePro) Api(ctx *engine.PluginContext, api string, apiargs map[s
 			}
 			dt = tmp
 		}
-		go ppro.doTest(ctx, ntimes, dt)
+		go quadpro.doTest(ctx, ntimes, dt)
 		return "", nil
 
 	default:
-		engine.LogWarn("PalettePro.ExecuteAPI api is not recognized\n", "api", api)
-		return "", fmt.Errorf("PalettePro.Api unrecognized api=%s", api)
+		engine.LogWarn("QuadPro.ExecuteAPI api is not recognized\n", "api", api)
+		return "", fmt.Errorf("QuadPro.Api unrecognized api=%s", api)
 	}
 }
 
-func (ppro *PalettePro) onPatchRefreshAll(apiargs map[string]string) error {
+func (quadpro *QuadPro) onPatchRefreshAll(apiargs map[string]string) error {
 	patchName, ok := apiargs["patch"]
 	if !ok {
-		return fmt.Errorf("PalettePro.onSet: no patch argument")
+		return fmt.Errorf("QuadPro.onSet: no patch argument")
 	}
 	patch := engine.GetPatch(patchName)
 	if patch == nil {
@@ -259,67 +254,66 @@ func (ppro *PalettePro) onPatchRefreshAll(apiargs map[string]string) error {
 	return nil
 }
 
-func (ppro *PalettePro) start(ctx *engine.PluginContext) error {
+func (quadpro *QuadPro) start(ctx *engine.PluginContext) error {
 
-	if ppro.started {
-		return fmt.Errorf("PalettePro: already started")
+	if quadpro.started {
+		return fmt.Errorf("QuadPro. already started")
 	}
-	ppro.started = true
+	quadpro.started = true
 
-	ppro.clearExternalScale()
+	quadpro.clearExternalScale()
 
 	// Make sure all the global parameters are set to their initial values
 	// XXX - Is this right?  Don't they get read in from global._Current.json ?
-	for nm, pd := range engine.ParamDefs {
-		if pd.Category == "global" {
-			err := ppro.globalparams.SetParamValueWithString(nm, pd.Init)
-			if err != nil {
-				engine.LogError(err)
-			}
-		}
-	}
+	// for nm, pd := range engine.ParamDefs {
+	// 	if pd.Category == "engine" {
+	// 		err := quadpro.engineClicks.SetParamValueWithString(nm, pd.Init)
+	// 		if err != nil {
+	// 			engine.LogError(err)
+	// 		}
+	// 	}
+	// }
 
 	transposebeats := engine.Clicks(engine.ConfigIntWithDefault("transposebeats", 48))
-	ppro.transposeNext = transposebeats * engine.OneBeat
-	ppro.transposeClicks = transposebeats
+	quadpro.transposeNext = transposebeats * engine.OneBeat
+	quadpro.transposeClicks = transposebeats
 
-	ppro.generateVisuals = engine.ConfigBoolWithDefault("generatevisuals", true)
-	ppro.generateSound = engine.ConfigBoolWithDefault("generatesound", true)
-	ppro.transposeAuto = engine.ConfigBoolWithDefault("transposeauto", true)
+	quadpro.generateVisuals = engine.ConfigBoolWithDefault("generatevisuals", true)
+	quadpro.generateSound = engine.ConfigBoolWithDefault("generatesound", true)
+	quadpro.transposeAuto = engine.ConfigBoolWithDefault("transposeauto", true)
 
 	ctx.AddProcessBuiltIn("resolume")
 	ctx.AddProcessBuiltIn("bidule")
-	ctx.AddProcess("gui", ppro.guiInfo())
-	ctx.AddProcess("mmtt", ppro.mmttInfo())
+	ctx.AddProcess("gui", quadpro.guiInfo())
+	ctx.AddProcess("mmtt", quadpro.mmttInfo())
 
 	ctx.AllowSource("A", "B", "C", "D")
 
-	_ = ppro.addPatch(ctx, "A")
-	_ = ppro.addPatch(ctx, "B")
-	_ = ppro.addPatch(ctx, "C")
-	_ = ppro.addPatch(ctx, "D")
+	_ = quadpro.addPatch(ctx, "A")
+	_ = quadpro.addPatch(ctx, "B")
+	_ = quadpro.addPatch(ctx, "C")
+	_ = quadpro.addPatch(ctx, "D")
 
-	engine.LogError(ppro.Load(ctx, "global", "_Current"))
-	engine.LogError(ppro.Load(ctx, "quad", "_Current"))
+	engine.LogError(quadpro.Load(ctx, "quad", "_Current"))
 
 	// Don't start checking processes right away, after killing them on a restart,
 	// they may still be running for a bit
-	ppro.processCheckSecs = engine.ConfigFloatWithDefault("processchecksecs", 60)
+	quadpro.processCheckSecs = engine.ConfigFloatWithDefault("processchecksecs", 60)
 
-	ppro.attractCheckSecs = engine.ConfigFloatWithDefault("attractchecksecs", 2)
-	ppro.attractIdleSecs = engine.ConfigFloatWithDefault("attractidlesecs", 0)
+	quadpro.attractCheckSecs = engine.ConfigFloatWithDefault("attractchecksecs", 2)
+	quadpro.attractIdleSecs = 60 * engine.ConfigFloatWithDefault("attractidleminutes", 0)
 
-	ppro.attractChangeInterval = engine.ConfigFloatWithDefault("attractchangeinterval", 30)
-	ppro.attractGestureInterval = engine.ConfigFloatWithDefault("attractgestureinterval", 0.5)
+	quadpro.attractChangeInterval = engine.ConfigFloatWithDefault("attractchangeinterval", 30)
+	quadpro.attractGestureInterval = engine.ConfigFloatWithDefault("attractgestureinterval", 0.5)
 
 	return nil
 }
 
-func (ppro *PalettePro) onCursorEvent(ctx *engine.PluginContext, apiargs map[string]string) (string, error) {
+func (quadpro *QuadPro) onCursorEvent(ctx *engine.PluginContext, apiargs map[string]string) (string, error) {
 
 	ddu, ok := apiargs["ddu"]
 	if !ok {
-		return "", fmt.Errorf("PalettePro: Missing ddu argument")
+		return "", fmt.Errorf("QuadPro. Missing ddu argument")
 	}
 
 	if ddu == "clear" {
@@ -354,58 +348,58 @@ func (ppro *PalettePro) onCursorEvent(ctx *engine.PluginContext, apiargs map[str
 
 	// Any non-internal cursor will turn attract mode off.
 	if !ce.IsInternal() {
-		ppro.setAttractMode(false)
+		quadpro.setAttractMode(false)
 	}
 
 	// For the moment, the cursor to patchLogic mapping is 1-to-1.
 	// I.e. ce.Source of "A" maps to patchLogic "A"
-	patchLogic, ok := ppro.patchLogic[ce.Source()]
+	patchLogic, ok := quadpro.patchLogic[ce.Source()]
 	if !ok || patchLogic == nil {
 		return "", nil
 	}
-	cursorStyle := ppro.globalparams.Get("misc.cursorstyle")
-	if ppro.generateSound && !ppro.attractModeIsOn {
+	cursorStyle := patchLogic.patch.Get("misc.cursorstyle")
+	if quadpro.generateSound && !quadpro.attractModeIsOn {
 		patchLogic.generateSoundFromCursor(ctx, ce, cursorStyle)
 	}
-	if ppro.generateVisuals {
+	if quadpro.generateVisuals {
 		patchLogic.generateVisualsFromCursor(ce)
 	}
 	return "", nil
 }
 
-func (ppro *PalettePro) setAttractMode(onoff bool) {
+func (quadpro *QuadPro) setAttractMode(onoff bool) {
 
-	if onoff == ppro.attractModeIsOn {
+	if onoff == quadpro.attractModeIsOn {
 		return // already in that mode
 	}
 	// Throttle it a bit
-	secondsSince := time.Since(ppro.lastAttractModeChange).Seconds()
+	secondsSince := time.Since(quadpro.lastAttractModeChange).Seconds()
 	if secondsSince > 1.0 {
-		engine.LogOfType("attract", "PalettePro: changing attract", "onoff", onoff)
-		ppro.attractModeIsOn = onoff
-		ppro.lastAttractModeChange = time.Now()
+		engine.LogOfType("attract", "QuadPro. changing attract", "onoff", onoff)
+		quadpro.attractModeIsOn = onoff
+		quadpro.lastAttractModeChange = time.Now()
 	}
 }
 
-func (ppro *PalettePro) clearExternalScale() {
-	ppro.externalScale = engine.MakeScale()
+func (quadpro *QuadPro) clearExternalScale() {
+	quadpro.externalScale = engine.MakeScale()
 }
 
-func (ppro *PalettePro) onClientRestart(ctx *engine.PluginContext, apiargs map[string]string) (string, error) {
+func (quadpro *QuadPro) onClientRestart(ctx *engine.PluginContext, apiargs map[string]string) (string, error) {
 	// These are messages from the Palette FFGL plugins in Resolume,
 	// telling us that they have restarted, and we should resend all parameters
 	portnum, ok := apiargs["portnum"]
 	if !ok {
-		return "", fmt.Errorf("PalettePro: Missing portnum argument")
+		return "", fmt.Errorf("QuadPro. Missing portnum argument")
 	}
 	ffglportnum, err := strconv.Atoi(portnum)
 	if err != nil {
 		return "", err
 	}
-	engine.LogInfo("ppro got clientrestart", "portnum", portnum)
+	engine.LogInfo("quadpro got clientrestart", "portnum", portnum)
 	// The restart message contains the
 	// portnum of the plugin that restarted.
-	for _, patch := range ppro.patch {
+	for _, patch := range quadpro.patch {
 		e := patch.RefreshAllIfPortnumMatches(ffglportnum)
 		if e != nil {
 			engine.LogError(e)
@@ -415,14 +409,14 @@ func (ppro *PalettePro) onClientRestart(ctx *engine.PluginContext, apiargs map[s
 	return "", err
 }
 
-func (ppro *PalettePro) onPatchSet(ctx *engine.PluginContext, apiargs map[string]string) error {
+func (quadpro *QuadPro) onPatchSet(ctx *engine.PluginContext, apiargs map[string]string) error {
 	paramName, paramValue, err := engine.GetNameValue(apiargs)
 	if err != nil {
-		return fmt.Errorf("PalettePro.onSet: %s", err)
+		return fmt.Errorf("QuadPro.onSet: %s", err)
 	}
 	patchName, ok := apiargs["patch"]
 	if !ok {
-		return fmt.Errorf("PalettePro.onSet: no patch argument")
+		return fmt.Errorf("QuadPro.onSet: no patch argument")
 	}
 	patch := engine.GetPatch(patchName)
 	if patch == nil {
@@ -432,43 +426,43 @@ func (ppro *PalettePro) onPatchSet(ctx *engine.PluginContext, apiargs map[string
 }
 
 // onSet is only used for global parameters.
-func (ppro *PalettePro) onSet(ctx *engine.PluginContext, apiargs map[string]string) (result string, err error) {
+func (quadpro *QuadPro) onSet(ctx *engine.PluginContext, apiargs map[string]string) (result string, err error) {
 
 	paramName, paramValue, err := engine.GetNameValue(apiargs)
 	if err != nil {
-		return "", fmt.Errorf("PalettePro.onSet: %s", err)
+		return "", fmt.Errorf("QuadPro.onSet: %s", err)
 	}
 
-	if strings.HasPrefix(paramName, "global") {
-		return "", ppro.globalparams.Set(paramName, paramValue)
+	if strings.HasPrefix(paramName, "engine") {
+		return "", engine.TheEngine.Set(paramName, paramValue)
 	}
-	return "", fmt.Errorf("PalettePro.onSet: can't handle non-global parameter %s", paramName)
+	return "", fmt.Errorf("QuadPro.onSet: can't handle non-global parameter %s", paramName)
 }
 
-func (ppro *PalettePro) onGet(apiargs map[string]string) (result string, err error) {
+func (quadpro *QuadPro) onGet(apiargs map[string]string) (result string, err error) {
 	paramName, ok := apiargs["name"]
 	if !ok {
-		return "", fmt.Errorf("PalettePro.onPatchGet: Missing name argument")
+		return "", fmt.Errorf("QuadPro.onPatchGet: Missing name argument")
 	}
-	if strings.HasPrefix(paramName, "global") {
-		return ppro.globalparams.Get(paramName), nil
+	if strings.HasPrefix(paramName, "engine") {
+		return engine.TheEngine.Get(paramName), nil
 	} else {
-		return "", fmt.Errorf("PalettePro.onGet: can't handle parameter %s", paramName)
+		return "", fmt.Errorf("QuadPro.onGet: can't handle parameter %s", paramName)
 	}
 }
 
-func (ppro *PalettePro) onClick(ctx *engine.PluginContext, apiargs map[string]string) (string, error) {
-	ppro.checkAttract(ctx)
-	ppro.checkProcess(ctx)
+func (quadpro *QuadPro) onClick(ctx *engine.PluginContext, apiargs map[string]string) (string, error) {
+	quadpro.checkAttract(ctx)
+	quadpro.checkProcess(ctx)
 	return "", nil
 }
 
-func (ppro *PalettePro) checkProcess(ctx *engine.PluginContext) {
+func (quadpro *QuadPro) checkProcess(ctx *engine.PluginContext) {
 
-	firstTime := (ppro.lastProcessCheck == time.Time{})
+	firstTime := (quadpro.lastProcessCheck == time.Time{})
 
 	// If processCheckSecs is 0, process checking is disabled
-	processCheckEnabled := ppro.processCheckSecs > 0
+	processCheckEnabled := quadpro.processCheckSecs > 0
 	if !processCheckEnabled {
 		if firstTime {
 			engine.LogInfo("Process Checking is disabled.")
@@ -477,8 +471,8 @@ func (ppro *PalettePro) checkProcess(ctx *engine.PluginContext) {
 	}
 
 	now := time.Now()
-	sinceLastProcessCheck := now.Sub(ppro.lastProcessCheck).Seconds()
-	if processCheckEnabled && (firstTime || sinceLastProcessCheck > ppro.processCheckSecs) {
+	sinceLastProcessCheck := now.Sub(quadpro.lastProcessCheck).Seconds()
+	if processCheckEnabled && (firstTime || sinceLastProcessCheck > quadpro.processCheckSecs) {
 		// Put it in background, so calling
 		// tasklist or ps doesn't disrupt realtime
 		// The sleep here is because if you kill something and
@@ -488,40 +482,40 @@ func (ppro *PalettePro) checkProcess(ctx *engine.PluginContext) {
 			time.Sleep(2 * time.Second)
 			ctx.CheckAutostartProcesses()
 		}()
-		ppro.lastProcessCheck = now
+		quadpro.lastProcessCheck = now
 	}
 }
 
-func (ppro *PalettePro) checkAttract(ctx *engine.PluginContext) {
+func (quadpro *QuadPro) checkAttract(ctx *engine.PluginContext) {
 
 	// Every so often we check to see if attract mode should be turned on
 	now := time.Now()
-	attractModeEnabled := ppro.attractIdleSecs > 0
-	sinceLastAttractCheck := now.Sub(ppro.lastAttractCheck).Seconds()
-	if attractModeEnabled && sinceLastAttractCheck > ppro.attractCheckSecs {
-		ppro.lastAttractCheck = now
+	attractModeEnabled := quadpro.attractIdleSecs > 0
+	sinceLastAttractCheck := now.Sub(quadpro.lastAttractCheck).Seconds()
+	if attractModeEnabled && sinceLastAttractCheck > quadpro.attractCheckSecs {
+		quadpro.lastAttractCheck = now
 		// There's a delay when checking cursor activity to turn attract mod on.
 		// Non-internal cursor activity turns attract mode off instantly.
-		sinceLastAttractModeChange := time.Since(ppro.lastAttractModeChange).Seconds()
-		if !ppro.attractModeIsOn && sinceLastAttractModeChange > ppro.attractIdleSecs {
+		sinceLastAttractModeChange := time.Since(quadpro.lastAttractModeChange).Seconds()
+		if !quadpro.attractModeIsOn && sinceLastAttractModeChange > quadpro.attractIdleSecs {
 			// Nothing happening for a while, turn attract mode on
-			ppro.setAttractMode(true)
+			quadpro.setAttractMode(true)
 		}
 	}
 
-	if ppro.attractModeIsOn {
-		ppro.doAttractAction(ctx)
+	if quadpro.attractModeIsOn {
+		quadpro.doAttractAction(ctx)
 	}
 }
 
-func (ppro *PalettePro) onMidiEvent(ctx *engine.PluginContext, apiargs map[string]string) (string, error) {
+func (quadpro *QuadPro) onMidiEvent(ctx *engine.PluginContext, apiargs map[string]string) (string, error) {
 
 	me, err := engine.MidiEventFromMap(apiargs)
 	if err != nil {
 		return "", err
 	}
 
-	engine.LogInfo("PalettePro.onMidiEvent", "me", me)
+	engine.LogInfo("QuadPro.onMidiEvent", "me", me)
 
 	/*
 		if EraeEnabled {
@@ -529,19 +523,19 @@ func (ppro *PalettePro) onMidiEvent(ctx *engine.PluginContext, apiargs map[strin
 		}
 	*/
 
-	if ppro.MIDIThru {
+	if quadpro.MIDIThru {
 		engine.LogInfo("PassThruMIDI", "msg", me.Msg)
 		// ctx.ScheduleMidi(patch, me.Msg, ctx.CurrentClick())
 		ctx.ScheduleAt(me.Msg, ctx.CurrentClick())
 	}
-	if ppro.MIDISetScale {
-		ppro.handleMIDISetScaleNote(me)
+	if quadpro.MIDISetScale {
+		quadpro.handleMIDISetScaleNote(me)
 	}
 
 	return "", nil
 }
 
-func (ppro *PalettePro) doTest(ctx *engine.PluginContext, ntimes int, dt time.Duration) {
+func (quadpro *QuadPro) doTest(ctx *engine.PluginContext, ntimes int, dt time.Duration) {
 	engine.LogInfo("doTest start", "ntimes", ntimes, "dt", dt)
 	for n := 0; n < ntimes; n++ {
 		if n > 0 {
@@ -557,7 +551,7 @@ func (ppro *PalettePro) doTest(ctx *engine.PluginContext, ntimes int, dt time.Du
 			"y":     fmt.Sprintf("%f", rand.Float32()),
 			"z":     fmt.Sprintf("%f", rand.Float32()),
 		}
-		_, err := ppro.Api(ctx, "event", thismap)
+		_, err := quadpro.Api(ctx, "event", thismap)
 		if err != nil {
 			engine.LogError(err)
 			return
@@ -571,7 +565,7 @@ func (ppro *PalettePro) doTest(ctx *engine.PluginContext, ntimes int, dt time.Du
 			"y":     fmt.Sprintf("%f", rand.Float32()),
 			"z":     fmt.Sprintf("%f", rand.Float32()),
 		}
-		_, err = ppro.Api(ctx, "event", thismap)
+		_, err = quadpro.Api(ctx, "event", thismap)
 		if err != nil {
 			engine.LogError(err)
 			return
@@ -580,7 +574,7 @@ func (ppro *PalettePro) doTest(ctx *engine.PluginContext, ntimes int, dt time.Du
 	engine.LogInfo("doTest end")
 }
 
-func (ppro *PalettePro) loadQuadRand(ctx *engine.PluginContext) error {
+func (quadpro *QuadPro) loadQuadRand(ctx *engine.PluginContext) error {
 
 	arr, err := engine.SavedFileList("quad")
 	if err != nil {
@@ -589,15 +583,15 @@ func (ppro *PalettePro) loadQuadRand(ctx *engine.PluginContext) error {
 	rn := rand.Uint64() % uint64(len(arr))
 	engine.LogInfo("loadQuadRand", "quad", arr[rn])
 
-	engine.LogError(ppro.Load(ctx, "quad", arr[rn]))
+	engine.LogError(quadpro.Load(ctx, "quad", arr[rn]))
 
-	for _, patch := range ppro.patch {
+	for _, patch := range quadpro.patch {
 		patch.RefreshAllPatchValues()
 	}
 	return nil
 }
 
-func (ppro *PalettePro) Load(ctx *engine.PluginContext, category string, filename string) error {
+func (quadpro *QuadPro) Load(ctx *engine.PluginContext, category string, filename string) error {
 
 	path := engine.SavedFilePath(category, filename)
 	paramsMap, err := engine.LoadParamsMap(path)
@@ -606,16 +600,14 @@ func (ppro *PalettePro) Load(ctx *engine.PluginContext, category string, filenam
 		return err
 	}
 
-	engine.LogInfo("PalettePro.Load", "category", category, "filename", filename)
+	engine.LogInfo("QuadPro.Load", "category", category, "filename", filename)
 
 	var lasterr error
 
 	switch category {
-	case "global":
-		ppro.globalparams.ApplyPatchValuesFromMap("global", paramsMap)
 
 	case "quad":
-		for _, patch := range ppro.patch {
+		for _, patch := range quadpro.patch {
 			err := patch.ApplyPatchValuesFromQuadMap(paramsMap)
 			if err != nil {
 				engine.LogError(err)
@@ -625,7 +617,7 @@ func (ppro *PalettePro) Load(ctx *engine.PluginContext, category string, filenam
 		}
 
 	default:
-		engine.LogWarn("PalettePro.Load: unhandled", "category", category, "filename", filename)
+		engine.LogWarn("QuadPro.Load: unhandled", "category", category, "filename", filename)
 	}
 
 	// Decide what _Current things we should save
@@ -634,20 +626,20 @@ func (ppro *PalettePro) Load(ctx *engine.PluginContext, category string, filenam
 	// then save the entire quad
 	err = nil
 	switch category {
-	case "global":
+	case "engine":
 		if filename != "_Current" {
 			// No need to save _Current if we're loading it
-			err = ppro.save("global", "_Current")
+			err = quadpro.save("engine", "_Current")
 		}
 	case "quad":
 		if filename != "_Current" {
-			err = ppro.saveQuad("_Current")
+			err = quadpro.saveQuad("_Current")
 		}
 	case "patch", "sound", "visual", "effect", "misc":
 		// If we're loading a patch (or something inside a patch, like sound, visual, etc),
 		// we save the entire quad, since that's our real persistent state
 		if filename != "_Current" {
-			err = ppro.saveQuad("_Current")
+			err = quadpro.saveQuad("_Current")
 		}
 	}
 	if err != nil {
@@ -657,16 +649,18 @@ func (ppro *PalettePro) Load(ctx *engine.PluginContext, category string, filenam
 	return lasterr
 }
 
-func (ppro *PalettePro) save(category string, filename string) (err error) {
+func (quadpro *QuadPro) save(category string, filename string) (err error) {
 
-	engine.LogOfType("saved", "PalettePro.save", "category", category, "filename", filename)
+	engine.LogOfType("saved", "QuadPro.save", "category", category, "filename", filename)
 
-	if category == "global" {
-		err = ppro.globalparams.Save("global", filename)
+	if category == "engine" {
+		// err = quadpro.engineClicks.Save("engine", filename)
+		engine.LogWarn("QuadPro.save: shouldn't be saving global?")
+		err = fmt.Errorf("QuadPro.save: global shouldn't be handled here")
 	} else if category == "quad" {
-		err = ppro.saveQuad(filename)
+		err = quadpro.saveQuad(filename)
 	} else {
-		err = fmt.Errorf("PalettePro.Api: unhandled save category %s", category)
+		err = fmt.Errorf("QuadPro.Api: unhandled save category %s", category)
 	}
 	if err != nil {
 		engine.LogError(err)
@@ -674,15 +668,15 @@ func (ppro *PalettePro) save(category string, filename string) (err error) {
 	return err
 }
 
-func (ppro *PalettePro) saveQuad(quadName string) error {
+func (quadpro *QuadPro) saveQuad(quadName string) error {
 
 	category := "quad"
 	path := engine.WritableFilePath(category, quadName)
 
-	engine.LogOfType("saved", "PalettePro.saveQuad", "quad", quadName)
+	engine.LogOfType("saved", "QuadPro.saveQuad", "quad", quadName)
 
 	sortedPatchNames := []string{}
-	for _, patch := range ppro.patch {
+	for _, patch := range quadpro.patch {
 		sortedPatchNames = append(sortedPatchNames, patch.Name())
 	}
 	sort.Strings(sortedPatchNames)
@@ -690,7 +684,7 @@ func (ppro *PalettePro) saveQuad(quadName string) error {
 	s := "{\n    \"params\": {\n"
 	sep := ""
 	for _, patchName := range sortedPatchNames {
-		patch := ppro.patch[patchName]
+		patch := quadpro.patch[patchName]
 		sortedNames := patch.ParamNames()
 		for _, fullName := range sortedNames {
 			valstring := patch.Get(fullName)
@@ -703,17 +697,17 @@ func (ppro *PalettePro) saveQuad(quadName string) error {
 	return os.WriteFile(path, data, 0644)
 }
 
-func (ppro *PalettePro) addPatch(ctx *engine.PluginContext, name string) *engine.Patch {
+func (quadpro *QuadPro) addPatch(ctx *engine.PluginContext, name string) *engine.Patch {
 	patch := engine.NewPatch(name)
 	patch.AddListener(ctx)
-	ppro.patch[name] = patch
-	ppro.patchLogic[name] = NewPatchLogic(ppro, patch)
+	quadpro.patch[name] = patch
+	quadpro.patchLogic[name] = NewPatchLogic(quadpro, patch)
 	return patch
 }
 
 /*
-func (ppro *PalettePro) scheduleNoteNow(ctx *engine.PluginContext, dest string, pitch, velocity uint8, duration engine.Clicks) {
-	engine.LogInfo("PalettePro.scheculeNoteNow", "dest", dest, "pitch", pitch)
+func (quadpro *QuadPro) scheduleNoteNow(ctx *engine.PluginContext, dest string, pitch, velocity uint8, duration engine.Clicks) {
+	engine.LogInfo("QuadPro.scheculeNoteNow", "dest", dest, "pitch", pitch)
 	pe := &engine.PhraseElement{Value: engine.NewNoteFull(0, pitch, velocity, duration)}
 	phr := engine.NewPhrase().InsertElement(pe)
 	phr.Destination = dest
@@ -722,52 +716,52 @@ func (ppro *PalettePro) scheduleNoteNow(ctx *engine.PluginContext, dest string, 
 */
 
 // SetExternalScale xxx
-func (ppro *PalettePro) setExternalScale(pitch int, on bool) {
-	s := ppro.externalScale
+func (quadpro *QuadPro) setExternalScale(pitch int, on bool) {
+	s := quadpro.externalScale
 	for p := pitch; p < 128; p += 12 {
 		s.HasNote[p] = on
 	}
 }
 
-func (ppro *PalettePro) handleMIDISetScaleNote(e engine.MidiEvent) {
+func (quadpro *QuadPro) handleMIDISetScaleNote(e engine.MidiEvent) {
 	status := e.Status() & 0xf0
 	pitch := int(e.Data1())
 	if status == 0x90 {
 		// If there are no notes held down (i.e. this is the first), clear the scale
-		if ppro.MIDINumDown < 0 {
+		if quadpro.MIDINumDown < 0 {
 			// this can happen when there's a Read error that misses a noteon
-			ppro.MIDINumDown = 0
+			quadpro.MIDINumDown = 0
 		}
-		if ppro.MIDINumDown == 0 {
-			ppro.clearExternalScale()
+		if quadpro.MIDINumDown == 0 {
+			quadpro.clearExternalScale()
 		}
-		ppro.setExternalScale(pitch%12, true)
-		ppro.MIDINumDown++
+		quadpro.setExternalScale(pitch%12, true)
+		quadpro.MIDINumDown++
 		if pitch < 60 {
-			ppro.MIDIOctaveShift = -1
+			quadpro.MIDIOctaveShift = -1
 		} else if pitch > 72 {
-			ppro.MIDIOctaveShift = 1
+			quadpro.MIDIOctaveShift = 1
 		} else {
-			ppro.MIDIOctaveShift = 0
+			quadpro.MIDIOctaveShift = 0
 		}
 	} else if status == 0x80 {
-		ppro.MIDINumDown--
+		quadpro.MIDINumDown--
 	}
 }
 
-func (ppro *PalettePro) doAttractAction(ctx *engine.PluginContext) {
+func (quadpro *QuadPro) doAttractAction(ctx *engine.PluginContext) {
 
 	now := time.Now()
-	dt := now.Sub(ppro.lastAttractGestureTime).Seconds()
-	if ppro.attractModeIsOn && dt > ppro.attractGestureInterval {
+	dt := now.Sub(quadpro.lastAttractGestureTime).Seconds()
+	if quadpro.attractModeIsOn && dt > quadpro.attractGestureInterval {
 
 		sourceNames := []string{"A", "B", "C", "D"}
 		i := uint64(rand.Uint64()*99) % 4
 		source := sourceNames[i]
-		ppro.lastAttractGestureTime = now
+		quadpro.lastAttractGestureTime = now
 
-		cid := fmt.Sprintf("%s#%d,internal", source, ppro.nextCursorNum)
-		ppro.nextCursorNum++
+		cid := fmt.Sprintf("%s#%d,internal", source, quadpro.nextCursorNum)
+		quadpro.nextCursorNum++
 
 		x0 := rand.Float32()
 		y0 := rand.Float32()
@@ -779,20 +773,20 @@ func (ppro *PalettePro) doAttractAction(ctx *engine.PluginContext) {
 
 		noteDuration := time.Second
 		go ctx.GenerateCursorGesture(cid, noteDuration, x0, y0, z0, x1, y1, z1)
-		ppro.lastAttractGestureTime = now
+		quadpro.lastAttractGestureTime = now
 	}
 
-	dp := now.Sub(ppro.lastAttractChange).Seconds()
-	if dp > ppro.attractChangeInterval {
-		err := ppro.loadQuadRand(ctx)
+	dp := now.Sub(quadpro.lastAttractChange).Seconds()
+	if dp > quadpro.attractChangeInterval {
+		err := quadpro.loadQuadRand(ctx)
 		if err != nil {
 			engine.LogError(err)
 		}
-		ppro.lastAttractChange = now
+		quadpro.lastAttractChange = now
 	}
 }
 
-func (ppro *PalettePro) mmttInfo() *engine.ProcessInfo {
+func (quadpro *QuadPro) mmttInfo() *engine.ProcessInfo {
 
 	// NOTE: it's inside a sub-directory of bin, so all the necessary .dll's are contained
 
@@ -806,7 +800,7 @@ func (ppro *PalettePro) mmttInfo() *engine.ProcessInfo {
 	return engine.NewProcessInfo("mmtt_"+mmtt+".exe", fullpath, "", nil)
 }
 
-func (ppro *PalettePro) guiInfo() *engine.ProcessInfo {
+func (quadpro *QuadPro) guiInfo() *engine.ProcessInfo {
 	exe := "palette_gui.exe"
 	fullpath := filepath.Join(engine.PaletteDir(), "bin", "pyinstalled", exe)
 	return engine.NewProcessInfo(exe, fullpath, "", nil)

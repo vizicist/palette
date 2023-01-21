@@ -45,9 +45,9 @@ func (e *Engine) ExecuteAPI(api string, apiargs map[string]string) (result strin
 			return patch.Api(apisuffix, apiargs)
 		default:
 			// If it's not one of the reserved aent names, see if it's a registered one
-			ctx, err := e.PluginManager.GetPluginContext(apitype)
-			if err != nil {
-				return "", err
+			ctx, ok := Plugins[apitype]
+			if !ok {
+				return "", fmt.Errorf("No such plugin: %s",apitype)
 			}
 			return ctx.api(ctx, apisuffix, apiargs)
 		}
@@ -80,6 +80,32 @@ func (e *Engine) executeEngineAPI(api string, apiargs map[string]string) (result
 		CallApiOnAllPlugins("stop", map[string]string{})
 		go e.stopAfterDelay()
 		return "", nil
+
+	case "set":
+		name, value, err := GetNameValue(apiargs)
+		if err != nil {
+			return "", err
+		}
+		err = e.Set(name, value)
+		if err != nil {
+			return "", err
+		}
+		err = e.SaveCurrent()
+		return "", err
+
+	case "get":
+		name, ok := apiargs["name"]
+		if !ok {
+			return "", fmt.Errorf("executeEngineAPI: missing name parameter")
+		}
+		return e.Get(name), nil
+
+	case "save":
+		filename, ok := apiargs["filename"]
+		if !ok {
+			return "", fmt.Errorf("executeEngineAPI: missing filename parameter")
+		}
+		return "", e.params.Save("engine", filename)
 
 	case "exit":
 		e.StopMe()
@@ -208,6 +234,36 @@ func (e *Engine) executeEngineAPI(api string, apiargs map[string]string) (result
 	}
 
 	return result, err
+}
+
+func (e *Engine) SaveCurrent() (err error) {
+	return e.params.Save("engine", "_Current")
+}
+
+func (e *Engine) LoadCurrent() (err error) {
+	path := SavedFilePath("engine", "_Current")
+	paramsmap, err := LoadParamsMap(path)
+	e.params.ApplyValuesFromMap("engine", paramsmap)
+	return err
+}
+
+func (e *Engine) Set(name string, value string) error {
+	LogInfo("Engine.Set", "name", name, "value", value)
+	return e.params.Set(name, value)
+}
+
+func (e *Engine) Get(name string) string {
+	value := e.params.Get(name)
+	LogInfo("Engine.Get", "name", name, "value", value)
+	return value
+}
+
+func (e *Engine) GetWithDefault(nm string, dflt string) string {
+	if e.params.Exists(nm) {
+		return e.params.Get(nm)
+	} else {
+		return dflt
+	}
 }
 
 func (e *Engine) executeSavedAPI(api string, apiargs map[string]string) (result string, err error) {

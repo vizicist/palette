@@ -15,7 +15,6 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"gopkg.in/gomail.v2"
@@ -434,6 +433,7 @@ func ConfigFloatWithDefault(nm string, dflt float64) float64 {
 	return f
 }
 
+/*
 func ConfigStringWithDefault(nm string, dflt string) string {
 	s := ConfigValue(nm)
 	if s == "" {
@@ -441,9 +441,10 @@ func ConfigStringWithDefault(nm string, dflt string) string {
 	}
 	return s
 }
+*/
 
-var configMap map[string]string
-var configMutex sync.Mutex
+// var configMap map[string]string
+// var configMutex sync.Mutex
 
 // ConfigValue returns "" if there's no value.  I.e. "" and 'no value' are identical
 func ConfigValue(nm string) string {
@@ -452,24 +453,14 @@ func ConfigValue(nm string) string {
 
 func ConfigValueWithDefault(nm string, dflt string) string {
 
-	configMutex.Lock()
-	defer configMutex.Unlock()
+	// configMutex.Lock()
+	// defer configMutex.Unlock()
 
-	if configMap == nil {
-		// Only do this once, perhaps should re-read if file has changed?
-		path := ConfigFilePath("settings.json")
-		var err error
-		configMap, err = ReadConfigFile(path) // make sure you're setting global configMap
-		if err != nil {
-			LogError(err)
-			return ""
-		}
+	if TheEngine == nil {
+		LogError(fmt.Errorf("No engine!?"))
+		return ""
 	}
-	val, ok := configMap[nm]
-	if ok {
-		return val
-	}
-	return dflt
+	return TheEngine.GetWithDefault(nm, dflt)
 }
 
 func needFloatArg(nm string, api string, args map[string]string) (float32, error) {
