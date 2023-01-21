@@ -40,9 +40,7 @@ func myTimeEncoder(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
 func fileLogger(path string) *zap.Logger {
 
 	stacktraceKey := ""
-	if ConfigBoolWithDefault("stacktrace", false) {
-		stacktraceKey = "stacktrace"
-	}
+	// stacktraceKey = "stacktrace" // use this if you want to get stack traces
 
 	config := zapcore.EncoderConfig{
 		MessageKey:     "msg",

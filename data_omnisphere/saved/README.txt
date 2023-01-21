@@ -1,9 +1,9 @@
 Directories here are:
 
-global
-preset     = misc + 4 layers
-misc
-layer      = sound+visual+effect
+engine     : global parameters
+quad       : 4 patches
+patch      : misc+sound+visual+effect
+  misc
   sound
   visual
   effect

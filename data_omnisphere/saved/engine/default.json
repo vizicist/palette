@@ -1,0 +1,13 @@
+{
+    "params": {
+        "engine.attractidleminutes":"0",
+        "engine.autostart":"bidule,resolume",
+        "engine.bidule":"",
+        "engine.debug":"",
+        "engine.enable:sound":"true",
+        "engine.enable:visual":"true",
+        "engine.guilevel":"",
+        "engine.guiresize":"",
+        "engine.plugins":"quadpro"
+    }
+}

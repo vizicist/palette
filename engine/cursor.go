@@ -183,7 +183,7 @@ func (cm *CursorManager) handleDownDragUp(ce CursorEvent) {
 	cursorState.Current.Click = CurrentClick()
 
 	// See who wants this cinput, but don't hold the Lock
-	ThePluginManager().HandleCursorEvent(ce)
+	PluginsHandleCursorEvent(ce)
 
 	LogOfType("cursor", "CursorManager.handleDownDragUp", "ce", ce)
 

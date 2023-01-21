@@ -9,8 +9,8 @@ import (
 )
 
 type PatchLogic struct {
-	ppro  *PalettePro
-	patch *engine.Patch
+	quadpro *QuadPro
+	patch   *engine.Patch
 
 	mutex sync.Mutex
 	// tempoFactor            float64
@@ -37,10 +37,10 @@ type PatchLogic struct {
 	// TransposePitch   int
 }
 
-func NewPatchLogic(ppro *PalettePro, patch *engine.Patch) *PatchLogic {
+func NewPatchLogic(quadpro *QuadPro, patch *engine.Patch) *PatchLogic {
 	logic := &PatchLogic{
-		ppro:  ppro,
-		patch: patch,
+		quadpro: quadpro,
+		patch:   patch,
 	}
 	return logic
 }
@@ -54,7 +54,7 @@ func (logic *PatchLogic) cursorToNoteOn(ctx *engine.PluginContext, ce engine.Cur
 
 func (logic *PatchLogic) cursorToPitch(ctx *engine.PluginContext, ce engine.CursorEvent) uint8 {
 	patch := logic.patch
-	ppro := logic.ppro
+	quadpro := logic.quadpro
 	pitchmin := patch.GetInt("sound.pitchmin")
 	pitchmax := patch.GetInt("sound.pitchmax")
 	dp := pitchmax - pitchmin + 1
@@ -68,14 +68,14 @@ func (logic *PatchLogic) cursorToPitch(ctx *engine.PluginContext, ce engine.Curs
 		scale := engine.GetScale(scaleName)
 		p = scale.ClosestTo(p)
 		// MIDIOctaveShift might be negative
-		i := int(p) + 12*ppro.MIDIOctaveShift
+		i := int(p) + 12*quadpro.MIDIOctaveShift
 		for i < 0 {
 			i += 12
 		}
 		for i > 127 {
 			i -= 12
 		}
-		p = uint8(i + ppro.TransposePitch)
+		p = uint8(i + quadpro.TransposePitch)
 	}
 	return p
 }
@@ -131,7 +131,7 @@ func (logic *PatchLogic) generateSoundFromCursor(ctx *engine.PluginContext, ce e
 	switch cursorStyle {
 	case "downonly":
 		logic.generateSoundFromCursorDownOnly(ctx, ce)
-	case "retrigger":
+	case "", "retrigger":
 		logic.generateSoundFromCursorRetrigger(ctx, ce)
 	default:
 		engine.LogWarn("Unrecognized cursorStyle", "cursorStyle", cursorStyle)
@@ -176,7 +176,7 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ctx *engine.PluginCont
 
 	switch ce.Ddu {
 	case "down":
-		engine.LogInfo("CURSOR down event for cursor", "cid", ce.Cid)
+		// engine.LogInfo("CURSOR down event for cursor", "cid", ce.Cid)
 		oldNoteOn := cursorState.NoteOn
 		if oldNoteOn != nil {
 			engine.LogWarn("generateSoundFromCursor: oldNote already exists", "cid", ce.Cid)
@@ -189,7 +189,7 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ctx *engine.PluginCont
 		cursorState.NoteOn = noteOn
 		cursorState.NoteOnClick = atClick
 	case "drag":
-		engine.LogInfo("CURSOR drag event for cursor", "cid", ce.Cid)
+		// engine.LogInfo("CURSOR drag event for cursor", "cid", ce.Cid)
 		oldNoteOn := cursorState.NoteOn
 		if oldNoteOn == nil {
 			engine.LogWarn("generateSoundFromCursor: no cursorState.NoteOn", "cid", ce.Cid)
@@ -217,22 +217,25 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ctx *engine.PluginCont
 
 		if newpitch != oldpitch || deltaz > deltaztrig || deltay > deltaytrig {
 
+			engine.LogInfo("drag sees change", "newpitch", newpitch, "oldpitch", oldpitch, "deltaz", deltaz, "deltaztrig", deltaztrig, "deltay", deltay, "deltaytrig", deltaytrig)
 			// Turn off existing note, one Click after noteOn
 			noteOff := engine.NewNoteOffFromNoteOn(oldNoteOn)
 			offClick := cursorState.NoteOnClick + 1
+			engine.LogInfo("drag, turning off note", "noteOff", noteOff, "offClick", offClick)
 			ctx.ScheduleAt(noteOff, offClick)
 
 			atClick := logic.nextQuant(ctx.CurrentClick(), logic.patch.CursorToQuant(ce))
 			if atClick < offClick {
 				atClick = offClick
 			}
+			engine.LogInfo("drag, turning on note", "newNoteOn", newNoteOn, "atClick", atClick)
 			ctx.ScheduleAt(newNoteOn, atClick)
 			cursorState.NoteOn = newNoteOn
 			cursorState.NoteOnClick = atClick
 		}
 
 	case "up":
-		engine.LogInfo("CURSOR up event for cursor", "cid", ce.Cid)
+		// engine.LogInfo("CURSOR up event for cursor", "cid", ce.Cid)
 		oldNoteOn := cursorState.NoteOn
 		if oldNoteOn == nil {
 			// not sure why this happens, yet
@@ -403,11 +406,11 @@ func (logic *PatchLogic) sendNoteOff(n *engine.NoteOn) {
 /*
 func (logic *PatchLogic) advanceTransposeTo(newclick engine.Clicks) {
 
-	ppro := logic.ppro
-	ppro.transposeNext += (ppro.transposeClicks * engine.OneBeat)
-	ppro.transposeIndex = (ppro.transposeIndex + 1) % len(ppro.transposeValues)
+	quadpro := logic.quadpro
+	quadpro.transposeNext += (quadpro.transposeClicks * engine.OneBeat)
+	quadpro.transposeIndex = (quadpro.transposeIndex + 1) % len(quadpro.transposeValues)
 
-			transposePitch := ppro.transposeValues[ppro.transposeIndex]
+			transposePitch := quadpro.transposeValues[quadpro.transposeIndex]
 				fr _, patch := range TheRouter().patches {
 					// patch.clearDown()
 					LogOfType("transpose""setting transposepitch in patch","pad", patch.padName, "transposePitch",transposePitch, "nactive",len(patch.activeNotes))
