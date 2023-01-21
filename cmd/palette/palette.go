@@ -114,17 +114,17 @@ func CliCommand(args []string) string {
 			return ""
 
 		case "gui":
-			return doApi("quadpro.startprocess", "process", "gui")
+			return doApi("quadpro.stopprocess", "process", "gui")
 
 		case "bidule":
-			return doApi("quadpro.startprocess", "process", "bidule")
+			return doApi("quadpro.stopprocess", "process", "bidule")
 
 		case "resolume":
-			return doApi("quadpro.startprocess", "process", "resolume")
+			return doApi("quadpro.stopprocess", "process", "resolume")
 
 		case "all":
-			s1 := doStartEngine()
-			s2 := doApi("quadpro.startprocess", "process", "all")
+			s1 := doApi("quadpro.stopprocess", "process", "all")
+			s2 := doApi("engine.stop")
 			return s1 + "\n" + s2
 
 		default:
