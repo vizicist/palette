@@ -199,7 +199,7 @@ func (quadpro *QuadPro) Api(ctx *engine.PluginContext, api string, apiargs map[s
 		}
 		return "", err
 
-	case "stoquadprocess":
+	case "stopprocess":
 		process, ok := apiargs["process"]
 		if !ok {
 			return "", fmt.Errorf("ExecuteAPI: missing process argument")
