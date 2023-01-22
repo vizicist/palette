@@ -92,7 +92,7 @@ func InitMIDI() {
 	inports := midi.GetInPorts()
 	outports := midi.GetOutPorts()
 
-	midiInputName := ConfigValue("midiinput")
+	midiInputName := EngineParam("midiinput")
 
 	// device names is done with strings.Contain	// Note: name matching of MIDI s
 	// beause gomidi/midi appends an index value to the strings

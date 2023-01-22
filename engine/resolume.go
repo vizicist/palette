@@ -276,7 +276,7 @@ func (r *Resolume) ResolumeLayerForText() int {
 }
 
 func (r *Resolume) ProcessInfo() *ProcessInfo {
-	fullpath := ConfigValue("resolume")
+	fullpath := EngineParam("resolume")
 	if fullpath != "" && !FileExists(fullpath) {
 		LogWarn("No Resolume found, looking for", "path", fullpath)
 		return nil

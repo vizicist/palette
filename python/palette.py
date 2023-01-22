@@ -390,7 +390,7 @@ def copyFile(frompath,topath):
 SettingsJson = None
 LocalSettingsJson = None
 
-def ConfigValue(s,defvalue=""):
+def EngineParam(s,defvalue=""):
     global SettingsJson
     if SettingsJson == None:
         path = engineFilePath("default.json")
