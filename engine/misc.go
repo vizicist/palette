@@ -304,27 +304,28 @@ func StringParamOfAPI(api string, pmap map[string]string, name string) (string, 
 	return value, nil
 }
 
-// IsTrueValue returns true if the value is some version of true
-func IsTrueValue(value string) (bool, error) {
+// IsTrueValue returns true if the value is some version of true, and false otherwise.
+func IsTrueValue(value string) bool {
 	switch value {
 	case "True":
-		return true, nil
+		return true
 	case "true":
-		return true, nil
+		return true
 	case "1":
-		return true, nil
+		return true
 	case "on":
-		return true, nil
+		return true
 	case "False":
-		return false, nil
+		return false
 	case "false":
-		return false, nil
+		return false
 	case "0":
-		return false, nil
+		return false
 	case "off":
-		return false, nil
+		return false
 	default:
-		return false, fmt.Errorf("IsTrueValue: invalid boolean value (%s), assuming false", value)
+		LogError(fmt.Errorf("IsTrueValue: invalid boolean value (%s), assuming false", value))
+		return false
 	}
 }
 
@@ -381,32 +382,25 @@ func ReadConfigFile(path string) (map[string]string, error) {
 	return pmap, nil
 }
 
-// ConfigBool returns bool value of nm, or false if nm not set
-func ConfigBool(nm string) bool {
-	v := ConfigValue(nm)
+func EngineParam(nm string) string {
+	return TheEngine.Get(nm)
+}
+
+func EngineParamWithDefault(nm string, dflt string) string {
+	return TheEngine.GetWithDefault(nm, dflt)
+}
+
+// EngineParamBool returns bool value of nm, or false if nm not set
+func EngineParamBool(nm string) bool {
+	v := EngineParam(nm)
 	if v == "" {
 		return false
 	}
-	b, err := IsTrueValue(v)
-	if err != nil {
-		LogError(err)
-		return false
-	}
-	return b
+	return IsTrueValue(v)
 }
 
-// ConfigBoolWithDefault xxx
-func ConfigBoolWithDefault(nm string, dflt bool) bool {
-	v := ConfigValue(nm)
-	b, err := IsTrueValue(v)
-	if err != nil {
-		return dflt
-	}
-	return b
-}
-
-func ConfigIntWithDefault(nm string, dflt int) int {
-	s := ConfigValue(nm)
+func EngineParamIntWithDefault(nm string, dflt int) int {
+	s := EngineParam(nm)
 	if s == "" {
 		return dflt
 	}
@@ -419,8 +413,8 @@ func ConfigIntWithDefault(nm string, dflt int) int {
 	return val
 }
 
-func ConfigFloatWithDefault(nm string, dflt float64) float64 {
-	s := ConfigValue(nm)
+func EngineParamFloatWithDefault(nm string, dflt float64) float64 {
+	s := EngineParam(nm)
 	if s == "" {
 		return dflt
 	}
@@ -431,36 +425,6 @@ func ConfigFloatWithDefault(nm string, dflt float64) float64 {
 		return dflt
 	}
 	return f
-}
-
-/*
-func ConfigStringWithDefault(nm string, dflt string) string {
-	s := ConfigValue(nm)
-	if s == "" {
-		return dflt
-	}
-	return s
-}
-*/
-
-// var configMap map[string]string
-// var configMutex sync.Mutex
-
-// ConfigValue returns "" if there's no value.  I.e. "" and 'no value' are identical
-func ConfigValue(nm string) string {
-	return ConfigValueWithDefault(nm, "")
-}
-
-func ConfigValueWithDefault(nm string, dflt string) string {
-
-	// configMutex.Lock()
-	// defer configMutex.Unlock()
-
-	if TheEngine == nil {
-		LogError(fmt.Errorf("No engine!?"))
-		return ""
-	}
-	return TheEngine.GetWithDefault(nm, dflt)
 }
 
 func needFloatArg(nm string, api string, args map[string]string) (float32, error) {
@@ -510,10 +474,7 @@ func needBoolArg(nm string, api string, args map[string]string) (bool, error) {
 	if !ok {
 		return false, fmt.Errorf("api/event=%s missing value for %s", api, nm)
 	}
-	b, err := IsTrueValue(val)
-	if err != nil {
-		return false, fmt.Errorf("api/event=%s bad value for %s", api, val)
-	}
+	b := IsTrueValue(val)
 	return b, nil
 }
 
@@ -605,7 +566,7 @@ func RemoteAPIRaw(args string) (map[string]string, error) {
 
 func SendLogs() error {
 
-	recipient := ConfigValue("emailto")
+	recipient := EngineParam("emailto")
 	if recipient == "" {
 		msg := "SendLogs: not sending, no emailto in settings"
 		LogWarn(msg)
@@ -654,9 +615,9 @@ func SendMail(body string) error {
 // SendMail xxx
 func SendMailWithAttachment(body, attachfile string) error {
 
-	recipient := ConfigValue("emailto")
-	login := ConfigValue("emaillogin")
-	password := ConfigValue("emailpassword")
+	recipient := EngineParam("emailto")
+	login := EngineParam("emaillogin")
+	password := EngineParam("emailpassword")
 
 	if recipient == "" {
 		return fmt.Errorf("sendMail: not sending, no emailto in settings")

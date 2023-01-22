@@ -98,7 +98,7 @@ func (e *Engine) Start() {
 	go e.Scheduler.Start()
 	go e.Router.Start()
 
-	if ConfigBoolWithDefault("depth", false) {
+	if EngineParamBool("depth") {
 		go DepthRunForever()
 	}
 }

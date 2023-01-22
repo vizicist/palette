@@ -21,9 +21,6 @@ type QuadPro struct {
 
 	started bool
 
-	generateVisuals bool
-	generateSound   bool
-
 	MIDIOctaveShift  int
 	MIDINumDown      int
 	MIDIThru         bool
@@ -61,12 +58,8 @@ func init() {
 	quadpro := &QuadPro{
 		patch:      map[string]*engine.Patch{},
 		patchLogic: map[string]*PatchLogic{},
-		// miscparams:   engine.NewParamValues(),
-		// engineClicks: engine.NewParamValues(),
 
 		attractModeIsOn: false,
-		generateVisuals: true,
-		generateSound:   true,
 
 		lastAttractModeChange:  time.Now(),
 		lastAttractGestureTime: time.Now(),
@@ -149,10 +142,7 @@ func (quadpro *QuadPro) Api(ctx *engine.PluginContext, api string, apiargs map[s
 		if !ok {
 			return "", fmt.Errorf("missing onoff parameter")
 		}
-		onoff, err := engine.IsTrueValue(onoffstr)
-		if err != nil {
-			return "", err
-		}
+		onoff := engine.IsTrueValue(onoffstr)
 		quadpro.setAttractMode(onoff)
 		return "", nil
 
@@ -274,18 +264,19 @@ func (quadpro *QuadPro) start(ctx *engine.PluginContext) error {
 	// 	}
 	// }
 
-	transposebeats := engine.Clicks(engine.ConfigIntWithDefault("transposebeats", 48))
-	quadpro.transposeNext = transposebeats * engine.OneBeat
-	quadpro.transposeClicks = transposebeats
+	quadpro.transposeAuto = engine.EngineParamBool("transposeauto")
+	beats := engine.EngineParamIntWithDefault("transposebeats", 48)
 
-	quadpro.generateVisuals = engine.ConfigBoolWithDefault("generatevisuals", true)
-	quadpro.generateSound = engine.ConfigBoolWithDefault("generatesound", true)
-	quadpro.transposeAuto = engine.ConfigBoolWithDefault("transposeauto", true)
+	quadpro.transposeNext = engine.Clicks(beats) * engine.OneBeat
+	quadpro.transposeClicks = engine.Clicks(beats) * engine.OneBeat
 
 	ctx.AddProcessBuiltIn("resolume")
 	ctx.AddProcessBuiltIn("bidule")
 	ctx.AddProcess("gui", quadpro.guiInfo())
-	// ctx.AddProcess("mmtt", quadpro.mmttInfo())
+	mmtt := quadpro.mmttInfo()
+	if mmtt != nil {
+		ctx.AddProcess("mmtt", mmtt)
+	}
 
 	ctx.AllowSource("A", "B", "C", "D")
 
@@ -298,13 +289,13 @@ func (quadpro *QuadPro) start(ctx *engine.PluginContext) error {
 
 	// Don't start checking processes right away, after killing them on a restart,
 	// they may still be running for a bit
-	quadpro.processCheckSecs = engine.ConfigFloatWithDefault("processchecksecs", 60)
+	quadpro.processCheckSecs = engine.EngineParamFloatWithDefault("processchecksecs", 60)
 
-	quadpro.attractCheckSecs = engine.ConfigFloatWithDefault("attractchecksecs", 2)
-	quadpro.attractIdleSecs = 60 * engine.ConfigFloatWithDefault("attractidleminutes", 0)
+	quadpro.attractCheckSecs = engine.EngineParamFloatWithDefault("attractchecksecs", 2)
+	quadpro.attractIdleSecs = 60 * engine.EngineParamFloatWithDefault("attractidleminutes", 0)
 
-	quadpro.attractChangeInterval = engine.ConfigFloatWithDefault("attractchangeinterval", 30)
-	quadpro.attractGestureInterval = engine.ConfigFloatWithDefault("attractgestureinterval", 0.5)
+	quadpro.attractChangeInterval = engine.EngineParamFloatWithDefault("attractchangeinterval", 30)
+	quadpro.attractGestureInterval = engine.EngineParamFloatWithDefault("attractgestureinterval", 0.5)
 
 	return nil
 }
@@ -325,11 +316,6 @@ func (quadpro *QuadPro) onCursorEvent(ctx *engine.PluginContext, apiargs map[str
 	if err != nil {
 		return "", err
 	}
-
-	// source, ok := apiargs["source"]
-	// if !ok {
-	// 	source = ""
-	// }
 
 	cid, ok := apiargs["cid"]
 	if !ok {
@@ -358,10 +344,12 @@ func (quadpro *QuadPro) onCursorEvent(ctx *engine.PluginContext, apiargs map[str
 		return "", nil
 	}
 	cursorStyle := patchLogic.patch.Get("misc.cursorstyle")
-	if quadpro.generateSound && !quadpro.attractModeIsOn {
+	gensound := engine.IsTrueValue(patchLogic.patch.Get("misc.generatesound"))
+	genvisual := engine.IsTrueValue(patchLogic.patch.Get("misc.generatevisual"))
+	if gensound && !quadpro.attractModeIsOn {
 		patchLogic.generateSoundFromCursor(ctx, ce, cursorStyle)
 	}
-	if quadpro.generateVisuals {
+	if genvisual {
 		patchLogic.generateVisualsFromCursor(ce)
 	}
 	return "", nil
@@ -791,7 +779,7 @@ func (quadpro *QuadPro) mmttInfo() *engine.ProcessInfo {
 	// NOTE: it's inside a sub-directory of bin, so all the necessary .dll's are contained
 
 	// The value of mmtt is either "kinect" or "oak"
-	mmtt := engine.ConfigValueWithDefault("mmtt", "kinect")
+	mmtt := engine.EngineParam("mmtt")
 	fullpath := filepath.Join(engine.PaletteDir(), "bin", "mmtt_"+mmtt, "mmtt_"+mmtt+".exe")
 	if !engine.FileExists(fullpath) {
 		engine.LogWarn("no mmtt executable found, looking for", "path", fullpath)

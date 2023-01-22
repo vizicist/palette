@@ -40,7 +40,7 @@ func (b *Bidule) Activate() {
 }
 
 func (b *Bidule) ProcessInfo() *ProcessInfo {
-	bidulePath := ConfigValueWithDefault("bidule", "")
+	bidulePath := EngineParam("bidule")
 	if bidulePath == "" {
 		bidulePath = "C:\\Program Files\\Plogue\\Bidule\\Bidule.exe"
 		LogWarn("No bidule value in settings, using default", "path", bidulePath)
@@ -54,7 +54,7 @@ func (b *Bidule) ProcessInfo() *ProcessInfo {
 	if lastslash > 0 {
 		exe = exe[lastslash+1:]
 	}
-	bidulefile := ConfigValueWithDefault("bidulefile", "")
+	bidulefile := EngineParam("bidulefile")
 	if bidulefile == "" {
 		bidulefile = "default.bidule"
 	}

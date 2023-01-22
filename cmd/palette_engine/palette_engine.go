@@ -35,7 +35,7 @@ func main() {
 		os.Exit(0)
 	}()
 
-	if engine.ConfigBoolWithDefault("twinsys", false) {
+	if engine.EngineParamBool("twinsys") {
 		twinsys.Run()
 	} else {
 		select {}
