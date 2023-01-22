@@ -36,9 +36,7 @@ type Router struct {
 	// resolumeClient *osc.Client
 	guiClient *osc.Client
 
-	myHostname string
-	// generateVisuals     bool
-	// generateSound       bool
+	myHostname          string
 	layerAssignedToNUID map[string]string
 	inputEventMutex     sync.RWMutex
 }
@@ -286,7 +284,7 @@ func (r *Router) handleOSCInput(e OSCEvent) {
 }
 
 func (r *Router) notifyGUI(eventName string) {
-	if !ConfigBool("notifygui") {
+	if !EngineParamBool("notifygui") {
 		return
 	}
 	msg := osc.NewMessage("/notify")
@@ -367,14 +365,14 @@ func (r *Router) handleMMTTCursor(msg *osc.Message) {
 	}
 
 	// XXX - HACK!!
-	zfactor := ConfigFloatWithDefault("mmttzfactor", 5.0)
-	ahack := ConfigFloatWithDefault("mmttahack", 20.0)
+	zfactor := EngineParamFloatWithDefault("mmttzfactor", 5.0)
+	ahack := EngineParamFloatWithDefault("mmttahack", 20.0)
 	ce.Z = boundval32(ahack * zfactor * float64(ce.Z))
 
-	xexpand := ConfigFloatWithDefault("mmttxexpand", 1.25)
+	xexpand := EngineParamFloatWithDefault("mmttxexpand", 1.25)
 	ce.X = boundval32(((float64(ce.X) - 0.5) * xexpand) + 0.5)
 
-	yexpand := ConfigFloatWithDefault("mmttyexpand", 1.25)
+	yexpand := EngineParamFloatWithDefault("mmttyexpand", 1.25)
 	ce.Y = boundval32(((float64(ce.Y) - 0.5) * yexpand) + 0.5)
 
 	LogOfType("mmtt", "MMTT Cursor", "source", ce.Source, "ddu", ce.Ddu, "x", ce.X, "y", ce.Y, "z", ce.Z)
