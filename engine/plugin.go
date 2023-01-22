@@ -44,10 +44,6 @@ func (ctx *PluginContext) PaletteDir() string {
 	return PaletteDir()
 }
 
-func (ctx *PluginContext) ConfigValue(name string) string {
-	return ConfigValue(name)
-}
-
 func (ctx *PluginContext) StartExecutableLogOutput(logName string, fullexe string, background bool, args ...string) error {
 	return StartExecutableLogOutput(logName, fullexe, background, args...)
 }

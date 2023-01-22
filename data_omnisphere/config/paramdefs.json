@@ -75,11 +75,9 @@
 "misc.midiinputpatch": {"valuetype":"string", "min":"patch", "max":"patch", "init":"A", "comment":"# Layer receiving MIDI Input" },
 "misc.pitchoffset": {"valuetype": "float", "min": "0.0", "max": "128.0",  "init": "0.0", "comment": "#" },
 "misc.pitchfactor": {"valuetype": "float", "min": "0.1", "max": "10.0",  "init": "1.0",	"comment": "#" },
-"misc.enable:sound": {"valuetype":"bool", "min":"false", "max":"true", "init":"true", "comment":"# Enable Sound" },
-"misc.enable:visual": {"valuetype":"bool", "min":"false", "max":"true", "init":"true", "comment":"# Enable Visual" },
+"misc.generatesound": {"valuetype":"bool", "min":"false", "max":"true", "init":"true", "comment":"# Enable Sound" },
+"misc.generatevisual": {"valuetype":"bool", "min":"false", "max":"true", "init":"true", "comment":"# Enable Visual" },
 
-"engine.enable:sound": {"valuetype":"bool", "min":"false", "max":"true", "init":"true", "comment":"# Enable Sound" },
-"engine.enable:visual": {"valuetype":"bool", "min":"false", "max":"true", "init":"true", "comment":"# Enable Visual" },
 "engine.debug": {"valuetype":"string", "min":"debug", "max":"debug", "init":"", "comment":"# Debugging" },
 "engine.plugins": {"valuetype":"string", "min":"plugins", "max":"plugins", "init":"quadpro", "comment":"# Plugins to start" },
 "engine.guilevel": {"valuetype":"string", "min":"guilevel", "max":"guilevel", "init":"", "comment":"# GUI level" },

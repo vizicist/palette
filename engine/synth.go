@@ -88,17 +88,15 @@ func GetSynth(synthName string) *Synth {
 
 func NewSynth(name string, port string, channel int, bank int, program int) *Synth {
 
-	synthoutput := ConfigBoolWithDefault("generatesound", true)
-
-	// If there's already a Synth for this PortChannel, error
+	// If there's already a Synth for this PortChannel, should error
 
 	portchannel := PortChannel{port: port, channel: channel}
 
 	var midiChannelOut *MIDIChannelOutput
-	if synthoutput {
-		midiChannelOut = MIDI.openChannelOutput(portchannel)
-	} else {
+	if name == "fake" {
 		midiChannelOut = MIDI.openFakeChannelOutput(port, channel)
+	} else {
+		midiChannelOut = MIDI.openChannelOutput(portchannel)
 	}
 
 	if midiChannelOut == nil {
