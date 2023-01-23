@@ -106,8 +106,7 @@ func (quadpro *QuadPro) Api(ctx *engine.PluginContext, api string, apiargs map[s
 				quadpro.attractIdleSecs = float64(60 * minutes)
 			}
 		}
-		// return quadpro.onSet(ctx, apiargs)
-		return "", fmt.Errorf("QuadPro.API: set is no longer an api, use engine.set")
+		return "", nil
 
 	case "get":
 		return quadpro.onGet(apiargs)
