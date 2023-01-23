@@ -5,8 +5,8 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"sync"
 	"strings"
+	"sync"
 
 	"github.com/hypebeast/go-osc/osc"
 )
@@ -42,7 +42,7 @@ func NewEngine() *Engine {
 		ProcessManager: NewProcessManager(),
 		done:           make(chan bool),
 	}
-	TheEngine.SetLogTypes()
+	TheEngine.SetLogTypes(os.Getenv("PALETTE_LOG"))
 	LogInfo("Engine InitLog ==============================================")
 	TheEngine.SetDefaultValues()
 	err := TheEngine.LoadCurrent()
@@ -104,14 +104,12 @@ func (e *Engine) Start() {
 }
 
 func (e *Engine) SetDefaultValues() {
-	LogInfo("SetDefaultValues start")
 	for nm, pd := range ParamDefs {
 		if pd.Category == "engine" {
 			err := e.params.SetParamValueWithString(nm, pd.Init)
 			if err != nil {
 				LogError(err)
 			}
-			LogInfo("SetDefaultValues", "name", nm, "value", pd.Init)
 		}
 	}
 }
@@ -124,8 +122,7 @@ func (e *Engine) StopMe() {
 	e.done <- true
 }
 
-func (e *Engine) SetLogTypes() {
-	logtypes := os.Getenv("PALETTE_LOG")
+func (e *Engine) SetLogTypes(logtypes string) {
 	if logtypes != "" {
 		darr := strings.Split(logtypes, ",")
 		for _, d := range darr {

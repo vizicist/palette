@@ -82,6 +82,11 @@ func isRunningExecutable(exe string) bool {
 	scanner := bufio.NewScanner(strings.NewReader(stdout.gathered))
 	scanner.Split(bufio.ScanLines)
 	exe = strings.ToLower(exe)
+	exe = strings.ReplaceAll(exe,"\\","/")
+	exeparts := strings.Split(exe,"/")
+	if len(exeparts) > 0 {
+		exe = exeparts[len(exeparts)-1]
+	}
 	for scanner.Scan() {
 		line := scanner.Text()
 		// os.Stdout.WriteString("Scanning line=" + line + "\n")

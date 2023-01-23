@@ -148,7 +148,7 @@ func (logic *PatchLogic) generateSoundFromCursorDownOnly(ctx *engine.PluginConte
 	case "down":
 		noteOn := logic.cursorToNoteOn(ctx, ce)
 		atClick := logic.nextQuant(ctx.CurrentClick(), logic.patch.CursorToQuant(ce))
-		engine.LogInfo("logic.down", "current", ctx.CurrentClick(), "atClick", atClick, "noteOn", noteOn)
+		// engine.LogInfo("logic.down", "current", ctx.CurrentClick(), "atClick", atClick, "noteOn", noteOn)
 		ctx.ScheduleAt(noteOn, atClick)
 		noteOff := engine.NewNoteOffFromNoteOn(noteOn)
 		atClick += engine.QuarterNote
@@ -216,19 +216,15 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ctx *engine.PluginCont
 		logic.generateController(ctx, cursorState)
 
 		if newpitch != oldpitch || deltaz > deltaztrig || deltay > deltaytrig {
-
-			engine.LogInfo("drag sees change", "newpitch", newpitch, "oldpitch", oldpitch, "deltaz", deltaz, "deltaztrig", deltaztrig, "deltay", deltay, "deltaytrig", deltaytrig)
 			// Turn off existing note, one Click after noteOn
 			noteOff := engine.NewNoteOffFromNoteOn(oldNoteOn)
 			offClick := cursorState.NoteOnClick + 1
-			engine.LogInfo("drag, turning off note", "noteOff", noteOff, "offClick", offClick)
 			ctx.ScheduleAt(noteOff, offClick)
 
 			atClick := logic.nextQuant(ctx.CurrentClick(), logic.patch.CursorToQuant(ce))
 			if atClick < offClick {
 				atClick = offClick
 			}
-			engine.LogInfo("drag, turning on note", "newNoteOn", newNoteOn, "atClick", atClick)
 			ctx.ScheduleAt(newNoteOn, atClick)
 			cursorState.NoteOn = newNoteOn
 			cursorState.NoteOnClick = atClick
