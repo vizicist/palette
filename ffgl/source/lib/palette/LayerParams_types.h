@@ -30,6 +30,7 @@ DEFINE_TYPES(midiport);
 void
 LayerParams_InitializeTypes() {
 
+	LayerParams_debugTypes.push_back("");
 	LayerParams_debugTypes.push_back("midi");
 	LayerParams_debugTypes.push_back("cursor");
 	LayerParams_debugTypes.push_back("saved");
@@ -38,21 +39,22 @@ LayerParams_InitializeTypes() {
 	LayerParams_debugTypes.push_back("process");
 	LayerParams_debugTypes.push_back("attract");
 
-	LayerParams_pluginsTypes.push_back("quadpro");
 	LayerParams_pluginsTypes.push_back("");
+	LayerParams_pluginsTypes.push_back("quadpro");
 
 	LayerParams_guilevelTypes.push_back("0");
 	LayerParams_guilevelTypes.push_back("1");
 	LayerParams_guilevelTypes.push_back("2");
 
-	LayerParams_guiresizeTypes.push_back("-800 0 800 1200");
+	LayerParams_guiresizeTypes.push_back("-800,0,800,1200");
+	LayerParams_guiresizeTypes.push_back("100,100,800,1280");
 	LayerParams_guiresizeTypes.push_back("");
 
 	LayerParams_autostartTypes.push_back("gui,bidule,resolume");
 	LayerParams_autostartTypes.push_back("bidule,resolume");
 	LayerParams_autostartTypes.push_back("none");
 
-	LayerParams_biduleTypes.push_back("C:\Program Files\Plogue\Bidule\Bidule.exe");
+	LayerParams_biduleTypes.push_back("C:/Program Files/Plogue/Bidule/Bidule.exe");
 	LayerParams_biduleTypes.push_back("");
 
 	LayerParams_mmttTypes.push_back("kinect");

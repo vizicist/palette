@@ -62,7 +62,10 @@ func CliCommand(args []string) string {
 	}
 
 	api := args[0]
-	arg1 := args[1]
+	var arg1 string
+	if len(args) > 1 {
+		arg1 = args[1]
+	}
 
 	switch api {
 
