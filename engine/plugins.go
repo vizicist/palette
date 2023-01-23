@@ -33,12 +33,20 @@ func NewPluginContext(apiFunc PluginFunc) *PluginContext {
 func PluginsStartPlugin(name string) error {
 	PluginsMutex.Lock()
 	defer PluginsMutex.Unlock()
-	ctx, ok := Plugins[name]
-	if !ok {
+	ctx := GetPlugin(name)
+	if ctx == nil {
 		return fmt.Errorf("no plugin named %s", name)
 	}
 	_, err := ctx.api(ctx, "start", nil)
 	return err
+}
+
+func GetPlugin(name string) *PluginContext {
+	ctx, ok := Plugins[name]
+	if !ok {
+		return nil
+	}
+	return ctx
 }
 
 func CallApiOnAllPlugins(api string, apiargs map[string]string) {

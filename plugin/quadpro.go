@@ -95,7 +95,19 @@ func (quadpro *QuadPro) Api(ctx *engine.PluginContext, api string, apiargs map[s
 		return "", ctx.StopRunning("all")
 
 	case "set":
-		return quadpro.onSet(ctx, apiargs)
+		paramName, paramValue, err := engine.GetNameValue(apiargs)
+		if err != nil {
+			return "", err
+		}
+		switch paramName {
+		case "attractidleminutes":
+			minutes, err := strconv.ParseInt(paramValue, 10, 64)
+			if err == nil {
+				quadpro.attractIdleSecs = float64(60 * minutes)
+			}
+		}
+		// return quadpro.onSet(ctx, apiargs)
+		return "", fmt.Errorf("QuadPro.API: set is no longer an api, use engine.set")
 
 	case "get":
 		return quadpro.onGet(apiargs)
@@ -234,7 +246,7 @@ func (quadpro *QuadPro) Api(ctx *engine.PluginContext, api string, apiargs map[s
 func (quadpro *QuadPro) onPatchRefreshAll(apiargs map[string]string) error {
 	patchName, ok := apiargs["patch"]
 	if !ok {
-		return fmt.Errorf("QuadPro.onSet: no patch argument")
+		return fmt.Errorf("QuadPro.onPtchRefreshAll: no patch argument")
 	}
 	patch := engine.GetPatch(patchName)
 	if patch == nil {
@@ -290,10 +302,8 @@ func (quadpro *QuadPro) start(ctx *engine.PluginContext) error {
 	// Don't start checking processes right away, after killing them on a restart,
 	// they may still be running for a bit
 	quadpro.processCheckSecs = engine.EngineParamFloatWithDefault("processchecksecs", 60)
-
 	quadpro.attractCheckSecs = engine.EngineParamFloatWithDefault("attractchecksecs", 2)
 	quadpro.attractIdleSecs = 60 * engine.EngineParamFloatWithDefault("attractidleminutes", 0)
-
 	quadpro.attractChangeInterval = engine.EngineParamFloatWithDefault("attractchangeinterval", 30)
 	quadpro.attractGestureInterval = engine.EngineParamFloatWithDefault("attractgestureinterval", 0.5)
 
@@ -400,11 +410,11 @@ func (quadpro *QuadPro) onClientRestart(ctx *engine.PluginContext, apiargs map[s
 func (quadpro *QuadPro) onPatchSet(ctx *engine.PluginContext, apiargs map[string]string) error {
 	paramName, paramValue, err := engine.GetNameValue(apiargs)
 	if err != nil {
-		return fmt.Errorf("QuadPro.onSet: %s", err)
+		return fmt.Errorf("QuadPro.onPatchSet: %s", err)
 	}
 	patchName, ok := apiargs["patch"]
 	if !ok {
-		return fmt.Errorf("QuadPro.onSet: no patch argument")
+		return fmt.Errorf("QuadPro.onPatchSet: no patch argument")
 	}
 	patch := engine.GetPatch(patchName)
 	if patch == nil {
@@ -413,6 +423,7 @@ func (quadpro *QuadPro) onPatchSet(ctx *engine.PluginContext, apiargs map[string
 	return patch.Set(paramName, paramValue)
 }
 
+/*
 // onSet is only used for global parameters.
 func (quadpro *QuadPro) onSet(ctx *engine.PluginContext, apiargs map[string]string) (result string, err error) {
 
@@ -421,11 +432,22 @@ func (quadpro *QuadPro) onSet(ctx *engine.PluginContext, apiargs map[string]stri
 		return "", fmt.Errorf("QuadPro.onSet: %s", err)
 	}
 
+	switch paramName {
+	case "attractchecksecs":
+		quadpro.attractCheckSecs = ParseInt(value, name)
+	case "attractchangeinterval":
+		quadpro.attractChangeInterval = ParseInt(value, name)
+	case "attractgestureinterval":
+		quadpro.attractGestureInterval = ParseFloat(value, nme)
+	}
+
 	if strings.HasPrefix(paramName, "engine") {
+		engine.LogWarn("Why is there an engine.* parameter here?")
 		return "", engine.TheEngine.Set(paramName, paramValue)
 	}
 	return "", fmt.Errorf("QuadPro.onSet: can't handle non-global parameter %s", paramName)
 }
+*/
 
 func (quadpro *QuadPro) onGet(apiargs map[string]string) (result string, err error) {
 	paramName, ok := apiargs["name"]
@@ -778,8 +800,11 @@ func (quadpro *QuadPro) mmttInfo() *engine.ProcessInfo {
 
 	// NOTE: it's inside a sub-directory of bin, so all the necessary .dll's are contained
 
-	// The value of mmtt is either "kinect" or "oak"
+	// The value of mmtt is either "kinect" or "oak" or ""
 	mmtt := engine.EngineParam("mmtt")
+	if mmtt == "" {
+		return nil
+	}
 	fullpath := filepath.Join(engine.PaletteDir(), "bin", "mmtt_"+mmtt, "mmtt_"+mmtt+".exe")
 	if !engine.FileExists(fullpath) {
 		engine.LogWarn("no mmtt executable found, looking for", "path", fullpath)

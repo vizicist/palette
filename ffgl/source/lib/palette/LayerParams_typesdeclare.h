@@ -4,6 +4,7 @@ DECLARE_TYPES(guilevel);
 DECLARE_TYPES(guiresize);
 DECLARE_TYPES(autostart);
 DECLARE_TYPES(bidule);
+DECLARE_TYPES(mmtt);
 DECLARE_TYPES(destination);
 DECLARE_TYPES(logic_sound);
 DECLARE_TYPES(logic_visual);

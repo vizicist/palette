@@ -47,7 +47,7 @@ func (e *Engine) ExecuteAPI(api string, apiargs map[string]string) (result strin
 			// If it's not one of the reserved aent names, see if it's a registered one
 			ctx, ok := Plugins[apitype]
 			if !ok {
-				return "", fmt.Errorf("No such plugin: %s",apitype)
+				return "", fmt.Errorf("No such plugin: %s", apitype)
 			}
 			return ctx.api(ctx, apisuffix, apiargs)
 		}
@@ -90,8 +90,20 @@ func (e *Engine) executeEngineAPI(api string, apiargs map[string]string) (result
 		if err != nil {
 			return "", err
 		}
-		err = e.SaveCurrent()
-		return "", err
+		return "", e.SaveCurrent()
+
+	case "setparams":
+		for name, value := range apiargs {
+			e := e.Set(name, value)
+			if e != nil {
+				LogError(e)
+				err = e
+			}
+		}
+		if err != nil {
+			return "", err
+		}
+		return "", e.SaveCurrent()
 
 	case "get":
 		name, ok := apiargs["name"]
@@ -133,13 +145,7 @@ func (e *Engine) executeEngineAPI(api string, apiargs map[string]string) (result
 		result = value
 
 	case "debug":
-		s, err := needStringArg("debug", api, apiargs)
-		if err == nil {
-			b, err := needBoolArg("onoff", api, apiargs)
-			if err == nil {
-				SetLogTypeEnabled(s, b)
-			}
-		}
+		return "", fmt.Errorf("debug API has been removed")
 
 	case "set_tempo_factor":
 		v, err := needFloatArg("value", api, apiargs)
@@ -248,13 +254,27 @@ func (e *Engine) LoadCurrent() (err error) {
 }
 
 func (e *Engine) Set(name string, value string) error {
-	LogInfo("Engine.Set", "name", name, "value", value)
+	// LogInfo("Engine.Set", "name", name, "value", value)
+	switch name {
+	case "engine.debug":
+		e.SetLogTypes(value)
+	case "engine.attractidleminutes":
+		ppro := GetPlugin("quadpro")
+		if ppro != nil {
+			_, err := ppro.api(ppro, "set", map[string]string{
+				"name":  "attractidleminutes",
+				"value": value})
+			if err != nil {
+				LogError(err)
+			}
+		}
+	}
 	return e.params.Set(name, value)
 }
 
 func (e *Engine) Get(name string) string {
 	value := e.params.Get(name)
-	LogInfo("Engine.Get", "name", name, "value", value)
+	// LogInfo("Engine.Get", "name", name, "value", value)
 	return value
 }
 
