@@ -162,6 +162,8 @@ class ProGuiApp(tk.Tk):
             p = Patch(self,patchName)
             self.Patches[p] = patchName
 
+        self.engine = Engine(self)
+
         self.frames = {}
         self.editPage = {}
         self.selectorPage = {}
@@ -550,7 +552,9 @@ class ProGuiApp(tk.Tk):
         self.lastLoadType = ""
         self.lastLoadName = ""
 
-        if self.editMode and pagename != "patch":
+        if self.editMode and pagename == "engine":
+            self.refreshEngineValues(pagename)
+        elif self.editMode and pagename != "patch":
             if self.allPatchesSelected:
                 patch = self.patchNamed("A")
             else:
@@ -560,6 +564,25 @@ class ProGuiApp(tk.Tk):
 
         self.setFrameSizes()
         self.placeFrames()
+
+    def refreshEngineValues(self,pagename):
+        page = self.editPage[pagename]
+        for name in self.engine.params:
+            ptype = self.paramTypeOf[name]
+            if pagename != "patch" and ptype != pagename:
+                continue
+            value, err = palette.palette_engine_api("get",
+                "\"name\": \"" + name + "\"")
+            if err != None:
+                log("Error in getting value of "+name)
+                continue
+            if isinstance(value,tuple):
+                value = value[0]
+            w = page.paramValueWidget[name]
+            value = page.normalizeJsonValue(name,value)
+            w.config(text=value)
+            # Need to set the value in local params values 
+            self.engine.setValue(name,value)
 
     def refreshValues(self,pagename,patch):
         page = self.editPage[pagename]
@@ -628,7 +651,8 @@ class ProGuiApp(tk.Tk):
     def changeAndSendValue(self,paramType,basename,value):
 
         if paramType == "engine":
-            self.changeGlobalValue(basename,value)
+            self.engine.paramValues[basename] = value
+            self.sendEngineValue(basename,value)
 
         elif self.doAllPatches():
             for patch in self.Patches:
@@ -639,8 +663,10 @@ class ProGuiApp(tk.Tk):
             self.CurrPatch.setValue(paramType,basename,value)
             self.CurrPatch.sendValue(paramType,basename)
 
-    def changeGlobalValue(self,basename,value):
+    def sendEngineValue(self,basename,value):
 
+        if not basename.startswith("engine."):
+            basename = "engine." + basename
         palette.palette_engine_api("set",
             "\"name\": \"" + basename + "\"" + \
             ", \"value\": \"" + str(value) + "\"" )
@@ -659,7 +685,12 @@ class ProGuiApp(tk.Tk):
             self.applyToAllParams(apply,paramType)
             self.refreshPage()
 
-            if self.allPatchesSelected:
+            if paramType == "engine":
+                paramlistjson = self.paramListOfType("engine",self.engine.getValue)
+                palette.palette_engine_api("setparams", paramlistjson)
+                # self.engine.sendParamsOfType(paramType)
+
+            elif self.allPatchesSelected:
                 log("Sending ",paramType," params to all patch")
                 for patch in self.Patches:
                     patch.sendParamsOfType(paramType)
@@ -1077,6 +1108,44 @@ class ProGuiApp(tk.Tk):
 
         return allparamsjson
 
+    def paramListOfType(self,paramType,functoget):
+        paramlist = ""
+        sep = ""
+        for name in self.newParamsJson:
+            if not isVisibleParameter(name):
+                continue
+            j = self.newParamsJson[name]
+            if paramType == "patch" or j["paramstype"] == paramType:
+                paramname = name
+                v = functoget(paramname)
+                paramlist = paramlist + sep + "\"" + name + "\" : \"" + str(v) + "\""
+                sep = ", "
+
+        return paramlist
+
+class Engine():
+    
+    def __init__(self, controller):
+        self.paramValues = {}
+        self.paramEnabled = {}
+        self.controller = controller
+        self.params = self.controller.paramsOfType["engine"]
+        self.setInitValues()
+        # self.setDefaultPerform()
+
+    def setValue(self,paramName,val):
+        if not paramName in self.paramValues:
+            log("Hey, setValue fullname=",paramName,"not in paramValues?")
+            return
+        self.paramValues[paramName] = val
+ 
+    def setInitValues(self):
+        for paramName in self.params:
+            self.paramValues[paramName] = self.params[paramName]["init"]
+
+    def getValue(self,paramName):
+        return self.paramValues[paramName]
+
 class Patch():
 
     def __init__(self, controller, patchName):
@@ -1137,7 +1206,7 @@ class Patch():
     def sendParamsOfType(self,paramType):
         for pt in ["sound","visual","effect","misc"]:
             if paramType == "patch" or paramType == pt:
-                paramlistjson = self.paramListOfType(pt)
+                paramlistjson = self.controller.paramListOfType(pt,self.getValue)
                 palette.palette_patch_api(self.name(), "setparams", paramlistjson)
 
         if paramType == "patch":
@@ -1229,20 +1298,6 @@ class Patch():
     def clearLoop(self):
         palette.palette_patch_api(self.name(), "loop_clear", "")
  
-    def paramListOfType(self,paramType):
-        paramlist = ""
-        sep = ""
-        # XXX - should this use self.params ?
-        for name in self.controller.newParamsJson:
-            j = self.controller.newParamsJson[name]
-            if paramType == "patch" or j["paramstype"] == paramType:
-                paramname = name
-                v = self.getValue(paramname)
-                paramlist = paramlist + sep + "\"" + name + "\" : \"" + str(v) + "\""
-                sep = ", "
-
-        return paramlist
-
 
 class PatchChooser(tk.Frame):
 
@@ -2480,7 +2535,7 @@ def status_thread(app):  # runs in background thread
 
     while True:
 
-        time.sleep(5.0)
+        time.sleep(15.0)
 
         status, err = palette.palette_quadpro_api("status","")
         if err != None:

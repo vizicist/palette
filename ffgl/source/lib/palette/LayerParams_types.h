@@ -4,6 +4,7 @@ DEFINE_TYPES(guilevel);
 DEFINE_TYPES(guiresize);
 DEFINE_TYPES(autostart);
 DEFINE_TYPES(bidule);
+DEFINE_TYPES(mmtt);
 DEFINE_TYPES(destination);
 DEFINE_TYPES(logic_sound);
 DEFINE_TYPES(logic_visual);
@@ -53,6 +54,10 @@ LayerParams_InitializeTypes() {
 
 	LayerParams_biduleTypes.push_back("C:\Program Files\Plogue\Bidule\Bidule.exe");
 	LayerParams_biduleTypes.push_back("");
+
+	LayerParams_mmttTypes.push_back("kinect");
+	LayerParams_mmttTypes.push_back("depthai");
+	LayerParams_mmttTypes.push_back("");
 
 	LayerParams_destinationTypes.push_back(".");
 	LayerParams_destinationTypes.push_back("A");

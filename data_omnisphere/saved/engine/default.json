@@ -2,11 +2,9 @@
     "params": {
         "engine.attractidleminutes":"0",
         "engine.autostart":"bidule,resolume",
-        "engine.bidule":"",
-        "engine.debug":"",
-        "engine.enable:sound":"true",
-        "engine.enable:visual":"true",
-        "engine.guilevel":"",
+        "engine.bidule":"C:/Program Files/Plogue/Bidule/Bidule.exe",
+        "engine.debug":"cursor",
+        "engine.guilevel":"0",
         "engine.guiresize":"",
         "engine.plugins":"quadpro"
     }
