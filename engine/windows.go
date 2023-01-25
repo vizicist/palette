@@ -12,10 +12,11 @@ import (
 )
 
 func killExecutable(executable string) error {
+	exe := isolateExe(executable)
 	// os.Stderr.WriteString("KillExecutable " + executable + "\n")
-	LogInfo("KillExecutable", "executable", executable)
+	LogInfo("KillExecutable", "executable", executable, "exe", exe)
 	// NOTE: do NOT use taskkill.exe instead of taskkill, it doesn't work.
-	cmd := exec.Command("taskkill", "/F", "/IM", executable)
+	cmd := exec.Command("taskkill", "/F", "/IM", exe)
 	// os.Stderr.WriteString(fmt.Sprintf("cmd = %#v\n", cmd))
 	return cmd.Run()
 }
@@ -81,12 +82,7 @@ func isRunningExecutable(exe string) bool {
 
 	scanner := bufio.NewScanner(strings.NewReader(stdout.gathered))
 	scanner.Split(bufio.ScanLines)
-	exe = strings.ToLower(exe)
-	exe = strings.ReplaceAll(exe,"\\","/")
-	exeparts := strings.Split(exe,"/")
-	if len(exeparts) > 0 {
-		exe = exeparts[len(exeparts)-1]
-	}
+	exe = isolateExe(exe)
 	for scanner.Scan() {
 		line := scanner.Text()
 		// os.Stdout.WriteString("Scanning line=" + line + "\n")
@@ -102,4 +98,15 @@ func isRunningExecutable(exe string) bool {
 	}
 	LogOfType("process", "IsRunningExecutable", "exe", exe, "returning", "false")
 	return false
+}
+
+func isolateExe(exepath string) string {
+	exepath = strings.ToLower(exepath)
+	exepath = strings.ReplaceAll(exepath, "\\", "/")
+	exeparts := strings.Split(exepath, "/")
+	exe := exepath
+	if len(exeparts) > 0 {
+		exe = exeparts[len(exeparts)-1]
+	}
+	return exe
 }
