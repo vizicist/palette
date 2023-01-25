@@ -23,6 +23,13 @@
             "args": []
         },
         {
+            "name": "palette stop bidule",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
+            "args": ["stop","bidule"]
+        },
+        {
             "name": "palette gui",
             "type": "go",
             "request": "launch",

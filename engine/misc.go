@@ -545,7 +545,10 @@ func RemoteAPIRaw(args string) (map[string]string, error) {
 	postBody := []byte(args)
 	resp, err := http.Post(url, "application/json", bytes.NewBuffer(postBody))
 	if err != nil {
-		return nil, fmt.Errorf("RemoteAPIRaw: http.Post err=%s", err)
+		if strings.Contains(err.Error(),"target machine actively refused") {
+			err = fmt.Errorf("Engine isn't running or responding")
+		}
+		return nil, err
 	}
 
 	defer resp.Body.Close()
@@ -558,7 +561,7 @@ func RemoteAPIRaw(args string) (map[string]string, error) {
 		return nil, fmt.Errorf("RemoteAPIRaw: unable to interpret output, err=%s", err)
 	}
 	errstr, haserror := output["error"]
-	if haserror {
+	if haserror && !strings.Contains(errstr, "exit status") {
 		return map[string]string{}, fmt.Errorf("RemoteApiRaw: error=%s", errstr)
 	}
 	return output, nil

@@ -43,8 +43,15 @@ ColorAqua = '#00ffff'
 ColorUnHigh = '#888888'
 
 def killApp():
+    log("killApp called!")
     global PaletteApp
     PaletteApp.killme = True
+    log("killApp before sleep!")
+    time.sleep(1.00)
+    log("killApp after sleep!")
+    # the .killme method doesn't seem to work all the time
+    PaletteApp.destroy()
+    log("killApp after destroy!")
 
 def controlCHandler(sig, frame):
     log("controlCHandler called!")
