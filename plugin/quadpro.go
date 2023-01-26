@@ -132,10 +132,15 @@ func (quadpro *QuadPro) Api(ctx *engine.PluginContext, api string, apiargs map[s
 		case "quad_save_current":
 			return "", quadpro.saveQuad("_Current")
 
-		case "patch_set":
-			return "", quadpro.onPatchSet(ctx, apiargs)
+		/*
+			case "patch_set":
+				// return "", quadpro.onPatchSet(ctx, apiargs)
+				engine.LogWarn("This shouldn't be used!  use patch.set api")
+				return "", fmt.Errorf("patch_set shouldn't be used!  use patch.set api")
+		*/
 
 		case "patch_refresh_all":
+			engine.LogWarn("Take a look at patch_refresh_all")
 			return "", quadpro.onPatchRefreshAll(apiargs)
 
 		default:
@@ -144,7 +149,7 @@ func (quadpro *QuadPro) Api(ctx *engine.PluginContext, api string, apiargs map[s
 
 	case "ANO":
 		for _, patch := range quadpro.patch {
-			patch.Synth.SendANO()
+			patch.Synth().SendANO()
 		}
 		return "", nil
 
@@ -406,6 +411,7 @@ func (quadpro *QuadPro) onClientRestart(ctx *engine.PluginContext, apiargs map[s
 	return "", err
 }
 
+/*
 func (quadpro *QuadPro) onPatchSet(ctx *engine.PluginContext, apiargs map[string]string) error {
 	paramName, paramValue, err := engine.GetNameValue(apiargs)
 	if err != nil {
@@ -421,6 +427,7 @@ func (quadpro *QuadPro) onPatchSet(ctx *engine.PluginContext, apiargs map[string
 	}
 	return patch.Set(paramName, paramValue)
 }
+*/
 
 /*
 // onSet is only used for global parameters.
