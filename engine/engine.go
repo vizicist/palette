@@ -42,7 +42,7 @@ func NewEngine() *Engine {
 		ProcessManager: NewProcessManager(),
 		done:           make(chan bool),
 	}
-	TheEngine.SetLogTypes(os.Getenv("PALETTE_LOG"))
+	TheEngine.ResetLogTypes(os.Getenv("PALETTE_LOG"))
 	LogInfo("Engine InitLog ==============================================")
 	TheEngine.SetDefaultValues()
 	err := TheEngine.LoadCurrent()
@@ -122,13 +122,23 @@ func (e *Engine) StopMe() {
 	e.done <- true
 }
 
-func (e *Engine) SetLogTypes(logtypes string) {
+func (e *Engine) ResetLogTypes(logtypes string) {
+	for logtype := range LogEnabled {
+		LogEnabled[logtype] = false
+	}
 	if logtypes != "" {
 		darr := strings.Split(logtypes, ",")
 		for _, d := range darr {
 			if d != "" {
+				d := strings.ToLower(d)
 				LogInfo("Turning logging ON for", "logtype", d)
-				SetLogTypeEnabled(d, true)
+				_, ok := LogEnabled[d]
+				if !ok {
+					LogError(fmt.Errorf("ResetLogTypes: logtype not recognized"), "logtype", d)
+				} else {
+					LogEnabled[d] = true
+				}
+				return
 			}
 		}
 	}

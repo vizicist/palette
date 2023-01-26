@@ -1,0 +1,16 @@
+{
+    "params": {
+        "misc.enable:sound":"false",
+        "misc.enable:visual":"true",
+        "misc.logic_sound":"true",
+        "misc.logic_visual":"true",
+        "misc.midibehaviour":"default",
+        "misc.midiinputpatch":"A",
+        "misc.pitchfactor":"1.000000",
+        "misc.pitchoffset":"0.000000",
+        "misc.quantstyle":"frets",
+        "misc.scale":"newage",
+        "misc.usescale":"true",
+        "misc.vol":"pressure"
+    }
+}
