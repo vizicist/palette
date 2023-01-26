@@ -96,66 +96,43 @@ func LocalPaletteDir() string {
 	return filepath.Join(localapp, "Palette")
 }
 
-var localMap map[string]string
+var DataDir = "data_omnisphere" // default, override with environment variable
+var FullDataPath string
 
-func DefaultDatapath() string {
-	v := os.Getenv("PALETTE_DATAPATH")
-	if v == "" {
-		v = "data_omnisphere"
-	}
-	return v
-}
-
-func LocalMap() map[string]string {
-	if localMap == nil {
-		var err error
-		f := filepath.Join(LocalPaletteDir(), "local.json")
-		if !FileExists(f) {
-			localMap, _ = StringMap("{ \"datapath\": \"" + DefaultDatapath() + "\" }")
-		} else {
-			localMap, err = ReadConfigFile(f)
-			if err != nil {
-				LogError(err)
-			}
-		}
-	}
-	return localMap
-}
-
-var paletteDataPath = ""
-
-// PaletteDataPath returns the datadir value in local.json
 func PaletteDataPath() string {
-
-	if paletteDataPath != "" {
-		return paletteDataPath
+	if FullDataPath != "" {
+		return FullDataPath
 	}
-
-	local := LocalMap()
-	datapath, ok := local["datapath"]
-	if !ok {
-		datapath = filepath.Join(LocalPaletteDir(), DefaultDatapath())
+	// Let environment variable override the compiled-in default of DataDir
+	dataPath := os.Getenv("PALETTE_DATA_PATH")
+	if dataPath != "" {
+		DataDir = dataPath
 	}
-	if filepath.Dir(datapath) == "." {
-		datapath = filepath.Join(LocalPaletteDir(), datapath)
+	// The value can be either a full path or just the "data_..." part.
+	if filepath.IsAbs(DataDir) {
+		FullDataPath = DataDir
+	} else {
+		FullDataPath = filepath.Join(LocalPaletteDir(), DataDir)
 	}
-	paletteDataPath = datapath
-	return datapath
+	return FullDataPath
 }
 
-// PaletteDataPath returns the datadir value in local.json
 func TwitchUser() (username string, authtoken string) {
-	local := LocalMap()
-	twitchuser, ok := local["twitchuser"]
-	if !ok {
-		twitchuser = "foo"
-	}
-	twitchtoken, ok := local["twitchtoken"]
-	if !ok {
-		twitchtoken = "foo"
-	}
-	LogInfo("TwitchUser", "user", twitchuser, "token", twitchtoken)
-	return twitchuser, twitchtoken
+	LogWarn("TwitchUser needs to be updated to use an environment variable")
+	/*
+		local := LocalMap()
+		twitchuser, ok := local["twitchuser"]
+		if !ok {
+			twitchuser = "foo"
+		}
+		twitchtoken, ok := local["twitchtoken"]
+		if !ok {
+			twitchtoken = "foo"
+		}
+		LogInfo("TwitchUser", "user", twitchuser, "token", twitchtoken)
+		return twitchuser, twitchtoken
+	*/
+	return
 }
 
 // LocalConfigFilePath xxx
@@ -545,7 +522,7 @@ func RemoteAPIRaw(args string) (map[string]string, error) {
 	postBody := []byte(args)
 	resp, err := http.Post(url, "application/json", bytes.NewBuffer(postBody))
 	if err != nil {
-		if strings.Contains(err.Error(),"target machine actively refused") {
+		if strings.Contains(err.Error(), "target machine actively refused") {
 			err = fmt.Errorf("Engine isn't running or responding")
 		}
 		return nil, err

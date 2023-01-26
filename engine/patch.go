@@ -9,7 +9,7 @@ import (
 )
 
 type Patch struct {
-	Synth     *Synth
+	synth     *Synth
 	name      string
 	params    *ParamValues
 	listeners []*PluginContext
@@ -31,7 +31,7 @@ func PatchNames() []string {
 
 func NewPatch(patchName string) *Patch {
 	patch := &Patch{
-		Synth:     GetSynth("default"),
+		synth:     GetSynth("default"),
 		name:      patchName,
 		params:    NewParamValues(),
 		listeners: []*PluginContext{},
@@ -60,6 +60,14 @@ func ApplyToAllPatchs(f func(patch *Patch)) {
 	}
 }
 
+func (patch *Patch) Synth() *Synth {
+	if patch.synth == nil {
+		// This shouldn't happen
+		LogWarn("Hey, Synth() finds patch.synth==nil?")
+	}
+	return patch.synth
+}
+
 // SetDefaultValues xxx
 func (patch *Patch) SetDefaultValues() {
 	for nm, d := range ParamDefs {
@@ -73,7 +81,12 @@ func (patch *Patch) SetDefaultValues() {
 }
 
 func (patch *Patch) MIDIChannel() uint8 {
-	return patch.Synth.Channel()
+	synth := patch.Synth()
+	if synth == nil {
+		LogWarn("MIDIChannel: synth is nil, returning 0")
+		return 0
+	}
+	return synth.Channel()
 }
 
 func (patch *Patch) RefreshAllIfPortnumMatches(ffglportnum int) error {
@@ -111,9 +124,10 @@ func (patch *Patch) refreshValue(paramName string, paramValue string) {
 	if paramName == "sound.synth" {
 		synth := GetSynth(paramValue)
 		if synth == nil {
-			LogWarn("QuadPro. no synth named", "synth", paramValue)
+			LogWarn("QuadPro. no synth, using default", "synth", paramValue)
+			synth = GetSynth("default")
 		}
-		patch.Synth = synth
+		patch.synth = synth
 	}
 }
 
@@ -139,6 +153,7 @@ func (patch *Patch) AlertListenersOf(args map[string]string) error {
 	return err
 }
 
+/*
 func (patch *Patch) AlertListenersOfSet(paramName string, paramValue string) error {
 
 	LogOfType("listeners", "AlertListenersOf", "param", paramName, "value", paramValue, "patch", patch.Name())
@@ -150,6 +165,7 @@ func (patch *Patch) AlertListenersOfSet(paramName string, paramValue string) err
 	}
 	return patch.AlertListenersOf(args)
 }
+*/
 
 func (patch *Patch) SaveAndAlert(category string, filename string) error {
 
@@ -262,10 +278,15 @@ func (patch *Patch) Api(api string, apiargs map[string]string) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		err = patch.AlertListenersOfSet(name, value)
-		if err != nil {
-			return "", err
+		if name == "sound.synth" {
+			patch.synth = GetSynth(value)
 		}
+		/*
+			err = patch.AlertListenersOfSet(name, value)
+			if err != nil {
+				return "", err
+			}
+		*/
 		return "", patch.SaveQuadAndAlert()
 
 	case "setparams":
