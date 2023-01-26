@@ -250,6 +250,8 @@ func (e *Engine) LoadCurrent() (err error) {
 	path := SavedFilePath("engine", "_Current")
 	paramsmap, err := LoadParamsMap(path)
 	e.params.ApplyValuesFromMap("engine", paramsmap)
+	debug := e.params.Get("engine.debug")
+	e.ResetLogTypes(debug)
 	return err
 }
 
@@ -257,7 +259,7 @@ func (e *Engine) Set(name string, value string) error {
 	// LogInfo("Engine.Set", "name", name, "value", value)
 	switch name {
 	case "engine.debug":
-		e.SetLogTypes(value)
+		e.ResetLogTypes(value)
 	case "engine.attractidleminutes":
 		ppro := GetPlugin("quadpro")
 		if ppro != nil {

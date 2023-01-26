@@ -61,7 +61,8 @@ func InitSynths() {
 
 	_, ok := Synths["default"]
 	if !ok {
-		LogError(fmt.Errorf("InitSynths: no default synth"))
+		LogError(fmt.Errorf("InitSynths: no default synth in Synths.json, using fake default"))
+		Synths["default"] = NewSynth("default", "default", 1, 0, 0)
 	}
 
 	LogInfo("Synths loaded", "len", len(Synths))
@@ -365,10 +366,10 @@ func (synth *Synth) SendNoteToMidiOutput(value any) {
 	}
 
 	LogOfType("midi", "Raw MIDI Output",
-		"synth", synth,
-		"status", hexString(status),
-		"data1", hexString(data1),
-		"data2", hexString(data2))
+		"synth", synth.name,
+		"status", "0x"+hexString(status),
+		"data1", "0x"+hexString(data1),
+		"data2", "0x"+hexString(data2))
 
 	err := mc.output.Send([]byte{status, data1, data2})
 	if err != nil {

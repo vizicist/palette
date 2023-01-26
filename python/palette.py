@@ -222,24 +222,26 @@ def paletteSubDir(subdir):
     return os.path.join(localPaletteDir(), subdir)
 
 paletteDataPath = ""
+FullDataPath = ""
+DataDir = "data_omnisphere"
 
 # This is the name of the data_* directory
-# under which are config and saved.
-# The value comes from the local.json file
+# containing config and saved.
+# This logic is identical to PaletteDataPath() in the Go code
 def PaletteDataPath():
     global paletteDataPath
-    if paletteDataPath != "":
-        return paletteDataPath
+    global FullDataPath
+    if FullDataPath != "":
+        return FullDataPath
 
-    datapath = os.path.join(localPaletteDir(),"data_omnisphere")
-    localjsonpath = os.path.join(localPaletteDir(),"local.json")
-    if os.path.isfile(localjsonpath):
-        vals = readJsonPath(localjsonpath)
-        if "datapath" in vals:
-            datapath = vals["datapath"]
-
-    paletteDataPath = datapath
-    return paletteDataPath
+    dataPath = os.environ.get("PALETTE_DATA_PATH","")
+    if dataPath != "":
+        DataDir = dataPath
+    if os.path.isabs(DataDir):
+        FullDataPath = DataDir
+    else:
+        FullDataPath = os.path.join(localPaletteDir(),DataDir)
+    return FullDataPath
 
 # Combine saved in the savedPath list
 def savedListAll(savedType):

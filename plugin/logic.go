@@ -48,7 +48,7 @@ func NewPatchLogic(quadpro *QuadPro, patch *engine.Patch) *PatchLogic {
 func (logic *PatchLogic) cursorToNoteOn(ctx *engine.PluginContext, ce engine.CursorEvent) *engine.NoteOn {
 	pitch := logic.cursorToPitch(ctx, ce)
 	velocity := logic.cursorToVelocity(ctx, ce)
-	synth := logic.patch.Synth
+	synth := logic.patch.Synth()
 	return engine.NewNoteOn(synth, pitch, velocity)
 }
 
@@ -260,7 +260,7 @@ func (logic *PatchLogic) generateController(ctx *engine.PluginContext, cursorSta
 		newzc := BoundAndScaleController(newz, zmin, zmax, cmin, cmax)
 
 		if newzc != 0 && newzc != oldzc {
-			logic.patch.Synth.SendController(1, newzc)
+			logic.patch.Synth().SendController(1, newzc)
 		}
 	}
 }
