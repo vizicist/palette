@@ -68,6 +68,10 @@ func (ctx *PluginContext) StopRunning(process string) error {
 	return TheEngine.ProcessManager.StopRunning(process)
 }
 
+func (ctx *PluginContext) Activate(process string) error {
+	return TheEngine.ProcessManager.Activate(process)
+}
+
 func (ctx *PluginContext) KillExecutable(exe string) error {
 	return killExecutable(exe)
 }
