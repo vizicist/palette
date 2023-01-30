@@ -5,7 +5,7 @@
         "sound.midifile":"jsbach",
         "sound.pitchmax":"80",
         "sound.pitchmin":"25",
-        "sound.synth":"SYNTHNAME",
+        "sound.synth":"P03_CH03",
         "sound.velocitymax":"127",
         "sound.velocitymin":"48",
         "sound.xcontroller":"1",

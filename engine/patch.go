@@ -100,11 +100,11 @@ func (patch *Patch) RefreshAllIfPortnumMatches(ffglportnum int) error {
 func (patch *Patch) RefreshAllPatchValues() {
 	for _, paramName := range patch.ParamNames() {
 		paramValue := patch.Get(paramName)
-		patch.refreshValue(paramName, paramValue)
+		patch.noticeValueChange(paramName, paramValue)
 	}
 }
 
-func (patch *Patch) refreshValue(paramName string, paramValue string) {
+func (patch *Patch) noticeValueChange(paramName string, paramValue string) {
 
 	if strings.HasPrefix(paramName, "visual.") {
 		name := strings.TrimPrefix(paramName, "visual.")
@@ -278,15 +278,7 @@ func (patch *Patch) Api(api string, apiargs map[string]string) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		if name == "sound.synth" {
-			patch.synth = GetSynth(value)
-		}
-		/*
-			err = patch.AlertListenersOfSet(name, value)
-			if err != nil {
-				return "", err
-			}
-		*/
+		patch.noticeValueChange(name, value)
 		return "", patch.SaveQuadAndAlert()
 
 	case "setparams":

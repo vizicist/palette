@@ -68,15 +68,21 @@ func (pm *ProcessManager) CheckAutostartProcesses() {
 	}
 }
 
-func (pm *ProcessManager) ActivateAll() {
-
-	for process, pi := range pm.info {
-		if pi.Activate != nil {
-			LogOfType("process", "ActivateAll", "process", process)
+func (pm *ProcessManager) Activate(process string) error {
+	doall := (process == "all" || process == "*")
+	anydone := false
+	for nm, pi := range pm.info {
+		if (doall || nm == process) && pi.Activate != nil {
+			LogOfType("process", "Activate", "process", nm)
 			go pi.Activate()
 			pi.Activated = true
+			anydone = true
 		}
 	}
+	if !anydone {
+		return fmt.Errorf("Activate: no process %s", process)
+	}
+	return nil
 }
 
 func (pm *ProcessManager) AddProcess(name string, info *ProcessInfo) {

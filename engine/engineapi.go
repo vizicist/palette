@@ -125,8 +125,7 @@ func (e *Engine) executeEngineAPI(api string, apiargs map[string]string) (result
 
 	case "activate":
 		// Force Activate even if already activated
-		e.ProcessManager.ActivateAll()
-		return "", nil
+		return "", e.ProcessManager.Activate("all")
 
 	case "audio_reset":
 		go LogError(TheBidule().Reset())
