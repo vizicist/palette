@@ -107,7 +107,7 @@ func (vals *ParamValues) Set(name, value string) error {
 }
 
 // Currently, no errors are ever returned, but log messages are generated.
-func (params *ParamValues) ApplyValuesFromMap(category string, paramsmap map[string]any) {
+func (params *ParamValues) ApplyValuesFromMap(category string, paramsmap map[string]any, setfunc func(string, string) error) {
 
 	for fullname, ival := range paramsmap {
 		var value string
@@ -131,7 +131,8 @@ func (params *ParamValues) ApplyValuesFromMap(category string, paramsmap map[str
 		// Only include ones that match the category.
 		// If the category is "patch", match any of sound/visual/effect/misc.
 		if category == paramCategory || (category == "patch" && IsPerPatchParam(fullname)) {
-			err := params.Set(fullname, value)
+			// err := params.Set(fullname, value)
+			err := setfunc(fullname, value)
 			if err != nil {
 				LogError(err)
 				// Don't abort the whole load, i.e. we are tolerant
