@@ -21,6 +21,7 @@ type Synth struct {
 	// midiChannelOut *MidiChannelOutput
 	noteDown      []bool
 	noteDownCount []int
+	state         *MIDIPortChannelState
 }
 
 var Synths map[string]*Synth
@@ -93,14 +94,14 @@ func NewSynth(name string, port string, channel int, bank int, program int) *Syn
 
 	portchannel := PortChannel{port: port, channel: channel}
 
-	var midiChannelOut *MIDIPortChannelState
+	var state *MIDIPortChannelState
 	if name == "fake" {
-		midiChannelOut = MIDI.openFakeChannelOutput(port, channel)
+		state = MIDI.openFakeChannelOutput(port, channel)
 	} else {
-		midiChannelOut = MIDI.openChannelOutput(portchannel)
+		state = MIDI.openChannelOutput(portchannel)
 	}
 
-	if midiChannelOut == nil {
+	if state == nil {
 		LogWarn("InitSynths: Unable to open", "port", port)
 		return nil
 	}
@@ -112,6 +113,7 @@ func NewSynth(name string, port string, channel int, bank int, program int) *Syn
 		// midiChannelOut: midiChannelOut,
 		noteDown:      make([]bool, 128),
 		noteDownCount: make([]int, 128),
+		state:         state,
 	}
 	sp.ClearNoteDowns() // debugging, shouldn't be needed
 	return sp
@@ -123,7 +125,7 @@ func (synth *Synth) updatePortChannelState() (*MIDIPortChannelState, error) {
 		return nil, err
 	}
 	// This only sends the bank and/or program if they change
-	state.UpdateBankProgram(synth)
+	synth.UpdateBankProgram()
 	return state, nil
 }
 
@@ -390,5 +392,38 @@ func (synth *Synth) SendNoteToMidiOutput(value any) {
 	err = state.output.Send([]byte{status, data1, data2})
 	if err != nil {
 		LogWarn("output.Send", "err", err)
+	}
+}
+
+func (synth *Synth) SendBytes(bytes []byte) error {
+	return synth.state.output.Send(bytes)
+}
+
+func (synth *Synth) UpdateBankProgram() {
+
+	state := synth.state
+	synth.state.mutex.Lock()
+	defer synth.state.mutex.Unlock()
+
+	// LogInfo("Checking Bank Program", "bank", bank, "program", program, "mc.bank", state.bank, "mc.program", state.program, "mc", fmt.Sprintf("%p", state))
+	if state.bank != synth.bank {
+		LogWarn("SendBankProgram: XXX - SHOULD be sending", "bank", synth.bank)
+		state.bank = synth.bank
+	}
+	// if the requested program doesn't match the current one, send it
+	if state.program != synth.program {
+		// LogInfo("PROGRAM CHANGED", "program", program, "mc.program", state.program)
+		state.program = synth.program
+		status := byte(int64(ProgramStatus) | int64(state.channel-1))
+		data1 := byte(synth.program - 1)
+		LogInfo("SendBankProgram: MIDI", "status", hexString(status), "program", hexString(data1))
+		LogOfType("midi", "Raw MIDI Output, BankProgram",
+			"synth", synth.name,
+			"status", "0x"+hexString(status),
+			"data1", "0x"+hexString(data1))
+
+		LogError(state.output.Send([]byte{status, data1}))
+	} else {
+		// LogInfo("PROGRAM DID NOT CHANGE", "program", program, "mc.program", state.program)
 	}
 }

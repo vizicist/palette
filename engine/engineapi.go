@@ -248,15 +248,19 @@ func (e *Engine) SaveCurrent() (err error) {
 func (e *Engine) LoadCurrent() (err error) {
 	path := SavedFilePath("engine", "_Current")
 	paramsmap, err := LoadParamsMap(path)
-	e.params.ApplyValuesFromMap("engine", paramsmap)
-	debug := e.params.Get("engine.debug")
-	e.ResetLogTypes(debug)
+	if err == nil {
+		e.params.ApplyValuesFromMap("engine", paramsmap, e.Set)
+	}
 	return err
 }
 
 func (e *Engine) Set(name string, value string) error {
 	// LogInfo("Engine.Set", "name", name, "value", value)
 	switch name {
+	case "engine.oscoutput":
+		b := IsTrueValue(value)
+		LogInfo("Changing oscoutput", "oscoutput", b)
+		e.Router.cursorManager.oscOutput = b
 	case "engine.debug":
 		e.ResetLogTypes(value)
 	case "engine.attractidleminutes":

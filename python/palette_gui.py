@@ -83,6 +83,7 @@ class ProGuiApp(tk.Tk):
         self.nextMode = ""
         self.lastLoadType = ""
         self.lastLoadName = ""
+        self.processRunning = {"bidule":False,"resolume":False}
 
         self.defaultGuiLevel = int(os.environ.get("PALETTE_GUI_LEVEL","0"))
 
@@ -197,12 +198,12 @@ class ProGuiApp(tk.Tk):
         self.initLayout()
         self.resetAll()
     
-    def setScaleList(self):
-        if self.guiLevel == 0:
-            palette.GlobalPerformLabels["scale"] = palette.SimpleScales
-        else:
-            palette.GlobalPerformLabels["scale"] = palette.PerformScales
-        self.globalPerformIndex["scale"] = palette.PerformDefaultVal["scale"]
+#    def setScaleList(self):
+#        if self.guiLevel == 0:
+#            palette.GlobalPerformLabels["scale"] = palette.SimpleScales
+#        else:
+#            palette.GlobalPerformLabels["scale"] = palette.PerformScales
+#        self.globalPerformIndex["scale"] = palette.PerformDefaultVal["scale"]
 
     def placePatchChooser(self):
         if self.guiLevel > 0:
@@ -904,8 +905,8 @@ class ProGuiApp(tk.Tk):
             palette.palette_engine_api("set_tempo_factor", "\"value\": \""+str(val) + "\"")
         elif name == "transpose":
             palette.palette_engine_api("set_transpose", "\"value\": \""+str(val) + "\"")
-        elif name == "scale":
-            palette.palette_engine_api("set_scale", "\"value\": \""+str(val) + "\"")
+#        elif name == "scale":
+#            palette.palette_engine_api("set_scale", "\"value\": \""+str(val) + "\"")
         elif name == "transposeauto":
             palette.palette_engine_api("set_transposeauto", "\"onoff\": \""+str(val) + "\"")
 
@@ -944,7 +945,7 @@ class ProGuiApp(tk.Tk):
 
     def setGuiLevel(self,level):
         self.guiLevel = level
-        self.setScaleList()
+#        self.setScaleList()
 
     def sendANO(self):
         for patch in self.Patches:
@@ -953,6 +954,24 @@ class ProGuiApp(tk.Tk):
     def startHelp(self):
         log("startHelp: nextMode = help")
         self.nextMode = "help"
+
+    def startstopProcess(self,processName):
+        log("starstopProcess "+processName)
+        if self.processRunning[processName]:
+            api = "stopprocess"
+        else:
+            api = "startprocess"
+        log("Calling api="+api+" process="+processName)
+        palette.palette_quadpro_api(api,"\"process\": \"" + processName + "\"")
+        self.processRunning[processName] = not self.processRunning[processName]
+
+    def startstopBidule(self):
+        log("starstop Bidule")
+        self.startstopProcess("bidule")
+
+    def startstopResolume(self):
+        log("starstop Resolume")
+        self.startstopProcess("resolume")
 
     def resetAll(self):
 
@@ -1248,32 +1267,32 @@ class Patch():
         index = self.performIndex[name]
         labels = palette.PerformLabels[name]
         val = labels[index]["value"]
-        if name == "loopingonoff":
-            reconoff = False
-            playonoff = False
-            if val == "off":
-                pass
-            elif val == "recplay":
-                reconoff = True
-                playonoff = True
-            elif val == "play":
-                reconoff = False
-                playonoff = True
-            else:
-                log("Unrecognized value of loopingonoff - %s" % val)
-                return
-
-            palette.palette_patch_api(self.name(), "loop_recording", '"onoff": "'+str(reconoff)+'"')
-            palette.palette_patch_api(self.name(), "loop_playing", '"onoff": "'+str(playonoff)+'"')
-
-        elif name == "loopinglength":
-            palette.palette_patch_api(self.name(), "loop_length", '"value": "'+str(val)+'"')
-        elif name == "loopingfade":
-            palette.palette_patch_api(self.name(), "loop_fade", '"fade": "'+str(val)+'"')
-        elif name == "loopingset":
-            palette.palette_patch_api(self.name(), "loop_set", '"set": "'+str(val)+'"')
-        elif name == "midithru":
+        if name == "midithru":
             palette.palette_patch_api(self.name(), "midi_thru", "\"onoff\": \"" + str(val) + "\"")
+#        elif name == "loopingonoff":
+#            reconoff = False
+#            playonoff = False
+#            if val == "off":
+#                pass
+#            elif val == "recplay":
+#                reconoff = True
+#                playonoff = True
+#            elif val == "play":
+#                reconoff = False
+#                playonoff = True
+#            else:
+#                log("Unrecognized value of loopingonoff - %s" % val)
+#                return
+#
+#            palette.palette_patch_api(self.name(), "loop_recording", '"onoff": "'+str(reconoff)+'"')
+#            palette.palette_patch_api(self.name(), "loop_playing", '"onoff": "'+str(playonoff)+'"')
+#
+#        elif name == "loopinglength":
+#            palette.palette_patch_api(self.name(), "loop_length", '"value": "'+str(val)+'"')
+#        elif name == "loopingfade":
+#            palette.palette_patch_api(self.name(), "loop_fade", '"fade": "'+str(val)+'"')
+#        elif name == "loopingset":
+#            palette.palette_patch_api(self.name(), "loop_set", '"set": "'+str(val)+'"')
         elif name == "midisetscale":
             palette.palette_patch_api(self.name(), "midi_setscale", "\"onoff\": \"" + str(val) + "\"")
         elif name == "midiquantized":
@@ -1288,8 +1307,8 @@ class Patch():
 
         elif name == "quantstyle":
             palette.palette_patch_set(self.name(), "misc.quantstyle",val)
-        elif name == "scale":
-            palette.palette_patch_set(self.name(), "misc.scale",val)
+#        elif name == "scale":
+#            palette.palette_patch_set(self.name(), "misc.scale",val)
         elif name == "volstyle":
             palette.palette_patch_set(self.name(), "misc.volstyle",val)
 
@@ -1500,7 +1519,7 @@ class PageEditParams(tk.Frame):
 
         # On the "quad" editing page, the parameter values aren't shown,
         # just the buttons to import/export/save
-        if pagename != "quad":
+        if pagename != "quad" and pagename != "patch":
             self.paramsFrame.pack(side=tk.LEFT, pady=0)
             self.scrollbar.pack(side=tk.LEFT, fill=tk.Y, expand=True, pady=10, padx=5)
             self.updateParamView()
@@ -1584,7 +1603,7 @@ class PageEditParams(tk.Frame):
             self.exportButton.bind("<ButtonRelease-1>", lambda event:self.saveExportRelease())
             self.exportButton.pack(side=tk.LEFT, padx=2)
 
-        b = ttk.Label(f, text="Save", style='RandEtcButton.TLabel')
+        b = ttk.Label(f, text="Save As", style='RandEtcButton.TLabel')
         b.bind("<Button-1>", lambda event:self.saveCallback())
         b.pack(side=tk.LEFT, pady=5, padx=2)
 
@@ -2120,12 +2139,14 @@ class PagePerformMain(tk.Frame):
         self.makePerformButton("Reset_All", self.controller.resetAll)
         self.makePerformButton("Clear_ ", self.controller.clear)
         self.makePerformButton("Help_ ", self.controller.startHelp)
+        self.makePerformButton("Start/Stop_Bidule", self.controller.startstopBidule)
+        self.makePerformButton("Start/Stop_Resolume", self.controller.startstopResolume)
 
         # More advanced buttons
-        self.makePerformButtonAdvanced("loopingonoff",None)
-        self.makePerformButtonAdvanced("loopingfade",None)
-        self.makePerformButtonAdvanced("loopinglength",None)
-        self.makePerformButtonAdvanced("scale",None)
+#        self.makePerformButtonAdvanced("loopingonoff",None)
+#        self.makePerformButtonAdvanced("loopingfade",None)
+#        self.makePerformButtonAdvanced("loopinglength",None)
+#        self.makePerformButtonAdvanced("scale",None)
         self.makePerformButtonAdvanced("transpose",None)
         self.makePerformButtonAdvanced("transposeauto",None)
         self.makePerformButtonAdvanced("Notes_Off", self.controller.sendANO)

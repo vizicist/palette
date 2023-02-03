@@ -28,8 +28,8 @@ func main() {
 // Usage for controlling the "quadpro" (QuadPro) plugin
 func usage() string {
 	return `Commands:
-	palette start [ engine | gui | bidule | resolume ]
-	palette stop [ engine | gui | bidule | resolume ]
+	palette start [ all | engine | gui | bidule | resolume ]
+	palette stop [ all | engine | gui | bidule | resolume ]
 	palette version
 	palette {plugin}.{api} [ {argname} {argvalue} ] ...
 	`
@@ -92,7 +92,7 @@ func CliCommand(args []string) string {
 		case "resolume":
 			return doApi("quadpro.startprocess", "process", "resolume")
 
-		case "all":
+		case "", "all":
 			s1 := doStartEngine()
 			s2 := doApi("quadpro.startprocess", "process", "all")
 			return s1 + "\n" + s2
@@ -109,6 +109,13 @@ func CliCommand(args []string) string {
 
 		switch arg1 {
 
+		case "", "all":
+			_, err := engine.RemoteAPI("engine.stopall")
+			if err != nil {
+				return fmt.Sprintf("RemoteAPI: err=%s\n", err)
+			}
+			return ""
+
 		case "engine":
 			_, err := engine.RemoteAPI("engine.stop")
 			if err != nil {
@@ -124,11 +131,6 @@ func CliCommand(args []string) string {
 
 		case "resolume":
 			return doApi("quadpro.stopprocess", "process", "resolume")
-
-		case "all":
-			s1 := doApi("quadpro.stopprocess", "process", "all")
-			s2 := doApi("engine.stop")
-			return s1 + "\n" + s2
 
 		default:
 			return usage()
@@ -150,7 +152,7 @@ func CliCommand(args []string) string {
 	default:
 		words := strings.Split(api, ".")
 		if len(words) != 2 {
-			return "Invalid api format, expecting {plugin}.{api}"
+			return "Invalid api format, expecting {plugin}.{api}\n" + usage()
 		}
 		return doApi(api, args[1:]...)
 	}
