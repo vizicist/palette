@@ -4,7 +4,6 @@ import (
 	"math"
 	"sync"
 
-	"github.com/hypebeast/go-osc/osc"
 	"github.com/vizicist/palette/engine"
 )
 
@@ -117,12 +116,7 @@ func (logic *PatchLogic) cursorToVelocity(ctx *engine.PluginContext, ce engine.C
 
 func (logic *PatchLogic) generateVisualsFromCursor(ce engine.CursorEvent) {
 	// send an OSC message to Resolume
-	msg := osc.NewMessage("/cursor")
-	msg.Append(ce.Ddu)
-	msg.Append(ce.Cid)
-	msg.Append(float32(ce.X))
-	msg.Append(float32(ce.Y))
-	msg.Append(float32(ce.Z))
+	msg := engine.CursorToOscMsg(ce)
 	engine.TheResolume().ToFreeFramePlugin(logic.patch.Name(), msg)
 }
 

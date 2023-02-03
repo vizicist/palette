@@ -70,17 +70,18 @@ func (pm *ProcessManager) CheckAutostartProcesses() {
 
 func (pm *ProcessManager) Activate(process string) error {
 	doall := (process == "all" || process == "*")
-	anydone := false
+	if !doall {
+		_, ok := pm.info[process]
+		if !ok {
+			return fmt.Errorf("ProcessManager.Activate: unknown process %s", process)
+		}
+	}
 	for nm, pi := range pm.info {
 		if (doall || nm == process) && pi.Activate != nil {
 			LogOfType("process", "Activate", "process", nm)
 			go pi.Activate()
 			pi.Activated = true
-			anydone = true
 		}
-	}
-	if !anydone {
-		return fmt.Errorf("Activate: no process %s", process)
 	}
 	return nil
 }
@@ -101,6 +102,8 @@ func (pm *ProcessManager) AddProcessBuiltIn(process string) {
 		pm.AddProcess(process, TheBidule().ProcessInfo())
 	case "resolume":
 		pm.AddProcess(process, TheResolume().ProcessInfo())
+	case "gui":
+		pm.AddProcess(process, GuiProcessInfo())
 	}
 }
 
@@ -191,23 +194,44 @@ func (pm ProcessManager) KillAll(ctx *PluginContext) error {
 
 /*
 // KillProcess kills a process (synchronously)
-func KillProcess(process string) {
-	switch process {
-	case "all":
-		for _, info := range ProcessInfo {
-		for _, info := range ProcssInfo {
-			KillExecuable(info.Exe)
-	cae "apps":
-		for nm, inf := rang ProcessInfo {
-			if IsAppName(nm) {
-				illExecutable(ino.Exe)
 
-		}
-	deault:
-		p, err = getProessInfo(process)
-		if err != nil {
-			illExecutablep.Exe)
+	func KillProcess(process string) {
+		switch process {
+		case "all":
+			for _, info := range ProcessInfo {
+			for _, info := range ProcssInfo {
+				KillExecuable(info.Exe)
+		cae "apps":
+			for nm, inf := rang ProcessInfo {
+				if IsAppName(nm) {
+					illExecutable(ino.Exe)
 
+			}
+		deault:
+			p, err = getProessInfo(process)
+			if err != nil {
+				illExecutablep.Exe)
 
 }
 */
+
+func GuiProcessInfo() *ProcessInfo {
+	fullpath := EngineParam("gui")
+	if fullpath != "" && !FileExists(fullpath) {
+		LogWarn("No Resolume found, looking for", "path", fullpath)
+		return nil
+	}
+	if fullpath == "" {
+		fullpath = "C:\\Program Files\\Palette\\bin\\palette_gui.exe"
+		if !FileExists(fullpath) {
+			LogWarn("Gui not found in default location")
+			return nil
+		}
+	}
+	exe := fullpath
+	lastslash := strings.LastIndex(fullpath, "\\")
+	if lastslash > 0 {
+		exe = fullpath[lastslash+1:]
+	}
+	return NewProcessInfo(exe, fullpath, "", nil)
+}

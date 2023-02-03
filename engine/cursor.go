@@ -6,10 +6,14 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/hypebeast/go-osc/osc"
 )
 
 // CursorDeviceCallbackFunc xxx
 type CursorCallbackFunc func(e CursorEvent)
+
+var CursorClientPort = 6666
 
 // CursorEvent is a single Cursor event
 type CursorEvent struct {
@@ -32,6 +36,8 @@ type CursorState struct {
 
 type CursorManager struct {
 	cursors      map[string]*CursorState
+	oscOutput    bool
+	oscClient    *osc.Client
 	cursorsMutex sync.RWMutex
 }
 
@@ -87,6 +93,19 @@ func (cm *CursorManager) GetCursorState(cid string) *CursorState {
 	return cs
 }
 
+func (cm *CursorManager) HandleCursorEvent(ce CursorEvent) {
+
+	switch ce.Ddu {
+
+	case "clear":
+		// Special event to clear cursors (by sending them "up" events)
+		cm.clearCursors()
+
+	case "down", "drag", "up":
+		cm.handleDownDragUp(ce)
+	}
+}
+
 func (cm *CursorManager) clearCursors() {
 
 	cm.cursorsMutex.RLock()
@@ -109,19 +128,6 @@ func (cm *CursorManager) clearCursors() {
 	cm.cursorsMutex.RUnlock()
 
 	cm.deleteCids(cidsToDelete)
-}
-
-func (cm *CursorManager) HandleCursorEvent(ce CursorEvent) {
-
-	switch ce.Ddu {
-
-	case "clear":
-		// Special event to clear cursors (by sending them "up" events)
-		cm.clearCursors()
-
-	case "down", "drag", "up":
-		cm.handleDownDragUp(ce)
-	}
 }
 
 func (cm *CursorManager) generateCursorGesture(cid string, noteDuration time.Duration, x0, y0, z0, x1, y1, z1 float32) {
@@ -184,6 +190,16 @@ func (cm *CursorManager) handleDownDragUp(ce CursorEvent) {
 
 	// See who wants this cinput, but don't hold the Lock
 	PluginsHandleCursorEvent(ce)
+	if cm.oscOutput {
+		if cm.oscClient == nil {
+			cm.oscClient = osc.NewClient(LocalAddress, CursorClientPort)
+			// oscClient is guaranteed to be non-nil
+		}
+		msg := CursorToOscMsg(ce)
+		err := cm.oscClient.Send(msg)
+		LogIfError(err)
+		LogOfType("cursor", "CursorManager sending to OSC client", "ce", ce)
+	}
 
 	LogOfType("cursor", "CursorManager.handleDownDragUp", "ce", ce)
 
@@ -193,6 +209,16 @@ func (cm *CursorManager) handleDownDragUp(ce CursorEvent) {
 		delete(cm.cursors, ce.Cid)
 		cm.cursorsMutex.Unlock()
 	}
+}
+
+func CursorToOscMsg(ce CursorEvent) *osc.Message {
+	msg := osc.NewMessage("/cursor")
+	msg.Append(ce.Ddu)
+	msg.Append(ce.Cid)
+	msg.Append(float32(ce.X))
+	msg.Append(float32(ce.Y))
+	msg.Append(float32(ce.Z))
+	return msg
 }
 
 func (cm *CursorManager) autoCursorUp(now time.Time) {
@@ -215,6 +241,8 @@ func (cm *CursorManager) autoCursorUp(now time.Time) {
 			cm.cursorsMutex.RUnlock()
 			cm.handleDownDragUp(ce)
 			cm.cursorsMutex.RUnlock()
+
+			cidsToDelete = append(cidsToDelete, cid)
 
 			cidsToDelete = append(cidsToDelete, cid)
 		}

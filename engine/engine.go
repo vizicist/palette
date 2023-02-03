@@ -16,6 +16,7 @@ type Engine struct {
 	params         *ParamValues
 	Router         *Router
 	Scheduler      *Scheduler
+	CursorManager      *CursorManager
 	ProcessManager *ProcessManager
 	// CursorManager *CursorManager
 	done chan bool
@@ -35,10 +36,15 @@ func NewEngine() *Engine {
 	defer engineSysex.Unlock()
 
 	InitLog("engine")
+
+	cm := NewCursorManager()
+	router := NewRouter(cm)
+
 	TheEngine = &Engine{
 		params:         NewParamValues(),
-		Router:         NewRouter(),
 		Scheduler:      NewScheduler(),
+		Router:         router,
+		CursorManager: cm,
 		ProcessManager: NewProcessManager(),
 		done:           make(chan bool),
 	}
@@ -207,7 +213,7 @@ func (e *Engine) StartHTTP(port int) {
 		default:
 			response = ErrorResponse(fmt.Errorf("HTTP server unable to handle method=%s", req.Method))
 		}
-	})
+})
 
 	source := fmt.Sprintf("127.0.0.1:%d", port)
 	err := http.ListenAndServe(source, nil)

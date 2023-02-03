@@ -1,28 +1,6 @@
 package engine
 
 /*
-// HandleMIDIInput xxx
-func (layer *Patch) HandleMidiEvent(me MidiEvent) {
-	LogInfo("Patch.HandleMidiEvent", "me", me)
-	for n, agent := range layer.agents {
-		ctx := layer.agentsContext[n]
-		agent.OnMidiEvent(ctx, me)
-	}
-
-	layer.midiInputMutex.Lock()
-	defer layer.midiInputMutex.Unlock()
-
-	LogOfType("midi", "Router.HandleMIDIInput", "event", e)
-
-	if layer.MIDIThru {
-		layer.PassThruMIDI(e)
-	}
-	if layer.MIDISetScale {
-		layer.handleMIDISetScaleNote(e)
-	}
-}
-
-/*
 func CallerPackageAndFunc() (string, string) {
 	pc, _, _, _ := runtime.Caller(1)
 
@@ -59,41 +37,6 @@ func (layer *Patch) clearExternalScale() {
 
 /*
  */
-
-/*
-func (layer) *Patch) cursorToPitch(ce CursorStepEvent) uint8 {
-	pitchmin := layer.params.ParamIntValue("sound.pitchmin")
-	pitchmax := layer.params.ParamIntValue("sound.pitchmax")
-	dp := pitchmax - pitchmin + 1
-	p1 := int(ce.X * float32(dp))
-	p := uint8(pitchmin + p1%dp)
-	chromatic := layer.params.ParamBoolValue("sound.chromatic")
-	if !chromatic {
-		scale := layer.getScale()
-		p = scale.ClosestTo(p)
-		// MIDIOctaveShift might be negative
-		i := int(p) + 12*layer.MIDIOctaveShift
-		for i < 0 {
-			i += 12
-		}
-		for i > 127 {
-			i -= 12
-		}
-		p = uint8(i + layer.TransposePitch)
-	}
-	return p
-}
-*/
-
-/*
- */
-
-/*
-func (layer) *Patch) cursorToDuration(ce CursorStepEvent) int {
-	return 92
-}
-
-*/
 
 /*
 func (layer) *Patch) loopQuant() {
@@ -156,7 +99,3 @@ func (layer) *Patch) loopQuant() {
 	}
 }
 */
-
-/*
-
- */

@@ -67,7 +67,7 @@ func PluginsHandleCursorEvent(ce CursorEvent) {
 	for _, ctx := range Plugins {
 		if ctx.IsSourceAllowed(source) {
 			_, err := ctx.api(ctx, "event", ce.ToMap())
-			LogError(err)
+			LogIfError(err)
 		}
 	}
 }
