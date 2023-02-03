@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"strconv"
@@ -56,11 +57,11 @@ type HeartbeatEvent struct {
 
 type APIExecutorFunc func(api string, nuid string, rawargs string) (result any, err error)
 
-func NewRouter() *Router {
+func NewRouter(cm *CursorManager) *Router {
 
-	r := Router{}
-
-	r.cursorManager = NewCursorManager()
+	r := Router{
+		cursorManager: cm,
+	}
 
 	err := LoadParamEnums()
 	if err != nil {
@@ -261,14 +262,14 @@ func (r *Router) handleOSCInput(e OSCEvent) {
 
 	case "/clientrestart":
 		// This message currently comes from the FFGL plugins in Resolume
-		r.handleClientRestart(e.Msg)
+		r.oscHandleClientRestart(e.Msg)
 
 	case "/event": // These messages encode the arguments as JSON
 		LogError(fmt.Errorf("/event OSC message should no longer be used"))
 		// r.handleOSCEvent(e.Msg)
 
 	case "/button":
-		r.handleMMTTButton(e.Msg)
+		r.oscHandleButton(e.Msg)
 
 	case "/cursor":
 		// This message comes from the mmtt_kinect process,
@@ -276,7 +277,16 @@ func (r *Router) handleOSCInput(e OSCEvent) {
 		// cursor down/drag/up input.  This is kinda like TUIO,
 		// except that it's not a polling interface - servers
 		// need to send explicit events, including a reliable "up".
-		r.handleMMTTCursor(e.Msg)
+		r.oscHandleCursor(e.Msg)
+
+		/*
+			case "/sprite":
+				r.handleSpriteMsg(e.Msg)
+		*/
+
+	case "/api":
+		err := r.oscHandleApi(e.Msg)
+		LogIfError(err)
 
 	default:
 		LogWarn("Router.HandleOSCInput: Unrecognized OSC message", "source", e.Source, "msg", e.Msg)
@@ -293,7 +303,7 @@ func (r *Router) notifyGUI(eventName string) {
 	LogOfType("osc", "Router.notifyGUI", "msg", msg)
 }
 
-func (r *Router) handleMMTTButton(msg *osc.Message) {
+func (r *Router) oscHandleButton(msg *osc.Message) {
 	buttName, err := argAsString(msg, 0)
 	if err != nil {
 		LogError(err)
@@ -303,7 +313,7 @@ func (r *Router) handleMMTTButton(msg *osc.Message) {
 	go TheResolume().showText(text)
 }
 
-func (r *Router) handleClientRestart(msg *osc.Message) {
+func (r *Router) oscHandleClientRestart(msg *osc.Message) {
 
 	nargs := msg.CountArguments()
 	if nargs < 1 {
@@ -320,8 +330,24 @@ func (r *Router) handleClientRestart(msg *osc.Message) {
 	CallApiOnAllPlugins("event", map[string]string{"event": "clientrestart", "portnum": s})
 }
 
+func (r *Router) getXYZargs(msg *osc.Message) (x, y, z float32, err error) {
+	x, err = argAsFloat32(msg, 2)
+	if err != nil {
+		return
+	}
+	y, err = argAsFloat32(msg, 3)
+	if err != nil {
+		return
+	}
+	z, err = argAsFloat32(msg, 4)
+	if err != nil {
+		return
+	}
+	return
+}
+
 // handleMMTTCursor handles messages from MMTT, reformating them as a standard cursor event
-func (r *Router) handleMMTTCursor(msg *osc.Message) {
+func (r *Router) oscHandleCursor(msg *osc.Message) {
 
 	nargs := msg.CountArguments()
 	if nargs < 1 {
@@ -338,22 +364,11 @@ func (r *Router) handleMMTTCursor(msg *osc.Message) {
 		LogError(err)
 		return
 	}
-	x, err := argAsFloat32(msg, 2)
+	x, y, z, err := r.getXYZargs(msg)
 	if err != nil {
 		LogError(err)
 		return
 	}
-	y, err := argAsFloat32(msg, 3)
-	if err != nil {
-		LogError(err)
-		return
-	}
-	z, err := argAsFloat32(msg, 4)
-	if err != nil {
-		LogError(err)
-		return
-	}
-
 	ce := CursorEvent{
 		Cid:   cid + ",mmtt", // NOTE: we add an mmmtt tag
 		Click: CurrentClick(),
@@ -378,6 +393,36 @@ func (r *Router) handleMMTTCursor(msg *osc.Message) {
 	LogOfType("mmtt", "MMTT Cursor", "source", ce.Source, "ddu", ce.Ddu, "x", ce.X, "y", ce.Y, "z", ce.Z)
 
 	r.cursorManager.HandleCursorEvent(ce)
+}
+
+/*
+// handleSpriteMsg
+func (r *Router) handleSpriteMsg(msg *osc.Message) {
+	x, y, z, err := r.getXYZargs(msg)
+	if err != nil {
+		LogError(err)
+		return
+	}
+	LogInfo("Router.handleSpriteMsg", "x", x, "y", y, "z", z)
+	// r.cursorManager.HandleCursorEvent(ce)
+}
+*/
+
+// handleApiMsg
+func (r *Router) oscHandleApi(msg *osc.Message) error {
+	apijson, err := argAsString(msg, 0)
+	if err != nil {
+		return err
+	}
+	var f any
+	err = json.Unmarshal([]byte(apijson), &f)
+	if err != nil {
+		return fmt.Errorf("unable to Unmarshal apijson=%s", apijson)
+	}
+	LogInfo("Router.handleApiMsg", "apijson", apijson)
+	LogInfo("Router.handleApiMsg", "f", f)
+	// r.cursorManager.HandleCursorEvent(ce)
+	return nil
 }
 
 /*
@@ -409,6 +454,9 @@ func (r *Router) handleOSCEvent(msg *osc.Message) {
 */
 
 func argAsInt(msg *osc.Message, index int) (i int, err error) {
+	if index >= len(msg.Arguments) {
+		return 0, fmt.Errorf("Not enough arguments, looking for index=%d", index)
+	}
 	arg := msg.Arguments[index]
 	switch v := arg.(type) {
 	case int32:
@@ -422,6 +470,9 @@ func argAsInt(msg *osc.Message, index int) (i int, err error) {
 }
 
 func argAsFloat32(msg *osc.Message, index int) (f float32, err error) {
+	if index >= len(msg.Arguments) {
+		return f, fmt.Errorf("Not enough arguments, looking for index=%d", index)
+	}
 	arg := msg.Arguments[index]
 	switch v := arg.(type) {
 	case float32:
@@ -435,6 +486,9 @@ func argAsFloat32(msg *osc.Message, index int) (f float32, err error) {
 }
 
 func argAsString(msg *osc.Message, index int) (s string, err error) {
+	if index >= len(msg.Arguments) {
+		return s, fmt.Errorf("Not enough arguments, looking for index=%d", index)
+	}
 	arg := msg.Arguments[index]
 	switch v := arg.(type) {
 	case string:

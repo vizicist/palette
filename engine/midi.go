@@ -195,8 +195,6 @@ func (state *MIDIPortChannelState) UpdateBankProgram(synth *Synth) {
 			"data1", "0x"+hexString(data1))
 
 		LogError(state.output.Send([]byte{status, data1}))
-	} else {
-		// LogInfo("PROGRAM DID NOT CHANGE", "program", program, "mc.program", state.program)
 	}
 }
 

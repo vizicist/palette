@@ -91,6 +91,12 @@ func IsLogging(logtype string) bool {
 
 }
 
+func LogIfError(err error, keysAndValues ...any) {
+	if err != nil {
+		LogError(err, keysAndValues...)
+	}
+}
+
 // LogError will accept a nil value and do nothing
 func LogError(err error, keysAndValues ...any) {
 

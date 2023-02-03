@@ -460,7 +460,7 @@ func (patch *Patch) Load(category string, filename string) error {
 			return err
 		}
 	} else {
-		patch.params.ApplyValuesFromMap(category, paramsmap)
+		patch.params.ApplyValuesFromMap(category, paramsmap, patch.params.Set)
 	}
 
 	// If there's a _override.json file, use it
@@ -472,7 +472,7 @@ func (patch *Patch) Load(category string, filename string) error {
 		if err != nil {
 			return err
 		}
-		patch.params.ApplyValuesFromMap(category, overridemap)
+		patch.params.ApplyValuesFromMap(category, overridemap, patch.params.Set)
 	}
 
 	// For any parameters that are in Paramdefs but are NOT in the loaded

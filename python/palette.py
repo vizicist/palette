@@ -26,44 +26,45 @@ GlobalPerformLabels = {}
 
 PerformDefaultVal = {} # these values are indexes into PerformLabels
 
-PerformLabels["loopinglength"] = [
-    {"label":"Loop Length_8 beats",  "value":8*OneBeat},
-    {"label":"Loop Length_16 beats", "value":16*OneBeat},
-    {"label":"Loop Length_32 beats", "value":32*OneBeat},
-    {"label":"Loop Length_64 beats", "value":64*OneBeat},
-    {"label":"Loop Length_4 beats", "value":4*OneBeat},
-]
-SimpleScales = [
-	{"label":"*Newage_Scale",    "value":"newage"},
-	{"label":"*Arabian_Scale",   "value":"arabian"},
-	# {"label":"*Chromatic_Scale", "value":"chromatic"},
-    # {"label":"*Dorian_Scale","value":"dorian"},
-	{"label":"*Fifths_Scale",    "value":"fifths"},
-    {"label":"*Harminor_Scale",  "value":"harminor"},
-    # {"label":"*Lydian_Scale","value":"lydian"},
-    {"label":"*Melminor_Scale",  "value":"melminor"},
-    {"label":"*Raga_Scale",     "value":"raga1"},
-]
-PerformScales = [
-	{"label":"*Newage_Scale",    "value":"newage"},
-    # {"label":"*Aeolian_Scale",   "value":"aeolian"},
- 	{"label":"*Arabian_Scale",   "value":"arabian"},
- 	{"label":"*Chromatic_Scale", "value":"chromatic"},
-    # {"label":"*Dorian_Scale","value":"dorian"},
- 	{"label":"*Fifths_Scale",    "value":"fifths"},
-    {"label":"*Harminor_Scale",  "value":"harminor"},
-    # {"label":"*Ionian_Scale","value":"ionian"},
-    # {"label":"*Locrian_Scale",   "value":"locrian"},
-    # {"label":"*Lydian_Scale","value":"lydian"},
-    {"label":"*Melminor_Scale",  "value":"melminor"},
-    # {"label":"*Mixolydian_Scale","value":"mixolydian"},
-    {"label":"*Phrygian_Scale",  "value":"phrygian"},
-    {"label":"*Raga_Scale",     "value":"raga1"},
-    # {"label":"*Raga2_Scale", "value":"raga2"},
-    # {"label":"*Raga3_Scale", "value":"raga3"},
-    # {"label":"*Raga4_Scale", "value":"raga4"},
-]
-PerformDefaultVal["scale"] = 0
+#PerformLabels["loopinglength"] = [
+#    {"label":"Loop Length_8 beats",  "value":8*OneBeat},
+#    {"label":"Loop Length_16 beats", "value":16*OneBeat},
+#    {"label":"Loop Length_32 beats", "value":32*OneBeat},
+#    {"label":"Loop Length_64 beats", "value":64*OneBeat},
+#    {"label":"Loop Length_4 beats", "value":4*OneBeat},
+#]
+
+# SimpleScales = [
+# 	{"label":"*Newage_Scale",    "value":"newage"},
+# 	{"label":"*Arabian_Scale",   "value":"arabian"},
+# 	# {"label":"*Chromatic_Scale", "value":"chromatic"},
+#     # {"label":"*Dorian_Scale","value":"dorian"},
+# 	{"label":"*Fifths_Scale",    "value":"fifths"},
+#     {"label":"*Harminor_Scale",  "value":"harminor"},
+#     # {"label":"*Lydian_Scale","value":"lydian"},
+#     {"label":"*Melminor_Scale",  "value":"melminor"},
+#     {"label":"*Raga_Scale",     "value":"raga1"},
+# ]
+# PerformScales = [
+# 	{"label":"*Newage_Scale",    "value":"newage"},
+#     # {"label":"*Aeolian_Scale",   "value":"aeolian"},
+#  	{"label":"*Arabian_Scale",   "value":"arabian"},
+#  	{"label":"*Chromatic_Scale", "value":"chromatic"},
+#     # {"label":"*Dorian_Scale","value":"dorian"},
+#  	{"label":"*Fifths_Scale",    "value":"fifths"},
+#     {"label":"*Harminor_Scale",  "value":"harminor"},
+#     # {"label":"*Ionian_Scale","value":"ionian"},
+#     # {"label":"*Locrian_Scale",   "value":"locrian"},
+#     # {"label":"*Lydian_Scale","value":"lydian"},
+#    {"label":"*Melminor_Scale",  "value":"melminor"},
+#    # {"label":"*Mixolydian_Scale","value":"mixolydian"},
+#    {"label":"*Phrygian_Scale",  "value":"phrygian"},
+#    {"label":"*Raga_Scale",     "value":"raga1"},
+#    # {"label":"*Raga2_Scale", "value":"raga2"},
+#    # {"label":"*Raga3_Scale", "value":"raga3"},
+#    # {"label":"*Raga4_Scale", "value":"raga4"},
+#]
+#PerformDefaultVal["scale"] = 0
 
 PerformLabels["quantstyle"] = [
     {"label":"Fret_Quantize", "value":"frets"},
@@ -76,17 +77,17 @@ PerformLabels["volstyle"] = [
     {"label":"Fixed_Vol", "value":"fixed"},
 ]
 
-PerformLabels["loopingfade"] = [
-    {"label":"Loop Fade_Slowest", "value":0.7},
-    {"label":"Loop Fade_Slower", "value":0.6},
-    {"label":"Loop Fade_Slow", "value":0.5},
-    {"label":"Loop Fade_Med",  "value":0.4},
-    {"label":"Loop Fade_Fast", "value":0.2},
-    {"label":"Loop Fade_Faster", "value":0.1},
-    {"label":"Loop Fade_Fastest", "value":0.05},
-    {"label":"Loop_Forever", "value":1.0},
-]
-PerformDefaultVal["loopingfade"] = 7
+#PerformLabels["loopingfade"] = [
+#    {"label":"Loop Fade_Slowest", "value":0.7},
+#    {"label":"Loop Fade_Slower", "value":0.6},
+#    {"label":"Loop Fade_Slow", "value":0.5},
+#    {"label":"Loop Fade_Med",  "value":0.4},
+#    {"label":"Loop Fade_Fast", "value":0.2},
+#    {"label":"Loop Fade_Faster", "value":0.1},
+#    {"label":"Loop Fade_Fastest", "value":0.05},
+#    {"label":"Loop_Forever", "value":1.0},
+#]
+#PerformDefaultVal["loopingfade"] = 7
 
 PerformLabels["deltaztrig"] = [
     {"label":"Retrigger_Pressure OFF", "value":1.0},
@@ -100,12 +101,12 @@ PerformLabels["deltaytrig"] = [
 ]
 PerformDefaultVal["deltaytrig"] = 0
 
-PerformLabels["loopingonoff"] = [
-    {"label":"Looping_is OFF",  "value":"off"},
-    # {"label":"Looping_is ON", "value":"recplay"},
-    {"label":"Looping_is ON", "value":"recplay"},
-    {"label":"Loop_Playback Only", "value":"play"},
-]
+#PerformLabels["loopingonoff"] = [
+#    {"label":"Looping_is OFF",  "value":"off"},
+#    # {"label":"Looping_is ON", "value":"recplay"},
+#    {"label":"Looping_is ON", "value":"recplay"},
+#    {"label":"Loop_Playback Only", "value":"play"},
+#]
 
 PerformLabels["midithru"] = [
     {"label":"MIDI Thru_On",  "value":True},
