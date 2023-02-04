@@ -88,6 +88,7 @@
 "engine.attractidleminutes": {"valuetype":"int", "min":"0", "max":"60", "init":"0", "comment":"# Attract timeout, 0 to disable" },
 "engine.autostart": {"valuetype":"string", "min":"autostart", "max":"autostart", "init":"bidule,resolume", "comment":"# Plugins to start" },
 "engine.bidule": {"valuetype":"string", "min":"bidule", "max":"bidule", "init":"C:/Program Files/Plogue/Bidule/Bidule.exe", "comment":"# Bidule executable path" },
+"engine.midiinput": {"valuetype":"string", "min":"midiinput", "max":"midiinput", "init":"", "comment":"# Bidule executable path" },
 "engine.guiresize": {"valuetype":"string", "min":"guiresize", "max":"bidule", "init":"100,100,800,1280", "comment":"# GUI resize" },
 
 "visual.noisevertex": {"valuetype":"float", "min":"0.0", "max":"1.0", "randmin":"0.0", "randmax":"0.0", "init":"0.0", "comment":"# 0-1" },

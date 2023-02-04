@@ -135,17 +135,21 @@ func TwitchUser() (username string, authtoken string) {
 	return
 }
 
-// LocalConfigFilePath xxx
+func ConfigDir() string {
+	return filepath.Join(PaletteDataPath(), "config")
+}
+
 func ConfigFilePath(nm string) string {
-	return filepath.Join(PaletteDataPath(), "config", nm)
+	return filepath.Join(ConfigDir(), nm)
 }
 
 // LogFilePath has a default if LocalPaletteDir fails
 func LogFilePath(nm string) string {
 	localdir := LocalPaletteDir()
 	if localdir == "" {
-		LogWarn("using c:/windows/tmp for log directory.")
-		return filepath.Join("C:/windows/tmp", nm)
+		logdir := DefaultTmpDir
+		LogWarn("Last resort, using tmp for log directory.", "logdir", logdir)
+		return filepath.Join(logdir, nm)
 	}
 	return filepath.Join(localdir, "logs", nm)
 }
@@ -359,50 +363,13 @@ func ReadConfigFile(path string) (map[string]string, error) {
 	return pmap, nil
 }
 
-func EngineParam(nm string) string {
-	return TheEngine.Get(nm)
-}
+// func ParamString(nm string) string {
+// 	return TheEngine.Get(nm)
+// }
 
-func EngineParamWithDefault(nm string, dflt string) string {
-	return TheEngine.GetWithDefault(nm, dflt)
-}
-
-// EngineParamBool returns bool value of nm, or false if nm not set
-func EngineParamBool(nm string) bool {
-	v := EngineParam(nm)
-	if v == "" {
-		return false
-	}
-	return IsTrueValue(v)
-}
-
-func EngineParamIntWithDefault(nm string, dflt int) int {
-	s := EngineParam(nm)
-	if s == "" {
-		return dflt
-	}
-	var val int
-	nfound, err := fmt.Sscanf(s, "%d", &val)
-	if nfound == 0 || err != nil {
-		LogError(err)
-		return dflt
-	}
-	return val
-}
-
-func EngineParamFloatWithDefault(nm string, dflt float64) float64 {
-	s := EngineParam(nm)
-	if s == "" {
-		return dflt
-	}
-	var f float64
-	f, err := strconv.ParseFloat(s, 32)
-	if err != nil {
-		LogError(err)
-		return dflt
-	}
-	return f
-}
+// func EngineParamWithDefault(nm string, dflt string) string {
+// 	return TheEngine.GetWithDefault(nm, dflt)
+// }
 
 func needFloatArg(nm string, api string, args map[string]string) (float32, error) {
 	val, ok := args[nm]
@@ -546,7 +513,7 @@ func RemoteAPIRaw(args string) (map[string]string, error) {
 
 func SendLogs() error {
 
-	recipient := EngineParam("emailto")
+	recipient := TheEngine.Get("engine.emailto")
 	if recipient == "" {
 		msg := "SendLogs: not sending, no emailto in settings"
 		LogWarn(msg)
@@ -595,9 +562,9 @@ func SendMail(body string) error {
 // SendMail xxx
 func SendMailWithAttachment(body, attachfile string) error {
 
-	recipient := EngineParam("emailto")
-	login := EngineParam("emaillogin")
-	password := EngineParam("emailpassword")
+	recipient := TheEngine.Get("engine.emailto")
+	login := TheEngine.Get("engine.emaillogin")
+	password := TheEngine.Get("engine.emailpassword")
 
 	if recipient == "" {
 		return fmt.Errorf("sendMail: not sending, no emailto in settings")

@@ -16,7 +16,7 @@ type Engine struct {
 	params         *ParamValues
 	Router         *Router
 	Scheduler      *Scheduler
-	CursorManager      *CursorManager
+	CursorManager  *CursorManager
 	ProcessManager *ProcessManager
 	// CursorManager *CursorManager
 	done chan bool
@@ -44,10 +44,13 @@ func NewEngine() *Engine {
 		params:         NewParamValues(),
 		Scheduler:      NewScheduler(),
 		Router:         router,
-		CursorManager: cm,
+		CursorManager:  cm,
 		ProcessManager: NewProcessManager(),
 		done:           make(chan bool),
 	}
+
+	TheEngine.ProcessManager.AddProcessBuiltIn("keykit")
+
 	TheEngine.ResetLogTypes(os.Getenv("PALETTE_LOG"))
 	LogInfo("Engine InitLog ==============================================")
 	TheEngine.SetDefaultValues()
@@ -104,7 +107,7 @@ func (e *Engine) Start() {
 	go e.Scheduler.Start()
 	go e.Router.Start()
 
-	if EngineParamBool("depth") {
+	if e.ParamBool("mmtt.depth") {
 		go DepthRunForever()
 	}
 }
@@ -213,7 +216,7 @@ func (e *Engine) StartHTTP(port int) {
 		default:
 			response = ErrorResponse(fmt.Errorf("HTTP server unable to handle method=%s", req.Method))
 		}
-})
+	})
 
 	source := fmt.Sprintf("127.0.0.1:%d", port)
 	err := http.ListenAndServe(source, nil)
