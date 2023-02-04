@@ -46,9 +46,7 @@ def killApp():
     log("killApp called!")
     global PaletteApp
     PaletteApp.killme = True
-    log("killApp before sleep!")
     time.sleep(1.00)
-    log("killApp after sleep!")
     # the .killme method doesn't seem to work all the time
     PaletteApp.destroy()
     log("killApp after destroy!")
@@ -83,7 +81,7 @@ class ProGuiApp(tk.Tk):
         self.nextMode = ""
         self.lastLoadType = ""
         self.lastLoadName = ""
-        self.processRunning = {"bidule":False,"resolume":False}
+        self.processRunning = {"bidule":False,"resolume":False,"keykit":False}
 
         self.defaultGuiLevel = int(os.environ.get("PALETTE_GUI_LEVEL","0"))
 
@@ -972,6 +970,15 @@ class ProGuiApp(tk.Tk):
     def startstopResolume(self):
         log("starstop Resolume")
         self.startstopProcess("resolume")
+
+    def startstopKeykit(self):
+        log("starstop Keykit")
+        self.startstopProcess("keykit")
+
+    def stopAll(self):
+        palette.palette_engine_api("stopall")
+        log("stopAll is calling os._exit(0)!")
+        os._exit(0)  # This is a hard exit, killing all the background threads
 
     def resetAll(self):
 
@@ -2141,6 +2148,8 @@ class PagePerformMain(tk.Frame):
         self.makePerformButton("Help_ ", self.controller.startHelp)
         self.makePerformButton("Start/Stop_Bidule", self.controller.startstopBidule)
         self.makePerformButton("Start/Stop_Resolume", self.controller.startstopResolume)
+        self.makePerformButton("Start/Stop_Keykit", self.controller.startstopKeykit)
+        self.makePerformButton("STOP_ALL", self.controller.stopAll)
 
         # More advanced buttons
 #        self.makePerformButtonAdvanced("loopingonoff",None)

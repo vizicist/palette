@@ -201,6 +201,9 @@ func (quadpro *QuadPro) Api(ctx *engine.PluginContext, api string, apiargs map[s
 		if !ok {
 			return "", fmt.Errorf("ExecuteAPI: missing process argument")
 		}
+
+		engine.LogInfo("Is quadpro.startprocess still used?", "process", process)
+
 		err = ctx.StartRunning(process)
 		if err != nil {
 			return "", err
@@ -283,8 +286,8 @@ func (quadpro *QuadPro) start(ctx *engine.PluginContext) error {
 	// 	}
 	// }
 
-	quadpro.transposeAuto = engine.EngineParamBool("transposeauto")
-	beats := engine.EngineParamIntWithDefault("transposebeats", 48)
+	quadpro.transposeAuto = engine.TheEngine.ParamBool("engine.transposeauto")
+	beats := engine.TheEngine.EngineParamIntWithDefault("engine.transposebeats", 48)
 
 	quadpro.transposeNext = engine.Clicks(beats) * engine.OneBeat
 	quadpro.transposeClicks = engine.Clicks(beats) * engine.OneBeat
@@ -308,11 +311,11 @@ func (quadpro *QuadPro) start(ctx *engine.PluginContext) error {
 
 	// Don't start checking processes right away, after killing them on a restart,
 	// they may still be running for a bit
-	quadpro.processCheckSecs = engine.EngineParamFloatWithDefault("processchecksecs", 60)
-	quadpro.attractCheckSecs = engine.EngineParamFloatWithDefault("attractchecksecs", 2)
-	quadpro.attractIdleSecs = 60 * engine.EngineParamFloatWithDefault("attractidleminutes", 0)
-	quadpro.attractChangeInterval = engine.EngineParamFloatWithDefault("attractchangeinterval", 30)
-	quadpro.attractGestureInterval = engine.EngineParamFloatWithDefault("attractgestureinterval", 0.5)
+	quadpro.processCheckSecs = engine.TheEngine.EngineParamFloatWithDefault("engine.processchecksecs", 60)
+	quadpro.attractCheckSecs = engine.TheEngine.EngineParamFloatWithDefault("engine.attractchecksecs", 2)
+	quadpro.attractIdleSecs = 60 * engine.TheEngine.EngineParamFloatWithDefault("engine.attractidleminutes", 0)
+	quadpro.attractChangeInterval = engine.TheEngine.EngineParamFloatWithDefault("engine.attractchangeinterval", 30)
+	quadpro.attractGestureInterval = engine.TheEngine.EngineParamFloatWithDefault("engine.attractgestureinterval", 0.5)
 
 	return nil
 }
@@ -810,7 +813,7 @@ func (quadpro *QuadPro) mmttInfo() *engine.ProcessInfo {
 	// NOTE: it's inside a sub-directory of bin, so all the necessary .dll's are contained
 
 	// The value of mmtt is either "kinect" or "oak" or ""
-	mmtt := engine.EngineParam("mmtt")
+	mmtt := engine.TheEngine.Get("engine.mmtt")
 	if mmtt == "" {
 		return nil
 	}

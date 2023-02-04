@@ -11,6 +11,7 @@ DEFINE_TYPES(logic_visual);
 DEFINE_TYPES(quantstyle);
 DEFINE_TYPES(volstyle);
 DEFINE_TYPES(shape);
+DEFINE_TYPES(midiinput);
 DEFINE_TYPES(movedir);
 DEFINE_TYPES(rotangdir);
 DEFINE_TYPES(mirror);
@@ -50,9 +51,11 @@ LayerParams_InitializeTypes() {
 	LayerParams_guiresizeTypes.push_back("100,100,800,1280");
 	LayerParams_guiresizeTypes.push_back("");
 
-	LayerParams_autostartTypes.push_back("gui,bidule,resolume");
-	LayerParams_autostartTypes.push_back("bidule,resolume");
+	LayerParams_autostartTypes.push_back("gui");
 	LayerParams_autostartTypes.push_back("none");
+	LayerParams_autostartTypes.push_back("gui,bidule");
+	LayerParams_autostartTypes.push_back("gui,resolume");
+	LayerParams_autostartTypes.push_back("gui,bidule,resolume");
 
 	LayerParams_biduleTypes.push_back("C:/Program Files/Plogue/Bidule/Bidule.exe");
 	LayerParams_biduleTypes.push_back("");
@@ -87,6 +90,8 @@ LayerParams_InitializeTypes() {
 	LayerParams_shapeTypes.push_back("triangle");
 	LayerParams_shapeTypes.push_back("square");
 	LayerParams_shapeTypes.push_back("circle");
+
+	LayerParams_midiinputTypes.push_back("");
 
 	LayerParams_movedirTypes.push_back("cursor");
 	LayerParams_movedirTypes.push_back("left");

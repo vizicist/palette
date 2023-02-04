@@ -11,6 +11,14 @@ import (
 	"syscall"
 )
 
+var BiduleDefaultPath = "C:/Program Files/Plogue/Bidule/Bidule.exe"
+var DefaultTmpDir = "C:/windows/tmp"
+var DefaultGuiPath = "C:\\Program Files\\Palette\\bin\\palette_gui.exe"
+var DefaultKeykitPath = "C:\\Program Files\\Palette\\keykit\\bin\\key.exe"
+var DefaultAvenuePath = "C:\\Program Files\\Resolume Avenue\\Avenue.exe"
+var DefaultArenaPath = "C:\\Program Files\\Resolume Arena\\Arena.exe"
+var DefaultKeykitOutput = "Microsoft GS Wavetable Synth"
+
 func killExecutable(executable string) error {
 	exe := isolateExe(executable)
 	// os.Stderr.WriteString("KillExecutable " + executable + "\n")
@@ -39,7 +47,12 @@ func StartExecutableLogOutput(logName string, fullexe string, background bool, a
 // StartExecutable executes something.  If background is true, it doesn't block
 func startExecutable(executable string, background bool, stdout io.Writer, stderr io.Writer, args ...string) (*exec.Cmd, error) {
 
-	cmd := exec.Command(executable, args...)
+	var cmd *exec.Cmd
+	if len(args) == 0 || args[0] == "" {
+		cmd = exec.Command(executable)
+	} else {
+		cmd = exec.Command(executable, args...)
+	}
 
 	// This is done so that ctrl-C doesn't kill things
 	cmd.SysProcAttr = &syscall.SysProcAttr{

@@ -500,7 +500,7 @@ func WinMorphInitialize() error {
 		morphtype, ok := MorphDefs[m.serialNum]
 		if !ok {
 			// It's not explicitly present in morphs.json
-			morphtype = EngineParam("morphtype")
+			morphtype = TheEngine.Get("engine.morphtype")
 			if morphtype == "" {
 				// morphtype = "corners" // default value
 				morphtype = "quadrants" // default value

@@ -276,15 +276,15 @@ func (r *Resolume) ResolumeLayerForText() int {
 }
 
 func (r *Resolume) ProcessInfo() *ProcessInfo {
-	fullpath := EngineParam("resolume")
+	fullpath := TheEngine.Get("engine.resolume")
 	if fullpath != "" && !FileExists(fullpath) {
 		LogWarn("No Resolume found, looking for", "path", fullpath)
 		return nil
 	}
 	if fullpath == "" {
-		fullpath = "C:\\Program Files\\Resolume Avenue\\Avenue.exe"
+		fullpath = DefaultAvenuePath
 		if !FileExists(fullpath) {
-			fullpath = "C:\\Program Files\\Resolume Arena\\Arena.exe"
+			fullpath = DefaultArenaPath
 			if !FileExists(fullpath) {
 				LogWarn("Resolume not found in default locations")
 				return nil

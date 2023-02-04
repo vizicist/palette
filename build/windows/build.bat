@@ -19,6 +19,9 @@ mkdir %ship%\bin
 mkdir %ship%\bin\mmtt_kinect
 mkdir %ship%\html
 mkdir %ship%\ffgl
+mkdir %ship%\keykit
+mkdir %ship%\keykit\bin
+mkdir %ship%\keykit\lib
 
 echo ================ Upgrading Python
 python -m pip install pip | grep -v "already.*satisfied"
@@ -96,6 +99,11 @@ copy %PALETTESOURCE%\binaries\nats\nats-sub.exe %bin% >nul
 copy %PALETTESOURCE%\binaries\nircmdc.exe %bin% >nul
 copy %PALETTESOURCE%\binaries\tail.exe %bin% >nul
 
+echo ================ Copying keykit things
+copy %PALETTESOURCE%\keykit\bin\key.exe %ship%\keykit\bin >nul
+copy %PALETTESOURCE%\keykit\bin\keylib.exe %ship%\keykit\bin >nul
+copy %PALETTESOURCE%\keykit\lib\*.* %ship%\keykit\lib >nul
+
 echo ================ Copying scripts
 pushd %PALETTESOURCE%\scripts
 copy palettetasks.bat %bin% >nul
@@ -114,6 +122,8 @@ for %%X in (data_omnisphere) DO (
 	mkdir %ship%\%%X\config
 	mkdir %ship%\%%X\midifiles
 	mkdir %ship%\%%X\saved
+	mkdir %ship%\%%X\keykit
+	mkdir %ship%\%%X\keykit\liblocal
 	copy %PALETTESOURCE%\%%X\config\homepage.json %ship%\%%X\config >nul
 	copy %PALETTESOURCE%\%%X\config\ffgl.json %ship%\%%X\config >nul
 	copy %PALETTESOURCE%\%%X\config\param*.json %ship%\%%X\config >nul
@@ -132,7 +142,8 @@ for %%X in (data_omnisphere) DO (
 	copy %PALETTESOURCE%\%%X\config\palette.ico %ship%\%%X\config >nul
 	copy %PALETTESOURCE%\%%X\config\*.bidule %ship%\%%X\config >nul
 	copy %PALETTESOURCE%\%%X\midifiles\*.* %ship%\%%X\midifiles >nul
-	xcopy /e /y %PALETTESOURCE%\%%X\saved %ship%\%%X\saved > nul
+	xcopy /e /y %PALETTESOURCE%\%%X\saved %ship%\%%X\saved >nul
+	xcopy /e /y %PALETTESOURCE%\%%X\keykit\liblocal %ship%\%%X\keykit\liblocal >nul
 )
 
 echo ================ Copying windows-specific things

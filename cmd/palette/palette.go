@@ -92,6 +92,9 @@ func CliCommand(args []string) string {
 		case "resolume":
 			return doApi("quadpro.startprocess", "process", "resolume")
 
+		case "keykit":
+			return doApi("quadpro.startprocess", "process", "keykit")
+
 		case "", "all":
 			s1 := doStartEngine()
 			s2 := doApi("quadpro.startprocess", "process", "all")
@@ -131,6 +134,9 @@ func CliCommand(args []string) string {
 
 		case "resolume":
 			return doApi("quadpro.stopprocess", "process", "resolume")
+
+		case "keykit":
+			return doApi("quadpro.stopprocess", "process", "keykit")
 
 		default:
 			return usage()

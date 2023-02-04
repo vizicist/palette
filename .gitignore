@@ -2,6 +2,7 @@ _Current.json
 _Current_*.json
 CurrentSnapshot.*
 CurrentQuad.*
+last.kp
 *.pyc
 *.suo
 default/logs/*.log

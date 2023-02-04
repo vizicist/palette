@@ -144,6 +144,9 @@ func (params *ParamValues) ApplyValuesFromMap(category string, paramsmap map[str
 
 // returns "" if parameter doesn't exist
 func (vals *ParamValues) Get(name string) string {
+	if !strings.Contains(name, ".") {
+		LogWarn("Hey, parameters should always have a period", "name", name)
+	}
 	v, err := vals.paramValueAsString(name)
 	if err != nil {
 		v = ""

@@ -2,6 +2,8 @@ package engine
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 )
@@ -31,9 +33,10 @@ func NewProcessInfo(exe, fullPath, arg string, activate func()) *ProcessInfo {
 }
 
 func NewProcessManager() *ProcessManager {
-	return &ProcessManager{
+	pm := &ProcessManager{
 		info: make(map[string]*ProcessInfo),
 	}
+	return pm
 }
 
 func (pm *ProcessManager) CheckAutostartProcesses() {
@@ -104,11 +107,15 @@ func (pm *ProcessManager) AddProcessBuiltIn(process string) {
 		pm.AddProcess(process, TheResolume().ProcessInfo())
 	case "gui":
 		pm.AddProcess(process, GuiProcessInfo())
+	case "keykit":
+		pm.AddProcess(process, KeykitProcessInfo())
 	}
 }
 
 func (pm *ProcessManager) StartRunning(process string) error {
 
+	keyroot := os.Getenv("KEYROOT")
+	LogInfo("KEYROOT value", "keyroot", keyroot)
 	LogOfType("process", "StartRunning", "process", process)
 
 	for nm, pi := range pm.info {
@@ -120,7 +127,7 @@ func (pm *ProcessManager) StartRunning(process string) error {
 				return fmt.Errorf("StartRunning: unable to start %s, no executable path", process)
 			}
 
-			LogInfo("StartRunning", "path", pi.FullPath)
+			LogInfo("StartRunning", "path", pi.FullPath, "arg", pi.Arg, "lenarg", len(pi.Arg))
 
 			err := StartExecutableLogOutput(process, pi.FullPath, true, pi.Arg)
 			if err != nil {
@@ -216,15 +223,61 @@ func (pm ProcessManager) KillAll(ctx *PluginContext) error {
 */
 
 func GuiProcessInfo() *ProcessInfo {
-	fullpath := EngineParam("gui")
+	fullpath := TheEngine.Get("engine.gui")
 	if fullpath != "" && !FileExists(fullpath) {
-		LogWarn("No Resolume found, looking for", "path", fullpath)
+		LogWarn("No Gui found, looking for", "path", fullpath)
 		return nil
 	}
 	if fullpath == "" {
-		fullpath = "C:\\Program Files\\Palette\\bin\\palette_gui.exe"
+		fullpath = DefaultGuiPath
 		if !FileExists(fullpath) {
 			LogWarn("Gui not found in default location")
+			return nil
+		}
+	}
+	exe := fullpath
+	lastslash := strings.LastIndex(fullpath, "\\")
+	if lastslash > 0 {
+		exe = fullpath[lastslash+1:]
+	}
+	return NewProcessInfo(exe, fullpath, "", nil)
+}
+
+func KeykitProcessInfo() *ProcessInfo {
+
+	// Allow parameter to override keyroot
+	keyroot := TheEngine.Get("engine.keyroot")
+	if keyroot == "" {
+		keyroot = filepath.Join(PaletteDir(), "keykit")
+	}
+	os.Setenv("KEYROOT", keyroot)
+
+	// Allow parameter to override keypath
+	keypath := TheEngine.Get("engine.keypath")
+	if keypath == "" {
+		kp1 := filepath.Join(PaletteDataPath(), "keykit", "liblocal")
+		kp2 := filepath.Join(PaletteDir(), "keykit", "lib")
+		keypath = kp1 + ";" + kp2
+
+	}
+	os.Setenv("KEYPATH", keypath)
+
+	// Allow parameter to override keyoutput
+	keyoutput := TheEngine.Get("engine.keyoutput")
+	if keyoutput == "" {
+		keyoutput = DefaultKeykitOutput
+	}
+	os.Setenv("KEYOUTPUT", keyoutput)
+
+	// Allow parameter to override path to key.exe
+	fullpath := TheEngine.Get("engine.keykit")
+	if fullpath != "" && !FileExists(fullpath) {
+		LogWarn("engine.keykit value doesn't exist, was looking for", "fullpath", fullpath)
+	}
+	if fullpath == "" {
+		fullpath = DefaultKeykitPath
+		if !FileExists(fullpath) {
+			LogWarn("Keykit not found in default location", "fullpath", fullpath)
 			return nil
 		}
 	}
