@@ -3,6 +3,7 @@ package engine
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -111,6 +112,26 @@ func (e *Engine) executeEngineAPI(api string, apiargs map[string]string) (result
 			return "", fmt.Errorf("executeEngineAPI: missing name parameter")
 		}
 		return e.Get(name), nil
+
+	case "startprocess":
+		process, ok := apiargs["process"]
+		if !ok {
+			return "", fmt.Errorf("executeEngineAPI: missing process parameter")
+		}
+		err := e.ProcessManager.StartRunning(process)
+		if err != nil {
+			return "", err
+		}
+		err = e.ProcessManager.Activate(process)
+		return "", err
+
+	case "stopprocess":
+		process, ok := apiargs["process"]
+		if !ok {
+			return "", fmt.Errorf("executeEngineAPI: missing process parameter")
+		}
+		err := e.ProcessManager.StopRunning(process)
+		return "", err
 
 	case "save":
 		filename, ok := apiargs["filename"]
@@ -278,9 +299,7 @@ func (e *Engine) Set(name string, value string) error {
 }
 
 func (e *Engine) Get(name string) string {
-	value := e.params.Get(name)
-	// LogInfo("Engine.Get", "name", name, "value", value)
-	return value
+	return e.params.Get(name)
 }
 
 func (e *Engine) GetWithDefault(nm string, dflt string) string {
@@ -289,6 +308,43 @@ func (e *Engine) GetWithDefault(nm string, dflt string) string {
 	} else {
 		return dflt
 	}
+}
+
+// ParamBool returns bool value of nm, or false if nm not set
+func (e *Engine) ParamBool(nm string) bool {
+	v := e.Get(nm)
+	if v == "" {
+		return false
+	}
+	return IsTrueValue(v)
+}
+
+func (e *Engine) EngineParamIntWithDefault(nm string, dflt int) int {
+	s := e.Get(nm)
+	if s == "" {
+		return dflt
+	}
+	var val int
+	nfound, err := fmt.Sscanf(s, "%d", &val)
+	if nfound == 0 || err != nil {
+		LogError(err)
+		return dflt
+	}
+	return val
+}
+
+func (e *Engine) EngineParamFloatWithDefault(nm string, dflt float64) float64 {
+	s := e.Get(nm)
+	if s == "" {
+		return dflt
+	}
+	var f float64
+	f, err := strconv.ParseFloat(s, 32)
+	if err != nil {
+		LogError(err)
+		return dflt
+	}
+	return f
 }
 
 func (e *Engine) executeSavedAPI(api string, apiargs map[string]string) (result string, err error) {

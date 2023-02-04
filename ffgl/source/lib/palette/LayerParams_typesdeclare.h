@@ -11,6 +11,7 @@ DECLARE_TYPES(logic_visual);
 DECLARE_TYPES(quantstyle);
 DECLARE_TYPES(volstyle);
 DECLARE_TYPES(shape);
+DECLARE_TYPES(midiinput);
 DECLARE_TYPES(movedir);
 DECLARE_TYPES(rotangdir);
 DECLARE_TYPES(mirror);

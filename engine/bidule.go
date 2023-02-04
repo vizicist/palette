@@ -1,7 +1,7 @@
 package engine
 
 import (
-	"strings"
+	"path/filepath"
 	"sync"
 	"time"
 
@@ -40,21 +40,17 @@ func (b *Bidule) Activate() {
 }
 
 func (b *Bidule) ProcessInfo() *ProcessInfo {
-	bidulePath := EngineParam("bidule")
+	bidulePath := TheEngine.Get("engine.bidule")
 	if bidulePath == "" {
-		bidulePath = "C:/Program Files/Plogue/Bidule/Bidule.exe"
+		bidulePath = BiduleDefaultPath
 		LogWarn("No bidule value in settings, using default", "path", bidulePath)
 	}
 	if !FileExists(bidulePath) {
 		LogWarn("No bidule found, looking for", "path", bidulePath)
 		return nil
 	}
-	exe := bidulePath
-	lastslash := strings.LastIndex(exe, "\\")
-	if lastslash > 0 {
-		exe = exe[lastslash+1:]
-	}
-	bidulefile := EngineParam("bidulefile")
+	exe := filepath.Base(bidulePath)
+	bidulefile := TheEngine.Get("engine.bidulefile")
 	if bidulefile == "" {
 		bidulefile = "default.bidule"
 	}

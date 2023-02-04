@@ -46,6 +46,7 @@ Source: "ship\bin\pyinstalled\*"; DestDir: "{app}\bin\pyinstalled"; Flags: ignor
 Source: "ship\bin\mmtt_kinect\*"; DestDir: "{app}\bin\mmtt_kinect"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "ship\ffgl\*"; DestDir: "{app}\ffgl"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "ship\html\*"; DestDir: "{app}\html"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "ship\keykit\*"; DestDir: "{app}\keykit"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 ; NOTE - all data_* files go in CommonProgramFiles\Palette
 Source: "ship\data_omnisphere\*"; DestDir: "{commoncf64}\{#MyAppName}\data_omnisphere"; Flags: comparetimestamp ignoreversion recursesubdirs createallsubdirs

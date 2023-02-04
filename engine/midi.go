@@ -94,7 +94,7 @@ func InitMIDI() {
 	inports := midi.GetInPorts()
 	outports := midi.GetOutPorts()
 
-	midiInputName := EngineParam("midiinput")
+	midiInputName := TheEngine.Get("engine.midiinput")
 
 	// device names is done with strings.Contain	// Note: name matching of MIDI s
 	// beause gomidi/midi appends an index value to the strings
@@ -132,9 +132,13 @@ func InitMIDI() {
 
 type MidiHandlerFunc func(midi.Message, int32)
 
+func (m *MIDIIO) handleMidiError(err error) {
+	LogError(err)
+}
+
 func (m *MIDIIO) Start(inChan chan MidiEvent) {
 	m.midiInputChan = inChan
-	stop, err := midi.ListenTo(m.midiInput, m.handleMidiInput, midi.UseSysEx())
+	stop, err := midi.ListenTo(m.midiInput, m.handleMidiInput, midi.UseSysEx(), midi.HandleError(m.handleMidiError))
 	if err != nil {
 		LogWarn("midi.ListenTo", "err", err)
 		return
