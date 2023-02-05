@@ -18,7 +18,7 @@ function keylocal() {
 	addpostrc(global(localpostrc))
 
 	# Inittask = remotecons(4444)  # would start remote console on port 4444
-	# Inittask = palette_listen()
+	Inittask = palette_listen()
 }
 
 function localprerc() {
