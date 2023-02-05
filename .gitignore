@@ -1,4 +1,6 @@
 _Current.json
+rtmidi/build/.vs
+rtmidi/build/x64
 _Current_*.json
 CurrentSnapshot.*
 CurrentQuad.*
