@@ -136,8 +136,8 @@ func (m *MIDIIO) handleMidiError(err error) {
 	LogError(err)
 }
 
-func (m *MIDIIO) Start(inChan chan MidiEvent) {
-	m.midiInputChan = inChan
+func (m *MIDIIO) Start(midiInputChan chan MidiEvent) {
+	m.midiInputChan = midiInputChan
 	stop, err := midi.ListenTo(m.midiInput, m.handleMidiInput, midi.UseSysEx(), midi.HandleError(m.handleMidiError))
 	if err != nil {
 		LogWarn("midi.ListenTo", "err", err)
@@ -149,23 +149,27 @@ func (m *MIDIIO) Start(inChan chan MidiEvent) {
 }
 
 func (m *MIDIIO) handleMidiInput(msg midi.Message, timestamp int32) {
-	var bt []byte
-	var ch, key, vel uint8
 	LogOfType("midi", "handleMidiInput", "msg", msg)
-	switch {
-	case msg.GetSysEx(&bt):
-		LogOfType("midi", "midi.ListenTo sysex", "bt", bt)
+	m.midiInputChan <- MidiEvent{Msg: msg}
 
-	case msg.GetNoteOn(&ch, &key, &vel):
-		LogOfType("midi", "midi.ListenTo notestart", "bt", bt)
-		m.midiInputChan <- MidiEvent{Msg: msg}
+	/*
+		var bt []byte
+		var ch, key, vel uint8
+		switch {
+		case msg.GetSysEx(&bt):
+			LogOfType("midi", "midi.ListenTo sysex", "bt", bt)
 
-	case msg.GetNoteOff(&ch, &key, &vel):
-		LogOfType("midi", "midi.ListenTo noteend", "bt", bt)
-		m.midiInputChan <- MidiEvent{Msg: msg}
-	default:
-		LogWarn("Unable to handle MIDI input", "msg", msg)
-	}
+		case msg.GetNoteOn(&ch, &key, &vel):
+			LogOfType("midi", "midi.ListenTo notestart", "bt", bt)
+			m.midiInputChan <- MidiEvent{Msg: msg}
+
+		case msg.GetNoteOff(&ch, &key, &vel):
+			LogOfType("midi", "midi.ListenTo noteend", "bt", bt)
+			m.midiInputChan <- MidiEvent{Msg: msg}
+		default:
+			LogWarn("Unable to handle MIDI input", "msg", msg)
+		}
+	*/
 }
 
 /*

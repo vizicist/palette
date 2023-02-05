@@ -13,8 +13,6 @@ import (
 // CursorDeviceCallbackFunc xxx
 type CursorCallbackFunc func(e CursorEvent)
 
-var CursorClientPort = 6666
-
 // CursorEvent is a single Cursor event
 type CursorEvent struct {
 	Cid   string
@@ -36,8 +34,6 @@ type CursorState struct {
 
 type CursorManager struct {
 	cursors      map[string]*CursorState
-	oscOutput    bool
-	oscClient    *osc.Client
 	cursorsMutex sync.RWMutex
 }
 
@@ -190,16 +186,6 @@ func (cm *CursorManager) handleDownDragUp(ce CursorEvent) {
 
 	// See who wants this cinput, but don't hold the Lock
 	PluginsHandleCursorEvent(ce)
-	if cm.oscOutput {
-		if cm.oscClient == nil {
-			cm.oscClient = osc.NewClient(LocalAddress, CursorClientPort)
-			// oscClient is guaranteed to be non-nil
-		}
-		msg := CursorToOscMsg(ce)
-		err := cm.oscClient.Send(msg)
-		LogIfError(err)
-		LogOfType("cursor", "CursorManager sending to OSC client", "ce", ce)
-	}
 
 	LogOfType("cursor", "CursorManager.handleDownDragUp", "ce", ce)
 
@@ -218,6 +204,18 @@ func CursorToOscMsg(ce CursorEvent) *osc.Message {
 	msg.Append(float32(ce.X))
 	msg.Append(float32(ce.Y))
 	msg.Append(float32(ce.Z))
+	return msg
+}
+
+func MidiToOscMsg(me MidiEvent) *osc.Message {
+	msg := osc.NewMessage("/midi")
+	bytes := me.Msg.Bytes()
+	s := "'x"
+	for _, b := range bytes {
+		s += fmt.Sprintf("%02x", b)
+	}
+	s += "'"
+	msg.Append(s)
 	return msg
 }
 

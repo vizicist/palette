@@ -13,9 +13,10 @@ import (
 
 var HTTPPort = 3330
 var OSCPort = 3333
+var EventClientPort = 6666
+var GuiPort = 3943
 
 var LocalAddress = "127.0.0.1"
-var GuiPort = 3943
 
 // Router takes events and routes them
 type Router struct {
@@ -24,6 +25,9 @@ type Router struct {
 	cursorInput   chan CursorEvent
 
 	cursorManager *CursorManager
+
+	oscOutput bool
+	oscClient *osc.Client
 
 	killme bool
 
@@ -36,7 +40,7 @@ type Router struct {
 	// resolumeClient *osc.Client
 	guiClient *osc.Client
 
-	myHostname          string
+	// myHostname          string
 	layerAssignedToNUID map[string]string
 	inputEventMutex     sync.RWMutex
 }
@@ -109,21 +113,43 @@ func (r *Router) Start() {
 	}
 
 	// go StartMorph(r.cursorManager.HandleCursorEvent, 1.0)
-	go StartMorph(r.cursorManager.HandleCursorEvent, 1.0)
+	go StartMorph(r.HandleCursorEvent, 1.0)
+}
+
+func (r *Router) HandleCursorEvent(ce CursorEvent) {
+	r.sendToOscClients(CursorToOscMsg(ce))
+	r.cursorManager.HandleCursorEvent(ce)
+}
+
+func (r *Router) HandleMidiEvent(me MidiEvent) {
+	r.sendToOscClients(MidiToOscMsg(me))
+	PluginsHandleMidiEvent(me)
+}
+
+func (r *Router) sendToOscClients(msg *osc.Message) {
+	if r.oscOutput {
+		if r.oscClient == nil {
+			r.oscClient = osc.NewClient(LocalAddress, EventClientPort)
+			// oscClient is guaranteed to be non-nil
+		}
+		err := r.oscClient.Send(msg)
+		LogIfError(err)
+		LogOfType("cursor", "Router sending to OSC client", "msg", msg)
+	}
 }
 
 // InputListener listens for local device inputs (OSC, MIDI)
-// We could have separate goroutines for the different inputs, but doing
 // them in a single select eliminates some need for locking.
+// We could have separate goroutines for the different inputs, but doing
 func (r *Router) InputListener() {
 	for !r.killme {
 		select {
 		case msg := <-r.OSCInput:
 			r.handleOSCInput(msg)
 		case event := <-r.midiInputChan:
-			PluginsHandleMidiEvent(event)
+			r.HandleMidiEvent(event)
 		case event := <-r.cursorInput:
-			r.cursorManager.HandleCursorEvent(event)
+			r.HandleCursorEvent(event)
 		default:
 			time.Sleep(time.Millisecond)
 		}

@@ -281,7 +281,7 @@ func (e *Engine) Set(name string, value string) error {
 	case "engine.oscoutput":
 		b := IsTrueValue(value)
 		LogInfo("Changing oscoutput", "oscoutput", b)
-		e.Router.cursorManager.oscOutput = b
+		e.Router.oscOutput = b
 	case "engine.debug":
 		e.ResetLogTypes(value)
 	case "engine.attractidleminutes":
