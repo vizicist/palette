@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/vizicist/palette/engine"
-	"gitlab.com/gomidi/midi/v2/drivers"
 )
 
 func init() {

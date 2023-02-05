@@ -7,7 +7,7 @@ import (
 )
 
 type PortChannel struct {
-	port    string // as used by Portmidi
+	port    string
 	channel int    // 0-15 for MIDI channels 1-16
 }
 
