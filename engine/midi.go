@@ -8,7 +8,9 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/thestk/rtmidi/contrib/go/rtmidi"
+	midi "gitlab.com/gomidi/midi/v2"
+	"gitlab.com/gomidi/midi/v2/drivers"
+	_ "gitlab.com/gomidi/midi/v2/drivers/rtmididrv" // autoregisters driver
 )
 
 // These are the values of MIDI status bytes
