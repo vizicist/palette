@@ -954,25 +954,21 @@ class ProGuiApp(tk.Tk):
         self.nextMode = "help"
 
     def startstopProcess(self,processName):
-        log("starstopProcess "+processName)
         if self.processRunning[processName]:
-            api = "stopprocess"
+            start_or_stop = "stopprocess"
         else:
-            api = "startprocess"
-        log("Calling api="+api+" process="+processName)
-        palette.palette_quadpro_api(api,"\"process\": \"" + processName + "\"")
+            start_or_stop = "startprocess"
+        log("startstopProcess: api="+start_or_stop+" process="+processName)
+        palette.palette_engine_api(start_or_stop,"\"process\": \"" + processName + "\"")
         self.processRunning[processName] = not self.processRunning[processName]
 
     def startstopBidule(self):
-        log("starstop Bidule")
         self.startstopProcess("bidule")
 
     def startstopResolume(self):
-        log("starstop Resolume")
         self.startstopProcess("resolume")
 
     def startstopKeykit(self):
-        log("starstop Keykit")
         self.startstopProcess("keykit")
 
     def stopAll(self):

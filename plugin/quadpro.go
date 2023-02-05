@@ -196,27 +196,29 @@ func (quadpro *QuadPro) Api(ctx *engine.PluginContext, api string, apiargs map[s
 		}
 		return "", quadpro.save(category, filename)
 
-	case "startprocess":
-		process, ok := apiargs["process"]
-		if !ok {
-			return "", fmt.Errorf("ExecuteAPI: missing process argument")
-		}
+		/*
+			case "startprocess":
+				process, ok := apiargs["process"]
+				if !ok {
+					return "", fmt.Errorf("ExecuteAPI: missing process argument")
+				}
 
-		engine.LogInfo("Is quadpro.startprocess still used?", "process", process)
+				engine.LogInfo("Is quadpro.startprocess still used?", "process", process)
 
-		err = ctx.StartRunning(process)
-		if err != nil {
-			return "", err
-		}
-		err = ctx.Activate(process)
-		return "", err
+				err = ctx.StartRunning(process)
+				if err != nil {
+					return "", err
+				}
+				err = ctx.Activate(process)
+				return "", err
 
-	case "stopprocess":
-		process, ok := apiargs["process"]
-		if !ok {
-			return "", fmt.Errorf("ExecuteAPI: missing process argument")
-		}
-		return "", ctx.StopRunning(process)
+			case "stopprocess":
+				process, ok := apiargs["process"]
+				if !ok {
+					return "", fmt.Errorf("ExecuteAPI: missing process argument")
+				}
+				return "", ctx.StopRunning(process)
+		*/
 
 	case "status":
 		result = engine.JsonObject(
