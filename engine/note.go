@@ -2,7 +2,6 @@ package engine
 
 import (
 	"fmt"
-	// _ "gitlab.com/gomidi/midi/v2/drivers/rtmididrv" // autoregisters driver
 )
 
 type NoteOn struct {
