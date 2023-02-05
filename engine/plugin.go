@@ -2,8 +2,7 @@ package engine
 
 import (
 	"time"
-
-	"gitlab.com/gomidi/midi/v2/drivers"
+	// "gitlab.com/gomidi/midi/v2/drivers"
 )
 
 type PluginFunc func(ctx *PluginContext, api string, apiargs map[string]string) (string, error)
@@ -315,9 +314,11 @@ func (ctx *EngineContext) PatchApplySaved(patchName, savedName string) error {
 }
 */
 
+/*
 func (ctx *PluginContext) OpenMIDIOutput(name string) drivers.In {
 	return nil
 }
+*/
 
 /*
 // GetSaved is guaranteed to return non=nil
