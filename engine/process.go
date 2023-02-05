@@ -267,7 +267,14 @@ func KeykitProcessInfo() *ProcessInfo {
 	if keyoutput == "" {
 		keyoutput = DefaultKeykitOutput
 	}
-	os.Setenv("KEYOUTPUT", keyoutput)
+	os.Setenv("KEYOUT", keyoutput)
+
+	// Allow parameter to override keyoutput
+	keyallow := TheEngine.Get("engine.keyallow")
+	if keyallow == "" {
+		keyallow = "127.0.0.1"
+	}
+	os.Setenv("KEYALLOW", keyallow)
 
 	// Allow parameter to override path to key.exe
 	fullpath := TheEngine.Get("engine.keykit")
