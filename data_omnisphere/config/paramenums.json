@@ -12,7 +12,7 @@
 	"quantstyle": [ "none", "frets", "fixed", "pressure" ],
 	"volstyle": [ "fixed", "pressure" ],
   "shape": [ "line", "triangle", "square", "circle" ],
-  "midiinput": [ "" ],
+  "midiinput": [ "microKEY2 Air", "" ],
   "movedir": [ "cursor", "left", "right", "up", "down", "random", "random90", "updown", "leftright" ],
   "rotangdir": [ "right", "left", "random" ],
   "mirror": [ "none", "vertical", "horizontal", "four" ],
