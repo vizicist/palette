@@ -546,9 +546,10 @@ func (quadpro *QuadPro) onMidiEvent(ctx *engine.PluginContext, apiargs map[strin
 	*/
 
 	if quadpro.MIDIThru {
-		engine.LogInfo("PassThruMIDI", "msg", me.Msg)
+		engine.LogWarn("quadpro.MIDIThru needs work")
+		/// engine.LogInfo("PassThruMIDI", "msg", me.Msg)
 		// ctx.ScheduleMidi(patch, me.Msg, ctx.CurrentClick())
-		ctx.ScheduleAt(me.Msg, ctx.CurrentClick())
+		/// ctx.ScheduleAt(me.Msg, ctx.CurrentClick())
 	}
 	if quadpro.MIDISetScale {
 		quadpro.handleMIDISetScaleNote(me)

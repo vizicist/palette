@@ -133,6 +133,7 @@ func (synth *Synth) updatePortChannelState() (*MIDIPortChannelState, error) {
 func (synth *Synth) SendANO() {
 
 	state, err := synth.updatePortChannelState()
+	_ = state
 	if err != nil {
 		LogError(err)
 		return
@@ -149,12 +150,13 @@ func (synth *Synth) SendANO() {
 		"data1", "0x"+hexString(data1),
 		"data2", "0x"+hexString(data2))
 
-	LogError(state.output.Send([]byte{status, data1, data2}))
+	/// LogError(state.output.Send([]byte{status, data1, data2}))
 }
 
 func (synth *Synth) SendController(cnum int, cval int) {
 
 	state, err := synth.updatePortChannelState()
+	_ = state
 	if err != nil {
 		LogError(err)
 		return
@@ -178,7 +180,7 @@ func (synth *Synth) SendController(cnum int, cval int) {
 		"data1", "0x"+hexString(data1),
 		"data2", "0x"+hexString(data2))
 
-	LogError(state.output.Send([]byte{status, data1, data2}))
+	/// LogError(state.output.Send([]byte{status, data1, data2}))
 }
 
 /*
@@ -328,6 +330,7 @@ func (synth *Synth) SendNoteToMidiOutput(value any) {
 	}
 
 	state, err := synth.updatePortChannelState()
+	_ = state
 	if err != nil {
 		LogError(err)
 		return
@@ -389,14 +392,15 @@ func (synth *Synth) SendNoteToMidiOutput(value any) {
 		"data1", "0x"+hexString(data1),
 		"data2", "0x"+hexString(data2))
 
-	err = state.output.Send([]byte{status, data1, data2})
-	if err != nil {
-		LogWarn("output.Send", "err", err)
-	}
+	/// err = state.output.Send([]byte{status, data1, data2})
+	/// if err != nil {
+	/// 	LogWarn("output.Send", "err", err)
+	/// }
 }
 
 func (synth *Synth) SendBytes(bytes []byte) error {
-	return synth.state.output.Send(bytes)
+	/// return synth.state.output.Send(bytes)
+	return fmt.Errorf("SendBytes needs work")
 }
 
 func (synth *Synth) UpdateBankProgram() {
@@ -422,7 +426,7 @@ func (synth *Synth) UpdateBankProgram() {
 			"status", "0x"+hexString(status),
 			"data1", "0x"+hexString(data1))
 
-		LogError(state.output.Send([]byte{status, data1}))
+		/// LogError(state.output.Send([]byte{status, data1}))
 	} else {
 		// LogInfo("PROGRAM DID NOT CHANGE", "program", program, "mc.program", state.program)
 	}

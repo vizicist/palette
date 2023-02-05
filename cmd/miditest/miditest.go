@@ -7,6 +7,6 @@ import (
 
 func main() {
 	fmt.Printf("rtmidi start")
-	apis := rtmidi.CompiledAPI()
-	fmt.Printf("compiled apis = %v\n",apis)
+	tjt := rtmidi.Tjt()
+	fmt.Printf("tjt = %d\n",tjt)
 }

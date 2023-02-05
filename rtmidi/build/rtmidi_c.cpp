@@ -47,6 +47,7 @@ class CallbackProxyUserData
 #endif
 extern "C" const unsigned int rtmidi_num_compiled_apis;
 
+extern "C" {
 /* RtMidi API */
 int rtmidi_get_compiled_api (enum RtMidiApi *apis, unsigned int apis_size)
 {
@@ -56,6 +57,7 @@ int rtmidi_get_compiled_api (enum RtMidiApi *apis, unsigned int apis_size)
         memcpy(apis, rtmidi_compiled_apis, num * sizeof(enum RtMidiApi));
     }
     return (int)num;
+}
 }
 
 extern "C" const char* rtmidi_api_names[][2];
