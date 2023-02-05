@@ -3,7 +3,6 @@ package engine
 import (
 	"encoding/json"
 	"fmt"
-	"os"
 	"strconv"
 	"strings"
 	"sync"
@@ -80,15 +79,17 @@ func NewRouter(cm *CursorManager) *Router {
 	r.midiInputChan = make(chan MidiEvent)
 	// r.recordingOn = false
 
-	r.myHostname = os.Getenv("PALETTE_HOSTNAME")
-	if r.myHostname == "" {
-		hostname, err := os.Hostname()
-		if err != nil {
-			LogError(err)
-			hostname = "unknown"
+	/*
+		r.myHostname = os.Getenv("PALETTE_HOSTNAME")
+		if r.myHostname == "" {
+			hostname, err := os.Hostname()
+			if err != nil {
+				LogError(err)
+				hostname = "unknown"
+			}
+			r.myHostname = hostname
 		}
-		r.myHostname = hostname
-	}
+	*/
 
 	// By default, the engine handles Cursor events internally.
 	// However, if publishcursor is set, it ONLY publishes them,
