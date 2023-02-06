@@ -8,6 +8,8 @@ import (
 	"sync"
 )
 
+var TheProcessManager *ProcessManager
+
 type ProcessInfo struct {
 	Exe       string // just the last part
 	FullPath  string
@@ -31,6 +33,20 @@ func NewProcessInfo(exe, fullPath, arg string, activate func()) *ProcessInfo {
 		Activated: false,
 	}
 }
+
+func StartRunning(process string) error {
+	return TheProcessManager.StartRunning(process)
+}
+
+func StopRunning(process string) error {
+	return TheProcessManager.StopRunning(process)
+}
+
+func CheckAutostartProcesses() {
+	TheProcessManager.CheckAutostartProcesses()
+}
+
+//////////////////////////////////////////////////////////////////
 
 func NewProcessManager() *ProcessManager {
 	pm := &ProcessManager{
@@ -98,6 +114,10 @@ func (pm *ProcessManager) AddProcess(name string, info *ProcessInfo) {
 
 }
 
+func AddProcessBuiltIn(process string) {
+	TheProcessManager.AddProcessBuiltIn(process)
+}
+
 func (pm *ProcessManager) AddProcessBuiltIn(process string) {
 
 	switch process {
@@ -109,6 +129,10 @@ func (pm *ProcessManager) AddProcessBuiltIn(process string) {
 		pm.AddProcess(process, GuiProcessInfo())
 	case "keykit":
 		pm.AddProcess(process, KeykitProcessInfo())
+	case "mmtt":
+		if mmtt := MmttInfo(); mmtt != nil {
+			pm.AddProcess(process, mmtt)
+		}
 	}
 }
 

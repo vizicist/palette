@@ -5,11 +5,10 @@ import (
 	"sync"
 )
 
-var Plugins map[string]*PluginContext
+var Plugins = make(map[string]*PluginContext)
 var PluginsMutex sync.Mutex
 
 func init() {
-	Plugins = make(map[string]*PluginContext)
 }
 
 func RegisterPlugin(name string, plugin PluginFunc) {

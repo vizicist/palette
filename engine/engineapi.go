@@ -118,11 +118,11 @@ func (e *Engine) executeEngineAPI(api string, apiargs map[string]string) (result
 		if !ok {
 			return "", fmt.Errorf("executeEngineAPI: missing process parameter")
 		}
-		err := e.ProcessManager.StartRunning(process)
+		err := TheProcessManager.StartRunning(process)
 		if err != nil {
 			return "", err
 		}
-		err = e.ProcessManager.Activate(process)
+		err = TheProcessManager.Activate(process)
 		return "", err
 
 	case "stopprocess":
@@ -130,7 +130,7 @@ func (e *Engine) executeEngineAPI(api string, apiargs map[string]string) (result
 		if !ok {
 			return "", fmt.Errorf("executeEngineAPI: missing process parameter")
 		}
-		err := e.ProcessManager.StopRunning(process)
+		err := TheProcessManager.StopRunning(process)
 		return "", err
 
 	case "save":
@@ -146,7 +146,7 @@ func (e *Engine) executeEngineAPI(api string, apiargs map[string]string) (result
 
 	case "activate":
 		// Force Activate even if already activated
-		return "", e.ProcessManager.Activate("all")
+		return "", TheProcessManager.Activate("all")
 
 	case "audio_reset":
 		go LogError(TheBidule().Reset())
@@ -172,6 +172,9 @@ func (e *Engine) executeEngineAPI(api string, apiargs map[string]string) (result
 		if err == nil {
 			ChangeClicksPerSecond(float64(v))
 		}
+
+	case "clearexternalscale":
+		ClearExternalScale()
 
 	case "set_transpose":
 		LogWarn("set_transpose API needs work")
@@ -281,7 +284,7 @@ func (e *Engine) Set(name string, value string) error {
 	case "engine.oscoutput":
 		b := IsTrueValue(value)
 		LogInfo("Changing oscoutput", "oscoutput", b)
-		e.Router.oscOutput = b
+		TheRouter.oscOutput = b
 	case "engine.debug":
 		e.ResetLogTypes(value)
 	case "engine.attractidleminutes":
