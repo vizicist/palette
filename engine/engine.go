@@ -12,14 +12,8 @@ import (
 )
 
 type Engine struct {
-	// ProcessManager *ProcessManager
-	params         *ParamValues
-	Router         *Router
-	Scheduler      *Scheduler
-	CursorManager  *CursorManager
-	ProcessManager *ProcessManager
-	// CursorManager *CursorManager
-	done chan bool
+	params *ParamValues
+	done   chan bool
 }
 
 var TheEngine *Engine
@@ -37,19 +31,21 @@ func NewEngine() *Engine {
 
 	InitLog("engine")
 
-	cm := NewCursorManager()
-	router := NewRouter(cm)
+	TheCursorManager = NewCursorManager()
+	TheRouter = NewRouter()
+	TheProcessManager = NewProcessManager()
+	TheScheduler = NewScheduler()
 
 	TheEngine = &Engine{
-		params:         NewParamValues(),
-		Scheduler:      NewScheduler(),
-		Router:         router,
-		CursorManager:  cm,
-		ProcessManager: NewProcessManager(),
-		done:           make(chan bool),
+		params: NewParamValues(),
+		done:   make(chan bool),
 	}
 
-	TheEngine.ProcessManager.AddProcessBuiltIn("keykit")
+	AddProcessBuiltIn("keykit")
+	AddProcessBuiltIn("bidule")
+	AddProcessBuiltIn("resolume")
+	AddProcessBuiltIn("gui")
+	AddProcessBuiltIn("mmtt")
 
 	TheEngine.ResetLogTypes(os.Getenv("PALETTE_LOG"))
 	LogInfo("Engine InitLog ==============================================")
@@ -60,14 +56,6 @@ func NewEngine() *Engine {
 		// but keep going
 	}
 	return TheEngine
-}
-
-func TheRouter() *Router {
-	return TheEngine.Router
-}
-
-func TheScheduler() *Scheduler {
-	return TheEngine.Scheduler
 }
 
 // func (e *Engine) HandleCursorEvent(ce CursorEvent) {
@@ -102,10 +90,14 @@ func (e *Engine) Start() {
 
 	go e.StartOSC(OSCPort)
 	go e.StartHTTP(HTTPPort)
-	// go r.StartNATSClient()
-	go e.StartMIDI()
-	go e.Scheduler.Start()
-	go e.Router.Start()
+
+	// this listens for MIDI events and sends their bytes to the MIDIInput chan
+	go MIDI.Start(TheRouter.midiInputChan)
+
+	// StartOSC xxx
+
+	go TheScheduler.Start()
+	go TheRouter.Start()
 
 	if e.ParamBool("mmtt.depth") {
 		go DepthRunForever()
@@ -153,12 +145,6 @@ func (e *Engine) ResetLogTypes(logtypes string) {
 	}
 }
 
-// StartMIDI listens for MIDI events and sends their bytes to the MIDIInput chan
-func (e *Engine) StartMIDI() {
-	MIDI.Start(e.Router.midiInputChan)
-}
-
-// StartOSC xxx
 func (e *Engine) StartOSC(port int) {
 
 	source := fmt.Sprintf("%s:%d", LocalAddress, port)
@@ -166,7 +152,7 @@ func (e *Engine) StartOSC(port int) {
 	d := osc.NewStandardDispatcher()
 
 	err := d.AddMsgHandler("*", func(msg *osc.Message) {
-		e.Router.OSCInput <- OSCEvent{Msg: msg, Source: source}
+		TheRouter.OSCInput <- OSCEvent{Msg: msg, Source: source}
 	})
 	if err != nil {
 		LogError(err)

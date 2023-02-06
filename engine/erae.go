@@ -1,4 +1,4 @@
-package plugin
+package engine
 
 /*
 import (
@@ -7,7 +7,6 @@ import (
 	"math"
 	"time"
 
-	"github.com/vizicist/palette/engine"
 	"gitlab.com/gomidi/midi/v2/drivers"
 )
 

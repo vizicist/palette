@@ -28,17 +28,6 @@ func (layer *Patch) SetParam(fullname, value string) error {
 }
 
 /*
-// ClearExternalScale xxx
-func (layer *Patch) clearExternalScale() {
-	LogOfType("scale", "clearExternalScale", "pad", layer.patchName)
-	layer.externalScale = MakeScale()
-}
-*/
-
-/*
- */
-
-/*
 func (layer) *Patch) loopQuant() {
 
 	layer.loop.stepsMutex.Lock()

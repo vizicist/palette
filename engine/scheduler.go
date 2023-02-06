@@ -7,6 +7,8 @@ import (
 	"time"
 )
 
+var TheScheduler *Scheduler
+
 type Event any
 
 type Scheduler struct {
@@ -40,6 +42,14 @@ func NewScheduler() *Scheduler {
 		// cmdInput:  make(chan any),
 	}
 	return s
+}
+
+func ScheduleAt(value any, click Clicks) {
+	se := &SchedElement{
+		AtClick: click,
+		Value:   value,
+	}
+	TheScheduler.insertScheduleElement(se)
 }
 
 // type SchedulerElementCmd struct {
@@ -114,9 +124,9 @@ func (sched *Scheduler) advanceClickTo(toClick Clicks) {
 	// Don't let events get handled while we're advancing
 	// XXX - this might not be needed if all communication/syncing
 	// is done only from the scheduler loop
-	TheRouter().inputEventMutex.Lock()
+	TheRouter.inputEventMutex.Lock()
 	defer func() {
-		TheRouter().inputEventMutex.Unlock()
+		TheRouter.inputEventMutex.Unlock()
 	}()
 
 	doAutoCursorUp := false
@@ -125,7 +135,7 @@ func (sched *Scheduler) advanceClickTo(toClick Clicks) {
 		sched.triggerItemsScheduledAtOrBefore(clk)
 		// sched.advancePendingNoteOffsByOneClick()
 		if doAutoCursorUp {
-			TheRouter().cursorManager.autoCursorUp(time.Now())
+			TheCursorManager.autoCursorUp(time.Now())
 		}
 	}
 	sched.lastClick = toClick

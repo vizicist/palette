@@ -991,9 +991,6 @@ class ProGuiApp(tk.Tk):
         self.sendANO()
 
         log("ProGuiApp.resetAll is not clearing scale things anymore")
-        # for patch in self.Patches:
-        #     patch.useExternalScale(False)
-        #     patch.clearExternalScale()
 
         for s in palette.GlobalPerformLabels:
             if s in palette.PerformDefaultVal:
@@ -1260,7 +1257,7 @@ class Patch():
         palette.palette_quadpro_api("ANO")
 
     def clearExternalScale(self):
-        palette.palette_quadpro_api("clearexternalscale")
+        palette.palette_engine_api("clearexternalscale")
 
     def useExternalScale(self,onoff):
         # palette.palette_quadpro_api("midi_usescale", "\"onoff\": \"" + str(onoff) + "\"")

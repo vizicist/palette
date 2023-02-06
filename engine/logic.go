@@ -1,20 +1,18 @@
-package plugin
+package engine
 
 import (
 	"math"
 	"sync"
-
-	"github.com/vizicist/palette/engine"
 )
 
 type PatchLogic struct {
 	quadpro *QuadPro
-	patch   *engine.Patch
+	patch   *Patch
 
 	mutex sync.Mutex
 	// tempoFactor            float64
 	// loop            *StepLoop
-	// loopLength      engine.Clicks
+	// loopLength      Clicks
 	// loopIsRecording bool
 	// loopIsPlaying   bool
 	// fadeLoop        float32
@@ -36,7 +34,7 @@ type PatchLogic struct {
 	// TransposePitch   int
 }
 
-func NewPatchLogic(quadpro *QuadPro, patch *engine.Patch) *PatchLogic {
+func NewPatchLogic(quadpro *QuadPro, patch *Patch) *PatchLogic {
 	logic := &PatchLogic{
 		quadpro: quadpro,
 		patch:   patch,
@@ -44,14 +42,14 @@ func NewPatchLogic(quadpro *QuadPro, patch *engine.Patch) *PatchLogic {
 	return logic
 }
 
-func (logic *PatchLogic) cursorToNoteOn(ctx *engine.PluginContext, ce engine.CursorEvent) *engine.NoteOn {
+func (logic *PatchLogic) cursorToNoteOn(ctx *PluginContext, ce CursorEvent) *NoteOn {
 	pitch := logic.cursorToPitch(ctx, ce)
 	velocity := logic.cursorToVelocity(ctx, ce)
 	synth := logic.patch.Synth()
-	return engine.NewNoteOn(synth, pitch, velocity)
+	return NewNoteOn(synth, pitch, velocity)
 }
 
-func (logic *PatchLogic) cursorToPitch(ctx *engine.PluginContext, ce engine.CursorEvent) uint8 {
+func (logic *PatchLogic) cursorToPitch(ctx *PluginContext, ce CursorEvent) uint8 {
 	patch := logic.patch
 	quadpro := logic.quadpro
 	pitchmin := patch.GetInt("sound.pitchmin")
@@ -63,8 +61,8 @@ func (logic *PatchLogic) cursorToPitch(ctx *engine.PluginContext, ce engine.Curs
 	usescale := patch.GetBool("misc.usescale")
 	chromatic := patch.GetBool("sound.chromatic")
 	if !chromatic && usescale {
-		scaleName := patch.GetString("misc.scale")
-		scale := engine.GetScale(scaleName)
+		scaleName := TheEngine.params.Get("engine.scale")
+		scale := GetScale(scaleName)
 		p = scale.ClosestTo(p)
 		// MIDIOctaveShift might be negative
 		i := int(p) + 12*quadpro.MIDIOctaveShift
@@ -79,7 +77,7 @@ func (logic *PatchLogic) cursorToPitch(ctx *engine.PluginContext, ce engine.Curs
 	return p
 }
 
-func (logic *PatchLogic) cursorToVelocity(ctx *engine.PluginContext, ce engine.CursorEvent) uint8 {
+func (logic *PatchLogic) cursorToVelocity(ctx *PluginContext, ce CursorEvent) uint8 {
 	patch := logic.patch
 	volstyle := patch.Get("misc.volstyle")
 	if volstyle == "" {
@@ -106,7 +104,7 @@ func (logic *PatchLogic) cursorToVelocity(ctx *engine.PluginContext, ce engine.C
 	case "fixed":
 		// do nothing
 	default:
-		engine.LogWarn("Unrecognized vol value", "volstyle", volstyle)
+		LogWarn("Unrecognized vol value", "volstyle", volstyle)
 	}
 	dv := velocitymax - velocitymin + 1
 	p1 := int(v * float32(dv))
@@ -114,13 +112,13 @@ func (logic *PatchLogic) cursorToVelocity(ctx *engine.PluginContext, ce engine.C
 	return uint8(vel)
 }
 
-func (logic *PatchLogic) generateVisualsFromCursor(ce engine.CursorEvent) {
+func (logic *PatchLogic) generateVisualsFromCursor(ce CursorEvent) {
 	// send an OSC message to Resolume
-	msg := engine.CursorToOscMsg(ce)
-	engine.TheResolume().ToFreeFramePlugin(logic.patch.Name(), msg)
+	msg := CursorToOscMsg(ce)
+	TheResolume().ToFreeFramePlugin(logic.patch.Name(), msg)
 }
 
-func (logic *PatchLogic) generateSoundFromCursor(ctx *engine.PluginContext, ce engine.CursorEvent, cursorStyle string) {
+func (logic *PatchLogic) generateSoundFromCursor(ctx *PluginContext, ce CursorEvent, cursorStyle string) {
 
 	switch cursorStyle {
 	case "downonly":
@@ -128,12 +126,12 @@ func (logic *PatchLogic) generateSoundFromCursor(ctx *engine.PluginContext, ce e
 	case "", "retrigger":
 		logic.generateSoundFromCursorRetrigger(ctx, ce)
 	default:
-		engine.LogWarn("Unrecognized cursorStyle", "cursorStyle", cursorStyle)
+		LogWarn("Unrecognized cursorStyle", "cursorStyle", cursorStyle)
 		logic.generateSoundFromCursorDownOnly(ctx, ce)
 	}
 }
 
-func (logic *PatchLogic) generateSoundFromCursorDownOnly(ctx *engine.PluginContext, ce engine.CursorEvent) {
+func (logic *PatchLogic) generateSoundFromCursorDownOnly(ctx *PluginContext, ce CursorEvent) {
 
 	logic.mutex.Lock()
 	defer logic.mutex.Unlock()
@@ -141,12 +139,12 @@ func (logic *PatchLogic) generateSoundFromCursorDownOnly(ctx *engine.PluginConte
 	switch ce.Ddu {
 	case "down":
 		noteOn := logic.cursorToNoteOn(ctx, ce)
-		atClick := logic.nextQuant(ctx.CurrentClick(), logic.patch.CursorToQuant(ce))
-		// engine.LogInfo("logic.down", "current", ctx.CurrentClick(), "atClick", atClick, "noteOn", noteOn)
-		ctx.ScheduleAt(noteOn, atClick)
-		noteOff := engine.NewNoteOffFromNoteOn(noteOn)
-		atClick += engine.QuarterNote
-		ctx.ScheduleAt(noteOff, atClick)
+		atClick := logic.nextQuant(CurrentClick(), logic.patch.CursorToQuant(ce))
+		// LogInfo("logic.down", "current", CurrentClick(), "atClick", atClick, "noteOn", noteOn)
+		ScheduleAt(noteOn, atClick)
+		noteOff := NewNoteOffFromNoteOn(noteOn)
+		atClick += QuarterNote
+		ScheduleAt(noteOff, atClick)
 
 	case "drag":
 		// do nothing
@@ -156,37 +154,37 @@ func (logic *PatchLogic) generateSoundFromCursorDownOnly(ctx *engine.PluginConte
 	}
 }
 
-func (logic *PatchLogic) generateSoundFromCursorRetrigger(ctx *engine.PluginContext, ce engine.CursorEvent) {
+func (logic *PatchLogic) generateSoundFromCursorRetrigger(ctx *PluginContext, ce CursorEvent) {
 
 	logic.mutex.Lock()
 	defer logic.mutex.Unlock()
 
 	patch := logic.patch
-	cursorState := ctx.GetCursorState(ce.Cid)
+	cursorState := GetCursorState(ce.Cid)
 	if cursorState == nil {
-		engine.LogWarn("generateSoundFromCursor: cursorState is nil", "cid", ce.Cid)
+		LogWarn("generateSoundFromCursor: cursorState is nil", "cid", ce.Cid)
 		return
 	}
 
 	switch ce.Ddu {
 	case "down":
-		// engine.LogInfo("CURSOR down event for cursor", "cid", ce.Cid)
+		// LogInfo("CURSOR down event for cursor", "cid", ce.Cid)
 		oldNoteOn := cursorState.NoteOn
 		if oldNoteOn != nil {
-			engine.LogWarn("generateSoundFromCursor: oldNote already exists", "cid", ce.Cid)
-			noteOff := engine.NewNoteOffFromNoteOn(oldNoteOn)
-			ctx.ScheduleAt(noteOff, ctx.CurrentClick())
+			LogWarn("generateSoundFromCursor: oldNote already exists", "cid", ce.Cid)
+			noteOff := NewNoteOffFromNoteOn(oldNoteOn)
+			ScheduleAt(noteOff, CurrentClick())
 		}
-		atClick := logic.nextQuant(ctx.CurrentClick(), logic.patch.CursorToQuant(ce))
+		atClick := logic.nextQuant(CurrentClick(), logic.patch.CursorToQuant(ce))
 		noteOn := logic.cursorToNoteOn(ctx, ce)
-		ctx.ScheduleAt(noteOn, atClick)
+		ScheduleAt(noteOn, atClick)
 		cursorState.NoteOn = noteOn
 		cursorState.NoteOnClick = atClick
 	case "drag":
-		// engine.LogInfo("CURSOR drag event for cursor", "cid", ce.Cid)
+		// LogInfo("CURSOR drag event for cursor", "cid", ce.Cid)
 		oldNoteOn := cursorState.NoteOn
 		if oldNoteOn == nil {
-			engine.LogWarn("generateSoundFromCursor: no cursorState.NoteOn", "cid", ce.Cid)
+			LogWarn("generateSoundFromCursor: no cursorState.NoteOn", "cid", ce.Cid)
 			return
 		}
 		newNoteOn := logic.cursorToNoteOn(ctx, ce)
@@ -211,35 +209,35 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ctx *engine.PluginCont
 
 		if newpitch != oldpitch || deltaz > deltaztrig || deltay > deltaytrig {
 			// Turn off existing note, one Click after noteOn
-			noteOff := engine.NewNoteOffFromNoteOn(oldNoteOn)
+			noteOff := NewNoteOffFromNoteOn(oldNoteOn)
 			offClick := cursorState.NoteOnClick + 1
-			ctx.ScheduleAt(noteOff, offClick)
+			ScheduleAt(noteOff, offClick)
 
-			atClick := logic.nextQuant(ctx.CurrentClick(), logic.patch.CursorToQuant(ce))
+			atClick := logic.nextQuant(CurrentClick(), logic.patch.CursorToQuant(ce))
 			if atClick < offClick {
 				atClick = offClick
 			}
-			ctx.ScheduleAt(newNoteOn, atClick)
+			ScheduleAt(newNoteOn, atClick)
 			cursorState.NoteOn = newNoteOn
 			cursorState.NoteOnClick = atClick
 		}
 
 	case "up":
-		// engine.LogInfo("CURSOR up event for cursor", "cid", ce.Cid)
+		// LogInfo("CURSOR up event for cursor", "cid", ce.Cid)
 		oldNoteOn := cursorState.NoteOn
 		if oldNoteOn == nil {
 			// not sure why this happens, yet
-			engine.LogWarn("Unexpected UP, no oldNoteOn", "cid", ce.Cid)
+			LogWarn("Unexpected UP, no oldNoteOn", "cid", ce.Cid)
 		} else {
-			noteOff := engine.NewNoteOffFromNoteOn(oldNoteOn)
+			noteOff := NewNoteOffFromNoteOn(oldNoteOn)
 			offClick := cursorState.NoteOnClick + 1
-			ctx.ScheduleAt(noteOff, offClick+1)
+			ScheduleAt(noteOff, offClick+1)
 			// delete(logic.cursorNote, ce.Cid)
 		}
 	}
 }
 
-func (logic *PatchLogic) generateController(ctx *engine.PluginContext, cursorState *engine.CursorState) {
+func (logic *PatchLogic) generateController(ctx *PluginContext, cursorState *CursorState) {
 
 	if logic.patch.Get("sound.controllerstyle") == "modulationonly" {
 		zmin := logic.patch.GetFloat("sound._controllerzmin")
@@ -259,7 +257,7 @@ func (logic *PatchLogic) generateController(ctx *engine.PluginContext, cursorSta
 	}
 }
 
-func (logic *PatchLogic) nextQuant(t engine.Clicks, q engine.Clicks) engine.Clicks {
+func (logic *PatchLogic) nextQuant(t Clicks, q Clicks) Clicks {
 	// the algorithm below is the same as KeyKit's nextquant
 	if q <= 1 {
 		return t
@@ -290,7 +288,7 @@ func (logic *PatchLogic) oldsendNoteOn(note any) {
 */
 
 /*
-func (logic *PatchLogic) SendPhraseElementToSynth(ctx *engine.PluginContext, pe *engine.PhraseElement) {
+func (logic *PatchLogic) SendPhraseElementToSynth(ctx *PluginContext, pe *PhraseElement) {
 
 	ss := logic.patch.Get("visual.spritesource")
 	if ss == "midi" {
@@ -301,7 +299,7 @@ func (logic *PatchLogic) SendPhraseElementToSynth(ctx *engine.PluginContext, pe 
 */
 
 /*
-func (logic *PatchLogic) generateSpriteFromPhraseElement(ctx *engine.PluginContext, pe *engine.PhraseElement) {
+func (logic *PatchLogic) generateSpriteFromPhraseElement(ctx *PluginContext, pe *PhraseElement) {
 
 	patch := logic.patch
 
@@ -310,15 +308,15 @@ func (logic *PatchLogic) generateSpriteFromPhraseElement(ctx *engine.PluginConte
 	var velocity uint8
 
 	switch v := pe.Value.(type) {
-	case *engine.NoteOn:
+	case *NoteOn:
 		// channel = v.Channel
 		pitch = v.Pitch
 		velocity = v.Velocity
-	case *engine.NoteOff:
+	case *NoteOff:
 		// channel = v.Channel
 		pitch = v.Pitch
 		velocity = v.Velocity
-	case *engine.NoteFull:
+	case *NoteFull:
 		// channel = v.Channel
 		pitch = v.Pitch
 		velocity = v.Velocity
@@ -329,7 +327,7 @@ func (logic *PatchLogic) generateSpriteFromPhraseElement(ctx *engine.PluginConte
 	pitchmin := uint8(patch.GetInt("sound.pitchmin"))
 	pitchmax := uint8(patch.GetInt("sound.pitchmax"))
 	if pitch < pitchmin || pitch > pitchmax {
-		engine.LogWarn("Unexpected value", "pitch", pitch)
+		LogWarn("Unexpected value", "pitch", pitch)
 		return
 	}
 
@@ -372,7 +370,7 @@ func (logic *PatchLogic) generateSpriteFromPhraseElement(ctx *engine.PluginConte
 	// XXX - Set sprite ID to pitch, is this right?
 	msg.Append(fmt.Sprintf("%d@localhost", pitch))
 
-	engine.TheResolume().ToFreeFramePlugin(patch.Name(), msg)
+	TheResolume().ToFreeFramePlugin(patch.Name(), msg)
 }
 */
 
@@ -381,23 +379,23 @@ func (logic *PatchLogic) generateSpriteFromPhraseElement(ctx *engine.PluginConte
 // }
 
 /*
-func (logic *PatchLogic) sendNoteOff(n *engine.NoteOn) {
+func (logic *PatchLogic) sendNoteOff(n *NoteOn) {
 	if n == nil {
 		// Not sure why this sometimes happens
 		return
 	}
-	noteOff := engine.NewNoteOff(n.Channel, n.Pitch, n.Velocity)
-	// pe := &engine.PhraseElement{Value: noteOff}
+	noteOff := NewNoteOff(n.Channel, n.Pitch, n.Velocity)
+	// pe := &PhraseElement{Value: noteOff}
 	logic.patch.Synth.SendNoteToMidiOutput(noteOff)
 	// patch.SendPhraseElementToSynth(pe)
 }
 */
 
 /*
-func (logic *PatchLogic) advanceTransposeTo(newclick engine.Clicks) {
+func (logic *PatchLogic) advanceTransposeTo(newclick Clicks) {
 
 	quadpro := logic.quadpro
-	quadpro.transposeNext += (quadpro.transposeClicks * engine.OneBeat)
+	quadpro.transposeNext += (quadpro.transposeClicks * OneBeat)
 	quadpro.transposeIndex = (quadpro.transposeIndex + 1) % len(quadpro.transposeValues)
 
 			transposePitch := quadpro.transposeValues[quadpro.transposeIndex]

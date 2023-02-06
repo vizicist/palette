@@ -10,6 +10,8 @@ import (
 	"github.com/hypebeast/go-osc/osc"
 )
 
+var TheCursorManager *CursorManager
+
 // CursorDeviceCallbackFunc xxx
 type CursorCallbackFunc func(e CursorEvent)
 
@@ -35,6 +37,10 @@ type CursorState struct {
 type CursorManager struct {
 	cursors      map[string]*CursorState
 	cursorsMutex sync.RWMutex
+}
+
+func ClearCursors() {
+	TheCursorManager.clearCursors()
 }
 
 func (ce CursorEvent) ToMap() map[string]string {
@@ -75,6 +81,10 @@ func NewCursorManager() *CursorManager {
 		cursors:      map[string]*CursorState{},
 		cursorsMutex: sync.RWMutex{},
 	}
+}
+
+func GetCursorState(cid string) *CursorState {
+	return TheCursorManager.GetCursorState(cid)
 }
 
 func (cm *CursorManager) GetCursorState(cid string) *CursorState {
@@ -124,6 +134,10 @@ func (cm *CursorManager) clearCursors() {
 	cm.cursorsMutex.RUnlock()
 
 	cm.deleteCids(cidsToDelete)
+}
+
+func GenerateCursorGesture(cid string, noteDuration time.Duration, x0, y0, z0, x1, y1, z1 float32) {
+	TheCursorManager.generateCursorGesture(cid, noteDuration, x0, y0, z0, x1, y1, z1)
 }
 
 func (cm *CursorManager) generateCursorGesture(cid string, noteDuration time.Duration, x0, y0, z0, x1, y1, z1 float32) {

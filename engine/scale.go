@@ -7,6 +7,18 @@ type Scale struct {
 
 // Scales maps a name to a Scale
 var Scales map[string]*Scale
+var ExternalScale *Scale
+
+func ClearExternalScale() {
+	ExternalScale = MakeScale()
+}
+
+func SetExternalScale(pitch int, on bool) {
+	s := ExternalScale
+	for p := pitch; p < 128; p += 12 {
+		s.HasNote[p] = on
+	}
+}
 
 // GetScale xxx
 func GetScale(name string) *Scale {

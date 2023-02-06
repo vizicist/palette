@@ -1,4 +1,4 @@
-package plugin
+package engine
 
 import (
 	"fmt"
@@ -9,14 +9,12 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/vizicist/palette/engine"
 )
 
 type QuadPro struct {
 
 	// Per-patch things
-	patch      map[string]*engine.Patch
+	patch      map[string]*Patch
 	patchLogic map[string]*PatchLogic
 
 	started bool
@@ -28,7 +26,6 @@ type QuadPro struct {
 	MIDISetScale     bool
 	MIDIQuantized    bool
 	TransposePitch   int
-	externalScale    *engine.Scale
 	nextCursorNum    int
 
 	attractModeIsOn        bool
@@ -48,15 +45,15 @@ type QuadPro struct {
 	processCheckSecs float64
 
 	transposeAuto   bool
-	transposeNext   engine.Clicks
-	transposeClicks engine.Clicks // time between auto transpose changes
-	transposeIndex  int           // current place in tranposeValues
+	transposeNext   Clicks
+	transposeClicks Clicks // time between auto transpose changes
+	transposeIndex  int    // current place in tranposeValues
 	transposeValues []int
 }
 
 func init() {
 	quadpro := &QuadPro{
-		patch:      map[string]*engine.Patch{},
+		patch:      map[string]*Patch{},
 		patchLogic: map[string]*PatchLogic{},
 
 		attractModeIsOn: false,
@@ -80,10 +77,10 @@ func init() {
 		transposeIndex:  0,
 		transposeValues: []int{0, -2, 3, -5},
 	}
-	engine.RegisterPlugin("quadpro", quadpro.Api)
+	RegisterPlugin("quadpro", quadpro.Api)
 }
 
-func (quadpro *QuadPro) Api(ctx *engine.PluginContext, api string, apiargs map[string]string) (result string, err error) {
+func (quadpro *QuadPro) Api(ctx *PluginContext, api string, apiargs map[string]string) (result string, err error) {
 
 	switch api {
 
@@ -92,10 +89,10 @@ func (quadpro *QuadPro) Api(ctx *engine.PluginContext, api string, apiargs map[s
 
 	case "stop":
 		quadpro.started = false
-		return "", ctx.StopRunning("all")
+		return "", StopRunning("all")
 
 	case "set":
-		paramName, paramValue, err := engine.GetNameValue(apiargs)
+		paramName, paramValue, err := GetNameValue(apiargs)
 		if err != nil {
 			return "", err
 		}
@@ -120,7 +117,7 @@ func (quadpro *QuadPro) Api(ctx *engine.PluginContext, api string, apiargs map[s
 			return quadpro.onClick(ctx, apiargs)
 		}
 
-		// engine.LogInfo("Ppro.event", "eventName", eventName)
+		// LogInfo("Ppro.event", "eventName", eventName)
 		switch eventName {
 		case "midi":
 			return quadpro.onMidiEvent(ctx, apiargs)
@@ -135,12 +132,12 @@ func (quadpro *QuadPro) Api(ctx *engine.PluginContext, api string, apiargs map[s
 		/*
 			case "patch_set":
 				// return "", quadpro.onPatchSet(ctx, apiargs)
-				engine.LogWarn("This shouldn't be used!  use patch.set api")
+				LogWarn("This shouldn't be used!  use patch.set api")
 				return "", fmt.Errorf("patch_set shouldn't be used!  use patch.set api")
 		*/
 
 		case "patch_refresh_all":
-			engine.LogWarn("Take a look at patch_refresh_all")
+			LogWarn("Take a look at patch_refresh_all")
 			return "", quadpro.onPatchRefreshAll(apiargs)
 
 		default:
@@ -158,12 +155,8 @@ func (quadpro *QuadPro) Api(ctx *engine.PluginContext, api string, apiargs map[s
 		if !ok {
 			return "", fmt.Errorf("missing onoff parameter")
 		}
-		onoff := engine.IsTrueValue(onoffstr)
+		onoff := IsTrueValue(onoffstr)
 		quadpro.setAttractMode(onoff)
-		return "", nil
-
-	case "clearexternalscale":
-		quadpro.clearExternalScale()
 		return "", nil
 
 	case "echo":
@@ -203,13 +196,13 @@ func (quadpro *QuadPro) Api(ctx *engine.PluginContext, api string, apiargs map[s
 					return "", fmt.Errorf("ExecuteAPI: missing process argument")
 				}
 
-				engine.LogInfo("Is quadpro.startprocess still used?", "process", process)
+				LogInfo("Is quadpro.startprocess still used?", "process", process)
 
-				err = ctx.StartRunning(process)
+				err = StartRunning(process)
 				if err != nil {
 					return "", err
 				}
-				err = ctx.Activate(process)
+				err = Activate(process)
 				return "", err
 
 			case "stopprocess":
@@ -217,12 +210,12 @@ func (quadpro *QuadPro) Api(ctx *engine.PluginContext, api string, apiargs map[s
 				if !ok {
 					return "", fmt.Errorf("ExecuteAPI: missing process argument")
 				}
-				return "", ctx.StopRunning(process)
+				return "", StopRunning(process)
 		*/
 
 	case "status":
-		result = engine.JsonObject(
-			"uptime", fmt.Sprintf("%f", ctx.Uptime()),
+		result = JsonObject(
+			"uptime", fmt.Sprintf("%f", Uptime()),
 			"attractmode", fmt.Sprintf("%v", quadpro.attractModeIsOn),
 		)
 		return result, nil
@@ -250,7 +243,7 @@ func (quadpro *QuadPro) Api(ctx *engine.PluginContext, api string, apiargs map[s
 		return "", nil
 
 	default:
-		engine.LogWarn("QuadPro.ExecuteAPI api is not recognized\n", "api", api)
+		LogWarn("QuadPro.ExecuteAPI api is not recognized\n", "api", api)
 		return "", fmt.Errorf("QuadPro.Api unrecognized api=%s", api)
 	}
 }
@@ -260,7 +253,7 @@ func (quadpro *QuadPro) onPatchRefreshAll(apiargs map[string]string) error {
 	if !ok {
 		return fmt.Errorf("QuadPro.onPtchRefreshAll: no patch argument")
 	}
-	patch := engine.GetPatch(patchName)
+	patch := GetPatch(patchName)
 	if patch == nil {
 		return fmt.Errorf("no such patch: %s", patchName)
 	}
@@ -268,39 +261,31 @@ func (quadpro *QuadPro) onPatchRefreshAll(apiargs map[string]string) error {
 	return nil
 }
 
-func (quadpro *QuadPro) start(ctx *engine.PluginContext) error {
+func (quadpro *QuadPro) start(ctx *PluginContext) error {
 
 	if quadpro.started {
 		return fmt.Errorf("QuadPro. already started")
 	}
 	quadpro.started = true
 
-	quadpro.clearExternalScale()
+	ClearExternalScale()
 
 	// Make sure all the global parameters are set to their initial values
 	// XXX - Is this right?  Don't they get read in from global._Current.json ?
-	// for nm, pd := range engine.ParamDefs {
+	// for nm, pd := range ParamDefs {
 	// 	if pd.Category == "engine" {
 	// 		err := quadpro.engineClicks.SetParamValueWithString(nm, pd.Init)
 	// 		if err != nil {
-	// 			engine.LogError(err)
+	// 			LogError(err)
 	// 		}
 	// 	}
 	// }
 
-	quadpro.transposeAuto = engine.TheEngine.ParamBool("engine.transposeauto")
-	beats := engine.TheEngine.EngineParamIntWithDefault("engine.transposebeats", 48)
+	quadpro.transposeAuto = TheEngine.ParamBool("engine.transposeauto")
+	beats := TheEngine.EngineParamIntWithDefault("engine.transposebeats", 48)
 
-	quadpro.transposeNext = engine.Clicks(beats) * engine.OneBeat
-	quadpro.transposeClicks = engine.Clicks(beats) * engine.OneBeat
-
-	ctx.AddProcessBuiltIn("resolume")
-	ctx.AddProcessBuiltIn("bidule")
-	ctx.AddProcess("gui", quadpro.guiInfo())
-	mmtt := quadpro.mmttInfo()
-	if mmtt != nil {
-		ctx.AddProcess("mmtt", mmtt)
-	}
+	quadpro.transposeNext = Clicks(beats) * OneBeat
+	quadpro.transposeClicks = Clicks(beats) * OneBeat
 
 	ctx.AllowSource("A", "B", "C", "D")
 
@@ -309,20 +294,20 @@ func (quadpro *QuadPro) start(ctx *engine.PluginContext) error {
 	_ = quadpro.addPatch(ctx, "C")
 	_ = quadpro.addPatch(ctx, "D")
 
-	engine.LogError(quadpro.Load(ctx, "quad", "_Current"))
+	LogError(quadpro.Load(ctx, "quad", "_Current"))
 
 	// Don't start checking processes right away, after killing them on a restart,
 	// they may still be running for a bit
-	quadpro.processCheckSecs = engine.TheEngine.EngineParamFloatWithDefault("engine.processchecksecs", 60)
-	quadpro.attractCheckSecs = engine.TheEngine.EngineParamFloatWithDefault("engine.attractchecksecs", 2)
-	quadpro.attractIdleSecs = 60 * engine.TheEngine.EngineParamFloatWithDefault("engine.attractidleminutes", 0)
-	quadpro.attractChangeInterval = engine.TheEngine.EngineParamFloatWithDefault("engine.attractchangeinterval", 30)
-	quadpro.attractGestureInterval = engine.TheEngine.EngineParamFloatWithDefault("engine.attractgestureinterval", 0.5)
+	quadpro.processCheckSecs = TheEngine.EngineParamFloatWithDefault("engine.processchecksecs", 60)
+	quadpro.attractCheckSecs = TheEngine.EngineParamFloatWithDefault("engine.attractchecksecs", 2)
+	quadpro.attractIdleSecs = 60 * TheEngine.EngineParamFloatWithDefault("engine.attractidleminutes", 0)
+	quadpro.attractChangeInterval = TheEngine.EngineParamFloatWithDefault("engine.attractchangeinterval", 30)
+	quadpro.attractGestureInterval = TheEngine.EngineParamFloatWithDefault("engine.attractgestureinterval", 0.5)
 
 	return nil
 }
 
-func (quadpro *QuadPro) onCursorEvent(ctx *engine.PluginContext, apiargs map[string]string) (string, error) {
+func (quadpro *QuadPro) onCursorEvent(ctx *PluginContext, apiargs map[string]string) (string, error) {
 
 	ddu, ok := apiargs["ddu"]
 	if !ok {
@@ -330,11 +315,11 @@ func (quadpro *QuadPro) onCursorEvent(ctx *engine.PluginContext, apiargs map[str
 	}
 
 	if ddu == "clear" {
-		ctx.ClearCursors()
+		ClearCursors()
 		return "", nil
 	}
 
-	x, y, z, err := ctx.GetArgsXYZ(apiargs)
+	x, y, z, err := GetArgsXYZ(apiargs)
 	if err != nil {
 		return "", err
 	}
@@ -344,7 +329,7 @@ func (quadpro *QuadPro) onCursorEvent(ctx *engine.PluginContext, apiargs map[str
 		cid = ""
 	}
 
-	ce := engine.CursorEvent{
+	ce := CursorEvent{
 		Cid:   cid,
 		Click: 0,
 		Ddu:   ddu,
@@ -366,8 +351,8 @@ func (quadpro *QuadPro) onCursorEvent(ctx *engine.PluginContext, apiargs map[str
 		return "", nil
 	}
 	cursorStyle := patchLogic.patch.Get("misc.cursorstyle")
-	gensound := engine.IsTrueValue(patchLogic.patch.Get("misc.generatesound"))
-	genvisual := engine.IsTrueValue(patchLogic.patch.Get("misc.generatevisual"))
+	gensound := IsTrueValue(patchLogic.patch.Get("misc.generatesound"))
+	genvisual := IsTrueValue(patchLogic.patch.Get("misc.generatevisual"))
 	if gensound && !quadpro.attractModeIsOn {
 		patchLogic.generateSoundFromCursor(ctx, ce, cursorStyle)
 	}
@@ -385,17 +370,13 @@ func (quadpro *QuadPro) setAttractMode(onoff bool) {
 	// Throttle it a bit
 	secondsSince := time.Since(quadpro.lastAttractModeChange).Seconds()
 	if secondsSince > 1.0 {
-		engine.LogOfType("attract", "QuadPro. changing attract", "onoff", onoff)
+		LogOfType("attract", "QuadPro. changing attract", "onoff", onoff)
 		quadpro.attractModeIsOn = onoff
 		quadpro.lastAttractModeChange = time.Now()
 	}
 }
 
-func (quadpro *QuadPro) clearExternalScale() {
-	quadpro.externalScale = engine.MakeScale()
-}
-
-func (quadpro *QuadPro) onClientRestart(ctx *engine.PluginContext, apiargs map[string]string) (string, error) {
+func (quadpro *QuadPro) onClientRestart(ctx *PluginContext, apiargs map[string]string) (string, error) {
 	// These are messages from the Palette FFGL plugins in Resolume,
 	// telling us that they have restarted, and we should resend all parameters
 	portnum, ok := apiargs["portnum"]
@@ -406,13 +387,13 @@ func (quadpro *QuadPro) onClientRestart(ctx *engine.PluginContext, apiargs map[s
 	if err != nil {
 		return "", err
 	}
-	engine.LogInfo("quadpro got clientrestart", "portnum", portnum)
+	LogInfo("quadpro got clientrestart", "portnum", portnum)
 	// The restart message contains the
 	// portnum of the plugin that restarted.
 	for _, patch := range quadpro.patch {
 		e := patch.RefreshAllIfPortnumMatches(ffglportnum)
 		if e != nil {
-			engine.LogError(e)
+			LogError(e)
 			err = e
 		}
 	}
@@ -420,8 +401,8 @@ func (quadpro *QuadPro) onClientRestart(ctx *engine.PluginContext, apiargs map[s
 }
 
 /*
-func (quadpro *QuadPro) onPatchSet(ctx *engine.PluginContext, apiargs map[string]string) error {
-	paramName, paramValue, err := engine.GetNameValue(apiargs)
+func (quadpro *QuadPro) onPatchSet(ctx *PluginContext, apiargs map[string]string) error {
+	paramName, paramValue, err := GetNameValue(apiargs)
 	if err != nil {
 		return fmt.Errorf("QuadPro.onPatchSet: %s", err)
 	}
@@ -429,7 +410,7 @@ func (quadpro *QuadPro) onPatchSet(ctx *engine.PluginContext, apiargs map[string
 	if !ok {
 		return fmt.Errorf("QuadPro.onPatchSet: no patch argument")
 	}
-	patch := engine.GetPatch(patchName)
+	patch := GetPatch(patchName)
 	if patch == nil {
 		return fmt.Errorf("no such patch: %s", patchName)
 	}
@@ -439,9 +420,9 @@ func (quadpro *QuadPro) onPatchSet(ctx *engine.PluginContext, apiargs map[string
 
 /*
 // onSet is only used for global parameters.
-func (quadpro *QuadPro) onSet(ctx *engine.PluginContext, apiargs map[string]string) (result string, err error) {
+func (quadpro *QuadPro) onSet(ctx *PluginContext, apiargs map[string]string) (result string, err error) {
 
-	paramName, paramValue, err := engine.GetNameValue(apiargs)
+	paramName, paramValue, err := GetNameValue(apiargs)
 	if err != nil {
 		return "", fmt.Errorf("QuadPro.onSet: %s", err)
 	}
@@ -456,8 +437,8 @@ func (quadpro *QuadPro) onSet(ctx *engine.PluginContext, apiargs map[string]stri
 	}
 
 	if strings.HasPrefix(paramName, "engine") {
-		engine.LogWarn("Why is there an engine.* parameter here?")
-		return "", engine.TheEngine.Set(paramName, paramValue)
+		LogWarn("Why is there an engine.* parameter here?")
+		return "", TheEngine.Set(paramName, paramValue)
 	}
 	return "", fmt.Errorf("QuadPro.onSet: can't handle non-global parameter %s", paramName)
 }
@@ -469,19 +450,19 @@ func (quadpro *QuadPro) onGet(apiargs map[string]string) (result string, err err
 		return "", fmt.Errorf("QuadPro.onPatchGet: Missing name argument")
 	}
 	if strings.HasPrefix(paramName, "engine") {
-		return engine.TheEngine.Get(paramName), nil
+		return TheEngine.Get(paramName), nil
 	} else {
 		return "", fmt.Errorf("QuadPro.onGet: can't handle parameter %s", paramName)
 	}
 }
 
-func (quadpro *QuadPro) onClick(ctx *engine.PluginContext, apiargs map[string]string) (string, error) {
+func (quadpro *QuadPro) onClick(ctx *PluginContext, apiargs map[string]string) (string, error) {
 	quadpro.checkAttract(ctx)
 	quadpro.checkProcess(ctx)
 	return "", nil
 }
 
-func (quadpro *QuadPro) checkProcess(ctx *engine.PluginContext) {
+func (quadpro *QuadPro) checkProcess(ctx *PluginContext) {
 
 	firstTime := (quadpro.lastProcessCheck == time.Time{})
 
@@ -489,7 +470,7 @@ func (quadpro *QuadPro) checkProcess(ctx *engine.PluginContext) {
 	processCheckEnabled := quadpro.processCheckSecs > 0
 	if !processCheckEnabled {
 		if firstTime {
-			engine.LogInfo("Process Checking is disabled.")
+			LogInfo("Process Checking is disabled.")
 		}
 		return
 	}
@@ -504,13 +485,13 @@ func (quadpro *QuadPro) checkProcess(ctx *engine.PluginContext) {
 		// it's stil running.
 		go func() {
 			time.Sleep(2 * time.Second)
-			ctx.CheckAutostartProcesses()
+			CheckAutostartProcesses()
 		}()
 		quadpro.lastProcessCheck = now
 	}
 }
 
-func (quadpro *QuadPro) checkAttract(ctx *engine.PluginContext) {
+func (quadpro *QuadPro) checkAttract(ctx *PluginContext) {
 
 	// Every so often we check to see if attract mode should be turned on
 	now := time.Now()
@@ -532,14 +513,14 @@ func (quadpro *QuadPro) checkAttract(ctx *engine.PluginContext) {
 	}
 }
 
-func (quadpro *QuadPro) onMidiEvent(ctx *engine.PluginContext, apiargs map[string]string) (string, error) {
+func (quadpro *QuadPro) onMidiEvent(ctx *PluginContext, apiargs map[string]string) (string, error) {
 
-	me, err := engine.MidiEventFromMap(apiargs)
+	me, err := MidiEventFromMap(apiargs)
 	if err != nil {
 		return "", err
 	}
 
-	engine.LogInfo("QuadPro.onMidiEvent", "me", me)
+	LogInfo("QuadPro.onMidiEvent", "me", me)
 
 	/*
 		if EraeEnabled {
@@ -548,9 +529,9 @@ func (quadpro *QuadPro) onMidiEvent(ctx *engine.PluginContext, apiargs map[strin
 	*/
 
 	if quadpro.MIDIThru {
-		engine.LogInfo("PassThruMIDI", "msg", me.Msg)
-		// ctx.ScheduleMidi(patch, me.Msg, ctx.CurrentClick())
-		ctx.ScheduleAt(me.Msg, ctx.CurrentClick())
+		LogInfo("PassThruMIDI", "msg", me.Msg)
+		// ScheduleMidi(patch, me.Msg, CurrentClick())
+		ScheduleAt(me.Msg, CurrentClick())
 	}
 	if quadpro.MIDISetScale {
 		quadpro.handleMIDISetScaleNote(me)
@@ -559,8 +540,8 @@ func (quadpro *QuadPro) onMidiEvent(ctx *engine.PluginContext, apiargs map[strin
 	return "", nil
 }
 
-func (quadpro *QuadPro) doTest(ctx *engine.PluginContext, ntimes int, dt time.Duration) {
-	engine.LogInfo("doTest start", "ntimes", ntimes, "dt", dt)
+func (quadpro *QuadPro) doTest(ctx *PluginContext, ntimes int, dt time.Duration) {
+	LogInfo("doTest start", "ntimes", ntimes, "dt", dt)
 	for n := 0; n < ntimes; n++ {
 		if n > 0 {
 			time.Sleep(dt)
@@ -577,7 +558,7 @@ func (quadpro *QuadPro) doTest(ctx *engine.PluginContext, ntimes int, dt time.Du
 		}
 		_, err := quadpro.Api(ctx, "event", thismap)
 		if err != nil {
-			engine.LogError(err)
+			LogError(err)
 			return
 		}
 		time.Sleep(dt)
@@ -591,23 +572,23 @@ func (quadpro *QuadPro) doTest(ctx *engine.PluginContext, ntimes int, dt time.Du
 		}
 		_, err = quadpro.Api(ctx, "event", thismap)
 		if err != nil {
-			engine.LogError(err)
+			LogError(err)
 			return
 		}
 	}
-	engine.LogInfo("doTest end")
+	LogInfo("doTest end")
 }
 
-func (quadpro *QuadPro) loadQuadRand(ctx *engine.PluginContext) error {
+func (quadpro *QuadPro) loadQuadRand(ctx *PluginContext) error {
 
-	arr, err := engine.SavedFileList("quad")
+	arr, err := SavedFileList("quad")
 	if err != nil {
 		return err
 	}
 	rn := rand.Uint64() % uint64(len(arr))
-	engine.LogInfo("loadQuadRand", "quad", arr[rn])
+	LogInfo("loadQuadRand", "quad", arr[rn])
 
-	engine.LogError(quadpro.Load(ctx, "quad", arr[rn]))
+	LogError(quadpro.Load(ctx, "quad", arr[rn]))
 
 	for _, patch := range quadpro.patch {
 		patch.RefreshAllPatchValues()
@@ -615,16 +596,16 @@ func (quadpro *QuadPro) loadQuadRand(ctx *engine.PluginContext) error {
 	return nil
 }
 
-func (quadpro *QuadPro) Load(ctx *engine.PluginContext, category string, filename string) error {
+func (quadpro *QuadPro) Load(ctx *PluginContext, category string, filename string) error {
 
-	path := engine.SavedFilePath(category, filename)
-	paramsMap, err := engine.LoadParamsMap(path)
+	path := SavedFilePath(category, filename)
+	paramsMap, err := LoadParamsMap(path)
 	if err != nil {
-		engine.LogError(err)
+		LogError(err)
 		return err
 	}
 
-	engine.LogInfo("QuadPro.Load", "category", category, "filename", filename)
+	LogInfo("QuadPro.Load", "category", category, "filename", filename)
 
 	var lasterr error
 
@@ -634,14 +615,14 @@ func (quadpro *QuadPro) Load(ctx *engine.PluginContext, category string, filenam
 		for _, patch := range quadpro.patch {
 			err := patch.ApplyPatchValuesFromQuadMap(paramsMap)
 			if err != nil {
-				engine.LogError(err)
+				LogError(err)
 				lasterr = err
 			}
 			patch.RefreshAllPatchValues()
 		}
 
 	default:
-		engine.LogWarn("QuadPro.Load: unhandled", "category", category, "filename", filename)
+		LogWarn("QuadPro.Load: unhandled", "category", category, "filename", filename)
 	}
 
 	// Decide what _Current things we should save
@@ -667,7 +648,7 @@ func (quadpro *QuadPro) Load(ctx *engine.PluginContext, category string, filenam
 		}
 	}
 	if err != nil {
-		engine.LogError(err)
+		LogError(err)
 		lasterr = err
 	}
 	return lasterr
@@ -675,11 +656,11 @@ func (quadpro *QuadPro) Load(ctx *engine.PluginContext, category string, filenam
 
 func (quadpro *QuadPro) save(category string, filename string) (err error) {
 
-	engine.LogOfType("saved", "QuadPro.save", "category", category, "filename", filename)
+	LogOfType("saved", "QuadPro.save", "category", category, "filename", filename)
 
 	if category == "engine" {
 		// err = quadpro.engineClicks.Save("engine", filename)
-		engine.LogWarn("QuadPro.save: shouldn't be saving global?")
+		LogWarn("QuadPro.save: shouldn't be saving global?")
 		err = fmt.Errorf("QuadPro.save: global shouldn't be handled here")
 	} else if category == "quad" {
 		err = quadpro.saveQuad(filename)
@@ -687,7 +668,7 @@ func (quadpro *QuadPro) save(category string, filename string) (err error) {
 		err = fmt.Errorf("QuadPro.Api: unhandled save category %s", category)
 	}
 	if err != nil {
-		engine.LogError(err)
+		LogError(err)
 	}
 	return err
 }
@@ -695,9 +676,9 @@ func (quadpro *QuadPro) save(category string, filename string) (err error) {
 func (quadpro *QuadPro) saveQuad(quadName string) error {
 
 	category := "quad"
-	path := engine.WritableFilePath(category, quadName)
+	path := WritableFilePath(category, quadName)
 
-	engine.LogOfType("saved", "QuadPro.saveQuad", "quad", quadName)
+	LogOfType("saved", "QuadPro.saveQuad", "quad", quadName)
 
 	sortedPatchNames := []string{}
 	for _, patch := range quadpro.patch {
@@ -721,8 +702,8 @@ func (quadpro *QuadPro) saveQuad(quadName string) error {
 	return os.WriteFile(path, data, 0644)
 }
 
-func (quadpro *QuadPro) addPatch(ctx *engine.PluginContext, name string) *engine.Patch {
-	patch := engine.NewPatch(name)
+func (quadpro *QuadPro) addPatch(ctx *PluginContext, name string) *Patch {
+	patch := NewPatch(name)
 	patch.AddListener(ctx)
 	quadpro.patch[name] = patch
 	quadpro.patchLogic[name] = NewPatchLogic(quadpro, patch)
@@ -730,36 +711,28 @@ func (quadpro *QuadPro) addPatch(ctx *engine.PluginContext, name string) *engine
 }
 
 /*
-func (quadpro *QuadPro) scheduleNoteNow(ctx *engine.PluginContext, dest string, pitch, velocity uint8, duration engine.Clicks) {
-	engine.LogInfo("QuadPro.scheculeNoteNow", "dest", dest, "pitch", pitch)
-	pe := &engine.PhraseElement{Value: engine.NewNoteFull(0, pitch, velocity, duration)}
-	phr := engine.NewPhrase().InsertElement(pe)
+func (quadpro *QuadPro) scheduleNoteNow(ctx *PluginContext, dest string, pitch, velocity uint8, duration Clicks) {
+	LogInfo("QuadPro.scheculeNoteNow", "dest", dest, "pitch", pitch)
+	pe := &PhraseElement{Value: NewNoteFull(0, pitch, velocity, duration)}
+	phr := NewPhrase().InsertElement(pe)
 	phr.Destination = dest
-	ctx.SchedulePhrase(phr, ctx.CurrentClick(), dest)
+	SchedulePhrase(phr, CurrentClick(), dest)
 }
 */
 
-// SetExternalScale xxx
-func (quadpro *QuadPro) setExternalScale(pitch int, on bool) {
-	s := quadpro.externalScale
-	for p := pitch; p < 128; p += 12 {
-		s.HasNote[p] = on
-	}
-}
-
-func (quadpro *QuadPro) handleMIDISetScaleNote(e engine.MidiEvent) {
+func (quadpro *QuadPro) handleMIDISetScaleNote(e MidiEvent) {
 	status := e.Status() & 0xf0
 	pitch := int(e.Data1())
-	if status == 0x90 {
+	if status == NoteOnStatus {
 		// If there are no notes held down (i.e. this is the first), clear the scale
 		if quadpro.MIDINumDown < 0 {
 			// this can happen when there's a Read error that misses a noteon
 			quadpro.MIDINumDown = 0
 		}
 		if quadpro.MIDINumDown == 0 {
-			quadpro.clearExternalScale()
+			ClearExternalScale()
 		}
-		quadpro.setExternalScale(pitch%12, true)
+		SetExternalScale(pitch%12, true)
 		quadpro.MIDINumDown++
 		if pitch < 60 {
 			quadpro.MIDIOctaveShift = -1
@@ -768,12 +741,12 @@ func (quadpro *QuadPro) handleMIDISetScaleNote(e engine.MidiEvent) {
 		} else {
 			quadpro.MIDIOctaveShift = 0
 		}
-	} else if status == 0x80 {
+	} else if status == NoteOffStatus {
 		quadpro.MIDINumDown--
 	}
 }
 
-func (quadpro *QuadPro) doAttractAction(ctx *engine.PluginContext) {
+func (quadpro *QuadPro) doAttractAction(ctx *PluginContext) {
 
 	now := time.Now()
 	dt := now.Sub(quadpro.lastAttractGestureTime).Seconds()
@@ -796,7 +769,7 @@ func (quadpro *QuadPro) doAttractAction(ctx *engine.PluginContext) {
 		z1 := rand.Float32() / 2.0
 
 		noteDuration := time.Second
-		go ctx.GenerateCursorGesture(cid, noteDuration, x0, y0, z0, x1, y1, z1)
+		go GenerateCursorGesture(cid, noteDuration, x0, y0, z0, x1, y1, z1)
 		quadpro.lastAttractGestureTime = now
 	}
 
@@ -804,31 +777,25 @@ func (quadpro *QuadPro) doAttractAction(ctx *engine.PluginContext) {
 	if dp > quadpro.attractChangeInterval {
 		err := quadpro.loadQuadRand(ctx)
 		if err != nil {
-			engine.LogError(err)
+			LogError(err)
 		}
 		quadpro.lastAttractChange = now
 	}
 }
 
-func (quadpro *QuadPro) mmttInfo() *engine.ProcessInfo {
+func MmttInfo() *ProcessInfo {
 
 	// NOTE: it's inside a sub-directory of bin, so all the necessary .dll's are contained
 
 	// The value of mmtt is either "kinect" or "oak" or ""
-	mmtt := engine.TheEngine.Get("engine.mmtt")
+	mmtt := TheEngine.Get("engine.mmtt")
 	if mmtt == "" {
 		return nil
 	}
-	fullpath := filepath.Join(engine.PaletteDir(), "bin", "mmtt_"+mmtt, "mmtt_"+mmtt+".exe")
-	if !engine.FileExists(fullpath) {
-		engine.LogWarn("no mmtt executable found, looking for", "path", fullpath)
+	fullpath := filepath.Join(PaletteDir(), "bin", "mmtt_"+mmtt, "mmtt_"+mmtt+".exe")
+	if !FileExists(fullpath) {
+		LogWarn("no mmtt executable found, looking for", "path", fullpath)
 		fullpath = ""
 	}
-	return engine.NewProcessInfo("mmtt_"+mmtt+".exe", fullpath, "", nil)
-}
-
-func (quadpro *QuadPro) guiInfo() *engine.ProcessInfo {
-	exe := "palette_gui.exe"
-	fullpath := filepath.Join(engine.PaletteDir(), "bin", "pyinstalled", exe)
-	return engine.NewProcessInfo(exe, fullpath, "", nil)
+	return NewProcessInfo("mmtt_"+mmtt+".exe", fullpath, "", nil)
 }
