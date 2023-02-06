@@ -25,7 +25,6 @@ func main() {
 	os.Stdout.WriteString(out)
 }
 
-// Usage for controlling the "quadpro" (QuadPro) plugin
 func usage() string {
 	return `Commands:
 	palette start [ all | engine | gui | bidule | resolume ]
@@ -84,20 +83,20 @@ func CliCommand(args []string) string {
 			return doStartEngine()
 
 		case "gui":
-			return doApi("quadpro.startprocess", "process", "gui")
+			return doApi("engine.startprocess", "process", "gui")
 
 		case "bidule":
-			return doApi("quadpro.startprocess", "process", "bidule")
+			return doApi("engine.startprocess", "process", "bidule")
 
 		case "resolume":
-			return doApi("quadpro.startprocess", "process", "resolume")
+			return doApi("engine.startprocess", "process", "resolume")
 
 		case "keykit":
-			return doApi("quadpro.startprocess", "process", "keykit")
+			return doApi("engine.startprocess", "process", "keykit")
 
 		case "", "all":
 			s1 := doStartEngine()
-			s2 := doApi("quadpro.startprocess", "process", "all")
+			s2 := doApi("engine.startprocess", "process", "all")
 			return s1 + "\n" + s2
 
 		default:
@@ -127,16 +126,16 @@ func CliCommand(args []string) string {
 			return ""
 
 		case "gui":
-			return doApi("quadpro.stopprocess", "process", "gui")
+			return doApi("engine.stopprocess", "process", "gui")
 
 		case "bidule":
-			return doApi("quadpro.stopprocess", "process", "bidule")
+			return doApi("engine.stopprocess", "process", "bidule")
 
 		case "resolume":
-			return doApi("quadpro.stopprocess", "process", "resolume")
+			return doApi("engine.stopprocess", "process", "resolume")
 
 		case "keykit":
-			return doApi("quadpro.stopprocess", "process", "keykit")
+			return doApi("engine.stopprocess", "process", "keykit")
 
 		default:
 			return usage()
@@ -153,7 +152,7 @@ func CliCommand(args []string) string {
 		return "Logs have been sent."
 
 	case "gui":
-		return doApi("quadpro.startprocess", "process", "gui")
+		return doApi("engine.startprocess", "process", "gui")
 
 	default:
 		words := strings.Split(api, ".")

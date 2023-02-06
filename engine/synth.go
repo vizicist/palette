@@ -234,7 +234,7 @@ func SendToSynth(value any) {
 	data2 := velocity
 	switch value.(type) {
 	case *NoteOn:
-		status |= 0x90
+		status |= NoteOnStatus
 
 		// We now allow multiple notes with the same pitch,
 		// which assumes the synth handles it okay.
@@ -254,7 +254,7 @@ func SendToSynth(value any) {
 			"notedowncount", synth.noteDownCount[pitch])
 
 	case *NoteOff:
-		status |= 0x80
+		status |= NoteOffStatus
 		data2 = 0
 		synth.noteDown[pitch] = false
 		synth.noteDownCount[pitch]--
@@ -338,7 +338,7 @@ func (synth *Synth) SendNoteToMidiOutput(value any) {
 	data2 := velocity
 	switch value.(type) {
 	case *NoteOn:
-		status |= 0x90
+		status |= NoteOnStatus
 
 		// We now allow multiple notes with the same pitch,
 		// which assumes the synth handles it okay.
@@ -358,7 +358,7 @@ func (synth *Synth) SendNoteToMidiOutput(value any) {
 			"notedowncount", synth.noteDownCount[pitch])
 
 	case *NoteOff:
-		status |= 0x80
+		status |= NoteOffStatus
 		data2 = 0
 		synth.noteDown[pitch] = false
 		synth.noteDownCount[pitch]--
