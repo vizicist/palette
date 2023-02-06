@@ -18,13 +18,13 @@ var GuiPort = 3943
 
 var LocalAddress = "127.0.0.1"
 
+var TheRouter *Router
+
 // Router takes events and routes them
 type Router struct {
 	OSCInput      chan OSCEvent
 	midiInputChan chan MidiEvent
 	cursorInput   chan CursorEvent
-
-	cursorManager *CursorManager
 
 	oscOutput bool
 	oscClient *osc.Client
@@ -60,11 +60,9 @@ type HeartbeatEvent struct {
 
 type APIExecutorFunc func(api string, nuid string, rawargs string) (result any, err error)
 
-func NewRouter(cm *CursorManager) *Router {
+func NewRouter() *Router {
 
-	r := Router{
-		cursorManager: cm,
-	}
+	r := Router{}
 
 	err := LoadParamEnums()
 	if err != nil {
@@ -112,17 +110,19 @@ func (r *Router) Start() {
 		LogWarn("StartCursorInput: LoadMorphs", "err", err)
 	}
 
-	// go StartMorph(r.cursorManager.HandleCursorEvent, 1.0)
 	go StartMorph(r.HandleCursorEvent, 1.0)
 }
 
 func (r *Router) HandleCursorEvent(ce CursorEvent) {
 	r.sendToOscClients(CursorToOscMsg(ce))
-	r.cursorManager.HandleCursorEvent(ce)
+	TheCursorManager.HandleCursorEvent(ce)
 }
 
 func (r *Router) HandleMidiEvent(me MidiEvent) {
 	r.sendToOscClients(MidiToOscMsg(me))
+	if r.midiEventHandler != nil {
+		r.midiEventHandler(me)
+	}
 	PluginsHandleMidiEvent(me)
 }
 
@@ -419,7 +419,7 @@ func (r *Router) oscHandleCursor(msg *osc.Message) {
 
 	LogOfType("mmtt", "MMTT Cursor", "source", ce.Source, "ddu", ce.Ddu, "x", ce.X, "y", ce.Y, "z", ce.Z)
 
-	r.cursorManager.HandleCursorEvent(ce)
+	TheCursorManager.HandleCursorEvent(ce)
 }
 
 /*

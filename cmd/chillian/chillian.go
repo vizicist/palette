@@ -6,7 +6,6 @@ import (
 	"syscall"
 
 	"github.com/vizicist/palette/engine"
-	_ "github.com/vizicist/palette/plugin"
 )
 
 func main() {

@@ -24,8 +24,8 @@ function palette_listen_task() {
 	if ( PaletteListenConnection == 0 ) {
 		PaletteListenConnection = open(PaletteListenAddress,"rA","osc_listen")
         if ( PaletteListenConnection < 0 ) {
-			print("Palette: unable to open ",PaletteListenAddress)
-			print("Palette: perhaps another process is listening on ",PaletteListenAddress)
+			print("Palette: unable to open "+PaletteListenAddress)
+			print("Palette: perhaps another process is listening on "+PaletteListenAddress)
             return()
 		}
 	}
