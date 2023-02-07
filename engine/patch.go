@@ -9,10 +9,10 @@ import (
 )
 
 type Patch struct {
-	synth     *Synth
-	name      string
-	params    *ParamValues
-	listeners []*PluginContext
+	synth  *Synth
+	name   string
+	params *ParamValues
+	// listeners []*PluginInstance
 }
 
 // In a quad file, the parameter names are of the form:
@@ -31,10 +31,10 @@ func PatchNames() []string {
 
 func NewPatch(patchName string) *Patch {
 	patch := &Patch{
-		synth:     GetSynth("default"),
-		name:      patchName,
-		params:    NewParamValues(),
-		listeners: []*PluginContext{},
+		synth:  GetSynth("default"),
+		name:   patchName,
+		params: NewParamValues(),
+		// listeners: []*PluginInstance{},
 	}
 	LogOfType("patch", "NewPatch", "patch", patchName)
 	patch.SetDefaultValues()
@@ -89,12 +89,11 @@ func (patch *Patch) MIDIChannel() uint8 {
 	return synth.Channel()
 }
 
-func (patch *Patch) RefreshAllIfPortnumMatches(ffglportnum int) error {
+func (patch *Patch) RefreshAllIfPortnumMatches(ffglportnum int) {
 	portnum, _ := TheResolume().PortAndLayerNumForPatch(patch.name)
-	if portnum != ffglportnum {
-		return nil
+	if portnum == ffglportnum {
+		patch.RefreshAllPatchValues()
 	}
-	return patch.AlertListeners("patch_refresh_all")
 }
 
 func (patch *Patch) RefreshAllPatchValues() {
@@ -131,42 +130,6 @@ func (patch *Patch) noticeValueChange(paramName string, paramValue string) {
 	}
 }
 
-func (patch *Patch) AlertListeners(event string) error {
-
-	LogOfType("listeners", "AlertListeners", "patch", patch.Name(), "event", event)
-	args := map[string]string{
-		"event": event,
-		"patch": patch.Name(),
-	}
-	return patch.AlertListenersOf(args)
-}
-
-func (patch *Patch) AlertListenersOf(args map[string]string) error {
-	var err error
-	for _, listener := range patch.listeners {
-		_, e := listener.api(listener, "event", args)
-		if e != nil {
-			LogError(e) // make sure multiple ones are all logged
-			err = e
-		}
-	}
-	return err
-}
-
-/*
-func (patch *Patch) AlertListenersOfSet(paramName string, paramValue string) error {
-
-	LogOfType("listeners", "AlertListenersOf", "param", paramName, "value", paramValue, "patch", patch.Name())
-	args := map[string]string{
-		"event": "patch_set",
-		"name":  paramName,
-		"value": paramValue,
-		"patch": patch.Name(),
-	}
-	return patch.AlertListenersOf(args)
-}
-*/
-
 func (patch *Patch) SaveAndAlert(category string, filename string) error {
 
 	LogOfType("saved", "Patch.SaveAndAlert", "category", category, "filename", filename)
@@ -181,11 +144,8 @@ func (patch *Patch) SaveAndAlert(category string, filename string) error {
 		LogError(err)
 		return err
 	}
-	return patch.AlertListeners("patch_refresh_all")
-}
-
-func (patch *Patch) AddListener(ctx *PluginContext) {
-	patch.listeners = append(patch.listeners, ctx)
+	patch.RefreshAllPatchValues()
+	return nil
 }
 
 func (patch *Patch) Name() string {
@@ -319,7 +279,7 @@ func (patch *Patch) Api(api string, apiargs map[string]string) (string, error) {
 }
 
 func (patch *Patch) SaveQuadAndAlert() error {
-	return patch.AlertListeners("quad_save_current")
+	return TheQuadPro.saveQuad("_Current")
 }
 
 func (patch *Patch) Set(paramName string, paramValue string) error {
@@ -497,7 +457,8 @@ func (patch *Patch) Load(category string, filename string) error {
 			}
 		}
 	}
-	return patch.AlertListeners("patch_refresh_all")
+	patch.RefreshAllPatchValues()
+	return nil
 }
 
 func (patch *Patch) clearGraphics() {

@@ -2,7 +2,6 @@ package engine
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -14,6 +13,10 @@ var TheCursorManager *CursorManager
 
 // CursorDeviceCallbackFunc xxx
 type CursorCallbackFunc func(e CursorEvent)
+
+type CursorHandler interface {
+	onCursorEvent(state CursorState) error
+}
 
 // CursorEvent is a single Cursor event
 type CursorEvent struct {
@@ -37,24 +40,11 @@ type CursorState struct {
 type CursorManager struct {
 	cursors      map[string]*CursorState
 	cursorsMutex sync.RWMutex
+	handlers     map[string]CursorHandler
 }
 
 func ClearCursors() {
 	TheCursorManager.clearCursors()
-}
-
-func (ce CursorEvent) ToMap() map[string]string {
-	return map[string]string{
-		"event": "cursor",
-		"cid":   ce.Cid,
-		// "source": ce.Source,
-		// Timestamp time.Time
-		"ddu":  ce.Ddu,
-		"x":    strconv.FormatFloat(float64(ce.X), 'f', 6, 32),
-		"y":    strconv.FormatFloat(float64(ce.Y), 'f', 6, 32),
-		"z":    strconv.FormatFloat(float64(ce.Z), 'f', 6, 32),
-		"area": strconv.FormatFloat(float64(ce.Area), 'f', 6, 32),
-	}
 }
 
 // Format xxx
@@ -80,6 +70,7 @@ func NewCursorManager() *CursorManager {
 	return &CursorManager{
 		cursors:      map[string]*CursorState{},
 		cursorsMutex: sync.RWMutex{},
+		handlers:     map[string]CursorHandler{},
 	}
 }
 
@@ -97,6 +88,10 @@ func (cm *CursorManager) GetCursorState(cid string) *CursorState {
 		return nil
 	}
 	return cs
+}
+
+func (cm *CursorManager) AddCursorHandler(name string, handler CursorHandler, sources ...string) {
+	cm.handlers[name] = handler
 }
 
 func (cm *CursorManager) HandleCursorEvent(ce CursorEvent) {
@@ -198,8 +193,10 @@ func (cm *CursorManager) handleDownDragUp(ce CursorEvent) {
 	}
 	cursorState.Current.Click = CurrentClick()
 
-	// See who wants this cinput, but don't hold the Lock
-	PluginsHandleCursorEvent(ce)
+	for _, handler := range cm.handlers {
+		err := handler.onCursorEvent(*cursorState)
+		LogIfError(err)
+	}
 
 	LogOfType("cursor", "CursorManager.handleDownDragUp", "ce", ce)
 

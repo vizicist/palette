@@ -32,8 +32,11 @@ func (e *Engine) ExecuteAPI(api string, apiargs map[string]string) (result strin
 			return e.executeEngineAPI(apisuffix, apiargs)
 		case "saved":
 			return e.executeSavedAPI(apisuffix, apiargs)
-		case "sound":
-			return e.executeSoundAPI(apisuffix, apiargs)
+		case "quadpro":
+			if TheQuadPro != nil {
+				return TheQuadPro.Api(apisuffix, apiargs)
+			}
+			return "", fmt.Errorf("No quadpro!")
 		case "patch":
 			patchName := ExtractAndRemoveValueOf("patch", apiargs)
 			if patchName == "" {
@@ -45,12 +48,7 @@ func (e *Engine) ExecuteAPI(api string, apiargs map[string]string) (result strin
 			}
 			return patch.Api(apisuffix, apiargs)
 		default:
-			// If it's not one of the reserved aent names, see if it's a registered one
-			ctx, ok := Plugins[apitype]
-			if !ok {
-				return "", fmt.Errorf("No such plugin: %s", apitype)
-			}
-			return ctx.api(ctx, apisuffix, apiargs)
+			return "", fmt.Errorf("Unknown apitype: %s", apitype)
 		}
 	}
 	// unreachable
@@ -78,7 +76,7 @@ func (e *Engine) executeEngineAPI(api string, apiargs map[string]string) (result
 		return "", nil
 
 	case "stopall":
-		CallApiOnAllPlugins("stop", map[string]string{})
+		TheQuadPro.Stop()
 		_ = StopRunning("bidule")
 		_ = StopRunning("resolume")
 		_ = StopRunning("keykit")
@@ -298,6 +296,10 @@ func (e *Engine) Set(name string, value string) error {
 		e.ResetLogTypes(value)
 	case "engine.attract":
 		TheAttractManager.setAttractMode(IsTrueValue(value))
+	case "engine.transposeauto":
+		TheQuadPro.transposeAuto = TheEngine.ParamBool("engine.transposeauto")
+	case "engine.midiinput":
+		TheMidi.SetMidiInput(value)
 	case "engine.attractidlesecs":
 		var f float64
 		f, err := strconv.ParseFloat(value, 32)
@@ -375,25 +377,4 @@ func (e *Engine) stopAfterDelay() {
 	time.Sleep(500 * time.Millisecond)
 	LogInfo("Engine.stop: calling os.Exit(0)")
 	os.Exit(0)
-}
-
-func (e *Engine) executeSoundAPI(api string, apiargs map[string]string) (result string, err error) {
-
-	switch api {
-
-	case "playnote":
-		notestr, oknote := apiargs["note"]
-		if !oknote {
-			return "", fmt.Errorf("missing note parameter")
-		}
-		LogInfo("sound.playnote API should be playing", "note", notestr)
-		return "", nil
-
-	default:
-		LogWarn("Router.ExecuteAPI api is not recognized\n", "api", api)
-		err = fmt.Errorf("Router.ExecuteSoundAPI unrecognized api=%s", api)
-		result = ""
-	}
-
-	return result, err
 }

@@ -39,8 +39,7 @@ type Router struct {
 
 	guiClient *osc.Client
 
-	layerAssignedToNUID map[string]string
-	inputEventMutex     sync.RWMutex
+	inputEventMutex sync.RWMutex
 }
 
 type MIDIEventHandler func(MidiEvent)
@@ -73,7 +72,6 @@ func NewRouter() *Router {
 		// might be fatal, but try to continue
 	}
 
-	r.layerAssignedToNUID = make(map[string]string)
 	r.guiClient = osc.NewClient(LocalAddress, GuiPort)
 	r.OSCInput = make(chan OSCEvent)
 	r.midiInputChan = make(chan MidiEvent)
@@ -121,14 +119,12 @@ func (r *Router) HandleMidiEvent(me MidiEvent) {
 		r.handleMIDISetScaleNote(me)
 	}
 
-	/*
-		n := MidiEvent.Note()
-		if r.midiEventHandler != nil {
-			r.midiEventHandler(me)
-		}
-	*/
+	err := TheQuadPro.onMidiEvent(me)
+	LogIfError(err)
 
-	PluginsHandleMidiEvent(me)
+	if TheErae.enabled {
+		TheErae.onMidiEvent(me)
+	}
 }
 
 func (r *Router) handleMIDISetScaleNote(me MidiEvent) {
@@ -310,7 +306,8 @@ func (r *Router) handleOSCInput(e OSCEvent) {
 
 	case "/clientrestart":
 		// This message currently comes from the FFGL plugins in Resolume
-		r.oscHandleClientRestart(e.Msg)
+		err := r.oscHandleClientRestart(e.Msg)
+		LogIfError(err)
 
 	case "/event": // These messages encode the arguments as JSON
 		LogError(fmt.Errorf("/event OSC message should no longer be used"))
@@ -361,21 +358,24 @@ func (r *Router) oscHandleButton(msg *osc.Message) {
 	go TheResolume().showText(text)
 }
 
-func (r *Router) oscHandleClientRestart(msg *osc.Message) {
+func (r *Router) oscHandleClientRestart(msg *osc.Message) error {
 
 	nargs := msg.CountArguments()
 	if nargs < 1 {
-		LogWarn("Router.handleOSCEvent: too few arguments")
-		return
+		return fmt.Errorf("Router.handleOSCEvent: too few arguments")
 	}
 	// Even though the argument is an integer port number,
 	// it's a string in the OSC message sent from the Palette FFGL plugin.
-	s, err := argAsString(msg, 0)
+	portnum, err := argAsString(msg, 0)
 	if err != nil {
-		LogError(err)
-		return
+		return err
 	}
-	CallApiOnAllPlugins("event", map[string]string{"event": "clientrestart", "portnum": s})
+	ffglportnum, err := strconv.Atoi(portnum)
+	if err != nil {
+		return err
+	}
+	TheQuadPro.onClientRestart(ffglportnum)
+	return nil
 }
 
 func (r *Router) getXYZargs(msg *osc.Message) (x, y, z float32, err error) {

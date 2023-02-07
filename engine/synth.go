@@ -96,9 +96,9 @@ func NewSynth(name string, port string, channel int, bank int, program int) *Syn
 
 	var state *MIDIPortChannelState
 	if name == "fake" {
-		state = MIDI.openFakeChannelOutput(port, channel)
+		state = TheMidi.openFakeChannelOutput(port, channel)
 	} else {
-		state = MIDI.openChannelOutput(portchannel)
+		state = TheMidi.openChannelOutput(portchannel)
 	}
 
 	if state == nil {
@@ -120,7 +120,7 @@ func NewSynth(name string, port string, channel int, bank int, program int) *Syn
 }
 
 func (synth *Synth) updatePortChannelState() (*MIDIPortChannelState, error) {
-	state, err := MIDI.GetPortChannelState(synth.portchannel)
+	state, err := TheMidi.GetPortChannelState(synth.portchannel)
 	if err != nil {
 		return nil, err
 	}
@@ -402,8 +402,8 @@ func (synth *Synth) SendBytes(bytes []byte) error {
 func (synth *Synth) UpdateBankProgram() {
 
 	state := synth.state
-	synth.state.mutex.Lock()
-	defer synth.state.mutex.Unlock()
+	state.mutex.Lock()
+	defer state.mutex.Unlock()
 
 	// LogInfo("Checking Bank Program", "bank", bank, "program", program, "mc.bank", state.bank, "mc.program", state.program, "mc", fmt.Sprintf("%p", state))
 	if state.bank != synth.bank {
