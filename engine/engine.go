@@ -32,6 +32,7 @@ func NewEngine() *Engine {
 	defer engineSysex.Unlock()
 
 	InitLog("engine")
+	LogInfo("Engine InitLog ==============================================")
 
 	TheEngine = &Engine{
 		params: NewParamValues(),
@@ -43,6 +44,9 @@ func NewEngine() *Engine {
 	TheProcessManager = NewProcessManager()
 	TheScheduler = NewScheduler()
 	TheAttractManager = NewAttractManager()
+	TheQuadPro = NewQuadPro()
+	TheMidi = NewMIDI()
+	TheErae = NewErae()
 
 	// The Managers above should be created first so that
 	// loading the Current settings can change values in them.
@@ -59,21 +63,8 @@ func NewEngine() *Engine {
 	AddProcessBuiltIn("mmtt")
 
 	TheEngine.ResetLogTypes(os.Getenv("PALETTE_LOG"))
-	LogInfo("Engine InitLog ==============================================")
 	TheEngine.SetDefaultValues()
 	return TheEngine
-}
-
-// func (e *Engine) HandleCursorEvent(ce CursorEvent) {
-// 	TheEngine.cursorManager.HandleCursorEvent(ce)
-// 	TheEngine.agentManager.HandleCursorEvent(ce)
-// }
-
-func (e *Engine) StartPlugin(name string) {
-	err := PluginsStartPlugin(name)
-	if err != nil {
-		LogError(err)
-	}
 }
 
 func (e *Engine) Start() {
@@ -84,26 +75,17 @@ func (e *Engine) Start() {
 	InitMIDI()
 	InitSynths()
 
-	// Eventually the defult should be "" rather than "quadpro"
-	plugins := e.GetWithDefault("plugins", "quadpro")
-
-	// Plugins should be started before anything,
-	// to guarante that the "start" event will be the first
-
-	for _, nm := range strings.Split(plugins, ",") {
-		e.StartPlugin(nm)
-	}
+	err := TheQuadPro.Start()
+	LogIfError(err)
 
 	go e.StartOSCListener(OSCPort)
 	go e.StartHTTP(HTTPPort)
-
-	// this listens for MIDI events and sends their bytes to the MIDIInput chan
-	go MIDI.Start(TheRouter.midiInputChan)
 
 	// StartOSC xxx
 
 	go TheScheduler.Start()
 	go TheRouter.Start()
+	go TheMidi.Start()
 
 	if e.ParamBool("mmtt.depth") {
 		go DepthRunForever()
