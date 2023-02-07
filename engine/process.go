@@ -20,7 +20,6 @@ type ProcessInfo struct {
 }
 
 type ProcessManager struct {
-	// ctx  *engine.PluginContext
 	info             map[string]*ProcessInfo
 	mutex            sync.Mutex
 	lastProcessCheck time.Time
@@ -242,43 +241,6 @@ func (pm *ProcessManager) IsRunning(process string) bool {
 	b := isRunningExecutable(pi.Exe)
 	return b
 }
-
-/*
-func (pm ProcessManager) KillAll(ctx *PluginContext) error {
-	for nm, pi := range pm.info {
-		if nm != "engine" {
-			err := ctx.KillExecutable(pi.Exe)
-			if err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-*/
-
-/*
-// KillProcess kills a process (synchronously)
-
-	func KillProcess(process string) {
-		switch process {
-		case "all":
-			for _, info := range ProcessInfo {
-			for _, info := range ProcssInfo {
-				KillExecuable(info.Exe)
-		cae "apps":
-			for nm, inf := rang ProcessInfo {
-				if IsAppName(nm) {
-					illExecutable(ino.Exe)
-
-			}
-		deault:
-			p, err = getProessInfo(process)
-			if err != nil {
-				illExecutablep.Exe)
-
-}
-*/
 
 func GuiProcessInfo() *ProcessInfo {
 	fullpath := TheEngine.Get("engine.gui")

@@ -30,7 +30,8 @@ type MIDIIO struct {
 	midiInput            drivers.In
 	midiOutputs          map[string]drivers.Out // synth name is the key
 	midiPortChannelState map[PortChannel]*MIDIPortChannelState
-	midiInputChan        chan MidiEvent
+	inports              midi.InPorts
+	outports             midi.OutPorts
 	stop                 func()
 }
 
@@ -54,18 +55,6 @@ type MidiEvent struct {
 	Msg midi.Message
 }
 
-func MidiEventFromMap(args map[string]string) (MidiEvent, error) {
-
-	msg, ok := args["msg"]
-	if !ok {
-		return MidiEvent{}, fmt.Errorf("missing msg argument")
-	}
-	_ = msg
-	return MidiEvent{}, fmt.Errorf("MakeMidiEvent needs work")
-	// var me MidiEvent
-	// me.Msg = midi.MessageFromString(msg)
-}
-
 func (me MidiEvent) HasPitch() bool {
 	return me.Msg.Is(midi.NoteOnMsg) || me.Msg.Is(midi.NoteOffMsg)
 }
@@ -78,68 +67,68 @@ func (me MidiEvent) Pitch() uint8 {
 	return 0
 }
 
-func (me MidiEvent) ToMap() map[string]string {
-	return map[string]string{
-		"event": "midi",
-		"msg":   me.Msg.String(),
+// MIDI is a pointer to
+var TheMidi *MIDIIO
+
+func NewMIDI() *MIDIIO {
+	return &MIDIIO{
+		midiInput:            nil,
+		midiOutputs:          make(map[string]drivers.Out),
+		midiPortChannelState: make(map[PortChannel]*MIDIPortChannelState),
+		stop:                 nil,
+		inports:              midi.GetInPorts(),
+		outports:             midi.GetOutPorts(),
 	}
 }
-
-// MIDI is a pointer to
-var MIDI *MIDIIO
 
 // InitMIDI initializes stuff
 func InitMIDI() {
 
 	InitializeClicksPerSecond(defaultClicksPerSecond)
 
-	MIDI = &MIDIIO{
-		midiInput:            nil,
-		midiOutputs:          make(map[string]drivers.Out),
-		midiPortChannelState: make(map[PortChannel]*MIDIPortChannelState),
-		stop:                 nil,
-	}
-
-	// util.InitScales()
-
-	// erae := false
-	inports := midi.GetInPorts()
-	outports := midi.GetOutPorts()
-
-	midiInputName := TheEngine.Get("engine.midiinput")
-
-	// device names is done with strings.Contain	// Note: name matching of MIDI s
-	// beause gomidi/midi appends an index value to the strings
-
-	for _, inp := range inports {
-		name := inp.String()
-		LogOfType("midiports", "MIDI input", "port", name)
-		// if strings.Contains(name, "Erae Touch") {
-		// 	erae = true
-		// 	EraeInput = inp
-		// }
-		if strings.Contains(name, midiInputName) {
-			// We only open a single input, though midiInputs is an array
-			MIDI.midiInput = inp
-		}
-	}
-
-	for _, outp := range outports {
+	for _, outp := range TheMidi.outports {
 		name := outp.String()
 		// NOTE: name is the port name followed by an index
 		LogOfType("midiports", "MIDI output", "port", outp.String())
-		// if strings.Contains(name, "Erae Touch") {
-		// 	EraeOutput = outp
-		// }
-		MIDI.midiOutputs[name] = outp
+		if strings.Contains(name, "Erae Touch") {
+			TheErae.output = outp
+		}
+		TheMidi.midiOutputs[name] = outp
 	}
 
-	LogInfo("Initialized MIDI", "outports", outports, "midiInputName", midiInputName)
+	LogInfo("Initialized MIDI", "outports", TheMidi.outports)
 
 	// if erae {
 	// 	Info("Erae Touch input is being enabled")
 	// 	InitErae()
 	// }
+}
+
+func (m *MIDIIO) SetMidiInput(midiInputName string) {
+
+	if TheMidi.midiInput != nil {
+		err := TheMidi.midiInput.Close()
+		LogIfError(err)
+		TheMidi.midiInput = nil
+	}
+
+	if midiInputName == "" {
+		return
+	}
+
+	// Note: name matching of MIDI device names is done with strings.Contain
+	// beause gomidi/midi appends an index value to the strings
+
+	for _, inp := range m.inports {
+		name := inp.String()
+		LogOfType("midiports", "MIDI input", "port", name)
+		if strings.Contains(name, midiInputName) {
+			// We only open a single input, though midiInputs is an array
+			LogInfo("Opening MIDI input", "name", name)
+			TheMidi.midiInput = inp
+			break // only pick the first one that matches
+		}
+	}
 }
 
 type MidiHandlerFunc func(midi.Message, int32)
@@ -148,21 +137,23 @@ func (m *MIDIIO) handleMidiError(err error) {
 	LogError(err)
 }
 
-func (m *MIDIIO) Start(midiInputChan chan MidiEvent) {
-	m.midiInputChan = midiInputChan
+func (m *MIDIIO) Start() {
+	if m.midiInput == nil {
+		LogWarn("No MIDI input port has been selected")
+		return
+	}
 	stop, err := midi.ListenTo(m.midiInput, m.handleMidiInput, midi.UseSysEx(), midi.HandleError(m.handleMidiError))
 	if err != nil {
 		LogWarn("midi.ListenTo", "err", err)
 		return
 	}
 	m.stop = stop
-
-	select {}
+	select {} // is this needed?
 }
 
 func (m *MIDIIO) handleMidiInput(msg midi.Message, timestamp int32) {
 	LogOfType("midi", "handleMidiInput", "msg", msg)
-	m.midiInputChan <- MidiEvent{Msg: msg}
+	TheRouter.midiInputChan <- MidiEvent{Msg: msg}
 
 	/*
 		var bt []byte
@@ -223,21 +214,25 @@ func (out *MIDIPortChannelState) WriteShort(status, data1, data2 int64) {
 }
 
 func (m *MIDIIO) GetPortChannelState(portchannel PortChannel) (*MIDIPortChannelState, error) {
-	mc, ok := m.midiPortChannelState[portchannel]
+
+	state, ok := m.midiPortChannelState[portchannel]
 	if !ok {
 		return nil, fmt.Errorf("GetMidiChannelOutput: no entry, port=%s channel=%d", portchannel.port, portchannel.channel)
 	}
-	if mc.output == nil {
+	if state.output == nil {
 		return nil, fmt.Errorf("GetMidiChannelOutput: midiDeviceOutput==nil, port=%s channel=%d", portchannel.port, portchannel.channel)
 	}
-	if !mc.isopen {
-		e := mc.output.Open()
+
+	state.mutex.Lock()
+	defer state.mutex.Unlock()
+	if !state.isopen {
+		e := state.output.Open()
 		if e != nil {
 			return nil, e
 		}
 	}
-	mc.isopen = true
-	return mc, nil
+	state.isopen = true
+	return state, nil
 }
 
 func (m *MIDIIO) openChannelOutput(portchannel PortChannel) *MIDIPortChannelState {
