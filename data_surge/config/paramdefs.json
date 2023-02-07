@@ -80,7 +80,7 @@
 "engine.debug": {"valuetype":"string", "min":"debug", "max":"debug", "init":"", "comment":"# Debugging" },
 "engine.plugins": {"valuetype":"string", "min":"plugins", "max":"plugins", "init":"quadpro", "comment":"# Plugins to start" },
 "engine.guilevel": {"valuetype":"string", "min":"guilevel", "max":"guilevel", "init":"0", "comment":"# GUI level" },
-"engine.attractidleminutes": {"valuetype":"int", "min":"0", "max":"60", "init":"0", "comment":"# Attract timeout, 0 to disable" },
+"engine.attractidlesecs": {"valuetype":"int", "min":"0", "max":"3600", "init":"0", "comment":"# Attract timeout, 0 to disable" },
 "engine.autostart": {"valuetype":"string", "min":"autostart", "max":"autostart", "init":"bidule,resolume", "comment":"# Plugins to start" },
 "engine.bidule": {"valuetype":"string", "min":"bidule", "max":"bidule", "init":"C:/Program Files/Plogue/Bidule/Bidule.exe", "comment":"# Bidule executable path" },
 "engine.guiresize": {"valuetype":"string", "min":"guiresize", "max":"bidule", "init":"100,100,800,1280", "comment":"# GUI resize" },

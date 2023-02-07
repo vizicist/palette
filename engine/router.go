@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/hypebeast/go-osc/osc"
+	midi "gitlab.com/gomidi/midi/v2"
 )
 
 var HTTPPort = 3330
@@ -26,21 +27,18 @@ type Router struct {
 	midiInputChan chan MidiEvent
 	cursorInput   chan CursorEvent
 
-	oscOutput bool
-	oscClient *osc.Client
+	killme          bool
+	MIDINumDown     int
+	MIDIOctaveShift int
 
-	killme bool
+	MIDISetScale     bool
+	MIDIThru         bool
+	MIDIThruScadjust bool
+	MIDIQuantized    bool
+	TransposePitch   int
 
-	AliveWaiters map[string]chan string
-
-	// layerMap map[string]int // map of pads to resolume layer numbers
-
-	midiEventHandler MIDIEventHandler
-
-	// resolumeClient *osc.Client
 	guiClient *osc.Client
 
-	// myHostname          string
 	layerAssignedToNUID map[string]string
 	inputEventMutex     sync.RWMutex
 }
@@ -79,19 +77,6 @@ func NewRouter() *Router {
 	r.guiClient = osc.NewClient(LocalAddress, GuiPort)
 	r.OSCInput = make(chan OSCEvent)
 	r.midiInputChan = make(chan MidiEvent)
-	// r.recordingOn = false
-
-	/*
-		r.myHostname = os.Getenv("PALETTE_HOSTNAME")
-		if r.myHostname == "" {
-			hostname, err := os.Hostname()
-			if err != nil {
-				LogError(err)
-				hostname = "unknown"
-			}
-			r.myHostname = hostname
-		}
-	*/
 
 	// By default, the engine handles Cursor events internally.
 	// However, if publishcursor is set, it ONLY publishes them,
@@ -102,7 +87,6 @@ func NewRouter() *Router {
 
 func (r *Router) Start() {
 
-	go r.notifyGUI("restart")
 	go r.InputListener()
 
 	err := LoadMorphs()
@@ -111,30 +95,65 @@ func (r *Router) Start() {
 	}
 
 	go StartMorph(r.HandleCursorEvent, 1.0)
+
+	go r.notifyGUI("restart")
 }
 
 func (r *Router) HandleCursorEvent(ce CursorEvent) {
-	r.sendToOscClients(CursorToOscMsg(ce))
+	TheEngine.sendToOscClients(CursorToOscMsg(ce))
 	TheCursorManager.HandleCursorEvent(ce)
 }
 
 func (r *Router) HandleMidiEvent(me MidiEvent) {
-	r.sendToOscClients(MidiToOscMsg(me))
-	if r.midiEventHandler != nil {
-		r.midiEventHandler(me)
+	TheEngine.sendToOscClients(MidiToOscMsg(me))
+
+	if me.Msg.Is(midi.NoteOnMsg) {
+		SetExternalScale(me.Pitch(), true)
+	} else {
+		SetExternalScale(me.Pitch(), false)
 	}
+
+	if r.MIDIThru {
+		LogInfo("PassThruMIDI", "msg", me.Msg)
+		ScheduleAt(me.Msg, CurrentClick())
+	}
+	if r.MIDISetScale {
+		r.handleMIDISetScaleNote(me)
+	}
+
+	/*
+		n := MidiEvent.Note()
+		if r.midiEventHandler != nil {
+			r.midiEventHandler(me)
+		}
+	*/
+
 	PluginsHandleMidiEvent(me)
 }
 
-func (r *Router) sendToOscClients(msg *osc.Message) {
-	if r.oscOutput {
-		if r.oscClient == nil {
-			r.oscClient = osc.NewClient(LocalAddress, EventClientPort)
-			// oscClient is guaranteed to be non-nil
+func (r *Router) handleMIDISetScaleNote(me MidiEvent) {
+	status := me.Status() & 0xf0
+	pitch := int(me.Data1())
+	if status == NoteOnStatus {
+		// If there are no notes held down (i.e. this is the first), clear the scale
+		if r.MIDINumDown < 0 {
+			// this can happen when there's a Read error that misses a noteon
+			r.MIDINumDown = 0
 		}
-		err := r.oscClient.Send(msg)
-		LogIfError(err)
-		LogOfType("cursor", "Router sending to OSC client", "msg", msg)
+		if r.MIDINumDown == 0 {
+			ClearExternalScale()
+		}
+		SetExternalScale(uint8(pitch%12), true)
+		r.MIDINumDown++
+		if pitch < 60 {
+			r.MIDIOctaveShift = -1
+		} else if pitch > 72 {
+			r.MIDIOctaveShift = 1
+		} else {
+			r.MIDIOctaveShift = 0
+		}
+	} else if status == NoteOffStatus {
+		r.MIDINumDown--
 	}
 }
 
@@ -157,9 +176,11 @@ func (r *Router) InputListener() {
 	LogInfo("InputListener is being killed")
 }
 
+/*
 func (r *Router) SetMIDIEventHandler(handler MIDIEventHandler) {
 	r.midiEventHandler = handler
 }
+*/
 
 func ArgToFloat(nm string, args map[string]string) float32 {
 	f, err := strconv.ParseFloat(args[nm], 32)

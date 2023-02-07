@@ -1,0 +1,14 @@
+{
+    "params": {
+        "engine.attractidlesecs":"72",
+        "engine.autostart":"bidule,resolume",
+        "engine.bidule":"C:/Program Files/Plogue/Bidule/Bidule.exe",
+        "engine.debug":"",
+        "engine.guilevel":"0",
+        "engine.guiresize":"100,100,800,1280",
+        "engine.midiinput":"",
+        "engine.oscoutput":"true",
+        "engine.plugins":"quadpro",
+        "engine.scale":"newage"
+    }
+}
