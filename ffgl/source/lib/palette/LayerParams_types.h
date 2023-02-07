@@ -91,6 +91,7 @@ LayerParams_InitializeTypes() {
 	LayerParams_shapeTypes.push_back("square");
 	LayerParams_shapeTypes.push_back("circle");
 
+	LayerParams_midiinputTypes.push_back("microKEY2 Air");
 	LayerParams_midiinputTypes.push_back("");
 
 	LayerParams_movedirTypes.push_back("cursor");
