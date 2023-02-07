@@ -30,7 +30,7 @@ func usage() string {
 	palette start [ all | engine | gui | bidule | resolume ]
 	palette stop [ all | engine | gui | bidule | resolume ]
 	palette version
-	palette {plugin}.{api} [ {argname} {argvalue} ] ...
+	palette {category}.{api} [ {argname} {argvalue} ] ...
 	`
 }
 
