@@ -80,6 +80,7 @@ func PluginsHandleMidiEvent(e MidiEvent) {
 	}
 }
 
+/*
 func PluginsHandleClickEvent(e ClickEvent) {
 	PluginsMutex.Lock()
 	defer PluginsMutex.Unlock()
@@ -88,3 +89,4 @@ func PluginsHandleClickEvent(e ClickEvent) {
 		LogError(err)
 	}
 }
+*/

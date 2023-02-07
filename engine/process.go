@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 )
 
 var TheProcessManager *ProcessManager
@@ -20,8 +21,10 @@ type ProcessInfo struct {
 
 type ProcessManager struct {
 	// ctx  *engine.PluginContext
-	info  map[string]*ProcessInfo
-	mutex sync.Mutex
+	info             map[string]*ProcessInfo
+	mutex            sync.Mutex
+	lastProcessCheck time.Time
+	processCheckSecs float64
 }
 
 func NewProcessInfo(exe, fullPath, arg string, activate func()) *ProcessInfo {
@@ -49,10 +52,42 @@ func CheckAutostartProcesses() {
 //////////////////////////////////////////////////////////////////
 
 func NewProcessManager() *ProcessManager {
+	processCheckSecs := TheEngine.EngineParamFloatWithDefault("engine.processchecksecs", 60)
 	pm := &ProcessManager{
-		info: make(map[string]*ProcessInfo),
+		info:             make(map[string]*ProcessInfo),
+		lastProcessCheck: time.Time{},
+		processCheckSecs: processCheckSecs,
 	}
 	return pm
+}
+
+func (pm *ProcessManager) checkProcess() {
+
+	firstTime := (pm.lastProcessCheck == time.Time{})
+
+	// If processCheckSecs is 0, process checking is disabled
+	processCheckEnabled := pm.processCheckSecs > 0
+	if !processCheckEnabled {
+		if firstTime {
+			LogInfo("Process Checking is disabled.")
+		}
+		return
+	}
+
+	now := time.Now()
+	sinceLastProcessCheck := now.Sub(pm.lastProcessCheck).Seconds()
+	if processCheckEnabled && (firstTime || sinceLastProcessCheck > pm.processCheckSecs) {
+		// Put it in background, so calling
+		// tasklist or ps doesn't disrupt realtime
+		// The sleep here is because if you kill something and
+		// immediately check to see if it's running, it reports that
+		// it's stil running.
+		go func() {
+			time.Sleep(2 * time.Second)
+			CheckAutostartProcesses()
+		}()
+		pm.lastProcessCheck = now
+	}
 }
 
 func (pm *ProcessManager) CheckAutostartProcesses() {
@@ -139,8 +174,7 @@ func (pm *ProcessManager) AddProcessBuiltIn(process string) {
 func (pm *ProcessManager) StartRunning(process string) error {
 
 	keyroot := os.Getenv("KEYROOT")
-	LogInfo("KEYROOT value", "keyroot", keyroot)
-	LogOfType("process", "StartRunning", "process", process)
+	LogOfType("process", "StartRunning", "process", process, "keyroot", keyroot)
 
 	for nm, pi := range pm.info {
 		if process == "all" || nm == process {

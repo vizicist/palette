@@ -30,13 +30,6 @@
             "args": ["start","gui"]
         },
         {
-            "name": "palette gui",
-            "type": "go",
-            "request": "launch",
-            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
-            "args": ["start","gui"]
-        },
-        {
             "name": "Chillian Start",
             "type": "go",
             "request": "launch",

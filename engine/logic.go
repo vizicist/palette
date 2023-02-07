@@ -6,7 +6,6 @@ import (
 )
 
 type PatchLogic struct {
-	quadpro *QuadPro
 	patch   *Patch
 
 	mutex sync.Mutex
@@ -19,24 +18,10 @@ type PatchLogic struct {
 
 	// lastCursorStepEvent    CursorStepEvent
 	// lastUnQuantizedStepNum Clicks
-
-	// params                         map[string]any
-
-	// paramsMutex               sync.RWMutex
-
-	// Things moved over from Router
-
-	// MIDINumDown      int
-	// MIDIThru         bool
-	// MIDIThruScadjust bool
-	// MIDISetScale     bool
-	// MIDIQuantized    bool
-	// TransposePitch   int
 }
 
-func NewPatchLogic(quadpro *QuadPro, patch *Patch) *PatchLogic {
+func NewPatchLogic(patch *Patch) *PatchLogic {
 	logic := &PatchLogic{
-		quadpro: quadpro,
 		patch:   patch,
 	}
 	return logic
@@ -51,7 +36,6 @@ func (logic *PatchLogic) cursorToNoteOn(ctx *PluginContext, ce CursorEvent) *Not
 
 func (logic *PatchLogic) cursorToPitch(ctx *PluginContext, ce CursorEvent) uint8 {
 	patch := logic.patch
-	quadpro := logic.quadpro
 	pitchmin := patch.GetInt("sound.pitchmin")
 	pitchmax := patch.GetInt("sound.pitchmax")
 	dp := pitchmax - pitchmin + 1
@@ -65,14 +49,14 @@ func (logic *PatchLogic) cursorToPitch(ctx *PluginContext, ce CursorEvent) uint8
 		scale := GetScale(scaleName)
 		p = scale.ClosestTo(p)
 		// MIDIOctaveShift might be negative
-		i := int(p) + 12*quadpro.MIDIOctaveShift
+		i := int(p) + 12*TheRouter.MIDIOctaveShift
 		for i < 0 {
 			i += 12
 		}
 		for i > 127 {
 			i -= 12
 		}
-		p = uint8(i + quadpro.TransposePitch)
+		p = uint8(i + TheRouter.TransposePitch)
 	}
 	return p
 }

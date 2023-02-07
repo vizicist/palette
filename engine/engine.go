@@ -12,8 +12,10 @@ import (
 )
 
 type Engine struct {
-	params *ParamValues
-	done   chan bool
+	params    *ParamValues
+	done      chan bool
+	oscOutput bool
+	oscClient *osc.Client
 }
 
 var TheEngine *Engine
@@ -31,14 +33,23 @@ func NewEngine() *Engine {
 
 	InitLog("engine")
 
+	TheEngine = &Engine{
+		params: NewParamValues(),
+		done:   make(chan bool),
+	}
+
 	TheCursorManager = NewCursorManager()
 	TheRouter = NewRouter()
 	TheProcessManager = NewProcessManager()
 	TheScheduler = NewScheduler()
+	TheAttractManager = NewAttractManager()
 
-	TheEngine = &Engine{
-		params: NewParamValues(),
-		done:   make(chan bool),
+	// The Managers above should be created first so that
+	// loading the Current settings can change values in them.
+	err := TheEngine.LoadCurrent()
+	if err != nil {
+		LogError(err)
+		// but keep going
 	}
 
 	AddProcessBuiltIn("keykit")
@@ -50,11 +61,6 @@ func NewEngine() *Engine {
 	TheEngine.ResetLogTypes(os.Getenv("PALETTE_LOG"))
 	LogInfo("Engine InitLog ==============================================")
 	TheEngine.SetDefaultValues()
-	err := TheEngine.LoadCurrent()
-	if err != nil {
-		LogError(err)
-		// but keep going
-	}
 	return TheEngine
 }
 
@@ -88,7 +94,7 @@ func (e *Engine) Start() {
 		e.StartPlugin(nm)
 	}
 
-	go e.StartOSC(OSCPort)
+	go e.StartOSCListener(OSCPort)
 	go e.StartHTTP(HTTPPort)
 
 	// this listens for MIDI events and sends their bytes to the MIDIInput chan
@@ -145,7 +151,19 @@ func (e *Engine) ResetLogTypes(logtypes string) {
 	}
 }
 
-func (e *Engine) StartOSC(port int) {
+func (e *Engine) sendToOscClients(msg *osc.Message) {
+	if e.oscOutput {
+		if e.oscClient == nil {
+			e.oscClient = osc.NewClient(LocalAddress, EventClientPort)
+			// oscClient is guaranteed to be non-nil
+		}
+		err := e.oscClient.Send(msg)
+		LogIfError(err)
+		LogOfType("cursor", "Router sending to OSC client", "msg", msg)
+	}
+}
+
+func (e *Engine) StartOSCListener(port int) {
 
 	source := fmt.Sprintf("%s:%d", LocalAddress, port)
 

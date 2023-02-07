@@ -489,7 +489,7 @@ class ProGuiApp(tk.Tk):
 
     def unattract(self):
         log("Screen pressed, stopping attract mode, setting nextMode to normal")
-        palette.palette_quadpro_api("attract",
+        palette.palette_engine_api("attract",
             "\"onoff\": \"false\"")
         self.nextMode = "normal"
         self.resetLastAnything()
@@ -802,7 +802,8 @@ class ProGuiApp(tk.Tk):
                     "\"filename\": \"" + filename + "\""
                     ", \"category\": \"" + category + "\"")
             else:
-                # Otherwise, the quad saved is loaded only in a single patch
+                # Otherwise, in "pro" mode,
+                # the quad is loaded only into a single patch
                 patchName = self.CurrPatch.name()
                 self.patchLoad(patchName,category,filename)
                 # palette.palette_quadpro_api("save",
@@ -2567,9 +2568,9 @@ def status_thread(app):  # runs in background thread
 
         time.sleep(15.0)
 
-        status, err = palette.palette_quadpro_api("status","")
+        status, err = palette.palette_engine_api("status","")
         if err != None:
-            log("quadpro.status: err=",err)
+            log("engine.status: err=",err)
             continue
 
         if status == None:

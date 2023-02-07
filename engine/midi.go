@@ -66,6 +66,18 @@ func MidiEventFromMap(args map[string]string) (MidiEvent, error) {
 	// me.Msg = midi.MessageFromString(msg)
 }
 
+func (me MidiEvent) HasPitch() bool {
+	return me.Msg.Is(midi.NoteOnMsg) || me.Msg.Is(midi.NoteOffMsg)
+}
+
+func (me MidiEvent) Pitch() uint8 {
+	b := me.Msg.Bytes()
+	if len(b) < 3 {
+		return b[1]
+	}
+	return 0
+}
+
 func (me MidiEvent) ToMap() map[string]string {
 	return map[string]string{
 		"event": "midi",
