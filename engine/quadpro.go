@@ -19,31 +19,6 @@ type QuadPro struct {
 
 	started bool
 
-	MIDIOctaveShift  int
-	MIDINumDown      int
-	MIDIThru         bool
-	MIDIThruScadjust bool
-	MIDISetScale     bool
-	MIDIQuantized    bool
-	TransposePitch   int
-	nextCursorNum    int
-
-	attractModeIsOn        bool
-	lastAttractModeChange  time.Time
-	lastAttractGestureTime time.Time
-	lastAttractChange      time.Time
-
-	// parameters
-	attractGestureInterval float64
-	attractChangeInterval  float64
-
-	lastAttractCheck time.Time
-	lastProcessCheck time.Time
-
-	attractCheckSecs float64
-	attractIdleSecs  float64
-	processCheckSecs float64
-
 	transposeAuto   bool
 	transposeNext   Clicks
 	transposeClicks Clicks // time between auto transpose changes
@@ -51,25 +26,12 @@ type QuadPro struct {
 	transposeValues []int
 }
 
+var TheQuadPro *QuadPro
+
 func init() {
 	quadpro := &QuadPro{
 		patch:      map[string]*Patch{},
 		patchLogic: map[string]*PatchLogic{},
-
-		attractModeIsOn: false,
-
-		lastAttractModeChange:  time.Now(),
-		lastAttractGestureTime: time.Now(),
-		lastAttractChange:      time.Now(),
-		lastAttractCheck:       time.Now(),
-		lastProcessCheck:       time.Time{},
-
-		attractGestureInterval: 0,
-		attractChangeInterval:  0,
-		attractCheckSecs:       0,
-		attractIdleSecs:        0, // default is no attract mode
-
-		processCheckSecs: 0,
 
 		transposeAuto:   true,
 		transposeNext:   0,
@@ -78,6 +40,7 @@ func init() {
 		transposeValues: []int{0, -2, 3, -5},
 	}
 	RegisterPlugin("quadpro", quadpro.Api)
+	TheQuadPro = quadpro
 }
 
 func (quadpro *QuadPro) Api(ctx *PluginContext, api string, apiargs map[string]string) (result string, err error) {
@@ -92,17 +55,7 @@ func (quadpro *QuadPro) Api(ctx *PluginContext, api string, apiargs map[string]s
 		return "", StopRunning("all")
 
 	case "set":
-		paramName, paramValue, err := GetNameValue(apiargs)
-		if err != nil {
-			return "", err
-		}
-		switch paramName {
-		case "attractidleminutes":
-			minutes, err := strconv.ParseInt(paramValue, 10, 64)
-			if err == nil {
-				quadpro.attractIdleSecs = float64(60 * minutes)
-			}
-		}
+		LogWarn("quadpro.set doesn't do anything")
 		return "", nil
 
 	case "get":
@@ -113,11 +66,7 @@ func (quadpro *QuadPro) Api(ctx *PluginContext, api string, apiargs map[string]s
 		if !ok {
 			return "", fmt.Errorf("QuadPro. Missing event argument")
 		}
-		if eventName == "click" {
-			return quadpro.onClick(ctx, apiargs)
-		}
 
-		// LogInfo("Ppro.event", "eventName", eventName)
 		switch eventName {
 		case "midi":
 			return quadpro.onMidiEvent(ctx, apiargs)
@@ -150,15 +99,6 @@ func (quadpro *QuadPro) Api(ctx *PluginContext, api string, apiargs map[string]s
 		}
 		return "", nil
 
-	case "attract":
-		onoffstr, ok := apiargs["onoff"]
-		if !ok {
-			return "", fmt.Errorf("missing onoff parameter")
-		}
-		onoff := IsTrueValue(onoffstr)
-		quadpro.setAttractMode(onoff)
-		return "", nil
-
 	case "echo":
 		value, ok := apiargs["value"]
 		if !ok {
@@ -175,7 +115,7 @@ func (quadpro *QuadPro) Api(ctx *PluginContext, api string, apiargs map[string]s
 		if !oksaved {
 			return "", fmt.Errorf("missing filename parameter")
 		}
-		quadpro.setAttractMode(false)
+		TheAttractManager.setAttractMode(false)
 		return "", quadpro.Load(ctx, category, filename)
 
 	case "save":
@@ -188,37 +128,6 @@ func (quadpro *QuadPro) Api(ctx *PluginContext, api string, apiargs map[string]s
 			return "", fmt.Errorf("missing filename parameter")
 		}
 		return "", quadpro.save(category, filename)
-
-		/*
-			case "startprocess":
-				process, ok := apiargs["process"]
-				if !ok {
-					return "", fmt.Errorf("ExecuteAPI: missing process argument")
-				}
-
-				LogInfo("Is quadpro.startprocess still used?", "process", process)
-
-				err = StartRunning(process)
-				if err != nil {
-					return "", err
-				}
-				err = Activate(process)
-				return "", err
-
-			case "stopprocess":
-				process, ok := apiargs["process"]
-				if !ok {
-					return "", fmt.Errorf("ExecuteAPI: missing process argument")
-				}
-				return "", StopRunning(process)
-		*/
-
-	case "status":
-		result = JsonObject(
-			"uptime", fmt.Sprintf("%f", Uptime()),
-			"attractmode", fmt.Sprintf("%v", quadpro.attractModeIsOn),
-		)
-		return result, nil
 
 	case "test":
 		var ntimes = 10                 // default
@@ -270,17 +179,6 @@ func (quadpro *QuadPro) start(ctx *PluginContext) error {
 
 	ClearExternalScale()
 
-	// Make sure all the global parameters are set to their initial values
-	// XXX - Is this right?  Don't they get read in from global._Current.json ?
-	// for nm, pd := range ParamDefs {
-	// 	if pd.Category == "engine" {
-	// 		err := quadpro.engineClicks.SetParamValueWithString(nm, pd.Init)
-	// 		if err != nil {
-	// 			LogError(err)
-	// 		}
-	// 	}
-	// }
-
 	quadpro.transposeAuto = TheEngine.ParamBool("engine.transposeauto")
 	beats := TheEngine.EngineParamIntWithDefault("engine.transposebeats", 48)
 
@@ -298,12 +196,6 @@ func (quadpro *QuadPro) start(ctx *PluginContext) error {
 
 	// Don't start checking processes right away, after killing them on a restart,
 	// they may still be running for a bit
-	quadpro.processCheckSecs = TheEngine.EngineParamFloatWithDefault("engine.processchecksecs", 60)
-	quadpro.attractCheckSecs = TheEngine.EngineParamFloatWithDefault("engine.attractchecksecs", 2)
-	quadpro.attractIdleSecs = 60 * TheEngine.EngineParamFloatWithDefault("engine.attractidleminutes", 0)
-	quadpro.attractChangeInterval = TheEngine.EngineParamFloatWithDefault("engine.attractchangeinterval", 30)
-	quadpro.attractGestureInterval = TheEngine.EngineParamFloatWithDefault("engine.attractgestureinterval", 0.5)
-
 	return nil
 }
 
@@ -341,7 +233,7 @@ func (quadpro *QuadPro) onCursorEvent(ctx *PluginContext, apiargs map[string]str
 
 	// Any non-internal cursor will turn attract mode off.
 	if !ce.IsInternal() {
-		quadpro.setAttractMode(false)
+		TheAttractManager.setAttractMode(false)
 	}
 
 	// For the moment, the cursor to patchLogic mapping is 1-to-1.
@@ -353,27 +245,13 @@ func (quadpro *QuadPro) onCursorEvent(ctx *PluginContext, apiargs map[string]str
 	cursorStyle := patchLogic.patch.Get("misc.cursorstyle")
 	gensound := IsTrueValue(patchLogic.patch.Get("misc.generatesound"))
 	genvisual := IsTrueValue(patchLogic.patch.Get("misc.generatevisual"))
-	if gensound && !quadpro.attractModeIsOn {
+	if gensound && !TheAttractManager.attractModeIsOn {
 		patchLogic.generateSoundFromCursor(ctx, ce, cursorStyle)
 	}
 	if genvisual {
 		patchLogic.generateVisualsFromCursor(ce)
 	}
 	return "", nil
-}
-
-func (quadpro *QuadPro) setAttractMode(onoff bool) {
-
-	if onoff == quadpro.attractModeIsOn {
-		return // already in that mode
-	}
-	// Throttle it a bit
-	secondsSince := time.Since(quadpro.lastAttractModeChange).Seconds()
-	if secondsSince > 1.0 {
-		LogOfType("attract", "QuadPro. changing attract", "onoff", onoff)
-		quadpro.attractModeIsOn = onoff
-		quadpro.lastAttractModeChange = time.Now()
-	}
 }
 
 func (quadpro *QuadPro) onClientRestart(ctx *PluginContext, apiargs map[string]string) (string, error) {
@@ -387,7 +265,7 @@ func (quadpro *QuadPro) onClientRestart(ctx *PluginContext, apiargs map[string]s
 	if err != nil {
 		return "", err
 	}
-	LogInfo("quadpro got clientrestart", "portnum", portnum)
+	LogOfType("ffgl","quadpro got clientrestart", "portnum", portnum)
 	// The restart message contains the
 	// portnum of the plugin that restarted.
 	for _, patch := range quadpro.patch {
@@ -418,32 +296,6 @@ func (quadpro *QuadPro) onPatchSet(ctx *PluginContext, apiargs map[string]string
 }
 */
 
-/*
-// onSet is only used for global parameters.
-func (quadpro *QuadPro) onSet(ctx *PluginContext, apiargs map[string]string) (result string, err error) {
-
-	paramName, paramValue, err := GetNameValue(apiargs)
-	if err != nil {
-		return "", fmt.Errorf("QuadPro.onSet: %s", err)
-	}
-
-	switch paramName {
-	case "attractchecksecs":
-		quadpro.attractCheckSecs = ParseInt(value, name)
-	case "attractchangeinterval":
-		quadpro.attractChangeInterval = ParseInt(value, name)
-	case "attractgestureinterval":
-		quadpro.attractGestureInterval = ParseFloat(value, nme)
-	}
-
-	if strings.HasPrefix(paramName, "engine") {
-		LogWarn("Why is there an engine.* parameter here?")
-		return "", TheEngine.Set(paramName, paramValue)
-	}
-	return "", fmt.Errorf("QuadPro.onSet: can't handle non-global parameter %s", paramName)
-}
-*/
-
 func (quadpro *QuadPro) onGet(apiargs map[string]string) (result string, err error) {
 	paramName, ok := apiargs["name"]
 	if !ok {
@@ -453,63 +305,6 @@ func (quadpro *QuadPro) onGet(apiargs map[string]string) (result string, err err
 		return TheEngine.Get(paramName), nil
 	} else {
 		return "", fmt.Errorf("QuadPro.onGet: can't handle parameter %s", paramName)
-	}
-}
-
-func (quadpro *QuadPro) onClick(ctx *PluginContext, apiargs map[string]string) (string, error) {
-	quadpro.checkAttract(ctx)
-	quadpro.checkProcess(ctx)
-	return "", nil
-}
-
-func (quadpro *QuadPro) checkProcess(ctx *PluginContext) {
-
-	firstTime := (quadpro.lastProcessCheck == time.Time{})
-
-	// If processCheckSecs is 0, process checking is disabled
-	processCheckEnabled := quadpro.processCheckSecs > 0
-	if !processCheckEnabled {
-		if firstTime {
-			LogInfo("Process Checking is disabled.")
-		}
-		return
-	}
-
-	now := time.Now()
-	sinceLastProcessCheck := now.Sub(quadpro.lastProcessCheck).Seconds()
-	if processCheckEnabled && (firstTime || sinceLastProcessCheck > quadpro.processCheckSecs) {
-		// Put it in background, so calling
-		// tasklist or ps doesn't disrupt realtime
-		// The sleep here is because if you kill something and
-		// immediately check to see if it's running, it reports that
-		// it's stil running.
-		go func() {
-			time.Sleep(2 * time.Second)
-			CheckAutostartProcesses()
-		}()
-		quadpro.lastProcessCheck = now
-	}
-}
-
-func (quadpro *QuadPro) checkAttract(ctx *PluginContext) {
-
-	// Every so often we check to see if attract mode should be turned on
-	now := time.Now()
-	attractModeEnabled := quadpro.attractIdleSecs > 0
-	sinceLastAttractCheck := now.Sub(quadpro.lastAttractCheck).Seconds()
-	if attractModeEnabled && sinceLastAttractCheck > quadpro.attractCheckSecs {
-		quadpro.lastAttractCheck = now
-		// There's a delay when checking cursor activity to turn attract mod on.
-		// Non-internal cursor activity turns attract mode off instantly.
-		sinceLastAttractModeChange := time.Since(quadpro.lastAttractModeChange).Seconds()
-		if !quadpro.attractModeIsOn && sinceLastAttractModeChange > quadpro.attractIdleSecs {
-			// Nothing happening for a while, turn attract mode on
-			quadpro.setAttractMode(true)
-		}
-	}
-
-	if quadpro.attractModeIsOn {
-		quadpro.doAttractAction(ctx)
 	}
 }
 
@@ -527,15 +322,6 @@ func (quadpro *QuadPro) onMidiEvent(ctx *PluginContext, apiargs map[string]strin
 			HandleEraeMIDI(me)
 		}
 	*/
-
-	if quadpro.MIDIThru {
-		LogInfo("PassThruMIDI", "msg", me.Msg)
-		// ScheduleMidi(patch, me.Msg, CurrentClick())
-		ScheduleAt(me.Msg, CurrentClick())
-	}
-	if quadpro.MIDISetScale {
-		quadpro.handleMIDISetScaleNote(me)
-	}
 
 	return "", nil
 }
@@ -579,7 +365,7 @@ func (quadpro *QuadPro) doTest(ctx *PluginContext, ntimes int, dt time.Duration)
 	LogInfo("doTest end")
 }
 
-func (quadpro *QuadPro) loadQuadRand(ctx *PluginContext) error {
+func (quadpro *QuadPro) loadQuadRand() error {
 
 	arr, err := SavedFileList("quad")
 	if err != nil {
@@ -587,8 +373,6 @@ func (quadpro *QuadPro) loadQuadRand(ctx *PluginContext) error {
 	}
 	rn := rand.Uint64() % uint64(len(arr))
 	LogInfo("loadQuadRand", "quad", arr[rn])
-
-	LogError(quadpro.Load(ctx, "quad", arr[rn]))
 
 	for _, patch := range quadpro.patch {
 		patch.RefreshAllPatchValues()
@@ -621,6 +405,10 @@ func (quadpro *QuadPro) Load(ctx *PluginContext, category string, filename strin
 			patch.RefreshAllPatchValues()
 		}
 
+	case "engine":
+		TheEngine.params.ApplyValuesFromMap("engine", paramsMap, TheEngine.Set)
+		LogInfo("HEY! need work here")
+
 	default:
 		LogWarn("QuadPro.Load: unhandled", "category", category, "filename", filename)
 	}
@@ -632,9 +420,9 @@ func (quadpro *QuadPro) Load(ctx *PluginContext, category string, filename strin
 	err = nil
 	switch category {
 	case "engine":
+		// No need to save _Current if we're loading it.
 		if filename != "_Current" {
-			// No need to save _Current if we're loading it
-			err = quadpro.save("engine", "_Current")
+			err = TheEngine.SaveCurrent()
 		}
 	case "quad":
 		if filename != "_Current" {
@@ -706,7 +494,7 @@ func (quadpro *QuadPro) addPatch(ctx *PluginContext, name string) *Patch {
 	patch := NewPatch(name)
 	patch.AddListener(ctx)
 	quadpro.patch[name] = patch
-	quadpro.patchLogic[name] = NewPatchLogic(quadpro, patch)
+	quadpro.patchLogic[name] = NewPatchLogic(patch)
 	return patch
 }
 
@@ -719,69 +507,6 @@ func (quadpro *QuadPro) scheduleNoteNow(ctx *PluginContext, dest string, pitch, 
 	SchedulePhrase(phr, CurrentClick(), dest)
 }
 */
-
-func (quadpro *QuadPro) handleMIDISetScaleNote(e MidiEvent) {
-	status := e.Status() & 0xf0
-	pitch := int(e.Data1())
-	if status == NoteOnStatus {
-		// If there are no notes held down (i.e. this is the first), clear the scale
-		if quadpro.MIDINumDown < 0 {
-			// this can happen when there's a Read error that misses a noteon
-			quadpro.MIDINumDown = 0
-		}
-		if quadpro.MIDINumDown == 0 {
-			ClearExternalScale()
-		}
-		SetExternalScale(pitch%12, true)
-		quadpro.MIDINumDown++
-		if pitch < 60 {
-			quadpro.MIDIOctaveShift = -1
-		} else if pitch > 72 {
-			quadpro.MIDIOctaveShift = 1
-		} else {
-			quadpro.MIDIOctaveShift = 0
-		}
-	} else if status == NoteOffStatus {
-		quadpro.MIDINumDown--
-	}
-}
-
-func (quadpro *QuadPro) doAttractAction(ctx *PluginContext) {
-
-	now := time.Now()
-	dt := now.Sub(quadpro.lastAttractGestureTime).Seconds()
-	if quadpro.attractModeIsOn && dt > quadpro.attractGestureInterval {
-
-		sourceNames := []string{"A", "B", "C", "D"}
-		i := uint64(rand.Uint64()*99) % 4
-		source := sourceNames[i]
-		quadpro.lastAttractGestureTime = now
-
-		cid := fmt.Sprintf("%s#%d,internal", source, quadpro.nextCursorNum)
-		quadpro.nextCursorNum++
-
-		x0 := rand.Float32()
-		y0 := rand.Float32()
-		z0 := rand.Float32() / 2.0
-
-		x1 := rand.Float32()
-		y1 := rand.Float32()
-		z1 := rand.Float32() / 2.0
-
-		noteDuration := time.Second
-		go GenerateCursorGesture(cid, noteDuration, x0, y0, z0, x1, y1, z1)
-		quadpro.lastAttractGestureTime = now
-	}
-
-	dp := now.Sub(quadpro.lastAttractChange).Seconds()
-	if dp > quadpro.attractChangeInterval {
-		err := quadpro.loadQuadRand(ctx)
-		if err != nil {
-			LogError(err)
-		}
-		quadpro.lastAttractChange = now
-	}
-}
 
 func MmttInfo() *ProcessInfo {
 

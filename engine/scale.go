@@ -13,7 +13,7 @@ func ClearExternalScale() {
 	ExternalScale = MakeScale()
 }
 
-func SetExternalScale(pitch int, on bool) {
+func SetExternalScale(pitch uint8, on bool) {
 	s := ExternalScale
 	for p := pitch; p < 128; p += 12 {
 		s.HasNote[p] = on

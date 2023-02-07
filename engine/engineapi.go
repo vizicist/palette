@@ -79,8 +79,19 @@ func (e *Engine) executeEngineAPI(api string, apiargs map[string]string) (result
 
 	case "stopall":
 		CallApiOnAllPlugins("stop", map[string]string{})
+		_ = StopRunning("bidule")
+		_ = StopRunning("resolume")
+		_ = StopRunning("keykit")
+		_ = StopRunning("gui")
 		go e.stopAfterDelay()
 		return "", nil
+
+	case "status":
+		result = JsonObject(
+			"uptime", fmt.Sprintf("%f", Uptime()),
+			"attractmode", fmt.Sprintf("%v", TheAttractManager.attractModeIsOn),
+		)
+		return result, nil
 
 	case "set":
 		name, value, err := GetNameValue(apiargs)
@@ -282,20 +293,18 @@ func (e *Engine) Set(name string, value string) error {
 	// LogInfo("Engine.Set", "name", name, "value", value)
 	switch name {
 	case "engine.oscoutput":
-		b := IsTrueValue(value)
-		LogInfo("Changing oscoutput", "oscoutput", b)
-		TheRouter.oscOutput = b
+		e.oscOutput = IsTrueValue(value)
 	case "engine.debug":
 		e.ResetLogTypes(value)
-	case "engine.attractidleminutes":
-		ppro := GetPlugin("quadpro")
-		if ppro != nil {
-			_, err := ppro.api(ppro, "set", map[string]string{
-				"name":  "attractidleminutes",
-				"value": value})
-			if err != nil {
-				LogError(err)
-			}
+	case "engine.attract":
+		TheAttractManager.setAttractMode(IsTrueValue(value))
+	case "engine.attractidlesecs":
+		var f float64
+		f, err := strconv.ParseFloat(value, 32)
+		if err != nil {
+			LogError(err)
+		} else {
+			TheAttractManager.attractIdleSecs = f
 		}
 	}
 	return e.params.Set(name, value)
