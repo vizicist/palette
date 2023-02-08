@@ -35,7 +35,6 @@ type Router struct {
 	MIDIThru         bool
 	MIDIThruScadjust bool
 	MIDIQuantized    bool
-	TransposePitch   int
 
 	guiClient *osc.Client
 

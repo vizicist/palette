@@ -20,24 +20,12 @@ type QuadPro struct {
 	patchLogic map[string]*PatchLogic
 
 	started bool
-
-	transposeAuto   bool
-	transposeNext   Clicks
-	transposeClicks Clicks // time between auto transpose changes
-	transposeIndex  int    // current place in tranposeValues
-	transposeValues []int
 }
 
 func NewQuadPro() *QuadPro {
 	quadpro := &QuadPro{
 		patch:      map[string]*Patch{},
 		patchLogic: map[string]*PatchLogic{},
-
-		transposeAuto:   true,
-		transposeNext:   0,
-		transposeClicks: 0,
-		transposeIndex:  0,
-		transposeValues: []int{0, -2, 3, -5},
 	}
 	return quadpro
 }
@@ -129,11 +117,6 @@ func (quadpro *QuadPro) Start() error {
 
 	ClearExternalScale()
 
-	beats := TheEngine.EngineParamIntWithDefault("engine.transposebeats", 48)
-
-	quadpro.transposeNext = Clicks(beats) * OneBeat
-	quadpro.transposeClicks = Clicks(beats) * OneBeat
-
 	TheCursorManager.AddCursorHandler("QuadPro", TheQuadPro, "A", "B", "C", "D")
 
 	_ = quadpro.addPatch("A")
@@ -181,7 +164,7 @@ func (quadpro *QuadPro) onCursorEvent(state CursorState) error {
 }
 
 func (quadpro *QuadPro) onClientRestart(portnum int) {
-	LogOfType("ffgl", "quadpro got clientrestart", "portnum", portnum)
+	LogOfType("resolume", "quadpro got clientrestart", "portnum", portnum)
 	// Refresh the patch that has that portnum
 	for _, patch := range quadpro.patch {
 		patch.RefreshAllIfPortnumMatches(portnum)

@@ -42,9 +42,9 @@ func (logic *PatchLogic) cursorToPitch(ce CursorEvent) uint8 {
 	p1 := int(ce.X * float32(dp))
 	p := uint8(pitchmin + p1%dp)
 
-	usescale := patch.GetBool("misc.usescale")
+	externalscaleOn := patch.GetBool("misc.externalscale")
 	chromatic := patch.GetBool("sound.chromatic")
-	if !chromatic && usescale {
+	if !chromatic && externalscaleOn {
 		scaleName := TheEngine.params.Get("engine.scale")
 		scale := GetScale(scaleName)
 		p = scale.ClosestTo(p)
@@ -56,7 +56,7 @@ func (logic *PatchLogic) cursorToPitch(ce CursorEvent) uint8 {
 		for i > 127 {
 			i -= 12
 		}
-		p = uint8(i + TheRouter.TransposePitch)
+		p = uint8(i)
 	}
 	return p
 }
@@ -260,29 +260,6 @@ func (logic *PatchLogic) nextQuant(t Clicks, q Clicks) Clicks {
 }
 
 /*
-func (logic *PatchLogic) oldsendNoteOn(note any) {
-
-	logic.patch.Synth.SendNoteToMidiOutput(note)
-
-	// ss := logic.patch.Get("visual.spritesource")
-	// if ss == "midi" {
-	// 	logic.generateSpriteFromPhraseElement(pe)
-	// }
-}
-*/
-
-/*
-func (logic *PatchLogic) SendPhraseElementToSynth(pe *PhraseElement) {
-
-	ss := logic.patch.Get("visual.spritesource")
-	if ss == "midi" {
-		logic.generateSpriteFromPhraseElement(pe)
-	}
-	logic.patch.Synth.SendTo(pe)
-}
-*/
-
-/*
 func (logic *PatchLogic) generateSpriteFromPhraseElement(pe *PhraseElement) {
 
 	patch := logic.patch
@@ -372,23 +349,6 @@ func (logic *PatchLogic) sendNoteOff(n *NoteOn) {
 	// pe := &PhraseElement{Value: noteOff}
 	logic.patch.Synth.SendNoteToMidiOutput(noteOff)
 	// patch.SendPhraseElementToSynth(pe)
-}
-*/
-
-/*
-func (logic *PatchLogic) advanceTransposeTo(newclick Clicks) {
-
-	quadpro := logic.quadpro
-	quadpro.transposeNext += (quadpro.transposeClicks * OneBeat)
-	quadpro.transposeIndex = (quadpro.transposeIndex + 1) % len(quadpro.transposeValues)
-
-			transposePitch := quadpro.transposeValues[quadpro.transposeIndex]
-				fr _, patch := range TheRouter().patches {
-					// patch.clearDown()
-					LogOfType("transpose""setting transposepitch in patch","pad", patch.padName, "transposePitch",transposePitch, "nactive",len(patch.activeNotes))
-					patch.TransposePitch = transposePitch
-				}
-		sched.SendAllPendingNoteoffs()
 }
 */
 
