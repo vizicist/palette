@@ -96,9 +96,9 @@ func NewSynth(name string, port string, channel int, bank int, program int) *Syn
 
 	var state *MIDIPortChannelState
 	if name == "fake" {
-		state = TheMidi.openFakeChannelOutput(port, channel)
+		state = TheMidiIO.openFakeChannelOutput(port, channel)
 	} else {
-		state = TheMidi.openChannelOutput(portchannel)
+		state = TheMidiIO.openChannelOutput(portchannel)
 	}
 
 	if state == nil {
@@ -120,7 +120,7 @@ func NewSynth(name string, port string, channel int, bank int, program int) *Syn
 }
 
 func (synth *Synth) updatePortChannelState() (*MIDIPortChannelState, error) {
-	state, err := TheMidi.GetPortChannelState(synth.portchannel)
+	state, err := TheMidiIO.GetPortChannelState(synth.portchannel)
 	if err != nil {
 		return nil, err
 	}
@@ -332,6 +332,18 @@ func (synth *Synth) SendNoteToMidiOutput(value any) {
 		LogError(err)
 		return
 	}
+
+	pitchOffset := TheMidiIO.engineTranspose
+	if TheMidiIO.autoTransposeOn {
+		pitchOffset += TheMidiIO.autoTransposeValues[TheMidiIO.autoTransposeIndex]
+	}
+	newpitch := int(pitch) + pitchOffset
+	if newpitch < 0 {
+		newpitch = 0
+	} else if newpitch > 127 {
+		newpitch = 127
+	}
+	pitch = uint8(newpitch)
 
 	status := byte(synth.portchannel.channel - 1)
 	data1 := pitch

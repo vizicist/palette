@@ -5,7 +5,6 @@
         "engine.bidule":"C:/Program Files/Plogue/Bidule/Bidule.exe",
         "engine.debug":"cursor",
         "engine.guilevel":"0",
-        "engine.guiresize":"",
-        "engine.plugins":"quadpro"
+        "engine.guiresize":""
     }
 }

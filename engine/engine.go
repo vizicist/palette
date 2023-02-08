@@ -45,7 +45,7 @@ func NewEngine() *Engine {
 	TheScheduler = NewScheduler()
 	TheAttractManager = NewAttractManager()
 	TheQuadPro = NewQuadPro()
-	TheMidi = NewMIDI()
+	TheMidiIO = NewMidiIO()
 	TheErae = NewErae()
 
 	// The Managers above should be created first so that
@@ -72,7 +72,7 @@ func (e *Engine) Start() {
 	e.done = make(chan bool)
 	LogInfo("Engine.Start")
 
-	InitMIDI()
+	InitMidiIO()
 	InitSynths()
 
 	err := TheQuadPro.Start()
@@ -85,7 +85,7 @@ func (e *Engine) Start() {
 
 	go TheScheduler.Start()
 	go TheRouter.Start()
-	go TheMidi.Start()
+	go TheMidiIO.Start()
 
 	if e.ParamBool("mmtt.depth") {
 		go DepthRunForever()
