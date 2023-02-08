@@ -334,7 +334,11 @@ func (synth *Synth) SendNoteToMidiOutput(value any) {
 	}
 
 	pitchOffset := TheMidiIO.engineTranspose
-	if TheMidiIO.autoTransposeOn {
+
+	// Hardcoded, channel 10 is usually drums, doesn't get transposed
+	// Should probably be an attribute of the Synth.
+	const drumChannel = 10
+	if TheMidiIO.autoTransposeOn && synth.portchannel.channel != drumChannel {
 		pitchOffset += TheMidiIO.autoTransposeValues[TheMidiIO.autoTransposeIndex]
 	}
 	newpitch := int(pitch) + pitchOffset

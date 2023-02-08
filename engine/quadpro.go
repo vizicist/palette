@@ -108,10 +108,11 @@ func (quadpro *QuadPro) Api(api string, apiargs map[string]string) (result strin
 	}
 }
 
-func (quadpro *QuadPro) Start() error {
+func (quadpro *QuadPro) Start() {
 
 	if quadpro.started {
-		return fmt.Errorf("QuadPro. already started")
+		LogInfo("QuadPro.Start: already started")
+		return
 	}
 	quadpro.started = true
 
@@ -126,10 +127,6 @@ func (quadpro *QuadPro) Start() error {
 
 	err := quadpro.Load("quad", "_Current")
 	LogIfError(err)
-
-	// Don't start checking processes right away, after killing them on a restart,
-	// they may still be running for a bit
-	return nil
 }
 
 func (quadpro *QuadPro) onCursorEvent(state CursorState) error {

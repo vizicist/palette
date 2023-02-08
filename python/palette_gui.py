@@ -81,17 +81,10 @@ class ProGuiApp(tk.Tk):
         self.nextMode = ""
         self.lastLoadType = ""
         self.lastLoadName = ""
-        self.processRunning = {"bidule":False,"resolume":False,"keykit":False}
 
         self.defaultGuiLevel = int(os.environ.get("PALETTE_GUI_LEVEL","0"))
 
         self.currentPageName = None
-
-        # The values in globalPerformIndex are indexes into palette.PerformLabels
-        # and the defaults point to the first entry in the label list
-        self.globalPerformIndex = {}
-        for name in palette.GlobalPerformLabels:
-            self.globalPerformIndex[name] = palette.PerformDefaultVal[name]
 
         self.setGuiLevel(self.defaultGuiLevel)
 
@@ -107,29 +100,31 @@ class ProGuiApp(tk.Tk):
             self.frameSizeOfSelectNormal = 1.0 - self.frameSizeOfControlNormal
             self.frameSizeOfPatchChooserNormal = 0.0
             self.selectDisplayRowsNormal = 15
-            self.frameSizeOfControlAdvanced = 0.15
+
+            self.frameSizeOfControlAdvanced = 0.06 #  0.15
             self.frameSizeOfPatchChooserAdvanced = 0.13
             self.frameSizeOfSelectAdvanced = 1.0 - self.frameSizeOfControlAdvanced - self.frameSizeOfPatchChooserAdvanced
+            self.selectDisplayRowsAdvanced = 13
+
             self.performButtonPadx = 3
             self.performButtonPady = 2
             self.performButtonsPerRow = 6
-            self.selectDisplayRowsAdvanced = 10
-            self.selectDisplayRowsAdvancedQuad = 12
         else:
             self.paramDisplayRows = 18
             self.frameSizeOfControlNormal = 0.085
-            self.frameSizeOfSelectNormal = 1.0 - self.frameSizeOfControlNormal
             self.frameSizeOfPatchChooserNormal = 0.0
+            self.frameSizeOfSelectNormal = 1.0 - self.frameSizeOfControlNormal
             self.selectDisplayRowsNormal = 13
-            self.frameSizeOfControlAdvanced = 0.19
+
+            self.frameSizeOfControlAdvanced = 0.085 #  0.19
             self.frameSizeOfPatchChooserAdvanced = 0.14
             self.frameSizeOfSelectAdvanced = 1.0 - self.frameSizeOfControlAdvanced - self.frameSizeOfPatchChooserAdvanced
+            self.selectDisplayRowsAdvanced = 11 # 9
+
             self.performButtonPadx = 3
             self.performButtonPady = 3
             self.performButtonsPerRow = 6
-            self.selectDisplayRowsAdvanced = 9
 
-        self.frameSizeOfSelectAdvancedQuad = self.frameSizeOfSelectAdvanced + self.frameSizeOfPatchChooserAdvanced
         if (self.frameSizeOfSelectAdvanced + self.frameSizeOfControlAdvanced + self.frameSizeOfPatchChooserAdvanced) != 1.0:
             log("Hey, page sizes don't add up to 1.0")
 
@@ -193,13 +188,6 @@ class ProGuiApp(tk.Tk):
         self.initLayout()
         self.resetAll()
     
-#    def setScaleList(self):
-#        if self.guiLevel == 0:
-#            palette.GlobalPerformLabels["scale"] = palette.SimpleScales
-#        else:
-#            palette.GlobalPerformLabels["scale"] = palette.PerformScales
-#        self.globalPerformIndex["scale"] = palette.PerformDefaultVal["scale"]
-
     def placePatchChooser(self):
         if self.guiLevel > 0:
             self.patchChooser.place(in_=self.topContainer, relx=0, rely=self.patchChooserPageY, relwidth=1, relheight=self.frameSizeOfPatchChooser)
@@ -869,7 +857,6 @@ class ProGuiApp(tk.Tk):
         self.refreshPage()
 
         self.performPage.updatePerformButtonLabels(self.CurrPatch)
-        self.CurrPatch.sendPerformVals()
 
         self.editPage[self.currentPageName].updateParamView()
 
@@ -888,25 +875,10 @@ class ProGuiApp(tk.Tk):
             else:
                 self.copyPatchToPage(self.CurrPatch,self.currentPageName)
 
-    def sendGlobalPerformVal(self,name):
-
-        newtext = self.performPage.globalPerformText(name)
-        self.performPage.performButton[name].config(text=newtext)
-        # log("sendGlobalPerformVal: Setting button name=",name," text=",newtext)
-
-        index = self.globalPerformIndex[name]
-        val = palette.GlobalPerformLabels[name][index]["value"]
-
-        if name == "tempo":
-            palette.palette_engine_api("set_tempo_factor", "\"value\": \""+str(val) + "\"")
-#        elif name == "scale":
-#            palette.palette_engine_api("set_scale", "\"value\": \""+str(val) + "\"")
-
     def clear(self):
         if self.allPatchesSelected:
             for patch in self.Patches:
                 patch.clearLoop()
-            # Extra clearing (on/off) of Bidule
             palette.palette_engine_api("audio_reset")
         else:
             self.CurrPatch.clearLoop()
@@ -947,27 +919,19 @@ class ProGuiApp(tk.Tk):
         log("startHelp: nextMode = help")
         self.nextMode = "help"
 
-    def startstopProcess(self,processName):
-        if self.processRunning[processName]:
-            start_or_stop = "stopprocess"
-        else:
-            start_or_stop = "startprocess"
-        log("startstopProcess: api="+start_or_stop+" process="+processName)
-        palette.palette_engine_api(start_or_stop,"\"process\": \"" + processName + "\"")
-        self.processRunning[processName] = not self.processRunning[processName]
+    def startProcess(self,processName):
+        palette.palette_engine_api("startprocess","\"process\": \"" + processName + "\"")
 
-    def startstopBidule(self):
-        self.startstopProcess("bidule")
+    def stopProcess(self,processName):
+        palette.palette_engine_api("stopprocess","\"process\": \"" + processName + "\"")
 
-    def startstopResolume(self):
-        self.startstopProcess("resolume")
-
-    def startstopKeykit(self):
-        self.startstopProcess("keykit")
+    def startAll(self):
+        palette.palette_engine_api("startall")
 
     def stopAll(self):
         palette.palette_engine_api("stopall")
-        log("stopAll is calling os._exit(0)!")
+
+    def exit(self):
         os._exit(0)  # This is a hard exit, killing all the background threads
 
     def resetAll(self):
@@ -986,19 +950,8 @@ class ProGuiApp(tk.Tk):
 
         log("ProGuiApp.resetAll is not clearing scale things anymore")
 
-        for s in palette.GlobalPerformLabels:
-            if s in palette.PerformDefaultVal:
-                self.globalPerformIndex[s] = palette.PerformDefaultVal[s]
-            else:
-                self.globalPerformIndex[s] = 0
-
-        for name in palette.GlobalPerformLabels:
-            self.sendGlobalPerformVal(name)
-
         for patch in self.Patches:
             patch.clearLoop()
-            patch.setDefaultPerform()
-            patch.sendPerformVals()
 
         self.performPage.updatePerformButtonLabels(self.CurrPatch)
 
@@ -1151,7 +1104,6 @@ class Engine():
         self.controller = controller
         self.params = self.controller.paramsOfType["engine"]
         self.setInitValues()
-        # self.setDefaultPerform()
 
     def setValue(self,paramName,val):
         if not paramName in self.paramValues:
@@ -1175,17 +1127,6 @@ class Patch():
         self.params = self.controller.paramsOfType["patch"]
         self.setInitValues()
         self.patchName = patchName
-        self.setDefaultPerform()
-
-    def setDefaultPerform(self):
-        # The values in performIndex are indexes into the palette.PerformLabels array.
-        self.performIndex = {}
-        # Default value of performIndexs is 0
-        for name in palette.PerformLabels:
-            self.performIndex[name] = 0
-        # but there can be exceptions, specified in PerformDefaultVal
-        for name in palette.PerformDefaultVal:
-            self.performIndex[name] = palette.PerformDefaultVal[name]
 
     def name(self):
         return self.patchName
@@ -1229,18 +1170,6 @@ class Patch():
                 paramlistjson = self.controller.paramListOfType(pt,self.getValue)
                 palette.palette_patch_api(self.name(), "setparams", paramlistjson)
 
-        if paramType == "patch":
-            self.sendPerformVals()
-
-    def sendPerformVals(self):
-        log("sendPerformVals is disabled! moving to per-patch optional values")
-        # for name in palette.PerformLabels:
-        #     self.sendPerformVal(name)
-
-    # def sendGlobalPerformVals(self):
-    #     for name in palette.GlobalPerformLabels:
-    #         self.sendGlobalPerformVal(name)
-
     def getPerformIndex(self,name):
         return self.performIndex[name]
 
@@ -1256,12 +1185,12 @@ class Patch():
     def useExternalScale(self,onoff):
         palette.palette_patch_set(self.name(), "misc.externalscale",str(onoff))
 
-    def sendPerformVal(self,name):
-        index = self.performIndex[name]
-        labels = palette.PerformLabels[name]
-        val = labels[index]["value"]
-        if name == "midithru":
-            palette.palette_patch_api(self.name(), "midi_thru", "\"onoff\": \"" + str(val) + "\"")
+#    def sendPerformVal(self,name):
+#        index = self.performIndex[name]
+#        labels = palette.PerformLabels[name]
+#        val = labels[index]["value"]
+#        if name == "midithru":
+#            palette.palette_patch_api(self.name(), "midi_thru", "\"onoff\": \"" + str(val) + "\"")
 #        elif name == "loopingonoff":
 #            reconoff = False
 #            playonoff = False
@@ -1286,27 +1215,27 @@ class Patch():
 #            palette.palette_patch_api(self.name(), "loop_fade", '"fade": "'+str(val)+'"')
 #        elif name == "loopingset":
 #            palette.palette_patch_api(self.name(), "loop_set", '"set": "'+str(val)+'"')
-        elif name == "midisetscale":
-            palette.palette_patch_api(self.name(), "midi_setscale", "\"onoff\": \"" + str(val) + "\"")
-        elif name == "midiquantized":
-            palette.palette_patch_api(self.name(), "midi_quantized", "\"onoff\": \"" + str(val) + "\"")
-        elif name == "midithruscadjust":
-            palette.palette_patch_api(self.name(), "midi_thruscadjust", "\"onoff\": \"" + str(val) + "\"")
-
-        elif name == "deltaztrig":
-            palette.palette_patch_set(self.name(), "sound._deltaztrig",val)
-        elif name == "deltaytrig":
-            palette.palette_patch_set(self.name(), "sound._deltaytrig",val)
-
-        elif name == "quantstyle":
-            palette.palette_patch_set(self.name(), "misc.quantstyle",val)
+#        elif name == "midisetscale":
+#            palette.palette_patch_api(self.name(), "midi_setscale", "\"onoff\": \"" + str(val) + "\"")
+#        elif name == "midiquantized":
+#            palette.palette_patch_set(self.name(), "misc.midi_quantized", str(val))
+#        elif name == "midithruscadjust":
+#            palette.palette_patch_api(self.name(), "midi_thruscadjust", "\"onoff\": \"" + str(val) + "\"")
+#
+#        elif name == "deltaztrig":
+#            palette.palette_patch_set(self.name(), "sound._deltaztrig",val)
+#        elif name == "deltaytrig":
+#            palette.palette_patch_set(self.name(), "sound._deltaytrig",val)
+#
+#        elif name == "quantstyle":
+#            palette.palette_patch_set(self.name(), "misc.quantstyle",val)
 #        elif name == "scale":
 #            palette.palette_patch_set(self.name(), "misc.scale",val)
-        elif name == "volstyle":
-            palette.palette_patch_set(self.name(), "misc.volstyle",val)
-
-        else:
-            log("SendPerformVal: unhandled name=",name)
+#        elif name == "volstyle":
+#            palette.palette_patch_set(self.name(), "misc.volstyle",val)
+#
+#        else:
+#            log("SendPerformVal: unhandled name=",name)
 
     def clearLoop(self):
         palette.palette_patch_api(self.name(), "loop_clear", "")
@@ -1475,6 +1404,7 @@ class PageHeader(tk.Frame):
         else:
             for pageName in self.controller.visiblePageNames:
                 self.pageButton[pageName].pack(side=tk.LEFT,padx=5)
+            self.PaletteTitle.pack_forget()
             
     def highlightPageButton(self,pagename):
         for nm in self.pageButton:
@@ -2120,38 +2050,15 @@ class PagePerformMain(tk.Frame):
         self.frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True, pady=5)
 
         self.performButton = {}
-        self.advancedButtons = {}
         self.buttonNames = []
 
         self.makePerformButton("Reset_All", self.controller.resetAll)
         self.makePerformButton("Clear_ ", self.controller.clear)
         self.makePerformButton("Help_ ", self.controller.startHelp)
-        self.makePerformButton("Start/Stop_Bidule", self.controller.startstopBidule)
-        self.makePerformButton("Start/Stop_Resolume", self.controller.startstopResolume)
-        self.makePerformButton("Start/Stop_Keykit", self.controller.startstopKeykit)
-        self.makePerformButton("STOP_ALL", self.controller.stopAll)
-
-        # More advanced buttons
-#        self.makePerformButtonAdvanced("loopingonoff",None)
-#        self.makePerformButtonAdvanced("loopingfade",None)
-#        self.makePerformButtonAdvanced("loopinglength",None)
-#        self.makePerformButtonAdvanced("scale",None)
-        self.makePerformButtonAdvanced("Notes_Off", self.controller.sendANO)
-
-        self.makePerformButtonAdvanced("quantstyle",None)
-        self.makePerformButtonAdvanced("volstyle",None)
-        # self.makePerformButtonAdvanced("deltaztrig",None)
-        # self.makePerformButtonAdvanced("deltaytrig",None)
-        self.makePerformButtonAdvanced("midithru",None)
-        self.makePerformButtonAdvanced("midisetscale",None)
-        self.makePerformButtonAdvanced("midiusescale",None)
-        self.makePerformButtonAdvanced("midithruscadjust",None)
-        self.makePerformButtonAdvanced("midiquantized",None)
-        self.makePerformButtonAdvanced("tempo",None)
-
-    def makePerformButtonAdvanced(self,name,f):
-        self.advancedButtons[name] = 0
-        self.makePerformButton(name,f)
+        # These shouldn't be shown in casual mode
+        self.makePerformButton("Start_All", self.controller.startAll)
+        self.makePerformButton("Stop_All", self.controller.stopAll)
+        self.makePerformButton("Exit", self.controller.exit)
 
     def button_cget(self,button,name):
         text = button.cget(name)
@@ -2183,12 +2090,9 @@ class PagePerformMain(tk.Frame):
             # log("setting perform button to text=",text)
 
             guiLevel = self.controller.guiLevel
-            if name == "TBD" or (guiLevel==0 and name in self.advancedButtons):
-                button.grid_forget()
-            else:
-                style = 'PerformButton.TLabel'
-                button.config(text=text, width=11, style=style)
-                button.grid(row=row,column=col, padx=self.controller.performButtonPadx,pady=self.controller.performButtonPady,ipady=ipady)
+            style = 'PerformButton.TLabel'
+            button.config(text=text, width=11, style=style)
+            button.grid(row=row,column=col, padx=self.controller.performButtonPadx,pady=self.controller.performButtonPady,ipady=ipady)
             col += 1
             if col >= self.controller.performButtonsPerRow:
                 col = 0
@@ -2216,69 +2120,6 @@ class PagePerformMain(tk.Frame):
         controller.resetLastAnything()
 
         log("Perform Button Pressed",name)
-        if name in palette.PerformLabels:
-
-            if controller.allPatchesSelected:
-                # We do the CurrPatch and then force all of the
-                # other patches to whatever the newindex is for that one
-                newtext = self.padPerformCallback(controller.CurrPatch,name)
-                newindex = controller.CurrPatch.getPerformIndex(name)
-                for pad in controller.Patches:
-                    pad.setPerformIndex(name,newindex)
-                    pad.sendPerformVal(name)
-            else:
-                newtext = self.padPerformCallback(controller.CurrPatch,name)
-                controller.CurrPatch.sendPerformVal(name)
-
-            self.performButton[name].config(text=newtext)
-
-        elif name in palette.GlobalPerformLabels:
-
-            newtext = self.globalPerformCallback(name)
-            self.performButton[name].config(text=newtext)
-            log("Setting performButton newtext=",newtext)
-            controller.sendGlobalPerformVal(name)
-
-        else:
-            log("UNHANDLED performCallback name=",name)
-
-    def padPerformCallback(self,pad,name):
-        if name in palette.GlobalPerformLabels:
-            labels = palette.GlobalPerformLabels[name]
-            index = self.globalPerformIndex[name]
-            newindex = ( index + 1 ) % len(labels)
-            newtext = labels[newindex]["label"]
-            if isTwoLine(newtext):
-                newtext = newtext.replace(palette.LineSep,"\n",1)
-            pad.globalPerformIndex[name] = newindex
-            return newtext
-        else:
-            labels = palette.PerformLabels[name]
-            index = pad.performIndex[name]
-            newindex = ( index + 1 ) % len(labels)
-            newtext = labels[newindex]["label"]
-            if isTwoLine(newtext):
-                newtext = newtext.replace(palette.LineSep,"\n",1)
-            pad.performIndex[name] = newindex
-            return newtext
-
-    def globalPerformCallback(self,name):
-            controller = self.controller
-            labels = palette.GlobalPerformLabels[name]
-            index = controller.globalPerformIndex[name]
-            newindex = ( index + 1 ) % len(labels)
-            controller.globalPerformIndex[name] = newindex
-
-            return self.globalPerformText(name)
-
-    def globalPerformText(self,name):
-            controller = self.controller
-            labels = palette.GlobalPerformLabels[name]
-            index = controller.globalPerformIndex[name]
-            text = labels[index]["label"]
-            if isTwoLine(text):
-                text = text.replace(palette.LineSep,"\n",1)
-            return text
 
 class PageSelector(tk.Frame):
 

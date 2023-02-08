@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/hypebeast/go-osc/osc"
-	midi "gitlab.com/gomidi/midi/v2"
 )
 
 var HTTPPort = 3330
@@ -27,14 +26,14 @@ type Router struct {
 	midiInputChan chan MidiEvent
 	cursorInput   chan CursorEvent
 
-	killme          bool
+	killme bool
+
 	MIDINumDown     int
 	MIDIOctaveShift int
 
 	MIDISetScale     bool
 	MIDIThru         bool
 	MIDIThruScadjust bool
-	MIDIQuantized    bool
 
 	guiClient *osc.Client
 
@@ -103,12 +102,6 @@ func (r *Router) HandleCursorEvent(ce CursorEvent) {
 
 func (r *Router) HandleMidiEvent(me MidiEvent) {
 	TheEngine.sendToOscClients(MidiToOscMsg(me))
-
-	if me.Msg.Is(midi.NoteOnMsg) {
-		SetExternalScale(me.Pitch(), true)
-	} else {
-		SetExternalScale(me.Pitch(), false)
-	}
 
 	if r.MIDIThru {
 		LogInfo("PassThruMIDI", "msg", me.Msg)
