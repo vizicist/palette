@@ -75,13 +75,19 @@ func (e *Engine) executeEngineAPI(api string, apiargs map[string]string) (result
 		go e.stopAfterDelay()
 		return "", nil
 
+	case "startall":
+		TheQuadPro.Start()
+		_ = StartRunning("bidule")
+		_ = StartRunning("resolume")
+		_ = StartRunning("keykit")
+		return "", nil
+
 	case "stopall":
 		TheQuadPro.Stop()
 		_ = StopRunning("bidule")
 		_ = StopRunning("resolume")
 		_ = StopRunning("keykit")
-		_ = StopRunning("gui")
-		go e.stopAfterDelay()
+		//  _ = StopRunning("gui")
 		return "", nil
 
 	case "status":
@@ -151,6 +157,7 @@ func (e *Engine) executeEngineAPI(api string, apiargs map[string]string) (result
 
 	case "exit":
 		e.StopMe()
+		go e.stopAfterDelay()
 		return "", nil
 
 	case "activate":
@@ -228,8 +235,8 @@ func (e *Engine) Set(name string, value string) error {
 		e.oscOutput = IsTrueValue(value)
 	case "engine.autotranspose":
 		TheMidiIO.autoTransposeOn = IsTrueValue(value)
-	case "engine.transposebeats":
-		i, err := ParseInt(value, "engine.transposebeats")
+	case "engine.autotransposebeats":
+		i, err := ParseInt(value, "engine.autotransposebeats")
 		if err != nil {
 			return err
 		}

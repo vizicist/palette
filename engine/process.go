@@ -172,6 +172,11 @@ func (pm *ProcessManager) AddProcessBuiltIn(process string) {
 
 func (pm *ProcessManager) StartRunning(process string) error {
 
+	if pm.IsRunning(process) {
+		LogInfo("StartRunning: already running", "process", process)
+		return nil
+	}
+
 	keyroot := os.Getenv("KEYROOT")
 	LogOfType("process", "StartRunning", "process", process, "keyroot", keyroot)
 

@@ -75,8 +75,7 @@ func (e *Engine) Start() {
 	InitMidiIO()
 	InitSynths()
 
-	err := TheQuadPro.Start()
-	LogIfError(err)
+	TheQuadPro.Start()
 
 	go e.StartOSCListener(OSCPort)
 	go e.StartHTTP(HTTPPort)
