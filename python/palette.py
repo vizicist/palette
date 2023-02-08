@@ -141,22 +141,6 @@ GlobalPerformLabels["tempo"] = [
 ]
 PerformDefaultVal["tempo"] = 0
 
-# NOTE: the order of these things needs to match
-# the order in oneRouter.transposeValues in router.go
-GlobalPerformLabels["transpose"] = [
-    {"label":"*Transpose_0",  "value":0},
-    {"label":"*Transpose_-2",  "value":-2},
-    {"label":"*Transpose_3",  "value":3},
-    {"label":"*Transpose_-5",  "value":-5},
-]
-PerformDefaultVal["transpose"] = 0
-
-GlobalPerformLabels["transposeauto"] = [
-    {"label":"*Transpose_Auto On",  "value":True},
-    {"label":"*Transpose_Auto Off",  "value":False},
-]
-PerformDefaultVal["transposeauto"] = 0
-
 def log(*args):
     s = sprint(*args)
     if s.endswith("\n"):

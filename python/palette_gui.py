@@ -93,9 +93,6 @@ class ProGuiApp(tk.Tk):
         for name in palette.GlobalPerformLabels:
             self.globalPerformIndex[name] = palette.PerformDefaultVal[name]
 
-        self.globalPerformIndex["transposeauto"] = 1  # default is off
-        self.globalPerformIndex["transpose"] = 0
-
         self.setGuiLevel(self.defaultGuiLevel)
 
         self.thumbFactor = 0.1
@@ -902,12 +899,8 @@ class ProGuiApp(tk.Tk):
 
         if name == "tempo":
             palette.palette_engine_api("set_tempo_factor", "\"value\": \""+str(val) + "\"")
-        elif name == "transpose":
-            palette.palette_engine_api("set_transpose", "\"value\": \""+str(val) + "\"")
 #        elif name == "scale":
 #            palette.palette_engine_api("set_scale", "\"value\": \""+str(val) + "\"")
-        elif name == "transposeauto":
-            palette.palette_engine_api("set_transposeauto", "\"onoff\": \""+str(val) + "\"")
 
     def clear(self):
         if self.allPatchesSelected:
@@ -1261,8 +1254,7 @@ class Patch():
         palette.palette_engine_api("clearexternalscale")
 
     def useExternalScale(self,onoff):
-        # palette.palette_quadpro_api("midi_usescale", "\"onoff\": \"" + str(onoff) + "\"")
-        palette.palette_patch_set(self.name(), "misc.usescale",str(onoff))
+        palette.palette_patch_set(self.name(), "misc.externalscale",str(onoff))
 
     def sendPerformVal(self,name):
         index = self.performIndex[name]
@@ -1312,12 +1304,6 @@ class Patch():
 #            palette.palette_patch_set(self.name(), "misc.scale",val)
         elif name == "volstyle":
             palette.palette_patch_set(self.name(), "misc.volstyle",val)
-
-        elif name == "midiusescale":
-            self.useExternalScale(val)
-
-        elif name == "transpose":
-            log("HEY, transpose shouldn't be here")
 
         else:
             log("SendPerformVal: unhandled name=",name)
@@ -2150,8 +2136,6 @@ class PagePerformMain(tk.Frame):
 #        self.makePerformButtonAdvanced("loopingfade",None)
 #        self.makePerformButtonAdvanced("loopinglength",None)
 #        self.makePerformButtonAdvanced("scale",None)
-        self.makePerformButtonAdvanced("transpose",None)
-        self.makePerformButtonAdvanced("transposeauto",None)
         self.makePerformButtonAdvanced("Notes_Off", self.controller.sendANO)
 
         self.makePerformButtonAdvanced("quantstyle",None)
@@ -2197,8 +2181,6 @@ class PagePerformMain(tk.Frame):
             ipady = 0
             button.config(text=text)
             # log("setting perform button to text=",text)
-            # if text == "*Transpose\nAuto On":
-            #     log("HEY, Transpose ON!??\n")
 
             guiLevel = self.controller.guiLevel
             if name == "TBD" or (guiLevel==0 and name in self.advancedButtons):
