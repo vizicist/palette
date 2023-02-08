@@ -1,11 +1,16 @@
 {
     "params": {
-        "engine.attractidleminutes":"0",
-        "engine.autostart":"gui,bidule,resolume",
+        "engine.attractidlesecs":"0",
+        "engine.autostart":"bidule,resolume",
         "engine.bidule":"C:/Program Files/Plogue/Bidule/Bidule.exe",
-        "engine.debug":"cursor",
+        "engine.debug":"midi",
         "engine.guilevel":"0",
-        "engine.guiresize":"",
-        "engine.plugins":"quadpro"
+        "engine.guiresize":"100,100,800,1280",
+        "engine.midiinput":"microKEY2 Air",
+        "engine.oscoutput":"true",
+        "engine.scale":"newage",
+        "engine.transpose":"0",
+        "engine.transposeauto":"false",
+        "engine.transposebeats":"48"
     }
 }

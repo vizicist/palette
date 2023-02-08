@@ -25,14 +25,21 @@ const (
 	PitchbendStatus    byte = 0xe0
 )
 
-// MIDIIO encapsulate everything having to do with MIDI I/O
-type MIDIIO struct {
+// MidiIO encapsulate everything having to do with MIDI I/O
+type MidiIO struct {
 	midiInput            drivers.In
 	midiOutputs          map[string]drivers.Out // synth name is the key
 	midiPortChannelState map[PortChannel]*MIDIPortChannelState
 	inports              midi.InPorts
 	outports             midi.OutPorts
 	stop                 func()
+
+	engineTranspose     int
+	autoTransposeOn     bool
+	autoTransposeNext   Clicks
+	autoTransposeClicks Clicks // time between auto transpose changes
+	autoTransposeIndex  int    // current place in tranposeValues
+	autoTransposeValues []int
 }
 
 // MIDIChannelOutput is used to remember the last
@@ -68,35 +75,39 @@ func (me MidiEvent) Pitch() uint8 {
 }
 
 // MIDI is a pointer to
-var TheMidi *MIDIIO
+var TheMidiIO *MidiIO
 
-func NewMIDI() *MIDIIO {
-	return &MIDIIO{
+func NewMidiIO() *MidiIO {
+	return &MidiIO{
 		midiInput:            nil,
 		midiOutputs:          make(map[string]drivers.Out),
 		midiPortChannelState: make(map[PortChannel]*MIDIPortChannelState),
 		stop:                 nil,
 		inports:              midi.GetInPorts(),
 		outports:             midi.GetOutPorts(),
+		engineTranspose:      0,
+		autoTransposeOn:      false,
+		autoTransposeNext:    0,
+		autoTransposeClicks:  8 * OneBeat,
+		autoTransposeIndex:   0,
+		autoTransposeValues:  []int{0, -2, 3, -5},
 	}
 }
 
 // InitMIDI initializes stuff
-func InitMIDI() {
+func InitMidiIO() {
 
-	InitializeClicksPerSecond(defaultClicksPerSecond)
-
-	for _, outp := range TheMidi.outports {
+	for _, outp := range TheMidiIO.outports {
 		name := outp.String()
 		// NOTE: name is the port name followed by an index
 		LogOfType("midiports", "MIDI output", "port", outp.String())
 		if strings.Contains(name, "Erae Touch") {
 			TheErae.output = outp
 		}
-		TheMidi.midiOutputs[name] = outp
+		TheMidiIO.midiOutputs[name] = outp
 	}
 
-	LogInfo("Initialized MIDI", "outports", TheMidi.outports)
+	LogInfo("Initialized MIDI", "outports", TheMidiIO.outports)
 
 	// if erae {
 	// 	Info("Erae Touch input is being enabled")
@@ -104,12 +115,12 @@ func InitMIDI() {
 	// }
 }
 
-func (m *MIDIIO) SetMidiInput(midiInputName string) {
+func (m *MidiIO) SetMidiInput(midiInputName string) {
 
-	if TheMidi.midiInput != nil {
-		err := TheMidi.midiInput.Close()
+	if TheMidiIO.midiInput != nil {
+		err := TheMidiIO.midiInput.Close()
 		LogIfError(err)
-		TheMidi.midiInput = nil
+		TheMidiIO.midiInput = nil
 	}
 
 	if midiInputName == "" {
@@ -125,7 +136,7 @@ func (m *MIDIIO) SetMidiInput(midiInputName string) {
 		if strings.Contains(name, midiInputName) {
 			// We only open a single input, though midiInputs is an array
 			LogInfo("Opening MIDI input", "name", name)
-			TheMidi.midiInput = inp
+			TheMidiIO.midiInput = inp
 			break // only pick the first one that matches
 		}
 	}
@@ -133,11 +144,18 @@ func (m *MIDIIO) SetMidiInput(midiInputName string) {
 
 type MidiHandlerFunc func(midi.Message, int32)
 
-func (m *MIDIIO) handleMidiError(err error) {
+func (m *MidiIO) handleMidiError(err error) {
 	LogError(err)
 }
 
-func (m *MIDIIO) Start() {
+func (m *MidiIO) SetAutoTransposeBeats(beats int) {
+	m.autoTransposeNext = Clicks(beats) * OneBeat
+	m.autoTransposeClicks = Clicks(beats) * OneBeat
+
+}
+
+func (m *MidiIO) Start() {
+
 	if m.midiInput == nil {
 		LogWarn("No MIDI input port has been selected")
 		return
@@ -151,7 +169,7 @@ func (m *MIDIIO) Start() {
 	select {} // is this needed?
 }
 
-func (m *MIDIIO) handleMidiInput(msg midi.Message, timestamp int32) {
+func (m *MidiIO) handleMidiInput(msg midi.Message, timestamp int32) {
 	LogOfType("midi", "handleMidiInput", "msg", msg)
 	TheRouter.midiInputChan <- MidiEvent{Msg: msg}
 
@@ -213,7 +231,7 @@ func (out *MIDIPortChannelState) WriteShort(status, data1, data2 int64) {
 	LogWarn("WriteShort needs work")
 }
 
-func (m *MIDIIO) GetPortChannelState(portchannel PortChannel) (*MIDIPortChannelState, error) {
+func (m *MidiIO) GetPortChannelState(portchannel PortChannel) (*MIDIPortChannelState, error) {
 
 	state, ok := m.midiPortChannelState[portchannel]
 	if !ok {
@@ -235,7 +253,7 @@ func (m *MIDIIO) GetPortChannelState(portchannel PortChannel) (*MIDIPortChannelS
 	return state, nil
 }
 
-func (m *MIDIIO) openChannelOutput(portchannel PortChannel) *MIDIPortChannelState {
+func (m *MidiIO) openChannelOutput(portchannel PortChannel) *MIDIPortChannelState {
 
 	portName := portchannel.port
 	// The portName in portchannel is from Synths.json, while
@@ -267,7 +285,7 @@ func (m *MIDIIO) openChannelOutput(portchannel PortChannel) *MIDIPortChannelStat
 	return state
 }
 
-func (m *MIDIIO) openFakeChannelOutput(port string, channel int) *MIDIPortChannelState {
+func (m *MidiIO) openFakeChannelOutput(port string, channel int) *MIDIPortChannelState {
 
 	co := &MIDIPortChannelState{
 		channel: channel,
@@ -295,4 +313,15 @@ func (me MidiEvent) Data1() uint8 {
 		return 0
 	}
 	return bytes[1]
+}
+
+func (m *MidiIO) advanceTransposeTo(newclick Clicks) {
+
+	if newclick < m.autoTransposeNext {
+		return
+	}
+	m.autoTransposeNext = newclick + m.autoTransposeClicks
+	m.autoTransposeIndex = (m.autoTransposeIndex + 1) % len(m.autoTransposeValues)
+	LogOfType("transpose", "advanceTransposeTo", "m.autoTransposeIndex", m.autoTransposeIndex)
+	// TheScheduler.SendAllPendingNoteoffs()
 }

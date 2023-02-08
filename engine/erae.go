@@ -36,7 +36,7 @@ func (erae *Erae) Start() {
 	if erae.enabled {
 		erae.EraeZoneClearDisplay(erae.zone)
 	}
-	// erae.output = TheMidi.OpenMIDIOutput("erae")
+	// erae.output = TheMidiIO.OpenMIDIOutput("erae")
 }
 
 func (erae *Erae) onMidiEvent(me MidiEvent) {
@@ -199,7 +199,7 @@ func (erae *Erae) handleFinger(bb []byte) {
 		x = 1.0
 	}
 
-	var ddu = ""
+	var ddu string
 	switch action {
 	case 0:
 		ddu = "down"

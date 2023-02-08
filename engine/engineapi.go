@@ -185,27 +185,6 @@ func (e *Engine) executeEngineAPI(api string, apiargs map[string]string) (result
 	case "clearexternalscale":
 		ClearExternalScale()
 
-	case "set_transpose":
-		LogWarn("set_transpose API needs work")
-		// v, err := needFloatArg("value", api, apiargs)
-		// if err == nil {
-		// ApplyToAllPatchs(func(patch *Patch) {
-		// 	patch.TransposePitch = int(v)
-		// })
-		// }
-
-	case "set_transposeauto":
-		LogWarn("set_transposeauto API needs work")
-		// b, err := needBoolArg("onoff", api, apiargs)
-		// if err == nil {
-		// 	e.Scheduler.transposeAuto = b
-		// 	// Quantizing CurrentClick() to a beat or measure might be nice
-		// 	e.Scheduler.transposeNext = CurrentClick() + e.Scheduler.transposeClicks*OneBeat
-		// 	ApplyToAllPatchs(func(patch *Patch) {
-		// 		patch.TransposePitch = 0
-		// 	})
-		// }
-
 	case "set_scale":
 		LogWarn("set_scale API needs work")
 		/*
@@ -219,51 +198,6 @@ func (e *Engine) executeEngineAPI(api string, apiargs map[string]string) (result
 				})
 			}
 		*/
-
-	/*
-		case "recordingStart":
-			r.recordingOn = true
-			if r.recordingFile != nil {
-				r.recordingFile.Close()
-			}
-			r.recordingFile, err = os.Create(recordingsFile("LastRecording.json"))
-			if err != nil {
-				return "", err
-			}
-			r.recordingBegun = time.Now()
-			if r.recordingOn {
-				r.recordEvent("engine", "*", "start", "{}")
-			}
-		case "recordingSave":
-			var name string
-			name, err = needStringArg("name", api, apiargs)
-			if err == nil {
-				err = r.recordingSave(name)
-			}
-
-		case "recordingStop":
-			if r.recordingOn {
-				r.recordEvent("engine", "*", "stop", "{}")
-			}
-			if r.recordingFile != nil {
-				r.recordingFile.Close()
-				r.recordingFile = nil
-			}
-			r.recordingOn = false
-
-		case "recordingPlay":
-			name, err := needStringArg("name", api, apiargs)
-			if err == nil {
-				events, err := r.recordingLoad(name)
-				if err == nil {
-					r.sendANO()
-					go r.recordingPlayback(events)
-				}
-			}
-
-		case "recordingPlaybackStop":
-			r.recordingPlaybackStop()
-	*/
 
 	default:
 		LogWarn("Router.ExecuteAPI api is not recognized\n", "api", api)
@@ -292,14 +226,26 @@ func (e *Engine) Set(name string, value string) error {
 	switch name {
 	case "engine.oscoutput":
 		e.oscOutput = IsTrueValue(value)
+	case "engine.autotranspose":
+		TheMidiIO.autoTransposeOn = IsTrueValue(value)
+	case "engine.transposebeats":
+		i, err := ParseInt(value, "engine.transposebeats")
+		if err != nil {
+			return err
+		}
+		TheMidiIO.SetAutoTransposeBeats(i)
+	case "engine.transpose":
+		i, err := ParseInt(value, "engine.transpose")
+		if err != nil {
+			return err
+		}
+		TheMidiIO.engineTranspose = i
 	case "engine.debug":
 		e.ResetLogTypes(value)
 	case "engine.attract":
 		TheAttractManager.setAttractMode(IsTrueValue(value))
-	case "engine.transposeauto":
-		TheQuadPro.transposeAuto = TheEngine.ParamBool("engine.transposeauto")
 	case "engine.midiinput":
-		TheMidi.SetMidiInput(value)
+		TheMidiIO.SetMidiInput(value)
 	case "engine.attractidlesecs":
 		var f float64
 		f, err := strconv.ParseFloat(value, 32)

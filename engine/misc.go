@@ -399,6 +399,8 @@ func needStringArg(nm string, api string, args map[string]string) (string, error
 	return val, nil
 }
 
+var _ = needStringArg
+
 /*
 func needIntArg(nm string, api string, args map[string]string) (int, error) {
 	val, ok := args[nm]
@@ -421,6 +423,8 @@ func needBoolArg(nm string, api string, args map[string]string) (bool, error) {
 	b := IsTrueValue(val)
 	return b, nil
 }
+
+var _ = needBoolArg
 
 func ziplogs(logsdir string, zipfile string) error {
 	file, err := os.Create(zipfile)

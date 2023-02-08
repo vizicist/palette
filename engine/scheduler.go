@@ -41,6 +41,7 @@ func NewScheduler() *Scheduler {
 		lastClick: -1,
 		// cmdInput:  make(chan any),
 	}
+	InitializeClicksPerSecond(defaultClicksPerSecond)
 	return s
 }
 
@@ -89,6 +90,7 @@ func (sched *Scheduler) Start() {
 		}
 
 		sched.advanceClickTo(newclick)
+		TheMidiIO.advanceTransposeTo(newclick)
 
 		SetCurrentClick(newclick)
 
