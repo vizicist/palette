@@ -10,7 +10,7 @@
         "engine.oscoutput":"true",
         "engine.scale":"newage",
         "engine.transpose":"0",
-        "engine.transposeauto":"false",
-        "engine.transposebeats":"48"
+        "engine.autotranspose":"false",
+        "engine.autotransposebeats":"48"
     }
 }
