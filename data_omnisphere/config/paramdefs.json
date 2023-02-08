@@ -82,7 +82,7 @@
 "misc.volstyle": {"valuetype":"string", "min":"volstyle", "max":"volstyle", "init":"pressure", "comment":"# Velocity style" },
 
 "engine.attractidlesecs": {"valuetype":"int", "min":"0", "max":"3600", "init":"0", "comment":"# Attract timeout, 0 to disable" },
-"engine.autostart": {"valuetype":"string", "min":"autostart", "max":"autostart", "init":"bidule,resolume", "comment":"# Plugins to start" },
+"engine.autostart": {"valuetype":"string", "min":"autostart", "max":"autostart", "init":"gui", "comment":"# Plugins to start" },
 "engine.autotranspose": {"valuetype":"bool", "min":"false", "max":"true", "init":"false", "comment":"#" },
 "engine.autotransposebeats": {"valuetype":"int", "min":"8", "max":"128", "init":"48", "comment":"# transpose pitch" },
 "engine.bidule": {"valuetype":"string", "min":"bidule", "max":"bidule", "init":"C:/Program Files/Plogue/Bidule/Bidule.exe", "comment":"# Bidule executable path" },
