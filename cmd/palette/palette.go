@@ -116,10 +116,14 @@ func CliCommand(args []string) string {
 			if err != nil {
 				return fmt.Sprintf("RemoteAPI: err=%s\n", err)
 			}
+			_, err = engine.RemoteAPI("engine.exit")
+			if err != nil {
+				return fmt.Sprintf("RemoteAPI: err=%s\n", err)
+			}
 			return ""
 
 		case "engine":
-			_, err := engine.RemoteAPI("engine.stop")
+			_, err := engine.RemoteAPI("engine.exit")
 			if err != nil {
 				return fmt.Sprintf("RemoteAPI: err=%s\n", err)
 			}
