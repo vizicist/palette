@@ -573,6 +573,7 @@ class ProGuiApp(tk.Tk):
             value = page.normalizeJsonValue(name,value)
             w.config(text=value)
             # Need to set the value in local params values 
+            # log("refreshEngineValue, name=",name," value=",value)
             self.engine.setValue(name,value)
 
     def refreshValues(self,pagename,patch):
@@ -948,8 +949,6 @@ class ProGuiApp(tk.Tk):
         self.patchChooser.refreshPatchColors()
         self.sendANO()
 
-        log("ProGuiApp.resetAll is not clearing scale things anymore")
-
         for patch in self.Patches:
             patch.clearLoop()
 
@@ -1179,67 +1178,8 @@ class Patch():
     def sendANO(self):
         palette.palette_quadpro_api("ANO")
 
-    def clearExternalScale(self):
-        palette.palette_engine_api("clearexternalscale")
-
-    def useExternalScale(self,onoff):
-        palette.palette_patch_set(self.name(), "misc.externalscale",str(onoff))
-
-#    def sendPerformVal(self,name):
-#        index = self.performIndex[name]
-#        labels = palette.PerformLabels[name]
-#        val = labels[index]["value"]
-#        if name == "midithru":
-#            palette.palette_patch_api(self.name(), "midi_thru", "\"onoff\": \"" + str(val) + "\"")
-#        elif name == "loopingonoff":
-#            reconoff = False
-#            playonoff = False
-#            if val == "off":
-#                pass
-#            elif val == "recplay":
-#                reconoff = True
-#                playonoff = True
-#            elif val == "play":
-#                reconoff = False
-#                playonoff = True
-#            else:
-#                log("Unrecognized value of loopingonoff - %s" % val)
-#                return
-#
-#            palette.palette_patch_api(self.name(), "loop_recording", '"onoff": "'+str(reconoff)+'"')
-#            palette.palette_patch_api(self.name(), "loop_playing", '"onoff": "'+str(playonoff)+'"')
-#
-#        elif name == "loopinglength":
-#            palette.palette_patch_api(self.name(), "loop_length", '"value": "'+str(val)+'"')
-#        elif name == "loopingfade":
-#            palette.palette_patch_api(self.name(), "loop_fade", '"fade": "'+str(val)+'"')
-#        elif name == "loopingset":
-#            palette.palette_patch_api(self.name(), "loop_set", '"set": "'+str(val)+'"')
-#        elif name == "midisetscale":
-#            palette.palette_patch_api(self.name(), "midi_setscale", "\"onoff\": \"" + str(val) + "\"")
-#        elif name == "midiquantized":
-#            palette.palette_patch_set(self.name(), "misc.midi_quantized", str(val))
-#        elif name == "midithruscadjust":
-#            palette.palette_patch_api(self.name(), "midi_thruscadjust", "\"onoff\": \"" + str(val) + "\"")
-#
-#        elif name == "deltaztrig":
-#            palette.palette_patch_set(self.name(), "sound._deltaztrig",val)
-#        elif name == "deltaytrig":
-#            palette.palette_patch_set(self.name(), "sound._deltaytrig",val)
-#
-#        elif name == "quantstyle":
-#            palette.palette_patch_set(self.name(), "misc.quantstyle",val)
-#        elif name == "scale":
-#            palette.palette_patch_set(self.name(), "misc.scale",val)
-#        elif name == "volstyle":
-#            palette.palette_patch_set(self.name(), "misc.volstyle",val)
-#
-#        else:
-#            log("SendPerformVal: unhandled name=",name)
-
     def clearLoop(self):
         palette.palette_patch_api(self.name(), "loop_clear", "")
- 
 
 class PatchChooser(tk.Frame):
 
