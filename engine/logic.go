@@ -42,14 +42,12 @@ func (logic *PatchLogic) cursorToPitch(ce CursorEvent) uint8 {
 	p1 := int(ce.X * float32(dp))
 	p := uint8(pitchmin + p1%dp)
 
-	externalscaleOn := patch.GetBool("misc.externalscale")
-	chromatic := patch.GetBool("sound.chromatic")
-	if !chromatic && externalscaleOn {
-		scaleName := TheEngine.params.Get("engine.scale")
+	scaleName := patch.Get("misc.scale")
+	if scaleName != "chromatic" {
 		scale := GetScale(scaleName)
-		p = scale.ClosestTo(p)
+		closest := scale.ClosestTo(p)
 		// MIDIOctaveShift might be negative
-		i := int(p) + 12*TheRouter.MIDIOctaveShift
+		i := int(closest) + 12*TheRouter.MidiOctaveShift
 		for i < 0 {
 			i += 12
 		}

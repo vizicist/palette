@@ -68,9 +68,10 @@ func (me MidiEvent) HasPitch() bool {
 
 func (me MidiEvent) Pitch() uint8 {
 	b := me.Msg.Bytes()
-	if len(b) < 3 {
+	if len(b) == 3 {
 		return b[1]
 	}
+	LogWarn("MidiEvent.Pitch: bad message length")
 	return 0
 }
 

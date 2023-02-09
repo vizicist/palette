@@ -116,8 +116,6 @@ func (quadpro *QuadPro) Start() {
 	}
 	quadpro.started = true
 
-	ClearExternalScale()
-
 	TheCursorManager.AddCursorHandler("QuadPro", TheQuadPro, "A", "B", "C", "D")
 
 	_ = quadpro.addPatch("A")

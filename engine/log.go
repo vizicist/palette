@@ -186,7 +186,7 @@ var LogEnabled = map[string]bool{
 	"note":      false,
 	"notify":    false,
 	"osc":       false,
-	"paramvals": false,
+	"params":    false,
 	"phrase":    false,
 	"plugin":    false,
 	"saved":     false,

@@ -83,7 +83,6 @@
 "engine.autostart": {"valuetype":"string", "min":"autostart", "max":"autostart", "init":"bidule,resolume", "comment":"# Plugins to start" },
 "engine.bidule": {"valuetype":"string", "min":"bidule", "max":"bidule", "init":"C:/Program Files/Plogue/Bidule/Bidule.exe", "comment":"# Bidule executable path" },
 "engine.guiresize": {"valuetype":"string", "min":"guiresize", "max":"bidule", "init":"100,100,800,1280", "comment":"# GUI resize" },
-"engine.scale": {"valuetype":"string", "min":"scale", "max":"scale", "randmax":"newage", "init":"newage", "comment":"# Quantization style" },
 
 "visual.noisevertex": {"valuetype":"float", "min":"0.0", "max":"1.0", "randmin":"0.0", "randmax":"0.0", "init":"0.0", "comment":"# 0-1" },
 "visual.cursorsprites": {"valuetype":"bool", "min":"false", "max":"true", "init":"false", "comment":"#" },

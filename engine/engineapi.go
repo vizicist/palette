@@ -189,23 +189,6 @@ func (e *Engine) executeEngineAPI(api string, apiargs map[string]string) (result
 			ChangeClicksPerSecond(float64(v))
 		}
 
-	case "clearexternalscale":
-		ClearExternalScale()
-
-	case "set_scale":
-		LogWarn("set_scale API needs work")
-		/*
-			v, err := needStringArg("value", api, apiargs)
-			if err == nil {
-				ApplyToAllPatchs(func(patch *Patch) {
-					err = patch.SetOneParamValue("misc.scale", v)
-					if err != nil {
-						LogError(err)
-					}
-				})
-			}
-		*/
-
 	default:
 		LogWarn("Router.ExecuteAPI api is not recognized\n", "api", api)
 		err = fmt.Errorf("ExecuteEngineAPI: unrecognized api=%s", api)
@@ -229,10 +212,13 @@ func (e *Engine) LoadCurrent() (err error) {
 }
 
 func (e *Engine) Set(name string, value string) error {
-	// LogInfo("Engine.Set", "name", name, "value", value)
 	switch name {
+	case "engine.midithru":
+		TheRouter.midithru = IsTrueValue(value)
+	case "engine.midisetexternalscale":
+		TheRouter.midisetexternalscale = IsTrueValue(value)
 	case "engine.oscoutput":
-		e.oscOutput = IsTrueValue(value)
+		e.oscoutput = IsTrueValue(value)
 	case "engine.autotranspose":
 		TheMidiIO.autoTransposeOn = IsTrueValue(value)
 	case "engine.autotransposebeats":
@@ -262,6 +248,7 @@ func (e *Engine) Set(name string, value string) error {
 			TheAttractManager.attractIdleSecs = f
 		}
 	}
+	LogOfType("params", "Engine.Set", "name", name, "value", value)
 	return e.params.Set(name, value)
 }
 

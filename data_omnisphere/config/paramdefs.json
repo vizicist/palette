@@ -77,8 +77,8 @@
 "misc.pitchfactor": {"valuetype": "float", "min": "0.1", "max": "10.0",  "init": "1.0",	"comment": "#" },
 "misc.pitchoffset": {"valuetype": "float", "min": "0.0", "max": "128.0",  "init": "0.0", "comment": "#" },
 "misc.quantstyle": {"valuetype":"string", "min":"quantstyle", "max":"quantstyle", "init":"frets", "comment":"# Quantization style" },
+"misc.scale": {"valuetype":"string", "min":"scale", "max":"scale", "init":"newage", "comment":"# Scale" },
 "misc.transposable": {"valuetype":"bool", "min":"false", "max":"true", "init":"true", "comment":"# Looping is on" },
-"misc.usescale": {"valuetype":"bool", "min":"false", "max":"true", "init":"true", "comment":"# Use Scale" },
 "misc.volstyle": {"valuetype":"string", "min":"volstyle", "max":"volstyle", "init":"pressure", "comment":"# Velocity style" },
 
 "engine.attractidlesecs": {"valuetype":"int", "min":"0", "max":"3600", "init":"0", "comment":"# Attract timeout, 0 to disable" },
@@ -90,8 +90,9 @@
 "engine.guilevel": {"valuetype":"string", "min":"guilevel", "max":"guilevel", "init":"0", "comment":"# GUI level" },
 "engine.guiresize": {"valuetype":"string", "min":"guiresize", "max":"bidule", "init":"100,100,800,1280", "comment":"# GUI resize" },
 "engine.midiinput": {"valuetype":"string", "min":"midiinput", "max":"midiinput", "init":"", "comment":"# Bidule executable path" },
+"engine.midithru": {"valuetype":"bool", "min":"false", "max":"true", "init":"false", "comment":"#" },
+"engine.midisetexternalscale": {"valuetype":"bool", "min":"false", "max":"true", "init":"false", "comment":"#" },
 "engine.oscoutput": {"valuetype":"bool", "min":"false", "max":"true", "init":"true", "comment":"#" },
-"engine.scale": {"valuetype":"string", "min":"scale", "max":"scale", "randmax":"newage", "init":"newage", "comment":"# scale name" },
 "engine.transpose": {"valuetype":"int", "min":"-24", "max":"24", "init":"0", "comment":"# transpose pitch" },
 
 "visual.noisevertex": {"valuetype":"float", "min":"0.0", "max":"1.0", "randmin":"0.0", "randmax":"0.0", "init":"0.0", "comment":"# 0-1" },
