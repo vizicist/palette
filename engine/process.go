@@ -184,9 +184,6 @@ func (pm *ProcessManager) StartRunning(process string) error {
 		return nil
 	}
 
-	keyroot := os.Getenv("KEYROOT")
-	LogOfType("process", "StartRunning", "process", process, "keyroot", keyroot)
-
 	for nm, pi := range pm.info {
 		if process == "all" || nm == process {
 			if pi == nil {
