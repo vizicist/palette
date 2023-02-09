@@ -37,7 +37,12 @@ func NewProcessInfo(exe, fullPath, arg string, activate func()) *ProcessInfo {
 }
 
 func StartRunning(process string) error {
-	return TheProcessManager.StartRunning(process)
+	err := TheProcessManager.StartRunning(process)
+	if err != nil {
+		LogError(err)
+		return (err)
+	}
+	return TheProcessManager.Activate(process)
 }
 
 func StopRunning(process string) error {
@@ -105,14 +110,16 @@ func (pm *ProcessManager) CheckAutostartProcesses() {
 		for processName, pi := range pm.info {
 			if autoName == "*" || autoName == "all" || autoName == processName {
 				if !pm.IsRunning(processName) {
-					LogError(pm.StartRunning(processName))
+					LogInfo("CheckAutoStartProcesses: Calling StartRunning", "process", processName)
+					err := pm.StartRunning(processName)
+					LogIfError(err)
 					pi.Activated = false
 				}
 				// Even if it's already running, we
 				// want to Activate it the first time we check.
 				// Also, if we restart it
 				if pi.Activate != nil && !pi.Activated {
-					LogInfo("Calling Activate", "process", processName)
+					LogInfo("CheckAutoStartProcesses: Calling Activate", "process", processName)
 					go pi.Activate()
 					pi.Activated = true
 				}
@@ -309,7 +316,7 @@ func KeykitProcessInfo() *ProcessInfo {
 	if fullpath == "" {
 		fullpath = DefaultKeykitPath
 		if !FileExists(fullpath) {
-			LogWarn("Keykit not found in default location", "fullpath", fullpath)
+		LogWarn("Keykit not found in default location", "fullpath", fullpath)
 			return nil
 		}
 	}

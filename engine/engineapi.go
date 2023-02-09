@@ -133,12 +133,7 @@ func (e *Engine) executeEngineAPI(api string, apiargs map[string]string) (result
 		if !ok {
 			return "", fmt.Errorf("executeEngineAPI: missing process parameter")
 		}
-		err := TheProcessManager.StartRunning(process)
-		if err != nil {
-			return "", err
-		}
-		err = TheProcessManager.Activate(process)
-		return "", err
+		return "", TheProcessManager.StartRunning(process)
 
 	case "stopprocess":
 		process, ok := apiargs["process"]

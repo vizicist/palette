@@ -1,17 +1,20 @@
 {
     "params": {
         "misc.cursorstyle":"retrigger",
-        "misc.enable:sound":"true",
-        "misc.enable:visual":"true",
-        "misc.logic_sound":"default",
-        "misc.logic_visual":"maze4",
-        "misc.midibehaviour":"sprite",
+        "misc.generatesound":"true",
+        "misc.generatevisual":"true",
+        "misc.logic_sound":"true",
+        "misc.logic_visual":"true",
+        "misc.looping_fade":"0.500000",
+        "misc.looping_length":"8",
+        "misc.looping_on":"false",
+        "misc.midibehaviour":"default",
         "misc.midiinputpatch":"A",
-        "misc.pitchfactor":"3.584000",
-        "misc.pitchoffset":"59.005001",
-        "misc.quantstyle":"fixed",
+        "misc.pitchfactor":"1.000000",
+        "misc.pitchoffset":"0.000000",
+        "misc.quantstyle":"frets",
         "misc.scale":"newage",
-        "misc.usescale":"true",
+        "misc.transposable":"true",
         "misc.volstyle":"pressure"
     }
 }
