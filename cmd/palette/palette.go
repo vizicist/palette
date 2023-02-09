@@ -96,7 +96,7 @@ func CliCommand(args []string) string {
 
 		case "", "all":
 			s1 := doStartEngine()
-			s2 := doApi("engine.startprocess", "process", "all")
+			s2 := doApi("engine.startall")
 			return s1 + "\n" + s2
 
 		default:
