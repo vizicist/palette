@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/hypebeast/go-osc/osc"
+	midi "gitlab.com/gomidi/midi/v2"
 )
 
 var HTTPPort = 3330
@@ -29,11 +30,11 @@ type Router struct {
 	killme bool
 
 	MIDINumDown     int
-	MIDIOctaveShift int
+	MidiOctaveShift int
 
-	MIDISetScale     bool
-	MIDIThru         bool
-	MIDIThruScadjust bool
+	midisetexternalscale bool
+	midithru             bool
+	MIDIThruScadjust     bool
 
 	guiClient *osc.Client
 
@@ -103,11 +104,11 @@ func (r *Router) HandleCursorEvent(ce CursorEvent) {
 func (r *Router) HandleMidiEvent(me MidiEvent) {
 	TheEngine.sendToOscClients(MidiToOscMsg(me))
 
-	if r.MIDIThru {
+	if r.midithru {
 		LogInfo("PassThruMIDI", "msg", me.Msg)
 		ScheduleAt(me.Msg, CurrentClick())
 	}
-	if r.MIDISetScale {
+	if r.midisetexternalscale {
 		r.handleMIDISetScaleNote(me)
 	}
 
@@ -120,27 +121,37 @@ func (r *Router) HandleMidiEvent(me MidiEvent) {
 }
 
 func (r *Router) handleMIDISetScaleNote(me MidiEvent) {
-	status := me.Status() & 0xf0
-	pitch := int(me.Data1())
-	if status == NoteOnStatus {
-		// If there are no notes held down (i.e. this is the first), clear the scale
+	if !me.HasPitch() {
+		return
+	}
+	pitch := me.Pitch()
+	if me.Msg.Is(midi.NoteOnMsg) {
+
 		if r.MIDINumDown < 0 {
-			// this can happen when there's a Read error that misses a noteon
+			// may happen when there's a Read error that misses a noteon
 			r.MIDINumDown = 0
 		}
+
+		// If there are no notes held down (i.e. this is the first), clear the scale
 		if r.MIDINumDown == 0 {
+			LogOfType("scale", "Clearing external scale")
 			ClearExternalScale()
 		}
-		SetExternalScale(uint8(pitch%12), true)
+		SetExternalScale(pitch, true)
 		r.MIDINumDown++
+
+		// adjust the octave shift based on incoming MIDI
+		newshift := 0
 		if pitch < 60 {
-			r.MIDIOctaveShift = -1
+			newshift = -1
 		} else if pitch > 72 {
-			r.MIDIOctaveShift = 1
-		} else {
-			r.MIDIOctaveShift = 0
+			newshift = 1
 		}
-	} else if status == NoteOffStatus {
+		if newshift != r.MidiOctaveShift {
+			r.MidiOctaveShift = newshift
+			LogInfo("MidiOctaveShift changed", "octaveshift", r.MidiOctaveShift)
+		}
+	} else if me.Msg.Is(midi.NoteOffMsg) {
 		r.MIDINumDown--
 	}
 }

@@ -14,7 +14,7 @@ import (
 type Engine struct {
 	params    *ParamValues
 	done      chan bool
-	oscOutput bool
+	oscoutput bool
 	oscClient *osc.Client
 }
 
@@ -50,6 +50,7 @@ func NewEngine() *Engine {
 
 	// The Managers above should be created first so that
 	// loading the Current settings can change values in them.
+	TheEngine.SetDefaultValues()
 	err := TheEngine.LoadCurrent()
 	if err != nil {
 		LogError(err)
@@ -63,7 +64,6 @@ func NewEngine() *Engine {
 	AddProcessBuiltIn("mmtt")
 
 	TheEngine.ResetLogTypes(os.Getenv("PALETTE_LOG"))
-	TheEngine.SetDefaultValues()
 	return TheEngine
 }
 
@@ -133,7 +133,7 @@ func (e *Engine) ResetLogTypes(logtypes string) {
 }
 
 func (e *Engine) sendToOscClients(msg *osc.Message) {
-	if e.oscOutput {
+	if e.oscoutput {
 		if e.oscClient == nil {
 			e.oscClient = osc.NewClient(LocalAddress, EventClientPort)
 			// oscClient is guaranteed to be non-nil
