@@ -7,14 +7,22 @@ type Scale struct {
 
 // Scales maps a name to a Scale
 var Scales map[string]*Scale
-var ExternalScale *Scale
+
+func InitializeExternalScaleToChromatic() {
+	// The external scale is initialized to chromatic,
+	// but will be changed by MIDI input when engine.setexternalscale is on.
+	Scales["external"] = MakeScale(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
+}
 
 func ClearExternalScale() {
-	ExternalScale = MakeScale()
+	LogOfType("scale", "Clearing external scale")
+	Scales["external"] = MakeScale()
 }
 
 func SetExternalScale(pitch uint8, on bool) {
-	s := ExternalScale
+	pitch = pitch % 12 // start from lowest octave
+	s := Scales["external"]
+	LogOfType("scale", "Adding to external scale", "pitch", pitch, "on", on)
 	for p := pitch; p < 128; p += 12 {
 		s.HasNote[p] = on
 	}
@@ -53,10 +61,14 @@ func InitScales() {
 	Scales["melminor"] = MakeScale(0, 2, 3, 5, 7, 9, 11)
 	Scales["chromatic"] = MakeScale(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
 	Scales["fifths"] = MakeScale(0, 7)
+
+	InitializeExternalScaleToChromatic()
 }
 
 func MakeScale(pitches ...int) *Scale {
-	s := &Scale{}
+	s := &Scale{
+		HasNote: [128]bool{},
+	}
 	for _, pitch := range pitches {
 		for p := pitch; p < 128; p += 12 {
 			s.HasNote[p] = true

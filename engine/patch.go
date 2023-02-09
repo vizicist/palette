@@ -154,7 +154,7 @@ func (patch *Patch) Name() string {
 
 func (patch *Patch) CursorToQuant(ce CursorEvent) Clicks {
 
-	quantStyle := patch.GetString("misc.quantstyle")
+	quantStyle := patch.Get("misc.quantstyle")
 
 	q := Clicks(1)
 	switch quantStyle {
@@ -310,9 +310,9 @@ func (patch *Patch) ParamNames() []string {
 	return sortedNames
 }
 
-func (patch *Patch) GetString(paramName string) string {
-	return patch.params.GetStringValue(paramName, "")
-}
+// func (patch *Patch) GetString(paramName string) string {
+// 	return patch.params.GetStringValue(paramName, "")
+// }
 
 func (patch *Patch) GetInt(paramName string) int {
 	return patch.params.GetIntValue(paramName)
