@@ -151,7 +151,7 @@ func (e *Engine) StartOSCListener(port int) {
 	d := osc.NewStandardDispatcher()
 
 	err := d.AddMsgHandler("*", func(msg *osc.Message) {
-		TheRouter.OSCInput <- OSCEvent{Msg: msg, Source: source}
+		TheRouter.oscInputChan <- OSCEvent{Msg: msg, Source: source}
 	})
 	if err != nil {
 		LogError(err)

@@ -127,7 +127,16 @@ func (quadpro *QuadPro) Start() {
 	LogIfError(err)
 }
 
-func (quadpro *QuadPro) onCursorEvent(state CursorState) error {
+func (quadpro *QuadPro) PatchForCursorEvent(ce CursorEvent) *Patch {
+	patchLogic, ok := quadpro.patchLogic[ce.Source()]
+	if !ok {
+		LogWarn("QuadPro.PatchForCursorEvent: no patchLogic for source", "source", ce.Source())
+		return nil
+	}
+	return patchLogic.patch
+}
+
+func (quadpro *QuadPro) onCursorEvent(state ActiveCursor) error {
 
 	if state.Current.Ddu == "clear" {
 		ClearCursors()
@@ -185,7 +194,7 @@ func (quadpro *QuadPro) onMidiEvent(me MidiEvent) error {
 
 func (quadpro *QuadPro) doTest(ntimes int, dt time.Duration) {
 	LogInfo("doTest start", "ntimes", ntimes, "dt", dt)
-	var state CursorState
+	var state ActiveCursor
 	for n := 0; n < ntimes; n++ {
 		if n > 0 {
 			time.Sleep(dt)

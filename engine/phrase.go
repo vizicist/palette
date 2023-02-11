@@ -234,7 +234,7 @@ func (n Note) String() string {
 }
 */
 
-func SchedElementFromString(s string) (se *SchedElement, err error) {
+func SchedElementFromString(patch *Patch, s string) (se *SchedElement, err error) {
 
 	if s == "" {
 		return nil, fmt.Errorf("NoteOnOffFromString: bad format - %s", s)
@@ -433,11 +433,7 @@ func SchedElementFromString(s string) (se *SchedElement, err error) {
 		return nil, err
 	}
 
-	se = &SchedElement{
-		AtClick: atclick,
-		Value:   val,
-	}
-
+	se = NewSchedElement(patch,atclick,val)
 	return se, nil
 }
 
