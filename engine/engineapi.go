@@ -212,6 +212,8 @@ func (e *Engine) Set(name string, value string) error {
 		TheRouter.midithru = IsTrueValue(value)
 	case "engine.midisetexternalscale":
 		TheRouter.midisetexternalscale = IsTrueValue(value)
+	case "engine.midithruscadjust":
+		TheRouter.midiThruScadjust = IsTrueValue(value)
 	case "engine.oscoutput":
 		e.oscoutput = IsTrueValue(value)
 	case "engine.autotranspose":

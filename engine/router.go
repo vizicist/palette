@@ -23,18 +23,17 @@ var TheRouter *Router
 
 // Router takes events and routes them
 type Router struct {
-	OSCInput      chan OSCEvent
+	oscInputChan  chan OSCEvent
 	midiInputChan chan MidiEvent
 	cursorInput   chan CursorEvent
 
 	killme bool
 
-	MIDINumDown     int
-	MidiOctaveShift int
-
+	midiNumDown          int
+	midiOctaveShift      int
 	midisetexternalscale bool
 	midithru             bool
-	MIDIThruScadjust     bool
+	midiThruScadjust     bool
 
 	guiClient *osc.Client
 
@@ -72,7 +71,7 @@ func NewRouter() *Router {
 	}
 
 	r.guiClient = osc.NewClient(LocalAddress, GuiPort)
-	r.OSCInput = make(chan OSCEvent)
+	r.oscInputChan = make(chan OSCEvent)
 	r.midiInputChan = make(chan MidiEvent)
 
 	// By default, the engine handles Cursor events internally.
@@ -91,14 +90,25 @@ func (r *Router) Start() {
 		LogWarn("StartCursorInput: LoadMorphs", "err", err)
 	}
 
-	go StartMorph(r.HandleCursorEvent, 1.0)
+	go StartMorph(r.ScheduleCursorEvent, 1.0)
 
 	go r.notifyGUI("restart")
 }
 
-func (r *Router) HandleCursorEvent(ce CursorEvent) {
-	TheEngine.sendToOscClients(CursorToOscMsg(ce))
-	TheCursorManager.HandleCursorEvent(ce)
+// HandleCursorEvent is the main entry point for Cursor events
+func (r *Router) ScheduleCursorEvent(ce CursorEvent) {
+	// schedule CursorEvents rather than handle them right away.
+	// This makes it easier to do looping, among other benefits.
+	if ce.Ddu == "clear" {
+		LogWarn("Should clear be done here, or in ExecuteCursorEvent?")
+		TheCursorManager.clearCursors()
+		return
+	}
+	patch := TheQuadPro.PatchForCursorEvent(ce)
+	if patch == nil {
+		LogWarn("patch is nil for cursor event", "ce", ce)
+	}
+	ScheduleAt(patch, CurrentClick(), ce)
 }
 
 func (r *Router) HandleMidiEvent(me MidiEvent) {
@@ -106,7 +116,10 @@ func (r *Router) HandleMidiEvent(me MidiEvent) {
 
 	if r.midithru {
 		LogInfo("PassThruMIDI", "msg", me.Msg)
-		ScheduleAt(me.Msg, CurrentClick())
+		if r.midiThruScadjust {
+			LogWarn("PassThruMIDI, midiThruScadjust needs work", "msg", me.Msg)
+		}
+		ScheduleAt(nil, CurrentClick(), me.Msg)
 	}
 	if r.midisetexternalscale {
 		r.handleMIDISetScaleNote(me)
@@ -127,18 +140,18 @@ func (r *Router) handleMIDISetScaleNote(me MidiEvent) {
 	pitch := me.Pitch()
 	if me.Msg.Is(midi.NoteOnMsg) {
 
-		if r.MIDINumDown < 0 {
+		if r.midiNumDown < 0 {
 			// may happen when there's a Read error that misses a noteon
-			r.MIDINumDown = 0
+			r.midiNumDown = 0
 		}
 
 		// If there are no notes held down (i.e. this is the first), clear the scale
-		if r.MIDINumDown == 0 {
+		if r.midiNumDown == 0 {
 			LogOfType("scale", "Clearing external scale")
 			ClearExternalScale()
 		}
 		SetExternalScale(pitch, true)
-		r.MIDINumDown++
+		r.midiNumDown++
 
 		// adjust the octave shift based on incoming MIDI
 		newshift := 0
@@ -147,12 +160,12 @@ func (r *Router) handleMIDISetScaleNote(me MidiEvent) {
 		} else if pitch > 72 {
 			newshift = 1
 		}
-		if newshift != r.MidiOctaveShift {
-			r.MidiOctaveShift = newshift
-			LogInfo("MidiOctaveShift changed", "octaveshift", r.MidiOctaveShift)
+		if newshift != r.midiOctaveShift {
+			r.midiOctaveShift = newshift
+			LogInfo("MidiOctaveShift changed", "octaveshift", r.midiOctaveShift)
 		}
 	} else if me.Msg.Is(midi.NoteOffMsg) {
-		r.MIDINumDown--
+		r.midiNumDown--
 	}
 }
 
@@ -162,12 +175,12 @@ func (r *Router) handleMIDISetScaleNote(me MidiEvent) {
 func (r *Router) InputListener() {
 	for !r.killme {
 		select {
-		case msg := <-r.OSCInput:
+		case msg := <-r.oscInputChan:
 			r.handleOSCInput(msg)
 		case event := <-r.midiInputChan:
 			r.HandleMidiEvent(event)
 		case event := <-r.cursorInput:
-			r.HandleCursorEvent(event)
+			r.ScheduleCursorEvent(event)
 		default:
 			time.Sleep(time.Millisecond)
 		}
@@ -443,7 +456,7 @@ func (r *Router) oscHandleCursor(msg *osc.Message) {
 
 	LogOfType("mmtt", "MMTT Cursor", "source", ce.Source, "ddu", ce.Ddu, "x", ce.X, "y", ce.Y, "z", ce.Z)
 
-	TheCursorManager.HandleCursorEvent(ce)
+	TheCursorManager.ExecuteCursorEvent(ce)
 }
 
 /*
