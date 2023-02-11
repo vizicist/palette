@@ -100,7 +100,7 @@ func (am *AttractManager) doAttractAction() {
 		z1 := rand.Float32() / 2.0
 
 		noteDuration := time.Second
-		go GenerateCursorGesture(cid, noteDuration, x0, y0, z0, x1, y1, z1)
+		go TheCursorManager.GenerateCursorGesture(cid, noteDuration, x0, y0, z0, x1, y1, z1)
 		am.lastAttractGestureTime = now
 	}
 
