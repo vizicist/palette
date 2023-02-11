@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"sync"
 	"time"
+
+	midi "gitlab.com/gomidi/midi/v2"
 )
 
 var TheScheduler *Scheduler
@@ -14,6 +16,7 @@ type Event any
 type Scheduler struct {
 	schedList *list.List // of *SchedElements
 	mutex     sync.RWMutex
+	nextSeq   int
 	// now       time.Time
 	// time0     time.Time
 	lastClick Clicks
@@ -26,14 +29,13 @@ type Command struct {
 }
 
 type SchedElement struct {
+	patch   *Patch
 	AtClick Clicks
 	Value   any // ...SchedValue things
 	// triggered bool
+	loopIt            bool
+	loopLengthInBeats int
 }
-
-// type MidiSchedValue struct {
-// 	msg midi.Message
-// }
 
 func NewScheduler() *Scheduler {
 	s := &Scheduler{
@@ -45,17 +47,21 @@ func NewScheduler() *Scheduler {
 	return s
 }
 
-func ScheduleAt(value any, click Clicks) {
-	se := &SchedElement{
-		AtClick: click,
-		Value:   value,
+func NewSchedElement(patch *Patch, atclick Clicks, value any) *SchedElement {
+	// patch might be nil
+	return &SchedElement{
+		patch:             patch,
+		AtClick:           atclick,
+		Value:             value,
+		loopIt:            false,
+		loopLengthInBeats: 0,
 	}
-	TheScheduler.insertScheduleElement(se)
 }
 
-// type SchedulerElementCmd struct {
-// 	element *SchedElement
-// }
+func ScheduleAt(patch *Patch, atClick Clicks, value any) {
+	se := NewSchedElement(patch, atClick, value)
+	TheScheduler.insertScheduleElement(se)
+}
 
 // Start runs the scheduler and never returns
 func (sched *Scheduler) Start() {
@@ -94,33 +100,16 @@ func (sched *Scheduler) Start() {
 
 		SetCurrentClick(newclick)
 
-		// sched.checkInput()
-
-		// ce := ClickEvent{Click: newclick, Uptime: uptimesecs}
-		// PluginsHandleClickEvent(ce)
-
 		TheProcessManager.checkProcess()
 		TheAttractManager.checkAttract()
 	}
 	LogInfo("StartRealtime ends")
 }
 
-/*
-func (sched *Scheduler) checkInput() {
-
-	select {
-	case cmd := <-sched.cmdInput:
-		LogInfo("Scheduler.cmdInput", "cmd", cmd)
-		switch v := cmd.(type) {
-		case SchedulerElementCmd:
-			sched.insertScheduleElement(v.element)
-		default:
-			LogWarn("Unexpected type", "type", fmt.Sprintf("%T", v))
-		}
-	default:
-	}
+func (sched *Scheduler) uniqueNum() int {
+	sched.nextSeq++
+	return sched.nextSeq
 }
-*/
 
 func (sched *Scheduler) advanceClickTo(toClick Clicks) {
 
@@ -149,7 +138,11 @@ func (sched *Scheduler) advanceClickTo(toClick Clicks) {
 func (sched *Scheduler) triggerItemsScheduledAtOrBefore(clk Clicks) {
 
 	sched.mutex.Lock()
-	defer sched.mutex.Unlock()
+
+	// we don't handle CursorEvents while we're looping through the schedList,
+	// since handling them may in some cases change the schedList in ways we can't predict.
+	cursorEventsToExecute := []CursorEvent{}
+	schedElementsToLoop := []*SchedElement{}
 
 	var nexti *list.Element
 	for i := sched.schedList.Front(); i != nil; i = nexti {
@@ -176,70 +169,70 @@ func (sched *Scheduler) triggerItemsScheduledAtOrBefore(clk Clicks) {
 				LogOfType("scheduler", "triggerItemsScheduleAt: NoteOff", "note", v.String())
 				v.Synth.SendNoteToMidiOutput(v)
 
+			case midi.Message:
+				LogInfo("triggerItemsScheduleAt: should handle midi.Message?", "msg", v)
+
+			case CursorEvent:
+				if v.Cid == "" {
+					LogWarn("Hey, Cid of CursorEvent is empty?")
+				}
+				cursorEventsToExecute = append(cursorEventsToExecute, v)
+
 			default:
 				LogError(fmt.Errorf("triggerItemsScheduleAt: unhandled Value type=%T", v))
 			}
 
-			// XXX - this is (maybe) where looping happens
-			// by rescheduling things rather than removing
-			sched.schedList.Remove(i)
+			// this is where looping happens
+			// by rescheduling things (removing and then adding)
+			if se.loopIt {
+				schedElementsToLoop = append(schedElementsToLoop, se)
+			}
 
+			sched.schedList.Remove(i)
 			// LogInfo("After Removing from schedList", "i", i, "Len", sched.schedList.Len())
 		}
 	}
-}
 
-/*
-func (sched *Scheduler) triggerPhraseElementsAt(phr *Phrase, clk Clicks, dclick Clicks) {
-	for i := phr.list.Front(); i != nil; i = i.Next() {
-		pe, ok := i.Value.(*PhraseElement)
+	sched.mutex.Unlock()
+
+	// Schedule the looped elements at their new time.
+	// I *think* it's important to do this
+	// before actually executing the CursorEvent.
+	// e.g. if the CursorEvent is an "up", we probably
+	// don't want to remove the Active cursor until we've
+	// rescheduled its CursorEvent.
+
+	for _, se := range schedElementsToLoop {
+
+		// The SchedElement in the schedElementsToLoop list
+		// has already been removed from the schedList,
+		// se we can re-use it for the looped element.
+		se.AtClick += OneBeat * Clicks(se.loopLengthInBeats)
+		ce, ok := se.Value.(CursorEvent)
 		if !ok {
-			LogWarn("Unexpected value in Phrase list")
-			break
+			LogWarn("Hey, unexpected non-CursorEvent")
+			continue
 		}
-		if pe.AtClick <= dclick {
-			// Info("triggerPhraseElementAt", "click", clk, "dclick", dclick, "pe.AtClick", pe.AtClick)
-			switch v := pe.Value.(type) {
-			case *NoteOn:
-				LogWarn("triggerPhraseElementsAt: NoteOn not handled")
-				// SendToSynth(v)
-			case *NoteOff:
-				LogWarn("triggerPhraseElementsAt: NoteOff not handled")
-				// SendToSynth(v)
-			case *NoteFull:
-				LogWarn("triggerPhraseElementsAt: NoteFull not handled")
-				// noteon := NewNoteOn(v.Channel, v.Pitch, v.Velocity)
-				// SendToSynth(noteon)
-				// noteoff := NewNoteOff(v.Channel, v.Pitch, v.Velocity)
-				// offClick := clk + pe.AtClick + v.Duration
-				// newpe := &PhraseElement{AtClick: offClick, Value: noteoff}
-				// sched.pendingNoteOffs.InsertElement(newpe)
-			default:
-				msg := fmt.Sprintf("triggerPhraseElementsAt: unexpected Value type=%T", v)
-				LogWarn(msg)
-			}
+		// The looped CursorEvents should have unique cid values.
+		ce.Cid = TheCursorManager.LoopedCidFor(ce)
+		if ce.Cid == "" {
+			LogWarn("Unable to get LoopedCidFor", "ce", ce)
+			continue
 		}
+		se.Value = ce
+		TheScheduler.insertScheduleElement(se)
+	}
+
+	for _, ce := range cursorEventsToExecute {
+		TheEngine.sendToOscClients(CursorToOscMsg(ce))
+		TheCursorManager.ExecuteCursorEvent(ce)
 	}
 }
-*/
-
-/*
-// Time returns the current time
-func (sched *Scheduler) time() time.Time {
-	return time.Now()
-}
-*/
-
-/*
-func (sched *Scheduler) Uptime() float64 {
-	return sched.now.Sub(sched.time0).Seconds()
-}
-*/
 
 func (sched *Scheduler) ToString() string {
 
-	// sched.mutex.Lock()
-	// defer sched.mutex.Unlock()
+	sched.mutex.RLock()
+	defer sched.mutex.RUnlock()
 
 	s := "Scheduler{"
 	for i := sched.schedList.Front(); i != nil; i = i.Next() {
@@ -267,9 +260,43 @@ func (sched *Scheduler) Format(f fmt.State, c rune) {
 	f.Write([]byte(s))
 }
 
+func LoopingIsSupported(value any) bool {
+	// Currently, looping is only supported
+	// for CursorEvent types
+	_, ok := value.(CursorEvent)
+	return ok
+}
+
+func FillInLooping(se *SchedElement) {
+	if se.patch != nil {
+		loopIt := se.patch.GetBool("misc.looping_on")
+		loopBeats := se.patch.GetInt("misc.looping_beats")
+		if loopIt && LoopingIsSupported(se.Value) {
+			if loopBeats <= 0 {
+				// sanity check
+				LogWarn("loopBeats <= 0?")
+				loopBeats = 8
+			}
+			se.loopIt = loopIt
+			se.loopLengthInBeats = loopBeats
+		} else {
+			se.loopIt = false
+		}
+	} else {
+		LogWarn("Hey, should patch in SchedElement be nil?")
+	}
+}
+
 func (sched *Scheduler) insertScheduleElement(se *SchedElement) {
 
+	FillInLooping(se)
+
 	sched.mutex.Lock()
+
+	ce, ok := se.Value.(CursorEvent)
+	if ok && ce.Cid == "" {
+		LogWarn("Hey, Cid of CursorEvent is empty?")
+	}
 
 	schedClick := se.AtClick
 	LogOfType("scheduler", "Scheduler.insertScheduleElement", "value", se.Value, "click", se.AtClick, "beforelen", sched.schedList.Len())
@@ -291,7 +318,8 @@ func (sched *Scheduler) insertScheduleElement(se *SchedElement) {
 		}
 	}
 
+	sched.mutex.Unlock()
+	// Don't log before mutex.Unlock()
 	LogOfType("scheduler", "Scheduler.insertScheduleElement", "value", se.Value, "click", se.AtClick, "schedafter", sched.ToString())
 
-	sched.mutex.Unlock()
 }
