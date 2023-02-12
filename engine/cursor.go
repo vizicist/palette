@@ -31,11 +31,14 @@ type ActiveCursor struct {
 }
 
 type CursorManager struct {
-	activeCursors  map[string]*ActiveCursor
-	cursorsMutex   sync.RWMutex
+	executeMutex sync.RWMutex
+
+	activeMutex   sync.RWMutex
+	activeCursors map[string]*ActiveCursor
+
 	CidToLoopedCid map[string]string
 	handlers       map[string]CursorHandler
-	sequenceNum int
+	sequenceNum    int
 }
 
 // CursorDeviceCallbackFunc xxx
@@ -75,27 +78,23 @@ func NewCursorManager() *CursorManager {
 	return &CursorManager{
 		activeCursors:  map[string]*ActiveCursor{},
 		CidToLoopedCid: map[string]string{},
-		cursorsMutex:   sync.RWMutex{},
+		activeMutex:    sync.RWMutex{},
 		handlers:       map[string]CursorHandler{},
 	}
 }
 
-func (cm *CursorManager) GetActiveCursor(cid string) *ActiveCursor {
-
-	cm.cursorsMutex.Lock()
-	defer cm.cursorsMutex.Unlock()
-
-	cs, ok := cm.activeCursors[cid]
-	if !ok {
-		return nil
-	}
-	return cs
+func (cm *CursorManager) getActiveCursorFor(cid string) (*ActiveCursor, bool) {
+	cm.activeMutex.RLock()
+	ac, ok := cm.activeCursors[cid]
+	cm.activeMutex.RUnlock()
+	return ac, ok
 }
 
 func (cm *CursorManager) AddCursorHandler(name string, handler CursorHandler, sources ...string) {
 	cm.handlers[name] = handler
 }
 
+/*
 func (cm *CursorManager) ExecuteCursorEvent(ce CursorEvent) {
 
 	switch ce.Ddu {
@@ -109,28 +108,32 @@ func (cm *CursorManager) ExecuteCursorEvent(ce CursorEvent) {
 		cm.executeDownDragUp(ce)
 	}
 }
+*/
 
 // cleaerCursors sends "up" events to all active cursors, then deletes them
 func (cm *CursorManager) clearCursors() {
 
-	cm.cursorsMutex.RLock()
-
 	currentClick := CurrentClick()
 	cidsToDelete := []string{}
+
+	cm.activeMutex.RLock()
+
 	for cid, ac := range cm.activeCursors {
 		ce := ac.Current
 		ce.Click = currentClick
 		ce.Ddu = "up"
 
-		cm.cursorsMutex.RUnlock()
+		// cm.DeleteActiveCursor(ce.Cid)
+		cm.activeMutex.RUnlock()
 		cm.ExecuteCursorEvent(ce)
-		cm.cursorsMutex.RLock()
+		cm.activeMutex.RLock()
 
 		LogOfType("cursor", "Clearing cursor", "cid", cid)
 
 		cidsToDelete = append(cidsToDelete, cid)
 	}
-	cm.cursorsMutex.RUnlock()
+
+	cm.activeMutex.RUnlock()
 
 	cm.deleteActiveCursors(cidsToDelete)
 }
@@ -159,14 +162,7 @@ func (cm *CursorManager) GenerateCursorGesture(cid string, noteDuration time.Dur
 	LogOfType("cursor", "generateCursorGesture end", "cid", cid, "noteDuration", noteDuration, "x0", x0, "y0", y0, "z0", z0, "x1", x1, "y1", y1, "z1", z1)
 }
 
-func (cm *CursorManager) getActiveCursorFor(cid string) (*ActiveCursor, bool) {
-	cm.cursorsMutex.RLock()
-	ac, ok := cm.activeCursors[cid]
-	cm.cursorsMutex.RUnlock()
-	return ac, ok
-}
-
-func (cm *CursorManager) UniqueCid(baseCid string) string{
+func (cm *CursorManager) UniqueCid(baseCid string) string {
 	base := baseCid
 	arr := strings.Split(baseCid, "#")
 	if len(arr) == 2 {
@@ -175,8 +171,12 @@ func (cm *CursorManager) UniqueCid(baseCid string) string{
 	// Return a unique cursor id, not already in cm.ActiveCursors
 	for {
 		cm.sequenceNum++
-		newCid := fmt.Sprintf("%s#%d",base, cm.sequenceNum)
+		newCid := fmt.Sprintf("%s#%d", base, cm.sequenceNum)
+
+		cm.activeMutex.RLock()
 		_, ok := cm.activeCursors[newCid]
+		cm.activeMutex.RUnlock()
+
 		if !ok {
 			// Cool, found a unique cid
 			LogOfType("cursor", "UniqueCid: returning", "baseCid", baseCid, "newCid", newCid)
@@ -200,37 +200,21 @@ func (cm *CursorManager) LoopedCidFor(ce CursorEvent) string {
 		}
 		// LogWarn("adjustLoopedCid: oldCid not found in ActiveCursor", "oldCid", oldCid)
 		loopedCid = cm.UniqueCid(ce.Cid)
-		LogOfType("cursor","LoopedCidFor: adding new entry", "ce", ce, "loopedCid", loopedCid)
+		LogOfType("cursor", "LoopedCidFor: adding new entry", "ce", ce, "loopedCid", loopedCid)
 		cm.CidToLoopedCid[ce.Cid] = loopedCid
 	}
 	return loopedCid
 }
 
-/*
-	newCid := fmt.Sprintf("%s#%d", oldCid[:i], oldNum+1)
-	// Don't really need to copy the oldCursorEvent,
-	// just want to make things clearer until it actually works.
-	newCursorEvent := oldCursorEvent
-	newCursorEvent.Cid = newCid
-	state, ok := cm.activeCursors[newCid]
-	if !ok {
-		// If the newCid doesn't already have a ActiveCursor,
-		// that means it should be a "down" event.
-		if newCursorEvent.Ddu != "down" {
-			LogWarn("ManageLoopingCid: first ddu is not down", "newCid", newCid, "ddu", newCursorEvent.Ddu)
-			return nil
-		}
-		cm.activeCursors[newCid] = NewActiveCursor(newCursorEvent)
-	} else {
-		cm.activeCursors[newCid].Current = state.Previous
-		cm.activeCursors[newCid].Current = newCursorEvent
-	}
-	se.Value = newCursorEvent
-	return se
-}
-*/
+func (cm *CursorManager) ExecuteCursorEvent(ce CursorEvent) {
 
-func (cm *CursorManager) executeDownDragUp(ce CursorEvent) {
+	if ce.Ddu == "clear" {
+		TheCursorManager.clearCursors()
+		return
+	}
+
+	cm.executeMutex.Lock()
+	defer cm.executeMutex.Unlock()
 
 	if ce.Click == 0 {
 		ce.Click = CurrentClick()
@@ -245,14 +229,19 @@ func (cm *CursorManager) executeDownDragUp(ce CursorEvent) {
 			ce.Ddu = "down"
 		}
 		ac = NewActiveCursor(ce)
-		cm.cursorsMutex.Lock()
+
+		cm.activeMutex.Lock()
 		cm.activeCursors[ce.Cid] = ac
-		cm.cursorsMutex.Unlock()
+		cm.activeMutex.Unlock()
+
 	} else {
+
 		// existing ActiveCursor
 		ac.Previous = ac.Current
 		ac.Current = ce
+
 	}
+
 	ac.Current.Click = CurrentClick()
 
 	for _, handler := range cm.handlers {
@@ -264,14 +253,16 @@ func (cm *CursorManager) executeDownDragUp(ce CursorEvent) {
 
 	if ce.Ddu == "up" {
 		// LogOfType("cursor", "handleDownDragUp up is deleting cid", "cid", ce.Cid, "ddu", ce.Ddu)
-		cm.cursorsMutex.Lock()
-		delete(cm.activeCursors, ce.Cid)
-
-		LogOfType("cursor","LoopedCidFor: DELETING CidToLoopedCid entry", "ce.Cid", ce.Cid)
-		delete(cm.CidToLoopedCid,ce.Cid)
-
-		cm.cursorsMutex.Unlock()
+		cm.DeleteActiveCursor(ce.Cid)
 	}
+}
+
+func (cm *CursorManager) DeleteActiveCursor(cid string) {
+	cm.activeMutex.Lock()
+	LogOfType("cursor", "DeleteActiveCursor", "cid", cid)
+	delete(cm.activeCursors, cid)
+	delete(cm.CidToLoopedCid, cid)
+	cm.activeMutex.Unlock()
 }
 
 func CursorToOscMsg(ce CursorEvent) *osc.Message {
@@ -303,35 +294,34 @@ func (cm *CursorManager) autoCursorUp(now time.Time) {
 	// resulting in an "up" event.
 	checkDelay := 8 * OneBeat
 
-	cm.cursorsMutex.RLock()
+	cm.activeMutex.RLock()
 	var cidsToDelete = []string{}
-	for cid, ActiveCursor := range cm.activeCursors {
+	for cid, ac := range cm.activeCursors {
 
-		dclick := ActiveCursor.Previous.Click - ActiveCursor.Current.Click
+		dclick := ac.Previous.Click - ac.Current.Click
 		if dclick > checkDelay {
-			ce := ActiveCursor.Current
+			ce := ac.Current
 			ce.Ddu = "up"
 			LogInfo("autoCursorUp: before handleDownDragUp", "cid", cid)
 
-			cm.cursorsMutex.RUnlock()
-			cm.executeDownDragUp(ce)
-			cm.cursorsMutex.RUnlock()
-
-			cidsToDelete = append(cidsToDelete, cid)
+			cm.DeleteActiveCursor(ce.Cid)
+			// cm.activeMutex.RUnlock()
+			/////// cm.ExecuteCursorEvent(ce)
+			// cm.activeMutex.RUnlock()
 
 			cidsToDelete = append(cidsToDelete, cid)
 		}
 	}
-	cm.cursorsMutex.RUnlock()
+	cm.activeMutex.RUnlock()
 
 	cm.deleteActiveCursors(cidsToDelete)
 }
 
 func (cm *CursorManager) deleteActiveCursors(cidsToDelete []string) {
-	cm.cursorsMutex.Lock()
+	cm.activeMutex.Lock()
 	for _, cid := range cidsToDelete {
 		// LogInfo("autoCursorUp: deleting cursor", "cid", cd)
 		delete(cm.activeCursors, cid)
 	}
-	cm.cursorsMutex.Unlock()
+	cm.activeMutex.Unlock()
 }

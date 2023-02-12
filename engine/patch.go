@@ -4,11 +4,13 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"sync"
 
 	"github.com/hypebeast/go-osc/osc"
 )
 
 type Patch struct {
+	mutex  sync.RWMutex
 	synth  *Synth
 	name   string
 	params *ParamValues
@@ -61,6 +63,10 @@ func ApplyToAllPatchs(f func(patch *Patch)) {
 }
 
 func (patch *Patch) Synth() *Synth {
+
+	patch.mutex.RLock()
+	defer patch.mutex.RUnlock()
+
 	if patch.synth == nil {
 		// This shouldn't happen
 		LogWarn("Hey, Synth() finds patch.synth==nil?")
@@ -126,7 +132,9 @@ func (patch *Patch) noticeValueChange(paramName string, paramValue string) {
 			LogWarn("QuadPro. no synth, using default", "synth", paramValue)
 			synth = GetSynth("default")
 		}
+		patch.mutex.Lock()
 		patch.synth = synth
+		patch.mutex.Unlock()
 	}
 }
 

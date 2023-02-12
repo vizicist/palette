@@ -358,12 +358,12 @@ func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float32) 
 				if newSourceName != m.sourceName {
 					LogInfo("Switching corners pad", "source", newSourceName)
 					ce := CursorEvent{
-						Cid:  "clear",
-						Ddu:  "clear",
-						X:    xNorm,
-						Y:    yNorm,
-						Z:    zNorm,
-						Area: area,
+						// Cid:  "clear",
+						Ddu: "clear",
+						// X:    xNorm,
+						// Y:    yNorm,
+						// Z:    zNorm,
+						// Area: area,
 					}
 					callback(ce)
 					continue // loop
@@ -400,12 +400,12 @@ func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float32) 
 			if ok && newSourceName != oldSource {
 				LogOfType("cursor", "Switching cursor source, sending clear", "source", newSourceName)
 				ce := CursorEvent{
-					Cid:  "clear",
-					Ddu:  "clear",
-					X:    xNorm,
-					Y:    yNorm,
-					Z:    zNorm,
-					Area: area,
+					// Cid:  "clear",
+					Ddu: "clear",
+					// X:    xNorm,
+					// Y:    yNorm,
+					// Z:    zNorm,
+					// Area: area,
 				}
 				callback(ce)
 			}
