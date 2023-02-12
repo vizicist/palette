@@ -145,7 +145,7 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
 	defer logic.mutex.Unlock()
 
 	patch := logic.patch
-	ActiveCursor := GetActiveCursor(ce.Cid)
+	ActiveCursor := TheCursorManager.GetActiveCursor(ce.Cid)
 	if ActiveCursor == nil {
 		LogWarn("generateSoundFromCursor: ActiveCursor is nil", "cid", ce.Cid)
 		return
