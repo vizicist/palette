@@ -138,11 +138,6 @@ func (quadpro *QuadPro) PatchForCursorEvent(ce CursorEvent) *Patch {
 
 func (quadpro *QuadPro) onCursorEvent(state ActiveCursor) error {
 
-	if state.Current.Ddu == "clear" {
-		TheCursorManager.clearCursors()
-		return nil
-	}
-
 	// Any non-internal cursor will turn attract mode off.
 	if !state.Current.IsInternal() {
 		TheAttractManager.setAttractMode(false)

@@ -173,7 +173,7 @@ func (sched *Scheduler) triggerItemsScheduledAtOrBefore(clk Clicks) {
 				LogInfo("triggerItemsScheduleAt: should handle midi.Message?", "msg", v)
 
 			case CursorEvent:
-				if v.Cid == "" {
+				if v.Ddu != "clear" && v.Cid == "" {
 					LogWarn("Hey, Cid of CursorEvent is empty?")
 				}
 				cursorEventsToExecute = append(cursorEventsToExecute, v)
@@ -289,14 +289,12 @@ func FillInLooping(se *SchedElement) {
 
 func (sched *Scheduler) insertScheduleElement(se *SchedElement) {
 
-	FillInLooping(se)
+	ce, ok := se.Value.(CursorEvent)
+	if ok && ce.Ddu != "clear" {
+		FillInLooping(se)
+	}
 
 	sched.mutex.Lock()
-
-	ce, ok := se.Value.(CursorEvent)
-	if ok && ce.Cid == "" {
-		LogWarn("Hey, Cid of CursorEvent is empty?")
-	}
 
 	schedClick := se.AtClick
 	LogOfType("scheduler", "Scheduler.insertScheduleElement", "value", se.Value, "click", se.AtClick, "beforelen", sched.schedList.Len())
