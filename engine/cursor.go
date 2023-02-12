@@ -45,10 +45,6 @@ type CursorHandler interface {
 	onCursorEvent(state ActiveCursor) error
 }
 
-func ClearCursors() {
-	TheCursorManager.clearCursors()
-}
-
 func NewActiveCursor(ce CursorEvent) *ActiveCursor {
 	return &ActiveCursor{
 		Current:  ce,
@@ -82,10 +78,6 @@ func NewCursorManager() *CursorManager {
 		cursorsMutex:   sync.RWMutex{},
 		handlers:       map[string]CursorHandler{},
 	}
-}
-
-func GetActiveCursor(cid string) *ActiveCursor {
-	return TheCursorManager.GetActiveCursor(cid)
 }
 
 func (cm *CursorManager) GetActiveCursor(cid string) *ActiveCursor {
@@ -125,8 +117,8 @@ func (cm *CursorManager) clearCursors() {
 
 	currentClick := CurrentClick()
 	cidsToDelete := []string{}
-	for cid, cs := range cm.activeCursors {
-		ce := cs.Current
+	for cid, ac := range cm.activeCursors {
+		ce := ac.Current
 		ce.Click = currentClick
 		ce.Ddu = "up"
 

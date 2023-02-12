@@ -139,7 +139,7 @@ func (quadpro *QuadPro) PatchForCursorEvent(ce CursorEvent) *Patch {
 func (quadpro *QuadPro) onCursorEvent(state ActiveCursor) error {
 
 	if state.Current.Ddu == "clear" {
-		ClearCursors()
+		TheCursorManager.clearCursors()
 		return nil
 	}
 
