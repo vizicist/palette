@@ -471,9 +471,9 @@ func LoadParamDefs() error {
 }
 
 func (vals *ParamValues) paramValue(name string) ParamValue {
-	// vals.mutex.RLock()
+	vals.mutex.RLock()
 	val, ok := vals.values[name]
-	// vals.mutex.RUnlock()
+	vals.mutex.RUnlock()
 	if !ok {
 		return nil
 	}
