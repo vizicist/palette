@@ -100,7 +100,7 @@ func (r *Router) ScheduleCursorEvent(ce CursorEvent) {
 	// schedule CursorEvents rather than handle them right away.
 	// This makes it easier to do looping, among other benefits.
 	if ce.Ddu == "clear" {
-		LogWarn("Should clear be done here, or in ExecuteCursorEvent?")
+		LogOfType("cursor","Should clear be done here, or in ExecuteCursorEvent?")
 		TheCursorManager.clearCursors()
 		return
 	}
