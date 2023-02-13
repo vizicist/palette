@@ -145,6 +145,23 @@ func (sched *Scheduler) advanceClickTo(toClick Clicks) {
 	sched.lastClick = toClick
 }
 
+func (sched *Scheduler) DeleteEventsWhoseCidIs(cidToDelete string) {
+
+	sched.mutex.Lock()
+	defer sched.mutex.Unlock()
+
+	var nexti *list.Element
+	for i := sched.schedList.Front(); i != nil; i = nexti {
+		nexti = i.Next()
+		se := i.Value.(*SchedElement)
+		ce, isce := se.Value.(CursorEvent)
+		if isce && ce.Cid == cidToDelete {
+			sched.schedList.Remove(i)
+			// keep going, there will be lots of them
+		}
+	}
+}
+
 func (sched *Scheduler) triggerItemsScheduledAtOrBefore(thisClick Clicks) {
 
 	sched.mutex.Lock()
@@ -193,13 +210,14 @@ func (sched *Scheduler) triggerItemsScheduledAtOrBefore(thisClick Clicks) {
 			// The Click in the CursorEvent is the click at which the event was scheduled,
 			// which might be before clk
 			ce.Click = se.AtClick
+			// delay the actual execution till the end of this routine
 			tobeExecuted = append(tobeExecuted, ce)
-			// TheCursorManager.ExecuteCursorEvent(ce)
 
 		default:
 			LogError(fmt.Errorf("triggerItemsScheduleAt: unhandled Value type=%T", v))
 		}
 
+		// This is where
 		sched.schedList.Remove(i)
 		// LogInfo("After Removing from schedList", "i", i, "Len", sched.schedList.Len())
 	}
