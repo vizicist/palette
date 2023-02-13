@@ -28,6 +28,11 @@ type ActiveCursor struct {
 	Previous    CursorEvent
 	NoteOn      *NoteOn
 	NoteOnClick Clicks
+	Patch       *Patch
+	loopIt      bool
+	loopBeats   int
+	loopFade    float32
+	maxZ        float32
 }
 
 type CursorManager struct {
@@ -49,17 +54,26 @@ type CursorHandler interface {
 }
 
 func NewActiveCursor(ce CursorEvent) *ActiveCursor {
+	patch := TheQuadPro.PatchForCursorEvent(ce)
+
 	return &ActiveCursor{
-		Current:  ce,
-		Previous: ce,
+		Current:   ce,
+		Previous:  ce,
+		Patch:     patch,
+		loopIt:    patch.GetBool("misc.looping_on"),
+		loopBeats: patch.GetInt("misc.looping_beats"),
+		loopFade:  patch.GetFloat("misc.looping_fade"),
+		maxZ:      0,
 	}
 }
 
 // Format xxx
+/*
 func (ce CursorEvent) Format(f fmt.State, c rune) {
 	s := fmt.Sprintf("(CursorEvent{%f,%f,%f})", ce.X, ce.Y, ce.Z)
 	f.Write([]byte(s))
 }
+*/
 
 func (ce CursorEvent) IsInternal() bool {
 	return strings.Contains(ce.Cid, "internal")
@@ -123,7 +137,6 @@ func (cm *CursorManager) clearCursors() {
 		ce.Click = currentClick
 		ce.Ddu = "up"
 
-		// cm.DeleteActiveCursor(ce.Cid)
 		cm.activeMutex.RUnlock()
 		cm.ExecuteCursorEvent(ce)
 		cm.activeMutex.RLock()
@@ -206,6 +219,8 @@ func (cm *CursorManager) LoopedCidFor(ce CursorEvent) string {
 	return loopedCid
 }
 
+const LoopFadeZThreshold = 0.001
+
 func (cm *CursorManager) ExecuteCursorEvent(ce CursorEvent) {
 
 	if ce.Ddu == "clear" {
@@ -244,6 +259,28 @@ func (cm *CursorManager) ExecuteCursorEvent(ce CursorEvent) {
 
 	ac.Current.Click = CurrentClick()
 
+	if ac.loopIt {
+
+		// the looped CursorEvent starts out as a copy of the ActiveCursor's Current value
+		loopce := ac.Current
+		loopce.Click = CurrentClick() + OneBeat*Clicks(ac.loopBeats)
+
+		// The looped CursorEvents should have unique cid values.
+		loopce.Cid = TheCursorManager.LoopedCidFor(ac.Current)
+
+		// Fade the Z value
+		loopce.Z = loopce.Z * ac.loopFade
+		if loopce.Z > ac.maxZ {
+			ac.maxZ = loopce.Z
+		}
+
+		LogInfo("looped CursorEvent", "ce.Z", ce.Z, "loopFade", ac.loopFade)
+		se := NewSchedElement(loopce.Click, loopce)
+		TheScheduler.insertScheduleElement(se)
+	}
+
+	TheEngine.sendToOscClients(CursorToOscMsg(ce))
+
 	for _, handler := range cm.handlers {
 		err := handler.onCursorEvent(*ac)
 		LogIfError(err)
@@ -260,6 +297,15 @@ func (cm *CursorManager) ExecuteCursorEvent(ce CursorEvent) {
 func (cm *CursorManager) DeleteActiveCursor(cid string) {
 	cm.activeMutex.Lock()
 	LogOfType("cursor", "DeleteActiveCursor", "cid", cid)
+	ac, ok := cm.activeCursors[cid]
+	if !ok {
+		LogWarn("DeleteActiveCursor: cid not found in ActiveCursor", "cid", cid)
+	} else {
+		if ac.maxZ < LoopFadeZThreshold {
+			LogInfo("LOOOOOOOOOOOOP should be deleting things scheduled from", "cid", cid, "ac", ac)
+			LogInfo("Here's the schedule: ", "schedule", TheScheduler.ToString())
+		}
+	}
 	delete(cm.activeCursors, cid)
 	delete(cm.CidToLoopedCid, cid)
 	cm.activeMutex.Unlock()
@@ -304,24 +350,29 @@ func (cm *CursorManager) autoCursorUp(now time.Time) {
 			ce.Ddu = "up"
 			LogInfo("autoCursorUp: before handleDownDragUp", "cid", cid)
 
-			cm.DeleteActiveCursor(ce.Cid)
-			// cm.activeMutex.RUnlock()
-			/////// cm.ExecuteCursorEvent(ce)
-			// cm.activeMutex.RUnlock()
-
+			cm.ExecuteCursorEvent(ce)
 			cidsToDelete = append(cidsToDelete, cid)
 		}
 	}
 	cm.activeMutex.RUnlock()
 
 	cm.deleteActiveCursors(cidsToDelete)
+
 }
 
 func (cm *CursorManager) deleteActiveCursors(cidsToDelete []string) {
-	cm.activeMutex.Lock()
 	for _, cid := range cidsToDelete {
-		// LogInfo("autoCursorUp: deleting cursor", "cid", cd)
-		delete(cm.activeCursors, cid)
+		cm.DeleteActiveCursor(cid)
 	}
-	cm.activeMutex.Unlock()
 }
+
+/*
+fn (cm *CursorManager)checkThreshold(ac *ActiveCursr()
+// XXX - shuld checking for "toolow Z" be done here?  NO!!
+	/ XX - it should be done when the "up" is receieve
+		 loopce.Z< LoopFadeZThreshold
+		LgInfo("loopce.Z too low, shoul be deleting", "loopce",lopce
+		continue
+		
+	}
+*/
