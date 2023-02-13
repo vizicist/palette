@@ -13,43 +13,37 @@ func (e *Engine) ExecuteAPI(api string, apiargs map[string]string) (result strin
 
 	LogOfType("api", "ExecuteAPI", "api", api, "apiargs", apiargs)
 
-	result = "" // pre-populate the most common result, when no err
-
-	switch api {
-
+	words := strings.Split(api, ".")
+	if len(words) <= 1 {
+		err = fmt.Errorf("single-word APIs no longer work, api=%s", api)
+		LogError(err)
+		return "", err
+	}
+	// Here we handle APIs of the form {apitype}.{apisuffix}
+	apitype := words[0]
+	apisuffix := words[1]
+	switch apitype {
+	case "engine":
+		return e.executeEngineAPI(apisuffix, apiargs)
+	case "saved":
+		return e.executeSavedAPI(apisuffix, apiargs)
+	case "quadpro":
+		if TheQuadPro != nil {
+			return TheQuadPro.Api(apisuffix, apiargs)
+		}
+		return "", fmt.Errorf("no quadpro")
+	case "patch":
+		patchName := ExtractAndRemoveValueOf("patch", apiargs)
+		if patchName == "" {
+			return "", fmt.Errorf("no patch value")
+		}
+		patch := GetPatch(patchName)
+		if patch == nil {
+			return "", fmt.Errorf("no such patch: %s", patchName)
+		}
+		return patch.Api(apisuffix, apiargs)
 	default:
-		words := strings.Split(api, ".")
-		if len(words) <= 1 {
-			err = fmt.Errorf("single-word APIs no longer work, api=%s", api)
-			LogError(err)
-			return "", err
-		}
-		// Here we handle APIs of the form {apitype}.{apisuffix}
-		apitype := words[0]
-		apisuffix := words[1]
-		switch apitype {
-		case "engine":
-			return e.executeEngineAPI(apisuffix, apiargs)
-		case "saved":
-			return e.executeSavedAPI(apisuffix, apiargs)
-		case "quadpro":
-			if TheQuadPro != nil {
-				return TheQuadPro.Api(apisuffix, apiargs)
-			}
-			return "", fmt.Errorf("No quadpro!")
-		case "patch":
-			patchName := ExtractAndRemoveValueOf("patch", apiargs)
-			if patchName == "" {
-				return "", fmt.Errorf("no patch value")
-			}
-			patch := GetPatch(patchName)
-			if patch == nil {
-				return "", fmt.Errorf("no such patch: %s", patchName)
-			}
-			return patch.Api(apisuffix, apiargs)
-		default:
-			return "", fmt.Errorf("Unknown apitype: %s", apitype)
-		}
+		return "", fmt.Errorf("unknown apitype: %s", apitype)
 	}
 	// unreachable
 }

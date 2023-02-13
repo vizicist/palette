@@ -95,26 +95,12 @@ func (r *Router) Start() {
 	go r.notifyGUI("restart")
 }
 
-// HandleCursorEvent is the main entry point for Cursor events
 func (r *Router) ScheduleCursorEvent(ce CursorEvent) {
+
 	// schedule CursorEvents rather than handle them right away.
 	// This makes it easier to do looping, among other benefits.
 
-	/*
-	if ce.Ddu == "clear" {
-		LogOfType("cursor","Should clear be done here, or in ExecuteCursorEvent?")
-		TheCursorManager.clearCursors()
-		return
-	}
-	*/
-	var patch *Patch
-	if ce.Ddu != "clear" {
-		patch = TheQuadPro.PatchForCursorEvent(ce)
-		if patch == nil {
-			LogWarn("patch is nil for cursor event", "ce", ce)
-		}
-	}
-	ScheduleAt(patch, CurrentClick(), ce)
+	ScheduleAt(CurrentClick(), ce)
 }
 
 func (r *Router) HandleMidiEvent(me MidiEvent) {
@@ -125,7 +111,7 @@ func (r *Router) HandleMidiEvent(me MidiEvent) {
 		if r.midiThruScadjust {
 			LogWarn("PassThruMIDI, midiThruScadjust needs work", "msg", me.Msg)
 		}
-		ScheduleAt(nil, CurrentClick(), me.Msg)
+		ScheduleAt(CurrentClick(), me.Msg)
 	}
 	if r.midisetexternalscale {
 		r.handleMIDISetScaleNote(me)
@@ -186,7 +172,7 @@ func (r *Router) InputListener() {
 		case event := <-r.midiInputChan:
 			r.HandleMidiEvent(event)
 		case event := <-r.cursorInput:
-			r.ScheduleCursorEvent(event)
+			ScheduleAt(CurrentClick(), event)
 		default:
 			time.Sleep(time.Millisecond)
 		}
@@ -525,7 +511,7 @@ func (r *Router) handleOSCEvent(msg *osc.Message) {
 
 func argAsInt(msg *osc.Message, index int) (i int, err error) {
 	if index >= len(msg.Arguments) {
-		return 0, fmt.Errorf("Not enough arguments, looking for index=%d", index)
+		return 0, fmt.Errorf("not enough arguments, looking for index=%d", index)
 	}
 	arg := msg.Arguments[index]
 	switch v := arg.(type) {
@@ -541,7 +527,7 @@ func argAsInt(msg *osc.Message, index int) (i int, err error) {
 
 func argAsFloat32(msg *osc.Message, index int) (f float32, err error) {
 	if index >= len(msg.Arguments) {
-		return f, fmt.Errorf("Not enough arguments, looking for index=%d", index)
+		return f, fmt.Errorf("not enough arguments, looking for index=%d", index)
 	}
 	arg := msg.Arguments[index]
 	switch v := arg.(type) {
