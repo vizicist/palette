@@ -206,7 +206,7 @@ func (cm *CursorManager) LoopedCidFor(ce CursorEvent) string {
 
 	loopedCid, ok := cm.CidToLoopedCid[ce.Cid]
 	if !ok {
-		if ce.Ddu == "up" {  // Not totally sure why this happens
+		if ce.Ddu == "up" { // Not totally sure why this happens
 			return ""
 		}
 		// LogWarn("adjustLoopedCid: oldCid not found in ActiveCursor", "oldCid", oldCid)
@@ -299,7 +299,7 @@ func (cm *CursorManager) DeleteActiveCursor(cid string) {
 	ac, ok := cm.activeCursors[cid]
 	loopCid := ""
 	if !ok {
-		LogWarn("DeleteActiveCursor: cid not found in ActiveCursor", "cid", cid)
+		// LogWarn("DeleteActiveCursor: cid not found in ActiveCursor", "cid", cid)
 	} else {
 		if ac.maxZ < LoopFadeZThreshold {
 			// we want to remove things that this ActiveCursor has created for looping.
