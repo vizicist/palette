@@ -216,7 +216,7 @@ func (cm *CursorManager) LoopedCidFor(ce CursorEvent) string {
 	return loopedCid
 }
 
-const LoopFadeZThreshold = 0.001
+const LoopFadeZThreshold = 0.005
 
 func (cm *CursorManager) ExecuteCursorEvent(ce CursorEvent) {
 
@@ -287,21 +287,27 @@ func (cm *CursorManager) ExecuteCursorEvent(ce CursorEvent) {
 
 	if ce.Ddu == "up" {
 		// LogOfType("cursor", "handleDownDragUp up is deleting cid", "cid", ce.Cid, "ddu", ce.Ddu)
-		cm.DeleteActiveCursor(ce.Cid)
+		cm.DeleteActiveCursorIfZLessThan(ce.Cid, LoopFadeZThreshold)
 	}
 }
 
 func (cm *CursorManager) DeleteActiveCursor(cid string) {
+	// reuse this routine, but mke sure that it will
+	cm.DeleteActiveCursorIfZLessThan(cid, 1.0)
+}
+
+// Set threshold to 1.0 (or greater) if you want to
+func (cm *CursorManager) DeleteActiveCursorIfZLessThan(cid string, threshold float32) {
 
 	cm.activeMutex.Lock()
 
-	LogOfType("cursor", "DeleteActiveCursor", "cid", cid)
 	ac, ok := cm.activeCursors[cid]
 	loopCid := ""
 	if !ok {
 		// LogWarn("DeleteActiveCursor: cid not found in ActiveCursor", "cid", cid)
 	} else {
-		if ac.maxZ < LoopFadeZThreshold {
+		// LogInfo("DeleteActiveCursorIfZLessThan", "cid", cid, "threshold", threshold, "ac.maxZ", ac.maxZ)
+		if ac.maxZ < threshold {
 			// we want to remove things that this ActiveCursor has created for looping.
 			loopCid = cm.LoopedCidFor(ac.Current)
 			// but wait till we give up the activeMutex lock
@@ -314,6 +320,28 @@ func (cm *CursorManager) DeleteActiveCursor(cid string) {
 
 	if loopCid != "" {
 		TheScheduler.DeleteEventsWhoseCidIs(loopCid)
+	}
+}
+
+func (cm *CursorManager) DeleteActiveCursorsForCidPrefix(cidPrefix string) {
+
+	// First construct the list
+	cm.activeMutex.RLock()
+
+	if len(cm.activeCursors) > 0 {
+		LogInfo("DeleteActiveCursorsForCidPrefix", "cidPrefix", cidPrefix)
+	}
+	todelete := []string{}
+	for _, ac := range cm.activeCursors {
+		if strings.HasPrefix(ac.Current.Cid, cidPrefix) {
+			todelete = append(todelete, ac.Current.Cid)
+		}
+	}
+	cm.activeMutex.RUnlock()
+
+	for _, cid := range todelete {
+		cm.DeleteActiveCursor(cid)
+		TheScheduler.DeleteEventsWhoseCidIs(cid)
 	}
 }
 
@@ -373,12 +401,26 @@ func (cm *CursorManager) deleteActiveCursors(cidsToDelete []string) {
 }
 
 /*
-fn (cm *CursorManager)checkThreshold(ac *ActiveCursr()
-// XXX - shuld checking for "toolow Z" be done here?  NO!!
-	/ XX - it should be done when the "up" is receieve
-		 loopce.Z< LoopFadeZThreshold
-		LgInfo("loopce.Z too low, shoul be deleting", "loopce",lopce
-		continue
+func (cm *CursorManager) ClearAll() {
+	LogInfo("CursorManager.ClearAll") {
+	LogInfo("CursorManager.ClearAll")
+	for ac := range cm.activeCursors {
+		m.DeleteActiveCursor(cid)rAll")
+	for ac := range cm.activeCursors {
+	m.DeleteActiveCursor(cid)ursors {
+	m.DeleteActiveCursor(cid)
+	gInfo("ClearAll: deleting", "cid", ac)
+
+
+/
+
+/*
+fn (cm *CusorManager)checkThrehold(ac *ActiveCurs()
+/ XXX - shuld checking for "tolow Z" be done here  NO!!
+	/XX - it hould be done whenthe "up" is receieve
+	loopce.Z LoopFadeZThreshold
+	gInfo("oopce.Z too low, shoul be deleting", "loopce",lopce
+	ntinue
 
 	}
 */
