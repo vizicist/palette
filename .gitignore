@@ -1,4 +1,6 @@
 _Current.json
+.vs
+.vscode
 _Current_*.json
 CurrentSnapshot.*
 CurrentQuad.*

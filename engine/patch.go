@@ -143,7 +143,7 @@ func (patch *Patch) SaveAndAlert(category string, filename string) error {
 	LogOfType("saved", "Patch.SaveAndAlert", "category", category, "filename", filename)
 
 	if filename == "_Current" && category != "quad" {
-		err := fmt.Errorf("Hey, we're only saving _Current in quad (and global)")
+		err := fmt.Errorf(", we're only saving _Current in quad (and global)")
 		LogError(err)
 		return err
 	}

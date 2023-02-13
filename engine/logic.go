@@ -119,16 +119,15 @@ func (logic *PatchLogic) generateSoundFromCursorDownOnly(ce CursorEvent) {
 	logic.mutex.Lock()
 	defer logic.mutex.Unlock()
 
-	patch := logic.patch
 	switch ce.Ddu {
 	case "down":
 		noteOn := logic.cursorToNoteOn(ce)
 		atClick := logic.nextQuant(CurrentClick(), logic.patch.CursorToQuant(ce))
 		// LogInfo("logic.down", "current", CurrentClick(), "atClick", atClick, "noteOn", noteOn)
-		ScheduleAt(patch, atClick, noteOn)
+		ScheduleAt(atClick, noteOn)
 		noteOff := NewNoteOffFromNoteOn(noteOn)
 		atClick += QuarterNote
-		ScheduleAt(patch, atClick, noteOff)
+		ScheduleAt(atClick, noteOff)
 
 	case "drag":
 		// do nothing
@@ -158,11 +157,11 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
 		if oldNoteOn != nil {
 			LogWarn("generateSoundFromCursor: oldNote already exists", "cid", ce.Cid)
 			noteOff := NewNoteOffFromNoteOn(oldNoteOn)
-			ScheduleAt(patch, CurrentClick(), noteOff)
+			ScheduleAt(CurrentClick(), noteOff)
 		}
 		atClick := logic.nextQuant(CurrentClick(), patch.CursorToQuant(ce))
 		noteOn := logic.cursorToNoteOn(ce)
-		ScheduleAt(patch, atClick, noteOn)
+		ScheduleAt(atClick, noteOn)
 		ac.NoteOn = noteOn
 		ac.NoteOnClick = atClick
 	case "drag":
@@ -196,13 +195,13 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
 			// Turn off existing note, one Click after noteOn
 			noteOff := NewNoteOffFromNoteOn(oldNoteOn)
 			offClick := ac.NoteOnClick + 1
-			ScheduleAt(patch, offClick, noteOff)
+			ScheduleAt(offClick, noteOff)
 
 			atClick := logic.nextQuant(CurrentClick(), patch.CursorToQuant(ce))
 			if atClick < offClick {
 				atClick = offClick
 			}
-			ScheduleAt(patch, atClick, newNoteOn)
+			ScheduleAt(atClick, newNoteOn)
 			ac.NoteOn = newNoteOn
 			ac.NoteOnClick = atClick
 		}
@@ -216,7 +215,7 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
 		} else {
 			noteOff := NewNoteOffFromNoteOn(oldNoteOn)
 			offClick := ac.NoteOnClick + 1
-			ScheduleAt(patch, offClick+1, noteOff)
+			ScheduleAt(offClick+1, noteOff)
 			// delete(logic.cursorNote, ce.Cid)
 		}
 	}
