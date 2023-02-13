@@ -307,10 +307,7 @@ func (synth *Synth) SendNoteToMidiOutput(value any) {
 	case *NoteOn:
 		// channel = v.Channel
 		pitch = v.Pitch
-		velocity = v.Velocity
-		if velocity == 0 {
-			LogInfo("MIDIIO.SendNote: noteon with velocity==0 NOT changed to a noteoff")
-		}
+		velocity = v.Velocity // could be 0, to be interpreted as a NoteOff by receivers
 
 	case *NoteOff:
 		// channel = v.Channel

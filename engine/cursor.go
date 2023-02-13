@@ -206,14 +206,11 @@ func (cm *CursorManager) LoopedCidFor(ce CursorEvent) string {
 
 	loopedCid, ok := cm.CidToLoopedCid[ce.Cid]
 	if !ok {
-		// New entries should always be triggered by a "down" event
-		if ce.Ddu != "down" {
-			LogInfo("LoopedCidFor: first ddu is not down", "ce", ce)
+		if ce.Ddu == "up" {  // Not totally sure why this happens
 			return ""
 		}
 		// LogWarn("adjustLoopedCid: oldCid not found in ActiveCursor", "oldCid", oldCid)
 		loopedCid = cm.UniqueCid(ce.Cid)
-		LogOfType("cursor", "LoopedCidFor: adding new entry", "ce", ce, "loopedCid", loopedCid)
 		cm.CidToLoopedCid[ce.Cid] = loopedCid
 	}
 	return loopedCid
@@ -274,7 +271,7 @@ func (cm *CursorManager) ExecuteCursorEvent(ce CursorEvent) {
 			ac.maxZ = loopce.Z
 		}
 
-		LogInfo("looped CursorEvent", "ce.Z", ce.Z, "loopFade", ac.loopFade)
+		// LogInfo("looped CursorEvent", "ce.Z", ce.Z, "loopFade", ac.loopFade)
 		se := NewSchedElement(loopce.Click, loopce)
 		TheScheduler.insertScheduleElement(se)
 	}
@@ -295,20 +292,29 @@ func (cm *CursorManager) ExecuteCursorEvent(ce CursorEvent) {
 }
 
 func (cm *CursorManager) DeleteActiveCursor(cid string) {
+
 	cm.activeMutex.Lock()
+
 	LogOfType("cursor", "DeleteActiveCursor", "cid", cid)
 	ac, ok := cm.activeCursors[cid]
+	loopCid := ""
 	if !ok {
 		LogWarn("DeleteActiveCursor: cid not found in ActiveCursor", "cid", cid)
 	} else {
 		if ac.maxZ < LoopFadeZThreshold {
-			LogInfo("LOOOOOOOOOOOOP should be deleting things scheduled from", "cid", cid, "ac", ac)
-			LogInfo("Here's the schedule: ", "schedule", TheScheduler.ToString())
+			// we want to remove things that this ActiveCursor has created for looping.
+			loopCid = cm.LoopedCidFor(ac.Current)
+			// but wait till we give up the activeMutex lock
 		}
 	}
 	delete(cm.activeCursors, cid)
 	delete(cm.CidToLoopedCid, cid)
+
 	cm.activeMutex.Unlock()
+
+	if loopCid != "" {
+		TheScheduler.DeleteEventsWhoseCidIs(loopCid)
+	}
 }
 
 func CursorToOscMsg(ce CursorEvent) *osc.Message {
@@ -373,6 +379,6 @@ fn (cm *CursorManager)checkThreshold(ac *ActiveCursr()
 		 loopce.Z< LoopFadeZThreshold
 		LgInfo("loopce.Z too low, shoul be deleting", "loopce",lopce
 		continue
-		
+
 	}
 */

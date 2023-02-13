@@ -341,7 +341,9 @@ func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float32) 
 
 			newSourceName := ""
 
-			if m.morphtype == "corners" {
+			switch m.morphtype {
+
+			case "corners":
 
 				// If the position is in one of the corners,
 				// we change the source to that corner.
@@ -368,9 +370,9 @@ func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float32) 
 					callback(ce)
 					continue // loop
 				}
-			}
 
-			if m.morphtype == "quadrants" {
+			case "quadrants":
+
 				// This method splits a single pad into quadrants.
 				// Adjust the xNorm and yNorm values to provide
 				// full range 0-1 within each quadrant.
@@ -393,6 +395,15 @@ func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float32) 
 				}
 				xNorm *= 2.0
 				yNorm *= 2.0
+
+			default:
+
+				newSourceName = m.morphtype
+			}
+
+			if newSourceName == "" {
+				LogWarn("Hey! newSourceName not set, assuming A")
+				newSourceName = "A"
 			}
 
 			contactid := int(contact.id)

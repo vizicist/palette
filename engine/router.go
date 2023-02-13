@@ -543,7 +543,7 @@ func argAsFloat32(msg *osc.Message, index int) (f float32, err error) {
 
 func argAsString(msg *osc.Message, index int) (s string, err error) {
 	if index >= len(msg.Arguments) {
-		return s, fmt.Errorf("Not enough arguments, looking for index=%d", index)
+		return s, fmt.Errorf("not enough arguments, looking for index=%d", index)
 	}
 	arg := msg.Arguments[index]
 	switch v := arg.(type) {

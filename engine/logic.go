@@ -155,7 +155,9 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
 		// LogInfo("CURSOR down event for cursor", "cid", ce.Cid)
 		oldNoteOn := ac.NoteOn
 		if oldNoteOn != nil {
-			LogWarn("generateSoundFromCursor: oldNote already exists", "cid", ce.Cid)
+			// I don't recall the situations where this occurred,
+			// but it does happen pretty regularly, I think.
+			// LogWarn("generateSoundFromCursor: oldNote already exists", "cid", ce.Cid)
 			noteOff := NewNoteOffFromNoteOn(oldNoteOn)
 			ScheduleAt(CurrentClick(), noteOff)
 		}
