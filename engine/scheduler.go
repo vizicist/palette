@@ -3,6 +3,7 @@ package engine
 import (
 	"container/list"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -160,6 +161,30 @@ func (sched *Scheduler) DeleteEventsWhoseCidIs(cidToDelete string) {
 			// keep going, there will be lots of them
 		}
 	}
+}
+
+func (sched *Scheduler) DeleteEventsForCidPrefix(prefix string) {
+
+	//// sched.ToString locks the mutex, to don't do it inside of the lock here
+	// LogInfo("DeleteEventsForCidPrefix BEFORE", "prefix", prefix, "sched", sched.ToString())
+
+	sched.mutex.Lock()
+
+	var nexti *list.Element
+	for i := sched.schedList.Front(); i != nil; i = nexti {
+		nexti = i.Next()
+		se := i.Value.(*SchedElement)
+		ce, isce := se.Value.(CursorEvent)
+		if isce && strings.HasPrefix(ce.Cid, prefix) {
+			sched.schedList.Remove(i)
+			// keep going, there will be lots of them
+		}
+	}
+
+	sched.mutex.Unlock()
+
+	//// sched.ToString locks the mutex, to do it outside of the lock here
+	// LogInfo("DeleteEventsForCidPrefix AFTER", "prefix", prefix, "sched", sched.ToString())
 }
 
 func (sched *Scheduler) triggerItemsScheduledAtOrBefore(thisClick Clicks) {

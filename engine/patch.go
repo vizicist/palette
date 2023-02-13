@@ -272,6 +272,10 @@ func (patch *Patch) Api(api string, apiargs map[string]string) (string, error) {
 
 	case "clear":
 		patch.clearGraphics()
+		return "", nil
+
+	case "loop_clear":
+		patch.loopClear()
 
 		return "", nil
 
@@ -472,4 +476,12 @@ func (patch *Patch) Load(category string, filename string) error {
 func (patch *Patch) clearGraphics() {
 	// send an OSC message to Resolume
 	TheResolume().ToFreeFramePlugin(patch.Name(), osc.NewMessage("/clear"))
+}
+
+func (patch *Patch) loopClear() {
+	prefix := patch.name
+	LogInfo("Patch.loopClear", "prefix", prefix)
+	TheCursorManager.DeleteActiveCursorsForCidPrefix(prefix)
+	TheScheduler.DeleteEventsForCidPrefix(prefix)
+	// LogInfo("Patch.loopClear end", "schedule", TheScheduler.ToString())
 }
