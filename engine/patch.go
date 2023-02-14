@@ -271,12 +271,12 @@ func (patch *Patch) Api(api string, apiargs map[string]string) (string, error) {
 		return patch.Get(name), nil
 
 	case "clear":
+		patch.loopClear()
 		patch.clearGraphics()
 		return "", nil
 
-	case "loop_clear":
-		patch.loopClear()
-
+	case "loop_debug":
+		patch.loopDebug()
 		return "", nil
 
 	default:
@@ -483,5 +483,9 @@ func (patch *Patch) loopClear() {
 	LogInfo("Patch.loopClear", "prefix", prefix)
 	TheCursorManager.DeleteActiveCursorsForCidPrefix(prefix)
 	TheScheduler.DeleteEventsForCidPrefix(prefix)
-	// LogInfo("Patch.loopClear end", "schedule", TheScheduler.ToString())
+	LogInfo("Patch.loopClear end", "schedule", TheScheduler.ToString())
+}
+
+func (patch *Patch) loopDebug() {
+	LogInfo("Patch.loopDebug", "schedule", TheScheduler.ToString())
 }

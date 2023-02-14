@@ -879,10 +879,10 @@ class ProGuiApp(tk.Tk):
     def clear(self):
         if self.allPatchesSelected:
             for patch in self.Patches:
-                patch.clearLoop()
+                patch.clear()
             palette.palette_engine_api("audio_reset")
         else:
-            self.CurrPatch.clearLoop()
+            self.CurrPatch.clear()
         self.checkEscape()
  
     def checkEscape(self):
@@ -950,7 +950,7 @@ class ProGuiApp(tk.Tk):
         self.sendANO()
 
         for patch in self.Patches:
-            patch.clearLoop()
+            patch.clear()
 
         self.performPage.updatePerformButtonLabels(self.CurrPatch)
 
@@ -1178,8 +1178,8 @@ class Patch():
     def sendANO(self):
         palette.palette_quadpro_api("ANO")
 
-    def clearLoop(self):
-        palette.palette_patch_api(self.name(), "loop_clear", "")
+    def clear(self):
+        palette.palette_patch_api(self.name(), "clear", "")
 
 class PatchChooser(tk.Frame):
 
