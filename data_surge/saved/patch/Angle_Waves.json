@@ -118,7 +118,7 @@
         "misc.quantstyle":"frets",
         "misc.scale":"newage",
         "misc.usescale":"false",
-        "misc.vol":"pressure",
+        "misc.volstyle":"pressure",
         "sound._controllermax":"127",
         "sound._controllermin":"1",
         "sound._controllerzmax":"0.600",
