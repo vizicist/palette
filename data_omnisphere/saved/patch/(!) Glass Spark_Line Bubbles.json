@@ -115,7 +115,7 @@
         "misc.pitchoffset":"0.000000",
         "misc.quantstyle":"frets",
         "misc.scale":"newage",
-        "misc.vol":"pressure",
+        "misc.volstyle":"pressure",
         "sound.chromatic":"false",
         "sound.controllerstyle":"modulationonly",
         "sound.midifile":"jsbach",

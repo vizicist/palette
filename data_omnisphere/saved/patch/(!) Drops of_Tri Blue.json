@@ -118,7 +118,7 @@
         "misc.quantstyle":"frets",
         "misc.scale":"newage",
         "misc.usescale":"false",
-        "misc.vol":"pressure",
+        "misc.volstyle":"pressure",
         "sound.chromatic":"false",
         "sound.controllerstyle":"modulationonly",
         "sound.midifile":"jsbach",
