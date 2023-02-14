@@ -11,6 +11,6 @@
         "misc.quantstyle":"frets",
         "misc.scale":"newage",
         "misc.usescale":"true",
-        "misc.vol":"pressure"
+        "misc.volstyle":"pressure"
     }
 }

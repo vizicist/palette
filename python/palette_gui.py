@@ -804,7 +804,7 @@ class ProGuiApp(tk.Tk):
             self.patchLoad(patchName,category,filename)
 
     def patchLoad(self,patchName,category,filename):
-        log("patchLoad","patch",patchName,"category",category,"filename",filename)
+        # log("patchLoad","patch",patchName,"category",category,"filename",filename)
         palette.palette_patch_api(patchName, "load",
             "\"category\": \"" + category + "\""
             ", \"filename\": \"" + filename + "\"")

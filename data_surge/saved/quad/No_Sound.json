@@ -633,7 +633,7 @@
         "misc.quantstyle":"frets",
         "misc.logic_visual":"true",
         "misc.logic_sound":"true",
-        "misc.vol":"pressure",
+        "misc.volstyle":"pressure",
         "misc.midibehaviour":"default",
         "misc.scale":"newage",
         "misc.enable:sound":"true"
