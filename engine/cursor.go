@@ -41,9 +41,10 @@ type CursorManager struct {
 	activeMutex   sync.RWMutex
 	activeCursors map[string]*ActiveCursor
 
-	CidToLoopedCid map[string]string
-	handlers       map[string]CursorHandler
-	sequenceNum    int
+	CidToLoopedCidMutex sync.RWMutex
+	CidToLoopedCid      map[string]string
+	handlers            map[string]CursorHandler
+	sequenceNum         int
 }
 
 // CursorDeviceCallbackFunc xxx
@@ -204,6 +205,9 @@ and use those names on subsequent "drag" and "up" events.
 */
 func (cm *CursorManager) LoopedCidFor(ce CursorEvent) string {
 
+	cm.CidToLoopedCidMutex.Lock()
+	defer cm.CidToLoopedCidMutex.Unlock()
+
 	loopedCid, ok := cm.CidToLoopedCid[ce.Cid]
 	if !ok {
 		if ce.Ddu == "up" { // Not totally sure why this happens
@@ -300,7 +304,6 @@ func (cm *CursorManager) DeleteActiveCursor(cid string) {
 func (cm *CursorManager) DeleteActiveCursorIfZLessThan(cid string, threshold float32) {
 
 	cm.activeMutex.Lock()
-
 	ac, ok := cm.activeCursors[cid]
 	loopCid := ""
 	if !ok {
@@ -309,14 +312,18 @@ func (cm *CursorManager) DeleteActiveCursorIfZLessThan(cid string, threshold flo
 		// LogInfo("DeleteActiveCursorIfZLessThan", "cid", cid, "threshold", threshold, "ac.maxZ", ac.maxZ)
 		if ac.maxZ < threshold {
 			// we want to remove things that this ActiveCursor has created for looping.
+			cm.activeMutex.Unlock()
 			loopCid = cm.LoopedCidFor(ac.Current)
-			// but wait till we give up the activeMutex lock
+			cm.activeMutex.Lock()
+			// but wait after we detete it from
 		}
 	}
 	delete(cm.activeCursors, cid)
-	delete(cm.CidToLoopedCid, cid)
-
 	cm.activeMutex.Unlock()
+
+	cm.CidToLoopedCidMutex.Lock()
+	delete(cm.CidToLoopedCid, cid)
+	cm.CidToLoopedCidMutex.Unlock()
 
 	if loopCid != "" {
 		TheScheduler.DeleteEventsWhoseCidIs(loopCid)
