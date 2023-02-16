@@ -110,7 +110,7 @@ class ProGuiApp(tk.Tk):
             self.performButtonPady = 2
             self.performButtonsPerRow = 6
         else:
-            self.paramDisplayRows = 18
+            self.paramDisplayRows = 24
             self.frameSizeOfControlNormal = 0.085
             self.frameSizeOfPatchChooserNormal = 0.0
             self.frameSizeOfSelectNormal = 1.0 - self.frameSizeOfControlNormal

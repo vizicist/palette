@@ -163,7 +163,6 @@ func (r *Router) handleMIDISetScaleNote(me MidiEvent) {
 
 // InputListener listens for local device inputs (OSC, MIDI)
 // them in a single select eliminates some need for locking.
-// We could have separate goroutines for the different inputs, but doing
 func (r *Router) InputListener() {
 	for !r.killme {
 		select {
@@ -214,77 +213,6 @@ func ArgsToCursorEvent(args map[string]string) CursorEvent {
 	}
 	return ce
 }
-
-/*
-// makeMIDIEvent xxx
-func (r *Router) makeMIDIEvent(source string, bytes string, args map[string]string) (*MidiEvent, error) {
-
-	var timestamp int64
-	s := optionalStringArg("time", args, "")
-	if s != "" {
-		f, err := strconv.ParseFloat(s, 64)
-		if err != nil {
-			return nil, fmt.Errorf("makeMIDIEvent: unable to parse time value (%s)", s)
-		}
-		timestamp = int64(f * 1000.0)
-	}
-
-	// We expect the string to start with 0x
-	if len(bytes) < 2 || bytes[0:2] != "0x" {
-		return nil, fmt.Errorf("makeMIDIEvent: invalid bytes value - %s", bytes)
-	}
-	hexstring := bytes[2:]
-	src := []byte(hexstring)
-	bytearr := make([]byte, hex.DecodedLen(len(src)))
-	nbytes, err := hex.Decode(bytearr, src)
-	if err != nil {
-		return nil, fmt.Errorf("makeMIDIEvent: unable to decode hex bytes = %s", bytes)
-	}
-	var event *MidiEvent
-	switch nbytes {
-	case 0:
-		return nil, fmt.Errorf("makeMIDIEvent: unable to handle midi bytes len=%d", nbytes)
-	case 1:
-		event = &MidiEvent{
-			Timestamp: Timestamp(timestamp),
-			Status:    int64(bytearr[0]),
-			Data1:     int64(0),
-			Data2:     int64(0),
-			SysEx:     []byte{},
-			source:    source,
-		}
-	case 2:
-		// return nil, fmt.Errorf("makeMIDIEvent: unable to handle midi bytes len=%d", nbytes)
-		event = &MidiEvent{
-			Timestamp: Timestamp(timestamp),
-			Status:    int64(bytearr[0]),
-			Data1:     int64(bytearr[1]),
-			Data2:     int64(0),
-			SysEx:     []byte{},
-			source:    source,
-		}
-	case 3:
-		event = &MidiEvent{
-			Timestamp: Timestamp(timestamp),
-			Status:    int64(bytearr[0]),
-			Data1:     int64(bytearr[1]),
-			Data2:     int64(bytearr[2]),
-			SysEx:     []byte{},
-			source:    source,
-		}
-	default:
-		event = &MidiEvent{
-			Timestamp: Timestamp(timestamp),
-			Status:    int64(bytearr[0]),
-			Data1:     int64(0),
-			Data2:     int64(0),
-			SysEx:     bytearr,
-		}
-	}
-
-	return event, nil
-}
-*/
 
 func GetArgsXYZ(args map[string]string) (x, y, z float32, err error) {
 
@@ -451,19 +379,6 @@ func (r *Router) oscHandleCursor(msg *osc.Message) {
 	TheCursorManager.ExecuteCursorEvent(ce)
 }
 
-/*
-// handleSpriteMsg
-func (r *Router) handleSpriteMsg(msg *osc.Message) {
-	x, y, z, err := r.getXYZargs(msg)
-	if err != nil {
-		LogError(err)
-		return
-	}
-	LogInfo("Router.handleSpriteMsg", "x", x, "y", y, "z", z)
-	// r.cursorManager.HandleCursorEvent(ce)
-}
-*/
-
 // handleApiMsg
 func (r *Router) oscHandleApi(msg *osc.Message) error {
 	apijson, err := argAsString(msg, 0)
@@ -480,34 +395,6 @@ func (r *Router) oscHandleApi(msg *osc.Message) error {
 	// r.cursorManager.HandleCursorEvent(ce)
 	return nil
 }
-
-/*
-func (r *Router) handleInputEventRaw(rawargs string) {
-
-	args, err := StringMap(rawargs)
-	if err != nil {
-		return
-	}
-	pluginName := ExtractAndRemoveValueOf("plugin", args)
-	r.CursorManager.HandleCursorEvent(args)
-}
-
-func (r *Router) handleOSCEvent(msg *osc.Message) {
-	tags, _ := msg.TypeTags()
-	_ = tags
-	nargs := msg.CountArguments()
-	if nargs < 1 {
-		LogWarn("Router.handleOSCEvent: too few arguments")
-		return
-	}
-	rawargs, err := argAsString(msg, 0)
-	if err != nil {
-		LogWarn("Router.handleOSCEvent", "err", err)
-		return
-	}
-	r.handleInputEventRaw(rawargs)
-}
-*/
 
 func argAsInt(msg *osc.Message, index int) (i int, err error) {
 	if index >= len(msg.Arguments) {
