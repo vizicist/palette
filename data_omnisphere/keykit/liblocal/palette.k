@@ -5,6 +5,11 @@ PaletteListenConnection = 0
 PaletteSendAddress = "3333@127.0.0.1"
 PaletteSendConnection = 0
 PaletteListenTask = 0
+PaletteEventFuncs = []
+
+function palette_addeventfunc(f) {
+	PaletteEventFuncs[f] = 1
+}
 
 function palette_kill() {
 	print("Killing listen task")
@@ -31,6 +36,10 @@ function palette_listen_task() {
 	}
 	while ( (d = get(PaletteListenConnection)) != Eof ) {
 		print("Palette sent to keykit:",string(d))
+		for ( f in PaletteEventFuncs ) {
+			print("f is ",f)
+			f(d)
+		}
 	}
 }
 

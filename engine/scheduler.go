@@ -47,13 +47,9 @@ func NewScheduler() *Scheduler {
 }
 
 func NewSchedElement(atclick Clicks, value any) *SchedElement {
-	// patch might be nil
 	return &SchedElement{
-		// patch:             patch,
 		AtClick: atclick,
 		Value:   value,
-		// loopIt:            false,
-		// loopLengthInBeats: 0,
 	}
 }
 
