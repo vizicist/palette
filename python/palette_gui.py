@@ -116,7 +116,7 @@ class ProGuiApp(tk.Tk):
             self.frameSizeOfSelectNormal = 1.0 - self.frameSizeOfControlNormal
             self.selectDisplayRowsNormal = 13
 
-            self.frameSizeOfControlAdvanced = 0.085 #  0.19
+            self.frameSizeOfControlAdvanced = 0.19 #  0.19
             self.frameSizeOfPatchChooserAdvanced = 0.14
             self.frameSizeOfSelectAdvanced = 1.0 - self.frameSizeOfControlAdvanced - self.frameSizeOfPatchChooserAdvanced
             self.selectDisplayRowsAdvanced = 11 # 9
@@ -931,6 +931,12 @@ class ProGuiApp(tk.Tk):
 
     def stopAll(self):
         palette.palette_engine_api("stopall")
+
+    def startRecording(self):
+        palette.palette_engine_api("startrecording")
+
+    def stopRecording(self):
+        palette.palette_engine_api("stoprecording")
 
     def exit(self):
         os._exit(0)  # This is a hard exit, killing all the background threads
@@ -1999,6 +2005,8 @@ class PagePerformMain(tk.Frame):
         self.makePerformButton("Start_All", self.controller.startAll)
         self.makePerformButton("Stop_All", self.controller.stopAll)
         self.makePerformButton("Exit", self.controller.exit)
+        self.makePerformButton("Start_Recording", self.controller.startRecording)
+        self.makePerformButton("Stop_Recording", self.controller.stopRecording)
 
     def button_cget(self,button,name):
         text = button.cget(name)

@@ -12,10 +12,13 @@ import (
 )
 
 type Engine struct {
-	params    *ParamValues
-	done      chan bool
-	oscoutput bool
-	oscClient *osc.Client
+	params          *ParamValues
+	done            chan bool
+	oscoutput       bool
+	oscClient       *osc.Client
+	recording       bool
+	recordingIndex int
+	recordingFile *os.File
 }
 
 var TheEngine *Engine
