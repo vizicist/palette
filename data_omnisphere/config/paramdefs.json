@@ -87,8 +87,6 @@
 "engine.autotransposebeats": {"valuetype":"int", "min":"8", "max":"128", "init":"48", "comment":"# transpose pitch" },
 "engine.bidule": {"valuetype":"string", "min":"bidule", "max":"bidule", "init":"C:/Program Files/Plogue/Bidule/Bidule.exe", "comment":"# Bidule executable path" },
 "engine.debug": {"valuetype":"string", "min":"debug", "max":"debug", "init":"", "comment":"# Debugging" },
-"engine.guilevel": {"valuetype":"string", "min":"guilevel", "max":"guilevel", "init":"0", "comment":"# GUI level" },
-"engine.guiresize": {"valuetype":"string", "min":"guiresize", "max":"bidule", "init":"100,100,800,1280", "comment":"# GUI resize" },
 "engine.midiinput": {"valuetype":"string", "min":"midiinput", "max":"midiinput", "init":"", "comment":"# Bidule executable path" },
 "engine.midithru": {"valuetype":"bool", "min":"false", "max":"true", "init":"false", "comment":"#" },
 "engine.midisetexternalscale": {"valuetype":"bool", "min":"false", "max":"true", "init":"false", "comment":"#" },

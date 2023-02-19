@@ -23,7 +23,7 @@ var TheRouter *Router
 
 // Router takes events and routes them
 type Router struct {
-	oscInputChan  chan OSCEvent
+	oscInputChan  chan OscEvent
 	midiInputChan chan MidiEvent
 	cursorInput   chan CursorEvent
 
@@ -38,19 +38,6 @@ type Router struct {
 	guiClient *osc.Client
 
 	inputEventMutex sync.RWMutex
-}
-
-type MIDIEventHandler func(MidiEvent)
-
-// OSCEvent is an OSC message
-type OSCEvent struct {
-	Msg    *osc.Message
-	Source string
-}
-
-type HeartbeatEvent struct {
-	UpTime      time.Duration
-	CursorCount int
 }
 
 type APIExecutorFunc func(api string, nuid string, rawargs string) (result any, err error)
@@ -71,7 +58,7 @@ func NewRouter() *Router {
 	}
 
 	r.guiClient = osc.NewClient(LocalAddress, GuiPort)
-	r.oscInputChan = make(chan OSCEvent)
+	r.oscInputChan = make(chan OscEvent)
 	r.midiInputChan = make(chan MidiEvent)
 
 	// By default, the engine handles Cursor events internally.
@@ -93,6 +80,26 @@ func (r *Router) Start() {
 	go StartMorph(r.ScheduleCursorEvent, 1.0)
 
 	go r.notifyGUI("restart")
+}
+
+// InputListener listens for local device inputs (OSC, MIDI)
+// them in a single select eliminates some need for locking.
+func (r *Router) InputListener() {
+	for !r.killme {
+		select {
+		case msg := <-r.oscInputChan:
+			r.handleOSCInput(msg)
+			TheEngine.RecordOscEvent(&msg)
+		case event := <-r.midiInputChan:
+			r.HandleMidiEvent(event)
+			TheEngine.RecordMidiEvent(&event)
+		case event := <-r.cursorInput:
+			ScheduleAt(CurrentClick(), event)
+		default:
+			time.Sleep(time.Millisecond)
+		}
+	}
+	LogInfo("InputListener is being killed")
 }
 
 func (r *Router) ScheduleCursorEvent(ce CursorEvent) {
@@ -161,24 +168,6 @@ func (r *Router) handleMIDISetScaleNote(me MidiEvent) {
 	}
 }
 
-// InputListener listens for local device inputs (OSC, MIDI)
-// them in a single select eliminates some need for locking.
-func (r *Router) InputListener() {
-	for !r.killme {
-		select {
-		case msg := <-r.oscInputChan:
-			r.handleOSCInput(msg)
-		case event := <-r.midiInputChan:
-			r.HandleMidiEvent(event)
-		case event := <-r.cursorInput:
-			ScheduleAt(CurrentClick(), event)
-		default:
-			time.Sleep(time.Millisecond)
-		}
-	}
-	LogInfo("InputListener is being killed")
-}
-
 /*
 func (r *Router) SetMIDIEventHandler(handler MIDIEventHandler) {
 	r.midiEventHandler = handler
@@ -235,7 +224,7 @@ func GetArgsXYZ(args map[string]string) (x, y, z float32, err error) {
 }
 
 // HandleOSCInput xxx
-func (r *Router) handleOSCInput(e OSCEvent) {
+func (r *Router) handleOSCInput(e OscEvent) {
 
 	LogOfType("osc", "Router.HandleOSCInput", "msg", e.Msg.String())
 	switch e.Msg.Address {
@@ -247,7 +236,7 @@ func (r *Router) handleOSCInput(e OSCEvent) {
 
 	case "/event": // These messages encode the arguments as JSON
 		LogError(fmt.Errorf("/event OSC message should no longer be used"))
-		// r.handleOSCEvent(e.Msg)
+		// r.handleOscEvent(e.Msg)
 
 	case "/button":
 		r.oscHandleButton(e.Msg)
@@ -298,7 +287,7 @@ func (r *Router) oscHandleClientRestart(msg *osc.Message) error {
 
 	nargs := msg.CountArguments()
 	if nargs < 1 {
-		return fmt.Errorf("Router.handleOSCEvent: too few arguments")
+		return fmt.Errorf("Router.handleOscEvent: too few arguments")
 	}
 	// Even though the argument is an integer port number,
 	// it's a string in the OSC message sent from the Palette FFGL plugin.
