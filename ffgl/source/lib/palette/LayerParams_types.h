@@ -1,7 +1,5 @@
 DEFINE_TYPES(debug);
 DEFINE_TYPES(plugins);
-DEFINE_TYPES(guilevel);
-DEFINE_TYPES(guiresize);
 DEFINE_TYPES(autostart);
 DEFINE_TYPES(bidule);
 DEFINE_TYPES(mmtt);
@@ -42,14 +40,6 @@ LayerParams_InitializeTypes() {
 
 	LayerParams_pluginsTypes.push_back("");
 	LayerParams_pluginsTypes.push_back("quadpro");
-
-	LayerParams_guilevelTypes.push_back("0");
-	LayerParams_guilevelTypes.push_back("1");
-	LayerParams_guilevelTypes.push_back("2");
-
-	LayerParams_guiresizeTypes.push_back("-800,0,800,1200");
-	LayerParams_guiresizeTypes.push_back("100,100,800,1280");
-	LayerParams_guiresizeTypes.push_back("");
 
 	LayerParams_autostartTypes.push_back("gui");
 	LayerParams_autostartTypes.push_back("none");

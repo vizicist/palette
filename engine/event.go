@@ -10,18 +10,25 @@ import (
 
 type RecordingEvent struct {
 	Event       string
-	Click       Clicks
-	CursorEvent *CursorEvent
-	MidiEvent   *MidiEvent
-	OscEvent    *OscEvent
+	Value       any
+	// PlaybackEvent *PlaybackEvent `json:"PlaybackEvent"`
+	// CursorEvent   *CursorEvent   `json:"CursorEvent"`
+	// MidiEvent     *MidiEvent     `json:"MidiEvent"`
+	// OscEvent      *OscEvent      `json:"OscEvent"`
+}
+
+// PlaybackEvent is for start/stop
+type PlaybackEvent struct {
+	Click     Clicks `json:"Click"`
+	IsRunning bool   `json:"IsRunning"`
 }
 
 type MIDIEventHandler func(MidiEvent)
 
 // CursorEvent is a singl Cursor event
 type CursorEvent struct {
-	Cid   string `json:"Cid"`
 	Click Clicks `json:"Click"`
+	Cid   string `json:"Cid"`
 	// Source string
 	Ddu  string  `json:"Ddu"` // "down", "drag", "up" (sometimes "clear")
 	X    float32 `json:"X"`
@@ -32,12 +39,14 @@ type CursorEvent struct {
 
 // OscEvent is an OSC message
 type OscEvent struct {
-	Msg    *osc.Message
-	Source string
+	Click  Clicks       `json:"Click"`
+	Msg    *osc.Message `json:"Msg"`
+	Source string       `json:"Source"`
 }
 
 type MidiEvent struct {
-	Msg midi.Message
+	Click Clicks
+	Msg   midi.Message
 }
 
 ////////////////////////// CursorEvent methods
@@ -55,12 +64,20 @@ func (ce CursorEvent) Source() string {
 	return arr[0]
 }
 
+/*
 func (ce CursorEvent) String() string {
 	bytes, err := json.Marshal(ce)
 	if err != nil {
 		return "{\"error\":\"Unable to Marshal CursorEvent\"}"
 	}
 	return string(bytes)
+}
+*/
+
+// XXX - can this make use of generics?  (across all the Event types)
+func (ce CursorEvent) Marshal() (bytes []byte, err error) {
+	bytes, err = json.Marshal(ce)
+	return
 }
 
 func CursorEventFromString(s string) (ce CursorEvent, err error) {
@@ -83,10 +100,34 @@ func (me MidiEvent) Pitch() uint8 {
 	return 0
 }
 
-func (event OscEvent) String() string {
-	return "{\"event\":\"osc\",\"source\":\"" + event.Source + "\",\"msg\":\"" + event.Msg.String() + "\"}"
+func (e MidiEvent) Marshal() (bytes []byte, err error) {
+	bytes, err = json.Marshal(e)
+	return
 }
 
-func (event MidiEvent) String() string {
-	return "{\"event\":\"midi\",\"msg\":\"" + event.Msg.String() + "\"}"
+func (e MidiEvent) String() string {
+	bytes, err := json.Marshal(e)
+	if err != nil {
+		return "{\"error\":\"Unable to Marshal CursorEvent\"}"
+	}
+	return string(bytes)
 }
+
+////////////////////////// OscEvent methods
+
+func (e OscEvent) String() string {
+	bytes, err := json.Marshal(e)
+	if err != nil {
+		return "{\"error\":\"Unable to Marshal CursorEvent\"}"
+	}
+	return string(bytes)
+}
+
+func (e OscEvent) Marshal() (bytes []byte, err error) {
+	bytes, err = json.Marshal(e)
+	return
+}
+
+// func (event MidiEvent) String() string {
+// 	return "{\"event\":\"midi\",\"msg\":\"" + event.Msg.String() + "\"}"
+// }
