@@ -1,10 +1,13 @@
 package engine
 
 import (
+	"bufio"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 
@@ -12,13 +15,13 @@ import (
 )
 
 type Engine struct {
-	params          *ParamValues
-	done            chan bool
-	oscoutput       bool
-	oscClient       *osc.Client
-	recording       bool
+	params         *ParamValues
+	done           chan bool
+	oscoutput      bool
+	oscClient      *osc.Client
 	recordingIndex int
-	recordingFile *os.File
+	recordingFile  *os.File
+	recordingPath  string
 }
 
 var TheEngine *Engine
@@ -154,7 +157,7 @@ func (e *Engine) StartOSCListener(port int) {
 	d := osc.NewStandardDispatcher()
 
 	err := d.AddMsgHandler("*", func(msg *osc.Message) {
-		TheRouter.oscInputChan <- OSCEvent{Msg: msg, Source: source}
+		TheRouter.oscInputChan <- OscEvent{Msg: msg, Source: source}
 	})
 	if err != nil {
 		LogError(err)
@@ -211,4 +214,175 @@ func (e *Engine) StartHTTP(port int) {
 	if err != nil {
 		LogError(err)
 	}
+}
+
+func (e *Engine) StartRecording() (string, error) {
+	fpath, err := e.NewRecordingPath()
+	if err != nil {
+		return "", err
+	}
+	f, err := os.Create(fpath)
+	if err != nil {
+		return "", err
+	}
+	e.recordingFile = f
+	e.recordingPath = fpath
+	e.RecordStartEvent()
+	LogInfo("startrecording", "fpath", fpath)
+	return fpath, nil
+}
+
+func (e *Engine) StopRecording() (string, error) {
+	if e.recordingFile == nil {
+		return "", fmt.Errorf("executeengineapi: not recording")
+	}
+	e.RecordStopEvent()
+	LogInfo("stoprecording", "recordingPath", e.recordingPath)
+	e.recordingFile.Close()
+	e.recordingFile = nil
+	e.recordingPath = ""
+	return "", nil
+}
+
+func (e *Engine) StartPlayback(fname string) error {
+	fpath := e.RecordingPath(fname)
+	f, err := os.Open(fpath)
+	if err != nil {
+		return err
+	}
+	go e.doPlayback(f)
+	return nil
+}
+
+func (e *Engine) doPlayback(f *os.File) {
+	fileScanner := bufio.NewScanner(f)
+	fileScanner.Split(bufio.ScanLines)
+	LogInfo("doPlayback start")
+	for fileScanner.Scan() {
+		var rec RecordingEvent
+		err := json.Unmarshal(fileScanner.Bytes(), &rec)
+		if err != nil {
+			LogError(err)
+			continue
+		}
+		event := rec.Event
+		LogInfo("Playback", "event", event)
+		LogInfo("Playback", "rec", rec)
+		switch event {
+
+		case "start":
+			LogInfo("doPlayback", "start", rec.Click)
+
+		case "cursor":
+			if rec.CursorEvent == nil {
+				LogError(fmt.Errorf("CursorEvent is nil?"))
+				continue
+			}
+			LogInfo("doPlayback", "cursor", rec.CursorEvent)
+			ScheduleAt(CurrentClick(), rec.CursorEvent)
+
+		case "midi":
+			if rec.CursorEvent == nil {
+				LogError(fmt.Errorf("CursorEvent is nil?"))
+				continue
+			}
+			LogInfo("doPlayback", "cursor", rec.CursorEvent)
+
+		case "osc":
+			if rec.CursorEvent == nil {
+				LogError(fmt.Errorf("CursorEvent is nil?"))
+				continue
+			}
+			LogInfo("doPlayback", "cursor", rec.CursorEvent)
+
+		case "stop":
+		}
+	}
+	err := fileScanner.Err()
+	if err != nil {
+		LogError(err)
+	}
+	LogInfo("doPlayback ran out of input")
+	f.Close()
+}
+
+func (e *Engine) RecordingPath(fname string) string {
+	return filepath.Join(PaletteDataPath(), "recordings", fname)
+}
+
+func (e *Engine) NewRecordingPath() (string, error) {
+	recdir := filepath.Join(PaletteDataPath(), "recordings")
+	_, err := os.Stat(recdir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			// Try to create it
+			LogInfo("NewRecordingPath: Creating %s", recdir)
+			err = os.MkdirAll(recdir, os.FileMode(0777))
+		}
+		if err != nil {
+			return "", err
+		}
+	}
+	for {
+		fname := fmt.Sprintf("%03d.json", e.recordingIndex)
+		fpath := filepath.Join(recdir, fname)
+		if !FileExists(fpath) {
+			return fpath, nil
+		}
+		e.recordingIndex++
+	}
+}
+
+func (e *Engine) RecordStartEvent() {
+	e.SaveRecordingEvent(RecordingEvent{
+		Event: "start",
+		Click: CurrentClick(),
+	})
+}
+
+func (e *Engine) RecordStopEvent() {
+	e.SaveRecordingEvent(RecordingEvent{
+		Event: "stop",
+		Click: CurrentClick(),
+	})
+}
+
+func (e *Engine) RecordOscEvent(oe *OscEvent) {
+	e.SaveRecordingEvent(RecordingEvent{
+		Event:    "osc",
+		Click:    CurrentClick(),
+		OscEvent: oe,
+	})
+}
+
+func (e *Engine) RecordMidiEvent(me *MidiEvent) {
+	e.SaveRecordingEvent(RecordingEvent{
+		Event:     "midi",
+		Click:     CurrentClick(),
+		MidiEvent: me,
+	})
+}
+
+// RecordThis logs errors, but for simplicity doesn't return them
+func (e *Engine) RecordCursorEvent(ce CursorEvent) {
+	if e.recordingFile == nil {
+		return
+	}
+	re := RecordingEvent{
+		Event:       "cursor",
+		Click:       CurrentClick(),
+		CursorEvent: &ce,
+	}
+	e.SaveRecordingEvent(re)
+}
+
+func (e *Engine) SaveRecordingEvent(re RecordingEvent) {
+	bytes, err := json.Marshal(re)
+	if err != nil {
+		LogError(err)
+		return
+	}
+	bytes = append(bytes, '\n')
+	_, err = e.recordingFile.Write(bytes)
+	LogError(err)
 }

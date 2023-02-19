@@ -3,7 +3,6 @@ package engine
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -139,32 +138,17 @@ func (e *Engine) executeEngineAPI(api string, apiargs map[string]string) (result
 		return "", err
 
 	case "startrecording":
-		if e.recordingFile != nil {
-			return "", fmt.Errorf("executeEngineAPI: already recording")
-		}
-		fpath, err := e.NewRecordingPath()
-		if err != nil {
-			return "", err
-		}
-		f, err := os.Create(fpath)
-		if err != nil {
-			return "", err
-		}
-		e.recordingFile = f
-		e.recording = true
-		LogInfo("startrecording", "fpath", fpath)
-		e.RecordThis{"{\"\":\"engine.startrecording\"}"}
-		return "", nil
+		return e.StartRecording()
 
 	case "stoprecording":
-		if e.recordingfile == nil {
-			return "", fmt.errorf("executeengineapi: not recording")
+		return e.StopRecording()
+
+	case "startplayback":
+		fname, ok := apiargs["filename"]
+		if !ok {
+			return "", fmt.Errorf("executeEngineAPI: missing filename parameter")
 		}
-		e.recordingfile.close()
-		e.recordingfile = nil
-		e.recording = false
-		loginfo("stoprecording")
-		return "", nil
+		return "", e.StartPlayback(fname)
 
 	case "save":
 		filename, ok := apiargs["filename"]
@@ -336,5 +320,5 @@ func (e *Engine) executeSavedAPI(api string, apiargs map[string]string) (result 
 func (e *Engine) stopAfterDelay() {
 	time.Sleep(500 * time.Millisecond)
 	LogInfo("Engine.stop: calling os.Exit(0)")
-	os.Exi
+	os.Exit(0)
 }

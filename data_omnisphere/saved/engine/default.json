@@ -6,8 +6,6 @@
         "engine.autotransposebeats":"48",
         "engine.bidule":"C:/Program Files/Plogue/Bidule/Bidule.exe",
         "engine.debug":"",
-        "engine.guilevel":"0",
-        "engine.guiresize":"100,100,800,1280",
         "engine.midiinput":"microKEY2 Air",
         "engine.oscoutput":"true",
         "engine.scale":"newage",

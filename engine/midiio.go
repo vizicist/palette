@@ -58,23 +58,6 @@ func DefaultMIDIChannelOutput() *MIDIPortChannelState {
 	return &MIDIPortChannelState{}
 }
 
-type MidiEvent struct {
-	Msg midi.Message
-}
-
-func (me MidiEvent) HasPitch() bool {
-	return me.Msg.Is(midi.NoteOnMsg) || me.Msg.Is(midi.NoteOffMsg)
-}
-
-func (me MidiEvent) Pitch() uint8 {
-	b := me.Msg.Bytes()
-	if len(b) == 3 {
-		return b[1]
-	}
-	LogWarn("MidiEvent.Pitch: bad message length")
-	return 0
-}
-
 // MIDI is a pointer to
 var TheMidiIO *MidiIO
 
