@@ -22,6 +22,7 @@ type Engine struct {
 	recordingIndex int
 	recordingFile  *os.File
 	recordingPath  string
+	recordingMutex sync.RWMutex
 }
 
 var TheEngine *Engine
@@ -265,37 +266,12 @@ func (e *Engine) doPlayback(f *os.File) {
 			LogError(err)
 			continue
 		}
-		event := rec.Event
-		LogInfo("Playback", "event", event)
 		LogInfo("Playback", "rec", rec)
-		switch event {
-
-		case "start":
-			LogInfo("doPlayback", "start", rec.Click)
-
+		switch rec.Event {
 		case "cursor":
-			if rec.CursorEvent == nil {
-				LogError(fmt.Errorf("CursorEvent is nil?"))
-				continue
-			}
-			LogInfo("doPlayback", "cursor", rec.CursorEvent)
-			ScheduleAt(CurrentClick(), rec.CursorEvent)
-
-		case "midi":
-			if rec.CursorEvent == nil {
-				LogError(fmt.Errorf("CursorEvent is nil?"))
-				continue
-			}
-			LogInfo("doPlayback", "cursor", rec.CursorEvent)
-
-		case "osc":
-			if rec.CursorEvent == nil {
-				LogError(fmt.Errorf("CursorEvent is nil?"))
-				continue
-			}
-			LogInfo("doPlayback", "cursor", rec.CursorEvent)
-
-		case "stop":
+			ce := rec.Value.(CursorEvent)
+			LogInfo("Playback","cursor",ce)
+			ScheduleAt(CurrentClick(), ce)
 		}
 	}
 	err := fileScanner.Err()
@@ -334,48 +310,99 @@ func (e *Engine) NewRecordingPath() (string, error) {
 }
 
 func (e *Engine) RecordStartEvent() {
-	e.SaveRecordingEvent(RecordingEvent{
-		Event: "start",
-		Click: CurrentClick(),
-	})
+	pe := PlaybackEvent{
+		Click:     CurrentClick(),
+	}
+	e.RecordPlaybackEvent(pe)
 }
 
 func (e *Engine) RecordStopEvent() {
-	e.SaveRecordingEvent(RecordingEvent{
-		Event: "stop",
-		Click: CurrentClick(),
-	})
-}
-
-func (e *Engine) RecordOscEvent(oe *OscEvent) {
-	e.SaveRecordingEvent(RecordingEvent{
-		Event:    "osc",
-		Click:    CurrentClick(),
-		OscEvent: oe,
-	})
-}
-
-func (e *Engine) RecordMidiEvent(me *MidiEvent) {
-	e.SaveRecordingEvent(RecordingEvent{
-		Event:     "midi",
+	pe := PlaybackEvent{
 		Click:     CurrentClick(),
-		MidiEvent: me,
-	})
+		IsRunning: false,
+	}
+	e.RecordPlaybackEvent(pe)
 }
 
-// RecordThis logs errors, but for simplicity doesn't return them
-func (e *Engine) RecordCursorEvent(ce CursorEvent) {
+// The following routines can make use of generics, I suspect
+
+func (e *Engine) RecordPlaybackEvent(event PlaybackEvent) {
+	if e.recordingFile == nil {
+		return
+	}
+	bytes := []byte("{\"PlaybackEvent\":")
+	morebytes, err := json.Marshal(event)
+	if err != nil {
+		LogError(err)
+		return
+	}
+	bytes = append(bytes, morebytes...)
+	bytes = append(bytes, '}', '\n')
+	_, err = e.recordingFile.Write(bytes)
+	LogError(err)
+}
+
+func (e *Engine) RecordMidiEvent(event *MidiEvent) {
+	if e.recordingFile == nil {
+		return
+	}
+	bytes := []byte("{\"MidiEvent\":")
+	morebytes, err := json.Marshal(event)
+	if err != nil {
+		LogError(err)
+		return
+	}
+	bytes = append(bytes, morebytes...)
+	bytes = append(bytes, '}', '\n')
+	_, err = e.recordingFile.Write(bytes)
+	LogError(err)
+}
+
+func (e *Engine) RecordOscEvent(event *OscEvent) {
 	if e.recordingFile == nil {
 		return
 	}
 	re := RecordingEvent{
-		Event:       "cursor",
-		Click:       CurrentClick(),
-		CursorEvent: &ce,
+		Event: "osc",
+		Value: event,
 	}
-	e.SaveRecordingEvent(re)
+	bytes, err := json.Marshal(re)
+	if err != nil {
+		LogError(err)
+		return
+	}
+	bytes = append(bytes, '}', '\n')
+	_, err = e.recordingFile.Write(bytes)
+	LogError(err)
 }
 
+
+func (e *Engine) RecordCursorEvent(event CursorEvent) {
+	if e.recordingFile == nil {
+		return
+	}
+
+	re := RecordingEvent{
+		Event: "cursor",
+		Value: event,
+	}
+	bytes, err := json.Marshal(re)
+	if err != nil {
+		LogError(err)
+		return
+	}
+	bytes = append(bytes, '\n')
+
+	e.recordingMutex.Lock()
+
+	_, err = e.recordingFile.Write(bytes)
+
+	e.recordingMutex.Unlock()
+
+	LogError(err)
+}
+
+/*
 func (e *Engine) SaveRecordingEvent(re RecordingEvent) {
 	bytes, err := json.Marshal(re)
 	if err != nil {
@@ -386,3 +413,4 @@ func (e *Engine) SaveRecordingEvent(re RecordingEvent) {
 	_, err = e.recordingFile.Write(bytes)
 	LogError(err)
 }
+*/
