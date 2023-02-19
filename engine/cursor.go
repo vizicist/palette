@@ -11,18 +11,6 @@ import (
 
 var TheCursorManager *CursorManager
 
-// CursorEvent is a singl Cursor event
-type CursorEvent struct {
-	Cid   string
-	Click Clicks // XXX - I think this can be removed
-	// Source string
-	Ddu  string // "down", "drag", "up" (sometimes "clear")
-	X    float32
-	Y    float32
-	Z    float32
-	Area float32
-}
-
 type ActiveCursor struct {
 	Current     CursorEvent
 	Previous    CursorEvent
@@ -66,27 +54,6 @@ func NewActiveCursor(ce CursorEvent) *ActiveCursor {
 		loopFade:  patch.GetFloat("misc.looping_fade"),
 		maxZ:      0,
 	}
-}
-
-// Format xxx
-/*
-func (ce CursorEvent) Format(f fmt.State, c rune) {
-	s := fmt.Sprintf("(CursorEvent{%f,%f,%f})", ce.X, ce.Y, ce.Z)
-	f.Write([]byte(s))
-}
-*/
-
-func (ce CursorEvent) IsInternal() bool {
-	return strings.Contains(ce.Cid, "internal")
-}
-
-func (ce CursorEvent) Source() string {
-	if ce.Cid == "" {
-		LogWarn("CursorEvent.Source: empty cid", "ce", ce)
-		return "dummysource"
-	}
-	arr := strings.Split(ce.Cid, "#")
-	return arr[0]
 }
 
 func NewCursorManager() *CursorManager {
@@ -223,6 +190,8 @@ func (cm *CursorManager) LoopedCidFor(ce CursorEvent) string {
 const LoopFadeZThreshold = 0.005
 
 func (cm *CursorManager) ExecuteCursorEvent(ce CursorEvent) {
+
+	TheEngine.RecordCursorEvent(ce)
 
 	if ce.Ddu == "clear" {
 		TheCursorManager.clearCursors()
