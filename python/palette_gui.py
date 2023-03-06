@@ -95,13 +95,13 @@ class ProGuiApp(tk.Tk):
 
         # Normal layout values
         if self.isguilarge:
-            self.paramDisplayRows = 19
+            self.paramDisplayRows = 22
             self.frameSizeOfControlNormal = 0.06
             self.frameSizeOfSelectNormal = 1.0 - self.frameSizeOfControlNormal
             self.frameSizeOfPatchChooserNormal = 0.0
             self.selectDisplayRowsNormal = 15
 
-            self.frameSizeOfControlAdvanced = 0.06 #  0.15
+            self.frameSizeOfControlAdvanced = 0.15 # 0.06 #  0.15
             self.frameSizeOfPatchChooserAdvanced = 0.13
             self.frameSizeOfSelectAdvanced = 1.0 - self.frameSizeOfControlAdvanced - self.frameSizeOfPatchChooserAdvanced
             self.selectDisplayRowsAdvanced = 13
