@@ -313,7 +313,7 @@ func KeykitProcessInfo() *ProcessInfo {
 	if fullpath == "" {
 		fullpath = DefaultKeykitPath
 		if !FileExists(fullpath) {
-		LogWarn("Keykit not found in default location", "fullpath", fullpath)
+			LogWarn("Keykit not found in default location", "fullpath", fullpath)
 			return nil
 		}
 	}

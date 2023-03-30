@@ -68,7 +68,7 @@ func (button *Button) Do(cmd engine.Cmd) string {
 	case "mouse":
 		currSize := WinGetSize(button)
 		currRect := image.Rect(0, 0, currSize.X, currSize.Y)
-		pos := cmd.ValuesPos(image.Point{0, 0})
+		pos := cmd.ValuesPos(engine.PointZero)
 		if !pos.In(currRect) {
 			engine.LogWarn("button: pos not in Rect?")
 			break

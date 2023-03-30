@@ -162,7 +162,7 @@ func (page *Page) Do(cmd engine.Cmd) string {
 		}
 
 	case "mouse":
-		page.lastPos = cmd.ValuesPos(image.Point{0, 0})
+		page.lastPos = cmd.ValuesPos(engine.PointZero)
 		page.mouseHandler(cmd)
 
 	case "closeme":
@@ -380,7 +380,7 @@ func (page *Page) resize() {
 
 func (page *Page) defaultHandler(cmd engine.Cmd) {
 
-	pos := cmd.ValuesPos(image.Point{0, 0})
+	pos := cmd.ValuesPos(engine.PointZero)
 	ddu := cmd.ValuesString("ddu", "")
 
 	child, relPos := WinFindWindowUnder(page, pos)

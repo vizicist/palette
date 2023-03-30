@@ -97,7 +97,7 @@ func NewStyle(styleName string, fontHeight int) *StyleInfo {
 func (style *StyleInfo) TextFitRect(s string) image.Rectangle {
 	width := len(s) * style.CharWidth()
 	height := style.TextHeight()
-	pos := image.Point{0, 0}
+	pos := engine.PointZero
 	return image.Rectangle{Min: pos, Max: pos.Add(image.Point{width, height})}
 }
 

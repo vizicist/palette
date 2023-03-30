@@ -43,6 +43,10 @@ func (riff *Riff) Context() *w.WinContext {
 // Do xxx
 func (riff *Riff) Do(cmd engine.Cmd) string {
 
+	// Things that should be handled the same for all tools?
+	// "mouse" forwarding downstream
+	// "draw*" forwarding upstream
+
 	subj := cmd.Subj
 	switch subj {
 	case "mouse":
