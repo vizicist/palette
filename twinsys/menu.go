@@ -160,7 +160,7 @@ func (menu *Menu) mouseHandler(cmd engine.Cmd) (removeMenu bool) {
 	parent := WinParent(menu)
 	menu.itemSelected = -1
 
-	pos := cmd.ValuesPos(image.Point{0, 0})
+	pos := cmd.ValuesPos(engine.PointZero)
 	ddu := cmd.ValuesString("ddu", "")
 	// If it's in the handle area...
 	if pos.Y <= menu.handleHeight {
