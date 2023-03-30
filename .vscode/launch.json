@@ -15,12 +15,11 @@
             "args": []
         },
         {
-            "name": "Start Python Gui",
-            "type": "python",
+            "name": "palette start",
+            "type": "go",
             "request": "launch",
-            "program": "${env:PALETTESOURCE}/python/palette_gui.py",
-            "console": "integratedTerminal",
-            "args": []
+            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
+            "args": ["start"]
         },
         {
             "name": "palette start gui",
