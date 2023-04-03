@@ -25,7 +25,7 @@ mkdir %ship%\keykit\lib
 
 echo ================ Upgrading Python
 python -m pip install pip | grep -v "already.*satisfied"
-pip install --use-pep517 codenamize pip install python-osc requests pip install pyinstaller get-mac mido pyperclip | grep -v "already satisfied"
+pip install --use-pep517 codenamize pip install python-osc requests pip install pyinstaller get-mac mido pyperclip chardet | grep -v "already satisfied"
 
 echo ================ Compiling depthlib
 pushd ..\..\depthlib

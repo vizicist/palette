@@ -103,6 +103,7 @@ def PaletteDataPath():
         return FullDataPath
 
     dataPath = os.environ.get("PALETTE_DATA_PATH","")
+    global DataDir
     if dataPath != "":
         DataDir = dataPath
     if os.path.isabs(DataDir):
