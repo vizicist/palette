@@ -205,11 +205,13 @@ func (quadpro *QuadPro) doTest(ntimes int, dt time.Duration) {
 			Y:     rand.Float32(),
 			Z:     rand.Float32(),
 		}
-		err := quadpro.onCursorEvent(state)
-		if err != nil {
-			LogError(err)
-			return
-		}
+		// LogInfo("calling quadpro.onCursorEvent A", "state", state)
+		// err := quadpro.onCursorEvent(state)
+		// if err != nil {
+		// 	LogError(err)
+		// 	return
+		// }
+		LogInfo("calling quadpro.ExecuteCursorEvent A", "Current", state.Current)
 		time.Sleep(dt)
 		state.Previous = state.Current
 		state.Current = CursorEvent{
@@ -220,11 +222,14 @@ func (quadpro *QuadPro) doTest(ntimes int, dt time.Duration) {
 			Y:     rand.Float32(),
 			Z:     rand.Float32(),
 		}
-		err = quadpro.onCursorEvent(state)
-		if err != nil {
-			LogError(err)
-			return
-		}
+		// LogInfo("calling quadpro.onCursorEvent B", "state", state)
+		// err = quadpro.onCursorEvent(state)
+		// if err != nil {
+		// 	LogError(err)
+		// 	return
+		// }
+		LogInfo("calling quadpro.ExecuteCursorEvent B", "Current", state.Current)
+		TheCursorManager.ExecuteCursorEvent(state.Current)
 	}
 	LogInfo("doTest end")
 }

@@ -6,22 +6,17 @@ type Scale struct {
 }
 
 // Scales maps a name to a Scale
-var Scales map[string]*Scale
-
-func InitializeExternalScaleToChromatic() {
-	// The external scale is initialized to chromatic,
-	// but will be changed by MIDI input when engine.setexternalscale is on.
-	Scales["external"] = MakeScale(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
-}
+var scales map[string]*Scale
 
 func ClearExternalScale() {
+	InitScales()
 	LogOfType("scale", "Clearing external scale")
-	Scales["external"] = MakeScale()
+	scales["external"] = MakeScale()
 }
 
 func SetExternalScale(pitch uint8, on bool) {
 	pitch = pitch % 12 // start from lowest octave
-	s := Scales["external"]
+	s := scales["external"]
 	LogOfType("scale", "Adding to external scale", "pitch", pitch, "on", on)
 	for p := pitch; p < 128; p += 12 {
 		s.HasNote[p] = on
@@ -30,10 +25,10 @@ func SetExternalScale(pitch uint8, on bool) {
 
 // GetScale xxx
 func GetScale(name string) *Scale {
-	s, ok := Scales[name]
+	s, ok := scales[name]
 	if !ok {
 		LogWarn("No such scale", "name", name)
-		s = Scales["newage"]
+		s = scales["newage"]
 	}
 	return s
 }
@@ -41,28 +36,33 @@ func GetScale(name string) *Scale {
 // InitScales xxx
 func InitScales() {
 
-	Scales = make(map[string]*Scale)
-	Scales["raga1"] = MakeScale(0, 1, 4, 5, 7, 8, 11)
-	Scales["raga2"] = MakeScale(0, 2, 4, 6, 7, 9, 11)
-	Scales["raga3"] = MakeScale(0, 2, 3, 5, 9, 10)
-	Scales["raga4"] = MakeScale(0, 1, 4, 6, 7, 8, 11)
+	if scales != nil {
+		return
+	}
+	scales = make(map[string]*Scale)
+	scales["raga1"] = MakeScale(0, 1, 4, 5, 7, 8, 11)
+	scales["raga2"] = MakeScale(0, 2, 4, 6, 7, 9, 11)
+	scales["raga3"] = MakeScale(0, 2, 3, 5, 9, 10)
+	scales["raga4"] = MakeScale(0, 1, 4, 6, 7, 8, 11)
 
-	Scales["arabian"] = MakeScale(0, 1, 4, 5, 7, 8, 10)
-	Scales["newage"] = MakeScale(0, 3, 5, 7, 10)
-	Scales["ionian"] = MakeScale(0, 2, 4, 5, 7, 9, 11)
-	Scales["dorian"] = MakeScale(0, 2, 3, 5, 7, 9, 10)
-	Scales["phrygian"] = MakeScale(0, 1, 3, 5, 7, 8, 10)
-	Scales["lydian"] = MakeScale(0, 2, 4, 6, 7, 9, 11)
-	Scales["mixolydian"] = MakeScale(0, 2, 4, 5, 7, 9, 10)
-	Scales["aeolian"] = MakeScale(0, 2, 3, 5, 7, 8, 10)
-	Scales["locrian"] = MakeScale(0, 1, 3, 5, 6, 8, 10)
-	Scales["octaves"] = MakeScale(0)
-	Scales["harminor"] = MakeScale(0, 2, 3, 5, 7, 8, 11)
-	Scales["melminor"] = MakeScale(0, 2, 3, 5, 7, 9, 11)
-	Scales["chromatic"] = MakeScale(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
-	Scales["fifths"] = MakeScale(0, 7)
+	scales["arabian"] = MakeScale(0, 1, 4, 5, 7, 8, 10)
+	scales["newage"] = MakeScale(0, 3, 5, 7, 10)
+	scales["ionian"] = MakeScale(0, 2, 4, 5, 7, 9, 11)
+	scales["dorian"] = MakeScale(0, 2, 3, 5, 7, 9, 10)
+	scales["phrygian"] = MakeScale(0, 1, 3, 5, 7, 8, 10)
+	scales["lydian"] = MakeScale(0, 2, 4, 6, 7, 9, 11)
+	scales["mixolydian"] = MakeScale(0, 2, 4, 5, 7, 9, 10)
+	scales["aeolian"] = MakeScale(0, 2, 3, 5, 7, 8, 10)
+	scales["locrian"] = MakeScale(0, 1, 3, 5, 6, 8, 10)
+	scales["octaves"] = MakeScale(0)
+	scales["harminor"] = MakeScale(0, 2, 3, 5, 7, 8, 11)
+	scales["melminor"] = MakeScale(0, 2, 3, 5, 7, 9, 11)
+	scales["chromatic"] = MakeScale(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
+	scales["fifths"] = MakeScale(0, 7)
 
-	InitializeExternalScaleToChromatic()
+	// The external scale is initialized to chromatic,
+	// but will be changed by MIDI input when engine.setexternalscale is on.
+	scales["external"] = MakeScale(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
 }
 
 func MakeScale(pitches ...int) *Scale {

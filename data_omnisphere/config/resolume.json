@@ -20,6 +20,23 @@
         "shade": "/goo/effect/shade"
       }
     },
+     "infinitezoom": {
+      "on": {
+        "addr": "/infinitezoom/bypassed",
+        "arg": 0
+      },
+      "off": {
+        "addr": "/infinitezoom/bypassed",
+        "arg": 1
+      },
+      "params": {
+        "rotationspeed": "/infinitezoom/effect/rotationspeed",
+        "zoom": "/infinitezoom/effect/zoom",
+        "range": "/infinitezoom/effect/range",
+        "alpha": "/infinitezoom/effect/alpha",
+        "numslices": "/infinitezoom/effect/numslices"
+      }
+    },
     "twisted": {
       "on": {
         "addr": "/twisted/bypassed",
