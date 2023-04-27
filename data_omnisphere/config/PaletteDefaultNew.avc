@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Composition name="Composition" uniqueId="1682293119309" numDecks="1" currentDeckIndex="0" numLayers="5" numColumns="4" compositionIsRelative="0">
+<Composition name="Composition" uniqueId="1682288161779" numDecks="1" currentDeckIndex="0" numLayers="5" numColumns="4" compositionIsRelative="0">
 	<versionInfo name="Resolume Avenue" majorVersion="7" minorVersion="14" microVersion="2" revision="22221"/>
-	<CompositionInfo name="PaletteDefault" description="" width="1920" height="1080">
+	<CompositionInfo name="PaletteNew" description="" width="1920" height="1080">
 		<DeckInfo name="AV" id="1499337861242" closed="0"/>
 	</CompositionInfo>
 	<Params name="Params">
-		<Param name="Name" T="STRING" default="" value="PaletteDefault"/>
-		<ParamRange name="Speed" T="DOUBLE" default="1" value="0.99999999999917388305">
-			<PhaseSourceStatic name="PhaseSourceStatic" phase="0.2499999999998795408"/>
+		<Param name="Name" T="STRING" default="" value="PaletteNew"/>
+		<ParamRange name="Speed" T="DOUBLE" default="1" value="0.99999999999919964022">
+			<PhaseSourceStatic name="PhaseSourceStatic" phase="0.24999999999988342658"/>
 		</ParamRange>
 		<ParamChoice name="Beat Snap" default="1" value="5" storeChoices="0"/>
 		<Param name="KeyboardShortcutPreset" T="STRING" default="" value="Default"/>
@@ -22,6 +22,9 @@
 	<CompositionView name="CompositionView">
 		<FoldParams name="FoldParams">
 			<FoldState component="/groupedcomponent/groupedcomponent/audio/" folded="1"/>
+			<FoldState component="/groupedcomponent/renderpasschaincomponent/bright.contrast/" folded="0"/>
+			<FoldState component="/groupedcomponent/renderpasschaincomponent/bright.contrast/view/groupedcomponent/" folded="0"/>
+			<FoldState component="/groupedcomponent/renderpasschaincomponent/transform/" folded="1"/>
 		</FoldParams>
 	</CompositionView>
 	<AudioTrack name="AudioTrack">
@@ -39,7 +42,7 @@
 				<PhaseSourceStatic name="PhaseSourceStatic" phase="0.05999999999999999778"/>
 			</ParamRange>
 		</Params>
-		<RenderPass name="RenderPassChain" type="RenderPassChain" uniqueTypeId="RenderPassChain" uniqueId="1682293119405" baseType="RenderPassChain">
+		<RenderPass name="RenderPassChain" type="RenderPassChain" uniqueTypeId="RenderPassChain" uniqueId="1682288161875" baseType="RenderPassChain">
 			<RenderPass name="Transform" type="TransformEffect" uniqueTypeId="17122039101699797593" uniqueId="1606707590229" baseType="Effect" index="0">
 				<View name="View" folded="1" bCanBeDisabled="0" bCanBeRemoved="0"/>
 			</RenderPass>
@@ -72,7 +75,7 @@
 					<PhaseSourceStatic name="PhaseSourceStatic" phase="0.032958984375"/>
 				</ParamRange>
 			</Params>
-			<RenderPass name="RenderPassChain" type="RenderPassChain" uniqueTypeId="RenderPassChain" uniqueId="1682293120520" baseType="RenderPassChain">
+			<RenderPass name="RenderPassChain" type="RenderPassChain" uniqueTypeId="RenderPassChain" uniqueId="1682288163829" baseType="RenderPassChain">
 				<RenderPass storage="0" name="Transform" type="TransformEffect" uniqueTypeId="17122039101699797593" uniqueId="1615422405599" baseType="Effect" index="0">
 					<View name="View" bCanBeDisabled="0" bCanBeRemoved="0"/>
 				</RenderPass>
@@ -114,7 +117,7 @@
 					<PhaseSourceStatic name="PhaseSourceStatic" phase="0.032958984375"/>
 				</ParamRange>
 			</Params>
-			<RenderPass name="RenderPassChain" type="RenderPassChain" uniqueTypeId="RenderPassChain" uniqueId="1682293120428" baseType="RenderPassChain">
+			<RenderPass name="RenderPassChain" type="RenderPassChain" uniqueTypeId="RenderPassChain" uniqueId="1682288163921" baseType="RenderPassChain">
 				<RenderPass storage="0" name="Transform" type="TransformEffect" uniqueTypeId="17122039101699797593" uniqueId="1615422406206" baseType="Effect" index="0">
 					<View name="View" bCanBeDisabled="0" bCanBeRemoved="0"/>
 				</RenderPass>
@@ -156,7 +159,7 @@
 					<PhaseSourceStatic name="PhaseSourceStatic" phase="0.032958984375"/>
 				</ParamRange>
 			</Params>
-			<RenderPass name="RenderPassChain" type="RenderPassChain" uniqueTypeId="RenderPassChain" uniqueId="1682293120336" baseType="RenderPassChain">
+			<RenderPass name="RenderPassChain" type="RenderPassChain" uniqueTypeId="RenderPassChain" uniqueId="1682288164013" baseType="RenderPassChain">
 				<RenderPass storage="0" name="Transform" type="TransformEffect" uniqueTypeId="17122039101699797593" uniqueId="1615422406524" baseType="Effect" index="0">
 					<View name="View" bCanBeDisabled="0" bCanBeRemoved="0"/>
 				</RenderPass>
@@ -203,7 +206,7 @@
 					<PhaseSourceStatic name="PhaseSourceStatic" phase="0.032958984375"/>
 				</ParamRange>
 			</Params>
-			<RenderPass name="RenderPassChain" type="RenderPassChain" uniqueTypeId="RenderPassChain" uniqueId="1682293125733" baseType="RenderPassChain">
+			<RenderPass name="RenderPassChain" type="RenderPassChain" uniqueTypeId="RenderPassChain" uniqueId="1682288164105" baseType="RenderPassChain">
 				<RenderPass name="Transform" type="TransformEffect" uniqueTypeId="17122039101699797593" uniqueId="1606707590234" baseType="Effect" index="0">
 					<View name="View" bCanBeDisabled="0" bCanBeRemoved="0"/>
 				</RenderPass>
@@ -257,7 +260,7 @@
 					<PhaseSourceStatic name="PhaseSourceStatic" phase="0.032958984375"/>
 				</ParamRange>
 			</Params>
-			<RenderPass name="RenderPassChain" type="RenderPassChain" uniqueTypeId="RenderPassChain" uniqueId="1682293125825" baseType="RenderPassChain">
+			<RenderPass name="RenderPassChain" type="RenderPassChain" uniqueTypeId="RenderPassChain" uniqueId="1682288164197" baseType="RenderPassChain">
 				<RenderPass storage="0" name="Transform" type="TransformEffect" uniqueTypeId="17122039101699797593" uniqueId="1655769110464" baseType="Effect" index="0">
 					<View name="View" bCanBeDisabled="0" bCanBeRemoved="0"/>
 				</RenderPass>
@@ -300,7 +303,7 @@
 					<PhaseSourceStatic name="PhaseSourceStatic" phase="0.032958984375"/>
 				</ParamRange>
 			</Params>
-			<RenderPass name="RenderPassChain" type="RenderPassChain" uniqueTypeId="RenderPassChain" uniqueId="1682293119444" baseType="RenderPassChain">
+			<RenderPass name="RenderPassChain" type="RenderPassChain" uniqueTypeId="RenderPassChain" uniqueId="1682288161914" baseType="RenderPassChain">
 				<RenderPass name="Transform" type="TransformEffect" uniqueTypeId="17122039101699797593" uniqueId="1606707590241" baseType="Effect" index="0">
 					<View name="View" bCanBeDisabled="0" bCanBeRemoved="0"/>
 				</RenderPass>
@@ -346,9 +349,9 @@
 			</Params>
 			<Transport name="Transport">
 				<Params name="Params">
-					<ParamRange name="Position" T="DOUBLE" default="0" value="0">
+					<ParamRange name="Position" T="DOUBLE" default="0" value="1469.7402978269797131">
 						<DurationSource name="DurationSource"/>
-						<PhaseSourceTransportTimeline name="PhaseSourceTransportTimeline" phase="0" defaultBeatsDuration="8">
+						<PhaseSourceTransportTimeline name="PhaseSourceTransportTimeline" phase="0.29394805956539593605" defaultBeatsDuration="8">
 							<Params name="Params">
 								<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="5" value="2">
 									<PhaseSourceStatic name="PhaseSourceStatic" phase="0.4000000000000000222"/>
@@ -380,6 +383,8 @@
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/blur/19view/groupedcomponent/" folded="0"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/blur/20" folded="1"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/blur/20view/groupedcomponent/" folded="0"/>
+					<FoldState component="/groupedcomponent/renderpasschaincomponent/blur/21" folded="1"/>
+					<FoldState component="/groupedcomponent/renderpasschaincomponent/blur/21view/groupedcomponent/" folded="0"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/chromakey/" folded="0"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/chromakey/view/groupedcomponent/" folded="0"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/circles/" folded="0"/>
@@ -408,6 +413,8 @@
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/displace/18view/groupedcomponent/" folded="0"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/displace/19" folded="1"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/displace/19view/groupedcomponent/" folded="0"/>
+					<FoldState component="/groupedcomponent/renderpasschaincomponent/displace/20" folded="1"/>
+					<FoldState component="/groupedcomponent/renderpasschaincomponent/displace/20view/groupedcomponent/" folded="0"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/distortion/" folded="1"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/distortion/0" folded="0"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/distortion/0view/groupedcomponent/" folded="0"/>
@@ -459,6 +466,10 @@
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/edgedetection/18usecolor/" folded="1"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/edgedetection/18usecolor/color/paramcolorcomponent/" folded="1"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/edgedetection/18view/groupedcomponent/" folded="0"/>
+					<FoldState component="/groupedcomponent/renderpasschaincomponent/edgedetection/19" folded="1"/>
+					<FoldState component="/groupedcomponent/renderpasschaincomponent/edgedetection/19usecolor/" folded="1"/>
+					<FoldState component="/groupedcomponent/renderpasschaincomponent/edgedetection/19usecolor/color/paramcolorcomponent/" folded="1"/>
+					<FoldState component="/groupedcomponent/renderpasschaincomponent/edgedetection/19view/groupedcomponent/" folded="0"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/fragment/10" folded="1"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/fragment/10view/groupedcomponent/" folded="0"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/fragment/11" folded="1"/>
@@ -475,6 +486,8 @@
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/fragment/16view/groupedcomponent/" folded="0"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/fragment/17" folded="1"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/fragment/17view/groupedcomponent/" folded="0"/>
+					<FoldState component="/groupedcomponent/renderpasschaincomponent/fragment/18" folded="1"/>
+					<FoldState component="/groupedcomponent/renderpasschaincomponent/fragment/18view/groupedcomponent/" folded="0"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/fragment/9" folded="1"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/fragment/9view/groupedcomponent/" folded="0"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/goo/10" folded="1"/>
@@ -491,6 +504,8 @@
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/goo/15view/groupedcomponent/" folded="0"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/goo/16" folded="1"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/goo/16view/groupedcomponent/" folded="0"/>
+					<FoldState component="/groupedcomponent/renderpasschaincomponent/goo/17" folded="1"/>
+					<FoldState component="/groupedcomponent/renderpasschaincomponent/goo/17view/groupedcomponent/" folded="0"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/goo/8" folded="1"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/goo/8view/groupedcomponent/" folded="0"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/goo/9" folded="1"/>
@@ -511,6 +526,8 @@
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/huerotate/13view/groupedcomponent/" folded="0"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/huerotate/14" folded="1"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/huerotate/14view/groupedcomponent/" folded="0"/>
+					<FoldState component="/groupedcomponent/renderpasschaincomponent/huerotate/15" folded="1"/>
+					<FoldState component="/groupedcomponent/renderpasschaincomponent/huerotate/15view/groupedcomponent/" folded="0"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/huerotate/16" folded="1"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/huerotate/16view/groupedcomponent/" folded="0"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/huerotate/7" folded="1"/>
@@ -545,6 +562,8 @@
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/kaleidoscope/12view/groupedcomponent/" folded="0"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/kaleidoscope/13" folded="1"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/kaleidoscope/13view/groupedcomponent/" folded="0"/>
+					<FoldState component="/groupedcomponent/renderpasschaincomponent/kaleidoscope/14" folded="1"/>
+					<FoldState component="/groupedcomponent/renderpasschaincomponent/kaleidoscope/14view/groupedcomponent/" folded="0"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/kaleidoscope/15" folded="1"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/kaleidoscope/15view/groupedcomponent/" folded="0"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/kaleidoscope/6" folded="1"/>
@@ -595,6 +614,8 @@
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/metashape/6view/groupedcomponent/" folded="0"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/mirror/10" folded="1"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/mirror/10view/groupedcomponent/" folded="0"/>
+					<FoldState component="/groupedcomponent/renderpasschaincomponent/mirror/11" folded="1"/>
+					<FoldState component="/groupedcomponent/renderpasschaincomponent/mirror/11view/groupedcomponent/" folded="0"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/mirror/12" folded="1"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/mirror/12view/groupedcomponent/" folded="0"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/mirror/13" folded="1"/>
@@ -611,6 +632,8 @@
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/mirror/8view/groupedcomponent/" folded="0"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/mirror/9" folded="1"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/mirror/9view/groupedcomponent/" folded="0"/>
+					<FoldState component="/groupedcomponent/renderpasschaincomponent/mirrorquad/10" folded="1"/>
+					<FoldState component="/groupedcomponent/renderpasschaincomponent/mirrorquad/10view/groupedcomponent/" folded="0"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/mirrorquad/11" folded="1"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/mirrorquad/11view/groupedcomponent/" folded="0"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/mirrorquad/12" folded="1"/>
@@ -631,6 +654,7 @@
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/mirrorquad/9view/groupedcomponent/" folded="0"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/noisy/" folded="1"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/noisy/view/groupedcomponent/" folded="0"/>
+					<FoldState component="/groupedcomponent/renderpasschaincomponent/palette/" folded="1"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/pixelblur/" folded="0"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/pixelblur/view/groupedcomponent/" folded="0"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/polarkaleido/0" folded="1"/>
@@ -661,6 +685,8 @@
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/posterize/6view/groupedcomponent/" folded="0"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/posterize/7" folded="1"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/posterize/7view/groupedcomponent/" folded="0"/>
+					<FoldState component="/groupedcomponent/renderpasschaincomponent/posterize/8" folded="1"/>
+					<FoldState component="/groupedcomponent/renderpasschaincomponent/posterize/8view/groupedcomponent/" folded="0"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/posterize/9" folded="1"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/posterize/9view/groupedcomponent/" folded="0"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/radialblur/0" folded="1"/>
@@ -687,12 +713,14 @@
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/radialcloner/4delay/" folded="1"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/radialcloner/4view/groupedcomponent/" folded="0"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/raster/" folded="0"/>
+					<FoldState component="/groupedcomponent/renderpasschaincomponent/ripples/" folded="1"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/ripples/0" folded="1"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/ripples/0view/groupedcomponent/" folded="0"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/ripples/1" folded="1"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/ripples/1view/groupedcomponent/" folded="0"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/ripples/2" folded="1"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/ripples/2view/groupedcomponent/" folded="0"/>
+					<FoldState component="/groupedcomponent/renderpasschaincomponent/ripples/view/groupedcomponent/" folded="0"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/shaper/" folded="0"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/shaper//groupedcomponent/common/" folded="0"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/shaper//groupedcomponent/common/color/paramcolorcomponent/" folded="1"/>
@@ -719,6 +747,7 @@
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/sphere/view/groupedcomponent/" folded="0"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/terrain/" folded="0"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/terrain/view/groupedcomponent/" folded="0"/>
+					<FoldState component="/groupedcomponent/renderpasschaincomponent/threshold/" folded="1"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/threshold/0" folded="1"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/threshold/0color1/paramcolorcomponent/" folded="1"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/threshold/0color2/paramcolorcomponent/" folded="1"/>
@@ -731,12 +760,17 @@
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/threshold/7color1/paramcolorcomponent/" folded="1"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/threshold/7color2/paramcolorcomponent/" folded="1"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/threshold/7view/groupedcomponent/" folded="0"/>
+					<FoldState component="/groupedcomponent/renderpasschaincomponent/threshold/color1/paramcolorcomponent/" folded="1"/>
+					<FoldState component="/groupedcomponent/renderpasschaincomponent/threshold/color2/paramcolorcomponent/" folded="1"/>
+					<FoldState component="/groupedcomponent/renderpasschaincomponent/threshold/view/groupedcomponent/" folded="0"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/trails/10" folded="1"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/trails/10view/groupedcomponent/" folded="0"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/trails/11" folded="1"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/trails/11view/groupedcomponent/" folded="0"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/trails/2" folded="1"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/trails/2view/groupedcomponent/" folded="0"/>
+					<FoldState component="/groupedcomponent/renderpasschaincomponent/trails/3" folded="1"/>
+					<FoldState component="/groupedcomponent/renderpasschaincomponent/trails/3view/groupedcomponent/" folded="0"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/trails/4" folded="1"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/trails/4view/groupedcomponent/" folded="0"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/trails/5" folded="1"/>
@@ -753,8 +787,10 @@
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/triangulate/0view/groupedcomponent/" folded="0"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/triangulate/8" folded="1"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/triangulate/8view/groupedcomponent/" folded="0"/>
+					<FoldState component="/groupedcomponent/renderpasschaincomponent/twisted/1" folded="1"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/twisted/10" folded="1"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/twisted/10view/groupedcomponent/" folded="0"/>
+					<FoldState component="/groupedcomponent/renderpasschaincomponent/twisted/1view/groupedcomponent/" folded="0"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/twisted/2" folded="1"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/twisted/2view/groupedcomponent/" folded="0"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/twisted/3" folded="1"/>
@@ -777,6 +813,7 @@
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/uvmap/filter/" folded="1"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/uvmap/filter/filtercolor/paramcolorcomponent/" folded="1"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/uvmap/view/groupedcomponent/" folded="0"/>
+					<FoldState component="/groupedcomponent/renderpasschaincomponent/wavewarp/" folded="1"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/wavewarp/9" folded="1"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/wavewarp/9view/groupedcomponent/" folded="0"/>
 				</FoldParams>
@@ -794,7 +831,7 @@
 					<Param name="BScale" T="BOOL" default="1" value="1"/>
 					<Param name="AScale" T="BOOL" default="1" value="1"/>
 				</Params>
-				<RenderPass name="RenderPassChain" type="RenderPassChain" uniqueTypeId="RenderPassChain" uniqueId="1682293126225" baseType="RenderPassChain">
+				<RenderPass name="RenderPassChain" type="RenderPassChain" uniqueTypeId="RenderPassChain" uniqueId="1682288164622" baseType="RenderPassChain">
 					<RenderPass storage="0" name="Palette" type="DryWetEffect" uniqueTypeId="PLTX" uniqueId="1655159518188" baseType="DryWetEffect" index="0">
 						<View name="View" folded="1"/>
 						<RenderPass name="Palette" type="FFGLEffect" uniqueTypeId="PLTX" uniqueId="1655159518185" baseType="Effect" dwType="Effect">
@@ -885,8 +922,8 @@
 									<DurationSource name="DurationSource" scale="0.064606741573033713011"/>
 									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.33000001311302185059">
 										<Params name="Params">
-											<ParamRange name="Speed" T="DOUBLE" default="1" value="1.0000000773480834937">
-												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.25000001164205032378"/>
+											<ParamRange name="Speed" T="DOUBLE" default="1" value="1.0000000773481092509">
+												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.25000001164205420956"/>
 											</ParamRange>
 											<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="0.32303370786516855118" value="0.32303370786516855118">
 												<PhaseSourceStatic name="PhaseSourceStatic" phase="1"/>
@@ -986,12 +1023,12 @@
 						<View name="View" folded="1"/>
 						<RenderPass name="HueRotate" type="HueRotate" uniqueTypeId="A128" uniqueId="1655159518370" baseType="Effect" dwType="Effect">
 							<Params name="Params">
-								<ParamRange name="Hue Rotate" T="DOUBLE" default="0" value="0">
+								<ParamRange name="Hue Rotate" T="DOUBLE" default="0" value="0.092549952631272941472">
 									<DurationSource name="DurationSource"/>
-									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0">
+									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.092549952631272941472">
 										<Params name="Params">
-											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.10531978589932314283">
-												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.064481089699323007602"/>
+											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.10531978589932589063">
+												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.064481089699324020681"/>
 											</ParamRange>
 											<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="5" value="2">
 												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.4000000000000000222"/>
@@ -1019,12 +1056,12 @@
 								<ParamRange name="Zoom" T="DOUBLE" default="0.5" value="0.57999998331069946289">
 									<PhaseSourceStatic name="PhaseSourceStatic" phase="0.57999998331069946289"/>
 								</ParamRange>
-								<ParamRange name="Input Rotation" T="DOUBLE" default="0" value="0">
+								<ParamRange name="Input Rotation" T="DOUBLE" default="0" value="0.30884673873294171687">
 									<DurationSource name="DurationSource"/>
-									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0">
+									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.30884673873294171687">
 										<Params name="Params">
-											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.056061405203568656641">
-												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.044112396757262729852"/>
+											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.056061405203570120748">
+												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.044112396757263423741"/>
 											</ParamRange>
 											<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="5" value="2">
 												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.4000000000000000222"/>
@@ -1055,12 +1092,12 @@
 								<ParamRange name="Tails" T="DOUBLE" default="2" value="6">
 									<PhaseSourceStatic name="PhaseSourceStatic" phase="0.71428571428571430157"/>
 								</ParamRange>
-								<ParamRange name="Start Rotation" T="DOUBLE" default="0" value="-180">
+								<ParamRange name="Start Rotation" T="DOUBLE" default="0" value="136.66733999666348609">
 									<DurationSource name="DurationSource"/>
-									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0">
+									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.87963149999073197982">
 										<Params name="Params">
-											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.49999999999996141975">
-												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.16470314500315960671"/>
+											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.49999999999997429834">
+												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.16470314500316216022"/>
 											</ParamRange>
 											<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="5" value="2">
 												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.4000000000000000222"/>
@@ -1079,12 +1116,12 @@
 								<ParamRange name="Distortion" T="DOUBLE" default="45" value="42.975210000000004129">
 									<PhaseSourceStatic name="PhaseSourceStatic" phase="0.71487604999999998512"/>
 								</ParamRange>
-								<ParamRange name="Master Rotation" T="DOUBLE" default="0" value="-180">
+								<ParamRange name="Master Rotation" T="DOUBLE" default="0" value="-136.66733999666405452">
 									<DurationSource name="DurationSource"/>
-									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0">
+									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.1203685000092665075">
 										<Params name="Params">
-											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.49999999999996141975">
-												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.16470314500315960671"/>
+											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.49999999999997429834">
+												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.16470314500316216022"/>
 											</ParamRange>
 											<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="5" value="2">
 												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.4000000000000000222"/>
@@ -1151,12 +1188,12 @@
 								<ParamRange name="Y" T="DOUBLE" default="0" value="0.5">
 									<PhaseSourceStatic name="PhaseSourceStatic" phase="0.5"/>
 								</ParamRange>
-								<ParamRange name="In / Out" T="DOUBLE" default="1" value="0">
+								<ParamRange name="In / Out" T="DOUBLE" default="1" value="0.68422144919849126055">
 									<DurationSource name="DurationSource"/>
-									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0">
+									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.68422144919849126055">
 										<Params name="Params">
-											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.52988971345962276871">
-												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.1705623324759349968"/>
+											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.52988971345963653548">
+												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.17056233247593766134"/>
 											</ParamRange>
 											<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="5" value="2">
 												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.4000000000000000222"/>
@@ -1318,12 +1355,12 @@
 						<View name="View" folded="1"/>
 						<RenderPass name="Twisted" type="Twisted" uniqueTypeId="A122" uniqueId="1655159518412" baseType="Effect" dwType="Effect">
 							<Params name="Params">
-								<ParamRange name="Twirl" T="DOUBLE" default="0.60000002384185791016" value="0.24728260869565216185">
+								<ParamRange name="Twirl" T="DOUBLE" default="0.60000002384185791016" value="0.51095883895014715392">
 									<DurationSource name="DurationSource" scale="0.43478260869565216185"/>
-									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0">
+									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.60645532958533865386">
 										<Params name="Params">
-											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.19666276010661784546">
-												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.093911409841783768937"/>
+											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.19666276010662292473">
+												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.093911409841785226105"/>
 											</ParamRange>
 											<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="2.1739130434782607537" value="2">
 												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.92000000000000003997"/>
@@ -1479,7 +1516,7 @@
 						<RenderPass name="InfiniteZoom" type="InfiniteZoom" uniqueTypeId="P205" uniqueId="1679437248995" baseType="Effect" dwType="Effect">
 							<Params name="Params">
 								<ParamRange name="Zoom" T="DOUBLE" default="0.050000000000000002776" value="-0.14285714285714287697">
-									<PhaseSourceStatic name="PhaseSourceStatic" phase="0.14285714285714282146"/>
+									<PhaseSourceStatic name="PhaseSourceStatic" phase="0.14285714285714284921"/>
 								</ParamRange>
 								<ParamRange name="Range" T="DOUBLE" default="3" value="3.0158730158730158166">
 									<PhaseSourceStatic name="PhaseSourceStatic" phase="0.15079365079365078528"/>
@@ -1519,12 +1556,12 @@
 								<ParamRange name="Zoom" T="DOUBLE" default="0.5" value="1">
 									<PhaseSourceStatic name="PhaseSourceStatic" phase="1"/>
 								</ParamRange>
-								<ParamRange name="Input Rotation" T="DOUBLE" default="0" value="0">
+								<ParamRange name="Input Rotation" T="DOUBLE" default="0" value="0.49267511649371875659">
 									<DurationSource name="DurationSource"/>
-									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0">
+									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.49267511649371875659">
 										<Params name="Params">
-											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.061944887797187972445">
-												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.046844092814597046437"/>
+											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.061944887797189589207">
+												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.04684409281459778196"/>
 											</ParamRange>
 											<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="5" value="2">
 												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.4000000000000000222"/>
@@ -1771,12 +1808,12 @@
 								<ParamRange name="Width" T="DOUBLE" default="0.20000000298023223877" value="0.92792792800000001296">
 									<PhaseSourceStatic name="PhaseSourceStatic" phase="0.92792792800000001296"/>
 								</ParamRange>
-								<ParamRange name="Angle" T="DOUBLE" default="1" value="0">
+								<ParamRange name="Angle" T="DOUBLE" default="1" value="0.065943243349495181405">
 									<DurationSource name="DurationSource"/>
-									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0">
+									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.065943243349495181405">
 										<Params name="Params">
-											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.52479966199995908838">
-												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.1695740238756813234"/>
+											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.5247996619999726331">
+												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.16957402387568396018"/>
 											</ParamRange>
 											<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="5" value="2">
 												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.4000000000000000222"/>
@@ -1805,7 +1842,7 @@
 				<ChoosableMixer name="Blend"/>
 				<PrimarySource>
 					<VideoSource storage="0" name="VideoSource" width="1920" height="1080" type="GeneratorVideoSource">
-						<RenderPass name="RenderPassChain" type="RenderPassChain" uniqueTypeId="RenderPassChain" uniqueId="1682293127131" baseType="RenderPassChain"/>
+						<RenderPass name="RenderPassChain" type="RenderPassChain" uniqueTypeId="RenderPassChain" uniqueId="1682288165290" baseType="RenderPassChain"/>
 						<RenderPass name="SolidColor" type="SolidColor" uniqueTypeId="A403" uniqueId="1655769180240" baseType="Generator">
 							<Params name="Params">
 								<ParamColor name="Color" T="COLOR" default="4278190335" value="4294967295" channelmode="2" paletteEnabled="0" color="4294967295" interpolated="0">
@@ -1864,7 +1901,7 @@
 					<Param name="BScale" T="BOOL" default="1" value="1"/>
 					<Param name="AScale" T="BOOL" default="1" value="1"/>
 				</Params>
-				<RenderPass name="RenderPassChain" type="RenderPassChain" uniqueTypeId="RenderPassChain" uniqueId="1682293127216" baseType="RenderPassChain">
+				<RenderPass name="RenderPassChain" type="RenderPassChain" uniqueTypeId="RenderPassChain" uniqueId="1682288165369" baseType="RenderPassChain">
 					<RenderPass storage="0" name="Palette" type="DryWetEffect" uniqueTypeId="PLTX" uniqueId="1655159520735" baseType="DryWetEffect" index="0">
 						<RenderPass name="Palette" type="FFGLEffect" uniqueTypeId="PLTX" uniqueId="1655159520737" baseType="Effect" dwType="Effect">
 							<Params name="Params">
@@ -1954,8 +1991,8 @@
 									<DurationSource name="DurationSource" scale="0.064606741573033713011"/>
 									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.33000001311302185059">
 										<Params name="Params">
-											<ParamRange name="Speed" T="DOUBLE" default="1" value="1.0000000773480577365">
-												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.250000011642046438"/>
+											<ParamRange name="Speed" T="DOUBLE" default="1" value="1.0000000773480834937">
+												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.25000001164205032378"/>
 											</ParamRange>
 											<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="0.32303370786516855118" value="0.32303370786516855118">
 												<PhaseSourceStatic name="PhaseSourceStatic" phase="1"/>
@@ -2043,8 +2080,8 @@
 									<DurationSource name="DurationSource"/>
 									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0">
 										<Params name="Params">
-											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.10531978589932039503">
-												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.064481089699321994524"/>
+											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.10531978589932314283">
+												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.064481089699323007602"/>
 											</ParamRange>
 											<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="5" value="2">
 												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.4000000000000000222"/>
@@ -2072,12 +2109,12 @@
 								<ParamRange name="Zoom" T="DOUBLE" default="0.5" value="0.57999998331069946289">
 									<PhaseSourceStatic name="PhaseSourceStatic" phase="0.57999998331069946289"/>
 								</ParamRange>
-								<ParamRange name="Input Rotation" T="DOUBLE" default="0" value="0">
+								<ParamRange name="Input Rotation" T="DOUBLE" default="0" value="0.5">
 									<DurationSource name="DurationSource"/>
-									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0">
+									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.5">
 										<Params name="Params">
-											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.056061405203567192534">
-												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.044112396757262035962"/>
+											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.056061405203568656641">
+												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.044112396757262729852"/>
 											</ParamRange>
 											<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="5" value="2">
 												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.4000000000000000222"/>
@@ -2115,8 +2152,8 @@
 									<DurationSource name="DurationSource"/>
 									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="1">
 										<Params name="Params">
-											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.52988971345960900194">
-												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.17056233247593233227"/>
+											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.52988971345962276871">
+												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.1705623324759349968"/>
 											</ParamRange>
 											<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="5" value="2">
 												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.4000000000000000222"/>
@@ -2187,12 +2224,12 @@
 						<View name="View" folded="1"/>
 						<RenderPass name="Twisted" type="Twisted" uniqueTypeId="A122" uniqueId="1655159520823" baseType="Effect" dwType="Effect">
 							<Params name="Params">
-								<ParamRange name="Twirl" T="DOUBLE" default="0.60000002384185791016" value="0.24728260869565216185">
+								<ParamRange name="Twirl" T="DOUBLE" default="0.60000002384185791016" value="0.46467391304347827052">
 									<DurationSource name="DurationSource" scale="0.43478260869565216185"/>
-									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0">
+									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.5">
 										<Params name="Params">
-											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.19666276010661273843">
-												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.093911409841782297891"/>
+											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.19666276010661784546">
+												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.093911409841783768937"/>
 											</ParamRange>
 											<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="2.1739130434782607537" value="2">
 												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.92000000000000003997"/>
@@ -2353,12 +2390,12 @@
 								<ParamRange name="Zoom" T="DOUBLE" default="0.5" value="1">
 									<PhaseSourceStatic name="PhaseSourceStatic" phase="1"/>
 								</ParamRange>
-								<ParamRange name="Input Rotation" T="DOUBLE" default="0" value="0">
+								<ParamRange name="Input Rotation" T="DOUBLE" default="0" value="0.5">
 									<DurationSource name="DurationSource"/>
-									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0">
+									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.5">
 										<Params name="Params">
-											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.061944887797186355682">
-												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.046844092814596310914"/>
+											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.061944887797187972445">
+												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.046844092814597046437"/>
 											</ParamRange>
 											<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="5" value="2">
 												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.4000000000000000222"/>
@@ -2463,7 +2500,7 @@
 				<ChoosableMixer name="Blend"/>
 				<PrimarySource>
 					<VideoSource storage="0" name="VideoSource" width="1920" height="1080" type="GeneratorVideoSource">
-						<RenderPass name="RenderPassChain" type="RenderPassChain" uniqueTypeId="RenderPassChain" uniqueId="1682293127719" baseType="RenderPassChain"/>
+						<RenderPass name="RenderPassChain" type="RenderPassChain" uniqueTypeId="RenderPassChain" uniqueId="1682288165872" baseType="RenderPassChain"/>
 						<RenderPass name="SolidColor" type="SolidColor" uniqueTypeId="A403" uniqueId="1655769180152" baseType="Generator">
 							<Params name="Params">
 								<ParamColor name="Color" T="COLOR" default="4278190335" value="4294967295" channelmode="2" paletteEnabled="0" color="4294967295" interpolated="0">
@@ -2522,7 +2559,7 @@
 					<Param name="BScale" T="BOOL" default="1" value="1"/>
 					<Param name="AScale" T="BOOL" default="1" value="1"/>
 				</Params>
-				<RenderPass name="RenderPassChain" type="RenderPassChain" uniqueTypeId="RenderPassChain" uniqueId="1682293127798" baseType="RenderPassChain">
+				<RenderPass name="RenderPassChain" type="RenderPassChain" uniqueTypeId="RenderPassChain" uniqueId="1682288165951" baseType="RenderPassChain">
 					<RenderPass storage="0" name="Palette" type="DryWetEffect" uniqueTypeId="PLTX" uniqueId="1655159521597" baseType="DryWetEffect" index="0">
 						<RenderPass name="Palette" type="FFGLEffect" uniqueTypeId="PLTX" uniqueId="1655159521599" baseType="Effect" dwType="Effect">
 							<Params name="Params">
@@ -2612,8 +2649,8 @@
 									<DurationSource name="DurationSource" scale="0.064606741573033713011"/>
 									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.33000001311302185059">
 										<Params name="Params">
-											<ParamRange name="Speed" T="DOUBLE" default="1" value="1.0000000773480317573">
-												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.25000001164204255222"/>
+											<ParamRange name="Speed" T="DOUBLE" default="1" value="1.0000000773480577365">
+												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.250000011642046438"/>
 											</ParamRange>
 											<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="0.32303370786516855118" value="0.32303370786516855118">
 												<PhaseSourceStatic name="PhaseSourceStatic" phase="1"/>
@@ -2701,8 +2738,8 @@
 									<DurationSource name="DurationSource"/>
 									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0">
 										<Params name="Params">
-											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.10531978589931764723">
-												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.064481089699320981445"/>
+											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.10531978589932039503">
+												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.064481089699321994524"/>
 											</ParamRange>
 											<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="5" value="2">
 												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.4000000000000000222"/>
@@ -2730,12 +2767,12 @@
 								<ParamRange name="Zoom" T="DOUBLE" default="0.5" value="0.57999998331069946289">
 									<PhaseSourceStatic name="PhaseSourceStatic" phase="0.57999998331069946289"/>
 								</ParamRange>
-								<ParamRange name="Input Rotation" T="DOUBLE" default="0" value="0">
+								<ParamRange name="Input Rotation" T="DOUBLE" default="0" value="0.5">
 									<DurationSource name="DurationSource"/>
-									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0">
+									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.5">
 										<Params name="Params">
-											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.056061405203565728428">
-												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.044112396757261342073"/>
+											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.056061405203567192534">
+												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.044112396757262035962"/>
 											</ParamRange>
 											<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="5" value="2">
 												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.4000000000000000222"/>
@@ -2769,12 +2806,12 @@
 								<ParamRange name="Y" T="DOUBLE" default="0" value="0.5">
 									<PhaseSourceStatic name="PhaseSourceStatic" phase="0.5"/>
 								</ParamRange>
-								<ParamRange name="In / Out" T="DOUBLE" default="1" value="0">
+								<ParamRange name="In / Out" T="DOUBLE" default="1" value="1">
 									<DurationSource name="DurationSource"/>
-									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0">
+									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="1">
 										<Params name="Params">
-											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.52988971345959523518">
-												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.17056233247592966773"/>
+											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.52988971345960900194">
+												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.17056233247593233227"/>
 											</ParamRange>
 											<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="5" value="2">
 												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.4000000000000000222"/>
@@ -2844,12 +2881,12 @@
 						<View name="View" folded="1"/>
 						<RenderPass name="Twisted" type="Twisted" uniqueTypeId="A122" uniqueId="1655159521685" baseType="Effect" dwType="Effect">
 							<Params name="Params">
-								<ParamRange name="Twirl" T="DOUBLE" default="0.60000002384185791016" value="0.24728260869565216185">
+								<ParamRange name="Twirl" T="DOUBLE" default="0.60000002384185791016" value="0.46467391304347827052">
 									<DurationSource name="DurationSource" scale="0.43478260869565216185"/>
-									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0">
+									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.5">
 										<Params name="Params">
-											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.19666276010660765916">
-												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.093911409841780840724"/>
+											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.19666276010661273843">
+												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.093911409841782297891"/>
 											</ParamRange>
 											<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="2.1739130434782607537" value="2">
 												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.92000000000000003997"/>
@@ -3009,12 +3046,12 @@
 								<ParamRange name="Zoom" T="DOUBLE" default="0.5" value="1">
 									<PhaseSourceStatic name="PhaseSourceStatic" phase="1"/>
 								</ParamRange>
-								<ParamRange name="Input Rotation" T="DOUBLE" default="0" value="0">
+								<ParamRange name="Input Rotation" T="DOUBLE" default="0" value="0.5">
 									<DurationSource name="DurationSource"/>
-									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0">
+									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.5">
 										<Params name="Params">
-											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.061944887797184745859">
-												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.046844092814595575391"/>
+											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.061944887797186355682">
+												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.046844092814596310914"/>
 											</ParamRange>
 											<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="5" value="2">
 												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.4000000000000000222"/>
@@ -3119,7 +3156,7 @@
 				<ChoosableMixer name="Blend"/>
 				<PrimarySource>
 					<VideoSource storage="0" name="VideoSource" width="1920" height="1080" type="GeneratorVideoSource">
-						<RenderPass name="RenderPassChain" type="RenderPassChain" uniqueTypeId="RenderPassChain" uniqueId="1682293128301" baseType="RenderPassChain"/>
+						<RenderPass name="RenderPassChain" type="RenderPassChain" uniqueTypeId="RenderPassChain" uniqueId="1682288166458" baseType="RenderPassChain"/>
 						<RenderPass name="SolidColor" type="SolidColor" uniqueTypeId="A403" uniqueId="1655769180198" baseType="Generator">
 							<Params name="Params">
 								<ParamColor name="Color" T="COLOR" default="4278190335" value="4294967295" channelmode="2" paletteEnabled="0" color="4294967295" interpolated="0">
@@ -3178,7 +3215,7 @@
 					<Param name="BScale" T="BOOL" default="1" value="1"/>
 					<Param name="AScale" T="BOOL" default="1" value="1"/>
 				</Params>
-				<RenderPass name="RenderPassChain" type="RenderPassChain" uniqueTypeId="RenderPassChain" uniqueId="1682293128380" baseType="RenderPassChain">
+				<RenderPass name="RenderPassChain" type="RenderPassChain" uniqueTypeId="RenderPassChain" uniqueId="1682288166537" baseType="RenderPassChain">
 					<RenderPass storage="0" name="Palette" type="DryWetEffect" uniqueTypeId="PLTX" uniqueId="1655159522448" baseType="DryWetEffect" index="0">
 						<RenderPass name="Palette" type="FFGLEffect" uniqueTypeId="PLTX" uniqueId="1655159522450" baseType="Effect" dwType="Effect">
 							<Params name="Params">
@@ -3268,8 +3305,8 @@
 									<DurationSource name="DurationSource" scale="0.064606741573033713011"/>
 									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.33000001311302185059">
 										<Params name="Params">
-											<ParamRange name="Speed" T="DOUBLE" default="1" value="1.0000000773480317573">
-												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.25000001164204255222"/>
+											<ParamRange name="Speed" T="DOUBLE" default="1" value="1.0000000773480577365">
+												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.250000011642046438"/>
 											</ParamRange>
 											<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="0.32303370786516855118" value="0.32303370786516855118">
 												<PhaseSourceStatic name="PhaseSourceStatic" phase="1"/>
@@ -3357,8 +3394,8 @@
 									<DurationSource name="DurationSource"/>
 									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0">
 										<Params name="Params">
-											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.10531978589931764723">
-												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.064481089699320981445"/>
+											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.10531978589932039503">
+												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.064481089699321994524"/>
 											</ParamRange>
 											<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="5" value="2">
 												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.4000000000000000222"/>
@@ -3386,12 +3423,12 @@
 								<ParamRange name="Zoom" T="DOUBLE" default="0.5" value="0.57999998331069946289">
 									<PhaseSourceStatic name="PhaseSourceStatic" phase="0.57999998331069946289"/>
 								</ParamRange>
-								<ParamRange name="Input Rotation" T="DOUBLE" default="0" value="0">
+								<ParamRange name="Input Rotation" T="DOUBLE" default="0" value="0.5">
 									<DurationSource name="DurationSource"/>
-									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0">
+									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.5">
 										<Params name="Params">
-											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.056061405203565728428">
-												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.044112396757261342073"/>
+											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.056061405203567192534">
+												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.044112396757262035962"/>
 											</ParamRange>
 											<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="5" value="2">
 												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.4000000000000000222"/>
@@ -3425,12 +3462,12 @@
 								<ParamRange name="Y" T="DOUBLE" default="0" value="0.5">
 									<PhaseSourceStatic name="PhaseSourceStatic" phase="0.5"/>
 								</ParamRange>
-								<ParamRange name="In / Out" T="DOUBLE" default="1" value="0">
+								<ParamRange name="In / Out" T="DOUBLE" default="1" value="1">
 									<DurationSource name="DurationSource"/>
-									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0">
+									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="1">
 										<Params name="Params">
-											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.52988971345959523518">
-												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.17056233247592966773"/>
+											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.52988971345960900194">
+												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.17056233247593233227"/>
 											</ParamRange>
 											<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="5" value="2">
 												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.4000000000000000222"/>
@@ -3500,12 +3537,12 @@
 						<View name="View" folded="1"/>
 						<RenderPass name="Twisted" type="Twisted" uniqueTypeId="A122" uniqueId="1655159522536" baseType="Effect" dwType="Effect">
 							<Params name="Params">
-								<ParamRange name="Twirl" T="DOUBLE" default="0.60000002384185791016" value="0.24728260869565216185">
+								<ParamRange name="Twirl" T="DOUBLE" default="0.60000002384185791016" value="0.46467391304347827052">
 									<DurationSource name="DurationSource" scale="0.43478260869565216185"/>
-									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0">
+									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.5">
 										<Params name="Params">
-											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.19666276010660765916">
-												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.093911409841780840724"/>
+											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.19666276010661273843">
+												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.093911409841782297891"/>
 											</ParamRange>
 											<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="2.1739130434782607537" value="2">
 												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.92000000000000003997"/>
@@ -3666,12 +3703,12 @@
 								<ParamRange name="Zoom" T="DOUBLE" default="0.5" value="1">
 									<PhaseSourceStatic name="PhaseSourceStatic" phase="1"/>
 								</ParamRange>
-								<ParamRange name="Input Rotation" T="DOUBLE" default="0" value="0">
+								<ParamRange name="Input Rotation" T="DOUBLE" default="0" value="0.5">
 									<DurationSource name="DurationSource"/>
-									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0">
+									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.5">
 										<Params name="Params">
-											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.061944887797184745859">
-												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.046844092814595575391"/>
+											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.061944887797186355682">
+												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.046844092814596310914"/>
 											</ParamRange>
 											<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="5" value="2">
 												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.4000000000000000222"/>
@@ -3776,7 +3813,7 @@
 				<ChoosableMixer name="Blend"/>
 				<PrimarySource>
 					<VideoSource storage="0" name="VideoSource" width="1920" height="1080" type="GeneratorVideoSource">
-						<RenderPass name="RenderPassChain" type="RenderPassChain" uniqueTypeId="RenderPassChain" uniqueId="1682293128883" baseType="RenderPassChain"/>
+						<RenderPass name="RenderPassChain" type="RenderPassChain" uniqueTypeId="RenderPassChain" uniqueId="1682288167044" baseType="RenderPassChain"/>
 						<RenderPass name="SolidColor" type="SolidColor" uniqueTypeId="A403" uniqueId="1655769181697" baseType="Generator">
 							<Params name="Params">
 								<ParamColor name="Color" T="COLOR" default="4278190335" value="4294967295" channelmode="2" paletteEnabled="0" color="4294967295" interpolated="0">
@@ -3842,7 +3879,7 @@
 					<Param name="BScale" T="BOOL" default="1" value="1"/>
 					<Param name="AScale" T="BOOL" default="1" value="1"/>
 				</Params>
-				<RenderPass name="RenderPassChain" type="RenderPassChain" uniqueTypeId="RenderPassChain" uniqueId="1682293128962" baseType="RenderPassChain">
+				<RenderPass name="RenderPassChain" type="RenderPassChain" uniqueTypeId="RenderPassChain" uniqueId="1682288167123" baseType="RenderPassChain">
 					<RenderPass storage="0" name="Transform" type="TransformEffect" uniqueTypeId="17122039101699797593" uniqueId="1655769169997" baseType="Effect" index="0">
 						<View name="View" bCanBeDisabled="0" bCanBeRemoved="0"/>
 					</RenderPass>
@@ -3850,7 +3887,7 @@
 				<ChoosableMixer name="Blend"/>
 				<PrimarySource>
 					<VideoSource storage="0" name="VideoSource" width="1920" height="1080" type="GeneratorVideoSource">
-						<RenderPass name="RenderPassChain" type="RenderPassChain" uniqueTypeId="RenderPassChain" uniqueId="1682293129036" baseType="RenderPassChain"/>
+						<RenderPass name="RenderPassChain" type="RenderPassChain" uniqueTypeId="RenderPassChain" uniqueId="1682288167197" baseType="RenderPassChain"/>
 						<RenderPass name="TextGenerator" type="TextGenerator" uniqueTypeId="11421072728336491440" uniqueId="1603880711975" baseType="Generator">
 							<Params name="Params">
 								<ParamText name="Text" T="STRING" default="Resolume" value="">
@@ -3884,8 +3921,8 @@
 									<DurationSource name="DurationSource" userDuration="1.4000000000000027978"/>
 									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0">
 										<Params name="Params">
-											<ParamRange name="Speed" T="DOUBLE" default="1" value="1.382007708005998925">
-												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.30376360493317799971"/>
+											<ParamRange name="Speed" T="DOUBLE" default="1" value="1.3820077080060344521">
+												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.30376360493318271816"/>
 											</ParamRange>
 											<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="1.4000000000000027978" value="0.45000000000000106581">
 												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.32142857142857156338"/>
@@ -3901,8 +3938,8 @@
 									<DurationSource name="DurationSource" userDuration="10.930126710198997841" scale="0.33301267101990050801"/>
 									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0">
 										<Params name="Params">
-											<ParamRange name="Speed" T="DOUBLE" default="1" value="4.2457549193326178383">
-												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.59704428181397328768"/>
+											<ParamRange name="Speed" T="DOUBLE" default="1" value="4.2457549193327279724">
+												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.59704428181398261355"/>
 											</ParamRange>
 											<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="10.930126710198997841" value="1.6650633550995033172">
 												<PhaseSourceStatic name="PhaseSourceStatic" phase="0.15233705877771919202"/>

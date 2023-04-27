@@ -1,6 +1,5 @@
 DECLARE_TYPES(debug);
 DECLARE_TYPES(plugins);
-DECLARE_TYPES(autostart);
 DECLARE_TYPES(bidule);
 DECLARE_TYPES(mmtt);
 DECLARE_TYPES(destination);

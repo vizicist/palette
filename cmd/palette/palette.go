@@ -96,8 +96,11 @@ func CliCommand(args []string) string {
 
 		case "", "all":
 			s1 := doStartEngine()
-			s2 := doApi("engine.startall")
-			return s1 + "\n" + s2
+			s1 += "\n" + doApi("engine.startprocess", "process", "gui")
+			s1 += "\n" + doApi("engine.startprocess", "process", "bidule")
+			s1 += "\n" + doApi("engine.startprocess", "process", "resolume")
+			s1 += "\n" + doApi("engine.startprocess", "process", "keykit")
+			return s1
 
 		default:
 			return usage()
@@ -112,22 +115,15 @@ func CliCommand(args []string) string {
 		switch arg1 {
 
 		case "", "all":
-			_, err := engine.RemoteAPI("engine.stopall")
-			if err != nil {
-				return fmt.Sprintf("RemoteAPI: err=%s\n", err)
-			}
-			_, err = engine.RemoteAPI("engine.exit")
-			if err != nil {
-				return fmt.Sprintf("RemoteAPI: err=%s\n", err)
-			}
-			return ""
+			s1 := doApi("engine.stopprocess", "process", "gui")
+			s1 += "\n" + doApi("engine.stopprocess", "process", "bidule")
+			s1 += "\n" + doApi("engine.stopprocess", "process", "resolume")
+			s1 += "\n" + doApi("engine.stopprocess", "process", "keykit")
+			s1 += "\n" + doApi("engine.exit")
+			return s1
 
 		case "engine":
-			_, err := engine.RemoteAPI("engine.exit")
-			if err != nil {
-				return fmt.Sprintf("RemoteAPI: err=%s\n", err)
-			}
-			return ""
+			return doApi("engine.exit")
 
 		case "gui":
 			return doApi("engine.stopprocess", "process", "gui")
@@ -155,9 +151,6 @@ func CliCommand(args []string) string {
 		}
 		return "Logs have been sent."
 
-	case "gui":
-		return doApi("engine.startprocess", "process", "gui")
-
 	default:
 		words := strings.Split(api, ".")
 		if len(words) != 2 {
@@ -170,7 +163,7 @@ func CliCommand(args []string) string {
 func doApi(api string, apiargs ...string) string {
 	resultMap, err := engine.RemoteAPI(api, apiargs...)
 	if err != nil {
-		return fmt.Sprintf("RemoteAPI: err=%s\n", err)
+		return fmt.Sprintf("RemoteAPI: api=%s err=%s\n", api, err)
 	}
 	return humanReadableApiOutput(resultMap)
 }

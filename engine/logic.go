@@ -102,6 +102,7 @@ func (logic *PatchLogic) generateVisualsFromCursor(ce CursorEvent) {
 
 func (logic *PatchLogic) generateSoundFromCursor(ce CursorEvent, cursorStyle string) {
 
+	LogOfType("cursor", "generateSoundFromCursor", "cursor", ce.Cid, "ce", ce)
 	switch cursorStyle {
 	case "downonly":
 		logic.generateSoundFromCursorDownOnly(ce)

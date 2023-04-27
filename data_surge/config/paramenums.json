@@ -1,7 +1,6 @@
 {
   "debug": [ "", "midi", "cursor", "saved", "api", "scheduler", "process", "attract" ],
   "plugins": [ "", "quadpro" ],
-  "autostart": [ "gui", "none", "gui,bidule", "gui,resolume", "gui,bidule,resolume" ],
   "bidule": ["C:/Program Files/Plogue/Bidule/Bidule.exe", ""],
   "mmtt": ["kinect", "depthai", ""],
 	"destination": [ ".", "A", "B", "C", "D" ],

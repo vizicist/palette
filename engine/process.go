@@ -21,6 +21,7 @@ type ProcessInfo struct {
 
 type ProcessManager struct {
 	info             map[string]*ProcessInfo
+	wasStarted       map[string]bool
 	mutex            sync.Mutex
 	lastProcessCheck time.Time
 	processCheckSecs float64
@@ -42,15 +43,15 @@ func StartRunning(process string) error {
 		LogError(err)
 		return (err)
 	}
-	return TheProcessManager.Activate(process)
+	return nil
 }
 
 func StopRunning(process string) error {
 	return TheProcessManager.StopRunning(process)
 }
 
-func CheckAutostartProcesses() {
-	TheProcessManager.CheckAutostartProcesses()
+func CheckAutorestartProcesses() {
+	TheProcessManager.CheckAutorestartProcesses()
 }
 
 //////////////////////////////////////////////////////////////////
@@ -59,6 +60,7 @@ func NewProcessManager() *ProcessManager {
 	processCheckSecs := TheEngine.EngineParamFloatWithDefault("engine.processchecksecs", 60)
 	pm := &ProcessManager{
 		info:             make(map[string]*ProcessInfo),
+		wasStarted:       make(map[string]bool),
 		lastProcessCheck: time.Time{},
 		processCheckSecs: processCheckSecs,
 	}
@@ -88,62 +90,31 @@ func (pm *ProcessManager) checkProcess() {
 		// it's stil running.
 		go func() {
 			time.Sleep(2 * time.Second)
-			CheckAutostartProcesses()
+			CheckAutorestartProcesses()
 		}()
 		pm.lastProcessCheck = now
 	}
 }
 
-func (pm *ProcessManager) CheckAutostartProcesses() {
+// CheckAutorestartProcesses will restart processes that were
+// started but are no longer running.
+func (pm *ProcessManager) CheckAutorestartProcesses() {
 
 	pm.mutex.Lock()
 	defer pm.mutex.Unlock()
 
-	autostart := TheEngine.Get("engine.autostart")
-	if autostart == "" || autostart == "nothing" || autostart == "none" {
+	autorestart := TheEngine.ParamBool("engine.autorestart")
+	if !autorestart {
 		return
 	}
-	// NOTE: the autostart value can be "all"
-	processes := strings.Split(autostart, ",")
-	// Only check the autostart values, not all processes
-	for _, autoName := range processes {
-		for processName, pi := range pm.info {
-			if autoName == "*" || autoName == "all" || autoName == processName {
-				if !pm.IsRunning(processName) {
-					LogInfo("CheckAutoStartProcesses: Calling StartRunning", "process", processName)
-					err := pm.StartRunning(processName)
-					LogIfError(err)
-					pi.Activated = false
-				}
-				// Even if it's already running, we
-				// want to Activate it the first time we check.
-				// Also, if we restart it
-				if pi.Activate != nil && !pi.Activated {
-					LogInfo("CheckAutoStartProcesses: Calling Activate", "process", processName)
-					go pi.Activate()
-					pi.Activated = true
-				}
-			}
+	for processName := range pm.info {
+		isRunning := pm.IsRunning(processName)
+		if !isRunning && pm.wasStarted[processName] {
+			LogInfo("CheckAutorestartProcesses: Restarting", "process", processName)
+			err := pm.StartRunning(processName)
+			LogIfError(err)
 		}
 	}
-}
-
-func (pm *ProcessManager) Activate(process string) error {
-	doall := (process == "all" || process == "*")
-	if !doall {
-		_, ok := pm.info[process]
-		if !ok {
-			return fmt.Errorf("ProcessManager.Activate: unknown process %s", process)
-		}
-	}
-	for nm, pi := range pm.info {
-		if (doall || nm == process) && pi.Activate != nil {
-			LogOfType("process", "Activate", "process", nm)
-			go pi.Activate()
-			pi.Activated = true
-		}
-	}
-	return nil
 }
 
 func (pm *ProcessManager) AddProcess(name string, info *ProcessInfo) {
@@ -161,6 +132,7 @@ func AddProcessBuiltIn(process string) {
 
 func (pm *ProcessManager) AddProcessBuiltIn(process string) {
 
+	LogInfo("AddProcessBuiltIn", "process", process)
 	switch process {
 	case "bidule":
 		pm.AddProcess(process, TheBidule().ProcessInfo())
@@ -183,23 +155,25 @@ func (pm *ProcessManager) StartRunning(process string) error {
 		LogInfo("StartRunning: already running", "process", process)
 		return nil
 	}
+	pi, err := pm.getProcessInfo(process)
+	if err != nil {
+		return err
+	}
+	if pi.FullPath == "" {
+		return fmt.Errorf("StartRunning: unable to start %s, no executable path", process)
+	}
 
-	for nm, pi := range pm.info {
-		if process == "all" || nm == process {
-			if pi == nil {
-				return fmt.Errorf("StartRunning: no ProcessInfo for process=%s", process)
-			}
-			if pi.FullPath == "" {
-				return fmt.Errorf("StartRunning: unable to start %s, no executable path", process)
-			}
+	LogInfo("StartRunning", "path", pi.FullPath, "arg", pi.Arg, "lenarg", len(pi.Arg))
 
-			LogInfo("StartRunning", "path", pi.FullPath, "arg", pi.Arg, "lenarg", len(pi.Arg))
-
-			err := StartExecutableLogOutput(process, pi.FullPath, true, pi.Arg)
-			if err != nil {
-				return fmt.Errorf("start: process=%s err=%s", process, err)
-			}
-		}
+	err = StartExecutableLogOutput(process, pi.FullPath, true, pi.Arg)
+	if err != nil {
+		return fmt.Errorf("StartRunning: process=%s err=%s", process, err)
+	}
+	pm.wasStarted[process] = true
+	if pi.Activate != nil {
+		LogOfType("process", "Activate", "process", process)
+		go pi.Activate()
+		pi.Activated = true
 	}
 	return nil
 }
@@ -208,15 +182,13 @@ func (pm *ProcessManager) StopRunning(process string) (err error) {
 
 	LogOfType("process", "StopRunning", "process", process)
 
-	for nm, pi := range pm.info {
-		if process == "all" || nm == process {
-			e := killExecutable(pi.Exe)
-			if e != nil {
-				err = e
-			}
-			pi.Activated = false
-		}
+	pi, err := pm.getProcessInfo(process)
+	if err != nil {
+		return err
 	}
+	_ = killExecutable(pi.Exe) // ignore errors
+	pi.Activated = false
+	pm.wasStarted[process] = false
 	return err
 }
 
@@ -233,10 +205,14 @@ func (pm *ProcessManager) ProcessStatus() string {
 func (pm *ProcessManager) getProcessInfo(process string) (*ProcessInfo, error) {
 	p, ok := pm.info[process]
 	if !ok {
-		return nil, fmt.Errorf("getProcessInfo: no process %s", process)
+		err := fmt.Errorf("getProcessInfo: no process %s", process)
+		LogError(err)
+		return nil, err
 	}
 	if p == nil {
-		return nil, fmt.Errorf("getProcessInfo: no process info for %s", process)
+		err := fmt.Errorf("getProcessInfo: no process info for %s", process)
+		LogError(err)
+		return nil, err
 	}
 	return p, nil
 }
@@ -244,7 +220,7 @@ func (pm *ProcessManager) getProcessInfo(process string) (*ProcessInfo, error) {
 func (pm *ProcessManager) IsRunning(process string) bool {
 	pi, err := pm.getProcessInfo(process)
 	if err != nil {
-		LogWarn("IsRunning: no process named", "process", process)
+		LogError(err)
 		return false
 	}
 	b := isRunningExecutable(pi.Exe)

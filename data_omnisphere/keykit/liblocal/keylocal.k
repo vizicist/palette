@@ -2,8 +2,8 @@
 # 
 
 function palette_init() {
-	print("Starting listener for Space Palette events...")
-	task palette_listen()
+	# print("NOT Starting listener for Space Palette events...")
+	# task palette_listen()
 }
 
 function keylocal() {

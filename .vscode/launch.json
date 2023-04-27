@@ -4,6 +4,15 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
+        {
+            "name": "run palette_gui.py",
+            "type": "python",
+            "request": "launch",
+            "program": "${env:PALETTESOURCE}/python/palette_gui.py",
+            "console": "integratedTerminal",
+            "cwd": "${fileDirname}",
+            "args": [""]
+        },
        {
             "name": "palette_engine.go",
             "type": "go",
@@ -22,11 +31,11 @@
             "args": ["start"]
         },
         {
-            "name": "palette start gui",
+            "name": "palette stop keykit",
             "type": "go",
             "request": "launch",
             "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
-            "args": ["start","gui"]
+            "args": ["stop","keykit"]
         },
         {
             "name": "Chillian Start",
@@ -149,15 +158,6 @@
             "request": "launch",
             "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
             "args": ["api", "stop", "\"process\":\"gui\""]
-        },
-        {
-            "name": "run testcursor.py",
-            "type": "python",
-            "request": "launch",
-            "program": "${env:PALETTESOURCE}/python/testcursor.py",
-            "console": "integratedTerminal",
-            "cwd": "${fileDirname}",
-            "args": [""]
         },
         {
             "name": "sendlogs",

@@ -1,9 +1,8 @@
 {
     "params": {
         "engine.attractidlesecs":"72",
-        "engine.autostart":"bidule,resolume",
+        "engine.autorestart":"true",
         "engine.bidule":"C:/Program Files/Plogue/Bidule/Bidule.exe",
-        "engine.debug":"",
         "engine.midiinput":"",
         "engine.oscoutput":"true",
         "engine.scale":"newage"

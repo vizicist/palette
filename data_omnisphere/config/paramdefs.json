@@ -34,6 +34,12 @@
 "effect.fragment:fragrotationz": {"valuetype": "float", "min": "0.0", "max": "1.0",  "init": "0.5", "comment": "#" },
 "effect.fragment:fragscale": {"valuetype": "float", "min": "0.0", "max": "1.0",  "randmin":"1.0", "randmax":"1.0", "init": "1.0", "comment": "#" },
 
+"effect.infinitezoom:rotationspeed": {"valuetype": "float", "min": "0.0", "max": "1.0",  "init": "0.5", "comment": "#" },
+"effect.infinitezoom:zoom": {"valuetype": "float", "min": "0.0", "max": "1.0",  "init": "0.5", "comment": "#" },
+"effect.infinitezoom:range": {"valuetype": "float", "min": "0.0", "max": "1.0",  "init": "0.5", "comment": "#" },
+"effect.infinitezoom:alpha": {"valuetype": "float", "min": "0.0", "max": "1.0",  "init": "0.5", "comment": "#" },
+"effect.infinitezoom:numslices": {"valuetype": "float", "min": "0.0", "max": "1.0",  "init": "0.5", "comment": "#" },
+
 "effect.posterize": {"valuetype": "bool", "min": "false", "max": "true", "randmax": "0.2", "init": "false", "comment": "#" },
 "effect.posterize:posterize": {"valuetype": "float", "min": "0.0", "max": "1.0", "randmin":"0.1", "randmax":"0.5", "init": "0.19", "comment": "#" },
 
@@ -82,11 +88,11 @@
 "misc.volstyle": {"valuetype":"string", "min":"volstyle", "max":"volstyle", "init":"pressure", "comment":"# Velocity style" },
 
 "engine.attractidlesecs": {"valuetype":"int", "min":"0", "max":"3600", "init":"0", "comment":"# Attract timeout, 0 to disable" },
-"engine.autostart": {"valuetype":"string", "min":"autostart", "max":"autostart", "init":"gui", "comment":"# Plugins to start" },
+"engine.autorestart": {"valuetype":"bool", "min":"false", "max":"true", "init":"true", "comment":"# auto restart processes" },
 "engine.autotranspose": {"valuetype":"bool", "min":"false", "max":"true", "init":"false", "comment":"#" },
 "engine.autotransposebeats": {"valuetype":"int", "min":"8", "max":"128", "init":"48", "comment":"# transpose pitch" },
 "engine.bidule": {"valuetype":"string", "min":"bidule", "max":"bidule", "init":"C:/Program Files/Plogue/Bidule/Bidule.exe", "comment":"# Bidule executable path" },
-"engine.debug": {"valuetype":"string", "min":"debug", "max":"debug", "init":"", "comment":"# Debugging" },
+"engine.log": {"valuetype":"string", "min":"", "max":"", "init":"", "comment":"# Bidule executable path" },
 "engine.midiinput": {"valuetype":"string", "min":"midiinput", "max":"midiinput", "init":"", "comment":"# Bidule executable path" },
 "engine.midithru": {"valuetype":"bool", "min":"false", "max":"true", "init":"false", "comment":"#" },
 "engine.midisetexternalscale": {"valuetype":"bool", "min":"false", "max":"true", "init":"false", "comment":"#" },

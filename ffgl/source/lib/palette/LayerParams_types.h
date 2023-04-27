@@ -1,6 +1,5 @@
 DEFINE_TYPES(debug);
 DEFINE_TYPES(plugins);
-DEFINE_TYPES(autostart);
 DEFINE_TYPES(bidule);
 DEFINE_TYPES(mmtt);
 DEFINE_TYPES(destination);
@@ -40,10 +39,6 @@ LayerParams_InitializeTypes() {
 
 	LayerParams_pluginsTypes.push_back("");
 	LayerParams_pluginsTypes.push_back("quadpro");
-
-	LayerParams_autostartTypes.push_back("gui");
-	LayerParams_autostartTypes.push_back("none");
-	LayerParams_autostartTypes.push_back("gui,bidule,resolume,keykit");
 
 	LayerParams_biduleTypes.push_back("C:/Program Files/Plogue/Bidule/Bidule.exe");
 	LayerParams_biduleTypes.push_back("");
