@@ -69,20 +69,23 @@ func (e *Engine) executeEngineAPI(api string, apiargs map[string]string) (result
 		go e.stopAfterDelay()
 		return "", nil
 
-	case "startall":
-		TheQuadPro.Start()
-		_ = StartRunning("bidule")
-		_ = StartRunning("resolume")
-		_ = StartRunning("keykit")
-		return "", nil
+		/*
+			case "startall":
+				TheQuadPro.Start()
+				_ = StartRunning("bidule")
+				_ = StartRunning("resolume")
+				_ = StartRunning("gui")
+				// _ = StartRunning("keykit")
+				return "", nil
 
-	case "stopall":
-		TheQuadPro.Stop()
-		_ = StopRunning("bidule")
-		_ = StopRunning("resolume")
-		_ = StopRunning("keykit")
-		//  _ = StopRunning("gui")
-		return "", nil
+			case "stopall":
+				TheQuadPro.Stop()
+				_ = StopRunning("bidule")
+				_ = StopRunning("resolume")
+				_ = StopRunning("gui")
+				// _ = StopRunning("keykit")
+				return "", nil
+		*/
 
 	case "status":
 		result = JsonObject(
@@ -162,10 +165,6 @@ func (e *Engine) executeEngineAPI(api string, apiargs map[string]string) (result
 		go e.stopAfterDelay()
 		return "", nil
 
-	case "activate":
-		// Force Activate even if already activated
-		return "", TheProcessManager.Activate("all")
-
 	case "audio_reset":
 		go LogError(TheBidule().Reset())
 
@@ -237,7 +236,7 @@ func (e *Engine) Set(name string, value string) error {
 			return err
 		}
 		TheMidiIO.engineTranspose = i
-	case "engine.debug":
+	case "engine.log":
 		e.ResetLogTypes(value)
 	case "engine.attract":
 		TheAttractManager.setAttractMode(IsTrueValue(value))

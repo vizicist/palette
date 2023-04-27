@@ -75,6 +75,7 @@ class ProGuiApp(tk.Tk):
             ):
 
         self.isguilarge = isguilarge
+        log("ProGuiApp isguilarge=",isguilarge)
         self.killme = False
 
         self.currentMode = ""
@@ -2002,11 +2003,11 @@ class PagePerformMain(tk.Frame):
         self.makePerformButton("Clear_ ", self.controller.clear)
         self.makePerformButton("Help_ ", self.controller.startHelp)
         # These shouldn't be shown in casual mode
-        self.makePerformButton("Start_All", self.controller.startAll)
-        self.makePerformButton("Stop_All", self.controller.stopAll)
-        self.makePerformButton("Exit", self.controller.exit)
-        self.makePerformButton("Start_Recording", self.controller.startRecording)
-        self.makePerformButton("Stop_Recording", self.controller.stopRecording)
+        # self.makePerformButton("Start_All", self.controller.startAll)
+        # self.makePerformButton("Stop_All", self.controller.stopAll)
+        # self.makePerformButton("Exit", self.controller.exit)
+        # self.makePerformButton("Start_Recording", self.controller.startRecording)
+        # self.makePerformButton("Stop_Recording", self.controller.stopRecording)
 
     def button_cget(self,button,name):
         text = button.cget(name)
@@ -2186,23 +2187,27 @@ class PageSelector(tk.Frame):
                 s = 'SavedButton.TLabel'
             self.selectButtons[i].config(style=s)
 
-def afterWindowIsDisplayed(windowName,guiresize,*args):
+def afterWindowIsDisplayed(windowName,guisize,*args):
 
-    if guiresize != "":
+    log("afterWindowIsDisplay guisize=",guisize)
+    if guisize != "":
 
         time.sleep(1.0) # wait for window to be visible so nircmdc sees it
-        log("Resizing GUI")
-        # The value of guiresize should be four integers separated by spaces
-        guiresize = guiresize.replace(","," ")
-        cmd = "nircmdc.exe win setsize stitle \""+windowName+"\" "+guiresize
+        # The value of guisize should be four integers separated by spaces
+        guisize = guisize.replace(","," ")
+        cmd = "nircmdc.exe win setsize stitle \""+windowName+"\" "+guisize
+        log("Resizing GUI, guisize=",guisize," cmd=",cmd)
         os.system(cmd)
 
         # By default, remove the title bar and maximize it
-        guimaximize = os.environ.get("PALETTE_GUI_MAXIMIZE","true")
+        guimaximize = os.environ.get("PALETTE_GUI_MAXIMIZE","false")
+        log("guimaximize=",guimaximize)
         if guimaximize == "true":
             cmd = "nircmdc.exe win -style stitle \""+windowName+"\" 0x00CA0000"
+            log("Maximizing gui cmd 1 =",cmd)
             os.system(cmd)
             cmd = "nircmdc.exe win max stitle \""+windowName+"\""
+            log("Maximizing gui cmd 2 =",cmd)
             os.system(cmd)
 
     global PaletteApp
@@ -2391,31 +2396,36 @@ if __name__ == "__main__":
         "effect":"Effect",
     }
 
-    # guiresize is of the form x,y,w,h
-    guiresize = os.environ.get("PALETTE_GUI_RESIZE","")
-    if guiresize == "palette":
-        # this is a special value for a Space Palette Pro
-        # putting the gui on the touchscreen
-        guiresize = "-800,0,800,1280"
+    # guisize is of the form x,y,w,h
+    guisize = os.environ.get("PALETTE_GUI_SIZE","default")
+    log("guisize env var = ",guisize)
 
     global PaletteApp
-    PaletteApp = ProGuiApp(patchname,patchnames,visiblepagenames,guiresize)
+    if guisize == "palette":
+        # this is a special value for a Space Palette Pro
+        # putting the gui on the touchscreen
+        guisize = "-800,0,800,1280"
+        PaletteApp = ProGuiApp(patchname,patchnames,visiblepagenames,True)
+    else:
+        PaletteApp = ProGuiApp(patchname,patchnames,visiblepagenames,False)
 
     makeStyles(PaletteApp)
 
-    # If guiresize is specified, we assume it's the "large" version
-    if guiresize != "":
-        # Fixed size - the guiresize is really only used to reposition it.
-        # Should check to see whether the resize matches the 800x1280 expectation
-        PaletteApp.wm_geometry("%dx%d" % (800,1280))  # LARGE VERSION
+    log("guisize=",guisize)
+    if guisize == "palette":
+        # Fixed size - the guisize is really only used to reposition it.
+        # Should check to see whether the size matches the 800x1280 expectation
+        PaletteApp.wm_geometry("%dx%d" % (800,1280))  # PALETTE VERSION
+    elif guisize == "small" or guisize == "default":
+        PaletteApp.wm_geometry("%dx%d" % (400,640))  # SMALL VERSION
     else:
-        # is this even used??
+        log("BAD VALUE FOR guisize=",guisize)
         PaletteApp.wm_geometry("%dx%d" % (400,640))   # SMALL VERSION
 
     PaletteApp.nextMode = ""
     PaletteApp.currentMode = ""
 
-    threading.Timer(0.0, afterWindowIsDisplayed, args=[PaletteApp.windowName,guiresize], kwargs=None).start()
+    threading.Timer(0.0, afterWindowIsDisplayed, args=[PaletteApp.windowName,guisize], kwargs=None).start()
 
     statusThread = threading.Thread(target=status_thread,args=(PaletteApp,))   # timer thread
     statusThread.daemon = True
