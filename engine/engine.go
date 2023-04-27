@@ -133,7 +133,6 @@ func (e *Engine) ResetLogTypes(logtypes string) {
 				} else {
 					LogEnabled[d] = true
 				}
-				return
 			}
 		}
 	}
@@ -270,7 +269,7 @@ func (e *Engine) doPlayback(f *os.File) {
 		switch rec.Event {
 		case "cursor":
 			ce := rec.Value.(CursorEvent)
-			LogInfo("Playback","cursor",ce)
+			LogInfo("Playback", "cursor", ce)
 			ScheduleAt(CurrentClick(), ce)
 		}
 	}
@@ -311,7 +310,7 @@ func (e *Engine) NewRecordingPath() (string, error) {
 
 func (e *Engine) RecordStartEvent() {
 	pe := PlaybackEvent{
-		Click:     CurrentClick(),
+		Click: CurrentClick(),
 	}
 	e.RecordPlaybackEvent(pe)
 }
@@ -375,7 +374,6 @@ func (e *Engine) RecordOscEvent(event *OscEvent) {
 	_, err = e.recordingFile.Write(bytes)
 	LogError(err)
 }
-
 
 func (e *Engine) RecordCursorEvent(event CursorEvent) {
 	if e.recordingFile == nil {
