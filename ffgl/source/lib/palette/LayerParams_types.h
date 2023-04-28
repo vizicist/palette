@@ -1,4 +1,3 @@
-DEFINE_TYPES(debug);
 DEFINE_TYPES(plugins);
 DEFINE_TYPES(bidule);
 DEFINE_TYPES(mmtt);
@@ -27,15 +26,6 @@ DEFINE_TYPES(midiport);
 
 void
 LayerParams_InitializeTypes() {
-
-	LayerParams_debugTypes.push_back("");
-	LayerParams_debugTypes.push_back("midi");
-	LayerParams_debugTypes.push_back("cursor");
-	LayerParams_debugTypes.push_back("saved");
-	LayerParams_debugTypes.push_back("api");
-	LayerParams_debugTypes.push_back("scheduler");
-	LayerParams_debugTypes.push_back("process");
-	LayerParams_debugTypes.push_back("attract");
 
 	LayerParams_pluginsTypes.push_back("");
 	LayerParams_pluginsTypes.push_back("quadpro");

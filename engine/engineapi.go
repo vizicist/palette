@@ -69,24 +69,6 @@ func (e *Engine) executeEngineAPI(api string, apiargs map[string]string) (result
 		go e.stopAfterDelay()
 		return "", nil
 
-		/*
-			case "startall":
-				TheQuadPro.Start()
-				_ = StartRunning("bidule")
-				_ = StartRunning("resolume")
-				_ = StartRunning("gui")
-				// _ = StartRunning("keykit")
-				return "", nil
-
-			case "stopall":
-				TheQuadPro.Stop()
-				_ = StopRunning("bidule")
-				_ = StopRunning("resolume")
-				_ = StopRunning("gui")
-				// _ = StopRunning("keykit")
-				return "", nil
-		*/
-
 	case "status":
 		result = JsonObject(
 			"uptime", fmt.Sprintf("%f", Uptime()),
@@ -103,7 +85,7 @@ func (e *Engine) executeEngineAPI(api string, apiargs map[string]string) (result
 		if err != nil {
 			return "", err
 		}
-		return "", e.SaveCurrent()
+		return "", SaveCurrentEngineParams()
 
 	case "setparams":
 		for name, value := range apiargs {
@@ -116,14 +98,14 @@ func (e *Engine) executeEngineAPI(api string, apiargs map[string]string) (result
 		if err != nil {
 			return "", err
 		}
-		return "", e.SaveCurrent()
+		return "", SaveCurrentEngineParams()
 
 	case "get":
 		name, ok := apiargs["name"]
 		if !ok {
 			return "", fmt.Errorf("executeEngineAPI: missing name parameter")
 		}
-		return e.Get(name), nil
+		return TheParams.Get(name), nil
 
 	case "startprocess":
 		process, ok := apiargs["process"]
@@ -158,7 +140,7 @@ func (e *Engine) executeEngineAPI(api string, apiargs map[string]string) (result
 		if !ok {
 			return "", fmt.Errorf("executeEngineAPI: missing filename parameter")
 		}
-		return "", e.params.Save("engine", filename)
+		return "", TheParams.Save("engine", filename)
 
 	case "exit":
 		e.StopMe()
@@ -199,15 +181,15 @@ func (e *Engine) executeEngineAPI(api string, apiargs map[string]string) (result
 	return result, err
 }
 
-func (e *Engine) SaveCurrent() (err error) {
-	return e.params.Save("engine", "_Current")
+func SaveCurrentEngineParams() (err error) {
+	return TheParams.Save("engine", "_Current")
 }
 
-func (e *Engine) LoadCurrent() (err error) {
+func LoadCurrentEngineParams() (err error) {
 	path := SavedFilePath("engine", "_Current")
 	paramsmap, err := LoadParamsMap(path)
 	if err == nil {
-		e.params.ApplyValuesFromMap("engine", paramsmap, e.Set)
+		TheParams.ApplyValuesFromMap("engine", paramsmap, TheParams.Set)
 	}
 	return err
 }
@@ -252,32 +234,32 @@ func (e *Engine) Set(name string, value string) error {
 		}
 	}
 	LogOfType("params", "Engine.Set", "name", name, "value", value)
-	return e.params.Set(name, value)
+	return TheParams.Set(name, value)
 }
 
-func (e *Engine) Get(name string) string {
-	return e.params.Get(name)
-}
+// func (e *Engine) Get(name string) string {
+// 	return TheParams.Get(name)
+// }
 
-func (e *Engine) GetWithDefault(nm string, dflt string) string {
-	if e.params.Exists(nm) {
-		return e.params.Get(nm)
+func GetWithDefault(nm string, dflt string) string {
+	if TheParams.Exists(nm) {
+		return TheParams.Get(nm)
 	} else {
 		return dflt
 	}
 }
 
 // ParamBool returns bool value of nm, or false if nm not set
-func (e *Engine) ParamBool(nm string) bool {
-	v := e.Get(nm)
+func ParamBool(nm string) bool {
+	v := TheParams.Get(nm)
 	if v == "" {
 		return false
 	}
 	return IsTrueValue(v)
 }
 
-func (e *Engine) EngineParamIntWithDefault(nm string, dflt int) int {
-	s := e.Get(nm)
+func EngineParamIntWithDefault(nm string, dflt int) int {
+	s := TheParams.Get(nm)
 	if s == "" {
 		return dflt
 	}
@@ -290,8 +272,8 @@ func (e *Engine) EngineParamIntWithDefault(nm string, dflt int) int {
 	return val
 }
 
-func (e *Engine) EngineParamFloatWithDefault(nm string, dflt float64) float64 {
-	s := e.Get(nm)
+func EngineParamFloatWithDefault(nm string, dflt float64) float64 {
+	s := TheParams.Get(nm)
 	if s == "" {
 		return dflt
 	}

@@ -17,7 +17,6 @@ rm -fr %ship% > nul 2>&1
 mkdir %ship%
 mkdir %ship%\bin
 mkdir %ship%\bin\mmtt_kinect
-mkdir %ship%\html
 mkdir %ship%\ffgl
 mkdir %ship%\keykit
 mkdir %ship%\keykit\bin
@@ -88,11 +87,6 @@ copy mmtt_kinect\Debug\mmtt_kinect.exe %bin%\mmtt_kinect\mmtt_kinect.exe >nul
 copy mmtt_kinect\*.dll %bin%\mmtt_kinect >nul
 popd
 
-echo ================ Copying html
-pushd %PALETTESOURCE%
-xcopy /e /y html %ship%\html >nul
-popd
-
 echo ================ Copying misc binaries
 copy %PALETTESOURCE%\binaries\nats\nats-pub.exe %bin% >nul
 copy %PALETTESOURCE%\binaries\nats\nats-sub.exe %bin% >nul
@@ -124,6 +118,7 @@ for %%X in (data_omnisphere) DO (
 	mkdir %ship%\%%X\saved
 	mkdir %ship%\%%X\keykit
 	mkdir %ship%\%%X\keykit\liblocal
+	mkdir %ship%\%%X\html
 	copy %PALETTESOURCE%\%%X\config\homepage.json %ship%\%%X\config >nul
 	copy %PALETTESOURCE%\%%X\config\ffgl.json %ship%\%%X\config >nul
 	copy %PALETTESOURCE%\%%X\config\param*.json %ship%\%%X\config >nul
@@ -144,6 +139,7 @@ for %%X in (data_omnisphere) DO (
 	copy %PALETTESOURCE%\%%X\midifiles\*.* %ship%\%%X\midifiles >nul
 	xcopy /e /y %PALETTESOURCE%\%%X\saved %ship%\%%X\saved >nul
 	xcopy /e /y %PALETTESOURCE%\%%X\keykit\liblocal %ship%\%%X\keykit\liblocal >nul
+	xcopy /e /y %PALETTESOURCE%\%%X\html %ship%\%%X\html >nul
 )
 
 echo ================ Copying windows-specific things

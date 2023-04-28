@@ -31,6 +31,13 @@
             "args": ["start"]
         },
         {
+            "name": "palette status",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
+            "args": ["status"]
+        },
+        {
             "name": "palette stop keykit",
             "type": "go",
             "request": "launch",

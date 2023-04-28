@@ -23,10 +23,30 @@ import (
 var EngineExe = "palette_engine.exe"
 var EngineExeDebug = "__debug_bin.exe"
 
-func IsEngineRunning() bool {
-	return isRunningExecutable(EngineExe)
-	// return isRunningExecutable(EngineExe) || isRunningExecutable(EngineExeDebug)
+func Init(tag string) {
+
+	InitLog(tag)
+	InitParams()
+	InitProcessManager()
+
 }
+
+func IsRunning(process string) bool {
+	if process == "engine" {
+		b := isRunningExecutable(EngineExe)
+		if !b {
+			// hack for debugging
+			b = isRunningExecutable("__debug_bin.exe")
+		}
+		return b
+	}
+	return TheProcessManager.IsRunning(process)
+}
+
+// func IsEngineRunning() bool {
+// 	return isRunningExecutable(EngineExe)
+// 	// return isRunningExecutable(EngineExe) || isRunningExecutable(EngineExeDebug)
+// }
 
 func StartEngine() error {
 	// Start the engine (which also starts up other processes)
@@ -518,7 +538,7 @@ func RemoteAPIRaw(args string) (map[string]string, error) {
 
 func SendLogs() error {
 
-	recipient := TheEngine.Get("engine.emailto")
+	recipient := TheParams.Get("engine.emailto")
 	if recipient == "" {
 		msg := "SendLogs: not sending, no emailto in settings"
 		LogWarn(msg)
@@ -567,9 +587,9 @@ func SendMail(body string) error {
 // SendMail xxx
 func SendMailWithAttachment(body, attachfile string) error {
 
-	recipient := TheEngine.Get("engine.emailto")
-	login := TheEngine.Get("engine.emaillogin")
-	password := TheEngine.Get("engine.emailpassword")
+	recipient := TheParams.Get("engine.emailto")
+	login := TheParams.Get("engine.emaillogin")
+	password := TheParams.Get("engine.emailpassword")
 
 	if recipient == "" {
 		return fmt.Errorf("sendMail: not sending, no emailto in settings")
