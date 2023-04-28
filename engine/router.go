@@ -46,17 +46,6 @@ func NewRouter() *Router {
 
 	r := Router{}
 
-	err := LoadParamEnums()
-	if err != nil {
-		LogWarn("LoadParamEnums", "err", err)
-		// might be fatal, but try to continue
-	}
-	err = LoadParamDefs()
-	if err != nil {
-		LogWarn("LoadParamDefs", "err", err)
-		// might be fatal, but try to continue
-	}
-
 	r.guiClient = osc.NewClient(LocalAddress, GuiPort)
 	r.oscInputChan = make(chan OscEvent)
 	r.midiInputChan = make(chan MidiEvent)
@@ -264,7 +253,7 @@ func (r *Router) handleOSCInput(e OscEvent) {
 }
 
 func (r *Router) notifyGUI(eventName string) {
-	if !TheEngine.ParamBool("engine.notifygui") {
+	if !ParamBool("engine.notifygui") {
 		return
 	}
 	msg := osc.NewMessage("/notify")
@@ -353,14 +342,14 @@ func (r *Router) oscHandleCursor(msg *osc.Message) {
 	}
 
 	// XXX - HACK!!
-	zfactor := TheEngine.EngineParamFloatWithDefault("mmttzfactor", 5.0)
-	ahack := TheEngine.EngineParamFloatWithDefault("mmttahack", 20.0)
+	zfactor := EngineParamFloatWithDefault("mmttzfactor", 5.0)
+	ahack := EngineParamFloatWithDefault("mmttahack", 20.0)
 	ce.Z = boundval32(ahack * zfactor * float64(ce.Z))
 
-	xexpand := TheEngine.EngineParamFloatWithDefault("mmttxexpand", 1.25)
+	xexpand := EngineParamFloatWithDefault("mmttxexpand", 1.25)
 	ce.X = boundval32(((float64(ce.X) - 0.5) * xexpand) + 0.5)
 
-	yexpand := TheEngine.EngineParamFloatWithDefault("mmttyexpand", 1.25)
+	yexpand := EngineParamFloatWithDefault("mmttyexpand", 1.25)
 	ce.Y = boundval32(((float64(ce.Y) - 0.5) * yexpand) + 0.5)
 
 	LogOfType("mmtt", "MMTT Cursor", "source", ce.Source, "ddu", ce.Ddu, "x", ce.X, "y", ce.Y, "z", ce.Z)

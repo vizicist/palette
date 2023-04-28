@@ -22,6 +22,8 @@ func main() {
 	signal.Ignore(syscall.SIGHUP)
 	signal.Ignore(syscall.SIGINT)
 
+	engine.Init("engine")
+
 	e := engine.NewEngine()
 
 	e.Start()
@@ -34,7 +36,7 @@ func main() {
 		os.Exit(0)
 	}()
 
-	if e.ParamBool("engine.twinsys") {
+	if engine.ParamBool("engine.twinsys") {
 		twinsys.Run()
 	} else {
 		select {}

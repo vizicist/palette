@@ -56,15 +56,23 @@ func CheckAutorestartProcesses() {
 
 //////////////////////////////////////////////////////////////////
 
-func NewProcessManager() *ProcessManager {
-	processCheckSecs := TheEngine.EngineParamFloatWithDefault("engine.processchecksecs", 60)
+func InitProcessManager() {
+	if TheProcessManager != nil {
+		return
+	}
+	processCheckSecs := EngineParamFloatWithDefault("engine.processchecksecs", 60)
 	pm := &ProcessManager{
 		info:             make(map[string]*ProcessInfo),
 		wasStarted:       make(map[string]bool),
 		lastProcessCheck: time.Time{},
 		processCheckSecs: processCheckSecs,
 	}
-	return pm
+	TheProcessManager = pm
+	pm.AddProcessBuiltIn("keykit")
+	pm.AddProcessBuiltIn("bidule")
+	pm.AddProcessBuiltIn("resolume")
+	pm.AddProcessBuiltIn("gui")
+	pm.AddProcessBuiltIn("mmtt")
 }
 
 func (pm *ProcessManager) checkProcess() {
@@ -103,7 +111,7 @@ func (pm *ProcessManager) CheckAutorestartProcesses() {
 	pm.mutex.Lock()
 	defer pm.mutex.Unlock()
 
-	autorestart := TheEngine.ParamBool("engine.autorestart")
+	autorestart := ParamBool("engine.autorestart")
 	if !autorestart {
 		return
 	}
@@ -124,10 +132,6 @@ func (pm *ProcessManager) AddProcess(name string, info *ProcessInfo) {
 		pm.info[name] = info
 	}
 
-}
-
-func AddProcessBuiltIn(process string) {
-	TheProcessManager.AddProcessBuiltIn(process)
 }
 
 func (pm *ProcessManager) AddProcessBuiltIn(process string) {
@@ -228,7 +232,7 @@ func (pm *ProcessManager) IsRunning(process string) bool {
 }
 
 func GuiProcessInfo() *ProcessInfo {
-	fullpath := TheEngine.Get("engine.gui")
+	fullpath := TheParams.Get("engine.gui")
 	if fullpath != "" && !FileExists(fullpath) {
 		LogWarn("No Gui found, looking for", "path", fullpath)
 		return nil
@@ -251,14 +255,15 @@ func GuiProcessInfo() *ProcessInfo {
 func KeykitProcessInfo() *ProcessInfo {
 
 	// Allow parameter to override keyroot
-	keyroot := TheEngine.Get("engine.keyroot")
+	keyroot := TheParams.Get("engine.keyroot")
 	if keyroot == "" {
 		keyroot = filepath.Join(PaletteDir(), "keykit")
 	}
+	LogInfo("Setting KEYROOT", "keyroot", keyroot)
 	os.Setenv("KEYROOT", keyroot)
 
 	// Allow parameter to override keypath
-	keypath := TheEngine.Get("engine.keypath")
+	keypath := TheParams.Get("engine.keypath")
 	if keypath == "" {
 		kp1 := filepath.Join(PaletteDataPath(), "keykit", "liblocal")
 		kp2 := filepath.Join(PaletteDir(), "keykit", "lib")
@@ -266,23 +271,26 @@ func KeykitProcessInfo() *ProcessInfo {
 
 	}
 	os.Setenv("KEYPATH", keypath)
+	LogInfo("Setting KEYPATH", "keypath", keypath)
 
 	// Allow parameter to override keyoutput
-	keyoutput := TheEngine.Get("engine.keyoutput")
+	keyoutput := TheParams.Get("engine.keyoutput")
 	if keyoutput == "" {
 		keyoutput = DefaultKeykitOutput
 	}
 	os.Setenv("KEYOUT", keyoutput)
+	LogInfo("Setting KEYPOUT", "keyoutput", keyoutput)
 
 	// Allow parameter to override keyoutput
-	keyallow := TheEngine.Get("engine.keyallow")
+	keyallow := TheParams.Get("engine.keyallow")
 	if keyallow == "" {
 		keyallow = "127.0.0.1"
 	}
 	os.Setenv("KEYALLOW", keyallow)
+	LogInfo("Setting KEYALLOW", "keyallow", keyallow)
 
 	// Allow parameter to override path to key.exe
-	fullpath := TheEngine.Get("engine.keykit")
+	fullpath := TheParams.Get("engine.keykit")
 	if fullpath != "" && !FileExists(fullpath) {
 		LogWarn("engine.keykit value doesn't exist, was looking for", "fullpath", fullpath)
 	}
