@@ -15,7 +15,6 @@ import (
 )
 
 type Engine struct {
-	params         *ParamValues
 	done           chan bool
 	oscoutput      bool
 	oscClient      *osc.Client
@@ -38,37 +37,19 @@ func NewEngine() *Engine {
 	engineSysex.Lock()
 	defer engineSysex.Unlock()
 
-	InitLog("engine")
 	LogInfo("Engine InitLog ==============================================")
 
 	TheEngine = &Engine{
-		params: NewParamValues(),
-		done:   make(chan bool),
+		done: make(chan bool),
 	}
 
 	TheCursorManager = NewCursorManager()
 	TheRouter = NewRouter()
-	TheProcessManager = NewProcessManager()
 	TheScheduler = NewScheduler()
 	TheAttractManager = NewAttractManager()
 	TheQuadPro = NewQuadPro()
 	TheMidiIO = NewMidiIO()
 	TheErae = NewErae()
-
-	// The Managers above should be created first so that
-	// loading the Current settings can change values in them.
-	TheEngine.SetDefaultValues()
-	err := TheEngine.LoadCurrent()
-	if err != nil {
-		LogError(err)
-		// but keep going
-	}
-
-	AddProcessBuiltIn("keykit")
-	AddProcessBuiltIn("bidule")
-	AddProcessBuiltIn("resolume")
-	AddProcessBuiltIn("gui")
-	AddProcessBuiltIn("mmtt")
 
 	TheEngine.ResetLogTypes(os.Getenv("PALETTE_LOG"))
 	return TheEngine
@@ -93,19 +74,8 @@ func (e *Engine) Start() {
 	go TheRouter.Start()
 	go TheMidiIO.Start()
 
-	if e.ParamBool("mmtt.depth") {
+	if ParamBool("mmtt.depth") {
 		go DepthRunForever()
-	}
-}
-
-func (e *Engine) SetDefaultValues() {
-	for nm, pd := range ParamDefs {
-		if pd.Category == "engine" {
-			err := e.params.SetParamValueWithString(nm, pd.Init)
-			if err != nil {
-				LogError(err)
-			}
-		}
 	}
 }
 

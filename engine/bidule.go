@@ -40,7 +40,7 @@ func (b *Bidule) Activate() {
 }
 
 func (b *Bidule) ProcessInfo() *ProcessInfo {
-	bidulePath := TheEngine.Get("engine.bidule")
+	bidulePath := TheParams.Get("engine.bidule")
 	if bidulePath == "" {
 		bidulePath = BiduleDefaultPath
 		LogWarn("No bidule value in settings, using default", "path", bidulePath)
@@ -50,7 +50,7 @@ func (b *Bidule) ProcessInfo() *ProcessInfo {
 		return nil
 	}
 	exe := filepath.Base(bidulePath)
-	bidulefile := TheEngine.Get("engine.bidulefile")
+	bidulefile := TheParams.Get("engine.bidulefile")
 	if bidulefile == "" {
 		bidulefile = "default.bidule"
 	}

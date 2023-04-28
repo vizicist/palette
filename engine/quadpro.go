@@ -176,7 +176,7 @@ func (quadpro *QuadPro) onGet(apiargs map[string]string) (result string, err err
 		return "", fmt.Errorf("QuadPro.onPatchGet: Missing name argument")
 	}
 	if strings.HasPrefix(paramName, "engine") {
-		return TheEngine.Get(paramName), nil
+		return TheParams.Get(paramName), nil
 	} else {
 		return "", fmt.Errorf("QuadPro.onGet: can't handle parameter %s", paramName)
 	}
@@ -275,7 +275,7 @@ func (quadpro *QuadPro) Load(category string, filename string) error {
 		}
 
 	case "engine":
-		TheEngine.params.ApplyValuesFromMap("engine", paramsMap, TheEngine.Set)
+		TheParams.ApplyValuesFromMap("engine", paramsMap, TheEngine.Set)
 		LogInfo("HEY! need work here")
 
 	default:
@@ -291,7 +291,7 @@ func (quadpro *QuadPro) Load(category string, filename string) error {
 	case "engine":
 		// No need to save _Current if we're loading it.
 		if filename != "_Current" {
-			err = TheEngine.SaveCurrent()
+			err = SaveCurrentEngineParams()
 		}
 	case "quad":
 		if filename != "_Current" {
@@ -381,7 +381,7 @@ func MmttInfo() *ProcessInfo {
 	// NOTE: it's inside a sub-directory of bin, so all the necessary .dll's are contained
 
 	// The value of mmtt is either "kinect" or "oak" or ""
-	mmtt := TheEngine.Get("engine.mmtt")
+	mmtt := TheParams.Get("engine.mmtt")
 	if mmtt == "" {
 		return nil
 	}

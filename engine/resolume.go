@@ -266,7 +266,7 @@ func (r *Resolume) showText(text string) {
 
 func (r *Resolume) ResolumeLayerForText() int {
 	defLayer := "5"
-	s := TheEngine.GetWithDefault("textlayer", defLayer)
+	s := GetWithDefault("textlayer", defLayer)
 	layernum, err := strconv.Atoi(s)
 	if err != nil {
 		LogError(err)
@@ -276,7 +276,7 @@ func (r *Resolume) ResolumeLayerForText() int {
 }
 
 func (r *Resolume) ProcessInfo() *ProcessInfo {
-	fullpath := TheEngine.Get("engine.resolume")
+	fullpath := TheParams.Get("engine.resolume")
 	if fullpath != "" && !FileExists(fullpath) {
 		LogWarn("No Resolume found, looking for", "path", fullpath)
 		return nil

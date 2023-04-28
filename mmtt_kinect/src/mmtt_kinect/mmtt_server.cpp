@@ -158,7 +158,7 @@ MmttServer::MmttServer()
 
 	_jsonport = 4444;
 	_do_initialalign = true;
-	_patchFile = NosuchLocalPath("config/mmtt_kinect.json");
+	_patchFile = NosuchDataPath("config/mmtt_kinect.json");
 	_tempDir = "c:/windows/temp";
 
 	camera = DepthCamera::makeDepthCamera(this,"kinect");
@@ -228,7 +228,7 @@ MmttServer::MmttServer()
 
 	_ffImage = cvCreateImageHeader( _camSize, IPL_DEPTH_8U, 3 );
 
-	std::string htmldir = NosuchPalettePath("html");
+	std::string htmldir = NosuchDataPath("html");
 	_httpserver = new MmttHttp(this,_jsonport,htmldir,60);
 
 	SetOscClientList(_OscClientList,_Clients);
@@ -1313,7 +1313,7 @@ MmttServer::LoadPatch(std::string fname)
 	}
 
 	if ( ! _regionsDefinedByPatch ) {
-		std::string fn_patch_image = NosuchLocalPath("config/mmtt.ppm");
+		std::string fn_patch_image = NosuchDataPath("config/mmtt.ppm");
 		NosuchDebug("Reading mask image from %s",fn_patch_image.c_str());
 		IplImage* img = cvLoadImage( fn_patch_image.c_str(), CV_LOAD_IMAGE_COLOR );
 		if ( ! img ) {
@@ -1430,7 +1430,7 @@ MmttServer::SavePatch(const char* id)
 		NosuchDebug("Unable to save patch, regions are not filled yet");
 		return error_json(-32700,"Unable to save patch, regions are not filled yet",id);
 	}
-	std::string fname = NosuchLocalPath("config/mmtt_patch_save.json");
+	std::string fname = NosuchDataPath("config/mmtt_patch_save.json");
 	ofstream f_json(fname.c_str());
 	if ( ! f_json.is_open() ) {
 		NosuchDebug("Unable to open %s!?",fname.c_str());
@@ -1473,7 +1473,7 @@ MmttServer::SavePatch(const char* id)
 	f_json.close();
 	NosuchDebug("Saved patch: %s",fname.c_str());
 
-	std::string fn_patch_image = NosuchLocalPath("config/mmtt_patch_save.ppm");
+	std::string fn_patch_image = NosuchDataPath("config/mmtt_patch_save.ppm");
 
 	copyRegionsToColorImage(_regionsImage,(unsigned char *)(_tmpRegionsColor->imageData),TRUE,TRUE,TRUE);
 	if ( !cvSaveImage(fn_patch_image.c_str(),_tmpRegionsColor) ) {

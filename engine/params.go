@@ -12,6 +12,8 @@ import (
 
 // parameter definitions
 
+var TheParams *ParamValues
+
 // ParamDef is a single parameter definition.
 type ParamDef struct {
 	TypedParamDef any
@@ -77,6 +79,41 @@ type ParamValues struct {
 func NewParamValues() *ParamValues {
 	// Note: it's ParamValue (not a pointer)
 	return &ParamValues{values: map[string]ParamValue{}}
+}
+
+func InitParams() {
+
+	if TheParams != nil {
+		LogError(fmt.Errorf("InitParams called a second time!?)"))
+		return
+	}
+	TheParams = NewParamValues()
+
+	err := LoadParamEnums()
+	if err != nil {
+		LogWarn("LoadParamEnums", "err", err)
+		// might be fatal, but try to continue
+	}
+
+	err = LoadParamDefs()
+	if err != nil {
+		LogWarn("LoadParamDefs", "err", err)
+		// might be fatal, but try to continue
+	}
+
+	// Set all the default engine.* values
+	for nm, pd := range ParamDefs {
+		if pd.Category == "engine" {
+			err := TheParams.SetParamValueWithString(nm, pd.Init)
+			if err != nil {
+				LogError(err)
+			}
+		}
+	}
+	err = LoadCurrentEngineParams()
+	if err != nil {
+		LogError(err)
+	}
 }
 
 func (vals *ParamValues) DoForAllParams(f func(string, ParamValue)) {

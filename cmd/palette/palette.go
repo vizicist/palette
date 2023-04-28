@@ -18,7 +18,7 @@ func main() {
 
 	flag.Parse()
 
-	engine.InitLog("palette")
+	engine.Init("palette")
 	engine.LogInfo("Palette InitLog", "args", flag.Args())
 
 	out := CliCommand(flag.Args())
@@ -52,6 +52,13 @@ func humanReadableApiOutput(output map[string]string) string {
 	return result
 }
 
+func statusString(process string) string {
+	if engine.IsRunning(process) {
+		return "running"
+	}
+	return "not running"
+}
+
 func CliCommand(args []string) string {
 
 	var err error
@@ -69,37 +76,32 @@ func CliCommand(args []string) string {
 	switch api {
 
 	case "status":
-		if engine.IsEngineRunning() {
-			return "Engine is running."
-		} else {
-			return "Engine is stopped."
-		}
+		s := ""
+		s += "Engine is " + statusString("engine") + ".\n"
+		s += "GUI is " + statusString("gui") + ".\n"
+		s += "Bidule is " + statusString("bidule") + ".\n"
+		s += "Resolume is " + statusString("resolume") + ".\n"
+		s += "Keykit is " + statusString("keykit") + ".\n"
+		s += "MMTT is " + statusString("mmtt") + ".\n"
+		return s
 
 	case "start":
 
 		switch arg1 {
 
-		case "engine":
+		case "", "engine":
 			return doStartEngine()
 
-		case "gui":
-			return doApi("engine.startprocess", "process", "gui")
+		case "gui", "biduile", "resolume", "keykit", "mmtt":
+			return doApi("engine.startprocess", "process", arg1)
 
-		case "bidule":
-			return doApi("engine.startprocess", "process", "bidule")
-
-		case "resolume":
-			return doApi("engine.startprocess", "process", "resolume")
-
-		case "keykit":
-			return doApi("engine.startprocess", "process", "keykit")
-
-		case "", "all":
+		case "all":
 			s1 := doStartEngine()
 			s1 += "\n" + doApi("engine.startprocess", "process", "gui")
 			s1 += "\n" + doApi("engine.startprocess", "process", "bidule")
 			s1 += "\n" + doApi("engine.startprocess", "process", "resolume")
 			s1 += "\n" + doApi("engine.startprocess", "process", "keykit")
+			s1 += "\n" + doApi("engine.startprocess", "process", "mmtt")
 			return s1
 
 		default:
@@ -108,34 +110,26 @@ func CliCommand(args []string) string {
 
 	case "stop":
 
-		if !engine.IsEngineRunning() {
+		if !engine.IsRunning("engine") {
 			return "Engine is not running."
 		}
 
 		switch arg1 {
 
-		case "", "all":
+		case "all":
 			s1 := doApi("engine.stopprocess", "process", "gui")
 			s1 += "\n" + doApi("engine.stopprocess", "process", "bidule")
 			s1 += "\n" + doApi("engine.stopprocess", "process", "resolume")
 			s1 += "\n" + doApi("engine.stopprocess", "process", "keykit")
+			s1 += "\n" + doApi("engine.stopprocess", "process", "mmtt")
 			s1 += "\n" + doApi("engine.exit")
 			return s1
 
-		case "engine":
+		case "", "engine":
 			return doApi("engine.exit")
 
-		case "gui":
-			return doApi("engine.stopprocess", "process", "gui")
-
-		case "bidule":
-			return doApi("engine.stopprocess", "process", "bidule")
-
-		case "resolume":
-			return doApi("engine.stopprocess", "process", "resolume")
-
-		case "keykit":
-			return doApi("engine.stopprocess", "process", "keykit")
+		case "gui", "bidule", "resolume", "keykit", "mmtt":
+			return doApi("engine.stopprocess", "process", arg1)
 
 		default:
 			return usage()
@@ -170,7 +164,7 @@ func doApi(api string, apiargs ...string) string {
 
 func doStartEngine() string {
 
-	if engine.IsEngineRunning() {
+	if engine.IsRunning("engine") {
 		return "Engine is already running?"
 	}
 

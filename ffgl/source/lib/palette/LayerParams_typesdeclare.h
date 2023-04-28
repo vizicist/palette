@@ -1,4 +1,3 @@
-DECLARE_TYPES(debug);
 DECLARE_TYPES(plugins);
 DECLARE_TYPES(bidule);
 DECLARE_TYPES(mmtt);
