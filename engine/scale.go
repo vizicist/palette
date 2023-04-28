@@ -9,12 +9,13 @@ type Scale struct {
 var scales map[string]*Scale
 
 func ClearExternalScale() {
-	InitScales()
+	initScales()
 	LogOfType("scale", "Clearing external scale")
 	scales["external"] = MakeScale()
 }
 
 func SetExternalScale(pitch uint8, on bool) {
+	initScales()
 	pitch = pitch % 12 // start from lowest octave
 	s := scales["external"]
 	LogOfType("scale", "Adding to external scale", "pitch", pitch, "on", on)
@@ -25,6 +26,7 @@ func SetExternalScale(pitch uint8, on bool) {
 
 // GetScale xxx
 func GetScale(name string) *Scale {
+	initScales()
 	s, ok := scales[name]
 	if !ok {
 		LogWarn("No such scale", "name", name)
@@ -33,8 +35,8 @@ func GetScale(name string) *Scale {
 	return s
 }
 
-// InitScales xxx
-func InitScales() {
+// initScales xxx
+func initScales() {
 
 	if scales != nil {
 		return
