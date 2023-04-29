@@ -92,6 +92,7 @@
 "engine.autotranspose": {"valuetype":"bool", "min":"false", "max":"true", "init":"false", "comment":"#" },
 "engine.autotransposebeats": {"valuetype":"int", "min":"8", "max":"128", "init":"48", "comment":"# transpose pitch" },
 "engine.bidule": {"valuetype":"string", "min":"bidule", "max":"bidule", "init":"C:/Program Files/Plogue/Bidule/Bidule.exe", "comment":"# Bidule executable path" },
+"engine.bidulefile": {"valuetype":"string", "min":"bidule", "max":"bidule", "init":"default.bidule", "comment":"# Bidule data file" },
 "engine.log": {"valuetype":"string", "min":"", "max":"", "init":"", "comment":"# Bidule executable path" },
 "engine.midiinput": {"valuetype":"string", "min":"midiinput", "max":"midiinput", "init":"", "comment":"# Bidule executable path" },
 "engine.midithru": {"valuetype":"bool", "min":"false", "max":"true", "init":"false", "comment":"#" },
