@@ -92,7 +92,7 @@ func CliCommand(args []string) string {
 		case "", "engine":
 			return doStartEngine()
 
-		case "gui", "biduile", "resolume", "keykit", "mmtt":
+		case "gui", "bidule", "resolume", "keykit", "mmtt":
 			return doApi("engine.startprocess", "process", arg1)
 
 		case "all":
