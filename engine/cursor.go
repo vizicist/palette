@@ -17,6 +17,7 @@ type ActiveCursor struct {
 	NoteOn      *NoteOn
 	NoteOnClick Clicks
 	Patch       *Patch
+	Button      string
 	loopIt      bool
 	loopBeats   int
 	loopFade    float32
@@ -42,18 +43,28 @@ type CursorHandler interface {
 	onCursorEvent(state ActiveCursor) error
 }
 
+// NewActiveCursor - create a new ActiveCursor for a CursorEvent
+// An ActiveCursor can be for a Button or a Patch area.
 func NewActiveCursor(ce CursorEvent) *ActiveCursor {
-	patch := TheQuadPro.PatchForCursorEvent(ce)
 
-	return &ActiveCursor{
+	patch, button := TheQuadPro.PatchForCursorEvent(ce)
+	if patch == nil && button == "" {
+		LogWarn("No Patch or Button for CursorEvent", "ce", ce)
+		return nil
+	}
+	ac := &ActiveCursor{
 		Current:   ce,
 		Previous:  ce,
+		Button:    button,
 		Patch:     patch,
-		loopIt:    patch.GetBool("misc.looping_on"),
-		loopBeats: patch.GetInt("misc.looping_beats"),
-		loopFade:  patch.GetFloat("misc.looping_fade"),
 		maxZ:      0,
 	}
+	if ac.Patch != nil {
+		ac.loopIt =    patch.GetBool("misc.looping_on")
+		ac.loopBeats = patch.GetInt("misc.looping_beats")
+		ac.loopFade =  patch.GetFloat("misc.looping_fade")
+	}
+	return ac
 }
 
 func NewCursorManager() *CursorManager {
@@ -214,6 +225,10 @@ func (cm *CursorManager) ExecuteCursorEvent(ce CursorEvent) {
 			ce.Ddu = "down"
 		}
 		ac = NewActiveCursor(ce)
+		if ac == nil {
+			LogWarn("CursorManager.ExecuteCursorEvent - unable to create ActiveCursor", "ce", ce)
+			return
+		}
 
 		cm.activeMutex.Lock()
 		cm.activeCursors[ce.Cid] = ac

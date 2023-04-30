@@ -384,14 +384,6 @@ func ReadConfigFile(path string) (map[string]string, error) {
 	return pmap, nil
 }
 
-// func ParamString(nm string) string {
-// 	return TheEngine.Get(nm)
-// }
-
-// func EngineParamWithDefault(nm string, dflt string) string {
-// 	return TheEngine.GetWithDefault(nm, dflt)
-// }
-
 func needFloatArg(nm string, api string, args map[string]string) (float32, error) {
 	val, ok := args[nm]
 	if !ok {

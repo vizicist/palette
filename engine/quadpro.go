@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"encoding/json"
 	"fmt"
 	"math/rand"
 	"os"
@@ -108,6 +109,8 @@ func (quadpro *QuadPro) Api(api string, apiargs map[string]string) (result strin
 	}
 }
 
+var CursorSourceToQuadPreset ParamsMap
+
 func (quadpro *QuadPro) Start() {
 
 	if quadpro.started {
@@ -115,6 +118,27 @@ func (quadpro *QuadPro) Start() {
 		return
 	}
 	quadpro.started = true
+
+	buttonPath := ConfigFilePath("buttons.json")
+	if fileExists(buttonPath) {
+		bytes, err := os.ReadFile(buttonPath)
+		if err != nil {
+			LogError(fmt.Errorf("unable to read buttons.json, err=%s", err))
+		} else {
+			var f any
+			err = json.Unmarshal(bytes, &f)
+			if err != nil {
+				LogError(fmt.Errorf("unable to Unmarshal %s", buttonPath))
+			} else {
+				buttonMap,ok := f.(map[string]any)
+				if !ok {
+					LogError(err)
+				} else {
+					CursorSourceToQuadPreset = buttonMap
+				}
+			}
+		}
+	}
 
 	TheCursorManager.AddCursorHandler("QuadPro", TheQuadPro, "A", "B", "C", "D")
 
@@ -127,13 +151,21 @@ func (quadpro *QuadPro) Start() {
 	LogIfError(err)
 }
 
-func (quadpro *QuadPro) PatchForCursorEvent(ce CursorEvent) *Patch {
-	patchLogic, ok := quadpro.patchLogic[ce.Source()]
+func (quadpro *QuadPro) PatchForCursorEvent(ce CursorEvent) (patch *Patch, button string) {
+	source := ce.Source()
+	// If the source has some patchLogic...
+	patchLogic, ok := quadpro.patchLogic[source]
 	if !ok {
-		LogWarn("QuadPro.PatchForCursorEvent: no patchLogic for source", "source", ce.Source())
-		return nil
+		patch = nil
+	} else {
+		patch = patchLogic.patch
 	}
-	return patchLogic.patch
+	// If the source is a Button...
+	_, ok = CursorSourceToQuadPreset[source]
+	if ok {
+		button = source
+	}
+	return patch, button
 }
 
 func (quadpro *QuadPro) onCursorEvent(state ActiveCursor) error {
@@ -141,6 +173,22 @@ func (quadpro *QuadPro) onCursorEvent(state ActiveCursor) error {
 	// Any non-internal cursor will turn attract mode off.
 	if !state.Current.IsInternal() {
 		TheAttractManager.setAttractMode(false)
+	}
+
+	if state.Button != "" {
+		if state.Current.Ddu == "down" {
+			val, ok := CursorSourceToQuadPreset[state.Button]
+			if !ok {
+				LogInfo("No Preset is attached to button", "button", state.Button)
+			} else {
+				preset := val.(string)
+				if TheQuadPro != nil {
+					TheQuadPro.Load("quad", preset)
+				}
+			}
+		}
+		// Buttons only do things on cursor down
+		return nil
 	}
 
 	// For the moment, the cursor to patchLogic mapping is 1-to-1.

@@ -258,7 +258,7 @@ func ParamBool(nm string) bool {
 	return IsTrueValue(v)
 }
 
-func EngineParamIntWithDefault(nm string, dflt int) int {
+func ParamIntWithDefault(nm string, dflt int) int {
 	s := TheParams.Get(nm)
 	if s == "" {
 		return dflt
@@ -272,7 +272,7 @@ func EngineParamIntWithDefault(nm string, dflt int) int {
 	return val
 }
 
-func EngineParamFloatWithDefault(nm string, dflt float64) float64 {
+func ParamFloatWithDefault(nm string, dflt float64) float64 {
 	s := TheParams.Get(nm)
 	if s == "" {
 		return dflt

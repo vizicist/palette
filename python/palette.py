@@ -261,21 +261,21 @@ def copyFile(frompath,topath):
 SettingsJson = None
 LocalSettingsJson = None
 
-def EngineParam(s,defvalue=""):
-    global SettingsJson
-    if SettingsJson == None:
-        path = engineFilePath("default.json")
-        if not os.path.isfile(path):
-            log("No file? path=",path)
-            return defvalue
-        if Verbose:
-            log("Loading ",path)
-        SettingsJson = readJsonPath(path)
-
-    if SettingsJson != None and "params" in SettingsJson and s in SettingsJson["params"]:
-        return SettingsJson[s]
-    else:
-        return defvalue
+# def EngineParam(s,defvalue=""):
+#     global SettingsJson
+#     if SettingsJson == None:
+#         path = engineFilePath("default.json")
+#         if not os.path.isfile(path):
+#             log("No file? path=",path)
+#             return defvalue
+#         if Verbose:
+#             log("Loading ",path)
+#         SettingsJson = readJsonPath(path)
+# 
+#     if SettingsJson != None and "params" in SettingsJson and s in SettingsJson["params"]:
+#         return SettingsJson[s]
+#     else:
+#         return defvalue
 
 paletteDir = None
 def PaletteDir():

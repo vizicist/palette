@@ -3,6 +3,7 @@ package engine
 import (
 	"encoding/json"
 	"fmt"
+	"runtime/debug"
 	"strconv"
 	"strings"
 	"sync"
@@ -74,21 +75,32 @@ func (r *Router) Start() {
 // InputListener listens for local device inputs (OSC, MIDI)
 // them in a single select eliminates some need for locking.
 func (r *Router) InputListener() {
+
 	for !r.killme {
-		select {
-		case msg := <-r.oscInputChan:
-			r.handleOSCInput(msg)
-			TheEngine.RecordOscEvent(&msg)
-		case event := <-r.midiInputChan:
-			r.HandleMidiEvent(event)
-			TheEngine.RecordMidiEvent(&event)
-		case event := <-r.cursorInput:
-			ScheduleAt(CurrentClick(), event)
-		default:
-			time.Sleep(time.Millisecond)
-		}
+		r.InputListenOnce()
 	}
 	LogInfo("InputListener is being killed")
+}
+
+func (r *Router) InputListenOnce() {
+	defer func() {
+		if err := recover(); err != nil {
+			LogWarn("Panic in InputListener", "err", err, "stacktrace", string(debug.Stack()))
+		}
+	}()
+	select {
+	case msg := <-r.oscInputChan:
+		r.handleOSCInput(msg)
+		TheEngine.RecordOscEvent(&msg)
+	case event := <-r.midiInputChan:
+		r.HandleMidiEvent(event)
+		TheEngine.RecordMidiEvent(&event)
+	case event := <-r.cursorInput:
+		ScheduleAt(CurrentClick(), event)
+	default:
+		time.Sleep(time.Millisecond)
+	}
+
 }
 
 func (r *Router) ScheduleCursorEvent(ce CursorEvent) {
@@ -342,14 +354,14 @@ func (r *Router) oscHandleCursor(msg *osc.Message) {
 	}
 
 	// XXX - HACK!!
-	zfactor := EngineParamFloatWithDefault("mmttzfactor", 5.0)
-	ahack := EngineParamFloatWithDefault("mmttahack", 20.0)
+	zfactor := ParamFloatWithDefault("mmtt.zfactor", 5.0)
+	ahack := ParamFloatWithDefault("mmtt.ahack", 20.0)
 	ce.Z = boundval32(ahack * zfactor * float64(ce.Z))
 
-	xexpand := EngineParamFloatWithDefault("mmttxexpand", 1.25)
+	xexpand := ParamFloatWithDefault("mmtt.xexpand", 1.25)
 	ce.X = boundval32(((float64(ce.X) - 0.5) * xexpand) + 0.5)
 
-	yexpand := EngineParamFloatWithDefault("mmttyexpand", 1.25)
+	yexpand := ParamFloatWithDefault("mmtt.yexpand", 1.25)
 	ce.Y = boundval32(((float64(ce.Y) - 0.5) * yexpand) + 0.5)
 
 	LogOfType("mmtt", "MMTT Cursor", "source", ce.Source, "ddu", ce.Ddu, "x", ce.X, "y", ce.Y, "z", ce.Z)
