@@ -60,7 +60,7 @@ func InitProcessManager() {
 	if TheProcessManager != nil {
 		return
 	}
-	processCheckSecs := EngineParamFloatWithDefault("engine.processchecksecs", 60)
+	processCheckSecs := ParamFloatWithDefault("engine.processchecksecs", 60)
 	pm := &ProcessManager{
 		info:             make(map[string]*ProcessInfo),
 		wasStarted:       make(map[string]bool),
