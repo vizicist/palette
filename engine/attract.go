@@ -33,10 +33,10 @@ func NewAttractManager() *AttractManager {
 		lastAttractChange:      time.Now(),
 		lastAttractCheck:       time.Now(),
 	}
-	am.attractCheckSecs = EngineParamFloatWithDefault("engine.attractchecksecs", 2)
-	am.attractIdleSecs = EngineParamFloatWithDefault("engine.attractidlesecs", 0)
-	am.attractChangeInterval = EngineParamFloatWithDefault("engine.attractchangeinterval", 30)
-	am.attractGestureInterval = EngineParamFloatWithDefault("engine.attractgestureinterval", 0.5)
+	am.attractCheckSecs = ParamFloatWithDefault("engine.attractchecksecs", 2)
+	am.attractIdleSecs = ParamFloatWithDefault("engine.attractidlesecs", 0)
+	am.attractChangeInterval = ParamFloatWithDefault("engine.attractchangeinterval", 30)
+	am.attractGestureInterval = ParamFloatWithDefault("engine.attractgestureinterval", 0.5)
 
 	return am
 }
