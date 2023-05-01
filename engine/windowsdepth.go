@@ -1,5 +1,5 @@
-//go:build windows
-// +build windows
+//go:build windowsdepth
+// +build windowsdepth
 
 package engine
 

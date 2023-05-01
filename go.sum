@@ -49,6 +49,8 @@ github.com/yuin/goldmark v1.4.0/go.mod h1:mwnBkeHKe2W/ZEtQ+71ViKU8L12m81fl3OWwC1
 github.com/yuin/goldmark v1.4.13/go.mod h1:6yULJ656Px+3vBD8DxQVa3kxgyrAnzto9xy5taEt/CY=
 gitlab.com/gomidi/midi/v2 v2.0.25 h1:dkzVBqbaFHjyWwP71MrQNX7IeRUIDonddmHbPpO/Ucg=
 gitlab.com/gomidi/midi/v2 v2.0.25/go.mod h1:quTyMKSQ4Klevxu6gY4gy2USbeZra0fV5SalndmPfsY=
+gitlab.com/gomidi/midi/v2 v2.0.30 h1:RgRYbQeQSab5ZaP1lqRcCTnTSBQroE3CE6V9HgMmOAc=
+gitlab.com/gomidi/midi/v2 v2.0.30/go.mod h1:Y6IFFyABN415AYsFMPJb0/43TRIuVYDpGKp2gDYLTLI=
 go.uber.org/atomic v1.7.0/go.mod h1:fEN4uk6kAWBTFdckzkM89CLk9XfWZrxpCo0nPH17wJc=
 go.uber.org/atomic v1.10.0 h1:9qC72Qh0+3MqyJbAn8YU5xVq1frD8bn3JtD2oXtafVQ=
 go.uber.org/atomic v1.10.0/go.mod h1:LUxbIzbOniOlMKjJjyPfpl4v+PKK2cNJn91OQbhoJI0=

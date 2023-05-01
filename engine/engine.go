@@ -68,15 +68,13 @@ func (e *Engine) Start() {
 	go e.StartOSCListener(OSCPort)
 	go e.StartHTTP(HTTPPort)
 
-	// StartOSC xxx
-
 	go TheScheduler.Start()
 	go TheRouter.Start()
 	go TheMidiIO.Start()
 
-	if ParamBool("mmtt.depth") {
-		go DepthRunForever()
-	}
+	// if ParamBool("mmtt.depth") {
+	// 	go DepthRunForever()
+	// }
 }
 
 func (e *Engine) WaitTillDone() {
