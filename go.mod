@@ -8,7 +8,7 @@ require (
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
 	github.com/hajimehoshi/ebiten/v2 v2.4.3
 	github.com/hypebeast/go-osc v0.0.0-20220308234300-cec5a8a1e5f5
-	gitlab.com/gomidi/midi/v2 v2.0.25
+	gitlab.com/gomidi/midi/v2 v2.0.30
 	go.uber.org/zap v1.23.0
 	golang.org/x/image v0.1.0
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
