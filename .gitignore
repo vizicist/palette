@@ -27,6 +27,10 @@ params/gentle/snap/CurrentSnapshot.*
 build/windows/.vs
 mmtt_kinect/build/windows/.oldvs
 mmtt_kinect/build/windows/.vs
+mmtt_kinect/build/windows/mmtt_kinect/Release
+mmtt_kinect/build/windows/mmtt_kinect/Debug
+mmtt_kinect/build/windows/ManifoldLib/Release
+mmtt_kinect/build/windows/ManifoldLib/Debug
 source/windows/.vs
 source/windows/x64
 badffgl
