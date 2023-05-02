@@ -1,8 +1,8 @@
 {
   "autowindow": 80,
-  "backbottom": 1281,
-  "backtop": 1529,
-  "shifty": -38,
+  "backbottom": 1359,
+  "backtop": 1442,
+  "shifty": -32,
   "blob_filter": 1,
   "blob_maxsize": 10000,
   "blob_minsize": 200,
