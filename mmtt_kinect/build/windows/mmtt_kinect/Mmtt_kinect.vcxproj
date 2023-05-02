@@ -30,7 +30,7 @@
     <ConfigurationType>Application</ConfigurationType>
     <CharacterSet>Unicode</CharacterSet>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v120</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -148,7 +148,7 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>..\..\..\src\nosuch;..\..\..\src\mmtt_kinect;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\src\nosuch;..\..\..\src\mmtt_kinect;..\..\..\src\pthreads-win32-2.8.0\Pre-built.2\include;..\..\..\src\osc\include;..\..\..\src\cvblobslib\src;..\..\..\src\opencv\build\include;..\..\..\src\cJSON;c:\Program Files\Microsoft SDKs\Kinect\v1.7\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -161,9 +161,9 @@
       <AdditionalIncludeDirectories>..\..\..\src\mmtt_kinect;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>opencv_highgui242.lib;opencv_core242.lib;opencv_flann242.lib;opencv_ml242.lib;opencv_imgproc242.lib;libjpeg.lib;libpng.lib;libtiff.lib;libjasper.lib;pthreadVC2.lib;winmm.lib;manifoldlib.lib;portmidi_s.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opencv_highgui2411.lib;opencv_core2411.lib;opencv_flann2411.lib;opencv_ml2411.lib;opencv_imgproc2411.lib;libjpeg.lib;libpng.lib;libtiff.lib;libjasper.lib;pthreadVC2.lib;winmm.lib;manifoldlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>Release\Mmtt_creative.exe</OutputFile>
-      <AdditionalLibraryDirectories>..\..\..\src\osc\lib\vc10;..\..\..\src\opencv_localbuild\lib\Release;..\..\..\src\opencv_localbuild\3rdparty\lib\Release;..\..\..\src\portmidi\Release;..\..\..\src\ManifoldLib\Release;..\..\..\src\pthreads-win32-2.8.0\Pre-built.2\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\..\src\osc\lib\vc10;..\..\..\src\portmidi\Release;..\\ManifoldLib\Release;..\..\..\src\pthreads-win32-2.8.0\Pre-built.2\lib;..\..\..\src\opencv\build\x86\vc12\staticlib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <GenerateDebugInformation>false</GenerateDebugInformation>
