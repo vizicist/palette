@@ -26,10 +26,10 @@ echo ================ Upgrading Python
 python -m pip install pip | grep -v "already.*satisfied"
 pip install --use-pep517 codenamize pip install python-osc requests pip install pyinstaller get-mac mido pyperclip chardet | grep -v "already satisfied"
 
-echo ================ Compiling depthlib
-pushd ..\..\depthlib
-call build.bat > nul
-popd
+rem echo ================ Compiling depthlib
+rem pushd ..\..\depthlib
+rem call build.bat > nul
+rem popd
 
 echo ================ Creating cmds
 
@@ -88,8 +88,8 @@ copy mmtt_kinect\*.dll %bin%\mmtt_kinect >nul
 popd
 
 echo ================ Copying misc binaries
-copy %PALETTESOURCE%\binaries\nats\nats-pub.exe %bin% >nul
-copy %PALETTESOURCE%\binaries\nats\nats-sub.exe %bin% >nul
+rem copy %PALETTESOURCE%\binaries\nats\nats-pub.exe %bin% >nul
+rem copy %PALETTESOURCE%\binaries\nats\nats-sub.exe %bin% >nul
 copy %PALETTESOURCE%\binaries\nircmdc.exe %bin% >nul
 copy %PALETTESOURCE%\binaries\tail.exe %bin% >nul
 
@@ -105,7 +105,7 @@ copy testcursor.bat %bin% >nul
 copy osc.bat %bin% >nul
 copy ipaddress.bat %bin% >nul
 copy taillogs.bat %bin% >nul
-copy natsmon.bat %bin% >nul
+rem copy natsmon.bat %bin% >nul
 copy delay.bat %bin% >nul
 copy setpalettelogdir.bat %bin% >nul
 
@@ -127,7 +127,7 @@ for %%X in (data_omnisphere) DO (
 	copy %PALETTESOURCE%\%%X\config\mmtt_*.json %ship%\%%X\config >nul
 	copy %PALETTESOURCE%\%%X\config\synths.json %ship%\%%X\config >nul
 	copy %PALETTESOURCE%\%%X\config\morphs.json %ship%\%%X\config >nul
-	copy %PALETTESOURCE%\%%X\config\nats*.conf %ship%\%%X\config >nul
+	rem copy %PALETTESOURCE%\%%X\config\nats*.conf %ship%\%%X\config >nul
 	copy %PALETTESOURCE%\%%X\config\Palette*.avc %ship%\%%X\config >nul
 	copy %PALETTESOURCE%\%%X\config\EraeTouchLayout.emk %ship%\%%X\config >nul
 	copy %PALETTESOURCE%\%%X\config\attractscreen.png %ship%\%%X\config >nul
@@ -145,7 +145,7 @@ for %%X in (data_omnisphere) DO (
 echo ================ Copying windows-specific things
 copy %PALETTESOURCE%\SenselLib\x64\LibSensel.dll %bin% >nul
 copy %PALETTESOURCE%\SenselLib\x64\LibSenselDecompress.dll %bin% >nul
-copy %PALETTESOURCE%\depthlib\build\x64\Release\depthlib.dll %bin% >nul
+rem copy %PALETTESOURCE%\depthlib\build\x64\Release\depthlib.dll %bin% >nul
 copy vc15\bin\depthai-core.dll %bin% >nul
 copy vc15\bin\opencv_world454.dll %bin% >nul
 
