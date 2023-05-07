@@ -69,9 +69,7 @@ The last time I installed it from https://github.com/niXman/mingw-builds-binarie
 
 - install LoopBe30 from https://nerds.de/en/loopbe30.html and enable 16 ports (requires reboot).
 
-- install Kinect Developer Toolkit v1.7.0
-- install Kinect Runtime v1.7
-- install Kinect SDK v1.7
+- install Kinect Runtime v1.7, Kinect SDK v1.7, and Kinect Developer Toolkit v1.7.0
 
 - To compile everything, use a newly-created "cmd" window (so that the changes to PATH and the environment variable are reflected) and enter these lines:
 
