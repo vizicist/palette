@@ -37,21 +37,7 @@
         "numslices": "/infinitezoom/effect/numslices"
       }
     },
-    "twisted": {
-      "on": {
-        "addr": "/twisted/bypassed",
-        "arg": 0
-      },
-      "off": {
-        "addr": "/twisted/bypassed",
-        "arg": 1
-      },
-      "params": {
-        "twirl": "/twisted/effect/twirl",
-        "radius": "/twisted/effect/radius"
-      }
-    },
-    "huerotate": {
+   "huerotate": {
       "on": {
         "addr": "/huerotate/bypassed",
         "arg": 0
@@ -212,6 +198,36 @@
       },
       "params": {
         "feedback": "/trails/effect/feedback"
+      }
+    },
+    "twisted": {
+      "on": {
+        "addr": "/twisted/bypassed",
+        "arg": 0
+      },
+      "off": {
+        "addr": "/twisted/bypassed",
+        "arg": 1
+      },
+      "params": {
+        "twirl": "/twisted/effect/twirl",
+        "radius": "/twisted/effect/radius"
+      }
+    },
+    "wavewarp": {
+      "on": {
+        "addr": "/wavewarp/bypassed",
+        "arg": 0
+      },
+      "off": {
+        "addr": "/wavewarp/bypassed",
+        "arg": 1
+      },
+      "params": {
+        "height": "/wavewarp/effect/height",
+        "width": "/wavewarp/effect/width",
+        "angle": "/wavewarp/effect/angle",
+        "speed": "/wavewarp/effect/speed"
       }
     }
   }
