@@ -71,11 +71,11 @@ class ProGuiApp(tk.Tk):
             patchname,
             patchnames,
             visiblepagenames,
-            isguilarge
+            guisize
             ):
 
-        self.isguilarge = isguilarge
-        log("ProGuiApp isguilarge=",isguilarge)
+        self.guisize = guisize
+        log("ProGuiApp guisize=",guisize)
         self.killme = False
 
         self.currentMode = ""
@@ -95,30 +95,47 @@ class ProGuiApp(tk.Tk):
         self.selectDisplayPerRow = 3
 
         # Normal layout values
-        if self.isguilarge:
+        if self.guisize == "palette":
             self.paramDisplayRows = 22
             self.frameSizeOfControlNormal = 0.06
             self.frameSizeOfSelectNormal = 1.0 - self.frameSizeOfControlNormal
             self.frameSizeOfPatchChooserNormal = 0.0
-            self.selectDisplayRowsNormal = 15
+            self.selectDisplayRowsNormal = 14
 
-            self.frameSizeOfControlAdvanced = 0.15 # 0.06 #  0.15
+            self.frameSizeOfControlAdvanced = 0.06 # 0.15
             self.frameSizeOfPatchChooserAdvanced = 0.13
             self.frameSizeOfSelectAdvanced = 1.0 - self.frameSizeOfControlAdvanced - self.frameSizeOfPatchChooserAdvanced
-            self.selectDisplayRowsAdvanced = 13
+            self.selectDisplayRowsAdvanced = 11
 
             self.performButtonPadx = 3
             self.performButtonPady = 2
             self.performButtonsPerRow = 6
-        else:
-            self.paramDisplayRows = 24
+        elif self.guisize == "medium":
+            self.paramDisplayRows = 23
             self.frameSizeOfControlNormal = 0.085
             self.frameSizeOfPatchChooserNormal = 0.0
             self.frameSizeOfSelectNormal = 1.0 - self.frameSizeOfControlNormal
-            self.selectDisplayRowsNormal = 13
+            self.selectDisplayRowsNormal = 14
 
-            self.frameSizeOfControlAdvanced = 0.19 #  0.19
+            self.frameSizeOfControlAdvanced = 0.085 #  0.19
             self.frameSizeOfPatchChooserAdvanced = 0.14
+            self.frameSizeOfSelectAdvanced = 1.0 - self.frameSizeOfControlAdvanced - self.frameSizeOfPatchChooserAdvanced
+            self.selectDisplayRowsAdvanced = 12 # 9
+
+            self.performButtonPadx = 3
+            self.performButtonPady = 3
+            self.performButtonsPerRow = 6
+        else:
+            if self.guisize != "small":
+                log("Unknown guisize=",self.guisize)
+            self.paramDisplayRows = 23
+            self.frameSizeOfControlNormal = 0.085
+            self.frameSizeOfPatchChooserNormal = 0.0
+            self.frameSizeOfSelectNormal = 1.0 - self.frameSizeOfControlNormal
+            self.selectDisplayRowsNormal = 12
+
+            self.frameSizeOfControlAdvanced = 0.085 #  0.19
+            self.frameSizeOfPatchChooserAdvanced = 0.12
             self.frameSizeOfSelectAdvanced = 1.0 - self.frameSizeOfControlAdvanced - self.frameSizeOfPatchChooserAdvanced
             self.selectDisplayRowsAdvanced = 11 # 9
 
@@ -133,7 +150,7 @@ class ProGuiApp(tk.Tk):
         self.selectButtonPadx = 5
         self.selectButtonPady = 3
 
-        setFontSizes(self.isguilarge)
+        setFontSizes(self.guisize)
 
         tk.Tk.__init__(self)
 
@@ -390,12 +407,6 @@ class ProGuiApp(tk.Tk):
         pass
 
     def resetVisibility(self):
-        for pg in self.visiblePageNames:
-            if self.guiLevel > 0:
-                self.pageHeader.pageButton[pg].pack(side=tk.LEFT,padx=5)
-            else:
-                self.pageHeader.pageButton[pg].pack_forget()
-
         self.editMode = False
         self.setFrameSizes()
 
@@ -890,7 +901,7 @@ class ProGuiApp(tk.Tk):
 
         self.resetLastAnything()
 
-        # click the Loop Clear button 4 times quickly to change the GuiLevel
+        # click the Clear button 4 times quickly to change the GuiLevel
         tm = time.time()
         since = tm - self.lastClearLoop
         self.lastClearLoop = tm
@@ -1340,18 +1351,35 @@ class PageHeader(tk.Frame):
             self.pageButton[pageName] = ttk.Button(self.titleFrame, text=realText, style='PageButtonDisabled.TLabel',
                 command=lambda nm=pageName: self.controller.clickPage(nm))
 
+        self.textPrefix = {}
+        self.textPrefix["quad"] = ttk.Label(self.titleFrame, text="/", style='PageSep.TLabel',background=ColorBg)
+        self.textPrefix["patch"] = ttk.Label(self.titleFrame, text="/", style='PageSep.TLabel',background=ColorBg)
+        self.textPrefix["misc"] = ttk.Label(self.titleFrame, text="=", style='PageSep.TLabel',background=ColorBg)
+        self.textPrefix["sound"] = ttk.Label(self.titleFrame, text="+", style='PageSep.TLabel',background=ColorBg)
+        self.textPrefix["visual"] = ttk.Label(self.titleFrame, text="+", style='PageSep.TLabel',background=ColorBg)
+        self.textPrefix["effect"] = ttk.Label(self.titleFrame, text="+", style='PageSep.TLabel',background=ColorBg)
+
         self.repack()
 
     def repack(self):
+
         if self.controller.guiLevel == 0:
+            # clear plaement of everything
+            for pg in self.controller.visiblePageNames:
+                self.pageButton[pg].pack_forget()
+            for t in self.textPrefix:
+                self.textPrefix[t].pack_forget()
+            # guiLevel 0 is just the title
             self.PaletteTitle.config(text="Space Palette Pro",justify=tk.CENTER)
             self.PaletteTitle.pack(side=tk.TOP,pady=0)
-            for pageName in self.controller.visiblePageNames:
-                self.pageButton[pageName].pack_forget()
         else:
-            for pageName in self.controller.visiblePageNames:
-                self.pageButton[pageName].pack(side=tk.LEFT,padx=5)
             self.PaletteTitle.pack_forget()
+            for pg in self.controller.visiblePageNames:
+                padx = 2
+                if pg in self.textPrefix:
+                    self.textPrefix[pg].pack(side=tk.LEFT,padx=0)
+                    padx = 0
+                self.pageButton[pg].pack(side=tk.LEFT,padx=padx)
             
     def highlightPageButton(self,pagename):
         for nm in self.pageButton:
@@ -2121,7 +2149,7 @@ class PageSelector(tk.Frame):
                 nrows = self.controller.selectDisplayRowsAdvanced
         nbuttons = self.controller.selectDisplayPerRow * nrows
         nvals = len(self.vals)
-        if nvals <= nbuttons:
+        if nvals <= nbuttons or self.controller.guiLevel == 0:
             # get rid of the scrollbar and adjust the button layout factors
             self.scrollbar.pack_forget()
             buttonwidth=17
@@ -2150,11 +2178,11 @@ class PageSelector(tk.Frame):
                     selectButtonText = self.vals[valindex]
                     istwo = isTwoLine(selectButtonText)
                     if istwo:
-                        style='SavedButton.TLabel'
+                        style='SelectButton.TLabel'
                         selectButtonText = selectButtonText.replace(palette.LineSep,"\n",1)
                         selectButtonText = selectButtonText.replace(palette.LineSep," ")
                     else:
-                        style='SavedButton.TLabel'
+                        style='SelectButton.TLabel'
                         selectButtonText = selectButtonText + "\n"
 
                     # First time here, we create the Button
@@ -2182,33 +2210,43 @@ class PageSelector(tk.Frame):
         self.controller.selectorButtonIndex = buttoni
         for i in self.selectButtons:
             if i == buttoni:
-                s = 'SavedButtonHighlight.TLabel'
+                s = 'SelectButtonHighlight.TLabel'
             else:
-                s = 'SavedButton.TLabel'
+                s = 'SelectButton.TLabel'
             self.selectButtons[i].config(style=s)
 
 def afterWindowIsDisplayed(windowName,guisize,*args):
 
     log("afterWindowIsDisplay guisize=",guisize)
-    if guisize != "":
 
-        time.sleep(1.0) # wait for window to be visible so nircmdc sees it
-        # The value of guisize should be four integers separated by spaces
-        guisize = guisize.replace(","," ")
-        cmd = "nircmdc.exe win setsize stitle \""+windowName+"\" "+guisize
-        log("Resizing GUI, guisize=",guisize," cmd=",cmd)
+    time.sleep(1.0) # wait for window to be visible so nircmdc sees it
+    # The value of guisize should be four integers separated by spaces
+    if guisize == "palette":
+        guirect = "-800 0 800 1280"
+        guirect = "0 0 800 1280"
+    elif guisize == "small":
+        guirect = "0 0 400 640"
+    elif guisize == "medium":
+        guirect = "0 0 500 800"
+    else:
+        log("BAD VALUE FOR guisize=",guisize)
+        guirect = "0 0 400 640"
+
+    guisize = guisize.replace(","," ")
+    cmd = "nircmdc.exe win setsize stitle \""+windowName+"\" "+guirect
+    log("Resizing GUI, guirect=",guirect," cmd=",cmd)
+    os.system(cmd)
+
+    # By default, remove the title bar and maximize it
+    guimaximize = os.environ.get("PALETTE_GUI_MAXIMIZE","false")
+    log("guimaximize=",guimaximize)
+    if guimaximize == "true":
+        cmd = "nircmdc.exe win -style stitle \""+windowName+"\" 0x00CA0000"
+        log("Maximizing gui cmd 1 =",cmd)
         os.system(cmd)
-
-        # By default, remove the title bar and maximize it
-        guimaximize = os.environ.get("PALETTE_GUI_MAXIMIZE","false")
-        log("guimaximize=",guimaximize)
-        if guimaximize == "true":
-            cmd = "nircmdc.exe win -style stitle \""+windowName+"\" 0x00CA0000"
-            log("Maximizing gui cmd 1 =",cmd)
-            os.system(cmd)
-            cmd = "nircmdc.exe win max stitle \""+windowName+"\""
-            log("Maximizing gui cmd 2 =",cmd)
-            os.system(cmd)
+        cmd = "nircmdc.exe win max stitle \""+windowName+"\""
+        log("Maximizing gui cmd 2 =",cmd)
+        os.system(cmd)
 
     global PaletteApp
     PaletteApp.nextMode = "layout"
@@ -2239,34 +2277,46 @@ def initMain(app):
     app.protocol("WM_DELETE_WINDOW", on_closing)
     app.mainLoop()
 
-def setFontSizes(isguilarge):
-    global savedButtonFont, largestFont
-    global hugeFont, comboFont, largerFont, largeFont, performButtonFont
-    global patchLabelFont, paramNameFont, paramValueFont, paramAdjustFont
+def setFontSizes(guisize):
+    global selectButtonFont, largestFont, smallFont
+    global comboFont, largerFont, largeFont, performButtonFont
+    global paramNameFont, paramValueFont, paramAdjustFont
 
     f = 'Open Sans Regular'
 
-    if isguilarge:
-        savedButtonFont = (f, int(20))
+    if guisize == "palette":
+        selectButtonFont = (f, int(20))
         largestFont = (f, int(24))
-        hugeFont = (f, int(36))
         comboFont = (f, int(20))
         largerFont = (f, int(20))
         largeFont = (f, int(16))
+        smallFont = (f, int(12))
         performButtonFont = (f, int(14))
-        patchLabelFont = (f, int(22))
         paramNameFont = (f, int(18))
         paramValueFont = (f, int(18))
         paramAdjustFont = (f, int(20))
-    else:
-        savedButtonFont = (f, int(10))
-        largestFont = (f, int(12))
-        hugeFont = (f, int(18))
+    elif guisize == "medium":
+        selectButtonFont = (f, int(12))
         comboFont = (f, int(10))
+        largestFont = (f, int(16))
+        largerFont = (f, int(12))
+        largeFont = (f, int(10))
+        smallFont = (f, int(6))
+        performButtonFont = (f, int(10))
+        paramNameFont = (f, int(12))
+        paramValueFont = (f, int(12))
+        paramAdjustFont = (f, int(10))
+    else:
+        if guisize != "small":
+            log("Unknown guisize=",guisize)
+        selectButtonFont = (f, int(10))
+
+        largestFont = (f, int(12))
         largerFont = (f, int(10))
         largeFont = (f, int(8))
+        smallFont = (f, int(6))
+        comboFont = (f, int(10))
         performButtonFont = (f, int(7))
-        patchLabelFont = (f, int(8))
         paramNameFont = (f, int(8))
         paramValueFont = (f, int(8))
         paramAdjustFont = (f, int(6))
@@ -2280,6 +2330,7 @@ def makeStyles(app):
 
     s.configure('PageButtonEnabled.TLabel', background=ColorHigh, relief="flat", justify=tk.CENTER, font=largestFont)
     s.configure('PageButtonDisabled.TLabel', background=ColorButton, relief="flat", justify=tk.CENTER, font=largestFont)
+    s.configure('PageSep.TLabel', background=ColorButton, relief="flat", justify=tk.CENTER, font=largerFont)
 
     s.configure('RandEtcButton.TLabel', font=largerFont, foreground=ColorText, background=ColorButton)
     s.configure('RandEtcButtonHigh.TLabel', font=largerFont, foreground=ColorText, background=ColorHigh)
@@ -2290,14 +2341,11 @@ def makeStyles(app):
 
     s.configure('GlobalButton.TLabel', font=largestFont, background=ColorButton, relief="flat", justify=tk.CENTER)
 
-    s.configure('PerformMessage.TLabel', background=ColorBg, foreground=ColorRed, relief="flat", justify=tk.CENTER, align=tk.CENTER, font=performButtonFont)
-
     s.configure('Loading.TLabel', background=ColorButton, foreground=ColorWhite, relief="flat", justify=tk.CENTER, align=tk.CENTER, font=largestFont)
     s.configure('Attract.TLabel', background=ColorBg, foreground=ColorWhite, relief="flat", justify=tk.CENTER, align=tk.CENTER, font=largestFont)
-    s.configure('PerformHeader.TLabel', background=ColorButton, foreground=ColorBright, relief="flat", justify=tk.CENTER, align=tk.CENTER, font=performButtonFont)
 
-    s.configure('SavedButton.TLabel', foreground=ColorText, font=savedButtonFont, background=ColorButton, anchor=tk.CENTER, justify=tk.CENTER)
-    s.configure('SavedButtonHighlight.TLabel', foreground=ColorText, font=savedButtonFont, background=ColorHigh, anchor=tk.CENTER, justify=tk.CENTER)
+    s.configure('SelectButton.TLabel', foreground=ColorText, font=selectButtonFont, background=ColorButton, anchor=tk.CENTER, justify=tk.CENTER)
+    s.configure('SelectButtonHighlight.TLabel', foreground=ColorText, font=selectButtonFont, background=ColorHigh, anchor=tk.CENTER, justify=tk.CENTER)
 
     s.configure('RecordingButton.TLabel', background=ColorRed, relief="flat", justify=tk.CENTER, align=tk.CENTER, font=largeFont)
 
@@ -2306,15 +2354,15 @@ def makeStyles(app):
 
     s.configure('custom.TCombobox', foreground=ColorComboText, background=ColorBg)
 
-    s.map('Patch.TLabel',
-        foreground=[('disabled', 'yellow'),
-                    ('pressed', ColorText),
-                    ('active', ColorText)],
-        background=[('disabled', 'yellow'),
-                    ('pressed', ColorHigh),
-                    ('active', ColorButton)]
-        )
-    s.map('SavedButton.TLabel',
+    # s.map('Patch.TLabel',
+    #     foreground=[('disabled', 'yellow'),
+    #                 ('pressed', ColorText),
+    #                 ('active', ColorText)],
+    #     background=[('disabled', 'yellow'),
+    #                 ('pressed', ColorHigh),
+    #                 ('active', ColorButton)]
+    #     )
+    s.map('SelectButton.TLabel',
         foreground=[('disabled', 'yellow'),
                     ('pressed', ColorText),
                     ('active', ColorText)],
@@ -2397,17 +2445,10 @@ if __name__ == "__main__":
     }
 
     # guisize is of the form x,y,w,h
-    guisize = os.environ.get("PALETTE_GUI_SIZE","default")
-    log("guisize env var = ",guisize)
+    guisize = os.environ.get("PALETTE_GUI_SIZE","palette")
 
     global PaletteApp
-    if guisize == "palette":
-        # this is a special value for a Space Palette Pro
-        # putting the gui on the touchscreen
-        guisize = "-800,0,800,1280"
-        PaletteApp = ProGuiApp(patchname,patchnames,visiblepagenames,True)
-    else:
-        PaletteApp = ProGuiApp(patchname,patchnames,visiblepagenames,False)
+    PaletteApp = ProGuiApp(patchname,patchnames,visiblepagenames,guisize)
 
     makeStyles(PaletteApp)
 
@@ -2416,8 +2457,10 @@ if __name__ == "__main__":
         # Fixed size - the guisize is really only used to reposition it.
         # Should check to see whether the size matches the 800x1280 expectation
         PaletteApp.wm_geometry("%dx%d" % (800,1280))  # PALETTE VERSION
-    elif guisize == "small" or guisize == "default":
-        PaletteApp.wm_geometry("%dx%d" % (400,640))  # SMALL VERSION
+    elif guisize == "small":
+        PaletteApp.wm_geometry("%dx%d" % (400,640))
+    elif guisize == "medium":
+        PaletteApp.wm_geometry("%dx%d" % (500,800))
     else:
         log("BAD VALUE FOR guisize=",guisize)
         PaletteApp.wm_geometry("%dx%d" % (400,640))   # SMALL VERSION
