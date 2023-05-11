@@ -85,20 +85,6 @@
         "gaussian": "/blur/effect/gaussian"
       }
     },
-    "mirrorquad": {
-      "on": {
-        "addr": "/mirrorquad/bypassed",
-        "arg": 0
-      },
-      "off": {
-        "addr": "/mirrorquad/bypassed",
-        "arg": 1
-      },
-      "params": {
-        "flipx": "/mirrorquad/effect/flipx",
-        "flipy": "/mirrorquad/effect/flipy"
-      }
-    },
     "fragment": {
       "on": {
         "addr": "/fragment/bypassed",
@@ -116,19 +102,6 @@
         "fragrotationy": "/fragment/effect/fragrotationy",
         "fragrotationz": "/fragment/effect/fragrotationz",
         "fragscale": "/fragment/effect/fragscale"
-      }
-    },
-    "posterize": {
-      "on": {
-        "addr": "/posterize/bypassed",
-        "arg": 0
-      },
-      "off": {
-        "addr": "/posterize/bypassed",
-        "arg": 1
-      },
-      "params": {
-        "posterize": "/posterize/effect/posterize"
       }
     },
     "displace": {
@@ -187,6 +160,115 @@
         "flipy": "/mirror/effect/flipy"
       }
     },
+    "mirrorquad": {
+      "on": {
+        "addr": "/mirrorquad/bypassed",
+        "arg": 0
+      },
+      "off": {
+        "addr": "/mirrorquad/bypassed",
+        "arg": 1
+      },
+      "params": {
+        "flipx": "/mirrorquad/effect/flipx",
+        "flipy": "/mirrorquad/effect/flipy"
+      }
+    },
+    "polarkaleido": {
+      "on": {
+        "addr": "/polarkaleido/bypassed",
+        "arg": 0
+      },
+      "off": {
+        "addr": "/polarkaleido/bypassed",
+        "arg": 1
+      },
+      "params": {
+        "rings": "/polarkaleido/effect/rings",
+        "parts": "/polarkaleido/effect/parts",
+        "angle": "/polarkaleido/effect/angle"
+      }
+    },
+    "posterize": {
+      "on": {
+        "addr": "/posterize/bypassed",
+        "arg": 0
+      },
+      "off": {
+        "addr": "/posterize/bypassed",
+        "arg": 1
+      },
+      "params": {
+        "posterize": "/posterize/effect/posterize"
+      }
+    },
+    "radialblur": {
+      "on": {
+        "addr": "/radialblur/bypassed",
+        "arg": 0
+      },
+      "off": {
+        "addr": "/radialblur/bypassed",
+        "arg": 1
+      },
+      "params": {
+        "steps": "/radialblur/effect/steps",
+        "distance": "/radialblur/effect/distance",
+        "rotation": "/radialblur/effect/rotation"
+      }
+    },
+    "radialcloner": {
+      "on": {
+        "addr": "/radialcloner/bypassed",
+        "arg": 0
+      },
+      "off": {
+        "addr": "/radialcloner/bypassed",
+        "arg": 1
+      },
+      "params": {
+        "clones": "/radialcloner/effect/clones",
+        "startradius": "/radialcloner/effect/startradius",
+        "startscale": "/radialcloner/effect/startscale",
+        "startrotation": "/radialcloner/effect/startrotation",
+        "endradius": "/radialcloner/effect/endradius",
+        "endscale": "/radialcloner/effect/endscale",
+        "endrotation": "/radialcloner/effect/endrotation",
+        "fan": "/radialcloner/effect/fan"
+      }
+    },
+    "ripples": {
+      "on": {
+        "addr": "/ripples/bypassed",
+        "arg": 0
+      },
+      "off": {
+        "addr": "/ripples/bypassed",
+        "arg": 1
+      },
+      "params": {
+        "frequencyh": "/ripples/effect/frequencyh",
+        "frequencyv": "/ripples/effect/frequencyv",
+        "amplitudeh": "/ripples/effect/amplitudeh",
+        "amplitudev": "/ripples/effect/amplitudev"
+      }
+    },
+    "threshold": {
+      "on": {
+        "addr": "/threshold/bypassed",
+        "arg": 0
+      },
+      "off": {
+        "addr": "/threshold/bypassed",
+        "arg": 1
+      },
+      "params": {
+        "threshold": "/threshold/effect/threshold",
+        "smoothness": "/threshold/effect/smoothness",
+        "color1hue": "/threshold/effect/color1/hue",
+        "color2hue": "/threshold/effect/color2/hue"
+      }
+    },
     "trails": {
       "on": {
         "addr": "/trails/bypassed",
@@ -198,6 +280,19 @@
       },
       "params": {
         "feedback": "/trails/effect/feedback"
+      }
+    },
+    "triangulate": {
+      "on": {
+        "addr": "/triangulate/bypassed",
+        "arg": 0
+      },
+      "off": {
+        "addr": "/triangulate/bypassed",
+        "arg": 1
+      },
+      "params": {
+        "threshold": "/triangulate/effect/threshold"
       }
     },
     "twisted": {

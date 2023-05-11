@@ -36,6 +36,7 @@
 "effect.huerotate:huerotate": {"valuetype": "float", "min": "0.0", "max": "1.0",  "init": "0.0", "comment": "#" },
 "effect.huerotate:satscale": {"valuetype": "float", "min": "0.0", "max": "1.0",  "init": "0.5", "comment": "#" },
 
+"effect.infinitezoom": {"valuetype": "bool", "min": "false", "max": "true", "randmax": "0.2", "init": "false", "comment": "#" },
 "effect.infinitezoom:rotationspeed": {"valuetype": "float", "min": "0.0", "max": "1.0",  "init": "0.5", "comment": "#" },
 "effect.infinitezoom:zoom": {"valuetype": "float", "min": "0.0", "max": "1.0",  "init": "0.5", "comment": "#" },
 "effect.infinitezoom:range": {"valuetype": "float", "min": "0.0", "max": "1.0",  "init": "0.5", "comment": "#" },
@@ -60,11 +61,46 @@
 "effect.mirrorquad:flipx": {"valuetype": "int", "min": "0", "max": "1",  "init": "0", "comment": "#" },
 "effect.mirrorquad:flipy": {"valuetype": "int", "min": "0", "max": "1",  "init": "0", "comment": "#" },
 
+"effect.polarkaleido": {"valuetype": "bool", "min": "false", "max": "true", "randmax": "0.2", "init": "false", "comment": "#" },
+"effect.polarkaleido:rings": {"valuetype": "float", "min": "0.0", "max": "1.0", "randmin":"0.0", "randmax":"1.0", "init": "0.5", "comment": "#" },
+"effect.polarkaleido:parts": {"valuetype": "float", "min": "0.0", "max": "1.0", "randmin":"0.0", "randmax":"1.0", "init": "0.5", "comment": "#" },
+"effect.polarkaleido:angle": {"valuetype": "float", "min": "0.0", "max": "1.0", "randmin":"0.0", "randmax":"1.0", "init": "0.5", "comment": "#" },
+
 "effect.posterize": {"valuetype": "bool", "min": "false", "max": "true", "randmax": "0.2", "init": "false", "comment": "#" },
 "effect.posterize:posterize": {"valuetype": "float", "min": "0.0", "max": "1.0", "randmin":"0.1", "randmax":"0.5", "init": "0.19", "comment": "#" },
 
+"effect.radialblur": {"valuetype": "bool", "min": "false", "max": "true", "randmax": "0.2", "init": "false", "comment": "#" },
+"effect.radialblur:steps": {"valuetype": "float", "min": "0.0", "max": "1.0", "randmin":"0.0", "randmax":"1.00", "init": "0.50", "comment": "#" },
+"effect.radialblur:distance": {"valuetype": "float", "min": "0.0", "max": "1.0", "randmin":"0.0", "randmax":"1.00", "init": "0.50", "comment": "#" },
+"effect.radialblur:rotation": {"valuetype": "float", "min": "0.0", "max": "1.0", "randmin":"0.0", "randmax":"1.00", "init": "0.50", "comment": "#" },
+
+"effect.radialcloner": {"valuetype": "bool", "min": "false", "max": "true", "randmax": "0.2", "init": "false", "comment": "#" },
+"effect.radialcloner:clones": {"valuetype": "float", "min": "0.0", "max": "1.0", "randmin":"0.0", "randmax":"1.00", "init": "0.50", "comment": "#" },
+"effect.radialcloner:startradius": {"valuetype": "float", "min": "0.0", "max": "1.0", "randmin":"0.0", "randmax":"1.00", "init": "0.50", "comment": "#" },
+"effect.radialcloner:startscale": {"valuetype": "float", "min": "0.0", "max": "1.0", "randmin":"0.0", "randmax":"1.00", "init": "0.50", "comment": "#" },
+"effect.radialcloner:startrotation": {"valuetype": "float", "min": "0.0", "max": "1.0", "randmin":"0.0", "randmax":"1.00", "init": "0.50", "comment": "#" },
+"effect.radialcloner:endradius": {"valuetype": "float", "min": "0.0", "max": "1.0", "randmin":"0.0", "randmax":"1.00", "init": "0.50", "comment": "#" },
+"effect.radialcloner:endscale": {"valuetype": "float", "min": "0.0", "max": "1.0", "randmin":"0.0", "randmax":"1.00", "init": "0.50", "comment": "#" },
+"effect.radialcloner:endrotation": {"valuetype": "float", "min": "0.0", "max": "1.0", "randmin":"0.0", "randmax":"1.00", "init": "0.50", "comment": "#" },
+"effect.radialcloner:fan": {"valuetype": "float", "min": "0.0", "max": "1.0", "randmin":"0.0", "randmax":"1.00", "init": "0.50", "comment": "#" },
+
+"effect.ripples": {"valuetype": "bool", "min": "false", "max": "true", "randmax": "0.2", "init": "false", "comment": "#" },
+"effect.ripples:frequencyh": {"valuetype": "float", "min": "0.0", "max": "1.0", "randmin":"0.0", "randmax":"1.00", "init": "0.50", "comment": "#" },
+"effect.ripples:amplitudeh": {"valuetype": "float", "min": "0.0", "max": "1.0", "randmin":"0.0", "randmax":"1.00", "init": "0.50", "comment": "#" },
+"effect.ripples:frequencyv": {"valuetype": "float", "min": "0.0", "max": "1.0", "randmin":"0.0", "randmax":"1.00", "init": "0.50", "comment": "#" },
+"effect.ripples:amplitudev": {"valuetype": "float", "min": "0.0", "max": "1.0", "randmin":"0.0", "randmax":"1.00", "init": "0.50", "comment": "#" },
+
+"effect.threshold": {"valuetype": "bool", "min": "false", "max": "true", "randmax": "0.2", "init": "false", "comment": "#" },
+"effect.threshold:threshold": {"valuetype": "float", "min": "0.0", "max": "1.0", "randmin":"0.0", "randmax":"1.00", "init": "0.50", "comment": "#" },
+"effect.threshold:smoothness": {"valuetype": "float", "min": "0.0", "max": "1.0", "randmin":"0.0", "randmax":"1.00", "init": "0.50", "comment": "#" },
+"effect.threshold:color1hue": {"valuetype": "float", "min": "0.0", "max": "1.0", "randmin":"0.0", "randmax":"1.0", "init": "0.50", "comment": "#" },
+"effect.threshold:color2hue": {"valuetype": "float", "min": "0.0", "max": "1.0", "randmin":"0.0", "randmax":"1.0", "init": "0.50", "comment": "#" },
+
 "effect.trails": {"valuetype": "bool", "min": "false", "max": "true", "randmax": "0.2", "init": "false", "comment": "#" },
 "effect.trails:feedback": {"valuetype": "float", "min": "0.0", "max": "1.0", "randmin":"0.5", "randmax":"0.70", "init": "0.70", "comment": "#" },
+
+"effect.triangulate": {"valuetype": "bool", "min": "false", "max": "true", "randmax": "0.2", "init": "false", "comment": "#" },
+"effect.triangulate:feedback": {"valuetype": "float", "min": "0.0", "max": "1.0", "randmin":"0.3", "randmax":"0.70", "init": "0.50", "comment": "#" },
 
 "effect.twisted": {"valuetype": "bool", "min": "false", "max": "true", "randmax": "0.1", "init": "false", "comment": "#" },
 "effect.twisted:twirl": {"valuetype": "float", "min": "0.0", "max": "1.0",  "init": "0.6", "comment": "#" },
