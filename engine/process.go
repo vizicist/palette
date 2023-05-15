@@ -40,7 +40,7 @@ func NewProcessInfo(exe, fullPath, arg string, activate func()) *ProcessInfo {
 func StartRunning(process string) error {
 	err := TheProcessManager.StartRunning(process)
 	if err != nil {
-		LogError(err)
+		LogIfError(err)
 		return (err)
 	}
 	return nil
@@ -210,12 +210,12 @@ func (pm *ProcessManager) getProcessInfo(process string) (*ProcessInfo, error) {
 	p, ok := pm.info[process]
 	if !ok {
 		err := fmt.Errorf("getProcessInfo: no process %s", process)
-		LogError(err)
+		LogIfError(err)
 		return nil, err
 	}
 	if p == nil {
 		err := fmt.Errorf("getProcessInfo: no process info for %s", process)
-		LogError(err)
+		LogIfError(err)
 		return nil, err
 	}
 	return p, nil
@@ -224,7 +224,7 @@ func (pm *ProcessManager) getProcessInfo(process string) (*ProcessInfo, error) {
 func (pm *ProcessManager) IsRunning(process string) bool {
 	pi, err := pm.getProcessInfo(process)
 	if err != nil {
-		LogError(err)
+		LogIfError(err)
 		return false
 	}
 	b := isRunningExecutable(pi.Exe)

@@ -30,7 +30,7 @@ var engineSysex sync.Mutex
 func NewEngine() *Engine {
 
 	if TheEngine != nil {
-		LogError(fmt.Errorf("TheEngine already exists, there can be only one"))
+		LogIfError(fmt.Errorf("TheEngine already exists, there can be only one"))
 		return TheEngine
 	}
 
@@ -97,7 +97,7 @@ func (e *Engine) ResetLogTypes(logtypes string) {
 				LogInfo("Turning logging ON for", "logtype", d)
 				_, ok := LogEnabled[d]
 				if !ok {
-					LogError(fmt.Errorf("ResetLogTypes: logtype not recognized"), "logtype", d)
+					LogIfError(fmt.Errorf("ResetLogTypes: logtype not recognized"), "logtype", d)
 				} else {
 					LogEnabled[d] = true
 				}
@@ -128,7 +128,7 @@ func (e *Engine) StartOSCListener(port int) {
 		TheRouter.oscInputChan <- OscEvent{Msg: msg, Source: source}
 	})
 	if err != nil {
-		LogError(err)
+		LogIfError(err)
 	}
 
 	server := &osc.Server{
@@ -137,7 +137,7 @@ func (e *Engine) StartOSCListener(port int) {
 	}
 	err = server.ListenAndServe()
 	if err != nil {
-		LogError(err)
+		LogIfError(err)
 	}
 }
 
@@ -153,7 +153,7 @@ func (e *Engine) StartHTTP(port int) {
 		defer func() {
 			_, err := responseWriter.Write([]byte(response))
 			if err != nil {
-				LogError(err)
+				LogIfError(err)
 			}
 		}()
 
@@ -180,7 +180,7 @@ func (e *Engine) StartHTTP(port int) {
 	source := fmt.Sprintf("127.0.0.1:%d", port)
 	err := http.ListenAndServe(source, nil)
 	if err != nil {
-		LogError(err)
+		LogIfError(err)
 	}
 }
 
@@ -230,7 +230,7 @@ func (e *Engine) doPlayback(f *os.File) {
 		var rec RecordingEvent
 		err := json.Unmarshal(fileScanner.Bytes(), &rec)
 		if err != nil {
-			LogError(err)
+			LogIfError(err)
 			continue
 		}
 		LogInfo("Playback", "rec", rec)
@@ -243,7 +243,7 @@ func (e *Engine) doPlayback(f *os.File) {
 	}
 	err := fileScanner.Err()
 	if err != nil {
-		LogError(err)
+		LogIfError(err)
 	}
 	LogInfo("doPlayback ran out of input")
 	f.Close()
@@ -300,13 +300,13 @@ func (e *Engine) RecordPlaybackEvent(event PlaybackEvent) {
 	bytes := []byte("{\"PlaybackEvent\":")
 	morebytes, err := json.Marshal(event)
 	if err != nil {
-		LogError(err)
+		LogIfError(err)
 		return
 	}
 	bytes = append(bytes, morebytes...)
 	bytes = append(bytes, '}', '\n')
 	_, err = e.recordingFile.Write(bytes)
-	LogError(err)
+	LogIfError(err)
 }
 
 func (e *Engine) RecordMidiEvent(event *MidiEvent) {
@@ -316,13 +316,13 @@ func (e *Engine) RecordMidiEvent(event *MidiEvent) {
 	bytes := []byte("{\"MidiEvent\":")
 	morebytes, err := json.Marshal(event)
 	if err != nil {
-		LogError(err)
+		LogIfError(err)
 		return
 	}
 	bytes = append(bytes, morebytes...)
 	bytes = append(bytes, '}', '\n')
 	_, err = e.recordingFile.Write(bytes)
-	LogError(err)
+	LogIfError(err)
 }
 
 func (e *Engine) RecordOscEvent(event *OscEvent) {
@@ -335,12 +335,12 @@ func (e *Engine) RecordOscEvent(event *OscEvent) {
 	}
 	bytes, err := json.Marshal(re)
 	if err != nil {
-		LogError(err)
+		LogIfError(err)
 		return
 	}
 	bytes = append(bytes, '}', '\n')
 	_, err = e.recordingFile.Write(bytes)
-	LogError(err)
+	LogIfError(err)
 }
 
 func (e *Engine) RecordCursorEvent(event CursorEvent) {
@@ -354,7 +354,7 @@ func (e *Engine) RecordCursorEvent(event CursorEvent) {
 	}
 	bytes, err := json.Marshal(re)
 	if err != nil {
-		LogError(err)
+		LogIfError(err)
 		return
 	}
 	bytes = append(bytes, '\n')
@@ -365,18 +365,18 @@ func (e *Engine) RecordCursorEvent(event CursorEvent) {
 
 	e.recordingMutex.Unlock()
 
-	LogError(err)
+	LogIfError(err)
 }
 
 /*
 func (e *Engine) SaveRecordingEvent(re RecordingEvent) {
 	bytes, err := json.Marshal(re)
 	if err != nil {
-		LogError(err)
+		LogIfError(err)
 		return
 	}
 	bytes = append(bytes, '\n')
 	_, err = e.recordingFile.Write(bytes)
-	LogError(err)
+	LogIfError(err)
 }
 */

@@ -1,4 +1,5 @@
 DEFINE_TYPES(plugins);
+DEFINE_TYPES(log);
 DEFINE_TYPES(bidule);
 DEFINE_TYPES(mmtt);
 DEFINE_TYPES(destination);
@@ -29,6 +30,13 @@ LayerParams_InitializeTypes() {
 
 	LayerParams_pluginsTypes.push_back("");
 	LayerParams_pluginsTypes.push_back("quadpro");
+
+	LayerParams_logTypes.push_back("");
+	LayerParams_logTypes.push_back("cursor");
+	LayerParams_logTypes.push_back("midi");
+	LayerParams_logTypes.push_back("osc");
+	LayerParams_logTypes.push_back("api");
+	LayerParams_logTypes.push_back("loop");
 
 	LayerParams_biduleTypes.push_back("C:/Program Files/Plogue/Bidule/Bidule.exe");
 	LayerParams_biduleTypes.push_back("");
