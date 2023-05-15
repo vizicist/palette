@@ -129,7 +129,7 @@ func (m *MidiIO) SetMidiInput(midiInputName string) {
 type MidiHandlerFunc func(midi.Message, int32)
 
 func (m *MidiIO) handleMidiError(err error) {
-	LogError(err)
+	LogIfError(err)
 }
 
 func (m *MidiIO) SetAutoTransposeBeats(beats int) {
@@ -207,7 +207,7 @@ func (state *MIDIPortChannelState) UpdateBankProgram(synth *Synth) {
 			"status", "0x"+hexString(status),
 			"data1", "0x"+hexString(data1))
 
-		LogError(state.output.Send([]byte{status, data1}))
+		LogIfError(state.output.Send([]byte{status, data1}))
 	}
 }
 

@@ -2,73 +2,6 @@
   "host": "127.0.0.1",
   "port": 7000,
   "effects": {
-    "goo": {
-      "on": {
-        "addr": "/goo/bypassed",
-        "arg": 0
-      },
-      "off": {
-        "addr": "/goo/bypassed",
-        "arg": 1
-      },
-      "params": {
-        "resolution": "/goo/effect/resolution",
-        "speed": "/goo/effect/speed",
-        "maxdistortionx": "/goo/effect/maxdistortionx",
-        "maxdistortiony": "/goo/effect/maxdistortiony",
-        "maxdistortionz": "/goo/effect/maxdistortionz",
-        "shade": "/goo/effect/shade"
-      }
-    },
-     "infinitezoom": {
-      "on": {
-        "addr": "/infinitezoom/bypassed",
-        "arg": 0
-      },
-      "off": {
-        "addr": "/infinitezoom/bypassed",
-        "arg": 1
-      },
-      "params": {
-        "rotationspeed": "/infinitezoom/effect/rotationspeed",
-        "zoom": "/infinitezoom/effect/zoom",
-        "range": "/infinitezoom/effect/range",
-        "alpha": "/infinitezoom/effect/alpha",
-        "numslices": "/infinitezoom/effect/numslices"
-      }
-    },
-   "huerotate": {
-      "on": {
-        "addr": "/huerotate/bypassed",
-        "arg": 0
-      },
-      "off": {
-        "addr": "/huerotate/bypassed",
-        "arg": 1
-      },
-      "params": {
-        "huescale": "/huerotate/effect/huescale",
-        "satscale": "/huerotate/effect/sat.scale",
-        "huerotate": "/huerotate/effect/huerotate"
-      }
-    },
-    "kaleidoscope": {
-      "on": {
-        "addr": "/kaleidoscope/bypassed",
-        "arg": 0
-      },
-      "off": {
-        "addr": "/kaleidoscope/bypassed",
-        "arg": 1
-      },
-      "params": {
-        "angles": "/kaleidoscope/effect/angles",
-        "rotation": "/kaleidoscope/effect/rotation",
-        "zoom": "/kaleidoscope/effect/zoom",
-        "inputrotation": "/kaleidoscope/effect/inputrotation",
-        "opacity": "/kaleidoscope/opacity"
-      }
-    },
     "blur": {
       "on": {
         "addr": "/blur/bypassed",
@@ -83,6 +16,35 @@
         "blurydistance": "/blur/effect/blurydistance",
         "quality": "/blur/effect/quality",
         "gaussian": "/blur/effect/gaussian"
+      }
+    },
+    "displace": {
+      "on": {
+        "addr": "/displace/bypassed",
+        "arg": 0
+      },
+      "off": {
+        "addr": "/displace/bypassed",
+        "arg": 1
+      },
+      "params": {
+        "xfactor": "/displace/effect/xfactor",
+        "yfactor": "/displace/effect/yfactor",
+        "threshold": "/displace/effect/threshold"
+      }
+    },
+    "edgedetection": {
+      "on": {
+        "addr": "/edgedetection/bypassed",
+        "arg": 0
+      },
+      "off": {
+        "addr": "/edgedetection/bypassed",
+        "arg": 1
+      },
+      "params": {
+        "mode": "/edgedetection/effect/mode",
+        "multiplier": "/edgedetection/effect/multiplier"
       }
     },
     "fragment": {
@@ -104,19 +66,71 @@
         "fragscale": "/fragment/effect/fragscale"
       }
     },
-    "displace": {
+    "goo": {
       "on": {
-        "addr": "/displace/bypassed",
+        "addr": "/goo/bypassed",
         "arg": 0
       },
       "off": {
-        "addr": "/displace/bypassed",
+        "addr": "/goo/bypassed",
         "arg": 1
       },
       "params": {
-        "xfactor": "/displace/effect/xfactor",
-        "yfactor": "/displace/effect/yfactor",
-        "threshold": "/displace/effect/threshold"
+        "resolution": "/goo/effect/resolution",
+        "speed": "/goo/effect/speed",
+        "maxdistortionx": "/goo/effect/maxdistortionx",
+        "maxdistortiony": "/goo/effect/maxdistortiony",
+        "maxdistortionz": "/goo/effect/maxdistortionz",
+        "shade": "/goo/effect/shade"
+      }
+    },
+   "huerotate": {
+      "on": {
+        "addr": "/huerotate/bypassed",
+        "arg": 0
+      },
+      "off": {
+        "addr": "/huerotate/bypassed",
+        "arg": 1
+      },
+      "params": {
+        "huescale": "/huerotate/effect/huescale",
+        "satscale": "/huerotate/effect/sat.scale",
+        "huerotate": "/huerotate/effect/huerotate"
+      }
+    },
+     "infinitezoom": {
+      "on": {
+        "addr": "/infinitezoom/bypassed",
+        "arg": 0
+      },
+      "off": {
+        "addr": "/infinitezoom/bypassed",
+        "arg": 1
+      },
+      "params": {
+        "rotationspeed": "/infinitezoom/effect/rotationspeed",
+        "zoom": "/infinitezoom/effect/zoom",
+        "range": "/infinitezoom/effect/range",
+        "alpha": "/infinitezoom/effect/alpha",
+        "numslices": "/infinitezoom/effect/numslices"
+      }
+    },
+    "kaleidoscope": {
+      "on": {
+        "addr": "/kaleidoscope/bypassed",
+        "arg": 0
+      },
+      "off": {
+        "addr": "/kaleidoscope/bypassed",
+        "arg": 1
+      },
+      "params": {
+        "angles": "/kaleidoscope/effect/angles",
+        "rotation": "/kaleidoscope/effect/rotation",
+        "zoom": "/kaleidoscope/effect/zoom",
+        "inputrotation": "/kaleidoscope/effect/inputrotation",
+        "opacity": "/kaleidoscope/opacity"
       }
     },
     "iterate": {
@@ -129,18 +143,48 @@
         "arg": 1
       }
     },
-    "edgedetection": {
+    "linearcloner": {
       "on": {
-        "addr": "/edgedetection/bypassed",
+        "addr": "/linearcloner/bypassed",
         "arg": 0
       },
       "off": {
-        "addr": "/edgedetection/bypassed",
+        "addr": "/linearcloner/bypassed",
         "arg": 1
       },
       "params": {
-        "mode": "/edgedetection/effect/mode",
-        "multiplier": "/edgedetection/effect/multiplier"
+        "clones": "/linearcloner/effect/clones",
+        "tails": "/linearcloner/effect/tails",
+        "center": "/linearcloner/effect/center",
+        "taillength": "/linearcloner/effect/taillength",
+        "startscale": "/linearcloner/effect/startscale",
+        "startrotation": "/linearcloner/effect/startrotation",
+        "endscale": "/linearcloner/effect/endscale",
+        "endrotation": "/linearcloner/effect/endrotation",
+        "distribution": "/linearcloner/effect/distribution",
+        "distortion": "/linearcloner/effect/distortion",
+        "reverse": "/linearcloner/effect/reverse",
+        "tailrotation": "/linearcloner/effect/tailrotation",
+        "masterrotation": "/linearcloner/effect/masterrotation"
+      }
+    },
+    "metashape": {
+      "on": {
+        "addr": "/metashape/bypassed",
+        "arg": 0
+      },
+      "off": {
+        "addr": "/metashape/bypassed",
+        "arg": 1
+      },
+      "params": {
+        "resolution": "/metashape/effect/resolution",
+        "shape1": "/metashape/effect/shape1",
+        "shape2": "/metashape/effect/shape2",
+        "color": "/metashape/effect/color",
+        "mode": "/metashape/effect/mode",
+        "scale": "/metashape/effect/scale",
+        "margin": "/metashape/effect/margin"
       }
     },
     "mirror": {
@@ -322,6 +366,7 @@
         "height": "/wavewarp/effect/height",
         "width": "/wavewarp/effect/width",
         "angle": "/wavewarp/effect/angle",
+        "anglespeed": "/wavewarp/effect/angle/behaviour/speed",
         "speed": "/wavewarp/effect/speed"
       }
     }

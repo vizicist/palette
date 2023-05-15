@@ -78,27 +78,21 @@ func InitLog(logname string) {
 	logpath := LogFilePath(logname + ".log")
 	logger := fileLogger(logpath)
 	TheLog = logger.Sugar()
-	defer LogError(logger.Sync()) // flushes buffer, if any
+	defer LogIfError(logger.Sync()) // flushes buffer, if any
 }
 
 func IsLogging(logtype string) bool {
 	b, ok := LogEnabled[logtype]
 	if !ok {
-		LogError(fmt.Errorf("IsLogging: logtype not recognized"), "logtype", logtype)
+		LogIfError(fmt.Errorf("IsLogging: logtype not recognized"), "logtype", logtype)
 		return false
 	}
 	return b
 
 }
 
+// LogIfError will accept a nil value and do nothing
 func LogIfError(err error, keysAndValues ...any) {
-	if err != nil {
-		LogError(err, keysAndValues...)
-	}
-}
-
-// LogError will accept a nil value and do nothing
-func LogError(err error, keysAndValues ...any) {
 
 	if err == nil {
 		return
@@ -109,7 +103,7 @@ func LogError(err error, keysAndValues ...any) {
 	}
 	keysAndValues = append(keysAndValues, "err")
 	keysAndValues = append(keysAndValues, err)
-	caller := "LogError"
+	caller := "LogIfError"
 	LogWarn(caller, keysAndValues...)
 }
 
@@ -121,16 +115,18 @@ func appendExtraValues(keysAndValues []any) []any {
 	return keysAndValues
 }
 
-func LogOfType(logtype string, msg string, keysAndValues ...any) {
+func LogOfType(logtypes string, msg string, keysAndValues ...any) {
 	if (len(keysAndValues) % 2) != 0 {
 		LogWarn("LogOfType function given bad number of arguments")
 	}
-	isEnabled := IsLogging(logtype)
-	keysAndValues = append(keysAndValues, "logtype")
-	keysAndValues = append(keysAndValues, logtype)
-	if isEnabled {
-		keysAndValues = appendExtraValues(keysAndValues)
-		TheLog.Infow(msg, keysAndValues...)
+	for _,logtype := range strings.Split(logtypes, ",") {
+		isEnabled := IsLogging(logtype)
+		keysAndValues = append(keysAndValues, "logtype")
+		keysAndValues = append(keysAndValues, logtype)
+		if isEnabled {
+			keysAndValues = appendExtraValues(keysAndValues)
+			TheLog.Infow(msg, keysAndValues...)
+		}
 	}
 }
 
@@ -205,7 +201,7 @@ func SetLogTypeEnabled(dtype string, b bool) {
 	d := strings.ToLower(dtype)
 	_, ok := LogEnabled[d]
 	if !ok {
-		LogError(fmt.Errorf("SetLogTypeEnabled: logtype not recognized"), "logtype", d)
+		LogIfError(fmt.Errorf("SetLogTypeEnabled: logtype not recognized"), "logtype", d)
 		return
 	}
 	LogEnabled[d] = b

@@ -123,16 +123,16 @@ func (quadpro *QuadPro) Start() {
 	if fileExists(buttonPath) {
 		bytes, err := os.ReadFile(buttonPath)
 		if err != nil {
-			LogError(fmt.Errorf("unable to read buttons.json, err=%s", err))
+			LogIfError(fmt.Errorf("unable to read buttons.json, err=%s", err))
 		} else {
 			var f any
 			err = json.Unmarshal(bytes, &f)
 			if err != nil {
-				LogError(fmt.Errorf("unable to Unmarshal %s", buttonPath))
+				LogIfError(fmt.Errorf("unable to Unmarshal %s", buttonPath))
 			} else {
 				buttonMap,ok := f.(map[string]any)
 				if !ok {
-					LogError(err)
+					LogIfError(err)
 				} else {
 					CursorSourceToQuadPreset = buttonMap
 				}
@@ -183,7 +183,10 @@ func (quadpro *QuadPro) onCursorEvent(state ActiveCursor) error {
 			} else {
 				preset := val.(string)
 				if TheQuadPro != nil {
-					TheQuadPro.Load("quad", preset)
+					err := TheQuadPro.Load("quad", preset)
+					if err != nil {
+						return err
+					}
 				}
 			}
 		}
@@ -256,7 +259,7 @@ func (quadpro *QuadPro) doTest(ntimes int, dt time.Duration) {
 		// LogInfo("calling quadpro.onCursorEvent A", "state", state)
 		// err := quadpro.onCursorEvent(state)
 		// if err != nil {
-		// 	LogError(err)
+		// 	LogIfError(err)
 		// 	return
 		// }
 		LogInfo("calling quadpro.ExecuteCursorEvent A", "Current", state.Current)
@@ -273,7 +276,7 @@ func (quadpro *QuadPro) doTest(ntimes int, dt time.Duration) {
 		// LogInfo("calling quadpro.onCursorEvent B", "state", state)
 		// err = quadpro.onCursorEvent(state)
 		// if err != nil {
-		// 	LogError(err)
+		// 	LogIfError(err)
 		// 	return
 		// }
 		LogInfo("calling quadpro.ExecuteCursorEvent B", "Current", state.Current)
@@ -302,7 +305,7 @@ func (quadpro *QuadPro) Load(category string, filename string) error {
 	path := SavedFilePath(category, filename)
 	paramsMap, err := LoadParamsMap(path)
 	if err != nil {
-		LogError(err)
+		LogIfError(err)
 		return err
 	}
 
@@ -316,7 +319,7 @@ func (quadpro *QuadPro) Load(category string, filename string) error {
 		for _, patch := range quadpro.patch {
 			err := patch.ApplyPatchValuesFromQuadMap(paramsMap)
 			if err != nil {
-				LogError(err)
+				LogIfError(err)
 				lasterr = err
 			}
 			patch.RefreshAllPatchValues()
@@ -353,7 +356,7 @@ func (quadpro *QuadPro) Load(category string, filename string) error {
 		}
 	}
 	if err != nil {
-		LogError(err)
+		LogIfError(err)
 		lasterr = err
 	}
 	return lasterr
@@ -373,7 +376,7 @@ func (quadpro *QuadPro) save(category string, filename string) (err error) {
 		err = fmt.Errorf("QuadPro.Api: unhandled save category %s", category)
 	}
 	if err != nil {
-		LogError(err)
+		LogIfError(err)
 	}
 	return err
 }

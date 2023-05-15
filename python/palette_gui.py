@@ -652,20 +652,23 @@ class ProGuiApp(tk.Tk):
             else:
                 self.CurrPatch.sendParamValue(name,v)
 
-    def changeAndSendValue(self,paramType,basename,value):
+    def changeAndSendValue(self,paramType,basename,value,sendit=True):
 
         if paramType == "engine":
             self.engine.paramValues[basename] = value
-            self.sendEngineValue(basename,value)
+            if sendit:
+                self.sendEngineValue(basename,value)
 
         elif self.doAllPatches():
             for patch in self.Patches:
                 patch.setValue(paramType,basename,value)
-                patch.sendValue(paramType,basename)
+                if sendit:
+                    patch.sendValue(paramType,basename)
 
         else:
             self.CurrPatch.setValue(paramType,basename,value)
-            self.CurrPatch.sendValue(paramType,basename)
+            if sendit:
+                self.CurrPatch.sendValue(paramType,basename)
 
     def sendEngineValue(self,basename,value):
 
@@ -686,23 +689,26 @@ class ProGuiApp(tk.Tk):
             log("selectorApply not implemented on patch")
         else:
 
-            self.applyToAllParams(apply,paramType)
+            log("selectorApply: before applyToAllParams")
+            self.applyToAllParams(apply,paramType,False)  # don't send yet
+            log("selectorApply: after applyToAllParams")
             self.refreshPage()
 
             if paramType == "engine":
                 paramlistjson = self.paramListOfType("engine",self.engine.getValue)
                 palette.palette_engine_api("setparams", paramlistjson)
-                # self.engine.sendParamsOfType(paramType)
+                self.engine.sendParamsOfType(paramType)
 
             elif self.allPatchesSelected:
                 log("Sending ",paramType," params to all patch")
                 for patch in self.Patches:
                     patch.sendParamsOfType(paramType)
+                log("After sending ",paramType," params to all patch")
             else:
                 log("Sending ",paramType," params to patch ",self.CurrPatch.name())
                 self.CurrPatch.sendParamsOfType(paramType)
 
-    def applyToAllParams(self,apply,paramType):
+    def applyToAllParams(self,apply,paramType,sendit=True):
         # loop through all the parameters of a given type
         for name in self.allParamsJson:
             j = self.allParamsJson[name]
@@ -764,7 +770,7 @@ class ProGuiApp(tk.Tk):
                         v = enums[i]
 
             if v != "":
-                self.changeAndSendValue(paramType,basename,v)
+                self.changeAndSendValue(paramType,basename,v,sendit)
 
     def selectorLoadAndSend(self,paramType,savedname):
         if self.editMode:
@@ -1626,8 +1632,8 @@ class PageEditParams(tk.Frame):
                 v = widgtext
             else:
                 v = str(widgtext[0])
-            vals = self.controller.paramenums[self.params[name]["min"]]
             try:
+                vals = self.controller.paramenums[self.params[name]["min"]]
                 i = vals.index(v.strip())
             except:
                 log("Unable to find v=",v)
