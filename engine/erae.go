@@ -231,7 +231,7 @@ func (erae *Erae) EraeWriteSysEx(bytes []byte) {
 	LogWarn("Erae.EraeWriteSysex needs work")
 	// err := erae.output.Send(bytes)
 	// if err != nil {
-	// 	LogError(err)
+	// 	LogIfError(err)
 	// }
 }
 

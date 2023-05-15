@@ -220,7 +220,7 @@ func PointString(p image.Point) string {
 func StringToRect(s string) (r image.Rectangle) {
 	n, err := fmt.Sscanf(s, "%d,%d,%d,%d", &r.Min.X, &r.Min.Y, &r.Max.X, &r.Max.Y)
 	if err != nil {
-		engine.LogError(err)
+		engine.LogIfError(err)
 		return image.Rectangle{}
 	}
 	if n != 4 {
@@ -234,7 +234,7 @@ func StringToRect(s string) (r image.Rectangle) {
 func StringToPoint(s string) (p image.Point) {
 	n, err := fmt.Sscanf(s, "%d,%d", &p.X, &p.Y)
 	if err != nil {
-		engine.LogError(err)
+		engine.LogIfError(err)
 		return image.Point{}
 	}
 	if n != 2 {

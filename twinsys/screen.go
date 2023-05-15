@@ -94,18 +94,18 @@ func Run() {
 	fname := engine.ConfigFilePath("homepage.json")
 	bytes, err := os.ReadFile(fname)
 	if err != nil {
-		engine.LogError(err)
+		engine.LogIfError(err)
 	} else {
 		page := td.w.(*Page)
 		err = page.restoreState(string(bytes))
 		if err != nil {
-			engine.LogError(err)
+			engine.LogIfError(err)
 		}
 	}
 
 	// This is it!  RunGame runs forever
 	if err := ebiten.RunGame(screen); err != nil {
-		engine.LogError(err)
+		engine.LogIfError(err)
 		// Should be fatal?
 	}
 }

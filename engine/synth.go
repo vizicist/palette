@@ -33,7 +33,7 @@ func InitSynths() {
 	filename := ConfigFilePath("synths.json")
 	bytes, err := os.ReadFile(filename)
 	if err != nil {
-		LogError(err)
+		LogIfError(err)
 		return
 	}
 
@@ -48,7 +48,7 @@ func InitSynths() {
 	var jsynths struct {
 		Synths []synth `json:"synths"`
 	}
-	LogError(json.Unmarshal(bytes, &jsynths))
+	LogIfError(json.Unmarshal(bytes, &jsynths))
 
 	for i := range jsynths.Synths {
 		nm := jsynths.Synths[i].Name
@@ -62,7 +62,7 @@ func InitSynths() {
 
 	_, ok := Synths["default"]
 	if !ok {
-		LogError(fmt.Errorf("InitSynths: no default synth in Synths.json, using fake default"))
+		LogIfError(fmt.Errorf("InitSynths: no default synth in Synths.json, using fake default"))
 		Synths["default"] = NewSynth("default", "default", 1, 0, 0)
 	}
 
@@ -134,7 +134,7 @@ func (synth *Synth) SendANO() {
 
 	state, err := synth.updatePortChannelState()
 	if err != nil {
-		LogError(err)
+		LogIfError(err)
 		return
 	}
 	synth.ClearNoteDowns()
@@ -149,14 +149,14 @@ func (synth *Synth) SendANO() {
 		"data1", "0x"+hexString(data1),
 		"data2", "0x"+hexString(data2))
 
-	LogError(state.output.Send([]byte{status, data1, data2}))
+	LogIfError(state.output.Send([]byte{status, data1, data2}))
 }
 
 func (synth *Synth) SendController(cnum int, cval int) {
 
 	state, err := synth.updatePortChannelState()
 	if err != nil {
-		LogError(err)
+		LogIfError(err)
 		return
 	}
 
@@ -178,7 +178,7 @@ func (synth *Synth) SendController(cnum int, cval int) {
 		"data1", "0x"+hexString(data1),
 		"data2", "0x"+hexString(data2))
 
-	LogError(state.output.Send([]byte{status, data1, data2}))
+	LogIfError(state.output.Send([]byte{status, data1, data2}))
 }
 
 /*
@@ -326,7 +326,7 @@ func (synth *Synth) SendNoteToMidiOutput(value any) {
 
 	state, err := synth.updatePortChannelState()
 	if err != nil {
-		LogError(err)
+		LogIfError(err)
 		return
 	}
 
@@ -435,6 +435,6 @@ func (synth *Synth) UpdateBankProgram() {
 			"status", "0x"+hexString(status),
 			"data1", "0x"+hexString(data1))
 
-		LogError(state.output.Send([]byte{status, data1}))
+		LogIfError(state.output.Send([]byte{status, data1}))
 	}
 }

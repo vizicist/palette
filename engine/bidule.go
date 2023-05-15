@@ -35,7 +35,7 @@ func (b *Bidule) Activate() {
 		dt := 5 * time.Second
 		time.Sleep(dt)
 		LogOfType("bidule", "Bidule.Activate is sending", "msg", msg)
-		LogError(b.client.Send(msg))
+		LogIfError(b.client.Send(msg))
 	}
 }
 
