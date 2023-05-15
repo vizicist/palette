@@ -270,7 +270,7 @@ var allMorphs []*oneMorph
 func StartMorph(callback CursorCallbackFunc, forceFactor float32) {
 	err := WinMorphInitialize()
 	if err != nil {
-		LogError(err)
+		LogIfError(err)
 		return
 	}
 	if len(allMorphs) == 0 {

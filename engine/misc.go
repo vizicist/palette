@@ -74,7 +74,7 @@ func fileExists(filename string) bool {
 			return false
 		}
 		// complain but still act as if it doesn't exist
-		LogError(err)
+		LogIfError(err)
 		return false
 	}
 	return true
@@ -326,7 +326,7 @@ func IsTrueValue(value string) bool {
 	case "off":
 		return false
 	default:
-		LogError(fmt.Errorf("IsTrueValue: invalid boolean value (%s), assuming false", value))
+		LogIfError(fmt.Errorf("IsTrueValue: invalid boolean value (%s), assuming false", value))
 		return false
 	}
 }
@@ -482,7 +482,7 @@ func ziplogs(logsdir string, zipfile string) error {
 	}
 	err = filepath.Walk(logsdir, walker)
 	if err != nil {
-		LogError(err)
+		LogIfError(err)
 	}
 	return err
 }
@@ -566,7 +566,7 @@ func SendLogs() error {
 func Hostname() string {
 	hostname, err := os.Hostname()
 	if err != nil {
-		LogError(err)
+		LogIfError(err)
 		hostname = "Unknown"
 	}
 	return hostname

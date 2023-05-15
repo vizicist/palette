@@ -73,7 +73,7 @@ func NewStyle(styleName string, fontHeight int) *StyleInfo {
 	}
 
 	if err != nil {
-		engine.LogError(err)
+		engine.LogIfError(err)
 		f, _ = truetype.Parse(gomono.TTF) // last resort
 	} else if f == nil {
 		engine.LogWarn("NewStyle: unable to get font", "font", styleName)

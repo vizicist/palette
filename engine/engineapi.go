@@ -16,7 +16,7 @@ func (e *Engine) ExecuteAPI(api string, apiargs map[string]string) (result strin
 	words := strings.Split(api, ".")
 	if len(words) <= 1 {
 		err = fmt.Errorf("single-word APIs no longer work, api=%s", api)
-		LogError(err)
+		LogIfError(err)
 		return "", err
 	}
 	// Here we handle APIs of the form {apitype}.{apisuffix}
@@ -91,7 +91,7 @@ func (e *Engine) executeEngineAPI(api string, apiargs map[string]string) (result
 		for name, value := range apiargs {
 			e := e.Set(name, value)
 			if e != nil {
-				LogError(e)
+				LogIfError(e)
 				err = e
 			}
 		}
@@ -148,7 +148,7 @@ func (e *Engine) executeEngineAPI(api string, apiargs map[string]string) (result
 		return "", nil
 
 	case "audio_reset":
-		go LogError(TheBidule().Reset())
+		go LogIfError(TheBidule().Reset())
 
 	case "sendlogs":
 		return "", SendLogs()
@@ -228,7 +228,7 @@ func (e *Engine) Set(name string, value string) error {
 		var f float64
 		f, err := strconv.ParseFloat(value, 32)
 		if err != nil {
-			LogError(err)
+			LogIfError(err)
 		} else {
 			TheAttractManager.attractIdleSecs = f
 		}
@@ -266,7 +266,7 @@ func ParamIntWithDefault(nm string, dflt int) int {
 	var val int
 	nfound, err := fmt.Sscanf(s, "%d", &val)
 	if nfound == 0 || err != nil {
-		LogError(err)
+		LogIfError(err)
 		return dflt
 	}
 	return val
@@ -280,7 +280,7 @@ func ParamFloatWithDefault(nm string, dflt float64) float64 {
 	var f float64
 	f, err := strconv.ParseFloat(s, 32)
 	if err != nil {
-		LogError(err)
+		LogIfError(err)
 		return dflt
 	}
 	return f

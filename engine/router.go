@@ -178,7 +178,7 @@ func (r *Router) SetMIDIEventHandler(handler MIDIEventHandler) {
 func ArgToFloat(nm string, args map[string]string) float32 {
 	f, err := strconv.ParseFloat(args[nm], 32)
 	if err != nil {
-		LogError(err)
+		LogIfError(err)
 		f = 0.0
 	}
 	return float32(f)
@@ -236,7 +236,7 @@ func (r *Router) handleOSCInput(e OscEvent) {
 		LogIfError(err)
 
 	case "/event": // These messages encode the arguments as JSON
-		LogError(fmt.Errorf("/event OSC message should no longer be used"))
+		LogIfError(fmt.Errorf("/event OSC message should no longer be used"))
 		// r.handleOscEvent(e.Msg)
 
 	case "/button":
@@ -270,14 +270,14 @@ func (r *Router) notifyGUI(eventName string) {
 	}
 	msg := osc.NewMessage("/notify")
 	msg.Append(eventName)
-	LogError(r.guiClient.Send(msg))
+	LogIfError(r.guiClient.Send(msg))
 	LogOfType("osc", "Router.notifyGUI", "msg", msg)
 }
 
 func (r *Router) oscHandleButton(msg *osc.Message) {
 	buttName, err := argAsString(msg, 0)
 	if err != nil {
-		LogError(err)
+		LogIfError(err)
 		return
 	}
 	text := strings.ReplaceAll(buttName, "_", "\n")
@@ -330,17 +330,17 @@ func (r *Router) oscHandleCursor(msg *osc.Message) {
 	}
 	ddu, err := argAsString(msg, 0)
 	if err != nil {
-		LogError(err)
+		LogIfError(err)
 		return
 	}
 	cid, err := argAsString(msg, 1)
 	if err != nil {
-		LogError(err)
+		LogIfError(err)
 		return
 	}
 	x, y, z, err := r.getXYZargs(msg)
 	if err != nil {
-		LogError(err)
+		LogIfError(err)
 		return
 	}
 	ce := CursorEvent{

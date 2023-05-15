@@ -31,7 +31,7 @@ func TheResolume() *Resolume {
 
 		err := theResolume.loadResolumeJSON()
 		if err != nil {
-			LogError(err)
+			LogIfError(err)
 		}
 	}
 	return theResolume
@@ -67,7 +67,7 @@ func (r *Resolume) PortAndLayerNumForPatch(patchName string) (portNum, layerNum 
 	case "D":
 		return 3337, 4
 	default:
-		LogError(fmt.Errorf("no port for layer %s", patchName))
+		LogIfError(fmt.Errorf("no port for layer %s", patchName))
 		return 0, 0
 	}
 }
@@ -89,16 +89,16 @@ func (r *Resolume) ToFreeFramePlugin(patchName string, msg *osc.Message) {
 	LogOfType("freeframe", "Resolume.toFreeframe", "patch", patchName, "msg", msg)
 	ff := r.freeframeClientFor(patchName)
 	if ff == nil {
-		LogError(fmt.Errorf("no freeframe client for layer"), "patch", patchName)
+		LogIfError(fmt.Errorf("no freeframe client for layer"), "patch", patchName)
 		return
 	}
-	LogError(ff.Send(msg))
+	LogIfError(ff.Send(msg))
 }
 
 func (r *Resolume) SendEffectParam(patchName string, name string, value string) {
 	portNum, layerNum := r.PortAndLayerNumForPatch(patchName)
 	if portNum == 0 {
-		LogError(fmt.Errorf("no such layer"), "name", patchName)
+		LogIfError(fmt.Errorf("no such layer"), "name", patchName)
 		return
 	}
 	// Effect parameters that have ":" in their name are plugin parameters
@@ -110,7 +110,7 @@ func (r *Resolume) SendEffectParam(patchName string, name string, value string) 
 	} else {
 		onoff, err := strconv.ParseBool(value)
 		if err != nil {
-			LogError(err)
+			LogIfError(err)
 			onoff = false
 		}
 		r.sendPadOneEffectOnOff(layerNum, name, onoff)
@@ -121,7 +121,7 @@ func (r *Resolume) sendPadOneEffectParam(layerNum int, effectName string, paramN
 	fullName := "effect" + "." + effectName + ":" + paramName
 	paramsMap, realEffectName, realEffectNum, err := r.getEffectMap(effectName, "params")
 	if err != nil {
-		LogError(err)
+		LogIfError(err)
 		return
 	}
 	if paramsMap == nil {
@@ -154,7 +154,7 @@ func (r *Resolume) sendPadOneEffectParam(layerNum int, effectName string, paramN
 	case ParamDefInt:
 		valint, err := strconv.Atoi(value)
 		if err != nil {
-			LogError(err)
+			LogIfError(err)
 			valint = 0
 		}
 		msg.Append(int32(valint))
@@ -162,7 +162,7 @@ func (r *Resolume) sendPadOneEffectParam(layerNum int, effectName string, paramN
 	case ParamDefBool:
 		valbool, err := strconv.ParseBool(value)
 		if err != nil {
-			LogError(err)
+			LogIfError(err)
 			valbool = false
 		}
 		onoffValue := 0
@@ -179,7 +179,7 @@ func (r *Resolume) sendPadOneEffectParam(layerNum int, effectName string, paramN
 		var valfloat float32
 		valfloat, err := ParseFloat32(value, resEffectName)
 		if err != nil {
-			LogError(err)
+			LogIfError(err)
 			valfloat = 0.0
 		}
 		msg.Append(float32(valfloat))
@@ -193,8 +193,9 @@ func (r *Resolume) sendPadOneEffectParam(layerNum int, effectName string, paramN
 }
 
 func (r *Resolume) toResolume(msg *osc.Message) {
-	LogOfType("resolume", "Resolume.toResolume", "msg", msg)
-	LogError(r.resolumeClient.Send(msg))
+	LogOfType("resolume,osc", "Resolume.toResolume", "msg", msg)
+	err := r.resolumeClient.Send(msg)
+	LogIfError(err)
 }
 
 func (r *Resolume) sendPadOneEffectOnOff(layerNum int, effectName string, onoff bool) {
@@ -207,7 +208,7 @@ func (r *Resolume) sendPadOneEffectOnOff(layerNum int, effectName string, onoff 
 
 	onoffMap, realEffectName, realEffectNum, err := r.getEffectMap(effectName, mapType)
 	if err != nil {
-		LogError(err)
+		LogIfError(err)
 		return
 	}
 
@@ -269,7 +270,7 @@ func (r *Resolume) ResolumeLayerForText() int {
 	s := GetWithDefault("textlayer", defLayer)
 	layernum, err := strconv.Atoi(s)
 	if err != nil {
-		LogError(err)
+		LogIfError(err)
 		layernum, _ = strconv.Atoi(defLayer)
 	}
 	return layernum
@@ -395,7 +396,7 @@ func (ctx *EngineContext) sendPadOneEffectParam(effectName string, paramName str
 	fullName := "effect" + "." + effectName + ":" + paramName
 	paramsMap, realEffectName, realEffectNum, err := layer.getEffectMap(effectName, "params")
 	if err != nil {
-		LogError(err)
+		LogIfError(err)
 		return
 	}
 	if paramsMap == nil {
@@ -428,7 +429,7 @@ func (ctx *EngineContext) sendPadOneEffectParam(effectName string, paramName str
 	case paramDefInt:
 		valint, err := strconv.Atoi(value)
 		if err != nil {
-			LogError(err)
+			LogIfError(err)
 			valint = 0
 		}
 		msg.Append(int32(valint))
@@ -436,7 +437,7 @@ func (ctx *EngineContext) sendPadOneEffectParam(effectName string, paramName str
 	case paramDefBool:
 		valbool, err := strconv.ParseBool(value)
 		if err != nil {
-			LogError(err)
+			LogIfError(err)
 			valbool = false
 		}
 		onoffValue := 0
@@ -453,7 +454,7 @@ func (ctx *EngineContext) sendPadOneEffectParam(effectName string, paramName str
 		var valfloat float32
 		valfloat, err := ParseFloat32(value, resEffectName)
 		if err != nil {
-			LogError(err)
+			LogIfError(err)
 			valfloat = 0.0
 		}
 		msg.Append(float32(valfloat))

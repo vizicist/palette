@@ -95,7 +95,7 @@ func (w PageLogWriter) Write(p []byte) (n int, err error) {
 func (page *Page) logToFile(s string) {
 	if page.logFile != nil {
 		_, err := page.logFile.WriteString(s)
-		engine.LogError(err)
+		engine.LogIfError(err)
 	}
 }
 
@@ -142,12 +142,12 @@ func (page *Page) Do(cmd engine.Cmd) string {
 		} else {
 			ps := toPrettyJSON(state)
 			fpath := engine.ConfigFilePath(fname)
-			engine.LogError(os.WriteFile(fpath, []byte(ps), 0644))
+			engine.LogIfError(os.WriteFile(fpath, []byte(ps), 0644))
 		}
 
 	case "getstate":
 		state, err := page.dumpState()
-		engine.LogError(err)
+		engine.LogIfError(err)
 		if err == nil {
 			return state
 		}
@@ -186,7 +186,7 @@ func (page *Page) Do(cmd engine.Cmd) string {
 		pos := image.Point{lastMenuX + 4, page.lastPos.Y}
 		_, err := page.AddTool(submenutype, pos, image.Point{})
 		if err != nil {
-			engine.LogError(err)
+			engine.LogIfError(err)
 		}
 
 	case "sweeptool":
@@ -261,7 +261,7 @@ func (page *Page) restoreState(s string) error {
 		// Create the window
 		childW, err := page.AddTool(toolType, pos, size)
 		if err != nil {
-			engine.LogError(err)
+			engine.LogIfError(err)
 			continue
 		}
 		// restore state
@@ -409,7 +409,7 @@ func (page *Page) defaultHandler(cmd engine.Cmd) {
 		} else {
 			w, err := page.AddTool("PageMenu", pos, image.Point{})
 			if err != nil {
-				engine.LogError(err)
+				engine.LogIfError(err)
 			} else {
 				page.pageMenu = w
 			}
@@ -488,7 +488,7 @@ func (page *Page) sweepHandler(cmd engine.Cmd) {
 			}
 			child, err := page.AddTool(page.sweepToolName, toolPos, toolSize)
 			if err != nil {
-				engine.LogError(err)
+				engine.LogIfError(err)
 			} else {
 				WinSetChildSize(child, toolSize)
 			}

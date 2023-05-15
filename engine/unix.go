@@ -31,7 +31,7 @@ func Spawn(executable string, background bool, stdout io.Writer, stderr io.Write
 	}
 	if err != nil {
 		// Don't do Fatal here - some commands like taskkill will fail harmlessly
-		LogError(err)
+		LogIfError(err)
 		return err
 	}
 	Info("Spawn", "bg", background, "cmd")

@@ -1,7 +1,7 @@
 {
     "params": {
-        "misc.enable:sound":"false",
-        "misc.enable:visual":"true",
+        "misc.generatesound":"false",
+        "misc.generatevisual":"true",
         "misc.logic_sound":"true",
         "misc.logic_visual":"true",
         "misc.midibehaviour":"default",

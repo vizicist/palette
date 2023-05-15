@@ -629,13 +629,13 @@
         "D-visual.thickness":"4.900000",
         "D-visual.zmin":"0.010000",
         "misc.midiinputpatch":"A",
-        "misc.enable:visual":"true",
+        "misc.generatevisual":"true",
         "misc.quantstyle":"frets",
         "misc.logic_visual":"true",
         "misc.logic_sound":"true",
         "misc.volstyle":"pressure",
         "misc.midibehaviour":"default",
         "misc.scale":"newage",
-        "misc.enable:sound":"true"
+        "misc.generatesound":"true"
     }
 }

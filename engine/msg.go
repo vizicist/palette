@@ -53,7 +53,7 @@ func (cmd Cmd) ValuesBool(name string, dflt bool) bool {
 	}
 	b, err := strconv.ParseBool(v)
 	if err != nil {
-		LogError(err)
+		LogIfError(err)
 		b = dflt
 	}
 	return b
@@ -119,7 +119,7 @@ func (cmd Cmd) ValuesXY(xyname string, dflt image.Point) image.Point {
 	var x, y int
 	n, err := fmt.Sscanf(xystr, "%d,%d", &x, &y)
 	if err != nil {
-		LogError(err)
+		LogIfError(err)
 		return dflt
 	}
 	if n != 2 {
@@ -153,7 +153,7 @@ func (cmd Cmd) ValuesInt(name string, dflt int) int {
 	}
 	i, err := strconv.Atoi(v)
 	if err != nil {
-		LogError(err)
+		LogIfError(err)
 		return dflt
 	}
 	return i

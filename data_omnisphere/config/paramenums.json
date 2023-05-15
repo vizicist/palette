@@ -1,5 +1,6 @@
 {
   "plugins": [ "", "quadpro" ],
+  "log": ["","cursor","midi","osc","api","loop"],
   "bidule": ["C:/Program Files/Plogue/Bidule/Bidule.exe", ""],
   "mmtt": ["kinect", "depthai", ""],
 	"destination": [ ".", "A", "B", "C", "D" ],

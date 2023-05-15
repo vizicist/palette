@@ -84,7 +84,7 @@ func NewParamValues() *ParamValues {
 func InitParams() {
 
 	if TheParams != nil {
-		LogError(fmt.Errorf("InitParams called a second time!?)"))
+		LogIfError(fmt.Errorf("InitParams called a second time!?)"))
 		return
 	}
 	TheParams = NewParamValues()
@@ -106,13 +106,13 @@ func InitParams() {
 		if pd.Category == "engine" {
 			err := TheParams.SetParamValueWithString(nm, pd.Init)
 			if err != nil {
-				LogError(err)
+				LogIfError(err)
 			}
 		}
 	}
 	err = LoadCurrentEngineParams()
 	if err != nil {
-		LogError(err)
+		LogIfError(err)
 	}
 }
 
@@ -171,12 +171,26 @@ func (params *ParamValues) ApplyValuesFromMap(category string, paramsmap map[str
 			// err := params.Set(fullname, value)
 			err := setfunc(fullname, value)
 			if err != nil {
-				LogError(err)
+				LogIfError(err)
 				// Don't abort the whole load, i.e. we are tolerant
 				// of unknown parameters or errors in the saved
 			}
 		}
 	}
+}
+
+func (vals *ParamValues) ParamNames() []string {
+	// Print the parameter values sorted by name
+	vals.mutex.RLock()
+	defer vals.mutex.RUnlock()
+	sortedNames := make([]string, 0, len(vals.values))
+	for k := range vals.values {
+		if IsPerPatchParam(k) {
+			sortedNames = append(sortedNames, k)
+		}
+	}
+	sort.Strings(sortedNames)
+	return sortedNames
 }
 
 // returns "" if parameter doesn't exist
@@ -216,7 +230,7 @@ func (vals *ParamValues) GetFloatValue(name string) float32 {
 		if ok {
 			f, err := strconv.ParseFloat(pd.Init, 64)
 			if err == nil {
-				LogError(err)
+				LogIfError(err)
 				return float32(f)
 			}
 		}
@@ -270,7 +284,7 @@ func (vals *ParamValues) Save(category string, filename string) error {
 		}
 		valstring, e := vals.paramValueAsString(fullName)
 		if e != nil {
-			LogError(e)
+			LogIfError(e)
 			continue
 		}
 		s += fmt.Sprintf("%s        \"%s\":\"%s\"", sep, fullName, valstring)
@@ -350,7 +364,7 @@ func (vals *ParamValues) SetParamValueWithString(origname, value string) (err er
 		paramVal = paramValFloat{def: d, value: float32(v)}
 	default:
 		e := fmt.Errorf("SetParamValueWithString: unknown type of ParamDef for name=%s", origname)
-		LogError(e)
+		LogIfError(e)
 		return e
 	}
 

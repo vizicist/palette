@@ -1,4 +1,5 @@
 DECLARE_TYPES(plugins);
+DECLARE_TYPES(log);
 DECLARE_TYPES(bidule);
 DECLARE_TYPES(mmtt);
 DECLARE_TYPES(destination);

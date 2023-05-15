@@ -31,7 +31,6 @@ func GetSaved(name string) *OldSaved {
 }
 */
 
-
 func SavedDir() string {
 	return "saved"
 }
@@ -137,6 +136,6 @@ func SavedFilePath(category string, filename string) string {
 // WritableSavedFilePath xxx
 func WritableFilePath(category string, filename string) string {
 	path := SavedFilePath(category, filename)
-	LogError(os.MkdirAll(filepath.Dir(path), 0777))
+	LogIfError(os.MkdirAll(filepath.Dir(path), 0777))
 	return path
 }

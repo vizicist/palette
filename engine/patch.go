@@ -2,11 +2,10 @@ package engine
 
 import (
 	"fmt"
-	"sort"
 	"strings"
 	"sync"
 
-	"github.com/hypebeast/go-osc/osc"
+"github.com/hypebeast/go-osc/osc"
 )
 
 type Patch struct {
@@ -80,7 +79,7 @@ func (patch *Patch) SetDefaultValues() {
 		if IsPerPatchParam(nm) {
 			err := patch.Set(nm, d.Init)
 			if err != nil {
-				LogError(err)
+				LogIfError(err)
 			}
 		}
 	}
@@ -144,12 +143,12 @@ func (patch *Patch) SaveAndAlert(category string, filename string) error {
 
 	if filename == "_Current" && category != "quad" {
 		err := fmt.Errorf(", we're only saving _Current in quad (and global)")
-		LogError(err)
+		LogIfError(err)
 		return err
 	}
 	err := patch.params.Save(category, filename)
 	if err != nil {
-		LogError(err)
+		LogIfError(err)
 		return err
 	}
 	patch.RefreshAllPatchValues()
@@ -250,16 +249,14 @@ func (patch *Patch) Api(api string, apiargs map[string]string) (string, error) {
 		return "", patch.SaveQuadAndAlert()
 
 	case "setparams":
-		var err error
 		for name, value := range apiargs {
-			e := patch.Set(name, value)
-			if e != nil {
-				LogError(e)
-				err = e
+			err := patch.Set(name, value)
+			if err != nil {
+				// TODO: should we return as soon as we get the first error?
+				LogIfError(err)
+				return "", err
 			}
-		}
-		if err != nil {
-			return "", err
+			patch.noticeValueChange(name, value)
 		}
 		return "", patch.SaveQuadAndAlert()
 
@@ -285,7 +282,7 @@ func (patch *Patch) Api(api string, apiargs map[string]string) (string, error) {
 			return "", nil
 		}
 		err := fmt.Errorf("Patch.API: unrecognized api=%s", api)
-		LogError(err)
+		LogIfError(err)
 		return "", err
 	}
 }
@@ -298,7 +295,7 @@ func (patch *Patch) Set(paramName string, paramValue string) error {
 
 	if !IsPerPatchParam(paramName) {
 		err := fmt.Errorf("Patch.Set: not per-patch param=%s", paramName)
-		LogError(err)
+		LogIfError(err)
 		return err
 	}
 	return patch.params.Set(paramName, paramValue)
@@ -310,16 +307,7 @@ func (patch *Patch) Get(paramName string) string {
 }
 
 func (patch *Patch) ParamNames() []string {
-	// Print the parameter values sorted by name
-	fullNames := patch.params.values
-	sortedNames := make([]string, 0, len(fullNames))
-	for k := range fullNames {
-		if IsPerPatchParam(k) {
-			sortedNames = append(sortedNames, k)
-		}
-	}
-	sort.Strings(sortedNames)
-	return sortedNames
+	return patch.params.ParamNames()
 }
 
 // func (patch *Patch) GetString(paramName string) string {
@@ -353,7 +341,7 @@ func (patch *Patch) ApplyPatchValuesFromQuadMap(paramsmap map[string]any) error 
 		// parmeters that are intended for this specific patch, so...
 		i := strings.Index(fullParamName, PatchNameSeparator)
 		if i < 0 {
-			LogError(fmt.Errorf("applyQuadValuesFrom: no PatchNameSeparator"), "param", fullParamName)
+			LogIfError(fmt.Errorf("applyQuadValuesFrom: no PatchNameSeparator"), "param", fullParamName)
 			continue
 		}
 		patchOfParam := fullParamName[0:i]
@@ -374,7 +362,7 @@ func (patch *Patch) ApplyPatchValuesFromQuadMap(paramsmap map[string]any) error 
 
 		value, ok := paramValue.(string)
 		if !ok {
-			LogError(fmt.Errorf("ApplyPatchValuesFromQuadMap: Needs to handle new value format"))
+			LogIfError(fmt.Errorf("ApplyPatchValuesFromQuadMap: Needs to handle new value format"))
 			return fmt.Errorf("value of name=%s isn't a string", fullParamName)
 		}
 		err := patch.Set(paramName, value)
@@ -421,14 +409,14 @@ func (patch *Patch) Load(category string, filename string) error {
 	path := patch.readableFilePath(category, filename)
 	paramsmap, err := LoadParamsMap(path)
 	if err != nil {
-		LogError(err)
+		LogIfError(err)
 		return err
 	}
 	if category == "quad" {
 		// this will only load things to this one patch
 		err = patch.ApplyPatchValuesFromQuadMap(paramsmap)
 		if err != nil {
-			LogError(err)
+			LogIfError(err)
 			return err
 		}
 	} else {
@@ -474,16 +462,15 @@ func (patch *Patch) Load(category string, filename string) error {
 }
 
 func (patch *Patch) clearGraphics() {
-	// send an OSC message to Resolume
 	TheResolume().ToFreeFramePlugin(patch.Name(), osc.NewMessage("/clear"))
 }
 
 func (patch *Patch) loopClear() {
 	prefix := patch.name
-	LogInfo("Patch.loopClear", "prefix", prefix)
+	LogOfType("loop", "Ptch.loopClear", "prefix", prefix)
 	TheCursorManager.DeleteActiveCursorsForCidPrefix(prefix)
 	TheScheduler.DeleteEventsForCidPrefix(prefix)
-	LogInfo("Patch.loopClear end", "schedule", TheScheduler.ToString())
+	LogOfType("loop", "Patch.loopClear end", "schdule", TheScheduler.ToString())
 }
 
 func (patch *Patch) loopDebug() {

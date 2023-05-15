@@ -16,7 +16,7 @@ func main() {
 	doProfile := false
 	if doProfile {
 		file, _ := os.Create("./cpu.pprof")
-		engine.LogError(pprof.StartCPUProfile(file))
+		engine.LogIfError(pprof.StartCPUProfile(file))
 	}
 
 	signal.Ignore(syscall.SIGHUP)
