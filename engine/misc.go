@@ -23,14 +23,6 @@ import (
 var EngineExe = "palette_engine.exe"
 var EngineExeDebug = "__debug_bin.exe"
 
-func Init(tag string) {
-
-	InitLog(tag)
-	InitParams()
-	InitProcessManager()
-
-}
-
 func IsRunning(process string) bool {
 	if process == "engine" {
 		b := isRunningExecutable(EngineExe)
@@ -530,7 +522,7 @@ func RemoteAPIRaw(args string) (map[string]string, error) {
 
 func SendLogs() error {
 
-	recipient := TheParams.Get("engine.emailto")
+	recipient := GetParam("engine.emailto")
 	if recipient == "" {
 		msg := "SendLogs: not sending, no emailto in settings"
 		LogWarn(msg)
@@ -579,9 +571,9 @@ func SendMail(body string) error {
 // SendMail xxx
 func SendMailWithAttachment(body, attachfile string) error {
 
-	recipient := TheParams.Get("engine.emailto")
-	login := TheParams.Get("engine.emaillogin")
-	password := TheParams.Get("engine.emailpassword")
+	recipient := GetParam("engine.emailto")
+	login := GetParam("engine.emaillogin")
+	password := GetParam("engine.emailpassword")
 
 	if recipient == "" {
 		return fmt.Errorf("sendMail: not sending, no emailto in settings")

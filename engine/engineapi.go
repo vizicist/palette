@@ -85,7 +85,7 @@ func (e *Engine) executeEngineAPI(api string, apiargs map[string]string) (result
 		if err != nil {
 			return "", err
 		}
-		return "", SaveCurrentEngineParams()
+		return "", e.SaveCurrent()
 
 	case "setparams":
 		for name, value := range apiargs {
@@ -98,14 +98,14 @@ func (e *Engine) executeEngineAPI(api string, apiargs map[string]string) (result
 		if err != nil {
 			return "", err
 		}
-		return "", SaveCurrentEngineParams()
+		return "", e.SaveCurrent()
 
 	case "get":
 		name, ok := apiargs["name"]
 		if !ok {
 			return "", fmt.Errorf("executeEngineAPI: missing name parameter")
 		}
-		return TheParams.Get(name), nil
+		return e.params.Get(name), nil
 
 	case "startprocess":
 		process, ok := apiargs["process"]
@@ -140,7 +140,7 @@ func (e *Engine) executeEngineAPI(api string, apiargs map[string]string) (result
 		if !ok {
 			return "", fmt.Errorf("executeEngineAPI: missing filename parameter")
 		}
-		return "", TheParams.Save("engine", filename)
+		return "", e.params.Save("engine", filename)
 
 	case "exit":
 		e.StopMe()
@@ -181,69 +181,92 @@ func (e *Engine) executeEngineAPI(api string, apiargs map[string]string) (result
 	return result, err
 }
 
-func SaveCurrentEngineParams() (err error) {
-	return TheParams.Save("engine", "_Current")
+func (e *Engine) getFloat(value string, f *float64) bool {
+	v, err := strconv.ParseFloat(value, 32)
+	if err != nil {
+		LogIfError(err)
+		return false
+	} else {
+		*f = v
+		return true
+	}
 }
 
-func LoadCurrentEngineParams() (err error) {
-	path := SavedFilePath("engine", "_Current")
-	paramsmap, err := LoadParamsMap(path)
-	if err == nil {
-		TheParams.ApplyValuesFromMap("engine", paramsmap, TheParams.Set)
+func (e *Engine) getInt(value string, i *int64) bool {
+	v, err := strconv.ParseInt(value, 10, 64)
+	if err != nil {
+		LogIfError(err)
+		return false
+	} else {
+		*i = v
+		return true
 	}
-	return err
 }
 
 func (e *Engine) Set(name string, value string) error {
+	var f float64
+	var i int64
 	switch name {
 	case "engine.midithru":
 		TheRouter.midithru = IsTrueValue(value)
+
 	case "engine.midisetexternalscale":
 		TheRouter.midisetexternalscale = IsTrueValue(value)
+
 	case "engine.midithruscadjust":
 		TheRouter.midiThruScadjust = IsTrueValue(value)
+
 	case "engine.oscoutput":
 		e.oscoutput = IsTrueValue(value)
+
 	case "engine.autotranspose":
 		TheMidiIO.autoTransposeOn = IsTrueValue(value)
+
 	case "engine.autotransposebeats":
-		i, err := ParseInt(value, "engine.autotransposebeats")
-		if err != nil {
-			return err
+		if e.getInt(value, &i) {
+			TheMidiIO.SetAutoTransposeBeats(int(i))
 		}
-		TheMidiIO.SetAutoTransposeBeats(i)
 	case "engine.transpose":
-		i, err := ParseInt(value, "engine.transpose")
-		if err != nil {
-			return err
+		if e.getInt(value, &i) {
+			TheMidiIO.SetTranspose(int(i))
 		}
-		TheMidiIO.engineTranspose = i
 	case "engine.log":
 		e.ResetLogTypes(value)
+
+	case "engine.processchecksecs":
+		if e.getFloat(value, &f) {
+			TheProcessManager.processCheckSecs = f
+		}
 	case "engine.attract":
 		TheAttractManager.setAttractMode(IsTrueValue(value))
-	case "engine.midiinput":
-		TheMidiIO.SetMidiInput(value)
+
+	case "engine.attractchecksecs":
+		if e.getFloat(value, &f) {
+			TheAttractManager.attractCheckSecs = f
+		}
+	case "engine.attractchangeinterval":
+		if e.getFloat(value, &f) {
+			TheAttractManager.attractChangeInterval = f
+		}
+	case "engine.attractgestureinterval":
+		if e.getFloat(value, &f) {
+			TheAttractManager.attractGestureInterval = f
+		}
 	case "engine.attractidlesecs":
-		var f float64
-		f, err := strconv.ParseFloat(value, 32)
-		if err != nil {
-			LogIfError(err)
-		} else {
+		if e.getFloat(value, &f) {
 			TheAttractManager.attractIdleSecs = f
 		}
+	case "engine.midiinput":
+		TheMidiIO.SetMidiInput(value)
 	}
+
 	LogOfType("params", "Engine.Set", "name", name, "value", value)
-	return TheParams.Set(name, value)
+	return e.params.Set(name, value)
 }
 
-// func (e *Engine) Get(name string) string {
-// 	return TheParams.Get(name)
-// }
-
 func GetWithDefault(nm string, dflt string) string {
-	if TheParams.Exists(nm) {
-		return TheParams.Get(nm)
+	if TheEngine.params.Exists(nm) {
+		return TheEngine.params.Get(nm)
 	} else {
 		return dflt
 	}
@@ -251,7 +274,7 @@ func GetWithDefault(nm string, dflt string) string {
 
 // ParamBool returns bool value of nm, or false if nm not set
 func ParamBool(nm string) bool {
-	v := TheParams.Get(nm)
+	v := TheEngine.params.Get(nm)
 	if v == "" {
 		return false
 	}
@@ -259,7 +282,7 @@ func ParamBool(nm string) bool {
 }
 
 func ParamIntWithDefault(nm string, dflt int) int {
-	s := TheParams.Get(nm)
+	s := TheEngine.params.Get(nm)
 	if s == "" {
 		return dflt
 	}
@@ -272,8 +295,8 @@ func ParamIntWithDefault(nm string, dflt int) int {
 	return val
 }
 
-func ParamFloatWithDefault(nm string, dflt float64) float64 {
-	s := TheParams.Get(nm)
+func (e *Engine) ParamFloatWithDefault(nm string, dflt float64) float64 {
+	s := e.params.Get(nm)
 	if s == "" {
 		return dflt
 	}

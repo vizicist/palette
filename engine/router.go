@@ -270,8 +270,7 @@ func (r *Router) notifyGUI(eventName string) {
 	}
 	msg := osc.NewMessage("/notify")
 	msg.Append(eventName)
-	LogIfError(r.guiClient.Send(msg))
-	LogOfType("osc", "Router.notifyGUI", "msg", msg)
+	TheEngine.SendOsc(r.guiClient, msg)
 }
 
 func (r *Router) oscHandleButton(msg *osc.Message) {
@@ -354,14 +353,14 @@ func (r *Router) oscHandleCursor(msg *osc.Message) {
 	}
 
 	// XXX - HACK!!
-	zfactor := ParamFloatWithDefault("mmtt.zfactor", 5.0)
-	ahack := ParamFloatWithDefault("mmtt.ahack", 20.0)
+	zfactor := TheEngine.ParamFloatWithDefault("mmtt.zfactor", 5.0)
+	ahack := TheEngine.ParamFloatWithDefault("mmtt.ahack", 20.0)
 	ce.Z = boundval32(ahack * zfactor * float64(ce.Z))
 
-	xexpand := ParamFloatWithDefault("mmtt.xexpand", 1.25)
+	xexpand := TheEngine.ParamFloatWithDefault("mmtt.xexpand", 1.25)
 	ce.X = boundval32(((float64(ce.X) - 0.5) * xexpand) + 0.5)
 
-	yexpand := ParamFloatWithDefault("mmtt.yexpand", 1.25)
+	yexpand := TheEngine.ParamFloatWithDefault("mmtt.yexpand", 1.25)
 	ce.Y = boundval32(((float64(ce.Y) - 0.5) * yexpand) + 0.5)
 
 	LogOfType("mmtt", "MMTT Cursor", "source", ce.Source, "ddu", ce.Ddu, "x", ce.X, "y", ce.Y, "z", ce.Z)

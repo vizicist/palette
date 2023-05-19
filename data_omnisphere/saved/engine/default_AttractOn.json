@@ -2,7 +2,7 @@
     "params": {
         "engine.attractidlesecs":"72",
         "engine.autorestart":"true",
-        "engine.bidule":"C:/Program Files/Plogue/Bidule/Bidule.exe",
+        "engine.bidulepath":"C:/Program Files/Plogue/Bidule/Bidule.exe",
         "engine.midiinput":"",
         "engine.oscoutput":"true",
         "engine.scale":"newage"

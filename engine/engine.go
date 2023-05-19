@@ -22,6 +22,7 @@ type Engine struct {
 	recordingFile  *os.File
 	recordingPath  string
 	recordingMutex sync.RWMutex
+	params         *ParamValues
 }
 
 var TheEngine *Engine
@@ -39,10 +40,13 @@ func NewEngine() *Engine {
 
 	LogInfo("Engine InitLog ==============================================")
 
-	TheEngine = &Engine{
+	e := &Engine{
 		done: make(chan bool),
 	}
 
+	e.params = NewParamValues()
+
+	TheProcessManager = NewProcessManager()
 	TheCursorManager = NewCursorManager()
 	TheRouter = NewRouter()
 	TheScheduler = NewScheduler()
@@ -51,8 +55,57 @@ func NewEngine() *Engine {
 	TheMidiIO = NewMidiIO()
 	TheErae = NewErae()
 
-	TheEngine.ResetLogTypes(os.Getenv("PALETTE_LOG"))
-	return TheEngine
+	e.ResetLogTypes(os.Getenv("PALETTE_LOG"))
+
+	// Set all the default engine.* values
+	for nm, pd := range ParamDefs {
+		if pd.Category == "engine" {
+			err := e.params.setParamValueWithString(nm, pd.Init)
+			if err != nil {
+				LogIfError(err)
+			}
+		}
+	}
+	err := e.LoadCurrent()
+	if err != nil {
+		LogIfError(err)
+	}
+
+	TheEngine = e
+
+	// These need to be done after engine parameters are loaded
+	TheProcessManager.AddProcessBuiltIn("keykit")
+	TheProcessManager.AddProcessBuiltIn("bidule")
+	TheProcessManager.AddProcessBuiltIn("resolume")
+	TheProcessManager.AddProcessBuiltIn("gui")
+	TheProcessManager.AddProcessBuiltIn("mmtt")
+
+	return e
+}
+
+func GetParam(name string) string {
+	if TheEngine == nil {
+		LogIfError(fmt.Errorf("GetParam called before NewEngine!?)"))
+		return ""
+	}
+	return TheEngine.Get(name)
+}
+
+func (e *Engine) Get(name string) string {
+	return e.params.Get(name)
+}
+
+func (e *Engine) SaveCurrent() (err error) {
+	return e.params.Save("engine", "_Current")
+}
+
+func (e *Engine) LoadCurrent() (err error) {
+	path := SavedFilePath("engine", "_Current")
+	paramsmap, err := LoadParamsMap(path)
+	if err == nil {
+		e.params.ApplyValuesFromMap("engine", paramsmap, e.Set)
+	}
+	return err
 }
 
 func (e *Engine) Start() {
@@ -106,15 +159,24 @@ func (e *Engine) ResetLogTypes(logtypes string) {
 	}
 }
 
+func (e *Engine) SendOsc(client *osc.Client, msg *osc.Message) {
+	if client == nil {
+		LogIfError(fmt.Errorf("engine.SendOsc: client is nil"))
+		return
+	}
+
+	LogOfType("osc", "Sending to OSC client", "client", client.IP(), "port", client.Port(), "msg", msg)
+	err := client.Send(msg)
+	LogIfError(err)
+}
+
 func (e *Engine) sendToOscClients(msg *osc.Message) {
 	if e.oscoutput {
 		if e.oscClient == nil {
 			e.oscClient = osc.NewClient(LocalAddress, EventClientPort)
 			// oscClient is guaranteed to be non-nil
 		}
-		err := e.oscClient.Send(msg)
-		LogIfError(err)
-		LogOfType("cursor", "Router sending to OSC client", "msg", msg)
+		e.SendOsc(e.oscClient, msg)
 	}
 }
 

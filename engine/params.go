@@ -10,10 +10,6 @@ import (
 	"sync"
 )
 
-// parameter definitions
-
-var TheParams *ParamValues
-
 // ParamDef is a single parameter definition.
 type ParamDef struct {
 	TypedParamDef any
@@ -82,13 +78,6 @@ func NewParamValues() *ParamValues {
 }
 
 func InitParams() {
-
-	if TheParams != nil {
-		LogIfError(fmt.Errorf("InitParams called a second time!?)"))
-		return
-	}
-	TheParams = NewParamValues()
-
 	err := LoadParamEnums()
 	if err != nil {
 		LogWarn("LoadParamEnums", "err", err)
@@ -99,20 +88,6 @@ func InitParams() {
 	if err != nil {
 		LogWarn("LoadParamDefs", "err", err)
 		// might be fatal, but try to continue
-	}
-
-	// Set all the default engine.* values
-	for nm, pd := range ParamDefs {
-		if pd.Category == "engine" {
-			err := TheParams.SetParamValueWithString(nm, pd.Init)
-			if err != nil {
-				LogIfError(err)
-			}
-		}
-	}
-	err = LoadCurrentEngineParams()
-	if err != nil {
-		LogIfError(err)
 	}
 }
 
@@ -138,9 +113,7 @@ func (vals *ParamValues) JsonValues() string {
 }
 
 func (vals *ParamValues) Set(name, value string) error {
-	vals.mutex.Lock()
-	defer vals.mutex.Unlock()
-	return vals.SetParamValueWithString(name, value)
+	return vals.setParamValueWithString(name, value)
 }
 
 // Currently, no errors are ever returned, but log messages are generated.
@@ -328,10 +301,13 @@ func LoadParamsMap(path string) (ParamsMap, error) {
 	return paramsmap, nil
 }
 
-func (vals *ParamValues) SetParamValueWithString(origname, value string) (err error) {
+func (vals *ParamValues) setParamValueWithString(origname, value string) (err error) {
+
+	vals.mutex.Lock()
+	defer vals.mutex.Unlock()
 
 	if origname == "pad" {
-		return fmt.Errorf("ParamValues.SetParamValueWithString rejects setting of pad value")
+		return fmt.Errorf("ParamValues.setParamValueWithString rejects setting of pad value")
 	}
 
 	def, err := vals.paramDefOf(origname)
@@ -363,11 +339,10 @@ func (vals *ParamValues) SetParamValueWithString(origname, value string) (err er
 		}
 		paramVal = paramValFloat{def: d, value: float32(v)}
 	default:
-		e := fmt.Errorf("SetParamValueWithString: unknown type of ParamDef for name=%s", origname)
+		e := fmt.Errorf("setParamValueWithString: unknown type of ParamDef for name=%s", origname)
 		LogIfError(e)
 		return e
 	}
-
 	vals.values[origname] = paramVal
 	return nil
 }

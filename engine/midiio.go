@@ -132,6 +132,10 @@ func (m *MidiIO) handleMidiError(err error) {
 	LogIfError(err)
 }
 
+func (m *MidiIO) SetTranspose(i int) {
+	m.engineTranspose = i
+}
+
 func (m *MidiIO) SetAutoTransposeBeats(beats int) {
 	m.autoTransposeNext = Clicks(beats) * OneBeat
 	m.autoTransposeClicks = Clicks(beats) * OneBeat

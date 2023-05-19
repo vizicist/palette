@@ -22,7 +22,8 @@ func main() {
 	signal.Ignore(syscall.SIGHUP)
 	signal.Ignore(syscall.SIGINT)
 
-	engine.Init("engine")
+	engine.InitLog("engine")
+	engine.InitParams()
 
 	e := engine.NewEngine()
 
