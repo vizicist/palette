@@ -38,11 +38,11 @@
             "args": ["status"]
         },
         {
-            "name": "palette stop keykit",
+            "name": "palette stop all",
             "type": "go",
             "request": "launch",
             "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
-            "args": ["stop","keykit"]
+            "args": ["stop","all"]
         },
         {
             "name": "Chillian Start",
