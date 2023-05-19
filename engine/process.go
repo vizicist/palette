@@ -63,7 +63,6 @@ func NewProcessManager() *ProcessManager {
 		lastProcessCheck: time.Time{},
 		processCheckSecs: 60, // default, change it with engine.processchecksecs
 	}
-	TheProcessManager = pm
 	return pm
 }
 
@@ -114,6 +113,16 @@ func (pm *ProcessManager) CheckAutorestartProcesses() {
 			err := pm.StartRunning(processName)
 			LogIfError(err)
 		}
+	}
+}
+
+func (pm *ProcessManager) AddBuiltins() {
+	pm.AddProcessBuiltIn("keykit")
+	pm.AddProcessBuiltIn("bidule")
+	pm.AddProcessBuiltIn("resolume")
+	pm.AddProcessBuiltIn("gui")
+	if pm.IsAvailable("mmtt") {
+		pm.AddProcessBuiltIn("mmtt")
 	}
 }
 
@@ -211,6 +220,11 @@ func (pm *ProcessManager) getProcessInfo(process string) (*ProcessInfo, error) {
 		return nil, err
 	}
 	return p, nil
+}
+
+func (pm *ProcessManager) IsAvailable(process string) bool {
+	_, err := pm.getProcessInfo(process)
+	return err == nil
 }
 
 func (pm *ProcessManager) IsRunning(process string) bool {

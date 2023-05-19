@@ -23,7 +23,7 @@ func main() {
 	signal.Ignore(syscall.SIGINT)
 
 	engine.InitLog("engine")
-	engine.InitParams()
+	engine.InitMisc()
 
 	e := engine.NewEngine()
 

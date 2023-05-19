@@ -19,7 +19,7 @@ func main() {
 	flag.Parse()
 
 	engine.InitLog("palette")
-	engine.InitParams()
+	engine.InitMisc()
 
 	engine.LogInfo("Palette InitLog", "args", flag.Args())
 
@@ -84,7 +84,11 @@ func CliCommand(args []string) string {
 		s += "Bidule is " + statusString("bidule") + ".\n"
 		s += "Resolume is " + statusString("resolume") + ".\n"
 		s += "Keykit is " + statusString("keykit") + ".\n"
-		s += "MMTT is " + statusString("mmtt") + ".\n"
+		if engine.TheProcessManager.IsAvailable("mmtt") {
+			s += "MMTT is " + statusString("mmtt") + ".\n"
+		} else {
+			s += "MMTT is not available.\n"
+		}
 		return s
 
 	case "start":
@@ -103,7 +107,9 @@ func CliCommand(args []string) string {
 			s1 += "\n" + doApi("engine.startprocess", "process", "bidule")
 			s1 += "\n" + doApi("engine.startprocess", "process", "resolume")
 			s1 += "\n" + doApi("engine.startprocess", "process", "keykit")
-			s1 += "\n" + doApi("engine.startprocess", "process", "mmtt")
+			if engine.TheProcessManager.IsAvailable("mmtt") {
+				s1 += "\n" + doApi("engine.startprocess", "process", "mmtt")
+			}
 			return s1
 
 		default:
