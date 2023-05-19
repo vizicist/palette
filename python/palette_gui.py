@@ -2442,7 +2442,7 @@ if __name__ == "__main__":
     }
 
     # guisize is palette/medium/small
-    guisize = os.environ.get("PALETTE_GUI_SIZE","palette")
+    guisize = os.environ.get("PALETTE_GUI_SIZE","small")
 
     global PaletteApp
     PaletteApp = ProGuiApp(patchname,patchnames,visiblepagenames,guisize)
