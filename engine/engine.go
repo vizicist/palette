@@ -28,6 +28,11 @@ type Engine struct {
 var TheEngine *Engine
 var engineSysex sync.Mutex
 
+func InitMisc() {
+	InitParams()
+	TheProcessManager = NewProcessManager()
+}
+
 func NewEngine() *Engine {
 
 	if TheEngine != nil {
@@ -46,7 +51,6 @@ func NewEngine() *Engine {
 
 	e.params = NewParamValues()
 
-	TheProcessManager = NewProcessManager()
 	TheCursorManager = NewCursorManager()
 	TheRouter = NewRouter()
 	TheScheduler = NewScheduler()
@@ -73,12 +77,8 @@ func NewEngine() *Engine {
 
 	TheEngine = e
 
-	// These need to be done after engine parameters are loaded
-	TheProcessManager.AddProcessBuiltIn("keykit")
-	TheProcessManager.AddProcessBuiltIn("bidule")
-	TheProcessManager.AddProcessBuiltIn("resolume")
-	TheProcessManager.AddProcessBuiltIn("gui")
-	TheProcessManager.AddProcessBuiltIn("mmtt")
+	// This need to be done after engine parameters are loaded
+	TheProcessManager.AddBuiltins()
 
 	return e
 }
