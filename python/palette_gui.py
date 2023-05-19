@@ -127,7 +127,7 @@ class ProGuiApp(tk.Tk):
             self.performButtonsPerRow = 6
         else:
             if self.guisize != "small":
-                log("Unknown guisize=",self.guisize)
+                log("Unknown guisize=",self.guisize," assuming small")
             self.paramDisplayRows = 23
             self.frameSizeOfControlNormal = 0.085
             self.frameSizeOfPatchChooserNormal = 0.0
@@ -143,7 +143,8 @@ class ProGuiApp(tk.Tk):
             self.performButtonPady = 3
             self.performButtonsPerRow = 6
 
-        if (self.frameSizeOfSelectAdvanced + self.frameSizeOfControlAdvanced + self.frameSizeOfPatchChooserAdvanced) != 1.0:
+        df = (self.frameSizeOfSelectAdvanced + self.frameSizeOfControlAdvanced + self.frameSizeOfPatchChooserAdvanced) - 1.0
+        if df > 0.01 or df < -0.01:
             log("Hey, page sizes don't add up to 1.0")
 
 
@@ -2223,30 +2224,26 @@ class PageSelector(tk.Frame):
 
 def afterWindowIsDisplayed(windowName,guisize,*args):
 
-    log("afterWindowIsDisplay guisize=",guisize)
-
     time.sleep(1.0) # wait for window to be visible so nircmdc sees it
-    # The value of guisize should be four integers separated by spaces
+    guimaximize = "false"
+    # guisize is palette/small/medium
     if guisize == "palette":
         guirect = "-800 0 800 1280"
-        guirect = "0 0 800 1280"
+        guimaximize = "true"
     elif guisize == "small":
         guirect = "0 0 400 640"
     elif guisize == "medium":
         guirect = "0 0 500 800"
     else:
-        log("BAD VALUE FOR guisize=",guisize)
+        log("BAD VALUE FOR guisize=",guisize," assuming small")
         guirect = "0 0 400 640"
 
-    guisize = guisize.replace(","," ")
     cmd = "nircmdc.exe win setsize stitle \""+windowName+"\" "+guirect
-    log("Resizing GUI, guirect=",guirect," cmd=",cmd)
+    log("Resizing GUI, guisize=",guisize," cmd=",cmd)
     os.system(cmd)
 
-    # By default, remove the title bar and maximize it
-    guimaximize = os.environ.get("PALETTE_GUI_MAXIMIZE","false")
-    log("guimaximize=",guimaximize)
     if guimaximize == "true":
+        # remove the title bar and maximize it
         cmd = "nircmdc.exe win -style stitle \""+windowName+"\" 0x00CA0000"
         log("Maximizing gui cmd 1 =",cmd)
         os.system(cmd)
@@ -2450,8 +2447,8 @@ if __name__ == "__main__":
         "effect":"Effect",
     }
 
-    # guisize is of the form x,y,w,h
-    guisize = os.environ.get("PALETTE_GUI_SIZE","palette")
+    # guisize is palette/medium/small
+    guisize = os.environ.get("PALETTE_GUI_SIZE","small")
 
     global PaletteApp
     PaletteApp = ProGuiApp(patchname,patchnames,visiblepagenames,guisize)
