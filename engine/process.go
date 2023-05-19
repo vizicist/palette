@@ -121,7 +121,7 @@ func (pm *ProcessManager) AddBuiltins() {
 	pm.AddProcessBuiltIn("bidule")
 	pm.AddProcessBuiltIn("resolume")
 	pm.AddProcessBuiltIn("gui")
-	if pm.IsAvailable("mmtt") {
+	if GetParam("engine.mmtt") != "" {
 		pm.AddProcessBuiltIn("mmtt")
 	}
 }
@@ -209,12 +209,7 @@ func (pm *ProcessManager) ProcessStatus() string {
 
 func (pm *ProcessManager) getProcessInfo(process string) (*ProcessInfo, error) {
 	p, ok := pm.info[process]
-	if !ok {
-		err := fmt.Errorf("getProcessInfo: no process %s", process)
-		LogIfError(err)
-		return nil, err
-	}
-	if p == nil {
+	if !ok || p == nil {
 		err := fmt.Errorf("getProcessInfo: no process info for %s", process)
 		LogIfError(err)
 		return nil, err
@@ -223,8 +218,8 @@ func (pm *ProcessManager) getProcessInfo(process string) (*ProcessInfo, error) {
 }
 
 func (pm *ProcessManager) IsAvailable(process string) bool {
-	_, err := pm.getProcessInfo(process)
-	return err == nil
+	p, err := pm.getProcessInfo(process)
+	return err == nil && p != nil && p.FullPath != ""
 }
 
 func (pm *ProcessManager) IsRunning(process string) bool {

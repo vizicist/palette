@@ -33,11 +33,11 @@ func InitMisc() {
 	TheProcessManager = NewProcessManager()
 }
 
-func NewEngine() *Engine {
+func InitEngine() {
 
 	if TheEngine != nil {
 		LogIfError(fmt.Errorf("TheEngine already exists, there can be only one"))
-		return TheEngine
+		return
 	}
 
 	engineSysex.Lock()
@@ -79,8 +79,14 @@ func NewEngine() *Engine {
 
 	// This need to be done after engine parameters are loaded
 	TheProcessManager.AddBuiltins()
+}
 
-	return e
+func Start() {
+	TheEngine.Start()
+}
+
+func WaitTillDone() {
+	TheEngine.WaitTillDone()
 }
 
 func GetParam(name string) string {
