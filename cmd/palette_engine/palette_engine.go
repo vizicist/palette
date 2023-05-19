@@ -24,13 +24,12 @@ func main() {
 
 	engine.InitLog("engine")
 	engine.InitMisc()
+	engine.InitEngine()
 
-	e := engine.NewEngine()
-
-	e.Start()
+	engine.Start()
 
 	go func() {
-		e.WaitTillDone()
+		engine.WaitTillDone()
 		if doProfile {
 			pprof.StopCPUProfile()
 		}
