@@ -35,12 +35,12 @@ func (b *Bidule) Activate() {
 		dt := 5 * time.Second
 		time.Sleep(dt)
 		LogOfType("bidule", "Bidule.Activate is sending", "msg", msg)
-		LogIfError(b.client.Send(msg))
+		TheEngine.SendOsc(b.client, msg)
 	}
 }
 
 func (b *Bidule) ProcessInfo() *ProcessInfo {
-	bidulePath := TheParams.Get("engine.bidule")
+	bidulePath := GetParam("engine.bidulepath")
 	if bidulePath == "" {
 		bidulePath = BiduleDefaultPath
 		LogWarn("No bidule value in settings, using default", "path", bidulePath)
@@ -50,7 +50,7 @@ func (b *Bidule) ProcessInfo() *ProcessInfo {
 		return nil
 	}
 	exe := filepath.Base(bidulePath)
-	bidulefile := TheParams.Get("engine.bidulefile")
+	bidulefile := GetParam("engine.bidulefile")
 	if bidulefile == "" {
 		bidulefile = "default.bidule"
 	}
@@ -66,14 +66,14 @@ func (b *Bidule) Reset() error {
 	msg := osc.NewMessage("/play")
 	msg.Append(int32(0))
 	LogOfType("bidule", "Bidule.Reset is sending", "msg", msg)
-	err := b.client.Send(msg)
-	if err != nil {
-		return err
-	}
+	TheEngine.SendOsc(b.client, msg)
+
 	// Give Bidule time to react
 	time.Sleep(400 * time.Millisecond)
 	msg = osc.NewMessage("/play")
 	msg.Append(int32(1))
 	LogOfType("bidule", "Bidule.Reset is sending", "msg", msg)
-	return b.client.Send(msg)
+	TheEngine.SendOsc(b.client, msg)
+
+	return nil
 }

@@ -27,7 +27,7 @@ func TheResolume() *Resolume {
 			freeframeClients: map[string]*osc.Client{},
 		}
 
-		_ = theResolume.bypassLayer // to avoid unused error
+		// _ = theResolume.bypassLayer // to avoid unused error
 
 		err := theResolume.loadResolumeJSON()
 		if err != nil {
@@ -92,7 +92,7 @@ func (r *Resolume) ToFreeFramePlugin(patchName string, msg *osc.Message) {
 		LogIfError(fmt.Errorf("no freeframe client for layer"), "patch", patchName)
 		return
 	}
-	LogIfError(ff.Send(msg))
+	TheEngine.SendOsc(ff, msg)
 }
 
 func (r *Resolume) SendEffectParam(patchName string, name string, value string) {
@@ -185,7 +185,7 @@ func (r *Resolume) sendPadOneEffectParam(layerNum int, effectName string, paramN
 		msg.Append(float32(valfloat))
 
 	default:
-		LogWarn("SetParamValueWithString: unknown type of ParamDef for", "name", fullName)
+		LogWarn("sendPadOneEffectParam: unknown type of ParamDef for", "name", fullName)
 		return
 	}
 
@@ -193,9 +193,7 @@ func (r *Resolume) sendPadOneEffectParam(layerNum int, effectName string, paramN
 }
 
 func (r *Resolume) toResolume(msg *osc.Message) {
-	LogOfType("resolume,osc", "Resolume.toResolume", "msg", msg)
-	err := r.resolumeClient.Send(msg)
-	LogIfError(err)
+	TheEngine.SendOsc(r.resolumeClient, msg)
 }
 
 func (r *Resolume) sendPadOneEffectOnOff(layerNum int, effectName string, onoff bool) {
@@ -247,7 +245,7 @@ func (r *Resolume) addEffectNum(addr string, effect string, num int) string {
 
 func (r *Resolume) showText(text string) {
 
-	textLayerNum := r.ResolumeLayerForText()
+	textLayerNum := r.TextLayerNum()
 
 	// make sure the layer is not displayed before changing it
 	r.bypassLayer(textLayerNum, true)
@@ -256,7 +254,7 @@ func (r *Resolume) showText(text string) {
 	addr := fmt.Sprintf("/composition/layers/%d/clips/1/video/source/textgenerator/text/params/lines", textLayerNum)
 	msg := osc.NewMessage(addr)
 	msg.Append(text)
-	_ = r.resolumeClient.Send(msg)
+	TheEngine.SendOsc(r.resolumeClient, msg)
 
 	// give it time to "sink in", otherwise the previous text displays briefly
 	time.Sleep(150 * time.Millisecond)
@@ -265,19 +263,22 @@ func (r *Resolume) showText(text string) {
 	r.bypassLayer(textLayerNum, false) // show the layer
 }
 
-func (r *Resolume) ResolumeLayerForText() int {
-	defLayer := "5"
-	s := GetWithDefault("textlayer", defLayer)
+func (r *Resolume) TextLayerNum() int {
+	s := GetParam("engine.resolumetextlayer")
+	if s == "" {
+		LogInfo("ResolumeLayerForText defaults to 5 because no engine.resolumetextlayer value?")
+		return 5
+	}
 	layernum, err := strconv.Atoi(s)
 	if err != nil {
 		LogIfError(err)
-		layernum, _ = strconv.Atoi(defLayer)
+		return 5
 	}
 	return layernum
 }
 
 func (r *Resolume) ProcessInfo() *ProcessInfo {
-	fullpath := TheParams.Get("engine.resolume")
+	fullpath := GetParam("engine.resolumepath")
 	if fullpath != "" && !FileExists(fullpath) {
 		LogWarn("No Resolume found, looking for", "path", fullpath)
 		return nil
@@ -302,7 +303,7 @@ func (r *Resolume) ProcessInfo() *ProcessInfo {
 
 func (r *Resolume) Activate() {
 	// handle_activate sends OSC messages to start the layers in Resolume,
-	textLayer := r.ResolumeLayerForText()
+	textLayer := r.TextLayerNum()
 	clipnum := 1
 
 	// do it a few times, in case Resolume hasn't started up
@@ -326,7 +327,7 @@ func (r *Resolume) connectClip(layerNum int, clip int) {
 	// Note: sending 0 doesn't seem to disable a clip; you need to
 	// bypass the layer to turn it off
 	msg.Append(int32(1))
-	_ = r.resolumeClient.Send(msg)
+	TheEngine.SendOsc(r.resolumeClient, msg)
 }
 
 func (r *Resolume) bypassLayer(layerNum int, onoff bool) {
@@ -337,7 +338,7 @@ func (r *Resolume) bypassLayer(layerNum int, onoff bool) {
 		v = 1
 	}
 	msg.Append(int32(v))
-	_ = r.resolumeClient.Send(msg)
+	TheEngine.SendOsc(r.resolumeClient, msg)
 }
 
 // getEffectMap returns the resolume.json map for a given effect
@@ -390,80 +391,3 @@ func resolumeEffectNameOf(name string, num int) string {
 	}
 	return fmt.Sprintf("%s%d", name, num)
 }
-
-/*
-func (ctx *EngineContext) sendPadOneEffectParam(effectName string, paramName string, value string) {
-	fullName := "effect" + "." + effectName + ":" + paramName
-	paramsMap, realEffectName, realEffectNum, err := layer.getEffectMap(effectName, "params")
-	if err != nil {
-		LogIfError(err)
-		return
-	}
-	if paramsMap == nil {
-		Warn("No params value for", "effecdt", effectName)
-		return
-	}
-	oneParam, ok := paramsMap[paramName]
-	if !ok {
-		Warn("No params value for", "param", paramName, "effect", effectName)
-		return
-	}
-
-	oneDef, ok := ParamDefs[fullName]
-	if !ok {
-		Warn("No paramdef value for", "param", paramName, "effect", effectName)
-		return
-	}
-
-	addr := oneParam.(string)
-	resEffectName := ctx.resolumeEffectNameOf(realEffectName, realEffectNum)
-	addr = strings.Replace(addr, realEffectName, resEffectName, 1)
-	addr = addLayerAndClipNums(addr, layer.resolumeLayer, 1)
-
-	msg := osc.NewMessage(addr)
-
-	// Append the value to the message, depending on the type of the parameter
-
-	switch oneDef.TypedParamDef.(type) {
-
-	case paramDefInt:
-		valint, err := strconv.Atoi(value)
-		if err != nil {
-			LogIfError(err)
-			valint = 0
-		}
-		msg.Append(int32(valint))
-
-	case paramDefBool:
-		valbool, err := strconv.ParseBool(value)
-		if err != nil {
-			LogIfError(err)
-			valbool = false
-		}
-		onoffValue := 0
-		if valbool {
-			onoffValue = 1
-		}
-		msg.Append(int32(onoffValue))
-
-	case paramDefString:
-		valstr := value
-		msg.Append(valstr)
-
-	case paramDefFloat:
-		var valfloat float32
-		valfloat, err := ParseFloat32(value, resEffectName)
-		if err != nil {
-			LogIfError(err)
-			valfloat = 0.0
-		}
-		msg.Append(float32(valfloat))
-
-	default:
-		Warn("SetParamValueWithString: unknown type of ParamDef for", "name", fullName)
-		return
-	}
-
-	ctx.toResolume(msg)
-}
-*/
