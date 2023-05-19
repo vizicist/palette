@@ -4,7 +4,7 @@
         "engine.autorestart":"true",
         "engine.autotranspose":"false",
         "engine.autotransposebeats":"48",
-        "engine.bidule":"C:/Program Files/Plogue/Bidule/Bidule.exe",
+        "engine.bidulepath":"C:/Program Files/Plogue/Bidule/Bidule.exe",
         "engine.log":"cursor",
         "engine.midiinput":"microKEY2 Air",
         "engine.midisetexternalscale":"true",

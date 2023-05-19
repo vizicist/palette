@@ -2,6 +2,6 @@
     "params": {
         "engine.attractidleminutes":"0",
         "engine.autorestart":"true",
-        "engine.bidule":"C:/Program Files/Plogue/Bidule/Bidule.exe"
+        "engine.bidulepath":"C:/Program Files/Plogue/Bidule/Bidule.exe"
     }
 }
