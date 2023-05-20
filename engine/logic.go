@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"fmt"
 	"math"
 	"sync"
 )
@@ -28,35 +29,57 @@ func NewPatchLogic(patch *Patch) *PatchLogic {
 }
 
 func (logic *PatchLogic) cursorToNoteOn(ce CursorEvent) *NoteOn {
-	pitch := logic.cursorToPitch(ce)
+	pitch, err := logic.cursorToPitch(ce)
+	if err != nil {
+		LogIfError(fmt.Errorf("cursorToNoteOn: no pitch for cursor, ce=%v", ce))
+		return nil
+	}
 	velocity := logic.cursorToVelocity(ce)
 	synth := logic.patch.Synth()
 	return NewNoteOn(synth, pitch, velocity)
 }
 
-func (logic *PatchLogic) cursorToPitch(ce CursorEvent) uint8 {
-	patch := logic.patch
-	pitchmin := patch.GetInt("sound.pitchmin")
-	pitchmax := patch.GetInt("sound.pitchmax")
-	dp := pitchmax - pitchmin + 1
-	p1 := int(ce.X * float32(dp))
-	p := uint8(pitchmin + p1%dp)
+var PitchSets = map[string][]uint8{
+	"stylusrmx": {36, 37, 38, 39, 42, 43, 51, 49},
+}
 
-	scaleName := patch.Get("misc.scale")
-	if scaleName != "chromatic" {
-		scale := GetScale(scaleName)
-		closest := scale.ClosestTo(p)
-		// MIDIOctaveShift might be negative
-		i := int(closest) + 12*TheRouter.midiOctaveShift
-		for i < 0 {
-			i += 12
+func (logic *PatchLogic) cursorToPitch(ce CursorEvent) (uint8, error) {
+	patch := logic.patch
+	pitchset := patch.Get("sound.pitchset")
+	if pitchset != "" {
+		pitches, ok := PitchSets[pitchset]
+		if !ok {
+			err := fmt.Errorf("unknown value for sound.pitchset: %s", pitchset)
+			LogIfError(err)
+			return 0, err
 		}
-		for i > 127 {
-			i -= 12
+		// In the stylusrmx set, there are 8 pitches corresponding to the 8 parts in Stylus RMX
+		n := int(ce.X*8.0) % len(pitches)
+		return pitches[n], nil
+
+	} else {
+		pitchmin := patch.GetInt("sound.pitchmin")
+		pitchmax := patch.GetInt("sound.pitchmax")
+		dp := pitchmax - pitchmin + 1
+		p1 := int(ce.X * float32(dp))
+		p := uint8(pitchmin + p1%dp)
+
+		scaleName := patch.Get("misc.scale")
+		if scaleName != "chromatic" {
+			scale := GetScale(scaleName)
+			closest := scale.ClosestTo(p)
+			// MIDIOctaveShift might be negative
+			i := int(closest) + 12*TheRouter.midiOctaveShift
+			for i < 0 {
+				i += 12
+			}
+			for i > 127 {
+				i -= 12
+			}
+			p = uint8(i)
 		}
-		p = uint8(i)
+		return p, nil
 	}
-	return p
 }
 
 func (logic *PatchLogic) cursorToVelocity(ce CursorEvent) uint8 {
@@ -123,6 +146,9 @@ func (logic *PatchLogic) generateSoundFromCursorDownOnly(ce CursorEvent) {
 	switch ce.Ddu {
 	case "down":
 		noteOn := logic.cursorToNoteOn(ce)
+		if noteOn == nil {
+			return // do nothing, assumes any errors are logged in cursorToNoteOn
+		}
 		atClick := logic.nextQuant(CurrentClick(), logic.patch.CursorToQuant(ce))
 		// LogInfo("logic.down", "current", CurrentClick(), "atClick", atClick, "noteOn", noteOn)
 		ScheduleAt(atClick, noteOn)
@@ -164,6 +190,9 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
 		}
 		atClick := logic.nextQuant(CurrentClick(), patch.CursorToQuant(ce))
 		noteOn := logic.cursorToNoteOn(ce)
+		if noteOn == nil {
+			return // do nothing, assumes any errors are logged in cursorToNoteOn
+		}
 		ScheduleAt(atClick, noteOn)
 		ac.NoteOn = noteOn
 		ac.NoteOnClick = atClick
@@ -175,6 +204,9 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
 			return
 		}
 		newNoteOn := logic.cursorToNoteOn(ce)
+		if newNoteOn == nil {
+			return // do nothing, assumes any errors are logged in cursorToNoteOn
+		}
 		oldpitch := oldNoteOn.Pitch
 		newpitch := newNoteOn.Pitch
 		// We only turn off the existing note (for a given Cursor ID)
