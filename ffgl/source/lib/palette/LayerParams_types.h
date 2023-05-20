@@ -1,5 +1,6 @@
 DEFINE_TYPES(plugins);
 DEFINE_TYPES(log);
+DEFINE_TYPES(pitchset);
 DEFINE_TYPES(bidule);
 DEFINE_TYPES(mmtt);
 DEFINE_TYPES(destination);
@@ -37,6 +38,9 @@ LayerParams_InitializeTypes() {
 	LayerParams_logTypes.push_back("osc");
 	LayerParams_logTypes.push_back("api");
 	LayerParams_logTypes.push_back("loop");
+
+	LayerParams_pitchsetTypes.push_back("");
+	LayerParams_pitchsetTypes.push_back("stylusrmx");
 
 	LayerParams_biduleTypes.push_back("C:/Program Files/Plogue/Bidule/Bidule.exe");
 	LayerParams_biduleTypes.push_back("");
