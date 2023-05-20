@@ -1,5 +1,6 @@
 DECLARE_TYPES(plugins);
 DECLARE_TYPES(log);
+DECLARE_TYPES(pitchset);
 DECLARE_TYPES(bidule);
 DECLARE_TYPES(mmtt);
 DECLARE_TYPES(destination);
