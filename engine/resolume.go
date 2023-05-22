@@ -253,6 +253,7 @@ func (r *Resolume) showText(text string) {
 	// the first clip is the textgenerator clip
 	addr := fmt.Sprintf("/composition/layers/%d/clips/1/video/source/textgenerator/text/params/lines", textLayerNum)
 	msg := osc.NewMessage(addr)
+	text = strings.Replace(text, "_", "\n", 1)
 	msg.Append(text)
 	TheEngine.SendOsc(r.resolumeClient, msg)
 

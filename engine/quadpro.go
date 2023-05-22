@@ -187,6 +187,7 @@ func (quadpro *QuadPro) onCursorEvent(state ActiveCursor) error {
 					if err != nil {
 						return err
 					}
+					TheResolume().showText(preset)
 				}
 			}
 		}
