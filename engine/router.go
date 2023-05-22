@@ -239,8 +239,8 @@ func (r *Router) handleOSCInput(e OscEvent) {
 		LogIfError(fmt.Errorf("/event OSC message should no longer be used"))
 		// r.handleOscEvent(e.Msg)
 
-	case "/button":
-		r.oscHandleButton(e.Msg)
+	// case "/button":
+	// 	r.oscHandleButton(e.Msg)
 
 	case "/cursor":
 		// This message comes from the mmtt_kinect process,
@@ -273,6 +273,7 @@ func (r *Router) notifyGUI(eventName string) {
 	TheEngine.SendOsc(r.guiClient, msg)
 }
 
+/*
 func (r *Router) oscHandleButton(msg *osc.Message) {
 	buttName, err := argAsString(msg, 0)
 	if err != nil {
@@ -282,6 +283,7 @@ func (r *Router) oscHandleButton(msg *osc.Message) {
 	text := strings.ReplaceAll(buttName, "_", "\n")
 	go TheResolume().showText(text)
 }
+*/
 
 func (r *Router) oscHandleClientRestart(msg *osc.Message) error {
 
