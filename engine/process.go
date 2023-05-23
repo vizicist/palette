@@ -102,7 +102,7 @@ func (pm *ProcessManager) CheckAutorestartProcesses() {
 	pm.mutex.Lock()
 	defer pm.mutex.Unlock()
 
-	autorestart := ParamBool("engine.autorestart")
+	autorestart := GetParamBool("engine.autorestart")
 	if !autorestart {
 		return
 	}
@@ -255,8 +255,13 @@ func GuiProcessInfo() *ProcessInfo {
 
 func KeykitProcessInfo() *ProcessInfo {
 
+	keykit := GetParamBool("engine.keykit")
+	if !keykit {
+		return nil
+	}
+
 	// Allow parameter to override keyroot
-	keyroot := GetParam("engine.keyroot")
+	keyroot := GetParam("engine.keykitroot")
 	if keyroot == "" {
 		keyroot = filepath.Join(PaletteDir(), "keykit")
 	}
@@ -264,7 +269,7 @@ func KeykitProcessInfo() *ProcessInfo {
 	os.Setenv("KEYROOT", keyroot)
 
 	// Allow parameter to override keypath
-	keypath := GetParam("engine.keypath")
+	keypath := GetParam("engine.keykitpath")
 	if keypath == "" {
 		kp1 := filepath.Join(PaletteDataPath(), "keykit", "liblocal")
 		kp2 := filepath.Join(PaletteDir(), "keykit", "lib")
@@ -275,7 +280,7 @@ func KeykitProcessInfo() *ProcessInfo {
 	LogInfo("Setting KEYPATH", "keypath", keypath)
 
 	// Allow parameter to override keyoutput
-	keyoutput := GetParam("engine.keyoutput")
+	keyoutput := GetParam("engine.keykitoutput")
 	if keyoutput == "" {
 		keyoutput = DefaultKeykitOutput
 	}
@@ -283,7 +288,7 @@ func KeykitProcessInfo() *ProcessInfo {
 	LogInfo("Setting KEYPOUT", "keyoutput", keyoutput)
 
 	// Allow parameter to override keyoutput
-	keyallow := GetParam("engine.keyallow")
+	keyallow := GetParam("engine.keykitallow")
 	if keyallow == "" {
 		keyallow = "127.0.0.1"
 	}
@@ -291,12 +296,12 @@ func KeykitProcessInfo() *ProcessInfo {
 	LogInfo("Setting KEYALLOW", "keyallow", keyallow)
 
 	// Allow parameter to override path to key.exe
-	fullpath := GetParam("engine.keykit")
+	fullpath := GetParam("engine.keykitpath")
 	if fullpath != "" && !FileExists(fullpath) {
 		LogWarn("engine.keykit value doesn't exist, was looking for", "fullpath", fullpath)
 	}
 	if fullpath == "" {
-		fullpath = DefaultKeykitPath
+		fullpath = filepath.Join(PaletteDir(), "keykit", "bin", "key.exe")
 		if !FileExists(fullpath) {
 			LogWarn("Keykit not found in default location", "fullpath", fullpath)
 			return nil
