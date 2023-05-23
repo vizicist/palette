@@ -265,7 +265,7 @@ func (r *Router) handleOSCInput(e OscEvent) {
 }
 
 func (r *Router) notifyGUI(eventName string) {
-	if !ParamBool("engine.notifygui") {
+	if !GetParamBool("engine.notifygui") {
 		return
 	}
 	msg := osc.NewMessage("/notify")
