@@ -52,12 +52,14 @@ In the list below, the === instructions are only appropriate for machines that w
 
 - Install Inno Setup from https://jrsoftware.org/isinfo.php
 
-- Install Visual Studio Build Tools 2017 from https://visualstudio.microsoft.com/downloads
+- Install Visual Studio Build Tools 2017 (version 15.9) from https://visualstudio.microsoft.com/downloads
 
-	- in the Workload tab, select "Desktop Development with C++"
+	- in the Workload tab, select "Visual C++ Build Tools"
 
-- Install mingw64 to get the gcc compiler.  The online installers don't always work.  You'll want the 8.5.0 version, x86_64 architecture, posix threads, and sjlj exceptions.
-The last time I installed it from https://github.com/niXman/mingw-builds-binaries
+- Install mingw64 to get the gcc compiler.
+You'll want the 8.5.0 version, x86_64 architecture, posix threads, and sjlj exceptions.
+The last time I installed it from https://github.com/niXman/mingw-builds-binaries, and it was necessary to download
+the "online installer" and execute it from the Explorer, selecting "more info" to allow installation of an unsigned package.
 
 - In Visual Studio Code, click on the "extensions marketplace" icon (four little squares) on the left side.
   In the "Search Extensions" field, enter "go", and install the Go language support.
@@ -65,9 +67,11 @@ The last time I installed it from https://github.com/niXman/mingw-builds-binarie
   Other pieces of the Go toolchain will be offered to you automatically within VSCode.
 
 - in a cmd window, cd to %PALETTESOURCE% and execute:
+	go mod tidy
 	go get gitlab.com/gomidi/midi/v2/drivers/rtmididrv
 
-- install LoopBe30 from https://nerds.de/en/loopbe30.html and enable 16 ports (requires reboot).
+- install LoopBe30 from https://nerds.de/en/loopbe30.html, and use its systray item to
+turn off Shortcut Detection and enable 16 ports (which requires a reboot).
 
 - install Kinect Runtime v1.7, Kinect SDK v1.7, and Kinect Developer Toolkit v1.7.0
 

@@ -396,6 +396,9 @@ func (synth *Synth) SendNoteToMidiOutput(value any) {
 		return
 	}
 
+	// if (status & 0xf0) == 0x80 {
+	// 	LogInfo("Sending note up?", "status", status, "data1", data1, "data2", data2)
+	// }
 	LogOfType("midi", "Raw MIDI Output",
 		"synth", synth.name,
 		"status", "0x"+hexString(status),
