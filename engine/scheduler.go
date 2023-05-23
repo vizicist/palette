@@ -61,6 +61,11 @@ func ScheduleAt(atClick Clicks, value any) {
 func (sched *Scheduler) savePendingSchedEvent(se *SchedElement) {
 	sched.pendingMutex.Lock()
 	sched.toBeScheduled = append(sched.toBeScheduled, se)
+	// LogInfo("savePendingSchedEvent","se",se,"value",se.Value)
+	// ss := fmt.Sprintf("%v",se.Value)
+	// if strings.Contains(ss,"NoteOff") {
+	// 	LogInfo("NoteOff in savePendingSchedEvent","se",se,"value",se.Value)
+	// }
 	sched.pendingMutex.Unlock()
 }
 

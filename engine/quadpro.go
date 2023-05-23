@@ -82,8 +82,9 @@ func (quadpro *QuadPro) Api(api string, apiargs map[string]string) (result strin
 		return "", quadpro.save(category, filename)
 
 	case "test":
-		var ntimes = 10                 // default
-		var dt = 500 * time.Millisecond // default
+		var ntimes = 10                  // default
+		var dt = 500 * time.Millisecond  // default
+		var dur = 500 * time.Millisecond // default
 		s, ok := apiargs["ntimes"]
 		if ok {
 			tmp, err := strconv.ParseInt(s, 10, 64)
@@ -100,7 +101,15 @@ func (quadpro *QuadPro) Api(api string, apiargs map[string]string) (result strin
 			}
 			dt = tmp
 		}
-		go quadpro.doTest(ntimes, dt)
+		s, ok = apiargs["dur"]
+		if ok {
+			tmp, err := time.ParseDuration(s)
+			if err != nil {
+				return "", err
+			}
+			dur = tmp
+		}
+		go quadpro.doTest(ntimes, dt, dur)
 		return "", nil
 
 	default:
@@ -239,17 +248,15 @@ func (quadpro *QuadPro) onMidiEvent(me MidiEvent) error {
 	return nil
 }
 
-func (quadpro *QuadPro) doTest(ntimes int, dt time.Duration) {
-	LogInfo("doTest start", "ntimes", ntimes, "dt", dt)
-	var state ActiveCursor
+func (quadpro *QuadPro) doTest(ntimes int, dt, dur time.Duration) {
+	LogInfo("doTest start", "ntimes", ntimes, "dt", dt, "dur", dur)
 	for n := 0; n < ntimes; n++ {
 		if n > 0 {
 			time.Sleep(dt)
 		}
 		source := string("ABCD"[rand.Int()%4])
-		cid := source + "#0"
-		state.Previous = state.Current
-		state.Current = CursorEvent{
+		cid := fmt.Sprintf("%s#%d",source,n)
+		cedown := CursorEvent{
 			Cid:   cid,
 			Click: CurrentClick(),
 			Ddu:   "down",
@@ -257,16 +264,9 @@ func (quadpro *QuadPro) doTest(ntimes int, dt time.Duration) {
 			Y:     rand.Float32(),
 			Z:     rand.Float32(),
 		}
-		// LogInfo("calling quadpro.onCursorEvent A", "state", state)
-		// err := quadpro.onCursorEvent(state)
-		// if err != nil {
-		// 	LogIfError(err)
-		// 	return
-		// }
-		LogInfo("calling quadpro.ExecuteCursorEvent A", "Current", state.Current)
-		time.Sleep(dt)
-		state.Previous = state.Current
-		state.Current = CursorEvent{
+		TheCursorManager.ExecuteCursorEvent(cedown)
+		// Send the cursor up, but don't block the loop
+		ceup := CursorEvent{
 			Cid:   cid,
 			Click: CurrentClick(),
 			Ddu:   "up",
@@ -274,14 +274,10 @@ func (quadpro *QuadPro) doTest(ntimes int, dt time.Duration) {
 			Y:     rand.Float32(),
 			Z:     rand.Float32(),
 		}
-		// LogInfo("calling quadpro.onCursorEvent B", "state", state)
-		// err = quadpro.onCursorEvent(state)
-		// if err != nil {
-		// 	LogIfError(err)
-		// 	return
-		// }
-		LogInfo("calling quadpro.ExecuteCursorEvent B", "Current", state.Current)
-		TheCursorManager.ExecuteCursorEvent(state.Current)
+		go func(ce CursorEvent) {
+			time.Sleep(dur)
+			TheCursorManager.ExecuteCursorEvent(ce)
+		}(ceup)
 	}
 	LogInfo("doTest end")
 }
