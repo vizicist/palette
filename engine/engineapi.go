@@ -273,7 +273,7 @@ func GetWithDefault(nm string, dflt string) string {
 }
 
 // ParamBool returns bool value of nm, or false if nm not set
-func ParamBool(nm string) bool {
+func GetParamBool(nm string) bool {
 	v := TheEngine.params.Get(nm)
 	if v == "" {
 		return false
