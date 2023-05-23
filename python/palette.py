@@ -13,6 +13,7 @@ import sys
 
 import threading
 import platform
+from traceback import format_exc
 
 DebugApi = False
 Verbose = False
@@ -199,10 +200,18 @@ def palette_api(api,params):
         requestError = None
         try:
             url = "http://127.0.0.1:3330/api"
+            # log("palette_api: pre requests.post")
             req = requests.post(url=url,data=params,timeout=600.0)
+            # log("palette_api: post requests.post")
             result = req.text
         except (requests.ConnectionError,requests.Timeout,Exception) as err:
+            log("palette_api: Connection exception!")
             requestError = err
+            log("ConnectionError exception: %s" % format_exc())
+        except:
+            log("palette_api: unknown exception!?")
+            log("Unexpected exception: %s" % format_exc())
+            requestError = "unknown"
     
         ApiLock.release()
 
