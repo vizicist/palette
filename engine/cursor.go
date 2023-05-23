@@ -221,7 +221,7 @@ func (cm *CursorManager) ExecuteCursorEvent(ce CursorEvent) {
 		// new ActiveCursor
 		// Make sure the first ddu is "down"
 		if ce.Ddu != "down" {
-			LogWarn("handleDownDragUp: first ddu is not down", "cid", ce.Cid, "ddu", ce.Ddu)
+			// LogWarn("handleDownDragUp: first ddu is not down", "cid", ce.Cid, "ddu", ce.Ddu)
 			ce.Ddu = "down"
 		}
 		ac = NewActiveCursor(ce)
@@ -231,7 +231,7 @@ func (cm *CursorManager) ExecuteCursorEvent(ce CursorEvent) {
 		}
 
 		cm.activeMutex.Lock()
-		LogOfType("cursor","ExecuteCursorEvent: adding new ActiveCursor", "cid", ce.Cid, "ac", ac)
+		LogOfType("cursor", "ExecuteCursorEvent: adding new ActiveCursor", "cid", ce.Cid, "ac", ac)
 		cm.activeCursors[ce.Cid] = ac
 		cm.activeMutex.Unlock()
 

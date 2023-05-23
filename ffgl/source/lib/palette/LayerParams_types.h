@@ -38,6 +38,7 @@ LayerParams_InitializeTypes() {
 	LayerParams_logTypes.push_back("osc");
 	LayerParams_logTypes.push_back("api");
 	LayerParams_logTypes.push_back("loop");
+	LayerParams_logTypes.push_back("morph");
 
 	LayerParams_pitchsetTypes.push_back("");
 	LayerParams_pitchsetTypes.push_back("stylusrmx");
