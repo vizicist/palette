@@ -1,6 +1,6 @@
 {
   "plugins": [ "", "quadpro" ],
-  "log": ["","cursor","midi","osc","api","loop"],
+  "log": ["","cursor","midi","osc","api","loop", "morph"],
   "pitchset": ["","stylusrmx"],
   "bidule": ["C:/Program Files/Plogue/Bidule/Bidule.exe", ""],
   "mmtt": ["kinect", "depthai", ""],
