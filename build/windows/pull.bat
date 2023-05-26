@@ -1,0 +1,3 @@
+pushd ..\..
+git pull
+popd 
