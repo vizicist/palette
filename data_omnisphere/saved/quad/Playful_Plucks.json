@@ -421,6 +421,7 @@
         "C-sound.midifile":"jsbach",
         "C-sound.pitchmax":"59",
         "C-sound.pitchmin":"36",
+        "C-sound.pitchset":"stylusrmx",
         "C-sound.synth":"P_02_C_10",
         "C-sound.velocitymax":"127",
         "C-sound.velocitymin":"58",
