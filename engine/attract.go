@@ -7,6 +7,7 @@ import (
 )
 
 type AttractManager struct {
+	attractEnabled         bool
 	attractModeIsOn        bool
 	lastAttractModeChange  time.Time
 	lastAttractGestureTime time.Time
@@ -27,13 +28,14 @@ var TheAttractManager *AttractManager
 func NewAttractManager() *AttractManager {
 
 	am := &AttractManager{
+		attractEnabled:         false,
 		attractModeIsOn:        false,
 		lastAttractModeChange:  time.Now(),
 		lastAttractGestureTime: time.Now(),
 		lastAttractChange:      time.Now(),
 		lastAttractCheck:       time.Now(),
 		attractCheckSecs:       2,
-		attractIdleSecs:        0,
+		attractIdleSecs:        70,
 		attractChangeInterval:  30,
 		attractGestureInterval: 0.5,
 	}
@@ -58,9 +60,9 @@ func (am *AttractManager) checkAttract() {
 
 	// Every so often we check to see if attract mode should be turned on
 	now := time.Now()
-	attractModeEnabled := am.attractIdleSecs > 0
+	// attractModeEnabled := am.attractIdleSecs > 0
 	sinceLastAttractCheck := now.Sub(am.lastAttractCheck).Seconds()
-	if attractModeEnabled && sinceLastAttractCheck > am.attractCheckSecs {
+	if am.attractEnabled && sinceLastAttractCheck > am.attractCheckSecs {
 		am.lastAttractCheck = now
 		// There's a delay when checking cursor activity to turn attract mod on.
 		// Non-internal cursor activity turns attract mode off instantly.
