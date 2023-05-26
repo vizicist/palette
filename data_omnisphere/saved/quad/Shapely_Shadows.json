@@ -266,6 +266,7 @@
         "B-sound.midifile":"jsbach",
         "B-sound.pitchmax":"59",
         "B-sound.pitchmin":"36",
+        "B-sound.pitchset":"stylusrmx",
         "B-sound.synth":"P_02_C_10",
         "B-sound.velocitymax":"127",
         "B-sound.velocitymin":"48",

@@ -253,7 +253,7 @@
         "sound.midifile":"jsbach",
         "sound.pitchmax":"59",
         "sound.pitchmin":"36",
-        "sound.pitchset":"",
+        "sound.pitchset":"stylusrmx",
         "sound.synth":"P_10_C_10",
         "sound.velocitymax":"127",
         "sound.velocitymin":"48",
