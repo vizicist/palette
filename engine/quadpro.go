@@ -289,7 +289,11 @@ func (quadpro *QuadPro) loadQuadRand() error {
 		return err
 	}
 	rn := rand.Uint64() % uint64(len(arr))
-	LogInfo("loadQuadRand", "quad", arr[rn])
+	err = quadpro.Load("quad", arr[rn])
+	if err != nil {
+		LogIfError(err)
+		return err
+	}
 
 	for _, patch := range quadpro.patch {
 		patch.RefreshAllPatchValues()
@@ -299,7 +303,11 @@ func (quadpro *QuadPro) loadQuadRand() error {
 
 func (quadpro *QuadPro) Load(category string, filename string) error {
 
-	path := SavedFilePath(category, filename)
+	path, err := SavedFilePath(category, filename)
+	if err != nil {
+		LogIfError(err)
+		return err
+	}
 	paramsMap, err := LoadParamsMap(path)
 	if err != nil {
 		LogIfError(err)
@@ -380,7 +388,11 @@ func (quadpro *QuadPro) save(category string, filename string) (err error) {
 func (quadpro *QuadPro) saveQuad(quadName string) error {
 
 	category := "quad"
-	path := WritableFilePath(category, quadName)
+	path, err := WritableFilePath(category, quadName)
+	if err != nil {
+		LogIfError(err)
+		return err
+	}
 
 	LogOfType("saved", "QuadPro.saveQuad", "quad", quadName)
 

@@ -154,6 +154,7 @@
 "misc.transposable": {"valuetype":"bool", "min":"false", "max":"true", "init":"true", "comment":"# Looping is on" },
 "misc.volstyle": {"valuetype":"string", "min":"volstyle", "max":"volstyle", "init":"pressure", "comment":"# Velocity style" },
 
+"engine.attractenabled": {"valuetype":"bool", "min":"false", "max":"true", "init":"false", "comment":"# enable attract mode" },
 "engine.attractidlesecs": {"valuetype":"int", "min":"0", "max":"3600", "init":"0", "comment":"# Attract timeout, 0 to disable" },
 "engine.autorestart": {"valuetype":"bool", "min":"false", "max":"true", "init":"true", "comment":"# auto restart processes" },
 "engine.autotranspose": {"valuetype":"bool", "min":"false", "max":"true", "init":"false", "comment":"#" },

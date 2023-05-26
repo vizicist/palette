@@ -226,7 +226,11 @@ func (vals *ParamValues) Save(category string, filename string) error {
 
 	LogOfType("saved", "ParamValues.Save", "category", category, "filename", filename)
 
-	path := WritableFilePath(category, filename)
+	path, err := WritableFilePath(category, filename)
+	if err != nil {
+		LogIfError(err)
+		return err
+	}
 
 	s := "{\n    \"params\": {\n"
 
