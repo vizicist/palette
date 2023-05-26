@@ -76,6 +76,14 @@ func (e *Engine) executeEngineAPI(api string, apiargs map[string]string) (result
 		)
 		return result, nil
 
+	case "attract":
+		v, ok := apiargs["onoff"]
+		if !ok {
+			return "", fmt.Errorf("executeEngineAPI: missing onoff parameter")
+		}
+		TheAttractManager.attractModeIsOn = IsTrueValue(v)
+		return "", nil
+
 	case "set":
 		name, value, err := GetNameValue(apiargs)
 		if err != nil {
@@ -207,6 +215,29 @@ func (e *Engine) Set(name string, value string) error {
 	var f float64
 	var i int64
 	switch name {
+
+	case "engine.attract":
+		TheAttractManager.setAttractMode(IsTrueValue(value))
+
+	case "engine.attractenabled":
+		TheAttractManager.attractEnabled = IsTrueValue(value)
+
+	case "engine.attractchecksecs":
+		if e.getFloat(value, &f) {
+			TheAttractManager.attractCheckSecs = f
+		}
+	case "engine.attractchangeinterval":
+		if e.getFloat(value, &f) {
+			TheAttractManager.attractChangeInterval = f
+		}
+	case "engine.attractgestureinterval":
+		if e.getFloat(value, &f) {
+			TheAttractManager.attractGestureInterval = f
+		}
+	case "engine.attractidlesecs":
+		if e.getFloat(value, &f) {
+			TheAttractManager.attractIdleSecs = f
+		}
 	case "engine.midithru":
 		TheRouter.midithru = IsTrueValue(value)
 
@@ -233,31 +264,13 @@ func (e *Engine) Set(name string, value string) error {
 	case "engine.log":
 		e.ResetLogTypes(value)
 
+	case "engine.midiinput":
+		TheMidiIO.SetMidiInput(value)
+
 	case "engine.processchecksecs":
 		if e.getFloat(value, &f) {
 			TheProcessManager.processCheckSecs = f
 		}
-	case "engine.attract":
-		TheAttractManager.setAttractMode(IsTrueValue(value))
-
-	case "engine.attractchecksecs":
-		if e.getFloat(value, &f) {
-			TheAttractManager.attractCheckSecs = f
-		}
-	case "engine.attractchangeinterval":
-		if e.getFloat(value, &f) {
-			TheAttractManager.attractChangeInterval = f
-		}
-	case "engine.attractgestureinterval":
-		if e.getFloat(value, &f) {
-			TheAttractManager.attractGestureInterval = f
-		}
-	case "engine.attractidlesecs":
-		if e.getFloat(value, &f) {
-			TheAttractManager.attractIdleSecs = f
-		}
-	case "engine.midiinput":
-		TheMidiIO.SetMidiInput(value)
 	}
 
 	LogOfType("params", "Engine.Set", "name", name, "value", value)

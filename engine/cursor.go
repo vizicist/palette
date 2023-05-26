@@ -143,7 +143,7 @@ func (cm *CursorManager) GenerateCursorGesture(cid string, noteDuration time.Dur
 		Z:    z0,
 		Area: 0,
 	}
-	LogWarn("Should generateCursorGesture be using ScheduleCursorEvent or ExecuteCursorEvent?")
+	// LogWarn("Should generateCursorGesture be using ScheduleCursorEvent or ExecuteCursorEvent?")
 	cm.ExecuteCursorEvent(ce)
 	time.Sleep(noteDuration)
 	ce.Ddu = "up"

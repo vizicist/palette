@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -127,15 +128,30 @@ func SavedList(apiargs map[string]string) (string, error) {
 }
 
 // SavedFilePath returns the full path of a saved file.
-func SavedFilePath(category string, filename string) string {
+// The value of filename isn't trusted, verify its sanity.
+func SavedFilePath(category string, filename string) (string, error) {
+	if strings.ContainsRune(filename, os.PathSeparator) {
+		return "", fmt.Errorf("SavedFilePath: filename contains path separator")
+	}
+	if strings.ContainsRune(filename, os.PathListSeparator) {
+		return "", fmt.Errorf("SavedFilePath: filename contains path list separator")
+	}
 	jsonfile := filename + ".json"
 	localpath := filepath.Join(PaletteDataPath(), SavedDir(), category, jsonfile)
-	return localpath
+	return localpath, nil
 }
 
 // WritableSavedFilePath xxx
-func WritableFilePath(category string, filename string) string {
-	path := SavedFilePath(category, filename)
-	LogIfError(os.MkdirAll(filepath.Dir(path), 0777))
-	return path
+func WritableFilePath(category string, filename string) (string, error) {
+	path, err := SavedFilePath(category, filename)
+	if err != nil {
+		LogIfError(err)
+		return "", err
+	}
+	err = os.MkdirAll(filepath.Dir(path), 0777)
+	if err != nil {
+		LogIfError(err)
+		return "", err
+	}
+	return path, nil
 }

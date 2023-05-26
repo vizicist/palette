@@ -208,10 +208,10 @@ def palette_api(api,params):
             log("palette_api: Connection exception!")
             requestError = err
             log("ConnectionError exception: %s" % format_exc())
-        except:
-            log("palette_api: unknown exception!?")
-            log("Unexpected exception: %s" % format_exc())
-            requestError = "unknown"
+        # except:
+        #     log("palette_api: unknown exception!?")
+        #     log("Unexpected exception: %s" % format_exc())
+        #     requestError = "unknown"
     
         ApiLock.release()
 

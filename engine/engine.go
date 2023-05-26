@@ -106,12 +106,16 @@ func (e *Engine) SaveCurrent() (err error) {
 }
 
 func (e *Engine) LoadCurrent() (err error) {
-	path := SavedFilePath("engine", "_Current")
-	paramsmap, err := LoadParamsMap(path)
-	if err == nil {
-		e.params.ApplyValuesFromMap("engine", paramsmap, e.Set)
+	path, err := SavedFilePath("engine", "_Current")
+	if err != nil {
+		return err
 	}
-	return err
+	paramsmap, err := LoadParamsMap(path)
+	if err != nil {
+		return err
+	}
+	e.params.ApplyValuesFromMap("engine", paramsmap, e.Set)
+	return nil
 }
 
 func (e *Engine) Start() {
