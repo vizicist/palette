@@ -45,14 +45,18 @@ func NewAttractManager() *AttractManager {
 func (am *AttractManager) setAttractMode(onoff bool) {
 
 	if onoff == am.attractModeIsOn {
+		LogInfo("setAttractMode already in mode", "attractModeIsOn", am.attractModeIsOn)
 		return // already in that mode
 	}
 	// Throttle it a bit
 	secondsSince := time.Since(am.lastAttractModeChange).Seconds()
 	if secondsSince > 1.0 {
-		LogOfType("attract", "AttractManager changing attract", "onoff", onoff)
+		// LogOfType("attract", "AttractManager changing attract", "onoff", onoff)
 		am.attractModeIsOn = onoff
 		am.lastAttractModeChange = time.Now()
+		LogInfo("setAttractMode", "attractModeIsOn", am.attractModeIsOn)
+	} else {
+		LogInfo("NOT setting setAttractMode, too quick!", "onoff", onoff)
 	}
 }
 
@@ -69,6 +73,7 @@ func (am *AttractManager) checkAttract() {
 		sinceLastAttractModeChange := time.Since(am.lastAttractModeChange).Seconds()
 		if !am.attractModeIsOn && sinceLastAttractModeChange > am.attractIdleSecs {
 			// Nothing happening for a while, turn attract mode on
+			LogInfo("CHECKATTRACT setting attractmode to true")
 			am.setAttractMode(true)
 		}
 	}
