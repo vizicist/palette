@@ -1,6 +1,7 @@
 {
     "params": {
-        "engine.attractidlesecs":"0",
+        "engine.attractenabled":"false",
+        "engine.attractidlesecs":"60",
         "engine.autorestart":"true",
         "engine.autotranspose":"false",
         "engine.autotransposebeats":"48",

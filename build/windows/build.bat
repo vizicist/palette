@@ -91,7 +91,6 @@ echo ================ Copying misc binaries
 rem copy %PALETTESOURCE%\binaries\nats\nats-pub.exe %bin% >nul
 rem copy %PALETTESOURCE%\binaries\nats\nats-sub.exe %bin% >nul
 copy %PALETTESOURCE%\binaries\nircmdc.exe %bin% >nul
-copy %PALETTESOURCE%\binaries\tail.exe %bin% >nul
 
 echo ================ Copying keykit things
 copy %PALETTESOURCE%\keykit\bin\key.exe %ship%\keykit\bin >nul
@@ -104,6 +103,7 @@ copy palettetasks.bat %bin% >nul
 copy testcursor.bat %bin% >nul
 copy osc.bat %bin% >nul
 copy ipaddress.bat %bin% >nul
+copy taillog.bat %bin% >nul
 copy taillogs.bat %bin% >nul
 rem copy natsmon.bat %bin% >nul
 copy delay.bat %bin% >nul
