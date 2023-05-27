@@ -81,7 +81,8 @@ func (e *Engine) executeEngineAPI(api string, apiargs map[string]string) (result
 		if !ok {
 			return "", fmt.Errorf("executeEngineAPI: missing onoff parameter")
 		}
-		TheAttractManager.attractModeIsOn = IsTrueValue(v)
+		TheAttractManager.setAttractMode(IsTrueValue(v))
+		LogInfo("ENGINE API AFTER SETTING ATTRACT", "attractModeIsOn", TheAttractManager.attractModeIsOn)
 		return "", nil
 
 	case "set":
@@ -235,8 +236,12 @@ func (e *Engine) Set(name string, value string) error {
 			TheAttractManager.attractGestureInterval = f
 		}
 	case "engine.attractidlesecs":
-		if e.getFloat(value, &f) {
-			TheAttractManager.attractIdleSecs = f
+		if e.getInt(value, &i) {
+			if i < 10 {
+				LogWarn("engine.attractidlesecs is too low, forcing to 10")
+				i = 10
+			}
+			TheAttractManager.attractIdleSecs = float64(i)
 		}
 	case "engine.midithru":
 		TheRouter.midithru = IsTrueValue(value)
