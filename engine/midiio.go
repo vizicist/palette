@@ -33,13 +33,6 @@ type MidiIO struct {
 	inports              midi.InPorts
 	outports             midi.OutPorts
 	stop                 func()
-
-	engineTranspose     int
-	autoTransposeOn     bool
-	autoTransposeNext   Clicks
-	autoTransposeClicks Clicks // time between auto transpose changes
-	autoTransposeIndex  int    // current place in tranposeValues
-	autoTransposeValues []int
 }
 
 // MIDIChannelOutput is used to remember the last
@@ -69,12 +62,12 @@ func NewMidiIO() *MidiIO {
 		stop:                 nil,
 		inports:              midi.GetInPorts(),
 		outports:             midi.GetOutPorts(),
-		engineTranspose:      0,
-		autoTransposeOn:      false,
-		autoTransposeNext:    0,
-		autoTransposeClicks:  8 * OneBeat,
-		autoTransposeIndex:   0,
-		autoTransposeValues:  []int{0, -2, 3, -5},
+		// engineTranspose:      0,
+		// autoTransposeOn:      false,
+		// autoTransposeNext:    0,
+		// autoTransposeClicks:  8 * OneBeat,
+		// autoTransposeIndex:   0,
+		// autoTransposeValues:  []int{0, -2, 3, -5},
 	}
 }
 
@@ -130,16 +123,6 @@ type MidiHandlerFunc func(midi.Message, int32)
 
 func (m *MidiIO) handleMidiError(err error) {
 	LogIfError(err)
-}
-
-func (m *MidiIO) SetTranspose(i int) {
-	m.engineTranspose = i
-}
-
-func (m *MidiIO) SetAutoTransposeBeats(beats int) {
-	m.autoTransposeNext = Clicks(beats) * OneBeat
-	m.autoTransposeClicks = Clicks(beats) * OneBeat
-
 }
 
 func (m *MidiIO) Start() {
@@ -303,13 +286,3 @@ func (me MidiEvent) Data1() uint8 {
 	return bytes[1]
 }
 
-func (m *MidiIO) advanceTransposeTo(newclick Clicks) {
-
-	if newclick < m.autoTransposeNext {
-		return
-	}
-	m.autoTransposeNext = newclick + m.autoTransposeClicks
-	m.autoTransposeIndex = (m.autoTransposeIndex + 1) % len(m.autoTransposeValues)
-	LogOfType("transpose", "advanceTransposeTo", "m.autoTransposeIndex", m.autoTransposeIndex)
-	// TheScheduler.SendAllPendingNoteoffs()
-}
