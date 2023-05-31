@@ -247,19 +247,19 @@ import (
 )
 
 type oneMorph struct {
-	idx                   uint8
-	opened                bool
-	serialNum             string
-	width                 float32
-	height                float32
-	fwVersionMajor        uint8
-	fwVersionMinor        uint8
-	fwVersionBuild        uint8
-	fwVersionRelease      uint8
-	deviceID              int
-	morphtype             string // "corners", "quadrants"
-	currentSource         string // "A", "B", "C", "D" - it can change dynamically
-	contactIdToCid map[int]string
+	idx              uint8
+	opened           bool
+	serialNum        string
+	width            float32
+	height           float32
+	fwVersionMajor   uint8
+	fwVersionMinor   uint8
+	fwVersionBuild   uint8
+	fwVersionRelease uint8
+	deviceID         int
+	morphtype        string // "corners", "quadrants"
+	currentSource    string // "A", "B", "C", "D" - it can change dynamically
+	contactIdToCid   map[int]string
 }
 
 var morphMaxForce float32 = 1000.0
@@ -390,13 +390,16 @@ func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float32) 
 				yNorm *= 2.0
 				m.currentSource = quadSource
 
+			case "A", "B", "C", "D":
+				m.currentSource = m.morphtype
+
 			default:
 				LogWarn("Unknown morphtype", "morphtype", m.morphtype)
-				continue
+				m.currentSource = ""
 			}
 
 			if m.currentSource == "" {
-				LogWarn("Hey! newSourceName not set, assuming A")
+				LogWarn("Hey! currentSource not set, assuming A")
 				m.currentSource = "A"
 			}
 
