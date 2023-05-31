@@ -2,6 +2,7 @@ package engine
 
 import (
 	"fmt"
+	"math/rand"
 	"os"
 	"strconv"
 	"strings"
@@ -72,7 +73,7 @@ func (e *Engine) executeEngineAPI(api string, apiargs map[string]string) (result
 	case "status":
 		result = JsonObject(
 			"uptime", fmt.Sprintf("%f", Uptime()),
-			"attractmode", fmt.Sprintf("%v", TheAttractManager.attractModeIsOn),
+			"attractmode", fmt.Sprintf("%v", TheAttractManager.CurrentAttractMode()),
 		)
 		return result, nil
 
@@ -81,8 +82,8 @@ func (e *Engine) executeEngineAPI(api string, apiargs map[string]string) (result
 		if !ok {
 			return "", fmt.Errorf("executeEngineAPI: missing onoff parameter")
 		}
-		TheAttractManager.setAttractMode(IsTrueValue(v))
-		LogInfo("ENGINE API AFTER SETTING ATTRACT", "attractModeIsOn", TheAttractManager.attractModeIsOn)
+		TheAttractManager.SetAttractMode(IsTrueValue(v))
+		LogInfo("ENGINE API AFTER SETTING ATTRACT", "attractModeIsOn", TheAttractManager.CurrentAttractMode())
 		return "", nil
 
 	case "set":
@@ -181,6 +182,36 @@ func (e *Engine) executeEngineAPI(api string, apiargs map[string]string) (result
 			ChangeClicksPerSecond(float64(v))
 		}
 
+	case "playcursor":
+		var dur = 500 * time.Millisecond // default
+		s, ok := apiargs["dur"]
+		if ok {
+			tmp, err := time.ParseDuration(s)
+			if err != nil {
+				return "", err
+			}
+			dur = tmp
+		}
+		source, ok := apiargs["source"]
+		if !ok {
+			source = "A"
+		}
+		xs := apiargs["x"]
+		ys := apiargs["y"]
+		zs := apiargs["z"]
+		var x, y, z float32
+		if xs == "" {
+			x = rand.Float32()
+			y = rand.Float32()
+			z = rand.Float32()
+		} else {
+			if !e.getFloat32(xs, &x) || !e.getFloat32(ys, &y) || !e.getFloat32(zs, &z) {
+				return "", fmt.Errorf("playcursor: bad x,y,z value")
+			}
+		}
+		go TheCursorManager.PlayCursor(source, dur, x, y, z)
+		return "", nil
+
 	default:
 		LogWarn("Router.ExecuteAPI api is not recognized\n", "api", api)
 		err = fmt.Errorf("ExecuteEngineAPI: unrecognized api=%s", api)
@@ -197,6 +228,17 @@ func (e *Engine) getFloat(value string, f *float64) bool {
 		return false
 	} else {
 		*f = v
+		return true
+	}
+}
+
+func (e *Engine) getFloat32(value string, f *float32) bool {
+	v, err := strconv.ParseFloat(value, 32)
+	if err != nil {
+		LogIfError(err)
+		return false
+	} else {
+		*f = float32(v)
 		return true
 	}
 }
@@ -218,7 +260,7 @@ func (e *Engine) Set(name string, value string) error {
 	switch name {
 
 	case "engine.attract":
-		TheAttractManager.setAttractMode(IsTrueValue(value))
+		TheAttractManager.SetAttractMode(IsTrueValue(value))
 
 	case "engine.attractenabled":
 		TheAttractManager.attractEnabled = IsTrueValue(value)
@@ -256,15 +298,15 @@ func (e *Engine) Set(name string, value string) error {
 		e.oscoutput = IsTrueValue(value)
 
 	case "engine.autotranspose":
-		TheMidiIO.autoTransposeOn = IsTrueValue(value)
+		e.autoTransposeOn = IsTrueValue(value)
 
 	case "engine.autotransposebeats":
 		if e.getInt(value, &i) {
-			TheMidiIO.SetAutoTransposeBeats(int(i))
+			e.SetAutoTransposeBeats(int(i))
 		}
 	case "engine.transpose":
 		if e.getInt(value, &i) {
-			TheMidiIO.SetTranspose(int(i))
+			e.SetTranspose(int(i))
 		}
 	case "engine.log":
 		e.ResetLogTypes(value)
@@ -344,3 +386,4 @@ func (e *Engine) stopAfterDelay() {
 	LogInfo("Engine.stop: calling os.Exit(0)")
 	os.Exit(0)
 }
+

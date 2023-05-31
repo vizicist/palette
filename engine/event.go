@@ -56,11 +56,16 @@ func (ce CursorEvent) IsInternal() bool {
 }
 
 func (ce CursorEvent) Source() string {
-	if ce.Cid == "" {
-		LogWarn("CursorEvent.Source: empty cid", "ce", ce)
+	return CidSource(ce.Cid)
+}
+
+// CidSource returns the source of the cursor event, which is the first part of the Cid
+func CidSource(cid string) string {
+	arr := strings.Split(cid, "#")
+	if len(arr) == 0 || cid == "" {
+		LogWarn("CidSource: empty source for cid?  Using dummysource", "cid", cid)
 		return "dummysource"
 	}
-	arr := strings.Split(ce.Cid, "#")
 	return arr[0]
 }
 

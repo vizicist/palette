@@ -172,7 +172,7 @@ func (synth *Synth) SendController(cnum int, cval int) {
 	data1 := byte(cnum)
 	data2 := byte(cval)
 
-	LogOfType("midi", "Raw MIDI Output, controller",
+	LogOfType("midicontroller", "Raw MIDI Output, controller",
 		"synth", synth.name,
 		"status", "0x"+hexString(status),
 		"data1", "0x"+hexString(data1),
@@ -301,6 +301,7 @@ func (synth *Synth) SendNoteToMidiOutput(value any) {
 	// var channel uint8
 	var pitch uint8
 	var velocity uint8
+	var ntype string
 
 	switch v := value.(type) {
 
@@ -308,19 +309,16 @@ func (synth *Synth) SendNoteToMidiOutput(value any) {
 		// channel = v.Channel
 		pitch = v.Pitch
 		velocity = v.Velocity // could be 0, to be interpreted as a NoteOff by receivers
+		ntype = "noteon"
 
 	case *NoteOff:
 		// channel = v.Channel
 		pitch = v.Pitch
 		velocity = v.Velocity
-
-	// case *NoteFull:
-	// 	// channel = v.Channel
-	// 	pitch = v.Pitch
-	// 	velocity = v.Velocity
+		ntype = "noteoff"
 
 	default:
-		LogWarn("SendToSynth: doesn't handle", "type", fmt.Sprintf("%T", v))
+		LogWarn("SendNoteToMidiOutput: doesn't handle", "type", fmt.Sprintf("%T", v))
 		return
 	}
 
@@ -329,22 +327,6 @@ func (synth *Synth) SendNoteToMidiOutput(value any) {
 		LogIfError(err)
 		return
 	}
-
-	pitchOffset := TheMidiIO.engineTranspose
-
-	// Hardcoded, channel 10 is usually drums, doesn't get transposed
-	// Should probably be an attribute of the Synth.
-	const drumChannel = 10
-	if TheMidiIO.autoTransposeOn && synth.portchannel.channel != drumChannel {
-		pitchOffset += TheMidiIO.autoTransposeValues[TheMidiIO.autoTransposeIndex]
-	}
-	newpitch := int(pitch) + pitchOffset
-	if newpitch < 0 {
-		newpitch = 0
-	} else if newpitch > 127 {
-		newpitch = 127
-	}
-	pitch = uint8(newpitch)
 
 	status := byte(synth.portchannel.channel - 1)
 	data1 := pitch
@@ -392,14 +374,15 @@ func (synth *Synth) SendNoteToMidiOutput(value any) {
 	// 	status |= 0xE0
 
 	default:
-		LogWarn("SendToSynth: can't handle", "type", fmt.Sprintf("%T", value))
+		LogWarn("SendNoteToMidiOutput: can't handle", "type", fmt.Sprintf("%T", value))
 		return
 	}
 
 	// if (status & 0xf0) == 0x80 {
 	// 	LogInfo("Sending note up?", "status", status, "data1", data1, "data2", data2)
 	// }
-	LogOfType("midi", "Raw MIDI Output",
+
+	LogOfType("midi", "Raw MIDI Output, "+ntype,
 		"synth", synth.name,
 		"status", "0x"+hexString(status),
 		"data1", "0x"+hexString(data1),

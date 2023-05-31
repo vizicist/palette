@@ -67,7 +67,7 @@ func (quadpro *QuadPro) Api(api string, apiargs map[string]string) (result strin
 		if !oksaved {
 			return "", fmt.Errorf("missing filename parameter")
 		}
-		TheAttractManager.setAttractMode(false)
+		TheAttractManager.SetAttractMode(false)
 		return "", quadpro.Load(category, filename)
 
 	case "save":
@@ -180,8 +180,8 @@ func (quadpro *QuadPro) PatchForCursorEvent(ce CursorEvent) (patch *Patch, butto
 func (quadpro *QuadPro) onCursorEvent(state ActiveCursor) error {
 
 	// Any non-internal cursor will turn attract mode off.
-	if !state.Current.IsInternal() {
-		TheAttractManager.setAttractMode(false)
+	if !state.Current.IsInternal() && TheAttractManager.CurrentAttractMode() {
+		TheAttractManager.SetAttractMode(false)
 	}
 
 	if state.Button != "" {
@@ -214,7 +214,7 @@ func (quadpro *QuadPro) onCursorEvent(state ActiveCursor) error {
 	cursorStyle := patchLogic.patch.Get("misc.cursorstyle")
 	gensound := IsTrueValue(patchLogic.patch.Get("misc.generatesound"))
 	genvisual := IsTrueValue(patchLogic.patch.Get("misc.generatevisual"))
-	if gensound && !TheAttractManager.attractModeIsOn {
+	if gensound && !TheAttractManager.CurrentAttractMode(){
 		patchLogic.generateSoundFromCursor(state.Current, cursorStyle)
 	}
 	if genvisual {
@@ -255,7 +255,7 @@ func (quadpro *QuadPro) doTest(ntimes int, dt, dur time.Duration) {
 			time.Sleep(dt)
 		}
 		source := string("ABCD"[rand.Int()%4])
-		cid := fmt.Sprintf("%s#%d",source,n)
+		cid := TheCursorManager.UniqueCid(source)
 		cedown := CursorEvent{
 			Cid:   cid,
 			Click: CurrentClick(),
