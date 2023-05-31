@@ -117,10 +117,12 @@ func (pm *ProcessManager) CheckAutorestartProcesses() {
 }
 
 func (pm *ProcessManager) AddBuiltins() {
-	pm.AddProcessBuiltIn("keykit")
 	pm.AddProcessBuiltIn("bidule")
 	pm.AddProcessBuiltIn("resolume")
 	pm.AddProcessBuiltIn("gui")
+	if GetParamBool("engine.keykit") {
+		pm.AddProcessBuiltIn("keykit")
+	}
 	if GetParam("engine.mmtt") != "" {
 		pm.AddProcessBuiltIn("mmtt")
 	}
@@ -313,4 +315,21 @@ func KeykitProcessInfo() *ProcessInfo {
 		exe = fullpath[lastslash+1:]
 	}
 	return NewProcessInfo(exe, fullpath, "", nil)
+}
+
+func MmttInfo() *ProcessInfo {
+
+	// NOTE: it's inside a sub-directory of bin, so all the necessary .dll's are contained
+
+	// The value of mmtt is either "kinect" or "oak" or ""
+	mmtt := GetParam("engine.mmtt")
+	if mmtt == "" {
+		return nil
+	}
+	fullpath := filepath.Join(PaletteDir(), "bin", "mmtt_"+mmtt, "mmtt_"+mmtt+".exe")
+	if !FileExists(fullpath) {
+		LogWarn("no mmtt executable found, looking for", "path", fullpath)
+		fullpath = ""
+	}
+	return NewProcessInfo("mmtt_"+mmtt+".exe", fullpath, "", nil)
 }

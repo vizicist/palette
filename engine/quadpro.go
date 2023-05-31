@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
-	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
@@ -434,20 +433,3 @@ func (quadpro *QuadPro) scheduleNoteNow(dest string, pitch, velocity uint8, dura
 	SchedulePhrase(phr, CurrentClick(), dest)
 }
 */
-
-func MmttInfo() *ProcessInfo {
-
-	// NOTE: it's inside a sub-directory of bin, so all the necessary .dll's are contained
-
-	// The value of mmtt is either "kinect" or "oak" or ""
-	mmtt := GetParam("engine.mmtt")
-	if mmtt == "" {
-		return nil
-	}
-	fullpath := filepath.Join(PaletteDir(), "bin", "mmtt_"+mmtt, "mmtt_"+mmtt+".exe")
-	if !FileExists(fullpath) {
-		LogWarn("no mmtt executable found, looking for", "path", fullpath)
-		fullpath = ""
-	}
-	return NewProcessInfo("mmtt_"+mmtt+".exe", fullpath, "", nil)
-}
