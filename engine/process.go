@@ -116,15 +116,23 @@ func (pm *ProcessManager) CheckAutorestartProcesses() {
 	}
 }
 
-func (pm *ProcessManager) AddBuiltins() {
-	pm.AddProcessBuiltIn("bidule")
-	pm.AddProcessBuiltIn("resolume")
-	pm.AddProcessBuiltIn("gui")
+func ProcessList() []string {
+	arr := []string{}
+	arr = append(arr,"gui")
+	arr = append(arr,"bidule")
+	arr = append(arr,"resolume")
 	if GetParamBool("engine.keykit") {
-		pm.AddProcessBuiltIn("keykit")
+		arr = append(arr,"keykit")
 	}
 	if GetParam("engine.mmtt") != "" {
-		pm.AddProcessBuiltIn("mmtt")
+		arr = append(arr,"mmtt")
+	}
+	return arr
+}
+
+func (pm *ProcessManager) AddBuiltins() {
+	for _, process := range ProcessList() {
+		pm.AddProcessBuiltIn(process)
 	}
 }
 
@@ -150,9 +158,7 @@ func (pm *ProcessManager) AddProcessBuiltIn(process string) {
 	case "keykit":
 		pm.AddProcess(process, KeykitProcessInfo())
 	case "mmtt":
-		if mmtt := MmttInfo(); mmtt != nil {
-			pm.AddProcess(process, mmtt)
-		}
+		pm.AddProcess(process, MmttInfo())
 	}
 }
 
@@ -257,11 +263,6 @@ func GuiProcessInfo() *ProcessInfo {
 
 func KeykitProcessInfo() *ProcessInfo {
 
-	keykit := GetParamBool("engine.keykit")
-	if !keykit {
-		return nil
-	}
-
 	// Allow parameter to override keyroot
 	keyroot := GetParam("engine.keykitroot")
 	if keyroot == "" {
@@ -319,8 +320,6 @@ func KeykitProcessInfo() *ProcessInfo {
 
 func MmttInfo() *ProcessInfo {
 
-	// NOTE: it's inside a sub-directory of bin, so all the necessary .dll's are contained
-
 	// The value of mmtt is either "kinect" or "oak" or ""
 	mmtt := GetParam("engine.mmtt")
 	if mmtt == "" {
@@ -328,7 +327,7 @@ func MmttInfo() *ProcessInfo {
 	}
 	fullpath := filepath.Join(PaletteDir(), "bin", "mmtt_"+mmtt, "mmtt_"+mmtt+".exe")
 	if !FileExists(fullpath) {
-		LogWarn("no mmtt executable found, looking for", "path", fullpath)
+		// LogWarn("no mmtt executable found, looking for", "path", fullpath)
 		fullpath = ""
 	}
 	return NewProcessInfo("mmtt_"+mmtt+".exe", fullpath, "", nil)

@@ -84,9 +84,10 @@ func CliCommand(args []string) string {
 		s += "GUI is " + statusString("gui") + ".\n"
 		s += "Bidule is " + statusString("bidule") + ".\n"
 		s += "Resolume is " + statusString("resolume") + ".\n"
-		s += "Keykit is " + statusString("keykit") + ".\n"
-		mmtt := engine.GetParam("engine.mmtt")
-		if mmtt != "" {
+		if engine.GetParamBool("engine.keykit") {
+			s += "Keykit is " + statusString("keykit") + ".\n"
+		}
+		if engine.GetParam("engine.mmtt") != "" {
 			s += "MMTT is " + statusString("mmtt") + ".\n"
 		}
 		return s
@@ -98,22 +99,21 @@ func CliCommand(args []string) string {
 		case "", "engine":
 			return doStartEngine()
 
-		case "gui", "bidule", "resolume", "keykit", "mmtt":
-			return doApi("engine.startprocess", "process", arg1)
-
 		case "all":
-			s1 := doStartEngine()
-			s1 += "\n" + doApi("engine.startprocess", "process", "gui")
-			s1 += "\n" + doApi("engine.startprocess", "process", "bidule")
-			s1 += "\n" + doApi("engine.startprocess", "process", "resolume")
-			s1 += "\n" + doApi("engine.startprocess", "process", "keykit")
-			if engine.TheProcessManager.IsAvailable("mmtt") {
-				s1 += "\n" + doApi("engine.startprocess", "process", "mmtt")
+			s := doStartEngine()
+			for _, process := range engine.ProcessList() {
+				s += "\n" + doApi("engine.startprocess", "process", process)
 			}
-			return s1
+			return s
 
 		default:
-			return usage()
+			// If it exists in the ProcessList...
+			for _, process := range engine.ProcessList() {
+				if arg1 == process {
+					return doApi("engine.startprocess", "process", arg1)
+				}
+			}
+			return fmt.Sprintf("Process %s is disabled or unknown.\n", arg1)
 		}
 
 	case "stop":
@@ -125,24 +125,26 @@ func CliCommand(args []string) string {
 		switch arg1 {
 
 		case "all":
-			s1 := doApi("engine.stopprocess", "process", "gui")
-			s1 += "\n" + doApi("engine.stopprocess", "process", "bidule")
-			s1 += "\n" + doApi("engine.stopprocess", "process", "resolume")
-			s1 += "\n" + doApi("engine.stopprocess", "process", "keykit")
-			if engine.TheProcessManager.IsAvailable("mmtt") {
-				s1 += "\n" + doApi("engine.stopprocess", "process", "mmtt")
+			sep := ""
+			s := ""
+			for _, process := range engine.ProcessList() {
+				s += sep + doApi("engine.stopprocess", "process", process)
+				sep = "\n"
 			}
-			s1 += "\n" + doApi("engine.exit")
-			return s1
+			s += sep + doApi("engine.exit")
+			return s
 
 		case "", "engine":
 			return doApi("engine.exit")
 
-		case "gui", "bidule", "resolume", "keykit", "mmtt":
-			return doApi("engine.stopprocess", "process", arg1)
-
 		default:
-			return usage()
+			// If it exists in the ProcessList...
+			for _, process := range engine.ProcessList() {
+				if arg1 == process {
+					return doApi("engine.stopprocess", "process", arg1)
+				}
+			}
+			return fmt.Sprintf("Process %s is disabled or unknown.\n", arg1)
 		}
 
 	case "version":
