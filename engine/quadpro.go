@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
-	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
@@ -67,7 +66,7 @@ func (quadpro *QuadPro) Api(api string, apiargs map[string]string) (result strin
 		if !oksaved {
 			return "", fmt.Errorf("missing filename parameter")
 		}
-		TheAttractManager.setAttractMode(false)
+		TheAttractManager.SetAttractMode(false)
 		return "", quadpro.Load(category, filename)
 
 	case "save":
@@ -180,8 +179,8 @@ func (quadpro *QuadPro) PatchForCursorEvent(ce CursorEvent) (patch *Patch, butto
 func (quadpro *QuadPro) onCursorEvent(state ActiveCursor) error {
 
 	// Any non-internal cursor will turn attract mode off.
-	if !state.Current.IsInternal() {
-		TheAttractManager.setAttractMode(false)
+	if !state.Current.IsInternal() && TheAttractManager.CurrentAttractMode() {
+		TheAttractManager.SetAttractMode(false)
 	}
 
 	if state.Button != "" {
@@ -214,7 +213,7 @@ func (quadpro *QuadPro) onCursorEvent(state ActiveCursor) error {
 	cursorStyle := patchLogic.patch.Get("misc.cursorstyle")
 	gensound := IsTrueValue(patchLogic.patch.Get("misc.generatesound"))
 	genvisual := IsTrueValue(patchLogic.patch.Get("misc.generatevisual"))
-	if gensound && !TheAttractManager.attractModeIsOn {
+	if gensound && !TheAttractManager.CurrentAttractMode(){
 		patchLogic.generateSoundFromCursor(state.Current, cursorStyle)
 	}
 	if genvisual {
@@ -255,7 +254,7 @@ func (quadpro *QuadPro) doTest(ntimes int, dt, dur time.Duration) {
 			time.Sleep(dt)
 		}
 		source := string("ABCD"[rand.Int()%4])
-		cid := fmt.Sprintf("%s#%d",source,n)
+		cid := TheCursorManager.UniqueCid(source)
 		cedown := CursorEvent{
 			Cid:   cid,
 			Click: CurrentClick(),
@@ -434,20 +433,3 @@ func (quadpro *QuadPro) scheduleNoteNow(dest string, pitch, velocity uint8, dura
 	SchedulePhrase(phr, CurrentClick(), dest)
 }
 */
-
-func MmttInfo() *ProcessInfo {
-
-	// NOTE: it's inside a sub-directory of bin, so all the necessary .dll's are contained
-
-	// The value of mmtt is either "kinect" or "oak" or ""
-	mmtt := GetParam("engine.mmtt")
-	if mmtt == "" {
-		return nil
-	}
-	fullpath := filepath.Join(PaletteDir(), "bin", "mmtt_"+mmtt, "mmtt_"+mmtt+".exe")
-	if !FileExists(fullpath) {
-		LogWarn("no mmtt executable found, looking for", "path", fullpath)
-		fullpath = ""
-	}
-	return NewProcessInfo("mmtt_"+mmtt+".exe", fullpath, "", nil)
-}

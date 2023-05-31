@@ -35,6 +35,8 @@ LayerParams_InitializeTypes() {
 	LayerParams_logTypes.push_back("");
 	LayerParams_logTypes.push_back("cursor");
 	LayerParams_logTypes.push_back("midi");
+	LayerParams_logTypes.push_back("cursor,midi");
+	LayerParams_logTypes.push_back("cursor,midi,osc");
 	LayerParams_logTypes.push_back("osc");
 	LayerParams_logTypes.push_back("api");
 	LayerParams_logTypes.push_back("loop");

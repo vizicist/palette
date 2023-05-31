@@ -23,6 +23,13 @@ type Engine struct {
 	recordingPath  string
 	recordingMutex sync.RWMutex
 	params         *ParamValues
+
+	currentPitchOffset  int
+	autoTransposeOn     bool
+	autoTransposeNext   Clicks
+	autoTransposeClicks Clicks // time between auto transpose changes
+	autoTransposeIndex  int    // current place in transposeValues
+	autoTransposeValues []int
 }
 
 var TheEngine *Engine
@@ -46,7 +53,13 @@ func InitEngine() {
 	LogInfo("Engine InitLog ==============================================")
 
 	e := &Engine{
-		done: make(chan bool),
+		done:                make(chan bool),
+		currentPitchOffset:  0,
+		autoTransposeOn:     false,
+		autoTransposeNext:   0,
+		autoTransposeClicks: 8 * OneBeat,
+		autoTransposeIndex:  0,
+		autoTransposeValues: []int{0, -2, 3, -5},
 	}
 
 	e.params = NewParamValues()
@@ -168,7 +181,6 @@ func (e *Engine) ResetLogTypes(logtypes string) {
 		}
 	}
 }
-
 func (e *Engine) SendOsc(client *osc.Client, msg *osc.Message) {
 	if client == nil {
 		LogIfError(fmt.Errorf("engine.SendOsc: client is nil"))
@@ -451,4 +463,48 @@ func (e *Engine) SaveRecordingEvent(re RecordingEvent) {
 	_, err = e.recordingFile.Write(bytes)
 	LogIfError(err)
 }
+*/
+
+func (e *Engine) SetTranspose(i int) {
+	e.currentPitchOffset = i
+}
+
+func (e *Engine) SetAutoTransposeBeats(beats int) {
+	e.autoTransposeNext = Clicks(beats) * OneBeat
+	e.autoTransposeClicks = Clicks(beats) * OneBeat
+
+}
+
+func (e *Engine) advanceTransposeTo(newclick Clicks) {
+
+	if newclick < e.autoTransposeNext {
+		return
+	}
+	e.autoTransposeNext = newclick + e.autoTransposeClicks
+	e.autoTransposeIndex = (e.autoTransposeIndex + 1) % len(e.autoTransposeValues)
+	e.currentPitchOffset = TheEngine.autoTransposeValues[TheEngine.autoTransposeIndex]
+	LogOfType("transpose", "advanceTransposeTo", "e.autoTransposeIndex", e.autoTransposeIndex, "pitchoffset", e.currentPitchOffset)
+	// TheScheduler.SendAllPendingNoteoffs()
+}
+
+/*
+	XXX - pitchOffset should be done elsewhere
+	pitchOffset := TheMidiIO.engineTranspose
+
+	// Hardcoded, channel 10 is usually drums, doesn't get transposed
+	// Should probably be an attribute of the Synth.
+	const drumChannel = 10
+	if TheMidiIO.autoTransposeOn && synth.portchannel.channel != drumChannel {
+		pitchOffset += TheMidiIO.autoTransposeValues[TheMidiIO.autoTransposeIndex]
+	}
+	newpitch := int(pitch) + pitchOffset
+	if newpitch < 0 {
+		newpitch = 0
+	} else if newpitch > 127 {
+		newpitch = 127
+	}
+	if newpitch != int(pitch) {
+		LogOfType("midi", "SendNoteToMidiOutput adjusting pitch", "newpitch", newpitch, "oldpitch", pitch)
+	}
+	pitch = uint8(newpitch)
 */
