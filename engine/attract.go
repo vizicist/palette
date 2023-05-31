@@ -46,7 +46,7 @@ func (am *AttractManager) CurrentAttractMode() bool{
 
 func (am *AttractManager) SetAttractMode(onoff bool) {
 	if onoff == am.attractModeIsOn {
-		LogInfo("setAttractMode already in mode", "attractModeIsOn", am.attractModeIsOn)
+		LogOfType("attract","setAttractMode already in mode", "attractModeIsOn", am.attractModeIsOn)
 		return // already in that mode
 	}
 	am.setAttractMode(onoff)
