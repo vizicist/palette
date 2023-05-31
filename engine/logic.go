@@ -29,13 +29,14 @@ func NewPatchLogic(patch *Patch) *PatchLogic {
 }
 
 func (logic *PatchLogic) cursorToNoteOn(ce CursorEvent) *NoteOn {
+	synth := logic.patch.Synth()
+	velocity := logic.cursorToVelocity(ce)
 	pitch, err := logic.cursorToPitch(ce)
 	if err != nil {
 		LogIfError(fmt.Errorf("cursorToNoteOn: no pitch for cursor, ce=%v", ce))
 		return nil
 	}
-	velocity := logic.cursorToVelocity(ce)
-	synth := logic.patch.Synth()
+	LogOfType("cursor", "cursorToNoteOn", "pitch", pitch, "velocity", velocity)
 	return NewNoteOn(synth, pitch, velocity)
 }
 
@@ -55,6 +56,7 @@ func (logic *PatchLogic) cursorToPitch(ce CursorEvent) (uint8, error) {
 		}
 		// In the stylusrmx set, there are 8 pitches corresponding to the 8 parts in Stylus RMX
 		n := int(ce.X*8.0) % len(pitches)
+		// Note: pitchsets don't get pitchoffset
 		return pitches[n], nil
 
 	} else {
@@ -77,6 +79,16 @@ func (logic *PatchLogic) cursorToPitch(ce CursorEvent) (uint8, error) {
 				i -= 12
 			}
 			p = uint8(i)
+		}
+		if TheEngine.currentPitchOffset != 0 {
+			newpitch := int(p) + TheEngine.currentPitchOffset
+			if newpitch < 0 {
+				newpitch = 0
+			} else if newpitch > 127 {
+				newpitch = 127
+			}
+			// LogOfType("midi", "cursorToPitch applied pitchoffset", "newpitch", newpitch, "oldpitch", p)
+			p = uint8(newpitch)
 		}
 		return p, nil
 	}

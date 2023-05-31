@@ -22,6 +22,7 @@ type ActiveCursor struct {
 	loopBeats   int
 	loopFade    float32
 	maxZ        float32
+	pitchOffset int
 }
 
 type CursorManager struct {
@@ -33,7 +34,7 @@ type CursorManager struct {
 	CidToLoopedCidMutex sync.RWMutex
 	CidToLoopedCid      map[string]string
 	handlers            map[string]CursorHandler
-	sequenceNum         int
+	uniqueInt           int
 }
 
 // CursorDeviceCallbackFunc xxx
@@ -64,6 +65,24 @@ func NewActiveCursor(ce CursorEvent) *ActiveCursor {
 		ac.loopBeats = patch.GetInt("misc.looping_beats")
 		ac.loopFade = patch.GetFloat("misc.looping_fade")
 	}
+
+	ac.pitchOffset = TheEngine.currentPitchOffset
+
+	/*
+	// Hardcoded, channel 10 is usually drums, doesn't get transposed
+	// Should probably be an attribute of the Synth.
+	const drumChannel = 10
+	if TheEngine.autoTransposeOn && synth.portchannel.channel != drumChannel {
+		pitchOffset += TheEngine.autoTransposeValues[TheEngine.autoTransposeIndex]
+	}
+	newpitch := int(pitch) + pitchOffset
+	if newpitch < 0 {
+		newpitch = 0
+	} else if newpitch > 127 {
+		newpitch = 127
+	}
+	*/
+
 	return ac
 }
 
@@ -74,6 +93,16 @@ func NewCursorManager() *CursorManager {
 		activeMutex:    sync.RWMutex{},
 		handlers:       map[string]CursorHandler{},
 	}
+}
+
+func (cm *CursorManager) UniqueInt() int {
+	n := cm.uniqueInt
+	cm.uniqueInt++
+	return n
+}
+
+func (cm *CursorManager) UniqueCid(source string) string {
+	return fmt.Sprintf("%s#%d", source, TheCursorManager.UniqueInt())
 }
 
 func (cm *CursorManager) getActiveCursorFor(cid string) (*ActiveCursor, bool) {
@@ -154,34 +183,11 @@ func (cm *CursorManager) GenerateCursorGesture(cid string, noteDuration time.Dur
 	LogOfType("cursor", "generateCursorGesture end", "cid", cid, "noteDuration", noteDuration, "x0", x0, "y0", y0, "z0", z0, "x1", x1, "y1", y1, "z1", z1)
 }
 
-func (cm *CursorManager) UniqueCid(baseCid string) string {
-	base := baseCid
-	arr := strings.Split(baseCid, "#")
-	if len(arr) == 2 {
-		base = arr[0]
-	}
-	// Return a unique cursor id, not already in cm.ActiveCursors
-	for {
-		cm.sequenceNum++
-		newCid := fmt.Sprintf("%s#%d", base, cm.sequenceNum)
-
-		cm.activeMutex.RLock()
-		_, ok := cm.activeCursors[newCid]
-		cm.activeMutex.RUnlock()
-
-		if !ok {
-			// Cool, found a unique cid
-			LogOfType("cursor", "UniqueCid: returning", "baseCid", baseCid, "newCid", newCid)
-			return newCid
-		}
-	}
-}
-
 /*
-Keep track of unique names attached to each cursor "down",
+Keep track of names attached to each cursor "down",
 and use those names on subsequent "drag" and "up" events.
 */
-func (cm *CursorManager) LoopedCidFor(ce CursorEvent) string {
+func (cm *CursorManager) LoopedCidFor(ce CursorEvent, warn bool) string {
 
 	cm.CidToLoopedCidMutex.Lock()
 	defer cm.CidToLoopedCidMutex.Unlock()
@@ -189,11 +195,12 @@ func (cm *CursorManager) LoopedCidFor(ce CursorEvent) string {
 	loopedCid, ok := cm.CidToLoopedCid[ce.Cid]
 	if !ok {
 		if ce.Ddu == "up" { // Not totally sure why this happens
+			if warn {
+				LogWarn("Why is this happening?")
+			}
 			return ""
 		}
-		// LogWarn("adjustLoopedCid: oldCid not found in ActiveCursor", "oldCid", oldCid)
-		loopedCid = cm.UniqueCid(ce.Cid)
-		cm.CidToLoopedCid[ce.Cid] = loopedCid
+		cm.CidToLoopedCid[ce.Cid] = fmt.Sprintf("%s#%d", ce.Source(), cm.UniqueInt())
 	}
 	return loopedCid
 }
@@ -237,6 +244,7 @@ func (cm *CursorManager) ExecuteCursorEvent(ce CursorEvent) {
 
 	} else {
 
+		LogOfType("cursor", "ExecuteCursorEvent: using existing ActiveCursor", "cid", ce.Cid, "ac", ac)
 		// existing ActiveCursor
 		ac.Previous = ac.Current
 		ac.Current = ce
@@ -251,8 +259,8 @@ func (cm *CursorManager) ExecuteCursorEvent(ce CursorEvent) {
 		loopce := ac.Current
 		loopce.Click = CurrentClick() + OneBeat*Clicks(ac.loopBeats)
 
-		// The looped CursorEvents should have unique cid values.
-		loopce.Cid = TheCursorManager.LoopedCidFor(ac.Current)
+		// The looped CursorEvents should have unique cid val,ues.
+		loopce.Cid = TheCursorManager.LoopedCidFor(ac.Current, true /*warn*/)
 
 		// Fade the Z value
 		loopce.Z = loopce.Z * ac.loopFade
@@ -298,7 +306,7 @@ func (cm *CursorManager) DeleteActiveCursorIfZLessThan(cid string, threshold flo
 		if ac.maxZ < threshold {
 			// we want to remove things that this ActiveCursor has created for looping.
 			cm.activeMutex.Unlock()
-			loopCid = cm.LoopedCidFor(ac.Current)
+			loopCid = cm.LoopedCidFor(ac.Current, false /*warn*/)
 			cm.activeMutex.Lock()
 			// but wait after we detete it from
 		}
@@ -416,3 +424,23 @@ fn (cm *CusorManager)checkThrehold(ac *ActiveCurs()
 
 	}
 */
+
+func (cm *CursorManager) PlayCursor(source string, dur time.Duration, x, y, z float32) {
+	cid := cm.UniqueCid(source)
+	ce := CursorEvent{
+		Cid:   cid,
+		Click: CurrentClick(),
+		Ddu:   "down",
+		X:     x,
+		Y:     y,
+		Z:     z,
+	}
+	cm.ExecuteCursorEvent(ce)
+	// Send the cursor up, but don't block the loop
+	go func(ce CursorEvent) {
+		time.Sleep(dur)
+		ce.Ddu = "up"
+		ce.Click = CurrentClick()
+		cm.ExecuteCursorEvent(ce)
+	}(ce)
+}

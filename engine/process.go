@@ -137,7 +137,7 @@ func (pm *ProcessManager) AddProcess(name string, info *ProcessInfo) {
 
 func (pm *ProcessManager) AddProcessBuiltIn(process string) {
 
-	LogInfo("AddProcessBuiltIn", "process", process)
+	LogOfType("process","AddProcessBuiltIn", "process", process)
 	switch process {
 	case "bidule":
 		pm.AddProcess(process, TheBidule().ProcessInfo())

@@ -247,19 +247,19 @@ import (
 )
 
 type oneMorph struct {
-	idx              uint8
-	opened           bool
-	serialNum        string
-	width            float32
-	height           float32
-	fwVersionMajor   uint8
-	fwVersionMinor   uint8
-	fwVersionBuild   uint8
-	fwVersionRelease uint8
-	deviceID         int
-	morphtype        string // "corners", "quadrants"
-	sourceName       string // "A", "B", "C", "D"
-	contactToSource  map[int]string
+	idx                   uint8
+	opened                bool
+	serialNum             string
+	width                 float32
+	height                float32
+	fwVersionMajor        uint8
+	fwVersionMinor        uint8
+	fwVersionBuild        uint8
+	fwVersionRelease      uint8
+	deviceID              int
+	morphtype             string // "corners", "quadrants"
+	currentSource         string // "A", "B", "C", "D" - it can change dynamically
+	contactIdToCid map[int]string
 }
 
 var morphMaxForce float32 = 1000.0
@@ -339,8 +339,6 @@ func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float32) 
 				continue
 			}
 
-			newSourceName := ""
-
 			switch m.morphtype {
 
 			case "corners":
@@ -348,27 +346,21 @@ func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float32) 
 				// If the position is in one of the corners,
 				// we change the source to that corner.
 				edge := float32(0.075)
+				cornerSource := ""
 				if xNorm < edge && yNorm < edge {
-					newSourceName = "A"
+					cornerSource = "A"
 				} else if xNorm < edge && yNorm > (1.0-edge) {
-					newSourceName = "B"
+					cornerSource = "B"
 				} else if xNorm > (1.0-edge) && yNorm > (1.0-edge) {
-					newSourceName = "C"
+					cornerSource = "C"
 				} else if xNorm > (1.0-edge) && yNorm < edge {
-					newSourceName = "D"
+					cornerSource = "D"
 				}
-				if newSourceName != m.sourceName {
-					LogInfo("Switching corners pad", "source", newSourceName)
-					ce := CursorEvent{
-						// Cid:  "clear",
-						Ddu: "clear",
-						// X:    xNorm,
-						// Y:    yNorm,
-						// Z:    zNorm,
-						// Area: area,
-					}
-					callback(ce)
-					continue // loop
+				if cornerSource != m.currentSource {
+					LogInfo("Switching corners pad", "source", cornerSource)
+					callback(CursorEvent{Ddu: "clear"})
+					m.currentSource = cornerSource
+					continue // loop, doesn't send a cursor event
 				}
 
 			case "quadrants":
@@ -376,18 +368,19 @@ func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float32) 
 				// This method splits a single pad into quadrants.
 				// Adjust the xNorm and yNorm values to provide
 				// full range 0-1 within each quadrant.
+				quadSource := ""
 				switch {
 				case xNorm < 0.5 && yNorm < 0.5:
-					newSourceName = "A"
+					quadSource = "A"
 				case xNorm < 0.5 && yNorm >= 0.5:
-					newSourceName = "B"
+					quadSource = "B"
 					yNorm = yNorm - 0.5
 				case xNorm >= 0.5 && yNorm >= 0.5:
-					newSourceName = "C"
+					quadSource = "C"
 					xNorm = xNorm - 0.5
 					yNorm = yNorm - 0.5
 				case xNorm >= 0.5 && yNorm < 0.5:
-					newSourceName = "D"
+					quadSource = "D"
 					xNorm = xNorm - 0.5
 				default:
 					LogWarn("unable to find QUAD source", "x", xNorm, "y", yNorm)
@@ -395,39 +388,42 @@ func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float32) 
 				}
 				xNorm *= 2.0
 				yNorm *= 2.0
+				m.currentSource = quadSource
 
 			default:
-
-				newSourceName = m.morphtype
+				LogWarn("Unknown morphtype", "morphtype", m.morphtype)
+				continue
 			}
 
-			if newSourceName == "" {
+			if m.currentSource == "" {
 				LogWarn("Hey! newSourceName not set, assuming A")
-				newSourceName = "A"
+				m.currentSource = "A"
 			}
 
 			contactid := int(contact.id)
-			oldSource, ok := m.contactToSource[contactid]
-			if ok && newSourceName != oldSource {
-				LogOfType("cursor", "Switching cursor source, sending clear", "source", newSourceName)
-				ce := CursorEvent{
-					// Cid:  "clear",
-					Ddu: "clear",
-					// X:    xNorm,
-					// Y:    yNorm,
-					// Z:    zNorm,
-					// Area: area,
+			cid, ok := m.contactIdToCid[contactid]
+			if !ok {
+				// If we've never seen this contact before, create a new cid...
+				cid = ""
+			} else {
+				// If we're switching to a new source, clear existing cursors...
+				if m.currentSource != CidSource(cid) {
+					LogOfType("cursor", "Switching cursor source, sending clear", "existingsource", CidSource(cid), "newsource", m.currentSource)
+					callback(CursorEvent{Ddu: "clear"})
+					// and create a new cid...
+					cid = ""
 				}
-				callback(ce)
 			}
 
-			m.contactToSource[contactid] = newSourceName
-			m.sourceName = newSourceName
+			if cid == "" {
+				cid = TheCursorManager.UniqueCid(m.currentSource)
+				m.contactIdToCid[contactid] = cid
+			}
 
 			LogOfType("morph", "Morph",
-				"source", m.sourceName,
-				"contactid", contact.id,
 				"idx", m.idx,
+				"contactid", contactid,
+				"cid", cid,
 				"n", n,
 				"contactstate", contact.state,
 				"xNorm", xNorm,
@@ -450,7 +446,7 @@ func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float32) 
 			}
 
 			ev := CursorEvent{
-				Cid:  fmt.Sprintf("%s#%d", m.sourceName, contact.id),
+				Cid:  cid,
 				Ddu:  ddu,
 				X:    xNorm,
 				Y:    yNorm,
@@ -471,7 +467,7 @@ func WinMorphInitialize() error {
 	for idx := uint8(0); idx < uint8(numdevices); idx++ {
 
 		m := &oneMorph{
-			contactToSource: map[int]string{},
+			contactIdToCid: map[int]string{},
 		}
 		allMorphs[idx] = m
 		m.idx = idx
@@ -522,9 +518,9 @@ func WinMorphInitialize() error {
 		m.morphtype = morphtype
 		switch m.morphtype {
 		case "corners", "quadrants":
-			m.sourceName = "A"
+			m.currentSource = "A"
 		case "A", "B", "C", "D":
-			m.sourceName = morphtype
+			m.currentSource = morphtype
 		default:
 			LogWarn("Unexpected morphtype", "morphtype", morphtype)
 		}
