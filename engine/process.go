@@ -116,13 +116,23 @@ func (pm *ProcessManager) CheckAutorestartProcesses() {
 	}
 }
 
-func (pm *ProcessManager) AddBuiltins() {
-	pm.AddProcessBuiltIn("keykit")
-	pm.AddProcessBuiltIn("bidule")
-	pm.AddProcessBuiltIn("resolume")
-	pm.AddProcessBuiltIn("gui")
+func ProcessList() []string {
+	arr := []string{}
+	arr = append(arr,"gui")
+	arr = append(arr,"bidule")
+	arr = append(arr,"resolume")
+	if GetParamBool("engine.keykit") {
+		arr = append(arr,"keykit")
+	}
 	if GetParam("engine.mmtt") != "" {
-		pm.AddProcessBuiltIn("mmtt")
+		arr = append(arr,"mmtt")
+	}
+	return arr
+}
+
+func (pm *ProcessManager) AddBuiltins() {
+	for _, process := range ProcessList() {
+		pm.AddProcessBuiltIn(process)
 	}
 }
 
@@ -137,7 +147,7 @@ func (pm *ProcessManager) AddProcess(name string, info *ProcessInfo) {
 
 func (pm *ProcessManager) AddProcessBuiltIn(process string) {
 
-	LogInfo("AddProcessBuiltIn", "process", process)
+	LogOfType("process","AddProcessBuiltIn", "process", process)
 	switch process {
 	case "bidule":
 		pm.AddProcess(process, TheBidule().ProcessInfo())
@@ -148,9 +158,7 @@ func (pm *ProcessManager) AddProcessBuiltIn(process string) {
 	case "keykit":
 		pm.AddProcess(process, KeykitProcessInfo())
 	case "mmtt":
-		if mmtt := MmttInfo(); mmtt != nil {
-			pm.AddProcess(process, mmtt)
-		}
+		pm.AddProcess(process, MmttInfo())
 	}
 }
 
@@ -255,11 +263,6 @@ func GuiProcessInfo() *ProcessInfo {
 
 func KeykitProcessInfo() *ProcessInfo {
 
-	keykit := GetParamBool("engine.keykit")
-	if !keykit {
-		return nil
-	}
-
 	// Allow parameter to override keyroot
 	keyroot := GetParam("engine.keykitroot")
 	if keyroot == "" {
@@ -313,4 +316,19 @@ func KeykitProcessInfo() *ProcessInfo {
 		exe = fullpath[lastslash+1:]
 	}
 	return NewProcessInfo(exe, fullpath, "", nil)
+}
+
+func MmttInfo() *ProcessInfo {
+
+	// The value of mmtt is either "kinect" or "oak" or ""
+	mmtt := GetParam("engine.mmtt")
+	if mmtt == "" {
+		return nil
+	}
+	fullpath := filepath.Join(PaletteDir(), "bin", "mmtt_"+mmtt, "mmtt_"+mmtt+".exe")
+	if !FileExists(fullpath) {
+		// LogWarn("no mmtt executable found, looking for", "path", fullpath)
+		fullpath = ""
+	}
+	return NewProcessInfo("mmtt_"+mmtt+".exe", fullpath, "", nil)
 }

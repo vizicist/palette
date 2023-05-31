@@ -59,14 +59,17 @@ func ScheduleAt(atClick Clicks, value any) {
 }
 
 func (sched *Scheduler) savePendingSchedEvent(se *SchedElement) {
+
 	sched.pendingMutex.Lock()
+	defer sched.pendingMutex.Unlock()
+
 	sched.toBeScheduled = append(sched.toBeScheduled, se)
+
 	// LogInfo("savePendingSchedEvent","se",se,"value",se.Value)
 	// ss := fmt.Sprintf("%v",se.Value)
 	// if strings.Contains(ss,"NoteOff") {
 	// 	LogInfo("NoteOff in savePendingSchedEvent","se",se,"value",se.Value)
 	// }
-	sched.pendingMutex.Unlock()
 }
 
 func (sched *Scheduler) handlePendingSchedEvents() {
@@ -111,7 +114,7 @@ func (sched *Scheduler) Start() {
 		}
 
 		sched.advanceClickTo(newclick)
-		TheMidiIO.advanceTransposeTo(newclick)
+		TheEngine.advanceTransposeTo(newclick)
 
 		SetCurrentClick(newclick)
 
@@ -292,6 +295,7 @@ func (sched *Scheduler) Format(f fmt.State, c rune) {
 func (sched *Scheduler) insertScheduleElement(se *SchedElement) {
 
 	sched.mutex.Lock()
+	defer sched.mutex.Unlock()
 
 	schedClick := se.AtClick
 	LogOfType("scheduler", "Scheduler.insertScheduleElement", "value", se.Value, "click", se.AtClick, "beforelen", sched.schedList.Len())
@@ -312,8 +316,6 @@ func (sched *Scheduler) insertScheduleElement(se *SchedElement) {
 			}
 		}
 	}
-
-	sched.mutex.Unlock()
 
 	// LogOfType("scheduler", "Scheduler.insertScheduleElement", "value", se.Value, "click", se.AtClick, "schedafter", sched.ToString())
 
