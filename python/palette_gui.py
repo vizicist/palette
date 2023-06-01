@@ -201,12 +201,11 @@ class ProGuiApp(tk.Tk):
         self.escapeCount = 0
         self.lastEscape = time.time()
         self.lastClearLoop = time.time()
-        self.resetLastAnything()
         self.layoutDone = False
 
         self.initLayout()
         self.resetAll()
-    
+
     def placePatchChooser(self):
         if self.guiLevel > 0:
             self.patchChooser.place(in_=self.topContainer, relx=0, rely=self.patchChooserPageY, relwidth=1, relheight=self.frameSizeOfPatchChooser)
@@ -275,10 +274,6 @@ class ProGuiApp(tk.Tk):
 
             if self.currentMode == "normal":
                 self.doSelectorAction()
-                # if self.attractTimeout>0 and (now - self.lastAnything) > self.attractTimeout:
-                #     log("No activity, starting attract mode...")
-                #     self.resetAll()
-                #     self.nextMode = "attract"
 
             elif self.currentMode == "attract":
                 # self.doAttractAction()
@@ -296,9 +291,19 @@ class ProGuiApp(tk.Tk):
 
         log("mainLoop is returning")
 
+    def loopingOn(self):
+        log("loopingOn")
+
+    def loopingOff(self):
+        log("loopingOff")
+
+    def loopingClear(self):
+        log("loopingClear")/unh
+
     def startNormalMode(self):
         # self.startupFrame.place_forget()
         # log("startNormalMode: setting nextMode to normal")
+        self.resetMinMaxXY()
         self.nextMode = "normal"
         self.attractFrame.place_forget()
         self.helpFrame.place_forget()
@@ -383,7 +388,6 @@ class ProGuiApp(tk.Tk):
         pass
 
     def doSelectorAction(self):
-        reset = True
         if self.selectorAction == "LOAD":
             self.selectorLoadAndSend(self.currentPageName,self.selectorValue)
 
@@ -396,17 +400,8 @@ class ProGuiApp(tk.Tk):
         elif self.selectorAction == "RAND":
             self.selectorApply("rand",self.currentPageName)
 
-        else:
-            reset = False
-
-        if reset:
-            self.resetLastAnything()
         self.selectorAction = ""
     
-    def resetLastAnything(self):
-        # self.lastAnything = time.time()
-        pass
-
     def resetVisibility(self):
         self.editMode = False
         self.setFrameSizes()
@@ -490,12 +485,10 @@ class ProGuiApp(tk.Tk):
         palette.palette_engine_api("attract",
             "\"onoff\": \"false\"")
         self.nextMode = "normal"
-        self.resetLastAnything()
 
     def unhelp(self):
-        log("unhelp: setting nextMode to normal")
+        self.checkForGuiCycle()
         self.nextMode = "normal"
-        self.resetLastAnything()
 
     def makeAttractFrame(self,container):
 
@@ -519,8 +512,38 @@ class ProGuiApp(tk.Tk):
         button = ttk.Button(f, image=self.helpImage, style='Attract.TLabel',
             command=self.unhelp)
         button.pack(side=tk.TOP,fill=tk.BOTH,expand=True)
+        self.FullWidth = button.winfo_width()
+        self.FullHeight = button.winfo_height()
+        button.bind("<Motion>", self.motionCallback)
         return f
 
+    # The routines here maintain the min/max of the mouse
+    # position while the help page is displayed.
+    # If you sweep from the upper left to the lower right of the help page,
+    # it will cycle through the gui levels
+    def resetMinMaxXY(self):
+        self.minX = 10000
+        self.minY = 10000
+        self.maxX = 0
+        self.maxY = 0
+    
+    def motionCallback(self,e):
+        if e.x > self.maxX:
+            self.maxX = e.x
+        if e.y > self.maxY:
+            self.maxY = e.y
+        if e.x < self.minX:
+            self.minX = e.x
+        if e.y < self.minY:
+            self.minY = e.y
+
+    def checkForGuiCycle(self):
+        smallx = PaletteAppSize["width"] / 4
+        smally = PaletteAppSize["height"] / 4
+        bigx = PaletteAppSize["width"] * 3 / 4
+        bigy = PaletteAppSize["height"] * 3 / 4
+        if self.minX < smallx and self.minY < smally and self.maxX > bigx and self.maxY > bigy:
+            self.cycleGuiLevel()
 
     def updateSelectorPage(self,pagename,files):
         page = self.selectorPage[pagename]
@@ -793,7 +816,7 @@ class ProGuiApp(tk.Tk):
         self.editPage[category].paramsnameVar.set(filename)
 
         if category == "engine":
-            log("Loading","category","engine","filename",filename)
+            # log("Loading","category","engine","filename",filename)
             palette.palette_quadpro_api("load",
                 "\"filename\": \"" + filename + "\""
                 ", \"category\": \"" + category + "\"")
@@ -906,8 +929,6 @@ class ProGuiApp(tk.Tk):
  
     def checkEscape(self):
 
-        self.resetLastAnything()
-
         # click the Clear button 4 times quickly to change the GuiLevel
         tm = time.time()
         since = tm - self.lastClearLoop
@@ -936,7 +957,6 @@ class ProGuiApp(tk.Tk):
             patch.sendANO()
 
     def startHelp(self):
-        log("startHelp: nextMode = help")
         self.nextMode = "help"
 
     def startProcess(self,processName):
@@ -967,7 +987,6 @@ class ProGuiApp(tk.Tk):
         palette.palette_engine_api("audio_reset")
 
         self.setGuiLevel(self.defaultGuiLevel)
-        self.resetLastAnything()
 
         self.allPatchesSelected = True
         self.CurrPatch = self.patchNamed("A")
@@ -2034,9 +2053,14 @@ class PagePerformMain(tk.Frame):
         self.performButton = {}
         self.buttonNames = []
 
-        self.makePerformButton("Reset_All", self.controller.resetAll)
-        self.makePerformButton("Clear_ ", self.controller.clear)
+        self.makePerformButton("COMPLETE_RESET", self.controller.resetAll)
         self.makePerformButton("Help_ ", self.controller.startHelp)
+        self.makePerformButton("Looping_ON", self.controller.loopingOn)
+        self.makePerformButton("Looping_OFF", self.controller.loopingOff)
+        if self.controller.defaultGuiLevel > 0:
+            self.makePerformButton("Loop_CLEAR", self.controller.loopingClear)
+        # if self.controller.defaultGuiLevel > 0:
+        #     self.makePerformButton("Clear_ ", self.controller.clear)
         # These shouldn't be shown in casual mode
         # self.makePerformButton("Start_All", self.controller.startAll)
         # self.makePerformButton("Stop_All", self.controller.stopAll)
@@ -2101,7 +2125,6 @@ class PagePerformMain(tk.Frame):
     def performCallback(self,name):
 
         controller = self.controller
-        controller.resetLastAnything()
 
         log("Perform Button Pressed",name)
 
@@ -2393,7 +2416,7 @@ def status_thread(app):  # runs in background thread
 
     while True:
 
-        time.sleep(15.0)
+        time.sleep(3.0)
 
         status, err = palette.palette_engine_api("status","")
         if err != None:
@@ -2412,12 +2435,9 @@ def status_thread(app):  # runs in background thread
                 log("Turning Attract Mode On!")
                 PaletteApp.nextMode = "attract"
         else:
-            if PaletteApp.currentMode != "normal":
-                if PaletteApp.currentMode == "help":
-                    log("NOT turning attract mode off because we're in help mode")
-                else:
-                    log("Turning Attract Mode Off!")
-                    PaletteApp.nextMode = "normal"
+            if PaletteApp.currentMode != "normal" and PaletteApp.currentMode != "help":
+                log("Turning Attract Mode Off!")
+                PaletteApp.nextMode = "normal"
 
 if __name__ == "__main__":
 
@@ -2459,15 +2479,18 @@ if __name__ == "__main__":
     if guisize == "palette":
         # Fixed size - the guisize is really only used to reposition it.
         # Should check to see whether the size matches the 800x1280 expectation
-        PaletteApp.wm_geometry("%dx%d" % (800,1280))  # PALETTE VERSION
+        PaletteAppSize = {"width":800,"height":1280}
     elif guisize == "small":
-        PaletteApp.wm_geometry("%dx%d" % (400,640))
+        PaletteAppSize = {"width":400,"height":640}
     elif guisize == "medium":
-        PaletteApp.wm_geometry("%dx%d" % (500,800))
+        PaletteAppSize = {"width":500,"height":800}
     else:
         log("BAD VALUE FOR guisize=",guisize)
-        PaletteApp.wm_geometry("%dx%d" % (400,640))   # SMALL VERSION
+        PaletteAppSize = {"width":400,"height":640}
 
+    PaletteApp.wm_geometry("%dx%d" % (PaletteAppSize["width"],PaletteAppSize["height"]))
+
+    log("PALETTEAPP size = ",PaletteAppSize)
     PaletteApp.nextMode = ""
     PaletteApp.currentMode = ""
 

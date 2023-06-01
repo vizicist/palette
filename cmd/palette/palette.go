@@ -8,6 +8,7 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/hpcloud/tail"
 	"github.com/vizicist/palette/engine"
 )
 
@@ -77,6 +78,17 @@ func CliCommand(args []string) string {
 	}
 
 	switch api {
+
+	case "taillog":
+		logpath := engine.LogFilePath("engine.log")
+		// Note, Poll is needed on Windows, apparently.
+		// The source code for tail currently uses 250 milliseconds for POLL_DURATION.
+		t, err := tail.TailFile(logpath, tail.Config{Follow: true, Poll: true})
+		engine.LogIfError(err)
+		for line := range t.Lines {
+			fmt.Println(line.Text)
+		}
+		return ""
 
 	case "status":
 		s := ""
