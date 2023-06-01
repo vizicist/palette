@@ -327,34 +327,17 @@ type NoWriter struct {
 }
 
 type FileWriter struct {
-	File *os.File
+	Exe string
 }
 
 var NoWriterInstance io.Writer
 
-func MakeFileWriter(path string) io.Writer {
-
-	file, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
-	if err != nil {
-		fmt.Printf("MakeFileWriter: Unable to open path=%s err=%s", path, err)
-		return nil
-	}
-	_ = file
-	return &FileWriter{File: file}
-	// return &FileWriter{File: file}
+func NewExecutableLogWriter(exe string) io.Writer {
+	return &FileWriter{Exe: exe}
 }
 
 func (w *FileWriter) Write(p []byte) (n int, err error) {
-	s := string(p)
-	newline := ""
-	if !strings.HasSuffix(s, "\n") {
-		newline = "\n"
-	}
-	final := fmt.Sprintf("%s%s", s, newline)
-	n, err = w.File.Write([]byte(final))
-	if err != nil {
-		return n, err
-	}
+	LogInfo("ExecutableOutput", "exe", w.Exe, "output", string(p))
 	return len(p), nil
 }
 
