@@ -83,7 +83,6 @@ func (e *Engine) executeEngineAPI(api string, apiargs map[string]string) (result
 			return "", fmt.Errorf("executeEngineAPI: missing onoff parameter")
 		}
 		TheAttractManager.SetAttractMode(IsTrueValue(v))
-		LogInfo("ENGINE API AFTER SETTING ATTRACT", "attractModeIsOn", TheAttractManager.CurrentAttractMode())
 		return "", nil
 
 	case "set":
