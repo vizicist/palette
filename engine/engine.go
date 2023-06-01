@@ -50,8 +50,6 @@ func InitEngine() {
 	engineSysex.Lock()
 	defer engineSysex.Unlock()
 
-	LogInfo("Engine InitLog ==============================================")
-
 	e := &Engine{
 		done:                make(chan bool),
 		currentPitchOffset:  0,
