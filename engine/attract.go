@@ -79,7 +79,6 @@ func (am *AttractManager) checkAttract() {
 		sinceLastAttractModeChange := time.Since(am.lastAttractModeChange).Seconds()
 		if !am.attractModeIsOn && sinceLastAttractModeChange > am.attractIdleSecs {
 			// Nothing happening for a while, turn attract mode on
-			LogInfo("CHECKATTRACT setting attractmode to true")
 			am.setAttractMode(true)
 		}
 	}

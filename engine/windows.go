@@ -30,16 +30,9 @@ func killExecutable(executable string) error {
 
 // StartExecutable executes something.  If background is true, it doesn't block
 func StartExecutableLogOutput(logName string, fullexe string, background bool, args ...string) error {
-	stdoutWriter := MakeFileWriter(LogFilePath(logName + ".stdout"))
-	if stdoutWriter == nil {
-		stdoutWriter = &NoWriter{}
-	}
-	stderrWriter := MakeFileWriter(LogFilePath(logName + ".stderr"))
-	if stderrWriter == nil {
-		stderrWriter = &NoWriter{}
-	}
+	logWriter := NewExecutableLogWriter(logName)
 	LogInfo("startExecutable", "executable", fullexe)
-	_, err := startExecutable(fullexe, true, stdoutWriter, stderrWriter, args...)
+	_, err := startExecutable(fullexe, true, logWriter, logWriter, args...)
 	return err
 }
 
