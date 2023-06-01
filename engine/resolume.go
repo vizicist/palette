@@ -308,7 +308,7 @@ func (r *Resolume) Activate() {
 	clipnum := 1
 
 	// do it a few times, in case Resolume hasn't started up
-	for i := 0; i < 4; i++ {
+	for i := 0; i < 10; i++ {
 		time.Sleep(5 * time.Second)
 
 		for _, patch := range PatchNames() {
