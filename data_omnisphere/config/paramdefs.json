@@ -166,6 +166,8 @@
 "engine.keykitoutput": {"valuetype":"string", "min":"", "max":"", "init":"", "comment":"#" },
 "engine.keykitallow": {"valuetype":"string", "min":"", "max":"", "init":"", "comment":"#" },
 "engine.log": {"valuetype":"string", "min":"log", "max":"log", "init":"", "comment":"# log type" },
+"engine.looping_defaultfade": {"valuetype": "float", "min": "0.0", "max": "1.0",  "init": "0.5",	"comment": "# default fade factor" },
+"engine.looping_defaultbeats": {"valuetype":"int", "min":"0", "max":"128", "init":"8", "comment":"# Loop length in beats" },
 "engine.midiinput": {"valuetype":"string", "min":"midiinput", "max":"midiinput", "init":"", "comment":"# Bidule executable path" },
 "engine.midithru": {"valuetype":"bool", "min":"false", "max":"true", "init":"false", "comment":"#" },
 "engine.midisetexternalscale": {"valuetype":"bool", "min":"false", "max":"true", "init":"false", "comment":"#" },

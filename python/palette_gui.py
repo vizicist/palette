@@ -292,13 +292,42 @@ class ProGuiApp(tk.Tk):
         log("mainLoop is returning")
 
     def loopingOn(self):
-        log("loopingOn")
+        defaultfade, err = palette.palette_engine_api("get", "\"name\": \"engine.looping_defaultfade\"")
+        if err != None:
+            log("Error in getting value of engine.looping_defaultfade")
+            return
+        defaultbeats, err = palette.palette_engine_api("get",
+            "\"name\": \"engine.looping_defaultbeats\"")
+        if err != None:
+            log("Error in getting value of engine.looping_defaultbeats")
+            return
+        log("loopingOn, defaultfade="+defaultfade+" defaultbeats="+defaultbeats)
+        for patch in self.Patches:
+            palette.palette_patch_api(patch.name(), "set",
+                "\"name\": \"misc.looping_on\"" + \
+                ", \"value\": \"true\"" )
+            palette.palette_patch_api(patch.name(), "set",
+                "\"name\": \"misc.looping_fade\"" + \
+                ", \"value\": \"" + defaultfade + "\"" )
+            palette.palette_patch_api(patch.name(), "set",
+                "\"name\": \"misc.looping_beats\"" + \
+                ", \"value\": \"" + defaultbeats + "\"" )
+            # This is overkill
+            self.refreshValues("misc",patch)
 
     def loopingOff(self):
         log("loopingOff")
+        for patch in self.Patches:
+            palette.palette_patch_api(patch.name(), "set",
+                "\"name\": \"misc.looping_on\"" + \
+                ", \"value\": \"false\"" )
+            self.refreshValues("misc",patch)
 
     def loopingClear(self):
-        log("loopingClear")/unh
+        log("loopingClear")
+        palette.palette_patch_api(self.name(), "clear", "")
+        for patch in self.Patches:
+            palette.palette_patch_api(patch.name(), "clear", "")
 
     def startNormalMode(self):
         # self.startupFrame.place_forget()
@@ -2057,8 +2086,7 @@ class PagePerformMain(tk.Frame):
         self.makePerformButton("Help_ ", self.controller.startHelp)
         self.makePerformButton("Looping_ON", self.controller.loopingOn)
         self.makePerformButton("Looping_OFF", self.controller.loopingOff)
-        if self.controller.defaultGuiLevel > 0:
-            self.makePerformButton("Loop_CLEAR", self.controller.loopingClear)
+        self.makePerformButton("Looping_CLEAR", self.controller.loopingClear)
         # if self.controller.defaultGuiLevel > 0:
         #     self.makePerformButton("Clear_ ", self.controller.clear)
         # These shouldn't be shown in casual mode
