@@ -112,8 +112,10 @@ func LogIfError(err error, keysAndValues ...any) {
 func appendExtraValues(keysAndValues []any) []any {
 	keysAndValues = append(keysAndValues, "click")
 	keysAndValues = append(keysAndValues, int64(CurrentClick()))
-	keysAndValues = append(keysAndValues, "goroutine")
-	keysAndValues = append(keysAndValues, fmt.Sprintf("%d", GoroutineID()))
+	if IsLogging("goroutine") {
+		keysAndValues = append(keysAndValues, "goroutine")
+		keysAndValues = append(keysAndValues, fmt.Sprintf("%d", GoroutineID()))
+	}
 	return keysAndValues
 }
 
@@ -168,6 +170,7 @@ var LogEnabled = map[string]bool{
 	"gensound":       false,
 	"genvisual":      false,
 	"go":             false,
+	"goroutine":             false,
 	"info":           false,
 	"patch":          false,
 	"process":        false,
