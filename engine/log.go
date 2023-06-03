@@ -79,6 +79,8 @@ func InitLog(logname string) {
 	logger := fileLogger(logpath)
 	TheLog = logger.Sugar()
 	defer LogIfError(logger.Sync()) // flushes buffer, if any
+	date := time.Now().Format("2006-01-02 15:04:05")
+	LogInfo("InitLog ==============================", "date", date, "logname", logname)
 }
 
 func IsLogging(logtype string) bool {
@@ -110,8 +112,10 @@ func LogIfError(err error, keysAndValues ...any) {
 func appendExtraValues(keysAndValues []any) []any {
 	keysAndValues = append(keysAndValues, "click")
 	keysAndValues = append(keysAndValues, int64(CurrentClick()))
-	keysAndValues = append(keysAndValues, "goroutine")
-	keysAndValues = append(keysAndValues, fmt.Sprintf("%d", GoroutineID()))
+	if IsLogging("goroutine") {
+		keysAndValues = append(keysAndValues, "goroutine")
+		keysAndValues = append(keysAndValues, fmt.Sprintf("%d", GoroutineID()))
+	}
 	return keysAndValues
 }
 
@@ -166,6 +170,7 @@ var LogEnabled = map[string]bool{
 	"gensound":       false,
 	"genvisual":      false,
 	"go":             false,
+	"goroutine":             false,
 	"info":           false,
 	"patch":          false,
 	"process":        false,

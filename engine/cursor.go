@@ -69,18 +69,18 @@ func NewActiveCursor(ce CursorEvent) *ActiveCursor {
 	ac.pitchOffset = TheEngine.currentPitchOffset
 
 	/*
-	// Hardcoded, channel 10 is usually drums, doesn't get transposed
-	// Should probably be an attribute of the Synth.
-	const drumChannel = 10
-	if TheEngine.autoTransposeOn && synth.portchannel.channel != drumChannel {
-		pitchOffset += TheEngine.autoTransposeValues[TheEngine.autoTransposeIndex]
-	}
-	newpitch := int(pitch) + pitchOffset
-	if newpitch < 0 {
-		newpitch = 0
-	} else if newpitch > 127 {
-		newpitch = 127
-	}
+		// Hardcoded, channel 10 is usually drums, doesn't get transposed
+		// Should probably be an attribute of the Synth.
+		const drumChannel = 10
+		if TheEngine.autoTransposeOn && synth.portchannel.channel != drumChannel {
+			pitchOffset += TheEngine.autoTransposeValues[TheEngine.autoTransposeIndex]
+		}
+		newpitch := int(pitch) + pitchOffset
+		if newpitch < 0 {
+			newpitch = 0
+		} else if newpitch > 127 {
+			newpitch = 127
+		}
 	*/
 
 	return ac
@@ -200,12 +200,13 @@ func (cm *CursorManager) LoopedCidFor(ce CursorEvent, warn bool) string {
 			}
 			return ""
 		}
-		cm.CidToLoopedCid[ce.Cid] = fmt.Sprintf("%s#%d", ce.Source(), cm.UniqueInt())
+		loopedCid = fmt.Sprintf("%s#%d", ce.Source(), cm.UniqueInt())
+		cm.CidToLoopedCid[ce.Cid] = loopedCid
 	}
 	return loopedCid
 }
 
-const LoopFadeZThreshold = 0.005
+const LoopFadeZThreshold = 0.001
 
 func (cm *CursorManager) ExecuteCursorEvent(ce CursorEvent) {
 
@@ -264,6 +265,7 @@ func (cm *CursorManager) ExecuteCursorEvent(ce CursorEvent) {
 
 		// Fade the Z value
 		loopce.Z = loopce.Z * ac.loopFade
+		// LogInfo("loopcd.Z is now", "Z", loopce.Z)
 		if loopce.Z > ac.maxZ {
 			ac.maxZ = loopce.Z
 		}
@@ -306,6 +308,7 @@ func (cm *CursorManager) DeleteActiveCursorIfZLessThan(cid string, threshold flo
 		if ac.maxZ < threshold {
 			// we want to remove things that this ActiveCursor has created for looping.
 			cm.activeMutex.Unlock()
+			// LogInfo("DeleteActiveCursorIfZLessThan REMOVING!")
 			loopCid = cm.LoopedCidFor(ac.Current, false /*warn*/)
 			cm.activeMutex.Lock()
 			// but wait after we detete it from

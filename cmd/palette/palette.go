@@ -8,6 +8,7 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/nxadm/tail"
 	"github.com/vizicist/palette/engine"
 )
 
@@ -77,6 +78,15 @@ func CliCommand(args []string) string {
 	}
 
 	switch api {
+
+	case "taillog":
+		logpath := engine.LogFilePath("engine.log")
+		t, err := tail.TailFile(logpath, tail.Config{Follow: true})
+		engine.LogIfError(err)
+		for line := range t.Lines {
+			fmt.Println(line.Text)
+		}
+		return ""
 
 	case "status":
 		s := ""
