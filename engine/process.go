@@ -99,13 +99,14 @@ func (pm *ProcessManager) checkProcess() {
 // started but are no longer running.
 func (pm *ProcessManager) CheckAutorestartProcesses() {
 
-	pm.mutex.Lock()
-	defer pm.mutex.Unlock()
-
 	autorestart := GetParamBool("engine.autorestart")
 	if !autorestart {
 		return
 	}
+
+	pm.mutex.Lock()
+	defer pm.mutex.Unlock()
+
 	for processName := range pm.info {
 		isRunning := pm.IsRunning(processName)
 		if !isRunning && pm.wasStarted[processName] {

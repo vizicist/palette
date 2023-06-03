@@ -184,6 +184,7 @@ func (patch *Patch) CursorToQuant(ce CursorEvent) Clicks {
 		q = OneBeat / 4
 
 	case "pressure":
+		LogWarn("CursortToQuant, pressure quant needs to use zmin/zmax")
 		if ce.Z > 0.20 {
 			q = OneBeat / 8
 		} else if ce.Z > 0.10 {
