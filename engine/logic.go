@@ -104,20 +104,29 @@ func (logic *PatchLogic) cursorToVelocity(ce CursorEvent) uint8 {
 	velocitymax := patch.GetInt("sound.velocitymax")
 	// bogus, when values in json are missing
 	if velocitymin == 0 && velocitymax == 0 {
+		LogWarn("Hey! velocitymin == velocitymax == 0", "patch", patch.Name(), "ce", ce)
 		velocitymin = 0
 		velocitymax = 127
 	}
-	if velocitymin > velocitymax {
+	if velocitymin > velocitymax { // relly?
+		LogWarn("Hey! velocitymin > velocitymax", "velocitymin", velocitymin, "velocitymax", velocitymax, "patch", patch.Name(), "ce", ce)
 		t := velocitymin
 		velocitymin = velocitymax
 		velocitymax = t
 	}
+	zmin := patch.GetFloat("sound._controllerzmin")
+	zmax := patch.GetFloat("sound._controllerzmax")
+
+	scaledZ := BoundAndScaleFloat(ce.Z, zmin, zmax, 0.0, 1.0)
+	// LogInfo("CursorToVelocity","scaledZ",scaledZ,"ce.Z",ce.Z,"zmin",zmin,"zmax",zmax)
+
+	// Scale cursor Z to controller zmin and zmax
 	v := float32(0.8) // default and fixed value
 	switch volstyle {
 	case "frets":
 		v = 1.0 - ce.Y
 	case "pressure":
-		v = ce.Z * 4.0
+		v = scaledZ
 	case "fixed":
 		// do nothing
 	default:
@@ -191,7 +200,6 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
 
 	switch ce.Ddu {
 	case "down":
-		// LogInfo("CURSOR down event for cursor", "cid", ce.Cid)
 		oldNoteOn := ac.NoteOn
 		if oldNoteOn != nil {
 			// I don't recall the situations where this occurred,
@@ -206,6 +214,7 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
 			return // do nothing, assumes any errors are logged in cursorToNoteOn
 		}
 		ScheduleAt(atClick, noteOn)
+		// LogInfo("RETRIGGER down", "ce", ce, "noteOn", noteOn)
 		ac.NoteOn = noteOn
 		ac.NoteOnClick = atClick
 	case "drag":
@@ -221,6 +230,8 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
 		}
 		oldpitch := oldNoteOn.Pitch
 		newpitch := newNoteOn.Pitch
+		oldvelocity := oldNoteOn.Velocity
+		newvelocity := newNoteOn.Velocity
 		// We only turn off the existing note (for a given Cursor ID)
 		// and start the new one if the pitch changes
 
@@ -229,20 +240,27 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
 		// NOTE: this could and perhaps should use a.ce.Z now that we're
 		// saving a.ce, like the deltay value
 
-		dz := float64(int(oldNoteOn.Velocity) - int(newNoteOn.Velocity))
+		dz := float64(int(oldvelocity) - int(newvelocity))
 		deltaz := float32(math.Abs(dz) / 128.0)
-		deltaztrig := patch.GetFloat("sound._deltaztrig")
+		deltaztrignote := patch.GetFloat("sound._deltaztrignote")
+		deltaztrigcontroller := patch.GetFloat("sound._deltaztrigcontroller")
 
 		deltay := float32(math.Abs(float64(ac.Previous.Y - ce.Y)))
 		deltaytrig := patch.GetFloat("sound._deltaytrig")
 
-		logic.generateController(ac)
+		// logic.generateController(ac)
+		if patch.Get("sound.controllerstyle") == "modulationonly" {
+			if deltaz > deltaztrigcontroller {
+				patch.Synth().SendController(1, newvelocity)
+			}
+		}
 
-		if newpitch != oldpitch || deltaz > deltaztrig || deltay > deltaytrig {
+		if newpitch != oldpitch || deltaz > deltaztrignote || deltay > deltaytrig {
 			// Turn off existing note, one Click after noteOn
 			noteOff := NewNoteOffFromNoteOn(oldNoteOn)
 			offClick := ac.NoteOnClick + 1
 			ScheduleAt(offClick, noteOff)
+			// LogInfo("RETRIGGER drag noteOff", "noteOff", noteOff)
 
 			atClick := logic.nextQuant(CurrentClick(), patch.CursorToQuant(ce))
 			if atClick < offClick {
@@ -251,6 +269,7 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
 			ScheduleAt(atClick, newNoteOn)
 			ac.NoteOn = newNoteOn
 			ac.NoteOnClick = atClick
+			// LogInfo("RETRIGGER drag noteOn", "newNoteOn", newNoteOn)
 		}
 
 	case "up":
@@ -268,6 +287,7 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
 	}
 }
 
+/*
 func (logic *PatchLogic) generateController(ActiveCursor *ActiveCursor) {
 
 	patch := logic.patch
@@ -288,6 +308,7 @@ func (logic *PatchLogic) generateController(ActiveCursor *ActiveCursor) {
 		}
 	}
 }
+*/
 
 func (logic *PatchLogic) nextQuant(t Clicks, q Clicks) Clicks {
 	// the algorithm below is the same as KeyKit's nextquant

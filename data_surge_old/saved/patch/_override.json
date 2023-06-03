@@ -1,9 +1,7 @@
 {
     "params": {
-        "sound._controllermax":"127",
-        "sound._controllermin":"1",
         "sound._controllerzmax":"0.600000",
-        "sound._controllerzmin":"0.050000",
+        "sound._controllerzmin":"0.001000",
         "sound._deltaytrig":"1.000000",
         "sound._deltaztrig":"0.05",
         "sound._inputport":"",
