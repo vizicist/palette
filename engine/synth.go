@@ -152,7 +152,7 @@ func (synth *Synth) SendANO() {
 	LogIfError(state.output.Send([]byte{status, data1, data2}))
 }
 
-func (synth *Synth) SendController(cnum int, cval int) {
+func (synth *Synth) SendController(cnum uint8, cval uint8) {
 
 	state, err := synth.updatePortChannelState()
 	if err != nil {

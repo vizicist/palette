@@ -325,7 +325,6 @@ class ProGuiApp(tk.Tk):
 
     def loopingClear(self):
         log("loopingClear")
-        palette.palette_patch_api(self.name(), "clear", "")
         for patch in self.Patches:
             palette.palette_patch_api(patch.name(), "clear", "")
 
@@ -1011,7 +1010,10 @@ class ProGuiApp(tk.Tk):
 
     def resetAll(self):
 
-        # log("ResetAll")
+        log("ResetAll")
+
+        self.loopingClear()
+        self.loopingOff()
 
         palette.palette_engine_api("audio_reset")
 
