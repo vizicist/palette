@@ -297,6 +297,15 @@ func (sched *Scheduler) insertScheduleElement(se *SchedElement) {
 	sched.mutex.Lock()
 	defer sched.mutex.Unlock()
 
+	switch v := (se.Value).(type) {
+		case *NoteOn:
+		case *NoteOff:
+		case CursorEvent:
+			if v.Ddu != "clear" && v.Cid == "" {
+				LogWarn("insertScheduleElement CursorEvent Cid is empty", "v", v)
+			}
+			// LogInfo("insertScheduleElement CursorEvent", "v", v)
+	}
 	schedClick := se.AtClick
 	LogOfType("scheduler", "Scheduler.insertScheduleElement", "value", se.Value, "click", se.AtClick, "beforelen", sched.schedList.Len())
 	// Insert newElement sorted by time
