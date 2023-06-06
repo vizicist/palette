@@ -11,12 +11,12 @@ import (
 	"syscall"
 )
 
-var BiduleDefaultPath = "C:/Program Files/Plogue/Bidule/Bidule.exe"
-var DefaultTmpDir = "C:/windows/tmp"
-var DefaultGuiPath = "C:\\Program Files\\Palette\\bin\\pyinstalled\\palette_gui.exe"
-var DefaultAvenuePath = "C:\\Program Files\\Resolume Avenue\\Avenue.exe"
-var DefaultArenaPath = "C:\\Program Files\\Resolume Arena\\Arena.exe"
-var DefaultKeykitOutput = "Microsoft GS Wavetable Synth"
+// var BiduleDefaultPath = "C:/Program Files/Plogue/Bidule/Bidule.exe"
+// var DefaultTmpDir = "C:/windows/tmp"
+// var DefaultGuiPath = "C:\\Program Files\\Palette\\bin\\pyinstalled\\palette_gui.exe"
+// var DefaultAvenuePath = "C:\\Program Files\\Resolume Avenue\\Avenue.exe"
+// var DefaultArenaPath = "C:\\Program Files\\Resolume Arena\\Arena.exe"
+// var DefaultKeykitOutput = "Microsoft GS Wavetable Synth"
 
 func killExecutable(executable string) error {
 	exe := isolateExe(executable)

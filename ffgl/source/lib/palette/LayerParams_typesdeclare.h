@@ -1,7 +1,6 @@
 DECLARE_TYPES(plugins);
 DECLARE_TYPES(log);
 DECLARE_TYPES(pitchset);
-DECLARE_TYPES(bidule);
 DECLARE_TYPES(mmtt);
 DECLARE_TYPES(destination);
 DECLARE_TYPES(logic_sound);
@@ -9,6 +8,7 @@ DECLARE_TYPES(logic_visual);
 DECLARE_TYPES(quantstyle);
 DECLARE_TYPES(volstyle);
 DECLARE_TYPES(shape);
+DECLARE_TYPES(morphtype);
 DECLARE_TYPES(midiinput);
 DECLARE_TYPES(movedir);
 DECLARE_TYPES(rotangdir);

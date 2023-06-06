@@ -114,7 +114,7 @@ func (e *Engine) executeEngineAPI(api string, apiargs map[string]string) (result
 		if !ok {
 			return "", fmt.Errorf("executeEngineAPI: missing name parameter")
 		}
-		return e.params.Get(name), nil
+		return e.params.Get(name)
 
 	case "startprocess":
 		process, ok := apiargs["process"]
@@ -321,51 +321,6 @@ func (e *Engine) Set(name string, value string) error {
 
 	LogOfType("params", "Engine.Set", "name", name, "value", value)
 	return e.params.Set(name, value)
-}
-
-func GetWithDefault(nm string, dflt string) string {
-	if TheEngine.params.Exists(nm) {
-		return TheEngine.params.Get(nm)
-	} else {
-		return dflt
-	}
-}
-
-// ParamBool returns bool value of nm, or false if nm not set
-func GetParamBool(nm string) bool {
-	v := TheEngine.params.Get(nm)
-	if v == "" {
-		return false
-	}
-	return IsTrueValue(v)
-}
-
-func ParamIntWithDefault(nm string, dflt int) int {
-	s := TheEngine.params.Get(nm)
-	if s == "" {
-		return dflt
-	}
-	var val int
-	nfound, err := fmt.Sscanf(s, "%d", &val)
-	if nfound == 0 || err != nil {
-		LogIfError(err)
-		return dflt
-	}
-	return val
-}
-
-func (e *Engine) ParamFloatWithDefault(nm string, dflt float64) float64 {
-	s := e.params.Get(nm)
-	if s == "" {
-		return dflt
-	}
-	var f float64
-	f, err := strconv.ParseFloat(s, 32)
-	if err != nil {
-		LogIfError(err)
-		return dflt
-	}
-	return f
 }
 
 func (e *Engine) executeSavedAPI(api string, apiargs map[string]string) (result string, err error) {
