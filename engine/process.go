@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 	"sync"
 	"time"
 )
@@ -99,7 +98,8 @@ func (pm *ProcessManager) checkProcess() {
 // started but are no longer running.
 func (pm *ProcessManager) CheckAutorestartProcesses() {
 
-	autorestart := GetParamBool("engine.autorestart")
+	autorestart, err := GetParamBool("engine.autorestart")
+	LogIfError(err)
 	if !autorestart {
 		return
 	}
@@ -122,10 +122,14 @@ func ProcessList() []string {
 	arr = append(arr,"gui")
 	arr = append(arr,"bidule")
 	arr = append(arr,"resolume")
-	if GetParamBool("engine.keykit") {
+	keykit, err := GetParamBool("engine.keykit")
+	LogIfError(err)
+	if keykit {
 		arr = append(arr,"keykit")
 	}
-	if GetParam("engine.mmtt") != "" {
+	mmtt, err := GetParam("engine.mmtt")
+	LogIfError(err)
+	if mmtt != "" {
 		arr = append(arr,"mmtt")
 	}
 	return arr
@@ -242,30 +246,21 @@ func (pm *ProcessManager) IsRunning(process string) bool {
 }
 
 func GuiProcessInfo() *ProcessInfo {
-	fullpath := GetParam("engine.gui")
+	fullpath, err := GetParam("engine.gui")
+	LogIfError(err)
 	if fullpath != "" && !FileExists(fullpath) {
 		LogWarn("No Gui found, looking for", "path", fullpath)
 		return nil
 	}
-	if fullpath == "" {
-		fullpath = DefaultGuiPath
-		if !FileExists(fullpath) {
-			LogWarn("Gui not found in default location")
-			return nil
-		}
-	}
-	exe := fullpath
-	lastslash := strings.LastIndex(fullpath, "\\")
-	if lastslash > 0 {
-		exe = fullpath[lastslash+1:]
-	}
+	exe := filepath.Base(fullpath)
 	return NewProcessInfo(exe, fullpath, "", nil)
 }
 
 func KeykitProcessInfo() *ProcessInfo {
 
 	// Allow parameter to override keyroot
-	keyroot := GetParam("engine.keykitroot")
+	keyroot, err := GetParam("engine.keykitroot")
+	LogIfError(err)
 	if keyroot == "" {
 		keyroot = filepath.Join(PaletteDir(), "keykit")
 	}
@@ -273,34 +268,31 @@ func KeykitProcessInfo() *ProcessInfo {
 	os.Setenv("KEYROOT", keyroot)
 
 	// Allow parameter to override keypath
-	keypath := GetParam("engine.keykitpath")
+	keypath, err := GetParam("engine.keykitpath")
+	LogIfError(err)
 	if keypath == "" {
 		kp1 := filepath.Join(PaletteDataPath(), "keykit", "liblocal")
 		kp2 := filepath.Join(PaletteDir(), "keykit", "lib")
 		keypath = kp1 + ";" + kp2
-
 	}
 	os.Setenv("KEYPATH", keypath)
 	LogInfo("Setting KEYPATH", "keypath", keypath)
 
 	// Allow parameter to override keyoutput
-	keyoutput := GetParam("engine.keykitoutput")
-	if keyoutput == "" {
-		keyoutput = DefaultKeykitOutput
-	}
+	keyoutput, err := GetParam("engine.keykitoutput")
+	LogIfError(err)
 	os.Setenv("KEYOUT", keyoutput)
 	LogInfo("Setting KEYPOUT", "keyoutput", keyoutput)
 
 	// Allow parameter to override keyoutput
-	keyallow := GetParam("engine.keykitallow")
-	if keyallow == "" {
-		keyallow = "127.0.0.1"
-	}
+	keyallow, err := GetParam("engine.keykitallow")
+	LogIfError(err)
 	os.Setenv("KEYALLOW", keyallow)
 	LogInfo("Setting KEYALLOW", "keyallow", keyallow)
 
 	// Allow parameter to override path to key.exe
-	fullpath := GetParam("engine.keykitpath")
+	fullpath, err := GetParam("engine.keykitpath")
+	LogIfError(err)
 	if fullpath != "" && !FileExists(fullpath) {
 		LogWarn("engine.keykit value doesn't exist, was looking for", "fullpath", fullpath)
 	}
@@ -311,18 +303,15 @@ func KeykitProcessInfo() *ProcessInfo {
 			return nil
 		}
 	}
-	exe := fullpath
-	lastslash := strings.LastIndex(fullpath, "\\")
-	if lastslash > 0 {
-		exe = fullpath[lastslash+1:]
-	}
+	exe := filepath.Base(fullpath)
 	return NewProcessInfo(exe, fullpath, "", nil)
 }
 
 func MmttInfo() *ProcessInfo {
 
 	// The value of mmtt is either "kinect" or "oak" or ""
-	mmtt := GetParam("engine.mmtt")
+	mmtt, err := GetParam("engine.mmtt")
+	LogIfError(err)
 	if mmtt == "" {
 		return nil
 	}

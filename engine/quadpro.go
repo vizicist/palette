@@ -236,7 +236,7 @@ func (quadpro *QuadPro) onGet(apiargs map[string]string) (result string, err err
 		return "", fmt.Errorf("QuadPro.onPatchGet: Missing name argument")
 	}
 	if strings.HasPrefix(paramName, "engine") {
-		return GetParam(paramName), nil
+		return GetParam(paramName)
 	} else {
 		return "", fmt.Errorf("QuadPro.onGet: can't handle parameter %s", paramName)
 	}
@@ -248,37 +248,11 @@ func (quadpro *QuadPro) onMidiEvent(me MidiEvent) error {
 }
 
 func (quadpro *QuadPro) doTest(ntimes int, dt, dur time.Duration) {
-	LogInfo("doTest start", "ntimes", ntimes, "dt", dt, "dur", dur)
 	for n := 0; n < ntimes; n++ {
-		if n > 0 {
-			time.Sleep(dt)
-		}
 		source := string("ABCD"[rand.Int()%4])
-		cid := TheCursorManager.UniqueCid(source)
-		cedown := CursorEvent{
-			Cid:   cid,
-			Click: CurrentClick(),
-			Ddu:   "down",
-			X:     rand.Float32(),
-			Y:     rand.Float32(),
-			Z:     rand.Float32(),
-		}
-		TheCursorManager.ExecuteCursorEvent(cedown)
-		// Send the cursor up, but don't block the loop
-		ceup := CursorEvent{
-			Cid:   cid,
-			Click: CurrentClick(),
-			Ddu:   "up",
-			X:     rand.Float32(),
-			Y:     rand.Float32(),
-			Z:     rand.Float32(),
-		}
-		go func(ce CursorEvent) {
-			time.Sleep(dur)
-			TheCursorManager.ExecuteCursorEvent(ce)
-		}(ceup)
+		go TheCursorManager.GenerateRandomGesture(source,"",dur)
+		time.Sleep(dt)
 	}
-	LogInfo("doTest end")
 }
 
 func (quadpro *QuadPro) loadQuadRand() error {
