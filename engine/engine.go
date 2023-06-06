@@ -129,7 +129,7 @@ func GetParamInt(nm string) (int, error) {
 	var val int
 	nfound, err := fmt.Sscanf(s, "%d", &val)
 	if err != nil || nfound == 0 {
-		return 0, fmt.Errorf("Bad format of integer parameter name=%s",nm)
+		return 0, fmt.Errorf("bad format of integer parameter name=%s",nm)
 	}
 	return val, nil
 }
@@ -141,7 +141,7 @@ func GetParamFloat(nm string) (float64, error) {
 	}
 	f, err := strconv.ParseFloat(s, 32)
 	if err != nil {
-		return 0.0, fmt.Errorf("Bad format of float parameter name=%s",nm)
+		return 0.0, fmt.Errorf("bad format of float parameter name=%s",nm)
 	}
 	return f, nil
 }
