@@ -40,19 +40,21 @@ func (b *Bidule) Activate() {
 }
 
 func (b *Bidule) ProcessInfo() *ProcessInfo {
-	bidulePath := GetParam("engine.bidulepath")
-	if bidulePath == "" {
-		bidulePath = BiduleDefaultPath
-		LogWarn("No bidule value in settings, using default", "path", bidulePath)
+	bidulePath, err := GetParam("engine.bidulepath")
+	if err != nil {
+		LogIfError(err)
+		return nil
 	}
 	if !FileExists(bidulePath) {
 		LogWarn("No bidule found, looking for", "path", bidulePath)
 		return nil
 	}
 	exe := filepath.Base(bidulePath)
-	bidulefile := GetParam("engine.bidulefile")
-	if bidulefile == "" {
-		bidulefile = "default.bidule"
+
+	bidulefile, err := GetParam("engine.bidulefile")
+	if err != nil {
+		LogIfError(err)
+		return nil
 	}
 	filepath := ConfigFilePath(bidulefile)
 	return NewProcessInfo(exe, bidulePath, filepath, b.Activate)

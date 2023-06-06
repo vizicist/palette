@@ -304,7 +304,12 @@ func (patch *Patch) Set(paramName string, paramValue string) error {
 
 // If no such parameter, return ""
 func (patch *Patch) Get(paramName string) string {
-	return patch.params.Get(paramName)
+	s, err := patch.params.Get(paramName)
+	if err != nil {
+		LogWarn("Patch.Get, error","err",err)
+		return ""
+	}
+	return s
 }
 
 func (patch *Patch) ParamNames() []string {
