@@ -3,6 +3,7 @@ package engine
 import (
 	"encoding/json"
 	"fmt"
+	"path/filepath"
 	"os"
 	"strconv"
 	"strings"
@@ -245,7 +246,11 @@ func (r *Resolume) addEffectNum(addr string, effect string, num int) string {
 
 func (r *Resolume) showText(text string) {
 
-	textLayerNum := r.TextLayerNum()
+	textLayerNum, err := r.TextLayerNum()
+	if err != nil {
+		LogIfError(err)
+		return
+	}
 
 	// make sure the layer is not displayed before changing it
 	r.bypassLayer(textLayerNum, true)
@@ -264,47 +269,28 @@ func (r *Resolume) showText(text string) {
 	r.bypassLayer(textLayerNum, false) // show the layer
 }
 
-func (r *Resolume) TextLayerNum() int {
-	s := GetParam("engine.resolumetextlayer")
-	if s == "" {
-		LogInfo("ResolumeLayerForText defaults to 5 because no engine.resolumetextlayer value?")
-		return 5
-	}
-	layernum, err := strconv.Atoi(s)
-	if err != nil {
-		LogIfError(err)
-		return 5
-	}
-	return layernum
+func (r *Resolume) TextLayerNum() (int, error) {
+	return GetParamInt("engine.resolumetextlayer")
 }
 
 func (r *Resolume) ProcessInfo() *ProcessInfo {
-	fullpath := GetParam("engine.resolumepath")
+	fullpath, err := GetParam("engine.resolumepath")
+	LogIfError(err)
 	if fullpath != "" && !FileExists(fullpath) {
 		LogWarn("No Resolume found, looking for", "path", fullpath)
 		return nil
 	}
-	if fullpath == "" {
-		fullpath = DefaultAvenuePath
-		if !FileExists(fullpath) {
-			fullpath = DefaultArenaPath
-			if !FileExists(fullpath) {
-				LogWarn("Resolume not found in default locations")
-				return nil
-			}
-		}
-	}
-	exe := fullpath
-	lastslash := strings.LastIndex(fullpath, "\\")
-	if lastslash > 0 {
-		exe = fullpath[lastslash+1:]
-	}
+	exe := filepath.Base(fullpath)
 	return NewProcessInfo(exe, fullpath, "", r.Activate)
 }
 
 func (r *Resolume) Activate() {
 	// handle_activate sends OSC messages to start the layers in Resolume,
-	textLayer := r.TextLayerNum()
+	textLayer, err := r.TextLayerNum()
+	if err != nil {
+		LogIfError(err)
+		return
+	}
 	clipnum := 1
 
 	// do it a few times, in case Resolume hasn't started up

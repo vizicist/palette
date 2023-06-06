@@ -65,17 +65,9 @@ func SavedMap(wantCategory string) (map[string]string, error) {
 		}
 		path := strings.TrimSuffix(walkedpath, ".json")
 		// the last two components of the path are category and saved
-		thisCategory := ""
-		thisSaved := ""
-		lastslash := strings.LastIndex(path, "\\")
-		if lastslash >= 0 {
-			thisSaved = path[lastslash+1:]
-			path2 := path[0:lastslash]
-			lastslash2 := strings.LastIndex(path2, "\\")
-			if lastslash2 >= 0 {
-				thisCategory = path2[lastslash2+1:]
-			}
-		}
+		thisSaved := filepath.Base(path)
+		catdir := filepath.Dir(path)
+		thisCategory := filepath.Base(catdir)
 		if wantCategory == "*" || thisCategory == wantCategory {
 			result[thisCategory+"."+thisSaved] = walkedpath
 		}

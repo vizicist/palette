@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -100,17 +101,51 @@ func WaitTillDone() {
 	TheEngine.WaitTillDone()
 }
 
-func GetParam(name string) string {
+func GetParam(name string) (string, error) {
 	if TheEngine == nil {
-		LogIfError(fmt.Errorf("GetParam called before NewEngine!?)"))
-		return ""
+		return "", fmt.Errorf("GetParam called before NewEngine, name=%s)",name)
 	}
-	return TheEngine.Get(name)
+	return TheEngine.params.Get(name)
 }
 
-func (e *Engine) Get(name string) string {
-	return e.params.Get(name)
+// func (e *Engine) Get(name string) string {
+// 	return e.params.Get(name)
+// }
+
+func GetParamBool(nm string) (bool, error) {
+	v, err := TheEngine.params.Get(nm)
+	if err != nil {
+		return false, err
+	} else {
+		return IsTrueValue(v), nil
+	}
 }
+
+func GetParamInt(nm string) (int, error) {
+	s, err := TheEngine.params.Get(nm)
+	if err != nil {
+		return 0, err
+	}
+	var val int
+	nfound, err := fmt.Sscanf(s, "%d", &val)
+	if err != nil || nfound == 0 {
+		return 0, fmt.Errorf("Bad format of integer parameter name=%s",nm)
+	}
+	return val, nil
+}
+
+func GetParamFloat(nm string) (float64, error) {
+	s, err := TheEngine.params.Get(nm)
+	if err != nil {
+		return 0.0, err
+	}
+	f, err := strconv.ParseFloat(s, 32)
+	if err != nil {
+		return 0.0, fmt.Errorf("Bad format of float parameter name=%s",nm)
+	}
+	return f, nil
+}
+
 
 func (e *Engine) SaveCurrent() (err error) {
 	return e.params.Save("engine", "_Current")

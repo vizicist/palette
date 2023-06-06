@@ -1,7 +1,6 @@
 package engine
 
 import (
-	"fmt"
 	"math/rand"
 	"time"
 )
@@ -93,24 +92,9 @@ func (am *AttractManager) doAttractAction() {
 	now := time.Now()
 	dt := now.Sub(am.lastAttractGestureTime).Seconds()
 	if am.attractModeIsOn && dt > am.attractGestureInterval {
-
-		sourceNames := []string{"A", "B", "C", "D"}
-		i := uint64(rand.Uint64()*99) % 4
-		source := sourceNames[i]
-		am.lastAttractGestureTime = now
-
-		cid := fmt.Sprintf("%s#%d,internal", source, TheCursorManager.UniqueInt())
-
-		x0 := rand.Float32()
-		y0 := rand.Float32()
-		z0 := rand.Float32() / 2.0
-
-		x1 := rand.Float32()
-		y1 := rand.Float32()
-		z1 := rand.Float32() / 2.0
-
-		noteDuration := time.Second
-		go TheCursorManager.GenerateCursorGesture(cid, noteDuration, x0, y0, z0, x1, y1, z1)
+		source := string("ABCD"[rand.Int()%4])
+		dur := 2 * time.Second
+		go TheCursorManager.GenerateRandomGesture(source, "internal", dur)
 		am.lastAttractGestureTime = now
 	}
 

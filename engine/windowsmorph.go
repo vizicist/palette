@@ -411,7 +411,7 @@ func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float32) 
 			} else {
 				// If we're switching to a new source, clear existing cursors...
 				if m.currentSource != CidSource(cid) {
-					LogOfType("cursor", "Switching cursor source, sending clear", "existingsource", CidSource(cid), "newsource", m.currentSource)
+					// LogOfType("cursor", "Switching cursor source, sending clear", "existingsource", CidSource(cid), "newsource", m.currentSource)
 					callback(CursorEvent{Ddu: "clear"})
 					// and create a new cid...
 					cid = ""
@@ -510,12 +510,12 @@ func WinMorphInitialize() error {
 		morphtype, ok := MorphDefs[m.serialNum]
 		if !ok {
 			// It's not explicitly present in morphs.json
-			morphtype = GetParam("engine.morphtype")
-			if morphtype == "" {
-				// morphtype = "corners" // default value
-				morphtype = "quadrants" // default value
-				LogInfo("Morph serial# isn't in morphs.json", "serialnum", m.serialNum, "morphtype", morphtype)
+			t, err := GetParam("engine.morphtype")
+			if err != nil {
+				return err
 			}
+			morphtype = t
+			LogInfo("Morph serial# isn't in morphs.json, using engine.morphtype", "serialnum", m.serialNum, "morphtype", morphtype)
 		}
 
 		m.morphtype = morphtype
