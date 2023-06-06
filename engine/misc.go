@@ -103,8 +103,14 @@ func MIDIFilePath(nm string) string {
 func LocalPaletteDir() string {
 	localapp := os.Getenv("CommonProgramFiles")
 	if localapp == "" {
-		LogWarn("Expecting CommonProgramFiles to be set.")
-		return ""
+		var err error
+		tempdir, err := GetParam("engine.tempdir")
+		LogWarn("Expecting CommonProgramFiles to be set, using engine.tempdir value","tempdir",tempdir)
+		if err != nil {
+			LogIfError(err)
+			return ""
+		}
+		localapp = tempdir
 	}
 	return filepath.Join(localapp, "Palette")
 }
@@ -160,9 +166,12 @@ func ConfigFilePath(nm string) string {
 func LogFilePath(nm string) string {
 	localdir := LocalPaletteDir()
 	if localdir == "" {
-		logdir := DefaultTmpDir
-		LogWarn("Last resort, using tmp for log directory.", "logdir", logdir)
-		return filepath.Join(logdir, nm)
+		tempdir, err := GetParam("engine.tempdir")
+		if err != nil {
+			LogIfError(err)
+		}
+		LogWarn("Last resort, using engine.tempdir value for log directory.", "tempdir", tempdir)
+		return filepath.Join(tempdir, nm)
 	}
 	return filepath.Join(localdir, "logs", nm)
 }
@@ -505,7 +514,8 @@ func RemoteAPIRaw(args string) (map[string]string, error) {
 
 func SendLogs() error {
 
-	recipient := GetParam("engine.emailto")
+	recipient, err := GetParam("engine.emailto")
+	LogIfError(err)
 	if recipient == "" {
 		msg := "SendLogs: not sending, no emailto in settings"
 		LogWarn(msg)
@@ -554,9 +564,9 @@ func SendMail(body string) error {
 // SendMail xxx
 func SendMailWithAttachment(body, attachfile string) error {
 
-	recipient := GetParam("engine.emailto")
-	login := GetParam("engine.emaillogin")
-	password := GetParam("engine.emailpassword")
+	recipient, _ := GetParam("engine.emailto")
+	login, _ := GetParam("engine.emaillogin")
+	password, _ := GetParam("engine.emailpassword")
 
 	if recipient == "" {
 		return fmt.Errorf("sendMail: not sending, no emailto in settings")

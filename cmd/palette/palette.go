@@ -94,10 +94,12 @@ func CliCommand(args []string) string {
 		s += "GUI is " + statusString("gui") + ".\n"
 		s += "Bidule is " + statusString("bidule") + ".\n"
 		s += "Resolume is " + statusString("resolume") + ".\n"
-		if engine.GetParamBool("engine.keykit") {
+		b, _ := engine.GetParamBool("engine.keykit")
+		if b {
 			s += "Keykit is " + statusString("keykit") + ".\n"
 		}
-		if engine.GetParam("engine.mmtt") != "" {
+		mmtt, _ := engine.GetParam("engine.mmtt")
+		if mmtt != "" {
 			s += "MMTT is " + statusString("mmtt") + ".\n"
 		}
 		return s

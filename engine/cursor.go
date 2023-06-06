@@ -2,6 +2,7 @@ package engine
 
 import (
 	"fmt"
+	"math/rand"
 	"strings"
 	"sync"
 	"time"
@@ -35,6 +36,10 @@ type CursorManager struct {
 	CidToLoopedCid      map[string]string
 	handlers            map[string]CursorHandler
 	uniqueInt           int
+}
+
+type CursorPos struct {
+	x, y, z float32
 }
 
 // CursorDeviceCallbackFunc xxx
@@ -102,6 +107,8 @@ func (cm *CursorManager) UniqueInt() int {
 }
 
 func (cm *CursorManager) UniqueCid(source string) string {
+	cm.activeMutex.Lock()
+	defer cm.activeMutex.Unlock()
 	return fmt.Sprintf("%s#%d", source, TheCursorManager.UniqueInt())
 }
 
@@ -159,28 +166,56 @@ func (cm *CursorManager) clearCursors() {
 	cm.deleteActiveCursors(cidsToDelete)
 }
 
-func (cm *CursorManager) GenerateCursorGesture(cid string, noteDuration time.Duration, x0, y0, z0, x1, y1, z1 float32) {
-
-	LogOfType("cursor", "generateCursorGesture start", "cid", cid, "noteDuration", noteDuration, "x0", x0, "y0", y0, "z0", z0, "x1", x1, "y1", y1, "z1", z1)
-	ce := CursorEvent{
-		Cid:   cid,
-		Click: CurrentClick(),
-		// Source: source,
-		Ddu:  "down",
-		X:    x0,
-		Y:    y0,
-		Z:    z0,
-		Area: 0,
+func (cm *CursorManager) GenerateRandomGesture(source string, attrib string, dur time.Duration) {
+	pos0 := CursorPos{
+		rand.Float32(),
+		rand.Float32(),
+		rand.Float32() / 2.0,
 	}
-	// LogWarn("Should generateCursorGesture be using ScheduleCursorEvent or ExecuteCursorEvent?")
-	cm.ExecuteCursorEvent(ce)
-	time.Sleep(noteDuration)
-	ce.Ddu = "up"
-	ce.X = x1
-	ce.Y = y1
-	ce.Z = z1
-	cm.ExecuteCursorEvent(ce)
-	LogOfType("cursor", "generateCursorGesture end", "cid", cid, "noteDuration", noteDuration, "x0", x0, "y0", y0, "z0", z0, "x1", x1, "y1", y1, "z1", z1)
+	pos1 := CursorPos{
+		rand.Float32(),
+		rand.Float32(),
+		rand.Float32() / 2.0,
+	}
+	cm.GenerateGesture(source, attrib, dur, pos0, pos1)
+}
+
+func (cm *CursorManager) GenerateGesture(source string, attrib string, dur time.Duration, pos0 CursorPos, pos1 CursorPos) {
+
+	cid := cm.UniqueCid(source)
+	if attrib != "" {
+		cid = cid + "," + attrib
+	}
+	LogOfType("cursor", "generateCursoresture start",
+		"cid", cid, "noteDuration", dur, "attrib", attrib, "pos0", pos0, "pos1", pos1)
+
+	nsteps, err := GetParamInt("engine.gesturesteps")
+	if err != nil {
+		LogIfError(err)
+		return
+	}
+
+	for n := 0; n <= nsteps; n++ {
+		var ddu string
+		if n == 0 {
+			ddu = "down"
+		} else if n < nsteps {
+			ddu = "drag"
+		} else {
+			ddu = "up"
+		}
+		ce := CursorEvent{
+			Cid:   cid,
+			Click: CurrentClick(),
+			Ddu:   ddu,
+			X:     pos0.x + pos1.x*float32(n)/float32(nsteps),
+			Y:     pos0.x + pos1.y*float32(n)/float32(nsteps),
+			Z:     pos0.x + pos1.z*float32(n)/float32(nsteps),
+			Area:  0,
+		}
+		cm.ExecuteCursorEvent(ce)
+		time.Sleep(time.Duration(dur.Nanoseconds() / int64(nsteps)))
+	}
 }
 
 /*
@@ -217,12 +252,15 @@ func (cm *CursorManager) ExecuteCursorEvent(ce CursorEvent) {
 		return
 	}
 
+	// Don't put lock above clearCursors(), since it calls ExecuteCursorEvent recursively
 	cm.executeMutex.Lock()
 	defer cm.executeMutex.Unlock()
 
 	if ce.Click == 0 {
 		ce.Click = CurrentClick()
 	}
+
+	LogOfType("cursor", "ExecuteCursorEvent", "ce", ce)
 
 	ac, ok := cm.getActiveCursorFor(ce.Cid)
 	if !ok {
