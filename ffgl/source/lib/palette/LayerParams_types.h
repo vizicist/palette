@@ -1,7 +1,6 @@
 DEFINE_TYPES(plugins);
 DEFINE_TYPES(log);
 DEFINE_TYPES(pitchset);
-DEFINE_TYPES(bidule);
 DEFINE_TYPES(mmtt);
 DEFINE_TYPES(destination);
 DEFINE_TYPES(logic_sound);
@@ -9,6 +8,7 @@ DEFINE_TYPES(logic_visual);
 DEFINE_TYPES(quantstyle);
 DEFINE_TYPES(volstyle);
 DEFINE_TYPES(shape);
+DEFINE_TYPES(morphtype);
 DEFINE_TYPES(midiinput);
 DEFINE_TYPES(movedir);
 DEFINE_TYPES(rotangdir);
@@ -45,9 +45,6 @@ LayerParams_InitializeTypes() {
 	LayerParams_pitchsetTypes.push_back("");
 	LayerParams_pitchsetTypes.push_back("stylusrmx");
 
-	LayerParams_biduleTypes.push_back("C:/Program Files/Plogue/Bidule/Bidule.exe");
-	LayerParams_biduleTypes.push_back("");
-
 	LayerParams_mmttTypes.push_back("kinect");
 	LayerParams_mmttTypes.push_back("depthai");
 	LayerParams_mmttTypes.push_back("");
@@ -78,6 +75,9 @@ LayerParams_InitializeTypes() {
 	LayerParams_shapeTypes.push_back("triangle");
 	LayerParams_shapeTypes.push_back("square");
 	LayerParams_shapeTypes.push_back("circle");
+
+	LayerParams_morphtypeTypes.push_back("quadrants");
+	LayerParams_morphtypeTypes.push_back("corners");
 
 	LayerParams_midiinputTypes.push_back("microKEY2 Air");
 	LayerParams_midiinputTypes.push_back("");

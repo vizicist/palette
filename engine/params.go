@@ -167,15 +167,11 @@ func (vals *ParamValues) ParamNames() []string {
 }
 
 // returns "" if parameter doesn't exist
-func (vals *ParamValues) Get(name string) string {
+func (vals *ParamValues) Get(name string) (string, error) {
 	if !strings.Contains(name, ".") {
-		LogWarn("Hey, parameters should always have a period", "name", name)
+		return "", fmt.Errorf("Hey, parameters should always have a period, name=%s", name)
 	}
-	v, err := vals.paramValueAsString(name)
-	if err != nil {
-		v = ""
-	}
-	return v
+	return vals.paramValueAsString(name)
 }
 
 func (vals *ParamValues) GetStringValue(name string, def string) string {
@@ -518,7 +514,7 @@ func (vals *ParamValues) Exists(name string) bool {
 func (vals *ParamValues) paramValueAsString(name string) (string, error) {
 	val := vals.paramValue(name)
 	if val == nil {
-		return "", fmt.Errorf("paramValueAsString: no parameter named %s", name)
+		return "", fmt.Errorf("no parameter named %s", name)
 	}
 	s := ""
 	switch v := val.(type) {
