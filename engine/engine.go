@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 
 	"github.com/hypebeast/go-osc/osc"
 )
@@ -25,7 +26,7 @@ type Engine struct {
 	recordingMutex sync.RWMutex
 	params         *ParamValues
 
-	currentPitchOffset  int
+	currentPitchOffset  *atomic.Int32
 	autoTransposeOn     bool
 	autoTransposeNext   Clicks
 	autoTransposeClicks Clicks // time between auto transpose changes
@@ -53,13 +54,14 @@ func InitEngine() {
 
 	e := &Engine{
 		done:                make(chan bool),
-		currentPitchOffset:  0,
+		currentPitchOffset:  &atomic.Int32{},
 		autoTransposeOn:     false,
 		autoTransposeNext:   0,
 		autoTransposeClicks: 8 * OneBeat,
 		autoTransposeIndex:  0,
 		autoTransposeValues: []int{0, -2, 3, -5},
 	}
+	e.currentPitchOffset.Store(0) // probably not needed
 
 	e.params = NewParamValues()
 
@@ -129,7 +131,7 @@ func GetParamInt(nm string) (int, error) {
 	var val int
 	nfound, err := fmt.Sscanf(s, "%d", &val)
 	if err != nil || nfound == 0 {
-		return 0, fmt.Errorf("Bad format of integer parameter name=%s",nm)
+		return 0, fmt.Errorf("bad format of integer parameter name=%s",nm)
 	}
 	return val, nil
 }
@@ -141,7 +143,7 @@ func GetParamFloat(nm string) (float64, error) {
 	}
 	f, err := strconv.ParseFloat(s, 32)
 	if err != nil {
-		return 0.0, fmt.Errorf("Bad format of float parameter name=%s",nm)
+		return 0.0, fmt.Errorf("bad format of float parameter name=%s",nm)
 	}
 	return f, nil
 }
@@ -499,7 +501,7 @@ func (e *Engine) SaveRecordingEvent(re RecordingEvent) {
 */
 
 func (e *Engine) SetTranspose(i int) {
-	e.currentPitchOffset = i
+	e.currentPitchOffset.Store(int32(i))
 }
 
 func (e *Engine) SetAutoTransposeBeats(beats int) {
@@ -515,7 +517,7 @@ func (e *Engine) advanceTransposeTo(newclick Clicks) {
 	}
 	e.autoTransposeNext = newclick + e.autoTransposeClicks
 	e.autoTransposeIndex = (e.autoTransposeIndex + 1) % len(e.autoTransposeValues)
-	e.currentPitchOffset = TheEngine.autoTransposeValues[TheEngine.autoTransposeIndex]
+	e.currentPitchOffset.Store(int32(TheEngine.autoTransposeValues[TheEngine.autoTransposeIndex]))
 	LogOfType("transpose", "advanceTransposeTo", "e.autoTransposeIndex", e.autoTransposeIndex, "pitchoffset", e.currentPitchOffset)
 	// TheScheduler.SendAllPendingNoteoffs()
 }

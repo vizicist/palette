@@ -169,7 +169,7 @@ func (vals *ParamValues) ParamNames() []string {
 // returns "" if parameter doesn't exist
 func (vals *ParamValues) Get(name string) (string, error) {
 	if !strings.Contains(name, ".") {
-		return "", fmt.Errorf("Hey, parameters should always have a period, name=%s", name)
+		return "", fmt.Errorf("parameters should always have a period, name=%s", name)
 	}
 	return vals.paramValueAsString(name)
 }

@@ -179,7 +179,7 @@ func (quadpro *QuadPro) PatchForCursorEvent(ce CursorEvent) (patch *Patch, butto
 func (quadpro *QuadPro) onCursorEvent(state ActiveCursor) error {
 
 	// Any non-internal cursor will turn attract mode off.
-	if !state.Current.IsInternal() && TheAttractManager.CurrentAttractMode() {
+	if !state.Current.IsInternal() && TheAttractManager.AttractModeIsOn() {
 		TheAttractManager.SetAttractMode(false)
 	}
 
@@ -213,7 +213,7 @@ func (quadpro *QuadPro) onCursorEvent(state ActiveCursor) error {
 	cursorStyle := patchLogic.patch.Get("misc.cursorstyle")
 	gensound := IsTrueValue(patchLogic.patch.Get("misc.generatesound"))
 	genvisual := IsTrueValue(patchLogic.patch.Get("misc.generatevisual"))
-	if gensound && !TheAttractManager.CurrentAttractMode(){
+	if gensound && !TheAttractManager.AttractModeIsOn() {
 		patchLogic.generateSoundFromCursor(state.Current, cursorStyle)
 	}
 	if genvisual {
@@ -250,7 +250,7 @@ func (quadpro *QuadPro) onMidiEvent(me MidiEvent) error {
 func (quadpro *QuadPro) doTest(ntimes int, dt, dur time.Duration) {
 	for n := 0; n < ntimes; n++ {
 		source := string("ABCD"[rand.Int()%4])
-		go TheCursorManager.GenerateRandomGesture(source,"",dur)
+		go TheCursorManager.GenerateRandomGesture(source, "", dur)
 		time.Sleep(dt)
 	}
 }

@@ -73,7 +73,7 @@ func (e *Engine) executeEngineAPI(api string, apiargs map[string]string) (result
 	case "status":
 		result = JsonObject(
 			"uptime", fmt.Sprintf("%f", Uptime()),
-			"attractmode", fmt.Sprintf("%v", TheAttractManager.CurrentAttractMode()),
+			"attractmode", fmt.Sprintf("%v", TheAttractManager.AttractModeIsOn()),
 		)
 		return result, nil
 
@@ -340,4 +340,3 @@ func (e *Engine) stopAfterDelay() {
 	LogInfo("Engine.stop: calling os.Exit(0)")
 	os.Exit(0)
 }
-
