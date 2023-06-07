@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -20,7 +21,7 @@ type ProcessInfo struct {
 
 type ProcessManager struct {
 	info             map[string]*ProcessInfo
-	wasStarted       map[string]bool
+	wasStarted       map[string]*atomic.Bool
 	mutex            sync.Mutex
 	lastProcessCheck time.Time
 	processCheckSecs float64
@@ -58,7 +59,7 @@ func CheckAutorestartProcesses() {
 func NewProcessManager() *ProcessManager {
 	pm := &ProcessManager{
 		info:             make(map[string]*ProcessInfo),
-		wasStarted:       make(map[string]bool),
+		wasStarted:       make(map[string]*atomic.Bool),
 		lastProcessCheck: time.Time{},
 		processCheckSecs: 60, // default, change it with engine.processchecksecs
 	}
@@ -109,7 +110,7 @@ func (pm *ProcessManager) CheckAutorestartProcesses() {
 
 	for processName := range pm.info {
 		isRunning := pm.IsRunning(processName)
-		if !isRunning && pm.wasStarted[processName] {
+		if !isRunning && pm.wasStarted[processName].Load() {
 			LogInfo("CheckAutorestartProcesses: Restarting", "process", processName)
 			err := pm.StartRunning(processName)
 			LogIfError(err)
@@ -119,18 +120,18 @@ func (pm *ProcessManager) CheckAutorestartProcesses() {
 
 func ProcessList() []string {
 	arr := []string{}
-	arr = append(arr,"gui")
-	arr = append(arr,"bidule")
-	arr = append(arr,"resolume")
+	arr = append(arr, "gui")
+	arr = append(arr, "bidule")
+	arr = append(arr, "resolume")
 	keykit, err := GetParamBool("engine.keykit")
 	LogIfError(err)
 	if keykit {
-		arr = append(arr,"keykit")
+		arr = append(arr, "keykit")
 	}
 	mmtt, err := GetParam("engine.mmtt")
 	LogIfError(err)
 	if mmtt != "" {
-		arr = append(arr,"mmtt")
+		arr = append(arr, "mmtt")
 	}
 	return arr
 }
@@ -138,6 +139,9 @@ func ProcessList() []string {
 func (pm *ProcessManager) AddBuiltins() {
 	for _, process := range ProcessList() {
 		pm.AddProcessBuiltIn(process)
+		var b atomic.Bool
+		pm.wasStarted[process] = &b
+		pm.wasStarted[process].Store(false)
 	}
 }
 
@@ -152,7 +156,7 @@ func (pm *ProcessManager) AddProcess(name string, info *ProcessInfo) {
 
 func (pm *ProcessManager) AddProcessBuiltIn(process string) {
 
-	LogOfType("process","AddProcessBuiltIn", "process", process)
+	LogOfType("process", "AddProcessBuiltIn", "process", process)
 	switch process {
 	case "bidule":
 		pm.AddProcess(process, TheBidule().ProcessInfo())
@@ -187,7 +191,7 @@ func (pm *ProcessManager) StartRunning(process string) error {
 	if err != nil {
 		return fmt.Errorf("StartRunning: process=%s err=%s", process, err)
 	}
-	pm.wasStarted[process] = true
+	pm.wasStarted[process].Store(true)
 	if pi.Activate != nil {
 		LogOfType("process", "Activate", "process", process)
 		go pi.Activate()
@@ -206,7 +210,7 @@ func (pm *ProcessManager) StopRunning(process string) (err error) {
 	}
 	_ = killExecutable(pi.Exe) // ignore errors
 	pi.Activated = false
-	pm.wasStarted[process] = false
+	pm.wasStarted[process].Store(false)
 	return err
 }
 
