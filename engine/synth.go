@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"sync"
 )
 
 type PortChannel struct {
@@ -14,11 +15,11 @@ type PortChannel struct {
 var PortChannels map[PortChannel]*MIDIPortChannelState
 
 type Synth struct {
-	name        string
-	portchannel PortChannel
-	bank        int // 0 if not set
-	program     int // 0 if note set
-	// midiChannelOut *MidiChannelOutput
+	name          string
+	portchannel   PortChannel
+	bank          int // 0 if not set
+	program       int // 0 if note set
+	noteMutex     sync.RWMutex
 	noteDown      []bool
 	noteDownCount []int
 	state         *MIDIPortChannelState
@@ -74,6 +75,10 @@ func (synth *Synth) Channel() uint8 {
 }
 
 func (synth *Synth) ClearNoteDowns() {
+
+	synth.noteMutex.Lock()
+	defer synth.noteMutex.Unlock()
+
 	for i := range synth.noteDown {
 		synth.noteDown[i] = false
 		synth.noteDownCount[i] = 0
@@ -343,26 +348,37 @@ func (synth *Synth) SendNoteToMidiOutput(value any) {
 		//     Warn("SendPhraseElementToSynth: Ignoring second noteon")
 		// }
 
+		synth.noteMutex.Lock()
+
 		synth.noteDown[pitch] = true
 		synth.noteDownCount[pitch]++
+		downCount := synth.noteDownCount[pitch]
+
+		synth.noteMutex.Unlock()
 
 		LogOfType("note", "SendNoteOnToSynth",
 			"synth", synth,
 			"channel", synth.portchannel.channel,
 			"pitch", pitch,
-			"notedowncount", synth.noteDownCount[pitch])
+			"notedowncount", downCount)
 
 	case *NoteOff:
 		status |= NoteOffStatus
 		data2 = 0
+
+		synth.noteMutex.Lock()
+
 		synth.noteDown[pitch] = false
 		synth.noteDownCount[pitch]--
+		downCount := synth.noteDownCount[pitch]
+
+		synth.noteMutex.Unlock()
 
 		LogOfType("note", "SendNoteOffToSynth",
 			"synth", synth,
 			"channel", synth.portchannel.channel,
 			"pitch", pitch,
-			"notedowncount", synth.noteDownCount[pitch])
+			"notedowncount", downCount)
 
 	// case "controller":
 	// 	status |= 0xB0
