@@ -3,14 +3,15 @@ package engine
 import (
 	"encoding/json"
 	"strings"
+	"sync/atomic"
 
 	"github.com/hypebeast/go-osc/osc"
 	midi "gitlab.com/gomidi/midi/v2"
 )
 
 type RecordingEvent struct {
-	Event       string
-	Value       any
+	Event string
+	Value any
 	// PlaybackEvent *PlaybackEvent `json:"PlaybackEvent"`
 	// CursorEvent   *CursorEvent   `json:"CursorEvent"`
 	// MidiEvent     *MidiEvent     `json:"MidiEvent"`
@@ -27,8 +28,8 @@ type MIDIEventHandler func(MidiEvent)
 
 // CursorEvent is a singl Cursor event
 type CursorEvent struct {
-	Click Clicks `json:"Click"`
-	Cid   string `json:"Cid"`
+	click *atomic.Int64 `json:"Click"`
+	Cid   string        `json:"Cid"`
 	// Source string
 	Ddu  string  `json:"Ddu"` // "down", "drag", "up" (sometimes "clear")
 	X    float32 `json:"X"`

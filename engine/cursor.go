@@ -5,6 +5,7 @@ import (
 	"math/rand"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/hypebeast/go-osc/osc"
@@ -23,7 +24,7 @@ type ActiveCursor struct {
 	loopBeats   int
 	loopFade    float32
 	maxZ        float32
-	pitchOffset int
+	pitchOffset int32
 }
 
 type CursorManager struct {
@@ -71,7 +72,7 @@ func NewActiveCursor(ce CursorEvent) *ActiveCursor {
 		ac.loopFade = patch.GetFloat("misc.looping_fade")
 	}
 
-	ac.pitchOffset = TheEngine.currentPitchOffset
+	ac.pitchOffset = TheEngine.currentPitchOffset.Load()
 
 	/*
 		// Hardcoded, channel 10 is usually drums, doesn't get transposed
@@ -149,7 +150,7 @@ func (cm *CursorManager) clearCursors() {
 
 	for cid, ac := range cm.activeCursors {
 		ce := ac.Current
-		ce.Click = currentClick
+		ce.SetClick(currentClick)
 		ce.Ddu = "up"
 
 		cm.activeMutex.RUnlock()
@@ -204,18 +205,39 @@ func (cm *CursorManager) GenerateGesture(source string, attrib string, dur time.
 		} else {
 			ddu = "up"
 		}
+
+		// Not sure about this Lock
+		cm.activeMutex.Lock()
 		ce := CursorEvent{
 			Cid:   cid,
-			Click: CurrentClick(),
+			click: &atomic.Int64{},
 			Ddu:   ddu,
 			X:     pos0.x + pos1.x*float32(n)/float32(nsteps),
 			Y:     pos0.x + pos1.y*float32(n)/float32(nsteps),
 			Z:     pos0.x + pos1.z*float32(n)/float32(nsteps),
 			Area:  0,
 		}
+		ce.SetClick(CurrentClick())
+		cm.activeMutex.Unlock()
+
 		cm.ExecuteCursorEvent(ce)
 		time.Sleep(time.Duration(dur.Nanoseconds() / int64(nsteps)))
 	}
+}
+
+func (ce CursorEvent) SetClick(click Clicks) {
+	if ce.click == nil {
+		LogWarn("Hey, click is null in CursorEvent.SetClick?")
+		ce.click = &atomic.Int64{}
+	}
+	ce.click.Store(int64(click))
+}
+func (ce CursorEvent) GetClick() Clicks {
+	if ce.click == nil {
+		LogWarn("Hey, click is null in CursorEvent.SetClick?")
+		ce.click = &atomic.Int64{}
+	}
+	return Clicks(ce.click.Load())
 }
 
 /*
@@ -256,8 +278,8 @@ func (cm *CursorManager) ExecuteCursorEvent(ce CursorEvent) {
 	cm.executeMutex.Lock()
 	defer cm.executeMutex.Unlock()
 
-	if ce.Click == 0 {
-		ce.Click = CurrentClick()
+	if ce.GetClick() == 0 {
+		ce.SetClick(CurrentClick())
 	}
 
 	LogOfType("cursor", "ExecuteCursorEvent", "ce", ce)
@@ -285,18 +307,20 @@ func (cm *CursorManager) ExecuteCursorEvent(ce CursorEvent) {
 
 		LogOfType("cursor", "ExecuteCursorEvent: using existing ActiveCursor", "cid", ce.Cid, "ac", ac)
 		// existing ActiveCursor
+		cm.activeMutex.Lock()
 		ac.Previous = ac.Current
 		ac.Current = ce
+		cm.activeMutex.Unlock()
 
 	}
 
-	ac.Current.Click = CurrentClick()
+	ac.Current.click.Store(int64(CurrentClick()))
 
 	if ac.loopIt {
 
 		// the looped CursorEvent starts out as a copy of the ActiveCursor's Current value
 		loopce := ac.Current
-		loopce.Click = CurrentClick() + OneBeat*Clicks(ac.loopBeats)
+		loopce.SetClick(CurrentClick() + OneBeat*Clicks(ac.loopBeats))
 
 		// The looped CursorEvents should have unique cid val,ues.
 		loopce.Cid = TheCursorManager.LoopedCidFor(ac.Current, true /*warn*/)
@@ -309,7 +333,7 @@ func (cm *CursorManager) ExecuteCursorEvent(ce CursorEvent) {
 		}
 
 		// LogInfo("looped CursorEvent", "ce.Z", ce.Z, "loopFade", ac.loopFade)
-		se := NewSchedElement(loopce.Click, loopce)
+		se := NewSchedElement(loopce.GetClick(), loopce)
 		TheScheduler.insertScheduleElement(se)
 	}
 
@@ -370,7 +394,7 @@ func (cm *CursorManager) DeleteActiveCursorsForCidPrefix(cidPrefix string) {
 	cm.activeMutex.RLock()
 
 	if len(cm.activeCursors) > 0 {
-		LogInfo("DeleteActiveCursorsForCidPrefix", "cidPrefix", cidPrefix)
+		LogOfType("cursor", "DeleteActiveCursorsForCidPrefix", "cidPrefix", cidPrefix)
 	}
 	todelete := []string{}
 	for _, ac := range cm.activeCursors {
@@ -419,7 +443,7 @@ func (cm *CursorManager) autoCursorUp(now time.Time) {
 	var cidsToDelete = []string{}
 	for cid, ac := range cm.activeCursors {
 
-		dclick := ac.Previous.Click - ac.Current.Click
+		dclick := ac.Previous.GetClick() - ac.Current.GetClick()
 		if dclick > checkDelay {
 			ce := ac.Current
 			ce.Ddu = "up"
@@ -470,18 +494,19 @@ func (cm *CursorManager) PlayCursor(source string, dur time.Duration, x, y, z fl
 	cid := cm.UniqueCid(source)
 	ce := CursorEvent{
 		Cid:   cid,
-		Click: CurrentClick(),
+		click: &atomic.Int64{},
 		Ddu:   "down",
 		X:     x,
 		Y:     y,
 		Z:     z,
 	}
+	ce.SetClick(CurrentClick())
 	cm.ExecuteCursorEvent(ce)
 	// Send the cursor up, but don't block the loop
 	go func(ce CursorEvent) {
 		time.Sleep(dur)
 		ce.Ddu = "up"
-		ce.Click = CurrentClick()
+		ce.SetClick(CurrentClick())
 		cm.ExecuteCursorEvent(ce)
 	}(ce)
 }
