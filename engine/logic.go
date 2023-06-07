@@ -80,8 +80,9 @@ func (logic *PatchLogic) cursorToPitch(ce CursorEvent) (uint8, error) {
 			}
 			p = uint8(i)
 		}
-		if TheEngine.currentPitchOffset != 0 {
-			newpitch := int(p) + TheEngine.currentPitchOffset
+		currentOffset := int(TheEngine.currentPitchOffset.Load())
+		if currentOffset != 0 {
+			newpitch := int(p) + currentOffset
 			if newpitch < 0 {
 				newpitch = 0
 			} else if newpitch > 127 {

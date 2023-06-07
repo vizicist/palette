@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/hypebeast/go-osc/osc"
@@ -193,14 +194,14 @@ func ArgsToCursorEvent(args map[string]string) CursorEvent {
 	z := ArgToFloat("z", args)
 	ce := CursorEvent{
 		Cid: cid,
-		// Source: source,
-		// Timestamp: time.Now(),
+		click: &atomic.Int64{},
 		Ddu:  event,
 		X:    x,
 		Y:    y,
 		Z:    z,
 		Area: 0.0,
 	}
+	ce.SetClick(CurrentClick())
 	return ce
 }
 
@@ -348,13 +349,14 @@ func (r *Router) oscHandleCursor(msg *osc.Message) {
 	}
 	ce := CursorEvent{
 		Cid:   cid + ",mmtt", // NOTE: we add an mmmtt tag
-		Click: CurrentClick(),
+		click: &atomic.Int64{},
 		Ddu:   ddu,
 		X:     x,
 		Y:     y,
 		Z:     z,
 		Area:  0.0,
 	}
+	ce.SetClick(CurrentClick())
 
 	// XXX - HACK!!
 	xexpand, err := GetParamFloat("engine.mmtt_xexpand")

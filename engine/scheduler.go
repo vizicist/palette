@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	midi "gitlab.com/gomidi/midi/v2"
@@ -29,7 +30,7 @@ type Command struct {
 
 type SchedElement struct {
 	// patch             *Patch
-	AtClick Clicks
+	AtClick *atomic.Int64
 	Value   any
 	// loopIt            bool
 	// loopLengthInBeats int
@@ -47,10 +48,27 @@ func NewScheduler() *Scheduler {
 }
 
 func NewSchedElement(atclick Clicks, value any) *SchedElement {
-	return &SchedElement{
-		AtClick: atclick,
+	se := &SchedElement{
+		AtClick: &atomic.Int64{},
 		Value:   value,
 	}
+	se.SetClick(atclick)
+	return se
+}
+
+func (se *SchedElement) SetClick(click Clicks) {
+	if se.AtClick == nil {
+		LogWarn("Hey, click is null in SchedElement.SetClick?")
+		se.AtClick = &atomic.Int64{}
+	}
+	se.AtClick.Store(int64(click))
+}
+func (se *SchedElement) GetClick() Clicks {
+	if se.AtClick == nil {
+		LogWarn("Hey, click is null in SchedElement.SetClick?")
+		se.AtClick = &atomic.Int64{}
+	}
+	return Clicks(se.AtClick.Load())
 }
 
 func ScheduleAt(atClick Clicks, value any) {
@@ -204,7 +222,7 @@ func (sched *Scheduler) triggerItemsScheduledAtOrBefore(thisClick Clicks) {
 		se := i.Value.(*SchedElement)
 
 		// too early?
-		if (se.AtClick - thisClick) > 0 {
+		if (se.GetClick() - thisClick) > 0 {
 			// XXX - should this continue be a break?  If the list is sorted by time, I think so!
 			continue
 		}
@@ -238,7 +256,7 @@ func (sched *Scheduler) triggerItemsScheduledAtOrBefore(thisClick Clicks) {
 			}
 			// The Click in the CursorEvent is the click at which the event was scheduled,
 			// which might be before clk
-			ce.Click = se.AtClick
+			ce.SetClick(se.GetClick())
 			// delay the actual execution till the end of this routine
 			tobeExecuted = append(tobeExecuted, ce)
 
@@ -278,7 +296,7 @@ func (sched *Scheduler) ToString() string {
 		case *NoteOff:
 			s += fmt.Sprintf("(%d,%s)", pe.AtClick, v.String())
 		case CursorEvent:
-			s += fmt.Sprintf("(%d,%v)", v.Click, v)
+			s += fmt.Sprintf("(%d,%v)", v.click, v)
 		default:
 			s += fmt.Sprintf("(Unknown Type=%T)", v)
 		}
@@ -298,28 +316,31 @@ func (sched *Scheduler) insertScheduleElement(se *SchedElement) {
 	defer sched.mutex.Unlock()
 
 	switch v := (se.Value).(type) {
-		case *NoteOn:
-		case *NoteOff:
-		case CursorEvent:
-			if v.Ddu != "clear" && v.Cid == "" {
-				LogWarn("insertScheduleElement CursorEvent Cid is empty", "v", v)
-			}
-			// LogInfo("insertScheduleElement CursorEvent", "v", v)
+	case *NoteOn:
+	case *NoteOff:
+	case CursorEvent:
+		if v.Ddu != "clear" && v.Cid == "" {
+			LogWarn("insertScheduleElement CursorEvent Cid is empty", "v", v)
+		}
+		// LogInfo("insertScheduleElement CursorEvent", "v", v)
+		if v.click == nil {
+			LogWarn("insertScheduleElement CursorEvent AtClick is nil?", "v", v)
+		}
 	}
-	schedClick := se.AtClick
+	schedClick := se.GetClick()
 	LogOfType("scheduler", "Scheduler.insertScheduleElement", "value", se.Value, "click", se.AtClick, "beforelen", sched.schedList.Len())
 	// Insert newElement sorted by time
 	i := sched.schedList.Front()
 	if i == nil {
 		// new list
 		sched.schedList.PushFront(se)
-	} else if sched.schedList.Back().Value.(*SchedElement).AtClick <= schedClick {
+	} else if sched.schedList.Back().Value.(*SchedElement).GetClick() <= schedClick {
 		// pe is later than all existing things
 		sched.schedList.PushBack(se)
 	} else {
 		// use click to find place to insert
 		for ; i != nil; i = i.Next() {
-			if i.Value.(*SchedElement).AtClick > schedClick {
+			if i.Value.(*SchedElement).GetClick() > schedClick {
 				sched.schedList.InsertBefore(se, i)
 				break
 			}
