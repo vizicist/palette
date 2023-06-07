@@ -243,6 +243,7 @@ import "C"
 
 import (
 	"fmt"
+	"sync/atomic"
 	"time"
 )
 
@@ -358,7 +359,11 @@ func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float32) 
 				}
 				if cornerSource != m.currentSource {
 					LogInfo("Switching corners pad", "source", cornerSource)
-					callback(CursorEvent{Ddu: "clear"})
+					ce := CursorEvent{
+						Ddu: "clear",
+						click: &atomic.Int64{},
+					}
+					callback(ce)
 					m.currentSource = cornerSource
 					continue // loop, doesn't send a cursor event
 				}
@@ -412,7 +417,11 @@ func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float32) 
 				// If we're switching to a new source, clear existing cursors...
 				if m.currentSource != CidSource(cid) {
 					// LogOfType("cursor", "Switching cursor source, sending clear", "existingsource", CidSource(cid), "newsource", m.currentSource)
-					callback(CursorEvent{Ddu: "clear"})
+					ce := CursorEvent{
+						Ddu: "clear",
+						click: &atomic.Int64{},
+					}
+					callback(ce)
 					// and create a new cid...
 					cid = ""
 				}
@@ -450,12 +459,14 @@ func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float32) 
 
 			ev := CursorEvent{
 				Cid:  cid,
+				click: &atomic.Int64{},
 				Ddu:  ddu,
 				X:    xNorm,
 				Y:    yNorm,
 				Z:    zNorm,
 				Area: area,
 			}
+			ev.SetClick(CurrentClick())
 			callback(ev)
 		}
 	}
