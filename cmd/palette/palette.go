@@ -95,7 +95,7 @@ func CliCommand(args []string) string {
 		s += "GUI is " + statusString("gui") + ".\n"
 		s += "Bidule is " + statusString("bidule") + ".\n"
 		s += "Resolume is " + statusString("resolume") + ".\n"
-		b, _ := engine.GetParamBool("engine.keykit")
+		b, _ := engine.GetParamBool("engine.keykitrun")
 		if b {
 			s += "Keykit is " + statusString("keykit") + ".\n"
 		}

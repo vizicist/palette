@@ -16,8 +16,6 @@
   "LR2": "Ghostly_Shapes",
   "LR3": "Spiral Moire_Universe",
 
-  "autostart": "all",
-  "OLDtransposeauto": "true",
   "presetsdir": "presets_fnf",
   "debug": "",
   "this line should not end with a comma": 0
