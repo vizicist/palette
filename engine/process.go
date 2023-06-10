@@ -124,7 +124,7 @@ func ProcessList() []string {
 	arr = append(arr, "monitor")
 	arr = append(arr, "bidule")
 	arr = append(arr, "resolume")
-	keykit, err := GetParamBool("engine.keykit")
+	keykit, err := GetParamBool("engine.keykitrun")
 	LogIfError(err)
 	if keykit {
 		arr = append(arr, "keykit")
@@ -140,17 +140,17 @@ func ProcessList() []string {
 func (pm *ProcessManager) AddBuiltins() {
 	for _, process := range ProcessList() {
 		pm.AddProcessBuiltIn(process)
-		var b atomic.Bool
-		pm.wasStarted[process] = &b
-		pm.wasStarted[process].Store(false)
 	}
 }
 
-func (pm *ProcessManager) AddProcess(name string, info *ProcessInfo) {
+func (pm *ProcessManager) AddProcess(process string, info *ProcessInfo) {
 	if info == nil {
-		LogWarn("Addprocess: info not available", "process", name)
+		LogWarn("Addprocess: info not available", "process", process)
 	} else {
-		pm.info[name] = info
+		pm.info[process] = info
+		var b atomic.Bool
+		pm.wasStarted[process] = &b
+		pm.wasStarted[process].Store(false)
 	}
 
 }
@@ -170,7 +170,7 @@ func (pm *ProcessManager) AddProcessBuiltIn(process string) {
 	case "keykit":
 		pm.AddProcess(process, KeykitProcessInfo())
 	case "mmtt":
-		pm.AddProcess(process, MmttInfo())
+		pm.AddProcess(process, MmttProcessInfo())
 	}
 }
 
@@ -283,7 +283,7 @@ func KeykitProcessInfo() *ProcessInfo {
 	if keyroot == "" {
 		keyroot = filepath.Join(PaletteDir(), "keykit")
 	}
-	LogInfo("Setting KEYROOT", "keyroot", keyroot)
+	LogOfType("keykit","Setting KEYROOT", "keyroot", keyroot)
 	os.Setenv("KEYROOT", keyroot)
 
 	// Allow parameter to override keypath
@@ -295,19 +295,19 @@ func KeykitProcessInfo() *ProcessInfo {
 		keypath = kp1 + ";" + kp2
 	}
 	os.Setenv("KEYPATH", keypath)
-	LogInfo("Setting KEYPATH", "keypath", keypath)
+	LogOfType("keykit","Setting KEYPATH", "keypath", keypath)
 
 	// Allow parameter to override keyoutput
 	keyoutput, err := GetParam("engine.keykitoutput")
 	LogIfError(err)
 	os.Setenv("KEYOUT", keyoutput)
-	LogInfo("Setting KEYPOUT", "keyoutput", keyoutput)
+	LogOfType("keykit","Setting KEYPOUT", "keyoutput", keyoutput)
 
 	// Allow parameter to override keyoutput
 	keyallow, err := GetParam("engine.keykitallow")
 	LogIfError(err)
 	os.Setenv("KEYALLOW", keyallow)
-	LogInfo("Setting KEYALLOW", "keyallow", keyallow)
+	LogOfType("keykit","Setting KEYALLOW", "keyallow", keyallow)
 
 	// Allow parameter to override path to key.exe
 	fullpath, err := GetParam("engine.keykitpath")
@@ -326,7 +326,7 @@ func KeykitProcessInfo() *ProcessInfo {
 	return NewProcessInfo(exe, fullpath, "", nil)
 }
 
-func MmttInfo() *ProcessInfo {
+func MmttProcessInfo() *ProcessInfo {
 
 	// The value of mmtt is either "kinect" or "oak" or ""
 	mmtt, err := GetParam("engine.mmtt")
