@@ -163,6 +163,7 @@
 "engine.bidulefile": {"valuetype":"string", "min":"", "max":"", "init":"default.bidule", "comment":"# Bidule config" },
 "engine.gesturesteps": {"valuetype":"int", "min":"1", "max":"128", "init":"8", "comment":"#" },
 "engine.gui": {"valuetype":"string", "min":"", "max":"", "init":"C:/Program Files/Palette/bin/pyinstalled/palette_gui.exe", "comment":"#" },
+"engine.monitor": {"valuetype":"string", "min":"", "max":"", "init":"C:/Program Files/Palette/bin/palette_monitor.exe", "comment":"#" },
 "engine.keykit": {"valuetype":"bool", "min":"false", "max":"true", "init":"false", "comment":"#" },
 "engine.keykitpath": {"valuetype":"string", "min":"", "max":"", "init":"", "comment":"# keykit executable path" },
 "engine.keykitroot": {"valuetype":"string", "min":"", "max":"", "init":"", "comment":"# keykit root dir" },
