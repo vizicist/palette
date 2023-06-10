@@ -5,7 +5,9 @@ import (
 	"os"
 	"strconv"
 	"time"
+	"path/filepath"
 
+	"github.com/vizicist/palette/engine"
 	"github.com/0xcafed00d/joystick"
 
 	midi "gitlab.com/gomidi/midi/v2"
@@ -29,6 +31,8 @@ func readJoystick(js joystick.Joystick) {
 
 func main() {
 
+	engine.InitLog("monitor")
+
 	jsid := 0
 	if len(os.Args) > 1 {
 		i, err := strconv.Atoi(os.Args[1])
@@ -39,6 +43,12 @@ func main() {
 		jsid = i
 	}
 
+	pm := engine.NewProcessManager()
+
+	pm.AddProcess("engine",EngineProcessInfo())
+
+	go processCheck(pm)
+
 	go joystickMonitor(jsid)
 
 	go midiMonitor("Logidy UMI3")
@@ -46,23 +56,45 @@ func main() {
 	select {}
 }
 
+func EngineProcessInfo() *engine.ProcessInfo {
+	fullpath := filepath.Join(engine.PaletteDir(), "bin", "palette_engine.exe")
+	if !engine.FileExists(fullpath) {
+		engine.LogWarn("Engine not found in default location", "fullpath", fullpath)
+		return nil
+	}
+	exe := filepath.Base(fullpath)
+	return engine.NewProcessInfo(exe, fullpath, "", nil)
+}
+
+func processCheck(pm *engine.ProcessManager) {
+	tick := time.NewTicker(time.Second*5)
+	for true {
+		if ! pm.IsRunning("engine") {
+			engine.LogInfo("processCheck: engine is NOT running, restarting it")
+			err := pm.StartRunning("engine")
+			engine.LogIfError(err)
+		}
+		tm := <- tick.C
+		_ = tm
+	}
+}
+
 func joystickMonitor(jsid int) {
 
-	js, jserr := joystick.Open(jsid)
+	js, err := joystick.Open(jsid)
 
-	fmt.Printf("Joystick: %s has %d buttons\n", js.Name(), js.ButtonCount())
-
-	if jserr != nil {
-		fmt.Println(jserr)
+	engine.LogInfo("joystickMonitor", "name", js.Name(), "buttoncount", js.ButtonCount())
+	if err != nil {
+		engine.LogIfError(err)
 		return
 	}
 
 	ticker := time.NewTicker(time.Millisecond * 100)
 
-	for doQuit := false; !doQuit; {
+	for {
+		readJoystick(js)
 		tm := <-ticker.C
 		_ = tm
-		readJoystick(js)
 	}
 }
 
@@ -72,20 +104,20 @@ func midiMonitor(port string) {
 
 	in, err := midi.FindInPort(port)
 	if err != nil {
-		fmt.Printf("Unable to find port %s\n", port)
+		engine.LogWarn("midiMonitor: Unable to find port", "port", port)
 		return
 	}
 
 	stop, err := midi.ListenTo(in, func(msg midi.Message, timestampms int32) {
-		var bt []byte
 		var ch, key, vel uint8
 		switch {
-		case msg.GetSysEx(&bt):
-			fmt.Printf("got sysex: % X\n", bt)
+		// var bt []byte
+		// case msg.GetSysEx(&bt):
+		// 	fmt.Printf("got sysex: % X\n", bt)
 		case msg.GetNoteStart(&ch, &key, &vel):
-			fmt.Printf("starting note %s on channel %v with velocity %v\n", midi.Note(key), ch, vel)
+			engine.LogInfo("NoteOn: note %v channel %v velocity %v", midi.Note(key), ch, vel)
 		case msg.GetNoteEnd(&ch, &key):
-			fmt.Printf("ending note %s on channel %v\n", midi.Note(key), ch)
+			engine.LogInfo("NoteOff: note %v channel %v", midi.Note(key), ch)
 		default:
 			// ignore
 		}
@@ -100,7 +132,7 @@ func midiMonitor(port string) {
 	if forever {
 		select {}
 	} else {
-		time.Sleep(time.Second * 10)
+		time.Sleep(time.Second)
 		stop()
 	}
 }
