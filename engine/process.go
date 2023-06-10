@@ -121,6 +121,7 @@ func (pm *ProcessManager) CheckAutorestartProcesses() {
 func ProcessList() []string {
 	arr := []string{}
 	arr = append(arr, "gui")
+	arr = append(arr, "monitor")
 	arr = append(arr, "bidule")
 	arr = append(arr, "resolume")
 	keykit, err := GetParamBool("engine.keykit")
@@ -164,6 +165,8 @@ func (pm *ProcessManager) AddProcessBuiltIn(process string) {
 		pm.AddProcess(process, TheResolume().ProcessInfo())
 	case "gui":
 		pm.AddProcess(process, GuiProcessInfo())
+	case "monitor":
+		pm.AddProcess(process, MonitorProcessInfo())
 	case "keykit":
 		pm.AddProcess(process, KeykitProcessInfo())
 	case "mmtt":
@@ -259,6 +262,18 @@ func GuiProcessInfo() *ProcessInfo {
 	exe := filepath.Base(fullpath)
 	return NewProcessInfo(exe, fullpath, "", nil)
 }
+
+func MonitorProcessInfo() *ProcessInfo {
+	fullpath, err := GetParam("engine.monitor")
+	LogIfError(err)
+	if fullpath != "" && !FileExists(fullpath) {
+		LogWarn("No Monitor found, looking for", "path", fullpath)
+		return nil
+	}
+	exe := filepath.Base(fullpath)
+	return NewProcessInfo(exe, fullpath, "", nil)
+}
+
 
 func KeykitProcessInfo() *ProcessInfo {
 

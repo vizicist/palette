@@ -91,6 +91,7 @@ func CliCommand(args []string) string {
 	case "status":
 		s := ""
 		s += "Engine is " + statusString("engine") + ".\n"
+		s += "Monitor is " + statusString("monitor") + ".\n"
 		s += "GUI is " + statusString("gui") + ".\n"
 		s += "Bidule is " + statusString("bidule") + ".\n"
 		s += "Resolume is " + statusString("resolume") + ".\n"

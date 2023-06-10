@@ -48,6 +48,12 @@ go build palette_engine.go >> %buildcmdsout% 2>&1
 move palette_engine.exe %bin%\palette_engine.exe > nul
 popd
 
+echo ================ Compiling palette_monitor
+pushd %PALETTESOURCE%\cmd\palette_monitor
+go build palette_monitor.go >> %buildcmdsout% 2>&1
+move palette_monitor.exe %bin%\palette_monitor.exe > nul
+popd
+
 rem print any error messages from compiling cmds
 type %buildcmdsout%
 

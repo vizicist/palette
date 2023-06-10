@@ -38,6 +38,13 @@
                 "Path": "${env:Path};${workspaceFolder};c:/Users/me/Documents/github/vizicist/palette/SenselLib/x64;"             },
             "args": []
         },
+       {
+            "name": "MONITOR - palette_monitor.go",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTESOURCE}/cmd/palette_monitor/palette_monitor.go",
+            "args": []
+        },
         {
             "name": "palette start",
             "type": "go",
