@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -99,18 +100,19 @@ func (pm *ProcessManager) checkProcess() {
 // started but are no longer running.
 func (pm *ProcessManager) CheckAutorestartProcesses() {
 
-	autorestart, err := GetParamBool("engine.autorestart")
+	autostart, err := GetParam("engine.autostart")
 	LogIfError(err)
-	if !autorestart {
+	if autostart == "" {
 		return
 	}
+	restarts := strings.Split(autostart, ",")
 
 	pm.mutex.Lock()
 	defer pm.mutex.Unlock()
 
-	for processName := range pm.info {
+	for _, processName := range restarts {
 		isRunning := pm.IsRunning(processName)
-		if !isRunning && pm.wasStarted[processName].Load() {
+		if !isRunning {
 			LogInfo("CheckAutorestartProcesses: Restarting", "process", processName)
 			err := pm.StartRunning(processName)
 			LogIfError(err)
@@ -121,7 +123,7 @@ func (pm *ProcessManager) CheckAutorestartProcesses() {
 func ProcessList() []string {
 	arr := []string{}
 	arr = append(arr, "gui")
-	arr = append(arr, "monitor")
+	// arr = append(arr, "monitor")
 	arr = append(arr, "bidule")
 	arr = append(arr, "resolume")
 	keykit, err := GetParamBool("engine.keykitrun")
@@ -165,8 +167,6 @@ func (pm *ProcessManager) AddProcessBuiltIn(process string) {
 		pm.AddProcess(process, TheResolume().ProcessInfo())
 	case "gui":
 		pm.AddProcess(process, GuiProcessInfo())
-	case "monitor":
-		pm.AddProcess(process, MonitorProcessInfo())
 	case "keykit":
 		pm.AddProcess(process, KeykitProcessInfo())
 	case "mmtt":
@@ -190,7 +190,7 @@ func (pm *ProcessManager) StartRunning(process string) error {
 
 	LogInfo("StartRunning", "path", pi.FullPath, "arg", pi.Arg, "lenarg", len(pi.Arg))
 
-	err = StartExecutableLogOutput(process, pi.FullPath, true, pi.Arg)
+	err = StartExecutableLogOutput(process, pi.FullPath, pi.Arg)
 	if err != nil {
 		return fmt.Errorf("StartRunning: process=%s err=%s", process, err)
 	}
@@ -211,7 +211,7 @@ func (pm *ProcessManager) StopRunning(process string) (err error) {
 	if err != nil {
 		return err
 	}
-	_ = killExecutable(pi.Exe) // ignore errors
+	_ = KillExecutable(pi.Exe) // ignore errors
 	pi.Activated = false
 	pm.wasStarted[process].Store(false)
 	return err
@@ -248,7 +248,7 @@ func (pm *ProcessManager) IsRunning(process string) bool {
 		LogIfError(err)
 		return false
 	}
-	b := isRunningExecutable(pi.Exe)
+	b := IsRunningExecutable(pi.Exe)
 	return b
 }
 
@@ -263,6 +263,7 @@ func GuiProcessInfo() *ProcessInfo {
 	return NewProcessInfo(exe, fullpath, "", nil)
 }
 
+/*
 func MonitorProcessInfo() *ProcessInfo {
 	fullpath, err := GetParam("engine.monitor")
 	LogIfError(err)
@@ -273,7 +274,7 @@ func MonitorProcessInfo() *ProcessInfo {
 	exe := filepath.Base(fullpath)
 	return NewProcessInfo(exe, fullpath, "", nil)
 }
-
+*/
 
 func KeykitProcessInfo() *ProcessInfo {
 
@@ -283,7 +284,7 @@ func KeykitProcessInfo() *ProcessInfo {
 	if keyroot == "" {
 		keyroot = filepath.Join(PaletteDir(), "keykit")
 	}
-	LogOfType("keykit","Setting KEYROOT", "keyroot", keyroot)
+	LogOfType("keykit", "Setting KEYROOT", "keyroot", keyroot)
 	os.Setenv("KEYROOT", keyroot)
 
 	// Allow parameter to override keypath
@@ -295,19 +296,19 @@ func KeykitProcessInfo() *ProcessInfo {
 		keypath = kp1 + ";" + kp2
 	}
 	os.Setenv("KEYPATH", keypath)
-	LogOfType("keykit","Setting KEYPATH", "keypath", keypath)
+	LogOfType("keykit", "Setting KEYPATH", "keypath", keypath)
 
 	// Allow parameter to override keyoutput
 	keyoutput, err := GetParam("engine.keykitoutput")
 	LogIfError(err)
 	os.Setenv("KEYOUT", keyoutput)
-	LogOfType("keykit","Setting KEYPOUT", "keyoutput", keyoutput)
+	LogOfType("keykit", "Setting KEYPOUT", "keyoutput", keyoutput)
 
 	// Allow parameter to override keyoutput
 	keyallow, err := GetParam("engine.keykitallow")
 	LogIfError(err)
 	os.Setenv("KEYALLOW", keyallow)
-	LogOfType("keykit","Setting KEYALLOW", "keyallow", keyallow)
+	LogOfType("keykit", "Setting KEYALLOW", "keyallow", keyallow)
 
 	// Allow parameter to override path to key.exe
 	fullpath, err := GetParam("engine.keykitpath")
@@ -316,7 +317,7 @@ func KeykitProcessInfo() *ProcessInfo {
 		LogWarn("engine.keykit value doesn't exist, was looking for", "fullpath", fullpath)
 	}
 	if fullpath == "" {
-		fullpath = filepath.Join(PaletteDir(), "keykit", "bin", "key.exe")
+		fullpath = filepath.Join(PaletteDir(), "keykit", "bin", KeykitExe)
 		if !FileExists(fullpath) {
 			LogWarn("Keykit not found in default location", "fullpath", fullpath)
 			return nil

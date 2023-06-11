@@ -1,1 +1,0 @@
-tasklist | findstr palette_

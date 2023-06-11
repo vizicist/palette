@@ -111,6 +111,9 @@ copy osc.bat %bin% >nul
 copy ipaddress.bat %bin% >nul
 copy taillog.bat %bin% >nul
 copy taillogs.bat %bin% >nul
+copy palette_killall.bat %bin% >nul
+copy palette_restart.bat %bin% >nul
+copy palette_onboot.bat %bin% >nul
 rem copy natsmon.bat %bin% >nul
 copy delay.bat %bin% >nul
 copy setpalettelogdir.bat %bin% >nul

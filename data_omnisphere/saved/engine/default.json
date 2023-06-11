@@ -2,7 +2,6 @@
     "params": {
         "engine.attractenabled":"false",
         "engine.attractidlesecs":"60",
-        "engine.autorestart":"true",
         "engine.autotranspose":"false",
         "engine.autotransposebeats":"48",
         "engine.bidulepath":"C:/Program Files/Plogue/Bidule/Bidule.exe",
