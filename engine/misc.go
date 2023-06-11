@@ -20,17 +20,40 @@ import (
 	"gopkg.in/gomail.v2"
 )
 
+var PaletteExe = "palette.exe"
+var MonitorExe = "palette_monitor.exe"
 var EngineExe = "palette_engine.exe"
-var EngineExeDebug = "__debug_bin.exe"
+var GuiExe = "palette_gui.exe"
+var BiduleExe = "bidule.exe"
+var ResolumeExe = "avenue.exe"
+var KeykitExe = "key.exe"
+var MmttExe = "mmtt_kinect.exe"
+
+func KillAll() {
+	LogInfo("KillAll")
+	err := KillExecutable(KeykitExe)
+	LogIfError(err)
+	err = KillExecutable(MmttExe)
+	LogIfError(err)
+	err = KillExecutable(BiduleExe)
+	LogIfError(err)
+	err = KillExecutable(ResolumeExe)
+	LogIfError(err)
+	err = KillExecutable(GuiExe)
+	LogIfError(err)
+	err = KillExecutable(EngineExe)
+	LogIfError(err)
+}
+
+func KillMonitor() {
+	LogInfo("KillMonitor")
+	err := KillExecutable(MonitorExe)
+	LogIfError(err)
+}
 
 func IsRunning(process string) bool {
 	if process == "engine" {
-		b := isRunningExecutable(EngineExe)
-		if !b {
-			// hack for debugging
-			b = isRunningExecutable("__debug_bin.exe")
-		}
-		return b
+		return IsRunningExecutable(EngineExe)
 	}
 	return TheProcessManager.IsRunning(process)
 }
@@ -39,24 +62,6 @@ func IsRunning(process string) bool {
 // 	return isRunningExecutable(EngineExe)
 // 	// return isRunningExecutable(EngineExe) || isRunningExecutable(EngineExeDebug)
 // }
-
-func StartEngine() error {
-	// Start the engine (which also starts up other processes)
-	fullexe := filepath.Join(PaletteDir(), "bin", EngineExe)
-	return StartExecutableLogOutput("engine", fullexe, true, "")
-}
-
-func KillEngine() error {
-	err1 := killExecutable(EngineExe)
-	err2 := killExecutable(EngineExeDebug)
-	if err1 != nil {
-		return err1
-	}
-	if err2 != nil {
-		return err2
-	}
-	return nil
-}
 
 // fileExists checks if a file exists
 func fileExists(filename string) bool {
@@ -105,7 +110,7 @@ func LocalPaletteDir() string {
 	if localapp == "" {
 		var err error
 		tempdir, err := GetParam("engine.tempdir")
-		LogWarn("Expecting CommonProgramFiles to be set, using engine.tempdir value","tempdir",tempdir)
+		LogWarn("Expecting CommonProgramFiles to be set, using engine.tempdir value", "tempdir", tempdir)
 		if err != nil {
 			LogIfError(err)
 			return ""
