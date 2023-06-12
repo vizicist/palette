@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strconv"
 	"time"
@@ -40,18 +41,28 @@ func checkEngine() {
 	tick := time.NewTicker(time.Second * 15)
 	for {
 		if !engine.IsRunningExecutable(engine.EngineExe) {
-
 			engine.LogInfo("processCheck: engine is not running, killing everything and restarting engine.")
-			engine.KillAll()
-
-			// restart just the engine,  engine.autostart value will determine what else gets started
-			fullexe := filepath.Join(engine.PaletteDir(), "bin", engine.PaletteExe)
-			err := engine.StartExecutableLogOutput("palette", fullexe, "start", "engine")
-			engine.LogIfError(err)
+			killAndRestart()
 		}
 		tm := <-tick.C
 		_ = tm
 	}
+}
+
+func killAndRestart() {
+	engine.KillAllExceptMonitor()
+	// restart just the engine,  engine.autostart value will determine what else gets started
+	fullexe := filepath.Join(engine.PaletteDir(), "bin", engine.PaletteExe)
+	err := engine.StartExecutableLogOutput("palette", fullexe, "start", "engine")
+	engine.LogIfError(err)
+}
+
+func shutdownAndReboot() {
+	engine.LogInfo("shutdownAndReboot is rebooting")
+	cmd := exec.Command("shutdown", "/r", "-t", "10")
+	err := cmd.Run()
+	engine.LogIfError(err)
+	engine.LogInfo("End of ButtonAction1")
 }
 
 type ButtonAction func()
@@ -76,10 +87,12 @@ func joystickMonitor(jsid int) {
 	buttonAction := make([]ButtonAction, js.ButtonCount())
 
 	buttonAction[0] = func() {
-		engine.LogInfo("ButtonAction0!!")
+		engine.LogInfo("ButtonAction: calling killAndRestart")
+		killAndRestart()
 	}
 	buttonAction[1] = func() {
-		engine.LogInfo("ButtonAction1!!")
+		engine.LogInfo("ButtonAction: calling shutdown")
+		shutdownAndReboot()
 	}
 
 	for {
@@ -136,34 +149,36 @@ func midiMonitor(port string) {
 	noteAction := make([]NoteAction, nnotes)
 
 	noteAction[60] = func() {
-		engine.LogInfo("NoteAction60!!")
+		engine.LogInfo("NoteAction: calling killAndRestart")
+		killAndRestart()
 	}
 	noteAction[62] = func() {
-		engine.LogInfo("NoteAction62!!")
+		engine.LogInfo("NoteAction: calling shutdownAndReboot")
+		shutdownAndReboot()
 	}
 	noteAction[64] = func() {
-		engine.LogInfo("NoteAction64!!")
+		engine.LogInfo("NoteAction: nothing attached to that note")
 	}
 
 	stop, err := midi.ListenTo(in, func(msg midi.Message, timestampms int32) {
 		var ch, pitch, vel uint8
 		switch {
 		case msg.GetNoteStart(&ch, &pitch, &vel):
-			engine.LogOfType("midi","NoteOn", "pitch", pitch, "chan", ch, "velocity", vel)
+			engine.LogOfType("midi", "NoteOn", "pitch", pitch, "chan", ch, "velocity", vel)
 			if !noteDown[pitch] {
 				noteDownTime[pitch] = time.Now()
 				noteDown[pitch] = true
 			}
 
 		case msg.GetNoteEnd(&ch, &pitch):
-			engine.LogOfType("midi","NoteOff", "pitch", pitch, "chan", ch)
+			engine.LogOfType("midi", "NoteOff", "pitch", pitch, "chan", ch)
 			if noteDown[pitch] {
 				noteDown[pitch] = false
 				// Note just came back up.
 				dt := time.Since(noteDownTime[pitch])
 				// Pay attention only if the note is down for more than a second.
 				if dt > time.Second {
-					engine.LogOfType("midi","notegpress", "pitch", pitch, "dt", dt)
+					engine.LogOfType("midi", "notegpress", "pitch", pitch, "dt", dt)
 					if noteAction[pitch] != nil {
 						noteAction[pitch]()
 					}

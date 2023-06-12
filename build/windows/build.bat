@@ -54,6 +54,12 @@ go build palette_monitor.go >> %buildcmdsout% 2>&1
 move palette_monitor.exe %bin%\palette_monitor.exe > nul
 popd
 
+echo ================ Compiling palette_splash
+pushd %PALETTESOURCE%\cmd\palette_splash
+go build palette_splash.go >> %buildcmdsout% 2>&1
+move palette_splash.exe %bin%\palette_splash.exe > nul
+popd
+
 rem print any error messages from compiling cmds
 type %buildcmdsout%
 
