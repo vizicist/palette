@@ -520,7 +520,7 @@ class ProGuiApp(tk.Tk):
 
     def makeAttractFrame(self,container):
 
-        path = palette.configFilePath("attractscreen.png")
+        path = palette.configFilePath("spp_attractscreen.png")
         self.attractImage = tk.PhotoImage(file=path)
 
         f = tk.Frame(container,
@@ -532,7 +532,7 @@ class ProGuiApp(tk.Tk):
 
     def makeHelpFrame(self,container):
 
-        path = palette.configFilePath("helpscreen.png")
+        path = palette.configFilePath("spp_helpscreen.png")
         self.helpImage = tk.PhotoImage(file=path)
 
         f = tk.Frame(container,
