@@ -38,12 +38,33 @@
                 "Path": "${env:Path};${workspaceFolder};c:/Users/me/Documents/github/vizicist/palette/SenselLib/x64;"             },
             "args": []
         },
+       {
+            "name": "MONITOR - palette_monitor.go",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTESOURCE}/cmd/palette_monitor/palette_monitor.go",
+            "args": []
+        },
+       {
+            "name": "SPLASH - palette_splash.go",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTESOURCE}/cmd/palette_splash/palette_splash.go",
+            "args": ["-text=Dummy Text","-image=sppro_rebooting.png","-width=1920","-height=1080"]
+        },
         {
             "name": "palette start",
             "type": "go",
             "request": "launch",
             "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
             "args": ["start"]
+        },
+        {
+            "name": "palette restart",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
+            "args": ["restart"]
         },
         {
             "name": "palette status",
@@ -53,11 +74,11 @@
             "args": ["status"]
         },
         {
-            "name": "palette stop all",
+            "name": "palette killall",
             "type": "go",
             "request": "launch",
             "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
-            "args": ["stop","all"]
+            "args": ["killall"]
         },
         {
             "name": "Chillian Start",

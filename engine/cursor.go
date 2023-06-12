@@ -210,7 +210,7 @@ func (cm *CursorManager) GenerateGesture(source string, attrib string, dur time.
 		cm.activeMutex.Lock()
 		ce := CursorEvent{
 			Cid:   cid,
-			click: &atomic.Int64{},
+			Click: &atomic.Int64{},
 			Ddu:   ddu,
 			X:     pos0.x + pos1.x*float32(n)/float32(nsteps),
 			Y:     pos0.x + pos1.y*float32(n)/float32(nsteps),
@@ -226,18 +226,18 @@ func (cm *CursorManager) GenerateGesture(source string, attrib string, dur time.
 }
 
 func (ce CursorEvent) SetClick(click Clicks) {
-	if ce.click == nil {
+	if ce.Click == nil {
 		LogWarn("Hey, click is null in CursorEvent.SetClick?")
-		ce.click = &atomic.Int64{}
+		ce.Click = &atomic.Int64{}
 	}
-	ce.click.Store(int64(click))
+	ce.Click.Store(int64(click))
 }
 func (ce CursorEvent) GetClick() Clicks {
-	if ce.click == nil {
+	if ce.Click == nil {
 		LogWarn("Hey, click is null in CursorEvent.SetClick?")
-		ce.click = &atomic.Int64{}
+		ce.Click = &atomic.Int64{}
 	}
-	return Clicks(ce.click.Load())
+	return Clicks(ce.Click.Load())
 }
 
 /*
@@ -314,7 +314,7 @@ func (cm *CursorManager) ExecuteCursorEvent(ce CursorEvent) {
 
 	}
 
-	ac.Current.click.Store(int64(CurrentClick()))
+	ac.Current.Click.Store(int64(CurrentClick()))
 
 	if ac.loopIt {
 
@@ -494,7 +494,7 @@ func (cm *CursorManager) PlayCursor(source string, dur time.Duration, x, y, z fl
 	cid := cm.UniqueCid(source)
 	ce := CursorEvent{
 		Cid:   cid,
-		click: &atomic.Int64{},
+		Click: &atomic.Int64{},
 		Ddu:   "down",
 		X:     x,
 		Y:     y,

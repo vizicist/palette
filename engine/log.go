@@ -101,7 +101,7 @@ func LogIfError(err error, keysAndValues ...any) {
 	}
 
 	if (len(keysAndValues) % 2) != 0 {
-		LogWarn("LogOfType function given bad number of arguments")
+		LogWarn("LogIfError function given bad number of arguments")
 	}
 	keysAndValues = append(keysAndValues, "err")
 	keysAndValues = append(keysAndValues, err)
@@ -147,7 +147,7 @@ func LogWarn(msg string, keysAndValues ...any) {
 
 func LogInfo(msg string, keysAndValues ...any) {
 	if (len(keysAndValues) % 2) != 0 {
-		LogWarn("LogOfType function given bad number of arguments")
+		LogWarn("LogInfo function given bad number of arguments")
 	}
 	keysAndValues = appendExtraValues(keysAndValues)
 	keysAndValues = append(keysAndValues, "loglevel")
@@ -170,10 +170,11 @@ var LogEnabled = map[string]bool{
 	"gensound":       false,
 	"genvisual":      false,
 	"go":             false,
-	"goroutine":             false,
+	"goroutine":      false,
 	"info":           false,
 	"patch":          false,
 	"process":        false,
+	"keykit":         false,
 	"layerapi":       false,
 	"listeners":      false,
 	"load":           false,
