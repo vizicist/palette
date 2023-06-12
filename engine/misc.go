@@ -29,7 +29,7 @@ var ResolumeExe = "avenue.exe"
 var KeykitExe = "key.exe"
 var MmttExe = "mmtt_kinect.exe"
 
-func KillAll() {
+func KillAllExceptMonitor() {
 	LogInfo("KillAll")
 	err := KillExecutable(KeykitExe)
 	LogIfError(err)

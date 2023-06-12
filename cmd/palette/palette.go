@@ -33,9 +33,11 @@ func main() {
 
 func usage() string {
 	return `Commands:
-	palette start [ all | engine | gui | bidule | resolume ]
-	palette stop [ all | engine | gui | bidule | resolume ]
+	palette start
+	palette stop
+	palette status
 	palette version
+	palette logtail
 	palette {category}.{api} [ {argname} {argvalue} ] ...
 	`
 }
@@ -81,7 +83,10 @@ func CliCommand(args []string) string {
 
 	switch api {
 
-	case "taillog":
+	case "taillog", "logtail":
+		if arg1 != "" {
+			return usage()
+		}
 		logpath := engine.LogFilePath("engine.log")
 		t, err := tail.TailFile(logpath, tail.Config{Follow: true})
 		engine.LogIfError(err)
@@ -91,6 +96,9 @@ func CliCommand(args []string) string {
 		return ""
 
 	case "status":
+		if arg1 != "" {
+			return usage()
+		}
 		s := ""
 		s += "Monitor is " + monitorStatus() + ".\n"
 		s += "Engine is " + processStatus("engine") + ".\n"
@@ -129,17 +137,22 @@ func CliCommand(args []string) string {
 			return fmt.Sprintf("Process %s is disabled or unknown.\n", arg1)
 		}
 
-	case "stop", "kill":
+	case "kill":
+		if arg1 != "" {
+			return usage()
+		}
+		engine.LogInfo("Palette stop is killing everything, including monitor.")
+		engine.KillAllExceptMonitor()
+		engine.KillMonitor()
+		return "OK\n"
 
-		// if !engine.IsRunning("engine") {
-		// 	return "Engine is not running."
-		// }
+	case "stop":
 
 		switch arg1 {
 
 		case "":
-			engine.LogInfo("Palette stop is killing everything, including monitor.")
-			engine.KillAll()
+			engine.LogInfo("Palette stop is killing everything including monitor.")
+			engine.KillAllExceptMonitor()
 			engine.KillMonitor()
 			return "OK\n"
 
@@ -157,15 +170,24 @@ func CliCommand(args []string) string {
 		}
 
 	case "version":
+		if arg1 != "" {
+			return usage()
+		}
 		return engine.GetPaletteVersion()
 
 	case "restart":
-		engine.KillAll()
+		if arg1 != "" {
+			return usage()
+		}
+		engine.KillAllExceptMonitor()
 		engine.KillMonitor()
 		time.Sleep(time.Second * 2)
 		return doStartMonitor()
 
 	case "sendlogs":
+		if arg1 != "" {
+			return usage()
+		}
 		err = engine.SendLogs()
 		if err != nil {
 			return err.Error()
@@ -180,7 +202,6 @@ func CliCommand(args []string) string {
 		return doApi(api, args[1:]...)
 	}
 }
-
 
 func monitorStatus() string {
 	if engine.IsRunningExecutable(engine.MonitorExe) {
