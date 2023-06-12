@@ -167,7 +167,7 @@ func (erae *Erae) handleFinger(bb []byte) {
 			// Clear cursor state
 			ce := CursorEvent{
 				Cid:   cid,
-				click: &atomic.Int64{},
+				Click: &atomic.Int64{},
 				Ddu:   "clear",
 			}
 			ce.SetClick(CurrentClick())
@@ -216,7 +216,7 @@ func (erae *Erae) handleFinger(bb []byte) {
 
 	ce := CursorEvent{
 		Cid:   cid,
-		click: &atomic.Int64{},
+		Click: &atomic.Int64{},
 		Ddu:   ddu,
 		X:     x,
 		Y:     y,

@@ -193,13 +193,13 @@ func ArgsToCursorEvent(args map[string]string) CursorEvent {
 	y := ArgToFloat("y", args)
 	z := ArgToFloat("z", args)
 	ce := CursorEvent{
-		Cid: cid,
-		click: &atomic.Int64{},
-		Ddu:  event,
-		X:    x,
-		Y:    y,
-		Z:    z,
-		Area: 0.0,
+		Cid:   cid,
+		Click: &atomic.Int64{},
+		Ddu:   event,
+		X:     x,
+		Y:     y,
+		Z:     z,
+		Area:  0.0,
 	}
 	ce.SetClick(CurrentClick())
 	return ce
@@ -349,7 +349,7 @@ func (r *Router) oscHandleCursor(msg *osc.Message) {
 	}
 	ce := CursorEvent{
 		Cid:   cid + ",mmtt", // NOTE: we add an mmmtt tag
-		click: &atomic.Int64{},
+		Click: &atomic.Int64{},
 		Ddu:   ddu,
 		X:     x,
 		Y:     y,

@@ -28,7 +28,7 @@ type MIDIEventHandler func(MidiEvent)
 
 // CursorEvent is a singl Cursor event
 type CursorEvent struct {
-	click *atomic.Int64 `json:"Click"`
+	Click *atomic.Int64 `json:"Click"`
 	Cid   string        `json:"Cid"`
 	// Source string
 	Ddu  string  `json:"Ddu"` // "down", "drag", "up" (sometimes "clear")

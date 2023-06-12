@@ -296,7 +296,7 @@ func (sched *Scheduler) ToString() string {
 		case *NoteOff:
 			s += fmt.Sprintf("(%d,%s)", pe.AtClick, v.String())
 		case CursorEvent:
-			s += fmt.Sprintf("(%d,%v)", v.click, v)
+			s += fmt.Sprintf("(%d,%v)", v.Click, v)
 		default:
 			s += fmt.Sprintf("(Unknown Type=%T)", v)
 		}
@@ -323,7 +323,7 @@ func (sched *Scheduler) insertScheduleElement(se *SchedElement) {
 			LogWarn("insertScheduleElement CursorEvent Cid is empty", "v", v)
 		}
 		// LogInfo("insertScheduleElement CursorEvent", "v", v)
-		if v.click == nil {
+		if v.Click == nil {
 			LogWarn("insertScheduleElement CursorEvent AtClick is nil?", "v", v)
 		}
 	}

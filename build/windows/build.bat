@@ -48,6 +48,18 @@ go build palette_engine.go >> %buildcmdsout% 2>&1
 move palette_engine.exe %bin%\palette_engine.exe > nul
 popd
 
+echo ================ Compiling palette_monitor
+pushd %PALETTESOURCE%\cmd\palette_monitor
+go build palette_monitor.go >> %buildcmdsout% 2>&1
+move palette_monitor.exe %bin%\palette_monitor.exe > nul
+popd
+
+echo ================ Compiling palette_splash
+pushd %PALETTESOURCE%\cmd\palette_splash
+go build palette_splash.go >> %buildcmdsout% 2>&1
+move palette_splash.exe %bin%\palette_splash.exe > nul
+popd
+
 rem print any error messages from compiling cmds
 type %buildcmdsout%
 
@@ -105,6 +117,9 @@ copy osc.bat %bin% >nul
 copy ipaddress.bat %bin% >nul
 copy taillog.bat %bin% >nul
 copy taillogs.bat %bin% >nul
+copy palette_killall.bat %bin% >nul
+copy palette_restart.bat %bin% >nul
+copy palette_onboot.bat %bin% >nul
 rem copy natsmon.bat %bin% >nul
 copy delay.bat %bin% >nul
 copy setpalettelogdir.bat %bin% >nul

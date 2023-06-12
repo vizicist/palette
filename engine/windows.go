@@ -11,14 +11,7 @@ import (
 	"syscall"
 )
 
-// var BiduleDefaultPath = "C:/Program Files/Plogue/Bidule/Bidule.exe"
-// var DefaultTmpDir = "C:/windows/tmp"
-// var DefaultGuiPath = "C:\\Program Files\\Palette\\bin\\pyinstalled\\palette_gui.exe"
-// var DefaultAvenuePath = "C:\\Program Files\\Resolume Avenue\\Avenue.exe"
-// var DefaultArenaPath = "C:\\Program Files\\Resolume Arena\\Arena.exe"
-// var DefaultKeykitOutput = "Microsoft GS Wavetable Synth"
-
-func killExecutable(executable string) error {
+func KillExecutable(executable string) error {
 	exe := isolateExe(executable)
 	// os.Stderr.WriteString("KillExecutable " + executable + "\n")
 	LogInfo("KillExecutable", "executable", executable, "exe", exe)
@@ -29,11 +22,19 @@ func killExecutable(executable string) error {
 }
 
 // StartExecutable executes something.  If background is true, it doesn't block
-func StartExecutableLogOutput(logName string, fullexe string, background bool, args ...string) error {
+func StartExecutableLogOutput(logName string, fullexe string, args ...string) error {
 	logWriter := NewExecutableLogWriter(logName)
-	LogInfo("startExecutable", "executable", fullexe)
-	_, err := startExecutable(fullexe, true, logWriter, logWriter, args...)
+	LogInfo("StartExecutableLogOutput", "executable", fullexe)
+	_, err := StartExecutableInBackground(fullexe, logWriter, logWriter, args...)
 	return err
+}
+
+func StartExecutableAndWait(executable string, stdout io.Writer, stderr io.Writer, args ...string) (*exec.Cmd, error) {
+	return startExecutable(executable, false, stdout, stderr, args...)
+}
+
+func StartExecutableInBackground(executable string, stdout io.Writer, stderr io.Writer, args ...string) (*exec.Cmd, error) {
+	return startExecutable(executable, true, stdout, stderr, args...)
 }
 
 // StartExecutable executes something.  If background is true, it doesn't block
@@ -73,11 +74,11 @@ func (writer *gatherWriter) Write(bytes []byte) (int, error) {
 	return len(bytes), nil
 }
 
-func isRunningExecutable(exe string) bool {
+func IsRunningExecutable(exe string) bool {
 	// os.Stdout.WriteString("IsRunningExecutable exe=" + exe + "\n")
 	stdout := &gatherWriter{}
 	stderr := &NoWriter{}
-	cmd, err := startExecutable("c:\\windows\\system32\\tasklist.exe", false, stdout, stderr)
+	cmd, err := StartExecutableAndWait("c:\\windows\\system32\\tasklist.exe", stdout, stderr)
 	if err != nil {
 		LogWarn("IsRunningExecutable tasklist.exe", "err", err)
 		LogOfType("process", "IsRunningExecutable", "exe", exe, "returning", "true")

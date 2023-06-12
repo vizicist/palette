@@ -64,6 +64,8 @@ Source: "vc15\bin\VC_redist.x64.exe"; DestDir: {app}\bin
 [Run]
 Filename: {app}\bin\VC_redist.x64.exe; Parameters: "/install /quiet /norestart"; StatusMsg: "Installing 64-bit Windows Universal runtime..."; Flags: waituntilterminated
 Filename: taskkill.exe; Parameters: "/F /IM palette_engine.exe"; StatusMsg: "Making sure palette_engine is not running..."; Flags: waituntilterminated
+Filename: taskkill.exe; Parameters: "/F /IM palette_monitor.exe"; StatusMsg: "Making sure palette_monitor is not running..."; Flags: waituntilterminated
+Filename: taskkill.exe; Parameters: "/F /IM palette_splash.exe"; StatusMsg: "Making sure palette_splash is not running..."; Flags: waituntilterminated
 Filename: taskkill.exe; Parameters: "/F /IM palette_gui.exe"; StatusMsg: "Making sure palette_gui is not running..."; Flags: waituntilterminated
 
 [Icons]
@@ -96,6 +98,8 @@ begin
 
   // Kill running palette things so we can install over them
   Exec('>', 'taskkill.exe /IM palette_engine.exe /T /F', '', SW_HIDE,
+     ewWaitUntilTerminated, ResultCode);
+  Exec('>', 'taskkill.exe /IM palette_nmonitor.exe /T /F', '', SW_HIDE,
      ewWaitUntilTerminated, ResultCode);
   Exec('>', 'taskkill.exe /IM palette_gui.exe /T /F', '', SW_HIDE,
      ewWaitUntilTerminated, ResultCode);
