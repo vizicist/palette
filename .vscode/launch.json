@@ -45,6 +45,13 @@
             "program": "${env:PALETTESOURCE}/cmd/palette_monitor/palette_monitor.go",
             "args": []
         },
+       {
+            "name": "SPLASH - palette_splash.go",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTESOURCE}/cmd/palette_splash/palette_splash.go",
+            "args": ["-text=Dummy Text","-image=sppro_rebooting.png","-width=1920","-height=1080"]
+        },
         {
             "name": "palette start",
             "type": "go",
