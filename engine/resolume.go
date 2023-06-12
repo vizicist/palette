@@ -3,8 +3,8 @@ package engine
 import (
 	"encoding/json"
 	"fmt"
-	"path/filepath"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -246,11 +246,7 @@ func (r *Resolume) addEffectNum(addr string, effect string, num int) string {
 
 func (r *Resolume) showText(text string) {
 
-	textLayerNum, err := r.TextLayerNum()
-	if err != nil {
-		LogIfError(err)
-		return
-	}
+	textLayerNum := r.TextLayerNum()
 
 	// make sure the layer is not displayed before changing it
 	r.bypassLayer(textLayerNum, true)
@@ -269,8 +265,21 @@ func (r *Resolume) showText(text string) {
 	r.bypassLayer(textLayerNum, false) // show the layer
 }
 
-func (r *Resolume) TextLayerNum() (int, error) {
-	return GetParamInt("engine.resolumetextlayer")
+// In text layer, clip 1 is the animated text generator for the preset names,
+// and clips 2,3,... are images for startup and reboot.
+func (r *Resolume) showClip(clipNum int) {
+
+	textLayerNum := r.TextLayerNum()
+	r.connectClip(textLayerNum, clipNum) // activate that clip
+}
+
+func (r *Resolume) TextLayerNum() int {
+	layerNum, err := GetParamInt("engine.resolumetextlayer")
+	if err != nil {
+		LogIfError(err)
+		layerNum = 5 // last resort
+	}
+	return layerNum
 }
 
 func (r *Resolume) ProcessInfo() *ProcessInfo {
@@ -286,26 +295,22 @@ func (r *Resolume) ProcessInfo() *ProcessInfo {
 
 func (r *Resolume) Activate() {
 	// handle_activate sends OSC messages to start the layers in Resolume,
-	textLayer, err := r.TextLayerNum()
-	if err != nil {
-		LogIfError(err)
-		return
-	}
+	textLayer := r.TextLayerNum()
 	clipnum := 1
 
 	// do it a few times, in case Resolume hasn't started up
-	for i := 0; i < 10; i++ {
-		time.Sleep(5 * time.Second)
+	for i := 0; i < 16; i++ {
+		time.Sleep(2 * time.Second)
 
 		for _, patch := range PatchNames() {
 			_, layerNum := r.PortAndLayerNumForPatch(string(patch))
 			LogOfType("resolume", "Activating Resolume", "patch", layerNum, "clipnum", clipnum)
-			r.connectClip(layerNum, clipnum)
+			r.connectClip(layerNum, 1) // clip 1 in layer is the palette ffgl
 		}
-		if textLayer >= 1 {
-			r.connectClip(textLayer, clipnum)
-		}
+		r.showClip(2) // show the "starting up" splash clip in the text layer
 	}
+	// stop the show the animated text generator for preset names
+	r.connectClip(textLayer, clipnum)
 }
 
 func (r *Resolume) connectClip(layerNum int, clip int) {

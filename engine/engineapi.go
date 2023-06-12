@@ -131,6 +131,18 @@ func (e *Engine) executeEngineAPI(api string, apiargs map[string]string) (result
 		err := TheProcessManager.StopRunning(process)
 		return "", err
 
+	case "showclip":
+		s, ok := apiargs["clipnum"]
+		if !ok {
+			return "", fmt.Errorf("engine.showimage: missing filename parameter")
+		}
+		clipNum, err := strconv.Atoi(s)
+		if err != nil {
+			return "", fmt.Errorf("engine.showimage: bad clipnum parameter")
+		}
+		TheResolume().showClip(clipNum)
+		return "", nil
+
 	case "startrecording":
 		return e.StartRecording()
 
