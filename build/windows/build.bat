@@ -145,8 +145,7 @@ for %%X in (data_omnisphere) DO (
 	rem copy %PALETTESOURCE%\%%X\config\nats*.conf %ship%\%%X\config >nul
 	copy %PALETTESOURCE%\%%X\config\Palette*.avc %ship%\%%X\config >nul
 	copy %PALETTESOURCE%\%%X\config\EraeTouchLayout.emk %ship%\%%X\config >nul
-	copy %PALETTESOURCE%\%%X\config\attractscreen.png %ship%\%%X\config >nul
-	copy %PALETTESOURCE%\%%X\config\helpscreen.png %ship%\%%X\config >nul
+	copy %PALETTESOURCE%\%%X\config\*.png %ship%\%%X\config >nul
 	copy %PALETTESOURCE%\%%X\config\consola.ttf %ship%\%%X\config >nul
 	copy %PALETTESOURCE%\%%X\config\OpenSans-Regular.ttf %ship%\%%X\config >nul
 	copy %PALETTESOURCE%\%%X\config\palette.ico %ship%\%%X\config >nul
