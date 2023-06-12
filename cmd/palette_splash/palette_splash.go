@@ -198,7 +198,7 @@ func main() {
 	wp := flag.Int("width", 800, "screen width")
 	hp := flag.Int("height", 800, "screen height")
 	tp := flag.String("text", "Normal Text", "text string")
-	ip := flag.String("image", "attractscreen.png", "image filename")
+	ip := flag.String("image", "spp_attractscreen.png", "image filename")
 
 	flag.Parse()
 
