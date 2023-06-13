@@ -79,7 +79,6 @@
 
 "engine.debug": {"valuetype":"string", "min":"debug", "max":"debug", "init":"", "comment":"# Debugging" },
 "engine.attractidlesecs": {"valuetype":"int", "min":"0", "max":"3600", "init":"0", "comment":"# Attract timeout, 0 to disable" },
-"engine.autorestart": {"valuetype":"bool", "min":"falses", "max":"true", "init":"true", "comment":"# auto restart processes" },
 "engine.bidulepath": {"valuetype":"string", "min":"bidule", "max":"bidule", "init":"C:/Program Files/Plogue/Bidule/Bidule.exe", "comment":"# Bidule executable path" },
 
 "visual.noisevertex": {"valuetype":"float", "min":"0.0", "max":"1.0", "randmin":"0.0", "randmax":"0.0", "init":"0.0", "comment":"# 0-1" },

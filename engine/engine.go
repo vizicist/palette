@@ -105,7 +105,7 @@ func WaitTillDone() {
 
 func GetParam(name string) (string, error) {
 	if TheEngine == nil {
-		return "", fmt.Errorf("GetParam called before NewEngine, name=%s)",name)
+		return "", fmt.Errorf("GetParam called before NewEngine, name=%s)", name)
 	}
 	return TheEngine.params.Get(name)
 }
@@ -131,7 +131,7 @@ func GetParamInt(nm string) (int, error) {
 	var val int
 	nfound, err := fmt.Sscanf(s, "%d", &val)
 	if err != nil || nfound == 0 {
-		return 0, fmt.Errorf("bad format of integer parameter name=%s",nm)
+		return 0, fmt.Errorf("bad format of integer parameter name=%s", nm)
 	}
 	return val, nil
 }
@@ -143,11 +143,10 @@ func GetParamFloat(nm string) (float64, error) {
 	}
 	f, err := strconv.ParseFloat(s, 32)
 	if err != nil {
-		return 0.0, fmt.Errorf("bad format of float parameter name=%s",nm)
+		return 0.0, fmt.Errorf("bad format of float parameter name=%s", nm)
 	}
 	return f, nil
 }
-
 
 func (e *Engine) SaveCurrent() (err error) {
 	return e.params.Save("engine", "_Current")
@@ -176,8 +175,8 @@ func (e *Engine) Start() {
 
 	TheQuadPro.Start()
 
-	go e.StartOSCListener(OSCPort)
-	go e.StartHTTP(HTTPPort)
+	go e.StartOscListener(OscPort)
+	go e.StartHttp(EngineHttpPort)
 
 	go TheScheduler.Start()
 	go TheRouter.Start()
@@ -216,6 +215,7 @@ func (e *Engine) ResetLogTypes(logtypes string) {
 		}
 	}
 }
+
 func (e *Engine) SendOsc(client *osc.Client, msg *osc.Message) {
 	if client == nil {
 		LogIfError(fmt.Errorf("engine.SendOsc: client is nil"))
@@ -237,7 +237,7 @@ func (e *Engine) sendToOscClients(msg *osc.Message) {
 	}
 }
 
-func (e *Engine) StartOSCListener(port int) {
+func (e *Engine) StartOscListener(port int) {
 
 	source := fmt.Sprintf("%s:%d", LocalAddress, port)
 
@@ -260,8 +260,8 @@ func (e *Engine) StartOSCListener(port int) {
 	}
 }
 
-// StartHTTP xxx
-func (e *Engine) StartHTTP(port int) {
+// StartHttp xxx
+func (e *Engine) StartHttp(port int) {
 
 	http.HandleFunc("/api", func(responseWriter http.ResponseWriter, req *http.Request) {
 
@@ -284,7 +284,7 @@ func (e *Engine) StartHTTP(port int) {
 			} else {
 				bstr := string(body)
 				_ = bstr
-				resp, err := e.ExecuteAPIFromJson(bstr)
+				resp, err := e.ExecuteApiFromJson(bstr)
 				if err != nil {
 					response = ErrorResponse(err)
 				} else {

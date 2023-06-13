@@ -164,9 +164,6 @@ def boolValueOfString(v):
     return True if (v!=0 and v!="0" and v!="off" and v!="false" and v!="False") else False
 
 ApiLock = threading.Lock()
-PaletteOutputEventSubject = "palette.output.event"
-PaletteInputEventSubject = "palette.input.event"
-PaletteAPIEventSubject = "palette.api"
 
 def publish_event(subject,params):
     log("public_event needs work params=",params.encode())
