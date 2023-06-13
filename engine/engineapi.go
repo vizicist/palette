@@ -9,10 +9,10 @@ import (
 	"time"
 )
 
-// ExecuteAPI xxx
-func (e *Engine) ExecuteAPI(api string, apiargs map[string]string) (result string, err error) {
+// ExecuteApi xxx
+func (e *Engine) ExecuteApi(api string, apiargs map[string]string) (result string, err error) {
 
-	LogOfType("api", "ExecuteAPI", "api", api, "apiargs", apiargs)
+	LogOfType("api", "ExecuteApi", "api", api, "apiargs", apiargs)
 
 	words := strings.Split(api, ".")
 	if len(words) <= 1 {
@@ -25,9 +25,9 @@ func (e *Engine) ExecuteAPI(api string, apiargs map[string]string) (result strin
 	apisuffix := words[1]
 	switch apitype {
 	case "engine":
-		return e.executeEngineAPI(apisuffix, apiargs)
+		return e.executeEngineApi(apisuffix, apiargs)
 	case "saved":
-		return e.executeSavedAPI(apisuffix, apiargs)
+		return e.executeSavedApi(apisuffix, apiargs)
 	case "quadpro":
 		if TheQuadPro != nil {
 			return TheQuadPro.Api(apisuffix, apiargs)
@@ -50,19 +50,19 @@ func (e *Engine) ExecuteAPI(api string, apiargs map[string]string) (result strin
 }
 
 // handleRawJsonApi takes raw JSON (as a string of the form "{...}"") as an API and returns raw JSON
-func (e *Engine) ExecuteAPIFromJson(rawjson string) (string, error) {
+func (e *Engine) ExecuteApiFromJson(rawjson string) (string, error) {
 	args, err := StringMap(rawjson)
 	if err != nil {
-		return "", fmt.Errorf("Router.ExecuteAPIAsJson: bad format of JSON")
+		return "", fmt.Errorf("Router.ExecuteApiAsJson: bad format of JSON")
 	}
 	api := ExtractAndRemoveValueOf("api", args)
 	if api == "" {
-		return "", fmt.Errorf("Router.ExecuteAPIAsJson: no api value")
+		return "", fmt.Errorf("Router.ExecuteApiAsJson: no api value")
 	}
-	return e.ExecuteAPI(api, args)
+	return e.ExecuteApi(api, args)
 }
 
-func (e *Engine) executeEngineAPI(api string, apiargs map[string]string) (result string, err error) {
+func (e *Engine) executeEngineApi(api string, apiargs map[string]string) (result string, err error) {
 
 	switch api {
 
@@ -80,7 +80,7 @@ func (e *Engine) executeEngineAPI(api string, apiargs map[string]string) (result
 	case "attract":
 		v, ok := apiargs["onoff"]
 		if !ok {
-			return "", fmt.Errorf("executeEngineAPI: missing onoff parameter")
+			return "", fmt.Errorf("executeEngineApi: missing onoff parameter")
 		}
 		TheAttractManager.SetAttractMode(IsTrueValue(v))
 		return "", nil
@@ -112,21 +112,21 @@ func (e *Engine) executeEngineAPI(api string, apiargs map[string]string) (result
 	case "get":
 		name, ok := apiargs["name"]
 		if !ok {
-			return "", fmt.Errorf("executeEngineAPI: missing name parameter")
+			return "", fmt.Errorf("executeEngineApi: missing name parameter")
 		}
 		return e.params.Get(name)
 
 	case "startprocess":
 		process, ok := apiargs["process"]
 		if !ok {
-			return "", fmt.Errorf("executeEngineAPI: missing process parameter")
+			return "", fmt.Errorf("executeEngineApi: missing process parameter")
 		}
 		return "", TheProcessManager.StartRunning(process)
 
 	case "stopprocess":
 		process, ok := apiargs["process"]
 		if !ok {
-			return "", fmt.Errorf("executeEngineAPI: missing process parameter")
+			return "", fmt.Errorf("executeEngineApi: missing process parameter")
 		}
 		err := TheProcessManager.StopRunning(process)
 		return "", err
@@ -152,14 +152,14 @@ func (e *Engine) executeEngineAPI(api string, apiargs map[string]string) (result
 	case "startplayback":
 		fname, ok := apiargs["filename"]
 		if !ok {
-			return "", fmt.Errorf("executeEngineAPI: missing filename parameter")
+			return "", fmt.Errorf("executeEngineApi: missing filename parameter")
 		}
 		return "", e.StartPlayback(fname)
 
 	case "save":
 		filename, ok := apiargs["filename"]
 		if !ok {
-			return "", fmt.Errorf("executeEngineAPI: missing filename parameter")
+			return "", fmt.Errorf("executeEngineApi: missing filename parameter")
 		}
 		return "", e.params.Save("engine", filename)
 
@@ -224,8 +224,8 @@ func (e *Engine) executeEngineAPI(api string, apiargs map[string]string) (result
 		return "", nil
 
 	default:
-		LogWarn("Router.ExecuteAPI api is not recognized\n", "api", api)
-		err = fmt.Errorf("ExecuteEngineAPI: unrecognized api=%s", api)
+		LogWarn("Router.ExecuteApi api is not recognized\n", "api", api)
+		err = fmt.Errorf("ExecuteEngineApi: unrecognized api=%s", api)
 		result = ""
 	}
 
@@ -335,7 +335,7 @@ func (e *Engine) Set(name string, value string) error {
 	return e.params.Set(name, value)
 }
 
-func (e *Engine) executeSavedAPI(api string, apiargs map[string]string) (result string, err error) {
+func (e *Engine) executeSavedApi(api string, apiargs map[string]string) (result string, err error) {
 
 	switch api {
 
@@ -343,7 +343,7 @@ func (e *Engine) executeSavedAPI(api string, apiargs map[string]string) (result 
 		return SavedList(apiargs)
 	default:
 		LogWarn("api is not recognized\n", "api", api)
-		return "", fmt.Errorf("Router.ExecuteSavedAPI unrecognized api=%s", api)
+		return "", fmt.Errorf("Router.ExecuteSavedApi unrecognized api=%s", api)
 	}
 }
 

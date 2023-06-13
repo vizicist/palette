@@ -50,7 +50,7 @@ def myTest():
 
     import time # in this example we will have a small delay in the while loop
 
-    print 'ready to receive and send osc messages ...'
+    print('ready to receive and send osc messages ...')
     
     while 1:
 ##        osc.sendMsg("/test", [444], "127.0.0.1", 9000) # send normal msg to a specific ip and port
@@ -84,9 +84,9 @@ def myTest():
 def printStuff(*msg):
     """deals with "print" tagged OSC addresses """
 
-    print "printing in the printStuff function ", msg
-    print "the oscaddress is ", msg[0][0]
-    print "the value is ", msg[0][2]
+    print("printing in the printStuff function ", msg)
+    print("the oscaddress is ", msg[0][0])
+    print("the value is ", msg[0][2])
 
 
 
