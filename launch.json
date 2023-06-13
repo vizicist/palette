@@ -96,60 +96,11 @@
             "args": ["kill", "engine"]
         },
         {
-            "name": "Start MMTT",
-            "type": "go",
-            "request": "launch",
-            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
-            "args": ["api", "start", "\"process\":\"mmtt\""]
-        },
-        {
-            "name": "Kill MMTT",
-            "type": "go",
-            "request": "launch",
-            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
-            "args": ["api", "kill", "mmtt"]
-        },
-        {
-            "name": "Start Resolume",
-            "type": "go",
-            "request": "launch",
-            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
-            "args": ["api", "start", "resolume"]
-        },
-        {
             "name": "Kill resolume",
             "type": "go",
             "request": "launch",
             "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
             "args": ["kill", "resolume"]
-        },
-        {
-            "name": "Start bidule",
-            "type": "go",
-            "request": "launch",
-            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
-            "args": ["api", "start", "bidule"]
-        },
-        {
-            "name": "Kill bidule",
-            "type": "go",
-            "request": "launch",
-            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
-            "args": ["api", "kill", "bidule"]
-        },
-        {
-            "name": "Start gui",
-            "type": "go",
-            "request": "launch",
-            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
-            "args": ["api", "start", "\"process\":\"gui\""]
-        },
-        {
-            "name": "Kill gui",
-            "type": "go",
-            "request": "launch",
-            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
-            "args": ["api", "kill", "gui"]
         },
         {
             "name": "run testcursor.py",
