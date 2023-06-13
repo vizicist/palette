@@ -3,7 +3,6 @@ package engine
 import (
 	"fmt"
 	"math/rand"
-	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -66,10 +65,6 @@ func (e *Engine) executeEngineApi(api string, apiargs map[string]string) (result
 
 	switch api {
 
-	case "stop":
-		go e.stopAfterDelay()
-		return "", nil
-
 	case "status":
 		result = JsonObject(
 			"uptime", fmt.Sprintf("%f", Uptime()),
@@ -128,7 +123,7 @@ func (e *Engine) executeEngineApi(api string, apiargs map[string]string) (result
 		if !ok {
 			return "", fmt.Errorf("executeEngineApi: missing process parameter")
 		}
-		err := TheProcessManager.StopRunning(process)
+		err := TheProcessManager.KillProcess(process)
 		return "", err
 
 	case "showclip":
@@ -163,9 +158,8 @@ func (e *Engine) executeEngineApi(api string, apiargs map[string]string) (result
 		}
 		return "", e.params.Save("engine", filename)
 
-	case "exit":
-		e.StopMe()
-		go e.stopAfterDelay()
+	case "done":
+		e.SayDone() // needed for clean exit when profiling
 		return "", nil
 
 	case "audio_reset":
@@ -345,10 +339,4 @@ func (e *Engine) executeSavedApi(api string, apiargs map[string]string) (result 
 		LogWarn("api is not recognized\n", "api", api)
 		return "", fmt.Errorf("Router.ExecuteSavedApi unrecognized api=%s", api)
 	}
-}
-
-func (e *Engine) stopAfterDelay() {
-	time.Sleep(500 * time.Millisecond)
-	LogInfo("Engine.stop: calling os.Exit(0)")
-	os.Exit(0)
 }

@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"strings"
 	"syscall"
-	"time"
 
 	"github.com/nxadm/tail"
 	"github.com/vizicist/palette/engine"
@@ -67,7 +66,7 @@ func CliCommand(args []string) (map[string]string, error) {
 
 	// The only apis that can handle arguments...
 	switch api {
-	case "start", "stop":
+	case "start", "kill":
 		// okay
 	default:
 		if len(args) > 1 {
@@ -113,7 +112,9 @@ func CliCommand(args []string) (map[string]string, error) {
 		switch arg1 {
 
 		case "":
+			return nil, fmt.Errorf("palette start requires an additional argument")
 
+		case "monitor":
 			if engine.MonitorIsRunning() {
 				return nil, fmt.Errorf("monitor is already running")
 			}
@@ -121,7 +122,7 @@ func CliCommand(args []string) (map[string]string, error) {
 			// palette_monitor.exe will restart the engine,
 			// which then starts whatever engine.autostart specifies.
 
-			engine.LogInfo("palette: starting monitor","MonitorExe",engine.MonitorExe)
+			engine.LogInfo("palette: starting monitor", "MonitorExe", engine.MonitorExe)
 			fullexe := filepath.Join(engine.PaletteDir(), "bin", engine.MonitorExe)
 			return nil, engine.StartExecutableLogOutput("monitor", fullexe)
 
@@ -139,24 +140,20 @@ func CliCommand(args []string) (map[string]string, error) {
 		}
 
 	case "kill":
-		engine.LogInfo("Palette stop is killing everything except monitor.")
-		engine.KillAllExceptMonitor()
-		return nil, nil
-
-	case "stop":
 
 		switch arg1 {
 
 		case "":
-			engine.LogInfo("Palette stop is killing everything except monitor.")
-			arr, err := engine.EngineApi("engine.showclip", "clipnum", "3")
-			if err != nil {
-				engine.LogIfError(err)
-				return nil, err
-			}
-			time.Sleep(time.Second * 2)
+			return nil, fmt.Errorf("palette kill requires an additional argument")
+
+		case "all":
+			engine.LogInfo("Palette kill is killing everything including monitor.")
+			engine.KillExecutable(engine.MonitorExe)
 			engine.KillAllExceptMonitor()
-			return arr, nil
+			return nil, nil
+
+		case "monitor":
+			return nil, engine.KillExecutable(engine.MonitorExe)
 
 		case "engine":
 			// Don't use engine.exit API, just kill it
@@ -187,7 +184,9 @@ func CliCommand(args []string) (map[string]string, error) {
 
 	default:
 		words := strings.Split(api, ".")
-		if len(words) != 2 {
+		if len(words) < 2 {
+			return nil, fmt.Errorf("unrecognized command (%s), expected usage:\n%s", api, usage())
+		} else if len(words) > 2 {
 			return nil, fmt.Errorf("invalid api format, expecting {plugin}.{api}" + usage())
 		}
 		return engine.EngineApi(api, args[1:]...)
