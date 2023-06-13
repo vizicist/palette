@@ -14,13 +14,6 @@ import (
 	midi "gitlab.com/gomidi/midi/v2"
 )
 
-var HTTPPort = 3330
-var OSCPort = 3333
-var EventClientPort = 6666
-var GuiPort = 3943
-
-var LocalAddress = "127.0.0.1"
-
 var TheRouter *Router
 
 // Router takes events and routes them
@@ -41,8 +34,6 @@ type Router struct {
 
 	inputEventMutex sync.RWMutex
 }
-
-type APIExecutorFunc func(api string, nuid string, rawargs string) (result any, err error)
 
 func NewRouter() *Router {
 
@@ -91,7 +82,7 @@ func (r *Router) InputListenOnce() {
 	}()
 	select {
 	case msg := <-r.oscInputChan:
-		r.handleOSCInput(msg)
+		r.handleOscInput(msg)
 		TheEngine.RecordOscEvent(&msg)
 	case event := <-r.midiInputChan:
 		r.HandleMidiEvent(event)
@@ -225,10 +216,10 @@ func GetArgsXYZ(args map[string]string) (x, y, z float32, err error) {
 	return x, y, z, err
 }
 
-// HandleOSCInput xxx
-func (r *Router) handleOSCInput(e OscEvent) {
+// HandleOscInput xxx
+func (r *Router) handleOscInput(e OscEvent) {
 
-	LogOfType("osc", "Router.HandleOSCInput", "msg", e.Msg.String())
+	LogOfType("osc", "Router.HandleOscInput", "msg", e.Msg.String())
 	switch e.Msg.Address {
 
 	case "/clientrestart":

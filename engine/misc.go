@@ -29,6 +29,13 @@ var ResolumeExe = "avenue.exe"
 var KeykitExe = "key.exe"
 var MmttExe = "mmtt_kinect.exe"
 
+var MmttHttpPort = 4444
+var EngineHttpPort = 3330
+var OscPort = 3333
+var EventClientPort = 6666
+var GuiPort = 3943
+var LocalAddress = "127.0.0.1"
+
 func KillAllExceptMonitor() {
 	LogInfo("KillAll")
 	err := KillExecutable(KeykitExe)
@@ -45,17 +52,15 @@ func KillAllExceptMonitor() {
 	LogIfError(err)
 }
 
-func KillMonitor() {
-	LogInfo("KillMonitor")
-	err := KillExecutable(MonitorExe)
-	LogIfError(err)
-}
-
 func IsRunning(process string) bool {
 	if process == "engine" {
 		return IsRunningExecutable(EngineExe)
 	}
 	return TheProcessManager.IsRunning(process)
+}
+
+func MonitorIsRunning() bool {
+	return IsRunningExecutable(MonitorExe)
 }
 
 // func IsEngineRunning() bool {
@@ -294,24 +299,6 @@ func LoadImage(path string) (*image.NRGBA, error) {
 	return nrgba, nil
 }
 
-// GetString complains if a parameter is not there, but still returns ""
-func GetString(pmap map[string]string, name string) (string, error) {
-	value, ok := pmap[name]
-	if !ok {
-		return "", fmt.Errorf("GetString: no param value named %s!?", name)
-	}
-	return value, nil
-}
-
-// StringParamOfAPI xxx
-func StringParamOfAPI(api string, pmap map[string]string, name string) (string, error) {
-	value, ok := pmap[name]
-	if !ok {
-		return "", fmt.Errorf("api '%s' is missing required parameter '%s'", api, name)
-	}
-	return value, nil
-}
-
 // IsTrueValue returns true if the value is some version of true, and false otherwise.
 func IsTrueValue(value string) bool {
 	switch value {
@@ -476,10 +463,39 @@ func ziplogs(logsdir string, zipfile string) error {
 	return err
 }
 
-func RemoteAPI(api string, args ...string) (map[string]string, error) {
+func MmttApi(api string, apiargs ...string) (map[string]string, error) {
+	return MmttRemoteApi(api, apiargs...)
+}
+
+func EngineApi(api string, apiargs ...string) (map[string]string, error) {
+	return EngineRemoteApi(api, apiargs...)
+}
+
+// humanReadableApiOutput takes the result of an API invocation and
+// produces what will appear in visible output from a CLI command.
+func HumanReadableApiOutput(apiOutput map[string]string) string {
+	if apiOutput == nil {
+		return "OK\n"
+	}
+	e, eok := apiOutput["error"]
+	if eok {
+		return fmt.Sprintf("Error: %s", e)
+	}
+	result, rok := apiOutput["result"]
+	if !rok {
+		return "Error: unexpected - no result or error in API output?"
+	}
+	if result == "" {
+		result = "OK\n"
+	}
+	return result
+}
+
+
+func EngineRemoteApi(api string, args ...string) (map[string]string, error) {
 
 	if len(args)%2 != 0 {
-		return nil, fmt.Errorf("RemoteAPI: odd nnumber of args, should be even")
+		return nil, fmt.Errorf("RemoteApi: odd nnumber of args, should be even")
 	}
 	apijson := "\"api\": \"" + api + "\""
 	for n := range args {
@@ -487,11 +503,26 @@ func RemoteAPI(api string, args ...string) (map[string]string, error) {
 			apijson = apijson + ",\"" + args[n] + "\": \"" + args[n+1] + "\""
 		}
 	}
-	return RemoteAPIRaw(apijson)
+	url := fmt.Sprintf("http://127.0.0.1:%d/api", EngineHttpPort)
+	return RemoteApiRaw(url, apijson)
 }
 
-func RemoteAPIRaw(args string) (map[string]string, error) {
-	url := fmt.Sprintf("http://127.0.0.1:%d/api", HTTPPort)
+func MmttRemoteApi(api string, args ...string) (map[string]string, error) {
+
+	if len(args)%2 != 0 {
+		return nil, fmt.Errorf("RemoteApi: odd nnumber of args, should be even")
+	}
+	apijson := "\"api\": \"" + api + "\""
+	for n := range args {
+		if n%2 == 0 {
+			apijson = apijson + ",\"" + args[n] + "\": \"" + args[n+1] + "\""
+		}
+	}
+	url := fmt.Sprintf("http://127.0.0.1:%d/api", MmttHttpPort)
+	return RemoteApiRaw(url, apijson)
+}
+
+func RemoteApiRaw(url string, args string) (map[string]string, error) {
 	postBody := []byte(args)
 	resp, err := http.Post(url, "application/json", bytes.NewBuffer(postBody))
 	if err != nil {
@@ -504,11 +535,11 @@ func RemoteAPIRaw(args string) (map[string]string, error) {
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("RemoteAPIRaw: ReadAll err=%s", err)
+		return nil, fmt.Errorf("RemoteApiRaw: ReadAll err=%s", err)
 	}
 	output, err := StringMap(string(body))
 	if err != nil {
-		return nil, fmt.Errorf("RemoteAPIRaw: unable to interpret output, err=%s", err)
+		return nil, fmt.Errorf("RemoteApiRaw: unable to interpret output, err=%s", err)
 	}
 	errstr, haserror := output["error"]
 	if haserror && !strings.Contains(errstr, "exit status") {

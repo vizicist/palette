@@ -60,13 +60,6 @@
             "args": ["start"]
         },
         {
-            "name": "palette restart",
-            "type": "go",
-            "request": "launch",
-            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
-            "args": ["restart"]
-        },
-        {
             "name": "palette status",
             "type": "go",
             "request": "launch",
@@ -74,11 +67,11 @@
             "args": ["status"]
         },
         {
-            "name": "palette killall",
+            "name": "palette kill",
             "type": "go",
             "request": "launch",
             "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
-            "args": ["killall"]
+            "args": ["kill"]
         },
         {
             "name": "Chillian Start",

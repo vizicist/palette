@@ -27,12 +27,16 @@ func main() {
 
 	engine.LogInfo("Palette InitLog", "args", flag.Args())
 
-	out := CliCommand(flag.Args())
-	os.Stdout.WriteString(out)
+	apiout, err := CliCommand(flag.Args())
+	if err != nil {
+		os.Stdout.WriteString("Error: " + err.Error() + "\n")
+	} else {
+		os.Stdout.WriteString(engine.HumanReadableApiOutput(apiout))
+	}
 }
 
 func usage() string {
-	return `Commands:
+	return `Invalid usage, expecting:
 	palette start
 	palette stop
 	palette status
@@ -42,24 +46,6 @@ func usage() string {
 	`
 }
 
-// humanReadableApiOutput takes the result of an API invocation and
-// produces what will appear in visible output from a CLI command.
-func humanReadableApiOutput(output map[string]string) string {
-	e, eok := output["error"]
-	if eok {
-		return fmt.Sprintf("Error: api err=%s", e)
-	}
-	result, rok := output["result"]
-	if !rok {
-		return "Error: unexpected - no result or error in API output?"
-	}
-	if result == "" {
-		result = "OK\n"
-	}
-
-	return result
-}
-
 func processStatus(process string) string {
 	if engine.IsRunning(process) {
 		return "running"
@@ -67,12 +53,10 @@ func processStatus(process string) string {
 	return "not running"
 }
 
-func CliCommand(args []string) string {
-
-	var err error
+func CliCommand(args []string) (map[string]string, error) {
 
 	if len(args) == 0 {
-		return usage()
+		return nil, fmt.Errorf(usage())
 	}
 
 	api := args[0]
@@ -81,26 +65,34 @@ func CliCommand(args []string) string {
 		arg1 = args[1]
 	}
 
+	// The only apis that can handle arguments...
+	switch api {
+	case "start", "stop":
+		// okay
+	default:
+		if len(args) > 1 {
+			return nil, fmt.Errorf(usage())
+		}
+	}
+
 	switch api {
 
 	case "taillog", "logtail":
-		if arg1 != "" {
-			return usage()
-		}
 		logpath := engine.LogFilePath("engine.log")
 		t, err := tail.TailFile(logpath, tail.Config{Follow: true})
 		engine.LogIfError(err)
 		for line := range t.Lines {
 			fmt.Println(line.Text)
 		}
-		return ""
+		return nil, nil
 
 	case "status":
-		if arg1 != "" {
-			return usage()
-		}
 		s := ""
-		s += "Monitor is " + monitorStatus() + ".\n"
+		if engine.MonitorIsRunning() {
+			s += "Monitor is running.\n"
+		} else {
+			s += "Monitor is not running.\n"
+		}
 		s += "Engine is " + processStatus("engine") + ".\n"
 		s += "GUI is " + processStatus("gui") + ".\n"
 		s += "Bidule is " + processStatus("bidule") + ".\n"
@@ -113,144 +105,106 @@ func CliCommand(args []string) string {
 		if mmtt != "" {
 			s += "MMTT is " + processStatus("mmtt") + ".\n"
 		}
-		return s
+		out := map[string]string{"result": s}
+		return out, nil
 
 	case "start":
 
 		switch arg1 {
 
 		case "":
+
+			if engine.MonitorIsRunning() {
+				return nil, fmt.Errorf("monitor is already running")
+			}
+
 			// palette_monitor.exe will restart the engine,
 			// which then starts whatever engine.autostart specifies.
-			return doStartMonitor()
+
+			engine.LogInfo("palette: starting monitor","MonitorExe",engine.MonitorExe)
+			fullexe := filepath.Join(engine.PaletteDir(), "bin", engine.MonitorExe)
+			return nil, engine.StartExecutableLogOutput("monitor", fullexe)
 
 		case "engine":
-			return doStartEngine()
+			return nil, doStartEngine()
 
 		default:
 			// If it exists in the ProcessList...
 			for _, process := range engine.ProcessList() {
 				if arg1 == process {
-					return doApi("engine.startprocess", "process", arg1)
+					return engine.EngineApi("engine.startprocess", "process", arg1)
 				}
 			}
-			return fmt.Sprintf("Process %s is disabled or unknown.\n", arg1)
+			return nil, fmt.Errorf("process %s is disabled or unknown", arg1)
 		}
 
 	case "kill":
-		if arg1 != "" {
-			return usage()
-		}
-		engine.LogInfo("Palette stop is killing everything, including monitor.")
+		engine.LogInfo("Palette stop is killing everything except monitor.")
 		engine.KillAllExceptMonitor()
-		engine.KillMonitor()
-		return "OK\n"
+		return nil, nil
 
 	case "stop":
 
 		switch arg1 {
 
 		case "":
-			engine.LogInfo("Palette stop is killing everything including monitor.")
-			doApi("engine.showclip", "clipnum", "3")
+			engine.LogInfo("Palette stop is killing everything except monitor.")
+			arr, err := engine.EngineApi("engine.showclip", "clipnum", "3")
+			if err != nil {
+				engine.LogIfError(err)
+				return nil, err
+			}
 			time.Sleep(time.Second * 2)
 			engine.KillAllExceptMonitor()
-			engine.KillMonitor()
-			return "OK\n"
+			return arr, nil
 
 		case "engine":
-			return doApi("engine.exit")
+			// Don't use engine.exit API, just kill it
+			return nil, engine.KillExecutable(engine.EngineExe)
 
 		default:
 			// If it exists in the ProcessList...
 			for _, process := range engine.ProcessList() {
 				if arg1 == process {
-					return doApi("engine.stopprocess", "process", arg1)
+					return engine.EngineApi("engine.stopprocess", "process", arg1)
 				}
 			}
-			return fmt.Sprintf("Process %s is disabled or unknown.\n", arg1)
+			return nil, fmt.Errorf("process %s is disabled or unknown", arg1)
 		}
 
 	case "version":
-		if arg1 != "" {
-			return usage()
-		}
-		return engine.GetPaletteVersion()
+		s := engine.GetPaletteVersion()
+		return map[string]string{"result": s}, nil
 
-	case "restart":
-		if arg1 != "" {
-			return usage()
-		}
-		engine.KillAllExceptMonitor()
-		engine.KillMonitor()
-		time.Sleep(time.Second * 2)
-		return doStartMonitor()
+	case "align":
+		return engine.MmttApi("realign")
 
 	case "sendlogs":
-		if arg1 != "" {
-			return usage()
-		}
-		err = engine.SendLogs()
-		if err != nil {
-			return err.Error()
-		}
-		return "Logs have been sent."
+		return nil, engine.SendLogs()
 
 	case "test":
-		return doApi("quadpro.test", "ntimes", "40")
+		return engine.EngineApi("quadpro.test", "ntimes", "40")
 
 	default:
 		words := strings.Split(api, ".")
 		if len(words) != 2 {
-			return "Invalid api format, expecting {plugin}.{api}\n" + usage()
+			return nil, fmt.Errorf("invalid api format, expecting {plugin}.{api}" + usage())
 		}
-		return doApi(api, args[1:]...)
+		return engine.EngineApi(api, args[1:]...)
 	}
 }
 
-func monitorStatus() string {
-	if engine.IsRunningExecutable(engine.MonitorExe) {
-		return "running"
-	} else {
-		return "not running"
-	}
-}
-
-func doApi(api string, apiargs ...string) string {
-	resultMap, err := engine.RemoteAPI(api, apiargs...)
-	if err != nil {
-		return fmt.Sprintf("RemoteAPI: api=%s err=%s\n", api, err)
-	}
-	return humanReadableApiOutput(resultMap)
-}
-
-func doStartEngine() string {
+func doStartEngine() error {
 
 	if engine.IsRunning("engine") {
-		return "Engine is already running?"
+		return fmt.Errorf("engine is already running")
 	}
 
 	fullexe := filepath.Join(engine.PaletteDir(), "bin", engine.EngineExe)
 	err := engine.StartExecutableLogOutput("engine", fullexe)
-
-	if err != nil {
-		return fmt.Sprintf("engine.StartEngine: err=%s", err)
-	}
-	return "Engine has been started."
-}
-
-func doStartMonitor() string {
-
-	if engine.IsRunningExecutable(engine.MonitorExe) {
-		return "Monitor is already running?"
-	}
-
-	engine.LogInfo("doStartMonitor: starting monitor")
-	fullexe := filepath.Join(engine.PaletteDir(), "bin", engine.MonitorExe)
-	err := engine.StartExecutableLogOutput("monitor", fullexe)
 	if err != nil {
 		engine.LogIfError(err)
-		return fmt.Sprintf("engine.StartMonitor: err=%s", err)
+		return err
 	}
-	return "Monitor has been started."
+	return nil
 }

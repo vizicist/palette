@@ -49,23 +49,28 @@ func checkEngine() {
 	}
 }
 
+func mmttRealign() {
+	engine.LogInfo("Begin mmttRealign")
+}
+
 func killAndRestart() {
+	engine.LogInfo("Begin killAndRestart")
 	engine.KillAllExceptMonitor()
 	// restart just the engine,  engine.autostart value will determine what else gets started
-	fullexe := filepath.Join(engine.PaletteDir(), "bin", engine.PaletteExe)
-	err := engine.StartExecutableLogOutput("palette", fullexe, "start", "engine")
+	engine.LogInfo("Restarting engine")
+	fullexe := filepath.Join(engine.PaletteDir(), "bin", engine.EngineExe)
+	err := engine.StartExecutableLogOutput(engine.EngineExe, fullexe)
 	engine.LogIfError(err)
+	engine.LogInfo("End of killAndRestart")
 }
 
 func shutdownAndReboot() {
-	engine.LogInfo("shutdownAndReboot is rebooting")
+	engine.LogInfo("Begin of shutdownAndReboot")
 	cmd := exec.Command("shutdown", "/r", "-t", "10")
 	err := cmd.Run()
 	engine.LogIfError(err)
-	engine.LogInfo("End of ButtonAction1")
+	engine.LogInfo("End of shutdownAndReboot")
 }
-
-type ButtonAction func()
 
 func joystickMonitor(jsid int) {
 	js, err := joystick.Open(jsid)
@@ -84,16 +89,6 @@ func joystickMonitor(jsid int) {
 	ticker := time.NewTicker(time.Millisecond * 100)
 	buttonDown := make([]bool, js.ButtonCount())
 	buttonDownTime := make([]time.Time, js.ButtonCount())
-	buttonAction := make([]ButtonAction, js.ButtonCount())
-
-	buttonAction[0] = func() {
-		engine.LogInfo("ButtonAction: calling killAndRestart")
-		killAndRestart()
-	}
-	buttonAction[1] = func() {
-		engine.LogInfo("ButtonAction: calling shutdown")
-		shutdownAndReboot()
-	}
 
 	for {
 		jinfo, err := js.Read()
@@ -114,11 +109,16 @@ func joystickMonitor(jsid int) {
 					// Button just came back up.
 					dt := time.Since(buttonDownTime[button])
 					// Pay attention only if the button is down for more than a second.
-					if dt > time.Second {
-						engine.LogInfo("BUTTON longpress", "button", button, "dt", dt)
-						if buttonAction[button] != nil {
-							buttonAction[button]()
-						}
+					shortPress := 2 * time.Second
+					longPress := 6 * time.Second
+					if dt < shortPress {
+						engine.LogInfo("BUTTON pressed, but not long enough to do anything", "button", button, "dt", dt)
+					} else if dt < longPress {
+						engine.LogInfo("BUTTON shortPress", "button", button, "dt", dt)
+						killAndRestart()
+					} else {
+						engine.LogInfo("BUTTON longPress", "button", button, "dt", dt)
+						shutdownAndReboot()
 					}
 				}
 			}
@@ -149,15 +149,16 @@ func midiMonitor(port string) {
 	noteAction := make([]NoteAction, nnotes)
 
 	noteAction[60] = func() {
-		engine.LogInfo("NoteAction: calling killAndRestart")
-		killAndRestart()
+		mmttRealign()
+		engine.LogInfo("NoteAction: nothing attached to that note")
 	}
 	noteAction[62] = func() {
 		engine.LogInfo("NoteAction: calling shutdownAndReboot")
 		shutdownAndReboot()
 	}
 	noteAction[64] = func() {
-		engine.LogInfo("NoteAction: nothing attached to that note")
+		engine.LogInfo("NoteAction: calling killAndRestart")
+		killAndRestart()
 	}
 
 	stop, err := midi.ListenTo(in, func(msg midi.Message, timestampms int32) {

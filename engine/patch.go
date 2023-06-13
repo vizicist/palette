@@ -240,7 +240,7 @@ func (patch *Patch) Api(api string, apiargs map[string]string) (string, error) {
 	case "set":
 		name, value, err := GetNameValue(apiargs)
 		if err != nil {
-			return "", fmt.Errorf("executePatchAPI: err=%s", err)
+			return "", fmt.Errorf("executePatchApi: err=%s", err)
 		}
 		err = patch.Set(name, value)
 		if err != nil {
@@ -264,7 +264,7 @@ func (patch *Patch) Api(api string, apiargs map[string]string) (string, error) {
 	case "get":
 		name, ok := apiargs["name"]
 		if !ok {
-			return "", fmt.Errorf("executePatchAPI: missing name argument")
+			return "", fmt.Errorf("Patch.Api: missing name argument")
 		}
 		return patch.Get(name), nil
 
@@ -282,7 +282,7 @@ func (patch *Patch) Api(api string, apiargs map[string]string) (string, error) {
 		if strings.HasPrefix(api, "loop_") || strings.HasPrefix(api, "midi_") {
 			return "", nil
 		}
-		err := fmt.Errorf("Patch.API: unrecognized api=%s", api)
+		err := fmt.Errorf("Patch.Api: unrecognized api=%s", api)
 		LogIfError(err)
 		return "", err
 	}
