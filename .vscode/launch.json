@@ -133,67 +133,11 @@
             "args": ["start","apps"]
         },
         {
-            "name": "Stop Engine",
+            "name": "Kill Engine",
             "type": "go",
             "request": "launch",
             "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
-            "args": ["stop", "engine"]
-        },
-        {
-            "name": "Start MMTT",
-            "type": "go",
-            "request": "launch",
-            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
-            "args": ["api", "start", "\"process\":\"mmtt\""]
-        },
-        {
-            "name": "Stop MMTT",
-            "type": "go",
-            "request": "launch",
-            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
-            "args": ["api", "stop", "\"process\":\"mmtt\""]
-        },
-        {
-            "name": "Start Resolume",
-            "type": "go",
-            "request": "launch",
-            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
-            "args": ["api", "start", "\"process\":\"resolume\""]
-        },
-        {
-            "name": "Stop resolume",
-            "type": "go",
-            "request": "launch",
-            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
-            "args": ["stop", "resolume"]
-        },
-        {
-            "name": "Start bidule",
-            "type": "go",
-            "request": "launch",
-            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
-            "args": ["api", "start", "\"process\":\"bidule\""]
-        },
-        {
-            "name": "Stop bidule",
-            "type": "go",
-            "request": "launch",
-            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
-            "args": ["api", "stop", "\"process\":\"bidule\""]
-        },
-        {
-            "name": "Start gui",
-            "type": "go",
-            "request": "launch",
-            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
-            "args": ["api", "start", "\"process\":\"gui\""]
-        },
-        {
-            "name": "Stop gui",
-            "type": "go",
-            "request": "launch",
-            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
-            "args": ["api", "stop", "\"process\":\"gui\""]
+            "args": ["kill", "engine"]
         },
         {
             "name": "sendlogs",
