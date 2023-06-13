@@ -36,8 +36,8 @@ func main() {
 
 func usage() string {
 	return `Invalid usage, expecting:
-	palette start
-	palette stop
+	palette start [ monitor, engine, gui, bidule, resolume, mmtt ]
+	palette kill [ monitor, engine, gui, bidule, resolume, mmtt ]
 	palette status
 	palette version
 	palette logtail
