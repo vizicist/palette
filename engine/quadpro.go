@@ -112,7 +112,7 @@ func (quadpro *QuadPro) Api(api string, apiargs map[string]string) (result strin
 		return "", nil
 
 	default:
-		LogWarn("QuadPro.ExecuteAPI api is not recognized\n", "api", api)
+		LogWarn("QuadPro.ExecuteApi api is not recognized\n", "api", api)
 		return "", fmt.Errorf("QuadPro.Api unrecognized api=%s", api)
 	}
 }
