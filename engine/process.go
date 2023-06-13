@@ -47,10 +47,6 @@ func StartRunning(process string) error {
 	return nil
 }
 
-func StopRunning(process string) error {
-	return TheProcessManager.StopRunning(process)
-}
-
 func CheckAutorestartProcesses() {
 	TheProcessManager.CheckAutorestartProcesses()
 }
@@ -203,9 +199,9 @@ func (pm *ProcessManager) StartRunning(process string) error {
 	return nil
 }
 
-func (pm *ProcessManager) StopRunning(process string) (err error) {
+func (pm *ProcessManager) KillProcess(process string) (err error) {
 
-	LogOfType("process", "StopRunning", "process", process)
+	LogOfType("process", "KillProcess", "process", process)
 
 	pi, err := pm.getProcessInfo(process)
 	if err != nil {
