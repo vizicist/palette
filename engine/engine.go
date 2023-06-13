@@ -191,7 +191,7 @@ func (e *Engine) WaitTillDone() {
 	<-e.done
 }
 
-func (e *Engine) StopMe() {
+func (e *Engine) SayDone() {
 	e.done <- true
 }
 
