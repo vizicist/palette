@@ -153,7 +153,7 @@ func CliCommand(args []string) string {
 		case "":
 			engine.LogInfo("Palette stop is killing everything including monitor.")
 			doApi("engine.showclip", "clipnum", "3")
-			time.Sleep(time.Second * 8)
+			time.Sleep(time.Second * 2)
 			engine.KillAllExceptMonitor()
 			engine.KillMonitor()
 			return "OK\n"
