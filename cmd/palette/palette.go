@@ -196,6 +196,9 @@ func CliCommand(args []string) string {
 		}
 		return "Logs have been sent."
 
+	case "test":
+		return doApi("quadpro.test", "ntimes", "40")
+
 	default:
 		words := strings.Split(api, ".")
 		if len(words) != 2 {
