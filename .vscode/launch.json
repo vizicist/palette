@@ -46,11 +46,25 @@
             "args": []
         },
        {
+            "name": "MONITOR Engine=false - palette_monitor.go",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTESOURCE}/cmd/palette_monitor/palette_monitor.go",
+            "args": ["-engine=false"]
+        },
+       {
             "name": "SPLASH - palette_splash.go",
             "type": "go",
             "request": "launch",
             "program": "${env:PALETTESOURCE}/cmd/palette_splash/palette_splash.go",
             "args": ["-text=Dummy Text","-image=sppro_rebooting.png","-width=1920","-height=1080"]
+        },
+        {
+            "name": "palette align",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
+            "args": ["align"]
         },
         {
             "name": "palette start",
@@ -67,11 +81,11 @@
             "args": ["status"]
         },
         {
-            "name": "palette kill",
+            "name": "palette kill resolume",
             "type": "go",
             "request": "launch",
             "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
-            "args": ["kill"]
+            "args": ["kill", "resolume"]
         },
         {
             "name": "Chillian Start",

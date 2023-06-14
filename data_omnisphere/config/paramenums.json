@@ -1,6 +1,7 @@
 {
   "plugins": [ "", "quadpro" ],
   "log": ["","cursor","midi","cursor,midi","cursor,midi,osc","osc","api","loop", "morph"],
+  "autostart": ["","resolume,gui,bidule","mmtt,resolume,gui,bidule"],
   "pitchset": ["","stylusrmx"],
   "mmtt": ["kinect", "depthai", ""],
 	"destination": [ ".", "A", "B", "C", "D" ],

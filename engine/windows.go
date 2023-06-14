@@ -13,12 +13,15 @@ import (
 
 func KillExecutable(executable string) error {
 	exe := isolateExe(executable)
-	// os.Stderr.WriteString("KillExecutable " + executable + "\n")
 	LogInfo("KillExecutable", "executable", executable, "exe", exe)
 	// NOTE: do NOT use taskkill.exe instead of taskkill, it doesn't work.
 	cmd := exec.Command("taskkill", "/F", "/IM", exe)
-	// os.Stderr.WriteString(fmt.Sprintf("cmd = %#v\n", cmd))
-	return cmd.Run()
+	// If the process isn't currently running,
+	// cmd.Run gives an "exit status 128" error,
+	// and doesn't seem like there's any other useful errors,
+	// so just ignore all errors.
+	_ = cmd.Run()
+	return nil
 }
 
 // StartExecutable executes something.  If background is true, it doesn't block
@@ -61,6 +64,9 @@ func startExecutable(executable string, background bool, stdout io.Writer, stder
 		err = cmd.Start()
 	} else {
 		err = cmd.Run()
+	}
+	if err != nil {
+		LogInfo("err in StartExecutable")
 	}
 	return cmd, err
 }

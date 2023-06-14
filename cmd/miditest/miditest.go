@@ -15,7 +15,7 @@ func main() {
 
 	defer midi.CloseDriver()
 
-	port := "01. Internal MIDI"
+	port := "Logidy UMI3"
 	in, err := midi.FindInPort(port)
 	if err != nil {
 		fmt.Printf("can't find %s\n", port)

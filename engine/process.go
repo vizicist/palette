@@ -176,7 +176,7 @@ func (pm *ProcessManager) StartRunning(process string) error {
 		LogInfo("StartRunning: already running", "process", process)
 		return nil
 	}
-	pi, err := pm.getProcessInfo(process)
+	pi, err := pm.GetProcessInfo(process)
 	if err != nil {
 		return err
 	}
@@ -203,7 +203,7 @@ func (pm *ProcessManager) KillProcess(process string) (err error) {
 
 	LogOfType("process", "KillProcess", "process", process)
 
-	pi, err := pm.getProcessInfo(process)
+	pi, err := pm.GetProcessInfo(process)
 	if err != nil {
 		return err
 	}
@@ -223,10 +223,10 @@ func (pm *ProcessManager) ProcessStatus() string {
 	return s
 }
 
-func (pm *ProcessManager) getProcessInfo(process string) (*ProcessInfo, error) {
+func (pm *ProcessManager) GetProcessInfo(process string) (*ProcessInfo, error) {
 	p, ok := pm.info[process]
 	if !ok || p == nil {
-		err := fmt.Errorf("getProcessInfo: no process info for %s", process)
+		err := fmt.Errorf("GetProcessInfo: no process info for %s", process)
 		LogIfError(err)
 		return nil, err
 	}
@@ -234,12 +234,12 @@ func (pm *ProcessManager) getProcessInfo(process string) (*ProcessInfo, error) {
 }
 
 func (pm *ProcessManager) IsAvailable(process string) bool {
-	p, err := pm.getProcessInfo(process)
+	p, err := pm.GetProcessInfo(process)
 	return err == nil && p != nil && p.FullPath != ""
 }
 
 func (pm *ProcessManager) IsRunning(process string) bool {
-	pi, err := pm.getProcessInfo(process)
+	pi, err := pm.GetProcessInfo(process)
 	if err != nil {
 		LogIfError(err)
 		return false
