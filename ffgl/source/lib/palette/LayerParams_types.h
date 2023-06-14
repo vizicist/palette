@@ -1,5 +1,6 @@
 DEFINE_TYPES(plugins);
 DEFINE_TYPES(log);
+DEFINE_TYPES(autostart);
 DEFINE_TYPES(pitchset);
 DEFINE_TYPES(mmtt);
 DEFINE_TYPES(destination);
@@ -41,6 +42,10 @@ LayerParams_InitializeTypes() {
 	LayerParams_logTypes.push_back("api");
 	LayerParams_logTypes.push_back("loop");
 	LayerParams_logTypes.push_back("morph");
+
+	LayerParams_autostartTypes.push_back("");
+	LayerParams_autostartTypes.push_back("resolume,gui,bidule");
+	LayerParams_autostartTypes.push_back("mmtt,resolume,gui,bidule");
 
 	LayerParams_pitchsetTypes.push_back("");
 	LayerParams_pitchsetTypes.push_back("stylusrmx");

@@ -37,7 +37,7 @@ func main() {
 func usage() string {
 	return `Invalid usage, expecting:
 	palette start [ monitor, engine, gui, bidule, resolume, mmtt ]
-	palette kill [ monitor, engine, gui, bidule, resolume, mmtt ]
+	palette kill [ all, monitor, engine, gui, bidule, resolume, mmtt]
 	palette status
 	palette version
 	palette logtail
@@ -111,10 +111,7 @@ func CliCommand(args []string) (map[string]string, error) {
 
 		switch arg1 {
 
-		case "":
-			return nil, fmt.Errorf("palette start requires an additional argument")
-
-		case "monitor":
+		case "", "monitor":
 			if engine.MonitorIsRunning() {
 				return nil, fmt.Errorf("monitor is already running")
 			}
@@ -143,10 +140,7 @@ func CliCommand(args []string) (map[string]string, error) {
 
 		switch arg1 {
 
-		case "":
-			return nil, fmt.Errorf("palette kill requires an additional argument")
-
-		case "all":
+		case "", "all":
 			engine.LogInfo("Palette kill is killing everything including monitor.")
 			engine.KillExecutable(engine.MonitorExe)
 			engine.KillAllExceptMonitor()
@@ -161,12 +155,11 @@ func CliCommand(args []string) (map[string]string, error) {
 
 		default:
 			// If it exists in the ProcessList...
-			for _, process := range engine.ProcessList() {
-				if arg1 == process {
-					return engine.EngineApi("engine.stopprocess", "process", arg1)
-				}
+			pi, err := engine.TheProcessManager.GetProcessInfo(arg1)
+			if err != nil {
+				return nil, err
 			}
-			return nil, fmt.Errorf("process %s is disabled or unknown", arg1)
+			return nil, engine.KillExecutable(pi.Exe)
 		}
 
 	case "version":
@@ -174,7 +167,7 @@ func CliCommand(args []string) (map[string]string, error) {
 		return map[string]string{"result": s}, nil
 
 	case "align":
-		return engine.MmttApi("realign")
+		return engine.MmttApi("align_start")
 
 	case "sendlogs":
 		return nil, engine.SendLogs()

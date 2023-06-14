@@ -463,8 +463,8 @@ func ziplogs(logsdir string, zipfile string) error {
 	return err
 }
 
-func MmttApi(api string, apiargs ...string) (map[string]string, error) {
-	return MmttRemoteApi(api, apiargs...)
+func MmttApi(api string) (map[string]string, error) {
+	return MmttRemoteApi(api)
 }
 
 func EngineApi(api string, apiargs ...string) (map[string]string, error) {
@@ -507,17 +507,10 @@ func EngineRemoteApi(api string, args ...string) (map[string]string, error) {
 	return RemoteApiRaw(url, apijson)
 }
 
-func MmttRemoteApi(api string, args ...string) (map[string]string, error) {
+func MmttRemoteApi(api string) (map[string]string, error) {
 
-	if len(args)%2 != 0 {
-		return nil, fmt.Errorf("RemoteApi: odd nnumber of args, should be even")
-	}
-	apijson := "\"api\": \"" + api + "\""
-	for n := range args {
-		if n%2 == 0 {
-			apijson = apijson + ",\"" + args[n] + "\": \"" + args[n+1] + "\""
-		}
-	}
+	id := "56789"
+	apijson := "{ \"jsonrpc\": \"2.0\", \"method\": \""+api+"\", \"id\":\""+id+"\"}"
 	url := fmt.Sprintf("http://127.0.0.1:%d/api", MmttHttpPort)
 	return RemoteApiRaw(url, apijson)
 }
