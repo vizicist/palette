@@ -1,10 +1,9 @@
 package main
 
 import (
-	"os"
+	"flag"
 	"os/exec"
 	"path/filepath"
-	"strconv"
 	"time"
 
 	"github.com/0xcafed00d/joystick"
@@ -18,19 +17,19 @@ func main() {
 
 	engine.InitLog("monitor")
 
-	jsid := 0
-	if len(os.Args) > 1 {
-		i, err := strconv.Atoi(os.Args[1])
-		if err != nil {
-			engine.LogIfError(err)
-			return
-		}
-		jsid = i
+	pcheck := flag.Bool("engine", true, "Check Engine")
+	pjsid := flag.Int("joystick", 0, "Joystick ID")
+
+	flag.Parse()
+
+	if *pcheck {
+		engine.LogInfo("monitor is checking the engine.")
+		go checkEngine()
+	} else {
+		engine.LogInfo("monitor is NOT checking the engine.")
 	}
 
-	go checkEngine()
-
-	go joystickMonitor(jsid)
+	go joystickMonitor(*pjsid)
 
 	go midiMonitor("Logidy UMI3")
 
@@ -41,8 +40,12 @@ func checkEngine() {
 	tick := time.NewTicker(time.Second * 15)
 	for {
 		if !engine.IsRunningExecutable(engine.EngineExe) {
-			engine.LogInfo("processCheck: engine is not running, killing everything and restarting engine.")
-			killAndRestart()
+			engine.LogInfo("checkEngine: engine is not running, killing everything, monitor should restart engine.")
+			engine.KillAllExceptMonitor()
+			engine.LogInfo("checkEngine: restarting engine")
+			fullexe := filepath.Join(engine.PaletteDir(), "bin", engine.EngineExe)
+			err := engine.StartExecutableLogOutput(engine.EngineExe, fullexe)
+			engine.LogIfError(err)
 		}
 		tm := <-tick.C
 		_ = tm
@@ -51,8 +54,11 @@ func checkEngine() {
 
 func mmttRealign() {
 	engine.LogInfo("Begin mmttRealign")
+	_, err := engine.MmttApi("align_start")
+	engine.LogIfError(err)
 }
 
+/*
 func killAndRestart() {
 	engine.LogInfo("Begin killAndRestart")
 	engine.KillAllExceptMonitor()
@@ -63,11 +69,15 @@ func killAndRestart() {
 	engine.LogIfError(err)
 	engine.LogInfo("End of killAndRestart")
 }
+*/
 
 func shutdownAndReboot() {
 	engine.LogInfo("Begin of shutdownAndReboot")
 	cmd := exec.Command("shutdown", "/r", "-t", "10")
 	err := cmd.Run()
+	if err != nil {
+		engine.LogInfo("err in shutdownAndReboot")
+	}
 	engine.LogIfError(err)
 	engine.LogInfo("End of shutdownAndReboot")
 }
@@ -115,7 +125,7 @@ func joystickMonitor(jsid int) {
 						engine.LogInfo("BUTTON pressed, but not long enough to do anything", "button", button, "dt", dt)
 					} else if dt < longPress {
 						engine.LogInfo("BUTTON shortPress", "button", button, "dt", dt)
-						killAndRestart()
+						engine.KillAllExceptMonitor()
 					} else {
 						engine.LogInfo("BUTTON longPress", "button", button, "dt", dt)
 						shutdownAndReboot()
@@ -149,8 +159,8 @@ func midiMonitor(port string) {
 	noteAction := make([]NoteAction, nnotes)
 
 	noteAction[60] = func() {
+		engine.LogInfo("NoteAction: calling mmttRealign")
 		mmttRealign()
-		engine.LogInfo("NoteAction: nothing attached to that note")
 	}
 	noteAction[62] = func() {
 		engine.LogInfo("NoteAction: calling shutdownAndReboot")
@@ -158,7 +168,7 @@ func midiMonitor(port string) {
 	}
 	noteAction[64] = func() {
 		engine.LogInfo("NoteAction: calling killAndRestart")
-		killAndRestart()
+		engine.KillAllExceptMonitor()
 	}
 
 	stop, err := midi.ListenTo(in, func(msg midi.Message, timestampms int32) {
