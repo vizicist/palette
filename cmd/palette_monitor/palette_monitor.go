@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"os/exec"
 	"path/filepath"
 	"time"
@@ -18,7 +19,7 @@ func main() {
 	engine.InitLog("monitor")
 
 	pcheck := flag.Bool("engine", true, "Check Engine")
-	pjsid := flag.Int("joystick", 0, "Joystick ID")
+	pjsid := flag.Int("joystick", -1, "Joystick ID")
 
 	flag.Parse()
 
@@ -58,19 +59,6 @@ func mmttRealign() {
 	engine.LogIfError(err)
 }
 
-/*
-func killAndRestart() {
-	engine.LogInfo("Begin killAndRestart")
-	engine.KillAllExceptMonitor()
-	// restart just the engine,  engine.autostart value will determine what else gets started
-	engine.LogInfo("Restarting engine")
-	fullexe := filepath.Join(engine.PaletteDir(), "bin", engine.EngineExe)
-	err := engine.StartExecutableLogOutput(engine.EngineExe, fullexe)
-	engine.LogIfError(err)
-	engine.LogInfo("End of killAndRestart")
-}
-*/
-
 func shutdownAndReboot() {
 	engine.LogInfo("Begin of shutdownAndReboot")
 	cmd := exec.Command("shutdown", "/r", "-t", "10")
@@ -83,34 +71,54 @@ func shutdownAndReboot() {
 }
 
 func joystickMonitor(jsid int) {
-	js, err := joystick.Open(jsid)
-	if err != nil {
-		engine.LogIfError(err)
-		return
+
+	var monitoredJoystick joystick.Joystick
+
+	if jsid >= 0 {
+		js, err := joystick.Open(jsid)
+		if err != nil {
+			engine.LogIfError(err)
+			return
+		}
+		monitoredJoystick = js
+	} else {
+		// Search for the first joystick that has 8 buttons.
+		// The Sensel Morphs show up as a joystick with 16 buttons,
+		// while the Ikkego footswitch (the one we want) has 8 buttons.
+		for j := 0; j < 10; j++ {
+			js, err := joystick.Open(j)
+			if err != nil {
+				break
+			}
+			if js.ButtonCount() == 8 {
+				jsid = j
+				monitoredJoystick = js
+				break
+			}
+		}
+		if jsid < 0 {
+			engine.LogIfError(fmt.Errorf("joystickMonitor: disabled, unable to find joystick with 8 buttons"))
+			return
+		}
+		engine.LogInfo("Found Ikkego joystick with 8 buttons", "jsid", jsid)
 	}
 
-	if err != nil {
-		engine.LogIfError(err)
-		return
-	}
+	engine.LogInfo("joystickMonitor: listening", "name", monitoredJoystick.Name(), "buttoncount", monitoredJoystick.ButtonCount())
 
-	engine.LogInfo("joystickMonitor: listening", "name", js.Name(), "buttoncount", js.ButtonCount())
-
-	ticker := time.NewTicker(time.Millisecond * 100)
-	buttonDown := make([]bool, js.ButtonCount())
-	buttonDownTime := make([]time.Time, js.ButtonCount())
+	ticker := time.NewTicker(time.Second)
+	buttonDown := make([]bool, monitoredJoystick.ButtonCount())
+	buttonDownTime := make([]time.Time, monitoredJoystick.ButtonCount())
 
 	for {
-		jinfo, err := js.Read()
+		jinfo, err := monitoredJoystick.Read()
 		if err != nil {
 			engine.LogIfError(err)
 			continue
 		}
 
-		for button := 0; button < js.ButtonCount(); button++ {
+		for button := 0; button < monitoredJoystick.ButtonCount(); button++ {
 			isdown := jinfo.Buttons&(1<<uint32(button)) != 0
 			if isdown != buttonDown[button] {
-				// engine.LogInfo("BUTTON change", "button", button, "isdown", isdown)
 				buttonDown[button] = isdown
 				if isdown {
 					// Button just went down.
