@@ -156,7 +156,7 @@
 
 "engine.attractenabled": {"valuetype":"bool", "min":"false", "max":"true", "init":"false", "comment":"# enable attract mode" },
 "engine.attractidlesecs": {"valuetype":"int", "min":"10", "max":"3600", "init":"0", "comment":"# Attract timeout" },
-"engine.autostart": {"valuetype":"string", "min":"", "max":"", "init":"gui,bidule,resolume", "comment":"# auto restart processes" },
+"engine.autostart": {"valuetype":"string", "min":"autostart", "max":"autostart", "init":"gui,bidule,resolume", "comment":"# auto restart processes" },
 "engine.autotranspose": {"valuetype":"bool", "min":"false", "max":"true", "init":"false", "comment":"#" },
 "engine.autotransposebeats": {"valuetype":"int", "min":"8", "max":"128", "init":"48", "comment":"# transpose pitch" },
 "engine.bidulepath": {"valuetype":"string", "min":"", "max":"", "init":"C:/Program Files/Plogue/Bidule/Bidule.exe", "comment":"# Bidule executable path" },
