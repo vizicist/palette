@@ -2,7 +2,6 @@ package engine
 
 import (
 	"fmt"
-	"math/rand"
 	"strconv"
 	"strings"
 	"time"
@@ -163,7 +162,7 @@ func (e *Engine) executeEngineApi(api string, apiargs map[string]string) (result
 		return "", nil
 
 	case "audio_reset":
-		go LogIfError(TheBidule().Reset())
+		go TheBidule().Reset()
 
 	case "sendlogs":
 		return "", SendLogs()
@@ -201,20 +200,20 @@ func (e *Engine) executeEngineApi(api string, apiargs map[string]string) (result
 		if !ok {
 			source = "A"
 		}
+		var pos CursorPos
 		xs := apiargs["x"]
 		ys := apiargs["y"]
 		zs := apiargs["z"]
-		var x, y, z float32
 		if xs == "" {
-			x = rand.Float32()
-			y = rand.Float32()
-			z = rand.Float32()
+			pos = RandPos()
 		} else {
+			var x, y, z float32
 			if !e.getFloat32(xs, &x) || !e.getFloat32(ys, &y) || !e.getFloat32(zs, &z) {
 				return "", fmt.Errorf("playcursor: bad x,y,z value")
 			}
+			pos = CursorPos{x, y, z}
 		}
-		go TheCursorManager.PlayCursor(source, dur, x, y, z)
+		go TheCursorManager.PlayCursor(source, dur, pos)
 		return "", nil
 
 	default:

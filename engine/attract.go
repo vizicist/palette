@@ -68,11 +68,15 @@ func (am *AttractManager) setAttractMode(onoff bool) {
 		// LogOfType("attract", "AttractManager changing attract", "onoff", onoff)
 		// am.attractMutex.Lock()
 		am.attractModeIsOn.Store(onoff)
+
+		LogInfo("setAttractMode is calling TheBidule().Reset()")
+		go TheBidule().Reset()
+
 		// am.attractMutex.Unlock()
 		am.lastAttractModeChange = time.Now()
 		LogInfo("setAttractMode", "onoff", onoff)
-	} else {
-		LogInfo("NOT setting setAttractMode, too quick!", "onoff", onoff)
+	// } else {
+		// LogInfo("NOT setting setAttractMode, too quick!", "onoff", onoff)
 	}
 }
 

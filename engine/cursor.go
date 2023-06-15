@@ -40,7 +40,7 @@ type CursorManager struct {
 }
 
 type CursorPos struct {
-	x, y, z float32
+	X, Y, Z float32
 }
 
 // CursorDeviceCallbackFunc xxx
@@ -168,18 +168,43 @@ func (cm *CursorManager) clearCursors() {
 }
 
 func (cm *CursorManager) GenerateRandomGesture(source string, attrib string, dur time.Duration) {
-	pos0 := CursorPos{
-		rand.Float32(),
-		rand.Float32(),
-		rand.Float32() / 2.0,
-	}
-	pos1 := CursorPos{
-		rand.Float32(),
-		rand.Float32(),
-		rand.Float32() / 2.0,
+	pos0 := RandPos()
+	pos1 := RandPos()
+	// Occasionally force horizontal and vertical
+	if rand.Int()%4 == 0 {
+		pos1.X = pos0.X
+	} else if rand.Int()%4 == 0 {
+		pos1.Y = pos0.Y
 	}
 	cm.GenerateGesture(source, attrib, dur, pos0, pos1)
 }
+
+func RandPos() CursorPos {
+	return CursorPos{
+		X: rand.Float32(),
+		Y: rand.Float32(),
+		Z: rand.Float32(),
+	}
+}
+
+/*
+func randDir() float32 {
+	retVals := [3]float32{-1.0, 0.0, 1.0}
+	r := retVals[rand.Int() % 3]
+	return r
+}
+
+func dirFrom(x0, x1 float32) float32 {
+	d := x1 - x0
+	if d > 0 {
+		return 1
+	} else if d < 0 {
+		return -1
+	} else {
+		return 0
+	}
+}
+*/
 
 func (cm *CursorManager) GenerateGesture(source string, attrib string, dur time.Duration, pos0 CursorPos, pos1 CursorPos) {
 
@@ -196,6 +221,12 @@ func (cm *CursorManager) GenerateGesture(source string, attrib string, dur time.
 		return
 	}
 
+	dpos := CursorPos{
+		X: pos1.X - pos0.X,
+		Y: pos1.Y - pos0.Y,
+		Z: pos1.Z - pos0.Z,
+	}
+
 	for n := 0; n <= nsteps; n++ {
 		var ddu string
 		if n == 0 {
@@ -208,15 +239,20 @@ func (cm *CursorManager) GenerateGesture(source string, attrib string, dur time.
 
 		// Not sure about this Lock
 		cm.activeMutex.Lock()
+		amount := float32(n) / float32(nsteps)
+		pos := CursorPos{
+			X: pos0.X + dpos.X*amount,
+			Y: pos0.Y + dpos.Y*amount,
+			Z: pos0.Z + dpos.Z*amount,
+		}
 		ce := CursorEvent{
 			Cid:   cid,
 			Click: &atomic.Int64{},
 			Ddu:   ddu,
-			X:     pos0.x + pos1.x*float32(n)/float32(nsteps),
-			Y:     pos0.x + pos1.y*float32(n)/float32(nsteps),
-			Z:     pos0.x + pos1.z*float32(n)/float32(nsteps),
+			Pos:   pos,
 			Area:  0,
 		}
+		// LogOfType("cursor", "generateCursoresture", "n", n, "amount", amount, "pos", pos)
 		ce.SetClick(CurrentClick())
 		cm.activeMutex.Unlock()
 
@@ -305,7 +341,7 @@ func (cm *CursorManager) ExecuteCursorEvent(ce CursorEvent) {
 
 	} else {
 
-		LogOfType("cursor", "ExecuteCursorEvent: using existing ActiveCursor", "cid", ce.Cid, "ac", ac)
+		// LogOfType("cursor", "ExecuteCursorEvent: using existing ActiveCursor", "cid", ce.Cid, "ac", ac)
 		// existing ActiveCursor
 		cm.activeMutex.Lock()
 		ac.Previous = ac.Current
@@ -326,10 +362,10 @@ func (cm *CursorManager) ExecuteCursorEvent(ce CursorEvent) {
 		loopce.Cid = TheCursorManager.LoopedCidFor(ac.Current, true /*warn*/)
 
 		// Fade the Z value
-		loopce.Z = loopce.Z * ac.loopFade
+		loopce.Pos.Z = loopce.Pos.Z * ac.loopFade
 		// LogInfo("loopcd.Z is now", "Z", loopce.Z)
-		if loopce.Z > ac.maxZ {
-			ac.maxZ = loopce.Z
+		if loopce.Pos.Z > ac.maxZ {
+			ac.maxZ = loopce.Pos.Z
 		}
 
 		// LogInfo("looped CursorEvent", "ce.Z", ce.Z, "loopFade", ac.loopFade)
@@ -414,9 +450,9 @@ func CursorToOscMsg(ce CursorEvent) *osc.Message {
 	msg := osc.NewMessage("/cursor")
 	msg.Append(ce.Ddu)
 	msg.Append(ce.Cid)
-	msg.Append(float32(ce.X))
-	msg.Append(float32(ce.Y))
-	msg.Append(float32(ce.Z))
+	msg.Append(float32(ce.Pos.X))
+	msg.Append(float32(ce.Pos.Y))
+	msg.Append(float32(ce.Pos.Z))
 	return msg
 }
 
@@ -490,15 +526,13 @@ fn (cm *CusorManager)checkThrehold(ac *ActiveCurs()
 	}
 */
 
-func (cm *CursorManager) PlayCursor(source string, dur time.Duration, x, y, z float32) {
+func (cm *CursorManager) PlayCursor(source string, dur time.Duration, pos CursorPos) {
 	cid := cm.UniqueCid(source)
 	ce := CursorEvent{
 		Cid:   cid,
 		Click: &atomic.Int64{},
 		Ddu:   "down",
-		X:     x,
-		Y:     y,
-		Z:     z,
+		Pos:   pos,
 	}
 	ce.SetClick(CurrentClick())
 	cm.ExecuteCursorEvent(ce)

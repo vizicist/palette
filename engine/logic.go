@@ -55,7 +55,7 @@ func (logic *PatchLogic) cursorToPitch(ce CursorEvent) (uint8, error) {
 			return 0, err
 		}
 		// In the stylusrmx set, there are 8 pitches corresponding to the 8 parts in Stylus RMX
-		n := int(ce.X*8.0) % len(pitches)
+		n := int(ce.Pos.X*8.0) % len(pitches)
 		// Note: pitchsets don't get pitchoffset
 		return pitches[n], nil
 
@@ -63,7 +63,7 @@ func (logic *PatchLogic) cursorToPitch(ce CursorEvent) (uint8, error) {
 		pitchmin := patch.GetInt("sound.pitchmin")
 		pitchmax := patch.GetInt("sound.pitchmax")
 		dp := pitchmax - pitchmin + 1
-		p1 := int(ce.X * float32(dp))
+		p1 := int(ce.Pos.X * float32(dp))
 		p := uint8(pitchmin + p1%dp)
 
 		scaleName := patch.Get("misc.scale")
@@ -109,7 +109,7 @@ func (logic *PatchLogic) cursorToVelocity(ce CursorEvent) uint8 {
 		velocitymin = 0
 		velocitymax = 127
 	}
-	if velocitymin > velocitymax { // relly?
+	if velocitymin > velocitymax { // really?
 		LogWarn("Hey! velocitymin > velocitymax", "velocitymin", velocitymin, "velocitymax", velocitymax, "patch", patch.Name(), "ce", ce)
 		t := velocitymin
 		velocitymin = velocitymax
@@ -118,14 +118,14 @@ func (logic *PatchLogic) cursorToVelocity(ce CursorEvent) uint8 {
 	zmin := patch.GetFloat("sound._controllerzmin")
 	zmax := patch.GetFloat("sound._controllerzmax")
 
-	scaledZ := BoundAndScaleFloat(ce.Z, zmin, zmax, 0.0, 1.0)
+	scaledZ := BoundAndScaleFloat(ce.Pos.Z, zmin, zmax, 0.0, 1.0)
 	// LogInfo("CursorToVelocity","scaledZ",scaledZ,"ce.Z",ce.Z,"zmin",zmin,"zmax",zmax)
 
 	// Scale cursor Z to controller zmin and zmax
 	v := float32(0.8) // default and fixed value
 	switch volstyle {
 	case "frets":
-		v = 1.0 - ce.Y
+		v = 1.0 - ce.Pos.Y
 	case "pressure":
 		v = scaledZ
 	case "fixed":
@@ -212,6 +212,7 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
 		atClick := logic.nextQuant(CurrentClick(), patch.CursorToQuant(ce))
 		noteOn := logic.cursorToNoteOn(ce)
 		if noteOn == nil {
+			LogWarn("Hmmm, retrigger, noteOn for down is nil?")
 			return // do nothing, assumes any errors are logged in cursorToNoteOn
 		}
 		ScheduleAt(atClick, noteOn)
@@ -222,11 +223,12 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
 		// LogInfo("CURSOR drag event for cursor", "cid", ce.Cid)
 		oldNoteOn := ac.NoteOn
 		if oldNoteOn == nil {
-			LogWarn("generateSoundFromCursor: no ActiveCursor.NoteOn", "cid", ce.Cid)
+			// LogWarn("generateSoundFromCursor: no ActiveCursor.NoteOn", "cid", ce.Cid)
 			return
 		}
 		newNoteOn := logic.cursorToNoteOn(ce)
 		if newNoteOn == nil {
+			LogWarn("Hmmm, retrigger, noteOn for drag is nil?")
 			return // do nothing, assumes any errors are logged in cursorToNoteOn
 		}
 		oldpitch := oldNoteOn.Pitch
@@ -246,7 +248,7 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
 		deltaztrignote := patch.GetFloat("sound._deltaztrignote")
 		deltaztrigcontroller := patch.GetFloat("sound._deltaztrigcontroller")
 
-		deltay := float32(math.Abs(float64(ac.Previous.Y - ce.Y)))
+		deltay := float32(math.Abs(float64(ac.Previous.Pos.Y - ce.Pos.Y)))
 		deltaytrig := patch.GetFloat("sound._deltaytrig")
 
 		// logic.generateController(ac)
