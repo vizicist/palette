@@ -60,7 +60,7 @@ func (b *Bidule) ProcessInfo() *ProcessInfo {
 	return NewProcessInfo(exe, bidulePath, filepath, b.Activate)
 }
 
-func (b *Bidule) Reset() error {
+func (b *Bidule) Reset() {
 
 	b.mutex.Lock()
 	defer b.mutex.Unlock()
@@ -76,6 +76,4 @@ func (b *Bidule) Reset() error {
 	msg.Append(int32(1))
 	LogOfType("bidule", "Bidule.Reset is sending", "msg", msg)
 	TheEngine.SendOsc(b.client, msg)
-
-	return nil
 }
