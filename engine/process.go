@@ -256,6 +256,15 @@ func GuiProcessInfo() *ProcessInfo {
 		return nil
 	}
 	exe := filepath.Base(fullpath)
+
+	// set PALETTE_GUI_LEVEL for future use when gui is started
+	guilevel, err := GetParam("engine.defaultguilevel")
+	if err != nil {
+		LogIfError(err)
+	} else {
+		os.Setenv("PALETTE_GUI_LEVEL", guilevel)
+	}
+
 	return NewProcessInfo(exe, fullpath, "", nil)
 }
 
