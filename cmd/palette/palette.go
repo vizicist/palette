@@ -64,12 +64,15 @@ func CliCommand(args []string) (map[string]string, error) {
 		arg1 = args[1]
 	}
 
-	// The only apis that can handle arguments...
+	words := strings.Split(api, ".")
+
+	// Warn about extra unexpected arguments
 	switch api {
 	case "start", "kill":
 		// okay
 	default:
-		if len(args) > 1 {
+		// extra args are allowed on api.method usage
+		if len(words) != 2 && len(args) > 1 {
 			return nil, fmt.Errorf(usage())
 		}
 	}
@@ -176,7 +179,6 @@ func CliCommand(args []string) (map[string]string, error) {
 		return engine.EngineApi("quadpro.test", "ntimes", "40")
 
 	default:
-		words := strings.Split(api, ".")
 		if len(words) < 2 {
 			return nil, fmt.Errorf("unrecognized command (%s), expected usage:\n%s", api, usage())
 		} else if len(words) > 2 {

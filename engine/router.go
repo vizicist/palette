@@ -183,14 +183,12 @@ func ArgsToCursorEvent(args map[string]string) CursorEvent {
 	x := ArgToFloat("x", args)
 	y := ArgToFloat("y", args)
 	z := ArgToFloat("z", args)
+	pos := CursorPos{x,y,z}
 	ce := CursorEvent{
 		Cid:   cid,
 		Click: &atomic.Int64{},
 		Ddu:   event,
-		X:     x,
-		Y:     y,
-		Z:     z,
-		Area:  0.0,
+		Pos: pos,
 	}
 	ce.SetClick(CurrentClick())
 	return ce
@@ -338,13 +336,12 @@ func (r *Router) oscHandleCursor(msg *osc.Message) {
 		LogIfError(err)
 		return
 	}
+	pos := CursorPos{x,y,z}
 	ce := CursorEvent{
 		Cid:   cid + ",mmtt", // NOTE: we add an mmmtt tag
 		Click: &atomic.Int64{},
 		Ddu:   ddu,
-		X:     x,
-		Y:     y,
-		Z:     z,
+		Pos: pos,
 		Area:  0.0,
 	}
 	ce.SetClick(CurrentClick())
@@ -366,11 +363,11 @@ func (r *Router) oscHandleCursor(msg *osc.Message) {
 		return
 	}
 
-	ce.X = boundval32(((float64(ce.X) - 0.5) * xexpand) + 0.5)
-	ce.Y = boundval32(((float64(ce.Y) - 0.5) * yexpand) + 0.5)
-	ce.Z = boundval32(((float64(ce.Z) - 0.5) * zexpand) + 0.5)
+	ce.Pos.X = boundval32(((float64(ce.Pos.X) - 0.5) * xexpand) + 0.5)
+	ce.Pos.Y = boundval32(((float64(ce.Pos.Y) - 0.5) * yexpand) + 0.5)
+	ce.Pos.Z = boundval32(((float64(ce.Pos.Z) - 0.5) * zexpand) + 0.5)
 
-	LogOfType("mmtt", "MMTT Cursor", "source", ce.Source, "ddu", ce.Ddu, "x", ce.X, "y", ce.Y, "z", ce.Z)
+	LogOfType("mmtt", "MMTT Cursor", "source", ce.Source, "ddu", ce.Ddu, "ce", ce)
 
 	TheCursorManager.ExecuteCursorEvent(ce)
 }

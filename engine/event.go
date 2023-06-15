@@ -31,11 +31,9 @@ type CursorEvent struct {
 	Click *atomic.Int64 `json:"Click"`
 	Cid   string        `json:"Cid"`
 	// Source string
-	Ddu  string  `json:"Ddu"` // "down", "drag", "up" (sometimes "clear")
-	X    float32 `json:"X"`
-	Y    float32 `json:"Y"`
-	Z    float32 `json:"Z"`
-	Area float32 `json:"Area"`
+	Ddu  string    `json:"Ddu"` // "down", "drag", "up" (sometimes "clear")
+	Pos  CursorPos `json:"Pos"`
+	Area float32   `json:"Area"`
 }
 
 // OscEvent is an OSC message

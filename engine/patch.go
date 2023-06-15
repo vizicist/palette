@@ -170,11 +170,12 @@ func (patch *Patch) CursorToQuant(ce CursorEvent) Clicks {
 		// q is 1
 
 	case "frets":
-		if ce.Y > 0.85 {
+		y := ce.Pos.Y
+		if y > 0.85 {
 			q = OneBeat / 8
-		} else if ce.Y > 0.55 {
+		} else if y > 0.55 {
 			q = OneBeat / 4
-		} else if ce.Y > 0.25 {
+		} else if y > 0.25 {
 			q = OneBeat / 2
 		} else {
 			q = OneBeat
@@ -185,11 +186,12 @@ func (patch *Patch) CursorToQuant(ce CursorEvent) Clicks {
 
 	case "pressure":
 		LogWarn("CursortToQuant, pressure quant needs to use zmin/zmax")
-		if ce.Z > 0.20 {
+		z := ce.Pos.Z
+		if z > 0.20 {
 			q = OneBeat / 8
-		} else if ce.Z > 0.10 {
+		} else if z > 0.10 {
 			q = OneBeat / 4
-		} else if ce.Z > 0.05 {
+		} else if z > 0.05 {
 			q = OneBeat / 2
 		} else {
 			q = OneBeat

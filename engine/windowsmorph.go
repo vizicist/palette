@@ -457,13 +457,12 @@ func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float32) 
 				xNorm = 1.0
 			}
 
+			pos := CursorPos{xNorm,yNorm,zNorm}
 			ev := CursorEvent{
 				Cid:   cid,
 				Click: &atomic.Int64{},
 				Ddu:   ddu,
-				X:     xNorm,
-				Y:     yNorm,
-				Z:     zNorm,
+				Pos: pos,
 				Area:  area,
 			}
 			ev.SetClick(CurrentClick())

@@ -83,6 +83,8 @@ class ProGuiApp(tk.Tk):
         self.lastLoadType = ""
         self.lastLoadName = ""
 
+        log("PALETTE_GUI_LEVEL env = "+ os.environ.get("PALETTE_GUI_LEVEL",""))
+
         self.defaultGuiLevel = int(os.environ.get("PALETTE_GUI_LEVEL","0"))
 
         self.currentPageName = None

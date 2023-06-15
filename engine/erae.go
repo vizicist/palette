@@ -214,14 +214,13 @@ func (erae *Erae) handleFinger(bb []byte) {
 		return
 	}
 
+	pos := CursorPos{x, y, z}
+
 	ce := CursorEvent{
 		Cid:   cid,
 		Click: &atomic.Int64{},
 		Ddu:   ddu,
-		X:     x,
-		Y:     y,
-		Z:     z,
-		Area:  0.0,
+		Pos:   pos,
 	}
 	ce.SetClick(CurrentClick())
 	_ = ce
