@@ -82,6 +82,7 @@ class ProGuiApp(tk.Tk):
         self.nextMode = ""
         self.lastLoadType = ""
         self.lastLoadName = ""
+        self.isLooping = False
 
         log("PALETTE_GUI_LEVEL env = "+ os.environ.get("PALETTE_GUI_LEVEL",""))
 
@@ -131,7 +132,8 @@ class ProGuiApp(tk.Tk):
             if self.guisize != "small":
                 log("Unknown guisize=",self.guisize," assuming small")
             self.paramDisplayRows = 23
-            self.frameSizeOfControlNormal = 0.085
+            # self.frameSizeOfControlNormal = 0.085
+            self.frameSizeOfControlNormal = 0.10
             self.frameSizeOfPatchChooserNormal = 0.0
             self.frameSizeOfSelectNormal = 1.0 - self.frameSizeOfControlNormal
             self.selectDisplayRowsNormal = 12
@@ -227,6 +229,7 @@ class ProGuiApp(tk.Tk):
     def mainLoop(self):
         # doneLoading = False
         while self.killme == False:
+            # log("time="+str(time.time()))
             try:
                 self.update_idletasks()
                 self.update()
@@ -291,9 +294,24 @@ class ProGuiApp(tk.Tk):
                 log("Invalid value for currentMode: ",self.currentMode)
                 self.currentMode = ""
 
+            # log("time C ="+str(time.time()))
+
         log("mainLoop is returning")
 
+    def loopingOnOff(self):
+        self.loopingClear()
+        if self.isLooping:
+            self.loopingOff()
+            palette.palette_engine_api("audio_reset")
+        else:
+            self.loopingOn()
+
     def loopingOn(self):
+        self.performPage.setPerformButtonText("Looping","LOOPING_IS ON ",'PerformButtonHighlight.TLabel')
+        self.update()
+
+        self.isLooping = True
+
         defaultfade, err = palette.palette_engine_api("get", "\"name\": \"engine.looping_defaultfade\"")
         if err != None:
             log("Error in getting value of engine.looping_defaultfade")
@@ -303,7 +321,9 @@ class ProGuiApp(tk.Tk):
         if err != None:
             log("Error in getting value of engine.looping_defaultbeats")
             return
+
         log("loopingOn, defaultfade="+defaultfade+" defaultbeats="+defaultbeats)
+
         for patch in self.Patches:
             palette.palette_patch_api(patch.name(), "set",
                 "\"name\": \"misc.looping_on\"" + \
@@ -318,7 +338,12 @@ class ProGuiApp(tk.Tk):
             self.refreshValues("misc",patch)
 
     def loopingOff(self):
+        self.performPage.setPerformButtonText("Looping","LOOPING_IS OFF",'PerformButton.TLabel')
+        self.update()
+
         log("loopingOff")
+        self.isLooping = False
+
         for patch in self.Patches:
             palette.palette_patch_api(patch.name(), "set",
                 "\"name\": \"misc.looping_on\"" + \
@@ -2087,10 +2112,10 @@ class PagePerformMain(tk.Frame):
         self.buttonNames = []
 
         self.makePerformButton("COMPLETE_RESET", self.controller.resetAll)
-        self.makePerformButton("Help_ ", self.controller.startHelp)
-        self.makePerformButton("Looping_ON", self.controller.loopingOn)
-        self.makePerformButton("Looping_OFF", self.controller.loopingOff)
-        self.makePerformButton("Looping_CLEAR", self.controller.loopingClear)
+        self.makePerformButton("HELP_ ", self.controller.startHelp)
+        self.makePerformButton("Looping", self.controller.loopingOnOff)
+        # self.makePerformButton("Looping_OFF", self.controller.loopingOff)
+        self.makePerformButton("LOOPING_CLEAR", self.controller.loopingClear)
         # if self.controller.defaultGuiLevel > 0:
         #     self.makePerformButton("Clear_ ", self.controller.clear)
         # These shouldn't be shown in casual mode
@@ -2138,21 +2163,32 @@ class PagePerformMain(tk.Frame):
                 col = 0
                 row += 1
 
+    def changeButton(self,name,text,highlight):
+        if not name in self.performButton:
+            log("changeButton name=",name," not in performButton")
+            return
+        if highlight:
+            style = 'PerformButtonHighlight.TLabel'
+        else:
+            style = 'PerformButton.TLabel'
+        self.setPerformButtonText(name,text,style)
+        self.performButton[name].config(style=style,text=text)
+        
     def makePerformButton(self,name,f=None,text=None):
         if f == None:
             cmd = lambda nm=name: self.performCallback(nm)
         else:
             cmd = f
         self.performButton[name] = ttk.Button(self.frame, width=10, command=cmd)
-        self.setPerformButtonText(name,text)
+        self.setPerformButtonText(name,text,'PerformButton.TLabel')
         self.buttonNames.append(name)
 
-    def setPerformButtonText(self,name,text):
+    def setPerformButtonText(self,name,text,style):
         if text == None:
             text = name
         if isTwoLine(text):
             text = text.replace(palette.LineSep,"\n",1)
-        self.performButton[name].config(text=text, width=10, style='PerformButton.TLabel')
+        self.performButton[name].config(text=text, style=style)
 
     def performCallback(self,name):
 
@@ -2374,7 +2410,7 @@ def setFontSizes(guisize):
         largeFont = (f, int(8))
         smallFont = (f, int(6))
         comboFont = (f, int(10))
-        performButtonFont = (f, int(7))
+        performButtonFont = (f, int(10))
         paramNameFont = (f, int(8))
         paramValueFont = (f, int(8))
         paramAdjustFont = (f, int(6))
@@ -2409,17 +2445,11 @@ def makeStyles(app):
 
     s.configure('PerformButton.TLabel', foreground=ColorText, background=ColorButton, relief="flat", justify=tk.CENTER,
         anchor=tk.CENTER, font=performButtonFont)
+    s.configure('PerformButtonHighlight.TLabel', foreground=ColorText, background=ColorHigh, relief="flat", justify=tk.CENTER,
+        anchor=tk.CENTER, font=performButtonFont)
 
     s.configure('custom.TCombobox', foreground=ColorComboText, background=ColorBg)
 
-    # s.map('Patch.TLabel',
-    #     foreground=[('disabled', 'yellow'),
-    #                 ('pressed', ColorText),
-    #                 ('active', ColorText)],
-    #     background=[('disabled', 'yellow'),
-    #                 ('pressed', ColorHigh),
-    #                 ('active', ColorButton)]
-    #     )
     s.map('SelectButton.TLabel',
         foreground=[('disabled', 'yellow'),
                     ('pressed', ColorText),
@@ -2428,14 +2458,25 @@ def makeStyles(app):
                     ('pressed', ColorHigh),
                     ('active', ColorButton)]
         )
-    s.map('PerformButton.TLabel',
-        foreground=[('disabled', 'yellow'),
-                    ('pressed', ColorText),
-                    ('active', ColorText)],
-        background=[('disabled', 'yellow'),
-                    ('pressed', ColorHigh),
-                    ('active', ColorButton)]
-        )
+
+    # s.map('PerformButton.TLabel', foreground=ColorText, font=selectButtonFont, background=ColorHigh, anchor=tk.CENTER, justify=tk.CENTER)
+    # s.map('PerformButton.TLabel',
+    #     foreground=[('disabled', 'yellow'),
+    #                 ('pressed', ColorText),
+    #                 ('active', ColorText)],
+    #    background=[('disabled', 'yellow'),
+    #                ('pressed', ColorHigh),
+    #                ('active', ColorButton)]
+    #    )
+
+    # s.map('PerformButtonHighlight.TLabel',
+    #     foreground=[('disabled', 'yellow'),
+    #                 ('pressed', ColorHigh),
+    #                 ('active', ColorHigh)],
+    #     background=[('disabled', 'yellow'),
+    #                 ('pressed', ColorHigh),
+    #                 ('active', ColorHigh)]
+    #     )
 
 def log(*args):
     final = args[0]
@@ -2501,6 +2542,8 @@ if __name__ == "__main__":
 
     # guisize is palette/medium/small
     guisize = os.environ.get("PALETTE_GUI_SIZE","small")
+
+    palette.palette_api_setup()
 
     global PaletteApp
     PaletteApp = ProGuiApp(patchname,patchnames,visiblepagenames,guisize)

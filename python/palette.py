@@ -15,6 +15,13 @@ import threading
 import platform
 from traceback import format_exc
 
+from requests.adapters import HTTPAdapter
+import urllib3
+from urllib3 import Retry
+
+ApiSession = None
+ApiLock = threading.Lock()
+
 DebugApi = False
 Verbose = False
 
@@ -163,10 +170,17 @@ def readJsonPath(path):
 def boolValueOfString(v):
     return True if (v!=0 and v!="0" and v!="off" and v!="false" and v!="False") else False
 
-ApiLock = threading.Lock()
-
 def publish_event(subject,params):
     log("public_event needs work params=",params.encode())
+
+# ...     r = session.get("http://httpbin.org/status/503")
+
+def palette_api_setup():
+    global ApiSession
+    session = requests.Session()
+    adapter = HTTPAdapter(max_retries=Retry(total=999, backoff_factor=1, allowed_methods=None, status_forcelist=[429, 500, 502, 503, 504]))
+    session.mount("http://", adapter)
+    session.mount("https://", adapter)
 
 def palette_api(api,params):
 
@@ -198,13 +212,13 @@ def palette_api(api,params):
         try:
             url = "http://127.0.0.1:3330/api"
             # log("palette_api: pre requests.post")
-            req = requests.post(url=url,data=params,timeout=600.0)
+            req = requests.post(url=url,data=params,timeout=6000.0)
             # log("palette_api: post requests.post")
             result = req.text
         except (requests.ConnectionError,requests.Timeout,Exception) as err:
             log("palette_api: Connection exception!")
             requestError = err
-            log("ConnectionError exception: %s" % format_exc())
+            # log("ConnectionError exception: %s" % format_exc())
         # except:
         #     log("palette_api: unknown exception!?")
         #     log("Unexpected exception: %s" % format_exc())
