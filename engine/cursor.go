@@ -400,13 +400,13 @@ func (cm *CursorManager) DeleteActiveCursorIfZLessThan(cid string, threshold flo
 	ac, ok := cm.activeCursors[cid]
 	loopCid := ""
 	if !ok {
-		// LogWarn("DeleteActiveCursor: cid not found in ActiveCursor", "cid", cid)
+		LogWarn("DeleteActiveCursor: cid not found in ActiveCursor", "cid", cid)
 	} else {
-		// LogInfo("DeleteActiveCursorIfZLessThan", "cid", cid, "threshold", threshold, "ac.maxZ", ac.maxZ)
+		LogInfo("DeleteActiveCursorIfZLessThan", "cid", cid, "threshold", threshold, "ac.maxZ", ac.maxZ)
 		if ac.maxZ < threshold {
 			// we want to remove things that this ActiveCursor has created for looping.
 			cm.activeMutex.Unlock()
-			// LogInfo("DeleteActiveCursorIfZLessThan REMOVING!")
+			LogInfo("DeleteActiveCursorIfZLessThan REMOVING!")
 			loopCid = cm.LoopedCidFor(ac.Current, false /*warn*/)
 			cm.activeMutex.Lock()
 			// but wait after we detete it from
@@ -479,11 +479,11 @@ func (cm *CursorManager) autoCursorUp(now time.Time) {
 	var cidsToDelete = []string{}
 	for cid, ac := range cm.activeCursors {
 
-		dclick := ac.Previous.GetClick() - ac.Current.GetClick()
+		dclick := ac.Current.GetClick() - ac.Previous.GetClick()
 		if dclick > checkDelay {
 			ce := ac.Current
 			ce.Ddu = "up"
-			LogInfo("autoCursorUp: before handleDownDragUp", "cid", cid)
+			LogInfo("autoCursorUp: Executing autoCursorUp!", "cid", cid,"ce", ce)
 
 			cm.ExecuteCursorEvent(ce)
 			cidsToDelete = append(cidsToDelete, cid)

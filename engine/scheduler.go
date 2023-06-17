@@ -156,7 +156,7 @@ func (sched *Scheduler) advanceClickTo(toClick Clicks) {
 		TheRouter.inputEventMutex.Unlock()
 	}()
 
-	doAutoCursorUp := false
+	doAutoCursorUp := true
 	sched.lastClick += 1
 	for clk := sched.lastClick; clk <= toClick; clk++ {
 		sched.triggerItemsScheduledAtOrBefore(clk)
