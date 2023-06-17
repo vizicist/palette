@@ -68,7 +68,7 @@ func CliCommand(args []string) (map[string]string, error) {
 
 	// Warn about extra unexpected arguments
 	switch api {
-	case "start", "kill":
+	case "start", "kill", "stop":
 		// okay
 	default:
 		// extra args are allowed on api.method usage
@@ -139,7 +139,7 @@ func CliCommand(args []string) (map[string]string, error) {
 			return nil, fmt.Errorf("process %s is disabled or unknown", arg1)
 		}
 
-	case "kill":
+	case "kill", "stop":
 
 		switch arg1 {
 
@@ -150,11 +150,13 @@ func CliCommand(args []string) (map[string]string, error) {
 			return nil, nil
 
 		case "monitor":
-			return nil, engine.KillExecutable(engine.MonitorExe)
+			engine.KillExecutable(engine.MonitorExe)
+			return nil, nil
 
 		case "engine":
 			// Don't use engine.exit API, just kill it
-			return nil, engine.KillExecutable(engine.EngineExe)
+			engine.KillExecutable(engine.EngineExe)
+			return nil, nil
 
 		default:
 			// If it exists in the ProcessList...
@@ -162,7 +164,8 @@ func CliCommand(args []string) (map[string]string, error) {
 			if err != nil {
 				return nil, err
 			}
-			return nil, engine.KillExecutable(pi.Exe)
+			engine.KillExecutable(pi.Exe)
+			return nil, nil
 		}
 
 	case "version":

@@ -11,7 +11,7 @@ import (
 	"syscall"
 )
 
-func KillExecutable(executable string) error {
+func KillExecutable(executable string) {
 	exe := isolateExe(executable)
 	LogInfo("KillExecutable", "executable", executable, "exe", exe)
 	// NOTE: do NOT use taskkill.exe instead of taskkill, it doesn't work.
@@ -21,7 +21,6 @@ func KillExecutable(executable string) error {
 	// and doesn't seem like there's any other useful errors,
 	// so just ignore all errors.
 	_ = cmd.Run()
-	return nil
 }
 
 // StartExecutable executes something.  If background is true, it doesn't block

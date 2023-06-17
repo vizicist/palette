@@ -207,7 +207,7 @@ func (pm *ProcessManager) KillProcess(process string) (err error) {
 	if err != nil {
 		return err
 	}
-	_ = KillExecutable(pi.Exe) // ignore errors
+	KillExecutable(pi.Exe)
 	pi.Activated = false
 	pm.wasStarted[process].Store(false)
 	return err

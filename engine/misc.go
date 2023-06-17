@@ -38,18 +38,12 @@ var LocalAddress = "127.0.0.1"
 
 func KillAllExceptMonitor() {
 	LogInfo("KillAll")
-	err := KillExecutable(KeykitExe)
-	LogIfError(err)
-	err = KillExecutable(MmttExe)
-	LogIfError(err)
-	err = KillExecutable(BiduleExe)
-	LogIfError(err)
-	err = KillExecutable(ResolumeExe)
-	LogIfError(err)
-	err = KillExecutable(GuiExe)
-	LogIfError(err)
-	err = KillExecutable(EngineExe)
-	LogIfError(err)
+	KillExecutable(KeykitExe)
+	KillExecutable(MmttExe)
+	KillExecutable(BiduleExe)
+	KillExecutable(ResolumeExe)
+	KillExecutable(GuiExe)
+	KillExecutable(EngineExe)
 }
 
 func IsRunning(process string) bool {
