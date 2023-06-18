@@ -3,7 +3,6 @@ package engine
 import (
 	"container/list"
 	"fmt"
-	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -51,7 +50,7 @@ func NewScheduler() *Scheduler {
 func NewSchedElement(atclick Clicks, tag string, value any) *SchedElement {
 	se := &SchedElement{
 		AtClick: &atomic.Int64{},
-		Tag:     tag,
+		Tag:    tag,
 		Value:   value,
 	}
 	se.SetClick(atclick)
@@ -74,6 +73,10 @@ func (se *SchedElement) GetClick() Clicks {
 }
 
 func ScheduleAt(atClick Clicks, tag string, value any) {
+	ce, ok := value.(CursorEvent)
+	if ok && ce.Gid == 0 {
+		LogWarn("ScheduleAt Gid is 0", "ce", ce)
+	}
 	se := NewSchedElement(atClick, tag, value)
 	TheScheduler.savePendingSchedEvent(se)
 }
@@ -171,7 +174,7 @@ func (sched *Scheduler) advanceClickTo(toClick Clicks) {
 	sched.lastClick = toClick
 }
 
-func (sched *Scheduler) DeleteEventsWhoseCidIs(cid string) {
+func (sched *Scheduler) DeleteEventsWhoseGidIs(gid int) {
 
 	sched.mutex.Lock()
 	defer sched.mutex.Unlock()
@@ -181,7 +184,7 @@ func (sched *Scheduler) DeleteEventsWhoseCidIs(cid string) {
 		nexti = i.Next()
 		se := i.Value.(*SchedElement)
 		ce, isce := se.Value.(CursorEvent)
-		if isce && ce.Cid == cid {
+		if isce && ce.Gid == gid {
 			sched.schedList.Remove(i)
 			// keep going, there will be lots of them
 		}
@@ -191,7 +194,7 @@ func (sched *Scheduler) DeleteEventsWhoseCidIs(cid string) {
 func (sched *Scheduler) DeleteEventsWithTag(tag string) {
 
 	//// sched.ToString locks the mutex, to don't do it inside of the lock here
-	// LogInfo("DeleteEventsForCidPrefix BEFORE", "prefix", prefix, "sched", sched.ToString())
+	// LogInfo("DeleteEventsForGidPrefix BEFORE", "prefix", prefix, "sched", sched.ToString())
 
 	sched.mutex.Lock()
 
@@ -200,7 +203,7 @@ func (sched *Scheduler) DeleteEventsWithTag(tag string) {
 		nexti = i.Next()
 		se := i.Value.(*SchedElement)
 		ce, isce := se.Value.(CursorEvent)
-		if isce && strings.HasPrefix(ce.Cid, tag) {
+		if isce && ce.Tag == tag {
 			sched.schedList.Remove(i)
 			// keep going, there will be lots of them
 		}
@@ -209,7 +212,7 @@ func (sched *Scheduler) DeleteEventsWithTag(tag string) {
 	sched.mutex.Unlock()
 
 	//// sched.ToString locks the mutex, to do it outside of the lock here
-	// LogInfo("DeleteEventsForCidPrefix AFTER", "prefix", prefix, "sched", sched.ToString())
+	// LogInfo("DeleteEventsForGidPrefix AFTER", "prefix", prefix, "sched", sched.ToString())
 }
 
 func (sched *Scheduler) triggerItemsScheduledAtOrBefore(thisClick Clicks) {
@@ -254,8 +257,11 @@ func (sched *Scheduler) triggerItemsScheduledAtOrBefore(thisClick Clicks) {
 
 		case CursorEvent:
 			ce := v
-			if v.Ddu != "clear" && v.Cid == "" {
-				LogWarn("Hey, Cid of CursorEvent is empty?")
+			if ce.Gid == 0 {
+				LogWarn("Hey, Gid of CursorEvent is 0?")
+			}
+			if v.Ddu != "clear" && v.Tag == "" {
+				LogWarn("Hey, Tag of CursorEvent is empty?")
 			}
 			// The Click in the CursorEvent is the click at which the event was scheduled,
 			// which might be before clk
@@ -322,8 +328,8 @@ func (sched *Scheduler) insertScheduleElement(se *SchedElement) {
 	case *NoteOn:
 	case *NoteOff:
 	case CursorEvent:
-		if v.Ddu != "clear" && v.Cid == "" {
-			LogWarn("insertScheduleElement CursorEvent Cid is empty", "v", v)
+		if v.Ddu != "clear" && v.Gid == 0 {
+			LogWarn("insertScheduleElement CursorEvent Gid is empty", "v", v)
 		}
 		// LogInfo("insertScheduleElement CursorEvent", "v", v)
 		if v.Click == nil {

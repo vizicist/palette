@@ -40,21 +40,24 @@ type MidiEvent struct {
 func NewMidiEvent(click Clicks, tag string, msg midi.Message) MidiEvent {
 	return MidiEvent{
 		Click: click,
-		Tag: tag,
-		Msg: msg,
+		Tag:   tag,
+		Msg:   msg,
 	}
 }
 
 ////////////////////////// CursorEvent methods
 
 func (ce CursorEvent) IsInternal() bool {
-	return strings.Contains(ce.Cid, "internal")
+	return strings.Contains(ce.Tag, "internal")
 }
 
+/*
 func (ce CursorEvent) Source() string {
-	return CidSource(ce.Cid)
+	return CidSource(ce.Tag)
 }
+*/
 
+/*
 // CidSource returns the source of the cursor event, which is the first part of the Cid
 func CidSource(cid string) string {
 	arr := strings.Split(cid, "#")
@@ -64,6 +67,7 @@ func CidSource(cid string) string {
 	}
 	return arr[0]
 }
+*/
 
 /*
 func (ce CursorEvent) String() string {

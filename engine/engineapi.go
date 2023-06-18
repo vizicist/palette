@@ -196,9 +196,9 @@ func (e *Engine) executeEngineApi(api string, apiargs map[string]string) (result
 			}
 			dur = tmp
 		}
-		source, ok := apiargs["source"]
+		tag, ok := apiargs["tag"]
 		if !ok {
-			source = "A"
+			tag = "A"
 		}
 		var pos CursorPos
 		xs := apiargs["x"]
@@ -213,7 +213,7 @@ func (e *Engine) executeEngineApi(api string, apiargs map[string]string) (result
 			}
 			pos = CursorPos{x, y, z}
 		}
-		go TheCursorManager.PlayCursor(source, dur, pos)
+		go TheCursorManager.PlayCursor(tag, dur, pos)
 		return "", nil
 
 	default:
