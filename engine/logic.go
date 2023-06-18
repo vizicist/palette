@@ -147,7 +147,7 @@ func (logic *PatchLogic) generateVisualsFromCursor(ce CursorEvent) {
 
 func (logic *PatchLogic) generateSoundFromCursor(ce CursorEvent, cursorStyle string) {
 
-	LogOfType("cursor", "generateSoundFromCursor", "cursor", ce.Cid, "ce", ce)
+	LogOfType("cursor", "generateSoundFromCursor", "cursor", ce.Gid, "ce", ce)
 
 	switch cursorStyle {
 	case "downonly":
@@ -174,10 +174,10 @@ func (logic *PatchLogic) generateSoundFromCursorDownOnly(ce CursorEvent) {
 		}
 		atClick := logic.nextQuant(CurrentClick(), logic.patch.CursorToQuant(ce))
 		// LogInfo("logic.down", "current", CurrentClick(), "atClick", atClick, "noteOn", noteOn)
-		ScheduleAt(atClick, ce.Cid, noteOn)
+		ScheduleAt(atClick, ce.Tag, noteOn)
 		noteOff := NewNoteOffFromNoteOn(noteOn)
 		atClick += QuarterNote
-		ScheduleAt(atClick, ce.Cid, noteOff)
+		ScheduleAt(atClick, ce.Tag, noteOff)
 
 	case "drag":
 		// do nothing
@@ -194,9 +194,9 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
 	defer logic.mutex.Unlock()
 
 	patch := logic.patch
-	ac, ok := TheCursorManager.getActiveCursorFor(ce.Cid)
+	ac, ok := TheCursorManager.getActiveCursorFor(ce.Gid)
 	if !ok {
-		LogWarn("generateSoundFromCursor: no active cursor", "cid", ce.Cid)
+		LogWarn("generateSoundFromCursor: no active cursor", "cid", ce.Gid)
 		return
 	}
 
@@ -208,7 +208,7 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
 			// but it does happen pretty regularly, I think.
 			// LogWarn("generateSoundFromCursor: oldNote already exists", "cid", ce.Cid)
 			noteOff := NewNoteOffFromNoteOn(oldNoteOn)
-			ScheduleAt(CurrentClick(), ce.Cid, noteOff)
+			ScheduleAt(CurrentClick(), ce.Tag, noteOff)
 		}
 		atClick := logic.nextQuant(CurrentClick(), patch.CursorToQuant(ce))
 		noteOn := logic.cursorToNoteOn(ce)
@@ -216,7 +216,7 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
 			LogWarn("Hmmm, retrigger, noteOn for down is nil?")
 			return // do nothing, assumes any errors are logged in cursorToNoteOn
 		}
-		ScheduleAt(atClick, ce.Cid, noteOn)
+		ScheduleAt(atClick, ce.Tag, noteOn)
 		// LogInfo("RETRIGGER down", "ce", ce, "noteOn", noteOn)
 		ac.NoteOn = noteOn
 		ac.NoteOnClick = atClick
@@ -263,14 +263,14 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
 			// Turn off existing note, one Click after noteOn
 			noteOff := NewNoteOffFromNoteOn(oldNoteOn)
 			offClick := ac.NoteOnClick + 1
-			ScheduleAt(offClick, ce.Cid, noteOff)
+			ScheduleAt(offClick, ce.Tag, noteOff)
 			// LogInfo("RETRIGGER drag noteOff", "noteOff", noteOff)
 
 			atClick := logic.nextQuant(CurrentClick(), patch.CursorToQuant(ce))
 			if atClick < offClick {
 				atClick = offClick
 			}
-			ScheduleAt(atClick, ce.Cid, newNoteOn)
+			ScheduleAt(atClick, ce.Tag, newNoteOn)
 			ac.NoteOn = newNoteOn
 			ac.NoteOnClick = atClick
 			// LogInfo("RETRIGGER drag noteOn", "newNoteOn", newNoteOn)
@@ -281,11 +281,11 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
 		oldNoteOn := ac.NoteOn
 		if oldNoteOn == nil {
 			// not sure why this happens, yet
-			LogWarn("Unexpected UP, no oldNoteOn", "cid", ce.Cid)
+			LogWarn("Unexpected UP, no oldNoteOn", "cid", ce.Gid)
 		} else {
 			noteOff := NewNoteOffFromNoteOn(oldNoteOn)
 			offClick := ac.NoteOnClick + 1
-			ScheduleAt(offClick+1, ce.Cid, noteOff)
+			ScheduleAt(offClick+1, ce.Tag, noteOff)
 			// delete(logic.cursorNote, ce.Cid)
 		}
 	}

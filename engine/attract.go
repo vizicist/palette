@@ -118,9 +118,11 @@ func (am *AttractManager) doAttractAction() {
 	now := time.Now()
 	dt := now.Sub(am.lastAttractGestureTime).Seconds()
 	dp := now.Sub(am.lastAttractChange).Seconds()
+	patch := RandomPatchName()
+	tags := patch + ",internal"
 	if dt > am.attractGestureInterval {
 		dur := 2 * time.Second
-		go TheCursorManager.GenerateRandomGesture("internal", dur)
+		go TheCursorManager.GenerateRandomGesture(tags, dur)
 		am.lastAttractGestureTime = now
 	}
 
