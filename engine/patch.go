@@ -1,11 +1,12 @@
 package engine
 
 import (
+	"container/list"
 	"fmt"
 	"strings"
 	"sync"
 
-"github.com/hypebeast/go-osc/osc"
+	"github.com/hypebeast/go-osc/osc"
 )
 
 type Patch struct {
@@ -308,7 +309,7 @@ func (patch *Patch) Set(paramName string, paramValue string) error {
 func (patch *Patch) Get(paramName string) string {
 	s, err := patch.params.Get(paramName)
 	if err != nil {
-		LogWarn("Patch.Get, error","err",err)
+		LogWarn("Patch.Get, error", "err", err)
 		return ""
 	}
 	return s
@@ -482,11 +483,57 @@ func (patch *Patch) clearGraphics() {
 }
 
 func (patch *Patch) loopClear() {
-	prefix := patch.name
-	LogOfType("loop", "Ptch.loopClear", "prefix", prefix)
-	TheCursorManager.DeleteActiveCursorsForCidPrefix(prefix)
-	TheScheduler.DeleteEventsForCidPrefix(prefix)
-	LogOfType("loop", "Patch.loopClear end", "schdule", TheScheduler.ToString())
+	tag := patch.name
+
+	// LogInfo("LOOP LOOPCLEAR START", "prefix", tag)
+
+	TheCursorManager.DeleteActiveCursorsForCidPrefix(tag)
+	TheScheduler.DeleteEventsWithTag(tag)
+
+	TheScheduler.pendingMutex.Lock()
+	clearPending := false
+	for _, se := range TheScheduler.pendingScheduled {
+		if strings.HasPrefix(se.Tag, tag) {
+			LogInfo("HEY!, saw pendingSchedule with tag prefix!", "prefix", tag, "se", se)
+			clearPending = true
+		}
+	}
+	if clearPending {
+		LogInfo("loopClear is clearing pendingScheduled")
+		TheScheduler.pendingScheduled = nil
+	}
+	TheScheduler.pendingMutex.Unlock()
+
+	// XXX - SHOULD BE USING DeleteEventsWhoseCidIs(cidToDelete string)
+	TheScheduler.mutex.Lock()
+	var nexti *list.Element
+	for i := TheScheduler.schedList.Front(); i != nil; i = nexti {
+		nexti = i.Next()
+		se := i.Value.(*SchedElement)
+		if strings.HasPrefix(se.Tag, tag) {
+			LogInfo("HEY!, saw SchedElement with tag prefix!", "prefix", tag)
+			switch v := se.Value.(type) {
+			case *NoteOn:
+				LogInfo("loopClear Saw Noteon", "v", v)
+			case *NoteOff:
+				LogInfo("loopClear Saw Noteoff", "v", v)
+				if patch.synth != nil {
+					LogInfo("LOOP LOOPCLEAR SENDING NOTEOFF", "v", v)
+					patch.synth.SendNoteToMidiOutput(v)
+				}
+			case CursorEvent:
+				LogInfo("loopClear Saw CursorEvent", "v", v)
+			case MidiEvent:
+				LogInfo("loopClear Saw MidiEvent", "v", v)
+			}
+			TheScheduler.schedList.Remove(i)
+		}
+	}
+	// LogInfo("At end of loopClear", "schedList.Len", TheScheduler.schedList.Len())
+	TheScheduler.mutex.Unlock()
+
+	// LogOfType("loop", "Patch.loopClear end", "schdule", TheScheduler.ToString())
+	// LogInfo("LOOP LOOPCLEAR END", "prefix", tag)
 }
 
 func (patch *Patch) loopDebug() {
