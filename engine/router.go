@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"runtime/debug"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 
@@ -87,7 +86,7 @@ func (r *Router) InputListenOnce() {
 		r.HandleMidiEvent(event)
 		TheEngine.RecordMidiEvent(&event)
 	case event := <-r.cursorInput:
-		ScheduleAt(CurrentClick(), event.Cid, event)
+		ScheduleAt(CurrentClick(), event.Tag, event)
 	default:
 		time.Sleep(time.Millisecond)
 	}
@@ -99,7 +98,7 @@ func (r *Router) ScheduleCursorEvent(ce CursorEvent) {
 	// schedule CursorEvents rather than handle them right away.
 	// This makes it easier to do looping, among other benefits.
 
-	ScheduleAt(CurrentClick(), ce.Cid, ce)
+	ScheduleAt(CurrentClick(), ce.Tag, ce)
 }
 
 func (r *Router) HandleMidiEvent(me MidiEvent) {
@@ -167,25 +166,36 @@ func (r *Router) SetMIDIEventHandler(handler MIDIEventHandler) {
 */
 
 func ArgToFloat(nm string, args map[string]string) float32 {
-	f, err := strconv.ParseFloat(args[nm], 32)
+	v, err := strconv.ParseFloat(args[nm], 32)
 	if err != nil {
 		LogIfError(err)
-		f = 0.0
+		v = 0.0
 	}
-	return float32(f)
+	return float32(v)
 }
 
+func ArgToInt(nm string, args map[string]string) int {
+	v, err := strconv.ParseInt(args[nm], 10,64)
+	if err != nil {
+		LogIfError(err)
+		v = 0.0
+	}
+	return int(v)
+}
+
+/*
 func ArgsToCursorEvent(args map[string]string) CursorEvent {
-	cid := args["cid"]
+	gid := ArgToInt("gid", args)
 	// source := args["source"]
 	ddu := strings.TrimPrefix(args["event"], "cursor_")
 	x := ArgToFloat("x", args)
 	y := ArgToFloat("y", args)
 	z := ArgToFloat("z", args)
-	pos := CursorPos{x,y,z}
-	ce := NewCursorEvent(cid,ddu,pos)
+	pos := CursorPos{x, y, z}
+	ce := NewCursorEvent(gid, ddu, pos)
 	return ce
 }
+*/
 
 func GetArgsXYZ(args map[string]string) (x, y, z float32, err error) {
 
@@ -319,7 +329,7 @@ func (r *Router) oscHandleCursor(msg *osc.Message) {
 		LogIfError(err)
 		return
 	}
-	cid, err := argAsString(msg, 1)
+	gid, err := argAsInt(msg, 1)
 	if err != nil {
 		LogIfError(err)
 		return
@@ -329,8 +339,8 @@ func (r *Router) oscHandleCursor(msg *osc.Message) {
 		LogIfError(err)
 		return
 	}
-	pos := CursorPos{x,y,z}
-	ce := NewCursorEvent(cid+",mmtt",ddu,pos)
+	pos := CursorPos{x, y, z}
+	ce := NewCursorEvent(gid, "mmtt", ddu, pos)
 
 	// XXX - HACK!!
 	xexpand, err := GetParamFloat("engine.mmtt_xexpand")
@@ -353,7 +363,7 @@ func (r *Router) oscHandleCursor(msg *osc.Message) {
 	ce.Pos.Y = boundval32(((float64(ce.Pos.Y) - 0.5) * yexpand) + 0.5)
 	ce.Pos.Z = boundval32(((float64(ce.Pos.Z) - 0.5) * zexpand) + 0.5)
 
-	LogOfType("mmtt", "MMTT Cursor", "source", ce.Source, "ddu", ce.Ddu, "ce", ce)
+	LogOfType("mmtt", "MMTT Cursor", "tag", ce.Tag, "ddu", ce.Ddu, "ce", ce)
 
 	TheCursorManager.ExecuteCursorEvent(ce)
 }
