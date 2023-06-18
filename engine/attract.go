@@ -1,7 +1,6 @@
 package engine
 
 import (
-	"math/rand"
 	"sync/atomic"
 	"time"
 )
@@ -120,9 +119,8 @@ func (am *AttractManager) doAttractAction() {
 	dt := now.Sub(am.lastAttractGestureTime).Seconds()
 	dp := now.Sub(am.lastAttractChange).Seconds()
 	if dt > am.attractGestureInterval {
-		source := string("ABCD"[rand.Int()%4])
 		dur := 2 * time.Second
-		go TheCursorManager.GenerateRandomGesture(source, "internal", dur)
+		go TheCursorManager.GenerateRandomGesture("internal", dur)
 		am.lastAttractGestureTime = now
 	}
 
