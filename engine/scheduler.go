@@ -16,11 +16,11 @@ var TheScheduler *Scheduler
 type Event any
 
 type Scheduler struct {
-	mutex         sync.RWMutex
-	schedList     *list.List // of *SchedElements
-	lastClick     Clicks
-	pendingMutex  sync.RWMutex
-	toBeScheduled []*SchedElement
+	mutex            sync.RWMutex
+	schedList        *list.List // of *SchedElements
+	lastClick        Clicks
+	pendingMutex     sync.RWMutex
+	pendingScheduled []*SchedElement
 }
 
 type Command struct {
@@ -31,6 +31,7 @@ type Command struct {
 type SchedElement struct {
 	// patch             *Patch
 	AtClick *atomic.Int64
+	Tag     string
 	Value   any
 	// loopIt            bool
 	// loopLengthInBeats int
@@ -39,17 +40,18 @@ type SchedElement struct {
 
 func NewScheduler() *Scheduler {
 	s := &Scheduler{
-		schedList:     list.New(),
-		lastClick:     -1,
-		toBeScheduled: nil,
+		schedList:        list.New(),
+		lastClick:        -1,
+		pendingScheduled: nil,
 	}
 	InitializeClicksPerSecond(defaultClicksPerSecond)
 	return s
 }
 
-func NewSchedElement(atclick Clicks, value any) *SchedElement {
+func NewSchedElement(atclick Clicks, tag string, value any) *SchedElement {
 	se := &SchedElement{
 		AtClick: &atomic.Int64{},
+		Tag:     tag,
 		Value:   value,
 	}
 	se.SetClick(atclick)
@@ -71,8 +73,8 @@ func (se *SchedElement) GetClick() Clicks {
 	return Clicks(se.AtClick.Load())
 }
 
-func ScheduleAt(atClick Clicks, value any) {
-	se := NewSchedElement(atClick, value)
+func ScheduleAt(atClick Clicks, tag string, value any) {
+	se := NewSchedElement(atClick, tag, value)
 	TheScheduler.savePendingSchedEvent(se)
 }
 
@@ -81,9 +83,10 @@ func (sched *Scheduler) savePendingSchedEvent(se *SchedElement) {
 	sched.pendingMutex.Lock()
 	defer sched.pendingMutex.Unlock()
 
-	sched.toBeScheduled = append(sched.toBeScheduled, se)
+	sched.pendingScheduled = append(sched.pendingScheduled, se)
 
-	// LogInfo("savePendingSchedEvent","se",se,"value",se.Value)
+	// LogInfo("savePendingSchedEvent", "se", se, "value", se.Value)
+
 	// ss := fmt.Sprintf("%v",se.Value)
 	// if strings.Contains(ss,"NoteOff") {
 	// 	LogInfo("NoteOff in savePendingSchedEvent","se",se,"value",se.Value)
@@ -92,10 +95,10 @@ func (sched *Scheduler) savePendingSchedEvent(se *SchedElement) {
 
 func (sched *Scheduler) handlePendingSchedEvents() {
 	sched.pendingMutex.Lock()
-	for _, se := range sched.toBeScheduled {
+	for _, se := range sched.pendingScheduled {
 		TheScheduler.insertScheduleElement(se)
 	}
-	sched.toBeScheduled = nil
+	sched.pendingScheduled = nil
 	sched.pendingMutex.Unlock()
 }
 
@@ -168,7 +171,7 @@ func (sched *Scheduler) advanceClickTo(toClick Clicks) {
 	sched.lastClick = toClick
 }
 
-func (sched *Scheduler) DeleteEventsWhoseCidIs(cidToDelete string) {
+func (sched *Scheduler) DeleteEventsWhoseCidIs(cid string) {
 
 	sched.mutex.Lock()
 	defer sched.mutex.Unlock()
@@ -178,14 +181,14 @@ func (sched *Scheduler) DeleteEventsWhoseCidIs(cidToDelete string) {
 		nexti = i.Next()
 		se := i.Value.(*SchedElement)
 		ce, isce := se.Value.(CursorEvent)
-		if isce && ce.Cid == cidToDelete {
+		if isce && ce.Cid == cid {
 			sched.schedList.Remove(i)
 			// keep going, there will be lots of them
 		}
 	}
 }
 
-func (sched *Scheduler) DeleteEventsForCidPrefix(prefix string) {
+func (sched *Scheduler) DeleteEventsWithTag(tag string) {
 
 	//// sched.ToString locks the mutex, to don't do it inside of the lock here
 	// LogInfo("DeleteEventsForCidPrefix BEFORE", "prefix", prefix, "sched", sched.ToString())
@@ -197,7 +200,7 @@ func (sched *Scheduler) DeleteEventsForCidPrefix(prefix string) {
 		nexti = i.Next()
 		se := i.Value.(*SchedElement)
 		ce, isce := se.Value.(CursorEvent)
-		if isce && strings.HasPrefix(ce.Cid, prefix) {
+		if isce && strings.HasPrefix(ce.Cid, tag) {
 			sched.schedList.Remove(i)
 			// keep going, there will be lots of them
 		}
@@ -334,14 +337,17 @@ func (sched *Scheduler) insertScheduleElement(se *SchedElement) {
 	if i == nil {
 		// new list
 		sched.schedList.PushFront(se)
+		// LogInfo("Adding SchedElement to front", "se", se)
 	} else if sched.schedList.Back().Value.(*SchedElement).GetClick() <= schedClick {
 		// pe is later than all existing things
 		sched.schedList.PushBack(se)
+		// LogInfo("Adding SchedElement to back", "se", se)
 	} else {
 		// use click to find place to insert
 		for ; i != nil; i = i.Next() {
 			if i.Value.(*SchedElement).GetClick() > schedClick {
 				sched.schedList.InsertBefore(se, i)
+				// LogInfo("Adding SchedElement to middle", "se", se)
 				break
 			}
 		}

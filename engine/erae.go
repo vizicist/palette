@@ -4,7 +4,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	"math"
-	"sync/atomic"
 	"time"
 
 	"gitlab.com/gomidi/midi/v2/drivers"
@@ -165,12 +164,7 @@ func (erae *Erae) handleFinger(bb []byte) {
 	if newPatchName != "" {
 		if newPatchName != erae.patchName {
 			// Clear cursor state
-			ce := CursorEvent{
-				Cid:   cid,
-				Click: &atomic.Int64{},
-				Ddu:   "clear",
-			}
-			ce.SetClick(CurrentClick())
+			ce := NewCursorEvent(cid,"clear",CursorPos{})
 			LogWarn("HandleFinger: needs work here")
 			// erae.OnCursorEvent(ce)
 			_ = ce
@@ -216,13 +210,7 @@ func (erae *Erae) handleFinger(bb []byte) {
 
 	pos := CursorPos{x, y, z}
 
-	ce := CursorEvent{
-		Cid:   cid,
-		Click: &atomic.Int64{},
-		Ddu:   ddu,
-		Pos:   pos,
-	}
-	ce.SetClick(CurrentClick())
+	ce := NewCursorEvent(cid,ddu,pos)
 	_ = ce
 	// XXX - should Fresh be trued???
 	LogWarn("HandleFinger: should be sending CursorEvent")

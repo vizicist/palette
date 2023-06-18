@@ -249,8 +249,7 @@ func (quadpro *QuadPro) onMidiEvent(me MidiEvent) error {
 
 func (quadpro *QuadPro) doTest(ntimes int, dt, dur time.Duration) {
 	for n := 0; n < ntimes; n++ {
-		source := string("ABCD"[rand.Int()%4])
-		go TheCursorManager.GenerateRandomGesture(source, "", dur)
+		go TheCursorManager.GenerateRandomGesture("", dur)
 		time.Sleep(dt)
 	}
 }

@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/hypebeast/go-osc/osc"
@@ -88,7 +87,7 @@ func (r *Router) InputListenOnce() {
 		r.HandleMidiEvent(event)
 		TheEngine.RecordMidiEvent(&event)
 	case event := <-r.cursorInput:
-		ScheduleAt(CurrentClick(), event)
+		ScheduleAt(CurrentClick(), event.Cid, event)
 	default:
 		time.Sleep(time.Millisecond)
 	}
@@ -100,7 +99,7 @@ func (r *Router) ScheduleCursorEvent(ce CursorEvent) {
 	// schedule CursorEvents rather than handle them right away.
 	// This makes it easier to do looping, among other benefits.
 
-	ScheduleAt(CurrentClick(), ce)
+	ScheduleAt(CurrentClick(), ce.Cid, ce)
 }
 
 func (r *Router) HandleMidiEvent(me MidiEvent) {
@@ -111,7 +110,7 @@ func (r *Router) HandleMidiEvent(me MidiEvent) {
 		if r.midiThruScadjust {
 			LogWarn("PassThruMIDI, midiThruScadjust needs work", "msg", me.Msg)
 		}
-		ScheduleAt(CurrentClick(), me.Msg)
+		ScheduleAt(CurrentClick(), "midi", me.Msg)
 	}
 	if r.midisetexternalscale {
 		r.handleMIDISetScaleNote(me)
@@ -179,18 +178,12 @@ func ArgToFloat(nm string, args map[string]string) float32 {
 func ArgsToCursorEvent(args map[string]string) CursorEvent {
 	cid := args["cid"]
 	// source := args["source"]
-	event := strings.TrimPrefix(args["event"], "cursor_")
+	ddu := strings.TrimPrefix(args["event"], "cursor_")
 	x := ArgToFloat("x", args)
 	y := ArgToFloat("y", args)
 	z := ArgToFloat("z", args)
 	pos := CursorPos{x,y,z}
-	ce := CursorEvent{
-		Cid:   cid,
-		Click: &atomic.Int64{},
-		Ddu:   event,
-		Pos: pos,
-	}
-	ce.SetClick(CurrentClick())
+	ce := NewCursorEvent(cid,ddu,pos)
 	return ce
 }
 
@@ -337,14 +330,7 @@ func (r *Router) oscHandleCursor(msg *osc.Message) {
 		return
 	}
 	pos := CursorPos{x,y,z}
-	ce := CursorEvent{
-		Cid:   cid + ",mmtt", // NOTE: we add an mmmtt tag
-		Click: &atomic.Int64{},
-		Ddu:   ddu,
-		Pos: pos,
-		Area:  0.0,
-	}
-	ce.SetClick(CurrentClick())
+	ce := NewCursorEvent(cid+",mmtt",ddu,pos)
 
 	// XXX - HACK!!
 	xexpand, err := GetParamFloat("engine.mmtt_xexpand")

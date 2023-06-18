@@ -3,7 +3,6 @@ package engine
 import (
 	"encoding/json"
 	"strings"
-	"sync/atomic"
 
 	"github.com/hypebeast/go-osc/osc"
 	midi "gitlab.com/gomidi/midi/v2"
@@ -26,17 +25,6 @@ type PlaybackEvent struct {
 
 type MIDIEventHandler func(MidiEvent)
 
-// CursorEvent is a singl Cursor event
-type CursorEvent struct {
-	Click *atomic.Int64 `json:"Click"`
-	Cid   string        `json:"Cid"`
-	// Source string
-	Ddu  string    `json:"Ddu"` // "down", "drag", "up" (sometimes "clear")
-	Pos  CursorPos `json:"Pos"`
-	Area float32   `json:"Area"`
-}
-
-// OscEvent is an OSC message
 type OscEvent struct {
 	Click  Clicks       `json:"Click"`
 	Msg    *osc.Message `json:"Msg"`
@@ -45,7 +33,16 @@ type OscEvent struct {
 
 type MidiEvent struct {
 	Click Clicks
+	Tag   string
 	Msg   midi.Message
+}
+
+func NewMidiEvent(click Clicks, tag string, msg midi.Message) MidiEvent {
+	return MidiEvent{
+		Click: click,
+		Tag: tag,
+		Msg: msg,
+	}
 }
 
 ////////////////////////// CursorEvent methods

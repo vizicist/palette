@@ -433,7 +433,7 @@ func SchedElementFromString(s string) (se *SchedElement, err error) {
 		return nil, err
 	}
 
-	se = NewSchedElement(atclick,val)
+	se = NewSchedElement(atclick,"fromString", val)
 	return se, nil
 }
 
