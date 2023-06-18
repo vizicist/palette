@@ -13,6 +13,18 @@ import (
 
 var TheCursorManager *CursorManager
 
+// CursorEvent is a singl Cursor event
+type CursorEvent struct {
+	Click *atomic.Int64 `json:"Click"`
+	Cid   string        `json:"Cid"`
+	Tag   string        `json:"Tag"`
+	// Source string
+	Ddu  string    `json:"Ddu"` // "down", "drag", "up" (sometimes "clear")
+	Pos  CursorPos `json:"Pos"`
+	Area float32   `json:"Area"`
+}
+
+// OscEvent is an OSC message
 type ActiveCursor struct {
 	Current     CursorEvent
 	Previous    CursorEvent
@@ -50,6 +62,22 @@ type CursorHandler interface {
 	onCursorEvent(state ActiveCursor) error
 }
 
+func NewCursorEvent(cid string, ddu string, pos CursorPos) CursorEvent {
+	ce := CursorEvent{
+		Click: &atomic.Int64{},
+		Cid:   cid,
+		Ddu:   ddu,
+		Pos:   pos,
+		Area:  0,
+	}
+	ce.Click.Store(int64(CurrentClick()))
+	return ce
+}
+
+func NewCursorClearEvent() CursorEvent {
+	return NewCursorEvent("", "clear", CursorPos{})
+}
+
 // NewActiveCursor - create a new ActiveCursor for a CursorEvent
 // An ActiveCursor can be for a Button or a Patch area.
 func NewActiveCursor(ce CursorEvent) *ActiveCursor {
@@ -71,6 +99,8 @@ func NewActiveCursor(ce CursorEvent) *ActiveCursor {
 		ac.loopBeats = patch.GetInt("misc.looping_beats")
 		ac.loopFade = patch.GetFloat("misc.looping_fade")
 	}
+
+	LogInfo("NewactiveCursor", "ac", ac)
 
 	ac.pitchOffset = TheEngine.currentPitchOffset.Load()
 
@@ -167,7 +197,8 @@ func (cm *CursorManager) clearCursors() {
 	cm.deleteActiveCursors(cidsToDelete)
 }
 
-func (cm *CursorManager) GenerateRandomGesture(source string, attrib string, dur time.Duration) {
+func (cm *CursorManager) GenerateRandomGesture(attrib string, dur time.Duration) {
+
 	pos0 := RandPos()
 	pos1 := RandPos()
 	// Occasionally force horizontal and vertical
@@ -176,7 +207,7 @@ func (cm *CursorManager) GenerateRandomGesture(source string, attrib string, dur
 	} else if rand.Int()%4 == 0 {
 		pos1.Y = pos0.Y
 	}
-	cm.GenerateGesture(source, attrib, dur, pos0, pos1)
+	cm.GenerateGesture(attrib, dur, pos0, pos1)
 }
 
 func RandPos() CursorPos {
@@ -206,7 +237,11 @@ func dirFrom(x0, x1 float32) float32 {
 }
 */
 
-func (cm *CursorManager) GenerateGesture(source string, attrib string, dur time.Duration, pos0 CursorPos, pos1 CursorPos) {
+func (cm *CursorManager) GenerateGesture(attrib string, dur time.Duration, pos0 CursorPos, pos1 CursorPos) {
+
+	// source := string("ABCD"[rand.Int()%4])
+	LogInfo("GenerateGesture should use a parameter for source")
+	source := "A"
 
 	cid := cm.UniqueCid(source)
 	if attrib != "" {
@@ -215,11 +250,14 @@ func (cm *CursorManager) GenerateGesture(source string, attrib string, dur time.
 	LogOfType("cursor", "generateCursoresture start",
 		"cid", cid, "noteDuration", dur, "attrib", attrib, "pos0", pos0, "pos1", pos1)
 
-	nsteps, err := GetParamInt("engine.gesturesteps")
-	if err != nil {
-		LogIfError(err)
-		return
-	}
+	nsteps := 1
+	/*
+		nsteps, err := GetParamInt("engine.gesturesteps")
+		if err != nil {
+			LogIfError(err)
+			return
+		}
+	*/
 
 	dpos := CursorPos{
 		X: pos1.X - pos0.X,
@@ -245,15 +283,8 @@ func (cm *CursorManager) GenerateGesture(source string, attrib string, dur time.
 			Y: pos0.Y + dpos.Y*amount,
 			Z: pos0.Z + dpos.Z*amount,
 		}
-		ce := CursorEvent{
-			Cid:   cid,
-			Click: &atomic.Int64{},
-			Ddu:   ddu,
-			Pos:   pos,
-			Area:  0,
-		}
+		ce := NewCursorEvent(cid, ddu, pos)
 		// LogOfType("cursor", "generateCursoresture", "n", n, "amount", amount, "pos", pos)
-		ce.SetClick(CurrentClick())
 		cm.activeMutex.Unlock()
 
 		cm.ExecuteCursorEvent(ce)
@@ -369,7 +400,7 @@ func (cm *CursorManager) ExecuteCursorEvent(ce CursorEvent) {
 		}
 
 		// LogInfo("looped CursorEvent", "ce.Z", ce.Z, "loopFade", ac.loopFade)
-		se := NewSchedElement(loopce.GetClick(), loopce)
+		se := NewSchedElement(loopce.GetClick(), ce.Cid, loopce)
 		TheScheduler.insertScheduleElement(se)
 	}
 
@@ -406,8 +437,8 @@ func (cm *CursorManager) DeleteActiveCursorIfZLessThan(cid string, threshold flo
 		if ac.maxZ < threshold {
 			// we want to remove things that this ActiveCursor has created for looping.
 			cm.activeMutex.Unlock()
-			LogInfo("DeleteActiveCursorIfZLessThan REMOVING!")
 			loopCid = cm.LoopedCidFor(ac.Current, false /*warn*/)
+			LogInfo("DeleteActiveCursorIfZLessThan REMOVING", "loopCid", loopCid, "ac.maxZ", ac.maxZ)
 			cm.activeMutex.Lock()
 			// but wait after we detete it from
 		}
@@ -420,6 +451,7 @@ func (cm *CursorManager) DeleteActiveCursorIfZLessThan(cid string, threshold flo
 	cm.CidToLoopedCidMutex.Unlock()
 
 	if loopCid != "" {
+		LogInfo("Calling DeleteEventsWhoseCidIs", "loopCid", loopCid)
 		TheScheduler.DeleteEventsWhoseCidIs(loopCid)
 	}
 }
@@ -430,7 +462,7 @@ func (cm *CursorManager) DeleteActiveCursorsForCidPrefix(cidPrefix string) {
 	cm.activeMutex.RLock()
 
 	if len(cm.activeCursors) > 0 {
-		LogOfType("cursor", "DeleteActiveCursorsForCidPrefix", "cidPrefix", cidPrefix)
+		LogOfType("cursor", "DeleteActiveCursorsWithTag", "cidPrefix", cidPrefix)
 	}
 	todelete := []string{}
 	for _, ac := range cm.activeCursors {
@@ -483,7 +515,7 @@ func (cm *CursorManager) autoCursorUp(now time.Time) {
 		if dclick > checkDelay {
 			ce := ac.Current
 			ce.Ddu = "up"
-			LogInfo("autoCursorUp: Executing autoCursorUp!", "cid", cid,"ce", ce)
+			LogInfo("autoCursorUp: Executing autoCursorUp!", "cid", cid, "ce", ce)
 
 			cm.ExecuteCursorEvent(ce)
 			cidsToDelete = append(cidsToDelete, cid)
@@ -528,13 +560,7 @@ fn (cm *CusorManager)checkThrehold(ac *ActiveCurs()
 
 func (cm *CursorManager) PlayCursor(source string, dur time.Duration, pos CursorPos) {
 	cid := cm.UniqueCid(source)
-	ce := CursorEvent{
-		Cid:   cid,
-		Click: &atomic.Int64{},
-		Ddu:   "down",
-		Pos:   pos,
-	}
-	ce.SetClick(CurrentClick())
+	ce := NewCursorEvent(cid, "down", pos)
 	cm.ExecuteCursorEvent(ce)
 	// Send the cursor up, but don't block the loop
 	go func(ce CursorEvent) {

@@ -142,7 +142,7 @@ func (m *MidiIO) Start() {
 
 func (m *MidiIO) handleMidiInput(msg midi.Message, timestamp int32) {
 	LogOfType("midi", "handleMidiInput", "msg", msg)
-	TheRouter.midiInputChan <- MidiEvent{Msg: msg}
+	TheRouter.midiInputChan <- NewMidiEvent(CurrentClick(),"handleMidiInput",msg)
 
 	/*
 		var bt []byte
