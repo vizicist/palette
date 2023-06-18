@@ -3,6 +3,7 @@ package engine
 import (
 	"container/list"
 	"fmt"
+	"math/rand"
 	"strings"
 	"sync"
 
@@ -29,6 +30,10 @@ func PatchNames() []string {
 		arr = append(arr, nm)
 	}
 	return arr
+}
+
+func RandomPatchName() string {
+	return string("ABCD"[rand.Intn(len(Patchs))])
 }
 
 func NewPatch(patchName string) *Patch {
@@ -487,7 +492,7 @@ func (patch *Patch) loopClear() {
 
 	// LogInfo("LOOP LOOPCLEAR START", "prefix", tag)
 
-	TheCursorManager.DeleteActiveCursorsForCidPrefix(tag)
+	TheCursorManager.DeleteActiveCursorsForTag(tag)
 	TheScheduler.DeleteEventsWithTag(tag)
 
 	TheScheduler.pendingMutex.Lock()
@@ -504,30 +509,34 @@ func (patch *Patch) loopClear() {
 	}
 	TheScheduler.pendingMutex.Unlock()
 
-	// XXX - SHOULD BE USING DeleteEventsWhoseCidIs(cidToDelete string)
+	// XXX - SHOULD BE USING DeleteEventsWhoseGidIs(cidToDelete string)
 	TheScheduler.mutex.Lock()
 	var nexti *list.Element
 	for i := TheScheduler.schedList.Front(); i != nil; i = nexti {
 		nexti = i.Next()
 		se := i.Value.(*SchedElement)
-		if strings.HasPrefix(se.Tag, tag) {
-			LogInfo("HEY!, saw SchedElement with tag prefix!", "prefix", tag)
-			switch v := se.Value.(type) {
-			case *NoteOn:
-				LogInfo("loopClear Saw Noteon", "v", v)
-			case *NoteOff:
-				LogInfo("loopClear Saw Noteoff", "v", v)
-				if patch.synth != nil {
-					LogInfo("LOOP LOOPCLEAR SENDING NOTEOFF", "v", v)
-					patch.synth.SendNoteToMidiOutput(v)
-				}
-			case CursorEvent:
-				LogInfo("loopClear Saw CursorEvent", "v", v)
-			case MidiEvent:
-				LogInfo("loopClear Saw MidiEvent", "v", v)
-			}
-			TheScheduler.schedList.Remove(i)
+		if se.Tag != tag {
+			continue
 		}
+		switch v := se.Value.(type) {
+
+		case *NoteOn:
+			// LogInfo("loopClear Saw Noteon", "v", v)
+
+		case *NoteOff:
+			LogInfo("loopClear Saw Noteoff", "v", v)
+			if patch.synth != nil {
+				LogInfo("LOOP LOOPCLEAR SENDING NOTEOFF", "v", v)
+				patch.synth.SendNoteToMidiOutput(v)
+			}
+
+		case CursorEvent:
+			// LogInfo("loopClear Saw CursorEvent", "v", v)
+
+		case MidiEvent:
+			// LogInfo("loopClear Saw MidiEvent", "v", v)
+		}
+		TheScheduler.schedList.Remove(i)
 	}
 	// LogInfo("At end of loopClear", "schedList.Len", TheScheduler.schedList.Len())
 	TheScheduler.mutex.Unlock()

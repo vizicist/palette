@@ -258,8 +258,9 @@ type oneMorph struct {
 	fwVersionRelease uint8
 	deviceID         int
 	morphtype        string // "corners", "quadrants"
-	currentSource    string // "A", "B", "C", "D" - it can change dynamically
-	contactIdToCid   map[int]string
+	currentTag       string // "A", "B", "C", "D" - it can change dynamically
+	previousTag      string // "A", "B", "C", "D" - it can change dynamically
+	contactIdToGid   map[int]int
 }
 
 var morphMaxForce float32 = 1000.0
@@ -356,11 +357,11 @@ func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float32) 
 				} else if xNorm > (1.0-edge) && yNorm < edge {
 					cornerSource = "D"
 				}
-				if cornerSource != m.currentSource {
+				if cornerSource != m.currentTag {
 					LogInfo("Switching corners pad", "source", cornerSource)
 					ce := NewCursorClearEvent()
 					callback(ce)
-					m.currentSource = cornerSource
+					m.currentTag = cornerSource
 					continue // loop, doesn't send a cursor event
 				}
 
@@ -389,46 +390,41 @@ func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float32) 
 				}
 				xNorm *= 2.0
 				yNorm *= 2.0
-				m.currentSource = quadSource
+				m.currentTag = quadSource
 
 			case "A", "B", "C", "D":
-				m.currentSource = m.morphtype
+				m.currentTag = m.morphtype
 
 			default:
 				LogWarn("Unknown morphtype", "morphtype", m.morphtype)
-				m.currentSource = ""
+				m.currentTag = ""
 			}
 
-			if m.currentSource == "" {
-				LogWarn("Hey! currentSource not set, assuming A")
-				m.currentSource = "A"
+			if m.currentTag == "" {
+				LogWarn("Hey! currentTag not set, assuming A")
+				m.currentTag = "A"
 			}
 
 			contactid := int(contact.id)
-			cid, ok := m.contactIdToCid[contactid]
+			gid, ok := m.contactIdToGid[contactid]
 			if !ok {
 				// If we've never seen this contact before, create a new cid...
-				cid = ""
-			} else {
+				gid = TheCursorManager.UniqueGid()
+				m.contactIdToGid[contactid] = gid
+			} else if m.currentTag != m.previousTag {
 				// If we're switching to a new source, clear existing cursors...
-				if m.currentSource != CidSource(cid) {
-					// LogOfType("cursor", "Switching cursor source, sending clear", "existingsource", CidSource(cid), "newsource", m.currentSource)
-					ce := NewCursorClearEvent()
-					callback(ce)
-					// and create a new cid...
-					cid = ""
-				}
+				ce := NewCursorClearEvent()
+				callback(ce)
+				// and create a new cid...
+				gid = TheCursorManager.UniqueGid()
 			}
 
-			if cid == "" {
-				cid = TheCursorManager.UniqueCid(m.currentSource)
-				m.contactIdToCid[contactid] = cid
-			}
+			m.previousTag = m.currentTag
 
 			LogOfType("morph", "Morph",
 				"idx", m.idx,
 				"contactid", contactid,
-				"cid", cid,
+				"cid", gid,
 				"n", n,
 				"contactstate", contact.state,
 				"xNorm", xNorm,
@@ -450,10 +446,10 @@ func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float32) 
 				xNorm = 1.0
 			}
 
-			pos := CursorPos{xNorm,yNorm,zNorm}
-			ev := NewCursorEvent(cid,ddu,pos)
-			ev.Area = area
-			callback(ev)
+			pos := CursorPos{xNorm, yNorm, zNorm}
+			ce := NewCursorEvent(gid, m.currentTag, ddu, pos)
+			ce.Area = area
+			callback(ce)
 		}
 	}
 }
@@ -467,7 +463,7 @@ func WinMorphInitialize() error {
 	for idx := uint8(0); idx < uint8(numdevices); idx++ {
 
 		m := &oneMorph{
-			contactIdToCid: map[int]string{},
+			contactIdToGid: map[int]int{},
 		}
 		allMorphs[idx] = m
 		m.idx = idx
@@ -518,9 +514,9 @@ func WinMorphInitialize() error {
 		m.morphtype = morphtype
 		switch m.morphtype {
 		case "corners", "quadrants":
-			m.currentSource = "A"
+			m.currentTag = "A"
 		case "A", "B", "C", "D":
-			m.currentSource = morphtype
+			m.currentTag = morphtype
 		default:
 			LogWarn("Unexpected morphtype", "morphtype", morphtype)
 		}

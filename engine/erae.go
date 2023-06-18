@@ -125,7 +125,7 @@ func (erae *Erae) handleFinger(bb []byte) {
 	rawx := Float32frombytes(realbytes[0:4])
 	rawy := Float32frombytes(realbytes[4:8])
 	rawz := Float32frombytes(realbytes[8:12])
-	cid := fmt.Sprintf("%d", finger)
+	gid := int(finger)
 
 	x := rawx / float32(erae.width)
 	y := rawy / float32(erae.height)
@@ -150,26 +150,26 @@ func (erae *Erae) handleFinger(bb []byte) {
 	// we change the patch to that corner.
 
 	edge := float32(0.1)
-	newPatchName := ""
+	tag := ""
 	if x < edge && y < edge {
-		newPatchName = "A"
+		tag = "A"
 	} else if x < edge && y > (1.0-edge) {
-		newPatchName = "B"
+		tag = "B"
 	} else if x > (1.0-edge) && y > (1.0-edge) {
-		newPatchName = "C"
+		tag = "C"
 	} else if x > (1.0-edge) && y < edge {
-		newPatchName = "D"
+		tag = "D"
 	}
 
-	if newPatchName != "" {
-		if newPatchName != erae.patchName {
+	if tag != "" {
+		if tag != erae.patchName {
 			// Clear cursor state
-			ce := NewCursorEvent(cid,"clear",CursorPos{})
+			ce := NewCursorEvent(gid,tag,"clear",CursorPos{})
 			LogWarn("HandleFinger: needs work here")
 			// erae.OnCursorEvent(ce)
 			_ = ce
-			LogOfType("erae", "Switching Erae to", "patch", newPatchName)
-			erae.patchName = newPatchName
+			LogOfType("erae", "Switching Erae to", "patch", tag)
+			erae.patchName = tag
 		}
 		// We don't pass corner things through, even if we haven't changed the player
 		return
@@ -210,7 +210,7 @@ func (erae *Erae) handleFinger(bb []byte) {
 
 	pos := CursorPos{x, y, z}
 
-	ce := NewCursorEvent(cid,ddu,pos)
+	ce := NewCursorEvent(gid,tag,ddu,pos)
 	_ = ce
 	// XXX - should Fresh be trued???
 	LogWarn("HandleFinger: should be sending CursorEvent")

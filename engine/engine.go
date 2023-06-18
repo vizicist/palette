@@ -357,7 +357,7 @@ func (e *Engine) doPlayback(f *os.File) {
 		case "cursor":
 			ce := rec.Value.(CursorEvent)
 			LogInfo("Playback", "cursor", ce)
-			ScheduleAt(CurrentClick(), ce.Cid, ce)
+			ScheduleAt(CurrentClick(), ce.Tag, ce)
 		}
 	}
 	err := fileScanner.Err()

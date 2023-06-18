@@ -160,18 +160,18 @@ func (quadpro *QuadPro) Start() {
 }
 
 func (quadpro *QuadPro) PatchForCursorEvent(ce CursorEvent) (patch *Patch, button string) {
-	source := ce.Source()
+	tag := ce.Tag
 	// If the source has some patchLogic...
-	patchLogic, ok := quadpro.patchLogic[source]
+	patchLogic, ok := quadpro.patchLogic[tag]
 	if !ok {
 		patch = nil
 	} else {
 		patch = patchLogic.patch
 	}
 	// If the source is a Button...
-	_, ok = CursorSourceToQuadPreset[source]
+	_, ok = CursorSourceToQuadPreset[tag]
 	if ok {
-		button = source
+		button = tag
 	}
 	return patch, button
 }
@@ -205,9 +205,9 @@ func (quadpro *QuadPro) onCursorEvent(state ActiveCursor) error {
 
 	// For the moment, the cursor to patchLogic mapping is 1-to-1.
 	// I.e. ce.Source of "A" maps to patchLogic "A"
-	patchLogic, ok := quadpro.patchLogic[state.Current.Source()]
+	patchLogic, ok := quadpro.patchLogic[state.Current.Tag]
 	if !ok || patchLogic == nil {
-		LogWarn("Source doesn't exist in patchLogic", "source", state.Current.Source())
+		LogWarn("Source doesn't exist in patchLogic", "source", state.Current.Tag)
 		return nil
 	}
 	cursorStyle := patchLogic.patch.Get("misc.cursorstyle")
@@ -248,8 +248,9 @@ func (quadpro *QuadPro) onMidiEvent(me MidiEvent) error {
 }
 
 func (quadpro *QuadPro) doTest(ntimes int, dt, dur time.Duration) {
+	tags := "A"
 	for n := 0; n < ntimes; n++ {
-		go TheCursorManager.GenerateRandomGesture("", dur)
+		go TheCursorManager.GenerateRandomGesture(tags, dur)
 		time.Sleep(dt)
 	}
 }
