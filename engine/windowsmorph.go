@@ -424,7 +424,7 @@ func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float32) 
 			LogOfType("morph", "Morph",
 				"idx", m.idx,
 				"contactid", contactid,
-				"cid", gid,
+				"gid", gid,
 				"n", n,
 				"contactstate", contact.state,
 				"xNorm", xNorm,

@@ -75,6 +75,14 @@ def sprint(*args, end='', **kwargs):
 def palette_engine_api(api, params=""):
     return palette_api("engine."+api,params)
 
+def palette_engine_set(name, value):
+    return palette_api("engine.set",
+            "\"name\": \"" + name + "\"" + \
+            ", \"value\": \"" + str(value) + "\"")
+
+def palette_engine_get(name):
+    return palette_api("engine.get", "\"name\": \"" + name + "\"")
+
 def logFilePath(nm):
     return os.path.join(localPaletteDir(),"logs",nm)
 
