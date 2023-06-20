@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math/rand"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/hypebeast/go-osc/osc"
@@ -12,11 +11,14 @@ import (
 
 var TheCursorManager *CursorManager
 
-// CursorEvent is a singl Cursor event
+// CursorEvent is a single Cursor event.
+// NOTE: it's assumed that we can copy a CursorEvent by copying the value.
+// Do note add pointers to this struct.
 type CursorEvent struct {
-	Click *atomic.Int64 `json:"Click"`
-	Gid   int           `json:"Gid"`
-	Tag   string        `json:"Tag"`
+	// Named CClick to catch everyone that accesses it
+	CClick Clicks `json:"Click"`
+	Gid    int    `json:"Gid"`
+	Tag    string `json:"Tag"`
 	// Source string
 	Ddu  string    `json:"Ddu"` // "down", "drag", "up" (sometimes "clear")
 	Pos  CursorPos `json:"Pos"`
@@ -40,14 +42,17 @@ type ActiveCursor struct {
 
 type CursorManager struct {
 	executeMutex sync.RWMutex
+	ClickMutex   sync.Mutex
 
-	activeMutex   sync.RWMutex
+	// activeMutex   sync.RWMutex
+	activeMutex   sync.Mutex
 	activeCursors map[int]*ActiveCursor // map of Gid to ActiveCursor
 
 	GidToLoopedGidMutex sync.RWMutex
 	GidToLoopedGid      map[int]int
 	handlers            map[string]CursorHandler
 	uniqueInt           int
+	uniqueMutex         sync.Mutex
 }
 
 type CursorPos struct {
@@ -63,18 +68,13 @@ type CursorHandler interface {
 
 func NewCursorEvent(gid int, tag string, ddu string, pos CursorPos) CursorEvent {
 	ce := CursorEvent{
-		Click: &atomic.Int64{},
-		Gid:   gid,
-		Tag:   tag,
-		Ddu:   ddu,
-		Pos:   pos,
-		Area:  0,
+		CClick: CurrentClick(),
+		Gid:    gid,
+		Tag:    tag,
+		Ddu:    ddu,
+		Pos:    pos,
+		Area:   0,
 	}
-	click := int64(CurrentClick())
-	if click == 0 {
-		LogWarn("NewCursorEvent: click is 0?")
-	}
-	ce.Click.Store(int64(CurrentClick()))
 	return ce
 }
 
@@ -105,6 +105,14 @@ func NewActiveCursor(ce CursorEvent) *ActiveCursor {
 		ac.loopFade = patch.GetFloat("misc.looping_fade")
 	}
 
+	force, _ := GetParamBool("engine.looping_force")
+	if force {
+		forcebeats, _ := GetParamInt("engine.looping_forcebeats")
+		ac.loopBeats = forcebeats
+		forcefade, _ := GetParamFloat("engine.looping_forcefade")
+		ac.loopFade = float32(forcefade)
+	}
+
 	// LogInfo("NewactiveCursor", "ac", ac)
 
 	ac.pitchOffset = TheEngine.currentPitchOffset.Load()
@@ -131,24 +139,24 @@ func NewCursorManager() *CursorManager {
 	return &CursorManager{
 		activeCursors:  map[int]*ActiveCursor{},
 		GidToLoopedGid: map[int]int{},
-		activeMutex:    sync.RWMutex{},
+		activeMutex:    sync.Mutex{},
 		handlers:       map[string]CursorHandler{},
 		uniqueInt:      1,
 	}
 }
 
 func (cm *CursorManager) UniqueGid() int {
-	cm.activeMutex.Lock()
-	defer cm.activeMutex.Unlock()
+	cm.uniqueMutex.Lock()
+	defer cm.uniqueMutex.Unlock()
 	unique := cm.uniqueInt
 	cm.uniqueInt++
 	return unique
 }
 
 func (cm *CursorManager) getActiveCursorFor(gid int) (*ActiveCursor, bool) {
-	cm.activeMutex.RLock()
+	cm.activeMutex.Lock()
 	ac, ok := cm.activeCursors[gid]
-	cm.activeMutex.RUnlock()
+	cm.activeMutex.Unlock()
 	return ac, ok
 }
 
@@ -156,33 +164,48 @@ func (cm *CursorManager) AddCursorHandler(name string, handler CursorHandler, so
 	cm.handlers[name] = handler
 }
 
-// cleaerCursors sends "up" events to all active cursors, then deletes them
-func (cm *CursorManager) clearActiveCursors(tag string) {
+func (cm *CursorManager) clearActiveCursors(tag string, checkDelay Clicks) {
 
 	currentClick := CurrentClick()
-	gidsToDelete := []int{}
 
-	cm.activeMutex.RLock()
+	gidsToDelete := []int{}
+	cursorUpEvents := []CursorEvent{}
+
+	cm.activeMutex.Lock()
 
 	for gid, ac := range cm.activeCursors {
-		if ac.Current.Tag != tag {
-			LogInfo("clearActiveCursors is NOT clearing", "ac.Current", ac.Current)
+
+		if tag != "*" && ac.Current.Tag != tag {
 			continue
 		}
-		ce := ac.Current
-		ce.SetClick(currentClick)
-		ce.Ddu = "up"
 
-		cm.activeMutex.RUnlock()
-		cm.ExecuteCursorEvent(ce)
-		cm.activeMutex.RLock()
+		currClick := ac.Current.GetClick()
+		prevClick := ac.Previous.GetClick()
+		dclick := currClick - prevClick
+		// Not sure the reason why dclick is sometimes -1 or -2, I should look at it later.
+		// if dclick < 0 {
+		// 	LogWarn("clearActiveCursors: Unexpected negative dclick?", "currClick", currClick, "prevClick", prevClick)
+		// }
 
-		LogOfType("cursor", "Clearing cursor", "gid", gid)
+		if dclick < checkDelay {
+			continue
+		}
 
+		ceUp := ac.Current
+		ceUp.SetClick(currentClick)
+		ceUp.Ddu = "up"
+
+		LogOfType("cursor", "Clearing Activecursor", "gid", gid)
+
+		cursorUpEvents = append(cursorUpEvents, ceUp)
 		gidsToDelete = append(gidsToDelete, gid)
 	}
 
-	cm.activeMutex.RUnlock()
+	cm.activeMutex.Unlock()
+
+	for _, ce := range cursorUpEvents {
+		cm.ExecuteCursorEvent(ce)
+	}
 
 	cm.deleteActiveCursors(gidsToDelete)
 }
@@ -231,7 +254,7 @@ func (cm *CursorManager) GenerateGesture(tag string, dur time.Duration, pos0 Cur
 
 	gid := cm.UniqueGid()
 	LogOfType("cursor", "generateCursoresture start",
-		"cid", gid, "noteDuration", dur, "tags", tag, "pos0", pos0, "pos1", pos1)
+		"gid", gid, "noteDuration", dur, "tags", tag, "pos0", pos0, "pos1", pos1)
 
 	nsteps := 1
 	/*
@@ -259,7 +282,7 @@ func (cm *CursorManager) GenerateGesture(tag string, dur time.Duration, pos0 Cur
 		}
 
 		// Not sure about this Lock
-		cm.activeMutex.Lock()
+		// cm.activeMutex.Lock()
 		amount := float32(n) / float32(nsteps)
 		pos := CursorPos{
 			X: pos0.X + dpos.X*amount,
@@ -268,26 +291,24 @@ func (cm *CursorManager) GenerateGesture(tag string, dur time.Duration, pos0 Cur
 		}
 		ce := NewCursorEvent(gid, tag, ddu, pos)
 		// LogOfType("cursor", "generateCursoresture", "n", n, "amount", amount, "pos", pos)
-		cm.activeMutex.Unlock()
+		// cm.activeMutex.Unlock()
 
 		cm.ExecuteCursorEvent(ce)
 		time.Sleep(time.Duration(dur.Nanoseconds() / int64(nsteps)))
 	}
 }
 
-func (ce CursorEvent) SetClick(click Clicks) {
-	if ce.Click == nil {
-		LogWarn("Hey, click is null in CursorEvent.SetClick?")
-		ce.Click = &atomic.Int64{}
-	}
-	ce.Click.Store(int64(click))
+func (ce *CursorEvent) SetClick(click Clicks) {
+	TheCursorManager.ClickMutex.Lock()
+	ce.CClick = click
+	TheCursorManager.ClickMutex.Unlock()
 }
+
 func (ce CursorEvent) GetClick() Clicks {
-	if ce.Click == nil {
-		LogWarn("Hey, click is null in CursorEvent.SetClick?")
-		ce.Click = &atomic.Int64{}
-	}
-	return Clicks(ce.Click.Load())
+	TheCursorManager.ClickMutex.Lock()
+	clk := ce.CClick
+	TheCursorManager.ClickMutex.Unlock()
+	return clk
 }
 
 /*
@@ -300,18 +321,29 @@ func (cm *CursorManager) LoopedGidFor(ce CursorEvent, warn bool) int {
 	defer cm.GidToLoopedGidMutex.Unlock()
 
 	loopedGid, ok := cm.GidToLoopedGid[ce.Gid]
-	if !ok {
-		if ce.Ddu == "up" { // Not totally sure why this happens
-			if warn {
-				LogWarn("Why is this happening?")
-			}
-			loopedGid = cm.UniqueGid()
-			return loopedGid
+	if ok {
+		// LogInfo("LoopedGidFor FOUND", "ce.Gid", ce.Gid, "loopedGid", loopedGid)
+		return loopedGid
+	}
+	switch ce.Ddu {
+	case "down":
+		loopedGid = cm.UniqueGid()
+		cm.GidToLoopedGid[ce.Gid] = loopedGid
+		// LogInfo("CursorManager.LoopedGidFor down", "original gid", ce.Gid, "loopedGid", loopedGid)
+	case "drag":
+		loopedGid = cm.UniqueGid()
+		cm.GidToLoopedGid[ce.Gid] = loopedGid
+		// LogInfo("CursorManager.LoopedGidFor drag", "original gid", ce.Gid, "loopedGid", loopedGid)
+	case "up":
+		// Not totally sure why this happens
+		if warn {
+			LogWarn("Why is this happening?")
 		}
-		// loopedCid = fmt.Sprintf("%s#%d", ce.Source(), cm.UniqueInt())
+		// loopedGid = 0
 		loopedGid = cm.UniqueGid()
 		cm.GidToLoopedGid[ce.Gid] = loopedGid
 	}
+	// LogInfo("CursorManager.LoopedGidFor up", "original gid", ce.Gid, "loopedGid", loopedGid)
 	return loopedGid
 }
 
@@ -325,7 +357,7 @@ func (cm *CursorManager) ExecuteCursorEvent(ce CursorEvent) {
 		if ce.Tag == "" {
 			LogWarn("CursorManager.ExecuteCursorEvent: clear with empty tag?")
 		}
-		TheCursorManager.clearActiveCursors(ce.Tag)
+		TheCursorManager.ClearAllActiveCursors(ce.Tag)
 		return
 	}
 
@@ -369,7 +401,7 @@ func (cm *CursorManager) ExecuteCursorEvent(ce CursorEvent) {
 
 	}
 
-	ac.Current.Click.Store(int64(CurrentClick()))
+	ac.Current.SetClick(CurrentClick())
 
 	if ac.loopIt {
 
@@ -379,10 +411,16 @@ func (cm *CursorManager) ExecuteCursorEvent(ce CursorEvent) {
 
 		// The looped CursorEvents should have unique gid val,ues.
 		loopce.Gid = TheCursorManager.LoopedGidFor(ac.Current, true /*warn*/)
+		if loopce.Gid == 0 {
+			LogWarn("HEY!!! loopIt LoopedGidFor returns 0?")
+			return
+		}
+		// LogInfo("ac.loopIt LoopedGidFor", "loopce.Gid", loopce.Gid)
 
 		// Fade the Z value
 		loopce.Pos.Z = loopce.Pos.Z * ac.loopFade
-		// LogInfo("loopcd.Z is now", "Z", loopce.Z)
+		// LogInfo("loopcd.Z is now", "Z", loopce.Pos.Z, "ac.loopFade", ac.loopFade)
+
 		if loopce.Pos.Z > ac.maxZ {
 			ac.maxZ = loopce.Pos.Z
 		}
@@ -403,74 +441,92 @@ func (cm *CursorManager) ExecuteCursorEvent(ce CursorEvent) {
 	LogOfType("cursor", "CursorManager.handleDownDragUp", "ce", ce)
 
 	if ce.Ddu == "up" {
-		// LogOfType("cursor", "handleDownDragUp up is deleting cid", "cid", ce.Cid, "ddu", ce.Ddu)
+		// LogOfType("cursor", "handleDownDragUp up is deleting gid", "gid", ce.Gid, "ddu", ce.Ddu)
 		cm.DeleteActiveCursorIfZLessThan(ce.Gid, LoopFadeZThreshold)
 	}
 }
 
 func (cm *CursorManager) DeleteActiveCursor(gid int) {
-	// reuse this routine, but mke sure that it will
-	cm.DeleteActiveCursorIfZLessThan(gid, 1.0)
+	cm.activeMutex.Lock()
+	// LogInfo("NEW DELETEACTIVECURSOR gid","gid",gid)
+	ac, ok := cm.activeCursors[gid]
+	if !ok {
+		// LogWarn("DeleteActiveCursor: gid not found in ActiveCursor", "gid", gid)
+	} else {
+		// LogInfo("DeleteActiveCursor: gid found","noteon",ac.NoteOn,"gid",gid)
+		if ac.NoteOn != nil {
+			// LogInfo("DeleteActiveCursor: gid found SENDING NOTEOFF!","noteon",ac.NoteOn,"gid",gid)
+			noteOff := NewNoteOffFromNoteOn(ac.NoteOn)
+			ac.NoteOn.Synth.SendNoteToMidiOutput(noteOff)
+			// LogInfo("DeleteActiveCursor: gid found AFTER NOTEOFF!","noteoff",noteOff,"gid",gid)
+		} else {
+			LogWarn("DeleteActiveCursor: gid found, NO NOTEON?", "gid", gid)
+		}
+
+	}
+	delete(cm.activeCursors, gid)
+	cm.activeMutex.Unlock()
 }
 
-// Set threshold to 1.0 (or greater) if you want to
+// DeleteActiveCursorIfZLessThan deletes the ActiveCursor if its Z value is less than threshold.
 func (cm *CursorManager) DeleteActiveCursorIfZLessThan(gid int, threshold float32) {
+
+	// LogInfo("BEGIN DeleteActiveCursorIfZ 1", "gid", gid,"sched", TheScheduler.ToString())
 
 	cm.activeMutex.Lock()
 	ac, ok := cm.activeCursors[gid]
 	loopGid := 0
 	if !ok {
-		LogWarn("DeleteActiveCursor: gid not found in ActiveCursor", "gid", gid)
+		// LogWarn("DeleteActiveCursor: gid not found in ActiveCursor", "gid", gid)
 	} else {
 		// LogInfo("DeleteActiveCursorIfZLessThan", "gid", gid, "threshold", threshold, "ac.maxZ", ac.maxZ)
 		if ac.maxZ < threshold {
 			// we want to remove things that this ActiveCursor has created for looping.
-			cm.activeMutex.Unlock()
 			loopGid = cm.LoopedGidFor(ac.Current, false /*don't warn*/)
-			LogInfo("DeleteActiveCursorIfZLessThan REMOVING", "loopCid", loopGid, "ac.maxZ", ac.maxZ)
-			cm.activeMutex.Lock()
-			// but wait after we detete it from
+			if loopGid == 0 {
+				LogWarn("HEY!!! in DeleteActiveCursorIfZLessThan LoopedGidFor returns 0?")
+			} else {
+				delete(cm.activeCursors, gid)
+				delete(cm.activeCursors, loopGid)
+				// LogInfo("DeleteActiveCursorIfZLessThan REMOVING", "loopGid", loopGid, "gid", gid, "ac.maxZ", ac.maxZ, "gid", gid)
+			}
 		}
 	}
-	delete(cm.activeCursors, gid)
 	cm.activeMutex.Unlock()
+
+	if loopGid == 0 {
+		return
+	}
+
+	// LogInfo("SHOULD BE SENDING NOTEOFF FOR THIS ACTIVE CURSOR?", "gid", gid, "ac", ac, "ac.NoteOn", ac.NoteOn)
 
 	cm.GidToLoopedGidMutex.Lock()
 	delete(cm.GidToLoopedGid, gid)
 	cm.GidToLoopedGidMutex.Unlock()
 
 	if loopGid != 0 {
-		LogInfo("Calling DeleteEventsWhoseGidIs", "loopCid", loopGid)
-		TheScheduler.DeleteEventsWhoseGidIs(loopGid)
+		TheScheduler.DeleteCursorEventsWhoseGidIs(loopGid)
+		TheScheduler.DeleteCursorEventsWhoseGidIs(gid)
 	}
 }
 
 func (cm *CursorManager) DeleteActiveCursorsForTag(tag string) {
 
-	// First construct the list
-	cm.activeMutex.RLock()
+	cm.activeMutex.Lock()
+	defer cm.activeMutex.Unlock()
 
-	if len(cm.activeCursors) > 0 {
-		LogOfType("cursor", "DeleteActiveCursorsWithTag", "tag", tag)
-	}
-	todelete := []int{}
-	for _, ac := range cm.activeCursors {
+	for gid, ac := range cm.activeCursors {
 		if ac.Current.Tag == tag {
-			todelete = append(todelete, ac.Current.Gid)
+			delete(cm.activeCursors, gid)
 		}
-	}
-	cm.activeMutex.RUnlock()
-
-	for _, cid := range todelete {
-		cm.DeleteActiveCursor(cid)
-		TheScheduler.DeleteEventsWhoseGidIs(cid)
 	}
 }
 
 func CursorToOscMsg(ce CursorEvent) *osc.Message {
 	msg := osc.NewMessage("/cursor")
 	msg.Append(ce.Ddu)
-	msg.Append(int32(ce.Gid))
+	// FFGL code expects a string
+	msg.Append(fmt.Sprintf("%d", ce.Gid))
 	msg.Append(float32(ce.Pos.X))
 	msg.Append(float32(ce.Pos.Y))
 	msg.Append(float32(ce.Pos.Z))
@@ -489,32 +545,49 @@ func MidiToOscMsg(me MidiEvent) *osc.Message {
 	return msg
 }
 
-func (cm *CursorManager) autoCursorUp(now time.Time) {
-
+func (cm *CursorManager) CheckAutoCursorUp() {
 	// checkDelay is the number of CLicks that has to pass
 	// before we decide a cursor is no longer present,
 	// resulting in an "up" event.
 	checkDelay := 8 * OneBeat
+	cm.clearActiveCursors("*", checkDelay)
+}
 
-	cm.activeMutex.RLock()
-	var gidsToDelete = []int{}
+func (cm *CursorManager) ClearAllActiveCursors(tag string) {
+	cm.clearActiveCursors(tag, 0)
+}
+
+/*
+func (cm *CursorManager) oldautoCursorUp() {
+
+	currentClick := CurrentClick()
+
+	gidsToDelete := []int{}
+	cursorUpEvents := []CursorEvent{}
+
+	cm.activeMutex.Lock()
+
 	for gid, ac := range cm.activeCursors {
 
 		dclick := ac.Current.GetClick() - ac.Previous.GetClick()
 		if dclick > checkDelay {
-			ce := ac.Current
-			ce.Ddu = "up"
-			LogInfo("autoCursorUp: Executing autoCursorUp!", "gid", gid, "ce", ce)
 
-			cm.ExecuteCursorEvent(ce)
+			cdUp := ac.Current
+			cdUp.SetClick(currentClick)
+			cdUp.Ddu = "up"
+
+			cursorUpEvents = append(cursorUpEvents, cdUp)
 			gidsToDelete = append(gidsToDelete, gid)
 		}
 	}
-	cm.activeMutex.RUnlock()
+	cm.activeMutex.Unlock()
 
+	for _, ce := range cursorUpEvents {
+		cm.ExecuteCursorEvent(ce)
+	}
 	cm.deleteActiveCursors(gidsToDelete)
-
 }
+*/
 
 func (cm *CursorManager) deleteActiveCursors(gidsToDelete []int) {
 	for _, gid := range gidsToDelete {

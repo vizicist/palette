@@ -1,7 +1,6 @@
 package engine
 
 import (
-	"container/list"
 	"fmt"
 	"math/rand"
 	"strings"
@@ -490,59 +489,61 @@ func (patch *Patch) clearGraphics() {
 func (patch *Patch) loopClear() {
 	tag := patch.name
 
-	// LogInfo("LOOP LOOPCLEAR START", "prefix", tag)
-
-	TheCursorManager.DeleteActiveCursorsForTag(tag)
+	// TheCursorManager.DeleteActiveCursorsForTag(tag)
+	// LogInfo("loopClear before DeleteEvents")
 	TheScheduler.DeleteEventsWithTag(tag)
+	// LogInfo("loopClear after DeleteEvents")
 
 	TheScheduler.pendingMutex.Lock()
 	clearPending := false
 	for _, se := range TheScheduler.pendingScheduled {
-		if strings.HasPrefix(se.Tag, tag) {
+		if se.Tag == tag {
 			LogInfo("HEY!, saw pendingSchedule with tag prefix!", "prefix", tag, "se", se)
 			clearPending = true
 		}
 	}
 	if clearPending {
-		LogInfo("loopClear is clearing pendingScheduled")
+		// LogInfo("loopClear is clearing pendingScheduled")
 		TheScheduler.pendingScheduled = nil
 	}
 	TheScheduler.pendingMutex.Unlock()
 
-	// XXX - SHOULD BE USING DeleteEventsWhoseGidIs(cidToDelete string)
-	TheScheduler.mutex.Lock()
-	var nexti *list.Element
-	for i := TheScheduler.schedList.Front(); i != nil; i = nexti {
-		nexti = i.Next()
-		se := i.Value.(*SchedElement)
-		if se.Tag != tag {
-			continue
-		}
-		switch v := se.Value.(type) {
-
-		case *NoteOn:
-			// LogInfo("loopClear Saw Noteon", "v", v)
-
-		case *NoteOff:
-			LogInfo("loopClear Saw Noteoff", "v", v)
-			if patch.synth != nil {
-				LogInfo("LOOP LOOPCLEAR SENDING NOTEOFF", "v", v)
-				patch.synth.SendNoteToMidiOutput(v)
+	/*
+		// XXX - SHOULD BE USING DeleteEventsWhoseGidIs(cidToDelete string)
+		TheScheduler.mutex.Lock()
+		var nexti *list.Element
+		for i := TheScheduler.schedList.Front(); i != nil; i = nexti {
+			nexti = i.Next()
+			se := i.Value.(*SchedElement)
+			if se.Tag != tag {
+				continue
 			}
+			switch v := se.Value.(type) {
 
-		case CursorEvent:
-			// LogInfo("loopClear Saw CursorEvent", "v", v)
+			case *NoteOn:
+				// LogInfo("loopClear Saw Noteon", "v", v)
 
-		case MidiEvent:
-			// LogInfo("loopClear Saw MidiEvent", "v", v)
+			case *NoteOff:
+				LogInfo("loopClear Saw Noteoff", "v", v)
+				if patch.synth != nil {
+					LogInfo("LOOP LOOPCLEAR SENDING NOTEOFF", "v", v)
+					patch.synth.SendNoteToMidiOutput(v)
+				}
+
+			case CursorEvent:
+				// LogInfo("loopClear Saw CursorEvent", "v", v)
+
+			case MidiEvent:
+				// LogInfo("loopClear Saw MidiEvent", "v", v)
+			}
+			TheScheduler.schedList.Remove(i)
 		}
-		TheScheduler.schedList.Remove(i)
-	}
-	// LogInfo("At end of loopClear", "schedList.Len", TheScheduler.schedList.Len())
-	TheScheduler.mutex.Unlock()
+		// LogInfo("At end of loopClear", "schedList.Len", TheScheduler.schedList.Len())
+		TheScheduler.mutex.Unlock()
 
-	// LogOfType("loop", "Patch.loopClear end", "schdule", TheScheduler.ToString())
-	// LogInfo("LOOP LOOPCLEAR END", "prefix", tag)
+		// LogOfType("loop", "Patch.loopClear end", "schdule", TheScheduler.ToString())
+		// LogInfo("LOOP LOOPCLEAR END", "prefix", tag)
+	*/
 }
 
 func (patch *Patch) loopDebug() {

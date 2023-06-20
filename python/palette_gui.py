@@ -307,33 +307,36 @@ class ProGuiApp(tk.Tk):
             self.loopingOn()
 
     def loopingOn(self):
+
         self.performPage.setPerformButtonText("Looping","LOOPING_IS ON ",'PerformButtonHighlight.TLabel')
         self.update()
 
         self.isLooping = True
+        log("loopingOn")
 
-        defaultfade, err = palette.palette_engine_api("get", "\"name\": \"engine.looping_defaultfade\"")
+        s, err = palette.palette_engine_get("engine.looping_force")
         if err != None:
-            log("Error in getting value of engine.looping_defaultfade")
+            log("Error in getting value of engine.looping_force")
             return
-        defaultbeats, err = palette.palette_engine_api("get",
-            "\"name\": \"engine.looping_defaultbeats\"")
-        if err != None:
-            log("Error in getting value of engine.looping_defaultbeats")
-            return
-
-        log("loopingOn, defaultfade="+defaultfade+" defaultbeats="+defaultbeats)
+        force = palette.boolValueOfString(s)
+        if force:
+            palette.palette_engine_set("engine.looping_forceon", "true")
+            forcefade, err = palette.palette_engine_get("engine.looping_forcefade")
+            if err != None:
+                log("Error in getting value of engine.looping_forcefade")
+                return
+            forcebeats, err = palette.palette_engine_get("engine.looping_forcebeats")
+            if err != None:
+                log("Error in getting value of engine.looping_forcebeats")
+                return
 
         for patch in self.Patches:
-            palette.palette_patch_api(patch.name(), "set",
-                "\"name\": \"misc.looping_on\"" + \
-                ", \"value\": \"true\"" )
-            palette.palette_patch_api(patch.name(), "set",
-                "\"name\": \"misc.looping_fade\"" + \
-                ", \"value\": \"" + defaultfade + "\"" )
-            palette.palette_patch_api(patch.name(), "set",
-                "\"name\": \"misc.looping_beats\"" + \
-                ", \"value\": \"" + defaultbeats + "\"" )
+
+            palette.palette_patch_set(patch.name(), "misc.looping_on", "true")
+            if force:
+                palette.palette_patch_set(patch.name(), "misc.looping_fade", forcefade)
+                palette.palette_patch_set(patch.name(), "misc.looping_beats", forcebeats)
+
             # This is overkill
             self.refreshValues("misc",patch)
 
@@ -341,13 +344,13 @@ class ProGuiApp(tk.Tk):
         self.performPage.setPerformButtonText("Looping","LOOPING_IS OFF",'PerformButton.TLabel')
         self.update()
 
-        log("loopingOff")
         self.isLooping = False
+        log("loopingOff")
+
+        palette.palette_engine_set("engine.looping_forceon", "false")
 
         for patch in self.Patches:
-            palette.palette_patch_api(patch.name(), "set",
-                "\"name\": \"misc.looping_on\"" + \
-                ", \"value\": \"false\"" )
+            palette.palette_patch_set(patch.name(), "misc.looping_on", "false")
             self.refreshValues("misc",patch)
 
     def loopingClear(self):
@@ -653,8 +656,7 @@ class ProGuiApp(tk.Tk):
             ptype = self.paramTypeOf[name]
             if pagename != "patch" and ptype != pagename:
                 continue
-            value, err = palette.palette_engine_api("get",
-                "\"name\": \"" + name + "\"")
+            value, err = palette.palette_engine_get(name)
             if err != None:
                 log("Error in getting value of "+name)
                 continue
@@ -753,9 +755,7 @@ class ProGuiApp(tk.Tk):
 
         if not basename.startswith("engine."):
             basename = "engine." + basename
-        palette.palette_engine_api("set",
-            "\"name\": \"" + basename + "\"" + \
-            ", \"value\": \"" + str(value) + "\"" )
+        palette.palette_engine_set(basename,str(value))
 
     def selectorApply(self,apply,paramType):
 
@@ -884,6 +884,7 @@ class ProGuiApp(tk.Tk):
                 palette.palette_quadpro_api("load",
                     "\"filename\": \"" + filename + "\""
                     ", \"category\": \"" + category + "\"")
+                log("After Loading","category","quad","filename",filename)
             else:
                 # Otherwise, in "pro" mode,
                 # the quad is loaded only into a single patch
@@ -899,6 +900,14 @@ class ProGuiApp(tk.Tk):
         else:
             patchName = self.CurrPatch.name()
             self.patchLoad(patchName,category,filename)
+
+        log("Before checking looping")
+        if self.isLooping:
+            log("loadAndSend: reloading looping On")
+            self.loopingOn()
+        else:
+            log("loadAndSend: reloading looping Off")
+            self.loopingOff()
 
     def patchLoad(self,patchName,category,filename):
         # log("patchLoad","patch",patchName,"category",category,"filename",filename)
@@ -1040,7 +1049,7 @@ class ProGuiApp(tk.Tk):
         log("ResetAll")
 
         self.loopingClear()
-        self.loopingOff()
+        # self.loopingOff()
 
         palette.palette_engine_api("audio_reset")
 
@@ -1057,6 +1066,24 @@ class ProGuiApp(tk.Tk):
         self.performPage.updatePerformButtonLabels(self.CurrPatch)
 
         self.resetVisibility()
+
+        s, err = palette.palette_engine_get("engine.looping_force")
+        if err != None:
+            log("Error in getting value of engine.looping_force")
+            return
+        force = palette.boolValueOfString(s)
+        if force:
+            s, err = palette.palette_engine_get("engine.looping_forceon")
+            if err != None:
+                forceon = False
+            else:
+                forceon = palette.boolValueOfString(s)
+            if forceon:
+                self.loopingOn()
+            else:
+                self.loopingOff()
+        else:
+            self.loopingOff()
 
     def synthesizeParamsJson(self):
 

@@ -4,7 +4,6 @@ import (
 	"container/list"
 	"fmt"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	midi "gitlab.com/gomidi/midi/v2"
@@ -29,9 +28,9 @@ type Command struct {
 
 type SchedElement struct {
 	// patch             *Patch
-	AtClick *atomic.Int64
-	Tag     string
-	Value   any
+	AAtClick Clicks
+	Tag      string
+	Value    any
 	// loopIt            bool
 	// loopLengthInBeats int
 	// loopFade          float32
@@ -49,27 +48,21 @@ func NewScheduler() *Scheduler {
 
 func NewSchedElement(atclick Clicks, tag string, value any) *SchedElement {
 	se := &SchedElement{
-		AtClick: &atomic.Int64{},
-		Tag:    tag,
-		Value:   value,
+		AAtClick: atclick,
+		Tag:      tag,
+		Value:    value,
 	}
 	se.SetClick(atclick)
 	return se
 }
 
+// NOTE: a pointer is used so se.SetClick() can modify the value
 func (se *SchedElement) SetClick(click Clicks) {
-	if se.AtClick == nil {
-		LogWarn("Hey, click is null in SchedElement.SetClick?")
-		se.AtClick = &atomic.Int64{}
-	}
-	se.AtClick.Store(int64(click))
+	se.AAtClick = click
 }
-func (se *SchedElement) GetClick() Clicks {
-	if se.AtClick == nil {
-		LogWarn("Hey, click is null in SchedElement.SetClick?")
-		se.AtClick = &atomic.Int64{}
-	}
-	return Clicks(se.AtClick.Load())
+
+func (se SchedElement) GetClick() Clicks {
+	return se.AAtClick
 }
 
 func ScheduleAt(atClick Clicks, tag string, value any) {
@@ -168,13 +161,13 @@ func (sched *Scheduler) advanceClickTo(toClick Clicks) {
 		sched.triggerItemsScheduledAtOrBefore(clk)
 		// sched.advancePendingNoteOffsByOneClick()
 		if doAutoCursorUp {
-			TheCursorManager.autoCursorUp(time.Now())
+			TheCursorManager.CheckAutoCursorUp()
 		}
 	}
 	sched.lastClick = toClick
 }
 
-func (sched *Scheduler) DeleteEventsWhoseGidIs(gid int) {
+func (sched *Scheduler) DeleteCursorEventsWhoseGidIs(gid int) {
 
 	sched.mutex.Lock()
 	defer sched.mutex.Unlock()
@@ -185,6 +178,7 @@ func (sched *Scheduler) DeleteEventsWhoseGidIs(gid int) {
 		se := i.Value.(*SchedElement)
 		ce, isce := se.Value.(CursorEvent)
 		if isce && ce.Gid == gid {
+			// LogInfo("DeleteEventsWhoseGidIs", "gid", gid, "i", i)
 			sched.schedList.Remove(i)
 			// keep going, there will be lots of them
 		}
@@ -193,26 +187,28 @@ func (sched *Scheduler) DeleteEventsWhoseGidIs(gid int) {
 
 func (sched *Scheduler) DeleteEventsWithTag(tag string) {
 
-	//// sched.ToString locks the mutex, to don't do it inside of the lock here
-	// LogInfo("DeleteEventsForGidPrefix BEFORE", "prefix", prefix, "sched", sched.ToString())
-
 	sched.mutex.Lock()
 
 	var nexti *list.Element
 	for i := sched.schedList.Front(); i != nil; i = nexti {
 		nexti = i.Next()
 		se := i.Value.(*SchedElement)
-		ce, isce := se.Value.(CursorEvent)
-		if isce && ce.Tag == tag {
-			sched.schedList.Remove(i)
-			// keep going, there will be lots of them
+		if se.Tag != tag {
+			continue
 		}
+		// LogInfo("DeleteEventsWithTag Removing schedList entry", "tag", tag, "i", i, "se", se)
+		ce, isce := se.Value.(CursorEvent)
+		// LogInfo("SAW CURSOREVENT", "v", v, "ddu", v.Ddu)
+		if isce && ce.Ddu == "up" {
+			// LogInfo("UP CURSOREVENT should be removing gid", "gid", v.Gid)
+			TheCursorManager.DeleteActiveCursor(ce.Gid)
+			// LogInfo("UP CURSOREVENT after removing gid", "gid", v.Gid)
+		}
+		sched.schedList.Remove(i)
+		// keep going, there will be lots of them
 	}
 
 	sched.mutex.Unlock()
-
-	//// sched.ToString locks the mutex, to do it outside of the lock here
-	// LogInfo("DeleteEventsForGidPrefix AFTER", "prefix", prefix, "sched", sched.ToString())
 }
 
 func (sched *Scheduler) triggerItemsScheduledAtOrBefore(thisClick Clicks) {
@@ -288,24 +284,51 @@ func (sched *Scheduler) triggerItemsScheduledAtOrBefore(thisClick Clicks) {
 
 func (sched *Scheduler) ToString() string {
 
-	sched.mutex.RLock()
-	defer sched.mutex.RUnlock()
+	// sched.mutex.Lock()
+	// defer sched.mutex.Unlock()
 
 	s := "Scheduler{"
 	for i := sched.schedList.Front(); i != nil; i = i.Next() {
-		pe := i.Value.(*SchedElement)
-		switch v := pe.Value.(type) {
+		se := i.Value.(*SchedElement)
+		switch v := se.Value.(type) {
 		/*
 			case *Phrase:
 				phr := v
 				s += fmt.Sprintf("(%d,%v)", pe.AtClick, phr)
 		*/
 		case *NoteOn:
-			s += fmt.Sprintf("(%d,%s)", pe.AtClick, v.String())
+			s += fmt.Sprintf("(%d,%s)", se.GetClick(), v.String())
 		case *NoteOff:
-			s += fmt.Sprintf("(%d,%s)", pe.AtClick, v.String())
+			s += fmt.Sprintf("(%d,%s)", se.GetClick(), v.String())
 		case CursorEvent:
-			s += fmt.Sprintf("(%d,%v)", v.Click, v)
+			s += fmt.Sprintf("(%d,%v)", v.GetClick(), v)
+		default:
+			s += fmt.Sprintf("(Unknown Type=%T)", v)
+		}
+	}
+	s += "}"
+	return s
+}
+
+func (sched *Scheduler) PendingToString() string {
+
+	sched.mutex.RLock()
+	defer sched.mutex.RUnlock()
+
+	s := "pendingScheduled{"
+	for _, se := range sched.pendingScheduled {
+		switch v := se.Value.(type) {
+		/*
+			case *Phrase:
+				phr := v
+				s += fmt.Sprintf("(%d,%v)", pe.AtClick, phr)
+		*/
+		case *NoteOn:
+			s += fmt.Sprintf("(%d,%s)", se.GetClick(), v.String())
+		case *NoteOff:
+			s += fmt.Sprintf("(%d,%s)", se.GetClick(), v.String())
+		case CursorEvent:
+			s += fmt.Sprintf("(%d,%v)", v.GetClick(), v)
 		default:
 			s += fmt.Sprintf("(Unknown Type=%T)", v)
 		}
@@ -331,13 +354,9 @@ func (sched *Scheduler) insertScheduleElement(se *SchedElement) {
 		if v.Ddu != "clear" && v.Gid == 0 {
 			LogWarn("insertScheduleElement CursorEvent Gid is empty", "v", v)
 		}
-		// LogInfo("insertScheduleElement CursorEvent", "v", v)
-		if v.Click == nil {
-			LogWarn("insertScheduleElement CursorEvent AtClick is nil?", "v", v)
-		}
 	}
 	schedClick := se.GetClick()
-	LogOfType("scheduler", "Scheduler.insertScheduleElement", "value", se.Value, "click", se.AtClick, "beforelen", sched.schedList.Len())
+	LogOfType("scheduler", "Scheduler.insertScheduleElement", "value", se.Value, "click", se.GetClick(), "beforelen", sched.schedList.Len())
 	// Insert newElement sorted by time
 	i := sched.schedList.Front()
 	if i == nil {

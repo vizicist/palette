@@ -51,34 +51,6 @@ func (ce CursorEvent) IsInternal() bool {
 	return strings.Contains(ce.Tag, "internal")
 }
 
-/*
-func (ce CursorEvent) Source() string {
-	return CidSource(ce.Tag)
-}
-*/
-
-/*
-// CidSource returns the source of the cursor event, which is the first part of the Cid
-func CidSource(cid string) string {
-	arr := strings.Split(cid, "#")
-	if len(arr) == 0 || cid == "" {
-		LogWarn("CidSource: empty source for cid?  Using dummysource", "cid", cid)
-		return "dummysource"
-	}
-	return arr[0]
-}
-*/
-
-/*
-func (ce CursorEvent) String() string {
-	bytes, err := json.Marshal(ce)
-	if err != nil {
-		return "{\"error\":\"Unable to Marshal CursorEvent\"}"
-	}
-	return string(bytes)
-}
-*/
-
 // XXX - can this make use of generics?  (across all the Event types)
 func (ce CursorEvent) Marshal() (bytes []byte, err error) {
 	bytes, err = json.Marshal(ce)

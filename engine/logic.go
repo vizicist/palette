@@ -196,7 +196,7 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
 	patch := logic.patch
 	ac, ok := TheCursorManager.getActiveCursorFor(ce.Gid)
 	if !ok {
-		LogWarn("generateSoundFromCursor: no active cursor", "cid", ce.Gid)
+		LogWarn("generateSoundFromCursor: no active cursor", "gid", ce.Gid)
 		return
 	}
 
@@ -206,7 +206,7 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
 		if oldNoteOn != nil {
 			// I don't recall the situations where this occurred,
 			// but it does happen pretty regularly, I think.
-			// LogWarn("generateSoundFromCursor: oldNote already exists", "cid", ce.Cid)
+			// LogWarn("generateSoundFromCursor: oldNote already exists", "gid", ce.Gid)
 			noteOff := NewNoteOffFromNoteOn(oldNoteOn)
 			ScheduleAt(CurrentClick(), ce.Tag, noteOff)
 		}
@@ -221,10 +221,10 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
 		ac.NoteOn = noteOn
 		ac.NoteOnClick = atClick
 	case "drag":
-		// LogInfo("CURSOR drag event for cursor", "cid", ce.Cid)
+		// LogInfo("CURSOR drag event for cursor", "gid", ce.Gid)
 		oldNoteOn := ac.NoteOn
 		if oldNoteOn == nil {
-			// LogWarn("generateSoundFromCursor: no ActiveCursor.NoteOn", "cid", ce.Cid)
+			// LogWarn("generateSoundFromCursor: no ActiveCursor.NoteOn", "gid", ce.Gid)
 			return
 		}
 		newNoteOn := logic.cursorToNoteOn(ce)
@@ -277,16 +277,16 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
 		}
 
 	case "up":
-		// LogInfo("CURSOR up event for cursor", "cid", ce.Cid)
+		// LogInfo("CURSOR up event for cursor", "gid", ce.Gid)
 		oldNoteOn := ac.NoteOn
 		if oldNoteOn == nil {
 			// not sure why this happens, yet
-			LogWarn("Unexpected UP, no oldNoteOn", "cid", ce.Gid)
+			LogWarn("Unexpected UP, no oldNoteOn", "gid", ce.Gid)
 		} else {
 			noteOff := NewNoteOffFromNoteOn(oldNoteOn)
 			offClick := ac.NoteOnClick + 1
 			ScheduleAt(offClick+1, ce.Tag, noteOff)
-			// delete(logic.cursorNote, ce.Cid)
+			// delete(logic.cursorNote, ce.Gid)
 		}
 	}
 }
