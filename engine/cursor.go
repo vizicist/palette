@@ -3,6 +3,7 @@ package engine
 import (
 	"fmt"
 	"math/rand"
+	"strings"
 	"sync"
 	"time"
 
@@ -296,6 +297,12 @@ func (cm *CursorManager) GenerateGesture(tag string, dur time.Duration, pos0 Cur
 		cm.ExecuteCursorEvent(ce)
 		time.Sleep(time.Duration(dur.Nanoseconds() / int64(nsteps)))
 	}
+}
+
+func (ce *CursorEvent) Source() string {
+	// Assumes the source is the first (and often only) thing in the tag
+	words := strings.Split(ce.Tag,",")
+	return words[0]
 }
 
 func (ce *CursorEvent) SetClick(click Clicks) {
