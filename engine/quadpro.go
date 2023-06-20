@@ -160,18 +160,18 @@ func (quadpro *QuadPro) Start() {
 }
 
 func (quadpro *QuadPro) PatchForCursorEvent(ce CursorEvent) (patch *Patch, button string) {
-	tag := ce.Tag
+	source := ce.Source()
 	// If the source has some patchLogic...
-	patchLogic, ok := quadpro.patchLogic[tag]
+	patchLogic, ok := quadpro.patchLogic[source]
 	if !ok {
 		patch = nil
 	} else {
 		patch = patchLogic.patch
 	}
 	// If the source is a Button...
-	_, ok = CursorSourceToQuadPreset[tag]
+	_, ok = CursorSourceToQuadPreset[source]
 	if ok {
-		button = tag
+		button = source
 	}
 	return patch, button
 }
@@ -205,9 +205,10 @@ func (quadpro *QuadPro) onCursorEvent(state ActiveCursor) error {
 
 	// For the moment, the cursor to patchLogic mapping is 1-to-1.
 	// I.e. ce.Source of "A" maps to patchLogic "A"
-	patchLogic, ok := quadpro.patchLogic[state.Current.Tag]
+	source := state.Current.Source()
+	patchLogic, ok := quadpro.patchLogic[source]
 	if !ok || patchLogic == nil {
-		LogWarn("Source doesn't exist in patchLogic", "source", state.Current.Tag)
+		LogWarn("Source doesn't exist in patchLogic", "source", source)
 		return nil
 	}
 	cursorStyle := patchLogic.patch.Get("misc.cursorstyle")
