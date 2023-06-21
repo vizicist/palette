@@ -42,6 +42,7 @@ LayerParams_InitializeTypes() {
 	LayerParams_logTypes.push_back("api");
 	LayerParams_logTypes.push_back("loop");
 	LayerParams_logTypes.push_back("morph");
+	LayerParams_logTypes.push_back("mmtt");
 
 	LayerParams_autostartTypes.push_back("");
 	LayerParams_autostartTypes.push_back("resolume,gui,bidule");

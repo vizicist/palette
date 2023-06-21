@@ -185,7 +185,7 @@
 "engine.mmtt": {"valuetype":"string", "min":"mmtt", "max":"mmtt", "init":"kinect", "comment":"# MMTT device" },
 "engine.mmtt_xexpand": {"valuetype": "float", "min": "0.5", "max": "2.0",  "init": "1.25",	"comment": "#" },
 "engine.mmtt_yexpand": {"valuetype": "float", "min": "0.5", "max": "2.0",  "init": "1.25",	"comment": "#" },
-"engine.mmtt_zexpand": {"valuetype": "float", "min": "0.5", "max": "200.0",  "init": "100.0",	"comment": "#" },
+"engine.mmtt_zexpand": {"valuetype": "float", "min": "0.5", "max": "10.0",  "init": "4.0",	"comment": "#" },
 "engine.notifygui": {"valuetype":"bool", "min":"false", "max":"true", "init":"true", "comment":"#" },
 "engine.oscoutput": {"valuetype":"bool", "min":"false", "max":"true", "init":"true", "comment":"#" },
 "engine.resolumepath": {"valuetype":"string", "min":"", "max":"", "init":"C:/Program Files/Resolume Avenue/Avenue.exe", "comment":"# Resolume executable path" },
