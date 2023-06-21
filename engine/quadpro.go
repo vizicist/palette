@@ -178,19 +178,24 @@ func (quadpro *QuadPro) PatchForCursorEvent(ce CursorEvent) (patch *Patch, butto
 
 func (quadpro *QuadPro) onCursorEvent(state ActiveCursor) error {
 
-	// Any non-internal cursor will turn attract mode off.
-	if !state.Current.IsInternal() && TheAttractManager.AttractModeIsOn() {
+	// Any non-internal cursor or Button will turn attract mode off.
+	if (state.Button!="" || !state.Current.IsInternal()) && TheAttractManager.AttractModeIsOn() {
 		TheAttractManager.SetAttractMode(false)
 	}
 
 	if state.Button != "" {
-		if state.Current.Ddu == "down" {
+
+		mmtt_buttondepth := float32(0.1)
+		// To avoid false triggering, we only want to be triggered when the
+		// Z depth is small, i.e. when something has just entered the button area.
+		if state.Current.Ddu == "down" && state.Current.Pos.Z < mmtt_buttondepth {
 			val, ok := CursorSourceToQuadPreset[state.Button]
 			if !ok {
 				LogInfo("No Preset is attached to button", "button", state.Button)
 			} else {
 				preset := val.(string)
 				if TheQuadPro != nil {
+					LogOfType("cursor","Button down", "z", state.Current.Pos.Z)
 					err := TheQuadPro.Load("quad", preset)
 					if err != nil {
 						return err
