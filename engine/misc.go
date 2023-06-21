@@ -485,7 +485,6 @@ func HumanReadableApiOutput(apiOutput map[string]string) string {
 	return result
 }
 
-
 func EngineRemoteApi(api string, args ...string) (map[string]string, error) {
 
 	if len(args)%2 != 0 {
@@ -504,7 +503,7 @@ func EngineRemoteApi(api string, args ...string) (map[string]string, error) {
 func MmttRemoteApi(api string) (map[string]string, error) {
 
 	id := "56789"
-	apijson := "{ \"jsonrpc\": \"2.0\", \"method\": \""+api+"\", \"id\":\""+id+"\"}"
+	apijson := "{ \"jsonrpc\": \"2.0\", \"method\": \"" + api + "\", \"id\":\"" + id + "\"}"
 	url := fmt.Sprintf("http://127.0.0.1:%d/api", MmttHttpPort)
 	return RemoteApiRaw(url, apijson)
 }
@@ -644,7 +643,7 @@ func JsonString(args ...string) string {
 	return params
 }
 
-func boundval32(v float64) float32 {
+func boundValueZeroToOne(v float64) float32 {
 	if v < 0.0 {
 		return 0.0
 	}
