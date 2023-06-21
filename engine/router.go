@@ -175,7 +175,7 @@ func ArgToFloat(nm string, args map[string]string) float32 {
 }
 
 func ArgToInt(nm string, args map[string]string) int {
-	v, err := strconv.ParseInt(args[nm], 10,64)
+	v, err := strconv.ParseInt(args[nm], 10, 64)
 	if err != nil {
 		LogIfError(err)
 		v = 0.0
@@ -300,22 +300,6 @@ func (r *Router) oscHandleClientRestart(msg *osc.Message) error {
 	return nil
 }
 
-func (r *Router) getXYZargs(msg *osc.Message) (x, y, z float32, err error) {
-	x, err = argAsFloat32(msg, 2)
-	if err != nil {
-		return
-	}
-	y, err = argAsFloat32(msg, 3)
-	if err != nil {
-		return
-	}
-	z, err = argAsFloat32(msg, 4)
-	if err != nil {
-		return
-	}
-	return
-}
-
 // handleMMTTCursor handles messages from MMTT, reformating them as a standard cursor event
 func (r *Router) oscHandleCursor(msg *osc.Message) {
 
@@ -329,18 +313,35 @@ func (r *Router) oscHandleCursor(msg *osc.Message) {
 		LogIfError(err)
 		return
 	}
-	gid, err := argAsInt(msg, 1)
+	source, err := argAsString(msg, 1)
 	if err != nil {
 		LogIfError(err)
 		return
 	}
-	x, y, z, err := r.getXYZargs(msg)
+	gid, err := argAsInt(msg, 2)
 	if err != nil {
 		LogIfError(err)
 		return
 	}
+	x, err := argAsFloat32(msg, 3)
+	if err != nil {
+		LogIfError(err)
+		return
+	}
+	y, err := argAsFloat32(msg, 4)
+	if err != nil {
+		LogIfError(err)
+		return
+	}
+	z, err := argAsFloat32(msg, 5)
+	if err != nil {
+		LogIfError(err)
+		return
+	}
+
 	pos := CursorPos{x, y, z}
-	ce := NewCursorEvent(gid, "mmtt", ddu, pos)
+
+	ce := NewCursorEvent(gid, source, ddu, pos)
 
 	// XXX - HACK!!
 	xexpand, err := GetParamFloat("engine.mmtt_xexpand")
@@ -359,11 +360,18 @@ func (r *Router) oscHandleCursor(msg *osc.Message) {
 		return
 	}
 
-	ce.Pos.X = boundval32(((float64(ce.Pos.X) - 0.5) * xexpand) + 0.5)
-	ce.Pos.Y = boundval32(((float64(ce.Pos.Y) - 0.5) * yexpand) + 0.5)
-	ce.Pos.Z = boundval32(((float64(ce.Pos.Z) - 0.5) * zexpand) + 0.5)
+	// The X, Y, Z values are 0.0 to 1.0.
+	// We want to expand the X and Y values a bit around their center
+	// (hence the 0.5 stuff), since the values from mmtt_kinect are inset a bit.
+	newPos := ce.Pos
+	newPos.X = boundValueZeroToOne(((float64(ce.Pos.X) - 0.5) * xexpand) + 0.5)
+	newPos.Y = boundValueZeroToOne(((float64(ce.Pos.Y) - 0.5) * yexpand) + 0.5)
+	// For Z, we want to expand the value only in the positive direction.
+	newPos.Z = boundValueZeroToOne(float64(ce.Pos.Z) * zexpand)
 
-	LogOfType("mmtt", "MMTT Cursor", "tag", ce.Tag, "ddu", ce.Ddu, "ce", ce)
+	LogOfType("cursor", "MMTT Cursor", "origPos", ce.Pos, "newPos", newPos)
+
+	ce.Pos = newPos
 
 	TheCursorManager.ExecuteCursorEvent(ce)
 }

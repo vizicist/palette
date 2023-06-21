@@ -1779,19 +1779,13 @@ MmttServer::registrationPoke(CvPoint pt)
 	}
 }
 
+int NextAvailableSid = 99;
+
 int
 MmttRegion::getAvailableSid() {
-	int available = 0;
-	// This assumes that the map iteration goes in ascending order of session ids (which are the key).
-	// We find the lowest session id that doesn't already exist.
-	for ( map<int,MmttSession*>::iterator it = _sessions.begin(); it != _sessions.end(); it++ ) {
-		int sid = (*it).first;
-		if ( sid != available ) {
-			return available;
-		}
-		available++;
-	}
-	return available;
+	// The session ID has to be globally unique, since I'm sending it to the Palette software
+	// that wants globally unique values that aren't reused.
+	return NextAvailableSid++;
 }
 
 void
@@ -2223,18 +2217,21 @@ MmttServer::addCursorEvent(OscBundle &bundle, std::string downdragup, std::strin
 	msg.clear();
 	msg.setAddress("/cursor");
 	msg.addStringArg(downdragup);
-	std::string cid = NosuchSnprintf("%s#%d",region.c_str(),sid);
-	msg.addStringArg(cid);
+
+	// std::string cid = NosuchSnprintf("%s#%d",region.c_str(),sid);
+	// msg.addStringArg(cid);
+	msg.addStringArg(region.c_str());  // this is the source name, i.e. A,B,C,D
+	msg.addIntArg(sid);  // gets used as gid in the Palette software
+
 	msg.addFloatArg(x);      // x (position)
 	msg.addFloatArg(y);      // y (position)
-	// NosuchDebug("orig z = %f  squared = %f\n", z, z*z);
-	msg.addFloatArg(z*z);        // z (position)
+	msg.addFloatArg(z);      // z (position)
 
 	// NosuchDebug("backmiddle=%f  backbottom=%f  backtop=%f  front=%f\n",
 	//	backmiddle, float(val_backbottom.internal_value), float(val_backtop.internal_value), val_front.internal_value);
 	// NosuchDebug("CursorEvent cid=%s ddu=%s xyz=%f %f %f\n", cid.c_str(), downdragup.c_str(), x, y, z);
 
-	// NosuchDebug("Sending /cursor cid=%s ddu=%s xyz=%f %f %f\n", cid.c_str(), downdragup.c_str(), x, y, z);
+	// NosuchDebug("Sending /cursor source=%s gid=%d ddu=%s xyz=%f %f %f\n", region.c_str(), sid, downdragup.c_str(), x, y, z);
 
 	// msg.addFloatArg((float)blobrect.width);   // w (width)
 	// msg.addFloatArg((float)blobrect.height);  // h (height)
