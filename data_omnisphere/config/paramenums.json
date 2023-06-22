@@ -1,6 +1,6 @@
 {
   "plugins": [ "", "quadpro" ],
-  "log": ["","cursor","midi","cursor,midi","cursor,midi,osc","osc","api","loop", "morph","mmtt"],
+  "log": ["","cursor","midi","cursor,midi","cursor,midi,osc","osc","api","loop", "morph","mmtt", "quant"],
   "autostart": ["","resolume,gui,bidule","mmtt,resolume,gui,bidule"],
   "pitchset": ["","stylusrmx"],
   "mmtt": ["kinect", "depthai", ""],

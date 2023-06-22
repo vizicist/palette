@@ -369,10 +369,13 @@ func (r *Router) oscHandleCursor(msg *osc.Message) {
 	// For Z, we want to expand the value only in the positive direction.
 	newPos.Z = boundValueZeroToOne(float64(ce.Pos.Z) * zexpand)
 
-	LogOfType("cursor", "MMTT Cursor", "origPos", ce.Pos, "newPos", newPos)
+	LogOfType("cursor", "MMTT Cursor", "ddu", ce.Ddu, "newPos", newPos)
 
 	ce.Pos = newPos
 
+	if ce.Ddu != "up" && ce.Pos.Z < 0.0001 {
+		LogWarn("Hmmmm, OSC down/drag cursor event has zero Z?","ce",ce)
+	}
 	TheCursorManager.ExecuteCursorEvent(ce)
 }
 
