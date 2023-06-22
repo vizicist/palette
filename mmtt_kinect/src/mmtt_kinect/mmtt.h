@@ -270,7 +270,7 @@ private:
 	void copyColorImageToRegionsAndMask(unsigned char* pixels, IplImage* regions, IplImage* mask, bool reverseColor, bool reverseX );
 	void copyRegionRectsToRegionsImage(IplImage* regions, bool reverseColor, bool reverseX);
 
-	void addCursorEvent(OscBundle &bundle, std::string downdragup, std::string region, int sid, float x, float y, float z);
+	void addCursorEvent(OscBundle &bundle, std::string downdragup, std::string region, int sid, float x, float y, float z, float area);
 	void sendCursorEvents(OscBundle &bundle);
 
 	void _updateValue(std::string nm, MmttValue* v);

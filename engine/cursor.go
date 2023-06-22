@@ -106,11 +106,11 @@ func NewActiveCursor(ce CursorEvent) *ActiveCursor {
 		ac.loopFade = patch.GetFloat("misc.looping_fade")
 	}
 
-	force, _ := GetParamBool("engine.looping_force")
-	if force {
-		forcebeats, _ := GetParamInt("engine.looping_forcebeats")
+	forceOverride, _ := GetParamBool("engine.looping_override")
+	if forceOverride {
+		forcebeats, _ := GetParamInt("engine.looping_beats")
 		ac.loopBeats = forcebeats
-		forcefade, _ := GetParamFloat("engine.looping_forcefade")
+		forcefade, _ := GetParamFloat("engine.looping_fade")
 		ac.loopFade = float32(forcefade)
 	}
 
@@ -254,7 +254,7 @@ func dirFrom(x0, x1 float32) float32 {
 func (cm *CursorManager) GenerateGesture(tag string, dur time.Duration, pos0 CursorPos, pos1 CursorPos) {
 
 	gid := cm.UniqueGid()
-	LogOfType("cursor", "generateCursoresture start",
+	LogOfType("generategesture", "generateCursoresture start",
 		"gid", gid, "noteDuration", dur, "tags", tag, "pos0", pos0, "pos1", pos1)
 
 	nsteps := 1
@@ -301,7 +301,7 @@ func (cm *CursorManager) GenerateGesture(tag string, dur time.Duration, pos0 Cur
 
 func (ce *CursorEvent) Source() string {
 	// Assumes the source is the first (and often only) thing in the tag
-	words := strings.Split(ce.Tag,",")
+	words := strings.Split(ce.Tag, ",")
 	return words[0]
 }
 
@@ -376,7 +376,7 @@ func (cm *CursorManager) ExecuteCursorEvent(ce CursorEvent) {
 		ce.SetClick(CurrentClick())
 	}
 
-	LogOfType("cursor", "ExecuteCursorEvent", "ce", ce)
+	LogOfType("cursor", "ExecuteCursorEvent", "gid", ce.Gid, "ddu", ce.Ddu, "x", ce.Pos.X, "y", ce.Pos.Y, "z", ce.Pos.Z)
 
 	ac, ok := cm.getActiveCursorFor(ce.Gid)
 	if !ok {
@@ -439,13 +439,13 @@ func (cm *CursorManager) ExecuteCursorEvent(ce CursorEvent) {
 
 	TheEngine.sendToOscClients(CursorToOscMsg(ce))
 
-	LogOfType("cursor", "CursorManager.handleDownDragUp before doing handlers", "ce", ce)
+	// LogOfType("cursor", "CursorManager.handleDownDragUp before doing handlers", "ce", ce)
 	for _, handler := range cm.handlers {
 		err := handler.onCursorEvent(*ac)
 		LogIfError(err)
 	}
 
-	LogOfType("cursor", "CursorManager.handleDownDragUp", "ce", ce)
+	// LogOfType("cursor", "CursorManager.handleDownDragUp", "ce", ce)
 
 	if ce.Ddu == "up" {
 		// LogOfType("cursor", "handleDownDragUp up is deleting gid", "gid", ce.Gid, "ddu", ce.Ddu)
