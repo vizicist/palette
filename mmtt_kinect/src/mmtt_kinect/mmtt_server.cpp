@@ -1940,7 +1940,7 @@ MmttServer::analyzePixels()
 				FloatPoint rxy = relativeToRegion(r, xy);
 				float z = float(sess->_depth_mm);
 
-				addCursorEvent(bundle, "drag", r->_name, sid, rxy.x, rxy.y, z);
+				addCursorEvent(bundle, "drag", r->_name, sid, rxy.x, rxy.y, z, (float)blob->Area());
 
 				blob_sid[mindist_i] = sid;
 				it++;
@@ -1953,7 +1953,7 @@ MmttServer::analyzePixels()
 				CvPoint xy = sess->_center;
 				FloatPoint rxy = relativeToRegion(r, xy);
 				float z = sess->_depth_normalized;
-				addCursorEvent(bundle, "up", r->_name, sid, rxy.x, rxy.y, z);
+				addCursorEvent(bundle, "up", r->_name, sid, rxy.x, rxy.y, z, 0.0);
 
 				delete sess;
 				r->_sessions.erase(erase_it);
@@ -2023,7 +2023,7 @@ MmttServer::analyzePixels()
 			FloatPoint rxy = relativeToRegion(r, xy);
 			// float z = float(sess->_depth_mm);
 			float z = float(depthavg + 0.5f);
-			addCursorEvent(bundle, "down", r->_name, sid, rxy.x, rxy.y, z);
+			addCursorEvent(bundle, "down", r->_name, sid, rxy.x, rxy.y, z, (float)blob->Area());
 		}
 
 		r->_sessions[sid]->_depth_mm = (int)(depthavg + 0.5f);
@@ -2188,10 +2188,11 @@ make_hfid(int hid, int fid)
 }
 
 void
-MmttServer::addCursorEvent(OscBundle &bundle, std::string downdragup, std::string region, int sid, float x, float y, float z) {
+MmttServer::addCursorEvent(OscBundle &bundle, std::string downdragup, std::string region, int sid, float x, float y, float z, float area) {
 	OscMessage msg;
 
-	// NosuchDebug("\n---- addCursorEvent\n");
+	NosuchDebug("addCursorEvent ddu=%s x=%f y=%f z=%f area=%f", downdragup.c_str(), x, y, z, area);
+
 	float backmiddle = float(val_backbottom.internal_value + val_backtop.internal_value) / 2.0f;
 	if (z < 1.0 || downdragup == "up") {
 		z = 0.0;
