@@ -314,20 +314,20 @@ class ProGuiApp(tk.Tk):
         self.isLooping = True
         log("loopingOn")
 
-        s, err = palette.palette_engine_get("engine.looping_force")
+        s, err = palette.palette_engine_get("engine.looping_override")
         if err != None:
-            log("Error in getting value of engine.looping_force")
+            log("Error in getting value of engine.looping_override")
             return
         force = palette.boolValueOfString(s)
         if force:
-            palette.palette_engine_set("engine.looping_forceon", "true")
-            forcefade, err = palette.palette_engine_get("engine.looping_forcefade")
+            palette.palette_engine_set("engine.looping_on", "true")
+            forcefade, err = palette.palette_engine_get("engine.looping_fade")
             if err != None:
-                log("Error in getting value of engine.looping_forcefade")
+                log("Error in getting value of engine.looping_fade")
                 return
-            forcebeats, err = palette.palette_engine_get("engine.looping_forcebeats")
+            forcebeats, err = palette.palette_engine_get("engine.looping_beats")
             if err != None:
-                log("Error in getting value of engine.looping_forcebeats")
+                log("Error in getting value of engine.looping_beats")
                 return
 
         for patch in self.Patches:
@@ -347,7 +347,7 @@ class ProGuiApp(tk.Tk):
         self.isLooping = False
         log("loopingOff")
 
-        palette.palette_engine_set("engine.looping_forceon", "false")
+        palette.palette_engine_set("engine.looping_on", "false")
 
         for patch in self.Patches:
             palette.palette_patch_set(patch.name(), "misc.looping_on", "false")
@@ -1067,13 +1067,13 @@ class ProGuiApp(tk.Tk):
 
         self.resetVisibility()
 
-        s, err = palette.palette_engine_get("engine.looping_force")
+        s, err = palette.palette_engine_get("engine.looping_override")
         if err != None:
-            log("Error in getting value of engine.looping_force")
+            log("Error in getting value of engine.looping_override")
             return
         force = palette.boolValueOfString(s)
         if force:
-            s, err = palette.palette_engine_get("engine.looping_forceon")
+            s, err = palette.palette_engine_get("engine.looping_on")
             if err != None:
                 forceon = False
             else:

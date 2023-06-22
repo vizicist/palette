@@ -175,12 +175,29 @@ func (patch *Patch) CursorToQuant(ce CursorEvent) Clicks {
 		// q is 1
 
 	case "frets":
-		y := ce.Pos.Y
-		if y > 0.85 {
+		y := float64(ce.Pos.Y)
+
+		high, err := GetParamFloat("engine.timefret_high")
+		if err != nil {
+			LogIfError(err)
+			return q
+		}
+		mid, err := GetParamFloat("engine.timefret_mid")
+		if err != nil {
+			LogIfError(err)
+			return q
+		}
+		low, err := GetParamFloat("engine.timefret_low")
+		if err != nil {
+			LogIfError(err)
+			return q
+		}
+
+		if y > high {
 			q = OneBeat / 8
-		} else if y > 0.55 {
+		} else if y > mid {
 			q = OneBeat / 4
-		} else if y > 0.25 {
+		} else if y > low {
 			q = OneBeat / 2
 		} else {
 			q = OneBeat
@@ -206,6 +223,7 @@ func (patch *Patch) CursorToQuant(ce CursorEvent) Clicks {
 		LogWarn("Unrecognized quant", "quantstyle", quantStyle)
 	}
 	q = Clicks(float64(q) / TempoFactor)
+	LogOfType("quant", "CursorToQuant", "q", q, "quantstyle", quantStyle)
 	return q
 }
 
