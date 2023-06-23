@@ -264,7 +264,7 @@ class ProGuiApp(tk.Tk):
 
                 elif self.nextMode == "help":
                     self.startHelpMode()
-                    self.loopingClearOnly()
+                    # self.loopingClearOnly()
 
                 elif self.nextMode == "attract":
                     log("nextMode == attract mode")
@@ -379,7 +379,7 @@ class ProGuiApp(tk.Tk):
         self.setNextMode("normal")
         self.attractFrame.place_forget()
         self.helpFrame.place_forget()
-        self.softResetAll()
+        # self.softResetAll()
         self.resetVisibility()
 
     def startAttractMode(self):
@@ -903,7 +903,7 @@ class ProGuiApp(tk.Tk):
                 palette.palette_quadpro_api("load",
                     "\"filename\": \"" + filename + "\""
                     ", \"category\": \"" + category + "\"")
-                log("After Loading","category","quad","filename",filename)
+                # log("After Loading","category","quad","filename",filename)
             else:
                 # Otherwise, in "pro" mode,
                 # the quad is loaded only into a single patch
@@ -920,12 +920,9 @@ class ProGuiApp(tk.Tk):
             patchName = self.CurrPatch.name()
             self.patchLoad(patchName,category,filename)
 
-        log("Before checking looping")
         if self.isLooping:
-            log("loadAndSend: reloading looping On")
             self.loopingOn()
         else:
-            log("loadAndSend: reloading looping Off")
             self.loopingOff()
 
     def patchLoad(self,patchName,category,filename):
@@ -2205,11 +2202,7 @@ class PagePerformMain(tk.Frame):
         log("changeButton name=",name," style=",style," text=",text)
         self.performButton[name].config(style=style,text=text)
         
-    def makePerformButton(self,name,f=None,text=None):
-        if f == None:
-            cmd = lambda nm=name: self.performCallback(nm)
-        else:
-            cmd = f
+    def makePerformButton(self,name,cmd,text=None):
         self.performButton[name] = ttk.Button(self.frame, width=10, command=cmd)
         self.setPerformButtonText(name,text,'PerformButton.TLabel')
         self.buttonNames.append(name)
@@ -2219,14 +2212,7 @@ class PagePerformMain(tk.Frame):
             text = name
         if isTwoLine(text):
             text = text.replace(palette.LineSep,"\n",1)
-        log("setPerformButtontext name=",name," style=",style," text=",text)
         self.performButton[name].config(text=text, style=style)
-
-    def performCallback(self,name):
-
-        controller = self.controller
-
-        log("Perform Button Pressed",name)
 
 class PageSelector(tk.Frame):
 
