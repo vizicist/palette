@@ -369,14 +369,14 @@ func (logic *PatchLogic) generateSpriteFromPhraseElement(pe *PhraseElement) {
 	var y float32
 	switch patch.Get("visual.placement") {
 	case "random", "":
-		x = rand.Float32()
-		y = rand.Float32()
+		x = TheRand.Float32()
+		y = TheRand.Float32()
 	case "linear":
 		y = 0.5
 		x = float32(pitch-pitchmin) / float32(pitchmax-pitchmin)
 	case "cursor":
-		x = rand.Float32()
-		y = rand.Float32()
+		x = TheRand.Float32()
+		y = TheRand.Float32()
 	case "top":
 		y = 1.0
 		x = float32(pitch-pitchmin) / float32(pitchmax-pitchmin)
@@ -390,8 +390,8 @@ func (logic *PatchLogic) generateSpriteFromPhraseElement(pe *PhraseElement) {
 		y = float32(pitch-pitchmin) / float32(pitchmax-pitchmin)
 		x = 1.0
 	default:
-		x = rand.Float32()
-		y = rand.Float32()
+		x = TheRand.Float32()
+		y = TheRand.Float32()
 	}
 
 	// send an OSC message to Resolume
