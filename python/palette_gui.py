@@ -257,7 +257,7 @@ class ProGuiApp(tk.Tk):
                 # log("nextMode=",self.nextMode)
                 # switch to a new Mode 
                 if self.nextMode == "layout":
-                    log("nextMode==layout, calling startAttractMode")
+                    # log("nextMode==layout, calling startAttractMode")
                     # start up in attract mode
                     # self.startAttractMode()
                     self.startNormalMode()
@@ -267,11 +267,11 @@ class ProGuiApp(tk.Tk):
                     # self.loopingClearOnly()
 
                 elif self.nextMode == "attract":
-                    log("nextMode == attract mode")
+                    # log("nextMode == attract mode")
                     self.startAttractMode()
 
                 elif self.nextMode == "normal":
-                    log("nextMode == normal mode")
+                    # log("nextMode == normal mode")
                     self.startNormalMode()
 
                 else:
@@ -394,6 +394,7 @@ class ProGuiApp(tk.Tk):
         self.softResetAll()
 
     def startHelpMode(self):
+        log("startHelpMode")
         self.selectFrame.place_forget()
         self.performFrame.place_forget()
         self.patchChooser.place_forget()
