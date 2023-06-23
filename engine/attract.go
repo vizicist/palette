@@ -73,8 +73,6 @@ func (am *AttractManager) setAttractMode(onoff bool) {
 	LogInfo("setAttractMode","onoff",onoff)
 
 	//// am.attractMutex.Lock()
-
-	// LogOfType("attract", "AttractManager changing attract", "onoff", onoff)
 	// am.attractMutex.Lock()
 	am.attractModeIsOn.Store(onoff)
 
@@ -93,13 +91,16 @@ func (am *AttractManager) setAttractMode(onoff bool) {
 
 func (am *AttractManager) checkAttract() {
 
+	if ! am.attractEnabled {
+		return
+	}
 	//// am.attractMutex.Lock()
 
 	// Every so often we check to see if attract mode should be turned on
 	now := time.Now()
 	// attractModeEnabled := am.attractIdleSecs > 0
 	sinceLastAttractCheck := now.Sub(am.lastAttractCheck).Seconds()
-	if am.attractEnabled && sinceLastAttractCheck > am.attractCheckSecs {
+	if sinceLastAttractCheck > am.attractCheckSecs {
 		am.lastAttractCheck = now
 		// There's a delay when checking cursor activity to turn attract mod on.
 		// Non-internal cursor activity turns attract mode off instantly.

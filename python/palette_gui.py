@@ -560,6 +560,8 @@ class ProGuiApp(tk.Tk):
         palette.palette_engine_api("attract",
             "\"onoff\": \"false\"")
         self.setNextMode("normal")
+        self.softResetAll()
+        self.resetVisibility()
 
     def unhelp(self):
         self.checkForGuiCycle()
