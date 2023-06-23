@@ -44,6 +44,7 @@ LayerParams_InitializeTypes() {
 	LayerParams_logTypes.push_back("morph");
 	LayerParams_logTypes.push_back("mmtt");
 	LayerParams_logTypes.push_back("quant");
+	LayerParams_logTypes.push_back("transpose");
 
 	LayerParams_autostartTypes.push_back("");
 	LayerParams_autostartTypes.push_back("resolume,gui,bidule");
