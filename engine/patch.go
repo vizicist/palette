@@ -2,7 +2,6 @@ package engine
 
 import (
 	"fmt"
-	"math/rand"
 	"strings"
 	"sync"
 
@@ -32,7 +31,7 @@ func PatchNames() []string {
 }
 
 func RandomPatchName() string {
-	return string("ABCD"[rand.Intn(len(Patchs))])
+	return string("ABCD"[TheRand.Intn(len(Patchs))])
 }
 
 func NewPatch(patchName string) *Patch {
@@ -60,11 +59,11 @@ func IsPerPatchParam(name string) bool {
 	return !strings.HasPrefix(name, "engine.")
 }
 
-func ApplyToAllPatchs(f func(patch *Patch)) {
-	for _, patch := range Patchs {
-		f(patch)
-	}
-}
+// func ApplyToAllPatchs(f func(patch *Patch)) {
+// 	for _, patch := range Patchs {
+// 		f(patch)
+// 	}
+// }
 
 func (patch *Patch) Synth() *Synth {
 

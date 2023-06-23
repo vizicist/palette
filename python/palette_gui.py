@@ -79,7 +79,7 @@ class ProGuiApp(tk.Tk):
         self.killme = False
 
         self.currentMode = ""
-        self.nextMode = ""
+        self.setNextMode("")
         self.lastLoadType = ""
         self.lastLoadName = ""
         self.isLooping = False
@@ -208,7 +208,7 @@ class ProGuiApp(tk.Tk):
         self.layoutDone = False
 
         self.initLayout()
-        self.resetAll()
+        self.completeReset()
 
     def placePatchChooser(self):
         if self.guiLevel > 0:
@@ -257,15 +257,21 @@ class ProGuiApp(tk.Tk):
                 # log("nextMode=",self.nextMode)
                 # switch to a new Mode 
                 if self.nextMode == "layout":
+                    log("nextMode==layout, calling startAttractMode")
+                    # start up in attract mode
+                    # self.startAttractMode()
                     self.startNormalMode()
 
                 elif self.nextMode == "help":
                     self.startHelpMode()
+                    self.loopingClearOnly()
 
                 elif self.nextMode == "attract":
+                    log("nextMode == attract mode")
                     self.startAttractMode()
 
                 elif self.nextMode == "normal":
+                    log("nextMode == normal mode")
                     self.startNormalMode()
 
                 else:
@@ -299,7 +305,7 @@ class ProGuiApp(tk.Tk):
         log("mainLoop is returning")
 
     def loopingOnOff(self):
-        self.loopingClear()
+        self.loopingClearOnly()
         if self.isLooping:
             self.loopingOff()
             palette.palette_engine_api("audio_reset")
@@ -320,7 +326,7 @@ class ProGuiApp(tk.Tk):
             return
         force = palette.boolValueOfString(s)
         if force:
-            palette.palette_engine_set("engine.looping_on", "true")
+            # palette.palette_engine_set("engine.looping_on", "true")
             forcefade, err = palette.palette_engine_get("engine.looping_fade")
             if err != None:
                 log("Error in getting value of engine.looping_fade")
@@ -347,36 +353,46 @@ class ProGuiApp(tk.Tk):
         self.isLooping = False
         log("loopingOff")
 
-        palette.palette_engine_set("engine.looping_on", "false")
+        # palette.palette_engine_set("engine.looping_on", "false")
 
         for patch in self.Patches:
             palette.palette_patch_set(patch.name(), "misc.looping_on", "false")
             self.refreshValues("misc",patch)
 
-    def loopingClear(self):
-        log("loopingClear")
+    def loopingClearButton(self):
+        log("loopingClearButton")
+        self.softResetAll()
+        self.resetVisibility()
+        self.loopingClearOnly()
+
+    def loopingClearOnly(self):
+        log("loopingClearOnly")
         for patch in self.Patches:
             palette.palette_patch_api(patch.name(), "clear", "")
 
+    def setNextMode(self,mode):
+        self.nextMode = mode
+
     def startNormalMode(self):
         # self.startupFrame.place_forget()
-        # log("startNormalMode: setting nextMode to normal")
+        log("startNormalMode")
         self.resetMinMaxXY()
-        self.nextMode = "normal"
+        self.setNextMode("normal")
         self.attractFrame.place_forget()
         self.helpFrame.place_forget()
+        self.softResetAll()
         self.resetVisibility()
 
     def startAttractMode(self):
-
-        # log("startAttractMode: setting nextMode to attract")
-        self.nextMode = "attract"
+        log("startAttractMode")
+        self.setNextMode ("attract")
         self.lastAttractSpriteTime = 0
         self.selectFrame.place_forget()
         self.performFrame.place_forget()
         self.patchChooser.place_forget()
         self.helpFrame.place_forget()
         self.attractFrame.place(in_=self.topContainer, relx=0, rely=0, relwidth=1, relheight=1)
+        self.softResetAll()
 
     def startHelpMode(self):
         self.selectFrame.place_forget()
@@ -539,14 +555,17 @@ class ProGuiApp(tk.Tk):
         return f
 
     def unattract(self):
+        log("unattract")
+        self.loopingOff()
+        self.clear()
         log("Screen pressed, stopping attract mode, setting nextMode to normal")
         palette.palette_engine_api("attract",
             "\"onoff\": \"false\"")
-        self.nextMode = "normal"
+        self.setNextMode("normal")
 
     def unhelp(self):
         self.checkForGuiCycle()
-        self.nextMode = "normal"
+        self.setNextMode("normal")
 
     def makeAttractFrame(self,container):
 
@@ -1010,10 +1029,11 @@ class ProGuiApp(tk.Tk):
         self.setGuiLevel((self.guiLevel + 1) % 2)
         self.resetVisibility()
         self.performPage.updatePerformButtonLabels(self.CurrPatch)
-        log("GuiLevel",self.guiLevel)
+        log("cycleGuiLevel, GuiLevel is now ",self.guiLevel)
 
     def setGuiLevel(self,level):
         self.guiLevel = level
+        log("setGuiLevel, GuiLevel = ",self.guiLevel)
 #        self.setScaleList()
 
     def sendANO(self):
@@ -1021,7 +1041,7 @@ class ProGuiApp(tk.Tk):
             patch.sendANO()
 
     def startHelp(self):
-        self.nextMode = "help"
+        self.setNextMode("help")
 
     def startProcess(self,processName):
         palette.palette_engine_api("startprocess","\"process\": \"" + processName + "\"")
@@ -1044,16 +1064,21 @@ class ProGuiApp(tk.Tk):
     def exit(self):
         os._exit(0)  # This is a hard exit, killing all the background threads
 
-    def resetAll(self):
+    def completeReset(self):
+        log("COMPLETE RESET")
+        self.setGuiLevel(self.defaultGuiLevel)
+        self.loopingOff()
+        self.softResetAll()
+        self.resetVisibility()
+        self.loopingClearOnly()
 
-        log("ResetAll")
+    def softResetAll(self):
 
-        self.loopingClear()
-        # self.loopingOff()
+        log("softResetAll")
+
+        self.loopingClearOnly()
 
         palette.palette_engine_api("audio_reset")
-
-        self.setGuiLevel(self.defaultGuiLevel)
 
         self.allPatchesSelected = True
         self.CurrPatch = self.patchNamed("A")
@@ -1062,28 +1087,6 @@ class ProGuiApp(tk.Tk):
 
         for patch in self.Patches:
             patch.clear()
-
-        self.performPage.updatePerformButtonLabels(self.CurrPatch)
-
-        self.resetVisibility()
-
-        s, err = palette.palette_engine_get("engine.looping_override")
-        if err != None:
-            log("Error in getting value of engine.looping_override")
-            return
-        force = palette.boolValueOfString(s)
-        if force:
-            s, err = palette.palette_engine_get("engine.looping_on")
-            if err != None:
-                forceon = False
-            else:
-                forceon = palette.boolValueOfString(s)
-            if forceon:
-                self.loopingOn()
-            else:
-                self.loopingOff()
-        else:
-            self.loopingOff()
 
     def synthesizeParamsJson(self):
 
@@ -2138,11 +2141,11 @@ class PagePerformMain(tk.Frame):
         self.performButton = {}
         self.buttonNames = []
 
-        self.makePerformButton("COMPLETE_RESET", self.controller.resetAll)
+        self.makePerformButton("COMPLETE_RESET", self.controller.completeReset)
         self.makePerformButton("HELP_ ", self.controller.startHelp)
         self.makePerformButton("Looping", self.controller.loopingOnOff)
         # self.makePerformButton("Looping_OFF", self.controller.loopingOff)
-        self.makePerformButton("LOOPING_CLEAR", self.controller.loopingClear)
+        self.makePerformButton("LOOPING_CLEAR", self.controller.loopingClearButton)
         # if self.controller.defaultGuiLevel > 0:
         #     self.makePerformButton("Clear_ ", self.controller.clear)
         # These shouldn't be shown in casual mode
@@ -2199,6 +2202,7 @@ class PagePerformMain(tk.Frame):
         else:
             style = 'PerformButton.TLabel'
         self.setPerformButtonText(name,text,style)
+        log("changeButton name=",name," style=",style," text=",text)
         self.performButton[name].config(style=style,text=text)
         
     def makePerformButton(self,name,f=None,text=None):
@@ -2215,6 +2219,7 @@ class PagePerformMain(tk.Frame):
             text = name
         if isTwoLine(text):
             text = text.replace(palette.LineSep,"\n",1)
+        log("setPerformButtontext name=",name," style=",style," text=",text)
         self.performButton[name].config(text=text, style=style)
 
     def performCallback(self,name):
@@ -2370,7 +2375,7 @@ def afterWindowIsDisplayed(windowName,guisize,*args):
         os.system(cmd)
 
     global PaletteApp
-    PaletteApp.nextMode = "layout"
+    PaletteApp.setNextMode("layout")
 
 def isVisibleParameter(name):
     parts = name.split(".")
@@ -2533,11 +2538,11 @@ def status_thread(app):  # runs in background thread
         if attractMode == "true":
             if PaletteApp.currentMode != "attract":
                 log("Turning Attract Mode On!")
-                PaletteApp.nextMode = "attract"
+                PaletteApp.setNextMode("attract")
         else:
             if PaletteApp.currentMode != "normal" and PaletteApp.currentMode != "help":
                 log("Turning Attract Mode Off!")
-                PaletteApp.nextMode = "normal"
+                PaletteApp.setNextMode("normal")
 
 if __name__ == "__main__":
 
@@ -2593,7 +2598,7 @@ if __name__ == "__main__":
     PaletteApp.wm_geometry("%dx%d" % (PaletteAppSize["width"],PaletteAppSize["height"]))
 
     log("PALETTEAPP size = ",PaletteAppSize)
-    PaletteApp.nextMode = ""
+    PaletteApp.setNextMode("")
     PaletteApp.currentMode = ""
 
     threading.Timer(0.0, afterWindowIsDisplayed, args=[PaletteApp.windowName,guisize], kwargs=None).start()

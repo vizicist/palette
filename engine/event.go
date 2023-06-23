@@ -47,8 +47,8 @@ func NewMidiEvent(click Clicks, tag string, msg midi.Message) MidiEvent {
 
 ////////////////////////// CursorEvent methods
 
-func (ce CursorEvent) IsInternal() bool {
-	return strings.Contains(ce.Tag, "internal")
+func (ce CursorEvent) IsAttractGenerated() bool {
+	return strings.Contains(ce.Tag, "attract")
 }
 
 // XXX - can this make use of generics?  (across all the Event types)

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math/rand"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -36,10 +37,13 @@ type Engine struct {
 
 var TheEngine *Engine
 var engineSysex sync.Mutex
+var TheRand *rand.Rand
 
 func InitMisc() {
 	InitParams()
 	TheProcessManager = NewProcessManager()
+	// Fixed rand sequence, better for testing
+	TheRand = rand.New(rand.NewSource(1))
 }
 
 func InitEngine() {
@@ -90,6 +94,10 @@ func InitEngine() {
 	}
 
 	TheEngine = e
+
+	enabled, err := GetParamBool("engine.attractenabled")
+	LogIfError(err)
+	TheAttractManager.SetAttractEnabled(enabled)
 
 	// This need to be done after engine parameters are loaded
 	TheProcessManager.AddBuiltins()
@@ -181,6 +189,10 @@ func (e *Engine) Start() {
 	go TheScheduler.Start()
 	go TheRouter.Start()
 	go TheMidiIO.Start()
+
+	go TheBidule().Reset()
+
+	// TheAttractManager.setAttractMode(true)
 
 	// if ParamBool("mmtt.depth") {
 	// 	go DepthRunForever()
@@ -502,12 +514,15 @@ func (e *Engine) SaveRecordingEvent(re RecordingEvent) {
 
 func (e *Engine) SetTranspose(i int) {
 	e.currentPitchOffset.Store(int32(i))
+	LogOfType("transpose", "SetTranspose", "i", i)
+	// LogInfo("Engine.SetTranspose", "schedule", TheScheduler.ToString())
+	// LogInfo("Engine.SetTranspose", "pending", TheScheduler.PendingToString())
 }
 
 func (e *Engine) SetAutoTransposeBeats(beats int) {
 	e.autoTransposeNext = Clicks(beats) * OneBeat
 	e.autoTransposeClicks = Clicks(beats) * OneBeat
-
+	LogOfType("transpose", "SetTransposeBeats", "beats", beats)
 }
 
 func (e *Engine) advanceTransposeTo(newclick Clicks) {
@@ -517,8 +532,7 @@ func (e *Engine) advanceTransposeTo(newclick Clicks) {
 	}
 	e.autoTransposeNext = newclick + e.autoTransposeClicks
 	e.autoTransposeIndex = (e.autoTransposeIndex + 1) % len(e.autoTransposeValues)
-	e.currentPitchOffset.Store(int32(TheEngine.autoTransposeValues[TheEngine.autoTransposeIndex]))
-	LogOfType("transpose", "advanceTransposeTo", "e.autoTransposeIndex", e.autoTransposeIndex, "pitchoffset", e.currentPitchOffset)
+	e.SetTranspose(TheEngine.autoTransposeValues[TheEngine.autoTransposeIndex])
 	// TheScheduler.SendAllPendingNoteoffs()
 }
 
