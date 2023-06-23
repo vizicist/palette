@@ -3,7 +3,6 @@ package engine
 import (
 	"encoding/json"
 	"fmt"
-	"math/rand"
 	"os"
 	"sort"
 	"strconv"
@@ -178,8 +177,8 @@ func (quadpro *QuadPro) PatchForCursorEvent(ce CursorEvent) (patch *Patch, butto
 
 func (quadpro *QuadPro) onCursorEvent(state ActiveCursor) error {
 
-	// Any non-internal cursor or Button will turn attract mode off.
-	if (state.Button!="" || !state.Current.IsInternal()) && TheAttractManager.AttractModeIsOn() {
+	// Any non-attract-generated cursor or Button will turn attract mode off.
+	if (state.Button != "" || !state.Current.IsAttractGenerated()) && TheAttractManager.AttractModeIsOn() {
 		TheAttractManager.SetAttractMode(false)
 	}
 
@@ -195,7 +194,7 @@ func (quadpro *QuadPro) onCursorEvent(state ActiveCursor) error {
 			} else {
 				preset := val.(string)
 				if TheQuadPro != nil {
-					LogOfType("cursor","Button down", "z", state.Current.Pos.Z)
+					LogOfType("cursor", "Button down", "z", state.Current.Pos.Z)
 					err := TheQuadPro.Load("quad", preset)
 					if err != nil {
 						return err
@@ -219,7 +218,10 @@ func (quadpro *QuadPro) onCursorEvent(state ActiveCursor) error {
 	cursorStyle := patchLogic.patch.Get("misc.cursorstyle")
 	gensound := IsTrueValue(patchLogic.patch.Get("misc.generatesound"))
 	genvisual := IsTrueValue(patchLogic.patch.Get("misc.generatevisual"))
-	if gensound && !TheAttractManager.AttractModeIsOn() {
+	isAttractCursor := state.Current.IsAttractGenerated()
+
+	// Don't generate sound from attractMode cursors
+	if !isAttractCursor && gensound && !TheAttractManager.AttractModeIsOn() {
 		patchLogic.generateSoundFromCursor(state.Current, cursorStyle)
 	}
 	if genvisual {
@@ -267,7 +269,7 @@ func (quadpro *QuadPro) loadQuadRand() error {
 	if err != nil {
 		return err
 	}
-	rn := rand.Uint64() % uint64(len(arr))
+	rn := TheRand.Uint64() % uint64(len(arr))
 	err = quadpro.Load("quad", arr[rn])
 	if err != nil {
 		LogIfError(err)

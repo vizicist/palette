@@ -37,46 +37,58 @@ func NewAttractManager() *AttractManager {
 		attractChangeInterval:  30,
 		attractGestureInterval: 0.5,
 	}
+
 	am.attractModeIsOn.Store(false) // probably not needed?
+
 	return am
+}
+
+func (am *AttractManager) SetAttractEnabled(b bool) {
+	am.attractEnabled = b
 }
 
 func (am *AttractManager) AttractModeIsOn() bool {
 	// am.attractMutex.Lock()
 	isOn := am.attractModeIsOn.Load()
 	// am.attractMutex.Unlock()
-	return isOn
+	return isOn && am.attractEnabled
 }
 
 func (am *AttractManager) SetAttractMode(onoff bool) {
 	if onoff == am.AttractModeIsOn() {
-		LogOfType("attract", "setAttractMode already in mode", "onoff", onoff)
+		LogWarn("setAttractMode already in mode", "onoff", onoff)
 		return // already in that mode
 	}
-	am.setAttractMode(onoff)
+	// Throttle it a bit
+	secondsSince := time.Since(am.lastAttractModeChange).Seconds()
+	if secondsSince > 1.0 {
+		am.setAttractMode(onoff)
+	} else {
+		LogWarn("NOT setting setAttractMode, too quick!", "onoff", onoff)
+	}
 }
 
 func (am *AttractManager) setAttractMode(onoff bool) {
 
+	LogInfo("setAttractMode","onoff",onoff)
+
 	//// am.attractMutex.Lock()
-	//// defer am.attractMutex.Unlock()
 
-	// Throttle it a bit
-	secondsSince := time.Since(am.lastAttractModeChange).Seconds()
-	if secondsSince > 1.0 {
-		// LogOfType("attract", "AttractManager changing attract", "onoff", onoff)
-		// am.attractMutex.Lock()
-		am.attractModeIsOn.Store(onoff)
+	// LogOfType("attract", "AttractManager changing attract", "onoff", onoff)
+	// am.attractMutex.Lock()
+	am.attractModeIsOn.Store(onoff)
 
-		LogInfo("setAttractMode is calling TheBidule().Reset()")
-		go TheBidule().Reset()
-
-		// am.attractMutex.Unlock()
-		am.lastAttractModeChange = time.Now()
-		LogInfo("setAttractMode", "onoff", onoff)
-	// } else {
-		// LogInfo("NOT setting setAttractMode, too quick!", "onoff", onoff)
+	if TheQuadPro != nil {
+		for _, patch := range Patchs {
+			patch.clearGraphics()
+			patch.loopClear()
+		}
 	}
+
+	go TheBidule().Reset()
+
+	// am.attractMutex.Unlock()
+	am.lastAttractModeChange = time.Now()
 }
 
 func (am *AttractManager) checkAttract() {
@@ -111,7 +123,7 @@ func (am *AttractManager) doAttractAction() {
 
 	//// am.attractMutex.Lock()
 
-	if !am.AttractModeIsOn() {
+	if !am.attractEnabled || !am.AttractModeIsOn() {
 		//// am.attractMutex.Unlock()
 		return
 	}
@@ -119,7 +131,7 @@ func (am *AttractManager) doAttractAction() {
 	dt := now.Sub(am.lastAttractGestureTime).Seconds()
 	dp := now.Sub(am.lastAttractChange).Seconds()
 	patch := RandomPatchName()
-	tags := patch + ",internal"
+	tags := patch + ",attract"
 	if dt > am.attractGestureInterval {
 		dur := 2 * time.Second
 		go TheCursorManager.GenerateRandomGesture(tags, dur)

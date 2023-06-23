@@ -267,7 +267,7 @@ func (e *Engine) Set(name string, value string) error {
 		TheAttractManager.SetAttractMode(IsTrueValue(value))
 
 	case "engine.attractenabled":
-		TheAttractManager.attractEnabled = IsTrueValue(value)
+		TheAttractManager.SetAttractEnabled(IsTrueValue(value))
 
 	case "engine.attractchecksecs":
 		if e.getFloat(value, &f) {

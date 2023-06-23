@@ -2,7 +2,6 @@ package engine
 
 import (
 	"fmt"
-	"math/rand"
 	"strings"
 	"sync"
 	"time"
@@ -216,9 +215,9 @@ func (cm *CursorManager) GenerateRandomGesture(tags string, dur time.Duration) {
 	pos0 := RandPos()
 	pos1 := RandPos()
 	// Occasionally force horizontal and vertical
-	if rand.Int()%4 == 0 {
+	if TheRand.Int()%4 == 0 {
 		pos1.X = pos0.X
-	} else if rand.Int()%4 == 0 {
+	} else if TheRand.Int()%4 == 0 {
 		pos1.Y = pos0.Y
 	}
 	cm.GenerateGesture(tags, dur, pos0, pos1)
@@ -226,16 +225,16 @@ func (cm *CursorManager) GenerateRandomGesture(tags string, dur time.Duration) {
 
 func RandPos() CursorPos {
 	return CursorPos{
-		X: rand.Float32(),
-		Y: rand.Float32(),
-		Z: rand.Float32(),
+		X: TheRand.Float32(),
+		Y: TheRand.Float32(),
+		Z: TheRand.Float32(),
 	}
 }
 
 /*
 func randDir() float32 {
 	retVals := [3]float32{-1.0, 0.0, 1.0}
-	r := retVals[rand.Int() % 3]
+	r := retVals[TheRand.Int() % 3]
 	return r
 }
 
@@ -411,30 +410,10 @@ func (cm *CursorManager) ExecuteCursorEvent(ce CursorEvent) {
 	ac.Current.SetClick(CurrentClick())
 
 	if ac.loopIt {
-
-		// the looped CursorEvent starts out as a copy of the ActiveCursor's Current value
-		loopce := ac.Current
-		loopce.SetClick(CurrentClick() + OneBeat*Clicks(ac.loopBeats))
-
-		// The looped CursorEvents should have unique gid val,ues.
-		loopce.Gid = TheCursorManager.LoopedGidFor(ac.Current, true /*warn*/)
-		if loopce.Gid == 0 {
-			LogWarn("HEY!!! loopIt LoopedGidFor returns 0?")
-			return
+		se := cm.LoopCursorEvent(ac)
+		if se != nil {
+			TheScheduler.insertScheduleElement(se)
 		}
-		// LogInfo("ac.loopIt LoopedGidFor", "loopce.Gid", loopce.Gid)
-
-		// Fade the Z value
-		loopce.Pos.Z = loopce.Pos.Z * ac.loopFade
-		// LogInfo("loopcd.Z is now", "Z", loopce.Pos.Z, "ac.loopFade", ac.loopFade)
-
-		if loopce.Pos.Z > ac.maxZ {
-			ac.maxZ = loopce.Pos.Z
-		}
-
-		// LogInfo("looped CursorEvent", "ce.Z", ce.Z, "loopFade", ac.loopFade)
-		se := NewSchedElement(loopce.GetClick(), ce.Tag, loopce)
-		TheScheduler.insertScheduleElement(se)
 	}
 
 	TheEngine.sendToOscClients(CursorToOscMsg(ce))
@@ -448,9 +427,40 @@ func (cm *CursorManager) ExecuteCursorEvent(ce CursorEvent) {
 	// LogOfType("cursor", "CursorManager.handleDownDragUp", "ce", ce)
 
 	if ce.Ddu == "up" {
+		// LogInfo("ExecuteCursorEvent UP")
 		// LogOfType("cursor", "handleDownDragUp up is deleting gid", "gid", ce.Gid, "ddu", ce.Ddu)
 		cm.DeleteActiveCursorIfZLessThan(ce.Gid, LoopFadeZThreshold)
 	}
+}
+
+func (cm *CursorManager) LoopCursorEvent(ac *ActiveCursor) *SchedElement {
+	loopce := ac.Current
+	// the looped CursorEvent starts out as a copy of the ActiveCursor's Current value
+	loopce.SetClick(CurrentClick() + OneBeat*Clicks(ac.loopBeats))
+
+	// The looped CursorEvents should have unique gid val,ues.
+	loopce.Gid = TheCursorManager.LoopedGidFor(ac.Current, true /*warn*/)
+	if loopce.Gid == 0 {
+		LogWarn("HEY!!! loopIt LoopedGidFor returns 0?")
+		return nil
+	}
+	// LogInfo("ac.loopIt LoopedGidFor", "loopce.Gid", loopce.Gid)
+
+	// Fade the Z value
+	loopce.Pos.Z = loopce.Pos.Z * ac.loopFade
+	// LogInfo("loopcd.Z is now", "Z", loopce.Pos.Z, "ac.loopFade", ac.loopFade)
+
+	if loopce.Pos.Z <= LoopFadeZThreshold && loopce.Ddu != "up" {
+		// LogInfo("loopce.Z is small, NOT LOOPING IT", "loopce", loopce)
+		return nil
+	}
+
+	if loopce.Pos.Z > ac.maxZ {
+		ac.maxZ = loopce.Pos.Z
+	}
+
+	// LogInfo("looped CursorEvent", "ce.Z", ce.Z, "loopFade", ac.loopFade)
+	return NewSchedElement(loopce.GetClick(), loopce.Tag, loopce)
 }
 
 func (cm *CursorManager) DeleteActiveCursor(gid int) {
