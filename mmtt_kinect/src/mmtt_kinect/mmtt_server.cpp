@@ -2191,7 +2191,7 @@ void
 MmttServer::addCursorEvent(OscBundle &bundle, std::string downdragup, std::string region, int sid, float x, float y, float z, float area) {
 	OscMessage msg;
 
-	NosuchDebug("addCursorEvent ddu=%s x=%f y=%f z=%f area=%f", downdragup.c_str(), x, y, z, area);
+	NosuchDebug(1,"addCursorEvent ddu=%s x=%f y=%f z=%f area=%f", downdragup.c_str(), x, y, z, area);
 
 	float backmiddle = float(val_backbottom.internal_value + val_backtop.internal_value) / 2.0f;
 	if (z < 1.0 || downdragup == "up") {
