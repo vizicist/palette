@@ -1,12 +1,13 @@
 package engine
 
 import (
+	"sync"
 	"sync/atomic"
 	"time"
 )
 
 type AttractManager struct {
-	// attractMutex           sync.RWMutex
+	attractMutex           sync.RWMutex
 	attractEnabled         bool
 	attractModeIsOn        *atomic.Bool
 	lastAttractModeChange  time.Time
@@ -70,7 +71,7 @@ func (am *AttractManager) SetAttractMode(onoff bool) {
 
 func (am *AttractManager) setAttractMode(onoff bool) {
 
-	LogInfo("setAttractMode","onoff",onoff)
+	LogInfo("setAttractMode", "onoff", onoff)
 
 	//// am.attractMutex.Lock()
 	// am.attractMutex.Lock()
@@ -91,7 +92,7 @@ func (am *AttractManager) setAttractMode(onoff bool) {
 
 func (am *AttractManager) checkAttract() {
 
-	if ! am.attractEnabled {
+	if !am.attractEnabled {
 		return
 	}
 	//// am.attractMutex.Lock()
@@ -101,19 +102,19 @@ func (am *AttractManager) checkAttract() {
 	// attractModeEnabled := am.attractIdleSecs > 0
 	sinceLastAttractCheck := now.Sub(am.lastAttractCheck).Seconds()
 	if sinceLastAttractCheck > am.attractCheckSecs {
+
 		am.lastAttractCheck = now
-		// There's a delay when checking cursor activity to turn attract mod on.
-		// Non-internal cursor activity turns attract mode off instantly.
+
+		am.attractMutex.Lock()
 		sinceLastAttractModeChange := time.Since(am.lastAttractModeChange).Seconds()
 		ison := am.AttractModeIsOn()
-		if !ison && sinceLastAttractModeChange > am.attractIdleSecs {
-			// Nothing happening for a while, turn attract mode on
-			//// am.attractMutex.Unlock()
+		idleTooLong := sinceLastAttractModeChange > am.attractIdleSecs
+		am.attractMutex.Unlock()
+
+		if !ison && idleTooLong {
 			am.setAttractMode(true)
-			//// am.attractMutex.Lock()
 		}
 	}
-	///// am.attractMutex.Unlock()
 
 	if am.AttractModeIsOn() {
 		am.doAttractAction()
