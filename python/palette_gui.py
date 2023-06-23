@@ -366,7 +366,6 @@ class ProGuiApp(tk.Tk):
         self.loopingClearOnly()
 
     def loopingClearOnly(self):
-        log("loopingClearOnly")
         for patch in self.Patches:
             palette.palette_patch_api(patch.name(), "clear", "")
 
@@ -555,10 +554,9 @@ class ProGuiApp(tk.Tk):
         return f
 
     def unattract(self):
-        log("unattract")
+        log("Screen pressed, stopping attract mode")
         self.loopingOff()
         self.clear()
-        log("Screen pressed, stopping attract mode, setting nextMode to normal")
         palette.palette_engine_api("attract",
             "\"onoff\": \"false\"")
         self.setNextMode("normal")
@@ -2142,10 +2140,10 @@ class PagePerformMain(tk.Frame):
         self.buttonNames = []
 
         self.makePerformButton("COMPLETE_RESET", self.controller.completeReset)
-        self.makePerformButton("HELP_ ", self.controller.startHelp)
         self.makePerformButton("Looping", self.controller.loopingOnOff)
+        self.makePerformButton("CLEAR_", self.controller.loopingClearButton)
+        self.makePerformButton("HELP_ ", self.controller.startHelp)
         # self.makePerformButton("Looping_OFF", self.controller.loopingOff)
-        self.makePerformButton("LOOPING_CLEAR", self.controller.loopingClearButton)
         # if self.controller.defaultGuiLevel > 0:
         #     self.makePerformButton("Clear_ ", self.controller.clear)
         # These shouldn't be shown in casual mode
