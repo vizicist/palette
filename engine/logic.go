@@ -217,11 +217,9 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
 			return // do nothing, assumes any errors are logged in cursorToNoteOn
 		}
 		ScheduleAt(atClick, ce.Tag, noteOn)
-		// LogInfo("RETRIGGER down", "ce", ce, "noteOn", noteOn)
 		ac.NoteOn = noteOn
 		ac.NoteOnClick = atClick
 	case "drag":
-		// LogInfo("CURSOR drag event for cursor", "gid", ce.Gid)
 		oldNoteOn := ac.NoteOn
 		if oldNoteOn == nil {
 			// LogWarn("generateSoundFromCursor: no ActiveCursor.NoteOn", "gid", ce.Gid)
@@ -259,21 +257,29 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
 			}
 		}
 
+		cc := CurrentClick()
+		c2q := patch.CursorToQuant(ce)
+		// If the last NoteOn for this ActiveCursor is scheduled in the future, don't retrigger.
+		if ac.NoteOnClick > cc {
+			// inTheFuture := ac.NoteOnClick - cc
+			// LogInfo("NOTEON IN FUTURE, NOT RETRIGGERING!!!!!", "inTheFuture", inTheFuture)
+			return
+		}
+
 		if newpitch != oldpitch || deltaz > deltaztrignote || deltay > deltaytrig {
 			// Turn off existing note, one Click after noteOn
 			noteOff := NewNoteOffFromNoteOn(oldNoteOn)
 			offClick := ac.NoteOnClick + 1
 			ScheduleAt(offClick, ce.Tag, noteOff)
-			// LogInfo("RETRIGGER drag noteOff", "noteOff", noteOff)
 
-			atClick := logic.nextQuant(CurrentClick(), patch.CursorToQuant(ce))
-			if atClick < offClick {
-				atClick = offClick
+			thisClick := logic.nextQuant(cc, c2q)
+			if thisClick < offClick {
+				thisClick = offClick
 			}
-			ScheduleAt(atClick, ce.Tag, newNoteOn)
+
+			ScheduleAt(thisClick, ce.Tag, newNoteOn)
 			ac.NoteOn = newNoteOn
-			ac.NoteOnClick = atClick
-			// LogInfo("RETRIGGER drag noteOn", "newNoteOn", newNoteOn)
+			ac.NoteOnClick = thisClick
 		}
 
 	case "up":
