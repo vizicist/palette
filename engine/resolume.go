@@ -93,6 +93,7 @@ func (r *Resolume) ToFreeFramePlugin(patchName string, msg *osc.Message) {
 		LogIfError(fmt.Errorf("no freeframe client for layer"), "patch", patchName)
 		return
 	}
+	LogOfType("ffgl","toFreeFramePlugin","patch",patchName,"msg",msg)
 	TheEngine.SendOsc(ff, msg)
 }
 

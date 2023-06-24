@@ -1,4 +1,5 @@
 {
+  "debuglevel": "0",
   "debugsprite": "false",
   "debugcursor": "true",
   "debugapi": "true",

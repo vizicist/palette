@@ -374,8 +374,8 @@ func (r *Router) oscHandleCursor(msg *osc.Message) {
 	ce.Pos = newPos
 
 	if ce.Ddu != "up" && ce.Pos.Z < 0.0001 {
-		LogWarn("Hmmmm, OSC down/drag cursor event has zero Z?","ce",ce)
-		ce.Pos.Z = 0.001
+		LogWarn("Hmmmmmmmm, OSC down/drag cursor event has zero Z?", "ce", ce)
+		ce.Pos.Z = TheCursorManager.LoopThreshold
 	}
 	TheCursorManager.ExecuteCursorEvent(ce)
 }

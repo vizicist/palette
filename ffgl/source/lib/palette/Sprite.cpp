@@ -45,7 +45,7 @@ Sprite::initState(std::string cid, std::string cidsource, glm::vec2& pos, float 
 	state.hue1 = params.hue1initial;
 	state.hue2 = params.hue2initial;
 	state.alpha = params.alphainitial;
-	state.size = params.sizeinitial;
+	state.spritesize = params.sizeinitial;
 	state.seq = NextSeq++;
 	state.rotdir = rotangdirOf(params.rotangdir);
 	state.rotanginit = rotanginit;
@@ -53,7 +53,7 @@ Sprite::initState(std::string cid, std::string cidsource, glm::vec2& pos, float 
 }
 
 Sprite::~Sprite() {
-	NosuchDebug(1, "Sprite destructor! s=%d cid=%s", this, state.cid.c_str());
+	NosuchDebug(2, "Sprite destructor! s=%d cid=%s", this, state.cid.c_str());
 }
 
 float Sprite::degree2radian(float deg) {
@@ -67,7 +67,7 @@ void Sprite::draw(PaletteDrawer* drawer) {
 		return;
 	}
 	
-	if ( state.alpha <= 0.0f || state.size < 0.001f ) {
+	if ( state.alpha <= 0.0f || state.spritesize < 0.001f ) {
 		state.killme = true;
 		return;
 	}
@@ -82,14 +82,16 @@ void Sprite::draw(PaletteDrawer* drawer) {
 	if (state.depth < params.zmin ) {
 		state.depth = params.zmin;
 	}
-	float scaled_z = drawer->scale_z(state.depth);
+	float scaled_depth = drawer->scale_z(state.depth);
 	
 	// XXX - this should move into PaletteDrawer, I suspect
 	float thickness = params.thickness;
 	drawer->strokeWeight(thickness);
 
-	float scalex = state.size * scaled_z;
-	float scaley = state.size * scaled_z;
+	float scalex = state.spritesize * scaled_depth;
+	float scaley = state.spritesize * scaled_depth;
+
+	NosuchDebug( 1, "state.depth=%f scaled_depth=%f scalex=%f scaley=%f\n", state.depth, scaled_depth, scalex, scaley );
 
 	// These control flipping of the drawing orientation
 	int xdir = 1;
@@ -129,8 +131,8 @@ void Sprite::drawAt(PaletteDrawer* drawer, float x, float y, float scalex, float
 
 	glm::vec2 pos( x, y );
 
-	NosuchDebug(1,"Sprite::drawAt s=%lld drawAt j=%s xy= %f %f width=%f size=%f depth=%f\n",
-		(long long)this,j.c_str(),pos.x,pos.y,width(),state.size,state.depth);
+	NosuchDebug(2,"Sprite::drawAt s=%lld drawAt j=%s xy= %f %f width=%f size=%f depth=%f\n",
+		(long long)this,j.c_str(),pos.x,pos.y,width(),state.spritesize,state.depth);
 
 	float halfWidth = width() / 2.0f;
 	float halfHeight = height() / 2.0f;
@@ -158,7 +160,7 @@ void Sprite::drawAt(PaletteDrawer* drawer, float x, float y, float scalex, float
 	}
 
 	float degrees = state.rotanginit + state.rotangsofar;
-	NosuchDebug(1, "Sprite::drawAt: xdir=%d ydir=%d degrees=%f anginit=%f sofar=%f\n", xdir, ydir, degrees, state.rotanginit, state.rotangsofar );
+	NosuchDebug(2, "Sprite::drawAt: xdir=%d ydir=%d degrees=%f anginit=%f sofar=%f\n", xdir, ydir, degrees, state.rotanginit, state.rotangsofar );
 
 	// XXX - I'm not sure why I have to do this - there's an extra translate/scale somewhere
 	// XXX - in the rendering or assumptions, and this is needed to negate it.
@@ -211,10 +213,10 @@ void Sprite::advanceTo(int now, glm::vec2 force) {
 
 	// _params->advanceTo(tm);
 	state.alpha = envelopeValue(params.alphainitial,params.alphafinal,params.alphatime,float(state.born),float(now));
-	state.size = envelopeValue(params.sizeinitial,params.sizefinal,params.sizetime,float(state.born),float(now));
+	state.spritesize = envelopeValue(params.sizeinitial,params.sizefinal,params.sizetime,float(state.born),float(now));
 	
 	int dnow = (now - state.born);
-	// NosuchDebug("Sprite::advanceTo this=%lld now=%d born=%d dnow=%d alpha=%f size=%f last_tm=%d",(long long)this,now,state.born,dnow,state.alpha,state.size,state.last_tm);
+	// NosuchDebug("Sprite::advanceTo this=%lld now=%d born=%d dnow=%d alpha=%f size=%f last_tm=%d",(long long)this,now,state.born,dnow,state.alpha,state.spritesize,state.last_tm);
 	if (params.lifetime >= 0.0 && ((now - state.born) > (1000.0 * params.lifetime))) {
 		// NosuchDebug("Lifetime of Sprite %lld exceeded, setting killme",(long long)this);
 		state.killme = true;
