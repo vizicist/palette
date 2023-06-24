@@ -975,6 +975,8 @@ class ProGuiApp(tk.Tk):
 
         self.allPatchesSelected = False
 
+        self.refreshValues(self.currentPageName,self.CurrPatch)
+
         if len(self.PatchNames) > 1:
             self.patchChooser.refreshPatchColors()
 
