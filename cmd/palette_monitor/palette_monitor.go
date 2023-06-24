@@ -90,7 +90,9 @@ func joystickMonitor(jsid int) {
 			if err != nil {
 				break
 			}
-			if js.ButtonCount() == 8 {
+			count := js.ButtonCount()
+			engine.LogInfo("joystick check", "j", j, "name", js.Name(), "buttoncount", count)
+			if count == 8 {
 				jsid = j
 				monitoredJoystick = js
 				break
@@ -109,10 +111,19 @@ func joystickMonitor(jsid int) {
 	buttonDown := make([]bool, monitoredJoystick.ButtonCount())
 	buttonDownTime := make([]time.Time, monitoredJoystick.ButtonCount())
 
+	errcount := 0
 	for {
 		jinfo, err := monitoredJoystick.Read()
-		if err != nil {
-			engine.LogIfError(err)
+		if err == nil {
+			errcount = 0
+		} else {
+			errcount++
+			if errcount < 4 {
+				engine.LogIfError(err)
+			} else if errcount > 999 {
+				engine.LogWarn("Too many joystick errors, aborting joystick monitoring")
+				break
+			}
 			continue
 		}
 
@@ -123,8 +134,10 @@ func joystickMonitor(jsid int) {
 				if isdown {
 					// Button just went down.
 					buttonDownTime[button] = time.Now()
+					engine.LogInfo("Button went down...")
 				} else {
 					// Button just came back up.
+					engine.LogInfo("Button came back up...")
 					dt := time.Since(buttonDownTime[button])
 					// Pay attention only if the button is down for more than a second.
 					shortPress := 2 * time.Second
@@ -145,6 +158,7 @@ func joystickMonitor(jsid int) {
 		tm := <-ticker.C
 		_ = tm
 	}
+	engine.LogWarn("Joystick monitoring has terminated")
 }
 
 type NoteAction func()
