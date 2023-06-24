@@ -97,7 +97,7 @@ Layer::setTrackedCursor(Palette* palette, std::string cid, std::string cidsource
 	} else {
 		c = new TrackedCursor(palette, cid, cidsource, this, pos, z);
 		if (NosuchDebugCursor) {
-			NosuchDebug("Layer.setTrackedCursor: new TrackedCursor cid=%s", cid.c_str());
+			NosuchDebug(1,"Layer.setTrackedCursor: new TrackedCursor cid=%s", cid.c_str());
 		}
 		_cursors.push_back(c);
 	}
@@ -145,18 +145,18 @@ void Layer::doCursorUp(Palette* palette, std::string cid) {
 	}
 	bool found = false;
 	if (NosuchDebugCursor) {
-		NosuchDebug("Layer.doCursorUp cid=%s\n", cid.c_str());
+		NosuchDebug(1,"Layer.doCursorUp cid=%s\n", cid.c_str());
 	}
 	for (std::list<TrackedCursor*>::iterator i = _cursors.begin(); i != _cursors.end(); ) {
 		TrackedCursor* c = *i;
 		NosuchAssert(c);
 		if (NosuchDebugCursor) {
-			NosuchDebug("Layer.doCursorUp TrackedCursor loop c->cid=%s\n", c->cid().c_str());
+			NosuchDebug(1,"Layer.doCursorUp TrackedCursor loop c->cid=%s\n", c->cid().c_str());
 		}
 		if (c->cid() == cid) {
 			found = true;
 			if (NosuchDebugCursor) {
-				NosuchDebug("Layer.doCursorUp: deleting cid=%s",cid.c_str());
+				NosuchDebug(1,"Layer.doCursorUp: deleting cid=%s",cid.c_str());
 			}
 			i = _cursors.erase(i);
 			delete c;
@@ -166,9 +166,9 @@ void Layer::doCursorUp(Palette* palette, std::string cid) {
 	}
 	if (NosuchDebugCursor) {
 		if (!found) {
-			NosuchDebug("Layer.doCursorUp: didn't find cursor cid=%s", cid.c_str());
+			NosuchDebug(1,"Layer.doCursorUp: didn't find cursor cid=%s", cid.c_str());
 		}
-		NosuchDebug("End of doCursorUp, _cursors.size = %d", _cursors.size());
+		NosuchDebug(1,"End of doCursorUp, _cursors.size = %d", _cursors.size());
 	}
 	cursorlist_unlock();
 }
@@ -342,7 +342,7 @@ Layer::instantiateSpriteBg() {
 		}
 		s->params.spritestyle = "texture";
 		s->params.aspect      = 0.527f;
-		s->state.size         = 3.82f;
+		s->state.spritesize         = 3.82f;
 		_spritelistbg->add(s, 100);  // should only be 1, but might someday be more
 	}
 }
@@ -353,7 +353,7 @@ bool Layer::cursorlist_lock_read() {
 		NosuchDebug("_cursorlist_rwlock for read failed!? e=%d", e);
 		return false;
 	}
-	NosuchDebug(2, "_cursorlist_rwlock for read succeeded");
+	NosuchDebug(3, "_cursorlist_rwlock for read succeeded");
 	return true;
 }
 
@@ -363,7 +363,7 @@ bool Layer::cursorlist_lock_write() {
 		NosuchDebug("_cursorlist_rwlock for write failed!? e=%d", e);
 		return false;
 	}
-	NosuchDebug(2, "_cursorlist_rwlock for write succeeded");
+	NosuchDebug(3, "_cursorlist_rwlock for write succeeded");
 	return true;
 }
 
@@ -373,7 +373,7 @@ void Layer::cursorlist_unlock() {
 		NosuchDebug("_cursorlist_rwlock unlock failed!? e=%d", e);
 		return;
 	}
-	NosuchDebug(2, "_cursorlist_rwlock unlock succeeded");
+	NosuchDebug(3, "_cursorlist_rwlock unlock succeeded");
 }
 
 void Layer::draw(PaletteDrawer* b) {
@@ -422,14 +422,6 @@ void Layer::advanceCursorsTo(int tm) {
 	}
 
 	try {
-		/*
-		if (NosuchDebugCursor) {
-			int sz = (int)cursors().size();
-			if (sz > 0) {
-				NosuchDebug("Layer.advanceCursorsTo: tm=%d cursors.size=%d  sprites.size=%d", tm, cursors().size(), _spritelist->size());
-			}
-		}
-		*/
 		for (std::list<TrackedCursor*>::iterator i = cursors().begin(); i != cursors().end(); i++) {
 			TrackedCursor* c = *i;
 

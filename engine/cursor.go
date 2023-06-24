@@ -53,6 +53,7 @@ type CursorManager struct {
 	handlers            map[string]CursorHandler
 	uniqueInt           int
 	uniqueMutex         sync.Mutex
+	LoopThreshold       float32
 }
 
 type CursorPos struct {
@@ -136,13 +137,15 @@ func NewActiveCursor(ce CursorEvent) *ActiveCursor {
 }
 
 func NewCursorManager() *CursorManager {
-	return &CursorManager{
+	cm := &CursorManager{
 		activeCursors:  map[int]*ActiveCursor{},
 		GidToLoopedGid: map[int]int{},
 		activeMutex:    sync.Mutex{},
 		handlers:       map[string]CursorHandler{},
 		uniqueInt:      1,
+		LoopThreshold:  float32(0.01),
 	}
+	return cm
 }
 
 func (cm *CursorManager) UniqueGid() int {
@@ -353,11 +356,17 @@ func (cm *CursorManager) LoopedGidFor(ce CursorEvent, warn bool) int {
 	return loopedGid
 }
 
-const LoopFadeZThreshold = 0.001
-
 func (cm *CursorManager) ExecuteCursorEvent(ce CursorEvent) {
 
 	TheEngine.RecordCursorEvent(ce)
+
+	fadeThreshold, err := GetParamFloat("engine.looping_fadethreshold")
+	if err != nil {
+		LogIfError(err)
+	} else {
+		TheCursorManager.LoopThreshold = float32(fadeThreshold)
+	}
+
 
 	if ce.Ddu == "clear" {
 		if ce.Tag == "" {
@@ -412,6 +421,9 @@ func (cm *CursorManager) ExecuteCursorEvent(ce CursorEvent) {
 	if ac.loopIt {
 		se := cm.LoopCursorEvent(ac)
 		if se != nil {
+			if ac.Current.Ddu == "up" {
+				LogOfType("cursor","UP cursor", "maxZ", ac.maxZ)
+			}
 			TheScheduler.insertScheduleElement(se)
 		}
 	}
@@ -428,8 +440,8 @@ func (cm *CursorManager) ExecuteCursorEvent(ce CursorEvent) {
 
 	if ce.Ddu == "up" {
 		// LogInfo("ExecuteCursorEvent UP")
-		// LogOfType("cursor", "handleDownDragUp up is deleting gid", "gid", ce.Gid, "ddu", ce.Ddu)
-		cm.DeleteActiveCursorIfZLessThan(ce.Gid, LoopFadeZThreshold)
+		LogOfType("cursor", "handleDownDragUp up is deleting gid", "gid", ce.Gid, "ddu", ce.Ddu)
+		cm.DeleteActiveCursorIfZLessThan(ce.Gid, cm.LoopThreshold)
 	}
 }
 
@@ -447,11 +459,12 @@ func (cm *CursorManager) LoopCursorEvent(ac *ActiveCursor) *SchedElement {
 	// LogInfo("ac.loopIt LoopedGidFor", "loopce.Gid", loopce.Gid)
 
 	// Fade the Z value
-	loopce.Pos.Z = loopce.Pos.Z * ac.loopFade
-	// LogInfo("loopcd.Z is now", "Z", loopce.Pos.Z, "ac.loopFade", ac.loopFade)
+	newZ := loopce.Pos.Z * ac.loopFade
+	LogOfType("loop","loopcd.Z faded", "origZ", loopce.Pos.Z, "newZ", newZ, "loopFade", ac.loopFade)
+	loopce.Pos.Z = newZ
 
-	if loopce.Pos.Z <= LoopFadeZThreshold && loopce.Ddu != "up" {
-		// LogInfo("loopce.Z is small, NOT LOOPING IT", "loopce", loopce)
+	if loopce.Pos.Z < cm.LoopThreshold && loopce.Ddu != "up" {
+		LogOfType("loop","loopce.Z is small, NOT LOOPING IT", "loopce", loopce)
 		return nil
 	}
 
@@ -497,12 +510,14 @@ func (cm *CursorManager) DeleteActiveCursorIfZLessThan(gid int, threshold float3
 		// LogWarn("DeleteActiveCursor: gid not found in ActiveCursor", "gid", gid)
 	} else {
 		// LogInfo("DeleteActiveCursorIfZLessThan", "gid", gid, "threshold", threshold, "ac.maxZ", ac.maxZ)
+		LogOfType("cursor","DeleteActiveCursorIfZLessThan", "maxZ", ac.maxZ, "threshold", threshold, "gid", ac.Current.Gid)
 		if ac.maxZ < threshold {
 			// we want to remove things that this ActiveCursor has created for looping.
 			loopGid = cm.LoopedGidFor(ac.Current, false /*don't warn*/)
 			if loopGid == 0 {
 				LogWarn("HEY!!! in DeleteActiveCursorIfZLessThan LoopedGidFor returns 0?")
 			} else {
+				LogOfType("cursor","DeleteActiveCursorIfZLessThan deleting!!", "loopGid", loopGid)
 				delete(cm.activeCursors, gid)
 				delete(cm.activeCursors, loopGid)
 				// LogInfo("DeleteActiveCursorIfZLessThan REMOVING", "loopGid", loopGid, "gid", gid, "ac.maxZ", ac.maxZ, "gid", gid)
