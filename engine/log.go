@@ -166,6 +166,7 @@ var LogEnabled = map[string]bool{
 	"drawing":         false,
 	"erae":            false,
 	"exec":            false,
+	"ffgl":            false,
 	"freeframe":       false,
 	"generategesture": false,
 	"gensound":        false,

@@ -289,6 +289,11 @@ func (e *Engine) Set(name string, value string) error {
 			}
 			TheAttractManager.attractIdleSecs = float64(i)
 		}
+	case "engine.looping_fadethreshold":
+		if e.getFloat(value, &f) {
+			TheCursorManager.LoopThreshold = float32(f)
+		}
+
 	case "engine.midithru":
 		TheRouter.midithru = IsTrueValue(value)
 

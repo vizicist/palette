@@ -57,7 +57,7 @@ public:
 		hue2 = 0.0f;
 		pos = glm::vec2(0.0f,0.0f);
 		depth = 0.0;
-		size = 0.5;
+		spritesize = 0.5;
 		alpha = 1.0;
 		born = 0;
 		last_tm = 0;
@@ -74,7 +74,7 @@ public:
 	float hue2;
 	glm::vec2 pos;
 	float depth;
-	float size;
+	float spritesize;
 	float alpha;
 	int born;
 	int last_tm;
@@ -99,8 +99,12 @@ public:
 	virtual void startAccumulate(TrackedCursor* c) { };
 	virtual void accumulate(TrackedCursor* c) { }
 
-	virtual float width() { return float(state.size * state.depth); }
-	virtual float height() { return float(state.size * state.depth); }
+	virtual float width() {
+		return float(state.spritesize * state.depth);
+	}
+	virtual float height() {
+		return float(state.spritesize * state.depth);
+	}
 
 	static bool initialized;
 	static void initialize();

@@ -1716,6 +1716,8 @@ class PageEditParams(tk.Frame):
             cg = self.widg_cget(widg,"text")
             v = float(cg)
             vrange = float(mx) - float(mn)
+            if vrange < 1.0:
+                vrange = 1.0
             if amount == -3:
                 v = v - (vrange/10)
             if amount == -2:

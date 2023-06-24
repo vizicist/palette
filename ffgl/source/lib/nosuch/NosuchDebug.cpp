@@ -125,15 +125,9 @@ RealNosuchDebugInit() {
 	char* pValue;
 	size_t len;
 
-	errno_t err = _dupenv_s( &pValue, &len, "PALETTEDEBUG" );
-	if( !err && pValue != NULL )
-	{
-		NosuchDebugLevel = atoi( std::string( pValue ).c_str() );
-	}
-
 	NosuchDebugLogPath = "c:\\windows\\temp\\ffgl.log";// last resort
 
-	err = _dupenv_s( &pValue, &len, "CommonProgramFiles" );
+	errno_t err = _dupenv_s( &pValue, &len, "CommonProgramFiles" );
 	if( err == 0 && pValue != NULL )
 	{
 		NosuchDebugLogPath = std::string( pValue ) + "\\Palette\\logs\\ffgl.log";

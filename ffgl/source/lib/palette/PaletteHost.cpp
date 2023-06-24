@@ -244,19 +244,23 @@ PaletteHost::PaletteHost()
 
 	std::string configfile;
 
-	char* localValue;
-	size_t locallen;
-	errno_t localerr = _dupenv_s( &localValue, &locallen, "CommonProgramFiles" );
-	if( !localerr && localValue != NULL )
-	{
-		configfile = std::string( localValue ) + "\\Palette\\config\\ffgl.json";
-		free( localValue );
+	char* datapathValue;
+	size_t len1;
+	errno_t datapathErr = _dupenv_s( &datapathValue, &len1, "PALETTE_DATA_PATH" );
+	if ( !datapathErr && datapathValue != NULL ) {
+		configfile = NosuchSnprintf( "%s/config/ffgl.json", datapathValue );
+	} else {
+		char* localValue;
+		size_t locallen;
+		errno_t localerr = _dupenv_s( &localValue, &locallen, "CommonProgramFiles" );
+		if( !localerr && localValue != NULL ) {
+			configfile = std::string( localValue ) + "\\Palette\\config\\ffgl.json";
+			free( localValue );
+		} else {
+			configfile = "c:\\windows\\temp\\ffgl.json";// last resort
+		}
 	}
-	else
-	{
-		configfile = "c:\\windows\\temp\\ffgl.json";// last resort
-		NosuchDebug( "No value for CommonProgramFiles? using configfile=%s\n", configfile.c_str() );
-	}
+	NosuchDebug( "Using configfile=%s\n", configfile.c_str() );
 
 	// NosuchDebugSetThreadName(pthread_self().p,"PaletteHost");
 
@@ -373,6 +377,11 @@ PaletteHost::LoadPaletteConfig(cJSON* c)
 {
 	cJSON *j;
 
+	NosuchDebug( "LoadPaletteConfig start\n" );
+	if ( (j=getString(c,"debuglevel")) != NULL ) {
+		NosuchDebugLevel = atoi( j->valuestring );
+		NosuchDebug( "NosuchDebugLevel = %d\n", NosuchDebugLevel );
+	}
 	if ( (j=getString(c,"debugcursor")) != NULL ) {
 		NosuchDebugCursor = istrue(j->valuestring);
 	}
@@ -501,7 +510,7 @@ DWORD PaletteHost::PaletteHostProcessOpenGL(ProcessOpenGLStruct *pGL)
 		int tm = _palette->now;
 		int begintm = _palette->now;
 		int endtm = MillisecondsSoFar();
-		NosuchDebug(2,"ProcessOpenGL tm=%d endtm=%d dt=%d",tm,endtm,(endtm-tm));
+		NosuchDebug(3,"ProcessOpenGL tm=%d endtm=%d dt=%d",tm,endtm,(endtm-tm));
 
 		glDisable(GL_TEXTURE_2D); 
 		glEnable(GL_BLEND); 
@@ -726,7 +735,7 @@ std::string PaletteHost::ExecuteJson(std::string meth, cJSON *params, const char
 				std::string val = item->valuestring;
 				// NosuchDebug("set %s %s\n", nm.c_str(), val.c_str());
 				if ( NosuchDebugParam == TRUE ) {
-					NosuchDebug("set_params %s %s\n", nm.c_str(), val.c_str());
+					NosuchDebug(3,"set_params %s %s\n", nm.c_str(), val.c_str());
 				}
 				_palette->layer.params.Set(nm, val);
 			}
@@ -835,7 +844,7 @@ void PaletteHost::ProcessOscMessage( std::string source, const osc::ReceivedMess
 	    const char *types = m.TypeTags();
 		const char *addr = m.AddressPattern();
 		Nprocessed++;
-		NosuchDebug(1, "ProcessOscMessage source=%s currentclick=%d addr=%s",
+		NosuchDebug(3, "ProcessOscMessage source=%s currentclick=%d addr=%s",
 			source.c_str(),Scheduler::CurrentClick,addr);
 
 		if (checkAddrPattern(addr, "/cursor")) {
@@ -846,14 +855,12 @@ void PaletteHost::ProcessOscMessage( std::string source, const osc::ReceivedMess
 			float z = ArgAsFloat(m,4);
 
 			if (cmd == "down" || cmd == "drag") {
-				if (NosuchDebugCursor) {
-					NosuchDebug("GOT /cursor %s cid=%s x,y=%.4f,%.4f  z=%f", cmd.c_str(), cid.c_str(), x, y, z);
-				}
+				NosuchDebug(1,"GOT /cursor %s cid=%s x,y=%.4f,%.4f  z=%f", cmd.c_str(), cid.c_str(), x, y, z);
 				SetCursorCid(cid, source, glm::vec2(x, y), z);
 			}
 			else if (cmd == "up") {
 				if (NosuchDebugCursor) {
-					NosuchDebug("GOT /cursor %s cid=%s x,y=%.4f,%.4f", cmd.c_str(), cid.c_str(), x, y);
+					NosuchDebug(1,"GOT /cursor %s cid=%s x,y=%.4f,%.4f", cmd.c_str(), cid.c_str(), x, y);
 				}
 				_palette->layer.doCursorUp(_palette, cid);
 			}
@@ -878,7 +885,7 @@ void PaletteHost::ProcessOscMessage( std::string source, const osc::ReceivedMess
 			std::string meth = ArgAsString(m,0);
 			std::string params = ArgAsString(m,1);
 			if (NosuchDebugAPI) {
-				NosuchDebug("/api !! meth=%s params=%s\n", meth.c_str(), params.c_str());
+				NosuchDebug(2,"/api meth=%s params=%s\n", meth.c_str(), params.c_str());
 			}
 			cJSON *c_params = cJSON_Parse(params.c_str());
 			if (c_params == NULL) {
@@ -927,10 +934,10 @@ std::string PaletteHost::RespondToJson(std::string method, cJSON *params, const 
 
 	bool err = false;
 	while ( json_pending ) {
-		NosuchDebug(2, "####### Waiting for json_cond!");
+		NosuchDebug(3, "####### Waiting for json_cond!");
 		int e = pthread_cond_wait(&json_cond, &json_mutex);
 		if ( e ) {
-			NosuchDebug(2,"####### ERROR from pthread_cond_wait e=%d",e);
+			NosuchDebug(3,"####### ERROR from pthread_cond_wait e=%d",e);
 			err = true;
 			break;
 		}

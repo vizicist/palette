@@ -167,7 +167,7 @@ void Palette::clear() {
 
 void Palette::advanceTo(int tm) {
 
-	NosuchDebug(2,"===================== Palette::advanceTo tm=%d setting now",tm);
+	NosuchDebug(3,"===================== Palette::advanceTo tm=%d setting now",tm);
 	now = tm;
 	LockPalette();
 	layer.advanceTo(now);

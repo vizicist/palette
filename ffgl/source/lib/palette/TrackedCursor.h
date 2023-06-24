@@ -46,9 +46,6 @@ public:
 
 	// Manipulation of cursor-related things for music
 
-	float last_raw_depth() { return _last_raw_depth; }
-	void set_last_raw_depth(float f) { _last_raw_depth = f; }
-
 	bool isRightSide() { return ( curr_raw_pos.x >= 0.5 ); }
 
 	std::string DebugString() {
