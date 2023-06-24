@@ -904,15 +904,11 @@ class ProGuiApp(tk.Tk):
                 palette.palette_quadpro_api("load",
                     "\"filename\": \"" + filename + "\""
                     ", \"category\": \"" + category + "\"")
-                # log("After Loading","category","quad","filename",filename)
             else:
                 # Otherwise, in "pro" mode,
                 # the quad is loaded only into a single patch
                 patchName = self.CurrPatch.name()
                 self.patchLoad(patchName,category,filename)
-                # palette.palette_quadpro_api("save",
-                #     "\"filename\": \"" + "_Current" + "\""
-                #     ", \"category\": \"" + "quad" + "\"")
 
         elif self.allPatchesSelected:
             for patch in self.Patches:
@@ -1967,12 +1963,14 @@ class PageEditParams(tk.Frame):
 
         if self.pagename == "quad":
             result, err = palette.palette_quadpro_api("save",
+                    "\"category\": \"" + self.pagename + "\", "
                     "\"filename\": \"" + filename + "\"")
             if err != None:
                 log("Error saving saved:",filename," err=",err)
 
         elif self.pagename == "engine":
             result, err = palette.palette_engine_api("save",
+                    "\"category\": \"" + self.pagename + "\", "
                     "\"filename\": \"" + filename + "\"")
             if err != None:
                 log("Error saving saved:",filename," err=",err)
