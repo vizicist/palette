@@ -2754,7 +2754,7 @@
 </HARM>
  <TONEWHEEL  drw1="3f000000"  drw2="3f000000"  drw3="3f000000"  drw4="3f000000"  drw5="0"  drw6="0"  drw7="0"  drw8="0"  drw9="0"  ped1="3f000000"  ped2="3f000000"  SpOn="0"  VOn="0"  Vmode="0"  Pon="0"  Psoft="0"  Pfast="0"  Pharm="0"  Spkr="0"  Click="0"  Hum="0"  Age="0"  Xtalk="0"  Lowfold="3f800000"  P9d="3f800000"  Pleg="3f800000"  Pdim="3f800000" >
 </TONEWHEEL>
- <WAVES  wf0="~BundleArchives/1 - Classic Waveforms/Sawtooth/D-50 Saw 1/D-50 Saw Bright 00 fixed.stmwf"  wf1="~BundleArchives/1 - Classic Waveforms/Sawtooth/D-50 Saw 1/D-50 Saw Bright 06.stmwf"  wf2="~BundleArchives/1 - Classic Waveforms/Sawtooth/D-50 Saw 1/D-50 Saw Bright 09.stmwf"  wf3="~BundleArchives/1 - Classic Waveforms/Sawtooth/D-50 Saw 1/D-50 Saw Bright 12.stmwf"  wf4="~BundleArchives/1 - Classic Waveforms/Sawtooth/D-50 Saw 1/D-50 Saw Bright 15.stmwf" >
+ <WAVES >
 </WAVES>
  <FMWAVES >
 </FMWAVES>
@@ -3208,7 +3208,7 @@
 </HARM>
  <TONEWHEEL  drw1="3f000000"  drw2="3f000000"  drw3="3f000000"  drw4="3f000000"  drw5="0"  drw6="0"  drw7="0"  drw8="0"  drw9="0"  ped1="3f000000"  ped2="3f000000"  SpOn="0"  VOn="0"  Vmode="0"  Pon="0"  Psoft="0"  Pfast="0"  Pharm="0"  Spkr="0"  Click="0"  Hum="0"  Age="0"  Xtalk="0"  Lowfold="3f800000"  P9d="3f800000"  Pleg="3f800000"  Pdim="3f800000" >
 </TONEWHEEL>
- <WAVES  wf0="~BundleArchives/1 - Classic Waveforms/Square/Super Jupiter Square/MKS-80 Square.stmwf"  wf1="~BundleArchives/1 - Classic Waveforms/Square/Super Jupiter Square/MKS-80 Triangle.stmwf" >
+ <WAVES >
 </WAVES>
  <FMWAVES >
 </FMWAVES>
@@ -3266,7 +3266,7 @@
 </HARM>
  <TONEWHEEL  drw1="3f000000"  drw2="3f000000"  drw3="3f000000"  drw4="3f000000"  drw5="0"  drw6="0"  drw7="0"  drw8="0"  drw9="0"  ped1="3f000000"  ped2="3f000000"  SpOn="0"  VOn="0"  Vmode="0"  Pon="0"  Psoft="0"  Pfast="0"  Pharm="0"  Spkr="0"  Click="0"  Hum="0"  Age="0"  Xtalk="0"  Lowfold="3f800000"  P9d="3f800000"  Pleg="3f800000"  Pdim="3f800000" >
 </TONEWHEEL>
- <WAVES  wf0="~BundleArchives/1 - Classic Waveforms/Pulse/Super Jupiter PWM/MKS-80 Square.stmwf"  wf1="~BundleArchives/1 - Classic Waveforms/Pulse/Super Jupiter PWM/MKS-80 PWM 02.stmwf"  wf2="~BundleArchives/1 - Classic Waveforms/Pulse/Super Jupiter PWM/MKS-80 PWM 03.stmwf"  wf3="~BundleArchives/1 - Classic Waveforms/Pulse/Super Jupiter PWM/MKS-80 PWM 04.stmwf"  wf4="~BundleArchives/1 - Classic Waveforms/Pulse/Super Jupiter PWM/MKS-80 PWM 05.stmwf"  wf5="~BundleArchives/1 - Classic Waveforms/Pulse/Super Jupiter PWM/MKS-80 PWM 06.stmwf"  wf6="~BundleArchives/1 - Classic Waveforms/Pulse/Super Jupiter PWM/MKS-80 PWM 07.stmwf"  wf7="~BundleArchives/1 - Classic Waveforms/Pulse/Super Jupiter PWM/MKS-80 PWM 08.stmwf"  wf8="~BundleArchives/1 - Classic Waveforms/Pulse/Super Jupiter PWM/MKS-80 PWM 09.stmwf"  wf9="~BundleArchives/1 - Classic Waveforms/Pulse/Super Jupiter PWM/MKS-80 PWM 09b.stmwf"  wf10="~BundleArchives/1 - Classic Waveforms/Pulse/Super Jupiter PWM/MKS-80 PWM 10.stmwf"  wf11="~BundleArchives/1 - Classic Waveforms/Pulse/Super Jupiter PWM/MKS-80 PWM 11.stmwf"  wf12="~BundleArchives/1 - Classic Waveforms/Pulse/Super Jupiter PWM/MKS-80 PWM 12.stmwf"  wf13="~BundleArchives/1 - Classic Waveforms/Pulse/Super Jupiter PWM/MKS-80 PWM 13.stmwf"  wf14="~BundleArchives/1 - Classic Waveforms/Pulse/Super Jupiter PWM/MKS-80 PWM 14.stmwf"  wf15="~BundleArchives/1 - Classic Waveforms/Pulse/Super Jupiter PWM/MKS-80 PWM 15.stmwf" >
+ <WAVES >
 </WAVES>
  <FMWAVES >
 </FMWAVES>
