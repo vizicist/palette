@@ -3,10 +3,11 @@ package engine
 import (
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"os"
 	"sort"
-	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -18,13 +19,16 @@ type QuadPro struct {
 	patch      map[string]*Patch
 	patchLogic map[string]*PatchLogic
 
-	started bool
+	started   bool
+	rand      *rand.Rand
+	randMutex sync.Mutex
 }
 
 func NewQuadPro() *QuadPro {
 	quadpro := &QuadPro{
 		patch:      map[string]*Patch{},
 		patchLogic: map[string]*PatchLogic{},
+		rand:       rand.New(rand.NewSource(1)),
 	}
 	return quadpro
 }
@@ -80,34 +84,20 @@ func (quadpro *QuadPro) Api(api string, apiargs map[string]string) (result strin
 		return "", quadpro.save(category, filename)
 
 	case "test":
-		var ntimes = 10                  // default
-		var dt = 500 * time.Millisecond  // default
-		var dur = 500 * time.Millisecond // default
-		s, ok := apiargs["ntimes"]
-		if ok {
-			tmp, err := strconv.ParseInt(s, 10, 64)
-			if err != nil {
-				return "", err
-			}
-			ntimes = int(tmp)
+		ntimes, err := GetParamInt("engine.testgesturentimes")
+		if err != nil {
+			LogIfError(err)
+			return "", err
 		}
-		s, ok = apiargs["dt"]
-		if ok {
-			tmp, err := time.ParseDuration(s)
-			if err != nil {
-				return "", err
-			}
-			dt = tmp
+		intervalf, err := GetParamFloat("engine.testgestureinterval")
+		if err != nil {
+			LogIfError(err)
+			return "", err
 		}
-		s, ok = apiargs["dur"]
-		if ok {
-			tmp, err := time.ParseDuration(s)
-			if err != nil {
-				return "", err
-			}
-			dur = tmp
-		}
-		go quadpro.doTest(ntimes, dt, dur)
+		interval := time.Duration(intervalf * 1000000000)
+		LogInfo("QuadPro.ExecuteApi test start", "ntimes", ntimes, "interval", interval)
+		quadpro.doTest(ntimes, interval)
+		LogInfo("QuadPro.ExecuteApi test end", "ntimes", ntimes, "interval", interval)
 		return "", nil
 
 	default:
@@ -262,11 +252,29 @@ func (quadpro *QuadPro) onMidiEvent(me MidiEvent) error {
 	return nil
 }
 
-func (quadpro *QuadPro) doTest(ntimes int, dt, dur time.Duration) {
-	tags := "A"
+func (quadpro *QuadPro) doTest(ntimes int, interval time.Duration) {
+
+	numsteps, err := GetParamInt("engine.testgesturenumsteps")
+	if err != nil {
+		LogIfError(err)
+		return
+	}
+	durfloat, err := GetParamFloat("engine.testgestureduration")
+	if err != nil {
+		LogIfError(err)
+		return
+	}
+	dur := time.Duration(durfloat * float64(time.Second))
+
 	for n := 0; n < ntimes; n++ {
-		go TheCursorManager.GenerateRandomGesture(tags, dur)
-		time.Sleep(dt)
+
+		quadpro.randMutex.Lock()
+		randomPatchName := string("ABCD"[quadpro.rand.Intn(len(Patchs))])
+		quadpro.randMutex.Unlock()
+
+		tag := randomPatchName + ",test"
+		go TheCursorManager.GenerateRandomGesture(tag, numsteps, dur)
+		time.Sleep(interval)
 	}
 }
 
@@ -276,7 +284,11 @@ func (quadpro *QuadPro) loadQuadRand() error {
 	if err != nil {
 		return err
 	}
-	rn := TheRand.Uint64() % uint64(len(arr))
+
+	quadpro.randMutex.Lock()
+	rn := quadpro.rand.Uint64() % uint64(len(arr))
+	quadpro.randMutex.Unlock()
+
 	err = quadpro.Load("quad", arr[rn])
 	if err != nil {
 		LogIfError(err)

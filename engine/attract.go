@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"math/rand"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -20,6 +21,9 @@ type AttractManager struct {
 	lastAttractCheck       time.Time
 	attractCheckSecs       float64
 	attractIdleSecs        float64
+
+	attractRand      *rand.Rand
+	attractRandMutex sync.Mutex
 }
 
 var TheAttractManager *AttractManager
@@ -37,6 +41,7 @@ func NewAttractManager() *AttractManager {
 		attractIdleSecs:        70,
 		attractChangeInterval:  30,
 		attractGestureInterval: 0.5,
+		attractRand:            rand.New(rand.NewSource(1)),
 	}
 
 	am.attractModeIsOn.Store(false) // probably not needed?
@@ -131,15 +136,30 @@ func (am *AttractManager) doAttractAction() {
 	}
 	now := time.Now()
 	dt := now.Sub(am.lastAttractGestureTime).Seconds()
-	dp := now.Sub(am.lastAttractChange).Seconds()
-	patch := RandomPatchName()
-	tags := patch + ",attract"
+
+	am.attractRandMutex.Lock()
+	patch := string("ABCD"[am.attractRand.Intn(len(Patchs))])
+	am.attractRandMutex.Unlock()
+
+	numsteps, err := GetParamInt("engine.attractgesturenumsteps")
+	if err != nil {
+		LogIfError(err)
+		return
+	}
+	durfloat, err := GetParamFloat("engine.attractgestureduration")
+	if err != nil {
+		LogIfError(err)
+		return
+	}
+	dur := time.Duration(durfloat * float64(time.Second))
+
+	tag := patch + ",attract"
 	if dt > am.attractGestureInterval {
-		dur := 2 * time.Second
-		go TheCursorManager.GenerateRandomGesture(tags, dur)
+		go TheCursorManager.GenerateRandomGesture(tag, numsteps, dur)
 		am.lastAttractGestureTime = now
 	}
 
+	dp := now.Sub(am.lastAttractChange).Seconds()
 	if dp > am.attractChangeInterval {
 		if TheQuadPro == nil {
 			LogWarn("No QuadPro to change for attract mode")
