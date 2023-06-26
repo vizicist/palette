@@ -30,10 +30,6 @@ func PatchNames() []string {
 	return arr
 }
 
-func RandomPatchName() string {
-	return string("ABCD"[TheRand.Intn(len(Patchs))])
-}
-
 func NewPatch(patchName string) *Patch {
 	patch := &Patch{
 		synth:  GetSynth("default"),
