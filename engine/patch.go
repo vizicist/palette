@@ -293,10 +293,6 @@ func (patch *Patch) Api(api string, apiargs map[string]string) (string, error) {
 		patch.clearGraphics()
 		return "", nil
 
-	case "loop_debug":
-		patch.loopDebug()
-		return "", nil
-
 	default:
 		// ignore errors on these for the moment
 		if strings.HasPrefix(api, "loop_") || strings.HasPrefix(api, "midi_") {
@@ -557,8 +553,4 @@ func (patch *Patch) loopClear() {
 		// LogOfType("loop", "Patch.loopClear end", "schdule", TheScheduler.ToString())
 		// LogInfo("LOOP LOOPCLEAR END", "prefix", tag)
 	*/
-}
-
-func (patch *Patch) loopDebug() {
-	LogInfo("Patch.loopDebug", "schedule", TheScheduler.ToString())
 }

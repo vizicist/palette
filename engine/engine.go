@@ -10,7 +10,6 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
-	"strings"
 	"sync"
 	"sync/atomic"
 
@@ -77,7 +76,7 @@ func InitEngine() {
 	TheMidiIO = NewMidiIO()
 	TheErae = NewErae()
 
-	e.ResetLogTypes(os.Getenv("PALETTE_LOG"))
+	ResetLogTypes(os.Getenv("PALETTE_LOG"))
 
 	// Set all the default engine.* values
 	for nm, pd := range ParamDefs {
@@ -205,27 +204,6 @@ func (e *Engine) WaitTillDone() {
 
 func (e *Engine) SayDone() {
 	e.done <- true
-}
-
-func (e *Engine) ResetLogTypes(logtypes string) {
-	for logtype := range LogEnabled {
-		LogEnabled[logtype] = false
-	}
-	if logtypes != "" {
-		darr := strings.Split(logtypes, ",")
-		for _, d := range darr {
-			if d != "" {
-				d := strings.ToLower(d)
-				LogInfo("Turning logging ON for", "logtype", d)
-				_, ok := LogEnabled[d]
-				if !ok {
-					LogIfError(fmt.Errorf("ResetLogTypes: logtype not recognized"), "logtype", d)
-				} else {
-					LogEnabled[d] = true
-				}
-			}
-		}
-	}
 }
 
 func (e *Engine) SendOsc(client *osc.Client, msg *osc.Message) {
