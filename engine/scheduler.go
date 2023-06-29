@@ -90,12 +90,14 @@ func (sched *Scheduler) savePendingSchedEvent(se *SchedElement) {
 }
 
 func (sched *Scheduler) handlePendingSchedEvents() {
+
 	sched.pendingMutex.Lock()
+	defer sched.pendingMutex.Unlock()
+
 	for _, se := range sched.pendingScheduled {
 		TheScheduler.insertScheduleElement(se)
 	}
 	sched.pendingScheduled = nil
-	sched.pendingMutex.Unlock()
 }
 
 // Start runs the scheduler and never returns
@@ -284,8 +286,8 @@ func (sched *Scheduler) triggerItemsScheduledAtOrBefore(thisClick Clicks) {
 
 func (sched *Scheduler) ToString() string {
 
-	// sched.mutex.Lock()
-	// defer sched.mutex.Unlock()
+	sched.mutex.Lock()
+	defer sched.mutex.Unlock()
 
 	s := "Scheduler{"
 	for i := sched.schedList.Front(); i != nil; i = i.Next() {
@@ -312,8 +314,8 @@ func (sched *Scheduler) ToString() string {
 
 func (sched *Scheduler) PendingToString() string {
 
-	sched.mutex.RLock()
-	defer sched.mutex.RUnlock()
+	sched.pendingMutex.Lock()
+	defer sched.pendingMutex.Unlock()
 
 	s := "pendingScheduled{"
 	for _, se := range sched.pendingScheduled {

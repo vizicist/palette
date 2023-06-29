@@ -345,6 +345,8 @@ func (cm *CursorManager) LoopedGidFor(ce CursorEvent, warn bool) int {
 	return loopedGid
 }
 
+var BugFixWarningCount = 0
+
 func (cm *CursorManager) ExecuteCursorEvent(ce CursorEvent) {
 
 	TheEngine.RecordCursorEvent(ce)
@@ -378,12 +380,34 @@ func (cm *CursorManager) ExecuteCursorEvent(ce CursorEvent) {
 
 	ac, ok := cm.getActiveCursorFor(ce.Gid)
 	if !ok {
+
 		// new ActiveCursor
-		// Make sure the first ddu is "down"
-		if ce.Ddu != "down" {
+
+		// If it's an "up" event for an unknown gid, don't do anything.  This shouldn't happen,
+		// but there's a bug in looping where this happens occasionally.  After the CFNM show,
+		// this should be investigated.  It probably has to do with when looping events
+		// in the middle of a gesture are deleted.  The whole looping strategy should be rethought.
+		// I.e. probably, no looped events in the middle of a gesture should be deleted until
+		// the maxz is less than the threshold, and then then entire gesture should be deleted at once.
+		if ce.Ddu == "up" {
+			BugFixWarningCount++
+			if BugFixWarningCount < 10 {
+				LogWarn("CursorManager.ExecuteCursorEvent - NEW BUG FIX, ignoring up cursor event", "ce", ce)
+			}
+			return
+		}
+
+		// Make sure the first ddu is "down", if we get drag events for an unknown gid
+		if ce.Ddu == "drag" {
 			// LogWarn("handleDownDragUp: first ddu is not down", "gid", ce.Gid, "ddu", ce.Ddu)
 			ce.Ddu = "down"
+		} else if ce.Ddu != "down" {
+			// Just in case, shouldn't happen
+			LogWarn("CursorManager.ExecuteCursorEvent - unexpected Ddu", "ce", ce)
+			return
+
 		}
+
 		ac = NewActiveCursor(ce)
 		if ac == nil {
 			LogWarn("CursorManager.ExecuteCursorEvent - unable to create ActiveCursor", "ce", ce)

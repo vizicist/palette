@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"go.uber.org/zap"
@@ -13,6 +14,7 @@ import (
 var TheLog *zap.SugaredLogger
 var Time0 = time.Time{}
 var FirstTime = true
+var LogMutex sync.Mutex
 
 // Uptime returns the number of seconds since the program started.
 func Uptime() float64 {
@@ -84,6 +86,10 @@ func InitLog(logname string) {
 }
 
 func IsLogging(logtype string) bool {
+
+	LogMutex.Lock()
+	defer LogMutex.Unlock()
+
 	b, ok := LogEnabled[logtype]
 	if !ok {
 		LogIfError(fmt.Errorf("IsLogging: logtype not recognized"), "logtype", logtype)
@@ -156,58 +162,62 @@ func LogInfo(msg string, keysAndValues ...any) {
 }
 
 var LogEnabled = map[string]bool{
-	"*":               false,
-	"advance":         false,
-	"api":             false,
-	"attract":         false,
-	"bidule":          false,
-	"config":          false,
-	"cursor":          false,
-	"drawing":         false,
-	"erae":            false,
-	"exec":            false,
-	"ffgl":            false,
-	"freeframe":       false,
-	"gensound":        false,
-	"genvisual":       false,
-	"gesture":       false,
-	"go":              false,
-	"goroutine":       false,
-	"info":            false,
-	"patch":           false,
-	"process":         false,
-	"keykit":          false,
-	"layerapi":        false,
-	"listeners":       false,
-	"load":            false,
-	"loop":            false,
-	"midi":            false,
-	"midicontroller":  false,
-	"midiports":       false,
-	"mmtt":            false,
-	"morph":           false,
-	"mouse":           false,
-	"nats":            false,
-	"note":            false,
-	"notify":          false,
-	"osc":             false,
-	"params":          false,
-	"phrase":          false,
-	"plugin":          false,
-	"quant":           false,
-	"saved":           false,
-	"realtime":        false,
-	"resolume":        false,
-	"remote":          false,
-	"router":          false,
-	"scale":           false,
-	"scheduler":       false,
-	"task":            false,
-	"transpose":       false,
-	"value":           false,
+	"*":              false,
+	"advance":        false,
+	"api":            false,
+	"attract":        false,
+	"bidule":         false,
+	"config":         false,
+	"cursor":         false,
+	"drawing":        false,
+	"erae":           false,
+	"exec":           false,
+	"ffgl":           false,
+	"freeframe":      false,
+	"gensound":       false,
+	"genvisual":      false,
+	"gesture":        false,
+	"go":             false,
+	"goroutine":      false,
+	"info":           false,
+	"patch":          false,
+	"process":        false,
+	"keykit":         false,
+	"layerapi":       false,
+	"listeners":      false,
+	"load":           false,
+	"loop":           false,
+	"midi":           false,
+	"midicontroller": false,
+	"midiports":      false,
+	"mmtt":           false,
+	"morph":          false,
+	"mouse":          false,
+	"nats":           false,
+	"note":           false,
+	"notify":         false,
+	"osc":            false,
+	"params":         false,
+	"phrase":         false,
+	"plugin":         false,
+	"quant":          false,
+	"saved":          false,
+	"realtime":       false,
+	"resolume":       false,
+	"remote":         false,
+	"router":         false,
+	"scale":          false,
+	"scheduler":      false,
+	"task":           false,
+	"transpose":      false,
+	"value":          false,
 }
 
 func SetLogTypeEnabled(dtype string, b bool) {
+
+	LogMutex.Lock()
+	defer LogMutex.Unlock()
+
 	d := strings.ToLower(dtype)
 	_, ok := LogEnabled[d]
 	if !ok {
@@ -215,4 +225,31 @@ func SetLogTypeEnabled(dtype string, b bool) {
 		return
 	}
 	LogEnabled[d] = b
+}
+
+func ResetLogTypes(logtypes string) {
+
+	LogMutex.Lock()
+	for logtype := range LogEnabled {
+		LogEnabled[logtype] = false
+	}
+	LogMutex.Unlock()
+
+	if logtypes != "" {
+		darr := strings.Split(logtypes, ",")
+		for _, d := range darr {
+			if d != "" {
+				d := strings.ToLower(d)
+				LogInfo("Turning logging ON for", "logtype", d)
+				LogMutex.Lock()
+				_, ok := LogEnabled[d]
+				if !ok {
+					LogIfError(fmt.Errorf("ResetLogTypes: logtype not recognized"), "logtype", d)
+				} else {
+					LogEnabled[d] = true
+				}
+				LogMutex.Unlock()
+			}
+		}
+	}
 }
