@@ -2,6 +2,7 @@ package engine
 
 import (
 	"fmt"
+	"math/rand"
 	"strings"
 	"sync"
 	"time"
@@ -42,7 +43,7 @@ type ActiveCursor struct {
 
 type CursorManager struct {
 	executeMutex sync.RWMutex
-	ClickMutex   sync.Mutex
+	ClickMutex   sync.RWMutex
 
 	// activeMutex   sync.RWMutex
 	activeMutex   sync.Mutex
@@ -54,6 +55,8 @@ type CursorManager struct {
 	uniqueInt           int
 	uniqueMutex         sync.Mutex
 	LoopThreshold       float32
+	cursorRand          *rand.Rand
+	cursorRandMutex     sync.Mutex
 }
 
 type CursorPos struct {
@@ -144,6 +147,7 @@ func NewCursorManager() *CursorManager {
 		handlers:       map[string]CursorHandler{},
 		uniqueInt:      1,
 		LoopThreshold:  float32(0.01),
+		cursorRand:     rand.New(rand.NewSource(1)),
 	}
 	return cm
 }
@@ -182,8 +186,16 @@ func (cm *CursorManager) clearActiveCursors(tag string, checkDelay Clicks) {
 			continue
 		}
 
-		currClick := ac.Current.GetClick()
-		prevClick := ac.Previous.GetClick()
+		TheCursorManager.ClickMutex.Lock()
+		ac_current_ce := ac.Current
+		TheCursorManager.ClickMutex.Unlock()
+
+		currClick := ac_current_ce.GetClick()
+
+		ac_previous_ce := ac.Previous
+
+		prevClick := ac_previous_ce.GetClick()
+
 		dclick := currClick - prevClick
 		// Not sure the reason why dclick is sometimes -1 or -2, I should look at it later.
 		// if dclick < 0 {
@@ -213,60 +225,37 @@ func (cm *CursorManager) clearActiveCursors(tag string, checkDelay Clicks) {
 	cm.deleteActiveCursors(gidsToDelete)
 }
 
-func (cm *CursorManager) GenerateRandomGesture(tags string, dur time.Duration) {
+func (cm *CursorManager) GenerateRandomGesture(tag string, numsteps int, dur time.Duration) {
 
-	pos0 := RandPos()
-	pos1 := RandPos()
+	randZFactor := float32(0.5)
+	cm.cursorRandMutex.Lock()
+	pos0 := CursorPos{
+		X: cm.cursorRand.Float32(),
+		Y: cm.cursorRand.Float32(),
+		Z: cm.cursorRand.Float32() * randZFactor,
+	}
+	pos1 := CursorPos{
+		X: cm.cursorRand.Float32(),
+		Y: cm.cursorRand.Float32(),
+		Z: cm.cursorRand.Float32() * randZFactor,
+	}
 	// Occasionally force horizontal and vertical
-	if TheRand.Int()%4 == 0 {
+	if cm.cursorRand.Int()%4 == 0 {
 		pos1.X = pos0.X
-	} else if TheRand.Int()%4 == 0 {
+	} else if cm.cursorRand.Int()%4 == 0 {
 		pos1.Y = pos0.Y
 	}
-	cm.GenerateGesture(tags, dur, pos0, pos1)
+	cm.cursorRandMutex.Unlock()
+
+	cm.GenerateGesture(tag, numsteps, dur, pos0, pos1)
 }
 
-func RandPos() CursorPos {
-	return CursorPos{
-		X: TheRand.Float32(),
-		Y: TheRand.Float32(),
-		Z: TheRand.Float32(),
-	}
-}
-
-/*
-func randDir() float32 {
-	retVals := [3]float32{-1.0, 0.0, 1.0}
-	r := retVals[TheRand.Int() % 3]
-	return r
-}
-
-func dirFrom(x0, x1 float32) float32 {
-	d := x1 - x0
-	if d > 0 {
-		return 1
-	} else if d < 0 {
-		return -1
-	} else {
-		return 0
-	}
-}
-*/
-
-func (cm *CursorManager) GenerateGesture(tag string, dur time.Duration, pos0 CursorPos, pos1 CursorPos) {
+func (cm *CursorManager) GenerateGesture(tag string, numsteps int, dur time.Duration, pos0 CursorPos, pos1 CursorPos) {
 
 	gid := cm.UniqueGid()
-	LogOfType("generategesture", "generateCursoresture start",
-		"gid", gid, "noteDuration", dur, "tags", tag, "pos0", pos0, "pos1", pos1)
 
-	nsteps := 1
-	/*
-		nsteps, err := GetParamInt("engine.gesturesteps")
-		if err != nil {
-			LogIfError(err)
-			return
-		}
-	*/
+	LogOfType("gesture", "generateCursoresture start",
+		"gid", gid, "noteDuration", dur, "tags", tag, "pos0", pos0, "pos1", pos1)
 
 	dpos := CursorPos{
 		X: pos1.X - pos0.X,
@@ -274,11 +263,11 @@ func (cm *CursorManager) GenerateGesture(tag string, dur time.Duration, pos0 Cur
 		Z: pos1.Z - pos0.Z,
 	}
 
-	for n := 0; n <= nsteps; n++ {
+	for n := 0; n <= numsteps; n++ {
 		var ddu string
 		if n == 0 {
 			ddu = "down"
-		} else if n < nsteps {
+		} else if n < numsteps {
 			ddu = "drag"
 		} else {
 			ddu = "up"
@@ -286,7 +275,7 @@ func (cm *CursorManager) GenerateGesture(tag string, dur time.Duration, pos0 Cur
 
 		// Not sure about this Lock
 		// cm.activeMutex.Lock()
-		amount := float32(n) / float32(nsteps)
+		amount := float32(n) / float32(numsteps)
 		pos := CursorPos{
 			X: pos0.X + dpos.X*amount,
 			Y: pos0.Y + dpos.Y*amount,
@@ -297,7 +286,7 @@ func (cm *CursorManager) GenerateGesture(tag string, dur time.Duration, pos0 Cur
 		// cm.activeMutex.Unlock()
 
 		cm.ExecuteCursorEvent(ce)
-		time.Sleep(time.Duration(dur.Nanoseconds() / int64(nsteps)))
+		time.Sleep(time.Duration(dur.Nanoseconds() / int64(numsteps)))
 	}
 }
 
@@ -314,9 +303,9 @@ func (ce *CursorEvent) SetClick(click Clicks) {
 }
 
 func (ce CursorEvent) GetClick() Clicks {
-	TheCursorManager.ClickMutex.Lock()
+	TheCursorManager.ClickMutex.RLock()
 	clk := ce.CClick
-	TheCursorManager.ClickMutex.Unlock()
+	TheCursorManager.ClickMutex.RUnlock()
 	return clk
 }
 
@@ -356,6 +345,8 @@ func (cm *CursorManager) LoopedGidFor(ce CursorEvent, warn bool) int {
 	return loopedGid
 }
 
+var BugFixWarningCount = 0
+
 func (cm *CursorManager) ExecuteCursorEvent(ce CursorEvent) {
 
 	TheEngine.RecordCursorEvent(ce)
@@ -364,9 +355,10 @@ func (cm *CursorManager) ExecuteCursorEvent(ce CursorEvent) {
 	if err != nil {
 		LogIfError(err)
 	} else {
+		cm.executeMutex.Lock()
 		TheCursorManager.LoopThreshold = float32(fadeThreshold)
+		cm.executeMutex.Unlock()
 	}
-
 
 	if ce.Ddu == "clear" {
 		if ce.Tag == "" {
@@ -388,12 +380,34 @@ func (cm *CursorManager) ExecuteCursorEvent(ce CursorEvent) {
 
 	ac, ok := cm.getActiveCursorFor(ce.Gid)
 	if !ok {
+
 		// new ActiveCursor
-		// Make sure the first ddu is "down"
-		if ce.Ddu != "down" {
+
+		// If it's an "up" event for an unknown gid, don't do anything.  This shouldn't happen,
+		// but there's a bug in looping where this happens occasionally.  After the CFNM show,
+		// this should be investigated.  It probably has to do with when looping events
+		// in the middle of a gesture are deleted.  The whole looping strategy should be rethought.
+		// I.e. probably, no looped events in the middle of a gesture should be deleted until
+		// the maxz is less than the threshold, and then then entire gesture should be deleted at once.
+		if ce.Ddu == "up" {
+			BugFixWarningCount++
+			if BugFixWarningCount < 10 {
+				LogWarn("CursorManager.ExecuteCursorEvent - NEW BUG FIX, ignoring up cursor event", "ce", ce)
+			}
+			return
+		}
+
+		// Make sure the first ddu is "down", if we get drag events for an unknown gid
+		if ce.Ddu == "drag" {
 			// LogWarn("handleDownDragUp: first ddu is not down", "gid", ce.Gid, "ddu", ce.Ddu)
 			ce.Ddu = "down"
+		} else if ce.Ddu != "down" {
+			// Just in case, shouldn't happen
+			LogWarn("CursorManager.ExecuteCursorEvent - unexpected Ddu", "ce", ce)
+			return
+
 		}
+
 		ac = NewActiveCursor(ce)
 		if ac == nil {
 			LogWarn("CursorManager.ExecuteCursorEvent - unable to create ActiveCursor", "ce", ce)
@@ -416,13 +430,14 @@ func (cm *CursorManager) ExecuteCursorEvent(ce CursorEvent) {
 
 	}
 
-	ac.Current.SetClick(CurrentClick())
+	currClick := CurrentClick()
+	ac.Current.SetClick(currClick)
 
 	if ac.loopIt {
 		se := cm.LoopCursorEvent(ac)
 		if se != nil {
 			if ac.Current.Ddu == "up" {
-				LogOfType("cursor","UP cursor", "maxZ", ac.maxZ)
+				LogOfType("cursor", "UP cursor", "maxZ", ac.maxZ)
 			}
 			TheScheduler.insertScheduleElement(se)
 		}
@@ -460,11 +475,11 @@ func (cm *CursorManager) LoopCursorEvent(ac *ActiveCursor) *SchedElement {
 
 	// Fade the Z value
 	newZ := loopce.Pos.Z * ac.loopFade
-	LogOfType("loop","loopcd.Z faded", "origZ", loopce.Pos.Z, "newZ", newZ, "loopFade", ac.loopFade)
+	LogOfType("loop", "loopcd.Z faded", "origZ", loopce.Pos.Z, "newZ", newZ, "loopFade", ac.loopFade)
 	loopce.Pos.Z = newZ
 
 	if loopce.Pos.Z < cm.LoopThreshold && loopce.Ddu != "up" {
-		LogOfType("loop","loopce.Z is small, NOT LOOPING IT", "loopce", loopce)
+		LogOfType("loop", "loopce.Z is small, NOT LOOPING IT", "loopce", loopce)
 		return nil
 	}
 
@@ -510,14 +525,14 @@ func (cm *CursorManager) DeleteActiveCursorIfZLessThan(gid int, threshold float3
 		// LogWarn("DeleteActiveCursor: gid not found in ActiveCursor", "gid", gid)
 	} else {
 		// LogInfo("DeleteActiveCursorIfZLessThan", "gid", gid, "threshold", threshold, "ac.maxZ", ac.maxZ)
-		LogOfType("cursor","DeleteActiveCursorIfZLessThan", "maxZ", ac.maxZ, "threshold", threshold, "gid", ac.Current.Gid)
+		LogOfType("cursor", "DeleteActiveCursorIfZLessThan", "maxZ", ac.maxZ, "threshold", threshold, "gid", ac.Current.Gid)
 		if ac.maxZ < threshold {
 			// we want to remove things that this ActiveCursor has created for looping.
 			loopGid = cm.LoopedGidFor(ac.Current, false /*don't warn*/)
 			if loopGid == 0 {
 				LogWarn("HEY!!! in DeleteActiveCursorIfZLessThan LoopedGidFor returns 0?")
 			} else {
-				LogOfType("cursor","DeleteActiveCursorIfZLessThan deleting!!", "loopGid", loopGid)
+				LogOfType("cursor", "DeleteActiveCursorIfZLessThan deleting!!", "loopGid", loopGid)
 				delete(cm.activeCursors, gid)
 				delete(cm.activeCursors, loopGid)
 				// LogInfo("DeleteActiveCursorIfZLessThan REMOVING", "loopGid", loopGid, "gid", gid, "ac.maxZ", ac.maxZ, "gid", gid)

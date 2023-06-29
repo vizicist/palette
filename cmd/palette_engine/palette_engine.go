@@ -9,14 +9,21 @@ import (
 	"github.com/vizicist/palette/engine"
 	_ "github.com/vizicist/palette/tool"
 	"github.com/vizicist/palette/twinsys"
+	"github.com/pkg/profile"
 )
 
 func main() {
 
 	doProfile := false
 	if doProfile {
-		file, _ := os.Create("./cpu.pprof")
-		engine.LogIfError(pprof.StartCPUProfile(file))
+		// defer profile.Start(profile.ProfilePath(".")).Stop()
+		// defer profile.Start(profile.BlockProfile).Stop()
+		defer profile.Start(profile.MutexProfile).Stop()
+
+
+		// Old original version
+		// file, _ := os.Create("./cpu.pprof")
+		// engine.LogIfError(pprof.StartCPUProfile(file))
 	}
 
 	signal.Ignore(syscall.SIGHUP)

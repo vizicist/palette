@@ -10,6 +10,7 @@ require (
 	github.com/hajimehoshi/ebiten/v2 v2.5.4
 	github.com/hypebeast/go-osc v0.0.0-20220308234300-cec5a8a1e5f5
 	github.com/nxadm/tail v1.4.8
+	github.com/pkg/profile v1.7.0
 	gitlab.com/gomidi/midi/v2 v2.0.30
 	go.uber.org/zap v1.23.0
 	golang.org/x/image v0.6.0
@@ -19,8 +20,10 @@ require (
 require (
 	github.com/buger/jsonparser v1.1.1 // indirect
 	github.com/ebitengine/purego v0.3.0 // indirect
+	github.com/felixge/fgprof v0.9.3 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/go-gl/glfw/v3.3/glfw v0.0.0-20221017161538-93cebf72946b // indirect
+	github.com/google/pprof v0.0.0-20230602150820-91b7bce49751 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/hashicorp/logutils v1.0.0 // indirect
 	github.com/jezek/xgb v1.1.0 // indirect
@@ -30,7 +33,7 @@ require (
 	golang.org/x/exp/shiny v0.0.0-20230210204819-062eb4c674ab // indirect
 	golang.org/x/mobile v0.0.0-20230301163155-e0f57694e12c // indirect
 	golang.org/x/sync v0.2.0 // indirect
-	golang.org/x/sys v0.8.0 // indirect
+	golang.org/x/sys v0.9.0 // indirect
 	golang.org/x/text v0.9.0 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
