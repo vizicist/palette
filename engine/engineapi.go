@@ -64,6 +64,12 @@ func (e *Engine) executeEngineApi(api string, apiargs map[string]string) (result
 
 	switch api {
 
+	case "debugsched":
+		return TheScheduler.ToString(), nil
+
+	case "debugpending":
+		return TheScheduler.PendingToString(), nil
+
 	case "status":
 		result = JsonObject(
 			"uptime", fmt.Sprintf("%f", Uptime()),
@@ -204,15 +210,14 @@ func (e *Engine) executeEngineApi(api string, apiargs map[string]string) (result
 		xs := apiargs["x"]
 		ys := apiargs["y"]
 		zs := apiargs["z"]
-		if xs == "" {
-			pos = RandPos()
-		} else {
-			var x, y, z float32
-			if !e.getFloat32(xs, &x) || !e.getFloat32(ys, &y) || !e.getFloat32(zs, &z) {
-				return "", fmt.Errorf("playcursor: bad x,y,z value")
-			}
-			pos = CursorPos{x, y, z}
+		if xs == "" || ys == "" || zs == "" {
+			return "", fmt.Errorf("playcursor: missing x, y, or z value")
 		}
+		var x, y, z float32
+		if !e.getFloat32(xs, &x) || !e.getFloat32(ys, &y) || !e.getFloat32(zs, &z) {
+			return "", fmt.Errorf("playcursor: bad x,y,z value")
+		}
+		pos = CursorPos{x, y, z}
 		go TheCursorManager.PlayCursor(tag, dur, pos)
 		return "", nil
 
@@ -318,7 +323,7 @@ func (e *Engine) Set(name string, value string) error {
 			e.SetTranspose(int(i))
 		}
 	case "engine.log":
-		e.ResetLogTypes(value)
+		ResetLogTypes(value)
 
 	case "engine.midiinput":
 		TheMidiIO.SetMidiInput(value)
