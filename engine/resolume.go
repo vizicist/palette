@@ -300,7 +300,7 @@ func (r *Resolume) Activate() {
 	clipnum := 1
 
 	// do it a few times, in case Resolume hasn't started up
-	for i := 0; i < 16; i++ {
+	for i := 0; i < 12; i++ {
 		time.Sleep(2 * time.Second)
 
 		for _, patch := range PatchNames() {
@@ -310,7 +310,7 @@ func (r *Resolume) Activate() {
 		}
 		r.showClip(2) // show the "starting up" splash clip in the text layer
 	}
-	// stop the show the animated text generator for preset names
+	// show the animated text generator for preset names
 	r.connectClip(textLayer, clipnum)
 }
 
