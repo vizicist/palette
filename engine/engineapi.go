@@ -64,6 +64,12 @@ func (e *Engine) executeEngineApi(api string, apiargs map[string]string) (result
 
 	switch api {
 
+	case "debugsched":
+		return TheScheduler.ToString(), nil
+
+	case "debugpending":
+		return TheScheduler.PendingToString(), nil
+
 	case "status":
 		result = JsonObject(
 			"uptime", fmt.Sprintf("%f", Uptime()),
@@ -317,7 +323,7 @@ func (e *Engine) Set(name string, value string) error {
 			e.SetTranspose(int(i))
 		}
 	case "engine.log":
-		e.ResetLogTypes(value)
+		ResetLogTypes(value)
 
 	case "engine.midiinput":
 		TheMidiIO.SetMidiInput(value)
