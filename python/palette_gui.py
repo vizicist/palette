@@ -568,26 +568,29 @@ class ProGuiApp(tk.Tk):
         self.checkForGuiCycle()
         self.setNextMode("normal")
 
+    def getImage(self,name):
+        filename = palette.GetParam(name)
+        if filename == "":
+            log("No value for "+name+" !?")
+            return None
+        else:
+            path = palette.configFilePath(filename)
+            return tk.PhotoImage(file=path)
+
     def makeAttractFrame(self,container):
-
-        path = palette.configFilePath("sppro_attractscreen.png")
-        self.attractImage = tk.PhotoImage(file=path)
-
+        self.attractimage = self.getImage("engine.attractimage")
         f = tk.Frame(container,
             highlightbackground=ColorBg, highlightcolor=ColorAqua, highlightthickness=3)
-        button = ttk.Button(f, image=self.attractImage, style='Attract.TLabel',
+        button = ttk.Button(f, image=self.attractimage, style='Attract.TLabel',
             command=self.unattract)
         button.pack(side=tk.TOP,fill=tk.BOTH,expand=True)
         return f
 
     def makeHelpFrame(self,container):
-
-        path = palette.configFilePath("sppro_helpscreen.png")
-        self.helpImage = tk.PhotoImage(file=path)
-
+        self.helpimage = self.getImage("engine.helpimage")
         f = tk.Frame(container,
             highlightbackground=ColorBg, highlightcolor=ColorAqua, highlightthickness=3)
-        button = ttk.Button(f, image=self.helpImage, style='Attract.TLabel',
+        button = ttk.Button(f, image=self.helpimage, style='Attract.TLabel',
             command=self.unhelp)
         button.pack(side=tk.TOP,fill=tk.BOTH,expand=True)
         self.FullWidth = button.winfo_width()
