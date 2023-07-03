@@ -1483,7 +1483,8 @@ class PageHeader(tk.Frame):
             for t in self.textPrefix:
                 self.textPrefix[t].pack_forget()
             # guiLevel 0 is just the title
-            self.PaletteTitle.config(text="Space Palette Pro",justify=tk.CENTER)
+            title = palette.GetParam("engine.title")
+            self.PaletteTitle.config(text="\n"+title+"\n",justify=tk.CENTER)
             self.PaletteTitle.pack(side=tk.TOP,pady=0)
         else:
             self.PaletteTitle.pack_forget()
