@@ -289,6 +289,14 @@ def copyFile(frompath,topath):
 SettingsJson = None
 LocalSettingsJson = None
 
+def GetParam(name):
+    value, err = palette_api("engine.get",
+        "\"name\": \"" + name + "\"")
+    if err != None:
+        log("Error in palette.GetParam for "+name)
+        return ""
+    return value
+
 # def EngineParam(s,defvalue=""):
 #     global SettingsJson
 #     if SettingsJson == None:
