@@ -133,12 +133,22 @@ def savedListAll(savedType):
     savedpath = savedPath()
     paths = savedpath.split(";")
     allvals = []
+    s = os.environ.get("PALETTE_GUI_SHOWALL")
+    if s == None or boolValue(s) == False:
+        showall = False
+    else:
+        showall = True
     for dir in paths:
         saveddir = os.path.join(dir,savedType)
         if os.path.isdir(saveddir):
             vals = listOfJsonFiles(saveddir)
             for v in vals:
-                if not v in allvals and v[0] != "_":
+                if v in allvals:
+                    continue # already in the list
+                if v[0] == "_":
+                    continue # never show
+                # Curly-brace names aren't shown by default
+                if showall==True or v[0] != "{":
                     allvals.append(v)
     sortvals = []
     for v in sorted(allvals):
