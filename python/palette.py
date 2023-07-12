@@ -8,6 +8,7 @@ import collections
 import time
 import signal
 import sys
+import socket
 
 # import _thread as thread
 
@@ -83,9 +84,6 @@ def palette_engine_set(name, value):
 def palette_engine_get(name):
     return palette_api("engine.get", "\"name\": \"" + name + "\"")
 
-def logFilePath(nm):
-    return os.path.join(localPaletteDir(),"logs",nm)
-
 def configFilePath(nm):
     return os.path.join(localPaletteDir(),PaletteDataPath(),"config",nm)
 
@@ -134,7 +132,7 @@ def savedListAll(savedType):
     paths = savedpath.split(";")
     allvals = []
     s = os.environ.get("PALETTE_GUI_SHOWALL")
-    if s == None or boolValue(s) == False:
+    if s == None or boolValueOfString(s) == False:
         showall = False
     else:
         showall = True

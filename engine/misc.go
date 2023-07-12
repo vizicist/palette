@@ -166,20 +166,6 @@ func ConfigFilePath(nm string) string {
 	return filepath.Join(ConfigDir(), nm)
 }
 
-// LogFilePath has a default if LocalPaletteDir fails
-func LogFilePath(nm string) string {
-	localdir := LocalPaletteDir()
-	if localdir == "" {
-		tempdir, err := GetParam("engine.tempdir")
-		if err != nil {
-			LogIfError(err)
-		}
-		LogWarn("Last resort, using engine.tempdir value for log directory.", "tempdir", tempdir)
-		return filepath.Join(tempdir, nm)
-	}
-	return filepath.Join(localdir, "logs", nm)
-}
-
 func FileExists(filepath string) bool {
 	fileinfo, err := os.Stat(filepath)
 	if os.IsNotExist(err) {

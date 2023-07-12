@@ -323,7 +323,7 @@ func (e *Engine) Set(name string, value string) error {
 			e.SetTranspose(int(i))
 		}
 	case "engine.log":
-		ResetLogTypes(value)
+		SetLogTypes(value)
 
 	case "engine.midiinput":
 		TheMidiIO.SetMidiInput(value)
