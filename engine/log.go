@@ -3,6 +3,7 @@ package engine
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -85,6 +86,21 @@ func InitLog(logname string) {
 	LogInfo("InitLog ==============================", "date", date, "logname", logname)
 }
 
+// LogFilePath uses $PALETTE_LOGDIR if set
+func LogFilePath(nm string) string {
+	// $PALETTE_LOGDIR can override, but normally we create one in the Data directory with the hostname.
+	// This allows the log files to be checked into github.
+	logdir := os.Getenv("PALETTE_LOGDIR")
+	if logdir == "" {
+		logdir = filepath.Join(PaletteDataPath(), "logs", Hostname())
+	}
+	if _, err := os.Stat(logdir); os.IsNotExist(err) {
+		err = os.MkdirAll(logdir, os.FileMode(0777))
+		LogIfError(err) // not fatal?
+	}	
+	return filepath.Join(logdir, nm)
+}
+
 func IsLogging(logtype string) bool {
 
 	LogMutex.Lock()
@@ -99,10 +115,18 @@ func IsLogging(logtype string) bool {
 
 }
 
-// LogIfError will accept a nil value and do nothing
 func LogIfError(err error, keysAndValues ...any) {
+	if err == nil {
+		return
+	}
+	LogError(err,keysAndValues...)
+}
+
+// LogIfError will accept a nil value and do nothing
+func LogError(err error, keysAndValues ...any) {
 
 	if err == nil {
+		LogWarn("LogError given a nil error value")
 		return
 	}
 
@@ -227,7 +251,12 @@ func SetLogTypeEnabled(dtype string, b bool) {
 	LogEnabled[d] = b
 }
 
-func ResetLogTypes(logtypes string) {
+func InitLogTypes() {
+	logtypes := os.Getenv("PALETTE_LOGTYPES")
+	SetLogTypes(logtypes)
+}
+
+func SetLogTypes(logtypes string) {
 
 	LogMutex.Lock()
 	for logtype := range LogEnabled {
