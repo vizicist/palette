@@ -1,2 +1,2 @@
 c:
-cd %PALETTESOURCE%\..\notes-from-nosuchtim
+cd %USERPROFILE%\Documents\Github\notes-from-nosuchtim
