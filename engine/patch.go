@@ -419,16 +419,15 @@ func (patch *Patch) ApplyPatchValuesFromQuadMap(paramsmap map[string]any) error 
 }
 
 // ReadableSavedFilePath xxx
-func (patch *Patch) readableFilePath(category string, filename string) (string, error) {
-	return SavedFilePath(category, filename)
-}
+// func (patch *Patch) readableFilePath(category string, filename string) (string, error) {
+// 	return SavedFilePath(category, filename, ".json")
+// }
 
 func (patch *Patch) Load(category string, filename string) error {
 
 	LogOfType("saved", "patch.Load", "patch", patch.Name(), "category", category, "filename", filename)
 
-	// category, filename := SavedNameSplit(savedName)
-	path, err := patch.readableFilePath(category, filename)
+	path, err := ReadableSavedFilePath(category, filename, ".json")
 	if err != nil {
 		LogIfError(err)
 		return err
@@ -451,7 +450,7 @@ func (patch *Patch) Load(category string, filename string) error {
 
 	// If there's a _override.json file, use it
 	overrideFilename := "._override"
-	overridepath, err := patch.readableFilePath(category, overrideFilename)
+	overridepath, err := ReadableSavedFilePath(category, overrideFilename, ".json")
 	if err != nil {
 		LogIfError(err)
 		return err

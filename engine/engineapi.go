@@ -171,7 +171,7 @@ func (e *Engine) executeEngineApi(api string, apiargs map[string]string) (result
 		go TheBidule().Reset()
 
 	case "sendlogs":
-		return "", SendLogs()
+		return "", ArchiveLogs()
 
 	case "midi_midifile":
 		return "", fmt.Errorf("midi_midifile API has been removed")

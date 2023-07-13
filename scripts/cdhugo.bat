@@ -1,2 +1,2 @@
 c:
-cd %PALETTESOURCE%\..\hugo
+cd %PALETTE_SOURCE%\..\hugo

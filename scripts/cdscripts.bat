@@ -1,2 +1,2 @@
 c:
-cd %PALETTESOURCE%\scripts
+cd %PALETTE_SOURCE%\scripts

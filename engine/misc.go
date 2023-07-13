@@ -520,17 +520,10 @@ func RemoteApiRaw(url string, args string) (map[string]string, error) {
 	return output, nil
 }
 
-func SendLogs() error {
+func ArchiveLogs() error {
 
-	recipient, err := GetParam("engine.emailto")
-	LogIfError(err)
-	if recipient == "" {
-		msg := "SendLogs: not sending, no emailto in settings"
-		LogWarn(msg)
-		return fmt.Errorf(msg)
-	}
+	LogInfo("CycleTheLogs is starting.")
 
-	zipfile := ""
 	logsdir := LogFilePath("")
 
 	currentTime := time.Now()
@@ -544,16 +537,18 @@ func SendLogs() error {
 		hr, min, sec = timeStamp.Clock()
 	}
 	year, month, day := time.Now().Date()
-	zipname := fmt.Sprintf("%s_logs_%04d_%02d_%02d_%02d_%02d_%02d.zip", Hostname(), year, month, day, hr, min, sec)
-	zipfile = ConfigFilePath(zipname)
-	err = ziplogs(logsdir, zipfile)
+	zipname := fmt.Sprintf("%s_logs_%04d_%02d_%02d_%02d_%02d_%02d", Hostname(), year, month, day, hr, min, sec)
+	zippath, err := WritableSavedFilePath("logsarchive", zipname, ".zip")
+	LogIfError(err)
+	LogInfo("CycleTheLogs should be zipping logs to", "zippath", zippath)
+
+	err = ziplogs(logsdir, zippath)
 	if err != nil {
-		return fmt.Errorf("sendLogs: err=%s", err)
+		return fmt.Errorf("CycleTheLogs: err=%s", err)
 	} else {
-		LogInfo("SendLogs", "zipfile", zipfile)
+		LogInfo("CycleTheLogs is done.")
 	}
-	body := fmt.Sprintf("host=%s palette logfiles attached\n", Hostname())
-	return SendMailWithAttachment(body, zipfile)
+	return nil
 }
 
 func Hostname() string {

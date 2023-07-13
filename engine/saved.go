@@ -119,27 +119,28 @@ func SavedList(apiargs map[string]string) (string, error) {
 	return result, nil
 }
 
-// SavedFilePath returns the full path of a saved file.
+// ReadableSavedFilePath returns the full path of a saved file.
 // The value of filename isn't trusted, verify its sanity.
-func SavedFilePath(category string, filename string) (string, error) {
+func ReadableSavedFilePath(category string, filename string, suffix string) (string, error) {
 	if strings.ContainsRune(filename, os.PathSeparator) {
 		return "", fmt.Errorf("SavedFilePath: filename contains path separator")
 	}
 	if strings.ContainsRune(filename, os.PathListSeparator) {
 		return "", fmt.Errorf("SavedFilePath: filename contains path list separator")
 	}
-	jsonfile := filename + ".json"
-	localpath := filepath.Join(PaletteDataPath(), SavedDir(), category, jsonfile)
+	localpath := filepath.Join(PaletteDataPath(), SavedDir(), category, filename+suffix)
 	return localpath, nil
 }
 
 // WritableSavedFilePath xxx
-func WritableFilePath(category string, filename string) (string, error) {
-	path, err := SavedFilePath(category, filename)
+func WritableSavedFilePath(category string, filename string, suffix string) (string, error) {
+	path, err := ReadableSavedFilePath(category, filename, suffix)
 	if err != nil {
 		LogIfError(err)
 		return "", err
 	}
+	// Create all the directories we need
+	// in order for this file to be writable.
 	err = os.MkdirAll(filepath.Dir(path), 0777)
 	if err != nil {
 		LogIfError(err)

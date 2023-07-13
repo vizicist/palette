@@ -1,2 +1,2 @@
 c:
-cd %PALETTESOURCE%\data_omnisphere\saved\engine
+cd %PALETTE_SOURCE%\data_omnisphere\saved
