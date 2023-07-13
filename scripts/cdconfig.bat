@@ -1,1 +1,1 @@
-cd %PALETTESOURCE%\data_omnisphere\config
+cd %PALETTE_SOURCE%\data_omnisphere\config

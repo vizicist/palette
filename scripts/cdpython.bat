@@ -1,2 +1,2 @@
 c:
-cd %PALETTESOURCE%\python
+cd %PALETTE_SOURCE%\python
