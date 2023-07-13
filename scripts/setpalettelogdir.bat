@@ -1,1 +1,1 @@
-set PALETTELOGDIR="%CommonProgramFiles%\Palette\logs"
+set PALETTE_LOGDIR="%CommonProgramFiles%\Palette\logs"
