@@ -1,17 +1,4 @@
 {
     "params": {
-        "engine.attractenabled":"false",
-        "engine.attractidlesecs":"60",
-        "engine.autotranspose":"false",
-        "engine.autotransposebeats":"48",
-        "engine.bidulepath":"C:/Program Files/Plogue/Bidule/Bidule.exe",
-        "engine.log":"cursor",
-        "engine.midiinput":"microKEY2 Air",
-        "engine.midisetexternalscale":"true",
-        "engine.midithru":"false",
-        "engine.mmtt":"",
-        "engine.oscoutput":"true",
-        "engine.transpose":"0",
-        "engine.twinsys":"false"
     }
 }
