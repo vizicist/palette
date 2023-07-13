@@ -160,7 +160,7 @@ func (e *Engine) SaveCurrent() (err error) {
 }
 
 func (e *Engine) LoadCurrent() (err error) {
-	path, err := SavedFilePath("engine", "_Current")
+	path, err := ReadableSavedFilePath("engine", "_Current", ".json")
 	if err != nil {
 		return err
 	}

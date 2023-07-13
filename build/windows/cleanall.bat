@@ -1,18 +1,18 @@
-if not "%PALETTESOURCE%" == "" goto keepgoing
-echo You must set the PALETTESOURCE environment variable.
+if not "%PALETTE_SOURCE%" == "" goto keepgoing
+echo You must set the PALETTE_SOURCE environment variable.
 goto getout
 
 :keepgoing
 
-rm -fr %PALETTESOURCE%\ffgl\build\windows\.vs
-rm -fr %PALETTESOURCE%\ffgl\build\windows\x64
-rm -fr %PALETTESOURCE%\ffgl\build\windows\x86
-rm -fr %PALETTESOURCE%\build\windows\ship
-rm -fr %PALETTESOURCE%\python\build
-rm -fr %PALETTESOURCE%\python\dist
-rm -fr %PALETTESOURCE%\depthlib\build\.vs
-rm -fr %PALETTESOURCE%\depthlib\build\x64
-rm -fr %PALETTESOURCE%\depthlib\build\*.dir
-del /s %PALETTESOURCE%\mmtt_kinect\build\windows\*.obj
+rm -fr %PALETTE_SOURCE%\ffgl\build\windows\.vs
+rm -fr %PALETTE_SOURCE%\ffgl\build\windows\x64
+rm -fr %PALETTE_SOURCE%\ffgl\build\windows\x86
+rm -fr %PALETTE_SOURCE%\build\windows\ship
+rm -fr %PALETTE_SOURCE%\python\build
+rm -fr %PALETTE_SOURCE%\python\dist
+rm -fr %PALETTE_SOURCE%\depthlib\build\.vs
+rm -fr %PALETTE_SOURCE%\depthlib\build\x64
+rm -fr %PALETTE_SOURCE%\depthlib\build\*.dir
+del /s %PALETTE_SOURCE%\mmtt_kinect\build\windows\*.obj
 
 :getout

@@ -1,1 +1,1 @@
-set PATH=%PATH%;%PALETTESOURCE%\scripts
+set PATH=%PATH%;%PALETTE_SOURCE%\scripts

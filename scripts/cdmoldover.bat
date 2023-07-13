@@ -1,2 +1,2 @@
 c:
-cd %PALETTESOURCE%\data_moldover\config
+cd %PALETTE_SOURCE%\data_moldover\config

@@ -1,4 +1,3 @@
-hostname > hostname.txt
-set /p hostname=<hostname.txt
-del /q hostname.txt
+@echo off
+call sethostname
 cd %PALETTE_DATA_PATH%\logs\%hostname%
