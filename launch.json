@@ -9,7 +9,7 @@
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "${env:PALETTESOURCE}/cmd/palette_engine/palette_engine.go",
+            "program": "${env:PALETTE_SOURCE}/cmd/palette_engine/palette_engine.go",
             "env": {
                 "Path": "${env:Path};${workspaceFolder};c:/Users/me/Documents/github/vizicist/palette/SenselLib/x64;"             },
             "args": []
@@ -18,7 +18,7 @@
             "name": "Start Python Gui",
             "type": "python",
             "request": "launch",
-            "program": "${env:PALETTESOURCE}/python/palette_gui.py",
+            "program": "${env:PALETTE_SOURCE}/python/palette_gui.py",
             "console": "integratedTerminal",
             "args": []
         },
@@ -26,7 +26,7 @@
             "name": "palette start gui",
             "type": "go",
             "request": "launch",
-            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
+            "program": "${env:PALETTE_SOURCE}/cmd/palette/palette.go",
             "args": ["start","gui"]
         },
         {
@@ -34,7 +34,7 @@
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "${env:PALETTESOURCE}/cmd/chillian/chillian.go",
+            "program": "${env:PALETTE_SOURCE}/cmd/chillian/chillian.go",
             "env": {
                 "Path": "${env:Path};${workspaceFolder};c:/Users/me/Documents/github/vizicist/palette/SenselLib/x64;"             },
             "args": []
@@ -43,70 +43,70 @@
             "name": "MIDI test",
             "type": "go",
             "request": "launch",
-            "program": "${env:PALETTESOURCE}/cmd/miditest/miditest.go",
+            "program": "${env:PALETTE_SOURCE}/cmd/miditest/miditest.go",
             "args": [""]
         },
         {
             "name": "WASM test",
             "type": "go",
             "request": "launch",
-            "program": "${env:PALETTESOURCE}/../midi/examples/webmidi/main.go",
+            "program": "${env:PALETTE_SOURCE}/../midi/examples/webmidi/main.go",
             "args": [""]
         },
         {
             "name": "Test 1",
             "type": "go",
             "request": "launch",
-            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
+            "program": "${env:PALETTE_SOURCE}/cmd/palette/palette.go",
             "args": ["test","1"]
         },
         {
             "name": "Twitch test",
             "type": "go",
             "request": "launch",
-            "program": "${env:PALETTESOURCE}/cmd/twitchtest/twitchtest.go",
+            "program": "${env:PALETTE_SOURCE}/cmd/twitchtest/twitchtest.go",
             "args": []
         },
         {
             "name": "OBS test",
             "type": "go",
             "request": "launch",
-            "program": "${env:PALETTESOURCE}/cmd/obstest/main.go",
+            "program": "${env:PALETTE_SOURCE}/cmd/obstest/main.go",
             "args": []
         },
         {
             "name": "Status",
             "type": "go",
             "request": "launch",
-            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
+            "program": "${env:PALETTE_SOURCE}/cmd/palette/palette.go",
             "args": ["status"]
         },
         {
             "name": "Start Apps",
             "type": "go",
             "request": "launch",
-            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
+            "program": "${env:PALETTE_SOURCE}/cmd/palette/palette.go",
             "args": ["start","apps"]
         },
         {
             "name": "Kill Engine",
             "type": "go",
             "request": "launch",
-            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
+            "program": "${env:PALETTE_SOURCE}/cmd/palette/palette.go",
             "args": ["kill", "engine"]
         },
         {
             "name": "Kill resolume",
             "type": "go",
             "request": "launch",
-            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
+            "program": "${env:PALETTE_SOURCE}/cmd/palette/palette.go",
             "args": ["kill", "resolume"]
         },
         {
             "name": "run testcursor.py",
             "type": "python",
             "request": "launch",
-            "program": "${env:PALETTESOURCE}/python/testcursor.py",
+            "program": "${env:PALETTE_SOURCE}/python/testcursor.py",
             "console": "integratedTerminal",
             "cwd": "${fileDirname}",
             "args": [""]
@@ -116,7 +116,7 @@
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "${env:PALETTESOURCE}/cmd/palette/palette.go",
+            "program": "${env:PALETTE_SOURCE}/cmd/palette/palette.go",
             "env": {
                 "Path": "${env:Path};${workspaceFolder};c:/Users/me/Documents/github/vizicist/palette/SenselLib/x64;"             },
             "args": ["sendlogs"]
@@ -126,7 +126,7 @@
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "${env:PALETTESOURCE}/cmd/erae/erae.go",
+            "program": "${env:PALETTE_SOURCE}/cmd/erae/erae.go",
             "env": {
                 "Path": "${env:Path};${workspaceFolder};c:/Users/me/Documents/github/vizicist/palette/SenselLib/x64;"             },
             "args": []

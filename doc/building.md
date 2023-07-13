@@ -36,7 +36,7 @@ In the list below, the === instructions are only appropriate for machines that w
 	- Add the following new environment variables:
 ```
  PALETTE=C:\Program Files\Palette
- PALETTESOURCE=%USERPROFILE%\Documents\Github\palette
+ PALETTE_SOURCE=%USERPROFILE%\Documents\Github\palette
  PALETTE_DATA_PATH=%USERPROFILE%\Documents\Github\palette\data_omnisphere
 ```
 
@@ -66,7 +66,7 @@ the "online installer" and execute it from the Explorer, selecting "more info" t
   Also install Python language support.
   Other pieces of the Go toolchain will be offered to you automatically within VSCode.
 
-- in a cmd window, cd to %PALETTESOURCE% and execute:
+- in a cmd window, cd to %PALETTE_SOURCE% and execute:
 	go mod tidy
 	go get gitlab.com/gomidi/midi/v2/drivers/rtmididrv
 
@@ -78,7 +78,7 @@ turn off Shortcut Detection and enable 16 ports (which requires a reboot).
 - To compile everything, use a newly-created "cmd" window (so that the changes to PATH and the environment variable are reflected) and enter these lines:
 
 ```
-cd %PALETTESOURCE%\build\windows
+cd %PALETTE_SOURCE%\build\windows
 build
 ```
 

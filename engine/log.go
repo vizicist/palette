@@ -1,7 +1,9 @@
 package engine
 
 import (
+	"encoding/json"
 	"fmt"
+	"bufio"
 	"os"
 	"path/filepath"
 	"strings"
@@ -40,7 +42,7 @@ func myTimeEncoder(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
 	enc.AppendString(s)
 }
 
-func fileLogger(path string) *zap.Logger {
+func zapEncoderConfig() zapcore.EncoderConfig { 
 
 	stacktraceKey := ""
 	// stacktraceKey = "stacktrace" // use this if you want to get stack traces
@@ -59,8 +61,13 @@ func fileLogger(path string) *zap.Logger {
 		EncodeDuration: zapcore.SecondsDurationEncoder,
 		EncodeCaller:   zapcore.ShortCallerEncoder,
 	}
-
 	// config.EncodeTime = zapcore.ISO8601TimeEncoder
+	return config
+}
+
+func fileLogger(path string) *zap.Logger {
+
+	config := zapEncoderConfig()
 	fileEncoder := zapcore.NewJSONEncoder(config)
 	logFile, _ := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	writer := zapcore.AddSync(logFile)
@@ -68,22 +75,94 @@ func fileLogger(path string) *zap.Logger {
 	core := zapcore.NewTee(
 		zapcore.NewCore(fileEncoder, writer, defaultLogLevel),
 	)
-
-	// field := zapcore.Field{Type: zapcore.Int64Type, Integer: int64(CurrentClick()), Key: "click"}
-	// core = core.With([]zapcore.Field{field})
-
-	// logger := zap.New(core, zap.AddCaller(), zap.AddStacktrace(zapcore.ErrorLevel))
 	logger := zap.New(core, zap.AddCaller(), zap.AddStacktrace(zapcore.WarnLevel))
 	return logger
 }
 
+func stdoutLogger() *zap.Logger {
+
+	config := zapEncoderConfig()
+	fileEncoder := zapcore.NewJSONEncoder(config)
+	logFile := os.Stdout
+	writer := zapcore.AddSync(logFile)
+	defaultLogLevel := zapcore.DebugLevel
+	core := zapcore.NewTee(
+		zapcore.NewCore(fileEncoder, writer, defaultLogLevel),
+	)
+	logger := zap.New(core, zap.AddCaller(), zap.AddStacktrace(zapcore.WarnLevel))
+	return logger
+}
+
+// InitLog creates a logger to a log file, or stdout if logname is "".
 func InitLog(logname string) {
-	logpath := LogFilePath(logname + ".log")
-	logger := fileLogger(logpath)
+	var logger *zap.Logger
+	if logname == "" {
+		logger = stdoutLogger()
+	} else {
+		logger = fileLogger(LogFilePath(logname + ".log"))
+	}
 	TheLog = logger.Sugar()
 	defer LogIfError(logger.Sync()) // flushes buffer, if any
 	date := time.Now().Format("2006-01-02 15:04:05")
 	LogInfo("InitLog ==============================", "date", date, "logname", logname)
+}
+
+func SummarizeLog(fname string) (summary string, err error) {
+	summary = ""
+	file, err := os.Open(fname)
+	if err != nil {
+		return "",err
+	}
+	scanner := bufio.NewScanner(file)
+	nloaded := 0
+	attractMode := false
+	for scanner.Scan() {
+		line := scanner.Text()
+		var values map[string]any
+		if err := json.Unmarshal([]byte(line), &values); err != nil {
+			return "", err
+		}
+		msg, ok := values["msg"].(string)
+		if !ok {
+			continue
+		}
+		if strings.HasPrefix("InitLog",msg) {
+			startdate, ok := values["date"].(string)
+			if !ok {
+				startdate = ""
+			}
+			summary += fmt.Sprintf("START: %s\n", startdate)
+			nloaded = 0
+			attractMode = false
+		} else if strings.HasPrefix("setAttractMode",msg) {
+			onoff, ok := values["onoff"].(string)
+			if !ok {
+				onoff = ""
+			}
+			summary += fmt.Sprintf("SETATTRACT: %s\n", onoff)
+			b := IsTrueValue(onoff)
+			if attractMode == false && b == true {
+				attractMode = true
+				summary += fmt.Sprintf("Starting ATTRACTMODE: nloaded=%d\n", nloaded)
+				nloaded = 0
+			} else if attractMode == true && b == false {
+				attractMode = false
+				summary += fmt.Sprintf("Stopping ATTRACTMODE: nloaded=%d\n", nloaded)
+				nloaded = 0
+			}
+		} else if strings.HasPrefix("QuadPro.Load",msg) {
+			fname := values["filename"]
+			if !ok {
+				fname = ""
+			}
+			nloaded++
+			summary += fmt.Sprintf("LOAD: %s\n", fname)
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		return "", err
+	}
+	return summary, nil
 }
 
 // LogFilePath uses $PALETTE_LOGDIR if set

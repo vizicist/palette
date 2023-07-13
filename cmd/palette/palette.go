@@ -19,14 +19,23 @@ func main() {
 	signal.Ignore(syscall.SIGINT)
 
 	flag.Parse()
+	args := flag.Args()
 
-	engine.InitLog("palette")
+	// If we're trying to archive the logs, use stdout.
+	// don't open any log files, use stdout
+	doingArchiveLogs := (len(args) == 1 && args[0] == "archivelogs")
+	if doingArchiveLogs {
+		engine.InitLog("") // "" == "stdout"
+	} else {
+		engine.InitLog("palette")
+	}
+
 	engine.InitMisc()
 	engine.InitEngine()
 
-	engine.LogInfo("Palette InitLog", "args", flag.Args())
+	engine.LogInfo("Palette InitLog", "args", args)
 
-	apiout, err := CliCommand(flag.Args())
+	apiout, err := CliCommand(args)
 	if err != nil {
 		os.Stdout.WriteString("Error: " + err.Error() + "\n")
 	} else {
@@ -40,17 +49,20 @@ func usage() string {
 	palette kill [ all, monitor, engine, gui, bidule, resolume, mmtt]
 	palette status
 	palette version
-	palette logtail
+	palette taillog
+	palette summarize {logfile}
 	palette {category}.{api} [ {argname} {argvalue} ] ...
 	`
 }
 
+/*
 func processStatus(process string) string {
 	if engine.IsRunning(process) {
 		return "running"
 	}
 	return "not running"
 }
+*/
 
 func CliCommand(args []string) (map[string]string, error) {
 
@@ -79,6 +91,14 @@ func CliCommand(args []string) (map[string]string, error) {
 
 	switch api {
 
+	case "summarize":
+		s, err := engine.SummarizeLog(arg1)
+		if err != nil {
+			return nil, err
+		}
+		out := map[string]string{"result": s}
+		return out, nil
+
 	case "taillog", "logtail":
 		logpath := engine.LogFilePath("engine.log")
 		t, err := tail.TailFile(logpath, tail.Config{Follow: true})
@@ -89,24 +109,7 @@ func CliCommand(args []string) (map[string]string, error) {
 		return nil, nil
 
 	case "status":
-		s := ""
-		if engine.MonitorIsRunning() {
-			s += "Monitor is running.\n"
-		} else {
-			s += "Monitor is not running.\n"
-		}
-		s += "Engine is " + processStatus("engine") + ".\n"
-		s += "GUI is " + processStatus("gui") + ".\n"
-		s += "Bidule is " + processStatus("bidule") + ".\n"
-		s += "Resolume is " + processStatus("resolume") + ".\n"
-		b, _ := engine.GetParamBool("engine.keykitrun")
-		if b {
-			s += "Keykit is " + processStatus("keykit") + ".\n"
-		}
-		mmtt, _ := engine.GetParam("engine.mmtt")
-		if mmtt != "" {
-			s += "MMTT is " + processStatus("mmtt") + ".\n"
-		}
+		s, _ := StatusOutput()
 		out := map[string]string{"result": s}
 		return out, nil
 
@@ -175,8 +178,13 @@ func CliCommand(args []string) (map[string]string, error) {
 	case "align":
 		return engine.MmttApi("align_start")
 
-	case "sendlogs":
-		return nil, engine.SendLogs()
+	case "archivelogs":
+		// Make sure nothing is running.
+		statusOut, nrunning := StatusOutput()
+		if nrunning > 0 {
+			return nil, fmt.Errorf("cannot archive logs while processes are running:\n%s\n", statusOut)
+		}
+		return nil, engine.ArchiveLogs()
 
 	case "test":
 		return engine.EngineApi("quadpro.test", "ntimes", "40")
@@ -189,6 +197,52 @@ func CliCommand(args []string) (map[string]string, error) {
 		}
 		return engine.EngineApi(api, args[1:]...)
 	}
+}
+
+func StatusOutput() (statusOut string, numRunning int) {
+	s := ""
+	nrunning := 0
+	if engine.MonitorIsRunning() {
+		s += "Monitor is running.\n"
+		nrunning++
+	}
+
+	if engine.IsRunning("engine") {
+		s += "Engine is running.\n"
+		nrunning++
+	}
+
+	if engine.IsRunning("gui") {
+		s += "GUI is running.\n"
+		nrunning++
+	}
+
+	if engine.IsRunning("bidule") {
+		s += "Bidule is running.\n"
+		nrunning++
+	}
+
+	if engine.IsRunning("resolume") {
+		s += "Resolume is running.\n"
+		nrunning++
+	}
+
+	b, _ := engine.GetParamBool("engine.keykitrun")
+	if b {
+		if engine.IsRunning("keykit") {
+			s += "Keykit is running.\n"
+			nrunning++
+		}
+	}
+
+	mmtt, _ := engine.GetParam("engine.mmtt")
+	if mmtt != "" {
+		if engine.IsRunning("mmtt") {
+			s += "MMTT is running.\n"
+			nrunning++
+		}
+	}
+	return s, nrunning
 }
 
 func doStartEngine() error {

@@ -1,8 +1,8 @@
 
 @echo off
 
-if not "%PALETTESOURCE%" == "" goto keepgoing1
-echo You must set the PALETTESOURCE environment variable.
+if not "%PALETTE_SOURCE%" == "" goto keepgoing1
+echo You must set the PALETTE_SOURCE environment variable.
 goto getout
 :keepgoing1
 
@@ -11,7 +11,7 @@ echo Calling msdev17 to set build environment.
 call ..\..\scripts\msdev17.bat
 :keepgoing2
 
-set ship=%PALETTESOURCE%\build\windows\ship
+set ship=%PALETTE_SOURCE%\build\windows\ship
 set bin=%ship%\bin
 rm -fr %ship% > nul 2>&1
 mkdir %ship%
@@ -33,29 +33,29 @@ rem popd
 
 echo ================ Creating cmds
 
-set buildcmdsout=%PALETTESOURCE%\build\windows\buildcmds.out
+set buildcmdsout=%PALETTE_SOURCE%\build\windows\buildcmds.out
 del /f /q %buildcmdsout% >nul 2>&1
 
 echo ================ Compiling palette
-pushd %PALETTESOURCE%\cmd\palette
+pushd %PALETTE_SOURCE%\cmd\palette
 go build palette.go >> %buildcmdsout% 2>&1
 move palette.exe %bin%\palette.exe > nul
 popd
 
 echo ================ Compiling palette_engine
-pushd %PALETTESOURCE%\cmd\palette_engine
+pushd %PALETTE_SOURCE%\cmd\palette_engine
 go build palette_engine.go >> %buildcmdsout% 2>&1
 move palette_engine.exe %bin%\palette_engine.exe > nul
 popd
 
 echo ================ Compiling palette_monitor
-pushd %PALETTESOURCE%\cmd\palette_monitor
+pushd %PALETTE_SOURCE%\cmd\palette_monitor
 go build palette_monitor.go >> %buildcmdsout% 2>&1
 move palette_monitor.exe %bin%\palette_monitor.exe > nul
 popd
 
 echo ================ Compiling palette_splash
-pushd %PALETTESOURCE%\cmd\palette_splash
+pushd %PALETTE_SOURCE%\cmd\palette_splash
 go build palette_splash.go >> %buildcmdsout% 2>&1
 move palette_splash.exe %bin%\palette_splash.exe > nul
 popd
@@ -64,7 +64,7 @@ rem print any error messages from compiling cmds
 type %buildcmdsout%
 
 echo ================ Creating palette_gui.exe, osc.exe
-pushd %PALETTESOURCE%\python
+pushd %PALETTE_SOURCE%\python
 rm -fr dist
 rm -fr build\palette_gui
 rm -fr build
@@ -79,20 +79,20 @@ move dist\pyinstalled %bin% >nul
 popd
 
 echo ================ Compiling FFGL plugin
-pushd %PALETTESOURCE%\ffgl\build\windows
+pushd %PALETTE_SOURCE%\ffgl\build\windows
 msbuild /t:Build /p:Configuration=Release /p:Platform="x64" Palette.vcxproj > nul
 popd
 
 echo ================ Copying FFGL plugin
-pushd %PALETTESOURCE%\ffgl\binaries\x64\Release
+pushd %PALETTE_SOURCE%\ffgl\binaries\x64\Release
 copy Palette*.dll %ship%\ffgl > nul
 copy Palette*.pdb %ship%\ffgl > nul
-copy %PALETTESOURCE%\build\windows\vc15\bin\pthreadvc2.dll %ship%\ffgl >nul
-copy %PALETTESOURCE%\build\windows\vc15\bin\msvcr100.dll %ship%\ffgl >nul
+copy %PALETTE_SOURCE%\build\windows\vc15\bin\pthreadvc2.dll %ship%\ffgl >nul
+copy %PALETTE_SOURCE%\build\windows\vc15\bin\msvcr100.dll %ship%\ffgl >nul
 popd
 
 echo ================ Compiling mmtt_kinect
-pushd %PALETTESOURCE%\mmtt_kinect\build\windows
+pushd %PALETTE_SOURCE%\mmtt_kinect\build\windows
 msbuild /t:Build /p:Configuration=Debug /p:Platform="x32" mmtt_kinect.sln > nul
 rem Put mmtt_kinect in its own bin directory, to keep 32-bit things separate
 copy mmtt_kinect\Debug\mmtt_kinect.exe %bin%\mmtt_kinect\mmtt_kinect.exe >nul
@@ -100,17 +100,17 @@ copy mmtt_kinect\*.dll %bin%\mmtt_kinect >nul
 popd
 
 echo ================ Copying misc binaries
-rem copy %PALETTESOURCE%\binaries\nats\nats-pub.exe %bin% >nul
-rem copy %PALETTESOURCE%\binaries\nats\nats-sub.exe %bin% >nul
-copy %PALETTESOURCE%\binaries\nircmdc.exe %bin% >nul
+rem copy %PALETTE_SOURCE%\binaries\nats\nats-pub.exe %bin% >nul
+rem copy %PALETTE_SOURCE%\binaries\nats\nats-sub.exe %bin% >nul
+copy %PALETTE_SOURCE%\binaries\nircmdc.exe %bin% >nul
 
 echo ================ Copying keykit things
-copy %PALETTESOURCE%\keykit\bin\key.exe %ship%\keykit\bin >nul
-copy %PALETTESOURCE%\keykit\bin\keylib.exe %ship%\keykit\bin >nul
-copy %PALETTESOURCE%\keykit\lib\*.* %ship%\keykit\lib >nul
+copy %PALETTE_SOURCE%\keykit\bin\key.exe %ship%\keykit\bin >nul
+copy %PALETTE_SOURCE%\keykit\bin\keylib.exe %ship%\keykit\bin >nul
+copy %PALETTE_SOURCE%\keykit\lib\*.* %ship%\keykit\lib >nul
 
 echo ================ Copying scripts
-pushd %PALETTESOURCE%\scripts
+pushd %PALETTE_SOURCE%\scripts
 copy palettetasks.bat %bin% >nul
 copy testcursor.bat %bin% >nul
 copy osc.bat %bin% >nul
@@ -134,44 +134,44 @@ for %%X in (data_omnisphere) DO (
 	mkdir %ship%\%%X\keykit
 	mkdir %ship%\%%X\keykit\liblocal
 	mkdir %ship%\%%X\html
-	copy %PALETTESOURCE%\%%X\config\homepage.json %ship%\%%X\config >nul
-	copy %PALETTESOURCE%\%%X\config\ffgl.json %ship%\%%X\config >nul
-	copy %PALETTESOURCE%\%%X\config\param*.json %ship%\%%X\config >nul
-	copy %PALETTESOURCE%\%%X\config\resolume.json %ship%\%%X\config >nul
-	copy %PALETTESOURCE%\%%X\config\settings.json %ship%\%%X\config >nul
-	copy %PALETTESOURCE%\%%X\config\mmtt_*.json %ship%\%%X\config >nul
-	copy %PALETTESOURCE%\%%X\config\synths.json %ship%\%%X\config >nul
-	copy %PALETTESOURCE%\%%X\config\morphs.json %ship%\%%X\config >nul
-	rem copy %PALETTESOURCE%\%%X\config\nats*.conf %ship%\%%X\config >nul
-	copy %PALETTESOURCE%\%%X\config\Palette*.avc %ship%\%%X\config >nul
-	copy %PALETTESOURCE%\%%X\config\EraeTouchLayout.emk %ship%\%%X\config >nul
-	copy %PALETTESOURCE%\%%X\config\*.png %ship%\%%X\config >nul
-	copy %PALETTESOURCE%\%%X\config\consola.ttf %ship%\%%X\config >nul
-	copy %PALETTESOURCE%\%%X\config\OpenSans-Regular.ttf %ship%\%%X\config >nul
-	copy %PALETTESOURCE%\%%X\config\palette.ico %ship%\%%X\config >nul
-	copy %PALETTESOURCE%\%%X\config\*.bidule %ship%\%%X\config >nul
-	copy %PALETTESOURCE%\%%X\midifiles\*.* %ship%\%%X\midifiles >nul
-	xcopy /e /y %PALETTESOURCE%\%%X\saved %ship%\%%X\saved >nul
-	xcopy /e /y %PALETTESOURCE%\%%X\keykit\liblocal %ship%\%%X\keykit\liblocal >nul
-	xcopy /e /y %PALETTESOURCE%\%%X\html %ship%\%%X\html >nul
+	copy %PALETTE_SOURCE%\%%X\config\homepage.json %ship%\%%X\config >nul
+	copy %PALETTE_SOURCE%\%%X\config\ffgl.json %ship%\%%X\config >nul
+	copy %PALETTE_SOURCE%\%%X\config\param*.json %ship%\%%X\config >nul
+	copy %PALETTE_SOURCE%\%%X\config\resolume.json %ship%\%%X\config >nul
+	copy %PALETTE_SOURCE%\%%X\config\settings.json %ship%\%%X\config >nul
+	copy %PALETTE_SOURCE%\%%X\config\mmtt_*.json %ship%\%%X\config >nul
+	copy %PALETTE_SOURCE%\%%X\config\synths.json %ship%\%%X\config >nul
+	copy %PALETTE_SOURCE%\%%X\config\morphs.json %ship%\%%X\config >nul
+	rem copy %PALETTE_SOURCE%\%%X\config\nats*.conf %ship%\%%X\config >nul
+	copy %PALETTE_SOURCE%\%%X\config\Palette*.avc %ship%\%%X\config >nul
+	copy %PALETTE_SOURCE%\%%X\config\EraeTouchLayout.emk %ship%\%%X\config >nul
+	copy %PALETTE_SOURCE%\%%X\config\*.png %ship%\%%X\config >nul
+	copy %PALETTE_SOURCE%\%%X\config\consola.ttf %ship%\%%X\config >nul
+	copy %PALETTE_SOURCE%\%%X\config\OpenSans-Regular.ttf %ship%\%%X\config >nul
+	copy %PALETTE_SOURCE%\%%X\config\palette.ico %ship%\%%X\config >nul
+	copy %PALETTE_SOURCE%\%%X\config\*.bidule %ship%\%%X\config >nul
+	copy %PALETTE_SOURCE%\%%X\midifiles\*.* %ship%\%%X\midifiles >nul
+	xcopy /e /y %PALETTE_SOURCE%\%%X\saved %ship%\%%X\saved >nul
+	xcopy /e /y %PALETTE_SOURCE%\%%X\keykit\liblocal %ship%\%%X\keykit\liblocal >nul
+	xcopy /e /y %PALETTE_SOURCE%\%%X\html %ship%\%%X\html >nul
 )
 
 echo ================ Copying windows-specific things
-copy %PALETTESOURCE%\SenselLib\x64\LibSensel.dll %bin% >nul
-copy %PALETTESOURCE%\SenselLib\x64\LibSenselDecompress.dll %bin% >nul
-rem copy %PALETTESOURCE%\depthlib\build\x64\Release\depthlib.dll %bin% >nul
+copy %PALETTE_SOURCE%\SenselLib\x64\LibSensel.dll %bin% >nul
+copy %PALETTE_SOURCE%\SenselLib\x64\LibSenselDecompress.dll %bin% >nul
+rem copy %PALETTE_SOURCE%\depthlib\build\x64\Release\depthlib.dll %bin% >nul
 copy vc15\bin\depthai-core.dll %bin% >nul
 copy vc15\bin\opencv_world454.dll %bin% >nul
 
 echo ================ Removing unused things
 rm -fr %bin%\pyinstalled\tcl\tzdata
 
-copy %PALETTESOURCE%\VERSION %ship% >nul
+copy %PALETTE_SOURCE%\VERSION %ship% >nul
 set /p version=<../../VERSION
 echo ================ Creating installer for VERSION %version%
 sed -e "s/SUBSTITUTE_VERSION_HERE/%version%/" < palette_win_setup.iss > tmp.iss
 "c:\Program Files (x86)\Inno Setup 6\ISCC.exe" /Q tmp.iss
-move Output\palette_%version%_win_setup.exe %PALETTESOURCE%\release >nul
+move Output\palette_%version%_win_setup.exe %PALETTE_SOURCE%\release >nul
 rmdir Output
 rm tmp.iss
 

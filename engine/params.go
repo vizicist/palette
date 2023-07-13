@@ -222,7 +222,7 @@ func (vals *ParamValues) Save(category string, filename string) error {
 
 	LogOfType("saved", "ParamValues.Save", "category", category, "filename", filename)
 
-	path, err := WritableFilePath(category, filename)
+	path, err := WritableSavedFilePath(category, filename, ".json")
 	if err != nil {
 		LogIfError(err)
 		return err

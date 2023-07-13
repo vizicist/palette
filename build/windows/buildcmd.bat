@@ -2,7 +2,7 @@ set xx=%1
 echo ================ Compiling %xx%
 
 echo on
-pushd %PALETTESOURCE%\cmd\%xx%
+pushd %PALETTE_SOURCE%\cmd\%xx%
 go build %xx%.go > gobuild.out 2>&1
 
 for /f %%i in ("gobuild.out") do (

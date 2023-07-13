@@ -1,1 +1,1 @@
-cd %PALETTESOURCE%\data_surge
+cd %PALETTE_SOURCE%\data_surge

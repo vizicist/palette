@@ -1,6 +1,9 @@
 @echo off
 call setpalettelogdir
-del /s %PALETTE_LOGDIR%\*.log >nul 2>nul
-del /s %PALETTE_LOGDIR%\*.stderr >nul 2>nul
-del /s %PALETTE_LOGDIR%\*.stdout >nul 2>nul
-echo Logs in %PALETTE_LOGDIR% have been cleared
+call sethostname
+set logdir=%PALETTE_DATA_PATH%\logs\%hostname%
+cd %logdir%
+del /s *.log >nul 2>nul
+del /s *.stderr >nul 2>nul
+del /s *.stdout >nul 2>nul
+echo Logs in %logdir% have been cleared

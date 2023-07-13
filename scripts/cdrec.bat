@@ -1,2 +1,2 @@
 c:
-cd %PALETTESOURCE%\data_omnisphere\recordings
+cd %PALETTE_SOURCE%\data_omnisphere\recordings

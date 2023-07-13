@@ -303,7 +303,7 @@ func (quadpro *QuadPro) loadQuadRand() error {
 
 func (quadpro *QuadPro) Load(category string, filename string) error {
 
-	path, err := SavedFilePath(category, filename)
+	path, err := ReadableSavedFilePath(category, filename, ".json")
 	if err != nil {
 		LogIfError(err)
 		return err
@@ -388,7 +388,7 @@ func (quadpro *QuadPro) save(category string, filename string) (err error) {
 func (quadpro *QuadPro) saveQuad(quadName string) error {
 
 	category := "quad"
-	path, err := WritableFilePath(category, quadName)
+	path, err := WritableSavedFilePath(category, quadName, ".json")
 	if err != nil {
 		LogIfError(err)
 		return err
