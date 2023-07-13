@@ -76,7 +76,7 @@ func InitEngine() {
 	TheMidiIO = NewMidiIO()
 	TheErae = NewErae()
 
-	ResetLogTypes(os.Getenv("PALETTE_LOG"))
+	InitLogTypes()
 
 	// Set all the default engine.* values
 	for nm, pd := range ParamDefs {

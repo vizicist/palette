@@ -1,0 +1,704 @@
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-07-12 11:38:08","logname":"engine","click":0,"loglevel":"info"}
+{"uptime":"0.040049","msg":"Engine.Start","click":0,"loglevel":"info"}
+{"uptime":"0.040049","msg":"Initialized MIDI","outports":"[0] Microsoft GS Wavetable Synth 0\n[1] Sensel MIDI 1\n[2] Sensel MIDI 2\n[3] Komplete Kontrol DAW - 1 3\n[4] Sensel MIDI 4\n[5] Sensel MIDI 5\n[6] 01. Internal MIDI 6\n[7] 02. Internal MIDI 7\n[8] 03. Internal MIDI 8\n[9] 04. Internal MIDI 9\n[10] 05. Internal MIDI 10\n[11] 06. Internal MIDI 11\n[12] 07. Internal MIDI 12\n[13] 08. Internal MIDI 13\n[14] 09. Internal MIDI 14\n[15] 10. Internal MIDI 15\n[16] 11. Internal MIDI 16\n[17] 12. Internal MIDI 17\n[18] 13. Internal MIDI 18\n[19] 14. Internal MIDI 19\n[20] 15. Internal MIDI 20\n[21] 16. Internal MIDI 21\n[22] MIDI function 22\n[23] KOMPLETE KONTROL - 1 23\n[24] KOMPLETE KONTROL EXT - 1 24\n","click":0,"loglevel":"info"}
+{"uptime":"0.040549","msg":"Synths loaded","len":193,"click":0,"loglevel":"info"}
+{"uptime":"0.042049","msg":"QuadPro.Load","category":"quad","filename":"_Current","click":0,"loglevel":"info"}
+{"uptime":"0.109628","msg":"Scheduler begins","click":0,"loglevel":"info"}
+{"uptime":"0.109628","msg":"No MIDI input port has been selected","click":0,"loglevel":"warn"}
+{"uptime":"0.692076","msg":"Morph Opened and Started","idx":0,"serial":"SM01174814333","firmware":"0.19.42","click":133,"loglevel":"info"}
+{"uptime":"1.006831","msg":"Morph Opened and Started","idx":1,"serial":"SM01182717093","firmware":"0.19.42","click":193,"loglevel":"info"}
+{"uptime":"1.322617","msg":"Morph Opened and Started","idx":2,"serial":"SM01182717004","firmware":"0.19.42","click":254,"loglevel":"info"}
+{"uptime":"1.642398","msg":"Morph Opened and Started","idx":3,"serial":"SM01182717159","firmware":"0.19.42","click":315,"loglevel":"info"}
+{"uptime":"2.343653","msg":"CheckAutorestartProcesses: Restarting","process":"resolume","click":450,"loglevel":"info"}
+{"uptime":"2.574349","msg":"StartRunning","path":"C:/Program Files/Resolume Avenue/Avenue.exe","arg":"","lenarg":0,"click":494,"loglevel":"info"}
+{"uptime":"2.574349","msg":"StartExecutableLogOutput","executable":"C:/Program Files/Resolume Avenue/Avenue.exe","click":494,"loglevel":"info"}
+{"uptime":"2.823268","msg":"CheckAutorestartProcesses: Restarting","process":"gui","click":542,"loglevel":"info"}
+{"uptime":"3.094311","msg":"StartRunning","path":"C:/Program Files/Palette/bin/pyinstalled/palette_gui.exe","arg":"","lenarg":0,"click":594,"loglevel":"info"}
+{"uptime":"3.094311","msg":"StartExecutableLogOutput","executable":"C:/Program Files/Palette/bin/pyinstalled/palette_gui.exe","click":594,"loglevel":"info"}
+{"uptime":"3.359267","msg":"CheckAutorestartProcesses: Restarting","process":"bidule","click":645,"loglevel":"info"}
+{"uptime":"3.516440","msg":"ExecutableOutput","exe":"gui","output":"GUI started\r\n","click":675,"loglevel":"info"}
+{"uptime":"3.516440","msg":"ExecutableOutput","exe":"gui","output":"ProGuiApp guisize= small\r\n","click":675,"loglevel":"info"}
+{"uptime":"3.516440","msg":"ExecutableOutput","exe":"gui","output":"PALETTE_GUI_LEVEL env = 0\r\nsetGuiLevel, GuiLevel =  0\r\n","click":675,"loglevel":"info"}
+{"uptime":"3.670123","msg":"StartRunning","path":"C:/Program Files/Plogue/Bidule/Bidule.exe","arg":"C:\\Users\\tjt\\Documents\\Github\\palette\\data_omnisphere\\config\\default.bidule","lenarg":75,"click":705,"loglevel":"info"}
+{"uptime":"3.670123","msg":"StartExecutableLogOutput","executable":"C:/Program Files/Plogue/Bidule/Bidule.exe","click":705,"loglevel":"info"}
+{"uptime":"3.737064","msg":"ExecutableOutput","exe":"gui","output":"Reading C:\\Users\\tjt\\Documents\\Github\\palette\\data_omnisphere\\config\\paramdefs.json\r\n","click":717,"loglevel":"info"}
+{"uptime":"5.321708","msg":"ExecutableOutput","exe":"gui","output":"COMPLETE RESET\r\n","click":1021,"loglevel":"info"}
+{"uptime":"5.321708","msg":"ExecutableOutput","exe":"gui","output":"setGuiLevel, GuiLevel =  0\r\n","click":1021,"loglevel":"info"}
+{"uptime":"5.366249","msg":"ExecutableOutput","exe":"resolume","output":"Could not find preset with id 1263297484 for KeyboardShortcutManagerShortcuts\r\n","click":1030,"loglevel":"info"}
+{"uptime":"5.366249","msg":"ExecutableOutput","exe":"resolume","output":"Could not find preset with id 1263297487 for MIDIShortcutManagerShortcuts\r\nCould not find preset with id 1263297489 for OSCShortcutManagerShortcuts\r\n","click":1030,"loglevel":"info"}
+{"uptime":"5.408352","msg":"ExecutableOutput","exe":"resolume","output":"Logging input channels:\r\n","click":1038,"loglevel":"info"}
+{"uptime":"5.408352","msg":"ExecutableOutput","exe":"resolume","output":"\tFFT: 0\r\nLogging output channels:\r\n\tMaster: 3\r\n\tPreview: 0\r\n","click":1038,"loglevel":"info"}
+{"uptime":"5.507910","msg":"ExecutableOutput","exe":"gui","output":"loopingOff\r\n","click":1057,"loglevel":"info"}
+{"uptime":"5.798854","msg":"ExecutableOutput","exe":"gui","output":"softResetAll\r\n","click":1113,"loglevel":"info"}
+{"uptime":"5.874941","msg":"ExecutableOutput","exe":"gui","output":"guisize= small\r\n","click":1128,"loglevel":"info"}
+{"uptime":"5.874941","msg":"ExecutableOutput","exe":"gui","output":"PALETTEAPP size =  {'width': 400, 'height': 640}\r\n","click":1128,"loglevel":"info"}
+{"uptime":"6.876395","msg":"ExecutableOutput","exe":"gui","output":"Resizing GUI, guisize= small  cmd= nircmdc.exe win setsize stitle \"Palette Control\" 0 0 400 640\r\n","click":1320,"loglevel":"info"}
+{"uptime":"6.992153","msg":"ExecutableOutput","exe":"gui","output":"startNormalMode\r\n","click":1342,"loglevel":"info"}
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-07-12 11:45:54","logname":"engine","click":0,"loglevel":"info"}
+{"uptime":"0.039983","msg":"Engine.Start","click":0,"loglevel":"info"}
+{"uptime":"0.039983","msg":"Initialized MIDI","outports":"[0] Microsoft GS Wavetable Synth 0\n[1] Sensel MIDI 1\n[2] Sensel MIDI 2\n[3] Komplete Kontrol DAW - 1 3\n[4] Sensel MIDI 4\n[5] Sensel MIDI 5\n[6] 01. Internal MIDI 6\n[7] 02. Internal MIDI 7\n[8] 03. Internal MIDI 8\n[9] 04. Internal MIDI 9\n[10] 05. Internal MIDI 10\n[11] 06. Internal MIDI 11\n[12] 07. Internal MIDI 12\n[13] 08. Internal MIDI 13\n[14] 09. Internal MIDI 14\n[15] 10. Internal MIDI 15\n[16] 11. Internal MIDI 16\n[17] 12. Internal MIDI 17\n[18] 13. Internal MIDI 18\n[19] 14. Internal MIDI 19\n[20] 15. Internal MIDI 20\n[21] 16. Internal MIDI 21\n[22] MIDI function 22\n[23] KOMPLETE KONTROL - 1 23\n[24] KOMPLETE KONTROL EXT - 1 24\n","click":0,"loglevel":"info"}
+{"uptime":"0.040985","msg":"Synths loaded","len":193,"click":0,"loglevel":"info"}
+{"uptime":"0.041985","msg":"QuadPro.Load","category":"quad","filename":"_Current","click":0,"loglevel":"info"}
+{"uptime":"0.109677","msg":"Scheduler begins","click":0,"loglevel":"info"}
+{"uptime":"0.109677","msg":"No MIDI input port has been selected","click":0,"loglevel":"warn"}
+{"uptime":"0.693086","msg":"Morph Opened and Started","idx":0,"serial":"SM01174814333","firmware":"0.19.42","click":133,"loglevel":"info"}
+{"uptime":"1.010759","msg":"Morph Opened and Started","idx":1,"serial":"SM01182717093","firmware":"0.19.42","click":194,"loglevel":"info"}
+{"uptime":"1.328231","msg":"Morph Opened and Started","idx":2,"serial":"SM01182717004","firmware":"0.19.42","click":255,"loglevel":"info"}
+{"uptime":"1.647594","msg":"Morph Opened and Started","idx":3,"serial":"SM01182717159","firmware":"0.19.42","click":316,"loglevel":"info"}
+{"uptime":"2.574976","msg":"CheckAutorestartProcesses: Restarting","process":"resolume","click":494,"loglevel":"info"}
+{"uptime":"2.883407","msg":"StartRunning","path":"C:/Program Files/Resolume Avenue/Avenue.exe","arg":"","lenarg":0,"click":553,"loglevel":"info"}
+{"uptime":"2.883407","msg":"StartExecutableLogOutput","executable":"C:/Program Files/Resolume Avenue/Avenue.exe","click":553,"loglevel":"info"}
+{"uptime":"3.202794","msg":"CheckAutorestartProcesses: Restarting","process":"gui","click":615,"loglevel":"info"}
+{"uptime":"3.456584","msg":"StartRunning","path":"C:/Program Files/Palette/bin/pyinstalled/palette_gui.exe","arg":"","lenarg":0,"click":664,"loglevel":"info"}
+{"uptime":"3.456584","msg":"StartExecutableLogOutput","executable":"C:/Program Files/Palette/bin/pyinstalled/palette_gui.exe","click":664,"loglevel":"info"}
+{"uptime":"3.876260","msg":"ExecutableOutput","exe":"gui","output":"GUI started\r\n","click":744,"loglevel":"info"}
+{"uptime":"3.876260","msg":"ExecutableOutput","exe":"gui","output":"ProGuiApp guisize= small\r\n","click":744,"loglevel":"info"}
+{"uptime":"3.876260","msg":"ExecutableOutput","exe":"gui","output":"PALETTE_GUI_LEVEL env = 0\r\nsetGuiLevel, GuiLevel =  0\r\n","click":744,"loglevel":"info"}
+{"uptime":"4.009425","msg":"CheckAutorestartProcesses: Restarting","process":"bidule","click":770,"loglevel":"info"}
+{"uptime":"4.085410","msg":"ExecutableOutput","exe":"gui","output":"Reading C:\\Users\\tjt\\Documents\\Github\\palette\\data_omnisphere\\config\\paramdefs.json\r\n","click":784,"loglevel":"info"}
+{"uptime":"4.378699","msg":"StartRunning","path":"C:/Program Files/Plogue/Bidule/Bidule.exe","arg":"C:\\Users\\tjt\\Documents\\Github\\palette\\data_omnisphere\\config\\default.bidule","lenarg":75,"click":841,"loglevel":"info"}
+{"uptime":"4.378699","msg":"StartExecutableLogOutput","executable":"C:/Program Files/Plogue/Bidule/Bidule.exe","click":841,"loglevel":"info"}
+{"uptime":"5.721323","msg":"ExecutableOutput","exe":"resolume","output":"Could not find preset with id 1264945832 for KeyboardShortcutManagerShortcuts\r\n","click":1098,"loglevel":"info"}
+{"uptime":"5.721323","msg":"ExecutableOutput","exe":"resolume","output":"Could not find preset with id 1264945835 for MIDIShortcutManagerShortcuts\r\nCould not find preset with id 1264945837 for OSCShortcutManagerShortcuts\r\n","click":1098,"loglevel":"info"}
+{"uptime":"5.751081","msg":"ExecutableOutput","exe":"gui","output":"COMPLETE RESET\r\n","click":1104,"loglevel":"info"}
+{"uptime":"5.751081","msg":"ExecutableOutput","exe":"gui","output":"setGuiLevel, GuiLevel =  0\r\n","click":1104,"loglevel":"info"}
+{"uptime":"5.762587","msg":"ExecutableOutput","exe":"resolume","output":"Logging input channels:\r\n","click":1106,"loglevel":"info"}
+{"uptime":"5.762587","msg":"ExecutableOutput","exe":"resolume","output":"\tFFT: 0\r\nLogging output channels:\r\n\tMaster: 3\r\n\tPreview: 0\r\n","click":1106,"loglevel":"info"}
+{"uptime":"5.928686","msg":"ExecutableOutput","exe":"gui","output":"loopingOff\r\n","click":1138,"loglevel":"info"}
+{"uptime":"6.190800","msg":"ExecutableOutput","exe":"gui","output":"softResetAll\r\n","click":1189,"loglevel":"info"}
+{"uptime":"6.277820","msg":"ExecutableOutput","exe":"gui","output":"guisize= small\r\n","click":1205,"loglevel":"info"}
+{"uptime":"6.277820","msg":"ExecutableOutput","exe":"gui","output":"PALETTEAPP size =  {'width': 400, 'height': 640}\r\n","click":1205,"loglevel":"info"}
+{"uptime":"7.282981","msg":"ExecutableOutput","exe":"gui","output":"Resizing GUI, guisize= small  cmd= nircmdc.exe win setsize stitle \"Palette Control\" 0 0 400 640\r\n","click":1398,"loglevel":"info"}
+{"uptime":"7.384524","msg":"ExecutableOutput","exe":"gui","output":"startNormalMode\r\n","click":1418,"loglevel":"info"}
+{"uptime":"16.617221","msg":"ExecutableOutput","exe":"gui","output":"Loading category quad filename Diagonal_Fantasy\r\n","click":3190,"loglevel":"info"}
+{"uptime":"16.617721","msg":"setAttractMode already in mode","onoff":false,"click":3191,"loglevel":"warn"}
+{"uptime":"16.622221","msg":"QuadPro.Load","category":"quad","filename":"Diagonal_Fantasy","click":3191,"loglevel":"info"}
+{"uptime":"16.705558","msg":"ExecutableOutput","exe":"gui","output":"loopingOff\r\n","click":3207,"loglevel":"info"}
+{"uptime":"50.828625","msg":"ExecutableOutput","exe":"gui","output":"startHelpMode\r\n","click":9759,"loglevel":"info"}
+{"uptime":"52.821099","msg":"ExecutableOutput","exe":"gui","output":"setGuiLevel, GuiLevel =  1\r\n","click":10142,"loglevel":"info"}
+{"uptime":"52.823106","msg":"ExecutableOutput","exe":"gui","output":"cycleGuiLevel, GuiLevel is now  1\r\n","click":10142,"loglevel":"info"}
+{"uptime":"52.928658","msg":"ExecutableOutput","exe":"gui","output":"startNormalMode\r\n","click":10162,"loglevel":"info"}
+{"uptime":"87.206752","msg":"setAttractMode","onoff":true,"click":16744,"loglevel":"info"}
+{"uptime":"87.217942","msg":"QuadPro.Load","category":"quad","filename":"{Colorful_Moire","click":16744,"loglevel":"info"}
+{"uptime":"87.370925","msg":"ExecutableOutput","exe":"gui","output":"Turning Attract Mode On!\r\n","click":16775,"loglevel":"info"}
+{"uptime":"87.371928","msg":"ExecutableOutput","exe":"gui","output":"startAttractMode\r\n","click":16775,"loglevel":"info"}
+{"uptime":"87.384942","msg":"ExecutableOutput","exe":"gui","output":"softResetAll\r\n","click":16778,"loglevel":"info"}
+{"uptime":"101.852005","msg":"ExecutableOutput","exe":"gui","output":"Screen pressed, stopping attract mode\r\n","click":19556,"loglevel":"info"}
+{"uptime":"101.852508","msg":"ExecutableOutput","exe":"gui","output":"loopingOff\r\n","click":19556,"loglevel":"info"}
+{"uptime":"102.071023","msg":"setAttractMode","onoff":false,"click":19597,"loglevel":"info"}
+{"uptime":"102.072024","msg":"ExecutableOutput","exe":"gui","output":"softResetAll\r\n","click":19597,"loglevel":"info"}
+{"uptime":"102.166667","msg":"ExecutableOutput","exe":"gui","output":"startNormalMode\r\n","click":19616,"loglevel":"info"}
+{"uptime":"110.268473","msg":"ExecutableOutput","exe":"gui","output":"Loading category quad filename Jigsaw_Puzzles\r\n","click":21171,"loglevel":"info"}
+{"uptime":"110.269473","msg":"setAttractMode already in mode","onoff":false,"click":21172,"loglevel":"warn"}
+{"uptime":"110.275474","msg":"QuadPro.Load","category":"quad","filename":"Jigsaw_Puzzles","click":21173,"loglevel":"info"}
+{"uptime":"110.353758","msg":"ExecutableOutput","exe":"gui","output":"loopingOff\r\n","click":21188,"loglevel":"info"}
+{"uptime":"179.348111","msg":"setAttractMode","onoff":true,"click":34435,"loglevel":"info"}
+{"uptime":"179.361627","msg":"QuadPro.Load","category":"quad","filename":"{Only_Orange","click":34435,"loglevel":"info"}
+{"uptime":"180.611239","msg":"ExecutableOutput","exe":"gui","output":"Turning Attract Mode On!\r\n","click":34677,"loglevel":"info"}
+{"uptime":"180.612239","msg":"ExecutableOutput","exe":"gui","output":"startAttractMode\r\n","click":34677,"loglevel":"info"}
+{"uptime":"180.619246","msg":"ExecutableOutput","exe":"gui","output":"softResetAll\r\n","click":34679,"loglevel":"info"}
+{"uptime":"209.359716","msg":"QuadPro.Load","category":"quad","filename":"{Dancing Fields_Of Space","click":40195,"loglevel":"info"}
+{"uptime":"239.368409","msg":"QuadPro.Load","category":"quad","filename":"{World Wide_Webs","click":45956,"loglevel":"info"}
+{"uptime":"269.364130","msg":"QuadPro.Load","category":"quad","filename":"{Spiral Moire_Universe","click":51716,"loglevel":"info"}
+{"uptime":"299.368412","msg":"QuadPro.Load","category":"quad","filename":"{Square_Fantasia","click":57477,"loglevel":"info"}
+{"uptime":"329.371443","msg":"QuadPro.Load","category":"quad","filename":"{(!) Compliment_Tree Colors","click":63237,"loglevel":"info"}
+{"uptime":"359.383474","msg":"QuadPro.Load","category":"quad","filename":"{(!) East West_North South","click":68998,"loglevel":"info"}
+{"uptime":"389.381539","msg":"QuadPro.Load","category":"quad","filename":"{Shapely_Shadows","click":74759,"loglevel":"info"}
+{"uptime":"419.386048","msg":"QuadPro.Load","category":"quad","filename":"{All Out_Kaleid","click":80520,"loglevel":"info"}
+{"uptime":"449.384798","msg":"QuadPro.Load","category":"quad","filename":"Quick Scat_Circles","click":86280,"loglevel":"info"}
+{"uptime":"479.384667","msg":"QuadPro.Load","category":"quad","filename":"{Cloudy_Elevations","click":92040,"loglevel":"info"}
+{"uptime":"509.409793","msg":"QuadPro.Load","category":"quad","filename":"{Just_Wright","click":97801,"loglevel":"info"}
+{"uptime":"539.393156","msg":"QuadPro.Load","category":"quad","filename":"_override","click":103562,"loglevel":"info"}
+{"uptime":"542.086840","msg":"setAttractMode","onoff":false,"click":104080,"loglevel":"info"}
+{"uptime":"544.178638","msg":"ExecutableOutput","exe":"gui","output":"Turning Attract Mode Off!\r\n","click":104482,"loglevel":"info"}
+{"uptime":"544.180635","msg":"ExecutableOutput","exe":"gui","output":"startNormalMode\r\n","click":104483,"loglevel":"info"}
+{"uptime":"610.102275","msg":"setAttractMode","onoff":true,"click":117140,"loglevel":"info"}
+{"uptime":"610.114809","msg":"QuadPro.Load","category":"quad","filename":"{Simply_Mellow","click":117140,"loglevel":"info"}
+{"uptime":"610.275163","msg":"ExecutableOutput","exe":"gui","output":"Turning Attract Mode On!\r\n","click":117173,"loglevel":"info"}
+{"uptime":"610.276161","msg":"ExecutableOutput","exe":"gui","output":"startAttractMode\r\n","click":117173,"loglevel":"info"}
+{"uptime":"610.281664","msg":"ExecutableOutput","exe":"gui","output":"softResetAll\r\n","click":117174,"loglevel":"info"}
+{"uptime":"636.092027","msg":"setAttractMode","onoff":false,"click":122129,"loglevel":"info"}
+{"uptime":"636.092527","msg":"HEY!, saw pendingSchedule with tag prefix!","prefix":"C","se":{"AAtClick":122129,"Tag":"C","Value":{"Click":122129,"Gid":1,"Tag":"C","Ddu":"drag","Pos":{"X":0.47659647,"Y":0.3458233,"Z":0.128125},"Area":181}},"click":122129,"loglevel":"info"}
+{"uptime":"636.093027","msg":"HEY!, saw pendingSchedule with tag prefix!","prefix":"C","se":{"AAtClick":122129,"Tag":"C","Value":{"Click":122129,"Gid":2,"Tag":"C","Ddu":"drag","Pos":{"X":0.3774796,"Y":0.33942306,"Z":0.069625},"Area":110}},"click":122129,"loglevel":"info"}
+{"uptime":"637.306173","msg":"ExecutableOutput","exe":"gui","output":"Turning Attract Mode Off!\r\n","click":122363,"loglevel":"info"}
+{"uptime":"637.307672","msg":"ExecutableOutput","exe":"gui","output":"startNormalMode\r\n","click":122363,"loglevel":"info"}
+{"uptime":"736.290440","msg":"setAttractMode","onoff":true,"click":141368,"loglevel":"info"}
+{"uptime":"736.297941","msg":"QuadPro.Load","category":"quad","filename":"Diagonal_Fantasy","click":141368,"loglevel":"info"}
+{"uptime":"736.479761","msg":"ExecutableOutput","exe":"gui","output":"Turning Attract Mode On!\r\n","click":141404,"loglevel":"info"}
+{"uptime":"736.480759","msg":"ExecutableOutput","exe":"gui","output":"startAttractMode\r\n","click":141404,"loglevel":"info"}
+{"uptime":"736.487261","msg":"ExecutableOutput","exe":"gui","output":"softResetAll\r\n","click":141405,"loglevel":"info"}
+{"uptime":"766.308120","msg":"QuadPro.Load","category":"quad","filename":"Fluorescent_Borealis","click":147129,"loglevel":"info"}
+{"uptime":"796.310204","msg":"QuadPro.Load","category":"quad","filename":"{Colored_Echoes","click":152889,"loglevel":"info"}
+{"uptime":"826.312284","msg":"QuadPro.Load","category":"quad","filename":"{Blue Purple_Cartoon Clouds","click":158650,"loglevel":"info"}
+{"uptime":"856.312467","msg":"QuadPro.Load","category":"quad","filename":"All Out_Kaleid","click":164410,"loglevel":"info"}
+{"uptime":"886.308177","msg":"QuadPro.Load","category":"quad","filename":"{Spiral Moire_Universe","click":170170,"loglevel":"info"}
+{"uptime":"916.311315","msg":"QuadPro.Load","category":"quad","filename":"{Blue Purple_Cartoon Clouds","click":175931,"loglevel":"info"}
+{"uptime":"946.313663","msg":"QuadPro.Load","category":"quad","filename":"_override","click":181691,"loglevel":"info"}
+{"uptime":"976.324974","msg":"QuadPro.Load","category":"quad","filename":"{(!) I Can See_Thru Time","click":187452,"loglevel":"info"}
+{"uptime":"1006.323255","msg":"QuadPro.Load","category":"quad","filename":"{World Wide_Webs","click":193213,"loglevel":"info"}
+{"uptime":"1036.323322","msg":"QuadPro.Load","category":"quad","filename":"{All Out_Kaleid","click":198973,"loglevel":"info"}
+{"uptime":"1066.336350","msg":"QuadPro.Load","category":"quad","filename":"Jigsaw_Puzzles","click":204733,"loglevel":"info"}
+{"uptime":"1096.334797","msg":"QuadPro.Load","category":"quad","filename":"{All Drums_Squares","click":210494,"loglevel":"info"}
+{"uptime":"1126.343652","msg":"QuadPro.Load","category":"quad","filename":"Perky_Clouds","click":216255,"loglevel":"info"}
+{"uptime":"1156.343161","msg":"QuadPro.Load","category":"quad","filename":"Layered_Elevations","click":222015,"loglevel":"info"}
+{"uptime":"1186.352783","msg":"QuadPro.Load","category":"quad","filename":"{Dancing_With Lines","click":227776,"loglevel":"info"}
+{"uptime":"1216.349627","msg":"QuadPro.Load","category":"quad","filename":"{All Out_Kaleid","click":233537,"loglevel":"info"}
+{"uptime":"1246.348748","msg":"QuadPro.Load","category":"quad","filename":"{(!) Compliment_Tree Colors","click":239298,"loglevel":"info"}
+{"uptime":"1276.350501","msg":"QuadPro.Load","category":"quad","filename":"Jigsaw_Puzzles","click":245058,"loglevel":"info"}
+{"uptime":"1306.355250","msg":"QuadPro.Load","category":"quad","filename":"{Square_Fantasia","click":250819,"loglevel":"info"}
+{"uptime":"1336.359578","msg":"QuadPro.Load","category":"quad","filename":"Quick Scat_Circles","click":256580,"loglevel":"info"}
+{"uptime":"1366.369269","msg":"QuadPro.Load","category":"quad","filename":"Ghost Note_All Drums","click":262340,"loglevel":"info"}
+{"uptime":"1396.369037","msg":"QuadPro.Load","category":"quad","filename":"{(!) Voltrons_Garage","click":268101,"loglevel":"info"}
+{"uptime":"1426.372650","msg":"QuadPro.Load","category":"quad","filename":"Infinite_Layers","click":273861,"loglevel":"info"}
+{"uptime":"1456.374139","msg":"QuadPro.Load","category":"quad","filename":"Vocal_Linescape","click":279622,"loglevel":"info"}
+{"uptime":"1486.369148","msg":"QuadPro.Load","category":"quad","filename":"Vocal_Linescape","click":285382,"loglevel":"info"}
+{"uptime":"1516.375141","msg":"QuadPro.Load","category":"quad","filename":"Too Many_Triangles","click":291142,"loglevel":"info"}
+{"uptime":"1546.381930","msg":"QuadPro.Load","category":"quad","filename":"{Infinite_Layers","click":296903,"loglevel":"info"}
+{"uptime":"1576.382889","msg":"QuadPro.Load","category":"quad","filename":"{Simply_Mellow","click":302664,"loglevel":"info"}
+{"uptime":"1606.390074","msg":"QuadPro.Load","category":"quad","filename":"{All Drums 2_Squares","click":308425,"loglevel":"info"}
+{"uptime":"1636.390378","msg":"QuadPro.Load","category":"quad","filename":"All Scat_Color Mix","click":314185,"loglevel":"info"}
+{"uptime":"1666.395196","msg":"QuadPro.Load","category":"quad","filename":"World Wide_Webs","click":319946,"loglevel":"info"}
+{"uptime":"1696.408853","msg":"QuadPro.Load","category":"quad","filename":"{Spiral Moire_Universe","click":325707,"loglevel":"info"}
+{"uptime":"1726.400957","msg":"QuadPro.Load","category":"quad","filename":"{Perky_Clouds","click":331467,"loglevel":"info"}
+{"uptime":"1756.402654","msg":"QuadPro.Load","category":"quad","filename":"Colored_Echoes","click":337227,"loglevel":"info"}
+{"uptime":"1786.398338","msg":"QuadPro.Load","category":"quad","filename":"Jigsaw_Puzzles","click":342987,"loglevel":"info"}
+{"uptime":"1816.406235","msg":"QuadPro.Load","category":"quad","filename":"{Playful_Plucks","click":348748,"loglevel":"info"}
+{"uptime":"1846.406303","msg":"QuadPro.Load","category":"quad","filename":"{(!) Uncarved_Block","click":354508,"loglevel":"info"}
+{"uptime":"1876.411831","msg":"QuadPro.Load","category":"quad","filename":"Diagonal_Fantasy","click":360269,"loglevel":"info"}
+{"uptime":"1906.414604","msg":"QuadPro.Load","category":"quad","filename":"{Ghostly_Shapes","click":366029,"loglevel":"info"}
+{"uptime":"1936.412034","msg":"QuadPro.Load","category":"quad","filename":"Infinite_Layers","click":371790,"loglevel":"info"}
+{"uptime":"1966.415047","msg":"QuadPro.Load","category":"quad","filename":"{Geographic_Travels","click":377550,"loglevel":"info"}
+{"uptime":"1996.423847","msg":"QuadPro.Load","category":"quad","filename":"Spiral Moire_Universe","click":383311,"loglevel":"info"}
+{"uptime":"2026.416349","msg":"QuadPro.Load","category":"quad","filename":"{(!) Compliment_Tree Colors","click":389071,"loglevel":"info"}
+{"uptime":"2056.422899","msg":"QuadPro.Load","category":"quad","filename":"{Dancing Fields_Of Space","click":394831,"loglevel":"info"}
+{"uptime":"2086.427549","msg":"QuadPro.Load","category":"quad","filename":"{Only_Orange","click":400592,"loglevel":"info"}
+{"uptime":"2116.423489","msg":"QuadPro.Load","category":"quad","filename":"{Square_Fantasia","click":406352,"loglevel":"info"}
+{"uptime":"2146.431351","msg":"QuadPro.Load","category":"quad","filename":"{(!) East West_North South","click":412113,"loglevel":"info"}
+{"uptime":"2176.428584","msg":"QuadPro.Load","category":"quad","filename":"World Wide_Webs","click":417873,"loglevel":"info"}
+{"uptime":"2206.438359","msg":"QuadPro.Load","category":"quad","filename":"All Scat_Color Trails","click":423634,"loglevel":"info"}
+{"uptime":"2236.438300","msg":"QuadPro.Load","category":"quad","filename":"All_Moire","click":429394,"loglevel":"info"}
+{"uptime":"2266.442912","msg":"QuadPro.Load","category":"quad","filename":"{Swimming In_Salmon Blue","click":435155,"loglevel":"info"}
+{"uptime":"2296.442990","msg":"QuadPro.Load","category":"quad","filename":"All_Moire","click":440916,"loglevel":"info"}
+{"uptime":"2326.443348","msg":"QuadPro.Load","category":"quad","filename":"Infinite_Layers","click":446676,"loglevel":"info"}
+{"uptime":"2356.446634","msg":"QuadPro.Load","category":"quad","filename":"Ghost Note_All Drums","click":452437,"loglevel":"info"}
+{"uptime":"2386.449371","msg":"QuadPro.Load","category":"quad","filename":"{Perky_Clouds","click":458197,"loglevel":"info"}
+{"uptime":"2416.457657","msg":"QuadPro.Load","category":"quad","filename":"_override","click":463958,"loglevel":"info"}
+{"uptime":"2446.453208","msg":"QuadPro.Load","category":"quad","filename":"{(!) East West_North South","click":469718,"loglevel":"info"}
+{"uptime":"2476.458858","msg":"QuadPro.Load","category":"quad","filename":"Jigsaw_Puzzles","click":475479,"loglevel":"info"}
+{"uptime":"2506.462508","msg":"QuadPro.Load","category":"quad","filename":"{Fluorescent_Borealis","click":481239,"loglevel":"info"}
+{"uptime":"2536.469329","msg":"QuadPro.Load","category":"quad","filename":"{Colorful_Moire","click":487000,"loglevel":"info"}
+{"uptime":"2566.475544","msg":"QuadPro.Load","category":"quad","filename":"{(!) I Can See_Thru Time","click":492761,"loglevel":"info"}
+{"uptime":"2596.476388","msg":"QuadPro.Load","category":"quad","filename":"{Dancing_With Lines","click":498522,"loglevel":"info"}
+{"uptime":"2626.478709","msg":"QuadPro.Load","category":"quad","filename":"{Colorful_Moire","click":504283,"loglevel":"info"}
+{"uptime":"2656.484002","msg":"QuadPro.Load","category":"quad","filename":"Fluorescent_Borealis","click":510043,"loglevel":"info"}
+{"uptime":"2686.478910","msg":"QuadPro.Load","category":"quad","filename":"{Simply_Mellow","click":515803,"loglevel":"info"}
+{"uptime":"2716.488865","msg":"QuadPro.Load","category":"quad","filename":"{Endless_Twirls","click":521564,"loglevel":"info"}
+{"uptime":"2746.490366","msg":"QuadPro.Load","category":"quad","filename":"Perky_Clouds","click":527325,"loglevel":"info"}
+{"uptime":"2776.494436","msg":"QuadPro.Load","category":"quad","filename":"Ghostly_Shapes","click":533085,"loglevel":"info"}
+{"uptime":"2806.494645","msg":"QuadPro.Load","category":"quad","filename":"Planetary_Layers","click":538845,"loglevel":"info"}
+{"uptime":"2836.497078","msg":"QuadPro.Load","category":"quad","filename":"Infinite_Layers","click":544606,"loglevel":"info"}
+{"uptime":"2866.499502","msg":"QuadPro.Load","category":"quad","filename":"All_Moire","click":550367,"loglevel":"info"}
+{"uptime":"2896.506833","msg":"QuadPro.Load","category":"quad","filename":"Alternate_Dimensions","click":556127,"loglevel":"info"}
+{"uptime":"2926.502119","msg":"QuadPro.Load","category":"quad","filename":"{Spiral Moire_Universe","click":561887,"loglevel":"info"}
+{"uptime":"2956.511407","msg":"QuadPro.Load","category":"quad","filename":"{Colored_Echoes","click":567648,"loglevel":"info"}
+{"uptime":"2986.511479","msg":"QuadPro.Load","category":"quad","filename":"{(!) I Can See_Thru Time","click":573409,"loglevel":"info"}
+{"uptime":"3016.518505","msg":"QuadPro.Load","category":"quad","filename":"{(!) Ready_Player Four","click":579170,"loglevel":"info"}
+{"uptime":"3046.522816","msg":"QuadPro.Load","category":"quad","filename":"{Shapely_Shadows","click":584930,"loglevel":"info"}
+{"uptime":"3076.525646","msg":"QuadPro.Load","category":"quad","filename":"{Vocal_Linescape","click":590691,"loglevel":"info"}
+{"uptime":"3106.527337","msg":"QuadPro.Load","category":"quad","filename":"{(!) Cosmolgcl_Constant","click":596451,"loglevel":"info"}
+{"uptime":"3136.525361","msg":"QuadPro.Load","category":"quad","filename":"{Ghostly_Shapes","click":602212,"loglevel":"info"}
+{"uptime":"3166.525844","msg":"QuadPro.Load","category":"quad","filename":"{All Drums_Squares","click":607972,"loglevel":"info"}
+{"uptime":"3196.531604","msg":"QuadPro.Load","category":"quad","filename":"{(!) Worm_Hole","click":613732,"loglevel":"info"}
+{"uptime":"3226.542338","msg":"QuadPro.Load","category":"quad","filename":"{Diagonal_Fantasy","click":619493,"loglevel":"info"}
+{"uptime":"3256.538405","msg":"QuadPro.Load","category":"quad","filename":"{Playful_Plucks","click":625253,"loglevel":"info"}
+{"uptime":"3286.536170","msg":"QuadPro.Load","category":"quad","filename":"{Shattered_Shapes","click":631013,"loglevel":"info"}
+{"uptime":"3316.543011","msg":"QuadPro.Load","category":"quad","filename":"Infinite_Layers","click":636774,"loglevel":"info"}
+{"uptime":"3346.547569","msg":"QuadPro.Load","category":"quad","filename":"{Simply_Mellow","click":642535,"loglevel":"info"}
+{"uptime":"3376.548044","msg":"QuadPro.Load","category":"quad","filename":"Quick Scat_Circles","click":648296,"loglevel":"info"}
+{"uptime":"3406.554276","msg":"QuadPro.Load","category":"quad","filename":"{(!) East West_North South","click":654057,"loglevel":"info"}
+{"uptime":"3436.564394","msg":"QuadPro.Load","category":"quad","filename":"Perky_McPerkFace","click":659818,"loglevel":"info"}
+{"uptime":"3466.558113","msg":"QuadPro.Load","category":"quad","filename":"{Swimming In_Salmon Blue","click":665578,"loglevel":"info"}
+{"uptime":"3496.563574","msg":"QuadPro.Load","category":"quad","filename":"{Vocal_Linescape","click":671339,"loglevel":"info"}
+{"uptime":"3526.561879","msg":"QuadPro.Load","category":"quad","filename":"{Spiral Moire_Universe","click":677099,"loglevel":"info"}
+{"uptime":"3556.571110","msg":"QuadPro.Load","category":"quad","filename":"Filagree_Dance","click":682859,"loglevel":"info"}
+{"uptime":"3586.564616","msg":"QuadPro.Load","category":"quad","filename":"Ghost Note_All Drums","click":688619,"loglevel":"info"}
+{"uptime":"3616.574305","msg":"QuadPro.Load","category":"quad","filename":"All Out_Kaleid","click":694380,"loglevel":"info"}
+{"uptime":"3646.577353","msg":"QuadPro.Load","category":"quad","filename":"Endless_Twirls","click":700141,"loglevel":"info"}
+{"uptime":"3676.577605","msg":"QuadPro.Load","category":"quad","filename":"{All Scat_Squares","click":705901,"loglevel":"info"}
+{"uptime":"3706.578790","msg":"QuadPro.Load","category":"quad","filename":"{(!) Voltrons_Garage","click":711662,"loglevel":"info"}
+{"uptime":"3736.583948","msg":"QuadPro.Load","category":"quad","filename":"{Vocal_Linescape","click":717423,"loglevel":"info"}
+{"uptime":"3766.591766","msg":"QuadPro.Load","category":"quad","filename":"{Colored_Echoes","click":723184,"loglevel":"info"}
+{"uptime":"3796.599164","msg":"QuadPro.Load","category":"quad","filename":"{World Wide_Webs","click":728945,"loglevel":"info"}
+{"uptime":"3826.598776","msg":"QuadPro.Load","category":"quad","filename":"{All Out_Kaleid","click":734706,"loglevel":"info"}
+{"uptime":"3856.604178","msg":"QuadPro.Load","category":"quad","filename":"{Colorful_Moire","click":740467,"loglevel":"info"}
+{"uptime":"3886.603796","msg":"QuadPro.Load","category":"quad","filename":"_override","click":746227,"loglevel":"info"}
+{"uptime":"3916.608986","msg":"QuadPro.Load","category":"quad","filename":"{(!) I Can See_Thru Time","click":751988,"loglevel":"info"}
+{"uptime":"3946.610301","msg":"QuadPro.Load","category":"quad","filename":"All Out_Kaleid","click":757748,"loglevel":"info"}
+{"uptime":"3976.610501","msg":"QuadPro.Load","category":"quad","filename":"Quick Scat_Circles","click":763508,"loglevel":"info"}
+{"uptime":"4006.615572","msg":"QuadPro.Load","category":"quad","filename":"Spiral Moire_Universe","click":769269,"loglevel":"info"}
+{"uptime":"4036.623507","msg":"QuadPro.Load","category":"quad","filename":"Psychonaut_Outlines","click":775030,"loglevel":"info"}
+{"uptime":"4066.621546","msg":"QuadPro.Load","category":"quad","filename":"_override","click":780790,"loglevel":"info"}
+{"uptime":"4096.627089","msg":"QuadPro.Load","category":"quad","filename":"{Only_Orange","click":786551,"loglevel":"info"}
+{"uptime":"4126.632584","msg":"QuadPro.Load","category":"quad","filename":"Psychonaut_Solids","click":792311,"loglevel":"info"}
+{"uptime":"4156.630698","msg":"QuadPro.Load","category":"quad","filename":"{World Wide_Webs","click":798072,"loglevel":"info"}
+{"uptime":"4186.631369","msg":"QuadPro.Load","category":"quad","filename":"{(!) Voltrons_Garage","click":803832,"loglevel":"info"}
+{"uptime":"4216.637815","msg":"QuadPro.Load","category":"quad","filename":"{Blue Purple_Cartoon Clouds","click":809592,"loglevel":"info"}
+{"uptime":"4246.636413","msg":"QuadPro.Load","category":"quad","filename":"All_Moire","click":815353,"loglevel":"info"}
+{"uptime":"4276.643466","msg":"QuadPro.Load","category":"quad","filename":"{Shapely_Shadows","click":821114,"loglevel":"info"}
+{"uptime":"4306.645222","msg":"QuadPro.Load","category":"quad","filename":"Perky_Clouds","click":826875,"loglevel":"info"}
+{"uptime":"4336.647434","msg":"QuadPro.Load","category":"quad","filename":"{Dancing_With Lines","click":832635,"loglevel":"info"}
+{"uptime":"4366.655496","msg":"QuadPro.Load","category":"quad","filename":"{All_Moire","click":838396,"loglevel":"info"}
+{"uptime":"4396.656028","msg":"QuadPro.Load","category":"quad","filename":"{Shapely_Shadows","click":844157,"loglevel":"info"}
+{"uptime":"4426.657920","msg":"QuadPro.Load","category":"quad","filename":"Vocal_Linescape","click":849917,"loglevel":"info"}
+{"uptime":"4456.662562","msg":"QuadPro.Load","category":"quad","filename":"{All Drums 2_Squares","click":855678,"loglevel":"info"}
+{"uptime":"4486.671325","msg":"QuadPro.Load","category":"quad","filename":"{Evolving_Elevations","click":861439,"loglevel":"info"}
+{"uptime":"4516.672399","msg":"QuadPro.Load","category":"quad","filename":"Endless_Twirls","click":867200,"loglevel":"info"}
+{"uptime":"4546.678227","msg":"QuadPro.Load","category":"quad","filename":"{(!) Super_Natural","click":872960,"loglevel":"info"}
+{"uptime":"4576.676214","msg":"QuadPro.Load","category":"quad","filename":"{(!) Cosmolgcl_Constant","click":878721,"loglevel":"info"}
+{"uptime":"4606.682765","msg":"QuadPro.Load","category":"quad","filename":"{All_Moire","click":884481,"loglevel":"info"}
+{"uptime":"4636.681096","msg":"QuadPro.Load","category":"quad","filename":"{Floating_Grains","click":890241,"loglevel":"info"}
+{"uptime":"4666.682860","msg":"QuadPro.Load","category":"quad","filename":"Vocal_Linescape","click":896002,"loglevel":"info"}
+{"uptime":"4696.682936","msg":"QuadPro.Load","category":"quad","filename":"{Geographic_Travels","click":901762,"loglevel":"info"}
+{"uptime":"4726.686967","msg":"QuadPro.Load","category":"quad","filename":"{Playful_Plucks","click":907523,"loglevel":"info"}
+{"uptime":"4756.688328","msg":"QuadPro.Load","category":"quad","filename":"Filagree_Dance","click":913283,"loglevel":"info"}
+{"uptime":"4786.688904","msg":"QuadPro.Load","category":"quad","filename":"{Spiral Moire_Universe","click":919043,"loglevel":"info"}
+{"uptime":"4816.692616","msg":"QuadPro.Load","category":"quad","filename":"Filagree_Dance","click":924804,"loglevel":"info"}
+{"uptime":"4846.694994","msg":"QuadPro.Load","category":"quad","filename":"{Ghostly_Shapes","click":930564,"loglevel":"info"}
+{"uptime":"4876.697888","msg":"QuadPro.Load","category":"quad","filename":"{Floating_Grains","click":936325,"loglevel":"info"}
+{"uptime":"4906.703344","msg":"QuadPro.Load","category":"quad","filename":"All Out_Kaleid","click":942086,"loglevel":"info"}
+{"uptime":"4936.703054","msg":"QuadPro.Load","category":"quad","filename":"Psychonaut_Outlines","click":947846,"loglevel":"info"}
+{"uptime":"4966.708644","msg":"QuadPro.Load","category":"quad","filename":"{Fluorescent_Borealis","click":953607,"loglevel":"info"}
+{"uptime":"4996.709771","msg":"QuadPro.Load","category":"quad","filename":"All Out_Kaleid","click":959367,"loglevel":"info"}
+{"uptime":"5026.716157","msg":"QuadPro.Load","category":"quad","filename":"{Organic_Linescape","click":965128,"loglevel":"info"}
+{"uptime":"5056.718682","msg":"QuadPro.Load","category":"quad","filename":"{(!) Super_Natural","click":970889,"loglevel":"info"}
+{"uptime":"5086.720877","msg":"QuadPro.Load","category":"quad","filename":"All Scat_Color Trails","click":976649,"loglevel":"info"}
+{"uptime":"5116.727081","msg":"QuadPro.Load","category":"quad","filename":"{(!) Simple_Things","click":982410,"loglevel":"info"}
+{"uptime":"5146.724290","msg":"QuadPro.Load","category":"quad","filename":"Psychonaut_Solids","click":988170,"loglevel":"info"}
+{"uptime":"5176.729833","msg":"QuadPro.Load","category":"quad","filename":"{All Out_Kaleid","click":993931,"loglevel":"info"}
+{"uptime":"5206.733624","msg":"QuadPro.Load","category":"quad","filename":"{(!) Worm_Hole","click":999692,"loglevel":"info"}
+{"uptime":"5236.739121","msg":"QuadPro.Load","category":"quad","filename":"{Just_Wright","click":1005452,"loglevel":"info"}
+{"uptime":"5266.738800","msg":"QuadPro.Load","category":"quad","filename":"{All_Moire","click":1011213,"loglevel":"info"}
+{"uptime":"5296.739828","msg":"QuadPro.Load","category":"quad","filename":"_Current","click":1016973,"loglevel":"info"}
+{"uptime":"5326.745163","msg":"QuadPro.Load","category":"quad","filename":"{Colorful_Moire","click":1022734,"loglevel":"info"}
+{"uptime":"5356.758937","msg":"QuadPro.Load","category":"quad","filename":"All_Moire","click":1028495,"loglevel":"info"}
+{"uptime":"5386.756647","msg":"QuadPro.Load","category":"quad","filename":"{Fluorescent_Borealis","click":1034256,"loglevel":"info"}
+{"uptime":"5416.760145","msg":"QuadPro.Load","category":"quad","filename":"{Evolving_Elevations","click":1040017,"loglevel":"info"}
+{"uptime":"5446.763130","msg":"QuadPro.Load","category":"quad","filename":"{(!) East West_North South","click":1045777,"loglevel":"info"}
+{"uptime":"5476.765483","msg":"QuadPro.Load","category":"quad","filename":"{(!) Traveling_WO Moving","click":1051537,"loglevel":"info"}
+{"uptime":"5506.762165","msg":"QuadPro.Load","category":"quad","filename":"{Infinite_Layers","click":1057297,"loglevel":"info"}
+{"uptime":"5536.764934","msg":"QuadPro.Load","category":"quad","filename":"{(!) Simple_Things","click":1063058,"loglevel":"info"}
+{"uptime":"5566.766411","msg":"QuadPro.Load","category":"quad","filename":"Filagree_Dance","click":1068818,"loglevel":"info"}
+{"uptime":"5596.770333","msg":"QuadPro.Load","category":"quad","filename":"{(!) Ready_Player Four","click":1074579,"loglevel":"info"}
+{"uptime":"5626.771098","msg":"QuadPro.Load","category":"quad","filename":"{(!) Ready_Player Four","click":1080339,"loglevel":"info"}
+{"uptime":"5656.784455","msg":"QuadPro.Load","category":"quad","filename":"Blue Purple_Cartoon Clouds","click":1086100,"loglevel":"info"}
+{"uptime":"5686.776656","msg":"QuadPro.Load","category":"quad","filename":"Ghost Note_All Drums","click":1091860,"loglevel":"info"}
+{"uptime":"5716.778618","msg":"QuadPro.Load","category":"quad","filename":"{Shattered_Shapes","click":1097620,"loglevel":"info"}
+{"uptime":"5746.782067","msg":"QuadPro.Load","category":"quad","filename":"All Scat_Color Trails","click":1103381,"loglevel":"info"}
+{"uptime":"5776.788596","msg":"QuadPro.Load","category":"quad","filename":"{Only_Orange","click":1109142,"loglevel":"info"}
+{"uptime":"5806.801653","msg":"QuadPro.Load","category":"quad","filename":"Pretty_Pulses","click":1114903,"loglevel":"info"}
+{"uptime":"5836.798018","msg":"QuadPro.Load","category":"quad","filename":"Perky_McPerkFace","click":1120664,"loglevel":"info"}
+{"uptime":"5866.805472","msg":"QuadPro.Load","category":"quad","filename":"Jigsaw_Puzzles","click":1126425,"loglevel":"info"}
+{"uptime":"5896.810650","msg":"QuadPro.Load","category":"quad","filename":"Ghost Note_All Drums","click":1132186,"loglevel":"info"}
+{"uptime":"5926.814742","msg":"QuadPro.Load","category":"quad","filename":"Blue Purple_Cartoon Clouds","click":1137947,"loglevel":"info"}
+{"uptime":"5956.819895","msg":"QuadPro.Load","category":"quad","filename":"Endless_Twirls","click":1143708,"loglevel":"info"}
+{"uptime":"5986.823504","msg":"QuadPro.Load","category":"quad","filename":"{(!) Super_Natural","click":1149469,"loglevel":"info"}
+{"uptime":"6016.834098","msg":"QuadPro.Load","category":"quad","filename":"Kaleidoscopes_Forever","click":1155230,"loglevel":"info"}
+{"uptime":"6046.832873","msg":"QuadPro.Load","category":"quad","filename":"All_Moire","click":1160991,"loglevel":"info"}
+{"uptime":"6076.837065","msg":"QuadPro.Load","category":"quad","filename":"{(!) Unstable_Ability","click":1166751,"loglevel":"info"}
+{"uptime":"6106.833760","msg":"QuadPro.Load","category":"quad","filename":"{Shapely_Shadows","click":1172511,"loglevel":"info"}
+{"uptime":"6136.834781","msg":"QuadPro.Load","category":"quad","filename":"{(!) Unstable_Ability","click":1178271,"loglevel":"info"}
+{"uptime":"6166.839638","msg":"QuadPro.Load","category":"quad","filename":"{Shapely_Shadows","click":1184032,"loglevel":"info"}
+{"uptime":"6196.845818","msg":"QuadPro.Load","category":"quad","filename":"Quick Scat_Circles","click":1189793,"loglevel":"info"}
+{"uptime":"6226.850616","msg":"QuadPro.Load","category":"quad","filename":"Pretty_Pulses","click":1195554,"loglevel":"info"}
+{"uptime":"6256.853285","msg":"QuadPro.Load","category":"quad","filename":"{Fluorescent_Borealis","click":1201315,"loglevel":"info"}
+{"uptime":"6286.854799","msg":"QuadPro.Load","category":"quad","filename":"All Out_Kaleid","click":1207075,"loglevel":"info"}
+{"uptime":"6316.859658","msg":"QuadPro.Load","category":"quad","filename":"{Floating_Grains","click":1212836,"loglevel":"info"}
+{"uptime":"6346.866264","msg":"QuadPro.Load","category":"quad","filename":"Alternate_Dimensions","click":1218597,"loglevel":"info"}
+{"uptime":"6376.865537","msg":"QuadPro.Load","category":"quad","filename":"{(!) Unstable_Ability","click":1224357,"loglevel":"info"}
+{"uptime":"6406.875194","msg":"QuadPro.Load","category":"quad","filename":"Linear_Dancing","click":1230118,"loglevel":"info"}
+{"uptime":"6436.869635","msg":"QuadPro.Load","category":"quad","filename":"{Shattered_Shapes","click":1235878,"loglevel":"info"}
+{"uptime":"6466.869317","msg":"QuadPro.Load","category":"quad","filename":"{World Wide_Webs","click":1241638,"loglevel":"info"}
+{"uptime":"6496.877701","msg":"QuadPro.Load","category":"quad","filename":"{Just_Wright","click":1247399,"loglevel":"info"}
+{"uptime":"6526.875842","msg":"QuadPro.Load","category":"quad","filename":"{All Drums 2_Squares","click":1253159,"loglevel":"info"}
+{"uptime":"6556.880859","msg":"QuadPro.Load","category":"quad","filename":"{Floating_Grains","click":1258920,"loglevel":"info"}
+{"uptime":"6586.885736","msg":"QuadPro.Load","category":"quad","filename":"{Playful_Plucks","click":1264681,"loglevel":"info"}
+{"uptime":"6616.891406","msg":"QuadPro.Load","category":"quad","filename":"{(!) Worm_Hole","click":1270442,"loglevel":"info"}
+{"uptime":"6646.897268","msg":"QuadPro.Load","category":"quad","filename":"{All Drums_Squares","click":1276203,"loglevel":"info"}
+{"uptime":"6676.901967","msg":"QuadPro.Load","category":"quad","filename":"{All_Moire","click":1281964,"loglevel":"info"}
+{"uptime":"6706.902223","msg":"QuadPro.Load","category":"quad","filename":"Planetary_Layers","click":1287724,"loglevel":"info"}
+{"uptime":"6736.906548","msg":"QuadPro.Load","category":"quad","filename":"{(!) Simple_Things","click":1293485,"loglevel":"info"}
+{"uptime":"6766.908893","msg":"QuadPro.Load","category":"quad","filename":"{Blue Purple_Cartoon Clouds","click":1299245,"loglevel":"info"}
+{"uptime":"6796.915413","msg":"QuadPro.Load","category":"quad","filename":"{Quick Scat_Circles","click":1305006,"loglevel":"info"}
+{"uptime":"6826.916662","msg":"QuadPro.Load","category":"quad","filename":"{Colored_Echoes","click":1310767,"loglevel":"info"}
+{"uptime":"6856.922795","msg":"QuadPro.Load","category":"quad","filename":"{Kaleidoscopes_Forever","click":1316527,"loglevel":"info"}
+{"uptime":"6886.921533","msg":"QuadPro.Load","category":"quad","filename":"{Spiral Moire_Universe","click":1322288,"loglevel":"info"}
+{"uptime":"6916.921935","msg":"QuadPro.Load","category":"quad","filename":"{Fluorescent_Borealis","click":1328048,"loglevel":"info"}
+{"uptime":"6946.921434","msg":"QuadPro.Load","category":"quad","filename":"{Ghostly_Shapes","click":1333808,"loglevel":"info"}
+{"uptime":"6976.928270","msg":"QuadPro.Load","category":"quad","filename":"{Simply_Mellow","click":1339569,"loglevel":"info"}
+{"uptime":"7006.935088","msg":"QuadPro.Load","category":"quad","filename":"Planetary_Layers","click":1345330,"loglevel":"info"}
+{"uptime":"7036.938072","msg":"QuadPro.Load","category":"quad","filename":"{(!) Unstable_Ability","click":1351091,"loglevel":"info"}
+{"uptime":"7066.938041","msg":"QuadPro.Load","category":"quad","filename":"{Swimming In_Salmon Blue","click":1356851,"loglevel":"info"}
+{"uptime":"7096.944402","msg":"QuadPro.Load","category":"quad","filename":"Perky_Clouds","click":1362612,"loglevel":"info"}
+{"uptime":"7126.952827","msg":"QuadPro.Load","category":"quad","filename":"Linear_Dancing","click":1368373,"loglevel":"info"}
+{"uptime":"7156.947961","msg":"QuadPro.Load","category":"quad","filename":"{(!) Traveling_WO Moving","click":1374133,"loglevel":"info"}
+{"uptime":"7186.953643","msg":"QuadPro.Load","category":"quad","filename":"All_Moire","click":1379894,"loglevel":"info"}
+{"uptime":"7216.952806","msg":"QuadPro.Load","category":"quad","filename":"{Infinite_Layers","click":1385654,"loglevel":"info"}
+{"uptime":"7246.953324","msg":"QuadPro.Load","category":"quad","filename":"{Quick Scat_Circles","click":1391414,"loglevel":"info"}
+{"uptime":"7276.959654","msg":"QuadPro.Load","category":"quad","filename":"All Scat_Color Trails","click":1397175,"loglevel":"info"}
+{"uptime":"7306.963547","msg":"QuadPro.Load","category":"quad","filename":"{Colored_Echoes","click":1402936,"loglevel":"info"}
+{"uptime":"7336.970315","msg":"QuadPro.Load","category":"quad","filename":"{(!) Voltrons_Garage","click":1408697,"loglevel":"info"}
+{"uptime":"7366.969314","msg":"QuadPro.Load","category":"quad","filename":"Infinite_Layers","click":1414457,"loglevel":"info"}
+{"uptime":"7396.974535","msg":"QuadPro.Load","category":"quad","filename":"{Ghostly_Shapes","click":1420218,"loglevel":"info"}
+{"uptime":"7426.980176","msg":"QuadPro.Load","category":"quad","filename":"{Playful_Plucks","click":1425979,"loglevel":"info"}
+{"uptime":"7456.981669","msg":"QuadPro.Load","category":"quad","filename":"All_Moire","click":1431739,"loglevel":"info"}
+{"uptime":"7486.987088","msg":"QuadPro.Load","category":"quad","filename":"{(!) Super_Natural","click":1437500,"loglevel":"info"}
+{"uptime":"7516.988417","msg":"QuadPro.Load","category":"quad","filename":"{(!) Traveling_WO Moving","click":1443261,"loglevel":"info"}
+{"uptime":"7546.988496","msg":"QuadPro.Load","category":"quad","filename":"{All_Moire","click":1449021,"loglevel":"info"}
+{"uptime":"7576.990113","msg":"QuadPro.Load","category":"quad","filename":"{Infinite_Layers","click":1454781,"loglevel":"info"}
+{"uptime":"7606.989697","msg":"QuadPro.Load","category":"quad","filename":"Ghostly_Shapes","click":1460541,"loglevel":"info"}
+{"uptime":"7636.994084","msg":"QuadPro.Load","category":"quad","filename":"_override","click":1466302,"loglevel":"info"}
+{"uptime":"7666.995221","msg":"QuadPro.Load","category":"quad","filename":"Jigsaw_Puzzles","click":1472062,"loglevel":"info"}
+{"uptime":"7696.994806","msg":"QuadPro.Load","category":"quad","filename":"{Shattered_Shapes","click":1477822,"loglevel":"info"}
+{"uptime":"7726.998371","msg":"QuadPro.Load","category":"quad","filename":"{Geographic_Travels","click":1483582,"loglevel":"info"}
+{"uptime":"7756.995975","msg":"QuadPro.Load","category":"quad","filename":"{(!) Cosmolgcl_Constant","click":1489342,"loglevel":"info"}
+{"uptime":"7787.000088","msg":"QuadPro.Load","category":"quad","filename":"{Blue Purple_Cartoon Clouds","click":1495103,"loglevel":"info"}
+{"uptime":"7817.006063","msg":"QuadPro.Load","category":"quad","filename":"Linear_Dancing","click":1500864,"loglevel":"info"}
+{"uptime":"7847.005422","msg":"QuadPro.Load","category":"quad","filename":"{Dancing Fields_Of Space","click":1506624,"loglevel":"info"}
+{"uptime":"7877.010770","msg":"QuadPro.Load","category":"quad","filename":"{Quick Scat_Circles","click":1512385,"loglevel":"info"}
+{"uptime":"7907.014452","msg":"QuadPro.Load","category":"quad","filename":"{Square_Fantasia","click":1518146,"loglevel":"info"}
+{"uptime":"7937.021387","msg":"QuadPro.Load","category":"quad","filename":"{All Out_Kaleid","click":1523907,"loglevel":"info"}
+{"uptime":"7967.026148","msg":"QuadPro.Load","category":"quad","filename":"{(!) Cosmolgcl_Constant","click":1529668,"loglevel":"info"}
+{"uptime":"7997.026691","msg":"QuadPro.Load","category":"quad","filename":"World Wide_Webs","click":1535428,"loglevel":"info"}
+{"uptime":"8027.028798","msg":"QuadPro.Load","category":"quad","filename":"{Just_Wright","click":1541188,"loglevel":"info"}
+{"uptime":"8057.028625","msg":"QuadPro.Load","category":"quad","filename":"Layered_Elevations","click":1546948,"loglevel":"info"}
+{"uptime":"8087.032328","msg":"QuadPro.Load","category":"quad","filename":"{Dancing_With Lines","click":1552709,"loglevel":"info"}
+{"uptime":"8117.037922","msg":"QuadPro.Load","category":"quad","filename":"{Colored_Echoes","click":1558470,"loglevel":"info"}
+{"uptime":"8147.041127","msg":"QuadPro.Load","category":"quad","filename":"{(!) Compliment_Tree Colors","click":1564231,"loglevel":"info"}
+{"uptime":"8177.042023","msg":"QuadPro.Load","category":"quad","filename":"Linear_Dancing","click":1569991,"loglevel":"info"}
+{"uptime":"8207.046823","msg":"QuadPro.Load","category":"quad","filename":"{(!) Cosmolgcl_Constant","click":1575752,"loglevel":"info"}
+{"uptime":"8237.051917","msg":"QuadPro.Load","category":"quad","filename":"Diagonal_Fantasy","click":1581513,"loglevel":"info"}
+{"uptime":"8267.057850","msg":"QuadPro.Load","category":"quad","filename":"{All Scat_Squares","click":1587274,"loglevel":"info"}
+{"uptime":"8297.061511","msg":"QuadPro.Load","category":"quad","filename":"{Endless_Twirls","click":1593035,"loglevel":"info"}
+{"uptime":"8327.062652","msg":"QuadPro.Load","category":"quad","filename":"Fluorescent_Borealis","click":1598795,"loglevel":"info"}
+{"uptime":"8357.063737","msg":"QuadPro.Load","category":"quad","filename":"{Shattered_Shapes","click":1604555,"loglevel":"info"}
+{"uptime":"8387.069811","msg":"QuadPro.Load","category":"quad","filename":"{All_Moire","click":1610316,"loglevel":"info"}
+{"uptime":"8417.074469","msg":"QuadPro.Load","category":"quad","filename":"{Kaleidoscopes_Forever","click":1616077,"loglevel":"info"}
+{"uptime":"8447.079918","msg":"QuadPro.Load","category":"quad","filename":"{Only_Orange","click":1621838,"loglevel":"info"}
+{"uptime":"8477.084519","msg":"QuadPro.Load","category":"quad","filename":"Psychonaut_Solids","click":1627599,"loglevel":"info"}
+{"uptime":"8507.090638","msg":"QuadPro.Load","category":"quad","filename":"{All Drums 2_Squares","click":1633360,"loglevel":"info"}
+{"uptime":"8537.096198","msg":"QuadPro.Load","category":"quad","filename":"{Geographic_Travels","click":1639121,"loglevel":"info"}
+{"uptime":"8567.101134","msg":"QuadPro.Load","category":"quad","filename":"Diagonal_Fantasy","click":1644882,"loglevel":"info"}
+{"uptime":"8597.100531","msg":"QuadPro.Load","category":"quad","filename":"{Perky_Clouds","click":1650642,"loglevel":"info"}
+{"uptime":"8627.107369","msg":"QuadPro.Load","category":"quad","filename":"{Green_Variety","click":1656403,"loglevel":"info"}
+{"uptime":"8657.104570","msg":"QuadPro.Load","category":"quad","filename":"{All Drums_Squares","click":1662163,"loglevel":"info"}
+{"uptime":"8687.111211","msg":"QuadPro.Load","category":"quad","filename":"Smokey_Trails","click":1667923,"loglevel":"info"}
+{"uptime":"8717.110500","msg":"QuadPro.Load","category":"quad","filename":"Endless_Twirls","click":1673684,"loglevel":"info"}
+{"uptime":"8747.114109","msg":"QuadPro.Load","category":"quad","filename":"Filagree_Dance","click":1679445,"loglevel":"info"}
+{"uptime":"8777.120398","msg":"QuadPro.Load","category":"quad","filename":"{Green_Variety","click":1685206,"loglevel":"info"}
+{"uptime":"8807.120525","msg":"QuadPro.Load","category":"quad","filename":"{(!) Uncarved_Block","click":1690966,"loglevel":"info"}
+{"uptime":"8837.121194","msg":"QuadPro.Load","category":"quad","filename":"{Fluorescent_Borealis","click":1696726,"loglevel":"info"}
+{"uptime":"8867.125564","msg":"QuadPro.Load","category":"quad","filename":"Ghost Note_All Drums","click":1702487,"loglevel":"info"}
+{"uptime":"8897.129777","msg":"QuadPro.Load","category":"quad","filename":"Perky_McPerkFace","click":1708248,"loglevel":"info"}
+{"uptime":"8927.130188","msg":"QuadPro.Load","category":"quad","filename":"{(!) Cosmolgcl_Constant","click":1714008,"loglevel":"info"}
+{"uptime":"8957.130280","msg":"QuadPro.Load","category":"quad","filename":"Ghostly_Shapes","click":1719768,"loglevel":"info"}
+{"uptime":"8987.131611","msg":"QuadPro.Load","category":"quad","filename":"{Geographic_Travels","click":1725528,"loglevel":"info"}
+{"uptime":"9017.133934","msg":"QuadPro.Load","category":"quad","filename":"{All Scat_Squares","click":1731288,"loglevel":"info"}
+{"uptime":"9047.135140","msg":"QuadPro.Load","category":"quad","filename":"{Infinite_Layers","click":1737049,"loglevel":"info"}
+{"uptime":"9077.139997","msg":"QuadPro.Load","category":"quad","filename":"{(!) Ready_Player Four","click":1742810,"loglevel":"info"}
+{"uptime":"9107.144108","msg":"QuadPro.Load","category":"quad","filename":"Psychonaut_Outlines","click":1748570,"loglevel":"info"}
+{"uptime":"9137.146028","msg":"QuadPro.Load","category":"quad","filename":"{All Drums_Squares","click":1754331,"loglevel":"info"}
+{"uptime":"9167.147010","msg":"QuadPro.Load","category":"quad","filename":"{Ghostly_Shapes","click":1760091,"loglevel":"info"}
+{"uptime":"9197.151060","msg":"QuadPro.Load","category":"quad","filename":"{Only_Orange","click":1765852,"loglevel":"info"}
+{"uptime":"9227.152642","msg":"QuadPro.Load","category":"quad","filename":"_override","click":1771612,"loglevel":"info"}
+{"uptime":"9257.158558","msg":"QuadPro.Load","category":"quad","filename":"{Playful_Plucks","click":1777373,"loglevel":"info"}
+{"uptime":"9287.163252","msg":"QuadPro.Load","category":"quad","filename":"{Geographic_Travels","click":1783134,"loglevel":"info"}
+{"uptime":"9317.162303","msg":"QuadPro.Load","category":"quad","filename":"{Green_Variety","click":1788894,"loglevel":"info"}
+{"uptime":"9347.166918","msg":"QuadPro.Load","category":"quad","filename":"All Scat_Color Trails","click":1794655,"loglevel":"info"}
+{"uptime":"9377.167377","msg":"QuadPro.Load","category":"quad","filename":"{Square_Fantasia","click":1800415,"loglevel":"info"}
+{"uptime":"9407.167380","msg":"QuadPro.Load","category":"quad","filename":"{Blue Purple_Cartoon Clouds","click":1806175,"loglevel":"info"}
+{"uptime":"9437.172121","msg":"QuadPro.Load","category":"quad","filename":"{All Scat_Squares","click":1811936,"loglevel":"info"}
+{"uptime":"9467.173223","msg":"QuadPro.Load","category":"quad","filename":"{Spiral Moire_Universe","click":1817696,"loglevel":"info"}
+{"uptime":"9497.178673","msg":"QuadPro.Load","category":"quad","filename":"{Endless_Twirls","click":1823457,"loglevel":"info"}
+{"uptime":"9527.177266","msg":"QuadPro.Load","category":"quad","filename":"{Floating_Grains","click":1829217,"loglevel":"info"}
+{"uptime":"9557.178073","msg":"QuadPro.Load","category":"quad","filename":"Psychonaut_Outlines","click":1834977,"loglevel":"info"}
+{"uptime":"9587.178021","msg":"QuadPro.Load","category":"quad","filename":"Perky_McPerkFace","click":1840737,"loglevel":"info"}
+{"uptime":"9617.178102","msg":"QuadPro.Load","category":"quad","filename":"Too Many_Triangles","click":1846497,"loglevel":"info"}
+{"uptime":"9647.183439","msg":"QuadPro.Load","category":"quad","filename":"Fluorescent_Borealis","click":1852258,"loglevel":"info"}
+{"uptime":"9677.187093","msg":"QuadPro.Load","category":"quad","filename":"{World Wide_Webs","click":1858019,"loglevel":"info"}
+{"uptime":"9707.192901","msg":"QuadPro.Load","category":"quad","filename":"Vocal_Linescape","click":1863780,"loglevel":"info"}
+{"uptime":"9737.199969","msg":"QuadPro.Load","category":"quad","filename":"{(!) Unstable_Ability","click":1869541,"loglevel":"info"}
+{"uptime":"9767.203516","msg":"QuadPro.Load","category":"quad","filename":"{Perky_Clouds","click":1875302,"loglevel":"info"}
+{"uptime":"9797.208875","msg":"QuadPro.Load","category":"quad","filename":"Spiral Moire_Universe","click":1881063,"loglevel":"info"}
+{"uptime":"9827.210579","msg":"QuadPro.Load","category":"quad","filename":"{Geographic_Travels","click":1886823,"loglevel":"info"}
+{"uptime":"9857.212790","msg":"QuadPro.Load","category":"quad","filename":"{(!) Traveling_WO Moving","click":1892584,"loglevel":"info"}
+{"uptime":"9887.213564","msg":"QuadPro.Load","category":"quad","filename":"{Geographic_Travels","click":1898344,"loglevel":"info"}
+{"uptime":"9917.219023","msg":"QuadPro.Load","category":"quad","filename":"All Out_Kaleid","click":1904105,"loglevel":"info"}
+{"uptime":"9947.219502","msg":"QuadPro.Load","category":"quad","filename":"Too Many_Triangles","click":1909865,"loglevel":"info"}
+{"uptime":"9977.224451","msg":"QuadPro.Load","category":"quad","filename":"Perky_McPerkFace","click":1915626,"loglevel":"info"}
+{"uptime":"10007.223995","msg":"QuadPro.Load","category":"quad","filename":"{Colorful_Moire","click":1921386,"loglevel":"info"}
+{"uptime":"10037.230877","msg":"QuadPro.Load","category":"quad","filename":"{All Drums 2_Squares","click":1927147,"loglevel":"info"}
+{"uptime":"10067.229904","msg":"QuadPro.Load","category":"quad","filename":"{All Drums 2_Squares","click":1932907,"loglevel":"info"}
+{"uptime":"10097.229593","msg":"QuadPro.Load","category":"quad","filename":"{Infinite_Layers","click":1938667,"loglevel":"info"}
+{"uptime":"10127.241789","msg":"QuadPro.Load","category":"quad","filename":"{Quick Scat_Circles","click":1944428,"loglevel":"info"}
+{"uptime":"10157.239059","msg":"QuadPro.Load","category":"quad","filename":"Ghost Note_All Drums","click":1950188,"loglevel":"info"}
+{"uptime":"10187.238254","msg":"QuadPro.Load","category":"quad","filename":"Planetary_Layers","click":1955948,"loglevel":"info"}
+{"uptime":"10217.240936","msg":"QuadPro.Load","category":"quad","filename":"{Swimming In_Salmon Blue","click":1961709,"loglevel":"info"}
+{"uptime":"10247.241741","msg":"QuadPro.Load","category":"quad","filename":"{Vocal_Linescape","click":1967469,"loglevel":"info"}
+{"uptime":"10277.243981","msg":"QuadPro.Load","category":"quad","filename":"All Scat_Color Trails","click":1973230,"loglevel":"info"}
+{"uptime":"10307.244595","msg":"QuadPro.Load","category":"quad","filename":"{(!) Cosmolgcl_Constant","click":1978990,"loglevel":"info"}
+{"uptime":"10337.245158","msg":"QuadPro.Load","category":"quad","filename":"{Swimming In_Salmon Blue","click":1984750,"loglevel":"info"}
+{"uptime":"10367.245243","msg":"QuadPro.Load","category":"quad","filename":"{Colored_Echoes","click":1990510,"loglevel":"info"}
+{"uptime":"10397.249360","msg":"QuadPro.Load","category":"quad","filename":"{Colored_Echoes","click":1996271,"loglevel":"info"}
+{"uptime":"10427.252230","msg":"QuadPro.Load","category":"quad","filename":"Colored_Echoes","click":2002031,"loglevel":"info"}
+{"uptime":"10457.255985","msg":"QuadPro.Load","category":"quad","filename":"{Perky_Clouds","click":2007792,"loglevel":"info"}
+{"uptime":"10487.260152","msg":"QuadPro.Load","category":"quad","filename":"Quick Scat_Circles","click":2013553,"loglevel":"info"}
+{"uptime":"10517.261949","msg":"QuadPro.Load","category":"quad","filename":"{Dancing Fields_Of Space","click":2019313,"loglevel":"info"}
+{"uptime":"10547.265630","msg":"QuadPro.Load","category":"quad","filename":"_Current","click":2025074,"loglevel":"info"}
+{"uptime":"10577.271809","msg":"QuadPro.Load","category":"quad","filename":"{Shapely_Shadows","click":2030835,"loglevel":"info"}
+{"uptime":"10607.271897","msg":"QuadPro.Load","category":"quad","filename":"Layered_Elevations","click":2036595,"loglevel":"info"}
+{"uptime":"10637.276958","msg":"QuadPro.Load","category":"quad","filename":"{Kaleidoscopes_Forever","click":2042356,"loglevel":"info"}
+{"uptime":"10667.277560","msg":"QuadPro.Load","category":"quad","filename":"Fluorescent_Borealis","click":2048116,"loglevel":"info"}
+{"uptime":"10697.278083","msg":"QuadPro.Load","category":"quad","filename":"{Quick Scat_Circles","click":2053876,"loglevel":"info"}
+{"uptime":"10727.279979","msg":"QuadPro.Load","category":"quad","filename":"{Swimming In_Salmon Blue","click":2059637,"loglevel":"info"}
+{"uptime":"10757.281059","msg":"QuadPro.Load","category":"quad","filename":"{(!) Compliment_Tree Colors","click":2065397,"loglevel":"info"}
+{"uptime":"10787.282000","msg":"QuadPro.Load","category":"quad","filename":"{All Out_Kaleid","click":2071157,"loglevel":"info"}
+{"uptime":"10817.288382","msg":"QuadPro.Load","category":"quad","filename":"{(!) Cosmolgcl_Constant","click":2076918,"loglevel":"info"}
+{"uptime":"10847.289349","msg":"QuadPro.Load","category":"quad","filename":"{Floating_Grains","click":2082678,"loglevel":"info"}
+{"uptime":"10877.292207","msg":"QuadPro.Load","category":"quad","filename":"Smokey_Trails","click":2088439,"loglevel":"info"}
+{"uptime":"10907.292740","msg":"QuadPro.Load","category":"quad","filename":"{Quick Scat_Circles","click":2094199,"loglevel":"info"}
+{"uptime":"10937.299119","msg":"QuadPro.Load","category":"quad","filename":"Pretty_Pulses","click":2099960,"loglevel":"info"}
+{"uptime":"10967.312295","msg":"QuadPro.Load","category":"quad","filename":"{(!) Simple_Things","click":2105721,"loglevel":"info"}
+{"uptime":"10997.310322","msg":"QuadPro.Load","category":"quad","filename":"{(!) I Can See_Thru Time","click":2111482,"loglevel":"info"}
+{"uptime":"11027.312538","msg":"QuadPro.Load","category":"quad","filename":"World Wide_Webs","click":2117242,"loglevel":"info"}
+{"uptime":"11057.322553","msg":"QuadPro.Load","category":"quad","filename":"All Out_Kaleid","click":2123003,"loglevel":"info"}
+{"uptime":"11087.324881","msg":"QuadPro.Load","category":"quad","filename":"{(!) Ready_Player Four","click":2128764,"loglevel":"info"}
+{"uptime":"11117.324157","msg":"QuadPro.Load","category":"quad","filename":"All Scat_Color Trails","click":2134524,"loglevel":"info"}
+{"uptime":"11147.327081","msg":"QuadPro.Load","category":"quad","filename":"Colored_Echoes","click":2140285,"loglevel":"info"}
+{"uptime":"11177.328149","msg":"QuadPro.Load","category":"quad","filename":"{(!) Simple_Things","click":2146046,"loglevel":"info"}
+{"uptime":"11207.333205","msg":"QuadPro.Load","category":"quad","filename":"{Cloudy_Elevations","click":2151806,"loglevel":"info"}
+{"uptime":"11237.337147","msg":"QuadPro.Load","category":"quad","filename":"_override","click":2157567,"loglevel":"info"}
+{"uptime":"11267.343380","msg":"QuadPro.Load","category":"quad","filename":"Planetary_Layers","click":2163328,"loglevel":"info"}
+{"uptime":"11297.350020","msg":"QuadPro.Load","category":"quad","filename":"{Geographic_Travels","click":2169089,"loglevel":"info"}
+{"uptime":"11327.344172","msg":"QuadPro.Load","category":"quad","filename":"World Wide_Webs","click":2174849,"loglevel":"info"}
+{"uptime":"11357.353483","msg":"QuadPro.Load","category":"quad","filename":"Alternate_Dimensions","click":2180610,"loglevel":"info"}
+{"uptime":"11387.354770","msg":"QuadPro.Load","category":"quad","filename":"{World Wide_Webs","click":2186370,"loglevel":"info"}
+{"uptime":"11417.358787","msg":"QuadPro.Load","category":"quad","filename":"{Evolving_Elevations","click":2192131,"loglevel":"info"}
+{"uptime":"11447.362554","msg":"QuadPro.Load","category":"quad","filename":"Layered_Elevations","click":2197892,"loglevel":"info"}
+{"uptime":"11477.370764","msg":"QuadPro.Load","category":"quad","filename":"Too Many_Triangles","click":2203653,"loglevel":"info"}
+{"uptime":"11507.369292","msg":"QuadPro.Load","category":"quad","filename":"Perky_Clouds","click":2209413,"loglevel":"info"}
+{"uptime":"11537.375705","msg":"QuadPro.Load","category":"quad","filename":"{All Drums_Squares","click":2215174,"loglevel":"info"}
+{"uptime":"11567.378721","msg":"QuadPro.Load","category":"quad","filename":"{Spiral Moire_Universe","click":2220935,"loglevel":"info"}
+{"uptime":"11597.388182","msg":"QuadPro.Load","category":"quad","filename":"{Swimming In_Salmon Blue","click":2226696,"loglevel":"info"}
+{"uptime":"11627.389589","msg":"QuadPro.Load","category":"quad","filename":"Linear_Dancing","click":2232457,"loglevel":"info"}
+{"uptime":"11657.391817","msg":"QuadPro.Load","category":"quad","filename":"_Current","click":2238218,"loglevel":"info"}
+{"uptime":"11687.399079","msg":"QuadPro.Load","category":"quad","filename":"{Ghostly_Shapes","click":2243979,"loglevel":"info"}
+{"uptime":"11717.396195","msg":"QuadPro.Load","category":"quad","filename":"Colored_Echoes","click":2249739,"loglevel":"info"}
+{"uptime":"11747.400443","msg":"QuadPro.Load","category":"quad","filename":"Psychonaut_Outlines","click":2255499,"loglevel":"info"}
+{"uptime":"11777.402284","msg":"QuadPro.Load","category":"quad","filename":"{Full Bore_Borealis","click":2261259,"loglevel":"info"}
+{"uptime":"11807.404056","msg":"QuadPro.Load","category":"quad","filename":"Spiral Moire_Universe","click":2267020,"loglevel":"info"}
+{"uptime":"11837.410369","msg":"QuadPro.Load","category":"quad","filename":"{Blue Purple_Cartoon Clouds","click":2272781,"loglevel":"info"}
+{"uptime":"11867.411715","msg":"QuadPro.Load","category":"quad","filename":"_Current","click":2278542,"loglevel":"info"}
+{"uptime":"11897.419767","msg":"QuadPro.Load","category":"quad","filename":"{All_Moire","click":2284303,"loglevel":"info"}
+{"uptime":"11927.422014","msg":"QuadPro.Load","category":"quad","filename":"Colored_Echoes","click":2290063,"loglevel":"info"}
+{"uptime":"11957.424947","msg":"QuadPro.Load","category":"quad","filename":"{Floating_Grains","click":2295824,"loglevel":"info"}
+{"uptime":"11987.431400","msg":"QuadPro.Load","category":"quad","filename":"{(!) Voltrons_Garage","click":2301585,"loglevel":"info"}
+{"uptime":"12017.433072","msg":"QuadPro.Load","category":"quad","filename":"{Kaleidoscopes_Forever","click":2307345,"loglevel":"info"}
+{"uptime":"12047.427915","msg":"QuadPro.Load","category":"quad","filename":"World Wide_Webs","click":2313105,"loglevel":"info"}
+{"uptime":"12077.437469","msg":"QuadPro.Load","category":"quad","filename":"{Vocal_Linescape","click":2318866,"loglevel":"info"}
+{"uptime":"12107.440417","msg":"QuadPro.Load","category":"quad","filename":"Ghostly_Shapes","click":2324627,"loglevel":"info"}
+{"uptime":"12137.441871","msg":"QuadPro.Load","category":"quad","filename":"{Organic_Linescape","click":2330387,"loglevel":"info"}
+{"uptime":"12167.452034","msg":"QuadPro.Load","category":"quad","filename":"{Fluorescent_Borealis","click":2336148,"loglevel":"info"}
+{"uptime":"12197.448596","msg":"QuadPro.Load","category":"quad","filename":"Infinite_Layers","click":2341908,"loglevel":"info"}
+{"uptime":"12227.451146","msg":"QuadPro.Load","category":"quad","filename":"Pretty_Pulses","click":2347669,"loglevel":"info"}
+{"uptime":"12257.453242","msg":"QuadPro.Load","category":"quad","filename":"{Shattered_Shapes","click":2353429,"loglevel":"info"}
+{"uptime":"12287.449892","msg":"QuadPro.Load","category":"quad","filename":"Perky_Clouds","click":2359189,"loglevel":"info"}
+{"uptime":"12317.455953","msg":"QuadPro.Load","category":"quad","filename":"{Colorful_Moire","click":2364950,"loglevel":"info"}
+{"uptime":"12347.452702","msg":"QuadPro.Load","category":"quad","filename":"{All_Moire","click":2370710,"loglevel":"info"}
+{"uptime":"12377.457885","msg":"QuadPro.Load","category":"quad","filename":"Smokey_Trails","click":2376470,"loglevel":"info"}
+{"uptime":"12407.460505","msg":"QuadPro.Load","category":"quad","filename":"{Vocal_Linescape","click":2382231,"loglevel":"info"}
+{"uptime":"12437.463797","msg":"QuadPro.Load","category":"quad","filename":"{Shattered_Shapes","click":2387992,"loglevel":"info"}
+{"uptime":"12467.468606","msg":"QuadPro.Load","category":"quad","filename":"{Colorful_Moire","click":2393753,"loglevel":"info"}
+{"uptime":"12497.474272","msg":"QuadPro.Load","category":"quad","filename":"{Square_Fantasia","click":2399513,"loglevel":"info"}
+{"uptime":"12527.474041","msg":"QuadPro.Load","category":"quad","filename":"World Wide_Webs","click":2405274,"loglevel":"info"}
+{"uptime":"12557.473806","msg":"QuadPro.Load","category":"quad","filename":"{(!) I Can See_Thru Time","click":2411034,"loglevel":"info"}
+{"uptime":"12587.479638","msg":"QuadPro.Load","category":"quad","filename":"Psychonaut_Solids","click":2416794,"loglevel":"info"}
+{"uptime":"12617.485269","msg":"QuadPro.Load","category":"quad","filename":"{Dancing_With Lines","click":2422555,"loglevel":"info"}
+{"uptime":"12647.489220","msg":"QuadPro.Load","category":"quad","filename":"{Perky_Clouds","click":2428316,"loglevel":"info"}
+{"uptime":"12677.484015","msg":"QuadPro.Load","category":"quad","filename":"{Full Bore_Borealis","click":2434076,"loglevel":"info"}
+{"uptime":"12707.492189","msg":"QuadPro.Load","category":"quad","filename":"{(!) Worm_Hole","click":2439837,"loglevel":"info"}
+{"uptime":"12737.492329","msg":"QuadPro.Load","category":"quad","filename":"Ghost Note_All Drums","click":2445597,"loglevel":"info"}
+{"uptime":"12767.493473","msg":"QuadPro.Load","category":"quad","filename":"Fluorescent_Borealis","click":2451357,"loglevel":"info"}
+{"uptime":"12797.495200","msg":"QuadPro.Load","category":"quad","filename":"All Out_Kaleid","click":2457118,"loglevel":"info"}
+{"uptime":"12827.494833","msg":"QuadPro.Load","category":"quad","filename":"{Shattered_Shapes","click":2462878,"loglevel":"info"}
+{"uptime":"12857.504204","msg":"QuadPro.Load","category":"quad","filename":"{Cloudy_Elevations","click":2468639,"loglevel":"info"}
+{"uptime":"12887.504642","msg":"QuadPro.Load","category":"quad","filename":"{Diagonal_Fantasy","click":2474399,"loglevel":"info"}
+{"uptime":"12917.505272","msg":"QuadPro.Load","category":"quad","filename":"{All Out_Kaleid","click":2480159,"loglevel":"info"}
+{"uptime":"12947.505435","msg":"QuadPro.Load","category":"quad","filename":"{Perky_Clouds","click":2485920,"loglevel":"info"}
+{"uptime":"12977.505617","msg":"QuadPro.Load","category":"quad","filename":"All Out_Kaleid","click":2491680,"loglevel":"info"}
+{"uptime":"13007.510828","msg":"QuadPro.Load","category":"quad","filename":"{All Out_Kaleid","click":2497441,"loglevel":"info"}
+{"uptime":"13037.511404","msg":"QuadPro.Load","category":"quad","filename":"_override","click":2503201,"loglevel":"info"}
+{"uptime":"13067.517422","msg":"QuadPro.Load","category":"quad","filename":"{All Drums_Squares","click":2508962,"loglevel":"info"}
+{"uptime":"13097.521890","msg":"QuadPro.Load","category":"quad","filename":"{(!) Simple_Things","click":2514723,"loglevel":"info"}
+{"uptime":"13127.521829","msg":"QuadPro.Load","category":"quad","filename":"Linear_Dancing","click":2520483,"loglevel":"info"}
+{"uptime":"13157.534678","msg":"QuadPro.Load","category":"quad","filename":"Blue Purple_Cartoon Clouds","click":2526244,"loglevel":"info"}
+{"uptime":"13187.538111","msg":"QuadPro.Load","category":"quad","filename":"All Scat_Color Mix","click":2532005,"loglevel":"info"}
+{"uptime":"13217.537229","msg":"QuadPro.Load","category":"quad","filename":"All Out_Kaleid","click":2537766,"loglevel":"info"}
+{"uptime":"13247.536354","msg":"QuadPro.Load","category":"quad","filename":"Smokey_Trails","click":2543526,"loglevel":"info"}
+{"uptime":"13277.542672","msg":"QuadPro.Load","category":"quad","filename":"{Colorful_Moire","click":2549287,"loglevel":"info"}
+{"uptime":"13307.548029","msg":"QuadPro.Load","category":"quad","filename":"{Square_Fantasia","click":2555048,"loglevel":"info"}
+{"uptime":"13337.553664","msg":"QuadPro.Load","category":"quad","filename":"{Organic_Linescape","click":2560808,"loglevel":"info"}
+{"uptime":"13367.550059","msg":"QuadPro.Load","category":"quad","filename":"All Scat_Color Mix","click":2566568,"loglevel":"info"}
+{"uptime":"13397.557282","msg":"QuadPro.Load","category":"quad","filename":"{(!) Uncarved_Block","click":2572329,"loglevel":"info"}
+{"uptime":"13427.557645","msg":"QuadPro.Load","category":"quad","filename":"{Perky_Clouds","click":2578090,"loglevel":"info"}
+{"uptime":"13457.569487","msg":"QuadPro.Load","category":"quad","filename":"{(!) Compliment_Tree Colors","click":2583851,"loglevel":"info"}
+{"uptime":"13487.567699","msg":"QuadPro.Load","category":"quad","filename":"Infinite_Layers","click":2589612,"loglevel":"info"}
+{"uptime":"13517.568607","msg":"QuadPro.Load","category":"quad","filename":"{All Out_Kaleid","click":2595372,"loglevel":"info"}
+{"uptime":"13547.571764","msg":"QuadPro.Load","category":"quad","filename":"{Only_Orange","click":2601132,"loglevel":"info"}
+{"uptime":"13577.579961","msg":"QuadPro.Load","category":"quad","filename":"Vocal_Linescape","click":2606893,"loglevel":"info"}
+{"uptime":"13607.573597","msg":"QuadPro.Load","category":"quad","filename":"{Organic_Linescape","click":2612653,"loglevel":"info"}
+{"uptime":"13637.582549","msg":"QuadPro.Load","category":"quad","filename":"{Green_Variety","click":2618414,"loglevel":"info"}
+{"uptime":"13667.579825","msg":"QuadPro.Load","category":"quad","filename":"{All Drums_Squares","click":2624174,"loglevel":"info"}
+{"uptime":"13697.584750","msg":"QuadPro.Load","category":"quad","filename":"Planetary_Layers","click":2629935,"loglevel":"info"}
+{"uptime":"13727.594523","msg":"QuadPro.Load","category":"quad","filename":"{Quick Scat_Circles","click":2635696,"loglevel":"info"}
+{"uptime":"13757.589873","msg":"QuadPro.Load","category":"quad","filename":"{(!) Simple_Things","click":2641456,"loglevel":"info"}
+{"uptime":"13787.596352","msg":"QuadPro.Load","category":"quad","filename":"{Dancing_With Lines","click":2647217,"loglevel":"info"}
+{"uptime":"13817.600233","msg":"QuadPro.Load","category":"quad","filename":"{(!) Simple_Things","click":2652978,"loglevel":"info"}
+{"uptime":"13847.605270","msg":"QuadPro.Load","category":"quad","filename":"{Shattered_Shapes","click":2658739,"loglevel":"info"}
+{"uptime":"13877.612538","msg":"QuadPro.Load","category":"quad","filename":"{(!) East West_North South","click":2664500,"loglevel":"info"}
+{"uptime":"13907.619344","msg":"QuadPro.Load","category":"quad","filename":"{Playful_Plucks","click":2670261,"loglevel":"info"}
+{"uptime":"13937.618802","msg":"QuadPro.Load","category":"quad","filename":"{Diagonal_Fantasy","click":2676022,"loglevel":"info"}
+{"uptime":"13967.618944","msg":"QuadPro.Load","category":"quad","filename":"{Dancing_With Lines","click":2681782,"loglevel":"info"}
+{"uptime":"13997.633844","msg":"QuadPro.Load","category":"quad","filename":"{Simply_Mellow","click":2687542,"loglevel":"info"}
+{"uptime":"14027.631171","msg":"QuadPro.Load","category":"quad","filename":"Perky_McPerkFace","click":2693303,"loglevel":"info"}
+{"uptime":"14057.631563","msg":"QuadPro.Load","category":"quad","filename":"{Floating_Grains","click":2699064,"loglevel":"info"}
+{"uptime":"14087.639112","msg":"QuadPro.Load","category":"quad","filename":"Jigsaw_Puzzles","click":2704825,"loglevel":"info"}
+{"uptime":"14117.641260","msg":"QuadPro.Load","category":"quad","filename":"Linear_Dancing","click":2710586,"loglevel":"info"}
+{"uptime":"14147.641940","msg":"QuadPro.Load","category":"quad","filename":"{Floating_Grains","click":2716346,"loglevel":"info"}
+{"uptime":"14177.645635","msg":"QuadPro.Load","category":"quad","filename":"{(!) Uncarved_Block","click":2722107,"loglevel":"info"}
+{"uptime":"14207.653448","msg":"QuadPro.Load","category":"quad","filename":"{All Out_Kaleid","click":2727868,"loglevel":"info"}
+{"uptime":"14237.652289","msg":"QuadPro.Load","category":"quad","filename":"{Blue Purple_Cartoon Clouds","click":2733628,"loglevel":"info"}
+{"uptime":"14267.655514","msg":"QuadPro.Load","category":"quad","filename":"Layered_Elevations","click":2739389,"loglevel":"info"}
+{"uptime":"14297.660553","msg":"QuadPro.Load","category":"quad","filename":"{Just_Wright","click":2745149,"loglevel":"info"}
+{"uptime":"14327.657495","msg":"QuadPro.Load","category":"quad","filename":"{(!) Voltrons_Garage","click":2750909,"loglevel":"info"}
+{"uptime":"14357.658521","msg":"QuadPro.Load","category":"quad","filename":"Colored_Echoes","click":2756669,"loglevel":"info"}
+{"uptime":"14387.661241","msg":"QuadPro.Load","category":"quad","filename":"{Simply_Mellow","click":2762430,"loglevel":"info"}
+{"uptime":"14417.661372","msg":"QuadPro.Load","category":"quad","filename":"{(!) East West_North South","click":2768190,"loglevel":"info"}
+{"uptime":"14447.661449","msg":"QuadPro.Load","category":"quad","filename":"{Diagonal_Fantasy","click":2773950,"loglevel":"info"}
+{"uptime":"14477.669288","msg":"QuadPro.Load","category":"quad","filename":"{Just_Wright","click":2779711,"loglevel":"info"}
+{"uptime":"14507.674608","msg":"QuadPro.Load","category":"quad","filename":"{World Wide_Webs","click":2785472,"loglevel":"info"}
+{"uptime":"14537.678418","msg":"QuadPro.Load","category":"quad","filename":"Ghost Note_All Drums","click":2791233,"loglevel":"info"}
+{"uptime":"14567.680708","msg":"QuadPro.Load","category":"quad","filename":"{Swimming In_Salmon Blue","click":2796993,"loglevel":"info"}
+{"uptime":"14597.688778","msg":"QuadPro.Load","category":"quad","filename":"{(!) Super_Natural","click":2802754,"loglevel":"info"}
+{"uptime":"14627.687415","msg":"QuadPro.Load","category":"quad","filename":"{(!) Cosmolgcl_Constant","click":2808514,"loglevel":"info"}
+{"uptime":"14657.686856","msg":"QuadPro.Load","category":"quad","filename":"{Geographic_Travels","click":2814275,"loglevel":"info"}
+{"uptime":"14687.689072","msg":"QuadPro.Load","category":"quad","filename":"Layered_Elevations","click":2820035,"loglevel":"info"}
+{"uptime":"14717.691928","msg":"QuadPro.Load","category":"quad","filename":"Quick Scat_Circles","click":2825795,"loglevel":"info"}
+{"uptime":"14747.695409","msg":"QuadPro.Load","category":"quad","filename":"Pretty_Pulses","click":2831556,"loglevel":"info"}
+{"uptime":"14777.700260","msg":"QuadPro.Load","category":"quad","filename":"{Swimming In_Salmon Blue","click":2837317,"loglevel":"info"}
+{"uptime":"14807.704516","msg":"QuadPro.Load","category":"quad","filename":"Perky_Clouds","click":2843078,"loglevel":"info"}
+{"uptime":"14837.712771","msg":"QuadPro.Load","category":"quad","filename":"{(!) Unstable_Ability","click":2848839,"loglevel":"info"}
+{"uptime":"14867.711316","msg":"QuadPro.Load","category":"quad","filename":"Alternate_Dimensions","click":2854599,"loglevel":"info"}
+{"uptime":"14897.714628","msg":"QuadPro.Load","category":"quad","filename":"{Evolving_Elevations","click":2860360,"loglevel":"info"}
+{"uptime":"14927.718797","msg":"QuadPro.Load","category":"quad","filename":"{World Wide_Webs","click":2866121,"loglevel":"info"}
+{"uptime":"14957.725314","msg":"QuadPro.Load","category":"quad","filename":"Endless_Twirls","click":2871881,"loglevel":"info"}
+{"uptime":"14987.726162","msg":"QuadPro.Load","category":"quad","filename":"{Infinite_Layers","click":2877641,"loglevel":"info"}
+{"uptime":"15017.723997","msg":"QuadPro.Load","category":"quad","filename":"{Ghostly_Shapes","click":2883402,"loglevel":"info"}
+{"uptime":"15047.724968","msg":"QuadPro.Load","category":"quad","filename":"{Dancing_With Lines","click":2889162,"loglevel":"info"}
+{"uptime":"15077.730905","msg":"QuadPro.Load","category":"quad","filename":"{Evolving_Elevations","click":2894923,"loglevel":"info"}
+{"uptime":"15107.734473","msg":"QuadPro.Load","category":"quad","filename":"Jigsaw_Puzzles","click":2900684,"loglevel":"info"}
+{"uptime":"15137.744741","msg":"QuadPro.Load","category":"quad","filename":"Filagree_Dance","click":2906445,"loglevel":"info"}
+{"uptime":"15167.746070","msg":"QuadPro.Load","category":"quad","filename":"Vocal_Linescape","click":2912206,"loglevel":"info"}
+{"uptime":"15197.747083","msg":"QuadPro.Load","category":"quad","filename":"{Perky_Clouds","click":2917966,"loglevel":"info"}
+{"uptime":"15227.746265","msg":"QuadPro.Load","category":"quad","filename":"{Blue Purple_Cartoon Clouds","click":2923726,"loglevel":"info"}
+{"uptime":"15257.754935","msg":"QuadPro.Load","category":"quad","filename":"{Shattered_Shapes","click":2929487,"loglevel":"info"}
+{"uptime":"15287.751350","msg":"QuadPro.Load","category":"quad","filename":"{(!) Compliment_Tree Colors","click":2935247,"loglevel":"info"}
+{"uptime":"15317.752063","msg":"QuadPro.Load","category":"quad","filename":"{Blue Purple_Cartoon Clouds","click":2941007,"loglevel":"info"}
+{"uptime":"15347.755043","msg":"QuadPro.Load","category":"quad","filename":"{All Drums_Squares","click":2946768,"loglevel":"info"}
+{"uptime":"15377.755148","msg":"QuadPro.Load","category":"quad","filename":"Alternate_Dimensions","click":2952528,"loglevel":"info"}
+{"uptime":"15407.763952","msg":"QuadPro.Load","category":"quad","filename":"{Dancing Fields_Of Space","click":2958289,"loglevel":"info"}
+{"uptime":"15437.765878","msg":"QuadPro.Load","category":"quad","filename":"Blue Purple_Cartoon Clouds","click":2964050,"loglevel":"info"}
+{"uptime":"15467.770206","msg":"QuadPro.Load","category":"quad","filename":"{(!) East West_North South","click":2969811,"loglevel":"info"}
+{"uptime":"15497.771195","msg":"QuadPro.Load","category":"quad","filename":"Quick Scat_Circles","click":2975571,"loglevel":"info"}
+{"uptime":"15527.779617","msg":"QuadPro.Load","category":"quad","filename":"Colored_Echoes","click":2981332,"loglevel":"info"}
+{"uptime":"15557.781780","msg":"QuadPro.Load","category":"quad","filename":"{Dancing_With Lines","click":2987093,"loglevel":"info"}
+{"uptime":"15587.783437","msg":"QuadPro.Load","category":"quad","filename":"Pretty_Pulses","click":2992853,"loglevel":"info"}
+{"uptime":"15617.787234","msg":"QuadPro.Load","category":"quad","filename":"{Square_Fantasia","click":2998614,"loglevel":"info"}
+{"uptime":"15647.787741","msg":"QuadPro.Load","category":"quad","filename":"Colored_Echoes","click":3004374,"loglevel":"info"}
+{"uptime":"15677.791091","msg":"QuadPro.Load","category":"quad","filename":"Colored_Echoes","click":3010135,"loglevel":"info"}
+{"uptime":"15707.792229","msg":"QuadPro.Load","category":"quad","filename":"{Full Bore_Borealis","click":3015895,"loglevel":"info"}
+{"uptime":"15737.798458","msg":"QuadPro.Load","category":"quad","filename":"Filagree_Dance","click":3021656,"loglevel":"info"}
+{"uptime":"15767.801063","msg":"QuadPro.Load","category":"quad","filename":"{World Wide_Webs","click":3027417,"loglevel":"info"}
+{"uptime":"15797.807414","msg":"QuadPro.Load","category":"quad","filename":"{(!) Traveling_WO Moving","click":3033177,"loglevel":"info"}
+{"uptime":"15827.803352","msg":"QuadPro.Load","category":"quad","filename":"Smokey_Trails","click":3038937,"loglevel":"info"}
+{"uptime":"15857.807961","msg":"QuadPro.Load","category":"quad","filename":"{(!) Voltrons_Garage","click":3044698,"loglevel":"info"}
+{"uptime":"15887.814331","msg":"QuadPro.Load","category":"quad","filename":"{Spiral Moire_Universe","click":3050459,"loglevel":"info"}
+{"uptime":"15917.819206","msg":"QuadPro.Load","category":"quad","filename":"{Shattered_Shapes","click":3056220,"loglevel":"info"}
+{"uptime":"15947.824680","msg":"QuadPro.Load","category":"quad","filename":"{All Drums_Squares","click":3061981,"loglevel":"info"}
+{"uptime":"15977.829008","msg":"QuadPro.Load","category":"quad","filename":"{Only_Orange","click":3067742,"loglevel":"info"}
+{"uptime":"16007.832597","msg":"QuadPro.Load","category":"quad","filename":"{Endless_Twirls","click":3073502,"loglevel":"info"}
+{"uptime":"16037.828711","msg":"QuadPro.Load","category":"quad","filename":"{(!) Super_Natural","click":3079262,"loglevel":"info"}
+{"uptime":"16067.832759","msg":"QuadPro.Load","category":"quad","filename":"{(!) Voltrons_Garage","click":3085023,"loglevel":"info"}
+{"uptime":"16097.832983","msg":"QuadPro.Load","category":"quad","filename":"{(!) Unstable_Ability","click":3090783,"loglevel":"info"}
+{"uptime":"16127.833601","msg":"QuadPro.Load","category":"quad","filename":"Too Many_Triangles","click":3096543,"loglevel":"info"}
+{"uptime":"16157.834487","msg":"QuadPro.Load","category":"quad","filename":"{Spiral Moire_Universe","click":3102303,"loglevel":"info"}
+{"uptime":"16187.839171","msg":"QuadPro.Load","category":"quad","filename":"{World Wide_Webs","click":3108064,"loglevel":"info"}
+{"uptime":"16217.839120","msg":"QuadPro.Load","category":"quad","filename":"Filagree_Dance","click":3113824,"loglevel":"info"}
+{"uptime":"16247.839741","msg":"QuadPro.Load","category":"quad","filename":"{(!) Worm_Hole","click":3119584,"loglevel":"info"}
+{"uptime":"16277.839717","msg":"QuadPro.Load","category":"quad","filename":"{(!) Unstable_Ability","click":3125344,"loglevel":"info"}
+{"uptime":"16307.845753","msg":"QuadPro.Load","category":"quad","filename":"Ghostly_Shapes","click":3131104,"loglevel":"info"}
+{"uptime":"16337.844154","msg":"QuadPro.Load","category":"quad","filename":"{Endless_Twirls","click":3136865,"loglevel":"info"}
+{"uptime":"16367.849270","msg":"QuadPro.Load","category":"quad","filename":"{(!) Traveling_WO Moving","click":3142626,"loglevel":"info"}
+{"uptime":"16397.848333","msg":"QuadPro.Load","category":"quad","filename":"Planetary_Layers","click":3148386,"loglevel":"info"}
+{"uptime":"16427.849612","msg":"QuadPro.Load","category":"quad","filename":"Pretty_Pulses","click":3154146,"loglevel":"info"}
+{"uptime":"16457.854015","msg":"QuadPro.Load","category":"quad","filename":"Pretty_Pulses","click":3159907,"loglevel":"info"}
+{"uptime":"16487.860507","msg":"QuadPro.Load","category":"quad","filename":"{Quick Scat_Circles","click":3165668,"loglevel":"info"}
+{"uptime":"16517.865014","msg":"QuadPro.Load","category":"quad","filename":"{(!) Worm_Hole","click":3171429,"loglevel":"info"}
+{"uptime":"16547.869682","msg":"QuadPro.Load","category":"quad","filename":"{Only_Orange","click":3177190,"loglevel":"info"}
+{"uptime":"16577.870585","msg":"QuadPro.Load","category":"quad","filename":"{Dancing Fields_Of Space","click":3182950,"loglevel":"info"}
+{"uptime":"16607.880090","msg":"QuadPro.Load","category":"quad","filename":"Smokey_Trails","click":3188711,"loglevel":"info"}
+{"uptime":"16637.876127","msg":"QuadPro.Load","category":"quad","filename":"Infinite_Layers","click":3194471,"loglevel":"info"}
+{"uptime":"16667.886767","msg":"QuadPro.Load","category":"quad","filename":"{Colored_Echoes","click":3200232,"loglevel":"info"}
+{"uptime":"16697.887619","msg":"QuadPro.Load","category":"quad","filename":"{World Wide_Webs","click":3205993,"loglevel":"info"}
+{"uptime":"16727.891253","msg":"QuadPro.Load","category":"quad","filename":"{All_Moire","click":3211754,"loglevel":"info"}
+{"uptime":"16749.545437","msg":"setAttractMode","onoff":false,"click":3215912,"loglevel":"info"}
+{"uptime":"16751.749263","msg":"ExecutableOutput","exe":"gui","output":"Turning Attract Mode Off!\r\n","click":3216336,"loglevel":"info"}
+{"uptime":"16751.749763","msg":"ExecutableOutput","exe":"gui","output":"startNormalMode\r\n","click":3216336,"loglevel":"info"}
+{"uptime":"16766.375015","msg":"ExecutableOutput","exe":"gui","output":"Loading category quad filename Ghostly_Shapes\r\n","click":3219144,"loglevel":"info"}
+{"uptime":"16766.376014","msg":"setAttractMode already in mode","onoff":false,"click":3219144,"loglevel":"warn"}
+{"uptime":"16766.376514","msg":"QuadPro.Load","category":"quad","filename":"Ghostly_Shapes","click":3219144,"loglevel":"info"}
+{"uptime":"16766.453704","msg":"ExecutableOutput","exe":"gui","output":"loopingOff\r\n","click":3219159,"loglevel":"info"}
+{"uptime":"16836.495606","msg":"setAttractMode","onoff":true,"click":3232607,"loglevel":"info"}
+{"uptime":"16836.503107","msg":"QuadPro.Load","category":"quad","filename":"{Vocal_Linescape","click":3232607,"loglevel":"info"}
+{"uptime":"16838.922547","msg":"ExecutableOutput","exe":"gui","output":"Turning Attract Mode On!\r\n","click":3233073,"loglevel":"info"}
+{"uptime":"16838.923046","msg":"ExecutableOutput","exe":"gui","output":"startAttractMode\r\n","click":3233073,"loglevel":"info"}
+{"uptime":"16838.931547","msg":"ExecutableOutput","exe":"gui","output":"softResetAll\r\n","click":3233075,"loglevel":"info"}
+{"uptime":"16866.506503","msg":"QuadPro.Load","category":"quad","filename":"All Scat_Color Trails","click":3238368,"loglevel":"info"}
+{"uptime":"16896.511916","msg":"QuadPro.Load","category":"quad","filename":"Spiral Moire_Universe","click":3244129,"loglevel":"info"}
+{"uptime":"16926.515632","msg":"QuadPro.Load","category":"quad","filename":"Too Many_Triangles","click":3249890,"loglevel":"info"}
+{"uptime":"16956.523167","msg":"QuadPro.Load","category":"quad","filename":"{(!) Unstable_Ability","click":3255650,"loglevel":"info"}
+{"uptime":"16986.522086","msg":"QuadPro.Load","category":"quad","filename":"All Scat_Color Trails","click":3261411,"loglevel":"info"}
+{"uptime":"17016.525012","msg":"QuadPro.Load","category":"quad","filename":"{Simply_Mellow","click":3267172,"loglevel":"info"}
+{"uptime":"17046.526194","msg":"QuadPro.Load","category":"quad","filename":"{(!) I Can See_Thru Time","click":3272932,"loglevel":"info"}
+{"uptime":"17076.531019","msg":"QuadPro.Load","category":"quad","filename":"{Playful_Plucks","click":3278692,"loglevel":"info"}
+{"uptime":"17106.530978","msg":"QuadPro.Load","category":"quad","filename":"{(!) East West_North South","click":3284453,"loglevel":"info"}
+{"uptime":"17136.536443","msg":"QuadPro.Load","category":"quad","filename":"{Infinite_Layers","click":3290214,"loglevel":"info"}
+{"uptime":"17166.538204","msg":"QuadPro.Load","category":"quad","filename":"{(!) Unstable_Ability","click":3295974,"loglevel":"info"}
+{"uptime":"17196.541387","msg":"QuadPro.Load","category":"quad","filename":"{Shattered_Shapes","click":3301735,"loglevel":"info"}
+{"uptime":"17226.542779","msg":"QuadPro.Load","category":"quad","filename":"{(!) Simple_Things","click":3307495,"loglevel":"info"}
+{"uptime":"17256.546868","msg":"QuadPro.Load","category":"quad","filename":"Infinite_Layers","click":3313256,"loglevel":"info"}
+{"uptime":"17286.551745","msg":"QuadPro.Load","category":"quad","filename":"{Shapely_Shadows","click":3319016,"loglevel":"info"}
+{"uptime":"17316.552087","msg":"QuadPro.Load","category":"quad","filename":"Psychonaut_Solids","click":3324777,"loglevel":"info"}
+{"uptime":"17346.556981","msg":"QuadPro.Load","category":"quad","filename":"Blue Purple_Cartoon Clouds","click":3330538,"loglevel":"info"}
+{"uptime":"17376.558489","msg":"QuadPro.Load","category":"quad","filename":"{(!) East West_North South","click":3336298,"loglevel":"info"}
+{"uptime":"17406.564294","msg":"QuadPro.Load","category":"quad","filename":"{Shapely_Shadows","click":3342059,"loglevel":"info"}
+{"uptime":"17436.563492","msg":"QuadPro.Load","category":"quad","filename":"Vocal_Linescape","click":3347819,"loglevel":"info"}
+{"uptime":"17466.567637","msg":"QuadPro.Load","category":"quad","filename":"{(!) I Can See_Thru Time","click":3353580,"loglevel":"info"}
+{"uptime":"17496.572811","msg":"QuadPro.Load","category":"quad","filename":"{Floating_Grains","click":3359341,"loglevel":"info"}
+{"uptime":"17526.572789","msg":"QuadPro.Load","category":"quad","filename":"{Spiral Moire_Universe","click":3365101,"loglevel":"info"}
+{"uptime":"17556.572396","msg":"QuadPro.Load","category":"quad","filename":"{(!) Unstable_Ability","click":3370861,"loglevel":"info"}
+{"uptime":"17586.579275","msg":"QuadPro.Load","category":"quad","filename":"Pretty_Pulses","click":3376622,"loglevel":"info"}
+{"uptime":"17616.583427","msg":"QuadPro.Load","category":"quad","filename":"{Shattered_Shapes","click":3382383,"loglevel":"info"}
+{"uptime":"17646.589266","msg":"QuadPro.Load","category":"quad","filename":"{Green_Variety","click":3388144,"loglevel":"info"}
+{"uptime":"17676.589841","msg":"QuadPro.Load","category":"quad","filename":"Linear_Dancing","click":3393904,"loglevel":"info"}
+{"uptime":"17706.589811","msg":"QuadPro.Load","category":"quad","filename":"{(!) Traveling_WO Moving","click":3399664,"loglevel":"info"}
+{"uptime":"17736.590791","msg":"QuadPro.Load","category":"quad","filename":"{Full Bore_Borealis","click":3405424,"loglevel":"info"}
