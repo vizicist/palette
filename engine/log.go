@@ -117,13 +117,17 @@ func SummarizeLog(fname string) error {
 	nloaded := 0
 	userMode := true
 	startdate := ""
-	startuptime := float64(0.0)
+	uptimesecs := float64(0.0)
 	line := ""
 	for scanner.Scan() {
 		line = scanner.Text()
 		var values map[string]any
+		if line[0] != '{' {
+			continue
+		}
 		if err := json.Unmarshal([]byte(line), &values); err != nil {
-			return err
+			fmt.Printf("Error parsing line: %s\n", line)
+			continue
 		}
 		msg, ok := values["msg"].(string)
 		if !ok {
@@ -135,7 +139,7 @@ func SummarizeLog(fname string) error {
 			if !ok {
 				startdate = ""
 			}
-			fmt.Printf("Starting Engine: %s\n", startdate)
+			fmt.Printf("%s :: Starting Engine\n", startdate)
 			nloaded = 0
 			userMode = true
 		} else if strings.HasPrefix(msg, "setAttractMode") {
@@ -148,7 +152,7 @@ func SummarizeLog(fname string) error {
 			if !ok {
 				uptime = ""
 			}
-			uptimesecs, err := strconv.ParseFloat(uptime, 32)
+			uptimesecs, err = strconv.ParseFloat(uptime, 32)
 			if err != nil {
 				LogIfError(err)
 				uptimesecs = 0.0
@@ -158,11 +162,12 @@ func SummarizeLog(fname string) error {
 					// fmt.Printf("Already in attractMode? not resetting nloaded\n")
 				} else {
 					// Turning on attract mode means we've just finished a user session
-					realstart := StartPlusUptime(startdate, startuptime)
+					realstart := StartPlusUptime(startdate, uptimesecs)
 					// fmt.Printf("User session: startdate=%s startsecs=%f nloaded=%d\n", startdate, modestart, nloaded)
-					fmt.Printf("User session:    start=%s nloaded=%d\n", realstart, nloaded)
-					startuptime = uptimesecs
-					nloaded = 0
+					if nloaded > 0 {
+						fmt.Printf("%s :: User session nloaded=%d\n", realstart, nloaded)
+						nloaded = 0
+					}
 					userMode = false
 				}
 			} else {
@@ -170,10 +175,11 @@ func SummarizeLog(fname string) error {
 					// fmt.Printf("Already in userMode? not resetting nloaded\n")
 				} else {
 					// Turning off attract mode means we've just finished an attract session
-					realstart := StartPlusUptime(startdate, startuptime)
-					fmt.Printf("Attract session: start=%s nloaded=%d\n", realstart, nloaded)
-					startuptime = uptimesecs
-					nloaded = 0
+					realstart := StartPlusUptime(startdate, uptimesecs)
+					if nloaded > 0 {
+						fmt.Printf("%s :: Attract session nloaded=%d\n", realstart, nloaded)
+						nloaded = 0
+					}
 					userMode = true
 				}
 			}
@@ -182,11 +188,13 @@ func SummarizeLog(fname string) error {
 		}
 	}
 
-	realstart := StartPlusUptime(startdate, startuptime)
-	if !userMode {
-		fmt.Printf("Attract session: start=%s nloaded=%d\n", realstart, nloaded)
-	} else {
-		fmt.Printf("User session:    start=%s nloaded=%d\n", realstart, nloaded)
+	if nloaded > 0 {
+		realstart := StartPlusUptime(startdate, uptimesecs)
+		if !userMode {
+			fmt.Printf("%s :: Attract session nloaded=%d\n", realstart, nloaded)
+		} else {
+			fmt.Printf("%s :: User session nloaded=%d\n", realstart, nloaded)
+		}
 	}
 
 	if err := scanner.Err(); err != nil {
