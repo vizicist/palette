@@ -160,7 +160,7 @@ func SummarizeLog(fname string) error {
 					// Turning on attract mode means we've just finished a user session
 					realstart := StartPlusUptime(startdate, startuptime)
 					// fmt.Printf("User session: startdate=%s startsecs=%f nloaded=%d\n", startdate, modestart, nloaded)
-					fmt.Printf("User session: start=%s nloaded=%d\n", realstart, nloaded)
+					fmt.Printf("User session:    start=%s nloaded=%d\n", realstart, nloaded)
 					startuptime = uptimesecs
 					nloaded = 0
 					userMode = false
@@ -182,10 +182,11 @@ func SummarizeLog(fname string) error {
 		}
 	}
 
+	realstart := StartPlusUptime(startdate, startuptime)
 	if !userMode {
-		fmt.Printf("Attract session: startdate=%s modestartsecs=%f nloaded=%d\n", startdate, startuptime, nloaded)
+		fmt.Printf("Attract session: start=%s nloaded=%d\n", realstart, nloaded)
 	} else {
-		fmt.Printf("User session: startdate=%s modestartsecs=%f nloaded=%d\n", startdate, startuptime, nloaded)
+		fmt.Printf("User session:    start=%s nloaded=%d\n", realstart, nloaded)
 	}
 
 	if err := scanner.Err(); err != nil {
