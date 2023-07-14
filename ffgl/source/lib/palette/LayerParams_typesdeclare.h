@@ -2,6 +2,7 @@ DECLARE_TYPES(plugins);
 DECLARE_TYPES(log);
 DECLARE_TYPES(autostart);
 DECLARE_TYPES(pitchset);
+DECLARE_TYPES(guisize);
 DECLARE_TYPES(mmtt);
 DECLARE_TYPES(destination);
 DECLARE_TYPES(logic_sound);
