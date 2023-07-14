@@ -80,7 +80,7 @@ func CliCommand(args []string) (map[string]string, error) {
 
 	// Warn about extra unexpected arguments
 	switch api {
-	case "start", "kill", "stop":
+	case "start", "kill", "stop", "summarize":
 		// okay
 	default:
 		// extra args are allowed on api.method usage
@@ -92,12 +92,7 @@ func CliCommand(args []string) (map[string]string, error) {
 	switch api {
 
 	case "summarize":
-		s, err := engine.SummarizeLog(arg1)
-		if err != nil {
-			return nil, err
-		}
-		out := map[string]string{"result": s}
-		return out, nil
+		return nil, engine.SummarizeLog(arg1)
 
 	case "taillog", "logtail":
 		logpath := engine.LogFilePath("engine.log")
@@ -109,7 +104,10 @@ func CliCommand(args []string) (map[string]string, error) {
 		return nil, nil
 
 	case "status":
-		s, _ := StatusOutput()
+		s, nrunning := StatusOutput()
+		if nrunning == 0 {
+			s = "No palette processes are running."
+		}
 		out := map[string]string{"result": s}
 		return out, nil
 

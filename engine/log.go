@@ -1,11 +1,12 @@
 package engine
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
-	"bufio"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -42,7 +43,7 @@ func myTimeEncoder(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
 	enc.AppendString(s)
 }
 
-func zapEncoderConfig() zapcore.EncoderConfig { 
+func zapEncoderConfig() zapcore.EncoderConfig {
 
 	stacktraceKey := ""
 	// stacktraceKey = "stacktrace" // use this if you want to get stack traces
@@ -107,62 +108,107 @@ func InitLog(logname string) {
 	LogInfo("InitLog ==============================", "date", date, "logname", logname)
 }
 
-func SummarizeLog(fname string) (summary string, err error) {
-	summary = ""
+func SummarizeLog(fname string) error {
 	file, err := os.Open(fname)
 	if err != nil {
-		return "",err
+		return err
 	}
 	scanner := bufio.NewScanner(file)
 	nloaded := 0
-	attractMode := false
+	userMode := true
+	startdate := ""
+	startuptime := float64(0.0)
+	line := ""
 	for scanner.Scan() {
-		line := scanner.Text()
+		line = scanner.Text()
 		var values map[string]any
 		if err := json.Unmarshal([]byte(line), &values); err != nil {
-			return "", err
+			return err
 		}
 		msg, ok := values["msg"].(string)
 		if !ok {
 			continue
 		}
-		if strings.HasPrefix("InitLog",msg) {
-			startdate, ok := values["date"].(string)
+
+		if strings.HasPrefix(msg, "InitLog") {
+			fmt.Printf("InitLog: %s\n", line)
+			startdate, ok = values["date"].(string)
 			if !ok {
 				startdate = ""
 			}
-			summary += fmt.Sprintf("START: %s\n", startdate)
+			fmt.Printf("Starting Engine: %s\n", startdate)
 			nloaded = 0
-			attractMode = false
-		} else if strings.HasPrefix("setAttractMode",msg) {
-			onoff, ok := values["onoff"].(string)
+			userMode = true
+		} else if strings.HasPrefix(msg, "setAttractMode") {
+			// This catches both plain setAttractMode and setAttractMode already
+			turnAttractOn, ok := values["onoff"].(bool)
 			if !ok {
-				onoff = ""
+				turnAttractOn = false
 			}
-			summary += fmt.Sprintf("SETATTRACT: %s\n", onoff)
-			b := IsTrueValue(onoff)
-			if attractMode == false && b == true {
-				attractMode = true
-				summary += fmt.Sprintf("Starting ATTRACTMODE: nloaded=%d\n", nloaded)
-				nloaded = 0
-			} else if attractMode == true && b == false {
-				attractMode = false
-				summary += fmt.Sprintf("Stopping ATTRACTMODE: nloaded=%d\n", nloaded)
-				nloaded = 0
-			}
-		} else if strings.HasPrefix("QuadPro.Load",msg) {
-			fname := values["filename"]
+			uptime, ok := values["uptime"].(string)
 			if !ok {
-				fname = ""
+				uptime = ""
 			}
+			uptimesecs, err := strconv.ParseFloat(uptime, 32)
+			if err != nil {
+				LogIfError(err)
+				uptimesecs = 0.0
+			}
+			if turnAttractOn {
+				if !userMode {
+					fmt.Printf("Already in attractMode? not resetting nloaded\n")
+				} else {
+					// Turning on attract mode means we've just finished a user session
+					fmt.Printf("Turning attractMode ON, dumping user session\n")
+					realstart := StartPlusUptime(startdate, startuptime)
+					// fmt.Printf("User session: startdate=%s startsecs=%f nloaded=%d\n", startdate, modestart, nloaded)
+					fmt.Printf("User session: start=%s nloaded=%d\n", realstart, nloaded)
+					startuptime = uptimesecs
+					nloaded = 0
+					userMode = false
+				}
+			} else {
+				if userMode {
+					fmt.Printf("Already in userMode? not resetting nloaded\n")
+				} else {
+					// Turning off attract mode means we've just finished an attract session
+					fmt.Printf("Turning userMode ON, dumping attract session\n")
+					realstart := StartPlusUptime(startdate, startuptime)
+					fmt.Printf("Attract session: start=%s nloaded=%d\n", realstart, nloaded)
+					startuptime = uptimesecs
+					nloaded = 0
+					userMode = true
+				}
+			}
+		} else if strings.HasPrefix(msg, "QuadPro.Load") {
+			// fname := values["filename"]
+			// if !ok {
+			// 	fname = ""
+			// }
+			// fmt.Printf("LOAD: %s\n", fname)
 			nloaded++
-			summary += fmt.Sprintf("LOAD: %s\n", fname)
 		}
 	}
-	if err := scanner.Err(); err != nil {
-		return "", err
+
+	if !userMode {
+		fmt.Printf("Attract session: startdate=%s modestartsecs=%f nloaded=%d\n", startdate, startuptime, nloaded)
+	} else {
+		fmt.Printf("User session: startdate=%s modestartsecs=%f nloaded=%d\n", startdate, startuptime, nloaded)
 	}
-	return summary, nil
+
+	if err := scanner.Err(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func StartPlusUptime(startdate string, uptime float64) string {
+	layout := "2006-01-02 15:04:05"
+	tt, err := time.Parse(layout, startdate)
+	LogIfError(err)
+	dur := time.Duration(uptime * float64(time.Second))
+	realstart := tt.Add(dur)
+	return realstart.Format(layout)
 }
 
 // LogFilePath uses $PALETTE_LOGDIR if set
@@ -176,7 +222,7 @@ func LogFilePath(nm string) string {
 	if _, err := os.Stat(logdir); os.IsNotExist(err) {
 		err = os.MkdirAll(logdir, os.FileMode(0777))
 		LogIfError(err) // not fatal?
-	}	
+	}
 	return filepath.Join(logdir, nm)
 }
 
@@ -198,7 +244,7 @@ func LogIfError(err error, keysAndValues ...any) {
 	if err == nil {
 		return
 	}
-	LogError(err,keysAndValues...)
+	LogError(err, keysAndValues...)
 }
 
 // LogIfError will accept a nil value and do nothing
