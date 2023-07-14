@@ -4,6 +4,7 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
+
         {
             "name": "GUI Basic - palette_gui.py",
             "type": "python",
@@ -58,6 +59,13 @@
             "request": "launch",
             "program": "${env:PALETTE_SOURCE}/cmd/palette/palette.go",
             "args": ["archivelogs"]
+        },
+        {
+            "name": "palette summarize palette11",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTE_SOURCE}/cmd/palette/palette.go",
+            "args": ["summarize","c:/users/tjt/Documents/GitHub/temp/palette11.engine.log"]
         },
        {
             "name": "SPLASH - palette_splash.go",
