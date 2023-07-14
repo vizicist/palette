@@ -38,6 +38,7 @@ func main() {
 	apiout, err := CliCommand(args)
 	if err != nil {
 		os.Stdout.WriteString("Error: " + err.Error() + "\n")
+		engine.LogError(err)
 	} else {
 		os.Stdout.WriteString(engine.HumanReadableApiOutput(apiout))
 	}
