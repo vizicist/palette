@@ -131,7 +131,6 @@ func SummarizeLog(fname string) error {
 		}
 
 		if strings.HasPrefix(msg, "InitLog") {
-			fmt.Printf("InitLog: %s\n", line)
 			startdate, ok = values["date"].(string)
 			if !ok {
 				startdate = ""
@@ -156,10 +155,9 @@ func SummarizeLog(fname string) error {
 			}
 			if turnAttractOn {
 				if !userMode {
-					fmt.Printf("Already in attractMode? not resetting nloaded\n")
+					// fmt.Printf("Already in attractMode? not resetting nloaded\n")
 				} else {
 					// Turning on attract mode means we've just finished a user session
-					fmt.Printf("Turning attractMode ON, dumping user session\n")
 					realstart := StartPlusUptime(startdate, startuptime)
 					// fmt.Printf("User session: startdate=%s startsecs=%f nloaded=%d\n", startdate, modestart, nloaded)
 					fmt.Printf("User session: start=%s nloaded=%d\n", realstart, nloaded)
@@ -169,10 +167,9 @@ func SummarizeLog(fname string) error {
 				}
 			} else {
 				if userMode {
-					fmt.Printf("Already in userMode? not resetting nloaded\n")
+					// fmt.Printf("Already in userMode? not resetting nloaded\n")
 				} else {
 					// Turning off attract mode means we've just finished an attract session
-					fmt.Printf("Turning userMode ON, dumping attract session\n")
 					realstart := StartPlusUptime(startdate, startuptime)
 					fmt.Printf("Attract session: start=%s nloaded=%d\n", realstart, nloaded)
 					startuptime = uptimesecs
@@ -181,11 +178,6 @@ func SummarizeLog(fname string) error {
 				}
 			}
 		} else if strings.HasPrefix(msg, "QuadPro.Load") {
-			// fname := values["filename"]
-			// if !ok {
-			// 	fname = ""
-			// }
-			// fmt.Printf("LOAD: %s\n", fname)
 			nloaded++
 		}
 	}
