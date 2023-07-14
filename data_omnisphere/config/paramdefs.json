@@ -172,6 +172,7 @@
 "engine.testgestureinterval": {"valuetype": "float", "min": "0.1", "max": "20.0",  "init": "0.3",	"comment": "# in seconds" },
 "engine.testgesturentimes": {"valuetype":"int", "min":"1", "max":"1000", "init":"250", "comment":"#" },
 "engine.gui": {"valuetype":"string", "min":"", "max":"", "init":"C:/Program Files/Palette/bin/pyinstalled/palette_gui.exe", "comment":"#" },
+"engine.guisize": {"valuetype":"string", "min":"guisize", "max":"guisize", "init":"small", "comment":"#" },
 "engine.defaultguilevel": {"valuetype":"int", "min":"0", "max":"1", "init":"0", "comment":"#" },
 "engine.keykitrun": {"valuetype":"bool", "min":"false", "max":"true", "init":"false", "comment":"#" },
 "engine.keykitpath": {"valuetype":"string", "min":"", "max":"", "init":"", "comment":"# keykit executable path" },

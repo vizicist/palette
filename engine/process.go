@@ -265,6 +265,14 @@ func GuiProcessInfo() *ProcessInfo {
 		os.Setenv("PALETTE_GUI_LEVEL", guilevel)
 	}
 
+	// set PALETTE_GUI_SIZE for future use when gui is started
+	guisize, err := GetParam("engine.guisize")
+	if err != nil {
+		LogIfError(err)
+	} else {
+		os.Setenv("PALETTE_GUI_SIZE", guisize)
+	}
+
 	return NewProcessInfo(exe, fullpath, "", nil)
 }
 

@@ -2,6 +2,7 @@ DEFINE_TYPES(plugins);
 DEFINE_TYPES(log);
 DEFINE_TYPES(autostart);
 DEFINE_TYPES(pitchset);
+DEFINE_TYPES(guisize);
 DEFINE_TYPES(mmtt);
 DEFINE_TYPES(destination);
 DEFINE_TYPES(logic_sound);
@@ -54,6 +55,10 @@ LayerParams_InitializeTypes() {
 
 	LayerParams_pitchsetTypes.push_back("");
 	LayerParams_pitchsetTypes.push_back("stylusrmx");
+
+	LayerParams_guisizeTypes.push_back("small");
+	LayerParams_guisizeTypes.push_back("medium");
+	LayerParams_guisizeTypes.push_back("palette");
 
 	LayerParams_mmttTypes.push_back("kinect");
 	LayerParams_mmttTypes.push_back("depthai");
