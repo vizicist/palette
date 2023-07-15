@@ -24,6 +24,7 @@ DEFINE_TYPES(spritestyle);
 DEFINE_TYPES(midibehaviour);
 DEFINE_TYPES(patch);
 DEFINE_TYPES(scale);
+DEFINE_TYPES(enginescale);
 DEFINE_TYPES(inputport);
 DEFINE_TYPES(synth);
 DEFINE_TYPES(midiport);
@@ -172,6 +173,22 @@ LayerParams_InitializeTypes() {
 	LayerParams_scaleTypes.push_back("harminor");
 	LayerParams_scaleTypes.push_back("melminor");
 	LayerParams_scaleTypes.push_back("chromatic");
+
+	LayerParams_enginescaleTypes.push_back("");
+	LayerParams_enginescaleTypes.push_back("external");
+	LayerParams_enginescaleTypes.push_back("newage");
+	LayerParams_enginescaleTypes.push_back("arabian");
+	LayerParams_enginescaleTypes.push_back("ionian");
+	LayerParams_enginescaleTypes.push_back("dorian");
+	LayerParams_enginescaleTypes.push_back("phrygian");
+	LayerParams_enginescaleTypes.push_back("lydian");
+	LayerParams_enginescaleTypes.push_back("mixolydian");
+	LayerParams_enginescaleTypes.push_back("aeolian");
+	LayerParams_enginescaleTypes.push_back("locrian");
+	LayerParams_enginescaleTypes.push_back("octaves");
+	LayerParams_enginescaleTypes.push_back("harminor");
+	LayerParams_enginescaleTypes.push_back("melminor");
+	LayerParams_enginescaleTypes.push_back("chromatic");
 
 	LayerParams_inputportTypes.push_back("");
 	LayerParams_inputportTypes.push_back("microKEY2 Air");
