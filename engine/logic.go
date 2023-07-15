@@ -67,6 +67,16 @@ func (logic *PatchLogic) cursorToPitch(ce CursorEvent) (uint8, error) {
 		p := uint8(pitchmin + p1%dp)
 
 		scaleName := patch.Get("misc.scale")
+
+		// The engine.scale param, if not "", overrides misc.scale
+		engineScaleName, err := GetParam("engine.scale")
+		if err != nil {
+			engineScaleName = ""
+		}
+		if engineScaleName != "" {
+			scaleName = engineScaleName
+		}
+
 		if scaleName != "chromatic" {
 			scale := GetScale(scaleName)
 			closest := scale.ClosestTo(p)

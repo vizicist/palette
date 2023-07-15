@@ -88,6 +88,8 @@ class ProGuiApp(tk.Tk):
 
         self.defaultGuiLevel = int(os.environ.get("PALETTE_GUI_LEVEL","0"))
 
+        self.showAll = palette.boolValueOfString(palette.GetParam("engine.guishowall"))
+
         self.currentPageName = None
 
         self.setGuiLevel(self.defaultGuiLevel)
@@ -219,6 +221,13 @@ class ProGuiApp(tk.Tk):
     def forgetPatchChooser(self):
         self.patchChooser.place_forget()
 
+    def PatchList(self):
+        if self.allPatchesSelected:
+            patchlist = self.Patches
+        else:
+            patchlist = {self.CurrPatch}
+        return patchlist
+
     def scrollWheel(self,event):
         if self.editMode:
             scrollbar = self.editPage[self.currentPageName].scrollbar
@@ -336,8 +345,7 @@ class ProGuiApp(tk.Tk):
                 log("Error in getting value of engine.looping_beats")
                 return
 
-        for patch in self.Patches:
-
+        for patch in self.PatchList():
             palette.palette_patch_set(patch.name(), "misc.looping_on", "true")
             if force:
                 palette.palette_patch_set(patch.name(), "misc.looping_fade", forcefade)
@@ -363,10 +371,10 @@ class ProGuiApp(tk.Tk):
         log("loopingClearButton")
         self.softResetAll()
         self.resetVisibility()
-        self.loopingClearOnly()
+        # self.loopingClearOnly()
 
     def loopingClearOnly(self):
-        for patch in self.Patches:
+        for patch in self.PatchList():
             palette.palette_patch_api(patch.name(), "clear", "")
 
     def setNextMode(self,mode):
@@ -391,6 +399,7 @@ class ProGuiApp(tk.Tk):
         self.patchChooser.place_forget()
         self.helpFrame.place_forget()
         self.attractFrame.place(in_=self.topContainer, relx=0, rely=0, relwidth=1, relheight=1)
+        self.allPatchesSelected = True
         self.softResetAll()
 
     def startHelpMode(self):
@@ -561,6 +570,7 @@ class ProGuiApp(tk.Tk):
         palette.palette_engine_api("attract",
             "\"onoff\": \"false\"")
         self.setNextMode("normal")
+        self.allPatchesSelected = True
         self.softResetAll()
         self.resetVisibility()
 
@@ -632,7 +642,7 @@ class ProGuiApp(tk.Tk):
         page.doLayout()
        
     def makeSelectorPage(self,parent,pagename,pagemaker):
-        vals = palette.savedListAll(pagename)
+        vals = palette.savedListAll(pagename,self.showAll)
 
         page = pagemaker(parent, self, vals, pagename)
 
@@ -800,15 +810,10 @@ class ProGuiApp(tk.Tk):
                 paramlistjson = self.paramListOfType("engine",self.engine.getValue)
                 palette.palette_engine_api("setparams", paramlistjson)
                 self.engine.sendParamsOfType(paramType)
-
-            elif self.allPatchesSelected:
-                log("Sending ",paramType," params to all patch")
-                for patch in self.Patches:
-                    patch.sendParamsOfType(paramType)
-                log("After sending ",paramType," params to all patch")
             else:
-                log("Sending ",paramType," params to patch ",self.CurrPatch.name())
-                self.CurrPatch.sendParamsOfType(paramType)
+                for patch in self.PatchList():
+                    log("Sending ",paramType," params to patch ",self.CurrPatch.name())
+                    patch.sendParamsOfType(paramType)
 
     def applyToAllParams(self,apply,paramType,sendit=True):
         # loop through all the parameters of a given type
@@ -913,12 +918,9 @@ class ProGuiApp(tk.Tk):
                 patchName = self.CurrPatch.name()
                 self.patchLoad(patchName,category,filename)
 
-        elif self.allPatchesSelected:
-            for patch in self.Patches:
-                self.patchLoad(patch.name(),category,filename)
         else:
-            patchName = self.CurrPatch.name()
-            self.patchLoad(patchName,category,filename)
+            for patch in self.PatchList():
+                self.patchLoad(patch.name(),category,filename)
 
         if self.isLooping:
             self.loopingOn()
@@ -937,7 +939,7 @@ class ProGuiApp(tk.Tk):
             log("HEY!! selectorLoadAndSendRand shouldn't be used in editMode?")
             return
 
-        saved = palette.savedListAll(savedType)
+        saved = palette.savedListAll(savedType,self.controller.showAll)
         nsaved = len(saved)
         if nsaved == 0:
             log("selectorLoadAndSendRand: no saved of type "+savedType+"?")
@@ -1067,6 +1069,7 @@ class ProGuiApp(tk.Tk):
         log("COMPLETE RESET")
         self.setGuiLevel(self.defaultGuiLevel)
         self.loopingOff()
+        self.allPatchesSelected = True
         self.softResetAll()
         self.resetVisibility()
         self.loopingClearOnly()
@@ -1077,15 +1080,19 @@ class ProGuiApp(tk.Tk):
 
         self.loopingClearOnly()
 
-        palette.palette_engine_api("audio_reset")
+        if self.allPatchesSelected:
+            palette.palette_engine_api("audio_reset")
 
-        self.allPatchesSelected = True
-        self.CurrPatch = self.patchNamed("A")
+        # self.CurrPatch = self.patchNamed("A")
+
         self.patchChooser.refreshPatchColors()
         self.sendANO()
 
-        for patch in self.Patches:
-            patch.clear()
+        # if self.allPatchesSelected:
+        #     for patch in self.Patches:
+        #         patch.clear()
+        # else:
+        #     self.CurrPatch.clear()
 
     def synthesizeParamsJson(self):
 
@@ -1180,7 +1187,7 @@ class ProGuiApp(tk.Tk):
             if pt in self.paramenums:
                 log("WARNING! pt=",pt," is already in paramenums.json!")
             else:
-                self.paramenums[pt] = palette.savedListAll(pt)
+                self.paramenums[pt] = palette.savedListAll(pt,self.showAll)
 
         j = palette.readJsonPath(palette.configFilePath("synths.json"))
 
@@ -1534,7 +1541,7 @@ class PageEditParams(tk.Frame):
         self.setSavedNameInComboBox(defname)
 
     def updateSavedNames(self):
-        self.savedNames = palette.savedListAll(self.pagename)
+        self.savedNames = palette.savedListAll(self.pagename,self.controller.showAll)
         self.comboParamsname.configure(values=self.savedNames)
 
     def makeParamsArea(self,container):
