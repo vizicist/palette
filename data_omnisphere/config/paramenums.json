@@ -49,6 +49,23 @@
     "melminor",
     "chromatic"
   ],
+  "enginescale": [
+    "",
+    "external",
+    "newage",
+    "arabian",
+    "ionian",
+    "dorian",
+    "phrygian",
+    "lydian",
+    "mixolydian",
+    "aeolian",
+    "locrian",
+    "octaves",
+    "harminor",
+    "melminor",
+    "chromatic"
+  ],
   "inputport": [
     "",
     "microKEY2 Air"

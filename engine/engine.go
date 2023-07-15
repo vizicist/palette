@@ -505,6 +505,9 @@ func (e *Engine) SetAutoTransposeBeats(beats int) {
 
 func (e *Engine) advanceTransposeTo(newclick Clicks) {
 
+	if ! e.autoTransposeOn {
+		return
+	}
 	if newclick < e.autoTransposeNext {
 		return
 	}
