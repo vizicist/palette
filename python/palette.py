@@ -127,15 +127,10 @@ def PaletteDataPath():
     return FullDataPath
 
 # Combine saved in the savedPath list
-def savedListAll(savedType):
+def savedListAll(savedType,showall):
     savedpath = savedPath()
     paths = savedpath.split(";")
     allvals = []
-    s = os.environ.get("PALETTE_GUI_SHOWALL")
-    if s == None or boolValueOfString(s) == False:
-        showall = False
-    else:
-        showall = True
     for dir in paths:
         saveddir = os.path.join(dir,savedType)
         if os.path.isdir(saveddir):
