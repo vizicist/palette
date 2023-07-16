@@ -48,8 +48,8 @@ def add_to_params(params,p):
 def palette_patch_api(patch, api, params=""):
     if patch == "":
         log("palette_patch_api: no patch specified?")
-    if DebugApi:
-        log("palette_patch_api: patch="+patch+" api="+api+" params="+params)
+    # if DebugApi:
+    #     log("palette_patch_api: patch="+patch+" api="+api+" params="+params)
     return palette_api("patch."+api,add_to_params(params,"\"patch\":\""+patch+"\""))
 
 def palette_patch_set(patch, name, value):
@@ -193,6 +193,10 @@ def palette_api_setup():
     session.mount("http://", adapter)
     session.mount("https://", adapter)
 
+def audio_reset():
+    log("palette.audio_reset")
+    palette_engine_api("audio_reset")
+
 def palette_api(api,params):
 
     global ApiLock
@@ -212,7 +216,7 @@ def palette_api(api,params):
         lim = 100
         if len(s) > lim:
             s = s[0:lim] + " ..."
-        log("palette_api: params=",s)
+        log("palette_api: api=",api," params=",s)
 
     success = False
     while not success:

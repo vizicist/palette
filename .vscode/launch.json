@@ -6,28 +6,13 @@
     "configurations": [
 
         {
-            "name": "GUI Basic - palette_gui.py",
+            "name": "GUI - palette_gui.py",
             "type": "python",
             "request": "launch",
             "program": "${env:PALETTE_SOURCE}/python/palette_gui.py",
             "console": "integratedTerminal",
             "cwd": "${fileDirname}",
-            "env": {
-                "PALETTE_GUI_LEVEL": "0"
-            },
-            "args": [""]
-        },
-        {
-            "name": "GUI Advanced - palette_gui.py",
-            "type": "python",
-            "request": "launch",
-            "program": "${env:PALETTE_SOURCE}/python/palette_gui.py",
-            "console": "integratedTerminal",
-            "cwd": "${fileDirname}",
-            "env": {
-                "PALETTE_GUI_LEVEL": "1"
-            },
-            "args": [""]
+            "args": []
         },
        {
             "name": "ENGINE - palette_engine.go",

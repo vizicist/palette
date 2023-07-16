@@ -75,18 +75,15 @@ class ProGuiApp(tk.Tk):
             ):
 
         self.guisize = guisize
-        log("ProGuiApp guisize=",guisize)
         self.killme = False
 
         self.currentMode = ""
         self.setNextMode("")
         self.lastLoadType = ""
         self.lastLoadName = ""
-        self.isLooping = False
+        # self.isLooping = False
 
-        log("PALETTE_GUI_LEVEL env = "+ os.environ.get("PALETTE_GUI_LEVEL",""))
-
-        self.defaultGuiLevel = int(os.environ.get("PALETTE_GUI_LEVEL","0"))
+        self.defaultGuiLevel = int(palette.GetParam("engine.defaultguilevel"))
 
         self.showAll = palette.boolValueOfString(palette.GetParam("engine.guishowall"))
 
@@ -313,21 +310,31 @@ class ProGuiApp(tk.Tk):
 
         log("mainLoop is returning")
 
-    def loopingOnOff(self):
-        self.loopingClearOnly()
-        if self.isLooping:
-            self.loopingOff()
-            palette.palette_engine_api("audio_reset")
+    def loopingToggle(self):
+        if self.allPatchesSelected:
+            anyOn = False
+            for patch in self.PatchList():
+                if patch.isLooping:
+                    anyOn = True
+            setLoopingOn = not anyOn
+            for patch in self.PatchList():
+                if setLoopingOn:
+                    self.loopingOn(patch)
+                else:
+                    self.loopingOff(patch)
         else:
-            self.loopingOn()
+            if self.CurrPatch.isLooping:
+                self.loopingOff(self.CurrPatch)
+            else:
+                self.loopingOn(self.CurrPatch)
 
-    def loopingOn(self):
+        self.resetLoopButton()
+        self.patchChooser.refreshPatches()
 
-        self.performPage.setPerformButtonText("Looping","LOOPING_IS ON ",'PerformButtonHighlight.TLabel')
-        self.update()
+    def loopingOn(self, patch):
 
-        self.isLooping = True
-        log("loopingOn")
+        patch.isLooping = True
+        self.update()  # tk stuff
 
         s, err = palette.palette_engine_get("engine.looping_override")
         if err != None:
@@ -335,7 +342,6 @@ class ProGuiApp(tk.Tk):
             return
         force = palette.boolValueOfString(s)
         if force:
-            # palette.palette_engine_set("engine.looping_on", "true")
             forcefade, err = palette.palette_engine_get("engine.looping_fade")
             if err != None:
                 log("Error in getting value of engine.looping_fade")
@@ -345,27 +351,22 @@ class ProGuiApp(tk.Tk):
                 log("Error in getting value of engine.looping_beats")
                 return
 
-        for patch in self.PatchList():
-            palette.palette_patch_set(patch.name(), "misc.looping_on", "true")
-            if force:
-                palette.palette_patch_set(patch.name(), "misc.looping_fade", forcefade)
-                palette.palette_patch_set(patch.name(), "misc.looping_beats", forcebeats)
+        palette.palette_patch_set(patch.name(), "misc.looping_on", "true")
+        if force:
+            palette.palette_patch_set(patch.name(), "misc.looping_fade", forcefade)
+            palette.palette_patch_set(patch.name(), "misc.looping_beats", forcebeats)
 
-            # This is overkill
-            self.refreshValues("misc",patch)
+        # This is overkill
+        # self.refreshValues("misc",patch)
 
-    def loopingOff(self):
-        self.performPage.setPerformButtonText("Looping","LOOPING_IS OFF",'PerformButton.TLabel')
-        self.update()
+    def loopingOff(self, patch):
 
-        self.isLooping = False
-        log("loopingOff")
+        patch.isLooping = False
+        self.update()  # tk stuff
 
-        # palette.palette_engine_set("engine.looping_on", "false")
+        palette.palette_patch_set(patch.name(), "misc.looping_on", "false")
 
-        for patch in self.Patches:
-            palette.palette_patch_set(patch.name(), "misc.looping_on", "false")
-            self.refreshValues("misc",patch)
+        # self.refreshValues("misc",patch)
 
     def loopingClearButton(self):
         log("loopingClearButton")
@@ -382,7 +383,6 @@ class ProGuiApp(tk.Tk):
 
     def startNormalMode(self):
         # self.startupFrame.place_forget()
-        log("startNormalMode")
         self.resetMinMaxXY()
         self.setNextMode("normal")
         self.attractFrame.place_forget()
@@ -391,7 +391,6 @@ class ProGuiApp(tk.Tk):
         self.resetVisibility()
 
     def startAttractMode(self):
-        log("startAttractMode")
         self.setNextMode ("attract")
         self.lastAttractSpriteTime = 0
         self.selectFrame.place_forget()
@@ -437,7 +436,7 @@ class ProGuiApp(tk.Tk):
         # select the initial patch
         self.patchChooserCallback(patchname)
         self.allPatchesSelected = True
-        self.patchChooser.refreshColors()
+        self.patchChooser.refreshPatches()
 
     def popup(self,msg):
         usemessagebox = True
@@ -485,7 +484,32 @@ class ProGuiApp(tk.Tk):
 
         self.selectorAction = ""
     
+    def resetLoopButton(self):
+
+        if self.allPatchesSelected:
+            # See if it's mixed
+            nlooping = 0
+            for patch in self.PatchList():
+                if patch.isLooping:
+                    nlooping += 1
+            if nlooping > 0:
+                if nlooping == len(self.Patches):
+                    self.performPage.setPerformButtonText("Looping","LOOPING_IS ON",'PerformButton.TLabel')
+                else:
+                    self.performPage.setPerformButtonText("Looping","LOOPING_IS MIXED",'PerformButton.TLabel')
+            else:
+                self.performPage.setPerformButtonText("Looping","LOOPING_IS OFF",'PerformButton.TLabel')
+        else:
+            if self.CurrPatch.isLooping:
+                self.performPage.setPerformButtonText("Looping","LOOPING_IS ON",'PerformButton.TLabel')
+            else:
+                self.performPage.setPerformButtonText("Looping","LOOPING_IS OFF",'PerformButton.TLabel')
+
     def resetVisibility(self):
+        # log("RESETVISIBILITY!")
+
+        self.resetLoopButton()
+
         self.editMode = False
         self.setFrameSizes()
 
@@ -565,12 +589,13 @@ class ProGuiApp(tk.Tk):
 
     def unattract(self):
         log("Screen pressed, stopping attract mode")
-        self.loopingOff()
+        self.allPatchesSelected = True
+        for patch in self.PatchList():
+            self.loopingOff(patch)
         self.clear()
         palette.palette_engine_api("attract",
             "\"onoff\": \"false\"")
         self.setNextMode("normal")
-        self.allPatchesSelected = True
         self.softResetAll()
         self.resetVisibility()
 
@@ -922,11 +947,6 @@ class ProGuiApp(tk.Tk):
             for patch in self.PatchList():
                 self.patchLoad(patch.name(),category,filename)
 
-        if self.isLooping:
-            self.loopingOn()
-        else:
-            self.loopingOff()
-
     def patchLoad(self,patchName,category,filename):
         # log("patchLoad","patch",patchName,"category",category,"filename",filename)
         palette.palette_patch_api(patchName, "load",
@@ -1003,12 +1023,10 @@ class ProGuiApp(tk.Tk):
                 self.copyPatchToPage(self.CurrPatch,self.currentPageName)
 
     def clear(self):
+        for patch in self.PatchList():
+            patch.clear()
         if self.allPatchesSelected:
-            for patch in self.Patches:
-                patch.clear()
-            palette.palette_engine_api("audio_reset")
-        else:
-            self.CurrPatch.clear()
+            palette.audio_reset()
         self.checkEscape()
  
     def checkEscape(self):
@@ -1034,7 +1052,6 @@ class ProGuiApp(tk.Tk):
 
     def setGuiLevel(self,level):
         self.guiLevel = level
-        log("setGuiLevel, GuiLevel = ",self.guiLevel)
 #        self.setScaleList()
 
     def sendANO(self):
@@ -1066,33 +1083,25 @@ class ProGuiApp(tk.Tk):
         os._exit(0)  # This is a hard exit, killing all the background threads
 
     def completeReset(self):
-        log("COMPLETE RESET")
         self.setGuiLevel(self.defaultGuiLevel)
-        self.loopingOff()
         self.allPatchesSelected = True
+        for patch in self.PatchList():
+            self.loopingOff(patch)
         self.softResetAll()
         self.resetVisibility()
         self.loopingClearOnly()
 
     def softResetAll(self):
 
-        log("softResetAll")
-
         self.loopingClearOnly()
 
         if self.allPatchesSelected:
-            palette.palette_engine_api("audio_reset")
+            palette.audio_reset()
 
         # self.CurrPatch = self.patchNamed("A")
 
         self.patchChooser.refreshPatchColors()
         self.sendANO()
-
-        # if self.allPatchesSelected:
-        #     for patch in self.Patches:
-        #         patch.clear()
-        # else:
-        #     self.CurrPatch.clear()
 
     def synthesizeParamsJson(self):
 
@@ -1264,6 +1273,7 @@ class Patch():
         self.params = self.controller.paramsOfType["patch"]
         self.setInitValues()
         self.patchName = patchName
+        self.isLooping = False
 
     def name(self):
         return self.patchName
@@ -1342,31 +1352,36 @@ class PatchChooser(tk.Frame):
 
         self.config(background=ColorBg)
 
-    def makePatchFrame(self,parent,patch,x0,y0):
+    def makePatchFrame(self,parent,patchName,x0,y0):
 
-        self.patchFrame[patch] = tk.Frame(self)
-        self.patchFrame[patch].place(relx=x0,rely=y0,relwidth=0.3,relheight=0.4)
-        self.patchFrame[patch].config(borderwidth=2,relief="solid",background=ColorUnHigh)
-        self.patchFrame[patch].bind("<Button-1>", lambda p=patch: self.patchCallback(p))
+        self.patchFrame[patchName] = tk.Frame(self)
+        self.patchFrame[patchName].place(relx=x0,rely=y0,relwidth=0.3,relheight=0.4)
+        self.patchFrame[patchName].config(borderwidth=2,relief="solid",background=ColorUnHigh)
+        self.patchFrame[patchName].bind("<Button-1>", lambda p=patchName: self.patchCallback(p))
 
         if self.controller.showCursorFeedback:
-            self.patchCanvas[patch] = tk.Canvas(self.patchFrame[patch], width=self.canvasWidth, height=self.canvasHeight, border=0)
-            self.patchCanvas[patch].pack(side=tk.TOP)
-            self.patchCanvas[patch].config(background=ColorUnHigh)
+            self.patchCanvas[patchName] = tk.Canvas(self.patchFrame[patchName], width=self.canvasWidth, height=self.canvasHeight, border=0)
+            self.patchCanvas[patchName].pack(side=tk.TOP)
+            self.patchCanvas[patchName].config(background=ColorUnHigh)
+
+        self.patchLabel[patchName] = ttk.Label(self.patchFrame[patchName], text="")
+        self.patchLabel[patchName].pack(side=tk.TOP)
+        self.patchLabel[patchName].bind("<Button-1>", lambda p=patchName: self.patchCallback(p))
+        self.patchLabel[patchName].configure(style='PatchText.TLabel')
 
     def makeAllButton(self,parent,x0,y0):
 
         self.patchAllButton = tk.Frame(self)
         self.patchAllButton.place(relx=x0-0.05,rely=y0-0.05,relwidth=0.1,relheight=0.275)
         self.patchAllButton.config(borderwidth=2,relief="solid",background=ColorUnHigh)
-        self.patchAllButton.bind("<Button-1>", self.globalCallback)
+        self.patchAllButton.bind("<Button-1>", self.patchallCallback)
 
         self.patchGlobalLabel = ttk.Label(self.patchAllButton, text="*")
         self.patchGlobalLabel.pack(side=tk.TOP)
         self.patchGlobalLabel.configure(style='GlobalButton.TLabel')
-        self.patchGlobalLabel.bind("<Button-1>", self.globalCallback)
+        self.patchGlobalLabel.bind("<Button-1>", self.patchallCallback)
 
-    def globalCallback(self,e):
+    def patchallCallback(self,e):
 
         # If you hit * 4 times quickly it
         # will cycle through the advanced modes
@@ -1386,9 +1401,10 @@ class PatchChooser(tk.Frame):
             return
 
         self.controller.allPatchesSelected = not self.controller.allPatchesSelected
-        self.refreshColors()
+        self.refreshPatches()
+        self.controller.resetVisibility()
 
-    def refreshColors(self):
+    def refreshPatches(self):
         if self.controller.allPatchesSelected:
             color = ColorHigh
         else:
@@ -1396,10 +1412,19 @@ class PatchChooser(tk.Frame):
         self.patchAllButton.config(background=color)
         self.patchGlobalLabel.config(background=color)
         for patch in self.controller.Patches:
-            if self.controller.allPatchesSelected or patch != self.controller.CurrPatch:
+            if patch.isLooping:
+                label = "looping"
+            else:
+                label = "not looping"
+            if self.controller.allPatchesSelected:
                 self.colorPatch(patch.name(),color)
+                self.patchLabel[patch.name()].configure(style='PatchTextSelected.TLabel',text=label)
+            elif patch != self.controller.CurrPatch:
+                self.colorPatch(patch.name(),color)
+                self.patchLabel[patch.name()].configure(style='PatchTextUnselected.TLabel',text=label)
             else:
                 self.colorPatch(patch.name(),ColorHigh)
+                self.patchLabel[patch.name()].configure(style='PatchTextSelected.TLabel',text=label)
 
     def colorPatch(self,patchName,color):
         self.patchFrame[patchName].config(background=color)
@@ -1433,12 +1458,14 @@ class PatchChooser(tk.Frame):
         if self.controller.guiLevel==0:
             return
         for pad in self.patchFrame:
-            if e.widget == self.patchFrame[pad]:
+            if e.widget == self.patchFrame[pad] or e.widget == self.patchLabel[pad]:
                 self.controller.allPatchesSelected = False
                 self.controller.patchChooserCallback(pad)
-                self.refreshColors()
-                return
-        log("No pad found in padCallback!?")
+                self.refreshPatches()
+                break
+
+        self.controller.resetLoopButton()
+        # self.controller.resetVisibility()
 
     def refreshPatchColors(self):
         if self.controller.allPatchesSelected:
@@ -2153,7 +2180,7 @@ class PagePerformMain(tk.Frame):
         self.buttonNames = []
 
         self.makePerformButton("COMPLETE_RESET", self.controller.completeReset)
-        self.makePerformButton("Looping", self.controller.loopingOnOff)
+        self.makePerformButton("Looping", self.controller.loopingToggle)
         self.makePerformButton("CLEAR_", self.controller.loopingClearButton)
         self.makePerformButton("HELP_ ", self.controller.startHelp)
         # self.makePerformButton("Looping_OFF", self.controller.loopingOff)
@@ -2362,16 +2389,14 @@ def afterWindowIsDisplayed(windowName,guisize,*args):
         guirect = "0 0 400 640"
 
     cmd = "nircmdc.exe win setsize stitle \""+windowName+"\" "+guirect
-    log("Resizing GUI, guisize=",guisize," cmd=",cmd)
+    # log("Resizing GUI, guisize=",guisize," cmd=",cmd)
     os.system(cmd)
 
     if guimaximize == "true":
         # remove the title bar and maximize it
         cmd = "nircmdc.exe win -style stitle \""+windowName+"\" 0x00CA0000"
-        log("Maximizing gui cmd 1 =",cmd)
         os.system(cmd)
         cmd = "nircmdc.exe win max stitle \""+windowName+"\""
-        log("Maximizing gui cmd 2 =",cmd)
         os.system(cmd)
 
     global PaletteApp
@@ -2467,6 +2492,9 @@ def makeStyles(app):
 
     s.configure('GlobalButton.TLabel', font=largestFont, background=ColorButton, relief="flat", justify=tk.CENTER)
 
+    s.configure('PatchTextSelected.TLabel', font=largestFont, background=ColorHigh, relief="flat", justify=tk.CENTER)
+    s.configure('PatchTextUnselected.TLabel', font=largestFont, background=ColorUnHigh, relief="flat", justify=tk.CENTER)
+
     s.configure('Loading.TLabel', background=ColorButton, foreground=ColorWhite, relief="flat", justify=tk.CENTER, align=tk.CENTER, font=largestFont)
     s.configure('Attract.TLabel', background=ColorBg, foreground=ColorWhite, relief="flat", justify=tk.CENTER, align=tk.CENTER, font=largestFont)
 
@@ -2537,16 +2565,12 @@ def status_thread(app):  # runs in background thread
         attractMode = jstatus["attractmode"]
         if attractMode == "true":
             if PaletteApp.currentMode != "attract":
-                log("Turning Attract Mode On!")
                 PaletteApp.setNextMode("attract")
         else:
             if PaletteApp.currentMode != "normal" and PaletteApp.currentMode != "help":
-                log("Turning Attract Mode Off!")
                 PaletteApp.setNextMode("normal")
 
 if __name__ == "__main__":
-
-    log("GUI started")
 
     # Default is all four patches
     patches = os.environ.get("PALETTE_PATCHES","ABCD")
@@ -2582,7 +2606,6 @@ if __name__ == "__main__":
 
     makeStyles(PaletteApp)
 
-    log("guisize=",guisize)
     if guisize == "palette":
         # Fixed size - the guisize is really only used to reposition it.
         # Should check to see whether the size matches the 800x1280 expectation
@@ -2597,7 +2620,6 @@ if __name__ == "__main__":
 
     PaletteApp.wm_geometry("%dx%d" % (PaletteAppSize["width"],PaletteAppSize["height"]))
 
-    log("PALETTEAPP size = ",PaletteAppSize)
     PaletteApp.setNextMode("")
     PaletteApp.currentMode = ""
 
