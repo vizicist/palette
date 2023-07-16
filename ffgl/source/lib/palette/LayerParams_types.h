@@ -51,8 +51,9 @@ LayerParams_InitializeTypes() {
 	LayerParams_logTypes.push_back("gesture");
 
 	LayerParams_autostartTypes.push_back("");
-	LayerParams_autostartTypes.push_back("resolume,gui,bidule");
-	LayerParams_autostartTypes.push_back("mmtt,resolume,gui,bidule");
+	LayerParams_autostartTypes.push_back("gui,resolume,bidule");
+	LayerParams_autostartTypes.push_back("mmtt,gui,resolume,bidule");
+	LayerParams_autostartTypes.push_back("resolume,bidule");
 
 	LayerParams_pitchsetTypes.push_back("");
 	LayerParams_pitchsetTypes.push_back("stylusrmx");
