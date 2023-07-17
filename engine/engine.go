@@ -160,7 +160,23 @@ func (e *Engine) SaveCurrent() (err error) {
 }
 
 func (e *Engine) LoadCurrent() (err error) {
+	return e.LoadEngineParams("_Current")
+	/*
 	path, err := ReadableSavedFilePath("engine", "_Current", ".json")
+	if err != nil {
+		return err
+	}
+	paramsmap, err := LoadParamsMap(path)
+	if err != nil {
+		return err
+	}
+	e.params.ApplyValuesFromMap("engine", paramsmap, e.Set)
+	return nil
+	*/
+}
+
+func (e *Engine) LoadEngineParams(fname string) (err error) {
+	path, err := ReadableSavedFilePath("engine", fname, ".json")
 	if err != nil {
 		return err
 	}
