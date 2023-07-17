@@ -335,7 +335,12 @@ func (quadpro *QuadPro) Load(category string, filename string) error {
 		}
 
 	case "engine":
-		LogWarn("HEY! quadpro.Load can't load engine parameters")
+		LogWarn("HACK! quadpro.Load shouldn't load engine parameters")
+		err := TheEngine.LoadEngineParams(filename)
+		if err != nil {
+			LogIfError(err)
+			lasterr = err
+		}
 
 	default:
 		LogWarn("QuadPro.Load: unhandled", "category", category, "filename", filename)
