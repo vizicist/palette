@@ -148,6 +148,10 @@ func (quadpro *QuadPro) Start() {
 	LogIfError(err)
 }
 
+func (quadpro *QuadPro) Status(source string) string {
+	return "status"+source
+}
+
 func (quadpro *QuadPro) PatchForCursorEvent(ce CursorEvent) (patch *Patch, button string) {
 	source := ce.Source()
 	// If the source has some patchLogic...
