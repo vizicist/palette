@@ -105,7 +105,7 @@ func (r *Router) HandleMidiEvent(me MidiEvent) {
 	TheEngine.sendToOscClients(MidiToOscMsg(me))
 
 	if r.midithru {
-		LogInfo("PassThruMIDI", "msg", me.Msg)
+		LogOfType("midi","PassThruMIDI", "msg", me.Msg)
 		if r.midiThruScadjust {
 			LogWarn("PassThruMIDI, midiThruScadjust needs work", "msg", me.Msg)
 		}
@@ -152,7 +152,7 @@ func (r *Router) handleMIDISetScaleNote(me MidiEvent) {
 		}
 		if newshift != r.midiOctaveShift {
 			r.midiOctaveShift = newshift
-			LogInfo("MidiOctaveShift changed", "octaveshift", r.midiOctaveShift)
+			LogOfType("midi","MidiOctaveShift changed", "octaveshift", r.midiOctaveShift)
 		}
 	} else if me.Msg.Is(midi.NoteOffMsg) {
 		r.midiNumDown--

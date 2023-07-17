@@ -190,6 +190,7 @@
 "engine.emailpassword": {"valuetype":"string", "min":"", "max":"", "init":"", "comment":"#" },
 "engine.midiinput": {"valuetype":"string", "min":"midiinput", "max":"midiinput", "init":"", "comment":"# Bidule executable path" },
 "engine.midithru": {"valuetype":"bool", "min":"false", "max":"true", "init":"false", "comment":"#" },
+"engine.midithrusynth": {"valuetype":"string", "min":"synth", "max":"synth", "init":"default", "comment":"#" },
 "engine.midisetexternalscale": {"valuetype":"bool", "min":"false", "max":"true", "init":"false", "comment":"#" },
 "engine.morphtype": {"valuetype":"string", "min":"morphtype", "max":"morphtype", "init":"quadrants", "comment":"#" },
 "engine.mmtt": {"valuetype":"string", "min":"mmtt", "max":"mmtt", "init":"kinect", "comment":"# MMTT device" },
