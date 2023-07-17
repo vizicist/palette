@@ -82,6 +82,7 @@ class ProGuiApp(tk.Tk):
         self.lastLoadType = ""
         self.lastLoadName = ""
         # self.isLooping = False
+        self.dorefreshPatches = False
 
         self.defaultGuiLevel = int(palette.GetParam("engine.defaultguilevel"))
 
@@ -307,6 +308,9 @@ class ProGuiApp(tk.Tk):
                 self.currentMode = ""
 
             # log("time C ="+str(time.time()))
+            if self.dorefreshPatches:
+                self.patchChooser.refreshPatches()
+                self.dorefreshPatches = False
 
         log("mainLoop is returning")
 
@@ -1274,6 +1278,7 @@ class Patch():
         self.setInitValues()
         self.patchName = patchName
         self.isLooping = False
+        self.status = ""
 
     def name(self):
         return self.patchName
@@ -1337,6 +1342,7 @@ class PatchChooser(tk.Frame):
         self.controller = controller
         self.parent = parent
         self.patchLabel = {}
+        self.patchStatus = {}
         self.patchFrame = {}
         self.patchCanvas = {}
         self.canvasHeight = 60
@@ -1364,10 +1370,17 @@ class PatchChooser(tk.Frame):
             self.patchCanvas[patchName].pack(side=tk.TOP)
             self.patchCanvas[patchName].config(background=ColorUnHigh)
 
+        self.patchStatus[patchName] = ""
         self.patchLabel[patchName] = ttk.Label(self.patchFrame[patchName], text="")
         self.patchLabel[patchName].pack(side=tk.TOP)
         self.patchLabel[patchName].bind("<Button-1>", lambda p=patchName: self.patchCallback(p))
         self.patchLabel[patchName].configure(style='PatchText.TLabel')
+
+    def setStatus(self,patchName,status):
+        self.patchStatus[patchName] = status
+
+    def getStatus(self,patchName):
+        return self.patchStatus[patchName]
 
     def makeAllButton(self,parent,x0,y0):
 
@@ -1413,9 +1426,9 @@ class PatchChooser(tk.Frame):
         self.patchGlobalLabel.config(background=color)
         for patch in self.controller.Patches:
             if patch.isLooping:
-                label = "looping"
+                label = "LP("+ self.patchStatus[patch.name()] + ")"
             else:
-                label = "not looping"
+                label = ""
             if self.controller.allPatchesSelected:
                 self.colorPatch(patch.name(),color)
                 self.patchLabel[patch.name()].configure(style='PatchTextSelected.TLabel',text=label)
@@ -2549,7 +2562,7 @@ def status_thread(app):  # runs in background thread
 
     while True:
 
-        time.sleep(3.0)
+        time.sleep(2.0)
 
         status, err = palette.palette_engine_api("status","")
         if err != None:
@@ -2569,6 +2582,15 @@ def status_thread(app):  # runs in background thread
         else:
             if PaletteApp.currentMode != "normal" and PaletteApp.currentMode != "help":
                 PaletteApp.setNextMode("normal")
+
+        for patch in PaletteApp.Patches:
+            nm = patch.name()
+            newstatus = jstatus[nm]
+            oldstatus = PaletteApp.patchChooser.getStatus(nm)
+            if oldstatus != newstatus:
+                PaletteApp.patchChooser.setStatus(nm,newstatus)
+                PaletteApp.dorefreshPatches = True
+
 
 if __name__ == "__main__":
 

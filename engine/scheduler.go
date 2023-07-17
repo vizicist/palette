@@ -213,6 +213,21 @@ func (sched *Scheduler) DeleteEventsWithTag(tag string) {
 	sched.mutex.Unlock()
 }
 
+func (sched *Scheduler) CountEventsWithTag(tag string) int {
+
+	sched.mutex.Lock() // should be Rlock?
+	defer sched.mutex.Unlock()
+
+	count := 0
+	for i := sched.schedList.Front(); i != nil; i = i.Next() {
+		se := i.Value.(*SchedElement)
+		if se.Tag == tag {
+			count++
+		}
+	}
+	return count
+}
+
 func (sched *Scheduler) triggerItemsScheduledAtOrBefore(thisClick Clicks) {
 
 	sched.mutex.Lock()
@@ -251,7 +266,40 @@ func (sched *Scheduler) triggerItemsScheduledAtOrBefore(thisClick Clicks) {
 			v.Synth.SendNoteToMidiOutput(v)
 
 		case midi.Message:
-			LogInfo("triggerItemsScheduleAt: should handle midi.Message?", "msg", v)
+			synthName, err := GetParam("engine.midithrusynth")
+			if err != nil || synthName == "" {
+				LogError(err)
+				synthName = "default"
+			}
+			synth := Synths[synthName]
+			var bt []byte
+
+			switch {
+			case v.GetSysEx(&bt):
+				LogWarn("triggerItemsScheduleAtOrBefore: should handle sysex?", "msg", v)
+
+			case v.Is(midi.NoteOnMsg):
+				// Need to maintain noteDownCount, don't use SendBytesToMidiOutput
+				nt := NewNoteOn(synth, v[1], v[2])
+				synth.SendNoteToMidiOutput(nt)
+
+			case v.Is(midi.NoteOffMsg):
+				// Need to maintain noteDownCount, don't use SendBytesToMidiOutput
+				nt := NewNoteOff(synth, v[1], v[2])
+				synth.SendNoteToMidiOutput(nt)
+
+			case v.Is(midi.ProgramChangeMsg):
+				synth.SendBytesToMidiOutput([]byte{v[0], v[1]})
+
+			case v.Is(midi.PitchBendMsg):
+				synth.SendBytesToMidiOutput([]byte{v[0], v[1], v[2]})
+
+			case v.Is(midi.ControlChangeMsg):
+				synth.SendBytesToMidiOutput([]byte{v[0], v[1], v[2]})
+
+			default:
+				LogWarn("Unable to handle MIDI input", "msg", v)
+			}
 
 		case CursorEvent:
 			ce := v

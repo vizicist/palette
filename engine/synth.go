@@ -306,7 +306,6 @@ func (synth *Synth) SendNoteToMidiOutput(value any) {
 	// var channel uint8
 	var pitch uint8
 	var velocity uint8
-	var ntype string
 
 	switch v := value.(type) {
 
@@ -314,20 +313,18 @@ func (synth *Synth) SendNoteToMidiOutput(value any) {
 		// channel = v.Channel
 		pitch = v.Pitch
 		velocity = v.Velocity // could be 0, to be interpreted as a NoteOff by receivers
-		ntype = "noteon"
 
 	case *NoteOff:
 		// channel = v.Channel
 		pitch = v.Pitch
 		velocity = v.Velocity
-		ntype = "noteoff"
 
 	default:
 		LogWarn("SendNoteToMidiOutput: doesn't handle", "type", fmt.Sprintf("%T", v))
 		return
 	}
 
-	state, err := synth.updatePortChannelState()
+	_, err := synth.updatePortChannelState()
 	if err != nil {
 		LogIfError(err)
 		return
@@ -380,33 +377,58 @@ func (synth *Synth) SendNoteToMidiOutput(value any) {
 			"pitch", pitch,
 			"notedowncount", downCount)
 
-	// case "controller":
-	// 	status |= 0xB0
-	// case "progchange":
-	// 	status |= 0xC0
-	// case "chanpressure":
-	// 	status |= 0xD0
-	// case "pitchbend":
-	// 	status |= 0xE0
-
 	default:
 		LogWarn("SendNoteToMidiOutput: can't handle", "type", fmt.Sprintf("%T", value))
 		return
 	}
 
-	// if (status & 0xf0) == 0x80 {
-	// 	LogInfo("Sending note up?", "status", status, "data1", data1, "data2", data2)
-	// }
+	synth.SendBytesToMidiOutput([]byte{status, data1, data2})
+}
 
-	LogOfType("midi", "Raw MIDI Output, "+ntype,
-		"synth", synth.name,
-		"status", "0x"+hexString(status),
-		"data1", "0x"+hexString(data1),
-		"data2", "0x"+hexString(data2))
+// SendBytesToMidiOutput
+func (synth *Synth) SendBytesToMidiOutput(bytes []byte) {
 
-	err = state.output.Send([]byte{status, data1, data2})
+	if len(bytes) == 0 {
+		LogWarn("SendBytesToMidiOutput: 0-length bytes?")
+		return
+	}
+
+	state, err := synth.updatePortChannelState()
 	if err != nil {
-		LogWarn("output.Send", "err", err)
+		LogIfError(err)
+		return
+	}
+
+	// Use status value from bytes, but channel gets taken from Synth
+	status := (bytes[0] & 0xf0 ) | byte(synth.portchannel.channel - 1)
+	bytes[0] = status
+
+	switch len(bytes) {
+	case 1:
+		LogOfType("midi", "Raw MIDI Output",
+			"synth", synth.name,
+			"bytes[0]", "0x"+hexString(bytes[0]))
+	case 2:
+		LogOfType("midi", "Raw MIDI Output",
+			"synth", synth.name,
+			"bytes[0]", "0x"+hexString(bytes[0]),
+			"bytes[1]", "0x"+hexString(bytes[1]))
+	case 3:
+		LogOfType("midi", "Raw MIDI Output",
+			"synth", synth.name,
+			"bytes[0]", "0x"+hexString(bytes[0]),
+			"bytes[1]", "0x"+hexString(bytes[1]),
+			"bytes[2]", "0x"+hexString(bytes[2]))
+	default:
+		LogOfType("midi", "Raw MIDI Output",
+			"synth", synth.name,
+			"length", len(bytes),
+			"bytes", bytes)
+	}
+
+	err = state.output.Send(bytes)
+	if err != nil {
+		LogWarn("synth.SendBytesToMidiOutputSend", "err", err)
 	}
 }
 
