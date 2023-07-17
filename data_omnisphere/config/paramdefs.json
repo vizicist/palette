@@ -209,6 +209,10 @@
 "engine.transpose": {"valuetype":"int", "min":"-24", "max":"24", "init":"0", "comment":"# transpose pitch" },
 "engine.twinsys": {"valuetype":"bool", "min":"false", "max":"true", "init":"false", "comment":"#" },
 "engine.winsize": {"valuetype":"string", "min":"", "max":"", "init":"", "comment":"# " },
+"engine.cursorscaley": {"valuetype": "float", "min": "0.0", "max": "1.0",  "init": "1.00",	"comment": "#" },
+"engine.cursoroffsety": {"valuetype": "float", "min": "-1.0", "max": "1.0",  "init": "0.00",	"comment": "#" },
+"engine.cursorscalex": {"valuetype": "float", "min": "0.0", "max": "1.0",  "init": "1.00",	"comment": "#" },
+"engine.cursoroffsetx": {"valuetype": "float", "min": "-1.0", "max": "1.0",  "init": "0.00",	"comment": "#" },
 
 "visual.noisevertex": {"valuetype":"float", "min":"0.0", "max":"1.0", "randmin":"0.0", "randmax":"0.0", "init":"0.0", "comment":"# 0-1" },
 "visual.cursorsprites": {"valuetype":"bool", "min":"false", "max":"true", "init":"false", "comment":"#" },

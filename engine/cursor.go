@@ -360,6 +360,25 @@ func (cm *CursorManager) ExecuteCursorEvent(ce CursorEvent) {
 		cm.executeMutex.Unlock()
 	}
 
+	cursorscaley, err := GetParamFloat("engine.cursorscaley")
+	if err==nil && cursorscaley>0.0 {
+		ce.Pos.Y *= float32(cursorscaley)
+	}
+	cursoroffsety, err := GetParamFloat("engine.cursoroffsety")
+	if err==nil {
+		ce.Pos.Y += float32(cursoroffsety)
+	}
+
+	cursorscalex, err := GetParamFloat("engine.cursorscalex")
+	if err==nil && cursorscalex>0.0 {
+		ce.Pos.X *= float32(cursorscalex)
+	}
+	cursoroffsetx, err := GetParamFloat("engine.cursoroffsetx")
+	if err==nil {
+		ce.Pos.X += float32(cursoroffsetx)
+	}
+
+
 	if ce.Ddu == "clear" {
 		if ce.Tag == "" {
 			LogWarn("CursorManager.ExecuteCursorEvent: clear with empty tag?")
