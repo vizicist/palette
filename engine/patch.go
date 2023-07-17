@@ -494,6 +494,14 @@ func (patch *Patch) clearGraphics() {
 	TheResolume().ToFreeFramePlugin(patch.Name(), osc.NewMessage("/clear"))
 }
 
+func (patch *Patch) Status() string {
+	nevents := TheScheduler.CountEventsWithTag(patch.name)
+	if nevents == 0 {
+		return ""
+	}
+	return fmt.Sprintf("%d",nevents)
+}
+
 func (patch *Patch) loopClear() {
 	tag := patch.name
 

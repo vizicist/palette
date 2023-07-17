@@ -71,10 +71,23 @@ func (e *Engine) executeEngineApi(api string, apiargs map[string]string) (result
 		return TheScheduler.PendingToString(), nil
 
 	case "status":
-		result = JsonObject(
-			"uptime", fmt.Sprintf("%f", Uptime()),
-			"attractmode", fmt.Sprintf("%v", TheAttractManager.AttractModeIsOn()),
-		)
+		uptime := fmt.Sprintf("%f", Uptime())
+		attractmode := fmt.Sprintf("%v", TheAttractManager.AttractModeIsOn())
+		if TheQuadPro == nil {
+			result = JsonObject(
+				"uptime", uptime,
+				"attractmode", attractmode,
+			)
+		} else {
+			result = JsonObject(
+				"uptime", uptime,
+				"attractmode", attractmode,
+				"A", Patchs["A"].Status(),
+				"B", Patchs["B"].Status(),
+				"C", Patchs["C"].Status(),
+				"D", Patchs["D"].Status(),
+			)
+		}
 		return result, nil
 
 	case "attract":
