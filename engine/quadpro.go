@@ -149,7 +149,7 @@ func (quadpro *QuadPro) Start() {
 }
 
 func (quadpro *QuadPro) Status(source string) string {
-	return "status"+source
+	return "status" + source
 }
 
 func (quadpro *QuadPro) PatchForCursorEvent(ce CursorEvent) (patch *Patch, button string) {
@@ -325,11 +325,16 @@ func (quadpro *QuadPro) Load(category string, filename string) error {
 	switch category {
 
 	case "quad":
+
+		overridemap := OverrideMap()
 		for _, patch := range quadpro.patch {
 			err := patch.ApplyPatchValuesFromQuadMap(paramsMap)
 			if err != nil {
 				LogIfError(err)
 				lasterr = err
+			}
+			if overridemap != nil {
+				patch.params.ApplyValuesFromMap(category, overridemap, patch.params.Set)
 			}
 			patch.RefreshAllPatchValues()
 		}
