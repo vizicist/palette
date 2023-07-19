@@ -277,6 +277,8 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
 		}
 
 		if newpitch != oldpitch || deltaz > deltaztrignote || deltay > deltaytrig {
+
+			LogOfType("note","Turning note off/on due to newpitch or deltaz or deltay")
 			// Turn off existing note, one Click after noteOn
 			noteOff := NewNoteOffFromNoteOn(oldNoteOn)
 			offClick := ac.NoteOnClick + 1
