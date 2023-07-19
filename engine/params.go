@@ -139,8 +139,11 @@ func (params *ParamValues) ApplyValuesFromMap(category string, paramsmap map[str
 		paramCategory, _ := SavedNameSplit(fullname)
 
 		// Only include ones that match the category.
-		// If the category is "patch", match any of sound/visual/effect/misc.
-		if category == paramCategory || (category == "patch" && IsPerPatchParam(fullname)) {
+		// If the category is "patch" or "quad", match any of sound/visual/effect/misc.
+
+		if category == paramCategory ||
+			((category == "patch" || category == "quad") && IsPerPatchParam(fullname)) {
+
 			// err := params.Set(fullname, value)
 			err := setfunc(fullname, value)
 			if err != nil {
@@ -539,4 +542,23 @@ func (vals *ParamValues) paramDefOf(name string) (ParamDef, error) {
 	} else {
 		return p, nil
 	}
+}
+
+var overrideMap ParamsMap
+
+func OverrideMap() ParamsMap {
+	if overrideMap == nil {
+		// If there's a _override.json file, use it
+		overridepath := ConfigFilePath("paramoverrides.json")
+		if fileExists(overridepath) {
+			LogOfType("params", "Reading Overridemap", "overridepath", overridepath)
+			m, err := LoadParamsMap(overridepath)
+			if err != nil {
+				LogError(err)
+			} else {
+				overrideMap = m
+			}
+		}
+	}
+	return overrideMap
 }

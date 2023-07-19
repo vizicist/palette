@@ -1,7 +1,10 @@
 {
     "params": {
-        "sound._controllerzmax":"0.900000",
+        "sound._controllerzmax":"1.000000",
         "sound._controllerzmin":"0.001000",
+        "sound._deltaztrignote":"0.2",
+        "sound._deltaztrigcontroller":"0.02",
+        "sound._deltaytrig":"0.08",
         "sound._inputport":"",
         "sound._timefret1q":"1.000000",
         "sound._timefret1y":"0.300000",

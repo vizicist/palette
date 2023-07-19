@@ -449,18 +449,8 @@ func (patch *Patch) Load(category string, filename string) error {
 	}
 
 	// If there's a _override.json file, use it
-	overrideFilename := "._override"
-	overridepath, err := ReadableSavedFilePath(category, overrideFilename, ".json")
-	if err != nil {
-		LogIfError(err)
-		return err
-	}
-	if fileExists(overridepath) {
-		LogOfType("saved", "applySaved using", "overridepath", overridepath)
-		overridemap, err := LoadParamsMap(overridepath)
-		if err != nil {
-			return err
-		}
+	overridemap := OverrideMap()
+	if overridemap != nil {
 		patch.params.ApplyValuesFromMap(category, overridemap, patch.params.Set)
 	}
 
