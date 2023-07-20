@@ -1,5 +1,6 @@
 data_omnisphere/recordings/*
 data_omnisphere/logs
+data_omnisphere/logs/vizdesk
 default.bidule.previous
 _Current.json
 .vs
