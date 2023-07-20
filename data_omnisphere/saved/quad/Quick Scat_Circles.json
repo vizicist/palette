@@ -584,7 +584,7 @@
         "B-sound.pitchset":"",
         "B-sound.synth":"P_08_C_06",
         "B-sound.velocitymax":"127",
-        "B-sound.velocitymin":"72",
+        "B-sound.velocitymin":"33",
         "B-sound.xcontroller":"1",
         "B-sound.ycontroller":"1",
         "B-sound.zcontroller":"1",
