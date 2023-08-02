@@ -260,10 +260,10 @@ func GuiProcessInfo() *ProcessInfo {
 	// set PALETTE_GUI_LEVEL to convey it to the gui
 	guilevel, err := GetParam("engine.defaultguilevel")
 	if err != nil {
+		guilevel = "0" // last resert
 		LogIfError(err)
-	} else {
-		os.Setenv("PALETTE_GUI_LEVEL", guilevel)
 	}
+	os.Setenv("PALETTE_GUI_LEVEL", guilevel)
 
 	// set PALETTE_GUI_SIZE to convey it to the gui
 	guisize, err := GetParam("engine.guisize")
