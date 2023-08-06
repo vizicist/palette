@@ -1,2 +1,2 @@
 c:
-cd %USERPROFILE%\documents\github\palette\keykit
+cd %USERPROFILE%\github\palette\keykit
