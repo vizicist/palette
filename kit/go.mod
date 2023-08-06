@@ -1,3 +1,3 @@
-module github.com/nosuchtim/kk/kkcore
+module github.com/vizicist/palette/kit
 
 go 1.20
