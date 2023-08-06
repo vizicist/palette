@@ -8,7 +8,7 @@ var treeIndent int
 
 type Node struct {
 	stype    int // e.g. NUMBER, STRING, etc.
-	sym      kkSymType
+	sym      pkSymType
 	children []*Node
 	num      int // for NUMBERs
 	name     string
@@ -17,10 +17,10 @@ type Node struct {
 	dbl      float64
 }
 
-func HandleProgram(kklex kkLexer, n *Node) {
-	mylex, ok := kklex.(*kkLex)
+func HandleProgram(pklex pkLexer, n *Node) {
+	mylex, ok := pklex.(*pkLex)
 	if !ok {
-		mylex.outf.WriteString("<<bad type for kklex>>")
+		mylex.outf.WriteString("<<bad type for pklex>>")
 	} else {
 
 		tp := n.treePostProcess()
