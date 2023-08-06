@@ -1,9 +1,10 @@
 go 1.20
 
 use (
+	./cmd/palette
 	./engine
-	./twinsys
-	./twintool
 	./kit
 	./player
+	./twinsys
+	./twintool
 )
