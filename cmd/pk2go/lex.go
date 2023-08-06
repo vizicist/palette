@@ -21,7 +21,7 @@ type Symstr string
 
 // The parser uses the type <prefix>Lex as a lexer. It must provide
 // the methods Lex(*<prefix>SymType) int and Error(string).
-type kkLex struct {
+type pkLex struct {
 	line       []byte
 	peek       []rune
 	yytext     string
@@ -29,19 +29,19 @@ type kkLex struct {
 	outf       *os.File
 }
 
-func (x *kkLex) stuff(s string) {
+func (x *pkLex) stuff(s string) {
 	for _, r := range s {
 		x.peek = append(x.peek, r)
 	}
 }
 
 // Push back one rune
-func (x *kkLex) unget(r rune) {
+func (x *pkLex) unget(r rune) {
 	x.peek = append(x.peek, r)
 }
 
 // Return the next rune for the lexer.
-func (x *kkLex) next() rune {
+func (x *pkLex) next() rune {
 	if len(x.peek) != 0 {
 		r := rune(x.peek[0])
 		x.peek = x.peek[1:]
@@ -59,7 +59,7 @@ func (x *kkLex) next() rune {
 	return c
 }
 
-func (x *kkLex) scaninputtill(lookfor string) (scanned string, echar rune) {
+func (x *pkLex) scaninputtill(lookfor string) (scanned string, echar rune) {
 	for {
 		c := x.next()
 		if c == eof {
@@ -96,7 +96,7 @@ func (x *kkLex) scaninputtill(lookfor string) (scanned string, echar rune) {
 }
 
 // The parser calls this method on a parse error.
-func (x *kkLex) Error(s string) {
+func (x *pkLex) Error(s string) {
 	log.Printf("parse error: %s", s)
 }
 
@@ -140,7 +140,7 @@ func hexchar(r rune) int {
 
 // The parser calls this method to get each new token. This
 // implementation returns operators and NUM.
-func (x *kkLex) Lex(yylval *kkSymType) int {
+func (x *pkLex) Lex(yylval *pkSymType) int {
 	var c rune
 	var retval int
 	// var nextc int
@@ -431,7 +431,7 @@ getout:
 	return (retval)
 }
 
-func (x *kkLex) readnumber(yylval *kkSymType) int {
+func (x *pkLex) readnumber(yylval *pkSymType) int {
 	f, isdouble := x.dblread()
 	if isdouble {
 		yylval.node = makeNodeDouble(f)
@@ -452,7 +452,7 @@ func eprint(s string) {
 	os.Stderr.Write([]byte(s))
 }
 
-func (x *kkLex) eatpound() {
+func (x *pkLex) eatpound() {
 	// comments extend from a '#' (at the beginning of a word)
 	// to the end of the line.
 	line := "#"
@@ -477,7 +477,7 @@ func (x *kkLex) eatpound() {
 	}
 }
 
-func (x *kkLex) dblread() (val float64, isdouble bool) {
+func (x *pkLex) dblread() (val float64, isdouble bool) {
 
 	var lastc rune
 	var c rune
@@ -552,7 +552,7 @@ func (x *kkLex) dblread() (val float64, isdouble bool) {
 }
 
 /* follow() - look ahead for >=, etc. */
-func (x *kkLex) follow(expect int, ifyes int, ifno int) int {
+func (x *pkLex) follow(expect int, ifyes int, ifno int) int {
 	ch := x.next()
 	if int(ch) == expect {
 		return ifyes
@@ -561,7 +561,7 @@ func (x *kkLex) follow(expect int, ifyes int, ifno int) int {
 	return ifno
 }
 
-func (x *kkLex) follo3(expect1 int, ifyes1 int, expect2 int, expect3 int, ifyes2 int, ifyes3 int, ifno int) int {
+func (x *pkLex) follo3(expect1 int, ifyes1 int, expect2 int, expect3 int, ifyes2 int, ifyes3 int, ifno int) int {
 	ch := x.next()
 	if int(ch) == expect1 {
 		return ifyes1
@@ -578,7 +578,7 @@ func (x *kkLex) follo3(expect1 int, ifyes1 int, expect2 int, expect3 int, ifyes2
 	return ifno
 }
 
-func (x *kkLex) follo2(expect1 int, ifyes1 int, expect2 int, ifyes2 int, ifno int) int {
+func (x *pkLex) follo2(expect1 int, ifyes1 int, expect2 int, ifyes2 int, ifno int) int {
 	ch := x.next()
 	if int(ch) == expect1 {
 		return ifyes1
