@@ -1,2 +1,2 @@
 c:
-cd %USERPROFILE%\Documents\Github\notes-from-nosuchtim
+cd %USERPROFILE%\Github\notes-from-nosuchtim

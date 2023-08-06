@@ -67,7 +67,9 @@ the "online installer" and execute it from the Explorer, selecting "more info" t
   Other pieces of the Go toolchain will be offered to you automatically within VSCode.
 
 - in a cmd window, cd to %PALETTE_SOURCE% and execute:
+
 	go mod tidy
+
 	go get gitlab.com/gomidi/midi/v2/drivers/rtmididrv
 
 - install LoopBe30 from https://nerds.de/en/loopbe30.html, and use its systray item to
