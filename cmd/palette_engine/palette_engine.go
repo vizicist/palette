@@ -7,7 +7,7 @@ import (
 	"syscall"
 
 	"github.com/vizicist/palette/engine"
-	_ "github.com/vizicist/palette/tool"
+	_ "github.com/vizicist/palette/twintool"
 	"github.com/vizicist/palette/twinsys"
 	"github.com/pkg/profile"
 )
