@@ -1,3 +1,3 @@
-module github.com/nosuchtim/kk/kklib
+module github.com/vizicist/palette/player
 
 go 1.20

@@ -1,4 +1,4 @@
-module github.com/palette/engine
+module github.com/vizicist/palette/engine
 
 go 1.20
 
