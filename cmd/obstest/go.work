@@ -1,0 +1,10 @@
+go 1.20
+
+use (
+	.
+	../../engine
+	../../kit
+	../../player
+	../../twinsys
+	../../twintool
+)
