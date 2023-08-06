@@ -1,3 +1,3 @@
-module github.com/palette/tool
+module github.com/palette/twintool
 
 go 1.20
