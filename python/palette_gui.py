@@ -84,7 +84,12 @@ class ProGuiApp(tk.Tk):
         # self.isLooping = False
         self.dorefreshPatches = False
 
-        self.defaultGuiLevel = int(palette.GetParam("engine.defaultguilevel"))
+        guilevel = palette.GetParam("engine.defaultguilevel")
+        if guilevel == "":
+            glev = 0
+        else:
+            glev = int(guilevel)
+        self.defaultGuiLevel = glev
 
         self.showAll = palette.boolValueOfString(palette.GetParam("engine.guishowall"))
 
