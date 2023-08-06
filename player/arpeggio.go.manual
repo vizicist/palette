@@ -1,0 +1,40 @@
+// ORIG: function arpeggio(phr) {
+func arpeggio(args ...Kval) []Kval {
+	phr := args[0].(Phrase)
+	// ORIG: if ( nargs() < 1 ) {
+	if len(args) < 1 {
+		// ORIG:		print("usage: arpeggio(phrase)")
+		fmt.Printf("usage: arpeggio(phrase)")
+		// return('')
+		return []Kval{NewPhrase("")}
+	}
+
+	//	lastend = 0
+	lastend := 0
+	// ORIG: r = ''
+	r := NewPhrase("")
+	// ORIG: 	for ( nt in phr ) {
+	nt_iter := phr.Iterator()
+	for nt_iter.HasNext() {
+		nt := nt_iter.Next()
+		// ORIG: nt.time = lastend
+		nt.SetTime(lastend)
+		// ORIG: r |= nt
+		r.MergeParallel(nt)
+		// ORIG: d = nt.duration
+		d := nt.Duration()
+		// ORIG: if ( d == 0 )
+		if d == 0 {
+			d = 1
+		}
+		// ORIG: lastend += d
+		lastend += d
+		// ORIG: }
+	}
+	// ORIG: r.length = lastend
+	r.SetLength(lastend)
+	// ORIG: return(r)
+	rval := []Kval{r}
+	return (rval)
+}
+
