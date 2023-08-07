@@ -539,11 +539,11 @@ prmlist	: /* nothing */		{
 				}
 	| DOTDOTDOT		{
 					$$ = &Node{
-						stype: PRMLIST,
+						stype: DOTDOTDOT,
 						children: []*Node{$1,nil},
 					}
 				}
-	| prms ',' DOTDOTDOT	{
+	| prms ',' prmlist	{
 					$$ = &Node{
 						stype: PRMLIST,
 						children: []*Node{$1,$3},
@@ -556,12 +556,6 @@ prms	: var {
 						children: []*Node{$1},
 					}
 			}
-	| prms ',' var		{
-				$$ = &Node{
-						stype: PARAM,
-						children: []*Node{$1,$3},
-					}
-				}
 	;
 arglist	: /* nothing */		{ $$ = nil }
 	| args
