@@ -416,7 +416,7 @@ state 15
 
 state 16
 	expr:  '['.arrlist ']' 
-	arrlist: .    (123)
+	arrlist: .    (122)
 
 	QMARK2  shift 22
 	DOLLAR2  shift 32
@@ -458,7 +458,7 @@ state 16
 	'('  shift 23
 	'{'  shift 10
 	'['  shift 16
-	.  reduce 123 (src line 608)
+	.  reduce 122 (src line 602)
 
 	expr  goto 100
 	var  goto 21
@@ -1003,75 +1003,75 @@ state 38
 	var  goto 129
 
 state 39
-	var:  NAME.    (126)
+	var:  NAME.    (125)
 
-	.  reduce 126 (src line 617)
+	.  reduce 125 (src line 611)
 
 
 state 40
-	var:  VOL.    (127)
+	var:  VOL.    (126)
 
-	.  reduce 127 (src line 618)
+	.  reduce 126 (src line 612)
 
 
 state 41
-	var:  DUR.    (128)
+	var:  DUR.    (127)
 
-	.  reduce 128 (src line 619)
+	.  reduce 127 (src line 613)
 
 
 state 42
-	var:  CHAN.    (129)
+	var:  CHAN.    (128)
 
-	.  reduce 129 (src line 620)
+	.  reduce 128 (src line 614)
 
 
 state 43
-	var:  PORT.    (130)
+	var:  PORT.    (129)
 
-	.  reduce 130 (src line 621)
+	.  reduce 129 (src line 615)
 
 
 state 44
-	var:  TIME.    (131)
+	var:  TIME.    (130)
 
-	.  reduce 131 (src line 622)
+	.  reduce 130 (src line 616)
 
 
 state 45
-	var:  PITCH.    (132)
+	var:  PITCH.    (131)
 
-	.  reduce 132 (src line 623)
+	.  reduce 131 (src line 617)
 
 
 state 46
-	var:  LENGTH.    (133)
+	var:  LENGTH.    (132)
 
-	.  reduce 133 (src line 624)
+	.  reduce 132 (src line 618)
 
 
 state 47
-	var:  TYPE.    (134)
+	var:  TYPE.    (133)
 
-	.  reduce 134 (src line 625)
+	.  reduce 133 (src line 619)
 
 
 state 48
-	var:  ATTRIB.    (135)
+	var:  ATTRIB.    (134)
 
-	.  reduce 135 (src line 626)
+	.  reduce 134 (src line 620)
 
 
 state 49
-	var:  FLAGS.    (136)
+	var:  FLAGS.    (135)
 
-	.  reduce 136 (src line 627)
+	.  reduce 135 (src line 621)
 
 
 state 50
-	var:  NUMBER.    (137)
+	var:  NUMBER.    (136)
 
-	.  reduce 137 (src line 628)
+	.  reduce 136 (src line 622)
 
 
 state 51
@@ -2264,7 +2264,7 @@ state 78
 
 state 79
 	expr:  expr '('.arglist ')' 
-	arglist: .    (114)
+	arglist: .    (113)
 
 	QMARK2  shift 22
 	DOLLAR2  shift 32
@@ -2308,7 +2308,7 @@ state 79
 	'('  shift 23
 	'{'  shift 10
 	'['  shift 16
-	.  reduce 114 (src line 566)
+	.  reduce 113 (src line 560)
 
 	expr  goto 161
 	arglist  goto 157
@@ -2728,9 +2728,9 @@ state 98
 
 
 state 99
-	arrlist:  arritem.    (124)
+	arrlist:  arritem.    (123)
 
-	.  reduce 124 (src line 609)
+	.  reduce 123 (src line 603)
 
 
 state 100
@@ -2879,7 +2879,7 @@ state 112
 
 state 113
 	expr:  var '('.arglist ')' 
-	arglist: .    (114)
+	arglist: .    (113)
 
 	QMARK2  shift 22
 	DOLLAR2  shift 32
@@ -2923,7 +2923,7 @@ state 113
 	'('  shift 23
 	'{'  shift 10
 	'['  shift 16
-	.  reduce 114 (src line 566)
+	.  reduce 113 (src line 560)
 
 	expr  goto 161
 	arglist  goto 174
@@ -5146,19 +5146,19 @@ state 157
 
 
 state 158
-	arglist:  args.    (115)
+	arglist:  args.    (114)
 	arglist:  args.',' DOTDOTDOT 
 	arglist:  args.',' VARG '(' expr ')' 
 	args:  args.',' expr 
 
 	','  shift 193
-	.  reduce 115 (src line 567)
+	.  reduce 114 (src line 561)
 
 
 state 159
-	arglist:  DOTDOTDOT.    (116)
+	arglist:  DOTDOTDOT.    (115)
 
-	.  reduce 116 (src line 568)
+	.  reduce 115 (src line 562)
 
 
 state 160
@@ -5197,7 +5197,7 @@ state 161
 	expr:  expr.DEC 
 	expr:  expr.'.' dottype 
 	expr:  expr.'(' arglist ')' 
-	args:  expr.    (120)
+	args:  expr.    (119)
 
 	SYM_IN  shift 72
 	PLUSEQ  shift 80
@@ -5236,7 +5236,7 @@ state 161
 	'('  shift 79
 	'{'  shift 53
 	'['  shift 52
-	.  reduce 120 (src line 593)
+	.  reduce 119 (src line 587)
 
 	equals  goto 75
 
@@ -5680,7 +5680,7 @@ state 178
 state 179
 	expr:  TASK var '('.arglist ')' 
 	expr:  var '('.arglist ')' 
-	arglist: .    (114)
+	arglist: .    (113)
 
 	QMARK2  shift 22
 	DOLLAR2  shift 32
@@ -5724,7 +5724,7 @@ state 179
 	'('  shift 23
 	'{'  shift 10
 	'['  shift 16
-	.  reduce 114 (src line 566)
+	.  reduce 113 (src line 560)
 
 	expr  goto 161
 	arglist  goto 207
@@ -5734,7 +5734,7 @@ state 179
 state 180
 	expr:  TASK expr '('.arglist ')' 
 	expr:  expr '('.arglist ')' 
-	arglist: .    (114)
+	arglist: .    (113)
 
 	QMARK2  shift 22
 	DOLLAR2  shift 32
@@ -5778,7 +5778,7 @@ state 180
 	'('  shift 23
 	'{'  shift 10
 	'['  shift 16
-	.  reduce 114 (src line 566)
+	.  reduce 113 (src line 560)
 
 	expr  goto 161
 	arglist  goto 208
@@ -6555,9 +6555,9 @@ state 200
 
 
 state 201
-	arrlist:  arrlist ',' arritem.    (125)
+	arrlist:  arrlist ',' arritem.    (124)
 
-	.  reduce 125 (src line 610)
+	.  reduce 124 (src line 604)
 
 
 state 202
@@ -6589,7 +6589,7 @@ state 202
 	expr:  expr.DEC 
 	expr:  expr.'.' dottype 
 	expr:  expr.'(' arglist ')' 
-	arritem:  expr '=' expr.    (122)
+	arritem:  expr '=' expr.    (121)
 
 	SYM_IN  shift 72
 	PLUSEQ  shift 80
@@ -6628,7 +6628,7 @@ state 202
 	'('  shift 79
 	'{'  shift 53
 	'['  shift 52
-	.  reduce 122 (src line 601)
+	.  reduce 121 (src line 595)
 
 	equals  goto 75
 
@@ -6742,8 +6742,7 @@ state 212
 
 state 213
 	prmlist:  prms.    (109)
-	prmlist:  prms.',' DOTDOTDOT 
-	prms:  prms.',' var 
+	prmlist:  prms.',' prmlist 
 
 	','  shift 233
 	.  reduce 109 (src line 534)
@@ -6848,9 +6847,9 @@ state 219
 	equals  goto 75
 
 state 220
-	arglist:  args ',' DOTDOTDOT.    (117)
+	arglist:  args ',' DOTDOTDOT.    (116)
 
-	.  reduce 117 (src line 574)
+	.  reduce 116 (src line 568)
 
 
 state 221
@@ -6889,7 +6888,7 @@ state 222
 	expr:  expr.DEC 
 	expr:  expr.'.' dottype 
 	expr:  expr.'(' arglist ')' 
-	args:  args ',' expr.    (121)
+	args:  args ',' expr.    (120)
 
 	SYM_IN  shift 72
 	PLUSEQ  shift 80
@@ -6928,7 +6927,7 @@ state 222
 	'('  shift 79
 	'{'  shift 53
 	'['  shift 52
-	.  reduce 121 (src line 594)
+	.  reduce 120 (src line 588)
 
 	equals  goto 75
 
@@ -7343,10 +7342,10 @@ state 232
 
 
 state 233
-	prmlist:  prms ','.DOTDOTDOT 
-	prms:  prms ','.var 
+	prmlist:  prms ','.prmlist 
+	prmlist: .    (108)
 
-	DOTDOTDOT  shift 245
+	DOTDOTDOT  shift 214
 	DUR  shift 41
 	VOL  shift 40
 	TIME  shift 44
@@ -7359,9 +7358,11 @@ state 233
 	FLAGS  shift 49
 	PORT  shift 43
 	NAME  shift 39
-	.  error
+	.  reduce 108 (src line 531)
 
-	var  goto 246
+	var  goto 215
+	prmlist  goto 245
+	prms  goto 213
 
 state 234
 	expr:  FUNC var '{' stmts '}'.    (81)
@@ -7372,7 +7373,7 @@ state 234
 state 235
 	expr:  FUNC uniqvar '(' prmlist ')'.'{' stmts '}' 
 
-	'{'  shift 247
+	'{'  shift 246
 	.  error
 
 
@@ -7427,13 +7428,13 @@ state 237
 	'['  shift 16
 	.  error
 
-	expr  goto 248
+	expr  goto 247
 	var  goto 21
 
 state 238
-	arglist:  VARG '(' expr ')'.    (118)
+	arglist:  VARG '(' expr ')'.    (117)
 
-	.  reduce 118 (src line 580)
+	.  reduce 117 (src line 574)
 
 
 state 239
@@ -7487,7 +7488,7 @@ state 239
 
 	expr  goto 6
 	nosemi  goto 168
-	optstmt  goto 249
+	optstmt  goto 248
 	var  goto 21
 
 state 240
@@ -7540,7 +7541,7 @@ state 240
 	.  error
 
 	expr  goto 6
-	stmt  goto 250
+	stmt  goto 249
 	nosemi  goto 5
 	var  goto 21
 
@@ -7594,7 +7595,7 @@ state 241
 	.  error
 
 	expr  goto 6
-	stmt  goto 251
+	stmt  goto 250
 	nosemi  goto 5
 	var  goto 21
 
@@ -7649,7 +7650,7 @@ state 243
 	'['  shift 16
 	.  error
 
-	expr  goto 252
+	expr  goto 251
 	var  goto 21
 
 state 244
@@ -7704,23 +7705,17 @@ state 244
 
 	expr  goto 6
 	stmt  goto 3
-	stmts  goto 253
+	stmts  goto 252
 	nosemi  goto 5
 	var  goto 21
 
 state 245
-	prmlist:  prms ',' DOTDOTDOT.    (111)
+	prmlist:  prms ',' prmlist.    (111)
 
 	.  reduce 111 (src line 546)
 
 
 state 246
-	prms:  prms ',' var.    (113)
-
-	.  reduce 113 (src line 559)
-
-
-state 247
 	expr:  FUNC uniqvar '(' prmlist ')' '{'.stmts '}' 
 	stmts: .    (2)
 
@@ -7772,11 +7767,11 @@ state 247
 
 	expr  goto 6
 	stmt  goto 3
-	stmts  goto 254
+	stmts  goto 253
 	nosemi  goto 5
 	var  goto 21
 
-state 248
+state 247
 	expr:  expr.'[' expr ']' 
 	expr:  expr.'{' expr '}' 
 	expr:  expr.'?' expr ':' expr 
@@ -7842,33 +7837,33 @@ state 248
 	'%'  shift 55
 	'.'  shift 78
 	'('  shift 79
-	')'  shift 255
+	')'  shift 254
 	'{'  shift 53
 	'['  shift 52
 	.  error
 
 	equals  goto 75
 
-state 249
+state 248
 	expr:  FOR '(' optstmt ';' optrelx ';' optstmt.')' stmt 
 
-	')'  shift 256
+	')'  shift 255
 	.  error
 
 
-state 250
+state 249
 	expr:  FOR '(' var SYM_IN expr ')' stmt.    (17)
 
 	.  reduce 17 (src line 134)
 
 
-state 251
+state 250
 	expr:  IF '(' expr ')' stmt ELSE stmt.    (19)
 
 	.  reduce 19 (src line 147)
 
 
-state 252
+state 251
 	expr:  expr.'[' expr ']' 
 	expr:  expr.'{' expr '}' 
 	expr:  expr.'?' expr ':' expr 
@@ -7936,32 +7931,32 @@ state 252
 	'('  shift 79
 	'{'  shift 53
 	'['  shift 52
-	','  shift 257
+	','  shift 256
 	.  error
 
 	equals  goto 75
 
-state 253
+state 252
 	expr:  FUNC var '(' prmlist ')' '{' stmts.'}' 
+
+	'}'  shift 257
+	.  error
+
+
+state 253
+	expr:  FUNC uniqvar '(' prmlist ')' '{' stmts.'}' 
 
 	'}'  shift 258
 	.  error
 
 
 state 254
-	expr:  FUNC uniqvar '(' prmlist ')' '{' stmts.'}' 
+	arglist:  args ',' VARG '(' expr ')'.    (118)
 
-	'}'  shift 259
-	.  error
+	.  reduce 118 (src line 580)
 
 
 state 255
-	arglist:  args ',' VARG '(' expr ')'.    (119)
-
-	.  reduce 119 (src line 586)
-
-
-state 256
 	expr:  FOR '(' optstmt ';' optrelx ';' optstmt ')'.stmt 
 
 	QMARK2  shift 22
@@ -8011,11 +8006,11 @@ state 256
 	.  error
 
 	expr  goto 6
-	stmt  goto 260
+	stmt  goto 259
 	nosemi  goto 5
 	var  goto 21
 
-state 257
+state 256
 	expr:  XY '(' expr ',' expr ',' expr ','.expr ')' 
 
 	QMARK2  shift 22
@@ -8060,28 +8055,28 @@ state 257
 	'['  shift 16
 	.  error
 
-	expr  goto 261
+	expr  goto 260
 	var  goto 21
 
-state 258
+state 257
 	expr:  FUNC var '(' prmlist ')' '{' stmts '}'.    (80)
 
 	.  reduce 80 (src line 468)
 
 
-state 259
+state 258
 	expr:  FUNC uniqvar '(' prmlist ')' '{' stmts '}'.    (82)
 
 	.  reduce 82 (src line 480)
 
 
-state 260
+state 259
 	expr:  FOR '(' optstmt ';' optrelx ';' optstmt ')' stmt.    (16)
 
 	.  reduce 16 (src line 127)
 
 
-state 261
+state 260
 	expr:  expr.'[' expr ']' 
 	expr:  expr.'{' expr '}' 
 	expr:  expr.'?' expr ':' expr 
@@ -8147,28 +8142,28 @@ state 261
 	'%'  shift 55
 	'.'  shift 78
 	'('  shift 79
-	')'  shift 262
+	')'  shift 261
 	'{'  shift 53
 	'['  shift 52
 	.  error
 
 	equals  goto 75
 
-state 262
+state 261
 	expr:  XY '(' expr ',' expr ',' expr ',' expr ')'.    (78)
 
 	.  reduce 78 (src line 456)
 
 
 102 terminals, 18 nonterminals
-138 grammar rules, 263/16000 states
+137 grammar rules, 262/16000 states
 336 shift/reduce, 74 reduce/reduce conflicts reported
 117 working sets used
-memory: parser 213/240000
+memory: parser 222/240000
 232 extra closures
 4348 shift entries, 50 exceptions
-102 goto entries
-151 entries saved by goto default
-Optimizer space used: output 1942/240000
-1942 table entries, 527 zero
-maximum spread: 102, maximum offset: 257
+103 goto entries
+152 entries saved by goto default
+Optimizer space used: output 1927/240000
+1927 table entries, 524 zero
+maximum spread: 102, maximum offset: 256

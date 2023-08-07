@@ -4,4 +4,4 @@ package player
 import (
 	"github.com/palette/kit"
 )
-func xxx ( yyy Kval,<<COMMA?>> ) { tjt = <<COMMA?>> [  ] ; return (  ); };
+func xxx ( yyy Kval,... ) { yyy.dur = 96 ; tjt = [ 4 = [ "chan" = 8 , "x" = 110 , "y" = 111 ] , 8 = [ "chan" = 8 , "x" = 116 , "y" = 117 ] ] ;; return (  ); };

@@ -82,6 +82,8 @@ func (n *Node) prettyPrint() string {
 			s0 += "," + s1
 		}
 		return s0
+	case DOTDOTDOT:
+		return "..."
 	case SEQUENCE:
 		nchildren := len(n.children)
 		switch nchildren {
@@ -91,7 +93,7 @@ func (n *Node) prettyPrint() string {
 			return n.PrettyChild(0) + ";"
 		default:
 			s := n.PrettyChild(0)
-			for i:=1; i<nchildren; i++ {
+			for i := 1; i < nchildren; i++ {
 				s += " " + n.PrettyChild(i) + ";"
 			}
 			return s
@@ -161,9 +163,13 @@ func (n *Node) prettyPrint() string {
 		val := n.PrettyChild(0)
 		return fmt.Sprintf("--%s", val)
 	case '[':
-		arr := n.PrettyChild(0)
-		index := n.PrettyChild(1)
-		return fmt.Sprintf("%s [ %s ]", arr, index)
+		if len(n.children) == 1 {
+			return "[ " + n.PrettyChild(0) + " ]"
+		} else {
+			arr := n.PrettyChild(0)
+			index := n.PrettyChild(1)
+			return fmt.Sprintf("%s [ %s ]", arr, index)
+		}
 	case '%':
 		left := n.PrettyChild(0)
 		right := n.PrettyChild(1)
@@ -219,12 +225,19 @@ func (n *Node) prettyPrint() string {
 		}
 		right := n.PrettyChild(2)
 		return fmt.Sprintf("%s %s %s ;", left, eq, right)
+	case ARRITEMEQ:
+		node0 := n.PrettyChild(0)
+		node1 := n.PrettyChild(1)
+		return fmt.Sprintf("%s = %s", node0, node1)
 	case '=', '+', '-', '*', '/':
 		left := n.PrettyChild(0)
 		right := n.PrettyChild(1)
 		return fmt.Sprintf("%s %c %s", left, n.stype, right)
 	case ',':
-		return "<<COMMA?>>"
+		// return "<<COMMA?>>"
+		left := n.PrettyChild(0)
+		right := n.PrettyChild(1)
+		return fmt.Sprintf("%s , %s", left, right)
 	case IF:
 		switch len(n.children) {
 		case 2:
