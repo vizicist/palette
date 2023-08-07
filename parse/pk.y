@@ -8,10 +8,10 @@ package parse
 	node *Node
 }
 
-%token	<node>	VAR UNDEF MACRO TOGLOBSYM QMARK2 DOLLAR2 WHILE DOTDOTDOT
+%token	<node>	VAR UNDEF MACRO QMARK2 DOLLAR2 WHILE DOTDOTDOT
 %token	<node>	IF ELSE FOR SYM_IN BEINGREAD EVAL BREAK CONTINUE TASK
-%token	<node>	SYM_DELETE UNDEFINE RETURN FUNC DEFINED READONLY ONCHANGE GLOBALDEC
-%token	<node>	CLASS METHOD KW_NEW NARGS TYPEOF XY
+%token	<node>	SYM_DELETE UNDEFINE RETURN FUNC DEFINED
+%token	<node>	NARGS TYPEOF XY
 %token	<node>	DUR VOL TIME CHAN PITCH LENGTH NUMBER TYPE ATTRIB FLAGS VARG PORT
 %token	<node>	PHRASE
 %token	<node>	STRING NAME
@@ -26,13 +26,9 @@ package parse
 %token	<node>	EQUALS
 %token	<node>	PLUSEQ MINUSEQ MULEQ DIVEQ AMPEQ INC DEC PREINC PREDEC
 %token	<node>	POSTINC POSTDEC OREQ XOREQ RSHIFTEQ LSHIFTEQ
-%type	<node>	list expr stmt stmts nosemi optstmt stmtnv
-%type	<node>	optrelx
-%type	<node>	equals
-%type	<node>	method arglist narglist methdef methdefs
-%type	<node>	uniqvar var dottype globvar
-%type	<node>	args prmlist prms arritem arrlist globlist
-%type	<node>	methname
+%type	<node>	list expr stmt stmts nosemi optstmt
+%type	<node>	optrelx equals arglist uniqvar var dottype
+%type	<node>	args prmlist prms arritem arrlist
 %type	<node>	'$'
 %right	'=' PLUSEQ MINUSEQ MULEQ DIVEQ AMPEQ OREQ XOREQ RSHIFTEQ LSHIFTEQ
 %right	'?'
@@ -85,23 +81,9 @@ stmt	: ';' {
 				children: []*Node{},
 			}
 			}
-	/// | '\n' {
-	/// 		$$ = &Node{
-	/// 			stype: '\n',
-	/// 			children: []*Node{},
-	/// 		}
-	/// }
 	| nosemi
-	| nosemi ';'
 	; 
-nosemi	: stmtnv
-	| expr
-stmtnv	: RETURN		{
-						$$ = &Node{
-							stype: RETURN,
-							children: []*Node{},
-						}
-						}
+nosemi	: expr
 	| RETURN '(' ')'	{
 						$$ = &Node{
 							stype: RETURN,
@@ -126,12 +108,6 @@ stmtnv	: RETURN		{
 						children: []*Node{},
 					}
 					}
-	| GLOBALDEC globlist {
-					$$ = &Node{
-						stype: GLOBALDEC,
-						children: []*Node{$2},
-					}
-				}
 	;
 expr	: '{' stmts '}'		{ $$ = $2 }
 	| SYM_DELETE expr
@@ -139,18 +115,6 @@ expr	: '{' stmts '}'		{ $$ = $2 }
 					$$ = &Node{
 						stype: SYM_DELETE,
 						children: []*Node{$2},
-					}
-		}
-	| READONLY var {
-					$$ = &Node{
-						stype: READONLY,
-						children: []*Node{$2},
-					}
-		}
-	| ONCHANGE '(' var ',' expr ')' {
-					$$ = &Node{
-						stype: ONCHANGE,
-						children: []*Node{$3,$5},
 					}
 		}
 	| WHILE '(' expr ')' stmt {
@@ -186,19 +150,6 @@ expr	: '{' stmts '}'		{ $$ = $2 }
 				children: []*Node{$3,$5,$7},
 			}
 		}
-	| KW_NEW var '(' narglist ')'	{
-			$$ = &Node{
-				stype: KW_NEW,
-				children: []*Node{$2,$4},
-			}
-			}
-	| KW_NEW '(' expr ')' var '(' narglist ')'	
-			{
-			$$ = &Node{
-				stype: KW_NEW,
-				children: []*Node{$3,$5,$7},
-			}
-			}
 	| UNDEFINE var {
 			$$ = &Node{
 				stype: UNDEFINE,
@@ -269,12 +220,6 @@ expr	: '{' stmts '}'		{ $$ = $2 }
 			$$ = &Node{
 				stype: DEFINED,
 				children: []*Node{$3},
-			}
-			}
-	| DEFINED '(' expr '.' method ')'	{
-			$$ = &Node{
-				stype: DEFINED,
-				children: []*Node{$3,$5},
 			}
 			}
 	| DEFINED var		{
@@ -471,18 +416,6 @@ expr	: '{' stmts '}'		{ $$ = $2 }
 				children: []*Node{$1,$3},
 			}
 			}
-	| expr '.' method	{
-			$$ = &Node{
-				stype: '.',
-				children: []*Node{$1,$3},
-			}
-			}
-	| expr '.' method '(' arglist ')' {
-			$$ = &Node{
-				stype: FUNCCALL,
-				children: []*Node{$1,$3,$5},
-			}
-			}
 	| TASK var '(' arglist ')' {
 			$$ = &Node{
 				stype: TASK,
@@ -493,12 +426,6 @@ expr	: '{' stmts '}'		{ $$ = $2 }
 			$$ = &Node{
 				stype: TASK,
 				children: []*Node{$2,$4},
-			}
-			}
-	| TASK expr '.' method '(' arglist ')' {
-			$$ = &Node{
-				stype: TASK,
-				children: []*Node{$2,$4,$6},
 			}
 			}
 	| var '(' arglist ')'	{
@@ -532,12 +459,6 @@ expr	: '{' stmts '}'		{ $$ = $2 }
 					children: []*Node{$3,$5,$7,$9},
 				}
 			}
-	| GLOBALDEC '(' globvar ')' {
-				$$ = &Node{
-					stype: GLOBALDEC,
-					children: []*Node{$3},
-				}
-		}
 	| FUNC '(' expr ')'	{
 				$$ = &Node{
 					stype: FUNC,
@@ -565,33 +486,6 @@ expr	: '{' stmts '}'		{ $$ = $2 }
 	| FUNC uniqvar '{' stmts '}'	{
 				$$ = &Node{
 					stype: FUNC,
-					children: []*Node{$2,$4},
-				}
-			}
-	| CLASS var '{' methdefs '}'	{
-				$$ = &Node{
-					stype: CLASS,
-					children: []*Node{$2,$4},
-				}
-			}
-	;
-methdefs: {
-				$$ = &Node{
-					stype: METHOD,
-					children: []*Node{},
-				}
-		}
-	| methdef methdefs
-	;
-methdef	: METHOD methname '(' prmlist ')' '{' stmts '}'	{
-				$$ = &Node{
-					stype: METHOD,
-					children: []*Node{$2,$4,$7},
-				}
-			}
-	| METHOD methname '{' stmts '}'	{
-				$$ = &Node{
-					stype: METHOD,
 					children: []*Node{$2,$4},
 				}
 			}
@@ -696,33 +590,6 @@ arglist	: /* nothing */		{ $$ = nil }
 					}
 				}
 	;
-narglist: /* nothing */		{ $$ = nil }
-	| args
-	| DOTDOTDOT		{
-					$$ = &Node{
-						stype: DOTDOTDOT,
-						children: []*Node{},
-					}
-				}
-	| args ',' DOTDOTDOT	{
-					$$ = &Node{
-						stype: DOTDOTDOT,
-						children: []*Node{$1},
-					}
-				}
-	| VARG '(' expr ')'	{
-					$$ = &Node{
-						stype: VARG,
-						children: []*Node{$3},
-					}
-				}
-	| args ',' VARG	'(' expr ')' {
-					$$ = &Node{
-						stype: VARG,
-						children: []*Node{$1,$5},
-					}
-				}
-	;
 args	: expr
 	| args ',' expr		{
 					$$ = &Node{
@@ -747,11 +614,6 @@ arrlist	: /* nothing */		{ $$ = nil }
 					}
 				}
 	;
-globvar	: var
-	;
-globlist: globvar
-	| globlist ',' globvar
-	;
 var	: NAME
 	| VOL
 	| DUR
@@ -764,28 +626,6 @@ var	: NAME
 	| ATTRIB
 	| FLAGS
 	| NUMBER
-	| CLASS
-	;
-methname: NAME
-	| SYM_DELETE
-	| CLASS
-	;
-method	: NAME
-	| SYM_DELETE  {
-					$$ = &Node{
-						stype: SYM_DELETE,
-						children: []*Node{},
-					}
-				}
-	| CLASS	  {
-					$$ = &Node{
-						stype: CLASS,
-						children: []*Node{},
-					}
-				}
-	| '(' expr ')'	{
-				$$ = $2;
-				}
 	;
 %%
 
