@@ -1,4 +1,4 @@
-package main
+package parse
 
 import (
 	"fmt"
@@ -8,7 +8,7 @@ var treeIndent int
 
 type Node struct {
 	stype    int // e.g. NUMBER, STRING, etc.
-	sym      pkSymType
+	sym      PkSymType
 	children []*Node
 	num      int // for NUMBERs
 	name     string
@@ -17,10 +17,10 @@ type Node struct {
 	dbl      float64
 }
 
-func HandleProgram(pklex pkLexer, n *Node) {
-	mylex, ok := pklex.(*pkLex)
+func HandleProgram(pklex PkLexer, n *Node) {
+	mylex, ok := pklex.(*PkLex)
 	if !ok {
-		mylex.outf.WriteString("<<bad type for pklex>>")
+		mylex.Outf.WriteString("<<bad type for pklex>>")
 	} else {
 
 		tp := n.treePostProcess()
@@ -30,7 +30,7 @@ func HandleProgram(pklex pkLexer, n *Node) {
 
 		pp = n.prettyPrint()
 		fmt.Printf("%s\n", pp)
-		mylex.outf.WriteString(pp)
+		mylex.Outf.WriteString(pp)
 	}
 }
 

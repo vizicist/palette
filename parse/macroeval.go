@@ -1,4 +1,4 @@
-package main
+package parse
 
 import (
 	"strings"
@@ -113,7 +113,7 @@ func scanarg(s string, pi *int) (echar int, paramname string) {
 /* Check to see if name is a macro, and if so, substitute its value (possibly*/
 /* gathering the arguments and substituting them in the macro definition). */
 /* The macro value is stuffed back onto the input stream. */
-func (x *pkLex) macroeval(yytext string) bool {
+func (x *PkLex) macroeval(yytext string) bool {
 
 	macro, ok := Macros[yytext]
 	if !ok {

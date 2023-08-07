@@ -1,4 +1,4 @@
-package main
+package parse
 
 import (
 	"fmt"
@@ -8,6 +8,8 @@ import (
 	"strings"
 	"unicode/utf8"
 )
+
+//go:generate goyacc -p Pk -o pk_generated.go pk.y
 
 // The parser expects the lexer to return 0 on EOF.  Give it a name
 // for clarity.
@@ -21,37 +23,37 @@ type Symstr string
 
 // The parser uses the type <prefix>Lex as a lexer. It must provide
 // the methods Lex(*<prefix>SymType) int and Error(string).
-type pkLex struct {
-	line       []byte
+type PkLex struct {
+	Line       []byte
 	peek       []rune
 	yytext     string
 	macrosused int
-	outf       *os.File
+	Outf       *os.File
 }
 
-func (x *pkLex) stuff(s string) {
+func (x *PkLex) stuff(s string) {
 	for _, r := range s {
 		x.peek = append(x.peek, r)
 	}
 }
 
 // Push back one rune
-func (x *pkLex) unget(r rune) {
+func (x *PkLex) unget(r rune) {
 	x.peek = append(x.peek, r)
 }
 
 // Return the next rune for the lexer.
-func (x *pkLex) next() rune {
+func (x *PkLex) next() rune {
 	if len(x.peek) != 0 {
 		r := rune(x.peek[0])
 		x.peek = x.peek[1:]
 		return r
 	}
-	if len(x.line) == 0 {
+	if len(x.Line) == 0 {
 		return eof
 	}
-	c, size := utf8.DecodeRune(x.line)
-	x.line = x.line[size:]
+	c, size := utf8.DecodeRune(x.Line)
+	x.Line = x.Line[size:]
 	if c == utf8.RuneError && size == 1 {
 		log.Print("invalid utf8")
 		return x.next()
@@ -59,7 +61,7 @@ func (x *pkLex) next() rune {
 	return c
 }
 
-func (x *pkLex) scaninputtill(lookfor string) (scanned string, echar rune) {
+func (x *PkLex) scaninputtill(lookfor string) (scanned string, echar rune) {
 	for {
 		c := x.next()
 		if c == eof {
@@ -96,7 +98,7 @@ func (x *pkLex) scaninputtill(lookfor string) (scanned string, echar rune) {
 }
 
 // The parser calls this method on a parse error.
-func (x *pkLex) Error(s string) {
+func (x *PkLex) Error(s string) {
 	log.Printf("parse error: %s", s)
 }
 
@@ -140,7 +142,7 @@ func hexchar(r rune) int {
 
 // The parser calls this method to get each new token. This
 // implementation returns operators and NUM.
-func (x *pkLex) Lex(yylval *pkSymType) int {
+func (x *PkLex) Lex(yylval *PkSymType) int {
 	var c rune
 	var retval int
 	// var nextc int
@@ -431,7 +433,7 @@ getout:
 	return (retval)
 }
 
-func (x *pkLex) readnumber(yylval *pkSymType) int {
+func (x *PkLex) readnumber(yylval *PkSymType) int {
 	f, isdouble := x.dblread()
 	if isdouble {
 		yylval.node = makeNodeDouble(f)
@@ -452,7 +454,7 @@ func eprint(s string) {
 	os.Stderr.Write([]byte(s))
 }
 
-func (x *pkLex) eatpound() {
+func (x *PkLex) eatpound() {
 	// comments extend from a '#' (at the beginning of a word)
 	// to the end of the line.
 	line := "#"
@@ -477,7 +479,7 @@ func (x *pkLex) eatpound() {
 	}
 }
 
-func (x *pkLex) dblread() (val float64, isdouble bool) {
+func (x *PkLex) dblread() (val float64, isdouble bool) {
 
 	var lastc rune
 	var c rune
@@ -552,7 +554,7 @@ func (x *pkLex) dblread() (val float64, isdouble bool) {
 }
 
 /* follow() - look ahead for >=, etc. */
-func (x *pkLex) follow(expect int, ifyes int, ifno int) int {
+func (x *PkLex) follow(expect int, ifyes int, ifno int) int {
 	ch := x.next()
 	if int(ch) == expect {
 		return ifyes
@@ -561,7 +563,7 @@ func (x *pkLex) follow(expect int, ifyes int, ifno int) int {
 	return ifno
 }
 
-func (x *pkLex) follo3(expect1 int, ifyes1 int, expect2 int, expect3 int, ifyes2 int, ifyes3 int, ifno int) int {
+func (x *PkLex) follo3(expect1 int, ifyes1 int, expect2 int, expect3 int, ifyes2 int, ifyes3 int, ifno int) int {
 	ch := x.next()
 	if int(ch) == expect1 {
 		return ifyes1
@@ -578,7 +580,7 @@ func (x *pkLex) follo3(expect1 int, ifyes1 int, expect2 int, expect3 int, ifyes2
 	return ifno
 }
 
-func (x *pkLex) follo2(expect1 int, ifyes1 int, expect2 int, ifyes2 int, ifno int) int {
+func (x *PkLex) follo2(expect1 int, ifyes1 int, expect2 int, ifyes2 int, ifno int) int {
 	ch := x.next()
 	if int(ch) == expect1 {
 		return ifyes1
