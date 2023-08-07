@@ -1,4 +1,4 @@
-package main
+package parse
 
 // Pre-defined macros.  It is REQUIRED that these values match the
 // corresponding values in phrase.go and elsewhere  For example, the value
