@@ -1,2 +1,2 @@
 c:
-cd %USERPROFILE%\github\nosuchtim\keykit
+cd %USERPROFILE%\github\keykit

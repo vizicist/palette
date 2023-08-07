@@ -110,38 +110,6 @@ func (n *Node) prettyPrint() string {
 		default:
 			return "<<wrong number of children for FUNC>>"
 		}
-	case CLASS:
-		name := n.children[0].name
-		methdefs := n.PrettyChild(1)
-		return fmt.Sprintf("class %s { %s }", name, methdefs)
-	case METHOD:
-		switch len(n.children) {
-		case 2:
-			name := n.PrettyChild(0)
-			stmts := n.PrettyChild(1)
-			return fmt.Sprintf("method %s { %s }", name, stmts)
-		case 3:
-			name := n.PrettyChild(0)
-			prmlist := n.PrettyChild(1)
-			stmts := n.PrettyChild(2)
-			return fmt.Sprintf("method %s ( %s ) { %s }", name, prmlist, stmts)
-		default:
-			return "<<wrong number of children for METHOD>>"
-		}
-	case KW_NEW:
-		switch len(n.children) {
-		case 2:
-			name := n.PrettyChild(0)
-			arglist := n.PrettyChild(1)
-			return fmt.Sprintf("new %s ( %s )", name, arglist)
-		case 3:
-			expr := n.PrettyChild(0)
-			v := n.PrettyChild(1)
-			stmts := n.PrettyChild(2)
-			return fmt.Sprintf("new ( %s ) %s ( %s )", expr, v, stmts)
-		default:
-			return "<<wrong number of children for METHOD>>"
-		}
 	case FUNCCALL:
 		switch len(n.children) {
 		case 2:
