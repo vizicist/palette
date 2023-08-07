@@ -1,19 +1,11 @@
 %{
 
-package main
+package parse
 
 %}
 
 %union {
 	node *Node
-	// outf *os.File	// transliterated output is sent here
-	// sym string		// symbol table pointer
-	// in string		// machine instruction
-	// // num int		// number of arguments
-	// val int			// numeric constant
-	// dbl float64		// floating constant
-	// str!string		// string constant
-	// phr string		// phrase constant
 }
 
 %token	<node>	VAR UNDEF MACRO TOGLOBSYM QMARK2 DOLLAR2 WHILE DOTDOTDOT
@@ -61,7 +53,7 @@ package main
 %%
 list	: 			
 		stmts		{
-			HandleProgram(pklex,$1)
+			HandleProgram(Pklex,$1)
 		}
 	;
 stmts	: /* nothing */		{
