@@ -35,26 +35,32 @@ del /f /q %buildcmdsout% >nul 2>&1
 
 echo ================ Compiling palette
 pushd %PALETTE_SOURCE%\cmd\palette
-go build palette.go >> %buildcmdsout% 2>&1
+go build -o palette.exe >> %buildcmdsout% 2>&1
 move palette.exe %bin%\palette.exe > nul
 popd
 
 echo ================ Compiling palette_engine
 pushd %PALETTE_SOURCE%\cmd\palette_engine
-go build palette_engine.go >> %buildcmdsout% 2>&1
+go build -o palette_engine.exe >> %buildcmdsout% 2>&1
 move palette_engine.exe %bin%\palette_engine.exe > nul
 popd
 
 echo ================ Compiling palette_monitor
 pushd %PALETTE_SOURCE%\cmd\palette_monitor
-go build palette_monitor.go >> %buildcmdsout% 2>&1
+go build -o palette_monitor.exe >> %buildcmdsout% 2>&1
 move palette_monitor.exe %bin%\palette_monitor.exe > nul
 popd
 
 echo ================ Compiling palette_splash
 pushd %PALETTE_SOURCE%\cmd\palette_splash
-go build palette_splash.go >> %buildcmdsout% 2>&1
+go build -o palette_splash.exe >> %buildcmdsout% 2>&1
 move palette_splash.exe %bin%\palette_splash.exe > nul
+popd
+
+echo ================ Compiling pk2go
+pushd %PALETTE_SOURCE%\cmd\pk2go
+go build -o pk2go.exe >> %buildcmdsout% 2>&1
+move pk2go.exe %bin%\pk2go.exe > nul
 popd
 
 rem print any error messages from compiling cmds

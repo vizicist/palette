@@ -52,7 +52,7 @@ state 0
 	'('  shift 28
 	'{'  shift 12
 	'['  shift 21
-	.  reduce 2 (src line 67)
+	.  reduce 2 (src line 59)
 
 	list  goto 1
 	expr  goto 7
@@ -72,7 +72,7 @@ state 1
 state 2
 	list:  stmts.    (1)
 
-	.  reduce 1 (src line 62)
+	.  reduce 1 (src line 54)
 
 
 state 3
@@ -128,7 +128,7 @@ state 3
 	'('  shift 28
 	'{'  shift 12
 	'['  shift 21
-	.  reduce 2 (src line 67)
+	.  reduce 2 (src line 59)
 
 	expr  goto 7
 	stmt  goto 3
@@ -140,7 +140,7 @@ state 3
 state 4
 	stmt:  ';'.    (6)
 
-	.  reduce 6 (src line 90)
+	.  reduce 6 (src line 82)
 
 
 5: shift/reduce conflict (shift 58(0), red'n 7(0)) on ';'
@@ -149,13 +149,13 @@ state 5
 	stmt:  nosemi.';' 
 
 	';'  shift 58
-	.  reduce 7 (src line 102)
+	.  reduce 7 (src line 94)
 
 
 state 6
 	nosemi:  stmtnv.    (9)
 
-	.  reduce 9 (src line 105)
+	.  reduce 9 (src line 97)
 
 
 7: shift/reduce conflict (shift 79(0), red'n 10(0)) on SYM_IN
@@ -265,7 +265,7 @@ state 7
 	'('  shift 86
 	'{'  shift 60
 	'['  shift 59
-	.  reduce 10 (src line 106)
+	.  reduce 10 (src line 98)
 
 	equals  goto 82
 
@@ -276,19 +276,19 @@ state 8
 	stmtnv:  RETURN.'(' expr ')' 
 
 	'('  shift 97
-	.  reduce 11 (src line 107)
+	.  reduce 11 (src line 99)
 
 
 state 9
 	stmtnv:  BREAK.    (14)
 
-	.  reduce 14 (src line 125)
+	.  reduce 14 (src line 117)
 
 
 state 10
 	stmtnv:  CONTINUE.    (15)
 
-	.  reduce 15 (src line 131)
+	.  reduce 15 (src line 123)
 
 
 state 11
@@ -368,7 +368,7 @@ state 12
 	'('  shift 28
 	'{'  shift 12
 	'['  shift 21
-	.  reduce 2 (src line 67)
+	.  reduce 2 (src line 59)
 
 	expr  goto 7
 	stmt  goto 3
@@ -573,7 +573,7 @@ state 21
 	'('  shift 28
 	'{'  shift 12
 	'['  shift 21
-	.  reduce 147 (src line 749)
+	.  reduce 147 (src line 741)
 
 	expr  goto 117
 	var  goto 26
@@ -583,7 +583,7 @@ state 21
 state 22
 	expr:  INTEGER.    (31)
 
-	.  reduce 31 (src line 228)
+	.  reduce 31 (src line 220)
 
 
 23: shift/reduce conflict (shift 120(0), red'n 32(0)) on DUR
@@ -612,20 +612,20 @@ state 23
 	ATTRIB  shift 127
 	FLAGS  shift 128
 	PORT  shift 122
-	.  reduce 32 (src line 229)
+	.  reduce 32 (src line 221)
 
 	dottype  goto 118
 
 state 24
 	expr:  STRING.    (33)
 
-	.  reduce 33 (src line 230)
+	.  reduce 33 (src line 222)
 
 
 state 25
 	expr:  PHRASE.    (34)
 
-	.  reduce 34 (src line 231)
+	.  reduce 34 (src line 223)
 
 
 26: shift/reduce conflict (shift 130(0), red'n 35(0)) on '('
@@ -634,13 +634,13 @@ state 26
 	expr:  var.'(' arglist ')' 
 
 	'('  shift 130
-	.  reduce 35 (src line 232)
+	.  reduce 35 (src line 224)
 
 
 state 27
 	expr:  QMARK2.    (36)
 
-	.  reduce 36 (src line 233)
+	.  reduce 36 (src line 225)
 
 
 state 28
@@ -1042,19 +1042,19 @@ state 35
 state 36
 	expr:  '$'.    (76)
 
-	.  reduce 76 (src line 468)
+	.  reduce 76 (src line 460)
 
 
 state 37
 	expr:  DOLLAR2.    (77)
 
-	.  reduce 77 (src line 474)
+	.  reduce 77 (src line 466)
 
 
 state 38
 	expr:  OBJECT.    (78)
 
-	.  reduce 78 (src line 475)
+	.  reduce 78 (src line 467)
 
 
 state 39
@@ -1191,92 +1191,92 @@ state 44
 	FLAGS  shift 55
 	PORT  shift 49
 	NAME  shift 45
-	.  reduce 165 (src line 775)
+	.  reduce 165 (src line 767)
 
 	var  goto 149
 
 state 45
 	var:  NAME.    (153)
 
-	.  reduce 153 (src line 763)
+	.  reduce 153 (src line 755)
 
 
 state 46
 	var:  VOL.    (154)
 
-	.  reduce 154 (src line 764)
+	.  reduce 154 (src line 756)
 
 
 state 47
 	var:  DUR.    (155)
 
-	.  reduce 155 (src line 765)
+	.  reduce 155 (src line 757)
 
 
 state 48
 	var:  CHAN.    (156)
 
-	.  reduce 156 (src line 766)
+	.  reduce 156 (src line 758)
 
 
 state 49
 	var:  PORT.    (157)
 
-	.  reduce 157 (src line 767)
+	.  reduce 157 (src line 759)
 
 
 state 50
 	var:  TIME.    (158)
 
-	.  reduce 158 (src line 768)
+	.  reduce 158 (src line 760)
 
 
 state 51
 	var:  PITCH.    (159)
 
-	.  reduce 159 (src line 769)
+	.  reduce 159 (src line 761)
 
 
 state 52
 	var:  LENGTH.    (160)
 
-	.  reduce 160 (src line 770)
+	.  reduce 160 (src line 762)
 
 
 state 53
 	var:  TYPE.    (161)
 
-	.  reduce 161 (src line 771)
+	.  reduce 161 (src line 763)
 
 
 state 54
 	var:  ATTRIB.    (162)
 
-	.  reduce 162 (src line 772)
+	.  reduce 162 (src line 764)
 
 
 state 55
 	var:  FLAGS.    (163)
 
-	.  reduce 163 (src line 773)
+	.  reduce 163 (src line 765)
 
 
 state 56
 	var:  NUMBER.    (164)
 
-	.  reduce 164 (src line 774)
+	.  reduce 164 (src line 766)
 
 
 state 57
 	stmts:  stmt stmts.    (3)
 
-	.  reduce 3 (src line 70)
+	.  reduce 3 (src line 62)
 
 
 state 58
 	stmt:  nosemi ';'.    (8)
 
-	.  reduce 8 (src line 103)
+	.  reduce 8 (src line 95)
 
 
 state 59
@@ -2554,13 +2554,13 @@ state 82
 state 83
 	expr:  expr INC.    (71)
 
-	.  reduce 71 (src line 438)
+	.  reduce 71 (src line 430)
 
 
 state 84
 	expr:  expr DEC.    (72)
 
-	.  reduce 72 (src line 444)
+	.  reduce 72 (src line 436)
 
 
 state 85
@@ -2639,7 +2639,7 @@ state 86
 	'('  shift 28
 	'{'  shift 12
 	'['  shift 21
-	.  reduce 132 (src line 680)
+	.  reduce 132 (src line 672)
 
 	expr  goto 184
 	arglist  goto 180
@@ -2649,61 +2649,61 @@ state 86
 state 87
 	equals:  PLUSEQ.    (113)
 
-	.  reduce 113 (src line 619)
+	.  reduce 113 (src line 611)
 
 
 state 88
 	equals:  MINUSEQ.    (114)
 
-	.  reduce 114 (src line 620)
+	.  reduce 114 (src line 612)
 
 
 state 89
 	equals:  MULEQ.    (115)
 
-	.  reduce 115 (src line 621)
+	.  reduce 115 (src line 613)
 
 
 state 90
 	equals:  DIVEQ.    (116)
 
-	.  reduce 116 (src line 622)
+	.  reduce 116 (src line 614)
 
 
 state 91
 	equals:  OREQ.    (117)
 
-	.  reduce 117 (src line 623)
+	.  reduce 117 (src line 615)
 
 
 state 92
 	equals:  AMPEQ.    (118)
 
-	.  reduce 118 (src line 624)
+	.  reduce 118 (src line 616)
 
 
 state 93
 	equals:  XOREQ.    (119)
 
-	.  reduce 119 (src line 625)
+	.  reduce 119 (src line 617)
 
 
 state 94
 	equals:  RSHIFTEQ.    (120)
 
-	.  reduce 120 (src line 626)
+	.  reduce 120 (src line 618)
 
 
 state 95
 	equals:  LSHIFTEQ.    (121)
 
-	.  reduce 121 (src line 627)
+	.  reduce 121 (src line 619)
 
 
 state 96
 	equals:  '='.    (122)
 
-	.  reduce 122 (src line 628)
+	.  reduce 122 (src line 620)
 
 
 state 97
@@ -2767,7 +2767,7 @@ state 98
 	globlist:  globlist.',' globvar 
 
 	','  shift 187
-	.  reduce 16 (src line 137)
+	.  reduce 16 (src line 129)
 
 
 state 99
@@ -2794,19 +2794,19 @@ state 99
 state 100
 	globlist:  globvar.    (151)
 
-	.  reduce 151 (src line 760)
+	.  reduce 151 (src line 752)
 
 
 state 101
 	globvar:  var.    (150)
 
-	.  reduce 150 (src line 758)
+	.  reduce 150 (src line 750)
 
 
 state 102
 	var:  CLASS.    (165)
 
-	.  reduce 165 (src line 775)
+	.  reduce 165 (src line 767)
 
 
 state 103
@@ -2923,7 +2923,7 @@ state 104
 	'('  shift 86
 	'{'  shift 60
 	'['  shift 59
-	.  reduce 18 (src line 145)
+	.  reduce 18 (src line 137)
 
 	equals  goto 82
 
@@ -2937,7 +2937,7 @@ state 105
 state 106
 	expr:  READONLY var.    (19)
 
-	.  reduce 19 (src line 152)
+	.  reduce 19 (src line 144)
 
 
 state 107
@@ -3066,7 +3066,7 @@ state 109
 	'('  shift 28
 	'{'  shift 12
 	'['  shift 21
-	.  reduce 4 (src line 87)
+	.  reduce 4 (src line 79)
 
 	expr  goto 7
 	nosemi  goto 194
@@ -3191,7 +3191,7 @@ state 112
 state 113
 	expr:  UNDEFINE var.    (28)
 
-	.  reduce 28 (src line 210)
+	.  reduce 28 (src line 202)
 
 
 state 114
@@ -3226,7 +3226,7 @@ state 115
 state 116
 	arrlist:  arritem.    (148)
 
-	.  reduce 148 (src line 750)
+	.  reduce 148 (src line 742)
 
 
 state 117
@@ -3306,73 +3306,73 @@ state 117
 state 118
 	expr:  DOUBLE dottype.    (37)
 
-	.  reduce 37 (src line 234)
+	.  reduce 37 (src line 226)
 
 
 state 119
 	dottype:  VOL.    (102)
 
-	.  reduce 102 (src line 607)
+	.  reduce 102 (src line 599)
 
 
 state 120
 	dottype:  DUR.    (103)
 
-	.  reduce 103 (src line 608)
+	.  reduce 103 (src line 600)
 
 
 state 121
 	dottype:  CHAN.    (104)
 
-	.  reduce 104 (src line 609)
+	.  reduce 104 (src line 601)
 
 
 state 122
 	dottype:  PORT.    (105)
 
-	.  reduce 105 (src line 610)
+	.  reduce 105 (src line 602)
 
 
 state 123
 	dottype:  TIME.    (106)
 
-	.  reduce 106 (src line 611)
+	.  reduce 106 (src line 603)
 
 
 state 124
 	dottype:  PITCH.    (107)
 
-	.  reduce 107 (src line 612)
+	.  reduce 107 (src line 604)
 
 
 state 125
 	dottype:  LENGTH.    (108)
 
-	.  reduce 108 (src line 613)
+	.  reduce 108 (src line 605)
 
 
 state 126
 	dottype:  TYPE.    (109)
 
-	.  reduce 109 (src line 614)
+	.  reduce 109 (src line 606)
 
 
 state 127
 	dottype:  ATTRIB.    (110)
 
-	.  reduce 110 (src line 615)
+	.  reduce 110 (src line 607)
 
 
 state 128
 	dottype:  FLAGS.    (111)
 
-	.  reduce 111 (src line 616)
+	.  reduce 111 (src line 608)
 
 
 state 129
 	dottype:  NUMBER.    (112)
 
-	.  reduce 112 (src line 617)
+	.  reduce 112 (src line 609)
 
 
 state 130
@@ -3426,7 +3426,7 @@ state 130
 	'('  shift 28
 	'{'  shift 12
 	'['  shift 21
-	.  reduce 132 (src line 680)
+	.  reduce 132 (src line 672)
 
 	expr  goto 184
 	arglist  goto 202
@@ -3567,7 +3567,7 @@ state 132
 state 133
 	expr:  DEFINED var.    (46)
 
-	.  reduce 46 (src line 288)
+	.  reduce 46 (src line 280)
 
 
 134: shift/reduce conflict (shift 79(0), red'n 57(13)) on SYM_IN
@@ -3615,7 +3615,7 @@ state 134
 	'('  shift 86
 	'{'  shift 60
 	'['  shift 59
-	.  reduce 57 (src line 354)
+	.  reduce 57 (src line 346)
 
 	equals  goto 82
 
@@ -3664,7 +3664,7 @@ state 135
 	'('  shift 86
 	'{'  shift 60
 	'['  shift 59
-	.  reduce 58 (src line 360)
+	.  reduce 58 (src line 352)
 
 	equals  goto 82
 
@@ -3713,7 +3713,7 @@ state 136
 	'('  shift 86
 	'{'  shift 60
 	'['  shift 59
-	.  reduce 66 (src line 408)
+	.  reduce 66 (src line 400)
 
 	equals  goto 82
 
@@ -3758,7 +3758,7 @@ state 137
 	'('  shift 86
 	'{'  shift 60
 	'['  shift 59
-	.  reduce 73 (src line 450)
+	.  reduce 73 (src line 442)
 
 	equals  goto 82
 
@@ -3803,7 +3803,7 @@ state 138
 	'('  shift 86
 	'{'  shift 60
 	'['  shift 59
-	.  reduce 74 (src line 456)
+	.  reduce 74 (src line 448)
 
 	equals  goto 82
 
@@ -3914,7 +3914,7 @@ state 139
 	'('  shift 86
 	'{'  shift 60
 	'['  shift 59
-	.  reduce 75 (src line 462)
+	.  reduce 75 (src line 454)
 
 	equals  goto 82
 
@@ -3925,7 +3925,7 @@ state 140
 	expr:  var.'(' arglist ')' 
 
 	'('  shift 208
-	.  reduce 35 (src line 232)
+	.  reduce 35 (src line 224)
 
 
 state 141
@@ -4191,7 +4191,7 @@ state 147
 state 148
 	uniqvar:  '?'.    (125)
 
-	.  reduce 125 (src line 638)
+	.  reduce 125 (src line 630)
 
 
 state 149
@@ -4469,7 +4469,7 @@ state 153
 	'('  shift 86
 	'{'  shift 60
 	'['  shift 59
-	.  reduce 47 (src line 294)
+	.  reduce 47 (src line 286)
 
 	equals  goto 82
 
@@ -4520,7 +4520,7 @@ state 154
 	'('  shift 86
 	'{'  shift 60
 	'['  shift 59
-	.  reduce 48 (src line 300)
+	.  reduce 48 (src line 292)
 
 	equals  goto 82
 
@@ -4571,7 +4571,7 @@ state 155
 	'('  shift 86
 	'{'  shift 60
 	'['  shift 59
-	.  reduce 49 (src line 306)
+	.  reduce 49 (src line 298)
 
 	equals  goto 82
 
@@ -4620,7 +4620,7 @@ state 156
 	'('  shift 86
 	'{'  shift 60
 	'['  shift 59
-	.  reduce 50 (src line 312)
+	.  reduce 50 (src line 304)
 
 	equals  goto 82
 
@@ -4669,7 +4669,7 @@ state 157
 	'('  shift 86
 	'{'  shift 60
 	'['  shift 59
-	.  reduce 51 (src line 318)
+	.  reduce 51 (src line 310)
 
 	equals  goto 82
 
@@ -4733,7 +4733,7 @@ state 158
 	'('  shift 86
 	'{'  shift 60
 	'['  shift 59
-	.  reduce 52 (src line 324)
+	.  reduce 52 (src line 316)
 
 	equals  goto 82
 
@@ -4795,7 +4795,7 @@ state 159
 	'('  shift 86
 	'{'  shift 60
 	'['  shift 59
-	.  reduce 53 (src line 330)
+	.  reduce 53 (src line 322)
 
 	equals  goto 82
 
@@ -4858,7 +4858,7 @@ state 160
 	'('  shift 86
 	'{'  shift 60
 	'['  shift 59
-	.  reduce 54 (src line 336)
+	.  reduce 54 (src line 328)
 
 	equals  goto 82
 
@@ -4911,7 +4911,7 @@ state 161
 	'('  shift 86
 	'{'  shift 60
 	'['  shift 59
-	.  reduce 55 (src line 342)
+	.  reduce 55 (src line 334)
 
 	equals  goto 82
 
@@ -4964,7 +4964,7 @@ state 162
 	'('  shift 86
 	'{'  shift 60
 	'['  shift 59
-	.  reduce 56 (src line 348)
+	.  reduce 56 (src line 340)
 
 	equals  goto 82
 
@@ -5026,7 +5026,7 @@ state 163
 	'('  shift 86
 	'{'  shift 60
 	'['  shift 59
-	.  reduce 59 (src line 366)
+	.  reduce 59 (src line 358)
 
 	equals  goto 82
 
@@ -5088,7 +5088,7 @@ state 164
 	'('  shift 86
 	'{'  shift 60
 	'['  shift 59
-	.  reduce 60 (src line 372)
+	.  reduce 60 (src line 364)
 
 	equals  goto 82
 
@@ -5150,7 +5150,7 @@ state 165
 	'('  shift 86
 	'{'  shift 60
 	'['  shift 59
-	.  reduce 61 (src line 378)
+	.  reduce 61 (src line 370)
 
 	equals  goto 82
 
@@ -5212,7 +5212,7 @@ state 166
 	'('  shift 86
 	'{'  shift 60
 	'['  shift 59
-	.  reduce 62 (src line 384)
+	.  reduce 62 (src line 376)
 
 	equals  goto 82
 
@@ -5274,7 +5274,7 @@ state 167
 	'('  shift 86
 	'{'  shift 60
 	'['  shift 59
-	.  reduce 63 (src line 390)
+	.  reduce 63 (src line 382)
 
 	equals  goto 82
 
@@ -5336,7 +5336,7 @@ state 168
 	'('  shift 86
 	'{'  shift 60
 	'['  shift 59
-	.  reduce 64 (src line 396)
+	.  reduce 64 (src line 388)
 
 	equals  goto 82
 
@@ -5398,7 +5398,7 @@ state 169
 	'('  shift 86
 	'{'  shift 60
 	'['  shift 59
-	.  reduce 65 (src line 402)
+	.  reduce 65 (src line 394)
 
 	equals  goto 82
 
@@ -5509,7 +5509,7 @@ state 170
 	'('  shift 86
 	'{'  shift 60
 	'['  shift 59
-	.  reduce 67 (src line 414)
+	.  reduce 67 (src line 406)
 
 	equals  goto 82
 
@@ -5574,7 +5574,7 @@ state 171
 	'('  shift 86
 	'{'  shift 60
 	'['  shift 59
-	.  reduce 68 (src line 420)
+	.  reduce 68 (src line 412)
 
 	equals  goto 82
 
@@ -5640,7 +5640,7 @@ state 172
 	'('  shift 86
 	'{'  shift 60
 	'['  shift 59
-	.  reduce 69 (src line 426)
+	.  reduce 69 (src line 418)
 
 	equals  goto 82
 
@@ -5751,14 +5751,14 @@ state 173
 	'('  shift 86
 	'{'  shift 60
 	'['  shift 59
-	.  reduce 70 (src line 432)
+	.  reduce 70 (src line 424)
 
 	equals  goto 82
 
 state 174
 	expr:  expr '.' dottype.    (79)
 
-	.  reduce 79 (src line 476)
+	.  reduce 79 (src line 468)
 
 
 175: shift/reduce conflict (shift 223(0), red'n 80(14)) on '('
@@ -5767,25 +5767,25 @@ state 175
 	expr:  expr '.' method.'(' arglist ')' 
 
 	'('  shift 223
-	.  reduce 80 (src line 482)
+	.  reduce 80 (src line 474)
 
 
 state 176
 	method:  NAME.    (169)
 
-	.  reduce 169 (src line 781)
+	.  reduce 169 (src line 773)
 
 
 state 177
 	method:  SYM_DELETE.    (170)
 
-	.  reduce 170 (src line 782)
+	.  reduce 170 (src line 774)
 
 
 state 178
 	method:  CLASS.    (171)
 
-	.  reduce 171 (src line 788)
+	.  reduce 171 (src line 780)
 
 
 state 179
@@ -5855,13 +5855,13 @@ state 181
 	args:  args.',' expr 
 
 	','  shift 226
-	.  reduce 133 (src line 681)
+	.  reduce 133 (src line 673)
 
 
 state 182
 	arglist:  DOTDOTDOT.    (134)
 
-	.  reduce 134 (src line 682)
+	.  reduce 134 (src line 674)
 
 
 state 183
@@ -5941,14 +5941,14 @@ state 184
 	'('  shift 86
 	'{'  shift 60
 	'['  shift 59
-	.  reduce 144 (src line 734)
+	.  reduce 144 (src line 726)
 
 	equals  goto 82
 
 state 185
 	stmtnv:  RETURN '(' ')'.    (12)
 
-	.  reduce 12 (src line 113)
+	.  reduce 12 (src line 105)
 
 
 state 186
@@ -6057,7 +6057,7 @@ state 188
 state 189
 	expr:  '{' stmts '}'.    (17)
 
-	.  reduce 17 (src line 144)
+	.  reduce 17 (src line 136)
 
 
 state 190
@@ -6158,13 +6158,13 @@ state 193
 
 	SYM_IN  shift 234
 	'('  shift 130
-	.  reduce 35 (src line 232)
+	.  reduce 35 (src line 224)
 
 
 state 194
 	optstmt:  nosemi.    (5)
 
-	.  reduce 5 (src line 88)
+	.  reduce 5 (src line 80)
 
 
 state 195
@@ -6294,7 +6294,7 @@ state 196
 	'('  shift 28
 	'{'  shift 12
 	'['  shift 21
-	.  reduce 138 (src line 707)
+	.  reduce 138 (src line 699)
 
 	expr  goto 184
 	narglist  goto 236
@@ -6386,7 +6386,7 @@ state 198
 state 199
 	expr:  '[' arrlist ']'.    (30)
 
-	.  reduce 30 (src line 222)
+	.  reduce 30 (src line 214)
 
 
 state 200
@@ -6547,7 +6547,7 @@ state 202
 state 203
 	expr:  '(' expr ')'.    (41)
 
-	.  reduce 41 (src line 258)
+	.  reduce 41 (src line 250)
 
 
 204: shift/reduce conflict (shift 130(0), red'n 35(0)) on '('
@@ -6558,7 +6558,7 @@ state 204
 
 	'('  shift 130
 	')'  shift 245
-	.  reduce 35 (src line 232)
+	.  reduce 35 (src line 224)
 
 
 state 205
@@ -6566,7 +6566,7 @@ state 205
 	expr:  '$'.    (76)
 
 	')'  shift 246
-	.  reduce 76 (src line 468)
+	.  reduce 76 (src line 460)
 
 
 state 206
@@ -6574,7 +6574,7 @@ state 206
 	expr:  DOLLAR2.    (77)
 
 	')'  shift 247
-	.  reduce 77 (src line 474)
+	.  reduce 77 (src line 466)
 
 
 state 207
@@ -6703,7 +6703,7 @@ state 208
 	'('  shift 28
 	'{'  shift 12
 	'['  shift 21
-	.  reduce 132 (src line 680)
+	.  reduce 132 (src line 672)
 
 	expr  goto 184
 	arglist  goto 249
@@ -6788,7 +6788,7 @@ state 210
 	'('  shift 28
 	'{'  shift 12
 	'['  shift 21
-	.  reduce 132 (src line 680)
+	.  reduce 132 (src line 672)
 
 	expr  goto 184
 	arglist  goto 251
@@ -6798,7 +6798,7 @@ state 210
 state 211
 	expr:  NARGS '(' ')'.    (87)
 
-	.  reduce 87 (src line 524)
+	.  reduce 87 (src line 516)
 
 
 state 212
@@ -7045,7 +7045,7 @@ state 215
 	FLAGS  shift 55
 	PORT  shift 49
 	NAME  shift 45
-	.  reduce 126 (src line 645)
+	.  reduce 126 (src line 637)
 
 	var  goto 258
 	prmlist  goto 255
@@ -7104,7 +7104,7 @@ state 216
 	'('  shift 28
 	'{'  shift 12
 	'['  shift 21
-	.  reduce 2 (src line 67)
+	.  reduce 2 (src line 59)
 
 	expr  goto 7
 	stmt  goto 3
@@ -7131,7 +7131,7 @@ state 217
 	FLAGS  shift 55
 	PORT  shift 49
 	NAME  shift 45
-	.  reduce 126 (src line 645)
+	.  reduce 126 (src line 637)
 
 	var  goto 258
 	prmlist  goto 260
@@ -7190,7 +7190,7 @@ state 218
 	'('  shift 28
 	'{'  shift 12
 	'['  shift 21
-	.  reduce 2 (src line 67)
+	.  reduce 2 (src line 59)
 
 	expr  goto 7
 	stmt  goto 3
@@ -7204,7 +7204,7 @@ state 219
 	methdefs: .    (98)
 
 	METHOD  shift 264
-	.  reduce 98 (src line 586)
+	.  reduce 98 (src line 578)
 
 	methdef  goto 263
 	methdefs  goto 262
@@ -7212,13 +7212,13 @@ state 219
 state 220
 	expr:  expr '[' expr ']'.    (38)
 
-	.  reduce 38 (src line 240)
+	.  reduce 38 (src line 232)
 
 
 state 221
 	expr:  expr '{' expr '}'.    (39)
 
-	.  reduce 39 (src line 246)
+	.  reduce 39 (src line 238)
 
 
 state 222
@@ -7325,7 +7325,7 @@ state 223
 	'('  shift 28
 	'{'  shift 12
 	'['  shift 21
-	.  reduce 132 (src line 680)
+	.  reduce 132 (src line 672)
 
 	expr  goto 184
 	arglist  goto 266
@@ -7410,7 +7410,7 @@ state 224
 state 225
 	expr:  expr '(' arglist ')'.    (86)
 
-	.  reduce 86 (src line 518)
+	.  reduce 86 (src line 510)
 
 
 state 226
@@ -7526,19 +7526,19 @@ state 227
 state 228
 	stmtnv:  RETURN '(' expr ')'.    (13)
 
-	.  reduce 13 (src line 119)
+	.  reduce 13 (src line 111)
 
 
 state 229
 	globlist:  globlist ',' globvar.    (152)
 
-	.  reduce 152 (src line 761)
+	.  reduce 152 (src line 753)
 
 
 state 230
 	expr:  GLOBALDEC '(' globvar ')'.    (91)
 
-	.  reduce 91 (src line 543)
+	.  reduce 91 (src line 535)
 
 
 state 231
@@ -7703,7 +7703,7 @@ state 233
 	'('  shift 28
 	'{'  shift 12
 	'['  shift 21
-	.  reduce 123 (src line 635)
+	.  reduce 123 (src line 627)
 
 	expr  goto 275
 	optrelx  goto 274
@@ -7837,13 +7837,13 @@ state 237
 	args:  args.',' expr 
 
 	','  shift 279
-	.  reduce 139 (src line 708)
+	.  reduce 139 (src line 700)
 
 
 state 238
 	narglist:  DOTDOTDOT.    (140)
 
-	.  reduce 140 (src line 709)
+	.  reduce 140 (src line 701)
 
 
 state 239
@@ -7876,13 +7876,13 @@ state 240
 state 241
 	expr:  UNDEFINE '(' var ')'.    (29)
 
-	.  reduce 29 (src line 216)
+	.  reduce 29 (src line 208)
 
 
 state 242
 	arrlist:  arrlist ',' arritem.    (149)
 
-	.  reduce 149 (src line 751)
+	.  reduce 149 (src line 743)
 
 
 state 243
@@ -7955,32 +7955,32 @@ state 243
 	'('  shift 86
 	'{'  shift 60
 	'['  shift 59
-	.  reduce 146 (src line 742)
+	.  reduce 146 (src line 734)
 
 	equals  goto 82
 
 state 244
 	expr:  var '(' arglist ')'.    (85)
 
-	.  reduce 85 (src line 512)
+	.  reduce 85 (src line 504)
 
 
 state 245
 	expr:  DEFINED '(' var ')'.    (42)
 
-	.  reduce 42 (src line 264)
+	.  reduce 42 (src line 256)
 
 
 state 246
 	expr:  DEFINED '(' '$' ')'.    (43)
 
-	.  reduce 43 (src line 270)
+	.  reduce 43 (src line 262)
 
 
 state 247
 	expr:  DEFINED '(' DOLLAR2 ')'.    (44)
 
-	.  reduce 44 (src line 276)
+	.  reduce 44 (src line 268)
 
 
 state 248
@@ -8024,7 +8024,7 @@ state 250
 	expr:  TASK expr '.' method.'(' arglist ')' 
 
 	'('  shift 284
-	.  reduce 80 (src line 482)
+	.  reduce 80 (src line 474)
 
 
 state 251
@@ -8038,7 +8038,7 @@ state 251
 state 252
 	expr:  TYPEOF '(' expr ')'.    (88)
 
-	.  reduce 88 (src line 525)
+	.  reduce 88 (src line 517)
 
 
 state 253
@@ -8098,7 +8098,7 @@ state 253
 state 254
 	expr:  FUNC '(' expr ')'.    (92)
 
-	.  reduce 92 (src line 549)
+	.  reduce 92 (src line 541)
 
 
 state 255
@@ -8114,19 +8114,19 @@ state 256
 	prms:  prms.',' var 
 
 	','  shift 288
-	.  reduce 127 (src line 648)
+	.  reduce 127 (src line 640)
 
 
 state 257
 	prmlist:  DOTDOTDOT.    (128)
 
-	.  reduce 128 (src line 654)
+	.  reduce 128 (src line 646)
 
 
 state 258
 	prms:  var.    (130)
 
-	.  reduce 130 (src line 667)
+	.  reduce 130 (src line 659)
 
 
 state 259
@@ -8162,7 +8162,7 @@ state 263
 	methdefs: .    (98)
 
 	METHOD  shift 264
-	.  reduce 98 (src line 586)
+	.  reduce 98 (src line 578)
 
 	methdef  goto 263
 	methdefs  goto 293
@@ -8241,7 +8241,7 @@ state 265
 	'('  shift 86
 	'{'  shift 60
 	'['  shift 59
-	.  reduce 40 (src line 252)
+	.  reduce 40 (src line 244)
 
 	equals  goto 82
 
@@ -8255,13 +8255,13 @@ state 266
 state 267
 	method:  '(' expr ')'.    (172)
 
-	.  reduce 172 (src line 794)
+	.  reduce 172 (src line 786)
 
 
 state 268
 	arglist:  args ',' DOTDOTDOT.    (135)
 
-	.  reduce 135 (src line 688)
+	.  reduce 135 (src line 680)
 
 
 state 269
@@ -8341,7 +8341,7 @@ state 270
 	'('  shift 86
 	'{'  shift 60
 	'['  shift 59
-	.  reduce 145 (src line 735)
+	.  reduce 145 (src line 727)
 
 	equals  goto 82
 
@@ -8498,7 +8498,7 @@ state 272
 state 273
 	expr:  WHILE '(' expr ')' stmt.    (21)
 
-	.  reduce 21 (src line 164)
+	.  reduce 21 (src line 156)
 
 
 state 274
@@ -8578,7 +8578,7 @@ state 275
 	'('  shift 86
 	'{'  shift 60
 	'['  shift 59
-	.  reduce 124 (src line 636)
+	.  reduce 124 (src line 628)
 
 	equals  goto 82
 
@@ -8663,13 +8663,13 @@ state 277
 	expr:  IF '(' expr ')' stmt.ELSE stmt 
 
 	ELSE  shift 304
-	.  reduce 24 (src line 185)
+	.  reduce 24 (src line 177)
 
 
 state 278
 	expr:  KW_NEW var '(' narglist ')'.    (26)
 
-	.  reduce 26 (src line 197)
+	.  reduce 26 (src line 189)
 
 
 state 279
@@ -8797,7 +8797,7 @@ state 282
 
 	'('  shift 223
 	')'  shift 309
-	.  reduce 80 (src line 482)
+	.  reduce 80 (src line 474)
 
 
  283: reduce/reduce conflict  (red'ns 82 and 85) on SYM_IN
@@ -8841,7 +8841,7 @@ state 283
 	expr:  TASK var '(' arglist ')'.    (82)
 	expr:  var '(' arglist ')'.    (85)
 
-	.  reduce 82 (src line 494)
+	.  reduce 82 (src line 486)
 
 
 state 284
@@ -8896,7 +8896,7 @@ state 284
 	'('  shift 28
 	'{'  shift 12
 	'['  shift 21
-	.  reduce 132 (src line 680)
+	.  reduce 132 (src line 672)
 
 	expr  goto 184
 	arglist  goto 310
@@ -8944,7 +8944,7 @@ state 285
 	expr:  TASK expr '(' arglist ')'.    (83)
 	expr:  expr '(' arglist ')'.    (86)
 
-	.  reduce 83 (src line 500)
+	.  reduce 83 (src line 492)
 
 
 state 286
@@ -9056,7 +9056,7 @@ state 288
 state 289
 	expr:  FUNC var '{' stmts '}'.    (94)
 
-	.  reduce 94 (src line 561)
+	.  reduce 94 (src line 553)
 
 
 state 290
@@ -9069,19 +9069,19 @@ state 290
 state 291
 	expr:  FUNC uniqvar '{' stmts '}'.    (96)
 
-	.  reduce 96 (src line 573)
+	.  reduce 96 (src line 565)
 
 
 state 292
 	expr:  CLASS var '{' methdefs '}'.    (97)
 
-	.  reduce 97 (src line 579)
+	.  reduce 97 (src line 571)
 
 
 state 293
 	methdefs:  methdef methdefs.    (99)
 
-	.  reduce 99 (src line 592)
+	.  reduce 99 (src line 584)
 
 
 state 294
@@ -9096,25 +9096,25 @@ state 294
 state 295
 	methname:  NAME.    (166)
 
-	.  reduce 166 (src line 777)
+	.  reduce 166 (src line 769)
 
 
 state 296
 	methname:  SYM_DELETE.    (167)
 
-	.  reduce 167 (src line 778)
+	.  reduce 167 (src line 770)
 
 
 state 297
 	methname:  CLASS.    (168)
 
-	.  reduce 168 (src line 779)
+	.  reduce 168 (src line 771)
 
 
 state 298
 	expr:  expr '.' method '(' arglist ')'.    (81)
 
-	.  reduce 81 (src line 488)
+	.  reduce 81 (src line 480)
 
 
 state 299
@@ -9173,13 +9173,13 @@ state 299
 state 300
 	arglist:  VARG '(' expr ')'.    (136)
 
-	.  reduce 136 (src line 694)
+	.  reduce 136 (src line 686)
 
 
 state 301
 	expr:  ONCHANGE '(' var ',' expr ')'.    (20)
 
-	.  reduce 20 (src line 158)
+	.  reduce 20 (src line 150)
 
 
 state 302
@@ -9234,7 +9234,7 @@ state 302
 	'('  shift 28
 	'{'  shift 12
 	'['  shift 21
-	.  reduce 4 (src line 87)
+	.  reduce 4 (src line 79)
 
 	expr  goto 7
 	nosemi  goto 194
@@ -9365,7 +9365,7 @@ state 304
 state 305
 	narglist:  args ',' DOTDOTDOT.    (141)
 
-	.  reduce 141 (src line 715)
+	.  reduce 141 (src line 707)
 
 
 state 306
@@ -9501,7 +9501,7 @@ state 308
 	'('  shift 28
 	'{'  shift 12
 	'['  shift 21
-	.  reduce 138 (src line 707)
+	.  reduce 138 (src line 699)
 
 	expr  goto 184
 	narglist  goto 325
@@ -9511,7 +9511,7 @@ state 308
 state 309
 	expr:  DEFINED '(' expr '.' method ')'.    (45)
 
-	.  reduce 45 (src line 282)
+	.  reduce 45 (src line 274)
 
 
 state 310
@@ -9525,7 +9525,7 @@ state 310
 state 311
 	expr:  XY '(' expr ',' expr ')'.    (89)
 
-	.  reduce 89 (src line 531)
+	.  reduce 89 (src line 523)
 
 
 state 312
@@ -9634,7 +9634,7 @@ state 313
 	'('  shift 28
 	'{'  shift 12
 	'['  shift 21
-	.  reduce 2 (src line 67)
+	.  reduce 2 (src line 59)
 
 	expr  goto 7
 	stmt  goto 3
@@ -9646,13 +9646,13 @@ state 313
 state 314
 	prmlist:  prms ',' DOTDOTDOT.    (129)
 
-	.  reduce 129 (src line 660)
+	.  reduce 129 (src line 652)
 
 
 state 315
 	prms:  prms ',' var.    (131)
 
-	.  reduce 131 (src line 673)
+	.  reduce 131 (src line 665)
 
 
 state 316
@@ -9708,7 +9708,7 @@ state 316
 	'('  shift 28
 	'{'  shift 12
 	'['  shift 21
-	.  reduce 2 (src line 67)
+	.  reduce 2 (src line 59)
 
 	expr  goto 7
 	stmt  goto 3
@@ -9735,7 +9735,7 @@ state 317
 	FLAGS  shift 55
 	PORT  shift 49
 	NAME  shift 45
-	.  reduce 126 (src line 645)
+	.  reduce 126 (src line 637)
 
 	var  goto 258
 	prmlist  goto 330
@@ -9794,7 +9794,7 @@ state 318
 	'('  shift 28
 	'{'  shift 12
 	'['  shift 21
-	.  reduce 2 (src line 67)
+	.  reduce 2 (src line 59)
 
 	expr  goto 7
 	stmt  goto 3
@@ -9888,13 +9888,13 @@ state 320
 state 321
 	expr:  FOR '(' var SYM_IN expr ')' stmt.    (23)
 
-	.  reduce 23 (src line 178)
+	.  reduce 23 (src line 170)
 
 
 state 322
 	expr:  IF '(' expr ')' stmt ELSE stmt.    (25)
 
-	.  reduce 25 (src line 191)
+	.  reduce 25 (src line 183)
 
 
 state 323
@@ -9953,7 +9953,7 @@ state 323
 state 324
 	narglist:  VARG '(' expr ')'.    (142)
 
-	.  reduce 142 (src line 721)
+	.  reduce 142 (src line 713)
 
 
 state 325
@@ -10004,44 +10004,44 @@ state 326
 	expr:  expr '.' method '(' arglist ')'.    (81)
 	expr:  TASK expr '.' method '(' arglist ')'.    (84)
 
-	SYM_IN  reduce 81 (src line 488)
-	PLUSEQ  reduce 81 (src line 488)
-	MINUSEQ  reduce 81 (src line 488)
-	MULEQ  reduce 81 (src line 488)
-	DIVEQ  reduce 81 (src line 488)
-	AMPEQ  reduce 81 (src line 488)
-	INC  reduce 81 (src line 488)
-	DEC  reduce 81 (src line 488)
-	OREQ  reduce 81 (src line 488)
-	XOREQ  reduce 81 (src line 488)
-	RSHIFTEQ  reduce 81 (src line 488)
-	LSHIFTEQ  reduce 81 (src line 488)
-	'='  reduce 81 (src line 488)
-	'?'  reduce 81 (src line 488)
-	OR  reduce 81 (src line 488)
-	AND  reduce 81 (src line 488)
-	'|'  reduce 81 (src line 488)
-	'^'  reduce 81 (src line 488)
-	'&'  reduce 81 (src line 488)
-	GT  reduce 81 (src line 488)
-	GE  reduce 81 (src line 488)
-	LT  reduce 81 (src line 488)
-	LE  reduce 81 (src line 488)
-	EQ  reduce 81 (src line 488)
-	NE  reduce 81 (src line 488)
-	REGEXEQ  reduce 81 (src line 488)
-	LSHIFT  reduce 81 (src line 488)
-	RSHIFT  reduce 81 (src line 488)
-	'+'  reduce 81 (src line 488)
-	'-'  reduce 81 (src line 488)
-	'*'  reduce 81 (src line 488)
-	'/'  reduce 81 (src line 488)
-	'%'  reduce 81 (src line 488)
-	'.'  reduce 81 (src line 488)
-	'('  reduce 81 (src line 488)
-	'{'  reduce 81 (src line 488)
-	'['  reduce 81 (src line 488)
-	.  reduce 84 (src line 506)
+	SYM_IN  reduce 81 (src line 480)
+	PLUSEQ  reduce 81 (src line 480)
+	MINUSEQ  reduce 81 (src line 480)
+	MULEQ  reduce 81 (src line 480)
+	DIVEQ  reduce 81 (src line 480)
+	AMPEQ  reduce 81 (src line 480)
+	INC  reduce 81 (src line 480)
+	DEC  reduce 81 (src line 480)
+	OREQ  reduce 81 (src line 480)
+	XOREQ  reduce 81 (src line 480)
+	RSHIFTEQ  reduce 81 (src line 480)
+	LSHIFTEQ  reduce 81 (src line 480)
+	'='  reduce 81 (src line 480)
+	'?'  reduce 81 (src line 480)
+	OR  reduce 81 (src line 480)
+	AND  reduce 81 (src line 480)
+	'|'  reduce 81 (src line 480)
+	'^'  reduce 81 (src line 480)
+	'&'  reduce 81 (src line 480)
+	GT  reduce 81 (src line 480)
+	GE  reduce 81 (src line 480)
+	LT  reduce 81 (src line 480)
+	LE  reduce 81 (src line 480)
+	EQ  reduce 81 (src line 480)
+	NE  reduce 81 (src line 480)
+	REGEXEQ  reduce 81 (src line 480)
+	LSHIFT  reduce 81 (src line 480)
+	RSHIFT  reduce 81 (src line 480)
+	'+'  reduce 81 (src line 480)
+	'-'  reduce 81 (src line 480)
+	'*'  reduce 81 (src line 480)
+	'/'  reduce 81 (src line 480)
+	'%'  reduce 81 (src line 480)
+	'.'  reduce 81 (src line 480)
+	'('  reduce 81 (src line 480)
+	'{'  reduce 81 (src line 480)
+	'['  reduce 81 (src line 480)
+	.  reduce 84 (src line 498)
 
 
 state 327
@@ -10150,7 +10150,7 @@ state 331
 state 332
 	arglist:  args ',' VARG '(' expr ')'.    (137)
 
-	.  reduce 137 (src line 700)
+	.  reduce 137 (src line 692)
 
 
 state 333
@@ -10291,7 +10291,7 @@ state 334
 state 335
 	expr:  KW_NEW '(' expr ')' var '(' narglist ')'.    (27)
 
-	.  reduce 27 (src line 203)
+	.  reduce 27 (src line 195)
 
 
 state 336
@@ -10350,13 +10350,13 @@ state 336
 state 337
 	expr:  FUNC var '(' prmlist ')' '{' stmts '}'.    (93)
 
-	.  reduce 93 (src line 555)
+	.  reduce 93 (src line 547)
 
 
 state 338
 	expr:  FUNC uniqvar '(' prmlist ')' '{' stmts '}'.    (95)
 
-	.  reduce 95 (src line 567)
+	.  reduce 95 (src line 559)
 
 
 state 339
@@ -10369,19 +10369,19 @@ state 339
 state 340
 	methdef:  METHOD methname '{' stmts '}'.    (101)
 
-	.  reduce 101 (src line 600)
+	.  reduce 101 (src line 592)
 
 
 state 341
 	expr:  FOR '(' optstmt ';' optrelx ';' optstmt ')' stmt.    (22)
 
-	.  reduce 22 (src line 171)
+	.  reduce 22 (src line 163)
 
 
 state 342
 	narglist:  args ',' VARG '(' expr ')'.    (143)
 
-	.  reduce 143 (src line 727)
+	.  reduce 143 (src line 719)
 
 
 state 343
@@ -10512,7 +10512,7 @@ state 344
 	'('  shift 28
 	'{'  shift 12
 	'['  shift 21
-	.  reduce 2 (src line 67)
+	.  reduce 2 (src line 59)
 
 	expr  goto 7
 	stmt  goto 3
@@ -10524,7 +10524,7 @@ state 344
 state 345
 	expr:  XY '(' expr ',' expr ',' expr ',' expr ')'.    (90)
 
-	.  reduce 90 (src line 537)
+	.  reduce 90 (src line 529)
 
 
 state 346
@@ -10537,7 +10537,7 @@ state 346
 state 347
 	methdef:  METHOD methname '(' prmlist ')' '{' stmts '}'.    (100)
 
-	.  reduce 100 (src line 594)
+	.  reduce 100 (src line 586)
 
 
 109 terminals, 26 nonterminals

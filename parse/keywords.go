@@ -1,4 +1,4 @@
-package main
+package parse
 
 var Keywords map[string]int = map[string]int{
 	"function": FUNC,

@@ -1,4 +1,4 @@
-package main
+package parse
 
 var Token map[int]string = map[int]string{
 	VAR: "VAR",
