@@ -18,9 +18,6 @@ mkdir %ship%
 mkdir %ship%\bin
 mkdir %ship%\bin\mmtt_kinect
 mkdir %ship%\ffgl
-mkdir %ship%\keykit
-mkdir %ship%\keykit\bin
-mkdir %ship%\keykit\lib
 
 echo ================ Upgrading Python
 python -m pip install pip | grep -v "already.*satisfied"
@@ -38,26 +35,32 @@ del /f /q %buildcmdsout% >nul 2>&1
 
 echo ================ Compiling palette
 pushd %PALETTE_SOURCE%\cmd\palette
-go build palette.go >> %buildcmdsout% 2>&1
+go build -o palette.exe >> %buildcmdsout% 2>&1
 move palette.exe %bin%\palette.exe > nul
 popd
 
 echo ================ Compiling palette_engine
 pushd %PALETTE_SOURCE%\cmd\palette_engine
-go build palette_engine.go >> %buildcmdsout% 2>&1
+go build -o palette_engine.exe >> %buildcmdsout% 2>&1
 move palette_engine.exe %bin%\palette_engine.exe > nul
 popd
 
 echo ================ Compiling palette_monitor
 pushd %PALETTE_SOURCE%\cmd\palette_monitor
-go build palette_monitor.go >> %buildcmdsout% 2>&1
+go build -o palette_monitor.exe >> %buildcmdsout% 2>&1
 move palette_monitor.exe %bin%\palette_monitor.exe > nul
 popd
 
 echo ================ Compiling palette_splash
 pushd %PALETTE_SOURCE%\cmd\palette_splash
-go build palette_splash.go >> %buildcmdsout% 2>&1
+go build -o palette_splash.exe >> %buildcmdsout% 2>&1
 move palette_splash.exe %bin%\palette_splash.exe > nul
+popd
+
+echo ================ Compiling pk2go
+pushd %PALETTE_SOURCE%\cmd\pk2go
+go build -o pk2go.exe >> %buildcmdsout% 2>&1
+move pk2go.exe %bin%\pk2go.exe > nul
 popd
 
 rem print any error messages from compiling cmds
@@ -104,11 +107,6 @@ rem copy %PALETTE_SOURCE%\binaries\nats\nats-pub.exe %bin% >nul
 rem copy %PALETTE_SOURCE%\binaries\nats\nats-sub.exe %bin% >nul
 copy %PALETTE_SOURCE%\binaries\nircmdc.exe %bin% >nul
 
-echo ================ Copying keykit things
-copy %PALETTE_SOURCE%\keykit\bin\key.exe %ship%\keykit\bin >nul
-copy %PALETTE_SOURCE%\keykit\bin\keylib.exe %ship%\keykit\bin >nul
-copy %PALETTE_SOURCE%\keykit\lib\*.* %ship%\keykit\lib >nul
-
 echo ================ Copying scripts
 pushd %PALETTE_SOURCE%\scripts
 copy palettetasks.bat %bin% >nul
@@ -131,8 +129,6 @@ for %%X in (data_omnisphere) DO (
 	mkdir %ship%\%%X\config
 	mkdir %ship%\%%X\midifiles
 	mkdir %ship%\%%X\saved
-	mkdir %ship%\%%X\keykit
-	mkdir %ship%\%%X\keykit\liblocal
 	mkdir %ship%\%%X\html
 	copy %PALETTE_SOURCE%\%%X\config\homepage.json %ship%\%%X\config >nul
 	copy %PALETTE_SOURCE%\%%X\config\ffgl.json %ship%\%%X\config >nul
@@ -152,7 +148,6 @@ for %%X in (data_omnisphere) DO (
 	copy %PALETTE_SOURCE%\%%X\config\*.bidule %ship%\%%X\config >nul
 	copy %PALETTE_SOURCE%\%%X\midifiles\*.* %ship%\%%X\midifiles >nul
 	xcopy /e /y %PALETTE_SOURCE%\%%X\saved %ship%\%%X\saved >nul
-	xcopy /e /y %PALETTE_SOURCE%\%%X\keykit\liblocal %ship%\%%X\keykit\liblocal >nul
 	xcopy /e /y %PALETTE_SOURCE%\%%X\html %ship%\%%X\html >nul
 )
 

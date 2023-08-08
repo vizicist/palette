@@ -1,2 +1,2 @@
 c:
-cd %USERPROFILE%\Documents\Github
+cd %USERPROFILE%\Github
