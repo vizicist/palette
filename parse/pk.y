@@ -17,7 +17,7 @@ package parse
 %token	<node>	STRING NAME
 %token	<node>	INTEGER OBJECT
 %token	<node>	DOUBLE
-%token	<node>	SEQUENCE
+%token	<node>	STMTSEQUENCE
 %token	<node>	SELECTION
 %token	<node>	FUNCCALL
 %token	<node>	PRMLIST
@@ -45,7 +45,7 @@ package parse
 %left	UNARYMINUS BANG '~'
 %left	'%' '.'
 %left	INC DEC
-%left   SEQUENCE
+%left   STMTSEQUENCE
 %%
 list	: 			
 		stmts		{
@@ -56,12 +56,12 @@ stmts	: /* nothing */		{
 							$$ = makeNodeNil()
 							}
 	| stmt stmts {
-		nn := &Node{ stype: SEQUENCE,
+		nn := &Node{ stype: STMTSEQUENCE,
 						children: []*Node{$1},
 						}
 		if $2 == nil {
 			// do nothing
-		} else if $2.stype != SEQUENCE {
+		} else if $2.stype != STMTSEQUENCE {
 			nn.children = append(nn.children,$2)
 		} else {
 			for i:=0; i<len($2.children); i++  {

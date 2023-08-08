@@ -32,11 +32,18 @@
             "args": []
         },
        {
-            "name": "PK2GO - pk2go.go",
+            "name": "PK2GO - simple.k",
             "type": "go",
             "request": "launch",
             "program": "${env:PALETTE_SOURCE}/cmd/pk2go/pk2go.go",
             "args": ["../../player/simple.k"]
+        },
+       {
+            "name": "PK2GO - arpeggio.k",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTE_SOURCE}/cmd/pk2go/pk2go.go",
+            "args": ["../../player/arpeggio.k"]
         },
        {
             "name": "MONITOR Engine=false - palette_monitor.go",
