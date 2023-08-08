@@ -1,4 +1,4 @@
-package kkcore
+package kit
 
 
 func Ternary(a Kval, b Kval, c Kval) Kval {

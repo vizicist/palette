@@ -2,6 +2,7 @@
 package player
 
 import (
-	"github.com/palette/kit"
+	"github.com/vizicist/palette/kit"
 )
-func xxx ( yyy Kval,... ) { yyy.dur = 96 ; tjt = [ 4 = [ "chan" = 8 , "x" = 110 , "y" = 111 ] , 8 = [ "chan" = 8 , "x" = 116 , "y" = 117 ] ] ;; return (  ); };
+func xxx (  ) {
+	print ( "usage: arpeggio(phrase)" ) ; return ( Phrase("''") ) };

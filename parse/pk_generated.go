@@ -56,7 +56,7 @@ const NAME = 57384
 const INTEGER = 57385
 const OBJECT = 57386
 const DOUBLE = 57387
-const SEQUENCE = 57388
+const STMTSEQUENCE = 57388
 const SELECTION = 57389
 const FUNCCALL = 57390
 const PRMLIST = 57391
@@ -138,7 +138,7 @@ var PkToknames = [...]string{
 	"INTEGER",
 	"OBJECT",
 	"DOUBLE",
-	"SEQUENCE",
+	"STMTSEQUENCE",
 	"SELECTION",
 	"FUNCCALL",
 	"PRMLIST",
@@ -988,12 +988,12 @@ Pkdefault:
 		PkDollar = PkS[Pkpt-2 : Pkpt+1]
 //line pk.y:58
 		{
-			nn := &Node{stype: SEQUENCE,
+			nn := &Node{stype: STMTSEQUENCE,
 				children: []*Node{PkDollar[1].node},
 			}
 			if PkDollar[2].node == nil {
 				// do nothing
-			} else if PkDollar[2].node.stype != SEQUENCE {
+			} else if PkDollar[2].node.stype != STMTSEQUENCE {
 				nn.children = append(nn.children, PkDollar[2].node)
 			} else {
 				for i := 0; i < len(PkDollar[2].node.children); i++ {
