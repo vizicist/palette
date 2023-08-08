@@ -84,17 +84,17 @@ func (n *Node) prettyPrint() string {
 		return s0
 	case DOTDOTDOT:
 		return "..."
-	case SEQUENCE:
+	case STMTSEQUENCE:
 		nchildren := len(n.children)
 		switch nchildren {
 		case 0:
-			return "<<wrong number of children for SEQUENCE?>>"
+			return "<<wrong number of children for STMTSEQUENCE?>>"
 		case 1:
 			return n.PrettyChild(0) + ";"
 		default:
 			s := n.PrettyChild(0)
 			for i := 1; i < nchildren; i++ {
-				s += " " + n.PrettyChild(i) + ";"
+				s += " ; " + n.PrettyChild(i)
 			}
 			return s
 		}
@@ -320,7 +320,7 @@ func (n *Node) treePostProcess() *Node {
 				},
 			}
 			newn := &Node{
-				stype: SEQUENCE,
+				stype: STMTSEQUENCE,
 				children: []*Node{
 					firsteq,
 					secondeq,
@@ -344,7 +344,7 @@ func (n *Node) treePostProcess() *Node {
 				},
 			}
 			newn := &Node{
-				stype: SEQUENCE,
+				stype: STMTSEQUENCE,
 				children: []*Node{
 					firsteq,
 					secondeq,
