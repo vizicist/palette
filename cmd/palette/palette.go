@@ -226,14 +226,6 @@ func StatusOutput() (statusOut string, numRunning int) {
 		nrunning++
 	}
 
-	b, _ := engine.GetParamBool("engine.keykitrun")
-	if b {
-		if engine.IsRunning("keykit") {
-			s += "Keykit is running.\n"
-			nrunning++
-		}
-	}
-
 	mmtt, _ := engine.GetParam("engine.mmtt")
 	if mmtt != "" {
 		if engine.IsRunning("mmtt") {
