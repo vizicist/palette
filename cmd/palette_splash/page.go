@@ -8,8 +8,6 @@ import (
 	"os"
 	"runtime"
 	"strings"
-
-	"github.com/vizicist/palette/engine"
 )
 
 // MouseHandler xxx

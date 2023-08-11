@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"image"
 
-	"github.com/vizicist/palette/engine"
 	w "github.com/vizicist/palette/twinsys"
 )
 
