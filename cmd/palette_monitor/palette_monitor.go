@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/0xcafed00d/joystick"
-	"github.com/vizicist/palette/engine"
 
 	midi "gitlab.com/gomidi/midi/v2"
 	_ "gitlab.com/gomidi/midi/v2/drivers/rtmididrv" // autoregisters driver

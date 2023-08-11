@@ -6,10 +6,10 @@ import (
 	"runtime/pprof"
 	"syscall"
 
-	"github.com/vizicist/palette/engine"
-	_ "github.com/vizicist/palette/twintool"
-	"github.com/vizicist/palette/twinsys"
 	"github.com/pkg/profile"
+	"github.com/vizicist/palette/twinsys"
+	"github.com/vizicist/palette/hostwin"
+	_ "github.com/vizicist/palette/twintool"
 )
 
 func main() {
@@ -20,7 +20,6 @@ func main() {
 		// defer profile.Start(profile.BlockProfile).Stop()
 		defer profile.Start(profile.MutexProfile).Stop()
 
-
 		// Old original version
 		// file, _ := os.Create("./cpu.pprof")
 		// engine.LogIfError(pprof.StartCPUProfile(file))
@@ -29,21 +28,23 @@ func main() {
 	signal.Ignore(syscall.SIGHUP)
 	signal.Ignore(syscall.SIGINT)
 
-	engine.InitLog("engine")
-	engine.InitMisc()
-	engine.InitEngine()
+	host := hostwin.NewHost()
 
-	engine.Start()
+	host.InitLog("host")
+	host.InitMisc()
+	host.InitEngine()
+
+	host.Start()
 
 	go func() {
-		engine.WaitTillDone()
+		host.WaitTillDone()
 		if doProfile {
 			pprof.StopCPUProfile()
 		}
 		os.Exit(0)
 	}()
 
-	b, _ := engine.GetParamBool("engine.twinsys")
+	b, _ := host.GetParamBool("engine.twinsys")
 	if b {
 		twinsys.Run()
 	} else {

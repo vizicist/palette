@@ -1,10 +1,10 @@
 go 1.20
 
 use (
-	./engine
+	./hostwin
 	./kit
 	./parse
-	./player
+	./kitlib
 	./twinsys
 	./twintool
 )

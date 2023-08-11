@@ -9,8 +9,6 @@ import (
 	"os/exec"
 	"time"
 
-	"github.com/vizicist/palette/engine"
-
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/examples/resources/fonts"
@@ -230,12 +228,12 @@ func main() {
 
 	go func() {
 
-		time.Sleep(time.Millisecond*200)
+		time.Sleep(time.Millisecond * 200)
 
 		cmd := exec.Command("nircmdc.exe", "win", "-style", "stitle", "palette_splash", "0x00CA0000")
 		err := cmd.Run()
 		engine.LogIfError(err)
-		
+
 		cmd = exec.Command("nircmdc.exe", "win", "max", "stitle", "palette_splash")
 		err = cmd.Run()
 		engine.LogIfError(err)

@@ -10,7 +10,7 @@ import (
 	"syscall"
 
 	"github.com/nxadm/tail"
-	"github.com/vizicist/palette/engine"
+	"github.com/vizicist/palette/hostwin"
 )
 
 func main() {
@@ -20,6 +20,8 @@ func main() {
 
 	flag.Parse()
 	args := flag.Args()
+
+	TheHost = hostwin.NewHost()
 
 	// If we're trying to archive the logs, use stdout.
 	// don't open any log files, use stdout
