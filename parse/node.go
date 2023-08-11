@@ -61,7 +61,7 @@ func (n *Node) prettyPrint() string {
 	case NAME:
 		return n.name
 	case PHRASE:
-		return fmt.Sprintf("Phrase(\"%s\")", n.phr)
+		return fmt.Sprintf("kit.Phrase(\"%s\")", n.phr)
 	case STRING:
 		return n.str
 	case OBJECT:
