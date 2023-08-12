@@ -221,9 +221,9 @@ func (r *Resolume) addEffectNum(addr string, effect string, num int) string {
 	return strings.Replace(addr, effect, fmt.Sprintf("%s%d", effect, num), 1)
 }
 
-func (r *Resolume) showText(text string) {
+func (h HostWin) ShowText(text string) {
 
-	textLayerNum := r.TextLayerNum()
+	textLayerNum := h.TextLayerNum()
 
 	// make sure the layer is not displayed before changing it
 	r.bypassLayer(textLayerNum, true)
@@ -233,7 +233,7 @@ func (r *Resolume) showText(text string) {
 	msg := osc.NewMessage(addr)
 	text = strings.Replace(text, "_", "\n", 1)
 	msg.Append(text)
-	TheEngine.SendOsc(r.resolumeClient, msg)
+	h.SendOsc(h.resolumeClient, msg)
 
 	// give it time to "sink in", otherwise the previous text displays briefly
 	time.Sleep(150 * time.Millisecond)
