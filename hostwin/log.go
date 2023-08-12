@@ -13,6 +13,8 @@ import (
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+
+	"github.com/vizicist/palette/kit"
 )
 
 var TheLog *zap.SugaredLogger
@@ -268,10 +270,10 @@ func LogError(err error, keysAndValues ...any) {
 
 func appendExtraValues(keysAndValues []any) []any {
 	keysAndValues = append(keysAndValues, "click")
-	keysAndValues = append(keysAndValues, int64(CurrentClick()))
+	keysAndValues = append(keysAndValues, int64(kit.CurrentClick()))
 	if IsLogging("goroutine") {
 		keysAndValues = append(keysAndValues, "goroutine")
-		keysAndValues = append(keysAndValues, fmt.Sprintf("%d", GoroutineID()))
+		keysAndValues = append(keysAndValues, fmt.Sprintf("%d", kit.GoroutineID()))
 	}
 	return keysAndValues
 }

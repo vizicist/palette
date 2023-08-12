@@ -16,11 +16,13 @@ type AttractManager struct {
 	lastAttractChange      time.Time
 
 	// parameters
-	attractGestureInterval float64
-	attractChangeInterval  float64
 	lastAttractCheck       time.Time
-	attractCheckSecs       float64
-	attractIdleSecs        float64
+
+	// externally controlled things
+	AttractCheckSecs       float64
+	AttractChangeInterval  float64
+	AttractGestureInterval float64
+	AttractIdleSecs        float64
 
 	attractRand      *rand.Rand
 	attractRandMutex sync.Mutex
@@ -37,10 +39,10 @@ func NewAttractManager() *AttractManager {
 		lastAttractGestureTime: time.Now(),
 		lastAttractChange:      time.Now(),
 		lastAttractCheck:       time.Now(),
-		attractCheckSecs:       2,
-		attractIdleSecs:        70,
-		attractChangeInterval:  30,
-		attractGestureInterval: 0.5,
+		AttractCheckSecs:       2,
+		AttractIdleSecs:        70,
+		AttractChangeInterval:  30,
+		AttractGestureInterval: 0.5,
 		attractRand:            rand.New(rand.NewSource(1)),
 	}
 
@@ -106,14 +108,14 @@ func (am *AttractManager) checkAttract() {
 	now := time.Now()
 	// attractModeEnabled := am.attractIdleSecs > 0
 	sinceLastAttractCheck := now.Sub(am.lastAttractCheck).Seconds()
-	if sinceLastAttractCheck > am.attractCheckSecs {
+	if sinceLastAttractCheck > am.AttractCheckSecs {
 
 		am.lastAttractCheck = now
 
 		am.attractMutex.Lock()
 		sinceLastAttractModeChange := time.Since(am.lastAttractModeChange).Seconds()
 		ison := am.AttractModeIsOn()
-		idleTooLong := sinceLastAttractModeChange > am.attractIdleSecs
+		idleTooLong := sinceLastAttractModeChange > am.AttractIdleSecs
 		am.attractMutex.Unlock()
 
 		if !ison && idleTooLong {
@@ -154,13 +156,13 @@ func (am *AttractManager) doAttractAction() {
 	dur := time.Duration(durfloat * float64(time.Second))
 
 	tag := patch + ",attract"
-	if dt > am.attractGestureInterval {
+	if dt > am.AttractGestureInterval {
 		go TheCursorManager.GenerateRandomGesture(tag, numsteps, dur)
 		am.lastAttractGestureTime = now
 	}
 
 	dp := now.Sub(am.lastAttractChange).Seconds()
-	if dp > am.attractChangeInterval {
+	if dp > am.AttractChangeInterval {
 		if TheQuadPro == nil {
 			LogWarn("No QuadPro to change for attract mode")
 		} else {

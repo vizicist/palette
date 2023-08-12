@@ -26,6 +26,10 @@ type Host interface {
 	GetConfigFileData(filename string) ([]byte, error)
 	InputEventLock()
 	InputEventUnlock()
+	OpenFakeChannelOutput(port string, channel int) *MIDIPortChannelState
+	OpenChannelOutput(PortChannel) *MIDIPortChannelState
+	GetPortChannelState(PortChannel) (*MIDIPortChannelState,error)
+	SendMIDI([]byte)
 
 	SaveCurrent() error
 	Uptime() float64
