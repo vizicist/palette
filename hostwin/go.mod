@@ -1,4 +1,4 @@
-module github.com/vizicist/palette/engine
+module github.com/vizicist/palette/hostwin
 
 go 1.20
 
