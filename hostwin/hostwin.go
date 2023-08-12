@@ -31,13 +31,13 @@ var TheHost *HostWin
 var TheRand *rand.Rand
 var TheKit *kit.Kit
 
-func NewHost() *HostWin {
+func NewHost(logname string) *HostWin {
 
 	h := &HostWin{
 		resolumeClient:   osc.NewClient(LocalAddress, ResolumePort),
 		freeframeClients: map[string]*osc.Client{},
 	}
-	InitLog("host")
+	InitLog(logname)
 	// InitMisc()
 
 	err := h.loadResolumeJSON()

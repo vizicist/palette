@@ -11,6 +11,7 @@ import (
 
 	"github.com/nxadm/tail"
 	"github.com/vizicist/palette/hostwin"
+	"github.com/vizicist/palette/kit"
 )
 
 func main() {
@@ -21,28 +22,23 @@ func main() {
 	flag.Parse()
 	args := flag.Args()
 
-	host := hostwin.NewHost()
-
 	// If we're trying to archive the logs, use stdout.
 	// don't open any log files, use stdout
 	doingArchiveLogs := (len(args) == 1 && args[0] == "archivelogs")
-	if doingArchiveLogs {
-		host.InitLog("") // "" == "stdout"
-	} else {
-		host.InitLog("palette")
+	logname := ""
+	if ! doingArchiveLogs {
+		logname = "palette"
 	}
+	host := hostwin.NewHost(logname)
 
-	host.InitMisc()
-	host.InitEngine()
-
-	host.LogInfo("Palette InitLog", "args", args)
+	host.LogInfo("Palette", "args", args)
 
 	apiout, err := CliCommand(args)
 	if err != nil {
 		os.Stdout.WriteString("Error: " + err.Error() + "\n")
 		host.LogError(err)
 	} else {
-		os.Stdout.WriteString(host.HumanReadableApiOutput(apiout))
+		os.Stdout.WriteString(hostwin.HumanReadableApiOutput(apiout))
 	}
 }
 
@@ -95,12 +91,12 @@ func CliCommand(args []string) (map[string]string, error) {
 	switch api {
 
 	case "summarize":
-		return nil, engine.SummarizeLog(arg1)
+		return nil, hostwin.SummarizeLog(arg1)
 
 	case "taillog", "logtail":
-		logpath := engine.LogFilePath("engine.log")
+		logpath := hostwin.LogFilePath("engine.log")
 		t, err := tail.TailFile(logpath, tail.Config{Follow: true})
-		engine.LogIfError(err)
+		hostwin.LogIfError(err)
 		for line := range t.Lines {
 			fmt.Println(line.Text)
 		}
@@ -119,25 +115,25 @@ func CliCommand(args []string) (map[string]string, error) {
 		switch arg1 {
 
 		case "", "monitor":
-			if engine.MonitorIsRunning() {
+			if hostwin.MonitorIsRunning() {
 				return nil, fmt.Errorf("monitor is already running")
 			}
 
 			// palette_monitor.exe will restart the engine,
 			// which then starts whatever engine.autostart specifies.
 
-			engine.LogInfo("palette: starting monitor", "MonitorExe", engine.MonitorExe)
-			fullexe := filepath.Join(engine.PaletteDir(), "bin", engine.MonitorExe)
-			return nil, engine.StartExecutableLogOutput("monitor", fullexe)
+			hostwin.LogInfo("palette: starting monitor", "MonitorExe", hostwin.MonitorExe)
+			fullexe := filepath.Join(hostwin.PaletteDir(), "bin", hostwin.MonitorExe)
+			return nil, hostwin.StartExecutableLogOutput("monitor", fullexe)
 
 		case "engine":
 			return nil, doStartEngine()
 
 		default:
 			// If it exists in the ProcessList...
-			for _, process := range engine.ProcessList() {
+			for _, process := range hostwin.ProcessList() {
 				if arg1 == process {
-					return engine.EngineApi("engine.startprocess", "process", arg1)
+					return hostwin.EngineApi("engine.startprocess", "process", arg1)
 				}
 			}
 			return nil, fmt.Errorf("process %s is disabled or unknown", arg1)
@@ -148,36 +144,36 @@ func CliCommand(args []string) (map[string]string, error) {
 		switch arg1 {
 
 		case "", "all":
-			engine.LogInfo("Palette kill is killing everything including monitor.")
-			engine.KillExecutable(engine.MonitorExe)
-			engine.KillAllExceptMonitor()
+			hostwin.LogInfo("Palette kill is killing everything including monitor.")
+			hostwin.KillExecutable(hostwin.MonitorExe)
+			hostwin.KillAllExceptMonitor()
 			return nil, nil
 
 		case "monitor":
-			engine.KillExecutable(engine.MonitorExe)
+			hostwin.KillExecutable(hostwin.MonitorExe)
 			return nil, nil
 
 		case "engine":
 			// Don't use engine.exit API, just kill it
-			engine.KillExecutable(engine.EngineExe)
+			hostwin.KillExecutable(hostwin.EngineExe)
 			return nil, nil
 
 		default:
 			// If it exists in the ProcessList...
-			pi, err := engine.TheProcessManager.GetProcessInfo(arg1)
+			pi, err := hostwin.TheProcessManager.GetProcessInfo(arg1)
 			if err != nil {
 				return nil, err
 			}
-			engine.KillExecutable(pi.Exe)
+			hostwin.KillExecutable(pi.Exe)
 			return nil, nil
 		}
 
 	case "version":
-		s := engine.GetPaletteVersion()
+		s := hostwin.GetPaletteVersion()
 		return map[string]string{"result": s}, nil
 
 	case "align":
-		return engine.MmttApi("align_start")
+		return hostwin.MmttApi("align_start")
 
 	case "archivelogs":
 		// Make sure nothing is running.
@@ -185,10 +181,10 @@ func CliCommand(args []string) (map[string]string, error) {
 		if nrunning > 0 {
 			return nil, fmt.Errorf("cannot archive logs while processes are running:\n%s\n", statusOut)
 		}
-		return nil, engine.ArchiveLogs()
+		return nil, hostwin.ArchiveLogs()
 
 	case "test":
-		return engine.EngineApi("quadpro.test", "ntimes", "40")
+		return hostwin.EngineApi("quadpro.test", "ntimes", "40")
 
 	default:
 		if len(words) < 2 {
@@ -196,41 +192,41 @@ func CliCommand(args []string) (map[string]string, error) {
 		} else if len(words) > 2 {
 			return nil, fmt.Errorf("invalid api format, expecting {plugin}.{api}" + usage())
 		}
-		return engine.EngineApi(api, args[1:]...)
+		return hostwin.EngineApi(api, args[1:]...)
 	}
 }
 
 func StatusOutput() (statusOut string, numRunning int) {
 	s := ""
 	nrunning := 0
-	if engine.MonitorIsRunning() {
+	if hostwin.MonitorIsRunning() {
 		s += "Monitor is running.\n"
 		nrunning++
 	}
 
-	if engine.IsRunning("engine") {
+	if hostwin.IsRunning("engine") {
 		s += "Engine is running.\n"
 		nrunning++
 	}
 
-	if engine.IsRunning("gui") {
+	if hostwin.IsRunning("gui") {
 		s += "GUI is running.\n"
 		nrunning++
 	}
 
-	if engine.IsRunning("bidule") {
+	if hostwin.IsRunning("bidule") {
 		s += "Bidule is running.\n"
 		nrunning++
 	}
 
-	if engine.IsRunning("resolume") {
+	if hostwin.IsRunning("resolume") {
 		s += "Resolume is running.\n"
 		nrunning++
 	}
 
-	mmtt, _ := engine.GetParam("engine.mmtt")
+	mmtt, _ := kit.TheHost.GetParam("engine.mmtt")
 	if mmtt != "" {
-		if engine.IsRunning("mmtt") {
+		if hostwin.IsRunning("mmtt") {
 			s += "MMTT is running.\n"
 			nrunning++
 		}
@@ -240,14 +236,14 @@ func StatusOutput() (statusOut string, numRunning int) {
 
 func doStartEngine() error {
 
-	if engine.IsRunning("engine") {
+	if hostwin.IsRunning("engine") {
 		return fmt.Errorf("engine is already running")
 	}
 
-	fullexe := filepath.Join(engine.PaletteDir(), "bin", engine.EngineExe)
-	err := engine.StartExecutableLogOutput("engine", fullexe)
+	fullexe := filepath.Join(hostwin.PaletteDir(), "bin", hostwin.EngineExe)
+	err := hostwin.StartExecutableLogOutput("engine", fullexe)
 	if err != nil {
-		engine.LogIfError(err)
+		hostwin.LogIfError(err)
 		return err
 	}
 	return nil
