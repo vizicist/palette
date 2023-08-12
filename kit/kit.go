@@ -9,11 +9,11 @@ import (
 )
 
 type Kit struct {
-	midiOctaveShift      int
-	midisetexternalscale bool
-	midithru             bool
-	midiThruScadjust     bool
-	midiNumDown          int
+	MidiOctaveShift      int
+	Midisetexternalscale bool
+	Midithru             bool
+	MidiThruScadjust     bool
+	MidiNumDown          int
 }
 
 func (k *Kit) Init() {
@@ -52,14 +52,14 @@ func (k *Kit) ScheduleCursorEvent(ce CursorEvent) {
 func (k *Kit) HandleMidiEvent(me MidiEvent) {
 	TheHost.SendToOscClients(MidiToOscMsg(me))
 
-	if k.midithru {
+	if k.Midithru {
 		LogOfType("midi","PassThruMIDI", "msg", me.Msg)
-		if k.midiThruScadjust {
+		if k.MidiThruScadjust {
 			LogWarn("PassThruMIDI, midiThruScadjust needs work", "msg", me.Msg)
 		}
 		ScheduleAt(CurrentClick(), "midi", me.Msg)
 	}
-	if k.midisetexternalscale {
+	if k.Midisetexternalscale {
 		k.handleMIDISetScaleNote(me)
 	}
 
@@ -78,18 +78,18 @@ func (k *Kit) handleMIDISetScaleNote(me MidiEvent) {
 	pitch := me.Pitch()
 	if me.Msg.Is(midi.NoteOnMsg) {
 
-		if k.midiNumDown < 0 {
+		if k.MidiNumDown < 0 {
 			// may happen when there's a Read error that misses a noteon
-			k.midiNumDown = 0
+			k.MidiNumDown = 0
 		}
 
 		// If there are no notes held down (i.e. this is the first), clear the scale
-		if k.midiNumDown == 0 {
+		if k.MidiNumDown == 0 {
 			LogOfType("scale", "Clearing external scale")
 			ClearExternalScale()
 		}
 		SetExternalScale(pitch, true)
-		k.midiNumDown++
+		k.MidiNumDown++
 
 		// adjust the octave shift based on incoming MIDI
 		newshift := 0
@@ -98,12 +98,12 @@ func (k *Kit) handleMIDISetScaleNote(me MidiEvent) {
 		} else if pitch > 72 {
 			newshift = 1
 		}
-		if newshift != k.midiOctaveShift {
-			k.midiOctaveShift = newshift
-			LogOfType("midi","MidiOctaveShift changed", "octaveshift", k.midiOctaveShift)
+		if newshift != k.MidiOctaveShift {
+			k.MidiOctaveShift = newshift
+			LogOfType("midi","MidiOctaveShift changed", "octaveshift", k.MidiOctaveShift)
 		}
 	} else if me.Msg.Is(midi.NoteOffMsg) {
-		k.midiNumDown--
+		k.MidiNumDown--
 	}
 }
 
@@ -138,7 +138,7 @@ func JsonString(args ...string) string {
 	return params
 }
 
-func boundValueZeroToOne(v float64) float32 {
+func BoundValueZeroToOne(v float64) float32 {
 	if v < 0.0 {
 		return 0.0
 	}

@@ -21,7 +21,7 @@ type Scheduler struct {
 	pendingMutex     sync.RWMutex
 	pendingScheduled []*SchedElement
 
-	autoTransposeOn     bool
+	AutoTransposeOn     bool
 	autoTransposeNext   Clicks
 	autoTransposeClicks Clicks // time between auto transpose changes
 	autoTransposeIndex  int        // current place in transposeValues
@@ -53,7 +53,7 @@ func NewScheduler() *Scheduler {
 		pendingScheduled: nil,
 
 		currentPitchOffset:  &atomic.Int32{},
-		autoTransposeOn:     false,
+		AutoTransposeOn:     false,
 		autoTransposeNext:   0,
 		autoTransposeClicks: 8 * OneBeat,
 		autoTransposeIndex:  0,
@@ -203,7 +203,7 @@ func (sched *Scheduler) SetAutoTransposeBeats(beats int) {
 
 func (sched *Scheduler) advanceTransposeTo(newclick Clicks) {
 
-	if !sched.autoTransposeOn {
+	if !sched.AutoTransposeOn {
 		return
 	}
 	if newclick < sched.autoTransposeNext {
@@ -211,7 +211,7 @@ func (sched *Scheduler) advanceTransposeTo(newclick Clicks) {
 	}
 	sched.autoTransposeNext = newclick + sched.autoTransposeClicks
 	sched.autoTransposeIndex = (sched.autoTransposeIndex + 1) % len(sched.autoTransposeValues)
-	sched.SetTranspose(TheEngine.autoTransposeValues[TheEngine.autoTransposeIndex])
+	sched.SetTranspose(sched.autoTransposeValues[sched.autoTransposeIndex])
 	// TheScheduler.SendAllPendingNoteoffs()
 }
 
@@ -334,7 +334,7 @@ func (sched *Scheduler) triggerItemsScheduledAtOrBefore(thisClick Clicks) {
 			v.Synth.SendNoteToMidiOutput(v)
 
 		case midi.Message:
-			synthName, err := GetParam("engine.midithrusynth")
+			synthName, err := TheHost.GetParam("engine.midithrusynth")
 			if err != nil || synthName == "" {
 				LogError(err)
 				synthName = "default"

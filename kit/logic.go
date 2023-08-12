@@ -81,7 +81,7 @@ func (logic *PatchLogic) cursorToPitch(ce CursorEvent) (uint8, error) {
 			scale := GetScale(scaleName)
 			closest := scale.ClosestTo(p)
 			// MIDIOctaveShift might be negative
-			i := int(closest) + 12*TheKit.midiOctaveShift
+			i := int(closest) + 12*TheKit.MidiOctaveShift
 			for i < 0 {
 				i += 12
 			}

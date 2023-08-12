@@ -29,7 +29,7 @@ type Erae struct {
 	width     int
 	height    int
 	zone      byte
-	output    drivers.Out
+	Output    drivers.Out
 }
 
 func (erae *Erae) Start() {

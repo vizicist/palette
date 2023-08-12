@@ -3,27 +3,27 @@ package kit
 import (
 	"encoding/json"
 	"fmt"
-	"os"
 	"sync"
 
 	"gitlab.com/gomidi/midi/v2/drivers"
 )
 
 type PortChannel struct {
-	port    string // as used by Portmidi
-	channel int    // 0-15 for MIDI channels 1-16
+	Port    string // as used by Portmidi
+	Channel int    // 0-15 for MIDI channels 1-16
 }
 
 // MIDIChannelOutput is used to remember the last
 // bank and program values for a particular output,
 // so they're only sent out when they've changed.
 type MIDIPortChannelState struct {
-	channel int // 1-based, 1-16
-	bank    int // 1-based, 1-whatever
-	program int // 1-based, 1-128
-	output  drivers.Out
-	isopen  bool
-	mutex   sync.Mutex
+	Channel int // 1-based, 1-16
+	Bank    int // 1-based, 1-whatever
+	Program int // 1-based, 1-128
+	PortName string // MIDI output port
+	Output  drivers.Out
+	Isopen  bool
+	Mutex   sync.Mutex
 }
 
 var PortChannels map[PortChannel]*MIDIPortChannelState
@@ -45,8 +45,7 @@ func InitSynths() {
 
 	Synths = make(map[string]*Synth)
 
-	filename := ConfigFilePath("synths.json")
-	bytes, err := os.ReadFile(filename)
+	bytes, err := TheHost.GetConfigFileData("synths.json")
 	if err != nil {
 		LogIfError(err)
 		return
@@ -85,7 +84,7 @@ func InitSynths() {
 }
 
 func (synth *Synth) Channel() uint8 {
-	return uint8(synth.portchannel.channel)
+	return uint8(synth.portchannel.Channel)
 }
 
 func (synth *Synth) ClearNoteDowns() {
@@ -111,13 +110,13 @@ func NewSynth(name string, port string, channel int, bank int, program int) *Syn
 
 	// If there's already a Synth for this PortChannel, should error
 
-	portchannel := PortChannel{port: port, channel: channel}
+	portchannel := PortChannel{Port: port, Channel: channel}
 
 	var state *MIDIPortChannelState
 	if name == "fake" {
-		state = TheMidiIO.openFakeChannelOutput(port, channel)
+		state = TheHost.OpenFakeChannelOutput(port, channel)
 	} else {
-		state = TheMidiIO.openChannelOutput(portchannel)
+		state = TheHost.OpenChannelOutput(portchannel)
 	}
 
 	if state == nil {
@@ -138,8 +137,38 @@ func NewSynth(name string, port string, channel int, bank int, program int) *Syn
 	return sp
 }
 
+func (state *MIDIPortChannelState) UpdateBankProgram(synth *Synth) {
+
+	state.Mutex.Lock()
+	defer state.Mutex.Unlock()
+
+	// LogInfo("Checking Bank Program", "bank", bank, "program", program, "mc.bank", state.bank, "mc.program", state.program, "mc", fmt.Sprintf("%p", state))
+	if state.Bank != synth.bank {
+		LogWarn("SendBankProgram: XXX - SHOULD be sending", "bank", synth.bank)
+		state.Bank = synth.bank
+	}
+	// if the requested program doesn't match the current one, send it
+	if state.Program != synth.program {
+		// LogInfo("PROGRAM CHANGED", "program", program, "mc.program", state.program)
+		state.Program = synth.program
+		status := byte(int64(ProgramStatus) | int64(state.Channel-1))
+		data1 := byte(synth.program - 1)
+		LogInfo("SendBankProgram: MIDI", "status", hexString(status), "program", hexString(data1))
+		LogOfType("midi", "Raw MIDI Output, BankProgram",
+			"synth", synth.name,
+			"status", "0x"+hexString(status),
+			"data1", "0x"+hexString(data1))
+
+		// TheHost.SendMIDI([]byte{status, data1})
+		err := state.Output.Send([]byte{status, data1})
+		LogIfError(err)
+	}
+}
+
+
+
 func (synth *Synth) updatePortChannelState() (*MIDIPortChannelState, error) {
-	state, err := TheMidiIO.GetPortChannelState(synth.portchannel)
+	state, err := TheHost.GetPortChannelState(synth.portchannel)
 	if err != nil {
 		return nil, err
 	}
@@ -159,7 +188,7 @@ func (synth *Synth) SendANO() {
 	synth.ClearNoteDowns()
 
 	// send All Notes Off
-	status := 0xb0 | byte(synth.portchannel.channel-1)
+	status := 0xb0 | byte(synth.portchannel.Channel-1)
 	data1 := byte(0x7b)
 	data2 := byte(0x00)
 	LogOfType("midi", "Raw MIDI Output, ANO",
@@ -168,7 +197,8 @@ func (synth *Synth) SendANO() {
 		"data1", "0x"+hexString(data1),
 		"data2", "0x"+hexString(data2))
 
-	LogIfError(state.output.Send([]byte{status, data1, data2}))
+	err = state.Output.Send([]byte{status, data1, data2})
+	LogIfError(err)
 }
 
 func (synth *Synth) SendController(cnum uint8, cval uint8) {
@@ -187,7 +217,7 @@ func (synth *Synth) SendController(cnum uint8, cval uint8) {
 		LogWarn("SendControllerToSynth: invalid value", "cval", cval)
 		return
 	}
-	status := 0xb0 | byte(synth.portchannel.channel-1)
+	status := 0xb0 | byte(synth.portchannel.Channel-1)
 	data1 := byte(cnum)
 	data2 := byte(cval)
 
@@ -197,7 +227,7 @@ func (synth *Synth) SendController(cnum uint8, cval uint8) {
 		"data1", "0x"+hexString(data1),
 		"data2", "0x"+hexString(data2))
 
-	LogIfError(state.output.Send([]byte{status, data1, data2}))
+	LogIfError(state.Output.Send([]byte{status, data1, data2}))
 }
 
 /*
@@ -344,7 +374,7 @@ func (synth *Synth) SendNoteToMidiOutput(value any) {
 		return
 	}
 
-	status := byte(synth.portchannel.channel - 1)
+	status := byte(synth.portchannel.Channel - 1)
 	data1 := pitch
 	data2 := velocity
 	switch value.(type) {
@@ -369,7 +399,7 @@ func (synth *Synth) SendNoteToMidiOutput(value any) {
 
 		LogOfType("note", "SendNoteOnToSynth",
 			"synth", synth,
-			"channel", synth.portchannel.channel,
+			"channel", synth.portchannel.Channel,
 			"pitch", pitch,
 			"notedowncount", downCount)
 
@@ -387,7 +417,7 @@ func (synth *Synth) SendNoteToMidiOutput(value any) {
 
 		LogOfType("note", "SendNoteOffToSynth",
 			"synth", synth,
-			"channel", synth.portchannel.channel,
+			"channel", synth.portchannel.Channel,
 			"pitch", pitch,
 			"notedowncount", downCount)
 
@@ -414,7 +444,7 @@ func (synth *Synth) SendBytesToMidiOutput(bytes []byte) {
 	}
 
 	// Use status value from bytes, but channel gets taken from Synth
-	status := (bytes[0] & 0xf0) | byte(synth.portchannel.channel-1)
+	status := (bytes[0] & 0xf0) | byte(synth.portchannel.Channel-1)
 	bytes[0] = status
 
 	switch len(bytes) {
@@ -440,32 +470,32 @@ func (synth *Synth) SendBytesToMidiOutput(bytes []byte) {
 			"bytes", bytes)
 	}
 
-	err = state.output.Send(bytes)
+	err = state.Output.Send(bytes)
 	if err != nil {
 		LogWarn("synth.SendBytesToMidiOutputSend", "err", err)
 	}
 }
 
 func (synth *Synth) SendBytes(bytes []byte) error {
-	return synth.state.output.Send(bytes)
+	return synth.state.Output.Send(bytes)
 }
 
 func (synth *Synth) UpdateBankProgram() {
 
 	state := synth.state
-	state.mutex.Lock()
-	defer state.mutex.Unlock()
+	state.Mutex.Lock()
+	defer state.Mutex.Unlock()
 
 	// LogInfo("Checking Bank Program", "bank", bank, "program", program, "mc.bank", state.bank, "mc.program", state.program, "mc", fmt.Sprintf("%p", state))
-	if state.bank != synth.bank {
+	if state.Bank != synth.bank {
 		LogWarn("SendBankProgram: XXX - SHOULD be sending", "bank", synth.bank)
-		state.bank = synth.bank
+		state.Bank = synth.bank
 	}
 	// if the requested program doesn't match the current one, send it
-	if state.program != synth.program {
+	if state.Program != synth.program {
 		// LogInfo("PROGRAM CHANGED", "program", program, "mc.program", state.program)
-		state.program = synth.program
-		status := byte(int64(ProgramStatus) | int64(state.channel-1))
+		state.Program = synth.program
+		status := byte(int64(ProgramStatus) | int64(state.Channel-1))
 		data1 := byte(synth.program - 1)
 		LogInfo("SendBankProgram: MIDI", "status", hexString(status), "program", hexString(data1))
 		LogOfType("midi", "Raw MIDI Output, BankProgram",
@@ -473,6 +503,7 @@ func (synth *Synth) UpdateBankProgram() {
 			"status", "0x"+hexString(status),
 			"data1", "0x"+hexString(data1))
 
-		LogIfError(state.output.Send([]byte{status, data1}))
+		err := state.Output.Send([]byte{status, data1})
+		LogIfError(err)
 	}
 }

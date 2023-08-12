@@ -46,6 +46,24 @@ func NewMidiEvent(click Clicks, tag string, msg midi.Message) MidiEvent {
 	}
 }
 
+func (me MidiEvent) Status() uint8 {
+	bytes := me.Msg.Bytes()
+	if len(bytes) == 0 {
+		LogWarn("Empty bytes in MidiEvent?")
+		return 0
+	}
+	return bytes[0]
+}
+
+func (me MidiEvent) Data1() uint8 {
+	bytes := me.Msg.Bytes()
+	if len(bytes) < 2 {
+		LogWarn("No Data1 byte in MidiEvent?")
+		return 0
+	}
+	return bytes[1]
+}
+
 ////////////////////////// CursorEvent methods
 
 func (ce CursorEvent) IsAttractGenerated() bool {

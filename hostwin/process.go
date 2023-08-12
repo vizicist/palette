@@ -8,6 +8,8 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/vizicist/palette/kit"
 )
 
 var TheProcessManager *ProcessManager
@@ -96,7 +98,7 @@ func (pm *ProcessManager) checkProcess() {
 // started but are no longer running.
 func (pm *ProcessManager) CheckAutorestartProcesses() {
 
-	autostart, err := GetParam("engine.autostart")
+	autostart, err := TheHost.GetParam("engine.autostart")
 	LogIfError(err)
 	if autostart == "" {
 		return
@@ -122,12 +124,12 @@ func ProcessList() []string {
 	// arr = append(arr, "monitor")
 	arr = append(arr, "bidule")
 	arr = append(arr, "resolume")
-	keykit, err := GetParamBool("engine.keykitrun")
+	keykit, err := kit.GetParamBool("engine.keykitrun")
 	LogIfError(err)
 	if keykit {
 		arr = append(arr, "keykit")
 	}
-	mmtt, err := GetParam("engine.mmtt")
+	mmtt, err := TheHost.GetParam("engine.mmtt")
 	LogIfError(err)
 	if mmtt != "" {
 		arr = append(arr, "mmtt")
@@ -160,7 +162,7 @@ func (pm *ProcessManager) AddProcessBuiltIn(process string) {
 	case "bidule":
 		pm.AddProcess(process, TheBidule().ProcessInfo())
 	case "resolume":
-		pm.AddProcess(process, TheResolume().ProcessInfo())
+		pm.AddProcess(process, TheHost.ProcessInfo())
 	case "gui":
 		pm.AddProcess(process, GuiProcessInfo())
 	case "keykit":
@@ -249,7 +251,7 @@ func (pm *ProcessManager) IsRunning(process string) bool {
 }
 
 func GuiProcessInfo() *ProcessInfo {
-	fullpath, err := GetParam("engine.gui")
+	fullpath, err := TheHost.GetParam("engine.gui")
 	LogIfError(err)
 	if fullpath != "" && !FileExists(fullpath) {
 		LogWarn("No Gui found, looking for", "path", fullpath)
@@ -258,7 +260,7 @@ func GuiProcessInfo() *ProcessInfo {
 	exe := filepath.Base(fullpath)
 
 	// set PALETTE_GUI_LEVEL to convey it to the gui
-	guilevel, err := GetParam("engine.defaultguilevel")
+	guilevel, err := TheHost.GetParam("engine.defaultguilevel")
 	if err != nil {
 		guilevel = "0" // last resert
 		LogIfError(err)
@@ -266,7 +268,7 @@ func GuiProcessInfo() *ProcessInfo {
 	os.Setenv("PALETTE_GUI_LEVEL", guilevel)
 
 	// set PALETTE_GUI_SIZE to convey it to the gui
-	guisize, err := GetParam("engine.guisize")
+	guisize, err := TheHost.GetParam("engine.guisize")
 	if err != nil {
 		LogIfError(err)
 	} else {
@@ -292,7 +294,7 @@ func MonitorProcessInfo() *ProcessInfo {
 func KeykitProcessInfo() *ProcessInfo {
 
 	// Allow parameter to override keyroot
-	keyroot, err := GetParam("engine.keykitroot")
+	keyroot, err := TheHost.GetParam("engine.keykitroot")
 	LogIfError(err)
 	if keyroot == "" {
 		keyroot = filepath.Join(PaletteDir(), "keykit")
@@ -301,7 +303,7 @@ func KeykitProcessInfo() *ProcessInfo {
 	os.Setenv("KEYROOT", keyroot)
 
 	// Allow parameter to override keypath
-	keypath, err := GetParam("engine.keykitpath")
+	keypath, err := TheHost.GetParam("engine.keykitpath")
 	LogIfError(err)
 	if keypath == "" {
 		kp1 := filepath.Join(PaletteDataPath(), "keykit", "liblocal")
@@ -312,19 +314,19 @@ func KeykitProcessInfo() *ProcessInfo {
 	LogOfType("keykit", "Setting KEYPATH", "keypath", keypath)
 
 	// Allow parameter to override keyoutput
-	keyoutput, err := GetParam("engine.keykitoutput")
+	keyoutput, err := TheHost.GetParam("engine.keykitoutput")
 	LogIfError(err)
 	os.Setenv("KEYOUT", keyoutput)
 	LogOfType("keykit", "Setting KEYPOUT", "keyoutput", keyoutput)
 
 	// Allow parameter to override keyoutput
-	keyallow, err := GetParam("engine.keykitallow")
+	keyallow, err := TheHost.GetParam("engine.keykitallow")
 	LogIfError(err)
 	os.Setenv("KEYALLOW", keyallow)
 	LogOfType("keykit", "Setting KEYALLOW", "keyallow", keyallow)
 
 	// Allow parameter to override path to key.exe
-	fullpath, err := GetParam("engine.keykitpath")
+	fullpath, err := TheHost.GetParam("engine.keykitpath")
 	LogIfError(err)
 	if fullpath != "" && !FileExists(fullpath) {
 		LogWarn("engine.keykit value doesn't exist, was looking for", "fullpath", fullpath)
@@ -343,7 +345,7 @@ func KeykitProcessInfo() *ProcessInfo {
 func MmttProcessInfo() *ProcessInfo {
 
 	// The value of mmtt is either "kinect" or "oak" or ""
-	mmtt, err := GetParam("engine.mmtt")
+	mmtt, err := TheHost.GetParam("engine.mmtt")
 	LogIfError(err)
 	if mmtt == "" {
 		return nil

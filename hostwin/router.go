@@ -9,15 +9,16 @@ import (
 	"time"
 
 	"github.com/hypebeast/go-osc/osc"
+	"github.com/vizicist/palette/kit"
 )
 
 var TheRouter *Router
 
 // Router takes events and routes them
 type Router struct {
-	oscInputChan  chan OscEvent
-	midiInputChan chan MidiEvent
-	cursorInput   chan CursorEvent
+	oscInputChan  chan kit.OscEvent
+	midiInputChan chan kit.MidiEvent
+	cursorInput   chan kit.CursorEvent
 
 	killme bool
 
@@ -31,8 +32,8 @@ func NewRouter() *Router {
 	r := Router{}
 
 	r.guiClient = osc.NewClient(LocalAddress, GuiPort)
-	r.oscInputChan = make(chan OscEvent)
-	r.midiInputChan = make(chan MidiEvent)
+	r.oscInputChan = make(chan kit.OscEvent)
+	r.midiInputChan = make(chan kit.MidiEvent)
 
 	// By default, the engine handles Cursor events internally.
 	// However, if publishcursor is set, it ONLY publishes them,
@@ -50,7 +51,7 @@ func (r *Router) Start() {
 		LogWarn("StartCursorInput: LoadMorphs", "err", err)
 	}
 
-	go StartMorph(r.ScheduleCursorEvent, 1.0)
+	go StartMorph(TheKit.ScheduleCursorEvent, 1.0)
 
 	go r.notifyGUI("restart")
 }
@@ -74,12 +75,12 @@ func (r *Router) InputListenOnce() {
 	select {
 	case msg := <-r.oscInputChan:
 		r.handleOscInput(msg)
-		TheEngine.RecordOscEvent(&msg)
+		// TheKit.RecordOscEvent(&msg)
 	case event := <-r.midiInputChan:
-		r.HandleMidiEvent(event)
-		TheEngine.RecordMidiEvent(&event)
+		TheKit.HandleMidiEvent(event)
+		// TheEngine.RecordMidiEvent(&event)
 	case event := <-r.cursorInput:
-		ScheduleAt(CurrentClick(), event.Tag, event)
+		kit.ScheduleAt(kit.CurrentClick(), event.Tag, event)
 	default:
 		time.Sleep(time.Millisecond)
 	}
@@ -145,7 +146,7 @@ func GetArgsXYZ(args map[string]string) (x, y, z float32, err error) {
 }
 
 // HandleOscInput xxx
-func (r *Router) handleOscInput(e OscEvent) {
+func (r *Router) handleOscInput(e kit.OscEvent) {
 
 	LogOfType("osc", "Router.HandleOscInput", "msg", e.Msg.String())
 	switch e.Msg.Address {
@@ -185,14 +186,14 @@ func (r *Router) handleOscInput(e OscEvent) {
 }
 
 func (r *Router) notifyGUI(eventName string) {
-	b, err := GetParamBool("engine.notifygui")
+	b, err := kit.GetParamBool("engine.notifygui")
 	LogIfError(err)
 	if !b {
 		return
 	}
 	msg := osc.NewMessage("/notify")
 	msg.Append(eventName)
-	TheEngine.SendOsc(r.guiClient, msg)
+	TheHost.SendOsc(r.guiClient, msg)
 }
 
 /*
@@ -223,7 +224,7 @@ func (r *Router) oscHandleClientRestart(msg *osc.Message) error {
 	if err != nil {
 		return err
 	}
-	TheQuadPro.onClientRestart(ffglportnum)
+	kit.TheQuadPro.OnClientRestart(ffglportnum)
 	return nil
 }
 
@@ -266,22 +267,22 @@ func (r *Router) oscHandleCursor(msg *osc.Message) {
 		return
 	}
 
-	pos := CursorPos{x, y, z}
+	pos := kit.CursorPos{X: x, Y: y, Z: z}
 
-	ce := NewCursorEvent(gid, source, ddu, pos)
+	ce := kit.NewCursorEvent(gid, source, ddu, pos)
 
 	// XXX - HACK!!
-	xexpand, err := GetParamFloat("engine.mmtt_xexpand")
+	xexpand, err := kit.GetParamFloat("engine.mmtt_xexpand")
 	if err != nil {
 		LogIfError(err)
 		return
 	}
-	yexpand, err := GetParamFloat("engine.mmtt_yexpand")
+	yexpand, err := kit.GetParamFloat("engine.mmtt_yexpand")
 	if err != nil {
 		LogIfError(err)
 		return
 	}
-	zexpand, err := GetParamFloat("engine.mmtt_zexpand")
+	zexpand, err := kit.GetParamFloat("engine.mmtt_zexpand")
 	if err != nil {
 		LogIfError(err)
 		return
@@ -291,10 +292,10 @@ func (r *Router) oscHandleCursor(msg *osc.Message) {
 	// We want to expand the X and Y values a bit around their center
 	// (hence the 0.5 stuff), since the values from mmtt_kinect are inset a bit.
 	newPos := ce.Pos
-	newPos.X = boundValueZeroToOne(((float64(ce.Pos.X) - 0.5) * xexpand) + 0.5)
-	newPos.Y = boundValueZeroToOne(((float64(ce.Pos.Y) - 0.5) * yexpand) + 0.5)
+	newPos.X = kit.BoundValueZeroToOne(((float64(ce.Pos.X) - 0.5) * xexpand) + 0.5)
+	newPos.Y = kit.BoundValueZeroToOne(((float64(ce.Pos.Y) - 0.5) * yexpand) + 0.5)
 	// For Z, we want to expand the value only in the positive direction.
-	newPos.Z = boundValueZeroToOne(float64(ce.Pos.Z) * zexpand)
+	newPos.Z = kit.BoundValueZeroToOne(float64(ce.Pos.Z) * zexpand)
 
 	LogOfType("cursor", "MMTT Cursor", "ddu", ce.Ddu, "newPos", newPos)
 
@@ -302,9 +303,9 @@ func (r *Router) oscHandleCursor(msg *osc.Message) {
 
 	if ce.Ddu != "up" && ce.Pos.Z < 0.0001 {
 		LogWarn("Hmmmmmmmm, OSC down/drag cursor event has zero Z?", "ce", ce)
-		ce.Pos.Z = TheCursorManager.LoopThreshold
+		ce.Pos.Z = kit.TheCursorManager.LoopThreshold
 	}
-	TheCursorManager.ExecuteCursorEvent(ce)
+	kit.TheCursorManager.ExecuteCursorEvent(ce)
 }
 
 // handleApiMsg

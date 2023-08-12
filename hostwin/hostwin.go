@@ -56,7 +56,6 @@ func NewHost() *HostWin {
 
 	TheRouter = NewRouter()
 	TheMidiIO = NewMidiIO()
-	// TheErae = NewErae()
 
 	InitLogTypes()
 
@@ -81,7 +80,6 @@ func NewHost() *HostWin {
 
 	kit.RegisterHost(h)
 
-
 	return h
 }
 
@@ -98,13 +96,12 @@ func (h HostWin) InputEventUnlock() {
 }
 
 func Start() {
-	TheEngine.Start()
+	TheHost.Start()
 }
 
 func WaitTillDone() {
-	TheEngine.WaitTillDone()
+	TheHost.WaitTillDone()
 }
-
 
 func (h HostWin) SaveDataInFile(data []byte, category string, filename string) error {
 	path, err := WritableSavedFilePath(category, filename, ".json")
@@ -129,7 +126,7 @@ func (h HostWin) GetConfigFileData(filename string) ([]byte, error) {
 	return os.ReadFile(path)
 }
 
-func (h HostWin) GenerateVisualsFromCursr(ce kit.CursorEvent, patchName string) {
+func (h HostWin) GenerateVisualsFromCursor(ce kit.CursorEvent, patchName string) {
 	// send an OSC message to Resolume
 	msg := kit.CursorToOscMsg(ce)
 	h.ToFreeFramePlugin(patchName, msg)
@@ -144,9 +141,18 @@ func (h HostWin) GetParam(name string) (string, error) {
 // 	return e.params.Get(name)
 // }
 
+func (h HostWin) GetSavedData(category string, filename string) ([]byte, error) {
+	err := fmt.Errorf("GetSavedData needs work!")
+	kit.LogError(err)
+	return []byte{}, err
+}
+
 func (h HostWin) SaveCurrent() (err error) {
-	data := h.GetSavedData("engine","_Current")
-	h.SaveDataInFile(data,"engine","_Current")
+	data, err := h.GetSavedData("engine","_Current")
+	if err != nil {
+		return err
+	}
+	return h.SaveDataInFile(data,"engine","_Current")
 }
 
 func (h HostWin) LoadCurrent() (err error) {
@@ -174,28 +180,69 @@ func (h HostWin) LoadEngineParams(fname string) (err error) {
 	if err != nil {
 		return err
 	}
-	paramsmap, err := kit.LoadParamsMap(path)
+	bytes, err := os.ReadFile(path)
 	if err != nil {
 		return err
 	}
-	e.params.ApplyValuesFromMap("engine", paramsmap, e.Set)
+	paramsmap, err := kit.LoadParamsMap(bytes)
+	if err != nil {
+		return err
+	}
+	h.params.ApplyValuesFromMap("engine", paramsmap, h.Set)
 	return nil
 }
 
-func (e *Engine) ToFreeFramePlugin(patchName string, msg *osc.Message) {
-	// send an OSC message to Resolume
-	e.SendToOscCLients(msg)
+func (h HostWin) HandleIncomingMidiEvent(me kit.MidiEvent) {
+	err := fmt.Errorf("HandleIncomingMidiEvent needs work!")
+	kit.LogIfError(err)
 }
 
-func (e *Engine) Start() {
+func (h HostWin) IsLogging(logtype string) bool {
+	return IsLogging(logtype)
+}
 
-	e.done = make(chan bool)
+func (h HostWin) LogError(err error, keysAndValues ...any) {
+	LogError(err, keysAndValues...)
+}
+
+func (h HostWin) LogIfError(err error, keysAndValues ...any) {
+	LogIfError(err, keysAndValues...)
+}
+
+func (h HostWin) LogInfo(msg string, keysAndValues ...any) {
+	LogInfo(msg, keysAndValues...)
+}
+
+func (h HostWin) LogWarn(msg string, keysAndValues ...any) {
+	LogWarn(msg, keysAndValues...)
+}
+
+func (h HostWin) LogOfType(logtypes string, msg string, keysAndValues ...any) {
+	LogOfType(logtypes, msg, keysAndValues...)
+}
+
+func (h HostWin) ResetAudio() {
+	LogWarn("ResetAudio needs work")
+}
+
+func (h HostWin) SendMIDI(bytes []byte) {
+	LogWarn("SendMIDI needs work")
+}
+
+// func (h HostWin) ToFreeFramePlugin(patchName string, msg *osc.Message) {
+// 	// send an OSC message to Resolume
+// 	h.SendToOscClients(msg)
+// }
+
+func (h HostWin) Start() {
+
+	h.done = make(chan bool)
 	LogInfo("Engine.Start")
 
 	InitMidiIO()
 
-	go e.StartOscListener(OscPort)
-	go e.StartHttp(EngineHttpPort)
+	go h.StartOscListener(OscPort)
+	go h.StartHttp(EngineHttpPort)
 
 	go TheRouter.Start()
 	go TheMidiIO.Start()
@@ -285,7 +332,7 @@ func (h HostWin) StartHttp(port int) {
 			} else {
 				bstr := string(body)
 				_ = bstr
-				resp, err := e.ExecuteApiFromJson(bstr)
+				resp, err := TheHost.ExecuteApiFromJson(bstr)
 				if err != nil {
 					response = ErrorResponse(err)
 				} else {

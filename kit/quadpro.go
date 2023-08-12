@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand"
-	"os"
 	"sort"
 	"strings"
 	"sync"
@@ -239,7 +238,7 @@ func (quadpro *QuadPro) onCursorEvent(state ActiveCursor) error {
 	return nil
 }
 
-func (quadpro *QuadPro) onClientRestart(portnum int) {
+func (quadpro *QuadPro) OnClientRestart(portnum int) {
 	LogOfType("resolume", "quadpro got clientrestart", "portnum", portnum)
 	// Refresh the patch that has that portnum
 	for _, patch := range quadpro.patch {
