@@ -8,6 +8,7 @@ import (
 
 	"github.com/pkg/profile"
 	"github.com/vizicist/palette/twinsys"
+	"github.com/vizicist/palette/kit"
 	"github.com/vizicist/palette/hostwin"
 	_ "github.com/vizicist/palette/twintool"
 )
@@ -30,11 +31,12 @@ func main() {
 
 	host := hostwin.NewHost()
 
-	host.InitLog("host")
-	host.InitMisc()
-	host.InitEngine()
-
+	host.Init()
+	// host.InitMisc()
+	// host.InitEngine()
 	host.Start()
+
+	kit.RegisterHost(host)
 
 	go func() {
 		host.WaitTillDone()

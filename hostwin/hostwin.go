@@ -6,7 +6,6 @@ import (
 	"os"
 	"math/rand"
 	"net/http"
-	"sync"
 
 	"github.com/hypebeast/go-osc/osc"
 	"github.com/vizicist/palette/kit"
@@ -29,73 +28,73 @@ type HostWin struct {
 }
 
 var TheHost *HostWin
-var engineSysex sync.Mutex
 var TheRand *rand.Rand
 var TheKit *kit.Kit
 
 func NewHost() *HostWin {
+
 	h := &HostWin{
 		resolumeClient:   osc.NewClient(LocalAddress, ResolumePort),
 		freeframeClients: map[string]*osc.Client{},
 	}
-	TheHost = h
-	return h
-}
+	InitLog("host")
+	// InitMisc()
 
-func (host HostWin) Init() {
-	err := host.loadResolumeJSON()
+	err := h.loadResolumeJSON()
 	if err != nil {
 		LogIfError(err)
 	}
-	InitParams()
+	kit.InitParams()
 	TheProcessManager = NewProcessManager()
 	TheKit = kit.NewKit()
 	// Fixed rand sequence, better for testing
 	TheRand = rand.New(rand.NewSource(1))
-}
 
-func InitEngine() {
+	TheHost = h
 
-	if TheEngine != nil {
-		LogIfError(fmt.Errorf("TheEngine already exists, there can be only one"))
-		return
-	}
-
-	engineSysex.Lock()
-	defer engineSysex.Unlock()
-
-	e := &Engine{
-		done: make(chan bool),
-	}
-
-	e.params = kit.NewParamValues()
-
-	kit.RegisterHost(e)
+	h.params = kit.NewParamValues()
 
 	TheRouter = NewRouter()
 	TheMidiIO = NewMidiIO()
-	TheErae = NewErae()
+	// TheErae = NewErae()
 
 	InitLogTypes()
 
 	// Set all the default engine.* values
-	for nm, pd := range ParamDefs {
+	for nm, pd := range kit.ParamDefs {
 		if pd.Category == "engine" {
-			err := e.params.setParamValueWithString(nm, pd.Init)
+			err := h.params.SetParamValueWithString(nm, pd.Init)
 			if err != nil {
 				LogIfError(err)
 			}
 		}
 	}
-	err := e.LoadCurrent()
+	err = h.LoadCurrent()
 	if err != nil {
 		LogIfError(err)
 	}
 
-	TheEngine = e
+	// TheEngine = e
 
 	// This need to be done after engine parameters are loaded
 	TheProcessManager.AddBuiltins()
+
+	kit.RegisterHost(h)
+
+
+	return h
+}
+
+func (h HostWin) EveryTick() {
+	TheProcessManager.checkProcess()
+}
+
+func (h HostWin) InputEventLock() {
+	TheRouter.inputEventMutex.Lock()
+}
+
+func (h HostWin) InputEventUnlock() {
+	TheRouter.inputEventMutex.Unlock()
 }
 
 func Start() {
@@ -133,7 +132,7 @@ func (h HostWin) GetConfigFileData(filename string) ([]byte, error) {
 func (h HostWin) GenerateVisualsFromCursr(ce kit.CursorEvent, patchName string) {
 	// send an OSC message to Resolume
 	msg := kit.CursorToOscMsg(ce)
-	TheResolume().ToFreeFramePlugin(patchName, msg)
+	h.ToFreeFramePlugin(patchName, msg)
 
 }
 
@@ -146,11 +145,12 @@ func (h HostWin) GetParam(name string) (string, error) {
 // }
 
 func (h HostWin) SaveCurrent() (err error) {
-	return e.params.Save("engine", "_Current")
+	data := h.GetSavedData("engine","_Current")
+	h.SaveDataInFile(data,"engine","_Current")
 }
 
 func (h HostWin) LoadCurrent() (err error) {
-	return e.LoadEngineParams("_Current")
+	return h.LoadEngineParams("_Current")
 	/*
 		path, err := ReadableSavedFilePath("engine", "_Current", ".json")
 		if err != nil {

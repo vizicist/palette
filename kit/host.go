@@ -7,6 +7,9 @@ import (
 var TheHost Host
 
 type Host interface {
+
+	Start()
+
 	LogWarn(msg string, keysAndValues ...any)
 	LogError(err error, keysAndValues ...any)
 	LogInfo(msg string, keysAndValues ...any)
@@ -18,12 +21,20 @@ type Host interface {
 	SendToOscClients(msg *osc.Message)
 	GenerateVisualsFromCursor(ce CursorEvent, patchName string)
 	SaveDataInFile(data []byte, category string, filename string) error
+	SavedFileList(category string) ([]string, error)
 	GetSavedData(category string, filename string) ([]byte, error)
 	GetConfigFileData(filename string) ([]byte, error)
+	InputEventLock()
+	InputEventUnlock()
+
+	SaveCurrent() error
+	Uptime() float64
+	EveryTick()
 
 	ToFreeFramePlugin(patchName string, msg *osc.Message)
 	SendEffectParam(patchName string, name string, value string)
 	PortAndLayerNumForPatch(patchName string) (portnum int, layernum int)
+	ShowText(msg string)
 }
 
 func RegisterHost(host Host) {

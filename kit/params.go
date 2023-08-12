@@ -3,7 +3,6 @@ package kit
 import (
 	"encoding/json"
 	"fmt"
-	"os"
 	"sort"
 	"strconv"
 	"strings"
@@ -113,7 +112,7 @@ func (vals *ParamValues) JsonValues() string {
 }
 
 func (vals *ParamValues) Set(name, value string) error {
-	return vals.setParamValueWithString(name, value)
+	return vals.SetParamValueWithString(name, value)
 }
 
 // Currently, no errors are ever returned, but log messages are generated.
@@ -367,13 +366,13 @@ func LoadParamsMap(bytes []byte) (ParamsMap, error) {
 	return paramsmap, nil
 }
 
-func (vals *ParamValues) setParamValueWithString(origname, value string) (err error) {
+func (vals *ParamValues) SetParamValueWithString(origname, value string) (err error) {
 
 	vals.mutex.Lock()
 	defer vals.mutex.Unlock()
 
 	if origname == "pad" {
-		return fmt.Errorf("ParamValues.setParamValueWithString rejects setting of pad value")
+		return fmt.Errorf("ParamValues.SetParamValueWithString rejects setting of pad value")
 	}
 
 	def, err := vals.paramDefOf(origname)
@@ -405,7 +404,7 @@ func (vals *ParamValues) setParamValueWithString(origname, value string) (err er
 		}
 		paramVal = paramValFloat{def: d, value: float32(v)}
 	default:
-		e := fmt.Errorf("setParamValueWithString: unknown type of ParamDef for name=%s", origname)
+		e := fmt.Errorf("SetParamValueWithString: unknown type of ParamDef for name=%s", origname)
 		LogIfError(e)
 		return e
 	}

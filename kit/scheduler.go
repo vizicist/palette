@@ -132,7 +132,7 @@ func (sched *Scheduler) Start() {
 	// By reading from tick.C, we wake up every 2 milliseconds
 	for range tick.C {
 		// sched.now = now
-		uptimesecs := Uptime()
+		uptimesecs := TheHost.Uptime()
 
 		// XXX - should lock from here?
 
@@ -151,14 +151,15 @@ func (sched *Scheduler) Start() {
 		}
 
 		sched.advanceClickTo(newclick)
-		TheEngine.advanceTransposeTo(newclick)
+		sched.advanceTransposeTo(newclick)
 
 		SetCurrentClick(newclick)
 
 		sched.handlePendingSchedEvents()
 
-		TheProcessManager.checkProcess()
 		TheAttractManager.checkAttract()
+
+		TheHost.EveryTick()
 	}
 	LogInfo("StartRealtime ends")
 }
@@ -170,9 +171,9 @@ func (sched *Scheduler) advanceClickTo(toClick Clicks) {
 	// Don't let events get handled while we're advancing
 	// XXX - this might not be needed if all communication/syncing
 	// is done only from the scheduler loop
-	TheRouter.inputEventMutex.Lock()
+	TheHost.InputEventLock()
 	defer func() {
-		TheRouter.inputEventMutex.Unlock()
+		TheHost.InputEventUnlock()
 	}()
 
 	doAutoCursorUp := true
