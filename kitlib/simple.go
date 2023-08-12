@@ -4,5 +4,10 @@ package kitlib
 import (
 	"github.com/vizicist/palette/kit"
 )
-func xxx (  ) {
-	print ( "usage: arpeggio(phrase)" ) ; return ( Phrase("''") ) };
+
+var dummy *kit.Phrase
+
+func xxx() {
+	print("usage: arpeggio(phrase)")
+	return (kit.Phrase("''"))
+}
