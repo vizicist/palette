@@ -244,6 +244,7 @@ import "C"
 import (
 	"fmt"
 	"time"
+	"github.com/vizicist/palette/kit"
 )
 
 type oneMorph struct {
@@ -268,7 +269,7 @@ var morphMaxForce float32 = 1000.0
 var allMorphs []*oneMorph
 
 // StartMorph xxx
-func StartMorph(callback CursorCallbackFunc, forceFactor float32) {
+func StartMorph(callback kit.CursorCallbackFunc, forceFactor float32) {
 	err := WinMorphInitialize()
 	if err != nil {
 		LogIfError(err)
@@ -295,7 +296,7 @@ const (
 	CursorUp   = 3
 )
 
-func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float32) {
+func (m *oneMorph) readFrames(callback kit.CursorCallbackFunc, forceFactor float32) {
 	status := C.SenselReadSensor(C.uchar(m.idx))
 	if status != C.SENSEL_OK {
 		LogWarn("SenselReadSensor for", "idx", m.idx, "status", status)
@@ -359,7 +360,7 @@ func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float32) 
 				}
 				if cornerSource != m.currentTag {
 					LogInfo("Switching corners pad", "source", cornerSource)
-					ce := NewCursorClearEvent()
+					ce := kit.NewCursorClearEvent()
 					callback(ce)
 					m.currentTag = cornerSource
 					continue // loop, doesn't send a cursor event
@@ -409,14 +410,14 @@ func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float32) 
 			gid, ok := m.contactIdToGid[contactid]
 			if !ok {
 				// If we've never seen this contact before, create a new cid...
-				gid = TheCursorManager.UniqueGid()
+				gid = kit.TheCursorManager.UniqueGid()
 				m.contactIdToGid[contactid] = gid
 			} else if m.currentTag != m.previousTag {
 				// If we're switching to a new source, clear existing cursors...
-				ce := NewCursorClearEvent()
+				ce := kit.NewCursorClearEvent()
 				callback(ce)
 				// and create a new cid...
-				gid = TheCursorManager.UniqueGid()
+				gid = kit.TheCursorManager.UniqueGid()
 			}
 
 			m.previousTag = m.currentTag
@@ -446,8 +447,8 @@ func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float32) 
 				xNorm = 1.0
 			}
 
-			pos := CursorPos{xNorm, yNorm, zNorm}
-			ce := NewCursorEvent(gid, m.currentTag, ddu, pos)
+			pos := kit.CursorPos{xNorm, yNorm, zNorm}
+			ce := kit.NewCursorEvent(gid, m.currentTag, ddu, pos)
 			ce.Area = area
 			callback(ce)
 		}
@@ -503,7 +504,7 @@ func WinMorphInitialize() error {
 		morphtype, ok := MorphDefs[m.serialNum]
 		if !ok {
 			// It's not explicitly present in morphs.json
-			t, err := GetParam("engine.morphtype")
+			t, err := TheHost.GetParam("engine.morphtype")
 			if err != nil {
 				return err
 			}

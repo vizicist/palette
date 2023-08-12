@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"github.com/vizicist/palette/kit"
 )
 
 /*
@@ -75,7 +76,7 @@ func SavedMap(wantCategory string) (map[string]string, error) {
 }
 
 // SavedArray returns a list of saved filenames for a particular category.
-func SavedFileList(category string) ([]string, error) {
+func (h HostWin) SavedFileList(category string) ([]string, error) {
 
 	savedMap, err := SavedMap(category)
 	if err != nil {
@@ -100,7 +101,7 @@ func SavedList(apiargs map[string]string) (string, error) {
 		return "", err
 	}
 	for name := range savedMap {
-		thisCategory, _ := SavedNameSplit(name)
+		thisCategory, _ := kit.SavedNameSplit(name)
 		if wantCategory == "*" || thisCategory == wantCategory {
 			result += sep + "\"" + name + "\""
 			sep = ","

@@ -5,10 +5,11 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"github.com/vizicist/palette/kit"
 )
 
 // ExecuteApi xxx
-func (e *Engine) ExecuteApi(api string, apiargs map[string]string) (result string, err error) {
+func (h HostWin) ExecuteApi(api string, apiargs map[string]string) (result string, err error) {
 
 	LogOfType("api", "ExecuteApi", "api", api, "apiargs", apiargs)
 
@@ -23,12 +24,12 @@ func (e *Engine) ExecuteApi(api string, apiargs map[string]string) (result strin
 	apisuffix := words[1]
 	switch apitype {
 	case "engine":
-		return e.executeEngineApi(apisuffix, apiargs)
+		return h.executeEngineApi(apisuffix, apiargs)
 	case "saved":
 		return e.executeSavedApi(apisuffix, apiargs)
 	case "quadpro":
-		if TheQuadPro != nil {
-			return TheQuadPro.Api(apisuffix, apiargs)
+		if kit.TheQuadPro != nil {
+			return kit.TheQuadPro.Api(apisuffix, apiargs)
 		}
 		return "", fmt.Errorf("no quadpro")
 	case "patch":
@@ -36,7 +37,7 @@ func (e *Engine) ExecuteApi(api string, apiargs map[string]string) (result strin
 		if patchName == "" {
 			return "", fmt.Errorf("no patch value")
 		}
-		patch := GetPatch(patchName)
+		patch := kit.GetPatch(patchName)
 		if patch == nil {
 			return "", fmt.Errorf("no such patch: %s", patchName)
 		}
@@ -48,7 +49,7 @@ func (e *Engine) ExecuteApi(api string, apiargs map[string]string) (result strin
 }
 
 // handleRawJsonApi takes raw JSON (as a string of the form "{...}"") as an API and returns raw JSON
-func (e *Engine) ExecuteApiFromJson(rawjson string) (string, error) {
+func (h HostWin) ExecuteApiFromJson(rawjson string) (string, error) {
 	args, err := StringMap(rawjson)
 	if err != nil {
 		return "", fmt.Errorf("Router.ExecuteApiAsJson: bad format of JSON")
@@ -57,35 +58,35 @@ func (e *Engine) ExecuteApiFromJson(rawjson string) (string, error) {
 	if api == "" {
 		return "", fmt.Errorf("Router.ExecuteApiAsJson: no api value")
 	}
-	return e.ExecuteApi(api, args)
+	return h.ExecuteApi(api, args)
 }
 
-func (e *Engine) executeEngineApi(api string, apiargs map[string]string) (result string, err error) {
+func (h HostWin) executeEngineApi(api string, apiargs map[string]string) (result string, err error) {
 
 	switch api {
 
 	case "debugsched":
-		return TheScheduler.ToString(), nil
+		return kit.TheScheduler.ToString(), nil
 
 	case "debugpending":
-		return TheScheduler.PendingToString(), nil
+		return kit.TheScheduler.PendingToString(), nil
 
 	case "status":
-		uptime := fmt.Sprintf("%f", Uptime())
-		attractmode := fmt.Sprintf("%v", TheAttractManager.AttractModeIsOn())
-		if TheQuadPro == nil {
-			result = JsonObject(
+		uptime := fmt.Sprintf("%f", TheHost.Uptime())
+		attractmode := fmt.Sprintf("%v", kit.TheAttractManager.AttractModeIsOn())
+		if kit.TheQuadPro == nil {
+			result = kit.JsonObject(
 				"uptime", uptime,
 				"attractmode", attractmode,
 			)
 		} else {
-			result = JsonObject(
+			result = kit.JsonObject(
 				"uptime", uptime,
 				"attractmode", attractmode,
-				"A", Patchs["A"].Status(),
-				"B", Patchs["B"].Status(),
-				"C", Patchs["C"].Status(),
-				"D", Patchs["D"].Status(),
+				"A", kit.Patchs["A"].Status(),
+				"B", kit.Patchs["B"].Status(),
+				"C", kit.Patchs["C"].Status(),
+				"D", kit.Patchs["D"].Status(),
 			)
 		}
 		return result, nil
@@ -95,23 +96,23 @@ func (e *Engine) executeEngineApi(api string, apiargs map[string]string) (result
 		if !ok {
 			return "", fmt.Errorf("executeEngineApi: missing onoff parameter")
 		}
-		TheAttractManager.SetAttractMode(IsTrueValue(v))
+		kit.TheAttractManager.SetAttractMode(kit.IsTrueValue(v))
 		return "", nil
 
 	case "set":
-		name, value, err := GetNameValue(apiargs)
+		name, value, err := kit.GetNameValue(apiargs)
 		if err != nil {
 			return "", err
 		}
-		err = e.Set(name, value)
+		err = h.Set(name, value)
 		if err != nil {
 			return "", err
 		}
-		return "", e.SaveCurrent()
+		return "", h.SaveCurrent()
 
 	case "setparams":
 		for name, value := range apiargs {
-			e := e.Set(name, value)
+			e := h.Set(name, value)
 			if e != nil {
 				LogIfError(e)
 				err = e
@@ -120,14 +121,14 @@ func (e *Engine) executeEngineApi(api string, apiargs map[string]string) (result
 		if err != nil {
 			return "", err
 		}
-		return "", e.SaveCurrent()
+		return "", h.SaveCurrent()
 
 	case "get":
 		name, ok := apiargs["name"]
 		if !ok {
 			return "", fmt.Errorf("executeEngineApi: missing name parameter")
 		}
-		return e.params.Get(name)
+		return h.params.Get(name)
 
 	case "startprocess":
 		process, ok := apiargs["process"]
@@ -153,7 +154,7 @@ func (e *Engine) executeEngineApi(api string, apiargs map[string]string) (result
 		if err != nil {
 			return "", fmt.Errorf("engine.showimage: bad clipnum parameter")
 		}
-		TheResolume().showClip(clipNum)
+		h.TheResolume().showClip(clipNum)
 		return "", nil
 
 	case "startrecording":
@@ -276,13 +277,13 @@ func (e *Engine) getInt(value string, i *int64) bool {
 	}
 }
 
-func (e *Engine) Set(name string, value string) error {
+func (h HostWin) Set(name string, value string) error {
 	var f float64
 	var i int64
 	switch name {
 
 	case "engine.attract":
-		TheAttractManager.SetAttractMode(IsTrueValue(value))
+		kit.TheAttractManager.SetAttractMode(IsTrueValue(value))
 
 	case "engine.attractenabled":
 		TheAttractManager.SetAttractEnabled(IsTrueValue(value))

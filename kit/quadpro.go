@@ -70,7 +70,11 @@ func (quadpro *QuadPro) Api(api string, apiargs map[string]string) (result strin
 			return "", fmt.Errorf("missing filename parameter")
 		}
 		TheAttractManager.SetAttractMode(false)
-		return "", quadpro.Load(category, filename)
+		data, err := TheHost.GetSavedData(category,filename)
+		if err != nil {
+			return "", err
+		}
+		return "", quadpro.Load(data, category, filename)
 
 	case "save":
 		category, oksaved := apiargs["category"]
@@ -139,9 +143,13 @@ func (quadpro *QuadPro) Start() {
 	_ = quadpro.addPatch("C")
 	_ = quadpro.addPatch("D")
 
-	bytes := TheHost.GetSavedData("quad", "_Current")
-	err := quadpro.Load("quad", "_Current")
-	LogIfError(err)
+	bytes, err = TheHost.GetSavedData("quad", "_Current")
+	if err != nil {
+		LogError(err)
+	} else {
+		err = quadpro.Load(bytes, "quad", "_Current")
+		LogIfError(err)
+	}
 }
 
 func (quadpro *QuadPro) Status(source string) string {
@@ -192,11 +200,15 @@ func (quadpro *QuadPro) onCursorEvent(state ActiveCursor) error {
 				preset := val.(string)
 				if TheQuadPro != nil {
 					LogOfType("cursor", "Button down", "z", state.Current.Pos.Z)
-					err := TheQuadPro.Load("quad", preset)
+					bytes, err := TheHost.GetSavedData("quad",preset)
 					if err != nil {
 						return err
 					}
-					TheResolume().showText(preset)
+					err = TheQuadPro.Load(bytes,"quad", preset)
+					if err != nil {
+						return err
+					}
+					TheHost.ShowText(preset)
 				}
 			}
 		}
@@ -280,7 +292,7 @@ func (quadpro *QuadPro) doTest(ntimes int, interval time.Duration) {
 
 func (quadpro *QuadPro) loadQuadRand() error {
 
-	arr, err := SavedFileList("quad")
+	arr, err := TheHost.SavedFileList("quad")
 	if err != nil {
 		return err
 	}
@@ -289,7 +301,12 @@ func (quadpro *QuadPro) loadQuadRand() error {
 	rn := quadpro.rand.Uint64() % uint64(len(arr))
 	quadpro.randMutex.Unlock()
 
-	err = quadpro.Load("quad", arr[rn])
+	bytes, err := TheHost.GetConfigFileData("buttons.json")
+	if err != nil {
+		LogIfError(err)
+		return err
+	}
+	err = quadpro.Load(bytes, "quad", arr[rn])
 	if err != nil {
 		LogIfError(err)
 		return err
@@ -301,7 +318,7 @@ func (quadpro *QuadPro) loadQuadRand() error {
 	return nil
 }
 
-func (quadpro *QuadPro) Load(bytes []byte) error {
+func (quadpro *QuadPro) Load(bytes []byte, category string, filename string) error {
 
 	paramsMap, err := LoadParamsMap(bytes)
 	if err != nil {
@@ -329,12 +346,12 @@ func (quadpro *QuadPro) Load(bytes []byte) error {
 		}
 
 	case "engine":
-		LogWarn("HACK! quadpro.Load shouldn't load engine parameters")
-		err := TheEngine.LoadEngineParams(filename)
-		if err != nil {
-			LogIfError(err)
-			lasterr = err
-		}
+		LogWarn("HACK! DISABLED! quadpro.Load shouldn't load engine parameters")
+		// err := TheHost.LoadEngineParams(filename)
+		// if err != nil {
+		// 	LogIfError(err)
+		// 	lasterr = err
+		// }
 
 	default:
 		LogWarn("QuadPro.Load: unhandled")
@@ -349,7 +366,7 @@ func (quadpro *QuadPro) Load(bytes []byte) error {
 	case "engine":
 		// No need to save _Current if we're loading it.
 		if filename != "_Current" {
-			err = TheEngine.SaveCurrent()
+			err = TheHost.SaveCurrent()
 		}
 	case "quad":
 		if filename != "_Current" {
@@ -388,16 +405,9 @@ func (quadpro *QuadPro) save(category string, filename string) (err error) {
 	return err
 }
 
-func (quadpro *QuadPro) saveQuad(quadName string) error {
+func (quadpro *QuadPro) saveQuad(filename string) error {
 
-	category := "quad"
-	path, err := WritableSavedFilePath(category, quadName, ".json")
-	if err != nil {
-		LogIfError(err)
-		return err
-	}
-
-	LogOfType("saved", "QuadPro.saveQuad", "quad", quadName)
+	LogOfType("saved", "QuadPro.saveQuad", "quad", filename)
 
 	sortedPatchNames := []string{}
 	for _, patch := range quadpro.patch {
@@ -418,7 +428,8 @@ func (quadpro *QuadPro) saveQuad(quadName string) error {
 	}
 	s += "\n    }\n}"
 	data := []byte(s)
-	return os.WriteFile(path, data, 0644)
+
+	return TheHost.SaveDataInFile(data,"quad",filename)
 }
 
 func (quadpro *QuadPro) addPatch(name string) *Patch {
