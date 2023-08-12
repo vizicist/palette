@@ -14,35 +14,11 @@ import (
 
 var ResolumePort = 7000
 
-type Resolume struct {
-	resolumeClient   *osc.Client
-	freeframeClients map[string]*osc.Client
-}
-
-var theResolume *Resolume
-
-func TheResolume() *Resolume {
-	if theResolume == nil {
-		theResolume = &Resolume{
-			resolumeClient:   osc.NewClient(LocalAddress, ResolumePort),
-			freeframeClients: map[string]*osc.Client{},
-		}
-
-		// _ = theResolume.bypassLayer // to avoid unused error
-
-		err := theResolume.loadResolumeJSON()
-		if err != nil {
-			LogIfError(err)
-		}
-	}
-	return theResolume
-}
-
 // ResolumeJSON is an unmarshalled version of the resolume.json file
 var ResolumeJSON map[string]any
 
 // LoadResolumeJSON returns an unmarshalled version of the resolume.json file
-func (r *Resolume) loadResolumeJSON() error {
+func (h HostWin) loadResolumeJSON() error {
 	path := ConfigFilePath("resolume.json")
 	bytes, err := os.ReadFile(path)
 	if err != nil {
@@ -57,7 +33,7 @@ func (r *Resolume) loadResolumeJSON() error {
 	return nil
 }
 
-func (r *Resolume) PortAndLayerNumForPatch(patchName string) (portNum, layerNum int) {
+func (h HostWin) PortAndLayerNumForPatch(patchName string) (portNum, layerNum int) {
 	switch patchName {
 	case "A":
 		return 3334, 1
@@ -73,10 +49,10 @@ func (r *Resolume) PortAndLayerNumForPatch(patchName string) (portNum, layerNum 
 	}
 }
 
-func (r *Resolume) freeframeClientFor(patchName string) *osc.Client {
-	ff, ok := r.freeframeClients[patchName]
+func (h HostWin) FreeframeClientFor(patchName string) *osc.Client {
+	ff, ok := h.freeframeClients[patchName]
 	if !ok {
-		portNum, _ := r.PortAndLayerNumForPatch(patchName)
+		portNum, _ := h.PortAndLayerNumForPatch(patchName)
 		if portNum == 0 {
 			return nil
 		}
@@ -86,15 +62,15 @@ func (r *Resolume) freeframeClientFor(patchName string) *osc.Client {
 	return ff
 }
 
-func (r *Resolume) ToFreeFramePlugin(patchName string, msg *osc.Message) {
+func (h HostWin) ToFreeFramePlugin(patchName string, msg *osc.Message) {
 	LogOfType("freeframe", "Resolume.toFreeframe", "patch", patchName, "msg", msg)
-	ff := r.freeframeClientFor(patchName)
+	ff := h.FreeframeClientFor(patchName)
 	if ff == nil {
 		LogIfError(fmt.Errorf("no freeframe client for layer"), "patch", patchName)
 		return
 	}
 	LogOfType("ffgl", "toFreeFramePlugin", "patch", patchName, "msg", msg)
-	TheEngine.SendOsc(ff, msg)
+	h.SendOsc(ff, msg)
 }
 
 func (r *Resolume) SendEffectParam(patchName string, name string, value string) {

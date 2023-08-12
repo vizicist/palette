@@ -291,14 +291,13 @@ func (vals *ParamValues) GetBoolValue(name string) bool {
 }
 
 func (vals *ParamValues) Save(category string, filename string) error {
+	data := vals.persistentDataOf(category,filename)
+	return TheHost.SaveDataInFile(data, category, filename)
+}
+
+func (vals *ParamValues) persistentDataOf(category string, filename string) (data []byte) {
 
 	LogOfType("saved", "ParamValues.Save", "category", category, "filename", filename)
-
-	path, err := WritableSavedFilePath(category, filename, ".json")
-	if err != nil {
-		LogIfError(err)
-		return err
-	}
 
 	s := "{\n    \"params\": {\n"
 
@@ -336,8 +335,7 @@ func (vals *ParamValues) Save(category string, filename string) error {
 		sep = ",\n"
 	}
 	s += "\n    }\n}"
-	data := []byte(s)
-	return os.WriteFile(path, data, 0644)
+	return []byte(s)
 }
 
 func IsPatchCategory(category string) bool {
@@ -347,15 +345,11 @@ func IsPatchCategory(category string) bool {
 		category == "misc")
 }
 
-func LoadParamsMap(path string) (ParamsMap, error) {
-	bytes, err := os.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
+func LoadParamsMap(bytes []byte) (ParamsMap, error) {
 	var f any
-	err = json.Unmarshal(bytes, &f)
+	err := json.Unmarshal(bytes, &f)
 	if err != nil {
-		return nil, fmt.Errorf("unable to Unmarshal path=%s, err=%s", path, err)
+		return nil, fmt.Errorf("unable to Unmarshal, err=%s", err)
 	}
 	toplevel, ok := f.(map[string]any)
 	if !ok {
@@ -454,15 +448,14 @@ func LoadParamEnums() error {
 
 	ParamEnums = make(map[string][]string)
 
-	path := ConfigFilePath("paramenums.json")
-	bytes, err := os.ReadFile(path)
+	bytes, err := TheHost.GetConfigFileData("paramenums.json")
 	if err != nil {
-		return fmt.Errorf("loadParamEnums: unable to read path=%s", path)
+		return err
 	}
 	var f any
 	err = json.Unmarshal(bytes, &f)
 	if err != nil {
-		return fmt.Errorf("loadParamEnums: unable to Unmarshal path=%s", path)
+		return err
 	}
 	toplevel := f.(map[string]any)
 
@@ -481,15 +474,14 @@ func LoadParamDefs() error {
 
 	ParamDefs = make(map[string]ParamDef)
 
-	path := ConfigFilePath("paramdefs.json")
-	bytes, err := os.ReadFile(path)
+	bytes, err := TheHost.GetConfigFileData("paramdefs.json")
 	if err != nil {
-		return fmt.Errorf("unable to read %s, err=%s", path, err)
+		return err
 	}
 	var f any
 	err = json.Unmarshal(bytes, &f)
 	if err != nil {
-		return fmt.Errorf("unable to Unmarshal %s, err=%s", path, err)
+		return err
 	}
 	params := f.(map[string]any)
 	for name, dat := range params {
@@ -618,10 +610,9 @@ var overrideMap ParamsMap
 func OverrideMap() ParamsMap {
 	if overrideMap == nil {
 		// If there's a _override.json file, use it
-		overridepath := ConfigFilePath("paramoverrides.json")
-		if fileExists(overridepath) {
-			LogOfType("params", "Reading Overridemap", "overridepath", overridepath)
-			m, err := LoadParamsMap(overridepath)
+		bytes, err := TheHost.GetConfigFileData("paramoverrides.json")
+		if err == nil {
+			m, err := LoadParamsMap(bytes)
 			if err != nil {
 				LogError(err)
 			} else {

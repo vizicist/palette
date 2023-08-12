@@ -131,7 +131,7 @@ func (erae *Erae) handleFinger(bb []byte) {
 	y := rawy / float32(erae.height)
 	z := rawz
 
-	if IsLogging("erae") {
+	if TheHost.IsLogging("erae") {
 		dx := lastX - x
 		dy := lastY - y
 		dz := lastZ - z
