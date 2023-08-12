@@ -14,7 +14,6 @@ require (
 	github.com/nats-io/nkeys v0.4.4 // indirect
 	github.com/nats-io/nuid v1.0.1 // indirect
 	github.com/pkg/profile v1.7.0 // indirect
-	github.com/vizicist/palette/engine v0.0.0-20230806230419-04243066f240 // indirect
 	gitlab.com/gomidi/midi/v2 v2.0.30 // indirect
 	go.uber.org/multierr v1.10.0 // indirect
 	go.uber.org/zap v1.25.0 // indirect

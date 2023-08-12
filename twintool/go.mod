@@ -11,7 +11,6 @@ require (
 	github.com/nats-io/nkeys v0.4.4 // indirect
 	github.com/nats-io/nuid v1.0.1 // indirect
 	github.com/vizicist/palette v0.0.0-20201219193756-9919d24a6e07 // indirect
-	github.com/vizicist/portmidi v0.0.0-20210914000823-0362764d0962 // indirect
 	golang.org/x/crypto v0.6.0 // indirect
 	golang.org/x/sys v0.5.0 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
