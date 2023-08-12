@@ -21,28 +21,28 @@ func main() {
 	flag.Parse()
 	args := flag.Args()
 
-	TheHost = hostwin.NewHost()
+	host := hostwin.NewHost()
 
 	// If we're trying to archive the logs, use stdout.
 	// don't open any log files, use stdout
 	doingArchiveLogs := (len(args) == 1 && args[0] == "archivelogs")
 	if doingArchiveLogs {
-		engine.InitLog("") // "" == "stdout"
+		host.InitLog("") // "" == "stdout"
 	} else {
-		engine.InitLog("palette")
+		host.InitLog("palette")
 	}
 
-	engine.InitMisc()
-	engine.InitEngine()
+	host.InitMisc()
+	host.InitEngine()
 
-	engine.LogInfo("Palette InitLog", "args", args)
+	host.LogInfo("Palette InitLog", "args", args)
 
 	apiout, err := CliCommand(args)
 	if err != nil {
 		os.Stdout.WriteString("Error: " + err.Error() + "\n")
-		engine.LogError(err)
+		host.LogError(err)
 	} else {
-		os.Stdout.WriteString(engine.HumanReadableApiOutput(apiout))
+		os.Stdout.WriteString(host.HumanReadableApiOutput(apiout))
 	}
 }
 

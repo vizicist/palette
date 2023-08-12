@@ -1,38 +1,175 @@
-{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-07-12 11:38:08","logname":"monitor","click":0,"loglevel":"info"}
-{"uptime":"0.000501","msg":"monitor is checking the engine.","click":0,"loglevel":"info"}
-{"uptime":"0.063533","msg":"LogIfError","port":"Logidy UMI3","err":"can't find MIDI input port Logidy UMI3","click":0,"loglevel":"warn"}
-{"uptime":"0.108534","msg":"joystick check","j":0,"name":"Microsoft PC-joystick driver","buttoncount":0,"click":0,"loglevel":"info"}
-{"uptime":"0.125056","msg":"joystick check","j":1,"name":"Microsoft PC-joystick driver","buttoncount":16,"click":0,"loglevel":"info"}
-{"uptime":"0.140607","msg":"joystick check","j":2,"name":"Microsoft PC-joystick driver","buttoncount":16,"click":0,"loglevel":"info"}
-{"uptime":"0.156605","msg":"joystick check","j":3,"name":"Microsoft PC-joystick driver","buttoncount":16,"click":0,"loglevel":"info"}
-{"uptime":"0.171643","msg":"joystick check","j":4,"name":"Microsoft PC-joystick driver","buttoncount":4,"click":0,"loglevel":"info"}
-{"uptime":"0.186666","msg":"LogIfError","err":"joystickMonitor: disabled, unable to find joystick with 8 buttons","click":0,"loglevel":"warn"}
-{"uptime":"0.224777","msg":"checkEngine: engine is not running, killing everything, monitor should restart engine.","click":0,"loglevel":"info"}
-{"uptime":"0.224777","msg":"KillAll","click":0,"loglevel":"info"}
-{"uptime":"0.224777","msg":"KillExecutable","executable":"key.exe","exe":"key.exe","click":0,"loglevel":"info"}
-{"uptime":"0.287348","msg":"KillExecutable","executable":"mmtt_kinect.exe","exe":"mmtt_kinect.exe","click":0,"loglevel":"info"}
-{"uptime":"0.347431","msg":"KillExecutable","executable":"bidule.exe","exe":"bidule.exe","click":0,"loglevel":"info"}
-{"uptime":"0.407527","msg":"KillExecutable","executable":"avenue.exe","exe":"avenue.exe","click":0,"loglevel":"info"}
-{"uptime":"0.469092","msg":"KillExecutable","executable":"palette_gui.exe","exe":"palette_gui.exe","click":0,"loglevel":"info"}
-{"uptime":"0.531229","msg":"KillExecutable","executable":"palette_engine.exe","exe":"palette_engine.exe","click":0,"loglevel":"info"}
-{"uptime":"0.594340","msg":"checkEngine: restarting engine","click":0,"loglevel":"info"}
-{"uptime":"0.594340","msg":"StartExecutableLogOutput","executable":"C:\\Program Files\\Palette\\bin\\palette_engine.exe","click":0,"loglevel":"info"}
-{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-07-12 11:45:54","logname":"monitor","click":0,"loglevel":"info"}
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-07-13 21:24:25","logname":"monitor","click":0,"loglevel":"info"}
 {"uptime":"0.000000","msg":"monitor is checking the engine.","click":0,"loglevel":"info"}
-{"uptime":"0.042157","msg":"LogIfError","port":"Logidy UMI3","err":"can't find MIDI input port Logidy UMI3","click":0,"loglevel":"warn"}
-{"uptime":"0.051658","msg":"joystick check","j":0,"name":"Microsoft PC-joystick driver","buttoncount":0,"click":0,"loglevel":"info"}
-{"uptime":"0.052157","msg":"joystick check","j":1,"name":"Microsoft PC-joystick driver","buttoncount":16,"click":0,"loglevel":"info"}
-{"uptime":"0.052658","msg":"joystick check","j":2,"name":"Microsoft PC-joystick driver","buttoncount":16,"click":0,"loglevel":"info"}
-{"uptime":"0.053157","msg":"joystick check","j":3,"name":"Microsoft PC-joystick driver","buttoncount":16,"click":0,"loglevel":"info"}
-{"uptime":"0.053157","msg":"joystick check","j":4,"name":"Microsoft PC-joystick driver","buttoncount":4,"click":0,"loglevel":"info"}
-{"uptime":"0.053157","msg":"LogIfError","err":"joystickMonitor: disabled, unable to find joystick with 8 buttons","click":0,"loglevel":"warn"}
-{"uptime":"0.195284","msg":"checkEngine: engine is not running, killing everything, monitor should restart engine.","click":0,"loglevel":"info"}
-{"uptime":"0.195284","msg":"KillAll","click":0,"loglevel":"info"}
-{"uptime":"0.195284","msg":"KillExecutable","executable":"key.exe","exe":"key.exe","click":0,"loglevel":"info"}
-{"uptime":"0.254834","msg":"KillExecutable","executable":"mmtt_kinect.exe","exe":"mmtt_kinect.exe","click":0,"loglevel":"info"}
-{"uptime":"0.311869","msg":"KillExecutable","executable":"bidule.exe","exe":"bidule.exe","click":0,"loglevel":"info"}
-{"uptime":"0.384902","msg":"KillExecutable","executable":"avenue.exe","exe":"avenue.exe","click":0,"loglevel":"info"}
-{"uptime":"0.477955","msg":"KillExecutable","executable":"palette_gui.exe","exe":"palette_gui.exe","click":0,"loglevel":"info"}
-{"uptime":"0.560636","msg":"KillExecutable","executable":"palette_engine.exe","exe":"palette_engine.exe","click":0,"loglevel":"info"}
-{"uptime":"0.641414","msg":"checkEngine: restarting engine","click":0,"loglevel":"info"}
-{"uptime":"0.641414","msg":"StartExecutableLogOutput","executable":"C:\\Program Files\\Palette\\bin\\palette_engine.exe","click":0,"loglevel":"info"}
+{"uptime":"0.042128","msg":"LogIfError","port":"Logidy UMI3","err":"can't find MIDI input port Logidy UMI3","click":0,"loglevel":"warn"}
+{"uptime":"0.053686","msg":"joystick check","j":0,"name":"Microsoft PC-joystick driver","buttoncount":0,"click":0,"loglevel":"info"}
+{"uptime":"0.054129","msg":"joystick check","j":1,"name":"Microsoft PC-joystick driver","buttoncount":16,"click":0,"loglevel":"info"}
+{"uptime":"0.054629","msg":"joystick check","j":2,"name":"Microsoft PC-joystick driver","buttoncount":16,"click":0,"loglevel":"info"}
+{"uptime":"0.055129","msg":"joystick check","j":3,"name":"Microsoft PC-joystick driver","buttoncount":16,"click":0,"loglevel":"info"}
+{"uptime":"0.055629","msg":"joystick check","j":4,"name":"Microsoft PC-joystick driver","buttoncount":4,"click":0,"loglevel":"info"}
+{"uptime":"0.055629","msg":"LogIfError","err":"joystickMonitor: disabled, unable to find joystick with 8 buttons","click":0,"loglevel":"warn"}
+{"uptime":"0.199792","msg":"checkEngine: engine is not running, killing everything, monitor should restart engine.","click":0,"loglevel":"info"}
+{"uptime":"0.199792","msg":"KillAll","click":0,"loglevel":"info"}
+{"uptime":"0.199792","msg":"KillExecutable","executable":"key.exe","exe":"key.exe","click":0,"loglevel":"info"}
+{"uptime":"0.270504","msg":"KillExecutable","executable":"mmtt_kinect.exe","exe":"mmtt_kinect.exe","click":0,"loglevel":"info"}
+{"uptime":"0.343014","msg":"KillExecutable","executable":"bidule.exe","exe":"bidule.exe","click":0,"loglevel":"info"}
+{"uptime":"0.427533","msg":"KillExecutable","executable":"avenue.exe","exe":"avenue.exe","click":0,"loglevel":"info"}
+{"uptime":"0.496539","msg":"KillExecutable","executable":"palette_gui.exe","exe":"palette_gui.exe","click":0,"loglevel":"info"}
+{"uptime":"0.565045","msg":"KillExecutable","executable":"palette_engine.exe","exe":"palette_engine.exe","click":0,"loglevel":"info"}
+{"uptime":"0.634053","msg":"checkEngine: restarting engine","click":0,"loglevel":"info"}
+{"uptime":"0.634053","msg":"StartExecutableLogOutput","executable":"C:\\Program Files\\Palette\\bin\\palette_engine.exe","click":0,"loglevel":"info"}
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-07-17 12:39:12","logname":"monitor","click":0,"loglevel":"info"}
+{"uptime":"0.000000","msg":"monitor is checking the engine.","click":0,"loglevel":"info"}
+{"uptime":"0.043524","msg":"LogIfError","port":"Logidy UMI3","err":"can't find MIDI input port Logidy UMI3","click":0,"loglevel":"warn"}
+{"uptime":"0.093553","msg":"joystick check","j":0,"name":"Microsoft PC-joystick driver","buttoncount":0,"click":0,"loglevel":"info"}
+{"uptime":"0.107584","msg":"joystick check","j":1,"name":"Microsoft PC-joystick driver","buttoncount":16,"click":0,"loglevel":"info"}
+{"uptime":"0.121600","msg":"joystick check","j":2,"name":"Microsoft PC-joystick driver","buttoncount":16,"click":0,"loglevel":"info"}
+{"uptime":"0.135618","msg":"joystick check","j":3,"name":"Microsoft PC-joystick driver","buttoncount":16,"click":0,"loglevel":"info"}
+{"uptime":"0.149635","msg":"joystick check","j":4,"name":"Microsoft PC-joystick driver","buttoncount":4,"click":0,"loglevel":"info"}
+{"uptime":"0.163647","msg":"LogIfError","err":"joystickMonitor: disabled, unable to find joystick with 8 buttons","click":0,"loglevel":"warn"}
+{"uptime":"0.166652","msg":"checkEngine: engine is not running, killing everything, monitor should restart engine.","click":0,"loglevel":"info"}
+{"uptime":"0.166835","msg":"KillAll","click":0,"loglevel":"info"}
+{"uptime":"0.166835","msg":"KillExecutable","executable":"key.exe","exe":"key.exe","click":0,"loglevel":"info"}
+{"uptime":"0.227242","msg":"KillExecutable","executable":"mmtt_kinect.exe","exe":"mmtt_kinect.exe","click":0,"loglevel":"info"}
+{"uptime":"0.281340","msg":"KillExecutable","executable":"bidule.exe","exe":"bidule.exe","click":0,"loglevel":"info"}
+{"uptime":"0.335874","msg":"KillExecutable","executable":"avenue.exe","exe":"avenue.exe","click":0,"loglevel":"info"}
+{"uptime":"0.389033","msg":"KillExecutable","executable":"palette_gui.exe","exe":"palette_gui.exe","click":0,"loglevel":"info"}
+{"uptime":"0.443286","msg":"KillExecutable","executable":"palette_engine.exe","exe":"palette_engine.exe","click":0,"loglevel":"info"}
+{"uptime":"0.511316","msg":"checkEngine: restarting engine","click":0,"loglevel":"info"}
+{"uptime":"0.511316","msg":"StartExecutableLogOutput","executable":"C:\\Program Files\\Palette\\bin\\palette_engine.exe","click":0,"loglevel":"info"}
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-07-19 19:21:48","logname":"monitor","click":0,"loglevel":"info"}
+{"uptime":"0.000000","msg":"monitor is checking the engine.","click":0,"loglevel":"info"}
+{"uptime":"0.034823","msg":"joystick check","j":0,"name":"Microsoft PC-joystick driver","buttoncount":0,"click":0,"loglevel":"info"}
+{"uptime":"0.035005","msg":"joystick check","j":1,"name":"Microsoft PC-joystick driver","buttoncount":16,"click":0,"loglevel":"info"}
+{"uptime":"0.035505","msg":"joystick check","j":2,"name":"Microsoft PC-joystick driver","buttoncount":16,"click":0,"loglevel":"info"}
+{"uptime":"0.036005","msg":"joystick check","j":3,"name":"Microsoft PC-joystick driver","buttoncount":16,"click":0,"loglevel":"info"}
+{"uptime":"0.036504","msg":"joystick check","j":4,"name":"Microsoft PC-joystick driver","buttoncount":4,"click":0,"loglevel":"info"}
+{"uptime":"0.036504","msg":"LogIfError","err":"joystickMonitor: disabled, unable to find joystick with 8 buttons","click":0,"loglevel":"warn"}
+{"uptime":"0.047489","msg":"LogIfError","port":"Logidy UMI3","err":"can't find MIDI input port Logidy UMI3","click":0,"loglevel":"warn"}
+{"uptime":"0.215672","msg":"checkEngine: engine is not running, killing everything, monitor should restart engine.","click":0,"loglevel":"info"}
+{"uptime":"0.215672","msg":"KillAll","click":0,"loglevel":"info"}
+{"uptime":"0.215672","msg":"KillExecutable","executable":"key.exe","exe":"key.exe","click":0,"loglevel":"info"}
+{"uptime":"0.283181","msg":"KillExecutable","executable":"mmtt_kinect.exe","exe":"mmtt_kinect.exe","click":0,"loglevel":"info"}
+{"uptime":"0.346702","msg":"KillExecutable","executable":"bidule.exe","exe":"bidule.exe","click":0,"loglevel":"info"}
+{"uptime":"0.410205","msg":"KillExecutable","executable":"avenue.exe","exe":"avenue.exe","click":0,"loglevel":"info"}
+{"uptime":"0.472715","msg":"KillExecutable","executable":"palette_gui.exe","exe":"palette_gui.exe","click":0,"loglevel":"info"}
+{"uptime":"0.545712","msg":"KillExecutable","executable":"palette_engine.exe","exe":"palette_engine.exe","click":0,"loglevel":"info"}
+{"uptime":"0.616776","msg":"checkEngine: restarting engine","click":0,"loglevel":"info"}
+{"uptime":"0.616776","msg":"StartExecutableLogOutput","executable":"C:\\Program Files\\Palette\\bin\\palette_engine.exe","click":0,"loglevel":"info"}
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-07-19 19:34:11","logname":"monitor","click":0,"loglevel":"info"}
+{"uptime":"0.000000","msg":"monitor is checking the engine.","click":0,"loglevel":"info"}
+{"uptime":"0.029001","msg":"joystick check","j":0,"name":"Microsoft PC-joystick driver","buttoncount":0,"click":0,"loglevel":"info"}
+{"uptime":"0.029504","msg":"joystick check","j":1,"name":"Microsoft PC-joystick driver","buttoncount":16,"click":0,"loglevel":"info"}
+{"uptime":"0.030002","msg":"joystick check","j":2,"name":"Microsoft PC-joystick driver","buttoncount":16,"click":0,"loglevel":"info"}
+{"uptime":"0.030500","msg":"joystick check","j":3,"name":"Microsoft PC-joystick driver","buttoncount":16,"click":0,"loglevel":"info"}
+{"uptime":"0.031001","msg":"joystick check","j":4,"name":"Microsoft PC-joystick driver","buttoncount":4,"click":0,"loglevel":"info"}
+{"uptime":"0.031001","msg":"LogIfError","err":"joystickMonitor: disabled, unable to find joystick with 8 buttons","click":0,"loglevel":"warn"}
+{"uptime":"0.044422","msg":"LogIfError","port":"Logidy UMI3","err":"can't find MIDI input port Logidy UMI3","click":0,"loglevel":"warn"}
+{"uptime":"0.306646","msg":"checkEngine: engine is not running, killing everything, monitor should restart engine.","click":0,"loglevel":"info"}
+{"uptime":"0.306646","msg":"KillAll","click":0,"loglevel":"info"}
+{"uptime":"0.306646","msg":"KillExecutable","executable":"key.exe","exe":"key.exe","click":0,"loglevel":"info"}
+{"uptime":"0.434696","msg":"KillExecutable","executable":"mmtt_kinect.exe","exe":"mmtt_kinect.exe","click":0,"loglevel":"info"}
+{"uptime":"0.546174","msg":"KillExecutable","executable":"bidule.exe","exe":"bidule.exe","click":0,"loglevel":"info"}
+{"uptime":"0.652850","msg":"KillExecutable","executable":"avenue.exe","exe":"avenue.exe","click":0,"loglevel":"info"}
+{"uptime":"0.741785","msg":"KillExecutable","executable":"palette_gui.exe","exe":"palette_gui.exe","click":0,"loglevel":"info"}
+{"uptime":"0.818957","msg":"KillExecutable","executable":"palette_engine.exe","exe":"palette_engine.exe","click":0,"loglevel":"info"}
+{"uptime":"0.911341","msg":"checkEngine: restarting engine","click":0,"loglevel":"info"}
+{"uptime":"0.911341","msg":"StartExecutableLogOutput","executable":"C:\\Program Files\\Palette\\bin\\palette_engine.exe","click":0,"loglevel":"info"}
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-07-19 19:35:43","logname":"monitor","click":0,"loglevel":"info"}
+{"uptime":"0.000000","msg":"monitor is checking the engine.","click":0,"loglevel":"info"}
+{"uptime":"0.018502","msg":"joystick check","j":0,"name":"Microsoft PC-joystick driver","buttoncount":0,"click":0,"loglevel":"info"}
+{"uptime":"0.019003","msg":"joystick check","j":1,"name":"Microsoft PC-joystick driver","buttoncount":16,"click":0,"loglevel":"info"}
+{"uptime":"0.019502","msg":"joystick check","j":2,"name":"Microsoft PC-joystick driver","buttoncount":16,"click":0,"loglevel":"info"}
+{"uptime":"0.020011","msg":"joystick check","j":3,"name":"Microsoft PC-joystick driver","buttoncount":16,"click":0,"loglevel":"info"}
+{"uptime":"0.020502","msg":"joystick check","j":4,"name":"Microsoft PC-joystick driver","buttoncount":4,"click":0,"loglevel":"info"}
+{"uptime":"0.020502","msg":"LogIfError","err":"joystickMonitor: disabled, unable to find joystick with 8 buttons","click":0,"loglevel":"warn"}
+{"uptime":"0.045501","msg":"LogIfError","port":"Logidy UMI3","err":"can't find MIDI input port Logidy UMI3","click":0,"loglevel":"warn"}
+{"uptime":"0.232586","msg":"checkEngine: engine is not running, killing everything, monitor should restart engine.","click":0,"loglevel":"info"}
+{"uptime":"0.232586","msg":"KillAll","click":0,"loglevel":"info"}
+{"uptime":"0.232586","msg":"KillExecutable","executable":"key.exe","exe":"key.exe","click":0,"loglevel":"info"}
+{"uptime":"0.309695","msg":"KillExecutable","executable":"mmtt_kinect.exe","exe":"mmtt_kinect.exe","click":0,"loglevel":"info"}
+{"uptime":"0.383749","msg":"KillExecutable","executable":"bidule.exe","exe":"bidule.exe","click":0,"loglevel":"info"}
+{"uptime":"0.456286","msg":"KillExecutable","executable":"avenue.exe","exe":"avenue.exe","click":0,"loglevel":"info"}
+{"uptime":"0.528304","msg":"KillExecutable","executable":"palette_gui.exe","exe":"palette_gui.exe","click":0,"loglevel":"info"}
+{"uptime":"0.607040","msg":"KillExecutable","executable":"palette_engine.exe","exe":"palette_engine.exe","click":0,"loglevel":"info"}
+{"uptime":"0.682541","msg":"checkEngine: restarting engine","click":0,"loglevel":"info"}
+{"uptime":"0.682541","msg":"StartExecutableLogOutput","executable":"C:\\Program Files\\Palette\\bin\\palette_engine.exe","click":0,"loglevel":"info"}
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-07-19 19:36:59","logname":"monitor","click":0,"loglevel":"info"}
+{"uptime":"0.000000","msg":"monitor is checking the engine.","click":0,"loglevel":"info"}
+{"uptime":"0.016498","msg":"joystick check","j":0,"name":"Microsoft PC-joystick driver","buttoncount":0,"click":0,"loglevel":"info"}
+{"uptime":"0.016498","msg":"joystick check","j":1,"name":"Microsoft PC-joystick driver","buttoncount":16,"click":0,"loglevel":"info"}
+{"uptime":"0.017504","msg":"joystick check","j":2,"name":"Microsoft PC-joystick driver","buttoncount":16,"click":0,"loglevel":"info"}
+{"uptime":"0.018012","msg":"joystick check","j":3,"name":"Microsoft PC-joystick driver","buttoncount":16,"click":0,"loglevel":"info"}
+{"uptime":"0.018510","msg":"joystick check","j":4,"name":"Microsoft PC-joystick driver","buttoncount":4,"click":0,"loglevel":"info"}
+{"uptime":"0.018510","msg":"LogIfError","err":"joystickMonitor: disabled, unable to find joystick with 8 buttons","click":0,"loglevel":"warn"}
+{"uptime":"0.045550","msg":"LogIfError","port":"Logidy UMI3","err":"can't find MIDI input port Logidy UMI3","click":0,"loglevel":"warn"}
+{"uptime":"0.261874","msg":"checkEngine: engine is not running, killing everything, monitor should restart engine.","click":0,"loglevel":"info"}
+{"uptime":"0.261874","msg":"KillAll","click":0,"loglevel":"info"}
+{"uptime":"0.262063","msg":"KillExecutable","executable":"key.exe","exe":"key.exe","click":0,"loglevel":"info"}
+{"uptime":"0.353968","msg":"KillExecutable","executable":"mmtt_kinect.exe","exe":"mmtt_kinect.exe","click":0,"loglevel":"info"}
+{"uptime":"0.426009","msg":"KillExecutable","executable":"bidule.exe","exe":"bidule.exe","click":0,"loglevel":"info"}
+{"uptime":"0.502118","msg":"KillExecutable","executable":"avenue.exe","exe":"avenue.exe","click":0,"loglevel":"info"}
+{"uptime":"0.593392","msg":"KillExecutable","executable":"palette_gui.exe","exe":"palette_gui.exe","click":0,"loglevel":"info"}
+{"uptime":"0.693032","msg":"KillExecutable","executable":"palette_engine.exe","exe":"palette_engine.exe","click":0,"loglevel":"info"}
+{"uptime":"0.775078","msg":"checkEngine: restarting engine","click":0,"loglevel":"info"}
+{"uptime":"0.775078","msg":"StartExecutableLogOutput","executable":"C:\\Program Files\\Palette\\bin\\palette_engine.exe","click":0,"loglevel":"info"}
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-07-19 19:37:40","logname":"monitor","click":0,"loglevel":"info"}
+{"uptime":"0.000000","msg":"monitor is checking the engine.","click":0,"loglevel":"info"}
+{"uptime":"0.018778","msg":"joystick check","j":0,"name":"Microsoft PC-joystick driver","buttoncount":0,"click":0,"loglevel":"info"}
+{"uptime":"0.019501","msg":"joystick check","j":1,"name":"Microsoft PC-joystick driver","buttoncount":16,"click":0,"loglevel":"info"}
+{"uptime":"0.020001","msg":"joystick check","j":2,"name":"Microsoft PC-joystick driver","buttoncount":16,"click":0,"loglevel":"info"}
+{"uptime":"0.020500","msg":"joystick check","j":3,"name":"Microsoft PC-joystick driver","buttoncount":16,"click":0,"loglevel":"info"}
+{"uptime":"0.021002","msg":"joystick check","j":4,"name":"Microsoft PC-joystick driver","buttoncount":4,"click":0,"loglevel":"info"}
+{"uptime":"0.021002","msg":"LogIfError","err":"joystickMonitor: disabled, unable to find joystick with 8 buttons","click":0,"loglevel":"warn"}
+{"uptime":"0.045531","msg":"LogIfError","port":"Logidy UMI3","err":"can't find MIDI input port Logidy UMI3","click":0,"loglevel":"warn"}
+{"uptime":"0.212531","msg":"checkEngine: engine is not running, killing everything, monitor should restart engine.","click":0,"loglevel":"info"}
+{"uptime":"0.212531","msg":"KillAll","click":0,"loglevel":"info"}
+{"uptime":"0.212531","msg":"KillExecutable","executable":"key.exe","exe":"key.exe","click":0,"loglevel":"info"}
+{"uptime":"0.296600","msg":"KillExecutable","executable":"mmtt_kinect.exe","exe":"mmtt_kinect.exe","click":0,"loglevel":"info"}
+{"uptime":"0.372155","msg":"KillExecutable","executable":"bidule.exe","exe":"bidule.exe","click":0,"loglevel":"info"}
+{"uptime":"0.481803","msg":"KillExecutable","executable":"avenue.exe","exe":"avenue.exe","click":0,"loglevel":"info"}
+{"uptime":"0.587372","msg":"KillExecutable","executable":"palette_gui.exe","exe":"palette_gui.exe","click":0,"loglevel":"info"}
+{"uptime":"0.666944","msg":"KillExecutable","executable":"palette_engine.exe","exe":"palette_engine.exe","click":0,"loglevel":"info"}
+{"uptime":"0.750502","msg":"checkEngine: restarting engine","click":0,"loglevel":"info"}
+{"uptime":"0.750502","msg":"StartExecutableLogOutput","executable":"C:\\Program Files\\Palette\\bin\\palette_engine.exe","click":0,"loglevel":"info"}
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-08-03 21:44:08","logname":"monitor","click":0,"loglevel":"info"}
+{"uptime":"0.000000","msg":"monitor is checking the engine.","click":0,"loglevel":"info"}
+{"uptime":"0.036004","msg":"LogIfError","err":"joystickMonitor: disabled, unable to find joystick with 8 buttons","click":0,"loglevel":"warn"}
+{"uptime":"0.049504","msg":"LogIfError","port":"Logidy UMI3","err":"can't find MIDI input port Logidy UMI3","click":0,"loglevel":"warn"}
+{"uptime":"0.306680","msg":"checkEngine: engine is not running, killing everything, monitor should restart engine.","click":0,"loglevel":"info"}
+{"uptime":"0.306680","msg":"KillAll","click":0,"loglevel":"info"}
+{"uptime":"0.306680","msg":"KillExecutable","executable":"key.exe","exe":"key.exe","click":0,"loglevel":"info"}
+{"uptime":"0.373747","msg":"KillExecutable","executable":"mmtt_kinect.exe","exe":"mmtt_kinect.exe","click":0,"loglevel":"info"}
+{"uptime":"0.439194","msg":"KillExecutable","executable":"bidule.exe","exe":"bidule.exe","click":0,"loglevel":"info"}
+{"uptime":"0.516704","msg":"KillExecutable","executable":"avenue.exe","exe":"avenue.exe","click":0,"loglevel":"info"}
+{"uptime":"0.581714","msg":"KillExecutable","executable":"palette_gui.exe","exe":"palette_gui.exe","click":0,"loglevel":"info"}
+{"uptime":"0.650729","msg":"KillExecutable","executable":"palette_engine.exe","exe":"palette_engine.exe","click":0,"loglevel":"info"}
+{"uptime":"0.724229","msg":"checkEngine: restarting engine","click":0,"loglevel":"info"}
+{"uptime":"0.724317","msg":"StartExecutableLogOutput","executable":"C:\\Program Files\\Palette\\bin\\palette_engine.exe","click":0,"loglevel":"info"}
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-08-03 21:46:08","logname":"monitor","click":0,"loglevel":"info"}
+{"uptime":"0.000000","msg":"monitor is checking the engine.","click":0,"loglevel":"info"}
+{"uptime":"0.010501","msg":"LogIfError","err":"joystickMonitor: disabled, unable to find joystick with 8 buttons","click":0,"loglevel":"warn"}
+{"uptime":"0.042000","msg":"LogIfError","port":"Logidy UMI3","err":"can't find MIDI input port Logidy UMI3","click":0,"loglevel":"warn"}
+{"uptime":"0.186321","msg":"checkEngine: engine is not running, killing everything, monitor should restart engine.","click":0,"loglevel":"info"}
+{"uptime":"0.186321","msg":"KillAll","click":0,"loglevel":"info"}
+{"uptime":"0.186321","msg":"KillExecutable","executable":"key.exe","exe":"key.exe","click":0,"loglevel":"info"}
+{"uptime":"0.250828","msg":"KillExecutable","executable":"mmtt_kinect.exe","exe":"mmtt_kinect.exe","click":0,"loglevel":"info"}
+{"uptime":"0.318839","msg":"KillExecutable","executable":"bidule.exe","exe":"bidule.exe","click":0,"loglevel":"info"}
+{"uptime":"0.381374","msg":"KillExecutable","executable":"avenue.exe","exe":"avenue.exe","click":0,"loglevel":"info"}
+{"uptime":"0.443375","msg":"KillExecutable","executable":"palette_gui.exe","exe":"palette_gui.exe","click":0,"loglevel":"info"}
+{"uptime":"0.506383","msg":"KillExecutable","executable":"palette_engine.exe","exe":"palette_engine.exe","click":0,"loglevel":"info"}
+{"uptime":"0.570387","msg":"checkEngine: restarting engine","click":0,"loglevel":"info"}
+{"uptime":"0.570387","msg":"StartExecutableLogOutput","executable":"C:\\Program Files\\Palette\\bin\\palette_engine.exe","click":0,"loglevel":"info"}
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-08-08 00:15:29","logname":"monitor","click":0,"loglevel":"info"}
+{"uptime":"0.000000","msg":"monitor is checking the engine.","click":0,"loglevel":"info"}
+{"uptime":"0.009001","msg":"LogIfError","err":"joystickMonitor: disabled, unable to find joystick with 8 buttons","click":0,"loglevel":"warn"}
+{"uptime":"0.040526","msg":"LogIfError","port":"Logidy UMI3","err":"can't find MIDI input port Logidy UMI3","click":0,"loglevel":"warn"}
+{"uptime":"0.189637","msg":"checkEngine: engine is not running, killing everything, monitor should restart engine.","click":0,"loglevel":"info"}
+{"uptime":"0.189637","msg":"KillAll","click":0,"loglevel":"info"}
+{"uptime":"0.189637","msg":"KillExecutable","executable":"key.exe","exe":"key.exe","click":0,"loglevel":"info"}
+{"uptime":"0.262268","msg":"KillExecutable","executable":"mmtt_kinect.exe","exe":"mmtt_kinect.exe","click":0,"loglevel":"info"}
+{"uptime":"0.330799","msg":"KillExecutable","executable":"bidule.exe","exe":"bidule.exe","click":0,"loglevel":"info"}
+{"uptime":"0.400332","msg":"KillExecutable","executable":"avenue.exe","exe":"avenue.exe","click":0,"loglevel":"info"}
+{"uptime":"0.487377","msg":"KillExecutable","executable":"palette_gui.exe","exe":"palette_gui.exe","click":0,"loglevel":"info"}
+{"uptime":"0.591437","msg":"KillExecutable","executable":"palette_engine.exe","exe":"palette_engine.exe","click":0,"loglevel":"info"}
+{"uptime":"0.660970","msg":"checkEngine: restarting engine","click":0,"loglevel":"info"}
+{"uptime":"0.660970","msg":"StartExecutableLogOutput","executable":"C:\\Program Files\\Palette\\bin\\palette_engine.exe","click":0,"loglevel":"info"}

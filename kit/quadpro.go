@@ -116,23 +116,18 @@ func (quadpro *QuadPro) Start() {
 	}
 	quadpro.started = true
 
-	buttonPath := ConfigFilePath("buttons.json")
-	if fileExists(buttonPath) {
-		bytes, err := os.ReadFile(buttonPath)
+	bytes, err := TheHost.GetConfigFileData("buttons.json")
+	if err == nil {
+		var f any
+		err = json.Unmarshal(bytes, &f)
 		if err != nil {
-			LogIfError(fmt.Errorf("unable to read buttons.json, err=%s", err))
+			LogIfError(fmt.Errorf("unable to Unmarshal buttons.json"))
 		} else {
-			var f any
-			err = json.Unmarshal(bytes, &f)
-			if err != nil {
-				LogIfError(fmt.Errorf("unable to Unmarshal %s", buttonPath))
+			buttonMap, ok := f.(map[string]any)
+			if !ok {
+				LogIfError(err)
 			} else {
-				buttonMap, ok := f.(map[string]any)
-				if !ok {
-					LogIfError(err)
-				} else {
-					CursorSourceToQuadPreset = buttonMap
-				}
+				CursorSourceToQuadPreset = buttonMap
 			}
 		}
 	}
@@ -144,6 +139,7 @@ func (quadpro *QuadPro) Start() {
 	_ = quadpro.addPatch("C")
 	_ = quadpro.addPatch("D")
 
+	bytes := TheHost.GetSavedData("quad", "_Current")
 	err := quadpro.Load("quad", "_Current")
 	LogIfError(err)
 }
@@ -226,7 +222,7 @@ func (quadpro *QuadPro) onCursorEvent(state ActiveCursor) error {
 		patchLogic.generateSoundFromCursor(state.Current, cursorStyle)
 	}
 	if genvisual {
-		patchLogic.generateVisualsFromCursor(state.Current)
+		TheHost.GenerateVisualsFromCursor(state.Current, patchLogic.patch.name)
 	}
 	return nil
 }
@@ -245,7 +241,7 @@ func (quadpro *QuadPro) onGet(apiargs map[string]string) (result string, err err
 		return "", fmt.Errorf("QuadPro.onPatchGet: Missing name argument")
 	}
 	if strings.HasPrefix(paramName, "engine") {
-		return GetParam(paramName)
+		return TheHost.GetParam(paramName)
 	} else {
 		return "", fmt.Errorf("QuadPro.onGet: can't handle parameter %s", paramName)
 	}
@@ -305,20 +301,13 @@ func (quadpro *QuadPro) loadQuadRand() error {
 	return nil
 }
 
-func (quadpro *QuadPro) Load(category string, filename string) error {
+func (quadpro *QuadPro) Load(bytes []byte) error {
 
-	path, err := ReadableSavedFilePath(category, filename, ".json")
+	paramsMap, err := LoadParamsMap(bytes)
 	if err != nil {
 		LogIfError(err)
 		return err
 	}
-	paramsMap, err := LoadParamsMap(path)
-	if err != nil {
-		LogIfError(err)
-		return err
-	}
-
-	LogInfo("QuadPro.Load", "category", category, "filename", filename)
 
 	var lasterr error
 
@@ -348,7 +337,7 @@ func (quadpro *QuadPro) Load(category string, filename string) error {
 		}
 
 	default:
-		LogWarn("QuadPro.Load: unhandled", "category", category, "filename", filename)
+		LogWarn("QuadPro.Load: unhandled")
 	}
 
 	// Decide what _Current things we should save
