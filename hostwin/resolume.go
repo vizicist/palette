@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/hypebeast/go-osc/osc"
+	"github.com/vizicist/palette/kit"
 )
 
 var ResolumePort = 7000
@@ -57,7 +58,7 @@ func (h HostWin) FreeframeClientFor(patchName string) *osc.Client {
 			return nil
 		}
 		ff = osc.NewClient(LocalAddress, portNum)
-		r.freeframeClients[patchName] = ff
+		h.freeframeClients[patchName] = ff
 	}
 	return ff
 }
@@ -73,8 +74,8 @@ func (h HostWin) ToFreeFramePlugin(patchName string, msg *osc.Message) {
 	h.SendOsc(ff, msg)
 }
 
-func (r *Resolume) SendEffectParam(patchName string, name string, value string) {
-	portNum, layerNum := r.PortAndLayerNumForPatch(patchName)
+func (h HostWin) SendEffectParam(patchName string, name string, value string) {
+	portNum, layerNum := h.PortAndLayerNumForPatch(patchName)
 	if portNum == 0 {
 		LogIfError(fmt.Errorf("no such layer"), "name", patchName)
 		return
@@ -84,20 +85,20 @@ func (r *Resolume) SendEffectParam(patchName string, name string, value string) 
 	if i > 0 {
 		effectName := name[0:i]
 		paramName := name[i+1:]
-		r.sendPadOneEffectParam(layerNum, effectName, paramName, value)
+		h.sendPadOneEffectParam(layerNum, effectName, paramName, value)
 	} else {
 		onoff, err := strconv.ParseBool(value)
 		if err != nil {
 			LogIfError(err)
 			onoff = false
 		}
-		r.sendPadOneEffectOnOff(layerNum, name, onoff)
+		h.sendPadOneEffectOnOff(layerNum, name, onoff)
 	}
 }
 
-func (r *Resolume) sendPadOneEffectParam(layerNum int, effectName string, paramName string, value string) {
+func (h HostWin) sendPadOneEffectParam(layerNum int, effectName string, paramName string, value string) {
 	fullName := "effect" + "." + effectName + ":" + paramName
-	paramsMap, realEffectName, realEffectNum, err := r.getEffectMap(effectName, "params")
+	paramsMap, realEffectName, realEffectNum, err := h.getEffectMap(effectName, "params")
 	if err != nil {
 		LogIfError(err)
 		return
@@ -112,7 +113,7 @@ func (r *Resolume) sendPadOneEffectParam(layerNum int, effectName string, paramN
 		return
 	}
 
-	oneDef, ok := ParamDefs[fullName]
+	oneDef, ok := kit.ParamDefs[fullName]
 	if !ok {
 		LogWarn("No paramdef value for", "param", paramName, "effect", effectName)
 		return
@@ -129,7 +130,7 @@ func (r *Resolume) sendPadOneEffectParam(layerNum int, effectName string, paramN
 
 	switch oneDef.TypedParamDef.(type) {
 
-	case ParamDefInt:
+	case kit.ParamDefInt:
 		valint, err := strconv.Atoi(value)
 		if err != nil {
 			LogIfError(err)
@@ -137,7 +138,7 @@ func (r *Resolume) sendPadOneEffectParam(layerNum int, effectName string, paramN
 		}
 		msg.Append(int32(valint))
 
-	case ParamDefBool:
+	case kit.ParamDefBool:
 		valbool, err := strconv.ParseBool(value)
 		if err != nil {
 			LogIfError(err)
@@ -149,13 +150,13 @@ func (r *Resolume) sendPadOneEffectParam(layerNum int, effectName string, paramN
 		}
 		msg.Append(int32(onoffValue))
 
-	case ParamDefString:
+	case kit.ParamDefString:
 		valstr := value
 		msg.Append(valstr)
 
-	case ParamDefFloat:
+	case kit.ParamDefFloat:
 		var valfloat float32
-		valfloat, err := ParseFloat32(value, resEffectName)
+		valfloat, err := kit.ParseFloat32(value, resEffectName)
 		if err != nil {
 			LogIfError(err)
 			valfloat = 0.0
@@ -167,14 +168,14 @@ func (r *Resolume) sendPadOneEffectParam(layerNum int, effectName string, paramN
 		return
 	}
 
-	r.toResolume(msg)
+	h.toResolume(msg)
 }
 
-func (r *Resolume) toResolume(msg *osc.Message) {
-	TheEngine.SendOsc(r.resolumeClient, msg)
+func (h HostWin) toResolume(msg *osc.Message) {
+	h.SendOsc(h.resolumeClient, msg)
 }
 
-func (r *Resolume) sendPadOneEffectOnOff(layerNum int, effectName string, onoff bool) {
+func (h HostWin) sendPadOneEffectOnOff(layerNum int, effectName string, onoff bool) {
 	var mapType string
 	if onoff {
 		mapType = "on"
@@ -182,7 +183,7 @@ func (r *Resolume) sendPadOneEffectOnOff(layerNum int, effectName string, onoff 
 		mapType = "off"
 	}
 
-	onoffMap, realEffectName, realEffectNum, err := r.getEffectMap(effectName, mapType)
+	onoffMap, realEffectName, realEffectNum, err := h.getEffectMap(effectName, mapType)
 	if err != nil {
 		LogIfError(err)
 		return
@@ -204,16 +205,16 @@ func (r *Resolume) sendPadOneEffectOnOff(layerNum int, effectName string, onoff 
 		return
 	}
 	addr := onoffAddr.(string)
-	addr = r.addEffectNum(addr, realEffectName, realEffectNum)
+	addr = h.addEffectNum(addr, realEffectName, realEffectNum)
 	addr = addLayerAndClipNums(addr, layerNum, 1)
 	onoffValue := int(onoffArg.(float64))
 
 	msg := osc.NewMessage(addr)
 	msg.Append(int32(onoffValue))
-	r.toResolume(msg)
+	h.toResolume(msg)
 }
 
-func (r *Resolume) addEffectNum(addr string, effect string, num int) string {
+func (h HostWin) addEffectNum(addr string, effect string, num int) string {
 	if num == 1 {
 		return addr
 	}
@@ -226,7 +227,7 @@ func (h HostWin) ShowText(text string) {
 	textLayerNum := h.TextLayerNum()
 
 	// make sure the layer is not displayed before changing it
-	r.bypassLayer(textLayerNum, true)
+	h.bypassLayer(textLayerNum, true)
 
 	// the first clip is the textgenerator clip
 	addr := fmt.Sprintf("/composition/layers/%d/clips/1/video/source/textgenerator/text/params/lines", textLayerNum)
@@ -238,20 +239,20 @@ func (h HostWin) ShowText(text string) {
 	// give it time to "sink in", otherwise the previous text displays briefly
 	time.Sleep(150 * time.Millisecond)
 
-	r.connectClip(textLayerNum, 1)     // activate that clip
-	r.bypassLayer(textLayerNum, false) // show the layer
+	h.connectClip(textLayerNum, 1)     // activate that clip
+	h.bypassLayer(textLayerNum, false) // show the layer
 }
 
 // In text layer, clip 1 is the animated text generator for the preset names,
 // and clips 2,3,... are images for startup and reboot.
-func (r *Resolume) showClip(clipNum int) {
+func (h HostWin) showClip(clipNum int) {
 
-	textLayerNum := r.TextLayerNum()
-	r.connectClip(textLayerNum, clipNum) // activate that clip
+	textLayerNum := h.TextLayerNum()
+	h.connectClip(textLayerNum, clipNum) // activate that clip
 }
 
-func (r *Resolume) TextLayerNum() int {
-	layerNum, err := GetParamInt("engine.resolumetextlayer")
+func (h HostWin) TextLayerNum() int {
+	layerNum, err := kit.GetParamInt("engine.resolumetextlayer")
 	if err != nil {
 		LogIfError(err)
 		layerNum = 5 // last resort
@@ -259,47 +260,47 @@ func (r *Resolume) TextLayerNum() int {
 	return layerNum
 }
 
-func (r *Resolume) ProcessInfo() *ProcessInfo {
-	fullpath, err := GetParam("engine.resolumepath")
+func (h HostWin) ProcessInfo() *ProcessInfo {
+	fullpath, err := h.GetParam("engine.resolumepath")
 	LogIfError(err)
 	if fullpath != "" && !FileExists(fullpath) {
 		LogWarn("No Resolume found, looking for", "path", fullpath)
 		return nil
 	}
 	exe := filepath.Base(fullpath)
-	return NewProcessInfo(exe, fullpath, "", r.Activate)
+	return NewProcessInfo(exe, fullpath, "", h.Activate)
 }
 
-func (r *Resolume) Activate() {
+func (h HostWin) Activate() {
 	// handle_activate sends OSC messages to start the layers in Resolume,
-	textLayer := r.TextLayerNum()
+	textLayer := h.TextLayerNum()
 	clipnum := 1
 
 	// do it a few times, in case Resolume hasn't started up
 	for i := 0; i < 12; i++ {
 		time.Sleep(2 * time.Second)
 
-		for _, patch := range PatchNames() {
-			_, layerNum := r.PortAndLayerNumForPatch(string(patch))
+		for _, patch := range kit.PatchNames() {
+			_, layerNum := h.PortAndLayerNumForPatch(string(patch))
 			LogOfType("resolume", "Activating Resolume", "patch", layerNum, "clipnum", clipnum)
-			r.connectClip(layerNum, 1) // clip 1 in layer is the palette ffgl
+			h.connectClip(layerNum, 1) // clip 1 in layer is the palette ffgl
 		}
-		r.showClip(2) // show the "starting up" splash clip in the text layer
+		h.showClip(2) // show the "starting up" splash clip in the text layer
 	}
 	// show the animated text generator for preset names
-	r.connectClip(textLayer, clipnum)
+	h.connectClip(textLayer, clipnum)
 }
 
-func (r *Resolume) connectClip(layerNum int, clip int) {
+func (h HostWin) connectClip(layerNum int, clip int) {
 	addr := fmt.Sprintf("/composition/layers/%d/clips/%d/connect", layerNum, clip)
 	msg := osc.NewMessage(addr)
 	// Note: sending 0 doesn't seem to disable a clip; you need to
 	// bypass the layer to turn it off
 	msg.Append(int32(1))
-	TheEngine.SendOsc(r.resolumeClient, msg)
+	h.SendOsc(h.resolumeClient, msg)
 }
 
-func (r *Resolume) bypassLayer(layerNum int, onoff bool) {
+func (h HostWin) bypassLayer(layerNum int, onoff bool) {
 	addr := fmt.Sprintf("/composition/layers/%d/bypassed", layerNum)
 	msg := osc.NewMessage(addr)
 	v := 0
@@ -307,12 +308,12 @@ func (r *Resolume) bypassLayer(layerNum int, onoff bool) {
 		v = 1
 	}
 	msg.Append(int32(v))
-	TheEngine.SendOsc(r.resolumeClient, msg)
+	h.SendOsc(h.resolumeClient, msg)
 }
 
 // getEffectMap returns the resolume.json map for a given effect
 // and map type ("on", "off", or "params")
-func (r *Resolume) getEffectMap(effectName string, mapType string) (map[string]any, string, int, error) {
+func (h HostWin) getEffectMap(effectName string, mapType string) (map[string]any, string, int, error) {
 	if effectName[1] != '-' {
 		err := fmt.Errorf("no dash in effect, name=%s", effectName)
 		return nil, "", 0, err

@@ -12,20 +12,21 @@ import (
 	midi "gitlab.com/gomidi/midi/v2"
 	"gitlab.com/gomidi/midi/v2/drivers"
 	_ "gitlab.com/gomidi/midi/v2/drivers/rtmididrv" // autoregisters driver
+	"github.com/vizicist/palette/kit"
 )
 
 // MidiIO encapsulate everything having to do with MIDI I/O
 type MidiIO struct {
 	midiInput            drivers.In
 	midiOutputs          map[string]drivers.Out // synth name is the key
-	midiPortChannelState map[PortChannel]*MIDIPortChannelState
+	midiPortChannelState map[kit.PortChannel]*kit.MIDIPortChannelState
 	inports              midi.InPorts
 	outports             midi.OutPorts
 	stop                 func()
 }
 
-func DefaultMIDIChannelOutput() *MIDIPortChannelState {
-	return &MIDIPortChannelState{}
+func DefaultMIDIChannelOutput() *kit.MIDIPortChannelState {
+	return &kit.MIDIPortChannelState{}
 }
 
 // MIDI is a pointer to
@@ -35,7 +36,7 @@ func NewMidiIO() *MidiIO {
 	return &MidiIO{
 		midiInput:            nil,
 		midiOutputs:          make(map[string]drivers.Out),
-		midiPortChannelState: make(map[PortChannel]*MIDIPortChannelState),
+		midiPortChannelState: make(map[kit.PortChannel]*kit.MIDIPortChannelState),
 		stop:                 nil,
 		inports:              midi.GetInPorts(),
 		outports:             midi.GetOutPorts(),
@@ -56,7 +57,7 @@ func InitMidiIO() {
 		// NOTE: name is the port name followed by an index
 		LogOfType("midiports", "MIDI output", "port", outp.String())
 		if strings.Contains(name, "Erae Touch") {
-			TheErae.output = outp
+			kit.TheErae.Output = outp
 		}
 		TheMidiIO.midiOutputs[name] = outp
 	}
@@ -120,7 +121,7 @@ func (m *MidiIO) Start() {
 
 func (m *MidiIO) handleMidiInput(msg midi.Message, timestamp int32) {
 	LogOfType("midi", "handleMidiInput", "msg", msg)
-	TheRouter.midiInputChan <- NewMidiEvent(CurrentClick(), "handleMidiInput", msg)
+	TheRouter.midiInputChan <- kit.NewMidiEvent(kit.CurrentClick(), "handleMidiInput", msg)
 
 	/*
 		var bt []byte
@@ -150,61 +151,39 @@ func (m* EraeWriteSysEx(bytes []byte) {
 }
 */
 
-func (state *MIDIPortChannelState) UpdateBankProgram(synth *Synth) {
+// func (out *kit.MIDIPortChannelState) WriteShort(status, data1, data2 int64) {
+// 	LogWarn("WriteShort needs work")
+// }
 
-	state.mutex.Lock()
-	defer state.mutex.Unlock()
+func (h HostWin) GetPortChannelState(portchannel kit.PortChannel) (*kit.MIDIPortChannelState, error) {
 
-	// LogInfo("Checking Bank Program", "bank", bank, "program", program, "mc.bank", state.bank, "mc.program", state.program, "mc", fmt.Sprintf("%p", state))
-	if state.bank != synth.bank {
-		LogWarn("SendBankProgram: XXX - SHOULD be sending", "bank", synth.bank)
-		state.bank = synth.bank
-	}
-	// if the requested program doesn't match the current one, send it
-	if state.program != synth.program {
-		// LogInfo("PROGRAM CHANGED", "program", program, "mc.program", state.program)
-		state.program = synth.program
-		status := byte(int64(ProgramStatus) | int64(state.channel-1))
-		data1 := byte(synth.program - 1)
-		LogInfo("SendBankProgram: MIDI", "status", hexString(status), "program", hexString(data1))
-		LogOfType("midi", "Raw MIDI Output, BankProgram",
-			"synth", synth.name,
-			"status", "0x"+hexString(status),
-			"data1", "0x"+hexString(data1))
-
-		LogIfError(state.output.Send([]byte{status, data1}))
-	}
-}
-
-func (out *MIDIPortChannelState) WriteShort(status, data1, data2 int64) {
-	LogWarn("WriteShort needs work")
-}
-
-func (m *MidiIO) GetPortChannelState(portchannel PortChannel) (*MIDIPortChannelState, error) {
-
-	state, ok := m.midiPortChannelState[portchannel]
+	state, ok := TheMidiIO.midiPortChannelState[portchannel]
 	if !ok {
-		return nil, fmt.Errorf("GetMidiChannelOutput: no entry, port=%s channel=%d", portchannel.port, portchannel.channel)
+		return nil, fmt.Errorf("GetMidiChannelOutput: no entry, port=%s channel=%d", portchannel.Port, portchannel.Channel)
 	}
-	if state.output == nil {
-		return nil, fmt.Errorf("GetMidiChannelOutput: midiDeviceOutput==nil, port=%s channel=%d", portchannel.port, portchannel.channel)
+	if state.Output == nil {
+		return nil, fmt.Errorf("GetMidiChannelOutput: midiDeviceOutput==nil, port=%s channel=%d", portchannel.Port, portchannel.Channel)
 	}
 
-	state.mutex.Lock()
-	defer state.mutex.Unlock()
-	if !state.isopen {
-		e := state.output.Open()
+	state.Mutex.Lock()
+	defer state.Mutex.Unlock()
+	if !state.Isopen {
+		e := state.Output.Open()
 		if e != nil {
 			return nil, e
 		}
 	}
-	state.isopen = true
+	state.Isopen = true
 	return state, nil
 }
 
-func (m *MidiIO) openChannelOutput(portchannel PortChannel) *MIDIPortChannelState {
+func (h HostWin) OpenChannelOutput(portchannel kit.PortChannel) *kit.MIDIPortChannelState {
+	return TheMidiIO.openChannelOutput(portchannel)
+}
 
-	portName := portchannel.port
+func (m *MidiIO) openChannelOutput(portchannel kit.PortChannel) *kit.MIDIPortChannelState {
+
+	portName := portchannel.Port
 	// The portName in portchannel is from Synths.json, while
 	// names in midiOutputs are from the gomidi/midi package.
 	// For example, portchannel.port might be "01. Internal MIDI",
@@ -223,43 +202,32 @@ func (m *MidiIO) openChannelOutput(portchannel PortChannel) *MIDIPortChannelStat
 		return nil
 	}
 
-	state := &MIDIPortChannelState{
-		channel: portchannel.channel,
-		bank:    0,
-		program: 0,
-		output:  output,
-		isopen:  false,
+	state := &kit.MIDIPortChannelState{
+		Channel: portchannel.Channel,
+		Bank:    0,
+		Program: 0,
+		Output:  output,
+		PortName: portName,
+		Isopen:  false,
 	}
 	m.midiPortChannelState[portchannel] = state
 	return state
 }
 
-func (m *MidiIO) openFakeChannelOutput(port string, channel int) *MIDIPortChannelState {
+func (h HostWin) OpenFakeChannelOutput(port string, channel int) *kit.MIDIPortChannelState {
+	return TheMidiIO.openFakeChannelOutput(port,channel)
+}
 
-	co := &MIDIPortChannelState{
-		channel: channel,
-		bank:    0,
-		program: 0,
-		output:  nil,
-		isopen:  false,
+func (m *MidiIO) openFakeChannelOutput(port string, channel int) *kit.MIDIPortChannelState {
+
+	co := &kit.MIDIPortChannelState{
+		Channel: channel,
+		Bank:    0,
+		Program: 0,
+		Output:  nil,
+		PortName: "fake",
+		Isopen:  false,
 	}
 	return co
 }
 
-func (me MidiEvent) Status() uint8 {
-	bytes := me.Msg.Bytes()
-	if len(bytes) == 0 {
-		LogWarn("Empty bytes in MidiEvent?")
-		return 0
-	}
-	return bytes[0]
-}
-
-func (me MidiEvent) Data1() uint8 {
-	bytes := me.Msg.Bytes()
-	if len(bytes) < 2 {
-		LogWarn("No Data1 byte in MidiEvent?")
-		return 0
-	}
-	return bytes[1]
-}
