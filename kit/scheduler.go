@@ -4,6 +4,7 @@ import (
 	"container/list"
 	"fmt"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	midi "gitlab.com/gomidi/midi/v2"
@@ -26,12 +27,8 @@ type Scheduler struct {
 	autoTransposeIndex  int        // current place in transposeValues
 	autoTransposeValues []int
 
-		currentPitchOffset:  &atomic.Int32{},
-		autoTransposeOn:     false,
-		autoTransposeNext:   0,
-		autoTransposeClicks: 8 * OneBeat,
-		autoTransposeIndex:  0,
-		autoTransposeValues: []int{0, -2, 3, -5},
+	currentPitchOffset  *atomic.Int32
+
 }
 
 type Command struct {
@@ -54,9 +51,16 @@ func NewScheduler() *Scheduler {
 		schedList:        list.New(),
 		lastClick:        -1,
 		pendingScheduled: nil,
+
+		currentPitchOffset:  &atomic.Int32{},
+		autoTransposeOn:     false,
+		autoTransposeNext:   0,
+		autoTransposeClicks: 8 * OneBeat,
+		autoTransposeIndex:  0,
+		autoTransposeValues: []int{0, -2, 3, -5},
 	}
 	InitializeClicksPerSecond(defaultClicksPerSecond)
-	se.currentPitchOffset.Store(0) // probably not needed
+	s.currentPitchOffset.Store(0) // probably not needed
 	return s
 }
 

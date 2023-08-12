@@ -3,6 +3,7 @@ package hostwin
 import (
 	"fmt"
 	"io"
+	"os"
 	"math/rand"
 	"net/http"
 	"sync"
@@ -16,6 +17,8 @@ type HostWin struct {
 	params    *kit.ParamValues
 	oscoutput bool
 	oscClient *osc.Client
+	resolumeClient   *osc.Client
+	freeframeClients map[string]*osc.Client
 
 	// recordingIndex int
 	// recordingFile  *os.File
@@ -30,7 +33,20 @@ var engineSysex sync.Mutex
 var TheRand *rand.Rand
 var TheKit *kit.Kit
 
-func InitMisc() {
+func NewHost() *HostWin {
+	h := &HostWin{
+		resolumeClient:   osc.NewClient(LocalAddress, ResolumePort),
+		freeframeClients: map[string]*osc.Client{},
+	}
+	TheHost = h
+	return h
+}
+
+func (host HostWin) Init() {
+	err := host.loadResolumeJSON()
+	if err != nil {
+		LogIfError(err)
+	}
 	InitParams()
 	TheProcessManager = NewProcessManager()
 	TheKit = kit.NewKit()
@@ -90,22 +106,50 @@ func WaitTillDone() {
 	TheEngine.WaitTillDone()
 }
 
-func (e *Engine) GetParam(name string) (string, error) {
-	if TheEngine == nil {
-		return "", fmt.Errorf("GetParam called before NewEngine, name=%s)", name)
+
+func (h HostWin) SaveDataInFile(data []byte, category string, filename string) error {
+	path, err := WritableSavedFilePath(category, filename, ".json")
+	if err != nil {
+		LogIfError(err)
+		return err
 	}
-	return TheEngine.params.Get(name)
+	return os.WriteFile(path, data, 0644)
 }
 
-// func (e *Engine) Get(name string) string {
+func (h HostWin) GetDataInFile(category string, filename string) (bytes []byte, err error) {
+	path, err := ReadableSavedFilePath(category, filename, ".json")
+	if err != nil {
+		LogIfError(err)
+		return nil, err
+	}
+	return os.ReadFile(path)
+}
+
+func (h HostWin) GetConfigFileData(filename string) ([]byte, error) {
+	path := ConfigFilePath(filename)
+	return os.ReadFile(path)
+}
+
+func (h HostWin) GenerateVisualsFromCursr(ce kit.CursorEvent, patchName string) {
+	// send an OSC message to Resolume
+	msg := kit.CursorToOscMsg(ce)
+	TheResolume().ToFreeFramePlugin(patchName, msg)
+
+}
+
+func (h HostWin) GetParam(name string) (string, error) {
+	return h.params.Get(name)
+}
+
+// func (h HostWin) Get(name string) string {
 // 	return e.params.Get(name)
 // }
 
-func (e *Engine) SaveCurrent() (err error) {
+func (h HostWin) SaveCurrent() (err error) {
 	return e.params.Save("engine", "_Current")
 }
 
-func (e *Engine) LoadCurrent() (err error) {
+func (h HostWin) LoadCurrent() (err error) {
 	return e.LoadEngineParams("_Current")
 	/*
 		path, err := ReadableSavedFilePath("engine", "_Current", ".json")
@@ -121,11 +165,11 @@ func (e *Engine) LoadCurrent() (err error) {
 	*/
 }
 
-func (e *Engine) SendToOscCLients(oscMessage *osc.Message) {
-	e.sendToOscClients(oscMessage)
-}
+// func (e *Engine) SendToOscCLients(oscMessage *osc.Message) {
+// 	e.sendToOscClients(oscMessage)
+// }
 
-func (e *Engine) LoadEngineParams(fname string) (err error) {
+func (h HostWin) LoadEngineParams(fname string) (err error) {
 	path, err := ReadableSavedFilePath("engine", fname, ".json")
 	if err != nil {
 		return err
@@ -136,6 +180,11 @@ func (e *Engine) LoadEngineParams(fname string) (err error) {
 	}
 	e.params.ApplyValuesFromMap("engine", paramsmap, e.Set)
 	return nil
+}
+
+func (e *Engine) ToFreeFramePlugin(patchName string, msg *osc.Message) {
+	// send an OSC message to Resolume
+	e.SendToOscCLients(msg)
 }
 
 func (e *Engine) Start() {
@@ -160,15 +209,15 @@ func (e *Engine) Start() {
 	// }
 }
 
-func (e *Engine) WaitTillDone() {
-	<-e.done
+func (h HostWin) WaitTillDone() {
+	<-h.done
 }
 
-func (e *Engine) SayDone() {
-	e.done <- true
+func (h HostWin) SayDone() {
+	h.done <- true
 }
 
-func (e *Engine) SendOsc(client *osc.Client, msg *osc.Message) {
+func (h HostWin) SendOsc(client *osc.Client, msg *osc.Message) {
 	if client == nil {
 		LogIfError(fmt.Errorf("engine.SendOsc: client is nil"))
 		return
@@ -179,24 +228,24 @@ func (e *Engine) SendOsc(client *osc.Client, msg *osc.Message) {
 	LogIfError(err)
 }
 
-func (e *Engine) sendToOscClients(msg *osc.Message) {
-	if e.oscoutput {
-		if e.oscClient == nil {
-			e.oscClient = osc.NewClient(LocalAddress, EventClientPort)
+func (h HostWin) SendToOscClients(msg *osc.Message) {
+	if h.oscoutput {
+		if h.oscClient == nil {
+			h.oscClient = osc.NewClient(LocalAddress, EventClientPort)
 			// oscClient is guaranteed to be non-nil
 		}
-		e.SendOsc(e.oscClient, msg)
+		h.SendOsc(h.oscClient, msg)
 	}
 }
 
-func (e *Engine) StartOscListener(port int) {
+func (h HostWin) StartOscListener(port int) {
 
 	source := fmt.Sprintf("%s:%d", LocalAddress, port)
 
 	d := osc.NewStandardDispatcher()
 
 	err := d.AddMsgHandler("*", func(msg *osc.Message) {
-		TheRouter.oscInputChan <- OscEvent{Msg: msg, Source: source}
+		TheRouter.oscInputChan <- kit.OscEvent{Msg: msg, Source: source}
 	})
 	if err != nil {
 		LogIfError(err)
@@ -213,7 +262,7 @@ func (e *Engine) StartOscListener(port int) {
 }
 
 // StartHttp xxx
-func (e *Engine) StartHttp(port int) {
+func (h HostWin) StartHttp(port int) {
 
 	http.HandleFunc("/api", func(responseWriter http.ResponseWriter, req *http.Request) {
 

@@ -17,3 +17,55 @@
 {"uptime":"0.041031","msg":"Palette InitLog","args":["start"],"click":0,"loglevel":"info"}
 {"uptime":"0.241944","msg":"palette: starting monitor","MonitorExe":"palette_monitor.exe","click":0,"loglevel":"info"}
 {"uptime":"0.241944","msg":"StartExecutableLogOutput","executable":"C:\\Program Files\\Palette\\bin\\palette_monitor.exe","click":0,"loglevel":"info"}
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-08-07 23:14:25","logname":"palette","click":0,"loglevel":"info"}
+{"uptime":"0.054036","msg":"LogIfError","err":"paramDefOf: no parameter named engine.keykitoutput","click":0,"loglevel":"warn"}
+{"uptime":"0.054036","msg":"LogIfError","err":"paramDefOf: no parameter named engine.keykitallow","click":0,"loglevel":"warn"}
+{"uptime":"0.054036","msg":"LogIfError","err":"paramDefOf: no parameter named engine.keykitpath","click":0,"loglevel":"warn"}
+{"uptime":"0.054036","msg":"LogIfError","err":"paramDefOf: no parameter named engine.keykitroot","click":0,"loglevel":"warn"}
+{"uptime":"0.054036","msg":"LogIfError","err":"paramDefOf: no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.054036","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.058536","msg":"Palette InitLog","args":["stop"],"click":0,"loglevel":"info"}
+{"uptime":"0.058536","msg":"Palette kill is killing everything including monitor.","click":0,"loglevel":"info"}
+{"uptime":"0.058536","msg":"KillExecutable","executable":"palette_monitor.exe","exe":"palette_monitor.exe","click":0,"loglevel":"info"}
+{"uptime":"0.149627","msg":"KillAll","click":0,"loglevel":"info"}
+{"uptime":"0.149627","msg":"KillExecutable","executable":"key.exe","exe":"key.exe","click":0,"loglevel":"info"}
+{"uptime":"0.259814","msg":"KillExecutable","executable":"mmtt_kinect.exe","exe":"mmtt_kinect.exe","click":0,"loglevel":"info"}
+{"uptime":"0.344024","msg":"KillExecutable","executable":"bidule.exe","exe":"bidule.exe","click":0,"loglevel":"info"}
+{"uptime":"0.431674","msg":"KillExecutable","executable":"avenue.exe","exe":"avenue.exe","click":0,"loglevel":"info"}
+{"uptime":"0.538875","msg":"KillExecutable","executable":"palette_gui.exe","exe":"palette_gui.exe","click":0,"loglevel":"info"}
+{"uptime":"0.703604","msg":"KillExecutable","executable":"palette_engine.exe","exe":"palette_engine.exe","click":0,"loglevel":"info"}
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-08-08 00:15:28","logname":"palette","click":0,"loglevel":"info"}
+{"uptime":"0.041018","msg":"LogIfError","err":"paramDefOf: no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.041018","msg":"LogIfError","err":"paramDefOf: no parameter named engine.keykitallow","click":0,"loglevel":"warn"}
+{"uptime":"0.041018","msg":"LogIfError","err":"paramDefOf: no parameter named engine.keykitroot","click":0,"loglevel":"warn"}
+{"uptime":"0.041018","msg":"LogIfError","err":"paramDefOf: no parameter named engine.keykitoutput","click":0,"loglevel":"warn"}
+{"uptime":"0.041018","msg":"LogIfError","err":"paramDefOf: no parameter named engine.keykitpath","click":0,"loglevel":"warn"}
+{"uptime":"0.041018","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.041018","msg":"Palette InitLog","args":["start"],"click":0,"loglevel":"info"}
+{"uptime":"0.355685","msg":"palette: starting monitor","MonitorExe":"palette_monitor.exe","click":0,"loglevel":"info"}
+{"uptime":"0.355685","msg":"StartExecutableLogOutput","executable":"C:\\Program Files\\Palette\\bin\\palette_monitor.exe","click":0,"loglevel":"info"}
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-08-08 00:15:58","logname":"palette","click":0,"loglevel":"info"}
+{"uptime":"0.042535","msg":"LogIfError","err":"paramDefOf: no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.042535","msg":"LogIfError","err":"paramDefOf: no parameter named engine.keykitallow","click":0,"loglevel":"warn"}
+{"uptime":"0.042535","msg":"LogIfError","err":"paramDefOf: no parameter named engine.keykitpath","click":0,"loglevel":"warn"}
+{"uptime":"0.042535","msg":"LogIfError","err":"paramDefOf: no parameter named engine.keykitoutput","click":0,"loglevel":"warn"}
+{"uptime":"0.042535","msg":"LogIfError","err":"paramDefOf: no parameter named engine.keykitroot","click":0,"loglevel":"warn"}
+{"uptime":"0.042535","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.043035","msg":"Palette InitLog","args":["test"],"click":0,"loglevel":"info"}
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-08-09 11:45:41","logname":"palette","click":0,"loglevel":"info"}
+{"uptime":"0.055036","msg":"LogIfError","err":"paramDefOf: no parameter named engine.keykitoutput","click":0,"loglevel":"warn"}
+{"uptime":"0.055036","msg":"LogIfError","err":"paramDefOf: no parameter named engine.keykitallow","click":0,"loglevel":"warn"}
+{"uptime":"0.055036","msg":"LogIfError","err":"paramDefOf: no parameter named engine.keykitroot","click":0,"loglevel":"warn"}
+{"uptime":"0.055036","msg":"LogIfError","err":"paramDefOf: no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.055036","msg":"LogIfError","err":"paramDefOf: no parameter named engine.keykitpath","click":0,"loglevel":"warn"}
+{"uptime":"0.055036","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.058036","msg":"Palette InitLog","args":["stop"],"click":0,"loglevel":"info"}
+{"uptime":"0.058036","msg":"Palette kill is killing everything including monitor.","click":0,"loglevel":"info"}
+{"uptime":"0.058036","msg":"KillExecutable","executable":"palette_monitor.exe","exe":"palette_monitor.exe","click":0,"loglevel":"info"}
+{"uptime":"0.137811","msg":"KillAll","click":0,"loglevel":"info"}
+{"uptime":"0.137811","msg":"KillExecutable","executable":"key.exe","exe":"key.exe","click":0,"loglevel":"info"}
+{"uptime":"0.214207","msg":"KillExecutable","executable":"mmtt_kinect.exe","exe":"mmtt_kinect.exe","click":0,"loglevel":"info"}
+{"uptime":"0.314781","msg":"KillExecutable","executable":"bidule.exe","exe":"bidule.exe","click":0,"loglevel":"info"}
+{"uptime":"0.421097","msg":"KillExecutable","executable":"avenue.exe","exe":"avenue.exe","click":0,"loglevel":"info"}
+{"uptime":"0.514670","msg":"KillExecutable","executable":"palette_gui.exe","exe":"palette_gui.exe","click":0,"loglevel":"info"}
+{"uptime":"0.678037","msg":"KillExecutable","executable":"palette_engine.exe","exe":"palette_engine.exe","click":0,"loglevel":"info"}

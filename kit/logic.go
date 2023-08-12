@@ -81,7 +81,7 @@ func (logic *PatchLogic) cursorToPitch(ce CursorEvent) (uint8, error) {
 			scale := GetScale(scaleName)
 			closest := scale.ClosestTo(p)
 			// MIDIOctaveShift might be negative
-			i := int(closest) + 12*TheRouter.midiOctaveShift
+			i := int(closest) + 12*TheKit.midiOctaveShift
 			for i < 0 {
 				i += 12
 			}
@@ -90,7 +90,7 @@ func (logic *PatchLogic) cursorToPitch(ce CursorEvent) (uint8, error) {
 			}
 			p = uint8(i)
 		}
-		currentOffset := int(TheEngine.currentPitchOffset.Load())
+		currentOffset := int(TheScheduler.currentPitchOffset.Load())
 		if currentOffset != 0 {
 			newpitch := int(p) + currentOffset
 			if newpitch < 0 {
@@ -149,11 +149,11 @@ func (logic *PatchLogic) cursorToVelocity(ce CursorEvent) uint8 {
 	return uint8(vel)
 }
 
-func (logic *PatchLogic) generateVisualsFromCursor(ce CursorEvent) {
-	// send an OSC message to Resolume
-	msg := CursorToOscMsg(ce)
-	TheResolume().ToFreeFramePlugin(logic.patch.Name(), msg)
-}
+// func (logic *PatchLogic) generateVisualsFromCursor(ce CursorEvent) {
+// 	// send an OSC message to Resolume
+// 	msg := CursorToOscMsg(ce)
+// 	TheResolume().ToFreeFramePlugin(logic.patch.Name(), msg)
+// }
 
 func (logic *PatchLogic) generateSoundFromCursor(ce CursorEvent, cursorStyle string) {
 

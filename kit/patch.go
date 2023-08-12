@@ -95,7 +95,7 @@ func (patch *Patch) MIDIChannel() uint8 {
 }
 
 func (patch *Patch) RefreshAllIfPortnumMatches(ffglportnum int) {
-	portnum, _ := TheResolume().PortAndLayerNumForPatch(patch.name)
+	portnum, _ := TheHost.PortAndLayerNumForPatch(patch.name)
 	if portnum == ffglportnum {
 		patch.RefreshAllPatchValues()
 	}
@@ -116,13 +116,13 @@ func (patch *Patch) noticeValueChange(paramName string, paramValue string) {
 		msg.Append("set_params")
 		args := fmt.Sprintf("{\"%s\":\"%s\"}", name, paramValue)
 		msg.Append(args)
-		TheResolume().ToFreeFramePlugin(patch.Name(), msg)
+		TheHost.ToFreeFramePlugin(patch.Name(), msg)
 	}
 
 	if strings.HasPrefix(paramName, "effect.") {
 		name := strings.TrimPrefix(paramName, "effect.")
 		// Effect parameters get sent to Resolume
-		TheResolume().SendEffectParam(patch.Name(), name, paramValue)
+		TheHost.SendEffectParam(patch.Name(), name, paramValue)
 	}
 
 	if paramName == "sound.synth" {
@@ -427,12 +427,12 @@ func (patch *Patch) Load(category string, filename string) error {
 
 	LogOfType("saved", "patch.Load", "patch", patch.Name(), "category", category, "filename", filename)
 
-	path, err := ReadableSavedFilePath(category, filename, ".json")
+	bytes, err := TheHost.GetSavedData(category, filename)
 	if err != nil {
 		LogIfError(err)
 		return err
 	}
-	paramsmap, err := LoadParamsMap(path)
+	paramsmap, err := LoadParamsMap(bytes)
 	if err != nil {
 		LogIfError(err)
 		return err
@@ -481,7 +481,7 @@ func (patch *Patch) Load(category string, filename string) error {
 }
 
 func (patch *Patch) clearGraphics() {
-	TheResolume().ToFreeFramePlugin(patch.Name(), osc.NewMessage("/clear"))
+	TheHost.ToFreeFramePlugin(patch.Name(), osc.NewMessage("/clear"))
 }
 
 func (patch *Patch) Status() string {
