@@ -24,11 +24,10 @@ type Scheduler struct {
 	AutoTransposeOn     bool
 	autoTransposeNext   Clicks
 	autoTransposeClicks Clicks // time between auto transpose changes
-	autoTransposeIndex  int        // current place in transposeValues
+	autoTransposeIndex  int    // current place in transposeValues
 	autoTransposeValues []int
 
-	currentPitchOffset  *atomic.Int32
-
+	currentPitchOffset *atomic.Int32
 }
 
 type Command struct {
@@ -334,7 +333,7 @@ func (sched *Scheduler) triggerItemsScheduledAtOrBefore(thisClick Clicks) {
 			v.Synth.SendNoteToMidiOutput(v)
 
 		case midi.Message:
-			synthName, err := TheHost.GetParam("engine.midithrusynth")
+			synthName, err := GetParam("engine.midithrusynth")
 			if err != nil || synthName == "" {
 				LogError(err)
 				synthName = "default"
