@@ -132,7 +132,7 @@ func (sched *Scheduler) Start() {
 	// By reading from tick.C, we wake up every 2 milliseconds
 	for range tick.C {
 		// sched.now = now
-		uptimesecs := TheHost.Uptime()
+		uptimesecs := Uptime()
 
 		// XXX - should lock from here?
 

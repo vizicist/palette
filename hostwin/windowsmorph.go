@@ -447,7 +447,7 @@ func (m *oneMorph) readFrames(callback kit.CursorCallbackFunc, forceFactor float
 				xNorm = 1.0
 			}
 
-			pos := kit.CursorPos{xNorm, yNorm, zNorm}
+			pos := kit.CursorPos{X: xNorm, Y: yNorm, Z: zNorm}
 			ce := kit.NewCursorEvent(gid, m.currentTag, ddu, pos)
 			ce.Area = area
 			callback(ce)

@@ -1,12 +1,12 @@
 package main
 
-import "github.com/vizicist/palette/engine"
+import "github.com/vizicist/palette/hostwin"
 
 // NewPageMenu xxx
 func NewPageMenu(parent Window) WindowData {
 
 	items := []MenuItem{
-		{Label: "About", Cmd: engine.NewSimpleCmd("about")},
+		{Label: "About", Cmd: hostwin.NewSimpleCmd("about")},
 		{Label: "Dump", Cmd: NewDumpFileCmd("homepage.json")},
 		{Label: "Restore", Cmd: NewRestoreFileCmd("homepage.json")},
 		{Label: "Tools  ->", Cmd: NewSubMenuCmd("ToolsMenu")},
@@ -28,7 +28,7 @@ func NewToolsMenu(parent Window) WindowData {
 func NewWindowMenu(parent Window) WindowData {
 	items := []MenuItem{
 		{Label: "Resize", Cmd: NewPickToolCmd("resize")},
-		{Label: "Move", Cmd: engine.NewSimpleCmd("movetool")},
+		{Label: "Move", Cmd: hostwin.NewSimpleCmd("movetool")},
 		{Label: "Delete", Cmd: NewPickToolCmd("delete")},
 		{Label: "More  ->", Cmd: NewSubMenuCmd("ToolsMenu")},
 	}

@@ -11,11 +11,13 @@ import (
 
 	midi "gitlab.com/gomidi/midi/v2"
 	_ "gitlab.com/gomidi/midi/v2/drivers/rtmididrv" // autoregisters driver
+
+	"github.com/vizicist/palette/hostwin"
 )
 
 func main() {
 
-	engine.InitLog("monitor")
+	hostwin.InitLog("monitor")
 
 	pcheck := flag.Bool("engine", true, "Check Engine")
 	pjsid := flag.Int("joystick", -1, "Joystick ID")
@@ -23,10 +25,10 @@ func main() {
 	flag.Parse()
 
 	if *pcheck {
-		engine.LogInfo("monitor is checking the engine.")
+		hostwin.LogInfo("monitor is checking the engine.")
 		go checkEngine()
 	} else {
-		engine.LogInfo("monitor is NOT checking the engine.")
+		hostwin.LogInfo("monitor is NOT checking the engine.")
 	}
 
 	go joystickMonitor(*pjsid)
@@ -39,13 +41,13 @@ func main() {
 func checkEngine() {
 	tick := time.NewTicker(time.Second * 15)
 	for {
-		if !engine.IsRunningExecutable(engine.EngineExe) {
-			engine.LogInfo("checkEngine: engine is not running, killing everything, monitor should restart engine.")
-			engine.KillAllExceptMonitor()
-			engine.LogInfo("checkEngine: restarting engine")
-			fullexe := filepath.Join(engine.PaletteDir(), "bin", engine.EngineExe)
-			err := engine.StartExecutableLogOutput(engine.EngineExe, fullexe)
-			engine.LogIfError(err)
+		if !hostwin.IsRunningExecutable(hostwin.EngineExe) {
+			hostwin.LogInfo("checkEngine: engine is not running, killing everything, monitor should restart engine.")
+			hostwin.KillAllExceptMonitor()
+			hostwin.LogInfo("checkEngine: restarting engine")
+			fullexe := filepath.Join(hostwin.PaletteDir(), "bin", hostwin.EngineExe)
+			err := hostwin.StartExecutableLogOutput(hostwin.EngineExe, fullexe)
+			hostwin.LogIfError(err)
 		}
 		tm := <-tick.C
 		_ = tm
@@ -53,20 +55,20 @@ func checkEngine() {
 }
 
 func mmttRealign() {
-	engine.LogInfo("Begin mmttRealign")
-	_, err := engine.MmttApi("align_start")
-	engine.LogIfError(err)
+	hostwin.LogInfo("Begin mmttRealign")
+	_, err := hostwin.MmttApi("align_start")
+	hostwin.LogIfError(err)
 }
 
 func shutdownAndReboot() {
-	engine.LogInfo("Begin of shutdownAndReboot")
+	hostwin.LogInfo("Begin of shutdownAndReboot")
 	cmd := exec.Command("shutdown", "/r", "-t", "10")
 	err := cmd.Run()
 	if err != nil {
-		engine.LogInfo("err in shutdownAndReboot")
+		hostwin.LogInfo("err in shutdownAndReboot")
 	}
-	engine.LogIfError(err)
-	engine.LogInfo("End of shutdownAndReboot")
+	hostwin.LogIfError(err)
+	hostwin.LogInfo("End of shutdownAndReboot")
 }
 
 func joystickMonitor(jsid int) {
@@ -76,7 +78,7 @@ func joystickMonitor(jsid int) {
 	if jsid >= 0 {
 		js, err := joystick.Open(jsid)
 		if err != nil {
-			engine.LogIfError(err)
+			hostwin.LogIfError(err)
 			return
 		}
 		monitoredJoystick = js
@@ -90,7 +92,7 @@ func joystickMonitor(jsid int) {
 				break
 			}
 			count := js.ButtonCount()
-			engine.LogInfo("joystick check", "j", j, "name", js.Name(), "buttoncount", count)
+			hostwin.LogInfo("joystick check", "j", j, "name", js.Name(), "buttoncount", count)
 			if count == 8 {
 				jsid = j
 				monitoredJoystick = js
@@ -98,13 +100,13 @@ func joystickMonitor(jsid int) {
 			}
 		}
 		if jsid < 0 {
-			engine.LogIfError(fmt.Errorf("joystickMonitor: disabled, unable to find joystick with 8 buttons"))
+			hostwin.LogIfError(fmt.Errorf("joystickMonitor: disabled, unable to find joystick with 8 buttons"))
 			return
 		}
-		engine.LogInfo("Found Ikkego joystick with 8 buttons", "jsid", jsid)
+		hostwin.LogInfo("Found Ikkego joystick with 8 buttons", "jsid", jsid)
 	}
 
-	engine.LogInfo("joystickMonitor: listening", "name", monitoredJoystick.Name(), "buttoncount", monitoredJoystick.ButtonCount())
+	hostwin.LogInfo("joystickMonitor: listening", "name", monitoredJoystick.Name(), "buttoncount", monitoredJoystick.ButtonCount())
 
 	ticker := time.NewTicker(time.Second)
 	buttonDown := make([]bool, monitoredJoystick.ButtonCount())
@@ -118,9 +120,9 @@ func joystickMonitor(jsid int) {
 		} else {
 			errcount++
 			if errcount < 4 {
-				engine.LogIfError(err)
+				hostwin.LogIfError(err)
 			} else if errcount > 999 {
-				engine.LogWarn("Too many joystick errors, aborting joystick monitoring")
+				hostwin.LogWarn("Too many joystick errors, aborting joystick monitoring")
 				break
 			}
 			continue
@@ -133,21 +135,21 @@ func joystickMonitor(jsid int) {
 				if isdown {
 					// Button just went down.
 					buttonDownTime[button] = time.Now()
-					engine.LogInfo("Button went down...")
+					hostwin.LogInfo("Button went down...")
 				} else {
 					// Button just came back up.
-					engine.LogInfo("Button came back up...")
+					hostwin.LogInfo("Button came back up...")
 					dt := time.Since(buttonDownTime[button])
 					// Pay attention only if the button is down for more than a second.
 					shortPress := 2 * time.Second
 					longPress := 6 * time.Second
 					if dt < shortPress {
-						engine.LogInfo("BUTTON pressed, but not long enough to do anything", "button", button, "dt", dt)
+						hostwin.LogInfo("BUTTON pressed, but not long enough to do anything", "button", button, "dt", dt)
 					} else if dt < longPress {
-						engine.LogInfo("BUTTON shortPress", "button", button, "dt", dt)
-						engine.KillAllExceptMonitor()
+						hostwin.LogInfo("BUTTON shortPress", "button", button, "dt", dt)
+						hostwin.KillAllExceptMonitor()
 					} else {
-						engine.LogInfo("BUTTON longPress", "button", button, "dt", dt)
+						hostwin.LogInfo("BUTTON longPress", "button", button, "dt", dt)
 						shutdownAndReboot()
 					}
 				}
@@ -157,7 +159,7 @@ func joystickMonitor(jsid int) {
 		tm := <-ticker.C
 		_ = tm
 	}
-	engine.LogWarn("Joystick monitoring has terminated")
+	hostwin.LogWarn("Joystick monitoring has terminated")
 }
 
 type NoteAction func()
@@ -168,11 +170,11 @@ func midiMonitor(port string) {
 
 	in, err := midi.FindInPort(port)
 	if err != nil {
-		engine.LogIfError(err, "port", port)
+		hostwin.LogIfError(err, "port", port)
 		return
 	}
 
-	engine.LogInfo("midiMonitor: listening", "port", port)
+	hostwin.LogInfo("midiMonitor: listening", "port", port)
 
 	nnotes := 128
 	noteDown := make([]bool, nnotes)
@@ -180,37 +182,37 @@ func midiMonitor(port string) {
 	noteAction := make([]NoteAction, nnotes)
 
 	noteAction[60] = func() {
-		engine.LogInfo("NoteAction: calling mmttRealign")
+		hostwin.LogInfo("NoteAction: calling mmttRealign")
 		mmttRealign()
 	}
 	noteAction[62] = func() {
-		engine.LogInfo("NoteAction: calling shutdownAndReboot")
+		hostwin.LogInfo("NoteAction: calling shutdownAndReboot")
 		shutdownAndReboot()
 	}
 	noteAction[64] = func() {
-		engine.LogInfo("NoteAction: calling killAndRestart")
-		engine.KillAllExceptMonitor()
+		hostwin.LogInfo("NoteAction: calling killAndRestart")
+		hostwin.KillAllExceptMonitor()
 	}
 
 	stop, err := midi.ListenTo(in, func(msg midi.Message, timestampms int32) {
 		var ch, pitch, vel uint8
 		switch {
 		case msg.GetNoteStart(&ch, &pitch, &vel):
-			engine.LogOfType("midi", "NoteOn", "pitch", pitch, "chan", ch, "velocity", vel)
+			hostwin.LogOfType("midi", "NoteOn", "pitch", pitch, "chan", ch, "velocity", vel)
 			if !noteDown[pitch] {
 				noteDownTime[pitch] = time.Now()
 				noteDown[pitch] = true
 			}
 
 		case msg.GetNoteEnd(&ch, &pitch):
-			engine.LogOfType("midi", "NoteOff", "pitch", pitch, "chan", ch)
+			hostwin.LogOfType("midi", "NoteOff", "pitch", pitch, "chan", ch)
 			if noteDown[pitch] {
 				noteDown[pitch] = false
 				// Note just came back up.
 				dt := time.Since(noteDownTime[pitch])
 				// Pay attention only if the note is down for more than a second.
 				if dt > time.Second {
-					engine.LogOfType("midi", "notegpress", "pitch", pitch, "dt", dt)
+					hostwin.LogOfType("midi", "notegpress", "pitch", pitch, "dt", dt)
 					if noteAction[pitch] != nil {
 						noteAction[pitch]()
 					}
@@ -225,7 +227,7 @@ func midiMonitor(port string) {
 	}, midi.UseSysEx())
 
 	if err != nil {
-		engine.LogIfError(err)
+		hostwin.LogIfError(err)
 		return
 	}
 

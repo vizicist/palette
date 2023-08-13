@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"image"
 
-	"github.com/vizicist/palette/engine"
+	"github.com/vizicist/palette/hostwin"
 	w "github.com/vizicist/palette/twinsys"
 )
 
@@ -41,7 +41,7 @@ func (riff *Riff) Context() *w.WinContext {
 }
 
 // Do xxx
-func (riff *Riff) Do(cmd engine.Cmd) string {
+func (riff *Riff) Do(cmd hostwin.Cmd) string {
 
 	// Things that should be handled the same for all tools?
 	// "mouse" forwarding downstream
@@ -60,7 +60,7 @@ func (riff *Riff) Do(cmd engine.Cmd) string {
 	case "close":
 		// do anything?
 	case "getstate":
-		ret := riff.TextArea.Do(engine.NewSimpleCmd("getstate"))
+		ret := riff.TextArea.Do(hostwin.NewSimpleCmd("getstate"))
 		return ret
 
 	case "buttondown":
@@ -68,7 +68,7 @@ func (riff *Riff) Do(cmd engine.Cmd) string {
 		lbl := cmd.ValuesString("label", "")
 		switch lbl {
 		case "Clear":
-			riff.TextArea.Do(engine.NewSimpleCmd("clear"))
+			riff.TextArea.Do(hostwin.NewSimpleCmd("clear"))
 		default:
 			riff.addLine(fmt.Sprintf("Unknown button: %s\n", lbl))
 		}
@@ -79,7 +79,7 @@ func (riff *Riff) Do(cmd engine.Cmd) string {
 	default:
 		w.WinDoUpstream(riff, cmd)
 	}
-	return engine.OkResult()
+	return hostwin.OkResult()
 }
 
 func (riff *Riff) addLine(line string) {

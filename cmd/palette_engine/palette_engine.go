@@ -29,14 +29,12 @@ func main() {
 	signal.Ignore(syscall.SIGHUP)
 	signal.Ignore(syscall.SIGINT)
 
-	host := hostwin.NewHost()
+	kit.TheHost = hostwin.NewHost("engine")
 
-	host.Init()
+	// host.Init()
 	// host.InitMisc()
 	// host.InitEngine()
-	host.Start()
-
-	kit.RegisterHost(host)
+	kit.TheHost.Start()
 
 	go func() {
 		host.WaitTillDone()
