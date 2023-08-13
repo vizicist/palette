@@ -71,12 +71,17 @@ type ParamValues struct {
 	values map[string]ParamValue
 }
 
+// These Params are global to the kit package
+var Params *ParamValues
+
 func NewParamValues() *ParamValues {
 	// Note: it's ParamValue (not a pointer)
 	return &ParamValues{values: map[string]ParamValue{}}
 }
 
 func InitParams() {
+	Params = NewParamValues()
+
 	err := LoadParamEnums()
 	if err != nil {
 		LogWarn("LoadParamEnums", "err", err)
@@ -185,8 +190,17 @@ func (vals *ParamValues) Get(name string) (string, error) {
 	return vals.paramValueAsString(name)
 }
 
+func GetParam(nm string) (string, error) {
+	s, err := Params.Get(nm)
+	if err != nil {
+		LogError(err) // may duplicate errors in the users of this func
+		s = ""
+	}
+	return s, err
+}
+
 func GetParamInt(nm string) (int, error) {
-	s, err := TheHost.GetParam(nm)
+	s, err := GetParam(nm)
 	if err != nil {
 		return 0, err
 	}
@@ -224,7 +238,7 @@ func IsTrueValue(value string) bool {
 }
 
 func GetParamBool(nm string) (bool, error) {
-	v, err := TheHost.GetParam(nm)
+	v, err := GetParam(nm)
 	if err != nil {
 		return false, err
 	} else {
@@ -233,7 +247,7 @@ func GetParamBool(nm string) (bool, error) {
 }
 
 func GetParamFloat(nm string) (float64, error) {
-	s, err := TheHost.GetParam(nm)
+	s, err := GetParam(nm)
 	if err != nil {
 		return 0.0, err
 	}
@@ -243,7 +257,6 @@ func GetParamFloat(nm string) (float64, error) {
 	}
 	return f, nil
 }
-
 
 func (vals *ParamValues) GetStringValue(name string, def string) string {
 	val := vals.paramValue(name)
@@ -290,7 +303,7 @@ func (vals *ParamValues) GetBoolValue(name string) bool {
 }
 
 func (vals *ParamValues) Save(category string, filename string) error {
-	data := vals.persistentDataOf(category,filename)
+	data := vals.persistentDataOf(category, filename)
 	return TheHost.SaveDataInFile(data, category, filename)
 }
 

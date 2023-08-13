@@ -244,6 +244,7 @@ import "C"
 import (
 	"fmt"
 	"time"
+
 	"github.com/vizicist/palette/kit"
 )
 
@@ -504,7 +505,7 @@ func WinMorphInitialize() error {
 		morphtype, ok := MorphDefs[m.serialNum]
 		if !ok {
 			// It's not explicitly present in morphs.json
-			t, err := TheHost.GetParam("engine.morphtype")
+			t, err := kit.GetParam("engine.morphtype")
 			if err != nil {
 				return err
 			}
