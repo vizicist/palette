@@ -5,7 +5,7 @@ import (
 	"image/color"
 	"strings"
 
-	"github.com/vizicist/palette/engine"
+	"github.com/vizicist/palette/hostwin"
 )
 
 // Menu xxx
@@ -33,7 +33,7 @@ type MenuItem struct {
 	Label string
 	posX  int
 	posY  int
-	Cmd   engine.Cmd
+	Cmd   hostwin.Cmd
 }
 
 var lastMenuX int
@@ -155,12 +155,12 @@ func (menu *Menu) redraw() {
 }
 
 // If mouseHandler return value is true, the menu should be removed
-func (menu *Menu) mouseHandler(cmd engine.Cmd) (removeMenu bool) {
+func (menu *Menu) mouseHandler(cmd hostwin.Cmd) (removeMenu bool) {
 
 	parent := WinParent(menu)
 	menu.itemSelected = -1
 
-	pos := cmd.ValuesPos(engine.PointZero)
+	pos := cmd.ValuesPos(hostwin.PointZero)
 	ddu := cmd.ValuesString("ddu", "")
 	// If it's in the handle area...
 	if pos.Y <= menu.handleHeight {
@@ -210,15 +210,15 @@ func (menu *Menu) mouseHandler(cmd engine.Cmd) (removeMenu bool) {
 }
 
 // Do xxx
-func (menu *Menu) Do(cmd engine.Cmd) string {
+func (menu *Menu) Do(cmd hostwin.Cmd) string {
 
 	switch cmd.Subj {
 
 	case "close":
-		engine.LogWarn("menu.Do: close needs work?  Maybe not")
+		hostwin.LogWarn("menu.Do: close needs work?  Maybe not")
 
 	case "resize":
-		size := cmd.ValuesXY("size", engine.PointZero)
+		size := cmd.ValuesXY("size", hostwin.PointZero)
 		menu.resize(size)
 
 	case "redraw":
@@ -246,5 +246,5 @@ func (menu *Menu) Do(cmd engine.Cmd) string {
 			// }
 		}
 	}
-	return engine.OkResult()
+	return hostwin.OkResult()
 }

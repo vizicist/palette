@@ -5,7 +5,6 @@ go 1.20
 require (
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
 	github.com/hajimehoshi/ebiten/v2 v2.5.6
-	github.com/vizicist/palette/engine v0.0.0-20230806235831-f04acb9fcad1
 	golang.org/x/image v0.11.0
 )
 

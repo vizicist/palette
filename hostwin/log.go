@@ -18,7 +18,6 @@ import (
 )
 
 var TheLog *zap.SugaredLogger
-var Time0 = time.Time{}
 var LogMutex sync.Mutex
 
 func myTimeEncoder(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
@@ -30,19 +29,8 @@ func myTimeEncoder(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
 	// rf := sec - float64(leftpart)
 	// rightpart := int(rf * 1000)
 	// s := fmt.Sprintf("%06d,%04d.%04d", CurrentClick(), leftpart, rightpart)
-	s := fmt.Sprintf("%.6f", TheHost.Uptime())
+	s := fmt.Sprintf("%.6f", kit.Uptime())
 	enc.AppendString(s)
-}
-
-var FirstTime = true
-// Uptime returns the number of seconds since the program started.
-func (h HostWin) Uptime() float64 {
-	now := time.Now()
-	if FirstTime {
-		FirstTime = false
-		Time0 = now
-	}
-	return now.Sub(Time0).Seconds()
 }
 
 

@@ -51,7 +51,7 @@ func (r *Router) Start() {
 		LogWarn("StartCursorInput: LoadMorphs", "err", err)
 	}
 
-	go StartMorph(TheKit.ScheduleCursorEvent, 1.0)
+	go StartMorph(kit.ScheduleCursorEvent, 1.0)
 
 	go r.notifyGUI("restart")
 }
@@ -77,7 +77,7 @@ func (r *Router) InputListenOnce() {
 		r.handleOscInput(msg)
 		// TheKit.RecordOscEvent(&msg)
 	case event := <-r.midiInputChan:
-		TheKit.HandleMidiEvent(event)
+		kit.HandleMidiEvent(event)
 		// TheEngine.RecordMidiEvent(&event)
 	case event := <-r.cursorInput:
 		kit.ScheduleAt(kit.CurrentClick(), event.Tag, event)
