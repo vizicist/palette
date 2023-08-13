@@ -16,6 +16,8 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/vector"
 	"golang.org/x/image/font"
 	"golang.org/x/image/font/opentype"
+
+	"github.com/vizicist/palette/hostwin"
 )
 
 var screenWidth = 640
@@ -210,11 +212,11 @@ func main() {
 	args := flag.Args()
 	_ = args
 
-	engine.InitLog("splash")
+	hostwin.InitLog("splash")
 
-	imgpath := engine.ConfigFilePath(*ip)
-	if engine.FileExists(imgpath) {
-		engine.LogInfo("Loading image", "imgpath", imgpath)
+	imgpath := hostwin.ConfigFilePath(*ip)
+	if hostwin.FileExists(imgpath) {
+		hostwin.LogInfo("Loading image", "imgpath", imgpath)
 		img, _, err := ebitenutil.NewImageFromFile(imgpath)
 		if err != nil {
 			log.Fatal(err)
@@ -232,11 +234,11 @@ func main() {
 
 		cmd := exec.Command("nircmdc.exe", "win", "-style", "stitle", "palette_splash", "0x00CA0000")
 		err := cmd.Run()
-		engine.LogIfError(err)
+		hostwin.LogIfError(err)
 
 		cmd = exec.Command("nircmdc.exe", "win", "max", "stitle", "palette_splash")
 		err = cmd.Run()
-		engine.LogIfError(err)
+		hostwin.LogIfError(err)
 	}()
 
 	if err := ebiten.RunGame(&Game{ngon: 10}); err != nil {

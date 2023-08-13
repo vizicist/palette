@@ -32,15 +32,10 @@ type Host interface {
 	SendMIDI([]byte)
 
 	SaveCurrent() error
-	Uptime() float64
 	EveryTick()
 
 	ToFreeFramePlugin(patchName string, msg *osc.Message)
 	SendEffectParam(patchName string, name string, value string)
 	PortAndLayerNumForPatch(patchName string) (portnum int, layernum int)
 	ShowText(msg string)
-}
-
-func RegisterHost(host Host) {
-	TheHost = host
 }

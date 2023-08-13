@@ -5,11 +5,12 @@ import (
 	"image"
 
 	w "github.com/vizicist/palette/twinsys"
+	"github.com/vizicist/palette/hostwin"
 )
 
 func init() {
 	w.RegisterWindow("Console", NewConsole)
-	// engine.RegisterBlock("Console", NewConsole)
+	// hostwin.RegisterBlock("Console", NewConsole)
 }
 
 // Console is a window that has a couple of buttons
@@ -47,15 +48,15 @@ func (console *Console) Context() *w.WinContext {
 }
 
 // Do xxx
-func (console *Console) Do(cmd engine.Cmd) string {
+func (console *Console) Do(cmd hostwin.Cmd) string {
 	switch cmd.Subj {
 	case "mouse":
-		pos := cmd.ValuesPos(engine.PointZero)
+		pos := cmd.ValuesPos(hostwin.PointZero)
 		child, relpos := w.WinFindWindowUnder(console, pos)
 		if child != nil {
 			// Note that we update the value in cmd.Values
 			cmd.ValuesSetPos(relpos)
-			engine.LogOfType("mouse", "Console Do mouse", "cmd", cmd)
+			hostwin.LogOfType("mouse", "Console Do mouse", "cmd", cmd)
 			child.Do(cmd)
 		}
 
@@ -83,7 +84,7 @@ func (console *Console) Do(cmd engine.Cmd) string {
 		case "Three":
 			console.addLine("Three!\n")
 		case "Clear":
-			console.TextArea.Do(engine.NewSimpleCmd("clear"))
+			console.TextArea.Do(hostwin.NewSimpleCmd("clear"))
 		default:
 			lbl := cmd.ValuesString("label", "")
 			console.addLine(fmt.Sprintf("Unknown button: %s\n", lbl))
@@ -92,7 +93,7 @@ func (console *Console) Do(cmd engine.Cmd) string {
 	default:
 		w.WinDoUpstream(console, cmd)
 	}
-	return engine.OkResult()
+	return hostwin.OkResult()
 }
 
 func (console *Console) addLine(s string) {
