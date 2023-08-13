@@ -18,6 +18,7 @@ import (
 	"golang.org/x/image/font"
 
 	"github.com/vizicist/palette/hostwin"
+	"github.com/vizicist/palette/kit"
 )
 
 // Screen satisfies the ebiten.Game interface.
@@ -53,7 +54,7 @@ func Run() {
 	minSize := image.Point{X: 640, Y: 480} // default
 
 	// change it with config value
-	winsize, err := hostwin.TheHost.GetParam("engine.winsize")
+	winsize, err := kit.GetParam("engine.winsize")
 	hostwin.LogIfError(err)
 	if winsize != "" {
 		var xsize int

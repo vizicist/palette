@@ -1,36 +1,57 @@
 package kit
 
 import (
+	"bytes"
 	"fmt"
-	"time"
 	"runtime"
 	"strconv"
-	"bytes"
+	"time"
+
 	midi "gitlab.com/gomidi/midi/v2"
 )
 
-var MidiOctaveShift      int
+var MidiOctaveShift int
 var Midisetexternalscale bool
-var Midithru             bool
-var MidiThruScadjust     bool
-var MidiNumDown          int
+var Midithru bool
+var MidiThruScadjust bool
+var MidiNumDown int
 
-func Init() {
+var TheHost Host
+
+func RegisterHost(h Host) {
+	TheHost = h
+}
+
+func Init() error {
+
+	InitParams()
+
+	if TheHost == nil {
+		return fmt.Errorf("kit.Init called without registering a Host")
+	}
 
 	TheCursorManager = NewCursorManager()
 	TheScheduler = NewScheduler()
 	TheAttractManager = NewAttractManager()
 	TheQuadPro = NewQuadPro()
 
+	err := TheHost.Init()
+	if err != nil {
+		return err
+	}
+
 	enabled, err := GetParamBool("engine.attractenabled")
 	LogIfError(err)
 	TheAttractManager.SetAttractEnabled(enabled)
 
 	InitSynths()
+	return nil
+}
 
+func StartEngine() {
+	TheHost.Start()
 	TheQuadPro.Start()
 	go TheScheduler.Start()
-
 }
 
 func ScheduleCursorEvent(ce CursorEvent) {
@@ -45,7 +66,7 @@ func HandleMidiEvent(me MidiEvent) {
 	TheHost.SendToOscClients(MidiToOscMsg(me))
 
 	if Midithru {
-		LogOfType("midi","PassThruMIDI", "msg", me.Msg)
+		LogOfType("midi", "PassThruMIDI", "msg", me.Msg)
 		if MidiThruScadjust {
 			LogWarn("PassThruMIDI, midiThruScadjust needs work", "msg", me.Msg)
 		}
@@ -92,13 +113,12 @@ func handleMIDISetScaleNote(me MidiEvent) {
 		}
 		if newshift != MidiOctaveShift {
 			MidiOctaveShift = newshift
-			LogOfType("midi","MidiOctaveShift changed", "octaveshift", MidiOctaveShift)
+			LogOfType("midi", "MidiOctaveShift changed", "octaveshift", MidiOctaveShift)
 		}
 	} else if me.Msg.Is(midi.NoteOffMsg) {
 		MidiNumDown--
 	}
 }
-
 
 func GoroutineID() uint64 {
 	b := make([]byte, 64)
@@ -166,4 +186,3 @@ func Uptime() float64 {
 	}
 	return now.Sub(Time0).Seconds()
 }
-

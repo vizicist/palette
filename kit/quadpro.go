@@ -252,7 +252,7 @@ func (quadpro *QuadPro) onGet(apiargs map[string]string) (result string, err err
 		return "", fmt.Errorf("QuadPro.onPatchGet: Missing name argument")
 	}
 	if strings.HasPrefix(paramName, "engine") {
-		return TheHost.GetParam(paramName)
+		return GetParam(paramName)
 	} else {
 		return "", fmt.Errorf("QuadPro.onGet: can't handle parameter %s", paramName)
 	}

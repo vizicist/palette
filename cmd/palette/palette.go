@@ -26,10 +26,13 @@ func main() {
 	// don't open any log files, use stdout
 	doingArchiveLogs := (len(args) == 1 && args[0] == "archivelogs")
 	logname := ""
-	if ! doingArchiveLogs {
+	if !doingArchiveLogs {
 		logname = "palette"
 	}
+
 	host := hostwin.NewHost(logname)
+	kit.RegisterHost(host)
+	kit.Init()
 
 	host.LogInfo("Palette", "args", args)
 
@@ -170,7 +173,7 @@ func CliCommand(args []string) (map[string]string, error) {
 		// Make sure nothing is running.
 		statusOut, nrunning := StatusOutput()
 		if nrunning > 0 {
-			return nil, fmt.Errorf("cannot archive logs while processes are running:\n%s\n", statusOut)
+			return nil, fmt.Errorf("cannot archive logs while processes are running:\n%s", statusOut)
 		}
 		return nil, hostwin.ArchiveLogs()
 
@@ -215,7 +218,7 @@ func StatusOutput() (statusOut string, numRunning int) {
 		nrunning++
 	}
 
-	mmtt, _ := kit.TheHost.GetParam("engine.mmtt")
+	mmtt, _ := kit.GetParam("engine.mmtt")
 	if mmtt != "" {
 		if hostwin.IsRunning("mmtt") {
 			s += "MMTT is running.\n"

@@ -3,19 +3,19 @@ package hostwin
 import (
 	"fmt"
 	"io"
-	"os"
 	"math/rand"
 	"net/http"
+	"os"
 
 	"github.com/hypebeast/go-osc/osc"
 	"github.com/vizicist/palette/kit"
 )
 
 type HostWin struct {
-	done      chan bool
-	params    *kit.ParamValues
-	oscoutput bool
-	oscClient *osc.Client
+	logName          string
+	done             chan bool
+	oscoutput        bool
+	oscClient        *osc.Client
 	resolumeClient   *osc.Client
 	freeframeClients map[string]*osc.Client
 
@@ -29,33 +29,38 @@ type HostWin struct {
 	bidulePort   int
 }
 
-// var TheHost *HostWin
+var TheWinHost *HostWin
 var TheRand *rand.Rand
 
 func NewHost(logname string) *HostWin {
 
 	h := &HostWin{
+		logName:          logname,
 		resolumeClient:   osc.NewClient(LocalAddress, ResolumePort),
 		freeframeClients: map[string]*osc.Client{},
+		biduleClient:     osc.NewClient(LocalAddress, BidulePort),
+		bidulePort:       BidulePort,
 	}
-	TheHost = h
+	TheWinHost = h
+	return h
+}
 
-	InitLog(logname)
+func (h HostWin) Init() error {
+
+	InitLog(h.logName)
 	// InitMisc()
 
 	err := h.loadResolumeJSON()
 	if err != nil {
 		LogIfError(err)
+		return err
 	}
-	kit.InitParams()
 	TheProcessManager = NewProcessManager()
 	// Fixed rand sequence, better for testing
 	TheRand = rand.New(rand.NewSource(1))
 
-	h.params = kit.NewParamValues()
-
 	h.biduleClient = osc.NewClient(LocalAddress, BidulePort)
-	h.bidulePort=   BidulePort
+	h.bidulePort = BidulePort
 
 	TheRouter = NewRouter()
 	TheMidiIO = NewMidiIO()
@@ -65,25 +70,25 @@ func NewHost(logname string) *HostWin {
 	// Set all the default engine.* values
 	for nm, pd := range kit.ParamDefs {
 		if pd.Category == "engine" {
-			err := h.params.SetParamValueWithString(nm, pd.Init)
+			err := kit.Params.SetParamValueWithString(nm, pd.Init)
 			if err != nil {
 				LogIfError(err)
+				return err
 			}
 		}
 	}
 	err = h.LoadCurrent()
 	if err != nil {
 		LogIfError(err)
+		return err
 	}
-
-	// TheEngine = e
 
 	// This need to be done after engine parameters are loaded
 	TheProcessManager.AddBuiltins()
 
 	kit.RegisterHost(h)
 
-	return h
+	return err
 }
 
 func (h HostWin) EveryTick() {
@@ -96,14 +101,6 @@ func (h HostWin) InputEventLock() {
 
 func (h HostWin) InputEventUnlock() {
 	TheRouter.inputEventMutex.Unlock()
-}
-
-func Start() {
-	TheHost.Start()
-}
-
-func WaitTillDone() {
-	TheHost.WaitTillDone()
 }
 
 func (h HostWin) SaveDataInFile(data []byte, category string, filename string) error {
@@ -136,13 +133,13 @@ func (h HostWin) GenerateVisualsFromCursor(ce kit.CursorEvent, patchName string)
 
 }
 
-func (h HostWin) GetParam(name string) (string, error) {
-	return h.params.Get(name)
-}
-
-func (h HostWin) GetParamBool(name string) (bool, error) {
-	return kit.GetParamBool(name)
-}
+// func (h HostWin) GetParam(name string) (string, error) {
+// 	return h.params.Get(name)
+// }
+//
+// func (h HostWin) GetParamBool(name string) (bool, error) {
+// 	return kit.GetParamBool(name)
+// }
 
 // func (h HostWin) Get(name string) string {
 // 	return e.params.Get(name)
@@ -155,11 +152,11 @@ func (h HostWin) GetSavedData(category string, filename string) ([]byte, error) 
 }
 
 func (h HostWin) SaveCurrent() (err error) {
-	data, err := h.GetSavedData("engine","_Current")
+	data, err := h.GetSavedData("engine", "_Current")
 	if err != nil {
 		return err
 	}
-	return h.SaveDataInFile(data,"engine","_Current")
+	return h.SaveDataInFile(data, "engine", "_Current")
 }
 
 func (h HostWin) LoadCurrent() (err error) {
@@ -195,7 +192,7 @@ func (h HostWin) LoadEngineParams(fname string) (err error) {
 	if err != nil {
 		return err
 	}
-	h.params.ApplyValuesFromMap("engine", paramsmap, h.Set)
+	kit.Params.ApplyValuesFromMap("engine", paramsmap, h.Set)
 	return nil
 }
 
@@ -228,10 +225,6 @@ func (h HostWin) LogOfType(logtypes string, msg string, keysAndValues ...any) {
 	LogOfType(logtypes, msg, keysAndValues...)
 }
 
-func (h HostWin) ResetAudio() {
-	LogWarn("ResetAudio needs work")
-}
-
 func (h HostWin) SendMIDI(bytes []byte) {
 	LogWarn("SendMIDI needs work")
 }
@@ -254,9 +247,7 @@ func (h HostWin) Start() {
 	go TheRouter.Start()
 	go TheMidiIO.Start()
 
-	go TheBidule().Reset()
-
-	// TheAttractManager.setAttractMode(true)
+	go h.ResetAudio()
 
 	// if ParamBool("mmtt.depth") {
 	// 	go DepthRunForever()
@@ -339,7 +330,7 @@ func (h HostWin) StartHttp(port int) {
 			} else {
 				bstr := string(body)
 				_ = bstr
-				resp, err := TheHost.ExecuteApiFromJson(bstr)
+				resp, err := TheWinHost.ExecuteApiFromJson(bstr)
 				if err != nil {
 					response = ErrorResponse(err)
 				} else {

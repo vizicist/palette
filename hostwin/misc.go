@@ -108,7 +108,7 @@ func LocalPaletteDir() string {
 	localapp := os.Getenv("CommonProgramFiles")
 	if localapp == "" {
 		var err error
-		tempdir, err := TheHost.GetParam("engine.tempdir")
+		tempdir, err := kit.GetParam("engine.tempdir")
 		LogWarn("Expecting CommonProgramFiles to be set, using engine.tempdir value", "tempdir", tempdir)
 		if err != nil {
 			LogIfError(err)
@@ -542,9 +542,9 @@ func SendMail(body string) error {
 // SendMail xxx
 func SendMailWithAttachment(body, attachfile string) error {
 
-	recipient, _ := TheHost.GetParam("engine.emailto")
-	login, _ := TheHost.GetParam("engine.emaillogin")
-	password, _ := TheHost.GetParam("engine.emailpassword")
+	recipient, _ := kit.GetParam("engine.emailto")
+	login, _ := kit.GetParam("engine.emaillogin")
+	password, _ := kit.GetParam("engine.emailpassword")
 
 	if recipient == "" {
 		return fmt.Errorf("sendMail: not sending, no emailto in settings")

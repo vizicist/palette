@@ -128,7 +128,7 @@ func (h HostWin) executeEngineApi(api string, apiargs map[string]string) (result
 		if !ok {
 			return "", fmt.Errorf("executeEngineApi: missing name parameter")
 		}
-		return h.params.Get(name)
+		return kit.GetParam(name)
 
 	case "startprocess":
 		process, ok := apiargs["process"]
@@ -178,14 +178,14 @@ func (h HostWin) executeEngineApi(api string, apiargs map[string]string) (result
 		if !ok {
 			return "", fmt.Errorf("executeEngineApi: missing filename parameter")
 		}
-		return "", h.params.Save("engine", filename)
+		return "", kit.Params.Save("engine", filename)
 
 	case "done":
 		h.SayDone() // needed for clean exit when profiling
 		return "", nil
 
 	case "audio_reset":
-		go TheBidule().Reset()
+		go h.ResetAudio()
 
 	case "sendlogs":
 		return "", ArchiveLogs()
@@ -352,7 +352,7 @@ func (h HostWin) Set(name string, value string) error {
 	}
 
 	LogOfType("params", "Engine.Set", "name", name, "value", value)
-	return h.params.Set(name, value)
+	return kit.Params.Set(name, value)
 }
 
 func (h HostWin) executeSavedApi(api string, apiargs map[string]string) (result string, err error) {

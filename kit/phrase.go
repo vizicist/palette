@@ -33,11 +33,15 @@ func (pe *PhraseElement) Copy() *PhraseElement {
 }
 
 // NewPhrase returns a new Phrase
-func NewPhrase() *Phrase {
-	return &Phrase{
+func NewPhrase(vals ...string) *Phrase {
+	p := &Phrase{
 		list: list.New(),
 		// rwmutex: new(sync.RWMutex),
 	}
+	if len(vals) > 0 {
+		LogWarn("NewPhrase of constant needs work")
+	}
+	return p
 }
 
 // Lock for writing

@@ -4,10 +4,9 @@ import (
 	"github.com/hypebeast/go-osc/osc"
 )
 
-var TheHost Host
-
 type Host interface {
 
+	Init() error
 	Start()
 
 	LogWarn(msg string, keysAndValues ...any)
@@ -15,9 +14,9 @@ type Host interface {
 	LogInfo(msg string, keysAndValues ...any)
 	IsLogging(name string) bool
 	LogOfType(logtypes string, msg string, keysAndValues ...any)
-	GetParam(name string) (string, error)
 	HandleIncomingMidiEvent(me MidiEvent)
 	ResetAudio()
+	ActivateAudio()
 	SendToOscClients(msg *osc.Message)
 	GenerateVisualsFromCursor(ce CursorEvent, patchName string)
 	SaveDataInFile(data []byte, category string, filename string) error
