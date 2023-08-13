@@ -24,6 +24,7 @@ using your fingers as 3D cursors on Sensel Morph pads.  The Palette software con
 1. Independent preset control of the Sound, Visual, and Effect parameters.  Sound refers to the MIDI output,
       Visual refers to the sprite generation of the Palette FFGL plugin, and Effect refers to all other FFGL plugins.
 
+
 # Documentation
 
 - <a href=doc/using_resolume.md>Using Palette with the Sensel Morph as a visual instrument in Resolume
