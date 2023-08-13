@@ -7,9 +7,9 @@ import (
 	"syscall"
 
 	"github.com/pkg/profile"
-	"github.com/vizicist/palette/twinsys"
-	"github.com/vizicist/palette/kit"
 	"github.com/vizicist/palette/hostwin"
+	"github.com/vizicist/palette/kit"
+	"github.com/vizicist/palette/twinsys"
 	_ "github.com/vizicist/palette/twintool"
 )
 
@@ -29,12 +29,11 @@ func main() {
 	signal.Ignore(syscall.SIGHUP)
 	signal.Ignore(syscall.SIGINT)
 
-	kit.TheHost = hostwin.NewHost("engine")
+	host := hostwin.NewHost("engine")
+	kit.RegisterHost(host)
 
-	// host.Init()
-	// host.InitMisc()
-	// host.InitEngine()
-	kit.TheHost.Start()
+	kit.Init()
+	kit.StartEngine()
 
 	go func() {
 		host.WaitTillDone()
@@ -44,7 +43,7 @@ func main() {
 		os.Exit(0)
 	}()
 
-	b, _ := host.GetParamBool("engine.twinsys")
+	b, _ := kit.GetParamBool("engine.twinsys")
 	if b {
 		twinsys.Run()
 	} else {

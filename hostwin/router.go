@@ -193,7 +193,7 @@ func (r *Router) notifyGUI(eventName string) {
 	}
 	msg := osc.NewMessage("/notify")
 	msg.Append(eventName)
-	TheHost.SendOsc(r.guiClient, msg)
+	TheWinHost.SendOsc(r.guiClient, msg)
 }
 
 /*

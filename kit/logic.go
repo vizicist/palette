@@ -69,7 +69,7 @@ func (logic *PatchLogic) cursorToPitch(ce CursorEvent) (uint8, error) {
 		scaleName := patch.Get("misc.scale")
 
 		// The engine.scale param, if not "", overrides misc.scale
-		engineScaleName, err := TheHost.GetParam("engine.scale")
+		engineScaleName, err := GetParam("engine.scale")
 		if err != nil {
 			engineScaleName = ""
 		}
