@@ -25,11 +25,12 @@ type HostWin struct {
 	// recordingMutex sync.RWMutex
 	// currentPitchOffset  *atomic.Int32
 
+	biduleClient *osc.Client
+	bidulePort   int
 }
 
-var TheHost *HostWin
+// var TheHost *HostWin
 var TheRand *rand.Rand
-var TheKit *kit.Kit
 
 func NewHost(logname string) *HostWin {
 
@@ -37,6 +38,8 @@ func NewHost(logname string) *HostWin {
 		resolumeClient:   osc.NewClient(LocalAddress, ResolumePort),
 		freeframeClients: map[string]*osc.Client{},
 	}
+	TheHost = h
+
 	InitLog(logname)
 	// InitMisc()
 
@@ -46,13 +49,13 @@ func NewHost(logname string) *HostWin {
 	}
 	kit.InitParams()
 	TheProcessManager = NewProcessManager()
-	TheKit = kit.NewKit()
 	// Fixed rand sequence, better for testing
 	TheRand = rand.New(rand.NewSource(1))
 
-	TheHost = h
-
 	h.params = kit.NewParamValues()
+
+	h.biduleClient = osc.NewClient(LocalAddress, BidulePort)
+	h.bidulePort=   BidulePort
 
 	TheRouter = NewRouter()
 	TheMidiIO = NewMidiIO()
@@ -137,12 +140,16 @@ func (h HostWin) GetParam(name string) (string, error) {
 	return h.params.Get(name)
 }
 
+func (h HostWin) GetParamBool(name string) (bool, error) {
+	return kit.GetParamBool(name)
+}
+
 // func (h HostWin) Get(name string) string {
 // 	return e.params.Get(name)
 // }
 
 func (h HostWin) GetSavedData(category string, filename string) ([]byte, error) {
-	err := fmt.Errorf("GetSavedData needs work!")
+	err := fmt.Errorf("GetSavedData needs work")
 	kit.LogError(err)
 	return []byte{}, err
 }

@@ -6,7 +6,7 @@ import (
 	"image"
 	"strings"
 
-	"github.com/vizicist/palette/engine"
+	"github.com/vizicist/palette/hostwin"
 )
 
 // TextCallback xxx
@@ -121,12 +121,12 @@ func jsonEscape(i string) string {
 }
 
 // Do xxx
-func (st *ScrollingText) Do(cmd engine.Cmd) string {
+func (st *ScrollingText) Do(cmd hostwin.Cmd) string {
 
 	switch cmd.Subj {
 
 	case "resize":
-		size := cmd.ValuesXY("size", engine.PointZero)
+		size := cmd.ValuesXY("size", hostwin.PointZero)
 		st.resize(size)
 
 	case "redraw":
@@ -157,9 +157,9 @@ func (st *ScrollingText) Do(cmd engine.Cmd) string {
 		st.AddLine(line)
 
 	default:
-		engine.LogWarn("ScrollingText: didn't handle", "subj", cmd.Subj)
+		hostwin.LogWarn("ScrollingText: didn't handle", "subj", cmd.Subj)
 	}
-	return engine.OkResult()
+	return hostwin.OkResult()
 }
 
 // AddLine xxx

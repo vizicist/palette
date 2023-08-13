@@ -72,7 +72,7 @@ func (h HostWin) executeEngineApi(api string, apiargs map[string]string) (result
 		return kit.TheScheduler.PendingToString(), nil
 
 	case "status":
-		uptime := fmt.Sprintf("%f", TheHost.Uptime())
+		uptime := fmt.Sprintf("%f", kit.Uptime())
 		attractmode := fmt.Sprintf("%v", kit.TheAttractManager.AttractModeIsOn())
 		if kit.TheQuadPro == nil {
 			result = kit.JsonObject(
@@ -317,13 +317,13 @@ func (h HostWin) Set(name string, value string) error {
 		}
 
 	case "engine.midithru":
-		TheKit.Midithru = kit.IsTrueValue(value)
+		kit.Midithru = kit.IsTrueValue(value)
 
 	case "engine.midisetexternalscale":
-		TheKit.Midisetexternalscale = kit.IsTrueValue(value)
+		kit.Midisetexternalscale = kit.IsTrueValue(value)
 
 	case "engine.midithruscadjust":
-		TheKit.MidiThruScadjust = kit.IsTrueValue(value)
+		kit.MidiThruScadjust = kit.IsTrueValue(value)
 
 	case "engine.oscoutput":
 		h.oscoutput = kit.IsTrueValue(value)

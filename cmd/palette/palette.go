@@ -54,15 +54,6 @@ func usage() string {
 	`
 }
 
-/*
-func processStatus(process string) string {
-	if engine.IsRunning(process) {
-		return "running"
-	}
-	return "not running"
-}
-*/
-
 func CliCommand(args []string) (map[string]string, error) {
 
 	if len(args) == 0 {

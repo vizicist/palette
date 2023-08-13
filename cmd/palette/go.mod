@@ -4,7 +4,6 @@ go 1.20
 
 require (
 	github.com/nxadm/tail v1.4.8
-	github.com/vizicist/palette/engine v0.0.0-20230806230419-04243066f240
 )
 
 require (

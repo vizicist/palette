@@ -2,21 +2,20 @@ package kit
 
 import (
 	"fmt"
+	"time"
 	"runtime"
 	"strconv"
 	"bytes"
 	midi "gitlab.com/gomidi/midi/v2"
 )
 
-type Kit struct {
-	MidiOctaveShift      int
-	Midisetexternalscale bool
-	Midithru             bool
-	MidiThruScadjust     bool
-	MidiNumDown          int
-}
+var MidiOctaveShift      int
+var Midisetexternalscale bool
+var Midithru             bool
+var MidiThruScadjust     bool
+var MidiNumDown          int
 
-func (k *Kit) Init() {
+func Init() {
 
 	TheCursorManager = NewCursorManager()
 	TheScheduler = NewScheduler()
@@ -34,14 +33,7 @@ func (k *Kit) Init() {
 
 }
 
-var TheKit *Kit
-
-func NewKit() *Kit {
-	TheKit = &Kit{ }
-	return TheKit
-}
-
-func (k *Kit) ScheduleCursorEvent(ce CursorEvent) {
+func ScheduleCursorEvent(ce CursorEvent) {
 
 	// schedule CursorEvents rather than handle them right away.
 	// This makes it easier to do looping, among other benefits.
@@ -49,18 +41,18 @@ func (k *Kit) ScheduleCursorEvent(ce CursorEvent) {
 	ScheduleAt(CurrentClick(), ce.Tag, ce)
 }
 
-func (k *Kit) HandleMidiEvent(me MidiEvent) {
+func HandleMidiEvent(me MidiEvent) {
 	TheHost.SendToOscClients(MidiToOscMsg(me))
 
-	if k.Midithru {
+	if Midithru {
 		LogOfType("midi","PassThruMIDI", "msg", me.Msg)
-		if k.MidiThruScadjust {
+		if MidiThruScadjust {
 			LogWarn("PassThruMIDI, midiThruScadjust needs work", "msg", me.Msg)
 		}
 		ScheduleAt(CurrentClick(), "midi", me.Msg)
 	}
-	if k.Midisetexternalscale {
-		k.handleMIDISetScaleNote(me)
+	if Midisetexternalscale {
+		handleMIDISetScaleNote(me)
 	}
 
 	err := TheQuadPro.onMidiEvent(me)
@@ -71,25 +63,25 @@ func (k *Kit) HandleMidiEvent(me MidiEvent) {
 	}
 }
 
-func (k *Kit) handleMIDISetScaleNote(me MidiEvent) {
+func handleMIDISetScaleNote(me MidiEvent) {
 	if !me.HasPitch() {
 		return
 	}
 	pitch := me.Pitch()
 	if me.Msg.Is(midi.NoteOnMsg) {
 
-		if k.MidiNumDown < 0 {
+		if MidiNumDown < 0 {
 			// may happen when there's a Read error that misses a noteon
-			k.MidiNumDown = 0
+			MidiNumDown = 0
 		}
 
 		// If there are no notes held down (i.e. this is the first), clear the scale
-		if k.MidiNumDown == 0 {
+		if MidiNumDown == 0 {
 			LogOfType("scale", "Clearing external scale")
 			ClearExternalScale()
 		}
 		SetExternalScale(pitch, true)
-		k.MidiNumDown++
+		MidiNumDown++
 
 		// adjust the octave shift based on incoming MIDI
 		newshift := 0
@@ -98,12 +90,12 @@ func (k *Kit) handleMIDISetScaleNote(me MidiEvent) {
 		} else if pitch > 72 {
 			newshift = 1
 		}
-		if newshift != k.MidiOctaveShift {
-			k.MidiOctaveShift = newshift
-			LogOfType("midi","MidiOctaveShift changed", "octaveshift", k.MidiOctaveShift)
+		if newshift != MidiOctaveShift {
+			MidiOctaveShift = newshift
+			LogOfType("midi","MidiOctaveShift changed", "octaveshift", MidiOctaveShift)
 		}
 	} else if me.Msg.Is(midi.NoteOffMsg) {
-		k.MidiNumDown--
+		MidiNumDown--
 	}
 }
 
@@ -161,3 +153,17 @@ func GetNameValue(apiargs map[string]string) (name string, value string, err err
 	}
 	return
 }
+
+var FirstTime = true
+var Time0 = time.Time{}
+
+// Uptime returns the number of seconds since the program started.
+func Uptime() float64 {
+	now := time.Now()
+	if FirstTime {
+		FirstTime = false
+		Time0 = now
+	}
+	return now.Sub(Time0).Seconds()
+}
+

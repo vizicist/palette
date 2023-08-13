@@ -6,17 +6,18 @@ import (
 	"time"
 
 	"github.com/hypebeast/go-osc/osc"
+	"github.com/vizicist/palette/kit"
 )
 
-type Bidule struct {
-	mutex  sync.Mutex
-	client *osc.Client
-	port   int
-}
+// type Bidule struct {
+// 	mutex  sync.Mutex
+// 	client *osc.Client
+// 	port   int
+// }
 
 const BidulePort = 3210
 
-var theBidule *Bidule
+// var theBidule *Bidule
 
 func TheBidule() *Bidule {
 	if theBidule == nil {
@@ -35,7 +36,7 @@ func (b *Bidule) Activate() {
 		dt := 5 * time.Second
 		time.Sleep(dt)
 		LogOfType("bidule", "Bidule.Activate is sending", "msg", msg)
-		TheHost.SendOsc(b.client, msg)
+		kit.TheHost.SendOsc(b.client, msg)
 	}
 }
 

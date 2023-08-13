@@ -17,6 +17,9 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/text"
 	"github.com/hajimehoshi/ebiten/v2/vector"
 	"golang.org/x/image/font"
+
+	"github.com/vizicist/palette/hostwin"
+	"github.com/vizicist/palette/kit"
 )
 
 // Screen satisfies the ebiten.Game interface.
@@ -52,14 +55,14 @@ func Run() {
 	minSize := image.Point{X: 640, Y: 480} // default
 
 	// change it with config value
-	winsize, err := engine.GetParam("engine.winsize")
-	engine.LogIfError(err)
+	winsize, err := kit.TheHost.GetParam("engine.winsize")
+	hostwin.LogIfError(err)
 	if winsize != "" {
 		var xsize int
 		var ysize int
 		n, err := fmt.Sscanf(winsize, "%d,%d", &xsize, &ysize)
 		if err != nil || n != 2 {
-			engine.LogWarn("Run: bad format of winsize", "winsize", winsize)
+			hostwin.LogWarn("Run: bad format of winsize", "winsize", winsize)
 		} else {
 			minSize.X = xsize
 			minSize.Y = ysize
@@ -92,21 +95,21 @@ func Run() {
 	screen.currentPage = WinAddChild(screen, td)
 
 	// START DEBUG - do RESTORE
-	fname := engine.ConfigFilePath("homepage.json")
+	fname := hostwin.ConfigFilePath("homepage.json")
 	bytes, err := os.ReadFile(fname)
 	if err != nil {
-		engine.LogIfError(err)
+		hostwin.LogIfError(err)
 	} else {
 		page := td.w.(*Page)
 		err = page.restoreState(string(bytes))
 		if err != nil {
-			engine.LogIfError(err)
+			hostwin.LogIfError(err)
 		}
 	}
 
 	// This is it!  RunGame runs forever
 	if err := ebiten.RunGame(screen); err != nil {
-		engine.LogIfError(err)
+		hostwin.LogIfError(err)
 		// Should be fatal?
 	}
 }
@@ -117,12 +120,12 @@ func (screen *Screen) Context() *WinContext {
 }
 
 // Do xxx
-func (screen *Screen) Do(cmd engine.Cmd) string {
+func (screen *Screen) Do(cmd hostwin.Cmd) string {
 
 	switch cmd.Subj {
 	case "drawline":
-		xy0 := cmd.ValuesXY0(engine.PointZero)
-		xy1 := cmd.ValuesXY1(engine.PointZero)
+		xy0 := cmd.ValuesXY0(hostwin.PointZero)
+		xy1 := cmd.ValuesXY1(hostwin.PointZero)
 		screen.drawLine(xy0, xy1)
 	case "drawrect":
 		rect := cmd.ValuesRect(image.Rectangle{})
@@ -133,7 +136,7 @@ func (screen *Screen) Do(cmd engine.Cmd) string {
 	case "drawtext":
 		text := cmd.ValuesString("text", "")
 		styleName := cmd.ValuesString("style", "")
-		pos := cmd.ValuesXY("pos", engine.PointZero)
+		pos := cmd.ValuesXY("pos", hostwin.PointZero)
 		screen.drawText(text, styleName, pos)
 	case "setcolor":
 		c := cmd.ValuesColor(RedColor)
@@ -146,13 +149,13 @@ func (screen *Screen) Do(cmd engine.Cmd) string {
 			ebiten.SetCursorMode(ebiten.CursorModeHidden)
 		}
 	case "closeme":
-		engine.LogWarn("screen.runMsgs: should not be getting CloseMeMsg!?")
+		hostwin.LogWarn("screen.runMsgs: should not be getting CloseMeMsg!?")
 	case "resizeme":
-		size := cmd.ValuesSize(engine.PointZero)
+		size := cmd.ValuesSize(hostwin.PointZero)
 		ebiten.SetWindowSize(size.X, size.Y)
 
 	default:
-		engine.LogWarn("screen.runMsgs: unrecognized", "msg", cmd.Subj)
+		hostwin.LogWarn("screen.runMsgs: unrecognized", "msg", cmd.Subj)
 	}
 	return ""
 }
@@ -160,7 +163,7 @@ func (screen *Screen) Do(cmd engine.Cmd) string {
 // Layout satisfies the ebiten.Game interface
 func (screen *Screen) Layout(width, height int) (int, int) {
 	if screen == nil {
-		engine.LogWarn("Screen.Layout: Hey, screen shouldn't be nil!")
+		hostwin.LogWarn("Screen.Layout: Hey, screen shouldn't be nil!")
 		return width, height
 	}
 	currSize := WinGetSize(screen)
@@ -216,7 +219,7 @@ func (screen *Screen) Update() (err error) {
 // Draw satisfies the ebiten.Game interface
 func (screen *Screen) Draw(eimage *ebiten.Image) {
 	screen.eimage = eimage
-	screen.currentPage.Do(engine.NewSimpleCmd("redraw"))
+	screen.currentPage.Do(hostwin.NewSimpleCmd("redraw"))
 }
 
 // drawRect xxx
@@ -225,7 +228,7 @@ func (screen *Screen) drawRect(rect image.Rectangle) {
 	y0 := rect.Min.Y
 	x1 := rect.Max.X
 	y1 := rect.Max.Y
-	engine.LogOfType("drawing", "drawRect", "x0", x0, "y0", y0, "x1", x1, "y1", y1)
+	hostwin.LogOfType("drawing", "drawRect", "x0", x0, "y0", y0, "x1", x1, "y1", y1)
 	screen.drawLine(image.Point{x0, y0}, image.Point{x1, y0})
 	screen.drawLine(image.Point{x1, y0}, image.Point{x1, y1})
 	screen.drawLine(image.Point{x1, y1}, image.Point{x0, y1})
@@ -234,21 +237,21 @@ func (screen *Screen) drawRect(rect image.Rectangle) {
 
 // drawLine xxx
 func (screen *Screen) drawLine(xy0, xy1 image.Point) {
-	engine.LogOfType("drawing", "drawLine", "x0", xy0.X, "y0", xy0.Y, "x1", xy1.X, "y1", xy1.Y, "color", screen.foreColor)
+	hostwin.LogOfType("drawing", "drawLine", "x0", xy0.X, "y0", xy0.Y, "x1", xy1.X, "y1", xy1.Y, "color", screen.foreColor)
 	vector.StrokeLine(screen.eimage,
 		float32(xy0.X), float32(xy0.Y), float32(xy1.X), float32(xy1.Y), 1, screen.foreColor, true)
 }
 
 func (screen *Screen) drawText(s string, styleName string, pos image.Point) {
 	styleInfo := Styles[styleName]
-	engine.LogOfType("drawing", "drawText", "s", s, "x", pos.X, "y", pos.Y)
+	hostwin.LogOfType("drawing", "drawText", "s", s, "x", pos.X, "y", pos.Y)
 	text.Draw(screen.eimage, s, styleInfo.fontFace, pos.X, pos.Y, screen.foreColor)
 }
 
 func (screen *Screen) drawFilledRect(rect image.Rectangle) {
 	w := rect.Max.X - rect.Min.X
 	h := rect.Max.Y - rect.Min.Y
-	engine.LogOfType("drawing", "drawFilledRect", "x0", rect.Min.X)
+	hostwin.LogOfType("drawing", "drawFilledRect", "x0", rect.Min.X)
 	vector.DrawFilledRect(screen.eimage, float32(rect.Min.X), float32(rect.Min.Y), float32(w), float32(h), screen.foreColor, true)
 }
 
