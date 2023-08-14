@@ -33,42 +33,35 @@ func DefaultMIDIChannelOutput() *kit.MIDIPortChannelState {
 var TheMidiIO *MidiIO
 
 func NewMidiIO() *MidiIO {
-	return &MidiIO{
+
+	midiIO := &MidiIO{
 		midiInput:            nil,
 		midiOutputs:          make(map[string]drivers.Out),
 		midiPortChannelState: make(map[kit.PortChannel]*kit.MIDIPortChannelState),
 		stop:                 nil,
 		inports:              midi.GetInPorts(),
 		outports:             midi.GetOutPorts(),
-		// engineTranspose:      0,
-		// autoTransposeOn:      false,
-		// autoTransposeNext:    0,
-		// autoTransposeClicks:  8 * OneBeat,
-		// autoTransposeIndex:   0,
-		// autoTransposeValues:  []int{0, -2, 3, -5},
 	}
-}
 
-// InitMIDI initializes stuff
-func InitMidiIO() {
-
-	for _, outp := range TheMidiIO.outports {
+	for _, outp := range midiIO.outports {
 		name := outp.String()
 		// NOTE: name is the port name followed by an index
 		LogOfType("midiports", "MIDI output", "port", outp.String())
 		if strings.Contains(name, "Erae Touch") {
 			kit.TheErae.Output = outp
 		}
-		TheMidiIO.midiOutputs[name] = outp
+		midiIO.midiOutputs[name] = outp
 	}
 
-	LogInfo("Initialized MIDI", "numoutports", len(TheMidiIO.outports))
-	LogOfType("midi", "MIDI outports", "outports", TheMidiIO.outports)
+	LogInfo("Initialized MIDI", "numoutports", len(midiIO.outports))
+	LogOfType("midi", "MIDI outports", "outports", midiIO.outports)
 
 	// if erae {
 	// 	Info("Erae Touch input is being enabled")
 	// 	InitErae()
 	// }
+
+	return midiIO
 }
 
 func (m *MidiIO) SetMidiInput(midiInputName string) {
