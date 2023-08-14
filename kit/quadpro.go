@@ -48,7 +48,12 @@ func (quadpro *QuadPro) Api(api string, apiargs map[string]string) (result strin
 
 	case "ANO":
 		for _, patch := range quadpro.patch {
-			patch.Synth().SendANO()
+			synth := patch.Synth()
+			if synth == nil {
+				return "", fmt.Errorf("patch Synth is nil?")
+			} else {
+				synth.SendANO()
+			}
 		}
 		return "", nil
 
@@ -142,7 +147,7 @@ func (quadpro *QuadPro) Start() {
 	_ = quadpro.addPatch("C")
 	_ = quadpro.addPatch("D")
 
-	bytes, err = TheHost.GetSavedData("quad", "_Current")
+	bytes, err = TheHost.GetSavedData("quad", "_Current.json")
 	if err != nil {
 		LogError(err)
 	} else {

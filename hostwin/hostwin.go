@@ -112,7 +112,7 @@ func (h HostWin) SaveDataInFile(data []byte, category string, filename string) e
 	return os.WriteFile(path, data, 0644)
 }
 
-func (h HostWin) GetDataInFile(category string, filename string) (bytes []byte, err error) {
+func (h HostWin) GetSavedData(category string, filename string) (bytes []byte, err error) {
 	path, err := ReadableSavedFilePath(category, filename, ".json")
 	if err != nil {
 		LogIfError(err)
@@ -145,18 +145,13 @@ func (h HostWin) GenerateVisualsFromCursor(ce kit.CursorEvent, patchName string)
 // 	return e.params.Get(name)
 // }
 
-func (h HostWin) GetSavedData(category string, filename string) ([]byte, error) {
-	err := fmt.Errorf("GetSavedData needs work")
-	kit.LogError(err)
-	return []byte{}, err
-}
-
 func (h HostWin) SaveCurrent() (err error) {
-	data, err := h.GetSavedData("engine", "_Current")
-	if err != nil {
-		return err
-	}
-	return h.SaveDataInFile(data, "engine", "_Current")
+	// data, err := h.GetSavedData("engine", "_Current")
+	// if err != nil {
+	// 	return err
+	// }
+	// return h.SaveDataInFile(data, "engine", "_Current")
+	return kit.Params.Save("engine", "_Current")
 }
 
 func (h HostWin) LoadCurrent() (err error) {
@@ -197,7 +192,7 @@ func (h HostWin) LoadEngineParams(fname string) (err error) {
 }
 
 func (h HostWin) HandleIncomingMidiEvent(me kit.MidiEvent) {
-	err := fmt.Errorf("HandleIncomingMidiEvent needs work!")
+	err := fmt.Errorf("HandleIncomingMidiEvent needs work")
 	kit.LogIfError(err)
 }
 
@@ -238,8 +233,6 @@ func (h HostWin) Start() {
 
 	h.done = make(chan bool)
 	LogInfo("Engine.Start")
-
-	InitMidiIO()
 
 	go h.StartOscListener(OscPort)
 	go h.StartHttp(EngineHttpPort)
