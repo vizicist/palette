@@ -124,11 +124,11 @@ func ProcessList() []string {
 	// arr = append(arr, "monitor")
 	arr = append(arr, "bidule")
 	arr = append(arr, "resolume")
-	keykit, err := kit.GetParamBool("engine.keykitrun")
-	LogIfError(err)
-	if keykit {
-		arr = append(arr, "keykit")
-	}
+	// keykit, err := kit.GetParamBool("engine.keykitrun")
+	// LogIfError(err)
+	// if keykit {
+	// 	arr = append(arr, "keykit")
+	// }
 	mmtt, err := kit.GetParam("engine.mmtt")
 	LogIfError(err)
 	if mmtt != "" {
