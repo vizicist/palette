@@ -474,7 +474,7 @@ func RemoteApiRaw(url string, args string) (map[string]string, error) {
 	resp, err := http.Post(url, "application/json", bytes.NewBuffer(postBody))
 	if err != nil {
 		if strings.Contains(err.Error(), "target machine actively refused") {
-			err = fmt.Errorf("Engine isn't running or responding")
+			err = fmt.Errorf("engine isn't running or responding")
 		}
 		return nil, err
 	}
@@ -513,7 +513,7 @@ func ArchiveLogs() error {
 	}
 	year, month, day := time.Now().Date()
 	zipname := fmt.Sprintf("%s_logs_%04d_%02d_%02d_%02d_%02d_%02d", Hostname(), year, month, day, hr, min, sec)
-	zippath, err := WritableSavedFilePath("logsarchive", zipname, ".zip")
+	zippath, err := WritableSavedFilePath("logsarchive", zipname+".zip")
 	LogIfError(err)
 	LogInfo("CycleTheLogs should be zipping logs to", "zippath", zippath)
 

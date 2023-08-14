@@ -141,7 +141,8 @@ func (patch *Patch) SaveAndAlert(category string, filename string) error {
 
 	LogOfType("saved", "Patch.SaveAndAlert", "category", category, "filename", filename)
 
-	if filename == "_Current" && category != "quad" {
+	isCurrent := strings.HasPrefix(filename,"_Current")
+	if isCurrent && category != "quad" {
 		err := fmt.Errorf(", we're only saving _Current in quad (and global)")
 		LogIfError(err)
 		return err
@@ -305,7 +306,7 @@ func (patch *Patch) Api(api string, apiargs map[string]string) (string, error) {
 }
 
 func (patch *Patch) SaveQuadAndAlert() error {
-	return TheQuadPro.saveQuad("_Current")
+	return TheQuadPro.saveQuad("_Current.json")
 }
 
 func (patch *Patch) Set(paramName string, paramValue string) error {
@@ -417,11 +418,6 @@ func (patch *Patch) ApplyPatchValuesFromQuadMap(paramsmap map[string]any) error 
 	}
 	return nil
 }
-
-// ReadableSavedFilePath xxx
-// func (patch *Patch) readableFilePath(category string, filename string) (string, error) {
-// 	return SavedFilePath(category, filename, ".json")
-// }
 
 func (patch *Patch) Load(category string, filename string) error {
 
