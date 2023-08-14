@@ -113,20 +113,23 @@ func SavedList(apiargs map[string]string) (string, error) {
 
 // ReadableSavedFilePath returns the full path of a saved file.
 // The value of filename isn't trusted, verify its sanity.
-func ReadableSavedFilePath(category string, filename string, suffix string) (string, error) {
+func ReadableSavedFilePath(category string, filename string) (string, error) {
+	if ! strings.HasSuffix(filename,".json") {
+		LogWarn("ReadableSavedFilePath: not a .json filename","filename",filename)
+	}
 	if strings.ContainsRune(filename, os.PathSeparator) {
 		return "", fmt.Errorf("SavedFilePath: filename contains path separator")
 	}
 	if strings.ContainsRune(filename, os.PathListSeparator) {
 		return "", fmt.Errorf("SavedFilePath: filename contains path list separator")
 	}
-	localpath := filepath.Join(PaletteDataPath(), SavedDir(), category, filename+suffix)
+	localpath := filepath.Join(PaletteDataPath(), SavedDir(), category, filename)
 	return localpath, nil
 }
 
 // WritableSavedFilePath xxx
-func WritableSavedFilePath(category string, filename string, suffix string) (string, error) {
-	path, err := ReadableSavedFilePath(category, filename, suffix)
+func WritableSavedFilePath(category string, filename string) (string, error) {
+	path, err := ReadableSavedFilePath(category, filename)
 	if err != nil {
 		LogIfError(err)
 		return "", err

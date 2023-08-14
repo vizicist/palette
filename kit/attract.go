@@ -64,7 +64,7 @@ func (am *AttractManager) AttractModeIsOn() bool {
 
 func (am *AttractManager) SetAttractMode(onoff bool) {
 	if onoff == am.AttractModeIsOn() {
-		LogWarn("setAttractMode already in mode", "onoff", onoff)
+		// LogWarn("setAttractMode already in mode", "onoff", onoff)
 		return // already in that mode
 	}
 	// Throttle it a bit
