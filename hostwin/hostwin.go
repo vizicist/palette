@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/hypebeast/go-osc/osc"
 	"github.com/vizicist/palette/kit"
@@ -104,7 +105,10 @@ func (h HostWin) InputEventUnlock() {
 }
 
 func (h HostWin) SaveDataInFile(data []byte, category string, filename string) error {
-	path, err := WritableSavedFilePath(category, filename, ".json")
+	if ! strings.HasSuffix(filename, ".json") {
+		LogWarn("SaveDataInFile: not a .json file","filename",filename)
+	}
+	path, err := WritableSavedFilePath(category, filename)
 	if err != nil {
 		LogIfError(err)
 		return err
@@ -113,7 +117,10 @@ func (h HostWin) SaveDataInFile(data []byte, category string, filename string) e
 }
 
 func (h HostWin) GetSavedData(category string, filename string) (bytes []byte, err error) {
-	path, err := ReadableSavedFilePath(category, filename, ".json")
+	if ! strings.HasSuffix(filename,".json") {
+		LogWarn("SaveDataInFile: not a .json file","filename",filename)
+	}
+	path, err := ReadableSavedFilePath(category, filename)
 	if err != nil {
 		LogIfError(err)
 		return nil, err
@@ -146,28 +153,16 @@ func (h HostWin) GenerateVisualsFromCursor(ce kit.CursorEvent, patchName string)
 // }
 
 func (h HostWin) SaveCurrent() (err error) {
-	// data, err := h.GetSavedData("engine", "_Current")
+	// data, err := h.GetSavedData("engine", "_Current.json")
 	// if err != nil {
 	// 	return err
 	// }
-	// return h.SaveDataInFile(data, "engine", "_Current")
-	return kit.Params.Save("engine", "_Current")
+	// return h.SaveDataInFile(data, "engine", "_Current.json")
+	return kit.Params.Save("engine", "_Current.json")
 }
 
 func (h HostWin) LoadCurrent() (err error) {
-	return h.LoadEngineParams("_Current")
-	/*
-		path, err := ReadableSavedFilePath("engine", "_Current", ".json")
-		if err != nil {
-			return err
-		}
-		paramsmap, err := LoadParamsMap(path)
-		if err != nil {
-			return err
-		}
-		e.params.ApplyValuesFromMap("engine", paramsmap, e.Set)
-		return nil
-	*/
+	return h.LoadEngineParams("_Current.json")
 }
 
 // func (e *Engine) SendToOscCLients(oscMessage *osc.Message) {
@@ -175,7 +170,7 @@ func (h HostWin) LoadCurrent() (err error) {
 // }
 
 func (h HostWin) LoadEngineParams(fname string) (err error) {
-	path, err := ReadableSavedFilePath("engine", fname, ".json")
+	path, err := ReadableSavedFilePath("engine", fname)
 	if err != nil {
 		return err
 	}
