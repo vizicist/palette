@@ -18,6 +18,7 @@ import (
 	"golang.org/x/image/font/opentype"
 
 	"github.com/vizicist/palette/hostwin"
+	"github.com/vizicist/palette/kit"
 )
 
 var screenWidth = 640
@@ -212,10 +213,11 @@ func main() {
 	args := flag.Args()
 	_ = args
 
-	hostwin.InitLog("splash")
+	host := hostwin.NewHost("splash")
+	kit.RegisterHost(host)
 
 	imgpath := hostwin.ConfigFilePath(*ip)
-	if hostwin.FileExists(imgpath) {
+	if host.FileExists(imgpath) {
 		hostwin.LogInfo("Loading image", "imgpath", imgpath)
 		img, _, err := ebitenutil.NewImageFromFile(imgpath)
 		if err != nil {

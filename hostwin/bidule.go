@@ -27,7 +27,7 @@ func (h HostWin) ProcessInfoBidule() *ProcessInfo {
 		LogIfError(err)
 		return nil
 	}
-	if !FileExists(bidulePath) {
+	if !h.FileExists(bidulePath) {
 		LogWarn("No bidule found, looking for", "path", bidulePath)
 		return nil
 	}

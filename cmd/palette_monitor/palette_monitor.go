@@ -13,11 +13,13 @@ import (
 	_ "gitlab.com/gomidi/midi/v2/drivers/rtmididrv" // autoregisters driver
 
 	"github.com/vizicist/palette/hostwin"
+	"github.com/vizicist/palette/kit"
 )
 
 func main() {
 
-	hostwin.InitLog("monitor")
+	host := hostwin.NewHost("monitor")
+	kit.RegisterHost(host)
 
 	pcheck := flag.Bool("engine", true, "Check Engine")
 	pjsid := flag.Int("joystick", -1, "Joystick ID")
@@ -25,10 +27,10 @@ func main() {
 	flag.Parse()
 
 	if *pcheck {
-		hostwin.LogInfo("monitor is checking the engine.")
+		host.LogInfo("monitor is checking the engine.")
 		go checkEngine()
 	} else {
-		hostwin.LogInfo("monitor is NOT checking the engine.")
+		host.LogInfo("monitor is NOT checking the engine.")
 	}
 
 	go joystickMonitor(*pjsid)

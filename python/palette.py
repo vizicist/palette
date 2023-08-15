@@ -105,11 +105,8 @@ def paletteSubDir(subdir):
 
 paletteDataPath = ""
 FullDataPath = ""
-DataDir = "data_omnisphere"
 
-# This is the name of the data_* directory
-# containing config and saved.
-# This logic is identical to PaletteDataPath() in the Go code
+# This is the name of the data directory containing config and saved
 def PaletteDataPath():
     global paletteDataPath
     global FullDataPath
@@ -117,13 +114,10 @@ def PaletteDataPath():
         return FullDataPath
 
     dataPath = os.environ.get("PALETTE_DATA_PATH","")
-    global DataDir
-    if dataPath != "":
-        DataDir = dataPath
-    if os.path.isabs(DataDir):
-        FullDataPath = DataDir
+    if dataPath == "":
+        FullDataPath = os.path.join(localPaletteDir(),"data")
     else:
-        FullDataPath = os.path.join(localPaletteDir(),DataDir)
+        FullDataPath = dataPath
     return FullDataPath
 
 # Combine saved in the savedPath list

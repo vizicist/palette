@@ -24,8 +24,8 @@ DefaultGroupName={#MyAppName}
 ; Uncomment the following line to run in non administrative install mode (install for current user only.)
 ;PrivilegesRequired=lowest
 OutputBaseFilename=palette_{#MyAppVersion}_win_setup
-; Compression=none
-Compression=lzma
+Compression=none
+; Compression=lzma
 SolidCompression=yes
 LZMAUseSeparateProcess=yes
 LZMANumBlockThreads=6
@@ -49,10 +49,8 @@ Source: "ship\bin\pyinstalled\*"; DestDir: "{app}\bin\pyinstalled"; Flags: ignor
 Source: "ship\bin\mmtt_kinect\*"; DestDir: "{app}\bin\mmtt_kinect"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "ship\ffgl\*"; DestDir: "{app}\ffgl"; Flags: ignoreversion recursesubdirs createallsubdirs
 
-; NOTE - all data_* files go in CommonProgramFiles\Palette
-Source: "ship\data_omnisphere\*"; DestDir: "{commoncf64}\{#MyAppName}\data_omnisphere"; Flags: comparetimestamp ignoreversion recursesubdirs createallsubdirs
-; Source: "ship\data_surge\*"; DestDir: "{commoncf64}\{#MyAppName}\data_surge"; Flags: comparetimestamp ignoreversion recursesubdirs createallsubdirs
-; Source: "ship\data_moldover\*"; DestDir: "{commoncf64}\{#MyAppName}\data_moldover"; Flags: comparetimestamp ignoreversion recursesubdirs createallsubdirs
+; NOTE - data files go in CommonProgramFiles\Palette
+Source: "ship\data\*"; DestDir: "{commoncf64}\{#MyAppName}\data"; Flags: comparetimestamp ignoreversion recursesubdirs createallsubdirs
 Source: "logs_readme.txt"; DestDir: "{commoncf64}\{#MyAppName}\logs"; DestName: "readme.txt"; Flags: ignoreversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
