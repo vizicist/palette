@@ -1,0 +1,50 @@
+﻿
+
+TyrellN6
+u-he.com
+
+License
+
+u-he TyrellN6 is a freeware plugin instrument for VST (Win & Mac) and Audio Units (Mac). The distribution rights belong to the Heckmann Audio GmbH and Amazona.de, exclusively.
+
+The author (Heckmann Audio GmbH, u-he.com) grants anybody to use it (TyrellN6) in the way he (you, who's reading this - or should be) wants, as long as following requirements are met:
+
+You may not
+
+- distribute it on magazine cds (or magazine dvds) or on your website
+
+- set links to its direct download location on websites or other means to hyperlink to the Internet
+
+- integrate it or parts of it in any form in commercial software products without the author's written permission
+
+- reverse engineer, modify  any of its components including but not limited to software algorithms, graphical artwork or sonic properties other than by using the means that the unmodified software publishes over its user interface or host interface
+
+- gain profit (financially, publicity or any other) from it other than by the music you create with it
+
+- expressly you may not use it to create any sort of sample libraries or the likes that reproduces sonic material made with it by other means than the software (it, TyrellN6) itself
+
+- infringe the copyright of the author by any claims of anybody else's ownership other than the author
+
+Nevertheless it is expressly granted to
+
+- publish screenshots and audio examples on websites, interactive, video and print material as long as there's some kind of link and reference to the author's website
+
+- set links to its page at Amazona.de or u-he.com
+
+In short:
+
+Use it for your own fun, but don't distribute it - link to Amazona.de or u-he.com instead.
+
+Enjoy,
+
+Urs Heckmann
+www.u-he.com
+support@u-he.com
+
+
+
+© 2012 by Heckmann Audio GmbH
+
+VST is a trademark of Steinberg Media Technologies
+AU and Mac are trademarks of Apple Inc.
+Win is short for Windows which is a trademark of Microsoft Inc.

@@ -69,3 +69,12 @@
 {"uptime":"0.421097","msg":"KillExecutable","executable":"avenue.exe","exe":"avenue.exe","click":0,"loglevel":"info"}
 {"uptime":"0.514670","msg":"KillExecutable","executable":"palette_gui.exe","exe":"palette_gui.exe","click":0,"loglevel":"info"}
 {"uptime":"0.678037","msg":"KillExecutable","executable":"palette_engine.exe","exe":"palette_engine.exe","click":0,"loglevel":"info"}
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-08-14 16:04:32","logname":"palette","click":0,"loglevel":"info"}
+{"uptime":"0.039510","msg":"Initialized MIDI","numoutports":21,"click":0,"loglevel":"info"}
+{"uptime":"0.039510","msg":"LogIfError","err":"paramDefOf: no parameter named engine.keykitroot","click":0,"loglevel":"warn"}
+{"uptime":"0.039510","msg":"LogIfError","err":"paramDefOf: no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.039510","msg":"LogIfError","err":"paramDefOf: no parameter named engine.keykitpath","click":0,"loglevel":"warn"}
+{"uptime":"0.039510","msg":"LogIfError","err":"paramDefOf: no parameter named engine.keykitallow","click":0,"loglevel":"warn"}
+{"uptime":"0.039510","msg":"LogIfError","err":"paramDefOf: no parameter named engine.keykitoutput","click":0,"loglevel":"warn"}
+{"uptime":"0.040012","msg":"Synths loaded","len":193,"click":0,"loglevel":"info"}
+{"uptime":"0.040012","msg":"Palette","args":["version"],"click":0,"loglevel":"info"}

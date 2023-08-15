@@ -263,7 +263,7 @@ func (h HostWin) TextLayerNum() int {
 func (h HostWin) ProcessInfo() *ProcessInfo {
 	fullpath, err := kit.GetParam("engine.resolumepath")
 	LogIfError(err)
-	if fullpath != "" && !FileExists(fullpath) {
+	if fullpath != "" && !h.FileExists(fullpath) {
 		LogWarn("No Resolume found, looking for", "path", fullpath)
 		return nil
 	}

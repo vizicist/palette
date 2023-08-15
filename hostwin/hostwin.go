@@ -6,7 +6,6 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
-	"strings"
 
 	"github.com/hypebeast/go-osc/osc"
 	"github.com/vizicist/palette/kit"
@@ -43,20 +42,18 @@ func NewHost(logname string) *HostWin {
 		bidulePort:       BidulePort,
 	}
 	TheWinHost = h
+	InitLog(h.logName)
+	TheProcessManager = NewProcessManager()
 	return h
 }
 
 func (h HostWin) Init() error {
-
-	InitLog(h.logName)
-	// InitMisc()
 
 	err := h.loadResolumeJSON()
 	if err != nil {
 		LogIfError(err)
 		return err
 	}
-	TheProcessManager = NewProcessManager()
 	// Fixed rand sequence, better for testing
 	TheRand = rand.New(rand.NewSource(1))
 
@@ -78,11 +75,12 @@ func (h HostWin) Init() error {
 			}
 		}
 	}
-	err = h.LoadCurrent()
-	if err != nil {
-		LogIfError(err)
-		return err
-	}
+	LogInfo("Should kit be loading Current?")
+	// jerr = h.LoadCurrent()
+	// jif err != nil {
+	//	LogIfError(err)
+	// return err
+	// 
 
 	// This need to be done after engine parameters are loaded
 	TheProcessManager.AddBuiltins()
@@ -105,9 +103,6 @@ func (h HostWin) InputEventUnlock() {
 }
 
 func (h HostWin) SaveDataInFile(data []byte, category string, filename string) error {
-	if ! strings.HasSuffix(filename, ".json") {
-		LogWarn("SaveDataInFile: not a .json file","filename",filename)
-	}
 	path, err := WritableSavedFilePath(category, filename)
 	if err != nil {
 		LogIfError(err)
@@ -117,9 +112,6 @@ func (h HostWin) SaveDataInFile(data []byte, category string, filename string) e
 }
 
 func (h HostWin) GetSavedData(category string, filename string) (bytes []byte, err error) {
-	if ! strings.HasSuffix(filename,".json") {
-		LogWarn("SaveDataInFile: not a .json file","filename",filename)
-	}
 	path, err := ReadableSavedFilePath(category, filename)
 	if err != nil {
 		LogIfError(err)
@@ -140,30 +132,9 @@ func (h HostWin) GenerateVisualsFromCursor(ce kit.CursorEvent, patchName string)
 
 }
 
-// func (h HostWin) GetParam(name string) (string, error) {
-// 	return h.params.Get(name)
+// func (h HostWin) LoadCurrent() (err error) {
+// 	return h.LoadEngineParams("_Current.json")
 // }
-//
-// func (h HostWin) GetParamBool(name string) (bool, error) {
-// 	return kit.GetParamBool(name)
-// }
-
-// func (h HostWin) Get(name string) string {
-// 	return e.params.Get(name)
-// }
-
-func (h HostWin) SaveCurrent() (err error) {
-	// data, err := h.GetSavedData("engine", "_Current.json")
-	// if err != nil {
-	// 	return err
-	// }
-	// return h.SaveDataInFile(data, "engine", "_Current.json")
-	return kit.Params.Save("engine", "_Current.json")
-}
-
-func (h HostWin) LoadCurrent() (err error) {
-	return h.LoadEngineParams("_Current.json")
-}
 
 // func (e *Engine) SendToOscCLients(oscMessage *osc.Message) {
 // 	e.sendToOscClients(oscMessage)

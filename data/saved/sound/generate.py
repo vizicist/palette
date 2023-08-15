@@ -1,0 +1,40 @@
+for name in { "default", 
+	"P_01_C_01", 
+	"P_01_C_10", 
+	"P_02_C_01", 
+	"P_02_C_10", 
+	"P_03_C_01", 
+	"P_03_C_10", 
+	"P_04_C_01", 
+	"P_04_C_10", 
+	"P_05_C_01", 
+	"P_05_C_10", 
+	"P_06_C_01", 
+	"P_06_C_10", 
+	"P_07_C_01", 
+	"P_07_C_10", 
+	"P_08_C_01", 
+	"P_08_C_10", 
+	"P_09_C_01", 
+	"P_09_C_10", 
+	"P_10_C_01", 
+	"P_10_C_10", 
+	"P_11_C_01", 
+	"P_11_C_10", 
+	"P_12_C_01", 
+	"P_12_C_10"
+	} :
+    print("name=",name)
+    f = open(name+".json","w")
+    f.write("""
+    "params":{
+        "sound.controllerstyle":"modulationonly",
+        "sound.pitchmax":"72",
+        "sound.pitchmin":"25",
+        "sound.synth":"""+"\""+name+"\""+""",
+        "sound.xcontroller":"1",
+        "sound.ycontroller":"1",
+        "sound.zcontroller":"1"
+    }
+    """)
+    f.close()

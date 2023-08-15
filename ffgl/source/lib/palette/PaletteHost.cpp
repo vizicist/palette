@@ -254,7 +254,7 @@ PaletteHost::PaletteHost()
 		size_t locallen;
 		errno_t localerr = _dupenv_s( &localValue, &locallen, "CommonProgramFiles" );
 		if( !localerr && localValue != NULL ) {
-			configfile = std::string( localValue ) + "\\Palette\\config\\ffgl.json";
+			configfile = std::string( localValue ) + "\\Palette\\data\\config\\ffgl.json";
 			free( localValue );
 		} else {
 			configfile = "c:\\windows\\temp\\ffgl.json";// last resort

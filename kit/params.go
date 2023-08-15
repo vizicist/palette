@@ -302,14 +302,19 @@ func (vals *ParamValues) GetBoolValue(name string) bool {
 	return (param).(paramValBool).value
 }
 
+// Save parameters values to a file.
+// If filename doesn't have a .json suffix, it's added.
 func (vals *ParamValues) Save(category string, filename string) error {
-	data := vals.persistentDataOf(category, filename)
+	data := vals.persistentDataOf(category)
+	if ! strings.HasSuffix(filename,".json") {
+		filename += ".json"
+	}
 	return TheHost.SaveDataInFile(data, category, filename)
 }
 
-func (vals *ParamValues) persistentDataOf(category string, filename string) (data []byte) {
+func (vals *ParamValues) persistentDataOf(category string) (data []byte) {
 
-	LogOfType("saved", "ParamValues.Save", "category", category, "filename", filename)
+	LogOfType("saved", "ParamValues.Save", "category", category)
 
 	s := "{\n    \"params\": {\n"
 
