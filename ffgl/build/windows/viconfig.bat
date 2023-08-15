@@ -1,1 +1,1 @@
-vi "%PALETTE_DATA_PATH%\config\ffgl.json"
+vi "%CommonProgramFiles%\Palette\data\config\ffgl.json"

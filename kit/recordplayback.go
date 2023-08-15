@@ -86,7 +86,7 @@ func (e *Engine) NewRecordingPath() (string, error) {
 	for {
 		fname := fmt.Sprintf("%03d.json", e.recordingIndex)
 		fpath := filepath.Join(recdir, fname)
-		if !FileExists(fpath) {
+		if !kit.FileExists(fpath) {
 			return fpath, nil
 		}
 		e.recordingIndex++

@@ -1,0 +1,28 @@
+{ "synths" : [
+	{"name": "default", "port":"01. Internal MIDI", "channel":1},
+	{"name": "P_01_C_01", "port":"01. Internal MIDI", "channel":1},
+	{"name": "P_01_C_10", "port":"01. Internal MIDI", "channel":10},
+	{"name": "P_02_C_01", "port":"02. Internal MIDI", "channel":1},
+	{"name": "P_02_C_10", "port":"02. Internal MIDI", "channel":10},
+	{"name": "P_03_C_01", "port":"03. Internal MIDI", "channel":1},
+	{"name": "P_03_C_10", "port":"03. Internal MIDI", "channel":10},
+	{"name": "P_04_C_01", "port":"04. Internal MIDI", "channel":1},
+	{"name": "P_04_C_10", "port":"04. Internal MIDI", "channel":10},
+	{"name": "P_05_C_01", "port":"05. Internal MIDI", "channel":1},
+	{"name": "P_05_C_10", "port":"05. Internal MIDI", "channel":10},
+	{"name": "P_06_C_01", "port":"06. Internal MIDI", "channel":1},
+	{"name": "P_06_C_10", "port":"06. Internal MIDI", "channel":10},
+	{"name": "P_07_C_01", "port":"07. Internal MIDI", "channel":1},
+	{"name": "P_07_C_10", "port":"07. Internal MIDI", "channel":10},
+	{"name": "P_08_C_01", "port":"08. Internal MIDI", "channel":1},
+	{"name": "P_08_C_10", "port":"08. Internal MIDI", "channel":10},
+	{"name": "P_09_C_01", "port":"09. Internal MIDI", "channel":1},
+	{"name": "P_09_C_10", "port":"09. Internal MIDI", "channel":10},
+	{"name": "P_10_C_01", "port":"10. Internal MIDI", "channel":1},
+	{"name": "P_10_C_10", "port":"10. Internal MIDI", "channel":10},
+	{"name": "P_11_C_01", "port":"11. Internal MIDI", "channel":1},
+	{"name": "P_11_C_10", "port":"11. Internal MIDI", "channel":10},
+	{"name": "P_12_C_01", "port":"12. Internal MIDI", "channel":1},
+	{"name": "P_12_C_10", "port":"12. Internal MIDI", "channel":10}
+]
+}

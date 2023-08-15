@@ -423,6 +423,9 @@ func (patch *Patch) Load(category string, filename string) error {
 
 	LogOfType("saved", "patch.Load", "patch", patch.Name(), "category", category, "filename", filename)
 
+	if ! strings.HasSuffix(filename,".json") {
+		filename += ".json"
+	}
 	bytes, err := TheHost.GetSavedData(category, filename)
 	if err != nil {
 		LogIfError(err)

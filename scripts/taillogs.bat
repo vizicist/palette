@@ -1,3 +1,2 @@
-call setpalettelogdir
-pushd "%PALETTE_LOGDIR%"
+pushd "%CommonProgramFiles%/Palette/logs"
 tail -f *

@@ -114,9 +114,6 @@ func SavedList(apiargs map[string]string) (string, error) {
 // ReadableSavedFilePath returns the full path of a saved file.
 // The value of filename isn't trusted, verify its sanity.
 func ReadableSavedFilePath(category string, filename string) (string, error) {
-	if ! strings.HasSuffix(filename,".json") {
-		LogWarn("ReadableSavedFilePath: not a .json filename","filename",filename)
-	}
 	if strings.ContainsRune(filename, os.PathSeparator) {
 		return "", fmt.Errorf("SavedFilePath: filename contains path separator")
 	}

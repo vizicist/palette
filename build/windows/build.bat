@@ -57,10 +57,10 @@ go build -o palette_splash.exe >> %buildcmdsout% 2>&1
 move palette_splash.exe %bin%\palette_splash.exe > nul
 popd
 
-echo ================ Compiling pk2go
-pushd %PALETTE_SOURCE%\cmd\pk2go
-go build -o pk2go.exe >> %buildcmdsout% 2>&1
-move pk2go.exe %bin%\pk2go.exe > nul
+echo ================ Compiling palette_pk2go
+pushd %PALETTE_SOURCE%\cmd\palette_pk2go
+go build -o palette_pk2go.exe >> %buildcmdsout% 2>&1
+move palette_pk2go.exe %bin%\palette_pk2go.exe > nul
 popd
 
 rem print any error messages from compiling cmds
@@ -71,7 +71,7 @@ pushd %PALETTE_SOURCE%\python
 rm -fr dist
 rm -fr build\palette_gui
 rm -fr build
-pyinstaller -i ..\data_omnisphere\config\palette.ico palette_gui.py > pyinstaller_gui.out 2>&1
+pyinstaller -i ..\data\config\palette.ico palette_gui.py > pyinstaller_gui.out 2>&1
 pyinstaller osc.py > pyinstaller_osc.out 2>&1
 
 echo ================ Merging python executables
@@ -124,7 +124,7 @@ copy setpalettelogdir.bat %bin% >nul
 
 popd
 
-for %%X in (data_omnisphere) DO (
+for %%X in (data) DO (
 	echo ================ Copying %%X
 	mkdir %ship%\%%X\config
 	mkdir %ship%\%%X\midifiles

@@ -249,27 +249,10 @@ NosuchDataPath(std::string filepath)
 {
 	char *data_path = getenv("PALETTE_DATA_PATH");
 	if ( data_path == NULL ) {
-		if ( filepath == "." ) {
-			return NosuchLocalDir;
-		}
-		else {
-			return NosuchLocalDir + "/" + filepath;
-		}
+		data_path = NosuchLocalDir + "/data";
 	}
 	return std::string(data_path) + "/" + filepath;
 }
-
-#ifdef OLDSTUFF
-std::string
-NosuchPalettePath(std::string filepath)
-{
-	if ( filepath == "." ) {
-		return NosuchPaletteDir;
-	} else {
-		return NosuchPaletteDir + "/" + filepath;
-	}
-}
-#endif
 
 std::string
 NosuchSnprintf(const char *fmt, ...)

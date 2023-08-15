@@ -203,18 +203,8 @@ func StartPlusUptime(startdate string, uptime float64) string {
 	return realstart.Format(layout)
 }
 
-// LogFilePath uses $PALETTE_LOGDIR if set
 func LogFilePath(nm string) string {
-	// $PALETTE_LOGDIR can override, but normally we create one in the Data directory with the hostname.
-	// This allows the log files to be checked into github.
-	logdir := os.Getenv("PALETTE_LOGDIR")
-	if logdir == "" {
-		logdir = filepath.Join(PaletteDataPath(), "logs", Hostname())
-	}
-	if _, err := os.Stat(logdir); os.IsNotExist(err) {
-		err = os.MkdirAll(logdir, os.FileMode(0777))
-		LogIfError(err) // not fatal?
-	}
+	logdir := filepath.Join(LocalPaletteDir(), "logs")
 	return filepath.Join(logdir, nm)
 }
 

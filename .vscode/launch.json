@@ -88,6 +88,13 @@
             "args": ["start"]
         },
         {
+            "name": "palette stop",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTE_SOURCE}/cmd/palette/palette.go",
+            "args": ["stop"]
+        },
+        {
             "name": "palette status",
             "type": "go",
             "request": "launch",

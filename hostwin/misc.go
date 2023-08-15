@@ -26,7 +26,7 @@ var EngineExe = "palette_engine.exe"
 var GuiExe = "palette_gui.exe"
 var BiduleExe = "bidule.exe"
 var ResolumeExe = "avenue.exe"
-var KeykitExe = "key.exe"
+// var KeykitExe = "key.exe"
 var MmttExe = "mmtt_kinect.exe"
 
 var MmttHttpPort = 4444
@@ -38,7 +38,7 @@ var LocalAddress = "127.0.0.1"
 
 func KillAllExceptMonitor() {
 	LogInfo("KillAll")
-	KillExecutable(KeykitExe)
+	// KillExecutable(KeykitExe)
 	KillExecutable(MmttExe)
 	KillExecutable(BiduleExe)
 	KillExecutable(ResolumeExe)
@@ -61,20 +61,6 @@ func MonitorIsRunning() bool {
 // 	return isRunningExecutable(EngineExe)
 // 	// return isRunningExecutable(EngineExe) || isRunningExecutable(EngineExeDebug)
 // }
-
-// fileExists checks if a file exists
-func fileExists(filename string) bool {
-	_, err := os.Stat(filename)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return false
-		}
-		// complain but still act as if it doesn't exist
-		LogIfError(err)
-		return false
-	}
-	return true
-}
 
 var paletteRoot string
 
@@ -107,35 +93,23 @@ func MIDIFilePath(nm string) string {
 func LocalPaletteDir() string {
 	localapp := os.Getenv("CommonProgramFiles")
 	if localapp == "" {
-		var err error
-		tempdir, err := kit.GetParam("engine.tempdir")
-		LogWarn("Expecting CommonProgramFiles to be set, using engine.tempdir value", "tempdir", tempdir)
-		if err != nil {
-			LogIfError(err)
-			return ""
-		}
-		localapp = tempdir
+		localapp = "C:/windows/temp"
 	}
 	return filepath.Join(localapp, "Palette")
 }
 
-var DataDir = "data_omnisphere" // default, override with environment variable
 var FullDataPath string
 
 func PaletteDataPath() string {
 	if FullDataPath != "" {
 		return FullDataPath
 	}
-	// Let environment variable override the compiled-in default of DataDir
+	// Let environment variable override the default
 	dataPath := os.Getenv("PALETTE_DATA_PATH")
 	if dataPath != "" {
-		DataDir = dataPath
-	}
-	// The value can be either a full path or just the "data_..." part.
-	if filepath.IsAbs(DataDir) {
-		FullDataPath = DataDir
+		FullDataPath = dataPath
 	} else {
-		FullDataPath = filepath.Join(LocalPaletteDir(), DataDir)
+		FullDataPath = filepath.Join(LocalPaletteDir(), "data")
 	}
 	return FullDataPath
 }
@@ -166,7 +140,7 @@ func ConfigFilePath(nm string) string {
 	return filepath.Join(ConfigDir(), nm)
 }
 
-func FileExists(filepath string) bool {
+func (h HostWin) FileExists(filepath string) bool {
 	fileinfo, err := os.Stat(filepath)
 	if os.IsNotExist(err) {
 		return false

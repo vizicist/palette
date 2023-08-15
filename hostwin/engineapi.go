@@ -108,7 +108,7 @@ func (h HostWin) executeEngineApi(api string, apiargs map[string]string) (result
 		if err != nil {
 			return "", err
 		}
-		return "", h.SaveCurrent()
+		return "", kit.Params.Save("engine", "_Current")
 
 	case "setparams":
 		for name, value := range apiargs {
@@ -121,7 +121,7 @@ func (h HostWin) executeEngineApi(api string, apiargs map[string]string) (result
 		if err != nil {
 			return "", err
 		}
-		return "", h.SaveCurrent()
+		return "", kit.Params.Save("engine","_Current")
 
 	case "get":
 		name, ok := apiargs["name"]

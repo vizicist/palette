@@ -1,7 +1,5 @@
 @echo off
-call setpalettelogdir
-call sethostname
-set logdir=%PALETTE_DATA_PATH%\logs\%hostname%
+set logdir=%CommonProgramFiles%\Palette\logs
 cd %logdir%
 del /s *.log >nul 2>nul
 del /s *.stderr >nul 2>nul
