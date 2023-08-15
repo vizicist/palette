@@ -17,12 +17,9 @@ type Host interface {
 	HandleIncomingMidiEvent(me MidiEvent)
 	ResetAudio()
 	ActivateAudio()
+	FileExists(path string) bool
 	SendToOscClients(msg *osc.Message)
 	GenerateVisualsFromCursor(ce CursorEvent, patchName string)
-	SaveDataInFile(data []byte, category string, filename string) error
-	SavedFileList(category string) ([]string, error)
-	GetSavedData(category string, filename string) ([]byte, error)
-	GetConfigFileData(filename string) ([]byte, error)
 	InputEventLock()
 	InputEventUnlock()
 	OpenFakeChannelOutput(port string, channel int) *MIDIPortChannelState
@@ -30,11 +27,19 @@ type Host interface {
 	GetPortChannelState(PortChannel) (*MIDIPortChannelState,error)
 	SendMIDI([]byte)
 
-	SaveCurrent() error
+	GetConfigFileData(filename string) ([]byte, error)
+	SavedFileList(category string) ([]string, error)
+	SaveDataInFile(data []byte, category string, filename string) error
+	GetSavedData(category string, filename string) ([]byte, error)
+
 	EveryTick()
 
 	ToFreeFramePlugin(patchName string, msg *osc.Message)
 	SendEffectParam(patchName string, name string, value string)
 	PortAndLayerNumForPatch(patchName string) (portnum int, layernum int)
 	ShowText(msg string)
+}
+
+func FileExists(path string) bool {
+	return TheHost.FileExists(path)
 }

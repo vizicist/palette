@@ -165,8 +165,8 @@ func (pm *ProcessManager) AddProcessBuiltIn(process string) {
 		pm.AddProcess(process, TheWinHost.ProcessInfo())
 	case "gui":
 		pm.AddProcess(process, GuiProcessInfo())
-	case "keykit":
-		pm.AddProcess(process, KeykitProcessInfo())
+	// case "keykit":
+	// 	pm.AddProcess(process, KeykitProcessInfo())
 	case "mmtt":
 		pm.AddProcess(process, MmttProcessInfo())
 	}
@@ -253,7 +253,7 @@ func (pm *ProcessManager) IsRunning(process string) bool {
 func GuiProcessInfo() *ProcessInfo {
 	fullpath, err := kit.GetParam("engine.gui")
 	LogIfError(err)
-	if fullpath != "" && !FileExists(fullpath) {
+	if fullpath != "" && !kit.FileExists(fullpath) {
 		LogWarn("No Gui found, looking for", "path", fullpath)
 		return nil
 	}
@@ -282,7 +282,7 @@ func GuiProcessInfo() *ProcessInfo {
 func MonitorProcessInfo() *ProcessInfo {
 	fullpath, err := GetParam("engine.monitor")
 	LogIfError(err)
-	if fullpath != "" && !FileExists(fullpath) {
+	if fullpath != "" && !kit.FileExists(fullpath) {
 		LogWarn("No Monitor found, looking for", "path", fullpath)
 		return nil
 	}
@@ -291,6 +291,7 @@ func MonitorProcessInfo() *ProcessInfo {
 }
 */
 
+/*
 func KeykitProcessInfo() *ProcessInfo {
 
 	// Allow parameter to override keyroot
@@ -328,12 +329,12 @@ func KeykitProcessInfo() *ProcessInfo {
 	// Allow parameter to override path to key.exe
 	fullpath, err := kit.GetParam("engine.keykitpath")
 	LogIfError(err)
-	if fullpath != "" && !FileExists(fullpath) {
+	if fullpath != "" && !kit.FileExists(fullpath) {
 		LogWarn("engine.keykit value doesn't exist, was looking for", "fullpath", fullpath)
 	}
 	if fullpath == "" {
 		fullpath = filepath.Join(PaletteDir(), "keykit", "bin", KeykitExe)
-		if !FileExists(fullpath) {
+		if !kit.FileExists(fullpath) {
 			LogWarn("Keykit not found in default location", "fullpath", fullpath)
 			return nil
 		}
@@ -341,6 +342,7 @@ func KeykitProcessInfo() *ProcessInfo {
 	exe := filepath.Base(fullpath)
 	return NewProcessInfo(exe, fullpath, "", nil)
 }
+*/
 
 func MmttProcessInfo() *ProcessInfo {
 
@@ -351,7 +353,7 @@ func MmttProcessInfo() *ProcessInfo {
 		return nil
 	}
 	fullpath := filepath.Join(PaletteDir(), "bin", "mmtt_"+mmtt, "mmtt_"+mmtt+".exe")
-	if !FileExists(fullpath) {
+	if !kit.FileExists(fullpath) {
 		// LogWarn("no mmtt executable found, looking for", "path", fullpath)
 		fullpath = ""
 	}

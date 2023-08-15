@@ -54,7 +54,6 @@ void NosuchDebug(char const *fmt, ... );
 void NosuchDebug(int level, char const *fmt, ... );
 void NosuchErrorOutput(const char *fmt, ...);
 std::string NosuchDataPath(std::string file);
-// std::string NosuchPalettePath(std::string file);
 std::string NosuchForwardSlash(std::string filepath);
 
 #define NosuchAssert(expr) if(!(expr)){ throw NosuchException("NosuchAssert (%s) failed at %s:%d",#expr,__FILE__,__LINE__);}
