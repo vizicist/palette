@@ -178,7 +178,7 @@ func CliCommand(args []string) (map[string]string, error) {
 		return nil, hostwin.ArchiveLogs()
 
 	case "test":
-		return hostwin.EngineApi("quadpro.test", "ntimes", "40")
+		return hostwin.EngineApi("quadpro.test")
 
 	default:
 		if len(words) < 2 {

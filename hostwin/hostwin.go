@@ -75,19 +75,31 @@ func (h HostWin) Init() error {
 			}
 		}
 	}
-	LogInfo("Should kit be loading Current?")
-	// jerr = h.LoadCurrent()
-	// jif err != nil {
-	//	LogIfError(err)
-	// return err
-	// 
-
-	// This need to be done after engine parameters are loaded
-	TheProcessManager.AddBuiltins()
 
 	kit.RegisterHost(h)
 
 	return err
+}
+
+func (h HostWin) Start() {
+
+	// This need to be done after engine parameters are loaded
+	TheProcessManager.AddBuiltins()
+
+	h.done = make(chan bool)
+	LogInfo("Engine.Start")
+
+	go h.StartOscListener(OscPort)
+	go h.StartHttp(EngineHttpPort)
+
+	go TheRouter.Start()
+	go TheMidiIO.Start()
+
+	go h.ResetAudio()
+
+	// if ParamBool("mmtt.depth") {
+	// 	go DepthRunForever()
+	// }
 }
 
 func (h HostWin) EveryTick() {
@@ -132,31 +144,6 @@ func (h HostWin) GenerateVisualsFromCursor(ce kit.CursorEvent, patchName string)
 
 }
 
-// func (h HostWin) LoadCurrent() (err error) {
-// 	return h.LoadEngineParams("_Current.json")
-// }
-
-// func (e *Engine) SendToOscCLients(oscMessage *osc.Message) {
-// 	e.sendToOscClients(oscMessage)
-// }
-
-func (h HostWin) LoadEngineParams(fname string) (err error) {
-	path, err := ReadableSavedFilePath("engine", fname)
-	if err != nil {
-		return err
-	}
-	bytes, err := os.ReadFile(path)
-	if err != nil {
-		return err
-	}
-	paramsmap, err := kit.LoadParamsMap(bytes)
-	if err != nil {
-		return err
-	}
-	kit.Params.ApplyValuesFromMap("engine", paramsmap, h.Set)
-	return nil
-}
-
 func (h HostWin) HandleIncomingMidiEvent(me kit.MidiEvent) {
 	err := fmt.Errorf("HandleIncomingMidiEvent needs work")
 	kit.LogIfError(err)
@@ -188,29 +175,6 @@ func (h HostWin) LogOfType(logtypes string, msg string, keysAndValues ...any) {
 
 func (h HostWin) SendMIDI(bytes []byte) {
 	LogWarn("SendMIDI needs work")
-}
-
-// func (h HostWin) ToFreeFramePlugin(patchName string, msg *osc.Message) {
-// 	// send an OSC message to Resolume
-// 	h.SendToOscClients(msg)
-// }
-
-func (h HostWin) Start() {
-
-	h.done = make(chan bool)
-	LogInfo("Engine.Start")
-
-	go h.StartOscListener(OscPort)
-	go h.StartHttp(EngineHttpPort)
-
-	go TheRouter.Start()
-	go TheMidiIO.Start()
-
-	go h.ResetAudio()
-
-	// if ParamBool("mmtt.depth") {
-	// 	go DepthRunForever()
-	// }
 }
 
 func (h HostWin) WaitTillDone() {
