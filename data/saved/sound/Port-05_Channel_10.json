@@ -1,4 +1,4 @@
-
+{
     "params":{
         "sound.controllerstyle":"modulationonly",
         "sound.pitchmax":"72",
@@ -8,4 +8,4 @@
         "sound.ycontroller":"1",
         "sound.zcontroller":"1"
     }
-    
+}
