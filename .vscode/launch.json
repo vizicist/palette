@@ -53,6 +53,13 @@
             "args": ["-engine=false"]
         },
         {
+            "name": "Test",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTE_SOURCE}/cmd/palette/palette.go",
+            "args": ["test"]
+        },
+        {
             "name": "palette archivelogs",
             "type": "go",
             "request": "launch",
@@ -131,13 +138,6 @@
             "request": "launch",
             "program": "${env:PALETTE_SOURCE}/../midi/examples/webmidi/main.go",
             "args": [""]
-        },
-        {
-            "name": "Test 1",
-            "type": "go",
-            "request": "launch",
-            "program": "${env:PALETTE_SOURCE}/cmd/palette/palette.go",
-            "args": ["test","1"]
         },
         {
             "name": "Twitch test",
