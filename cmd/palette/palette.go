@@ -30,6 +30,7 @@ func main() {
 		logname = "palette"
 	}
 
+
 	host := hostwin.NewHost(logname)
 	kit.RegisterHost(host)
 	kit.Init()

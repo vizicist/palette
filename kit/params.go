@@ -79,7 +79,7 @@ func NewParamValues() *ParamValues {
 	return &ParamValues{values: map[string]ParamValue{}}
 }
 
-func InitParams() {
+func InitParamDefs() {
 	Params = NewParamValues()
 
 	err := LoadParamEnums()
@@ -306,7 +306,7 @@ func (vals *ParamValues) GetBoolValue(name string) bool {
 // If filename doesn't have a .json suffix, it's added.
 func (vals *ParamValues) Save(category string, filename string) error {
 	data := vals.persistentDataOf(category)
-	if ! strings.HasSuffix(filename,".json") {
+	if !strings.HasSuffix(filename, ".json") {
 		filename += ".json"
 	}
 	return TheHost.SaveDataInFile(data, category, filename)

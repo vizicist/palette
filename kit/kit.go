@@ -24,11 +24,12 @@ func RegisterHost(h Host) {
 
 func Init() error {
 
-	InitParams()
-
+	InitParamDefs()
 	if TheHost == nil {
 		return fmt.Errorf("kit.Init called without registering a Host")
 	}
+
+	LoadEngineParams("_Current.json")
 
 	TheCursorManager = NewCursorManager()
 	TheScheduler = NewScheduler()
@@ -45,11 +46,11 @@ func Init() error {
 	TheAttractManager.SetAttractEnabled(enabled)
 
 	InitSynths()
+
 	return nil
 }
 
 func StartEngine() {
-	LoadEngineParams("_Current.json")
 	TheHost.Start()
 	TheQuadPro.Start()
 	go TheScheduler.Start()
