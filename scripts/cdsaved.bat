@@ -1,2 +1,2 @@
 c:
-cd %CommonProgramFiles%\Palette\data\saved
+cd %PALETTE_SOURCE%\data\saved
