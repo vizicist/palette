@@ -49,6 +49,8 @@ func NewHost(logname string) *HostWin {
 
 func (h HostWin) Init() error {
 
+	TheProcessManager.AddBuiltins()
+
 	err := h.loadResolumeJSON()
 	if err != nil {
 		LogIfError(err)
@@ -84,7 +86,6 @@ func (h HostWin) Init() error {
 func (h HostWin) Start() {
 
 	// This need to be done after engine parameters are loaded
-	TheProcessManager.AddBuiltins()
 
 	h.done = make(chan bool)
 	LogInfo("Engine.Start")

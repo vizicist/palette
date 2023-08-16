@@ -363,11 +363,6 @@ func (quadpro *QuadPro) Load(bytes []byte, category string, filename string) err
 
 	case "engine":
 		LogWarn("HACK! DISABLED! quadpro.Load shouldn't load engine parameters")
-		// err := TheHost.LoadEngineParams(filename)
-		// if err != nil {
-		// 	LogIfError(err)
-		// 	lasterr = err
-		// }
 
 	default:
 		LogWarn("QuadPro.Load: unhandled")
