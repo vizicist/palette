@@ -49,9 +49,24 @@ func Init() error {
 }
 
 func StartEngine() {
+	LoadEngineParams("_Current.json")
 	TheHost.Start()
 	TheQuadPro.Start()
 	go TheScheduler.Start()
+}
+
+func LoadEngineParams(fname string) {
+	bytes, err := TheHost.GetSavedData("engine", fname)
+	if err != nil {
+		TheHost.LogError(err)
+		return
+	}
+	paramsmap, err := LoadParamsMap(bytes)
+	if err != nil {
+		TheHost.LogError(err)
+		return
+	}
+	Params.ApplyValuesFromMap("engine", paramsmap, Params.Set)
 }
 
 func ScheduleCursorEvent(ce CursorEvent) {
