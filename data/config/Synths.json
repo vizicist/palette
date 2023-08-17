@@ -47,6 +47,22 @@
 	{"name": "Surge_Channel 13", "port":"03. Internal MIDI", "channel":13},
 	{"name": "Surge_Channel 14", "port":"03. Internal MIDI", "channel":14},
 	{"name": "Surge_Channel 15", "port":"03. Internal MIDI", "channel":15},
-	{"name": "Surge_Channel 16", "port":"03. Internal MIDI", "channel":16}
+	{"name": "Surge_Channel 16", "port":"03. Internal MIDI", "channel":16},
+	{"name": "Helm_Channel 1", "port":"04. Internal MIDI", "channel":1},
+	{"name": "Helm_Channel 2", "port":"04. Internal MIDI", "channel":2},
+	{"name": "Helm_Channel 3", "port":"04. Internal MIDI", "channel":3},
+	{"name": "Helm_Channel 4", "port":"04. Internal MIDI", "channel":4},
+	{"name": "Helm_Channel 5", "port":"04. Internal MIDI", "channel":5},
+	{"name": "Helm_Channel 6", "port":"04. Internal MIDI", "channel":6},
+	{"name": "Helm_Channel 7", "port":"04. Internal MIDI", "channel":7},
+	{"name": "Helm_Channel 8", "port":"04. Internal MIDI", "channel":8},
+	{"name": "Helm_Channel 9", "port":"04. Internal MIDI", "channel":9},
+	{"name": "Helm_Channel 10", "port":"04. Internal MIDI", "channel":10},
+	{"name": "Helm_Channel 11", "port":"04. Internal MIDI", "channel":11},
+	{"name": "Helm_Channel 12", "port":"04. Internal MIDI", "channel":12},
+	{"name": "Helm_Channel 13", "port":"04. Internal MIDI", "channel":13},
+	{"name": "Helm_Channel 14", "port":"04. Internal MIDI", "channel":14},
+	{"name": "Helm_Channel 15", "port":"04. Internal MIDI", "channel":15},
+	{"name": "Helm_Channel 16", "port":"04. Internal MIDI", "channel":16}
 ]
 }
