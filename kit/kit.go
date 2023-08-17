@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"runtime"
 	"strconv"
+	"strings"
 	"time"
 
 	midi "gitlab.com/gomidi/midi/v2"
@@ -57,6 +58,13 @@ func StartEngine() {
 }
 
 func LoadEngineParams(fname string) {
+	// First set the defaults
+	for nm, d := range ParamDefs {
+		if strings.HasPrefix(nm,"engine.") {
+			err := Params.Set(nm, d.Init)
+			LogIfError(err)
+		}
+	}
 	bytes, err := TheHost.GetSavedData("engine", fname)
 	if err != nil {
 		TheHost.LogError(err)

@@ -80,8 +80,6 @@ func NewParamValues() *ParamValues {
 }
 
 func InitParamDefs() {
-	Params = NewParamValues()
-
 	err := LoadParamEnums()
 	if err != nil {
 		LogWarn("LoadParamEnums", "err", err)
@@ -93,6 +91,8 @@ func InitParamDefs() {
 		LogWarn("LoadParamDefs", "err", err)
 		// might be fatal, but try to continue
 	}
+
+	Params = NewParamValues()
 }
 
 func (vals *ParamValues) DoForAllParams(f func(string, ParamValue)) {
