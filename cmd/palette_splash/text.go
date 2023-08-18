@@ -6,7 +6,8 @@ import (
 	"image"
 	"strings"
 
-	"github.com/vizicist/palette/hostwin"
+	"github.com/vizicist/palette/kit"
+	"github.com/vizicist/palette/twinsys"
 )
 
 // TextCallback xxx
@@ -16,7 +17,7 @@ var defaultBufferSize = 128
 
 // ScrollingText assumes a fixed-width font
 type ScrollingText struct {
-	ctx       WinContext
+	ctx       twinsys.WinContext
 	isPressed bool
 	Buffer    []string
 	nlines    int // number of lines actually displayed
@@ -24,23 +25,23 @@ type ScrollingText struct {
 }
 
 // NewScrollingText xxx
-func NewScrollingText(parent Window) WindowData {
+func NewScrollingText(parent twinsys.Window) twinsys.WindowData {
 	st := &ScrollingText{
-		ctx:       NewWindowContext(parent),
+		ctx:       twinsys.NewWindowContext(parent),
 		isPressed: false,
 		Buffer:    make([]string, defaultBufferSize),
 	}
-	return NewToolData(st, "ScrollingText", image.Point{})
+	return twinsys.NewToolData(st, "ScrollingText", image.Point{})
 }
 
 // Context xxx
-func (st *ScrollingText) Context() *WinContext {
+func (st *ScrollingText) Context() *twinsys.WinContext {
 	return &st.ctx
 }
 
 func (st *ScrollingText) resize(size image.Point) {
 
-	styleInfo := WinStyleInfo(st)
+	styleInfo := twinsys.WinStyleInfo(st)
 	// See how many lines and chars we can fit in the rect
 	st.nlines = size.Y / styleInfo.RowHeight()
 	st.nchars = size.X / styleInfo.CharWidth()
@@ -52,18 +53,18 @@ func (st *ScrollingText) resize(size image.Point) {
 		st.Buffer = newbuffer
 	}
 	// Adjust our size so we're exactly that height
-	WinSetSize(st, image.Point{size.X, st.nlines * styleInfo.RowHeight()})
+	twinsys.WinSetSize(st, image.Point{size.X, st.nlines * styleInfo.RowHeight()})
 }
 
 func (st *ScrollingText) redraw() {
 
-	sz := WinGetSize(st)
+	sz := twinsys.WinGetSize(st)
 	rect := image.Rect(0, 0, sz.X, sz.Y)
-	styleInfo := WinStyleInfo(st)
-	styleName := WinStyleName(st)
+	styleInfo := twinsys.WinStyleInfo(st)
+	styleName := twinsys.WinStyleName(st)
 
-	WinDoUpstream(st, NewSetColorCmd(ForeColor))
-	WinDoUpstream(st, NewDrawRectCmd(rect))
+	twinsys.WinDoUpstream(st, twinsys.NewSetColorCmd(twinsys.ForeColor))
+	twinsys.WinDoUpstream(st, twinsys.NewDrawRectCmd(rect))
 
 	if st.nchars == 0 || st.nlines == 0 {
 		// window is too small
@@ -106,7 +107,7 @@ func (st *ScrollingText) redraw() {
 		if line != "" {
 			// rownum 0 is the bottom
 			texty := rect.Max.Y - n*styleInfo.RowHeight() - 4
-			WinDoUpstream(st, NewDrawTextCmd(line, styleName, image.Point{textx, texty}))
+			twinsys.WinDoUpstream(st, twinsys.NewDrawTextCmd(line, styleName, image.Point{textx, texty}))
 		}
 	}
 }
@@ -121,12 +122,12 @@ func jsonEscape(i string) string {
 }
 
 // Do xxx
-func (st *ScrollingText) Do(cmd hostwin.Cmd) string {
+func (st *ScrollingText) Do(cmd kit.Cmd) string {
 
 	switch cmd.Subj {
 
 	case "resize":
-		size := cmd.ValuesXY("size", hostwin.PointZero)
+		size := cmd.ValuesXY("size", kit.PointZero)
 		st.resize(size)
 
 	case "redraw":
@@ -157,9 +158,9 @@ func (st *ScrollingText) Do(cmd hostwin.Cmd) string {
 		st.AddLine(line)
 
 	default:
-		hostwin.LogWarn("ScrollingText: didn't handle", "subj", cmd.Subj)
+		kit.LogWarn("ScrollingText: didn't handle", "subj", cmd.Subj)
 	}
-	return hostwin.OkResult()
+	return kit.OkResult()
 }
 
 // AddLine xxx

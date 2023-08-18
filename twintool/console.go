@@ -5,7 +5,7 @@ import (
 	"image"
 
 	w "github.com/vizicist/palette/twinsys"
-	"github.com/vizicist/palette/hostwin"
+	"github.com/vizicist/palette/kit"
 )
 
 func init() {
@@ -48,15 +48,15 @@ func (console *Console) Context() *w.WinContext {
 }
 
 // Do xxx
-func (console *Console) Do(cmd hostwin.Cmd) string {
+func (console *Console) Do(cmd kit.Cmd) string {
 	switch cmd.Subj {
 	case "mouse":
-		pos := cmd.ValuesPos(hostwin.PointZero)
+		pos := cmd.ValuesPos(kit.PointZero)
 		child, relpos := w.WinFindWindowUnder(console, pos)
 		if child != nil {
 			// Note that we update the value in cmd.Values
 			cmd.ValuesSetPos(relpos)
-			hostwin.LogOfType("mouse", "Console Do mouse", "cmd", cmd)
+			kit.LogOfType("mouse", "Console Do mouse", "cmd", cmd)
 			child.Do(cmd)
 		}
 
@@ -84,7 +84,7 @@ func (console *Console) Do(cmd hostwin.Cmd) string {
 		case "Three":
 			console.addLine("Three!\n")
 		case "Clear":
-			console.TextArea.Do(hostwin.NewSimpleCmd("clear"))
+			console.TextArea.Do(kit.NewSimpleCmd("clear"))
 		default:
 			lbl := cmd.ValuesString("label", "")
 			console.addLine(fmt.Sprintf("Unknown button: %s\n", lbl))
@@ -93,7 +93,7 @@ func (console *Console) Do(cmd hostwin.Cmd) string {
 	default:
 		w.WinDoUpstream(console, cmd)
 	}
-	return hostwin.OkResult()
+	return kit.OkResult()
 }
 
 func (console *Console) addLine(s string) {
