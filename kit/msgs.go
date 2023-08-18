@@ -1,9 +1,7 @@
-package hostwin
+package kit
 
 import (
 	"fmt"
-
-	"github.com/vizicist/palette/kit"
 )
 
 //////////////////////////////////////////////////////////////////
@@ -45,7 +43,7 @@ func NewSetParamMsg(name string, value string) string {
 ////////////////////////////////////////////////////////////////////
 
 // NewClickMsg xxx
-func NewClickMsg(click kit.Clicks) string {
+func NewClickMsg(click Clicks) string {
 	return fmt.Sprintf("\"click\":\"%d\"", click)
 }
 

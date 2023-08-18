@@ -33,7 +33,7 @@ func (h HostWin) ExecuteApi(api string, apiargs map[string]string) (result strin
 		}
 		return "", fmt.Errorf("no quadpro")
 	case "patch":
-		patchName := ExtractAndRemoveValueOf("patch", apiargs)
+		patchName := kit.ExtractAndRemoveValueOf("patch", apiargs)
 		if patchName == "" {
 			return "", fmt.Errorf("no patch value")
 		}
@@ -50,11 +50,11 @@ func (h HostWin) ExecuteApi(api string, apiargs map[string]string) (result strin
 
 // handleRawJsonApi takes raw JSON (as a string of the form "{...}"") as an API and returns raw JSON
 func (h HostWin) ExecuteApiFromJson(rawjson string) (string, error) {
-	args, err := StringMap(rawjson)
+	args, err := kit.StringMap(rawjson)
 	if err != nil {
 		return "", fmt.Errorf("Router.ExecuteApiAsJson: bad format of JSON")
 	}
-	api := ExtractAndRemoveValueOf("api", args)
+	api := kit.ExtractAndRemoveValueOf("api", args)
 	if api == "" {
 		return "", fmt.Errorf("Router.ExecuteApiAsJson: no api value")
 	}

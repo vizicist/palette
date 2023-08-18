@@ -35,7 +35,7 @@
             "name": "PK2GO - simple.k",
             "type": "go",
             "request": "launch",
-            "program": "${env:PALETTE_SOURCE}/cmd/pk2go/pk2go.go",
+            "program": "${env:PALETTE_SOURCE}/cmd/palette_pk2go/pk2go.go",
             "args": ["../../kitlib/simple.k"]
         },
        {

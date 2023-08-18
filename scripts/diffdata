@@ -1,0 +1,7 @@
+if [ "$1" == "" ] ; then
+	echo "Usage: diffdata {file}"
+	exit 1
+fi
+echo "++ comparing Common Files to PALETTE_SOURCE"
+diff "/c/Program Files/Common Files/Palette/data/$1" /c/Users/nosuc/GitHub/palette/data/$1
+ls -l "/c/Program Files/Common Files/Palette/data/$1" /c/Users/nosuc/GitHub/palette/data/$1
