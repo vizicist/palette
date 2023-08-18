@@ -1,0 +1,1 @@
+"%PALETTE%\bin\nats-sub" ">"

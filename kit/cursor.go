@@ -82,9 +82,9 @@ func NewCursorEvent(gid int, tag string, ddu string, pos CursorPos) CursorEvent 
 	return ce
 }
 
-func NewCursorClearEvent() CursorEvent {
+func NewCursorClearEvent(tag string) CursorEvent {
 	gid := TheCursorManager.UniqueGid()
-	return NewCursorEvent(gid, "", "clear", CursorPos{})
+	return NewCursorEvent(gid, tag, "clear", CursorPos{})
 }
 
 // NewActiveCursor - create a new ActiveCursor for a CursorEvent

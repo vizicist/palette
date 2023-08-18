@@ -361,7 +361,7 @@ func (m *oneMorph) readFrames(callback kit.CursorCallbackFunc, forceFactor float
 				}
 				if cornerSource != m.currentTag {
 					LogInfo("Switching corners pad", "source", cornerSource)
-					ce := kit.NewCursorClearEvent()
+					ce := kit.NewCursorClearEvent(m.currentTag)
 					callback(ce)
 					m.currentTag = cornerSource
 					continue // loop, doesn't send a cursor event
@@ -415,7 +415,7 @@ func (m *oneMorph) readFrames(callback kit.CursorCallbackFunc, forceFactor float
 				m.contactIdToGid[contactid] = gid
 			} else if m.currentTag != m.previousTag {
 				// If we're switching to a new source, clear existing cursors...
-				ce := kit.NewCursorClearEvent()
+				ce := kit.NewCursorClearEvent(m.currentTag)
 				callback(ce)
 				// and create a new cid...
 				gid = kit.TheCursorManager.UniqueGid()

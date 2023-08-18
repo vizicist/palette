@@ -61,7 +61,7 @@ func (n *Node) prettyPrint() string {
 	case NAME:
 		return n.name
 	case PHRASE:
-		return fmt.Sprintf("kit.Phrase(\"%s\")", n.phr)
+		return fmt.Sprintf("kit.NewPhraseVal(\"%s\")", n.phr)
 	case STRING:
 		return n.str
 	case OBJECT:
@@ -69,9 +69,9 @@ func (n *Node) prettyPrint() string {
 	case PARAM:
 		switch len(n.children) {
 		case 1:
-			return n.PrettyChild(0) + " Kval"
+			return n.PrettyChild(0) + " kit.Kval"
 		case 2:
-			return n.PrettyChild(0) + "," + n.PrettyChild(1) + " Kval"
+			return n.PrettyChild(0) + "," + n.PrettyChild(1) + " kit.Kval"
 		default:
 			return "(Unexpected children in PARAM)"
 		}
@@ -104,7 +104,7 @@ func (n *Node) prettyPrint() string {
 			name := n.children[0].name
 			params := n.PrettyChild(1)
 			stmts := n.PrettyChild(2)
-			return fmt.Sprintf("func %s ( %s ) { %s }", name, params, stmts)
+			return fmt.Sprintf("func %s ( %s ) kit.Kval { %s }", name, params, stmts)
 		case 2:
 			name := n.children[0].name
 			stmts := n.PrettyChild(1)

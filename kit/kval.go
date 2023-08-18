@@ -1,5 +1,12 @@
 package kit
 
 type Kval struct {
-	str string
+	phr *Phrase
+}
+
+func NewPhraseVal(s string) Kval {
+	p := NewPhrase(s)
+	return Kval {
+		phr: p,
+	}
 }

@@ -1,0 +1,7 @@
+if [ "$1" == "" ] ; then
+	echo "Usage: pulldata {file}"
+	exit 1
+fi
+base=`basename $1`
+cp /c/Users/nosuc/GitHub/palette/data/$1 /c/tmp/$base
+cp "/c/Program Files/Common Files/Palette/data/$1" /c/Users/nosuc/GitHub/palette/data/$1

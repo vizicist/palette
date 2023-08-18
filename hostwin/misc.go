@@ -3,8 +3,6 @@ package hostwin
 import (
 	"archive/zip"
 	"bytes"
-	"encoding/json"
-	"errors"
 	"fmt"
 	"image"
 	"image/draw"
@@ -149,94 +147,6 @@ func (h HostWin) FileExists(filepath string) bool {
 	return !fileinfo.IsDir()
 }
 
-func MapString(amap map[string]string) string {
-	final := ""
-	sep := ""
-	for _, val := range amap {
-		final = final + sep + "\"" + val + "\""
-		sep = ","
-	}
-	return final
-}
-
-// StringMap takes a JSON string and returns a map of elements
-func StringMap(params string) (map[string]string, error) {
-	// The enclosing curly braces are optional
-	if params == "" || params[0] == '"' {
-		params = "{ " + params + " }"
-	}
-	dec := json.NewDecoder(strings.NewReader(params))
-	t, err := dec.Token()
-	if err != nil {
-		return nil, err
-	}
-	if t != json.Delim('{') {
-		LogWarn("no curly", "params", params)
-		return nil, errors.New("expected '{' delimiter")
-	}
-	values := make(map[string]string)
-	for dec.More() {
-		name, err := dec.Token()
-		if err != nil {
-			return nil, err
-		}
-		if !dec.More() {
-			return nil, errors.New("incomplete JSON?")
-		}
-		value, err := dec.Token()
-		if err != nil {
-			return nil, err
-		}
-		// The name and value Tokens can be floats or strings or ...
-		n := fmt.Sprintf("%v", name)
-		v := fmt.Sprintf("%v", value)
-		values[n] = v
-	}
-	return values, nil
-}
-
-// ExtractAndRemoveValueOf removes a named value from a map and returns it.
-// If the value doesn't exist, "" is returned.
-func ExtractAndRemoveValueOf(valName string, argsmap map[string]string) string {
-	val, ok := argsmap[valName]
-	if !ok {
-		val = ""
-	}
-	delete(argsmap, valName)
-	return val
-}
-
-// ResultResponse returns a JSON 2.0 result response
-func ResultResponse(resultObj any) string {
-	bytes, err := json.Marshal(resultObj)
-	if err != nil {
-		LogWarn("ResultResponse: unable to marshal resultObj")
-		return ""
-	}
-	result := string(bytes)
-	if result == "" {
-		result = "\"0\""
-	}
-	return `{ "result": ` + result + ` }`
-}
-
-func jsonEscape(s string) string {
-	s = strings.ReplaceAll(s, "\\", "\\\\") // has to be first
-	s = strings.ReplaceAll(s, "\b", "\\b")
-	s = strings.ReplaceAll(s, "\f", "\\f")
-	s = strings.ReplaceAll(s, "\n", "\\n")
-	s = strings.ReplaceAll(s, "\r", "\\r")
-	s = strings.ReplaceAll(s, "\t", "\\t")
-	s = strings.ReplaceAll(s, "\"", "\\\"")
-	return s
-}
-
-// ErrorResponse return an error response
-func ErrorResponse(err error) string {
-	escaped := jsonEscape(err.Error())
-	return `{ "error": "` + escaped + `" }`
-}
-
 // LoadImage reads an image file
 func LoadImage(path string) (*image.NRGBA, error) {
 	file, err := os.Open(path)
@@ -282,7 +192,7 @@ func ReadConfigFile(path string) (map[string]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	pmap, err := StringMap(string(bytes))
+	pmap, err := kit.StringMap(string(bytes))
 	if err != nil {
 		return nil, err
 	}
@@ -458,7 +368,7 @@ func RemoteApiRaw(url string, args string) (map[string]string, error) {
 	if err != nil {
 		return nil, fmt.Errorf("RemoteApiRaw: ReadAll err=%s", err)
 	}
-	output, err := StringMap(string(body))
+	output, err := kit.StringMap(string(body))
 	if err != nil {
 		return nil, fmt.Errorf("RemoteApiRaw: unable to interpret output, err=%s", err)
 	}

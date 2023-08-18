@@ -67,19 +67,6 @@ func (h HostWin) Init() error {
 
 	InitLogTypes()
 
-	// Set all the default engine.* values
-	for nm, pd := range kit.ParamDefs {
-		if pd.Category == "engine" {
-			err := kit.Params.SetParamValueWithString(nm, pd.Init)
-			if err != nil {
-				LogIfError(err)
-				return err
-			}
-		}
-	}
-
-	kit.RegisterHost(h)
-
 	return err
 }
 
@@ -250,19 +237,19 @@ func (h HostWin) StartHttp(port int) {
 		case "POST":
 			body, err := io.ReadAll(req.Body)
 			if err != nil {
-				response = ErrorResponse(err)
+				response = kit.ErrorResponse(err)
 			} else {
 				bstr := string(body)
 				_ = bstr
 				resp, err := TheWinHost.ExecuteApiFromJson(bstr)
 				if err != nil {
-					response = ErrorResponse(err)
+					response = kit.ErrorResponse(err)
 				} else {
-					response = ResultResponse(resp)
+					response = kit.ResultResponse(resp)
 				}
 			}
 		default:
-			response = ErrorResponse(fmt.Errorf("HTTP server unable to handle method=%s", req.Method))
+			response = kit.ErrorResponse(fmt.Errorf("HTTP server unable to handle method=%s", req.Method))
 		}
 	})
 
