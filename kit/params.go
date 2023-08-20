@@ -71,8 +71,8 @@ type ParamValues struct {
 	values map[string]ParamValue
 }
 
-// These Params are global to the kit package
-var Params *ParamValues
+// These EngineParams are global to the kit package
+var EngineParams *ParamValues
 
 func NewParamValues() *ParamValues {
 	// Note: it's ParamValue (not a pointer)
@@ -92,7 +92,7 @@ func InitParamDefs() {
 		// might be fatal, but try to continue
 	}
 
-	Params = NewParamValues()
+	EngineParams = NewParamValues()
 }
 
 func (vals *ParamValues) DoForAllParams(f func(string, ParamValue)) {
@@ -191,7 +191,7 @@ func (vals *ParamValues) Get(name string) (string, error) {
 }
 
 func GetParam(nm string) (string, error) {
-	s, err := Params.Get(nm)
+	s, err := EngineParams.Get(nm)
 	if err != nil {
 		LogError(err) // may duplicate errors in the users of this func
 		s = ""

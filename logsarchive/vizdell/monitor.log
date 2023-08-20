@@ -1,0 +1,42 @@
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-08-14 15:20:10","logname":"monitor","click":0,"loglevel":"info"}
+{"uptime":"0.000000","msg":"monitor is checking the engine.","click":0,"loglevel":"info"}
+{"uptime":"0.014828","msg":"LogIfError","err":"joystickMonitor: disabled, unable to find joystick with 8 buttons","click":0,"loglevel":"warn"}
+{"uptime":"0.025545","msg":"LogIfError","port":"Logidy UMI3","err":"can't find MIDI input port Logidy UMI3","click":0,"loglevel":"warn"}
+{"uptime":"0.200690","msg":"checkEngine: engine is not running, killing everything, monitor should restart engine.","click":0,"loglevel":"info"}
+{"uptime":"0.200690","msg":"KillAll","click":0,"loglevel":"info"}
+{"uptime":"0.200690","msg":"KillExecutable","executable":"key.exe","exe":"key.exe","click":0,"loglevel":"info"}
+{"uptime":"0.323331","msg":"KillExecutable","executable":"mmtt_kinect.exe","exe":"mmtt_kinect.exe","click":0,"loglevel":"info"}
+{"uptime":"0.442561","msg":"KillExecutable","executable":"bidule.exe","exe":"bidule.exe","click":0,"loglevel":"info"}
+{"uptime":"0.569993","msg":"KillExecutable","executable":"avenue.exe","exe":"avenue.exe","click":0,"loglevel":"info"}
+{"uptime":"0.693549","msg":"KillExecutable","executable":"palette_gui.exe","exe":"palette_gui.exe","click":0,"loglevel":"info"}
+{"uptime":"0.785028","msg":"KillExecutable","executable":"palette_engine.exe","exe":"palette_engine.exe","click":0,"loglevel":"info"}
+{"uptime":"0.876143","msg":"checkEngine: restarting engine","click":0,"loglevel":"info"}
+{"uptime":"0.876143","msg":"StartExecutableLogOutput","executable":"C:\\Program Files\\Palette\\bin\\palette_engine.exe","click":0,"loglevel":"info"}
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-08-14 15:22:20","logname":"monitor","click":0,"loglevel":"info"}
+{"uptime":"0.000000","msg":"monitor is checking the engine.","click":0,"loglevel":"info"}
+{"uptime":"0.010402","msg":"LogIfError","err":"joystickMonitor: disabled, unable to find joystick with 8 buttons","click":0,"loglevel":"warn"}
+{"uptime":"0.022473","msg":"LogIfError","port":"Logidy UMI3","err":"can't find MIDI input port Logidy UMI3","click":0,"loglevel":"warn"}
+{"uptime":"0.194417","msg":"checkEngine: engine is not running, killing everything, monitor should restart engine.","click":0,"loglevel":"info"}
+{"uptime":"0.194417","msg":"KillAll","click":0,"loglevel":"info"}
+{"uptime":"0.194417","msg":"KillExecutable","executable":"key.exe","exe":"key.exe","click":0,"loglevel":"info"}
+{"uptime":"0.312140","msg":"KillExecutable","executable":"mmtt_kinect.exe","exe":"mmtt_kinect.exe","click":0,"loglevel":"info"}
+{"uptime":"0.459018","msg":"KillExecutable","executable":"bidule.exe","exe":"bidule.exe","click":0,"loglevel":"info"}
+{"uptime":"0.570298","msg":"KillExecutable","executable":"avenue.exe","exe":"avenue.exe","click":0,"loglevel":"info"}
+{"uptime":"0.660789","msg":"KillExecutable","executable":"palette_gui.exe","exe":"palette_gui.exe","click":0,"loglevel":"info"}
+{"uptime":"0.749512","msg":"KillExecutable","executable":"palette_engine.exe","exe":"palette_engine.exe","click":0,"loglevel":"info"}
+{"uptime":"0.857500","msg":"checkEngine: restarting engine","click":0,"loglevel":"info"}
+{"uptime":"0.857554","msg":"StartExecutableLogOutput","executable":"C:\\Program Files\\Palette\\bin\\palette_engine.exe","click":0,"loglevel":"info"}
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-08-14 15:23:55","logname":"monitor","click":0,"loglevel":"info"}
+{"uptime":"0.000000","msg":"monitor is checking the engine.","click":0,"loglevel":"info"}
+{"uptime":"0.011057","msg":"LogIfError","err":"joystickMonitor: disabled, unable to find joystick with 8 buttons","click":0,"loglevel":"warn"}
+{"uptime":"0.075560","msg":"LogIfError","port":"Logidy UMI3","err":"can't find MIDI input port Logidy UMI3","click":0,"loglevel":"warn"}
+{"uptime":"0.207356","msg":"checkEngine: engine is not running, killing everything, monitor should restart engine.","click":0,"loglevel":"info"}
+{"uptime":"0.207356","msg":"KillAll","click":0,"loglevel":"info"}
+{"uptime":"0.207356","msg":"KillExecutable","executable":"key.exe","exe":"key.exe","click":0,"loglevel":"info"}
+{"uptime":"0.327362","msg":"KillExecutable","executable":"mmtt_kinect.exe","exe":"mmtt_kinect.exe","click":0,"loglevel":"info"}
+{"uptime":"0.451025","msg":"KillExecutable","executable":"bidule.exe","exe":"bidule.exe","click":0,"loglevel":"info"}
+{"uptime":"0.570835","msg":"KillExecutable","executable":"avenue.exe","exe":"avenue.exe","click":0,"loglevel":"info"}
+{"uptime":"0.694583","msg":"KillExecutable","executable":"palette_gui.exe","exe":"palette_gui.exe","click":0,"loglevel":"info"}
+{"uptime":"0.805261","msg":"KillExecutable","executable":"palette_engine.exe","exe":"palette_engine.exe","click":0,"loglevel":"info"}
+{"uptime":"0.919005","msg":"checkEngine: restarting engine","click":0,"loglevel":"info"}
+{"uptime":"0.919005","msg":"StartExecutableLogOutput","executable":"C:\\Program Files\\Palette\\bin\\palette_engine.exe","click":0,"loglevel":"info"}

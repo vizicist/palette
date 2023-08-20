@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 )
 
@@ -93,5 +94,108 @@ func jsonEscape(s string) string {
 func ErrorResponse(err error) string {
 	escaped := jsonEscape(err.Error())
 	return `{ "error": "` + escaped + `" }`
+}
+
+func NeedFloatArg(nm string, api string, args map[string]string) (float32, error) {
+	val, ok := args[nm]
+	if !ok {
+		return 0.0, fmt.Errorf("api/event=%s missing value for %s", api, nm)
+	}
+	f, err := strconv.ParseFloat(val, 32)
+	if err != nil {
+		return 0.0, fmt.Errorf("api/event=%s bad value, expecting float for %s, got %s", api, nm, val)
+	}
+	return float32(f), nil
+}
+
+func OptionalStringArg(nm string, args map[string]string, dflt string) string {
+	val, ok := args[nm]
+	if !ok {
+		return dflt
+	}
+	return val
+}
+
+func NeedStringArg(nm string, api string, args map[string]string) (string, error) {
+	val, ok := args[nm]
+	if !ok {
+		return "", fmt.Errorf("api/event=%s missing value for %s", api, nm)
+	}
+	return val, nil
+}
+
+/*
+func needIntArg(nm string, api string, args map[string]string) (int, error) {
+	val, ok := args[nm]
+	if !ok {
+		return 0, fmt.Errorf("api/event=%s missing value for %s", api, nm)
+	}
+	v, err := strconv.Atoi(val)
+	if err != nil {
+		return 0, fmt.Errorf("api/event=%s bad value for %s", api, nm)
+	}
+	return int(v), nil
+}
+*/
+
+func NeedBoolArg(nm string, api string, args map[string]string) (bool, error) {
+	val, ok := args[nm]
+	if !ok {
+		return false, fmt.Errorf("api/event=%s missing value for %s", api, nm)
+	}
+	b := IsTrueValue(val)
+	return b, nil
+}
+
+func ArgToFloat(nm string, args map[string]string) float32 {
+	v, err := strconv.ParseFloat(args[nm], 32)
+	if err != nil {
+		LogIfError(err)
+		v = 0.0
+	}
+	return float32(v)
+}
+
+func ArgToInt(nm string, args map[string]string) int {
+	v, err := strconv.ParseInt(args[nm], 10, 64)
+	if err != nil {
+		LogIfError(err)
+		v = 0.0
+	}
+	return int(v)
+}
+
+/*
+func ArgsToCursorEvent(args map[string]string) CursorEvent {
+	gid := ArgToInt("gid", args)
+	// source := args["source"]
+	ddu := strings.TrimPrefix(args["event"], "cursor_")
+	x := ArgToFloat("x", args)
+	y := ArgToFloat("y", args)
+	z := ArgToFloat("z", args)
+	pos := CursorPos{x, y, z}
+	ce := NewCursorEvent(gid, ddu, pos)
+	return ce
+}
+*/
+
+func GetArgsXYZ(args map[string]string) (x, y, z float32, err error) {
+
+	api := "GetArgsXYZ"
+	x, err = NeedFloatArg("x", api, args)
+	if err != nil {
+		return x, y, z, err
+	}
+
+	y, err = NeedFloatArg("y", api, args)
+	if err != nil {
+		return x, y, z, err
+	}
+
+	z, err = NeedFloatArg("z", api, args)
+	if err != nil {
+		return x, y, z, err
+	}
+	return x, y, z, err
 }
 

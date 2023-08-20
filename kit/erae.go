@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"math"
 	"time"
-
-	"gitlab.com/gomidi/midi/v2/drivers"
 )
 
 var TheErae *Erae
@@ -29,7 +27,7 @@ type Erae struct {
 	width     int
 	height    int
 	zone      byte
-	Output    drivers.Out
+	Output    any
 }
 
 func (erae *Erae) Start() {
@@ -131,7 +129,7 @@ func (erae *Erae) handleFinger(bb []byte) {
 	y := rawy / float32(erae.height)
 	z := rawz
 
-	if TheHost.IsLogging("erae") {
+	if IsLogging("erae") {
 		dx := lastX - x
 		dy := lastY - y
 		dz := lastZ - z

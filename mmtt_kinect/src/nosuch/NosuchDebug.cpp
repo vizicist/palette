@@ -247,10 +247,8 @@ NosuchErrorOutput(const char *fmt, ...)
 std::string
 NosuchDataPath(std::string filepath)
 {
-	char *data_path = getenv("PALETTE_DATA_PATH");
-	if ( data_path == NULL ) {
-		data_path = NosuchLocalDir + "/data";
-	}
+	char *data_path;
+	data_path = NosuchLocalDir + "/data";
 	return std::string(data_path) + "/" + filepath;
 }
 

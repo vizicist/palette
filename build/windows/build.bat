@@ -124,31 +124,19 @@ copy setpalettelogdir.bat %bin% >nul
 
 popd
 
-for %%X in (data) DO (
+mkdir %ship%\data\config
+mkdir %ship%\data\html
+mkdir %ship%\data\saved
+xcopy /e /y %PALETTE_SOURCE%\data\config %ship%\data\config >nul
+xcopy /e /y %PALETTE_SOURCE%\data\html %ship%\data\html >nul
+xcopy /e /y %PALETTE_SOURCE%\data\saved %ship%\data\saved >nul
+
+for %%X in (data_dexed data_omnisphere) DO (
 	echo ================ Copying %%X
 	mkdir %ship%\%%X\config
-	mkdir %ship%\%%X\midifiles
 	mkdir %ship%\%%X\saved
-	mkdir %ship%\%%X\html
-	copy %PALETTE_SOURCE%\%%X\config\homepage.json %ship%\%%X\config >nul
-	copy %PALETTE_SOURCE%\%%X\config\ffgl.json %ship%\%%X\config >nul
-	copy %PALETTE_SOURCE%\%%X\config\param*.json %ship%\%%X\config >nul
-	copy %PALETTE_SOURCE%\%%X\config\resolume.json %ship%\%%X\config >nul
-	copy %PALETTE_SOURCE%\%%X\config\settings.json %ship%\%%X\config >nul
-	copy %PALETTE_SOURCE%\%%X\config\mmtt_*.json %ship%\%%X\config >nul
-	copy %PALETTE_SOURCE%\%%X\config\synths.json %ship%\%%X\config >nul
-	copy %PALETTE_SOURCE%\%%X\config\morphs.json %ship%\%%X\config >nul
-	rem copy %PALETTE_SOURCE%\%%X\config\nats*.conf %ship%\%%X\config >nul
-	copy %PALETTE_SOURCE%\%%X\config\Palette*.avc %ship%\%%X\config >nul
-	copy %PALETTE_SOURCE%\%%X\config\EraeTouchLayout.emk %ship%\%%X\config >nul
-	copy %PALETTE_SOURCE%\%%X\config\*.png %ship%\%%X\config >nul
-	copy %PALETTE_SOURCE%\%%X\config\consola.ttf %ship%\%%X\config >nul
-	copy %PALETTE_SOURCE%\%%X\config\OpenSans-Regular.ttf %ship%\%%X\config >nul
-	copy %PALETTE_SOURCE%\%%X\config\palette.ico %ship%\%%X\config >nul
-	copy %PALETTE_SOURCE%\%%X\config\*.bidule %ship%\%%X\config >nul
-	copy %PALETTE_SOURCE%\%%X\midifiles\*.* %ship%\%%X\midifiles >nul
+	xcopy /e /y %PALETTE_SOURCE%\%%X\config %ship%\%%X\config >nul
 	xcopy /e /y %PALETTE_SOURCE%\%%X\saved %ship%\%%X\saved >nul
-	xcopy /e /y %PALETTE_SOURCE%\%%X\html %ship%\%%X\html >nul
 )
 
 echo ================ Copying windows-specific things

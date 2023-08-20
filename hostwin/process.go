@@ -157,7 +157,7 @@ func (pm *ProcessManager) AddProcess(process string, info *ProcessInfo) {
 
 func (pm *ProcessManager) AddProcessBuiltIn(process string) {
 
-	LogOfType("process", "AddProcessBuiltIn", "process", process)
+	kit.LogOfType("process", "AddProcessBuiltIn", "process", process)
 	switch process {
 	case "bidule":
 		pm.AddProcess(process, TheWinHost.ProcessInfoBidule())
@@ -186,7 +186,7 @@ func (pm *ProcessManager) StartRunning(process string) error {
 		return fmt.Errorf("StartRunning: unable to start %s, no executable path", process)
 	}
 
-	LogInfo("StartRunning", "path", pi.FullPath, "arg", pi.Arg, "lenarg", len(pi.Arg))
+	// LogInfo("StartRunning", "path", pi.FullPath, "arg", pi.Arg, "lenarg", len(pi.Arg))
 
 	err = StartExecutableLogOutput(process, pi.FullPath, pi.Arg)
 	if err != nil {
@@ -194,7 +194,7 @@ func (pm *ProcessManager) StartRunning(process string) error {
 	}
 	pm.wasStarted[process].Store(true)
 	if pi.Activate != nil {
-		LogOfType("process", "Activate", "process", process)
+		kit.LogOfType("process", "Activate", "process", process)
 		go pi.Activate()
 		pi.Activated = true
 	}
@@ -203,7 +203,7 @@ func (pm *ProcessManager) StartRunning(process string) error {
 
 func (pm *ProcessManager) KillProcess(process string) (err error) {
 
-	LogOfType("process", "KillProcess", "process", process)
+	kit.LogOfType("process", "KillProcess", "process", process)
 
 	pi, err := pm.GetProcessInfo(process)
 	if err != nil {

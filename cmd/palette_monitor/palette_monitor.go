@@ -200,21 +200,21 @@ func midiMonitor(port string) {
 		var ch, pitch, vel uint8
 		switch {
 		case msg.GetNoteStart(&ch, &pitch, &vel):
-			hostwin.LogOfType("midi", "NoteOn", "pitch", pitch, "chan", ch, "velocity", vel)
+			kit.LogOfType("midi", "NoteOn", "pitch", pitch, "chan", ch, "velocity", vel)
 			if !noteDown[pitch] {
 				noteDownTime[pitch] = time.Now()
 				noteDown[pitch] = true
 			}
 
 		case msg.GetNoteEnd(&ch, &pitch):
-			hostwin.LogOfType("midi", "NoteOff", "pitch", pitch, "chan", ch)
+			kit.LogOfType("midi", "NoteOff", "pitch", pitch, "chan", ch)
 			if noteDown[pitch] {
 				noteDown[pitch] = false
 				// Note just came back up.
 				dt := time.Since(noteDownTime[pitch])
 				// Pay attention only if the note is down for more than a second.
 				if dt > time.Second {
-					hostwin.LogOfType("midi", "notegpress", "pitch", pitch, "dt", dt)
+					kit.LogOfType("midi", "notegpress", "pitch", pitch, "dt", dt)
 					if noteAction[pitch] != nil {
 						noteAction[pitch]()
 					}

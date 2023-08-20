@@ -5,15 +5,17 @@ import (
 )
 
 type Host interface {
-
 	Init() error
 	Start()
+	SayDone()
 
 	LogWarn(msg string, keysAndValues ...any)
 	LogError(err error, keysAndValues ...any)
 	LogInfo(msg string, keysAndValues ...any)
-	IsLogging(name string) bool
-	LogOfType(logtypes string, msg string, keysAndValues ...any)
+	// IsLogging(name string) bool
+	// LogOfType(logtypes string, msg string, keysAndValues ...any)
+	ArchiveLogs() error
+
 	HandleIncomingMidiEvent(me MidiEvent)
 	ResetAudio()
 	ActivateAudio()
@@ -24,8 +26,12 @@ type Host interface {
 	InputEventUnlock()
 	OpenFakeChannelOutput(port string, channel int) *MIDIPortChannelState
 	OpenChannelOutput(PortChannel) *MIDIPortChannelState
-	GetPortChannelState(PortChannel) (*MIDIPortChannelState,error)
-	SendMIDI([]byte)
+	GetPortChannelState(PortChannel) (*MIDIPortChannelState, error)
+	SendMIDI(output any, bytes []byte) error
+	StartRunning(process string) error
+	KillProcess(process string) error
+	SetMidiInput(name string) error
+	ShowClip(clipNum int)
 
 	GetConfigFileData(filename string) ([]byte, error)
 	SavedFileList(category string) ([]string, error)
@@ -42,4 +48,16 @@ type Host interface {
 
 func FileExists(path string) bool {
 	return TheHost.FileExists(path)
+}
+
+var OscOutput = true
+
+func SendToOscClients(msg *osc.Message) {
+	if OscOutput {
+		TheHost.SendToOscClients(msg)
+	}
+}
+
+func ArchiveLogs() error {
+	return TheHost.ArchiveLogs()
 }

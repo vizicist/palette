@@ -31,6 +31,7 @@ func Init() error {
 	}
 
 	LoadEngineParams("_Current.json")
+	InitLogTypes()
 
 	TheCursorManager = NewCursorManager()
 	TheScheduler = NewScheduler()
@@ -60,8 +61,8 @@ func StartEngine() {
 func LoadEngineParams(fname string) {
 	// First set the defaults
 	for nm, d := range ParamDefs {
-		if strings.HasPrefix(nm,"engine.") {
-			err := Params.Set(nm, d.Init)
+		if strings.HasPrefix(nm, "engine.") {
+			err := EngineParams.Set(nm, d.Init)
 			LogIfError(err)
 		}
 	}
@@ -75,13 +76,14 @@ func LoadEngineParams(fname string) {
 		TheHost.LogError(err)
 		return
 	}
-	Params.ApplyValuesFromMap("engine", paramsmap, Params.Set)
+	EngineParams.ApplyValuesFromMap("engine", paramsmap, EngineParams.Set)
 }
 
 func ScheduleCursorEvent(ce CursorEvent) {
 
 	// schedule CursorEvents rather than handle them right away.
 	// This makes it easier to do looping, among other benefits.
+	LogOfType("cursor", "ScheduleCursorEvent", "ce", ce)
 
 	ScheduleAt(CurrentClick(), ce.Tag, ce)
 }

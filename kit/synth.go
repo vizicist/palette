@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"sync"
-
-	"gitlab.com/gomidi/midi/v2/drivers"
 )
 
 type PortChannel struct {
@@ -21,7 +19,7 @@ type MIDIPortChannelState struct {
 	Bank    int // 1-based, 1-whatever
 	Program int // 1-based, 1-128
 	PortName string // MIDI output port
-	Output  drivers.Out
+	Output  any // was drivers.Out
 	Isopen  bool
 	Mutex   sync.Mutex
 }
@@ -159,8 +157,7 @@ func (state *MIDIPortChannelState) UpdateBankProgram(synth *Synth) {
 			"status", "0x"+hexString(status),
 			"data1", "0x"+hexString(data1))
 
-		// TheHost.SendMIDI([]byte{status, data1})
-		err := state.Output.Send([]byte{status, data1})
+		err := TheHost.SendMIDI(state.Output,[]byte{status, data1})
 		LogIfError(err)
 	}
 }
@@ -197,7 +194,7 @@ func (synth *Synth) SendANO() {
 		"data1", "0x"+hexString(data1),
 		"data2", "0x"+hexString(data2))
 
-	err = state.Output.Send([]byte{status, data1, data2})
+	err = TheHost.SendMIDI(state.Output,[]byte{status, data1, data2})
 	LogIfError(err)
 }
 
@@ -227,7 +224,8 @@ func (synth *Synth) SendController(cnum uint8, cval uint8) {
 		"data1", "0x"+hexString(data1),
 		"data2", "0x"+hexString(data2))
 
-	LogIfError(state.Output.Send([]byte{status, data1, data2}))
+	err = TheHost.SendMIDI(state.Output,[]byte{status, data1, data2})
+	LogIfError(err)
 }
 
 /*
@@ -470,14 +468,14 @@ func (synth *Synth) SendBytesToMidiOutput(bytes []byte) {
 			"bytes", bytes)
 	}
 
-	err = state.Output.Send(bytes)
+	err = TheHost.SendMIDI(state.Output,bytes)
 	if err != nil {
 		LogWarn("synth.SendBytesToMidiOutputSend", "err", err)
 	}
 }
 
 func (synth *Synth) SendBytes(bytes []byte) error {
-	return synth.state.Output.Send(bytes)
+	return TheHost.SendMIDI(synth.state.Output,bytes)
 }
 
 func (synth *Synth) UpdateBankProgram() {
@@ -503,7 +501,7 @@ func (synth *Synth) UpdateBankProgram() {
 			"status", "0x"+hexString(status),
 			"data1", "0x"+hexString(data1))
 
-		err := state.Output.Send([]byte{status, data1})
+		err := TheHost.SendMIDI(state.Output,[]byte{status, data1})
 		LogIfError(err)
 	}
 }

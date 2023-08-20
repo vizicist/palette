@@ -77,7 +77,7 @@ func (patch *Patch) Synth() *Synth {
 func (patch *Patch) SetDefaultValues() {
 	for nm, d := range ParamDefs {
 		if IsPerPatchParam(nm) {
-			err := patch.Set(nm, d.Init)
+			err := patch.setParam(nm, d.Init)
 			if err != nil {
 				LogIfError(err)
 			}
@@ -263,7 +263,7 @@ func (patch *Patch) Api(api string, apiargs map[string]string) (string, error) {
 		if err != nil {
 			return "", fmt.Errorf("executePatchApi: err=%s", err)
 		}
-		err = patch.Set(name, value)
+		err = patch.setParam(name, value)
 		if err != nil {
 			return "", err
 		}
@@ -272,7 +272,7 @@ func (patch *Patch) Api(api string, apiargs map[string]string) (string, error) {
 
 	case "setparams":
 		for name, value := range apiargs {
-			err := patch.Set(name, value)
+			err := patch.setParam(name, value)
 			if err != nil {
 				// TODO: should we return as soon as we get the first error?
 				LogIfError(err)
@@ -309,10 +309,10 @@ func (patch *Patch) SaveQuadAndAlert() error {
 	return TheQuadPro.saveQuad("_Current.json")
 }
 
-func (patch *Patch) Set(paramName string, paramValue string) error {
+func (patch *Patch) setParam(paramName string, paramValue string) error {
 
 	if !IsPerPatchParam(paramName) {
-		err := fmt.Errorf("Patch.Set: not per-patch param=%s", paramName)
+		err := fmt.Errorf("Patch.setParam: not per-patch param=%s", paramName)
 		LogIfError(err)
 		return err
 	}
@@ -372,7 +372,7 @@ func (patch *Patch) ApplyPatchValuesFromQuadMap(paramsmap map[string]any) error 
 			continue
 		}
 
-		// the name give to patch.Set doesn't include the patch name
+		// the name give to patch.setParam doesn't include the patch name
 		paramName := fullParamName[i+1:]
 
 		// We expect the parameter to be of the form
@@ -388,7 +388,7 @@ func (patch *Patch) ApplyPatchValuesFromQuadMap(paramsmap map[string]any) error 
 			LogIfError(fmt.Errorf("ApplyPatchValuesFromQuadMap: Needs to handle new value format"))
 			return fmt.Errorf("value of name=%s isn't a string", fullParamName)
 		}
-		err := patch.Set(paramName, value)
+		err := patch.setParam(paramName, value)
 		if err != nil {
 			LogWarn("applyQuadValuesFrom", "name", paramName, "err", err)
 			// Don't fail completely on individual failures,
@@ -407,7 +407,7 @@ func (patch *Patch) ApplyPatchValuesFromQuadMap(paramsmap map[string]any) error 
 		_, found := paramsmap[patchParamName]
 		if !found {
 			init := def.Init
-			err := patch.Set(paramName, init)
+			err := patch.setParam(paramName, init)
 			if err != nil {
 				// a hack to eliminate errors on a parameter that still exists somewhere
 				LogWarn("applyQuadValuesFrom", "nm", paramName, "err", err)
@@ -444,7 +444,7 @@ func (patch *Patch) Load(category string, filename string) error {
 			return err
 		}
 	} else {
-		patch.params.ApplyValuesFromMap(category, paramsmap, patch.params.Set)
+		patch.params.ApplyValuesFromMap(category, paramsmap, patch.setParam)
 	}
 
 	// If there's a _override.json file, use it
@@ -467,7 +467,7 @@ func (patch *Patch) Load(category string, filename string) error {
 		_, found := paramsmap[paramName]
 		if !found {
 			paramValue := def.Init
-			err := patch.Set(paramName, paramValue)
+			err := patch.setParam(paramName, paramValue)
 			// err := params.Set(paramName, paramValue)
 			if err != nil {
 				LogWarn("patch.Set error", "saved", paramName, "err", err)
