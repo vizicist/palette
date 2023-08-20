@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"time"
 
@@ -24,6 +23,7 @@ var EngineExe = "palette_engine.exe"
 var GuiExe = "palette_gui.exe"
 var BiduleExe = "bidule.exe"
 var ResolumeExe = "avenue.exe"
+
 // var KeykitExe = "key.exe"
 var MmttExe = "mmtt_kinect.exe"
 
@@ -102,13 +102,7 @@ func PaletteDataPath() string {
 	if FullDataPath != "" {
 		return FullDataPath
 	}
-	// Let environment variable override the default
-	dataPath := os.Getenv("PALETTE_DATA_PATH")
-	if dataPath != "" {
-		FullDataPath = dataPath
-	} else {
-		FullDataPath = filepath.Join(LocalPaletteDir(), "data")
-	}
+	FullDataPath = filepath.Join(LocalPaletteDir(), "data")
 	return FullDataPath
 }
 
@@ -177,7 +171,10 @@ func NewExecutableLogWriter(exe string) io.Writer {
 }
 
 func (w *FileWriter) Write(p []byte) (n int, err error) {
-	LogInfo("ExecutableOutput", "exe", w.Exe, "output", string(p))
+	// Hack, don't log resolume output
+	if w.Exe != "resolume" {
+		LogInfo("ExecutableOutput", "exe", w.Exe, "output", string(p))
+	}
 	return len(p), nil
 }
 
@@ -198,61 +195,6 @@ func ReadConfigFile(path string) (map[string]string, error) {
 	}
 	return pmap, nil
 }
-
-func needFloatArg(nm string, api string, args map[string]string) (float32, error) {
-	val, ok := args[nm]
-	if !ok {
-		return 0.0, fmt.Errorf("api/event=%s missing value for %s", api, nm)
-	}
-	f, err := strconv.ParseFloat(val, 32)
-	if err != nil {
-		return 0.0, fmt.Errorf("api/event=%s bad value, expecting float for %s, got %s", api, nm, val)
-	}
-	return float32(f), nil
-}
-
-func optionalStringArg(nm string, args map[string]string, dflt string) string {
-	val, ok := args[nm]
-	if !ok {
-		return dflt
-	}
-	return val
-}
-
-func needStringArg(nm string, api string, args map[string]string) (string, error) {
-	val, ok := args[nm]
-	if !ok {
-		return "", fmt.Errorf("api/event=%s missing value for %s", api, nm)
-	}
-	return val, nil
-}
-
-var _ = needStringArg
-
-/*
-func needIntArg(nm string, api string, args map[string]string) (int, error) {
-	val, ok := args[nm]
-	if !ok {
-		return 0, fmt.Errorf("api/event=%s missing value for %s", api, nm)
-	}
-	v, err := strconv.Atoi(val)
-	if err != nil {
-		return 0, fmt.Errorf("api/event=%s bad value for %s", api, nm)
-	}
-	return int(v), nil
-}
-*/
-
-func needBoolArg(nm string, api string, args map[string]string) (bool, error) {
-	val, ok := args[nm]
-	if !ok {
-		return false, fmt.Errorf("api/event=%s missing value for %s", api, nm)
-	}
-	b := kit.IsTrueValue(val)
-	return b, nil
-}
-
-var _ = needBoolArg
 
 func ziplogs(logsdir string, zipfile string) error {
 	file, err := os.Create(zipfile)
@@ -379,7 +321,7 @@ func RemoteApiRaw(url string, args string) (map[string]string, error) {
 	return output, nil
 }
 
-func ArchiveLogs() error {
+func (h HostWin) ArchiveLogs() error {
 
 	LogInfo("CycleTheLogs is starting.")
 

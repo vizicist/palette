@@ -64,13 +64,13 @@ func (h HostWin) FreeframeClientFor(patchName string) *osc.Client {
 }
 
 func (h HostWin) ToFreeFramePlugin(patchName string, msg *osc.Message) {
-	LogOfType("freeframe", "Resolume.toFreeframe", "patch", patchName, "msg", msg)
+	kit.LogOfType("freeframe", "Resolume.toFreeframe", "patch", patchName, "msg", msg)
 	ff := h.FreeframeClientFor(patchName)
 	if ff == nil {
 		LogIfError(fmt.Errorf("no freeframe client for layer"), "patch", patchName)
 		return
 	}
-	LogOfType("ffgl", "toFreeFramePlugin", "patch", patchName, "msg", msg)
+	kit.LogOfType("ffgl", "toFreeFramePlugin", "patch", patchName, "msg", msg)
 	h.SendOsc(ff, msg)
 }
 
@@ -245,7 +245,7 @@ func (h HostWin) ShowText(text string) {
 
 // In text layer, clip 1 is the animated text generator for the preset names,
 // and clips 2,3,... are images for startup and reboot.
-func (h HostWin) showClip(clipNum int) {
+func (h HostWin) ShowClip(clipNum int) {
 
 	textLayerNum := h.TextLayerNum()
 	h.connectClip(textLayerNum, clipNum) // activate that clip
@@ -282,10 +282,10 @@ func (h HostWin) Activate() {
 
 		for _, patch := range kit.PatchNames() {
 			_, layerNum := h.PortAndLayerNumForPatch(string(patch))
-			LogOfType("resolume", "Activating Resolume", "patch", layerNum, "clipnum", clipnum)
+			kit.LogOfType("resolume", "Activating Resolume", "patch", layerNum, "clipnum", clipnum)
 			h.connectClip(layerNum, 1) // clip 1 in layer is the palette ffgl
 		}
-		h.showClip(2) // show the "starting up" splash clip in the text layer
+		h.ShowClip(2) // show the "starting up" splash clip in the text layer
 	}
 	// show the animated text generator for preset names
 	h.connectClip(textLayer, clipnum)

@@ -93,62 +93,10 @@ func (r *Router) SetMIDIEventHandler(handler MIDIEventHandler) {
 }
 */
 
-func ArgToFloat(nm string, args map[string]string) float32 {
-	v, err := strconv.ParseFloat(args[nm], 32)
-	if err != nil {
-		LogIfError(err)
-		v = 0.0
-	}
-	return float32(v)
-}
-
-func ArgToInt(nm string, args map[string]string) int {
-	v, err := strconv.ParseInt(args[nm], 10, 64)
-	if err != nil {
-		LogIfError(err)
-		v = 0.0
-	}
-	return int(v)
-}
-
-/*
-func ArgsToCursorEvent(args map[string]string) CursorEvent {
-	gid := ArgToInt("gid", args)
-	// source := args["source"]
-	ddu := strings.TrimPrefix(args["event"], "cursor_")
-	x := ArgToFloat("x", args)
-	y := ArgToFloat("y", args)
-	z := ArgToFloat("z", args)
-	pos := CursorPos{x, y, z}
-	ce := NewCursorEvent(gid, ddu, pos)
-	return ce
-}
-*/
-
-func GetArgsXYZ(args map[string]string) (x, y, z float32, err error) {
-
-	api := "GetArgsXYZ"
-	x, err = needFloatArg("x", api, args)
-	if err != nil {
-		return x, y, z, err
-	}
-
-	y, err = needFloatArg("y", api, args)
-	if err != nil {
-		return x, y, z, err
-	}
-
-	z, err = needFloatArg("z", api, args)
-	if err != nil {
-		return x, y, z, err
-	}
-	return x, y, z, err
-}
-
 // HandleOscInput xxx
 func (r *Router) handleOscInput(e kit.OscEvent) {
 
-	LogOfType("osc", "Router.HandleOscInput", "msg", e.Msg.String())
+	kit.LogOfType("osc", "Router.HandleOscInput", "msg", e.Msg.String())
 	switch e.Msg.Address {
 
 	case "/clientrestart":
@@ -297,7 +245,7 @@ func (r *Router) oscHandleCursor(msg *osc.Message) {
 	// For Z, we want to expand the value only in the positive direction.
 	newPos.Z = kit.BoundValueZeroToOne(float64(ce.Pos.Z) * zexpand)
 
-	LogOfType("cursor", "MMTT Cursor", "ddu", ce.Ddu, "newPos", newPos)
+	kit.LogOfType("cursor", "MMTT Cursor", "ddu", ce.Ddu, "newPos", newPos)
 
 	ce.Pos = newPos
 

@@ -1,6 +1,0 @@
-{
-    "params": {
-        "engine.enable:sound":"false",
-        "engine.enable:visual":"false"
-    }
-}

@@ -93,15 +93,15 @@ func WinFindWindowUnder(parent Window, pos image.Point) (Window, image.Point) {
 // WinAddChild xxx
 func WinAddChild(parent Window, td WindowData) Window {
 
-	child := td.w
+	child := td.W
 	cc := child.Context()
 	if !cc.initialized {
 		kit.LogWarn("AddChild: child.Context not initialized!")
 		return nil
 	}
-	cc.minSize = td.minSize
-	cc.currSz = td.minSize
-	cc.toolType = td.toolType
+	cc.minSize = td.MinSize
+	cc.currSz = td.MinSize
+	cc.toolType = td.ToolType
 
 	pc := parent.Context()
 	if !pc.initialized {
@@ -110,7 +110,7 @@ func WinAddChild(parent Window, td WindowData) Window {
 	}
 
 	pc.lastChildID++
-	wname := fmt.Sprintf("%s.%d", td.toolType, pc.lastChildID)
+	wname := fmt.Sprintf("%s.%d", td.ToolType, pc.lastChildID)
 	_, ok := pc.childWindow[wname]
 	if ok {
 		kit.LogWarn("AddChild: there's already a child with", "name", wname)

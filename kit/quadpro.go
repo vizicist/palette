@@ -74,10 +74,10 @@ func (quadpro *QuadPro) Api(api string, apiargs map[string]string) (result strin
 			return "", fmt.Errorf("missing filename parameter")
 		}
 		TheAttractManager.SetAttractMode(false)
-		if ! strings.HasSuffix(filename,".json") {
+		if !strings.HasSuffix(filename, ".json") {
 			filename += ".json"
 		}
-		data, err := TheHost.GetSavedData(category,filename)
+		data, err := TheHost.GetSavedData(category, filename)
 		if err != nil {
 			return "", err
 		}
@@ -211,14 +211,14 @@ func (quadpro *QuadPro) onCursorEvent(state ActiveCursor) error {
 				if TheQuadPro != nil {
 					LogOfType("cursor", "Button down", "z", state.Current.Pos.Z)
 					filename := preset
-					if ! strings.HasSuffix(filename,".json") {
+					if !strings.HasSuffix(filename, ".json") {
 						filename += ".json"
 					}
-					bytes, err := TheHost.GetSavedData("quad",filename)
+					bytes, err := TheHost.GetSavedData("quad", filename)
 					if err != nil {
 						return err
 					}
-					err = TheQuadPro.Load(bytes,"quad", preset)
+					err = TheQuadPro.Load(bytes, "quad", preset)
 					if err != nil {
 						return err
 					}
@@ -334,7 +334,7 @@ func (quadpro *QuadPro) loadQuadRand() error {
 
 func (quadpro *QuadPro) Load(bytes []byte, category string, filename string) error {
 
-	LogInfo("QuadPro.Load","category",category,"filename",filename)
+	LogInfo("QuadPro.Load", "category", category, "filename", filename)
 
 	paramsMap, err := LoadParamsMap(bytes)
 	if err != nil {
@@ -373,21 +373,21 @@ func (quadpro *QuadPro) Load(bytes []byte, category string, filename string) err
 	// loading a patch with something, we want to
 	// then save the entire quad
 	err = nil
-	isCurrent := strings.HasPrefix(filename,"_Current")
+	isCurrent := strings.HasPrefix(filename, "_Current")
 	switch category {
 	case "engine":
 		// No need to save _Current if we're loading it.
-		if ! isCurrent {
-			err = Params.Save("engine","_Current")
+		if !isCurrent {
+			err = EngineParams.Save("engine", "_Current")
 		}
 	case "quad":
-		if ! isCurrent {
+		if !isCurrent {
 			err = quadpro.saveQuad("_Current")
 		}
 	case "patch", "sound", "visual", "effect", "misc":
 		// If we're loading a patch (or something inside a patch, like sound, visual, etc),
 		// we save the entire quad, since that's our real persistent state
-		if ! isCurrent {
+		if !isCurrent {
 			err = quadpro.saveQuad("_Current")
 		}
 	}
@@ -441,10 +441,10 @@ func (quadpro *QuadPro) saveQuad(filename string) error {
 	s += "\n    }\n}"
 	data := []byte(s)
 
-	if ! strings.HasSuffix(filename,".json") {
+	if !strings.HasSuffix(filename, ".json") {
 		filename += ".json"
 	}
-	return TheHost.SaveDataInFile(data,"quad",filename)
+	return TheHost.SaveDataInFile(data, "quad", filename)
 }
 
 func (quadpro *QuadPro) addPatch(name string) *Patch {

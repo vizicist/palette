@@ -46,7 +46,7 @@ func NewMidiIO() *MidiIO {
 	for _, outp := range midiIO.outports {
 		name := outp.String()
 		// NOTE: name is the port name followed by an index
-		LogOfType("midiports", "MIDI output", "port", outp.String())
+		kit.LogOfType("midiports", "MIDI output", "port", outp.String())
 		if strings.Contains(name, "Erae Touch") {
 			kit.TheErae.Output = outp
 		}
@@ -54,7 +54,7 @@ func NewMidiIO() *MidiIO {
 	}
 
 	LogInfo("Initialized MIDI", "numoutports", len(midiIO.outports))
-	LogOfType("midi", "MIDI outports", "outports", midiIO.outports)
+	kit.LogOfType("midi", "MIDI outports", "outports", midiIO.outports)
 
 	// if erae {
 	// 	Info("Erae Touch input is being enabled")
@@ -64,7 +64,7 @@ func NewMidiIO() *MidiIO {
 	return midiIO
 }
 
-func (m *MidiIO) SetMidiInput(midiInputName string) {
+func (m *MidiIO) SetMidiInput(midiInputName string) error {
 
 	if TheMidiIO.midiInput != nil {
 		err := TheMidiIO.midiInput.Close()
@@ -73,7 +73,7 @@ func (m *MidiIO) SetMidiInput(midiInputName string) {
 	}
 
 	if midiInputName == "" {
-		return
+		return nil
 	}
 
 	// Note: name matching of MIDI device names is done with strings.Contain
@@ -81,7 +81,7 @@ func (m *MidiIO) SetMidiInput(midiInputName string) {
 
 	for _, inp := range m.inports {
 		name := inp.String()
-		LogOfType("midiports", "MIDI input", "port", name)
+		kit.LogOfType("midiports", "MIDI input", "port", name)
 		if strings.Contains(name, midiInputName) {
 			// We only open a single input, though midiInputs is an array
 			LogInfo("Opening MIDI input", "name", name)
@@ -89,6 +89,10 @@ func (m *MidiIO) SetMidiInput(midiInputName string) {
 			break // only pick the first one that matches
 		}
 	}
+	if TheMidiIO.midiInput == nil {
+		return fmt.Errorf("unable to find MIDI input - %s",midiInputName)
+	}
+	return nil
 }
 
 type MidiHandlerFunc func(midi.Message, int32)
@@ -113,7 +117,7 @@ func (m *MidiIO) Start() {
 }
 
 func (m *MidiIO) handleMidiInput(msg midi.Message, timestamp int32) {
-	LogOfType("midi", "handleMidiInput", "msg", msg)
+	kit.LogOfType("midi", "handleMidiInput", "msg", msg)
 	TheRouter.midiInputChan <- kit.NewMidiEvent(kit.CurrentClick(), "handleMidiInput", msg)
 
 	/*
@@ -121,14 +125,14 @@ func (m *MidiIO) handleMidiInput(msg midi.Message, timestamp int32) {
 		var ch, key, vel uint8
 		switch {
 		case msg.GetSysEx(&bt):
-			LogOfType("midi", "midi.ListenTo sysex", "bt", bt)
+			kit.LogOfType("midi", "midi.ListenTo sysex", "bt", bt)
 
 		case msg.GetNoteOn(&ch, &key, &vel):
-			LogOfType("midi", "midi.ListenTo notestart", "bt", bt)
+			kit.LogOfType("midi", "midi.ListenTo notestart", "bt", bt)
 			m.midiInputChan <- MidiEvent{Msg: msg}
 
 		case msg.GetNoteOff(&ch, &key, &vel):
-			LogOfType("midi", "midi.ListenTo noteend", "bt", bt)
+			kit.LogOfType("midi", "midi.ListenTo noteend", "bt", bt)
 			m.midiInputChan <- MidiEvent{Msg: msg}
 		default:
 			LogWarn("Unable to handle MIDI input", "msg", msg)
@@ -158,10 +162,16 @@ func (h HostWin) GetPortChannelState(portchannel kit.PortChannel) (*kit.MIDIPort
 		return nil, fmt.Errorf("GetMidiChannelOutput: midiDeviceOutput==nil, port=%s channel=%d", portchannel.Port, portchannel.Channel)
 	}
 
+	driverOutput, ok := state.Output.(drivers.Out)
+	if !ok {
+		LogWarn("unable to convert output to drivers.Out")
+		return nil, fmt.Errorf("unable to convert output to drivers.Out")
+	}
+
 	state.Mutex.Lock()
 	defer state.Mutex.Unlock()
 	if !state.Isopen {
-		e := state.Output.Open()
+		e := driverOutput.Open()
 		if e != nil {
 			return nil, e
 		}
