@@ -83,6 +83,7 @@ func (se SchedElement) GetClick() Clicks {
 }
 
 func ScheduleAt(atClick Clicks, tag string, value any) {
+	LogInfo("ScheduleAt","atClick",atClick,"tag",tag,"value",value)
 	ce, ok := value.(CursorEvent)
 	if ok && ce.Gid == 0 {
 		LogWarn("ScheduleAt Gid is 0", "ce", ce)
@@ -98,7 +99,7 @@ func (sched *Scheduler) savePendingSchedEvent(se *SchedElement) {
 
 	sched.pendingScheduled = append(sched.pendingScheduled, se)
 
-	// LogInfo("savePendingSchedEvent", "se", se, "value", se.Value)
+	LogInfo("savePendingSchedEvent", "se", se, "value", se.Value)
 
 	// ss := fmt.Sprintf("%v",se.Value)
 	// if strings.Contains(ss,"NoteOff") {

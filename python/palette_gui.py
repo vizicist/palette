@@ -43,16 +43,16 @@ ColorAqua = '#00ffff'
 ColorUnHigh = '#888888'
 
 def killApp():
-    log("killApp called!")
+    # log("killApp called!")
     global PaletteApp
     PaletteApp.killme = True
     time.sleep(1.00)
     # the .killme method doesn't seem to work all the time
     PaletteApp.destroy()
-    log("killApp after destroy!")
+    # log("killApp after destroy!")
 
 def controlCHandler(sig, frame):
-    log("controlCHandler called!")
+    # log("controlCHandler called!")
     killApp()
 
 palette.NoticeKeyboardInterrupt(controlCHandler)
@@ -317,7 +317,7 @@ class ProGuiApp(tk.Tk):
                 self.patchChooser.refreshPatches()
                 self.dorefreshPatches = False
 
-        log("mainLoop is returning")
+        # log("mainLoop is returning")
 
     def loopingToggle(self):
         if self.allPatchesSelected:

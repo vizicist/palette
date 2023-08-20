@@ -176,7 +176,7 @@ func CliCommand(args []string) (map[string]string, error) {
 		if nrunning > 0 {
 			return nil, fmt.Errorf("cannot archive logs while processes are running:\n%s", statusOut)
 		}
-		return nil, hostwin.ArchiveLogs()
+		return nil, kit.ArchiveLogs()
 
 	case "test":
 		return hostwin.EngineApi("quadpro.test")

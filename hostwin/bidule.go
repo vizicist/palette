@@ -16,7 +16,7 @@ func (h HostWin) ActivateAudio() {
 	for i := 0; i < 10; i++ {
 		dt := 5 * time.Second
 		time.Sleep(dt)
-		LogOfType("bidule", "Bidule.Activate is sending", "msg", msg)
+		kit.LogOfType("bidule", "Bidule.Activate is sending", "msg", msg)
 		h.SendOsc(h.biduleClient, msg)
 	}
 }
@@ -46,13 +46,13 @@ func (h HostWin) ResetAudio() {
 
 	msg := osc.NewMessage("/play")
 	msg.Append(int32(0))
-	LogOfType("bidule", "Bidule.Reset is sending", "msg", msg)
+	kit.LogOfType("bidule", "Bidule.Reset is sending", "msg", msg)
 	h.SendOsc(h.biduleClient, msg)
 
 	// Give Bidule time to react
 	time.Sleep(400 * time.Millisecond)
 	msg = osc.NewMessage("/play")
 	msg.Append(int32(1))
-	LogOfType("bidule", "Bidule.Reset is sending", "msg", msg)
+	kit.LogOfType("bidule", "Bidule.Reset is sending", "msg", msg)
 	h.SendOsc(h.biduleClient, msg)
 }
