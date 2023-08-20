@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 
+	"gitlab.com/gomidi/midi/v2/drivers"
 	"github.com/hypebeast/go-osc/osc"
 	"github.com/vizicist/palette/kit"
 )
@@ -64,8 +65,6 @@ func (h HostWin) Init() error {
 
 	TheRouter = NewRouter()
 	TheMidiIO = NewMidiIO()
-
-	InitLogTypes()
 
 	return err
 }
@@ -137,10 +136,6 @@ func (h HostWin) HandleIncomingMidiEvent(me kit.MidiEvent) {
 	kit.LogIfError(err)
 }
 
-func (h HostWin) IsLogging(logtype string) bool {
-	return IsLogging(logtype)
-}
-
 func (h HostWin) LogError(err error, keysAndValues ...any) {
 	LogError(err, keysAndValues...)
 }
@@ -157,12 +152,17 @@ func (h HostWin) LogWarn(msg string, keysAndValues ...any) {
 	LogWarn(msg, keysAndValues...)
 }
 
-func (h HostWin) LogOfType(logtypes string, msg string, keysAndValues ...any) {
-	LogOfType(logtypes, msg, keysAndValues...)
-}
+// func (h HostWin) LogOfType(logtypes string, msg string, keysAndValues ...any) {
+// 	LogOfType(logtypes, msg, keysAndValues...)
+// }
 
-func (h HostWin) SendMIDI(bytes []byte) {
-	LogWarn("SendMIDI needs work")
+func (h HostWin) SendMIDI(output any, bytes []byte) error {
+	driverout, ok := output.(drivers.Out)
+	if !ok {
+		LogWarn("unable to convert output to drivers.Out")
+		return fmt.Errorf("unable to convert output to drivers.Out")
+	}
+	return driverout.Send(bytes)
 }
 
 func (h HostWin) WaitTillDone() {
@@ -179,7 +179,6 @@ func (h HostWin) SendOsc(client *osc.Client, msg *osc.Message) {
 		return
 	}
 
-	LogOfType("osc", "Sending to OSC client", "client", client.IP(), "port", client.Port(), "msg", msg)
 	err := client.Send(msg)
 	LogIfError(err)
 }
@@ -241,7 +240,7 @@ func (h HostWin) StartHttp(port int) {
 			} else {
 				bstr := string(body)
 				_ = bstr
-				resp, err := TheWinHost.ExecuteApiFromJson(bstr)
+				resp, err := kit.ExecuteApiFromJson(bstr)
 				if err != nil {
 					response = kit.ErrorResponse(err)
 				} else {
@@ -258,4 +257,16 @@ func (h HostWin) StartHttp(port int) {
 	if err != nil {
 		LogIfError(err)
 	}
+}
+
+func (h HostWin) StartRunning(process string) (err error) {
+	return TheProcessManager.StartRunning(process)
+}
+
+func (h HostWin) KillProcess(process string) (err error) {
+	return TheProcessManager.KillProcess(process)
+}
+
+func (h HostWin) SetMidiInput(midiInputName string) error {
+	return TheMidiIO.SetMidiInput(midiInputName)
 }

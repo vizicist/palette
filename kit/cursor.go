@@ -409,7 +409,7 @@ func (cm *CursorManager) ExecuteCursorEvent(ce CursorEvent) {
 		// the maxz is less than the threshold, and then then entire gesture should be deleted at once.
 		if ce.Ddu == "up" {
 			BugFixWarningCount++
-			if BugFixWarningCount < 10 {
+			if BugFixWarningCount < 1000 {
 				LogWarn("CursorManager.ExecuteCursorEvent - NEW BUG FIX, ignoring up cursor event", "ce", ce)
 			}
 			return

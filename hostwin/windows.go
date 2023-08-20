@@ -9,6 +9,8 @@ import (
 	"os/exec"
 	"strings"
 	"syscall"
+
+	"github.com/vizicist/palette/kit"
 )
 
 func KillExecutable(executable string) {
@@ -86,7 +88,7 @@ func IsRunningExecutable(exe string) bool {
 	cmd, err := StartExecutableAndWait("c:\\windows\\system32\\tasklist.exe", stdout, stderr)
 	if err != nil {
 		LogWarn("IsRunningExecutable tasklist.exe", "err", err)
-		LogOfType("process", "IsRunningExecutable", "exe", exe, "returning", "true")
+		kit.LogOfType("process", "IsRunningExecutable", "exe", exe, "returning", "true")
 		return false
 	}
 	_ = cmd.Wait() // ignore "Wait was already called"
@@ -102,12 +104,12 @@ func IsRunningExecutable(exe string) bool {
 			// os.Stdout.WriteString("words0=" + words[0] + " exe=" + exe + "\n")
 			if strings.ToLower(words[0]) == exe {
 				// os.Stdout.WriteString("IsRunningExecutable " + exe + " returning true\n")
-				LogOfType("process", "IsRunningExecutable", "exe", exe, "returning", "true")
+				kit.LogOfType("process", "IsRunningExecutable", "exe", exe, "returning", "true")
 				return true
 			}
 		}
 	}
-	LogOfType("process", "IsRunningExecutable", "exe", exe, "returning", "false")
+	kit.LogOfType("process", "IsRunningExecutable", "exe", exe, "returning", "false")
 	return false
 }
 

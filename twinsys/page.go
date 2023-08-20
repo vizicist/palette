@@ -311,7 +311,7 @@ func (page *Page) MakeTool(name string) (WindowData, error) {
 		return WindowData{}, fmt.Errorf("MakeTool: There is no registered Tool named %s", name)
 	}
 	td := maker(page)
-	if td.w == nil {
+	if td.W == nil {
 		return WindowData{}, fmt.Errorf("MakeTool: maker for Tool %s returns nil Window?", name)
 	}
 	return td, nil
@@ -329,7 +329,7 @@ func (page *Page) AddTool(name string, pos image.Point, size image.Point) (Windo
 	WinSetChildPos(page, child, pos)
 	// If size isn't specified, use MinSize
 	if size.X == 0 || size.Y == 0 {
-		size = td.minSize
+		size = td.MinSize
 	}
 	WinSetChildSize(child, size)
 	kit.LogInfo("Page.AddTool", "name", name, "pos", pos, "size", size)

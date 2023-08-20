@@ -359,7 +359,7 @@ func (m *oneMorph) readFrames(callback kit.CursorCallbackFunc, forceFactor float
 				} else if xNorm > (1.0-edge) && yNorm < edge {
 					cornerSource = "D"
 				}
-				if cornerSource != m.currentTag {
+				if cornerSource != "" && cornerSource != m.currentTag {
 					LogInfo("Switching corners pad", "source", cornerSource)
 					ce := kit.NewCursorClearEvent(m.currentTag)
 					callback(ce)
@@ -423,7 +423,7 @@ func (m *oneMorph) readFrames(callback kit.CursorCallbackFunc, forceFactor float
 
 			m.previousTag = m.currentTag
 
-			LogOfType("morph", "Morph",
+			kit.LogOfType("morph", "Morph",
 				"idx", m.idx,
 				"contactid", contactid,
 				"gid", gid,

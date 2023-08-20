@@ -103,21 +103,15 @@ def localPaletteDir():
 def paletteSubDir(subdir):
     return os.path.join(localPaletteDir(), subdir)
 
-paletteDataPath = ""
 FullDataPath = ""
 
 # This is the name of the data directory containing config and saved
 def PaletteDataPath():
-    global paletteDataPath
     global FullDataPath
     if FullDataPath != "":
         return FullDataPath
 
-    dataPath = os.environ.get("PALETTE_DATA_PATH","")
-    if dataPath == "":
-        FullDataPath = os.path.join(localPaletteDir(),"data")
-    else:
-        FullDataPath = dataPath
+    FullDataPath = os.path.join(localPaletteDir(),"data")
     return FullDataPath
 
 # Combine saved in the savedPath list
@@ -188,7 +182,7 @@ def palette_api_setup():
     session.mount("https://", adapter)
 
 def audio_reset():
-    log("palette.audio_reset")
+    # log("palette.audio_reset")
     palette_engine_api("audio_reset")
 
 def palette_api(api,params):

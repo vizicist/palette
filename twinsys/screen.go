@@ -99,7 +99,7 @@ func Run() {
 	if err != nil {
 		kit.LogIfError(err)
 	} else {
-		page := td.w.(*Page)
+		page := td.W.(*Page)
 		err = page.restoreState(string(bytes))
 		if err != nil {
 			kit.LogIfError(err)

@@ -5,7 +5,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"github.com/vizicist/palette/kit"
 )
 
 /*
@@ -88,27 +87,6 @@ func (h HostWin) SavedFileList(category string) ([]string, error) {
 		filelist = append(filelist, name)
 	}
 	return filelist, nil
-}
-
-func SavedList(apiargs map[string]string) (string, error) {
-
-	wantCategory := optionalStringArg("category", apiargs, "*")
-	result := "["
-	sep := ""
-
-	savedMap, err := SavedMap(wantCategory)
-	if err != nil {
-		return "", err
-	}
-	for name := range savedMap {
-		thisCategory, _ := kit.SavedNameSplit(name)
-		if wantCategory == "*" || thisCategory == wantCategory {
-			result += sep + "\"" + name + "\""
-			sep = ","
-		}
-	}
-	result += "]"
-	return result, nil
 }
 
 // ReadableSavedFilePath returns the full path of a saved file.

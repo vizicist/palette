@@ -1,0 +1,280 @@
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-08-13 18:14:38","logname":"engine","click":0,"loglevel":"info"}
+{"uptime":"0.019009","msg":"Initialized MIDI","numoutports":17,"click":0,"loglevel":"info"}
+{"uptime":"0.019009","msg":"engine.attractidlesecs is too low, forcing to 10","click":0,"loglevel":"warn"}
+{"uptime":"0.019009","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.019009","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.019542","msg":"Synths loaded","len":193,"click":0,"loglevel":"info"}
+{"uptime":"0.019542","msg":"Engine.Start","click":0,"loglevel":"info"}
+{"uptime":"0.020167","msg":"No MIDI input port has been selected","click":0,"loglevel":"warn"}
+{"uptime":"0.020167","msg":"LogIfError","err":"open C:\\Users\\nosuc\\Github\\palette\\data_omnisphere\\saved\\quad\\_Current.json.json: The system cannot find the file specified.","click":0,"loglevel":"warn"}
+{"uptime":"0.020671","msg":"No Morphs were found","click":0,"loglevel":"info"}
+{"uptime":"0.020671","msg":"Scheduler begins","click":0,"loglevel":"info"}
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-08-14 14:40:01","logname":"engine","click":0,"loglevel":"info"}
+{"uptime":"1.174969","msg":"Initialized MIDI","numoutports":17,"click":0,"loglevel":"info"}
+{"uptime":"1.174969","msg":"engine.attractidlesecs is too low, forcing to 10","click":0,"loglevel":"warn"}
+{"uptime":"1.174969","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"1.174969","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"3.192633","msg":"Synths loaded","len":193,"click":0,"loglevel":"info"}
+{"uptime":"3.192633","msg":"Engine.Start","click":0,"loglevel":"info"}
+{"uptime":"5.239816","msg":"No MIDI input port has been selected","click":0,"loglevel":"warn"}
+{"uptime":"5.250385","msg":"LogIfError","err":"open C:\\Users\\nosuc\\Github\\palette\\data_omnisphere\\saved\\quad\\_Current.json.json: The system cannot find the file specified.","click":0,"loglevel":"warn"}
+{"uptime":"5.250907","msg":"Scheduler begins","click":0,"loglevel":"info"}
+{"uptime":"5.252472","msg":"No Morphs were found","click":0,"loglevel":"info"}
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-08-14 14:40:51","logname":"engine","click":0,"loglevel":"info"}
+{"uptime":"0.028041","msg":"Initialized MIDI","numoutports":17,"click":0,"loglevel":"info"}
+{"uptime":"0.028552","msg":"engine.attractidlesecs is too low, forcing to 10","click":0,"loglevel":"warn"}
+{"uptime":"0.028552","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.028552","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.029743","msg":"Synths loaded","len":193,"click":0,"loglevel":"info"}
+{"uptime":"0.029743","msg":"Engine.Start","click":0,"loglevel":"info"}
+{"uptime":"0.029743","msg":"No MIDI input port has been selected","click":0,"loglevel":"warn"}
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-08-14 14:50:51","logname":"engine","click":0,"loglevel":"info"}
+{"uptime":"0.034827","msg":"Initialized MIDI","numoutports":17,"click":0,"loglevel":"info"}
+{"uptime":"0.034827","msg":"ReadableSavedFilePath: not a .json filename","filename":"_Current","click":0,"loglevel":"warn"}
+{"uptime":"0.034827","msg":"LogIfError","err":"open C:\\Users\\nosuc\\Github\\palette\\data_omnisphere\\saved\\engine\\_Current: The system cannot find the file specified.","click":0,"loglevel":"warn"}
+{"uptime":"0.034827","msg":"Engine.Start","click":0,"loglevel":"info"}
+{"uptime":"0.034827","msg":"No MIDI input port has been selected","click":0,"loglevel":"warn"}
+{"uptime":"19.415046","msg":"SaveDataInFile: not a .json file","filename":"_Current","click":0,"loglevel":"warn"}
+{"uptime":"19.415046","msg":"ReadableSavedFilePath: not a .json filename","filename":"_Current","click":0,"loglevel":"warn"}
+{"uptime":"29.683169","msg":"LogIfError","err":"open C:\\Users\\nosuc\\Github\\palette\\data_omnisphere\\saved\\quad\\_Current: The system cannot find the file specified.","click":0,"loglevel":"warn"}
+{"uptime":"29.683169","msg":"Scheduler begins","click":0,"loglevel":"info"}
+{"uptime":"29.686273","msg":"No Morphs were found","click":0,"loglevel":"info"}
+{"uptime":"31.687183","msg":"LogIfError","err":"GetProcessInfo: no process info for gui","click":6084,"loglevel":"warn"}
+{"uptime":"31.687183","msg":"LogIfError","err":"GetProcessInfo: no process info for gui","click":6084,"loglevel":"warn"}
+{"uptime":"31.687183","msg":"CheckAutorestartProcesses: Restarting","process":"gui","click":6084,"loglevel":"info"}
+{"uptime":"31.687183","msg":"LogIfError","err":"GetProcessInfo: no process info for gui","click":6084,"loglevel":"warn"}
+{"uptime":"31.687183","msg":"LogIfError","err":"GetProcessInfo: no process info for gui","click":6084,"loglevel":"warn"}
+{"uptime":"31.687183","msg":"LogIfError","err":"GetProcessInfo: no process info for gui","click":6084,"loglevel":"warn"}
+{"uptime":"31.687183","msg":"LogIfError","err":"GetProcessInfo: no process info for gui","click":6084,"loglevel":"warn"}
+{"uptime":"31.687183","msg":"LogIfError","err":"GetProcessInfo: no process info for bidule","click":6084,"loglevel":"warn"}
+{"uptime":"31.687183","msg":"LogIfError","err":"GetProcessInfo: no process info for bidule","click":6084,"loglevel":"warn"}
+{"uptime":"31.687183","msg":"CheckAutorestartProcesses: Restarting","process":"bidule","click":6084,"loglevel":"info"}
+{"uptime":"31.687183","msg":"LogIfError","err":"GetProcessInfo: no process info for bidule","click":6084,"loglevel":"warn"}
+{"uptime":"31.687183","msg":"LogIfError","err":"GetProcessInfo: no process info for bidule","click":6084,"loglevel":"warn"}
+{"uptime":"31.687183","msg":"LogIfError","err":"GetProcessInfo: no process info for bidule","click":6084,"loglevel":"warn"}
+{"uptime":"31.687183","msg":"LogIfError","err":"GetProcessInfo: no process info for bidule","click":6084,"loglevel":"warn"}
+{"uptime":"31.687183","msg":"LogIfError","err":"GetProcessInfo: no process info for resolume","click":6084,"loglevel":"warn"}
+{"uptime":"31.687183","msg":"LogIfError","err":"GetProcessInfo: no process info for resolume","click":6084,"loglevel":"warn"}
+{"uptime":"31.687183","msg":"CheckAutorestartProcesses: Restarting","process":"resolume","click":6084,"loglevel":"info"}
+{"uptime":"31.687183","msg":"LogIfError","err":"GetProcessInfo: no process info for resolume","click":6084,"loglevel":"warn"}
+{"uptime":"31.687183","msg":"LogIfError","err":"GetProcessInfo: no process info for resolume","click":6084,"loglevel":"warn"}
+{"uptime":"31.687183","msg":"LogIfError","err":"GetProcessInfo: no process info for resolume","click":6084,"loglevel":"warn"}
+{"uptime":"31.687183","msg":"LogIfError","err":"GetProcessInfo: no process info for resolume","click":6084,"loglevel":"warn"}
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-08-14 14:51:41","logname":"engine","click":0,"loglevel":"info"}
+{"uptime":"0.041914","msg":"Initialized MIDI","numoutports":17,"click":0,"loglevel":"info"}
+{"uptime":"0.041914","msg":"ReadableSavedFilePath: not a .json filename","filename":"_Current","click":0,"loglevel":"warn"}
+{"uptime":"0.042441","msg":"LogIfError","err":"open C:\\Users\\nosuc\\Github\\palette\\data_omnisphere\\saved\\engine\\_Current: The system cannot find the file specified.","click":0,"loglevel":"warn"}
+{"uptime":"0.042441","msg":"Engine.Start","click":0,"loglevel":"info"}
+{"uptime":"0.042441","msg":"No MIDI input port has been selected","click":0,"loglevel":"warn"}
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-08-14 14:56:00","logname":"engine","click":0,"loglevel":"info"}
+{"uptime":"0.033728","msg":"Initialized MIDI","numoutports":17,"click":0,"loglevel":"info"}
+{"uptime":"0.033728","msg":"engine.attractidlesecs is too low, forcing to 10","click":0,"loglevel":"warn"}
+{"uptime":"0.033728","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.034244","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.034759","msg":"Synths loaded","len":193,"click":0,"loglevel":"info"}
+{"uptime":"0.035292","msg":"Engine.Start","click":0,"loglevel":"info"}
+{"uptime":"0.035292","msg":"No MIDI input port has been selected","click":0,"loglevel":"warn"}
+{"uptime":"15.690784","msg":"No Morphs were found","click":0,"loglevel":"info"}
+{"uptime":"28.479104","msg":"Scheduler begins","click":0,"loglevel":"info"}
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-08-14 14:57:07","logname":"engine","click":0,"loglevel":"info"}
+{"uptime":"0.039154","msg":"Initialized MIDI","numoutports":17,"click":0,"loglevel":"info"}
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-08-14 14:58:18","logname":"engine","click":0,"loglevel":"info"}
+{"uptime":"0.028471","msg":"Initialized MIDI","numoutports":17,"click":0,"loglevel":"info"}
+{"uptime":"0.028471","msg":"engine.attractidlesecs is too low, forcing to 10","click":0,"loglevel":"warn"}
+{"uptime":"0.028987","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.028987","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.030055","msg":"Synths loaded","len":193,"click":0,"loglevel":"info"}
+{"uptime":"0.030055","msg":"Engine.Start","click":0,"loglevel":"info"}
+{"uptime":"0.030055","msg":"No MIDI input port has been selected","click":0,"loglevel":"warn"}
+{"uptime":"0.032789","msg":"No Morphs were found","click":0,"loglevel":"info"}
+{"uptime":"0.173640","msg":"Scheduler begins","click":0,"loglevel":"info"}
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-08-14 14:58:54","logname":"engine","click":0,"loglevel":"info"}
+{"uptime":"0.029441","msg":"Initialized MIDI","numoutports":17,"click":0,"loglevel":"info"}
+{"uptime":"0.029957","msg":"engine.attractidlesecs is too low, forcing to 10","click":0,"loglevel":"warn"}
+{"uptime":"0.031065","msg":"Synths loaded","len":193,"click":0,"loglevel":"info"}
+{"uptime":"0.031065","msg":"Engine.Start","click":0,"loglevel":"info"}
+{"uptime":"0.031065","msg":"No MIDI input port has been selected","click":0,"loglevel":"warn"}
+{"uptime":"0.032616","msg":"No Morphs were found","click":0,"loglevel":"info"}
+{"uptime":"0.105961","msg":"Scheduler begins","click":0,"loglevel":"info"}
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-08-14 15:00:07","logname":"engine","click":0,"loglevel":"info"}
+{"uptime":"0.037639","msg":"Initialized MIDI","numoutports":17,"click":0,"loglevel":"info"}
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-08-14 15:01:03","logname":"engine","click":0,"loglevel":"info"}
+{"uptime":"0.031396","msg":"Initialized MIDI","numoutports":17,"click":0,"loglevel":"info"}
+{"uptime":"0.033157","msg":"Synths loaded","len":193,"click":0,"loglevel":"info"}
+{"uptime":"0.033157","msg":"Engine.Start","click":0,"loglevel":"info"}
+{"uptime":"0.033157","msg":"No MIDI input port has been selected","click":0,"loglevel":"warn"}
+{"uptime":"0.034694","msg":"No Morphs were found","click":0,"loglevel":"info"}
+{"uptime":"0.105446","msg":"Scheduler begins","click":0,"loglevel":"info"}
+{"uptime":"21.907952","msg":"QuadPro.ExecuteApi test start","ntimes":34,"interval":0.300000011,"click":4206,"loglevel":"info"}
+{"uptime":"32.135609","msg":"QuadPro.ExecuteApi test end","ntimes":34,"interval":0.300000011,"click":6170,"loglevel":"info"}
+{"uptime":"39.530898","msg":"StartRunning","path":"C:/Program Files/Plogue/Bidule/Bidule.exe","arg":"C:\\Users\\nosuc\\Github\\palette\\data_omnisphere\\config\\default.bidule","lenarg":67,"click":7590,"loglevel":"info"}
+{"uptime":"39.530898","msg":"StartExecutableLogOutput","executable":"C:/Program Files/Plogue/Bidule/Bidule.exe","click":7590,"loglevel":"info"}
+{"uptime":"46.281961","msg":"StartRunning","path":"C:/Program Files/Resolume Avenue/Avenue.exe","arg":"","lenarg":0,"click":8886,"loglevel":"info"}
+{"uptime":"46.281961","msg":"StartExecutableLogOutput","executable":"C:/Program Files/Resolume Avenue/Avenue.exe","click":8886,"loglevel":"info"}
+{"uptime":"56.054647","msg":"ExecutableOutput","exe":"resolume","output":"Could not find preset with id -259345583 for KeyboardShortcutManagerShortcuts\r\n","click":10762,"loglevel":"info"}
+{"uptime":"56.054647","msg":"ExecutableOutput","exe":"resolume","output":"Could not find preset with id -259345580 for MIDIShortcutManagerShortcuts\r\nCould not find preset with id -259345578 for OSCShortcutManagerShortcuts\r\n","click":10762,"loglevel":"info"}
+{"uptime":"56.111834","msg":"ExecutableOutput","exe":"resolume","output":"Logging input channels:\r\n","click":10773,"loglevel":"info"}
+{"uptime":"56.111834","msg":"ExecutableOutput","exe":"resolume","output":"\tFFT: 0\r\nLogging output channels:\r\n\tMaster: 3\r\n\tPreview: 0\r\n","click":10773,"loglevel":"info"}
+{"uptime":"70.928882","msg":"QuadPro.ExecuteApi test start","ntimes":34,"interval":0.300000011,"click":13618,"loglevel":"info"}
+{"uptime":"81.152418","msg":"QuadPro.ExecuteApi test end","ntimes":34,"interval":0.300000011,"click":15581,"loglevel":"info"}
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-08-14 15:03:38","logname":"engine","click":0,"loglevel":"info"}
+{"uptime":"0.020746","msg":"Initialized MIDI","numoutports":17,"click":0,"loglevel":"info"}
+{"uptime":"0.023989","msg":"Synths loaded","len":193,"click":0,"loglevel":"info"}
+{"uptime":"0.023989","msg":"Engine.Start","click":0,"loglevel":"info"}
+{"uptime":"0.024517","msg":"No MIDI input port has been selected","click":0,"loglevel":"warn"}
+{"uptime":"0.025173","msg":"LogIfError","err":"listen tcp 127.0.0.1:3330: bind: Only one usage of each socket address (protocol/network address/port) is normally permitted.","click":0,"loglevel":"warn"}
+{"uptime":"0.025173","msg":"LogIfError","err":"listen udp 127.0.0.1:3333: bind: Only one usage of each socket address (protocol/network address/port) is normally permitted.","click":0,"loglevel":"warn"}
+{"uptime":"0.025173","msg":"No Morphs were found","click":0,"loglevel":"info"}
+{"uptime":"0.144419","msg":"Scheduler begins","click":0,"loglevel":"info"}
+{"uptime":"174.574051","msg":"QuadPro.ExecuteApi test start","ntimes":34,"interval":0.300000011,"click":33518,"loglevel":"info"}
+{"uptime":"184.800387","msg":"QuadPro.ExecuteApi test end","ntimes":34,"interval":0.300000011,"click":35482,"loglevel":"info"}
+{"uptime":"188.290629","msg":"QuadPro.ExecuteApi test start","ntimes":34,"interval":0.300000011,"click":36152,"loglevel":"info"}
+{"uptime":"192.292802","msg":"QuadPro.ExecuteApi test start","ntimes":34,"interval":0.300000011,"click":36920,"loglevel":"info"}
+{"uptime":"198.521679","msg":"QuadPro.ExecuteApi test end","ntimes":34,"interval":0.300000011,"click":38116,"loglevel":"info"}
+{"uptime":"202.517497","msg":"QuadPro.ExecuteApi test end","ntimes":34,"interval":0.300000011,"click":38883,"loglevel":"info"}
+{"uptime":"219.265089","msg":"StartRunning","path":"C:/Program Files/Palette/bin/pyinstalled/palette_gui.exe","arg":"","lenarg":0,"click":42099,"loglevel":"info"}
+{"uptime":"219.265089","msg":"StartExecutableLogOutput","executable":"C:/Program Files/Palette/bin/pyinstalled/palette_gui.exe","click":42099,"loglevel":"info"}
+{"uptime":"220.890525","msg":"ExecutableOutput","exe":"gui","output":"Reading C:\\Users\\nosuc\\Github\\palette\\data_omnisphere\\config\\paramdefs.json\r\n","click":42411,"loglevel":"info"}
+{"uptime":"222.595031","msg":"ExecutableOutput","exe":"gui","output":"palette.audio_reset\r\n","click":42738,"loglevel":"info"}
+{"uptime":"223.808744","msg":"StartRunning","path":"C:/Program Files/Plogue/Bidule/Bidule.exe","arg":"C:\\Users\\nosuc\\Github\\palette\\data_omnisphere\\config\\default.bidule","lenarg":67,"click":42971,"loglevel":"info"}
+{"uptime":"223.808744","msg":"StartExecutableLogOutput","executable":"C:/Program Files/Plogue/Bidule/Bidule.exe","click":42971,"loglevel":"info"}
+{"uptime":"229.493808","msg":"StartRunning","path":"C:/Program Files/Resolume Avenue/Avenue.exe","arg":"","lenarg":0,"click":44063,"loglevel":"info"}
+{"uptime":"229.493808","msg":"StartExecutableLogOutput","executable":"C:/Program Files/Resolume Avenue/Avenue.exe","click":44063,"loglevel":"info"}
+{"uptime":"234.119406","msg":"ExecutableOutput","exe":"resolume","output":"Could not find preset with id -166600135 for KeyboardShortcutManagerShortcuts\r\n","click":44951,"loglevel":"info"}
+{"uptime":"234.119406","msg":"ExecutableOutput","exe":"resolume","output":"Could not find preset with id -166600132 for MIDIShortcutManagerShortcuts\r\nCould not find preset with id -166600130 for OSCShortcutManagerShortcuts\r\n","click":44951,"loglevel":"info"}
+{"uptime":"234.180980","msg":"ExecutableOutput","exe":"resolume","output":"Logging input channels:\r\n","click":44963,"loglevel":"info"}
+{"uptime":"234.181424","msg":"ExecutableOutput","exe":"resolume","output":"\tFFT: 0\r\nLogging output channels:\r\n\tMaster: 3\r\n\tPreview: 0\r\n","click":44963,"loglevel":"info"}
+{"uptime":"282.541383","msg":"QuadPro.ExecuteApi test start","ntimes":34,"interval":0.300000011,"click":54248,"loglevel":"info"}
+{"uptime":"292.764998","msg":"QuadPro.ExecuteApi test end","ntimes":34,"interval":0.300000011,"click":56211,"loglevel":"info"}
+{"uptime":"298.600651","msg":"ExecutableOutput","exe":"gui","output":"Loading category quad filename All Scat_Color Mix\r\n","click":57331,"loglevel":"info"}
+{"uptime":"298.601624","msg":"setAttractMode already in mode","onoff":false,"click":57332,"loglevel":"warn"}
+{"uptime":"298.601624","msg":"SaveDataInFile: not a .json file","filename":"All Scat_Color Mix","click":57332,"loglevel":"warn"}
+{"uptime":"298.601624","msg":"ReadableSavedFilePath: not a .json filename","filename":"All Scat_Color Mix","click":57332,"loglevel":"warn"}
+{"uptime":"298.601624","msg":"ExecutableOutput","exe":"gui","output":"palette_api: api=quadpro.load err=open C:\\Users\\nosuc\\Github\\palette\\data_omnisphere\\saved\\quad\\All Scat_Color Mix: The system cannot find the file specified.\r\n","click":57332,"loglevel":"info"}
+{"uptime":"300.368502","msg":"QuadPro.ExecuteApi test start","ntimes":34,"interval":0.300000011,"click":57671,"loglevel":"info"}
+{"uptime":"304.410857","msg":"ExecutableOutput","exe":"gui","output":"Loading category quad filename Alternate_Dimensions\r\n","click":58447,"loglevel":"info"}
+{"uptime":"304.411864","msg":"setAttractMode already in mode","onoff":false,"click":58447,"loglevel":"warn"}
+{"uptime":"304.411864","msg":"SaveDataInFile: not a .json file","filename":"Alternate_Dimensions","click":58447,"loglevel":"warn"}
+{"uptime":"304.411864","msg":"ReadableSavedFilePath: not a .json filename","filename":"Alternate_Dimensions","click":58447,"loglevel":"warn"}
+{"uptime":"304.411864","msg":"ExecutableOutput","exe":"gui","output":"palette_api: api=quadpro.load err=open C:\\Users\\nosuc\\Github\\palette\\data_omnisphere\\saved\\quad\\Alternate_Dimensions: The system cannot find the file specified.\r\n","click":58447,"loglevel":"info"}
+{"uptime":"306.106782","msg":"ExecutableOutput","exe":"gui","output":"Loading category quad filename Endless_Twirls\r\n","click":58773,"loglevel":"info"}
+{"uptime":"306.117879","msg":"setAttractMode already in mode","onoff":false,"click":58775,"loglevel":"warn"}
+{"uptime":"306.117879","msg":"SaveDataInFile: not a .json file","filename":"Endless_Twirls","click":58775,"loglevel":"warn"}
+{"uptime":"306.117879","msg":"ReadableSavedFilePath: not a .json filename","filename":"Endless_Twirls","click":58775,"loglevel":"warn"}
+{"uptime":"306.117879","msg":"ExecutableOutput","exe":"gui","output":"palette_api: api=quadpro.load err=open C:\\Users\\nosuc\\Github\\palette\\data_omnisphere\\saved\\quad\\Endless_Twirls: The system cannot find the file specified.\r\n","click":58775,"loglevel":"info"}
+{"uptime":"310.373270","msg":"ExecutableOutput","exe":"gui","output":"Loading category quad filename Linear_Dancing\r\n","click":59591,"loglevel":"info"}
+{"uptime":"310.374277","msg":"setAttractMode already in mode","onoff":false,"click":59591,"loglevel":"warn"}
+{"uptime":"310.374277","msg":"SaveDataInFile: not a .json file","filename":"Linear_Dancing","click":59591,"loglevel":"warn"}
+{"uptime":"310.374277","msg":"ReadableSavedFilePath: not a .json filename","filename":"Linear_Dancing","click":59592,"loglevel":"warn"}
+{"uptime":"310.374784","msg":"ExecutableOutput","exe":"gui","output":"palette_api: api=quadpro.load err=open C:\\Users\\nosuc\\Github\\palette\\data_omnisphere\\saved\\quad\\Linear_Dancing: The system cannot find the file specified.\r\n","click":59592,"loglevel":"info"}
+{"uptime":"310.589789","msg":"QuadPro.ExecuteApi test end","ntimes":34,"interval":0.300000011,"click":59633,"loglevel":"info"}
+{"uptime":"310.896719","msg":"ExecutableOutput","exe":"gui","output":"Loading category quad filename Jigsaw_Puzzles\r\n","click":59692,"loglevel":"info"}
+{"uptime":"310.897748","msg":"setAttractMode already in mode","onoff":false,"click":59692,"loglevel":"warn"}
+{"uptime":"310.897748","msg":"SaveDataInFile: not a .json file","filename":"Jigsaw_Puzzles","click":59692,"loglevel":"warn"}
+{"uptime":"310.897748","msg":"ReadableSavedFilePath: not a .json filename","filename":"Jigsaw_Puzzles","click":59692,"loglevel":"warn"}
+{"uptime":"310.897748","msg":"ExecutableOutput","exe":"gui","output":"palette_api: api=quadpro.load err=open C:\\Users\\nosuc\\Github\\palette\\data_omnisphere\\saved\\quad\\Jigsaw_Puzzles: The system cannot find the file specified.\r\n","click":59692,"loglevel":"info"}
+{"uptime":"314.003440","msg":"ExecutableOutput","exe":"gui","output":"Loading category quad filename Jigsaw_Puzzles\r\n","click":60289,"loglevel":"info"}
+{"uptime":"314.014213","msg":"setAttractMode already in mode","onoff":false,"click":60291,"loglevel":"warn"}
+{"uptime":"314.014213","msg":"SaveDataInFile: not a .json file","filename":"Jigsaw_Puzzles","click":60291,"loglevel":"warn"}
+{"uptime":"314.014213","msg":"ReadableSavedFilePath: not a .json filename","filename":"Jigsaw_Puzzles","click":60291,"loglevel":"warn"}
+{"uptime":"314.015296","msg":"ExecutableOutput","exe":"gui","output":"palette_api: api=quadpro.load err=open C:\\Users\\nosuc\\Github\\palette\\data_omnisphere\\saved\\quad\\Jigsaw_Puzzles: The system cannot find the file specified.\r\n","click":60291,"loglevel":"info"}
+{"uptime":"357.934941","msg":"ExecutableOutput","exe":"gui","output":"Loading category quad filename Colored_Echoes\r\n","click":68723,"loglevel":"info"}
+{"uptime":"357.935945","msg":"setAttractMode already in mode","onoff":false,"click":68724,"loglevel":"warn"}
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-08-14 15:09:58","logname":"engine","click":0,"loglevel":"info"}
+{"uptime":"0.031740","msg":"Initialized MIDI","numoutports":17,"click":0,"loglevel":"info"}
+{"uptime":"0.034001","msg":"Synths loaded","len":193,"click":0,"loglevel":"info"}
+{"uptime":"0.034001","msg":"Engine.Start","click":0,"loglevel":"info"}
+{"uptime":"0.034001","msg":"No MIDI input port has been selected","click":0,"loglevel":"warn"}
+{"uptime":"0.036241","msg":"No Morphs were found","click":0,"loglevel":"info"}
+{"uptime":"0.133002","msg":"Scheduler begins","click":0,"loglevel":"info"}
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-08-14 15:10:27","logname":"engine","click":0,"loglevel":"info"}
+{"uptime":"0.034480","msg":"Initialized MIDI","numoutports":17,"click":0,"loglevel":"info"}
+{"uptime":"0.035794","msg":"Synths loaded","len":193,"click":0,"loglevel":"info"}
+{"uptime":"0.035794","msg":"Engine.Start","click":0,"loglevel":"info"}
+{"uptime":"0.036361","msg":"No MIDI input port has been selected","click":0,"loglevel":"warn"}
+{"uptime":"0.037940","msg":"No Morphs were found","click":0,"loglevel":"info"}
+{"uptime":"0.139609","msg":"Scheduler begins","click":0,"loglevel":"info"}
+{"uptime":"14.913582","msg":"setAttractMode already in mode","onoff":false,"click":2863,"loglevel":"warn"}
+{"uptime":"19.807797","msg":"setAttractMode already in mode","onoff":false,"click":3803,"loglevel":"warn"}
+{"uptime":"41.815316","msg":"setAttractMode already in mode","onoff":false,"click":6567,"loglevel":"warn"}
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-08-14 15:12:47","logname":"engine","click":0,"loglevel":"info"}
+{"uptime":"0.029484","msg":"Initialized MIDI","numoutports":17,"click":0,"loglevel":"info"}
+{"uptime":"0.031290","msg":"Synths loaded","len":193,"click":0,"loglevel":"info"}
+{"uptime":"0.031794","msg":"Engine.Start","click":0,"loglevel":"info"}
+{"uptime":"0.031794","msg":"No MIDI input port has been selected","click":0,"loglevel":"warn"}
+{"uptime":"0.032346","msg":"QuadPro.Load","category":"quad","filename":"_Current.json","click":0,"loglevel":"info"}
+{"uptime":"0.033000","msg":"No Morphs were found","click":0,"loglevel":"info"}
+{"uptime":"11.458508","msg":"setAttractMode already in mode","onoff":false,"click":0,"loglevel":"warn"}
+{"uptime":"11.458508","msg":"QuadPro.Load","category":"quad","filename":"All_Moire.json","click":0,"loglevel":"info"}
+{"uptime":"11.562939","msg":"Scheduler begins","click":0,"loglevel":"info"}
+{"uptime":"15.799892","msg":"setAttractMode already in mode","onoff":false,"click":3034,"loglevel":"warn"}
+{"uptime":"15.799892","msg":"QuadPro.Load","category":"quad","filename":"Kaleidoscopes_Forever.json","click":3034,"loglevel":"info"}
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-08-14 15:17:57","logname":"engine","click":0,"loglevel":"info"}
+{"uptime":"0.029680","msg":"Initialized MIDI","numoutports":17,"click":0,"loglevel":"info"}
+{"uptime":"0.030810","msg":"Synths loaded","len":193,"click":0,"loglevel":"info"}
+{"uptime":"0.030810","msg":"Engine.Start","click":0,"loglevel":"info"}
+{"uptime":"0.031315","msg":"No MIDI input port has been selected","click":0,"loglevel":"warn"}
+{"uptime":"0.032026","msg":"QuadPro.Load","category":"quad","filename":"_Current.json","click":0,"loglevel":"info"}
+{"uptime":"0.033314","msg":"No Morphs were found","click":0,"loglevel":"info"}
+{"uptime":"0.129446","msg":"Scheduler begins","click":0,"loglevel":"info"}
+{"uptime":"0.440934","msg":"QuadPro.Load","category":"quad","filename":"Colored_Echoes.json","click":84,"loglevel":"info"}
+{"uptime":"5.163477","msg":"QuadPro.Load","category":"quad","filename":"Diagonal_Fantasy.json","click":991,"loglevel":"info"}
+{"uptime":"6.216300","msg":"QuadPro.Load","category":"quad","filename":"Colored_Echoes.json","click":1193,"loglevel":"info"}
+{"uptime":"10.132185","msg":"QuadPro.Load","category":"quad","filename":"Jigsaw_Puzzles.json","click":1945,"loglevel":"info"}
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-08-14 15:20:10","logname":"engine","click":0,"loglevel":"info"}
+{"uptime":"0.019634","msg":"Initialized MIDI","numoutports":17,"click":0,"loglevel":"info"}
+{"uptime":"0.019634","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.020640","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.020640","msg":"Synths loaded","len":193,"click":0,"loglevel":"info"}
+{"uptime":"0.021143","msg":"Engine.Start","click":0,"loglevel":"info"}
+{"uptime":"0.021697","msg":"No MIDI input port has been selected","click":0,"loglevel":"warn"}
+{"uptime":"0.021697","msg":"LogIfError","err":"listen udp 127.0.0.1:3333: bind: Only one usage of each socket address (protocol/network address/port) is normally permitted.","click":0,"loglevel":"warn"}
+{"uptime":"0.021143","msg":"LogIfError","err":"listen tcp 127.0.0.1:3330: bind: Only one usage of each socket address (protocol/network address/port) is normally permitted.","click":0,"loglevel":"warn"}
+{"uptime":"0.021697","msg":"LogIfError","err":"open C:\\Users\\nosuc\\Github\\palette\\data_omnisphere\\saved\\quad\\_Current.json.json: The system cannot find the file specified.","click":0,"loglevel":"warn"}
+{"uptime":"0.021697","msg":"Scheduler begins","click":0,"loglevel":"info"}
+{"uptime":"0.022222","msg":"No Morphs were found","click":0,"loglevel":"info"}
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-08-14 15:22:21","logname":"engine","click":0,"loglevel":"info"}
+{"uptime":"0.019025","msg":"Initialized MIDI","numoutports":17,"click":0,"loglevel":"info"}
+{"uptime":"0.019540","msg":"Synths loaded","len":193,"click":0,"loglevel":"info"}
+{"uptime":"0.019540","msg":"Engine.Start","click":0,"loglevel":"info"}
+{"uptime":"0.019540","msg":"No MIDI input port has been selected","click":0,"loglevel":"warn"}
+{"uptime":"0.020809","msg":"QuadPro.Load","category":"quad","filename":"_Current.json","click":0,"loglevel":"info"}
+{"uptime":"0.021312","msg":"No Morphs were found","click":0,"loglevel":"info"}
+{"uptime":"0.079454","msg":"Scheduler begins","click":0,"loglevel":"info"}
+{"uptime":"15.545144","msg":"StartRunning","path":"C:/Program Files/Palette/bin/pyinstalled/palette_gui.exe","arg":"","lenarg":0,"click":2985,"loglevel":"info"}
+{"uptime":"15.545144","msg":"StartExecutableLogOutput","executable":"C:/Program Files/Palette/bin/pyinstalled/palette_gui.exe","click":2985,"loglevel":"info"}
+{"uptime":"16.837560","msg":"ExecutableOutput","exe":"gui","output":"Reading C:\\Users\\nosuc\\Github\\palette\\data_omnisphere\\config\\paramdefs.json\r\n","click":3233,"loglevel":"info"}
+{"uptime":"18.489837","msg":"ExecutableOutput","exe":"gui","output":"palette.audio_reset\r\n","click":3550,"loglevel":"info"}
+{"uptime":"67.299171","msg":"ExecutableOutput","exe":"gui","output":"Loading category quad filename All_Moire\r\n","click":12921,"loglevel":"info"}
+{"uptime":"67.299171","msg":"QuadPro.Load","category":"quad","filename":"All_Moire.json","click":12921,"loglevel":"info"}
+{"uptime":"72.918395","msg":"ExecutableOutput","exe":"gui","output":"startHelpMode\r\n","click":14000,"loglevel":"info"}
+{"uptime":"74.290426","msg":"ExecutableOutput","exe":"gui","output":"cycleGuiLevel, GuiLevel is now  1\r\n","click":14263,"loglevel":"info"}
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-08-14 15:23:56","logname":"engine","click":0,"loglevel":"info"}
+{"uptime":"0.018691","msg":"Initialized MIDI","numoutports":17,"click":0,"loglevel":"info"}
+{"uptime":"0.019206","msg":"Synths loaded","len":193,"click":0,"loglevel":"info"}
+{"uptime":"0.019206","msg":"Engine.Start","click":0,"loglevel":"info"}
+{"uptime":"0.019206","msg":"No MIDI input port has been selected","click":0,"loglevel":"warn"}
+{"uptime":"0.020237","msg":"QuadPro.Load","category":"quad","filename":"_Current.json","click":0,"loglevel":"info"}
+{"uptime":"0.020317","msg":"No Morphs were found","click":0,"loglevel":"info"}
+{"uptime":"0.078508","msg":"Scheduler begins","click":0,"loglevel":"info"}
+{"uptime":"2.292226","msg":"CheckAutorestartProcesses: Restarting","process":"gui","click":440,"loglevel":"info"}
+{"uptime":"2.538599","msg":"StartRunning","path":"C:/Program Files/Palette/bin/pyinstalled/palette_gui.exe","arg":"","lenarg":0,"click":487,"loglevel":"info"}
+{"uptime":"2.538599","msg":"StartExecutableLogOutput","executable":"C:/Program Files/Palette/bin/pyinstalled/palette_gui.exe","click":487,"loglevel":"info"}
+{"uptime":"2.713943","msg":"ExecutableOutput","exe":"gui","output":"Reading C:\\Users\\nosuc\\Github\\palette\\data_omnisphere\\config\\paramdefs.json\r\n","click":521,"loglevel":"info"}
+{"uptime":"2.735972","msg":"CheckAutorestartProcesses: Restarting","process":"resolume","click":525,"loglevel":"info"}
+{"uptime":"3.141592","msg":"StartRunning","path":"C:/Program Files/Resolume Avenue/Avenue.exe","arg":"","lenarg":0,"click":603,"loglevel":"info"}
+{"uptime":"3.141592","msg":"StartExecutableLogOutput","executable":"C:/Program Files/Resolume Avenue/Avenue.exe","click":603,"loglevel":"info"}
+{"uptime":"3.355474","msg":"CheckAutorestartProcesses: Restarting","process":"bidule","click":644,"loglevel":"info"}
+{"uptime":"3.567344","msg":"StartRunning","path":"C:/Program Files/Plogue/Bidule/Bidule.exe","arg":"C:\\Users\\nosuc\\Github\\palette\\data_omnisphere\\config\\default.bidule","lenarg":67,"click":685,"loglevel":"info"}
+{"uptime":"3.567344","msg":"StartExecutableLogOutput","executable":"C:/Program Files/Plogue/Bidule/Bidule.exe","click":685,"loglevel":"info"}
+{"uptime":"4.396651","msg":"ExecutableOutput","exe":"gui","output":"palette.audio_reset\r\n","click":844,"loglevel":"info"}
+{"uptime":"7.613107","msg":"ExecutableOutput","exe":"resolume","output":"Could not find preset with id -166418529 for KeyboardShortcutManagerShortcuts\r\n","click":1462,"loglevel":"info"}
+{"uptime":"7.613107","msg":"ExecutableOutput","exe":"resolume","output":"Could not find preset with id -166418526 for MIDIShortcutManagerShortcuts\r\nCould not find preset with id -166418524 for OSCShortcutManagerShortcuts\r\n","click":1462,"loglevel":"info"}
+{"uptime":"7.667335","msg":"ExecutableOutput","exe":"resolume","output":"Logging input channels:\r\n","click":1472,"loglevel":"info"}
+{"uptime":"7.667335","msg":"ExecutableOutput","exe":"resolume","output":"\tFFT: 0\r\nLogging output channels:\r\n\tMaster: 3\r\n\tPreview: 0\r\n","click":1472,"loglevel":"info"}
+{"uptime":"59.920771","msg":"ExecutableOutput","exe":"gui","output":"Loading category quad filename All_Moire\r\n","click":11505,"loglevel":"info"}
+{"uptime":"59.921740","msg":"QuadPro.Load","category":"quad","filename":"All_Moire.json","click":11505,"loglevel":"info"}
+{"uptime":"65.165391","msg":"ExecutableOutput","exe":"gui","output":"Loading category quad filename Alternate_Dimensions\r\n","click":12511,"loglevel":"info"}
+{"uptime":"65.165901","msg":"QuadPro.Load","category":"quad","filename":"Alternate_Dimensions.json","click":12512,"loglevel":"info"}
+{"uptime":"75.695119","msg":"ExecutableOutput","exe":"gui","output":"Loading category quad filename Psychonaut_Outlines\r\n","click":14533,"loglevel":"info"}
+{"uptime":"75.697131","msg":"QuadPro.Load","category":"quad","filename":"Psychonaut_Outlines.json","click":14533,"loglevel":"info"}

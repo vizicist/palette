@@ -1,0 +1,260 @@
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-08-13 18:14:38","logname":"palette","click":0,"loglevel":"info"}
+{"uptime":"0.020048","msg":"Initialized MIDI","numoutports":17,"click":0,"loglevel":"info"}
+{"uptime":"0.020048","msg":"engine.attractidlesecs is too low, forcing to 10","click":0,"loglevel":"warn"}
+{"uptime":"0.020048","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.020048","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.020678","msg":"Synths loaded","len":193,"click":0,"loglevel":"info"}
+{"uptime":"0.020678","msg":"Palette","args":["start","engine"],"click":0,"loglevel":"info"}
+{"uptime":"0.223582","msg":"StartExecutableLogOutput","executable":"C:\\Program Files\\Palette\\bin\\palette_engine.exe","click":0,"loglevel":"info"}
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-08-13 20:59:24","logname":"palette","click":0,"loglevel":"info"}
+{"uptime":"0.030175","msg":"Initialized MIDI","numoutports":17,"click":0,"loglevel":"info"}
+{"uptime":"0.030679","msg":"engine.attractidlesecs is too low, forcing to 10","click":0,"loglevel":"warn"}
+{"uptime":"0.030679","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.030679","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.031848","msg":"Synths loaded","len":193,"click":0,"loglevel":"info"}
+{"uptime":"0.031848","msg":"Palette","args":["status"],"click":0,"loglevel":"info"}
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-08-14 14:37:31","logname":"palette","click":0,"loglevel":"info"}
+{"uptime":"0.040499","msg":"Initialized MIDI","numoutports":17,"click":0,"loglevel":"info"}
+{"uptime":"0.048234","msg":"engine.attractidlesecs is too low, forcing to 10","click":0,"loglevel":"warn"}
+{"uptime":"0.048234","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.048234","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.052941","msg":"Synths loaded","len":193,"click":0,"loglevel":"info"}
+{"uptime":"0.052941","msg":"Palette","args":["status"],"click":0,"loglevel":"info"}
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-08-14 14:37:44","logname":"palette","click":0,"loglevel":"info"}
+{"uptime":"0.019935","msg":"Initialized MIDI","numoutports":17,"click":0,"loglevel":"info"}
+{"uptime":"0.020456","msg":"engine.attractidlesecs is too low, forcing to 10","click":0,"loglevel":"warn"}
+{"uptime":"0.020456","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.020456","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.020988","msg":"Synths loaded","len":193,"click":0,"loglevel":"info"}
+{"uptime":"0.020988","msg":"Palette","args":["stop"],"click":0,"loglevel":"info"}
+{"uptime":"0.020988","msg":"Palette kill is killing everything including monitor.","click":0,"loglevel":"info"}
+{"uptime":"0.020988","msg":"KillExecutable","executable":"palette_monitor.exe","exe":"palette_monitor.exe","click":0,"loglevel":"info"}
+{"uptime":"0.145419","msg":"KillAll","click":0,"loglevel":"info"}
+{"uptime":"0.145419","msg":"KillExecutable","executable":"key.exe","exe":"key.exe","click":0,"loglevel":"info"}
+{"uptime":"0.267460","msg":"KillExecutable","executable":"mmtt_kinect.exe","exe":"mmtt_kinect.exe","click":0,"loglevel":"info"}
+{"uptime":"0.352483","msg":"KillExecutable","executable":"bidule.exe","exe":"bidule.exe","click":0,"loglevel":"info"}
+{"uptime":"0.438620","msg":"KillExecutable","executable":"avenue.exe","exe":"avenue.exe","click":0,"loglevel":"info"}
+{"uptime":"0.567146","msg":"KillExecutable","executable":"palette_gui.exe","exe":"palette_gui.exe","click":0,"loglevel":"info"}
+{"uptime":"0.691799","msg":"KillExecutable","executable":"palette_engine.exe","exe":"palette_engine.exe","click":0,"loglevel":"info"}
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-08-14 14:37:47","logname":"palette","click":0,"loglevel":"info"}
+{"uptime":"0.021861","msg":"Initialized MIDI","numoutports":17,"click":0,"loglevel":"info"}
+{"uptime":"0.022399","msg":"engine.attractidlesecs is too low, forcing to 10","click":0,"loglevel":"warn"}
+{"uptime":"0.022399","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.022399","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.022928","msg":"Synths loaded","len":193,"click":0,"loglevel":"info"}
+{"uptime":"0.022928","msg":"Palette","args":["status"],"click":0,"loglevel":"info"}
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-08-14 14:37:54","logname":"palette","click":0,"loglevel":"info"}
+{"uptime":"0.030839","msg":"Initialized MIDI","numoutports":17,"click":0,"loglevel":"info"}
+{"uptime":"0.030839","msg":"engine.attractidlesecs is too low, forcing to 10","click":0,"loglevel":"warn"}
+{"uptime":"0.030839","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.030839","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.032021","msg":"Synths loaded","len":193,"click":0,"loglevel":"info"}
+{"uptime":"0.032021","msg":"Palette","args":["status"],"click":0,"loglevel":"info"}
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-08-14 15:01:25","logname":"palette","click":0,"loglevel":"info"}
+{"uptime":"0.019967","msg":"Initialized MIDI","numoutports":17,"click":0,"loglevel":"info"}
+{"uptime":"0.020504","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.020504","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.021619","msg":"Synths loaded","len":193,"click":0,"loglevel":"info"}
+{"uptime":"0.021619","msg":"Palette","args":["test"],"click":0,"loglevel":"info"}
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-08-14 15:01:42","logname":"palette","click":0,"loglevel":"info"}
+{"uptime":"0.019784","msg":"Initialized MIDI","numoutports":17,"click":0,"loglevel":"info"}
+{"uptime":"0.020303","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.020303","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.020810","msg":"Synths loaded","len":193,"click":0,"loglevel":"info"}
+{"uptime":"0.020810","msg":"Palette","args":["start","bidule"],"click":0,"loglevel":"info"}
+{"uptime":"0.020810","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.020810","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-08-14 15:01:49","logname":"palette","click":0,"loglevel":"info"}
+{"uptime":"0.021345","msg":"Initialized MIDI","numoutports":17,"click":0,"loglevel":"info"}
+{"uptime":"0.021345","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.021345","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.021857","msg":"Synths loaded","len":193,"click":0,"loglevel":"info"}
+{"uptime":"0.021857","msg":"Palette","args":["start","resolume"],"click":0,"loglevel":"info"}
+{"uptime":"0.021857","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.021857","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-08-14 15:02:14","logname":"palette","click":0,"loglevel":"info"}
+{"uptime":"0.023438","msg":"Initialized MIDI","numoutports":17,"click":0,"loglevel":"info"}
+{"uptime":"0.023968","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.023968","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.024508","msg":"Synths loaded","len":193,"click":0,"loglevel":"info"}
+{"uptime":"0.024508","msg":"Palette","args":["test"],"click":0,"loglevel":"info"}
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-08-14 15:02:57","logname":"palette","click":0,"loglevel":"info"}
+{"uptime":"0.021393","msg":"Initialized MIDI","numoutports":17,"click":0,"loglevel":"info"}
+{"uptime":"0.021393","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.021393","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.021971","msg":"Synths loaded","len":193,"click":0,"loglevel":"info"}
+{"uptime":"0.021971","msg":"Palette","args":["stop"],"click":0,"loglevel":"info"}
+{"uptime":"0.021971","msg":"Palette kill is killing everything including monitor.","click":0,"loglevel":"info"}
+{"uptime":"0.021971","msg":"KillExecutable","executable":"palette_monitor.exe","exe":"palette_monitor.exe","click":0,"loglevel":"info"}
+{"uptime":"0.137981","msg":"KillAll","click":0,"loglevel":"info"}
+{"uptime":"0.137981","msg":"KillExecutable","executable":"key.exe","exe":"key.exe","click":0,"loglevel":"info"}
+{"uptime":"0.256575","msg":"KillExecutable","executable":"mmtt_kinect.exe","exe":"mmtt_kinect.exe","click":0,"loglevel":"info"}
+{"uptime":"0.367303","msg":"KillExecutable","executable":"bidule.exe","exe":"bidule.exe","click":0,"loglevel":"info"}
+{"uptime":"0.483491","msg":"KillExecutable","executable":"avenue.exe","exe":"avenue.exe","click":0,"loglevel":"info"}
+{"uptime":"0.596886","msg":"KillExecutable","executable":"palette_gui.exe","exe":"palette_gui.exe","click":0,"loglevel":"info"}
+{"uptime":"0.712955","msg":"KillExecutable","executable":"palette_engine.exe","exe":"palette_engine.exe","click":0,"loglevel":"info"}
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-08-14 15:03:43","logname":"palette","click":0,"loglevel":"info"}
+{"uptime":"0.020471","msg":"Initialized MIDI","numoutports":17,"click":0,"loglevel":"info"}
+{"uptime":"0.020975","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.020975","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.021514","msg":"Synths loaded","len":193,"click":0,"loglevel":"info"}
+{"uptime":"0.021514","msg":"Palette","args":["engine.status"],"click":0,"loglevel":"info"}
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-08-14 15:03:57","logname":"palette","click":0,"loglevel":"info"}
+{"uptime":"0.020445","msg":"Initialized MIDI","numoutports":17,"click":0,"loglevel":"info"}
+{"uptime":"0.020968","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.020968","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.021593","msg":"Synths loaded","len":193,"click":0,"loglevel":"info"}
+{"uptime":"0.021593","msg":"Palette","args":["test"],"click":0,"loglevel":"info"}
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-08-14 15:04:11","logname":"palette","click":0,"loglevel":"info"}
+{"uptime":"0.019125","msg":"Initialized MIDI","numoutports":17,"click":0,"loglevel":"info"}
+{"uptime":"0.019688","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.019688","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.020191","msg":"Synths loaded","len":193,"click":0,"loglevel":"info"}
+{"uptime":"0.020191","msg":"Palette","args":["test"],"click":0,"loglevel":"info"}
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-08-14 15:04:15","logname":"palette","click":0,"loglevel":"info"}
+{"uptime":"0.019419","msg":"Initialized MIDI","numoutports":17,"click":0,"loglevel":"info"}
+{"uptime":"0.019922","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.019922","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.020446","msg":"Synths loaded","len":193,"click":0,"loglevel":"info"}
+{"uptime":"0.020446","msg":"Palette","args":["test"],"click":0,"loglevel":"info"}
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-08-14 15:04:42","logname":"palette","click":0,"loglevel":"info"}
+{"uptime":"0.019964","msg":"Initialized MIDI","numoutports":17,"click":0,"loglevel":"info"}
+{"uptime":"0.019964","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.019964","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.020481","msg":"Synths loaded","len":193,"click":0,"loglevel":"info"}
+{"uptime":"0.020481","msg":"Palette","args":["start","gui"],"click":0,"loglevel":"info"}
+{"uptime":"0.020481","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.020481","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-08-14 15:04:46","logname":"palette","click":0,"loglevel":"info"}
+{"uptime":"0.019842","msg":"Initialized MIDI","numoutports":17,"click":0,"loglevel":"info"}
+{"uptime":"0.019842","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.019842","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.020377","msg":"Synths loaded","len":193,"click":0,"loglevel":"info"}
+{"uptime":"0.020377","msg":"Palette","args":["start","bidule"],"click":0,"loglevel":"info"}
+{"uptime":"0.020377","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.020377","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-08-14 15:04:52","logname":"palette","click":0,"loglevel":"info"}
+{"uptime":"0.021993","msg":"Initialized MIDI","numoutports":17,"click":0,"loglevel":"info"}
+{"uptime":"0.022515","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.022515","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.023040","msg":"Synths loaded","len":193,"click":0,"loglevel":"info"}
+{"uptime":"0.023040","msg":"Palette","args":["start","resolume"],"click":0,"loglevel":"info"}
+{"uptime":"0.023040","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.023040","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-08-14 15:05:45","logname":"palette","click":0,"loglevel":"info"}
+{"uptime":"0.020365","msg":"Initialized MIDI","numoutports":17,"click":0,"loglevel":"info"}
+{"uptime":"0.020365","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.020365","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.021390","msg":"Synths loaded","len":193,"click":0,"loglevel":"info"}
+{"uptime":"0.021390","msg":"Palette","args":["test"],"click":0,"loglevel":"info"}
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-08-14 15:06:03","logname":"palette","click":0,"loglevel":"info"}
+{"uptime":"0.020076","msg":"Initialized MIDI","numoutports":17,"click":0,"loglevel":"info"}
+{"uptime":"0.020604","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.020604","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.021129","msg":"Synths loaded","len":193,"click":0,"loglevel":"info"}
+{"uptime":"0.021129","msg":"Palette","args":["test"],"click":0,"loglevel":"info"}
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-08-14 15:19:57","logname":"palette","click":0,"loglevel":"info"}
+{"uptime":"0.026173","msg":"Initialized MIDI","numoutports":17,"click":0,"loglevel":"info"}
+{"uptime":"0.026721","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.026721","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.027321","msg":"Synths loaded","len":193,"click":0,"loglevel":"info"}
+{"uptime":"0.027321","msg":"Palette","args":["stop"],"click":0,"loglevel":"info"}
+{"uptime":"0.027321","msg":"Palette kill is killing everything including monitor.","click":0,"loglevel":"info"}
+{"uptime":"0.027321","msg":"KillExecutable","executable":"palette_monitor.exe","exe":"palette_monitor.exe","click":0,"loglevel":"info"}
+{"uptime":"0.136260","msg":"KillAll","click":0,"loglevel":"info"}
+{"uptime":"0.136260","msg":"KillExecutable","executable":"key.exe","exe":"key.exe","click":0,"loglevel":"info"}
+{"uptime":"0.204129","msg":"KillExecutable","executable":"mmtt_kinect.exe","exe":"mmtt_kinect.exe","click":0,"loglevel":"info"}
+{"uptime":"0.272171","msg":"KillExecutable","executable":"bidule.exe","exe":"bidule.exe","click":0,"loglevel":"info"}
+{"uptime":"0.341958","msg":"KillExecutable","executable":"avenue.exe","exe":"avenue.exe","click":0,"loglevel":"info"}
+{"uptime":"0.413017","msg":"KillExecutable","executable":"palette_gui.exe","exe":"palette_gui.exe","click":0,"loglevel":"info"}
+{"uptime":"0.554462","msg":"KillExecutable","executable":"palette_engine.exe","exe":"palette_engine.exe","click":0,"loglevel":"info"}
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-08-14 15:20:05","logname":"palette","click":0,"loglevel":"info"}
+{"uptime":"0.020009","msg":"Initialized MIDI","numoutports":17,"click":0,"loglevel":"info"}
+{"uptime":"0.020521","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.020521","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.021104","msg":"Synths loaded","len":193,"click":0,"loglevel":"info"}
+{"uptime":"0.021104","msg":"Palette","args":["stop","all"],"click":0,"loglevel":"info"}
+{"uptime":"0.021104","msg":"Palette kill is killing everything including monitor.","click":0,"loglevel":"info"}
+{"uptime":"0.021104","msg":"KillExecutable","executable":"palette_monitor.exe","exe":"palette_monitor.exe","click":0,"loglevel":"info"}
+{"uptime":"0.123561","msg":"KillAll","click":0,"loglevel":"info"}
+{"uptime":"0.123561","msg":"KillExecutable","executable":"key.exe","exe":"key.exe","click":0,"loglevel":"info"}
+{"uptime":"0.230787","msg":"KillExecutable","executable":"mmtt_kinect.exe","exe":"mmtt_kinect.exe","click":0,"loglevel":"info"}
+{"uptime":"0.319421","msg":"KillExecutable","executable":"bidule.exe","exe":"bidule.exe","click":0,"loglevel":"info"}
+{"uptime":"0.408336","msg":"KillExecutable","executable":"avenue.exe","exe":"avenue.exe","click":0,"loglevel":"info"}
+{"uptime":"0.499006","msg":"KillExecutable","executable":"palette_gui.exe","exe":"palette_gui.exe","click":0,"loglevel":"info"}
+{"uptime":"0.589487","msg":"KillExecutable","executable":"palette_engine.exe","exe":"palette_engine.exe","click":0,"loglevel":"info"}
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-08-14 15:20:09","logname":"palette","click":0,"loglevel":"info"}
+{"uptime":"0.020505","msg":"Initialized MIDI","numoutports":17,"click":0,"loglevel":"info"}
+{"uptime":"0.021018","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.021018","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.021541","msg":"Synths loaded","len":193,"click":0,"loglevel":"info"}
+{"uptime":"0.021541","msg":"Palette","args":["start"],"click":0,"loglevel":"info"}
+{"uptime":"0.226356","msg":"palette: starting monitor","MonitorExe":"palette_monitor.exe","click":0,"loglevel":"info"}
+{"uptime":"0.226356","msg":"StartExecutableLogOutput","executable":"C:\\Program Files\\Palette\\bin\\palette_monitor.exe","click":0,"loglevel":"info"}
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-08-14 15:20:12","logname":"palette","click":0,"loglevel":"info"}
+{"uptime":"0.019478","msg":"Initialized MIDI","numoutports":17,"click":0,"loglevel":"info"}
+{"uptime":"0.020017","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.020017","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.020551","msg":"Synths loaded","len":193,"click":0,"loglevel":"info"}
+{"uptime":"0.020551","msg":"Palette","args":["stop"],"click":0,"loglevel":"info"}
+{"uptime":"0.020551","msg":"Palette kill is killing everything including monitor.","click":0,"loglevel":"info"}
+{"uptime":"0.020551","msg":"KillExecutable","executable":"palette_monitor.exe","exe":"palette_monitor.exe","click":0,"loglevel":"info"}
+{"uptime":"0.114969","msg":"KillAll","click":0,"loglevel":"info"}
+{"uptime":"0.115030","msg":"KillExecutable","executable":"key.exe","exe":"key.exe","click":0,"loglevel":"info"}
+{"uptime":"0.209799","msg":"KillExecutable","executable":"mmtt_kinect.exe","exe":"mmtt_kinect.exe","click":0,"loglevel":"info"}
+{"uptime":"0.301665","msg":"KillExecutable","executable":"bidule.exe","exe":"bidule.exe","click":0,"loglevel":"info"}
+{"uptime":"0.392585","msg":"KillExecutable","executable":"avenue.exe","exe":"avenue.exe","click":0,"loglevel":"info"}
+{"uptime":"0.483223","msg":"KillExecutable","executable":"palette_gui.exe","exe":"palette_gui.exe","click":0,"loglevel":"info"}
+{"uptime":"0.569727","msg":"KillExecutable","executable":"palette_engine.exe","exe":"palette_engine.exe","click":0,"loglevel":"info"}
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-08-14 15:20:22","logname":"palette","click":0,"loglevel":"info"}
+{"uptime":"0.019566","msg":"Initialized MIDI","numoutports":17,"click":0,"loglevel":"info"}
+{"uptime":"0.020117","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.020117","msg":"LogIfError","err":"no parameter named engine.keykitrun","click":0,"loglevel":"warn"}
+{"uptime":"0.020689","msg":"Synths loaded","len":193,"click":0,"loglevel":"info"}
+{"uptime":"0.020689","msg":"Palette","args":["status"],"click":0,"loglevel":"info"}
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-08-14 15:22:20","logname":"palette","click":0,"loglevel":"info"}
+{"uptime":"0.029360","msg":"Initialized MIDI","numoutports":17,"click":0,"loglevel":"info"}
+{"uptime":"0.029883","msg":"Synths loaded","len":193,"click":0,"loglevel":"info"}
+{"uptime":"0.029883","msg":"Palette","args":["start"],"click":0,"loglevel":"info"}
+{"uptime":"0.324989","msg":"palette: starting monitor","MonitorExe":"palette_monitor.exe","click":0,"loglevel":"info"}
+{"uptime":"0.324989","msg":"StartExecutableLogOutput","executable":"C:\\Program Files\\Palette\\bin\\palette_monitor.exe","click":0,"loglevel":"info"}
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-08-14 15:22:30","logname":"palette","click":0,"loglevel":"info"}
+{"uptime":"0.022155","msg":"Initialized MIDI","numoutports":17,"click":0,"loglevel":"info"}
+{"uptime":"0.023206","msg":"Synths loaded","len":193,"click":0,"loglevel":"info"}
+{"uptime":"0.023206","msg":"Palette","args":["status"],"click":0,"loglevel":"info"}
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-08-14 15:22:37","logname":"palette","click":0,"loglevel":"info"}
+{"uptime":"0.020660","msg":"Initialized MIDI","numoutports":17,"click":0,"loglevel":"info"}
+{"uptime":"0.021270","msg":"Synths loaded","len":193,"click":0,"loglevel":"info"}
+{"uptime":"0.021270","msg":"Palette","args":["start","gui"],"click":0,"loglevel":"info"}
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-08-14 15:23:51","logname":"palette","click":0,"loglevel":"info"}
+{"uptime":"0.019228","msg":"Initialized MIDI","numoutports":17,"click":0,"loglevel":"info"}
+{"uptime":"0.019746","msg":"Synths loaded","len":193,"click":0,"loglevel":"info"}
+{"uptime":"0.019746","msg":"Palette","args":["stop"],"click":0,"loglevel":"info"}
+{"uptime":"0.019746","msg":"Palette kill is killing everything including monitor.","click":0,"loglevel":"info"}
+{"uptime":"0.019746","msg":"KillExecutable","executable":"palette_monitor.exe","exe":"palette_monitor.exe","click":0,"loglevel":"info"}
+{"uptime":"0.126992","msg":"KillAll","click":0,"loglevel":"info"}
+{"uptime":"0.126992","msg":"KillExecutable","executable":"key.exe","exe":"key.exe","click":0,"loglevel":"info"}
+{"uptime":"0.213602","msg":"KillExecutable","executable":"mmtt_kinect.exe","exe":"mmtt_kinect.exe","click":0,"loglevel":"info"}
+{"uptime":"0.322063","msg":"KillExecutable","executable":"bidule.exe","exe":"bidule.exe","click":0,"loglevel":"info"}
+{"uptime":"0.433242","msg":"KillExecutable","executable":"avenue.exe","exe":"avenue.exe","click":0,"loglevel":"info"}
+{"uptime":"0.523490","msg":"KillExecutable","executable":"palette_gui.exe","exe":"palette_gui.exe","click":0,"loglevel":"info"}
+{"uptime":"0.659338","msg":"KillExecutable","executable":"palette_engine.exe","exe":"palette_engine.exe","click":0,"loglevel":"info"}
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-08-14 15:23:54","logname":"palette","click":0,"loglevel":"info"}
+{"uptime":"0.020177","msg":"Initialized MIDI","numoutports":17,"click":0,"loglevel":"info"}
+{"uptime":"0.021228","msg":"Synths loaded","len":193,"click":0,"loglevel":"info"}
+{"uptime":"0.021228","msg":"Palette","args":["start"],"click":0,"loglevel":"info"}
+{"uptime":"0.359225","msg":"palette: starting monitor","MonitorExe":"palette_monitor.exe","click":0,"loglevel":"info"}
+{"uptime":"0.359225","msg":"StartExecutableLogOutput","executable":"C:\\Program Files\\Palette\\bin\\palette_monitor.exe","click":0,"loglevel":"info"}
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2023-08-14 15:28:42","logname":"palette","click":0,"loglevel":"info"}
+{"uptime":"0.022322","msg":"Initialized MIDI","numoutports":17,"click":0,"loglevel":"info"}
+{"uptime":"0.022825","msg":"Synths loaded","len":193,"click":0,"loglevel":"info"}
+{"uptime":"0.022825","msg":"Palette","args":["stop"],"click":0,"loglevel":"info"}
+{"uptime":"0.022825","msg":"Palette kill is killing everything including monitor.","click":0,"loglevel":"info"}
+{"uptime":"0.022825","msg":"KillExecutable","executable":"palette_monitor.exe","exe":"palette_monitor.exe","click":0,"loglevel":"info"}
+{"uptime":"0.135702","msg":"KillAll","click":0,"loglevel":"info"}
+{"uptime":"0.135702","msg":"KillExecutable","executable":"key.exe","exe":"key.exe","click":0,"loglevel":"info"}
+{"uptime":"0.245344","msg":"KillExecutable","executable":"mmtt_kinect.exe","exe":"mmtt_kinect.exe","click":0,"loglevel":"info"}
+{"uptime":"0.359743","msg":"KillExecutable","executable":"bidule.exe","exe":"bidule.exe","click":0,"loglevel":"info"}
+{"uptime":"0.479476","msg":"KillExecutable","executable":"avenue.exe","exe":"avenue.exe","click":0,"loglevel":"info"}
+{"uptime":"0.583254","msg":"KillExecutable","executable":"palette_gui.exe","exe":"palette_gui.exe","click":0,"loglevel":"info"}
+{"uptime":"0.767505","msg":"KillExecutable","executable":"palette_engine.exe","exe":"palette_engine.exe","click":0,"loglevel":"info"}
