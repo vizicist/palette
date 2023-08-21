@@ -1,6 +1,10 @@
 
 @echo off
 
+palette stop
+palette status
+echo ""
+
 if not "%PALETTE_SOURCE%" == "" goto keepgoing1
 echo You must set the PALETTE_SOURCE environment variable.
 goto getout
@@ -13,7 +17,7 @@ call ..\..\scripts\msdev17.bat
 
 set ship=%PALETTE_SOURCE%\build\windows\ship
 set bin=%ship%\bin
-rm -fr %ship% > nul 2>&1
+rm -fr %ship%
 mkdir %ship%
 mkdir %ship%\bin
 mkdir %ship%\bin\mmtt_kinect
@@ -131,7 +135,10 @@ xcopy /e /y %PALETTE_SOURCE%\data\config %ship%\data\config >nul
 xcopy /e /y %PALETTE_SOURCE%\data\html %ship%\data\html >nul
 xcopy /e /y %PALETTE_SOURCE%\data\saved %ship%\data\saved >nul
 
-for %%X in (data_dexed data_omnisphere) DO (
+xcopy /e /y %PALETTE_SOURCE%\data_dexed\saved %ship%\data\saved >nul
+xcopy /e /y %PALETTE_SOURCE%\data_dexed\config %ship%\data\config >nul
+
+for %%X in (data_dexed data_dexedvital data_foursynths data_omnisphere) DO (
 	echo ================ Copying %%X
 	mkdir %ship%\%%X\config
 	mkdir %ship%\%%X\saved
