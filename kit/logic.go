@@ -296,11 +296,11 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
 		// LogInfo("deltay and deltaytrig", "deltay", deltay, "deltaytrignote", deltaytrignote)
 		if deltay > deltaytrignote {
 			deltay_triggered = true
-			LogInfo("YES!!  deltay > deltaytrig", "deltay", deltay, "deltaytrignote", deltaytrignote)
+			// LogInfo("YES!!  deltay > deltaytrig", "deltay", deltay, "deltaytrignote", deltaytrignote)
 		}
 		if deltaz > deltaztrignote {
 			deltaz_triggered = true
-			LogInfo("YES!!  deltaz > deltaztrig", "deltaz", deltaz, "deltaztrig", deltaztrignote)
+			// LogInfo("YES!!  deltaz > deltaztrig", "deltaz", deltaz, "deltaztrig", deltaztrignote)
 		}
 		if newpitch != oldpitch {
 			newpitch_triggered = true
@@ -329,7 +329,7 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
 			ac.NoteOnClick = thisClick
 			if deltay_triggered {
 				ac.NoteOnY = ce.Pos.Y
-				LogInfo("Setting ac.NoteOnY","ac.NoteOnY",ac.NoteOnY)
+				// LogInfo("Setting ac.NoteOnY","ac.NoteOnY",ac.NoteOnY)
 			}
 			if deltaz_triggered {
 				ac.NoteOnZ = ce.Pos.Z

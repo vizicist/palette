@@ -411,7 +411,6 @@ class ProGuiApp(tk.Tk):
         self.softResetAll()
 
     def startHelpMode(self):
-        log("startHelpMode")
         self.selectFrame.place_forget()
         self.performFrame.place_forget()
         self.patchChooser.place_forget()
