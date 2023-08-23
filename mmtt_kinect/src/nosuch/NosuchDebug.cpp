@@ -247,9 +247,7 @@ NosuchErrorOutput(const char *fmt, ...)
 std::string
 NosuchDataPath(std::string filepath)
 {
-	char *data_path;
-	data_path = NosuchLocalDir + "/data";
-	return std::string(data_path) + "/" + filepath;
+	return NosuchLocalDir + "/data/" + filepath;
 }
 
 std::string

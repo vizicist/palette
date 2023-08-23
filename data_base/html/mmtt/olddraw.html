@@ -1,0 +1,229 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <style>
+      body {
+        margin: 0px;
+        padding: 0px;
+      }
+      #myCanvas {
+        border: 1px solid #9C9898;
+      }
+    </style>
+    <script>
+
+	var shapeOfCursor = [0, 1, 2, 3];
+	var colorForCursorRegion = [
+		"rgba(255,0,0,0.03)",
+		"rgba(0,255,0,0.03)",
+		"rgba(255,255,0,0.03)",
+		"rgba(0,0,255,0.03)",
+	];
+
+	var cursorDown = [0, 0, 0, 0];
+	var maxCursors = 4;
+	var ws;
+	var osc_sid = [];
+	var date = new Date();
+	var time0 = date.getTime();
+        var canvas;
+        var context;
+
+    window.onload = function() {
+
+	// We want to isolate the first part of the url (after http://)
+	var url = document.location.href;
+	var i = url.indexOf("//");
+	if ( i >= 0 ) {
+	    url = url.substr(i+2);
+	}
+	var i = url.indexOf("/");
+	if ( i >= 0 ) {
+	    url = url.substr(0,i);
+	}
+	var wurl = "ws://" + url + "/websocket";
+
+	if ("WebSocket" in window) {
+		ws = new WebSocket(wurl);
+	} else {
+		ws = new MozWebSocket(wurl);
+	}
+	ws.onmessage = handleJSON;
+
+	ws.onopen = function() {
+		// console.log("EVENT onopen!");
+	}
+	ws.onclose = function() {
+		// console.log("EVENT onclose!");
+	}
+	ws.onerror = function() {
+		// console.log("EVENT onerror!");
+	}
+
+        canvas = document.getElementById('myCanvas');
+        context = canvas.getContext('2d');
+
+	function drawcursor(c) {
+		x = c.x * canvas.width;
+		y = (1.0 - c.y) * canvas.height;
+		sz = c.z * 100;
+		logMessage("x="+x);
+		logMessage("y="+y);
+		logMessage("sz="+sz);
+		context.beginPath();
+		// context.rect(x,y,sz,sz);
+		try {
+		    context.arc(x, y, sz, 0 , 2 * Math.PI, false);
+		} catch(err) {
+		    logMessage("Exception in context.arc, err="+err.message);
+		    return;
+		}
+		context.fillStyle = colorForCursorRegion[c.region];
+		context.fill();
+		context.strokeStyle = context.fillStyle;
+		context.stroke();
+	}
+	function Cursor(region) {
+		this.touched = false
+		this.region = region
+	}
+	function handleOscMessage(m) {
+	    if ( m.address == "/tuio/25Dblb" ) {
+		var args = m.args;
+		var cmd = args[0];
+		if ( cmd == "alive" ) {
+			var c;
+			for ( sid in osc_sid ) {
+				c = osc_sid[sid];
+				c.touched = false;
+			}
+			for ( n=1; n<args.length; n++ ) {
+				sid = args[n];
+				if ( ! ( sid in osc_sid ) ) {
+					region = Math.floor(sid / 1000) % maxCursors;
+					osc_sid[sid] = new Cursor(region);
+					logMessage("New cursor region="+region+" sid="+sid);
+				}
+				c = osc_sid[sid];
+				c.touched = true;
+			}
+			for ( sid in osc_sid ) {
+				c = osc_sid[sid];
+				if ( c.touched == false ) {
+					logMessage("Deleting cursor sid="+sid);
+					delete osc_sid[sid]
+				}
+			}
+		} else if ( cmd == "set" ) {
+			sid = args[1];
+			osc_sid[sid].x = args[2];
+			osc_sid[sid].y = args[3];
+			osc_sid[sid].z = args[4];
+			logOscMessage("args[2] = "+args[2]+" sid="+sid+" osc_sid.x="+osc_sid[sid].x);
+			drawcursor(osc_sid[sid]);
+			logOscMessage(JSON.stringify(m));
+		} else if ( cmd == "fseq" ) {
+			// logMessage("fseq!");
+		} else {
+			logMessage("No hander in 25Dblb for "+cmd);
+		}
+	    }
+	}
+
+	function handleJSON ( event ) {
+		var data;
+
+		try {
+			data = JSON.parse(event.data);
+		} catch(err) {
+			logMessage("Exception in JSON.parse, err="+err.message);
+			return;
+		}
+
+		if ( data == undefined ) {
+			logOscMessage("Bad JSON data="+event.data);
+		} else if ( data.messages != undefined ) {
+			// JSON that has a "messages" key is an OSC bundle, an array
+			// of individual OSC messages
+			for ( m in data.messages ) {
+				handleOscMessage(data.messages[m]);
+			}
+		} else if ( data.address != undefined ) {
+			// JSON that has an "address" key is a single OSC message
+			handleOscMessage(data);
+		} else if ( data.message != undefined ) {
+			logOtherMessage(data.message);
+		} else {
+			logOtherMessage("Unrecognized JSON data="+event.data);
+		}
+	}
+	function logMessage ( msg ) {
+		// console.log(msg);
+		logOtherMessage(msg);
+	}
+	function logOscMessage ( line ) {
+		line = "Time: "+getTime()+" : "+line;
+		var area = document.getElementById("oscmessages");
+		addMessageThrottle(line,area);
+	}
+	function logOtherMessage ( line ) {
+		line = "Time: "+getTime()+" : "+line;
+		var area = document.getElementById("othermessages");
+		addMessageThrottle(line,area);
+	}
+
+	function getTime() {
+	    var d = new Date();
+	    var tm = (d.getTime() - time0) / 1000.0;
+	    return tm.toFixed(3);
+	}
+
+	function addMessageThrottle ( line, area ) {
+		var s = "";
+		var olds = area.innerHTML.split("\n");
+		var maxlines = 32;
+		for(var i=olds.length-maxlines; i<olds.length; i++) {
+			if(i>=0) s += olds[i] + "\n";  
+		}
+		s += line;
+		area.innerHTML = s;
+		area.scrollTop = area.scrollHeight;
+	}
+    };
+
+    </script>
+  </head>
+  <body>
+    <center>
+    <h2>MMTT Monitor</h2>
+    </center>
+    <form>
+    <table cellpadding=10>
+    <tr><td rowspan=3>
+	<center>
+		Drawing Canvas<br>
+		<br>
+		<canvas id="myCanvas" width="640" height="480"></canvas>
+		<br>
+		<button type="button" onclick="context.clearRect(0,0,canvas.width,canvas.height);">Clear</button>
+	</center>
+	</td>
+	<td width=47% valign=top>
+	    <center>
+		Osc Message Log<br>
+		<textarea id="oscmessages" rows="16" cols="80"></textarea>
+	    </center>
+	</td>
+    </tr>
+    <tr><td>
+	<center>
+		Debug Message Log<br>
+		<textarea id="othermessages" rows="16" cols="80"></textarea>
+	</center>
+	</td>
+    </tr>
+  </table>
+  </form>
+  </body>
+</html>
+

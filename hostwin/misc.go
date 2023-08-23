@@ -87,7 +87,7 @@ func MIDIFilePath(nm string) string {
 	return filepath.Join(PaletteDataPath(), "midifiles", nm)
 }
 
-// LocalPaletteDir gets used for local (and changed) things in saved and config
+// LocalPaletteDir gets used for local (and changed) things in saved and config.
 func LocalPaletteDir() string {
 	localapp := os.Getenv("CommonProgramFiles")
 	if localapp == "" {
