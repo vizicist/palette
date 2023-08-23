@@ -1,0 +1,12 @@
+#!/bin/bash
+
+set -x
+
+savedir=/mnt/c/tmp/saved_dexed
+rm -fr $savedir
+mkdir $savedir
+cp /mnt/c/Users/nosuc/GitHub/palette/data_dexed/saved/sound/* $savedir
+cp /mnt/c/Users/nosuc/GitHub/palette/data_dexed/config/default.bidule $savedir
+
+cp /mnt/c/'Program Files'/'Common Files'/Palette/data/saved/sound/* /mnt/c/Users/nosuc/GitHub/palette/data_dexed/saved/sound
+cp /mnt/c/'Program Files'/'Common Files'/Palette/data/config/default.bidule /mnt/c/Users/nosuc/GitHub/palette/data_dexed/config/default.bidule

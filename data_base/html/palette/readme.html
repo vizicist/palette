@@ -1,0 +1,45 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html dir="ltr">
+    
+<head>
+<meta name="viewport"
+  content="width=device-width,
+  minimum-scale=1.0, maximum-scale=1.0" />
+<style type="text/css">
+	body, html { font-family:helvetica,arial,sans-serif; font-size:90%; }
+</style>
+</head>
+<body class="claro">
+<h2>README for Manifold</h2>
+<p>
+Manifold is a <a href=http://freeframe.org>FreeFrame</a> plugin (FFGL, version 1.5) that can be used
+within Resolume 4.0.  (It's possible that it may work in Resolume 3.3 as well.)  It is capable of listening for TUIO over OSC
+and generating graphics and music from it.  It was originally designed
+for use with the <a href=http://spacepalette.com>Space Palette</a>,
+but can also be used with any TUIO-generating application, such as
+<a href=http://code.google.com/p/tuiopad/>TuioPad</a>.
+<h2>Getting Started</h2>
+After installing Manifold, you need to configure Resolume in the following way:
+<ol>
+<li>
+Enable OSC Input on port 7000 (the default)
+<p>
+<li>
+Add the following directory to the list of FreeFrame plugin directories:
+<p>
+<dd>
+<table>
+<tr><td>c:\Users\Public\Documents\Nosuch Media\FFGLPlugins</td><td>&nbsp;</td></tr>
+</table>
+</dd>
+</ol>
+<h2>Browser-based User Interface</h2>
+After you start Resolume, Manifold should appear as a plugin in the Effects section.
+When you add Manifold to a composition and run it, you can
+interact with it by pointing a browser at
+<a href=http://127.0.0.1:4445>http://127.0.0.1:4445</a>.
+You can also access this interface remotely by using the
+IP address or hostname of the computer, rather than 127.0.0.1 (localhost).
+The browser interface only works if Resolume is running and you are running a clip that has Manifold as an effect plugin.
+<h2>Questions, etc.</h2>
+Send email to <a href=mailto:me@timthompson.com>me@timthompson.com</a>

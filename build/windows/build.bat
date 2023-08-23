@@ -1,10 +1,6 @@
 
 @echo off
 
-palette stop
-palette status
-echo ""
-
 if not "%PALETTE_SOURCE%" == "" goto keepgoing1
 echo You must set the PALETTE_SOURCE environment variable.
 goto getout
@@ -75,7 +71,7 @@ pushd %PALETTE_SOURCE%\python
 rm -fr dist
 rm -fr build\palette_gui
 rm -fr build
-pyinstaller -i ..\data\config\palette.ico palette_gui.py > pyinstaller_gui.out 2>&1
+pyinstaller -i ..\data_base\config\palette.ico palette_gui.py > pyinstaller_gui.out 2>&1
 pyinstaller osc.py > pyinstaller_osc.out 2>&1
 
 echo ================ Merging python executables
@@ -131,10 +127,12 @@ popd
 mkdir %ship%\data\config
 mkdir %ship%\data\html
 mkdir %ship%\data\saved
-xcopy /e /y %PALETTE_SOURCE%\data\config %ship%\data\config >nul
-xcopy /e /y %PALETTE_SOURCE%\data\html %ship%\data\html >nul
-xcopy /e /y %PALETTE_SOURCE%\data\saved %ship%\data\saved >nul
+xcopy /e /y %PALETTE_SOURCE%\data_base\config %ship%\data\config >nul
+xcopy /e /y %PALETTE_SOURCE%\data_base\html %ship%\data\html >nul
+xcopy /e /y %PALETTE_SOURCE%\data_base\saved %ship%\data\saved >nul
 
+rem The default data directory is data_dexed-based
+rem You can use copydata.bat to switch to other data_*.
 xcopy /e /y %PALETTE_SOURCE%\data_dexed\saved %ship%\data\saved >nul
 xcopy /e /y %PALETTE_SOURCE%\data_dexed\config %ship%\data\config >nul
 
