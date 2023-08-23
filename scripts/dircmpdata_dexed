@@ -1,0 +1,4 @@
+#!/bin/bash
+
+dircmp "/mnt/c/Program Files/Common Files/Palette/data" /mnt/c/Users/nosuc/github/palette/data_dexed | grep different
+

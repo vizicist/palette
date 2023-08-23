@@ -62,6 +62,11 @@ func (logic *PatchLogic) cursorToPitch(ce CursorEvent) (uint8, error) {
 	} else {
 		pitchmin := patch.GetInt("sound.pitchmin")
 		pitchmax := patch.GetInt("sound.pitchmax")
+		if pitchmin > pitchmax {
+			t := pitchmin
+			pitchmin = pitchmax
+			pitchmax = t
+		}
 		dp := pitchmax - pitchmin + 1
 		p1 := int(ce.Pos.X * float32(dp))
 		p := uint8(pitchmin + p1%dp)
@@ -228,6 +233,7 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
 		}
 		ScheduleAt(atClick, ce.Tag, noteOn)
 		ac.NoteOn = noteOn
+		ac.NoteOnY = ce.Pos.Y
 		ac.NoteOnClick = atClick
 	case "drag":
 		oldNoteOn := ac.NoteOn
@@ -257,14 +263,22 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
 		deltaztrignote := patch.GetFloat("sound._deltaztrignote")
 		deltaztrigcontroller := patch.GetFloat("sound._deltaztrigcontroller")
 
-		deltay := float32(math.Abs(float64(ac.Previous.Pos.Y - ce.Pos.Y)))
-		deltaytrig := patch.GetFloat("sound._deltaytrig")
+		// deltay := float32(math.Abs(float64(ac.Previous.Pos.Y - ce.Pos.Y)))
+		deltay := float32(math.Abs(float64(ac.NoteOnY - ce.Pos.Y)))
+		deltaytrignote := patch.GetFloat("sound._deltaytrignote")
+		// deltaytrigcontroller := patch.GetFloat("sound._deltaytrigcontroller")
 
 		// logic.generateController(ac)
 		if patch.Get("sound.controllerstyle") == "modulationonly" {
 			if deltaz > deltaztrigcontroller {
 				patch.Synth().SendController(1, newvelocity)
 			}
+			// Currently, only z sends the modulation controller.
+			// There needs to be a new parameter to give a specific controller number for Y.
+			// if deltay > deltaytrigcontroller {
+			//	// LogWarn("Hey, deltaytrigcontroller needs work?")
+			//	// patch.Synth().SendController(1, newvelocity)
+			// }
 		}
 
 		cc := CurrentClick()
@@ -276,9 +290,30 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
 			return
 		}
 
-		if newpitch != oldpitch || deltaz > deltaztrignote || deltay > deltaytrig {
+		deltay_triggered := false
+		deltaz_triggered := false
+		newpitch_triggered := false
+		// LogInfo("deltay and deltaytrig", "deltay", deltay, "deltaytrignote", deltaytrignote)
+		if deltay > deltaytrignote {
+			deltay_triggered = true
+			LogInfo("YES!!  deltay > deltaytrig", "deltay", deltay, "deltaytrignote", deltaytrignote)
+		}
+		if deltaz > deltaztrignote {
+			deltaz_triggered = true
+			LogInfo("YES!!  deltaz > deltaztrig", "deltaz", deltaz, "deltaztrig", deltaztrignote)
+		}
+		if newpitch != oldpitch {
+			newpitch_triggered = true
+		}
 
-			LogOfType("note", "Turning note off/on due to newpitch or deltaz or deltay")
+		doNewNote := newpitch_triggered || deltaz_triggered || deltay_triggered
+		if doNewNote {
+
+			LogOfType("note", "Turning note off/on due",
+				"newpitch_triggered",newpitch_triggered,
+				"deltaz_triggered",deltaz_triggered,
+				"deltay_triggered",deltay_triggered)
+
 			// Turn off existing note, one Click after noteOn
 			noteOff := NewNoteOffFromNoteOn(oldNoteOn)
 			offClick := ac.NoteOnClick + 1
@@ -292,6 +327,13 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
 			ScheduleAt(thisClick, ce.Tag, newNoteOn)
 			ac.NoteOn = newNoteOn
 			ac.NoteOnClick = thisClick
+			if deltay_triggered {
+				ac.NoteOnY = ce.Pos.Y
+				LogInfo("Setting ac.NoteOnY","ac.NoteOnY",ac.NoteOnY)
+			}
+			if deltaz_triggered {
+				ac.NoteOnZ = ce.Pos.Z
+			}
 		}
 
 	case "up":

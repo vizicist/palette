@@ -1,4 +1,5 @@
 # utility to migrate from old huefill{initial,final,time} to hue1{initial,final,time} and hue2
+# No longer used/valid, but kept around in case it's useful
 
 import json
 import glob
@@ -182,6 +183,8 @@ def changeeffects(paramfile):
 
 homedir = os.getenv("PALETTE_SOURCE")
 
+print("HEY!  THIS SCRIPT IS NO LONGER VALID")
+sys.exit(1)
 
 # This can be used on either "effect" or "patch"
 
