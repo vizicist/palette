@@ -18,8 +18,8 @@ var TheCursorManager *CursorManager
 type CursorEvent struct {
 	// Named CClick to catch everyone that accesses it
 	CClick Clicks `json:"Click"`
-	Gid    int        `json:"Gid"`
-	Tag    string     `json:"Tag"`
+	Gid    int    `json:"Gid"`
+	Tag    string `json:"Tag"`
 	// Source string
 	Ddu  string    `json:"Ddu"` // "down", "drag", "up" (sometimes "clear")
 	Pos  CursorPos `json:"Pos"`
@@ -32,6 +32,8 @@ type ActiveCursor struct {
 	Previous    CursorEvent
 	NoteOn      *NoteOn
 	NoteOnClick Clicks
+	NoteOnY     float32
+	NoteOnZ     float32
 	Patch       *Patch
 	Button      string
 	loopIt      bool
@@ -101,7 +103,6 @@ func NewActiveCursor(ce CursorEvent) *ActiveCursor {
 		Previous: ce,
 		Button:   button,
 		Patch:    patch,
-		maxZ:     0,
 	}
 	if ac.Patch != nil {
 		ac.loopIt = patch.GetBool("misc.looping_on")
