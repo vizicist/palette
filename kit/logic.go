@@ -32,6 +32,9 @@ func (logic *PatchLogic) cursorToNoteOn(ce CursorEvent) *NoteOn {
 	synth := logic.patch.Synth()
 	velocity := logic.cursorToVelocity(ce)
 	pitch, err := logic.cursorToPitch(ce)
+
+	LogInfo("cursorToNoteOn","velocity",velocity)
+
 	if err != nil {
 		LogIfError(fmt.Errorf("cursorToNoteOn: no pitch for cursor, ce=%v", ce))
 		return nil
@@ -148,9 +151,17 @@ func (logic *PatchLogic) cursorToVelocity(ce CursorEvent) uint8 {
 	default:
 		LogWarn("Unrecognized vol value", "volstyle", volstyle)
 	}
+
 	dv := velocitymax - velocitymin + 1
-	p1 := int(v * float32(dv))
-	vel := uint8(velocitymin + p1%dv)
+	vScaledToVelocityRange := int(v * float32(dv))
+	var vel uint8
+	if vScaledToVelocityRange >= dv {
+		vel = uint8(velocitymax)
+	} else {
+		vel = uint8(velocitymin) + uint8(vScaledToVelocityRange%dv)
+	}
+
+	LogInfo("cursorToVelocity","velocitymin",velocitymin,"p1",vScaledToVelocityRange,"dv",dv,"v",v)
 	return uint8(vel)
 }
 
