@@ -2,7 +2,6 @@ package kit
 
 import (
 	"sync"
-	"os"
 	"strings"
 	"fmt"
 )
@@ -87,11 +86,6 @@ func IsLogging(logtype string) bool {
 	}
 	return b
 
-}
-
-func InitLogTypes() {
-	logtypes := os.Getenv("PALETTE_LOGTYPES")
-	SetLogTypes(logtypes)
 }
 
 func SetLogTypes(logtypes string) {

@@ -31,14 +31,18 @@ func Init() error {
 	}
 
 	LoadEngineParams("_Current.json")
-	InitLogTypes()
+
+	logtypes, err := GetParam("engine.log")
+	if err == nil {
+		SetLogTypes(logtypes)
+	}
 
 	TheCursorManager = NewCursorManager()
 	TheScheduler = NewScheduler()
 	TheAttractManager = NewAttractManager()
 	TheQuadPro = NewQuadPro()
 
-	err := TheHost.Init()
+	err = TheHost.Init()
 	if err != nil {
 		return err
 	}
@@ -176,14 +180,14 @@ func JsonString(args ...string) string {
 	return params
 }
 
-func BoundValueZeroToOne(v float64) float32 {
+func BoundValueZeroToOne(v float64) float64 {
 	if v < 0.0 {
 		return 0.0
 	}
 	if v > 1.0 {
 		return 1.0
 	}
-	return float32(v)
+	return v
 }
 
 func GetNameValue(apiargs map[string]string) (name string, value string, err error) {

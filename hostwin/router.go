@@ -240,10 +240,10 @@ func (r *Router) oscHandleCursor(msg *osc.Message) {
 	// We want to expand the X and Y values a bit around their center
 	// (hence the 0.5 stuff), since the values from mmtt_kinect are inset a bit.
 	newPos := ce.Pos
-	newPos.X = kit.BoundValueZeroToOne(((float64(ce.Pos.X) - 0.5) * xexpand) + 0.5)
-	newPos.Y = kit.BoundValueZeroToOne(((float64(ce.Pos.Y) - 0.5) * yexpand) + 0.5)
+	newPos.X = (float32)(kit.BoundValueZeroToOne(((float64(ce.Pos.X) - 0.5) * xexpand) + 0.5))
+	newPos.Y = (float32)(kit.BoundValueZeroToOne(((float64(ce.Pos.Y) - 0.5) * yexpand) + 0.5))
 	// For Z, we want to expand the value only in the positive direction.
-	newPos.Z = kit.BoundValueZeroToOne(float64(ce.Pos.Z) * zexpand)
+	newPos.Z = (float32)(kit.BoundValueZeroToOne(float64(ce.Pos.Z) * zexpand))
 
 	kit.LogOfType("cursor", "MMTT Cursor", "ddu", ce.Ddu, "newPos", newPos)
 

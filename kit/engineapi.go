@@ -342,7 +342,7 @@ func SetEngineParam(name string, value string) error {
 		SetLogTypes(value)
 
 	case "engine.midiinput":
-		TheHost.SetMidiInput(value)
+		return TheHost.SetMidiInput(value)
 
 	case "engine.processchecksecs":
 		LogWarn("engine.processchecksecs value needs work")

@@ -1,0 +1,18 @@
+dircmp . "/c/Program Files/Common Files/Palette/data/config" | grep different | sed -e "s/different[ \t]*//" > tmp.out
+if [ ! -s tmp.out ] ; then
+	echo "NO DIFFERENCES!"
+	exit 0
+fi
+echo "DIFFERENCES:"
+cat tmp.out
+echo -n "Do you want to diff these from Common Files? (y or n) > "
+read a
+echo a=$a
+if [ "$a" = "y" ] ; then
+	for i in `cat tmp.out` ; do
+		echo "=================="
+		echo "================== $i"
+		echo "=================="
+		diff $i "/c/Program Files/Common Files/Palette/data/config"
+	done
+fi
