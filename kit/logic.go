@@ -33,8 +33,6 @@ func (logic *PatchLogic) cursorToNoteOn(ce CursorEvent) *NoteOn {
 	velocity := logic.cursorToVelocity(ce)
 	pitch, err := logic.cursorToPitch(ce)
 
-	LogInfo("cursorToNoteOn","velocity",velocity)
-
 	if err != nil {
 		LogIfError(fmt.Errorf("cursorToNoteOn: no pitch for cursor, ce=%v", ce))
 		return nil
@@ -161,7 +159,6 @@ func (logic *PatchLogic) cursorToVelocity(ce CursorEvent) uint8 {
 		vel = uint8(velocitymin) + uint8(vScaledToVelocityRange%dv)
 	}
 
-	LogInfo("cursorToVelocity","velocitymin",velocitymin,"p1",vScaledToVelocityRange,"dv",dv,"v",v)
 	return uint8(vel)
 }
 
