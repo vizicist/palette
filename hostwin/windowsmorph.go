@@ -265,7 +265,7 @@ type oneMorph struct {
 	contactIdToGid   map[int]int
 }
 
-var morphMaxForce float32 = 1000.0
+var morphMaxForce float32 = 1000.0  // the morph can still report higher values
 
 var allMorphs []*oneMorph
 
@@ -328,6 +328,11 @@ func (m *oneMorph) readFrames(callback kit.CursorCallbackFunc, forceFactor float
 			yNorm := float32(contact.y_pos) / m.height
 			zNorm := float32(contact.total_force) / morphMaxForce
 			zNorm *= forceFactor
+
+			xNorm = float32(kit.BoundValueZeroToOne(float64(xNorm)))
+			yNorm = float32(kit.BoundValueZeroToOne(float64(yNorm)))
+			zNorm = float32(kit.BoundValueZeroToOne(float64(zNorm)))
+
 			area := float32(contact.area)
 			var ddu string
 			switch contact.state {
@@ -435,18 +440,6 @@ func (m *oneMorph) readFrames(callback kit.CursorCallbackFunc, forceFactor float
 
 			// make the coordinate space match OpenGL and Freeframe
 			yNorm = 1.0 - yNorm
-
-			// Make sure we don't send anyting out of bounds
-			if yNorm < 0.0 {
-				yNorm = 0.0
-			} else if yNorm > 1.0 {
-				yNorm = 1.0
-			}
-			if xNorm < 0.0 {
-				xNorm = 0.0
-			} else if xNorm > 1.0 {
-				xNorm = 1.0
-			}
 
 			pos := kit.CursorPos{X: xNorm, Y: yNorm, Z: zNorm}
 			ce := kit.NewCursorEvent(gid, m.currentTag, ddu, pos)

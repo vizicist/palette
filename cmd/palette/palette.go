@@ -74,7 +74,7 @@ func CliCommand(args []string) (map[string]string, error) {
 
 	// Warn about extra unexpected arguments
 	switch api {
-	case "start", "kill", "stop", "summarize":
+	case "start", "restart", "kill", "stop", "summarize":
 		// okay
 	default:
 		// extra args are allowed on api.method usage
@@ -103,6 +103,18 @@ func CliCommand(args []string) (map[string]string, error) {
 			s = "No palette processes are running."
 		}
 		out := map[string]string{"result": s}
+		return out, nil
+
+	case "restart":
+		_, err := CliCommand( []string{"stop"})
+		if err != nil {
+			return nil, err
+		}
+		_, err = CliCommand( []string{"start"})
+		if err != nil {
+			return nil, err
+		}
+		out := map[string]string{"result": "RESTARTED"}
 		return out, nil
 
 	case "start":
