@@ -87,7 +87,7 @@ func ScheduleCursorEvent(ce CursorEvent) {
 
 	// schedule CursorEvents rather than handle them right away.
 	// This makes it easier to do looping, among other benefits.
-	LogOfType("cursor", "ScheduleCursorEvent", "ce", ce)
+	LogOfType("scheduler", "ScheduleCursorEvent", "ce", ce)
 
 	ScheduleAt(CurrentClick(), ce.Tag, ce)
 }
