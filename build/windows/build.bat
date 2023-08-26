@@ -71,7 +71,7 @@ pushd %PALETTE_SOURCE%\python
 rm -fr dist
 rm -fr build\palette_gui
 rm -fr build
-pyinstaller -i ..\data_base\config\palette.ico palette_gui.py > pyinstaller_gui.out 2>&1
+pyinstaller -i ..\data_defaults\config\palette.ico palette_gui.py > pyinstaller_gui.out 2>&1
 pyinstaller osc.py > pyinstaller_osc.out 2>&1
 
 echo ================ Merging python executables
@@ -127,9 +127,9 @@ popd
 mkdir %ship%\data\config
 mkdir %ship%\data\html
 mkdir %ship%\data\saved
-xcopy /e /y %PALETTE_SOURCE%\data_base\config %ship%\data\config >nul
-xcopy /e /y %PALETTE_SOURCE%\data_base\html %ship%\data\html >nul
-xcopy /e /y %PALETTE_SOURCE%\data_base\saved %ship%\data\saved >nul
+xcopy /e /y %PALETTE_SOURCE%\data_defaults\config %ship%\data\config >nul
+xcopy /e /y %PALETTE_SOURCE%\data_defaults\html %ship%\data\html >nul
+xcopy /e /y %PALETTE_SOURCE%\data_defaults\saved %ship%\data\saved >nul
 
 rem The default data directory is data_dexed-based
 rem You can use copydata.bat to switch to other data_*.
