@@ -303,6 +303,7 @@ func (m *oneMorph) readFrames(callback kit.CursorCallbackFunc, forceFactor float
 		LogWarn("SenselReadSensor for", "idx", m.idx, "status", status)
 		LogWarn("Morph has been disabled due to SenselReadSensor errors", "serialnum", m.serialNum)
 		m.opened = false
+		return
 	}
 	numFrames := C.SenselGetNumAvailableFrames(C.uchar(m.idx))
 	if numFrames <= 0 {
@@ -365,7 +366,7 @@ func (m *oneMorph) readFrames(callback kit.CursorCallbackFunc, forceFactor float
 					cornerSource = "D"
 				}
 				if cornerSource != "" && cornerSource != m.currentTag {
-					LogInfo("Switching corners pad", "source", cornerSource)
+					// LogInfo("Switching corners pad", "source", cornerSource)
 					ce := kit.NewCursorClearEvent(m.currentTag)
 					callback(ce)
 					m.currentTag = cornerSource
@@ -397,6 +398,14 @@ func (m *oneMorph) readFrames(callback kit.CursorCallbackFunc, forceFactor float
 				}
 				xNorm *= 2.0
 				yNorm *= 2.0
+
+				if quadSource != m.currentTag {
+					// LogInfo("quadSource != m.currentTag, Generating NewCursorClearEvent","m.currentTage",m.currentTag)
+					ce := kit.NewCursorClearEvent(m.currentTag)
+					callback(ce)
+					// LogInfo("Setting m.currentTag to","quadSource",quadSource)
+				}
+				
 				m.currentTag = quadSource
 
 			case "A", "B", "C", "D":
@@ -420,10 +429,12 @@ func (m *oneMorph) readFrames(callback kit.CursorCallbackFunc, forceFactor float
 				m.contactIdToGid[contactid] = gid
 			} else if m.currentTag != m.previousTag {
 				// If we're switching to a new source, clear existing cursors...
+				// LogInfo("Creating NewCursorClearEvent","m.currentTag",m.currentTag)
 				ce := kit.NewCursorClearEvent(m.currentTag)
 				callback(ce)
 				// and create a new cid...
 				gid = kit.TheCursorManager.UniqueGid()
+				// LogInfo("Creating new gid","gid",gid)
 			}
 
 			m.previousTag = m.currentTag
@@ -443,6 +454,7 @@ func (m *oneMorph) readFrames(callback kit.CursorCallbackFunc, forceFactor float
 
 			pos := kit.CursorPos{X: xNorm, Y: yNorm, Z: zNorm}
 			ce := kit.NewCursorEvent(gid, m.currentTag, ddu, pos)
+			// LogInfo("NewCursorEvent","ce",ce)
 			ce.Area = area
 			callback(ce)
 		}
@@ -518,7 +530,7 @@ func WinMorphInitialize() error {
 
 		// Don't use Debug.Morph, this should always gets logged
 		firmware := fmt.Sprintf("%d.%d.%d", m.fwVersionMajor, m.fwVersionMinor, m.fwVersionBuild)
-		LogInfo("Morph Opened and Started", "idx", m.idx, "serial", m.serialNum, "firmware", firmware)
+		LogInfo("Morph Opened and Started", "idx", m.idx, "serial", m.serialNum, "firmware", firmware,"morphtype",m.morphtype)
 	}
 	return nil
 }
