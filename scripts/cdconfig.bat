@@ -1,2 +1,2 @@
 c:
-cd %PALETTE_SOURCE%\data\config
+cd %CommonProgramFiles%\Palette\data\config
