@@ -1,0 +1,28 @@
+#!/bin/bash
+
+c="/mnt/c"
+if [ ! -d "$c" ] ; then
+        c="/c"
+        if [ ! -d "$c" ] ; then
+                echo "No C drive?"
+                exit 1
+        fi
+fi
+
+set -x
+# for subdir in patch quad sound ; do
+for subdir in quad ; do
+	d1="$c/Program Files/Common Files/Palette/data/saved/$subdir"
+	d2="$c/Users/$USERNAME/Github/Palette/data_dexed/saved/$subdir"
+	echo "COMPARING $d1 to $d2"
+	diff "$d1" "$d2" > tmp.out
+	echo "===== FILES ONLY IN $d1:"
+	grep "^Only in $d1" < tmp.out > tmp.d1.out
+	echo -n "Do you want to pull these from Common Files? (y or n) > "
+	read a
+	echo a=$a
+	if [ "$a" = "y" ] ; then
+		d2escaped=`echo $d2 | sed -e 's/\//\//g'`
+		cat tmp.d1.out | sed -e 's/^Only in /ls -l "/' -e 's/$/"/' -e 's/: /\//' -e "s:\$: \"$d2escaped\":"
+	fi
+done
