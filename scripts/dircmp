@@ -29,7 +29,7 @@ then echo $D2 not a directory !
      exit 2
 fi
 D0=`pwd`
-cd $D1
+cd "$D1"
 find . -print | sort > /tmp/dc$$a
 cd "$D0"
 cd "$D2"
