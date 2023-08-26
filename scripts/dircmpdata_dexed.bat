@@ -1,0 +1,1 @@
+bash dircmpdata_dexed
