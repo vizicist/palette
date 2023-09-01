@@ -51,11 +51,11 @@ go build -o palette_monitor.exe >> %buildcmdsout% 2>&1
 move palette_monitor.exe %bin%\palette_monitor.exe > nul
 popd
 
-echo ================ Compiling palette_splash
-pushd %PALETTE_SOURCE%\cmd\palette_splash
-go build -o palette_splash.exe >> %buildcmdsout% 2>&1
-move palette_splash.exe %bin%\palette_splash.exe > nul
-popd
+rem echo ================ Compiling palette_splash
+rem pushd %PALETTE_SOURCE%\cmd\palette_splash
+rem go build -o palette_splash.exe >> %buildcmdsout% 2>&1
+rem move palette_splash.exe %bin%\palette_splash.exe > nul
+rem popd
 
 echo ================ Compiling palette_pk2go
 pushd %PALETTE_SOURCE%\cmd\palette_pk2go
@@ -94,13 +94,13 @@ copy %PALETTE_SOURCE%\build\windows\vc15\bin\pthreadvc2.dll %ship%\ffgl >nul
 copy %PALETTE_SOURCE%\build\windows\vc15\bin\msvcr100.dll %ship%\ffgl >nul
 popd
 
-echo ================ Compiling mmtt_kinect
-pushd %PALETTE_SOURCE%\mmtt_kinect\build\windows
-msbuild /t:Build /p:Configuration=Debug /p:Platform="x32" mmtt_kinect.sln > nul
-rem Put mmtt_kinect in its own bin directory, to keep 32-bit things separate
-copy mmtt_kinect\Debug\mmtt_kinect.exe %bin%\mmtt_kinect\mmtt_kinect.exe >nul
-copy mmtt_kinect\*.dll %bin%\mmtt_kinect >nul
-popd
+rem echo ================ Compiling mmtt_kinect
+rem pushd %PALETTE_SOURCE%\mmtt_kinect\build\windows
+rem msbuild /t:Build /p:Configuration=Debug /p:Platform="x32" mmtt_kinect.sln > nul
+rem rem Put mmtt_kinect in its own bin directory, to keep 32-bit things separate
+rem copy mmtt_kinect\Debug\mmtt_kinect.exe %bin%\mmtt_kinect\mmtt_kinect.exe >nul
+rem copy mmtt_kinect\*.dll %bin%\mmtt_kinect >nul
+rem popd
 
 echo ================ Copying misc binaries
 rem copy %PALETTE_SOURCE%\binaries\nats\nats-pub.exe %bin% >nul
@@ -136,7 +136,7 @@ rem You can use copydata.bat to switch to other data_*.
 xcopy /e /y %PALETTE_SOURCE%\data_dexed\saved %ship%\data\saved >nul
 xcopy /e /y %PALETTE_SOURCE%\data_dexed\config %ship%\data\config >nul
 
-for %%X in (data_dexed data_dexedvital data_foursynths data_omnisphere) DO (
+for %%X in (data_dexed data_dexedvital data_omnisphere) DO (
 	echo ================ Copying %%X
 	mkdir %ship%\%%X\config
 	mkdir %ship%\%%X\saved
@@ -148,8 +148,8 @@ echo ================ Copying windows-specific things
 copy %PALETTE_SOURCE%\SenselLib\x64\LibSensel.dll %bin% >nul
 copy %PALETTE_SOURCE%\SenselLib\x64\LibSenselDecompress.dll %bin% >nul
 rem copy %PALETTE_SOURCE%\depthlib\build\x64\Release\depthlib.dll %bin% >nul
-copy vc15\bin\depthai-core.dll %bin% >nul
-copy vc15\bin\opencv_world454.dll %bin% >nul
+rem copy vc15\bin\depthai-core.dll %bin% >nul
+rem copy vc15\bin\opencv_world454.dll %bin% >nul
 
 echo ================ Removing unused things
 rm -fr %bin%\pyinstalled\tcl\tzdata
