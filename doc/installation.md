@@ -1,16 +1,18 @@
-## Using Palette with Resolume 7 and the Sensel Morph
-
-- These installation instructions will give you a visuals-only Palette.
+## Installing Palette
 
 - Installing the musical aspects of a full-blown Space Palette Pro is a much more
 involved process involving lots of additional software and configuration.
 If you want to attempt it, these are the instructions to use:
 <a href="https://github.com/vizicist/spacepalettepro/blob/main/doc/building_software.md">https://github.com/vizicist/spacepalettepro/blob/main/doc/building_software.md</a>
 
-- The instructions below assume that you:
-  - are running Windows 10
-  - have Resolume Avenue (or Arena) 7
-  - and have a Sensel Morph.
+- The instructions below assume that you have:
+  - Windows 10 or later
+  - Resolume Avenue (or Arena) 7
+  - Plogue Bidule
+  - Dexed and Vital VST synths (open source)
+  - at least one Sensel Morph
+
+  The installation
 
 ## One-time installation steps
 
