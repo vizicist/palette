@@ -1,12 +1,12 @@
-## Initializing a Palette build and development environment.
+## Building Palette software from the source code
 
-NOTE: these instructions are only appropriate if you are wanting
+NOTE: these instructions describe how
 to recompile the Palette software from scratch.
 If instead you just want to install it using one of the
-released installation packages, which is certainly a lot simpler and is recommended, use:
-<a href="https://github.com/vizicist/palette/blob/main/doc/using_resolume.md">https://github.com/vizicist/palette/blob/main/doc/using_resolume.md</a>
+released installation packages, use
+<a href="https://github.com/vizicist/palette/blob/main/doc/installation.md">these instructions</a>
 
-In the list below, the === instructions are only appropriate for machines that will be maintained by Tim.
+In the list below, the === instructions are only appropriate for machines that will be maintained remotely.
 
 - Please send email to me@timthompson.com if these instructions don't work for you.
 
@@ -25,22 +25,20 @@ In the list below, the === instructions are only appropriate for machines that w
 - Use the github desktop (or CLI if you prefer) to clone this repo:
       https://github.com/vizicist/palette.git into
   into this directory: 
-	%USERPROFILE%\Documents\Github\palette
-  That may take a while, and you can continue on to the next steps while that cooks.
+	%USERPROFILE%\Github\palette
+   may take a while, and you can continue on to the next steps while that cooks.
 
 - In your Environment Variables:
-	- Add %USERPROFILE%\Documents\Github\palette\scripts to your PATH
+	- Add %USERPROFILE%\Github\palette\scripts to your PATH
  	- Add C:\Program Files\Git\bin to your PATH
 	- Add C:\Program Files\Git\usr\bin to your PATH
  	- Add %USERPROFILE%\mingw64\bin to your PATH (adjust path if installed elsewhere)
 	- Add the following new environment variables:
 ```
  PALETTE=C:\Program Files\Palette
- PALETTE_SOURCE=%USERPROFILE%\Documents\Github\palette
- PALETTE_DATA_PATH=%USERPROFILE%\Documents\Github\palette\data_omnisphere
+ PALETTE_SOURCE=%USERPROFILE%\Github\palette
 ```
-
-	Not sure whether %USERPROFILE%\Documents\Github\palette\SenselLib\x64 is needed, it depends on how you execute things during development.
+Not sure whether %USERPROFILE%\Github\palette\SenselLib\x64 is needed, it depends on how you execute things during development.
 
 - Install Go version 1.19 or later from https://golang.org/dl/
 
