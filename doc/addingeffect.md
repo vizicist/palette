@@ -1,9 +1,9 @@
 ## How to add a new FFGL effect to the Palette
 
 - Add the effect to the PaletteABCD.avc composition in Resolume.  It should be added eight times in total.  Within each of the four layers - A,B,C,D - the new effect should be added twice within the long pipeline of effects you'll find there.  Use the existing effects as a guide for where to place the two instances of a new effect, and place them in alphabetical order.  After you change the PaletteABCD.avc composition and write it out, copy it from the standard location (in
-  %USERPROFILE%\Documents\Resolume Avenue\Compositions) to your %CommonProgramFiles%\Palette\config directory, so that you don't lose it.
+  %USERPROFILE%\Documents\Resolume Avenue\Compositions) to your %CommonProgramFiles%\Palette\data\config directory, so that you don't lose it.
 
-- Add the effect and its parameters to the %CommonProgramFiles%\Palette\config\paramdefs.json file.  Here's a sample for the recently-added "goo" effect.
+- Add the effect and its parameters to the %CommonProgramFiles%\Palette\data\config\paramdefs.json file.  Here's a sample for the recently-added "goo" effect.
 <pre>
 "effect.goo": {"valuetype": "bool", "min": "false", "max": "true", "randmax": "0.2", "init": "false", "comment": "#" },
 
