@@ -1,14 +1,19 @@
 ## Using the Palette
 
-- These instructions assume you have already installed and configured the Palette software.
+- These instructions assume you have already <a href=installing.md>installed</a> the Palette software.
 
 ## Starting Up
 
 - Make sure the Sensel Morph is plugged in, and that Resolume is not currently running.
 
-- Invoke <b>Start Palette</b> found in the Palette folder of the Windows Start menu.  This will start up a few things: the Palette engine that runs in the background, the Palette GUI that you use to select and edit presets, and Resolume.  If you've installed Plogue Bidule for doing music, Bidule will also be started.
+- In a cmd window, run:
 
-- If you have an actual touchscreen (as in the Space Palette Pro controller), you can set the guisize value in %CommonProgramFiles%\Palette\config\settings.json to have the GUI show up on that touchscreen.
+    <pre>palette start</pre>
+    This will start the Palette engine that runs in the background.  If configured appropriately, other programs will be automatically started - Bidule,
+    Resolume, and the Palette GUI that you use to select and edit presets.
+
+    The default configuration should automatically start Bidule, Resolume, and the Palette GUI.  If there are any issues, look at engine.log file in the
+    <b>%CommonProgramFiles%\Palette\logs</b> directory.
 
 ## Basic Usage
 
