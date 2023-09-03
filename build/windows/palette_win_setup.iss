@@ -24,8 +24,8 @@ DefaultGroupName={#MyAppName}
 ; Uncomment the following line to run in non administrative install mode (install for current user only.)
 ;PrivilegesRequired=lowest
 OutputBaseFilename=palette_{#MyAppVersion}_win_setup
-Compression=none
-; Compression=lzma
+; Compression=none
+Compression=lzma
 SolidCompression=yes
 LZMAUseSeparateProcess=yes
 LZMANumBlockThreads=6
@@ -46,14 +46,14 @@ Source: "ship\bin\*.bat"; DestDir: "{app}\bin"; Flags: comparetimestamp ignoreve
 Source: "ship\bin\*.dll"; DestDir: "{app}\bin"; Flags: comparetimestamp ignoreversion
 Source: "ship\bin\*.exe"; DestDir: "{app}\bin"; Flags: comparetimestamp ignoreversion
 Source: "ship\bin\pyinstalled\*"; DestDir: "{app}\bin\pyinstalled"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "ship\bin\mmtt_kinect\*"; DestDir: "{app}\bin\mmtt_kinect"; Flags: ignoreversion recursesubdirs createallsubdirs
+; Source: "ship\bin\mmtt_kinect\*"; DestDir: "{app}\bin\mmtt_kinect"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "ship\ffgl\*"; DestDir: "{app}\ffgl"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 ; NOTE - data files go in CommonProgramFiles\Palette
 Source: "ship\data\*"; DestDir: "{commoncf64}\{#MyAppName}\data"; Flags: comparetimestamp ignoreversion recursesubdirs createallsubdirs
 Source: "ship\data_dexed\*"; DestDir: "{commoncf64}\{#MyAppName}\data_dexed"; Flags: comparetimestamp ignoreversion recursesubdirs createallsubdirs
 Source: "ship\data_dexedvital\*"; DestDir: "{commoncf64}\{#MyAppName}\data_dexedvital"; Flags: comparetimestamp ignoreversion recursesubdirs createallsubdirs
-Source: "ship\data_foursynths\*"; DestDir: "{commoncf64}\{#MyAppName}\data_foursynths"; Flags: comparetimestamp ignoreversion recursesubdirs createallsubdirs
+; Source: "ship\data_foursynths\*"; DestDir: "{commoncf64}\{#MyAppName}\data_foursynths"; Flags: comparetimestamp ignoreversion recursesubdirs createallsubdirs
 Source: "ship\data_omnisphere\*"; DestDir: "{commoncf64}\{#MyAppName}\data_omnisphere"; Flags: comparetimestamp ignoreversion recursesubdirs createallsubdirs
 Source: "logs_readme.txt"; DestDir: "{commoncf64}\{#MyAppName}\logs"; DestName: "readme.txt"; Flags: ignoreversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
@@ -66,7 +66,7 @@ Source: "vc15\bin\VC_redist.x64.exe"; DestDir: {app}\bin
 Filename: {app}\bin\VC_redist.x64.exe; Parameters: "/install /quiet /norestart"; StatusMsg: "Installing 64-bit Windows Universal runtime..."; Flags: waituntilterminated
 Filename: taskkill.exe; Parameters: "/F /IM palette_engine.exe"; StatusMsg: "Making sure palette_engine is not running..."; Flags: waituntilterminated
 Filename: taskkill.exe; Parameters: "/F /IM palette_monitor.exe"; StatusMsg: "Making sure palette_monitor is not running..."; Flags: waituntilterminated
-Filename: taskkill.exe; Parameters: "/F /IM palette_splash.exe"; StatusMsg: "Making sure palette_splash is not running..."; Flags: waituntilterminated
+; Filename: taskkill.exe; Parameters: "/F /IM palette_splash.exe"; StatusMsg: "Making sure palette_splash is not running..."; Flags: waituntilterminated
 Filename: taskkill.exe; Parameters: "/F /IM palette_gui.exe"; StatusMsg: "Making sure palette_gui is not running..."; Flags: waituntilterminated
 
 [Icons]
