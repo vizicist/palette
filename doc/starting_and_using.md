@@ -6,9 +6,8 @@
 
 - Make sure the Sensel Morph is plugged in, and that Resolume is not currently running.
 
-- In a cmd window, run:
+- In a cmd window, execute: <b>palette start</b>
 
-    <pre>palette start</pre>
     This will start the Palette engine that runs in the background.  If configured appropriately, other programs will be automatically started - Bidule,
     Resolume, and the Palette GUI that you use to select and edit presets.
 
@@ -75,13 +74,12 @@ case that randomized parameters will produce no output.
 
 ## Stopping the Palette
 
-- Use <b>Stop Palette</b> from the Palette folder of the Windows Start menu.
+- Execute <b>palette stop</b> to stop everything (including Resolume and Bidule).
 
 ## Configuring
 
-- The Config directory: <pre>%CommonProgramFiles%\Palette\config</pre>
+- The Config directory - <b>%CommonProgramFiles%\Palette\data\config</b> -
 contains various files you can edit to control things.
-The settings.json file is the one you'll adjust most often.
 
 ## Debugging hints
 
