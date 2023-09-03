@@ -2,13 +2,13 @@
 
 # WARNING - main branch is under active development, do not use.
 
-Palette is the software used in the <a href=https://youtu.be/HDtxEyCI_zc>Space Palette Pro</a>,
+Palette is the system used by the <a href=https://youtu.be/HDtxEyCI_zc>Space Palette Pro</a>,
 an instrument that lets you fingerpaint sound and visuals
 using your fingers as 3D cursors on Sensel Morph pads.
 
 # Documentation
 
-- <a href=doc/implementation.md>Overview and implementation details</a>
+- <a href=doc/overview.md>Overview and implementation details</a>
 
 - <a href=doc/installation.md>Installation
 
