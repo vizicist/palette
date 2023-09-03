@@ -53,11 +53,11 @@ Not sure whether %USERPROFILE%\Github\palette\SenselLib\x64 is needed, it depend
 - Install Visual Studio Build Tools 2017 (version 15.9) from https://visualstudio.microsoft.com/downloads
 
 	- in the Workload tab, select "Visual C++ Build Tools"
+<p>
 
 - Install mingw64 to get the gcc compiler.
-You'll want the 8.5.0 version, x86_64 architecture, posix threads, and sjlj exceptions.
 The last time I installed it from https://github.com/niXman/mingw-builds-binaries, and it was necessary to download
-the "online installer" and execute it from the Explorer, selecting "more info" to allow installation of an unsigned package.
+the "online installer" and execute it from the Explorer, selecting "more info" to allow installation of an unsigned package.  You'll want the 13.1.0 version, 64 bit architecture, posix thread model, and ucrt runtime.
 
 - In Visual Studio Code, click on the "extensions marketplace" icon (four little squares) on the left side.
   In the "Search Extensions" field, enter "go", and install the Go language support.
