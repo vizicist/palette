@@ -1,7 +1,7 @@
 ## Installing Palette
 
 These are the instructions for installing a binary release of the Palette system.  If instead you want to rebuild it from the source code, see
-<a href="https://github.com/vizicist/spacepalette/blob/main/doc/building.md">these instructions</a>.
+<a href=building.md>these instructions</a>.
 
 The instructions below assume that you have:
   - Windows 10 or later
