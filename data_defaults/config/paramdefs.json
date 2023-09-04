@@ -170,7 +170,7 @@
 "engine.testgesturenumsteps": {"valuetype":"int", "min":"1", "max":"1024", "init":"32", "comment":"#" },
 "engine.testgestureduration": {"valuetype": "float", "min": "0.1", "max": "20.0",  "init": "2.5",	"comment": "# in seconds" },
 "engine.testgestureinterval": {"valuetype": "float", "min": "0.1", "max": "20.0",  "init": "0.3",	"comment": "# in seconds" },
-"engine.testgesturentimes": {"valuetype":"int", "min":"1", "max":"1000", "init":"250", "comment":"#" },
+"engine.testgesturentimes": {"valuetype":"int", "min":"1", "max":"1000", "init":"10", "comment":"#" },
 "engine.gui": {"valuetype":"string", "min":"", "max":"", "init":"C:/Program Files/Palette/bin/pyinstalled/palette_gui.exe", "comment":"#" },
 "engine.guisize": {"valuetype":"string", "min":"guisize", "max":"guisize", "init":"small", "comment":"#" },
 "engine.guishowall": {"valuetype":"bool", "min":"false", "max":"true", "init":"false", "comment":"#" },
