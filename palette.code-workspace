@@ -2,6 +2,9 @@
 	"folders": [
 		{
 			"path": "."
+		},
+		{
+			"path": "../../go/pkg/mod/gitlab.com/gomidi"
 		}
 	],
 	"settings": {
