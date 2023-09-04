@@ -12,7 +12,7 @@
     Resolume, and the Palette GUI that you use to select and edit presets.
 
     The default configuration should automatically start Bidule, Resolume, and the Palette GUI.  If there are any issues, look at engine.log file in the
-    <b>%CommonProgramFiles%\Palette\logs</b> directory.
+    `%CommonProgramFiles%\Palette\logs` directory.
 
 ## Basic Usage
 
@@ -78,7 +78,7 @@ case that randomized parameters will produce no output.
 
 ## Configuring
 
-- The Config directory - <b>%CommonProgramFiles%\Palette\data\config</b> -
+- The Config directory - `%CommonProgramFiles%\Palette\data\config` -
 contains various files you can edit to control things.
 
 ## Debugging hints
@@ -88,12 +88,12 @@ you should find an entry for <b>Palette</b> in Resolume's Sources tab, in the al
 If you don't see this, look for clues in the Resolume log file in this directory: <pre>%APPDATA%\Resolume Avenue</pre>
 
 - If for some reason Resolume crashes at startup,
-you can look in this file: <pre>%CommonProgramFiles%\Palette\logs\ffgl.log</pre>
+you can look in the file `%CommonProgramFiles%\Palette\logs\ffgl.log`
 for clues as to the reason.  If you can't resolve the issue,
 you should either remove the ffgl directory from Resolume's <i>Preferences->Video</i> section or just uninstall Palette.
 
-- When the Palette FFGL plugin is properly activated, this log file: <pre>%CommonProgramFiles%\Palette\logs\ffgl.log</pre>
+- When the Palette FFGL plugin is properly activated, this log file: `%CommonProgramFiles%\Palette\logs\ffgl.log`
 should contain this line at the end: <pre>Palette: listening for OSC on port 3334</pre>
 
-- In this logfile: <pre>%CommonProgramFiles%\Palette\logs\engine.log</pre>
+- In this logfile: `%CommonProgramFiles%\Palette\logs\engine.log`
 you should see lines that indicate what has happened and/or failed during startup.
