@@ -121,6 +121,7 @@ copy palette_onboot.bat %bin% >nul
 rem copy natsmon.bat %bin% >nul
 copy delay.bat %bin% >nul
 copy setpalettelogdir.bat %bin% >nul
+copy cdlogs.bat %bin% >nul
 
 popd
 
