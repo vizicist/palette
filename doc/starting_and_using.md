@@ -1,6 +1,6 @@
 ## Using the Palette
 
-- These instructions assume you have already <a href=installing.md>installed</a> the Palette software.
+- These instructions assume you have already <a href=installation.md>installed</a> the Palette software.
 
 ## Starting Up
 
@@ -40,16 +40,14 @@ you don't need to switch - you have simultaneous access to all four.
 
 ## Advanced Mode
 
-- There are 2 modes - casual and advanced.  You can switch between them by pressing the "Clear" button (at the bottom of the Palette GUI) four times in a row, quickly.
-In the Advanced Mode, you have more per-pad control and can edit the presets as described below.
+- There are 2 modes - casual and advanced.  You can toggle between them in the GUI by first pressing the Help button to display the help page, and then sweeping (with the mouse or your finger) diagonally across the help page from one corner to the other.
+In the Advanced Mode, you can select individual pads to enable per-pad control, and you can also edit the presets.
+
+- In the advanced mode, clicking on the top category headers (Engine, Misc, Sound, Visual, Effect) will toggle between showing the presets of that category and showing and letting you edit the values of individual parameters.
 
 ## Looping
 
-- Looping operations are only visible in the more advanced modes of the GUI.
-
-- The buttons at the bottom of the GUI let you turn on Looping, which will loop your
-gestures on the Morph.  You can control the length of the loops and how quickly they fade out.
-The effects of the looping controls are per-pad, depending (like parameter changes) on which pads are currently highlighted in the GUI.
+- The casual GUI interface allows looping to be turned on and off.  More detailed control of looping is only visible in the advanced mode of the GUI.  For example, engine parameters like engine.looping_fade let you control the looping behaviour, and the per-pad control in the advanced mode also applies to looping.
 
 - Beware, if you leave looping on, you may get confused about what's going on, since you'll be seeing
 the results of your live gestures as well as the looped gestures.
@@ -57,7 +55,7 @@ the results of your live gestures as well as the looped gestures.
 ## Editing the presets
 
 - In the Advanced mode, you will see buttons at the top of the GUI that let you access
-separate pages for Pad, Sound, Visual, and Effect presets.
+separate category pages for Pad, Sound, Visual, and Effect presets.
 A Pad preset combines the Sound, Visual and Effect settings.
 
 - Clicking the buttons at the top of the page for Pad, Sound, Visual, and Effect will toggle
