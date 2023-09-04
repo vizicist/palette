@@ -4,7 +4,7 @@ NOTE: these instructions describe how
 to recompile the Palette software from scratch.
 If instead you just want to install it using one of the
 released installation packages, use
-<a href="https://github.com/vizicist/palette/blob/main/doc/installation.md">these instructions</a>
+<a href=installation.md>these instructions</a>
 
 In the list below, the === instructions are only appropriate for machines that will be maintained remotely.
 
@@ -53,11 +53,12 @@ Not sure whether %USERPROFILE%\Github\palette\SenselLib\x64 is needed, it depend
 - Install Visual Studio Build Tools 2017 (version 15.9) from https://visualstudio.microsoft.com/downloads
 
 	- in the Workload tab, select "Visual C++ Build Tools"
+<p>
 
 - Install mingw64 to get the gcc compiler.
-You'll want the 8.5.0 version, x86_64 architecture, posix threads, and sjlj exceptions.
-The last time I installed it from https://github.com/niXman/mingw-builds-binaries, and it was necessary to download
+The last time I installed it from https://github.com/niXman/mingw-builds-binaries, and it may be necessary to download
 the "online installer" and execute it from the Explorer, selecting "more info" to allow installation of an unsigned package.
+The version I'm using is the 13.1.0 version, 64 bit architecture, posix thread model, and ucrt runtime.
 
 - In Visual Studio Code, click on the "extensions marketplace" icon (four little squares) on the left side.
   In the "Search Extensions" field, enter "go", and install the Go language support.
@@ -88,9 +89,9 @@ build
 - The result of this should be an installer executable in the release directory,
 which you should execute to install Palette.
 
-- If this is the first time you've run the Palette software, you should follow the instructions for one-time steps in
-<a href="https://github.com/vizicist/palette/blob/main/doc/using_resolume.md">https://github.com/vizicist/palette/blob/main/doc/using_resolume.md</a>.
+- If this is the first time you've run the Palette software, you should follow the instructions for one-time steps
+<a href=installation.md>here</a>.
 
-- After that, you're ready to start using the Palette, as described in 
-<a href="https://github.com/vizicist/palette/blob/main/doc/starting_and_using.md">https://github.com/vizicist/palette/blob/main/doc/starting_and_using.md</a>
+- After that, you're ready to start using the Palette, as described 
+<a href=starting_and_using.md>here</a>.
 
