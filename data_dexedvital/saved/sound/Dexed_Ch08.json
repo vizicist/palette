@@ -1,9 +1,14 @@
 {
-    "params":{
+    "params": {
+        "sound.chromatic":"false",
         "sound.controllerstyle":"modulationonly",
-        "sound.pitchmax":"72",
-        "sound.pitchmin":"25",
+        "sound.midifile":"jsbach",
+        "sound.pitchmax":"78",
+        "sound.pitchmin":"37",
+        "sound.pitchset":"",
         "sound.synth":"Dexed_Ch08",
+        "sound.velocitymax":"127",
+        "sound.velocitymin":"37",
         "sound.xcontroller":"1",
         "sound.ycontroller":"1",
         "sound.zcontroller":"1"

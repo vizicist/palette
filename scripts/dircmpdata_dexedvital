@@ -1,0 +1,18 @@
+#!/bin/bash
+
+c="/mnt/c"
+if [ ! -d "$c" ] ; then
+	c="/c"
+	if [ ! -d "$c" ] ; then
+		echo "No C drive?"
+		exit 1
+	fi
+fi
+d1="$c/Program Files/Common Files/Palette/data"
+d2=$c/Users/$USERNAME/github/palette/data_dexedvital
+if [ ! -d "$d1" -o ! -d "$d2" ] ; then
+	echo "$d1 or $d2 doesn't exist?"
+	exit 1
+fi
+bash dircmp "$d1" "$d2" | grep different
+
