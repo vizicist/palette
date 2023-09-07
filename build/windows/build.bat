@@ -57,11 +57,11 @@ rem go build -o palette_splash.exe >> %buildcmdsout% 2>&1
 rem move palette_splash.exe %bin%\palette_splash.exe > nul
 rem popd
 
-echo ================ Compiling palette_pk2go
-pushd %PALETTE_SOURCE%\cmd\palette_pk2go
-go build -o palette_pk2go.exe >> %buildcmdsout% 2>&1
-move palette_pk2go.exe %bin%\palette_pk2go.exe > nul
-popd
+rem echo ================ Compiling palette_pk2go
+rem pushd %PALETTE_SOURCE%\cmd\palette_pk2go
+rem go build -o palette_pk2go.exe >> %buildcmdsout% 2>&1
+rem move palette_pk2go.exe %bin%\palette_pk2go.exe > nul
+rem popd
 
 rem print any error messages from compiling cmds
 type %buildcmdsout%
@@ -132,10 +132,10 @@ xcopy /e /y %PALETTE_SOURCE%\data_defaults\config %ship%\data\config >nul
 xcopy /e /y %PALETTE_SOURCE%\data_defaults\html %ship%\data\html >nul
 xcopy /e /y %PALETTE_SOURCE%\data_defaults\saved %ship%\data\saved >nul
 
-rem The default data directory is data_dexed-based
+rem The default data directory is data_dexedvital
 rem You can use copydata.bat to switch to other data_*.
-xcopy /e /y %PALETTE_SOURCE%\data_dexed\saved %ship%\data\saved >nul
-xcopy /e /y %PALETTE_SOURCE%\data_dexed\config %ship%\data\config >nul
+xcopy /e /y %PALETTE_SOURCE%\data_dexedvital\saved %ship%\data\saved >nul
+xcopy /e /y %PALETTE_SOURCE%\data_dexedvital\config %ship%\data\config >nul
 
 for %%X in (data_dexed data_dexedvital data_omnisphere) DO (
 	echo ================ Copying %%X
