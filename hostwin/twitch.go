@@ -6,6 +6,7 @@ import (
 	"time"
 
 	twitch "github.com/gempir/go-twitch-irc/v3"
+	"github.com/vizicist/palette/kit"
 )
 
 const (
@@ -16,6 +17,7 @@ const (
 )
 
 func StartTwitch() {
+	clientUsername, clientAuthenticationToken := TwitchUserInfo()
 	client := twitch.NewClient(clientUsername, clientAuthenticationToken)
 	// client := twitch.NewAnonymousClient()
 
@@ -100,3 +102,12 @@ func StartTwitch() {
 	select {}
 	// unreachable
 }
+
+func TwitchUserInfo() (username string, authtoken string) {
+	LogWarn("TwitchUser needs to be updated to use an environment variable")
+	// ignore errors, values will be ""
+	twitchuser, _ := kit.GetParam("engine.twitchuser")
+	twitchtoken, _ := kit.GetParam("engine.twitchtoken")
+	return twitchuser, twitchtoken
+}
+
