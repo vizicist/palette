@@ -1,14 +1,15 @@
+@echo off
+
 rem This script copies things from one of the data_* directories,
 rem overwriting things in the active data directory (%CommonProgramFiles%\Palette\data).
 rem This is used when switching between different configurations (e.g. data_dexed vs data_omnisphere).
 
-@echo off
 if not "%1" == "" goto :doit
-echo "Usage: copydata {data_dexed or data_dexedvital or data_omnisphere}"
+echo "Usage: usedata {data_dexed or data_dexedvital or data_omnisphere}"
 goto getout
 :doit
 if exist "%CommonProgramFiles%\Palette\%1" goto :doit2
-echo "Usage: copydata {data_dexed or data_dexedvital or data_omnisphere}"
+echo "Usage: usedata {data_dexed or data_dexedvital or data_omnisphere}"
 goto getout
 :doit2
 
