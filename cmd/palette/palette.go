@@ -33,7 +33,11 @@ func main() {
 
 	host := hostwin.NewHost(logname)
 	kit.RegisterHost(host)
-	kit.Init()
+	err := kit.Init()
+	if err != nil {
+		os.Stdout.WriteString("Error: " + err.Error() + "\n")
+		host.LogError(err)
+	}
 
 	host.LogInfo("Palette", "args", args)
 
