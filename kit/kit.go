@@ -19,6 +19,11 @@ var MidiNumDown int
 
 var TheHost Host
 
+func RegisterAndInit(h Host) error {
+	TheHost = h
+	return Init()
+}
+
 func RegisterHost(h Host) {
 	TheHost = h
 }
@@ -52,6 +57,13 @@ func Init() error {
 	TheAttractManager.SetAttractEnabled(enabled)
 
 	InitSynths()
+
+	TheNats = NewVizNats()
+	err = TheNats.Connect("tjt","mantic0re")
+	if err != nil {
+		LogError(err)
+	}
+
 
 	return nil
 }

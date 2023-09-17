@@ -51,6 +51,12 @@ go build -o palette_monitor.exe >> %buildcmdsout% 2>&1
 move palette_monitor.exe %bin%\palette_monitor.exe > nul
 popd
 
+echo ================ Compiling palette_twitch
+pushd %PALETTE_SOURCE%\cmd\palette_twitch
+go build -o palette_twitch.exe >> %buildcmdsout% 2>&1
+move palette_twitch.exe %bin%\palette_twitch.exe > nul
+popd
+
 rem echo ================ Compiling palette_splash
 rem pushd %PALETTE_SOURCE%\cmd\palette_splash
 rem go build -o palette_splash.exe >> %buildcmdsout% 2>&1
@@ -103,8 +109,8 @@ rem copy mmtt_kinect\*.dll %bin%\mmtt_kinect >nul
 rem popd
 
 echo ================ Copying misc binaries
-rem copy %PALETTE_SOURCE%\binaries\nats\nats-pub.exe %bin% >nul
-rem copy %PALETTE_SOURCE%\binaries\nats\nats-sub.exe %bin% >nul
+copy %PALETTE_SOURCE%\binaries\nats\nats-pub.exe %bin% >nul
+copy %PALETTE_SOURCE%\binaries\nats\nats-sub.exe %bin% >nul
 copy %PALETTE_SOURCE%\binaries\nircmdc.exe %bin% >nul
 
 echo ================ Copying scripts
