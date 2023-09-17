@@ -2,7 +2,11 @@ module main
 
 go 1.20
 
-require github.com/nxadm/tail v1.4.8
+require (
+	github.com/nxadm/tail v1.4.8
+	github.com/vizicist/palette/hostwin v0.0.0-20230915205453-8758b6e1a003
+	github.com/vizicist/palette/kit v0.0.0-20230915205453-8758b6e1a003
+)
 
 require (
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
