@@ -463,6 +463,7 @@ func (cm *CursorManager) ExecuteCursorEvent(ce CursorEvent) {
 	}
 
 	TheHost.SendToOscClients(CursorToOscMsg(ce))
+	PublishCursorEvent(ce)
 
 	// LogOfType("cursor", "CursorManager.handleDownDragUp before doing handlers", "ce", ce)
 	for _, handler := range cm.handlers {
