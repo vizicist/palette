@@ -66,7 +66,7 @@ func (h HostWin) Init() error {
 	TheRouter = NewRouter()
 	TheMidiIO = NewMidiIO()
 
-	return err
+	return nil
 }
 
 func (h HostWin) Start() {
@@ -109,6 +109,7 @@ func (h HostWin) SaveDataInFile(data []byte, category string, filename string) e
 	}
 	return os.WriteFile(path, data, 0644)
 }
+
 
 func (h HostWin) GetSavedData(category string, filename string) (bytes []byte, err error) {
 	path, err := ReadableSavedFilePath(category, filename)
