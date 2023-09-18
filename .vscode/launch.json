@@ -13,6 +13,13 @@
             "args": []
         },
         {
+            "name": "palette_control",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTE_SOURCE}/cmd/palette_control/palette_control.go",
+            "args": []
+        },
+        {
             "name": "GUI - palette_gui.py",
             "type": "python",
             "request": "launch",

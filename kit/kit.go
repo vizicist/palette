@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/nats-io/nats.go"
 	midi "gitlab.com/gomidi/midi/v2"
 )
 
@@ -59,19 +60,21 @@ func Init() error {
 	InitSynths()
 
 	TheNats = NewVizNats()
-	err = TheNats.Connect("tjt","mantic0re")
-	if err != nil {
-		LogError(err)
-	}
+	err = TheNats.Connect("tjt", "mantic0re")
 
-
-	return nil
+	return err
 }
 
 func StartEngine() {
 	TheHost.Start()
 	TheQuadPro.Start()
 	go TheScheduler.Start()
+	TheNats.Subscribe(">", myMsgHandler)
+}
+
+func myMsgHandler(msg *nats.Msg) {
+	data := string(msg.Data)
+	LogInfo("myMsgHandler", "msg", msg.Subject, "data", data)
 }
 
 func LoadEngineParams(fname string) {
