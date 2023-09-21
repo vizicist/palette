@@ -57,6 +57,12 @@ go build -o palette_twitch.exe >> %buildcmdsout% 2>&1
 move palette_twitch.exe %bin%\palette_twitch.exe > nul
 popd
 
+echo ================ Compiling palette_control
+pushd %PALETTE_SOURCE%\cmd\palette_control
+go build -o palette_control.exe >> %buildcmdsout% 2>&1
+move palette_control.exe %bin%\palette_control.exe > nul
+popd
+
 rem echo ================ Compiling palette_splash
 rem pushd %PALETTE_SOURCE%\cmd\palette_splash
 rem go build -o palette_splash.exe >> %buildcmdsout% 2>&1
