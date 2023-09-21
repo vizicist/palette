@@ -1,4 +1,4 @@
-package hostwin
+package kit
 
 import (
 	"io"

@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/vizicist/palette/hostwin"
+	"github.com/vizicist/palette/twinsys"
 	"github.com/vizicist/palette/kit"
 	"github.com/nats-io/nats.go"
 )
@@ -16,11 +17,12 @@ func main() {
 	}
 
 	kit.LogInfo("palette_control started")
-	err = kit.TheNats.Subscribe("tjt.>",myMsgHandler)
+	err = kit.TheNats.Subscribe(">",myMsgHandler)
 	if err != nil {
 		kit.LogError(err)
 		return
 	}
+	twinsys.Run()
 	select {}
 }
 
