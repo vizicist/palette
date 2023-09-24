@@ -6,10 +6,11 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
+	"strings"
 
-	"gitlab.com/gomidi/midi/v2/drivers"
 	"github.com/hypebeast/go-osc/osc"
 	"github.com/vizicist/palette/kit"
+	"gitlab.com/gomidi/midi/v2/drivers"
 )
 
 type HostWin struct {
@@ -110,8 +111,10 @@ func (h HostWin) SaveDataInFile(data []byte, category string, filename string) e
 	return os.WriteFile(path, data, 0644)
 }
 
-
 func (h HostWin) GetSavedData(category string, filename string) (bytes []byte, err error) {
+	if !strings.HasSuffix(filename, ".json") {
+		filename += ".json"
+	}
 	path, err := ReadableSavedFilePath(category, filename)
 	if err != nil {
 		LogIfError(err)

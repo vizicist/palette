@@ -69,12 +69,23 @@ func StartEngine() {
 	TheHost.Start()
 	TheQuadPro.Start()
 	go TheScheduler.Start()
-	TheNats.Subscribe(">", myMsgHandler)
+	TheNats.Subscribe("toengine.>", NatsHandler)
 }
 
-func myMsgHandler(msg *nats.Msg) {
+func RemoteEngineApi(api string, data string) (string, error) {
+	LogInfo("RemoteEngineApi before Request", "api", api, "data", data)
+	result, err := TheNats.Request("engine.api."+api, data, time.Second)
+	if err == nats.ErrNoResponders {
+		return "", err
+	}
+	LogIfError(err)
+	LogInfo("RemoteEngineApi after Request", "result", result)
+	return result, nil
+}
+
+func NatsHandler(msg *nats.Msg) {
 	data := string(msg.Data)
-	LogInfo("myMsgHandler", "msg", msg.Subject, "data", data)
+	LogInfo("NatsHandler", "subject", msg.Subject, "data", data)
 }
 
 func LoadEngineParams(fname string) {

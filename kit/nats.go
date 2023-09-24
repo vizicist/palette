@@ -1,9 +1,9 @@
 package kit
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
-	"encoding/json"
 	"time"
 
 	"github.com/nats-io/nats.go"
@@ -20,9 +20,6 @@ var TheNats *VizNats
 // PaletteAPISubject xxx
 var PaletteAPISubject = "palette.api"
 
-// PaletteEventSubject xxx
-var PaletteEventSubject = "palette.event"
-
 var time0 = time.Now()
 
 // PublishCursorEvent xxx
@@ -32,27 +29,24 @@ func PublishCursorEvent(ce CursorEvent) {
 	if ce.Tag != "" {
 		regionvalue = "\"tag\": \"" + ce.Tag + "\", "
 	}
-	event := "cursor_" + ce.Ddu
 	params := "{ " +
-		"\"tag\": \"" + ce.Tag + "\", " +
+		// "\"tag\": \"" + ce.Tag + "\", " +
 		"\"cid\": \"" + fmt.Sprintf("%d", ce.Gid) + "\", " +
 		regionvalue +
-		"\"event\": \"" + event + "\", " +
+		"\"ddu\": \"" + ce.Ddu + "\", " +
 		"\"millisecs\": \"" + fmt.Sprintf("%d", dt.Milliseconds()) + "\", " +
 		"\"x\": \"" + fmt.Sprintf("%f", ce.Pos.X) + "\", " +
 		"\"y\": \"" + fmt.Sprintf("%f", ce.Pos.Y) + "\", " +
 		"\"z\": \"" + fmt.Sprintf("%f", ce.Pos.Z) + "\", " +
 		"\"area\": \"" + fmt.Sprintf("%f", ce.Area) + "\" }"
 
-	if IsLogging("nats") {
-		log.Printf("Publishing %s %s\n", PaletteEventSubject, params)
-	}
-	err := TheNats.Publish(PaletteEventSubject, params)
+	subject := "fromengine.event.cursor"
+	err := TheNats.Publish(subject, params)
 	LogIfError(err)
 }
 
 // PublishMIDIDeviceEvent xxx
-func PublishMIDIDeviceEvent(me MidiEvent) error {
+func PublishMIDIDeviceEvent(me MidiEvent) {
 	dt := time.Since(time0)
 	// NOTE: we ignore the Timestamp on the MIDIDeviceEvent
 	// and use our own, so the timestamps are consistent with
@@ -64,31 +58,24 @@ func PublishMIDIDeviceEvent(me MidiEvent) error {
 		"\"millisecs\": \"" + fmt.Sprintf("%d", dt.Milliseconds()) + "\", " +
 		"\"bytes\": \"" + fmt.Sprintf("%v", me.Msg.Bytes()) + "\" }"
 
-	if IsLogging("midi") {
-		log.Printf("Publishing %s %s\n", PaletteEventSubject, params)
-	}
-	err := TheNats.Publish(PaletteEventSubject, params)
-	if err != nil {
-		return err
-	}
-	return nil
+	subject := "fromengine.event.midi"
+	err := TheNats.Publish(subject, params)
+	LogIfError(err)
 }
 
 // PublishSpriteEvent xxx
-func PublishSpriteEvent(x, y, z float32) error {
+func PublishSpriteEvent(x, y, z float32) {
 	params := "{ " +
 		"\"nuid\": \"" + MyNUID() + "\", " +
 		"\"x\": \"" + fmt.Sprintf("%f", x) + "\", " +
 		"\"y\": \"" + fmt.Sprintf("%f", y) + "\", " +
 		"\"z\": \"" + fmt.Sprintf("%f", z) + "\" }"
 
-	log.Printf("Publishing %s %s\n", PaletteEventSubject, params)
+	subject := "fromengine.event.sprite"
+	log.Printf("Publishing %s %s\n", subject, params)
 
-	err := TheNats.Publish(PaletteEventSubject, params)
-	if err != nil {
-		return err
-	}
-	return nil
+	err := TheNats.Publish(subject, params)
+	LogIfError(err)
 }
 
 /*
@@ -159,15 +146,15 @@ func (vn *VizNats) Request(subj, data string, timeout time.Duration) (retdata st
 // Publish xxx
 func (vn *VizNats) Publish(subj string, msg string) error {
 
-	if IsLogging("nats") {
-		log.Printf("VizNats.Publish: %s %s\n", subj, msg)
-	}
-
 	nc := vn.natsConn
 	if nc == nil {
 		return fmt.Errorf("Publish: subject=%s, no connection to nats-server", subj)
 	}
 	bytes := []byte(msg)
+
+	if IsLogging("nats") {
+		log.Printf("Nats.Publish: %s %s\n", subj, msg)
+	}
 
 	nc.Publish(subj, bytes)
 	nc.Flush()
@@ -226,16 +213,16 @@ func GetNUID() string {
 	}
 	return nuid
 	/*
-	file, err := os.OpenFile(nuidpath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
-	if err != nil {
-		log.Printf("InitLogs: Unable to open %s err=%s", nuidpath, err)
-		return "UnableToOpenNUIDFile"
-	}
-	nuid := nuid.Next()
-	file.WriteString("{\n\t\"nuid\": \"" + nuid + "\"\n}\n")
-	file.Close()
-	log.Printf("GetNUID: generated nuid.json for %s\n", nuid)
-	return nuid
+		file, err := os.OpenFile(nuidpath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
+		if err != nil {
+			log.Printf("InitLogs: Unable to open %s err=%s", nuidpath, err)
+			return "UnableToOpenNUIDFile"
+		}
+		nuid := nuid.Next()
+		file.WriteString("{\n\t\"nuid\": \"" + nuid + "\"\n}\n")
+		file.Close()
+		log.Printf("GetNUID: generated nuid.json for %s\n", nuid)
+		return nuid
 	*/
 }
 
@@ -314,4 +301,3 @@ func StartNATSServer() {
 	s.WaitForShutdown()
 }
 */
-
