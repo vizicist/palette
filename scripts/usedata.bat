@@ -14,9 +14,16 @@ goto getout
 :doit2
 
 rem Make a backup of and then remove saved things entirely, so that old saved things don't show up in the new configuration
-xcopy /q /e /y "%CommonProgramFiles%\Palette\data\saved" C:\tmp\palette
+mkdir %USERPROFILE%\tmp >nul 2>nul
+rm -fr %USERPROFILE%\tmp\palette
+mkdir %USERPROFILE%\tmp\palette
+xcopy /q /e /y "%CommonProgramFiles%\Palette\data\saved" %USERPROFILE%\tmp\palette
 pushd "%CommonProgramFiles%/Palette/data/saved"
 rm -fr patch quad sound
+popd
+
+pushd "%CommonProgramFiles%/Palette"
+del /s _Current.json >nul 2>nul
 popd
 
 xcopy /q /e /y "%CommonProgramFiles%\Palette\%1\config" "%CommonProgramFiles%\Palette\data\config"

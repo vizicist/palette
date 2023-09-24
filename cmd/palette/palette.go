@@ -30,7 +30,6 @@ func main() {
 		logname = "palette"
 	}
 
-
 	host := hostwin.NewHost(logname)
 	kit.RegisterHost(host)
 	err := kit.Init()
@@ -46,7 +45,7 @@ func main() {
 		os.Stdout.WriteString("Error: " + err.Error() + "\n")
 		host.LogError(err)
 	} else {
-		os.Stdout.WriteString(hostwin.HumanReadableApiOutput(apiout))
+		os.Stdout.WriteString(kit.HumanReadableApiOutput(apiout))
 	}
 }
 
@@ -68,16 +67,20 @@ func CliCommand(args []string) (map[string]string, error) {
 		return nil, fmt.Errorf(usage())
 	}
 
-	api := args[0]
+	arg0 := args[0]
 	var arg1 string
 	if len(args) > 1 {
 		arg1 = args[1]
 	}
+	var arg2 string
+	if len(args) > 2 {
+		arg2 = args[2]
+	}
 
-	words := strings.Split(api, ".")
+	words := strings.Split(arg0, ".")
 
 	// Warn about extra unexpected arguments
-	switch api {
+	switch arg0 {
 	case "start", "restart", "kill", "stop", "summarize":
 		// okay
 	default:
@@ -87,7 +90,7 @@ func CliCommand(args []string) (map[string]string, error) {
 		}
 	}
 
-	switch api {
+	switch arg0 {
 
 	case "summarize":
 		return nil, hostwin.SummarizeLog(arg1)
@@ -110,15 +113,23 @@ func CliCommand(args []string) (map[string]string, error) {
 		return out, nil
 
 	case "restart":
-		_, err := CliCommand( []string{"stop"})
+		_, err := CliCommand([]string{"stop"})
 		if err != nil {
 			return nil, err
 		}
-		_, err = CliCommand( []string{"start"})
+		_, err = CliCommand([]string{"start"})
 		if err != nil {
 			return nil, err
 		}
 		out := map[string]string{"result": "RESTARTED"}
+		return out, nil
+
+	case "api":
+		result, err := kit.RemoteEngineApi(arg1, arg2)
+		if err != nil {
+			return nil, err
+		}
+		out := map[string]string{"result": result}
 		return out, nil
 
 	case "start":
@@ -144,7 +155,7 @@ func CliCommand(args []string) (map[string]string, error) {
 			// If it exists in the ProcessList...
 			for _, process := range hostwin.ProcessList() {
 				if arg1 == process {
-					return hostwin.EngineApi("engine.startprocess", "process", arg1)
+					return kit.EngineApi("engine.startprocess", "process", arg1)
 				}
 			}
 			return nil, fmt.Errorf("process %s is disabled or unknown", arg1)
@@ -184,7 +195,7 @@ func CliCommand(args []string) (map[string]string, error) {
 		return map[string]string{"result": s}, nil
 
 	case "align":
-		return hostwin.MmttApi("align_start")
+		return kit.MmttApi("align_start")
 
 	case "archivelogs":
 		// Make sure nothing is running.
@@ -195,15 +206,15 @@ func CliCommand(args []string) (map[string]string, error) {
 		return nil, kit.ArchiveLogs()
 
 	case "test":
-		return hostwin.EngineApi("quadpro.test")
+		return kit.EngineApi("quadpro.test")
 
 	default:
 		if len(words) < 2 {
-			return nil, fmt.Errorf("unrecognized command (%s), expected usage:\n%s", api, usage())
+			return nil, fmt.Errorf("unrecognized command (%s), expected usage:\n%s", arg0, usage())
 		} else if len(words) > 2 {
 			return nil, fmt.Errorf("invalid api format, expecting {plugin}.{api}" + usage())
 		}
-		return hostwin.EngineApi(api, args[1:]...)
+		return kit.EngineApi(arg0, args[1:]...)
 	}
 }
 

@@ -74,9 +74,6 @@ func (quadpro *QuadPro) Api(api string, apiargs map[string]string) (result strin
 			return "", fmt.Errorf("missing filename parameter")
 		}
 		TheAttractManager.SetAttractMode(false)
-		if !strings.HasSuffix(filename, ".json") {
-			filename += ".json"
-		}
 		data, err := TheHost.GetSavedData(category, filename)
 		if err != nil {
 			return "", err
@@ -211,9 +208,6 @@ func (quadpro *QuadPro) onCursorEvent(state ActiveCursor) error {
 				if TheQuadPro != nil {
 					LogOfType("cursor", "Button down", "z", state.Current.Pos.Z)
 					filename := preset
-					if !strings.HasSuffix(filename, ".json") {
-						filename += ".json"
-					}
 					bytes, err := TheHost.GetSavedData("quad", filename)
 					if err != nil {
 						return err
@@ -315,7 +309,7 @@ func (quadpro *QuadPro) loadQuadRand() error {
 	rn := quadpro.rand.Uint64() % uint64(len(arr))
 	quadpro.randMutex.Unlock()
 
-	bytes, err := TheHost.GetConfigFileData("buttons.json")
+	bytes, err := TheHost.GetSavedData("quad", arr[rn])
 	if err != nil {
 		LogIfError(err)
 		return err
