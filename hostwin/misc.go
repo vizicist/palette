@@ -34,6 +34,55 @@ var EventClientPort = 6666
 var GuiPort = 3943
 var LocalAddress = "127.0.0.1"
 
+func (h HostWin) EngineHttpApi(api string, args ...string) (map[string]string, error) {
+
+	if len(args)%2 != 0 {
+		return nil, fmt.Errorf("HttpApi: odd nnumber of args, should be even")
+	}
+	apijson := "\"api\": \"" + api + "\""
+	for n := range args {
+		if n%2 == 0 {
+			apijson = apijson + ",\"" + args[n] + "\": \"" + args[n+1] + "\""
+		}
+	}
+	url := fmt.Sprintf("http://127.0.0.1:%d/api", EngineHttpPort)
+	return HttpApiRaw(url, apijson)
+}
+
+func (h HostWin) MmttHttpApi(api string) (map[string]string, error) {
+
+	id := "56789"
+	apijson := "{ \"jsonrpc\": \"2.0\", \"method\": \"" + api + "\", \"id\":\"" + id + "\"}"
+	url := fmt.Sprintf("http://127.0.0.1:%d/api", MmttHttpPort)
+	return HttpApiRaw(url, apijson)
+}
+
+func HttpApiRaw(url string, args string) (map[string]string, error) {
+	postBody := []byte(args)
+	resp, err := http.Post(url, "application/json", bytes.NewBuffer(postBody))
+	if err != nil {
+		if strings.Contains(err.Error(), "target machine actively refused") {
+			err = fmt.Errorf("engine isn't running or responding")
+		}
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("HttpApiRaw: ReadAll err=%s", err)
+	}
+	output, err := kit.StringMap(string(body))
+	if err != nil {
+		return nil, fmt.Errorf("HttpApiRaw: unable to interpret output, err=%s", err)
+	}
+	errstr, haserror := output["error"]
+	if haserror && !strings.Contains(errstr, "exit status") {
+		return map[string]string{}, fmt.Errorf("HttpApiRaw: error=%s", errstr)
+	}
+	return output, nil
+}
+
 func KillAllExceptMonitor() {
 	LogInfo("KillAll")
 	// KillExecutable(KeykitExe)
@@ -224,83 +273,6 @@ func ziplogs(logsdir string, zipfile string) error {
 		LogIfError(err)
 	}
 	return err
-}
-
-func MmttApi(api string) (map[string]string, error) {
-	return MmttRemoteApi(api)
-}
-
-func EngineApi(api string, apiargs ...string) (map[string]string, error) {
-	return EngineRemoteApi(api, apiargs...)
-}
-
-// humanReadableApiOutput takes the result of an API invocation and
-// produces what will appear in visible output from a CLI command.
-func HumanReadableApiOutput(apiOutput map[string]string) string {
-	if apiOutput == nil {
-		return "OK\n"
-	}
-	e, eok := apiOutput["error"]
-	if eok {
-		return fmt.Sprintf("Error: %s", e)
-	}
-	result, rok := apiOutput["result"]
-	if !rok {
-		return "Error: unexpected - no result or error in API output?"
-	}
-	if result == "" {
-		result = "OK\n"
-	}
-	return result
-}
-
-func EngineRemoteApi(api string, args ...string) (map[string]string, error) {
-
-	if len(args)%2 != 0 {
-		return nil, fmt.Errorf("RemoteApi: odd nnumber of args, should be even")
-	}
-	apijson := "\"api\": \"" + api + "\""
-	for n := range args {
-		if n%2 == 0 {
-			apijson = apijson + ",\"" + args[n] + "\": \"" + args[n+1] + "\""
-		}
-	}
-	url := fmt.Sprintf("http://127.0.0.1:%d/api", EngineHttpPort)
-	return RemoteApiRaw(url, apijson)
-}
-
-func MmttRemoteApi(api string) (map[string]string, error) {
-
-	id := "56789"
-	apijson := "{ \"jsonrpc\": \"2.0\", \"method\": \"" + api + "\", \"id\":\"" + id + "\"}"
-	url := fmt.Sprintf("http://127.0.0.1:%d/api", MmttHttpPort)
-	return RemoteApiRaw(url, apijson)
-}
-
-func RemoteApiRaw(url string, args string) (map[string]string, error) {
-	postBody := []byte(args)
-	resp, err := http.Post(url, "application/json", bytes.NewBuffer(postBody))
-	if err != nil {
-		if strings.Contains(err.Error(), "target machine actively refused") {
-			err = fmt.Errorf("engine isn't running or responding")
-		}
-		return nil, err
-	}
-
-	defer resp.Body.Close()
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("RemoteApiRaw: ReadAll err=%s", err)
-	}
-	output, err := kit.StringMap(string(body))
-	if err != nil {
-		return nil, fmt.Errorf("RemoteApiRaw: unable to interpret output, err=%s", err)
-	}
-	errstr, haserror := output["error"]
-	if haserror && !strings.Contains(errstr, "exit status") {
-		return map[string]string{}, fmt.Errorf("RemoteApiRaw: error=%s", errstr)
-	}
-	return output, nil
 }
 
 func (h HostWin) ArchiveLogs() error {

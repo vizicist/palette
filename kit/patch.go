@@ -141,7 +141,7 @@ func (patch *Patch) SaveAndAlert(category string, filename string) error {
 
 	LogOfType("saved", "Patch.SaveAndAlert", "category", category, "filename", filename)
 
-	isCurrent := strings.HasPrefix(filename,"_Current")
+	isCurrent := strings.HasPrefix(filename, "_Current")
 	if isCurrent && category != "quad" {
 		err := fmt.Errorf(", we're only saving _Current in quad (and global)")
 		LogIfError(err)
@@ -423,9 +423,6 @@ func (patch *Patch) Load(category string, filename string) error {
 
 	LogOfType("saved", "patch.Load", "patch", patch.Name(), "category", category, "filename", filename)
 
-	if ! strings.HasSuffix(filename,".json") {
-		filename += ".json"
-	}
 	bytes, err := TheHost.GetSavedData(category, filename)
 	if err != nil {
 		LogIfError(err)
