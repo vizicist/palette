@@ -7,6 +7,34 @@ import (
 	"time"
 )
 
+func MmttApi(api string) (map[string]string, error) {
+	return TheHost.MmttHttpApi(api)
+}
+
+func EngineApi(api string, apiargs ...string) (map[string]string, error) {
+	return TheHost.EngineHttpApi(api, apiargs...)
+}
+
+// humanReadableApiOutput takes the result of an API invocation and
+// produces what will appear in visible output from a CLI command.
+func HumanReadableApiOutput(apiOutput map[string]string) string {
+	if apiOutput == nil {
+		return "OK\n"
+	}
+	e, eok := apiOutput["error"]
+	if eok {
+		return fmt.Sprintf("Error: %s", e)
+	}
+	result, rok := apiOutput["result"]
+	if !rok {
+		return "Error: unexpected - no result or error in API output?"
+	}
+	if result == "" {
+		result = "OK\n"
+	}
+	return result
+}
+
 // ExecuteApi xxx
 func ExecuteApi(api string, apiargs map[string]string) (result string, err error) {
 

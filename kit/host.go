@@ -16,6 +16,8 @@ type Host interface {
 	// LogOfType(logtypes string, msg string, keysAndValues ...any)
 	ArchiveLogs() error
 
+	EngineHttpApi(api string, args ...string) (map[string]string, error)
+	MmttHttpApi(api string) (map[string]string, error)
 	HandleIncomingMidiEvent(me MidiEvent)
 	ResetAudio()
 	ActivateAudio()
