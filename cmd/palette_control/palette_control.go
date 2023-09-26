@@ -3,24 +3,23 @@ package main
 import (
 	"log"
 
-	"github.com/vizicist/palette/hostwin"
-	"github.com/vizicist/palette/twinsys"
-	"github.com/vizicist/palette/kit"
 	"github.com/nats-io/nats.go"
+	"github.com/vizicist/palette/hostwin"
+	"github.com/vizicist/palette/kit"
+	"github.com/vizicist/palette/twinsys"
 )
 
 func main() {
-	
+
 	err := kit.RegisterAndInit(hostwin.NewHost("palette_control"))
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	kit.LogInfo("palette_control started")
-	err = kit.TheNats.Subscribe(">",myMsgHandler)
-	if err != nil {
-		kit.LogError(err)
-		return
+	if kit.TheNats != nil {
+		err = kit.TheNats.Subscribe(">", myMsgHandler)
+		kit.LogIfError(err)
 	}
 	twinsys.Run()
 	select {}
