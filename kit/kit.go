@@ -3,6 +3,7 @@ package kit
 import (
 	"bytes"
 	"fmt"
+	"os"
 	"runtime"
 	"strconv"
 	"strings"
@@ -57,10 +58,19 @@ func Init() error {
 	LogIfError(err)
 	TheAttractManager.SetAttractEnabled(enabled)
 
+	natsEnabled, err := GetParamBool("engine.natsenabled")
+	LogIfError(err)
+
 	InitSynths()
 
-	TheNats = NewVizNats()
-	err = TheNats.Connect("tjt", "mantic0re")
+	if natsEnabled {
+		TheNats = NewVizNats()
+		natsUser := os.Getenv("NATS_USER")
+		natsPassword := os.Getenv("NATS_PASSWORD")
+		natsUrl := os.Getenv("NATS_URL")
+		err = TheNats.Connect(natsUser, natsPassword, natsUrl)
+		LogIfError(err)
+	}
 
 	return err
 }
