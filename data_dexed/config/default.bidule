@@ -3,7 +3,7 @@
 	<MediaPool>
 	</MediaPool>
 	<BiduleGroup id="UID_1026570522" displayName="" zoom="0.55" processingMode="process" version="0.0">
-		<Geometry x="482" y="137" w="660" h="769"/>
+		<Geometry x="455" y="145" w="660" h="769"/>
 		<Parameter id="-11" userMin="0" userMax="1" lockedForRandom="false" mutationFactor="0.1">0</Parameter>
 		<Parameter id="-9" userMin="0" userMax="0" lockedForRandom="false" mutationFactor="0.1">1.0</Parameter>
 		<Parameter id="-7" userMin="0" userMax="1" lockedForRandom="false" mutationFactor="0.1">1</Parameter>
@@ -258,7 +258,7 @@
 			<Parameter id="-2" userMin="0" userMax="2" lockedForRandom="false" mutationFactor="0.1">0.0</Parameter>
 			<Parameter id="0" userMin="0" userMax="3.16228" lockedForRandom="false" mutationFactor="0.1">0.531655</Parameter>
 		</Bidule>
-		<Bidule id="UID_1628437389" type="AudioOutput_3" displayName="Primary Sound Driver(out)" processingMode="process">
+		<Bidule id="UID_1628437389" type="AudioOutput_2" displayName="Primary Sound Driver(out)" processingMode="process">
 			<Geometry x="255.91" y="-611.673" w="0" h="0"/>
 			<ChannelConfig numSampleIn="2" numSampleOut="0" numMidiIn="0" numMidiOut="0" numFreqIn="0" numFreqOut="0" numMagIn="0" numMagOut="0" numDiscIn="0" numDiscOut="0"/>
 			<Gui state="normal" hidden="true" generic="true">

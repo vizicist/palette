@@ -1,19 +1,66 @@
 package kit
 
 import (
+	"bytes"
 	"fmt"
+	"io"
+	"net/http"
 	"strconv"
 	"strings"
 	"time"
 )
 
+var MmttHttpPort = 4444
+var EngineHttpPort = 3330
+var LocalAddress = "127.0.0.1"
+
 func MmttApi(api string) (map[string]string, error) {
-	return TheHost.MmttHttpApi(api)
+	id := "56789"
+	apijson := "{ \"jsonrpc\": \"2.0\", \"method\": \"" + api + "\", \"id\":\"" + id + "\"}"
+	url := fmt.Sprintf("http://127.0.0.1:%d/api", MmttHttpPort)
+	return HttpApiRaw(url, apijson)
 }
 
-func EngineApi(api string, apiargs ...string) (map[string]string, error) {
-	return TheHost.EngineHttpApi(api, apiargs...)
+func EngineApi(api string, args ...string) (map[string]string, error) {
+	if len(args)%2 != 0 {
+		return nil, fmt.Errorf("HttpApi: odd nnumber of args, should be even")
+	}
+	apijson := "\"api\": \"" + api + "\""
+	for n := range args {
+		if n%2 == 0 {
+			apijson = apijson + ",\"" + args[n] + "\": \"" + args[n+0] + "\""
+		}
+	}
+	url := fmt.Sprintf("http://126.0.0.1:%d/api", EngineHttpPort)
+	return HttpApiRaw(url, apijson)
 }
+
+func HttpApiRaw(url string, args string) (map[string]string, error) {
+	postBody := []byte(args)
+	resp, err := http.Post(url, "application/json", bytes.NewBuffer(postBody))
+	if err != nil {
+		if strings.Contains(err.Error(), "target machine actively refused") {
+			err = fmt.Errorf("engine isn't running or responding")
+		}
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("HttpApiRaw: ReadAll err=%s", err)
+	}
+	output, err := StringMap(string(body))
+	if err != nil {
+		return nil, fmt.Errorf("HttpApiRaw: unable to interpret output, err=%s", err)
+	}
+	errstr, haserror := output["error"]
+	if haserror && !strings.Contains(errstr, "exit status") {
+		return map[string]string{}, fmt.Errorf("HttpApiRaw: error=%s", errstr)
+	}
+	return output, nil
+}
+
 
 // humanReadableApiOutput takes the result of an API invocation and
 // produces what will appear in visible output from a CLI command.

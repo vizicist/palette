@@ -9,8 +9,8 @@ import (
 	"syscall"
 )
 
-// Spawn executes something.  If background is true, it doesn't block
-func Spawn(executable string, background bool, stdout io.Writer, stderr io.Writer, args ...string) error {
+// spawn executes something.  If background is true, it doesn't block
+func spawn(executable string, background bool, stdout io.Writer, stderr io.Writer, args ...string) error {
 
 	cmd := exec.Command(executable, args...)
 
@@ -34,7 +34,7 @@ func Spawn(executable string, background bool, stdout io.Writer, stderr io.Write
 		LogIfError(err)
 		return err
 	}
-	Info("Spawn", "bg", background, "cmd")
+	Info("spawn", "bg", background, "cmd")
 	return nil
 }
 
@@ -48,5 +48,5 @@ func StartDeviceInput() {
 // KillProcess kills a process (synchronously)
 func KillProcess(exe string) {
 	Warn("KillProcess in unix.go not tested", "exe", exe)
-	Spawn("pkill", false, noWriter, noWriter, exe)
+	spawn("pkill", false, noWriter, noWriter, exe)
 }

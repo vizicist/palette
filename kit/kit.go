@@ -2,7 +2,9 @@ package kit
 
 import (
 	"bytes"
+	"io"
 	"fmt"
+	"net/http"
 	"os"
 	"runtime"
 	"strconv"
@@ -76,11 +78,57 @@ func Init() error {
 }
 
 func StartEngine() {
+	LogInfo("Engine.Start")
+	go StartHttp(EngineHttpPort)
 	TheHost.Start()
 	TheQuadPro.Start()
 	go TheScheduler.Start()
 	TheNats.Subscribe("toengine.>", NatsHandler)
 }
+
+// StartHttp xxx
+func StartHttp(port int) {
+
+	http.HandleFunc("/api", func(responseWriter http.ResponseWriter, req *http.Request) {
+
+		responseWriter.Header().Set("Content-Type", "application/json")
+		responseWriter.WriteHeader(http.StatusOK)
+
+		response := ""
+		defer func() {
+			_, err := responseWriter.Write([]byte(response))
+			if err != nil {
+				LogIfError(err)
+			}
+		}()
+
+		switch req.Method {
+		case "POST":
+			body, err := io.ReadAll(req.Body)
+			if err != nil {
+				response = ErrorResponse(err)
+			} else {
+				bstr := string(body)
+				_ = bstr
+				resp, err := ExecuteApiFromJson(bstr)
+				if err != nil {
+					response = ErrorResponse(err)
+				} else {
+					response = ResultResponse(resp)
+				}
+			}
+		default:
+			response = ErrorResponse(fmt.Errorf("HTTP server unable to handle method=%s", req.Method))
+		}
+	})
+
+	source := fmt.Sprintf("127.0.0.1:%d", port)
+	err := http.ListenAndServe(source, nil)
+	if err != nil {
+		LogIfError(err)
+	}
+}
+
 
 func RemoteEngineApi(api string, data string) (string, error) {
 	LogInfo("RemoteEngineApi before Request", "api", api, "data", data)

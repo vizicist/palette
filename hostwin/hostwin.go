@@ -2,9 +2,7 @@ package hostwin
 
 import (
 	"fmt"
-	"io"
 	"math/rand"
-	"net/http"
 	"os"
 	"strings"
 
@@ -33,6 +31,7 @@ type HostWin struct {
 
 var TheWinHost *HostWin
 var TheRand *rand.Rand
+var LocalAddress = "127.0.0.1"
 
 func NewHost(logname string) *HostWin {
 
@@ -75,10 +74,8 @@ func (h HostWin) Start() {
 	// This need to be done after engine parameters are loaded
 
 	h.done = make(chan bool)
-	LogInfo("Engine.Start")
 
 	go h.StartOscListener(OscPort)
-	go h.StartHttp(EngineHttpPort)
 
 	go TheRouter.Start()
 	go TheMidiIO.Start()
@@ -215,49 +212,6 @@ func (h HostWin) StartOscListener(port int) {
 		Dispatcher: d,
 	}
 	err = server.ListenAndServe()
-	if err != nil {
-		LogIfError(err)
-	}
-}
-
-// StartHttp xxx
-func (h HostWin) StartHttp(port int) {
-
-	http.HandleFunc("/api", func(responseWriter http.ResponseWriter, req *http.Request) {
-
-		responseWriter.Header().Set("Content-Type", "application/json")
-		responseWriter.WriteHeader(http.StatusOK)
-
-		response := ""
-		defer func() {
-			_, err := responseWriter.Write([]byte(response))
-			if err != nil {
-				LogIfError(err)
-			}
-		}()
-
-		switch req.Method {
-		case "POST":
-			body, err := io.ReadAll(req.Body)
-			if err != nil {
-				response = kit.ErrorResponse(err)
-			} else {
-				bstr := string(body)
-				_ = bstr
-				resp, err := kit.ExecuteApiFromJson(bstr)
-				if err != nil {
-					response = kit.ErrorResponse(err)
-				} else {
-					response = kit.ResultResponse(resp)
-				}
-			}
-		default:
-			response = kit.ErrorResponse(fmt.Errorf("HTTP server unable to handle method=%s", req.Method))
-		}
-	})
-
-	source := fmt.Sprintf("127.0.0.1:%d", port)
-	err := http.ListenAndServe(source, nil)
 	if err != nil {
 		LogIfError(err)
 	}
