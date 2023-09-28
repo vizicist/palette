@@ -97,9 +97,9 @@ func NewVizNats() *VizNats {
 }
 
 // Connect xxx
-func (vn *VizNats) Connect(user string, password string) error {
+func (vn *VizNats) Connect(user string, password string, url string) error {
 
-	fullurl := fmt.Sprintf("%s:%s@timthompson.com", user, password)
+	fullurl := fmt.Sprintf("%s:%s@%s", user, password, url)
 
 	var userCreds = "" // User Credentials File
 
