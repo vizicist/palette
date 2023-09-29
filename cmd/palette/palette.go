@@ -79,17 +79,6 @@ func CliCommand(args []string) (map[string]string, error) {
 
 	words := strings.Split(arg0, ".")
 
-	// Warn about extra unexpected arguments
-	switch arg0 {
-	case "start", "restart", "kill", "stop", "summarize":
-		// okay
-	default:
-		// extra args are allowed on api.method usage
-		if len(words) != 2 && len(args) > 1 {
-			return nil, fmt.Errorf(usage())
-		}
-	}
-
 	switch arg0 {
 
 	case "summarize":

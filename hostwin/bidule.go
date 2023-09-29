@@ -38,7 +38,7 @@ func (h HostWin) ProcessInfoBidule() *ProcessInfo {
 		LogIfError(err)
 		return nil
 	}
-	filepath := ConfigFilePath(bidulefile)
+	filepath := h.ConfigFilePath(bidulefile)
 	return NewProcessInfo(exe, bidulePath, filepath, h.ActivateAudio)
 }
 

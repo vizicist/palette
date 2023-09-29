@@ -30,14 +30,14 @@ func PatchNames() []string {
 	return arr
 }
 
-func NewPatch(patchName string) *Patch {
+func NewBrush(patchName string) *Patch {
 	patch := &Patch{
 		synth:  GetSynth("default"),
 		name:   patchName,
 		params: NewParamValues(),
 		// listeners: []*PluginInstance{},
 	}
-	LogOfType("patch", "NewPatch", "patch", patchName)
+	LogOfType("patch", "NewBrush", "patch", patchName)
 	patch.SetDefaultValues()
 	Patchs[patchName] = patch
 	return patch

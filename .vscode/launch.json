@@ -20,6 +20,29 @@
             "args": []
         },
         {
+            "name": "palette start gui",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTE_SOURCE}/cmd/palette/palette.go",
+            "args": ["start","gui"]
+        },
+        {
+            "name": "palette api engine.status",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTE_SOURCE}/cmd/palette/palette.go",
+            "args": ["api","engine.status"]
+        },
+        {
+            "name": "python tryapi.py",
+            "type": "python",
+            "request": "launch",
+            "program": "${env:PALETTE_SOURCE}/python/tryapi.py",
+            "console": "integratedTerminal",
+            "cwd": "${fileDirname}",
+            "args": []
+        },
+        {
             "name": "GUI - palette_gui.py",
             "type": "python",
             "request": "launch",
@@ -114,13 +137,6 @@
             "request": "launch",
             "program": "${env:PALETTE_SOURCE}/cmd/palette/palette.go",
             "args": ["stop"]
-        },
-        {
-            "name": "palette status",
-            "type": "go",
-            "request": "launch",
-            "program": "${env:PALETTE_SOURCE}/cmd/palette/palette.go",
-            "args": ["status"]
         },
         {
             "name": "palette kill resolume",

@@ -2,8 +2,8 @@ package kit
 
 import (
 	"bytes"
-	"io"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"runtime"
@@ -50,6 +50,7 @@ func Init() error {
 	TheScheduler = NewScheduler()
 	TheAttractManager = NewAttractManager()
 	TheQuadPro = NewQuadPro()
+	TheNats = NewVizNats()
 
 	err = TheHost.Init()
 	if err != nil {
@@ -60,30 +61,89 @@ func Init() error {
 	LogIfError(err)
 	TheAttractManager.SetAttractEnabled(enabled)
 
-	natsEnabled, err := GetParamBool("engine.natsenabled")
-	LogIfError(err)
-
 	InitSynths()
 
-	if natsEnabled {
-		TheNats = NewVizNats()
-		natsUser := os.Getenv("NATS_USER")
-		natsPassword := os.Getenv("NATS_PASSWORD")
-		natsUrl := os.Getenv("NATS_URL")
-		err = TheNats.Connect(natsUser, natsPassword, natsUrl)
-		LogIfError(err)
-	}
-
-	return err
+	return nil
 }
 
-func StartEngine() {
+func StartNATS() error {
+
+	subscribeTo := "toengine.api"
+	natsUser := os.Getenv("NATS_USER")
+	natsPassword := os.Getenv("NATS_PASSWORD")
+	natsUrl := os.Getenv("NATS_URL")
+	if natsUrl == "" {
+		natsUrl = LocalAddress
+	}
+
+	/*
+	// Subscribe
+sub, err := nc.SubscribeSync("time")
+if err != nil {
+    log.Fatal(err)
+}
+
+// Read a message
+msg, err := sub.NextMsg(10 * time.Second)
+if err != nil {
+    log.Fatal(err)
+}
+
+// Get the time
+timeAsBytes := []byte(time.Now().String())
+
+// Send the time as the response.
+msg.Respond(timeAsBytes)
+*/
+
+	err := TheNats.Connect(natsUser, natsPassword, natsUrl)
+	LogIfError(err)
+	if err == nil {
+		LogInfo("Successfully connected to NATS server", "url", natsUrl)
+		LogInfo("NATS Connection successful")
+		TheNats.Subscribe(subscribeTo, NatsRequestHandler)
+		return nil
+	}
+
+	// If unable to connect to remote (or at least, the NATS_URL) server, we start up our own local server
+	if natsUrl != LocalAddress {
+		LogInfo("Connection to cloud NATS server fails, falling back to local server", "natsUrl", natsUrl, "err", err.Error())
+	}
+	natsUrl = LocalAddress
+	err = TheNats.StartServer()
+	if err != nil {
+		LogWarn("StarNATS unable to start local server", "err", err.Error())
+		return err
+	}
+
+	// Try the connect again
+	err = TheNats.Connect(natsUser, natsPassword, natsUrl)
+	if err != nil {
+		LogWarn("StarNATS unable to connect to local server", "err", err.Error())
+		return err
+	}
+	LogInfo("Successfully connected to NATS server", "url", natsUrl)
+	TheNats.Subscribe(subscribeTo, NatsRequestHandler)
+	return nil
+}
+
+func ShutdownNATS() {
+	TheNats.natsServer.WaitForShutdown()
+}
+
+func StartEngine() error {
 	LogInfo("Engine.Start")
-	go StartHttp(EngineHttpPort)
+
+	// go StartHttp(EngineHttpPort)
+	err := StartNATS()
+	if err != nil {
+		return err
+	}
 	TheHost.Start()
 	TheQuadPro.Start()
 	go TheScheduler.Start()
-	TheNats.Subscribe("toengine.>", NatsHandler)
+
+	return nil
 }
 
 // StartHttp xxx
@@ -129,7 +189,6 @@ func StartHttp(port int) {
 	}
 }
 
-
 func RemoteEngineApi(api string, data string) (string, error) {
 	LogInfo("RemoteEngineApi before Request", "api", api, "data", data)
 	result, err := TheNats.Request("engine.api."+api, data, time.Second)
@@ -141,9 +200,20 @@ func RemoteEngineApi(api string, data string) (string, error) {
 	return result, nil
 }
 
-func NatsHandler(msg *nats.Msg) {
+func NatsRequestHandler(msg *nats.Msg) {
 	data := string(msg.Data)
 	LogInfo("NatsHandler", "subject", msg.Subject, "data", data)
+	result, err := ExecuteApiFromJson(data)
+	response := ""
+	if err != nil {
+		LogError(fmt.Errorf("unable to nats api data: %s", data))
+		response = ErrorResponse(err)
+	} else {
+		response = ResultResponse(result)
+	}
+	bytes := []byte(response)
+	// Send the response.
+	msg.Respond(bytes)
 }
 
 func LoadEngineParams(fname string) {

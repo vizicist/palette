@@ -253,6 +253,74 @@ def palette_api(api,params):
 
     return (res,err)
 
+def palette_api_nats(api,params):
+
+    global ApiLock
+
+    result = None
+
+    if params != "" and params[0] == "{":
+        return None, "palette_api: invalid curly brace in params=%s\n" % (params)
+    else:
+        if params == "":
+            params = "{ \"api\":\""+api+"\" }"
+        else:
+            params = "{ \"api\":\""+api+"\", "+params+" }"
+
+    if DebugApi:
+        s = params
+        lim = 100
+        if len(s) > lim:
+            s = s[0:lim] + " ..."
+        log("palette_api: api=",api," params=",s)
+
+    success = False
+    while not success:
+        # Acquire lock before sending
+        ApiLock.acquire()
+
+        requestError = None
+        try:
+            url = "http://127.0.0.1:3330/api"
+            # log("palette_api: pre requests.post")
+            req = requests.post(url=url,data=params,timeout=6000.0)
+            # log("palette_api: post requests.post")
+            result = req.text
+        except (requests.ConnectionError,requests.Timeout,Exception) as err:
+            log("palette_api: Connection exception!")
+            requestError = err
+            # log("ConnectionError exception: %s" % format_exc())
+        # except:
+        #     log("palette_api: unknown exception!?")
+        #     log("Unexpected exception: %s" % format_exc())
+        #     requestError = "unknown"
+    
+        ApiLock.release()
+
+        if requestError == None:
+            success = True
+        else:
+            # log("palette_api: Exception = "+str(requestError))
+            log("palette_api: failed connection, api=%s is being retried" % api)
+
+    if result == "":
+        log("palette_api: result is empty?")
+        result = "{}"
+
+    resultjson = json.loads(result)
+
+    err = None
+    if "error" in resultjson:
+        err = resultjson["error"]
+    res = None
+    if "result" in resultjson:
+        res = resultjson["result"]
+
+    if err != None:
+        log("palette_api: api=%s err=%s" % (api,err))
+
+    return (res,err)
+
 def mergeJsonParams(finalparams,tomerge):
     # The finalparams value contains just the param values, while tomerge contains objects with "value" and "enabled"
     for nm in tomerge:

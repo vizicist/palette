@@ -20,7 +20,7 @@ var ResolumeJSON map[string]any
 
 // LoadResolumeJSON returns an unmarshalled version of the resolume.json file
 func (h HostWin) loadResolumeJSON() error {
-	path := ConfigFilePath("resolume.json")
+	path := h.ConfigFilePath("resolume.json")
 	bytes, err := os.ReadFile(path)
 	if err != nil {
 		return fmt.Errorf("unable to read resolume.json, err=%s", err)

@@ -150,6 +150,8 @@ func (sched *Scheduler) Start() {
 			continue
 		}
 
+		// Publish("fromengine.event.click",fmt.Sprintf("click=%d",newclick))
+
 		sched.advanceClickTo(newclick)
 		sched.advanceTransposeTo(newclick)
 

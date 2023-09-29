@@ -17,7 +17,7 @@ var LocalAddress = "127.0.0.1"
 func MmttApi(api string) (map[string]string, error) {
 	id := "56789"
 	apijson := "{ \"jsonrpc\": \"2.0\", \"method\": \"" + api + "\", \"id\":\"" + id + "\"}"
-	url := fmt.Sprintf("http://127.0.0.1:%d/api", MmttHttpPort)
+	url := fmt.Sprintf("http://%s:%d/api", LocalAddress,MmttHttpPort)
 	return HttpApiRaw(url, apijson)
 }
 
