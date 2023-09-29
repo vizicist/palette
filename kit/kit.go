@@ -190,8 +190,18 @@ func StartHttp(port int) {
 }
 
 func RemoteEngineApi(api string, data string) (string, error) {
-	LogInfo("RemoteEngineApi before Request", "api", api, "data", data)
-	result, err := TheNats.Request("engine.api."+api, data, time.Second)
+	if data == "" {
+		data = "{ " + "\"api\":\"" + api + "\" }"
+	} else if data[0] != '{' {
+		// data needs curly braces
+		data = "{ " + "\"api\":\"" + api + "\"," + data + " }"
+	} else {
+		// data has curly braces, add the api value to the beginning
+		data = strings.TrimPrefix(data,"{")
+		data = "{ " + "\"api\":\"" + api + "\"," + data
+	}
+	LogInfo("RemoteEngineApi before Request", "data", data)
+	result, err := TheNats.Request("toengine.api", data, time.Second)
 	if err == nats.ErrNoResponders {
 		return "", err
 	}
