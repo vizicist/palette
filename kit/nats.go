@@ -2,16 +2,19 @@ package kit
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"log"
 	"time"
 
+	"github.com/nats-io/nats-server/v2/server"
 	"github.com/nats-io/nats.go"
 )
 
 // VizNats xxx
 type VizNats struct {
-	natsConn *nats.Conn
+	natsConn   *nats.Conn
+	natsServer *server.Server
 }
 
 // TheNats is the only one
@@ -21,6 +24,12 @@ var TheNats *VizNats
 var PaletteAPISubject = "palette.api"
 
 var time0 = time.Now()
+
+// Publish sends an asynchronous message via NATS
+func Publish(subject string, msg string) {
+	err := TheNats.Publish(subject, msg)
+	LogIfError(err)
+}
 
 // PublishCursorEvent xxx
 func PublishCursorEvent(ce CursorEvent) {
@@ -41,8 +50,7 @@ func PublishCursorEvent(ce CursorEvent) {
 		"\"area\": \"" + fmt.Sprintf("%f", ce.Area) + "\" }"
 
 	subject := "fromengine.event.cursor"
-	err := TheNats.Publish(subject, params)
-	LogIfError(err)
+	Publish(subject, params)
 }
 
 // PublishMIDIDeviceEvent xxx
@@ -59,8 +67,7 @@ func PublishMIDIDeviceEvent(me MidiEvent) {
 		"\"bytes\": \"" + fmt.Sprintf("%v", me.Msg.Bytes()) + "\" }"
 
 	subject := "fromengine.event.midi"
-	err := TheNats.Publish(subject, params)
-	LogIfError(err)
+	Publish(subject, params)
 }
 
 // PublishSpriteEvent xxx
@@ -74,8 +81,7 @@ func PublishSpriteEvent(x, y, z float32) {
 	subject := "fromengine.event.sprite"
 	log.Printf("Publishing %s %s\n", subject, params)
 
-	err := TheNats.Publish(subject, params)
-	LogIfError(err)
+	Publish(subject, params)
 }
 
 /*
@@ -120,9 +126,7 @@ func (vn *VizNats) Connect(user string, password string, url string) error {
 	if err != nil {
 		return fmt.Errorf("nats.Connect failed, user=%s err=%s", user, err)
 	} else {
-		LogInfo("nats.Connect succeeded", "user", user)
 		vn.natsConn = nc
-
 		err = vn.Publish("palette.info", "nats.Connect has succeeded")
 		LogIfError(err)
 	}
@@ -135,6 +139,9 @@ func (vn *VizNats) Request(subj, data string, timeout time.Duration) (retdata st
 		log.Printf("VizNats.Request: %s %s\n", subj, data)
 	}
 	nc := vn.natsConn
+	if nc == nil {
+		return "", fmt.Errorf("VizNats.Request: no natsConn")
+	}
 	bytes := []byte(data)
 	msg, err := nc.Request(subj, bytes, timeout)
 	if err != nil {
@@ -255,23 +262,22 @@ func handleDiscover(msg *nats.Msg) {
 
 var _ = handleDiscover // to avoid unused error from go-staticcheck
 
-/*
 // StartNATSServer xxx
-func StartNATSServer() {
+func (viznats *VizNats) StartServer() error{
 
 	_ = MyNUID() // to make sure nuid.json is initialized
 
-	exe := "nats-server"
+	fs := flag.NewFlagSet("VizNats.StartServer", flag.ExitOnError)
 
-	// Create a FlagSet and sets the usage
-	fs := flag.NewFlagSet(exe, flag.ExitOnError)
-
-	natsconf := ConfigValue("natsconf")
-	if natsconf == "" {
+	natsconf, err := GetParam("engine.natsconf")
+	if err != nil || natsconf == "" {
 		natsconf = "natsalone.conf"
 	}
+
+	LogInfo("Starting NATS Server", "natsconf", natsconf)
+
 	// Configure the options from the flags/config file
-	conf := ConfigFilePath(natsconf)
+	conf := TheHost.ConfigFilePath(natsconf)
 	args := []string{"-c", conf}
 
 	opts, err := server.ConfigureOptions(fs, args,
@@ -279,25 +285,27 @@ func StartNATSServer() {
 		fs.Usage,
 		server.PrintTLSHelpAndDie)
 	if err != nil {
-		server.PrintAndDie(fmt.Sprintf("%s: %s", exe, err))
-	} else if opts.CheckConfig {
-		fmt.Fprintf(os.Stderr, "%s: configuration file %s is valid\n", exe, opts.ConfigFile)
-		os.Exit(0)
+		return err
 	}
+	LogInfo("VizNats.StartServer config file is valid", "config", opts.ConfigFile)
 
 	// Create the server with appropriate options.
 	s, err := server.NewServer(opts)
 	if err != nil {
-		server.PrintAndDie(fmt.Sprintf("%s: %s", exe, err))
+		return err
 	}
 
 	// Configure the logger based on the flags
 	s.ConfigureLogger()
 
-	// Start things up. Block here until done.
+	// Start the server up in the background
 	if err := server.Run(s); err != nil {
-		server.PrintAndDie(err.Error())
+		LogError(err)
 	}
-	s.WaitForShutdown()
+	viznats.natsServer = s
+	return nil
 }
-*/
+
+func (viznats *VizNats) WaitForShutdown() {
+	viznats.natsServer.WaitForShutdown()
+}
