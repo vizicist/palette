@@ -318,6 +318,8 @@ func (vals *ParamValues) persistentDataOf(category string) (data []byte) {
 
 	s := "{\n    \"params\": {\n"
 
+	vals.mutex.RLock()
+	defer vals.mutex.RUnlock()
 	// Print the parameter values sorted by name
 	fullNames := vals.values
 	sortedNames := make([]string, 0, len(fullNames))

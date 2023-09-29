@@ -95,7 +95,7 @@ func ConfigDir() string {
 	return filepath.Join(PaletteDataPath(), "config")
 }
 
-func ConfigFilePath(nm string) string {
+func (h HostWin) ConfigFilePath(nm string) string {
 	return filepath.Join(ConfigDir(), nm)
 }
 
