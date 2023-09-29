@@ -3,35 +3,12 @@ package kit
 import (
 	"fmt"
 	"math"
-	"sync"
 )
 
-type PatchLogic struct {
-	patch *Patch
-
-	mutex sync.Mutex
-	// tempoFactor            float64
-	// loop            *StepLoop
-	// loopLength      Clicks
-	// loopIsRecording bool
-	// loopIsPlaying   bool
-	// fadeLoop        float32
-
-	// lastCursorStepEvent    CursorStepEvent
-	// lastUnQuantizedStepNum Clicks
-}
-
-func NewPatchLogic(patch *Patch) *PatchLogic {
-	logic := &PatchLogic{
-		patch: patch,
-	}
-	return logic
-}
-
-func (logic *PatchLogic) cursorToNoteOn(ce CursorEvent) *NoteOn {
-	synth := logic.patch.Synth()
-	velocity := logic.cursorToVelocity(ce)
-	pitch, err := logic.cursorToPitch(ce)
+func (patch *Patch) cursorToNoteOn(ce CursorEvent) *NoteOn {
+	synth := patch.Synth()
+	velocity := patch.cursorToVelocity(ce)
+	pitch, err := patch.cursorToPitch(ce)
 
 	if err != nil {
 		LogIfError(fmt.Errorf("cursorToNoteOn: no pitch for cursor, ce=%v", ce))
@@ -45,8 +22,7 @@ var PitchSets = map[string][]uint8{
 	"stylusrmx": {36, 37, 38, 39, 42, 43, 51, 49},
 }
 
-func (logic *PatchLogic) cursorToPitch(ce CursorEvent) (uint8, error) {
-	patch := logic.patch
+func (patch *Patch) cursorToPitch(ce CursorEvent) (uint8, error) {
 	pitchset := patch.Get("sound.pitchset")
 	if pitchset != "" {
 		pitches, ok := PitchSets[pitchset]
@@ -111,8 +87,7 @@ func (logic *PatchLogic) cursorToPitch(ce CursorEvent) (uint8, error) {
 	}
 }
 
-func (logic *PatchLogic) cursorToVelocity(ce CursorEvent) uint8 {
-	patch := logic.patch
+func (patch *Patch) cursorToVelocity(ce CursorEvent) uint8 {
 	volstyle := patch.Get("misc.volstyle")
 	if volstyle == "" {
 		volstyle = "pressure"
@@ -162,41 +137,41 @@ func (logic *PatchLogic) cursorToVelocity(ce CursorEvent) uint8 {
 	return uint8(vel)
 }
 
-// func (logic *PatchLogic) generateVisualsFromCursor(ce CursorEvent) {
+// func (patch *Patch) generateVisualsFromCursor(ce CursorEvent) {
 // 	// send an OSC message to Resolume
 // 	msg := CursorToOscMsg(ce)
-// 	TheResolume().ToFreeFramePlugin(logic.patch.Name(), msg)
+// 	TheResolume().ToFreeFramePlugin(patch.Name(), msg)
 // }
 
-func (logic *PatchLogic) generateSoundFromCursor(ce CursorEvent, cursorStyle string) {
+func (patch *Patch) generateSoundFromCursor(ce CursorEvent, cursorStyle string) {
 
 	LogOfType("gensound", "generateSoundFromCursor", "cursor", ce.Gid, "ce", ce)
 
 	switch cursorStyle {
 	case "downonly":
-		logic.generateSoundFromCursorDownOnly(ce)
+		patch.generateSoundFromCursorDownOnly(ce)
 	case "", "retrigger":
-		logic.generateSoundFromCursorRetrigger(ce)
+		patch.generateSoundFromCursorRetrigger(ce)
 	default:
 		LogWarn("Unrecognized cursorStyle", "cursorStyle", cursorStyle)
-		logic.generateSoundFromCursorDownOnly(ce)
+		patch.generateSoundFromCursorDownOnly(ce)
 	}
 }
 
-func (logic *PatchLogic) generateSoundFromCursorDownOnly(ce CursorEvent) {
+func (patch *Patch) generateSoundFromCursorDownOnly(ce CursorEvent) {
 
 	// XXX - is this mutex really needed?
-	logic.mutex.Lock()
-	defer logic.mutex.Unlock()
+	patch.mutex.Lock()
+	defer patch.mutex.Unlock()
 
 	switch ce.Ddu {
 	case "down":
-		noteOn := logic.cursorToNoteOn(ce)
+		noteOn := patch.cursorToNoteOn(ce)
 		if noteOn == nil {
 			return // do nothing, assumes any errors are logged in cursorToNoteOn
 		}
-		atClick := logic.nextQuant(CurrentClick(), logic.patch.CursorToQuant(ce))
-		// LogInfo("logic.down", "current", CurrentClick(), "atClick", atClick, "noteOn", noteOn)
+		atClick := patch.nextQuant(CurrentClick(), patch.CursorToQuant(ce))
+		// LogInfo("patch.down", "current", CurrentClick(), "atClick", atClick, "noteOn", noteOn)
 		ScheduleAt(atClick, ce.Tag, noteOn)
 		noteOff := NewNoteOffFromNoteOn(noteOn)
 		atClick += QuarterNote
@@ -210,13 +185,12 @@ func (logic *PatchLogic) generateSoundFromCursorDownOnly(ce CursorEvent) {
 	}
 }
 
-func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
+func (patch *Patch) generateSoundFromCursorRetrigger(ce CursorEvent) {
 
 	// XXX - is this mutex really needed?
-	logic.mutex.Lock()
-	defer logic.mutex.Unlock()
+	patch.mutex.Lock()
+	defer patch.mutex.Unlock()
 
-	patch := logic.patch
 	ac, ok := TheCursorManager.getActiveCursorFor(ce.Gid)
 	if !ok {
 		LogWarn("generateSoundFromCursor: no active cursor", "gid", ce.Gid)
@@ -233,8 +207,8 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
 			noteOff := NewNoteOffFromNoteOn(oldNoteOn)
 			ScheduleAt(CurrentClick(), ce.Tag, noteOff)
 		}
-		atClick := logic.nextQuant(CurrentClick(), patch.CursorToQuant(ce))
-		noteOn := logic.cursorToNoteOn(ce)
+		atClick := patch.nextQuant(CurrentClick(), patch.CursorToQuant(ce))
+		noteOn := patch.cursorToNoteOn(ce)
 		if noteOn == nil {
 			LogWarn("Hmmm, retrigger, noteOn for down is nil?")
 			return // do nothing, assumes any errors are logged in cursorToNoteOn
@@ -249,7 +223,7 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
 			// LogWarn("generateSoundFromCursor: no ActiveCursor.NoteOn", "gid", ce.Gid)
 			return
 		}
-		newNoteOn := logic.cursorToNoteOn(ce)
+		newNoteOn := patch.cursorToNoteOn(ce)
 		if newNoteOn == nil {
 			LogWarn("Hmmm, retrigger, noteOn for drag is nil?")
 			return // do nothing, assumes any errors are logged in cursorToNoteOn
@@ -276,7 +250,7 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
 		deltaytrignote := patch.GetFloat("sound._deltaytrignote")
 		// deltaytrigcontroller := patch.GetFloat("sound._deltaytrigcontroller")
 
-		// logic.generateController(ac)
+		// patch.generateController(ac)
 		if patch.Get("sound.controllerstyle") == "modulationonly" {
 			if deltaz > deltaztrigcontroller {
 				patch.Synth().SendController(1, newvelocity)
@@ -327,7 +301,7 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
 			offClick := ac.NoteOnClick + 1
 			ScheduleAt(offClick, ce.Tag, noteOff)
 
-			thisClick := logic.nextQuant(cc, c2q)
+			thisClick := patch.nextQuant(cc, c2q)
 			if thisClick < offClick {
 				thisClick = offClick
 			}
@@ -354,15 +328,14 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
 			noteOff := NewNoteOffFromNoteOn(oldNoteOn)
 			offClick := ac.NoteOnClick + 1
 			ScheduleAt(offClick+1, ce.Tag, noteOff)
-			// delete(logic.cursorNote, ce.Gid)
+			// delete(patch.cursorNote, ce.Gid)
 		}
 	}
 }
 
 /*
-func (logic *PatchLogic) generateController(ActiveCursor *ActiveCursor) {
+func (patch *Patch) generateController(ActiveCursor *ActiveCursor) {
 
-	patch := logic.patch
 	if patch.Get("sound.controllerstyle") == "modulationonly" {
 		zmin := patch.GetFloat("sound._controllerzmin")
 		zmax := patch.GetFloat("sound._controllerzmax")
@@ -382,7 +355,7 @@ func (logic *PatchLogic) generateController(ActiveCursor *ActiveCursor) {
 }
 */
 
-func (logic *PatchLogic) nextQuant(t Clicks, q Clicks) Clicks {
+func (patch *Patch) nextQuant(t Clicks, q Clicks) Clicks {
 	// the algorithm below is the same as KeyKit's nextquant
 	if q <= 1 {
 		return t
@@ -401,9 +374,7 @@ func (logic *PatchLogic) nextQuant(t Clicks, q Clicks) Clicks {
 }
 
 /*
-func (logic *PatchLogic) generateSpriteFromPhraseElement(pe *PhraseElement) {
-
-	patch := logic.patch
+func (patch *Patch) generateSpriteFromPhraseElement(pe *PhraseElement) {
 
 	// var channel uint8
 	var pitch uint8
@@ -476,19 +447,19 @@ func (logic *PatchLogic) generateSpriteFromPhraseElement(pe *PhraseElement) {
 }
 */
 
-// func (logic *PatchLogic) sendANO() {
-// 	logic.patch.Synth.SendANO()
+// func (patch *Patch) sendANO() {
+// 	patch.Synth.SendANO()
 // }
 
 /*
-func (logic *PatchLogic) sendNoteOff(n *NoteOn) {
+func (patch *Patch) sendNoteOff(n *NoteOn) {
 	if n == nil {
 		// Not sure why this sometimes happens
 		return
 	}
 	noteOff := NewNoteOff(n.Channel, n.Pitch, n.Velocity)
 	// pe := &PhraseElement{Value: noteOff}
-	logic.patch.Synth.SendNoteToMidiOutput(noteOff)
+	patch.Synth.SendNoteToMidiOutput(noteOff)
 	// patch.SendPhraseElementToSynth(pe)
 }
 */

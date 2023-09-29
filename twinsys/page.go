@@ -142,7 +142,7 @@ func (page *Page) Do(cmd kit.Cmd) string {
 			kit.LogWarn("DumpFileMsg didn't receive valid StateDatamsg")
 		} else {
 			ps := toPrettyJSON(state)
-			fpath := hostwin.ConfigFilePath(fname)
+			fpath := kit.TheHost.ConfigFilePath(fname)
 			kit.LogIfError(os.WriteFile(fpath, []byte(ps), 0644))
 		}
 

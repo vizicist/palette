@@ -121,7 +121,7 @@ func (h HostWin) GetSavedData(category string, filename string) (bytes []byte, e
 }
 
 func (h HostWin) GetConfigFileData(filename string) ([]byte, error) {
-	path := ConfigFilePath(filename)
+	path := h.ConfigFilePath(filename)
 	return os.ReadFile(path)
 }
 
