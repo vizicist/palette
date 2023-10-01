@@ -3,11 +3,15 @@ package kit
 import (
 	"bytes"
 	"fmt"
+	"io"
+	"net/http"
+	"os"
 	"runtime"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/nats-io/nats.go"
 	midi "gitlab.com/gomidi/midi/v2"
 )
 
@@ -18,6 +22,11 @@ var MidiThruScadjust bool
 var MidiNumDown int
 
 var TheHost Host
+
+func RegisterAndInit(h Host) error {
+	TheHost = h
+	return Init()
+}
 
 func RegisterHost(h Host) {
 	TheHost = h
@@ -41,6 +50,7 @@ func Init() error {
 	TheScheduler = NewScheduler()
 	TheAttractManager = NewAttractManager()
 	TheQuadPro = NewQuadPro()
+	TheNats = NewVizNats()
 
 	err = TheHost.Init()
 	if err != nil {
@@ -53,13 +63,144 @@ func Init() error {
 
 	InitSynths()
 
+	return StartNATS()
+}
+
+func StartNATS() error {
+
+	subscribeTo := "toengine.api"
+	natsUser := os.Getenv("NATS_USER")
+	natsPassword := os.Getenv("NATS_PASSWORD")
+	natsUrl := os.Getenv("NATS_URL")
+	if natsUrl == "" {
+		natsUrl = LocalAddress
+	}
+
+	err := TheNats.Connect(natsUser, natsPassword, natsUrl)
+	LogIfError(err)
+	if err == nil {
+		LogInfo("Successfully connected to NATS server", "url", natsUrl)
+		LogInfo("NATS Connection successful")
+		TheNats.Subscribe(subscribeTo, NatsRequestHandler)
+		return nil
+	}
+
+	// If unable to connect to remote (or at least, the NATS_URL) server, we start up our own local server
+	if natsUrl != LocalAddress {
+		LogInfo("Connection to cloud NATS server fails, falling back to local server", "natsUrl", natsUrl, "err", err.Error())
+	}
+	natsUrl = LocalAddress
+	err = TheNats.StartServer()
+	if err != nil {
+		LogWarn("StarNATS unable to start local server", "err", err.Error())
+		return err
+	}
+
+	// Try the connect again
+	err = TheNats.Connect(natsUser, natsPassword, natsUrl)
+	if err != nil {
+		LogWarn("StarNATS unable to connect to local server", "err", err.Error())
+		return err
+	}
+	LogInfo("Successfully connected to NATS server", "url", natsUrl)
+	TheNats.Subscribe(subscribeTo, NatsRequestHandler)
 	return nil
 }
 
-func StartEngine() {
+func ShutdownNATS() {
+	TheNats.natsServer.WaitForShutdown()
+}
+
+func StartEngine() error {
+	LogInfo("Engine.Start")
+
+	// go StartHttp(EngineHttpPort)
 	TheHost.Start()
 	TheQuadPro.Start()
 	go TheScheduler.Start()
+
+	return nil
+}
+
+// StartHttp xxx
+func StartHttp(port int) {
+
+	http.HandleFunc("/api", func(responseWriter http.ResponseWriter, req *http.Request) {
+
+		responseWriter.Header().Set("Content-Type", "application/json")
+		responseWriter.WriteHeader(http.StatusOK)
+
+		response := ""
+		defer func() {
+			_, err := responseWriter.Write([]byte(response))
+			if err != nil {
+				LogIfError(err)
+			}
+		}()
+
+		switch req.Method {
+		case "POST":
+			body, err := io.ReadAll(req.Body)
+			if err != nil {
+				response = ErrorResponse(err)
+			} else {
+				bstr := string(body)
+				_ = bstr
+				resp, err := ExecuteApiFromJson(bstr)
+				if err != nil {
+					response = ErrorResponse(err)
+				} else {
+					response = ResultResponse(resp)
+				}
+			}
+		default:
+			response = ErrorResponse(fmt.Errorf("HTTP server unable to handle method=%s", req.Method))
+		}
+	})
+
+	source := fmt.Sprintf("127.0.0.1:%d", port)
+	err := http.ListenAndServe(source, nil)
+	if err != nil {
+		LogIfError(err)
+	}
+}
+
+// RemoteEngineApi makes a call to the remote engine
+// The args array is expected to be name,value pairs.
+func RemoteEngineApi(api string, args []string) (string, error) {
+	if len(args) % 2 != 0 {
+		return "",fmt.Errorf("remoteengineapi - bad value of args, must be even")
+	}
+	data := "{ " + "\"api\":\"" + api + "\""
+	for n:=0; n<len(args); n+=2 {
+		data += ",\"" + args[n] + "\":\"" + args[n+1] + "\""
+	}
+	data += " }"
+
+	LogInfo("RemoteEngineApi before Request", "data", data)
+	result, err := TheNats.Request("toengine.api", data, time.Second)
+	if err == nats.ErrNoResponders {
+		return "", err
+	}
+	LogIfError(err)
+	LogInfo("RemoteEngineApi after Request", "result", result)
+	return result, nil
+}
+
+func NatsRequestHandler(msg *nats.Msg) {
+	data := string(msg.Data)
+	LogInfo("NatsHandler", "subject", msg.Subject, "data", data)
+	result, err := ExecuteApiFromJson(data)
+	response := ""
+	if err != nil {
+		LogError(fmt.Errorf("unable to nats api data: %s", data))
+		response = ErrorResponse(err)
+	} else {
+		response = ResultResponse(result)
+	}
+	bytes := []byte(response)
+	// Send the response.
+	msg.Respond(bytes)
 }
 
 func LoadEngineParams(fname string) {

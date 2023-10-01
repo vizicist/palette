@@ -240,6 +240,7 @@ class ProGuiApp(tk.Tk):
 
     def mainLoop(self):
         # doneLoading = False
+        lastStatus = time.time()
         while self.killme == False:
             # log("time="+str(time.time()))
             try:
@@ -263,6 +264,15 @@ class ProGuiApp(tk.Tk):
                 pass
 
             now = time.time()
+
+            sinceStatus = now - lastStatus
+            if sinceStatus > 2.0:
+                status, err = palette.palette_api("engine.status","")
+                if err != None:
+                    log("Eror from engine.status api, err=",err)
+                else:
+                    status_handle(status)
+                lastStatus = now
 
             if self.nextMode != "":
 
@@ -2536,25 +2546,6 @@ def makeStyles(app):
                     ('active', ColorButton)]
         )
 
-    # s.map('PerformButton.TLabel', foreground=ColorText, font=selectButtonFont, background=ColorHigh, anchor=tk.CENTER, justify=tk.CENTER)
-    # s.map('PerformButton.TLabel',
-    #     foreground=[('disabled', 'yellow'),
-    #                 ('pressed', ColorText),
-    #                 ('active', ColorText)],
-    #    background=[('disabled', 'yellow'),
-    #                ('pressed', ColorHigh),
-    #                ('active', ColorButton)]
-    #    )
-
-    # s.map('PerformButtonHighlight.TLabel',
-    #     foreground=[('disabled', 'yellow'),
-    #                 ('pressed', ColorHigh),
-    #                 ('active', ColorHigh)],
-    #     background=[('disabled', 'yellow'),
-    #                 ('pressed', ColorHigh),
-    #                 ('active', ColorHigh)]
-    #     )
-
 def log(*args):
     final = args[0]
     if len(args) > 1:
@@ -2562,38 +2553,29 @@ def log(*args):
             final += " " + str(s)
     palette.log(final)
 
-def status_thread(app):  # runs in background thread
+def status_handle(status):
 
-    while True:
+    if status == None:
+        log("Hey, output of engine.status is None?")
+        return
 
-        time.sleep(2.0)
+    # log("status_handle of ",status)
+    jstatus = json.loads(status)
+    attractMode = jstatus["attractmode"]
+    if attractMode == "true":
+        if PaletteApp.currentMode != "attract":
+            PaletteApp.setNextMode("attract")
+    else:
+        if PaletteApp.currentMode != "normal" and PaletteApp.currentMode != "help":
+            PaletteApp.setNextMode("normal")
 
-        status, err = palette.palette_engine_api("status","")
-        if err != None:
-            log("engine.status: err=",err)
-            continue
-
-        if status == None:
-            log("Hey, output of status is None?")
-            continue
-
-        # log("status is ",status)
-        jstatus = json.loads(status)
-        attractMode = jstatus["attractmode"]
-        if attractMode == "true":
-            if PaletteApp.currentMode != "attract":
-                PaletteApp.setNextMode("attract")
-        else:
-            if PaletteApp.currentMode != "normal" and PaletteApp.currentMode != "help":
-                PaletteApp.setNextMode("normal")
-
-        for patch in PaletteApp.Patches:
-            nm = patch.name()
-            newstatus = jstatus[nm]
-            oldstatus = PaletteApp.patchChooser.getStatus(nm)
-            if oldstatus != newstatus:
-                PaletteApp.patchChooser.setStatus(nm,newstatus)
-                PaletteApp.dorefreshPatches = True
+    for patch in PaletteApp.Patches:
+        nm = patch.name()
+        newstatus = jstatus[nm]
+        oldstatus = PaletteApp.patchChooser.getStatus(nm)
+        if oldstatus != newstatus:
+            PaletteApp.patchChooser.setStatus(nm,newstatus)
+            PaletteApp.dorefreshPatches = True
 
 
 if __name__ == "__main__":
@@ -2625,7 +2607,7 @@ if __name__ == "__main__":
     # guisize is palette/medium/small
     guisize = os.environ.get("PALETTE_GUI_SIZE","small")
 
-    palette.palette_api_setup()
+    # palette.palette_api_setup()
 
     global PaletteApp
     PaletteApp = ProGuiApp(patchname,patchnames,visiblepagenames,guisize)
@@ -2651,8 +2633,8 @@ if __name__ == "__main__":
 
     threading.Timer(0.0, afterWindowIsDisplayed, args=[PaletteApp.windowName,guisize], kwargs=None).start()
 
-    statusThread = threading.Thread(target=status_thread,args=(PaletteApp,))   # timer thread
-    statusThread.daemon = True
-    statusThread.start()  # start timer loop
+    # statusThread = threading.Thread(target=status_thread,args=(PaletteApp,))   # timer thread
+    # statusThread.daemon = True
+    # statusThread.start()  # start timer loop
 
     initMain(PaletteApp)

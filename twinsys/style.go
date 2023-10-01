@@ -10,7 +10,6 @@ import (
 	"golang.org/x/image/font"
 
 	"golang.org/x/image/font/gofont/gomono"
-	"github.com/vizicist/palette/hostwin"
 )
 
 // RedColor xxx
@@ -54,7 +53,7 @@ func NewStyle(styleName string, fontHeight int) *StyleInfo {
 	switch styleName {
 
 	case "fixed":
-		fontfile := hostwin.ConfigFilePath("consola.ttf")
+		fontfile := kit.TheHost.ConfigFilePath("consola.ttf")
 		b, err := os.ReadFile(fontfile)
 		if err == nil {
 			f, _ = truetype.Parse(b)
@@ -63,7 +62,7 @@ func NewStyle(styleName string, fontHeight int) *StyleInfo {
 	case "regular":
 		// This font sucks
 		// f, err = truetype.Parse(goregular.TTF)
-		fontfile := hostwin.ConfigFilePath("times.ttf")
+		fontfile := kit.TheHost.ConfigFilePath("times.ttf")
 		b, err := os.ReadFile(fontfile)
 		if err == nil {
 			f, _ = truetype.Parse(b)

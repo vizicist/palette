@@ -359,3 +359,14 @@ func MmttProcessInfo() *ProcessInfo {
 	}
 	return NewProcessInfo("mmtt_"+mmtt+".exe", fullpath, "", nil)
 }
+
+func KillAllExceptMonitor() {
+	LogInfo("KillAll")
+	// KillExecutable(KeykitExe)
+	KillExecutable(MmttExe)
+	KillExecutable(BiduleExe)
+	KillExecutable(ResolumeExe)
+	KillExecutable(GuiExe)
+	KillExecutable(EngineExe)
+}
+
