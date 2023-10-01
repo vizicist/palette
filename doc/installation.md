@@ -14,7 +14,10 @@ The instructions below assume that you have:
 
 - Install git from https://gitforwindows.org
 
-- Use System Properties->Environment Variables to add `C:\Program Files\Git\bin` and `C:\Program Files\Git\usr\bin` to your Path variable.  You will need to log out (or reboot) to have this change reflected.
+- Use System Properties->Environment Variables to add these directories to your PATH, and then log out or reboot to have this change reflected:
+	<br>`C:\Program Files\Git\bin`
+	<br>`C:\Program Files\Git\usr\bin`
+	<br>`C:\Program Files\Git\mingw64\bin`
 
 - All VST plugins should be put in `%CommonProgramFiles%\VST2` (for VST 2 plugins) and `%CommonProgramFiles%\VST3` (for VST 3 plugins).
 

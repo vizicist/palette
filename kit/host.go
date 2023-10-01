@@ -34,6 +34,7 @@ type Host interface {
 	ShowClip(clipNum int)
 
 	GetConfigFileData(filename string) ([]byte, error)
+	ConfigFilePath(filename string) string
 	SavedFileList(category string) ([]string, error)
 	SaveDataInFile(data []byte, category string, filename string) error
 	GetSavedData(category string, filename string) ([]byte, error)

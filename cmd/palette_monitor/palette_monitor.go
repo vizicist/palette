@@ -58,7 +58,7 @@ func checkEngine() {
 
 func mmttRealign() {
 	hostwin.LogInfo("Begin mmttRealign")
-	_, err := hostwin.MmttApi("align_start")
+	_, err := kit.MmttApi("align_start")
 	hostwin.LogIfError(err)
 }
 

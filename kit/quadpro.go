@@ -16,7 +16,6 @@ type QuadPro struct {
 
 	// Per-patch things
 	patch      map[string]*Patch
-	patchLogic map[string]*PatchLogic
 
 	started   bool
 	rand      *rand.Rand
@@ -26,7 +25,6 @@ type QuadPro struct {
 func NewQuadPro() *QuadPro {
 	quadpro := &QuadPro{
 		patch:      map[string]*Patch{},
-		patchLogic: map[string]*PatchLogic{},
 		rand:       rand.New(rand.NewSource(1)),
 	}
 	return quadpro
@@ -74,9 +72,6 @@ func (quadpro *QuadPro) Api(api string, apiargs map[string]string) (result strin
 			return "", fmt.Errorf("missing filename parameter")
 		}
 		TheAttractManager.SetAttractMode(false)
-		if !strings.HasSuffix(filename, ".json") {
-			filename += ".json"
-		}
 		data, err := TheHost.GetSavedData(category, filename)
 		if err != nil {
 			return "", err
@@ -165,15 +160,8 @@ func (quadpro *QuadPro) Status(source string) string {
 
 func (quadpro *QuadPro) PatchForCursorEvent(ce CursorEvent) (patch *Patch, button string) {
 	source := ce.Source()
-	// If the source has some patchLogic...
-	patchLogic, ok := quadpro.patchLogic[source]
-	if !ok {
-		patch = nil
-	} else {
-		patch = patchLogic.patch
-	}
 	// If the source is a Button...
-	_, ok = CursorSourceToQuadPreset[source]
+	_, ok := CursorSourceToQuadPreset[source]
 	if ok {
 		button = source
 	}
@@ -211,9 +199,6 @@ func (quadpro *QuadPro) onCursorEvent(state ActiveCursor) error {
 				if TheQuadPro != nil {
 					LogOfType("cursor", "Button down", "z", state.Current.Pos.Z)
 					filename := preset
-					if !strings.HasSuffix(filename, ".json") {
-						filename += ".json"
-					}
 					bytes, err := TheHost.GetSavedData("quad", filename)
 					if err != nil {
 						return err
@@ -230,25 +215,25 @@ func (quadpro *QuadPro) onCursorEvent(state ActiveCursor) error {
 		return nil
 	}
 
-	// For the moment, the cursor to patchLogic mapping is 1-to-1.
-	// I.e. ce.Source of "A" maps to patchLogic "A"
+	// For the moment, the cursor to patch mapping is 1-to-1.
+	// I.e. ce.Source of "A" maps to patch "A"
 	source := state.Current.Source()
-	patchLogic, ok := quadpro.patchLogic[source]
-	if !ok || patchLogic == nil {
-		LogWarn("Source doesn't exist in patchLogic", "source", source)
+	patch, ok := quadpro.patch[source]
+	if !ok || patch == nil {
+		LogWarn("Source is not a patch", "source", source)
 		return nil
 	}
-	cursorStyle := patchLogic.patch.Get("misc.cursorstyle")
-	gensound := IsTrueValue(patchLogic.patch.Get("misc.generatesound"))
-	genvisual := IsTrueValue(patchLogic.patch.Get("misc.generatevisual"))
+	cursorStyle := patch.Get("misc.cursorstyle")
+	gensound := IsTrueValue(patch.Get("misc.generatesound"))
+	genvisual := IsTrueValue(patch.Get("misc.generatevisual"))
 	isAttractCursor := state.Current.IsAttractGenerated()
 
 	// Don't generate sound from attractMode cursors
 	if !isAttractCursor && gensound && !TheAttractManager.AttractModeIsOn() {
-		patchLogic.generateSoundFromCursor(state.Current, cursorStyle)
+		patch.generateSoundFromCursor(state.Current, cursorStyle)
 	}
 	if genvisual {
-		TheHost.GenerateVisualsFromCursor(state.Current, patchLogic.patch.name)
+		TheHost.GenerateVisualsFromCursor(state.Current, patch.name)
 	}
 	return nil
 }
@@ -315,7 +300,7 @@ func (quadpro *QuadPro) loadQuadRand() error {
 	rn := quadpro.rand.Uint64() % uint64(len(arr))
 	quadpro.randMutex.Unlock()
 
-	bytes, err := TheHost.GetConfigFileData("buttons.json")
+	bytes, err := TheHost.GetSavedData("quad", arr[rn])
 	if err != nil {
 		LogIfError(err)
 		return err
@@ -448,9 +433,8 @@ func (quadpro *QuadPro) saveQuad(filename string) error {
 }
 
 func (quadpro *QuadPro) addPatch(name string) *Patch {
-	patch := NewPatch(name)
+	patch := NewBrush(name)
 	quadpro.patch[name] = patch
-	quadpro.patchLogic[name] = NewPatchLogic(patch)
 	return patch
 }
 

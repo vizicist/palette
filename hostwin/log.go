@@ -222,11 +222,11 @@ func LogError(err error, keysAndValues ...any) {
 	}
 
 	if (len(keysAndValues) % 2) != 0 {
-		LogWarn("LogIfError function given bad number of arguments")
+		LogWarn("LogError function given bad number of arguments")
 	}
 	keysAndValues = append(keysAndValues, "err")
 	keysAndValues = append(keysAndValues, err)
-	caller := "LogIfError"
+	caller := "LogError"
 	LogWarn(caller, keysAndValues...)
 }
 

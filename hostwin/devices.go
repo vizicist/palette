@@ -27,7 +27,7 @@ func LoadMorphs() error {
 	// If you have more than one morph, or
 	// want the patch assignment to NOT be
 	// automatic, put them in here.
-	path := ConfigFilePath("morphs.json")
+	path := kit.TheHost.ConfigFilePath("morphs.json")
 	if !kit.FileExists(path) {
 		return fmt.Errorf("unable to get path to morphs.json")
 	}

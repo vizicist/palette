@@ -30,14 +30,14 @@ func PatchNames() []string {
 	return arr
 }
 
-func NewPatch(patchName string) *Patch {
+func NewBrush(patchName string) *Patch {
 	patch := &Patch{
 		synth:  GetSynth("default"),
 		name:   patchName,
 		params: NewParamValues(),
 		// listeners: []*PluginInstance{},
 	}
-	LogOfType("patch", "NewPatch", "patch", patchName)
+	LogOfType("patch", "NewBrush", "patch", patchName)
 	patch.SetDefaultValues()
 	Patchs[patchName] = patch
 	return patch
@@ -141,7 +141,7 @@ func (patch *Patch) SaveAndAlert(category string, filename string) error {
 
 	LogOfType("saved", "Patch.SaveAndAlert", "category", category, "filename", filename)
 
-	isCurrent := strings.HasPrefix(filename,"_Current")
+	isCurrent := strings.HasPrefix(filename, "_Current")
 	if isCurrent && category != "quad" {
 		err := fmt.Errorf(", we're only saving _Current in quad (and global)")
 		LogIfError(err)
@@ -423,9 +423,6 @@ func (patch *Patch) Load(category string, filename string) error {
 
 	LogOfType("saved", "patch.Load", "patch", patch.Name(), "category", category, "filename", filename)
 
-	if ! strings.HasSuffix(filename,".json") {
-		filename += ".json"
-	}
 	bytes, err := TheHost.GetSavedData(category, filename)
 	if err != nil {
 		LogIfError(err)
@@ -484,11 +481,14 @@ func (patch *Patch) clearGraphics() {
 }
 
 func (patch *Patch) Status() string {
+	if patch == nil {
+		return ""
+	}
 	nevents := TheScheduler.CountEventsWithTag(patch.name)
 	if nevents == 0 {
 		return ""
 	}
-	return fmt.Sprintf("%d", nevents)
+	return fmt.Sprintf("nevents=%d", nevents)
 }
 
 func (patch *Patch) loopClear() {

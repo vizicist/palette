@@ -202,6 +202,8 @@
 "engine.timefret_low": {"valuetype": "float", "min": "0.0", "max": "1.0",  "init": "0.25",	"comment": "#" },
 "engine.transpose": {"valuetype":"int", "min":"-24", "max":"24", "init":"0", "comment":"# transpose pitch" },
 "engine.twinsys": {"valuetype":"bool", "min":"false", "max":"true", "init":"false", "comment":"#" },
+"engine.twitchuser": {"valuetype":"string", "min":"", "max":"", "init":"", "comment":"# " },
+"engine.twitchtoken": {"valuetype":"string", "min":"", "max":"", "init":"", "comment":"# " },
 "engine.winsize": {"valuetype":"string", "min":"", "max":"", "init":"", "comment":"# " },
 "engine.cursorscaley": {"valuetype": "float", "min": "0.0", "max": "1.0",  "init": "1.00",	"comment": "#" },
 "engine.cursoroffsety": {"valuetype": "float", "min": "-1.0", "max": "1.0",  "init": "0.00",	"comment": "#" },
