@@ -63,7 +63,7 @@ func Init() error {
 
 	InitSynths()
 
-	return nil
+	return StartNATS()
 }
 
 func StartNATS() error {
@@ -75,26 +75,6 @@ func StartNATS() error {
 	if natsUrl == "" {
 		natsUrl = LocalAddress
 	}
-
-	/*
-	// Subscribe
-sub, err := nc.SubscribeSync("time")
-if err != nil {
-    log.Fatal(err)
-}
-
-// Read a message
-msg, err := sub.NextMsg(10 * time.Second)
-if err != nil {
-    log.Fatal(err)
-}
-
-// Get the time
-timeAsBytes := []byte(time.Now().String())
-
-// Send the time as the response.
-msg.Respond(timeAsBytes)
-*/
 
 	err := TheNats.Connect(natsUser, natsPassword, natsUrl)
 	LogIfError(err)
@@ -135,10 +115,6 @@ func StartEngine() error {
 	LogInfo("Engine.Start")
 
 	// go StartHttp(EngineHttpPort)
-	err := StartNATS()
-	if err != nil {
-		return err
-	}
 	TheHost.Start()
 	TheQuadPro.Start()
 	go TheScheduler.Start()
@@ -189,17 +165,18 @@ func StartHttp(port int) {
 	}
 }
 
-func RemoteEngineApi(api string, data string) (string, error) {
-	if data == "" {
-		data = "{ " + "\"api\":\"" + api + "\" }"
-	} else if data[0] != '{' {
-		// data needs curly braces
-		data = "{ " + "\"api\":\"" + api + "\"," + data + " }"
-	} else {
-		// data has curly braces, add the api value to the beginning
-		data = strings.TrimPrefix(data,"{")
-		data = "{ " + "\"api\":\"" + api + "\"," + data
+// RemoteEngineApi makes a call to the remote engine
+// The args array is expected to be name,value pairs.
+func RemoteEngineApi(api string, args []string) (string, error) {
+	if len(args) % 2 != 0 {
+		return "",fmt.Errorf("remoteengineapi - bad value of args, must be even")
 	}
+	data := "{ " + "\"api\":\"" + api + "\""
+	for n:=0; n<len(args); n+=2 {
+		data += ",\"" + args[n] + "\":\"" + args[n+1] + "\""
+	}
+	data += " }"
+
 	LogInfo("RemoteEngineApi before Request", "data", data)
 	result, err := TheNats.Request("toengine.api", data, time.Second)
 	if err == nats.ErrNoResponders {

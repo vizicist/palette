@@ -72,10 +72,6 @@ func CliCommand(args []string) (map[string]string, error) {
 	if len(args) > 1 {
 		arg1 = args[1]
 	}
-	var arg2 string
-	if len(args) > 2 {
-		arg2 = args[2]
-	}
 
 	words := strings.Split(arg0, ".")
 
@@ -114,7 +110,7 @@ func CliCommand(args []string) (map[string]string, error) {
 		return out, nil
 
 	case "api":
-		result, err := kit.RemoteEngineApi(arg1, arg2)
+		result, err := kit.RemoteEngineApi(arg1, args[2:])
 		if err != nil {
 			return nil, err
 		}
