@@ -4,7 +4,7 @@ Palette is the software used in the <a href=https://youtu.be/HDtxEyCI_zc>Space P
 an instrument that lets you fingerpaint sound and visuals
 using your fingers as 3D cursors on Sensel Morph pads.
 
-# Open Source software
+# Open Source software parts
 
 <b>palette_engine</b> is the Go-based central brain of the system that:
 
@@ -21,7 +21,7 @@ using your fingers as 3D cursors on Sensel Morph pads.
 
 <b>Palette.dll</b> is a Freeframe plugin draws basic visual shapes (sprites) in response to OSC messages sent from palette_engine.  The sprites are animated (moving, resizing, color fades) by the Freeframe plugin, but the position and all other parameters are sent by the palette_engine.
 
-# Commercial software
+# Commercial software parts
 
 ### Resolume
 

@@ -18,7 +18,6 @@ import (
 	"golang.org/x/image/font"
 
 	"github.com/vizicist/palette/kit"
-	"github.com/vizicist/palette/hostwin"
 )
 
 // Screen satisfies the ebiten.Game interface.
@@ -94,7 +93,7 @@ func Run() {
 	screen.currentPage = WinAddChild(screen, td)
 
 	// START DEBUG - do RESTORE
-	fname := hostwin.ConfigFilePath("homepage.json")
+	fname := kit.TheHost.ConfigFilePath("homepage.json")
 	bytes, err := os.ReadFile(fname)
 	if err != nil {
 		kit.LogIfError(err)

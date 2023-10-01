@@ -21,7 +21,7 @@ mkdir %ship%\ffgl
 
 echo ================ Upgrading Python
 python -m pip install pip | grep -v "already.*satisfied"
-pip install --use-pep517 codenamize pip install python-osc requests pip install pyinstaller get-mac mido pyperclip chardet | grep -v "already satisfied"
+pip install --use-pep517 codenamize pip install python-osc requests pip install pyinstaller get-mac mido pyperclip chardet nats-py | grep -v "already satisfied"
 
 rem echo ================ Compiling depthlib
 rem pushd ..\..\depthlib
@@ -51,17 +51,29 @@ go build -o palette_monitor.exe >> %buildcmdsout% 2>&1
 move palette_monitor.exe %bin%\palette_monitor.exe > nul
 popd
 
+echo ================ Compiling palette_twitch
+pushd %PALETTE_SOURCE%\cmd\palette_twitch
+go build -o palette_twitch.exe >> %buildcmdsout% 2>&1
+move palette_twitch.exe %bin%\palette_twitch.exe > nul
+popd
+
+echo ================ Compiling palette_control
+pushd %PALETTE_SOURCE%\cmd\palette_control
+go build -o palette_control.exe >> %buildcmdsout% 2>&1
+move palette_control.exe %bin%\palette_control.exe > nul
+popd
+
 rem echo ================ Compiling palette_splash
 rem pushd %PALETTE_SOURCE%\cmd\palette_splash
 rem go build -o palette_splash.exe >> %buildcmdsout% 2>&1
 rem move palette_splash.exe %bin%\palette_splash.exe > nul
 rem popd
 
-echo ================ Compiling palette_pk2go
-pushd %PALETTE_SOURCE%\cmd\palette_pk2go
-go build -o palette_pk2go.exe >> %buildcmdsout% 2>&1
-move palette_pk2go.exe %bin%\palette_pk2go.exe > nul
-popd
+rem echo ================ Compiling palette_pk2go
+rem pushd %PALETTE_SOURCE%\cmd\palette_pk2go
+rem go build -o palette_pk2go.exe >> %buildcmdsout% 2>&1
+rem move palette_pk2go.exe %bin%\palette_pk2go.exe > nul
+rem popd
 
 rem print any error messages from compiling cmds
 type %buildcmdsout%
@@ -103,8 +115,8 @@ rem copy mmtt_kinect\*.dll %bin%\mmtt_kinect >nul
 rem popd
 
 echo ================ Copying misc binaries
-rem copy %PALETTE_SOURCE%\binaries\nats\nats-pub.exe %bin% >nul
-rem copy %PALETTE_SOURCE%\binaries\nats\nats-sub.exe %bin% >nul
+copy %PALETTE_SOURCE%\binaries\nats\nats-pub.exe %bin% >nul
+copy %PALETTE_SOURCE%\binaries\nats\nats-sub.exe %bin% >nul
 copy %PALETTE_SOURCE%\binaries\nircmdc.exe %bin% >nul
 
 echo ================ Copying scripts
@@ -132,10 +144,10 @@ xcopy /e /y %PALETTE_SOURCE%\data_defaults\config %ship%\data\config >nul
 xcopy /e /y %PALETTE_SOURCE%\data_defaults\html %ship%\data\html >nul
 xcopy /e /y %PALETTE_SOURCE%\data_defaults\saved %ship%\data\saved >nul
 
-rem The default data directory is data_dexed-based
+rem The default data directory is data_dexedvital
 rem You can use copydata.bat to switch to other data_*.
-xcopy /e /y %PALETTE_SOURCE%\data_dexed\saved %ship%\data\saved >nul
-xcopy /e /y %PALETTE_SOURCE%\data_dexed\config %ship%\data\config >nul
+xcopy /e /y %PALETTE_SOURCE%\data_dexedvital\saved %ship%\data\saved >nul
+xcopy /e /y %PALETTE_SOURCE%\data_dexedvital\config %ship%\data\config >nul
 
 for %%X in (data_dexed data_dexedvital data_omnisphere) DO (
 	echo ================ Copying %%X
