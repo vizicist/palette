@@ -481,11 +481,14 @@ func (patch *Patch) clearGraphics() {
 }
 
 func (patch *Patch) Status() string {
+	if patch == nil {
+		return ""
+	}
 	nevents := TheScheduler.CountEventsWithTag(patch.name)
 	if nevents == 0 {
 		return ""
 	}
-	return fmt.Sprintf("%d", nevents)
+	return fmt.Sprintf("nevents=%d", nevents)
 }
 
 func (patch *Patch) loopClear() {
