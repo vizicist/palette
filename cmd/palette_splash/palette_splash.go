@@ -216,7 +216,7 @@ func main() {
 	host := hostwin.NewHost("splash")
 	kit.RegisterHost(host)
 
-	imgpath := hostwin.ConfigFilePath(*ip)
+	imgpath := kit.TheHost.ConfigFilePath(*ip)
 	if host.FileExists(imgpath) {
 		hostwin.LogInfo("Loading image", "imgpath", imgpath)
 		img, _, err := ebitenutil.NewImageFromFile(imgpath)

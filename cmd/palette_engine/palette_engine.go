@@ -1,10 +1,12 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"os/signal"
 	"runtime/pprof"
 	"syscall"
+    "runtime/debug"
 
 	"github.com/pkg/profile"
 	"github.com/vizicist/palette/hostwin"
@@ -32,8 +34,26 @@ func main() {
 	host := hostwin.NewHost("engine")
 	kit.RegisterHost(host)
 
-	kit.Init()
-	kit.StartEngine()
+	err := kit.Init()
+	if err != nil {
+		kit.LogInfo("Error in kit.Init, cannot continue","err",err.Error())
+		os.Exit(1)
+	}
+
+	defer func() {
+        if r := recover(); r != nil {
+			stack := debug.Stack()
+            fmt.Println("PANIC!? Error:\n", string(stack))
+			kit.LogWarn("PANIC","error",r,"stacktrace",string(stack))
+        }
+    }()
+
+	err = kit.StartEngine()
+	if err != nil {
+		kit.LogError(err)
+		kit.LogInfo("Unable to Start Engine, cannot continue","err",err.Error())
+		os.Exit(1)
+	}
 
 	go func() {
 		host.WaitTillDone()
