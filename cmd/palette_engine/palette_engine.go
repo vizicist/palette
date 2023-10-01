@@ -34,7 +34,11 @@ func main() {
 	host := hostwin.NewHost("engine")
 	kit.RegisterHost(host)
 
-	kit.Init()
+	err := kit.Init()
+	if err != nil {
+		kit.LogInfo("Error in kit.Init, cannot continue","err",err.Error())
+		os.Exit(1)
+	}
 
 	defer func() {
         if r := recover(); r != nil {
@@ -44,10 +48,10 @@ func main() {
         }
     }()
 
-	err := kit.StartEngine()
+	err = kit.StartEngine()
 	if err != nil {
 		kit.LogError(err)
-		kit.LogInfo("Unable to Start Engine, cannot continue")
+		kit.LogInfo("Unable to Start Engine, cannot continue","err",err.Error())
 		os.Exit(1)
 	}
 

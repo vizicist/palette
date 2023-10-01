@@ -172,18 +172,28 @@ def boolValueOfString(v):
 def publish_event(subject,params):
     log("public_event needs work params=",params.encode())
 
-# ...     r = session.get("http://httpbin.org/status/503")
-
-def palette_api_setup():
-    global ApiSession
-    session = requests.Session()
-    adapter = HTTPAdapter(max_retries=Retry(total=999, backoff_factor=1, allowed_methods=None, status_forcelist=[429, 500, 502, 503, 504]))
-    session.mount("http://", adapter)
-    session.mount("https://", adapter)
-
 def audio_reset():
     # log("palette.audio_reset")
     palette_engine_api("audio_reset")
+
+import asyncio
+import nats
+from nats.errors import ConnectionClosedError, TimeoutError, NoServersError
+
+NatsInitialized = False
+NatsNc = None
+NatsResponse = None
+
+async def palette_nats_connect():
+    global NatsNc
+    NatsNc = await nats.connect("nats://127.0.0.1:4222")
+
+async def palette_nats_request(subject,msg):
+    global NatsResponse
+    NatsResponse = await NatsNc.request(subject, msg, timeout=0.5)
+
+async def palette_nats_subscribe(subject,handler):
+    await NatsNc.subscribe(subject, handler)
 
 def palette_api(api,params):
 
@@ -211,90 +221,34 @@ def palette_api(api,params):
         # Acquire lock before sending
         ApiLock.acquire()
 
-        requestError = None
-        try:
-            url = "http://127.0.0.1:3330/api"
-            # log("palette_api: pre requests.post")
-            req = requests.post(url=url,data=params,timeout=6000.0)
-            # log("palette_api: post requests.post")
-            result = req.text
-        except (requests.ConnectionError,requests.Timeout,Exception) as err:
-            log("palette_api: Connection exception!")
-            requestError = err
-            # log("ConnectionError exception: %s" % format_exc())
-        # except:
-        #     log("palette_api: unknown exception!?")
-        #     log("Unexpected exception: %s" % format_exc())
-        #     requestError = "unknown"
-    
-        ApiLock.release()
+        global NatsInitialized
+        if NatsInitialized == False:
+            # NatsNc = await nats.connect("nats://127.0.0.1:4222")
 
-        if requestError == None:
-            success = True
-        else:
-            # log("palette_api: Exception = "+str(requestError))
-            log("palette_api: failed connection, api=%s is being retried" % api)
+            loop = asyncio.get_event_loop()
+            loop.run_until_complete(asyncio.gather(
+                asyncio.ensure_future(palette_nats_connect())
+            ))
 
-    if result == "":
-        log("palette_api: result is empty?")
-        result = "{}"
-
-    resultjson = json.loads(result)
-
-    err = None
-    if "error" in resultjson:
-        err = resultjson["error"]
-    res = None
-    if "result" in resultjson:
-        res = resultjson["result"]
-
-    if err != None:
-        log("palette_api: api=%s err=%s" % (api,err))
-
-    return (res,err)
-
-def palette_api_nats(api,params):
-
-    global ApiLock
-
-    result = None
-
-    if params != "" and params[0] == "{":
-        return None, "palette_api: invalid curly brace in params=%s\n" % (params)
-    else:
-        if params == "":
-            params = "{ \"api\":\""+api+"\" }"
-        else:
-            params = "{ \"api\":\""+api+"\", "+params+" }"
-
-    if DebugApi:
-        s = params
-        lim = 100
-        if len(s) > lim:
-            s = s[0:lim] + " ..."
-        log("palette_api: api=",api," params=",s)
-
-    success = False
-    while not success:
-        # Acquire lock before sending
-        ApiLock.acquire()
+            log("NatsNc = ",NatsNc)
+            NatsInitialized = True
 
         requestError = None
         try:
-            url = "http://127.0.0.1:3330/api"
-            # log("palette_api: pre requests.post")
-            req = requests.post(url=url,data=params,timeout=6000.0)
-            # log("palette_api: post requests.post")
-            result = req.text
-        except (requests.ConnectionError,requests.Timeout,Exception) as err:
-            log("palette_api: Connection exception!")
+            loop = asyncio.get_event_loop()
+            p = params.encode('ascii', 'utf-8')
+            paramsbytes = bytes(p)
+            loop.run_until_complete(asyncio.gather(
+                asyncio.ensure_future(palette_nats_request("toengine.api",paramsbytes))
+            ))
+
+            global NatsResponse
+            result = NatsResponse.data.decode()
+            
+        except TimeoutError as err:
+            print("Request timed out")
             requestError = err
-            # log("ConnectionError exception: %s" % format_exc())
-        # except:
-        #     log("palette_api: unknown exception!?")
-        #     log("Unexpected exception: %s" % format_exc())
-        #     requestError = "unknown"
-    
+
         ApiLock.release()
 
         if requestError == None:
@@ -359,22 +313,6 @@ def GetParam(name):
         log("Error in palette.GetParam for "+name)
         return ""
     return value
-
-# def EngineParam(s,defvalue=""):
-#     global SettingsJson
-#     if SettingsJson == None:
-#         path = engineFilePath("default.json")
-#         if not os.path.isfile(path):
-#             log("No file? path=",path)
-#             return defvalue
-#         if Verbose:
-#             log("Loading ",path)
-#         SettingsJson = readJsonPath(path)
-# 
-#     if SettingsJson != None and "params" in SettingsJson and s in SettingsJson["params"]:
-#         return SettingsJson[s]
-#     else:
-#         return defvalue
 
 paletteDir = None
 def PaletteDir():
