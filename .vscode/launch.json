@@ -34,6 +34,13 @@
             "args": ["api","engine.status"]
         },
         {
+            "name": "palette api engine.get engine.defaultguilevel",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTE_SOURCE}/cmd/palette/palette.go",
+            "args": ["api","engine.get","name","engine.defaultguilevel"]
+        },
+        {
             "name": "python tryapi.py",
             "type": "python",
             "request": "launch",
