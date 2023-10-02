@@ -1,6 +1,6 @@
 # Palette - a system for visual music instruments
 
-# WARNING - main branch is under active development, do not use.
+NOTE: The main branch of this repo is now considered stable, and is based on the v7.7 release.  Active development now happens on the dev branch.
 
 Palette is used in the <a href=https://youtu.be/HDtxEyCI_zc>Space Palette Pro</a>,
 an instrument that lets you fingerpaint sound and visuals
