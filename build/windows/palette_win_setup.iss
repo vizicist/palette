@@ -24,8 +24,8 @@ DefaultGroupName={#MyAppName}
 ; Uncomment the following line to run in non administrative install mode (install for current user only.)
 ;PrivilegesRequired=lowest
 OutputBaseFilename=palette_{#MyAppVersion}_win_setup
-Compression=none
-; Compression=lzma
+; Compression=none
+Compression=lzma
 SolidCompression=yes
 LZMAUseSeparateProcess=yes
 LZMANumBlockThreads=6
