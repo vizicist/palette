@@ -484,7 +484,7 @@ func NewVizletISF(name string, isfname string, frame *glhf.Frame) (Vizlet, error
 // FilePath xxx
 func FilePath(nm string) string {
 	dir := engine.LocalPaletteDir()
-	ps := os.Getenv("PALETTESOURCE")
+	ps := os.Getenv("PALETTE_SOURCE")
 	if ps != "" {
 		dir = filepath.Join(ps, "default")
 	}

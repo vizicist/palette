@@ -171,7 +171,7 @@ def generate(homedir, force, sourcedir, floatType):
 
 if __name__ == "__main__":
 
-    homedir = os.getenv("PALETTESOURCE")
+    homedir = os.getenv("PALETTE_SOURCE")
 
     force = False
     sourcedir = os.path.join(homedir,"ffgl/source/lib/palette")

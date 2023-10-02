@@ -142,16 +142,16 @@ func BinFilePath(nm string) string {
 	return filepath.Join(RootPath(), "bin", nm)
 }
 
-var paletteSourceLogged = false
+var PALETTE_SOURCELogged = false
 
 // ConfigFilePath xxx
 func ConfigFilePath(nm string) string {
-	// If PALETTESOURCE is defined, we use it
-	ps := os.Getenv("PALETTESOURCE")
+	// If PALETTE_SOURCE is defined, we use it
+	ps := os.Getenv("PALETTE_SOURCE")
 	if ps != "" {
-		if !paletteSourceLogged {
-			paletteSourceLogged = true
-			log.Printf("Using PALETTESOURCE=%s to get config files\n", ps)
+		if !PALETTE_SOURCELogged {
+			PALETTE_SOURCELogged = true
+			log.Printf("Using PALETTE_SOURCE=%s to get config files\n", ps)
 		}
 		return filepath.Join(ps, "default", "config", nm)
 	}

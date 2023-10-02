@@ -180,7 +180,7 @@ def changeeffects(paramfile):
     f.write("\n")
     f.close()
 
-homedir = os.getenv("PALETTESOURCE")
+homedir = os.getenv("PALETTE_SOURCE")
 
 
 # This can be used on either "effect" or "snap"
