@@ -21,19 +21,19 @@ import platform
 DebugApi = False
 Verbose = False
 MyNuid = ""
-PaletteSourceLogged = False
+PALETTE_SOURCELogged = False
 
 def localconfigFilePath(nm):
     return os.path.join(localAppDataDir(), "config", nm)
 
 def configFilePath(nm):
-    # If PALETTESOURCE is defined, we use
-    ps = os.environ.get("PALETTESOURCE")
+    # If PALETTE_SOURCE is defined, we use
+    ps = os.environ.get("PALETTE_SOURCE")
     if ps != None:
-        global PaletteSourceLogged
-        if not PaletteSourceLogged:
-            PaletteSourceLogged = True
-            print("Using PALETTESOURCE=",ps," to get config files")
+        global PALETTE_SOURCELogged
+        if not PALETTE_SOURCELogged:
+            PALETTE_SOURCELogged = True
+            print("Using PALETTE_SOURCE=",ps," to get config files")
         return os.path.join(ps, "default", "config", nm)
     else:
         return os.path.join(PaletteDir(), "config", nm)
@@ -52,10 +52,10 @@ def presetsPath():
     if lad != None:
         p = p.replace("%LOCALAPPDATA%",lad)
 
-    # If PALETTESOURCE is defined, add the default/presets directory
+    # If PALETTE_SOURCE is defined, add the default/presets directory
     # to the presetsPath ,so that any editing/creation of presets
     # will be saved there (to be used in the default installation).
-    ps = os.environ.get("PALETTESOURCE")
+    ps = os.environ.get("PALETTE_SOURCE")
     if ps != None:
         p = os.path.join(ps,"default","presets") + ";" + p
 
@@ -79,8 +79,8 @@ def presetsListAll(section):
     return sortvals
 
 # This one always returns the local (first) directory in the presetspath,
-# which is either the user's LOCALAPPDATA version or (if PALETTESOURCE is
-# defined) the PALETTESOURCE version.
+# which is either the user's LOCALAPPDATA version or (if PALETTE_SOURCE is
+# defined) the PALETTE_SOURCE version.
 def localPresetsFilePath(section, nm, suffix=".json"):
     presetspath = presetsPath()
     paths = presetspath.split(";")

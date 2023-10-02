@@ -64,7 +64,7 @@ go get gopkg.in/mail.v2
 - Add a new environment variable in your System Properties:
 
 ```
- PALETTESOURCE=%USERPROFILE%\go\src\github.com\vizicist\palette
+ PALETTE_SOURCE=%USERPROFILE%\go\src\github.com\vizicist\palette
 ```
 
 - In Visual Studio Code, click on the "extensions marketplace" icon (four little squares) on the left side.
@@ -74,7 +74,7 @@ go get gopkg.in/mail.v2
 - To compile everything, use a newly-created "cmd" window (so that the changes to PATH and the environment variable are reflected) and enter these lines:
 
 ```
-cd %PALETTESOURCE%\build\windows
+cd %PALETTE_SOURCE%\build\windows
 build
 ```
 
