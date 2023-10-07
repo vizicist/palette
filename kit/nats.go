@@ -125,12 +125,10 @@ func (vn *VizNats) Connect(user string, password string, url string) error {
 	nc, err := nats.Connect(fullurl, opts...)
 	if err != nil {
 		return fmt.Errorf("nats.Connect failed, user=%s err=%s", user, err)
-	} else {
-		vn.natsConn = nc
-		err = vn.Publish("palette.info", "nats.Connect has succeeded")
-		LogIfError(err)
 	}
-	return err // nil or not
+	vn.natsConn = nc
+	LogInfo("Successful connect to NATS")
+	return vn.Publish("palette.info", "nats.Connect has succeeded")
 }
 
 // Request is used for APIs - it blocks waiting for a response and returns the response
@@ -140,7 +138,7 @@ func (vn *VizNats) Request(subj, data string, timeout time.Duration) (retdata st
 	}
 	nc := vn.natsConn
 	if nc == nil {
-		return "", fmt.Errorf("VizNats.Request: no natsConn")
+		return "", fmt.Errorf("Unable to communicate with NATS")
 	}
 	bytes := []byte(data)
 	msg, err := nc.Request(subj, bytes, timeout)

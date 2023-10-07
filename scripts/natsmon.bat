@@ -1,2 +1,2 @@
-if "%1" == "" "%PALETTE%\bin\nats-sub" -s "%NATS_USER%:%NATS_PASSWORD%@%NATS_URL%" ">"
-if not "%1" == "" "%PALETTE%\bin\nats-sub" -s "%NATS_USER%:%NATS_PASSWORD%@%NATS_URL%" %1
+if "%1" == "" "%PALETTE%\bin\nats" -s "%NATS_USER%:%NATS_PASSWORD%@%NATS_URL%" subscribe ">"
+if not "%1" == "" "%PALETTE%\bin\nats" -s "%NATS_USER%:%NATS_PASSWORD%@%NATS_URL%" subscribe %1

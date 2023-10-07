@@ -134,7 +134,7 @@ func CliCommand(args []string) (map[string]string, error) {
 			return nil, hostwin.StartExecutableLogOutput("monitor", fullexe)
 
 		case "engine":
-			return nil, doStartEngine()
+			return nil, startEngineExecutable()
 
 		default:
 			// If it exists in the ProcessList...
@@ -241,7 +241,7 @@ func StatusOutput() (statusOut string, numRunning int) {
 	return s, nrunning
 }
 
-func doStartEngine() error {
+func startEngineExecutable() error {
 
 	if hostwin.IsRunning("engine") {
 		return fmt.Errorf("engine is already running")

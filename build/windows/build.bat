@@ -115,9 +115,9 @@ rem copy mmtt_kinect\*.dll %bin%\mmtt_kinect >nul
 rem popd
 
 echo ================ Copying misc binaries
-copy %PALETTE_SOURCE%\binaries\nats\nats-pub.exe %bin% >nul
-copy %PALETTE_SOURCE%\binaries\nats\nats-sub.exe %bin% >nul
+copy %PALETTE_SOURCE%\binaries\nats.exe %bin% >nul
 copy %PALETTE_SOURCE%\binaries\nircmdc.exe %bin% >nul
+copy %PALETTE_SOURCE%\binaries\jq.exe %bin% >nul
 
 echo ================ Copying scripts
 pushd %PALETTE_SOURCE%\scripts

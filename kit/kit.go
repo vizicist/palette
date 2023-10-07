@@ -63,25 +63,17 @@ func Init() error {
 		return err
 	}
 
-	enabled, err := GetParamBool("engine.attractenabled")
-	LogIfError(err)
-	TheAttractManager.SetAttractEnabled(enabled)
-
 	InitSynths()
 
 	err = LoadResolumeJSON()
 	if err != nil {
 		LogIfError(err)
 	}
+	return err
 
-	go InputListener()
-	go StartOscListener(OscPort)
-
-	return StartNATS()
 }
 
-
-func StartNATS() error {
+func StartNATSClient() error {
 
 	subscribeTo := "toengine.api"
 	natsUser := os.Getenv("NATS_USER")
@@ -92,36 +84,18 @@ func StartNATS() error {
 	}
 
 	err := TheNats.Connect(natsUser, natsPassword, natsUrl)
-	LogIfError(err)
-	if err == nil {
-		LogInfo("Successfully connected to NATS server", "url", natsUrl)
-		LogInfo("NATS Connection successful")
-		err = TheNats.Subscribe(subscribeTo, NatsRequestHandler)
-		LogIfError(err)
-		return nil
-	}
-
-	// If unable to connect to remote (or at least, the NATS_URL) server, we start up our own local server
-	if natsUrl != LocalAddress {
-		LogInfo("Connection to cloud NATS server fails, falling back to local server", "natsUrl", natsUrl, "err", err.Error())
-	}
-	natsUrl = LocalAddress
-	err = TheNats.StartServer()
 	if err != nil {
-		LogWarn("StarNATS unable to start local server", "err", err.Error())
 		return err
 	}
+	LogInfo("Successfully connected to NATS", "url", natsUrl)
+	LogInfo("NATS Connection successful")
+	return TheNats.Subscribe(subscribeTo, NatsRequestHandler)
+}
 
-	// Try the connect again
-	err = TheNats.Connect(natsUser, natsPassword, natsUrl)
-	if err != nil {
-		LogWarn("StarNATS unable to connect to local server", "err", err.Error())
-		return err
-	}
-	LogInfo("Successfully connected to NATS server", "url", natsUrl)
-	err = TheNats.Subscribe(subscribeTo, NatsRequestHandler)
+func StartNATSServer() error {
+	err := TheNats.StartServer()
 	LogIfError(err)
-	return nil
+	return err
 }
 
 func ShutdownNATS() {
@@ -129,7 +103,23 @@ func ShutdownNATS() {
 }
 
 func StartEngine() error {
+
 	LogInfo("Engine.Start")
+
+	enabled, err := GetParamBool("engine.attractenabled")
+	if err != nil {
+		LogIfError(err)
+		enabled = false
+	}
+	TheAttractManager.SetAttractEnabled(enabled)
+
+	go InputListener()
+	go StartOscListener(OscPort)
+
+	err = StartNATSServer()
+	if err != nil {
+		return err
+	}
 
 	// go StartHttp(EngineHttpPort)
 	TheHost.Start()
@@ -195,13 +185,11 @@ func RemoteEngineApi(api string, args []string) (string, error) {
 	}
 	data += " }"
 
-	LogInfo("RemoteEngineApi before Request", "data", data)
 	result, err := TheNats.Request("toengine.api", data, time.Second)
-	if err == nats.ErrNoResponders {
+	if err != nil {
 		return "", err
 	}
-	LogIfError(err)
-	LogInfo("RemoteEngineApi after Request", "result", result)
+	LogInfo("RemoteEngineApi has been called", "api", api, "result", result)
 	return result, nil
 }
 
