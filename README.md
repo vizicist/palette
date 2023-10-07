@@ -1,6 +1,6 @@
 # Palette - a visual music instrument system
 
-# WARNING - main branch is under active development, do not use.
+# WARNING - this branch is under active development, do not use.
 
 Palette is the system used by the <a href=https://youtu.be/HDtxEyCI_zc>Space Palette Pro</a>,
 an instrument that lets you fingerpaint sound and visuals

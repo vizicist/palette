@@ -50,7 +50,6 @@ var LogEnabled = map[string]bool{
 	"realtime":       false,
 	"resolume":       false,
 	"remote":         false,
-	"router":         false,
 	"scale":          false,
 	"scheduler":      false,
 	"task":           false,

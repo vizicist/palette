@@ -173,9 +173,9 @@ func (sched *Scheduler) advanceClickTo(toClick Clicks) {
 	// Don't let events get handled while we're advancing
 	// XXX - this might not be needed if all communication/syncing
 	// is done only from the scheduler loop
-	TheHost.InputEventLock()
+	InputEventLock()
 	defer func() {
-		TheHost.InputEventUnlock()
+		InputEventUnlock()
 	}()
 
 	doAutoCursorUp := true

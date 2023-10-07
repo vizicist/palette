@@ -217,7 +217,7 @@ func main() {
 	kit.RegisterHost(host)
 
 	imgpath := kit.TheHost.ConfigFilePath(*ip)
-	if host.FileExists(imgpath) {
+	if kit.FileExists(imgpath) {
 		hostwin.LogInfo("Loading image", "imgpath", imgpath)
 		img, _, err := ebitenutil.NewImageFromFile(imgpath)
 		if err != nil {

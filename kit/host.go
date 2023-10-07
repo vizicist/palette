@@ -1,9 +1,5 @@
 package kit
 
-import (
-	"github.com/hypebeast/go-osc/osc"
-)
-
 type Host interface {
 	Init() error
 	Start()
@@ -20,10 +16,7 @@ type Host interface {
 	ResetAudio()
 	ActivateAudio()
 	FileExists(path string) bool
-	SendToOscClients(msg *osc.Message)
 	GenerateVisualsFromCursor(ce CursorEvent, patchName string)
-	InputEventLock()
-	InputEventUnlock()
 	OpenFakeChannelOutput(port string, channel int) *MIDIPortChannelState
 	OpenChannelOutput(PortChannel) *MIDIPortChannelState
 	GetPortChannelState(PortChannel) (*MIDIPortChannelState, error)
@@ -31,7 +24,7 @@ type Host interface {
 	StartRunning(process string) error
 	KillProcess(process string) error
 	SetMidiInput(name string) error
-	ShowClip(clipNum int)
+	// ShowClip(clipNum int)
 
 	GetConfigFileData(filename string) ([]byte, error)
 	ConfigFilePath(filename string) string
@@ -41,10 +34,9 @@ type Host interface {
 
 	EveryTick()
 
-	ToFreeFramePlugin(patchName string, msg *osc.Message)
-	SendEffectParam(patchName string, name string, value string)
-	PortAndLayerNumForPatch(patchName string) (portnum int, layernum int)
-	ShowText(msg string)
+	// ToFreeFramePlugin(patchName string, msg *osc.Message)
+	// SendEffectParam(patchName string, name string, value string)
+	// ShowText(msg string)
 }
 
 func FileExists(path string) bool {
@@ -53,11 +45,13 @@ func FileExists(path string) bool {
 
 var OscOutput = true
 
+/*
 func SendToOscClients(msg *osc.Message) {
 	if OscOutput {
-		TheHost.SendToOscClients(msg)
+		SendToOscClients(msg)
 	}
 }
+*/
 
 func ArchiveLogs() error {
 	return TheHost.ArchiveLogs()

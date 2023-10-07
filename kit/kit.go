@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/hypebeast/go-osc/osc"
 	"github.com/nats-io/nats.go"
 	midi "gitlab.com/gomidi/midi/v2"
 )
@@ -52,6 +53,11 @@ func Init() error {
 	TheQuadPro = NewQuadPro()
 	TheNats = NewVizNats()
 
+	ResolumeClient = osc.NewClient(LocalAddress, ResolumePort)
+	GuiClient = osc.NewClient(LocalAddress, GuiPort)
+	OscInputChan = make(chan OscEvent)
+	MidiInputChan = make(chan MidiEvent)
+
 	err = TheHost.Init()
 	if err != nil {
 		return err
@@ -63,8 +69,17 @@ func Init() error {
 
 	InitSynths()
 
+	err = LoadResolumeJSON()
+	if err != nil {
+		LogIfError(err)
+	}
+
+	go InputListener()
+	go StartOscListener(OscPort)
+
 	return StartNATS()
 }
+
 
 func StartNATS() error {
 
@@ -81,7 +96,8 @@ func StartNATS() error {
 	if err == nil {
 		LogInfo("Successfully connected to NATS server", "url", natsUrl)
 		LogInfo("NATS Connection successful")
-		TheNats.Subscribe(subscribeTo, NatsRequestHandler)
+		err = TheNats.Subscribe(subscribeTo, NatsRequestHandler)
+		LogIfError(err)
 		return nil
 	}
 
@@ -103,7 +119,8 @@ func StartNATS() error {
 		return err
 	}
 	LogInfo("Successfully connected to NATS server", "url", natsUrl)
-	TheNats.Subscribe(subscribeTo, NatsRequestHandler)
+	err = TheNats.Subscribe(subscribeTo, NatsRequestHandler)
+	LogIfError(err)
 	return nil
 }
 
@@ -118,6 +135,7 @@ func StartEngine() error {
 	TheHost.Start()
 	TheQuadPro.Start()
 	go TheScheduler.Start()
+	go NotifyGUI("restart")
 
 	return nil
 }
@@ -200,7 +218,8 @@ func NatsRequestHandler(msg *nats.Msg) {
 	}
 	bytes := []byte(response)
 	// Send the response.
-	msg.Respond(bytes)
+	err = msg.Respond(bytes)
+	LogIfError(err)
 }
 
 func LoadEngineParams(fname string) {
@@ -234,7 +253,7 @@ func ScheduleCursorEvent(ce CursorEvent) {
 }
 
 func HandleMidiEvent(me MidiEvent) {
-	TheHost.SendToOscClients(MidiToOscMsg(me))
+	SendToOscClients(MidiToOscMsg(me))
 
 	if Midithru {
 		LogOfType("midi", "PassThruMIDI", "msg", me.Msg)

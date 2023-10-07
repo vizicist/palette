@@ -95,7 +95,7 @@ func (patch *Patch) MIDIChannel() uint8 {
 }
 
 func (patch *Patch) RefreshAllIfPortnumMatches(ffglportnum int) {
-	portnum, _ := TheHost.PortAndLayerNumForPatch(patch.name)
+	portnum, _ := PortAndLayerNumForPatch(patch.name)
 	if portnum == ffglportnum {
 		patch.RefreshAllPatchValues()
 	}
@@ -116,13 +116,13 @@ func (patch *Patch) noticeValueChange(paramName string, paramValue string) {
 		msg.Append("set_params")
 		args := fmt.Sprintf("{\"%s\":\"%s\"}", name, paramValue)
 		msg.Append(args)
-		TheHost.ToFreeFramePlugin(patch.Name(), msg)
+		ToFreeFramePlugin(patch.Name(), msg)
 	}
 
 	if strings.HasPrefix(paramName, "effect.") {
 		name := strings.TrimPrefix(paramName, "effect.")
 		// Effect parameters get sent to Resolume
-		TheHost.SendEffectParam(patch.Name(), name, paramValue)
+		SendEffectParam(patch.Name(), name, paramValue)
 	}
 
 	if paramName == "sound.synth" {
@@ -477,7 +477,7 @@ func (patch *Patch) Load(category string, filename string) error {
 }
 
 func (patch *Patch) clearGraphics() {
-	TheHost.ToFreeFramePlugin(patch.Name(), osc.NewMessage("/clear"))
+	ToFreeFramePlugin(patch.Name(), osc.NewMessage("/clear"))
 }
 
 func (patch *Patch) Status() string {

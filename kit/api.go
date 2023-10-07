@@ -2,17 +2,148 @@ package kit
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
+	"github.com/hypebeast/go-osc/osc"
 )
 
 var MmttHttpPort = 4444
 var EngineHttpPort = 3330
 var LocalAddress = "127.0.0.1"
+
+var OscPort = 3333
+var EventClientPort = 6666
+var GuiPort = 3943
+var BidulePort   int
+
+var ResolumeClient   *osc.Client
+var OscClient        *osc.Client
+var GuiClient *osc.Client
+var FreeframeClients = map[string]*osc.Client{}
+
+func OscHandleCursor(msg *osc.Message) {
+
+	nargs := msg.CountArguments()
+	if nargs < 1 {
+		LogWarn("Router.handleMMTTCursor: too few arguments")
+		return
+	}
+	ddu, err := argAsString(msg, 0)
+	if err != nil {
+		LogIfError(err)
+		return
+	}
+	source, err := argAsString(msg, 1)
+	if err != nil {
+		LogIfError(err)
+		return
+	}
+	gid, err := argAsInt(msg, 2)
+	if err != nil {
+		LogIfError(err)
+		return
+	}
+	x, err := argAsFloat32(msg, 3)
+	if err != nil {
+		LogIfError(err)
+		return
+	}
+	y, err := argAsFloat32(msg, 4)
+	if err != nil {
+		LogIfError(err)
+		return
+	}
+	z, err := argAsFloat32(msg, 5)
+	if err != nil {
+		LogIfError(err)
+		return
+	}
+
+	pos := CursorPos{X: x, Y: y, Z: z}
+
+	ce := NewCursorEvent(gid, source, ddu, pos)
+
+	// XXX - HACK!!
+	xexpand, err := GetParamFloat("engine.mmtt_xexpand")
+	if err != nil {
+		LogIfError(err)
+		return
+	}
+	yexpand, err := GetParamFloat("engine.mmtt_yexpand")
+	if err != nil {
+		LogIfError(err)
+		return
+	}
+	zexpand, err := GetParamFloat("engine.mmtt_zexpand")
+	if err != nil {
+		LogIfError(err)
+		return
+	}
+
+	// The X, Y, Z values are 0.0 to 1.0.
+	// We want to expand the X and Y values a bit around their center
+	// (hence the 0.5 stuff), since the values from mmtt_kinect are inset a bit.
+	newPos := ce.Pos
+	newPos.X = (float32)(BoundValueZeroToOne(((float64(ce.Pos.X) - 0.5) * xexpand) + 0.5))
+	newPos.Y = (float32)(BoundValueZeroToOne(((float64(ce.Pos.Y) - 0.5) * yexpand) + 0.5))
+	// For Z, we want to expand the value only in the positive direction.
+	newPos.Z = (float32)(BoundValueZeroToOne(float64(ce.Pos.Z) * zexpand))
+
+	LogOfType("cursor", "MMTT Cursor", "ddu", ce.Ddu, "newPos", newPos)
+
+	ce.Pos = newPos
+
+	if ce.Ddu != "up" && ce.Pos.Z < 0.0001 {
+		LogWarn("Hmmmmmmmm, OSC down/drag cursor event has zero Z?", "ce", ce)
+		ce.Pos.Z = TheCursorManager.LoopThreshold
+	}
+	TheCursorManager.ExecuteCursorEvent(ce)
+}
+
+
+func HandleOscInput(e OscEvent) {
+
+	LogOfType("osc", "Router.HandleOscInput", "msg", e.Msg.String())
+	switch e.Msg.Address {
+
+	case "/clientrestart":
+		// This message currently comes from the FFGL plugins in Resolume
+		err := OscHandleClientRestart(e.Msg)
+		LogIfError(err)
+
+	case "/event": // These messages encode the arguments as JSON
+		LogIfError(fmt.Errorf("/event OSC message should no longer be used"))
+		// r.handleOscEvent(e.Msg)
+
+	// case "/button":
+	// 	r.oscHandleButton(e.Msg)
+
+	case "/cursor":
+		// This message comes from the mmtt_kinect process,
+		// and is the way other cursor servers can convey
+		// cursor down/drag/up input.  This is kinda like TUIO,
+		// except that it's not a polling interface - servers
+		// need to send explicit events, including a reliable "up".
+		OscHandleCursor(e.Msg)
+
+		/*
+			case "/sprite":
+				r.handleSpriteMsg(e.Msg)
+		*/
+
+	case "/api":
+		err := OscHandleApi(e.Msg)
+		LogIfError(err)
+
+	default:
+		LogWarn("Router.HandleOSCInput: Unrecognized OSC message", "source", e.Source, "msg", e.Msg)
+	}
+}
 
 func MmttApi(api string) (map[string]string, error) {
 	id := "56789"
@@ -228,7 +359,7 @@ func ExecuteEngineApi(api string, apiargs map[string]string) (result string, err
 		if err != nil {
 			return "", fmt.Errorf("engine.showimage: bad clipnum parameter")
 		}
-		TheHost.ShowClip(clipNum)
+		ShowClip(clipNum)
 		return "", nil
 
 	case "startrecording":
@@ -459,3 +590,153 @@ func SavedList(apiargs map[string]string) (string, error) {
 	result += "]"
 	return result, nil
 }
+
+func NotifyGUI(eventName string) {
+	b, err := GetParamBool("engine.notifygui")
+	LogIfError(err)
+	if !b {
+		return
+	}
+	msg := osc.NewMessage("/notify")
+	msg.Append(eventName)
+	SendOsc(GuiClient, msg)
+}
+
+/*
+func (r *Router) oscHandleButton(msg *osc.Message) {
+	buttName, err := argAsString(msg, 0)
+	if err != nil {
+		LogIfError(err)
+		return
+	}
+	text := strings.ReplaceAll(buttName, "_", "\n")
+	go TheResolume().showText(text)
+}
+*/
+
+func OscHandleClientRestart(msg *osc.Message) error {
+
+	nargs := msg.CountArguments()
+	if nargs < 1 {
+		return fmt.Errorf("Router.handleOscEvent: too few arguments")
+	}
+	// Even though the argument is an integer port number,
+	// it's a string in the OSC message sent from the Palette FFGL plugin.
+	portnum, err := argAsString(msg, 0)
+	if err != nil {
+		return err
+	}
+	ffglportnum, err := strconv.Atoi(portnum)
+	if err != nil {
+		return err
+	}
+	TheQuadPro.OnClientRestart(ffglportnum)
+	return nil
+}
+
+// handleApiMsg
+func OscHandleApi(msg *osc.Message) error {
+	apijson, err := argAsString(msg, 0)
+	if err != nil {
+		return err
+	}
+	var f any
+	err = json.Unmarshal([]byte(apijson), &f)
+	if err != nil {
+		return fmt.Errorf("unable to Unmarshal apijson=%s", apijson)
+	}
+	LogInfo("Router.handleApiMsg", "apijson", apijson)
+	LogInfo("Router.handleApiMsg", "f", f)
+	// r.cursorManager.HandleCursorEvent(ce)
+	return nil
+}
+
+func argAsInt(msg *osc.Message, index int) (i int, err error) {
+	if index >= len(msg.Arguments) {
+		return 0, fmt.Errorf("not enough arguments, looking for index=%d", index)
+	}
+	arg := msg.Arguments[index]
+	switch v := arg.(type) {
+	case int32:
+		i = int(v)
+	case int64:
+		i = int(v)
+	default:
+		err = fmt.Errorf("expected an int in OSC argument index=%d", index)
+	}
+	return i, err
+}
+
+func argAsFloat32(msg *osc.Message, index int) (f float32, err error) {
+	if index >= len(msg.Arguments) {
+		return f, fmt.Errorf("not enough arguments, looking for index=%d", index)
+	}
+	arg := msg.Arguments[index]
+	switch v := arg.(type) {
+	case float32:
+		f = v
+	case float64:
+		f = float32(v)
+	default:
+		err = fmt.Errorf("expected a float in OSC argument index=%d", index)
+	}
+	return f, err
+}
+
+func argAsString(msg *osc.Message, index int) (s string, err error) {
+	if index >= len(msg.Arguments) {
+		return s, fmt.Errorf("not enough arguments, looking for index=%d", index)
+	}
+	arg := msg.Arguments[index]
+	switch v := arg.(type) {
+	case string:
+		s = v
+	default:
+		err = fmt.Errorf("expected a string in OSC argument index=%d", index)
+	}
+	return s, err
+}
+
+func SendOsc(client *osc.Client, msg *osc.Message) {
+	if client == nil {
+		LogIfError(fmt.Errorf("engine.SendOsc: client is nil"))
+		return
+	}
+
+	err := client.Send(msg)
+	LogIfError(err)
+}
+
+func SendToOscClients(msg *osc.Message) {
+	if OscOutput {
+		if OscClient == nil {
+			OscClient = osc.NewClient(LocalAddress, EventClientPort)
+			// oscClient is guaranteed to be non-nil
+		}
+		SendOsc(OscClient, msg)
+	}
+}
+
+func StartOscListener(port int) {
+
+	source := fmt.Sprintf("%s:%d", LocalAddress, port)
+
+	d := osc.NewStandardDispatcher()
+
+	err := d.AddMsgHandler("*", func(msg *osc.Message) {
+		OscInputChan <- OscEvent{Msg: msg, Source: source}
+	})
+	if err != nil {
+		LogIfError(err)
+	}
+
+	server := &osc.Server{
+		Addr:       source,
+		Dispatcher: d,
+	}
+	err = server.ListenAndServe()
+	if err != nil {
+		LogIfError(err)
+	}
+}
+

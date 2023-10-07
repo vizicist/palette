@@ -163,7 +163,8 @@ func (vn *VizNats) Publish(subj string, msg string) error {
 		log.Printf("Nats.Publish: %s %s\n", subj, msg)
 	}
 
-	nc.Publish(subj, bytes)
+	err := nc.Publish(subj, bytes)
+	LogIfError(err)
 	nc.Flush()
 
 	if err := nc.LastError(); err != nil {
@@ -182,7 +183,8 @@ func (vn *VizNats) Subscribe(subj string, callback nats.MsgHandler) error {
 	if nc == nil {
 		return fmt.Errorf("Subscribe: subject=%s, no connection to nats-server", subj)
 	}
-	nc.Subscribe(subj, callback)
+	_, err := nc.Subscribe(subj, callback)
+	LogIfError(err)
 	nc.Flush()
 
 	return nc.LastError()
@@ -257,7 +259,8 @@ func handleDiscover(msg *nats.Msg) {
 	if IsLogging("api") {
 		log.Printf("handleDiscover: data=%s reply=%s response=%s\n", string(msg.Data), msg.Reply, response)
 	}
-	msg.Respond([]byte(response))
+	err := msg.Respond([]byte(response))
+	LogIfError(err)
 }
 
 var _ = handleDiscover // to avoid unused error from go-staticcheck

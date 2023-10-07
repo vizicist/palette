@@ -14,10 +14,6 @@ import (
 type HostWin struct {
 	logName          string
 	done             chan bool
-	oscoutput        bool
-	oscClient        *osc.Client
-	resolumeClient   *osc.Client
-	freeframeClients map[string]*osc.Client
 
 	// recordingIndex int
 	// recordingFile  *os.File
@@ -25,8 +21,6 @@ type HostWin struct {
 	// recordingMutex sync.RWMutex
 	// currentPitchOffset  *atomic.Int32
 
-	biduleClient *osc.Client
-	bidulePort   int
 }
 
 var TheWinHost *HostWin
@@ -37,11 +31,8 @@ func NewHost(logname string) *HostWin {
 
 	h := &HostWin{
 		logName:          logname,
-		resolumeClient:   osc.NewClient(LocalAddress, ResolumePort),
-		freeframeClients: map[string]*osc.Client{},
-		biduleClient:     osc.NewClient(LocalAddress, BidulePort),
-		bidulePort:       BidulePort,
 	}
+	BiduleClient = osc.NewClient(LocalAddress, BidulePort)
 	TheWinHost = h
 	InitLog(h.logName)
 	TheProcessManager = NewProcessManager()
@@ -52,18 +43,9 @@ func (h HostWin) Init() error {
 
 	TheProcessManager.AddBuiltins()
 
-	err := h.loadResolumeJSON()
-	if err != nil {
-		LogIfError(err)
-		return err
-	}
 	// Fixed rand sequence, better for testing
 	TheRand = rand.New(rand.NewSource(1))
 
-	h.biduleClient = osc.NewClient(LocalAddress, BidulePort)
-	h.bidulePort = BidulePort
-
-	TheRouter = NewRouter()
 	TheMidiIO = NewMidiIO()
 
 	return nil
@@ -75,9 +57,6 @@ func (h HostWin) Start() {
 
 	h.done = make(chan bool)
 
-	go h.StartOscListener(OscPort)
-
-	go TheRouter.Start()
 	go TheMidiIO.Start()
 
 	go h.ResetAudio()
@@ -86,17 +65,19 @@ func (h HostWin) Start() {
 	// 	go DepthRunForever()
 	// }
 }
+func Start() {
+
+	err := LoadMorphs()
+	if err != nil {
+		LogWarn("StartCursorInput: LoadMorphs", "err", err)
+	}
+
+	go StartMorph(kit.ScheduleCursorEvent, 1.0)
+}
+
 
 func (h HostWin) EveryTick() {
 	TheProcessManager.checkProcess()
-}
-
-func (h HostWin) InputEventLock() {
-	TheRouter.inputEventMutex.Lock()
-}
-
-func (h HostWin) InputEventUnlock() {
-	TheRouter.inputEventMutex.Unlock()
 }
 
 func (h HostWin) SaveDataInFile(data []byte, category string, filename string) error {
@@ -128,7 +109,7 @@ func (h HostWin) GetConfigFileData(filename string) ([]byte, error) {
 func (h HostWin) GenerateVisualsFromCursor(ce kit.CursorEvent, patchName string) {
 	// send an OSC message to Resolume
 	msg := kit.CursorToOscMsg(ce)
-	h.ToFreeFramePlugin(patchName, msg)
+	kit.ToFreeFramePlugin(patchName, msg)
 
 }
 
@@ -172,49 +153,6 @@ func (h HostWin) WaitTillDone() {
 
 func (h HostWin) SayDone() {
 	h.done <- true
-}
-
-func (h HostWin) SendOsc(client *osc.Client, msg *osc.Message) {
-	if client == nil {
-		LogIfError(fmt.Errorf("engine.SendOsc: client is nil"))
-		return
-	}
-
-	err := client.Send(msg)
-	LogIfError(err)
-}
-
-func (h HostWin) SendToOscClients(msg *osc.Message) {
-	if h.oscoutput {
-		if h.oscClient == nil {
-			h.oscClient = osc.NewClient(LocalAddress, EventClientPort)
-			// oscClient is guaranteed to be non-nil
-		}
-		h.SendOsc(h.oscClient, msg)
-	}
-}
-
-func (h HostWin) StartOscListener(port int) {
-
-	source := fmt.Sprintf("%s:%d", LocalAddress, port)
-
-	d := osc.NewStandardDispatcher()
-
-	err := d.AddMsgHandler("*", func(msg *osc.Message) {
-		TheRouter.oscInputChan <- kit.OscEvent{Msg: msg, Source: source}
-	})
-	if err != nil {
-		LogIfError(err)
-	}
-
-	server := &osc.Server{
-		Addr:       source,
-		Dispatcher: d,
-	}
-	err = server.ListenAndServe()
-	if err != nil {
-		LogIfError(err)
-	}
 }
 
 func (h HostWin) StartRunning(process string) (err error) {

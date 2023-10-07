@@ -124,11 +124,6 @@ func ProcessList() []string {
 	// arr = append(arr, "monitor")
 	arr = append(arr, "bidule")
 	arr = append(arr, "resolume")
-	// keykit, err := kit.GetParamBool("engine.keykitrun")
-	// LogIfError(err)
-	// if keykit {
-	// 	arr = append(arr, "keykit")
-	// }
 	mmtt, err := kit.GetParam("engine.mmtt")
 	LogIfError(err)
 	if mmtt != "" {
@@ -160,9 +155,9 @@ func (pm *ProcessManager) AddProcessBuiltIn(process string) {
 	kit.LogOfType("process", "AddProcessBuiltIn", "process", process)
 	switch process {
 	case "bidule":
-		pm.AddProcess(process, TheWinHost.ProcessInfoBidule())
+		pm.AddProcess(process, ProcessInfoBidule())
 	case "resolume":
-		pm.AddProcess(process, TheWinHost.ProcessInfo())
+		pm.AddProcess(process, ResolumeProcessInfo())
 	case "gui":
 		pm.AddProcess(process, GuiProcessInfo())
 	// case "keykit":
@@ -358,6 +353,17 @@ func MmttProcessInfo() *ProcessInfo {
 		fullpath = ""
 	}
 	return NewProcessInfo("mmtt_"+mmtt+".exe", fullpath, "", nil)
+}
+
+func ResolumeProcessInfo() *ProcessInfo {
+	fullpath, err := kit.GetParam("engine.resolumepath")
+	LogIfError(err)
+	if fullpath != "" && !kit.FileExists(fullpath) {
+		LogWarn("No Resolume found, looking for", "path", fullpath)
+		return nil
+	}
+	exe := filepath.Base(fullpath)
+	return NewProcessInfo(exe, fullpath, "", kit.ResolumeActivate)
 }
 
 func KillAllExceptMonitor() {

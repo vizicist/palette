@@ -25,10 +25,6 @@ var ResolumeExe = "avenue.exe"
 // var KeykitExe = "key.exe"
 var MmttExe = "mmtt_kinect.exe"
 
-var OscPort = 3333
-var EventClientPort = 6666
-var GuiPort = 3943
-
 func IsRunning(process string) bool {
 	if process == "engine" {
 		return IsRunningExecutable(EngineExe)

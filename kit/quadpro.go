@@ -207,7 +207,7 @@ func (quadpro *QuadPro) onCursorEvent(state ActiveCursor) error {
 					if err != nil {
 						return err
 					}
-					TheHost.ShowText(preset)
+					ShowText(preset)
 				}
 			}
 		}
