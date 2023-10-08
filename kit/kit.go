@@ -75,7 +75,10 @@ func Init() error {
 
 func StartNATSClient() error {
 
-	subscribeTo := "toengine.api"
+	if TheNats.natsConn != nil {
+		// Already connected
+		return nil
+	}
 	natsUser := os.Getenv("NATS_USER")
 	natsPassword := os.Getenv("NATS_PASSWORD")
 	natsUrl := os.Getenv("NATS_URL")
@@ -87,15 +90,21 @@ func StartNATSClient() error {
 	if err != nil {
 		return err
 	}
-	LogInfo("Successfully connected to NATS", "url", natsUrl)
-	LogInfo("NATS Connection successful")
-	return TheNats.Subscribe(subscribeTo, NatsRequestHandler)
+	LogInfo("NATS client Connection successful","url",natsUrl)
+	return nil
 }
 
 func StartNATSServer() error {
 	err := TheNats.StartServer()
-	LogIfError(err)
-	return err
+	if err != nil {
+		return err
+	}
+	err = StartNATSClient()
+	if err != nil {
+		return err
+	}
+	subscribeTo := "toengine.>"
+	return TheNats.Subscribe(subscribeTo, NatsRequestHandler)
 }
 
 func ShutdownNATS() {
@@ -176,6 +185,12 @@ func StartHttp(port int) {
 // RemoteEngineApi makes a call to the remote engine
 // The args array is expected to be name,value pairs.
 func RemoteEngineApi(api string, args []string) (string, error) {
+
+	err := StartNATSClient()
+	if err != nil {
+		return "",err
+	}
+
 	if len(args) % 2 != 0 {
 		return "",fmt.Errorf("remoteengineapi - bad value of args, must be even")
 	}

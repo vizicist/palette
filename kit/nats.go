@@ -138,7 +138,7 @@ func (vn *VizNats) Request(subj, data string, timeout time.Duration) (retdata st
 	}
 	nc := vn.natsConn
 	if nc == nil {
-		return "", fmt.Errorf("Unable to communicate with NATS")
+		return "", fmt.Errorf("unable to communicate with NATS")
 	}
 	bytes := []byte(data)
 	msg, err := nc.Request(subj, bytes, timeout)
@@ -186,6 +186,13 @@ func (vn *VizNats) Subscribe(subj string, callback nats.MsgHandler) error {
 	nc.Flush()
 
 	return nc.LastError()
+}
+
+func (vn *VizNats) Close() {
+	if vn.natsConn != nil {
+		vn.natsConn.Close()
+		vn.natsConn = nil
+	}
 }
 
 var myNUID = ""

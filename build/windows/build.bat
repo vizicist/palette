@@ -101,7 +101,7 @@ popd
 echo ================ Copying FFGL plugin
 pushd %PALETTE_SOURCE%\ffgl\binaries\x64\Release
 copy Palette*.dll %ship%\ffgl > nul
-copy Palette*.pdb %ship%\ffgl > nul
+rem copy Palette*.pdb %ship%\ffgl > nul
 copy %PALETTE_SOURCE%\build\windows\vc15\bin\pthreadvc2.dll %ship%\ffgl >nul
 copy %PALETTE_SOURCE%\build\windows\vc15\bin\msvcr100.dll %ship%\ffgl >nul
 popd
@@ -134,6 +134,7 @@ rem copy natsmon.bat %bin% >nul
 copy delay.bat %bin% >nul
 copy setpalettelogdir.bat %bin% >nul
 copy cdlogs.bat %bin% >nul
+copy usedata.bat %bin% >nul
 
 popd
 
@@ -143,18 +144,24 @@ mkdir %ship%\data\saved
 xcopy /e /y %PALETTE_SOURCE%\data_defaults\config %ship%\data\config >nul
 xcopy /e /y %PALETTE_SOURCE%\data_defaults\html %ship%\data\html >nul
 xcopy /e /y %PALETTE_SOURCE%\data_defaults\saved %ship%\data\saved >nul
+del /f /q %ship%\data\config\*.afphoto >nul 2>&1
+del /f /q %ship%\data\config\*.zip >nul 2>&1
 
 rem The default data directory is data_dexedvital
-rem You can use copydata.bat to switch to other data_*.
+rem You can use usedata.bat to switch to other data_*.
 xcopy /e /y %PALETTE_SOURCE%\data_dexedvital\saved %ship%\data\saved >nul
 xcopy /e /y %PALETTE_SOURCE%\data_dexedvital\config %ship%\data\config >nul
+del /f /q %ship%\data\config\*.zip >nul 2>&1
 
+rem Provide the other data_* directories so you can switch dynamically
 for %%X in (data_dexed data_dexedvital data_omnisphere) DO (
 	echo ================ Copying %%X
 	mkdir %ship%\%%X\config
 	mkdir %ship%\%%X\saved
 	xcopy /e /y %PALETTE_SOURCE%\%%X\config %ship%\%%X\config >nul
 	xcopy /e /y %PALETTE_SOURCE%\%%X\saved %ship%\%%X\saved >nul
+	del /f /q %ship%\%%X\config\default.bidule.* >nul 2>&1
+	del /f /q %ship%\%%X\config\omnisphere\*.omnisphere >nul 2>&1
 )
 
 echo ================ Copying windows-specific things
