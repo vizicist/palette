@@ -3,8 +3,6 @@ package kit
 import (
 	"bytes"
 	"fmt"
-	"io"
-	"net/http"
 	"os"
 	"runtime"
 	"strconv"
@@ -90,7 +88,7 @@ func StartNATSClient() error {
 	if err != nil {
 		return err
 	}
-	LogInfo("NATS client Connection successful","url",natsUrl)
+	LogInfo("NATS client Connection successful", "url", natsUrl)
 	return nil
 }
 
@@ -104,7 +102,7 @@ func StartNATSServer() error {
 		return err
 	}
 	subscribeTo := "toengine.>"
-	return TheNats.Subscribe(subscribeTo, NatsRequestHandler)
+	return TheNats.Subscribe(subscribeTo, natsRequestHandler)
 }
 
 func ShutdownNATS() {
@@ -139,6 +137,7 @@ func StartEngine() error {
 	return nil
 }
 
+/*
 // StartHttp xxx
 func StartHttp(port int) {
 
@@ -163,7 +162,7 @@ func StartHttp(port int) {
 			} else {
 				bstr := string(body)
 				_ = bstr
-				resp, err := ExecuteApiFromJson(bstr)
+				resp, err := executeApiFromJson(bstr)
 				if err != nil {
 					response = ErrorResponse(err)
 				} else {
@@ -181,37 +180,39 @@ func StartHttp(port int) {
 		LogIfError(err)
 	}
 }
+*/
 
-// RemoteEngineApi makes a call to the remote engine
+// EngineApi makes a call to the remote engine
 // The args array is expected to be name,value pairs.
-func RemoteEngineApi(api string, args []string) (string, error) {
+func EngineApi(api string, args []string) (out map[string]string, err error) {
 
-	err := StartNATSClient()
+	err = StartNATSClient()
 	if err != nil {
-		return "",err
+		return nil, err
 	}
 
-	if len(args) % 2 != 0 {
-		return "",fmt.Errorf("remoteengineapi - bad value of args, must be even")
+	if len(args)%2 != 0 {
+		return nil, fmt.Errorf("remoteengineapi - bad args, should be [name,value] pairs")
 	}
 	data := "{ " + "\"api\":\"" + api + "\""
-	for n:=0; n<len(args); n+=2 {
+	for n := 0; n < len(args); n += 2 {
 		data += ",\"" + args[n] + "\":\"" + args[n+1] + "\""
 	}
 	data += " }"
 
 	result, err := TheNats.Request("toengine.api", data, time.Second)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	LogInfo("RemoteEngineApi has been called", "api", api, "result", result)
-	return result, nil
+	LogInfo("EngineApi has been called", "api", api, "result", result)
+	out = map[string]string{"result": result}
+	return out, nil
 }
 
-func NatsRequestHandler(msg *nats.Msg) {
+func natsRequestHandler(msg *nats.Msg) {
 	data := string(msg.Data)
 	LogInfo("NatsHandler", "subject", msg.Subject, "data", data)
-	result, err := ExecuteApiFromJson(data)
+	result, err := executeApiFromJson(data)
 	response := ""
 	if err != nil {
 		LogError(fmt.Errorf("unable to nats api data: %s", data))
@@ -255,7 +256,7 @@ func ScheduleCursorEvent(ce CursorEvent) {
 	ScheduleAt(CurrentClick(), ce.Tag, ce)
 }
 
-func HandleMidiEvent(me MidiEvent) {
+func handleMidiEvent(me MidiEvent) {
 	SendToOscClients(MidiToOscMsg(me))
 
 	if Midithru {
@@ -343,7 +344,7 @@ func JsonString(args ...string) string {
 	return params
 }
 
-func BoundValueZeroToOne(v float64) float64 {
+func ForceValueZeroToOne(v float64) float64 {
 	if v < 0.0 {
 		return 0.0
 	}

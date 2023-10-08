@@ -39,10 +39,10 @@ func InputListenOnce() {
 	}()
 	select {
 	case msg := <-OscInputChan:
-		HandleOscInput(msg)
+		handleOscInput(msg)
 		// TheKit.RecordOscEvent(&msg)
 	case event := <-MidiInputChan:
-		HandleMidiEvent(event)
+		handleMidiEvent(event)
 		// TheEngine.RecordMidiEvent(&event)
 	case event := <-CursorInput:
 		ScheduleAt(CurrentClick(), event.Tag, event)

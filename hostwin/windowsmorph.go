@@ -265,7 +265,7 @@ type oneMorph struct {
 	contactIdToGid   map[int]int
 }
 
-var morphMaxForce float32 = 1000.0  // the morph can still report higher values
+var morphMaxForce float32 = 1000.0 // the morph can still report higher values
 
 var allMorphs []*oneMorph
 
@@ -330,9 +330,9 @@ func (m *oneMorph) readFrames(callback kit.CursorCallbackFunc, forceFactor float
 			zNorm := float32(contact.total_force) / morphMaxForce
 			zNorm *= forceFactor
 
-			xNorm = float32(kit.BoundValueZeroToOne(float64(xNorm)))
-			yNorm = float32(kit.BoundValueZeroToOne(float64(yNorm)))
-			zNorm = float32(kit.BoundValueZeroToOne(float64(zNorm)))
+			xNorm = float32(kit.ForceValueZeroToOne(float64(xNorm)))
+			yNorm = float32(kit.ForceValueZeroToOne(float64(yNorm)))
+			zNorm = float32(kit.ForceValueZeroToOne(float64(zNorm)))
 
 			area := float32(contact.area)
 			var ddu string
@@ -405,7 +405,7 @@ func (m *oneMorph) readFrames(callback kit.CursorCallbackFunc, forceFactor float
 					callback(ce)
 					// LogInfo("Setting m.currentTag to","quadSource",quadSource)
 				}
-				
+
 				m.currentTag = quadSource
 
 			case "A", "B", "C", "D":
@@ -530,7 +530,7 @@ func WinMorphInitialize() error {
 
 		// Don't use Debug.Morph, this should always gets logged
 		firmware := fmt.Sprintf("%d.%d.%d", m.fwVersionMajor, m.fwVersionMinor, m.fwVersionBuild)
-		LogInfo("Morph Opened and Started", "idx", m.idx, "serial", m.serialNum, "firmware", firmware,"morphtype",m.morphtype)
+		LogInfo("Morph Opened and Started", "idx", m.idx, "serial", m.serialNum, "firmware", firmware, "morphtype", m.morphtype)
 	}
 	return nil
 }

@@ -110,12 +110,7 @@ func CliCommand(args []string) (map[string]string, error) {
 		return out, nil
 
 	case "api":
-		result, err := kit.RemoteEngineApi(arg1, args[2:])
-		if err != nil {
-			return nil, err
-		}
-		out := map[string]string{"result": result}
-		return out, nil
+		return kit.EngineApi(arg1, args[2:])
 
 	case "start":
 
@@ -140,7 +135,7 @@ func CliCommand(args []string) (map[string]string, error) {
 			// If it exists in the ProcessList...
 			for _, process := range hostwin.ProcessList() {
 				if arg1 == process {
-					return kit.EngineApi("engine.startprocess", "process", arg1)
+					return kit.EngineApi("engine.startprocess", []string{"process",arg1})
 				}
 			}
 			return nil, fmt.Errorf("process %s is disabled or unknown", arg1)
@@ -191,7 +186,7 @@ func CliCommand(args []string) (map[string]string, error) {
 		return nil, kit.ArchiveLogs()
 
 	case "test":
-		return kit.EngineApi("quadpro.test")
+		return kit.EngineApi("quadpro.test",[]string{})
 
 	default:
 		if len(words) < 2 {
@@ -199,7 +194,7 @@ func CliCommand(args []string) (map[string]string, error) {
 		} else if len(words) > 2 {
 			return nil, fmt.Errorf("invalid api format, expecting {plugin}.{api}" + usage())
 		}
-		return kit.EngineApi(arg0, args[1:]...)
+		return kit.EngineApi(arg0, args[1:])
 	}
 }
 

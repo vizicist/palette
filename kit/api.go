@@ -9,24 +9,26 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
 	"github.com/hypebeast/go-osc/osc"
 )
 
 var MmttHttpPort = 4444
-var EngineHttpPort = 3330
+
+// var EngineHttpPort = 3330
 var LocalAddress = "127.0.0.1"
 
 var OscPort = 3333
 var EventClientPort = 6666
 var GuiPort = 3943
-var BidulePort   int
+var BidulePort int
 
-var ResolumeClient   *osc.Client
-var OscClient        *osc.Client
+var ResolumeClient *osc.Client
+var OscClient *osc.Client
 var GuiClient *osc.Client
 var FreeframeClients = map[string]*osc.Client{}
 
-func OscHandleCursor(msg *osc.Message) {
+func oscHandleCursor(msg *osc.Message) {
 
 	nargs := msg.CountArguments()
 	if nargs < 1 {
@@ -89,10 +91,10 @@ func OscHandleCursor(msg *osc.Message) {
 	// We want to expand the X and Y values a bit around their center
 	// (hence the 0.5 stuff), since the values from mmtt_kinect are inset a bit.
 	newPos := ce.Pos
-	newPos.X = (float32)(BoundValueZeroToOne(((float64(ce.Pos.X) - 0.5) * xexpand) + 0.5))
-	newPos.Y = (float32)(BoundValueZeroToOne(((float64(ce.Pos.Y) - 0.5) * yexpand) + 0.5))
+	newPos.X = (float32)(ForceValueZeroToOne(((float64(ce.Pos.X) - 0.5) * xexpand) + 0.5))
+	newPos.Y = (float32)(ForceValueZeroToOne(((float64(ce.Pos.Y) - 0.5) * yexpand) + 0.5))
 	// For Z, we want to expand the value only in the positive direction.
-	newPos.Z = (float32)(BoundValueZeroToOne(float64(ce.Pos.Z) * zexpand))
+	newPos.Z = (float32)(ForceValueZeroToOne(float64(ce.Pos.Z) * zexpand))
 
 	LogOfType("cursor", "MMTT Cursor", "ddu", ce.Ddu, "newPos", newPos)
 
@@ -105,8 +107,7 @@ func OscHandleCursor(msg *osc.Message) {
 	TheCursorManager.ExecuteCursorEvent(ce)
 }
 
-
-func HandleOscInput(e OscEvent) {
+func handleOscInput(e OscEvent) {
 
 	LogOfType("osc", "Router.HandleOscInput", "msg", e.Msg.String())
 	switch e.Msg.Address {
@@ -129,7 +130,7 @@ func HandleOscInput(e OscEvent) {
 		// cursor down/drag/up input.  This is kinda like TUIO,
 		// except that it's not a polling interface - servers
 		// need to send explicit events, including a reliable "up".
-		OscHandleCursor(e.Msg)
+		oscHandleCursor(e.Msg)
 
 		/*
 			case "/sprite":
@@ -148,10 +149,11 @@ func HandleOscInput(e OscEvent) {
 func MmttApi(api string) (map[string]string, error) {
 	id := "56789"
 	apijson := "{ \"jsonrpc\": \"2.0\", \"method\": \"" + api + "\", \"id\":\"" + id + "\"}"
-	url := fmt.Sprintf("http://%s:%d/api", LocalAddress,MmttHttpPort)
-	return HttpApiRaw(url, apijson)
+	url := fmt.Sprintf("http://%s:%d/api", LocalAddress, MmttHttpPort)
+	return httpApiRaw(url, apijson)
 }
 
+/*
 func EngineApi(api string, args ...string) (map[string]string, error) {
 	if len(args)%2 != 0 {
 		return nil, fmt.Errorf("HttpApi: odd nnumber of args, should be even")
@@ -165,8 +167,9 @@ func EngineApi(api string, args ...string) (map[string]string, error) {
 	url := fmt.Sprintf("http://126.0.0.1:%d/api", EngineHttpPort)
 	return HttpApiRaw(url, apijson)
 }
+*/
 
-func HttpApiRaw(url string, args string) (map[string]string, error) {
+func httpApiRaw(url string, args string) (map[string]string, error) {
 	postBody := []byte(args)
 	resp, err := http.Post(url, "application/json", bytes.NewBuffer(postBody))
 	if err != nil {
@@ -191,7 +194,6 @@ func HttpApiRaw(url string, args string) (map[string]string, error) {
 	}
 	return output, nil
 }
-
 
 // humanReadableApiOutput takes the result of an API invocation and
 // produces what will appear in visible output from a CLI command.
@@ -229,9 +231,9 @@ func ExecuteApi(api string, apiargs map[string]string) (result string, err error
 	apisuffix := words[1]
 	switch apitype {
 	case "engine":
-		return ExecuteEngineApi(apisuffix, apiargs)
+		return executeEngineApi(apisuffix, apiargs)
 	case "saved":
-		return ExecuteSavedApi(apisuffix, apiargs)
+		return executeSavedApi(apisuffix, apiargs)
 	case "quadpro":
 		if TheQuadPro != nil {
 			return TheQuadPro.Api(apisuffix, apiargs)
@@ -254,7 +256,7 @@ func ExecuteApi(api string, apiargs map[string]string) (result string, err error
 }
 
 // handleRawJsonApi takes raw JSON (as a string of the form "{...}"") as an API and returns raw JSON
-func ExecuteApiFromJson(rawjson string) (string, error) {
+func executeApiFromJson(rawjson string) (string, error) {
 	args, err := StringMap(rawjson)
 	if err != nil {
 		return "", fmt.Errorf("Router.ExecuteApiAsJson: bad format of JSON")
@@ -266,7 +268,7 @@ func ExecuteApiFromJson(rawjson string) (string, error) {
 	return ExecuteApi(api, args)
 }
 
-func ExecuteEngineApi(api string, apiargs map[string]string) (result string, err error) {
+func executeEngineApi(api string, apiargs map[string]string) (result string, err error) {
 
 	switch api {
 
@@ -436,7 +438,7 @@ func ExecuteEngineApi(api string, apiargs map[string]string) (result string, err
 			return "", fmt.Errorf("playcursor: missing x, y, or z value")
 		}
 		var x, y, z float32
-		if !GetFloat32(xs, &x) || !GetFloat32(ys, &y) || !GetFloat32(zs, &z) {
+		if !getFloat32(xs, &x) || !getFloat32(ys, &y) || !getFloat32(zs, &z) {
 			return "", fmt.Errorf("playcursor: bad x,y,z value")
 		}
 		pos = CursorPos{X: x, Y: y, Z: z}
@@ -452,7 +454,7 @@ func ExecuteEngineApi(api string, apiargs map[string]string) (result string, err
 	return result, err
 }
 
-func GetFloat(value string, f *float64) bool {
+func getFloat(value string, f *float64) bool {
 	v, err := strconv.ParseFloat(value, 32)
 	if err != nil {
 		LogIfError(err)
@@ -463,7 +465,7 @@ func GetFloat(value string, f *float64) bool {
 	}
 }
 
-func GetFloat32(value string, f *float32) bool {
+func getFloat32(value string, f *float32) bool {
 	v, err := strconv.ParseFloat(value, 32)
 	if err != nil {
 		LogIfError(err)
@@ -474,7 +476,7 @@ func GetFloat32(value string, f *float32) bool {
 	}
 }
 
-func GetInt(value string, i *int64) bool {
+func getInt(value string, i *int64) bool {
 	v, err := strconv.ParseInt(value, 10, 64)
 	if err != nil {
 		LogIfError(err)
@@ -497,19 +499,19 @@ func SetEngineParam(name string, value string) error {
 		TheAttractManager.SetAttractEnabled(IsTrueValue(value))
 
 	case "engine.attractchecksecs":
-		if GetFloat(value, &f) {
+		if getFloat(value, &f) {
 			TheAttractManager.AttractCheckSecs = f
 		}
 	case "engine.attractchangeinterval":
-		if GetFloat(value, &f) {
+		if getFloat(value, &f) {
 			TheAttractManager.AttractChangeInterval = f
 		}
 	case "engine.attractgestureinterval":
-		if GetFloat(value, &f) {
+		if getFloat(value, &f) {
 			TheAttractManager.AttractGestureInterval = f
 		}
 	case "engine.attractidlesecs":
-		if GetInt(value, &i) {
+		if getInt(value, &i) {
 			if i < 10 {
 				LogWarn("engine.attractidlesecs is too low, forcing to 10")
 				i = 10
@@ -517,7 +519,7 @@ func SetEngineParam(name string, value string) error {
 			TheAttractManager.AttractIdleSecs = float64(i)
 		}
 	case "engine.looping_fadethreshold":
-		if GetFloat(value, &f) {
+		if getFloat(value, &f) {
 			TheCursorManager.LoopThreshold = float32(f)
 		}
 
@@ -537,11 +539,11 @@ func SetEngineParam(name string, value string) error {
 		TheScheduler.AutoTransposeOn = IsTrueValue(value)
 
 	case "engine.autotransposebeats":
-		if GetInt(value, &i) {
+		if getInt(value, &i) {
 			TheScheduler.SetAutoTransposeBeats(int(i))
 		}
 	case "engine.transpose":
-		if GetInt(value, &i) {
+		if getInt(value, &i) {
 			TheScheduler.SetTranspose(int(i))
 		}
 	case "engine.log":
@@ -561,7 +563,7 @@ func SetEngineParam(name string, value string) error {
 	return EngineParams.Set(name, value)
 }
 
-func ExecuteSavedApi(api string, apiargs map[string]string) (result string, err error) {
+func executeSavedApi(api string, apiargs map[string]string) (result string, err error) {
 
 	switch api {
 
@@ -739,4 +741,3 @@ func StartOscListener(port int) {
 		LogIfError(err)
 	}
 }
-
