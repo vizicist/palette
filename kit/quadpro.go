@@ -89,7 +89,7 @@ func (quadpro *QuadPro) Api(api string, apiargs map[string]string) (result strin
 		}
 		return "", quadpro.save(category, filename)
 
-	case "test":
+	case "test","test1":
 		ntimes, err := GetParamInt("engine.testgesturentimes")
 		if err != nil {
 			LogIfError(err)
@@ -101,10 +101,18 @@ func (quadpro *QuadPro) Api(api string, apiargs map[string]string) (result strin
 			return "", err
 		}
 		interval := time.Duration(intervalf * 1000000000)
-		LogInfo("QuadPro.ExecuteApi test start", "ntimes", ntimes, "interval", interval)
-		quadpro.doTest(ntimes, interval)
-		LogInfo("QuadPro.ExecuteApi test end", "ntimes", ntimes, "interval", interval)
+		if api == "test1" {
+			ntimes = 1
+			interval = time.Duration(1000000000)
+		}
+		// XXX - need a way to stop a test without killing engine
+		LogInfo("quadpro.test start","ntimes",ntimes,"interval",interval)
+		go quadpro.doTest(ntimes, interval)
 		return "", nil
+
+	// XXX - need a "stoptest" API, or kill running test if a new one is requested
+	case "stoptest":
+		return "", fmt.Errorf("stoptest api is not implemented")
 
 	default:
 		LogWarn("QuadPro.ExecuteApi api is not recognized\n", "api", api)
@@ -158,13 +166,18 @@ func (quadpro *QuadPro) Status(source string) string {
 	return "status" + source
 }
 
+// PatchForCursorEvent
 func (quadpro *QuadPro) PatchForCursorEvent(ce CursorEvent) (patch *Patch, button string) {
 	source := ce.Source()
+
 	// If the source is a Button...
 	_, ok := CursorSourceToQuadPreset[source]
 	if ok {
 		button = source
 	}
+
+	patch = quadpro.patch[source]
+
 	return patch, button
 }
 
@@ -287,6 +300,7 @@ func (quadpro *QuadPro) doTest(ntimes int, interval time.Duration) {
 		go TheCursorManager.GenerateRandomGesture(tag, numsteps, dur)
 		time.Sleep(interval)
 	}
+	LogInfo("quadpro.test ends")
 }
 
 func (quadpro *QuadPro) loadQuadRand() error {

@@ -211,7 +211,7 @@ func EngineApi(api string, args []string) (out map[string]string, err error) {
 
 func natsRequestHandler(msg *nats.Msg) {
 	data := string(msg.Data)
-	LogInfo("NatsHandler", "subject", msg.Subject, "data", data)
+	// LogInfo("NatsHandler", "subject", msg.Subject, "data", data)
 	result, err := executeApiFromJson(data)
 	response := ""
 	if err != nil {

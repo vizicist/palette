@@ -199,7 +199,7 @@ def palette_api(api,params):
 
     global ApiLock
 
-    result = None
+    result = "{}"
 
     if params != "" and params[0] == "{":
         return None, "palette_api: invalid curly brace in params=%s\n" % (params)
@@ -216,8 +216,10 @@ def palette_api(api,params):
             s = s[0:lim] + " ..."
         log("palette_api: api=",api," params=",s)
 
-    success = False
-    while not success:
+    keepgoing = True
+    ntries = 0
+    ntrieslimit = 1
+    while keepgoing:
         # Acquire lock before sending
         ApiLock.acquire()
 
@@ -252,13 +254,17 @@ def palette_api(api,params):
         ApiLock.release()
 
         if requestError == None:
-            success = True
+            keepgoing = False
         else:
             # log("palette_api: Exception = "+str(requestError))
-            log("palette_api: failed connection, api=%s is being retried" % api)
+            ntries += 1
+            if ntries < ntrieslimit:
+                time.sleep(1.0)
+            else:
+                log("palette_api: failed after %d tries, api=%s" % (ntries,api))
+                keepgoing = False
 
     if result == "":
-        log("palette_api: result is empty?")
         result = "{}"
 
     resultjson = json.loads(result)

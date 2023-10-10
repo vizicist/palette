@@ -161,8 +161,8 @@ func (patch *Patch) generateSoundFromCursor(ce CursorEvent, cursorStyle string) 
 func (patch *Patch) generateSoundFromCursorDownOnly(ce CursorEvent) {
 
 	// XXX - is this mutex really needed?
-	patch.mutex.Lock()
-	defer patch.mutex.Unlock()
+	// patch.mutex.Lock()
+	// defer patch.mutex.Unlock()
 
 	switch ce.Ddu {
 	case "down":
@@ -188,8 +188,8 @@ func (patch *Patch) generateSoundFromCursorDownOnly(ce CursorEvent) {
 func (patch *Patch) generateSoundFromCursorRetrigger(ce CursorEvent) {
 
 	// XXX - is this mutex really needed?
-	patch.mutex.Lock()
-	defer patch.mutex.Unlock()
+	// patch.mutex.Lock()
+	// defer patch.mutex.Unlock()
 
 	ac, ok := TheCursorManager.getActiveCursorFor(ce.Gid)
 	if !ok {

@@ -95,7 +95,7 @@ func NewActiveCursor(ce CursorEvent) *ActiveCursor {
 
 	patch, button := TheQuadPro.PatchForCursorEvent(ce)
 	if patch == nil && button == "" {
-		LogWarn("No Patch or Button for CursorEvent", "ce", ce)
+		LogWarn("No Patch or Button for CursorEvent", "source", ce.Source)
 		return nil
 	}
 	ac := &ActiveCursor{
@@ -255,7 +255,7 @@ func (cm *CursorManager) GenerateGesture(tag string, numsteps int, dur time.Dura
 
 	gid := cm.UniqueGid()
 
-	LogOfType("gesture", "generateCursoresture start",
+	LogOfType("cursor", "generateCursoresture start",
 		"gid", gid, "noteDuration", dur, "tags", tag, "pos0", pos0, "pos1", pos1)
 
 	dpos := CursorPos{
@@ -283,7 +283,7 @@ func (cm *CursorManager) GenerateGesture(tag string, numsteps int, dur time.Dura
 			Z: pos0.Z + dpos.Z*amount,
 		}
 		ce := NewCursorEvent(gid, tag, ddu, pos)
-		// LogOfType("cursor", "generateCursoresture", "n", n, "amount", amount, "pos", pos)
+
 		// cm.activeMutex.Unlock()
 
 		cm.ExecuteCursorEvent(ce)
@@ -388,8 +388,8 @@ func (cm *CursorManager) ExecuteCursorEvent(ce CursorEvent) {
 	}
 
 	// Don't put lock above clearActiveCursors(), since it calls ExecuteCursorEvent recursively
-	cm.executeMutex.Lock()
-	defer cm.executeMutex.Unlock()
+	// cm.executeMutex.Lock()
+	// defer cm.executeMutex.Unlock()
 
 	if ce.GetClick() == 0 {
 		ce.SetClick(CurrentClick())

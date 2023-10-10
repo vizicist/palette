@@ -265,12 +265,13 @@ class ProGuiApp(tk.Tk):
 
             now = time.time()
 
+            # Every once in a while, check the engine status
             sinceStatus = now - lastStatus
             if sinceStatus > 2.0:
                 status, err = palette.palette_api("engine.status","")
                 if err != None:
                     log("Eror from engine.status api, err=",err)
-                else:
+                elif status != None:
                     status_handle(status)
                 lastStatus = now
 
