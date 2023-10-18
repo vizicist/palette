@@ -3,6 +3,13 @@
 These are the instructions for installing a binary release of the Palette system.  If instead you want to rebuild it from the source code, see
 <a href=building.md>these instructions</a>.
 
+A complete Space Palette Pro installation requires the
+Omnisphere and Stylus RMX synthesizers from Spectrasonics.
+To make it easier to try things out, these instructions
+show how to install the Dexed and Vital synthesizers,
+and the default configuration assumes that.  The demo version
+of Resolume can be used if you don't have a licensed version.
+
 The instructions below assume that you have:
   - Windows 10 or later
   - Resolume Avenue 7 or later (~$300)
