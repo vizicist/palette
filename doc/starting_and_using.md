@@ -1,14 +1,18 @@
 ## Using the Palette
 
-- These instructions assume you have already installed and configured the Palette software.
+- These instructions assume you have already <a href=installation.md>installed</a> the Palette software.
 
 ## Starting Up
 
 - Make sure the Sensel Morph is plugged in, and that Resolume is not currently running.
 
-- Invoke <b>Start Palette</b> found in the Palette folder of the Windows Start menu.  This will start up a few things: the Palette engine that runs in the background, the Palette GUI that you use to select and edit presets, and Resolume.  If you've installed Plogue Bidule for doing music, Bidule will also be started.
+- In a cmd window, execute: `palette start`
 
-- If you have an actual touchscreen (as in the Space Palette Pro controller), you can set the guisize value in %CommonProgramFiles%\Palette\config\settings.json to have the GUI show up on that touchscreen.
+    This will start the Palette engine that runs in the background.  If configured appropriately, other programs will be automatically started - Bidule,
+    Resolume, and the Palette GUI that you use to select and edit presets.
+
+    The default configuration should automatically start Bidule, Resolume, and the Palette GUI.  If there are any issues, look at engine.log file in the
+    `%CommonProgramFiles%\Palette\logs` directory.
 
 ## Basic Usage
 
@@ -36,16 +40,14 @@ you don't need to switch - you have simultaneous access to all four.
 
 ## Advanced Mode
 
-- There are 2 modes - casual and advanced.  You can switch between them by pressing the "Clear" button (at the bottom of the Palette GUI) four times in a row, quickly.
-In the Advanced Mode, you have more per-pad control and can edit the presets as described below.
+- There are 2 modes - casual and advanced.  You can toggle between them in the GUI by first pressing the Help button to display the help page, and then sweeping (with the mouse or your finger) diagonally across the help page from one corner to the other.
+In the Advanced Mode, you can select individual pads to enable per-pad control, and you can also edit the presets.
+
+- In the advanced mode, clicking on the top category headers (Engine, Misc, Sound, Visual, Effect) will toggle between showing the presets of that category and showing and letting you edit the values of individual parameters.
 
 ## Looping
 
-- Looping operations are only visible in the more advanced modes of the GUI.
-
-- The buttons at the bottom of the GUI let you turn on Looping, which will loop your
-gestures on the Morph.  You can control the length of the loops and how quickly they fade out.
-The effects of the looping controls are per-pad, depending (like parameter changes) on which pads are currently highlighted in the GUI.
+- The casual GUI interface allows looping to be turned on and off.  More detailed control of looping is only visible in the advanced mode of the GUI.  For example, engine parameters like engine.looping_fade let you control the looping behaviour, and the per-pad control in the advanced mode also applies to looping.
 
 - Beware, if you leave looping on, you may get confused about what's going on, since you'll be seeing
 the results of your live gestures as well as the looped gestures.
@@ -53,7 +55,7 @@ the results of your live gestures as well as the looped gestures.
 ## Editing the presets
 
 - In the Advanced mode, you will see buttons at the top of the GUI that let you access
-separate pages for Pad, Sound, Visual, and Effect presets.
+separate category pages for Pad, Sound, Visual, and Effect presets.
 A Pad preset combines the Sound, Visual and Effect settings.
 
 - Clicking the buttons at the top of the page for Pad, Sound, Visual, and Effect will toggle
@@ -70,13 +72,12 @@ case that randomized parameters will produce no output.
 
 ## Stopping the Palette
 
-- Use <b>Stop Palette</b> from the Palette folder of the Windows Start menu.
+- Execute `palette stop` to stop everything (including Resolume and Bidule).
 
 ## Configuring
 
-- The Config directory: <pre>%CommonProgramFiles%\Palette\config</pre>
+- The Config directory - `%CommonProgramFiles%\Palette\data\config` -
 contains various files you can edit to control things.
-The settings.json file is the one you'll adjust most often.
 
 ## Debugging hints
 
@@ -85,12 +86,12 @@ you should find an entry for <b>Palette</b> in Resolume's Sources tab, in the al
 If you don't see this, look for clues in the Resolume log file in this directory: <pre>%APPDATA%\Resolume Avenue</pre>
 
 - If for some reason Resolume crashes at startup,
-you can look in this file: <pre>%CommonProgramFiles%\Palette\logs\ffgl.log</pre>
+you can look in the file `%CommonProgramFiles%\Palette\logs\ffgl.log`
 for clues as to the reason.  If you can't resolve the issue,
 you should either remove the ffgl directory from Resolume's <i>Preferences->Video</i> section or just uninstall Palette.
 
-- When the Palette FFGL plugin is properly activated, this log file: <pre>%CommonProgramFiles%\Palette\logs\ffgl.log</pre>
+- When the Palette FFGL plugin is properly activated, this log file: `%CommonProgramFiles%\Palette\logs\ffgl.log`
 should contain this line at the end: <pre>Palette: listening for OSC on port 3334</pre>
 
-- In this logfile: <pre>%CommonProgramFiles%\Palette\logs\engine.log</pre>
+- In this logfile: `%CommonProgramFiles%\Palette\logs\engine.log`
 you should see lines that indicate what has happened and/or failed during startup.
