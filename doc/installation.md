@@ -3,19 +3,13 @@
 These are the instructions for installing a binary release of the Palette system.  If instead you want to rebuild it from the source code, see
 <a href=building.md>these instructions</a>.
 
-A complete Space Palette Pro installation requires the
-Omnisphere and Stylus RMX synthesizers from Spectrasonics.
-To make it easier to try things out, these instructions
-show how to install the Dexed and Vital synthesizers,
-and the default configuration assumes that.  The demo version
-of Resolume can be used if you don't have a licensed version.
-
 The instructions below assume that you have:
   - Windows 10 or later
   - Resolume Avenue 7 or later (~$300)
   - Plogue Bidule (~$100), see https://www.plogue.com/products/bidule.html
   - LoopBe30 (~$20), see from https://www.nerds.de/en/order.html
   - at least one Sensel Morph, or some other 3D cursor-providing device or program
+  - Omnisphere and Stylus RMX synthesizers from Spectrasonics.
 
 ## One-time installation steps
 
@@ -27,10 +21,6 @@ The instructions below assume that you have:
 	<br>`C:\Program Files\Git\mingw64\bin`
 
 - All VST plugins should be put in `%CommonProgramFiles%\VST2` (for VST 2 plugins) and `%CommonProgramFiles%\VST3` (for VST 3 plugins).
-
- - Install the Dexed VST synth (free) from https://github.com/asb2m10/dexed . 
-
- - Install the Vital VST synth (free Basic version) from https://vital.audio
 
 - After installing and starting Bidule, use Edit->Preferences->Plugins to set the VST plugin directory to
 `%CommonProgramFiles%\VST2`.
