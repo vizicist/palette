@@ -125,6 +125,9 @@ func NewSynth(name string, port string, channel int, bank int, program int) *Syn
 }
 
 func (synth *Synth) updatePortChannelState() (*MIDIPortChannelState, error) {
+	if TheMidiIO == nil {
+		return nil, fmt.Errorf("updatePortChannelState: TheMidiIO is nil?")
+	}
 	state, err := TheMidiIO.GetPortChannelState(synth.portchannel)
 	if err != nil {
 		return nil, err
