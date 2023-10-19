@@ -23,7 +23,7 @@ The instructions below assume that you have:
 
  - Install the Dexed VST synth (free) from https://github.com/asb2m10/dexed . 
 
- - Install the Vital VST synth (free Basic version) from https://vital.audio
+ - Install the Vital VST synth (free Basic version, though you need to create an account) from https://vital.audio
 
 - After installing and starting Bidule, use Edit->Preferences->Plugins to set the VST plugin directory to
 `%CommonProgramFiles%\VST2`.
