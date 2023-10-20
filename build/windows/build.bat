@@ -147,10 +147,10 @@ xcopy /e /y %PALETTE_SOURCE%\data_defaults\saved %ship%\data\saved >nul
 del /f /q %ship%\data\config\*.afphoto >nul 2>&1
 del /f /q %ship%\data\config\*.zip >nul 2>&1
 
-rem The default data directory is data_dexedvital
+rem This sets up the default data directory
 rem You can use usedata.bat to switch to other data_*.
-xcopy /e /y %PALETTE_SOURCE%\data_dexedvital\saved %ship%\data\saved >nul
-xcopy /e /y %PALETTE_SOURCE%\data_dexedvital\config %ship%\data\config >nul
+xcopy /e /y %PALETTE_SOURCE%\data_dexed\saved %ship%\data\saved >nul
+xcopy /e /y %PALETTE_SOURCE%\data_dexed\config %ship%\data\config >nul
 del /f /q %ship%\data\config\*.zip >nul 2>&1
 
 rem Provide the other data_* directories so you can switch dynamically
