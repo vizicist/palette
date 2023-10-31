@@ -312,6 +312,15 @@ func (e *Engine) Set(name string, value string) error {
 			TheCursorManager.LoopThreshold = float32(f)
 		}
 
+	case "engine.looping_override":
+		LogInfo("engine.looping_override needs handling")
+
+	case "engine.looping_fade":
+		LogInfo("engine.looping_fade needs handling")
+
+	case "engine.looping_beats":
+		LogInfo("engine.looping_beats needs handling")
+
 	case "engine.midithru":
 		TheRouter.midithru = IsTrueValue(value)
 
@@ -345,6 +354,63 @@ func (e *Engine) Set(name string, value string) error {
 		if e.getFloat(value, &f) {
 			TheProcessManager.processCheckSecs = f
 		}
+
+	case "engine.emailto":
+
+	case "engine.twinsys":
+
+	case "engine.mmtt_zexpand":
+
+	case "engine.keykitallow":
+	case "engine.keykitoutput":
+
+	case "engine.timefret_low":
+	case "engine.timefret_mid":
+	case "engine.timefret_high":
+
+	case "engine.cursoroffsety":
+	case "engine.cursoroffsetx":
+
+	case "engine.gui":
+
+	case "engine.attractgestureduration":
+	case "engine.mmtt":
+	case "engine.testgesturentimes":
+	case "engine.testgesturenumsteps":
+	case "engine.title":
+	case "engine.scale":
+	case "engine.mmtt_xexpand":
+	case "engine.morphtype":
+	case "engine.testgestureinterval":
+	case "engine.bidulefile":
+	case "engine.emailpassword":
+	case "engine.cursorscaley":
+	case "engine.emaillogin":
+	case "engine.tempdir":
+	case "engine.attractimage":
+	case "engine.bidulepath":
+	case "engine.cursorscalex":
+	case "engine.midithrusynth":
+	case "engine.resolumepath":
+	case "engine.resolumetextlayer":
+	case "engine.keykitroot":
+	case "engine.keykitrun":
+	case "engine.defaultguilevel":
+	case "engine.guisize":
+	case "engine.testgestureduration":
+	case "engine.winsize":
+	case "engine.notifygui":
+	case "engine.attractgesturenumsteps":
+	case "engine.autostart":
+	case "engine.keykitpath":
+	case "engine.mmtt_yexpand":
+	case "engine.helpimage":
+	case "engine.guishowall":
+
+	case "engine.attractnumbergesturesteps":
+
+	default:
+		LogInfo("Engine.Set, unknown parameter", "name", name, "value", value)
 	}
 
 	LogOfType("params", "Engine.Set", "name", name, "value", value)

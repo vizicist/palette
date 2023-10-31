@@ -1,5 +1,6 @@
 {
     "params": {
+        "engine.midisetexternalscale":"false",
         "engine.scale":"chromatic"
     }
 }
