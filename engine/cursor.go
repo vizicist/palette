@@ -112,8 +112,9 @@ func NewActiveCursor(ce CursorEvent) *ActiveCursor {
 	forceOverride, _ := GetParamBool("engine.looping_override")
 	if forceOverride {
 		forcebeats, _ := GetParamInt("engine.looping_beats")
-		ac.loopBeats = forcebeats
 		forcefade, _ := GetParamFloat("engine.looping_fade")
+		ac.loopIt = forceOverride
+		ac.loopBeats = forcebeats
 		ac.loopFade = float32(forcefade)
 	}
 
