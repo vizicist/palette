@@ -1,0 +1,6 @@
+{
+    "params": {
+        "engine.looping_override":"true"
+        "engine.looping_fade":"0.100"
+    }
+}
