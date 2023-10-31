@@ -160,7 +160,7 @@ for %%X in (data_dexed data_dexedvital data_omnisphere) DO (
 	mkdir %ship%\%%X\saved
 	xcopy /e /y %PALETTE_SOURCE%\%%X\config %ship%\%%X\config >nul
 	xcopy /e /y %PALETTE_SOURCE%\%%X\saved %ship%\%%X\saved >nul
-	del /f /q %ship%\%%X\config\default.bidule.* >nul 2>&1
+	del /f /q %ship%\%%X\config\default.bidule_* >nul 2>&1
 	del /f /q %ship%\%%X\config\omnisphere\*.omnisphere >nul 2>&1
 )
 

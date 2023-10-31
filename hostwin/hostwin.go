@@ -64,12 +64,10 @@ func (h HostWin) Start() {
 	// if ParamBool("mmtt.depth") {
 	// 	go DepthRunForever()
 	// }
-}
-func Start() {
 
 	err := LoadMorphs()
 	if err != nil {
-		LogWarn("StartCursorInput: LoadMorphs", "err", err)
+		LogWarn("LoadMorphs", "err", err)
 	}
 
 	go StartMorph(kit.ScheduleCursorEvent, 1.0)

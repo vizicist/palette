@@ -25,7 +25,7 @@ func InputEventUnlock() {
 // them in a single select eliminates some need for locking.
 func InputListener() {
 
-	for KillMe {
+	for ! KillMe {
 		InputListenOnce()
 	}
 	LogInfo("InputListener is being killed")

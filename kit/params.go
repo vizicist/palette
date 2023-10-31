@@ -156,6 +156,9 @@ func (params *ParamValues) ApplyValuesFromMap(category string, paramsmap map[str
 				// of unknown parameters or errors in the saved
 			}
 		}
+		if category == "engine" {
+			SetEngineParam(fullname,value)
+		}
 	}
 }
 

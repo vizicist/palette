@@ -38,7 +38,7 @@ func Init() error {
 		return fmt.Errorf("kit.Init called without registering a Host")
 	}
 
-	LoadEngineParams("_Current.json")
+	// LoadEngineParams("_Current.json")
 
 	logtypes, err := GetParam("engine.log")
 	if err == nil {
@@ -60,6 +60,8 @@ func Init() error {
 	if err != nil {
 		return err
 	}
+
+	LoadEngineParams("_Current.json")
 
 	InitSynths()
 
