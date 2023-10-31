@@ -517,7 +517,7 @@ class ProGuiApp(tk.Tk):
     def resetVisibility(self):
         # log("RESETVISIBILITY!")
 
-        self.resetLoopButton()
+        # self.resetLoopButton()
 
         self.editMode = False
         self.setFrameSizes()
@@ -2198,7 +2198,7 @@ class PagePerformMain(tk.Frame):
         self.buttonNames = []
 
         self.makePerformButton("COMPLETE_RESET", self.controller.completeReset)
-        self.makePerformButton("Looping", self.controller.loopingToggle)
+        # self.makePerformButton("Looping", self.controller.loopingToggle)
         self.makePerformButton("CLEAR_", self.controller.loopingClearButton)
         self.makePerformButton("HELP_ ", self.controller.startHelp)
         # self.makePerformButton("Looping_OFF", self.controller.loopingOff)
