@@ -1244,7 +1244,7 @@
         "D-visual.rotangdir":"left",
         "D-visual.rotanginit":"0.000000",
         "D-visual.rotangspeed":"0.000000",
-        "D-visual.rotauto":"false",
+        "D-visual.rotauto":"true",
         "D-visual.saturation":"1.000000",
         "D-visual.shape":"square",
         "D-visual.sizefinal":"2.600000",
