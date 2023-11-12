@@ -221,6 +221,11 @@ func StatusOutput() (statusOut string, numRunning int) {
 		nrunning++
 	}
 
+	if engine.IsRunning("obs") {
+		s += "OBS is running.\n"
+		nrunning++
+	}
+
 	if engine.IsRunning("resolume") {
 		s += "Resolume is running.\n"
 		nrunning++
