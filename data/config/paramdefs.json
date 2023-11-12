@@ -202,6 +202,7 @@
 "engine.notifygui": {"valuetype":"bool", "min":"false", "max":"true", "init":"true", "comment":"#" },
 "engine.oscoutput": {"valuetype":"bool", "min":"false", "max":"true", "init":"true", "comment":"#" },
 "engine.resolumepath": {"valuetype":"string", "min":"", "max":"", "init":"C:/Program Files/Resolume Avenue/Avenue.exe", "comment":"# Resolume executable path" },
+"engine.obspath": {"valuetype":"string", "min":"", "max":"", "init":"C:/Program Files/obs-studio/bin/64bit/obs64.exe", "comment":"# OBS executable path" },
 "engine.resolumetextlayer": {"valuetype":"int", "min":"1", "max":"10", "init":"5", "comment":"# text layer num" },
 "engine.scale": {"valuetype":"string", "min":"enginescale", "max":"enginescale", "init":"", "comment":"# " },
 "engine.tempdir": {"valuetype":"string", "min":"", "max":"", "init":"C:/windows/temp", "comment":"# " },
