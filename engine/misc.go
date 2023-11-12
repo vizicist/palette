@@ -119,7 +119,7 @@ func LocalPaletteDir() string {
 	return filepath.Join(localapp, "Palette")
 }
 
-var DataDir = "data_omnisphere" // default, override with environment variable
+var DataDir = "data" // default, override with environment variable
 var FullDataPath string
 
 func PaletteDataPath() string {

@@ -1,0 +1,6 @@
+{
+    "params": {
+        "engine.midisetexternalscale":"true",
+        "engine.scale":"external"
+    }
+}
