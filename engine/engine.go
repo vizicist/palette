@@ -117,6 +117,17 @@ func GetParam(name string) (string, error) {
 	return TheEngine.params.Get(name)
 }
 
+func GetParamWithDefault(name string, dflt string) string {
+	if TheEngine == nil {
+		return ""
+	}
+	val, err := TheEngine.params.Get(name)
+	if err != nil {
+		val = dflt
+	}
+	return val
+}
+
 // func (e *Engine) Get(name string) string {
 // 	return e.params.Get(name)
 // }
