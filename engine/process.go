@@ -15,6 +15,7 @@ var TheProcessManager *ProcessManager
 type ProcessInfo struct {
 	Exe       string // just the last part
 	FullPath  string
+	DirPath   string
 	Arg       string
 	Activate  func()
 	Activated bool
@@ -32,6 +33,7 @@ func NewProcessInfo(exe, fullPath, arg string, activate func()) *ProcessInfo {
 	return &ProcessInfo{
 		Exe:       exe,
 		FullPath:  fullPath,
+		DirPath:   "",
 		Arg:       arg,
 		Activate:  activate,
 		Activated: false,
@@ -50,6 +52,48 @@ func StartRunning(process string) error {
 func CheckAutorestartProcesses() {
 	TheProcessManager.CheckAutorestartProcesses()
 }
+
+// These should come from the process list
+var MonitorExe = "palette_monitor.exe"
+var EngineExe = "palette_engine.exe"
+var GuiExe = "palette_gui.exe"
+var BiduleExe = "bidule.exe"
+var ResolumeExe = "avenue.exe"
+var KeykitExe = "key.exe"
+var MmttExe = "mmtt_kinect.exe"
+var ObsExe = "obs64.exe"
+
+func KillAllExceptMonitor() {
+	LogInfo("KillAll")
+	// XXX - Unfortunate that this is hard-coded.
+	KillExecutable(KeykitExe)
+	KillExecutable(MmttExe)
+	KillExecutable(BiduleExe)
+	KillExecutable(ResolumeExe)
+	KillExecutable(GuiExe)
+	KillExecutable(EngineExe)
+	KillExecutable(ObsExe)
+}
+
+func IsRunning(process string) bool {
+	if process == "engine" {
+		return IsRunningExecutable(EngineExe)
+	}
+	return TheProcessManager.IsRunning(process)
+}
+
+func MonitorIsRunning() bool {
+	return IsRunningExecutable(MonitorExe)
+}
+
+// func IsEngineRunning() bool {
+// 	return isRunningExecutable(EngineExe)
+// 	// return isRunningExecutable(EngineExe) || isRunningExecutable(EngineExeDebug)
+// }
+
+
+
+
 
 //////////////////////////////////////////////////////////////////
 
@@ -122,6 +166,7 @@ func ProcessList() []string {
 	// arr = append(arr, "monitor")
 	arr = append(arr, "bidule")
 	arr = append(arr, "resolume")
+	arr = append(arr, "obs")
 	keykit, err := GetParamBool("engine.keykitrun")
 	LogIfError(err)
 	if keykit {
@@ -167,6 +212,8 @@ func (pm *ProcessManager) AddProcessBuiltIn(process string) {
 		pm.AddProcess(process, KeykitProcessInfo())
 	case "mmtt":
 		pm.AddProcess(process, MmttProcessInfo())
+	case "obs":
+		pm.AddProcess(process, ObsProcessInfo())
 	}
 }
 
@@ -182,6 +229,18 @@ func (pm *ProcessManager) StartRunning(process string) error {
 	}
 	if pi.FullPath == "" {
 		return fmt.Errorf("StartRunning: unable to start %s, no executable path", process)
+	}
+
+	if pi.DirPath != "" {
+		thisDir, err := os.Getwd()
+		LogIfError(err)
+		LogInfo("StartRunning: changing to", "dir", pi.DirPath)
+		err = os.Chdir(pi.DirPath)
+		LogIfError(err)
+		defer func() {
+			LogInfo("StartRunning: changing back to", "dir", thisDir)
+			os.Chdir(thisDir)
+		}()
 	}
 
 	LogInfo("StartRunning", "path", pi.FullPath, "arg", pi.Arg, "lenarg", len(pi.Arg))
@@ -247,6 +306,8 @@ func (pm *ProcessManager) IsRunning(process string) bool {
 	b := IsRunningExecutable(pi.Exe)
 	return b
 }
+
+// Below here are functions that return ProcessInfo for various programs
 
 func GuiProcessInfo() *ProcessInfo {
 	fullpath, err := GetParam("engine.gui")
@@ -354,4 +415,18 @@ func MmttProcessInfo() *ProcessInfo {
 		fullpath = ""
 	}
 	return NewProcessInfo("mmtt_"+mmtt+".exe", fullpath, "", nil)
+}
+
+func ObsProcessInfo() *ProcessInfo {
+
+	fullpath, err := GetParam("engine.obspath")
+	LogIfError(err)
+	if fullpath != "" && !FileExists(fullpath) {
+		LogWarn("No OBS found, looking for", "path", fullpath)
+		return nil
+	}
+	exe := filepath.Base(fullpath)
+	pi := NewProcessInfo(exe, fullpath, "", nil)
+	pi.DirPath = filepath.Dir(fullpath)
+	return pi
 }
