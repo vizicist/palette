@@ -20,47 +20,12 @@ import (
 	"gopkg.in/gomail.v2"
 )
 
-var PaletteExe = "palette.exe"
-var MonitorExe = "palette_monitor.exe"
-var EngineExe = "palette_engine.exe"
-var GuiExe = "palette_gui.exe"
-var BiduleExe = "bidule.exe"
-var ResolumeExe = "avenue.exe"
-var KeykitExe = "key.exe"
-var MmttExe = "mmtt_kinect.exe"
-
 var MmttHttpPort = 4444
 var EngineHttpPort = 3330
 var OscPort = 3333
 var EventClientPort = 6666
 var GuiPort = 3943
 var LocalAddress = "127.0.0.1"
-
-func KillAllExceptMonitor() {
-	LogInfo("KillAll")
-	KillExecutable(KeykitExe)
-	KillExecutable(MmttExe)
-	KillExecutable(BiduleExe)
-	KillExecutable(ResolumeExe)
-	KillExecutable(GuiExe)
-	KillExecutable(EngineExe)
-}
-
-func IsRunning(process string) bool {
-	if process == "engine" {
-		return IsRunningExecutable(EngineExe)
-	}
-	return TheProcessManager.IsRunning(process)
-}
-
-func MonitorIsRunning() bool {
-	return IsRunningExecutable(MonitorExe)
-}
-
-// func IsEngineRunning() bool {
-// 	return isRunningExecutable(EngineExe)
-// 	// return isRunningExecutable(EngineExe) || isRunningExecutable(EngineExeDebug)
-// }
 
 // fileExists checks if a file exists
 func fileExists(filename string) bool {
