@@ -105,7 +105,7 @@ def paletteSubDir(subdir):
 
 paletteDataPath = ""
 FullDataPath = ""
-DataDir = "data_omnisphere"
+DataDir = "data"
 
 # This is the name of the data_* directory
 # containing config and saved.

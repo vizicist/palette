@@ -69,7 +69,8 @@ func (quadpro *QuadPro) Api(api string, apiargs map[string]string) (result strin
 		if !oksaved {
 			return "", fmt.Errorf("missing filename parameter")
 		}
-		TheAttractManager.SetAttractMode(false)
+		// Loading a preset no longer turns off attract mode
+		// TheAttractManager.SetAttractMode(false)
 		return "", quadpro.Load(category, filename)
 
 	case "save":
@@ -219,10 +220,19 @@ func (quadpro *QuadPro) onCursorEvent(state ActiveCursor) error {
 	cursorStyle := patchLogic.patch.Get("misc.cursorstyle")
 	gensound := IsTrueValue(patchLogic.patch.Get("misc.generatesound"))
 	genvisual := IsTrueValue(patchLogic.patch.Get("misc.generatevisual"))
-	isAttractCursor := state.Current.IsAttractGenerated()
+	attractSound := IsTrueValue(GetParamWithDefault("engine.attractsound", "false"))
+	// in attract mode, don't generate sound from attractMode cursors
+	attractIsOn := TheAttractManager.AttractModeIsOn()
+	isAttractGenerated := state.Current.IsAttractGenerated()
+	makeSound := false
+	if !attractIsOn && !isAttractGenerated {
+		makeSound = true
+	}
+	if attractIsOn && (attractSound || !isAttractGenerated) {
+		makeSound = true
+	}
 
-	// Don't generate sound from attractMode cursors
-	if !isAttractCursor && gensound && !TheAttractManager.AttractModeIsOn() {
+	if gensound && makeSound {
 		patchLogic.generateSoundFromCursor(state.Current, cursorStyle)
 	}
 	if genvisual {

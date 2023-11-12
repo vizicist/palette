@@ -218,7 +218,7 @@ func LogFilePath(nm string) string {
 	// This allows the log files to be checked into github.
 	logdir := os.Getenv("PALETTE_LOGDIR")
 	if logdir == "" {
-		logdir = filepath.Join(PaletteDataPath(), "logs", Hostname())
+		logdir = filepath.Join(PaletteDataPath(), "logs")
 	}
 	if _, err := os.Stat(logdir); os.IsNotExist(err) {
 		err = os.MkdirAll(logdir, os.FileMode(0777))

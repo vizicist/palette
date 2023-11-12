@@ -16,15 +16,15 @@ set bin=%ship%\bin
 rm -fr %ship% > nul 2>&1
 mkdir %ship%
 mkdir %ship%\bin
-mkdir %ship%\bin\mmtt_kinect
 mkdir %ship%\ffgl
-mkdir %ship%\keykit
-mkdir %ship%\keykit\bin
-mkdir %ship%\keykit\lib
+rem mkdir %ship%\bin\mmtt_kinect
+rem mkdir %ship%\keykit
+rem mkdir %ship%\keykit\bin
+rem mkdir %ship%\keykit\lib
 
 echo ================ Upgrading Python
 python -m pip install pip | grep -v "already.*satisfied"
-pip install --use-pep517 codenamize pip install python-osc requests pip install pyinstaller get-mac mido pyperclip chardet | grep -v "already satisfied"
+pip install --use-pep517 codenamize pip install python-osc requests pip install pyinstaller get-mac mido pyperclip chardet obs-cli | grep -v "already satisfied"
 
 rem echo ================ Compiling depthlib
 rem pushd ..\..\depthlib
@@ -54,11 +54,11 @@ go build palette_monitor.go >> %buildcmdsout% 2>&1
 move palette_monitor.exe %bin%\palette_monitor.exe > nul
 popd
 
-echo ================ Compiling palette_splash
-pushd %PALETTE_SOURCE%\cmd\palette_splash
-go build palette_splash.go >> %buildcmdsout% 2>&1
-move palette_splash.exe %bin%\palette_splash.exe > nul
-popd
+rem echo ================ Compiling palette_splash
+rem pushd %PALETTE_SOURCE%\cmd\palette_splash
+rem go build palette_splash.go >> %buildcmdsout% 2>&1
+rem move palette_splash.exe %bin%\palette_splash.exe > nul
+rem popd
 
 rem print any error messages from compiling cmds
 type %buildcmdsout%
@@ -68,7 +68,7 @@ pushd %PALETTE_SOURCE%\python
 rm -fr dist
 rm -fr build\palette_gui
 rm -fr build
-pyinstaller -i ..\data_omnisphere\config\palette.ico palette_gui.py > pyinstaller_gui.out 2>&1
+pyinstaller -i ..\data\config\palette.ico palette_gui.py > pyinstaller_gui.out 2>&1
 pyinstaller osc.py > pyinstaller_osc.out 2>&1
 
 echo ================ Merging python executables
@@ -91,23 +91,21 @@ copy %PALETTE_SOURCE%\build\windows\vc15\bin\pthreadvc2.dll %ship%\ffgl >nul
 copy %PALETTE_SOURCE%\build\windows\vc15\bin\msvcr100.dll %ship%\ffgl >nul
 popd
 
-echo ================ Compiling mmtt_kinect
-pushd %PALETTE_SOURCE%\mmtt_kinect\build\windows
-msbuild /t:Build /p:Configuration=Debug /p:Platform="x32" mmtt_kinect.sln > nul
-rem Put mmtt_kinect in its own bin directory, to keep 32-bit things separate
-copy mmtt_kinect\Debug\mmtt_kinect.exe %bin%\mmtt_kinect\mmtt_kinect.exe >nul
-copy mmtt_kinect\*.dll %bin%\mmtt_kinect >nul
-popd
+rem echo ================ Compiling mmtt_kinect
+rem pushd %PALETTE_SOURCE%\mmtt_kinect\build\windows
+rem msbuild /t:Build /p:Configuration=Debug /p:Platform="x32" mmtt_kinect.sln > nul
+rem rem Put mmtt_kinect in its own bin directory, to keep 32-bit things separate
+rem copy mmtt_kinect\Debug\mmtt_kinect.exe %bin%\mmtt_kinect\mmtt_kinect.exe >nul
+rem copy mmtt_kinect\*.dll %bin%\mmtt_kinect >nul
+rem popd
 
 echo ================ Copying misc binaries
-rem copy %PALETTE_SOURCE%\binaries\nats\nats-pub.exe %bin% >nul
-rem copy %PALETTE_SOURCE%\binaries\nats\nats-sub.exe %bin% >nul
 copy %PALETTE_SOURCE%\binaries\nircmdc.exe %bin% >nul
 
-echo ================ Copying keykit things
-copy %PALETTE_SOURCE%\keykit\bin\key.exe %ship%\keykit\bin >nul
-copy %PALETTE_SOURCE%\keykit\bin\keylib.exe %ship%\keykit\bin >nul
-copy %PALETTE_SOURCE%\keykit\lib\*.* %ship%\keykit\lib >nul
+rem echo ================ Copying keykit things
+rem copy %PALETTE_SOURCE%\keykit\bin\key.exe %ship%\keykit\bin >nul
+rem copy %PALETTE_SOURCE%\keykit\bin\keylib.exe %ship%\keykit\bin >nul
+rem copy %PALETTE_SOURCE%\keykit\lib\*.* %ship%\keykit\lib >nul
 
 echo ================ Copying scripts
 pushd %PALETTE_SOURCE%\scripts
@@ -120,41 +118,36 @@ copy taillogs.bat %bin% >nul
 copy palette_killall.bat %bin% >nul
 copy palette_restart.bat %bin% >nul
 copy palette_onboot.bat %bin% >nul
-rem copy natsmon.bat %bin% >nul
 copy delay.bat %bin% >nul
 copy setpalettelogdir.bat %bin% >nul
-
 popd
 
-for %%X in (data_omnisphere) DO (
-	echo ================ Copying %%X
-	mkdir %ship%\%%X\config
-	mkdir %ship%\%%X\midifiles
-	mkdir %ship%\%%X\saved
-	mkdir %ship%\%%X\keykit
-	mkdir %ship%\%%X\keykit\liblocal
-	mkdir %ship%\%%X\html
-	copy %PALETTE_SOURCE%\%%X\config\homepage.json %ship%\%%X\config >nul
-	copy %PALETTE_SOURCE%\%%X\config\ffgl.json %ship%\%%X\config >nul
-	copy %PALETTE_SOURCE%\%%X\config\param*.json %ship%\%%X\config >nul
-	copy %PALETTE_SOURCE%\%%X\config\resolume.json %ship%\%%X\config >nul
-	copy %PALETTE_SOURCE%\%%X\config\settings.json %ship%\%%X\config >nul
-	copy %PALETTE_SOURCE%\%%X\config\mmtt_*.json %ship%\%%X\config >nul
-	copy %PALETTE_SOURCE%\%%X\config\synths.json %ship%\%%X\config >nul
-	copy %PALETTE_SOURCE%\%%X\config\morphs.json %ship%\%%X\config >nul
-	rem copy %PALETTE_SOURCE%\%%X\config\nats*.conf %ship%\%%X\config >nul
-	copy %PALETTE_SOURCE%\%%X\config\Palette*.avc %ship%\%%X\config >nul
-	copy %PALETTE_SOURCE%\%%X\config\EraeTouchLayout.emk %ship%\%%X\config >nul
-	copy %PALETTE_SOURCE%\%%X\config\*.png %ship%\%%X\config >nul
-	copy %PALETTE_SOURCE%\%%X\config\consola.ttf %ship%\%%X\config >nul
-	copy %PALETTE_SOURCE%\%%X\config\OpenSans-Regular.ttf %ship%\%%X\config >nul
-	copy %PALETTE_SOURCE%\%%X\config\palette.ico %ship%\%%X\config >nul
-	copy %PALETTE_SOURCE%\%%X\config\*.bidule %ship%\%%X\config >nul
-	copy %PALETTE_SOURCE%\%%X\midifiles\*.* %ship%\%%X\midifiles >nul
-	xcopy /e /y %PALETTE_SOURCE%\%%X\saved %ship%\%%X\saved >nul
-	xcopy /e /y %PALETTE_SOURCE%\%%X\keykit\liblocal %ship%\%%X\keykit\liblocal >nul
-	xcopy /e /y %PALETTE_SOURCE%\%%X\html %ship%\%%X\html >nul
-)
+echo ================ Copying data
+mkdir %ship%\data\config
+mkdir %ship%\data\midifiles
+mkdir %ship%\data\saved
+rem mkdir %ship%\data\keykit
+rem mkdir %ship%\data\keykit\liblocal
+mkdir %ship%\data\html
+copy %PALETTE_SOURCE%\data\config\homepage.json %ship%\data\config >nul
+copy %PALETTE_SOURCE%\data\config\ffgl.json %ship%\data\config >nul
+copy %PALETTE_SOURCE%\data\config\param*.json %ship%\data\config >nul
+copy %PALETTE_SOURCE%\data\config\resolume.json %ship%\data\config >nul
+copy %PALETTE_SOURCE%\data\config\settings.json %ship%\data\config >nul
+rem copy %PALETTE_SOURCE%\data\config\mmtt_*.json %ship%\data\config >nul
+copy %PALETTE_SOURCE%\data\config\synths.json %ship%\data\config >nul
+copy %PALETTE_SOURCE%\data\config\morphs.json %ship%\data\config >nul
+copy %PALETTE_SOURCE%\data\config\Palette*.avc %ship%\data\config >nul
+copy %PALETTE_SOURCE%\data\config\EraeTouchLayout.emk %ship%\data\config >nul
+copy %PALETTE_SOURCE%\data\config\*.png %ship%\data\config >nul
+copy %PALETTE_SOURCE%\data\config\consola.ttf %ship%\data\config >nul
+copy %PALETTE_SOURCE%\data\config\OpenSans-Regular.ttf %ship%\data\config >nul
+copy %PALETTE_SOURCE%\data\config\palette.ico %ship%\data\config >nul
+copy %PALETTE_SOURCE%\data\config\*.bidule %ship%\data\config >nul
+copy %PALETTE_SOURCE%\data\midifiles\*.* %ship%\data\midifiles >nul
+xcopy /e /y %PALETTE_SOURCE%\data\saved %ship%\data\saved >nul
+rem xcopy /e /y %PALETTE_SOURCE%\data\keykit\liblocal %ship%\data\keykit\liblocal >nul
+xcopy /e /y %PALETTE_SOURCE%\data\html %ship%\data\html >nul
 
 echo ================ Copying windows-specific things
 copy %PALETTE_SOURCE%\SenselLib\x64\LibSensel.dll %bin% >nul

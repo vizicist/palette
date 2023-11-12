@@ -1,0 +1,50 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <style>
+      body {
+        margin: 0px;
+        padding: 0px;
+      }
+      #myCanvas {
+        border: 1px solid #9C9898;
+      }
+    </style>
+
+    <script type="text/javascript" src="drawfade.js"></script>
+
+  </head>
+  <body>
+    <center>
+    <h2>MMTT Monitor</h2>
+    </center>
+    <form>
+    <table cellpadding=10>
+    <tr><td rowspan=3>
+	<center>
+		Drawing Canvas<br>
+		<br>
+		<canvas id="myCanvas" width="640" height="480"></canvas>
+		<br>
+		<button type="button" onclick="context.clearRect(0,0,canvas.width,canvas.height);">Clear</button>
+	</center>
+	</td>
+	<td width=47% valign=top>
+	    <center>
+		Osc Message Log<br>
+		<textarea id="oscmessages" rows="16" cols="80"></textarea>
+	    </center>
+	</td>
+    </tr>
+    <tr><td>
+	<center>
+		Debug Message Log<br>
+		<textarea id="othermessages" rows="16" cols="80"></textarea>
+	</center>
+	</td>
+    </tr>
+  </table>
+  </form>
+  </body>
+</html>
+

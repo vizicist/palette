@@ -93,6 +93,8 @@ class ProGuiApp(tk.Tk):
 
         self.showAll = palette.boolValueOfString(palette.GetParam("engine.guishowall"))
 
+        self.attractGuiShow = palette.boolValueOfString(palette.GetParam("engine.attractguishow"))
+
         self.currentPageName = None
 
         self.setGuiLevel(self.defaultGuiLevel)
@@ -2581,7 +2583,7 @@ def status_thread(app):  # runs in background thread
         # log("status is ",status)
         jstatus = json.loads(status)
         attractMode = jstatus["attractmode"]
-        if attractMode == "true":
+        if attractMode == "true" and PaletteApp.attractGuiShow:
             if PaletteApp.currentMode != "attract":
                 PaletteApp.setNextMode("attract")
         else:
