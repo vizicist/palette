@@ -164,7 +164,7 @@ func (am *AttractManager) doAttractAction() {
 		if TheQuadPro == nil {
 			LogWarn("No QuadPro to change for attract mode")
 		} else {
-			err := TheQuadPro.loadQuadRand()
+			_, err := TheQuadPro.loadQuadRand()
 			LogIfError(err)
 		}
 		am.lastAttractChange = now

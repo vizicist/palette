@@ -412,10 +412,6 @@ func MmttApi(api string) (map[string]string, error) {
 	return MmttRemoteApi(api)
 }
 
-func EngineApi(api string, apiargs ...string) (map[string]string, error) {
-	return EngineRemoteApi(api, apiargs...)
-}
-
 // humanReadableApiOutput takes the result of an API invocation and
 // produces what will appear in visible output from a CLI command.
 func HumanReadableApiOutput(apiOutput map[string]string) string {

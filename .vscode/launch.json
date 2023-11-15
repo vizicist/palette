@@ -5,6 +5,7 @@
     "version": "0.2.0",
     "configurations": [
 
+
         {
             "name": "GUI - palette_gui.py",
             "type": "python",
@@ -39,11 +40,25 @@
             "args": ["-engine=false"]
         },
         {
+            "name": "palette_chat",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTE_SOURCE}/cmd/palette_chat/palette_chat.go",
+            "args": []
+        },
+        {
             "name": "palette archivelogs",
             "type": "go",
             "request": "launch",
             "program": "${env:PALETTE_SOURCE}/cmd/palette/palette.go",
             "args": ["archivelogs"]
+        },
+        {
+            "name": "palette OBS",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTE_SOURCE}/cmd/palette/palette.go",
+            "args": ["obs","recordstart"]
         },
         {
             "name": "palette summarize palette11",

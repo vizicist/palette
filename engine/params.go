@@ -304,6 +304,28 @@ func LoadParamsMap(path string) (ParamsMap, error) {
 	return paramsmap, nil
 }
 
+func LoadParamsMapFromString(s string) (ParamsMap, error) {
+	var f any
+	err := json.Unmarshal([]byte(s), &f)
+	if err != nil {
+		return nil, fmt.Errorf("unable to Unmarshal, err=%s, s=%s", err, s)
+	}
+	toplevel, ok := f.(map[string]any)
+	if !ok {
+		return nil, fmt.Errorf("unable to convert to ParamsMap - %s",s)
+
+	}
+	params, okparams := toplevel["params"]
+	if !okparams {
+		return nil, fmt.Errorf("no params value in json")
+	}
+	paramsmap, okmap := params.(map[string]any)
+	if !okmap {
+		return nil, fmt.Errorf("params value is not a map[string]string in jsom")
+	}
+	return paramsmap, nil
+}
+
 func (vals *ParamValues) setParamValueWithString(origname, value string) (err error) {
 
 	vals.mutex.Lock()

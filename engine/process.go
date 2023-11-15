@@ -91,10 +91,6 @@ func MonitorIsRunning() bool {
 // 	// return isRunningExecutable(EngineExe) || isRunningExecutable(EngineExeDebug)
 // }
 
-
-
-
-
 //////////////////////////////////////////////////////////////////
 
 func NewProcessManager() *ProcessManager {
@@ -319,7 +315,7 @@ func GuiProcessInfo() *ProcessInfo {
 	exe := filepath.Base(fullpath)
 
 	// set PALETTE_GUI_LEVEL to convey it to the gui
-	guilevel, err := GetParam("engine.defaultguilevel")
+	guilevel, err := GetParam("engine.guidefaultlevel")
 	if err != nil {
 		guilevel = "0" // last resert
 		LogIfError(err)
@@ -415,18 +411,4 @@ func MmttProcessInfo() *ProcessInfo {
 		fullpath = ""
 	}
 	return NewProcessInfo("mmtt_"+mmtt+".exe", fullpath, "", nil)
-}
-
-func ObsProcessInfo() *ProcessInfo {
-
-	fullpath, err := GetParam("engine.obspath")
-	LogIfError(err)
-	if fullpath != "" && !FileExists(fullpath) {
-		LogWarn("No OBS found, looking for", "path", fullpath)
-		return nil
-	}
-	exe := filepath.Base(fullpath)
-	pi := NewProcessInfo(exe, fullpath, "", nil)
-	pi.DirPath = filepath.Dir(fullpath)
-	return pi
 }

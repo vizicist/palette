@@ -84,12 +84,12 @@ class ProGuiApp(tk.Tk):
         # self.isLooping = False
         self.dorefreshPatches = False
 
-        guilevel = palette.GetParam("engine.defaultguilevel")
+        guilevel = palette.GetParam("engine.guidefaultlevel")
         if guilevel == "":
             glev = 0
         else:
             glev = int(guilevel)
-        self.defaultGuiLevel = glev
+        self.guidefaultlevel = glev
 
         self.showAll = palette.boolValueOfString(palette.GetParam("engine.guishowall"))
 
@@ -97,7 +97,7 @@ class ProGuiApp(tk.Tk):
 
         self.currentPageName = None
 
-        self.setGuiLevel(self.defaultGuiLevel)
+        self.setGuiLevel(self.guidefaultlevel)
 
         self.thumbFactor = 0.1
 
@@ -1094,7 +1094,7 @@ class ProGuiApp(tk.Tk):
         os._exit(0)  # This is a hard exit, killing all the background threads
 
     def completeReset(self):
-        self.setGuiLevel(self.defaultGuiLevel)
+        self.setGuiLevel(self.guidefaultlevel)
         self.allPatchesSelected = True
         for patch in self.PatchList():
             self.loopingOff(patch)
@@ -2204,7 +2204,7 @@ class PagePerformMain(tk.Frame):
         self.makePerformButton("CLEAR_", self.controller.loopingClearButton)
         self.makePerformButton("HELP_ ", self.controller.startHelp)
         # self.makePerformButton("Looping_OFF", self.controller.loopingOff)
-        # if self.controller.defaultGuiLevel > 0:
+        # if self.controller.guidefaultlevel > 0:
         #     self.makePerformButton("Clear_ ", self.controller.clear)
         # These shouldn't be shown in casual mode
         # self.makePerformButton("Start_All", self.controller.startAll)

@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/0xcafed00d/joystick v1.0.1
-	github.com/andreykaipov/goobs v0.10.0
+	github.com/andreykaipov/goobs v0.12.1
 	github.com/gempir/go-twitch-irc/v3 v3.2.0
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
 	github.com/hajimehoshi/ebiten/v2 v2.5.4

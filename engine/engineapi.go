@@ -355,6 +355,13 @@ func (e *Engine) Set(name string, value string) error {
 			TheProcessManager.processCheckSecs = f
 		}
 
+	case "engine.obsstream":
+		if IsTrueValue(value) {
+			ObsCommand("streamstart")
+		} else {
+			ObsCommand("streamstop")
+		}
+
 	case "engine.emailto":
 
 	case "engine.twinsys":
@@ -395,7 +402,7 @@ func (e *Engine) Set(name string, value string) error {
 	case "engine.resolumetextlayer":
 	case "engine.keykitroot":
 	case "engine.keykitrun":
-	case "engine.defaultguilevel":
+	case "engine.guidefaultlevel":
 	case "engine.guisize":
 	case "engine.testgestureduration":
 	case "engine.winsize":
