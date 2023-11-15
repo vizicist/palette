@@ -2,6 +2,8 @@ github.com/0xcafed00d/joystick v1.0.1 h1:r4p2cRp4MHJWu1gArhGtumbkPxmr3tcOUTFqybE
 github.com/0xcafed00d/joystick v1.0.1/go.mod h1:gzszjNgzP6jtCAeSdC9OqPVO5rO7TJuaw4P7eAjNzx8=
 github.com/andreykaipov/goobs v0.10.0 h1:wa4CxbYu/NqwUmx5E4/baDqYRYEmfHwg2T23RAg3jlU=
 github.com/andreykaipov/goobs v0.10.0/go.mod h1:EqG73Uu/4npyhXIWWszgRelNkEeIz+d0slUT6NKWYs4=
+github.com/andreykaipov/goobs v0.12.1 h1:KfVHfuvGFHg1MDi1muaKCwRxek3O4tzKcqBZmLDF8EA=
+github.com/andreykaipov/goobs v0.12.1/go.mod h1:9lCSWI7uZScJx05Hc0KnRtIItGjU8VpGV5dhONiiUgg=
 github.com/benbjohnson/clock v1.1.0 h1:Q92kusRqC1XV2MjkWETPvjJVqKetz1OzxZB7mHJLju8=
 github.com/buger/jsonparser v1.1.1 h1:2PnMjfWD7wBILjqQbt530v576A/cAbQvEW9gGIpYMUs=
 github.com/buger/jsonparser v1.1.1/go.mod h1:6RYKKt7H4d4+iWqouImQ9R2FZql3VbhNgx27UK13J/0=
