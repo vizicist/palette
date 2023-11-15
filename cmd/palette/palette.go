@@ -81,7 +81,7 @@ func CliCommand(args []string) (map[string]string, error) {
 
 	// Warn about extra unexpected arguments
 	switch api {
-	case "start", "kill", "stop", "summarize":
+	case "start", "kill", "stop", "summarize", "obs":
 		// okay
 	default:
 		// extra args are allowed on api.method usage
@@ -117,25 +117,18 @@ func CliCommand(args []string) (map[string]string, error) {
 		switch arg1 {
 
 		case "", "monitor":
-			if engine.MonitorIsRunning() {
-				return nil, fmt.Errorf("monitor is already running")
-			}
-
-			// palette_monitor.exe will restart the engine,
-			// which then starts whatever engine.autostart specifies.
-
-			engine.LogInfo("palette: starting monitor", "MonitorExe", engine.MonitorExe)
-			fullexe := filepath.Join(engine.PaletteDir(), "bin", engine.MonitorExe)
-			return nil, engine.StartExecutableLogOutput("monitor", fullexe)
+			return nil, doStartMonitor()
 
 		case "engine":
 			return nil, doStartEngine()
 
 		default:
-			// If it exists in the ProcessList...
+			// Only the monitor and engine are started directly by palette.
+			// The monitor will restart the engine if it dies, and
+			// the engine will restart any processes specified in engine.autostart.
 			for _, process := range engine.ProcessList() {
 				if arg1 == process {
-					return engine.EngineApi("engine.startprocess", "process", arg1)
+					return engine.EngineRemoteApi("engine.startprocess", "process", arg1)
 				}
 			}
 			return nil, fmt.Errorf("process %s is disabled or unknown", arg1)
@@ -181,12 +174,21 @@ func CliCommand(args []string) (map[string]string, error) {
 		// Make sure nothing is running.
 		statusOut, nrunning := StatusOutput()
 		if nrunning > 0 {
-			return nil, fmt.Errorf("cannot archive logs while processes are running:\n%s\n", statusOut)
+			return nil, fmt.Errorf("cannot archive logs while processes are running: %s", statusOut)
 		}
 		return nil, engine.ArchiveLogs()
 
 	case "test":
-		return engine.EngineApi("quadpro.test", "ntimes", "40")
+		return engine.EngineRemoteApi("quadpro.test", "ntimes", "40")
+
+	case "obs":
+		engine.LogInfo("palette: obs command")
+		err := engine.ObsCommand(arg1)
+		if err != nil {
+			return map[string]string{"error": err.Error()}, nil
+		}
+		// return map[string]string{"result": ""}, nil
+		return nil, nil
 
 	default:
 		if len(words) < 2 {
@@ -194,7 +196,7 @@ func CliCommand(args []string) (map[string]string, error) {
 		} else if len(words) > 2 {
 			return nil, fmt.Errorf("invalid api format, expecting {plugin}.{api}" + usage())
 		}
-		return engine.EngineApi(api, args[1:]...)
+		return engine.EngineRemoteApi(api, args[1:]...)
 	}
 }
 
@@ -250,16 +252,22 @@ func StatusOutput() (statusOut string, numRunning int) {
 }
 
 func doStartEngine() error {
-
 	if engine.IsRunning("engine") {
 		return fmt.Errorf("engine is already running")
 	}
-
 	fullexe := filepath.Join(engine.PaletteDir(), "bin", engine.EngineExe)
-	err := engine.StartExecutableLogOutput("engine", fullexe)
-	if err != nil {
-		engine.LogIfError(err)
-		return err
-	}
-	return nil
+	engine.LogInfo("palette: starting engine", "EngineExe", engine.EngineExe)
+	return engine.StartExecutableLogOutput("engine", fullexe)
 }
+
+func doStartMonitor() error {
+	if engine.MonitorIsRunning() {
+		return fmt.Errorf("monitor is already running")
+	}
+	// palette_monitor.exe will restart the engine,
+	// which then starts whatever engine.autostart specifies.
+	engine.LogInfo("palette: starting monitor", "MonitorExe", engine.MonitorExe)
+	fullexe := filepath.Join(engine.PaletteDir(), "bin", engine.MonitorExe)
+	return engine.StartExecutableLogOutput("monitor", fullexe)
+}
+
