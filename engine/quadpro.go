@@ -73,6 +73,9 @@ func (quadpro *QuadPro) Api(api string, apiargs map[string]string) (result strin
 		// TheAttractManager.SetAttractMode(false)
 		return "", quadpro.Load(category, filename)
 
+	case "loadrand":
+		return quadpro.loadQuadRand()
+
 	case "save":
 		category, oksaved := apiargs["category"]
 		if !oksaved {
@@ -292,11 +295,11 @@ func (quadpro *QuadPro) doTest(ntimes int, interval time.Duration) {
 	}
 }
 
-func (quadpro *QuadPro) loadQuadRand() error {
+func (quadpro *QuadPro) loadQuadRand() (string, error) {
 
 	arr, err := SavedFileList("quad")
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	quadpro.randMutex.Lock()
@@ -306,13 +309,13 @@ func (quadpro *QuadPro) loadQuadRand() error {
 	err = quadpro.Load("quad", arr[rn])
 	if err != nil {
 		LogIfError(err)
-		return err
+		return "", err
 	}
 
 	for _, patch := range quadpro.patch {
 		patch.RefreshAllPatchValues()
 	}
-	return nil
+	return arr[rn],err
 }
 
 func (quadpro *QuadPro) Load(category string, filename string) error {

@@ -54,7 +54,8 @@ LayerParams_InitializeTypes() {
 	LayerParams_autostartTypes.push_back("gui,resolume,bidule");
 	LayerParams_autostartTypes.push_back("mmtt,gui,resolume,bidule");
 	LayerParams_autostartTypes.push_back("resolume,bidule");
-	LayerParams_autostartTypes.push_back("obs,resolume,bidule");
+	LayerParams_autostartTypes.push_back("obs,resolume,bidule,obs");
+	LayerParams_autostartTypes.push_back("gui,obs,resolume,bidule");
 
 	LayerParams_pitchsetTypes.push_back("");
 	LayerParams_pitchsetTypes.push_back("stylusrmx");
