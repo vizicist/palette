@@ -47,11 +47,18 @@
             "args": []
         },
         {
-            "name": "palette archivelogs",
+            "name": "palette logs archive",
             "type": "go",
             "request": "launch",
             "program": "${env:PALETTE_SOURCE}/cmd/palette/palette.go",
-            "args": ["archivelogs"]
+            "args": ["logs","archive"]
+        },
+        {
+            "name": "palette logs clear",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTE_SOURCE}/cmd/palette/palette.go",
+            "args": ["logs","clear"]
         },
         {
             "name": "palette start chat",

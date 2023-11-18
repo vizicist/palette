@@ -274,16 +274,20 @@ func (e *Engine) getInt(value string, i *int64) bool {
 	}
 }
 
-func (e *Engine) Set(name string, value string) error {
+func (e *Engine) Set(name string, value string) (err error) {
 	var f float64
 	var i int64
 
 	if strings.HasPrefix(name,"engine.process.") {
 		process := strings.TrimPrefix(name,"engine.process.")
 		if IsTrueValue(value) {
-			TheProcessManager.StartRunning(process)
+			err = TheProcessManager.StartRunning(process)
 		} else {
-			TheProcessManager.StopRunning(process)
+			err = TheProcessManager.StopRunning(process)
+		}
+		if err != nil {
+			LogError(err)
+			return err
 		}
 		return e.params.Set(name, value)
 	}
@@ -366,10 +370,13 @@ func (e *Engine) Set(name string, value string) error {
 
 	case "engine.obsstream":
 		if IsTrueValue(value) {
-			ObsCommand("streamstart")
+			err := ObsCommand("streamstart")
+			LogIfError(err)
 		} else {
-			ObsCommand("streamstop")
+			err := ObsCommand("streamstop")
+			LogIfError(err)
 		}
+		// But keep going to set persistence
 
 	case "engine.emailto":
 

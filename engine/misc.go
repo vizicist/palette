@@ -17,6 +17,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/nxadm/tail"
 	"gopkg.in/gomail.v2"
 )
 
@@ -481,9 +482,40 @@ func RemoteApiRaw(url string, args string) (map[string]string, error) {
 	return output, nil
 }
 
+func ClearLogs() error {
+	logsdir := LogFilePath("")
+
+	walker := func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if info.IsDir() {
+			return nil
+		}
+		if strings.HasSuffix(path, ".log") {
+			LogInfo("ClearLogs is removing", "path", path)
+			_ = os.Remove(path)
+		}
+		return nil
+	}
+	err := filepath.Walk(logsdir, walker)
+	LogIfError(err)
+	return err
+}
+
+func TailLogs() error {
+	logpath := LogFilePath("engine.log")
+	t, err := tail.TailFile(logpath, tail.Config{Follow: true})
+	LogIfError(err)
+	for line := range t.Lines {
+		fmt.Println(line.Text)
+	}
+	return nil
+}
+
 func ArchiveLogs() error {
 
-	LogInfo("CycleTheLogs is starting.")
+	LogInfo("ArchiveLogs is starting.")
 
 	logsdir := LogFilePath("")
 
@@ -499,17 +531,17 @@ func ArchiveLogs() error {
 	}
 	year, month, day := time.Now().Date()
 	zipname := fmt.Sprintf("%s_logs_%04d_%02d_%02d_%02d_%02d_%02d", Hostname(), year, month, day, hr, min, sec)
-	zippath, err := WritableSavedFilePath("logsarchive", zipname, ".zip")
+	zippath, err := WritableSavedFilePath("archive", zipname, ".zip")
 	LogIfError(err)
-	LogInfo("CycleTheLogs should be zipping logs to", "zippath", zippath)
+	LogInfo("Archivelogs is writing", "zippath", zippath)
 
 	err = ziplogs(logsdir, zippath)
 	if err != nil {
-		return fmt.Errorf("CycleTheLogs: err=%s", err)
+		return fmt.Errorf("Archivelogs: err=%s", err)
 	} else {
-		LogInfo("CycleTheLogs is done.")
+		// If archiving is successful, clear the logs
+		return ClearLogs()
 	}
-	return nil
 }
 
 func Hostname() string {
