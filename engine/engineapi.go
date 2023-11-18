@@ -130,19 +130,17 @@ func (e *Engine) executeEngineApi(api string, apiargs map[string]string) (result
 		return e.params.Get(name)
 
 	case "startprocess":
-		process, ok := apiargs["process"]
-		if !ok {
-			return "", fmt.Errorf("executeEngineApi: missing process parameter")
-		}
-		return "", TheProcessManager.StartRunning(process)
+		return "", fmt.Errorf("executeEngineApi: startprocess is deprecated")
+		// return "", TheProcessManager.StartRunning(process)
 
 	case "stopprocess":
-		process, ok := apiargs["process"]
-		if !ok {
-			return "", fmt.Errorf("executeEngineApi: missing process parameter")
-		}
-		err := TheProcessManager.KillProcess(process)
-		return "", err
+		return "", fmt.Errorf("executeEngineApi: stopprocess is deprecated")
+		// process, ok := apiargs["process"]
+		// if !ok {
+		// 	return "", fmt.Errorf("executeEngineApi: missing process parameter")
+		// }
+		// err := TheProcessManager.KillProcess(process)
+		// return "", err
 
 	case "showclip":
 		s, ok := apiargs["clipnum"]
@@ -279,6 +277,17 @@ func (e *Engine) getInt(value string, i *int64) bool {
 func (e *Engine) Set(name string, value string) error {
 	var f float64
 	var i int64
+
+	if strings.HasPrefix(name,"engine.process.") {
+		process := strings.TrimPrefix(name,"engine.process.")
+		if IsTrueValue(value) {
+			TheProcessManager.StartRunning(process)
+		} else {
+			TheProcessManager.StopRunning(process)
+		}
+		return e.params.Set(name, value)
+	}
+
 	switch name {
 
 	case "engine.attract":
@@ -408,13 +417,15 @@ func (e *Engine) Set(name string, value string) error {
 	case "engine.winsize":
 	case "engine.notifygui":
 	case "engine.attractgesturenumsteps":
-	case "engine.autostart":
 	case "engine.keykitpath":
 	case "engine.mmtt_yexpand":
 	case "engine.helpimage":
 	case "engine.guishowall":
 
 	case "engine.attractnumbergesturesteps":
+
+	case "engine.autostart":
+		LogInfo("Engine.Set, obsolete parameter", "name", name, "value", value)
 
 	default:
 		LogInfo("Engine.Set, unknown parameter", "name", name, "value", value)
@@ -429,7 +440,7 @@ func (e *Engine) executeSavedApi(api string, apiargs map[string]string) (result 
 	switch api {
 
 	case "list":
-		category := optionalStringArg("category", apiargs, "*")	
+		category := optionalStringArg("category", apiargs, "*")
 		return SavedList(category)
 	default:
 		LogWarn("api is not recognized\n", "api", api)

@@ -54,6 +54,13 @@
             "args": ["archivelogs"]
         },
         {
+            "name": "palette start chat",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTE_SOURCE}/cmd/palette/palette.go",
+            "args": ["start","chat"]
+        },
+        {
             "name": "palette OBS",
             "type": "go",
             "request": "launch",
