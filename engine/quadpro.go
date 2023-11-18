@@ -74,7 +74,11 @@ func (quadpro *QuadPro) Api(api string, apiargs map[string]string) (result strin
 		return "", quadpro.Load(category, filename)
 
 	case "loadrand":
-		return quadpro.loadQuadRand()
+		category, oksaved := apiargs["category"]
+		if !oksaved {
+			return "", fmt.Errorf("missing category parameter")
+		}
+		return quadpro.loadQuadRand(category)
 
 	case "save":
 		category, oksaved := apiargs["category"]
@@ -295,9 +299,9 @@ func (quadpro *QuadPro) doTest(ntimes int, interval time.Duration) {
 	}
 }
 
-func (quadpro *QuadPro) loadQuadRand() (string, error) {
+func (quadpro *QuadPro) loadQuadRand(category string) (string, error) {
 
-	arr, err := SavedFileList("quad")
+	arr, err := SavedFileList(category)
 	if err != nil {
 		return "", err
 	}
@@ -306,7 +310,7 @@ func (quadpro *QuadPro) loadQuadRand() (string, error) {
 	rn := quadpro.rand.Uint64() % uint64(len(arr))
 	quadpro.randMutex.Unlock()
 
-	err = quadpro.Load("quad", arr[rn])
+	err = quadpro.Load(category, arr[rn])
 	if err != nil {
 		LogIfError(err)
 		return "", err
@@ -315,17 +319,12 @@ func (quadpro *QuadPro) loadQuadRand() (string, error) {
 	for _, patch := range quadpro.patch {
 		patch.RefreshAllPatchValues()
 	}
-	return arr[rn],err
+	return arr[rn], err
 }
 
 func (quadpro *QuadPro) Load(category string, filename string) error {
 
-	path, err := ReadableSavedFilePath(category, filename, ".json")
-	if err != nil {
-		LogIfError(err)
-		return err
-	}
-	paramsMap, err := LoadParamsMap(path)
+	paramsMap, err := LoadParamsMapOfCategory(category,filename)
 	if err != nil {
 		LogIfError(err)
 		return err
@@ -335,33 +334,21 @@ func (quadpro *QuadPro) Load(category string, filename string) error {
 
 	var lasterr error
 
-	switch category {
-
-	case "quad":
-
-		overridemap := OverrideMap()
-		for _, patch := range quadpro.patch {
-			err := patch.ApplyPatchValuesFromQuadMap(paramsMap)
-			if err != nil {
-				LogIfError(err)
-				lasterr = err
-			}
-			if overridemap != nil {
-				patch.params.ApplyValuesFromMap(category, overridemap, patch.params.Set)
-			}
-			patch.RefreshAllPatchValues()
-		}
-
-	case "engine":
+	if category == "engine" {
 		LogWarn("HACK! quadpro.Load shouldn't load engine parameters")
-		err := TheEngine.LoadEngineParams(filename)
+		err := TheEngine.LoadEngineParams(paramsMap)
 		if err != nil {
 			LogIfError(err)
 			lasterr = err
 		}
-
-	default:
-		LogWarn("QuadPro.Load: unhandled", "category", category, "filename", filename)
+	} else {
+		for _, patch := range quadpro.patch {
+			err := patch.Load(category, filename)
+			if err != nil {
+				LogIfError(err)
+				lasterr = err
+			}
+		}
 	}
 
 	// Decide what _Current things we should save

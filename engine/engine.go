@@ -171,30 +171,27 @@ func (e *Engine) SaveCurrent() (err error) {
 }
 
 func (e *Engine) LoadCurrent() (err error) {
-	return e.LoadEngineParams("_Current")
+	paramsMap, err := LoadParamsMapOfCategory("engine","_Current")
+	if err != nil {
+		LogIfError(err)
+		return err
+	}
+	return e.LoadEngineParams(paramsMap)
 	/*
-	path, err := ReadableSavedFilePath("engine", "_Current", ".json")
-	if err != nil {
-		return err
-	}
-	paramsmap, err := LoadParamsMap(path)
-	if err != nil {
-		return err
-	}
-	e.params.ApplyValuesFromMap("engine", paramsmap, e.Set)
-	return nil
+		path, err := ReadableSavedFilePath("engine", "_Current", ".json")
+		if err != nil {
+			return err
+		}
+		paramsmap, err := LoadParamsMap(path)
+		if err != nil {
+			return err
+		}
+		e.params.ApplyValuesFromMap("engine", paramsmap, e.Set)
+		return nil
 	*/
 }
 
-func (e *Engine) LoadEngineParams(fname string) (err error) {
-	path, err := ReadableSavedFilePath("engine", fname, ".json")
-	if err != nil {
-		return err
-	}
-	paramsmap, err := LoadParamsMap(path)
-	if err != nil {
-		return err
-	}
+func (e *Engine) LoadEngineParams(paramsmap ParamsMap) (err error) {
 	e.params.ApplyValuesFromMap("engine", paramsmap, e.Set)
 	return nil
 }
@@ -532,7 +529,7 @@ func (e *Engine) SetAutoTransposeBeats(beats int) {
 
 func (e *Engine) advanceTransposeTo(newclick Clicks) {
 
-	if ! e.autoTransposeOn {
+	if !e.autoTransposeOn {
 		return
 	}
 	if newclick < e.autoTransposeNext {
