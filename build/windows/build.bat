@@ -115,17 +115,12 @@ rem copy %PALETTE_SOURCE%\keykit\lib\*.* %ship%\keykit\lib >nul
 
 echo ================ Copying scripts
 pushd %PALETTE_SOURCE%\scripts
-copy palettetasks.bat %bin% >nul
-copy testcursor.bat %bin% >nul
 copy osc.bat %bin% >nul
 copy ipaddress.bat %bin% >nul
-copy taillog.bat %bin% >nul
-copy taillogs.bat %bin% >nul
 copy palette_killall.bat %bin% >nul
-copy palette_restart.bat %bin% >nul
 copy palette_onboot.bat %bin% >nul
 copy delay.bat %bin% >nul
-copy setpalettelogdir.bat %bin% >nul
+copy cdlogs.bat %bin% >nul
 popd
 
 echo ================ Copying data

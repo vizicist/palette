@@ -14,26 +14,25 @@ func main() {
 
 	engine.InitLog("chat")
 
-	engine.LogInfo("CHAT START")
-
 	flag.Parse()
 
-	go StartTwitch()
-
-	vals, err := engine.EngineRemoteApi("engine.status")
+	err := StartTwitch()
 	if err != nil {
 		engine.LogError(err)
-	} else {
-		engine.LogInfo("api output", "vals", vals)
 	}
-
-	select {}
+	engine.LogInfo("Chat is exiting")
 }
 
-func StartTwitch() {
+func StartTwitch() error {
 
 	clientUserName := os.Getenv("TWITCH_USER")
+	if clientUserName == "" {
+		return fmt.Errorf("StartTwitch: TWITCH_USER not set")
+	}
 	clientAuthenticationToken := os.Getenv("TWITCH_TOKEN")
+	if clientAuthenticationToken == "" {
+		return fmt.Errorf("StartTwitch: TWITCH_TOKEN not set")
+	}
 	client := twitch.NewClient(clientUserName, clientAuthenticationToken)
 
 	client.OnConnect(func() {
@@ -158,12 +157,9 @@ func StartTwitch() {
 	client.Join("photonsalon")
 
 	err := client.Connect()
-	engine.LogInfo("MAIN 5")
 	if err != nil {
-		engine.LogInfo("MAIN 6")
-		panic(err)
+		return fmt.Errorf("unable to connect to twitch, clientUserName=%s clientAuthenticationToken=%s err=%s",clientUserName, clientAuthenticationToken, err.Error())
 	}
-	engine.LogInfo("MAIN 7!!!")
 	select {}
 	// unreachable
 }
