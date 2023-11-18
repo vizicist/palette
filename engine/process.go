@@ -252,7 +252,8 @@ func (pm *ProcessManager) StartRunning(process string) error {
 		LogIfError(err)
 		defer func() {
 			LogInfo("StartRunning: changing back to", "dir", thisDir)
-			os.Chdir(thisDir)
+			err = os.Chdir(thisDir)
+			LogIfError(err)
 		}()
 	}
 
