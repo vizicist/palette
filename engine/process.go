@@ -57,6 +57,7 @@ func CheckAutorestartProcesses() {
 var MonitorExe = "palette_monitor.exe"
 var EngineExe = "palette_engine.exe"
 var GuiExe = "palette_gui.exe"
+var ChatExe = "palette_chat.exe"
 var BiduleExe = "bidule.exe"
 var ResolumeExe = "avenue.exe"
 var KeykitExe = "key.exe"
@@ -73,6 +74,7 @@ func KillAllExceptMonitor() {
 	KillExecutable(GuiExe)
 	KillExecutable(EngineExe)
 	KillExecutable(ObsExe)
+	KillExecutable(ChatExe)
 }
 
 func IsRunning(process string) bool {
@@ -163,6 +165,7 @@ func ProcessList() []string {
 	arr = append(arr, "bidule")
 	arr = append(arr, "resolume")
 	arr = append(arr, "obs")
+	arr = append(arr, "chat")
 	keykit, err := GetParamBool("engine.keykitrun")
 	LogIfError(err)
 	if keykit {
@@ -197,19 +200,25 @@ func (pm *ProcessManager) AddProcess(process string, info *ProcessInfo) {
 func (pm *ProcessManager) AddProcessBuiltIn(process string) {
 
 	LogOfType("process", "AddProcessBuiltIn", "process", process)
+	var p *ProcessInfo
 	switch process {
 	case "bidule":
-		pm.AddProcess(process, TheBidule().ProcessInfo())
+		p = TheBidule().ProcessInfo()
 	case "resolume":
-		pm.AddProcess(process, TheResolume().ProcessInfo())
+		p = TheResolume().ProcessInfo()
 	case "gui":
-		pm.AddProcess(process, GuiProcessInfo())
+		p = GuiProcessInfo()
 	case "keykit":
-		pm.AddProcess(process, KeykitProcessInfo())
+		p = KeykitProcessInfo()
 	case "mmtt":
-		pm.AddProcess(process, MmttProcessInfo())
+		p = MmttProcessInfo()
 	case "obs":
-		pm.AddProcess(process, ObsProcessInfo())
+		p = ObsProcessInfo()
+	case "chat":
+		p = ChatProcessInfo()
+	}
+	if p != nil {
+		pm.AddProcess(process, p)
 	}
 }
 
@@ -306,8 +315,12 @@ func (pm *ProcessManager) IsRunning(process string) bool {
 // Below here are functions that return ProcessInfo for various programs
 
 func GuiProcessInfo() *ProcessInfo {
-	fullpath, err := GetParam("engine.gui")
-	LogIfError(err)
+	gui, err := GetParam("engine.gui")
+	if err != nil {
+		LogIfError(err)
+		return nil
+	}
+	fullpath := filepath.Join(PaletteDir(),gui)
 	if fullpath != "" && !FileExists(fullpath) {
 		LogWarn("No Gui found, looking for", "path", fullpath)
 		return nil
@@ -333,18 +346,20 @@ func GuiProcessInfo() *ProcessInfo {
 	return NewProcessInfo(exe, fullpath, "", nil)
 }
 
-/*
-func MonitorProcessInfo() *ProcessInfo {
-	fullpath, err := GetParam("engine.monitor")
+func ChatProcessInfo() *ProcessInfo {
+	runchat, err := GetParamBool("engine.process.chat")
 	LogIfError(err)
+	if err != nil || !runchat {
+		return nil
+	}
+	fullpath := filepath.Join(paletteRoot,"bin","process_chat.exe")
 	if fullpath != "" && !FileExists(fullpath) {
-		LogWarn("No Monitor found, looking for", "path", fullpath)
+		LogWarn("No chat executable found, looking for", "path", fullpath)
 		return nil
 	}
 	exe := filepath.Base(fullpath)
 	return NewProcessInfo(exe, fullpath, "", nil)
 }
-*/
 
 func KeykitProcessInfo() *ProcessInfo {
 
