@@ -86,7 +86,7 @@ func stdoutLogger() *zap.Logger {
 	fileEncoder := zapcore.NewJSONEncoder(config)
 	logFile := os.Stdout
 	writer := zapcore.AddSync(logFile)
-	defaultLogLevel := zapcore.DebugLevel
+	defaultLogLevel := zapcore.ErrorLevel
 	core := zapcore.NewTee(
 		zapcore.NewCore(fileEncoder, writer, defaultLogLevel),
 	)
