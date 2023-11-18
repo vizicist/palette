@@ -1,10 +1,10 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 	"strings"
-	"flag"
 
 	twitch "github.com/gempir/go-twitch-irc/v3"
 	"github.com/vizicist/palette/engine"
@@ -37,7 +37,7 @@ func StartTwitch() {
 	client := twitch.NewClient(clientUserName, clientAuthenticationToken)
 
 	client.OnConnect(func() {
-		engine.LogInfo("Twitch OnConnect","clientUserName",clientUserName)
+		engine.LogInfo("Twitch OnConnect", "clientUserName", clientUserName)
 		// client.Say("photonsalon", fmt.Sprintf("OnConnect user=%s", clientUserName))
 	})
 	client.OnWhisperMessage(func(message twitch.WhisperMessage) {
@@ -49,19 +49,42 @@ func StartTwitch() {
 		id := message.Tags["id"]
 		engine.LogInfo("OnPrivateMessage", "msg", msg)
 		words := strings.Split(msg, " ")
+		for i := range(words) {
+			words[i] = strings.ToLower(words[i]	)
+		}
 		if len(words) == 0 {
 			client.Reply("photonsalon", id, "No command given?")
 		} else {
 			switch words[0] {
 
 			case "randomize":
-				vals, err := engine.EngineRemoteApi("quadpro.loadrand")
+				category := "quad"
+				if len(words) > 1 {
+					category = words[1]
+				}
+				engine.LogInfo("randomize message", "category", category)
+				vals, err := engine.EngineRemoteApi("quadpro.loadrand", "category", category)
 				var reply string
 				if err != nil {
 					reply = fmt.Sprintf("err=%s", err.Error())
 				} else {
 					result := vals["result"]
 					reply = fmt.Sprintf("Preset = %s", result)
+				}
+				client.Reply("photonsalon", id, reply)
+
+			case "list":
+				category := "quad"
+				if len(words) > 1 {
+					category = words[1]
+				}
+				engine.LogInfo("list message", "category", category)
+				vals, err := engine.EngineRemoteApi("saved.list", "category", category)
+				var reply string
+				if err != nil {
+					reply = fmt.Sprintf("err=%s", err.Error())
+				} else {
+					reply = fmt.Sprintf("vals=%v", vals)
 				}
 				client.Reply("photonsalon", id, reply)
 

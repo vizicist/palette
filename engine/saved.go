@@ -45,10 +45,10 @@ func SavedNameSplit(saved string) (string, string) {
 	}
 }
 
-// SavedMap returns a map of saved names to file paths
+// SavedPathMap returns a map of saved names to file paths
 // The saved names are of the form "category.name".
 // If wantCategory is "*", all categories are returned
-func SavedMap(wantCategory string) (map[string]string, error) {
+func SavedPathMap(wantCategory string) (map[string]string, error) {
 
 	result := make(map[string]string, 0)
 
@@ -86,7 +86,7 @@ func SavedMap(wantCategory string) (map[string]string, error) {
 // SavedArray returns a list of saved filenames for a particular category.
 func SavedFileList(category string) ([]string, error) {
 
-	savedMap, err := SavedMap(category)
+	savedMap, err := SavedPathMap(category)
 	if err != nil {
 		return nil, err
 	}
@@ -98,19 +98,18 @@ func SavedFileList(category string) ([]string, error) {
 	return filelist, nil
 }
 
-func SavedList(apiargs map[string]string) (string, error) {
+func SavedList(category string) (string, error) {
 
-	wantCategory := optionalStringArg("category", apiargs, "*")
 	result := "["
 	sep := ""
 
-	savedMap, err := SavedMap(wantCategory)
+	savedMap, err := SavedPathMap(category)
 	if err != nil {
 		return "", err
 	}
 	for name := range savedMap {
 		thisCategory, _ := SavedNameSplit(name)
-		if wantCategory == "*" || thisCategory == wantCategory {
+		if category == "*" || thisCategory == category {
 			result += sep + "\"" + name + "\""
 			sep = ","
 		}

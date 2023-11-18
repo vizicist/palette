@@ -22,6 +22,7 @@ import palette
 
 FourPatches = False
 RecMode = False
+LoopingButton = False
 # DoAttractStuff = False
 
 ColorWhite = '#ffffff'
@@ -496,6 +497,9 @@ class ProGuiApp(tk.Tk):
         self.selectorAction = ""
     
     def resetLoopButton(self):
+
+        if LoopingButton == False:
+            return
 
         if self.allPatchesSelected:
             # See if it's mixed

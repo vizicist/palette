@@ -239,6 +239,7 @@ func (patch *Patch) Api(api string, apiargs map[string]string) (string, error) {
 		// Note that if it's a "quad" file,
 		// we're only loading the items
 		// in that quad that match the patch
+		LogInfo("Patch.Load", "patch", patch.Name(), "category", category, "filename", filename)
 		err := patch.Load(category, filename)
 		if err != nil {
 			return "", err
@@ -418,21 +419,9 @@ func (patch *Patch) ApplyPatchValuesFromQuadMap(paramsmap map[string]any) error 
 	return nil
 }
 
-// ReadableSavedFilePath xxx
-// func (patch *Patch) readableFilePath(category string, filename string) (string, error) {
-// 	return SavedFilePath(category, filename, ".json")
-// }
-
 func (patch *Patch) Load(category string, filename string) error {
 
-	LogOfType("saved", "patch.Load", "patch", patch.Name(), "category", category, "filename", filename)
-
-	path, err := ReadableSavedFilePath(category, filename, ".json")
-	if err != nil {
-		LogIfError(err)
-		return err
-	}
-	paramsmap, err := LoadParamsMap(path)
+	paramsmap, err := LoadParamsMapOfCategory(category, filename)
 	if err != nil {
 		LogIfError(err)
 		return err
@@ -489,7 +478,7 @@ func (patch *Patch) Status() string {
 	if nevents == 0 {
 		return ""
 	}
-	return fmt.Sprintf("%d",nevents)
+	return fmt.Sprintf("%d", nevents)
 }
 
 func (patch *Patch) loopClear() {
