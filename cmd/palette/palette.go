@@ -79,17 +79,6 @@ func CliCommand(args []string) (map[string]string, error) {
 
 	words := strings.Split(api, ".")
 
-	// Warn about extra unexpected arguments
-	switch api {
-	case "start", "kill", "stop", "summarize", "obs":
-		// okay
-	default:
-		// extra args are allowed on api.method usage
-		if len(words) != 2 && len(args) > 1 {
-			return nil, fmt.Errorf(usage())
-		}
-	}
-
 	switch api {
 
 	case "summarize":
@@ -194,7 +183,7 @@ func CliCommand(args []string) (map[string]string, error) {
 		if len(words) < 2 {
 			return nil, fmt.Errorf("unrecognized command (%s), expected usage:\n%s", api, usage())
 		} else if len(words) > 2 {
-			return nil, fmt.Errorf("invalid api format, expecting {plugin}.{api}" + usage())
+			return nil, fmt.Errorf("invalid api format, expecting {plugin}.{api}\n" + usage())
 		}
 		return engine.EngineRemoteApi(api, args[1:]...)
 	}
@@ -225,6 +214,11 @@ func StatusOutput() (statusOut string, numRunning int) {
 
 	if engine.IsRunning("obs") {
 		s += "OBS is running.\n"
+		nrunning++
+	}
+
+	if engine.IsRunning("chat") {
+		s += "Chat monitor is running.\n"
 		nrunning++
 	}
 
