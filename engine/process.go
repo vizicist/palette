@@ -352,7 +352,7 @@ func ChatProcessInfo() *ProcessInfo {
 	if err != nil || !runchat {
 		return nil
 	}
-	fullpath := filepath.Join(paletteRoot,"bin","process_chat.exe")
+	fullpath := filepath.Join(paletteRoot,"bin","palette_chat.exe")
 	if fullpath != "" && !FileExists(fullpath) {
 		LogWarn("No chat executable found, looking for", "path", fullpath)
 		return nil
