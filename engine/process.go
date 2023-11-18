@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -138,22 +137,29 @@ func (pm *ProcessManager) checkProcess() {
 // started but are no longer running.
 func (pm *ProcessManager) CheckAutorestartProcesses() {
 
-	autostart, err := GetParam("engine.autostart")
-	LogIfError(err)
-	if autostart == "" {
-		return
-	}
-	restarts := strings.Split(autostart, ",")
-
 	pm.mutex.Lock()
 	defer pm.mutex.Unlock()
 
-	for _, processName := range restarts {
-		isRunning := pm.IsRunning(processName)
-		if !isRunning {
-			LogInfo("CheckAutorestartProcesses: Restarting", "process", processName)
-			err := pm.StartRunning(processName)
-			LogIfError(err)
+	for _, process := range ProcessList() {
+		runit, err := GetParamBool("engine.process." + process)
+		if err != nil {
+			LogError(err)
+			continue
+		}
+		isRunning := pm.IsRunning(process)
+		if runit {
+			if !isRunning {
+				LogInfo("CheckAutorestartProcesses: Restarting", "process", process)
+				err := pm.StartRunning(process)
+				LogIfError(err)
+			}
+		} else {
+			if isRunning {
+				LogInfo("CheckAutorestartProcesses: Stopping", "process", process)
+				err := pm.StopRunning(process)
+				LogIfError(err)
+			}
+
 		}
 	}
 }
@@ -217,7 +223,9 @@ func (pm *ProcessManager) AddProcessBuiltIn(process string) {
 	case "chat":
 		p = ChatProcessInfo()
 	}
-	if p != nil {
+	if p == nil {
+		LogWarn("AddProcessBuiltIn: no process info for", "process", process)
+	} else {
 		pm.AddProcess(process, p)
 	}
 }
@@ -263,7 +271,7 @@ func (pm *ProcessManager) StartRunning(process string) error {
 	return nil
 }
 
-func (pm *ProcessManager) KillProcess(process string) (err error) {
+func (pm *ProcessManager) StopRunning(process string) (err error) {
 
 	LogOfType("process", "KillProcess", "process", process)
 
@@ -320,7 +328,7 @@ func GuiProcessInfo() *ProcessInfo {
 		LogIfError(err)
 		return nil
 	}
-	fullpath := filepath.Join(PaletteDir(),gui)
+	fullpath := filepath.Join(PaletteDir(), gui)
 	if fullpath != "" && !FileExists(fullpath) {
 		LogWarn("No Gui found, looking for", "path", fullpath)
 		return nil
@@ -347,12 +355,7 @@ func GuiProcessInfo() *ProcessInfo {
 }
 
 func ChatProcessInfo() *ProcessInfo {
-	runchat, err := GetParamBool("engine.process.chat")
-	LogIfError(err)
-	if err != nil || !runchat {
-		return nil
-	}
-	fullpath := filepath.Join(paletteRoot,"bin","palette_chat.exe")
+	fullpath := filepath.Join(paletteRoot, "bin", "palette_chat.exe")
 	if fullpath != "" && !FileExists(fullpath) {
 		LogWarn("No chat executable found, looking for", "path", fullpath)
 		return nil
