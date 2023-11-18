@@ -1071,16 +1071,10 @@ class ProGuiApp(tk.Tk):
         self.setNextMode("help")
 
     def startProcess(self,processName):
-        palette.palette_engine_api("startprocess","\"process\": \"" + processName + "\"")
+        palette.palette_engine_api("set","\"name\": \"engine.process."+processName+"\",\"value\": \"true\"")
 
     def stopProcess(self,processName):
-        palette.palette_engine_api("stopprocess","\"process\": \"" + processName + "\"")
-
-    def startAll(self):
-        palette.palette_engine_api("startall")
-
-    def stopAll(self):
-        palette.palette_engine_api("stopall")
+        palette.palette_engine_api("set","\"name\": \"engine.process."+processName+"\",\"value\": \"false\"")
 
     def startRecording(self):
         palette.palette_engine_api("startrecording")
@@ -1222,7 +1216,7 @@ class ProGuiApp(tk.Tk):
         # code that assumes the structure that was in the old Params.json file.
         allparamsjson = {}
         for name in newparamsjson:
-            parts = name.split(".")
+            parts = name.split(".",1)
             if len(parts) != 2:
                 log("Unable to handle param name: ",name)
                 continue

@@ -1,6 +1,5 @@
 DECLARE_TYPES(plugins);
 DECLARE_TYPES(log);
-DECLARE_TYPES(autostart);
 DECLARE_TYPES(pitchset);
 DECLARE_TYPES(guisize);
 DECLARE_TYPES(mmtt);

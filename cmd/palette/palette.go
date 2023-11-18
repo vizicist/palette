@@ -114,10 +114,11 @@ func CliCommand(args []string) (map[string]string, error) {
 		default:
 			// Only the monitor and engine are started directly by palette.
 			// The monitor will restart the engine if it dies, and
-			// the engine will restart any processes specified in engine.autostart.
+			// the engine will restart any processes specified in engine.process.*.
 			for _, process := range engine.ProcessList() {
 				if arg1 == process {
-					return engine.EngineRemoteApi("engine.startprocess", "process", arg1)
+					param := "engine.process." + arg1
+					return engine.EngineRemoteApi("engine.set", "name", param, "value", "true")
 				}
 			}
 			return nil, fmt.Errorf("process %s is disabled or unknown", arg1)
@@ -143,13 +144,10 @@ func CliCommand(args []string) (map[string]string, error) {
 			return nil, nil
 
 		default:
-			// If it exists in the ProcessList...
-			pi, err := engine.TheProcessManager.GetProcessInfo(arg1)
-			if err != nil {
-				return nil, err
-			}
-			engine.KillExecutable(pi.Exe)
-			return nil, nil
+			// Individual processes are stopped by setting engine.process.* to false.	
+			// If the engine isn't running, this will fail.  Use stop all as last resort.
+			param := "engine.process." + arg1
+			return engine.EngineRemoteApi("engine.set", "name", param, "value", "false")
 		}
 
 	case "version":
@@ -259,7 +257,7 @@ func doStartMonitor() error {
 		return fmt.Errorf("monitor is already running")
 	}
 	// palette_monitor.exe will restart the engine,
-	// which then starts whatever engine.autostart specifies.
+	// which then starts whatever engine.process.* specifies.
 	engine.LogInfo("palette: starting monitor", "MonitorExe", engine.MonitorExe)
 	fullexe := filepath.Join(engine.PaletteDir(), "bin", engine.MonitorExe)
 	return engine.StartExecutableLogOutput("monitor", fullexe)
