@@ -54,6 +54,12 @@ go build palette_monitor.go >> %buildcmdsout% 2>&1
 move palette_monitor.exe %bin%\palette_monitor.exe > nul
 popd
 
+echo ================ Compiling palette_chat
+pushd %PALETTE_SOURCE%\cmd\palette_chat
+go build palette_chat.go >> %buildcmdsout% 2>&1
+move palette_chat.exe %bin%\palette_chat.exe > nul
+popd
+
 rem echo ================ Compiling palette_splash
 rem pushd %PALETTE_SOURCE%\cmd\palette_splash
 rem go build palette_splash.go >> %buildcmdsout% 2>&1
