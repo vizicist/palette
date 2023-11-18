@@ -9,7 +9,6 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/nxadm/tail"
 	"github.com/vizicist/palette/engine"
 )
 
@@ -21,11 +20,10 @@ func main() {
 	flag.Parse()
 	args := flag.Args()
 
-	// If we're trying to archive the logs, use stdout.
-	// don't open any log files, use stdout
-	doingArchiveLogs := (len(args) == 1 && args[0] == "archivelogs")
-	if doingArchiveLogs {
-		engine.InitLog("") // "" == "stdout"
+	// If we're doing any log commands, use stdout
+	doingLogs := (len(args) > 0 && args[0] == "logs")
+	if doingLogs {
+		engine.InitLog("")
 	} else {
 		engine.InitLog("palette")
 	}
@@ -50,7 +48,7 @@ func usage() string {
 	palette kill [ all, monitor, engine, gui, bidule, resolume, mmtt]
 	palette status
 	palette version
-	palette taillog
+	palette logs [ archive, clear, tail ]
 	palette summarize {logfile}
 	palette {category}.{api} [ {argname} {argvalue} ] ...
 	`
@@ -83,15 +81,6 @@ func CliCommand(args []string) (map[string]string, error) {
 
 	case "summarize":
 		return nil, engine.SummarizeLog(arg1)
-
-	case "taillog", "logtail":
-		logpath := engine.LogFilePath("engine.log")
-		t, err := tail.TailFile(logpath, tail.Config{Follow: true})
-		engine.LogIfError(err)
-		for line := range t.Lines {
-			fmt.Println(line.Text)
-		}
-		return nil, nil
 
 	case "status":
 		s, nrunning := StatusOutput()
@@ -157,13 +146,21 @@ func CliCommand(args []string) (map[string]string, error) {
 	case "align":
 		return engine.MmttApi("align_start")
 
-	case "archivelogs":
-		// Make sure nothing is running.
-		statusOut, nrunning := StatusOutput()
-		if nrunning > 0 {
-			return nil, fmt.Errorf("cannot archive logs while processes are running: %s", statusOut)
+	case "logs":
+		switch arg1 {
+		case "archive":
+			// Make sure nothing is running.
+			statusOut, nrunning := StatusOutput()
+			if nrunning > 0 {
+				return nil, fmt.Errorf("cannot archive logs while processes are running: %s", statusOut)
+			}
+			return nil, engine.ArchiveLogs()
+		case "clear":
+			return nil, engine.ClearLogs()
+		case "tail":
+			return nil, engine.TailLogs()
 		}
-		return nil, engine.ArchiveLogs()
+		return nil, fmt.Errorf("invalid logs command: %s", arg1)	
 
 	case "test":
 		return engine.EngineRemoteApi("quadpro.test", "ntimes", "40")

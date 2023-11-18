@@ -30,7 +30,8 @@ func ObsActivate() {
 	LogIfError(err)
 	if err == nil && stream {
 		LogInfo("ObsActivate calling streamstart")
-		ObsCommand("streamstart")
+		err = ObsCommand("streamstart")
+		LogIfError(err)
 	}
 }
 
@@ -40,7 +41,9 @@ func ObsCommand(cmd string) error {
 	if err != nil {
 		return err
 	}
-	defer client.Disconnect()
+	defer func () {
+		_ = client.Disconnect()
+	}()
 
 	switch cmd {
 	case "status":
