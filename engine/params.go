@@ -278,7 +278,21 @@ func IsPatchCategory(category string) bool {
 		category == "misc")
 }
 
-func LoadParamsMap(path string) (ParamsMap, error) {
+func LoadParamsMapOfCategory(category string, filename string) (ParamsMap, error) {
+	path, err := ReadableSavedFilePath(category, filename, ".json")
+	if err != nil {
+		LogIfError(err)
+		return nil, err
+	}
+	paramsmap, err := LoadParamsMapFromPath(path)
+	if err != nil {
+		LogIfError(err)
+		return nil, err
+	}
+	return paramsmap, nil
+}
+
+func LoadParamsMapFromPath(path string) (ParamsMap, error) {
 	bytes, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
@@ -312,7 +326,7 @@ func LoadParamsMapFromString(s string) (ParamsMap, error) {
 	}
 	toplevel, ok := f.(map[string]any)
 	if !ok {
-		return nil, fmt.Errorf("unable to convert to ParamsMap - %s",s)
+		return nil, fmt.Errorf("unable to convert to ParamsMap - %s", s)
 
 	}
 	params, okparams := toplevel["params"]
@@ -574,7 +588,7 @@ func OverrideMap() ParamsMap {
 		overridepath := ConfigFilePath("paramoverrides.json")
 		if fileExists(overridepath) {
 			LogOfType("params", "Reading Overridemap", "overridepath", overridepath)
-			m, err := LoadParamsMap(overridepath)
+			m, err := LoadParamsMapFromPath(overridepath)
 			if err != nil {
 				LogError(err)
 			} else {

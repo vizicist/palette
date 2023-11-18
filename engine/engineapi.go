@@ -429,7 +429,8 @@ func (e *Engine) executeSavedApi(api string, apiargs map[string]string) (result 
 	switch api {
 
 	case "list":
-		return SavedList(apiargs)
+		category := optionalStringArg("category", apiargs, "*")	
+		return SavedList(category)
 	default:
 		LogWarn("api is not recognized\n", "api", api)
 		return "", fmt.Errorf("Router.ExecuteSavedApi unrecognized api=%s", api)
