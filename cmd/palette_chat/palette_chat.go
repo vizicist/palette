@@ -48,8 +48,8 @@ func StartTwitch() error {
 		id := message.Tags["id"]
 		engine.LogInfo("OnPrivateMessage", "msg", msg)
 		words := strings.Split(msg, " ")
-		for i := range(words) {
-			words[i] = strings.ToLower(words[i]	)
+		for i := range words {
+			words[i] = strings.ToLower(words[i])
 		}
 		if len(words) == 0 {
 			client.Reply("photonsalon", id, "No command given?")
@@ -83,8 +83,13 @@ func StartTwitch() error {
 				if err != nil {
 					reply = fmt.Sprintf("err=%s", err.Error())
 				} else {
-					reply = fmt.Sprintf("vals=%v", vals)
+					reply = vals["result"]
 				}
+				limit := 200
+				if len(reply) > limit {
+					reply = reply[:limit] + "..."
+				}
+				engine.LogInfo("list message reply", "reply", reply)
 				client.Reply("photonsalon", id, reply)
 
 			case "status":
@@ -158,7 +163,7 @@ func StartTwitch() error {
 
 	err := client.Connect()
 	if err != nil {
-		return fmt.Errorf("unable to connect to twitch, clientUserName=%s clientAuthenticationToken=%s err=%s",clientUserName, clientAuthenticationToken, err.Error())
+		return fmt.Errorf("unable to connect to twitch, clientUserName=%s clientAuthenticationToken=%s err=%s", clientUserName, clientAuthenticationToken, err.Error())
 	}
 	select {}
 	// unreachable
