@@ -25,6 +25,7 @@ type Engine struct {
 	recordingPath  string
 	recordingMutex sync.RWMutex
 	params         *ParamValues
+	loading bool
 
 	currentPitchOffset  *atomic.Int32
 	autoTransposeOn     bool
@@ -87,10 +88,12 @@ func InitEngine() {
 			}
 		}
 	}
+	e.loading = true
 	err := e.LoadCurrent()
 	if err != nil {
 		LogIfError(err)
 	}
+	e.loading = false
 
 	TheEngine = e
 

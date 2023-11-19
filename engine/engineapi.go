@@ -278,8 +278,9 @@ func (e *Engine) Set(name string, value string) (err error) {
 	var f float64
 	var i int64
 
-	if strings.HasPrefix(name,"engine.process.") {
-		process := strings.TrimPrefix(name,"engine.process.")
+	// starting and stopping processes can't be done while loading initial parameters
+	if !e.loading && strings.HasPrefix(name, "engine.process.") {
+		process := strings.TrimPrefix(name, "engine.process.")
 		if IsTrueValue(value) {
 			err = TheProcessManager.StartRunning(process)
 		} else {
@@ -289,7 +290,6 @@ func (e *Engine) Set(name string, value string) (err error) {
 			LogError(err)
 			return err
 		}
-		return e.params.Set(name, value)
 	}
 
 	switch name {
@@ -314,9 +314,9 @@ func (e *Engine) Set(name string, value string) (err error) {
 		}
 	case "engine.attractidlesecs":
 		if e.getInt(value, &i) {
-			if i < 10 {
-				LogWarn("engine.attractidlesecs is too low, forcing to 10")
-				i = 10
+			if i < 15 {
+				LogWarn("engine.attractidlesecs is too low, forcing to 15")
+				i = 15
 			}
 			TheAttractManager.attractIdleSecs = float64(i)
 		}
@@ -369,12 +369,14 @@ func (e *Engine) Set(name string, value string) (err error) {
 		}
 
 	case "engine.obsstream":
-		if IsTrueValue(value) {
-			err := ObsCommand("streamstart")
-			LogIfError(err)
-		} else {
-			err := ObsCommand("streamstop")
-			LogIfError(err)
+		if !e.loading {
+			if IsTrueValue(value) {
+				err := ObsCommand("streamstart")
+				LogIfError(err)
+			} else {
+				err := ObsCommand("streamstop")
+				LogIfError(err)
+			}
 		}
 		// But keep going to set persistence
 
@@ -430,12 +432,18 @@ func (e *Engine) Set(name string, value string) (err error) {
 	case "engine.guishowall":
 
 	case "engine.attractnumbergesturesteps":
+	case "engine.attractguishow":
+	case "engine.attractsound":
+
+	case "engine.obspath":
 
 	case "engine.autostart":
 		LogInfo("Engine.Set, obsolete parameter", "name", name, "value", value)
 
 	default:
-		LogInfo("Engine.Set, unknown parameter", "name", name, "value", value)
+		if !strings.HasPrefix(name, "engine.process.") {
+			LogInfo("Engine.Set, unknown parameter", "name", name, "value", value)
+		}
 	}
 
 	LogOfType("params", "Engine.Set", "name", name, "value", value)

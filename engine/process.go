@@ -172,11 +172,13 @@ func ProcessList() []string {
 	arr = append(arr, "resolume")
 	arr = append(arr, "obs")
 	arr = append(arr, "chat")
+	/*
 	keykit, err := GetParamBool("engine.keykitrun")
 	LogIfError(err)
 	if keykit {
 		arr = append(arr, "keykit")
 	}
+	*/
 	mmtt, err := GetParam("engine.mmtt")
 	LogIfError(err)
 	if mmtt != "" {
@@ -214,8 +216,10 @@ func (pm *ProcessManager) AddProcessBuiltIn(process string) {
 		p = TheResolume().ProcessInfo()
 	case "gui":
 		p = GuiProcessInfo()
+	/*
 	case "keykit":
 		p = KeykitProcessInfo()
+		*/
 	case "mmtt":
 		p = MmttProcessInfo()
 	case "obs":
@@ -365,6 +369,7 @@ func ChatProcessInfo() *ProcessInfo {
 	return NewProcessInfo(exe, fullpath, "", nil)
 }
 
+/*
 func KeykitProcessInfo() *ProcessInfo {
 
 	// Allow parameter to override keyroot
@@ -415,18 +420,27 @@ func KeykitProcessInfo() *ProcessInfo {
 	exe := filepath.Base(fullpath)
 	return NewProcessInfo(exe, fullpath, "", nil)
 }
+*/
 
 func MmttProcessInfo() *ProcessInfo {
 
+	/*
 	// The value of mmtt is either "kinect" or "oak" or ""
 	mmtt, err := GetParam("engine.mmtt")
 	LogIfError(err)
 	if mmtt == "" {
 		return nil
 	}
+	*/
+	// Should probably get this from an environment variable
+	// e.g. PALETTE_MMTT
+	mmtt := os.Getenv("PALETTE_MMTT")
+	if mmtt == "" {
+		mmtt = "kinect"
+	}
 	fullpath := filepath.Join(PaletteDir(), "bin", "mmtt_"+mmtt, "mmtt_"+mmtt+".exe")
 	if !FileExists(fullpath) {
-		// LogWarn("no mmtt executable found, looking for", "path", fullpath)
+		LogWarn("no mmtt executable found, looking for", "fullpath", fullpath)
 		fullpath = ""
 	}
 	return NewProcessInfo("mmtt_"+mmtt+".exe", fullpath, "", nil)
