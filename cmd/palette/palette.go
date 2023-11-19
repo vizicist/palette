@@ -48,7 +48,7 @@ func usage() string {
 	palette kill [ all, monitor, engine, gui, bidule, resolume, mmtt]
 	palette status
 	palette version
-	palette logs [ archive, clear, tail ]
+	palette logs [ archive, clear ]
 	palette summarize {logfile}
 	palette {category}.{api} [ {argname} {argvalue} ] ...
 	`
@@ -152,13 +152,13 @@ func CliCommand(args []string) (map[string]string, error) {
 			// Make sure nothing is running.
 			statusOut, nrunning := StatusOutput()
 			if nrunning > 0 {
-				return nil, fmt.Errorf("cannot archive logs while processes are running: %s", statusOut)
+				return nil, fmt.Errorf("cannot archive logs while these processes are running:\n%s", statusOut)
 			}
 			return nil, engine.ArchiveLogs()
 		case "clear":
 			return nil, engine.ClearLogs()
-		case "tail":
-			return nil, engine.TailLogs()
+		// case "tail":
+		// 	return nil, engine.TailLogs()
 		}
 		return nil, fmt.Errorf("invalid logs command: %s", arg1)	
 

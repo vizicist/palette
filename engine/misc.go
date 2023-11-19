@@ -17,7 +17,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/nxadm/tail"
+	// "github.com/hpcloud/tail"
 	"gopkg.in/gomail.v2"
 )
 
@@ -284,7 +284,14 @@ func NewExecutableLogWriter(exe string) io.Writer {
 }
 
 func (w *FileWriter) Write(p []byte) (n int, err error) {
-	LogInfo("ExecutableOutput", "exe", w.Exe, "output", string(p))
+	var s string
+	limit := 256 // probably too low
+	if len(p) > limit {
+		s = string(p[:limit]) + "..."
+	} else {
+		s = string(p)
+	}
+	LogInfo("ExecutableOutput", "exe", w.Exe, "output", s)
 	return len(p), nil
 }
 
@@ -503,6 +510,11 @@ func ClearLogs() error {
 	return err
 }
 
+/*
+ * Thie TailLogs doesn't seem to tail as good as "tail -f",
+ * it doesn't show new lines as quickly.
+ */
+ /*
 func TailLogs() error {
 	logpath := LogFilePath("engine.log")
 	t, err := tail.TailFile(logpath, tail.Config{Follow: true})
@@ -512,6 +524,7 @@ func TailLogs() error {
 	}
 	return nil
 }
+*/
 
 func ArchiveLogs() error {
 
