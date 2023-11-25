@@ -128,6 +128,11 @@ func ConfigDir() string {
 	return filepath.Join(PaletteDataPath(), "config")
 }
 
+func GetConfigFileData(filename string) ([]byte, error) {
+	path := ConfigFilePath(filename)
+	return os.ReadFile(path)
+}
+
 func ConfigFilePath(nm string) string {
 	return filepath.Join(ConfigDir(), nm)
 }
@@ -550,7 +555,7 @@ func ArchiveLogs() error {
 
 	err = ziplogs(logsdir, zippath)
 	if err != nil {
-		return fmt.Errorf("Archivelogs: err=%s", err)
+		return fmt.Errorf("archivelogs: err=%s", err)
 	} else {
 		// If archiving is successful, clear the logs
 		return ClearLogs()

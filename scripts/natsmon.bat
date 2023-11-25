@@ -1,1 +1,1 @@
-"%PALETTE%\bin\nats-sub" ">"
+"%PALETTE%\bin\nats" subscribe ">"

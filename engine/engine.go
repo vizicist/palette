@@ -76,6 +76,7 @@ func InitEngine() {
 	TheQuadPro = NewQuadPro()
 	TheMidiIO = NewMidiIO()
 	TheErae = NewErae()
+	TheNats = NewNats()
 
 	InitLogTypes()
 
