@@ -368,6 +368,15 @@ func (e *Engine) Set(name string, value string) (err error) {
 			TheProcessManager.processCheckSecs = f
 		}
 
+	case "engine.nats":
+		if !e.loading {
+			if IsTrueValue(value) {
+				TheNats.Connect()
+			} else {
+				TheNats.Disconnect()
+			}
+		}
+
 	case "engine.obsstream":
 		if !e.loading {
 			if IsTrueValue(value) {
