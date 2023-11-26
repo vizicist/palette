@@ -21,20 +21,17 @@ func main() {
 
 	kit.InitLog("monitor")
 
-	// pcheck := flag.Bool("engine", true, "Check Engine")
+	pcheck := flag.Bool("engine", true, "Check Engine")
 	pjsid := flag.Int("joystick", -1, "Joystick ID")
 
 	flag.Parse()
 
-	kit.LogInfo("HACK - palette_monitor is not checking engine")
-	/*
-		if *pcheck {
-			kit.LogInfo("monitor is checking the engine.")
-			go checkEngine()
-		} else {
-			kit.LogInfo("monitor is NOT checking the engine.")
-		}
-	*/
+	if *pcheck {
+		kit.LogInfo("monitor is checking the engine.")
+		go checkEngine()
+	} else {
+		kit.LogInfo("monitor is NOT checking the engine.")
+	}
 
 	go joystickMonitor(*pjsid)
 
@@ -88,7 +85,7 @@ func scheduler() {
 func checkEngine() {
 	tick := time.NewTicker(time.Second * 15)
 	for {
-		if !kit.IsRunningExecutable(engine.EngineExe) {
+		if !kit.IsRunningExecutable(kit.EngineExe) {
 			kit.LogInfo("checkEngine: engine is not running, killing everything, monitor should restart engine.")
 			kit.KillAllExceptMonitor()
 			kit.LogInfo("checkEngine: restarting engine")
