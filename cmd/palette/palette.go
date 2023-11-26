@@ -9,7 +9,7 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/vizicist/palette/engine"
+	"github.com/vizicist/palette/kit"
 )
 
 func main() {
@@ -23,22 +23,22 @@ func main() {
 	// If we're doing any log commands, use stdout
 	doingLogs := (len(args) > 0 && args[0] == "logs")
 	if doingLogs {
-		engine.InitLog("")
+		kit.InitLog("")
 	} else {
-		engine.InitLog("palette")
+		kit.InitLog("palette")
 	}
 
 	engine.InitMisc()
-	engine.InitEngine()
+	// kit.InitEngine()
 
-	engine.LogInfo("Palette InitLog", "args", args)
+	kit.LogInfo("Palette InitLog", "args", args)
 
 	apiout, err := CliCommand(args)
 	if err != nil {
 		os.Stdout.WriteString("Error: " + err.Error() + "\n")
-		engine.LogError(err)
+		kit.LogError(err)
 	} else {
-		os.Stdout.WriteString(engine.HumanReadableApiOutput(apiout))
+		os.Stdout.WriteString(kit.HumanReadableApiOutput(apiout))
 	}
 }
 
@@ -56,7 +56,7 @@ func usage() string {
 
 /*
 func processStatus(process string) string {
-	if engine.IsRunning(process) {
+	if kit.IsRunning(process) {
 		return "running"
 	}
 	return "not running"
@@ -80,7 +80,7 @@ func CliCommand(args []string) (map[string]string, error) {
 	switch api {
 
 	case "summarize":
-		return nil, engine.SummarizeLog(arg1)
+		return nil, kit.SummarizeLog(arg1)
 
 	case "status":
 		s, nrunning := StatusOutput()
@@ -103,11 +103,11 @@ func CliCommand(args []string) (map[string]string, error) {
 		default:
 			// Only the monitor and engine are started directly by palette.
 			// The monitor will restart the engine if it dies, and
-			// the engine will restart any processes specified in engine.process.*.
-			for _, process := range engine.ProcessList() {
+			// the engine will restart any processes specified in global.process.*.
+			for _, process := range kit.ProcessList() {
 				if arg1 == process {
-					param := "engine.process." + arg1
-					return engine.EngineRemoteApi("engine.set", "name", param, "value", "true")
+					param := "global.process." + arg1
+					return kit.EngineRemoteApi("global.set", "name", param, "value", "true")
 				}
 			}
 			return nil, fmt.Errorf("process %s is disabled or unknown", arg1)
@@ -118,33 +118,33 @@ func CliCommand(args []string) (map[string]string, error) {
 		switch arg1 {
 
 		case "", "all":
-			engine.LogInfo("Palette kill is killing everything including monitor.")
-			engine.KillExecutable(engine.MonitorExe)
-			engine.KillAllExceptMonitor()
+			kit.LogInfo("Palette kill is killing everything including monitor.")
+			kit.KillExecutable(kit.MonitorExe)
+			kit.KillAllExceptMonitor()
 			return nil, nil
 
 		case "monitor":
-			engine.KillExecutable(engine.MonitorExe)
+			kit.KillExecutable(kit.MonitorExe)
 			return nil, nil
 
 		case "engine":
-			// Don't use engine.exit API, just kill it
-			engine.KillExecutable(engine.EngineExe)
+			// Don't use kit.exit API, just kill it
+			kit.KillExecutable(kit.EngineExe)
 			return nil, nil
 
 		default:
-			// Individual processes are stopped by setting engine.process.* to false.	
+			// Individual processes are stopped by setting global.process.* to false.
 			// If the engine isn't running, this will fail.  Use stop all as last resort.
-			param := "engine.process." + arg1
-			return engine.EngineRemoteApi("engine.set", "name", param, "value", "false")
+			param := "global.process." + arg1
+			return kit.EngineRemoteApi("global.set", "name", param, "value", "false")
 		}
 
 	case "version":
-		s := engine.GetPaletteVersion()
+		s := kit.GetPaletteVersion()
 		return map[string]string{"result": s}, nil
 
 	case "align":
-		return engine.MmttApi("align_start")
+		return kit.MmttApi("align_start")
 
 	case "logs":
 		switch arg1 {
@@ -154,25 +154,37 @@ func CliCommand(args []string) (map[string]string, error) {
 			if nrunning > 0 {
 				return nil, fmt.Errorf("cannot archive logs while these processes are running:\n%s", statusOut)
 			}
-			return nil, engine.ArchiveLogs()
+			return nil, kit.ArchiveLogs()
 		case "clear":
-			return nil, engine.ClearLogs()
-		// case "tail":
-		// 	return nil, engine.TailLogs()
+			return nil, kit.ClearLogs()
+			// case "tail":
+			// 	return nil, kit.TailLogs()
 		}
-		return nil, fmt.Errorf("invalid logs command: %s", arg1)	
+		return nil, fmt.Errorf("invalid logs command: %s", arg1)
 
 	case "test":
-		return engine.EngineRemoteApi("quadpro.test", "ntimes", "40")
+		return kit.EngineRemoteApi("quadpro.test", "ntimes", "40")
 
 	case "obs":
-		engine.LogInfo("palette: obs command")
-		err := engine.ObsCommand(arg1)
+		kit.LogInfo("palette: obs command")
+		err := kit.ObsCommand(arg1)
 		if err != nil {
 			return map[string]string{"error": err.Error()}, nil
 		}
 		// return map[string]string{"result": ""}, nil
 		return nil, nil
+
+	case "nats":
+		kit.LogInfo("palette: nats command")
+		if len(args) < 2 {
+			return nil, fmt.Errorf("nats command missing argument")
+		}
+		result, err := kit.NatsApi(args[1])
+		if err != nil {
+			return map[string]string{"error": err.Error()}, nil
+		} else {
+			return map[string]string{"result": result}, nil
+		}
 
 	default:
 		if len(words) < 2 {
@@ -180,59 +192,59 @@ func CliCommand(args []string) (map[string]string, error) {
 		} else if len(words) > 2 {
 			return nil, fmt.Errorf("invalid api format, expecting {plugin}.{api}\n" + usage())
 		}
-		return engine.EngineRemoteApi(api, args[1:]...)
+		return kit.EngineRemoteApi(api, args[1:]...)
 	}
 }
 
 func StatusOutput() (statusOut string, numRunning int) {
 	s := ""
 	nrunning := 0
-	if engine.MonitorIsRunning() {
+	if kit.MonitorIsRunning() {
 		s += "Monitor is running.\n"
 		nrunning++
 	}
 
-	if engine.IsRunning("engine") {
+	if kit.IsRunning("engine") {
 		s += "Engine is running.\n"
 		nrunning++
 	}
 
-	if engine.IsRunning("gui") {
+	if kit.IsRunning("gui") {
 		s += "GUI is running.\n"
 		nrunning++
 	}
 
-	if engine.IsRunning("bidule") {
+	if kit.IsRunning("bidule") {
 		s += "Bidule is running.\n"
 		nrunning++
 	}
 
-	if engine.IsRunning("obs") {
+	if kit.IsRunning("obs") {
 		s += "OBS is running.\n"
 		nrunning++
 	}
 
-	if engine.IsRunning("chat") {
+	if kit.IsRunning("chat") {
 		s += "Chat monitor is running.\n"
 		nrunning++
 	}
 
-	if engine.IsRunning("resolume") {
+	if kit.IsRunning("resolume") {
 		s += "Resolume is running.\n"
 		nrunning++
 	}
 
-	b, _ := engine.GetParamBool("engine.keykitrun")
+	b, _ := kit.GetParamBool("global.keykitrun")
 	if b {
-		if engine.IsRunning("keykit") {
+		if kit.IsRunning("keykit") {
 			s += "Keykit is running.\n"
 			nrunning++
 		}
 	}
 
-	mmtt, _ := engine.GetParam("engine.mmtt")
+	mmtt, _ := kit.GetParam("global.mmtt")
 	if mmtt != "" {
-		if engine.IsRunning("mmtt") {
+		if kit.IsRunning("mmtt") {
 			s += "MMTT is running.\n"
 			nrunning++
 		}
@@ -241,22 +253,21 @@ func StatusOutput() (statusOut string, numRunning int) {
 }
 
 func doStartEngine() error {
-	if engine.IsRunning("engine") {
+	if kit.IsRunning("engine") {
 		return fmt.Errorf("engine is already running")
 	}
-	fullexe := filepath.Join(engine.PaletteDir(), "bin", engine.EngineExe)
-	engine.LogInfo("palette: starting engine", "EngineExe", engine.EngineExe)
-	return engine.StartExecutableLogOutput("engine", fullexe)
+	fullexe := filepath.Join(kit.PaletteDir(), "bin", kit.EngineExe)
+	kit.LogInfo("palette: starting engine", "EngineExe", kit.EngineExe)
+	return kit.StartExecutableLogOutput("engine", fullexe)
 }
 
 func doStartMonitor() error {
-	if engine.MonitorIsRunning() {
+	if kit.MonitorIsRunning() {
 		return fmt.Errorf("monitor is already running")
 	}
 	// palette_monitor.exe will restart the engine,
-	// which then starts whatever engine.process.* specifies.
-	engine.LogInfo("palette: starting monitor", "MonitorExe", engine.MonitorExe)
-	fullexe := filepath.Join(engine.PaletteDir(), "bin", engine.MonitorExe)
-	return engine.StartExecutableLogOutput("monitor", fullexe)
+	// which then starts whatever global.process.* specifies.
+	kit.LogInfo("palette: starting monitor", "MonitorExe", kit.MonitorExe)
+	fullexe := filepath.Join(kit.PaletteDir(), "bin", kit.MonitorExe)
+	return kit.StartExecutableLogOutput("monitor", fullexe)
 }
-

@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	twitch "github.com/gempir/go-twitch-irc/v3"
-	"github.com/vizicist/palette/engine"
+	"github.com/vizicist/palette/kit"
 )
 
 func main() {
@@ -93,7 +93,7 @@ func StartTwitch() error {
 				client.Reply("photonsalon", id, reply)
 
 			case "status":
-				vals, err := engine.EngineRemoteApi("engine.status")
+				vals, err := engine.EngineRemoteApi("global.status")
 				var reply string
 				if err != nil {
 					reply = fmt.Sprintf("err=%s", err.Error())
