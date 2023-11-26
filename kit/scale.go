@@ -1,4 +1,4 @@
-package engine
+package kit
 
 // Scale says whether a pitch is in a scale
 type Scale struct {
