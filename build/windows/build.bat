@@ -60,12 +60,6 @@ go build palette_chat.go >> %buildcmdsout% 2>&1
 move palette_chat.exe %bin%\palette_chat.exe > nul
 popd
 
-rem echo ================ Compiling palette_splash
-rem pushd %PALETTE_SOURCE%\cmd\palette_splash
-rem go build palette_splash.go >> %buildcmdsout% 2>&1
-rem move palette_splash.exe %bin%\palette_splash.exe > nul
-rem popd
-
 rem print any error messages from compiling cmds
 type %buildcmdsout%
 
@@ -107,6 +101,7 @@ rem popd
 
 echo ================ Copying misc binaries
 copy %PALETTE_SOURCE%\binaries\nircmdc.exe %bin% >nul
+copy %PALETTE_SOURCE%\binaries\nats\nats.exe %bin% >nul
 
 rem echo ================ Copying keykit things
 rem copy %PALETTE_SOURCE%\keykit\bin\key.exe %ship%\keykit\bin >nul

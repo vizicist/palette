@@ -52,7 +52,7 @@ func Run() {
 	minSize := image.Point{X: 640, Y: 480} // default
 
 	// change it with config value
-	winsize, err := engine.GetParam("engine.winsize")
+	winsize, err := engine.GetParam("global.winsize")
 	engine.LogIfError(err)
 	if winsize != "" {
 		var xsize int
