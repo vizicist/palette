@@ -6,10 +6,10 @@ import (
 	"runtime/pprof"
 	"syscall"
 
+	"github.com/pkg/profile"
 	"github.com/vizicist/palette/engine"
 	_ "github.com/vizicist/palette/tool"
 	"github.com/vizicist/palette/twinsys"
-	"github.com/pkg/profile"
 )
 
 func main() {
@@ -19,7 +19,6 @@ func main() {
 		// defer profile.Start(profile.ProfilePath(".")).Stop()
 		// defer profile.Start(profile.BlockProfile).Stop()
 		defer profile.Start(profile.MutexProfile).Stop()
-
 
 		// Old original version
 		// file, _ := os.Create("./cpu.pprof")
@@ -33,7 +32,7 @@ func main() {
 	engine.InitMisc()
 	engine.InitEngine()
 
-	engine.Start()
+	engine.StartEngine()
 
 	go func() {
 		engine.WaitTillDone()
@@ -43,7 +42,7 @@ func main() {
 		os.Exit(0)
 	}()
 
-	b, _ := engine.GetParamBool("engine.twinsys")
+	b, _ := engine.GetParamBool("global.twinsys")
 	if b {
 		twinsys.Run()
 	} else {

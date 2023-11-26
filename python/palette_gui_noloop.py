@@ -84,14 +84,14 @@ class ProGuiApp(tk.Tk):
         # self.isLooping = False
         self.dorefreshPatches = False
 
-        guilevel = palette.GetParam("engine.guidefaultlevel")
+        guilevel = palette.GetParam("global.guidefaultlevel")
         if guilevel == "":
             glev = 0
         else:
             glev = int(guilevel)
         self.guidefaultlevel = glev
 
-        self.showAll = palette.boolValueOfString(palette.GetParam("engine.guishowall"))
+        self.showAll = palette.boolValueOfString(palette.GetParam("global.guishowall"))
 
         self.currentPageName = None
 
@@ -345,17 +345,17 @@ class ProGuiApp(tk.Tk):
         patch.isLooping = True
         self.update()  # tk stuff
 
-        s, err = palette.palette_engine_get("engine.looping_override")
+        s, err = palette.palette_engine_get("global.looping_override")
         if err != None:
             log("Error in getting value of engine.looping_override")
             return
         force = palette.boolValueOfString(s)
         if force:
-            forcefade, err = palette.palette_engine_get("engine.looping_fade")
+            forcefade, err = palette.palette_engine_get("global.looping_fade")
             if err != None:
                 log("Error in getting value of engine.looping_fade")
                 return
-            forcebeats, err = palette.palette_engine_get("engine.looping_beats")
+            forcebeats, err = palette.palette_engine_get("global.looping_beats")
             if err != None:
                 log("Error in getting value of engine.looping_beats")
                 return
@@ -622,7 +622,7 @@ class ProGuiApp(tk.Tk):
             return tk.PhotoImage(file=path)
 
     def makeAttractFrame(self,container):
-        self.attractimage = self.getImage("engine.attractimage")
+        self.attractimage = self.getImage("global.attractimage")
         f = tk.Frame(container,
             highlightbackground=ColorBg, highlightcolor=ColorAqua, highlightthickness=3)
         button = ttk.Button(f, image=self.attractimage, style='Attract.TLabel',
@@ -631,7 +631,7 @@ class ProGuiApp(tk.Tk):
         return f
 
     def makeHelpFrame(self,container):
-        self.helpimage = self.getImage("engine.helpimage")
+        self.helpimage = self.getImage("global.helpimage")
         f = tk.Frame(container,
             highlightbackground=ColorBg, highlightcolor=ColorAqua, highlightthickness=3)
         button = ttk.Button(f, image=self.helpimage, style='Attract.TLabel',
@@ -820,8 +820,8 @@ class ProGuiApp(tk.Tk):
 
     def sendEngineValue(self,basename,value):
 
-        if not basename.startswith("engine."):
-            basename = "engine." + basename
+        if not basename.startswith("global."):
+            basename = "global." + basename
         palette.palette_engine_set(basename,str(value))
 
     def selectorApply(self,apply,paramType):
@@ -1071,10 +1071,10 @@ class ProGuiApp(tk.Tk):
         self.setNextMode("help")
 
     def startProcess(self,processName):
-        palette.palette_engine_api("set","\"name\": \"engine.process."+processName+"\",\"value\": \"true\"")
+        palette.palette_engine_api("set","\"name\": \"global.process."+processName+"\",\"value\": \"true\"")
 
     def stopProcess(self,processName):
-        palette.palette_engine_api("set","\"name\": \"engine.process."+processName+"\",\"value\": \"false\"")
+        palette.palette_engine_api("set","\"name\": \"global.process."+processName+"\",\"value\": \"false\"")
 
     def startRecording(self):
         palette.palette_engine_api("startrecording")
@@ -1179,7 +1179,7 @@ class ProGuiApp(tk.Tk):
             self.paramValueTypeOf[name] = self.newParamsJson[name]["valuetype"]
             if "misc." in name:
                 ptype = "patch"  # misc parameters are patch parameters
-            elif "engine." in name:
+            elif "global." in name:
                 ptype = "engine"
             else:
                 ptype = "patch"
@@ -1529,7 +1529,7 @@ class PageHeader(tk.Frame):
             for t in self.textPrefix:
                 self.textPrefix[t].pack_forget()
             # guiLevel 0 is just the title
-            title = palette.GetParam("engine.title")
+            title = palette.GetParam("global.title")
             self.PaletteTitle.config(text="\n"+title+"\n",justify=tk.CENTER)
             self.PaletteTitle.pack(side=tk.TOP,pady=0)
         else:
@@ -2565,7 +2565,7 @@ def status_thread(app):  # runs in background thread
 
         status, err = palette.palette_engine_api("status","")
         if err != None:
-            log("engine.status: err=",err)
+            log("global.status: err=",err)
             continue
 
         if status == None:
@@ -2608,7 +2608,7 @@ if __name__ == "__main__":
         log("Unexpected number of patches: ",patches)
 
     visiblepagenames = {
-        "engine":"Engine",
+        "global":"Global",
         "quad":"Quad",
         "patch":"Patch",
         "misc":"Misc",
