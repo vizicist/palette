@@ -7,7 +7,7 @@ import (
 	"syscall"
 
 	"github.com/pkg/profile"
-	"github.com/vizicist/palette/engine"
+	"github.com/vizicist/palette/kit"
 	_ "github.com/vizicist/palette/tool"
 	"github.com/vizicist/palette/twinsys"
 )
@@ -22,27 +22,27 @@ func main() {
 
 		// Old original version
 		// file, _ := os.Create("./cpu.pprof")
-		// engine.LogIfError(pprof.StartCPUProfile(file))
+		// kit.LogIfError(pprof.StartCPUProfile(file))
 	}
 
 	signal.Ignore(syscall.SIGHUP)
 	signal.Ignore(syscall.SIGINT)
 
-	engine.InitLog("engine")
-	engine.InitMisc()
-	engine.InitEngine()
+	kit.InitLog("kit")
+	kit.InitMisc()
+	kit.InitEngine()
 
-	engine.StartEngine()
+	kit.StartEngine()
 
 	go func() {
-		engine.WaitTillDone()
+		kit.WaitTillDone()
 		if doProfile {
 			pprof.StopCPUProfile()
 		}
 		os.Exit(0)
 	}()
 
-	b, _ := engine.GetParamBool("global.twinsys")
+	b, _ := kit.GetParamBool("global.twinsys")
 	if b {
 		twinsys.Run()
 	} else {
