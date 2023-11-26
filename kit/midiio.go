@@ -1,7 +1,7 @@
 //go:build windows
 // +build windows
 
-package engine
+package kit
 
 import (
 	"fmt"
@@ -85,7 +85,7 @@ func InitMidiIO() {
 	}
 
 	LogInfo("Initialized MIDI", "numoutports", len(TheMidiIO.outports))
-	LogOfType("midi","MIDI outports", "outports", TheMidiIO.outports)
+	LogOfType("midi", "MIDI outports", "outports", TheMidiIO.outports)
 
 	// if erae {
 	// 	Info("Erae Touch input is being enabled")
@@ -143,7 +143,7 @@ func (m *MidiIO) Start() {
 
 func (m *MidiIO) handleMidiInput(msg midi.Message, timestamp int32) {
 	LogOfType("midi", "handleMidiInput", "msg", msg)
-	TheRouter.midiInputChan <- NewMidiEvent(CurrentClick(),"handleMidiInput",msg)
+	TheRouter.midiInputChan <- NewMidiEvent(CurrentClick(), "handleMidiInput", msg)
 
 	/*
 		var bt []byte
@@ -286,4 +286,3 @@ func (me MidiEvent) Data1() uint8 {
 	}
 	return bytes[1]
 }
-

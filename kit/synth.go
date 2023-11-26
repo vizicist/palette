@@ -1,4 +1,4 @@
-package engine
+package kit
 
 import (
 	"encoding/json"
@@ -403,7 +403,7 @@ func (synth *Synth) SendBytesToMidiOutput(bytes []byte) {
 	}
 
 	// Use status value from bytes, but channel gets taken from Synth
-	status := (bytes[0] & 0xf0 ) | byte(synth.portchannel.channel - 1)
+	status := (bytes[0] & 0xf0) | byte(synth.portchannel.channel-1)
 	bytes[0] = status
 
 	switch len(bytes) {

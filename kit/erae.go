@@ -1,4 +1,4 @@
-package engine
+package kit
 
 import (
 	"encoding/binary"
@@ -164,7 +164,7 @@ func (erae *Erae) handleFinger(bb []byte) {
 	if tag != "" {
 		if tag != erae.patchName {
 			// Clear cursor state
-			ce := NewCursorEvent(gid,tag,"clear",CursorPos{})
+			ce := NewCursorEvent(gid, tag, "clear", CursorPos{})
 			LogWarn("HandleFinger: needs work here")
 			// erae.OnCursorEvent(ce)
 			_ = ce
@@ -210,7 +210,7 @@ func (erae *Erae) handleFinger(bb []byte) {
 
 	pos := CursorPos{x, y, z}
 
-	ce := NewCursorEvent(gid,tag,ddu,pos)
+	ce := NewCursorEvent(gid, tag, ddu, pos)
 	_ = ce
 	// XXX - should Fresh be trued???
 	LogWarn("HandleFinger: should be sending CursorEvent")

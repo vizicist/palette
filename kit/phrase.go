@@ -1,4 +1,4 @@
-package engine
+package kit
 
 import (
 	"bufio"
@@ -433,7 +433,7 @@ func SchedElementFromString(s string) (se *SchedElement, err error) {
 		return nil, err
 	}
 
-	se = NewSchedElement(atclick,"fromString", val)
+	se = NewSchedElement(atclick, "fromString", val)
 	return se, nil
 }
 

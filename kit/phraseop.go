@@ -1,4 +1,4 @@
-package engine
+package kit
 
 // Copy returns a copy of a Phrase
 func (p *Phrase) Copy() *Phrase {

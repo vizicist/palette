@@ -1,7 +1,7 @@
 //go:build windows
 // +build windows
 
-package engine
+package kit
 
 // #cgo LDFLAGS: -L. "${SRCDIR}/../SenselLib/x64/LibSensel.dll"
 /*
