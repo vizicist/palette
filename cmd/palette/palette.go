@@ -28,7 +28,7 @@ func main() {
 		kit.InitLog("palette")
 	}
 
-	engine.InitMisc()
+	kit.InitMisc()
 	// kit.InitEngine()
 
 	kit.LogInfo("Palette InitLog", "args", args)
