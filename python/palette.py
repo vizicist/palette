@@ -74,15 +74,15 @@ def sprint(*args, end='', **kwargs):
     return sio.getvalue()
 
 def palette_engine_api(api, params=""):
-    return palette_api("engine."+api,params)
+    return palette_api("global."+api,params)
 
 def palette_engine_set(name, value):
-    return palette_api("engine.set",
+    return palette_api("global.set",
             "\"name\": \"" + name + "\"" + \
             ", \"value\": \"" + str(value) + "\"")
 
 def palette_engine_get(name):
-    return palette_api("engine.get", "\"name\": \"" + name + "\"")
+    return palette_api("global.get", "\"name\": \"" + name + "\"")
 
 def configFilePath(nm):
     return os.path.join(localPaletteDir(),PaletteDataPath(),"config",nm)
@@ -297,7 +297,7 @@ SettingsJson = None
 LocalSettingsJson = None
 
 def GetParam(name):
-    value, err = palette_api("engine.get",
+    value, err = palette_api("global.get",
         "\"name\": \"" + name + "\"")
     if err != None:
         log("Error in palette.GetParam for "+name)

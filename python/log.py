@@ -7,4 +7,4 @@ if len(sys.argv) != 2:
 
 val = sys.argv[1]
 
-palette.palette_api("engine.set","\"name\":\"engine.log\", \"value\": \""+val+"\"" )
+palette.palette_api("global.set","\"name\":\"global.log\", \"value\": \""+val+"\"" )
