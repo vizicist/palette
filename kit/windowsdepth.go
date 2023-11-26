@@ -1,7 +1,7 @@
 //go:build windowsdepth
 // +build windowsdepth
 
-package engine
+package kit
 
 // #cgo LDFLAGS: -L. "${SRCDIR}/../depthlib/build/x64/Release/depthlib.dll"
 /*
