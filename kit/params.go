@@ -80,6 +80,7 @@ func NewParamValues() *ParamValues {
 }
 
 func InitParams() {
+
 	err := LoadParamEnums()
 	if err != nil {
 		LogWarn("LoadParamEnums", "err", err)
@@ -91,7 +92,19 @@ func InitParams() {
 		LogWarn("LoadParamDefs", "err", err)
 		// might be fatal, but try to continue
 	}
+
 	GlobalParams = NewParamValues()
+
+	// Set all the default global.* values
+	for nm, pd := range ParamDefs {
+		if pd.Category == "global" {
+			err := GlobalParams.SetParamWithString(nm, pd.Init)
+			if err != nil {
+				LogError(err)
+			}
+		}
+	}
+
 }
 
 func (vals *ParamValues) DoForAllParams(f func(string, ParamValue)) {

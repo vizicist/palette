@@ -26,7 +26,6 @@ func KillExecutable(executable string) {
 // StartExecutable executes something.  If background is true, it doesn't block
 func StartExecutableLogOutput(logName string, fullexe string, args ...string) error {
 	logWriter := NewExecutableLogWriter(logName)
-	LogInfo("StartExecutableLogOutput", "executable", fullexe)
 	_, err := StartExecutableInBackground(fullexe, logWriter, logWriter, args...)
 	return err
 }
