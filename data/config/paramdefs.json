@@ -194,7 +194,6 @@
 "global.midithrusynth": {"valuetype":"string", "min":"synth", "max":"synth", "init":"default", "comment":"#" },
 "global.midisetexternalscale": {"valuetype":"bool", "min":"false", "max":"true", "init":"false", "comment":"#" },
 "global.morphtype": {"valuetype":"string", "min":"morphtype", "max":"morphtype", "init":"quadrants", "comment":"#" },
-"global.mmtt": {"valuetype":"string", "min":"mmtt", "max":"mmtt", "init":"kinect", "comment":"# MMTT device" },
 "global.mmtt_xexpand": {"valuetype": "float", "min": "0.5", "max": "2.0",  "init": "1.25",	"comment": "#" },
 "global.mmtt_yexpand": {"valuetype": "float", "min": "0.5", "max": "2.0",  "init": "1.25",	"comment": "#" },
 "global.mmtt_zexpand": {"valuetype": "float", "min": "0.5", "max": "10.0",  "init": "4.0",	"comment": "#" },

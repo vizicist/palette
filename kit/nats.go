@@ -27,7 +27,7 @@ func NatsApi(cmd string) (result string, err error) {
 		return "", err
 	}
 	timeout := 3 * time.Second
-	retdata, err := TheNats.Request("toengine.api", cmd, timeout)
+	retdata, err := TheNats.Request("to_palette.api", cmd, timeout)
 	LogIfError(err)
 	return retdata, err
 }
@@ -158,7 +158,7 @@ func (vn *VizNats) Connect() error {
 func natsRequestHandler(msg *nats.Msg) {
 	data := string(msg.Data)
 	LogInfo("NatsHandler", "subject", msg.Subject, "data", data)
-	result, err := TheEngine.ExecuteApiFromJson(data)
+	result, err := ExecuteApiFromJson(data)
 	var response string
 	if err != nil {
 		LogError(fmt.Errorf("natsRequestHandler unable to interpret"), "data", data)

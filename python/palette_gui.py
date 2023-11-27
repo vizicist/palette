@@ -168,7 +168,7 @@ class ProGuiApp(tk.Tk):
         tk.Tk.__init__(self)
 
         self.AllPageNames = {
-                "engine":0,
+                "global":0,
                 "quad":0,
                 "patch":0,
                 "sound":0,
@@ -350,17 +350,17 @@ class ProGuiApp(tk.Tk):
 
         s, err = palette.palette_engine_get("global.looping_override")
         if err != None:
-            log("Error in getting value of engine.looping_override")
+            log("Error in getting value of global.looping_override")
             return
         force = palette.boolValueOfString(s)
         if force:
             forcefade, err = palette.palette_engine_get("global.looping_fade")
             if err != None:
-                log("Error in getting value of engine.looping_fade")
+                log("Error in getting value of global.looping_fade")
                 return
             forcebeats, err = palette.palette_engine_get("global.looping_beats")
             if err != None:
-                log("Error in getting value of engine.looping_beats")
+                log("Error in getting value of global.looping_beats")
                 return
 
         palette.palette_patch_set(patch.name(), "misc.looping_on", "true")
@@ -608,7 +608,7 @@ class ProGuiApp(tk.Tk):
         for patch in self.PatchList():
             self.loopingOff(patch)
         self.clear()
-        palette.palette_engine_api("attract",
+        palette.palette_global_api("attract",
             "\"onoff\": \"false\"")
         self.setNextMode("normal")
         self.softResetAll()
@@ -710,7 +710,7 @@ class ProGuiApp(tk.Tk):
         self.lastLoadType = ""
         self.lastLoadName = ""
 
-        if self.editMode and pagename == "engine":
+        if self.editMode and pagename == "global":
             self.refreshEngineValues(pagename)
         elif self.editMode and pagename != "patch":
             if self.allPatchesSelected:
@@ -808,7 +808,7 @@ class ProGuiApp(tk.Tk):
 
     def changeAndSendValue(self,paramType,basename,value,sendit=True):
 
-        if paramType == "engine":
+        if paramType == "global":
             self.engine.paramValues[basename] = value
             if sendit:
                 self.sendEngineValue(basename,value)
@@ -846,9 +846,9 @@ class ProGuiApp(tk.Tk):
             log("selectorApply: after applyToAllParams")
             self.refreshPage()
 
-            if paramType == "engine":
-                paramlistjson = self.paramListOfType("engine",self.engine.getValue)
-                palette.palette_engine_api("setparams", paramlistjson)
+            if paramType == "global":
+                paramlistjson = self.paramListOfType("global",self.engine.getValue)
+                palette.palette_global_api("setparams", paramlistjson)
                 self.engine.sendParamsOfType(paramType)
             else:
                 for patch in self.PatchList():
@@ -938,8 +938,8 @@ class ProGuiApp(tk.Tk):
         fullsavedname = category+"."+str(filename)
         self.editPage[category].paramsnameVar.set(filename)
 
-        if category == "engine":
-            # log("Loading","category","engine","filename",filename)
+        if category == "global":
+            # log("Loading","category","global","filename",filename)
             palette.palette_quadpro_api("load",
                 "\"filename\": \"" + filename + "\""
                 ", \"category\": \"" + category + "\"")
@@ -1077,16 +1077,16 @@ class ProGuiApp(tk.Tk):
         self.setNextMode("help")
 
     def startProcess(self,processName):
-        palette.palette_engine_api("set","\"name\":\"global.process."+processName+"\",\"value\":\"true\"")
+        palette.palette_global_api("set","\"name\":\"global.process."+processName+"\",\"value\":\"true\"")
 
     def stopProcess(self,processName):
-        palette.palette_engine_api("set","\"name\":\"global.process."+processName+"\",\"value\":\"false\"")
+        palette.palette_global_api("set","\"name\":\"global.process."+processName+"\",\"value\":\"false\"")
 
     def startRecording(self):
-        palette.palette_engine_api("startrecording")
+        palette.palette_global_api("startrecording")
 
     def stopRecording(self):
-        palette.palette_engine_api("stoprecording")
+        palette.palette_global_api("stoprecording")
 
     def exit(self):
         os._exit(0)  # This is a hard exit, killing all the background threads
@@ -1126,7 +1126,7 @@ class ProGuiApp(tk.Tk):
 
         s = ""
         path = palette.configFilePath("paramdefs.json")
-        log("Reading",path)
+        # log("Reading",path)
         f = open(path,'r')
         lines = f.readlines() 
         for line in lines: 
@@ -1186,7 +1186,7 @@ class ProGuiApp(tk.Tk):
             if "misc." in name:
                 ptype = "patch"  # misc parameters are patch parameters
             elif "global." in name:
-                ptype = "engine"
+                ptype = "global"
             else:
                 ptype = "patch"
             self.paramsOfType[ptype][name] = self.newParamsJson[name]
@@ -1257,7 +1257,7 @@ class Engine():
         self.paramValues = {}
         self.paramEnabled = {}
         self.controller = controller
-        self.params = self.controller.paramsOfType["engine"]
+        self.params = self.controller.paramsOfType["global"]
         self.setInitValues()
 
     def setValue(self,paramName,val):
@@ -2024,8 +2024,8 @@ class PageEditParams(tk.Frame):
             if err != None:
                 log("Error saving saved:",filename," err=",err)
 
-        elif self.pagename == "engine":
-            result, err = palette.palette_engine_api("save",
+        elif self.pagename == "global":
+            result, err = palette.palette_global_api("save",
                     "\"category\": \"" + self.pagename + "\", "
                     "\"filename\": \"" + filename + "\"")
             if err != None:
@@ -2569,7 +2569,7 @@ def status_thread(app):  # runs in background thread
 
         time.sleep(2.0)
 
-        status, err = palette.palette_engine_api("status","")
+        status, err = palette.palette_global_api("status","")
         if err != None:
             log("global.status: err=",err)
             continue

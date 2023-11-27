@@ -8,7 +8,7 @@ import (
 )
 
 // ExecuteApi xxx
-func (e *Engine) ExecuteApi(api string, apiargs map[string]string) (result string, err error) {
+func ExecuteApi(api string, apiargs map[string]string) (result string, err error) {
 
 	LogOfType("api", "ExecuteApi", "api", api, "apiargs", apiargs)
 
@@ -22,10 +22,10 @@ func (e *Engine) ExecuteApi(api string, apiargs map[string]string) (result strin
 	apitype := words[0]
 	apisuffix := words[1]
 	switch apitype {
-	case "engine":
-		return e.executeEngineApi(apisuffix, apiargs)
+	case "global":
+		return ExecuteGlobalApi(apisuffix, apiargs)
 	case "saved":
-		return e.executeSavedApi(apisuffix, apiargs)
+		return ExecuteSavedApi(apisuffix, apiargs)
 	case "quadpro":
 		if TheQuadPro != nil {
 			return TheQuadPro.Api(apisuffix, apiargs)
@@ -47,8 +47,8 @@ func (e *Engine) ExecuteApi(api string, apiargs map[string]string) (result strin
 	// unreachable
 }
 
-// handleRawJsonApi takes raw JSON (as a string of the form "{...}"") as an API and returns raw JSON
-func (e *Engine) ExecuteApiFromJson(rawjson string) (string, error) {
+// ExecuteApiFromJson takes raw JSON (as a string of the form "{...}"") as an API and returns raw JSON
+func ExecuteApiFromJson(rawjson string) (string, error) {
 	args, err := StringMap(rawjson)
 	if err != nil {
 		return "", fmt.Errorf("Router.ExecuteApiAsJson: bad format of JSON")
@@ -57,10 +57,10 @@ func (e *Engine) ExecuteApiFromJson(rawjson string) (string, error) {
 	if api == "" {
 		return "", fmt.Errorf("Router.ExecuteApiAsJson: no api value")
 	}
-	return e.ExecuteApi(api, args)
+	return ExecuteApi(api, args)
 }
 
-func (e *Engine) executeEngineApi(api string, apiargs map[string]string) (result string, err error) {
+func ExecuteGlobalApi(api string, apiargs map[string]string) (result string, err error) {
 
 	switch api {
 
@@ -93,7 +93,7 @@ func (e *Engine) executeEngineApi(api string, apiargs map[string]string) (result
 	case "attract":
 		v, ok := apiargs["onoff"]
 		if !ok {
-			return "", fmt.Errorf("executeEngineApi: missing onoff parameter")
+			return "", fmt.Errorf("ExecuteGlobalApi: missing onoff parameter")
 		}
 		TheAttractManager.SetAttractMode(IsTrueValue(v))
 		return "", nil
@@ -103,6 +103,7 @@ func (e *Engine) executeEngineApi(api string, apiargs map[string]string) (result
 		if err != nil {
 			return "", err
 		}
+		// LogInfo("ExecuteGlobalApi set", "name", name, "value", value)
 		err = GlobalParams.SetParamWithString(name, value)
 		if err != nil {
 			return "", err
@@ -111,7 +112,7 @@ func (e *Engine) executeEngineApi(api string, apiargs map[string]string) (result
 		if err != nil {
 			return "", err
 		}
-		return "", SaveCurrent()
+		return "", SaveGlobalParams()
 
 	case "setparams":
 		for name, value := range apiargs {
@@ -129,27 +130,14 @@ func (e *Engine) executeEngineApi(api string, apiargs map[string]string) (result
 		if err != nil {
 			return "", err
 		}
-		return "", SaveCurrent()
+		return "", SaveGlobalParams()
 
 	case "get":
 		name, ok := apiargs["name"]
 		if !ok {
-			return "", fmt.Errorf("executeEngineApi: missing name parameter")
+			return "", fmt.Errorf("ExecuteGlobalApi: missing name parameter")
 		}
 		return GlobalParams.Get(name)
-
-	case "startprocess":
-		return "", fmt.Errorf("executeEngineApi: startprocess is deprecated")
-		// return "", TheProcessManager.StartRunning(process)
-
-	case "stopprocess":
-		return "", fmt.Errorf("executeEngineApi: stopprocess is deprecated")
-		// process, ok := apiargs["process"]
-		// if !ok {
-		// 	return "", fmt.Errorf("executeEngineApi: missing process parameter")
-		// }
-		// err := TheProcessManager.KillProcess(process)
-		// return "", err
 
 	case "showclip":
 		s, ok := apiargs["clipnum"]
@@ -164,27 +152,27 @@ func (e *Engine) executeEngineApi(api string, apiargs map[string]string) (result
 		return "", nil
 
 	case "startrecording":
-		return e.StartRecording()
+		return TheEngine.StartRecording()
 
 	case "stoprecording":
-		return e.StopRecording()
+		return TheEngine.StopRecording()
 
 	case "startplayback":
 		fname, ok := apiargs["filename"]
 		if !ok {
-			return "", fmt.Errorf("executeEngineApi: missing filename parameter")
+			return "", fmt.Errorf("ExecuteGlobalApi: missing filename parameter")
 		}
-		return "", e.StartPlayback(fname)
+		return "", TheEngine.StartPlayback(fname)
 
 	case "save":
 		filename, ok := apiargs["filename"]
 		if !ok {
-			return "", fmt.Errorf("executeEngineApi: missing filename parameter")
+			return "", fmt.Errorf("ExecuteGlobalApi: missing filename parameter")
 		}
-		return "", GlobalParams.Save("engine", filename)
+		return "", GlobalParams.Save("global", filename)
 
 	case "done":
-		e.SayDone() // needed for clean exit when profiling
+		TheEngine.SayDone() // needed for clean exit when profiling
 		return "", nil
 
 	case "audio_reset":
@@ -234,7 +222,7 @@ func (e *Engine) executeEngineApi(api string, apiargs map[string]string) (result
 			return "", fmt.Errorf("playcursor: missing x, y, or z value")
 		}
 		var x, y, z float32
-		if !e.getFloat32(xs, &x) || !e.getFloat32(ys, &y) || !e.getFloat32(zs, &z) {
+		if !GetFloat32(xs, &x) || !GetFloat32(ys, &y) || !GetFloat32(zs, &z) {
 			return "", fmt.Errorf("playcursor: bad x,y,z value")
 		}
 		pos = CursorPos{x, y, z}
@@ -250,7 +238,7 @@ func (e *Engine) executeEngineApi(api string, apiargs map[string]string) (result
 	return result, err
 }
 
-func (e *Engine) getFloat(value string, f *float64) bool {
+func GetFloat(value string, f *float64) bool {
 	v, err := strconv.ParseFloat(value, 32)
 	if err != nil {
 		LogIfError(err)
@@ -261,7 +249,7 @@ func (e *Engine) getFloat(value string, f *float64) bool {
 	}
 }
 
-func (e *Engine) getFloat32(value string, f *float32) bool {
+func GetFloat32(value string, f *float32) bool {
 	v, err := strconv.ParseFloat(value, 32)
 	if err != nil {
 		LogIfError(err)
@@ -272,7 +260,7 @@ func (e *Engine) getFloat32(value string, f *float32) bool {
 	}
 }
 
-func (e *Engine) getInt(value string, i *int64) bool {
+func GetInt(value string, i *int64) bool {
 	v, err := strconv.ParseInt(value, 10, 64)
 	if err != nil {
 		LogIfError(err)
@@ -284,10 +272,17 @@ func (e *Engine) getInt(value string, i *int64) bool {
 }
 
 func ApplyParam(name string, value string) (err error) {
+
+	_, ok := ParamDefs[name]
+	if !ok {
+		err := fmt.Errorf("ApplyParam: unknown parameter %s", name)
+		LogError(err)
+		return err
+	}
+
 	var f float64
 	var i int64
 
-	// starting and stopping processes can't be done while loading initial parameters
 	if strings.HasPrefix(name, "global.process.") {
 		process := strings.TrimPrefix(name, "global.process.")
 		if IsTrueValue(value) {
@@ -310,19 +305,19 @@ func ApplyParam(name string, value string) (err error) {
 		TheAttractManager.SetAttractEnabled(IsTrueValue(value))
 
 	case "global.attractchecksecs":
-		if TheEngine.getFloat(value, &f) {
+		if GetFloat(value, &f) {
 			TheAttractManager.attractCheckSecs = f
 		}
 	case "global.attractchangeinterval":
-		if TheEngine.getFloat(value, &f) {
+		if GetFloat(value, &f) {
 			TheAttractManager.attractChangeInterval = f
 		}
 	case "global.attractgestureinterval":
-		if TheEngine.getFloat(value, &f) {
+		if GetFloat(value, &f) {
 			TheAttractManager.attractGestureInterval = f
 		}
 	case "global.attractidlesecs":
-		if TheEngine.getInt(value, &i) {
+		if GetInt(value, &i) {
 			if i < 15 {
 				LogWarn("global.attractidlesecs is too low, forcing to 15")
 				i = 15
@@ -330,7 +325,7 @@ func ApplyParam(name string, value string) (err error) {
 			TheAttractManager.attractIdleSecs = float64(i)
 		}
 	case "global.looping_fadethreshold":
-		if TheEngine.getFloat(value, &f) {
+		if GetFloat(value, &f) {
 			TheCursorManager.LoopThreshold = float32(f)
 		}
 
@@ -359,11 +354,11 @@ func ApplyParam(name string, value string) (err error) {
 		TheEngine.autoTransposeOn = IsTrueValue(value)
 
 	case "global.autotransposebeats":
-		if TheEngine.getInt(value, &i) {
+		if GetInt(value, &i) {
 			TheEngine.SetAutoTransposeBeats(int(i))
 		}
 	case "global.transpose":
-		if TheEngine.getInt(value, &i) {
+		if GetInt(value, &i) {
 			TheEngine.SetTranspose(int(i))
 		}
 	case "global.log":
@@ -373,7 +368,7 @@ func ApplyParam(name string, value string) (err error) {
 		TheMidiIO.SetMidiInput(value)
 
 	case "global.processchecksecs":
-		if TheEngine.getFloat(value, &f) {
+		if GetFloat(value, &f) {
 			TheProcessManager.processCheckSecs = f
 		}
 
@@ -410,6 +405,7 @@ func ApplyParam(name string, value string) (err error) {
 	case "global.cursoroffsetx":
 
 	case "global.gui":
+	case "global.guidefaultlevel":
 
 	case "global.attractgestureduration":
 	case "global.mmtt":
@@ -433,7 +429,6 @@ func ApplyParam(name string, value string) (err error) {
 	case "global.resolumetextlayer":
 	case "global.keykitroot":
 	case "global.keykitrun":
-	case "global.guidefaultlevel":
 	case "global.guisize":
 	case "global.testgestureduration":
 	case "global.winsize":
@@ -450,9 +445,6 @@ func ApplyParam(name string, value string) (err error) {
 
 	case "global.obspath":
 
-	case "global.autostart":
-		LogInfo("Engine.Set, obsolete parameter", "name", name, "value", value)
-
 	default:
 		if !strings.HasPrefix(name, "global.process.") {
 			LogInfo("Engine.Set, unknown parameter", "name", name, "value", value)
@@ -467,7 +459,7 @@ func ApplyParam(name string, value string) (err error) {
 // 	return GlobalParams.SetParamWithString(name, value)
 // }
 
-func (e *Engine) executeSavedApi(api string, apiargs map[string]string) (result string, err error) {
+func ExecuteSavedApi(api string, apiargs map[string]string) (result string, err error) {
 
 	switch api {
 

@@ -261,7 +261,7 @@ func (quadpro *QuadPro) onGet(apiargs map[string]string) (result string, err err
 	if !ok {
 		return "", fmt.Errorf("QuadPro.onPatchGet: Missing name argument")
 	}
-	if strings.HasPrefix(paramName, "engine") {
+	if strings.HasPrefix(paramName, "global") {
 		return GetParam(paramName)
 	} else {
 		return "", fmt.Errorf("QuadPro.onGet: can't handle parameter %s", paramName)
@@ -334,8 +334,8 @@ func (quadpro *QuadPro) Load(category string, filename string) error {
 
 	var lasterr error
 
-	if category == "engine" {
-		err := fmt.Errorf("HACK! quadpro.Load shouldn't load engine parameters")
+	if category == "global" {
+		err := fmt.Errorf("HACK! quadpro.Load shouldn't load global parameters")
 		LogError(err)
 		lasterr = err
 	} else {
@@ -357,7 +357,7 @@ func (quadpro *QuadPro) Load(category string, filename string) error {
 	case "global":
 		// No need to save _Current if we're loading it.
 		if filename != "_Current" {
-			err = SaveCurrent()
+			err = SaveGlobalParams()
 		}
 	case "quad":
 		if filename != "_Current" {
@@ -381,8 +381,7 @@ func (quadpro *QuadPro) save(category string, filename string) (err error) {
 
 	LogOfType("saved", "QuadPro.save", "category", category, "filename", filename)
 
-	if category == "engine" {
-		// err = quadpro.engineClicks.Save("engine", filename)
+	if category == "global" {
 		LogWarn("QuadPro.save: shouldn't be saving global?")
 		err = fmt.Errorf("QuadPro.save: global shouldn't be handled here")
 	} else if category == "quad" {

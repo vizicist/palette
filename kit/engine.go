@@ -39,24 +39,20 @@ var engineSysex sync.Mutex
 var TheRand *rand.Rand
 
 func InitMisc() {
+
 	InitParams()
 
 	// We first load the current values, but don't actually execute anything that they trigger
-	err := LoadCurrent()
+	err := LoadGlobalParams()
 	if err != nil {
 		LogIfError(err)
 	}
 
 	TheProcessManager = NewProcessManager()
+
 	// Fixed rand sequence, better for testing
 	TheRand = rand.New(rand.NewSource(1))
-
 	TheNats = NewNats()
-	nats, err := GetParamBool("global.nats")
-	LogIfError(err)
-	if nats {
-		EngineSubscribeNats()
-	}
 }
 
 func InitEngine() {
@@ -92,16 +88,6 @@ func InitEngine() {
 
 	InitLogTypes()
 
-	// Set all the default global.* values
-	for nm, pd := range ParamDefs {
-		if pd.Category == "global" {
-			err := GlobalParams.SetParamWithString(nm, pd.Init)
-			if err != nil {
-				LogError(err)
-			}
-		}
-	}
-
 	TheEngine = e
 
 	// Now we do things that need to be done after parameters are loaded
@@ -114,13 +100,19 @@ func InitEngine() {
 
 	CheckAutorestartProcesses()
 
+	nats, err := GetParamBool("global.nats")
+	LogIfError(err)
+	if nats {
+		EngineSubscribeNats()
+	}
+
 }
 
 func EngineSubscribeNats() {
 	err := TheNats.Connect()
 	LogIfError(err)
 	if err == nil {
-		subscribeTo := "toengine.>"
+		subscribeTo := "to_palette.>"
 		err = TheNats.Subscribe(subscribeTo, natsRequestHandler)
 		LogIfError(err)
 	}
@@ -193,18 +185,17 @@ func GetParamFloat(nm string) (float64, error) {
 	return f, nil
 }
 
-func SaveCurrent() (err error) {
+func SaveGlobalParams() (err error) {
 	return GlobalParams.Save("global", "_Current")
 }
 
-func LoadCurrent() (err error) {
+func LoadGlobalParams() (err error) {
 	paramsMap, err := LoadParamsMapOfCategory("global", "_Current")
 	if err != nil {
 		LogIfError(err)
 		return err
 	}
 	GlobalParams.ApplyValuesFromMap("global", paramsMap, GlobalParams.SetParamWithString)
-	GlobalParams.ApplyValuesFromMap("global", paramsMap, ApplyParam)
 	return nil
 }
 
@@ -310,7 +301,7 @@ func (e *Engine) StartHttp(port int) {
 			} else {
 				bstr := string(body)
 				_ = bstr
-				resp, err := e.ExecuteApiFromJson(bstr)
+				resp, err := ExecuteApiFromJson(bstr)
 				if err != nil {
 					response = ErrorResponse(err)
 				} else {
@@ -347,7 +338,7 @@ func (e *Engine) StartRecording() (string, error) {
 
 func (e *Engine) StopRecording() (string, error) {
 	if e.recordingFile == nil {
-		return "", fmt.Errorf("executeengineapi: not recording")
+		return "", fmt.Errorf("Engine.StopRecording: not recording")
 	}
 	e.RecordStopEvent()
 	LogInfo("stoprecording", "recordingPath", e.recordingPath)

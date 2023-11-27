@@ -63,7 +63,7 @@ func initScales() {
 	scales["fifths"] = MakeScale(0, 7)
 
 	// The external scale is initialized to chromatic,
-	// but will be changed by MIDI input when engine.setexternalscale is on.
+	// but will be changed by MIDI input when global.setexternalscale is on.
 	scales["external"] = MakeScale(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
 }
 
