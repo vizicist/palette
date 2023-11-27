@@ -242,7 +242,7 @@ func StatusOutput() (statusOut string, numRunning int) {
 		}
 	}
 
-	mmtt, _ := kit.GetParam("global.mmtt")
+	mmtt := os.Getenv("PALETTE_MMTT")
 	if mmtt != "" {
 		if kit.IsRunning("mmtt") {
 			s += "MMTT is running.\n"

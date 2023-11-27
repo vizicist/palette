@@ -283,6 +283,8 @@ func ApplyParam(name string, value string) (err error) {
 	var f float64
 	var i int64
 
+	// LogOfType("params", "Engine.ApplyParam", "name", name, "value", value)
+
 	if strings.HasPrefix(name, "global.process.") {
 		process := strings.TrimPrefix(name, "global.process.")
 		if IsTrueValue(value) {
@@ -387,70 +389,7 @@ func ApplyParam(name string, value string) (err error) {
 			err := ObsCommand("streamstop")
 			LogIfError(err)
 		}
-
-	case "global.emailto":
-
-	case "global.twinsys":
-
-	case "global.mmtt_zexpand":
-
-	case "global.keykitallow":
-	case "global.keykitoutput":
-
-	case "global.timefret_low":
-	case "global.timefret_mid":
-	case "global.timefret_high":
-
-	case "global.cursoroffsety":
-	case "global.cursoroffsetx":
-
-	case "global.gui":
-	case "global.guidefaultlevel":
-
-	case "global.attractgestureduration":
-	case "global.mmtt":
-	case "global.testgesturentimes":
-	case "global.testgesturenumsteps":
-	case "global.title":
-	case "global.scale":
-	case "global.mmtt_xexpand":
-	case "global.morphtype":
-	case "global.testgestureinterval":
-	case "global.bidulefile":
-	case "global.emailpassword":
-	case "global.cursorscaley":
-	case "global.emaillogin":
-	case "global.tempdir":
-	case "global.attractimage":
-	case "global.bidulepath":
-	case "global.cursorscalex":
-	case "global.midithrusynth":
-	case "global.resolumepath":
-	case "global.resolumetextlayer":
-	case "global.keykitroot":
-	case "global.keykitrun":
-	case "global.guisize":
-	case "global.testgestureduration":
-	case "global.winsize":
-	case "global.notifygui":
-	case "global.attractgesturenumsteps":
-	case "global.keykitpath":
-	case "global.mmtt_yexpand":
-	case "global.helpimage":
-	case "global.guishowall":
-
-	case "global.attractnumbergesturesteps":
-	case "global.attractguishow":
-	case "global.attractsound":
-
-	case "global.obspath":
-
-	default:
-		if !strings.HasPrefix(name, "global.process.") {
-			LogInfo("Engine.Set, unknown parameter", "name", name, "value", value)
-		}
 	}
-	LogOfType("params", "Engine.ApplyParam", "name", name, "value", value)
 	return nil
 }
 
