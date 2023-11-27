@@ -28,7 +28,7 @@ func main() {
 	signal.Ignore(syscall.SIGHUP)
 	signal.Ignore(syscall.SIGINT)
 
-	kit.InitLog("kit")
+	kit.InitLog("engine")
 	kit.InitMisc()
 	kit.InitEngine()
 

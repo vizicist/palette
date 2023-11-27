@@ -296,7 +296,17 @@ func (w *FileWriter) Write(p []byte) (n int, err error) {
 	} else {
 		s = string(p)
 	}
-	LogInfo("ExecutableOutput", "exe", w.Exe, "output", s)
+	// Hack to avoid logging things that resolume always logs
+	if w.Exe == "resolume" && (
+		strings.Contains(s, "Logging input channels") ||
+		strings.Contains(s, "Logging output channels") ||
+		strings.Contains(s, "Logging midi input devices") ||
+		strings.Contains(s, "Internal MIDI") ||
+		strings.Contains(s, "Could not find preset") ) {
+		// don't log it
+	} else {
+		LogInfo("ExecutableOutput", "exe", w.Exe, "output", s)
+	}
 	return len(p), nil
 }
 
