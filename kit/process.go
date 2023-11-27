@@ -99,7 +99,7 @@ func NewProcessManager() *ProcessManager {
 		info:             make(map[string]*ProcessInfo),
 		wasStarted:       make(map[string]*atomic.Bool),
 		lastProcessCheck: time.Time{},
-		processCheckSecs: 60, // default, change it with engine.processchecksecs
+		processCheckSecs: 60, // default
 	}
 	return pm
 }
@@ -261,7 +261,7 @@ func (pm *ProcessManager) StartRunning(process string) error {
 		}()
 	}
 
-	LogInfo("StartRunning", "path", pi.FullPath, "arg", pi.Arg, "lenarg", len(pi.Arg))
+	// LogInfo("StartRunning", "path", pi.FullPath, "arg", pi.Arg, "lenarg", len(pi.Arg))
 
 	err = StartExecutableLogOutput(process, pi.FullPath, pi.Arg)
 	if err != nil {
@@ -339,14 +339,6 @@ func GuiProcessInfo() *ProcessInfo {
 		return nil
 	}
 	exe := filepath.Base(fullpath)
-
-	// set PALETTE_GUI_LEVEL to convey it to the gui
-	guilevel, err := GetParam("global.guidefaultlevel")
-	if err != nil {
-		guilevel = "0" // last resert
-		LogIfError(err)
-	}
-	os.Setenv("PALETTE_GUI_LEVEL", guilevel)
 
 	// set PALETTE_GUI_SIZE to convey it to the gui
 	guisize, err := GetParam("global.guisize")
@@ -432,15 +424,13 @@ func MmttProcessInfo() *ProcessInfo {
 			return nil
 		}
 	*/
-	// Should probably get this from an environment variable
-	// e.g. PALETTE_MMTT
 	mmtt := os.Getenv("PALETTE_MMTT")
 	if mmtt == "" {
-		mmtt = "kinect"
+		return nil
 	}
 	fullpath := filepath.Join(PaletteDir(), "bin", "mmtt_"+mmtt, "mmtt_"+mmtt+".exe")
 	if !FileExists(fullpath) {
-		LogWarn("no mmtt executable found, looking for", "fullpath", fullpath)
+		LogWarn(" executable found, looking for", "fullpath", fullpath)
 		fullpath = ""
 	}
 	return NewProcessInfo("mmtt_"+mmtt+".exe", fullpath, "", nil)
