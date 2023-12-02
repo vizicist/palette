@@ -184,9 +184,9 @@ func (vn *VizNats) Request(subj, data string, timeout time.Duration) (retdata st
 	bytes := []byte(data)
 	msg, err := nc.Request(subj, bytes, timeout)
 	if err == nats.ErrTimeout {
-		return "", fmt.Errorf("Timeout, nothing is subscribed to subj=%s", subj)
+		return "", fmt.Errorf("timeout, nothing is subscribed to subj=%s", subj)
 	} else if err != nil {
-		return "", fmt.Errorf("Error: subj=%s err=%s", subj, err)
+		return "", fmt.Errorf("error: subj=%s err=%s", subj, err)
 	}
 	return string(msg.Data), nil
 }

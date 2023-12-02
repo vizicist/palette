@@ -49,6 +49,7 @@ func InitMisc() {
 	}
 
 	TheProcessManager = NewProcessManager()
+	TheProcessManager.AddBuiltins()
 
 	// Fixed rand sequence, better for testing
 	TheRand = rand.New(rand.NewSource(1))
@@ -96,8 +97,6 @@ func InitEngine() {
 	LogIfError(err)
 	TheAttractManager.SetAttractEnabled(enabled)
 
-	TheProcessManager.AddBuiltins()
-
 	CheckAutorestartProcesses()
 
 	nats, err := GetParamBool("global.nats")
@@ -130,16 +129,10 @@ func WaitTillDone() {
 }
 
 func GetParam(name string) (string, error) {
-	if TheEngine == nil {
-		return "", fmt.Errorf("GetParam called before NewEngine, name=%s)", name)
-	}
 	return GlobalParams.Get(name)
 }
 
 func GetParamWithDefault(name string, dflt string) string {
-	if TheEngine == nil {
-		return ""
-	}
 	val, err := GlobalParams.Get(name)
 	if err != nil {
 		val = dflt
