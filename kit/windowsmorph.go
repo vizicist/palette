@@ -257,7 +257,7 @@ type oneMorph struct {
 	fwVersionBuild   uint8
 	fwVersionRelease uint8
 	deviceID         int
-	morphtype        string // "corners", "quadrants"
+	morphtype        string // "corners", "quadrants", "A", "B", "C", "D"
 	currentTag       string // "A", "B", "C", "D" - it can change dynamically
 	previousTag      string // "A", "B", "C", "D" - it can change dynamically
 	contactIdToGid   map[int]int
@@ -505,10 +505,11 @@ func WinMorphInitialize() error {
 			// It's not explicitly present in morphs.json
 			t, err := GetParam("global.morphtype")
 			if err != nil {
-				return err
+				morphtype = "A"
+			} else {
+				morphtype = t
 			}
-			morphtype = t
-			LogInfo("Morph serial# isn't in morphs.json, using engine.morphtype", "serialnum", m.serialNum, "morphtype", morphtype)
+			LogInfo("Morph serial# isn't in morphs.json", "serialnum", m.serialNum, "morphtype", morphtype)
 		}
 
 		m.morphtype = morphtype
