@@ -10,7 +10,7 @@
 	"quantstyle": [ "none", "frets", "fixed", "pressure" ],
 	"volstyle": [ "fixed", "pressure" ],
   "shape": [ "line", "triangle", "square", "circle" ],
-  "morphtype": [ "quadrants", "corners" ],
+  "morphtype": [ "quadrants", "corners", "A", "B", "C", "D" ],
   "midiinput": [ "microKEY2 Air", "" ],
   "movedir": [ "cursor", "left", "right", "up", "down", "random", "random90", "updown", "leftright" ],
   "rotangdir": [ "right", "left", "random" ],

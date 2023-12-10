@@ -75,7 +75,7 @@ func LocalPaletteDir() string {
 	if localapp == "" {
 		var err error
 		tempdir, err := GetParam("global.tempdir")
-		LogWarn("Expecting CommonProgramFiles to be set, using engine.tempdir value", "tempdir", tempdir)
+		LogWarn("Expecting CommonProgramFiles to be set, using global.tempdir value", "tempdir", tempdir)
 		if err != nil {
 			LogIfError(err)
 			return ""

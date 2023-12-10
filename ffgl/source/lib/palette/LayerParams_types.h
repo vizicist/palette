@@ -89,6 +89,10 @@ LayerParams_InitializeTypes() {
 
 	LayerParams_morphtypeTypes.push_back("quadrants");
 	LayerParams_morphtypeTypes.push_back("corners");
+	LayerParams_morphtypeTypes.push_back("A");
+	LayerParams_morphtypeTypes.push_back("B");
+	LayerParams_morphtypeTypes.push_back("C");
+	LayerParams_morphtypeTypes.push_back("D");
 
 	LayerParams_midiinputTypes.push_back("microKEY2 Air");
 	LayerParams_midiinputTypes.push_back("");
