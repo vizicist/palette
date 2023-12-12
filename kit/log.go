@@ -257,12 +257,11 @@ func LogError(err error, keysAndValues ...any) {
 	}
 
 	if (len(keysAndValues) % 2) != 0 {
-		LogWarn("LogIfError function given bad number of arguments")
+		LogWarn("LogError function given bad number of arguments")
 	}
 	keysAndValues = append(keysAndValues, "err")
 	keysAndValues = append(keysAndValues, err)
-	caller := "LogIfError"
-	LogWarn(caller, keysAndValues...)
+	LogRaw("error", "LogError", keysAndValues...)
 }
 
 func appendExtraValues(keysAndValues []any) []any {
@@ -291,12 +290,16 @@ func LogOfType(logtypes string, msg string, keysAndValues ...any) {
 }
 
 func LogWarn(msg string, keysAndValues ...any) {
+	LogRaw("warn", msg, keysAndValues...)
+}
+
+func LogRaw(loglevel string, msg string, keysAndValues ...any) {
 	if (len(keysAndValues) % 2) != 0 {
-		LogWarn("Warn function given bad number of arguments")
+		LogWarn("LogRaw function given bad number of arguments","msg",msg)
 	} else {
 		keysAndValues = appendExtraValues(keysAndValues)
 		keysAndValues = append(keysAndValues, "loglevel")
-		keysAndValues = append(keysAndValues, "warn")
+		keysAndValues = append(keysAndValues, loglevel)
 		TheLog.Warnw(msg, keysAndValues...)
 	}
 }

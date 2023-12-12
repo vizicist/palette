@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"runtime/debug"
 )
 
 // ExecuteApi xxx
@@ -47,8 +48,21 @@ func ExecuteApi(api string, apiargs map[string]string) (result string, err error
 	// unreachable
 }
 
+
 // ExecuteApiFromJson takes raw JSON (as a string of the form "{...}"") as an API and returns raw JSON
 func ExecuteApiFromJson(rawjson string) (string, error) {
+
+	defer func() {
+		if r := recover(); r != nil {
+			// Print stack trace in the error messages
+			stacktrace := string(debug.Stack())
+			// First to stdout, then to log file
+			fmt.Printf("PANIC: recover in ExecuteApiFromJson called, r=%+v stack=%v", r, stacktrace)
+			err := fmt.Errorf("PANIC: recover in ExecuteApiFromJson has been called")
+			LogError(err, "r", r, "stack", stacktrace)
+		}
+	}()
+
 	args, err := StringMap(rawjson)
 	if err != nil {
 		return "", fmt.Errorf("Router.ExecuteApiAsJson: bad format of JSON")
@@ -63,6 +77,11 @@ func ExecuteApiFromJson(rawjson string) (string, error) {
 func ExecuteGlobalApi(api string, apiargs map[string]string) (result string, err error) {
 
 	switch api {
+
+	case "debugnil":
+		// Generate a nil pointer panic
+		var a *Engine
+		a.SayDone()
 
 	case "debugsched":
 		return TheScheduler.ToString(), nil

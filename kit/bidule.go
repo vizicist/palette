@@ -4,6 +4,8 @@ import (
 	"path/filepath"
 	"sync"
 	"time"
+	"runtime/debug"
+	"fmt"
 
 	"github.com/hypebeast/go-osc/osc"
 )
@@ -43,24 +45,36 @@ func (b *Bidule) ProcessInfo() *ProcessInfo {
 	bidulePath, err := GetParam("global.bidulepath")
 	if err != nil {
 		LogIfError(err)
-		return nil
+		return EmptyProcessInfo()
 	}
 	if !FileExists(bidulePath) {
 		LogWarn("No bidule found, looking for", "path", bidulePath)
-		return nil
+		return EmptyProcessInfo()
 	}
 	exe := filepath.Base(bidulePath)
 
 	bidulefile, err := GetParam("global.bidulefile")
 	if err != nil {
 		LogIfError(err)
-		return nil
+		return EmptyProcessInfo()
 	}
 	filepath := ConfigFilePath(bidulefile)
 	return NewProcessInfo(exe, bidulePath, filepath, b.Activate)
 }
 
 func (b *Bidule) Reset() {
+
+	defer func() {
+		if r := recover(); r != nil {
+			// Print stack trace in the error messages
+			stacktrace := string(debug.Stack())
+			// First to stdout, then to log file
+			fmt.Printf("PANIC: recover in Bidule.Reset called, r=%+v stack=%v", r, stacktrace)
+			err := fmt.Errorf("PANIC: recover in Bidule.Reset has been called")
+			LogError(err, "r", r, "stack", stacktrace)
+		}
+	}()
+
 
 	b.mutex.Lock()
 	defer b.mutex.Unlock()

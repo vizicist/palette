@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"runtime/debug"
 	"strconv"
 	"sync"
 	"sync/atomic"
@@ -195,6 +196,7 @@ func LoadGlobalParams() (err error) {
 func (e *Engine) Start() {
 
 	e.done = make(chan bool)
+
 	LogInfo("Engine.Start")
 
 	InitMidiIO()
@@ -249,6 +251,17 @@ func (e *Engine) sendToOscClients(msg *osc.Message) {
 
 func (e *Engine) StartOscListener(port int) {
 
+	defer func() {
+		if r := recover(); r != nil {
+			// Print stack trace in the error messages
+			stacktrace := string(debug.Stack())
+			// First to stdout, then to log file
+			fmt.Printf("PANIC: recover in StartOscListener called, r=%+v stack=%v", r, stacktrace)
+			err := fmt.Errorf("PANIC: recover in StartOscListener has been called")
+			LogError(err, "r", r, "stack", stacktrace)
+		}
+	}()
+
 	source := fmt.Sprintf("%s:%d", LocalAddress, port)
 
 	d := osc.NewStandardDispatcher()
@@ -272,6 +285,17 @@ func (e *Engine) StartOscListener(port int) {
 
 // StartHttp xxx
 func (e *Engine) StartHttp(port int) {
+
+	defer func() {
+		if r := recover(); r != nil {
+			// Print stack trace in the error messages
+			stacktrace := string(debug.Stack())
+			// First to stdout, then to log file
+			fmt.Printf("PANIC: recover in StartHttp called, r=%+v stack=%v", r, stacktrace)
+			err := fmt.Errorf("PANIC: recover in StartHttp has been called")
+			LogError(err, "r", r, "stack", stacktrace)
+		}
+	}()
 
 	http.HandleFunc("/api", func(responseWriter http.ResponseWriter, req *http.Request) {
 

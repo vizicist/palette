@@ -286,9 +286,23 @@ func (r *Resolume) TextLayerNum() int {
 func (r *Resolume) ProcessInfo() *ProcessInfo {
 	fullpath, err := GetParam("global.resolumepath")
 	LogIfError(err)
-	if fullpath != "" && !FileExists(fullpath) {
-		LogWarn("No Resolume found, looking for", "path", fullpath)
-		return nil
+	if fullpath == "" || !FileExists(fullpath) {
+		// try other hardcoded paths
+		hardcoded := []string{
+			"C:/Program Files/Resolume Avenue/Avenue.exe",
+			"C:/Program Files/Resolume Arena/Arena.exe",
+		}
+		fullpath = ""
+		for _,path := range(hardcoded) {
+			if FileExists(path) {
+				fullpath = path
+				break
+			}
+		}
+		if fullpath == "" {
+			LogWarn("No Resolume found, set global.resolumepath to the full path to Resolume")
+			return EmptyProcessInfo()
+		}
 	}
 	exe := filepath.Base(fullpath)
 	return NewProcessInfo(exe, fullpath, "", r.Activate)
