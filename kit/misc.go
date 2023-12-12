@@ -302,6 +302,7 @@ func (w *FileWriter) Write(p []byte) (n int, err error) {
 		strings.Contains(s, "Logging output channels") ||
 		strings.Contains(s, "Logging midi input devices") ||
 		strings.Contains(s, "Internal MIDI") ||
+		strings.Contains(s, "Sensel MIDI") ||
 		strings.Contains(s, "Could not find preset") ) {
 		// don't log it
 	} else {

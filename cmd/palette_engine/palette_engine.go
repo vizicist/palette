@@ -1,8 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"os/signal"
+	"runtime/debug"
 	"runtime/pprof"
 	"syscall"
 
@@ -29,6 +31,18 @@ func main() {
 	signal.Ignore(syscall.SIGINT)
 
 	kit.InitLog("engine")
+
+	defer func() {
+		if r := recover(); r != nil {
+			// Print stack trace in the error messages
+			stacktrace := string(debug.Stack())
+			// First to stdout, then to log file
+			fmt.Printf("PANIC: recover in palette_engine called, r=%+v stack=%v", r, stacktrace)
+			err := fmt.Errorf("PANIC: recover in palette_engine has been called")
+			kit.LogError(err, "r", r, "stack", stacktrace)
+		}
+	}()
+
 	kit.InitMisc()
 	kit.InitEngine()
 
