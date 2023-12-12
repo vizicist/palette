@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"runtime/debug"
 
 	midi "gitlab.com/gomidi/midi/v2"
 	"gitlab.com/gomidi/midi/v2/drivers"
@@ -127,6 +128,17 @@ func (m *MidiIO) handleMidiError(err error) {
 }
 
 func (m *MidiIO) Start() {
+
+	defer func() {
+		if r := recover(); r != nil {
+			// Print stack trace in the error messages
+			stacktrace := string(debug.Stack())
+			// First to stdout, then to log file
+			fmt.Printf("PANIC: recover in MidiIO.Start called, r=%+v stack=%v", r, stacktrace)
+			err := fmt.Errorf("PANIC: recover in MidiIO.Start has been called")
+			LogError(err, "r", r, "stack", stacktrace)
+		}
+	}()
 
 	if m.midiInput == nil {
 		LogWarn("No MIDI input port has been selected")

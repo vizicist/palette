@@ -14,7 +14,7 @@ func ObsProcessInfo() *ProcessInfo {
 	LogIfError(err)
 	if fullpath != "" && !FileExists(fullpath) {
 		LogWarn("No OBS found, looking for", "path", fullpath)
-		return nil
+		return EmptyProcessInfo()
 	}
 	exe := filepath.Base(fullpath)
 	pi := NewProcessInfo(exe, fullpath, "", ObsActivate)

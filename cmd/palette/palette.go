@@ -90,6 +90,21 @@ func CliCommand(args []string) (map[string]string, error) {
 		out := map[string]string{"result": s}
 		return out, nil
 
+	case "restart":
+		_, err := CliCommand([]string{"stop"})
+		if err != nil {
+			return nil, err
+		}
+		_, err = CliCommand([]string{"start"})
+		if err != nil {
+			return nil, err
+		}
+		out := map[string]string{"result": "RESTARTED"}
+		return out, nil
+
+	// case "api":
+	// 	return kit.EngineApi(arg1, args[2:])
+
 	case "start":
 
 		switch arg1 {

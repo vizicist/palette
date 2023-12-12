@@ -39,6 +39,10 @@ func NewProcessInfo(exe, fullPath, arg string, activate func()) *ProcessInfo {
 	}
 }
 
+func EmptyProcessInfo() *ProcessInfo {
+	return NewProcessInfo("", "", "", nil)
+}
+
 func StartRunning(process string) error {
 	err := TheProcessManager.StartRunning(process)
 	if err != nil {
@@ -172,6 +176,7 @@ func ProcessList() []string {
 	arr = append(arr, "resolume")
 	arr = append(arr, "obs")
 	arr = append(arr, "chat")
+	arr = append(arr, "mmtt")
 	/*
 		keykit, err := GetParamBool("global.keykitrun")
 		LogIfError(err)
@@ -179,11 +184,6 @@ func ProcessList() []string {
 			arr = append(arr, "keykit")
 		}
 	*/
-	mmtt, err := GetParam("global.mmtt")
-	LogIfError(err)
-	if mmtt != "" {
-		arr = append(arr, "mmtt")
-	}
 	return arr
 }
 
@@ -331,12 +331,12 @@ func GuiProcessInfo() *ProcessInfo {
 	gui, err := GetParam("global.gui")
 	if err != nil {
 		LogIfError(err)
-		return nil
+		return EmptyProcessInfo()
 	}
 	fullpath := filepath.Join(PaletteDir(), gui)
 	if fullpath != "" && !FileExists(fullpath) {
 		LogWarn("No Gui found, looking for", "path", fullpath)
-		return nil
+		return EmptyProcessInfo()
 	}
 	exe := filepath.Base(fullpath)
 
@@ -355,7 +355,7 @@ func ChatProcessInfo() *ProcessInfo {
 	fullpath := filepath.Join(paletteRoot, "bin", "palette_chat.exe")
 	if fullpath != "" && !FileExists(fullpath) {
 		LogWarn("No chat executable found, looking for", "path", fullpath)
-		return nil
+		return EmptyProcessInfo()
 	}
 	exe := filepath.Base(fullpath)
 	return NewProcessInfo(exe, fullpath, "", nil)
@@ -406,7 +406,7 @@ func KeykitProcessInfo() *ProcessInfo {
 		fullpath = filepath.Join(PaletteDir(), "keykit", "bin", KeykitExe)
 		if !FileExists(fullpath) {
 			LogWarn("Keykit not found in default location", "fullpath", fullpath)
-			return nil
+			return EmptyProcessInfo()
 		}
 	}
 	exe := filepath.Base(fullpath)
@@ -416,22 +416,17 @@ func KeykitProcessInfo() *ProcessInfo {
 
 func MmttProcessInfo() *ProcessInfo {
 
-	/*
-		// The value of mmtt is either "kinect" or "oak" or ""
-		mmtt, err := GetParam("global.mmtt")
-		LogIfError(err)
-		if mmtt == "" {
-			return nil
-		}
-	*/
+	// The value of PALETTE_MMTT environment variable can be "kinect" or (someday) "oak"
 	mmtt := os.Getenv("PALETTE_MMTT")
 	if mmtt == "" {
-		return nil
+		// This warning would be annoying, since PALETTE_MMTT rarely set
+		// LogInfo("No PALETTE_MMTT environment variable set")
+		return EmptyProcessInfo()
 	}
 	fullpath := filepath.Join(PaletteDir(), "bin", "mmtt_"+mmtt, "mmtt_"+mmtt+".exe")
 	if !FileExists(fullpath) {
-		LogWarn(" executable found, looking for", "fullpath", fullpath)
-		fullpath = ""
+		LogWarn("mmtt executable not found, looking for", "fullpath", fullpath)
+		return EmptyProcessInfo()
 	}
 	return NewProcessInfo("mmtt_"+mmtt+".exe", fullpath, "", nil)
 }

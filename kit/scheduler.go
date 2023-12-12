@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sync"
 	"time"
+	"runtime/debug"
 
 	midi "gitlab.com/gomidi/midi/v2"
 )
@@ -102,6 +103,18 @@ func (sched *Scheduler) handlePendingSchedEvents() {
 
 // Start runs the scheduler and never returns
 func (sched *Scheduler) Start() {
+
+	defer func() {
+		if r := recover(); r != nil {
+			// Print stack trace in the error messages
+			stacktrace := string(debug.Stack())
+			// First to stdout, then to log file
+			fmt.Printf("PANIC: recover in Scheduler.Start called, r=%+v stack=%v", r, stacktrace)
+			err := fmt.Errorf("PANIC: recover in Scheduler.Start has been called")
+			LogError(err, "r", r, "stack", stacktrace)
+		}
+	}()
+
 
 	LogInfo("Scheduler begins")
 

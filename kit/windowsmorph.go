@@ -244,6 +244,7 @@ import "C"
 import (
 	"fmt"
 	"time"
+	"runtime/debug"
 )
 
 type oneMorph struct {
@@ -269,6 +270,18 @@ var allMorphs []*oneMorph
 
 // StartMorph xxx
 func StartMorph(callback CursorCallbackFunc, forceFactor float32) {
+
+	defer func() {
+		if r := recover(); r != nil {
+			// Print stack trace in the error messages
+			stacktrace := string(debug.Stack())
+			// First to stdout, then to log file
+			fmt.Printf("PANIC: recover in StartMorph called, r=%+v stack=%v", r, stacktrace)
+			err := fmt.Errorf("PANIC: recover in StartMorph has been called")
+			LogError(err, "r", r, "stack", stacktrace)
+		}
+	}()
+
 	err := WinMorphInitialize()
 	if err != nil {
 		LogIfError(err)
@@ -503,7 +516,7 @@ func WinMorphInitialize() error {
 		morphtype, ok := MorphDefs[m.serialNum]
 		if !ok {
 			// It's not explicitly present in morphs.json
-			t, err := GetParam("global.morphtype")
+			t, err := GetParam("global.morphdefault")
 			if err != nil {
 				morphtype = "A"
 			} else {
