@@ -37,7 +37,11 @@ func NewPatch(patchName string) *Patch {
 		params: NewParamValues(),
 		// listeners: []*PluginInstance{},
 	}
-	LogOfType("patch", "NewPatch", "patch", patchName)
+	if patch.synth == nil {
+		LogWarn("NewPatch: no default synth??", "patch", patchName)
+	} else {
+		LogInfo("NewPatch, using default synth", "patch", patchName, "synth", patch.synth.name)
+	}
 	patch.SetDefaultValues()
 	Patchs[patchName] = patch
 	return patch
@@ -128,12 +132,17 @@ func (patch *Patch) noticeValueChange(paramName string, paramValue string) {
 	if paramName == "sound.synth" {
 		synth := GetSynth(paramValue)
 		if synth == nil {
-			LogWarn("QuadPro. no synth, using default", "synth", paramValue)
+			LogWarn("Patch.noticeValueChange: no synth, trying default", "paramValue", paramValue)
 			synth = GetSynth("default")
 		}
-		patch.mutex.Lock()
-		patch.synth = synth
-		patch.mutex.Unlock()
+		if synth == nil {
+			LogWarn("Patch.noticeValueChange: no default synth!?")
+		} else {
+			patch.mutex.Lock()
+			patch.synth = synth
+			LogInfo("Patch.noticeValueChange: changed synth", "patch", patch.name, "synth.name", synth.name)
+			patch.mutex.Unlock()
+		}
 	}
 }
 
