@@ -243,8 +243,8 @@ import "C"
 
 import (
 	"fmt"
-	"time"
 	"runtime/debug"
+	"time"
 )
 
 type oneMorph struct {
@@ -473,6 +473,9 @@ func WinMorphInitialize() error {
 	numdevices := int(C.SenselNumDevices())
 	allMorphs = make([]*oneMorph, numdevices)
 
+	defaultMorphName := []string{"A", "B", "C", "D"}
+	nextMorphIndex := 0
+
 	for idx := uint8(0); idx < uint8(numdevices); idx++ {
 
 		m := &oneMorph{
@@ -516,11 +519,9 @@ func WinMorphInitialize() error {
 		morphtype, ok := MorphDefs[m.serialNum]
 		if !ok {
 			// It's not explicitly present in morphs.json
-			t, err := GetParam("global.morphdefault")
-			if err != nil {
-				morphtype = "A"
-			} else {
-				morphtype = t
+			morphtype = defaultMorphName[nextMorphIndex]
+			if nextMorphIndex < len(defaultMorphName)-1 {
+				nextMorphIndex++
 			}
 			LogInfo("Morph serial# isn't in morphs.json", "serialnum", m.serialNum, "morphtype", morphtype)
 		}

@@ -70,82 +70,31 @@ func InitSynths() {
 	LogInfo("Synths loaded", "len", len(Synths))
 }
 
-func (synth *Synth) Channel() uint8 {
-	return uint8(synth.portchannel.channel)
-}
-
-func (synth *Synth) ClearNoteDowns() {
-
-	synth.noteMutex.Lock()
-	defer synth.noteMutex.Unlock()
-
-	for i := range synth.noteDown {
-		synth.noteDown[i] = false
-		synth.noteDownCount[i] = 0
+func (synth *Synth) midiOutputEnabled() bool {
+	if synth.state == nil {
+		LogWarn("Synth.MidiOutputEnabled: state is nil")
+		return false
 	}
-}
-
-func GetSynth(synthName string) *Synth {
-	synth, ok := Synths[synthName]
-	if !ok {
-		return nil
+	if synth.state.output == nil {
+		LogWarn("Synth.MidiOutputEnabled: output is nil")
+		return false
 	}
-	return synth
-}
-
-func NewSynth(name string, port string, channel int, bank int, program int) *Synth {
-
-	// If there's already a Synth for this PortChannel, should error
-
-	portchannel := PortChannel{port: port, channel: channel}
-
-	var state *MIDIPortChannelState
-	if name == "fake" {
-		state = TheMidiIO.openFakeChannelOutput(port, channel)
-	} else {
-		state = TheMidiIO.openChannelOutput(portchannel)
-	}
-
-	if state == nil {
-		LogWarn("InitSynths: Unable to open", "port", port)
-		return nil
-	}
-	sp := &Synth{
-		name:        name,
-		portchannel: portchannel,
-		bank:        bank,
-		program:     program,
-		// midiChannelOut: midiChannelOut,
-		noteDown:      make([]bool, 128),
-		noteDownCount: make([]int, 128),
-		state:         state,
-	}
-	sp.ClearNoteDowns() // debugging, shouldn't be needed
-	return sp
-}
-
-func (synth *Synth) updatePortChannelState() (*MIDIPortChannelState, error) {
-	if TheMidiIO == nil {
-		return nil, fmt.Errorf("updatePortChannelState: TheMidiIO is nil?")
-	}
-	state, err := TheMidiIO.GetPortChannelState(synth.portchannel)
-	if err != nil {
-		return nil, err
-	}
-	// This only sends the bank and/or program if they change
-	synth.UpdateBankProgram()
-	return state, nil
+	return true
 }
 
 // SendANO sends all-notes-off
 func (synth *Synth) SendANO() {
+
+	if !synth.midiOutputEnabled() {
+		return
+	}
 
 	state, err := synth.updatePortChannelState()
 	if err != nil {
 		LogIfError(err)
 		return
 	}
-	synth.ClearNoteDowns()
+	synth.clearNoteDowns()
 
 	// send All Notes Off
 	status := 0xb0 | byte(synth.portchannel.channel-1)
@@ -161,6 +110,10 @@ func (synth *Synth) SendANO() {
 }
 
 func (synth *Synth) SendController(cnum uint8, cval uint8) {
+
+	if !synth.midiOutputEnabled() {
+		return
+	}
 
 	state, err := synth.updatePortChannelState()
 	if err != nil {
@@ -189,122 +142,11 @@ func (synth *Synth) SendController(cnum uint8, cval uint8) {
 	LogIfError(state.output.Send([]byte{status, data1, data2}))
 }
 
-/*
-func SendToSynth(value any) {
-
-	var channel uint8
-	var pitch uint8
-	var velocity uint8
-
-	switch v := value.(type) {
-	case *NoteOn:
-		channel = v.Channel
-		pitch = v.Pitch
-		velocity = v.Velocity
-		if velocity == 0 {
-			LogInfo("MIDIIO.SendNote: noteon with velocity==0 NOT changed to a noteoff")
-		}
-	case *NoteOff:
-		channel = v.Channel
-		pitch = v.Pitch
-		velocity = v.Velocity
-	case *NoteFull:
-		channel = v.Channel
-		pitch = v.Pitch
-		velocity = v.Velocity
-	default:
-		LogWarn("SendToSynth: doesn't handle", "type", fmt.Sprintf("%T", v))
-		return
-	}
-
-	synthName := fmt.Sprintf("P_01_C_%02d", channel+1)
-	synth, ok := Synths[synthName]
-	if !ok {
-		LogWarn("SendPhraseElementToSynth: no such", "synth", synthName)
-		return
-	}
-
-	if synth == nil {
-		// We don't complain, we assume the inability to open the
-		// synth named synthName has already been logged.
-		return
-	wsc := MIDI.GetMidiChannelOutput(synth.portchannel)
-	if mc == nil {
-		// Assumes errs are logged in GetMidiChannelOutput
-		return
-	}
-
-	// This only sends the bank and/or program if they change
-	mc.SendBankProgram(synth.bank, synth.program)
-
-	status := byte(synth.portchannel.channel - 1)
-	data1 := pitch
-	data2 := velocity
-	switch value.(type) {
-	case *NoteOn:
-		status |= NoteOnStatus
-
-		// We now allow multiple notes with the same pitch,
-		// which assumes the synth handles it okay.
-		// There might need to be an option to
-		// automatically send a noteOff before sending the noteOn.
-		// if synth.noteDown[note.Pitch] {
-		//     Warn("SendPhraseElementToSynth: Ignoring second noteon")
-		// }
-
-		synth.noteDown[pitch] = true
-		synth.noteDownCount[pitch]++
-
-		LogOfType("midi", "SendNoteOnToSynth",
-			"synth", synth,
-			"channel", synth.portchannel.channel,
-			"pitch", pitch,
-			"notedowncount", synth.noteDownCount[pitch])
-
-	case *NoteOff:
-		status |= NoteOffStatus
-		data2 = 0
-		synth.noteDown[pitch] = false
-		synth.noteDownCount[pitch]--
-
-		LogOfType("midi", "SendNoteOffToSynth",
-			"synth", synth,
-			"channel", synth.portchannel.channel,
-			"pitch", pitch,
-			"notedowncount", synth.noteDownCount[pitch])
-
-	// case "controller":
-	// 	status |= 0xB0
-	// case "progchange":
-	// 	status |= 0xC0
-	// case "chanpressure":
-	// 	status |= 0xD0
-	// case "pitchbend":
-	// 	status |= 0xE0
-
-	default:
-		LogWarn("SendToSynth: can't handle", "type", fmt.Sprintf("%T", value))
-		return
-	}
-
-	LogOfType("midi", "Raw MIDI Output",
-		"synth", synth,
-		"status", hexString(status),
-		"data1", hexString(data1),
-		"data2", hexString(data2))
-
-	err := mc.output.Send([]byte{status, data1, data2})
-	if err != nil {
-		LogWarn("output.Send", "err", err)
-	}
-}
-*/
-
-func hexString(b byte) string {
-	return fmt.Sprintf("%02x", b)
-}
-
 func (synth *Synth) SendNoteToMidiOutput(value any) {
+
+	if !synth.midiOutputEnabled() {
+		return
+	}
 
 	// var channel uint8
 	var pitch uint8
@@ -391,6 +233,10 @@ func (synth *Synth) SendNoteToMidiOutput(value any) {
 // SendBytesToMidiOutput
 func (synth *Synth) SendBytesToMidiOutput(bytes []byte) {
 
+	if !synth.midiOutputEnabled() {
+		return
+	}
+
 	if len(bytes) == 0 {
 		LogWarn("SendBytesToMidiOutput: 0-length bytes?")
 		return
@@ -435,11 +281,74 @@ func (synth *Synth) SendBytesToMidiOutput(bytes []byte) {
 	}
 }
 
-func (synth *Synth) SendBytes(bytes []byte) error {
-	return synth.state.output.Send(bytes)
+func (synth *Synth) Channel() uint8 {
+	return uint8(synth.portchannel.channel)
 }
 
-func (synth *Synth) UpdateBankProgram() {
+func (synth *Synth) clearNoteDowns() {
+
+	synth.noteMutex.Lock()
+	defer synth.noteMutex.Unlock()
+
+	for i := range synth.noteDown {
+		synth.noteDown[i] = false
+		synth.noteDownCount[i] = 0
+	}
+}
+
+func GetSynth(synthName string) *Synth {
+	synth, ok := Synths[synthName]
+	if !ok {
+		return nil
+	}
+	return synth
+}
+
+func NewSynth(name string, port string, channel int, bank int, program int) *Synth {
+
+	// If there's already a Synth for this PortChannel, should error
+
+	portchannel := PortChannel{port: port, channel: channel}
+
+	var state *MIDIPortChannelState
+	if name == "fake" {
+		state = TheMidiIO.openFakeChannelOutput(port, channel)
+	} else {
+		state = TheMidiIO.openChannelOutput(portchannel)
+	}
+
+	if state == nil {
+		LogWarn("InitSynths: Unable to open", "port", port)
+		return nil
+	}
+	sp := &Synth{
+		name:        name,
+		portchannel: portchannel,
+		bank:        bank,
+		program:     program,
+		// midiChannelOut: midiChannelOut,
+		noteDown:      make([]bool, 128),
+		noteDownCount: make([]int, 128),
+		state:         state,
+	}
+	sp.clearNoteDowns() // debugging, shouldn't be needed
+	return sp
+}
+
+func (synth *Synth) updatePortChannelState() (*MIDIPortChannelState, error) {
+	if TheMidiIO == nil {
+		return nil, fmt.Errorf("updatePortChannelState: TheMidiIO is nil?")
+	}
+	state, err := TheMidiIO.GetPortChannelState(synth.portchannel)
+	if err != nil {
+		return nil, err
+	}
+	// This only sends the bank and/or program if they change
+	synth.updateBankProgram()
+	return state, nil
+}
+
+func (synth *Synth) updateBankProgram() {
 
 	state := synth.state
 	state.mutex.Lock()
@@ -464,4 +373,8 @@ func (synth *Synth) UpdateBankProgram() {
 
 		LogIfError(state.output.Send([]byte{status, data1}))
 	}
+}
+
+func hexString(b byte) string {
+	return fmt.Sprintf("%02x", b)
 }
