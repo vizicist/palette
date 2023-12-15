@@ -1,3 +1,4 @@
+DECLARE_TYPES(resolumepath);
 DECLARE_TYPES(plugins);
 DECLARE_TYPES(log);
 DECLARE_TYPES(pitchset);
