@@ -5,9 +5,9 @@ package kit
 
 import (
 	"fmt"
+	"runtime/debug"
 	"strings"
 	"sync"
-	"runtime/debug"
 
 	midi "gitlab.com/gomidi/midi/v2"
 	"gitlab.com/gomidi/midi/v2/drivers"

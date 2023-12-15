@@ -98,7 +98,7 @@ func InitEngine() {
 	LogIfError(err)
 	TheAttractManager.SetAttractEnabled(enabled)
 
-	CheckAutorestartProcesses()
+	// CheckAutorestartProcesses()
 
 	nats, err := GetParamBool("global.nats")
 	LogIfError(err)

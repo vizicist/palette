@@ -122,25 +122,34 @@ RealNosuchDebugInit() {
 	dMutex = CreateMutex(NULL, FALSE, NULL);
 	DebugInitialized = TRUE;
 
-	char* pValue;
-	size_t len;
-
 	NosuchDebugLogPath = "c:\\windows\\temp\\ffgl.log";// last resort
 
-	errno_t err = _dupenv_s( &pValue, &len, "CommonProgramFiles" );
-	if( err == 0 && pValue != NULL )
-	{
-		NosuchDebugLogPath = std::string( pValue ) + "\\Palette\\logs\\ffgl.log";
-		free( pValue );
+	char* value;
+	errno_t err;
+	size_t len;
+
+	err = _dupenv_s( &value, &len, "PALETTE_DATA_PATH" );
+	if ( err == 0 && value != NULL ) {
+		NosuchDebugLogPath = std::string( value ) + "\\logs\\ffgl.log";
+		free( value );
+	} else {
+		// Otherwise it's in %CommonProgramFiles%
+		err = _dupenv_s( &value, &len, "CommonProgramFiles" );
+		if( err == 0 && value != NULL ) {
+			// %CommonProgramFiles% is defined
+			NosuchDebugLogPath = std::string( value ) + "\\Palette\\data\\logs\\ffgl.log";
+		}
 	}
 
-	NosuchDebug( "NosuchDebugInit: debuglevel=%d log=%s\n", NosuchDebugLevel, NosuchDebugLogPath.c_str() );
-	NosuchDebug( "NosuchDebugInit: DebugCursor=%d Param=%d API=%d\n", NosuchDebugCursor , NosuchDebugParam, NosuchDebugAPI);
+	NosuchDebug( "NosuchDebugInit: Level=%d Cursor=%d Param=%d API=%d\n", NosuchDebugLevel, NosuchDebugCursor , NosuchDebugParam, NosuchDebugAPI);
 
-	err = _dupenv_s( &pValue, &len, "PALETTE" );
-	if( err || pValue == NULL )
+	err = _dupenv_s( &value, &len, "PALETTE" );
+	if( err || value == NULL )
 	{
-		NosuchDebug( "No value for PALETTE!?\n" );
+		NosuchDebug( "No value for PALETTE environment variable!?\n" );
+	}
+	if (value != NULL) {
+			free( value );
 	}
 
 

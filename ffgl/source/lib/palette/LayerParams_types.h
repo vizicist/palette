@@ -1,3 +1,4 @@
+DEFINE_TYPES(resolumepath);
 DEFINE_TYPES(plugins);
 DEFINE_TYPES(log);
 DEFINE_TYPES(pitchset);
@@ -30,6 +31,9 @@ DEFINE_TYPES(midiport);
 
 void
 LayerParams_InitializeTypes() {
+
+	LayerParams_resolumepathTypes.push_back("C:/Program Files/Resolume Avenue/Avenue.exe");
+	LayerParams_resolumepathTypes.push_back("C:/Program Files/Resolume Arena/Arena.exe");
 
 	LayerParams_pluginsTypes.push_back("");
 	LayerParams_pluginsTypes.push_back("quadpro");
