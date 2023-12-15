@@ -20,6 +20,9 @@ The instructions below assume that you have:
 	<br>`C:\Program Files\Git\usr\bin`
 	<br>`C:\Program Files\Git\mingw64\bin`
 
+- Install the redistributable support for X64 (the filename is vc_redist_x64.exe) from this page:
+https://learn.microsoft.com/en-US/cpp/windows/latest-supported-vc-redist?view=msvc-170
+
 - All VST plugins should be put in `%CommonProgramFiles%\VST2` (for VST 2 plugins) and `%CommonProgramFiles%\VST3` (for VST 3 plugins).
 
 - After installing and starting Bidule, use Edit->Preferences->Plugins to set the VST plugin directory to
@@ -58,5 +61,5 @@ The instructions below assume that you have:
 - You're now ready to start using the Palette, as described
 <a href="https://github.com/vizicist/palette/blob/main/doc/starting_and_using.md">here</a>
 
-- If there are any issues, log files can be found in `%CommonProgramFiles%\Palette\logs`,
+- If there are any issues, log files can be found in `%CommonProgramFiles%\Palette\data\logs`,
 with `engine.log` being the most important one.  Feel free to email me@timthompson with questions or suggestions for improving this documentation.
