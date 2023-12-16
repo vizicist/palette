@@ -252,7 +252,7 @@ func SchedElementFromString(s string) (se *SchedElement, err error) {
 	// nchannel := 0
 	endstate := 99
 	nattribute := ""
-	synthName := "default"
+	synthName := ""
 	for state != endstate {
 
 		// At the beginning (state 0) we only want 1 character

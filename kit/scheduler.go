@@ -280,9 +280,9 @@ func (sched *Scheduler) triggerItemsScheduledAtOrBefore(thisClick Clicks) {
 
 		case midi.Message:
 			synthName, err := GetParam("global.midithrusynth")
-			if err != nil || synthName == "" {
+			if err != nil {
 				LogError(err)
-				synthName = "default"
+				synthName = ""
 			}
 			synth := Synths[synthName]
 			var bt []byte

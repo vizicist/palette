@@ -32,15 +32,10 @@ func PatchNames() []string {
 
 func NewPatch(patchName string) *Patch {
 	patch := &Patch{
-		synth:  GetSynth("default"),
+		synth:  GetSynth(""),
 		name:   patchName,
 		params: NewParamValues(),
 		// listeners: []*PluginInstance{},
-	}
-	if patch.synth == nil {
-		LogWarn("NewPatch: no default synth??", "patch", patchName)
-	} else {
-		LogInfo("NewPatch, using default synth", "patch", patchName, "synth", patch.synth.name)
 	}
 	patch.SetDefaultValues()
 	Patchs[patchName] = patch
@@ -131,18 +126,10 @@ func (patch *Patch) noticeValueChange(paramName string, paramValue string) {
 
 	if paramName == "sound.synth" {
 		synth := GetSynth(paramValue)
-		if synth == nil {
-			LogWarn("Patch.noticeValueChange: no synth, trying default", "paramValue", paramValue)
-			synth = GetSynth("default")
-		}
-		if synth == nil {
-			LogWarn("Patch.noticeValueChange: no default synth!?")
-		} else {
-			patch.mutex.Lock()
-			patch.synth = synth
-			LogInfo("Patch.noticeValueChange: changed synth", "patch", patch.name, "synth.name", synth.name)
-			patch.mutex.Unlock()
-		}
+		patch.mutex.Lock()
+		patch.synth = synth
+		LogInfo("Patch.noticeValueChange: changed synth", "patch", patch.name, "synth.name", synth.name)
+		patch.mutex.Unlock()
 	}
 }
 
