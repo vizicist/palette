@@ -12,7 +12,7 @@ type PortChannel struct {
 	channel int    // 0-15 for MIDI channels 1-16
 }
 
-var PortChannels map[PortChannel]*MIDIPortChannelState
+var PortChannels map[PortChannel]*MidiPortChannelState
 
 type Synth struct {
 	name          string
@@ -22,14 +22,17 @@ type Synth struct {
 	noteMutex     sync.RWMutex
 	noteDown      []bool
 	noteDownCount []int
-	state         *MIDIPortChannelState
+	state         *MidiPortChannelState
 }
 
 var Synths map[string]*Synth
 
 func InitSynths() {
 
+	LogInfo("InitSynths called")
 	Synths = make(map[string]*Synth)
+
+	Synths[""] = OpenNewSynth("", "dummyport", 1, 0, 0)
 
 	filename := ConfigFilePath("synths.json")
 	bytes, err := os.ReadFile(filename)
@@ -58,13 +61,7 @@ func InitSynths() {
 		bank := jsynths.Synths[i].Bank
 		program := jsynths.Synths[i].Program
 
-		Synths[nm] = NewSynth(nm, port, channel, bank, program)
-	}
-
-	_, ok := Synths["default"]
-	if !ok {
-		LogIfError(fmt.Errorf("InitSynths: no default synth in Synths.json, using fake default"))
-		Synths["default"] = NewSynth("default", "default", 1, 0, 0)
+		Synths[nm] = OpenNewSynth(nm, port, channel, bank, program)
 	}
 
 	LogInfo("Synths loaded", "len", len(Synths))
@@ -299,28 +296,40 @@ func (synth *Synth) clearNoteDowns() {
 func GetSynth(synthName string) *Synth {
 	synth, ok := Synths[synthName]
 	if !ok {
-		return nil
+		LogWarn("GetSynth: no Synth, using empty Synth", "synthName", synthName)
+		return Synths[""]
 	}
 	return synth
 }
 
-func NewSynth(name string, port string, channel int, bank int, program int) *Synth {
+var FakeIndex int
 
-	// If there's already a Synth for this PortChannel, should error
+func OpenNewSynth(name string, port string, channel int, bank int, program int) *Synth {
 
+	// XXX - If there's already a Synth for this PortChannel, should error
 	portchannel := PortChannel{port: port, channel: channel}
 
-	var state *MIDIPortChannelState
-	if name == "fake" {
-		state = TheMidiIO.openFakeChannelOutput(port, channel)
-	} else {
-		state = TheMidiIO.openChannelOutput(portchannel)
-	}
+	state := TheMidiIO.NewPortChannelState(portchannel)
+	return NewSynth(name, portchannel, bank, program, state)
+}
 
-	if state == nil {
-		LogWarn("InitSynths: Unable to open", "port", port)
-		return nil
+/*
+	sp := &Synth{
+		name:        name,
+		portchannel: portchannel,
+		bank:        bank,
+		program:     program,
+		// midiChannelOut: midiChannelOut,
+		noteDown:      make([]bool, 128),
+		noteDownCount: make([]int, 128),
+		state:         state,
 	}
+	sp.clearNoteDowns() // debugging, shouldn't be needed
+	return sp
+}
+*/
+
+func NewSynth(name string, portchannel PortChannel, bank int, program int, state *MidiPortChannelState) *Synth {
 	sp := &Synth{
 		name:        name,
 		portchannel: portchannel,
@@ -335,7 +344,7 @@ func NewSynth(name string, port string, channel int, bank int, program int) *Syn
 	return sp
 }
 
-func (synth *Synth) updatePortChannelState() (*MIDIPortChannelState, error) {
+func (synth *Synth) updatePortChannelState() (*MidiPortChannelState, error) {
 	if TheMidiIO == nil {
 		return nil, fmt.Errorf("updatePortChannelState: TheMidiIO is nil?")
 	}
