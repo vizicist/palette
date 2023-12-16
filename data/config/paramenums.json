@@ -67,25 +67,9 @@
     "chromatic"
   ],
   "inputport": [
-    "",
-    "microKEY2 Air"
+    ""
   ],
   "synth": [
-    "",
-    "DummyWave"
-  ],
-  "midiport": [
-    "01. Internal MIDI",
-    "02. Internal MIDI",
-    "03. Internal MIDI",
-    "04. Internal MIDI",
-    "05. Internal MIDI",
-    "06. Internal MIDI",
-    "07. Internal MIDI",
-    "08. Internal MIDI",
-    "09. Internal MIDI",
-    "10. Internal MIDI",
-    "11. Internal MIDI",
-    "12. Internal MIDI"
+    ""
   ]
 }
