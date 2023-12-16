@@ -27,4 +27,3 @@ DECLARE_TYPES(scale);
 DECLARE_TYPES(enginescale);
 DECLARE_TYPES(inputport);
 DECLARE_TYPES(synth);
-DECLARE_TYPES(midiport);

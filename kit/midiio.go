@@ -30,7 +30,7 @@ const (
 type MidiIO struct {
 	midiInput            drivers.In
 	midiOutputs          map[string]drivers.Out // synth name is the key
-	midiPortChannelState map[PortChannel]*MIDIPortChannelState
+	midiPortChannelState map[PortChannel]*MidiPortChannelState
 	inports              midi.InPorts
 	outports             midi.OutPorts
 	stop                 func()
@@ -39,17 +39,13 @@ type MidiIO struct {
 // MIDIChannelOutput is used to remember the last
 // bank and program values for a particular output,
 // so they're only sent out when they've changed.
-type MIDIPortChannelState struct {
+type MidiPortChannelState struct {
 	channel int // 1-based, 1-16
 	bank    int // 1-based, 1-whatever
 	program int // 1-based, 1-128
 	output  drivers.Out
 	isopen  bool
 	mutex   sync.Mutex
-}
-
-func DefaultMIDIChannelOutput() *MIDIPortChannelState {
-	return &MIDIPortChannelState{}
 }
 
 // MIDI is a pointer to
@@ -59,7 +55,7 @@ func NewMidiIO() *MidiIO {
 	return &MidiIO{
 		midiInput:            nil,
 		midiOutputs:          make(map[string]drivers.Out),
-		midiPortChannelState: make(map[PortChannel]*MIDIPortChannelState),
+		midiPortChannelState: make(map[PortChannel]*MidiPortChannelState),
 		stop:                 nil,
 		inports:              midi.GetInPorts(),
 		outports:             midi.GetOutPorts(),
@@ -185,7 +181,7 @@ func (m* EraeWriteSysEx(bytes []byte) {
 }
 */
 
-func (state *MIDIPortChannelState) UpdateBankProgram(synth *Synth) {
+func (state *MidiPortChannelState) UpdateBankProgram(synth *Synth) {
 
 	state.mutex.Lock()
 	defer state.mutex.Unlock()
@@ -211,11 +207,11 @@ func (state *MIDIPortChannelState) UpdateBankProgram(synth *Synth) {
 	}
 }
 
-func (out *MIDIPortChannelState) WriteShort(status, data1, data2 int64) {
+func (out *MidiPortChannelState) WriteShort(status, data1, data2 int64) {
 	LogWarn("WriteShort needs work")
 }
 
-func (m *MidiIO) GetPortChannelState(portchannel PortChannel) (*MIDIPortChannelState, error) {
+func (m *MidiIO) GetPortChannelState(portchannel PortChannel) (*MidiPortChannelState, error) {
 
 	state, ok := m.midiPortChannelState[portchannel]
 	if !ok {
@@ -237,7 +233,7 @@ func (m *MidiIO) GetPortChannelState(portchannel PortChannel) (*MIDIPortChannelS
 	return state, nil
 }
 
-func (m *MidiIO) openChannelOutput(portchannel PortChannel) *MIDIPortChannelState {
+func (m *MidiIO) NewPortChannelState(portchannel PortChannel) *MidiPortChannelState {
 
 	portName := portchannel.port
 	// The portName in portchannel is from Synths.json, while
@@ -253,25 +249,21 @@ func (m *MidiIO) openChannelOutput(portchannel PortChannel) *MIDIPortChannelStat
 			break
 		}
 	}
-	if output == nil {
-		LogWarn("No output found matching", "port", portName)
-		return nil
-	}
-
-	state := &MIDIPortChannelState{
+	state := &MidiPortChannelState{
 		channel: portchannel.channel,
 		bank:    0,
 		program: 0,
-		output:  output,
+		output:  output, // may be nil
 		isopen:  false,
 	}
 	m.midiPortChannelState[portchannel] = state
 	return state
 }
 
-func (m *MidiIO) openFakeChannelOutput(port string, channel int) *MIDIPortChannelState {
+/*
+func (m *MidiIO) openFakeChannelOutput(channel int) *MidiPortChannelState {
 
-	co := &MIDIPortChannelState{
+	co := &MidiPortChannelState{
 		channel: channel,
 		bank:    0,
 		program: 0,
@@ -280,6 +272,7 @@ func (m *MidiIO) openFakeChannelOutput(port string, channel int) *MIDIPortChanne
 	}
 	return co
 }
+*/
 
 func (me MidiEvent) Status() uint8 {
 	bytes := me.Msg.Bytes()
