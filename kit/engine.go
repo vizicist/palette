@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"runtime/debug"
 	"strconv"
+	"strings"
 	"sync"
 	"sync/atomic"
 
@@ -94,20 +95,11 @@ func InitEngine() {
 
 	TheEngine = e
 
-	// Now we do things that need to be done after parameters are loaded
-
-	enabled, err := GetParamBool("global.attractenabled")
-	LogIfError(err)
-	TheAttractManager.SetAttractEnabled(enabled)
-
-	// CheckAutorestartProcesses()
-
-	nats, err := GetParamBool("global.nats")
-	LogIfError(err)
-	if nats {
-		EngineSubscribeNats()
+	for name := range(ParamDefs) {
+		if strings.HasPrefix(name,"global.") {
+			ActivateGlobalParam(name)
+		}
 	}
-
 }
 
 func EngineSubscribeNats() {
@@ -561,7 +553,7 @@ func (e *Engine) advanceTransposeTo(newclick Clicks) {
 	e.autoTransposeIndex = (e.autoTransposeIndex + 1) % len(e.autoTransposeValues)
 	transpose := TheEngine.autoTransposeValues[TheEngine.autoTransposeIndex]
 	e.SetTranspose(transpose)
-	LogOfType("transpose","TransposeTo","index",e.autoTransposeIndex,"transpose",transpose,"newclick",newclick)
+	LogOfType("transpose", "TransposeTo", "index", e.autoTransposeIndex, "transpose", transpose, "newclick", newclick)
 	// TheScheduler.SendAllPendingNoteoffs()
 }
 
