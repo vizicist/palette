@@ -226,26 +226,41 @@ func (cm *CursorManager) clearActiveCursors(tag string, checkDelay Clicks) {
 	cm.deleteActiveCursors(gidsToDelete)
 }
 
+func (cm *CursorManager) RandPos() CursorPos {
+	randZFactor := float32(0.5)
+	return CursorPos{
+		X: cm.cursorRand.Float32(),
+		Y: cm.cursorRand.Float32(),
+		Z: cm.cursorRand.Float32() * randZFactor,
+	}
+}
+
+func (cm *CursorManager) GenerateCenterGesture(tag string, dur time.Duration) {
+
+	pos0 := CursorPos{
+		X: 0.5,
+		Y: 0.5,
+		Z: 0.5,
+	}
+	pos1 := pos0
+
+	cm.GenerateGesture(tag, 1, dur, pos0, pos1)
+}
+
 func (cm *CursorManager) GenerateRandomGesture(tag string, numsteps int, dur time.Duration) {
 
-	randZFactor := float32(0.5)
 	cm.cursorRandMutex.Lock()
-	pos0 := CursorPos{
-		X: cm.cursorRand.Float32(),
-		Y: cm.cursorRand.Float32(),
-		Z: cm.cursorRand.Float32() * randZFactor,
-	}
-	pos1 := CursorPos{
-		X: cm.cursorRand.Float32(),
-		Y: cm.cursorRand.Float32(),
-		Z: cm.cursorRand.Float32() * randZFactor,
-	}
+
+	pos0 := cm.RandPos()
+	pos1 := cm.RandPos()
+
 	// Occasionally force horizontal and vertical
 	if cm.cursorRand.Int()%4 == 0 {
 		pos1.X = pos0.X
 	} else if cm.cursorRand.Int()%4 == 0 {
 		pos1.Y = pos0.Y
 	}
+
 	cm.cursorRandMutex.Unlock()
 
 	cm.GenerateGesture(tag, numsteps, dur, pos0, pos1)
