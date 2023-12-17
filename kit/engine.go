@@ -59,6 +59,8 @@ func InitMisc() {
 
 func InitEngine() {
 
+	InitializeClicks()
+
 	if TheEngine != nil {
 		LogIfError(fmt.Errorf("TheEngine already exists, there can be only one"))
 		return
@@ -557,7 +559,9 @@ func (e *Engine) advanceTransposeTo(newclick Clicks) {
 	}
 	e.autoTransposeNext = newclick + e.autoTransposeClicks
 	e.autoTransposeIndex = (e.autoTransposeIndex + 1) % len(e.autoTransposeValues)
-	e.SetTranspose(TheEngine.autoTransposeValues[TheEngine.autoTransposeIndex])
+	transpose := TheEngine.autoTransposeValues[TheEngine.autoTransposeIndex]
+	e.SetTranspose(transpose)
+	LogOfType("transpose","TransposeTo","index",e.autoTransposeIndex,"transpose",transpose,"newclick",newclick)
 	// TheScheduler.SendAllPendingNoteoffs()
 }
 

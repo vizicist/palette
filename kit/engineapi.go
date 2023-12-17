@@ -2,10 +2,10 @@ package kit
 
 import (
 	"fmt"
+	"runtime/debug"
 	"strconv"
 	"strings"
 	"time"
-	"runtime/debug"
 )
 
 // ExecuteApi xxx
@@ -47,7 +47,6 @@ func ExecuteApi(api string, apiargs map[string]string) (result string, err error
 	}
 	// unreachable
 }
-
 
 // ExecuteApiFromJson takes raw JSON (as a string of the form "{...}"") as an API and returns raw JSON
 func ExecuteApiFromJson(rawjson string) (string, error) {
@@ -127,7 +126,7 @@ func ExecuteGlobalApi(api string, apiargs map[string]string) (result string, err
 		if err != nil {
 			return "", err
 		}
-		err = ApplyParam(name, value)
+		err = ApplyGlobalParam(name, value)
 		if err != nil {
 			return "", err
 		}
@@ -140,7 +139,7 @@ func ExecuteGlobalApi(api string, apiargs map[string]string) (result string, err
 				LogError(tmperr)
 				err = tmperr
 			}
-			tmperr = ApplyParam(name, value)
+			tmperr = ApplyGlobalParam(name, value)
 			if tmperr != nil {
 				LogError(tmperr)
 				err = tmperr
@@ -290,7 +289,7 @@ func GetInt(value string, i *int64) bool {
 	}
 }
 
-func ApplyParam(name string, value string) (err error) {
+func ApplyGlobalParam(name string, value string) (err error) {
 
 	_, ok := ParamDefs[name]
 	if !ok {

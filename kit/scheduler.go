@@ -3,9 +3,9 @@ package kit
 import (
 	"container/list"
 	"fmt"
+	"runtime/debug"
 	"sync"
 	"time"
-	"runtime/debug"
 
 	midi "gitlab.com/gomidi/midi/v2"
 )
@@ -43,7 +43,6 @@ func NewScheduler() *Scheduler {
 		lastClick:        -1,
 		pendingScheduled: nil,
 	}
-	InitializeClicksPerSecond(defaultClicksPerSecond)
 	return s
 }
 
@@ -114,7 +113,6 @@ func (sched *Scheduler) Start() {
 			LogError(err, "r", r, "stack", stacktrace)
 		}
 	}()
-
 
 	LogInfo("Scheduler begins")
 

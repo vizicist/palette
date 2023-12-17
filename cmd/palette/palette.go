@@ -178,7 +178,16 @@ func CliCommand(args []string) (map[string]string, error) {
 		return nil, fmt.Errorf("invalid logs command: %s", arg1)
 
 	case "test":
-		return kit.EngineRemoteApi("quadpro.test", "ntimes", "40")
+		switch arg1 {
+		case "":
+			return kit.EngineRemoteApi("quadpro.test", "ntimes", "40")
+		case "long":
+			return kit.EngineRemoteApi("quadpro.test", "ntimes", "400")
+		case "center":
+			return kit.EngineRemoteApi("quadpro.test", "ntimes", "1000", "testtype","center")
+		default:
+			return nil, fmt.Errorf("unknown test type - %s", arg1)
+		}
 
 	case "obs":
 		kit.LogInfo("palette: obs command")
