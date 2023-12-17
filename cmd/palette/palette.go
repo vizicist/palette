@@ -249,6 +249,7 @@ func StatusOutput() (statusOut string, numRunning int) {
 		nrunning++
 	}
 
+	/*
 	b, _ := kit.GetParamBool("global.keykitrun")
 	if b {
 		if kit.IsRunning("keykit") {
@@ -256,6 +257,7 @@ func StatusOutput() (statusOut string, numRunning int) {
 			nrunning++
 		}
 	}
+	*/
 
 	mmtt := os.Getenv("PALETTE_MMTT")
 	if mmtt != "" {

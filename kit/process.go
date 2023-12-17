@@ -63,14 +63,14 @@ var GuiExe = "palette_gui.exe"
 var ChatExe = "palette_chat.exe"
 var BiduleExe = "bidule.exe"
 var ResolumeExe = "avenue.exe"
-var KeykitExe = "key.exe"
+// var KeykitExe = "key.exe"
 var MmttExe = "mmtt_kinect.exe"
 var ObsExe = "obs64.exe"
 
 func KillAllExceptMonitor() {
 	LogInfo("KillAll")
 	// XXX - Unfortunate that this is hard-coded.
-	KillExecutable(KeykitExe)
+	// KillExecutable(KeykitExe)
 	KillExecutable(MmttExe)
 	KillExecutable(BiduleExe)
 	KillExecutable(ResolumeExe)
