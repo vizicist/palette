@@ -92,19 +92,19 @@ func (quadpro *QuadPro) Api(api string, apiargs map[string]string) (result strin
 		return "", quadpro.save(category, filename)
 
 	case "test":
-		ntimes, err := GetParamInt("global.testgesturentimes")
-		if err != nil {
-			LogIfError(err)
-			return "", err
-		}
+		ntimes := ArgToInt("ntimes", apiargs)
 		intervalf, err := GetParamFloat("global.testgestureinterval")
 		if err != nil {
 			LogIfError(err)
 			return "", err
 		}
+		testtype, oktype := apiargs["testtype"]
+		if !oktype {
+			testtype = ""
+		}
 		interval := time.Duration(intervalf * 1000000000)
 		LogInfo("QuadPro.ExecuteApi test start", "ntimes", ntimes, "interval", interval)
-		quadpro.doTest(ntimes, interval)
+		quadpro.doTest(testtype, ntimes, interval)
 		LogInfo("QuadPro.ExecuteApi test end", "ntimes", ntimes, "interval", interval)
 		return "", nil
 
@@ -273,7 +273,13 @@ func (quadpro *QuadPro) onMidiEvent(me MidiEvent) error {
 	return nil
 }
 
-func (quadpro *QuadPro) doTest(ntimes int, interval time.Duration) {
+func (quadpro *QuadPro) RandomPatchName() string {
+	quadpro.randMutex.Lock()
+	defer quadpro.randMutex.Unlock()
+	return string("ABCD"[quadpro.rand.Intn(len(Patchs))])
+}
+
+func (quadpro *QuadPro) doTest(testtype string, ntimes int, interval time.Duration) {
 
 	numsteps, err := GetParamInt("global.testgesturenumsteps")
 	if err != nil {
@@ -289,12 +295,18 @@ func (quadpro *QuadPro) doTest(ntimes int, interval time.Duration) {
 
 	for n := 0; n < ntimes; n++ {
 
-		quadpro.randMutex.Lock()
-		randomPatchName := string("ABCD"[quadpro.rand.Intn(len(Patchs))])
-		quadpro.randMutex.Unlock()
+		switch testtype {
+		case "":
+			randomPatchName := quadpro.RandomPatchName()
+			tag := randomPatchName + ",test"
+			go TheCursorManager.GenerateRandomGesture(tag, numsteps, dur)
 
-		tag := randomPatchName + ",test"
-		go TheCursorManager.GenerateRandomGesture(tag, numsteps, dur)
+		case "center":
+			tag := "A,testcenter"
+			half := interval / 2
+			go TheCursorManager.GenerateCenterGesture(tag, half)
+		}
+
 		time.Sleep(interval)
 	}
 }
