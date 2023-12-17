@@ -289,6 +289,14 @@ func GetInt(value string, i *int64) bool {
 	}
 }
 
+func ActivateGlobalParam(name string) {
+	val, err := GetParam(name)
+	LogIfError(err)
+	err = ApplyGlobalParam(name,val)
+	LogIfError(err)
+	
+}
+
 func ApplyGlobalParam(name string, value string) (err error) {
 
 	_, ok := ParamDefs[name]
@@ -404,8 +412,8 @@ func ApplyGlobalParam(name string, value string) (err error) {
 			err := ObsCommand("streamstart")
 			LogIfError(err)
 		} else {
-			err := ObsCommand("streamstop")
-			LogIfError(err)
+			// Ignore errors, since it may not be running at all
+			_ = ObsCommand("streamstop")
 		}
 	}
 	return nil
