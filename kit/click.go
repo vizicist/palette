@@ -61,6 +61,10 @@ type ClickEvent struct {
 	Uptime float64
 }
 
+func InitializeClicks() {
+	InitializeClicksPerSecond(defaultClicksPerSecond)
+}
+
 // InitializeClicksPerSecond initializes
 func InitializeClicksPerSecond(clkpersec Clicks) {
 	// no locks needed here

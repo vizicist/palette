@@ -5,7 +5,27 @@
     "version": "0.2.0",
     "configurations": [
 
-
+        {
+            "name": "palette stop",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTE_SOURCE}/cmd/palette/palette.go",
+            "args": ["stop"]
+        },
+        {
+            "name": "PK2GO - simple.k",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTE_SOURCE}/cmd/palette_pk2go/pk2go.go",
+            "args": ["../../kitlib/simple.k"]
+        },
+       {
+            "name": "PK2GO - arpeggio.k",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTE_SOURCE}/cmd/pk2go/pk2go.go",
+            "args": ["../../kitlib/arpeggio.k"]
+        },
         {
             "name": "GUI - palette_gui.py",
             "type": "python",
