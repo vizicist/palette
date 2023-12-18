@@ -538,7 +538,7 @@ func WinMorphInitialize() error {
 
 		// Don't use Debug.Morph, this should always gets logged
 		firmware := fmt.Sprintf("%d.%d.%d", m.fwVersionMajor, m.fwVersionMinor, m.fwVersionBuild)
-		LogInfo("Morph Opened and Started", "idx", m.idx, "serial", m.serialNum, "firmware", firmware)
+		LogInfo("Morph Opened and Started", "idx", m.idx, "serial", m.serialNum, "firmware", firmware, "morphtype", m.morphtype)
 	}
 	return nil
 }
