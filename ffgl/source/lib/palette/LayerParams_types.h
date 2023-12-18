@@ -1,3 +1,4 @@
+DEFINE_TYPES(resolumepath);
 DEFINE_TYPES(plugins);
 DEFINE_TYPES(log);
 DEFINE_TYPES(pitchset);
@@ -26,10 +27,12 @@ DEFINE_TYPES(scale);
 DEFINE_TYPES(enginescale);
 DEFINE_TYPES(inputport);
 DEFINE_TYPES(synth);
-DEFINE_TYPES(midiport);
 
 void
 LayerParams_InitializeTypes() {
+
+	LayerParams_resolumepathTypes.push_back("C:/Program Files/Resolume Avenue/Avenue.exe");
+	LayerParams_resolumepathTypes.push_back("C:/Program Files/Resolume Arena/Arena.exe");
 
 	LayerParams_pluginsTypes.push_back("");
 	LayerParams_pluginsTypes.push_back("quadpro");
@@ -89,6 +92,10 @@ LayerParams_InitializeTypes() {
 
 	LayerParams_morphtypeTypes.push_back("quadrants");
 	LayerParams_morphtypeTypes.push_back("corners");
+	LayerParams_morphtypeTypes.push_back("A");
+	LayerParams_morphtypeTypes.push_back("B");
+	LayerParams_morphtypeTypes.push_back("C");
+	LayerParams_morphtypeTypes.push_back("D");
 
 	LayerParams_midiinputTypes.push_back("microKEY2 Air");
 	LayerParams_midiinputTypes.push_back("");
@@ -186,21 +193,6 @@ LayerParams_InitializeTypes() {
 	LayerParams_enginescaleTypes.push_back("chromatic");
 
 	LayerParams_inputportTypes.push_back("");
-	LayerParams_inputportTypes.push_back("microKEY2 Air");
 
 	LayerParams_synthTypes.push_back("");
-	LayerParams_synthTypes.push_back("DummyWave");
-
-	LayerParams_midiportTypes.push_back("01. Internal MIDI");
-	LayerParams_midiportTypes.push_back("02. Internal MIDI");
-	LayerParams_midiportTypes.push_back("03. Internal MIDI");
-	LayerParams_midiportTypes.push_back("04. Internal MIDI");
-	LayerParams_midiportTypes.push_back("05. Internal MIDI");
-	LayerParams_midiportTypes.push_back("06. Internal MIDI");
-	LayerParams_midiportTypes.push_back("07. Internal MIDI");
-	LayerParams_midiportTypes.push_back("08. Internal MIDI");
-	LayerParams_midiportTypes.push_back("09. Internal MIDI");
-	LayerParams_midiportTypes.push_back("10. Internal MIDI");
-	LayerParams_midiportTypes.push_back("11. Internal MIDI");
-	LayerParams_midiportTypes.push_back("12. Internal MIDI");
 };

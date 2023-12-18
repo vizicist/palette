@@ -1,3 +1,4 @@
+DECLARE_TYPES(resolumepath);
 DECLARE_TYPES(plugins);
 DECLARE_TYPES(log);
 DECLARE_TYPES(pitchset);
@@ -26,4 +27,3 @@ DECLARE_TYPES(scale);
 DECLARE_TYPES(enginescale);
 DECLARE_TYPES(inputport);
 DECLARE_TYPES(synth);
-DECLARE_TYPES(midiport);

@@ -9,11 +9,11 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/vizicist/palette/engine"
+	"github.com/vizicist/palette/kit"
 )
 
 // MouseHandler xxx
-type MouseHandler func(engine.Cmd)
+type MouseHandler func(kit.Cmd)
 
 // MouseDrawer xxx
 type MouseDrawer func()
@@ -61,13 +61,13 @@ func NewPage(parent Window, name string) WindowData {
 
 	// Putting things in page.log is a last-resort,
 	// since sometimes there's no Console up
-	path := engine.LogFilePath("page.log")
+	path := kit.LogFilePath("page.log")
 	f, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
 	if err != nil {
 		fmt.Printf("NewPage: Unable to open %s err=%s", path, err)
 	}
 	page.logFile = f // could be nil
-	engine.LogInfo("Page logs are being saved in", "path", path)
+	kit.LogInfo("Page logs are being saved in", "path", path)
 
 	return NewToolData(page, "Page", image.Point{640, 480})
 }
@@ -95,7 +95,7 @@ func (w PageLogWriter) Write(p []byte) (n int, err error) {
 func (page *Page) logToFile(s string) {
 	if page.logFile != nil {
 		_, err := page.logFile.WriteString(s)
-		engine.LogIfError(err)
+		kit.LogIfError(err)
 	}
 }
 
@@ -105,7 +105,7 @@ func (page *Page) Context() *WinContext {
 }
 
 // Do xxx
-func (page *Page) Do(cmd engine.Cmd) string {
+func (page *Page) Do(cmd kit.Cmd) string {
 
 	// XXX - should be checking to verify that the from Window
 	// is allowed to do the particular commands invoked.
@@ -124,30 +124,30 @@ func (page *Page) Do(cmd engine.Cmd) string {
 		fname := cmd.ValuesString("filename", "")
 		bytes, err := os.ReadFile(fname)
 		if err != nil {
-			return engine.ErrorResult(err.Error())
+			return kit.ErrorResult(err.Error())
 		}
 		err = page.restoreState(string(bytes))
 		if err != nil {
-			return engine.ErrorResult(err.Error())
+			return kit.ErrorResult(err.Error())
 		}
 
 	case "dumpfile":
 		fname := cmd.ValuesString("filename", "")
-		retmsg := page.Do(engine.NewSimpleCmd("getstate"))
-		engine.LogInfo("dumpfile message", "retmsg", retmsg)
-		m, _ := engine.StringMap(retmsg)
+		retmsg := page.Do(kit.NewSimpleCmd("getstate"))
+		kit.LogInfo("dumpfile message", "retmsg", retmsg)
+		m, _ := kit.StringMap(retmsg)
 		state, ok := m["state"]
 		if !ok {
-			engine.LogWarn("DumpFileMsg didn't receive valid StateDatamsg")
+			kit.LogWarn("DumpFileMsg didn't receive valid StateDatamsg")
 		} else {
 			ps := toPrettyJSON(state)
-			fpath := engine.ConfigFilePath(fname)
-			engine.LogIfError(os.WriteFile(fpath, []byte(ps), 0644))
+			fpath := kit.ConfigFilePath(fname)
+			kit.LogIfError(os.WriteFile(fpath, []byte(ps), 0644))
 		}
 
 	case "getstate":
 		state, err := page.dumpState()
-		engine.LogIfError(err)
+		kit.LogIfError(err)
 		if err == nil {
 			return state
 		}
@@ -162,7 +162,7 @@ func (page *Page) Do(cmd engine.Cmd) string {
 		}
 
 	case "mouse":
-		page.lastPos = cmd.ValuesPos(engine.PointZero)
+		page.lastPos = cmd.ValuesPos(kit.PointZero)
 		page.mouseHandler(cmd)
 
 	case "closeme":
@@ -186,7 +186,7 @@ func (page *Page) Do(cmd engine.Cmd) string {
 		pos := image.Point{lastMenuX + 4, page.lastPos.Y}
 		_, err := page.AddTool(submenutype, pos, image.Point{})
 		if err != nil {
-			engine.LogIfError(err)
+			kit.LogIfError(err)
 		}
 
 	case "sweeptool":
@@ -222,7 +222,7 @@ func (page *Page) Do(cmd engine.Cmd) string {
 	default:
 		WinDoUpstream(page, cmd)
 	}
-	return engine.OkResult()
+	return kit.OkResult()
 }
 
 func (page *Page) restoreState(s string) error {
@@ -243,11 +243,11 @@ func (page *Page) restoreState(s string) error {
 	sz := dat["size"].(string)
 	size := StringToPoint(sz)
 
-	engine.LogInfo("restore", "name", name, "size", size)
+	kit.LogInfo("restore", "name", name, "size", size)
 
 	WinDoUpstream(page, NewResizeMeCmd(size))
 
-	engine.LogWarn("HEY!! restoreState needs work!")
+	kit.LogWarn("HEY!! restoreState needs work!")
 
 	children := dat["children"].([]any)
 	for _, ch := range children {
@@ -261,7 +261,7 @@ func (page *Page) restoreState(s string) error {
 		// Create the window
 		childW, err := page.AddTool(toolType, pos, size)
 		if err != nil {
-			engine.LogIfError(err)
+			kit.LogIfError(err)
 			continue
 		}
 		// restore state
@@ -285,7 +285,7 @@ func (page *Page) dumpState() (string, error) {
 		if child == doingMenu { // don't dump the menu used to do a dump
 			continue
 		}
-		state := child.Do(engine.NewSimpleCmd("getstate"))
+		state := child.Do(kit.NewSimpleCmd("getstate"))
 
 		s += fmt.Sprintf("%s{\n", sep)
 		s += fmt.Sprintf("\"wid\": \"%s\",\n", wid)
@@ -331,7 +331,7 @@ func (page *Page) AddTool(name string, pos image.Point, size image.Point) (Windo
 		size = td.minSize
 	}
 	WinSetChildSize(child, size)
-	engine.LogInfo("Page.AddTool", "name", name, "pos", pos, "size", size)
+	kit.LogInfo("Page.AddTool", "name", name, "pos", pos, "size", size)
 	return child, nil
 }
 
@@ -375,12 +375,12 @@ func (page *Page) drawPickMouse() {
 func (page *Page) resize() {
 	size := WinGetSize(page)
 	WinSetSize(page, size)
-	engine.LogWarn("Page.Resize: should be doing menus (and other things)?")
+	kit.LogWarn("Page.Resize: should be doing menus (and other things)?")
 }
 
-func (page *Page) defaultHandler(cmd engine.Cmd) {
+func (page *Page) defaultHandler(cmd kit.Cmd) {
 
-	pos := cmd.ValuesPos(engine.PointZero)
+	pos := cmd.ValuesPos(kit.PointZero)
 	ddu := cmd.ValuesString("ddu", "")
 
 	child, relPos := WinFindWindowUnder(page, pos)
@@ -409,7 +409,7 @@ func (page *Page) defaultHandler(cmd engine.Cmd) {
 		} else {
 			w, err := page.AddTool("PageMenu", pos, image.Point{})
 			if err != nil {
-				engine.LogIfError(err)
+				kit.LogIfError(err)
 			} else {
 				page.pageMenu = w
 			}
@@ -424,13 +424,13 @@ func (page *Page) sweepRect() image.Rectangle {
 	return r
 }
 
-func (page *Page) sweepHandler(cmd engine.Cmd) {
+func (page *Page) sweepHandler(cmd kit.Cmd) {
 
 	ddu := cmd.ValuesString("ddu", "")
 	switch ddu {
 
 	case "down":
-		pos := cmd.ValuesPos(engine.PointZero)
+		pos := cmd.ValuesPos(kit.PointZero)
 		page.dragStart = pos
 		page.mouseDrawer = page.drawSweepRect
 
@@ -449,12 +449,12 @@ func (page *Page) sweepHandler(cmd engine.Cmd) {
 		case "resize":
 			wname := page.targetWindowName
 			if wname == "" {
-				engine.LogWarn("Page.sweepHandler: no targetWindow?")
+				kit.LogWarn("Page.sweepHandler: no targetWindow?")
 				return
 			}
 			w := WinChildNamed(page, wname)
 			if w == nil {
-				engine.LogWarn("Page.sweepHandler: no window with", "name", wname)
+				kit.LogWarn("Page.sweepHandler: no window with", "name", wname)
 				return
 			}
 			// If you don't sweep out anything, look for
@@ -464,7 +464,7 @@ func (page *Page) sweepHandler(cmd engine.Cmd) {
 				// If there's a window (other than the one we're resizing)
 				// underneath the point, then don't do anything
 				if under != nil && under != w {
-					engine.LogWarn("Page.sweepHandler: can't resize above a Window")
+					kit.LogWarn("Page.sweepHandler: can't resize above a Window")
 					return
 				}
 				foundRect := page.findSpace(r.Min, w)
@@ -488,7 +488,7 @@ func (page *Page) sweepHandler(cmd engine.Cmd) {
 			}
 			child, err := page.AddTool(page.sweepToolName, toolPos, toolSize)
 			if err != nil {
-				engine.LogIfError(err)
+				kit.LogIfError(err)
 			} else {
 				WinSetChildSize(child, toolSize)
 			}
@@ -582,7 +582,7 @@ func (page *Page) startSweep(action string) {
 }
 
 // This Handler waits until MouseUp
-func (page *Page) pickHandler(cmd engine.Cmd) {
+func (page *Page) pickHandler(cmd kit.Cmd) {
 
 	ddu := cmd.ValuesString("ddu", "")
 	switch ddu {
@@ -604,13 +604,13 @@ func (page *Page) pickHandler(cmd engine.Cmd) {
 			WinRemoveChild(page, child)
 			page.resetHandlers()
 		default:
-			engine.LogWarn("Unrecognized action", "currentAction", page.currentAction)
+			kit.LogWarn("Unrecognized action", "currentAction", page.currentAction)
 		}
 	}
 }
 
 // This Handler starts doing things on MouseDown
-func (page *Page) moveHandler(cmd engine.Cmd) {
+func (page *Page) moveHandler(cmd kit.Cmd) {
 
 	ddu := cmd.ValuesString("ddu", "")
 	switch ddu {

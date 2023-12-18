@@ -73,22 +73,19 @@ def sprint(*args, end='', **kwargs):
     print(*args, **kwargs, end=end, file=sio)
     return sio.getvalue()
 
-def palette_engine_api(api, params=""):
-    return palette_api("engine."+api,params)
+def palette_global_api(api, params=""):
+    return palette_api("global."+api,params)
 
 def palette_engine_set(name, value):
-    return palette_api("engine.set",
+    return palette_api("global.set",
             "\"name\": \"" + name + "\"" + \
             ", \"value\": \"" + str(value) + "\"")
 
 def palette_engine_get(name):
-    return palette_api("engine.get", "\"name\": \"" + name + "\"")
+    return palette_api("global.get", "\"name\": \"" + name + "\"")
 
 def configFilePath(nm):
     return os.path.join(localPaletteDir(),PaletteDataPath(),"config",nm)
-
-def engineFilePath(nm):
-    return os.path.join(savedPath(),"engine",nm)
 
 def savedPath():
     return os.path.join(localPaletteDir(),PaletteDataPath(),"saved")
@@ -194,8 +191,8 @@ def palette_api_setup():
     session.mount("https://", adapter)
 
 def audio_reset():
-    log("palette.audio_reset")
-    palette_engine_api("audio_reset")
+    # log("palette.audio_reset")
+    palette_global_api("audio_reset")
 
 def palette_api(api,params):
 
@@ -297,28 +294,12 @@ SettingsJson = None
 LocalSettingsJson = None
 
 def GetParam(name):
-    value, err = palette_api("engine.get",
+    value, err = palette_api("global.get",
         "\"name\": \"" + name + "\"")
     if err != None:
         log("Error in palette.GetParam for "+name)
         return ""
     return value
-
-# def EngineParam(s,defvalue=""):
-#     global SettingsJson
-#     if SettingsJson == None:
-#         path = engineFilePath("default.json")
-#         if not os.path.isfile(path):
-#             log("No file? path=",path)
-#             return defvalue
-#         if Verbose:
-#             log("Loading ",path)
-#         SettingsJson = readJsonPath(path)
-# 
-#     if SettingsJson != None and "params" in SettingsJson and s in SettingsJson["params"]:
-#         return SettingsJson[s]
-#     else:
-#         return defvalue
 
 paletteDir = None
 def PaletteDir():

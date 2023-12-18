@@ -5,7 +5,27 @@
     "version": "0.2.0",
     "configurations": [
 
-
+        {
+            "name": "palette stop",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTE_SOURCE}/cmd/palette/palette.go",
+            "args": ["stop"]
+        },
+        {
+            "name": "PK2GO - simple.k",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTE_SOURCE}/cmd/palette_pk2go/pk2go.go",
+            "args": ["../../kitlib/simple.k"]
+        },
+       {
+            "name": "PK2GO - arpeggio.k",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTE_SOURCE}/cmd/pk2go/pk2go.go",
+            "args": ["../../kitlib/arpeggio.k"]
+        },
         {
             "name": "GUI - palette_gui.py",
             "type": "python",
@@ -32,19 +52,19 @@
             "program": "${env:PALETTE_SOURCE}/cmd/palette_monitor/palette_monitor.go",
             "args": []
         },
-       {
-            "name": "MONITOR Engine=false - palette_monitor.go",
-            "type": "go",
-            "request": "launch",
-            "program": "${env:PALETTE_SOURCE}/cmd/palette_monitor/palette_monitor.go",
-            "args": ["-engine=false"]
-        },
         {
             "name": "palette_chat",
             "type": "go",
             "request": "launch",
             "program": "${env:PALETTE_SOURCE}/cmd/palette_chat/palette_chat.go",
             "args": []
+        },
+        {
+            "name": "palette nats test",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTE_SOURCE}/cmd/palette/palette.go",
+            "args": ["nats","{\"api\":\"global.status\"}"]
         },
         {
             "name": "palette logs archive",

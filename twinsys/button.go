@@ -3,7 +3,7 @@ package twinsys
 import (
 	"image"
 
-	"github.com/vizicist/palette/engine"
+	"github.com/vizicist/palette/kit"
 )
 
 // Button xxx
@@ -36,11 +36,11 @@ func (button *Button) Context() *WinContext {
 }
 
 // Do xxx
-func (button *Button) Do(cmd engine.Cmd) string {
+func (button *Button) Do(cmd kit.Cmd) string {
 
 	switch cmd.Subj {
 	case "resize":
-		sz := cmd.ValuesXY("size", engine.PointZero)
+		sz := cmd.ValuesXY("size", kit.PointZero)
 		toPoint := image.Point{X: sz.X, Y: sz.Y}
 		minSize := WinMinSize(button)
 		if toPoint.X < minSize.X || toPoint.Y < minSize.Y {
@@ -68,9 +68,9 @@ func (button *Button) Do(cmd engine.Cmd) string {
 	case "mouse":
 		currSize := WinGetSize(button)
 		currRect := image.Rect(0, 0, currSize.X, currSize.Y)
-		pos := cmd.ValuesPos(engine.PointZero)
+		pos := cmd.ValuesPos(kit.PointZero)
 		if !pos.In(currRect) {
-			engine.LogWarn("button: pos not in Rect?")
+			kit.LogWarn("button: pos not in Rect?")
 			break
 		}
 		ddu := cmd.ValuesString("ddu", "")
