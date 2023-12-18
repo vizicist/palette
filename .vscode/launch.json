@@ -6,11 +6,11 @@
     "configurations": [
 
         {
-            "name": "palette stop",
+            "name": "palette summarize tiny.log",
             "type": "go",
             "request": "launch",
             "program": "${env:PALETTE_SOURCE}/cmd/palette/palette.go",
-            "args": ["stop"]
+            "args": ["summarize","${env:PALETTE_SOURCE}/data/logs/tiny.log"]
         },
         {
             "name": "PK2GO - simple.k",

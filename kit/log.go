@@ -139,6 +139,9 @@ func SummarizeLog(fname string) error {
 			if !ok {
 				startdate = ""
 			}
+			if nloaded > 0 {
+				fmt.Printf("%s :: Previous session nloaded=%d\n",startdate,nloaded)
+			}
 			fmt.Printf("%s :: Starting Engine\n", startdate)
 			nloaded = 0
 			userMode = true

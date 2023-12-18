@@ -73,7 +73,7 @@ func (synth *Synth) midiOutputEnabled() bool {
 		return false
 	}
 	if synth.state.output == nil {
-		LogWarn("Synth.MidiOutputEnabled: output is nil")
+		// LogWarn("Synth.MidiOutputEnabled: output is nil")
 		return false
 	}
 	return true
