@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/golang/freetype/truetype"
-	"github.com/vizicist/palette/engine"
+	"github.com/vizicist/palette/kit"
 	"golang.org/x/image/font"
 
 	"golang.org/x/image/font/gofont/gomono"
@@ -43,7 +43,7 @@ func DefaultStyleName() string {
 func NewStyle(styleName string, fontHeight int) *StyleInfo {
 
 	if fontHeight <= 0 {
-		engine.LogWarn("NewStyle: invalid fontHeight, using 12")
+		kit.LogWarn("NewStyle: invalid fontHeight, using 12")
 		fontHeight = 12
 	}
 
@@ -53,7 +53,7 @@ func NewStyle(styleName string, fontHeight int) *StyleInfo {
 	switch styleName {
 
 	case "fixed":
-		fontfile := engine.ConfigFilePath("consola.ttf")
+		fontfile := kit.ConfigFilePath("consola.ttf")
 		b, err := os.ReadFile(fontfile)
 		if err == nil {
 			f, _ = truetype.Parse(b)
@@ -62,21 +62,21 @@ func NewStyle(styleName string, fontHeight int) *StyleInfo {
 	case "regular":
 		// This font sucks
 		// f, err = truetype.Parse(goregular.TTF)
-		fontfile := engine.ConfigFilePath("times.ttf")
+		fontfile := kit.ConfigFilePath("times.ttf")
 		b, err := os.ReadFile(fontfile)
 		if err == nil {
 			f, _ = truetype.Parse(b)
 		}
 
 	default:
-		engine.LogWarn("NewStyle: unrecognized fontname", "fontname", styleName)
+		kit.LogWarn("NewStyle: unrecognized fontname", "fontname", styleName)
 	}
 
 	if err != nil {
-		engine.LogIfError(err)
+		kit.LogIfError(err)
 		f, _ = truetype.Parse(gomono.TTF) // last resort
 	} else if f == nil {
-		engine.LogWarn("NewStyle: unable to get font", "font", styleName)
+		kit.LogWarn("NewStyle: unable to get font", "font", styleName)
 		f, _ = truetype.Parse(gomono.TTF) // last resort
 	}
 	face := truetype.NewFace(f, &truetype.Options{Size: float64(fontHeight)})
@@ -97,7 +97,7 @@ func NewStyle(styleName string, fontHeight int) *StyleInfo {
 func (style *StyleInfo) TextFitRect(s string) image.Rectangle {
 	width := len(s) * style.CharWidth()
 	height := style.TextHeight()
-	pos := engine.PointZero
+	pos := kit.PointZero
 	return image.Rectangle{Min: pos, Max: pos.Add(image.Point{width, height})}
 }
 

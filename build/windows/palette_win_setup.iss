@@ -54,7 +54,7 @@ Source: "ship\ffgl\*"; DestDir: "{app}\ffgl"; Flags: ignoreversion recursesubdir
 Source: "ship\data\*"; DestDir: "{commoncf64}\{#MyAppName}\data"; Flags: comparetimestamp ignoreversion recursesubdirs createallsubdirs
 ; Source: "ship\data_surge\*"; DestDir: "{commoncf64}\{#MyAppName}\data_surge"; Flags: comparetimestamp ignoreversion recursesubdirs createallsubdirs
 ; Source: "ship\data_moldover\*"; DestDir: "{commoncf64}\{#MyAppName}\data_moldover"; Flags: comparetimestamp ignoreversion recursesubdirs createallsubdirs
-Source: "logs_readme.txt"; DestDir: "{commoncf64}\{#MyAppName}\logs"; DestName: "readme.txt"; Flags: ignoreversion
+Source: "logs_readme.txt"; DestDir: "{commoncf64}\{#MyAppName}\data\logs"; DestName: "readme.txt"; Flags: ignoreversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 ; This specifies the Visual C++ Windows Runtime Redistributable to install, it's put in {app}\bin to help debug things.

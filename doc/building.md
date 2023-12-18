@@ -67,9 +67,11 @@ The version I'm using is the 13.1.0 version, 64 bit architecture, posix thread m
 
 - in a cmd window, cd to %PALETTE_SOURCE% and execute:
 
-	go get gitlab.com/gomidi/midi/v2/drivers/rtmididrv
-	cd cmd\palette
-	go mod tidy
+```
+go get gitlab.com/gomidi/midi/v2/drivers/rtmididrv
+cd cmd\palette
+go mod tidy
+```
 
 - install LoopBe30 from https://nerds.de/en/loopbe30.html, and use its systray item to
 turn off Shortcut Detection and enable 16 ports (which requires a reboot).

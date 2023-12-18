@@ -7,20 +7,20 @@ import (
 	"strings"
 
 	twitch "github.com/gempir/go-twitch-irc/v3"
-	"github.com/vizicist/palette/engine"
+	"github.com/vizicist/palette/kit"
 )
 
 func main() {
 
-	engine.InitLog("chat")
+	kit.InitLog("chat")
 
 	flag.Parse()
 
 	err := StartTwitch()
 	if err != nil {
-		engine.LogError(err)
+		kit.LogError(err)
 	}
-	engine.LogInfo("Chat is exiting")
+	kit.LogInfo("Chat is exiting")
 }
 
 func StartTwitch() error {
@@ -36,17 +36,17 @@ func StartTwitch() error {
 	client := twitch.NewClient(clientUserName, clientAuthenticationToken)
 
 	client.OnConnect(func() {
-		engine.LogInfo("Twitch OnConnect", "clientUserName", clientUserName)
+		kit.LogInfo("Twitch OnConnect", "clientUserName", clientUserName)
 		// client.Say("photonsalon", fmt.Sprintf("OnConnect user=%s", clientUserName))
 	})
 	client.OnWhisperMessage(func(message twitch.WhisperMessage) {
-		engine.LogInfo("OnWhisperMessage")
+		kit.LogInfo("OnWhisperMessage")
 	})
 	client.OnPrivateMessage(func(message twitch.PrivateMessage) {
-		// engine.LogInfo("OnPrivateMessage", "raw", message.Raw)
+		// kit.LogInfo("OnPrivateMessage", "raw", message.Raw)
 		msg := strings.ToLower(message.Message)
 		id := message.Tags["id"]
-		engine.LogInfo("OnPrivateMessage", "msg", msg)
+		kit.LogInfo("OnPrivateMessage", "msg", msg)
 		words := strings.Split(msg, " ")
 		for i := range words {
 			words[i] = strings.ToLower(words[i])
@@ -61,8 +61,8 @@ func StartTwitch() error {
 				if len(words) > 1 {
 					category = words[1]
 				}
-				engine.LogInfo("randomize message", "category", category)
-				vals, err := engine.EngineRemoteApi("quadpro.loadrand", "category", category)
+				kit.LogInfo("randomize message", "category", category)
+				vals, err := kit.EngineRemoteApi("quadpro.loadrand", "category", category)
 				var reply string
 				if err != nil {
 					reply = fmt.Sprintf("err=%s", err.Error())
@@ -77,8 +77,8 @@ func StartTwitch() error {
 				if len(words) > 1 {
 					category = words[1]
 				}
-				engine.LogInfo("list message", "category", category)
-				vals, err := engine.EngineRemoteApi("saved.list", "category", category)
+				kit.LogInfo("list message", "category", category)
+				vals, err := kit.EngineRemoteApi("saved.list", "category", category)
 				var reply string
 				if err != nil {
 					reply = fmt.Sprintf("err=%s", err.Error())
@@ -89,11 +89,11 @@ func StartTwitch() error {
 				if len(reply) > limit {
 					reply = reply[:limit] + "..."
 				}
-				engine.LogInfo("list message reply", "reply", reply)
+				kit.LogInfo("list message reply", "reply", reply)
 				client.Reply("photonsalon", id, reply)
 
 			case "status":
-				vals, err := engine.EngineRemoteApi("engine.status")
+				vals, err := kit.EngineRemoteApi("global.status")
 				var reply string
 				if err != nil {
 					reply = fmt.Sprintf("err=%s", err.Error())
@@ -102,61 +102,61 @@ func StartTwitch() error {
 				}
 				client.Reply("photonsalon", id, reply)
 			case "ping":
-				engine.LogInfo("ping message", "msg", msg)
+				kit.LogInfo("ping message", "msg", msg)
 			}
 		}
 
 	})
 	client.OnClearChatMessage(func(message twitch.ClearChatMessage) {
-		engine.LogInfo("OnClearChatMessage")
+		kit.LogInfo("OnClearChatMessage")
 	})
 	client.OnClearMessage(func(message twitch.ClearMessage) {
-		engine.LogInfo("OnClearMessage")
+		kit.LogInfo("OnClearMessage")
 	})
 	client.OnRoomStateMessage(func(message twitch.RoomStateMessage) {
-		// engine.LogInfo("OnRoomStateMessage", "raw", message.Raw)
+		// kit.LogInfo("OnRoomStateMessage", "raw", message.Raw)
 	})
 	client.OnUserNoticeMessage(func(message twitch.UserNoticeMessage) {
-		engine.LogInfo("OnUserNoticeMessage")
+		kit.LogInfo("OnUserNoticeMessage")
 	})
 	client.OnUserStateMessage(func(message twitch.UserStateMessage) {
-		// engine.LogInfo("OnUserStateMessage", "raw", message.Raw)
+		// kit.LogInfo("OnUserStateMessage", "raw", message.Raw)
 	})
 	client.OnGlobalUserStateMessage(func(message twitch.GlobalUserStateMessage) {
-		// engine.LogInfo("OnGlobalUserStateMessage", "raw", message.Raw)
+		// kit.LogInfo("OnGlobalUserStateMessage", "raw", message.Raw)
 	})
 	client.OnNoticeMessage(func(message twitch.NoticeMessage) {
-		engine.LogInfo("OnNoticeMessage", "message", message.Message)
+		kit.LogInfo("OnNoticeMessage", "message", message.Message)
 	})
 	client.OnUserJoinMessage(func(message twitch.UserJoinMessage) {
-		engine.LogInfo("OnUserJoingMessage")
+		kit.LogInfo("OnUserJoingMessage")
 	})
 	client.OnUserPartMessage(func(message twitch.UserPartMessage) {
-		engine.LogInfo("OnUserPartgMessage")
+		kit.LogInfo("OnUserPartgMessage")
 	})
 	client.OnSelfJoinMessage(func(message twitch.UserJoinMessage) {
-		// engine.LogInfo("onSelfJoinMessage", "raw", message.Raw)
+		// kit.LogInfo("onSelfJoinMessage", "raw", message.Raw)
 	})
 	client.OnSelfPartMessage(func(message twitch.UserPartMessage) {
-		engine.LogInfo("OnSelfPartMessage")
+		kit.LogInfo("OnSelfPartMessage")
 	})
 	client.OnReconnectMessage(func(message twitch.ReconnectMessage) {
-		engine.LogInfo("OnReconnectMessage")
+		kit.LogInfo("OnReconnectMessage")
 	})
 	client.OnNamesMessage(func(message twitch.NamesMessage) {
-		// engine.LogInfo("OnNamesMessage")
+		// kit.LogInfo("OnNamesMessage")
 	})
 	client.OnPingMessage(func(message twitch.PingMessage) {
-		// engine.LogInfo("OnPingMessage")
+		// kit.LogInfo("OnPingMessage")
 	})
 	client.OnPongMessage(func(message twitch.PongMessage) {
-		// engine.LogInfo("OnPongMessage")
+		// kit.LogInfo("OnPongMessage")
 	})
 	client.OnUnsetMessage(func(message twitch.RawMessage) {
-		// engine.LogInfo("OnUnsetMessage", "raw", message.Raw)
+		// kit.LogInfo("OnUnsetMessage", "raw", message.Raw)
 	})
 	client.OnPingSent(func() {
-		// engine.LogInfo("OnPingSent")
+		// kit.LogInfo("OnPingSent")
 	})
 
 	client.Join("photonsalon")
