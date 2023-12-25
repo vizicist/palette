@@ -270,7 +270,7 @@ func IsTrueValue(value string) bool {
 	case "off":
 		return false
 	default:
-		LogIfError(fmt.Errorf("IsTrueValue: invalid boolean value (%s), assuming false", value))
+		LogError(fmt.Errorf("IsTrueValue: invalid boolean value"), "value", value)
 		return false
 	}
 }
@@ -297,13 +297,12 @@ func (w *FileWriter) Write(p []byte) (n int, err error) {
 		s = string(p)
 	}
 	// Hack to avoid logging things that resolume always logs
-	if w.Exe == "resolume" && (
-		strings.Contains(s, "Logging input channels") ||
+	if w.Exe == "resolume" && (strings.Contains(s, "Logging input channels") ||
 		strings.Contains(s, "Logging output channels") ||
 		strings.Contains(s, "Logging midi input devices") ||
 		strings.Contains(s, "Internal MIDI") ||
 		strings.Contains(s, "Sensel MIDI") ||
-		strings.Contains(s, "Could not find preset") ) {
+		strings.Contains(s, "Could not find preset")) {
 		// don't log it
 	} else {
 		LogInfo("ExecutableOutput", "exe", w.Exe, "output", s)

@@ -68,7 +68,7 @@ func (r *Resolume) PortAndLayerNumForPatch(patchName string) (portNum, layerNum 
 	case "D":
 		return 3337, 4
 	default:
-		LogIfError(fmt.Errorf("no port for layer %s", patchName))
+		LogError(fmt.Errorf("no port for layer"), "patchName", patchName)
 		return 0, 0
 	}
 }
