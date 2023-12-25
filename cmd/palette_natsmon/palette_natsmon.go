@@ -9,6 +9,8 @@ import (
 	"github.com/nats-io/nats.go"
 )
 
+var PaletteTimeLayout = "2006-01-02-15-04-05"
+
 func main() {
 
 	user := os.Getenv("NATS_USER")
@@ -50,8 +52,9 @@ func main() {
 	// Create a file to write the traffic
 	// file, err := os.Create("palette_nats_traffic.log")
 
-	filename := "nats_traffic.log"
-	file, err := os.OpenFile(filename, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
+	date := time.Now().Format(PaletteTimeLayout)
+	filename := "nats_traffic_" + date + ".log"
+	file, err := os.OpenFile(filename, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
 
 	msg := fmt.Sprintf("Started, writing to %s", filename)
 	addToLog(file, "nats_traffic.log", msg)
@@ -76,18 +79,12 @@ func main() {
 }
 
 func addToLog(file *os.File, subject string, data string) {
-	layout := "2006-01-02-15:04:05"
-	date := time.Now().Format(layout)
+	date := time.Now().Format(PaletteTimeLayout)
 	line := fmt.Sprintf("%s ; %s ; %s\n", date, subject, data)
 
-	_, err := time.Parse(layout, layout)
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	// Print once to the file, and again to stdout
-	fmt.Fprintf(file, line)
-	fmt.Printf(line)
+	fmt.Fprint(file, line)
+	fmt.Print(line)
 }
 
 func setupConnOptions(opts []nats.Option) []nats.Option {
