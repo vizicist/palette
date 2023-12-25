@@ -86,7 +86,7 @@ func PublishSpriteEvent(x, y, z float32) {
 	PublishFromEngine("event.sprite", params)
 }
 
-// NewVizNats xxx
+// NewNats xxx
 func NewNats() *VizNats {
 	return &VizNats{
 		natsConn: nil,
@@ -138,7 +138,7 @@ func (vn *VizNats) Connect() error {
 	vn.natsConn = nc
 	LogInfo("Successful connect to NATS")
 
-	date := time.Now().Format("2006-01-02 15:04:05")
+	date := time.Now().Format(PaletteTimeLayout)
 	msg := fmt.Sprintf("Successful connection from hostname=%s date=%s", Hostname(), date)
 	PublishFromEngine("connect.info", msg)
 	return nil

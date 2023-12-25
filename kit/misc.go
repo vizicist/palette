@@ -548,12 +548,11 @@ func ArchiveLogs() error {
 	logsdir := LogFilePath("")
 
 	currentTime := time.Now()
-	timeStampString := currentTime.Format("2006-01-02 15:04:05")
-	layOut := "2006-01-02 15:04:05"
+	timeStampString := currentTime.Format(PaletteTimeLayout)
 	hr := 0
 	min := 0
 	sec := 0
-	timeStamp, err := time.Parse(layOut, timeStampString)
+	timeStamp, err := time.Parse(PaletteTimeLayout, timeStampString)
 	if err == nil {
 		hr, min, sec = timeStamp.Clock()
 	}
