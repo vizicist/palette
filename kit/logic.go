@@ -33,7 +33,7 @@ func (logic *PatchLogic) cursorToNoteOn(ce CursorEvent) *NoteOn {
 	velocity := logic.cursorToVelocity(ce)
 	pitch, err := logic.cursorToPitch(ce)
 	if err != nil {
-		LogIfError(fmt.Errorf("cursorToNoteOn: no pitch for cursor, ce=%v", ce))
+		LogError(fmt.Errorf("cursorToNoteOn: no pitch for cursor"),"ce",ce)
 		return nil
 	}
 	LogOfType("cursor", "cursorToNoteOn", "pitch", pitch, "velocity", velocity)

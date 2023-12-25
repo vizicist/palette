@@ -145,6 +145,9 @@ func (pm *ProcessManager) CheckAutorestartProcesses() {
 	defer pm.mutex.Unlock()
 
 	for _, process := range ProcessList() {
+		if ! pm.IsAvailable(process) {
+			continue
+		}
 		runit, err := GetParamBool("global.process." + process)
 		if err != nil {
 			LogError(err)
@@ -304,15 +307,23 @@ func (pm *ProcessManager) GetProcessInfo(process string) (*ProcessInfo, error) {
 	p, ok := pm.info[process]
 	if !ok || p == nil {
 		err := fmt.Errorf("GetProcessInfo: no process info for %s", process)
-		LogIfError(err)
+		LogError(err)
 		return nil, err
+	}
+	if p.Exe == "" {
+		err := fmt.Errorf("GetProcessInfo: no executable info for %s", process)
+		LogError(err)
+	}
+	if p.FullPath == "" {
+		err := fmt.Errorf("GetProcessInfo: no fullpath info for %s", process)
+		LogError(err)
 	}
 	return p, nil
 }
 
 func (pm *ProcessManager) IsAvailable(process string) bool {
-	p, err := pm.GetProcessInfo(process)
-	return err == nil && p != nil && p.FullPath != ""
+	p, ok := pm.info[process]
+	return ok && p != nil && p.Exe != "" && p.FullPath != ""
 }
 
 func (pm *ProcessManager) IsRunning(process string) bool {
