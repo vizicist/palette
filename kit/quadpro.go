@@ -128,12 +128,12 @@ func (quadpro *QuadPro) Start() {
 	if fileExists(buttonPath) {
 		bytes, err := os.ReadFile(buttonPath)
 		if err != nil {
-			LogIfError(fmt.Errorf("unable to read buttons.json, err=%s", err))
+			LogError(fmt.Errorf("unable to read buttons.json"), "err", err)
 		} else {
 			var f any
 			err = json.Unmarshal(bytes, &f)
 			if err != nil {
-				LogIfError(fmt.Errorf("unable to Unmarshal %s", buttonPath))
+				LogError(fmt.Errorf("unable to Unmarshal"), "buttonPath", buttonPath)
 			} else {
 				buttonMap, ok := f.(map[string]any)
 				if !ok {
@@ -343,6 +343,8 @@ func (quadpro *QuadPro) Load(category string, filename string) error {
 	}
 
 	LogInfo("QuadPro.Load", "category", category, "filename", filename)
+	isOn := TheAttractManager.attractModeIsOn.Load()
+	PublishFromEngine("quadro.load", fmt.Sprintf("category=%s filename=%s attractmode=%v", category, filename, isOn))
 
 	var lasterr error
 
