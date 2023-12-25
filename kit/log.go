@@ -20,6 +20,8 @@ var Time0 = time.Time{}
 var FirstTime = true
 var LogMutex sync.Mutex
 
+var PaletteTimeLayout = "2006-01-02-15:04:05"
+
 // Uptime returns the number of seconds since the program started.
 func Uptime() float64 {
 	now := time.Now()
@@ -104,7 +106,7 @@ func InitLog(logname string) {
 	}
 	TheLog = logger.Sugar()
 	defer LogIfError(logger.Sync()) // flushes buffer, if any
-	date := time.Now().Format("2006-01-02 15:04:05")
+	date := time.Now().Format(PaletteTimeLayout)
 	LogInfo("InitLog ==============================", "date", date, "logname", logname)
 }
 
@@ -207,12 +209,11 @@ func SummarizeLog(fname string) error {
 }
 
 func StartPlusUptime(startdate string, uptime float64) string {
-	layout := "2006-01-02 15:04:05"
-	tt, err := time.Parse(layout, startdate)
+	tt, err := time.Parse(PaletteTimeLayout, startdate)
 	LogIfError(err)
 	dur := time.Duration(uptime * float64(time.Second))
 	realstart := tt.Add(dur)
-	return realstart.Format(layout)
+	return realstart.Format(PaletteTimeLayout)
 }
 
 // LogFilePath uses $PALETTE_LOGDIR if set
