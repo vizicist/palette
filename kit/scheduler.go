@@ -327,7 +327,8 @@ func (sched *Scheduler) triggerItemsScheduledAtOrBefore(thisClick Clicks) {
 			tobeExecuted = append(tobeExecuted, ce)
 
 		default:
-			LogIfError(fmt.Errorf("triggerItemsScheduleAt: unhandled Value type=%T", v))
+			t := fmt.Sprintf("%T",v)
+			LogError(fmt.Errorf("triggerItemsScheduleAt: unhandled Value"),"type",t)
 		}
 
 		// This is where

@@ -3,7 +3,6 @@ package kit
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 	"time"
 
@@ -32,9 +31,10 @@ func NatsApi(cmd string) (result string, err error) {
 	return retdata, err
 }
 
-// Publish sends an asynchronous message via NATS
-func Publish(subject string, msg string) {
-	err := TheNats.Publish(subject, msg)
+// PublishFromEngine sends an asynchronous message via NATS
+func PublishFromEngine(subject string, msg string) {
+	fullsubject := fmt.Sprintf("from_engine.%s.%s", Hostname(), subject)
+	err := TheNats.Publish(fullsubject, msg)
 	LogIfError(err)
 }
 
@@ -56,8 +56,7 @@ func PublishCursorEvent(ce CursorEvent) {
 		"\"z\": \"" + fmt.Sprintf("%f", ce.Pos.Z) + "\", " +
 		"\"area\": \"" + fmt.Sprintf("%f", ce.Area) + "\" }"
 
-	subject := "fromengine.event.cursor"
-	Publish(subject, params)
+	PublishFromEngine("event.cursor", params)
 }
 
 // PublishMIDIDeviceEvent xxx
@@ -73,8 +72,7 @@ func PublishMIDIDeviceEvent(me MidiEvent) {
 		"\"millisecs\": \"" + fmt.Sprintf("%d", dt.Milliseconds()) + "\", " +
 		"\"bytes\": \"" + fmt.Sprintf("%v", me.Msg.Bytes()) + "\" }"
 
-	subject := "fromengine.event.midi"
-	Publish(subject, params)
+	PublishFromEngine("event.midi", params)
 }
 
 // PublishSpriteEvent xxx
@@ -85,22 +83,8 @@ func PublishSpriteEvent(x, y, z float32) {
 		"\"y\": \"" + fmt.Sprintf("%f", y) + "\", " +
 		"\"z\": \"" + fmt.Sprintf("%f", z) + "\" }"
 
-	subject := "fromengine.event.sprite"
-	log.Printf("Publishing %s %s\n", subject, params)
-
-	Publish(subject, params)
+	PublishFromEngine("event.sprite", params)
 }
-
-/*
-// StartVizNats xxx
-func StartVizNats() {
-	err := TheNats.Connect()
-	if err != nil {
-		log.Printf("VizNats.Connect: err=%s\n", err)
-		TheNats.natsConn = nil
-	}
-}
-*/
 
 // NewVizNats xxx
 func NewNats() *VizNats {
@@ -119,8 +103,10 @@ func (vn *VizNats) Connect() error {
 
 	if vn.natsConn != nil {
 		// Already connected
+		LogInfo("VisNats.Connect: Already connected!")
 		return nil
 	}
+	LogInfo("VisNats.Connect: about to try to connect")
 	user := os.Getenv("NATS_USER")
 	password := os.Getenv("NATS_PASSWORD")
 	url := os.Getenv("NATS_URL")
@@ -146,13 +132,16 @@ func (vn *VizNats) Connect() error {
 	// Connect to NATS
 	nc, err := nats.Connect(fullurl, opts...)
 	if err != nil {
-		return fmt.Errorf("nats.Connect failed, user=%s err=%s", user, err)
+		vn.natsConn = nil
+		return fmt.Errorf("nats.Connect failed, user=%s url=%s err=%s", user, url, err)
 	}
 	vn.natsConn = nc
 	LogInfo("Successful connect to NATS")
 
-	msg := fmt.Sprintf("Successful connection from hostname = %s", Hostname())
-	return vn.Publish("palette.info", msg)
+	date := time.Now().Format("2006-01-02 15:04:05")
+	msg := fmt.Sprintf("Successful connection from hostname=%s date=%s", Hostname(), date)
+	PublishFromEngine("connect.info", msg)
+	return nil
 }
 
 func natsRequestHandler(msg *nats.Msg) {
@@ -174,12 +163,10 @@ func natsRequestHandler(msg *nats.Msg) {
 
 // Request is used for APIs - it blocks waiting for a response and returns the response
 func (vn *VizNats) Request(subj, data string, timeout time.Duration) (retdata string, err error) {
-	if IsLogging("nats") {
-		log.Printf("VizNats.Request: %s %s\n", subj, data)
-	}
+	LogOfType("nats", "VizNats.Request", "subject", subj, "data", data)
 	nc := vn.natsConn
 	if nc == nil {
-		return "", fmt.Errorf("unable to communicate with NATS")
+		return "", fmt.Errorf("Viznats.Request: no NATS connection")
 	}
 	bytes := []byte(data)
 	msg, err := nc.Request(subj, bytes, timeout)
@@ -196,13 +183,11 @@ func (vn *VizNats) Publish(subj string, msg string) error {
 
 	nc := vn.natsConn
 	if nc == nil {
-		return fmt.Errorf("Publish: subject=%s, no connection to nats-server", subj)
+		return fmt.Errorf("Viznats.Publish: no NATS connection, subject=%s", subj)
 	}
 	bytes := []byte(msg)
 
-	if IsLogging("nats") {
-		log.Printf("Nats.Publish: %s %s\n", subj, msg)
-	}
+	LogInfo("Nats.Publish", "subject", subj, "msg", msg)
 
 	err := nc.Publish(subj, bytes)
 	LogIfError(err)
@@ -217,13 +202,11 @@ func (vn *VizNats) Publish(subj string, msg string) error {
 // Subscribe xxx
 func (vn *VizNats) Subscribe(subj string, callback nats.MsgHandler) error {
 
-	// if IsLogging("nats") {
-	LogInfo("VizNats.Subscribe: %s\n", subj)
-	// }
+	LogInfo("VizNats.Subscribe", "subject", subj)
 
 	nc := vn.natsConn
 	if nc == nil {
-		return fmt.Errorf("Subscribe: subject=%s, no connection to nats-server", subj)
+		return fmt.Errorf("VizNats.Subscribe: subject=%s, no connection to NATS server", subj)
 	}
 	_, err := nc.Subscribe(subj, callback)
 	LogIfError(err)
@@ -273,13 +256,13 @@ func GetNUID() string {
 	/*
 		file, err := os.OpenFile(nuidpath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
 		if err != nil {
-			log.Printf("InitLogs: Unable to open %s err=%s", nuidpath, err)
+			LogWarn("InitLogs: Unable to open", "nuidpath", nuidpath, "err", err)
 			return "UnableToOpenNUIDFile"
 		}
 		nuid := nuid.Next()
 		file.WriteString("{\n\t\"nuid\": \"" + nuid + "\"\n}\n")
 		file.Close()
-		log.Printf("GetNUID: generated nuid.json for %s\n", nuid)
+		LogInfo("GetNUID: generated nuid.json", "nuid", nuid)
 		return nuid
 	*/
 }
@@ -291,25 +274,14 @@ func setupConnOptions(opts []nats.Option) []nats.Option {
 	opts = append(opts, nats.ReconnectWait(reconnectDelay))
 	opts = append(opts, nats.MaxReconnects(int(totalWait/reconnectDelay)))
 	opts = append(opts, nats.DisconnectErrHandler(func(nc *nats.Conn, err error) {
-		log.Printf("Disconnected due to:%s, will attempt reconnects for %.0fm", err, totalWait.Minutes())
+		LogWarn("nats.Disconnected", "rr", err, "waitminutes", totalWait.Minutes())
 	}))
 	opts = append(opts, nats.ReconnectHandler(func(nc *nats.Conn) {
-		log.Printf("Reconnected [%s]", nc.ConnectedUrl())
+		LogWarn("nats.Reconnected", "connecturl", nc.ConnectedUrl())
 	}))
 	opts = append(opts, nats.ClosedHandler(func(nc *nats.Conn) {
-		log.Printf("nats.ClosedHandler, Exiting: %v", nc.LastError())
+		LogWarn("nats.ClosedHandler, Exiting", "lasterror", nc.LastError())
 		TheNats.natsConn = nil
 	}))
 	return opts
 }
-
-func handleDiscover(msg *nats.Msg) {
-	response := MyNUID()
-	if IsLogging("api") {
-		log.Printf("handleDiscover: data=%s reply=%s response=%s\n", string(msg.Data), msg.Reply, response)
-	}
-	err := msg.Respond([]byte(response))
-	LogIfError(err)
-}
-
-var _ = handleDiscover // to avoid unused error from go-staticcheck

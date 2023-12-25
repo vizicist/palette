@@ -128,7 +128,7 @@ func (patch *Patch) noticeValueChange(paramName string, paramValue string) {
 		synth := GetSynth(paramValue)
 		patch.mutex.Lock()
 		patch.synth = synth
-		LogInfo("Patch.noticeValueChange: changed synth", "patch", patch.name, "synth.name", synth.name)
+		// LogInfo("Patch.noticeValueChange: changed synth", "patch", patch.name, "synth.name", synth.name)
 		patch.mutex.Unlock()
 	}
 }

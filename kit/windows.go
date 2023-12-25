@@ -13,6 +13,9 @@ import (
 
 func KillExecutable(executable string) {
 	exe := isolateExe(executable)
+	if executable == "" {
+		LogWarn("KillExecutable: empty name?")
+	}
 	LogInfo("KillExecutable", "executable", executable, "exe", exe)
 	// NOTE: do NOT use taskkill.exe instead of taskkill, it doesn't work.
 	cmd := exec.Command("taskkill", "/F", "/IM", exe)

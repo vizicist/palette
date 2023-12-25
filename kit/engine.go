@@ -95,6 +95,8 @@ func InitEngine() {
 
 	TheEngine = e
 
+	EngineSubscribeNats()
+
 	for name := range(ParamDefs) {
 		if strings.HasPrefix(name,"global.") {
 			ActivateGlobalParam(name)
@@ -106,11 +108,12 @@ func EngineSubscribeNats() {
 	err := TheNats.Connect()
 	LogIfError(err)
 	if err == nil {
-		subscribeTo := "to_palette.>"
+		subscribeTo := fmt.Sprintf("to_palette.%s.>",Hostname())
 		err = TheNats.Subscribe(subscribeTo, natsRequestHandler)
 		LogIfError(err)
 	}
 }
+
 func EngineCloseNats() {
 	TheNats.Disconnect()
 }
@@ -406,7 +409,7 @@ func (e *Engine) NewRecordingPath() (string, error) {
 	if err != nil {
 		if os.IsNotExist(err) {
 			// Try to create it
-			LogInfo("NewRecordingPath: Creating %s", recdir)
+			LogInfo("NewRecordingPath: Creating", "recdir", recdir)
 			err = os.MkdirAll(recdir, os.FileMode(0777))
 		}
 		if err != nil {

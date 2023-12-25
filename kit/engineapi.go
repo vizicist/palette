@@ -292,9 +292,9 @@ func GetInt(value string, i *int64) bool {
 func ActivateGlobalParam(name string) {
 	val, err := GetParam(name)
 	LogIfError(err)
-	err = ApplyGlobalParam(name,val)
+	err = ApplyGlobalParam(name, val)
 	LogIfError(err)
-	
+
 }
 
 func ApplyGlobalParam(name string, value string) (err error) {
@@ -313,14 +313,16 @@ func ApplyGlobalParam(name string, value string) (err error) {
 
 	if strings.HasPrefix(name, "global.process.") {
 		process := strings.TrimPrefix(name, "global.process.")
-		if IsTrueValue(value) {
-			err = TheProcessManager.StartRunning(process)
-		} else {
-			err = TheProcessManager.StopRunning(process)
-		}
-		if err != nil {
-			LogError(err)
-			return err
+		if TheProcessManager.IsAvailable(process) {
+			if IsTrueValue(value) {
+				err = TheProcessManager.StartRunning(process)
+			} else {
+				err = TheProcessManager.StopRunning(process)
+			}
+			if err != nil {
+				LogError(err)
+				return err
+			}
 		}
 	}
 
@@ -358,13 +360,13 @@ func ApplyGlobalParam(name string, value string) (err error) {
 		}
 
 	case "global.looping_override":
-		LogInfo("global.looping_override needs handling")
+		LogOfType("loop","global.looping_override needs handling")
 
 	case "global.looping_fade":
-		LogInfo("global.looping_fade needs handling")
+		LogOfType("loop","global.looping_fade needs handling")
 
 	case "global.looping_beats":
-		LogInfo("global.looping_beats needs handling")
+		LogOfType("loop","global.looping_beats needs handling")
 
 	case "global.midithru":
 		TheRouter.midithru = IsTrueValue(value)
@@ -400,12 +402,12 @@ func ApplyGlobalParam(name string, value string) (err error) {
 			TheProcessManager.processCheckSecs = f
 		}
 
-	case "global.nats":
-		if IsTrueValue(value) {
-			EngineSubscribeNats()
-		} else {
-			EngineCloseNats()
-		}
+	// case "global.nats":
+	// 	if IsTrueValue(value) {
+	// 		EngineSubscribeNats()
+	// 	} else {
+	// 		EngineCloseNats()
+	// 	}
 
 	case "global.obsstream":
 		if IsTrueValue(value) {
