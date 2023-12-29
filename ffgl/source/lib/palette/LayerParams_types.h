@@ -35,7 +35,7 @@ LayerParams_InitializeTypes() {
 	LayerParams_resolumepathTypes.push_back("C:/Program Files/Resolume Arena/Arena.exe");
 
 	LayerParams_pluginsTypes.push_back("");
-	LayerParams_pluginsTypes.push_back("quadpro");
+	LayerParams_pluginsTypes.push_back("quad");
 
 	LayerParams_logTypes.push_back("");
 	LayerParams_logTypes.push_back("cursor");

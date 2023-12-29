@@ -27,11 +27,11 @@ func ExecuteApi(api string, apiargs map[string]string) (result string, err error
 		return ExecuteGlobalApi(apisuffix, apiargs)
 	case "saved":
 		return ExecuteSavedApi(apisuffix, apiargs)
-	case "quadpro":
-		if TheQuadPro != nil {
-			return TheQuadPro.Api(apisuffix, apiargs)
+	case "quad":
+		if TheQuad != nil {
+			return TheQuad.Api(apisuffix, apiargs)
 		}
-		return "", fmt.Errorf("no quadpro")
+		return "", fmt.Errorf("no quad")
 	case "patch":
 		patchName := ExtractAndRemoveValueOf("patch", apiargs)
 		if patchName == "" {
@@ -91,7 +91,7 @@ func ExecuteGlobalApi(api string, apiargs map[string]string) (result string, err
 	case "status":
 		uptime := fmt.Sprintf("%f", Uptime())
 		attractmode := fmt.Sprintf("%v", TheAttractManager.AttractModeIsOn())
-		if TheQuadPro == nil {
+		if TheQuad == nil {
 			result = JsonObject(
 				"uptime", uptime,
 				"attractmode", attractmode,
@@ -360,13 +360,13 @@ func ApplyGlobalParam(name string, value string) (err error) {
 		}
 
 	case "global.looping_override":
-		LogOfType("loop","global.looping_override needs handling")
+		LogOfType("loop", "global.looping_override needs handling")
 
 	case "global.looping_fade":
-		LogOfType("loop","global.looping_fade needs handling")
+		LogOfType("loop", "global.looping_fade needs handling")
 
 	case "global.looping_beats":
-		LogOfType("loop","global.looping_beats needs handling")
+		LogOfType("loop", "global.looping_beats needs handling")
 
 	case "global.midithru":
 		TheRouter.midithru = IsTrueValue(value)

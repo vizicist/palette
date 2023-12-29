@@ -82,7 +82,7 @@ func (am *AttractManager) setAttractMode(onoff bool) {
 	// am.attractMutex.Lock()
 	am.attractModeIsOn.Store(onoff)
 
-	if TheQuadPro != nil {
+	if TheQuad != nil {
 		for _, patch := range Patchs {
 			patch.clearGraphics()
 			patch.loopClear()
@@ -161,10 +161,10 @@ func (am *AttractManager) doAttractAction() {
 
 	dp := now.Sub(am.lastAttractChange).Seconds()
 	if dp > am.attractChangeInterval {
-		if TheQuadPro == nil {
-			LogWarn("No QuadPro to change for attract mode")
+		if TheQuad == nil {
+			LogWarn("No Quad to change for attract mode")
 		} else {
-			_, err := TheQuadPro.loadQuadRand("quad")
+			_, err := TheQuad.loadQuadRand("quad")
 			LogIfError(err)
 		}
 		am.lastAttractChange = now

@@ -91,7 +91,7 @@ func NewCursorClearEvent() CursorEvent {
 // An ActiveCursor can be for a Button or a Patch area.
 func NewActiveCursor(ce CursorEvent) *ActiveCursor {
 
-	patch, button := TheQuadPro.PatchForCursorEvent(ce)
+	patch, button := TheQuad.PatchForCursorEvent(ce)
 	if patch == nil && button == "" {
 		LogWarn("No Patch or Button for CursorEvent", "ce", ce)
 		return nil

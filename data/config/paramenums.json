@@ -1,6 +1,6 @@
 {
   "resolumepath": ["C:/Program Files/Resolume Avenue/Avenue.exe", "C:/Program Files/Resolume Arena/Arena.exe"],
-  "plugins": [ "", "quadpro" ],
+  "plugins": [ "", "quad" ],
   "log": ["","cursor","midi","cursor,midi","cursor,midi,osc","osc","api","loop", "morph","mmtt", "quant", "transpose", "ffgl", "gesture"],
   "pitchset": ["","stylusrmx"],
   "guisize": ["small","medium","palette"],

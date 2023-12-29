@@ -87,7 +87,7 @@ func InitEngine() {
 	TheRouter = NewRouter()
 	TheScheduler = NewScheduler()
 	TheAttractManager = NewAttractManager()
-	TheQuadPro = NewQuadPro()
+	TheQuad = NewQuad()
 	TheMidiIO = NewMidiIO()
 	TheErae = NewErae()
 
@@ -97,8 +97,8 @@ func InitEngine() {
 
 	EngineSubscribeNats()
 
-	for name := range(ParamDefs) {
-		if strings.HasPrefix(name,"global.") {
+	for name := range ParamDefs {
+		if strings.HasPrefix(name, "global.") {
 			ActivateGlobalParam(name)
 		}
 	}
@@ -108,7 +108,7 @@ func EngineSubscribeNats() {
 	err := TheNats.Connect()
 	LogIfError(err)
 	if err == nil {
-		subscribeTo := fmt.Sprintf("to_palette.%s.>",Hostname())
+		subscribeTo := fmt.Sprintf("to_palette.%s.>", Hostname())
 		err = TheNats.Subscribe(subscribeTo, natsRequestHandler)
 		LogIfError(err)
 	}
@@ -199,7 +199,7 @@ func (e *Engine) Start() {
 	InitMidiIO()
 	InitSynths()
 
-	TheQuadPro.Start()
+	TheQuad.Start()
 
 	go e.StartOscListener(OscPort)
 	go e.StartHttp(EngineHttpPort)

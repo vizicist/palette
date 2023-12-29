@@ -180,11 +180,11 @@ func CliCommand(args []string) (map[string]string, error) {
 	case "test":
 		switch arg1 {
 		case "":
-			return kit.EngineRemoteApi("quadpro.test", "ntimes", "40")
+			return kit.EngineRemoteApi("quad.test", "ntimes", "40")
 		case "long":
-			return kit.EngineRemoteApi("quadpro.test", "ntimes", "400")
+			return kit.EngineRemoteApi("quad.test", "ntimes", "400")
 		case "center":
-			return kit.EngineRemoteApi("quadpro.test", "ntimes", "1000", "testtype","center")
+			return kit.EngineRemoteApi("quad.test", "ntimes", "1000", "testtype", "center")
 		default:
 			return nil, fmt.Errorf("unknown test type - %s", arg1)
 		}
@@ -223,63 +223,57 @@ func CliCommand(args []string) (map[string]string, error) {
 func StatusOutput() (statusOut string, numRunning int) {
 	s := ""
 	nrunning := 0
-	if kit.MonitorIsRunning() {
+	running, err := kit.MonitorIsRunning()
+	if err == nil && running {
 		s += "Monitor is running.\n"
 		nrunning++
 	}
 
-	if kit.IsRunning("engine") {
-		s += "Engine is running.\n"
-		nrunning++
+	type Runnable struct {
+		processName string
+		userName    string
 	}
-
-	if kit.IsRunning("gui") {
-		s += "GUI is running.\n"
-		nrunning++
+	var Runnables = []Runnable{
+		{"engine", "Engine"},
+		{"gui", "GUI"},
+		{"bidule", "Bidule"},
+		{"obs", "OBS"},
+		{"chat", "Chat monitor"},
+		{"resolume", "Resolume"},
 	}
-
-	if kit.IsRunning("bidule") {
-		s += "Bidule is running.\n"
-		nrunning++
-	}
-
-	if kit.IsRunning("obs") {
-		s += "OBS is running.\n"
-		nrunning++
-	}
-
-	if kit.IsRunning("chat") {
-		s += "Chat monitor is running.\n"
-		nrunning++
-	}
-
-	if kit.IsRunning("resolume") {
-		s += "Resolume is running.\n"
-		nrunning++
-	}
-
-	/*
-	b, _ := kit.GetParamBool("global.keykitrun")
-	if b {
-		if kit.IsRunning("keykit") {
-			s += "Keykit is running.\n"
+	for _, r := range Runnables {
+		running, err = kit.IsRunning(r.processName)
+		if err == nil && running {
+			s += (r.userName + " is running.\n")
 			nrunning++
 		}
 	}
+
+	/*
+		b, _ := kit.GetParamBool("global.keykitrun")
+		if b {
+			if kit.IsRunning("keykit") {
+				s += "Keykit is running.\n"
+				nrunning++
+			}
+		}
 	*/
 
 	mmtt := os.Getenv("PALETTE_MMTT")
 	if mmtt != "" {
-		if kit.IsRunning("mmtt") {
+		running, err := kit.IsRunning("mmtt")
+		if err == nil && running {
 			s += "MMTT is running.\n"
 			nrunning++
 		}
 	}
+
 	return s, nrunning
 }
 
 func doStartEngine() error {
-	if kit.IsRunning("engine") {
+	running, err := kit.IsRunning("engine")
+	if err == nil && running {
 		return fmt.Errorf("engine is already running")
 	}
 	fullexe := filepath.Join(kit.PaletteDir(), "bin", kit.EngineExe)
@@ -288,7 +282,8 @@ func doStartEngine() error {
 }
 
 func doStartMonitor() error {
-	if kit.MonitorIsRunning() {
+	running, err := kit.MonitorIsRunning()
+	if err == nil && running {
 		return fmt.Errorf("monitor is already running")
 	}
 	// palette_monitor.exe will restart the engine,

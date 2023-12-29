@@ -115,7 +115,7 @@ func (r *Router) HandleMidiEvent(me MidiEvent) {
 		r.handleMIDISetScaleNote(me)
 	}
 
-	err := TheQuadPro.onMidiEvent(me)
+	err := TheQuad.onMidiEvent(me)
 	LogIfError(err)
 
 	if TheErae.enabled {
@@ -296,7 +296,7 @@ func (r *Router) oscHandleClientRestart(msg *osc.Message) error {
 	if err != nil {
 		return err
 	}
-	TheQuadPro.onClientRestart(ffglportnum)
+	TheQuad.onClientRestart(ffglportnum)
 	return nil
 }
 
