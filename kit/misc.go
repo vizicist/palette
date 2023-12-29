@@ -455,30 +455,15 @@ func HumanReadableApiOutput(apiOutput map[string]string) string {
 	return result
 }
 
-func EngineRemoteApi(api string, args ...string) (map[string]string, error) {
-
-	if len(args)%2 != 0 {
-		return nil, fmt.Errorf("RemoteApi: odd nnumber of args, should be even")
-	}
-	apijson := "\"api\": \"" + api + "\""
-	for n := range args {
-		if n%2 == 0 {
-			apijson = apijson + ",\"" + args[n] + "\": \"" + args[n+1] + "\""
-		}
-	}
-	url := fmt.Sprintf("http://127.0.0.1:%d/api", EngineHttpPort)
-	return RemoteApiRaw(url, apijson)
-}
-
 func MmttRemoteApi(api string) (map[string]string, error) {
 
 	id := "56789"
 	apijson := "{ \"jsonrpc\": \"2.0\", \"method\": \"" + api + "\", \"id\":\"" + id + "\"}"
 	url := fmt.Sprintf("http://127.0.0.1:%d/api", MmttHttpPort)
-	return RemoteApiRaw(url, apijson)
+	return HttpApiRaw(url, apijson)
 }
 
-func RemoteApiRaw(url string, args string) (map[string]string, error) {
+func HttpApiRaw(url string, args string) (map[string]string, error) {
 	postBody := []byte(args)
 	resp, err := http.Post(url, "application/json", bytes.NewBuffer(postBody))
 	if err != nil {
