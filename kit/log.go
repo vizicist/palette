@@ -142,7 +142,7 @@ func SummarizeLog(fname string) error {
 				startdate = ""
 			}
 			if nloaded > 0 {
-				fmt.Printf("%s :: Previous session nloaded=%d\n",startdate,nloaded)
+				fmt.Printf("%s :: Previous session nloaded=%d\n", startdate, nloaded)
 			}
 			fmt.Printf("%s :: Starting Engine\n", startdate)
 			nloaded = 0
@@ -188,7 +188,7 @@ func SummarizeLog(fname string) error {
 					userMode = true
 				}
 			}
-		} else if strings.HasPrefix(msg, "QuadPro.Load") {
+		} else if strings.HasPrefix(msg, "Quad.Load") {
 			nloaded++
 		}
 	}
@@ -299,7 +299,7 @@ func LogWarn(msg string, keysAndValues ...any) {
 
 func LogRaw(loglevel string, msg string, keysAndValues ...any) {
 	if (len(keysAndValues) % 2) != 0 {
-		LogWarn("LogRaw function given bad number of arguments","msg",msg)
+		LogWarn("LogRaw function given bad number of arguments", "msg", msg)
 	} else {
 		keysAndValues = appendExtraValues(keysAndValues)
 		keysAndValues = append(keysAndValues, "loglevel")

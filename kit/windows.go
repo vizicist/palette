@@ -81,15 +81,15 @@ func (writer *gatherWriter) Write(bytes []byte) (int, error) {
 	return len(bytes), nil
 }
 
-func IsRunningExecutable(exe string) bool {
+func IsRunningExecutable(exe string) (bool,error) {
 	// os.Stdout.WriteString("IsRunningExecutable exe=" + exe + "\n")
 	stdout := &gatherWriter{}
 	stderr := &NoWriter{}
 	cmd, err := StartExecutableAndWait("c:\\windows\\system32\\tasklist.exe", stdout, stderr)
 	if err != nil {
-		LogWarn("IsRunningExecutable tasklist.exe", "err", err)
-		LogOfType("process", "IsRunningExecutable", "exe", exe, "returning", "true")
-		return false
+		LogWarn("IsRunningExecutable of tasklist.exe", "err", err)
+		// Assume it's running, to avoid multiple instances
+		return true, err
 	}
 	_ = cmd.Wait() // ignore "Wait was already called"
 
@@ -105,12 +105,12 @@ func IsRunningExecutable(exe string) bool {
 			if strings.ToLower(words[0]) == exe {
 				// os.Stdout.WriteString("IsRunningExecutable " + exe + " returning true\n")
 				LogOfType("process", "IsRunningExecutable", "exe", exe, "returning", "true")
-				return true
+				return true, nil
 			}
 		}
 	}
 	LogOfType("process", "IsRunningExecutable", "exe", exe, "returning", "false")
-	return false
+	return false, nil
 }
 
 func isolateExe(exepath string) string {

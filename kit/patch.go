@@ -309,7 +309,7 @@ func (patch *Patch) Api(api string, apiargs map[string]string) (string, error) {
 }
 
 func (patch *Patch) SaveQuadAndAlert() error {
-	return TheQuadPro.saveQuad("_Current")
+	return TheQuad.saveQuad("_Current")
 }
 
 func (patch *Patch) SetParam(paramName string, paramValue string) error {

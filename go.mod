@@ -3,7 +3,7 @@ module github.com/vizicist/palette
 go 1.19
 
 require (
-	fyne.io/fyne/v2 v2.4.2
+	fyne.io/fyne/v2 v2.4.3
 	github.com/0xcafed00d/joystick v1.0.1
 	github.com/andreykaipov/goobs v0.12.1
 	github.com/gempir/go-twitch-irc/v3 v3.3.0
@@ -57,7 +57,7 @@ require (
 	golang.org/x/exp/shiny v0.0.0-20230210204819-062eb4c674ab // indirect
 	golang.org/x/mobile v0.0.0-20230531173138-3c911d8e3eda // indirect
 	golang.org/x/net v0.17.0 // indirect
-	golang.org/x/sync v0.2.0 // indirect
+	golang.org/x/sync v0.3.0 // indirect
 	golang.org/x/sys v0.15.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect

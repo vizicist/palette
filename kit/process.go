@@ -63,6 +63,7 @@ var GuiExe = "palette_gui.exe"
 var ChatExe = "palette_chat.exe"
 var BiduleExe = "bidule.exe"
 var ResolumeExe = "avenue.exe"
+
 // var KeykitExe = "key.exe"
 var MmttExe = "mmtt_kinect.exe"
 var ObsExe = "obs64.exe"
@@ -80,14 +81,14 @@ func KillAllExceptMonitor() {
 	KillExecutable(ChatExe)
 }
 
-func IsRunning(process string) bool {
+func IsRunning(process string) (bool, error) {
 	if process == "engine" {
 		return IsRunningExecutable(EngineExe)
 	}
 	return TheProcessManager.IsRunning(process)
 }
 
-func MonitorIsRunning() bool {
+func MonitorIsRunning() (bool, error) {
 	return IsRunningExecutable(MonitorExe)
 }
 
@@ -145,7 +146,7 @@ func (pm *ProcessManager) CheckAutorestartProcesses() {
 	defer pm.mutex.Unlock()
 
 	for _, process := range ProcessList() {
-		if ! pm.IsAvailable(process) {
+		if !pm.IsAvailable(process) {
 			continue
 		}
 		runit, err := GetParamBool("global.process." + process)
@@ -153,20 +154,22 @@ func (pm *ProcessManager) CheckAutorestartProcesses() {
 			LogError(err)
 			continue
 		}
-		isRunning := pm.IsRunning(process)
-		if runit {
-			if !isRunning {
-				LogInfo("CheckAutorestartProcesses: Restarting", "process", process)
-				err := pm.StartRunning(process)
-				LogIfError(err)
+		running, err := pm.IsRunning(process)
+		if err == nil {
+			if runit {
+				if !running {
+					LogInfo("CheckAutorestartProcesses: Restarting", "process", process)
+					err := pm.StartRunning(process)
+					LogIfError(err)
+				}
+			} else {
+				// If we're not supposed to be running it, stop it
+				if running {
+					LogInfo("CheckAutorestartProcesses: Stopping", "process", process)
+					err := pm.StopRunning(process)
+					LogIfError(err)
+				}
 			}
-		} else {
-			if isRunning {
-				LogInfo("CheckAutorestartProcesses: Stopping", "process", process)
-				err := pm.StopRunning(process)
-				LogIfError(err)
-			}
-
 		}
 	}
 }
@@ -239,7 +242,11 @@ func (pm *ProcessManager) AddProcessBuiltIn(process string) {
 
 func (pm *ProcessManager) StartRunning(process string) error {
 
-	if pm.IsRunning(process) {
+	running, err := pm.IsRunning(process)
+	if err != nil {
+		return err
+	}
+	if running {
 		LogInfo("StartRunning: already running", "process", process)
 		return nil
 	}
@@ -293,15 +300,18 @@ func (pm *ProcessManager) StopRunning(process string) (err error) {
 	return err
 }
 
+/*
 func (pm *ProcessManager) ProcessStatus() string {
 	s := ""
 	for name := range pm.info {
-		if pm.IsRunning(name) {
+		running, err := pm.IsRunning(name)
+		if err == nil && running {
 			s += fmt.Sprintf("%s is running\n", name)
 		}
 	}
 	return s
 }
+*/
 
 func (pm *ProcessManager) GetProcessInfo(process string) (*ProcessInfo, error) {
 	p, ok := pm.info[process]
@@ -326,14 +336,13 @@ func (pm *ProcessManager) IsAvailable(process string) bool {
 	return ok && p != nil && p.Exe != "" && p.FullPath != ""
 }
 
-func (pm *ProcessManager) IsRunning(process string) bool {
+func (pm *ProcessManager) IsRunning(process string) (bool, error) {
 	pi, err := pm.GetProcessInfo(process)
 	if err != nil {
 		LogIfError(err)
-		return false
+		return false, err
 	}
-	b := IsRunningExecutable(pi.Exe)
-	return b
+	return IsRunningExecutable(pi.Exe)
 }
 
 // Below here are functions that return ProcessInfo for various programs
