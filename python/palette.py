@@ -60,11 +60,11 @@ def palette_patch_set(patch, name, value):
             ", \"name\": \"" + name + "\"" + \
             ", \"value\": \"" + str(value) + "\"")
 
-def palette_quadpro_api(api, params=""):
-    return palette_api("quadpro."+api,params)
+def palette_quad_api(api, params=""):
+    return palette_api("quad."+api,params)
 
-def palette_quadpro_set(name, value):
-    return palette_api("quadpro.set",
+def palette_quad_set(name, value):
+    return palette_api("quad.set",
             "\"name\": \"" + name + "\"" + \
             ", \"value\": \"" + str(value) + "\"")
 

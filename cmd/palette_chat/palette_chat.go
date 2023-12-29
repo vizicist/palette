@@ -62,7 +62,7 @@ func StartTwitch() error {
 					category = words[1]
 				}
 				kit.LogInfo("randomize message", "category", category)
-				vals, err := kit.EngineRemoteApi("quadpro.loadrand", "category", category)
+				vals, err := kit.EngineRemoteApi("quad.loadrand", "category", category)
 				var reply string
 				if err != nil {
 					reply = fmt.Sprintf("err=%s", err.Error())

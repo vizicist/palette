@@ -85,7 +85,8 @@ func scheduler() {
 func checkEngine() {
 	tick := time.NewTicker(time.Second * 15)
 	for {
-		if !kit.IsRunningExecutable(kit.EngineExe) {
+		running, err := kit.IsRunningExecutable(kit.EngineExe)
+		if err == nil && !running {
 			kit.LogInfo("checkEngine: engine is not running, killing everything, monitor should restart engine.")
 			kit.KillAllExceptMonitor()
 			kit.LogInfo("checkEngine: restarting engine")
