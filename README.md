@@ -2,7 +2,7 @@
 
 Palette is the system used by the <a href=https://youtu.be/HDtxEyCI_zc>Space Palette Pro</a>,
 an instrument that lets you fingerpaint sound and visuals
-using your fingers as 3D cursors on Sensel Morph pads.
+using your fingers as three-dimensional cursors on Sensel Morph pads.
 
 The main branch here is intended to be stable.  The dev branch is for active development.
 
