@@ -122,7 +122,7 @@ func CliCommand(args []string) (map[string]string, error) {
 			for _, process := range kit.ProcessList() {
 				if arg1 == process {
 					param := "global.process." + arg1
-					return kit.EngineRemoteApi("global.set", "name", param, "value", "true")
+					return kit.LocalEngineApi("global.set", "name", param, "value", "true")
 				}
 			}
 			return nil, fmt.Errorf("process %s is disabled or unknown", arg1)
@@ -151,7 +151,7 @@ func CliCommand(args []string) (map[string]string, error) {
 			// Individual processes are stopped by setting global.process.* to false.
 			// If the engine isn't running, this will fail.  Use stop all as last resort.
 			param := "global.process." + arg1
-			return kit.EngineRemoteApi("global.set", "name", param, "value", "false")
+			return kit.LocalEngineApi("global.set", "name", param, "value", "false")
 		}
 
 	case "version":
@@ -180,11 +180,11 @@ func CliCommand(args []string) (map[string]string, error) {
 	case "test":
 		switch arg1 {
 		case "":
-			return kit.EngineRemoteApi("quad.test", "ntimes", "40")
+			return kit.LocalEngineApi("quad.test", "ntimes", "40")
 		case "long":
-			return kit.EngineRemoteApi("quad.test", "ntimes", "400")
+			return kit.LocalEngineApi("quad.test", "ntimes", "400")
 		case "center":
-			return kit.EngineRemoteApi("quad.test", "ntimes", "1000", "testtype", "center")
+			return kit.LocalEngineApi("quad.test", "ntimes", "1000", "testtype", "center")
 		default:
 			return nil, fmt.Errorf("unknown test type - %s", arg1)
 		}
@@ -198,17 +198,31 @@ func CliCommand(args []string) (map[string]string, error) {
 		// return map[string]string{"result": ""}, nil
 		return nil, nil
 
-	case "nats":
+	case "nats", "natsapi":
 		kit.LogInfo("palette: nats command")
 		if len(args) < 2 {
 			return nil, fmt.Errorf("nats command missing argument")
 		}
-		result, err := kit.NatsApi(args[1])
+		result, err := kit.EngineNatsApi(kit.Hostname(), args[1])
 		if err != nil {
 			return map[string]string{"error": err.Error()}, nil
 		} else {
 			return map[string]string{"result": result}, nil
 		}
+
+	case "remote":
+		if len(args) < 3 {
+			return nil, fmt.Errorf("remote command needs 2 arguments, host and api")
+		}
+		host := args[1]
+		api := args[2]
+		result, err := kit.EngineNatsApi(host, api)
+		if err != nil {
+			return map[string]string{"error": err.Error()}, nil
+		} else {
+			return map[string]string{"result": result}, nil
+		}
+
 
 	default:
 		if len(words) < 2 {
@@ -216,7 +230,7 @@ func CliCommand(args []string) (map[string]string, error) {
 		} else if len(words) > 2 {
 			return nil, fmt.Errorf("invalid api format, expecting {plugin}.{api}\n" + usage())
 		}
-		return kit.EngineRemoteApi(api, args[1:]...)
+		return kit.LocalEngineApi(api, args[1:]...)
 	}
 }
 
