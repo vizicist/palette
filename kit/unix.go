@@ -46,7 +46,12 @@ func StartDeviceInput() {
 }
 
 // KillProcess kills a process (synchronously)
-func KillProcess(exe string) {
+func KillExecutable(exe string) {
 	Warn("KillProcess in unix.go not tested", "exe", exe)
 	Spawn("pkill", false, noWriter, noWriter, exe)
+}
+
+func IsRunningExecutable(exe string) (bool,error) {
+	err := fmt.Eprintf("unix.go: IsRunningExecutable needs work")
+	return false,err
 }
