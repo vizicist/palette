@@ -62,7 +62,7 @@ func StartTwitch() error {
 					category = words[1]
 				}
 				kit.LogInfo("randomize message", "category", category)
-				vals, err := kit.EngineRemoteApi("quad.loadrand", "category", category)
+				vals, err := kit.EngineHttpApi("quad.loadrand", "category", category)
 				var reply string
 				if err != nil {
 					reply = fmt.Sprintf("err=%s", err.Error())
@@ -78,7 +78,7 @@ func StartTwitch() error {
 					category = words[1]
 				}
 				kit.LogInfo("list message", "category", category)
-				vals, err := kit.EngineRemoteApi("saved.list", "category", category)
+				vals, err := kit.EngineHttpApi("saved.list", "category", category)
 				var reply string
 				if err != nil {
 					reply = fmt.Sprintf("err=%s", err.Error())
@@ -93,7 +93,7 @@ func StartTwitch() error {
 				client.Reply("photonsalon", id, reply)
 
 			case "status":
-				vals, err := kit.EngineRemoteApi("global.status")
+				vals, err := kit.LocalEngineApi("global.status")
 				var reply string
 				if err != nil {
 					reply = fmt.Sprintf("err=%s", err.Error())

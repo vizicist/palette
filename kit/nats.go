@@ -23,28 +23,13 @@ var TheNats *VizNats
 
 var time0 = time.Now()
 
-func NatsApi(cmd string) (result string, err error) {
-	if !TheNats.enabled {
-		return "", fmt.Errorf("NatsAPI: NATS not enabled")
-	}
-	err = TheNats.Connect()
-	if err != nil {
-		LogIfError(err)
-		return "", err
-	}
-	timeout := 3 * time.Second
-	retdata, err := TheNats.Request("to_palette.api", cmd, timeout)
-	LogIfError(err)
-	return retdata, err
-}
-
 // PublishFromEngine sends an asynchronous message via NATS
 func PublishFromEngine(subject string, msg string) {
 	if !TheNats.enabled {
 		// silent, but perhaps you could log it every once in a while
 		return
 	}
-	fullsubject := fmt.Sprintf("from_engine.%s.%s", Hostname(), subject)
+	fullsubject := fmt.Sprintf("from_palette.%s.%s", Hostname(), subject)
 	err := TheNats.Publish(fullsubject, msg)
 	LogIfError(err)
 }
