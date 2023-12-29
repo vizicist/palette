@@ -11,9 +11,9 @@ import (
 	"time"
 )
 
-var TheQuadPro *QuadPro
+var TheQuad *Quad
 
-type QuadPro struct {
+type Quad struct {
 
 	// Per-patch things
 	patch      map[string]*Patch
@@ -24,31 +24,31 @@ type QuadPro struct {
 	randMutex sync.Mutex
 }
 
-func NewQuadPro() *QuadPro {
-	quadpro := &QuadPro{
+func NewQuad() *Quad {
+	quad := &Quad{
 		patch:      map[string]*Patch{},
 		patchLogic: map[string]*PatchLogic{},
 		rand:       rand.New(rand.NewSource(1)),
 	}
-	return quadpro
+	return quad
 }
 
-func (quadpro *QuadPro) Stop() {
-	quadpro.started = false
+func (quad *Quad) Stop() {
+	quad.started = false
 }
 
-func (quadpro *QuadPro) Api(api string, apiargs map[string]string) (result string, err error) {
+func (quad *Quad) Api(api string, apiargs map[string]string) (result string, err error) {
 
 	switch api {
 
 	case "get":
-		return quadpro.onGet(apiargs)
+		return quad.onGet(apiargs)
 
 	case "event":
 		return "", fmt.Errorf("event no longer handled in Quadpro.Api")
 
 	case "ANO":
-		for _, patch := range quadpro.patch {
+		for _, patch := range quad.patch {
 			patch.Synth().SendANO()
 		}
 		return "", nil
@@ -71,14 +71,14 @@ func (quadpro *QuadPro) Api(api string, apiargs map[string]string) (result strin
 		}
 		// Loading a preset no longer turns off attract mode
 		// TheAttractManager.SetAttractMode(false)
-		return "", quadpro.Load(category, filename)
+		return "", quad.Load(category, filename)
 
 	case "loadrand":
 		category, oksaved := apiargs["category"]
 		if !oksaved {
 			return "", fmt.Errorf("missing category parameter")
 		}
-		return quadpro.loadQuadRand(category)
+		return quad.loadQuadRand(category)
 
 	case "save":
 		category, oksaved := apiargs["category"]
@@ -89,7 +89,7 @@ func (quadpro *QuadPro) Api(api string, apiargs map[string]string) (result strin
 		if !oksaved {
 			return "", fmt.Errorf("missing filename parameter")
 		}
-		return "", quadpro.save(category, filename)
+		return "", quad.save(category, filename)
 
 	case "test":
 		ntimes := ArgToInt("ntimes", apiargs)
@@ -103,26 +103,26 @@ func (quadpro *QuadPro) Api(api string, apiargs map[string]string) (result strin
 			testtype = ""
 		}
 		interval := time.Duration(intervalf * 1000000000)
-		LogInfo("QuadPro.ExecuteApi test start", "ntimes", ntimes, "interval", interval)
-		quadpro.doTest(testtype, ntimes, interval)
-		LogInfo("QuadPro.ExecuteApi test end", "ntimes", ntimes, "interval", interval)
+		LogInfo("Quad.ExecuteApi test start", "ntimes", ntimes, "interval", interval)
+		quad.doTest(testtype, ntimes, interval)
+		LogInfo("Quad.ExecuteApi test end", "ntimes", ntimes, "interval", interval)
 		return "", nil
 
 	default:
-		LogWarn("QuadPro.ExecuteApi api is not recognized\n", "api", api)
-		return "", fmt.Errorf("QuadPro.Api unrecognized api=%s", api)
+		LogWarn("Quad.ExecuteApi api is not recognized\n", "api", api)
+		return "", fmt.Errorf("Quad.Api unrecognized api=%s", api)
 	}
 }
 
 var CursorSourceToQuadPreset ParamsMap
 
-func (quadpro *QuadPro) Start() {
+func (quad *Quad) Start() {
 
-	if quadpro.started {
-		LogInfo("QuadPro.Start: already started")
+	if quad.started {
+		LogInfo("Quad.Start: already started")
 		return
 	}
-	quadpro.started = true
+	quad.started = true
 
 	buttonPath := ConfigFilePath("buttons.json")
 	if fileExists(buttonPath) {
@@ -145,25 +145,25 @@ func (quadpro *QuadPro) Start() {
 		}
 	}
 
-	TheCursorManager.AddCursorHandler("QuadPro", TheQuadPro, "A", "B", "C", "D")
+	TheCursorManager.AddCursorHandler("Quad", TheQuad, "A", "B", "C", "D")
 
-	_ = quadpro.addPatch("A")
-	_ = quadpro.addPatch("B")
-	_ = quadpro.addPatch("C")
-	_ = quadpro.addPatch("D")
+	_ = quad.addPatch("A")
+	_ = quad.addPatch("B")
+	_ = quad.addPatch("C")
+	_ = quad.addPatch("D")
 
-	err := quadpro.Load("quad", "_Current")
+	err := quad.Load("quad", "_Current")
 	LogIfError(err)
 }
 
-func (quadpro *QuadPro) Status(source string) string {
+func (quad *Quad) Status(source string) string {
 	return "status" + source
 }
 
-func (quadpro *QuadPro) PatchForCursorEvent(ce CursorEvent) (patch *Patch, button string) {
+func (quad *Quad) PatchForCursorEvent(ce CursorEvent) (patch *Patch, button string) {
 	source := ce.Source()
 	// If the source has some patchLogic...
-	patchLogic, ok := quadpro.patchLogic[source]
+	patchLogic, ok := quad.patchLogic[source]
 	if !ok {
 		patch = nil
 	} else {
@@ -177,7 +177,7 @@ func (quadpro *QuadPro) PatchForCursorEvent(ce CursorEvent) (patch *Patch, butto
 	return patch, button
 }
 
-func (quadpro *QuadPro) onCursorEvent(state ActiveCursor) error {
+func (quad *Quad) onCursorEvent(state ActiveCursor) error {
 
 	// Any non-attract-generated cursor or Button will turn attract mode off.
 	if !state.Current.IsAttractGenerated() && TheAttractManager.AttractModeIsOn() {
@@ -202,9 +202,9 @@ func (quadpro *QuadPro) onCursorEvent(state ActiveCursor) error {
 				LogInfo("No Preset is attached to button", "button", state.Button)
 			} else {
 				preset := val.(string)
-				if TheQuadPro != nil {
+				if TheQuad != nil {
 					LogOfType("cursor", "Button down", "z", state.Current.Pos.Z)
-					err := TheQuadPro.Load("quad", preset)
+					err := TheQuad.Load("quad", preset)
 					if err != nil {
 						return err
 					}
@@ -219,7 +219,7 @@ func (quadpro *QuadPro) onCursorEvent(state ActiveCursor) error {
 	// For the moment, the cursor to patchLogic mapping is 1-to-1.
 	// I.e. ce.Source of "A" maps to patchLogic "A"
 	source := state.Current.Source()
-	patchLogic, ok := quadpro.patchLogic[source]
+	patchLogic, ok := quad.patchLogic[source]
 	if !ok || patchLogic == nil {
 		LogWarn("Source doesn't exist in patchLogic", "source", source)
 		return nil
@@ -248,38 +248,38 @@ func (quadpro *QuadPro) onCursorEvent(state ActiveCursor) error {
 	return nil
 }
 
-func (quadpro *QuadPro) onClientRestart(portnum int) {
-	LogOfType("resolume", "quadpro got clientrestart", "portnum", portnum)
+func (quad *Quad) onClientRestart(portnum int) {
+	LogOfType("resolume", "quad got clientrestart", "portnum", portnum)
 	// Refresh the patch that has that portnum
-	for _, patch := range quadpro.patch {
+	for _, patch := range quad.patch {
 		patch.RefreshAllIfPortnumMatches(portnum)
 	}
 }
 
-func (quadpro *QuadPro) onGet(apiargs map[string]string) (result string, err error) {
+func (quad *Quad) onGet(apiargs map[string]string) (result string, err error) {
 	paramName, ok := apiargs["name"]
 	if !ok {
-		return "", fmt.Errorf("QuadPro.onPatchGet: Missing name argument")
+		return "", fmt.Errorf("Quad.onPatchGet: Missing name argument")
 	}
 	if strings.HasPrefix(paramName, "global") {
 		return GetParam(paramName)
 	} else {
-		return "", fmt.Errorf("QuadPro.onGet: can't handle parameter %s", paramName)
+		return "", fmt.Errorf("Quad.onGet: can't handle parameter %s", paramName)
 	}
 }
 
-func (quadpro *QuadPro) onMidiEvent(me MidiEvent) error {
-	LogOfType("midi", "QuadPro.onMidiEvent", "me", me)
+func (quad *Quad) onMidiEvent(me MidiEvent) error {
+	LogOfType("midi", "Quad.onMidiEvent", "me", me)
 	return nil
 }
 
-func (quadpro *QuadPro) RandomPatchName() string {
-	quadpro.randMutex.Lock()
-	defer quadpro.randMutex.Unlock()
-	return string("ABCD"[quadpro.rand.Intn(len(Patchs))])
+func (quad *Quad) RandomPatchName() string {
+	quad.randMutex.Lock()
+	defer quad.randMutex.Unlock()
+	return string("ABCD"[quad.rand.Intn(len(Patchs))])
 }
 
-func (quadpro *QuadPro) doTest(testtype string, ntimes int, interval time.Duration) {
+func (quad *Quad) doTest(testtype string, ntimes int, interval time.Duration) {
 
 	numsteps, err := GetParamInt("global.testgesturenumsteps")
 	if err != nil {
@@ -297,7 +297,7 @@ func (quadpro *QuadPro) doTest(testtype string, ntimes int, interval time.Durati
 
 		switch testtype {
 		case "":
-			randomPatchName := quadpro.RandomPatchName()
+			randomPatchName := quad.RandomPatchName()
 			tag := randomPatchName + ",test"
 			go TheCursorManager.GenerateRandomGesture(tag, numsteps, dur)
 
@@ -311,30 +311,30 @@ func (quadpro *QuadPro) doTest(testtype string, ntimes int, interval time.Durati
 	}
 }
 
-func (quadpro *QuadPro) loadQuadRand(category string) (string, error) {
+func (quad *Quad) loadQuadRand(category string) (string, error) {
 
 	arr, err := SavedFileList(category)
 	if err != nil {
 		return "", err
 	}
 
-	quadpro.randMutex.Lock()
-	rn := quadpro.rand.Uint64() % uint64(len(arr))
-	quadpro.randMutex.Unlock()
+	quad.randMutex.Lock()
+	rn := quad.rand.Uint64() % uint64(len(arr))
+	quad.randMutex.Unlock()
 
-	err = quadpro.Load(category, arr[rn])
+	err = quad.Load(category, arr[rn])
 	if err != nil {
 		LogIfError(err)
 		return "", err
 	}
 
-	for _, patch := range quadpro.patch {
+	for _, patch := range quad.patch {
 		patch.RefreshAllPatchValues()
 	}
 	return arr[rn], err
 }
 
-func (quadpro *QuadPro) Load(category string, filename string) error {
+func (quad *Quad) Load(category string, filename string) error {
 
 	paramsMap, err := LoadParamsMapOfCategory(category, filename)
 	if err != nil {
@@ -342,18 +342,18 @@ func (quadpro *QuadPro) Load(category string, filename string) error {
 		return err
 	}
 
-	LogInfo("QuadPro.Load", "category", category, "filename", filename)
+	LogInfo("Quad.Load", "category", category, "filename", filename)
 	isOn := TheAttractManager.attractModeIsOn.Load()
 	PublishFromEngine("quadro.load", fmt.Sprintf("category=%s filename=%s attractmode=%v", category, filename, isOn))
 
 	var lasterr error
 
 	if category == "global" {
-		err := fmt.Errorf("HACK! quadpro.Load shouldn't load global parameters")
+		err := fmt.Errorf("HACK! quad.Load shouldn't load global parameters")
 		LogError(err)
 		lasterr = err
 	} else {
-		for _, patch := range quadpro.patch {
+		for _, patch := range quad.patch {
 			err := patch.Load(category, paramsMap)
 			if err != nil {
 				LogIfError(err)
@@ -375,13 +375,13 @@ func (quadpro *QuadPro) Load(category string, filename string) error {
 		}
 	case "quad":
 		if filename != "_Current" {
-			err = quadpro.saveQuad("_Current")
+			err = quad.saveQuad("_Current")
 		}
 	case "patch", "sound", "visual", "effect", "misc":
 		// If we're loading a patch (or something inside a patch, like sound, visual, etc),
 		// we save the entire quad, since that's our real persistent state
 		if filename != "_Current" {
-			err = quadpro.saveQuad("_Current")
+			err = quad.saveQuad("_Current")
 		}
 	}
 	if err != nil {
@@ -391,17 +391,17 @@ func (quadpro *QuadPro) Load(category string, filename string) error {
 	return lasterr
 }
 
-func (quadpro *QuadPro) save(category string, filename string) (err error) {
+func (quad *Quad) save(category string, filename string) (err error) {
 
-	LogOfType("saved", "QuadPro.save", "category", category, "filename", filename)
+	LogOfType("saved", "Quad.save", "category", category, "filename", filename)
 
 	if category == "global" {
-		LogWarn("QuadPro.save: shouldn't be saving global?")
-		err = fmt.Errorf("QuadPro.save: global shouldn't be handled here")
+		LogWarn("quad.save: shouldn't be saving global?")
+		err = fmt.Errorf("quad.save: global shouldn't be handled here")
 	} else if category == "quad" {
-		err = quadpro.saveQuad(filename)
+		err = quad.saveQuad(filename)
 	} else {
-		err = fmt.Errorf("QuadPro.Api: unhandled save category %s", category)
+		err = fmt.Errorf("quad.save: unhandled save category %s", category)
 	}
 	if err != nil {
 		LogIfError(err)
@@ -409,7 +409,7 @@ func (quadpro *QuadPro) save(category string, filename string) (err error) {
 	return err
 }
 
-func (quadpro *QuadPro) saveQuad(quadName string) error {
+func (quad *Quad) saveQuad(quadName string) error {
 
 	category := "quad"
 	path, err := WritableSavedFilePath(category, quadName, ".json")
@@ -418,10 +418,10 @@ func (quadpro *QuadPro) saveQuad(quadName string) error {
 		return err
 	}
 
-	LogOfType("saved", "QuadPro.saveQuad", "quad", quadName)
+	LogOfType("saved", "Quad.saveQuad", "quad", quadName)
 
 	sortedPatchNames := []string{}
-	for _, patch := range quadpro.patch {
+	for _, patch := range quad.patch {
 		sortedPatchNames = append(sortedPatchNames, patch.Name())
 	}
 	sort.Strings(sortedPatchNames)
@@ -429,7 +429,7 @@ func (quadpro *QuadPro) saveQuad(quadName string) error {
 	s := "{\n    \"params\": {\n"
 	sep := ""
 	for _, patchName := range sortedPatchNames {
-		patch := quadpro.patch[patchName]
+		patch := quad.patch[patchName]
 		sortedNames := patch.ParamNames()
 		for _, fullName := range sortedNames {
 			valstring := patch.Get(fullName)
@@ -442,16 +442,16 @@ func (quadpro *QuadPro) saveQuad(quadName string) error {
 	return os.WriteFile(path, data, 0644)
 }
 
-func (quadpro *QuadPro) addPatch(name string) *Patch {
+func (quad *Quad) addPatch(name string) *Patch {
 	patch := NewPatch(name)
-	quadpro.patch[name] = patch
-	quadpro.patchLogic[name] = NewPatchLogic(patch)
+	quad.patch[name] = patch
+	quad.patchLogic[name] = NewPatchLogic(patch)
 	return patch
 }
 
 /*
-func (quadpro *QuadPro) scheduleNoteNow(dest string, pitch, velocity uint8, duration Clicks) {
-	LogInfo("QuadPro.scheculeNoteNow", "dest", dest, "pitch", pitch)
+func (quad *Quad) scheduleNoteNow(dest string, pitch, velocity uint8, duration Clicks) {
+	LogInfo("Quad.scheculeNoteNow", "dest", dest, "pitch", pitch)
 	pe := &PhraseElement{Value: NewNoteFull(0, pitch, velocity, duration)}
 	phr := NewPhrase().InsertElement(pe)
 	phr.Destination = dest

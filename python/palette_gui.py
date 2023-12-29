@@ -940,7 +940,7 @@ class ProGuiApp(tk.Tk):
 
         if category == "global":
             # log("Loading","category","global","filename",filename)
-            palette.palette_quadpro_api("load",
+            palette.palette_quad_api("load",
                 "\"filename\": \"" + filename + "\""
                 ", \"category\": \"" + category + "\"")
         elif category == "quad":
@@ -949,7 +949,7 @@ class ProGuiApp(tk.Tk):
                 # because in casual mode, the patch selectors aren't shown.
                 # In non-casual mode (guiLevel>0) we do this if allPatchesSelected
                 log("Loading","category","quad","filename",filename)
-                palette.palette_quadpro_api("load",
+                palette.palette_quad_api("load",
                     "\"filename\": \"" + filename + "\""
                     ", \"category\": \"" + category + "\"")
             else:
@@ -1334,7 +1334,7 @@ class Patch():
         self.performIndex[name] = index
 
     def sendANO(self):
-        palette.palette_quadpro_api("ANO")
+        palette.palette_quad_api("ANO")
 
     def clear(self):
         palette.palette_patch_api(self.name(), "clear", "")
@@ -2018,7 +2018,7 @@ class PageEditParams(tk.Frame):
     def saveSaved(self,filename):
 
         if self.pagename == "quad":
-            result, err = palette.palette_quadpro_api("save",
+            result, err = palette.palette_quad_api("save",
                     "\"category\": \"" + self.pagename + "\", "
                     "\"filename\": \"" + filename + "\"")
             if err != None:
