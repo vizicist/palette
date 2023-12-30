@@ -4,6 +4,7 @@
 package kit
 
 import (
+	"fmt"
 	"io"
 	"os/exec"
 	"syscall"
@@ -34,7 +35,7 @@ func Spawn(executable string, background bool, stdout io.Writer, stderr io.Write
 		LogIfError(err)
 		return err
 	}
-	Info("Spawn", "bg", background, "cmd")
+	LogInfo("Spawn", "bg", background, "cmd")
 	return nil
 }
 
@@ -47,11 +48,18 @@ func StartDeviceInput() {
 
 // KillProcess kills a process (synchronously)
 func KillExecutable(exe string) {
-	Warn("KillProcess in unix.go not tested", "exe", exe)
+	LogWarn("KillProcess in unix.go not tested", "exe", exe)
 	Spawn("pkill", false, noWriter, noWriter, exe)
 }
 
 func IsRunningExecutable(exe string) (bool,error) {
-	err := fmt.Eprintf("unix.go: IsRunningExecutable needs work")
+	err := fmt.Errorf("unix.go: IsRunningExecutable needs work")
 	return false,err
+}
+
+func StartExecutableLogOutput(logName string, fullexe string, args ...string) error {
+	err := fmt.Errorf("unix.go: StartExecutableLogOutput needs work")
+	// logWriter := NewExecutableLogWriter(logName)
+	// _, err := StartExecutableInBackground(fullexe, logWriter, logWriter, args...)
+	return err
 }
