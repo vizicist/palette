@@ -9,6 +9,7 @@ import (
 	"image"
 	"image/draw"
 	"io"
+	"math/rand"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -27,6 +28,26 @@ var OscPort = 3333
 var EventClientPort = 6666
 var GuiPort = 3943
 var LocalAddress = "127.0.0.1"
+var TheRand *rand.Rand
+
+func InitMisc() {
+
+	InitParams()
+
+	// We first load the current values, but don't actually execute anything that they trigger
+	err := LoadGlobalParams()
+	if err != nil {
+		LogIfError(err)
+	}
+
+	TheProcessManager = NewProcessManager()
+	TheProcessManager.AddBuiltins()
+
+	// Fixed rand sequence, better for testing
+	TheRand = rand.New(rand.NewSource(1))
+	TheNats = NewNats()
+}
+
 
 // fileExists checks if a file exists
 func fileExists(filename string) bool {
