@@ -200,10 +200,10 @@ func CliCommand(args []string) (map[string]string, error) {
 
 	case "nats", "natsapi":
 		kit.LogInfo("palette: nats command")
-		if len(args) < 2 {
+		if len(args) < 3 {
 			return nil, fmt.Errorf("nats command missing argument")
 		}
-		result, err := kit.EngineNatsApi(kit.Hostname(), args[1])
+		result, err := kit.EngineNatsApi(args[1], args[2])
 		if err != nil {
 			return map[string]string{"error": err.Error()}, nil
 		} else {

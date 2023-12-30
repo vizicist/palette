@@ -5,6 +5,16 @@
     "version": "0.2.0",
     "configurations": [
 
+       {
+            "name": "REMOTE GUI (FYNE)",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${env:PALETTE_SOURCE}/cmd/palette_remote/palette_remote.go",
+            "env": {
+                "Path": "${env:Path};${workspaceFolder};c:/Users/me/Documents/github/vizicist/palette/SenselLib/x64;"             },
+            "args": []
+        },
         {
             "name": "palette summarize tiny.log",
             "type": "go",
@@ -33,16 +43,6 @@
             "program": "${env:PALETTE_SOURCE}/python/palette_gui.py",
             "console": "integratedTerminal",
             "cwd": "${fileDirname}",
-            "args": []
-        },
-       {
-            "name": "GUI (FYNE) palette_gui.go",
-            "type": "go",
-            "request": "launch",
-            "mode": "auto",
-            "program": "${env:PALETTE_SOURCE}/cmd/palette_gui/palette_gui.go",
-            "env": {
-                "Path": "${env:Path};${workspaceFolder};c:/Users/me/Documents/github/vizicist/palette/SenselLib/x64;"             },
             "args": []
         },
        {
