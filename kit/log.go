@@ -110,6 +110,10 @@ func InitLog(logname string) {
 	LogInfo("InitLog ==============================", "date", date, "logname", logname)
 }
 
+func LogFatal(err error) {
+	TheLog.Fatal(err)
+}
+
 func SummarizeLog(fname string) error {
 	file, err := os.Open(fname)
 	if err != nil {

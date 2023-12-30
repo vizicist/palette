@@ -73,14 +73,12 @@ func MIDIFilePath(nm string) string {
 func LocalPaletteDir() string {
 	localapp := os.Getenv("CommonProgramFiles")
 	if localapp == "" {
-		var err error
-		tempdir, err := GetParam("global.tempdir")
-		LogWarn("Expecting CommonProgramFiles to be set, using global.tempdir value", "tempdir", tempdir)
-		if err != nil {
-			LogIfError(err)
-			return ""
+		home := os.Getenv("HOME")
+		localapp = filepath.Join(home,"commonfiles","Palette")
+		if err := os.MkdirAll(localapp, os.ModePerm); err != nil {
+			LogFatal(err)
 		}
-		localapp = tempdir
+		LogInfo("LocalPaletteDir using HOME","localapp",localapp)
 	}
 	return filepath.Join(localapp, "Palette")
 }
