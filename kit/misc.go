@@ -71,16 +71,20 @@ func MIDIFilePath(nm string) string {
 
 // LocalPaletteDir gets used for local (and changed) things in saved and config
 func LocalPaletteDir() string {
-	localapp := os.Getenv("CommonProgramFiles")
-	if localapp == "" {
+	commonfilepath := os.Getenv("CommonProgramFiles")
+	if commonfilepath == "" {
 		home := os.Getenv("HOME")
-		localapp = filepath.Join(home,"commonfiles","Palette")
-		if err := os.MkdirAll(localapp, os.ModePerm); err != nil {
-			LogFatal(err)
+		commonfilepath = filepath.Join(home,"commonfiles")
+		palettedir := filepath.Join(commonfilepath,"Palette")
+		if err := os.MkdirAll(palettedir, os.ModePerm); err != nil {
+			fmt.Printf("Unable to create %s\n",palettedir)
+			panic(err)
 		}
-		LogInfo("LocalPaletteDir using HOME","localapp",localapp)
+		// DO NOT USE Log* functions here
+		fmt.Printf("HOME palettedir = %s\n",palettedir)
+		return palettedir
 	}
-	return filepath.Join(localapp, "Palette")
+	return filepath.Join(commonfilepath, "Palette")
 }
 
 var DataDir = "data" // default, override with environment variable
