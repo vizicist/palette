@@ -7,6 +7,7 @@
 #define MyAppVersion "SUBSTITUTE_VERSION_HERE"
 #define MyAppPublisher "Nosuch Media"
 #define MyAppURL "https://github.com/vizicist/palette"
+#define DataPath "{commoncf64}/Palette/data"
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
@@ -51,10 +52,8 @@ Source: "ship\ffgl\*"; DestDir: "{app}\ffgl"; Flags: ignoreversion recursesubdir
 ; Source: "ship\keykit\*"; DestDir: "{app}\keykit"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 ; NOTE - all data_* files go in CommonProgramFiles\Palette
-Source: "ship\data\*"; DestDir: "{commoncf64}\{#MyAppName}\data"; Flags: comparetimestamp ignoreversion recursesubdirs createallsubdirs
-; Source: "ship\data_surge\*"; DestDir: "{commoncf64}\{#MyAppName}\data_surge"; Flags: comparetimestamp ignoreversion recursesubdirs createallsubdirs
-; Source: "ship\data_moldover\*"; DestDir: "{commoncf64}\{#MyAppName}\data_moldover"; Flags: comparetimestamp ignoreversion recursesubdirs createallsubdirs
-Source: "logs_readme.txt"; DestDir: "{commoncf64}\{#MyAppName}\data\logs"; DestName: "readme.txt"; Flags: ignoreversion
+Source: "ship\data\*"; DestDir: "{#DataPath}"; Flags: comparetimestamp ignoreversion recursesubdirs createallsubdirs
+Source: "logs_readme.txt"; DestDir: "{#DataPath}\logs"; DestName: "readme.txt"; Flags: ignoreversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 ; This specifies the Visual C++ Windows Runtime Redistributable to install, it's put in {app}\bin to help debug things.
@@ -71,11 +70,12 @@ Filename: taskkill.exe; Parameters: "/F /IM palette_gui.exe"; StatusMsg: "Making
 Name: "{group}\{cm:ProgramOnTheWeb,{#MyAppName}}"; Filename: "{#MyAppURL}"
 Name: "{group}\Start Palette"; Filename: "{app}\bin\palette.exe"; Parameters: "start"; Flags: runminimized
 Name: "{group}\Stop Palette"; Filename: "{app}\bin\palette.exe"; Parameters: "stop"; Flags: runminimized
-Name: "{group}\Config Directory"; Filename: "{win}\explorer.exe"; Parameters: "{commoncf64}\{#MyAppName}"
 
 [Registry]
 Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; \
-    ValueType: expandsz; ValueName: "PALETTE"; ValueData: "{app}"
+    ValueType: expandsz; ValueName: "PALETTE"; ValueData: "{app}"; Flags: preservestringtype
+Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; \
+    ValueType: expandsz; ValueName: "PALETTE_DATA_PATH"; ValueData: "{commoncf64}\Palette\data"; Flags: preservestringtype
 
 [Code]
 procedure CurStepChanged(CurStep: TSetupStep);
