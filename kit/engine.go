@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"math/rand"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -39,25 +38,6 @@ type Engine struct {
 
 var TheEngine *Engine
 var engineSysex sync.Mutex
-var TheRand *rand.Rand
-
-func InitMisc() {
-
-	InitParams()
-
-	// We first load the current values, but don't actually execute anything that they trigger
-	err := LoadGlobalParams()
-	if err != nil {
-		LogIfError(err)
-	}
-
-	TheProcessManager = NewProcessManager()
-	TheProcessManager.AddBuiltins()
-
-	// Fixed rand sequence, better for testing
-	TheRand = rand.New(rand.NewSource(1))
-	TheNats = NewNats()
-}
 
 func InitEngine() {
 
