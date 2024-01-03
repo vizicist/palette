@@ -6,9 +6,11 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"syscall"
 
+	"github.com/hypebeast/go-osc/osc"
 	"github.com/vizicist/palette/kit"
 )
 
@@ -43,13 +45,15 @@ func main() {
 }
 
 func usage() string {
-	return `Invalid usage, expecting:
+	return `Usage:
 	palette start [ {processname} ]
 	palette stop [ {processname}]
 	palette status
 	palette version
 	palette logs [ archive, clear ]
 	palette summarize {logfile}
+	palette osc listen {port@host}
+	palette osc send {port@host} {addr} ...
 	palette {category}.{api} [ {argname} {argvalue} ] ...
 	`
 }
@@ -104,6 +108,47 @@ func CliCommand(args []string) (map[string]string, error) {
 
 	// case "api":
 	// 	return kit.EngineApi(arg1, args[2:])
+
+	case "osc":
+
+		switch arg1 {
+
+		case "listen":
+			if len(args) < 3 {
+				return nil, fmt.Errorf("bad osc command (%s), expected usage:\n%s", arg1, usage())
+			}
+			port, host, err := getPortHost(args[2])
+			if err != nil {
+				return nil, err
+			}
+			fmt.Printf("Listening on %d@%s ...\n", port, host)
+			ListenAndPrint(host, port)
+			return nil, nil
+
+		case "send":
+			if len(args) < 3 {
+				return nil, fmt.Errorf("bad osc command (%s), expected usage:\n%s", arg1, usage())
+			}
+			port, host, err := getPortHost(args[2])
+			if err != nil {
+				return nil, err
+			}
+			fmt.Printf("porthost = %d@%s\n", port, host)
+			client := osc.NewClient(host,port)
+			msg := osc.NewMessage(args[3]) // addr
+			for _, val := range args[4:] {   // remaining values
+				s := fmt.Sprintf("%v", val)
+				msg.Append(s) // always append as a string
+			}
+			err = client.Send(msg)
+			if err != nil {
+				return nil, fmt.Errorf("client.Send, err=%s",err.Error())
+			}
+			return nil, nil
+
+		default:
+			return nil, fmt.Errorf("bad osc command (%s), expected usage:\n%s", arg1, usage())
+		}
 
 	case "start":
 
@@ -223,7 +268,6 @@ func CliCommand(args []string) (map[string]string, error) {
 			return map[string]string{"result": result}, nil
 		}
 
-
 	default:
 		if len(words) < 2 {
 			return nil, fmt.Errorf("unrecognized command (%s), expected usage:\n%s", api, usage())
@@ -231,6 +275,49 @@ func CliCommand(args []string) (map[string]string, error) {
 			return nil, fmt.Errorf("invalid api format, expecting {plugin}.{api}\n" + usage())
 		}
 		return kit.LocalEngineApi(api, args[1:]...)
+	}
+}
+
+func getPortHost(porthost string) (port int, host string, err error) {
+	words := strings.Split(porthost, "@")
+	switch len(words) {
+	case 1: // just port number, assume LocalAddress
+		port, err = strconv.Atoi(words[0])
+		if err == nil {
+			host = kit.LocalAddress
+		}
+	case 2: // port@host
+		host = words[1]
+		port, err = strconv.Atoi(words[0])
+	default:
+		err = fmt.Errorf("bad format of port@host")
+	}
+	return port, host, err
+}
+
+func ListenAndPrint(host string, port int) {
+
+	source := fmt.Sprintf("%s:%d", host, port)
+
+	d := osc.NewStandardDispatcher()
+
+	err := d.AddMsgHandler("*", func(msg *osc.Message) {
+		fmt.Printf("received msg = %v\n", msg)
+	})
+	if err != nil {
+		kit.LogIfError(err)
+	}
+
+	server := &osc.Server{
+		Addr:       source,
+		Dispatcher: d,
+	}
+	// ListenAndServer listens forever
+	err = server.ListenAndServe()
+	if err != nil {
+		fmt.Printf("err = %v\n",err)
+		kit.LogError(err)
+		return
 	}
 }
 
