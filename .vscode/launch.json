@@ -5,6 +5,13 @@
     "version": "0.2.0",
     "configurations": [
 
+        {
+            "name": "palette osc listen",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTE_SOURCE}/cmd/palette/palette.go",
+            "args": ["osc","listen","3355@127.0.0.1"]
+        },
        {
             "name": "REMOTE GUI (FYNE)",
             "type": "go",

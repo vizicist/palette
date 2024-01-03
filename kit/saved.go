@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 )
 
@@ -95,10 +96,11 @@ func SavedFileList(category string) ([]string, error) {
 		name = strings.TrimPrefix(name, category+".")
 		filelist = append(filelist, name)
 	}
+	slices.Sort(filelist)
 	return filelist, nil
 }
 
-func SavedList(category string) (string, error) {
+func SavedListAsString(category string) (string, error) {
 
 	result := "["
 	sep := ""

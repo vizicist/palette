@@ -424,11 +424,6 @@ func (patch *Patch) SetPatchValuesFromQuadMap(paramsmap map[string]any) error {
 
 func (patch *Patch) Load(category string, paramsMap ParamsMap) error {
 
-	// paramsmap, err := LoadParamsMapOfCategory(category, filename)
-	// if err != nil {
-	// 	LogIfError(err)
-	// 	return err
-	// }
 	if category == "quad" {
 		// this will only load things to this one patch
 		err := patch.SetPatchValuesFromQuadMap(paramsMap)
