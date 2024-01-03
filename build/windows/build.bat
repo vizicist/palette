@@ -63,18 +63,13 @@ popd
 rem print any error messages from compiling cmds
 type %buildcmdsout%
 
-echo ================ Creating palette_gui.exe, osc.exe
+echo ================ Creating palette_gui.exe
 pushd %PALETTE_SOURCE%\python
 rm -fr dist
 rm -fr build\palette_gui
 rm -fr build
 pyinstaller -i ..\data\config\palette.ico palette_gui.py > pyinstaller_gui.out 2>&1
-pyinstaller osc.py > pyinstaller_osc.out 2>&1
-
-echo ================ Merging python executables
-rem merge all the pyinstalled things into one
 move dist\palette_gui dist\pyinstalled >nul
-move dist\osc\osc.exe dist\pyinstalled >nul
 move dist\pyinstalled %bin% >nul
 popd
 

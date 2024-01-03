@@ -86,7 +86,7 @@ func InitEngine() {
 }
 
 func LocalEngineApi(api string, args ...string) (map[string]string, error) {
-	return EngineHttpApi("127.0.0.1",api, args...)
+	return EngineHttpApi(LocalAddress, api, args...)
 }
 
 func EngineHttpApi(host string, api string, args ...string) (map[string]string, error) {
@@ -114,7 +114,7 @@ func EngineNatsApi(host string, cmd string) (result string, err error) {
 		return "", err
 	}
 	timeout := 3 * time.Second
-	subject := fmt.Sprintf("to_palette.%s.api",host)
+	subject := fmt.Sprintf("to_palette.%s.api", host)
 	retdata, err := TheNats.Request(subject, cmd, timeout)
 	LogIfError(err)
 	return retdata, err
@@ -125,7 +125,7 @@ func EngineSubscribeNats() {
 	LogIfError(err)
 	if err == nil {
 		subscribeTo := fmt.Sprintf("to_palette.%s.>", Hostname())
-		LogInfo("Subscribing to NATS","subscribeTo",subscribeTo)
+		LogInfo("Subscribing to NATS", "subscribeTo", subscribeTo)
 		err = TheNats.Subscribe(subscribeTo, natsRequestHandler)
 		LogIfError(err)
 	}
@@ -344,7 +344,7 @@ func (e *Engine) StartHttp(port int) {
 		}
 	})
 
-	source := fmt.Sprintf("127.0.0.1:%d", port)
+	source := fmt.Sprintf("%s:%d", LocalAddress, port)
 	err := http.ListenAndServe(source, nil)
 	if err != nil {
 		LogIfError(err)
