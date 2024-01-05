@@ -76,8 +76,6 @@ func InitEngine() {
 
 	TheEngine = e
 
-	EngineSubscribeNats()
-
 	for name := range ParamDefs {
 		if strings.HasPrefix(name, "global.") {
 			ActivateGlobalParam(name)
@@ -108,27 +106,17 @@ func EngineNatsApi(host string, cmd string) (result string, err error) {
 	if !TheNats.enabled {
 		return "", fmt.Errorf("NatsAPI: NATS not enabled")
 	}
-	err = TheNats.Connect()
-	if err != nil {
-		LogIfError(err)
-		return "", err
+	if !TheNats.isConnected {
+		return "", fmt.Errorf("EngineNatsAPI: NATS is not connected")
+	}
+	if TheNats.natsConn == nil {
+		return "", fmt.Errorf("NatsAPI: natsConn is nil?")
 	}
 	timeout := 3 * time.Second
 	subject := fmt.Sprintf("to_palette.%s.api", host)
 	retdata, err := TheNats.Request(subject, cmd, timeout)
 	LogIfError(err)
 	return retdata, err
-}
-
-func EngineSubscribeNats() {
-	err := TheNats.Connect()
-	LogIfError(err)
-	if err == nil {
-		subscribeTo := fmt.Sprintf("to_palette.%s.>", Hostname())
-		LogInfo("Subscribing to NATS", "subscribeTo", subscribeTo)
-		err = TheNats.Subscribe(subscribeTo, natsRequestHandler)
-		LogIfError(err)
-	}
 }
 
 func EngineCloseNats() {
