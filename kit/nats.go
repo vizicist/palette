@@ -14,8 +14,6 @@ type VizNats struct {
 	natsConn    *nats.Conn
 	enabled     bool
 	isConnected bool
-	doReconnect bool
-	attempts    int
 }
 
 // TheNats is the only one
@@ -95,73 +93,72 @@ func PublishSpriteEvent(x, y, z float32) {
 func NewNats() *VizNats {
 	return &VizNats{
 		natsConn:    nil,
-		enabled:     true,
+		enabled:     false,
 		isConnected: false,
-		doReconnect: false,
-		attempts:    0,
 	}
 }
 
 func (vn *VizNats) Disconnect() {
 	vn.natsConn.Close()
-	vn.natsConn = nil
+	vn.isConnected = false
 }
 
-// Connect xxx
-func (vn *VizNats) Connect() error {
+// Init xxx
+func (vn *VizNats) Init() error {
 
 	if !TheNats.enabled {
-		return fmt.Errorf("VizNats.Connect: called when NATS not enabled")
+		return fmt.Errorf("VizNats.Init: called when NATS not enabled")
 	}
-	if vn.natsConn != nil {
+
+	LogInfo("VizNats.Init", "natsConn", vn.natsConn, "isconnected", vn.isConnected, "enabled", vn.enabled)
+
+	if vn.isConnected {
 		// Already connected
-		LogInfo("VisNats.Connect: Already connected!")
+		LogInfo("VisNats.Init: Already connected!")
 		return nil
 	}
-	if !vn.doReconnect && vn.attempts > 0 {
-		err := fmt.Errorf("VisNats.Connect: doReconnect is false, not attempting another connect")
-		LogError(err)
-		return err
-	}
-	vn.attempts++
-	LogInfo("VisNats.Connect: about to try to connect", "attempt", vn.attempts)
+
 	user := os.Getenv("NATS_USER")
 	password := os.Getenv("NATS_PASSWORD")
 	url := os.Getenv("NATS_URL")
+
 	if url == "" {
 		url = LocalAddress
 	}
 	fullurl := fmt.Sprintf("%s:%s@%s", user, password, url)
 
 	// Connect Options.
-	opts := []nats.Option{nats.Name("Palette hostwin Subscriber")}
+	opts := []nats.Option{nats.Name("Palette NATS Subscriber")}
 	opts = setupConnOptions(opts)
 
-	// Use UserCredentials
-	var userCreds = "" // User Credentials File
-	if userCreds != "" {
-		opts = append(opts, nats.UserCredentials(userCreds))
-	}
-
-	reconnects := -1 // Keep reconnecting forever
-	if ! vn.doReconnect {
-		LogInfo("VizNats.Connect: will not attempt to reconnect")
-		reconnects = 0
-	}
-	opts = append(opts, nats.MaxReconnects(reconnects))
+	/*
+		// Use UserCredentials
+		var userCreds = "" // User Credentials File
+		if userCreds != "" {
+			opts = append(opts, nats.UserCredentials(userCreds))
+		}
+	*/
 
 	// Connect to NATS
 	nc, err := nats.Connect(fullurl, opts...)
 	if err != nil {
-		vn.natsConn = nil
+		vn.isConnected = false
 		return fmt.Errorf("nats.Connect failed, user=%s url=%s err=%s", user, url, err)
 	}
+	vn.isConnected = true
 	vn.natsConn = nc
-	LogInfo("Successful connect to NATS")
+
+	LogInfo("Successful connect to NATS","user",user,"url",url)
 
 	date := time.Now().Format(PaletteTimeLayout)
 	msg := fmt.Sprintf("Successful connection from hostname=%s date=%s", Hostname(), date)
 	PublishFromEngine("connect.info", msg)
+
+	subscribeTo := fmt.Sprintf("to_palette.%s.>", Hostname())
+	LogInfo("Subscribing to NATS", "subscribeTo", subscribeTo)
+	err = TheNats.Subscribe(subscribeTo, natsRequestHandler)
+	LogIfError(err)
+
 	return nil
 }
 
@@ -187,13 +184,16 @@ func (vn *VizNats) Request(subj, data string, timeout time.Duration) (retdata st
 	if !TheNats.enabled {
 		return "", fmt.Errorf("VizNats.Request: called when NATS not enabled")
 	}
+	if !TheNats.isConnected {
+		return "", fmt.Errorf("VizNats.Request: called when NATS is not Connected")
+	}
+
 	LogOfType("nats", "VizNats.Request", "subject", subj, "data", data)
-	nc := vn.natsConn
-	if nc == nil {
+	if !vn.isConnected || vn.natsConn == nil {
 		return "", fmt.Errorf("Viznats.Request: no NATS connection")
 	}
 	bytes := []byte(data)
-	msg, err := nc.Request(subj, bytes, timeout)
+	msg, err := vn.natsConn.Request(subj, bytes, timeout)
 	if err == nats.ErrTimeout {
 		return "", fmt.Errorf("timeout, nothing is subscribed to subj=%s", subj)
 	} else if err != nil {
@@ -208,16 +208,19 @@ func (vn *VizNats) Publish(subj string, msg string) error {
 	if !TheNats.enabled {
 		return fmt.Errorf("VizNats.Publish: called when NATS not enabled")
 	}
+	if !TheNats.isConnected {
+		return fmt.Errorf("VizNats.Publish: called when NATS is not Connected")
+	}
 
 	nc := vn.natsConn
-	if nc == nil {
+	if !vn.isConnected || nc == nil {
 		return fmt.Errorf("Viznats.Publish: no NATS connection, subject=%s", subj)
 	}
 	bytes := []byte(msg)
 
 	LogInfo("Nats.Publish", "subject", subj, "msg", msg)
 
-	err := nc.Publish(subj, bytes)
+	err := vn.natsConn.Publish(subj, bytes)
 	LogIfError(err)
 	nc.Flush()
 
@@ -232,6 +235,9 @@ func (vn *VizNats) Subscribe(subj string, callback nats.MsgHandler) error {
 
 	if !TheNats.enabled {
 		return fmt.Errorf("VizNats.Subscribe: called when NATS not enabled")
+	}
+	if !TheNats.isConnected {
+		return fmt.Errorf("VizNats.Subscribe: called when NATS is not Connected")
 	}
 
 	LogInfo("VizNats.Subscribe", "subject", subj)
@@ -249,21 +255,16 @@ func (vn *VizNats) Subscribe(subj string, callback nats.MsgHandler) error {
 
 func (vn *VizNats) Close() {
 	if !vn.enabled {
-		LogError(fmt.Errorf("VisNats.Close: called with NATS not enabled"))
+		LogError(fmt.Errorf("VizNats.Close: called with NATS not enabled"))
 		return
 	}
-	if vn.doReconnect && vn.attempts > 0 {
-		LogInfo("VizNats.CLose called, should NOT attempt another connection, NATS is being disabled")
-		vn.enabled = false
+	if vn.natsConn == nil || !vn.isConnected {
+		LogError(fmt.Errorf("VizNats.Close called when natsConn is nil or unconnected"))
 		return
 	}
-	if vn.natsConn != nil {
-		vn.natsConn.Close()
-		vn.natsConn = nil
-		LogError(fmt.Errorf("VizNats.CLose called"))
-	} else {
-		LogError(fmt.Errorf("VizNats.CLose called when natsConn is nil"))
-	}
+	vn.natsConn.Close()
+	vn.isConnected = false
+	LogError(fmt.Errorf("VizNats.CLose called"))
 }
 
 var myNUID = ""
@@ -312,28 +313,25 @@ func GetNUID() string {
 }
 
 func setupConnOptions(opts []nats.Option) []nats.Option {
-	totalWait := 10 * time.Minute
-	reconnectDelay := time.Second
+	totalWait := 48 * time.Hour
+	reconnectDelay := 5 * time.Second
 
 	opts = append(opts, nats.ReconnectWait(reconnectDelay))
 	opts = append(opts, nats.MaxReconnects(int(totalWait/reconnectDelay)))
 	opts = append(opts, nats.DisconnectErrHandler(func(nc *nats.Conn, err error) {
-		TheNats.natsConn = nil
-		TheNats.enabled = TheNats.doReconnect
+		TheNats.isConnected = false
 		LogWarn("nats.Disconnected",
 			"err", err,
-			"waitminutes", totalWait.Minutes(),
-			"doReconnect", TheNats.doReconnect)
+			"waitminutes", totalWait.Minutes())
 	}))
 	opts = append(opts, nats.ReconnectHandler(func(nc *nats.Conn) {
+		TheNats.isConnected = true
 		LogWarn("nats.Reconnected", "connecturl", nc.ConnectedUrl())
 	}))
 	opts = append(opts, nats.ClosedHandler(func(nc *nats.Conn) {
-		TheNats.natsConn = nil
-		TheNats.enabled = TheNats.doReconnect
+		TheNats.isConnected = false
 		LogWarn("nats.ClosedHandler",
-			"lasterror", nc.LastError(),
-			"doReconnect", TheNats.doReconnect)
+			"lasterror", nc.LastError())
 
 	}))
 	return opts
