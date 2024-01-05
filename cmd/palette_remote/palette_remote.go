@@ -1,13 +1,18 @@
 package main
 
 import (
+	"fmt"
 	"image/color"
+	"slices"
+	"strings"
 	"time"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/driver/desktop"
+	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 
 	"github.com/vizicist/palette/kit"
@@ -18,6 +23,7 @@ var CategoryButton = map[string]*widget.Button{}
 var CurrentCategory = "global"
 var StatusLabel *widget.Label
 var SelectGrid *fyne.Container
+var SelectList *fyne.Container
 var SelectButton = map[string]*widget.Button{}
 var SelectButtonName string
 var ActionButtons = map[string]*ActionButton{}
@@ -97,6 +103,15 @@ func NewActionButton(nm string, f func()) *ActionButton {
 	return a
 }
 
+func GenerateEmptyPage() *fyne.Container {
+	label := widget.NewLabel("This Page Is Blank?")
+	return container.NewVBox(
+		TopButtons,
+		container.NewCenter(label),
+		BottomButtons,
+	)
+}
+
 func GenerateSelectPageForCategory(category string) *fyne.Container {
 
 	scrollableGrid := container.NewVScroll(SelectGrid)
@@ -112,58 +127,89 @@ func GenerateSelectPageForCategory(category string) *fyne.Container {
 	right := canvas.NewRectangle(red)
 	middle := container.NewBorder(top, bottom, left, right, scrollableGrid)
 
+	mousewidget := NewMouseWidget()
+	mousecontainer := container.New(layout.NewStackLayout(), mousewidget)
+	// mousewidget := canvas.NewRectangle(red)
+	// mousewidget.Resize(fyne.NewSize(200,200))
+	// mousewidget.SetMinSize(fyne.NewSize(200,200))
+
 	// Use a container to arrange the label and button vertically
 	return container.NewVBox(
 		TopButtons,
 		middle,
+		mousecontainer,
 		BottomButtons,
 		container.NewCenter(StatusLabel),
 	)
 }
 
 func GenerateEditPageForCategory(category string) *fyne.Container {
-	items := container.NewVBox()
-	items.Add(widget.NewLabel("ITEM1"))
-	items.Add(widget.NewLabel("ITEM2"))
-	items.Add(widget.NewLabel("ITEM3"))
-	paramlist, err := kit.LoadParamsMapOfCategory(category,"_Current")
-	if err != nil {
-		items.Add(widget.NewLabel("NO PARAMETERS OF THAT CATEGORY?"))
-		kit.LogError(err)
-		return nil
-	}
-	limit := 10
-	for nm := range paramlist {
-		limit--
-		if limit <= 0 {
-			break
+
+	scrollableList := container.NewVScroll(SelectList)
+	scrollableList.SetMinSize(fyne.Size{
+		Width:  AppSize.Width,
+		Height: AppSize.Height,
+	})
+
+	SelectList.RemoveAll()
+
+	/*
+		// items := container.NewVBox()
+		paramlist, err := kit.LoadParamsMapOfCategory(category, "_Current")
+		if err != nil {
+			SelectList.Add(widget.NewLabel("NO PARAMETERS OF THAT CATEGORY?"))
+			kit.LogError(err)
+			return nil
 		}
-		kit.LogInfo("nm="+nm)
-		items.Add(widget.NewLabel(nm))
+	*/
+	paramlist := []string{}
+	for nm, def := range kit.ParamDefs {
+		if strings.HasPrefix(nm, category+"._") {
+			continue
+		}
+		if def.Category == category {
+			paramlist = append(paramlist, nm)
+		}
 	}
-	items.Refresh()
+	slices.Sort(paramlist)
+	for _, nm := range paramlist {
+		kit.LogInfo("nm=" + nm)
+		SelectList.Add(widget.NewLabel(nm))
+	}
+	SelectList.Refresh()
+
 	return container.NewVBox(
 		TopButtons,
-		items,
+		scrollableList,
 		BottomButtons,
 		container.NewCenter(StatusLabel),
 	)
 }
 
-func SetCurrentContent(nm string) {
+var EditPage = map[string]*fyne.Container{}
+
+func GenerateEditPages() {
+	for _, category := range []string{"global",
+		"misc", "sound", "visual", "effect"} {
+		EditPage[category] = GenerateEditPageForCategory(category)
+	}
+}
+
+func SetCurrentContent(contentType string) {
 
 	var content *fyne.Container
-	switch nm {
+	switch contentType {
 	case "edit":
-		content = GenerateEditPageForCategory(CurrentCategory)
+		content = EditPage[CurrentCategory]
 	case "select":
-		content = GenerateSelectPageForCategory("select")
-
+		content = GenerateSelectPageForCategory(CurrentCategory)
 	}
 	if content == nil {
-		kit.LogWarn("No content with that name", "name", nm)
+		kit.LogWarn("No content of that type", "contentType", contentType)
+		CurrentContentType = "empty"
+		RemoteWindow.SetContent(GenerateEmptyPage())
 	} else {
-		CurrentContentType = nm
+		CurrentContentType = contentType
 		RemoteWindow.SetContent(content) // Set the window content to be the container
 	}
 }
@@ -202,6 +248,10 @@ func main() {
 		Width:  200,
 		Height: 40,
 	}
+	listsize := fyne.Size{
+		Width:  200,
+		Height: 30,
+	}
 
 	RemoteWindow.Resize(fyne.NewSize(AppSize.Width, AppSize.Height)) // Resize the window
 
@@ -209,6 +259,7 @@ func main() {
 	StatusLabel = widget.NewLabel("Palette Remote 2024")
 
 	SelectGrid = container.NewGridWrap(gridsize)
+	SelectList = container.NewGridWrap(listsize)
 
 	// Create the buttons along the top
 	TopButtons = container.NewHBox()
@@ -231,11 +282,81 @@ func main() {
 		kit.LogInfo("Should be doing Help")
 	}))
 
-	// The "edit" Content page is dynamically generated
-	// the first time it's viewed
+	GenerateEditPages()
 
 	SetCurrentContent("select")
 	SelectCategory("quad")
 
 	RemoteWindow.ShowAndRun() // Show and run the application
 }
+
+// MouseWidget is a widget that implements the desktop.Mouseable interface
+type MouseWidget struct {
+	rect *canvas.Rectangle
+}
+
+func (w *MouseWidget) Refresh() {
+	w.rect.Refresh()
+}
+
+func (w *MouseWidget) Hide() {
+	w.rect.Hide()
+}
+
+func (w *MouseWidget) Show() {
+	w.rect.Show()
+}
+func (w *MouseWidget) Visible() bool {
+	return w.rect.Visible()
+}
+
+func (w *MouseWidget) Resize(size fyne.Size) {
+	w.rect.Resize(size)
+}
+func (w *MouseWidget) MinSize() fyne.Size {
+	return w.rect.MinSize()
+}
+func (w *MouseWidget) Size() fyne.Size {
+	return w.rect.Size()
+}
+func (w *MouseWidget) Position() fyne.Position {
+	return w.rect.Position()
+}
+func (w *MouseWidget) Move(pos fyne.Position) {
+	w.rect.Move(pos)
+}
+
+// MouseDown is called when a mouse button is pressed
+func (w *MouseWidget) MouseDown(ev *desktop.MouseEvent) {
+	fmt.Printf("Mouse down at %v with button %v and modifier %v\n", ev.Position, ev.Button, ev.Modifier)
+}
+
+// MouseUp is called when a mouse button is released
+func (w *MouseWidget) MouseUp(ev *desktop.MouseEvent) {
+	fmt.Printf("Mouse up at %v with button %v and modifier %v\n", ev.Position, ev.Button, ev.Modifier)
+}
+
+// MouseMoved is called when the mouse pointer is moved
+func (w *MouseWidget) MouseMoved(ev *desktop.MouseEvent) {
+	fmt.Printf("Mouse moved at %v with button %v and modifier %v\n", ev.Position, ev.Button, ev.Modifier)
+}
+
+// NewMouseWidget creates a new mouse widget
+func NewMouseWidget() *MouseWidget {
+	red := color.RGBA{R: 255, G: 0, B: 0, A: 255}
+	w := canvas.NewRectangle(red)
+	// w := &MouseWidget{}
+	w.SetMinSize(fyne.NewSize(200, 200))
+	w.FillColor = color.RGBA{R: 255, G: 0, B: 0, A: 255}
+	return &MouseWidget{rect: w}
+}
+
+/*
+func main() {
+	a := app.New()
+	w := a.NewWindow("Mouse Events")
+
+	w.SetContent(NewMouseWidget())
+	w.ShowAndRun()
+}
+*/

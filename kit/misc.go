@@ -40,12 +40,13 @@ func InitMisc() {
 		LogIfError(err)
 	}
 
+	TheNats = NewNats()
+
 	TheProcessManager = NewProcessManager()
 	TheProcessManager.AddBuiltins()
 
 	// Fixed rand sequence, better for testing
 	TheRand = rand.New(rand.NewSource(1))
-	TheNats = NewNats()
 }
 
 

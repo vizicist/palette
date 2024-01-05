@@ -90,7 +90,8 @@ func ExecuteGlobalApi(api string, apiargs map[string]string) (result string, err
 
 	case "status":
 		uptime := fmt.Sprintf("%f", Uptime())
-		attractmode := fmt.Sprintf("%v", TheAttractManager.AttractModeIsOn())
+		attractmode := strconv.FormatBool(TheAttractManager.AttractModeIsOn())
+		natsConnected := strconv.FormatBool(TheNats.isConnected)
 		if TheQuad == nil {
 			result = JsonObject(
 				"uptime", uptime,
@@ -100,6 +101,7 @@ func ExecuteGlobalApi(api string, apiargs map[string]string) (result string, err
 			result = JsonObject(
 				"uptime", uptime,
 				"attractmode", attractmode,
+				"natsconnected", natsConnected,
 				"A", Patchs["A"].Status(),
 				"B", Patchs["B"].Status(),
 				"C", Patchs["C"].Status(),
@@ -327,6 +329,27 @@ func ApplyGlobalParam(name string, value string) (err error) {
 	}
 
 	switch name {
+
+	case "global.nats":
+		newvalue := IsTrueValue(value)
+		if !newvalue && TheNats.isConnected {
+			TheNats.Close()
+		}
+		TheNats.enabled = IsTrueValue(value)
+		if TheNats.enabled {
+			err = TheNats.Init()
+			LogIfError(err)
+		}
+
+		/*
+		if TheNats.enabled && TheNats.natsConn == nil {
+			err = TheNats.Connect()
+			if err != nil {
+				LogIfError(err)
+				return err
+			}
+		}
+		*/
 
 	case "global.attract":
 		TheAttractManager.SetAttractMode(IsTrueValue(value))

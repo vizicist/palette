@@ -1,5 +1,10 @@
 package main
 
+/*
+ * This program monitors NATS traffic from Palettes
+  * and writes it to a file whose name contains the date.
+ */
+
 import (
 	"fmt"
 	"log"
@@ -33,9 +38,6 @@ func main() {
 	// Connect Options.
 	opts := []nats.Option{nats.Name("Palette hostwin Subscriber")}
 	opts = setupConnOptions(opts)
-
-	// Keep reconnecting forever
-	opts = append(opts, nats.MaxReconnects(-1))
 
 	// Connect to NATS
 	nc, err := nats.Connect(fullurl, opts...)
@@ -88,8 +90,9 @@ func addToLog(file *os.File, subject string, data string) {
 }
 
 func setupConnOptions(opts []nats.Option) []nats.Option {
-	totalWait := 10 * time.Minute
-	reconnectDelay := time.Second
+
+	totalWait := 48 * time.Hour // 2 days
+	reconnectDelay := 10 * time.Second
 
 	opts = append(opts, nats.ReconnectWait(reconnectDelay))
 	opts = append(opts, nats.MaxReconnects(int(totalWait/reconnectDelay)))
