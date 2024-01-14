@@ -5,6 +5,9 @@
 		},
 		{
 			"path": "cmd/fyne_demo"
+		},
+		{
+			"path": "../fyne"
 		}
 	],
 	"settings": {
