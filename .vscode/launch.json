@@ -5,12 +5,15 @@
     "version": "0.2.0",
     "configurations": [
 
-        {
-            "name": "palette osc listen",
+       {
+            "name": "Palette Looper GUI",
             "type": "go",
             "request": "launch",
-            "program": "${env:PALETTE_SOURCE}/cmd/palette/palette.go",
-            "args": ["osc","listen","3355@127.0.0.1"]
+            "mode": "auto",
+            "program": "${env:PALETTE_SOURCE}/cmd/palette_looper/palette_looper.go",
+            "env": {
+                "Path": "${env:Path};${workspaceFolder};c:/Users/me/Documents/github/vizicist/palette/SenselLib/x64;"             },
+            "args": []
         },
        {
             "name": "REMOTE GUI (FYNE)",
