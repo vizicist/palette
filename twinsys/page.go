@@ -39,6 +39,8 @@ type MakePermanentMsg struct {
 	W Window
 }
 
+var CurrentPage *Page
+
 // NewPage xxx
 func NewPage(parent Window, name string) WindowData {
 	page := &Page{

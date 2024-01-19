@@ -35,14 +35,8 @@ type Screen struct {
 	backColor color.RGBA
 }
 
-// CurrentPage xxx
-var CurrentPage *Page
-var CurrentWorld *Window
-
-var Styles map[string]*StyleInfo
-
 // Run runs the Gui and never returns
-func Run() {
+func RunEbiten() {
 
 	// The user of palette.win can/should add custom tool types,
 	// but we want to make sure that the standard ones are ours.

@@ -6,6 +6,16 @@
     "configurations": [
 
        {
+            "name": "tjttest",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${env:PALETTE_SOURCE}/cmd/tjttest/tjttest.go",
+            "env": {
+                "Path": "${env:Path};${workspaceFolder};c:/Users/me/Documents/github/vizicist/palette/SenselLib/x64;"             },
+            "args": []
+        },
+       {
             "name": "Palette Looper GUI",
             "type": "go",
             "request": "launch",

@@ -1,0 +1,32 @@
+package main
+
+import (
+    "fyne.io/fyne/v2"
+    "fyne.io/fyne/v2/app"
+    "fyne.io/fyne/v2/canvas"
+    "fyne.io/fyne/v2/container"
+    "fyne.io/fyne/v2/widget"
+    "image/color"
+    "log"
+)
+
+func main() {
+    myApp := app.New()
+    myWindow := myApp.NewWindow("Red Square with Tap Event")
+
+    redSquare := canvas.NewRectangle(color.NRGBA{R: 255, G: 0, B: 0, A: 255})
+    redSquare.SetMinSize(fyne.NewSize(100, 100))
+
+    // Invisible button to capture the tap events
+    invisibleButton := widget.NewButton("", func() {
+        log.Println("Red square tapped")
+    })
+    invisibleButton.Importance = widget.LowImportance // Make the button invisible
+    invisibleButton.Resize(redSquare.MinSize())
+
+    content := container.NewStack(redSquare, invisibleButton) // Overlay the button on the square
+    myWindow.SetContent(content)
+    myWindow.Resize(fyne.NewSize(150, 150))
+
+    myWindow.ShowAndRun()
+}

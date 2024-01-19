@@ -12,7 +12,6 @@ import (
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/driver/desktop"
-	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 
 	"github.com/vizicist/palette/kit"
@@ -108,8 +107,24 @@ func GenerateEmptyPage() *fyne.Container {
 	return container.NewVBox(
 		TopButtons,
 		container.NewCenter(label),
+		NewMouseContainer(),
 		BottomButtons,
 	)
+}
+
+func NewMouseContainer() *fyne.Container {
+	red := color.RGBA{R: 255, G: 0, B: 0, A: 255}
+	mousewidget := canvas.NewRectangle(red)
+	mousewidget.Resize(fyne.NewSize(200, 200))
+	mousewidget.SetMinSize(fyne.NewSize(200, 200))
+	mousewidget2 := canvas.NewRectangle(red)
+	mousewidget2.Resize(fyne.NewSize(100, 100))
+	mousewidget2.SetMinSize(fyne.NewSize(100, 100))
+
+	realwidget := NewMouseWidget()
+	// return container.NewWithoutLayout( mousewidget, mousewidget2, realwidget)
+
+	return container.NewWithoutLayout(realwidget)
 }
 
 func GenerateSelectPageForCategory(category string) *fyne.Container {
@@ -127,17 +142,11 @@ func GenerateSelectPageForCategory(category string) *fyne.Container {
 	right := canvas.NewRectangle(red)
 	middle := container.NewBorder(top, bottom, left, right, scrollableGrid)
 
-	mousewidget := NewMouseWidget()
-	mousecontainer := container.New(layout.NewStackLayout(), mousewidget)
-	// mousewidget := canvas.NewRectangle(red)
-	// mousewidget.Resize(fyne.NewSize(200,200))
-	// mousewidget.SetMinSize(fyne.NewSize(200,200))
-
 	// Use a container to arrange the label and button vertically
 	return container.NewVBox(
 		TopButtons,
 		middle,
-		mousecontainer,
+		NewMouseContainer(),
 		BottomButtons,
 		container.NewCenter(StatusLabel),
 	)
@@ -223,7 +232,7 @@ func ToggleContent() {
 	}
 }
 
-func main() {
+func oldmain() {
 
 	kit.InitLog("remote")
 	kit.InitMisc()
@@ -343,15 +352,19 @@ func (w *MouseWidget) MouseMoved(ev *desktop.MouseEvent) {
 
 // NewMouseWidget creates a new mouse widget
 func NewMouseWidget() *MouseWidget {
-	red := color.RGBA{R: 255, G: 0, B: 0, A: 255}
+	red := color.RGBA{R: 0, G: 255, B: 0, A: 255}
 	w := canvas.NewRectangle(red)
 	// w := &MouseWidget{}
-	w.SetMinSize(fyne.NewSize(200, 200))
-	w.FillColor = color.RGBA{R: 255, G: 0, B: 0, A: 255}
+	w.SetMinSize(fyne.NewSize(300, 300))
+	w.FillColor = color.RGBA{R: 0, G: 255, B: 0, A: 255}
+	w.StrokeColor = color.RGBA{R: 0, G: 255, B: 0, A: 255}
+	w.StrokeWidth = 5.0
+	w.Refresh()
+	w.Show()
+	fmt.Printf("show=%v\n",w.Visible())
 	return &MouseWidget{rect: w}
 }
 
-/*
 func main() {
 	a := app.New()
 	w := a.NewWindow("Mouse Events")
@@ -359,4 +372,3 @@ func main() {
 	w.SetContent(NewMouseWidget())
 	w.ShowAndRun()
 }
-*/
