@@ -18,6 +18,8 @@ type Window interface {
 	Do(cmd kit.Cmd) string
 }
 
+var CurrentWorld *Window
+
 // WinContext doesn't export any of its fields
 type WinContext struct {
 	parent      Window

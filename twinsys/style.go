@@ -34,6 +34,8 @@ type StyleInfo struct {
 	fontFace    font.Face
 }
 
+var Styles map[string]*StyleInfo
+
 // DefaultStyle xxx
 func DefaultStyleName() string {
 	return "fixed"

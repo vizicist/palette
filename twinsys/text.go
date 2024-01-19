@@ -6,6 +6,8 @@ import (
 	"image"
 	"strings"
 
+	"golang.org/x/image/font"
+	"golang.org/x/image/math/fixed"
 	"github.com/vizicist/palette/kit"
 )
 
@@ -176,4 +178,93 @@ func (st *ScrollingText) Clear() {
 	for n := 0; n < len(st.Buffer); n++ {
 		st.Buffer[n] = ""
 	}
+}
+// BoundString returns the measured size of a given string using a given font.
+// This method will return the exact size in pixels that a string drawn by Draw will be.
+// The bound's origin point indicates the dot (period) position.
+// This means that if the text consists of one character '.', this dot is rendered at (0, 0).
+//
+// BoundString behaves almost exactly like golang.org/x/image/font's BoundString,
+// but newline characters '\n' in the input string move the text position to the following line.
+//
+// face is the font for text rendering.
+// text is the string that's being measured.
+//
+// Be careful that the passed font face is held by this package and is never released.
+// This is a known issue (#498).
+//
+// BoundString is concurrent-safe.
+func BoundString(face font.Face, text string) image.Rectangle {
+	// textM.Lock()
+	// defer textM.Unlock()
+
+	m := face.Metrics()
+	faceHeight := m.Height
+
+	fx, fy := fixed.I(0), fixed.I(0)
+	prevR := rune(-1)
+
+	var bounds fixed.Rectangle26_6
+	for _, r := range text {
+		if prevR >= 0 {
+			fx += face.Kern(prevR, r)
+		}
+		if r == '\n' {
+			fx = fixed.I(0)
+			fy += faceHeight
+			prevR = rune(-1)
+			continue
+		}
+
+		b := getGlyphBounds(face, r)
+		b.Min.X += fx
+		b.Max.X += fx
+		b.Min.Y += fy
+		b.Max.Y += fy
+		bounds = bounds.Union(b)
+
+		fx += glyphAdvance(face, r)
+		prevR = r
+	}
+
+	return image.Rect(
+		bounds.Min.X.Floor(),
+		bounds.Min.Y.Floor(),
+		bounds.Max.X.Ceil(),
+		bounds.Max.Y.Ceil(),
+	)
+}
+
+var (
+	glyphBoundsCache = map[font.Face]map[rune]fixed.Rectangle26_6{}
+)
+
+func getGlyphBounds(face font.Face, r rune) fixed.Rectangle26_6 {
+	if _, ok := glyphBoundsCache[face]; !ok {
+		glyphBoundsCache[face] = map[rune]fixed.Rectangle26_6{}
+	}
+	if b, ok := glyphBoundsCache[face][r]; ok {
+		return b
+	}
+	b, _, _ := face.GlyphBounds(r)
+	glyphBoundsCache[face][r] = b
+	return b
+}
+
+var glyphAdvanceCache = map[font.Face]map[rune]fixed.Int26_6{}
+
+func glyphAdvance(face font.Face, r rune) fixed.Int26_6 {
+	m, ok := glyphAdvanceCache[face]
+	if !ok {
+		m = map[rune]fixed.Int26_6{}
+		glyphAdvanceCache[face] = m
+	}
+
+	a, ok := m[r]
+	if !ok {
+		a, _ = face.GlyphAdvance(r)
+		m[r] = a
+	}
+
+	return a
 }

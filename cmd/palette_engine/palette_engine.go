@@ -1,6 +1,20 @@
 package main
 
 import (
+	/*
+		"fmt"
+		"os"
+		"os/signal"
+		"runtime/debug"
+		"runtime/pprof"
+		"syscall"
+
+		"github.com/pkg/profile"
+		"github.com/vizicist/palette/kit"
+		_ "github.com/vizicist/palette/tool"
+		"github.com/vizicist/palette/twinsys"
+	*/
+
 	"fmt"
 	"os"
 	"os/signal"
@@ -10,8 +24,8 @@ import (
 
 	"github.com/pkg/profile"
 	"github.com/vizicist/palette/kit"
-	_ "github.com/vizicist/palette/tool"
 	"github.com/vizicist/palette/twinsys"
+	_ "github.com/vizicist/palette/twinsys"
 )
 
 func main() {
@@ -58,7 +72,7 @@ func main() {
 
 	b, _ := kit.GetParamBool("global.twinsys")
 	if b {
-		twinsys.Run()
+		twinsys.RunEbiten()
 	} else {
 		select {}
 	}
