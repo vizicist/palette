@@ -6,8 +6,8 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/vizicist/montage/engine"
-	"github.com/vizicist/montage/glhf"
+	"github.com/vizicist/palette/kit"
+	"github.com/vizicist/palette/glhf"
 )
 
 // Sprite xxx
@@ -120,40 +120,40 @@ func RotdirValue(s string) int {
 }
 
 // NewSpriteParams xxx
-func NewSpriteParams(params *engine.ParamValues) *SpriteParams {
+func NewSpriteParams(params *kit.ParamValues) *SpriteParams {
 	return &SpriteParams{
-		alphainitial:   params.ParamFloatValue("alphainitial"),
-		alphafinal:     params.ParamFloatValue("alphafinal"),
-		alphatime:      params.ParamFloatValue("alphatime"),
-		aspect:         params.ParamFloatValue("aspect"),
-		filled:         params.ParamBoolValue("filled"),
-		sizeinitial:    params.ParamFloatValue("sizeinitial"),
-		sizefinal:      params.ParamFloatValue("sizefinal"),
-		sizetime:       params.ParamFloatValue("sizetime"),
-		bounce:         params.ParamBoolValue("bounce"),
-		huefillfinal:   params.ParamFloatValue("huefillfinal"),
-		huefillinitial: params.ParamFloatValue("huefillinitial"),
-		huefilltime:    params.ParamFloatValue("huefilltime"),
-		huefinal:       params.ParamFloatValue("huefinal"),
-		hueinitial:     params.ParamFloatValue("hueinitial"),
-		huetime:        params.ParamFloatValue("huetime"),
-		lifetime:       params.ParamFloatValue("lifetime"),
-		luminance:      params.ParamFloatValue("luminance"),
-		mirrortype:     params.ParamStringValue("mirrortype", "non"),
-		movedir:        params.ParamStringValue("movedir", "0.0"),
-		noisevertex:    params.ParamFloatValue("noisevertex"),
-		rotangdir:      params.ParamStringValue("rotangdir", "right"),
-		rotanginit:     params.ParamFloatValue("rotanginit"),
-		rotangspeed:    params.ParamFloatValue("rotangspeed"),
-		rotauto:        params.ParamBoolValue("rotauto"),
-		saturation:     params.ParamFloatValue("saturation"),
-		speed:          params.ParamFloatValue("speed"),
-		thickness:      params.ParamFloatValue("thickness"),
-		cursorsprites:  params.ParamBoolValue("cursorsprites"),
-		nsprites:       params.ParamIntValue("nsprites"),
-		smoothxyz:      params.ParamIntValue("smoothxyz"),
-		shape:          params.ParamStringValue("shape", "square"),
-		zmin:           params.ParamFloatValue("zmin"),
+		alphainitial:   params.GetFloatValue("alphainitial"),
+		alphafinal:     params.GetFloatValue("alphafinal"),
+		alphatime:      params.GetFloatValue("alphatime"),
+		aspect:         params.GetFloatValue("aspect"),
+		filled:         params.GetBoolValue("filled"),
+		sizeinitial:    params.GetFloatValue("sizeinitial"),
+		sizefinal:      params.GetFloatValue("sizefinal"),
+		sizetime:       params.GetFloatValue("sizetime"),
+		bounce:         params.GetBoolValue("bounce"),
+		huefillfinal:   params.GetFloatValue("huefillfinal"),
+		huefillinitial: params.GetFloatValue("huefillinitial"),
+		huefilltime:    params.GetFloatValue("huefilltime"),
+		huefinal:       params.GetFloatValue("huefinal"),
+		hueinitial:     params.GetFloatValue("hueinitial"),
+		huetime:        params.GetFloatValue("huetime"),
+		lifetime:       params.GetFloatValue("lifetime"),
+		luminance:      params.GetFloatValue("luminance"),
+		mirrortype:     params.GetStringValue("mirrortype", "non"),
+		movedir:        params.GetStringValue("movedir", "0.0"),
+		noisevertex:    params.GetFloatValue("noisevertex"),
+		rotangdir:      params.GetStringValue("rotangdir", "right"),
+		rotanginit:     params.GetFloatValue("rotanginit"),
+		rotangspeed:    params.GetFloatValue("rotangspeed"),
+		rotauto:        params.GetBoolValue("rotauto"),
+		saturation:     params.GetFloatValue("saturation"),
+		speed:          params.GetFloatValue("speed"),
+		thickness:      params.GetFloatValue("thickness"),
+		cursorsprites:  params.GetBoolValue("cursorsprites"),
+		nsprites:       params.GetIntValue("nsprites"),
+		smoothxyz:      params.GetIntValue("smoothxyz"),
+		shape:          params.GetStringValue("shape", "square"),
+		zmin:           params.GetFloatValue("zmin"),
 	}
 }
 

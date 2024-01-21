@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/go-gl/gl/v3.3-core/gl"
-	"github.com/vizicist/montage/engine"
+	"github.com/vizicist/palette/kit"
 )
 
 // SpriteLine xxx
@@ -25,7 +25,7 @@ func (s *SpriteLine) SpriteParams() *SpriteParams {
 }
 
 // NewSpriteLine xxx
-func NewSpriteLine(x, y, z float32, params *engine.ParamValues) *SpriteLine {
+func NewSpriteLine(x, y, z float32, params *kit.ParamValues) *SpriteLine {
 	spriteParams := NewSpriteParams(params)
 	spriteParams.sizeinitial *= z
 	spriteParams.sizefinal *= z
@@ -38,7 +38,7 @@ func NewSpriteLine(x, y, z float32, params *engine.ParamValues) *SpriteLine {
 			hue:         spriteParams.hueinitial,
 			alpha:       spriteParams.alphainitial,
 			rotangsofar: spriteParams.rotanginit,
-			rotdir:      RotdirValue(params.ParamStringValue("rotangdir", "right")),
+			rotdir:      RotdirValue(params.GetStringValue("rotangdir", "right")),
 		},
 		Params: spriteParams,
 	}

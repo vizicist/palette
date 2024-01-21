@@ -257,6 +257,18 @@ func (r *Router) handleOscInput(e OscEvent) {
 	}
 }
 
+// ArgAsString xxx
+func ArgAsString(msg *osc.Message, index int) (s string, err error) {
+	arg := msg.Arguments[index]
+	switch arg.(type) {
+	case string:
+		s = arg.(string)
+	default:
+		err = fmt.Errorf("Expected a string in OSC argument index=%d", index)
+	}
+	return s, err
+}
+
 func (r *Router) notifyGUI(eventName string) {
 	b, err := GetParamBool("global.notifygui")
 	LogIfError(err)

@@ -25,7 +25,6 @@ import (
 	"github.com/pkg/profile"
 	"github.com/vizicist/palette/kit"
 	"github.com/vizicist/palette/twinsys"
-	_ "github.com/vizicist/palette/twinsys"
 )
 
 func main() {
