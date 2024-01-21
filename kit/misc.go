@@ -364,6 +364,7 @@ func needFloatArg(nm string, api string, args map[string]string) (float32, error
 	return float32(f), nil
 }
 
+
 func optionalStringArg(nm string, args map[string]string, dflt string) string {
 	val, ok := args[nm]
 	if !ok {

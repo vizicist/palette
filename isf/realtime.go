@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/hypebeast/go-osc/osc"
-	"github.com/vizicist/montage/engine"
+	"github.com/vizicist/palette/kit"
 )
 
 // DebugISF xxx
@@ -30,7 +30,7 @@ type Realtime struct {
 
 	time         time.Time
 	time0        time.Time
-	globalParams *engine.ParamValues
+	globalParams *kit.ParamValues
 }
 
 // PlaybackEvent is a time-tagged cursor or API event
@@ -53,12 +53,12 @@ func NewRealtime() (*Realtime, error) {
 		}
 	*/
 
-	engine.LoadParamEnums()
-	engine.LoadParamDefs()
+	kit.LoadParamEnums()
+	kit.LoadParamDefs()
 	// engine.LoadEffectsJSON()
 
 	e := &Realtime{
-		globalParams: engine.NewParamValues(),
+		globalParams: kit.NewParamValues(),
 		apiInput:     make(chan apiEvent),
 	}
 
@@ -133,14 +133,14 @@ func (e *Realtime) handleOSCMessage(msg *osc.Message) {
 		return
 	}
 	// The first argument is the method
-	meth, err := engine.ArgAsString(msg, 0)
+	meth, err := kit.ArgAsString(msg, 0)
 	if err != nil {
 		log.Printf("Realtime.handleOSCMessage: err=%s\n", err)
 		return
 	}
 	args := ""
 	if nargs > 1 {
-		args, err = engine.ArgAsString(msg, 1)
+		args, err = kit.ArgAsString(msg, 1)
 		if err != nil {
 			log.Printf("Realtime.handleOSCMessage: err=%s\n", err)
 			return
@@ -156,7 +156,7 @@ func (e *Realtime) executeAPI(api apiEvent) (result string, err error) {
 	if api.args == "" {
 		args = map[string]string{}
 	} else {
-		args, err = engine.StringMap(api.args)
+		args, err = kit.StringMap(api.args)
 		if err != nil {
 			return "", err
 		}
@@ -171,7 +171,7 @@ func (e *Realtime) executeAPI(api apiEvent) (result string, err error) {
 	case "set_param":
 		nm := args["param"]
 		val := args["value"]
-		err := globalParams.SetParamValueWithString(nm, val, nil)
+		err := globalParams.SetParamWithString(nm, val)
 		if err != nil {
 			return "", err
 		}
@@ -180,7 +180,7 @@ func (e *Realtime) executeAPI(api apiEvent) (result string, err error) {
 
 		log.Printf("set_params API in executeGlobalAPI - needed?\n")
 		for name, value := range args {
-			err := globalParams.SetParamValueWithString(name, value, nil)
+			err := globalParams.SetParamWithString(name, value)
 			if err != nil {
 				return "", fmt.Errorf("error in SoundAPI: method=sound.set_params name=%s value=%s err=%s", name, value, err)
 			}
@@ -189,7 +189,7 @@ func (e *Realtime) executeAPI(api apiEvent) (result string, err error) {
 	case "sprite":
 		log.Printf("Adding sprite\n")
 
-		x, y, z, err := engine.GetXYZ(method, args)
+		x, y, z, err := kit.GetArgsXYZ(args)
 		if err != nil {
 			return "", err
 		}

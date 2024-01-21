@@ -3,8 +3,8 @@ package isf
 import (
 	"time"
 
-	"github.com/vizicist/montage/engine"
-	"github.com/vizicist/montage/glhf"
+	"github.com/vizicist/palette/kit"
+	"github.com/vizicist/palette/glhf"
 )
 
 // SpriteSquare xxx
@@ -26,7 +26,7 @@ func (s *SpriteSquare) SpriteParams() *SpriteParams {
 }
 
 // NewSpriteSquare xxx
-func NewSpriteSquare(x, y, z float32, params *engine.ParamValues) *SpriteSquare {
+func NewSpriteSquare(x, y, z float32, params *kit.ParamValues) *SpriteSquare {
 	spriteParams := NewSpriteParams(params)
 	spriteParams.sizeinitial *= z
 	spriteParams.sizefinal *= z
@@ -39,7 +39,7 @@ func NewSpriteSquare(x, y, z float32, params *engine.ParamValues) *SpriteSquare 
 			hue:         spriteParams.hueinitial,
 			alpha:       spriteParams.alphainitial,
 			rotangsofar: spriteParams.rotanginit,
-			rotdir:      RotdirValue(params.ParamStringValue("rotangdir", "right")),
+			rotdir:      RotdirValue(params.GetStringValue("rotangdir", "right")),
 		},
 		Params: spriteParams,
 	}

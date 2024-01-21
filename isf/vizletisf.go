@@ -3,15 +3,14 @@ package isf
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
 
-	"github.com/vizicist/montage/engine"
-	"github.com/vizicist/montage/glhf"
-	"github.com/vizicist/montage/spout"
+	"github.com/vizicist/palette/kit"
+	"github.com/vizicist/palette/spout"
+	"github.com/vizicist/palette/glhf"
 
 	"github.com/go-gl/gl/v3.3-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
@@ -387,7 +386,7 @@ func NewVizletISF(name string, isfname string, frame *glhf.Frame) (Vizlet, error
 	var err error
 
 	if isFileExist(fspath) {
-		fsbytes, err = ioutil.ReadFile(fspath)
+		fsbytes, err = os.ReadFile(fspath)
 		if err != nil {
 			return nil, err
 		}
@@ -399,7 +398,7 @@ func NewVizletISF(name string, isfname string, frame *glhf.Frame) (Vizlet, error
 	}
 
 	if isFileExist(vspath) {
-		vsbytes, err = ioutil.ReadFile(vspath)
+		vsbytes, err = os.ReadFile(vspath)
 		if err != nil {
 			return nil, err
 		}
@@ -483,13 +482,7 @@ func NewVizletISF(name string, isfname string, frame *glhf.Frame) (Vizlet, error
 
 // FilePath xxx
 func FilePath(nm string) string {
-	dir := engine.LocalMontageDir()
-	ps := os.Getenv("MONTAGE_SOURCE")
-	if ps != "" {
-		dir = filepath.Join(ps, "default")
-	}
-	path := filepath.Join(dir, "isf", nm)
-	return path
+	return filepath.Join(kit.PaletteDataPath(), "isf", nm)
 }
 
 // FilePaths returns the 2 ISF file paths for a given name

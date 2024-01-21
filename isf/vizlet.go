@@ -1,7 +1,7 @@
 package isf
 
 import (
-	"github.com/vizicist/montage/glhf"
+	"github.com/vizicist/palette/glhf"
 )
 
 // Vizlet xxx
