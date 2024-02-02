@@ -8,9 +8,9 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/vizicist/palette/glhf"
 	"github.com/vizicist/palette/kit"
 	"github.com/vizicist/palette/spout"
-	"github.com/vizicist/palette/glhf"
 
 	"github.com/go-gl/gl/v3.3-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
@@ -501,6 +501,7 @@ func (viz *VizletISF) isfUniformDeclarations() (string, glhf.AttrFormat, error) 
 		switch i.TYPE {
 		case "bool":
 			line = "uniform bool " + i.NAME + ";\n"
+			// attrs = append(attrs, glhf.Attr{Name: i.NAME, Type: glhf.Bool})
 			attrs = append(attrs, glhf.Attr{Name: i.NAME, Type: glhf.Bool})
 		case "long":
 			// This value defines some UI VALUES and LABELS

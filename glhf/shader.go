@@ -54,8 +54,7 @@ func NewShader(vertexFmt, uniformFmt AttrFormat, vertexShader, fragmentShader st
 
 			infoLog := make([]byte, logLen)
 			gl.GetShaderInfoLog(vshader, logLen, nil, &infoLog[0])
-			msg := string(infoLog)
-			return nil, fmt.Errorf("error compiling vertex shader: %s", msg)
+			return nil, fmt.Errorf("error compiling vertex shader: %s", string(infoLog))
 		}
 
 		defer gl.DeleteShader(vshader)
@@ -106,33 +105,12 @@ func NewShader(vertexFmt, uniformFmt AttrFormat, vertexShader, fragmentShader st
 	// uniforms
 	for i, uniform := range uniformFmt {
 		loc := gl.GetUniformLocation(shader.program.obj, gl.Str(uniform.Name+"\x00"))
-		// Some of these location value may be -1,
-		// when the variables get removed during shader optimization.
 		shader.uniformLoc[i] = loc
 	}
-
-	/*
-		if ri >= 0 {
-			val := mgl32.Vec2{800.0, 600.0}
-			gl.Uniform2fv(ri, 1, &val[0])
-		}
-	*/
 
 	runtime.SetFinalizer(shader, (*Shader).delete)
 
 	return shader, nil
-}
-
-// UniformIndex returns the index position of the named uniform.
-// This is the index within the uniformFmt/Attr array
-// as well as the index within the uniformLoc array.
-func (s *Shader) UniformIndex(name string) int {
-	for i, a := range s.uniformFmt {
-		if a.Name == name {
-			return i
-		}
-	}
-	return -1
 }
 
 func (s *Shader) delete() {
@@ -163,20 +141,23 @@ func (s *Shader) UniformFormat() AttrFormat {
 //
 // Supplied value must correspond to the type of the attribute. Correct types are these
 // (right-hand is the type of the value):
-//   Attr{Type: Int}:   int32
-//   Attr{Type: Float}: float32
-//   Attr{Type: Vec2}:  mgl32.Vec2
-//   Attr{Type: Vec3}:  mgl32.Vec3
-//   Attr{Type: Vec4}:  mgl32.Vec4
-//   Attr{Type: Mat2}:  mgl32.Mat2
-//   Attr{Type: Mat23}: mgl32.Mat2x3
-//   Attr{Type: Mat24}: mgl32.Mat2x4
-//   Attr{Type: Mat3}:  mgl32.Mat3
-//   Attr{Type: Mat32}: mgl32.Mat3x2
-//   Attr{Type: Mat34}: mgl32.Mat3x4
-//   Attr{Type: Mat4}:  mgl32.Mat4
-//   Attr{Type: Mat42}: mgl32.Mat4x2
-//   Attr{Type: Mat43}: mgl32.Mat4x3
+//
+//	Attr{Type: Int}:   int32
+//	Attr{Type: Float}: float32
+//	Attr{Type: Vec2}:  mgl32.Vec2
+//	Attr{Type: Vec3}:  mgl32.Vec3
+//	Attr{Type: Vec4}:  mgl32.Vec4
+//	Attr{Type: Mat2}:  mgl32.Mat2
+//	Attr{Type: Mat23}: mgl32.Mat2x3
+//	Attr{Type: Mat24}: mgl32.Mat2x4
+//	Attr{Type: Mat3}:  mgl32.Mat3
+//	Attr{Type: Mat32}: mgl32.Mat3x2
+//	Attr{Type: Mat34}: mgl32.Mat3x4
+//	Attr{Type: Mat4}:  mgl32.Mat4
+//	Attr{Type: Mat42}: mgl32.Mat4x2
+//	Attr{Type: Mat43}: mgl32.Mat4x3
+//	Attr{Type: Bool}: bool
+//
 // No other types are supported.
 //
 // The Shader must be bound before calling this method.
@@ -187,19 +168,17 @@ func (s *Shader) SetUniformAttr(uniform int, value interface{}) (ok bool) {
 
 	switch s.uniformFmt[uniform].Type {
 	case Bool:
-		b := value.(bool)
-		var value int32
-		if b {
-			value = 1
+		value := value.(bool)
+		if value {
+			gl.Uniform1i(s.uniformLoc[uniform], 1)
 		} else {
-			value = 0
+			gl.Uniform1i(s.uniformLoc[uniform], 0)
 		}
-		gl.Uniform1iv(s.uniformLoc[uniform], 1, &value)
 	case Int:
 		value := value.(int32)
 		gl.Uniform1iv(s.uniformLoc[uniform], 1, &value)
 	case Float:
-		value := float32(value.(float64))
+		value := value.(float32)
 		gl.Uniform1fv(s.uniformLoc[uniform], 1, &value)
 	case Vec2:
 		value := value.(mgl32.Vec2)

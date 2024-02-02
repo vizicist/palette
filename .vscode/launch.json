@@ -26,6 +26,16 @@
             "args": []
         },
        {
+            "name": "ENGINE - palette_engine.go",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${env:PALETTE_SOURCE}/cmd/palette_engine/palette_engine.go",
+            "env": {
+                "Path": "${env:Path};${workspaceFolder};c:/Users/me/Documents/github/vizicist/palette/SenselLib/x64;"             },
+            "args": []
+        },
+       {
             "name": "Palette Looper GUI",
             "type": "go",
             "request": "launch",
@@ -81,16 +91,6 @@
             "request": "launch",
             "mode": "auto",
             "program": "${env:PALETTE_SOURCE}/cmd/fyne_demo/fyne_demo.go",
-            "env": {
-                "Path": "${env:Path};${workspaceFolder};c:/Users/me/Documents/github/vizicist/palette/SenselLib/x64;"             },
-            "args": []
-        },
-       {
-            "name": "ENGINE - palette_engine.go",
-            "type": "go",
-            "request": "launch",
-            "mode": "auto",
-            "program": "${env:PALETTE_SOURCE}/cmd/palette_engine/palette_engine.go",
             "env": {
                 "Path": "${env:Path};${workspaceFolder};c:/Users/me/Documents/github/vizicist/palette/SenselLib/x64;"             },
             "args": []

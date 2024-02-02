@@ -8,9 +8,10 @@ import (
 
 	"github.com/faiface/mainthread"
 	"github.com/go-gl/glfw/v3.3/glfw"
-	"github.com/vizicist/palette/kit"
 	"github.com/vizicist/palette/glhf"
 	"github.com/vizicist/palette/isf"
+	"github.com/vizicist/palette/kit"
+	// _ "github.com/vizicist/palette/twinsys"
 )
 
 const windowWidth = 800
@@ -26,6 +27,8 @@ func run() {
 
 	kit.InitLog("isf")
 	kit.InitMisc()
+	kit.InitEngine()
+	kit.StartEngine()
 
 	log.Printf("Montage_ISF: starting\n")
 
@@ -39,9 +42,8 @@ func run() {
 		log.Fatalf("NewRealtime: err=%s\n", err)
 	}
 
-	// engine.LoadParamEnums()
-	// engine.LoadParamDefs()
-	// engine.LoadEffectsJSON()
+	// kit.LoadParamEnums()
+	// kit.LoadParamDefs()
 
 	go realtime.Start()
 
@@ -53,6 +55,9 @@ func run() {
 
 	var win *glfw.Window
 	var pipeline *isf.Pipeline
+
+	// go twinsys.RunEbiten()
+	// kit.LogInfo("Avoiding RunEbiten", "version", twinsys.Version)
 
 	mainthread.Call(func() {
 
@@ -98,6 +103,10 @@ func run() {
 	tm := time.Now()
 	previousTime := tm
 	// elapsed := time.Duration(0)
+
+	// mainthread.Call(func() {
+	// 	twinsys.RunEbiten()
+	// })
 
 	shouldQuit := false
 	for !shouldQuit {

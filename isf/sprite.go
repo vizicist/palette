@@ -6,8 +6,8 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/vizicist/palette/kit"
 	"github.com/vizicist/palette/glhf"
+	"github.com/vizicist/palette/kit"
 )
 
 // Sprite xxx

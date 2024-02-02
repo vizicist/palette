@@ -28,7 +28,6 @@ type AttrType int
 // List of all possible attribute types.
 const (
 	Int AttrType = iota
-	Bool
 	Float
 	Vec2
 	Vec3
@@ -42,6 +41,7 @@ const (
 	Mat4
 	Mat42
 	Mat43
+	Bool
 )
 
 // Size returns the size of a type in bytes.

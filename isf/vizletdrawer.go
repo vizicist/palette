@@ -5,8 +5,8 @@ import (
 	"log"
 	"time"
 
-	"github.com/vizicist/palette/spout"
 	"github.com/vizicist/palette/glhf"
+	"github.com/vizicist/palette/spout"
 
 	"github.com/go-gl/gl/v3.3-core/gl"
 )

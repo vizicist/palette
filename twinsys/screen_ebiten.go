@@ -35,6 +35,8 @@ type Screen struct {
 	backColor color.RGBA
 }
 
+var Version = "0.0.1"
+
 // Run runs the Gui and never returns
 func RunEbiten() {
 
