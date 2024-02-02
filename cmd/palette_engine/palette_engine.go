@@ -1,20 +1,6 @@
 package main
 
 import (
-	/*
-		"fmt"
-		"os"
-		"os/signal"
-		"runtime/debug"
-		"runtime/pprof"
-		"syscall"
-
-		"github.com/pkg/profile"
-		"github.com/vizicist/palette/kit"
-		_ "github.com/vizicist/palette/tool"
-		"github.com/vizicist/palette/twinsys"
-	*/
-
 	"fmt"
 	"os"
 	"os/signal"
@@ -23,11 +9,16 @@ import (
 	"syscall"
 
 	"github.com/pkg/profile"
+	"github.com/faiface/mainthread"
 	"github.com/vizicist/palette/kit"
 	"github.com/vizicist/palette/twinsys"
 )
 
 func main() {
+	mainthread.Run(runmain)
+}
+
+func runmain() {
 
 	doProfile := false
 	if doProfile {
@@ -71,7 +62,9 @@ func main() {
 
 	b, _ := kit.GetParamBool("global.twinsys")
 	if b {
-		twinsys.RunEbiten()
+		mainthread.Call(func() {
+			twinsys.RunEbiten()
+		})
 	} else {
 		select {}
 	}

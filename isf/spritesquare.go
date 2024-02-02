@@ -3,8 +3,8 @@ package isf
 import (
 	"time"
 
-	"github.com/vizicist/palette/kit"
 	"github.com/vizicist/palette/glhf"
+	"github.com/vizicist/palette/kit"
 )
 
 // SpriteSquare xxx
