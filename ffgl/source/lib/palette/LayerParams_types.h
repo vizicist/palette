@@ -97,6 +97,7 @@ LayerParams_InitializeTypes() {
 	LayerParams_morphtypeTypes.push_back("C");
 	LayerParams_morphtypeTypes.push_back("D");
 
+	LayerParams_midiinputTypes.push_back("microKEY");
 	LayerParams_midiinputTypes.push_back("microKEY2 Air");
 	LayerParams_midiinputTypes.push_back("");
 

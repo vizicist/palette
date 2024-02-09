@@ -940,7 +940,7 @@ class ProGuiApp(tk.Tk):
 
         if category == "global":
             # log("Loading","category","global","filename",filename)
-            palette.palette_quad_api("load",
+            palette.palette_global_api("load",
                 "\"filename\": \"" + filename + "\""
                 ", \"category\": \"" + category + "\"")
         elif category == "quad":
