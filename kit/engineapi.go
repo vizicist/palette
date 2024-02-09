@@ -118,6 +118,14 @@ func ExecuteGlobalApi(api string, apiargs map[string]string) (result string, err
 		TheAttractManager.SetAttractMode(IsTrueValue(v))
 		return "", nil
 
+	case "load":
+		fname, ok := apiargs["filename"]
+		if !ok {
+			return "", fmt.Errorf("ExecuteGlobalApi: missing filename parameter")
+		}
+		err := LoadGlobalParamsFrom(fname)
+		return "",err
+
 	case "set":
 		name, value, err := GetNameValue(apiargs)
 		if err != nil {

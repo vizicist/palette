@@ -181,12 +181,16 @@ func GetParamFloat(nm string) (float64, error) {
 	return f, nil
 }
 
-func SaveGlobalParams() (err error) {
+func SaveCurrentGlobalParams() (err error) {
 	return GlobalParams.Save("global", "_Current")
 }
 
 func LoadGlobalParams() (err error) {
-	paramsMap, err := LoadParamsMapOfCategory("global", "_Current")
+	return LoadGlobalParamsFrom("_Current")
+}
+
+func LoadGlobalParamsFrom(filename string) (err error) {
+	paramsMap, err := LoadParamsMapOfCategory("global", filename)
 	if err != nil {
 		LogIfError(err)
 		return err
