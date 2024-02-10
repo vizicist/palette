@@ -301,6 +301,10 @@ func (patch *Patch) Api(api string, apiargs map[string]string) (string, error) {
 		patch.loopFade()
 		return "", nil
 
+	case "filter":
+		patch.loopFilter()
+		return "", nil
+
 	default:
 		// ignore errors on these for the moment
 		if strings.HasPrefix(api, "loop_") || strings.HasPrefix(api, "midi_") {
@@ -492,6 +496,29 @@ func (patch *Patch) loopFade() {
 	// TheCursorManager.DeleteActiveCursorsForTag(tag)
 	// LogInfo("loopClear before DeleteEvents")
 	TheScheduler.FadeEventsWithTag(tag)
+	// LogInfo("loopClear after DeleteEvents")
+
+	TheScheduler.pendingMutex.Lock()
+	clearPending := false
+	for _, se := range TheScheduler.pendingScheduled {
+		if se.Tag == tag {
+			LogInfo("HEY!, saw pendingSchedule with tag prefix!", "prefix", tag, "se", se)
+			clearPending = true
+		}
+	}
+	if clearPending {
+		// LogInfo("loopClear is clearing pendingScheduled")
+		TheScheduler.pendingScheduled = nil
+	}
+	TheScheduler.pendingMutex.Unlock()
+}
+
+func (patch *Patch) loopFilter() {
+	tag := patch.name
+
+	// TheCursorManager.DeleteActiveCursorsForTag(tag)
+	// LogInfo("loopClear before DeleteEvents")
+	TheScheduler.FilterEventsWithTag(tag)
 	// LogInfo("loopClear after DeleteEvents")
 
 	TheScheduler.pendingMutex.Lock()

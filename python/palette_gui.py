@@ -396,6 +396,11 @@ class ProGuiApp(tk.Tk):
             palette.palette_patch_api(patch.name(), "fade", "")
         self.patchChooser.refreshPatches()
 
+    def filterNotes(self):
+        for patch in self.PatchList():
+            palette.palette_patch_api(patch.name(), "filter", "")
+        self.patchChooser.refreshPatches()
+
     def setNextMode(self,mode):
         self.nextMode = mode
 
@@ -2203,6 +2208,7 @@ class PagePerformMain(tk.Frame):
         self.makePerformButton("SOFT_RESET", self.controller.softReset)
         self.makePerformButton("CLEAR_LOOP", self.controller.clearNotes)
         self.makePerformButton("FADE_LOOP", self.controller.fadeNotes)
+        self.makePerformButton("FILTER_LOOP", self.controller.filterNotes)
         self.makePerformButton("HELP_ ", self.controller.startHelp)
         # self.makePerformButton("Looping_OFF", self.controller.loopingOff)
         # if self.controller.guidefaultlevel > 0:
