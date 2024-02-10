@@ -78,6 +78,7 @@ func InitEngine() {
 
 	for name := range ParamDefs {
 		if strings.HasPrefix(name, "global.") {
+			LogInfo("global name","name",name)
 			ActivateGlobalParam(name)
 		}
 	}
@@ -186,16 +187,22 @@ func SaveCurrentGlobalParams() (err error) {
 }
 
 func LoadGlobalParams() (err error) {
-	return LoadGlobalParamsFrom("_Current")
+	return LoadGlobalParamsFrom("_Current", false)
 }
 
-func LoadGlobalParamsFrom(filename string) (err error) {
+func LoadGlobalParamsFrom(filename string, activate bool) (err error) {
 	paramsMap, err := LoadParamsMapOfCategory("global", filename)
 	if err != nil {
 		LogIfError(err)
 		return err
 	}
 	GlobalParams.ApplyValuesFromMap("global", paramsMap, GlobalParams.SetParamWithString)
+	if activate {
+		for nm, _ := range paramsMap {
+			ActivateGlobalParam(nm)
+
+		}
+	}
 	return nil
 }
 

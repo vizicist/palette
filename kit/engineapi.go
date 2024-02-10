@@ -125,7 +125,7 @@ func ExecuteGlobalApi(api string, apiargs map[string]string) (result string, err
 		if !ok {
 			return "", fmt.Errorf("ExecuteGlobalApi: missing filename parameter")
 		}
-		err := LoadGlobalParamsFrom(fname)
+		err := LoadGlobalParamsFrom(fname,true)
 		return "", err
 
 	case "set":
