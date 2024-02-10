@@ -5,6 +5,16 @@
     "version": "0.2.0",
     "configurations": [
 
+       {
+            "name": "ENGINE - palette_engine.go",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${env:PALETTE_SOURCE}/cmd/palette_engine/palette_engine.go",
+            "env": {
+                "Path": "${env:Path};${workspaceFolder};c:/Users/me/Documents/github/vizicist/palette/SenselLib/x64;"             },
+            "args": []
+        },
         {
             "name": "palette osc listen",
             "type": "go",
@@ -45,7 +55,7 @@
         },
         {
             "name": "GUI - palette_gui.py",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "program": "${env:PALETTE_SOURCE}/python/palette_gui.py",
             "console": "integratedTerminal",
@@ -58,16 +68,6 @@
             "request": "launch",
             "mode": "auto",
             "program": "${env:PALETTE_SOURCE}/cmd/fyne_demo/fyne_demo.go",
-            "env": {
-                "Path": "${env:Path};${workspaceFolder};c:/Users/me/Documents/github/vizicist/palette/SenselLib/x64;"             },
-            "args": []
-        },
-       {
-            "name": "ENGINE - palette_engine.go",
-            "type": "go",
-            "request": "launch",
-            "mode": "auto",
-            "program": "${env:PALETTE_SOURCE}/cmd/palette_engine/palette_engine.go",
             "env": {
                 "Path": "${env:Path};${workspaceFolder};c:/Users/me/Documents/github/vizicist/palette/SenselLib/x64;"             },
             "args": []

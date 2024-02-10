@@ -11,7 +11,9 @@ import (
 // ExecuteApi xxx
 func ExecuteApi(api string, apiargs map[string]string) (result string, err error) {
 
-	LogOfType("api", "ExecuteApi", "api", api, "apiargs", apiargs)
+	if api != "global.status" {  // global.status happens every few seconds
+		LogOfType("api", "ExecuteApi", "api", api, "apiargs", apiargs)
+	}
 
 	words := strings.Split(api, ".")
 	if len(words) <= 1 {
@@ -124,7 +126,7 @@ func ExecuteGlobalApi(api string, apiargs map[string]string) (result string, err
 			return "", fmt.Errorf("ExecuteGlobalApi: missing filename parameter")
 		}
 		err := LoadGlobalParamsFrom(fname)
-		return "",err
+		return "", err
 
 	case "set":
 		name, value, err := GetNameValue(apiargs)
@@ -140,7 +142,7 @@ func ExecuteGlobalApi(api string, apiargs map[string]string) (result string, err
 		if err != nil {
 			return "", err
 		}
-		return "", SaveGlobalParams()
+		return "", SaveCurrentGlobalParams()
 
 	case "setparams":
 		for name, value := range apiargs {
@@ -158,7 +160,7 @@ func ExecuteGlobalApi(api string, apiargs map[string]string) (result string, err
 		if err != nil {
 			return "", err
 		}
-		return "", SaveGlobalParams()
+		return "", SaveCurrentGlobalParams()
 
 	case "get":
 		name, ok := apiargs["name"]
@@ -350,13 +352,13 @@ func ApplyGlobalParam(name string, value string) (err error) {
 		}
 
 		/*
-		if TheNats.enabled && TheNats.natsConn == nil {
-			err = TheNats.Connect()
-			if err != nil {
-				LogIfError(err)
-				return err
+			if TheNats.enabled && TheNats.natsConn == nil {
+				err = TheNats.Connect()
+				if err != nil {
+					LogIfError(err)
+					return err
+				}
 			}
-		}
 		*/
 
 	case "global.attract":
