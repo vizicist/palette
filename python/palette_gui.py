@@ -279,7 +279,7 @@ class ProGuiApp(tk.Tk):
 
                 elif self.nextMode == "help":
                     self.startHelpMode()
-                    # self.loopingClearOnly()
+                    # self.clearNotes()
 
                 elif self.nextMode == "attract":
                     # log("nextMode == attract mode")
@@ -380,15 +380,21 @@ class ProGuiApp(tk.Tk):
 
         # self.refreshValues("misc",patch)
 
-    def loopingClearButton(self):
-        log("loopingClearButton")
+    def softReset(self):
+        log("softReset")
         self.softResetAll()
         self.resetVisibility()
-        # self.loopingClearOnly()
+        # self.clearNotes()
 
-    def loopingClearOnly(self):
+    def clearNotes(self):
         for patch in self.PatchList():
             palette.palette_patch_api(patch.name(), "clear", "")
+        self.patchChooser.refreshPatches()
+
+    def fadeNotes(self):
+        for patch in self.PatchList():
+            palette.palette_patch_api(patch.name(), "fade", "")
+        self.patchChooser.refreshPatches()
 
     def setNextMode(self,mode):
         self.nextMode = mode
@@ -521,9 +527,6 @@ class ProGuiApp(tk.Tk):
                 self.performPage.setPerformButtonText("Looping","LOOPING_IS OFF",'PerformButton.TLabel')
 
     def resetVisibility(self):
-        # log("RESETVISIBILITY!")
-
-        # self.resetLoopButton()
 
         self.editMode = False
         self.setFrameSizes()
@@ -1069,10 +1072,6 @@ class ProGuiApp(tk.Tk):
         self.guiLevel = level
 #        self.setScaleList()
 
-    def sendANO(self):
-        for patch in self.Patches:
-            patch.sendANO()
-
     def startHelp(self):
         self.setNextMode("help")
 
@@ -1098,11 +1097,11 @@ class ProGuiApp(tk.Tk):
             self.loopingOff(patch)
         self.softResetAll()
         self.resetVisibility()
-        self.loopingClearOnly()
+        self.clearNotes()
 
     def softResetAll(self):
 
-        self.loopingClearOnly()
+        self.clearNotes()
 
         if self.allPatchesSelected:
             palette.audio_reset()
@@ -1110,7 +1109,9 @@ class ProGuiApp(tk.Tk):
         # self.CurrPatch = self.patchNamed("A")
 
         self.patchChooser.refreshPatchColors()
-        self.sendANO()
+
+        for patch in self.Patches:
+            patch.sendANO()
 
     def synthesizeParamsJson(self):
 
@@ -2199,7 +2200,9 @@ class PagePerformMain(tk.Frame):
 
         self.makePerformButton("COMPLETE_RESET", self.controller.completeReset)
         # self.makePerformButton("Looping", self.controller.loopingToggle)
-        self.makePerformButton("CLEAR_", self.controller.loopingClearButton)
+        self.makePerformButton("SOFT_RESET", self.controller.softReset)
+        self.makePerformButton("CLEAR_LOOP", self.controller.clearNotes)
+        self.makePerformButton("FADE_LOOP", self.controller.fadeNotes)
         self.makePerformButton("HELP_ ", self.controller.startHelp)
         # self.makePerformButton("Looping_OFF", self.controller.loopingOff)
         # if self.controller.guidefaultlevel > 0:
