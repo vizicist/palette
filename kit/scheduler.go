@@ -198,6 +198,29 @@ func (sched *Scheduler) DeleteCursorEventsWhoseGidIs(gid int) {
 	}
 }
 
+func (sched *Scheduler) FadeEventsWithTag(tag string) {
+
+	sched.mutex.Lock()
+	defer sched.mutex.Unlock()
+
+	var nexti *list.Element
+	for i := sched.schedList.Front(); i != nil; i = nexti {
+		nexti = i.Next()
+		se := i.Value.(*SchedElement)
+		if se.Tag != tag {
+			continue
+		}
+		// LogInfo("DeleteEventsWithTag Removing schedList entry", "tag", tag, "i", i, "se", se)
+		ce, isce := se.Value.(CursorEvent)
+		// LogInfo("SAW CURSOREVENT", "v", v, "ddu", v.Ddu)
+		if isce {
+			ce.Pos.Z *= 0.3
+			se.Value = ce
+			// LogInfo("FadeEvents", "Z", se.Value.(CursorEvent).Pos.Z)
+		}
+	}
+}
+
 func (sched *Scheduler) DeleteEventsWithTag(tag string) {
 
 	sched.mutex.Lock()
@@ -327,8 +350,8 @@ func (sched *Scheduler) triggerItemsScheduledAtOrBefore(thisClick Clicks) {
 			tobeExecuted = append(tobeExecuted, ce)
 
 		default:
-			t := fmt.Sprintf("%T",v)
-			LogError(fmt.Errorf("triggerItemsScheduleAt: unhandled Value"),"type",t)
+			t := fmt.Sprintf("%T", v)
+			LogError(fmt.Errorf("triggerItemsScheduleAt: unhandled Value"), "type", t)
 		}
 
 		// This is where

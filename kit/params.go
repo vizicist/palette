@@ -309,10 +309,18 @@ func LoadParamsMapFromPath(path string) (ParamsMap, error) {
 	if err != nil {
 		return nil, err
 	}
-	var f any
-	err = json.Unmarshal(bytes, &f)
+	pmap, err := MakeParamsMapFromBytes(bytes)
 	if err != nil {
-		return nil, fmt.Errorf("unable to Unmarshal path=%s, err=%s", path, err)
+		return nil, fmt.Errorf("unable to load params from path=%s err=%s",path, err)
+	}
+	return pmap, nil
+}
+
+func MakeParamsMapFromBytes(bytes []byte) (ParamsMap, error) {
+	var f any
+	err := json.Unmarshal(bytes, &f)
+	if err != nil {
+		return nil, fmt.Errorf("unable to Unmarshal bytes, err=%s", err)
 	}
 	toplevel, ok := f.(map[string]any)
 	if !ok {
@@ -331,25 +339,7 @@ func LoadParamsMapFromPath(path string) (ParamsMap, error) {
 }
 
 func LoadParamsMapFromString(s string) (ParamsMap, error) {
-	var f any
-	err := json.Unmarshal([]byte(s), &f)
-	if err != nil {
-		return nil, fmt.Errorf("unable to Unmarshal, err=%s, s=%s", err, s)
-	}
-	toplevel, ok := f.(map[string]any)
-	if !ok {
-		return nil, fmt.Errorf("unable to convert to ParamsMap - %s", s)
-
-	}
-	params, okparams := toplevel["params"]
-	if !okparams {
-		return nil, fmt.Errorf("no params value in json")
-	}
-	paramsmap, okmap := params.(map[string]any)
-	if !okmap {
-		return nil, fmt.Errorf("params value is not a map[string]string in jsom")
-	}
-	return paramsmap, nil
+	return MakeParamsMapFromBytes([]byte(s))
 }
 
 func (vals *ParamValues) SetParamWithString(origname, value string) (err error) {

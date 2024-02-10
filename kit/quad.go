@@ -371,7 +371,7 @@ func (quad *Quad) Load(category string, filename string) error {
 	case "global":
 		// No need to save _Current if we're loading it.
 		if filename != "_Current" {
-			err = SaveGlobalParams()
+			err = SaveCurrentGlobalParams()
 		}
 	case "quad":
 		if filename != "_Current" {
