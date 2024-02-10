@@ -3,6 +3,7 @@ package kit
 import (
 	"container/list"
 	"fmt"
+	"math/rand"
 	"runtime/debug"
 	"sync"
 	"time"
@@ -198,6 +199,8 @@ func (sched *Scheduler) DeleteCursorEventsWhoseGidIs(gid int) {
 	}
 }
 
+// XXX - Fade, Filter, and Delete should be combined into one function
+
 func (sched *Scheduler) FadeEventsWithTag(tag string) {
 
 	sched.mutex.Lock()
@@ -221,6 +224,27 @@ func (sched *Scheduler) FadeEventsWithTag(tag string) {
 	}
 }
 
+func (sched *Scheduler) FilterEventsWithTag(tag string) {
+
+	sched.mutex.Lock()
+	defer sched.mutex.Unlock()
+
+	rnd := rand.New(rand.NewSource(1))
+	var nexti *list.Element
+	for i := sched.schedList.Front(); i != nil; i = nexti {
+		nexti = i.Next()
+		se := i.Value.(*SchedElement)
+		if se.Tag != tag {
+			continue
+		}
+		ce, isce := se.Value.(CursorEvent)
+		if isce && ce.Ddu == "up" && rnd.Float32() < 0.5 {
+			TheCursorManager.DeleteActiveCursor(ce.Gid)
+		}
+		sched.schedList.Remove(i)
+	}
+}
+
 func (sched *Scheduler) DeleteEventsWithTag(tag string) {
 
 	sched.mutex.Lock()
@@ -232,16 +256,11 @@ func (sched *Scheduler) DeleteEventsWithTag(tag string) {
 		if se.Tag != tag {
 			continue
 		}
-		// LogInfo("DeleteEventsWithTag Removing schedList entry", "tag", tag, "i", i, "se", se)
 		ce, isce := se.Value.(CursorEvent)
-		// LogInfo("SAW CURSOREVENT", "v", v, "ddu", v.Ddu)
 		if isce && ce.Ddu == "up" {
-			// LogInfo("UP CURSOREVENT should be removing gid", "gid", v.Gid)
 			TheCursorManager.DeleteActiveCursor(ce.Gid)
-			// LogInfo("UP CURSOREVENT after removing gid", "gid", v.Gid)
 		}
 		sched.schedList.Remove(i)
-		// keep going, there will be lots of them
 	}
 
 	sched.mutex.Unlock()
