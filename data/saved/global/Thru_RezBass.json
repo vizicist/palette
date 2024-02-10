@@ -1,5 +1,6 @@
 {
     "params": {
+        "global.midisetexternalscale":"false",
         "global.midithru":"true",
         "global.midithrusynth":"P_09_C_06"
     }
