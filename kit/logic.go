@@ -62,6 +62,12 @@ func (logic *PatchLogic) cursorToPitch(ce CursorEvent) (uint8, error) {
 	} else {
 		pitchmin := patch.GetInt("sound.pitchmin")
 		pitchmax := patch.GetInt("sound.pitchmax")
+		if pitchmin > pitchmax { // really?
+			LogWarn("Hey! pitchmin > pitchmax", "pitchmin", pitchmin, "pitchmax", pitchmax, "patch", patch.Name(), "ce", ce)	
+			t := pitchmin
+			pitchmin = pitchmax
+			pitchmax = t
+		}
 		dp := pitchmax - pitchmin + 1
 		p1 := int(ce.Pos.X * float32(dp))
 		p := uint8(pitchmin + p1%dp)

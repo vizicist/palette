@@ -29,7 +29,7 @@ func copy(src, dest string, info os.FileInfo) error {
 // fcopy is for just a file,
 // with considering existence of parent directory
 // and file permission.
-func fcopy(src, dest string, info os.FileInfo) error {
+func fcopy(src, dest string, _ os.FileInfo) error {
 
 	err := os.MkdirAll(filepath.Dir(dest), os.ModePerm)
 	if err != nil {

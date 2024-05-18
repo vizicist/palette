@@ -374,6 +374,7 @@ var LogEnabled = map[string]bool{
 	"value":          false,
 }
 
+/*
 func SetLogTypeEnabled(dtype string, b bool) {
 
 	LogMutex.Lock()
@@ -387,9 +388,16 @@ func SetLogTypeEnabled(dtype string, b bool) {
 	}
 	LogEnabled[d] = b
 }
+*/
 
 func InitLogTypes() {
 	logtypes := os.Getenv("PALETTE_LOGTYPES")
+	if logtypes == "" {
+		s, err := GetParam("global.log")
+		if err == nil {
+			logtypes = s
+		}
+	}
 	SetLogTypes(logtypes)
 }
 

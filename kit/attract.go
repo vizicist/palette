@@ -8,19 +8,19 @@ import (
 )
 
 type AttractManager struct {
-	attractMutex           sync.RWMutex
-	attractEnabled         bool
-	attractModeIsOn        *atomic.Bool
-	lastAttractModeChange  time.Time
-	lastAttractGestureTime time.Time
-	lastAttractChange      time.Time
+	attractMutex            sync.RWMutex
+	attractEnabled          bool
+	attractModeIsOn         *atomic.Bool
+	lastAttractModeChange   time.Time
+	lastAttractGestureTime  time.Time
+	lastAttractPresetChange time.Time
 
 	// parameters
-	attractGestureInterval float64
-	attractChangeInterval  float64
-	lastAttractCheck       time.Time
-	attractCheckSecs       float64
-	attractIdleSecs        float64
+	attractGestureInterval      float64
+	attractPresetChangeInterval float64
+	lastAttractModeCheck        time.Time
+	attractModeCheckSecs        float64
+	attractIdleSecs             float64
 
 	attractRand      *rand.Rand
 	attractRandMutex sync.Mutex
@@ -30,18 +30,22 @@ var TheAttractManager *AttractManager
 
 func NewAttractManager() *AttractManager {
 
+	gestureInterval, err := GetParamFloat("global.attractgestureinterval")
+	if err != nil {
+		gestureInterval = 5.0
+	}
 	am := &AttractManager{
-		attractEnabled:         false,
-		attractModeIsOn:        &atomic.Bool{},
-		lastAttractModeChange:  time.Now(),
-		lastAttractGestureTime: time.Now(),
-		lastAttractChange:      time.Now(),
-		lastAttractCheck:       time.Now(),
-		attractCheckSecs:       2,
-		attractIdleSecs:        70,
-		attractChangeInterval:  30,
-		attractGestureInterval: 0.5,
-		attractRand:            rand.New(rand.NewSource(1)),
+		attractEnabled:              false,
+		attractModeIsOn:             &atomic.Bool{},
+		lastAttractModeChange:       time.Now(),
+		lastAttractGestureTime:      time.Now(),
+		lastAttractPresetChange:     time.Now(),
+		lastAttractModeCheck:        time.Now(),
+		attractModeCheckSecs:        2, // fixed, not in config, check every 2 seconds
+		attractIdleSecs:             70,
+		attractPresetChangeInterval: 30,
+		attractGestureInterval:      gestureInterval,
+		attractRand:                 rand.New(rand.NewSource(1)),
 	}
 
 	am.attractModeIsOn.Store(false) // probably not needed?
@@ -105,10 +109,10 @@ func (am *AttractManager) checkAttract() {
 	// Every so often we check to see if attract mode should be turned on
 	now := time.Now()
 	// attractModeEnabled := am.attractIdleSecs > 0
-	sinceLastAttractCheck := now.Sub(am.lastAttractCheck).Seconds()
-	if sinceLastAttractCheck > am.attractCheckSecs {
+	sinceLastAttractModeCheck := now.Sub(am.lastAttractModeCheck).Seconds()
+	if sinceLastAttractModeCheck > am.attractModeCheckSecs {
 
-		am.lastAttractCheck = now
+		am.lastAttractModeCheck = now
 
 		am.attractMutex.Lock()
 		sinceLastAttractModeChange := time.Since(am.lastAttractModeChange).Seconds()
@@ -159,15 +163,15 @@ func (am *AttractManager) doAttractAction() {
 		am.lastAttractGestureTime = now
 	}
 
-	dp := now.Sub(am.lastAttractChange).Seconds()
-	if dp > am.attractChangeInterval {
+	dp := now.Sub(am.lastAttractPresetChange).Seconds()
+	if dp > am.attractPresetChangeInterval {
 		if TheQuad == nil {
 			LogWarn("No Quad to change for attract mode")
 		} else {
 			_, err := TheQuad.loadQuadRand("quad")
 			LogIfError(err)
 		}
-		am.lastAttractChange = now
+		am.lastAttractPresetChange = now
 	}
 
 	//// am.attractMutex.Unlock()
