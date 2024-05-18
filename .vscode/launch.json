@@ -16,6 +16,15 @@
             "args": []
         },
         {
+            "name": "GUI - palette_gui.py",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${env:PALETTE_SOURCE}/python/palette_gui.py",
+            "console": "integratedTerminal",
+            "cwd": "${fileDirname}",
+            "args": []
+        },
+        {
             "name": "palette osc listen",
             "type": "go",
             "request": "launch",
@@ -52,15 +61,6 @@
             "request": "launch",
             "program": "${env:PALETTE_SOURCE}/cmd/pk2go/pk2go.go",
             "args": ["../../kitlib/arpeggio.k"]
-        },
-        {
-            "name": "GUI - palette_gui.py",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${env:PALETTE_SOURCE}/python/palette_gui.py",
-            "console": "integratedTerminal",
-            "cwd": "${fileDirname}",
-            "args": []
         },
        {
             "name": "FYNE DEMO",

@@ -198,9 +198,8 @@ func LoadGlobalParamsFrom(filename string, activate bool) (err error) {
 	}
 	GlobalParams.ApplyValuesFromMap("global", paramsMap, GlobalParams.SetParamWithString)
 	if activate {
-		for nm, _ := range paramsMap {
+		for nm := range paramsMap {
 			ActivateGlobalParam(nm)
-
 		}
 	}
 	return nil
