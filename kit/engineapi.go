@@ -11,7 +11,7 @@ import (
 // ExecuteApi xxx
 func ExecuteApi(api string, apiargs map[string]string) (result string, err error) {
 
-	if api != "global.status" {  // global.status happens every few seconds
+	if api != "global.status" { // global.status happens every few seconds
 		LogOfType("api", "ExecuteApi", "api", api, "apiargs", apiargs)
 	}
 
@@ -125,7 +125,7 @@ func ExecuteGlobalApi(api string, apiargs map[string]string) (result string, err
 		if !ok {
 			return "", fmt.Errorf("ExecuteGlobalApi: missing filename parameter")
 		}
-		err := LoadGlobalParamsFrom(fname,true)
+		err := LoadGlobalParamsFrom(fname, true)
 		return "", err
 
 	case "set":
@@ -367,13 +367,9 @@ func ApplyGlobalParam(name string, value string) (err error) {
 	case "global.attractenabled":
 		TheAttractManager.SetAttractEnabled(IsTrueValue(value))
 
-	case "global.attractchecksecs":
+	case "global.attractpresetchangeinterval":
 		if GetFloat(value, &f) {
-			TheAttractManager.attractCheckSecs = f
-		}
-	case "global.attractchangeinterval":
-		if GetFloat(value, &f) {
-			TheAttractManager.attractChangeInterval = f
+			TheAttractManager.attractPresetChangeInterval = f
 		}
 	case "global.attractgestureinterval":
 		if GetFloat(value, &f) {

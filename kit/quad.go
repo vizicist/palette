@@ -227,7 +227,7 @@ func (quad *Quad) onCursorEvent(state ActiveCursor) error {
 	cursorStyle := patchLogic.patch.Get("misc.cursorstyle")
 	gensound := IsTrueValue(patchLogic.patch.Get("misc.generatesound"))
 	genvisual := IsTrueValue(patchLogic.patch.Get("misc.generatevisual"))
-	attractSound := IsTrueValue(GetParamWithDefault("global.attractsound", "false"))
+	attractSound := IsTrueValue(GetParamWithDefault("global.attractplaysound", "false"))
 	// in attract mode, don't generate sound from attractMode cursors
 	attractIsOn := TheAttractManager.AttractModeIsOn()
 	isAttractGenerated := state.Current.IsAttractGenerated()

@@ -226,6 +226,7 @@ func (cm *CursorManager) clearActiveCursors(tag string, checkDelay Clicks) {
 	cm.deleteActiveCursors(gidsToDelete)
 }
 
+/*
 func (cm *CursorManager) RandPos() CursorPos {
 	randZFactor := float32(0.5)
 	return CursorPos{
@@ -234,6 +235,7 @@ func (cm *CursorManager) RandPos() CursorPos {
 		Z: cm.cursorRand.Float32() * randZFactor,
 	}
 }
+*/
 
 func (cm *CursorManager) GenerateCenterGesture(tag string, dur time.Duration) {
 
@@ -251,8 +253,18 @@ func (cm *CursorManager) GenerateRandomGesture(tag string, numsteps int, dur tim
 
 	cm.cursorRandMutex.Lock()
 
-	pos0 := cm.RandPos()
-	pos1 := cm.RandPos()
+	// randZFactor := float32(0.5)
+	randZMin := float32(0.25)
+	randZMax := float32(0.75)
+	dz := randZMax - randZMin
+	pos0 := CursorPos{
+		X: cm.cursorRand.Float32(),
+		Y: cm.cursorRand.Float32(),
+		Z: randZMin + cm.cursorRand.Float32()*dz}
+	pos1 := CursorPos{
+		X: cm.cursorRand.Float32(),
+		Y: cm.cursorRand.Float32(),
+		Z: randZMin + cm.cursorRand.Float32()*dz}
 
 	// Occasionally force horizontal and vertical
 	if cm.cursorRand.Int()%4 == 0 {
@@ -270,8 +282,8 @@ func (cm *CursorManager) GenerateGesture(tag string, numsteps int, dur time.Dura
 
 	gid := cm.UniqueGid()
 
-	LogOfType("gesture", "generateCursoresture start",
-		"gid", gid, "noteDuration", dur, "tags", tag, "pos0", pos0, "pos1", pos1)
+	LogOfType("gesture", "generateCursorgesture start",
+		"gid", gid, "noteDuration", dur, "durNano", dur.Nanoseconds(), "tags", tag, "pos0", pos0, "pos1", pos1)
 
 	dpos := CursorPos{
 		X: pos1.X - pos0.X,
@@ -298,11 +310,13 @@ func (cm *CursorManager) GenerateGesture(tag string, numsteps int, dur time.Dura
 			Z: pos0.Z + dpos.Z*amount,
 		}
 		ce := NewCursorEvent(gid, tag, ddu, pos)
-		// LogOfType("cursor", "generateCursoresture", "n", n, "amount", amount, "pos", pos)
+		LogOfType("gesture", "generateCursorEvent", "n", n, "amount", amount, "pos", pos, "tag", tag)
 		// cm.activeMutex.Unlock()
 
 		cm.ExecuteCursorEvent(ce)
-		time.Sleep(time.Duration(dur.Nanoseconds() / int64(numsteps)))
+		sleepDur := time.Duration(dur.Nanoseconds() / int64(numsteps))
+		LogOfType("gesture", "generateGesture sleep", "sleepDur", sleepDur, "tag", tag)
+		time.Sleep(sleepDur)
 	}
 }
 

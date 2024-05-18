@@ -94,7 +94,7 @@ class ProGuiApp(tk.Tk):
 
         self.showAll = palette.boolValueOfString(palette.GetParam("global.guishowall"))
 
-        self.attractGuiShow = palette.boolValueOfString(palette.GetParam("global.attractguishow"))
+        self.attractGuiShow = palette.boolValueOfString(palette.GetParam("global.attractallowgui"))
 
         self.currentPageName = None
 
@@ -636,10 +636,10 @@ class ProGuiApp(tk.Tk):
             return tk.PhotoImage(file=path)
 
     def makeAttractFrame(self,container):
-        self.attractimage = self.getImage("global.attractimage")
+        self.attractguiimage = self.getImage("global.attractguiimage")
         f = tk.Frame(container,
             highlightbackground=ColorBg, highlightcolor=ColorAqua, highlightthickness=3)
-        button = ttk.Button(f, image=self.attractimage, style='Attract.TLabel',
+        button = ttk.Button(f, image=self.attractguiimage, style='Attract.TLabel',
             command=self.unattract)
         button.pack(side=tk.TOP,fill=tk.BOTH,expand=True)
         return f
