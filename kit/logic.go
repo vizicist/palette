@@ -69,7 +69,7 @@ func (logic *PatchLogic) cursorToPitch(ce CursorEvent) (uint8, error) {
 			pitchmax = t
 		}
 		dp := pitchmax - pitchmin + 1
-		p1 := int(ce.Pos.X * float32(dp))
+		p1 := int(ce.Pos.X * float64(dp))
 		p := uint8(pitchmin + p1%dp)
 
 		scaleName := patch.Get("misc.scale")
@@ -138,7 +138,7 @@ func (logic *PatchLogic) cursorToVelocity(ce CursorEvent) uint8 {
 	// LogInfo("CursorToVelocity","scaledZ",scaledZ,"ce.Z",ce.Z,"zmin",zmin,"zmax",zmax)
 
 	// Scale cursor Z to controller zmin and zmax
-	v := float32(0.8) // default and fixed value
+	v := 0.8 // default and fixed value
 	switch volstyle {
 	case "frets":
 		v = 1.0 - ce.Pos.Y
@@ -150,7 +150,7 @@ func (logic *PatchLogic) cursorToVelocity(ce CursorEvent) uint8 {
 		LogWarn("Unrecognized vol value", "volstyle", volstyle)
 	}
 	dv := velocitymax - velocitymin + 1
-	p1 := int(v * float32(dv))
+	p1 := int(v * float64(dv))
 	vel := uint8(velocitymin + p1%dv)
 	return uint8(vel)
 }
@@ -259,11 +259,11 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
 		// saving a.ce, like the deltay value
 
 		dz := float64(int(oldvelocity) - int(newvelocity))
-		deltaz := float32(math.Abs(dz) / 128.0)
+		deltaz := math.Abs(dz) / 128.0
 		deltaztrignote := patch.GetFloat("sound._deltaztrignote")
 		deltaztrigcontroller := patch.GetFloat("sound._deltaztrigcontroller")
 
-		deltay := float32(math.Abs(float64(ac.Previous.Pos.Y - ce.Pos.Y)))
+		deltay := math.Abs(float64(ac.Previous.Pos.Y - ce.Pos.Y))
 		deltaytrig := patch.GetFloat("sound._deltaytrig")
 
 		// logic.generateController(ac)
@@ -449,12 +449,12 @@ func (logic *PatchLogic) sendNoteOff(n *NoteOn) {
 }
 */
 
-func BoundAndScaleController(v, vmin, vmax float32, cmin, cmax int) int {
-	newv := BoundAndScaleFloat(v, vmin, vmax, float32(cmin), float32(cmax))
+func BoundAndScaleController(v, vmin, vmax float64, cmin, cmax int) int {
+	newv := BoundAndScaleFloat(v, vmin, vmax, float64(cmin), float64(cmax))
 	return int(newv)
 }
 
-func BoundAndScaleFloat(v, vmin, vmax, outmin, outmax float32) float32 {
+func BoundAndScaleFloat(v, vmin, vmax, outmin, outmax float64) float64 {
 	if v < vmin {
 		v = vmin
 	} else if v > vmax {

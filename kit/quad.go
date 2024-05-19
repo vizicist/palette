@@ -193,7 +193,7 @@ func (quad *Quad) onCursorEvent(state ActiveCursor) error {
 
 	if state.Button != "" {
 
-		mmtt_buttondepth := float32(0.1)
+		mmtt_buttondepth := 0.1
 		// To avoid false triggering, we only want to be triggered when the
 		// Z depth is small, i.e. when something has just entered the button area.
 		if state.Current.Ddu == "down" && state.Current.Pos.Z < mmtt_buttondepth {
