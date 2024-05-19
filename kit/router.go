@@ -165,13 +165,13 @@ func (r *Router) SetMIDIEventHandler(handler MIDIEventHandler) {
 }
 */
 
-func ArgToFloat(nm string, args map[string]string) float32 {
-	v, err := strconv.ParseFloat(args[nm], 32)
+func ArgToFloat(nm string, args map[string]string) float64 {
+	v, err := strconv.ParseFloat(args[nm], 64)
 	if err != nil {
 		LogIfError(err)
 		v = 0.0
 	}
-	return float32(v)
+	return v
 }
 
 func ArgToInt(nm string, args map[string]string) int {
@@ -197,7 +197,7 @@ func ArgsToCursorEvent(args map[string]string) CursorEvent {
 }
 */
 
-func GetArgsXYZ(args map[string]string) (x, y, z float32, err error) {
+func GetArgsXYZ(args map[string]string) (x, y, z float64, err error) {
 
 	api := "GetArgsXYZ"
 	x, err = needFloatArg("x", api, args)
@@ -323,17 +323,17 @@ func (r *Router) oscHandleCursor(msg *osc.Message) {
 		LogIfError(err)
 		return
 	}
-	x, err := argAsFloat32(msg, 3)
+	x, err := argAsFloat(msg, 3)
 	if err != nil {
 		LogIfError(err)
 		return
 	}
-	y, err := argAsFloat32(msg, 4)
+	y, err := argAsFloat(msg, 4)
 	if err != nil {
 		LogIfError(err)
 		return
 	}
-	z, err := argAsFloat32(msg, 5)
+	z, err := argAsFloat(msg, 5)
 	if err != nil {
 		LogIfError(err)
 		return
@@ -364,8 +364,8 @@ func (r *Router) oscHandleCursor(msg *osc.Message) {
 	// We want to expand the X and Y values a bit around their center
 	// (hence the 0.5 stuff), since the values from mmtt_kinect are inset a bit.
 	newPos := ce.Pos
-	newPos.X = boundValueZeroToOne(((float64(ce.Pos.X) - 0.5) * xexpand) + 0.5)
-	newPos.Y = boundValueZeroToOne(((float64(ce.Pos.Y) - 0.5) * yexpand) + 0.5)
+	newPos.X = boundValueZeroToOne(((ce.Pos.X - 0.5) * xexpand) + 0.5)
+	newPos.Y = boundValueZeroToOne(((ce.Pos.Y - 0.5) * yexpand) + 0.5)
 	// For Z, we want to expand the value only in the positive direction.
 	newPos.Z = boundValueZeroToOne(float64(ce.Pos.Z) * zexpand)
 
@@ -413,16 +413,16 @@ func argAsInt(msg *osc.Message, index int) (i int, err error) {
 	return i, err
 }
 
-func argAsFloat32(msg *osc.Message, index int) (f float32, err error) {
+func argAsFloat(msg *osc.Message, index int) (f float64, err error) {
 	if index >= len(msg.Arguments) {
 		return f, fmt.Errorf("not enough arguments, looking for index=%d", index)
 	}
 	arg := msg.Arguments[index]
 	switch v := arg.(type) {
 	case float32:
-		f = v
+		f = float64(v)
 	case float64:
-		f = float32(v)
+		f = v
 	default:
 		err = fmt.Errorf("expected a float in OSC argument index=%d", index)
 	}
@@ -445,4 +445,4 @@ func argAsString(msg *osc.Message, index int) (s string, err error) {
 
 // This silliness is to avoid unused function errors from go-staticcheck
 var _ = argAsInt
-var _ = argAsFloat32
+var _ = argAsFloat

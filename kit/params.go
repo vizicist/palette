@@ -19,8 +19,8 @@ type ParamDef struct {
 }
 
 type ParamDefFloat struct {
-	min  float32
-	max  float32
+	min  float64
+	max  float64
 	Init string
 	// comment string
 }
@@ -58,7 +58,7 @@ type paramValInt struct {
 
 type paramValFloat struct {
 	def   ParamDefFloat
-	value float32
+	value float64
 }
 
 type paramValBool struct {
@@ -206,7 +206,7 @@ func (vals *ParamValues) GetIntValue(name string) int {
 	return param.(paramValInt).value
 }
 
-func (vals *ParamValues) GetFloatValue(name string) float32 {
+func (vals *ParamValues) GetFloatValue(name string) float64 {
 	param := vals.paramValue(name)
 	if param == nil {
 		// Warn("No existing float value for param", "name", name)
@@ -215,7 +215,7 @@ func (vals *ParamValues) GetFloatValue(name string) float32 {
 			f, err := strconv.ParseFloat(pd.Init, 64)
 			if err == nil {
 				LogIfError(err)
-				return float32(f)
+				return f
 			}
 		}
 		return 0.0
@@ -373,12 +373,12 @@ func (vals *ParamValues) SetParamWithString(origname, value string) (err error) 
 	case ParamDefString:
 		paramVal = paramValString{def: d, value: value}
 	case ParamDefFloat:
-		var v float32
-		v, err := ParseFloat32(value, origname)
+		var v float64
+		v, err := ParseFloat(value, origname)
 		if err != nil {
 			return err
 		}
-		paramVal = paramValFloat{def: d, value: float32(v)}
+		paramVal = paramValFloat{def: d, value: v}
 	default:
 		e := fmt.Errorf("ParamValues.Set: unknown TypedParamDef for name=%s type=%T", origname, def.TypedParamDef)
 		LogIfError(e)
@@ -391,13 +391,12 @@ func (vals *ParamValues) SetParamWithString(origname, value string) (err error) 
 // ParamEnums contains the lists of enumerated values for string parameters
 var ParamEnums map[string][]string
 
-// ParseFloat32 xxx
-func ParseFloat32(s string, name string) (float32, error) {
+func ParseFloat(s string, name string) (float64, error) {
 	f, err := strconv.ParseFloat(s, 32)
 	if err != nil {
-		return 0.0, fmt.Errorf("ParseFloat32 of parameter '%s' (%s) fails", name, s)
+		return 0.0, fmt.Errorf("ParseFloat of parameter '%s' (%s) fails", name, s)
 	}
-	return float32(f), nil
+	return f, nil
 }
 
 // ParseInt xxx
@@ -480,11 +479,11 @@ func LoadParamDefs() error {
 
 		switch valuetype {
 		case "double", "float":
-			fmin, err := ParseFloat32(min, "min")
+			fmin, err := ParseFloat(min, "min")
 			if err != nil {
 				return err
 			}
-			fmax, err := ParseFloat32(max, "max")
+			fmax, err := ParseFloat(max, "max")
 			if err != nil {
 				return err
 			}

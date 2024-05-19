@@ -45,6 +45,8 @@
     "aeolian",
     "locrian",
     "octaves",
+    "fifths",
+    "fourths",
     "harminor",
     "melminor",
     "chromatic"
@@ -62,6 +64,8 @@
     "aeolian",
     "locrian",
     "octaves",
+    "fifths",
+    "fourths",
     "harminor",
     "melminor",
     "chromatic"

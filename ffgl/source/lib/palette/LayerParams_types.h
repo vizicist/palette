@@ -173,6 +173,8 @@ LayerParams_InitializeTypes() {
 	LayerParams_scaleTypes.push_back("aeolian");
 	LayerParams_scaleTypes.push_back("locrian");
 	LayerParams_scaleTypes.push_back("octaves");
+	LayerParams_scaleTypes.push_back("fifths");
+	LayerParams_scaleTypes.push_back("fourths");
 	LayerParams_scaleTypes.push_back("harminor");
 	LayerParams_scaleTypes.push_back("melminor");
 	LayerParams_scaleTypes.push_back("chromatic");
@@ -189,6 +191,8 @@ LayerParams_InitializeTypes() {
 	LayerParams_enginescaleTypes.push_back("aeolian");
 	LayerParams_enginescaleTypes.push_back("locrian");
 	LayerParams_enginescaleTypes.push_back("octaves");
+	LayerParams_enginescaleTypes.push_back("fifths");
+	LayerParams_enginescaleTypes.push_back("fourths");
 	LayerParams_enginescaleTypes.push_back("harminor");
 	LayerParams_enginescaleTypes.push_back("melminor");
 	LayerParams_enginescaleTypes.push_back("chromatic");
