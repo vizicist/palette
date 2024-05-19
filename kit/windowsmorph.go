@@ -251,8 +251,8 @@ type oneMorph struct {
 	idx              uint8
 	opened           bool
 	serialNum        string
-	width            float32
-	height           float32
+	width            float64
+	height           float64
 	fwVersionMajor   uint8
 	fwVersionMinor   uint8
 	fwVersionBuild   uint8
@@ -264,12 +264,12 @@ type oneMorph struct {
 	contactIdToGid   map[int]int
 }
 
-var morphMaxForce float32 = 1000.0
+var morphMaxForce float64 = 1000.0
 
 var allMorphs []*oneMorph
 
 // StartMorph xxx
-func StartMorph(callback CursorCallbackFunc, forceFactor float32) {
+func StartMorph(callback CursorCallbackFunc, forceFactor float64) {
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -308,7 +308,7 @@ const (
 	CursorUp   = 3
 )
 
-func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float32) {
+func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float64) {
 	status := C.SenselReadSensor(C.uchar(m.idx))
 	if status != C.SENSEL_OK {
 		LogWarn("SenselReadSensor for", "idx", m.idx, "status", status)
@@ -335,11 +335,11 @@ func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float32) 
 				LogWarn("SenselGetContact of morph", "idx", m.idx, "n", n, "status", status)
 				continue
 			}
-			xNorm := float32(contact.x_pos) / m.width
-			yNorm := float32(contact.y_pos) / m.height
-			zNorm := float32(contact.total_force) / morphMaxForce
+			xNorm := float64(contact.x_pos) / m.width
+			yNorm := float64(contact.y_pos) / m.height
+			zNorm := float64(contact.total_force) / morphMaxForce
 			zNorm *= forceFactor
-			area := float32(contact.area)
+			area := float64(contact.area)
 			var ddu string
 			switch contact.state {
 			case CursorDown:
@@ -359,7 +359,7 @@ func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float32) 
 
 				// If the position is in one of the corners,
 				// we change the source to that corner.
-				edge := float32(0.075)
+				edge := 0.075
 				cornerSource := ""
 				if xNorm < edge && yNorm < edge {
 					cornerSource = "A"
@@ -508,8 +508,8 @@ func WinMorphInitialize() error {
 		}
 
 		m.opened = true
-		m.width = float32(sensorinfo.width)
-		m.height = float32(sensorinfo.height)
+		m.width = float64(sensorinfo.width)
+		m.height = float64(sensorinfo.height)
 		m.fwVersionMajor = uint8(firmwareinfo.fw_version_major)
 		m.fwVersionMinor = uint8(firmwareinfo.fw_version_minor)
 		m.fwVersionBuild = uint8(firmwareinfo.fw_version_build)

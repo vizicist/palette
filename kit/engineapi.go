@@ -251,8 +251,8 @@ func ExecuteGlobalApi(api string, apiargs map[string]string) (result string, err
 		if xs == "" || ys == "" || zs == "" {
 			return "", fmt.Errorf("playcursor: missing x, y, or z value")
 		}
-		var x, y, z float32
-		if !GetFloat32(xs, &x) || !GetFloat32(ys, &y) || !GetFloat32(zs, &z) {
+		var x, y, z float64
+		if !GetFloat(xs, &x) || !GetFloat(ys, &y) || !GetFloat(zs, &z) {
 			return "", fmt.Errorf("playcursor: bad x,y,z value")
 		}
 		pos = CursorPos{x, y, z}
@@ -269,7 +269,7 @@ func ExecuteGlobalApi(api string, apiargs map[string]string) (result string, err
 }
 
 func GetFloat(value string, f *float64) bool {
-	v, err := strconv.ParseFloat(value, 32)
+	v, err := strconv.ParseFloat(value, 64)
 	if err != nil {
 		LogIfError(err)
 		return false
@@ -279,6 +279,7 @@ func GetFloat(value string, f *float64) bool {
 	}
 }
 
+/*
 func GetFloat32(value string, f *float32) bool {
 	v, err := strconv.ParseFloat(value, 32)
 	if err != nil {
@@ -289,6 +290,7 @@ func GetFloat32(value string, f *float32) bool {
 		return true
 	}
 }
+*/
 
 func GetInt(value string, i *int64) bool {
 	v, err := strconv.ParseInt(value, 10, 64)
@@ -367,25 +369,50 @@ func ApplyGlobalParam(name string, value string) (err error) {
 	case "global.attractenabled":
 		TheAttractManager.SetAttractEnabled(IsTrueValue(value))
 
-	case "global.attractpresetchangeinterval":
-		if GetFloat(value, &f) {
-			TheAttractManager.attractPresetChangeInterval = f
-		}
-	case "global.attractgestureinterval":
-		if GetFloat(value, &f) {
-			TheAttractManager.attractGestureInterval = f
-		}
 	case "global.attractidlesecs":
 		if GetInt(value, &i) {
 			if i < 15 {
 				LogWarn("global.attractidlesecs is too low, forcing to 15")
 				i = 15
 			}
-			TheAttractManager.attractIdleSecs = float64(i)
+			TheAttractManager.IdleSecs = float64(i)
 		}
+	case "global.attractgestureinterval":
+		if GetFloat(value, &f) {
+			TheAttractManager.GestureInterval = f
+		}
+	case "global.attractpresetchangeinterval":
+		if GetFloat(value, &f) {
+			TheAttractManager.PresetChangeInterval = f
+		}
+	case "global.attractgesturenumsteps":
+		if GetFloat(value, &f) {
+			TheAttractManager.GestureNumSteps = f
+		}
+	case "global.attractgestureduration":
+		if GetFloat(value, &f) {
+			TheAttractManager.GestureDuration = f
+		}
+	case "global.attractgestureminlength":
+		if GetFloat(value, &f) {
+			TheAttractManager.GestureMinLength = f
+		}
+	case "global.attractgesturemaxlength":
+		if GetFloat(value, &f) {
+			TheAttractManager.GestureMaxLength = f
+		}
+	case "global.attractgestureminz":
+		if GetFloat(value, &f) {
+			TheAttractManager.GestureZMin = f
+		}
+	case "global.attractgesturemaxz":
+		if GetFloat(value, &f) {
+			TheAttractManager.GestureZMax = f
+		}
+
 	case "global.looping_fadethreshold":
 		if GetFloat(value, &f) {
-			TheCursorManager.LoopThreshold = float32(f)
+			TheCursorManager.LoopThreshold = f
 		}
 
 	case "global.looping_override":

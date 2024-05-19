@@ -178,8 +178,7 @@ func (r *Resolume) sendPadOneEffectParam(layerNum int, effectName string, paramN
 		msg.Append(valstr)
 
 	case ParamDefFloat:
-		var valfloat float32
-		valfloat, err := ParseFloat32(value, resEffectName)
+		valfloat, err := ParseFloat(value, resEffectName)
 		if err != nil {
 			LogIfError(err)
 			valfloat = 0.0

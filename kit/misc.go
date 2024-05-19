@@ -352,16 +352,16 @@ func ReadConfigFile(path string) (map[string]string, error) {
 	return pmap, nil
 }
 
-func needFloatArg(nm string, api string, args map[string]string) (float32, error) {
+func needFloatArg(nm string, api string, args map[string]string) (float64, error) {
 	val, ok := args[nm]
 	if !ok {
 		return 0.0, fmt.Errorf("api/event=%s missing value for %s", api, nm)
 	}
-	f, err := strconv.ParseFloat(val, 32)
+	f, err := strconv.ParseFloat(val, 64)
 	if err != nil {
 		return 0.0, fmt.Errorf("api/event=%s bad value, expecting float for %s, got %s", api, nm, val)
 	}
-	return float32(f), nil
+	return f, nil
 }
 
 func optionalStringArg(nm string, args map[string]string, dflt string) string {
@@ -653,14 +653,14 @@ func JsonString(args ...string) string {
 	return params
 }
 
-func boundValueZeroToOne(v float64) float32 {
+func boundValueZeroToOne(v float64) float64 {
 	if v < 0.0 {
 		return 0.0
 	}
 	if v > 1.0 {
 		return 1.0
 	}
-	return float32(v)
+	return v
 }
 
 func GetNameValue(apiargs map[string]string) (name string, value string, err error) {

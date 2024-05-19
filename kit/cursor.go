@@ -2,6 +2,7 @@ package kit
 
 import (
 	"fmt"
+	"math"
 	"math/rand"
 	"strings"
 	"sync"
@@ -23,7 +24,7 @@ type CursorEvent struct {
 	// Source string
 	Ddu  string    `json:"Ddu"` // "down", "drag", "up" (sometimes "clear")
 	Pos  CursorPos `json:"Pos"`
-	Area float32   `json:"Area"`
+	Area float64   `json:"Area"`
 }
 
 // OscEvent is an OSC message
@@ -36,8 +37,8 @@ type ActiveCursor struct {
 	Button      string
 	loopIt      bool
 	loopBeats   int
-	loopFade    float32
-	maxZ        float32
+	loopFade    float64
+	maxZ        float64
 	pitchOffset int32
 }
 
@@ -54,13 +55,13 @@ type CursorManager struct {
 	handlers            map[string]CursorHandler
 	uniqueInt           int
 	uniqueMutex         sync.Mutex
-	LoopThreshold       float32
+	LoopThreshold       float64
 	cursorRand          *rand.Rand
 	cursorRandMutex     sync.Mutex
 }
 
 type CursorPos struct {
-	X, Y, Z float32
+	X, Y, Z float64
 }
 
 // CursorDeviceCallbackFunc xxx
@@ -115,7 +116,7 @@ func NewActiveCursor(ce CursorEvent) *ActiveCursor {
 		forcefade, _ := GetParamFloat("global.looping_fade")
 		ac.loopIt = forceOverride
 		ac.loopBeats = forcebeats
-		ac.loopFade = float32(forcefade)
+		ac.loopFade = forcefade
 	}
 
 	// LogInfo("NewactiveCursor", "ac", ac)
@@ -147,7 +148,7 @@ func NewCursorManager() *CursorManager {
 		activeMutex:    sync.Mutex{},
 		handlers:       map[string]CursorHandler{},
 		uniqueInt:      1,
-		LoopThreshold:  float32(0.01),
+		LoopThreshold:  0.01,
 		cursorRand:     rand.New(rand.NewSource(1)),
 	}
 	return cm
@@ -228,11 +229,11 @@ func (cm *CursorManager) clearActiveCursors(tag string, checkDelay Clicks) {
 
 /*
 func (cm *CursorManager) RandPos() CursorPos {
-	randZFactor := float32(0.5)
+	randZFactor := 0.5
 	return CursorPos{
-		X: cm.cursorRand.Float32(),
-		Y: cm.cursorRand.Float32(),
-		Z: cm.cursorRand.Float32() * randZFactor,
+		X: cm.cursorRand.Float64(),
+		Y: cm.cursorRand.Float64(),
+		Z: cm.cursorRand.Float64() * randZFactor,
 	}
 }
 */
@@ -249,27 +250,45 @@ func (cm *CursorManager) GenerateCenterGesture(tag string, dur time.Duration) {
 	cm.GenerateGesture(tag, 1, dur, pos0, pos1)
 }
 
+func lineLength(pos0 CursorPos, pos1 CursorPos) float64 {
+	return math.Sqrt(math.Pow(pos1.X-pos0.X, 2) + math.Pow(pos1.Y-pos0.Y, 2))
+}
+
+func (cm *CursorManager) zRand(zmin float64, zmax float64) float64 {
+	z := 0.0
+	for z == 0.0 {
+		z = zmin + cm.cursorRand.Float64()*(zmax-zmin)
+		if z < zmin || z > zmax {	
+			z = 0.0
+		}
+	}
+	return z
+}
+
 func (cm *CursorManager) GenerateRandomGesture(tag string, numsteps int, dur time.Duration) {
 
 	cm.cursorRandMutex.Lock()
 
-	// randZFactor := float32(0.5)
-	randZMin := float32(0.25)
-	randZMax := float32(0.75)
-	dz := randZMax - randZMin
 	pos0 := CursorPos{
-		X: cm.cursorRand.Float32(),
-		Y: cm.cursorRand.Float32(),
-		Z: randZMin + cm.cursorRand.Float32()*dz}
-	pos1 := CursorPos{
-		X: cm.cursorRand.Float32(),
-		Y: cm.cursorRand.Float32(),
-		Z: randZMin + cm.cursorRand.Float32()*dz}
+		X: cm.cursorRand.Float64(),
+		Y: cm.cursorRand.Float64(),
+	}
+	pos1 := CursorPos{}
+	am := TheAttractManager
+	for pos1.X == 0.0 {
+		pos1.X = cm.cursorRand.Float64()
+		pos1.Y = cm.cursorRand.Float64()
+		// Keep going until desired length is achieved
+		leng := lineLength(pos0, pos1)
+		if leng < am.GestureMinLength || leng > am.GestureMaxLength {
+			pos1.X = 0.0 // try again
+		}
+	}
+	pos0.Z = cm.zRand(am.GestureZMin, am.GestureZMax)	
+	pos1.Z = cm.zRand(am.GestureZMin, am.GestureZMax)	
 
-	// Occasionally force horizontal and vertical
+	// Occasionally force exactly horizontal (since pitch goes horizontal)
 	if cm.cursorRand.Int()%4 == 0 {
-		pos1.X = pos0.X
-	} else if cm.cursorRand.Int()%4 == 0 {
 		pos1.Y = pos0.Y
 	}
 
@@ -303,7 +322,7 @@ func (cm *CursorManager) GenerateGesture(tag string, numsteps int, dur time.Dura
 
 		// Not sure about this Lock
 		// cm.activeMutex.Lock()
-		amount := float32(n) / float32(numsteps)
+		amount := float64(n) / float64(numsteps)
 		pos := CursorPos{
 			X: pos0.X + dpos.X*amount,
 			Y: pos0.Y + dpos.Y*amount,
@@ -386,26 +405,26 @@ func (cm *CursorManager) ExecuteCursorEvent(ce CursorEvent) {
 		LogIfError(err)
 	} else {
 		cm.executeMutex.Lock()
-		TheCursorManager.LoopThreshold = float32(fadeThreshold)
+		TheCursorManager.LoopThreshold = fadeThreshold
 		cm.executeMutex.Unlock()
 	}
 
 	cursorscaley, err := GetParamFloat("global.cursorscaley")
 	if err == nil && cursorscaley > 0.0 {
-		ce.Pos.Y *= float32(cursorscaley)
+		ce.Pos.Y *= cursorscaley
 	}
 	cursoroffsety, err := GetParamFloat("global.cursoroffsety")
 	if err == nil {
-		ce.Pos.Y += float32(cursoroffsety)
+		ce.Pos.Y += cursoroffsety
 	}
 
 	cursorscalex, err := GetParamFloat("global.cursorscalex")
 	if err == nil && cursorscalex > 0.0 {
-		ce.Pos.X *= float32(cursorscalex)
+		ce.Pos.X *= cursorscalex
 	}
 	cursoroffsetx, err := GetParamFloat("global.cursoroffsetx")
 	if err == nil {
-		ce.Pos.X += float32(cursoroffsetx)
+		ce.Pos.X += cursoroffsetx
 	}
 
 	if ce.Ddu == "clear" {
@@ -562,7 +581,7 @@ func (cm *CursorManager) DeleteActiveCursor(gid int) {
 }
 
 // DeleteActiveCursorIfZLessThan deletes the ActiveCursor if its Z value is less than threshold.
-func (cm *CursorManager) DeleteActiveCursorIfZLessThan(gid int, threshold float32) {
+func (cm *CursorManager) DeleteActiveCursorIfZLessThan(gid int, threshold float64) {
 
 	// LogInfo("BEGIN DeleteActiveCursorIfZ 1", "gid", gid,"sched", TheScheduler.ToString())
 
@@ -622,6 +641,7 @@ func CursorToOscMsg(ce CursorEvent) *osc.Message {
 	msg.Append(ce.Ddu)
 	// FFGL code expects a string
 	msg.Append(fmt.Sprintf("%d", ce.Gid))
+	// Note: OSC messages must use 32-bit floats
 	msg.Append(float32(ce.Pos.X))
 	msg.Append(float32(ce.Pos.Y))
 	msg.Append(float32(ce.Pos.Z))

@@ -177,6 +177,7 @@ func GetParamFloat(nm string) (float64, error) {
 	}
 	f, err := strconv.ParseFloat(s, 32)
 	if err != nil {
+		// XXX - should be setting f to "init" value
 		return 0.0, fmt.Errorf("bad format of float parameter name=%s", nm)
 	}
 	return f, nil

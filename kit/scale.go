@@ -57,10 +57,11 @@ func initScales() {
 	scales["aeolian"] = MakeScale(0, 2, 3, 5, 7, 8, 10)
 	scales["locrian"] = MakeScale(0, 1, 3, 5, 6, 8, 10)
 	scales["octaves"] = MakeScale(0)
+	scales["fifths"] = MakeScale(0, 7)
+	scales["fourths"] = MakeScale(0, 5)
 	scales["harminor"] = MakeScale(0, 2, 3, 5, 7, 8, 11)
 	scales["melminor"] = MakeScale(0, 2, 3, 5, 7, 9, 11)
 	scales["chromatic"] = MakeScale(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
-	scales["fifths"] = MakeScale(0, 7)
 
 	// The external scale is initialized to chromatic,
 	// but will be changed by MIDI input when global.setexternalscale is on.

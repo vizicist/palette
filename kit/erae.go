@@ -72,9 +72,9 @@ func (erae *Erae) handleBoundary(bb []byte) {
 	LogInfo("BOUNDARY REPLY", "zone", zone, "width", width, "height", height)
 }
 
-var lastX float32
-var lastY float32
-var lastZ float32
+var lastX float64
+var lastY float64
+var lastZ float64
 
 func (erae *Erae) EraeFingerIndicator(zone, x, y byte) {
 	LogOfType("erae", "EraeFingerIndicator", "x", x, "y", y)
@@ -127,9 +127,9 @@ func (erae *Erae) handleFinger(bb []byte) {
 	rawz := Float32frombytes(realbytes[8:12])
 	gid := int(finger)
 
-	x := rawx / float32(erae.width)
-	y := rawy / float32(erae.height)
-	z := rawz
+	x := float64(rawx) / float64(erae.width)
+	y := float64(rawy) / float64(erae.height)
+	z := float64(rawz)
 
 	if IsLogging("erae") {
 		dx := lastX - x
@@ -149,7 +149,7 @@ func (erae *Erae) handleFinger(bb []byte) {
 	// If the position is in one of the corners,
 	// we change the patch to that corner.
 
-	edge := float32(0.1)
+	edge := 0.1
 	tag := ""
 	if x < edge && y < edge {
 		tag = "A"
