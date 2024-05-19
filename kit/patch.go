@@ -356,7 +356,7 @@ func (patch *Patch) GetBool(paramName string) bool {
 	return patch.params.GetBoolValue(paramName)
 }
 
-func (patch *Patch) GetFloat(paramName string) float32 {
+func (patch *Patch) GetFloat(paramName string) float64 {
 	return patch.params.GetFloatValue(paramName)
 }
 
