@@ -85,7 +85,7 @@ copy %PALETTE_SOURCE%\build\windows\vc15\bin\pthreadvc2.dll %ship%\ffgl >nul
 copy %PALETTE_SOURCE%\build\windows\vc15\bin\msvcr100.dll %ship%\ffgl >nul
 popd
 
-if "%PALETTE_KINECT%" == "" goto no_mmtt_kinect
+if not "%PALETTE_MMTT%" == "kinect" goto no_mmtt_kinect
 	echo ================ Compiling mmtt_kinect
 	pushd %PALETTE_SOURCE%\mmtt_kinect\build\windows
 	msbuild /t:Build /p:Configuration=Debug /p:Platform="x32" mmtt_kinect.sln > nul
