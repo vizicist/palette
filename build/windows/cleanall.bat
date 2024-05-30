@@ -13,6 +13,6 @@ rm -fr %PALETTE_SOURCE%\python\dist
 rm -fr %PALETTE_SOURCE%\depthlib\build\.vs
 rm -fr %PALETTE_SOURCE%\depthlib\build\x64
 rm -fr %PALETTE_SOURCE%\depthlib\build\*.dir
-del /s %PALETTE_SOURCE%\mmtt_kinect\build\windows\*.obj
+del /s %PALETTE_SOURCE%\mmtt_kinect\build\windows\*.obj >nul 2>nul
 
 :getout
