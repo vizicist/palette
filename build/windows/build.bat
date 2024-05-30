@@ -148,6 +148,7 @@ copy %PALETTE_SOURCE%\SenselLib\x64\LibSenselDecompress.dll %bin% >nul
 rem copy %PALETTE_SOURCE%\depthlib\build\x64\Release\depthlib.dll %bin% >nul
 copy vc15\bin\depthai-core.dll %bin% >nul
 copy vc15\bin\opencv_world454.dll %bin% >nul
+copy "c:\program files\git\mingw64\bin\libgcc_s_seh-1.dll" %bin% >nul
 copy "%USERPROFILE%\mingw64\bin\libgcc_s_sjlj-1.dll" %bin% >nul
 copy "%USERPROFILE%\mingw64\bin\libstdc++-6.dll" %bin% >nul
 
