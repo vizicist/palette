@@ -47,7 +47,9 @@ Source: "ship\bin\*.bat"; DestDir: "{app}\bin"; Flags: comparetimestamp ignoreve
 Source: "ship\bin\*.dll"; DestDir: "{app}\bin"; Flags: comparetimestamp ignoreversion
 Source: "ship\bin\*.exe"; DestDir: "{app}\bin"; Flags: comparetimestamp ignoreversion
 Source: "ship\bin\pyinstalled\*"; DestDir: "{app}\bin\pyinstalled"; Flags: ignoreversion recursesubdirs createallsubdirs
-; Source: "ship\bin\mmtt_kinect\*"; DestDir: "{app}\bin\mmtt_kinect"; Flags: ignoreversion recursesubdirs createallsubdirs
+#if "{#GetEnv('PALETTE_KINECT')}" != ""
+Source: "ship\bin\mmtt_kinect\*"; DestDir: "{app}\bin\mmtt_kinect"; Flags: ignoreversion recursesubdirs createallsubdirs
+#endif
 Source: "ship\ffgl\*"; DestDir: "{app}\ffgl"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; Source: "ship\keykit\*"; DestDir: "{app}\keykit"; Flags: ignoreversion recursesubdirs createallsubdirs
 

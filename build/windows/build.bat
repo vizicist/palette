@@ -2,13 +2,13 @@
 @echo off
 
 if not "%PALETTE_SOURCE%" == "" goto keepgoing1
-echo You must set the PALETTE_SOURCE environment variable.
-goto getout
+	echo You must set the PALETTE_SOURCE environment variable.
+	goto getout
 :keepgoing1
 
 if not "%VSINSTALLDIR%" == "" goto keepgoing2
-echo Calling msdev17 to set build environment.
-call ..\..\scripts\msdev17.bat
+	echo Calling msdev17 to set build environment.
+	call ..\..\scripts\msdev17.bat
 :keepgoing2
 
 set ship=%PALETTE_SOURCE%\build\windows\ship
@@ -17,7 +17,6 @@ rm -fr %ship% > nul 2>&1
 mkdir %ship%
 mkdir %ship%\bin
 mkdir %ship%\ffgl
-rem mkdir %ship%\bin\mmtt_kinect
 rem mkdir %ship%\keykit
 rem mkdir %ship%\keykit\bin
 rem mkdir %ship%\keykit\lib
@@ -86,13 +85,16 @@ copy %PALETTE_SOURCE%\build\windows\vc15\bin\pthreadvc2.dll %ship%\ffgl >nul
 copy %PALETTE_SOURCE%\build\windows\vc15\bin\msvcr100.dll %ship%\ffgl >nul
 popd
 
-rem echo ================ Compiling mmtt_kinect
-rem pushd %PALETTE_SOURCE%\mmtt_kinect\build\windows
-rem msbuild /t:Build /p:Configuration=Debug /p:Platform="x32" mmtt_kinect.sln > nul
-rem rem Put mmtt_kinect in its own bin directory, to keep 32-bit things separate
-rem copy mmtt_kinect\Debug\mmtt_kinect.exe %bin%\mmtt_kinect\mmtt_kinect.exe >nul
-rem copy mmtt_kinect\*.dll %bin%\mmtt_kinect >nul
-rem popd
+if "%PALETTE_KINECT%" == "" goto no_mmtt_kinect
+	echo ================ Compiling mmtt_kinect
+	pushd %PALETTE_SOURCE%\mmtt_kinect\build\windows
+	msbuild /t:Build /p:Configuration=Debug /p:Platform="x32" mmtt_kinect.sln > nul
+	rem Put mmtt_kinect in its own bin directory, to keep 32-bit things separate
+	mkdir %bin%\mmtt_kinect
+	copy mmtt_kinect\Debug\mmtt_kinect.exe %bin%\mmtt_kinect\mmtt_kinect.exe >nul
+	copy mmtt_kinect\*.dll %bin%\mmtt_kinect >nul
+	popd
+:no_mmtt_kinect
 
 echo ================ Copying misc binaries
 copy %PALETTE_SOURCE%\binaries\nircmdc.exe %bin% >nul
@@ -152,13 +154,6 @@ copy "%USERPROFILE%\mingw64\bin\libstdc++-6.dll" %bin% >nul
 echo ================ Removing unused things
 rm -fr %bin%\pyinstalled\tcl\tzdata
 
-copy %PALETTE_SOURCE%\VERSION %ship% >nul
-set /p version=<../../VERSION
-echo ================ Creating installer for VERSION %version%
-sed -e "s/SUBSTITUTE_VERSION_HERE/%version%/" < palette_win_setup.iss > tmp.iss
-"c:\Program Files (x86)\Inno Setup 6\ISCC.exe" /Q tmp.iss
-move Output\palette_%version%_win_setup.exe %PALETTE_SOURCE%\release >nul
-rmdir Output
-rm tmp.iss
+call buildinstaller.bat
 
 :getout
