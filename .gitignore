@@ -2,7 +2,7 @@ data/recordings/*
 data/saved/archive/vizdesk*
 cmd/fyne_demo
 data/logs
-data/logs
+data_omnisphere/logs
 default.bidule.previous
 _Current.json
 .vs
