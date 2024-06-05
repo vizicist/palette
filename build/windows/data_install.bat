@@ -1,12 +1,14 @@
 @echo off
+
+set datadir=data_omnisphere
+
 set /p version=<../../VERSION
-hostname > hostname.txt
-set /p hostname=<hostname.txt
-del /q hostname.txt
 echo ....................................................
-echo Installing Palette version %version%
+echo Installing %datadir%_%version%
 echo ....................................................
-..\..\release\palette_%version%_win_setup.exe /SILENT
+
+..\..\release\%datadir%_%version%.exe /SILENT
+
 echo ....................................................
 echo Done!
 echo ....................................................

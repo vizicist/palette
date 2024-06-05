@@ -69,6 +69,7 @@ void NosuchPrintTime(const char *prefix);
 // std::string NosuchSnprintf(const char *fmt, ...);
 // void NosuchFree(std::string s);
 int NosuchNetworkInit();
+std::string PaletteDataPath();
 
 std::vector<std::string> NosuchSplitOnAnyChar(std::string s, std::string sepchars);
 std::vector<std::string> NosuchSplitOnString(const std::string& s, const std::string& delim, const bool keep_empty);
