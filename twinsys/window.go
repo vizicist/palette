@@ -47,7 +47,8 @@ func NewWindowContext(parent Window) WinContext {
 	var style string
 	if parent == nil {
 		kit.LogWarn("NewWindowContext: unexpected parent == nil?")
-		style = parent.Context().styleName
+		style = DefaultStyleName()
+		// style = parent.Context().styleName
 	}
 	return realNewWindowContext(parent, style)
 }

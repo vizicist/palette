@@ -86,6 +86,21 @@ func GetPaletteVersion() string {
 	return strings.TrimSuffix(string(bytes), "\n")
 }
 
+func PaletteDataPath() (datapath string) {
+
+	palette_data := os.Getenv("PALETTE_DATA")
+	if palette_data == "" {
+		palette_data = "omnisphere"
+	}
+	palette_source := os.Getenv("PALETTE_SOURCE")
+	if palette_source != "" {
+		datapath = filepath.Join(palette_source,"data_" + palette_data)	
+	} else {
+		datapath = filepath.Join("C:\\Program Files\\Common Files\\Palette", "data_" + palette_data)
+	}
+	return datapath;
+}
+
 // MIDIFilePath xxx
 func MIDIFilePath(nm string) string {
 	return filepath.Join(PaletteDataPath(), "midifiles", nm)
@@ -107,27 +122,6 @@ func LocalPaletteDir() string {
 		return palettedir
 	}
 	return filepath.Join(commonfilepath, "Palette")
-}
-
-var DataDir = "data" // default, override with environment variable
-var FullDataPath string
-
-func PaletteDataPath() string {
-	if FullDataPath != "" {
-		return FullDataPath
-	}
-	// Let environment variable override the compiled-in default of DataDir
-	dataPath := os.Getenv("PALETTE_DATA_PATH")
-	if dataPath != "" {
-		DataDir = dataPath
-	}
-	// The value can be either a full path or just the "data_..." part.
-	if filepath.IsAbs(DataDir) {
-		FullDataPath = DataDir
-	} else {
-		FullDataPath = filepath.Join(LocalPaletteDir(), DataDir)
-	}
-	return FullDataPath
 }
 
 func TwitchUser() (username string, authtoken string) {

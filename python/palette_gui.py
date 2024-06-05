@@ -472,7 +472,12 @@ class ProGuiApp(tk.Tk):
             # than the palette gui.
             win = tk.Toplevel(highlightbackground=ColorBg, highlightcolor=ColorAqua, highlightthickness=3, background=ColorBg)
             win.wm_title(windowName)
-            win.iconbitmap(palette.configFilePath("palette.ico"))
+            try:
+                win.iconbitmap("palette.ico")
+                log("iconbitmap for palette.ico succeeded")
+            except:
+                log("iconbitmap for palette.ico failed")
+
     
             l = tk.Label(win, text=msg, background=ColorBg, foreground=ColorText)
             l.grid(row=0, column=0)
@@ -2451,7 +2456,12 @@ def isTwoLine(text):
     return text.find(palette.LineSep) >= 0 or text.find("\n") >= 0
 
 def initMain(app):
-    app.iconbitmap(palette.configFilePath("palette.ico"))
+    try:
+        app.iconbitmap("palette.ico")
+        log("iconbitmap for palette.ico succeeded")
+    except:
+        log("iconbitmap for palette.ico failed")
+
     app.protocol("WM_DELETE_WINDOW", on_closing)
     app.mainLoop()
 

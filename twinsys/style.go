@@ -49,12 +49,13 @@ func NewStyle(styleName string, fontHeight int) *StyleInfo {
 
 	var f *truetype.Font
 	var err error
+	var b []byte
 
 	switch styleName {
 
 	case "fixed":
 		fontfile := kit.ConfigFilePath("consola.ttf")
-		b, err := os.ReadFile(fontfile)
+		b, err = os.ReadFile(fontfile)
 		if err == nil {
 			f, _ = truetype.Parse(b)
 		}
@@ -63,7 +64,7 @@ func NewStyle(styleName string, fontHeight int) *StyleInfo {
 		// This font sucks
 		// f, err = truetype.Parse(goregular.TTF)
 		fontfile := kit.ConfigFilePath("times.ttf")
-		b, err := os.ReadFile(fontfile)
+		b, err = os.ReadFile(fontfile)
 		if err == nil {
 			f, _ = truetype.Parse(b)
 		}

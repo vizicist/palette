@@ -113,46 +113,78 @@ NosuchDebugDumpLog()
 	ReleaseMutex(dMutex);
 }
 
+std::string
+PaletteDataPath()
+{
+
+	errno_t err;
+	char* palette = NULL;
+	char* source = NULL;
+	char *dataval = NULL;
+	char *value = NULL;
+	std::string sourcepath = "";
+	std::string datapath;
+	size_t len;
+
+	err = _dupenv_s( &palette, &len, "PALETTE" );
+	if( err || palette == NULL )
+	{
+		NosuchDebug( "No value for PALETTE environment variable!?\n" );
+		return NULL;
+	}
+
+	err = _dupenv_s( &dataval, &len, "PALETTE_DATA" );
+	if ( err == 0 && dataval != NULL ) {
+		dataval = "omnisphere";
+	}
+
+	err = _dupenv_s( &value, &len, "PALETTE_SOURCE" );
+	std::string parent;
+	if ( err == 0 && value != NULL ) {
+		parent = std::string(value);
+	} else {
+		parent = "c:\\Program Files\\Common Files\\Palette";
+	}
+	datapath = std::string(parent) + "\\data_" + std::string( dataval );	
+
+	NosuchDebug( "NosuchDebugInit: Level=%d Cursor=%d Param=%d API=%d\n", NosuchDebugLevel, NosuchDebugCursor , NosuchDebugParam, NosuchDebugAPI);
+	return datapath;
+}
+
 void
 RealNosuchDebugInit() {
 	if ( DebugInitialized ) {
 		return;
 	}
 
+	NosuchDebugLogPath = "c:\\windows\\temp\\ffgl.log";// last resort
+
+	errno_t err;
+	char* palette = NULL;
+	char *value = NULL;
+	size_t len;
+
+	err = _dupenv_s( &palette, &len, "PALETTE" );
+	if( err || palette == NULL )
+	{
+		NosuchDebug( "No value for PALETTE environment variable!?\n" );
+		return;
+	}
+
 	dMutex = CreateMutex(NULL, FALSE, NULL);
 	DebugInitialized = TRUE;
 
-	NosuchDebugLogPath = "c:\\windows\\temp\\ffgl.log";// last resort
-
-	char* value;
-	errno_t err;
-	size_t len;
-
-	err = _dupenv_s( &value, &len, "PALETTE_DATA_PATH" );
-	if ( err == 0 && value != NULL ) {
-		NosuchDebugLogPath = std::string( value ) + "\\logs\\ffgl.log";
-		free( value );
-	} else {
-		// Otherwise it's in %CommonProgramFiles%
-		err = _dupenv_s( &value, &len, "CommonProgramFiles" );
-		if( err == 0 && value != NULL ) {
-			// %CommonProgramFiles% is defined
-			NosuchDebugLogPath = std::string( value ) + "\\Palette\\data\\logs\\ffgl.log";
-		}
-	}
+	std::string datapath = PaletteDataPath();
+	NosuchDebugLogPath = datapath + "\\logs\\ffgl.log";
 
 	NosuchDebug( "NosuchDebugInit: Level=%d Cursor=%d Param=%d API=%d\n", NosuchDebugLevel, NosuchDebugCursor , NosuchDebugParam, NosuchDebugAPI);
 
-	err = _dupenv_s( &value, &len, "PALETTE" );
-	if( err || value == NULL )
-	{
-		NosuchDebug( "No value for PALETTE environment variable!?\n" );
-	}
 	if (value != NULL) {
 			free( value );
 	}
-
-
+	if (palette != NULL) {
+			free( palette );
+	}
 }
 
 void

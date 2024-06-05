@@ -67,8 +67,9 @@ pushd %PALETTE_SOURCE%\python
 rm -fr dist
 rm -fr build\palette_gui
 rm -fr build
-pyinstaller -i ..\data\config\palette.ico palette_gui.py > pyinstaller_gui.out 2>&1
+pyinstaller -i palette.ico palette_gui.py > pyinstaller_gui.out 2>&1
 move dist\palette_gui dist\pyinstalled >nul
+copy palette.ico dist\pyinstalled >nul
 move dist\pyinstalled %bin% >nul
 popd
 
@@ -113,34 +114,9 @@ copy palette_killall.bat %bin% >nul
 copy palette_onboot.bat %bin% >nul
 copy delay.bat %bin% >nul
 copy cdlogs.bat %bin% >nul
+copy tv_on.bat %bin% >nul
+copy tv_off.bat %bin% >nul
 popd
-
-echo ================ Copying data
-mkdir %ship%\data\config
-mkdir %ship%\data\midifiles
-mkdir %ship%\data\saved
-rem mkdir %ship%\data\keykit
-rem mkdir %ship%\data\keykit\liblocal
-mkdir %ship%\data\html
-copy %PALETTE_SOURCE%\data\config\homepage.json %ship%\data\config >nul
-copy %PALETTE_SOURCE%\data\config\ffgl.json %ship%\data\config >nul
-copy %PALETTE_SOURCE%\data\config\param*.json %ship%\data\config >nul
-copy %PALETTE_SOURCE%\data\config\resolume.json %ship%\data\config >nul
-copy %PALETTE_SOURCE%\data\config\settings.json %ship%\data\config >nul
-rem copy %PALETTE_SOURCE%\data\config\mmtt_*.json %ship%\data\config >nul
-copy %PALETTE_SOURCE%\data\config\synths.json %ship%\data\config >nul
-copy %PALETTE_SOURCE%\data\config\morphs.json %ship%\data\config >nul
-copy %PALETTE_SOURCE%\data\config\Palette*.avc %ship%\data\config >nul
-copy %PALETTE_SOURCE%\data\config\EraeTouchLayout.emk %ship%\data\config >nul
-copy %PALETTE_SOURCE%\data\config\*.png %ship%\data\config >nul
-copy %PALETTE_SOURCE%\data\config\consola.ttf %ship%\data\config >nul
-copy %PALETTE_SOURCE%\data\config\OpenSans-Regular.ttf %ship%\data\config >nul
-copy %PALETTE_SOURCE%\data\config\palette.ico %ship%\data\config >nul
-copy %PALETTE_SOURCE%\data\config\*.bidule %ship%\data\config >nul
-copy %PALETTE_SOURCE%\data\midifiles\*.* %ship%\data\midifiles >nul
-xcopy /e /y %PALETTE_SOURCE%\data\saved %ship%\data\saved >nul
-rem xcopy /e /y %PALETTE_SOURCE%\data\keykit\liblocal %ship%\data\keykit\liblocal >nul
-xcopy /e /y %PALETTE_SOURCE%\data\html %ship%\data\html >nul
 
 echo ================ Copying windows-specific things
 copy %PALETTE_SOURCE%\SenselLib\x64\LibSensel.dll %bin% >nul
@@ -155,6 +131,24 @@ copy "%USERPROFILE%\mingw64\bin\libstdc++-6.dll" %bin% >nul
 echo ================ Removing unused things
 rm -fr %bin%\pyinstalled\tcl\tzdata
 
-call buildinstaller.bat
+copy %PALETTE_SOURCE%\VERSION %ship% >nul
+set /p version=<../../VERSION
+
+echo ================ Creating installer for VERSION %version%
+
+sed -e "s/SUBSTITUTE_VERSION_HERE/%version%/" < palette_win_setup.iss > tmp.iss
+"c:\Program Files (x86)\Inno Setup 6\ISCC.exe" /Q tmp.iss
+
+if not "%PALETTE_MMTT%" == "kinect" goto no_kinect
+move Output\palette_%version%_win_setup.exe %PALETTE_SOURCE%\release\palette_%version%_win_setup_with_kinect.exe >nul
+goto finish
+
+:no_kinect
+move Output\palette_%version%_win_setup.exe %PALETTE_SOURCE%\release >nul
+
+:finish
+
+rmdir Output
+rm tmp.iss
 
 :getout

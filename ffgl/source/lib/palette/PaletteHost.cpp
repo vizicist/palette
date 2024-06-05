@@ -244,22 +244,10 @@ PaletteHost::PaletteHost()
 
 	std::string configfile;
 
-	char* datapathValue;
-	size_t len1;
-	errno_t datapathErr = _dupenv_s( &datapathValue, &len1, "PALETTE_DATA_PATH" );
-	if ( !datapathErr && datapathValue != NULL ) {
-		configfile = NosuchSnprintf( "%s/config/ffgl.json", datapathValue );
-	} else {
-		char* localValue;
-		size_t locallen;
-		errno_t localerr = _dupenv_s( &localValue, &locallen, "CommonProgramFiles" );
-		if( !localerr && localValue != NULL ) {
-			configfile = std::string( localValue ) + "\\Palette\\config\\ffgl.json";
-			free( localValue );
-		} else {
-			configfile = "c:\\windows\\temp\\ffgl.json";// last resort
-		}
-	}
+	std::string datapath = PaletteDataPath();
+
+	configfile = datapath + "\\config\\ffgl.json";
+
 	NosuchDebug( "Using configfile=%s\n", configfile.c_str() );
 
 	// NosuchDebugSetThreadName(pthread_self().p,"PaletteHost");
