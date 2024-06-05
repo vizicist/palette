@@ -15,9 +15,9 @@ import json
 def openFile(dir,name):
 	return open(os.path.join(dir,name),"w")
 
-def generate(homedir, force, sourcedir, floatType):
+def generate(datadir, force, sourcedir, floatType):
 
-	c = os.path.join(homedir,"data/config")
+	c = os.path.join(datadir,"config")
 
 	#########################################
 	## First process paramdefs.json
@@ -166,17 +166,21 @@ def generate(homedir, force, sourcedir, floatType):
 
 if __name__ == "__main__":
 
-    homedir = os.getenv("PALETTE_SOURCE")
+    source = os.getenv("PALETTE_SOURCE")
 
     force = False
-    sourcedir = os.path.join(homedir,"ffgl/source/lib/palette")
+    sourcedir = os.path.join(source,"ffgl/source/lib/palette")
     ftype = "float"
     if len(sys.argv) > 1:
         for a in sys.argv[1:]:
             if a == "-f":
                 force = True
 
+    data = os.getenv("PALETTE_DATA")
+    if data == "":
+        data = "omnisphere"
+    datadir = os.path.join(source,"data_"+data)
     print("Generateparams: checking source in: "+sourcedir)
-    generate(homedir,force,sourcedir,ftype)
+    generate(datadir,force,sourcedir,ftype)
 
     sys.exit(0)

@@ -1,0 +1,91 @@
+{"uptime":"0.000000","msg":"InitLog ==============================","date":"2024-06-04-19-05-24","logname":"engine","click":0,"loglevel":"info"}
+{"uptime":"0.036550","msg":"global name","name":"global.cursorscalex","click":0,"loglevel":"info"}
+{"uptime":"0.036550","msg":"global name","name":"global.attractplaysound","click":0,"loglevel":"info"}
+{"uptime":"0.036550","msg":"global name","name":"global.process.mmtt","click":0,"loglevel":"info"}
+{"uptime":"0.036550","msg":"KillExecutable","executable":"mmtt_kinect.exe","exe":"mmtt_kinect.exe","click":0,"loglevel":"info"}
+{"uptime":"0.108841","msg":"global name","name":"global.emailpassword","click":0,"loglevel":"info"}
+{"uptime":"0.108841","msg":"global name","name":"global.cursorscaley","click":0,"loglevel":"info"}
+{"uptime":"0.108841","msg":"global name","name":"global.testgestureinterval","click":0,"loglevel":"info"}
+{"uptime":"0.108841","msg":"global name","name":"global.midithrusynth","click":0,"loglevel":"info"}
+{"uptime":"0.108841","msg":"global name","name":"global.cursoroffsetx","click":0,"loglevel":"info"}
+{"uptime":"0.108841","msg":"global name","name":"global.bidulefile","click":0,"loglevel":"info"}
+{"uptime":"0.108841","msg":"global name","name":"global.mmtt_zexpand","click":0,"loglevel":"info"}
+{"uptime":"0.108841","msg":"global name","name":"global.attractenabled","click":0,"loglevel":"info"}
+{"uptime":"0.108841","msg":"global name","name":"global.looping_override","click":0,"loglevel":"info"}
+{"uptime":"0.108841","msg":"global name","name":"global.attractgestureduration","click":0,"loglevel":"info"}
+{"uptime":"0.108841","msg":"global name","name":"global.keykitpath","click":0,"loglevel":"info"}
+{"uptime":"0.108841","msg":"global name","name":"global.looping_beats","click":0,"loglevel":"info"}
+{"uptime":"0.108841","msg":"global name","name":"global.testgestureduration","click":0,"loglevel":"info"}
+{"uptime":"0.108841","msg":"global name","name":"global.looping_fadethreshold","click":0,"loglevel":"info"}
+{"uptime":"0.108841","msg":"global name","name":"global.guidefaultlevel","click":0,"loglevel":"info"}
+{"uptime":"0.108841","msg":"global name","name":"global.log","click":0,"loglevel":"info"}
+{"uptime":"0.108841","msg":"global name","name":"global.helpimage","click":0,"loglevel":"info"}
+{"uptime":"0.108841","msg":"global name","name":"global.attractpresetchangeinterval","click":0,"loglevel":"info"}
+{"uptime":"0.108841","msg":"global name","name":"global.resolumetextlayer","click":0,"loglevel":"info"}
+{"uptime":"0.108841","msg":"global name","name":"global.midisetexternalscale","click":0,"loglevel":"info"}
+{"uptime":"0.108841","msg":"global name","name":"global.bidulepath","click":0,"loglevel":"info"}
+{"uptime":"0.108841","msg":"global name","name":"global.midiinput","click":0,"loglevel":"info"}
+{"uptime":"0.108841","msg":"global name","name":"global.attractguiimage","click":0,"loglevel":"info"}
+{"uptime":"0.108841","msg":"global name","name":"global.autotranspose","click":0,"loglevel":"info"}
+{"uptime":"0.108841","msg":"global name","name":"global.midithru","click":0,"loglevel":"info"}
+{"uptime":"0.108841","msg":"global name","name":"global.autotransposebeats","click":0,"loglevel":"info"}
+{"uptime":"0.108841","msg":"global name","name":"global.keykitallow","click":0,"loglevel":"info"}
+{"uptime":"0.108841","msg":"global name","name":"global.attractgestureminlength","click":0,"loglevel":"info"}
+{"uptime":"0.108841","msg":"global name","name":"global.process.resolume","click":0,"loglevel":"info"}
+{"uptime":"0.273047","msg":"global name","name":"global.testgesturentimes","click":0,"loglevel":"info"}
+{"uptime":"0.273047","msg":"global name","name":"global.nats","click":0,"loglevel":"info"}
+{"uptime":"0.273047","msg":"global name","name":"global.notifygui","click":0,"loglevel":"info"}
+{"uptime":"0.273047","msg":"global name","name":"global.attractidlesecs","click":0,"loglevel":"info"}
+{"uptime":"0.273047","msg":"global.attractidlesecs is too low, forcing to 15","click":0,"loglevel":"warn"}
+{"uptime":"0.273047","msg":"global name","name":"global.cursoroffsety","click":0,"loglevel":"info"}
+{"uptime":"0.273047","msg":"global name","name":"global.attractgesturezmax","click":0,"loglevel":"info"}
+{"uptime":"0.273047","msg":"global name","name":"global.obspath","click":0,"loglevel":"info"}
+{"uptime":"0.273047","msg":"global name","name":"global.attractgesturezmin","click":0,"loglevel":"info"}
+{"uptime":"0.273047","msg":"global name","name":"global.process.gui","click":0,"loglevel":"info"}
+{"uptime":"0.457744","msg":"global name","name":"global.testgesturenumsteps","click":0,"loglevel":"info"}
+{"uptime":"0.457744","msg":"global name","name":"global.process.bidule","click":0,"loglevel":"info"}
+{"uptime":"0.653851","msg":"global name","name":"global.transpose","click":0,"loglevel":"info"}
+{"uptime":"0.653851","msg":"global name","name":"global.guishowall","click":0,"loglevel":"info"}
+{"uptime":"0.653851","msg":"global name","name":"global.gui","click":0,"loglevel":"info"}
+{"uptime":"0.653851","msg":"global name","name":"global.resolumepath","click":0,"loglevel":"info"}
+{"uptime":"0.653851","msg":"global name","name":"global.attractgesturenumsteps","click":0,"loglevel":"info"}
+{"uptime":"0.653851","msg":"global name","name":"global.process.chat","click":0,"loglevel":"info"}
+{"uptime":"0.653851","msg":"KillExecutable","executable":"palette_chat.exe","exe":"palette_chat.exe","click":0,"loglevel":"info"}
+{"uptime":"0.734898","msg":"global name","name":"global.keykitroot","click":0,"loglevel":"info"}
+{"uptime":"0.734898","msg":"global name","name":"global.attractgestureinterval","click":0,"loglevel":"info"}
+{"uptime":"0.734898","msg":"global name","name":"global.timefret_high","click":0,"loglevel":"info"}
+{"uptime":"0.734898","msg":"global name","name":"global.timefret_low","click":0,"loglevel":"info"}
+{"uptime":"0.734898","msg":"global name","name":"global.mmtt_yexpand","click":0,"loglevel":"info"}
+{"uptime":"0.734898","msg":"global name","name":"global.obsstream","click":0,"loglevel":"info"}
+{"uptime":"0.740249","msg":"global name","name":"global.timefret_mid","click":0,"loglevel":"info"}
+{"uptime":"0.740249","msg":"global name","name":"global.guisize","click":0,"loglevel":"info"}
+{"uptime":"0.740249","msg":"global name","name":"global.title","click":0,"loglevel":"info"}
+{"uptime":"0.740249","msg":"global name","name":"global.keykitrun","click":0,"loglevel":"info"}
+{"uptime":"0.740249","msg":"global name","name":"global.looping_fade","click":0,"loglevel":"info"}
+{"uptime":"0.740249","msg":"global name","name":"global.twinsys","click":0,"loglevel":"info"}
+{"uptime":"0.740249","msg":"global name","name":"global.winsize","click":0,"loglevel":"info"}
+{"uptime":"0.740249","msg":"global name","name":"global.keykitoutput","click":0,"loglevel":"info"}
+{"uptime":"0.740249","msg":"global name","name":"global.emaillogin","click":0,"loglevel":"info"}
+{"uptime":"0.740249","msg":"global name","name":"global.attractallowgui","click":0,"loglevel":"info"}
+{"uptime":"0.740249","msg":"global name","name":"global.scale","click":0,"loglevel":"info"}
+{"uptime":"0.740249","msg":"global name","name":"global.emailto","click":0,"loglevel":"info"}
+{"uptime":"0.740249","msg":"global name","name":"global.attractgesturemaxlength","click":0,"loglevel":"info"}
+{"uptime":"0.740249","msg":"global name","name":"global.tempdir","click":0,"loglevel":"info"}
+{"uptime":"0.740249","msg":"global name","name":"global.mmtt_xexpand","click":0,"loglevel":"info"}
+{"uptime":"0.740249","msg":"global name","name":"global.oscoutput","click":0,"loglevel":"info"}
+{"uptime":"0.740249","msg":"global name","name":"global.process.obs","click":0,"loglevel":"info"}
+{"uptime":"0.740249","msg":"KillExecutable","executable":"obs64.exe","exe":"obs64.exe","click":0,"loglevel":"info"}
+{"uptime":"0.821559","msg":"Engine.Start","click":0,"loglevel":"info"}
+{"uptime":"0.821559","msg":"Initialized MIDI","numoutports":24,"click":0,"loglevel":"info"}
+{"uptime":"0.821559","msg":"InitSynths called","click":0,"loglevel":"info"}
+{"uptime":"0.822088","msg":"Synths loaded","len":193,"click":0,"loglevel":"info"}
+{"uptime":"0.823088","msg":"Quad.Load","category":"quad","filename":"_Current","click":0,"loglevel":"info"}
+{"uptime":"0.878423","msg":"Scheduler begins","click":0,"loglevel":"info"}
+{"uptime":"0.878423","msg":"No MIDI input port has been selected","click":0,"loglevel":"warn"}
+{"uptime":"2.590866","msg":"Morph serial# isn't in morphs.json","serialnum":"SM01174915413","morphtype":"A","click":497,"loglevel":"info"}
+{"uptime":"2.590866","msg":"Morph Opened and Started","idx":0,"serial":"SM01174915413","firmware":"0.19.42","morphtype":"A","click":497,"loglevel":"info"}
+{"uptime":"3.298207","msg":"CheckAutorestartProcesses: Restarting","process":"bidule","click":633,"loglevel":"info"}
+{"uptime":"3.815038","msg":"ExecutableOutput","exe":"gui","output":"iconbitmap for palette.ico failed\r\n","click":732,"loglevel":"info"}
+{"uptime":"63.256076","msg":"CheckAutorestartProcesses: Restarting","process":"bidule","click":12145,"loglevel":"info"}
+{"uptime":"102.516242","msg":"Quad.ExecuteApi test start","ntimes":40,"interval":0.300000011,"click":19683,"loglevel":"info"}
+{"uptime":"114.536718","msg":"Quad.ExecuteApi test end","ntimes":40,"interval":0.300000011,"click":21991,"loglevel":"info"}

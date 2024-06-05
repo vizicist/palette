@@ -7,7 +7,6 @@
 #define MyAppVersion "SUBSTITUTE_VERSION_HERE"
 #define MyAppPublisher "Nosuch Media"
 #define MyAppURL "https://github.com/vizicist/palette"
-#define DataPath "{commoncf64}/Palette/data"
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
@@ -53,11 +52,6 @@ Source: "ship\bin\mmtt_kinect\*"; DestDir: "{app}\bin\mmtt_kinect"; Flags: ignor
 Source: "ship\ffgl\*"; DestDir: "{app}\ffgl"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; Source: "ship\keykit\*"; DestDir: "{app}\keykit"; Flags: ignoreversion recursesubdirs createallsubdirs
 
-; NOTE - all data_* files go in CommonProgramFiles\Palette
-Source: "ship\data\*"; DestDir: "{#DataPath}"; Flags: comparetimestamp ignoreversion recursesubdirs createallsubdirs
-Source: "logs_readme.txt"; DestDir: "{#DataPath}\logs"; DestName: "readme.txt"; Flags: ignoreversion
-; NOTE: Don't use "Flags: ignoreversion" on any shared system files
-
 ; This specifies the Visual C++ Windows Runtime Redistributable to install, it's put in {app}\bin to help debug things.
 [Files]
 Source: "vc15\bin\VC_redist.x64.exe"; DestDir: {app}\bin
@@ -76,8 +70,6 @@ Name: "{group}\Stop Palette"; Filename: "{app}\bin\palette.exe"; Parameters: "st
 [Registry]
 Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; \
     ValueType: expandsz; ValueName: "PALETTE"; ValueData: "{app}"; Flags: preservestringtype
-Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; \
-    ValueType: expandsz; ValueName: "PALETTE_DATA_PATH"; ValueData: "{commoncf64}\Palette\data"; Flags: preservestringtype
 
 [Code]
 procedure CurStepChanged(CurStep: TSetupStep);

@@ -1,4 +1,13 @@
 @echo off
-if exist "%CommonProgramFiles%\Palette\data\logs" cd "%CommonProgramFiles%\Palette\data\logs"
-if exist "%PALETTE_DATA_PATH%\logs" cd "%PALETTE_DATA_PATH%\logs"
-cd
+
+set data="omnisphere"
+if not "%PALETTE_DATA%" == "" set data=%PALETTE_DATA
+
+if "%PALETTE_SOURCE%" == "" goto usecommon
+cd "%PALETTE_SOURCE%\\data_%PALETTE_DATA%\logs"
+goto out
+
+:usecommon
+cd "C:\\Program Files\\Common Files\\Palette\\data_%PALETTE_DATA%\\logs"
+
+:out

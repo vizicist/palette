@@ -1,0 +1,6 @@
+{
+    "params": {
+        "global.midisetexternalscale":"true",
+        "global.scale":"external"
+    }
+}

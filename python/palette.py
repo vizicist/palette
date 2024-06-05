@@ -85,10 +85,10 @@ def palette_engine_get(name):
     return palette_api("global.get", "\"name\": \"" + name + "\"")
 
 def configFilePath(nm):
-    return os.path.join(localPaletteDir(),PaletteDataPath(),"config",nm)
+    return os.path.join(PaletteDataPath(),"config",nm)
 
 def savedPath():
-    return os.path.join(localPaletteDir(),PaletteDataPath(),"saved")
+    return os.path.join(PaletteDataPath(),"saved")
 
 def localPaletteDir():
     common = os.environ.get("CommonProgramFiles")
@@ -102,25 +102,23 @@ def paletteSubDir(subdir):
 
 paletteDataPath = ""
 FullDataPath = ""
-DataDir = "data"
 
 # This is the name of the data_* directory
 # containing config and saved.
 # This logic is identical to PaletteDataPath() in the Go code
 def PaletteDataPath():
     global paletteDataPath
-    global FullDataPath
+    global FullDataPath # cache the full path
+
     if FullDataPath != "":
         return FullDataPath
 
-    dataPath = os.environ.get("PALETTE_DATA_PATH","")
-    global DataDir
-    if dataPath != "":
-        DataDir = dataPath
-    if os.path.isabs(DataDir):
-        FullDataPath = DataDir
+    palette_data = os.environ.get("PALETTE_DATA","omnisphere")
+    palette_source = os.environ.get("PALETTE_SOURCE","")
+    if palette_source != "":
+        FullDataPath = os.path.join(palette_source, "data_" + palette_data)
     else:
-        FullDataPath = os.path.join(localPaletteDir(),DataDir)
+        FullDataPath = os.path.join(localPaletteDir(), "data_" + palette_data)
     return FullDataPath
 
 # Combine saved in the savedPath list
