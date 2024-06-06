@@ -112,6 +112,7 @@ copy osc.bat %bin% >nul
 copy ipaddress.bat %bin% >nul
 copy palette_killall.bat %bin% >nul
 copy palette_onboot.bat %bin% >nul
+copy palette_onboot_kinect.bat %bin% >nul
 copy delay.bat %bin% >nul
 copy cdlogs.bat %bin% >nul
 copy tv_on.bat %bin% >nul
