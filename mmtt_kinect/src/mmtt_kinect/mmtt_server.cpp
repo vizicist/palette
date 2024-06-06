@@ -121,6 +121,47 @@ static float raw_depth_to_meters(int raw_depth)
 	}
 	return 0.0f;
 }
+ 
+std::string PaletteDataPath(std::string fname)
+{
+	errno_t err;
+	char* palette = NULL;
+	char* source = NULL;
+	char *dataval = NULL;
+	char *value = NULL;
+	std::string sourcepath = "";
+	std::string datapath;
+	size_t len;
+
+	err = _dupenv_s(&palette, &len, "PALETTE");
+	if (err || palette == NULL)
+	{
+		// NosuchDebug("No value for PALETTE environment variable!?\n");
+		return NULL;
+	}
+
+	err = _dupenv_s(&dataval, &len, "PALETTE_DATA");
+	if (err == 0 && dataval != NULL) {
+		 dataval = "omnisphere";
+	}
+
+	err = _dupenv_s(&value, &len, "PALETTE_SOURCE");
+	std::string parent;
+	if (err == 0 && value != NULL) {
+		parent = std::string(value);
+	}
+	else {
+		// This weird name is to get the 64-bit Common Files directory
+		// (where the Palette stuff is kept) from a 32-bit program.
+		char *p = getenv("CommonProgramW6432");
+		if ( p == NULL ) {
+			p = ".";
+		}
+		parent = std::string(p) + "\\Palette";
+	}
+	datapath = std::string(parent) + "\\data_" + std::string(dataval) + "\\" + fname;
+	return datapath.c_str();
+}
 
 MmttServer::MmttServer()
 {
@@ -158,7 +199,7 @@ MmttServer::MmttServer()
 
 	_jsonport = 4444;
 	_do_initialalign = true;
-	_patchFile = NosuchDataPath("config/mmtt_kinect.json");
+	_patchFile = PaletteDataPath("config/mmtt_kinect.json");
 	_tempDir = "c:/windows/temp";
 
 	camera = DepthCamera::makeDepthCamera(this,"kinect");
@@ -228,7 +269,7 @@ MmttServer::MmttServer()
 
 	_ffImage = cvCreateImageHeader( _camSize, IPL_DEPTH_8U, 3 );
 
-	std::string htmldir = NosuchDataPath("html");
+	std::string htmldir = PaletteDataPath("html");
 	_httpserver = new MmttHttp(this,_jsonport,htmldir,60);
 
 	SetOscClientList(_OscClientList,_Clients);
@@ -1313,7 +1354,7 @@ MmttServer::LoadPatch(std::string fname)
 	}
 
 	if ( ! _regionsDefinedByPatch ) {
-		std::string fn_patch_image = NosuchDataPath("config/mmtt.ppm");
+		std::string fn_patch_image = PaletteDataPath("config/mmtt.ppm");
 		NosuchDebug("Reading mask image from %s",fn_patch_image.c_str());
 		IplImage* img = cvLoadImage( fn_patch_image.c_str(), CV_LOAD_IMAGE_COLOR );
 		if ( ! img ) {
@@ -1430,7 +1471,7 @@ MmttServer::SavePatch(const char* id)
 		NosuchDebug("Unable to save patch, regions are not filled yet");
 		return error_json(-32700,"Unable to save patch, regions are not filled yet",id);
 	}
-	std::string fname = NosuchDataPath("config/mmtt_patch_save.json");
+	std::string fname = PaletteDataPath("config/mmtt_patch_save.json");
 	ofstream f_json(fname.c_str());
 	if ( ! f_json.is_open() ) {
 		NosuchDebug("Unable to open %s!?",fname.c_str());
@@ -1473,7 +1514,7 @@ MmttServer::SavePatch(const char* id)
 	f_json.close();
 	NosuchDebug("Saved patch: %s",fname.c_str());
 
-	std::string fn_patch_image = NosuchDataPath("config/mmtt_patch_save.ppm");
+	std::string fn_patch_image = PaletteDataPath("config/mmtt_patch_save.ppm");
 
 	copyRegionsToColorImage(_regionsImage,(unsigned char *)(_tmpRegionsColor->imageData),TRUE,TRUE,TRUE);
 	if ( !cvSaveImage(fn_patch_image.c_str(),_tmpRegionsColor) ) {
@@ -2413,27 +2454,14 @@ MmttServer::makeMmttServer()
 	NosuchDebugAutoFlush = TRUE;
 	NosuchAppName = "Space Manifold";
 
-	char *p = getenv("PALETTE");
-	if ( p == NULL ) {
-		p = ".";
-	}
-	NosuchPaletteDir = std::string(p);
-
-	// This weird name is to get the 64-bit Common Files directory
-	// (where the Palette stuff is kept) from a 32-bit program.
-	p = getenv("CommonProgramW6432");
-	if ( p == NULL ) {
-		p = ".";
-	}
-	NosuchLocalDir = std::string(p) + "\\Palette";
-
-	std::string logdir = NosuchLocalDir + "\\logs";
+	std::string logdir = PaletteDataPath("logs");
 	NosuchDebugSetLogDirFile(logdir,"mmtt_kinect.log");
-	NosuchDebug("Hello mmtt_kinect\n");
+
+	NosuchDebug("Hello mmtt_kinect logdir=%s\n",logdir.c_str());
 
 	MmttServer* server = new MmttServer();
 
-	NosuchDebug("after new MmttServer\n");
+	NosuchDebug("after new MmttServer logdir=%s\n",logdir.c_str());
 
 	std::string stat = server->status();
 	if ( stat != "" ) {

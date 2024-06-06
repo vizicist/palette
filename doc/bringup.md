@@ -37,5 +37,15 @@
 - Authorize Omnisphere and Stylus RMX.
 
 - Load Multis into Omnisphere
+	- execute copy_to_omnisphere.bat
+	- Start Omnisphere, switch to Multi Browser, then DIRECTORY: User
+	- load fourgo_ into each of 12 plugins
 
 - Load presets in Stylus RMX
+	- REMEMBER TO SET THEM TO CHANNEL 10 !
+
+- Set PALETTE_DATA to omnisphere
+- Set PALETTE_MMTT to kinect (if using Kinect), and install Kinect runtime/sdk
+
+
+
