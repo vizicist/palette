@@ -55,8 +55,6 @@ std::string NosuchDebugPrefix = "";
 std::string NosuchDebugLogFile = "";
 std::string NosuchDebugLogDir = ".";
 std::string NosuchDebugLogPath;
-std::string NosuchLocalDir = ".";
-std::string NosuchPaletteDir = ".";
 
 #ifdef DEBUG_TO_BUFFER
 bool NosuchDebugToBuffer = true;
@@ -95,6 +93,7 @@ RealDebugDumpLog() {
 	}
 	f.close();
 }
+
 
 void
 NosuchDebugDumpLog()
