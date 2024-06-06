@@ -25,7 +25,7 @@ sed -e "s/SUBSTITUTE_VERSION_HERE/%version%/" < tmp.iss > tmp2.iss
 
 move Output\%datadir%_%version%.exe %PALETTE_SOURCE%\release\palette_%version%_%datadir%.exe >nul
 
-rem rm -fr Output > nul 2>&1
-rem rm tmp.iss tmp2.iss
+rm -fr Output > nul 2>&1
+rm tmp.iss tmp2.iss
 
 :getout
