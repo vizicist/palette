@@ -23,8 +23,7 @@ sed -e "s/SUBSTITUTE_DATADIR_HERE/%datadir%/" < %datadir%.iss > tmp.iss
 sed -e "s/SUBSTITUTE_VERSION_HERE/%version%/" < tmp.iss > tmp2.iss
 "c:\Program Files (x86)\Inno Setup 6\ISCC.exe" /Q tmp2.iss
 
-set filename=%datadir%_%version%
-move Output\%filename%.exe %PALETTE_SOURCE%\release >nul
+move Output\%datadir%_%version%.exe %PALETTE_SOURCE%\release\palette_%version%_%datadir%.exe >nul
 
 rem rm -fr Output > nul 2>&1
 rem rm tmp.iss tmp2.iss

@@ -43,8 +43,6 @@ extern std::string NosuchDebugLogFile;
 extern std::string NosuchDebugLogDir;
 extern std::string NosuchDebugPrefix;
 extern std::string NosuchAppName;
-extern std::string NosuchLocalDir;
-extern std::string NosuchPaletteDir;
 
 std::string NosuchSnprintf(const char *fmt, ...);
 
@@ -53,7 +51,6 @@ void NosuchDebugDumpLog();
 void NosuchDebug(char const *fmt, ... );
 void NosuchDebug(int level, char const *fmt, ... );
 void NosuchErrorOutput(const char *fmt, ...);
-std::string NosuchDataPath(std::string file);
 // std::string NosuchPalettePath(std::string file);
 std::string NosuchForwardSlash(std::string filepath);
 
