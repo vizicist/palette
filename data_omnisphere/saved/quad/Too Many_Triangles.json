@@ -898,7 +898,7 @@
         "C-sound.pitchset":"",
         "C-sound.synth":"P_01_C_02",
         "C-sound.velocitymax":"127",
-        "C-sound.velocitymin":"1",
+        "C-sound.velocitymin":"25",
         "C-sound.xcontroller":"3",
         "C-sound.ycontroller":"2",
         "C-sound.zcontroller":"1",
