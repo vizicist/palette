@@ -58,7 +58,8 @@ Not sure whether %USERPROFILE%\Github\palette\SenselLib\x64 is needed, it depend
 - Install mingw64 to get the gcc compiler.
 The last time I installed it from https://github.com/niXman/mingw-builds-binaries, and it may be necessary to download
 the "online installer" and execute it from the Explorer, selecting "more info" to allow installation of an unsigned package.
-The version I'm using is the 13.1.0 version, 64 bit architecture, posix thread model, and ucrt runtime.
+The version of gcc I'm using gives this output from 'gcc --version' -
+gcc (x86_64-win32-sjlj-rev0, Built by MinGW-W64 project) 8.5.0
 
 - In Visual Studio Code, click on the "extensions marketplace" icon (four little squares) on the left side.
   In the "Search Extensions" field, enter "go", and install the Go language support.
