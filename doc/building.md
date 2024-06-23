@@ -50,7 +50,7 @@ Not sure whether %USERPROFILE%\Github\palette\SenselLib\x64 is needed, it depend
 
 - Install Inno Setup from https://jrsoftware.org/isinfo.php
 
-- Install Visual Studio Build Tools 2017 (version 15.9) from https://visualstudio.microsoft.com/downloads
+- Install Visual Studio 2017 Community (version 15.9) from https://aka.ms/vs/15/release/vs_community.exe
 
 	- in the Workload tab, select "Visual C++ Build Tools"
 <p>
