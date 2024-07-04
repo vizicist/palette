@@ -1,11 +1,10 @@
 @echo off
 
-set data=%PALETTE_DATA%
-
 set /p version=<../../VERSION
 set PALETTE_VERSION=%version%
 
-set datadir=data_%data%
+set data=%PALETTE_DATA%
+if "%data%" == "" set data=omnisphere
 
 if not "%PALETTE_SOURCE%" == "" goto keepgoing1
 	echo You must set the PALETTE_SOURCE environment variable.
@@ -13,6 +12,7 @@ if not "%PALETTE_SOURCE%" == "" goto keepgoing1
 :keepgoing1
 
 set ship=%PALETTE_SOURCE%\build\windows\ship
+set datadir=data_%data%
 
 rm -fr %ship% > nul 2>&1
 mkdir %ship%
