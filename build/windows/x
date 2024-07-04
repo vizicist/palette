@@ -1,2 +1,0 @@
-sed -e "s/SUBSTITUTE_VERSION_HERE/%version%/" < palette_win_setup.iss > tmp.iss
-"c:\Program Files (x86)\Inno Setup 6\ISCC.exe" /Q tmp.iss
