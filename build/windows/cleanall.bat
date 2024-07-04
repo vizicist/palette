@@ -1,3 +1,5 @@
+@echo off
+
 if not "%PALETTE_SOURCE%" == "" goto keepgoing
 echo You must set the PALETTE_SOURCE environment variable.
 goto getout

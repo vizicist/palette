@@ -21,6 +21,10 @@ rem mkdir %ship%\keykit
 rem mkdir %ship%\keykit\bin
 rem mkdir %ship%\keykit\lib
 
+copy %PALETTE_SOURCE%\VERSION %ship% >nul
+set /p version=<../../VERSION
+set PALETTE_VERSION=%version%
+
 echo ================ Upgrading Python
 python -m pip install pip | grep -v "already.*satisfied"
 pip install --use-pep517 codenamize pip install python-osc requests pip install pyinstaller get-mac mido pyperclip chardet obs-cli | grep -v "already satisfied"
@@ -86,16 +90,8 @@ copy %PALETTE_SOURCE%\build\windows\vc15\bin\pthreadvc2.dll %ship%\ffgl >nul
 copy %PALETTE_SOURCE%\build\windows\vc15\bin\msvcr100.dll %ship%\ffgl >nul
 popd
 
-if not "%PALETTE_MMTT%" == "kinect" goto no_mmtt_kinect
-	echo ================ Compiling mmtt_kinect
-	pushd %PALETTE_SOURCE%\mmtt_kinect\build\windows
-	msbuild /t:Build /p:Configuration=Debug /p:Platform="x32" mmtt_kinect.sln
-	rem Put mmtt_kinect in its own bin directory, to keep 32-bit things separate
-	mkdir %bin%\mmtt_kinect
-	copy mmtt_kinect\Debug\mmtt_kinect.exe %bin%\mmtt_kinect\mmtt_kinect.exe >nul
-	copy mmtt_kinect\*.dll %bin%\mmtt_kinect >nul
-	popd
-:no_mmtt_kinect
+rem ======== Kinect (mmtt_kinect) is only built when PALETTE_MMTT is set
+if "%PALETTE_MMTT%" == "kinect" call mmtt_build.bat
 
 echo ================ Copying misc binaries
 copy %PALETTE_SOURCE%\binaries\nircmdc.exe %bin% >nul
@@ -132,13 +128,9 @@ copy "%USERPROFILE%\mingw64\bin\libstdc++-6.dll" %bin% >nul
 echo ================ Removing unused things
 rm -fr %bin%\pyinstalled\tcl\tzdata
 
-copy %PALETTE_SOURCE%\VERSION %ship% >nul
-set /p version=<../../VERSION
-
 echo ================ Creating installer for VERSION %version%
 
-sed -e "s/SUBSTITUTE_VERSION_HERE/%version%/" < palette_win_setup.iss > tmp.iss
-"c:\Program Files (x86)\Inno Setup 6\ISCC.exe" /Q tmp.iss
+"c:\Program Files (x86)\Inno Setup 6\ISCC.exe" /Q palette_win_setup.iss
 
 if not "%PALETTE_MMTT%" == "kinect" goto no_kinect
 move Output\palette_%version%_win_setup.exe %PALETTE_SOURCE%\release\palette_%version%_win_setup_with_kinect.exe >nul
@@ -150,6 +142,5 @@ move Output\palette_%version%_win_setup.exe %PALETTE_SOURCE%\release >nul
 :finish
 
 rmdir Output
-rm tmp.iss
 
 :getout

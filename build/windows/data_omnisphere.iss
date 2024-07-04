@@ -3,12 +3,12 @@
 
 #include "environment.iss"
 
-#define MyAppName "SUBSTITUTE_DATADIR_HERE"
-#define MyAppVersion "SUBSTITUTE_VERSION_HERE"
+#define MyAppName "data_"+GetEnv('PALETTE_DATA')
+#define MyAppVersion GetEnv('PALETTE_VERSION')
 #define MyAppPublisher "Nosuch Media"
 #define MyAppURL "https://github.com/vizicist/palette"
 #define DataDir "data_omnisphere"
-#define DataPath "{commoncf64}/Palette/SUBSTITUTE_DATADIR_HERE"
+#define DataPath "{commoncf64}/Palette/data_"+GetEnv('PALETTE_DATA')
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
