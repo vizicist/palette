@@ -1,5 +1,5 @@
 echo off
-set PALETTE_MMTT=none
+if "%PALETTE_MMTT%" == "" set PALETTE_MMTT=none
 echo "STOPPING palette"
 palette stop
 echo "INSTALLING binaries"
