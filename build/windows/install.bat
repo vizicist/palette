@@ -1,8 +1,7 @@
-echo off
+@echo off
 if "%PALETTE_MMTT%" == "" set PALETTE_MMTT=none
-echo "STOPPING palette"
+echo STOPPING...
 palette stop
-echo "INSTALLING binaries"
-call bin_install
-echo "INSTALLING data"
-call data_install
+echo INSTALLING...
+call install_bin
+call install_data
