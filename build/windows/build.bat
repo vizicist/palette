@@ -1,6 +1,6 @@
 echo off
 if "%PALETTE_MMTT%" == "" set PALETTE_MMTT=none
-echo "BUILDING binaries..."
-call bin_build
-echo "BUILDING data..."
-call data_build
+echo BUILDING binaries...
+call build_bin
+echo BUILDING data...
+call build_data

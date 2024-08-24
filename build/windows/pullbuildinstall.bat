@@ -1,3 +1,0 @@
-call pull.bat
-call build.bat
-call installpause.bat
