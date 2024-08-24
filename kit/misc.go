@@ -49,7 +49,6 @@ func InitMisc() {
 	TheRand = rand.New(rand.NewSource(1))
 }
 
-
 // fileExists checks if a file exists
 func fileExists(filename string) bool {
 	_, err := os.Stat(filename)
@@ -94,11 +93,11 @@ func PaletteDataPath() (datapath string) {
 	}
 	palette_source := os.Getenv("PALETTE_SOURCE")
 	if palette_source != "" {
-		datapath = filepath.Join(palette_source,"data_" + palette_data)	
+		datapath = filepath.Join(palette_source, "data_"+palette_data)
 	} else {
-		datapath = filepath.Join("C:\\Program Files\\Common Files\\Palette", "data_" + palette_data)
+		datapath = filepath.Join("C:\\Program Files\\Common Files\\Palette", "data_"+palette_data)
 	}
-	return datapath;
+	return datapath
 }
 
 // MIDIFilePath xxx
@@ -111,14 +110,14 @@ func LocalPaletteDir() string {
 	commonfilepath := os.Getenv("CommonProgramFiles")
 	if commonfilepath == "" {
 		home := os.Getenv("HOME")
-		commonfilepath = filepath.Join(home,"commonfiles")
-		palettedir := filepath.Join(commonfilepath,"Palette")
+		commonfilepath = filepath.Join(home, "commonfiles")
+		palettedir := filepath.Join(commonfilepath, "Palette")
 		if err := os.MkdirAll(palettedir, os.ModePerm); err != nil {
-			fmt.Printf("Unable to create %s\n",palettedir)
+			fmt.Printf("Unable to create %s\n", palettedir)
 			panic(err)
 		}
 		// DO NOT USE Log* functions here
-		fmt.Printf("HOME palettedir = %s\n",palettedir)
+		fmt.Printf("HOME palettedir = %s\n", palettedir)
 		return palettedir
 	}
 	return filepath.Join(commonfilepath, "Palette")
@@ -457,7 +456,7 @@ func MmttApi(api string) (map[string]string, error) {
 // produces what will appear in visible output from a CLI command.
 func HumanReadableApiOutput(apiOutput map[string]string) string {
 	if apiOutput == nil {
-		return "OK\n"
+		return ""
 	}
 	e, eok := apiOutput["error"]
 	if eok {
@@ -467,9 +466,9 @@ func HumanReadableApiOutput(apiOutput map[string]string) string {
 	if !rok {
 		return "Error: unexpected - no result or error in API output?"
 	}
-	if result == "" {
-		result = "OK\n"
-	}
+	// if result == "" {
+	// 	result = "OK\n"
+	// }
 	return result
 }
 
