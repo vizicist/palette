@@ -1,0 +1,865 @@
+<StylusRMXMaster  Version="1"  MultiName="SPPro_12"  MIDILearnTemplateName="Unnamed"  Gain="3f18e38e"  GainMidiLearnDevice0="16"  GainMidiLearnCC0="0"  GainMidiLearnChannel0="-1"  AutoLoadPatch="3f800000"  FavoritesAdd="1"  KitMode="3f800000"  AllPlay="0"  AllPlayMidiLearnDevice0="16"  AllPlayMidiLearnCC0="1"  AllPlayMidiLearnChannel0="-1"  AllStop="0" >
+<AUXEFFRACK >
+<EFFMODULE  Type="PRO-Verb"  Active="3f800000"  P0="3f800000"  P1="3e6147ae"  P2="3ebd70a4"  P3="0"  P4="3e666667"  P5="3f800000"  P6="3f399999"  P7="3f400000"  P8="3f0e147b"  P9="3f10a3d7"  P10="3f47ae14"  P11="3e5c28f5"  P12="3f800000"  P13="0"  P14="0" >
+</EFFMODULE>
+ <EFFMODULE  Type="No Effect"  Active="3f800000"  P0="0"  P1="0"  P2="0"  P3="0"  P4="0"  P5="0"  P6="0"  P7="0"  P8="0"  P9="0"  P10="0"  P11="0"  P12="0"  P13="0"  P14="0" >
+</EFFMODULE>
+ <EFFMODULE  Type="No Effect"  Active="3f800000"  P0="0"  P1="0"  P2="0"  P3="0"  P4="0"  P5="0"  P6="0"  P7="0"  P8="0"  P9="0"  P10="0"  P11="0"  P12="0"  P13="0"  P14="0" >
+</EFFMODULE>
+ </AUXEFFRACK>
+ <AUXEFFRACK >
+<EFFMODULE  Type="BPM Delay"  Active="3f800000"  P0="3f800000"  P1="3f800000"  P2="3f000000"  P3="3f800000"  P4="3e6147ae"  P5="3e75c28f"  P6="3f03d70a"  P7="3eab851f"  P8="0"  P9="3ca3d70a"  P10="0"  P11="0"  P12="0"  P13="0"  P14="0" >
+</EFFMODULE>
+ <EFFMODULE  Type="No Effect"  Active="3f800000"  P0="0"  P1="0"  P2="0"  P3="0"  P4="0"  P5="0"  P6="0"  P7="0"  P8="0"  P9="0"  P10="0"  P11="0"  P12="0"  P13="0"  P14="0" >
+</EFFMODULE>
+ <EFFMODULE  Type="No Effect"  Active="3f800000"  P0="0"  P1="0"  P2="0"  P3="0"  P4="0"  P5="0"  P6="0"  P7="0"  P8="0"  P9="0"  P10="0"  P11="0"  P12="0"  P13="0"  P14="0" >
+</EFFMODULE>
+ </AUXEFFRACK>
+ <AUXEFFRACK >
+<EFFMODULE  Type="No Effect"  Active="3f800000"  P0="3e8a3d71"  P1="3f800000"  P2="3f000000"  P3="3f800000"  P4="3d75c28f"  P5="3e947ae1"  P6="0"  P7="3eab851f"  P8="0"  P9="3ca3d70a"  P10="0"  P11="0"  P12="0"  P13="0"  P14="3f5c28f6" >
+</EFFMODULE>
+ <EFFMODULE  Type="No Effect"  Active="3f800000"  P0="0"  P1="0"  P2="0"  P3="0"  P4="0"  P5="0"  P6="0"  P7="0"  P8="0"  P9="0"  P10="0"  P11="0"  P12="0"  P13="0"  P14="0" >
+</EFFMODULE>
+ <EFFMODULE  Type="No Effect"  Active="3f800000"  P0="0"  P1="0"  P2="0"  P3="0"  P4="0"  P5="0"  P6="0"  P7="0"  P8="0"  P9="0"  P10="0"  P11="0"  P12="0"  P13="0"  P14="0" >
+</EFFMODULE>
+ </AUXEFFRACK>
+ <AUXEFFRACK >
+<EFFMODULE  Type="No Effect"  Active="0"  P0="3f800000"  P1="3e800001"  P2="3ed47ae2"  P3="3d23d70a"  P4="3f800000"  P5="3dcccccd"  P6="3d75c28f"  P7="3f800000"  P8="3ed99999"  P9="0"  P10="0"  P11="3f000000"  P12="3ef0a3d7"  P13="0"  P14="3f800000" >
+</EFFMODULE>
+ <EFFMODULE  Type="No Effect"  Active="3f800000"  P0="3f800000"  P1="3e47ae14"  P2="3f800000"  P3="3f800000"  P4="3d4ccccd"  P5="3f400000"  P6="3f800000"  P7="3f800000"  P8="3e76c8b4"  P9="3da3d70a"  P10="0"  P11="0"  P12="3ecccccd"  P13="0"  P14="0" >
+</EFFMODULE>
+ <EFFMODULE  Type="No Effect"  Active="3f800000"  P0="3f800000"  P1="3ea3d70a"  P2="3f800000"  P3="3f800000"  P4="0"  P5="3f051eb8"  P6="3f3c28f6"  P7="3f6f5c29"  P8="0"  P9="0"  P10="0"  P11="0"  P12="0"  P13="0"  P14="0" >
+</EFFMODULE>
+ </AUXEFFRACK>
+ <MASTEREFFRACK >
+<EFFMODULE  Type="Tube Limiter"  Active="3f800000"  P0="0"  P1="3e3c6a80"  P2="3d9fbe77"  P3="0"  P4="3f59999a"  P5="3e428f5c"  P6="0"  P7="0"  P8="0"  P9="0"  P10="0"  P11="0"  P12="0"  P13="0"  P14="0" >
+</EFFMODULE>
+ <EFFMODULE  Type="Vintage 2-Band EQ"  Active="3f800000"  P0="3e4ccccc"  P1="3d23d70a"  P2="0"  P3="3e4ccccd"  P4="3f000000"  P5="3e23d70a"  P6="0"  P7="3ee3d70a"  P8="0"  P9="0"  P10="0"  P11="0"  P12="0"  P13="0"  P14="0" >
+</EFFMODULE>
+ <EFFMODULE  Type="No Effect"  Active="3f800000"  P0="0"  P1="0"  P2="0"  P3="0"  P4="0"  P5="0"  P6="0"  P7="0"  P8="0"  P9="0"  P10="0"  P11="0"  P12="0"  P13="0"  P14="0" >
+</EFFMODULE>
+ </MASTEREFFRACK>
+ <EDITBUFFERSUITE >
+</EDITBUFFERSUITE>
+ <ENGINE  Version="0"  Gain="3f400000"  Pan="3f000000"  HalfSpeedTrigger="0"  DoubleSpeedTrigger="0"  MNIF="0"  AuxSend0="0"  AuxSend0MidiLearnDevice0="16"  AuxSend0MidiLearnCC0="35"  AuxSend0MidiLearnChannel0="-1"  AuxSend1="0"  AuxSend1MidiLearnDevice0="16"  AuxSend1MidiLearnCC0="36"  AuxSend1MidiLearnChannel0="-1"  AuxSend2="0"  AuxSend2MidiLearnDevice0="16"  AuxSend2MidiLearnCC0="37"  AuxSend2MidiLearnChannel0="-1"  AuxSend3="0"  AuxSend3MidiLearnDevice0="16"  AuxSend3MidiLearnCC0="38"  AuxSend3MidiLearnChannel0="-1" >
+<GROOVESEL  LatchMode="0"  TriggerMode="3d23d70a"  SpeedMultiplier="3dcccccd"  FavoritesAdd="1"  AuditionActive="0"  AuditionActiveMidiLearnDevice0="16"  AuditionActiveMidiLearnCC0="34"  AuditionActiveMidiLearnChannel0="-1"  SaveToHost="0"  Category="Kit Modules"  Suite="KICKS - Boomy"  Loop="KICK - Neuro Sub"  PlayMode="0" >
+</GROOVESEL>
+ <TIME_DESIGNER  TimeSignature="0"  TimeSignatureUseHost="0"  StartOffsetNoteNumber="0"  FeelSnapGridGravity="3f800000"  FeelThinNotes="0"  FeelSnapGridSwingDelay="0"  FeelSwingKind="0"  FeelOnOff="0"  FeelIgnoreSomeNotes="3f000000"  TimeShiftOnOff="0"  TimeShiftFine="3f000000"  TimeShiftCoarse="16" >
+<FEEL_GROOVE  BEAT_FRACTION="0"  FEEL_GROOVE_NAME=""  TEMPO="42f00000"  TICKSPERQUARTER="4608"  TIMESIGNUM="4"  TIMESIGDENOM="4" >
+<SLICESEQSTEP  BEGIN="18432"  END="18432"  CH="-1"  SLICEINDEX="-1"  VEL="127"  SP="0"  STRSP="3e800000" >
+</SLICESEQSTEP>
+ </FEEL_GROOVE>
+ </TIME_DESIGNER>
+ <USERSLICECLASSES >
+</USERSLICECLASSES>
+ <EDITGROUP  SliceClass="0"  EditGroupIndex="0"  Active="3f800000"  Gain="3f400000"  GainLFODepth="0"  GainLFORate="3eca3d71"  GainLFOSync="3f800000"  GainLFORetrig="0"  GainLFOStep="0"  GainLFOPolarity="0"  GainLFOShape="0"  Pan="3f000000"  PanLFODepth="0"  PanLFORate="3ec7ae14"  PanLFOSync="3f800000"  PanLFORetrig="0"  PanLFOStep="0"  PanLFOPolarity="0"  PanLFOShape="0"  Pitch="3ef0940c"  PitchFine="3e51bc25"  SampleStart="0"  Reverse="0"  ReverseRand="0"  FilterFreq="3f800000"  FilterQ="3e86bca2"  FilterDrive="0"  FilterMode="0"  FilterLFODepth="0"  FilterLFORate="3eca3d70"  FilterLFOSync="3f800000"  FilterLFORetrig="0"  FilterLFOStep="0"  FilterLFOPolarity="0"  FilterLFOShape="0"  FilterModWheelPolarity="0"  FilterModWheelDepth="0"  FilterWidth="3ee98b3a"  FilterNPoles="0"  FilterAtten="3eaaaaaa"  AmpEnvA="0"  AmpEnvH="3f800000"  AmpEnvD="3f666666"  AmpEnvR="3f023ee0"  AmpEnvDepth="3f800000"  AmpEnvSens="3f800000"  AmpEnvPolarity="0"  FilterEnvA="0"  FilterEnvH="0"  FilterEnvD="3eaaaaaa"  FilterEnvR="3e99999a"  FilterEnvDepth="0"  FilterEnvSens="3f800000"  FilterEnvPolarity="0"  PitchEnvA="0"  PitchEnvH="0"  PitchEnvD="3e98b3a6"  PitchEnvR="3e99999a"  PitchEnvDepth="0"  PitchEnvSens="3f800000"  PitchEnvPolarity="0"  Mute="0"  Solo="0"  OutputBus="0"  Tone="3f000000"  ToneRes="0"  FilterType="0"  ReorderRand="0"  RepeatRand="0"  PitchRandFreq="0"  PitchRandDepth="3f000000"  PitchRandDir="3f000000"  TimingRandFreq="0"  TimingRandDepth="3f000000"  TimingRandDir="3f000000"  DynamicsRandFreq="0"  DynamicsRandDepth="3f000000"  DynamicsRandDir="3f000000"  RandOnOff="0"  BuzzOnOff="0"  BuzzStartInterval="3f000000"  BuzzStartIntervalWidth="0"  BuzzAccel="3f000000"  BuzzAccelWidth="0"  BuzzGainComp="3f800000"  SlSubGt="0"  RMNote="0"  AuxSendLevel0="3f800000"  AuxSendLevel1="3f800000"  AuxSendLevel2="3f800000"  AuxSendLevel3="3f800000" >
+<EFFRACK >
+<EFFMODULE  Type="No Effect"  P0="0"  P1="0"  P2="0"  P3="0"  P4="0"  P5="0"  P6="0"  P7="0"  P8="0"  P9="0"  P10="0"  P11="0"  P12="0"  P13="0"  P14="0"  Active="3f800000" >
+</EFFMODULE>
+ <EFFMODULE  Type="No Effect"  P0="0"  P1="0"  P2="0"  P3="0"  P4="0"  P5="0"  P6="0"  P7="0"  P8="0"  P9="0"  P10="0"  P11="0"  P12="0"  P13="0"  P14="0"  Active="3f800000" >
+</EFFMODULE>
+ <EFFMODULE  Type="No Effect"  P0="0"  P1="0"  P2="0"  P3="0"  P4="0"  P5="0"  P6="0"  P7="0"  P8="0"  P9="0"  P10="0"  P11="0"  P12="0"  P13="0"  P14="0"  Active="3f800000" >
+</EFFMODULE>
+ </EFFRACK>
+ </EDITGROUP>
+ <DRUMKITMODULE  Category="Kit Modules"  Suite="KICKS - Boomy"  Loop="KICK - Neuro Sub" >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ </ENGINE>
+ <CHANNELSTRIP  Mute="0"  MuteMidiLearnDevice0="16"  MuteMidiLearnCC0="18"  MuteMidiLearnChannel0="-1"  Solo="0"  SoloMidiLearnDevice0="16"  SoloMidiLearnCC0="26"  SoloMidiLearnChannel0="-1"  Level="3f4ea68e"  LevelMidiLearnDevice0="16"  LevelMidiLearnCC0="2"  LevelMidiLearnChannel0="-1"  Pan="3f000000"  PanMidiLearnDevice0="16"  PanMidiLearnCC0="10"  PanMidiLearnChannel0="-1" >
+</CHANNELSTRIP>
+ <ENGINE  Version="0"  Gain="3f400000"  Pan="3f000000"  HalfSpeedTrigger="0"  DoubleSpeedTrigger="0"  MNIF="0"  AuxSend0="3cf5c28e"  AuxSend0MidiLearnDevice0="16"  AuxSend0MidiLearnCC0="40"  AuxSend0MidiLearnChannel0="-1"  AuxSend1="3df5c28f"  AuxSend1MidiLearnDevice0="16"  AuxSend1MidiLearnCC0="41"  AuxSend1MidiLearnChannel0="-1"  AuxSend2="0"  AuxSend2MidiLearnDevice0="16"  AuxSend2MidiLearnCC0="42"  AuxSend2MidiLearnChannel0="-1"  AuxSend3="0"  AuxSend3MidiLearnDevice0="16"  AuxSend3MidiLearnCC0="43"  AuxSend3MidiLearnChannel0="-1" >
+<GROOVESEL  LatchMode="0"  TriggerMode="3d23d70a"  SpeedMultiplier="3dcccccd"  FavoritesAdd="1"  AuditionActive="0"  AuditionActiveMidiLearnDevice0="16"  AuditionActiveMidiLearnCC0="39"  AuditionActiveMidiLearnChannel0="-1"  SaveToHost="0"  Category="Kit Modules"  Suite="STICKS - Electronic"  Loop="STICK - Electronic Desert 1"  PlayMode="0" >
+</GROOVESEL>
+ <TIME_DESIGNER  TimeSignature="0"  TimeSignatureUseHost="0"  StartOffsetNoteNumber="0"  FeelSnapGridGravity="3f800000"  FeelThinNotes="0"  FeelSnapGridSwingDelay="0"  FeelSwingKind="0"  FeelOnOff="0"  FeelIgnoreSomeNotes="3f000000"  TimeShiftOnOff="0"  TimeShiftFine="3f000000"  TimeShiftCoarse="16" >
+<FEEL_GROOVE  BEAT_FRACTION="0"  FEEL_GROOVE_NAME=""  TEMPO="42f00000"  TICKSPERQUARTER="4608"  TIMESIGNUM="4"  TIMESIGDENOM="4" >
+<SLICESEQSTEP  BEGIN="18432"  END="18432"  CH="-1"  SLICEINDEX="-1"  VEL="127"  SP="0"  STRSP="3e800000" >
+</SLICESEQSTEP>
+ </FEEL_GROOVE>
+ </TIME_DESIGNER>
+ <USERSLICECLASSES >
+</USERSLICECLASSES>
+ <EDITGROUP  SliceClass="0"  EditGroupIndex="0"  Active="3f800000"  Gain="3f400000"  GainLFODepth="0"  GainLFORate="3eca3d71"  GainLFOSync="3f800000"  GainLFORetrig="0"  GainLFOStep="0"  GainLFOPolarity="0"  GainLFOShape="0"  Pan="3f000000"  PanLFODepth="0"  PanLFORate="3ec7ae14"  PanLFOSync="3f800000"  PanLFORetrig="0"  PanLFOStep="0"  PanLFOPolarity="0"  PanLFOShape="0"  Pitch="3f000000"  PitchFine="3f000000"  SampleStart="0"  Reverse="0"  ReverseRand="3ee08fb8"  FilterFreq="3f800000"  FilterQ="3e86bca2"  FilterDrive="0"  FilterMode="0"  FilterLFODepth="0"  FilterLFORate="3eca3d70"  FilterLFOSync="3f800000"  FilterLFORetrig="0"  FilterLFOStep="0"  FilterLFOPolarity="0"  FilterLFOShape="0"  FilterModWheelPolarity="0"  FilterModWheelDepth="0"  FilterWidth="3ee98b3a"  FilterNPoles="0"  FilterAtten="3eaaaaaa"  AmpEnvA="0"  AmpEnvH="3f800000"  AmpEnvD="3f666666"  AmpEnvR="3f0b3a63"  AmpEnvDepth="3f800000"  AmpEnvSens="3f800000"  AmpEnvPolarity="0"  FilterEnvA="0"  FilterEnvH="0"  FilterEnvD="3eaaaaaa"  FilterEnvR="3e99999a"  FilterEnvDepth="0"  FilterEnvSens="3f800000"  FilterEnvPolarity="0"  PitchEnvA="0"  PitchEnvH="0"  PitchEnvD="3e86bca2"  PitchEnvR="3e99999a"  PitchEnvDepth="0"  PitchEnvSens="3f800000"  PitchEnvPolarity="0"  Mute="0"  Solo="0"  OutputBus="0"  Tone="3f000000"  ToneRes="0"  FilterType="0"  ReorderRand="0"  RepeatRand="0"  PitchRandFreq="0"  PitchRandDepth="3f000000"  PitchRandDir="3f000000"  TimingRandFreq="0"  TimingRandDepth="3f000000"  TimingRandDir="3f000000"  DynamicsRandFreq="0"  DynamicsRandDepth="3f000000"  DynamicsRandDir="3f000000"  RandOnOff="3f800000"  BuzzOnOff="0"  BuzzStartInterval="3f000000"  BuzzStartIntervalWidth="0"  BuzzAccel="3f000000"  BuzzAccelWidth="0"  BuzzGainComp="3f800000"  SlSubGt="0"  RMNote="0"  AuxSendLevel0="3f800000"  AuxSendLevel1="3f800000"  AuxSendLevel2="3f800000"  AuxSendLevel3="3f800000" >
+<EFFRACK >
+<EFFMODULE  Type="No Effect"  P0="0"  P1="0"  P2="0"  P3="0"  P4="0"  P5="0"  P6="0"  P7="0"  P8="0"  P9="0"  P10="0"  P11="0"  P12="0"  P13="0"  P14="0"  Active="3f800000" >
+</EFFMODULE>
+ <EFFMODULE  Type="No Effect"  P0="0"  P1="0"  P2="0"  P3="0"  P4="0"  P5="0"  P6="0"  P7="0"  P8="0"  P9="0"  P10="0"  P11="0"  P12="0"  P13="0"  P14="0"  Active="3f800000" >
+</EFFMODULE>
+ <EFFMODULE  Type="No Effect"  P0="0"  P1="0"  P2="0"  P3="0"  P4="0"  P5="0"  P6="0"  P7="0"  P8="0"  P9="0"  P10="0"  P11="0"  P12="0"  P13="0"  P14="0"  Active="3f800000" >
+</EFFMODULE>
+ </EFFRACK>
+ </EDITGROUP>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE  Category="Kit Modules"  Suite="STICKS - Electronic"  Loop="STICK - Electronic Desert 1" >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ </ENGINE>
+ <CHANNELSTRIP  Mute="0"  MuteMidiLearnDevice0="16"  MuteMidiLearnCC0="19"  MuteMidiLearnChannel0="-1"  Solo="0"  SoloMidiLearnDevice0="16"  SoloMidiLearnCC0="27"  SoloMidiLearnChannel0="-1"  Level="3f400000"  LevelMidiLearnDevice0="16"  LevelMidiLearnCC0="3"  LevelMidiLearnChannel0="-1"  Pan="3f000000"  PanMidiLearnDevice0="16"  PanMidiLearnCC0="11"  PanMidiLearnChannel0="-1" >
+</CHANNELSTRIP>
+ <ENGINE  Version="0"  Gain="3f400000"  Pan="3f000000"  HalfSpeedTrigger="0"  DoubleSpeedTrigger="0"  MNIF="0"  AuxSend0="3d8f5c28"  AuxSend0MidiLearnDevice0="16"  AuxSend0MidiLearnCC0="45"  AuxSend0MidiLearnChannel0="-1"  AuxSend1="0"  AuxSend1MidiLearnDevice0="16"  AuxSend1MidiLearnCC0="46"  AuxSend1MidiLearnChannel0="-1"  AuxSend2="0"  AuxSend2MidiLearnDevice0="16"  AuxSend2MidiLearnCC0="47"  AuxSend2MidiLearnChannel0="-1"  AuxSend3="0"  AuxSend3MidiLearnDevice0="16"  AuxSend3MidiLearnCC0="48"  AuxSend3MidiLearnChannel0="-1" >
+<GROOVESEL  LatchMode="0"  TriggerMode="3d23d70a"  SpeedMultiplier="3dcccccd"  FavoritesAdd="1"  AuditionActive="0"  AuditionActiveMidiLearnDevice0="16"  AuditionActiveMidiLearnCC0="44"  AuditionActiveMidiLearnChannel0="-1"  SaveToHost="0"  Category="Kit Modules"  Suite="SNARES - Drum Machines"  Loop="SNARE - Ted NoiZee"  PlayMode="0" >
+</GROOVESEL>
+ <TIME_DESIGNER  TimeSignature="0"  TimeSignatureUseHost="0"  StartOffsetNoteNumber="0"  FeelSnapGridGravity="3f800000"  FeelThinNotes="0"  FeelSnapGridSwingDelay="0"  FeelSwingKind="0"  FeelOnOff="0"  FeelIgnoreSomeNotes="3f000000"  TimeShiftOnOff="0"  TimeShiftFine="3f000000"  TimeShiftCoarse="16" >
+<FEEL_GROOVE  BEAT_FRACTION="0"  FEEL_GROOVE_NAME=""  TEMPO="42f00000"  TICKSPERQUARTER="4608"  TIMESIGNUM="4"  TIMESIGDENOM="4" >
+<SLICESEQSTEP  BEGIN="18432"  END="18432"  CH="-1"  SLICEINDEX="-1"  VEL="127"  SP="0"  STRSP="3e800000" >
+</SLICESEQSTEP>
+ </FEEL_GROOVE>
+ </TIME_DESIGNER>
+ <USERSLICECLASSES >
+</USERSLICECLASSES>
+ <EDITGROUP  SliceClass="0"  EditGroupIndex="0"  Active="3f800000"  Gain="3f400000"  GainLFODepth="0"  GainLFORate="3eca3d71"  GainLFOSync="3f800000"  GainLFORetrig="0"  GainLFOStep="0"  GainLFOPolarity="0"  GainLFOShape="0"  Pan="3f000000"  PanLFODepth="0"  PanLFORate="3ec7ae14"  PanLFOSync="3f800000"  PanLFORetrig="0"  PanLFOStep="0"  PanLFOPolarity="0"  PanLFOShape="0"  Pitch="3f000000"  PitchFine="3f000000"  SampleStart="0"  Reverse="0"  ReverseRand="0"  FilterFreq="3f800000"  FilterQ="3e86bca2"  FilterDrive="0"  FilterMode="0"  FilterLFODepth="0"  FilterLFORate="3eca3d70"  FilterLFOSync="3f800000"  FilterLFORetrig="0"  FilterLFOStep="0"  FilterLFOPolarity="0"  FilterLFOShape="0"  FilterModWheelPolarity="0"  FilterModWheelDepth="0"  FilterWidth="3ee98b3a"  FilterNPoles="0"  FilterAtten="3eaaaaaa"  AmpEnvA="0"  AmpEnvH="3f800000"  AmpEnvD="3f666666"  AmpEnvR="3f0fb824"  AmpEnvDepth="3f800000"  AmpEnvSens="3f800000"  AmpEnvPolarity="0"  FilterEnvA="0"  FilterEnvH="0"  FilterEnvD="3eaaaaaa"  FilterEnvR="3e99999a"  FilterEnvDepth="0"  FilterEnvSens="3f800000"  FilterEnvPolarity="0"  PitchEnvA="0"  PitchEnvH="0"  PitchEnvD="3e579434"  PitchEnvR="3e99999a"  PitchEnvDepth="0"  PitchEnvSens="3f800000"  PitchEnvPolarity="0"  Mute="0"  Solo="0"  OutputBus="0"  Tone="3f000000"  ToneRes="0"  FilterType="0"  ReorderRand="0"  RepeatRand="0"  PitchRandFreq="0"  PitchRandDepth="3f000000"  PitchRandDir="3f000000"  TimingRandFreq="0"  TimingRandDepth="3f000000"  TimingRandDir="3f000000"  DynamicsRandFreq="0"  DynamicsRandDepth="3f000000"  DynamicsRandDir="3f000000"  RandOnOff="0"  BuzzOnOff="0"  BuzzStartInterval="3f000000"  BuzzStartIntervalWidth="0"  BuzzAccel="3f000000"  BuzzAccelWidth="0"  BuzzGainComp="3f800000"  SlSubGt="0"  RMNote="0"  AuxSendLevel0="3f800000"  AuxSendLevel1="3f800000"  AuxSendLevel2="3f800000"  AuxSendLevel3="3f800000" >
+<EFFRACK >
+<EFFMODULE  Type="No Effect"  P0="0"  P1="0"  P2="0"  P3="0"  P4="0"  P5="0"  P6="0"  P7="0"  P8="0"  P9="0"  P10="0"  P11="0"  P12="0"  P13="0"  P14="0"  Active="3f800000" >
+</EFFMODULE>
+ <EFFMODULE  Type="No Effect"  P0="0"  P1="0"  P2="0"  P3="0"  P4="0"  P5="0"  P6="0"  P7="0"  P8="0"  P9="0"  P10="0"  P11="0"  P12="0"  P13="0"  P14="0"  Active="3f800000" >
+</EFFMODULE>
+ <EFFMODULE  Type="No Effect"  P0="0"  P1="0"  P2="0"  P3="0"  P4="0"  P5="0"  P6="0"  P7="0"  P8="0"  P9="0"  P10="0"  P11="0"  P12="0"  P13="0"  P14="0"  Active="3f800000" >
+</EFFMODULE>
+ </EFFRACK>
+ </EDITGROUP>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE  Category="Kit Modules"  Suite="SNARES - Drum Machines"  Loop="SNARE - Ted NoiZee" >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ </ENGINE>
+ <CHANNELSTRIP  Mute="0"  MuteMidiLearnDevice0="16"  MuteMidiLearnCC0="20"  MuteMidiLearnChannel0="-1"  Solo="0"  SoloMidiLearnDevice0="16"  SoloMidiLearnCC0="28"  SoloMidiLearnChannel0="-1"  Level="3f5e1282"  LevelMidiLearnDevice0="16"  LevelMidiLearnCC0="4"  LevelMidiLearnChannel0="-1"  Pan="3f000000"  PanMidiLearnDevice0="16"  PanMidiLearnCC0="12"  PanMidiLearnChannel0="-1" >
+</CHANNELSTRIP>
+ <ENGINE  Version="0"  Gain="3f400000"  Pan="3f000000"  HalfSpeedTrigger="0"  DoubleSpeedTrigger="0"  MNIF="0"  AuxSend0="3d4ccccd"  AuxSend0MidiLearnDevice0="16"  AuxSend0MidiLearnCC0="50"  AuxSend0MidiLearnChannel0="-1"  AuxSend1="0"  AuxSend1MidiLearnDevice0="16"  AuxSend1MidiLearnCC0="51"  AuxSend1MidiLearnChannel0="-1"  AuxSend2="0"  AuxSend2MidiLearnDevice0="16"  AuxSend2MidiLearnCC0="52"  AuxSend2MidiLearnChannel0="-1"  AuxSend3="0"  AuxSend3MidiLearnDevice0="16"  AuxSend3MidiLearnCC0="53"  AuxSend3MidiLearnChannel0="-1" >
+<GROOVESEL  LatchMode="0"  TriggerMode="3d23d70a"  SpeedMultiplier="3dcccccd"  FavoritesAdd="1"  AuditionActive="0"  AuditionActiveMidiLearnDevice0="16"  AuditionActiveMidiLearnCC0="49"  AuditionActiveMidiLearnChannel0="-1"  SaveToHost="0"  Category="Kit Modules"  Suite="CLAPS - Electronic"  Loop="CLAP - Defender 1"  PlayMode="0" >
+</GROOVESEL>
+ <TIME_DESIGNER  TimeSignature="0"  TimeSignatureUseHost="0"  StartOffsetNoteNumber="0"  FeelSnapGridGravity="3f800000"  FeelThinNotes="0"  FeelSnapGridSwingDelay="0"  FeelSwingKind="0"  FeelOnOff="0"  FeelIgnoreSomeNotes="3f000000"  TimeShiftOnOff="0"  TimeShiftFine="3f000000"  TimeShiftCoarse="16" >
+<FEEL_GROOVE  BEAT_FRACTION="0"  FEEL_GROOVE_NAME=""  TEMPO="42f00000"  TICKSPERQUARTER="4608"  TIMESIGNUM="4"  TIMESIGDENOM="4" >
+<SLICESEQSTEP  BEGIN="18432"  END="18432"  CH="-1"  SLICEINDEX="-1"  VEL="127"  SP="0"  STRSP="3e800000" >
+</SLICESEQSTEP>
+ </FEEL_GROOVE>
+ </TIME_DESIGNER>
+ <USERSLICECLASSES >
+</USERSLICECLASSES>
+ <EDITGROUP  SliceClass="0"  EditGroupIndex="0"  Active="3f800000"  Gain="3f400000"  GainLFODepth="0"  GainLFORate="3eca3d71"  GainLFOSync="3f800000"  GainLFORetrig="0"  GainLFOStep="0"  GainLFOPolarity="0"  GainLFOShape="0"  Pan="3f000000"  PanLFODepth="0"  PanLFORate="3ec7ae14"  PanLFOSync="3f800000"  PanLFORetrig="0"  PanLFOStep="0"  PanLFOPolarity="0"  PanLFOShape="0"  Pitch="3f000000"  PitchFine="3f000000"  SampleStart="0"  Reverse="0"  ReverseRand="0"  FilterFreq="3f800000"  FilterQ="3e86bca2"  FilterDrive="0"  FilterMode="0"  FilterLFODepth="0"  FilterLFORate="3eca3d70"  FilterLFOSync="3f800000"  FilterLFORetrig="0"  FilterLFOStep="0"  FilterLFOPolarity="0"  FilterLFOShape="0"  FilterModWheelPolarity="0"  FilterModWheelDepth="0"  FilterWidth="3ee98b3a"  FilterNPoles="0"  FilterAtten="3eaaaaaa"  AmpEnvA="0"  AmpEnvH="3f800000"  AmpEnvD="3f666666"  AmpEnvR="3f262cea"  AmpEnvDepth="3f800000"  AmpEnvSens="3f800000"  AmpEnvPolarity="0"  FilterEnvA="0"  FilterEnvH="0"  FilterEnvD="3eaaaaaa"  FilterEnvR="3e99999a"  FilterEnvDepth="0"  FilterEnvSens="3f800000"  FilterEnvPolarity="0"  PitchEnvA="0"  PitchEnvH="0"  PitchEnvD="3e98b3a6"  PitchEnvR="3e99999a"  PitchEnvDepth="0"  PitchEnvSens="3f800000"  PitchEnvPolarity="0"  Mute="0"  Solo="0"  OutputBus="0"  Tone="3f000000"  ToneRes="0"  FilterType="0"  ReorderRand="0"  RepeatRand="0"  PitchRandFreq="0"  PitchRandDepth="3f000000"  PitchRandDir="3f000000"  TimingRandFreq="0"  TimingRandDepth="3f000000"  TimingRandDir="3f000000"  DynamicsRandFreq="0"  DynamicsRandDepth="3f000000"  DynamicsRandDir="3f000000"  RandOnOff="0"  BuzzOnOff="0"  BuzzStartInterval="3f000000"  BuzzStartIntervalWidth="0"  BuzzAccel="3f000000"  BuzzAccelWidth="0"  BuzzGainComp="3f800000"  SlSubGt="0"  RMNote="0"  AuxSendLevel0="3f800000"  AuxSendLevel1="3f800000"  AuxSendLevel2="3f800000"  AuxSendLevel3="3f800000" >
+<EFFRACK >
+<EFFMODULE  Type="No Effect"  P0="0"  P1="0"  P2="0"  P3="0"  P4="0"  P5="0"  P6="0"  P7="0"  P8="0"  P9="0"  P10="0"  P11="0"  P12="0"  P13="0"  P14="0"  Active="3f800000" >
+</EFFMODULE>
+ <EFFMODULE  Type="No Effect"  P0="0"  P1="0"  P2="0"  P3="0"  P4="0"  P5="0"  P6="0"  P7="0"  P8="0"  P9="0"  P10="0"  P11="0"  P12="0"  P13="0"  P14="0"  Active="3f800000" >
+</EFFMODULE>
+ <EFFMODULE  Type="No Effect"  P0="0"  P1="0"  P2="0"  P3="0"  P4="0"  P5="0"  P6="0"  P7="0"  P8="0"  P9="0"  P10="0"  P11="0"  P12="0"  P13="0"  P14="0"  Active="3f800000" >
+</EFFMODULE>
+ </EFFRACK>
+ </EDITGROUP>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE  Category="Kit Modules"  Suite="CLAPS - Electronic"  Loop="CLAP - Defender 1" >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ </ENGINE>
+ <CHANNELSTRIP  Mute="0"  MuteMidiLearnDevice0="16"  MuteMidiLearnCC0="21"  MuteMidiLearnChannel0="-1"  Solo="0"  SoloMidiLearnDevice0="16"  SoloMidiLearnCC0="29"  SoloMidiLearnChannel0="-1"  Level="3f23784a"  LevelMidiLearnDevice0="16"  LevelMidiLearnCC0="5"  LevelMidiLearnChannel0="-1"  Pan="3f000000"  PanMidiLearnDevice0="16"  PanMidiLearnCC0="13"  PanMidiLearnChannel0="-1" >
+</CHANNELSTRIP>
+ <ENGINE  Version="0"  Gain="3f400000"  Pan="3f000000"  HalfSpeedTrigger="0"  DoubleSpeedTrigger="0"  MNIF="0"  AuxSend0="0"  AuxSend0MidiLearnDevice0="16"  AuxSend0MidiLearnCC0="55"  AuxSend0MidiLearnChannel0="-1"  AuxSend1="0"  AuxSend1MidiLearnDevice0="16"  AuxSend1MidiLearnCC0="56"  AuxSend1MidiLearnChannel0="-1"  AuxSend2="0"  AuxSend2MidiLearnDevice0="16"  AuxSend2MidiLearnCC0="57"  AuxSend2MidiLearnChannel0="-1"  AuxSend3="0"  AuxSend3MidiLearnDevice0="16"  AuxSend3MidiLearnCC0="58"  AuxSend3MidiLearnChannel0="-1" >
+<GROOVESEL  LatchMode="0"  TriggerMode="3d23d70a"  SpeedMultiplier="3dcccccd"  FavoritesAdd="1"  AuditionActive="0"  AuditionActiveMidiLearnDevice0="16"  AuditionActiveMidiLearnCC0="54"  AuditionActiveMidiLearnChannel0="-1"  SaveToHost="0"  Category="Kit Modules"  Suite="HI-HATS - Electronic"  Loop="HI-HATS - Noisy Spitfire"  PlayMode="0" >
+</GROOVESEL>
+ <TIME_DESIGNER  TimeSignature="0"  TimeSignatureUseHost="0"  StartOffsetNoteNumber="0"  FeelSnapGridGravity="3f800000"  FeelThinNotes="0"  FeelSnapGridSwingDelay="0"  FeelSwingKind="0"  FeelOnOff="0"  FeelIgnoreSomeNotes="3f000000"  TimeShiftOnOff="0"  TimeShiftFine="3f000000"  TimeShiftCoarse="16" >
+<FEEL_GROOVE  BEAT_FRACTION="0"  FEEL_GROOVE_NAME=""  TEMPO="42f00000"  TICKSPERQUARTER="4608"  TIMESIGNUM="4"  TIMESIGDENOM="4" >
+<SLICESEQSTEP  BEGIN="18432"  END="18432"  CH="-1"  SLICEINDEX="-1"  VEL="127"  SP="0"  STRSP="3e800000" >
+</SLICESEQSTEP>
+ </FEEL_GROOVE>
+ </TIME_DESIGNER>
+ <USERSLICECLASSES >
+<USERSLICECLASS  Name="Edit Group 1"  Id="-2" >
+</USERSLICECLASS>
+ <LOOP  Name="HI-HATS - Arid Fog" >
+<SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ </LOOP>
+ <LOOP  Name="HI-HATS - Bitless" >
+<SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ </LOOP>
+ <LOOP  Name="HI-HATS - Blind Date" >
+<SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ </LOOP>
+ <LOOP  Name="HI-HATS - Bossa Baby" >
+<SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ </LOOP>
+ <LOOP  Name="HI-HATS - Bum Gumm" >
+<SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ </LOOP>
+ <LOOP  Name="HI-HATS - Clank" >
+<SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ </LOOP>
+ <LOOP  Name="HI-HATS - Cousin" >
+<SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ </LOOP>
+ <LOOP  Name="HI-HATS - Cryo Bot" >
+<SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ </LOOP>
+ <LOOP  Name="HI-HATS - Designer Wack" >
+<SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ </LOOP>
+ <LOOP  Name="HI-HATS - Driller" >
+<SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ </LOOP>
+ <LOOP  Name="HI-HATS - Eden Out" >
+<SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ </LOOP>
+ <LOOP  Name="HI-HATS - Edge of Light" >
+<SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ </LOOP>
+ <LOOP  Name="HI-HATS - Electrisoul" >
+<SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ </LOOP>
+ <LOOP  Name="HI-HATS - Exhale" >
+<SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ </LOOP>
+ <LOOP  Name="HI-HATS - Fan Base" >
+<SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ </LOOP>
+ <LOOP  Name="HI-HATS - Feel Eye" >
+<SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ </LOOP>
+ <LOOP  Name="HI-HATS - Flow Filter" >
+<SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ </LOOP>
+ <LOOP  Name="HI-HATS - GranFlower" >
+<SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ </LOOP>
+ <LOOP  Name="HI-HATS - Hard Disco" >
+<SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ </LOOP>
+ <LOOP  Name="HI-HATS - Hard Vertical" >
+<SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ </LOOP>
+ <LOOP  Name="HI-HATS - Hiccups" >
+<SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ </LOOP>
+ <LOOP  Name="HI-HATS - Hysterics" >
+<SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ </LOOP>
+ <LOOP  Name="HI-HATS - Iron Mini" >
+<SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ </LOOP>
+ <LOOP  Name="HI-HATS - Jahmma" >
+<SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ </LOOP>
+ <LOOP  Name="HI-HATS - Liquid DSP" >
+<SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ </LOOP>
+ <LOOP  Name="HI-HATS - Mass Agression" >
+<SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ </LOOP>
+ <LOOP  Name="HI-HATS - Narrow Gate" >
+<SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ </LOOP>
+ <LOOP  Name="HI-HATS - Noisy Spitfire" >
+<SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="-2" >
+</SLICECLASS>
+ </LOOP>
+ <LOOP  Name="HI-HATS - Nutcracked" >
+<SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ </LOOP>
+ <LOOP  Name="HI-HATS - Pave the Way" >
+<SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ </LOOP>
+ <LOOP  Name="HI-HATS - PinkPanther" >
+<SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ </LOOP>
+ <LOOP  Name="HI-HATS - Prague" >
+<SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ </LOOP>
+ <LOOP  Name="HI-HATS - RedCloud" >
+<SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ </LOOP>
+ <LOOP  Name="HI-HATS - Stupeat" >
+<SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ </LOOP>
+ <LOOP  Name="HI-HATS - Stupeater" >
+<SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ </LOOP>
+ <LOOP  Name="HI-HATS - SunTrip Filter" >
+<SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ </LOOP>
+ <LOOP  Name="HI-HATS - Tagger" >
+<SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ </LOOP>
+ <LOOP  Name="HI-HATS - Tek Knoll" >
+<SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ </LOOP>
+ <LOOP  Name="HI-HATS - Tek Noah" >
+<SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ </LOOP>
+ <LOOP  Name="HI-HATS - Tek Tonic" >
+<SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ </LOOP>
+ <LOOP  Name="HI-HATS - Tenka" >
+<SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ </LOOP>
+ <LOOP  Name="HI-HATS - The Call Grain" >
+<SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ </LOOP>
+ <LOOP  Name="HI-HATS - Thin Squash" >
+<SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ </LOOP>
+ <LOOP  Name="HI-HATS - Tick Splat" >
+<SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ </LOOP>
+ <LOOP  Name="HI-HATS - Tick Tock" >
+<SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ </LOOP>
+ <LOOP  Name="HI-HATS - Tide Pool" >
+<SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ </LOOP>
+ <LOOP  Name="HI-HATS - To Bee" >
+<SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ </LOOP>
+ <LOOP  Name="HI-HATS - Transonic" >
+<SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ </LOOP>
+ <LOOP  Name="HI-HATS - Twister" >
+<SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ </LOOP>
+ <LOOP  Name="HI-HATS - Zero Grafitti" >
+<SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ </LOOP>
+ <LOOP  Name="HI-HATS - Zero Grafitti Bing" >
+<SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ <SLICECLASS  Class="12" >
+</SLICECLASS>
+ </LOOP>
+ </USERSLICECLASSES>
+ <EDITGROUP  SliceClass="0"  EditGroupIndex="0"  Active="3f800000"  Gain="3f400000"  GainLFODepth="0"  GainLFORate="3eca3d71"  GainLFOSync="3f800000"  GainLFORetrig="0"  GainLFOStep="0"  GainLFOPolarity="0"  GainLFOShape="0"  Pan="3f000000"  PanLFODepth="0"  PanLFORate="3ec7ae14"  PanLFOSync="3f800000"  PanLFORetrig="0"  PanLFOStep="0"  PanLFOPolarity="0"  PanLFOShape="0"  Pitch="3f000000"  PitchFine="3f000000"  SampleStart="0"  Reverse="0"  ReverseRand="0"  FilterFreq="3f800000"  FilterQ="3e86bca2"  FilterDrive="0"  FilterMode="0"  FilterLFODepth="0"  FilterLFORate="3eca3d70"  FilterLFOSync="3f800000"  FilterLFORetrig="0"  FilterLFOStep="0"  FilterLFOPolarity="0"  FilterLFOShape="0"  FilterModWheelPolarity="0"  FilterModWheelDepth="0"  FilterWidth="3ee98b3a"  FilterNPoles="0"  FilterAtten="3eaaaaaa"  AmpEnvA="0"  AmpEnvH="0"  AmpEnvD="3efb823e"  AmpEnvR="3f1d3168"  AmpEnvDepth="3f800000"  AmpEnvSens="3f800000"  AmpEnvPolarity="0"  FilterEnvA="0"  FilterEnvH="0"  FilterEnvD="3eaaaaaa"  FilterEnvR="3e99999a"  FilterEnvDepth="0"  FilterEnvSens="3f800000"  FilterEnvPolarity="0"  PitchEnvA="0"  PitchEnvH="0"  PitchEnvD="3e21af28"  PitchEnvR="3e99999a"  PitchEnvDepth="0"  PitchEnvSens="3f800000"  PitchEnvPolarity="0"  Mute="0"  Solo="0"  OutputBus="0"  Tone="3f000000"  ToneRes="0"  FilterType="0"  ReorderRand="0"  RepeatRand="0"  PitchRandFreq="3e698b3c"  PitchRandDepth="3f000000"  PitchRandDir="3f000000"  TimingRandFreq="0"  TimingRandDepth="3f000000"  TimingRandDir="3f000000"  DynamicsRandFreq="0"  DynamicsRandDepth="3f000000"  DynamicsRandDir="3f000000"  RandOnOff="3f800000"  BuzzOnOff="0"  BuzzStartInterval="3f000000"  BuzzStartIntervalWidth="0"  BuzzAccel="3f000000"  BuzzAccelWidth="0"  BuzzGainComp="3f800000"  SlSubGt="0"  RMNote="0"  AuxSendLevel0="3f800000"  AuxSendLevel1="3f800000"  AuxSendLevel2="3f800000"  AuxSendLevel3="3f800000" >
+<EFFRACK >
+<EFFMODULE  Type="No Effect"  P0="0"  P1="0"  P2="0"  P3="0"  P4="0"  P5="0"  P6="0"  P7="0"  P8="0"  P9="0"  P10="0"  P11="0"  P12="0"  P13="0"  P14="0"  Active="3f800000" >
+</EFFMODULE>
+ <EFFMODULE  Type="No Effect"  P0="0"  P1="0"  P2="0"  P3="0"  P4="0"  P5="0"  P6="0"  P7="0"  P8="0"  P9="0"  P10="0"  P11="0"  P12="0"  P13="0"  P14="0"  Active="3f800000" >
+</EFFMODULE>
+ <EFFMODULE  Type="No Effect"  P0="0"  P1="0"  P2="0"  P3="0"  P4="0"  P5="0"  P6="0"  P7="0"  P8="0"  P9="0"  P10="0"  P11="0"  P12="0"  P13="0"  P14="0"  Active="3f800000" >
+</EFFMODULE>
+ </EFFRACK>
+ </EDITGROUP>
+ <EDITGROUP  SliceClass="-2"  EditGroupIndex="1"  Active="3f800000"  Gain="3ec565c8"  GainLFODepth="0"  GainLFORate="3eca3d71"  GainLFOSync="3f800000"  GainLFORetrig="0"  GainLFOStep="0"  GainLFOPolarity="0"  GainLFOShape="0"  Pan="3f000000"  PanLFODepth="0"  PanLFORate="3ec7ae14"  PanLFOSync="3f800000"  PanLFORetrig="0"  PanLFOStep="0"  PanLFOPolarity="0"  PanLFOShape="0"  Pitch="3f000000"  PitchFine="3f000000"  SampleStart="0"  Reverse="0"  ReverseRand="3ed79436"  FilterFreq="3f800000"  FilterQ="3e86bca2"  FilterDrive="0"  FilterMode="0"  FilterLFODepth="0"  FilterLFORate="3eca3d70"  FilterLFOSync="3f800000"  FilterLFORetrig="0"  FilterLFOStep="0"  FilterLFOPolarity="0"  FilterLFOShape="0"  FilterModWheelPolarity="0"  FilterModWheelDepth="0"  FilterWidth="3ee98b3a"  FilterNPoles="0"  FilterAtten="3eaaaaaa"  AmpEnvA="0"  AmpEnvH="0"  AmpEnvD="3f4a1af2"  AmpEnvR="3f1d3168"  AmpEnvDepth="3f800000"  AmpEnvSens="3f800000"  AmpEnvPolarity="0"  FilterEnvA="0"  FilterEnvH="0"  FilterEnvD="3eaaaaaa"  FilterEnvR="3e99999a"  FilterEnvDepth="0"  FilterEnvSens="3f800000"  FilterEnvPolarity="0"  PitchEnvA="0"  PitchEnvH="0"  PitchEnvD="3e21af28"  PitchEnvR="3e99999a"  PitchEnvDepth="0"  PitchEnvSens="3f800000"  PitchEnvPolarity="0"  Mute="0"  Solo="0"  OutputBus="0"  Tone="3f000000"  ToneRes="0"  FilterType="0"  ReorderRand="0"  RepeatRand="0"  PitchRandFreq="0"  PitchRandDepth="3f000000"  PitchRandDir="3f000000"  TimingRandFreq="0"  TimingRandDepth="3f000000"  TimingRandDir="3f000000"  DynamicsRandFreq="0"  DynamicsRandDepth="3f000000"  DynamicsRandDir="3f000000"  RandOnOff="3f800000"  BuzzOnOff="0"  BuzzStartInterval="3f000000"  BuzzStartIntervalWidth="0"  BuzzAccel="3f000000"  BuzzAccelWidth="0"  BuzzGainComp="3f800000"  SlSubGt="0"  RMNote="0"  AuxSendLevel0="3f800000"  AuxSendLevel1="3f800000"  AuxSendLevel2="3f800000"  AuxSendLevel3="3f800000" >
+<EFFRACK >
+<EFFMODULE  Type="No Effect"  P0="0"  P1="0"  P2="0"  P3="0"  P4="0"  P5="0"  P6="0"  P7="0"  P8="0"  P9="0"  P10="0"  P11="0"  P12="0"  P13="0"  P14="0"  Active="3f800000" >
+</EFFMODULE>
+ <EFFMODULE  Type="No Effect"  P0="0"  P1="0"  P2="0"  P3="0"  P4="0"  P5="0"  P6="0"  P7="0"  P8="0"  P9="0"  P10="0"  P11="0"  P12="0"  P13="0"  P14="0"  Active="3f800000" >
+</EFFMODULE>
+ <EFFMODULE  Type="No Effect"  P0="0"  P1="0"  P2="0"  P3="0"  P4="0"  P5="0"  P6="0"  P7="0"  P8="0"  P9="0"  P10="0"  P11="0"  P12="0"  P13="0"  P14="0"  Active="3f800000" >
+</EFFMODULE>
+ </EFFRACK>
+ </EDITGROUP>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE  Category="Kit Modules"  Suite="HI-HATS - Electronic"  Loop="HI-HATS - Noisy Spitfire" >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ </ENGINE>
+ <CHANNELSTRIP  Mute="0"  MuteMidiLearnDevice0="16"  MuteMidiLearnCC0="22"  MuteMidiLearnChannel0="-1"  Solo="0"  SoloMidiLearnDevice0="16"  SoloMidiLearnCC0="30"  SoloMidiLearnChannel0="-1"  Level="3f400000"  LevelMidiLearnDevice0="16"  LevelMidiLearnCC0="6"  LevelMidiLearnChannel0="-1"  Pan="3f000000"  PanMidiLearnDevice0="16"  PanMidiLearnCC0="14"  PanMidiLearnChannel0="-1" >
+</CHANNELSTRIP>
+ <ENGINE  Version="0"  Gain="3f400000"  Pan="3f000000"  HalfSpeedTrigger="0"  DoubleSpeedTrigger="0"  MNIF="0"  AuxSend0="3cf5c290"  AuxSend0MidiLearnDevice0="16"  AuxSend0MidiLearnCC0="60"  AuxSend0MidiLearnChannel0="-1"  AuxSend1="0"  AuxSend1MidiLearnDevice0="16"  AuxSend1MidiLearnCC0="61"  AuxSend1MidiLearnChannel0="-1"  AuxSend2="0"  AuxSend2MidiLearnDevice0="16"  AuxSend2MidiLearnCC0="62"  AuxSend2MidiLearnChannel0="-1"  AuxSend3="0"  AuxSend3MidiLearnDevice0="16"  AuxSend3MidiLearnCC0="63"  AuxSend3MidiLearnChannel0="-1" >
+<GROOVESEL  LatchMode="0"  TriggerMode="3d23d70a"  SpeedMultiplier="3dcccccd"  FavoritesAdd="1"  AuditionActive="0"  AuditionActiveMidiLearnDevice0="16"  AuditionActiveMidiLearnCC0="59"  AuditionActiveMidiLearnChannel0="-1"  SaveToHost="0"  Category="Kit Modules"  Suite="TOMS - Assorted Tom Toms"  Loop="TOMS - Electric Soul"  PlayMode="0" >
+</GROOVESEL>
+ <TIME_DESIGNER  TimeSignature="0"  TimeSignatureUseHost="0"  StartOffsetNoteNumber="0"  FeelSnapGridGravity="3f800000"  FeelThinNotes="0"  FeelSnapGridSwingDelay="0"  FeelSwingKind="0"  FeelOnOff="0"  FeelIgnoreSomeNotes="3f000000"  TimeShiftOnOff="0"  TimeShiftFine="3f000000"  TimeShiftCoarse="16" >
+<FEEL_GROOVE  BEAT_FRACTION="0"  FEEL_GROOVE_NAME=""  TEMPO="42f00000"  TICKSPERQUARTER="4608"  TIMESIGNUM="4"  TIMESIGDENOM="4" >
+<SLICESEQSTEP  BEGIN="18432"  END="18432"  CH="-1"  SLICEINDEX="-1"  VEL="127"  SP="0"  STRSP="3e800000" >
+</SLICESEQSTEP>
+ </FEEL_GROOVE>
+ </TIME_DESIGNER>
+ <USERSLICECLASSES >
+</USERSLICECLASSES>
+ <EDITGROUP  SliceClass="0"  EditGroupIndex="0"  Active="3f800000"  Gain="3f400000"  GainLFODepth="0"  GainLFORate="3eca3d71"  GainLFOSync="3f800000"  GainLFORetrig="0"  GainLFOStep="0"  GainLFOPolarity="0"  GainLFOShape="0"  Pan="3f000000"  PanLFODepth="0"  PanLFORate="3ec7ae14"  PanLFOSync="3f800000"  PanLFORetrig="0"  PanLFOStep="0"  PanLFOPolarity="0"  PanLFOShape="0"  Pitch="3f000000"  PitchFine="3f000000"  SampleStart="0"  Reverse="0"  ReverseRand="0"  FilterFreq="3f800000"  FilterQ="3e86bca2"  FilterDrive="0"  FilterMode="0"  FilterLFODepth="0"  FilterLFORate="3eca3d70"  FilterLFOSync="3f800000"  FilterLFORetrig="0"  FilterLFOStep="0"  FilterLFOPolarity="0"  FilterLFOShape="0"  FilterModWheelPolarity="0"  FilterModWheelDepth="0"  FilterWidth="3ee98b3a"  FilterNPoles="0"  FilterAtten="3eaaaaaa"  AmpEnvA="0"  AmpEnvH="3f800000"  AmpEnvD="3f666666"  AmpEnvR="3f18b3a6"  AmpEnvDepth="3f800000"  AmpEnvSens="3f800000"  AmpEnvPolarity="0"  FilterEnvA="0"  FilterEnvH="0"  FilterEnvD="3eaaaaaa"  FilterEnvR="3e99999a"  FilterEnvDepth="0"  FilterEnvSens="3f800000"  FilterEnvPolarity="0"  PitchEnvA="0"  PitchEnvH="0"  PitchEnvD="3e98b3a6"  PitchEnvR="3e99999a"  PitchEnvDepth="0"  PitchEnvSens="3f800000"  PitchEnvPolarity="0"  Mute="0"  Solo="0"  OutputBus="0"  Tone="3f000000"  ToneRes="0"  FilterType="0"  ReorderRand="0"  RepeatRand="0"  PitchRandFreq="0"  PitchRandDepth="3f000000"  PitchRandDir="3f000000"  TimingRandFreq="0"  TimingRandDepth="3f000000"  TimingRandDir="3f000000"  DynamicsRandFreq="0"  DynamicsRandDepth="3f000000"  DynamicsRandDir="3f000000"  RandOnOff="0"  BuzzOnOff="0"  BuzzStartInterval="3f000000"  BuzzStartIntervalWidth="0"  BuzzAccel="3f000000"  BuzzAccelWidth="0"  BuzzGainComp="3f800000"  SlSubGt="0"  RMNote="0"  AuxSendLevel0="3f800000"  AuxSendLevel1="3f800000"  AuxSendLevel2="3f800000"  AuxSendLevel3="3f800000" >
+<EFFRACK >
+<EFFMODULE  Type="No Effect"  P0="0"  P1="0"  P2="0"  P3="0"  P4="0"  P5="0"  P6="0"  P7="0"  P8="0"  P9="0"  P10="0"  P11="0"  P12="0"  P13="0"  P14="0"  Active="3f800000" >
+</EFFMODULE>
+ <EFFMODULE  Type="No Effect"  P0="0"  P1="0"  P2="0"  P3="0"  P4="0"  P5="0"  P6="0"  P7="0"  P8="0"  P9="0"  P10="0"  P11="0"  P12="0"  P13="0"  P14="0"  Active="3f800000" >
+</EFFMODULE>
+ <EFFMODULE  Type="No Effect"  P0="0"  P1="0"  P2="0"  P3="0"  P4="0"  P5="0"  P6="0"  P7="0"  P8="0"  P9="0"  P10="0"  P11="0"  P12="0"  P13="0"  P14="0"  Active="3f800000" >
+</EFFMODULE>
+ </EFFRACK>
+ </EDITGROUP>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE  Category="Kit Modules"  Suite="TOMS - Assorted Tom Toms"  Loop="TOMS - Electric Soul" >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ </ENGINE>
+ <CHANNELSTRIP  Mute="0"  MuteMidiLearnDevice0="16"  MuteMidiLearnCC0="23"  MuteMidiLearnChannel0="-1"  Solo="0"  SoloMidiLearnDevice0="16"  SoloMidiLearnCC0="31"  SoloMidiLearnChannel0="-1"  Level="3f487b60"  LevelMidiLearnDevice0="16"  LevelMidiLearnCC0="7"  LevelMidiLearnChannel0="-1"  Pan="3f000000"  PanMidiLearnDevice0="16"  PanMidiLearnCC0="15"  PanMidiLearnChannel0="-1" >
+</CHANNELSTRIP>
+ <ENGINE  Version="0"  Gain="3f400000"  Pan="3f000000"  HalfSpeedTrigger="0"  DoubleSpeedTrigger="0"  MNIF="0"  AuxSend0="3d0f5c29"  AuxSend0MidiLearnDevice0="16"  AuxSend0MidiLearnCC0="65"  AuxSend0MidiLearnChannel0="-1"  AuxSend1="0"  AuxSend1MidiLearnDevice0="16"  AuxSend1MidiLearnCC0="66"  AuxSend1MidiLearnChannel0="-1"  AuxSend2="0"  AuxSend2MidiLearnDevice0="16"  AuxSend2MidiLearnCC0="67"  AuxSend2MidiLearnChannel0="-1"  AuxSend3="0"  AuxSend3MidiLearnDevice0="16"  AuxSend3MidiLearnCC0="68"  AuxSend3MidiLearnChannel0="-1" >
+<GROOVESEL  LatchMode="0"  TriggerMode="3d23d70a"  SpeedMultiplier="3dcccccd"  FavoritesAdd="1"  AuditionActive="0"  AuditionActiveMidiLearnDevice0="16"  AuditionActiveMidiLearnCC0="64"  AuditionActiveMidiLearnChannel0="-1"  SaveToHost="0"  Category="Kit Modules"  Suite="RIDES - Ride Cymbals"  Loop="RIDE - Machine 2"  PlayMode="0" >
+</GROOVESEL>
+ <TIME_DESIGNER  TimeSignature="0"  TimeSignatureUseHost="0"  StartOffsetNoteNumber="0"  FeelSnapGridGravity="3f800000"  FeelThinNotes="0"  FeelSnapGridSwingDelay="0"  FeelSwingKind="0"  FeelOnOff="0"  FeelIgnoreSomeNotes="3f000000"  TimeShiftOnOff="0"  TimeShiftFine="3f000000"  TimeShiftCoarse="16" >
+<FEEL_GROOVE  BEAT_FRACTION="0"  FEEL_GROOVE_NAME=""  TEMPO="42f00000"  TICKSPERQUARTER="4608"  TIMESIGNUM="4"  TIMESIGDENOM="4" >
+<SLICESEQSTEP  BEGIN="18432"  END="18432"  CH="-1"  SLICEINDEX="-1"  VEL="127"  SP="0"  STRSP="3e800000" >
+</SLICESEQSTEP>
+ </FEEL_GROOVE>
+ </TIME_DESIGNER>
+ <USERSLICECLASSES >
+</USERSLICECLASSES>
+ <EDITGROUP  SliceClass="0"  EditGroupIndex="0"  Active="3f800000"  Gain="3f400000"  GainLFODepth="0"  GainLFORate="3eca3d71"  GainLFOSync="3f800000"  GainLFORetrig="0"  GainLFOStep="0"  GainLFOPolarity="0"  GainLFOShape="0"  Pan="3f000000"  PanLFODepth="0"  PanLFORate="3ec7ae14"  PanLFOSync="3f800000"  PanLFORetrig="0"  PanLFOStep="0"  PanLFOPolarity="0"  PanLFOShape="0"  Pitch="3f000000"  PitchFine="3f000000"  SampleStart="0"  Reverse="0"  ReverseRand="0"  FilterFreq="3f800000"  FilterQ="3e86bca2"  FilterDrive="0"  FilterMode="0"  FilterLFODepth="0"  FilterLFORate="3eca3d70"  FilterLFOSync="3f800000"  FilterLFORetrig="0"  FilterLFOStep="0"  FilterLFOPolarity="0"  FilterLFOShape="0"  FilterModWheelPolarity="0"  FilterModWheelDepth="0"  FilterWidth="3ee98b3a"  FilterNPoles="0"  FilterAtten="3eaaaaaa"  AmpEnvA="0"  AmpEnvH="3f800000"  AmpEnvD="3f800000"  AmpEnvR="3f6e08fc"  AmpEnvDepth="3f800000"  AmpEnvSens="3f800000"  AmpEnvPolarity="0"  FilterEnvA="0"  FilterEnvH="0"  FilterEnvD="3eaaaaaa"  FilterEnvR="3e99999a"  FilterEnvDepth="0"  FilterEnvSens="3f800000"  FilterEnvPolarity="0"  PitchEnvA="0"  PitchEnvH="0"  PitchEnvD="3e98b3a6"  PitchEnvR="3e99999a"  PitchEnvDepth="0"  PitchEnvSens="3f800000"  PitchEnvPolarity="0"  Mute="0"  Solo="0"  OutputBus="0"  Tone="3f000000"  ToneRes="0"  FilterType="0"  ReorderRand="0"  RepeatRand="0"  PitchRandFreq="0"  PitchRandDepth="3f000000"  PitchRandDir="3f000000"  TimingRandFreq="0"  TimingRandDepth="3f000000"  TimingRandDir="3f000000"  DynamicsRandFreq="0"  DynamicsRandDepth="3f000000"  DynamicsRandDir="3f000000"  RandOnOff="0"  BuzzOnOff="0"  BuzzStartInterval="3f000000"  BuzzStartIntervalWidth="0"  BuzzAccel="3f000000"  BuzzAccelWidth="0"  BuzzGainComp="3f800000"  SlSubGt="0"  RMNote="0"  AuxSendLevel0="3f800000"  AuxSendLevel1="3f800000"  AuxSendLevel2="3f800000"  AuxSendLevel3="3f800000" >
+<EFFRACK >
+<EFFMODULE  Type="No Effect"  P0="0"  P1="0"  P2="0"  P3="0"  P4="0"  P5="0"  P6="0"  P7="0"  P8="0"  P9="0"  P10="0"  P11="0"  P12="0"  P13="0"  P14="0"  Active="3f800000" >
+</EFFMODULE>
+ <EFFMODULE  Type="No Effect"  P0="0"  P1="0"  P2="0"  P3="0"  P4="0"  P5="0"  P6="0"  P7="0"  P8="0"  P9="0"  P10="0"  P11="0"  P12="0"  P13="0"  P14="0"  Active="3f800000" >
+</EFFMODULE>
+ <EFFMODULE  Type="No Effect"  P0="0"  P1="0"  P2="0"  P3="0"  P4="0"  P5="0"  P6="0"  P7="0"  P8="0"  P9="0"  P10="0"  P11="0"  P12="0"  P13="0"  P14="0"  Active="3f800000" >
+</EFFMODULE>
+ </EFFRACK>
+ </EDITGROUP>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE  Category="Kit Modules"  Suite="RIDES - Ride Cymbals"  Loop="RIDE - Machine 2" >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ </ENGINE>
+ <CHANNELSTRIP  Mute="0"  MuteMidiLearnDevice0="16"  MuteMidiLearnCC0="24"  MuteMidiLearnChannel0="-1"  Solo="0"  SoloMidiLearnDevice0="16"  SoloMidiLearnCC0="32"  SoloMidiLearnChannel0="-1"  Level="3ed1bc25"  LevelMidiLearnDevice0="16"  LevelMidiLearnCC0="8"  LevelMidiLearnChannel0="-1"  Pan="3f000000"  PanMidiLearnDevice0="16"  PanMidiLearnCC0="16"  PanMidiLearnChannel0="-1" >
+</CHANNELSTRIP>
+ <ENGINE  Version="0"  Gain="3f400000"  Pan="3f000000"  HalfSpeedTrigger="0"  DoubleSpeedTrigger="0"  MNIF="0"  AuxSend0="0"  AuxSend0MidiLearnDevice0="16"  AuxSend0MidiLearnCC0="70"  AuxSend0MidiLearnChannel0="-1"  AuxSend1="3e947ae1"  AuxSend1MidiLearnDevice0="16"  AuxSend1MidiLearnCC0="71"  AuxSend1MidiLearnChannel0="-1"  AuxSend2="0"  AuxSend2MidiLearnDevice0="16"  AuxSend2MidiLearnCC0="72"  AuxSend2MidiLearnChannel0="-1"  AuxSend3="0"  AuxSend3MidiLearnDevice0="16"  AuxSend3MidiLearnCC0="73"  AuxSend3MidiLearnChannel0="-1" >
+<GROOVESEL  LatchMode="0"  TriggerMode="3d23d70a"  SpeedMultiplier="3dcccccd"  FavoritesAdd="1"  AuditionActive="0"  AuditionActiveMidiLearnDevice0="16"  AuditionActiveMidiLearnCC0="69"  AuditionActiveMidiLearnChannel0="-1"  SaveToHost="0"  Category="Kit Modules"  Suite="CYMS - Cymbal Sets"  Loop="CYM - Lo Fi Noisy Set"  PlayMode="0" >
+</GROOVESEL>
+ <TIME_DESIGNER  TimeSignature="0"  TimeSignatureUseHost="0"  StartOffsetNoteNumber="0"  FeelSnapGridGravity="3f800000"  FeelThinNotes="0"  FeelSnapGridSwingDelay="0"  FeelSwingKind="0"  FeelOnOff="0"  FeelIgnoreSomeNotes="3f000000"  TimeShiftOnOff="0"  TimeShiftFine="3f000000"  TimeShiftCoarse="16" >
+<FEEL_GROOVE  BEAT_FRACTION="0"  FEEL_GROOVE_NAME=""  TEMPO="42f00000"  TICKSPERQUARTER="4608"  TIMESIGNUM="4"  TIMESIGDENOM="4" >
+<SLICESEQSTEP  BEGIN="18432"  END="18432"  CH="-1"  SLICEINDEX="-1"  VEL="127"  SP="0"  STRSP="3e800000" >
+</SLICESEQSTEP>
+ </FEEL_GROOVE>
+ </TIME_DESIGNER>
+ <USERSLICECLASSES >
+</USERSLICECLASSES>
+ <EDITGROUP  SliceClass="0"  EditGroupIndex="0"  Active="3f800000"  Gain="3f400000"  GainLFODepth="0"  GainLFORate="3eca3d71"  GainLFOSync="3f800000"  GainLFORetrig="0"  GainLFOStep="0"  GainLFOPolarity="0"  GainLFOShape="0"  Pan="3f000000"  PanLFODepth="0"  PanLFORate="3ec7ae14"  PanLFOSync="3f800000"  PanLFORetrig="0"  PanLFOStep="0"  PanLFOPolarity="0"  PanLFOShape="0"  Pitch="3ede1282"  PitchFine="3f000000"  SampleStart="0"  Reverse="0"  ReverseRand="0"  FilterFreq="3f800000"  FilterQ="3e86bca2"  FilterDrive="0"  FilterMode="0"  FilterLFODepth="0"  FilterLFORate="3eca3d70"  FilterLFOSync="3f800000"  FilterLFORetrig="0"  FilterLFOStep="0"  FilterLFOPolarity="0"  FilterLFOShape="0"  FilterModWheelPolarity="0"  FilterModWheelDepth="0"  FilterWidth="3ee98b3a"  FilterNPoles="0"  FilterAtten="3eaaaaaa"  AmpEnvA="0"  AmpEnvH="3f800000"  AmpEnvD="3f666666"  AmpEnvR="3f7b823f"  AmpEnvDepth="3f800000"  AmpEnvSens="3f800000"  AmpEnvPolarity="0"  FilterEnvA="0"  FilterEnvH="0"  FilterEnvD="3eaaaaaa"  FilterEnvR="3e99999a"  FilterEnvDepth="0"  FilterEnvSens="3f800000"  FilterEnvPolarity="0"  PitchEnvA="3f3823ee"  PitchEnvH="0"  PitchEnvD="3f2aaaaa"  PitchEnvR="3f21af28"  PitchEnvDepth="3f000000"  PitchEnvSens="3f800000"  PitchEnvPolarity="0"  Mute="0"  Solo="0"  OutputBus="0"  Tone="3f000000"  ToneRes="0"  FilterType="0"  ReorderRand="0"  RepeatRand="0"  PitchRandFreq="0"  PitchRandDepth="3f000000"  PitchRandDir="3f000000"  TimingRandFreq="0"  TimingRandDepth="3f000000"  TimingRandDir="3f000000"  DynamicsRandFreq="0"  DynamicsRandDepth="3f000000"  DynamicsRandDir="3f000000"  RandOnOff="0"  BuzzOnOff="0"  BuzzStartInterval="3f000000"  BuzzStartIntervalWidth="0"  BuzzAccel="3f000000"  BuzzAccelWidth="0"  BuzzGainComp="3f800000"  SlSubGt="0"  RMNote="0"  AuxSendLevel0="3f800000"  AuxSendLevel1="3f800000"  AuxSendLevel2="3f800000"  AuxSendLevel3="3f800000" >
+<EFFRACK >
+<EFFMODULE  Type="No Effect"  P0="0"  P1="0"  P2="0"  P3="0"  P4="0"  P5="0"  P6="0"  P7="0"  P8="0"  P9="0"  P10="0"  P11="0"  P12="0"  P13="0"  P14="0"  Active="3f800000" >
+</EFFMODULE>
+ <EFFMODULE  Type="No Effect"  P0="0"  P1="0"  P2="0"  P3="0"  P4="0"  P5="0"  P6="0"  P7="0"  P8="0"  P9="0"  P10="0"  P11="0"  P12="0"  P13="0"  P14="0"  Active="3f800000" >
+</EFFMODULE>
+ <EFFMODULE  Type="No Effect"  P0="0"  P1="0"  P2="0"  P3="0"  P4="0"  P5="0"  P6="0"  P7="0"  P8="0"  P9="0"  P10="0"  P11="0"  P12="0"  P13="0"  P14="0"  Active="3f800000" >
+</EFFMODULE>
+ </EFFRACK>
+ </EDITGROUP>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE  Category="Kit Modules"  Suite="CYMS - Cymbal Sets"  Loop="CYM - Lo Fi Noisy Set" >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ <DRUMKITMODULE >
+</DRUMKITMODULE>
+ </ENGINE>
+ <CHANNELSTRIP  Mute="0"  MuteMidiLearnDevice0="16"  MuteMidiLearnCC0="25"  MuteMidiLearnChannel0="-1"  Solo="0"  SoloMidiLearnDevice0="16"  SoloMidiLearnCC0="33"  SoloMidiLearnChannel0="-1"  Level="3ecb90f7"  LevelMidiLearnDevice0="16"  LevelMidiLearnCC0="9"  LevelMidiLearnChannel0="-1"  Pan="3f000000"  PanMidiLearnDevice0="16"  PanMidiLearnCC0="17"  PanMidiLearnChannel0="-1" >
+</CHANNELSTRIP>
+ </StylusRMXMaster>
+ 

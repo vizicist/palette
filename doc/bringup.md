@@ -26,6 +26,8 @@
 
 - Install latest Palette installer
 
+- Install desired Palette data (e.g. for data_omnisphere or data_sfmoma)
+
 - Set Resolume ffgl folder to c:\program files\Palette\ffgl, enable OSC, open c:\program files\common files\Palette\data\config\PaletteDefault.avc
 
 - Pin Start Palette and Stop Palette to the taskbar
@@ -44,7 +46,6 @@
 - Load presets in Stylus RMX
 	- REMEMBER TO SET THEM TO CHANNEL 10 !
 
-- Set PALETTE_DATA to omnisphere
 - Set PALETTE_MMTT to kinect (if using Kinect), and install Kinect runtime/sdk
 
 
