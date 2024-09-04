@@ -91,7 +91,7 @@ copy %PALETTE_SOURCE%\build\windows\vc15\bin\msvcr100.dll %ship%\ffgl >nul
 popd
 
 rem ======== Kinect (mmtt_kinect) is only built when PALETTE_MMTT is set
-if "%PALETTE_MMTT%" == "kinect" call mmtt_build.bat
+if "%PALETTE_MMTT%" == "kinect" call build_mmtt.bat
 
 echo ================ Copying misc binaries
 copy %PALETTE_SOURCE%\binaries\nircmdc.exe %bin% >nul
