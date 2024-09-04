@@ -105,11 +105,15 @@ FullDataPath = ""
 
 # This is the name of the data_* directory
 # containing config and saved.
-# This logic is identical to PaletteDataPath() in the Go code
+# This logic should be identical to PaletteDataPath() in the Go code
 def PaletteDataPath():
     global paletteDataPath
     global FullDataPath # cache the full path
 
+    if FullDataPath != "":
+        return FullDataPath
+
+    FullDataPath = os.environ.get("PALETTE_DATA_PATH","")
     if FullDataPath != "":
         return FullDataPath
 
