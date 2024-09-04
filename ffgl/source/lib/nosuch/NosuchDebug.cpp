@@ -119,6 +119,7 @@ PaletteDataPath()
 
 	errno_t err;
 	char* palette = NULL;
+	char* palette_data_path = NULL;
 	char* source = NULL;
 	char *dataval = NULL;
 	char *value = NULL;
@@ -126,6 +127,13 @@ PaletteDataPath()
 	std::string datapath;
 	size_t len;
 
+	err = _dupenv_s( &palette_data_path, &len, "PALETTE_DATA_PATH" );
+	if( err == 0 && palette_data_path != NULL )
+	{
+		return datapath = std::string(palette_data_path);
+	}
+
+	// Otherwise construct it from PALETTE and PALETTE_DATA
 	err = _dupenv_s( &palette, &len, "PALETTE" );
 	if( err || palette == NULL )
 	{
@@ -138,14 +146,13 @@ PaletteDataPath()
 		dataval = "omnisphere";
 	}
 
+	std::string datadir = "data_" + std::string( dataval );	
 	err = _dupenv_s( &value, &len, "PALETTE_SOURCE" );
-	std::string parent;
 	if ( err == 0 && value != NULL ) {
-		parent = std::string(value);
+		datapath = std::string(value) + "\\" + datadir;
 	} else {
-		parent = "c:\\Program Files\\Common Files\\Palette";
+		datapath = std::string("c:\\Program Files\\Common Files\\Palette") + "\\" + datadir ;
 	}
-	datapath = std::string(parent) + "\\data_" + std::string( dataval );	
 
 	NosuchDebug( "NosuchDebugInit: Level=%d Cursor=%d Param=%d API=%d\n", NosuchDebugLevel, NosuchDebugCursor , NosuchDebugParam, NosuchDebugAPI);
 	return datapath;
