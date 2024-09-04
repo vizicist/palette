@@ -311,7 +311,7 @@ func LoadParamsMapFromPath(path string) (ParamsMap, error) {
 	}
 	pmap, err := MakeParamsMapFromBytes(bytes)
 	if err != nil {
-		return nil, fmt.Errorf("unable to load params from path=%s err=%s",path, err)
+		return nil, fmt.Errorf("unable to load params from path=%s err=%s", path, err)
 	}
 	return pmap, nil
 }

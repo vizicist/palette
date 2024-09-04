@@ -7,6 +7,7 @@
 #define MyAppVersion GetEnv('PALETTE_VERSION')
 #define MyAppPublisher "Nosuch Media"
 #define MyAppURL "https://github.com/vizicist/palette"
+#define Data GetEnv('PALETTE_DATA')
 #define DataDir "data_"+GetEnv('PALETTE_DATA')
 #define DataPath "{commoncf64}/Palette/data_"+GetEnv('PALETTE_DATA')
 
@@ -21,7 +22,6 @@ AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
 DefaultDirName={#DataPath}
-DefaultGroupName={#MyAppName}
 ; Uncomment the following line to run in non administrative install mode (install for current user only.)
 ;PrivilegesRequired=lowest
 OutputBaseFilename={#DataDir}_{#MyAppVersion}
@@ -50,5 +50,5 @@ Source: "ship\{#DataDir}\*"; DestDir: "{#DataPath}"; Flags: comparetimestamp ign
 Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; \
     ValueType: expandsz; ValueName: "PALETTE_DATA_PATH"; ValueData: "{#DataPath}"; Flags: preservestringtype
 Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; \
-    ValueType: expandsz; ValueName: "PALETTE_DATA"; ValueData: "{#DataDir}"; Flags: preservestringtype
+    ValueType: expandsz; ValueName: "PALETTE_DATA"; ValueData: "{#Data}"; Flags: preservestringtype
 
