@@ -2211,9 +2211,9 @@ class PagePerformMain(tk.Frame):
         self.makePerformButton("COMPLETE_RESET", self.controller.completeReset)
         # self.makePerformButton("Looping", self.controller.loopingToggle)
         self.makePerformButton("SOFT_RESET", self.controller.softReset)
-        self.makePerformButton("CLEAR_LOOP", self.controller.clearNotes)
-        self.makePerformButton("FADE_LOOP", self.controller.fadeNotes)
-        self.makePerformButton("FILTER_LOOP", self.controller.filterNotes)
+        # self.makePerformButton("CLEAR_LOOP", self.controller.clearNotes)
+        # self.makePerformButton("FADE_LOOP", self.controller.fadeNotes)
+        # self.makePerformButton("FILTER_LOOP", self.controller.filterNotes)
         self.makePerformButton("HELP_ ", self.controller.startHelp)
         # self.makePerformButton("Looping_OFF", self.controller.loopingOff)
         # if self.controller.guidefaultlevel > 0:
