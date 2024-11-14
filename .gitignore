@@ -1,3 +1,4 @@
+build/windows/vcvars64.err
 data/recordings/*
 data/saved/archive/vizdesk*
 cmd/fyne_demo

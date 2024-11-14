@@ -7,8 +7,8 @@ if not "%PALETTE_SOURCE%" == "" goto keepgoing1
 :keepgoing1
 
 if not "%VSINSTALLDIR%" == "" goto keepgoing2
-	echo Calling msdev17 to set build environment.
-	call ..\..\scripts\msdev17.bat
+	echo Calling msdev22 to set build environment.
+	call ..\..\scripts\msdev22.bat
 :keepgoing2
 
 set ship=%PALETTE_SOURCE%\build\windows\ship
@@ -91,7 +91,8 @@ copy %PALETTE_SOURCE%\build\windows\vc15\bin\msvcr100.dll %ship%\ffgl >nul
 popd
 
 rem ======== Kinect (mmtt_kinect) is only built when PALETTE_MMTT is set
-if "%PALETTE_MMTT%" == "kinect" call build_mmtt.bat
+rem ======== NOTE - this is now NOT done automatically, you need to call build_mmtt manually
+rem if "%PALETTE_MMTT%" == "kinect" call build_mmtt.bat
 
 echo ================ Copying misc binaries
 copy %PALETTE_SOURCE%\binaries\nircmdc.exe %bin% >nul
