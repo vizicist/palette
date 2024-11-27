@@ -16,7 +16,7 @@ require (
 	github.com/visualfc/atk v1.2.3
 	gitlab.com/gomidi/midi/v2 v2.0.30
 	go.uber.org/zap v1.26.0
-	golang.org/x/image v0.14.0
+	golang.org/x/image v0.19.0
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
 )
 
@@ -53,13 +53,13 @@ require (
 	github.com/tevino/abool v1.2.0 // indirect
 	github.com/yuin/goldmark v1.5.5 // indirect
 	go.uber.org/multierr v1.10.0 // indirect
-	golang.org/x/crypto v0.17.0 // indirect
+	golang.org/x/crypto v0.22.0 // indirect
 	golang.org/x/exp/shiny v0.0.0-20230210204819-062eb4c674ab // indirect
 	golang.org/x/mobile v0.0.0-20230531173138-3c911d8e3eda // indirect
-	golang.org/x/net v0.17.0 // indirect
-	golang.org/x/sync v0.3.0 // indirect
-	golang.org/x/sys v0.15.0 // indirect
-	golang.org/x/text v0.14.0 // indirect
+	golang.org/x/net v0.24.0 // indirect
+	golang.org/x/sync v0.8.0 // indirect
+	golang.org/x/sys v0.19.0 // indirect
+	golang.org/x/text v0.17.0 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	honnef.co/go/js/dom v0.0.0-20210725211120-f030747120f2 // indirect
