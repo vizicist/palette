@@ -443,7 +443,7 @@ func (sched *Scheduler) PendingToString() string {
 
 func (sched *Scheduler) Format(f fmt.State, c rune) {
 	s := sched.ToString()
-	f.Write([]byte(s))
+	_,_ = f.Write([]byte(s))  // XXX - can this ever fail?
 }
 
 func (sched *Scheduler) insertScheduleElement(se *SchedElement) {

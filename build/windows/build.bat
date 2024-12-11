@@ -1,5 +1,4 @@
 echo off
-if "%PALETTE_MMTT%" == "" set PALETTE_MMTT=none
 
 echo BUILDING binaries...
 call build_bin

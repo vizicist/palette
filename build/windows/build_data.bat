@@ -1,6 +1,7 @@
 @echo off
 
 set /p version=<../../VERSION
+rem putting the PALETTE_VERSION in the environment so it can be used in the installer
 set PALETTE_VERSION=%version%
 
 set data=%1
@@ -35,3 +36,4 @@ move Output\%datadir%_%version%.exe %PALETTE_SOURCE%\release\palette_%version%_%
 rm -fr Output > nul 2>&1
 
 :getout
+set PALETTE_VERSION=
