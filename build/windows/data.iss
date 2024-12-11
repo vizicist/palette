@@ -48,7 +48,5 @@ Source: "ship\{#DataDir}\*"; DestDir: "{#DataPath}"; Flags: comparetimestamp ign
 
 [Registry]
 Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; \
-    ValueType: expandsz; ValueName: "PALETTE_DATA_PATH"; ValueData: "{#DataPath}"; Flags: preservestringtype
-Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; \
     ValueType: expandsz; ValueName: "PALETTE_DATA"; ValueData: "{#Data}"; Flags: preservestringtype
 

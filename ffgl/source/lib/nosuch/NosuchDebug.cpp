@@ -127,13 +127,7 @@ PaletteDataPath()
 	std::string datapath;
 	size_t len;
 
-	err = _dupenv_s( &palette_data_path, &len, "PALETTE_DATA_PATH" );
-	if( err == 0 && palette_data_path != NULL )
-	{
-		return datapath = std::string(palette_data_path);
-	}
-
-	// Otherwise construct it from PALETTE and PALETTE_DATA
+	// construct datapath from PALETTE and PALETTE_DATA
 	err = _dupenv_s( &palette, &len, "PALETTE" );
 	if( err || palette == NULL )
 	{
@@ -143,10 +137,12 @@ PaletteDataPath()
 
 	err = _dupenv_s( &dataval, &len, "PALETTE_DATA" );
 	if ( err == 0 && dataval != NULL ) {
-		dataval = "omnisphere";
+		dataval = "omnisphere"; // default value
 	}
-
 	std::string datadir = "data_" + std::string( dataval );	
+
+	// If PALETTE_SOURCE is defined, datapath is relative to that
+	// otherwise, it's relative to the PALETTE directory in Common Files.
 	err = _dupenv_s( &value, &len, "PALETTE_SOURCE" );
 	if ( err == 0 && value != NULL ) {
 		datapath = std::string(value) + "\\" + datadir;

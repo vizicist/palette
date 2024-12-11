@@ -70,7 +70,8 @@ func (pi *PhraseElement) Format(f fmt.State, c rune) {
 		valstr = "UNKNOWNTYPE"
 	}
 	final := fmt.Sprintf("(PhraseElement AtClick=%d Value=%s)", pi.AtClick, valstr)
-	f.Write([]byte(final))
+	// XXX - is there any way that this can fail?
+	_,_ = f.Write([]byte(final))
 }
 
 /*
