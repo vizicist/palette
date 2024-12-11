@@ -23,6 +23,7 @@ rem mkdir %ship%\keykit\lib
 
 copy %PALETTE_SOURCE%\VERSION %ship% >nul
 set /p version=<../../VERSION
+rem putting the PALETTE_VERSION in the environment so it can be used in the installer
 set PALETTE_VERSION=%version%
 
 echo ================ Upgrading Python
@@ -33,6 +34,11 @@ rem echo ================ Compiling depthlib
 rem pushd ..\..\depthlib
 rem call build.bat > nul
 rem popd
+
+if "%PALETTE_MMTT%" == "" goto no_mmtt
+	echo ================ Building mmtt
+	call build_mmtt.bat > build_mmtt.out 2>&1
+:no_mmtt
 
 echo ================ Creating cmds
 
@@ -145,3 +151,4 @@ move Output\palette_%version%_win_setup.exe %PALETTE_SOURCE%\release >nul
 rmdir Output
 
 :getout
+set PALETTE_VERSION=

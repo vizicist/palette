@@ -85,18 +85,17 @@ func GetPaletteVersion() string {
 	return strings.TrimSuffix(string(bytes), "\n")
 }
 
-func PaletteDataPath() string {
+func PaletteDataPath() (datapath string) {
 
-	datapath := os.Getenv("PALETTE_DATA_PATH")
-	if datapath != "" {
-		return datapath
-	}
 	palette_data := os.Getenv("PALETTE_DATA")
 	if palette_data == "" {
 		palette_data = "omnisphere"
 	}
-	palette_source := os.Getenv("PALETTE_SOURCE")
 	datadir := "data_" + palette_data
+
+	// If PALETTE_SOURCE is defined, datapath is relative to that
+	// otherwise, it's relative to the PALETTE directory in Common Files.
+	palette_source := os.Getenv("PALETTE_SOURCE")
 	if palette_source != "" {
 		datapath = filepath.Join(palette_source, datadir)
 	} else {
