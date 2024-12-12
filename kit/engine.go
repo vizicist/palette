@@ -78,10 +78,21 @@ func InitEngine() {
 
 	for name := range ParamDefs {
 		if strings.HasPrefix(name, "global.") {
-			LogInfo("global name","name",name)
+			// LogInfo("global name","name",name)
 			ActivateGlobalParam(name)
 		}
 	}
+
+	LogInfo("PaletteDataPath","path",PaletteDataPath())
+
+	// To avoid confusion, force looping off at startup
+	LogInfo("Looping is being forced off")
+	err := GlobalParams.SetParamWithString("global.looping_override", "true")
+	LogIfError(err)
+	err = GlobalParams.SetParamWithString("global.looping_fade", "0.00")
+	LogIfError(err)
+	err = SaveCurrentGlobalParams()
+	LogIfError(err)
 }
 
 func LocalEngineApi(api string, args ...string) (map[string]string, error) {
@@ -203,7 +214,10 @@ func LoadGlobalParamsFrom(filename string, activate bool) (err error) {
 			ActivateGlobalParam(nm)
 		}
 	}
-	return nil
+	if filename != "_Current" {
+		err = SaveCurrentGlobalParams()
+	}
+	return err
 }
 
 func (e *Engine) Start() {

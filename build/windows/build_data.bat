@@ -17,11 +17,12 @@ if not "%PALETTE_SOURCE%" == "" goto keepgoing1
 :keepgoing1
 
 set ship=%PALETTE_SOURCE%\build\windows\ship
+set datadir=data_%data%
 
+rm -fr %PALETTE_SOURCE%\%datadir%\logs
 rm -fr %ship% > nul 2>&1
 mkdir %ship%
 
-set datadir=data_%data%
 echo ================ Copying %datadir%
 mkdir %ship%\%datadir%
 xcopy /e /y %PALETTE_SOURCE%\%datadir%\* %ship%\%datadir% >nul
