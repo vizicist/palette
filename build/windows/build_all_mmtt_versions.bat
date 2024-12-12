@@ -13,3 +13,4 @@ call clean.bat
 call build.bat
 
 set PALETTE_MMTT=%save_PALETTE_MMTT%
+set save_PALETTE_MMTT=

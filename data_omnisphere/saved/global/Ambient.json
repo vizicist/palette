@@ -33,7 +33,7 @@
         "global.looping_beats":"8",
         "global.looping_fade":"1.000000",
         "global.looping_fadethreshold":"0.500000",
-        "global.looping_override":"false",
+        "global.looping_override":"true",
         "global.midiinput":"",
         "global.midisetexternalscale":"false",
         "global.midithru":"false",
