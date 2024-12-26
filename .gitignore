@@ -4,6 +4,9 @@ data/saved/archive/vizdesk*
 cmd/fyne_demo
 data/logs
 data_omnisphere/logs
+data_default/logs
+data_default/logs/*
+data_cloud/logs
 default.bidule.previous
 _Current.json
 .vs
