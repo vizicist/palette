@@ -1,0 +1,215 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <style>
+      body {
+        margin: 0px;
+        padding: 0px;
+      }
+      #myCanvas {
+        border: 1px solid #9C9898;
+      }
+    </style>
+    <script>
+	    
+
+
+      window.onload = function() {
+	var shapeOfCursor = [0, 1, 2, 3];
+	var colorForCursorRegion = [
+		"rgba(255,0,0,0.1)",
+		"rgba(0,255,0,0.1)",
+		"rgba(0,0,255,0.1)",
+		"rgba(255,255,255,0.1)",
+	];
+
+	var cursorDown = [0, 0, 0, 0];
+	var maxCursors = 4;
+	var ws;
+	if ("WebSocket" in window) {
+		ws = new WebSocket("ws://localhost:4444/websocket");
+	} else {
+		ws = new MozWebSocket("ws://localhost:4444/websocket");
+	}
+	ws.onmessage = handleJSON;
+
+	ws.onopen = function() {
+		console.log("EVENT onopen!");
+	}
+	ws.onclose = function() {
+		console.log("EVENT onclose!");
+	}
+	ws.onerror = function() {
+		console.log("EVENT onerror!");
+	}
+
+        var canvas = document.getElementById('myCanvas');
+        var context = canvas.getContext('2d');
+
+	function stringifyObject(obj) {
+		var output = 'TJTOBJECT - ';
+		for (property in obj) {
+			output += property + ': ' + obj[property]+'; ';
+		}
+		return output;
+	}
+	function drawshape(x,y,size) {
+	      context.beginPath();
+	      context.rect(x,y, 300*size, 300*size);
+	      context.fillStyle = "rgba(255,0,0,0.1)";
+	      context.fill();
+	      context.lineWidth = 7;
+	      context.strokeStyle = "rgba(0,0,255,0.1)";
+	      context.stroke();
+	}
+	function drawcursor(c) {
+		x = c.x * canvas.width;
+		y = (1.0 - c.y) * canvas.height;
+		sz = c.z * 300;
+		context.beginPath();
+		context.rect(x,y,sz,sz);
+		context.fillStyle = colorForCursorRegion[c.region];
+		context.fill();
+		context.stroke();
+	}
+      function canvasMessage(canvas, message) {
+        var context = canvas.getContext('2d');
+        context.clearRect(0, 0, canvas.width, 30);
+        context.font = '18pt Calibri';
+        context.fillStyle = 'black';
+        context.fillText(message, 10, 25);
+      }
+      function getMousePos(canvas, evt) {
+        var rect = canvas.getBoundingClientRect(), root = document.documentElement;
+
+        // return relative mouse position
+        var mouseX = evt.clientX - rect.top - root.scrollTop;
+        var mouseY = evt.clientY - rect.left - root.scrollLeft;
+        return {
+          x: mouseX,
+          y: mouseY
+        };
+      }
+      function Cursor(region) {
+	      this.touched = false
+	      this.region = region
+      }
+      osc_sid = [];
+    function handleOscMessage(m) {
+	// addtodocument("handleOscMessage m="+JSON.stringify(m));
+	if ( m.address == "/tuio/25Dblb" ) {
+		var args = m.args;
+		var cmd = args[0];
+		if ( cmd == "alive" ) {
+			// logMessage("alive!");
+			var c;
+			for ( sid in osc_sid ) {
+				c = osc_sid[sid];
+				c.touched = false;
+				// logMessage("  sid="+sid+"  .touched=false");
+			}
+			for ( n=1; n<args.length; n++ ) {
+				sid = args[n];
+				if ( ! ( sid in osc_sid ) ) {
+					logMessage("  NEW CURSOR sid="+sid);
+					region = (sid / 1000) % maxCursors;
+					osc_sid[sid] = new Cursor(region);
+				}
+				c = osc_sid[sid];
+				c.touched = true;
+				// logMessage("  ALIVE sid="+sid+"  .touched=true");
+			}
+			for ( sid in osc_sid ) {
+				c = osc_sid[sid];
+				if ( c.touched == false ) {
+					logMessage("sid="+sid+" went away");
+					delete osc_sid[sid]
+				}
+			}
+		} else if ( cmd == "set" ) {
+			sid = args[1];
+			osc_sid[sid].x = args[2]
+			osc_sid[sid].y = args[3]
+			osc_sid[sid].z = args[4]
+			drawcursor(osc_sid[sid]);
+		} else if ( cmd == "fseq" ) {
+			// logMessage("fseq!");
+		} else {
+			logMessage("No hander in 25Dblb for "+cmd);
+		}
+	}
+    }
+
+    function handleJSON ( event ) {
+        var data = JSON.parse(event.data);
+	if ( data == undefined ) {
+		addtodocument("Bad JSON data="+event.data);
+	} else if ( data.messages != undefined ) {
+		// JSON that has a "messages" key is an OSC bundle, an array
+		// of individual OSC messages
+		for ( m in data.messages ) {
+			handleOscMessage(data.messages[m]);
+		}
+	} else if ( data.address != undefined ) {
+		// JSON that has an "address" key is a single OSC message
+		handleOscMessage(data);
+	} else {
+		addtodocument("Unrecognized JSON data="+event.data);
+	}
+    }
+    function logMessage ( msg ) {
+	addtodocument(msg);
+        console.log(msg);
+    }
+    function addtodocument ( line ) {
+        var s = "";
+        var olds = document.getElementById("msg").innerHTML.split("\n");
+        for(var i=olds.length-20; i<olds.length; i++) {
+           	if(i>=0) s += olds[i] + "\n";  
+        }
+        s += "<br>" + line;
+        document.getElementById("msg").innerHTML = s;
+    }
+    function rawappend ( event ) {
+        console.log("Hi from rawappend");
+    }
+		
+        function mymousemove(evt) {
+          var mousePos = getMousePos(canvas, evt);
+	  drawshape(mousePos.x,mousePos.y,1);
+		return;
+          var message = "XMouse move: " + mousePos.x + "," + mousePos.y;
+	  logMessage(message);
+        }
+        canvas.addEventListener('mousemove', mymousemove, false );
+
+        function mymousedown(evt) {
+          var mousePos = getMousePos(canvas, evt);
+          var message = "Mouse down: " + mousePos.x + "," + mousePos.y;
+	  logMessage(message);
+	  // logMessage("evt = "+stringifyObject(evt));
+        }
+        canvas.addEventListener('mousedown', mymousedown, false );
+
+        function mymouseup(evt) {
+          var mousePos = getMousePos(canvas, evt);
+          var message = "Mouse up: " + mousePos.x + "," + mousePos.y;
+	  logMessage(message);
+        }
+        canvas.addEventListener('mouseup', mymouseup, false );
+      };
+
+    </script>
+  </head>
+  <body>
+    <canvas id="myCanvas" width="578" height="200"></canvas>
+    <p>
+    <hr>
+	  Event Monitor
+	  <div id="wrapper">
+		  <div id="msg">
+		  </div>
+	  </div>
+  </body>
+</html>
+

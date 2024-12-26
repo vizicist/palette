@@ -1,0 +1,6 @@
+{
+    "params": {
+        "global.looping_override":"true",
+        "global.looping_fade":"0.000000"
+    }
+}
