@@ -118,6 +118,7 @@ copy palette_onboot.bat %bin% >nul
 copy palette_onboot_kinect.bat %bin% >nul
 copy delay.bat %bin% >nul
 copy cdlogs.bat %bin% >nul
+copy cddata.bat %bin% >nul
 copy tv_on.bat %bin% >nul
 copy tv_off.bat %bin% >nul
 popd
