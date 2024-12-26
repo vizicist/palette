@@ -87,11 +87,11 @@
             "args": []
         },
         {
-            "name": "palette nats test",
+            "name": "palette nats.test",
             "type": "go",
             "request": "launch",
             "program": "${env:PALETTE_SOURCE}/cmd/palette/palette.go",
-            "args": ["nats","{\"api\":\"global.status\"}"]
+            "args": ["nats.test"]
         },
         {
             "name": "palette logs archive",

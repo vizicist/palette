@@ -43,7 +43,7 @@ func main() {
 		}
 	}()
 
-	kit.InitMisc()
+	kit.InitKit()
 	kit.InitEngine()
 
 	kit.StartEngine()
