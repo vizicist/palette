@@ -1,0 +1,11 @@
+{
+    "params":{
+        "sound.controllerstyle":"modulationonly",
+        "sound.pitchmax":"80",
+        "sound.pitchmin":"33",
+        "sound.synth":"P_05_C_01",
+        "sound.xcontroller":"3",
+        "sound.ycontroller":"2",
+        "sound.zcontroller":"1"
+    }
+}

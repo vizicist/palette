@@ -1,0 +1,121 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html dir="ltr">
+    
+<head>
+<meta name="viewport"
+  content="width=device-width,
+  minimum-scale=1.0, maximum-scale=1.0" />
+<style type="text/css">
+	body, html { font-family:helvetica,arial,sans-serif; font-size:90%; }
+</style>
+<style type="text/css">
+    html, body { width: 100%; margin: 0; }
+    button.incdec { width: 100%; }
+    text.spacer { width: 30%; }
+    td.valuelabel { width: 15%; text-align: center}
+    td.valuevalue { width: 15%; text-align: center}
+    td.bigbutton { height: 25px; width: 100px; text-align: center}
+</style>
+
+<script src="dojo/dojo.js" djConfig="parseOnLoad: true"> </script>
+<script type="text/javascript">
+
+function format_error(meth,err) {
+	var estr = "" + err;
+	if ( estr.match(/xmlhttprequest exception 101/i) ) {
+		return "Unable to connect to MMTT - is it running?";
+	} else {
+		return "Method: "+meth+"  Error:" + err;
+	}
+}
+
+function doaction(meth,params) {
+	params = (typeof params === "undefined") ? "{ }" : params;
+
+	// The value of params should include the curly braces
+	var id = "12345";
+	var url = "/dojo.txt";
+
+	var def = dojo.xhrPost( {
+		url: url,
+		handleAs: "json",
+		sync: true,
+		postData: "{ \"jsonrpc\": \"2.0\", \"method\": \""+meth+"\", \"params\": "+params+", \"id\":\""+id+"\" }\n"
+	});
+
+	var place = dojo.byId("status");
+	place.innerHTML = "Sending meth="+meth
+
+	def.then( function(r) {
+		if ( r == null ) {
+			place.innerHTML = ("Method: "+meth+"  Error! r is null");
+		} else if ( r.error ) {
+			place.innerHTML = ("Method: "+meth+"  Error! id:" + r.id + " msg="+r.error.message);
+		} else {
+			place.innerHTML = ("Status: OK");
+		}
+		},
+		function(err) {
+			place.innerHTML = format_error(meth,err);
+	});
+
+}
+
+var ButtonNames = [
+	["Oozing<br>Color", "UL1"],
+	["Faded<br>Swirls", "UL2"],
+	["Organic<br>Outlines", "UL3"],
+	["Ribbon<br>Dance", "LL1"],
+	["Mirrored<br>Waves", "LL2"],
+	["Sacred<br>Circles", "LL3"],
+	["Smooth<br>Moves", "UR1"],
+	["Dancing<br>Lines", "UR2"],
+	["Rippled<br>Shadows", "UR3"],
+	["Fuzzy<br>Logic", "LR1"],
+	["Perky<br>Shapes", "LR2"],
+	["Time<br>Ripples", "LR3"]
+	];
+
+function do_button(name) {
+	doaction('button','{ "name" : "'+name+'" }');
+}
+function setup() {
+	var buttons = dojo.byId("buttons");
+	buttons.innerHTML = "";
+	var cnt = 0;
+	for ( n in ButtonNames ) {
+		if ( cnt >= 3 ) {
+			cnt = 0;
+			buttons.innerHTML += "<p>";
+		}
+		cnt++;
+		var nm = ButtonNames[n][0];
+		var tag = ButtonNames[n][1];
+		var b = "<button style=\"width:30%;height:30%\" onClick=\"do_button('"+tag+"');\"><br><font size=+4>"+nm+"</font><br>&nbsp;</button>&nbsp;&nbsp;&nbsp;&nbsp;";
+		buttons.innerHTML += b;
+	}
+}
+
+dojo.addOnLoad(setup);
+
+</script>
+</head>
+    
+<body class="claro">
+
+<center>
+<h1>Palette Selection</h1>
+<p>
+<div id="buttons"></div>
+<p>
+<div id="status">&nbsp;</div>
+</center>
+<p>
+<center>
+<a href=/index.html>Go to main menu page</a>
+</center>
+	
+</body>
+
+</html>
+
