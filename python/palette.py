@@ -113,7 +113,7 @@ def PaletteDataPath():
     if FullDataPath != "":
         return FullDataPath
 
-    palette_data = os.environ.get("PALETTE_DATA","omnisphere")
+    palette_data = os.environ.get("PALETTE_DATA","default")
     datadir = "data_" + palette_data
 
 	# If PALETTE_SOURCE is defined, datapath is relative to that

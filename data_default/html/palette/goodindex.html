@@ -1,0 +1,668 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html dir="ltr">
+    
+<head>
+<meta name="viewport"
+  content="width=device-width,
+  minimum-scale=1.0, maximum-scale=1.0" />
+<style type="text/css">
+	body, html { font-family:helvetica,arial,sans-serif; font-size:90%; }
+</style>
+<style type="text/css">
+    html, body { width: 100%; margin: 0; }
+    button.incdec { font-size: 75%; width: 100%; }
+    button.unset { width: 100%; }
+    text.spacer { width: 30%; }
+    td.stringspacer { width: 20%; text-align: center}
+    td.togglespacer { width: 20%; text-align: center}
+    td.stringvaluelabel { width: 15%; text-align: center}
+    td.valuelabel { width: 15%; text-align: center}
+    td.valuevalue { width: 15%; text-align: center}
+    td.buttontrio { width: 10%; text-align: center}
+
+    td.tinyspacer { width: 5%; text-align: center}
+    td.tinybutton { width: 2%; text-align: center}
+</style>
+
+<script src="dojo/dojo.js" djConfig="parseOnLoad: true"> </script>
+<script type="text/javascript">
+
+var ParamTypes = [
+	"all",
+	"graphic",
+	"music"
+];
+
+var GlobalGraphicValNames = [
+	["Fade All","fading","toggle"],
+	["Fade All Amount","fade","number"],
+	["Luminance","luminance","number"],
+	["Saturation","saturation","number"],
+	["Z exponential","zexponential","number"],
+	["Z multiply","zmultiply","number"],
+	["Clear Background","clearbg","toggle"],
+	["Show FPS","showfps","toggle"],
+	["Min Button Area","minbuttonarea","number"],
+	["Depth of 2d","depth2d","number"],
+	["Area of 2d","area2d","number"],
+	["Changeable","changeable","toggle"]
+];
+
+var GlobalMusicValNames = [
+	["Scale","musicscale","string"],
+	["Minimum Movement","minmove","number"],
+	["SoundSet","soundset","number"]
+];
+
+var RegionGraphicValNames = [
+	["Shape","shape","string"],
+	["Graphic Behaviour","graphicbehaviour","string"],
+	["Sprite Limit","nsprites","number"],
+	["Hue","hue","number"],
+	["Aspect","aspect","number"],
+	["Hue Fill","huefill","number"],
+	["Cycle Hue","cyclehue","number"],
+	["Cycle Initial Hue","cycleinitialhue","number"],
+	["Initial Size","sizeinitial","number"],
+	["Final Size","sizefinal","number"],
+	["Size Time","sizetime","number"],
+	["Initial Alpha","alphainitial","number"],
+	["Final Alpha","alphafinal","number"],
+	["Alpha Time","alphatime","number"],
+	["Thickness","thickness","number"],
+	["Lifetime","lifetime","number"],
+	["Speed","speed","number"],
+	["Initial Angle","rotanginit","number"],
+	["Noise Vertex","noisevertex","number"],
+	["Rotation Speed","rotangspeed","number"],
+	["Mirror","mirror","string"],
+	["Move Direction","movedir","string"],
+	["Rotation Dir","rotangdir","string"],
+	["Rotation Auto","rotauto","toggle"],
+	["Bounce","bounce","toggle"],
+	["Filled","filled","toggle"]
+];
+
+var RegionMusicValNames = [
+	["Sound","sound","string"],
+	["Music Behaviour","musicbehaviour","string"],
+	["Controller Style","controllerstyle","string"],
+	["Controller Chan","controllerchan","number"],
+	["X Controller","xcontroller","number"],
+	["Y Controller","ycontroller","number"],
+	["Z Controller","zcontroller","number"],
+	["Pitch Min","pitchmin","number"],
+	["Pitch Max","pitchmax","number"],
+	["Arpeggio","arpeggio","toggle"],
+	["Quantize Timing","doquantize","toggle"],
+	["Timefret 1 Y","timefret1y","number"],
+	["Timefret 2 Y","timefret2y","number"],
+	["Timefret 3 Y","timefret3y","number"],
+	["Timefret 4 Y","timefret4y","number"],
+	["Timefret 1 Q","timefret1q","number"],
+	["Timefret 2 Q","timefret2q","number"],
+	["Timefret 3 Q","timefret3q","number"],
+	["Timefret 4 Q","timefret4q","number"]
+];
+
+var NumRegions = 4;
+
+function is_toggle(nm) {
+	if ( is_type("toggle",nm,GlobalGraphicValNames)
+			|| is_type("toggle",nm,GlobalMusicValNames)
+			|| is_type("toggle",nm,RegionMusicValNames)
+			|| is_type("toggle",nm,RegionGraphicValNames) ) {
+		return true;
+	} else {
+		return false;
+	}
+}
+
+function is_string(nm) {
+	if ( is_type("string",nm,GlobalGraphicValNames)
+			|| is_type("string",nm,GlobalMusicValNames)
+			|| is_type("string",nm,RegionMusicValNames)
+			|| is_type("string",nm,RegionGraphicValNames) ) {
+		return true;
+	} else {
+		return false;
+	}
+}
+
+function is_type(type,nm,names) {
+	for ( n in names ) {
+		a = names[n]
+		if ( nm == a[1] ) {
+			if ( a[2] == type )
+				return(true);
+			else
+				return(false);
+		}
+	}
+	return(false);
+}
+
+// function is_threshold(nm) {
+// 	for ( n in GlobalGraphicValNames ) {
+// 		a = GlobalGraphicValNames[n]
+// 		if ( nm == a[1] ) {
+// 			if ( a[0].match(/^thresh/i) )
+// 				return true;
+// 			else
+// 				return(false);
+// 		}
+// 	}
+// }
+
+function format_value(varname,r) {
+	var s = r.result;
+	if ( is_toggle(varname) ) {
+		if ( s == "0" || s == 0 ) {
+			s = "off";
+		} else if ( s == "1" || s == 1 ) {
+			s = "on";
+		} else if ( s == "-999" || s == -999 ) {
+			s = "UNSET";
+		} else {
+			alert("Unexpected value for toggle, varname="+varname+" r.result="+r.result);
+			s = "off";
+		}
+	} else if ( is_string(varname) ) {
+		// do nothing, use raw result/string
+	// } else if ( is_threshold(varname) ) {
+		// IS THIS USED??
+		// s = s * 3.0;
+		// s = s.toPrecision(5);
+	} else {
+		if ( s == "-999" || s == -999 ) {
+			s = "UNSET";
+		} else {
+			s = s.toPrecision(5);
+		}
+	}
+	return s;
+}
+
+function format_error(meth,err) {
+	var estr = "" + err;
+	if ( estr.match(/xmlhttprequest exception 101/i) ) {
+		return "Unable to connect to Manifold - is it running?";
+	} else {
+		return "Method: "+meth+"  Error:" + err;
+	}
+}
+
+function get_and_update_region_value(regionnum,varname) {
+	// The value of params should include the curly braces
+	var id = "12345";
+	var url = "/dojo.txt";
+	var meth = "get";
+	// alert("get_and_update_region_value regionnum="+regionnum+" varname="+varname);
+
+	if ( regionnum == -1 ) {
+		var valueid = "value_"+varname;
+	} else {
+		var valueid = "regionvalue_"+varname;
+	}
+
+	// alert("update_region_value regionnum="+regionnum+" varname="+varname);
+	var params = "{ \"name\": \"" + varname + "\", \"region\": " + regionnum + " }";
+
+	var def = dojo.xhrPost( {
+		url: url,
+		handleAs: "json",
+		postData: "{ \"jsonrpc\": \"2.0\", \"method\": \""+meth+"\", \"params\": "+params+", \"id\":\""+id+"\" }\n"
+	});
+
+	var place = dojo.byId("status");
+	// place.innerHTML = "Sending meth="+meth;
+
+	def.then( function(r) {
+		if ( r == null ) {
+			place.innerHTML = ("Method: "+meth+"  Error! r is null");
+		} else if ( r.error ) {
+			place.innerHTML = ("Method: "+meth+"  Error! id:" + r.id + " msg="+r.error.message);
+		} else {
+			place.innerHTML = ("Status: OK");
+			var vid = dojo.byId(valueid);
+			if ( vid == null ) {
+				alert("Can't find valueid: "+valueid);
+			} else {
+				// alert("update regionval varname="+varname+" r="+r.result);
+				vid.innerHTML = format_value(varname,r);
+			}
+		}
+		},
+		function(err) {
+			place.innerHTML = format_error(meth,err);
+	});
+
+}
+
+function decr(name,valueid,regionnum,amount) {
+	if ( regionnum == 0 ) {
+		regionnum = current_regionnum();
+	}
+	adjust_value(name,"decrement","{\"name\": \""+name+"\", \"region\": "+regionnum+", \"amount\": "+amount+"}",valueid);
+}
+function incr(name,valueid,regionnum,amount) {
+	if ( regionnum == 0 ) {
+		regionnum = current_regionnum();
+	}
+	adjust_value(name,"increment","{\"name\": \""+name+"\", \"region\": "+regionnum+", \"amount\": "+amount+"}",valueid);
+}
+
+function dounset(name,valueid) {
+	var regionnum = current_regionnum();
+	if ( regionnum != -2 ) {
+		alert("dounset only works for REGION = ALL");
+		return;
+	}
+	adjust_value(name,"set","{\"name\": \""+name+"\", \"region\": "+regionnum+", \"value\": \"UNSET\" }",valueid);
+}
+
+function togg(name,valueid,regionnum,amount) {
+	if ( regionnum == 0 ) {
+		regionnum = current_regionnum();
+	}
+	adjust_value(name,"toggle","{\"name\": \""+name+"\", \"region\": "+regionnum+" }",valueid);
+}
+
+function doaction(meth) {
+	params = "{ }";
+
+	// The value of params should include the curly braces
+	var id = "12345";
+	var url = "/dojo.txt";
+
+	var def = dojo.xhrPost( {
+		url: url,
+		handleAs: "json",
+		sync: true,
+		postData: "{ \"jsonrpc\": \"2.0\", \"method\": \""+meth+"\", \"params\": "+params+", \"id\":\""+id+"\" }\n"
+	});
+
+	var place = dojo.byId("status");
+	// place.innerHTML = "Sending meth="+meth
+
+	def.then( function(r) {
+		if ( r == null ) {
+			place.innerHTML = ("Method: "+meth+"  Error! r is null");
+		} else if ( r.error ) {
+			place.innerHTML = ("Method: "+meth+"  Error! id:" + r.id + " msg="+r.error.message);
+		} else {
+			place.innerHTML = ("Status: OK");
+		}
+		},
+		function(err) {
+			place.innerHTML = format_error(meth,err);
+	});
+
+}
+
+function current_regionnum() {
+	var place = dojo.byId("select_regionnum");
+	return place.value;
+}
+
+function doregionselect() {
+	update_region_values(current_regionnum());
+}
+
+function doconfig(type,paramtype) {
+
+	var regionnum = -1;
+	var configplace = dojo.byId("text_config_"+paramtype);
+
+	var configname = configplace.value;
+
+	// type is "load", "overwrite", "savenew", "next", "prev", or "rand"
+	// If regionnum is -1, it's global config
+	meth = "config_"+type
+	params = "{ \"name\": \""+configname+"\", \"region\": "+regionnum+", \"paramtype\": \""+paramtype+"\" }";
+
+	// The value of params should include the curly braces
+
+	var id = "12345";
+	var url = "/dojo.txt";
+
+	var def = dojo.xhrPost( {
+		url: url,
+		handleAs: "json",
+		postData: "{ \"jsonrpc\": \"2.0\", \"method\": \""+meth+"\", \"params\": "+params+", \"id\":\""+id+"\" }\n"
+	});
+
+	var place = dojo.byId("status");
+	// place.innerHTML = "Sending meth="+meth;
+
+	def.then( function(r) {
+		if ( r == null ) {
+			place.innerHTML = ("Method: "+meth+"  Error! r is null");
+		} else if ( r.error ) {
+			place.innerHTML = ("Method: "+meth+"  Error! id:" + r.id + " msg="+r.error.message);
+		} else {
+			// place.innerHTML = ("Result: "+r.result);
+			configplace.value = r.result;
+			update_region_values(regionnum);
+			if ( regionnum == -1 ) {
+				update_region_values(current_regionnum());
+			}
+		}
+		},
+		function(err) {
+			place.innerHTML = format_error(meth,err);
+	});
+	return;
+
+}
+
+function adjust_value(varname,meth,params,valueid) {
+
+	// The value of params should include the curly braces
+	var id = "12345";
+	var url = "/dojo.txt";
+	var valplace = dojo.byId(valueid);
+	if ( valplace == null ) {
+		alert("Unable to find id: "+valueid);
+		return;
+	}
+	var place = dojo.byId("status");
+
+	if ( params == "" ) {
+		params = "{ }";
+	}
+
+	var def = dojo.xhrPost( {
+		url: url,
+		handleAs: "json",
+		postData: "{ \"jsonrpc\": \"2.0\", \"method\": \""+meth+"\", \"params\": "+params+", \"id\":\""+id+"\" }\n"
+	});
+
+	// place.innerHTML = "Sending meth="+meth;
+
+	def.then( function(r) {
+		if ( r == null ) {
+			place.innerHTML = ("Method: "+meth+"  Error! r is null");
+		} else if ( r.error ) {
+			place.innerHTML = ("Method: "+meth+"  Error! id:" + r.id + " msg="+r.error.message);
+		} else {
+			place.innerHTML = ("Status: OK");
+			valplace.innerHTML = format_value(varname,r);
+		}
+		},
+		function(err) {
+			place.innerHTML = format_error(meth,err);
+			}
+		);
+
+}
+
+function one_button(nm,valueid,regionnum,label,incdectype,incdecval) {
+	return "<td class=buttontrio valign=center>"
+		+"<button class=incdec name='"+incdectype+"_"+nm+"' onClick='"+incdectype+"(&quot;"+nm+"&quot;,&quot;"+valueid+"&quot;,"+regionnum+","+incdecval+");'>"+label+"</button>"
+		+"</td>";
+}
+
+function one_toggle(nm,valueid,regionnum,label,unsettable) {
+	return "<td class=buttontrio valign=center>"
+		+"<button class=incdec name='toggle_"+nm+"' onClick='togg(&quot;"+nm+"&quot,&quot;"+valueid+"&quot;,"+regionnum+");'>"+label+"</button>"
+		+"</td>";
+}
+
+function one_unset_button(unsettable,nm,valueid) {
+	if ( unsettable ) {
+		var s = "<td class=tinybutton valign=center>"
+			+"<span id='unset_"+nm+"' >"
+			+unset_button(nm)
+			+"</span></td>";
+		return s;
+	} else {
+		return "<td class=tinybutton>&nbsp;</td>";
+	}
+
+	// old code:
+	// +"<button class=unset name='unset_"+nm+"' onClick='dounset(&quot;"+nm+"&quot;,&quot;"+valueid+"&quot;);'>UNSET</button>"
+
+}
+
+
+function one_spacer() {
+	return "<td class=buttontrio></td>";
+}
+function one_tinyspacer() {
+	return "<td class=tinyspacer></td>";
+}
+
+function make_string_ui(divid,valueid,regionnum,label,nm,unsettable) {
+        var x = dojo.byId(divid);
+	if ( x == null ) {
+		alert("make_value_ui, no divid: "+divid);
+		return;
+	}
+	// alert("make_string_ui, valueid="+valueid);
+	x.innerHTML = "<table width=100%><tr><td class=stringspacer></td>"
+	+one_button(nm,valueid,regionnum,"-","decr",1)
+	+"<td class=stringvaluelabel>"+label+"</td>"
+	+"<td class=valuevalue><span id='"+valueid+"' /></span></td>"
+	+one_button(nm,valueid,regionnum,"+","incr",1)
+	+one_tinyspacer()
+	+one_unset_button(unsettable,nm,valueid)
+	+"<td class=stringspacer></td>"
+	+"</tr></table>"
+		;
+}
+
+function make_value_ui(divid,valueid,regionnum,label,nm,unsettable) {
+        var x = dojo.byId(divid);
+	if ( x == null ) {
+		alert("make_value_ui, no divid: "+divid);
+		return;
+	}
+	// alert("make_value_ui, valueid="+valueid);
+	x.innerHTML = "<table width=100%><tr><td></td>"
+	+one_button(nm,valueid,regionnum,"---","decr",0.1)
+	+one_button(nm,valueid,regionnum,"--","decr",0.01)
+	+one_button(nm,valueid,regionnum,"-","decr",0.001)
+	+"<td class=valuelabel align=center>"
+	+"<table border=1 width=100%><tr>"
+	+"<td>"+label+"<br><span id='"+valueid+"' /></span></td>"
+	+"</tr></table>"
+	+"</td>"
+	+one_button(nm,valueid,regionnum,"+","incr",0.001)
+	+one_button(nm,valueid,regionnum,"++","incr",0.01)
+	+one_button(nm,valueid,regionnum,"+++","incr",0.1)
+	+one_unset_button(unsettable,nm,valueid)
+	+"<td></td>"
+	+"</tr></table>"
+		;
+}
+
+function make_toggle_ui(divid,valueid,regionnum,label,nm,unsettable) {
+        var x = dojo.byId(divid);
+	if ( x == null ) {
+		alert("make_toggle_ui, no divid: "+divid);
+		return;
+	}
+	x.innerHTML = "<table width=100%><tr><td class=togglespacer></td>"
+	+"<td class=buttontrio></td>"
+	+"<td class=valuelabel>"+label+"</td>"
+	+"<td class=valuevalue><span class=value id='"+valueid+"' /></span></td>"
+	+one_toggle(nm,valueid,regionnum,"Toggle","togg")
+	+one_tinyspacer()
+	+one_unset_button(unsettable,nm,valueid)
+	+"<td class=togglespacer></td>"
+	+"</tr></table>"
+		;
+}
+
+function update_values_named(regionnum,vals) {
+	for ( n in vals ) {
+		a = vals[n]
+		var name = a[1]; 
+		get_and_update_region_value(regionnum,name);
+	}
+}
+
+function update_region_values(regionnum) {
+	// regionnum -1 is for global values
+	// regionnum -2 is for region override values
+	if ( regionnum == -1 ) {
+		update_values_named(regionnum,GlobalGraphicValNames);
+		update_values_named(regionnum,GlobalMusicValNames);
+		// Are these calls really needed?
+		adjust_unset_visibility(true,RegionGraphicValNames);
+		adjust_unset_visibility(true,RegionMusicValNames);
+	} else {
+		update_values_named(regionnum,RegionGraphicValNames);
+		update_values_named(regionnum,RegionMusicValNames);
+		adjust_unset_visibility(true,RegionGraphicValNames);
+		adjust_unset_visibility(true,RegionMusicValNames);
+	}
+}
+
+function unset_button(nm) {
+	var valueid = "regionvalue_"+nm;
+	return "<button class=unset name='unset_"+nm+"' onClick='dounset(&quot;"+nm+"&quot;,&quot;"+valueid+"&quot;);'>UNSET</button>";
+}
+
+function adjust_unset_visibility(vis,vals) {
+	for ( n in vals ) {
+		a = vals[n]
+		var nm = a[1]; 
+		var x = dojo.byId("unset_"+nm);
+		if ( vis ) {
+			x.innerHTML = unset_button(nm);
+		} else {
+			x.innerHTML = "";
+		}
+	}
+}
+
+function make_one_ui(valtype,divid,valueid,regionnum,label,name,unsettable) {
+	if ( valtype == "number" ) {
+		make_value_ui(divid,valueid,regionnum,label,name,unsettable);
+	} else if ( valtype == "toggle" ) {
+		make_toggle_ui(divid,valueid,regionnum,label,name,unsettable);
+	} else if ( valtype == "string" ) {
+		make_string_ui(divid,valueid,regionnum,label,name,unsettable);
+	} else {
+		alert("Unknown val type: "+valtype);
+	}
+}
+
+function setup() {
+	var config = dojo.byId("config");
+	var html = "<table>";
+	for ( n in ParamTypes ) {
+	    var paramtype = ParamTypes[n];
+	    html += "<tr><td width=10%><b>"+paramtype+"</b></td>"
+		    +"<td><input type=\"button\" value=\"Rand Config\" onClick=\"doconfig('rand','"+paramtype+"');\"></td>"
+		    +"<td><input type=\"button\" value=\"Prev Config\" onClick=\"doconfig('prev','"+paramtype+"');\"></td>"
+		    +"<td><input type=\"button\" value=\"Next Config\" onClick=\"doconfig('next','"+paramtype+"');\"></td>"
+		    +"<td><input type=\"text\" id=\"text_config_"+paramtype+"\" name=\"text_config_"+paramtype+"\" value=\"default.plt\"></td>"
+		    +"<td><input type=\"button\" value=\"Load Config\" onClick=\"doconfig('load','"+paramtype+"');\"></td>"
+		    +"<td><input type=\"button\" value=\"Save New Config\" onClick=\"doconfig('savenew','"+paramtype+"');\"></td>"
+		    +"<td><input type=\"button\" value=\"Overwrite Config\" onClick=\"doconfig('overwrite','"+paramtype+"');\"></td>"
+		+"</tr>";
+	}
+	html += "</table>";
+	config.innerHTML += html;
+
+	var values = dojo.byId("values");
+
+	values.innerHTML += "<p><hr><center><h3>GLOBAL Graphic Parameters</h3>";
+
+	for ( n in GlobalGraphicValNames ) {
+		a = GlobalGraphicValNames[n];
+		var name = a[1]; 
+		var divid = "val_"+name;
+		var valueid = "value_"+name;
+		values.innerHTML += ("<div id='"+divid+"'></div>");
+		make_one_ui(a[2],divid,valueid,-1,a[0],a[1],false);
+	}
+	values.innerHTML += "<p><hr><center><h3>GLOBAL Music Parameters</h3>";
+	for ( n in GlobalMusicValNames ) {
+		a = GlobalMusicValNames[n];
+		var name = a[1]; 
+		var divid = "val_"+name;
+		var valueid = "value_"+name;
+		values.innerHTML += ("<div id='"+divid+"'></div>");
+		make_one_ui(a[2],divid,valueid,-1,a[0],a[1],false);
+	}
+
+	var regionnum = 0;
+
+	var astr = "<select name=\"select_regionnum\" id=\"select_regionnum\" onChange=\"doregionselect();\">";
+	astr += "<option value=\"-2\">All</option>";
+	for ( var an=0; an <= NumRegions; an++ ) {
+		astr += "<option value=\""+an+"\">"+an+"</option>";
+	}
+	astr += "</select>";
+	values.innerHTML += "<p><hr><center><h2>REGION Select: &nbsp;&nbsp;"+astr+"</h2>";
+	values.innerHTML += "<h3><center>REGION Graphic Parameters</h3>";
+	for ( n in RegionGraphicValNames ) {
+		a = RegionGraphicValNames[n];
+		var name = a[1]; 
+		var divid = "regionval_"+name;
+		var valueid = "regionvalue_"+name;
+		values.innerHTML += ("<div id='"+divid+"'></div>");
+		make_one_ui(a[2],divid,valueid,regionnum,a[0],a[1],true);
+	}
+	values.innerHTML += "<p><hr><h3><center>REGION Music Parameters</h3>";
+	for ( n in RegionMusicValNames ) {
+		a = RegionMusicValNames[n];
+		var name = a[1]; 
+		var divid = "regionval_"+name;
+		var valueid = "regionvalue_"+name;
+		values.innerHTML += ("<div id='"+divid+"'></div>");
+		make_one_ui(a[2],divid,valueid,regionnum,a[0],a[1],true);
+	}
+
+	update_region_values(-1);  // global values
+	update_region_values(current_regionnum());
+}
+
+dojo.addOnLoad(setup);
+</script>
+<link rel="stylesheet" type="text/css" href="dijit/themes/claro/claro.css" />
+</head>
+    
+<body class="claro">
+
+<center>
+<h2>Manifold Control</h2>
+<div id="status">&nbsp;</div>
+<br>
+<input type="button" name="butt_randvisual" value="Random Visual" onClick="doaction('randvisual');">
+<input type="button" name="butt_randgraphic" value="Random Graphic" onClick="doaction('randgraphic');">
+<input type="button" name="butt_tonic_change" value="Tonic Change" onClick="doaction('tonic_change');">
+<input type="button" name="butt_tonic_reset" value="Tonic Reset" onClick="doaction('tonic_reset');">
+<input type="button" name="butt_clear_all" value="Clear All" onClick="doaction('clear_all');">
+<input type="button" name="butt_ano" value="ANO" onClick="doaction('ANO');">
+<br>
+<input type="button" name="butt_looping_on" value="Looping On" onClick="doaction('looping_on');">
+<input type="button" name="butt_looping_off" value="Looping Off" onClick="doaction('looping_off');">
+<input type="button" name="tempo_slow" value="Tempo Slow" onClick="doaction('tempo_slow');">
+<input type="button" name="tempo_fast" value="Tempo Fast" onClick="doaction('tempo_fast');">
+<input type="button" name="range_full" value="Range Full" onClick="doaction('range_full');">
+<input type="button" name="range_normal" value="Range Normal" onClick="doaction('range_normal');">
+<br>
+<input type="button" name="minmove_zero" value="MinMove Zero" onClick="doaction('minmove_zero');">
+<input type="button" name="minmove_default" value="MinMove Default" onClick="doaction('minmove_default');">
+<input type="button" name="quantize_on" value="Quantize On" onClick="doaction('quantize_on');">
+<input type="button" name="quantize_off" value="Quantize Off" onClick="doaction('quantize_off');">
+<br>
+<div id="config">&nbsp;</div>
+<p>
+</center>
+<p>
+<div id="values"></div>
+<p>
+</center>
+</div>
+
+	
+</body>
+
+</html>
+

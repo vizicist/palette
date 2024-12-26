@@ -43,4 +43,3 @@ rm -fr Output > nul 2>&1
 :getout
 set PALETTE_VERSION=
 set PALETTE_DATA=%save_PALETTE_DATA%
-set save_PALETTE_DATA=
