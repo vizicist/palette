@@ -1,0 +1,7 @@
+{
+    "params": {
+        "global.midisetexternalscale":"false",
+        "global.midithru":"true",
+        "global.midithrusynth":"P_11_C_04"
+    }
+}

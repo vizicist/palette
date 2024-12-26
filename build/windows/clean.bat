@@ -16,7 +16,7 @@ rm -fr %PALETTE_SOURCE%\depthlib\build\.vs
 rm -fr %PALETTE_SOURCE%\depthlib\build\x64
 rm -fr %PALETTE_SOURCE%\depthlib\build\*.dir
 del /s %PALETTE_SOURCE%\mmtt_kinect\build\windows\*.obj >nul 2>nul
-del /s %PALETTE_SOURCE%\data_sfmoma\logs\*.log >nul 2>nul
-del /s %PALETTE_SOURCE%\data_omnisphere\logs\*.log >nul 2>nul
+del /s %PALETTE_SOURCE%\data_default\logs\*.log >nul 2>nul
+del /s %PALETTE_SOURCE%\data_cloud\logs\*.log >nul 2>nul
 
 :getout

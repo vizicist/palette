@@ -1,0 +1,293 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<EreaLabLayout name="palette_layout16">
+  <VersionEraeLab prefix="86" major="1" minor="0" patch="2" commit="4f610031"/>
+  <Revisions>
+    <LayoutTag revision="1" tagName="" date="2021-09-20T14:20:02.901-07:00">
+      <Layout uniqueID="15" mainMidiFX="0" altMidiFX="0">
+        <MainLayout>
+          <GridElement>
+            <Style>
+              <IntensityChange value="-1" time="255"/>
+              <StyleAttributes type="255">
+                <DisabledProperties/>
+              </StyleAttributes>
+            </Style>
+            <Animations>
+              <AnimationClick>
+                <AnimationEvent shape="7" coloring="1" color="16777215" speed="3"/>
+              </AnimationClick>
+              <AnimationSlide>
+                <AnimationEvent shape="7" coloring="1" color="16777215" speed="3"/>
+              </AnimationSlide>
+              <AnimationRelease>
+                <AnimationEvent shape="7" coloring="1" color="16777215" speed="3"/>
+              </AnimationRelease>
+            </Animations>
+            <Geometry xPos="0" yPos="0" width="42" height="24" priority="0" orientation="3"/>
+            <GridElementAttribute type="200">
+              <APIZoneAttributes zoneIndex="1" maxNumFingers="10" fingerDataRate="255"/>
+            </GridElementAttribute>
+          </GridElement>
+        </MainLayout>
+        <AltLayout>
+          <GridElement>
+            <Style>
+              <IntensityChange value="63" time="5"/>
+              <StyleAttributes type="0">
+                <SolidColorProperties color="8355711"/>
+              </StyleAttributes>
+            </Style>
+            <Animations>
+              <AnimationClick>
+                <AnimationEvent shape="7" coloring="1" color="16777215" speed="3"/>
+              </AnimationClick>
+              <AnimationSlide>
+                <AnimationEvent shape="7" coloring="1" color="16777215" speed="3"/>
+              </AnimationSlide>
+              <AnimationRelease>
+                <AnimationEvent shape="7" coloring="1" color="16777215" speed="3"/>
+              </AnimationRelease>
+            </Animations>
+            <Geometry xPos="1" yPos="0" width="19" height="1" priority="0" orientation="3"/>
+            <GridElementAttribute type="12">
+              <ButtonProgramChangeAttributes midiChannel="15" midiGroup="0" latched="0" bankMSB_A_disabled="1"
+                                             bankMSB_A="0" bankLSB_A_disabled="1" bankLSB_A="0" program_A_disabled="1"
+                                             program_A="0" bankMSB_B_disabled="1" bankMSB_B="0" bankLSB_B_disabled="1"
+                                             bankLSB_B="0" program_B_disabled="1" program_B="0"/>
+            </GridElementAttribute>
+          </GridElement>
+          <GridElement>
+            <Style>
+              <IntensityChange value="63" time="5"/>
+              <StyleAttributes type="0">
+                <SolidColorProperties color="8355711"/>
+              </StyleAttributes>
+            </Style>
+            <Animations>
+              <AnimationClick>
+                <AnimationEvent shape="7" coloring="1" color="16777215" speed="3"/>
+              </AnimationClick>
+              <AnimationSlide>
+                <AnimationEvent shape="7" coloring="1" color="16777215" speed="3"/>
+              </AnimationSlide>
+              <AnimationRelease>
+                <AnimationEvent shape="7" coloring="1" color="16777215" speed="3"/>
+              </AnimationRelease>
+            </Animations>
+            <Geometry xPos="20" yPos="0" width="1" height="23" priority="0" orientation="3"/>
+            <GridElementAttribute type="12">
+              <ButtonProgramChangeAttributes midiChannel="15" midiGroup="0" latched="0" bankMSB_A_disabled="1"
+                                             bankMSB_A="0" bankLSB_A_disabled="1" bankLSB_A="0" program_A_disabled="1"
+                                             program_A="0" bankMSB_B_disabled="1" bankMSB_B="0" bankLSB_B_disabled="1"
+                                             bankLSB_B="0" program_B_disabled="1" program_B="0"/>
+            </GridElementAttribute>
+          </GridElement>
+          <GridElement>
+            <Style>
+              <IntensityChange value="63" time="5"/>
+              <StyleAttributes type="0">
+                <SolidColorProperties color="8355711"/>
+              </StyleAttributes>
+            </Style>
+            <Animations>
+              <AnimationClick>
+                <AnimationEvent shape="7" coloring="1" color="16777215" speed="3"/>
+              </AnimationClick>
+              <AnimationSlide>
+                <AnimationEvent shape="7" coloring="1" color="16777215" speed="3"/>
+              </AnimationSlide>
+              <AnimationRelease>
+                <AnimationEvent shape="7" coloring="1" color="16777215" speed="3"/>
+              </AnimationRelease>
+            </Animations>
+            <Geometry xPos="2" yPos="23" width="19" height="1" priority="0" orientation="3"/>
+            <GridElementAttribute type="12">
+              <ButtonProgramChangeAttributes midiChannel="15" midiGroup="0" latched="0" bankMSB_A_disabled="1"
+                                             bankMSB_A="0" bankLSB_A_disabled="1" bankLSB_A="0" program_A_disabled="1"
+                                             program_A="0" bankMSB_B_disabled="1" bankMSB_B="0" bankLSB_B_disabled="1"
+                                             bankLSB_B="0" program_B_disabled="1" program_B="0"/>
+            </GridElementAttribute>
+          </GridElement>
+          <GridElement>
+            <Style>
+              <IntensityChange value="63" time="5"/>
+              <StyleAttributes type="0">
+                <SolidColorProperties color="8355711"/>
+              </StyleAttributes>
+            </Style>
+            <Animations>
+              <AnimationClick>
+                <AnimationEvent shape="7" coloring="1" color="16777215" speed="3"/>
+              </AnimationClick>
+              <AnimationSlide>
+                <AnimationEvent shape="7" coloring="1" color="16777215" speed="3"/>
+              </AnimationSlide>
+              <AnimationRelease>
+                <AnimationEvent shape="7" coloring="1" color="16777215" speed="3"/>
+              </AnimationRelease>
+            </Animations>
+            <Geometry xPos="1" yPos="1" width="1" height="23" priority="0" orientation="3"/>
+            <GridElementAttribute type="12">
+              <ButtonProgramChangeAttributes midiChannel="15" midiGroup="0" latched="0" bankMSB_A_disabled="1"
+                                             bankMSB_A="0" bankLSB_A_disabled="1" bankLSB_A="0" program_A_disabled="1"
+                                             program_A="0" bankMSB_B_disabled="1" bankMSB_B="0" bankLSB_B_disabled="1"
+                                             bankLSB_B="0" program_B_disabled="1" program_B="0"/>
+            </GridElementAttribute>
+          </GridElement>
+          <GridElement>
+            <Style>
+              <IntensityChange value="-1" time="255"/>
+              <StyleAttributes type="255">
+                <DisabledProperties/>
+              </StyleAttributes>
+            </Style>
+            <Animations>
+              <AnimationClick>
+                <AnimationEvent shape="7" coloring="1" color="16777215" speed="3"/>
+              </AnimationClick>
+              <AnimationSlide>
+                <AnimationEvent shape="7" coloring="1" color="16777215" speed="3"/>
+              </AnimationSlide>
+              <AnimationRelease>
+                <AnimationEvent shape="7" coloring="1" color="16777215" speed="3"/>
+              </AnimationRelease>
+            </Animations>
+            <Geometry xPos="2" yPos="1" width="18" height="22" priority="0" orientation="3"/>
+            <GridElementAttribute type="200">
+              <APIZoneAttributes zoneIndex="2" maxNumFingers="10" fingerDataRate="255"/>
+            </GridElementAttribute>
+          </GridElement>
+          <GridElement>
+            <Style>
+              <IntensityChange value="63" time="5"/>
+              <StyleAttributes type="0">
+                <SolidColorProperties color="8355711"/>
+              </StyleAttributes>
+            </Style>
+            <Animations>
+              <AnimationClick>
+                <AnimationEvent shape="7" coloring="1" color="16777215" speed="3"/>
+              </AnimationClick>
+              <AnimationSlide>
+                <AnimationEvent shape="7" coloring="1" color="16777215" speed="3"/>
+              </AnimationSlide>
+              <AnimationRelease>
+                <AnimationEvent shape="7" coloring="1" color="16777215" speed="3"/>
+              </AnimationRelease>
+            </Animations>
+            <Geometry xPos="22" yPos="0" width="19" height="1" priority="0" orientation="3"/>
+            <GridElementAttribute type="12">
+              <ButtonProgramChangeAttributes midiChannel="15" midiGroup="0" latched="0" bankMSB_A_disabled="1"
+                                             bankMSB_A="0" bankLSB_A_disabled="1" bankLSB_A="0" program_A_disabled="1"
+                                             program_A="0" bankMSB_B_disabled="1" bankMSB_B="0" bankLSB_B_disabled="1"
+                                             bankLSB_B="0" program_B_disabled="1" program_B="0"/>
+            </GridElementAttribute>
+          </GridElement>
+          <GridElement>
+            <Style>
+              <IntensityChange value="63" time="5"/>
+              <StyleAttributes type="0">
+                <SolidColorProperties color="8355711"/>
+              </StyleAttributes>
+            </Style>
+            <Animations>
+              <AnimationClick>
+                <AnimationEvent shape="7" coloring="1" color="16777215" speed="3"/>
+              </AnimationClick>
+              <AnimationSlide>
+                <AnimationEvent shape="7" coloring="1" color="16777215" speed="3"/>
+              </AnimationSlide>
+              <AnimationRelease>
+                <AnimationEvent shape="7" coloring="1" color="16777215" speed="3"/>
+              </AnimationRelease>
+            </Animations>
+            <Geometry xPos="41" yPos="0" width="1" height="23" priority="0" orientation="3"/>
+            <GridElementAttribute type="12">
+              <ButtonProgramChangeAttributes midiChannel="15" midiGroup="0" latched="0" bankMSB_A_disabled="1"
+                                             bankMSB_A="0" bankLSB_A_disabled="1" bankLSB_A="0" program_A_disabled="1"
+                                             program_A="0" bankMSB_B_disabled="1" bankMSB_B="0" bankLSB_B_disabled="1"
+                                             bankLSB_B="0" program_B_disabled="1" program_B="0"/>
+            </GridElementAttribute>
+          </GridElement>
+          <GridElement>
+            <Style>
+              <IntensityChange value="63" time="5"/>
+              <StyleAttributes type="0">
+                <SolidColorProperties color="8355711"/>
+              </StyleAttributes>
+            </Style>
+            <Animations>
+              <AnimationClick>
+                <AnimationEvent shape="7" coloring="1" color="16777215" speed="3"/>
+              </AnimationClick>
+              <AnimationSlide>
+                <AnimationEvent shape="7" coloring="1" color="16777215" speed="3"/>
+              </AnimationSlide>
+              <AnimationRelease>
+                <AnimationEvent shape="7" coloring="1" color="16777215" speed="3"/>
+              </AnimationRelease>
+            </Animations>
+            <Geometry xPos="23" yPos="23" width="19" height="1" priority="0" orientation="3"/>
+            <GridElementAttribute type="12">
+              <ButtonProgramChangeAttributes midiChannel="15" midiGroup="0" latched="0" bankMSB_A_disabled="1"
+                                             bankMSB_A="0" bankLSB_A_disabled="1" bankLSB_A="0" program_A_disabled="1"
+                                             program_A="0" bankMSB_B_disabled="1" bankMSB_B="0" bankLSB_B_disabled="1"
+                                             bankLSB_B="0" program_B_disabled="1" program_B="0"/>
+            </GridElementAttribute>
+          </GridElement>
+          <GridElement>
+            <Style>
+              <IntensityChange value="63" time="5"/>
+              <StyleAttributes type="0">
+                <SolidColorProperties color="8355711"/>
+              </StyleAttributes>
+            </Style>
+            <Animations>
+              <AnimationClick>
+                <AnimationEvent shape="7" coloring="1" color="16777215" speed="3"/>
+              </AnimationClick>
+              <AnimationSlide>
+                <AnimationEvent shape="7" coloring="1" color="16777215" speed="3"/>
+              </AnimationSlide>
+              <AnimationRelease>
+                <AnimationEvent shape="7" coloring="1" color="16777215" speed="3"/>
+              </AnimationRelease>
+            </Animations>
+            <Geometry xPos="22" yPos="1" width="1" height="23" priority="0" orientation="3"/>
+            <GridElementAttribute type="12">
+              <ButtonProgramChangeAttributes midiChannel="15" midiGroup="0" latched="0" bankMSB_A_disabled="1"
+                                             bankMSB_A="0" bankLSB_A_disabled="1" bankLSB_A="0" program_A_disabled="1"
+                                             program_A="0" bankMSB_B_disabled="1" bankMSB_B="0" bankLSB_B_disabled="1"
+                                             bankLSB_B="0" program_B_disabled="1" program_B="0"/>
+            </GridElementAttribute>
+          </GridElement>
+          <GridElement>
+            <Style>
+              <IntensityChange value="-1" time="255"/>
+              <StyleAttributes type="255">
+                <DisabledProperties/>
+              </StyleAttributes>
+            </Style>
+            <Animations>
+              <AnimationClick>
+                <AnimationEvent shape="7" coloring="1" color="16777215" speed="3"/>
+              </AnimationClick>
+              <AnimationSlide>
+                <AnimationEvent shape="7" coloring="1" color="16777215" speed="3"/>
+              </AnimationSlide>
+              <AnimationRelease>
+                <AnimationEvent shape="7" coloring="1" color="16777215" speed="3"/>
+              </AnimationRelease>
+            </Animations>
+            <Geometry xPos="23" yPos="1" width="18" height="22" priority="0" orientation="3"/>
+            <GridElementAttribute type="200">
+              <APIZoneAttributes zoneIndex="3" maxNumFingers="10" fingerDataRate="255"/>
+            </GridElementAttribute>
+          </GridElement>
+        </AltLayout>
+        <VersionEraeData prefix="86" major="1" minor="0" patch="3" commit="6132f8b1"/>
+      </Layout>
+    </LayoutTag>
+  </Revisions>
+</EreaLabLayout>

@@ -153,15 +153,6 @@ func GenerateEditPageForCategory(category string) *fyne.Container {
 
 	SelectList.RemoveAll()
 
-	/*
-		// items := container.NewVBox()
-		paramlist, err := kit.LoadParamsMapOfCategory(category, "_Current")
-		if err != nil {
-			SelectList.Add(widget.NewLabel("NO PARAMETERS OF THAT CATEGORY?"))
-			kit.LogError(err)
-			return nil
-		}
-	*/
 	paramlist := []string{}
 	for nm, def := range kit.ParamDefs {
 		if strings.HasPrefix(nm, category+"._") {
@@ -226,7 +217,7 @@ func ToggleContent() {
 func main() {
 
 	kit.InitLog("remote")
-	kit.InitMisc()
+	kit.InitKit()
 
 	type FileList []string
 	saved := map[string]FileList{}
