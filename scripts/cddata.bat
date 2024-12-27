@@ -1,7 +1,7 @@
 @echo off
 
 if not "%PALETTE_DATA%" == "" goto keepgoing1
-	set PALETTE_DATA=default
+	set PALETTE_DATA=omnisphere
 :keepgoing1
 
 if not "%PALETTE_SOURCE%" == "" goto usesource

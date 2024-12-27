@@ -195,11 +195,11 @@ func GetParamFloat(nm string) (float64, error) {
 }
 
 func SaveCurrentGlobalParams() (err error) {
-	return SaveGlobalParamsIn("_Current")
+	return GlobalParams.Save("global", "_Current")
 }
 
-func SaveGlobalParamsIn(filename string) (err error) {
-	return GlobalParams.Save("global", filename)
+func LoadGlobalParams() (err error) {
+	return LoadGlobalParamsFrom("_Current", false)
 }
 
 func LoadGlobalParamsFrom(filename string, activate bool) (err error) {

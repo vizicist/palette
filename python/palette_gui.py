@@ -167,7 +167,6 @@ class ProGuiApp(tk.Tk):
 
         tk.Tk.__init__(self)
 
-        # This list could be larger than the visiblepagenames list
         self.AllPageNames = {
                 "global":0,
                 "quad":0,
@@ -1649,7 +1648,7 @@ class PageEditParams(tk.Frame):
     def makeButtonArea(self):
         f = tk.Frame(self, background=ColorBg)
 
-        if self.pagename != "quad" and self.pagename != "patch" and self.pagename!="global":
+        if self.pagename != "quad" and self.pagename != "patch":
             self.initButton = ttk.Label(f, text="Init", style='RandEtcButton.TLabel')
             self.initButton.bind("<Button-1>", lambda event:self.initCallback())
             self.initButton.bind("<ButtonRelease-1>", lambda event:self.initRelease())
