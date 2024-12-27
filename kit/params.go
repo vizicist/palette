@@ -278,7 +278,7 @@ func (vals *ParamValues) Save(category string, filename string) error {
 		s += fmt.Sprintf("%s        \"%s\":\"%s\"", sep, fullName, valstring)
 		sep = ",\n"
 	}
-	s += "\n    }\n}\n"
+	s += "\n    }\n}"
 	data := []byte(s)
 	return os.WriteFile(path, data, 0644)
 }

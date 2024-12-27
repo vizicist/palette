@@ -6,6 +6,30 @@
     "configurations": [
 
        {
+            "name": "GUICOGENT",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${env:PALETTE_SOURCE}/guicogent/main.go",
+            "args": []
+        },
+       {
+            "name": "GUICOGENTDEMO",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${env:PALETTE_SOURCE}/guicogentdemo/main.go",
+            "args": []
+        },
+       {
+            "name": "GUITK",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${env:PALETTE_SOURCE}/guitk/main.go",
+            "args": []
+        },
+       {
             "name": "ENGINE - palette_engine.go",
             "type": "go",
             "request": "launch",
@@ -87,11 +111,11 @@
             "args": []
         },
         {
-            "name": "palette nats.test",
+            "name": "palette nats test",
             "type": "go",
             "request": "launch",
             "program": "${env:PALETTE_SOURCE}/cmd/palette/palette.go",
-            "args": ["nats.test"]
+            "args": ["nats","{\"api\":\"global.status\"}"]
         },
         {
             "name": "palette logs archive",

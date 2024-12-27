@@ -178,7 +178,7 @@ if __name__ == "__main__":
 
     data = os.getenv("PALETTE_DATA")
     if data == "":
-        data = "default"
+        data = "omnisphere"
     datadir = os.path.join(source,"data_"+data)
     print("Generateparams: checking source in: "+sourcedir)
     generate(datadir,force,sourcedir,ftype)

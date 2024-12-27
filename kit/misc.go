@@ -30,29 +30,12 @@ var GuiPort = 3943
 var LocalAddress = "127.0.0.1"
 var TheRand *rand.Rand
 
-func InitKit() {
+func InitMisc() {
 
 	InitParams()
 
-	// If _Boot.json doesn't exist, copy _BootDefault.json to it
-	bootpath, _ := ReadableSavedFilePath("global", "_Boot", ".json")
-	if ! FileExists(bootpath) {
-		bootdefaultpath, err := ReadableSavedFilePath("global", "_BootDefault", ".json")
-		if err != nil {
-			LogIfError(err)
-		}
-		err = copyFile(bootpath,bootdefaultpath)
-		if err != nil {
-			LogIfError(err)
-		}
-	}
-
-	// We first load the _Boot values, but don't actually execute anything that they trigger
-	err := LoadGlobalParamsFrom("_Boot", false)
-	if err != nil {
-		LogIfError(err)
-	}
-	err = SaveCurrentGlobalParams()
+	// We first load the current values, but don't actually execute anything that they trigger
+	err := LoadGlobalParams()
 	if err != nil {
 		LogIfError(err)
 	}
@@ -106,7 +89,7 @@ func PaletteDataPath() (datapath string) {
 
 	palette_data := os.Getenv("PALETTE_DATA")
 	if palette_data == "" {
-		palette_data = "default"
+		palette_data = "omnisphere"
 	}
 	datadir := "data_" + palette_data
 
@@ -689,22 +672,4 @@ func GetNameValue(apiargs map[string]string) (name string, value string, err err
 		return
 	}
 	return
-}
-
-// copyFile copies a file from src to dst.
-func copyFile(dst, src string) error {
-	source, err := os.Open(src)
-	if err != nil {
-			return err
-	}
-	defer source.Close()
-
-	destination, err := os.Create(dst)
-	if err != nil {
-			return err
-	}
-	defer destination.Close()
-
-	_, err = io.Copy(destination, source)
-	return err
 }
