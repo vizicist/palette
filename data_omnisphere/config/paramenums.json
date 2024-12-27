@@ -1,0 +1,79 @@
+{
+  "resolumepath": ["C:/Program Files/Resolume Avenue/Avenue.exe", "C:/Program Files/Resolume Arena/Arena.exe"],
+  "plugins": [ "", "quad" ],
+  "log": ["","cursor","midi","cursor,midi","cursor,midi,osc","osc","api","loop", "morph","mmtt", "quant", "transpose", "ffgl", "gesture"],
+  "pitchset": ["","stylusrmx"],
+  "guisize": ["small","medium","palette"],
+  "mmtt": ["kinect", "depthai", ""],
+	"destination": [ ".", "A", "B", "C", "D" ],
+	"logic_sound": [ "default", "midigrid" ],
+	"logic_visual": [ "default", "maze", "maze4", "maze33" ],
+	"quantstyle": [ "none", "frets", "fixed", "pressure" ],
+	"volstyle": [ "fixed", "pressure" ],
+  "shape": [ "line", "triangle", "square", "circle" ],
+  "morphtype": [ "quadrants", "corners", "A", "B", "C", "D" ],
+  "midiinput": [ "microKEY", "microKEY2 Air", "" ],
+  "movedir": [ "cursor", "left", "right", "up", "down", "random", "random90", "updown", "leftright" ],
+  "rotangdir": [ "right", "left", "random" ],
+  "mirror": [ "none", "vertical", "horizontal", "four" ],
+  "justification": [ "center", "left", "right", "top", "bottom", "topleft", "topright", "bottomleft", "bottomright" ],
+  "controllerstyle": [ "modulationonly", "allcontrollers", "pitchYZ", "nothing" ],
+  "cursorstyle": [ "downonly", "retrigger" ],
+  "placement": [ "random", "linear", "cursor", "top", "bottom", "left", "right" ],
+  "spritesource": [ "cursor", "midi", "none" ],
+  "spritestyle": [ "hue", "texture" ],
+  "midibehaviour": [
+    "scalecapture",
+    "none",
+    "sprite"
+  ],
+  "patch": [
+    "A",
+    "B",
+    "C",
+    "D"
+  ],
+  "scale": [
+    "external",
+    "newage",
+    "arabian",
+    "ionian",
+    "dorian",
+    "phrygian",
+    "lydian",
+    "mixolydian",
+    "aeolian",
+    "locrian",
+    "octaves",
+    "fifths",
+    "fourths",
+    "harminor",
+    "melminor",
+    "chromatic"
+  ],
+  "enginescale": [
+    "",
+    "external",
+    "newage",
+    "arabian",
+    "ionian",
+    "dorian",
+    "phrygian",
+    "lydian",
+    "mixolydian",
+    "aeolian",
+    "locrian",
+    "octaves",
+    "fifths",
+    "fourths",
+    "harminor",
+    "melminor",
+    "chromatic"
+  ],
+  "inputport": [
+    ""
+  ],
+  "synth": [
+    ""
+  ]
+}

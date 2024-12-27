@@ -1,0 +1,14 @@
+{
+    "params": {
+        "sound.controllerstyle":"modulationonly",
+        "sound.midifile":"jsbach",
+        "sound.pitchmax":"78",
+        "sound.pitchmin":"36",
+        "sound.synth":"P_04_C_08",
+        "sound.velocitymax":"127",
+        "sound.velocitymin":"1",
+        "sound.xcontroller":"3",
+        "sound.ycontroller":"2",
+        "sound.zcontroller":"1"
+    }
+}

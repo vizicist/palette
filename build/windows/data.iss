@@ -46,3 +46,7 @@ Source: "ship\{#DataDir}\*"; DestDir: "{#DataPath}"; Flags: comparetimestamp ign
 
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
+[Registry]
+Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; \
+    ValueType: expandsz; ValueName: "PALETTE_DATA"; ValueData: "{#Data}"; Flags: preservestringtype
+

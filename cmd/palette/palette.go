@@ -30,7 +30,7 @@ func main() {
 		kit.InitLog("palette")
 	}
 
-	kit.InitKit()
+	kit.InitMisc()
 	// kit.InitEngine()
 
 	kit.LogInfo("Palette InitLog", "args", args)
@@ -134,15 +134,15 @@ func CliCommand(args []string) (map[string]string, error) {
 				return nil, err
 			}
 			fmt.Printf("porthost = %d@%s\n", port, host)
-			client := osc.NewClient(host, port)
+			client := osc.NewClient(host,port)
 			msg := osc.NewMessage(args[3]) // addr
-			for _, val := range args[4:] { // remaining values
+			for _, val := range args[4:] {   // remaining values
 				s := fmt.Sprintf("%v", val)
 				msg.Append(s) // always append as a string
 			}
 			err = client.Send(msg)
 			if err != nil {
-				return nil, fmt.Errorf("client.Send, err=%s", err.Error())
+				return nil, fmt.Errorf("client.Send, err=%s",err.Error())
 			}
 			return nil, nil
 
@@ -243,32 +243,30 @@ func CliCommand(args []string) (map[string]string, error) {
 		// return map[string]string{"result": ""}, nil
 		return nil, nil
 
-	/*
-		case "nats", "natsapi":
-			kit.LogInfo("palette: nats command")
-			if len(args) < 3 {
-				return nil, fmt.Errorf("nats command missing argument")
-			}
-			result, err := kit.EngineNatsApi(args[1], args[2])
-			if err != nil {
-				return map[string]string{"error": err.Error()}, nil
-			} else {
-				return map[string]string{"result": result}, nil
-			}
+	case "nats", "natsapi":
+		kit.LogInfo("palette: nats command")
+		if len(args) < 3 {
+			return nil, fmt.Errorf("nats command missing argument")
+		}
+		result, err := kit.EngineNatsApi(args[1], args[2])
+		if err != nil {
+			return map[string]string{"error": err.Error()}, nil
+		} else {
+			return map[string]string{"result": result}, nil
+		}
 
-		case "remote":
-			if len(args) < 3 {
-				return nil, fmt.Errorf("remote command needs 2 arguments, host and api")
-			}
-			host := args[1]
-			api := args[2]
-			result, err := kit.EngineNatsApi(host, api)
-			if err != nil {
-				return map[string]string{"error": err.Error()}, nil
-			} else {
-				return map[string]string{"result": result}, nil
-			}
-	*/
+	case "remote":
+		if len(args) < 3 {
+			return nil, fmt.Errorf("remote command needs 2 arguments, host and api")
+		}
+		host := args[1]
+		api := args[2]
+		result, err := kit.EngineNatsApi(host, api)
+		if err != nil {
+			return map[string]string{"error": err.Error()}, nil
+		} else {
+			return map[string]string{"result": result}, nil
+		}
 
 	default:
 		if len(words) < 2 {
@@ -317,7 +315,7 @@ func ListenAndPrint(host string, port int) {
 	// ListenAndServer listens forever
 	err = server.ListenAndServe()
 	if err != nil {
-		fmt.Printf("err = %v\n", err)
+		fmt.Printf("err = %v\n",err)
 		kit.LogError(err)
 		return
 	}

@@ -2,7 +2,7 @@
 
 set data=%1
 if not "%data%" == "" goto keepgoing0
-	echo You must provide an argument, e.g. "default"
+	echo You must provide an argument, e.g. "omnisphere" or "sfmoma"
 	goto getout
 :keepgoing0
 

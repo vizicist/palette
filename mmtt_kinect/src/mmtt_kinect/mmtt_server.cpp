@@ -142,7 +142,7 @@ std::string PaletteDataPath(std::string fname)
 
 	err = _dupenv_s(&dataval, &len, "PALETTE_DATA");
 	if (err == 0 && dataval != NULL) {
-		 dataval = "default";
+		 dataval = "omnisphere";
 	}
 
 	err = _dupenv_s(&value, &len, "PALETTE_SOURCE");
