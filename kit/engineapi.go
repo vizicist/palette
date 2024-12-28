@@ -353,16 +353,6 @@ func ApplyGlobalParam(name string, value string) (err error) {
 			LogIfError(err)
 		}
 
-		/*
-			if TheNats.enabled && TheNats.natsConn == nil {
-				err = TheNats.Connect()
-				if err != nil {
-					LogIfError(err)
-					return err
-				}
-			}
-		*/
-
 	case "global.attract":
 		TheAttractManager.SetAttractMode(IsTrueValue(value))
 
