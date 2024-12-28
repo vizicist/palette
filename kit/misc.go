@@ -110,14 +110,7 @@ func PaletteDataPath() (datapath string) {
 	}
 	datadir := "data_" + palette_data
 
-	// If PALETTE_SOURCE is defined, datapath is relative to that
-	// otherwise, it's relative to the PALETTE directory in Common Files.
-	palette_source := os.Getenv("PALETTE_SOURCE")
-	if palette_source != "" {
-		datapath = filepath.Join(palette_source, datadir)
-	} else {
-		datapath = filepath.Join("C:\\Program Files\\Common Files\\Palette", datadir)
-	}
+	datapath = filepath.Join("C:\\Program Files\\Common Files\\Palette", datadir)
 	return datapath
 }
 

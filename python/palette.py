@@ -115,14 +115,8 @@ def PaletteDataPath():
 
     palette_data = os.environ.get("PALETTE_DATA","default")
     datadir = "data_" + palette_data
-
-	# If PALETTE_SOURCE is defined, datapath is relative to that
-	# otherwise, it's relative to the PALETTE directory in Common Files.
-    palette_source = os.environ.get("PALETTE_SOURCE","")
-    if palette_source != "":
-        FullDataPath = os.path.join(palette_source, datadir)
-    else:
-        FullDataPath = os.path.join(localPaletteDir(), datadir)
+    FullDataPath = os.path.join(localPaletteDir(), datadir)
+    
     return FullDataPath
 
 # Combine saved in the savedPath list

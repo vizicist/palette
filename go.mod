@@ -16,7 +16,6 @@ require (
 	github.com/nats-io/nats.go v1.31.0
 	github.com/pkg/profile v1.7.0
 	github.com/reugn/go-quartz v0.9.0
-	github.com/visualfc/atk v1.2.3
 	gitlab.com/gomidi/midi/v2 v2.0.30
 	go.uber.org/zap v1.26.0
 	golang.org/x/image v0.20.0
