@@ -141,14 +141,7 @@ PaletteDataPath()
 	}
 	std::string datadir = "data_" + std::string( dataval );	
 
-	// If PALETTE_SOURCE is defined, datapath is relative to that
-	// otherwise, it's relative to the PALETTE directory in Common Files.
-	err = _dupenv_s( &value, &len, "PALETTE_SOURCE" );
-	if ( err == 0 && value != NULL ) {
-		datapath = std::string(value) + "\\" + datadir;
-	} else {
-		datapath = std::string("c:\\Program Files\\Common Files\\Palette") + "\\" + datadir ;
-	}
+	datapath = std::string("c:\\Program Files\\Common Files\\Palette") + "\\" + datadir ;
 
 	NosuchDebug( "NosuchDebugInit: Level=%d Cursor=%d Param=%d API=%d\n", NosuchDebugLevel, NosuchDebugCursor , NosuchDebugParam, NosuchDebugAPI);
 	return datapath;
