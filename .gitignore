@@ -1,13 +1,11 @@
 build/windows/vcvars64.err
 data/recordings/*
-data/saved/archive/vizdesk*
-cmd/fyne_demo
 binaries/tcltk90/*
 data/logs
-data_omnisphere/logs
 data_default/logs
 data_default/logs/*
 data_cloud/logs
+data_cloud/logs/*
 default.bidule.previous
 _Current.json
 .vs
