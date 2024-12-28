@@ -145,20 +145,15 @@ std::string PaletteDataPath(std::string fname)
 		 dataval = "default";
 	}
 
-	err = _dupenv_s(&value, &len, "PALETTE_SOURCE");
 	std::string parent;
-	if (err == 0 && value != NULL) {
-		parent = std::string(value);
+	
+	// This weird name is to get the 64-bit Common Files directory
+	// (where the Palette stuff is kept) from a 32-bit program.
+	char *p = getenv("CommonProgramW6432");
+	if ( p == NULL ) {
+		p = ".";
 	}
-	else {
-		// This weird name is to get the 64-bit Common Files directory
-		// (where the Palette stuff is kept) from a 32-bit program.
-		char *p = getenv("CommonProgramW6432");
-		if ( p == NULL ) {
-			p = ".";
-		}
-		parent = std::string(p) + "\\Palette";
-	}
+	parent = std::string(p) + "\\Palette";
 	datapath = std::string(parent) + "\\data_" + std::string(dataval) + "\\" + fname;
 	return datapath.c_str();
 }
