@@ -70,7 +70,7 @@ func processStatus(process string) string {
 func CliCommand(args []string) (map[string]string, error) {
 
 	if len(args) == 0 {
-		return nil, fmt.Errorf(usage())
+		return nil, fmt.Errorf("%s",usage())
 	}
 
 	api := args[0]
@@ -274,7 +274,7 @@ func CliCommand(args []string) (map[string]string, error) {
 		if len(words) < 2 {
 			return nil, fmt.Errorf("unrecognized command (%s), expected usage:\n%s", api, usage())
 		} else if len(words) > 2 {
-			return nil, fmt.Errorf("invalid api format, expecting {plugin}.{api}\n" + usage())
+			return nil, fmt.Errorf("invalid api format, expecting {plugin}.{api}\n%s", usage())
 		}
 		return kit.LocalEngineApi(api, args[1:]...)
 	}
