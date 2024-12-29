@@ -57,8 +57,6 @@ func InitKit() {
 		LogIfError(err)
 	}
 
-	TheNats = NewNats()
-
 	TheProcessManager = NewProcessManager()
 	TheProcessManager.AddBuiltins()
 
@@ -587,13 +585,18 @@ func ArchiveLogs() error {
 	}
 }
 
+var myHostname string
+
 func Hostname() string {
-	hostname, err := os.Hostname()
-	if err != nil {
-		LogIfError(err)
-		hostname = "Unknown"
+	if myHostname == "" {
+		hostname, err := os.Hostname()
+		if err != nil {
+			LogIfError(err)
+			hostname = "unknown"
+		}	
+		myHostname = hostname
 	}
-	return hostname
+	return myHostname
 }
 
 func SendMail(body string) error {

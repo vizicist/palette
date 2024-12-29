@@ -344,7 +344,7 @@ func (quad *Quad) Load(category string, filename string) error {
 
 	LogInfo("Quad.Load", "category", category, "filename", filename)
 	isOn := TheAttractManager.attractModeIsOn.Load()
-	PublishFromEngine("quadro.load", fmt.Sprintf("category=%s filename=%s attractmode=%v", category, filename, isOn))
+	NatsPublishFromEngine("quadro.load", fmt.Sprintf("category=%s filename=%s attractmode=%v", category, filename, isOn))
 
 	var lasterr error
 

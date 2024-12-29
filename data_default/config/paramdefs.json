@@ -201,7 +201,6 @@
 "global.mmtt_xexpand": {"valuetype": "float", "min": "0.5", "max": "2.0",  "init": "1.25",	"comment": "#" },
 "global.mmtt_yexpand": {"valuetype": "float", "min": "0.5", "max": "2.0",  "init": "1.25",	"comment": "#" },
 "global.mmtt_zexpand": {"valuetype": "float", "min": "0.5", "max": "10.0",  "init": "4.0",	"comment": "#" },
-"global.nats": {"valuetype":"bool", "min":"false", "max":"true", "init":"false", "comment":"# Enable NATS" },
 "global.notifygui": {"valuetype":"bool", "min":"false", "max":"true", "init":"true", "comment":"#" },
 "global.obspath": {"valuetype":"string", "min":"", "max":"", "init":"C:/Program Files/obs-studio/bin/64bit/obs64.exe", "comment":"# OBS executable path" },
 "global.obsstream": {"valuetype":"bool", "min":"false", "max":"true", "init":"false", "comment":"# turn on OBS streaming" },

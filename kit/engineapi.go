@@ -93,7 +93,7 @@ func ExecuteGlobalApi(api string, apiargs map[string]string) (result string, err
 	case "status":
 		uptime := fmt.Sprintf("%f", Uptime())
 		attractmode := strconv.FormatBool(TheAttractManager.AttractModeIsOn())
-		natsConnected := strconv.FormatBool(TheNats.isConnected)
+		natsConnected := strconv.FormatBool(natsIsConnected)
 		if TheQuad == nil {
 			result = JsonObject(
 				"uptime", uptime,
@@ -342,17 +342,6 @@ func ApplyGlobalParam(name string, value string) (err error) {
 
 	switch name {
 
-	case "global.nats":
-		newvalue := IsTrueValue(value)
-		if !newvalue && TheNats.isConnected {
-			TheNats.Close()
-		}
-		TheNats.enabled = IsTrueValue(value)
-		if TheNats.enabled {
-			err = TheNats.Init()
-			LogIfError(err)
-		}
-
 	case "global.attract":
 		TheAttractManager.SetAttractMode(IsTrueValue(value))
 
@@ -447,13 +436,6 @@ func ApplyGlobalParam(name string, value string) (err error) {
 		if GetFloat(value, &f) {
 			TheProcessManager.processCheckSecs = f
 		}
-
-	// case "global.nats":
-	// 	if IsTrueValue(value) {
-	// 		EngineSubscribeNats()
-	// 	} else {
-	// 		EngineCloseNats()
-	// 	}
 
 	case "global.obsstream":
 		if IsTrueValue(value) {
