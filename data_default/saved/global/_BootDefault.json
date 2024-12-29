@@ -46,7 +46,6 @@
         "global.mmtt_xexpand":"1.250000",
         "global.mmtt_yexpand":"1.250000",
         "global.mmtt_zexpand":"4.000000",
-        "global.nats":"false",
         "global.notifygui":"true",
         "global.obspath":"C:/Program Files/obs-studio/bin/64bit/obs64.exe",
         "global.obsstream":"false",

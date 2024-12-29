@@ -64,6 +64,8 @@ func InitEngine() {
 
 	// e.params = NewParamValues()
 
+	NatsInit()
+
 	TheCursorManager = NewCursorManager()
 	TheRouter = NewRouter()
 	TheScheduler = NewScheduler()
@@ -83,7 +85,7 @@ func InitEngine() {
 		}
 	}
 
-	LogInfo("PaletteDataPath","path",PaletteDataPath())
+	LogInfo("PaletteDataPath", "path", PaletteDataPath())
 
 	// To avoid confusion, force looping off at startup
 	LogInfo("Looping is being forced off")
@@ -115,24 +117,21 @@ func EngineHttpApi(host string, api string, args ...string) (map[string]string, 
 }
 
 func EngineNatsApi(host string, cmd string) (result string, err error) {
-	if !TheNats.enabled {
-		return "", fmt.Errorf("NatsAPI: NATS not enabled")
-	}
-	if !TheNats.isConnected {
+	if !natsIsConnected {
 		return "", fmt.Errorf("EngineNatsAPI: NATS is not connected")
 	}
-	if TheNats.natsConn == nil {
-		return "", fmt.Errorf("NatsAPI: natsConn is nil?")
+	if natsConn == nil {
+		return "", fmt.Errorf("NatsAPI: NatsConn is nil?")
 	}
 	timeout := 3 * time.Second
 	subject := fmt.Sprintf("to_palette.%s.api", host)
-	retdata, err := TheNats.Request(subject, cmd, timeout)
+	retdata, err := NatsRequest(subject, cmd, timeout)
 	LogIfError(err)
 	return retdata, err
 }
 
 func EngineCloseNats() {
-	TheNats.Disconnect()
+	NatsDisconnect()
 }
 
 func StartEngine() {
