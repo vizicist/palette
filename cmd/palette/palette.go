@@ -11,6 +11,7 @@ import (
 	"syscall"
 
 	"github.com/hypebeast/go-osc/osc"
+	"github.com/joho/godotenv"
 	"github.com/vizicist/palette/kit"
 )
 
@@ -70,7 +71,7 @@ func processStatus(process string) string {
 func CliCommand(args []string) (map[string]string, error) {
 
 	if len(args) == 0 {
-		return nil, fmt.Errorf("%s",usage())
+		return nil, fmt.Errorf("%s", usage())
 	}
 
 	api := args[0]
@@ -148,6 +149,44 @@ func CliCommand(args []string) (map[string]string, error) {
 
 		default:
 			return nil, fmt.Errorf("bad osc command (%s), expected usage:\n%s", arg1, usage())
+		}
+
+	case "env":
+		path := kit.ConfigFilePath(".env")
+		myenv, err := godotenv.Read(path)
+		if err != nil {
+			myenv = make(map[string]string)
+		}
+		if arg1 == "" {
+			s := ""
+			for k, v := range myenv {
+				s = s + k + "=" + v + "\n"
+			}
+			return map[string]string{"result": s}, nil
+		}
+		if len(args) < 3 {
+			return nil, fmt.Errorf("not enough arguments to env command")	
+		}
+		switch args[1] {
+		case "set":
+			myenv[args[2]] = args[3]
+			err = godotenv.Write(myenv, path)
+			if err != nil {
+				kit.LogError(err)
+				return map[string]string{"error": err.Error()}, nil
+			} else {
+				s := args[2] + "=" + args[3] + "\n"
+				return map[string]string{"result": s}, nil
+			}
+		case "get":
+			gotten, ok := myenv[args[2]]	
+			if !ok {
+				return map[string]string{"error": "No value"}, nil
+			} else {
+				return map[string]string{"result": gotten}, nil
+			}
+		default:
+			return nil, fmt.Errorf("unknown env subcommand - %s", arg1)
 		}
 
 	case "start":

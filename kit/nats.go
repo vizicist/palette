@@ -1,23 +1,24 @@
 package kit
 
 import (
-	"flag"
 	"fmt"
+	"net/url"
 	"time"
 
+	"github.com/joho/godotenv"
 	"github.com/nats-io/nats-server/v2/server"
 	"github.com/nats-io/nats.go"
 )
 
 var (
-	natsServer      *server.Server = nil
+	natsLeafServer      *server.Server = nil
 	natsConn        *nats.Conn     = nil
 	natsIsConnected bool           = false
 )
 
 func NatsInit() {
 
-	err := NatsStartServer()
+	err := NatsStartLeafServer()
 	if err != nil {
 		LogError(err)
 		return
@@ -199,6 +200,7 @@ func NatsDisconnect() {
 	natsIsConnected = false
 }
 
+/*
 func printVersion() {
 	LogInfo("PrintVersion")
 }
@@ -208,36 +210,46 @@ func printUsage() {
 func printTLSHelp() {
 	LogInfo("PrintTLSHelp")
 }
+*/
 
-func NatsStartServer() error {
+func NatsStartLeafServer() error {
 
-	if natsServer != nil {
-		return fmt.Errorf("NatsInit: NATS Server already started")
+	if natsLeafServer != nil {
+		return fmt.Errorf("NatsStartLeafServer: NATS leaf Server already started")
 	}
 
-	natsconf, err := GetParam("engine.natsconf")
-	if err != nil || natsconf == "" {
-		natsconf = "natsleaf.conf"
-	}
-
-	// Configure the options from the config file
-	conf := ConfigFilePath(natsconf)
-	args := []string{"-c", conf}
-
-	fs := flag.NewFlagSet("nats-server", flag.ContinueOnError)
-
-	opts, err := server.ConfigureOptions(fs, args,
-		printVersion,
-		printUsage,
-		printTLSHelp)
-
+	path := ConfigFilePath(".env")
+	myenv, err := godotenv.Read(path)
 	if err != nil {
-		return err
+		return fmt.Errorf("Error reading .env for NATS leaf server")
 	}
-	LogInfo("NatsStartServer config file is valid", "config", opts.ConfigFile)
+	hubStr, ok := myenv["NATS_HUB_URL"]
+	if !ok {
+		return fmt.Errorf("No NATS_HUB_URL value, use 'palette env set' to set")
+	}
+
+	hubUrl, err := url.Parse(hubStr)
+	if err != nil {
+		return fmt.Errorf("Unable to parse url value - %s", hubUrl)
+	}
+
+	leafOptions := &server.Options{
+		ServerName: "leaf-server",
+		Port:       4222, // Port for local clients to connect to the leaf node
+		LeafNode: server.LeafNodeOpts{
+			Remotes: []*server.RemoteLeafOpts{
+				{
+					URLs: []*url.URL{
+						hubUrl, // Connect to hub's leafnode port
+					},
+				},
+			},
+			TLSConfig: nil, // Optional TLS configuration if needed
+		},
+	}
 
 	// Create the server with appropriate options.
-	s, err := server.NewServer(opts)
+	s, err := server.NewServer(leafOptions)
 	if err != nil {
 		return err
 	}
@@ -249,12 +261,11 @@ func NatsStartServer() error {
 		return err
 	}
 
-	natsServer = s
-	LogInfo("NatsStartServer: NATS Server started", "config", opts.ConfigFile)
+	natsLeafServer = s
 
 	return nil
 }
 
 func NatsWaitForShutdown() {
-	natsServer.WaitForShutdown()
+	natsLeafServer.WaitForShutdown()
 }
