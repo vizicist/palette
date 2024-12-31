@@ -1,4 +1,4 @@
-echo off
+@echo off
 
 echo BUILDING binaries...
 call build_bin

@@ -13,6 +13,7 @@ require (
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
 	github.com/hajimehoshi/ebiten/v2 v2.5.4
 	github.com/hypebeast/go-osc v0.0.0-20220308234300-cec5a8a1e5f5
+	github.com/joho/godotenv v1.5.1
 	github.com/nats-io/nats-server/v2 v2.10.24
 	github.com/nats-io/nats.go v1.36.0
 	github.com/pkg/profile v1.7.0
