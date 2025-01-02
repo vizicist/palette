@@ -30,6 +30,13 @@
             "args": []
         },
        {
+            "name": "palette hub dump",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTE_SOURCE}/cmd/palette/palette.go",
+            "args": ["hub","dump"]
+        },
+       {
             "name": "ENGINE - palette_engine.go",
             "type": "go",
             "request": "launch",

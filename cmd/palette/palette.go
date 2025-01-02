@@ -165,7 +165,7 @@ func CliCommand(args []string) (map[string]string, error) {
 			return map[string]string{"result": s}, nil
 		}
 		if len(args) < 3 {
-			return nil, fmt.Errorf("not enough arguments to env command")	
+			return nil, fmt.Errorf("not enough arguments to env command")
 		}
 		switch args[1] {
 		case "set":
@@ -179,7 +179,7 @@ func CliCommand(args []string) (map[string]string, error) {
 				return map[string]string{"result": s}, nil
 			}
 		case "get":
-			gotten, ok := myenv[args[2]]	
+			gotten, ok := myenv[args[2]]
 			if !ok {
 				return map[string]string{"error": "No value"}, nil
 			} else {
@@ -282,32 +282,62 @@ func CliCommand(args []string) (map[string]string, error) {
 		// return map[string]string{"result": ""}, nil
 		return nil, nil
 
-	/*
-		case "nats", "natsapi":
-			kit.LogInfo("palette: nats command")
-			if len(args) < 3 {
-				return nil, fmt.Errorf("nats command missing argument")
-			}
-			result, err := kit.EngineNatsApi(args[1], args[2])
-			if err != nil {
-				return map[string]string{"error": err.Error()}, nil
-			} else {
-				return map[string]string{"result": result}, nil
-			}
+	case "hub":
+		if len(args) < 2 {
+			return nil, fmt.Errorf("hub command missing argument")
+		}
+		// No matter what, connect to the remote
+		err := kit.NatsConnectRemote()
+		if err != nil {
+			return map[string]string{"error": err.Error()}, nil
+		}
+		switch arg1 {
 
-		case "remote":
-			if len(args) < 3 {
-				return nil, fmt.Errorf("remote command needs 2 arguments, host and api")
+		case "streams":
+			streams, err := kit.NatsStreams()
+			if err != nil {
+				return map[string]string{"error": err.Error()}, nil
 			}
-			host := args[1]
-			api := args[2]
-			result, err := kit.EngineNatsApi(host, api)
+			s := ""
+			for _, stream := range streams {
+				s += fmt.Sprintf("%s\n", stream)
+			}
+			return map[string]string{"result": s}, nil
+
+		case "dump":
+			err := kit.NatsDump()
+			if err != nil {
+				return map[string]string{"error": err.Error()}, nil
+			}
+			return map[string]string{"result": ""}, nil
+
+		default:
+			return nil, fmt.Errorf("nats bad subcommand")
+		}
+
+		/*
+			result, err = kit.EngineNatsApi(args[1], args[2])
 			if err != nil {
 				return map[string]string{"error": err.Error()}, nil
 			} else {
 				return map[string]string{"result": result}, nil
 			}
-	*/
+		*/
+
+		/*
+			case "remote":
+				if len(args) < 3 {
+					return nil, fmt.Errorf("remote command needs 2 arguments, host and api")
+				}
+				host := args[1]
+				api := args[2]
+				result, err := kit.EngineNatsApi(host, api)
+				if err != nil {
+					return map[string]string{"error": err.Error()}, nil
+				} else {
+					return map[string]string{"result": result}, nil
+				}
+		*/
 
 	default:
 		if len(words) < 2 {
