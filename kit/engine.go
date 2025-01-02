@@ -64,7 +64,10 @@ func InitEngine() {
 
 	// e.params = NewParamValues()
 
-	NatsInit()
+	err := NatsStartLeafServer()
+	LogIfError(err)
+
+	NatsConnectLocalAndSubscribe()
 
 	TheCursorManager = NewCursorManager()
 	TheRouter = NewRouter()
@@ -89,7 +92,7 @@ func InitEngine() {
 
 	// To avoid confusion, force looping off at startup
 	LogInfo("Looping is being forced off")
-	err := GlobalParams.SetParamWithString("global.looping_override", "true")
+	err = GlobalParams.SetParamWithString("global.looping_override", "true")
 	LogIfError(err)
 	err = GlobalParams.SetParamWithString("global.looping_fade", "0.00")
 	LogIfError(err)

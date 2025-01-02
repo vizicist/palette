@@ -1,6 +1,7 @@
 package kit
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 	"time"
@@ -11,19 +12,12 @@ import (
 )
 
 var (
-	natsLeafServer      *server.Server = nil
+	natsLeafServer  *server.Server = nil
 	natsConn        *nats.Conn     = nil
 	natsIsConnected bool           = false
 )
 
-func NatsInit() {
-
-	err := NatsStartLeafServer()
-	if err != nil {
-		LogError(err)
-		return
-	}
-	LogIfError(err)
+func NatsConnectLocalAndSubscribe() {
 
 	if natsIsConnected {
 		// Already connected
@@ -36,14 +30,6 @@ func NatsInit() {
 	// Connect Options.
 	opts := []nats.Option{nats.Name("Palette NATS Subscriber")}
 	opts = setupConnOptions(opts)
-
-	/*
-		// Use UserCredentials
-		var userCreds = "" // User Credentials File
-		if userCreds != "" {
-			opts = append(opts, nats.UserCredentials(userCreds))
-		}
-	*/
 
 	// Connect to NATS
 	nc, err := nats.Connect(url, opts...)
@@ -65,6 +51,119 @@ func NatsInit() {
 	LogInfo("Subscribing to NATS", "subscribeTo", subscribeTo)
 	err = NatsSubscribe(subscribeTo, natsRequestHandler)
 	LogIfError(err)
+}
+
+func NatsConnectRemote() error {
+
+	if natsIsConnected {
+		// Already connected
+		return fmt.Errorf("NatsInit: Already connected!")
+	}
+
+	url, err := NatsEnvValue("NATS_HUB_CLIENT_URL")
+	if err != nil {
+		return err
+	}
+
+	// Connect Options.
+	opts := []nats.Option{nats.Name("Palette NATS Subscriber")}
+	opts = setupConnOptions(opts)
+
+	// Connect to NATS
+	nc, err := nats.Connect(url, opts...)
+	if err != nil {
+		natsIsConnected = false
+		return fmt.Errorf("nats.Connect failed, url=%s err=%s", url, err)
+	}
+	natsIsConnected = true
+	natsConn = nc
+
+	LogInfo("Successful connect to remote NATS", "url", url)
+	return nil
+}
+
+func NatsDump() error {
+
+	if !natsIsConnected {
+		return fmt.Errorf("NatsSummary: not Connected")
+	}
+
+	// Create a JetStream management context
+	js, err := natsConn.JetStream()
+	if err != nil {
+		LogError(fmt.Errorf("Error creating JetStream management context: %v", err))
+	}
+
+	// List all streams
+	streamName := "photonsalon"
+	// Get stream info to validate the stream exists
+	streamInfo, err := js.StreamInfo(streamName)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("Stream Info: %+v\n", streamInfo)
+
+	// Create an ephemeral pull subscription
+	sub, err := js.PullSubscribe("", "", // No durable name for ephemeral consumer
+		nats.BindStream(streamName),               // Bind to the specific stream
+		nats.DeliverAll(),                         // Start from message 0
+	)
+	if err != nil {
+		return err
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	for {
+		// Fetch messages in batches of 10
+		msgs, err := sub.Fetch(10, nats.Context(ctx))
+		if err != nil {
+			if err == context.DeadlineExceeded {
+				fmt.Println("No more messages to fetch.")
+				break
+			}
+			LogError(fmt.Errorf("Error fetching messages: %v", err))
+		}
+
+		for _, msg := range msgs {
+			fmt.Printf("Message Subject: %s\n", msg.Subject)
+			md, err := msg.Metadata()
+			if err != nil {
+				LogError(fmt.Errorf("Error fetching message metadata: %v", err))
+				break
+			}
+			fmt.Printf("Message Sequence: %d\n", md.Sequence.Stream)
+			fmt.Printf("Message Data: %s\n", string(msg.Data))
+			err = msg.Ack() // Acknowledge the message
+			if err != nil {
+				LogError(fmt.Errorf("Error in msg.Ack(): %v", err))
+				break
+			}
+		}
+	}
+	return nil
+}
+
+func NatsStreams() ([]string, error) {
+
+	if !natsIsConnected {
+		return nil, fmt.Errorf("NatsSummary: not Connected")
+	}
+
+	// Create a JetStream management context
+	jsm, err := natsConn.JetStream()
+	if err != nil {
+		return nil, fmt.Errorf("Error creating JetStream management context: %v", err)
+	}
+
+	// List all streams
+	streams := jsm.StreamNames()
+	s := []string{}
+	for stream := range streams {
+		s = append(s, stream)
+	}
+	return s, nil
 }
 
 func natsRequestHandler(msg *nats.Msg) {
@@ -212,20 +311,28 @@ func printTLSHelp() {
 }
 */
 
+func NatsEnvValue(key string) (string, error) {
+	path := ConfigFilePath(".env")
+	myenv, err := godotenv.Read(path)
+	if err != nil {
+		return "", fmt.Errorf("Error reading .env for NATS")
+	}
+	s, ok := myenv[key]
+	if !ok {
+		return "", fmt.Errorf("No %s value, use 'palette env set' to set", key)
+	}
+	return s, nil
+}
+
 func NatsStartLeafServer() error {
 
 	if natsLeafServer != nil {
 		return fmt.Errorf("NatsStartLeafServer: NATS leaf Server already started")
 	}
 
-	path := ConfigFilePath(".env")
-	myenv, err := godotenv.Read(path)
+	hubStr, err := NatsEnvValue("NATS_HUB_LEAF_URL")
 	if err != nil {
-		return fmt.Errorf("Error reading .env for NATS leaf server")
-	}
-	hubStr, ok := myenv["NATS_HUB_URL"]
-	if !ok {
-		return fmt.Errorf("No NATS_HUB_URL value, use 'palette env set' to set")
+		return err
 	}
 
 	hubUrl, err := url.Parse(hubStr)
