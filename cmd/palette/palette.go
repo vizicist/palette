@@ -164,11 +164,11 @@ func CliCommand(args []string) (map[string]string, error) {
 			}
 			return map[string]string{"result": s}, nil
 		}
-		if len(args) < 3 {
-			return nil, fmt.Errorf("not enough arguments to env command")
-		}
 		switch args[1] {
 		case "set":
+			if len(args) < 4 {
+				return nil, fmt.Errorf("not enough arguments to env command")
+			}
 			myenv[args[2]] = args[3]
 			err = godotenv.Write(myenv, path)
 			if err != nil {
@@ -179,6 +179,9 @@ func CliCommand(args []string) (map[string]string, error) {
 				return map[string]string{"result": s}, nil
 			}
 		case "get":
+			if len(args) < 3 {
+				return nil, fmt.Errorf("not enough arguments to env command")
+			}
 			gotten, ok := myenv[args[2]]
 			if !ok {
 				return map[string]string{"error": "No value"}, nil
@@ -188,6 +191,47 @@ func CliCommand(args []string) (map[string]string, error) {
 		default:
 			return nil, fmt.Errorf("unknown env subcommand - %s", arg1)
 		}
+
+		/*
+			case "bootparam":
+				if arg1 == "" {
+					s := ""
+					for k, v := range kit.GetGlobalParams() {
+						s = s + k + "=" + v + "\n"
+					}
+					return map[string]string{"result": s}, nil
+				}
+				switch args[1] {
+				case "set":
+					if len(args) < 4 {
+						return nil, fmt.Errorf("not enough arguments to env command")
+					}
+					err := kit.GlobalParams.SetParamWithString(args[2], args[3])
+					if err != nil {
+						kit.LogError(err)
+						return map[string]string{"error": err.Error()}, nil
+					} else {
+						err = kit.SaveGlobalParamsIn("_Boot")
+						if err != nil {
+							kit.LogError(err)
+							return map[string]string{"error": err.Error()}, nil
+						}
+						return map[string]string{"result": ""}, nil
+					}
+				case "get":
+					if len(args) < 3 {
+						return nil, fmt.Errorf("not enough arguments to env command")
+					}
+					gotten, err := kit.GlobalParams.ParamValueAsString(args[2])
+					if err != nil {
+						return map[string]string{"error": err.Error()}, nil
+					} else {
+						return map[string]string{"result": gotten}, nil
+					}
+				default:
+					return nil, fmt.Errorf("unknown env subcommand - %s", arg1)
+				}
+		*/
 
 	case "start":
 
@@ -432,7 +476,7 @@ func StatusOutput() (statusOut string, numRunning int) {
 	*/
 
 	mmtt := os.Getenv("PALETTE_MMTT")
-	if mmtt != "" {
+	if mmtt != "" && mmtt != "none" {
 		running, err := kit.IsRunning("mmtt")
 		if err == nil && running {
 			s += "MMTT is running.\n"

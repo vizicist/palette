@@ -1,7 +1,7 @@
 package twinsys
 
 import (
-	"encoding/json"
+	json "github.com/goccy/go-json"
 	"fmt"
 	"image"
 	"io"
@@ -84,7 +84,7 @@ func (w PageLogWriter) Write(p []byte) (n int, err error) {
 		newline = "\n"
 	}
 	final := fmt.Sprintf("%s%s", s, newline)
-	w.page.log(final)
+	w.page.log("%s",final)
 	os.Stderr.Write([]byte(final))
 
 	w.page.logToFile(final) // last resort, if no "islogger" windows up

@@ -10,6 +10,7 @@ require (
 	github.com/0xcafed00d/joystick v1.0.1
 	github.com/andreykaipov/goobs v0.12.1
 	github.com/gempir/go-twitch-irc/v3 v3.3.0
+	github.com/goccy/go-json v0.10.4
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
 	github.com/hajimehoshi/ebiten/v2 v2.5.4
 	github.com/hypebeast/go-osc v0.0.0-20220308234300-cec5a8a1e5f5

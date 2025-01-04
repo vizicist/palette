@@ -6,6 +6,8 @@ import (
 	"net/url"
 	"time"
 
+	json "github.com/goccy/go-json"
+
 	"github.com/joho/godotenv"
 	"github.com/nats-io/nats-server/v2/server"
 	"github.com/nats-io/nats.go"
@@ -32,6 +34,7 @@ func NatsConnectLocalAndSubscribe() {
 	opts = setupConnOptions(opts)
 
 	// Connect to NATS
+	LogInfo("Calling nats.Connect A", "url", url)
 	nc, err := nats.Connect(url, opts...)
 	if err != nil {
 		natsIsConnected = false
@@ -41,16 +44,16 @@ func NatsConnectLocalAndSubscribe() {
 	natsIsConnected = true
 	natsConn = nc
 
-	LogInfo("Successful connect to NATS", "url", url)
-
-	date := time.Now().Format(PaletteTimeLayout)
-	msg := fmt.Sprintf("Successful connection from hostname=%s date=%s", Hostname(), date)
-	NatsPublishFromEngine("connect.info", msg)
-
 	subscribeTo := fmt.Sprintf("to_palette.%s.>", Hostname())
-	LogInfo("Subscribing to NATS", "subscribeTo", subscribeTo)
 	err = NatsSubscribe(subscribeTo, natsRequestHandler)
-	LogIfError(err)
+	if err != nil {
+		LogError(err)
+	} else {
+		LogInfo("Connected and subscribing to NATS", "subscribeTo", subscribeTo)
+		data := map[string]any{"hostname": Hostname()}
+		NatsPublishFromEngine("connect.info", data)
+	}
+
 }
 
 func NatsConnectRemote() error {
@@ -68,6 +71,8 @@ func NatsConnectRemote() error {
 	// Connect Options.
 	opts := []nats.Option{nats.Name("Palette NATS Subscriber")}
 	opts = setupConnOptions(opts)
+
+	LogInfo("Calling nats.Connect B", "url", url)
 
 	// Connect to NATS
 	nc, err := nats.Connect(url, opts...)
@@ -105,8 +110,8 @@ func NatsDump() error {
 
 	// Create an ephemeral pull subscription
 	sub, err := js.PullSubscribe("", "", // No durable name for ephemeral consumer
-		nats.BindStream(streamName),               // Bind to the specific stream
-		nats.DeliverAll(),                         // Start from message 0
+		nats.BindStream(streamName), // Bind to the specific stream
+		nats.DeliverAll(),           // Start from message 0
 	)
 	if err != nil {
 		return err
@@ -127,14 +132,13 @@ func NatsDump() error {
 		}
 
 		for _, msg := range msgs {
-			fmt.Printf("Message Subject: %s\n", msg.Subject)
 			md, err := msg.Metadata()
 			if err != nil {
 				LogError(fmt.Errorf("Error fetching message metadata: %v", err))
 				break
 			}
-			fmt.Printf("Message Sequence: %d\n", md.Sequence.Stream)
-			fmt.Printf("Message Data: %s\n", string(msg.Data))
+			fmt.Printf("time=%s subject=%s data=%s\n",
+				md.Timestamp.Format(PaletteTimeLayout), msg.Subject, string(msg.Data))
 			err = msg.Ack() // Acknowledge the message
 			if err != nil {
 				LogError(fmt.Errorf("Error in msg.Ack(): %v", err))
@@ -204,28 +208,27 @@ func NatsRequest(subj, data string, timeout time.Duration) (retdata string, err 
 }
 
 // Publish xxx
-func NatsPublish(subj string, msg string) error {
-
-	if !natsIsConnected {
-		return fmt.Errorf("NatsPublish: called when NATS is not Connected")
-	}
+func NatsPublish(subj string, data map[string]any) error {
 
 	nc := natsConn
 	if !natsIsConnected || nc == nil {
-		return fmt.Errorf("Viznats.Publish: no NATS connection, subject=%s", subj)
+		return fmt.Errorf("NatsPublish: no NATS connection, subject=%s", subj)
 	}
-	bytes := []byte(msg)
 
-	LogInfo("Nats.Publish", "subject", subj, "msg", msg)
+	bytes, err := json.Marshal(data)
+	if err != nil {
+		return err
+	}
 
-	err := natsConn.Publish(subj, bytes)
+	// bytes := []byte("foobar")
+
+	LogInfo("NatsPublish", "subject", subj, "data", string(bytes))
+
+	err = natsConn.Publish(subj, bytes)
 	LogIfError(err)
 	nc.Flush()
 
-	if err := nc.LastError(); err != nil {
-		return err
-	}
-	return nil
+	return nc.LastError()
 }
 
 // Subscribe xxx
@@ -284,13 +287,14 @@ func setupConnOptions(opts []nats.Option) []nats.Option {
 }
 
 // NatsPublishFromEngine sends an asynchronous message via NATS
-func NatsPublishFromEngine(subject string, msg string) {
+func NatsPublishFromEngine(subject string, data map[string]any) {
 	if !natsIsConnected {
 		// silent, but perhaps you could log it every once in a while
+		LogError(fmt.Errorf("NatsPublishFromEngine: called when NATS is not Connected"))
 		return
 	}
 	fullsubject := fmt.Sprintf("from_palette.%s.%s", Hostname(), subject)
-	err := NatsPublish(fullsubject, msg)
+	err := NatsPublish(fullsubject, data)
 	LogIfError(err)
 }
 
@@ -335,19 +339,21 @@ func NatsStartLeafServer() error {
 		return err
 	}
 
-	hubUrl, err := url.Parse(hubStr)
+	huburl, err := url.Parse(hubStr)
 	if err != nil {
-		return fmt.Errorf("Unable to parse url value - %s", hubUrl)
+		return fmt.Errorf("Unable to parse url value - %s", huburl)
 	}
 
+	leafName := Hostname() + "-leaf-server"
+
 	leafOptions := &server.Options{
-		ServerName: "leaf-server",
+		ServerName: leafName,
 		Port:       4222, // Port for local clients to connect to the leaf node
 		LeafNode: server.LeafNodeOpts{
 			Remotes: []*server.RemoteLeafOpts{
 				{
 					URLs: []*url.URL{
-						hubUrl, // Connect to hub's leafnode port
+						huburl, // Connect to hub's leafnode port
 					},
 				},
 			},
@@ -363,6 +369,7 @@ func NatsStartLeafServer() error {
 
 	s.ConfigureLogger()
 
+	LogInfo("Calling nats.server.Run", "huburl", huburl)
 	// Start the server up in the background
 	if err := server.Run(s); err != nil {
 		return err

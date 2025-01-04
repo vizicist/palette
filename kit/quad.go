@@ -1,7 +1,7 @@
 package kit
 
 import (
-	"encoding/json"
+	json "github.com/goccy/go-json"
 	"fmt"
 	"math/rand"
 	"os"
@@ -130,17 +130,12 @@ func (quad *Quad) Start() {
 		if err != nil {
 			LogError(fmt.Errorf("unable to read buttons.json"), "err", err)
 		} else {
-			var f any
-			err = json.Unmarshal(bytes, &f)
+			var buttonMap map[string]any
+			err = json.Unmarshal(bytes, &buttonMap)
 			if err != nil {
 				LogError(fmt.Errorf("unable to Unmarshal"), "buttonPath", buttonPath)
 			} else {
-				buttonMap, ok := f.(map[string]any)
-				if !ok {
-					LogIfError(err)
-				} else {
-					CursorSourceToQuadPreset = buttonMap
-				}
+				CursorSourceToQuadPreset = buttonMap
 			}
 		}
 	}
@@ -344,7 +339,13 @@ func (quad *Quad) Load(category string, filename string) error {
 
 	LogInfo("Quad.Load", "category", category, "filename", filename)
 	isOn := TheAttractManager.attractModeIsOn.Load()
-	NatsPublishFromEngine("load", fmt.Sprintf("category=%s filename=%s attractmode=%v", category, filename, isOn))
+
+	data := map[string]any{
+		"category": category,
+		"filename":  filename,
+		"attractmode":  isOn,
+	}
+	NatsPublishFromEngine("load", data)
 
 	var lasterr error
 
