@@ -2,7 +2,7 @@ package kit
 
 import (
 	"bufio"
-	"encoding/json"
+	json "github.com/goccy/go-json"
 	"fmt"
 	"io"
 	"net/http"
@@ -90,7 +90,9 @@ func InitEngine() {
 
 	LogInfo("PaletteDataPath", "path", PaletteDataPath())
 
-	// To avoid confusion, force looping off at startup
+	/*
+	// The _Boot.json file is now used to set the initial state of the system,
+	// so if you want to force looping off at startup, you can do it there.
 	LogInfo("Looping is being forced off")
 	err = GlobalParams.SetParamWithString("global.looping_override", "true")
 	LogIfError(err)
@@ -98,6 +100,7 @@ func InitEngine() {
 	LogIfError(err)
 	err = SaveCurrentGlobalParams()
 	LogIfError(err)
+	*/
 }
 
 func LocalEngineApi(api string, args ...string) (map[string]string, error) {

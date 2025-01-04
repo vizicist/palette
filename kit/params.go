@@ -1,13 +1,14 @@
 package kit
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"sort"
 	"strconv"
 	"strings"
 	"sync"
+
+	json "github.com/goccy/go-json"
 )
 
 // ParamDef is a single parameter definition.
@@ -104,7 +105,14 @@ func InitParams() {
 			}
 		}
 	}
+}
 
+func GetGlobalParams() map[string]string {
+	s := map[string]string{}
+	GlobalParams.DoForAllParams(func(nm string, val ParamValue) {
+		s[nm], _ = GlobalParams.ParamValueAsString(nm)
+	})
+	return s
 }
 
 func (vals *ParamValues) DoForAllParams(f func(string, ParamValue)) {
@@ -121,7 +129,7 @@ func (vals *ParamValues) JsonValues() string {
 	s := ""
 	sep := ""
 	for nm := range vals.values {
-		valstr, _ := vals.paramValueAsString(nm) // error shouldn't happen
+		valstr, _ := vals.ParamValueAsString(nm) // error shouldn't happen
 		s = s + sep + "        \"" + nm + "\":\"" + valstr + "\""
 		sep = ",\n"
 	}
@@ -136,7 +144,7 @@ func (params *ParamValues) ApplyValuesFromMap(category string, paramsmap map[str
 		value, ok := ival.(string)
 		if !ok {
 			// map value format is like {"value": "0.5", "enabled": "true", ...}
-			mapval, ok := ival.(map[string]interface{})
+			mapval, ok := ival.(map[string]any)
 			if !ok {
 				LogWarn("value isn't a string or map in params json", "name", fullname, "value", ival)
 				continue
@@ -186,7 +194,7 @@ func (vals *ParamValues) Get(name string) (string, error) {
 	if !strings.Contains(name, ".") {
 		return "", fmt.Errorf("parameters should always have a period, name=%s", name)
 	}
-	return vals.paramValueAsString(name)
+	return vals.ParamValueAsString(name)
 }
 
 func (vals *ParamValues) GetStringValue(name string, def string) string {
@@ -270,7 +278,7 @@ func (vals *ParamValues) Save(category string, filename string) error {
 		if strings.Contains(fullName, "._") {
 			continue
 		}
-		valstring, e := vals.paramValueAsString(fullName)
+		valstring, e := vals.ParamValueAsString(fullName)
 		if e != nil {
 			LogIfError(e)
 			continue
@@ -317,15 +325,10 @@ func LoadParamsMapFromPath(path string) (ParamsMap, error) {
 }
 
 func MakeParamsMapFromBytes(bytes []byte) (ParamsMap, error) {
-	var f any
-	err := json.Unmarshal(bytes, &f)
+	var toplevel map[string]any
+	err := json.Unmarshal(bytes, &toplevel)
 	if err != nil {
 		return nil, fmt.Errorf("unable to Unmarshal bytes, err=%s", err)
-	}
-	toplevel, ok := f.(map[string]any)
-	if !ok {
-		return nil, fmt.Errorf("unable to convert params to map[string]any")
-
 	}
 	params, okparams := toplevel["params"]
 	if !okparams {
@@ -427,12 +430,11 @@ func LoadParamEnums() error {
 	if err != nil {
 		return fmt.Errorf("loadParamEnums: unable to read path=%s", path)
 	}
-	var f any
-	err = json.Unmarshal(bytes, &f)
+	var toplevel map[string]any
+	err = json.Unmarshal(bytes, &toplevel)
 	if err != nil {
 		return fmt.Errorf("loadParamEnums: unable to Unmarshal path=%s", path)
 	}
-	toplevel := f.(map[string]any)
 
 	for enumName, enumList := range toplevel {
 		var enums []string
@@ -454,12 +456,11 @@ func LoadParamDefs() error {
 	if err != nil {
 		return fmt.Errorf("unable to read %s, err=%s", path, err)
 	}
-	var f any
-	err = json.Unmarshal(bytes, &f)
+	var params map[string]any
+	err = json.Unmarshal(bytes, &params)
 	if err != nil {
 		return fmt.Errorf("unable to Unmarshal %s, err=%s", path, err)
 	}
-	params := f.(map[string]any)
 	for name, dat := range params {
 		w := strings.SplitN(name, ".", 2)
 		if len(w) != 2 {
@@ -551,7 +552,7 @@ func (vals *ParamValues) Exists(name string) bool {
 	return exists
 }
 
-func (vals *ParamValues) paramValueAsString(name string) (string, error) {
+func (vals *ParamValues) ParamValueAsString(name string) (string, error) {
 	val := vals.paramValue(name)
 	if val == nil {
 		return "", fmt.Errorf("no parameter named %s", name)

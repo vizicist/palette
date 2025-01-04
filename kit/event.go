@@ -1,9 +1,9 @@
 package kit
 
 import (
-	"encoding/json"
 	"strings"
 
+	json "github.com/goccy/go-json"
 	"github.com/hypebeast/go-osc/osc"
 	midi "gitlab.com/gomidi/midi/v2"
 )

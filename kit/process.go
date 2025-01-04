@@ -438,9 +438,7 @@ func MmttProcessInfo() *ProcessInfo {
 
 	// The value of PALETTE_MMTT environment variable can be "kinect" or (someday) "oak"
 	mmtt := os.Getenv("PALETTE_MMTT")
-	if mmtt == "" {
-		// This warning would be annoying, since PALETTE_MMTT rarely set
-		// LogInfo("No PALETTE_MMTT environment variable set")
+	if mmtt == "" || mmtt == "none" {
 		return EmptyProcessInfo()
 	}
 	fullpath := filepath.Join(PaletteDir(), "bin", "mmtt_"+mmtt, "mmtt_"+mmtt+".exe")

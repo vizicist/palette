@@ -1,7 +1,7 @@
 package kit
 
 import (
-	"encoding/json"
+	json "github.com/goccy/go-json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -48,12 +48,12 @@ func (r *Resolume) loadResolumeJSON() error {
 	if err != nil {
 		return fmt.Errorf("unable to read resolume.json, err=%s", err)
 	}
-	var f any
-	err = json.Unmarshal(bytes, &f)
+	var j map[string]any
+	err = json.Unmarshal(bytes, &j)
 	if err != nil {
 		return fmt.Errorf("unable to Unmarshal %s", path)
 	}
-	ResolumeJSON = f.(map[string]any)
+	ResolumeJSON = j
 	return nil
 }
 

@@ -1,7 +1,7 @@
 package kit
 
 import (
-	"encoding/json"
+	json "github.com/goccy/go-json"
 	"fmt"
 	"runtime/debug"
 	"strconv"
@@ -386,13 +386,13 @@ func (r *Router) oscHandleApi(msg *osc.Message) error {
 	if err != nil {
 		return err
 	}
-	var f any
-	err = json.Unmarshal([]byte(apijson), &f)
+	var j map[string]any
+	err = json.Unmarshal([]byte(apijson), &j)
 	if err != nil {
 		return fmt.Errorf("unable to Unmarshal apijson=%s", apijson)
 	}
 	LogInfo("Router.handleApiMsg", "apijson", apijson)
-	LogInfo("Router.handleApiMsg", "f", f)
+	LogInfo("Router.handleApiMsg", "j", j)
 	// r.cursorManager.HandleCursorEvent(ce)
 	return nil
 }
