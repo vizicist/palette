@@ -2,7 +2,7 @@ package kit
 
 import (
 	"bufio"
-	"encoding/json"
+	json "github.com/goccy/go-json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -20,7 +20,7 @@ var Time0 = time.Time{}
 var FirstTime = true
 var LogMutex sync.Mutex
 
-var PaletteTimeLayout = "2006-01-02-15-04-05"
+var PaletteTimeLayout = "2006-01-02-15-04-05.000"
 
 // Uptime returns the number of seconds since the program started.
 func Uptime() float64 {

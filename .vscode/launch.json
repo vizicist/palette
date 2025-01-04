@@ -37,6 +37,20 @@
             "args": ["hub","dump"]
         },
        {
+            "name": "palette param get",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTE_SOURCE}/cmd/palette/palette.go",
+            "args": ["param","get"]
+        },
+       {
+            "name": "palette param set",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTE_SOURCE}/cmd/palette/palette.go",
+            "args": ["param","set","global.transpose", "3"]
+        },
+       {
             "name": "ENGINE - palette_engine.go",
             "type": "go",
             "request": "launch",

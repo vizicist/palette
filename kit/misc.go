@@ -3,7 +3,7 @@ package kit
 import (
 	"archive/zip"
 	"bytes"
-	"encoding/json"
+	json "github.com/goccy/go-json"
 	"errors"
 	"fmt"
 	"image"
@@ -36,12 +36,12 @@ func InitKit() {
 
 	// If _Boot.json doesn't exist, copy _BootDefault.json to it
 	bootpath, _ := ReadableSavedFilePath("global", "_Boot", ".json")
-	if ! FileExists(bootpath) {
+	if !FileExists(bootpath) {
 		bootdefaultpath, err := ReadableSavedFilePath("global", "_BootDefault", ".json")
 		if err != nil {
 			LogIfError(err)
 		}
-		err = copyFile(bootpath,bootdefaultpath)
+		err = copyFile(bootpath, bootdefaultpath)
 		if err != nil {
 			LogIfError(err)
 		}
@@ -61,7 +61,10 @@ func InitKit() {
 	TheProcessManager.AddBuiltins()
 
 	// Fixed rand sequence, better for testing
-	TheRand = rand.New(rand.NewSource(1))
+	// TheRand = rand.New(rand.NewSource(1))
+	TheRand = rand.New(rand.NewSource(time.Now().UnixNano()))
+	// TheRand.Seed(time.Now().UnixNano())
+
 }
 
 // fileExists checks if a file exists
@@ -593,7 +596,7 @@ func Hostname() string {
 		if err != nil {
 			LogIfError(err)
 			hostname = "unknown"
-		}	
+		}
 		myHostname = hostname
 	}
 	return myHostname
@@ -691,13 +694,13 @@ func GetNameValue(apiargs map[string]string) (name string, value string, err err
 func copyFile(dst, src string) error {
 	source, err := os.Open(src)
 	if err != nil {
-			return err
+		return err
 	}
 	defer source.Close()
 
 	destination, err := os.Create(dst)
 	if err != nil {
-			return err
+		return err
 	}
 	defer destination.Close()
 
