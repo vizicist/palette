@@ -312,7 +312,11 @@ func CliCommand(args []string) (map[string]string, error) {
 			return map[string]string{"result": s}, nil
 
 		case "dump":
-			err := kit.NatsDump()
+			streamName := "from_palette"
+			if len(args) > 2 {
+				streamName = args[2]
+			}
+			err := kit.NatsDump(streamName)
 			if err != nil {
 				return map[string]string{"error": err.Error()}, nil
 			}

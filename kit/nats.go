@@ -87,7 +87,7 @@ func NatsConnectRemote() error {
 	return nil
 }
 
-func NatsDump() error {
+func NatsDump(streamName string) error {
 
 	if !natsIsConnected {
 		return fmt.Errorf("NatsSummary: not Connected")
@@ -99,8 +99,6 @@ func NatsDump() error {
 		LogError(fmt.Errorf("Error creating JetStream management context: %v", err))
 	}
 
-	// List all streams
-	streamName := "photonsalon"
 	// Get stream info to validate the stream exists
 	streamInfo, err := js.StreamInfo(streamName)
 	if err != nil {
