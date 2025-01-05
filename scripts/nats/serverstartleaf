@@ -1,9 +1,0 @@
-#!/bin/bash
-
-set -x
-
-cd $HOME/nats
-
-./serverkill
-
-nohup $NATS/nats-server -c leafserver.conf > leafserver.out 2>&1 &
