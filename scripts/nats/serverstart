@@ -1,0 +1,12 @@
+#!/bin/bash
+
+# set -x
+
+cd $HOME/palette/scripts/nats
+
+./serverkill
+sleep 1
+
+echo "Starting server"
+rm -f ./server.out
+nohup nats-server -c ./server.conf > ./server.out 2>&1 &
