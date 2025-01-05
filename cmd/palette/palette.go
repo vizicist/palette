@@ -51,10 +51,12 @@ func usage() string {
 	palette stop [ {processname}]
 	palette status
 	palette version
+	palette env [ set {name} {value} | get {name} ]
 	palette logs [ archive, clear ]
 	palette summarize {logfile}
 	palette osc listen {port@host}
 	palette osc send {port@host} {addr} ...
+	palette hub [ streams | dump ]
 	palette {category}.{api} [ {argname} {argvalue} ] ...
 	`
 }
@@ -83,9 +85,6 @@ func CliCommand(args []string) (map[string]string, error) {
 	words := strings.Split(api, ".")
 
 	switch api {
-
-	case "summarize":
-		return nil, kit.SummarizeLog(arg1)
 
 	case "status":
 		s, nrunning := StatusOutput()
@@ -192,47 +191,6 @@ func CliCommand(args []string) (map[string]string, error) {
 			return nil, fmt.Errorf("unknown env subcommand - %s", arg1)
 		}
 
-		/*
-			case "bootparam":
-				if arg1 == "" {
-					s := ""
-					for k, v := range kit.GetGlobalParams() {
-						s = s + k + "=" + v + "\n"
-					}
-					return map[string]string{"result": s}, nil
-				}
-				switch args[1] {
-				case "set":
-					if len(args) < 4 {
-						return nil, fmt.Errorf("not enough arguments to env command")
-					}
-					err := kit.GlobalParams.SetParamWithString(args[2], args[3])
-					if err != nil {
-						kit.LogError(err)
-						return map[string]string{"error": err.Error()}, nil
-					} else {
-						err = kit.SaveGlobalParamsIn("_Boot")
-						if err != nil {
-							kit.LogError(err)
-							return map[string]string{"error": err.Error()}, nil
-						}
-						return map[string]string{"result": ""}, nil
-					}
-				case "get":
-					if len(args) < 3 {
-						return nil, fmt.Errorf("not enough arguments to env command")
-					}
-					gotten, err := kit.GlobalParams.ParamValueAsString(args[2])
-					if err != nil {
-						return map[string]string{"error": err.Error()}, nil
-					} else {
-						return map[string]string{"result": gotten}, nil
-					}
-				default:
-					return nil, fmt.Errorf("unknown env subcommand - %s", arg1)
-				}
-		*/
-
 	case "start":
 
 		switch arg1 {
@@ -256,7 +214,7 @@ func CliCommand(args []string) (map[string]string, error) {
 			return nil, fmt.Errorf("process %s is disabled or unknown", arg1)
 		}
 
-	case "kill", "stop":
+	case "stop":
 
 		switch arg1 {
 
@@ -286,8 +244,13 @@ func CliCommand(args []string) (map[string]string, error) {
 		s := kit.GetPaletteVersion()
 		return map[string]string{"result": s}, nil
 
-	case "align":
-		return kit.MmttApi("align_start")
+	case "mmtt":
+		switch arg1 {
+		case "align":
+			return kit.MmttApi("align_start")
+		default:
+			return nil, fmt.Errorf("unknown mmtt command - %s", arg1)
+		}
 
 	case "logs":
 		switch arg1 {

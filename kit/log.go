@@ -1,12 +1,9 @@
 package kit
 
 import (
-	"bufio"
-	json "github.com/goccy/go-json"
 	"fmt"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -112,104 +109,6 @@ func InitLog(logname string) {
 
 func LogFatal(err error) {
 	TheLog.Fatal(err)
-}
-
-func SummarizeLog(fname string) error {
-	file, err := os.Open(fname)
-	if err != nil {
-		return err
-	}
-	scanner := bufio.NewScanner(file)
-	nloaded := 0
-	userMode := true
-	startdate := ""
-	uptimesecs := float64(0.0)
-	line := ""
-	for scanner.Scan() {
-		line = scanner.Text()
-		var values map[string]any
-		if line[0] != '{' {
-			continue
-		}
-		if err := json.Unmarshal([]byte(line), &values); err != nil {
-			fmt.Printf("Error parsing line: %s\n", line)
-			continue
-		}
-		msg, ok := values["msg"].(string)
-		if !ok {
-			continue
-		}
-
-		if strings.HasPrefix(msg, "InitLog") {
-			startdate, ok = values["date"].(string)
-			if !ok {
-				startdate = ""
-			}
-			if nloaded > 0 {
-				fmt.Printf("%s :: Previous session nloaded=%d\n", startdate, nloaded)
-			}
-			fmt.Printf("%s :: Starting Engine\n", startdate)
-			nloaded = 0
-			userMode = true
-		} else if strings.HasPrefix(msg, "setAttractMode") {
-			// This catches both plain setAttractMode and setAttractMode already
-			turnAttractOn, ok := values["onoff"].(bool)
-			if !ok {
-				turnAttractOn = false
-			}
-			uptime, ok := values["uptime"].(string)
-			if !ok {
-				uptime = ""
-			}
-			uptimesecs, err = strconv.ParseFloat(uptime, 32)
-			if err != nil {
-				LogIfError(err)
-				uptimesecs = 0.0
-			}
-			if turnAttractOn {
-				if !userMode {
-					// fmt.Printf("Already in attractMode? not resetting nloaded\n")
-				} else {
-					// Turning on attract mode means we've just finished a user session
-					realstart := StartPlusUptime(startdate, uptimesecs)
-					// fmt.Printf("User session: startdate=%s startsecs=%f nloaded=%d\n", startdate, modestart, nloaded)
-					if nloaded > 0 {
-						fmt.Printf("%s :: User session nloaded=%d\n", realstart, nloaded)
-						nloaded = 0
-					}
-					userMode = false
-				}
-			} else {
-				if userMode {
-					// fmt.Printf("Already in userMode? not resetting nloaded\n")
-				} else {
-					// Turning off attract mode means we've just finished an attract session
-					realstart := StartPlusUptime(startdate, uptimesecs)
-					if nloaded > 0 {
-						fmt.Printf("%s :: Attract session nloaded=%d\n", realstart, nloaded)
-						nloaded = 0
-					}
-					userMode = true
-				}
-			}
-		} else if strings.HasPrefix(msg, "Quad.Load") {
-			nloaded++
-		}
-	}
-
-	if nloaded > 0 {
-		realstart := StartPlusUptime(startdate, uptimesecs)
-		if !userMode {
-			fmt.Printf("%s :: Attract session nloaded=%d\n", realstart, nloaded)
-		} else {
-			fmt.Printf("%s :: User session nloaded=%d\n", realstart, nloaded)
-		}
-	}
-
-	if err := scanner.Err(); err != nil {
-		return err
-	}
-	return nil
 }
 
 func StartPlusUptime(startdate string, uptime float64) string {
