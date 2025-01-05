@@ -1,9 +1,5 @@
 #!/bin/bash
 
-# set -x
-
-cd $HOME/palette/scripts/nats
-
 ./serverkill
 sleep 1
 
