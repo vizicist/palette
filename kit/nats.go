@@ -87,7 +87,7 @@ func NatsConnectRemote() error {
 	return nil
 }
 
-func NatsDump(streamName string) error {
+func NatsDump(streamName string, f func(tm time.Time, subj string, data string)) error {
 
 	if !natsIsConnected {
 		return fmt.Errorf("NatsSummary: not Connected")
@@ -100,11 +100,11 @@ func NatsDump(streamName string) error {
 	}
 
 	// Get stream info to validate the stream exists
-	streamInfo, err := js.StreamInfo(streamName)
+	_, err = js.StreamInfo(streamName)
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Stream Info: %+v\n", streamInfo)
+	// fmt.Printf("Stream Info: %+v\n", streamInfo)
 
 	// Create an ephemeral pull subscription
 	sub, err := js.PullSubscribe("", "", // No durable name for ephemeral consumer
@@ -135,8 +135,7 @@ func NatsDump(streamName string) error {
 				LogError(fmt.Errorf("Error fetching message metadata: %v", err))
 				break
 			}
-			fmt.Printf("time=%s subject=%s data=%s\n",
-				md.Timestamp.Format(PaletteTimeLayout), msg.Subject, string(msg.Data))
+			f(md.Timestamp, msg.Subject, string(msg.Data))
 			err = msg.Ack() // Acknowledge the message
 			if err != nil {
 				LogError(fmt.Errorf("Error in msg.Ack(): %v", err))

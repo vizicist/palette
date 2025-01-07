@@ -14,7 +14,7 @@ import (
 	"github.com/nats-io/nats.go"
 )
 
-var PaletteTimeLayout = "2006-01-02-15-04-05"
+var PaletteTimeLayout = "2006-01-02T15:04:05Z07:00" // RFC3339 Format
 
 func main() {
 

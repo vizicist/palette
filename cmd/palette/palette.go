@@ -9,7 +9,9 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
+	"time"
 
+	json "github.com/goccy/go-json"
 	"github.com/hypebeast/go-osc/osc"
 	"github.com/joho/godotenv"
 	"github.com/vizicist/palette/kit"
@@ -60,15 +62,6 @@ func usage() string {
 	palette {category}.{api} [ {argname} {argvalue} ] ...
 	`
 }
-
-/*
-func processStatus(process string) string {
-	if kit.IsRunning(process) {
-		return "running"
-	}
-	return "not running"
-}
-*/
 
 func CliCommand(args []string) (map[string]string, error) {
 
@@ -311,12 +304,105 @@ func CliCommand(args []string) (map[string]string, error) {
 			}
 			return map[string]string{"result": s}, nil
 
-		case "dump":
+		case "dumpraw":
 			streamName := "from_palette"
 			if len(args) > 2 {
 				streamName = args[2]
 			}
-			err := kit.NatsDump(streamName)
+			type DumpData struct {
+				Subject string `json:"subject"`
+				Tm      string `json:"time"`
+				Data    string `json:"data"`
+			}
+			err := kit.NatsDump(streamName, func(tm time.Time, subj string, data string) {
+				dd := DumpData{
+					Subject:  subj,
+					Tm:       tm.Format(kit.PaletteTimeLayout),
+					Data: data,
+				}
+				jsonData, err := json.Marshal(dd)
+				if err != nil {
+					fmt.Println("Error marshalling JSON:", err)
+					return
+				}
+
+				fmt.Println(string(jsonData))
+			})
+			if err != nil {
+				return map[string]string{"error": err.Error()}, nil
+			}
+			return map[string]string{"result": ""}, nil
+
+		case "dumpload":
+
+			streamName := "from_palette"
+			err = kit.NatsDump(streamName, func(tm time.Time, subj string, data string) {
+
+				// We only look at .load messages
+				if !strings.HasSuffix(subj, ".load") {
+					return
+				}
+
+				var toplevel map[string]any
+				err := json.Unmarshal([]byte(data), &toplevel)
+				if err != nil {
+					return
+				}
+				host := strings.TrimPrefix(subj, streamName+".")
+				host = strings.TrimSuffix(host, ".load")
+
+				a := toplevel["attractmode"]
+				attract, ok := a.(bool)
+				if !ok {
+					kit.LogError(fmt.Errorf("bad attractmode value"))
+					return
+				}
+				// If we're in attract mode, we ignore the load
+				if attract {
+					return
+				}
+
+				f := toplevel["filename"]
+				filename, ok := f.(string)
+				if !ok {
+					kit.LogError(fmt.Errorf("bad filename value"))
+					return
+				}
+
+				c := toplevel["category"]
+				category, ok := c.(string)
+				if !ok {
+					kit.LogError(fmt.Errorf("bad category value"))
+					return
+				}
+
+				// fmt.Printf("event=load host=%s time=%s category=%s file=%s\n",
+				// 	host, tm.Format(format), category, filename)
+
+				type DumpData struct {
+					Event    string `json:"event"`
+					Host     string `json:"host"`
+					Category string `json:"category"`
+					Tm       string `json:"time"`
+					Filename string `json:"filename"`
+				}
+
+				dd := DumpData{
+					Event:    "load",
+					Host:     host,
+					Tm:       tm.Format(kit.PaletteTimeLayout),
+					Category: category,
+					Filename: filename,
+				}
+				jsonData, err := json.Marshal(dd)
+				if err != nil {
+					fmt.Println("Error marshalling JSON:", err)
+					return
+				}
+
+				fmt.Println(string(jsonData))
+
+			})
 			if err != nil {
 				return map[string]string{"error": err.Error()}, nil
 			}

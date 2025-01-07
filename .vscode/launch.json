@@ -30,11 +30,18 @@
             "args": []
         },
        {
-            "name": "palette hub dump",
+            "name": "palette hub dumpload",
             "type": "go",
             "request": "launch",
             "program": "${env:PALETTE_SOURCE}/cmd/palette/palette.go",
-            "args": ["hub","dump"]
+            "args": ["hub","dumpload"]
+        },
+       {
+            "name": "palette hub dumpraw",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTE_SOURCE}/cmd/palette/palette.go",
+            "args": ["hub","dumpraw"]
         },
        {
             "name": "palette param get",
