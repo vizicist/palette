@@ -1,12 +1,13 @@
 package kit
 
 import (
-	json "github.com/goccy/go-json"
 	"fmt"
 	"runtime/debug"
 	"strconv"
 	"sync"
 	"time"
+
+	json "github.com/goccy/go-json"
 
 	"github.com/hypebeast/go-osc/osc"
 	midi "gitlab.com/gomidi/midi/v2"
@@ -118,7 +119,7 @@ func (r *Router) HandleMidiEvent(me MidiEvent) {
 	err := TheQuad.onMidiEvent(me)
 	LogIfError(err)
 
-	if TheErae.enabled {
+	if TheErae.apienabled {
 		TheErae.onMidiEvent(me)
 	}
 }
