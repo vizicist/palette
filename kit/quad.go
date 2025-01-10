@@ -1,7 +1,6 @@
 package kit
 
 import (
-	json "github.com/goccy/go-json"
 	"fmt"
 	"math/rand"
 	"os"
@@ -9,6 +8,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	json "github.com/goccy/go-json"
 )
 
 var TheQuad *Quad
@@ -340,12 +341,13 @@ func (quad *Quad) Load(category string, filename string) error {
 	LogInfo("Quad.Load", "category", category, "filename", filename)
 	isOn := TheAttractManager.attractModeIsOn.Load()
 
-	data := map[string]any{
-		"category": category,
-		"filename":  filename,
-		"attractmode":  isOn,
+	// Don't publish a load message if we're in attract mode
+	if !isOn {
+		NatsPublishFromEngine("load", map[string]any{
+			"category":    category,
+			"filename":    filename,
+		})
 	}
-	NatsPublishFromEngine("load", data)
 
 	var lasterr error
 

@@ -71,11 +71,27 @@ func NewMidiIO() *MidiIO {
 // InitMIDI initializes stuff
 func InitMidiIO() {
 
+	LogInfo("Initializing MIDI I/O",
+		"inports", TheMidiIO.inports, "outports", TheMidiIO.outports)
+
 	for _, outp := range TheMidiIO.outports {
 		name := outp.String()
 		// NOTE: name is the port name followed by an index
 		LogOfType("midiports", "MIDI output", "port", outp.String())
-		if strings.Contains(name, "Erae Touch") {
+
+		// if strings.Contains(name, "Erae Touch") {
+
+		// There are a variety of MIDI ports created for the Erae 2:
+		// Input ports:
+		// 	Erae 2
+		// 	MIDIIN2 (Erae 2)
+		// 	MIDIIN3 (Erae 2)
+		// Output ports:
+		// 	Erae 2
+		// 	MIDIOUT2 (Erae 2)
+
+		// 
+		if strings.HasPrefix(name, "Erae 2") {
 			TheErae.output = outp
 		}
 		TheMidiIO.midiOutputs[name] = outp
