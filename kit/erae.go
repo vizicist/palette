@@ -13,27 +13,28 @@ var TheErae *Erae
 
 func NewErae() *Erae {
 	return &Erae{
-		enabled:   false,
-		patchName: "A",
-		prefix:    0x55,
-		width:     0x2a,
-		height:    0x18,
-		zone:      1,
+		apienabled: false,
+		patchName:  "A",
+		prefix:     0x55,
+		width:      0x2a,
+		height:     0x18,
+		zone:       1,
+		output:     nil,
 	}
 }
 
 type Erae struct {
-	enabled   bool
-	patchName string
-	prefix    byte
-	width     int
-	height    int
-	zone      byte
-	output    drivers.Out
+	apienabled bool
+	patchName  string
+	prefix     byte
+	width      int
+	height     int
+	zone       byte
+	output     drivers.Out
 }
 
 func (erae *Erae) Start() {
-	if erae.enabled {
+	if erae.apienabled {
 		erae.EraeZoneClearDisplay(erae.zone)
 	}
 	// erae.output = TheMidiIO.OpenMIDIOutput("erae")
@@ -230,12 +231,14 @@ func (erae *Erae) EraeApiModeEnable() {
 		0x01, 0x01, 0x04, 0x01,
 		erae.prefix, 0xf7}
 	erae.EraeWriteSysEx(bytes)
+	erae.apienabled = true
 }
 
 func (erae *Erae) EraeApiModeDisable() {
 	bytes := []byte{0xf0, 0x00, 0x21, 0x50, 0x00, 0x01, 0x00, 0x01,
 		0x01, 0x01, 0x04, 0x02, 0xf7}
 	erae.EraeWriteSysEx(bytes)
+	erae.apienabled = false
 }
 
 func (erae *Erae) EraeZoneBoundaryRequest(zone byte) {

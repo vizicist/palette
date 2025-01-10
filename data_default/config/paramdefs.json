@@ -167,6 +167,7 @@
 "global.attractguiimage": {"valuetype":"string", "min":"", "max":"", "init":"sppro_attractscreen.png", "comment":"#" },
 "global.attractplaysound": {"valuetype":"bool", "min":"false", "max":"true", "init":"false", "comment":"# does attract make sound" },
 "global.attractallowgui": {"valuetype":"bool", "min":"false", "max":"true", "init":"false", "comment":"# does gui show attract mode" },
+"global.erae": {"valuetype":"bool", "min":"false", "max":"true", "init":"false", "comment":"# turn on Erae functionality" },
 "global.helpimage": {"valuetype":"string", "min":"", "max":"", "init":"sppro_helpscreen.png", "comment":"#" },
 "global.title": {"valuetype":"string", "min":"", "max":"", "init":"Space Palette Pro", "comment":"#" },
 "global.autotranspose": {"valuetype":"bool", "min":"false", "max":"true", "init":"false", "comment":"#" },

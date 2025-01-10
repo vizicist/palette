@@ -388,6 +388,12 @@ func ApplyGlobalParam(name string, value string) (err error) {
 		if GetFloat(value, &f) {
 			TheAttractManager.GestureZMax = f
 		}
+	case "global.erae":
+		b, _ := GetParamBool("global.erae")
+		if b {
+			TheErae.EraeApiModeEnable()
+			TheMidiIO.SetMidiInput("Erae 2")
+		}
 
 	case "global.looping_fadethreshold":
 		if GetFloat(value, &f) {

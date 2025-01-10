@@ -316,9 +316,9 @@ func CliCommand(args []string) (map[string]string, error) {
 			}
 			err := kit.NatsDump(streamName, func(tm time.Time, subj string, data string) {
 				dd := DumpData{
-					Subject:  subj,
-					Tm:       tm.Format(kit.PaletteTimeLayout),
-					Data: data,
+					Subject: subj,
+					Tm:      tm.Format(kit.PaletteTimeLayout),
+					Data:    data,
 				}
 				jsonData, err := json.Marshal(dd)
 				if err != nil {
@@ -351,15 +351,20 @@ func CliCommand(args []string) (map[string]string, error) {
 				host := strings.TrimPrefix(subj, streamName+".")
 				host = strings.TrimSuffix(host, ".load")
 
+				// We used to include an attractmode flag in the published .load message,
+				// but now we don't; we assume that attractmode loads won't even be published.
+				// This code handles old logs that have the explicit attractmode value.
 				a := toplevel["attractmode"]
-				attract, ok := a.(bool)
-				if !ok {
-					kit.LogError(fmt.Errorf("bad attractmode value"))
-					return
-				}
-				// If we're in attract mode, we ignore the load
-				if attract {
-					return
+				if a != nil {
+					attractMode, ok := a.(bool)
+					if !ok {
+						kit.LogError(fmt.Errorf("bad attractmode value"))
+						return
+					}
+					// If we're in attract mode, we ignore the load
+					if attractMode {
+						return
+					}
 				}
 
 				f := toplevel["filename"]

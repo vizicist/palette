@@ -28,7 +28,7 @@ set PALETTE_VERSION=%version%
 
 echo ================ Upgrading Python
 python -m pip install pip | grep -v "already.*satisfied"
-pip install --use-pep517 codenamize pip install python-osc requests pip install pyinstaller get-mac mido pyperclip chardet obs-cli | grep -v "already satisfied"
+pip install --use-pep517 pip python-osc requests pip pyinstaller get-mac mido pyperclip chardet obs-cli | grep -v "already satisfied"
 
 rem echo ================ Compiling depthlib
 rem pushd ..\..\depthlib

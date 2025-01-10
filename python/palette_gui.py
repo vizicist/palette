@@ -16,7 +16,7 @@ import collections
 import signal
 import pyperclip
 import random
-from codenamize import codenamize
+# from codenamize import codenamize
 
 import palette
 

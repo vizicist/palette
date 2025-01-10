@@ -50,8 +50,9 @@ func NatsConnectLocalAndSubscribe() {
 		LogError(err)
 	} else {
 		LogInfo("Connected and subscribing to NATS", "subscribeTo", subscribeTo)
-		data := map[string]any{"hostname": Hostname()}
-		NatsPublishFromEngine("connect.info", data)
+		NatsPublishFromEngine("connect.info", map[string]any{
+			"hostname": Hostname(),
+		})
 	}
 
 }
