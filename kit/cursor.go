@@ -149,7 +149,7 @@ func NewCursorManager() *CursorManager {
 		handlers:       map[string]CursorHandler{},
 		uniqueInt:      1,
 		LoopThreshold:  0.01,
-		cursorRand:     rand.New(rand.NewSource(1)),
+		cursorRand:     rand.New(rand.NewSource(time.Now().UnixNano())),
 	}
 	return cm
 }
