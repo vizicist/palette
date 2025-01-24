@@ -229,7 +229,7 @@ func (sched *Scheduler) FilterEventsWithTag(tag string) {
 	sched.mutex.Lock()
 	defer sched.mutex.Unlock()
 
-	rnd := rand.New(rand.NewSource(1))
+	rnd := rand.New(rand.NewSource(time.Now().UnixNano()))
 	var nexti *list.Element
 	for i := sched.schedList.Front(); i != nil; i = nexti {
 		nexti = i.Next()

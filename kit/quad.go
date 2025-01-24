@@ -29,7 +29,7 @@ func NewQuad() *Quad {
 	quad := &Quad{
 		patch:      map[string]*Patch{},
 		patchLogic: map[string]*PatchLogic{},
-		rand:       rand.New(rand.NewSource(1)),
+		rand:       rand.New(rand.NewSource(time.Now().UnixNano())),
 	}
 	return quad
 }

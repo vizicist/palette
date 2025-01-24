@@ -45,7 +45,7 @@ func NewAttractManager() *AttractManager {
 		lastAttractPresetChange: time.Now(),
 		lastAttractModeCheck:    time.Now(),
 		ModeCheckSecs:           2,
-		attractRand:             rand.New(rand.NewSource(1)),
+		attractRand:             rand.New(rand.NewSource(time.Now().UnixNano())),
 		attractRandMutex:        sync.Mutex{},
 
 		GestureMinLength:     0,
@@ -122,6 +122,10 @@ func (am *AttractManager) setAttractMode(onoff bool) {
 	// am.attractMutex.Lock()
 	am.attractModeIsOn.Store(onoff)
 
+	NatsPublishFromEngine("attract", map[string]any{
+		"onoff": onoff,
+	})
+
 	if TheQuad != nil {
 		for _, patch := range Patchs {
 			patch.clearGraphics()
@@ -144,7 +148,6 @@ func (am *AttractManager) checkAttract() {
 
 	// Every so often we check to see if attract mode should be turned on
 	now := time.Now()
-	// attractModeEnabled := am.attractIdleSecs > 0
 	sinceLastAttractModeCheck := now.Sub(am.lastAttractModeCheck).Seconds()
 	if sinceLastAttractModeCheck > am.ModeCheckSecs {
 

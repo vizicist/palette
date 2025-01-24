@@ -63,8 +63,6 @@ func InitKit() {
 	// Fixed rand sequence, better for testing
 	// TheRand = rand.New(rand.NewSource(1))
 	TheRand = rand.New(rand.NewSource(time.Now().UnixNano()))
-	// TheRand.Seed(time.Now().UnixNano())
-
 }
 
 // fileExists checks if a file exists
