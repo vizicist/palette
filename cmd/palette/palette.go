@@ -373,6 +373,9 @@ func CliCommand(args []string) (map[string]string, error) {
 					kit.LogError(fmt.Errorf("bad filename value"))
 					return
 				}
+				if filename == "_Current" {
+					return
+				}
 
 				c := toplevel["category"]
 				category, ok := c.(string)
