@@ -1,2 +1,1 @@
-c:
-cd %PALETTE_SOURCE%\..\hugo
+pushd c:\%PALETTE_SOURCE%\..\hugo

@@ -1,2 +1,1 @@
-c:
-cd %PALETTE_SOURCE%
+pushd %PALETTE_SOURCE%
