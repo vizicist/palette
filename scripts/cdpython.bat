@@ -1,2 +1,1 @@
-c:
-cd %PALETTE_SOURCE%\python
+pushd %PALETTE_SOURCE%\python

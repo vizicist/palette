@@ -1,2 +1,2 @@
 c:
-cd %PALETTE_SOURCE%\build\windows
+pushd %PALETTE_SOURCE%\build\windows

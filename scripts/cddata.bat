@@ -6,6 +6,6 @@ if not "%PALETTE_DATA%" == "" goto keepgoing1
 
 set datapath=C:\\Program Files\\Common Files\\Palette\\data_%PALETTE_DATA%
 
-cd %datapath%
+pushd %datapath%\%1
 
 :out

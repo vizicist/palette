@@ -1,2 +1,1 @@
-c:
-cd %PALETTE_SOURCE%\scripts
+pushd %PALETTE_SOURCE%\scripts
