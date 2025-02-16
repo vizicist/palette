@@ -1,5 +1,3 @@
 @echo off
 
-call cddata.bat
-
-cd config
+call cddata.bat config

@@ -1,5 +1,3 @@
 @echo off
 
-call cddata.bat
-
-cd saved\global
+call cddata.bat saved\global
