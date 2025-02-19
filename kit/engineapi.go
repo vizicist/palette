@@ -126,14 +126,47 @@ func ExecuteGlobalApi(api string, apiargs map[string]string) (result string, err
 			return "", fmt.Errorf("ExecuteGlobalApi: missing filename parameter")
 		}
 		err := LoadGlobalParamsFrom(fname, true)
+		if err != nil && fname != "_Current" {
+			err = SaveCurrentGlobalParams()
+		}
 		return "", err
+
+	case "getboot":
+		name, ok := apiargs["name"]
+		if !ok {
+			return "", fmt.Errorf("ExecuteGlobalApi: missing name parameter")
+		}
+		params, err := LoadParamValuesOfCategory("global", "_Boot")
+		if err != nil {
+			return "", err
+		}
+		return params.Get(name)
+
+	case "setboot":
+		name, value, err := GetNameValue(apiargs)
+		if err != nil {
+			return "", err
+		}
+		params, err := LoadParamValuesOfCategory("global", "_Boot")
+		if err != nil {
+			return "", err
+		}
+		err = params.SetParamWithString(name, value)
+		if err != nil {
+			return "", err
+		}
+		err = params.Save("global", "_Boot")
+		if err != nil {
+			return "", err
+		}
+		// Refresh EVERYTHING from _Boot, as if rebooting
+		return "", LoadGlobalParamsFrom("_Boot", true)
 
 	case "set":
 		name, value, err := GetNameValue(apiargs)
 		if err != nil {
 			return "", err
 		}
-		// LogInfo("ExecuteGlobalApi set", "name", name, "value", value)
 		err = GlobalParams.SetParamWithString(name, value)
 		if err != nil {
 			return "", err

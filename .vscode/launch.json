@@ -44,11 +44,18 @@
             "args": ["hub","dumpraw"]
         },
        {
-            "name": "palette param get",
+            "name": "palette getboot global.guisize",
             "type": "go",
             "request": "launch",
             "program": "${env:PALETTE_SOURCE}/cmd/palette/palette.go",
-            "args": ["param","get"]
+            "args": ["getboot","global.guisize"]
+        },
+       {
+            "name": "palette setboot global.guisize palette",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTE_SOURCE}/cmd/palette/palette.go",
+            "args": ["setboot","global.guisize","palette"]
         },
        {
             "name": "palette param set",
