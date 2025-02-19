@@ -298,6 +298,16 @@ func IsPatchCategory(category string) bool {
 		category == "misc")
 }
 
+func LoadParamValuesOfCategory(category string, filename string) (*ParamValues, error) {
+		paramsMap, err := LoadParamsMapOfCategory("global", "_Boot")
+		if err != nil {
+			return nil, err
+		}
+		params := NewParamValues()
+		params.ApplyValuesFromMap("global", paramsMap, params.SetParamWithString)
+		return params, nil
+	}
+
 func LoadParamsMapOfCategory(category string, filename string) (ParamsMap, error) {
 	path, err := ReadableSavedFilePath(category, filename, ".json")
 	if err != nil {

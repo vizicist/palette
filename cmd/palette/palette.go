@@ -58,7 +58,9 @@ func usage() string {
 	palette summarize {logfile}
 	palette osc listen {port@host}
 	palette osc send {port@host} {addr} ...
-	palette hub [ streams | dump ]
+	palette hub [ streams | dumpload ]
+	palette get {name}
+	palette set {name} {value}
 	palette {category}.{api} [ {argname} {argvalue} ] ...
 	`
 }
@@ -142,6 +144,18 @@ func CliCommand(args []string) (map[string]string, error) {
 		default:
 			return nil, fmt.Errorf("bad osc command (%s), expected usage:\n%s", arg1, usage())
 		}
+
+	case "get", "getboot":
+		if len(args) != 2 {
+			return nil, fmt.Errorf("bad %s command, expected usage:\n%s", api, usage())
+		}
+		return kit.LocalEngineApi("global."+api, "name", args[1])
+
+	case "set", "setboot":
+		if len(args) != 3 {
+			return nil, fmt.Errorf("bad %s command, expected usage:\n%s", api, usage())
+		}
+		return kit.LocalEngineApi("global."+api, "name", args[1], "value", args[2])
 
 	case "env":
 		path := kit.ConfigFilePath(".env")

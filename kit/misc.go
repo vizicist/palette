@@ -52,10 +52,6 @@ func InitKit() {
 	if err != nil {
 		LogIfError(err)
 	}
-	err = SaveCurrentGlobalParams()
-	if err != nil {
-		LogIfError(err)
-	}
 
 	TheProcessManager = NewProcessManager()
 	TheProcessManager.AddBuiltins()
