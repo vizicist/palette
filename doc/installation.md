@@ -18,7 +18,6 @@ The instructions below assume that you have:
 - Use System Properties->Environment Variables to add these directories to your PATH, and then log out or reboot to have this change reflected:
 	<br>`C:\Program Files\Git\bin`
 	<br>`C:\Program Files\Git\usr\bin`
-	<br>`C:\Program Files\Git\mingw64\bin`
 
 - Install the redistributable support for X64 (the filename is vc_redist_x64.exe) from this page:
 https://learn.microsoft.com/en-US/cpp/windows/latest-supported-vc-redist?view=msvc-170
