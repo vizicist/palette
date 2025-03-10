@@ -50,7 +50,7 @@ Not sure whether %USERPROFILE%\Github\palette\SenselLib\x64 is needed, it depend
 
 - Install Inno Setup from https://jrsoftware.org/isinfo.php
 
-- Install Visual Studio 2017 Community (version 15.9) from https://aka.ms/vs/15/release/vs_community.exe
+- Install Visual Studio 2022 Community from https://visualstudio.microsoft.com/vs/community/
 
 	- in the Workload tab, select "Visual C++ Build Tools"
 <p>
@@ -59,7 +59,7 @@ Not sure whether %USERPROFILE%\Github\palette\SenselLib\x64 is needed, it depend
 The last time I installed it from https://github.com/niXman/mingw-builds-binaries, and it may be necessary to download
 the "online installer" and execute it from the Explorer, selecting "more info" to allow installation of an unsigned package.
 The version of gcc I'm using gives this output from 'gcc --version' -
-gcc (x86_64-win32-sjlj-rev0, Built by MinGW-W64 project) 8.5.0
+gcc (x86_64-win32-seh-rev1, Built by MinGW-Builds project) 14.2.0
 
 - In Visual Studio Code, click on the "extensions marketplace" icon (four little squares) on the left side.
   In the "Search Extensions" field, enter "go", and install the Go language support.
