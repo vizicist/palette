@@ -23,7 +23,7 @@ func NatsConnectLocalAndSubscribe() {
 
 	if natsIsConnected {
 		// Already connected
-		LogError(fmt.Errorf("NatsInit: Already connected!"))
+		LogError(fmt.Errorf("NatsInit: Already connected"))
 		return
 	}
 
@@ -61,7 +61,7 @@ func NatsConnectRemote() error {
 
 	if natsIsConnected {
 		// Already connected
-		return fmt.Errorf("NatsInit: Already connected!")
+		return fmt.Errorf("NatsInit: Already connected")
 	}
 
 	url, err := NatsEnvValue("NATS_HUB_CLIENT_URL")
@@ -97,7 +97,7 @@ func NatsDump(streamName string, f func(tm time.Time, subj string, data string))
 	// Create a JetStream management context
 	js, err := natsConn.JetStream()
 	if err != nil {
-		LogError(fmt.Errorf("Error creating JetStream management context: %v", err))
+		LogError(fmt.Errorf("error creating JetStream management context: %v", err))
 	}
 
 	// Get stream info to validate the stream exists
@@ -127,19 +127,19 @@ func NatsDump(streamName string, f func(tm time.Time, subj string, data string))
 				fmt.Println("No more messages to fetch.")
 				break
 			}
-			LogError(fmt.Errorf("Error fetching messages: %v", err))
+			LogError(fmt.Errorf("error fetching messages: %v", err))
 		}
 
 		for _, msg := range msgs {
 			md, err := msg.Metadata()
 			if err != nil {
-				LogError(fmt.Errorf("Error fetching message metadata: %v", err))
+				LogError(fmt.Errorf("error fetching message metadata: %v", err))
 				break
 			}
 			f(md.Timestamp, msg.Subject, string(msg.Data))
 			err = msg.Ack() // Acknowledge the message
 			if err != nil {
-				LogError(fmt.Errorf("Error in msg.Ack(): %v", err))
+				LogError(fmt.Errorf("error in msg.Ack(): %v", err))
 				break
 			}
 		}
@@ -156,7 +156,7 @@ func NatsStreams() ([]string, error) {
 	// Create a JetStream management context
 	jsm, err := natsConn.JetStream()
 	if err != nil {
-		return nil, fmt.Errorf("Error creating JetStream management context: %v", err)
+		return nil, fmt.Errorf("error creating JetStream management context: %v", err)
 	}
 
 	// List all streams
@@ -317,11 +317,11 @@ func NatsEnvValue(key string) (string, error) {
 	path := ConfigFilePath(".env")
 	myenv, err := godotenv.Read(path)
 	if err != nil {
-		return "", fmt.Errorf("Error reading .env for NATS")
+		return "", fmt.Errorf("error reading .env for NATS")
 	}
 	s, ok := myenv[key]
 	if !ok {
-		return "", fmt.Errorf("No %s value, use 'palette env set' to set", key)
+		return "", fmt.Errorf("no %s value, use 'palette env set' to set", key)
 	}
 	return s, nil
 }
@@ -339,7 +339,7 @@ func NatsStartLeafServer() error {
 
 	huburl, err := url.Parse(hubStr)
 	if err != nil {
-		return fmt.Errorf("Unable to parse url value - %s", huburl)
+		return fmt.Errorf("unable to parse url value - %s", huburl)
 	}
 
 	leafName := Hostname() + "-leaf-server"
