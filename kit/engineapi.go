@@ -126,9 +126,6 @@ func ExecuteGlobalApi(api string, apiargs map[string]string) (result string, err
 			return "", fmt.Errorf("ExecuteGlobalApi: missing filename parameter")
 		}
 		err := LoadGlobalParamsFrom(fname, true)
-		if err != nil && fname != "_Current" {
-			err = SaveCurrentGlobalParams()
-		}
 		return "", err
 
 	case "getboot":
@@ -162,16 +159,20 @@ func ExecuteGlobalApi(api string, apiargs map[string]string) (result string, err
 		// Refresh EVERYTHING from _Boot, as if rebooting
 		return "", LoadGlobalParamsFrom("_Boot", true)
 
+	case "setbootfromcurrent":
+		err = GlobalParams.Save("global", "_Boot")
+		if err != nil {
+			return "", err
+		}
+		// Refresh EVERYTHING from _Boot, as if rebooting
+		return "", LoadGlobalParamsFrom("_Boot", true)
+
 	case "set":
 		name, value, err := GetNameValue(apiargs)
 		if err != nil {
 			return "", err
 		}
-		err = GlobalParams.SetParamWithString(name, value)
-		if err != nil {
-			return "", err
-		}
-		err = ApplyGlobalParam(name, value)
+		err = SetAndApplyGlobalParam(name, value)
 		if err != nil {
 			return "", err
 		}
@@ -179,12 +180,7 @@ func ExecuteGlobalApi(api string, apiargs map[string]string) (result string, err
 
 	case "setparams":
 		for name, value := range apiargs {
-			tmperr := GlobalParams.SetParamWithString(name, value)
-			if tmperr != nil {
-				LogError(tmperr)
-				err = tmperr
-			}
-			tmperr = ApplyGlobalParam(name, value)
+			tmperr := SetAndApplyGlobalParam(name, value)
 			if tmperr != nil {
 				LogError(tmperr)
 				err = tmperr
@@ -339,9 +335,17 @@ func GetInt(value string, i *int64) bool {
 func ActivateGlobalParam(name string) {
 	val, err := GetParam(name)
 	LogIfError(err)
-	err = ApplyGlobalParam(name, val)
+	err = SetAndApplyGlobalParam(name, val)
 	LogIfError(err)
 
+}
+
+func SetAndApplyGlobalParam(name string, value string) (err error) {
+	err = GlobalParams.SetParamWithString(name, value)
+	if err != nil {
+		return err
+	}
+	return ApplyGlobalParam(name, value)
 }
 
 func ApplyGlobalParam(name string, value string) (err error) {
@@ -433,14 +437,12 @@ func ApplyGlobalParam(name string, value string) (err error) {
 			TheCursorManager.LoopThreshold = f
 		}
 
-	case "global.looping_override":
-		LogOfType("loop", "global.looping_override needs handling")
-
-	case "global.looping_fade":
-		LogOfType("loop", "global.looping_fade needs handling")
-
-	case "global.looping_beats":
-		LogOfType("loop", "global.looping_beats needs handling")
+	case "global.looping_override", "global.looping_fade", "global.looping_beats":
+		err := GlobalParams.SetParamWithString(name, value)
+		if err != nil {
+			LogError(err)
+			return err
+		}
 
 	case "global.midithru":
 		TheRouter.midithru = IsTrueValue(value)

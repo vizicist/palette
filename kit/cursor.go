@@ -108,6 +108,9 @@ func NewActiveCursor(ce CursorEvent) *ActiveCursor {
 		ac.loopIt = patch.GetBool("misc.looping_on")
 		ac.loopBeats = patch.GetInt("misc.looping_beats")
 		ac.loopFade = patch.GetFloat("misc.looping_fade")
+		if ! ac.loopIt {
+			ac.loopFade = 0.0
+		}
 	}
 
 	forceOverride, _ := GetParamBool("global.looping_override")
@@ -258,7 +261,7 @@ func (cm *CursorManager) zRand(zmin float64, zmax float64) float64 {
 	z := 0.0
 	for z == 0.0 {
 		z = zmin + cm.cursorRand.Float64()*(zmax-zmin)
-		if z < zmin || z > zmax {	
+		if z < zmin || z > zmax {
 			z = 0.0
 		}
 	}
@@ -284,8 +287,8 @@ func (cm *CursorManager) GenerateRandomGesture(tag string, numsteps int, dur tim
 			pos1.X = 0.0 // try again
 		}
 	}
-	pos0.Z = cm.zRand(am.GestureZMin, am.GestureZMax)	
-	pos1.Z = cm.zRand(am.GestureZMin, am.GestureZMax)	
+	pos0.Z = cm.zRand(am.GestureZMin, am.GestureZMax)
+	pos1.Z = cm.zRand(am.GestureZMin, am.GestureZMax)
 
 	// Occasionally force exactly horizontal (since pitch goes horizontal)
 	if cm.cursorRand.Int()%4 == 0 {
@@ -541,8 +544,19 @@ func (cm *CursorManager) LoopCursorEvent(ac *ActiveCursor) *SchedElement {
 	// LogInfo("ac.loopIt LoopedGidFor", "loopce.Gid", loopce.Gid)
 
 	// Fade the Z value
-	newZ := loopce.Pos.Z * ac.loopFade
-	LogOfType("loop", "loopcd.Z faded", "origZ", loopce.Pos.Z, "newZ", newZ, "loopFade", ac.loopFade)
+	fade := ac.loopFade
+	if ac.Patch != nil {
+		// ac.loopIt = patch.GetBool("misc.looping_on")
+		// ac.loopBeats = patch.GetInt("misc.looping_beats")
+		fade = ac.Patch.GetFloat("misc.looping_fade")
+	}
+	forceOverride, _ := GetParamBool("global.looping_override")
+	if forceOverride {
+		fade, _ = GetParamFloat("global.looping_fade")
+	}
+
+	newZ := loopce.Pos.Z * fade
+	LogOfType("loop", "loopcd.Z faded", "origZ", loopce.Pos.Z, "newZ", newZ, "fade", fade)
 	loopce.Pos.Z = newZ
 
 	if loopce.Pos.Z < cm.LoopThreshold && loopce.Ddu != "up" {

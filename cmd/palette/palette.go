@@ -61,6 +61,7 @@ func usage() string {
 	palette hub [ streams | dumpload ]
 	palette get {name}
 	palette set {name} {value}
+	palette setboot {name} {value}
 	palette {category}.{api} [ {argname} {argvalue} ] ...
 	`
 }
@@ -156,6 +157,9 @@ func CliCommand(args []string) (map[string]string, error) {
 			return nil, fmt.Errorf("bad %s command, expected usage:\n%s", api, usage())
 		}
 		return kit.LocalEngineApi("global."+api, "name", args[1], "value", args[2])
+
+	case "setbootfromcurrent": // secret?
+		return kit.LocalEngineApi("global." + api)
 
 	case "env":
 		path := kit.ConfigFilePath(".env")
