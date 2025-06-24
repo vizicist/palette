@@ -344,8 +344,8 @@ func (quad *Quad) Load(category string, filename string) error {
 	// Don't publish a load message if we're in attract mode
 	if !isOn {
 		NatsPublishFromEngine("load", map[string]any{
-			"category":    category,
-			"filename":    filename,
+			"category": category,
+			"filename": filename,
 		})
 	}
 
@@ -398,12 +398,13 @@ func (quad *Quad) save(category string, filename string) (err error) {
 
 	LogOfType("saved", "Quad.save", "category", category, "filename", filename)
 
-	if category == "global" {
+	switch category {
+	case "global":
 		LogWarn("quad.save: shouldn't be saving global?")
 		err = fmt.Errorf("quad.save: global shouldn't be handled here")
-	} else if category == "quad" {
+	case "quad":
 		err = quad.saveQuad(filename)
-	} else {
+	default:
 		err = fmt.Errorf("quad.save: unhandled save category %s", category)
 	}
 	if err != nil {
