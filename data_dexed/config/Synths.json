@@ -1,0 +1,20 @@
+{ "synths" : [
+	{"name": "default", "port":"01. Internal MIDI", "channel":1},
+	{"name": "Dexed_Ch01", "port":"01. Internal MIDI", "channel":1},
+	{"name": "Dexed_Ch02", "port":"01. Internal MIDI", "channel":2},
+	{"name": "Dexed_Ch03", "port":"01. Internal MIDI", "channel":3},
+	{"name": "Dexed_Ch04", "port":"01. Internal MIDI", "channel":4},
+	{"name": "Dexed_Ch05", "port":"01. Internal MIDI", "channel":5},
+	{"name": "Dexed_Ch06", "port":"01. Internal MIDI", "channel":6},
+	{"name": "Dexed_Ch07", "port":"01. Internal MIDI", "channel":7},
+	{"name": "Dexed_Ch08", "port":"01. Internal MIDI", "channel":8},
+	{"name": "Dexed_Ch09", "port":"01. Internal MIDI", "channel":9},
+	{"name": "Dexed_Ch10", "port":"01. Internal MIDI", "channel":10},
+	{"name": "Dexed_Ch11", "port":"01. Internal MIDI", "channel":11},
+	{"name": "Dexed_Ch12", "port":"01. Internal MIDI", "channel":12},
+	{"name": "Dexed_Ch13", "port":"01. Internal MIDI", "channel":13},
+	{"name": "Dexed_Ch14", "port":"01. Internal MIDI", "channel":14},
+	{"name": "Dexed_Ch15", "port":"01. Internal MIDI", "channel":15},
+	{"name": "Dexed_Ch16", "port":"01. Internal MIDI", "channel":16}
+]
+}
