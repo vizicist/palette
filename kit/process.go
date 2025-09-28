@@ -111,7 +111,7 @@ func NewProcessManager() *ProcessManager {
 
 func (pm *ProcessManager) checkProcess() {
 
-	firstTime := (pm.lastProcessCheck == time.Time{})
+	firstTime := (pm.lastProcessCheck.Equal(time.Time{}))
 
 	// If processCheckSecs is 0, process checking is disabled
 	processCheckEnabled := pm.processCheckSecs > 0
