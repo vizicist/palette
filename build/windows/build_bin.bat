@@ -85,6 +85,7 @@ popd
 
 echo ================ Compiling FFGL plugin
 pushd %PALETTE_SOURCE%\ffgl\build\windows
+set PALETTE_DATA=default
 msbuild /t:Build /p:Configuration=Release /p:Platform="x64" Palette.vcxproj > nul
 popd
 

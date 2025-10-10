@@ -1,6 +1,6 @@
 @echo off
 echo STOPPING...
-palette stop
+palette stop 2>nul
 echo INSTALLING...
 call install_bin
 call install_data default
