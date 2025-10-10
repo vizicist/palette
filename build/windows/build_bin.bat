@@ -124,6 +124,8 @@ copy cdglobal.bat %bin% >nul
 copy cdconfig.bat %bin% >nul
 copy tv_on.bat %bin% >nul
 copy tv_off.bat %bin% >nul
+copy disable_multitouch.bat %bin% >nul
+copy setup_onboot.bat %bin% >nul
 popd
 
 echo ================ Copying windows-specific things
