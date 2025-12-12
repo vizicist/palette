@@ -13,7 +13,6 @@ import sys
 
 # Hardcoded mapping of palette hostnames to readable names
 PALETTE_NAME_MAP = {
-    'palette7': 'KALEID',
     'palette12': 'Carleton University',
     'spacepalette34': 'Idea Fab Labs',
     'spacepalette35': 'MADE',
@@ -41,16 +40,19 @@ def extract_palette_name(subject):
 
 def analyze_day_file(filepath):
     """
-    Analyze a single day file and return palette load counts.
+    Analyze a single day file and return palette load counts and time-of-day data.
     Tracks attractmode state changes and ignores loads when attractmode is active.
-    Returns dict: {palette_name: count}
+    Returns tuple: (palette_loads dict, time_of_day_loads dict)
+        - palette_loads: {palette_name: count}
+        - time_of_day_loads: {palette_name: {hour: count}}
     """
     palette_loads = defaultdict(int)
+    time_of_day_loads = defaultdict(lambda: defaultdict(int))
     # Track attract mode state per palette (default: False)
     attract_mode_state = defaultdict(bool)
 
     if not os.path.exists(filepath):
-        return palette_loads
+        return palette_loads, time_of_day_loads
 
     try:
         with open(filepath, 'r', encoding='utf-8') as f:
@@ -62,6 +64,7 @@ def analyze_day_file(filepath):
                 try:
                     entry = json.loads(line)
                     subject = entry.get('subject', '')
+                    time_str = entry.get('time', '')
 
                     # Extract palette/host name from subject
                     # Subject format: from_palette.{hostname}.{event}
@@ -91,6 +94,16 @@ def analyze_day_file(filepath):
                             if not attract_mode_state[palette_name]:
                                 palette_loads[palette_name] += 1
 
+                                # Extract hour from timestamp
+                                if time_str:
+                                    try:
+                                        # Parse ISO format timestamp
+                                        dt = datetime.fromisoformat(time_str.replace('Z', '+00:00'))
+                                        hour = dt.hour
+                                        time_of_day_loads[palette_name][hour] += 1
+                                    except (ValueError, AttributeError):
+                                        pass
+
                 except json.JSONDecodeError as e:
                     print(f"Warning: Failed to parse JSON in {filepath}: {e}", file=sys.stderr)
                     continue
@@ -98,18 +111,23 @@ def analyze_day_file(filepath):
     except Exception as e:
         print(f"Error reading {filepath}: {e}", file=sys.stderr)
 
-    return palette_loads
+    return palette_loads, time_of_day_loads
 
 def analyze_all_days(days_dir='days'):
     """
     Analyze all day files in the days directory.
-    Returns dict: {date_str: {palette_name: count}}
+    Returns tuple: (daily_data, per_day_time_of_day_data)
+        - daily_data: {date_str: {palette_name: count}}
+        - per_day_time_of_day_data: {date_str: {palette_name: {hour: count}}}
     """
     if not os.path.exists(days_dir):
         print(f"Error: Directory '{days_dir}' not found", file=sys.stderr)
-        return {}
+        return {}, {}
 
     results = {}
+    # Store per-day time-of-day data
+    per_day_time_of_day = {}
+
     files = sorted([f for f in os.listdir(days_dir) if f.endswith('.json')])
 
     for filename in files:
@@ -117,34 +135,43 @@ def analyze_all_days(days_dir='days'):
         filepath = os.path.join(days_dir, filename)
 
         print(f"Analyzing {filename}...", file=sys.stderr)
-        palette_loads = analyze_day_file(filepath)
+        palette_loads, time_of_day_loads = analyze_day_file(filepath)
 
         if palette_loads:
             results[date_str] = dict(palette_loads)
 
-    return results
+        # Store time-of-day data for this day
+        if time_of_day_loads:
+            per_day_time_of_day[date_str] = {}
+            for palette, hours in time_of_day_loads.items():
+                per_day_time_of_day[date_str][palette] = dict(hours)
 
-def generate_html(data, output_file='palette_analysis.html'):
+    return results, per_day_time_of_day
+
+def generate_html(data, time_of_day_data, output_file='palette_analysis.html'):
     """
     Generate an interactive HTML page with the analysis data.
     """
     # Get all unique palettes (using original hostnames from data)
-    all_palettes = set()
+    all_palettes_in_data = set()
     for day_data in data.values():
-        all_palettes.update(day_data.keys())
-    all_palettes = sorted(all_palettes)
+        all_palettes_in_data.update(day_data.keys())
+
+    # Filter to only include palettes that are in the mapping
+    all_palettes = sorted([p for p in all_palettes_in_data if p in PALETTE_NAME_MAP])
 
     # Sort dates
     dates = sorted(data.keys())
 
     # Map palette hostnames to readable names
-    mapped_palettes = [PALETTE_NAME_MAP.get(p, p) for p in all_palettes]
+    mapped_palettes = [PALETTE_NAME_MAP[p] for p in all_palettes]
 
     # Prepare data for JavaScript
     js_data = {
         'dates': dates,
         'palettes': mapped_palettes,
-        'loads': {}
+        'loads': {},
+        'timeOfDayByDate': {}
     }
 
     # Build loads data: loads[mapped_name][date] = count
@@ -153,6 +180,18 @@ def generate_html(data, output_file='palette_analysis.html'):
         for date in dates:
             count = data.get(date, {}).get(palette, 0)
             js_data['loads'][mapped_name][date] = count
+
+    # Build per-day time-of-day data: timeOfDayByDate[date][mapped_name][hour] = count
+    for date in dates:
+        js_data['timeOfDayByDate'][date] = {}
+        for palette, mapped_name in zip(all_palettes, mapped_palettes):
+            js_data['timeOfDayByDate'][date][mapped_name] = {}
+            if date in time_of_day_data and palette in time_of_day_data[date]:
+                for hour in range(24):
+                    js_data['timeOfDayByDate'][date][mapped_name][hour] = time_of_day_data[date][palette].get(hour, 0)
+            else:
+                for hour in range(24):
+                    js_data['timeOfDayByDate'][date][mapped_name][hour] = 0
 
     html = f"""<!DOCTYPE html>
 <html lang="en">
@@ -288,6 +327,12 @@ def generate_html(data, output_file='palette_analysis.html'):
         </div>
 
         <div class="controls">
+            <label for="view-type">View:</label>
+            <select id="view-type" onchange="updateChart()">
+                <option value="daily">Daily Loads</option>
+                <option value="time-of-day">Time of Day</option>
+            </select>
+
             <div class="date-range">
                 <label for="start-date">From:</label>
                 <input type="date" id="start-date" onchange="updateChart()">
@@ -411,8 +456,21 @@ def generate_html(data, output_file='palette_analysis.html'):
             return `${{dayName}}<br>${{dateStr}}`;
         }}
 
-        // Update chart with stacked bars
+        // Update chart based on selected view type
         function updateChart() {{
+            const viewType = document.getElementById('view-type').value;
+
+            if (viewType === 'daily') {{
+                updateDailyChart();
+            }} else if (viewType === 'time-of-day') {{
+                updateTimeOfDayChart();
+            }}
+
+            updateSummary();
+        }}
+
+        // Update daily loads chart with stacked bars
+        function updateDailyChart() {{
             const filteredDates = getFilteredDates();
             const traces = [];
 
@@ -452,7 +510,72 @@ def generate_html(data, output_file='palette_analysis.html'):
             }};
 
             Plotly.newPlot('chart', traces, layout, {{responsive: true}});
-            updateSummary();
+        }}
+
+        // Update time-of-day heatmap
+        function updateTimeOfDayChart() {{
+            const filteredDates = getFilteredDates();
+            const traces = [];
+
+            // Aggregate time-of-day data across filtered dates
+            const aggregatedTimeOfDay = {{}};
+            for (const palette of data.palettes) {{
+                aggregatedTimeOfDay[palette] = Array(24).fill(0);
+
+                for (const date of filteredDates) {{
+                    if (data.timeOfDayByDate[date] && data.timeOfDayByDate[date][palette]) {{
+                        for (let hour = 0; hour < 24; hour++) {{
+                            aggregatedTimeOfDay[palette][hour] += data.timeOfDayByDate[date][palette][hour] || 0;
+                        }}
+                    }}
+                }}
+            }}
+
+            // Create a bar trace for each palette
+            for (const palette of data.palettes) {{
+                const trace = {{
+                    x: Array.from({{length: 24}}, (_, i) => i),
+                    y: aggregatedTimeOfDay[palette],
+                    name: palette,
+                    type: 'bar'
+                }};
+
+                traces.push(trace);
+            }}
+
+            const hourLabels = Array.from({{length: 24}}, (_, i) => {{
+                const hour12 = i === 0 ? 12 : (i > 12 ? i - 12 : i);
+                const ampm = i < 12 ? 'AM' : 'PM';
+                return `${{hour12}}${{ampm}}`;
+            }});
+
+            const dateRangeText = filteredDates.length === data.dates.length
+                ? 'All Days Combined'
+                : `${{filteredDates[0]}} to ${{filteredDates[filteredDates.length - 1]}}`;
+
+            const layout = {{
+                title: `Loads by Time of Day (${{dateRangeText}})`,
+                xaxis: {{
+                    title: 'Hour of Day',
+                    tickmode: 'array',
+                    tickvals: Array.from({{length: 24}}, (_, i) => i),
+                    ticktext: hourLabels,
+                    tickangle: -45
+                }},
+                yaxis: {{
+                    title: 'Number of Loads'
+                }},
+                barmode: 'stack',
+                hovermode: 'x unified',
+                showlegend: true,
+                legend: {{
+                    orientation: 'v',
+                    x: 1.02,
+                    y: 1
+                }}
+            }};
+
+            Plotly.newPlot('chart', traces, layout, {{responsive: true}});
         }}
 
         // Initialize date pickers with data range
@@ -502,7 +625,7 @@ def main():
     print("=" * 50, file=sys.stderr)
 
     # Analyze all day files
-    data = analyze_all_days('days')
+    data, time_of_day_data = analyze_all_days('days')
 
     if not data:
         print("No data found to analyze.", file=sys.stderr)
@@ -511,7 +634,7 @@ def main():
     print(f"\nAnalyzed {len(data)} days", file=sys.stderr)
 
     # Generate HTML report
-    generate_html(data)
+    generate_html(data, time_of_day_data)
 
     print("\nDone! Open palette_analysis.html in your browser.", file=sys.stderr)
     return 0
