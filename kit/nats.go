@@ -89,6 +89,12 @@ func NatsConnectRemote() error {
 }
 
 func NatsDump(streamName string, f func(tm time.Time, subj string, data string)) error {
+	return NatsDumpTimeRange(streamName, nil, nil, f)
+}
+
+// NatsDumpTimeRange dumps messages from a stream within an optional time range.
+// If startTime is nil, starts from the beginning. If endTime is nil, continues to the end.
+func NatsDumpTimeRange(streamName string, startTime *time.Time, endTime *time.Time, f func(tm time.Time, subj string, data string)) error {
 
 	if !natsIsConnected {
 		return fmt.Errorf("NatsSummary: not Connected")
@@ -105,13 +111,20 @@ func NatsDump(streamName string, f func(tm time.Time, subj string, data string))
 	if err != nil {
 		return err
 	}
-	// fmt.Printf("Stream Info: %+v\n", streamInfo)
+
+	// Build subscription options
+	opts := []nats.SubOpt{nats.BindStream(streamName)}
+
+	if startTime != nil {
+		// Efficiently start from the specified time
+		opts = append(opts, nats.StartTime(*startTime))
+	} else {
+		// Start from message 0
+		opts = append(opts, nats.DeliverAll())
+	}
 
 	// Create an ephemeral pull subscription
-	sub, err := js.PullSubscribe("", "", // No durable name for ephemeral consumer
-		nats.BindStream(streamName), // Bind to the specific stream
-		nats.DeliverAll(),           // Start from message 0
-	)
+	sub, err := js.PullSubscribe("", "", opts...)
 	if err != nil {
 		return err
 	}
@@ -136,6 +149,12 @@ func NatsDump(streamName string, f func(tm time.Time, subj string, data string))
 				LogError(fmt.Errorf("error fetching message metadata: %v", err))
 				break
 			}
+
+			// If endTime is specified and we've passed it, stop
+			if endTime != nil && md.Timestamp.After(*endTime) {
+				return nil
+			}
+
 			f(md.Timestamp, msg.Subject, string(msg.Data))
 			err = msg.Ack() // Acknowledge the message
 			if err != nil {
@@ -317,7 +336,7 @@ func NatsEnvValue(key string) (string, error) {
 	path := ConfigFilePath(".env")
 	myenv, err := godotenv.Read(path)
 	if err != nil {
-		return "", fmt.Errorf("error reading .env for NATS")
+		return "", fmt.Errorf("error reading .env for NATS_*_URL values")
 	}
 	s, ok := myenv[key]
 	if !ok {

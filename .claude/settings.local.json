@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(go build:*)",
+      "Bash(./palette_hub.exe)",
+      "Bash(python analyze_days.py:*)",
+      "Bash(ls:*)"
+    ]
+  }
+}
