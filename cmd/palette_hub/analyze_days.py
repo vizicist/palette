@@ -40,19 +40,30 @@ def extract_palette_name(subject):
 
 def analyze_day_file(filepath):
     """
-    Analyze a single day file and return palette load counts and time-of-day data.
+    Analyze a single day file and return palette load counts, time-of-day data, session durations, and session list.
     Tracks attractmode state changes and ignores loads when attractmode is active.
-    Returns tuple: (palette_loads dict, time_of_day_loads dict)
+    Returns tuple: (palette_loads dict, time_of_day_loads dict, session_durations dict, sessions list)
         - palette_loads: {palette_name: count}
         - time_of_day_loads: {palette_name: {hour: count}}
+        - session_durations: {palette_name: total_seconds}
+        - sessions: list of {palette, start_time, duration_seconds}
     """
     palette_loads = defaultdict(int)
     time_of_day_loads = defaultdict(lambda: defaultdict(int))
+    session_durations = defaultdict(float)
+    sessions = []
     # Track attract mode state per palette (default: False)
     attract_mode_state = defaultdict(bool)
+    # Track when attract mode last turned off (session started)
+    session_start_time = defaultdict(lambda: None)
+    # Track load times to estimate session duration when attract events are missing
+    first_load_time = defaultdict(lambda: None)
+    last_load_time = defaultdict(lambda: None)
+    # Track load count per current session
+    session_load_count = defaultdict(int)
 
     if not os.path.exists(filepath):
-        return palette_loads, time_of_day_loads
+        return palette_loads, time_of_day_loads, session_durations, sessions
 
     try:
         with open(filepath, 'r', encoding='utf-8') as f:
@@ -84,15 +95,62 @@ def analyze_day_file(filepath):
                             data_obj = {}
 
                         # Check for attractmode state change events
-                        if 'attractmode' in data_obj:
-                            attract_mode_state[palette_name] = data_obj['attractmode']
+                        # The field is 'onoff' for .attract events, 'attractmode' for other events
+                        attract_value = None
+                        if 'onoff' in data_obj and event_type == 'attract':
+                            attract_value = data_obj['onoff']
+                        elif 'attractmode' in data_obj:
+                            attract_value = data_obj['attractmode']
+
+                        if attract_value is not None:
+                            new_attract_state = attract_value
+                            attract_mode_state[palette_name] = new_attract_state
+
+                            # Track session duration
+                            if time_str:
+                                try:
+                                    event_time = datetime.fromisoformat(time_str.replace('Z', '+00:00'))
+
+                                    # If attract mode is turning OFF (onoff: false, session starting)
+                                    if not new_attract_state:
+                                        session_start_time[palette_name] = event_time
+                                        session_load_count[palette_name] = 0  # Reset load count for new session
+
+                                    # If attract mode is turning ON (onoff: true, session ending)
+                                    elif new_attract_state:
+                                        if session_start_time[palette_name] is not None:
+                                            # Only record session if it has loads
+                                            if session_load_count[palette_name] > 0:
+                                                duration = (event_time - session_start_time[palette_name]).total_seconds()
+                                                session_durations[palette_name] += duration
+                                                # Record individual session
+                                                sessions.append({
+                                                    'palette': palette_name,
+                                                    'start_time': session_start_time[palette_name].isoformat(),
+                                                    'duration_seconds': duration
+                                                })
+                                            session_start_time[palette_name] = None
+                                            session_load_count[palette_name] = 0
+                                except (ValueError, AttributeError):
+                                    pass
+
                             # Don't count attractmode events themselves
                             continue
 
                         # Count .load events only if not in attract mode
                         if event_type == 'load':
+                            # Skip if filename is "_Current"
+                            filename = data_obj.get('filename', '')
+                            if filename == '_Current':
+                                continue
+
+                            # Some palettes include attractmode state in load events - use it if present
+                            if 'attractmode' in data_obj:
+                                attract_mode_state[palette_name] = data_obj['attractmode']
+
                             if not attract_mode_state[palette_name]:
                                 palette_loads[palette_name] += 1
+                                session_load_count[palette_name] += 1  # Count load for current session
 
                                 # Extract hour from timestamp
                                 if time_str:
@@ -101,6 +159,11 @@ def analyze_day_file(filepath):
                                         dt = datetime.fromisoformat(time_str.replace('Z', '+00:00'))
                                         hour = dt.hour
                                         time_of_day_loads[palette_name][hour] += 1
+
+                                        # Track first and last load times for session estimation
+                                        if first_load_time[palette_name] is None:
+                                            first_load_time[palette_name] = dt
+                                        last_load_time[palette_name] = dt
                                     except (ValueError, AttributeError):
                                         pass
 
@@ -111,44 +174,110 @@ def analyze_day_file(filepath):
     except Exception as e:
         print(f"Error reading {filepath}: {e}", file=sys.stderr)
 
-    return palette_loads, time_of_day_loads
+    # Estimate session duration for palettes with loads but no explicit session end
+    # This handles cases where attract mode events are missing or sessions span day boundaries
+    # Track which palettes already have recorded sessions
+    palettes_with_sessions = set(s['palette'] for s in sessions)
+
+    for palette_name in palette_loads.keys():
+        if palette_loads[palette_name] > 0 and first_load_time[palette_name] is not None:
+            # If there's an active session (started but not ended), estimate the duration
+            if session_start_time[palette_name] is not None and last_load_time[palette_name] is not None:
+                # Session started with attract mode off, but never ended
+                # Estimate it lasted until last load time + buffer (5 minutes)
+                estimated_end = last_load_time[palette_name]
+                duration = (estimated_end - session_start_time[palette_name]).total_seconds() + 300
+                # Cap duration at 2 hours to avoid unrealistic estimates
+                duration = min(duration, 7200)
+                session_durations[palette_name] += duration
+                sessions.append({
+                    'palette': palette_name,
+                    'start_time': session_start_time[palette_name].isoformat(),
+                    'duration_seconds': duration
+                })
+            # If we have loads but never saw any session boundaries at all
+            # AND we don't already have proper sessions tracked
+            elif session_start_time[palette_name] is None and last_load_time[palette_name] is not None:
+                # Only estimate if we have NO tracked sessions for this palette
+                if palette_name not in palettes_with_sessions:
+                    # Estimate session from first to last load + buffers
+                    # Add 5 minutes before first load and 5 minutes after last load
+                    duration = (last_load_time[palette_name] - first_load_time[palette_name]).total_seconds() + 600
+                    # Cap duration at 2 hours to avoid unrealistic estimates
+                    duration = min(duration, 7200)
+                    session_durations[palette_name] += duration
+                    sessions.append({
+                        'palette': palette_name,
+                        'start_time': first_load_time[palette_name].isoformat(),
+                        'duration_seconds': duration
+                    })
+
+    return palette_loads, time_of_day_loads, session_durations, sessions
 
 def analyze_all_days(days_dir='days'):
     """
     Analyze all day files in the days directory.
-    Returns tuple: (daily_data, per_day_time_of_day_data)
+    Returns tuple: (daily_data, per_day_time_of_day_data, per_day_session_durations, all_sessions)
         - daily_data: {date_str: {palette_name: count}}
         - per_day_time_of_day_data: {date_str: {palette_name: {hour: count}}}
+        - per_day_session_durations: {date_str: {palette_name: total_seconds}}
+        - all_sessions: list of all sessions with {palette, start_time, duration_seconds}
     """
     if not os.path.exists(days_dir):
         print(f"Error: Directory '{days_dir}' not found", file=sys.stderr)
-        return {}, {}
+        return {}, {}, {}, []
 
     results = {}
     # Store per-day time-of-day data
     per_day_time_of_day = {}
+    # Store per-day session durations
+    per_day_session_durations = {}
+    # Store all individual sessions
+    all_sessions = []
 
     files = sorted([f for f in os.listdir(days_dir) if f.endswith('.json')])
 
     for filename in files:
-        date_str = filename.replace('.json', '')
         filepath = os.path.join(days_dir, filename)
 
         print(f"Analyzing {filename}...", file=sys.stderr)
-        palette_loads, time_of_day_loads = analyze_day_file(filepath)
+        palette_loads, time_of_day_loads, _session_durations, sessions = analyze_day_file(filepath)
 
+        # Group data by actual event date (from timestamps) instead of file date
+        # For loads and time-of-day, we already track by actual event date in analyze_day_file
         if palette_loads:
+            # Note: palette_loads are already from the file, but we keep using filename date for backward compat
+            # This is actually correct since loads are counted per file processing
+            date_str = filename.replace('.json', '')
             results[date_str] = dict(palette_loads)
 
-        # Store time-of-day data for this day
+        # Store time-of-day data
         if time_of_day_loads:
+            date_str = filename.replace('.json', '')
             per_day_time_of_day[date_str] = {}
             for palette, hours in time_of_day_loads.items():
                 per_day_time_of_day[date_str][palette] = dict(hours)
 
-    return results, per_day_time_of_day
+        # For sessions, group by their actual start date (not file date)
+        for session in sessions:
+            # Extract date from session start_time
+            session_date = session['start_time'].split('T')[0]
 
-def generate_html(data, time_of_day_data, output_file='palette_analysis.html'):
+            if session_date not in per_day_session_durations:
+                per_day_session_durations[session_date] = defaultdict(float)
+
+            per_day_session_durations[session_date][session['palette']] += session['duration_seconds']
+
+        # Collect all sessions
+        all_sessions.extend(sessions)
+
+    # Convert defaultdicts to regular dicts
+    for date in per_day_session_durations:
+        per_day_session_durations[date] = dict(per_day_session_durations[date])
+
+    return results, per_day_time_of_day, per_day_session_durations, all_sessions
+
+def generate_html(data, time_of_day_data, session_duration_data, all_sessions, output_file='palette_analysis.html'):
     """
     Generate an interactive HTML page with the analysis data.
     """
@@ -166,12 +295,23 @@ def generate_html(data, time_of_day_data, output_file='palette_analysis.html'):
     # Map palette hostnames to readable names
     mapped_palettes = [PALETTE_NAME_MAP[p] for p in all_palettes]
 
+    # Map sessions to use readable palette names
+    mapped_sessions = []
+    for session in all_sessions:
+        mapped_sessions.append({
+            'palette': PALETTE_NAME_MAP.get(session['palette'], session['palette']),
+            'start_time': session['start_time'],
+            'duration_seconds': session['duration_seconds']
+        })
+
     # Prepare data for JavaScript
     js_data = {
         'dates': dates,
         'palettes': mapped_palettes,
         'loads': {},
-        'timeOfDayByDate': {}
+        'timeOfDayByDate': {},
+        'sessionDurationByDate': {},
+        'sessions': mapped_sessions
     }
 
     # Build loads data: loads[mapped_name][date] = count
@@ -192,6 +332,15 @@ def generate_html(data, time_of_day_data, output_file='palette_analysis.html'):
             else:
                 for hour in range(24):
                     js_data['timeOfDayByDate'][date][mapped_name][hour] = 0
+
+    # Build per-day session duration data: sessionDurationByDate[date][mapped_name] = seconds
+    for date in dates:
+        js_data['sessionDurationByDate'][date] = {}
+        for palette, mapped_name in zip(all_palettes, mapped_palettes):
+            if date in session_duration_data and palette in session_duration_data[date]:
+                js_data['sessionDurationByDate'][date][mapped_name] = session_duration_data[date][palette]
+            else:
+                js_data['sessionDurationByDate'][date][mapped_name] = 0
 
     html = f"""<!DOCTYPE html>
 <html lang="en">
@@ -331,6 +480,7 @@ def generate_html(data, time_of_day_data, output_file='palette_analysis.html'):
             <select id="view-type" onchange="updateChart()">
                 <option value="daily">Daily Loads</option>
                 <option value="time-of-day">Time of Day</option>
+                <option value="session-duration" selected>Session Duration</option>
             </select>
 
             <div class="date-range">
@@ -353,6 +503,8 @@ def generate_html(data, time_of_day_data, output_file='palette_analysis.html'):
                         <th>Total Loads</th>
                         <th>Days Active</th>
                         <th>Avg Loads/Day</th>
+                        <th>Total Session Hours</th>
+                        <th>Avg Hours/Day</th>
                         <th>Peak Day</th>
                         <th>Peak Loads</th>
                     </tr>
@@ -361,11 +513,35 @@ def generate_html(data, time_of_day_data, output_file='palette_analysis.html'):
                 </tbody>
             </table>
         </div>
+
+        <div id="session-list" style="display: block; margin-top: 30px;">
+            <h2>Session List</h2>
+            <div id="session-list-content" style="font-family: monospace; font-size: 14px; max-height: 500px; overflow-y: auto; background-color: #f9f9f9; padding: 15px; border-radius: 4px;">
+            </div>
+        </div>
     </div>
 
     <script>
         // Data from Python
         const data = {json.dumps(js_data, indent=8)};
+
+        // Track palette visibility state
+        const paletteVisibility = {{}};
+        data.palettes.forEach(palette => {{
+            paletteVisibility[palette] = true; // All visible by default
+        }});
+
+        // Capture visibility state from current chart
+        function captureVisibilityState() {{
+            const chartDiv = document.getElementById('chart');
+            if (chartDiv && chartDiv.data) {{
+                chartDiv.data.forEach(trace => {{
+                    if (trace.name && paletteVisibility.hasOwnProperty(trace.name)) {{
+                        paletteVisibility[trace.name] = trace.visible !== 'legendonly';
+                    }}
+                }});
+            }}
+        }}
 
         // Calculate statistics for filtered date range
         function calculateStats(filteredDates) {{
@@ -381,6 +557,14 @@ def generate_html(data, time_of_day_data, output_file='palette_analysis.html'):
                 const daysActive = filteredLoadValues.filter(v => v > 0).length;
                 const avg = daysActive > 0 ? (total / daysActive).toFixed(1) : 0;
 
+                // Calculate session duration stats
+                let totalSessionSeconds = 0;
+                for (const date of filteredDates) {{
+                    totalSessionSeconds += data.sessionDurationByDate[date][palette] || 0;
+                }}
+                const totalSessionHours = (totalSessionSeconds / 3600).toFixed(1);
+                const avgHoursPerDay = filteredDates.length > 0 ? (totalSessionSeconds / 3600 / filteredDates.length).toFixed(1) : 0;
+
                 let peakDay = '';
                 let peakLoads = 0;
                 for (const date of filteredDates) {{
@@ -395,6 +579,8 @@ def generate_html(data, time_of_day_data, output_file='palette_analysis.html'):
                     total,
                     daysActive,
                     avg,
+                    totalSessionHours,
+                    avgHoursPerDay,
                     peakDay,
                     peakLoads
                 }};
@@ -430,6 +616,8 @@ def generate_html(data, time_of_day_data, output_file='palette_analysis.html'):
                     <td>${{s.total.toLocaleString()}}</td>
                     <td>${{s.daysActive}}</td>
                     <td>${{s.avg}}</td>
+                    <td>${{s.totalSessionHours}}</td>
+                    <td>${{s.avgHoursPerDay}}</td>
                     <td>${{s.peakDay}}</td>
                     <td>${{s.peakLoads}}</td>
                 `;
@@ -458,12 +646,22 @@ def generate_html(data, time_of_day_data, output_file='palette_analysis.html'):
 
         // Update chart based on selected view type
         function updateChart() {{
+            // Capture current visibility state before updating
+            captureVisibilityState();
+
             const viewType = document.getElementById('view-type').value;
+            const sessionList = document.getElementById('session-list');
 
             if (viewType === 'daily') {{
                 updateDailyChart();
+                sessionList.style.display = 'none';
             }} else if (viewType === 'time-of-day') {{
                 updateTimeOfDayChart();
+                sessionList.style.display = 'none';
+            }} else if (viewType === 'session-duration') {{
+                updateSessionDurationChart();
+                updateSessionList();
+                sessionList.style.display = 'block';
             }}
 
             updateSummary();
@@ -484,7 +682,8 @@ def generate_html(data, time_of_day_data, output_file='palette_analysis.html'):
                     x: xLabels,
                     y: counts,
                     name: palette,
-                    type: 'bar'
+                    type: 'bar',
+                    visible: paletteVisibility[palette] ? true : 'legendonly'
                 }};
 
                 traces.push(trace);
@@ -509,7 +708,7 @@ def generate_html(data, time_of_day_data, output_file='palette_analysis.html'):
                 }}
             }};
 
-            Plotly.newPlot('chart', traces, layout, {{responsive: true}});
+            Plotly.react('chart', traces, layout, {{responsive: true}});
         }}
 
         // Update time-of-day heatmap
@@ -537,7 +736,8 @@ def generate_html(data, time_of_day_data, output_file='palette_analysis.html'):
                     x: Array.from({{length: 24}}, (_, i) => i),
                     y: aggregatedTimeOfDay[palette],
                     name: palette,
-                    type: 'bar'
+                    type: 'bar',
+                    visible: paletteVisibility[palette] ? true : 'legendonly'
                 }};
 
                 traces.push(trace);
@@ -575,7 +775,130 @@ def generate_html(data, time_of_day_data, output_file='palette_analysis.html'):
                 }}
             }};
 
-            Plotly.newPlot('chart', traces, layout, {{responsive: true}});
+            Plotly.react('chart', traces, layout, {{responsive: true}});
+        }}
+
+        // Update session duration chart
+        function updateSessionDurationChart() {{
+            const filteredDates = getFilteredDates();
+            const traces = [];
+
+            // Format x-axis labels with day of week
+            const xLabels = filteredDates.map(date => formatDateWithDay(date));
+
+            // Create a bar trace for each palette showing duration in hours
+            for (const palette of data.palettes) {{
+                const durations = filteredDates.map(date => {{
+                    const seconds = data.sessionDurationByDate[date][palette] || 0;
+                    return seconds / 3600; // Convert seconds to hours
+                }});
+
+                const trace = {{
+                    x: xLabels,
+                    y: durations,
+                    name: palette,
+                    type: 'bar',
+                    visible: paletteVisibility[palette] ? true : 'legendonly'
+                }};
+
+                traces.push(trace);
+            }}
+
+            const layout = {{
+                title: 'Session Duration (Non-Attract Mode Time)',
+                xaxis: {{
+                    title: 'Date',
+                    tickangle: -45
+                }},
+                yaxis: {{
+                    title: 'Hours'
+                }},
+                barmode: 'stack',
+                hovermode: 'x unified',
+                showlegend: true,
+                legend: {{
+                    orientation: 'v',
+                    x: 1.02,
+                    y: 1
+                }}
+            }};
+
+            Plotly.react('chart', traces, layout, {{responsive: true}});
+        }}
+
+        // Update session list based on filtered date range
+        function updateSessionList() {{
+            const filteredDates = getFilteredDates();
+            const startDate = filteredDates[0];
+            const endDate = filteredDates[filteredDates.length - 1];
+
+            // Filter sessions within date range and for visible palettes only
+            const filteredSessions = data.sessions.filter(session => {{
+                const sessionDate = session.start_time.split('T')[0];
+                const dateInRange = sessionDate >= startDate && sessionDate <= endDate;
+                const paletteVisible = paletteVisibility[session.palette];
+                return dateInRange && paletteVisible;
+            }});
+
+            // Sort sessions by start time
+            filteredSessions.sort((a, b) => {{
+                return new Date(a.start_time) - new Date(b.start_time);
+            }});
+
+            // Format and display sessions
+            const content = document.getElementById('session-list-content');
+            if (filteredSessions.length === 0) {{
+                content.innerHTML = 'No sessions found in the selected date range for the selected palettes.';
+                return;
+            }}
+
+            const lines = filteredSessions.map(session => {{
+                const startTime = new Date(session.start_time).toLocaleString();
+                const durationMinutes = (session.duration_seconds / 60).toFixed(1);
+                return `${{session.palette.padEnd(20)}} - ${{startTime}} - ${{durationMinutes}} minutes`;
+            }});
+
+            content.innerHTML = lines.join('<br>');
+        }}
+
+        // Handle zoom/pan events on the chart to update date range selectors
+        function setupChartEventHandlers() {{
+            const chartDiv = document.getElementById('chart');
+
+            chartDiv.on('plotly_relayout', function(eventData) {{
+                // Check if this is a zoom event with x-axis range change
+                if (eventData['xaxis.range[0]'] && eventData['xaxis.range[1]']) {{
+                    // Get the filtered dates to map indices back to dates
+                    const filteredDates = getFilteredDates();
+
+                    // The range values are indices into the x-axis array
+                    const startIdx = Math.max(0, Math.floor(eventData['xaxis.range[0]']));
+                    const endIdx = Math.min(filteredDates.length - 1, Math.ceil(eventData['xaxis.range[1]']));
+
+                    // Map indices to dates
+                    const newStartDate = filteredDates[startIdx];
+                    const newEndDate = filteredDates[endIdx];
+
+                    // Update the date inputs
+                    document.getElementById('start-date').value = newStartDate;
+                    document.getElementById('end-date').value = newEndDate;
+
+                    // Trigger chart update to reflect the new date range
+                    updateChart();
+                }}
+            }});
+
+            // Handle legend clicks (palette visibility changes)
+            chartDiv.on('plotly_restyle', function(eventData) {{
+                // Capture the new visibility state
+                captureVisibilityState();
+
+                // Update session list if in session duration view
+                const viewType = document.getElementById('view-type').value;
+                if (viewType === 'session-duration') {{
+                    updateSessionList();
+                }}
+            }});
         }}
 
         // Initialize date pickers with data range
@@ -609,6 +932,7 @@ def generate_html(data, time_of_day_data, output_file='palette_analysis.html'):
         // Initialize
         initializeDatePickers();
         updateChart();
+        setupChartEventHandlers();
     </script>
 </body>
 </html>
@@ -625,7 +949,7 @@ def main():
     print("=" * 50, file=sys.stderr)
 
     # Analyze all day files
-    data, time_of_day_data = analyze_all_days('days')
+    data, time_of_day_data, session_duration_data, all_sessions = analyze_all_days('days')
 
     if not data:
         print("No data found to analyze.", file=sys.stderr)
@@ -634,7 +958,7 @@ def main():
     print(f"\nAnalyzed {len(data)} days", file=sys.stderr)
 
     # Generate HTML report
-    generate_html(data, time_of_day_data)
+    generate_html(data, time_of_day_data, session_duration_data, all_sessions)
 
     print("\nDone! Open palette_analysis.html in your browser.", file=sys.stderr)
     return 0
