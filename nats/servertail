@@ -1,0 +1,6 @@
+#!/bin/bash
+
+cd $HOME/nats
+
+log=`ls -t *.log | head -1`
+tail -f $log
