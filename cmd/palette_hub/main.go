@@ -249,10 +249,16 @@ func dumpDays(streamName string) error {
 		return fmt.Errorf("failed to create days directory: %v", err)
 	}
 
-	// Define start and end dates
-	startDate := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
-	yesterday := time.Now().UTC().AddDate(0, 0, -1)
-	endDate := time.Date(yesterday.Year(), yesterday.Month(), yesterday.Day(), 0, 0, 0, 0, time.UTC)
+	// Define start and end dates in local timezone
+	loc, err := time.LoadLocation("America/Los_Angeles")
+	if err != nil {
+		// Fallback to local time if timezone loading fails
+		loc = time.Local
+	}
+
+	startDate := time.Date(2025, 1, 1, 0, 0, 0, 0, loc)
+	yesterday := time.Now().In(loc).AddDate(0, 0, -1)
+	endDate := time.Date(yesterday.Year(), yesterday.Month(), yesterday.Day(), 0, 0, 0, 0, loc)
 
 	// Iterate through each day
 	for currentDate := startDate; !currentDate.After(endDate); currentDate = currentDate.AddDate(0, 0, 1) {
@@ -273,9 +279,9 @@ func dumpDays(streamName string) error {
 			return fmt.Errorf("failed to create file %s: %v", filename, err)
 		}
 
-		// Set time range for the entire day
-		dayStart := time.Date(currentDate.Year(), currentDate.Month(), currentDate.Day(), 0, 0, 0, 0, time.UTC)
-		dayEnd := time.Date(currentDate.Year(), currentDate.Month(), currentDate.Day(), 23, 59, 59, 999999999, time.UTC)
+		// Set time range for the entire day in local timezone (Pacific Time)
+		dayStart := time.Date(currentDate.Year(), currentDate.Month(), currentDate.Day(), 0, 0, 0, 0, loc)
+		dayEnd := time.Date(currentDate.Year(), currentDate.Month(), currentDate.Day(), 23, 59, 59, 999999999, loc)
 
 		type DumpData struct {
 			Subject string `json:"subject"`
