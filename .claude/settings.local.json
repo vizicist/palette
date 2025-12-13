@@ -4,7 +4,14 @@
       "Bash(go build:*)",
       "Bash(./palette_hub.exe)",
       "Bash(python analyze_days.py:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(python -c:*)",
+      "Bash(for file in 2025-12-*.json)",
+      "Bash(do grep '\"\"\"\"subject\"\"\"\":\"\"\"\"from_palette.*\\.load\"\"\"\"' \"$file\")",
+      "Bash(break)",
+      "Bash(done)",
+      "Bash(grep:*)",
+      "Bash(./palette_hub.exe dumpdays:*)"
     ]
   }
 }
