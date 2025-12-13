@@ -1,0 +1,19 @@
+#!/bin/bash
+
+# set -x
+
+cd $HOME/nats
+
+./serverkill
+sleep 1
+
+echo "Starting server"
+rm -f server.out
+nohup nats-server -c server.conf > server.out 2>&1 &
+
+# Give it time to get started
+# echo "Pausing before starting palette_natsmon..."
+# sleep 5
+# echo "Starting palette_natsmon"
+# nohup $HOME/palette/cmd/palette_natsmon/palette_natsmon 2>&1 &
+# echo "Done"

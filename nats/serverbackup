@@ -1,0 +1,5 @@
+#!/bin/bash
+
+cd $HOME/nats
+
+nats account backup $HOME/nats_backup
