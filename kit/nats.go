@@ -336,7 +336,7 @@ func NatsEnvValue(key string) (string, error) {
 	path := ConfigFilePath(".env")
 	myenv, err := godotenv.Read(path)
 	if err != nil {
-		return "", fmt.Errorf("error reading .env for NATS_*_URL values")
+		return "", fmt.Errorf("error reading .env (%s) for NATS_*_URL values",path)
 	}
 	s, ok := myenv[key]
 	if !ok {
