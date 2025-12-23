@@ -54,11 +54,5 @@ func main() {
 		os.Exit(0)
 	}()
 
-	// the twinsys stuff has been moved to separate repo
-	// b, _ := kit.GetParamBool("global.twinsys")
-	// if b {
-	// 	twinsys.Run()
-	// } else {
-	// 	select {}
-	// }
+	select {}
 }
