@@ -105,7 +105,14 @@ func PaletteDataPath() (datapath string) {
 	}
 	datadir := "data_" + palette_data
 
-	datapath = filepath.Join("C:\\Program Files\\Common Files\\Palette", datadir)
+	var basePath string
+	if runtime.GOOS == "windows" {
+		basePath = "C:\\Program Files\\Common Files\\Palette"
+	} else {
+		basePath = "/usr/local/palette"
+	}
+
+	datapath = filepath.Join(basePath, datadir)
 	return datapath
 }
 
@@ -161,6 +168,15 @@ func GetConfigFileData(filename string) ([]byte, error) {
 
 func ConfigFilePath(nm string) string {
 	return filepath.Join(ConfigDir(), nm)
+}
+
+// EnvFilePath returns the path to the env file, preferring .palette over .env
+func EnvFilePath() string {
+	palettePath := ConfigFilePath(".palette")
+	if FileExists(palettePath) {
+		return palettePath
+	}
+	return ConfigFilePath(".env")
 }
 
 func FileExists(filepath string) bool {
