@@ -337,13 +337,11 @@ func (pm *ProcessManager) IsAvailable(process string) bool {
 }
 
 func (pm *ProcessManager) IsRunning(process string) (bool, error) {
-	LogInfo("IsRunning: ", "process", process)
 	pi, err := pm.GetProcessInfo(process)
 	if err != nil {
 		LogIfError(err)
 		return false, err
 	}
-	LogInfo("Calling IsRunningExecutable: ", "pi.Exe", pi.Exe)
 	return IsRunningExecutable(pi.Exe)
 }
 
