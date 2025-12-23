@@ -162,7 +162,7 @@ func CliCommand(args []string) (map[string]string, error) {
 		return kit.LocalEngineApi("global." + api)
 
 	case "env":
-		path := kit.ConfigFilePath(".env")
+		path := kit.EnvFilePath()
 		myenv, err := godotenv.Read(path)
 		if err != nil {
 			myenv = make(map[string]string)

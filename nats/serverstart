@@ -2,9 +2,8 @@
 
 # set -x
 
-cd $HOME/nats
-
 ./serverkill
+
 sleep 1
 
 echo "Starting server"

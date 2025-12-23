@@ -43,7 +43,6 @@ var noWriter = &NoWriter{}
 
 // StartDeviceInput starts anything needed to provide device inputs
 func StartDeviceInput() {
-	return
 }
 
 // KillProcess kills a process (synchronously)
