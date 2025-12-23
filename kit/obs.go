@@ -38,21 +38,17 @@ func ObsProcessInfo() *ProcessInfo {
 // This is the workaround for OBS 32.0.0+ where --disable-shutdown-check was removed.
 func deleteObsSentinel() {
 	// OBS config is in %APPDATA%\obs-studio on Windows
-	LogInfo("deleteObsSentinel 0")
 	appData := os.Getenv("APPDATA")
-	LogInfo("deleteObsSentinel 1", "appData", appData)
 	if appData == "" {
 		return
 	}
 	sentinelPath := filepath.Join(appData, "obs-studio", ".sentinel")
-	LogInfo("sentinelPath", "sentinelPath", sentinelPath)
 	if err := os.RemoveAll(sentinelPath); err != nil {
 		LogIfError(err)
 	} else {
 		LogInfo("RemoveAll okay", "sentinelPath", sentinelPath)
 		LogOfType("obs", "Deleted OBS sentinel folder", "path", sentinelPath)
 	}
-	LogInfo("deleteObsSentinel is returning")
 }
 
 // ObsActivate is called in a goroutine, so it can block.
