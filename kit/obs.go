@@ -2,6 +2,7 @@ package kit
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"time"
 
@@ -16,11 +17,34 @@ func ObsProcessInfo() *ProcessInfo {
 		LogWarn("No OBS found, looking for", "path", fullpath)
 		return EmptyProcessInfo()
 	}
+
+	// Delete the .sentinel folder to prevent OBS from showing the safe mode dialog.
+	// This is needed for OBS 32.0.0+ where --disable-shutdown-check was removed.
+	deleteObsSentinel()
+
 	exe := filepath.Base(fullpath)
 	pi := NewProcessInfo(exe, fullpath, "", ObsActivate)
 	pi.DirPath = filepath.Dir(fullpath)
 	pi.Arg = "--disable-shutdown-check"
 	return pi
+}
+
+// deleteObsSentinel removes the .sentinel folder in the OBS config directory.
+// OBS uses this folder to detect unclean shutdowns. By deleting it before
+// starting OBS, we prevent the "safe mode" dialog from appearing.
+// This is the workaround for OBS 32.0.0+ where --disable-shutdown-check was removed.
+func deleteObsSentinel() {
+	// OBS config is in %APPDATA%\obs-studio on Windows
+	appData := os.Getenv("APPDATA")
+	if appData == "" {
+		return
+	}
+	sentinelPath := filepath.Join(appData, "obs-studio", ".sentinel")
+	if err := os.RemoveAll(sentinelPath); err != nil {
+		LogIfError(err)
+	} else {
+		LogOfType("obs", "Deleted OBS sentinel folder", "path", sentinelPath)
+	}
 }
 
 // ObsActivate is called in a goroutine, so it can block.

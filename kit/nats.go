@@ -333,10 +333,10 @@ func printTLSHelp() {
 */
 
 func NatsEnvValue(key string) (string, error) {
-	path := ConfigFilePath(".env")
+	path := EnvFilePath()
 	myenv, err := godotenv.Read(path)
 	if err != nil {
-		return "", fmt.Errorf("error reading .env (%s) for NATS_*_URL values",path)
+		return "", fmt.Errorf("error reading env file (%s) for NATS_*_URL values", path)
 	}
 	s, ok := myenv[key]
 	if !ok {

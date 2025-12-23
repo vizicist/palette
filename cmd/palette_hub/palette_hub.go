@@ -234,7 +234,7 @@ func HubCommand(args []string) (map[string]string, error) {
 		if err != nil {
 			return map[string]string{"error": err.Error()}, nil
 		}
-		return map[string]string{"result": "Daily dumps completed"}, nil
+		return map[string]string{"result": "Daily dumps completed\n"}, nil
 
 	default:
 		return nil, fmt.Errorf("unknown command: %s\n%s", cmd, usage())

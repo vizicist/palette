@@ -945,11 +945,20 @@ def generate_html(data, time_of_day_data, session_duration_data, all_sessions, o
 
 def main():
     """Main function"""
+    if len(sys.argv) != 3:
+        print(f"Usage: {sys.argv[0]} <days_directory> <output_html_file>", file=sys.stderr)
+        print(f"  days_directory   - directory containing daily JSON dump files", file=sys.stderr)
+        print(f"  output_html_file - path for the generated HTML report", file=sys.stderr)
+        return 1
+
+    days_dir = sys.argv[1]
+    output_file = sys.argv[2]
+
     print("Palette Load Analysis", file=sys.stderr)
     print("=" * 50, file=sys.stderr)
 
     # Analyze all day files
-    data, time_of_day_data, session_duration_data, all_sessions = analyze_all_days('days')
+    data, time_of_day_data, session_duration_data, all_sessions = analyze_all_days(days_dir)
 
     if not data:
         print("No data found to analyze.", file=sys.stderr)
@@ -958,9 +967,9 @@ def main():
     print(f"\nAnalyzed {len(data)} days", file=sys.stderr)
 
     # Generate HTML report
-    generate_html(data, time_of_day_data, session_duration_data, all_sessions)
+    generate_html(data, time_of_day_data, session_duration_data, all_sessions, output_file)
 
-    print("\nDone! Open palette_analysis.html in your browser.", file=sys.stderr)
+    print(f"\nDone! Open {output_file} in your browser.", file=sys.stderr)
     return 0
 
 if __name__ == '__main__':
