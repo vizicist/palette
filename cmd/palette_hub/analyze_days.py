@@ -61,6 +61,8 @@ def analyze_day_file(filepath):
     last_load_time = defaultdict(lambda: None)
     # Track load count per current session
     session_load_count = defaultdict(int)
+    # Track which palettes have seen any attract mode events (required for session tracking)
+    has_attract_events = set()
 
     if not os.path.exists(filepath):
         return palette_loads, time_of_day_loads, session_durations, sessions
@@ -105,6 +107,7 @@ def analyze_day_file(filepath):
                         if attract_value is not None:
                             new_attract_state = attract_value
                             attract_mode_state[palette_name] = new_attract_state
+                            has_attract_events.add(palette_name)
 
                             # Track session duration
                             if time_str:
@@ -174,12 +177,13 @@ def analyze_day_file(filepath):
     except Exception as e:
         print(f"Error reading {filepath}: {e}", file=sys.stderr)
 
-    # Estimate session duration for palettes with loads but no explicit session end
-    # This handles cases where attract mode events are missing or sessions span day boundaries
-    # Track which palettes already have recorded sessions
-    palettes_with_sessions = set(s['palette'] for s in sessions)
-
+    # Estimate session duration for palettes that have attract events but session wasn't closed
+    # Only do this for palettes that have attract mode events - otherwise we can't track sessions
     for palette_name in palette_loads.keys():
+        # Skip palettes without attract events - we can't track sessions for them
+        if palette_name not in has_attract_events:
+            continue
+
         if palette_loads[palette_name] > 0 and first_load_time[palette_name] is not None:
             # If there's an active session (started but not ended), estimate the duration
             if session_start_time[palette_name] is not None and last_load_time[palette_name] is not None:
@@ -187,30 +191,12 @@ def analyze_day_file(filepath):
                 # Estimate it lasted until last load time + buffer (5 minutes)
                 estimated_end = last_load_time[palette_name]
                 duration = (estimated_end - session_start_time[palette_name]).total_seconds() + 300
-                # Cap duration at 2 hours to avoid unrealistic estimates
-                duration = min(duration, 7200)
                 session_durations[palette_name] += duration
                 sessions.append({
                     'palette': palette_name,
                     'start_time': session_start_time[palette_name].isoformat(),
                     'duration_seconds': duration
                 })
-            # If we have loads but never saw any session boundaries at all
-            # AND we don't already have proper sessions tracked
-            elif session_start_time[palette_name] is None and last_load_time[palette_name] is not None:
-                # Only estimate if we have NO tracked sessions for this palette
-                if palette_name not in palettes_with_sessions:
-                    # Estimate session from first to last load + buffers
-                    # Add 5 minutes before first load and 5 minutes after last load
-                    duration = (last_load_time[palette_name] - first_load_time[palette_name]).total_seconds() + 600
-                    # Cap duration at 2 hours to avoid unrealistic estimates
-                    duration = min(duration, 7200)
-                    session_durations[palette_name] += duration
-                    sessions.append({
-                        'palette': palette_name,
-                        'start_time': first_load_time[palette_name].isoformat(),
-                        'duration_seconds': duration
-                    })
 
     return palette_loads, time_of_day_loads, session_durations, sessions
 
