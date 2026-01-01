@@ -13,8 +13,9 @@ import sys
 
 # Hardcoded mapping of palette hostnames to readable names
 PALETTE_NAME_MAP = {
-    'palette12': 'Carleton University',
-    'spacepalette34': 'Idea Fab Labs',
+    'palette12': 'Carleton_University',
+    'spacepalette36': 'Rich_DDT',
+    'spacepalette34': 'Idea_Fab_Labs',
     'spacepalette35': 'MADE',
 }
 
@@ -463,7 +464,7 @@ def generate_html(data, time_of_day_data, session_duration_data, all_sessions, o
 
         <div class="controls">
             <label for="view-type">View:</label>
-            <select id="view-type" onchange="updateChart()">
+            <select id="view-type" onchange="onSettingsChange()">
                 <option value="daily">Daily Loads</option>
                 <option value="time-of-day">Time of Day</option>
                 <option value="session-duration" selected>Session Duration</option>
@@ -471,11 +472,13 @@ def generate_html(data, time_of_day_data, session_duration_data, all_sessions, o
 
             <div class="date-range">
                 <label for="start-date">From:</label>
-                <input type="date" id="start-date" onchange="updateChart()">
+                <input type="date" id="start-date" onchange="onSettingsChange()">
 
                 <label for="end-date">To:</label>
-                <input type="date" id="end-date" onchange="updateChart()">
+                <input type="date" id="end-date" onchange="onSettingsChange()">
             </div>
+
+            <button id="reset-defaults" onclick="resetToDefaults()" style="margin-left: 15px; padding: 8px 12px; font-size: 14px; border: 1px solid #ddd; border-radius: 4px; background-color: #f0f0f0; cursor: pointer;">Reset to Defaults</button>
         </div>
 
         <div id="chart"></div>
@@ -879,12 +882,34 @@ def generate_html(data, time_of_day_data, session_duration_data, all_sessions, o
                 // Capture the new visibility state
                 captureVisibilityState();
 
+                // Update URL with new palette visibility
+                updateUrl();
+
                 // Update session list if in session duration view
                 const viewType = document.getElementById('view-type').value;
                 if (viewType === 'session-duration') {{
                     updateSessionList();
                 }}
             }});
+        }}
+
+        // Get default date range (last month)
+        function getDefaultDateRange() {{
+            if (data.dates.length === 0) return {{ start: '', end: '' }};
+
+            const minDate = data.dates[0];
+            const maxDate = data.dates[data.dates.length - 1];
+
+            const endDateObj = new Date(maxDate + 'T00:00:00');
+            const startDateObj = new Date(endDateObj);
+            startDateObj.setMonth(startDateObj.getMonth() - 1);
+
+            const defaultStart = startDateObj.toISOString().split('T')[0];
+
+            return {{
+                start: defaultStart < minDate ? minDate : defaultStart,
+                end: maxDate
+            }};
         }}
 
         // Initialize date pickers with data range
@@ -901,22 +926,107 @@ def generate_html(data, time_of_day_data, session_duration_data, all_sessions, o
                 endInput.min = minDate;
                 endInput.max = maxDate;
 
-                // Default to showing last month of data
-                const endDateObj = new Date(maxDate + 'T00:00:00');
-                const startDateObj = new Date(endDateObj);
-                startDateObj.setMonth(startDateObj.getMonth() - 1);
-
-                // Format as YYYY-MM-DD
-                const defaultStart = startDateObj.toISOString().split('T')[0];
-
-                // Make sure we don't go before the minimum available date
-                startInput.value = defaultStart < minDate ? minDate : defaultStart;
-                endInput.value = maxDate;
+                const defaults = getDefaultDateRange();
+                startInput.value = defaults.start;
+                endInput.value = defaults.end;
             }}
+        }}
+
+        // Parse URL parameters
+        function getUrlParams() {{
+            const params = new URLSearchParams(window.location.search);
+            return {{
+                startDate: params.get('start'),
+                endDate: params.get('end'),
+                view: params.get('view'),
+                palettes: params.get('palettes') ? params.get('palettes').split(',') : null
+            }};
+        }}
+
+        // Update URL with current settings
+        function updateUrl() {{
+            const params = new URLSearchParams();
+
+            const startDate = document.getElementById('start-date').value;
+            const endDate = document.getElementById('end-date').value;
+            const viewType = document.getElementById('view-type').value;
+
+            const defaults = getDefaultDateRange();
+
+            // Only add non-default values to URL
+            if (startDate && startDate !== defaults.start) {{
+                params.set('start', startDate);
+            }}
+            if (endDate && endDate !== defaults.end) {{
+                params.set('end', endDate);
+            }}
+            if (viewType !== 'session-duration') {{
+                params.set('view', viewType);
+            }}
+
+            // Add hidden palettes to URL
+            const hiddenPalettes = data.palettes.filter(p => !paletteVisibility[p]);
+            if (hiddenPalettes.length > 0 && hiddenPalettes.length < data.palettes.length) {{
+                // Store visible palettes (shorter if most are hidden)
+                const visiblePalettes = data.palettes.filter(p => paletteVisibility[p]);
+                if (visiblePalettes.length <= hiddenPalettes.length) {{
+                    params.set('palettes', visiblePalettes.join(','));
+                }} else {{
+                    params.set('hide', hiddenPalettes.join(','));
+                }}
+            }}
+
+            const newUrl = params.toString() ? `${{window.location.pathname}}?${{params.toString()}}` : window.location.pathname;
+            window.history.replaceState(null, '', newUrl);
+        }}
+
+        // Apply URL parameters to page state
+        function applyUrlParams() {{
+            const params = getUrlParams();
+
+            if (params.startDate) {{
+                document.getElementById('start-date').value = params.startDate;
+            }}
+            if (params.endDate) {{
+                document.getElementById('end-date').value = params.endDate;
+            }}
+            if (params.view) {{
+                document.getElementById('view-type').value = params.view;
+            }}
+
+            // Handle palette visibility from URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const showPalettes = urlParams.get('palettes');
+            const hidePalettes = urlParams.get('hide');
+
+            if (showPalettes) {{
+                const visibleList = showPalettes.split(',');
+                data.palettes.forEach(p => {{
+                    paletteVisibility[p] = visibleList.includes(p);
+                }});
+            }} else if (hidePalettes) {{
+                const hideList = hidePalettes.split(',');
+                data.palettes.forEach(p => {{
+                    paletteVisibility[p] = !hideList.includes(p);
+                }});
+            }}
+        }}
+
+        // Called when user changes settings
+        function onSettingsChange() {{
+            updateChart();
+            updateUrl();
+        }}
+
+        // Reset to default settings
+        function resetToDefaults() {{
+            // Clear URL parameters and reload the page for a clean state
+            window.location.href = window.location.pathname;
         }}
 
         // Initialize
         initializeDatePickers();
+        applyUrlParams();
         updateChart();
         setupChartEventHandlers();
     </script>
