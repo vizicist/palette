@@ -1,0 +1,31 @@
+A list of all the wood pieces needed to build the Space Palette Pro.
+Note the quantity of each and the varying thicknesses.
+----------------------------------------------------------------------------------
+
+1 - 1/4"	SPP_Layer1_face.dxf
+1 - 1/8"	SPP_Layer2.dxf
+1 - 1/8"	SPP_Layer3.dxf
+1 - 1/8"	SPP_Layer4.dxf
+1 - 1/2"	SPP_Layer5.dxf
+1 - 1/2"	SPP_Layer6.dxf
+1 - 1/4"	SPP_Layer7_back.dxf
+
+1 - 1/4"	SPP_MonLayer1_face.dxf
+2 - 1/2"	SPP_MonLayer2_3_bottom.dxf
+4 - 1/2"	SPP_MonLayer2_3_leftright.dxf
+2 - 1/2"	SPP_MonLayer2_3_top.dxf
+1 - 1/2"	SPP_MonLayer4.dxf
+1 - 1/2"	SPP_MonLayer5.dxf
+1 - 1/4"	SPP_MonLayer6_back.dxf
+
+1 - 1/2"	SPP_BaseBack.dxf
+1 - 1/2"	SPP_BaseBackBottom.dxf
+1 - 1/2"	SPP_BaseBottom.dxf
+1 - 1/4"	SPP_BaseFront.dxf
+1 - 1/2"	SPP_BaseHeadphones.dxf
+1 - 1/2"	SPP_BaseKeyboard.dxf
+1 - 1/4"	SPP_BaseMidShelf.dxf
+1 - 1/4"	SPP_BaseMonKeyShelf.dxf
+2 - 1/2"	SPP_BaseSide.dxf
+2 - 1/4"	SPP_BaseSpeaker.dxf
+1 - 1/4"	SPP_BaseTopShelf.dxf
