@@ -257,6 +257,7 @@ var LogEnabled = map[string]bool{
 	"nats":           false,
 	"note":           false,
 	"notify":         false,
+	"obs":            false,
 	"osc":            false,
 	"params":         false,
 	"phrase":         false,

@@ -126,6 +126,8 @@ copy tv_on.bat %bin% >nul
 copy tv_off.bat %bin% >nul
 copy disable_multitouch.bat %bin% >nul
 copy setup_onboot.bat %bin% >nul
+copy setup_dailyreboot.bat %bin% >nul
+copy remove_dailyreboot.bat %bin% >nul
 popd
 
 echo ================ Copying windows-specific things
