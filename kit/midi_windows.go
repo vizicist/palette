@@ -1,15 +1,14 @@
 //go:build windows
-// +build windows
 
 /*
- * If you ever get an error message like this:
- *
- * gitlab.com/gomidi/midio/v2/drivers/rtmididrv/imported/rtmidi:
-        build constraints exclude all Go files in
-		C:\Users\space\go\pkg\mod\gitlab.com\gomidi\midi\v2@v2.2.19\drivers\rtmididrv\imported\rtmidi
- *
- * it's because you don't have gcc.exe in your PATH.
- */
+  - If you ever get an error message like this:
+    *
+  - gitlab.com/gomidi/midio/v2/drivers/rtmididrv/imported/rtmidi:
+    build constraints exclude all Go files in
+    C:\Users\space\go\pkg\mod\gitlab.com\gomidi\midi\v2@v2.2.19\drivers\rtmididrv\imported\rtmidi
+    *
+  - it's because you don't have gcc.exe in your PATH.
+*/
 package kit
 
 import (
@@ -99,7 +98,7 @@ func InitMidiIO() {
 		// 	Erae 2
 		// 	MIDIOUT2 (Erae 2)
 
-		// 
+		//
 		if strings.HasPrefix(name, "Erae 2") {
 			TheErae.output = outp
 		}
