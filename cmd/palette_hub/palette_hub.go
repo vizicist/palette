@@ -1,9 +1,12 @@
 package main
 
 import (
+	"bufio"
 	"flag"
 	"fmt"
 	"os"
+	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -39,6 +42,10 @@ func usage() string {
 	  Date formats: 2025-12-11, 12-11, 12/11, today, yesterday
 	palette_hub dumpdays [ {streamname} ]
 	  Creates days/*.json files for each day from 2025-01-01 to yesterday
+	palette_hub import_log {hostname}
+	  Reads engine.log from stdin and merges events into days/*.json files
+	  Deduplicates against existing events in the days files
+	  Example: cat engine.log | ssh hub_machine "cd palette_hub && ./palette_hub import_log spacepalette37"
 	`
 }
 
@@ -47,13 +54,26 @@ func HubCommand(args []string) (map[string]string, error) {
 		return nil, fmt.Errorf("%s", usage())
 	}
 
-	// Connect to the remote NATS server
+	cmd := args[0]
+
+	// Handle commands that don't need NATS connection
+	if cmd == "import_log" {
+		if len(args) < 2 {
+			return nil, fmt.Errorf("import_log requires a hostname argument\n%s", usage())
+		}
+		hostname := args[1]
+		result, err := importEngineLog(hostname)
+		if err != nil {
+			return map[string]string{"error": err.Error()}, nil
+		}
+		return map[string]string{"result": result}, nil
+	}
+
+	// Connect to the remote NATS server for other commands
 	err := kit.NatsConnectRemote()
 	if err != nil {
 		return map[string]string{"error": err.Error()}, nil
 	}
-
-	cmd := args[0]
 
 	switch cmd {
 
@@ -355,4 +375,261 @@ func parseFlexibleDate(dateStr string) (time.Time, error) {
 	}
 
 	return time.Time{}, fmt.Errorf("unrecognized date format: %s", dateStr)
+}
+
+// importEngineLog reads an engine.log from stdin and merges events into days files
+func importEngineLog(hostname string) (string, error) {
+	// Create days directory if it doesn't exist
+	daysDir := "days"
+	if err := os.MkdirAll(daysDir, 0755); err != nil {
+		return "", fmt.Errorf("failed to create days directory: %v", err)
+	}
+
+	loc, err := time.LoadLocation("America/Los_Angeles")
+	if err != nil {
+		loc = time.Local
+	}
+
+	// Read all lines from stdin
+	scanner := bufio.NewScanner(os.Stdin)
+	// Increase buffer size for potentially long log lines
+	buf := make([]byte, 0, 64*1024)
+	scanner.Buffer(buf, 1024*1024)
+
+	var startTime time.Time
+	var events []DayEvent
+
+	// Track attract mode state - loads during attract mode should be skipped
+	// (matching the behavior of NatsPublishFromEngine which only publishes when !isOn)
+	attractModeOn := false
+
+	lineNum := 0
+	for scanner.Scan() {
+		lineNum++
+		line := scanner.Text()
+		if line == "" {
+			continue
+		}
+
+		var logEntry map[string]any
+		if err := json.Unmarshal([]byte(line), &logEntry); err != nil {
+			continue // Skip non-JSON lines
+		}
+
+		msg, ok := logEntry["msg"].(string)
+		if !ok {
+			continue
+		}
+
+		uptimeStr, ok := logEntry["uptime"].(string)
+		if !ok {
+			continue
+		}
+		uptime, err := strconv.ParseFloat(uptimeStr, 64)
+		if err != nil {
+			continue
+		}
+
+		// Look for InitLog to get start time
+		if msg == "InitLog ==============================" {
+			dateStr, ok := logEntry["date"].(string)
+			if ok {
+				t, err := time.Parse(kit.PaletteTimeLayout, dateStr)
+				if err == nil {
+					// Subtract uptime to get the actual start time
+					startTime = t.Add(-time.Duration(uptime * float64(time.Second)))
+					// Reset attract mode state on new session
+					attractModeOn = false
+				}
+			}
+			continue
+		}
+
+		// Skip if we haven't found a start time yet
+		if startTime.IsZero() {
+			continue
+		}
+
+		// Calculate absolute time for this event
+		eventTime := startTime.Add(time.Duration(uptime * float64(time.Second)))
+
+		// Extract attract mode events
+		if msg == "setAttractMode" {
+			onoff, ok := logEntry["onoff"].(bool)
+			if !ok {
+				continue
+			}
+			// Update our tracking of attract mode state
+			attractModeOn = onoff
+			data := map[string]any{"onoff": onoff}
+			dataBytes, _ := json.Marshal(data)
+			events = append(events, DayEvent{
+				Subject: fmt.Sprintf("from_palette.%s.attract", hostname),
+				Time:    eventTime,
+				Data:    string(dataBytes),
+			})
+		}
+
+		// Extract load events - but only when NOT in attract mode
+		// This matches the NATS publishing logic in kit/quad.go
+		if msg == "Quad.Load" {
+			// Skip loads during attract mode (these wouldn't have been published via NATS)
+			if attractModeOn {
+				continue
+			}
+			category, ok1 := logEntry["category"].(string)
+			filename, ok2 := logEntry["filename"].(string)
+			if !ok1 || !ok2 {
+				continue
+			}
+			// Skip _Current loads
+			if filename == "_Current" {
+				continue
+			}
+			data := map[string]any{"category": category, "filename": filename}
+			dataBytes, _ := json.Marshal(data)
+			events = append(events, DayEvent{
+				Subject: fmt.Sprintf("from_palette.%s.load", hostname),
+				Time:    eventTime,
+				Data:    string(dataBytes),
+			})
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		return "", fmt.Errorf("error reading stdin: %v", err)
+	}
+
+	if len(events) == 0 {
+		return "No events found in engine.log\n", nil
+	}
+
+	// Group events by day
+	eventsByDay := make(map[string][]DayEvent)
+	for _, event := range events {
+		dayStr := event.Time.In(loc).Format("2006-01-02")
+		eventsByDay[dayStr] = append(eventsByDay[dayStr], event)
+	}
+
+	// Process each day
+	totalNew := 0
+	totalSkipped := 0
+	daysModified := 0
+
+	for dayStr, dayEvents := range eventsByDay {
+		filename := fmt.Sprintf("%s/%s.json", daysDir, dayStr)
+
+		// Load existing events from the day file (if it exists)
+		existingEvents := make(map[string]bool)
+		if fileData, err := os.ReadFile(filename); err == nil {
+			lines := strings.Split(string(fileData), "\n")
+			for _, line := range lines {
+				if line == "" {
+					continue
+				}
+				// Create a key from the event for deduplication
+				existingEvents[line] = true
+			}
+		}
+
+		// Filter out duplicates and prepare new events
+		var newEvents []DayEvent
+		for _, event := range dayEvents {
+			eventLine := formatDayEvent(event)
+			if !existingEvents[eventLine] {
+				newEvents = append(newEvents, event)
+			} else {
+				totalSkipped++
+			}
+		}
+
+		if len(newEvents) == 0 {
+			continue
+		}
+
+		// Read existing file content (if any)
+		var allEvents []DayEvent
+		if fileData, err := os.ReadFile(filename); err == nil {
+			lines := strings.Split(string(fileData), "\n")
+			for _, line := range lines {
+				if line == "" {
+					continue
+				}
+				event, err := parseDayEvent(line)
+				if err == nil {
+					allEvents = append(allEvents, event)
+				}
+			}
+		}
+
+		// Add new events
+		allEvents = append(allEvents, newEvents...)
+
+		// Sort by time
+		sort.Slice(allEvents, func(i, j int) bool {
+			return allEvents[i].Time.Before(allEvents[j].Time)
+		})
+
+		// Write back to file
+		file, err := os.Create(filename)
+		if err != nil {
+			return "", fmt.Errorf("failed to create file %s: %v", filename, err)
+		}
+
+		for _, event := range allEvents {
+			file.WriteString(formatDayEvent(event) + "\n")
+		}
+		file.Close()
+
+		totalNew += len(newEvents)
+		daysModified++
+		fmt.Printf("  %s: added %d events (total now %d)\n", dayStr, len(newEvents), len(allEvents))
+	}
+
+	return fmt.Sprintf("Imported %d new events, skipped %d duplicates, modified %d day files\n",
+		totalNew, totalSkipped, daysModified), nil
+}
+
+// DayEvent represents an event to be stored in a day file
+type DayEvent struct {
+	Subject string
+	Time    time.Time
+	Data    string
+}
+
+// formatDayEvent formats an event as a JSON line for the day file
+func formatDayEvent(event DayEvent) string {
+	type DumpData struct {
+		Subject string `json:"subject"`
+		Tm      string `json:"time"`
+		Data    string `json:"data"`
+	}
+	dd := DumpData{
+		Subject: event.Subject,
+		Tm:      event.Time.Format(kit.PaletteTimeLayout),
+		Data:    event.Data,
+	}
+	jsonData, _ := json.Marshal(dd)
+	return string(jsonData)
+}
+
+// parseDayEvent parses a JSON line from a day file
+func parseDayEvent(line string) (DayEvent, error) {
+	var dd struct {
+		Subject string `json:"subject"`
+		Tm      string `json:"time"`
+		Data    string `json:"data"`
+	}
+	if err := json.Unmarshal([]byte(line), &dd); err != nil {
+		return DayEvent{}, err
+	}
+	t, err := time.Parse(kit.PaletteTimeLayout, dd.Tm)
+	if err != nil {
+		return DayEvent{}, err
+	}
+	return DayEvent{
+		Subject: dd.Subject,
+		Time:    t,
+		Data:    dd.Data,
+	}, nil
 }
