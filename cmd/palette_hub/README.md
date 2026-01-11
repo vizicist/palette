@@ -23,6 +23,12 @@ palette_hub dumpday {date} [streamname]
 # Generate daily dump files (2025-01-01 to yesterday)
 palette_hub dumpdays [streamname]
   # Creates days/*.json files, skips existing files
+
+# Import events from a local engine.log file
+palette_hub import_log {hostname}
+  # Reads engine.log from stdin and merges into days/*.json files
+  # Deduplicates against existing events
+  # Filters out attract-mode loads (matching NATS behavior)
 ```
 
 ### Examples
@@ -36,7 +42,27 @@ palette_hub dumpday today
 
 # Dump a specific date
 palette_hub dumpday 2025-12-11
+
+# Import engine.log from a remote palette via SSH
+# (run this command ON the palette machine)
+cat engine.log | ssh tjt@timthompson.com "cd /home/tjt/github/palette/cmd/palette_hub && ./palette_hub import_log spacepalette34"
 ```
+
+### Offline Palette Recovery
+
+When a palette is disconnected from the network, it can't send NATS messages to log usage. However, the local `engine.log` file continues to record all events. The `import_log` command allows you to recover this data:
+
+1. **Connect to the palette** (e.g., via Chrome Remote Desktop)
+2. **Run the import command** from the palette, piping the engine.log to the hub machine:
+   ```bash
+   cat /path/to/engine.log | ssh user@hub-machine "cd /path/to/palette_hub && ./palette_hub import_log {hostname}"
+   ```
+3. The command will:
+   - Parse the engine.log to extract `setAttractMode` and `Quad.Load` events
+   - Reconstruct absolute timestamps from the log's relative uptime values
+   - Skip loads that occurred during attract mode (matching NATS behavior)
+   - Deduplicate against existing events in the days files
+   - Merge new events chronologically into the appropriate day files
 
 ## analyze_days.py - Web-based Analysis
 
