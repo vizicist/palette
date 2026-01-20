@@ -1,5 +1,4 @@
 //go:build windowsdepth
-// +build windowsdepth
 
 package kit
 

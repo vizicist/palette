@@ -219,8 +219,7 @@ func LoadGlobalParamsFrom(filename string, activate bool) (err error) {
 			ActivateGlobalParam(nm)
 		}
 	}
-	SaveCurrentGlobalParams()
-	return nil
+	return SaveCurrentGlobalParams()
 }
 
 func (e *Engine) Start() {

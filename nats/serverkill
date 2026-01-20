@@ -1,0 +1,12 @@
+pid=`ps -eaf | grep nats-server | grep -v grep | awk '{print $2}'`
+if [ "$pid" != "" ]
+then
+	kill -15 "$pid"
+fi
+pid=`ps -eaf | grep palette_natsmon | grep -v grep | awk '{print $2}'`
+for i in $pid ; do
+	if [ "$i" != "" ]
+	then
+		kill -15 "$i"
+	fi
+done

@@ -1,0 +1,3 @@
+#/bin/bash
+
+ps -eaf | grep nats| grep -v grep 

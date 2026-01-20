@@ -1,5 +1,4 @@
 //go:build windows
-// +build windows
 
 package kit
 
@@ -81,7 +80,7 @@ func (writer *gatherWriter) Write(bytes []byte) (int, error) {
 	return len(bytes), nil
 }
 
-func IsRunningExecutable(exe string) (bool,error) {
+func IsRunningExecutable(exe string) (bool, error) {
 	// os.Stdout.WriteString("IsRunningExecutable exe=" + exe + "\n")
 	stdout := &gatherWriter{}
 	stderr := &NoWriter{}
