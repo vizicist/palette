@@ -1,5 +1,4 @@
 //go:build !windows
-// +build !windows
 
 package kit
 
@@ -43,7 +42,6 @@ var noWriter = &NoWriter{}
 
 // StartDeviceInput starts anything needed to provide device inputs
 func StartDeviceInput() {
-	return
 }
 
 // KillProcess kills a process (synchronously)
@@ -52,9 +50,9 @@ func KillExecutable(exe string) {
 	Spawn("pkill", false, noWriter, noWriter, exe)
 }
 
-func IsRunningExecutable(exe string) (bool,error) {
+func IsRunningExecutable(exe string) (bool, error) {
 	err := fmt.Errorf("unix.go: IsRunningExecutable needs work")
-	return false,err
+	return false, err
 }
 
 func StartExecutableLogOutput(logName string, fullexe string, args ...string) error {

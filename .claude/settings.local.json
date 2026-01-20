@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(go build:*)",
+      "Bash(./palette_hub.exe)",
+      "Bash(python analyze_days.py:*)",
+      "Bash(ls:*)",
+      "Bash(python -c:*)",
+      "Bash(for file in 2025-12-*.json)",
+      "Bash(do grep '\"\"\"\"subject\"\"\"\":\"\"\"\"from_palette.*\\.load\"\"\"\"' \"$file\")",
+      "Bash(break)",
+      "Bash(done)",
+      "Bash(grep:*)",
+      "Bash(./palette_hub.exe dumpdays:*)",
+      "Bash(./daily_update.sh)",
+      "Bash(cat:*)",
+      "Bash(crontab -l:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nAdd URL parameters and Reset button to analysis page\n\n- Support URL params: start, end, view, palettes, hide\n- Add Reset to Defaults button that reloads page\n- Add spacepalette36 \\(Rich_DDT\\) to palette map\n- Use underscores in palette names for easier URL use\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git push)"
+    ]
+  }
+}

@@ -10,8 +10,6 @@ import (
 
 	"github.com/pkg/profile"
 	"github.com/vizicist/palette/kit"
-	_ "github.com/vizicist/palette/tool"
-	"github.com/vizicist/palette/twinsys"
 )
 
 func main() {
@@ -56,10 +54,5 @@ func main() {
 		os.Exit(0)
 	}()
 
-	b, _ := kit.GetParamBool("global.twinsys")
-	if b {
-		twinsys.Run()
-	} else {
-		select {}
-	}
+	select {}
 }
