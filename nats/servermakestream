@@ -1,0 +1,5 @@
+#!/bin/bash
+
+nats stream add --subjects "from_palette.>" --storage file --replicas 1 --retention limits --max-msg-size=-1 --max-msgs=-1 --max-msgs-per-subject=-1 --max-bytes=-1 --max-age=0 --dupe-window=2m --discard old from_palette
+
+nats stream add --subjects "to_palette.>" --storage file --replicas 1 --retention limits --max-msg-size=-1 --max-msgs=-1 --max-msgs-per-subject=-1 --max-bytes=-1 --max-age=0 --dupe-window=2m --discard old to_palette
