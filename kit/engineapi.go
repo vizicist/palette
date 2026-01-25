@@ -196,7 +196,17 @@ func ExecuteGlobalApi(api string, apiargs map[string]string) (result string, err
 		if !ok {
 			return "", fmt.Errorf("ExecuteGlobalApi: missing name parameter")
 		}
-		return GlobalParams.Get(name)
+		// First try exact match, if not found try prefix matching
+		val, err := GlobalParams.Get(name)
+		if err == nil {
+			return name + " = " + val, nil
+		}
+		// Try prefix matching (add "." if not present to match category boundaries)
+		prefix := name
+		if !strings.HasSuffix(prefix, ".") {
+			prefix = name + "."
+		}
+		return GlobalParams.GetWithPrefix(prefix)
 
 	case "showclip":
 		s, ok := apiargs["clipnum"]
