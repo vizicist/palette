@@ -59,7 +59,7 @@ func usage() string {
 	palette osc listen {port@host}
 	palette osc send {port@host} {addr} ...
 	palette hub [ streams | dumpload ]
-	palette get {name}
+	palette get {name}    (prefix matching if no exact match)
 	palette set {name} {value}
 	palette setboot {name} {value}
 	palette {category}.{api} [ {argname} {argvalue} ] ...
