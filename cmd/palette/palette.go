@@ -150,7 +150,8 @@ func CliCommand(args []string) (map[string]string, error) {
 		if len(args) != 2 {
 			return nil, fmt.Errorf("bad %s command, expected usage:\n%s", api, usage())
 		}
-		return kit.LocalEngineApi("global."+api, "name", args[1])
+		// Use the ...withprefix apis to get all matching parameters
+		return kit.LocalEngineApi("global."+api+"withprefix", "name", args[1])
 
 	case "set", "setboot":
 		if len(args) != 3 {
@@ -210,7 +211,10 @@ func CliCommand(args []string) (map[string]string, error) {
 			return nil, doStartMonitor()
 
 		case "engine":
-			return nil, doStartEngine()
+			return nil, doStartEngine("")
+
+		case "engineonly":
+			return nil, doStartEngine("engineonly")
 
 		default:
 			// Only the monitor and engine are started directly by palette.
@@ -566,14 +570,14 @@ func StatusOutput() (statusOut string, numRunning int) {
 	return s, nrunning
 }
 
-func doStartEngine() error {
+func doStartEngine(arg string) error {
 	running, err := kit.IsRunning("engine")
 	if err == nil && running {
 		return fmt.Errorf("engine is already running")
 	}
 	fullexe := filepath.Join(kit.PaletteDir(), "bin", kit.EngineExe)
-	kit.LogInfo("palette: starting engine", "EngineExe", kit.EngineExe)
-	return kit.StartExecutableLogOutput("engine", fullexe)
+	kit.LogInfo("palette: starting engine", "EngineExe", kit.EngineExe, "arg", arg)
+	return kit.StartExecutableLogOutput("engine", fullexe, arg)
 }
 
 func doStartMonitor() error {

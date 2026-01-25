@@ -8,6 +8,9 @@ import (
 	"time"
 )
 
+// NoProcess when true, skip auto-starting processes
+var NoProcess bool
+
 // ExecuteApi xxx
 func ExecuteApi(api string, apiargs map[string]string) (result string, err error) {
 
@@ -77,6 +80,8 @@ func ExecuteApiFromJson(rawjson string) (string, error) {
 
 func ExecuteGlobalApi(api string, apiargs map[string]string) (result string, err error) {
 
+	LogInfo("ExecuteGlobalApi", "api", api, "apiargs", apiargs)
+
 	switch api {
 
 	case "debugnil":
@@ -128,7 +133,7 @@ func ExecuteGlobalApi(api string, apiargs map[string]string) (result string, err
 		err := LoadGlobalParamsFrom(fname, true)
 		return "", err
 
-	case "getboot":
+	case "getboot", "getbootwithprefix":
 		name, ok := apiargs["name"]
 		if !ok {
 			return "", fmt.Errorf("ExecuteGlobalApi: missing name parameter")
@@ -137,7 +142,11 @@ func ExecuteGlobalApi(api string, apiargs map[string]string) (result string, err
 		if err != nil {
 			return "", err
 		}
-		return params.Get(name)
+		if api == "getboot" {
+			return params.Get(name)
+		} else {
+			return params.GetWithPrefix(name)
+		}
 
 	case "setboot":
 		name, value, err := GetNameValue(apiargs)
@@ -191,22 +200,21 @@ func ExecuteGlobalApi(api string, apiargs map[string]string) (result string, err
 		}
 		return "", SaveCurrentGlobalParams()
 
-	case "get":
+	case "get", "getwithprefix":
+
+		LogInfo("ExecuteGlobalApi get 222", "api", api, "apiargs", apiargs)
+
 		name, ok := apiargs["name"]
 		if !ok {
 			return "", fmt.Errorf("ExecuteGlobalApi: missing name parameter")
 		}
-		// First try exact match, if not found try prefix matching
-		val, err := GlobalParams.Get(name)
-		if err == nil {
-			return name + " = " + val, nil
+		if api == "getwithprefix" {
+			LogInfo("ExecuteGlobalApi 111", "api", api, "name", name)
+			return GlobalParams.GetWithPrefix(name)
+		} else {
+			LogInfo("ExecuteGlobalApi 000", "api", api, "name", name)
+			return GlobalParams.Get(name)
 		}
-		// Try prefix matching (add "." if not present to match category boundaries)
-		prefix := name
-		if !strings.HasSuffix(prefix, ".") {
-			prefix = name + "."
-		}
-		return GlobalParams.GetWithPrefix(prefix)
 
 	case "showclip":
 		s, ok := apiargs["clipnum"]
@@ -373,6 +381,9 @@ func ApplyGlobalParam(name string, value string) (err error) {
 	// LogOfType("params", "Engine.ApplyParam", "name", name, "value", value)
 
 	if strings.HasPrefix(name, "global.process.") {
+		if NoProcess {
+			return nil
+		}
 		process := strings.TrimPrefix(name, "global.process.")
 		if TheProcessManager.IsAvailable(process) {
 			if IsTrueValue(value) {
