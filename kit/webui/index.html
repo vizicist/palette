@@ -5,12 +5,51 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <header id="title-bar">
+    <!-- Help overlay -->
+    <div id="help-overlay" class="hidden">
+        <img src="sppro_helpscreen.png" alt="Help" draggable="false">
+    </div>
+
+    <header id="title-bar" class="hidden">
         <h1>Space Palette Pro</h1>
     </header>
 
+    <!-- Advanced mode: category tabs -->
+    <nav id="category-tabs">
+        <button class="tab" data-category="global">Global</button>
+        <span class="tab-sep">/</span>
+        <button class="tab active" data-category="quad">Quad</button>
+        <span class="tab-sep">/</span>
+        <button class="tab" data-category="patch">Patch</button>
+        <span class="tab-sep">=</span>
+        <button class="tab" data-category="misc">Misc</button>
+        <span class="tab-sep">+</span>
+        <button class="tab" data-category="sound">Sound</button>
+        <span class="tab-sep">+</span>
+        <button class="tab" data-category="visual">Visual</button>
+        <span class="tab-sep">+</span>
+        <button class="tab" data-category="effect">Effect</button>
+    </nav>
+
     <div id="main-container">
         <main id="preset-grid"></main>
+
+        <!-- Advanced mode: patch selector -->
+        <div id="patch-selector">
+            <div class="patch-grid">
+                <div class="patch-row">
+                    <button class="patch-btn" data-patch="A">A</button>
+                    <button class="patch-btn active" data-patch="*">*</button>
+                    <button class="patch-btn" data-patch="D">D</button>
+                </div>
+                <div class="patch-row patch-row-bottom">
+                    <button class="patch-btn" data-patch="B">B</button>
+                    <button class="patch-btn" data-patch="C">C</button>
+                </div>
+            </div>
+            <div class="scroll-indicator"></div>
+        </div>
+
         <footer id="controls">
             <button id="btn-complete-reset">COMPLETE<br>RESET</button>
             <button id="btn-soft-reset">SOFT<br>RESET</button>
