@@ -80,7 +80,9 @@ func ExecuteApiFromJson(rawjson string) (string, error) {
 
 func ExecuteGlobalApi(api string, apiargs map[string]string) (result string, err error) {
 
-	LogInfo("ExecuteGlobalApi", "api", api, "apiargs", apiargs)
+	if api != "status" {
+		LogInfo("ExecuteGlobalApi", "api", api, "apiargs", apiargs)
+	}
 
 	switch api {
 
@@ -523,6 +525,15 @@ func ExecuteSavedApi(api string, apiargs map[string]string) (result string, err 
 	case "list":
 		category := optionalStringArg("category", apiargs, "*")
 		return SavedListAsString(category)
+	case "paramdefs":
+		category := optionalStringArg("category", apiargs, "*")
+		return ParamDefsForCategory(category)
+	case "paraminits":
+		category := optionalStringArg("category", apiargs, "*")
+		return ParamInitValuesForCategory(category)
+	case "paramrands":
+		category := optionalStringArg("category", apiargs, "*")
+		return ParamRandomValuesForCategory(category)
 	default:
 		LogWarn("api is not recognized\n", "api", api)
 		return "", fmt.Errorf("Router.ExecuteSavedApi unrecognized api=%s", api)
