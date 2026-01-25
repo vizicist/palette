@@ -292,6 +292,14 @@ func (patch *Patch) Api(api string, apiargs map[string]string) (string, error) {
 		}
 		return patch.Get(name), nil
 
+	case "getparams":
+		// Returns all parameter values for a given category prefix
+		category, ok := apiargs["category"]
+		if !ok {
+			category = "" // return all per-patch params
+		}
+		return patch.params.GetWithPrefix(category)
+
 	case "clear":
 		patch.loopClear()
 		patch.clearGraphics()

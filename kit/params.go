@@ -2,6 +2,7 @@ package kit
 
 import (
 	"fmt"
+	"math/rand"
 	"os"
 	"sort"
 	"strconv"
@@ -20,22 +21,32 @@ type ParamDef struct {
 }
 
 type ParamDefFloat struct {
-	min  float64
-	max  float64
-	Init string
+	min     float64
+	max     float64
+	randmin float64
+	randmax float64
+	hasRand bool // true if randmin or randmax was specified
+	Init    string
 	// comment string
 }
 
 type ParamDefInt struct {
-	min int
-	max int
+	min     int
+	max     int
+	randmin int
+	randmax int
+	hasRand bool // true if randmin or randmax was specified
 }
 
 type ParamDefBool struct {
+	randmax float64 // probability of being true (0.0-1.0)
+	hasRand bool    // true if randmax was specified
 }
 
 type ParamDefString struct {
-	values []string
+	values  []string
+	randmax string // if set, always use this value for rand
+	hasRand bool   // true if randmax was specified
 }
 
 type ParamsMap map[string]any
@@ -529,9 +540,28 @@ func LoadParamDefs() error {
 			if err != nil {
 				return err
 			}
+			// Check if randmin/randmax are specified
+			frandmin := fmin
+			frandmax := fmax
+			hasRand := false
+			if rm, ok := jmap["randmin"].(string); ok {
+				if v, err := ParseFloat(rm, "randmin"); err == nil {
+					frandmin = v
+					hasRand = true
+				}
+			}
+			if rm, ok := jmap["randmax"].(string); ok {
+				if v, err := ParseFloat(rm, "randmax"); err == nil {
+					frandmax = v
+					hasRand = true
+				}
+			}
 			pd.TypedParamDef = ParamDefFloat{
-				min: fmin,
-				max: fmax,
+				min:     fmin,
+				max:     fmax,
+				randmin: frandmin,
+				randmax: frandmax,
+				hasRand: hasRand,
 			}
 
 		case "int":
@@ -543,13 +573,44 @@ func LoadParamDefs() error {
 			if err != nil {
 				return err
 			}
+			// Check if randmin/randmax are specified
+			irandmin := imin
+			irandmax := imax
+			hasRand := false
+			if rm, ok := jmap["randmin"].(string); ok {
+				if v, err := ParseInt(rm, "randmin"); err == nil {
+					irandmin = v
+					hasRand = true
+				}
+			}
+			if rm, ok := jmap["randmax"].(string); ok {
+				if v, err := ParseInt(rm, "randmax"); err == nil {
+					irandmax = v
+					hasRand = true
+				}
+			}
 			pd.TypedParamDef = ParamDefInt{
-				min: imin,
-				max: imax,
+				min:     imin,
+				max:     imax,
+				randmin: irandmin,
+				randmax: irandmax,
+				hasRand: hasRand,
 			}
 
 		case "bool":
-			pd.TypedParamDef = ParamDefBool{}
+			// randmax for bool is probability of being true (0.0-1.0)
+			randprob := 0.5
+			hasRand := false
+			if rm, ok := jmap["randmax"].(string); ok {
+				if v, err := ParseFloat(rm, "randmax"); err == nil {
+					randprob = v
+					hasRand = true
+				}
+			}
+			pd.TypedParamDef = ParamDefBool{
+				randmax: randprob,
+				hasRand: hasRand,
+			}
 
 		case "string":
 			// A bit of a hack - the "min" value of a
@@ -557,8 +618,17 @@ func LoadParamDefs() error {
 			// is actually an "enum" type name
 			enumName := min
 			values := ParamEnums[enumName]
+			// randmax for string is a specific value to always use
+			randmax := ""
+			hasRand := false
+			if rm, ok := jmap["randmax"].(string); ok {
+				randmax = rm
+				hasRand = true
+			}
 			pd.TypedParamDef = ParamDefString{
-				values: values,
+				values:  values,
+				randmax: randmax,
+				hasRand: hasRand,
 			}
 		}
 
@@ -624,6 +694,98 @@ func (vals *ParamValues) paramDefOf(name string) (ParamDef, error) {
 }
 
 var overrideMap ParamsMap
+
+// ParamDefsForCategory returns a newline-separated list of parameter names for a category
+func ParamDefsForCategory(category string) (string, error) {
+	var names []string
+	for name, def := range ParamDefs {
+		if def.Category == category || category == "*" {
+			names = append(names, name)
+		}
+	}
+	sort.Strings(names)
+	return strings.Join(names, "\n"), nil
+}
+
+// ParamInitValuesForCategory returns a JSON object mapping param names to their init values
+func ParamInitValuesForCategory(category string) (string, error) {
+	initMap := make(map[string]string)
+	for name, def := range ParamDefs {
+		if def.Category == category || category == "*" {
+			initMap[name] = def.Init
+		}
+	}
+	jsonBytes, err := json.Marshal(initMap)
+	if err != nil {
+		return "", fmt.Errorf("ParamInitValuesForCategory: %w", err)
+	}
+	return string(jsonBytes), nil
+}
+
+// RandomValueForParam generates a random value for a parameter based on its definition.
+// Returns empty string if the parameter has no randmin/randmax specified.
+func RandomValueForParam(def ParamDef) string {
+	switch td := def.TypedParamDef.(type) {
+	case ParamDefFloat:
+		if !td.hasRand {
+			return ""
+		}
+		val := td.randmin + rand.Float64()*(td.randmax-td.randmin)
+		return fmt.Sprintf("%f", val)
+	case ParamDefInt:
+		if !td.hasRand {
+			return ""
+		}
+		rangeSize := td.randmax - td.randmin + 1
+		if rangeSize <= 0 {
+			return fmt.Sprintf("%d", td.randmin)
+		}
+		val := td.randmin + rand.Intn(rangeSize)
+		return fmt.Sprintf("%d", val)
+	case ParamDefBool:
+		if !td.hasRand {
+			return ""
+		}
+		// randmax is probability of being true
+		if rand.Float64() < td.randmax {
+			return "true"
+		}
+		return "false"
+	case ParamDefString:
+		if !td.hasRand {
+			return ""
+		}
+		// If randmax is set, always use that value
+		if td.randmax != "" {
+			return td.randmax
+		}
+		if len(td.values) == 0 {
+			return ""
+		}
+		return td.values[rand.Intn(len(td.values))]
+	default:
+		return ""
+	}
+}
+
+// ParamRandomValuesForCategory returns a JSON object mapping param names to random values.
+// Only includes params that have randmin/randmax specified in their definition.
+func ParamRandomValuesForCategory(category string) (string, error) {
+	randMap := make(map[string]string)
+	for name, def := range ParamDefs {
+		if def.Category == category || category == "*" {
+			randVal := RandomValueForParam(def)
+			if randVal != "" {
+				randMap[name] = randVal
+			}
+		}
+	}
+	jsonBytes, err := json.Marshal(randMap)
+	if err != nil {
+		return "", fmt.Errorf("ParamRandomValuesForCategory: %w", err)
+	}
+	return string(jsonBytes), nil
+}
 
 func OverrideMap() ParamsMap {
 	if overrideMap == nil {

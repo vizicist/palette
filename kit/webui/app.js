@@ -1,15 +1,31 @@
+// State
+let currentPatch = '*';
+let currentCategory = 'quad';
+let advancedMode = true;
+let lastSinglePatch = 'A'; // Track last single selection for toggle
+let showingParams = false; // Toggle between presets and parameters view
+
+// Swipe tracking for diagonal gesture
+let swipeStart = null;
+const CORNER_THRESHOLD = 0.20; // 20% of screen dimension
+
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
     await loadPresets();
     setupControls();
+    setupHelpOverlay();
+    setupCategoryTabs();
+    setupPatchSelector();
+    updatePatchButtons();
 });
 
 async function loadPresets() {
     const grid = document.getElementById('preset-grid');
+    grid.classList.add('grid-mode');
     grid.innerHTML = '<div class="loading">Loading...</div>';
 
     try {
-        const list = await API.getSavedList('quad');
+        const list = await API.getSavedList(currentCategory);
 
         // Handle both array and newline-separated string formats
         let presets;
@@ -47,9 +63,187 @@ async function loadPresets() {
     }
 }
 
+async function loadParams() {
+    const grid = document.getElementById('preset-grid');
+    grid.classList.remove('grid-mode');
+    grid.innerHTML = '<div class="loading">Loading parameters...</div>';
+
+    try {
+        // Get parameter values from the current patch (or patch A if * selected)
+        const patchToQuery = currentPatch === '*' ? 'A' : currentPatch;
+        const paramsStr = await API.getPatchParams(patchToQuery, currentCategory);
+
+        // Parse "name=value\n" format
+        const lines = paramsStr.split('\n').filter(l => l.trim());
+        if (lines.length === 0) {
+            grid.innerHTML = '<div class="loading">No parameters found</div>';
+            return;
+        }
+
+        // Parse into array of {name, value}
+        const params = lines.map(line => {
+            const eqIdx = line.indexOf('=');
+            if (eqIdx < 0) return null;
+            return {
+                name: line.substring(0, eqIdx),
+                value: line.substring(eqIdx + 1)
+            };
+        }).filter(p => p);
+
+        // Sort by name
+        params.sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
+
+        // Build parameter list HTML
+        let html = '<div class="param-header">';
+        html += '<button class="param-header-btn" id="btn-param-init">Init</button>';
+        html += '<button class="param-header-btn" id="btn-param-rand">Rand</button>';
+        html += '<button class="param-header-btn" id="btn-param-save">Save As</button>';
+        html += '</div>';
+        html += '<div class="param-list">';
+
+        for (const p of params) {
+            const isNumeric = !isNaN(parseFloat(p.value));
+            html += `<div class="param-row" data-param="${p.name}">`;
+            html += `<span class="param-name">${p.name}</span>`;
+            html += `<span class="param-value">${p.value}</span>`;
+            html += '<span class="param-controls">';
+            if (isNumeric) {
+                html += `<button class="param-ctrl" data-action="dec2">--</button>`;
+                html += `<button class="param-ctrl" data-action="dec">-</button>`;
+                html += `<button class="param-ctrl" data-action="inc">+</button>`;
+                html += `<button class="param-ctrl" data-action="inc2">++</button>`;
+            } else if (p.value === 'true' || p.value === 'false') {
+                html += `<button class="param-ctrl param-toggle" data-action="toggle">toggle</button>`;
+            }
+            html += '</span>';
+            html += '</div>';
+        }
+        html += '</div>';
+
+        grid.innerHTML = html;
+
+        // Setup event handlers for controls
+        setupParamControls();
+        setupParamHeaderButtons();
+    } catch (e) {
+        grid.innerHTML = `<div class="error">${e.message}</div>`;
+    }
+}
+
+function setupParamControls() {
+    // Increment/decrement buttons
+    document.querySelectorAll('.param-ctrl').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const row = btn.closest('.param-row');
+            const paramName = row.dataset.param;
+            const valueEl = row.querySelector('.param-value');
+            const currentValue = valueEl.textContent;
+            const action = btn.dataset.action;
+
+            let newValue;
+            if (action === 'toggle') {
+                newValue = currentValue === 'true' ? 'false' : 'true';
+            } else {
+                const num = parseFloat(currentValue);
+                const isInt = Number.isInteger(num) && !currentValue.includes('.');
+                let delta;
+                if (action === 'dec2') delta = isInt ? -10 : -0.1;
+                else if (action === 'dec') delta = isInt ? -1 : -0.01;
+                else if (action === 'inc') delta = isInt ? 1 : 0.01;
+                else if (action === 'inc2') delta = isInt ? 10 : 0.1;
+                newValue = (num + delta).toFixed(isInt ? 0 : 3);
+            }
+
+            // Ensure value is a string
+            const valueStr = String(newValue);
+            console.log('Setting param:', paramName, '=', valueStr, 'patch:', currentPatch);
+
+            try {
+                // Update all patches if * selected, otherwise just current patch
+                if (currentPatch === '*') {
+                    for (const p of ['A', 'B', 'C', 'D']) {
+                        await API.setPatchParam(p, paramName, valueStr);
+                    }
+                } else {
+                    await API.setPatchParam(currentPatch, paramName, valueStr);
+                }
+                valueEl.textContent = valueStr;
+            } catch (err) {
+                console.error('Failed to set param:', err);
+            }
+        });
+    });
+}
+
+function setupParamHeaderButtons() {
+    // Init button - set all params to default values
+    const initBtn = document.getElementById('btn-param-init');
+    if (initBtn) {
+        initBtn.addEventListener('click', async () => {
+            try {
+                // Get init values for the current category
+                const initValues = await API.getParamInits(currentCategory);
+
+                // Apply all values in a single batch call per patch
+                if (currentPatch === '*') {
+                    await Promise.all(['A', 'B', 'C', 'D'].map(p =>
+                        API.setPatchParams(p, initValues)
+                    ));
+                } else {
+                    await API.setPatchParams(currentPatch, initValues);
+                }
+
+                // Refresh the params display
+                await loadParams();
+            } catch (err) {
+                console.error('Failed to init params:', err);
+                alert('Init failed: ' + err.message);
+            }
+        });
+    }
+
+    // Rand button - randomize all params
+    const randBtn = document.getElementById('btn-param-rand');
+    if (randBtn) {
+        randBtn.addEventListener('click', async () => {
+            try {
+                // Get random values for the current category
+                const randValues = await API.getParamRands(currentCategory);
+
+                // Apply all values in a single batch call per patch
+                if (currentPatch === '*') {
+                    await Promise.all(['A', 'B', 'C', 'D'].map(p =>
+                        API.setPatchParams(p, randValues)
+                    ));
+                } else {
+                    await API.setPatchParams(currentPatch, randValues);
+                }
+
+                // Refresh the params display
+                await loadParams();
+            } catch (err) {
+                console.error('Failed to randomize params:', err);
+                alert('Rand failed: ' + err.message);
+            }
+        });
+    }
+}
+
 async function loadPreset(name) {
     try {
-        await API.loadQuad(name);
+        if (currentCategory === 'global') {
+            await API.loadGlobal(name);
+        } else if (currentCategory === 'quad') {
+            await API.loadQuad(name);
+        } else if (currentPatch === '*') {
+            // Load to all patches
+            for (const p of ['A', 'B', 'C', 'D']) {
+                await API.loadPatch(p, currentCategory, name);
+            }
+        } else {
+            await API.loadPatch(currentPatch, currentCategory, name);
+        }
     } catch (e) {
         alert('Load failed: ' + e.message);
     }
@@ -57,6 +251,11 @@ async function loadPreset(name) {
 
 function setupControls() {
     document.getElementById('btn-complete-reset').addEventListener('click', async () => {
+        // In advanced mode, COMPLETE RESET returns to normal mode
+        if (advancedMode) {
+            setAdvancedMode(false);
+            return;
+        }
         try {
             await API.completeReset();
         } catch (e) {
@@ -73,6 +272,165 @@ function setupControls() {
     });
 
     document.getElementById('btn-help').addEventListener('click', () => {
-        alert('Space Palette Pro\n\nClick a preset to load it.');
+        showHelp();
     });
+}
+
+// Help overlay functionality
+function setupHelpOverlay() {
+    const overlay = document.getElementById('help-overlay');
+
+    // Track mouse/touch for diagonal swipe detection
+    overlay.addEventListener('mousedown', (e) => {
+        e.preventDefault(); // Prevent image drag
+        swipeStart = { x: e.clientX, y: e.clientY, time: Date.now() };
+    });
+
+    overlay.addEventListener('mouseup', (e) => {
+        if (swipeStart && checkDiagonalSwipe(swipeStart, { x: e.clientX, y: e.clientY })) {
+            hideHelp();
+            setAdvancedMode(true);
+        } else {
+            // Regular click - just close help
+            hideHelp();
+        }
+        swipeStart = null;
+    });
+
+    // Touch support
+    overlay.addEventListener('touchstart', (e) => {
+        e.preventDefault(); // Prevent default touch behavior
+        const touch = e.touches[0];
+        swipeStart = { x: touch.clientX, y: touch.clientY, time: Date.now() };
+    });
+
+    overlay.addEventListener('touchend', (e) => {
+        const touch = e.changedTouches[0];
+        if (swipeStart && checkDiagonalSwipe(swipeStart, { x: touch.clientX, y: touch.clientY })) {
+            hideHelp();
+            setAdvancedMode(true);
+        } else {
+            hideHelp();
+        }
+        swipeStart = null;
+    });
+}
+
+function checkDiagonalSwipe(start, end) {
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    const cornerSize = CORNER_THRESHOLD;
+
+    // Check if start is in a corner (within 20%)
+    const startInTopLeft = start.x < w * cornerSize && start.y < h * cornerSize;
+    const startInTopRight = start.x > w * (1 - cornerSize) && start.y < h * cornerSize;
+    const startInBottomLeft = start.x < w * cornerSize && start.y > h * (1 - cornerSize);
+    const startInBottomRight = start.x > w * (1 - cornerSize) && start.y > h * (1 - cornerSize);
+
+    // Check if end is in opposite corner
+    const endInTopLeft = end.x < w * cornerSize && end.y < h * cornerSize;
+    const endInTopRight = end.x > w * (1 - cornerSize) && end.y < h * cornerSize;
+    const endInBottomLeft = end.x < w * cornerSize && end.y > h * (1 - cornerSize);
+    const endInBottomRight = end.x > w * (1 - cornerSize) && end.y > h * (1 - cornerSize);
+
+    // Diagonal swipe: opposite corners
+    return (startInTopLeft && endInBottomRight) ||
+           (startInBottomRight && endInTopLeft) ||
+           (startInTopRight && endInBottomLeft) ||
+           (startInBottomLeft && endInTopRight);
+}
+
+function showHelp() {
+    document.getElementById('help-overlay').classList.remove('hidden');
+}
+
+function hideHelp() {
+    document.getElementById('help-overlay').classList.add('hidden');
+}
+
+function setAdvancedMode(enabled) {
+    advancedMode = enabled;
+    const categoryTabs = document.getElementById('category-tabs');
+    const patchSelector = document.getElementById('patch-selector');
+    const titleBar = document.getElementById('title-bar');
+
+    if (enabled) {
+        categoryTabs.classList.remove('hidden');
+        patchSelector.classList.remove('hidden');
+        titleBar.classList.add('hidden');
+        updatePatchButtons();
+    } else {
+        categoryTabs.classList.add('hidden');
+        patchSelector.classList.add('hidden');
+        titleBar.classList.remove('hidden');
+        // Reset to quad category in normal mode
+        currentCategory = 'quad';
+        currentPatch = '*';
+        loadPresets();
+    }
+}
+
+function setupCategoryTabs() {
+    document.querySelectorAll('#category-tabs .tab').forEach(tab => {
+        tab.addEventListener('click', async () => {
+            const clickedCategory = tab.dataset.category;
+
+            if (clickedCategory === currentCategory) {
+                // Same category clicked - toggle between presets and params
+                showingParams = !showingParams;
+            } else {
+                // Different category - switch to it, show presets
+                document.querySelectorAll('#category-tabs .tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                currentCategory = clickedCategory;
+                showingParams = false;
+            }
+
+            if (showingParams) {
+                await loadParams();
+            } else {
+                await loadPresets();
+            }
+        });
+    });
+}
+
+function setupPatchSelector() {
+    document.querySelectorAll('#patch-selector .patch-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const patch = btn.dataset.patch;
+
+            if (patch === '*') {
+                // Toggle between all selected and last single selection
+                if (currentPatch === '*') {
+                    // Currently all selected, switch to single
+                    currentPatch = lastSinglePatch;
+                    updatePatchButtons();
+                } else {
+                    // Currently single, switch to all
+                    currentPatch = '*';
+                    updatePatchButtons();
+                }
+            } else {
+                // Single patch selected
+                lastSinglePatch = patch;
+                currentPatch = patch;
+                updatePatchButtons();
+            }
+        });
+    });
+}
+
+function updatePatchButtons() {
+    const buttons = document.querySelectorAll('#patch-selector .patch-btn');
+    buttons.forEach(b => b.classList.remove('active'));
+
+    if (currentPatch === '*') {
+        // Highlight all buttons (*, A, B, C, D)
+        buttons.forEach(b => b.classList.add('active'));
+    } else {
+        // Highlight only the selected single patch
+        const btn = document.querySelector(`#patch-selector .patch-btn[data-patch="${currentPatch}"]`);
+        if (btn) btn.classList.add('active');
+    }
 }

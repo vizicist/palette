@@ -6,6 +6,16 @@
     "configurations": [
 
        {
+            "name": "ENGINE ONLY - palette_engine.go",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${env:PALETTE_SOURCE}/cmd/palette_engine/palette_engine.go",
+            "env": {
+                "Path": "${env:Path};${workspaceFolder};c:/Users/me/Documents/github/vizicist/palette/SenselLib/x64;"             },
+            "args": ["engineonly"]
+        },
+       {
             "name": "palette get global.gui",
             "type": "go",
             "request": "launch",
@@ -70,16 +80,6 @@
             "request": "launch",
             "program": "${env:PALETTE_SOURCE}/cmd/palette/palette.go",
             "args": ["param","set","global.transpose", "3"]
-        },
-       {
-            "name": "ENGINE - palette_engine.go",
-            "type": "go",
-            "request": "launch",
-            "mode": "auto",
-            "program": "${env:PALETTE_SOURCE}/cmd/palette_engine/palette_engine.go",
-            "env": {
-                "Path": "${env:Path};${workspaceFolder};c:/Users/me/Documents/github/vizicist/palette/SenselLib/x64;"             },
-            "args": []
         },
         {
             "name": "GUI - palette_gui.py",
