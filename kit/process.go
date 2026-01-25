@@ -145,6 +145,9 @@ func (pm *ProcessManager) CheckAutorestartProcesses() {
 	pm.mutex.Lock()
 	defer pm.mutex.Unlock()
 
+	if NoProcess {
+		return
+	}
 	for _, process := range ProcessList() {
 		if !pm.IsAvailable(process) {
 			continue
@@ -348,12 +351,16 @@ func (pm *ProcessManager) IsRunning(process string) (bool, error) {
 // Below here are functions that return ProcessInfo for various programs
 
 func GuiProcessInfo() *ProcessInfo {
-	gui, err := GetParam("global.gui")
+	// guiexec is preferred, but
+	guiexec, err := GetParam("global.guiexec")
 	if err != nil {
-		LogIfError(err)
-		return EmptyProcessInfo()
+		guiexec, err = GetParam("global.gui")
+		if err != nil {
+			LogIfError(err)
+			return EmptyProcessInfo()
+		}
 	}
-	fullpath := filepath.Join(PaletteDir(), gui)
+	fullpath := filepath.Join(PaletteDir(), guiexec)
 	if fullpath != "" && !FileExists(fullpath) {
 		LogWarn("No Gui found, looking for", "path", fullpath)
 		return EmptyProcessInfo()

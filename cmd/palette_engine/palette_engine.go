@@ -28,6 +28,10 @@ func main() {
 	signal.Ignore(syscall.SIGHUP)
 	signal.Ignore(syscall.SIGINT)
 
+	if len(os.Args) > 1 && os.Args[1] == "engineonly" {
+		kit.NoProcess = true
+	}
+
 	kit.InitLog("engine")
 
 	defer func() {

@@ -6,6 +6,13 @@
     "configurations": [
 
        {
+            "name": "palette get global.gui",
+            "type": "go",
+            "request": "launch",
+            "program": "${env:PALETTE_SOURCE}/cmd/palette/palette.go",
+            "args": ["get","global.gui"],
+        },
+       {
             "name": "GUICOGENT",
             "type": "go",
             "request": "launch",
