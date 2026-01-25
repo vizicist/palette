@@ -197,6 +197,35 @@ func (vals *ParamValues) Get(name string) (string, error) {
 	return vals.ParamValueAsString(name)
 }
 
+// GetWithPrefix returns all parameters that start with the given prefix
+func (vals *ParamValues) GetWithPrefix(prefix string) (string, error) {
+	vals.mutex.RLock()
+	defer vals.mutex.RUnlock()
+
+	// Collect matching names and sort them
+	var names []string
+	for name := range vals.values {
+		if strings.HasPrefix(name, prefix) {
+			names = append(names, name)
+		}
+	}
+	sort.Strings(names)
+
+	// Build result string
+	var result strings.Builder
+	for _, name := range names {
+		valstr, err := vals.ParamValueAsString(name)
+		if err != nil {
+			continue
+		}
+		result.WriteString(name)
+		result.WriteString(" = ")
+		result.WriteString(valstr)
+		result.WriteString("\n")
+	}
+	return strings.TrimSuffix(result.String(), "\n"), nil
+}
+
 func (vals *ParamValues) GetStringValue(name string, def string) string {
 	val := vals.paramValue(name)
 	if val == nil {
