@@ -198,10 +198,12 @@ func (vals *ParamValues) Get(name string) (string, error) {
 }
 
 // GetWithPrefix returns all parameters that start with the given prefix
+// The return value is newline-separated list of "name = value" strings.
 func (vals *ParamValues) GetWithPrefix(prefix string) (string, error) {
 	vals.mutex.RLock()
 	defer vals.mutex.RUnlock()
 
+	LogInfo("params GetWithPrefix", "prefix", prefix)
 	// Collect matching names and sort them
 	var names []string
 	for name := range vals.values {
@@ -219,7 +221,7 @@ func (vals *ParamValues) GetWithPrefix(prefix string) (string, error) {
 			continue
 		}
 		result.WriteString(name)
-		result.WriteString(" = ")
+		result.WriteString("=")
 		result.WriteString(valstr)
 		result.WriteString("\n")
 	}
