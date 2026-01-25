@@ -1,3 +1,4 @@
+node_modules/*
 cmd/palette_hub/days
 build/windows/vcvars64.err
 data/recordings/*
@@ -84,3 +85,6 @@ _Current.json
 
 nats/serversetupcontext
 cmd/palette_hub/palette_hub
+webui-screenshot.png
+package-lock.json
+package.json

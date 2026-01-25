@@ -326,6 +326,9 @@ func (e *Engine) StartHttp(port int) {
 		}
 	}()
 
+	// Serve web UI at root
+	http.Handle("/", WebUIHandler())
+
 	http.HandleFunc("/api", func(responseWriter http.ResponseWriter, req *http.Request) {
 
 		responseWriter.Header().Set("Content-Type", "application/json")
