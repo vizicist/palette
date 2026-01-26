@@ -31,8 +31,10 @@ const API = {
     getStatus() { return this.call('global.status'); },
     getSavedList(category) { return this.call('saved.list', { category }); },
     getParamDefs(category) { return this.call('saved.paramdefs', { category }); },
+    getParamDefsJson() { return this.call('saved.paramdefsjson'); },
     getParamInits(category) { return this.call('saved.paraminits', { category }); },
     getParamRands(category) { return this.call('saved.paramrands', { category }); },
+    getParamEnums() { return this.call('saved.paramenums'); },
     loadGlobal(filename) { return this.call('global.load', { category: 'global', filename }); },
     loadQuad(filename) { return this.call('quad.load', { category: 'quad', filename }); },
     loadPatch(patch, category, filename) {
