@@ -81,7 +81,7 @@ async function loadParams() {
         }
 
         // Parse into array of {name, value}
-        const params = lines.map(line => {
+        let params = lines.map(line => {
             const eqIdx = line.indexOf('=');
             if (eqIdx < 0) return null;
             return {
@@ -93,6 +93,23 @@ async function loadParams() {
         // Sort by name
         params.sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
 
+        // For effect category, filter out sub-params of disabled effects
+        if (currentCategory === 'effect') {
+            // Find which effects are enabled (boolean params without ":" that are "true")
+            const enabledEffects = new Set();
+            for (const p of params) {
+                if (!p.name.includes(':') && p.value === 'true') {
+                    enabledEffects.add(p.name);
+                }
+            }
+            // Filter: show all main params (no ":"), only show sub-params if parent is enabled
+            params = params.filter(p => {
+                if (!p.name.includes(':')) return true; // Always show main effect toggle
+                const parentName = p.name.split(':')[0];
+                return enabledEffects.has(parentName);
+            });
+        }
+
         // Build parameter list HTML
         let html = '<div class="param-header">';
         html += '<button class="param-header-btn" id="btn-param-init">Init</button>';
@@ -103,19 +120,40 @@ async function loadParams() {
 
         for (const p of params) {
             const isNumeric = !isNaN(parseFloat(p.value));
-            html += `<div class="param-row" data-param="${p.name}">`;
-            html += `<span class="param-name">${p.name}</span>`;
-            html += `<span class="param-value">${p.value}</span>`;
-            html += '<span class="param-controls">';
-            if (isNumeric) {
-                html += `<button class="param-ctrl" data-action="dec2">--</button>`;
-                html += `<button class="param-ctrl" data-action="dec">-</button>`;
-                html += `<button class="param-ctrl" data-action="inc">+</button>`;
-                html += `<button class="param-ctrl" data-action="inc2">++</button>`;
-            } else if (p.value === 'true' || p.value === 'false') {
-                html += `<button class="param-ctrl param-toggle" data-action="toggle">toggle</button>`;
+            const isBool = p.value === 'true' || p.value === 'false';
+            const isMainEffectBool = currentCategory === 'effect' && isBool && !p.name.includes(':');
+            const isEffectSubParam = currentCategory === 'effect' && p.name.includes(':');
+
+            let rowClass = 'param-row';
+            if (isEffectSubParam) rowClass += ' effect-sub-param';
+            if (isMainEffectBool) rowClass += ' effect-main-row';
+            html += `<div class="${rowClass}" data-param="${p.name}">`;
+
+            if (isMainEffectBool) {
+                // Main effect toggle: single wide button with +/- and name
+                const isEnabled = p.value === 'true';
+                const btnClass = isEnabled ? 'effect-toggle-enabled' : 'effect-toggle-disabled';
+                const symbol = isEnabled ? '-' : '+';
+                html += `<button class="param-ctrl effect-toggle ${btnClass}" data-action="toggle">`;
+                html += `<span class="effect-symbol">${symbol}</span>`;
+                html += `<span class="effect-label">${p.name}</span>`;
+                html += `</button>`;
+                html += `<span class="param-value" style="display:none">${p.value}</span>`;
+                html += `<span class="param-controls"></span>`;
+            } else {
+                html += `<span class="param-name">${p.name}</span>`;
+                html += `<span class="param-value">${p.value}</span>`;
+                html += '<span class="param-controls">';
+                if (isNumeric) {
+                    html += `<button class="param-ctrl" data-action="dec2">--</button>`;
+                    html += `<button class="param-ctrl" data-action="dec">-</button>`;
+                    html += `<button class="param-ctrl" data-action="inc">+</button>`;
+                    html += `<button class="param-ctrl" data-action="inc2">++</button>`;
+                } else if (isBool) {
+                    html += `<button class="param-ctrl param-toggle" data-action="toggle">toggle</button>`;
+                }
+                html += '</span>';
             }
-            html += '</span>';
             html += '</div>';
         }
         html += '</div>';
@@ -169,6 +207,17 @@ function setupParamControls() {
                     await API.setPatchParam(currentPatch, paramName, valueStr);
                 }
                 valueEl.textContent = valueStr;
+
+                // Refresh list if toggling an effect boolean (affects sub-param visibility)
+                if (currentCategory === 'effect' && action === 'toggle' && !paramName.includes(':')) {
+                    // Save scroll position before refresh
+                    const paramList = document.querySelector('.param-list');
+                    const scrollTop = paramList ? paramList.scrollTop : 0;
+                    await loadParams();
+                    // Restore scroll position after refresh
+                    const newParamList = document.querySelector('.param-list');
+                    if (newParamList) newParamList.scrollTop = scrollTop;
+                }
             } catch (err) {
                 console.error('Failed to set param:', err);
             }
