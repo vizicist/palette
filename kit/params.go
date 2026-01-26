@@ -495,7 +495,38 @@ func LoadParamEnums() error {
 		}
 		ParamEnums[enumName] = enums
 	}
+
+	// Special case: populate "synth" enum from Synths.json
+	loadSynthEnums()
+
 	return nil
+}
+
+// loadSynthEnums reads Synths.json and populates the "synth" enum with all synth names
+func loadSynthEnums() {
+	path := ConfigFilePath("Synths.json")
+	bytes, err := os.ReadFile(path)
+	if err != nil {
+		LogWarn("loadSynthEnums: unable to read Synths.json", "err", err)
+		return
+	}
+
+	var data struct {
+		Synths []struct {
+			Name string `json:"name"`
+		} `json:"synths"`
+	}
+	err = json.Unmarshal(bytes, &data)
+	if err != nil {
+		LogWarn("loadSynthEnums: unable to parse Synths.json", "err", err)
+		return
+	}
+
+	var synthNames []string
+	for _, s := range data.Synths {
+		synthNames = append(synthNames, s.Name)
+	}
+	ParamEnums["synth"] = synthNames
 }
 
 // LoadParamDefs initializes the list of parameters
@@ -785,6 +816,25 @@ func ParamRandomValuesForCategory(category string) (string, error) {
 		return "", fmt.Errorf("ParamRandomValuesForCategory: %w", err)
 	}
 	return string(jsonBytes), nil
+}
+
+// ParamEnumsAsJSON returns the ParamEnums map as a JSON string
+func ParamEnumsAsJSON() (string, error) {
+	jsonBytes, err := json.Marshal(ParamEnums)
+	if err != nil {
+		return "", fmt.Errorf("ParamEnumsAsJSON: %w", err)
+	}
+	return string(jsonBytes), nil
+}
+
+// ParamDefsAsJSON returns paramdefs.json content directly
+func ParamDefsAsJSON() (string, error) {
+	path := ConfigFilePath("paramdefs.json")
+	bytes, err := os.ReadFile(path)
+	if err != nil {
+		return "", fmt.Errorf("ParamDefsAsJSON: %w", err)
+	}
+	return string(bytes), nil
 }
 
 func OverrideMap() ParamsMap {

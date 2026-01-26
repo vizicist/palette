@@ -534,6 +534,10 @@ func ExecuteSavedApi(api string, apiargs map[string]string) (result string, err 
 	case "paramrands":
 		category := optionalStringArg("category", apiargs, "*")
 		return ParamRandomValuesForCategory(category)
+	case "paramenums":
+		return ParamEnumsAsJSON()
+	case "paramdefsjson":
+		return ParamDefsAsJSON()
 	default:
 		LogWarn("api is not recognized\n", "api", api)
 		return "", fmt.Errorf("Router.ExecuteSavedApi unrecognized api=%s", api)

@@ -5,6 +5,10 @@ let advancedMode = true;
 let lastSinglePatch = 'A'; // Track last single selection for toggle
 let showingParams = false; // Toggle between presets and parameters view
 
+// Cached parameter definitions and enums for string param dropdowns
+let cachedParamDefs = null;
+let cachedParamEnums = null;
+
 // Swipe tracking for diagonal gesture
 let swipeStart = null;
 const CORNER_THRESHOLD = 0.20; // 20% of screen dimension
@@ -69,9 +73,22 @@ async function loadParams() {
     grid.innerHTML = '<div class="loading">Loading parameters...</div>';
 
     try {
-        // Get parameter values from the current patch (or patch A if * selected)
-        const patchToQuery = currentPatch === '*' ? 'A' : currentPatch;
-        const paramsStr = await API.getPatchParams(patchToQuery, currentCategory);
+        // Load paramdefs and paramenums if not cached (for string param dropdowns)
+        if (!cachedParamDefs) {
+            cachedParamDefs = await API.getParamDefsJson();
+        }
+        if (!cachedParamEnums) {
+            cachedParamEnums = await API.getParamEnums();
+        }
+
+        // Get parameter values - use different API for global vs patch categories
+        let paramsStr;
+        if (currentCategory === 'global') {
+            paramsStr = await API.getGlobalParams('global.');
+        } else {
+            const patchToQuery = currentPatch === '*' ? 'A' : currentPatch;
+            paramsStr = await API.getPatchParams(patchToQuery, currentCategory);
+        }
 
         // Parse "name=value\n" format
         const lines = paramsStr.split('\n').filter(l => l.trim());
@@ -142,17 +159,74 @@ async function loadParams() {
                 html += `<span class="param-controls"></span>`;
             } else {
                 html += `<span class="param-name">${p.name}</span>`;
-                html += `<span class="param-value">${p.value}</span>`;
-                html += '<span class="param-controls">';
-                if (isNumeric) {
-                    html += `<button class="param-ctrl" data-action="dec2">--</button>`;
-                    html += `<button class="param-ctrl" data-action="dec">-</button>`;
-                    html += `<button class="param-ctrl" data-action="inc">+</button>`;
-                    html += `<button class="param-ctrl" data-action="inc2">++</button>`;
-                } else if (isBool) {
-                    html += `<button class="param-ctrl param-toggle" data-action="toggle">toggle</button>`;
+                // Use slider for numeric params in effect sub-params, visual, sound, misc
+                const isFloat = isNumeric && p.value.includes('.');
+                const isInt = isNumeric && !p.value.includes('.');
+                const sliderCategory = isEffectSubParam || currentCategory === 'visual' || currentCategory === 'sound' || currentCategory === 'misc' || currentCategory === 'global';
+
+                // For bool params in slider categories, use Enabled/Disabled button
+                if (sliderCategory && isBool) {
+                    const isEnabled = p.value === 'true';
+                    const btnClass = isEnabled ? 'bool-toggle-enabled' : 'bool-toggle-disabled';
+                    const btnLabel = isEnabled ? 'Enabled' : 'Disabled';
+                    html += `<span class="param-value" style="display:none">${p.value}</span>`;
+                    html += `<span class="param-controls">`;
+                    html += `<button class="param-ctrl bool-toggle ${btnClass}" data-action="toggle">${btnLabel}</button>`;
+                    html += `</span>`;
+                } else {
+                    // Check if this is a string param with enum values
+                    const isString = !isNumeric && !isBool;
+                    let enumValues = null;
+                    let enumName = null;
+                    if (isString && cachedParamDefs && cachedParamEnums) {
+                        // Look up the param definition to get the enum name from "min" field
+                        const paramDef = cachedParamDefs[p.name];
+                        if (paramDef && paramDef.valuetype === 'string' && paramDef.min) {
+                            enumName = paramDef.min;
+                            if (cachedParamEnums[enumName]) {
+                                enumValues = cachedParamEnums[enumName];
+                            }
+                        }
+                    }
+
+                    if (enumValues && enumValues.length > 0) {
+                        // String param with enum - show dropdown
+                        html += `<span class="param-value" style="display:none">${p.value}</span>`;
+                        html += '<span class="param-controls">';
+                        html += `<select class="param-select">`;
+                        for (const opt of enumValues) {
+                            const selected = opt === p.value ? ' selected' : '';
+                            html += `<option value="${opt}"${selected}>${opt || '(empty)'}</option>`;
+                        }
+                        html += `</select>`;
+                        html += '</span>';
+                    } else if (isString) {
+                        // String param without enum - show text input
+                        const escaped = p.value.replace(/"/g, '&quot;');
+                        html += `<span class="param-value" style="display:none">${p.value}</span>`;
+                        html += '<span class="param-controls">';
+                        html += `<input type="text" class="param-text" value="${escaped}" data-original="${escaped}">`;
+                        html += '</span>';
+                    } else {
+                        html += `<span class="param-value">${p.value}</span>`;
+                        html += '<span class="param-controls">';
+                        if (sliderCategory && isFloat) {
+                            const val = parseFloat(p.value);
+                            html += `<input type="range" class="param-slider" min="0" max="1" step="0.01" value="${val}">`;
+                        } else if (sliderCategory && isInt) {
+                            const val = parseInt(p.value);
+                            html += `<input type="range" class="param-slider param-slider-int" min="0" max="127" step="1" value="${val}">`;
+                        } else if (isNumeric) {
+                            html += `<button class="param-ctrl" data-action="dec2">--</button>`;
+                            html += `<button class="param-ctrl" data-action="dec">-</button>`;
+                            html += `<button class="param-ctrl" data-action="inc">+</button>`;
+                            html += `<button class="param-ctrl" data-action="inc2">++</button>`;
+                        } else if (isBool) {
+                            html += `<button class="param-ctrl param-toggle" data-action="toggle">toggle</button>`;
+                        }
+                        html += '</span>';
+                    }
                 }
-                html += '</span>';
             }
             html += '</div>';
         }
@@ -198,8 +272,10 @@ function setupParamControls() {
             console.log('Setting param:', paramName, '=', valueStr, 'patch:', currentPatch);
 
             try {
-                // Update all patches if * selected, otherwise just current patch
-                if (currentPatch === '*') {
+                // Use different API for global vs patch parameters
+                if (currentCategory === 'global') {
+                    await API.setGlobalParam(paramName, valueStr);
+                } else if (currentPatch === '*') {
                     for (const p of ['A', 'B', 'C', 'D']) {
                         await API.setPatchParam(p, paramName, valueStr);
                     }
@@ -207,6 +283,14 @@ function setupParamControls() {
                     await API.setPatchParam(currentPatch, paramName, valueStr);
                 }
                 valueEl.textContent = valueStr;
+
+                // Update bool toggle button label and class
+                if (action === 'toggle' && btn.classList.contains('bool-toggle')) {
+                    const isEnabled = valueStr === 'true';
+                    btn.textContent = isEnabled ? 'Enabled' : 'Disabled';
+                    btn.classList.remove('bool-toggle-enabled', 'bool-toggle-disabled');
+                    btn.classList.add(isEnabled ? 'bool-toggle-enabled' : 'bool-toggle-disabled');
+                }
 
                 // Refresh list if toggling an effect boolean (affects sub-param visibility)
                 if (currentCategory === 'effect' && action === 'toggle' && !paramName.includes(':')) {
@@ -220,6 +304,104 @@ function setupParamControls() {
                 }
             } catch (err) {
                 console.error('Failed to set param:', err);
+            }
+        });
+    });
+
+    // Slider inputs for numeric params
+    document.querySelectorAll('.param-slider').forEach(slider => {
+        slider.addEventListener('input', async (e) => {
+            const row = slider.closest('.param-row');
+            const paramName = row.dataset.param;
+            const valueEl = row.querySelector('.param-value');
+            const isInt = slider.classList.contains('param-slider-int');
+            const valueStr = isInt ? String(parseInt(slider.value)) : parseFloat(slider.value).toFixed(3);
+
+            // Update display immediately
+            valueEl.textContent = valueStr;
+
+            try {
+                if (currentCategory === 'global') {
+                    await API.setGlobalParam(paramName, valueStr);
+                } else if (currentPatch === '*') {
+                    for (const p of ['A', 'B', 'C', 'D']) {
+                        await API.setPatchParam(p, paramName, valueStr);
+                    }
+                } else {
+                    await API.setPatchParam(currentPatch, paramName, valueStr);
+                }
+            } catch (err) {
+                console.error('Failed to set param:', err);
+            }
+        });
+    });
+
+    // Select dropdowns for string params with enums
+    document.querySelectorAll('.param-select').forEach(select => {
+        select.addEventListener('change', async (e) => {
+            const row = select.closest('.param-row');
+            const paramName = row.dataset.param;
+            const valueEl = row.querySelector('.param-value');
+            const valueStr = select.value;
+
+            // Update hidden value element
+            valueEl.textContent = valueStr;
+
+            try {
+                if (currentCategory === 'global') {
+                    await API.setGlobalParam(paramName, valueStr);
+                } else if (currentPatch === '*') {
+                    for (const p of ['A', 'B', 'C', 'D']) {
+                        await API.setPatchParam(p, paramName, valueStr);
+                    }
+                } else {
+                    await API.setPatchParam(currentPatch, paramName, valueStr);
+                }
+            } catch (err) {
+                console.error('Failed to set param:', err);
+            }
+        });
+    });
+
+    // Text inputs for string params without enums - submit on Enter, cancel on Escape
+    document.querySelectorAll('.param-text').forEach(input => {
+        input.addEventListener('keydown', async (e) => {
+            const row = input.closest('.param-row');
+            const valueEl = row.querySelector('.param-value');
+
+            if (e.key === 'Escape') {
+                // Restore original value from data attribute
+                e.preventDefault();
+                input.value = input.dataset.original || '';
+                input.blur();
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                const paramName = row.dataset.param;
+                const valueStr = input.value;
+
+                // Update hidden value element
+                valueEl.textContent = valueStr;
+
+                try {
+                    if (currentCategory === 'global') {
+                        await API.setGlobalParam(paramName, valueStr);
+                    } else if (currentPatch === '*') {
+                        for (const p of ['A', 'B', 'C', 'D']) {
+                            await API.setPatchParam(p, paramName, valueStr);
+                        }
+                    } else {
+                        await API.setPatchParam(currentPatch, paramName, valueStr);
+                    }
+                    // Update data-original to reflect the new saved value
+                    input.dataset.original = valueStr;
+                    // Brief visual feedback - flash the input
+                    input.style.backgroundColor = '#4a4';
+                    setTimeout(() => { input.style.backgroundColor = ''; }, 200);
+                } catch (err) {
+                    console.error('Failed to set param:', err);
+                    input.style.backgroundColor = '#a44';
+                    setTimeout(() => { input.style.backgroundColor = ''; }, 200);
+                }
             }
         });
     });
@@ -483,3 +665,4 @@ function updatePatchButtons() {
         if (btn) btn.classList.add('active');
     }
 }
+
