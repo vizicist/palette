@@ -466,7 +466,13 @@ async function loadPreset(name) {
         if (currentCategory === 'global') {
             await API.loadGlobal(name);
         } else if (currentCategory === 'quad') {
-            await API.loadQuad(name);
+            if (currentPatch === '*') {
+                // Load quad to all patches
+                await API.loadQuad(name);
+            } else {
+                // Load only this patch's portion of the quad
+                await API.loadPatch(currentPatch, 'quad', name);
+            }
         } else if (currentPatch === '*') {
             // Load to all patches
             for (const p of ['A', 'B', 'C', 'D']) {
