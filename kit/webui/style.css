@@ -338,7 +338,7 @@ body {
 }
 
 .effect-sub-param {
-    padding-left: 20px;
+    padding-left: 40px;
     border-left: 3px solid #0aa;
     margin-left: 10px;
 }
@@ -349,4 +349,80 @@ body {
 
 .effect-name-disabled {
     color: #f00;
+}
+
+.param-slider {
+    width: 120px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: #0aa;
+}
+
+.bool-toggle {
+    padding: 2px 10px;
+    min-width: 70px;
+}
+
+.bool-toggle-enabled {
+    color: #8c8;
+}
+
+.bool-toggle-enabled:hover {
+    color: #afa;
+}
+
+.bool-toggle-disabled {
+    color: #c88;
+}
+
+.bool-toggle-disabled:hover {
+    color: #faa;
+}
+
+.param-select {
+    background: #222;
+    color: #0cc;
+    border: 1px solid #444;
+    padding: 4px 8px;
+    font-size: 12px;
+    min-width: 120px;
+    cursor: pointer;
+    border-radius: 3px;
+}
+
+.param-select:hover {
+    background: #333;
+    border-color: #0aa;
+}
+
+.param-select:focus {
+    outline: none;
+    border-color: #0aa;
+}
+
+.param-select option {
+    background: #222;
+    color: #fff;
+}
+
+.param-text {
+    background: #222;
+    color: #0cc;
+    border: 1px solid #444;
+    padding: 4px 8px;
+    font-size: 12px;
+    min-width: 150px;
+    border-radius: 3px;
+    font-family: monospace;
+}
+
+.param-text:hover {
+    background: #333;
+    border-color: #0aa;
+}
+
+.param-text:focus {
+    outline: none;
+    border-color: #0aa;
+    background: #333;
 }
