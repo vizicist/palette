@@ -4,14 +4,12 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"os/exec"
 	"os/signal"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"syscall"
-	"time"
-
-	json "github.com/goccy/go-json"
 	"github.com/hypebeast/go-osc/osc"
 	"github.com/joho/godotenv"
 	"github.com/vizicist/palette/kit"
@@ -305,166 +303,17 @@ func CliCommand(args []string) (map[string]string, error) {
 		return nil, nil
 
 	case "hub":
-		if len(args) < 2 {
-			return nil, fmt.Errorf("hub command missing argument")
-		}
-		// No matter what, connect to the remote
-		err := kit.NatsConnectRemote()
+		// Delegate to palette_hub executable with remaining arguments
+		hubArgs := args[1:] // everything after "hub"
+		cmd := exec.Command("palette_hub", hubArgs...)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		cmd.Stdin = os.Stdin
+		err := cmd.Run()
 		if err != nil {
 			return map[string]string{"error": err.Error()}, nil
 		}
-		switch arg1 {
-
-		case "streams":
-			streams, err := kit.NatsStreams()
-			if err != nil {
-				return map[string]string{"error": err.Error()}, nil
-			}
-			s := ""
-			for _, stream := range streams {
-				s += fmt.Sprintf("%s\n", stream)
-			}
-			return map[string]string{"result": s}, nil
-
-		case "dumpraw":
-			streamName := "from_palette"
-			if len(args) > 2 {
-				streamName = args[2]
-			}
-			type DumpData struct {
-				Subject string `json:"subject"`
-				Tm      string `json:"time"`
-				Data    string `json:"data"`
-			}
-			err := kit.NatsDump(streamName, func(tm time.Time, subj string, data string) {
-				dd := DumpData{
-					Subject: subj,
-					Tm:      tm.Format(kit.PaletteTimeLayout),
-					Data:    data,
-				}
-				jsonData, err := json.Marshal(dd)
-				if err != nil {
-					fmt.Println("Error marshalling JSON:", err)
-					return
-				}
-
-				fmt.Println(string(jsonData))
-			})
-			if err != nil {
-				return map[string]string{"error": err.Error()}, nil
-			}
-			return map[string]string{"result": ""}, nil
-
-		case "dumpload":
-
-			streamName := "from_palette"
-			err = kit.NatsDump(streamName, func(tm time.Time, subj string, data string) {
-
-				// We only look at .load messages
-				if !strings.HasSuffix(subj, ".load") {
-					return
-				}
-
-				var toplevel map[string]any
-				err := json.Unmarshal([]byte(data), &toplevel)
-				if err != nil {
-					return
-				}
-				host := strings.TrimPrefix(subj, streamName+".")
-				host = strings.TrimSuffix(host, ".load")
-
-				// We used to include an attractmode flag in the published .load message,
-				// but now we don't; we assume that attractmode loads won't even be published.
-				// This code handles old logs that have the explicit attractmode value.
-				a := toplevel["attractmode"]
-				if a != nil {
-					attractMode, ok := a.(bool)
-					if !ok {
-						kit.LogError(fmt.Errorf("bad attractmode value"))
-						return
-					}
-					// If we're in attract mode, we ignore the load
-					if attractMode {
-						return
-					}
-				}
-
-				f := toplevel["filename"]
-				filename, ok := f.(string)
-				if !ok {
-					kit.LogError(fmt.Errorf("bad filename value"))
-					return
-				}
-				if filename == "_Current" {
-					return
-				}
-
-				c := toplevel["category"]
-				category, ok := c.(string)
-				if !ok {
-					kit.LogError(fmt.Errorf("bad category value"))
-					return
-				}
-
-				// fmt.Printf("event=load host=%s time=%s category=%s file=%s\n",
-				// 	host, tm.Format(format), category, filename)
-
-				type DumpData struct {
-					Event    string `json:"event"`
-					Host     string `json:"host"`
-					Category string `json:"category"`
-					Tm       string `json:"time"`
-					Filename string `json:"filename"`
-				}
-
-				dd := DumpData{
-					Event:    "load",
-					Host:     host,
-					Tm:       tm.Format(kit.PaletteTimeLayout),
-					Category: category,
-					Filename: filename,
-				}
-				jsonData, err := json.Marshal(dd)
-				if err != nil {
-					fmt.Println("Error marshalling JSON:", err)
-					return
-				}
-
-				fmt.Println(string(jsonData))
-
-			})
-			if err != nil {
-				return map[string]string{"error": err.Error()}, nil
-			}
-			return map[string]string{"result": ""}, nil
-
-		default:
-			return nil, fmt.Errorf("nats bad subcommand")
-		}
-
-		/*
-			result, err = kit.EngineNatsApi(args[1], args[2])
-			if err != nil {
-				return map[string]string{"error": err.Error()}, nil
-			} else {
-				return map[string]string{"result": result}, nil
-			}
-		*/
-
-		/*
-			case "remote":
-				if len(args) < 3 {
-					return nil, fmt.Errorf("remote command needs 2 arguments, host and api")
-				}
-				host := args[1]
-				api := args[2]
-				result, err := kit.EngineNatsApi(host, api)
-				if err != nil {
-					return map[string]string{"error": err.Error()}, nil
-				} else {
-					return map[string]string{"result": result}, nil
-				}
-		*/
+		return map[string]string{"result": ""}, nil
 
 	default:
 		if len(words) < 2 {
