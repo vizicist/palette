@@ -5,12 +5,15 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"os/signal"
 	"sort"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	json "github.com/goccy/go-json"
+	"github.com/nats-io/nats.go"
 	"github.com/vizicist/palette/kit"
 )
 
@@ -36,6 +39,8 @@ func main() {
 func usage() string {
 	return `Usage:
 	palette_hub streams
+	palette_hub listen [ {streamname} ]
+	  Subscribe and print events in real-time (Ctrl+C to stop)
 	palette_hub dumpraw [ {streamname} ]
 	palette_hub dumpload [ {streamname} ]
 	palette_hub dumpday {date} [ {streamname} ]
@@ -87,6 +92,46 @@ func HubCommand(args []string) (map[string]string, error) {
 			s += fmt.Sprintf("%s\n", stream)
 		}
 		return map[string]string{"result": s}, nil
+
+	case "listen":
+		// Subscribe to events in real-time
+		subject := ">"
+		if len(args) > 1 {
+			subject = args[1] + ".>"
+		}
+
+		type EventData struct {
+			Subject string `json:"subject"`
+			Tm      string `json:"time"`
+			Data    string `json:"data"`
+		}
+
+		fmt.Printf("Listening to %s (Ctrl+C to stop)...\n", subject)
+
+		err := kit.NatsSubscribe(subject, func(msg *nats.Msg) {
+			ed := EventData{
+				Subject: msg.Subject,
+				Tm:      time.Now().Format(kit.PaletteTimeLayout),
+				Data:    string(msg.Data),
+			}
+			jsonData, err := json.Marshal(ed)
+			if err != nil {
+				fmt.Println("Error marshalling JSON:", err)
+				return
+			}
+			fmt.Println(string(jsonData))
+		})
+		if err != nil {
+			return map[string]string{"error": err.Error()}, nil
+		}
+
+		// Wait for Ctrl+C
+		sigChan := make(chan os.Signal, 1)
+		signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+		<-sigChan
+
+		fmt.Println("\nStopped listening.")
+		return map[string]string{"result": ""}, nil
 
 	case "dumpraw":
 		streamName := "from_palette"
