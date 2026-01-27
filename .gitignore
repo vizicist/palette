@@ -88,3 +88,5 @@ cmd/palette_hub/palette_hub
 webui-screenshot.png
 package-lock.json
 package.json
+cmd/palette_engine/palette_engine.exe
+cmd/palette_hub/palette_hub.exe
