@@ -17,7 +17,8 @@
       "Bash(crontab -l:*)",
       "Bash(git add:*)",
       "Bash(git commit -m \"$\\(cat <<''EOF''\nAdd URL parameters and Reset button to analysis page\n\n- Support URL params: start, end, view, palettes, hide\n- Add Reset to Defaults button that reloads page\n- Add spacepalette36 \\(Rich_DDT\\) to palette map\n- Use underscores in palette names for easier URL use\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
-      "Bash(git push)"
+      "Bash(git push)",
+      "Bash(git commit:*)"
     ]
   }
 }
