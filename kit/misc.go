@@ -490,15 +490,15 @@ func HumanReadableApiOutput(apiOutput map[string]string) string {
 	}
 	e, eok := apiOutput["error"]
 	if eok {
-		return fmt.Sprintf("Error: %s", e)
+		return fmt.Sprintf("Error: %s\n", e)
 	}
 	result, rok := apiOutput["result"]
 	if !rok {
-		return "Error: unexpected - no result or error in API output?"
+		return "Error: unexpected - no result or error in API output?\n"
 	}
-	// if result == "" {
-	// 	result = "OK\n"
-	// }
+	if result != "" && !strings.HasSuffix(result, "\n") {
+		result += "\n"
+	}
 	return result
 }
 
