@@ -20,6 +20,16 @@ import random
 
 import palette
 
+# Get the base path for resources - works with both regular Python and PyInstaller
+def get_resource_path(filename):
+    if getattr(sys, 'frozen', False):
+        # Running as PyInstaller frozen executable
+        base_path = sys._MEIPASS
+    else:
+        # Running as regular Python script
+        base_path = os.path.dirname(__file__)
+    return os.path.join(base_path, filename)
+
 FourPatches = False
 RecMode = False
 LoopingButton = False
@@ -474,7 +484,7 @@ class ProGuiApp(tk.Tk):
             win = tk.Toplevel(highlightbackground=ColorBg, highlightcolor=ColorAqua, highlightthickness=3, background=ColorBg)
             win.wm_title(windowName)
             try:
-                win.iconbitmap("palette.ico")
+                win.iconbitmap(get_resource_path("palette.ico"))
                 log("iconbitmap for palette.ico succeeded")
             except:
                 log("iconbitmap for palette.ico failed")
@@ -2458,7 +2468,7 @@ def isTwoLine(text):
 
 def initMain(app):
     try:
-        app.iconbitmap("palette.ico")
+        app.iconbitmap(get_resource_path("palette.ico"))
         log("iconbitmap for palette.ico succeeded")
     except:
         log("iconbitmap for palette.ico failed")

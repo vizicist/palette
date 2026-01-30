@@ -249,14 +249,14 @@ func NatsPublish(subj string, data map[string]any) error {
 	return nc.LastError()
 }
 
-// Subscribe xxx
+// NatsSubscribe subscribes to the given subject using the provided callback.
 func NatsSubscribe(subj string, callback nats.MsgHandler) error {
 
 	if !natsIsConnected {
 		return fmt.Errorf("NatsSubscribe: called when NATS is not Connected")
 	}
 
-	LogInfo("NatsSubscribe", "subject", subj)
+	LogOfType("nats", "NatsSubscribe", "subject", subj)
 
 	nc := natsConn
 	if nc == nil {
