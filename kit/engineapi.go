@@ -258,7 +258,7 @@ func ExecuteGlobalApi(api string, apiargs map[string]string) (result string, err
 	case "sendlogs":
 		return "", ArchiveLogs()
 
-	case "logs":
+	case "log":
 		// Parse optional time range parameters
 		var startTime, endTime *time.Time
 		if startStr, ok := apiargs["start"]; ok && startStr != "" {
@@ -277,7 +277,7 @@ func ExecuteGlobalApi(api string, apiargs map[string]string) (result string, err
 		}
 
 		// Parse optional limit and offset
-		limit := 1000
+		limit := 50
 		if limitStr, ok := apiargs["limit"]; ok && limitStr != "" {
 			l, err := strconv.Atoi(limitStr)
 			if err != nil {
