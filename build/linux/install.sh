@@ -29,6 +29,12 @@ fi
 
 echo "Installing Palette version $VERSION"
 
+# Create palette user if it doesn't exist
+if ! id -u palette >/dev/null 2>&1; then
+    echo "Creating 'palette' user..."
+    useradd --system --no-create-home --shell /usr/sbin/nologin palette
+fi
+
 # Create install directory
 mkdir -p "$INSTALL_DIR"
 
@@ -74,9 +80,14 @@ for bin in "$INSTALL_DIR/bin/"*; do
     echo "  $name -> $bin"
 done
 
+# Set ownership to palette user
+echo "Setting ownership to 'palette' user..."
+chown -R palette:palette "$INSTALL_DIR"
+
 echo ""
 echo "Installation complete!"
 echo "  Install directory: $INSTALL_DIR"
+echo "  Owner: palette"
 echo "  Binaries linked to: $BIN_DIR"
 echo ""
 echo "You can now run: palette, palette_hub, palette_engine"
