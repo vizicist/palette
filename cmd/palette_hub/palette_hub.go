@@ -152,7 +152,7 @@ func HubCommand(args []string) (map[string]string, error) {
 		}
 
 		// Build the API request
-		apiRequest := map[string]string{"api": "global.logs"}
+		apiRequest := map[string]string{"api": "global.log"}
 		if v, ok := params["start"]; ok {
 			apiRequest["start"] = v
 		}
