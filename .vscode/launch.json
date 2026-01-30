@@ -16,6 +16,16 @@
             "args": ["engineonly"]
         },
        {
+            "name": "palette_hub request_log spacepalette33",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${env:PALETTE_SOURCE}/cmd/palette_hub/palette_hub.go",
+            "env": {
+                "Path": "${env:Path};${workspaceFolder};c:/Users/me/Documents/github/vizicist/palette/SenselLib/x64;"             },
+            "args": ["request_log","spacepalette33"]
+        },
+       {
             "name": "palette get global.gui",
             "type": "go",
             "request": "launch",
