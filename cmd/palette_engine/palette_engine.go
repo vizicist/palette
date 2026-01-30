@@ -10,6 +10,8 @@ import (
 
 	"github.com/pkg/profile"
 	"github.com/vizicist/palette/kit"
+
+	_ "gitlab.com/gomidi/midi/v2/drivers/rtmididrv" // MIDI driver - must be imported here to avoid init in CLI commands
 )
 
 func main() {
