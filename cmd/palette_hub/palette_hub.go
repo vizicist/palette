@@ -545,9 +545,9 @@ func importEngineLog(hostname string) (string, error) {
 
 		// Look for InitLog to get start time
 		if msg == "InitLog ==============================" {
-			dateStr, ok := logEntry["date"].(string)
+			timeStr, ok := logEntry["time"].(string)
 			if ok {
-				t, err := time.Parse(kit.PaletteTimeLayout, dateStr)
+				t, err := time.Parse(kit.PaletteTimeLayout, timeStr)
 				if err == nil {
 					// Subtract uptime to get the actual start time
 					startTime = t.Add(-time.Duration(uptime * float64(time.Second)))

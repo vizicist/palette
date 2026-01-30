@@ -119,8 +119,7 @@ func InitLog(logname string) {
 	}
 	TheLog = logger.Sugar()
 	defer LogIfError(logger.Sync()) // flushes buffer, if any
-	date := time.Now().UTC().Format(PaletteTimeLayout)
-	LogInfo("InitLog ==============================", "date", date, "logname", logname)
+	LogInfo("InitLog ==============================", "logname", logname)
 }
 
 func LogFatal(err error) {
@@ -395,12 +394,12 @@ func ReadLogEntries(startTime, endTime *time.Time, limit, offset int) ([]map[str
 			continue
 		}
 
-		// Check for InitLog to support backward compatibility
+		// Check for InitLog to establish session start time
 		if msgStr, ok := entry["msg"].(string); ok && strings.Contains(msgStr, "InitLog") {
-			if dateStr, ok := entry["date"].(string); ok {
+			if timeStr, ok := entry["time"].(string); ok {
 				if uptimeStr, ok := entry["uptime"].(string); ok {
 					uptime, _ := strconv.ParseFloat(uptimeStr, 64)
-					t, err := time.Parse(PaletteTimeLayout, dateStr)
+					t, err := time.Parse(PaletteTimeLayout, timeStr)
 					if err == nil {
 						sessionStart = t
 						sessionStartUptime = uptime

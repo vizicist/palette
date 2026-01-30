@@ -83,7 +83,7 @@ func ExecuteApiFromJson(rawjson string) (string, error) {
 func ExecuteGlobalApi(api string, apiargs map[string]string) (result string, err error) {
 
 	if api != "status" {
-		LogInfo("ExecuteGlobalApi", "api", api, "apiargs", apiargs)
+		LogOfType("api", "ExecuteGlobalApi", "api", api, "apiargs", apiargs)
 	}
 
 	switch api {
@@ -206,17 +206,13 @@ func ExecuteGlobalApi(api string, apiargs map[string]string) (result string, err
 
 	case "get", "getwithprefix":
 
-		LogInfo("ExecuteGlobalApi get 222", "api", api, "apiargs", apiargs)
-
 		name, ok := apiargs["name"]
 		if !ok {
 			return "", fmt.Errorf("ExecuteGlobalApi: missing name parameter")
 		}
 		if api == "getwithprefix" {
-			LogInfo("ExecuteGlobalApi 111", "api", api, "name", name)
 			return GlobalParams.GetWithPrefix(name)
 		} else {
-			LogInfo("ExecuteGlobalApi 000", "api", api, "name", name)
 			return GlobalParams.Get(name)
 		}
 
