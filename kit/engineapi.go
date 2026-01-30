@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	json "github.com/goccy/go-json"
 )
 
 // NoProcess when true, skip auto-starting processes
@@ -259,6 +261,52 @@ func ExecuteGlobalApi(api string, apiargs map[string]string) (result string, err
 
 	case "sendlogs":
 		return "", ArchiveLogs()
+
+	case "logs":
+		// Parse optional time range parameters
+		var startTime, endTime *time.Time
+		if startStr, ok := apiargs["start"]; ok && startStr != "" {
+			t, err := time.Parse(PaletteTimeLayout, startStr)
+			if err != nil {
+				return "", fmt.Errorf("invalid start time format, use RFC3339: %w", err)
+			}
+			startTime = &t
+		}
+		if endStr, ok := apiargs["end"]; ok && endStr != "" {
+			t, err := time.Parse(PaletteTimeLayout, endStr)
+			if err != nil {
+				return "", fmt.Errorf("invalid end time format, use RFC3339: %w", err)
+			}
+			endTime = &t
+		}
+
+		// Parse optional limit and offset
+		limit := 1000
+		if limitStr, ok := apiargs["limit"]; ok && limitStr != "" {
+			l, err := strconv.Atoi(limitStr)
+			if err != nil {
+				return "", fmt.Errorf("invalid limit value: %w", err)
+			}
+			limit = l
+		}
+		offset := 0
+		if offsetStr, ok := apiargs["offset"]; ok && offsetStr != "" {
+			o, err := strconv.Atoi(offsetStr)
+			if err != nil {
+				return "", fmt.Errorf("invalid offset value: %w", err)
+			}
+			offset = o
+		}
+
+		entries, err := ReadLogEntries(startTime, endTime, limit, offset)
+		if err != nil {
+			return "", err
+		}
+		jsonBytes, err := json.Marshal(entries)
+		if err != nil {
+			return "", fmt.Errorf("failed to marshal log entries: %w", err)
+		}
+		return string(jsonBytes), nil
 
 	case "midi_midifile":
 		return "", fmt.Errorf("midi_midifile API has been removed")

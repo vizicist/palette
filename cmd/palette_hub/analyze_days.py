@@ -8,7 +8,7 @@ import json
 import os
 import re
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timezone
 import sys
 
 # Hardcoded mapping of palette hostnames to readable names
@@ -111,10 +111,10 @@ def analyze_day_file(filepath):
                             attract_mode_state[palette_name] = new_attract_state
                             has_attract_events.add(palette_name)
 
-                            # Track session duration
+                            # Track session duration (using UTC)
                             if time_str:
                                 try:
-                                    event_time = datetime.fromisoformat(time_str.replace('Z', '+00:00'))
+                                    event_time = datetime.fromisoformat(time_str.replace('Z', '+00:00')).astimezone(timezone.utc)
 
                                     # If attract mode is turning OFF (onoff: false, session starting)
                                     if not new_attract_state:
@@ -157,18 +157,19 @@ def analyze_day_file(filepath):
                                 palette_loads[palette_name] += 1
                                 session_load_count[palette_name] += 1  # Count load for current session
 
-                                # Extract hour from timestamp
+                                # Extract hour from timestamp (in UTC)
                                 if time_str:
                                     try:
-                                        # Parse ISO format timestamp
+                                        # Parse ISO format timestamp and convert to UTC
                                         dt = datetime.fromisoformat(time_str.replace('Z', '+00:00'))
-                                        hour = dt.hour
+                                        dt_utc = dt.astimezone(timezone.utc)
+                                        hour = dt_utc.hour
                                         time_of_day_loads[palette_name][hour] += 1
 
                                         # Track first and last load times for session estimation
                                         if first_load_time[palette_name] is None:
-                                            first_load_time[palette_name] = dt
-                                        last_load_time[palette_name] = dt
+                                            first_load_time[palette_name] = dt_utc
+                                        last_load_time[palette_name] = dt_utc
                                     except (ValueError, AttributeError):
                                         pass
 

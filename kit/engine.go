@@ -64,10 +64,7 @@ func InitEngine() {
 
 	// e.params = NewParamValues()
 
-	err := NatsStartLeafServer()
-	LogIfError(err)
-
-	NatsConnectLocalAndSubscribe()
+	NatsConnectToHubAndSubscribe()
 
 	TheCursorManager = NewCursorManager()
 	TheRouter = NewRouter()

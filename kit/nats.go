@@ -3,42 +3,43 @@ package kit
 import (
 	"context"
 	"fmt"
-	"net/url"
 	"time"
 
 	json "github.com/goccy/go-json"
 
 	"github.com/joho/godotenv"
-	"github.com/nats-io/nats-server/v2/server"
 	"github.com/nats-io/nats.go"
 )
 
 var (
-	natsLeafServer  *server.Server = nil
-	natsConn        *nats.Conn     = nil
-	natsIsConnected bool           = false
+	natsConn        *nats.Conn = nil
+	natsIsConnected bool       = false
 )
 
-func NatsConnectLocalAndSubscribe() {
+func NatsConnectToHubAndSubscribe() {
 
 	if natsIsConnected {
 		// Already connected
-		LogError(fmt.Errorf("NatsInit: Already connected"))
+		LogError(fmt.Errorf("NatsConnectToHubAndSubscribe: Already connected"))
 		return
 	}
 
-	url := "127.0.0.1:4222"
+	url, err := NatsEnvValue("NATS_HUB_CLIENT_URL")
+	if err != nil {
+		LogError(err)
+		return
+	}
 
 	// Connect Options.
 	opts := []nats.Option{nats.Name("Palette NATS Subscriber")}
 	opts = setupConnOptions(opts)
 
-	// Connect to NATS
-	LogInfo("Calling nats.Connect A", "url", url)
+	// Connect to NATS hub
+	LogInfo("Connecting to NATS hub", "url", url)
 	nc, err := nats.Connect(url, opts...)
 	if err != nil {
 		natsIsConnected = false
-		LogError(fmt.Errorf("nats.Connect failed, fullurl=%s err=%s", url, err))
+		LogError(fmt.Errorf("nats.Connect to hub failed, url=%s err=%s", url, err))
 		return
 	}
 	natsIsConnected = true
@@ -49,7 +50,7 @@ func NatsConnectLocalAndSubscribe() {
 	if err != nil {
 		LogError(err)
 	} else {
-		LogInfo("Connected and subscribing to NATS", "subscribeTo", subscribeTo)
+		LogInfo("Connected to NATS hub and subscribed", "subscribeTo", subscribeTo)
 		NatsPublishFromEngine("connect.info", map[string]any{
 			"hostname": Hostname(),
 		})
@@ -343,60 +344,4 @@ func NatsEnvValue(key string) (string, error) {
 		return "", fmt.Errorf("no %s value, use 'palette env set' to set", key)
 	}
 	return s, nil
-}
-
-func NatsStartLeafServer() error {
-
-	if natsLeafServer != nil {
-		return fmt.Errorf("NatsStartLeafServer: NATS leaf Server already started")
-	}
-
-	hubStr, err := NatsEnvValue("NATS_HUB_LEAF_URL")
-	if err != nil {
-		return err
-	}
-
-	huburl, err := url.Parse(hubStr)
-	if err != nil {
-		return fmt.Errorf("unable to parse url value - %s", huburl)
-	}
-
-	leafName := Hostname() + "-leaf-server"
-
-	leafOptions := &server.Options{
-		ServerName: leafName,
-		Port:       4222, // Port for local clients to connect to the leaf node
-		LeafNode: server.LeafNodeOpts{
-			Remotes: []*server.RemoteLeafOpts{
-				{
-					URLs: []*url.URL{
-						huburl, // Connect to hub's leafnode port
-					},
-				},
-			},
-			TLSConfig: nil, // Optional TLS configuration if needed
-		},
-	}
-
-	// Create the server with appropriate options.
-	s, err := server.NewServer(leafOptions)
-	if err != nil {
-		return err
-	}
-
-	s.ConfigureLogger()
-
-	LogInfo("Calling nats.server.Run", "huburl", huburl)
-	// Start the server up in the background
-	if err := server.Run(s); err != nil {
-		return err
-	}
-
-	natsLeafServer = s
-
-	return nil
-}
-
-func NatsWaitForShutdown() {
-	natsLeafServer.WaitForShutdown()
 }
