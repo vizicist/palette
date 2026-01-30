@@ -1,12 +1,16 @@
 package kit
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	json "github.com/goccy/go-json"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -30,39 +34,24 @@ func Uptime() float64 {
 	return now.Sub(Time0).Seconds()
 }
 
-func myTimeEncoder(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
-	// nanos := t.UnixNano() - Time0Nanoseconds
-	// sec := float64(nanos) / float64(time.Second)
-	// For some reason a %04.4f format doesn't seem to work,
-	// so I do it manuall.
-	// leftpart := int(math.Trunc(sec))
-	// rf := sec - float64(leftpart)
-	// rightpart := int(rf * 1000)
-	// s := fmt.Sprintf("%06d,%04d.%04d", CurrentClick(), leftpart, rightpart)
-	s := fmt.Sprintf("%.6f", Uptime())
-	enc.AppendString(s)
-}
-
 func zapEncoderConfig() zapcore.EncoderConfig {
 
 	stacktraceKey := ""
 	// stacktraceKey = "stacktrace" // use this if you want to get stack traces
 
 	config := zapcore.EncoderConfig{
-		MessageKey:     "msg",
-		LevelKey:       "",
-		NameKey:        "name",
-		TimeKey:        "uptime",
-		CallerKey:      "", // "caller",
-		FunctionKey:    "", // "function",
-		StacktraceKey:  stacktraceKey,
-		LineEnding:     "\n",
-		EncodeTime:     myTimeEncoder,
-		EncodeLevel:    zapcore.LowercaseLevelEncoder,
+		MessageKey:    "msg",
+		LevelKey:      "",
+		NameKey:       "name",
+		TimeKey:       "", // uptime removed - absolute "time" field added via appendExtraValues
+		CallerKey:     "", // "caller",
+		FunctionKey:   "", // "function",
+		StacktraceKey: stacktraceKey,
+		LineEnding:    "\n",
+		EncodeLevel:   zapcore.LowercaseLevelEncoder,
 		EncodeDuration: zapcore.SecondsDurationEncoder,
-		EncodeCaller:   zapcore.ShortCallerEncoder,
+		EncodeCaller:  zapcore.ShortCallerEncoder,
 	}
-	// config.EncodeTime = zapcore.ISO8601TimeEncoder
 	return config
 }
 
@@ -104,7 +93,7 @@ func InitLog(logname string) {
 	}
 	TheLog = logger.Sugar()
 	defer LogIfError(logger.Sync()) // flushes buffer, if any
-	date := time.Now().Format(PaletteTimeLayout)
+	date := time.Now().UTC().Format(PaletteTimeLayout)
 	LogInfo("InitLog ==============================", "date", date, "logname", logname)
 }
 
@@ -173,6 +162,9 @@ func LogError(err error, keysAndValues ...any) {
 }
 
 func appendExtraValues(keysAndValues []any) []any {
+	// Add absolute UTC timestamp for easy filtering
+	keysAndValues = append(keysAndValues, "time")
+	keysAndValues = append(keysAndValues, time.Now().UTC().Format(PaletteTimeLayout))
 	keysAndValues = append(keysAndValues, "click")
 	keysAndValues = append(keysAndValues, int64(CurrentClick()))
 	if IsLogging("goroutine") {
@@ -327,4 +319,137 @@ func SetLogTypes(logtypes string) {
 			}
 		}
 	}
+}
+
+// LogEntry represents a parsed log entry with absolute timestamp
+type LogEntry struct {
+	Time    string         `json:"time"`
+	Msg     string         `json:"msg"`
+	Uptime  float64        `json:"uptime"`
+	Data    map[string]any `json:"-"` // All other fields
+	RawJSON string         `json:"-"` // Original JSON line
+}
+
+// MaxLogResponseBytes is the maximum size of log response (~900KB to stay under 1MB NATS limit)
+const MaxLogResponseBytes = 900000
+
+// ReadLogEntries reads engine.log and returns entries filtered by time range
+// startTime and endTime are optional (nil means no bound)
+// limit caps the number of entries (0 means default of 1000)
+// offset skips entries for pagination
+func ReadLogEntries(startTime, endTime *time.Time, limit, offset int) ([]map[string]any, error) {
+	if limit <= 0 {
+		limit = 1000
+	}
+
+	logPath := LogFilePath("engine.log")
+	file, err := os.Open(logPath)
+	if err != nil {
+		return nil, fmt.Errorf("cannot open engine.log: %w", err)
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	// Increase buffer size for potentially long lines
+	buf := make([]byte, 0, 64*1024)
+	scanner.Buffer(buf, 1024*1024)
+
+	// For backward compatibility with old logs without "time" field
+	var sessionStart time.Time
+	var sessionStartUptime float64
+
+	var results []map[string]any
+	skipped := 0
+	totalBytes := 0
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		var entry map[string]any
+		if err := json.Unmarshal([]byte(line), &entry); err != nil {
+			continue
+		}
+
+		// Check for InitLog to support backward compatibility
+		if msgStr, ok := entry["msg"].(string); ok && strings.Contains(msgStr, "InitLog") {
+			if dateStr, ok := entry["date"].(string); ok {
+				if uptimeStr, ok := entry["uptime"].(string); ok {
+					uptime, _ := strconv.ParseFloat(uptimeStr, 64)
+					t, err := time.Parse(PaletteTimeLayout, dateStr)
+					if err == nil {
+						sessionStart = t
+						sessionStartUptime = uptime
+					}
+				}
+			}
+		}
+
+		// Get absolute time - prefer "time" field, fall back to computed time
+		var absTime time.Time
+		if timeStr, ok := entry["time"].(string); ok {
+			// New format: use the "time" field directly
+			t, err := time.Parse(PaletteTimeLayout, timeStr)
+			if err == nil {
+				absTime = t
+			}
+		}
+
+		// Fall back to computing from uptime if no "time" field
+		if absTime.IsZero() {
+			if sessionStart.IsZero() {
+				// Can't compute time yet, skip this entry
+				continue
+			}
+			uptimeStr, ok := entry["uptime"].(string)
+			if !ok {
+				continue
+			}
+			uptime, err := strconv.ParseFloat(uptimeStr, 64)
+			if err != nil {
+				continue
+			}
+			relativeUptime := uptime - sessionStartUptime
+			absTime = sessionStart.Add(time.Duration(relativeUptime * float64(time.Second)))
+			// Add time to entry for consistency
+			entry["time"] = absTime.Format(PaletteTimeLayout)
+		}
+
+		// Filter by time range
+		if startTime != nil && absTime.Before(*startTime) {
+			continue
+		}
+		if endTime != nil && absTime.After(*endTime) {
+			continue
+		}
+
+		// Handle offset
+		if skipped < offset {
+			skipped++
+			continue
+		}
+
+		// Check size limit before adding
+		entryJSON, _ := json.Marshal(entry)
+		if totalBytes+len(entryJSON) > MaxLogResponseBytes {
+			// Add truncation notice
+			truncEntry := map[string]any{
+				"_truncated": true,
+				"_message":   "Response truncated due to size limit",
+			}
+			results = append(results, truncEntry)
+			break
+		}
+
+		results = append(results, entry)
+		totalBytes += len(entryJSON)
+
+		if len(results) >= limit {
+			break
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, fmt.Errorf("error reading engine.log: %w", err)
+	}
+
+	return results, nil
 }

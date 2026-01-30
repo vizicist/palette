@@ -54,7 +54,7 @@ func main() {
 	// Create a file to write the traffic
 	// file, err := os.Create("palette_nats_traffic.log")
 
-	date := time.Now().Format(PaletteTimeLayout)
+	date := time.Now().UTC().Format(PaletteTimeLayout)
 	filename := "nats_traffic_" + date + ".log"
 	file, err := os.OpenFile(filename, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
 
@@ -81,7 +81,7 @@ func main() {
 }
 
 func addToLog(file *os.File, subject string, data string) {
-	date := time.Now().Format(PaletteTimeLayout)
+	date := time.Now().UTC().Format(PaletteTimeLayout)
 	line := fmt.Sprintf("%s ; %s ; %s\n", date, subject, data)
 
 	// Print once to the file, and again to stdout

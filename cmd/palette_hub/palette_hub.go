@@ -41,6 +41,10 @@ func usage() string {
 	palette_hub streams
 	palette_hub listen [ {streamname} ]
 	  Subscribe and print events in real-time (Ctrl+C to stop)
+	palette_hub request_log {hostname} [ start={time} ] [ end={time} ] [ limit={n} ]
+	  Request log entries from a palette via NATS
+	  Time format: RFC3339 (e.g., 2026-01-30T00:00:00Z)
+	  Example: palette_hub request_log spacepalette34 limit=100
 	palette_hub dumpraw [ {streamname} ]
 	palette_hub dumpload [ {streamname} ]
 	palette_hub dumpday {date} [ {streamname} ]
@@ -131,6 +135,81 @@ func HubCommand(args []string) (map[string]string, error) {
 		<-sigChan
 
 		fmt.Println("\nStopped listening.")
+		return map[string]string{"result": ""}, nil
+
+	case "request_log":
+		if len(args) < 2 {
+			return nil, fmt.Errorf("request_log requires a hostname argument\n%s", usage())
+		}
+		hostname := args[1]
+
+		// Parse optional key=value arguments
+		params := make(map[string]string)
+		for _, arg := range args[2:] {
+			if parts := strings.SplitN(arg, "=", 2); len(parts) == 2 {
+				params[parts[0]] = parts[1]
+			}
+		}
+
+		// Build the API request
+		apiRequest := map[string]string{"api": "global.logs"}
+		if v, ok := params["start"]; ok {
+			apiRequest["start"] = v
+		}
+		if v, ok := params["end"]; ok {
+			apiRequest["end"] = v
+		}
+		if v, ok := params["limit"]; ok {
+			apiRequest["limit"] = v
+		}
+		if v, ok := params["offset"]; ok {
+			apiRequest["offset"] = v
+		}
+
+		requestJSON, err := json.Marshal(apiRequest)
+		if err != nil {
+			return map[string]string{"error": err.Error()}, nil
+		}
+
+		// Send NATS request to the palette
+		subject := fmt.Sprintf("to_palette.%s.api", hostname)
+		timeout := 30 * time.Second
+		response, err := kit.NatsRequest(subject, string(requestJSON), timeout)
+		if err != nil {
+			return map[string]string{"error": fmt.Sprintf("NATS request failed: %v", err)}, nil
+		}
+
+		// Parse the response to check for errors
+		var responseData map[string]any
+		if err := json.Unmarshal([]byte(response), &responseData); err != nil {
+			// Not JSON, just output as-is
+			fmt.Println(response)
+			return map[string]string{"result": ""}, nil
+		}
+
+		// Check if response has an error
+		if errMsg, ok := responseData["error"].(string); ok {
+			return map[string]string{"error": errMsg}, nil
+		}
+
+		// Check if response has a result field with the log entries
+		if result, ok := responseData["result"].(string); ok {
+			// Parse and pretty-print each log entry
+			var entries []map[string]any
+			if err := json.Unmarshal([]byte(result), &entries); err != nil {
+				// Not a JSON array, output as-is
+				fmt.Println(result)
+			} else {
+				// Output each entry as a separate JSON line
+				for _, entry := range entries {
+					entryJSON, _ := json.Marshal(entry)
+					fmt.Println(string(entryJSON))
+				}
+			}
+		} else {
+			// Output raw response
+			fmt.Println(response)
+		}
 		return map[string]string{"result": ""}, nil
 
 	case "dumpraw":
@@ -314,16 +393,10 @@ func dumpDays(streamName string) error {
 		return fmt.Errorf("failed to create days directory: %v", err)
 	}
 
-	// Define start and end dates in local timezone
-	loc, err := time.LoadLocation("America/Los_Angeles")
-	if err != nil {
-		// Fallback to local time if timezone loading fails
-		loc = time.Local
-	}
-
-	startDate := time.Date(2025, 1, 1, 0, 0, 0, 0, loc)
-	yesterday := time.Now().In(loc).AddDate(0, 0, -1)
-	endDate := time.Date(yesterday.Year(), yesterday.Month(), yesterday.Day(), 0, 0, 0, 0, loc)
+	// Define start and end dates in UTC
+	startDate := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
+	yesterday := time.Now().UTC().AddDate(0, 0, -1)
+	endDate := time.Date(yesterday.Year(), yesterday.Month(), yesterday.Day(), 0, 0, 0, 0, time.UTC)
 
 	// Iterate through each day
 	for currentDate := startDate; !currentDate.After(endDate); currentDate = currentDate.AddDate(0, 0, 1) {
@@ -344,9 +417,9 @@ func dumpDays(streamName string) error {
 			return fmt.Errorf("failed to create file %s: %v", filename, err)
 		}
 
-		// Set time range for the entire day in local timezone (Pacific Time)
-		dayStart := time.Date(currentDate.Year(), currentDate.Month(), currentDate.Day(), 0, 0, 0, 0, loc)
-		dayEnd := time.Date(currentDate.Year(), currentDate.Month(), currentDate.Day(), 23, 59, 59, 999999999, loc)
+		// Set time range for the entire day in UTC
+		dayStart := time.Date(currentDate.Year(), currentDate.Month(), currentDate.Day(), 0, 0, 0, 0, time.UTC)
+		dayEnd := time.Date(currentDate.Year(), currentDate.Month(), currentDate.Day(), 23, 59, 59, 999999999, time.UTC)
 
 		type DumpData struct {
 			Subject string `json:"subject"`
@@ -428,11 +501,6 @@ func importEngineLog(hostname string) (string, error) {
 	daysDir := "days"
 	if err := os.MkdirAll(daysDir, 0755); err != nil {
 		return "", fmt.Errorf("failed to create days directory: %v", err)
-	}
-
-	loc, err := time.LoadLocation("America/Los_Angeles")
-	if err != nil {
-		loc = time.Local
 	}
 
 	// Read all lines from stdin
@@ -552,7 +620,7 @@ func importEngineLog(hostname string) (string, error) {
 	// Group events by day
 	eventsByDay := make(map[string][]DayEvent)
 	for _, event := range events {
-		dayStr := event.Time.In(loc).Format("2006-01-02")
+		dayStr := event.Time.UTC().Format("2006-01-02")
 		eventsByDay[dayStr] = append(eventsByDay[dayStr], event)
 	}
 
