@@ -36,6 +36,16 @@ pushd "$PALETTE_SOURCE/cmd/palette_engine" > /dev/null
 go build -o "$BIN/palette_engine" .
 popd > /dev/null
 
+echo "================ Copying data_default"
+DATA_DEFAULT="$SHIP/data_default"
+cp -r "$PALETTE_SOURCE/data_default" "$SHIP/"
+# Create logs directory
+mkdir -p "$DATA_DEFAULT/logs"
+# Remove user-specific files that shouldn't be distributed
+rm -f "$DATA_DEFAULT/saved/global/_Current.json"
+rm -f "$DATA_DEFAULT/saved/global/_Boot.json"
+rm -f "$DATA_DEFAULT/logs/"*.log 2>/dev/null || true
+
 # Create release directory if it doesn't exist
 RELEASE_DIR="$PALETTE_SOURCE/release"
 mkdir -p "$RELEASE_DIR"
