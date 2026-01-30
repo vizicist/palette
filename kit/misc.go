@@ -77,12 +77,17 @@ func fileExists(filename string) bool {
 
 var paletteRoot string
 
-// PaletteDir is the value of environment variable PALETTE
+// PaletteDir is the value of environment variable PALETTE,
+// or /usr/local/palette on Linux if not set.
 func PaletteDir() string {
 	if paletteRoot == "" {
 		paletteRoot = os.Getenv("PALETTE")
 		if paletteRoot == "" {
-			LogWarn("PALETTE environment variable needs to be set.")
+			if runtime.GOOS == "linux" {
+				paletteRoot = "/usr/local/palette"
+			} else {
+				LogWarn("PALETTE environment variable needs to be set.")
+			}
 		}
 	}
 	return paletteRoot

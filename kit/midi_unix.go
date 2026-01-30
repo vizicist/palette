@@ -10,7 +10,7 @@ import (
 
 	midi "gitlab.com/gomidi/midi/v2"
 	"gitlab.com/gomidi/midi/v2/drivers"
-	_ "gitlab.com/gomidi/midi/v2/drivers/rtmididrv" // autoregisters driver
+	// rtmididrv import moved to cmd/palette_engine to avoid MIDI init in CLI commands
 )
 
 // These are the values of MIDI status bytes

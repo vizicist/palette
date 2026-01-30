@@ -3,6 +3,7 @@ package kit
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -59,27 +60,52 @@ func fileLogger(path string) *zap.Logger {
 
 	config := zapEncoderConfig()
 	fileEncoder := zapcore.NewJSONEncoder(config)
-	logFile, _ := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	writer := zapcore.AddSync(logFile)
+	logFile, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+
+	var writer zapcore.WriteSyncer
+	if err != nil {
+		// Can't open log file, fall back to no-op writer to avoid errors
+		// This happens when log directory doesn't exist or isn't writable
+		writer = noSyncWriter{io.Discard}
+	} else {
+		writer = zapcore.AddSync(logFile)
+	}
+
 	defaultLogLevel := zapcore.DebugLevel
 	core := zapcore.NewTee(
 		zapcore.NewCore(fileEncoder, writer, defaultLogLevel),
 	)
-	logger := zap.New(core, zap.AddCaller(), zap.AddStacktrace(zapcore.WarnLevel))
+	// Use noSyncWriter for ErrorOutput to prevent "write error" messages
+	// when zap tries to fsync stderr (which fails on terminals)
+	logger := zap.New(core, zap.AddCaller(), zap.AddStacktrace(zapcore.WarnLevel),
+		zap.ErrorOutput(noSyncWriter{os.Stderr}))
 	return logger
+}
+
+// noSyncWriter wraps an io.Writer and ignores Sync() calls.
+// This prevents "write error: invalid argument" messages when zap tries
+// to fsync stdout/stderr (which fails on terminals).
+type noSyncWriter struct {
+	io.Writer
+}
+
+func (w noSyncWriter) Sync() error {
+	return nil
 }
 
 func stdoutLogger() *zap.Logger {
 
 	config := zapEncoderConfig()
 	fileEncoder := zapcore.NewJSONEncoder(config)
-	logFile := os.Stdout
-	writer := zapcore.AddSync(logFile)
+	// Wrap stdout in noSyncWriter to prevent fsync errors on terminals
+	writer := noSyncWriter{os.Stdout}
 	defaultLogLevel := zapcore.ErrorLevel
 	core := zapcore.NewTee(
 		zapcore.NewCore(fileEncoder, writer, defaultLogLevel),
 	)
-	logger := zap.New(core, zap.AddCaller(), zap.AddStacktrace(zapcore.WarnLevel))
+	// Use noSyncWriter for ErrorOutput to prevent "write error" messages
+	logger := zap.New(core, zap.AddCaller(), zap.AddStacktrace(zapcore.WarnLevel),
+		zap.ErrorOutput(noSyncWriter{os.Stderr}))
 	return logger
 }
 
@@ -139,7 +165,7 @@ func IsLogging(logtype string) bool {
 }
 
 func LogIfError(err error, keysAndValues ...any) {
-	if err == nil {
+	if err == nil || TheLog == nil {
 		return
 	}
 	LogError(err, keysAndValues...)
