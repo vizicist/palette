@@ -90,3 +90,5 @@ package-lock.json
 package.json
 cmd/palette_engine/palette_engine.exe
 cmd/palette_hub/palette_hub.exe
+cmd/palette/palette
+cmd/palette_natsmon/palette_natsmon
