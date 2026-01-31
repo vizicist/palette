@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/andreykaipov/goobs"
+	"github.com/joho/godotenv"
 )
 
 func ObsProcessInfo() *ProcessInfo {
@@ -64,7 +65,17 @@ func ObsActivate() {
 
 func ObsCommand(cmd string) error {
 
-	client, err := goobs.New("localhost:4455", goobs.WithPassword("mantic0re"))
+	// Read OBS password from .env file
+	myenv, err := godotenv.Read(EnvFilePath())
+	if err != nil {
+		return fmt.Errorf("cannot read .env file: %w", err)
+	}
+	password, ok := myenv["OBS_PASSWORD"]
+	if !ok || password == "" {
+		return fmt.Errorf("OBS_PASSWORD not set in .env file")
+	}
+
+	client, err := goobs.New("localhost:4455", goobs.WithPassword(password))
 	if err != nil {
 		return err
 	}

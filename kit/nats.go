@@ -3,6 +3,8 @@ package kit
 import (
 	"context"
 	"fmt"
+	"net/url"
+	"strings"
 	"time"
 
 	json "github.com/goccy/go-json"
@@ -10,6 +12,20 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/nats-io/nats.go"
 )
+
+// maskURLPassword replaces the password in a URL with X's
+func maskURLPassword(rawURL string) string {
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return rawURL
+	}
+	if u.User != nil {
+		if _, hasPassword := u.User.Password(); hasPassword {
+			u.User = url.UserPassword(u.User.Username(), strings.Repeat("X", 8))
+		}
+	}
+	return u.String()
+}
 
 var (
 	natsConn        *nats.Conn = nil
@@ -35,11 +51,11 @@ func NatsConnectToHubAndSubscribe() {
 	opts = setupConnOptions(opts)
 
 	// Connect to NATS hub
-	LogInfo("Connecting to NATS hub", "url", url)
+	LogInfo("Connecting to NATS hub", "url", maskURLPassword(url))
 	nc, err := nats.Connect(url, opts...)
 	if err != nil {
 		natsIsConnected = false
-		LogError(fmt.Errorf("nats.Connect to hub failed, url=%s err=%s", url, err))
+		LogError(fmt.Errorf("nats.Connect to hub failed, url=%s err=%s", maskURLPassword(url), err))
 		return
 	}
 	natsIsConnected = true
