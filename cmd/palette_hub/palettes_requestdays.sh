@@ -13,7 +13,7 @@ if [ ! -f "$PALETTES_JSON" ]; then
 fi
 
 # Get date range
-START_DATE="2026-01-01"
+START_DATE="2025-01-01"
 END_DATE=$(date +%Y-%m-%d)
 
 echo "Requesting logs from $START_DATE to $END_DATE"
@@ -58,7 +58,7 @@ while IFS= read -r line; do
         day_end="${current_date}T23:59:59Z"
 
         echo "  Requesting $current_date...  $day_start to $day_end"
-        "$SCRIPT_DIR/palette_hub" request_log "$hostname" "start=$day_start" "end=$day_end" > "$outfile" 2>/dev/null
+        palette_hub request_log "$hostname" "start=$day_start" "end=$day_end" > "$outfile" 2>/dev/null
 
         # Check if we got any data
         if [ -s "$outfile" ]; then
@@ -66,7 +66,7 @@ while IFS= read -r line; do
             echo "    -> $lines entries"
         else
             # Remove empty file
-            rm -f "$outfile"
+            # rm -f "$outfile"
             echo "    -> no entries"
         fi
 
