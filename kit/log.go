@@ -419,7 +419,9 @@ func ReadLogEntries(startTime, endTime *time.Time, limit, offset int) ([]map[str
 			// New format: use the "time" field directly
 			t, err := time.Parse(PaletteTimeLayout, timeStr)
 			if err == nil {
-				absTime = t
+				absTime = t.UTC()
+				// Normalize time to UTC in the output
+				entry["time"] = absTime.Format(PaletteTimeLayout)
 			}
 		}
 
