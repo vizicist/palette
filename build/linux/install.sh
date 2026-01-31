@@ -42,7 +42,7 @@ mkdir -p "$INSTALL_DIR"
 # -u = update (only extract newer files or new files)
 # -o = overwrite without prompting
 echo "Extracting to $INSTALL_DIR (preserving newer existing files)..."
-unzip -uo "$ZIP_FILE" -d "$INSTALL_DIR"
+unzip -uoq "$ZIP_FILE" -d "$INSTALL_DIR"
 
 # Make binaries executable
 chmod +x "$INSTALL_DIR/bin/"*

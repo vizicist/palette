@@ -211,8 +211,14 @@ func HubCommand(args []string) (map[string]string, error) {
 				break
 			}
 
-			// Output each entry as a separate JSON line
+			// Output each entry as a separate JSON line, converting time to UTC
 			for _, entry := range entries {
+				// Convert time field to UTC if present
+				if timeStr, ok := entry["time"].(string); ok {
+					if t, err := time.Parse(time.RFC3339, timeStr); err == nil {
+						entry["time"] = t.UTC().Format(time.RFC3339)
+					}
+				}
 				entryJSON, _ := json.Marshal(entry)
 				fmt.Println(string(entryJSON))
 			}
