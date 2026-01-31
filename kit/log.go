@@ -360,11 +360,11 @@ const MaxLogResponseBytes = 900000
 
 // ReadLogEntries reads engine.log and returns entries filtered by time range
 // startTime and endTime are optional (nil means no bound)
-// limit caps the number of entries (0 means default of 1000)
+// limit caps the number of entries (0 means default of 50)
 // offset skips entries for pagination
 func ReadLogEntries(startTime, endTime *time.Time, limit, offset int) ([]map[string]any, error) {
 	if limit <= 0 {
-		limit = 1000
+		limit = 500
 	}
 
 	logPath := LogFilePath("engine.log")
@@ -396,7 +396,12 @@ func ReadLogEntries(startTime, endTime *time.Time, limit, offset int) ([]map[str
 
 		// Check for InitLog to establish session start time
 		if msgStr, ok := entry["msg"].(string); ok && strings.Contains(msgStr, "InitLog") {
-			if timeStr, ok := entry["time"].(string); ok {
+			// Check for "time" field, fall back to "date" for old log files
+			timeStr, ok := entry["time"].(string)
+			if !ok {
+				timeStr, ok = entry["date"].(string)
+			}
+			if ok {
 				if uptimeStr, ok := entry["uptime"].(string); ok {
 					uptime, _ := strconv.ParseFloat(uptimeStr, 64)
 					t, err := time.Parse(PaletteTimeLayout, timeStr)
@@ -471,6 +476,7 @@ func ReadLogEntries(startTime, endTime *time.Time, limit, offset int) ([]map[str
 			break
 		}
 	}
+	LogInfo("RESULTS LogEntries", "len", len(results))
 
 	if err := scanner.Err(); err != nil {
 		return nil, fmt.Errorf("error reading engine.log: %w", err)

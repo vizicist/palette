@@ -79,7 +79,7 @@ func NewMidiIO() *MidiIO {
 // InitMIDI initializes stuff
 func InitMidiIO() {
 
-	LogInfo("Initializing MIDI I/O",
+	LogOfType("midi", "Initializing MIDI I/O",
 		"inports", TheMidiIO.inports, "outports", TheMidiIO.outports)
 
 	for _, outp := range TheMidiIO.outports {
@@ -105,8 +105,9 @@ func InitMidiIO() {
 		TheMidiIO.midiOutputs[name] = outp
 	}
 
-	LogInfo("Initialized MIDI", "numoutports", len(TheMidiIO.outports))
-	LogOfType("midi", "MIDI outports", "outports", TheMidiIO.outports)
+	LogInfo("Initialized MIDI",
+		"numoutports", len(TheMidiIO.outports),
+		"numinports", len(TheMidiIO.inports))
 
 	// if erae {
 	// 	Info("Erae Touch input is being enabled")
