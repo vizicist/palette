@@ -1,6 +1,7 @@
 node_modules/*
 cmd/palette_hub/days
 cmd/palette_hub/days_backup
+cmd/palette_hub/palettes
 build/windows/vcvars64.err
 data/recordings/*
 binaries/tcltk90/*

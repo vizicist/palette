@@ -54,11 +54,10 @@ mkdir -p "$RELEASE_DIR"
 ZIP_NAME="palette_${VERSION}_linux_amd64.zip"
 echo "================ Creating $ZIP_NAME"
 pushd "$SHIP" > /dev/null
-zip -r "$RELEASE_DIR/$ZIP_NAME" .
+zip -rq "$RELEASE_DIR/$ZIP_NAME" .
 popd > /dev/null
 
 echo "================ Done"
 echo "Installer created: $RELEASE_DIR/$ZIP_NAME"
-echo ""
-echo "Contents:"
-unzip -l "$RELEASE_DIR/$ZIP_NAME"
+
+rm -rf "$SHIP"
