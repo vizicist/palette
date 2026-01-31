@@ -151,65 +151,83 @@ func HubCommand(args []string) (map[string]string, error) {
 			}
 		}
 
-		// Build the API request
-		apiRequest := map[string]string{"api": "global.log"}
-		if v, ok := params["start"]; ok {
-			apiRequest["start"] = v
-		}
-		if v, ok := params["end"]; ok {
-			apiRequest["end"] = v
-		}
-		if v, ok := params["limit"]; ok {
-			apiRequest["limit"] = v
-		}
-		if v, ok := params["offset"]; ok {
-			apiRequest["offset"] = v
-		}
-
-		requestJSON, err := json.Marshal(apiRequest)
-		if err != nil {
-			return map[string]string{"error": err.Error()}, nil
-		}
-
-		// Send NATS request to the palette
+		// Fetch log entries in batches
 		subject := fmt.Sprintf("to_palette.%s.api", hostname)
 		timeout := 30 * time.Second
-		response, err := kit.NatsRequest(subject, string(requestJSON), timeout)
-		if err != nil {
-			return map[string]string{"error": fmt.Sprintf("NATS request failed: %v", err)}, nil
-		}
+		batchSize := 500
+		offset := 0
+		totalEntries := 0
 
-		// Parse the response to check for errors
-		var responseData map[string]any
-		if err := json.Unmarshal([]byte(response), &responseData); err != nil {
-			// Not JSON, just output as-is
-			fmt.Println(response)
-			return map[string]string{"result": ""}, nil
-		}
+		for {
+			// Build the API request for this batch
+			apiRequest := map[string]string{
+				"api":    "global.log",
+				"limit":  strconv.Itoa(batchSize),
+				"offset": strconv.Itoa(offset),
+			}
+			if v, ok := params["start"]; ok {
+				apiRequest["start"] = v
+			}
+			if v, ok := params["end"]; ok {
+				apiRequest["end"] = v
+			}
 
-		// Check if response has an error
-		if errMsg, ok := responseData["error"].(string); ok {
-			return map[string]string{"error": errMsg}, nil
-		}
+			requestJSON, err := json.Marshal(apiRequest)
+			if err != nil {
+				return map[string]string{"error": err.Error()}, nil
+			}
 
-		// Check if response has a result field with the log entries
-		if result, ok := responseData["result"].(string); ok {
-			// Parse and pretty-print each log entry
+			response, err := kit.NatsRequest(subject, string(requestJSON), timeout)
+			if err != nil {
+				return map[string]string{"error": fmt.Sprintf("NATS request failed: %v", err)}, nil
+			}
+
+			// Parse the response to check for errors
+			var responseData map[string]any
+			if err := json.Unmarshal([]byte(response), &responseData); err != nil {
+				// Not JSON, just output as-is
+				fmt.Println(response)
+				return map[string]string{"result": ""}, nil
+			}
+
+			// Check if response has an error
+			if errMsg, ok := responseData["error"].(string); ok {
+				return map[string]string{"error": errMsg}, nil
+			}
+
+			// Check if response has a result field with the log entries
+			result, ok := responseData["result"].(string)
+			if !ok {
+				// Output raw response and stop
+				fmt.Println(response)
+				break
+			}
+
+			// Parse the log entries
 			var entries []map[string]any
 			if err := json.Unmarshal([]byte(result), &entries); err != nil {
-				// Not a JSON array, output as-is
+				// Not a JSON array, output as-is and stop
 				fmt.Println(result)
-			} else {
-				// Output each entry as a separate JSON line
-				for _, entry := range entries {
-					entryJSON, _ := json.Marshal(entry)
-					fmt.Println(string(entryJSON))
-				}
+				break
 			}
-		} else {
-			// Output raw response
-			fmt.Println(response)
+
+			// Output each entry as a separate JSON line
+			for _, entry := range entries {
+				entryJSON, _ := json.Marshal(entry)
+				fmt.Println(string(entryJSON))
+			}
+
+			totalEntries += len(entries)
+
+			// If we got fewer entries than the batch size, we're done
+			if len(entries) < batchSize {
+				break
+			}
+
+			offset += batchSize
 		}
+
+		fmt.Fprintf(os.Stderr, "Total entries: %d\n", totalEntries)
 		return map[string]string{"result": ""}, nil
 
 	case "dumpraw":
@@ -472,12 +490,12 @@ func parseFlexibleDate(dateStr string) (time.Time, error) {
 
 	// Try various date formats
 	formats := []string{
-		"2006-01-02",     // 2025-12-11
-		"2006/01/02",     // 2025/12/11
-		"01-02",          // 12-11 (assumes current year)
-		"01/02",          // 12/11 (assumes current year)
-		"01-02-2006",     // 12-11-2025
-		"01/02/2006",     // 12/11/2025
+		"2006-01-02",                // 2025-12-11
+		"2006/01/02",                // 2025/12/11
+		"01-02",                     // 12-11 (assumes current year)
+		"01/02",                     // 12/11 (assumes current year)
+		"01-02-2006",                // 12-11-2025
+		"01/02/2006",                // 12/11/2025
 		"2006-01-02T15:04:05Z07:00", // RFC3339
 	}
 
