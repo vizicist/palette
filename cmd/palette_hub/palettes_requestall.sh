@@ -35,7 +35,7 @@ while IFS= read -r line; do
     mkdir -p "$outdir"
 
     echo "Requesting logs from $hostname ($location)..."
-    "$SCRIPT_DIR/palette_hub" request_log "$hostname" > "$outdir/engine.log" 2>&1
+    palette_hub request_log "$hostname" > "$outdir/engine.log" 2>&1
 
     if [ $? -eq 0 ]; then
         lines=$(wc -l < "$outdir/engine.log")
