@@ -1,11 +1,14 @@
 #!/bin/bash
 
-# Request full engine logs from all palettes listed in palettes.json
-# Output goes to palettes/{location}/engine.log
+# Request logs from all palettes listed in palettes.json
+# Output goes to palettes/{location}/{logfile} for each log type
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PALETTES_JSON="$SCRIPT_DIR/palettes.json"
 PALETTES_DIR="$SCRIPT_DIR/palettes"
+
+# Log files to request from each palette
+LOGFILES="engine.log monitor.log ffgl.log"
 
 if [ ! -f "$PALETTES_JSON" ]; then
     echo "Error: $PALETTES_JSON not found"
@@ -35,14 +38,20 @@ while IFS= read -r line; do
     mkdir -p "$outdir"
 
     echo "Requesting logs from $hostname ($location)..."
-    palette_hub request_log "$hostname" > "$outdir/engine.log" 2>&1
 
-    if [ $? -eq 0 ]; then
-        lines=$(wc -l < "$outdir/engine.log")
-        echo "  -> Saved $lines lines to $outdir/engine.log"
-    else
-        echo "  -> Error requesting logs from $hostname"
-    fi
+    # Request each log file
+    for logfile in $LOGFILES; do
+        palette_hub request_log "$hostname" "logfile=$logfile" > "$outdir/$logfile" 2>&1
+
+        if [ $? -eq 0 ] && [ -s "$outdir/$logfile" ]; then
+            lines=$(wc -l < "$outdir/$logfile")
+            echo "  -> $logfile: $lines lines"
+        else
+            # Remove empty file
+            rm -f "$outdir/$logfile"
+            echo "  -> $logfile: no data"
+        fi
+    done
 done < "$PALETTES_JSON"
 
 echo "Done."
