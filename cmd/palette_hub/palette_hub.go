@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
@@ -41,10 +42,14 @@ func usage() string {
 	palette_hub streams
 	palette_hub listen [ {streamname} ]
 	  Subscribe and print events in real-time (Ctrl+C to stop)
-	palette_hub request_log {hostname} [ start={time} ] [ end={time} ] [ limit={n} ]
+	palette_hub request_log {hostname} [ logfile={file} ] [ start={time} ] [ end={time} ]
 	  Request log entries from a palette via NATS
+	  logfile defaults to engine.log if not specified
 	  Time format: RFC3339 (e.g., 2026-01-30T00:00:00Z)
-	  Example: palette_hub request_log spacepalette34 limit=100
+	  Examples:
+	    palette_hub request_log spacepalette34
+	    palette_hub request_log spacepalette34 logfile=monitor.log
+	    palette_hub request_log spacepalette34 logfile=monitor.log start=2025-01-01T00:00:00Z
 	palette_hub dumpraw [ {streamname} ]
 	palette_hub dumpload [ {streamname} ]
 	palette_hub dumpday {date} [ {streamname} ]
@@ -151,6 +156,13 @@ func HubCommand(args []string) (map[string]string, error) {
 			}
 		}
 
+		// Get logfile parameter (default to engine.log, sanitize to basename only)
+		logfile := "engine.log"
+		if v, ok := params["logfile"]; ok && v != "" {
+			// Sanitize: only allow basename, no paths
+			logfile = filepath.Base(v)
+		}
+
 		// Fetch log entries in batches
 		timeout := 5 * time.Second
 		batchSize := 500
@@ -161,6 +173,7 @@ func HubCommand(args []string) (map[string]string, error) {
 			// Build the API request for this batch
 			apiRequest := map[string]string{
 				"api":    "global.log",
+				"file":   logfile,
 				"limit":  strconv.Itoa(batchSize),
 				"offset": strconv.Itoa(offset),
 			}
