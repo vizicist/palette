@@ -119,14 +119,13 @@ func EngineHttpApi(host string, api string, args ...string) (map[string]string, 
 	return HttpApiRaw(url, apijson)
 }
 
-func EngineNatsApi(host string, cmd string) (result string, err error) {
+func EngineNatsApi(host string, cmd string, timeout time.Duration) (result string, err error) {
 	if !natsIsConnected {
 		return "", fmt.Errorf("EngineNatsAPI: NATS is not connected")
 	}
 	if natsConn == nil {
 		return "", fmt.Errorf("NatsAPI: NatsConn is nil?")
 	}
-	timeout := 3 * time.Second
 	subject := fmt.Sprintf("to_palette.%s.api", host)
 	retdata, err := NatsRequest(subject, cmd, timeout)
 	LogIfError(err)

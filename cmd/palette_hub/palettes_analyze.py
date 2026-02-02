@@ -54,6 +54,9 @@ def analyze_day_file(filepath, location):
     # Track load times for session estimation
     first_load_time = None
     last_load_time = None
+    # Track uptime to detect reboots
+    prev_uptime = None
+    last_event_time = None
 
     if not os.path.exists(filepath):
         return palette_loads, time_of_day_loads, session_durations, sessions
@@ -69,6 +72,38 @@ def analyze_day_file(filepath, location):
                     entry = json.loads(line)
                     msg = entry.get('msg', '')
                     time_str = entry.get('time', '')
+                    uptime_str = entry.get('uptime', '')
+
+                    # Detect reboot via uptime decrease (uptime resets on reboot)
+                    if uptime_str:
+                        try:
+                            current_uptime = float(uptime_str)
+                            if prev_uptime is not None and current_uptime < prev_uptime - 60:
+                                # Uptime decreased significantly - this is a reboot
+                                # Close any open session at the last known time
+                                if session_start_time is not None and session_load_count > 0 and last_event_time is not None:
+                                    duration = (last_event_time - session_start_time).total_seconds()
+                                    if duration > 0:
+                                        session_durations[location] += duration
+                                        sessions.append({
+                                            'palette': location,
+                                            'start_time': session_start_time.isoformat(),
+                                            'duration_seconds': duration
+                                        })
+                                # Reset session state after reboot
+                                session_start_time = None
+                                session_load_count = 0
+                                attract_mode_on = True  # Assume attract mode on after reboot
+                            prev_uptime = current_uptime
+                        except (ValueError, TypeError):
+                            pass
+
+                    # Update last event time for reboot detection
+                    if time_str:
+                        try:
+                            last_event_time = datetime.fromisoformat(time_str.replace('Z', '+00:00')).astimezone(timezone.utc)
+                        except (ValueError, AttributeError):
+                            pass
 
                     # Check for attract mode state change
                     if msg == 'setAttractMode':
@@ -135,14 +170,17 @@ def analyze_day_file(filepath, location):
     # Estimate session duration if session wasn't closed
     if has_attract_events and palette_loads[location] > 0 and first_load_time is not None:
         if session_start_time is not None and last_load_time is not None:
-            estimated_end = last_load_time
-            duration = (estimated_end - session_start_time).total_seconds() + 300
-            session_durations[location] += duration
-            sessions.append({
-                'palette': location,
-                'start_time': session_start_time.isoformat(),
-                'duration_seconds': duration
-            })
+            # Only estimate if last_load_time is after session_start_time
+            # (otherwise last_load_time is from a previous session)
+            if last_load_time > session_start_time:
+                estimated_end = last_load_time
+                duration = (estimated_end - session_start_time).total_seconds() + 300
+                session_durations[location] += duration
+                sessions.append({
+                    'palette': location,
+                    'start_time': session_start_time.isoformat(),
+                    'duration_seconds': duration
+                })
 
     return palette_loads, time_of_day_loads, session_durations, sessions
 

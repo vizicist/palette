@@ -152,8 +152,7 @@ func HubCommand(args []string) (map[string]string, error) {
 		}
 
 		// Fetch log entries in batches
-		subject := fmt.Sprintf("to_palette.%s.api", hostname)
-		timeout := 30 * time.Second
+		timeout := 5 * time.Second
 		batchSize := 500
 		offset := 0
 		totalEntries := 0
@@ -177,7 +176,7 @@ func HubCommand(args []string) (map[string]string, error) {
 				return map[string]string{"error": err.Error()}, nil
 			}
 
-			response, err := kit.NatsRequest(subject, string(requestJSON), timeout)
+			response, err := kit.EngineNatsApi(hostname, string(requestJSON), timeout)
 			if err != nil {
 				return map[string]string{"error": fmt.Sprintf("NATS request failed: %v", err)}, nil
 			}
