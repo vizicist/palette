@@ -98,3 +98,4 @@ cmd/palette_natsmon/palette_natsmon
 cmd/palette_hub/palette_hub.exe
 cmd/palette_hub/palette_hub.exe
 cmd/palette_hub/palette_hub.exe
+.claude/settings.local.json
