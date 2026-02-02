@@ -54,7 +54,7 @@ func scheduler() {
 
 	// create jobs
 	// "0 15 10 * * ?"          Fire at 10:15am every day
-	cronTrigger, _ := quartz.NewCronTrigger("0,15,30,45 * * * * *")
+	cronTrigger, _ := quartz.NewCronTrigger("0 0,15,30,45 * * * *")
 	shellJob := quartz.NewShellJob("palette status")
 	fjob := quartz.NewFunctionJob(func(_ context.Context) (int, error) {
 		fmt.Printf("hi from function!\n")
