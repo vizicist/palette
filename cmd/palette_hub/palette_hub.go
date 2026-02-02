@@ -143,7 +143,7 @@ func HubCommand(args []string) (map[string]string, error) {
 		return map[string]string{"result": ""}, nil
 
 	case "request_log":
-		if len(args) < 2 {
+		if len(args) < 2 || args[1] == "" || strings.Contains(args[1], "=") {
 			return nil, fmt.Errorf("request_log requires a hostname argument\n%s", usage())
 		}
 		hostname := args[1]
@@ -245,7 +245,6 @@ func HubCommand(args []string) (map[string]string, error) {
 			offset += batchSize
 		}
 
-		fmt.Fprintf(os.Stderr, "Total entries: %d\n", totalEntries)
 		return map[string]string{"result": ""}, nil
 
 	case "dumpraw":
