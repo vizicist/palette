@@ -2,6 +2,7 @@ package kit
 
 import (
 	"fmt"
+	"path/filepath"
 	"runtime/debug"
 	"strconv"
 	"strings"
@@ -259,6 +260,13 @@ func ExecuteGlobalApi(api string, apiargs map[string]string) (result string, err
 		return "", ArchiveLogs()
 
 	case "log":
+		// Parse optional file parameter (defaults to engine.log)
+		// Sanitize to basename only for security (no path traversal)
+		logfile := "engine.log"
+		if fileStr, ok := apiargs["file"]; ok && fileStr != "" {
+			logfile = filepath.Base(fileStr)
+		}
+
 		// Parse optional time range parameters
 		var startTime, endTime *time.Time
 		if startStr, ok := apiargs["start"]; ok && startStr != "" {
@@ -294,7 +302,7 @@ func ExecuteGlobalApi(api string, apiargs map[string]string) (result string, err
 			offset = o
 		}
 
-		entries, err := ReadLogEntries(startTime, endTime, limit, offset)
+		entries, err := ReadLogEntries(logfile, startTime, endTime, limit, offset)
 		if err != nil {
 			return "", err
 		}

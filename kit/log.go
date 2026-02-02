@@ -358,19 +358,23 @@ type LogEntry struct {
 // MaxLogResponseBytes is the maximum size of log response (~900KB to stay under 1MB NATS limit)
 const MaxLogResponseBytes = 900000
 
-// ReadLogEntries reads engine.log and returns entries filtered by time range
+// ReadLogEntries reads a log file and returns entries filtered by time range
+// logfile specifies which log file to read (defaults to "engine.log" if empty)
 // startTime and endTime are optional (nil means no bound)
 // limit caps the number of entries (0 means default of 50)
 // offset skips entries for pagination
-func ReadLogEntries(startTime, endTime *time.Time, limit, offset int) ([]map[string]any, error) {
+func ReadLogEntries(logfile string, startTime, endTime *time.Time, limit, offset int) ([]map[string]any, error) {
 	if limit <= 0 {
 		limit = 500
 	}
 
-	logPath := LogFilePath("engine.log")
+	if logfile == "" {
+		logfile = "engine.log"
+	}
+	logPath := LogFilePath(logfile)
 	file, err := os.Open(logPath)
 	if err != nil {
-		return nil, fmt.Errorf("cannot open engine.log: %w", err)
+		return nil, fmt.Errorf("cannot open %s: %w", logfile, err)
 	}
 	defer file.Close()
 
