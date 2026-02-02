@@ -53,9 +53,10 @@ while IFS= read -r line; do
             continue
         fi
 
-        # Calculate start and end times for this day (UTC)
-        day_start="${current_date}T00:00:00Z"
-        day_end="${current_date}T23:59:59Z"
+        # Calculate start and end times for this day (local timezone)
+        tz_offset=$(date +%:z)
+        day_start="${current_date}T00:00:00${tz_offset}"
+        day_end="${current_date}T23:59:59${tz_offset}"
 
         echo "  Requesting $current_date...  $day_start to $day_end"
         palette_hub request_log "$hostname" "start=$day_start" "end=$day_end" > "$outfile" 2>/dev/null
