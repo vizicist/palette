@@ -10,11 +10,19 @@ from collections import defaultdict
 from datetime import datetime, timezone
 import sys
 
-# Read location list from palettes.json
-def load_palette_locations(script_dir):
-    """Load palette locations from palettes.json"""
+# Default color palette for auto-assignment
+DEFAULT_COLORS = [
+    '#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd',
+    '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf'
+]
+
+# Read location list and colors from palettes.json
+def load_palette_config(script_dir):
+    """Load palette locations and colors from palettes.json"""
     config_path = os.path.join(script_dir, 'palettes.json')
     locations = []
+    colors = {}
+    used_colors = set()
 
     if os.path.exists(config_path):
         with open(config_path, 'r', encoding='utf-8') as f:
@@ -25,12 +33,36 @@ def load_palette_locations(script_dir):
                 try:
                     entry = json.loads(line)
                     location = entry.get('location', '')
+                    color = entry.get('color', '')
                     if location:
                         locations.append(location)
+                        if color:
+                            colors[location] = color
+                            used_colors.add(color.lower())
                 except json.JSONDecodeError:
                     continue
 
-    return locations
+    # Assign colors to palettes that don't have one
+    for location in locations:
+        if location not in colors:
+            # Find an unused color from the default palette
+            assigned_color = None
+            for default_color in DEFAULT_COLORS:
+                if default_color.lower() not in used_colors:
+                    assigned_color = default_color
+                    break
+
+            # If all default colors are used, generate a new one
+            if assigned_color is None:
+                # Generate a color based on hash of location name
+                hash_val = hash(location) & 0xFFFFFF
+                assigned_color = f'#{hash_val:06x}'
+
+            colors[location] = assigned_color
+            used_colors.add(assigned_color.lower())
+            print(f"Warning: No color assigned for '{location}' in palettes.json. Using: {assigned_color}", file=sys.stderr)
+
+    return locations, colors
 
 def analyze_day_file(filepath, location):
     """
@@ -165,7 +197,7 @@ def analyze_day_file(filepath, location):
                     continue
 
     except Exception as e:
-        print(f"Error reading {filepath}: {e}", file=sys.stderr)
+        print(f"Error reading {filepath}: {e}")
 
     # Estimate session duration if session wasn't closed
     if has_attract_events and palette_loads[location] > 0 and first_load_time is not None:
@@ -188,30 +220,30 @@ def analyze_all_palettes(palettes_dir='palettes', script_dir=None):
     """
     Analyze all palette directories under palettes_dir.
     Each subdirectory is a location with date-named JSON files.
-    Returns tuple: (daily_data, per_day_time_of_day_data, per_day_session_durations, all_sessions)
+    Returns tuple: (daily_data, per_day_time_of_day_data, per_day_session_durations, all_sessions, palette_colors)
     """
     if not os.path.exists(palettes_dir):
-        print(f"Error: Directory '{palettes_dir}' not found", file=sys.stderr)
-        return {}, {}, {}, []
+        print(f"Error: Directory '{palettes_dir}' not found")
+        return {}, {}, {}, [], {}
 
     results = {}
     per_day_time_of_day = {}
     per_day_session_durations = {}
     all_sessions = []
 
-    # Get locations from palettes.json
+    # Get locations and colors from palettes.json
     if script_dir is None:
         script_dir = os.path.dirname(os.path.abspath(__file__))
-    locations = load_palette_locations(script_dir)
+    locations, palette_colors = load_palette_config(script_dir)
     if not locations:
-        print("Error: No locations found in palettes.json", file=sys.stderr)
-        return {}, {}, {}, []
+        print("Error: No locations found in palettes.json")
+        return {}, {}, {}, [], {}
 
     for location in locations:
         location_dir = os.path.join(palettes_dir, location)
         files = sorted([f for f in os.listdir(location_dir) if f.endswith('.json')])
 
-        print(f"Analyzing {location} ({len(files)} files)...", file=sys.stderr)
+        print(f"Analyzing {location} ({len(files)} files)...")
 
         for filename in files:
             filepath = os.path.join(location_dir, filename)
@@ -250,9 +282,9 @@ def analyze_all_palettes(palettes_dir='palettes', script_dir=None):
     for date in per_day_session_durations:
         per_day_session_durations[date] = dict(per_day_session_durations[date])
 
-    return results, per_day_time_of_day, per_day_session_durations, all_sessions
+    return results, per_day_time_of_day, per_day_session_durations, all_sessions, palette_colors
 
-def generate_html(data, time_of_day_data, session_duration_data, all_sessions, output_file='palette_analysis.html'):
+def generate_html(data, time_of_day_data, session_duration_data, all_sessions, palette_colors, output_file='palette_analysis.html'):
     """
     Generate an interactive HTML page with the analysis data.
     """
@@ -269,6 +301,7 @@ def generate_html(data, time_of_day_data, session_duration_data, all_sessions, o
     js_data = {
         'dates': dates,
         'palettes': all_palettes,
+        'colors': palette_colors,
         'loads': {},
         'timeOfDayByDate': {},
         'sessionDurationByDate': {},
@@ -452,10 +485,16 @@ def generate_html(data, time_of_day_data, session_duration_data, all_sessions, o
     <script>
         const data = {json.dumps(js_data, indent=8)};
 
-        const plotlyColors = [
+        // Fallback colors for palettes without assigned colors
+        const fallbackColors = [
             '#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd',
             '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf'
         ];
+
+        // Get color for a palette (from config or fallback)
+        function getPaletteColor(palette, index) {{
+            return data.colors[palette] || fallbackColors[index % fallbackColors.length];
+        }}
 
         const paletteVisibility = {{}};
         data.palettes.forEach(palette => {{
@@ -542,7 +581,7 @@ def generate_html(data, time_of_day_data, session_duration_data, all_sessions, o
                 const counts = filteredDates.map(date => data.loads[palette][date] || 0);
                 traces.push({{
                     x: xLabels, y: counts, name: palette, type: 'bar',
-                    marker: {{ color: plotlyColors[index % plotlyColors.length] }}
+                    marker: {{ color: getPaletteColor(palette, index) }}
                 }});
             }});
 
@@ -577,7 +616,7 @@ def generate_html(data, time_of_day_data, session_duration_data, all_sessions, o
                 traces.push({{
                     x: Array.from({{length: 24}}, (_, i) => i),
                     y: aggregated[palette], name: palette, type: 'bar',
-                    marker: {{ color: plotlyColors[index % plotlyColors.length] }}
+                    marker: {{ color: getPaletteColor(palette, index) }}
                 }});
             }});
 
@@ -606,7 +645,7 @@ def generate_html(data, time_of_day_data, session_duration_data, all_sessions, o
                 const durations = filteredDates.map(date => (data.sessionDurationByDate[date][palette] || 0) / 3600);
                 traces.push({{
                     x: xLabels, y: durations, name: palette, type: 'bar',
-                    marker: {{ color: plotlyColors[index % plotlyColors.length] }}
+                    marker: {{ color: getPaletteColor(palette, index) }}
                 }});
             }});
 
@@ -684,7 +723,7 @@ def generate_html(data, time_of_day_data, session_duration_data, all_sessions, o
             container.innerHTML = '';
 
             data.palettes.forEach((palette, index) => {{
-                const color = plotlyColors[index % plotlyColors.length];
+                const color = getPaletteColor(palette, index);
                 const label = document.createElement('label');
                 label.style.cssText = 'display: flex; align-items: center; cursor: pointer; padding: 4px 8px; border-radius: 4px; background-color: #fff; border: 1px solid #ddd;';
 
@@ -721,34 +760,34 @@ def generate_html(data, time_of_day_data, session_duration_data, all_sessions, o
     with open(output_file, 'w', encoding='utf-8') as f:
         f.write(html)
 
-    print(f"Generated {output_file}", file=sys.stderr)
+    print(f"Generated {output_file}")
 
 def main():
     """Main function"""
     if len(sys.argv) != 3:
-        print(f"Usage: {sys.argv[0]} <palettes_directory> <output_html_file>", file=sys.stderr)
-        print(f"  palettes_directory - directory containing location subdirectories with JSON files", file=sys.stderr)
-        print(f"  output_html_file   - path for the generated HTML report", file=sys.stderr)
+        print(f"Usage: {sys.argv[0]} <palettes_directory> <output_html_file>")
+        print(f"  palettes_directory - directory containing location subdirectories with JSON files")
+        print(f"  output_html_file   - path for the generated HTML report")
         return 1
 
     palettes_dir = sys.argv[1]
     output_file = sys.argv[2]
     script_dir = os.path.dirname(os.path.abspath(__file__))
 
-    print("Space Palette Usage Analysis", file=sys.stderr)
-    print("=" * 50, file=sys.stderr)
+    print("Space Palette Usage Analysis")
+    print("=" * 50)
 
-    data, time_of_day_data, session_duration_data, all_sessions = analyze_all_palettes(palettes_dir, script_dir)
+    data, time_of_day_data, session_duration_data, all_sessions, palette_colors = analyze_all_palettes(palettes_dir, script_dir)
 
     if not data:
-        print("No data found to analyze.", file=sys.stderr)
+        print("No data found to analyze.")
         return 1
 
-    print(f"\nAnalyzed {len(data)} days", file=sys.stderr)
+    print(f"\nAnalyzed {len(data)} days")
 
-    generate_html(data, time_of_day_data, session_duration_data, all_sessions, output_file)
+    generate_html(data, time_of_day_data, session_duration_data, all_sessions, palette_colors, output_file)
 
-    print(f"\nDone! Open {output_file} in your browser.", file=sys.stderr)
+    print(f"\nDone! Open {output_file} in your browser.")
     return 0
 
 if __name__ == '__main__':
