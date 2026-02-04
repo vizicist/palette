@@ -19,7 +19,7 @@ END_DATE=$(date +%Y-%m-%d)
 echo "Requesting logs from $START_DATE to $END_DATE"
 
 # Read each line from palettes.json and request logs
-while IFS= read -r line; do
+while IFS= read -r line || [ -n "$line" ]; do
     # Skip empty lines
     [ -z "$line" ] && continue
 
