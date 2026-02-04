@@ -47,10 +47,15 @@ while IFS= read -r line || [ -n "$line" ]; do
     while [[ "$current_date" < "$END_DATE" ]] || [[ "$current_date" == "$END_DATE" ]]; do
         outfile="$outdir/${current_date}.json"
 
-        # Skip if file already exists
+        # For current day, always delete and re-request to capture new events
+        # For past days, skip if file already exists
         if [ -f "$outfile" ]; then
-            current_date=$(date -d "$current_date + 1 day" +%Y-%m-%d)
-            continue
+            if [ "$current_date" == "$END_DATE" ]; then
+                rm -f "$outfile"
+            else
+                current_date=$(date -d "$current_date + 1 day" +%Y-%m-%d)
+                continue
+            fi
         fi
 
         # Calculate start and end times for this day (local timezone)
