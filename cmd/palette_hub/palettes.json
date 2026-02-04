@@ -1,6 +1,5 @@
-{"location":"PrairieWillow","hostname":"spacepalette33"}
-{"location":"IdeaFabLabs","hostname":"spacepalette34"}
-{"location":"MADE","hostname":"spacepalette35"}
-{"location":"CatFactory","hostname":"spacepalette36"}
-{"location":"CarletonUniversity","hostname":"palette12"}
-{"location":"TIAT","hostname":"spacepalette37"}
+{"location":"IdeaFabLabs","hostname":"spacepalette34","color":"#2ca02c"}
+{"location":"MADE","hostname":"spacepalette35","color":"#d62728"}
+{"location":"CatFactory","hostname":"spacepalette36","color":"#ff7f0e"}
+{"location":"CarletonUniversity","hostname":"palette12","color":"#1f77b4"}
+{"location":"TIAT","hostname":"spacepalette37","color":"#9467bd"}
