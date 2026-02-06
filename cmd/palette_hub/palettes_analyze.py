@@ -68,12 +68,13 @@ def analyze_day_file(filepath, location):
     """
     Analyze a single day file from a palette location directory.
     The file contains engine log entries with "msg" field indicating event type.
-    Returns tuple: (palette_loads dict, time_of_day_loads dict, session_durations dict, sessions list)
+    Returns tuple: (palette_loads dict, time_of_day_loads dict, session_durations dict, sessions list, restart_count int)
     """
     palette_loads = defaultdict(int)
     time_of_day_loads = defaultdict(lambda: defaultdict(int))
     session_durations = defaultdict(float)
     sessions = []
+    restart_count = 0
 
     # Track attract mode state (default: True, palette starts in attract mode)
     attract_mode_on = True
@@ -91,7 +92,7 @@ def analyze_day_file(filepath, location):
     last_event_time = None
 
     if not os.path.exists(filepath):
-        return palette_loads, time_of_day_loads, session_durations, sessions
+        return palette_loads, time_of_day_loads, session_durations, sessions, restart_count
 
     try:
         with open(filepath, 'r', encoding='utf-8') as f:
@@ -112,6 +113,7 @@ def analyze_day_file(filepath, location):
                             current_uptime = float(uptime_str)
                             if prev_uptime is not None and current_uptime < prev_uptime - 60:
                                 # Uptime decreased significantly - this is a reboot
+                                restart_count += 1
                                 # Close any open session at the last known time
                                 if session_start_time is not None and session_load_count > 0 and last_event_time is not None:
                                     duration = (last_event_time - session_start_time).total_seconds()
@@ -214,21 +216,22 @@ def analyze_day_file(filepath, location):
                     'duration_seconds': duration
                 })
 
-    return palette_loads, time_of_day_loads, session_durations, sessions
+    return palette_loads, time_of_day_loads, session_durations, sessions, restart_count
 
 def analyze_all_palettes(palettes_dir='palettes', script_dir=None):
     """
     Analyze all palette directories under palettes_dir.
     Each subdirectory is a location with date-named JSON files.
-    Returns tuple: (daily_data, per_day_time_of_day_data, per_day_session_durations, all_sessions, palette_colors)
+    Returns tuple: (daily_data, per_day_time_of_day_data, per_day_session_durations, all_sessions, palette_colors, per_day_restarts)
     """
     if not os.path.exists(palettes_dir):
         print(f"Error: Directory '{palettes_dir}' not found")
-        return {}, {}, {}, [], {}
+        return {}, {}, {}, [], {}, {}
 
     results = {}
     per_day_time_of_day = {}
     per_day_session_durations = {}
+    per_day_restarts = {}
     all_sessions = []
 
     # Get locations and colors from palettes.json
@@ -237,7 +240,7 @@ def analyze_all_palettes(palettes_dir='palettes', script_dir=None):
     locations, palette_colors = load_palette_config(script_dir)
     if not locations:
         print("Error: No locations found in palettes.json")
-        return {}, {}, {}, [], {}
+        return {}, {}, {}, [], {}, {}
 
     for location in locations:
         location_dir = os.path.join(palettes_dir, location)
@@ -249,7 +252,13 @@ def analyze_all_palettes(palettes_dir='palettes', script_dir=None):
             filepath = os.path.join(location_dir, filename)
             date_str = filename.replace('.json', '')
 
-            palette_loads, time_of_day_loads, _session_durations, sessions = analyze_day_file(filepath, location)
+            palette_loads, time_of_day_loads, _session_durations, sessions, restart_count = analyze_day_file(filepath, location)
+
+            # Aggregate restart counts by date
+            if restart_count > 0:
+                if date_str not in per_day_restarts:
+                    per_day_restarts[date_str] = {}
+                per_day_restarts[date_str][location] = per_day_restarts[date_str].get(location, 0) + restart_count
 
             # Aggregate results by date
             if palette_loads:
@@ -282,9 +291,9 @@ def analyze_all_palettes(palettes_dir='palettes', script_dir=None):
     for date in per_day_session_durations:
         per_day_session_durations[date] = dict(per_day_session_durations[date])
 
-    return results, per_day_time_of_day, per_day_session_durations, all_sessions, palette_colors
+    return results, per_day_time_of_day, per_day_session_durations, all_sessions, palette_colors, per_day_restarts
 
-def generate_html(data, time_of_day_data, session_duration_data, all_sessions, palette_colors, output_file='palette_analysis.html'):
+def generate_html(data, time_of_day_data, session_duration_data, all_sessions, palette_colors, restart_data, output_file='palette_analysis.html'):
     """
     Generate an interactive HTML page with the analysis data.
     """
@@ -305,6 +314,7 @@ def generate_html(data, time_of_day_data, session_duration_data, all_sessions, p
         'loads': {},
         'timeOfDayByDate': {},
         'sessionDurationByDate': {},
+        'restartsByDate': {},
         'sessions': all_sessions
     }
 
@@ -335,6 +345,15 @@ def generate_html(data, time_of_day_data, session_duration_data, all_sessions, p
                 js_data['sessionDurationByDate'][date][palette] = session_duration_data[date][palette]
             else:
                 js_data['sessionDurationByDate'][date][palette] = 0
+
+    # Build per-day restart data
+    for date in dates:
+        js_data['restartsByDate'][date] = {}
+        for palette in all_palettes:
+            if date in restart_data and palette in restart_data[date]:
+                js_data['restartsByDate'][date][palette] = restart_data[date][palette]
+            else:
+                js_data['restartsByDate'][date][palette] = 0
 
     html = f"""<!DOCTYPE html>
 <html lang="en">
@@ -419,6 +438,23 @@ def generate_html(data, time_of_day_data, session_duration_data, all_sessions, p
             border-radius: 8px;
             min-width: 180px;
         }}
+        /* Responsive: stack chart and legend vertically on narrow screens */
+        @media (max-width: 768px) {{
+            .chart-container {{
+                flex-direction: column;
+            }}
+            .palette-selector {{
+                width: 100%;
+                min-width: unset;
+                order: 1;
+            }}
+            .chart-container #chart {{
+                order: 0;
+            }}
+            #chart {{
+                height: 400px;
+            }}
+        }}
     </style>
 </head>
 <body>
@@ -439,6 +475,7 @@ def generate_html(data, time_of_day_data, session_duration_data, all_sessions, p
                             <option value="daily">Daily Loads</option>
                             <option value="time-of-day">Time of Day</option>
                             <option value="session-duration" selected>Session Duration</option>
+                            <option value="restarts">Restarts</option>
                         </select>
                     </div>
 
@@ -567,6 +604,9 @@ def generate_html(data, time_of_day_data, session_duration_data, all_sessions, p
                 updateSessionDurationChart();
                 updateSessionList();
                 sessionList.style.display = 'block';
+            }} else if (viewType === 'restarts') {{
+                updateRestartsChart();
+                sessionList.style.display = 'none';
             }}
             updateSummary();
         }}
@@ -653,6 +693,30 @@ def generate_html(data, time_of_day_data, session_duration_data, all_sessions, p
                 title: 'Session Duration (Non-Attract Mode Time)',
                 xaxis: {{ tickangle: -45, fixedrange: true }},
                 yaxis: {{ title: 'Hours', fixedrange: true }},
+                barmode: 'stack', hovermode: 'x unified', showlegend: false, dragmode: false
+            }};
+
+            Plotly.react('chart', traces, layout, {{responsive: true, displayModeBar: false}});
+        }}
+
+        function updateRestartsChart() {{
+            const filteredDates = getFilteredDates();
+            const traces = [];
+            const xLabels = filteredDates.map(date => formatDateWithDay(date));
+
+            data.palettes.forEach((palette, index) => {{
+                if (!paletteVisibility[palette]) return;
+                const restarts = filteredDates.map(date => data.restartsByDate[date][palette] || 0);
+                traces.push({{
+                    x: xLabels, y: restarts, name: palette, type: 'bar',
+                    marker: {{ color: getPaletteColor(palette, index) }}
+                }});
+            }});
+
+            const layout = {{
+                title: 'Restarts per Day',
+                xaxis: {{ tickangle: -45, fixedrange: true }},
+                yaxis: {{ title: 'Number of Restarts', fixedrange: true }},
                 barmode: 'stack', hovermode: 'x unified', showlegend: false, dragmode: false
             }};
 
@@ -777,7 +841,7 @@ def main():
     print("Space Palette Usage Analysis")
     print("=" * 50)
 
-    data, time_of_day_data, session_duration_data, all_sessions, palette_colors = analyze_all_palettes(palettes_dir, script_dir)
+    data, time_of_day_data, session_duration_data, all_sessions, palette_colors, restart_data = analyze_all_palettes(palettes_dir, script_dir)
 
     if not data:
         print("No data found to analyze.")
@@ -785,7 +849,7 @@ def main():
 
     print(f"\nAnalyzed {len(data)} days")
 
-    generate_html(data, time_of_day_data, session_duration_data, all_sessions, palette_colors, output_file)
+    generate_html(data, time_of_day_data, session_duration_data, all_sessions, palette_colors, restart_data, output_file)
 
     print(f"\nDone! Open {output_file} in your browser.")
     return 0

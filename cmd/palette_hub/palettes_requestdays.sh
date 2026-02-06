@@ -15,8 +15,10 @@ fi
 # Get date range
 START_DATE="2025-01-01"
 END_DATE=$(date +%Y-%m-%d)
+# Always refresh the last 3 days (current day + 2 past days)
+REFRESH_CUTOFF=$(date -d "$END_DATE - 2 days" +%Y-%m-%d)
 
-echo "Requesting logs from $START_DATE to $END_DATE"
+echo "Requesting logs from $START_DATE to $END_DATE (refreshing $REFRESH_CUTOFF and later)"
 
 # Read each line from palettes.json and request logs
 while IFS= read -r line || [ -n "$line" ]; do
@@ -47,10 +49,10 @@ while IFS= read -r line || [ -n "$line" ]; do
     while [[ "$current_date" < "$END_DATE" ]] || [[ "$current_date" == "$END_DATE" ]]; do
         outfile="$outdir/${current_date}.json"
 
-        # For current day, always delete and re-request to capture new events
-        # For past days, skip if file already exists
+        # For recent days (last 3), always delete and re-request to capture new events
+        # For older days, skip if file already exists
         if [ -f "$outfile" ]; then
-            if [ "$current_date" == "$END_DATE" ]; then
+            if [[ ! "$current_date" < "$REFRESH_CUTOFF" ]]; then
                 rm -f "$outfile"
             else
                 current_date=$(date -d "$current_date + 1 day" +%Y-%m-%d)
