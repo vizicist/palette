@@ -87,8 +87,6 @@ def analyze_day_file(filepath, location):
     # Track load times for session estimation
     first_load_time = None
     last_load_time = None
-    # Track uptime to detect reboots
-    prev_uptime = None
     last_event_time = None
 
     if not os.path.exists(filepath):
@@ -105,34 +103,27 @@ def analyze_day_file(filepath, location):
                     entry = json.loads(line)
                     msg = entry.get('msg', '')
                     time_str = entry.get('time', '')
-                    uptime_str = entry.get('uptime', '')
 
-                    # Detect reboot via uptime decrease (uptime resets on reboot)
-                    if uptime_str:
-                        try:
-                            current_uptime = float(uptime_str)
-                            if prev_uptime is not None and current_uptime < prev_uptime - 60:
-                                # Uptime decreased significantly - this is a reboot
-                                restart_count += 1
-                                # Close any open session at the last known time
-                                if session_start_time is not None and session_load_count > 0 and last_event_time is not None:
-                                    duration = (last_event_time - session_start_time).total_seconds()
-                                    if duration > 0:
-                                        session_durations[location] += duration
-                                        sessions.append({
-                                            'palette': location,
-                                            'start_time': session_start_time.isoformat(),
-                                            'duration_seconds': duration
-                                        })
-                                # Reset session state after reboot
-                                session_start_time = None
-                                session_load_count = 0
-                                attract_mode_on = True  # Assume attract mode on after reboot
-                            prev_uptime = current_uptime
-                        except (ValueError, TypeError):
-                            pass
+                    # Detect restart via InitLog event (logged when engine starts)
+                    if msg.startswith('InitLog'):
+                        restart_count += 1
+                        # Close any open session at the last known time
+                        if session_start_time is not None and session_load_count > 0 and last_event_time is not None:
+                            duration = (last_event_time - session_start_time).total_seconds()
+                            if duration > 0:
+                                session_durations[location] += duration
+                                sessions.append({
+                                    'palette': location,
+                                    'start_time': session_start_time.isoformat(),
+                                    'duration_seconds': duration
+                                })
+                        # Reset session state after restart
+                        session_start_time = None
+                        session_load_count = 0
+                        attract_mode_on = True  # Assume attract mode on after restart
+                        continue
 
-                    # Update last event time for reboot detection
+                    # Update last event time
                     if time_str:
                         try:
                             last_event_time = datetime.fromisoformat(time_str.replace('Z', '+00:00')).astimezone(timezone.utc)
