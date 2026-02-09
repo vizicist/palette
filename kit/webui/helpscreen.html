@@ -138,22 +138,25 @@
             const h = window.innerHeight;
             const cornerThreshold = 0.3; // 30% from corner for start/end detection
 
-            // Check if start is in top-left corner
-            const startInTopLeft = startX < w * cornerThreshold && startY < h * cornerThreshold;
-            // Check if end is in bottom-right corner
-            const endInBottomRight = x > w * (1 - cornerThreshold) && y > h * (1 - cornerThreshold);
+            // Define corner regions
+            const inTopLeft = (px, py) => px < w * cornerThreshold && py < h * cornerThreshold;
+            const inTopRight = (px, py) => px > w * (1 - cornerThreshold) && py < h * cornerThreshold;
+            const inBottomLeft = (px, py) => px < w * cornerThreshold && py > h * (1 - cornerThreshold);
+            const inBottomRight = (px, py) => px > w * (1 - cornerThreshold) && py > h * (1 - cornerThreshold);
 
-            // Check opposite diagonal too
-            const startInTopRight = startX > w * (1 - cornerThreshold) && startY < h * cornerThreshold;
-            const endInBottomLeft = x < w * cornerThreshold && y > h * (1 - cornerThreshold);
+            // Check all four diagonal directions
+            const isDiagonal = (inTopLeft(startX, startY) && inBottomRight(x, y)) ||
+                               (inBottomRight(startX, startY) && inTopLeft(x, y)) ||
+                               (inTopRight(startX, startY) && inBottomLeft(x, y)) ||
+                               (inBottomLeft(startX, startY) && inTopRight(x, y));
 
-            // Also check minimum swipe distance (at least 50% of screen diagonal)
+            // Minimum swipe distance (at least 40% of screen diagonal)
             const dx = x - startX;
             const dy = y - startY;
             const distance = Math.sqrt(dx * dx + dy * dy);
             const minDistance = Math.sqrt(w * w + h * h) * 0.4;
 
-            if (distance > minDistance && ((startInTopLeft && endInBottomRight) || (startInTopRight && endInBottomLeft))) {
+            if (distance > minDistance && isDiagonal) {
                 // Diagonal swipe detected - enter advanced mode
                 window.parent.postMessage('advancedMode', '*');
             } else {
