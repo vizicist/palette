@@ -72,17 +72,6 @@ popd
 rem print any error messages from compiling cmds
 type %buildcmdsout%
 
-echo ================ Creating palette_gui.exe
-pushd %PALETTE_SOURCE%\python
-rm -fr dist
-rm -fr build\palette_gui
-rm -fr build
-pyinstaller -i palette.ico palette_gui.py > pyinstaller_gui.out 2>&1
-move dist\palette_gui dist\pyinstalled >nul
-copy palette.ico dist\pyinstalled >nul
-move dist\pyinstalled %bin% >nul
-popd
-
 echo ================ Compiling FFGL plugin
 pushd %PALETTE_SOURCE%\ffgl\build\windows
 set PALETTE_DATA=default
@@ -126,6 +115,7 @@ copy tv_on.bat %bin% >nul
 copy tv_off.bat %bin% >nul
 copy disable_multitouch.bat %bin% >nul
 copy setup_onboot.bat %bin% >nul
+copy remove_onboot.bat %bin% >nul
 copy setup_dailyreboot.bat %bin% >nul
 copy remove_dailyreboot.bat %bin% >nul
 popd

@@ -62,7 +62,7 @@ func NatsConnectToHubAndSubscribe() {
 	natsConn = nc
 
 	subscribeTo := fmt.Sprintf("to_palette.%s.>", Hostname())
-	err = NatsSubscribe(subscribeTo, natsRequestHandler)
+	err = NatsSubscribe(subscribeTo, natsEngineApiHandler)
 	if err != nil {
 		LogError(err)
 	} else {
@@ -204,7 +204,7 @@ func NatsStreams() ([]string, error) {
 	return s, nil
 }
 
-func natsRequestHandler(msg *nats.Msg) {
+func natsEngineApiHandler(msg *nats.Msg) {
 	data := string(msg.Data)
 	LogInfo("NatsHandler", "subject", msg.Subject, "data", data)
 	result, err := ExecuteApiFromJson(data)

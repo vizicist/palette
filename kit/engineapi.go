@@ -554,12 +554,15 @@ func ApplyGlobalParam(name string, value string) (err error) {
 		}
 
 	case "global.obsstream":
-		if IsTrueValue(value) {
-			err := ObsCommand("streamstart")
-			LogIfError(err)
-		} else {
-			// Ignore errors, since it may not be running at all
-			_ = ObsCommand("streamstop")
+		// Only send OBS commands if OBS is actually running
+		running, err := IsRunning("obs")
+		if err == nil && running {
+			if IsTrueValue(value) {
+				err := ObsCommand("streamstart")
+				LogIfError(err)
+			} else {
+				_ = ObsCommand("streamstop")
+			}
 		}
 	}
 	return nil
