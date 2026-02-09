@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -23,6 +24,7 @@ type ProcessInfo struct {
 type ProcessManager struct {
 	info             map[string]*ProcessInfo
 	wasStarted       map[string]*atomic.Bool
+	runningPids      map[string]int // track PIDs of running processes
 	mutex            sync.Mutex
 	lastProcessCheck time.Time
 	processCheckSecs float64
@@ -59,7 +61,7 @@ func CheckAutorestartProcesses() {
 // These should come from the process list
 var MonitorExe = "palette_monitor.exe"
 var EngineExe = "palette_engine.exe"
-var GuiExe = "palette_gui.exe"
+var GuiExe = "chrome.exe"
 var ChatExe = "palette_chat.exe"
 var BiduleExe = "bidule.exe"
 var ResolumeExe = "avenue.exe"
@@ -103,6 +105,7 @@ func NewProcessManager() *ProcessManager {
 	pm := &ProcessManager{
 		info:             make(map[string]*ProcessInfo),
 		wasStarted:       make(map[string]*atomic.Bool),
+		runningPids:      make(map[string]int),
 		lastProcessCheck: time.Time{},
 		processCheckSecs: 60, // default
 	}
@@ -245,6 +248,13 @@ func (pm *ProcessManager) AddProcessBuiltIn(process string) {
 
 func (pm *ProcessManager) StartRunning(process string) error {
 
+	// For GUI (Chrome), always kill any existing instances first
+	// This ensures we start fresh and avoids issues with multiple Chrome instances
+	if process == "gui" {
+		LogInfo("StartRunning: killing any existing Chrome instances before starting GUI")
+		KillExecutable("chrome.exe")
+	}
+
 	running, err := pm.IsRunning(process)
 	if err != nil {
 		return err
@@ -261,6 +271,9 @@ func (pm *ProcessManager) StartRunning(process string) error {
 		return fmt.Errorf("StartRunning: unable to start %s, no executable path", process)
 	}
 
+	// Log the command being executed
+	LogInfo("StartRunning", "process", process, "fullPath", pi.FullPath, "arg", pi.Arg)
+
 	if pi.DirPath != "" {
 		thisDir, err := os.Getwd()
 		LogIfError(err)
@@ -276,10 +289,11 @@ func (pm *ProcessManager) StartRunning(process string) error {
 
 	// LogInfo("StartRunning", "path", pi.FullPath, "arg", pi.Arg, "lenarg", len(pi.Arg))
 
-	err = StartExecutableLogOutput(process, pi.FullPath, pi.Arg)
+	pid, err := StartExecutableLogOutput(process, pi.FullPath, pi.Arg)
 	if err != nil {
 		return fmt.Errorf("StartRunning: process=%s err=%s", process, err)
 	}
+	pm.runningPids[process] = pid
 	pm.wasStarted[process].Store(true)
 	if pi.Activate != nil {
 		LogOfType("process", "Activate", "process", process)
@@ -297,7 +311,16 @@ func (pm *ProcessManager) StopRunning(process string) (err error) {
 	if err != nil {
 		return err
 	}
-	KillExecutable(pi.Exe)
+
+	// Use PID-based killing if we have the PID (avoids killing other instances)
+	if pid, ok := pm.runningPids[process]; ok && pid > 0 {
+		KillByPid(pid)
+		delete(pm.runningPids, process)
+	} else {
+		// Fall back to killing by executable name
+		KillExecutable(pi.Exe)
+	}
+
 	pi.Activated = false
 	pm.wasStarted[process].Store(false)
 	return err
@@ -342,7 +365,6 @@ func (pm *ProcessManager) IsAvailable(process string) bool {
 func (pm *ProcessManager) IsRunning(process string) (bool, error) {
 	pi, err := pm.GetProcessInfo(process)
 	if err != nil {
-		LogIfError(err)
 		return false, err
 	}
 	return IsRunningExecutable(pi.Exe)
@@ -351,31 +373,94 @@ func (pm *ProcessManager) IsRunning(process string) (bool, error) {
 // Below here are functions that return ProcessInfo for various programs
 
 func GuiProcessInfo() *ProcessInfo {
-	// guiexec is preferred, but
-	guiexec, err := GetParam("global.guiexec")
-	if err != nil {
-		guiexec, err = GetParam("global.gui")
-		if err != nil {
-			LogIfError(err)
-			return EmptyProcessInfo()
-		}
-	}
-	fullpath := filepath.Join(PaletteDir(), guiexec)
-	if fullpath != "" && !FileExists(fullpath) {
-		LogWarn("No Gui found, looking for", "path", fullpath)
+	// Use Chrome to display the webui
+	chromePath := `C:\Program Files\Google\Chrome\Application\chrome.exe`
+	if !FileExists(chromePath) {
+		LogWarn("Chrome not found", "path", chromePath)
 		return EmptyProcessInfo()
 	}
-	exe := filepath.Base(fullpath)
 
-	// set PALETTE_GUI_SIZE to convey it to the gui
+	// Get window size from global.guisize (format: "WIDTHxHEIGHT" or named size)
 	guisize, err := GetParam("global.guisize")
 	if err != nil {
-		LogIfError(err)
-	} else {
-		os.Setenv("PALETTE_GUI_SIZE", guisize)
+		guisize = "800x1280" // default size
 	}
 
-	return NewProcessInfo(exe, fullpath, "", nil)
+	// Track if this is the "palette" size for special positioning
+	isPaletteSize := guisize == "palette"
+
+	// Convert named sizes to actual dimensions
+	switch guisize {
+	case "small":
+		guisize = "600x800"
+	case "medium":
+		guisize = "600x960"
+	case "palette":
+		guisize = "800x1280"
+	case "large":
+		guisize = "1024x1600"
+	case "fullscreen", "full":
+		guisize = "1920x1080"
+	}
+
+	// Determine window position
+	// For "palette" size, try to place on left monitor if one exists
+	windowPosX := 0
+	windowPosY := 0
+	useKiosk := false
+	if isPaletteSize {
+		if leftX, leftY, found := GetLeftMonitorPosition(); found {
+			windowPosX = leftX
+			windowPosY = leftY
+			useKiosk = true
+			LogInfo("GuiProcessInfo: using left monitor position with kiosk mode", "x", windowPosX, "y", windowPosY)
+		}
+	}
+
+	// Use a dedicated Chrome profile in the config directory
+	chromeDataDir := filepath.Join(ConfigDir(), "chrome")
+	if _, err := os.Stat(chromeDataDir); os.IsNotExist(err) {
+		if err := os.MkdirAll(chromeDataDir, 0755); err != nil {
+			LogWarn("Failed to create Chrome data directory", "path", chromeDataDir, "err", err)
+		}
+	}
+
+	// Clear any cached window placement from Chrome profile so --window-size is respected
+	clearChromeWindowPlacement(chromeDataDir)
+
+	// Build Chrome arguments
+	// Quote the data dir path since it may contain spaces
+	// Use --window-position to help Chrome respect window-size (prevents restoring cached bounds)
+	// Use --force-device-scale-factor=1 to prevent Windows DPI scaling from affecting window size
+	windowSize := strings.ReplaceAll(guisize, "x", ",")
+	kioskFlag := ""
+	if useKiosk {
+		kioskFlag = "--kiosk "
+	}
+	args := fmt.Sprintf("--user-data-dir=\"%s\" --profile-directory=Space %s--window-size=%s --window-position=%d,%d --force-device-scale-factor=1 --app=http://127.0.0.1:3330/",
+		chromeDataDir, kioskFlag, windowSize, windowPosX, windowPosY)
+
+	LogInfo("GuiProcessInfo", "chromePath", chromePath, "windowSize", windowSize, "args", args)
+
+	return NewProcessInfo("chrome.exe", chromePath, args, nil)
+}
+
+// clearChromeWindowPlacement removes cached window placement from Chrome's profile
+// so that --window-size is respected on launch
+func clearChromeWindowPlacement(chromeDataDir string) {
+	// Delete the Preferences file entirely - this ensures Chrome respects --window-size
+	// Chrome will recreate it with default settings
+	prefsPath := filepath.Join(chromeDataDir, "Space", "Preferences")
+	if err := os.Remove(prefsPath); err != nil && !os.IsNotExist(err) {
+		LogWarn("Failed to remove Chrome Preferences", "path", prefsPath, "err", err)
+	}
+
+	// Also delete Local State which can cache window bounds for apps
+	localStatePath := filepath.Join(chromeDataDir, "Local State")
+	if err := os.Remove(localStatePath); err != nil && !os.IsNotExist(err) {
+		LogWarn("Failed to remove Chrome Local State", "path", localStatePath, "err", err)
+	}
+
 }
 
 func ChatProcessInfo() *ProcessInfo {
