@@ -50,14 +50,24 @@ func KillExecutable(exe string) {
 	Spawn("pkill", false, noWriter, noWriter, exe)
 }
 
+// KillByPid kills a process by its PID
+func KillByPid(pid int) {
+	if pid <= 0 {
+		return
+	}
+	LogWarn("KillByPid in unix.go not tested", "pid", pid)
+	Spawn("kill", false, noWriter, noWriter, "-9", fmt.Sprintf("%d", pid))
+}
+
 func IsRunningExecutable(exe string) (bool, error) {
 	err := fmt.Errorf("unix.go: IsRunningExecutable needs work")
 	return false, err
 }
 
-func StartExecutableLogOutput(logName string, fullexe string, args ...string) error {
+func StartExecutableLogOutput(logName string, fullexe string, args ...string) (int, error) {
 	err := fmt.Errorf("unix.go: StartExecutableLogOutput needs work")
 	// logWriter := NewExecutableLogWriter(logName)
-	// _, err := StartExecutableInBackground(fullexe, logWriter, logWriter, args...)
-	return err
+	// cmd, err := StartExecutableInBackground(fullexe, logWriter, logWriter, args...)
+	// return cmd.Process.Pid, err
+	return 0, err
 }

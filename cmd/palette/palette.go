@@ -10,16 +10,21 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
+	"time"
+
 	"github.com/hypebeast/go-osc/osc"
 	"github.com/joho/godotenv"
 	"github.com/vizicist/palette/kit"
 )
+
+var natsTarget string
 
 func main() {
 
 	signal.Ignore(syscall.SIGHUP)
 	signal.Ignore(syscall.SIGINT)
 
+	flag.StringVar(&natsTarget, "nats", "", "Use NATS to communicate with engine at specified hostname")
 	flag.Parse()
 	args := flag.Args()
 
@@ -32,9 +37,18 @@ func main() {
 	}
 
 	kit.InitKit()
-	// kit.InitEngine()
 
-	kit.LogInfo("Palette InitLog", "args", args)
+	// Connect to NATS if requested
+	if natsTarget != "" {
+		err := kit.NatsConnectRemote()
+		if err != nil {
+			os.Stdout.WriteString("Error connecting to NATS: " + err.Error() + "\n")
+			os.Exit(1)
+		}
+		defer kit.NatsDisconnect()
+	}
+
+	kit.LogInfo("Palette InitLog", "args", args, "natsTarget", natsTarget)
 
 	apiout, err := CliCommand(args)
 	if err != nil {
@@ -47,8 +61,8 @@ func main() {
 
 func usage() string {
 	return `Usage:
-	palette start [ {processname} ]
-	palette stop [ {processname}]
+	palette [-nats {hostname}] start [ {processname} ]
+	palette [-nats {hostname}] stop [ {processname}]
 	palette status
 	palette version
 	palette env [ set {name} {value} | get {name} ]
@@ -57,11 +71,51 @@ func usage() string {
 	palette osc listen {port@host}
 	palette osc send {port@host} {addr} ...
 	palette hub [ streams | listen | ... ]
-	palette get {name}    (prefix matching if no exact match)
-	palette set {name} {value}
-	palette setboot {name} {value}
-	palette {category}.{api} [ {argname} {argvalue} ] ...
+	palette [-nats {hostname}] get {name}
+	palette [-nats {hostname}] set {name} {value}
+	palette [-nats {hostname}] setboot {name} {value}
+	palette [-nats {hostname}] {category}.{api} [ {argname} {argvalue} ] ...
+
+Options:
+	-nats {hostname}  Use NATS to communicate with engine at specified hostname
 	`
+}
+
+// EngineApi routes API calls to NATS or HTTP based on natsTarget
+func EngineApi(api string, args ...string) (map[string]string, error) {
+	if natsTarget != "" {
+		return NatsEngineApi(api, args...)
+	}
+	return kit.LocalEngineApi(api, args...)
+}
+
+// NatsEngineApi sends an API request via NATS and returns the result
+func NatsEngineApi(api string, args ...string) (map[string]string, error) {
+	if len(args)%2 != 0 {
+		return nil, fmt.Errorf("NatsEngineApi: odd number of args, should be even")
+	}
+
+	// Build JSON request
+	apijson := fmt.Sprintf(`{"api": "%s"`, api)
+	for n := 0; n < len(args); n += 2 {
+		apijson += fmt.Sprintf(`, "%s": "%s"`, args[n], args[n+1])
+	}
+	apijson += "}"
+
+	result, err := kit.EngineNatsApi(natsTarget, apijson, 10*time.Second)
+	if err != nil {
+		return nil, err
+	}
+
+	// Parse the JSON response
+	output, err := kit.StringMap(result)
+	if err != nil {
+		return nil, fmt.Errorf("NatsEngineApi: unable to parse response: %s", err)
+	}
+	if errstr, hasError := output["error"]; hasError {
+		return nil, fmt.Errorf("%s", errstr)
+	}
+	return output, nil
 }
 
 func CliCommand(args []string) (map[string]string, error) {
@@ -149,16 +203,16 @@ func CliCommand(args []string) (map[string]string, error) {
 			return nil, fmt.Errorf("bad %s command, expected usage:\n%s", api, usage())
 		}
 		// Use the ...withprefix apis to get all matching parameters
-		return kit.LocalEngineApi("global."+api+"withprefix", "name", args[1])
+		return EngineApi("global."+api+"withprefix", "name", args[1])
 
 	case "set", "setboot":
 		if len(args) != 3 {
 			return nil, fmt.Errorf("bad %s command, expected usage:\n%s", api, usage())
 		}
-		return kit.LocalEngineApi("global."+api, "name", args[1], "value", args[2])
+		return EngineApi("global."+api, "name", args[1], "value", args[2])
 
 	case "setbootfromcurrent": // secret?
-		return kit.LocalEngineApi("global." + api)
+		return EngineApi("global." + api)
 
 	case "env":
 		path := kit.EnvFilePath()
@@ -221,7 +275,7 @@ func CliCommand(args []string) (map[string]string, error) {
 			for _, process := range kit.ProcessList() {
 				if arg1 == process {
 					param := "global.process." + arg1
-					return kit.LocalEngineApi("global.set", "name", param, "value", "true")
+					return EngineApi("global.set", "name", param, "value", "true")
 				}
 			}
 			return nil, fmt.Errorf("process %s is disabled or unknown", arg1)
@@ -250,7 +304,7 @@ func CliCommand(args []string) (map[string]string, error) {
 			// Individual processes are stopped by setting global.process.* to false.
 			// If the engine isn't running, this will fail.  Use stop all as last resort.
 			param := "global.process." + arg1
-			return kit.LocalEngineApi("global.set", "name", param, "value", "false")
+			return EngineApi("global.set", "name", param, "value", "false")
 		}
 
 	case "version":
@@ -284,11 +338,11 @@ func CliCommand(args []string) (map[string]string, error) {
 	case "test":
 		switch arg1 {
 		case "":
-			return kit.LocalEngineApi("quad.test", "ntimes", "40")
+			return EngineApi("quad.test", "ntimes", "40")
 		case "long":
-			return kit.LocalEngineApi("quad.test", "ntimes", "400")
+			return EngineApi("quad.test", "ntimes", "400")
 		case "center":
-			return kit.LocalEngineApi("quad.test", "ntimes", "1000", "testtype", "center")
+			return EngineApi("quad.test", "ntimes", "1000", "testtype", "center")
 		default:
 			return nil, fmt.Errorf("unknown test type - %s", arg1)
 		}
@@ -321,7 +375,7 @@ func CliCommand(args []string) (map[string]string, error) {
 		} else if len(words) > 2 {
 			return nil, fmt.Errorf("invalid api format, expecting {plugin}.{api}\n%s", usage())
 		}
-		return kit.LocalEngineApi(api, args[1:]...)
+		return EngineApi(api, args[1:]...)
 	}
 }
 
@@ -426,7 +480,8 @@ func doStartEngine(arg string) error {
 	}
 	fullexe := filepath.Join(kit.PaletteDir(), "bin", kit.EngineExe)
 	kit.LogInfo("palette: starting engine", "EngineExe", kit.EngineExe, "arg", arg)
-	return kit.StartExecutableLogOutput("engine", fullexe, arg)
+	_, err = kit.StartExecutableLogOutput("engine", fullexe, arg)
+	return err
 }
 
 func doStartMonitor() error {
@@ -438,5 +493,6 @@ func doStartMonitor() error {
 	// which then starts whatever global.process.* specifies.
 	kit.LogInfo("palette: starting monitor", "MonitorExe", kit.MonitorExe)
 	fullexe := filepath.Join(kit.PaletteDir(), "bin", kit.MonitorExe)
-	return kit.StartExecutableLogOutput("monitor", fullexe)
+	_, err = kit.StartExecutableLogOutput("monitor", fullexe)
+	return err
 }

@@ -6,7 +6,7 @@
     "configurations": [
 
        {
-            "name": "ENGINE ONLY - palette_engine.go",
+            "name": "ONLY ENGINE - palette_engine.go",
             "type": "go",
             "request": "launch",
             "mode": "auto",
@@ -14,6 +14,16 @@
             "env": {
                 "Path": "${env:Path};${workspaceFolder};c:/Users/me/Documents/github/vizicist/palette/SenselLib/x64;"             },
             "args": ["engineonly"]
+        },
+       {
+            "name": "ENGINE - palette_engine.go",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${env:PALETTE_SOURCE}/cmd/palette_engine/palette_engine.go",
+            "env": {
+                "Path": "${env:Path};${workspaceFolder};c:/Users/me/Documents/github/vizicist/palette/SenselLib/x64;"             },
+            "args": []
         },
        {
             "name": "palette_hub request_log spacepalette33",
