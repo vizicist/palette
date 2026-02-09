@@ -64,10 +64,12 @@ def load_palette_config(script_dir):
 
     return locations, colors
 
-def analyze_day_file(filepath, location):
+def analyze_day_file(filepath, location, file_date=None):
     """
     Analyze a single day file from a palette location directory.
     The file contains engine log entries with "msg" field indicating event type.
+    file_date is the date string from the filename (e.g. '2026-02-06') used to
+    attribute sessions to the correct local date (since timestamps are UTC).
     Returns tuple: (palette_loads dict, time_of_day_loads dict, session_durations dict, sessions list, restart_count int)
     """
     palette_loads = defaultdict(int)
@@ -152,7 +154,8 @@ def analyze_day_file(filepath, location):
                                         sessions.append({
                                             'palette': location,
                                             'start_time': session_start_time.isoformat(),
-                                            'duration_seconds': duration
+                                            'duration_seconds': duration,
+                                            'file_date': file_date
                                         })
                                     session_start_time = None
                                     session_load_count = 0
@@ -204,7 +207,8 @@ def analyze_day_file(filepath, location):
                 sessions.append({
                     'palette': location,
                     'start_time': session_start_time.isoformat(),
-                    'duration_seconds': duration
+                    'duration_seconds': duration,
+                    'file_date': file_date
                 })
 
     return palette_loads, time_of_day_loads, session_durations, sessions, restart_count
@@ -243,7 +247,7 @@ def analyze_all_palettes(palettes_dir='palettes', script_dir=None):
             filepath = os.path.join(location_dir, filename)
             date_str = filename.replace('.json', '')
 
-            palette_loads, time_of_day_loads, _session_durations, sessions, restart_count = analyze_day_file(filepath, location)
+            palette_loads, time_of_day_loads, _session_durations, sessions, restart_count = analyze_day_file(filepath, location, date_str)
 
             # Aggregate restart counts by date
             if restart_count > 0:
@@ -269,9 +273,9 @@ def analyze_all_palettes(palettes_dir='palettes', script_dir=None):
                         per_day_time_of_day[date_str][palette][hour] = \
                             per_day_time_of_day[date_str][palette].get(hour, 0) + count
 
-            # Process sessions
+            # Process sessions - use file_date to match loads attribution
             for session in sessions:
-                session_date = session['start_time'].split('T')[0]
+                session_date = session.get('file_date', session['start_time'].split('T')[0])
                 if session_date not in per_day_session_durations:
                     per_day_session_durations[session_date] = defaultdict(float)
                 per_day_session_durations[session_date][session['palette']] += session['duration_seconds']
@@ -720,7 +724,7 @@ def generate_html(data, time_of_day_data, session_duration_data, all_sessions, p
             const endDate = filteredDates[filteredDates.length - 1];
 
             const filteredSessions = data.sessions.filter(session => {{
-                const sessionDate = session.start_time.split('T')[0];
+                const sessionDate = session.file_date || session.start_time.split('T')[0];
                 return sessionDate >= startDate && sessionDate <= endDate && paletteVisibility[session.palette];
             }});
 
