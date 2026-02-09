@@ -158,6 +158,23 @@ body {
     overflow-y: auto;
 }
 
+#preset-grid::-webkit-scrollbar {
+    width: 96px;
+}
+
+#preset-grid::-webkit-scrollbar-track {
+    background: #111;
+}
+
+#preset-grid::-webkit-scrollbar-thumb {
+    background: #444;
+    border-radius: 4px;
+}
+
+#preset-grid::-webkit-scrollbar-thumb:hover {
+    background: #666;
+}
+
 #preset-grid.grid-mode {
     display: grid;
     grid-template-columns: repeat(3, 1fr);

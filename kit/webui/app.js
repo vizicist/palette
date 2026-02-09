@@ -1,7 +1,7 @@
 // State
 let currentPatch = '*';
 let currentCategory = 'quad';
-let advancedMode = true;
+let advancedMode = false;
 let lastSinglePatch = 'A'; // Track last single selection for toggle
 let showingParams = false; // Toggle between presets and parameters view
 
@@ -11,12 +11,20 @@ let cachedParamEnums = null;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
+    // Check guidefaultlevel to determine initial mode
+    try {
+        const level = await API.call('global.get', { name: 'global.guidefaultlevel' });
+        if (level === '1' || level === 1) {
+            advancedMode = true;
+        }
+    } catch (e) { /* default to normal mode */ }
+
     await loadPresets();
     setupControls();
     setupHelpOverlay();
     setupCategoryTabs();
     setupPatchSelector();
-    updatePatchButtons();
+    setAdvancedMode(advancedMode);
 });
 
 async function loadPresets() {
