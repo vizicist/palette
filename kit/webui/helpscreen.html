@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Space Palette Pro Help</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        html, body {
+            height: 100%;
+        }
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background: linear-gradient(to bottom, #0a1a1a 0%, #0d2a2a 50%, #103030 100%);
+            color: #40e0d0;
+            min-height: 100vh;
+            padding: 20px 25px;
+            display: flex;
+            flex-direction: column;
+            cursor: pointer;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .title-area {
+            background-color: #000000;
+            margin: -20px -25px 15px -25px;
+            padding: 15px 25px;
+        }
+        h1 {
+            font-size: 56px;
+            font-weight: bold;
+            color: #00d4c8;
+            margin-bottom: 2px;
+        }
+        .subtitle {
+            font-size: 35px;
+            color: #00d4c8;
+        }
+        .content {
+            flex: 1;
+        }
+        h2 {
+            font-size: 32px;
+            font-weight: bold;
+            color: #00e0d0;
+            text-decoration: underline;
+            margin-top: 24px;
+            margin-bottom: 7px;
+        }
+        .section-body {
+            padding-left: 20px;
+        }
+        p {
+            font-size: 25px;
+            color: #60f0e0;
+            line-height: 1.4;
+            margin-bottom: 4px;
+        }
+        .tap-text {
+            background: linear-gradient(to bottom, #006060 0%, #004848 100%);
+            color: #00ffff;
+            text-align: center;
+            padding: 21px 35px;
+            font-size: 32px;
+            font-weight: bold;
+            margin: 35px -25px -20px -25px;
+        }
+    </style>
+</head>
+<body>
+    <div class="title-area">
+        <h1>Space Palette Pro</h1>
+        <div class="subtitle">A Visual Music Instrument</div>
+    </div>
+
+    <div class="content">
+        <h2>Instructions</h2>
+        <div class="section-body">
+            <p>Finger paint on the pressure-sensitive pads.</p>
+            <p>Use the headphones to listen.</p>
+            <p>Select presets with this touchscreen.</p>
+        </div>
+
+        <h2>As a Visual Instrument</h2>
+        <div class="section-body">
+            <p>Your fingers are three-dimensional paintbrushes.</p>
+            <p>Each pad draws a different style of visuals.</p>
+            <p>Finger pressure changes the size of the visuals.</p>
+        </div>
+
+        <h2>As a Musical Instrument</h2>
+        <div class="section-body">
+            <p>Your fingers strum the strings of a virtual harp.</p>
+            <p>Each pad plays a different type of sound.</p>
+            <p>Lower pitches to the left, higher pitches to the right.</p>
+            <p>Faster notes at the top, slower notes at the bottom.</p>
+        </div>
+
+        <h2>It's Both! A Visual Music Instrument</h2>
+        <div class="section-body">
+            <p>Each finger plays music and visuals at the same time.</p>
+            <p>Each preset changes the behavior of all four pads.</p>
+        </div>
+
+        <h2>Hints</h2>
+        <div class="section-body">
+            <p>Vary finger pressure from a light caress to very hard.</p>
+            <p>You can press really hard, it won't damage the pad.</p>
+            <p>Drag your fingers around like you're finger painting.</p>
+            <p>Explore the entire pad, vertically and horizontally.</p>
+            <p>Try different presets.</p>
+            <p>More info at https://spacepalette.com</p>
+        </div>
+    </div>
+
+    <div class="tap-text">Tap This Screen To Continue</div>
+
+    <script>
+        // Diagonal swipe detection for entering advanced mode
+        let startX = 0, startY = 0;
+        let isTracking = false;
+
+        function handleStart(x, y) {
+            startX = x;
+            startY = y;
+            isTracking = true;
+        }
+
+        function handleEnd(x, y) {
+            if (!isTracking) return;
+            isTracking = false;
+
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+            const cornerThreshold = 0.3; // 30% from corner for start/end detection
+
+            // Check if start is in top-left corner
+            const startInTopLeft = startX < w * cornerThreshold && startY < h * cornerThreshold;
+            // Check if end is in bottom-right corner
+            const endInBottomRight = x > w * (1 - cornerThreshold) && y > h * (1 - cornerThreshold);
+
+            // Check opposite diagonal too
+            const startInTopRight = startX > w * (1 - cornerThreshold) && startY < h * cornerThreshold;
+            const endInBottomLeft = x < w * cornerThreshold && y > h * (1 - cornerThreshold);
+
+            // Also check minimum swipe distance (at least 50% of screen diagonal)
+            const dx = x - startX;
+            const dy = y - startY;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            const minDistance = Math.sqrt(w * w + h * h) * 0.4;
+
+            if (distance > minDistance && ((startInTopLeft && endInBottomRight) || (startInTopRight && endInBottomLeft))) {
+                // Diagonal swipe detected - enter advanced mode
+                window.parent.postMessage('advancedMode', '*');
+            } else {
+                // Regular tap/click - close help
+                window.parent.postMessage('closeHelp', '*');
+            }
+        }
+
+        // Mouse events
+        document.body.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            handleStart(e.clientX, e.clientY);
+        });
+        document.body.addEventListener('mouseup', (e) => {
+            e.preventDefault();
+            handleEnd(e.clientX, e.clientY);
+        });
+
+        // Touch events - use passive: false to ensure preventDefault works
+        document.body.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (e.touches.length === 1) {
+                handleStart(e.touches[0].clientX, e.touches[0].clientY);
+            }
+        }, { passive: false });
+        document.body.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            if (e.changedTouches.length === 1) {
+                handleEnd(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+            }
+        }, { passive: false });
+    </script>
+</body>
+</html>
