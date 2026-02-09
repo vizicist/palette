@@ -9,10 +9,6 @@ let showingParams = false; // Toggle between presets and parameters view
 let cachedParamDefs = null;
 let cachedParamEnums = null;
 
-// Swipe tracking for diagonal gesture
-let swipeStart = null;
-const CORNER_THRESHOLD = 0.20; // 20% of screen dimension
-
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
     await loadPresets();
@@ -515,66 +511,15 @@ function setupControls() {
 
 // Help overlay functionality
 function setupHelpOverlay() {
-    const overlay = document.getElementById('help-overlay');
-
-    // Track mouse/touch for diagonal swipe detection
-    overlay.addEventListener('mousedown', (e) => {
-        e.preventDefault(); // Prevent image drag
-        swipeStart = { x: e.clientX, y: e.clientY, time: Date.now() };
-    });
-
-    overlay.addEventListener('mouseup', (e) => {
-        if (swipeStart && checkDiagonalSwipe(swipeStart, { x: e.clientX, y: e.clientY })) {
+    // Listen for messages from the help iframe
+    window.addEventListener('message', (e) => {
+        if (e.data === 'closeHelp') {
+            hideHelp();
+        } else if (e.data === 'advancedMode') {
             hideHelp();
             setAdvancedMode(true);
-        } else {
-            // Regular click - just close help
-            hideHelp();
         }
-        swipeStart = null;
     });
-
-    // Touch support
-    overlay.addEventListener('touchstart', (e) => {
-        e.preventDefault(); // Prevent default touch behavior
-        const touch = e.touches[0];
-        swipeStart = { x: touch.clientX, y: touch.clientY, time: Date.now() };
-    });
-
-    overlay.addEventListener('touchend', (e) => {
-        const touch = e.changedTouches[0];
-        if (swipeStart && checkDiagonalSwipe(swipeStart, { x: touch.clientX, y: touch.clientY })) {
-            hideHelp();
-            setAdvancedMode(true);
-        } else {
-            hideHelp();
-        }
-        swipeStart = null;
-    });
-}
-
-function checkDiagonalSwipe(start, end) {
-    const w = window.innerWidth;
-    const h = window.innerHeight;
-    const cornerSize = CORNER_THRESHOLD;
-
-    // Check if start is in a corner (within 20%)
-    const startInTopLeft = start.x < w * cornerSize && start.y < h * cornerSize;
-    const startInTopRight = start.x > w * (1 - cornerSize) && start.y < h * cornerSize;
-    const startInBottomLeft = start.x < w * cornerSize && start.y > h * (1 - cornerSize);
-    const startInBottomRight = start.x > w * (1 - cornerSize) && start.y > h * (1 - cornerSize);
-
-    // Check if end is in opposite corner
-    const endInTopLeft = end.x < w * cornerSize && end.y < h * cornerSize;
-    const endInTopRight = end.x > w * (1 - cornerSize) && end.y < h * cornerSize;
-    const endInBottomLeft = end.x < w * cornerSize && end.y > h * (1 - cornerSize);
-    const endInBottomRight = end.x > w * (1 - cornerSize) && end.y > h * (1 - cornerSize);
-
-    // Diagonal swipe: opposite corners
-    return (startInTopLeft && endInBottomRight) ||
-           (startInBottomRight && endInTopLeft) ||
-           (startInTopRight && endInBottomLeft) ||
-           (startInBottomLeft && endInTopRight);
 }
 
 function showHelp() {

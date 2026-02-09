@@ -91,7 +91,7 @@ func checkEngine() {
 			kit.KillAllExceptMonitor()
 			kit.LogInfo("checkEngine: restarting engine")
 			fullexe := filepath.Join(kit.PaletteDir(), "bin", kit.EngineExe)
-			err := kit.StartExecutableLogOutput(kit.EngineExe, fullexe)
+			_, err := kit.StartExecutableLogOutput(kit.EngineExe, fullexe)
 			kit.LogIfError(err)
 		}
 		tm := <-tick.C

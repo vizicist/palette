@@ -1,1 +1,1 @@
-schtasks /delete /tn "DailyReboot" /f
+schtasks /delete /tn "Daily Reboot for Space Palette" /f
