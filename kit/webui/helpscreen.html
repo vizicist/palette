@@ -17,28 +17,29 @@
             font-family: Arial, Helvetica, sans-serif;
             background: linear-gradient(to bottom, #0a1a1a 0%, #0d2a2a 50%, #103030 100%);
             color: #40e0d0;
-            min-height: 100vh;
-            padding: 20px 25px;
+            height: 100vh;
+            padding: 0 25px;
             display: flex;
             flex-direction: column;
             cursor: pointer;
             user-select: none;
             -webkit-user-select: none;
+            overflow: hidden;
         }
         .title-area {
             background-color: #000000;
-            margin: -20px -25px 15px -25px;
-            padding: 15px 25px;
+            margin: 0 -25px;
+            padding: 1vh 25px;
             text-align: center;
         }
         h1 {
-            font-size: 56px;
+            font-size: 4.5vh;
             font-weight: bold;
             color: #00d4c8;
-            margin-bottom: 2px;
+            margin-bottom: 0;
         }
         .subtitle {
-            font-size: 35px;
+            font-size: 2.8vh;
             color: #00d4c8;
         }
         .content {
@@ -46,32 +47,35 @@
             max-width: 700px;
             margin: 0 auto;
             width: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-evenly;
         }
         h2 {
-            font-size: 32px;
+            font-size: 2.5vh;
             font-weight: bold;
             color: #00e0d0;
             text-decoration: underline;
-            margin-top: 24px;
-            margin-bottom: 7px;
+            margin-top: 0;
+            margin-bottom: 0.3vh;
         }
         .section-body {
             padding-left: 30px;
         }
         p {
-            font-size: 25px;
+            font-size: 2vh;
             color: #60f0e0;
-            line-height: 1.4;
-            margin-bottom: 4px;
+            line-height: 1.3;
+            margin-bottom: 0.1vh;
         }
         .tap-text {
             background: linear-gradient(to bottom, #006060 0%, #004848 100%);
             color: #00ffff;
             text-align: center;
-            padding: 21px 35px;
-            font-size: 32px;
+            padding: 1.5vh 35px;
+            font-size: 2.5vh;
             font-weight: bold;
-            margin: 35px -25px -20px -25px;
+            margin: 0 -25px;
         }
     </style>
 </head>
