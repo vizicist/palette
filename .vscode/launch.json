@@ -12,7 +12,7 @@
             "mode": "auto",
             "program": "${env:PALETTE_SOURCE}/cmd/palette_engine/palette_engine.go",
             "env": {
-                "Path": "${env:Path};${workspaceFolder};c:/Users/me/Documents/github/vizicist/palette/SenselLib/x64;"             },
+                "Path": "${env:Path};${workspaceFolder};c:/Users/space/github/vizicist/palette/SenselLib/x64;"             },
             "args": ["engineonly"]
         },
        {
@@ -22,7 +22,7 @@
             "mode": "auto",
             "program": "${env:PALETTE_SOURCE}/cmd/palette_engine/palette_engine.go",
             "env": {
-                "Path": "${env:Path};${workspaceFolder};c:/Users/me/Documents/github/vizicist/palette/SenselLib/x64;"             },
+                "Path": "${env:Path};${workspaceFolder};c:/Users/space/github/vizicist/palette/SenselLib/x64;"             },
             "args": []
         },
        {
@@ -32,7 +32,7 @@
             "mode": "auto",
             "program": "${env:PALETTE_SOURCE}/cmd/palette_hub/palette_hub.go",
             "env": {
-                "Path": "${env:Path};${workspaceFolder};c:/Users/me/Documents/github/vizicist/palette/SenselLib/x64;"             },
+                "Path": "${env:Path};${workspaceFolder};c:/Users/space/github/vizicist/palette/SenselLib/x64;"             },
             "args": ["request_log","spacepalette33"]
         },
        {
@@ -124,7 +124,7 @@
             "mode": "auto",
             "program": "${env:PALETTE_SOURCE}/cmd/palette_remote/palette_remote.go",
             "env": {
-                "Path": "${env:Path};${workspaceFolder};c:/Users/me/Documents/github/vizicist/palette/SenselLib/x64;"             },
+                "Path": "${env:Path};${workspaceFolder};c:/Users/space/github/vizicist/palette/SenselLib/x64;"             },
             "args": []
         },
         {
@@ -155,7 +155,7 @@
             "mode": "auto",
             "program": "${env:PALETTE_SOURCE}/cmd/fyne_demo/fyne_demo.go",
             "env": {
-                "Path": "${env:Path};${workspaceFolder};c:/Users/me/Documents/github/vizicist/palette/SenselLib/x64;"             },
+                "Path": "${env:Path};${workspaceFolder};c:/Users/space/github/vizicist/palette/SenselLib/x64;"             },
             "args": []
         },
        {
@@ -212,7 +212,7 @@
             "type": "go",
             "request": "launch",
             "program": "${env:PALETTE_SOURCE}/cmd/palette/palette.go",
-            "args": ["summarize","c:/users/tjt/Documents/GitHub/temp/palette11.engine.log"]
+            "args": ["summarize","c:/users/space/github/temp/palette11.engine.log"]
         },
        {
             "name": "SPLASH - palette_splash.go",
@@ -256,7 +256,7 @@
             "mode": "auto",
             "program": "${env:PALETTE_SOURCE}/cmd/chillian/chillian.go",
             "env": {
-                "Path": "${env:Path};${workspaceFolder};c:/Users/me/Documents/github/vizicist/palette/SenselLib/x64;"             },
+                "Path": "${env:Path};${workspaceFolder};c:/Users/space/github/vizicist/palette/SenselLib/x64;"             },
             "args": []
         },
         {
@@ -322,7 +322,7 @@
             "mode": "auto",
             "program": "${env:PALETTE_SOURCE}/cmd/palette/palette.go",
             "env": {
-                "Path": "${env:Path};${workspaceFolder};c:/Users/me/Documents/github/vizicist/palette/SenselLib/x64;"             },
+                "Path": "${env:Path};${workspaceFolder};c:/Users/space/github/vizicist/palette/SenselLib/x64;"             },
             "args": ["sendlogs"]
         },
         {
@@ -332,7 +332,7 @@
             "mode": "auto",
             "program": "${env:PALETTE_SOURCE}/cmd/erae/erae.go",
             "env": {
-                "Path": "${env:Path};${workspaceFolder};c:/Users/me/Documents/github/vizicist/palette/SenselLib/x64;"             },
+                "Path": "${env:Path};${workspaceFolder};c:/Users/space/github/vizicist/palette/SenselLib/x64;"             },
             "args": []
         }
     ]
