@@ -131,6 +131,11 @@ func (am *AttractManager) setAttractMode(onoff bool) {
 			patch.clearGraphics()
 			patch.loopClear()
 		}
+		if !onoff {
+			for _, patch := range TheQuad.patch {
+				patch.Synth().SendANO()
+			}
+		}
 	}
 
 	go TheBidule().Reset()
