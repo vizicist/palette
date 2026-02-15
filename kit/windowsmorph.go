@@ -260,7 +260,7 @@ type oneMorph struct {
 	morphtype        string // "corners", "quadrants", "A", "B", "C", "D"
 	currentTag       string // "A", "B", "C", "D" - it can change dynamically
 	previousTag      string // "A", "B", "C", "D" - it can change dynamically
-	contactIdToGID   map[int]int
+	contactIDToGID   map[int]int
 }
 
 var morphMaxForce float64 = 1000.0
@@ -418,11 +418,11 @@ func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float64) 
 			}
 
 			contactid := int(contact.id)
-			gid, ok := m.contactIdToGID[contactid]
+			gid, ok := m.contactIDToGID[contactid]
 			if !ok {
 				// If we've never seen this contact before, create a new cid...
 				gid = TheCursorManager.UniqueGID()
-				m.contactIdToGID[contactid] = gid
+				m.contactIDToGID[contactid] = gid
 			} else if m.currentTag != m.previousTag {
 				// If we're switching to a new source, clear existing cursors...
 				ce := NewCursorClearEvent()
@@ -477,7 +477,7 @@ func WinMorphInitialize() error {
 	for idx := uint8(0); idx < uint8(numdevices); idx++ {
 
 		m := &oneMorph{
-			contactIdToGID: map[int]int{},
+			contactIDToGID: map[int]int{},
 		}
 		allMorphs[idx] = m
 		m.idx = idx
