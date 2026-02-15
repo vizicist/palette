@@ -226,7 +226,7 @@ func (erae *Erae) EraeWriteSysEx(bytes []byte) {
 	// }
 }
 
-func (erae *Erae) EraeApiModeEnable() {
+func (erae *Erae) EraeAPIModeEnable() {
 	bytes := []byte{0xf0, 0x00, 0x21, 0x50, 0x00, 0x01, 0x00, 0x01,
 		0x01, 0x01, 0x04, 0x01,
 		erae.prefix, 0xf7}
@@ -234,7 +234,7 @@ func (erae *Erae) EraeApiModeEnable() {
 	erae.apienabled = true
 }
 
-func (erae *Erae) EraeApiModeDisable() {
+func (erae *Erae) EraeAPIModeDisable() {
 	bytes := []byte{0xf0, 0x00, 0x21, 0x50, 0x00, 0x01, 0x00, 0x01,
 		0x01, 0x01, 0x04, 0x02, 0xf7}
 	erae.EraeWriteSysEx(bytes)
@@ -272,7 +272,7 @@ func (erae *Erae) EraeZoneRectangle(zone, x, y, w, h, r, g, b byte) {
 	erae.EraeWriteSysEx(bytes)
 }
 
-// 7-bitize an array of bytes and get the resulting checksum
+// EraeBitize7chksum - 7-bitize an array of bytes and get the resulting checksum
 // Algorithm taken from Erae documentation.
 // Return value is the output bytes and checksum
 func EraeBitize7chksum(in []byte) (out []byte, chksum byte) {
@@ -295,7 +295,7 @@ func EraeBitize7chksum(in []byte) (out []byte, chksum byte) {
 	return out[0:outsize], chksum
 }
 
-// 7-unbitize an array of bytes and get the incomming checksum
+// EraeUnbitize7chksum - 7-unbitize an array of bytes and get the incomming checksum
 // Algorithm taken from Erae documentation.
 // Return value is the output bytes and checksum
 func EraeUnbitize7chksum(in []byte) ([]byte, byte) {

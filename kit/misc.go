@@ -3,7 +3,6 @@ package kit
 import (
 	"archive/zip"
 	"bytes"
-	json "github.com/goccy/go-json"
 	"errors"
 	"fmt"
 	"image"
@@ -18,12 +17,14 @@ import (
 	"strings"
 	"time"
 
+	json "github.com/goccy/go-json"
+
 	// "github.com/hpcloud/tail"
 	"gopkg.in/gomail.v2"
 )
 
-var MmttHttpPort = 4444
-var EngineHttpPort = 3330
+var MmttHTTPPort = 4444
+var EngineHTTPPort = 3330
 var OscPort = 3333
 var EventClientPort = 6666
 var GuiPort = 3943
@@ -104,11 +105,11 @@ func GetPaletteVersion() string {
 
 func PaletteDataPath() (datapath string) {
 
-	palette_data := os.Getenv("PALETTE_DATA")
-	if palette_data == "" {
-		palette_data = "default"
+	paletteData := os.Getenv("PALETTE_DATA")
+	if paletteData == "" {
+		paletteData = "default"
 	}
-	datadir := "data_" + palette_data
+	datadir := "data_" + paletteData
 
 	var basePath string
 	if runtime.GOOS == "windows" {
@@ -478,13 +479,13 @@ func ziplogs(logsdir string, zipfile string) error {
 	return err
 }
 
-func MmttApi(api string) (map[string]string, error) {
-	return MmttRemoteApi(api)
+func MmttAPI(api string) (map[string]string, error) {
+	return MmttRemoteAPI(api)
 }
 
-// humanReadableApiOutput takes the result of an API invocation and
+// HumanReadableAPIOutput takes the result of an API invocation and
 // produces what will appear in visible output from a CLI command.
-func HumanReadableApiOutput(apiOutput map[string]string) string {
+func HumanReadableAPIOutput(apiOutput map[string]string) string {
 	if apiOutput == nil {
 		return ""
 	}
@@ -502,15 +503,15 @@ func HumanReadableApiOutput(apiOutput map[string]string) string {
 	return result
 }
 
-func MmttRemoteApi(api string) (map[string]string, error) {
+func MmttRemoteAPI(api string) (map[string]string, error) {
 
 	id := "56789"
 	apijson := "{ \"jsonrpc\": \"2.0\", \"method\": \"" + api + "\", \"id\":\"" + id + "\"}"
-	url := fmt.Sprintf("http://%s:%d/api", LocalAddress, MmttHttpPort)
-	return HttpApiRaw(url, apijson)
+	url := fmt.Sprintf("http://%s:%d/api", LocalAddress, MmttHTTPPort)
+	return HTTPAPIRaw(url, apijson)
 }
 
-func HttpApiRaw(url string, args string) (map[string]string, error) {
+func HTTPAPIRaw(url string, args string) (map[string]string, error) {
 	postBody := []byte(args)
 	resp, err := http.Post(url, "application/json", bytes.NewBuffer(postBody))
 	if err != nil {
@@ -523,15 +524,15 @@ func HttpApiRaw(url string, args string) (map[string]string, error) {
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("RemoteApiRaw: ReadAll err=%s", err)
+		return nil, fmt.Errorf("RemoteAPIRaw: ReadAll err=%s", err)
 	}
 	output, err := StringMap(string(body))
 	if err != nil {
-		return nil, fmt.Errorf("RemoteApiRaw: unable to interpret output, err=%s", err)
+		return nil, fmt.Errorf("RemoteAPIRaw: unable to interpret output, err=%s", err)
 	}
 	errstr, haserror := output["error"]
 	if haserror && !strings.Contains(errstr, "exit status") {
-		return map[string]string{}, fmt.Errorf("RemoteApiRaw: error=%s", errstr)
+		return map[string]string{}, fmt.Errorf("RemoteAPIRaw: error=%s", errstr)
 	}
 	return output, nil
 }
@@ -621,7 +622,7 @@ func SendMail(body string) error {
 	return SendMailWithAttachment(body, "")
 }
 
-// SendMail xxx
+// SendMailWithAttachment sends an email with the given body and an optional attachment file.
 func SendMailWithAttachment(body, attachfile string) error {
 
 	recipient, _ := GetParam("global.emailto")
@@ -660,14 +661,14 @@ func GoroutineID() uint64 {
 	return n
 }
 
-func JsonObject(args ...string) string {
-	s := JsonString(args...)
+func JSONObject(args ...string) string {
+	s := JSONString(args...)
 	return "{ " + s + " }"
 }
 
-func JsonString(args ...string) string {
+func JSONString(args ...string) string {
 	if len(args)%2 != 0 {
-		LogWarn("ApiParams: odd number of arguments", "args", args)
+		LogWarn("APIParams: odd number of arguments", "args", args)
 		return ""
 	}
 	params := ""

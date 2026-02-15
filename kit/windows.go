@@ -38,7 +38,7 @@ func KillByPid(pid int) {
 	_ = cmd.Run()
 }
 
-// StartExecutable executes something.  If background is true, it doesn't block
+// StartExecutableLogOutput executes something.  If background is true, it doesn't block
 // Returns the PID of the started process
 func StartExecutableLogOutput(logName string, fullexe string, args ...string) (int, error) {
 	logWriter := NewExecutableLogWriter(logName)

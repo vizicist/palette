@@ -84,7 +84,7 @@ func SavedPathMap(wantCategory string) (map[string]string, error) {
 	return result, nil
 }
 
-// SavedArray returns a list of saved filenames for a particular category.
+// SavedFileList returns a list of saved filenames for a particular category.
 func SavedFileList(category string) ([]string, error) {
 
 	savedMap, err := SavedPathMap(category)

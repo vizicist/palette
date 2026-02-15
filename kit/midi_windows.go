@@ -1,14 +1,14 @@
 //go:build windows
 
-/*
-  - If you ever get an error message like this:
-    *
-  - gitlab.com/gomidi/midio/v2/drivers/rtmididrv/imported/rtmidi:
-    build constraints exclude all Go files in
-    C:\Users\space\go\pkg\mod\gitlab.com\gomidi\midi\v2@v2.2.19\drivers\rtmididrv\imported\rtmidi
-    *
-  - it's because you don't have gcc.exe in your PATH.
-*/
+// Package kit - Windows-specific MIDI code
+//
+// - If you ever get an error message like this:
+//
+// - gitlab.com/gomidi/midio/v2/drivers/rtmididrv/imported/rtmidi:
+// build constraints exclude all Go files in
+// C:\Users\space\go\pkg\mod\gitlab.com\gomidi\midi\v2@v2.2.19\drivers\rtmididrv\imported\rtmidi
+//
+// - it's because you don't have gcc.exe in your PATH.
 package kit
 
 import (
@@ -44,7 +44,7 @@ type MidiIO struct {
 	stop                 func()
 }
 
-// MIDIChannelOutput is used to remember the last
+// MidiPortChannelState is used to remember the last
 // bank and program values for a particular output,
 // so they're only sent out when they've changed.
 type MidiPortChannelState struct {
@@ -56,7 +56,6 @@ type MidiPortChannelState struct {
 	mutex   sync.Mutex
 }
 
-// MIDI is a pointer to
 var TheMidiIO *MidiIO
 
 func NewMidiIO() *MidiIO {
@@ -76,8 +75,8 @@ func NewMidiIO() *MidiIO {
 	}
 }
 
-// InitMIDI initializes stuff
-func InitMidiIO() {
+// InitMIDIIO initializes stuff
+func InitMIDIIO() {
 
 	LogOfType("midi", "Initializing MIDI I/O",
 		"inports", TheMidiIO.inports, "outports", TheMidiIO.outports)
@@ -232,7 +231,7 @@ func (state *MidiPortChannelState) UpdateBankProgram(synth *Synth) {
 	}
 }
 
-func (out *MidiPortChannelState) WriteShort(status, data1, data2 int64) {
+func (state *MidiPortChannelState) WriteShort(status, data1, data2 int64) {
 	LogWarn("WriteShort needs work")
 }
 

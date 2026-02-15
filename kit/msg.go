@@ -14,12 +14,10 @@ type Cmd struct {
 	Values map[string]string
 }
 
-// ErrorResult xxx
 func ErrorResult(err string) string {
 	return fmt.Sprintf("\"error\":\"%s\"", err)
 }
 
-// ErrorResult xxx
 func OkResult() string {
 	return ""
 }

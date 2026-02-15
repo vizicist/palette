@@ -227,7 +227,6 @@ func (synth *Synth) SendNoteToMidiOutput(value any) {
 	synth.SendBytesToMidiOutput([]byte{status, data1, data2})
 }
 
-// SendBytesToMidiOutput
 func (synth *Synth) SendBytesToMidiOutput(bytes []byte) {
 
 	if !synth.midiOutputEnabled() {

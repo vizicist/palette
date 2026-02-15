@@ -134,7 +134,7 @@ func (vals *ParamValues) DoForAllParams(f func(string, ParamValue)) {
 	}
 }
 
-func (vals *ParamValues) JsonValues() string {
+func (vals *ParamValues) JSONValues() string {
 	vals.mutex.RLock()
 	defer vals.mutex.RUnlock()
 	s := ""
@@ -147,8 +147,8 @@ func (vals *ParamValues) JsonValues() string {
 	return s
 }
 
-// Currently, no errors are ever returned, but log messages are generated.
-func (params *ParamValues) ApplyValuesFromMap(category string, paramsmap map[string]any, setfunc func(string, string) error) {
+// ApplyValuesFromMap - Currently, no errors are ever returned, but log messages are generated.
+func (vals *ParamValues) ApplyValuesFromMap(category string, paramsmap map[string]any, setfunc func(string, string) error) {
 
 	for fullname, ival := range paramsmap {
 		var value string
@@ -200,7 +200,7 @@ func (vals *ParamValues) ParamNames() []string {
 	return sortedNames
 }
 
-// returns "" if parameter doesn't exist
+// Get - returns "" if parameter doesn't exist
 func (vals *ParamValues) Get(name string) (string, error) {
 	if !strings.Contains(name, ".") {
 		return "", fmt.Errorf("parameters should always have a period, name=%s", name)

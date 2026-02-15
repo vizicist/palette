@@ -22,7 +22,6 @@ var Time0 = time.Time{}
 var FirstTime = true
 var LogMutex sync.Mutex
 
-// var PaletteTimeLayout = "2006-01-02-15-04-05.000"
 var PaletteTimeLayout = "2006-01-02T15:04:05Z07:00" // RFC3339 Format
 
 // Uptime returns the number of seconds since the program started.
@@ -170,7 +169,7 @@ func LogIfError(err error, keysAndValues ...any) {
 	LogError(err, keysAndValues...)
 }
 
-// LogIfError will accept a nil value and do nothing
+// LogError will accept a nil value and do nothing
 func LogError(err error, keysAndValues ...any) {
 
 	if err == nil {

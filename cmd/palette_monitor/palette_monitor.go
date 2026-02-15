@@ -101,7 +101,7 @@ func checkEngine() {
 
 func mmttRealign() {
 	kit.LogInfo("Begin mmttRealign")
-	_, err := kit.MmttApi("align_start")
+	_, err := kit.MmttAPI("align_start")
 	kit.LogIfError(err)
 }
 
