@@ -61,15 +61,15 @@ func (p *Phrase) RUnlock() {
 }
 
 // Format xxx
-func (pi *PhraseElement) Format(f fmt.State, c rune) {
+func (pe *PhraseElement) Format(f fmt.State, c rune) {
 	var valstr string
-	switch v := pi.Value.(type) {
+	switch v := pe.Value.(type) {
 	case *NoteOn:
 		valstr = v.String()
 	default:
 		valstr = "UNKNOWNTYPE"
 	}
-	final := fmt.Sprintf("(PhraseElement AtClick=%d Value=%s)", pi.AtClick, valstr)
+	final := fmt.Sprintf("(PhraseElement AtClick=%d Value=%s)", pe.AtClick, valstr)
 	// XXX - is there any way that this can fail?
 	_,_ = f.Write([]byte(final))
 }
@@ -114,7 +114,7 @@ func NewNoteOff(synth *Synth, pitch, velocity uint8) *NoteOff {
 	return &NoteOff{Pitch: pitch, Velocity: velocity, Synth: synth}
 }
 
-// NewNoteOff create a new NoteOff from a NoteOn
+// NewNoteOffFromNoteOn - create a new NoteOff from a NoteOn
 func NewNoteOffFromNoteOn(nt *NoteOn) *NoteOff {
 	return &NoteOff{Pitch: nt.Pitch, Velocity: nt.Velocity, Synth: nt.Synth}
 }
@@ -666,7 +666,7 @@ func isNumber(ch rune) bool {
 	return ch == '-' || (ch >= '0' && ch <= '9')
 }
 
-// InsertNote inserts a note into a Phrase
+// InsertElement inserts a note into a Phrase
 func (p *Phrase) InsertElement(item *PhraseElement) *Phrase {
 	// XXX - should lock here?
 	// p.Lock()
@@ -679,12 +679,12 @@ type PhraseScanner struct {
 	r *bufio.Reader
 }
 
-// NewScanner returns a new instance of Scanner.
+// NewPhraseScanner returns a new instance of Scanner.
 func NewPhraseScanner(r io.Reader) *PhraseScanner {
 	return &PhraseScanner{r: bufio.NewReader(r)}
 }
 
-// read reads the next rune from the bufferred reader.
+// PhraseScanner - reads the next rune from the bufferred reader.
 // Returns the rune(0) if an error occurs (or io.EOF is returned).
 func (s *PhraseScanner) read() rune {
 	ch, _, err := s.r.ReadRune()
@@ -716,7 +716,7 @@ func (s *PhraseScanner) ScanNumber() (int, error) {
 	return n, nil
 }
 
-// Scan returns the next token and literal value.
+// ScanWord returns the next token and literal value.
 func (s *PhraseScanner) ScanWord() (tok Token, lit string) {
 	// Read the next rune.
 	ch := s.read()

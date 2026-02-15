@@ -33,7 +33,7 @@ func (logic *PatchLogic) cursorToNoteOn(ce CursorEvent) *NoteOn {
 	velocity := logic.cursorToVelocity(ce)
 	pitch, err := logic.cursorToPitch(ce)
 	if err != nil {
-		LogError(fmt.Errorf("cursorToNoteOn: no pitch for cursor"),"ce",ce)
+		LogError(fmt.Errorf("cursorToNoteOn: no pitch for cursor"), "ce", ce)
 		return nil
 	}
 	LogOfType("cursor", "cursorToNoteOn", "pitch", pitch, "velocity", velocity)
@@ -63,7 +63,7 @@ func (logic *PatchLogic) cursorToPitch(ce CursorEvent) (uint8, error) {
 		pitchmin := patch.GetInt("sound.pitchmin")
 		pitchmax := patch.GetInt("sound.pitchmax")
 		if pitchmin > pitchmax { // really?
-			LogWarn("Hey! pitchmin > pitchmax", "pitchmin", pitchmin, "pitchmax", pitchmax, "patch", patch.Name(), "ce", ce)	
+			LogWarn("Hey! pitchmin > pitchmax", "pitchmin", pitchmin, "pitchmax", pitchmax, "patch", patch.Name(), "ce", ce)
 			t := pitchmin
 			pitchmin = pitchmax
 			pitchmax = t
@@ -163,7 +163,7 @@ func (logic *PatchLogic) generateVisualsFromCursor(ce CursorEvent) {
 
 func (logic *PatchLogic) generateSoundFromCursor(ce CursorEvent, cursorStyle string) {
 
-	LogOfType("gensound", "generateSoundFromCursor", "cursor", ce.Gid, "ce", ce)
+	LogOfType("gensound", "generateSoundFromCursor", "cursor", ce.GID, "ce", ce)
 
 	switch cursorStyle {
 	case "downonly":
@@ -210,9 +210,9 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
 	defer logic.mutex.Unlock()
 
 	patch := logic.patch
-	ac, ok := TheCursorManager.getActiveCursorFor(ce.Gid)
+	ac, ok := TheCursorManager.getActiveCursorFor(ce.GID)
 	if !ok {
-		LogWarn("generateSoundFromCursor: no active cursor", "gid", ce.Gid)
+		LogWarn("generateSoundFromCursor: no active cursor", "gid", ce.GID)
 		return
 	}
 
@@ -305,7 +305,7 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
 		oldNoteOn := ac.NoteOn
 		if oldNoteOn == nil {
 			// not sure why this happens, yet
-			LogWarn("Unexpected UP, no oldNoteOn", "gid", ce.Gid)
+			LogWarn("Unexpected UP, no oldNoteOn", "gid", ce.GID)
 		} else {
 			noteOff := NewNoteOffFromNoteOn(oldNoteOn)
 			offClick := ac.NoteOnClick + 1

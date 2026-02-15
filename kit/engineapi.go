@@ -14,11 +14,11 @@ import (
 // NoProcess when true, skip auto-starting processes
 var NoProcess bool
 
-// ExecuteApi xxx
-func ExecuteApi(api string, apiargs map[string]string) (result string, err error) {
+// ExecuteAPI xxx
+func ExecuteAPI(api string, apiargs map[string]string) (result string, err error) {
 
 	if api != "global.status" { // global.status happens every few seconds
-		LogOfType("api", "ExecuteApi", "api", api, "apiargs", apiargs)
+		LogOfType("api", "ExecuteAPI", "api", api, "apiargs", apiargs)
 	}
 
 	words := strings.Split(api, ".")
@@ -32,12 +32,12 @@ func ExecuteApi(api string, apiargs map[string]string) (result string, err error
 	apisuffix := words[1]
 	switch apitype {
 	case "global":
-		return ExecuteGlobalApi(apisuffix, apiargs)
+		return ExecuteGlobalAPI(apisuffix, apiargs)
 	case "saved":
-		return ExecuteSavedApi(apisuffix, apiargs)
+		return ExecuteSavedAPI(apisuffix, apiargs)
 	case "quad":
 		if TheQuad != nil {
-			return TheQuad.Api(apisuffix, apiargs)
+			return TheQuad.API(apisuffix, apiargs)
 		}
 		return "", fmt.Errorf("no quad")
 	case "patch":
@@ -49,42 +49,42 @@ func ExecuteApi(api string, apiargs map[string]string) (result string, err error
 		if patch == nil {
 			return "", fmt.Errorf("no such patch: %s", patchName)
 		}
-		return patch.Api(apisuffix, apiargs)
+		return patch.API(apisuffix, apiargs)
 	default:
 		return "", fmt.Errorf("unknown apitype: %s", apitype)
 	}
 	// unreachable
 }
 
-// ExecuteApiFromJson takes raw JSON (as a string of the form "{...}"") as an API and returns raw JSON
-func ExecuteApiFromJson(rawjson string) (string, error) {
+// ExecuteAPIFromJSON takes raw JSON (as a string of the form "{...}"") as an API and returns raw JSON
+func ExecuteAPIFromJSON(rawjson string) (string, error) {
 
 	defer func() {
 		if r := recover(); r != nil {
 			// Print stack trace in the error messages
 			stacktrace := string(debug.Stack())
 			// First to stdout, then to log file
-			fmt.Printf("PANIC: recover in ExecuteApiFromJson called, r=%+v stack=%v", r, stacktrace)
-			err := fmt.Errorf("PANIC: recover in ExecuteApiFromJson has been called")
+			fmt.Printf("PANIC: recover in ExecuteAPIFromJson called, r=%+v stack=%v", r, stacktrace)
+			err := fmt.Errorf("PANIC: recover in ExecuteAPIFromJson has been called")
 			LogError(err, "r", r, "stack", stacktrace)
 		}
 	}()
 
 	args, err := StringMap(rawjson)
 	if err != nil {
-		return "", fmt.Errorf("Router.ExecuteApiAsJson: bad format of JSON")
+		return "", fmt.Errorf("Router.ExecuteAPIAsJson: bad format of JSON")
 	}
 	api := ExtractAndRemoveValueOf("api", args)
 	if api == "" {
-		return "", fmt.Errorf("Router.ExecuteApiAsJson: no api value")
+		return "", fmt.Errorf("Router.ExecuteAPIAsJson: no api value")
 	}
-	return ExecuteApi(api, args)
+	return ExecuteAPI(api, args)
 }
 
-func ExecuteGlobalApi(api string, apiargs map[string]string) (result string, err error) {
+func ExecuteGlobalAPI(api string, apiargs map[string]string) (result string, err error) {
 
 	if api != "status" {
-		LogOfType("api", "ExecuteGlobalApi", "api", api, "apiargs", apiargs)
+		LogOfType("api", "ExecuteGlobalAPI", "api", api, "apiargs", apiargs)
 	}
 
 	switch api {
@@ -105,12 +105,12 @@ func ExecuteGlobalApi(api string, apiargs map[string]string) (result string, err
 		attractmode := strconv.FormatBool(TheAttractManager.AttractModeIsOn())
 		natsConnected := strconv.FormatBool(natsIsConnected)
 		if TheQuad == nil {
-			result = JsonObject(
+			result = JSONObject(
 				"uptime", uptime,
 				"attractmode", attractmode,
 			)
 		} else {
-			result = JsonObject(
+			result = JSONObject(
 				"uptime", uptime,
 				"attractmode", attractmode,
 				"natsconnected", natsConnected,
@@ -125,7 +125,7 @@ func ExecuteGlobalApi(api string, apiargs map[string]string) (result string, err
 	case "attract":
 		v, ok := apiargs["onoff"]
 		if !ok {
-			return "", fmt.Errorf("ExecuteGlobalApi: missing onoff parameter")
+			return "", fmt.Errorf("ExecuteGlobalAPI: missing onoff parameter")
 		}
 		TheAttractManager.SetAttractMode(IsTrueValue(v))
 		return "", nil
@@ -133,7 +133,7 @@ func ExecuteGlobalApi(api string, apiargs map[string]string) (result string, err
 	case "load":
 		fname, ok := apiargs["filename"]
 		if !ok {
-			return "", fmt.Errorf("ExecuteGlobalApi: missing filename parameter")
+			return "", fmt.Errorf("ExecuteGlobalAPI: missing filename parameter")
 		}
 		err := LoadGlobalParamsFrom(fname, true)
 		return "", err
@@ -141,7 +141,7 @@ func ExecuteGlobalApi(api string, apiargs map[string]string) (result string, err
 	case "getboot", "getbootwithprefix":
 		name, ok := apiargs["name"]
 		if !ok {
-			return "", fmt.Errorf("ExecuteGlobalApi: missing name parameter")
+			return "", fmt.Errorf("ExecuteGlobalAPI: missing name parameter")
 		}
 		params, err := LoadParamValuesOfCategory("global", "_Boot")
 		if err != nil {
@@ -209,7 +209,7 @@ func ExecuteGlobalApi(api string, apiargs map[string]string) (result string, err
 
 		name, ok := apiargs["name"]
 		if !ok {
-			return "", fmt.Errorf("ExecuteGlobalApi: missing name parameter")
+			return "", fmt.Errorf("ExecuteGlobalAPI: missing name parameter")
 		}
 		if api == "getwithprefix" {
 			return GlobalParams.GetWithPrefix(name)
@@ -238,14 +238,14 @@ func ExecuteGlobalApi(api string, apiargs map[string]string) (result string, err
 	case "startplayback":
 		fname, ok := apiargs["filename"]
 		if !ok {
-			return "", fmt.Errorf("ExecuteGlobalApi: missing filename parameter")
+			return "", fmt.Errorf("ExecuteGlobalAPI: missing filename parameter")
 		}
 		return "", TheEngine.StartPlayback(fname)
 
 	case "save":
 		filename, ok := apiargs["filename"]
 		if !ok {
-			return "", fmt.Errorf("ExecuteGlobalApi: missing filename parameter")
+			return "", fmt.Errorf("ExecuteGlobalAPI: missing filename parameter")
 		}
 		return "", GlobalParams.Save("global", filename)
 
@@ -361,8 +361,8 @@ func ExecuteGlobalApi(api string, apiargs map[string]string) (result string, err
 		return "", nil
 
 	default:
-		LogWarn("Router.ExecuteApi api is not recognized\n", "api", api)
-		err = fmt.Errorf("ExecuteEngineApi: unrecognized api=%s", api)
+		LogWarn("Router.ExecuteAPI api is not recognized\n", "api", api)
+		err = fmt.Errorf("ExecuteEngineAPI: unrecognized api=%s", api)
 		result = ""
 	}
 
@@ -503,7 +503,7 @@ func ApplyGlobalParam(name string, value string) (err error) {
 	case "global.erae":
 		b, _ := GetParamBool("global.erae")
 		if b {
-			TheErae.EraeApiModeEnable()
+			TheErae.EraeAPIModeEnable()
 			TheMidiIO.SetMidiInput("Erae 2")
 		}
 
@@ -573,7 +573,7 @@ func ApplyGlobalParam(name string, value string) (err error) {
 // 	return GlobalParams.SetParamWithString(name, value)
 // }
 
-func ExecuteSavedApi(api string, apiargs map[string]string) (result string, err error) {
+func ExecuteSavedAPI(api string, apiargs map[string]string) (result string, err error) {
 
 	switch api {
 
@@ -595,6 +595,6 @@ func ExecuteSavedApi(api string, apiargs map[string]string) (result string, err 
 		return ParamDefsAsJSON()
 	default:
 		LogWarn("api is not recognized\n", "api", api)
-		return "", fmt.Errorf("Router.ExecuteSavedApi unrecognized api=%s", api)
+		return "", fmt.Errorf("Router.ExecuteSavedAPI unrecognized api=%s", api)
 	}
 }

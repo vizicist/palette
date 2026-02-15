@@ -43,14 +43,12 @@ var globaclCurrentClickMutex sync.RWMutex
 var OneBeat Clicks
 var OneBeatMutex sync.RWMutex
 
-// CurrentMilli is the time from the start, in milliseconds
 const defaultClicksPerSecond = Clicks(192)
 const minClicksPerSecond = (defaultClicksPerSecond / 16)
 const maxClicksPerSecond = (defaultClicksPerSecond * 16)
 
 // var loopForever = 999999
 
-// Bits for Events
 const EventMidiInput = 0x01
 const EventNoteOutput = 0x02
 const EventCursor = 0x04

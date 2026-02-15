@@ -16,7 +16,7 @@ type Patch struct {
 	// listeners []*PluginInstance
 }
 
-// In a quad file, the parameter names are of the form:
+// PatchNameSeparator - In a quad file, the parameter names are of the form:
 // {patchName}-{parametername}.
 const PatchNameSeparator = "-"
 
@@ -218,7 +218,7 @@ func (patch *Patch) CursorToQuant(ce CursorEvent) Clicks {
 	return q
 }
 
-func (patch *Patch) Api(api string, apiargs map[string]string) (string, error) {
+func (patch *Patch) API(api string, apiargs map[string]string) (string, error) {
 
 	switch api {
 
@@ -264,7 +264,7 @@ func (patch *Patch) Api(api string, apiargs map[string]string) (string, error) {
 	case "set":
 		name, value, err := GetNameValue(apiargs)
 		if err != nil {
-			return "", fmt.Errorf("executePatchApi: err=%s", err)
+			return "", fmt.Errorf("executePatchAPI: err=%s", err)
 		}
 		err = patch.SetParam(name, value)
 		if err != nil {
@@ -288,7 +288,7 @@ func (patch *Patch) Api(api string, apiargs map[string]string) (string, error) {
 	case "get":
 		name, ok := apiargs["name"]
 		if !ok {
-			return "", fmt.Errorf("Patch.Api: missing name argument")
+			return "", fmt.Errorf("Patch.API: missing name argument")
 		}
 		return patch.Get(name), nil
 
@@ -318,7 +318,7 @@ func (patch *Patch) Api(api string, apiargs map[string]string) (string, error) {
 		if strings.HasPrefix(api, "loop_") || strings.HasPrefix(api, "midi_") {
 			return "", nil
 		}
-		err := fmt.Errorf("Patch.Api: unrecognized api=%s", api)
+		err := fmt.Errorf("Patch.API: unrecognized api=%s", api)
 		LogIfError(err)
 		return "", err
 	}
@@ -338,7 +338,7 @@ func (patch *Patch) SetParam(paramName string, paramValue string) error {
 	return patch.params.SetParamWithString(paramName, paramValue)
 }
 
-// If no such parameter, return ""
+// Get - If no such parameter, return ""
 func (patch *Patch) Get(paramName string) string {
 	s, err := patch.params.Get(paramName)
 	if err != nil {

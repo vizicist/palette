@@ -38,7 +38,7 @@ func (quad *Quad) Stop() {
 	quad.started = false
 }
 
-func (quad *Quad) Api(api string, apiargs map[string]string) (result string, err error) {
+func (quad *Quad) API(api string, apiargs map[string]string) (result string, err error) {
 
 	switch api {
 
@@ -46,7 +46,7 @@ func (quad *Quad) Api(api string, apiargs map[string]string) (result string, err
 		return quad.onGet(apiargs)
 
 	case "event":
-		return "", fmt.Errorf("event no longer handled in Quadpro.Api")
+		return "", fmt.Errorf("event no longer handled in Quadpro.API")
 
 	case "ANO":
 		for _, patch := range quad.patch {
@@ -104,14 +104,14 @@ func (quad *Quad) Api(api string, apiargs map[string]string) (result string, err
 			testtype = ""
 		}
 		interval := time.Duration(intervalf * 1000000000)
-		LogInfo("Quad.ExecuteApi test start", "ntimes", ntimes, "interval", interval)
+		LogInfo("Quad.ExecuteAPI test start", "ntimes", ntimes, "interval", interval)
 		quad.doTest(testtype, ntimes, interval)
-		LogInfo("Quad.ExecuteApi test end", "ntimes", ntimes, "interval", interval)
+		LogInfo("Quad.ExecuteAPI test end", "ntimes", ntimes, "interval", interval)
 		return "", nil
 
 	default:
-		LogWarn("Quad.ExecuteApi api is not recognized\n", "api", api)
-		return "", fmt.Errorf("Quad.Api unrecognized api=%s", api)
+		LogWarn("Quad.ExecuteAPI api is not recognized\n", "api", api)
+		return "", fmt.Errorf("Quad.API unrecognized api=%s", api)
 	}
 }
 
@@ -189,10 +189,10 @@ func (quad *Quad) onCursorEvent(state ActiveCursor) error {
 
 	if state.Button != "" {
 
-		mmtt_buttondepth := 0.1
+		mmttButtonDepth := 0.1
 		// To avoid false triggering, we only want to be triggered when the
 		// Z depth is small, i.e. when something has just entered the button area.
-		if state.Current.Ddu == "down" && state.Current.Pos.Z < mmtt_buttondepth {
+		if state.Current.Ddu == "down" && state.Current.Pos.Z < mmttButtonDepth {
 			val, ok := CursorSourceToQuadPreset[state.Button]
 			if !ok {
 				LogInfo("No Preset is attached to button", "button", state.Button)
