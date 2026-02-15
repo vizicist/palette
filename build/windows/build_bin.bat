@@ -69,6 +69,12 @@ go build palette_chat.go >> %buildcmdsout% 2>&1
 move palette_chat.exe %bin%\palette_chat.exe > nul
 popd
 
+echo ================ Compiling palette_hub
+pushd %PALETTE_SOURCE%\cmd\palette_hub
+go build palette_hub.go >> %buildcmdsout% 2>&1
+move palette_hub.exe %bin%\palette_hub.exe > nul
+popd
+
 rem print any error messages from compiling cmds
 type %buildcmdsout%
 
