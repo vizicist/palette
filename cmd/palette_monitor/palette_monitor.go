@@ -83,7 +83,7 @@ func scheduler() {
 }
 
 func checkEngine() {
-	tick := time.NewTicker(time.Second * 15)
+	tick := time.NewTicker(time.Second * 2)
 	for {
 		running, err := kit.IsRunningExecutable(kit.EngineExe)
 		if err == nil && !running {
