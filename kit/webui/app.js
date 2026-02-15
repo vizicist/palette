@@ -9,6 +9,10 @@ let showingParams = false; // Toggle between presets and parameters view
 let cachedParamDefs = null;
 let cachedParamEnums = null;
 
+// Attract mode state
+let attractModeActive = false;
+let attractAllowGui = false;
+
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
     // Check guidefaultlevel to determine initial mode
@@ -19,12 +23,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     } catch (e) { /* default to normal mode */ }
 
+    // Check if attract GUI display is allowed
+    try {
+        const val = await API.call('global.get', { name: 'global.attractallowgui' });
+        attractAllowGui = val === 'true' || val === true;
+    } catch (e) { /* default to false */ }
+
     await loadPresets();
     setupControls();
     setupHelpOverlay();
+    setupAttractOverlay();
     setupCategoryTabs();
     setupPatchSelector();
     setAdvancedMode(advancedMode);
+
+    // Start polling engine status every 2 seconds
+    setInterval(pollStatus, 2000);
 });
 
 async function loadPresets() {
@@ -497,10 +511,13 @@ function setupControls() {
             setAdvancedMode(false);
             return;
         }
+        // Restart the engine (monitor will relaunch it)
+        await silenceAll();
+        document.getElementById('restart-overlay').classList.remove('hidden');
         try {
-            await API.completeReset();
+            await API.call('global.done');
         } catch (e) {
-            alert('Reset failed: ' + e.message);
+            // Expected - engine exits so connection drops
         }
     });
 
@@ -520,21 +537,27 @@ function setupControls() {
 // Help overlay functionality
 function setupHelpOverlay() {
     // Listen for messages from the help iframe
-    window.addEventListener('message', (e) => {
+    window.addEventListener('message', async (e) => {
         if (e.data === 'closeHelp') {
             hideHelp();
+            await silenceAll();
         } else if (e.data === 'advancedMode') {
             hideHelp();
+            await silenceAll();
             setAdvancedMode(true);
         }
     });
 }
 
+let helpVisible = false;
+
 function showHelp() {
+    helpVisible = true;
     document.getElementById('help-overlay').classList.remove('hidden');
 }
 
 function hideHelp() {
+    helpVisible = false;
     document.getElementById('help-overlay').classList.add('hidden');
 }
 
@@ -622,6 +645,62 @@ function updatePatchButtons() {
         // Highlight only the selected single patch
         const btn = document.querySelector(`#patch-selector .patch-btn[data-patch="${currentPatch}"]`);
         if (btn) btn.classList.add('active');
+    }
+}
+
+// Attract mode overlay
+function setupAttractOverlay() {
+    const overlay = document.getElementById('attract-overlay');
+    overlay.addEventListener('click', exitAttractMode);
+    overlay.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        exitAttractMode();
+    }, { passive: false });
+}
+
+async function silenceAll() {
+    try {
+        for (const p of ['A', 'B', 'C', 'D']) {
+            API.setPatchParam(p, 'misc.looping_on', 'false');
+            API.call('patch.clear', { patch: p });
+        }
+        await API.call('quad.ANO');
+        await API.audioReset();
+    } catch (e) {
+        console.error('Failed to silence all:', e);
+    }
+}
+
+async function exitAttractMode() {
+    await API.call('global.attract', { onoff: 'false' }).catch(() => {});
+    await silenceAll();
+    hideAttract();
+}
+
+function showAttract() {
+    if (!attractModeActive) {
+        attractModeActive = true;
+        document.getElementById('attract-overlay').classList.remove('hidden');
+    }
+}
+
+function hideAttract() {
+    if (attractModeActive) {
+        attractModeActive = false;
+        document.getElementById('attract-overlay').classList.add('hidden');
+    }
+}
+
+async function pollStatus() {
+    try {
+        const status = await API.getStatus();
+        if (status && status.attractmode === 'true' && attractAllowGui && !helpVisible) {
+            showAttract();
+        } else {
+            hideAttract();
+        }
+    } catch (e) {
+        // Ignore polling errors
     }
 }
 
