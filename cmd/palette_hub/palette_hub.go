@@ -33,7 +33,7 @@ func main() {
 		kit.LogError(err)
 		os.Exit(1)
 	} else {
-		os.Stdout.WriteString(kit.HumanReadableApiOutput(apiout))
+		os.Stdout.WriteString(kit.HumanReadableAPIOutput(apiout))
 	}
 }
 
@@ -189,7 +189,7 @@ func HubCommand(args []string) (map[string]string, error) {
 				return map[string]string{"error": err.Error()}, nil
 			}
 
-			response, err := kit.EngineNatsApi(hostname, string(requestJSON), timeout)
+			response, err := kit.EngineNatsAPI(hostname, string(requestJSON), timeout)
 			if err != nil {
 				return map[string]string{"error": fmt.Sprintf("NATS request failed: %v", err)}, nil
 			}

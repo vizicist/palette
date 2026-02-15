@@ -55,7 +55,7 @@ func main() {
 		os.Stdout.WriteString("Error: " + err.Error() + "\n")
 		kit.LogError(err)
 	} else {
-		os.Stdout.WriteString(kit.HumanReadableApiOutput(apiout))
+		os.Stdout.WriteString(kit.HumanReadableAPIOutput(apiout))
 	}
 }
 
@@ -81,18 +81,18 @@ Options:
 	`
 }
 
-// EngineApi routes API calls to NATS or HTTP based on natsTarget
-func EngineApi(api string, args ...string) (map[string]string, error) {
+// EngineAPI routes API calls to NATS or HTTP based on natsTarget
+func EngineAPI(api string, args ...string) (map[string]string, error) {
 	if natsTarget != "" {
-		return NatsEngineApi(api, args...)
+		return NatsEngineAPI(api, args...)
 	}
-	return kit.LocalEngineApi(api, args...)
+	return kit.LocalEngineAPI(api, args...)
 }
 
-// NatsEngineApi sends an API request via NATS and returns the result
-func NatsEngineApi(api string, args ...string) (map[string]string, error) {
+// NatsEngineAPI sends an API request via NATS and returns the result
+func NatsEngineAPI(api string, args ...string) (map[string]string, error) {
 	if len(args)%2 != 0 {
-		return nil, fmt.Errorf("NatsEngineApi: odd number of args, should be even")
+		return nil, fmt.Errorf("NatsEngineAPI: odd number of args, should be even")
 	}
 
 	// Build JSON request
@@ -102,7 +102,7 @@ func NatsEngineApi(api string, args ...string) (map[string]string, error) {
 	}
 	apijson += "}"
 
-	result, err := kit.EngineNatsApi(natsTarget, apijson, 10*time.Second)
+	result, err := kit.EngineNatsAPI(natsTarget, apijson, 10*time.Second)
 	if err != nil {
 		return nil, err
 	}
@@ -110,7 +110,7 @@ func NatsEngineApi(api string, args ...string) (map[string]string, error) {
 	// Parse the JSON response
 	output, err := kit.StringMap(result)
 	if err != nil {
-		return nil, fmt.Errorf("NatsEngineApi: unable to parse response: %s", err)
+		return nil, fmt.Errorf("NatsEngineAPI: unable to parse response: %s", err)
 	}
 	if errstr, hasError := output["error"]; hasError {
 		return nil, fmt.Errorf("%s", errstr)
@@ -155,7 +155,7 @@ func CliCommand(args []string) (map[string]string, error) {
 		return out, nil
 
 	// case "api":
-	// 	return kit.EngineApi(arg1, args[2:])
+	// 	return kit.EngineAPI(arg1, args[2:])
 
 	case "osc":
 
@@ -203,16 +203,16 @@ func CliCommand(args []string) (map[string]string, error) {
 			return nil, fmt.Errorf("bad %s command, expected usage:\n%s", api, usage())
 		}
 		// Use the ...withprefix apis to get all matching parameters
-		return EngineApi("global."+api+"withprefix", "name", args[1])
+		return EngineAPI("global."+api+"withprefix", "name", args[1])
 
 	case "set", "setboot":
 		if len(args) != 3 {
 			return nil, fmt.Errorf("bad %s command, expected usage:\n%s", api, usage())
 		}
-		return EngineApi("global."+api, "name", args[1], "value", args[2])
+		return EngineAPI("global."+api, "name", args[1], "value", args[2])
 
 	case "setbootfromcurrent": // secret?
-		return EngineApi("global." + api)
+		return EngineAPI("global." + api)
 
 	case "env":
 		path := kit.EnvFilePath()
@@ -275,7 +275,7 @@ func CliCommand(args []string) (map[string]string, error) {
 			for _, process := range kit.ProcessList() {
 				if arg1 == process {
 					param := "global.process." + arg1
-					return EngineApi("global.set", "name", param, "value", "true")
+					return EngineAPI("global.set", "name", param, "value", "true")
 				}
 			}
 			return nil, fmt.Errorf("process %s is disabled or unknown", arg1)
@@ -304,7 +304,7 @@ func CliCommand(args []string) (map[string]string, error) {
 			// Individual processes are stopped by setting global.process.* to false.
 			// If the engine isn't running, this will fail.  Use stop all as last resort.
 			param := "global.process." + arg1
-			return EngineApi("global.set", "name", param, "value", "false")
+			return EngineAPI("global.set", "name", param, "value", "false")
 		}
 
 	case "version":
@@ -314,7 +314,7 @@ func CliCommand(args []string) (map[string]string, error) {
 	case "mmtt":
 		switch arg1 {
 		case "align":
-			return kit.MmttApi("align_start")
+			return kit.MmttAPI("align_start")
 		default:
 			return nil, fmt.Errorf("unknown mmtt command - %s", arg1)
 		}
@@ -338,11 +338,11 @@ func CliCommand(args []string) (map[string]string, error) {
 	case "test":
 		switch arg1 {
 		case "":
-			return EngineApi("quad.test", "ntimes", "40")
+			return EngineAPI("quad.test", "ntimes", "40")
 		case "long":
-			return EngineApi("quad.test", "ntimes", "400")
+			return EngineAPI("quad.test", "ntimes", "400")
 		case "center":
-			return EngineApi("quad.test", "ntimes", "1000", "testtype", "center")
+			return EngineAPI("quad.test", "ntimes", "1000", "testtype", "center")
 		default:
 			return nil, fmt.Errorf("unknown test type - %s", arg1)
 		}
@@ -375,7 +375,7 @@ func CliCommand(args []string) (map[string]string, error) {
 		} else if len(words) > 2 {
 			return nil, fmt.Errorf("invalid api format, expecting {plugin}.{api}\n%s", usage())
 		}
-		return EngineApi(api, args[1:]...)
+		return EngineAPI(api, args[1:]...)
 	}
 }
 

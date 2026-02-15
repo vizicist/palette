@@ -57,7 +57,7 @@ func NewSchedElement(atclick Clicks, tag string, value any) *SchedElement {
 	return se
 }
 
-// NOTE: a pointer is used so se.SetClick() can modify the value
+// SetClick - NOTE: a pointer is used so se.SetClick() can modify the value
 func (se *SchedElement) SetClick(click Clicks) {
 	se.AAtClick = click
 }
@@ -68,7 +68,7 @@ func (se SchedElement) GetClick() Clicks {
 
 func ScheduleAt(atClick Clicks, tag string, value any) {
 	ce, ok := value.(CursorEvent)
-	if ok && ce.Gid == 0 {
+	if ok && ce.GID == 0 {
 		LogWarn("ScheduleAt Gid is 0", "ce", ce)
 	}
 	se := NewSchedElement(atClick, tag, value)
@@ -181,7 +181,7 @@ func (sched *Scheduler) advanceClickTo(toClick Clicks) {
 	sched.lastClick = toClick
 }
 
-func (sched *Scheduler) DeleteCursorEventsWhoseGidIs(gid int) {
+func (sched *Scheduler) DeleteCursorEventsWhoseGIDIs(gid int) {
 
 	sched.mutex.Lock()
 	defer sched.mutex.Unlock()
@@ -191,7 +191,7 @@ func (sched *Scheduler) DeleteCursorEventsWhoseGidIs(gid int) {
 		nexti = i.Next()
 		se := i.Value.(*SchedElement)
 		ce, isce := se.Value.(CursorEvent)
-		if isce && ce.Gid == gid {
+		if isce && ce.GID == gid {
 			// LogInfo("DeleteEventsWhoseGidIs", "gid", gid, "i", i)
 			sched.schedList.Remove(i)
 			// keep going, there will be lots of them
@@ -239,7 +239,7 @@ func (sched *Scheduler) FilterEventsWithTag(tag string) {
 		}
 		ce, isce := se.Value.(CursorEvent)
 		if isce && ce.Ddu == "up" && rnd.Float32() < 0.5 {
-			TheCursorManager.DeleteActiveCursor(ce.Gid)
+			TheCursorManager.DeleteActiveCursor(ce.GID)
 		}
 		sched.schedList.Remove(i)
 	}
@@ -258,7 +258,7 @@ func (sched *Scheduler) DeleteEventsWithTag(tag string) {
 		}
 		ce, isce := se.Value.(CursorEvent)
 		if isce && ce.Ddu == "up" {
-			TheCursorManager.DeleteActiveCursor(ce.Gid)
+			TheCursorManager.DeleteActiveCursor(ce.GID)
 		}
 		sched.schedList.Remove(i)
 	}
@@ -356,7 +356,7 @@ func (sched *Scheduler) triggerItemsScheduledAtOrBefore(thisClick Clicks) {
 
 		case CursorEvent:
 			ce := v
-			if ce.Gid == 0 {
+			if ce.GID == 0 {
 				LogWarn("Hey, Gid of CursorEvent is 0?")
 			}
 			if v.Ddu != "clear" && v.Tag == "" {
@@ -443,7 +443,7 @@ func (sched *Scheduler) PendingToString() string {
 
 func (sched *Scheduler) Format(f fmt.State, c rune) {
 	s := sched.ToString()
-	_,_ = f.Write([]byte(s))  // XXX - can this ever fail?
+	_, _ = f.Write([]byte(s)) // XXX - can this ever fail?
 }
 
 func (sched *Scheduler) insertScheduleElement(se *SchedElement) {
@@ -455,7 +455,7 @@ func (sched *Scheduler) insertScheduleElement(se *SchedElement) {
 	case *NoteOn:
 	case *NoteOff:
 	case CursorEvent:
-		if v.Ddu != "clear" && v.Gid == 0 {
+		if v.Ddu != "clear" && v.GID == 0 {
 			LogWarn("insertScheduleElement CursorEvent Gid is empty", "v", v)
 		}
 	}

@@ -2,7 +2,6 @@ package kit
 
 import (
 	"bufio"
-	json "github.com/goccy/go-json"
 	"fmt"
 	"io"
 	"net/http"
@@ -14,6 +13,8 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+
+	json "github.com/goccy/go-json"
 
 	"github.com/hypebeast/go-osc/osc"
 )
@@ -88,26 +89,26 @@ func InitEngine() {
 	LogInfo("PaletteDataPath", "path", PaletteDataPath())
 
 	/*
-	// The _Boot.json file is now used to set the initial state of the system,
-	// so if you want to force looping off at startup, you can do it there.
-	LogInfo("Looping is being forced off")
-	err = GlobalParams.SetParamWithString("global.looping_override", "true")
-	LogIfError(err)
-	err = GlobalParams.SetParamWithString("global.looping_fade", "0.00")
-	LogIfError(err)
-	err = SaveCurrentGlobalParams()
-	LogIfError(err)
+		// The _Boot.json file is now used to set the initial state of the system,
+		// so if you want to force looping off at startup, you can do it there.
+		LogInfo("Looping is being forced off")
+		err = GlobalParams.SetParamWithString("global.looping_override", "true")
+		LogIfError(err)
+		err = GlobalParams.SetParamWithString("global.looping_fade", "0.00")
+		LogIfError(err)
+		err = SaveCurrentGlobalParams()
+		LogIfError(err)
 	*/
 }
 
-func LocalEngineApi(api string, args ...string) (map[string]string, error) {
-	return EngineHttpApi(LocalAddress, api, args...)
+func LocalEngineAPI(api string, args ...string) (map[string]string, error) {
+	return EngineHTTPAPI(LocalAddress, api, args...)
 }
 
-func EngineHttpApi(host string, api string, args ...string) (map[string]string, error) {
+func EngineHTTPAPI(host string, api string, args ...string) (map[string]string, error) {
 
 	if len(args)%2 != 0 {
-		return nil, fmt.Errorf("RemoteApi: odd nnumber of args, should be even")
+		return nil, fmt.Errorf("RemoteAPI: odd nnumber of args, should be even")
 	}
 	apijson := "\"api\": \"" + api + "\""
 	for n := range args {
@@ -115,11 +116,11 @@ func EngineHttpApi(host string, api string, args ...string) (map[string]string, 
 			apijson = apijson + ",\"" + args[n] + "\": \"" + args[n+1] + "\""
 		}
 	}
-	url := fmt.Sprintf("http://%s:%d/api", host, EngineHttpPort)
-	return HttpApiRaw(url, apijson)
+	url := fmt.Sprintf("http://%s:%d/api", host, EngineHTTPPort)
+	return HTTPAPIRaw(url, apijson)
 }
 
-func EngineNatsApi(host string, cmd string, timeout time.Duration) (result string, err error) {
+func EngineNatsAPI(host string, cmd string, timeout time.Duration) (result string, err error) {
 	if !natsIsConnected {
 		return "", fmt.Errorf("EngineNatsAPI: NATS is not connected")
 	}
@@ -224,13 +225,13 @@ func (e *Engine) Start() {
 
 	LogInfo("Engine.Start")
 
-	InitMidiIO()
+	InitMIDIIO()
 	InitSynths()
 
 	TheQuad.Start()
 
 	go e.StartOscListener(OscPort)
-	go e.StartHttp(EngineHttpPort)
+	go e.StartHTTP(EngineHTTPPort)
 
 	go TheScheduler.Start()
 	go TheRouter.Start()
@@ -308,8 +309,8 @@ func (e *Engine) StartOscListener(port int) {
 	}
 }
 
-// StartHttp xxx
-func (e *Engine) StartHttp(port int) {
+// StartHTTP xxx
+func (e *Engine) StartHTTP(port int) {
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -346,7 +347,7 @@ func (e *Engine) StartHttp(port int) {
 			} else {
 				bstr := string(body)
 				_ = bstr
-				resp, err := ExecuteApiFromJson(bstr)
+				resp, err := ExecuteAPIFromJSON(bstr)
 				if err != nil {
 					response = ErrorResponse(err)
 				} else {

@@ -12,7 +12,7 @@ func PublishCursorEvent(ce CursorEvent) {
 		return // silent
 	}
 	data := map[string]any{
-		"cid":       ce.Gid,
+		"cid":       ce.GID,
 		"ddu":       ce.Ddu,
 		"millisecs": time.Since(time0).Milliseconds(),
 		"x":         ce.Pos.X,
@@ -36,10 +36,10 @@ func PublishMIDIDeviceEvent(me MidiEvent) {
 	// and use our own, so the timestamps are consistent with
 	// the ones on Cursor events
 	data := map[string]any{
-		"host": Hostname(),
-		"event": "midi",
+		"host":      Hostname(),
+		"event":     "midi",
 		"millisecs": time.Since(time0).Milliseconds(),
-		"bytes": me.Msg.Bytes(),
+		"bytes":     me.Msg.Bytes(),
 	}
 
 	NatsPublishFromEngine("event.midi", data)
@@ -52,9 +52,9 @@ func PublishSpriteEvent(x, y, z float32) {
 	}
 	data := map[string]any{
 		"host": Hostname(),
-		"x": x,
-		"y": y,
-		"z": z,
+		"x":    x,
+		"y":    y,
+		"z":    z,
 	}
 	NatsPublishFromEngine("event.sprite", data)
 }

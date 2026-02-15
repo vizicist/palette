@@ -59,6 +59,7 @@ func CheckAutorestartProcesses() {
 }
 
 // These should come from the process list
+
 var MonitorExe = "palette_monitor.exe"
 var EngineExe = "palette_engine.exe"
 var GuiExe = "chrome.exe"
@@ -66,7 +67,6 @@ var ChatExe = "palette_chat.exe"
 var BiduleExe = "bidule.exe"
 var ResolumeExe = "avenue.exe"
 
-// var KeykitExe = "key.exe"
 var MmttExe = "mmtt_kinect.exe"
 var ObsExe = "obs64.exe"
 

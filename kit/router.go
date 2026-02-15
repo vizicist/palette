@@ -250,7 +250,7 @@ func (r *Router) handleOscInput(e OscEvent) {
 		*/
 
 	case "/api":
-		err := r.oscHandleApi(e.Msg)
+		err := r.oscHandleAPI(e.Msg)
 		LogIfError(err)
 
 	default:
@@ -381,8 +381,8 @@ func (r *Router) oscHandleCursor(msg *osc.Message) {
 	TheCursorManager.ExecuteCursorEvent(ce)
 }
 
-// handleApiMsg
-func (r *Router) oscHandleApi(msg *osc.Message) error {
+// handleAPIMsg
+func (r *Router) oscHandleAPI(msg *osc.Message) error {
 	apijson, err := argAsString(msg, 0)
 	if err != nil {
 		return err
@@ -392,8 +392,8 @@ func (r *Router) oscHandleApi(msg *osc.Message) error {
 	if err != nil {
 		return fmt.Errorf("unable to Unmarshal apijson=%s", apijson)
 	}
-	LogInfo("Router.handleApiMsg", "apijson", apijson)
-	LogInfo("Router.handleApiMsg", "j", j)
+	LogInfo("Router.handleAPIMsg", "apijson", apijson)
+	LogInfo("Router.handleAPIMsg", "j", j)
 	// r.cursorManager.HandleCursorEvent(ce)
 	return nil
 }

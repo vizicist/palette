@@ -51,7 +51,7 @@ func (ce CursorEvent) IsAttractGenerated() bool {
 	return strings.Contains(ce.Tag, "attract")
 }
 
-// XXX - can this make use of generics?  (across all the Event types)
+// Marshal - XXX - can this make use of generics?  (across all the Event types)
 func (ce CursorEvent) Marshal() (bytes []byte, err error) {
 	bytes, err = json.Marshal(ce)
 	return
@@ -77,13 +77,13 @@ func (me MidiEvent) Pitch() uint8 {
 	return 0
 }
 
-func (e MidiEvent) Marshal() (bytes []byte, err error) {
-	bytes, err = json.Marshal(e)
+func (me MidiEvent) Marshal() (bytes []byte, err error) {
+	bytes, err = json.Marshal(me)
 	return
 }
 
-func (e MidiEvent) String() string {
-	bytes, err := json.Marshal(e)
+func (me MidiEvent) String() string {
+	bytes, err := json.Marshal(me)
 	if err != nil {
 		return "{\"error\":\"Unable to Marshal CursorEvent\"}"
 	}

@@ -62,7 +62,7 @@ func NatsConnectToHubAndSubscribe() {
 	natsConn = nc
 
 	subscribeTo := fmt.Sprintf("to_palette.%s.>", Hostname())
-	err = NatsSubscribe(subscribeTo, natsEngineApiHandler)
+	err = NatsSubscribe(subscribeTo, natsEngineAPIHandler)
 	if err != nil {
 		LogError(err)
 	} else {
@@ -204,10 +204,10 @@ func NatsStreams() ([]string, error) {
 	return s, nil
 }
 
-func natsEngineApiHandler(msg *nats.Msg) {
+func natsEngineAPIHandler(msg *nats.Msg) {
 	data := string(msg.Data)
 	LogInfo("NatsHandler", "subject", msg.Subject, "data", data)
-	result, err := ExecuteApiFromJson(data)
+	result, err := ExecuteAPIFromJSON(data)
 	var response string
 	if err != nil {
 		LogError(fmt.Errorf("natsRequestHandler unable to interpret"), "data", data)
@@ -221,7 +221,7 @@ func natsEngineApiHandler(msg *nats.Msg) {
 	LogIfError(err)
 }
 
-// Request is used for APIs - it blocks waiting for a response and returns the response
+// NatsRequest is used for APIs - it blocks waiting for a response and returns the response
 func NatsRequest(subj, data string, timeout time.Duration) (retdata string, err error) {
 	if !natsIsConnected {
 		return "", fmt.Errorf("NatsRequest: called when NATS is not Connected")
@@ -241,7 +241,7 @@ func NatsRequest(subj, data string, timeout time.Duration) (retdata string, err 
 	return string(msg.Data), nil
 }
 
-// Publish xxx
+// NatsPublish xxx
 func NatsPublish(subj string, data map[string]any) error {
 
 	nc := natsConn
