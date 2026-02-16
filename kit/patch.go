@@ -264,7 +264,7 @@ func (patch *Patch) API(api string, apiargs map[string]string) (string, error) {
 	case "set":
 		name, value, err := GetNameValue(apiargs)
 		if err != nil {
-			return "", fmt.Errorf("executePatchAPI: err=%s", err)
+			return "", fmt.Errorf("executePatchAPI: err=%w", err)
 		}
 		err = patch.SetParam(name, value)
 		if err != nil {

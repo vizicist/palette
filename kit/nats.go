@@ -55,7 +55,7 @@ func NatsConnectToHubAndSubscribe() {
 	nc, err := nats.Connect(url, opts...)
 	if err != nil {
 		natsIsConnected = false
-		LogError(fmt.Errorf("nats.Connect to hub failed, url=%s err=%s", maskURLPassword(url), err))
+		LogError(fmt.Errorf("nats.Connect to hub failed, url=%s err=%w", maskURLPassword(url), err))
 		return
 	}
 	natsIsConnected = true
@@ -96,7 +96,7 @@ func NatsConnectRemote() error {
 	nc, err := nats.Connect(url, opts...)
 	if err != nil {
 		natsIsConnected = false
-		return fmt.Errorf("nats.Connect failed, url=%s err=%s", url, err)
+		return fmt.Errorf("nats.Connect failed, url=%s err=%w", url, err)
 	}
 	natsIsConnected = true
 	natsConn = nc
@@ -236,7 +236,7 @@ func NatsRequest(subj, data string, timeout time.Duration) (retdata string, err 
 	if err == nats.ErrTimeout {
 		return "", fmt.Errorf("timeout, nothing is subscribed to subj=%s", subj)
 	} else if err != nil {
-		return "", fmt.Errorf("error: subj=%s err=%s", subj, err)
+		return "", fmt.Errorf("error: subj=%s err=%w", subj, err)
 	}
 	return string(msg.Data), nil
 }
@@ -292,7 +292,7 @@ func NatsClose() {
 	}
 	natsConn.Close()
 	natsIsConnected = false
-	LogError(fmt.Errorf("NatsClose called"))
+	LogInfo("NatsClose called")
 }
 
 func setupConnOptions(opts []nats.Option) []nats.Option {
@@ -336,18 +336,6 @@ func NatsDisconnect() {
 	natsConn.Close()
 	natsIsConnected = false
 }
-
-/*
-func printVersion() {
-	LogInfo("PrintVersion")
-}
-func printUsage() {
-	LogInfo("PrintUsage")
-}
-func printTLSHelp() {
-	LogInfo("PrintTLSHelp")
-}
-*/
 
 func NatsEnvValue(key string) (string, error) {
 	path := EnvFilePath()
