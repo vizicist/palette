@@ -311,11 +311,11 @@ func (sched *Scheduler) triggerItemsScheduledAtOrBefore(thisClick Clicks) {
 		*/
 
 		case *NoteOn:
-			LogOfType("scheduler", "triggerItemsScheduleAt: NoteOn", "note", v.String())
+			LogOfType("scheduler", "triggerItemsScheduledAtOrBefore: NoteOn", "note", v.String())
 			v.Synth.SendNoteToMidiOutput(v)
 
 		case *NoteOff:
-			LogOfType("scheduler", "triggerItemsScheduleAt: NoteOff", "note", v.String())
+			LogOfType("scheduler", "triggerItemsScheduledAtOrBefore: NoteOff", "note", v.String())
 			v.Synth.SendNoteToMidiOutput(v)
 
 		case midi.Message:
@@ -329,7 +329,7 @@ func (sched *Scheduler) triggerItemsScheduledAtOrBefore(thisClick Clicks) {
 
 			switch {
 			case v.GetSysEx(&bt):
-				LogWarn("triggerItemsScheduleAtOrBefore: should handle sysex?", "msg", v)
+				LogWarn("triggerItemsScheduledAtOrBefore: should handle sysex?", "msg", v)
 
 			case v.Is(midi.NoteOnMsg):
 				// Need to maintain noteDownCount, don't use SendBytesToMidiOutput
@@ -370,7 +370,7 @@ func (sched *Scheduler) triggerItemsScheduledAtOrBefore(thisClick Clicks) {
 
 		default:
 			t := fmt.Sprintf("%T", v)
-			LogError(fmt.Errorf("triggerItemsScheduleAt: unhandled Value"), "type", t)
+			LogError(fmt.Errorf("triggerItemsScheduledAtOrBefore: unhandled Value"), "type", t)
 		}
 
 		// This is where

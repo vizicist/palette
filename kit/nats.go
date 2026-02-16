@@ -78,7 +78,7 @@ func NatsConnectRemote() error {
 
 	if natsIsConnected {
 		// Already connected
-		return fmt.Errorf("NatsInit: Already connected")
+		return fmt.Errorf("NatsConnectRemote: Already connected")
 	}
 
 	url, err := NatsEnvValue("NATS_HUB_CLIENT_URL")
@@ -114,7 +114,7 @@ func NatsDump(streamName string, f func(tm time.Time, subj string, data string))
 func NatsDumpTimeRange(streamName string, startTime *time.Time, endTime *time.Time, f func(tm time.Time, subj string, data string)) error {
 
 	if !natsIsConnected {
-		return fmt.Errorf("NatsSummary: not Connected")
+		return fmt.Errorf("NatsDumpTimeRange: not Connected")
 	}
 
 	// Create a JetStream management context
@@ -186,7 +186,7 @@ func NatsDumpTimeRange(streamName string, startTime *time.Time, endTime *time.Ti
 func NatsStreams() ([]string, error) {
 
 	if !natsIsConnected {
-		return nil, fmt.Errorf("NatsSummary: not Connected")
+		return nil, fmt.Errorf("NatsStreams: not Connected")
 	}
 
 	// Create a JetStream management context
@@ -206,11 +206,11 @@ func NatsStreams() ([]string, error) {
 
 func natsEngineAPIHandler(msg *nats.Msg) {
 	data := string(msg.Data)
-	LogInfo("NatsHandler", "subject", msg.Subject, "data", data)
+	LogInfo("natsEngineAPIHandler", "subject", msg.Subject, "data", data)
 	result, err := ExecuteAPIFromJSON(data)
 	var response string
 	if err != nil {
-		LogError(fmt.Errorf("natsRequestHandler unable to interpret"), "data", data)
+		LogError(fmt.Errorf("natsEngineAPIHandler unable to interpret"), "data", data)
 		response = ErrorResponse(err)
 	} else {
 		response = ResultResponse(result)
@@ -229,7 +229,7 @@ func NatsRequest(subj, data string, timeout time.Duration) (retdata string, err 
 
 	LogOfType("nats", "NatsRequest", "subject", subj, "data", data)
 	if natsConn == nil {
-		return "", fmt.Errorf("Viznats.Request: no NATS connection")
+		return "", fmt.Errorf("NatsRequest: no NATS connection")
 	}
 	bytes := []byte(data)
 	msg, err := natsConn.Request(subj, bytes, timeout)
@@ -292,7 +292,7 @@ func NatsClose() {
 	}
 	natsConn.Close()
 	natsIsConnected = false
-	LogError(fmt.Errorf("NatsCLose called"))
+	LogError(fmt.Errorf("NatsClose called"))
 }
 
 func setupConnOptions(opts []nats.Option) []nats.Option {
