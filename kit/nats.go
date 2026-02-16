@@ -120,7 +120,7 @@ func NatsDumpTimeRange(streamName string, startTime *time.Time, endTime *time.Ti
 	// Create a JetStream management context
 	js, err := natsConn.JetStream()
 	if err != nil {
-		LogError(fmt.Errorf("error creating JetStream management context: %v", err))
+		return fmt.Errorf("error creating JetStream management context: %w", err)
 	}
 
 	// Get stream info to validate the stream exists

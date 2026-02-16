@@ -451,7 +451,7 @@ func ziplogs(logsdir string, zipfile string) error {
 		defer file.Close()
 
 		// Transform path into a zip-root relative path.
-		lastslash := strings.LastIndex(path, "logs\\")
+		lastslash := strings.LastIndex(path, "logs"+string(filepath.Separator))
 		relativePath := path
 		if lastslash >= 0 {
 			relativePath = relativePath[lastslash+5:]
