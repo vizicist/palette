@@ -524,11 +524,11 @@ func HTTPAPIRaw(url string, args string) (map[string]string, error) {
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("RemoteAPIRaw: ReadAll err=%s", err)
+		return nil, fmt.Errorf("RemoteAPIRaw: ReadAll err=%w", err)
 	}
 	output, err := StringMap(string(body))
 	if err != nil {
-		return nil, fmt.Errorf("RemoteAPIRaw: unable to interpret output, err=%s", err)
+		return nil, fmt.Errorf("RemoteAPIRaw: unable to interpret output, err=%w", err)
 	}
 	errstr, haserror := output["error"]
 	if haserror && !strings.Contains(errstr, "exit status") {
@@ -597,11 +597,10 @@ func ArchiveLogs() error {
 
 	err = ziplogs(logsdir, zippath)
 	if err != nil {
-		return fmt.Errorf("archivelogs: err=%s", err)
-	} else {
-		// If archiving is successful, clear the logs
-		return ClearLogs()
+		return fmt.Errorf("archivelogs: err=%w", err)
 	}
+	// If archiving is successful, clear the logs
+	return ClearLogs()
 }
 
 var myHostname string

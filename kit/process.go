@@ -291,7 +291,7 @@ func (pm *ProcessManager) StartRunning(process string) error {
 
 	pid, err := StartExecutableLogOutput(process, pi.FullPath, pi.Arg)
 	if err != nil {
-		return fmt.Errorf("StartRunning: process=%s err=%s", process, err)
+		return fmt.Errorf("StartRunning: process=%s err=%w", process, err)
 	}
 	pm.runningPids[process] = pid
 	pm.wasStarted[process].Store(true)

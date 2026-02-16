@@ -37,7 +37,7 @@ func LoadMorphs() error {
 	var f any
 	err = json.Unmarshal(bytes, &f)
 	if err != nil {
-		return fmt.Errorf("unable to Unmarshal %s, err=%s", path, err)
+		return fmt.Errorf("unable to Unmarshal %s, err=%w", path, err)
 	}
 	toplevel := f.(map[string]any)
 

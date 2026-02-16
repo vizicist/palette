@@ -371,7 +371,7 @@ func LoadParamsMapFromPath(path string) (ParamsMap, error) {
 	}
 	pmap, err := MakeParamsMapFromBytes(bytes)
 	if err != nil {
-		return nil, fmt.Errorf("unable to load params from path=%s err=%s", path, err)
+		return nil, fmt.Errorf("unable to load params from path=%s err=%w", path, err)
 	}
 	return pmap, nil
 }
@@ -380,7 +380,7 @@ func MakeParamsMapFromBytes(bytes []byte) (ParamsMap, error) {
 	var toplevel map[string]any
 	err := json.Unmarshal(bytes, &toplevel)
 	if err != nil {
-		return nil, fmt.Errorf("unable to Unmarshal bytes, err=%s", err)
+		return nil, fmt.Errorf("unable to Unmarshal bytes, err=%w", err)
 	}
 	params, okparams := toplevel["params"]
 	if !okparams {
@@ -537,12 +537,12 @@ func LoadParamDefs() error {
 	path := ConfigFilePath("paramdefs.json")
 	bytes, err := os.ReadFile(path)
 	if err != nil {
-		return fmt.Errorf("unable to read %s, err=%s", path, err)
+		return fmt.Errorf("unable to read %s, err=%w", path, err)
 	}
 	var params map[string]any
 	err = json.Unmarshal(bytes, &params)
 	if err != nil {
-		return fmt.Errorf("unable to Unmarshal %s, err=%s", path, err)
+		return fmt.Errorf("unable to Unmarshal %s, err=%w", path, err)
 	}
 	for name, dat := range params {
 		w := strings.SplitN(name, ".", 2)

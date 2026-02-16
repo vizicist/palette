@@ -108,24 +108,27 @@ func LocalEngineAPI(api string, args ...string) (map[string]string, error) {
 func EngineHTTPAPI(host string, api string, args ...string) (map[string]string, error) {
 
 	if len(args)%2 != 0 {
-		return nil, fmt.Errorf("RemoteAPI: odd nnumber of args, should be even")
+		return nil, fmt.Errorf("RemoteAPI: odd number of args, should be even")
 	}
-	apijson := "\"api\": \"" + api + "\""
-	for n := range args {
-		if n%2 == 0 {
-			apijson = apijson + ",\"" + args[n] + "\": \"" + args[n+1] + "\""
-		}
+
+	// Build request map
+	request := map[string]string{"api": api}
+	for i := 0; i < len(args); i += 2 {
+		request[args[i]] = args[i+1]
 	}
+
+	jsonBytes, err := json.Marshal(request)
+	if err != nil {
+		return nil, fmt.Errorf("EngineHTTPAPI: failed to marshal request: %w", err)
+	}
+
 	url := fmt.Sprintf("http://%s:%d/api", host, EngineHTTPPort)
-	return HTTPAPIRaw(url, apijson)
+	return HTTPAPIRaw(url, string(jsonBytes))
 }
 
 func EngineNatsAPI(host string, cmd string, timeout time.Duration) (result string, err error) {
 	if !natsIsConnected {
 		return "", fmt.Errorf("EngineNatsAPI: NATS is not connected")
-	}
-	if natsConn == nil {
-		return "", fmt.Errorf("EngineNatsAPI: NatsConn is nil?")
 	}
 	subject := fmt.Sprintf("to_palette.%s.api", host)
 	retdata, err := NatsRequest(subject, cmd, timeout)
@@ -591,25 +594,3 @@ func (e *Engine) advanceTransposeTo(newclick Clicks) {
 	LogOfType("transpose", "TransposeTo", "index", e.autoTransposeIndex, "transpose", transpose, "newclick", newclick)
 	// TheScheduler.SendAllPendingNoteoffs()
 }
-
-/*
-	XXX - pitchOffset should be done elsewhere
-	pitchOffset := TheMidiIO.engineTranspose
-
-	// Hardcoded, channel 10 is usually drums, doesn't get transposed
-	// Should probably be an attribute of the Synth.
-	const drumChannel = 10
-	if TheMidiIO.autoTransposeOn && synth.portchannel.channel != drumChannel {
-		pitchOffset += TheMidiIO.autoTransposeValues[TheMidiIO.autoTransposeIndex]
-	}
-	newpitch := int(pitch) + pitchOffset
-	if newpitch < 0 {
-		newpitch = 0
-	} else if newpitch > 127 {
-		newpitch = 127
-	}
-	if newpitch != int(pitch) {
-		LogOfType("midi", "SendNoteToMidiOutput adjusting pitch", "newpitch", newpitch, "oldpitch", pitch)
-	}
-	pitch = uint8(newpitch)
-*/

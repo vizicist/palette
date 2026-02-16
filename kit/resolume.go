@@ -46,7 +46,7 @@ func (r *Resolume) loadResolumeJSON() error {
 	path := ConfigFilePath("resolume.json")
 	bytes, err := os.ReadFile(path)
 	if err != nil {
-		return fmt.Errorf("unable to read resolume.json, err=%s", err)
+		return fmt.Errorf("unable to read resolume.json, err=%w", err)
 	}
 	var j map[string]any
 	err = json.Unmarshal(bytes, &j)

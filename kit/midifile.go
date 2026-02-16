@@ -49,7 +49,7 @@ func NewMIDIFile(path string) (*MIDIFile, error) {
 	}
 	err := m.Parse()
 	if err != nil {
-		return nil, fmt.Errorf("error in MIDIFile.Phrase: %s", err)
+		return nil, fmt.Errorf("error in MIDIFile.Phrase: %w", err)
 	}
 	return m, nil
 }
@@ -72,7 +72,7 @@ func (m *MIDIFile) Parse() error {
 	}
 	dat, err := os.ReadFile(m.path)
 	if err != nil {
-		return fmt.Errorf("unable to read midifile: path=%s err=%s", m.path, err)
+		return fmt.Errorf("unable to read midifile: path=%s err=%w", m.path, err)
 	}
 	m.dat = dat
 	m.sofar = 0
@@ -86,7 +86,7 @@ func (m *MIDIFile) Parse() error {
 			// Normal EOF
 			break
 		} else if err != nil {
-			return fmt.Errorf("error while reading track: %s", err)
+			return fmt.Errorf("error while reading track: %w", err)
 		}
 	}
 	if len(m.tracks) != m.ntracks {
