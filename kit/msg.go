@@ -7,7 +7,7 @@ import (
 	"strconv"
 )
 
-var PointZero image.Point = image.Point{0, 0}
+var pointZero image.Point = image.Point{0, 0}
 
 type Cmd struct {
 	Subj   string
@@ -103,8 +103,8 @@ func (cmd Cmd) ValuesXY1(dflt image.Point) image.Point {
 }
 
 func (cmd Cmd) ValuesRect(dflt image.Rectangle) image.Rectangle {
-	xy0 := cmd.ValuesXY("xy0", PointZero)
-	xy1 := cmd.ValuesXY("xy1", PointZero)
+	xy0 := cmd.ValuesXY("xy0", pointZero)
+	xy1 := cmd.ValuesXY("xy1", pointZero)
 	return image.Rectangle{Min: xy0, Max: xy1}
 }
 

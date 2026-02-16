@@ -13,7 +13,7 @@ import (
 	midi "gitlab.com/gomidi/midi/v2"
 )
 
-var TheRouter *Router
+var theRouter *Router
 
 // Router takes events and routes them
 type Router struct {
@@ -38,7 +38,7 @@ func NewRouter() *Router {
 
 	r := Router{}
 
-	r.guiClient = osc.NewClient(LocalAddress, GuiPort)
+	r.guiClient = osc.NewClient(LocalAddress, guiPort)
 	r.oscInputChan = make(chan OscEvent)
 	r.midiInputChan = make(chan MidiEvent)
 
@@ -82,10 +82,10 @@ func (r *Router) InputListenOnce() {
 	select {
 	case msg := <-r.oscInputChan:
 		r.handleOscInput(msg)
-		TheEngine.RecordOscEvent(&msg)
+		theEngine.RecordOscEvent(&msg)
 	case event := <-r.midiInputChan:
 		r.HandleMidiEvent(event)
-		TheEngine.RecordMidiEvent(&event)
+		theEngine.RecordMidiEvent(&event)
 	case event := <-r.cursorInput:
 		ScheduleAt(CurrentClick(), event.Tag, event)
 	default:
@@ -103,7 +103,7 @@ func (r *Router) ScheduleCursorEvent(ce CursorEvent) {
 }
 
 func (r *Router) HandleMidiEvent(me MidiEvent) {
-	TheEngine.sendToOscClients(MidiToOscMsg(me))
+	theEngine.sendToOscClients(MidiToOscMsg(me))
 
 	if r.midithru {
 		LogOfType("midi", "PassThruMIDI", "msg", me.Msg)
@@ -116,11 +116,11 @@ func (r *Router) HandleMidiEvent(me MidiEvent) {
 		r.handleMIDISetScaleNote(me)
 	}
 
-	err := TheQuad.onMidiEvent(me)
+	err := theQuad.onMidiEvent(me)
 	LogIfError(err)
 
-	if TheErae.apienabled {
-		TheErae.onMidiEvent(me)
+	if theErae.apienabled {
+		theErae.onMidiEvent(me)
 	}
 }
 
@@ -266,7 +266,7 @@ func (r *Router) notifyGUI(eventName string) {
 	}
 	msg := osc.NewMessage("/notify")
 	msg.Append(eventName)
-	TheEngine.SendOsc(r.guiClient, msg)
+	theEngine.SendOsc(r.guiClient, msg)
 }
 
 /*
@@ -297,7 +297,7 @@ func (r *Router) oscHandleClientRestart(msg *osc.Message) error {
 	if err != nil {
 		return err
 	}
-	TheQuad.onClientRestart(ffglportnum)
+	theQuad.onClientRestart(ffglportnum)
 	return nil
 }
 
@@ -376,9 +376,9 @@ func (r *Router) oscHandleCursor(msg *osc.Message) {
 
 	if ce.Ddu != "up" && ce.Pos.Z < 0.0001 {
 		LogWarn("Hmmmmmmmm, OSC down/drag cursor event has zero Z?", "ce", ce)
-		ce.Pos.Z = TheCursorManager.LoopThreshold
+		ce.Pos.Z = theCursorManager.LoopThreshold
 	}
-	TheCursorManager.ExecuteCursorEvent(ce)
+	theCursorManager.ExecuteCursorEvent(ce)
 }
 
 // handleAPIMsg

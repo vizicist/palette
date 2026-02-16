@@ -32,7 +32,7 @@ type AttractManager struct {
 	IdleSecs             float64
 }
 
-var TheAttractManager *AttractManager
+var theAttractManager *AttractManager
 
 func NewAttractManager() *AttractManager {
 
@@ -126,13 +126,13 @@ func (am *AttractManager) setAttractMode(onoff bool) {
 		"onoff": onoff,
 	})
 
-	if TheQuad != nil {
+	if theQuad != nil {
 		for _, patch := range Patchs {
 			patch.clearGraphics()
 			patch.loopClear()
 		}
 		if !onoff {
-			for _, patch := range TheQuad.patch {
+			for _, patch := range theQuad.patch {
 				patch.Synth().SendANO()
 			}
 		}
@@ -198,15 +198,15 @@ func (am *AttractManager) doAttractAction() {
 		numsteps := int(am.GestureNumSteps)
 		dur := time.Duration(am.GestureDuration * float64(time.Second))
 
-		go TheCursorManager.GenerateRandomGesture(tag, numsteps, dur)
+		go theCursorManager.GenerateRandomGesture(tag, numsteps, dur)
 	}
 
 	dp := now.Sub(am.lastAttractPresetChange).Seconds()
 	if dp > am.PresetChangeInterval {
-		if TheQuad == nil {
+		if theQuad == nil {
 			LogWarn("No Quad to change for attract mode")
 		} else {
-			_, err := TheQuad.loadQuadRand("quad")
+			_, err := theQuad.loadQuadRand("quad")
 			LogIfError(err)
 		}
 		am.lastAttractPresetChange = now

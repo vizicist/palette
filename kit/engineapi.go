@@ -36,8 +36,8 @@ func ExecuteAPI(api string, apiargs map[string]string) (result string, err error
 	case "saved":
 		return ExecuteSavedAPI(apisuffix, apiargs)
 	case "quad":
-		if TheQuad != nil {
-			return TheQuad.API(apisuffix, apiargs)
+		if theQuad != nil {
+			return theQuad.API(apisuffix, apiargs)
 		}
 		return "", fmt.Errorf("no quad")
 	case "patch":
@@ -81,292 +81,339 @@ func ExecuteAPIFromJSON(rawjson string) (string, error) {
 	return ExecuteAPI(api, args)
 }
 
-func ExecuteGlobalAPI(api string, apiargs map[string]string) (result string, err error) {
+type globalAPIHandler func(api string, apiargs map[string]string) (string, error)
 
+var globalAPIHandlers = map[string]globalAPIHandler{
+	"debugnil":           globalDebugNil,
+	"debugsched":         globalDebugSched,
+	"debugpending":       globalDebugPending,
+	"status":             globalStatus,
+	"attract":            globalAttract,
+	"load":               globalLoad,
+	"getboot":            globalGetBoot,
+	"getbootwithprefix":  globalGetBoot,
+	"setboot":            globalSetBoot,
+	"setbootfromcurrent": globalSetBootFromCurrent,
+	"set":                globalSet,
+	"setparams":          globalSetParams,
+	"get":                globalGet,
+	"getwithprefix":      globalGet,
+	"showclip":           globalShowClip,
+	"startrecording":     globalStartRecording,
+	"stoprecording":      globalStopRecording,
+	"startplayback":      globalStartPlayback,
+	"save":               globalSave,
+	"done":               globalDone,
+	"audio_reset":        globalAudioReset,
+	"sendlogs":           globalSendLogs,
+	"log":                globalLog,
+	"midi_midifile":      globalRemoved,
+	"echo":               globalEcho,
+	"debug":              globalRemoved,
+	"set_tempo_factor":   globalSetTempoFactor,
+	"playcursor":         globalPlayCursor,
+}
+
+func ExecuteGlobalAPI(api string, apiargs map[string]string) (string, error) {
 	if api != "status" {
 		LogOfType("api", "ExecuteGlobalAPI", "api", api, "apiargs", apiargs)
 	}
+	handler, ok := globalAPIHandlers[api]
+	if !ok {
+		LogWarn("ExecuteGlobalAPI api is not recognized\n", "api", api)
+		return "", fmt.Errorf("ExecuteGlobalAPI: unrecognized api=%s", api)
+	}
+	return handler(api, apiargs)
+}
 
-	switch api {
+func globalDebugNil(api string, apiargs map[string]string) (string, error) {
+	// Generate a nil pointer panic
+	var a *Engine
+	a.SayDone()
+	return "", nil // unreachable
+}
 
-	case "debugnil":
-		// Generate a nil pointer panic
-		var a *Engine
-		a.SayDone()
+func globalDebugSched(api string, apiargs map[string]string) (string, error) {
+	return theScheduler.ToString(), nil
+}
 
-	case "debugsched":
-		return TheScheduler.ToString(), nil
+func globalDebugPending(api string, apiargs map[string]string) (string, error) {
+	return theScheduler.PendingToString(), nil
+}
 
-	case "debugpending":
-		return TheScheduler.PendingToString(), nil
+func globalStatus(api string, apiargs map[string]string) (string, error) {
+	uptime := fmt.Sprintf("%f", Uptime())
+	attractmode := strconv.FormatBool(theAttractManager.AttractModeIsOn())
+	natsConnected := strconv.FormatBool(natsIsConnected)
+	if theQuad == nil {
+		return JSONObject(
+			"uptime", uptime,
+			"attractmode", attractmode,
+		), nil
+	}
+	return JSONObject(
+		"uptime", uptime,
+		"attractmode", attractmode,
+		"natsconnected", natsConnected,
+		"A", Patchs["A"].Status(),
+		"B", Patchs["B"].Status(),
+		"C", Patchs["C"].Status(),
+		"D", Patchs["D"].Status(),
+	), nil
+}
 
-	case "status":
-		uptime := fmt.Sprintf("%f", Uptime())
-		attractmode := strconv.FormatBool(TheAttractManager.AttractModeIsOn())
-		natsConnected := strconv.FormatBool(natsIsConnected)
-		if TheQuad == nil {
-			result = JSONObject(
-				"uptime", uptime,
-				"attractmode", attractmode,
-			)
-		} else {
-			result = JSONObject(
-				"uptime", uptime,
-				"attractmode", attractmode,
-				"natsconnected", natsConnected,
-				"A", Patchs["A"].Status(),
-				"B", Patchs["B"].Status(),
-				"C", Patchs["C"].Status(),
-				"D", Patchs["D"].Status(),
-			)
-		}
-		return result, nil
-
-	case "attract":
-		v, ok := apiargs["onoff"]
-		if !ok {
-			return "", fmt.Errorf("ExecuteGlobalAPI: missing onoff parameter")
-		}
-		TheAttractManager.SetAttractMode(IsTrueValue(v))
-		return "", nil
-
-	case "load":
-		fname, ok := apiargs["filename"]
-		if !ok {
-			return "", fmt.Errorf("ExecuteGlobalAPI: missing filename parameter")
-		}
-		err := LoadGlobalParamsFrom(fname, true)
+func globalAttract(api string, apiargs map[string]string) (string, error) {
+	v, err := needStringArg("onoff", api, apiargs)
+	if err != nil {
 		return "", err
+	}
+	theAttractManager.SetAttractMode(IsTrueValue(v))
+	return "", nil
+}
 
-	case "getboot", "getbootwithprefix":
-		name, ok := apiargs["name"]
-		if !ok {
-			return "", fmt.Errorf("ExecuteGlobalAPI: missing name parameter")
-		}
-		params, err := LoadParamValuesOfCategory("global", "_Boot")
-		if err != nil {
-			return "", err
-		}
-		if api == "getboot" {
-			return params.Get(name)
-		} else {
-			return params.GetWithPrefix(name)
-		}
+func globalLoad(api string, apiargs map[string]string) (string, error) {
+	fname, err := needStringArg("filename", api, apiargs)
+	if err != nil {
+		return "", err
+	}
+	return "", LoadGlobalParamsFrom(fname, true)
+}
 
-	case "setboot":
-		name, value, err := GetNameValue(apiargs)
-		if err != nil {
-			return "", err
-		}
-		params, err := LoadParamValuesOfCategory("global", "_Boot")
-		if err != nil {
-			return "", err
-		}
-		err = params.SetParamWithString(name, value)
-		if err != nil {
-			return "", err
-		}
-		err = params.Save("global", "_Boot")
-		if err != nil {
-			return "", err
-		}
-		// Refresh EVERYTHING from _Boot, as if rebooting
-		return "", LoadGlobalParamsFrom("_Boot", true)
+func globalGetBoot(api string, apiargs map[string]string) (string, error) {
+	name, err := needStringArg("name", api, apiargs)
+	if err != nil {
+		return "", err
+	}
+	params, err := LoadParamValuesOfCategory("global", "_Boot")
+	if err != nil {
+		return "", err
+	}
+	if api == "getbootwithprefix" {
+		return params.GetWithPrefix(name)
+	}
+	return params.Get(name)
+}
 
-	case "setbootfromcurrent":
-		err = GlobalParams.Save("global", "_Boot")
-		if err != nil {
-			return "", err
-		}
-		// Refresh EVERYTHING from _Boot, as if rebooting
-		return "", LoadGlobalParamsFrom("_Boot", true)
+func globalSetBoot(api string, apiargs map[string]string) (string, error) {
+	name, value, err := GetNameValue(apiargs)
+	if err != nil {
+		return "", err
+	}
+	params, err := LoadParamValuesOfCategory("global", "_Boot")
+	if err != nil {
+		return "", err
+	}
+	err = params.SetParamWithString(name, value)
+	if err != nil {
+		return "", err
+	}
+	err = params.Save("global", "_Boot")
+	if err != nil {
+		return "", err
+	}
+	// Refresh EVERYTHING from _Boot, as if rebooting
+	return "", LoadGlobalParamsFrom("_Boot", true)
+}
 
-	case "set":
-		name, value, err := GetNameValue(apiargs)
-		if err != nil {
-			return "", err
-		}
-		err = SetAndApplyGlobalParam(name, value)
-		if err != nil {
-			return "", err
-		}
-		return "", SaveCurrentGlobalParams()
+func globalSetBootFromCurrent(api string, apiargs map[string]string) (string, error) {
+	err := GlobalParams.Save("global", "_Boot")
+	if err != nil {
+		return "", err
+	}
+	// Refresh EVERYTHING from _Boot, as if rebooting
+	return "", LoadGlobalParamsFrom("_Boot", true)
+}
 
-	case "setparams":
-		for name, value := range apiargs {
-			tmperr := SetAndApplyGlobalParam(name, value)
-			if tmperr != nil {
-				LogError(tmperr)
-				err = tmperr
-			}
-		}
-		if err != nil {
-			return "", err
-		}
-		return "", SaveCurrentGlobalParams()
+func globalSet(api string, apiargs map[string]string) (string, error) {
+	name, value, err := GetNameValue(apiargs)
+	if err != nil {
+		return "", err
+	}
+	err = SetAndApplyGlobalParam(name, value)
+	if err != nil {
+		return "", err
+	}
+	return "", SaveCurrentGlobalParams()
+}
 
-	case "get", "getwithprefix":
-
-		name, ok := apiargs["name"]
-		if !ok {
-			return "", fmt.Errorf("ExecuteGlobalAPI: missing name parameter")
+func globalSetParams(api string, apiargs map[string]string) (string, error) {
+	var err error
+	for name, value := range apiargs {
+		tmperr := SetAndApplyGlobalParam(name, value)
+		if tmperr != nil {
+			LogError(tmperr)
+			err = tmperr
 		}
-		if api == "getwithprefix" {
-			return GlobalParams.GetWithPrefix(name)
-		} else {
-			return GlobalParams.Get(name)
-		}
+	}
+	if err != nil {
+		return "", err
+	}
+	return "", SaveCurrentGlobalParams()
+}
 
-	case "showclip":
-		s, ok := apiargs["clipnum"]
-		if !ok {
-			return "", fmt.Errorf("global.showimage: missing filename parameter")
-		}
-		clipNum, err := strconv.Atoi(s)
-		if err != nil {
-			return "", fmt.Errorf("global.showimage: bad clipnum parameter")
-		}
-		TheResolume().showClip(clipNum)
-		return "", nil
+func globalGet(api string, apiargs map[string]string) (string, error) {
+	name, err := needStringArg("name", api, apiargs)
+	if err != nil {
+		return "", err
+	}
+	if api == "getwithprefix" {
+		return GlobalParams.GetWithPrefix(name)
+	}
+	return GlobalParams.Get(name)
+}
 
-	case "startrecording":
-		return TheEngine.StartRecording()
+func globalShowClip(api string, apiargs map[string]string) (string, error) {
+	s, err := needStringArg("clipnum", api, apiargs)
+	if err != nil {
+		return "", err
+	}
+	clipNum, err := strconv.Atoi(s)
+	if err != nil {
+		return "", fmt.Errorf("global.showclip: bad clipnum value: %w", err)
+	}
+	TheResolume().showClip(clipNum)
+	return "", nil
+}
 
-	case "stoprecording":
-		return TheEngine.StopRecording()
+func globalStartRecording(api string, apiargs map[string]string) (string, error) {
+	return theEngine.StartRecording()
+}
 
-	case "startplayback":
-		fname, ok := apiargs["filename"]
-		if !ok {
-			return "", fmt.Errorf("ExecuteGlobalAPI: missing filename parameter")
-		}
-		return "", TheEngine.StartPlayback(fname)
+func globalStopRecording(api string, apiargs map[string]string) (string, error) {
+	return theEngine.StopRecording()
+}
 
-	case "save":
-		filename, ok := apiargs["filename"]
-		if !ok {
-			return "", fmt.Errorf("ExecuteGlobalAPI: missing filename parameter")
-		}
-		return "", GlobalParams.Save("global", filename)
+func globalStartPlayback(api string, apiargs map[string]string) (string, error) {
+	fname, err := needStringArg("filename", api, apiargs)
+	if err != nil {
+		return "", err
+	}
+	return "", theEngine.StartPlayback(fname)
+}
 
-	case "done":
-		TheEngine.SayDone() // needed for clean exit when profiling
-		return "", nil
+func globalSave(api string, apiargs map[string]string) (string, error) {
+	filename, err := needStringArg("filename", api, apiargs)
+	if err != nil {
+		return "", err
+	}
+	return "", GlobalParams.Save("global", filename)
+}
 
-	case "audio_reset":
-		go TheBidule().Reset()
+func globalDone(api string, apiargs map[string]string) (string, error) {
+	theEngine.SayDone() // needed for clean exit when profiling
+	return "", nil
+}
 
-	case "sendlogs":
-		return "", ArchiveLogs()
+func globalAudioReset(api string, apiargs map[string]string) (string, error) {
+	go TheBidule().Reset()
+	return "", nil
+}
 
-	case "log":
-		// Parse optional file parameter (defaults to engine.log)
-		// Sanitize to basename only for security (no path traversal)
-		logfile := "engine.log"
-		if fileStr, ok := apiargs["file"]; ok && fileStr != "" {
-			logfile = filepath.Base(fileStr)
-		}
+func globalSendLogs(api string, apiargs map[string]string) (string, error) {
+	return "", ArchiveLogs()
+}
 
-		// Parse optional time range parameters
-		var startTime, endTime *time.Time
-		if startStr, ok := apiargs["start"]; ok && startStr != "" {
-			t, err := time.Parse(PaletteTimeLayout, startStr)
-			if err != nil {
-				return "", fmt.Errorf("invalid start time format, use RFC3339: %w", err)
-			}
-			startTime = &t
-		}
-		if endStr, ok := apiargs["end"]; ok && endStr != "" {
-			t, err := time.Parse(PaletteTimeLayout, endStr)
-			if err != nil {
-				return "", fmt.Errorf("invalid end time format, use RFC3339: %w", err)
-			}
-			endTime = &t
-		}
-
-		// Parse optional limit and offset
-		limit := 500
-		if limitStr, ok := apiargs["limit"]; ok && limitStr != "" {
-			l, err := strconv.Atoi(limitStr)
-			if err != nil {
-				return "", fmt.Errorf("invalid limit value: %w", err)
-			}
-			limit = l
-		}
-		offset := 0
-		if offsetStr, ok := apiargs["offset"]; ok && offsetStr != "" {
-			o, err := strconv.Atoi(offsetStr)
-			if err != nil {
-				return "", fmt.Errorf("invalid offset value: %w", err)
-			}
-			offset = o
-		}
-
-		entries, err := ReadLogEntries(logfile, startTime, endTime, limit, offset)
-		if err != nil {
-			return "", err
-		}
-		jsonBytes, err := json.Marshal(entries)
-		if err != nil {
-			return "", fmt.Errorf("failed to marshal log entries: %w", err)
-		}
-		return string(jsonBytes), nil
-
-	case "midi_midifile":
-		return "", fmt.Errorf("midi_midifile API has been removed")
-
-	case "echo":
-		value, ok := apiargs["value"]
-		if !ok {
-			value = "ECHO!"
-		}
-		result = value
-
-	case "debug":
-		return "", fmt.Errorf("debug API has been removed")
-
-	case "set_tempo_factor":
-		v, err := needFloatArg("value", api, apiargs)
-		if err == nil {
-			ChangeClicksPerSecond(float64(v))
-		}
-
-	case "playcursor":
-		var dur = 500 * time.Millisecond // default
-		s, ok := apiargs["dur"]
-		if ok {
-			tmp, err := time.ParseDuration(s)
-			if err != nil {
-				return "", err
-			}
-			dur = tmp
-		}
-		tag, ok := apiargs["tag"]
-		if !ok {
-			tag = "A"
-		}
-		var pos CursorPos
-		xs := apiargs["x"]
-		ys := apiargs["y"]
-		zs := apiargs["z"]
-		if xs == "" || ys == "" || zs == "" {
-			return "", fmt.Errorf("playcursor: missing x, y, or z value")
-		}
-		var x, y, z float64
-		if !GetFloat(xs, &x) || !GetFloat(ys, &y) || !GetFloat(zs, &z) {
-			return "", fmt.Errorf("playcursor: bad x,y,z value")
-		}
-		pos = CursorPos{x, y, z}
-		go TheCursorManager.PlayCursor(tag, dur, pos)
-		return "", nil
-
-	default:
-		LogWarn("Router.ExecuteAPI api is not recognized\n", "api", api)
-		err = fmt.Errorf("ExecuteEngineAPI: unrecognized api=%s", api)
-		result = ""
+func globalLog(api string, apiargs map[string]string) (string, error) {
+	// Parse optional file parameter (defaults to engine.log)
+	// Sanitize to basename only for security (no path traversal)
+	logfile := "engine.log"
+	if fileStr, ok := apiargs["file"]; ok && fileStr != "" {
+		logfile = filepath.Base(fileStr)
 	}
 
-	return result, err
+	// Parse optional time range parameters
+	var startTime, endTime *time.Time
+	if startStr, ok := apiargs["start"]; ok && startStr != "" {
+		t, err := time.Parse(PaletteTimeLayout, startStr)
+		if err != nil {
+			return "", fmt.Errorf("invalid start time format, use RFC3339: %w", err)
+		}
+		startTime = &t
+	}
+	if endStr, ok := apiargs["end"]; ok && endStr != "" {
+		t, err := time.Parse(PaletteTimeLayout, endStr)
+		if err != nil {
+			return "", fmt.Errorf("invalid end time format, use RFC3339: %w", err)
+		}
+		endTime = &t
+	}
+
+	// Parse optional limit and offset
+	limit := 500
+	if limitStr, ok := apiargs["limit"]; ok && limitStr != "" {
+		l, err := strconv.Atoi(limitStr)
+		if err != nil {
+			return "", fmt.Errorf("invalid limit value: %w", err)
+		}
+		limit = l
+	}
+	offset := 0
+	if offsetStr, ok := apiargs["offset"]; ok && offsetStr != "" {
+		o, err := strconv.Atoi(offsetStr)
+		if err != nil {
+			return "", fmt.Errorf("invalid offset value: %w", err)
+		}
+		offset = o
+	}
+
+	entries, err := ReadLogEntries(logfile, startTime, endTime, limit, offset)
+	if err != nil {
+		return "", err
+	}
+	jsonBytes, err := json.Marshal(entries)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal log entries: %w", err)
+	}
+	return string(jsonBytes), nil
+}
+
+func globalRemoved(api string, apiargs map[string]string) (string, error) {
+	return "", fmt.Errorf("%s API has been removed", api)
+}
+
+func globalEcho(api string, apiargs map[string]string) (string, error) {
+	value, ok := apiargs["value"]
+	if !ok {
+		value = "ECHO!"
+	}
+	return value, nil
+}
+
+func globalSetTempoFactor(api string, apiargs map[string]string) (string, error) {
+	v, err := needFloatArg("value", api, apiargs)
+	if err == nil {
+		ChangeClicksPerSecond(float64(v))
+	}
+	return "", nil
+}
+
+func globalPlayCursor(api string, apiargs map[string]string) (string, error) {
+	var dur = 500 * time.Millisecond // default
+	s, ok := apiargs["dur"]
+	if ok {
+		tmp, err := time.ParseDuration(s)
+		if err != nil {
+			return "", err
+		}
+		dur = tmp
+	}
+	tag, ok := apiargs["tag"]
+	if !ok {
+		tag = "A"
+	}
+	xs := apiargs["x"]
+	ys := apiargs["y"]
+	zs := apiargs["z"]
+	if xs == "" || ys == "" || zs == "" {
+		return "", fmt.Errorf("playcursor: missing x, y, or z value")
+	}
+	var x, y, z float64
+	if !GetFloat(xs, &x) || !GetFloat(ys, &y) || !GetFloat(zs, &z) {
+		return "", fmt.Errorf("playcursor: bad x,y,z value")
+	}
+	pos := CursorPos{x, y, z}
+	go theCursorManager.PlayCursor(tag, dur, pos)
+	return "", nil
 }
 
 func GetFloat(value string, f *float64) bool {
@@ -439,11 +486,11 @@ func ApplyGlobalParam(name string, value string) (err error) {
 			return nil
 		}
 		process := strings.TrimPrefix(name, "global.process.")
-		if TheProcessManager.IsAvailable(process) {
+		if theProcessManager.IsAvailable(process) {
 			if IsTrueValue(value) {
-				err = TheProcessManager.StartRunning(process)
+				err = theProcessManager.StartRunning(process)
 			} else {
-				err = TheProcessManager.StopRunning(process)
+				err = theProcessManager.StopRunning(process)
 			}
 			if err != nil {
 				LogError(err)
@@ -455,10 +502,10 @@ func ApplyGlobalParam(name string, value string) (err error) {
 	switch name {
 
 	case "global.attract":
-		TheAttractManager.SetAttractMode(IsTrueValue(value))
+		theAttractManager.SetAttractMode(IsTrueValue(value))
 
 	case "global.attractenabled":
-		TheAttractManager.SetAttractEnabled(IsTrueValue(value))
+		theAttractManager.SetAttractEnabled(IsTrueValue(value))
 
 	case "global.attractidlesecs":
 		if GetInt(value, &i) {
@@ -466,50 +513,50 @@ func ApplyGlobalParam(name string, value string) (err error) {
 				LogWarn("global.attractidlesecs is too low, forcing to 15")
 				i = 15
 			}
-			TheAttractManager.IdleSecs = float64(i)
+			theAttractManager.IdleSecs = float64(i)
 		}
 	case "global.attractgestureinterval":
 		if GetFloat(value, &f) {
-			TheAttractManager.GestureInterval = f
+			theAttractManager.GestureInterval = f
 		}
 	case "global.attractpresetchangeinterval":
 		if GetFloat(value, &f) {
-			TheAttractManager.PresetChangeInterval = f
+			theAttractManager.PresetChangeInterval = f
 		}
 	case "global.attractgesturenumsteps":
 		if GetFloat(value, &f) {
-			TheAttractManager.GestureNumSteps = f
+			theAttractManager.GestureNumSteps = f
 		}
 	case "global.attractgestureduration":
 		if GetFloat(value, &f) {
-			TheAttractManager.GestureDuration = f
+			theAttractManager.GestureDuration = f
 		}
 	case "global.attractgestureminlength":
 		if GetFloat(value, &f) {
-			TheAttractManager.GestureMinLength = f
+			theAttractManager.GestureMinLength = f
 		}
 	case "global.attractgesturemaxlength":
 		if GetFloat(value, &f) {
-			TheAttractManager.GestureMaxLength = f
+			theAttractManager.GestureMaxLength = f
 		}
 	case "global.attractgestureminz":
 		if GetFloat(value, &f) {
-			TheAttractManager.GestureZMin = f
+			theAttractManager.GestureZMin = f
 		}
 	case "global.attractgesturemaxz":
 		if GetFloat(value, &f) {
-			TheAttractManager.GestureZMax = f
+			theAttractManager.GestureZMax = f
 		}
 	case "global.erae":
 		b, _ := GetParamBool("global.erae")
 		if b {
-			TheErae.EraeAPIModeEnable()
-			TheMidiIO.SetMidiInput("Erae 2")
+			theErae.EraeAPIModeEnable()
+			theMidiIO.SetMidiInput("Erae 2")
 		}
 
 	case "global.looping_fadethreshold":
 		if GetFloat(value, &f) {
-			TheCursorManager.LoopThreshold = f
+			theCursorManager.LoopThreshold = f
 		}
 
 	case "global.looping_override", "global.looping_fade", "global.looping_beats":
@@ -520,37 +567,37 @@ func ApplyGlobalParam(name string, value string) (err error) {
 		}
 
 	case "global.midithru":
-		TheRouter.midithru = IsTrueValue(value)
+		theRouter.midithru = IsTrueValue(value)
 
 	case "global.midisetexternalscale":
-		TheRouter.midisetexternalscale = IsTrueValue(value)
+		theRouter.midisetexternalscale = IsTrueValue(value)
 
 	case "global.midithruscadjust":
-		TheRouter.midiThruScadjust = IsTrueValue(value)
+		theRouter.midiThruScadjust = IsTrueValue(value)
 
 	case "global.oscoutput":
-		TheEngine.oscoutput = IsTrueValue(value)
+		theEngine.oscoutput = IsTrueValue(value)
 
 	case "global.autotranspose":
-		TheEngine.autoTransposeOn = IsTrueValue(value)
+		theEngine.autoTransposeOn = IsTrueValue(value)
 
 	case "global.autotransposebeats":
 		if GetInt(value, &i) {
-			TheEngine.SetAutoTransposeBeats(int(i))
+			theEngine.SetAutoTransposeBeats(int(i))
 		}
 	case "global.transpose":
 		if GetInt(value, &i) {
-			TheEngine.SetTranspose(int(i))
+			theEngine.SetTranspose(int(i))
 		}
 	case "global.log":
 		SetLogTypes(value)
 
 	case "global.midiinput":
-		TheMidiIO.SetMidiInput(value)
+		theMidiIO.SetMidiInput(value)
 
 	case "global.processchecksecs":
 		if GetFloat(value, &f) {
-			TheProcessManager.processCheckSecs = f
+			theProcessManager.processCheckSecs = f
 		}
 
 	case "global.obsstream":

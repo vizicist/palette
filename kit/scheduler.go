@@ -11,7 +11,7 @@ import (
 	midi "gitlab.com/gomidi/midi/v2"
 )
 
-var TheScheduler *Scheduler
+var theScheduler *Scheduler
 
 type Event any
 
@@ -72,7 +72,7 @@ func ScheduleAt(atClick Clicks, tag string, value any) {
 		LogWarn("ScheduleAt Gid is 0", "ce", ce)
 	}
 	se := NewSchedElement(atClick, tag, value)
-	TheScheduler.savePendingSchedEvent(se)
+	theScheduler.savePendingSchedEvent(se)
 }
 
 func (sched *Scheduler) savePendingSchedEvent(se *SchedElement) {
@@ -96,7 +96,7 @@ func (sched *Scheduler) handlePendingSchedEvents() {
 	defer sched.pendingMutex.Unlock()
 
 	for _, se := range sched.pendingScheduled {
-		TheScheduler.insertScheduleElement(se)
+		theScheduler.insertScheduleElement(se)
 	}
 	sched.pendingScheduled = nil
 }
@@ -145,14 +145,14 @@ func (sched *Scheduler) Start() {
 		}
 
 		sched.advanceClickTo(newclick)
-		TheEngine.advanceTransposeTo(newclick)
+		theEngine.advanceTransposeTo(newclick)
 
 		SetCurrentClick(newclick)
 
 		sched.handlePendingSchedEvents()
 
-		TheProcessManager.checkProcess()
-		TheAttractManager.checkAttract()
+		theProcessManager.checkProcess()
+		theAttractManager.checkAttract()
 	}
 	LogInfo("StartRealtime ends")
 }
@@ -164,9 +164,9 @@ func (sched *Scheduler) advanceClickTo(toClick Clicks) {
 	// Don't let events get handled while we're advancing
 	// XXX - this might not be needed if all communication/syncing
 	// is done only from the scheduler loop
-	TheRouter.inputEventMutex.Lock()
+	theRouter.inputEventMutex.Lock()
 	defer func() {
-		TheRouter.inputEventMutex.Unlock()
+		theRouter.inputEventMutex.Unlock()
 	}()
 
 	doAutoCursorUp := true
@@ -175,7 +175,7 @@ func (sched *Scheduler) advanceClickTo(toClick Clicks) {
 		sched.triggerItemsScheduledAtOrBefore(clk)
 		// sched.advancePendingNoteOffsByOneClick()
 		if doAutoCursorUp {
-			TheCursorManager.CheckAutoCursorUp()
+			theCursorManager.CheckAutoCursorUp()
 		}
 	}
 	sched.lastClick = toClick
@@ -239,7 +239,7 @@ func (sched *Scheduler) FilterEventsWithTag(tag string) {
 		}
 		ce, isce := se.Value.(CursorEvent)
 		if isce && ce.Ddu == "up" && rnd.Float32() < 0.5 {
-			TheCursorManager.DeleteActiveCursor(ce.GID)
+			theCursorManager.DeleteActiveCursor(ce.GID)
 		}
 		sched.schedList.Remove(i)
 	}
@@ -258,7 +258,7 @@ func (sched *Scheduler) DeleteEventsWithTag(tag string) {
 		}
 		ce, isce := se.Value.(CursorEvent)
 		if isce && ce.Ddu == "up" {
-			TheCursorManager.DeleteActiveCursor(ce.GID)
+			theCursorManager.DeleteActiveCursor(ce.GID)
 		}
 		sched.schedList.Remove(i)
 	}
@@ -381,7 +381,7 @@ func (sched *Scheduler) triggerItemsScheduledAtOrBefore(thisClick Clicks) {
 	sched.mutex.Unlock()
 
 	for _, ce := range tobeExecuted {
-		TheCursorManager.ExecuteCursorEvent(ce)
+		theCursorManager.ExecuteCursorEvent(ce)
 	}
 
 }
