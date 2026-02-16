@@ -45,10 +45,6 @@ func main() {
 		log.Printf("nats.Connect failed, user=%s url=%s err=%s", user, url, err)
 		os.Exit(1)
 	}
-
-	if err != nil {
-		log.Fatal(err)
-	}
 	defer nc.Close()
 
 	// Create a file to write the traffic
