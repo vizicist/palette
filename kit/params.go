@@ -264,7 +264,6 @@ func (vals *ParamValues) GetFloatValue(name string) float64 {
 		if ok {
 			f, err := strconv.ParseFloat(pd.Init, 64)
 			if err == nil {
-				LogIfError(err)
 				return f
 			}
 		}
@@ -690,7 +689,9 @@ func (vals *ParamValues) paramValue(name string) ParamValue {
 }
 
 func (vals *ParamValues) Exists(name string) bool {
+	vals.mutex.RLock()
 	_, exists := vals.values[name]
+	vals.mutex.RUnlock()
 	return exists
 }
 

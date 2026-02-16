@@ -381,9 +381,10 @@ func globalEcho(api string, apiargs map[string]string) (string, error) {
 
 func globalSetTempoFactor(api string, apiargs map[string]string) (string, error) {
 	v, err := needFloatArg("value", api, apiargs)
-	if err == nil {
-		ChangeClicksPerSecond(float64(v))
+	if err != nil {
+		return "", err
 	}
+	ChangeClicksPerSecond(float64(v))
 	return "", nil
 }
 
@@ -421,10 +422,9 @@ func GetFloat(value string, f *float64) bool {
 	if err != nil {
 		LogIfError(err)
 		return false
-	} else {
-		*f = v
-		return true
 	}
+	*f = v
+	return true
 }
 
 /*
@@ -445,10 +445,9 @@ func GetInt(value string, i *int64) bool {
 	if err != nil {
 		LogIfError(err)
 		return false
-	} else {
-		*i = v
-		return true
 	}
+	*i = v
+	return true
 }
 
 func ActivateGlobalParam(name string) {
