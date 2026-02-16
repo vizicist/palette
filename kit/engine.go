@@ -37,15 +37,15 @@ type Engine struct {
 	autoTransposeValues []int
 }
 
-var TheEngine *Engine
+var theEngine *Engine
 var engineSysex sync.Mutex
 
 func InitEngine() {
 
 	InitializeClicks()
 
-	if TheEngine != nil {
-		LogIfError(fmt.Errorf("TheEngine already exists, there can be only one"))
+	if theEngine != nil {
+		LogIfError(fmt.Errorf("theEngine already exists, there can be only one"))
 		return
 	}
 
@@ -67,17 +67,17 @@ func InitEngine() {
 
 	NatsConnectToHubAndSubscribe()
 
-	TheCursorManager = NewCursorManager()
-	TheRouter = NewRouter()
-	TheScheduler = NewScheduler()
-	TheAttractManager = NewAttractManager()
-	TheQuad = NewQuad()
-	TheMidiIO = NewMidiIO()
-	TheErae = NewErae()
+	theCursorManager = NewCursorManager()
+	theRouter = NewRouter()
+	theScheduler = NewScheduler()
+	theAttractManager = NewAttractManager()
+	theQuad = NewQuad()
+	theMidiIO = NewMidiIO()
+	theErae = NewErae()
 
 	InitLogTypes()
 
-	TheEngine = e
+	theEngine = e
 
 	for name := range ParamDefs {
 		if strings.HasPrefix(name, "global.") {
@@ -122,7 +122,7 @@ func EngineHTTPAPI(host string, api string, args ...string) (map[string]string, 
 		return nil, fmt.Errorf("EngineHTTPAPI: failed to marshal request: %w", err)
 	}
 
-	url := fmt.Sprintf("http://%s:%d/api", host, EngineHTTPPort)
+	url := fmt.Sprintf("http://%s:%d/api", host, engineHTTPPort)
 	return HTTPAPIRaw(url, string(jsonBytes))
 }
 
@@ -141,11 +141,11 @@ func EngineCloseNats() {
 }
 
 func StartEngine() {
-	TheEngine.Start()
+	theEngine.Start()
 }
 
 func WaitTillDone() {
-	TheEngine.WaitTillDone()
+	theEngine.WaitTillDone()
 }
 
 func GetParam(name string) (string, error) {
@@ -231,18 +231,18 @@ func (e *Engine) Start() {
 	InitMIDIIO()
 	InitSynths()
 
-	TheQuad.Start()
+	theQuad.Start()
 
-	go e.StartOscListener(OscPort)
-	go e.StartHTTP(EngineHTTPPort)
+	go e.StartOscListener(oscPort)
+	go e.StartHTTP(engineHTTPPort)
 
-	go TheScheduler.Start()
-	go TheRouter.Start()
-	go TheMidiIO.Start()
+	go theScheduler.Start()
+	go theRouter.Start()
+	go theMidiIO.Start()
 
 	go TheBidule().Reset()
 
-	// TheAttractManager.setAttractMode(true)
+	// theAttractManager.setAttractMode(true)
 
 	// if ParamBool("mmtt.depth") {
 	// 	go DepthRunForever()
@@ -271,7 +271,7 @@ func (e *Engine) SendOsc(client *osc.Client, msg *osc.Message) {
 func (e *Engine) sendToOscClients(msg *osc.Message) {
 	if e.oscoutput {
 		if e.oscClient == nil {
-			e.oscClient = osc.NewClient(LocalAddress, EventClientPort)
+			e.oscClient = osc.NewClient(LocalAddress, eventClientPort)
 			// oscClient is guaranteed to be non-nil
 		}
 		e.SendOsc(e.oscClient, msg)
@@ -296,7 +296,7 @@ func (e *Engine) StartOscListener(port int) {
 	d := osc.NewStandardDispatcher()
 
 	err := d.AddMsgHandler("*", func(msg *osc.Message) {
-		TheRouter.oscInputChan <- OscEvent{Msg: msg, Source: source}
+		theRouter.oscInputChan <- OscEvent{Msg: msg, Source: source}
 	})
 	if err != nil {
 		LogIfError(err)
@@ -569,8 +569,8 @@ func (e *Engine) SaveRecordingEvent(re RecordingEvent) {
 func (e *Engine) SetTranspose(i int) {
 	e.currentPitchOffset.Store(int32(i))
 	LogOfType("transpose", "SetTranspose", "i", i)
-	// LogInfo("Engine.SetTranspose", "schedule", TheScheduler.ToString())
-	// LogInfo("Engine.SetTranspose", "pending", TheScheduler.PendingToString())
+	// LogInfo("Engine.SetTranspose", "schedule", theScheduler.ToString())
+	// LogInfo("Engine.SetTranspose", "pending", theScheduler.PendingToString())
 }
 
 func (e *Engine) SetAutoTransposeBeats(beats int) {
@@ -589,8 +589,8 @@ func (e *Engine) advanceTransposeTo(newclick Clicks) {
 	}
 	e.autoTransposeNext = newclick + e.autoTransposeClicks
 	e.autoTransposeIndex = (e.autoTransposeIndex + 1) % len(e.autoTransposeValues)
-	transpose := TheEngine.autoTransposeValues[TheEngine.autoTransposeIndex]
+	transpose := theEngine.autoTransposeValues[theEngine.autoTransposeIndex]
 	e.SetTranspose(transpose)
 	LogOfType("transpose", "TransposeTo", "index", e.autoTransposeIndex, "transpose", transpose, "newclick", newclick)
-	// TheScheduler.SendAllPendingNoteoffs()
+	// theScheduler.SendAllPendingNoteoffs()
 }

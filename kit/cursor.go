@@ -11,7 +11,7 @@ import (
 	"github.com/hypebeast/go-osc/osc"
 )
 
-var TheCursorManager *CursorManager
+var theCursorManager *CursorManager
 
 // CursorEvent is a single Cursor event.
 // NOTE: it's assumed that we can copy a CursorEvent by copying the value.
@@ -83,7 +83,7 @@ func NewCursorEvent(gid int, tag string, ddu string, pos CursorPos) CursorEvent 
 }
 
 func NewCursorClearEvent() CursorEvent {
-	gid := TheCursorManager.UniqueGID()
+	gid := theCursorManager.UniqueGID()
 	return NewCursorEvent(gid, "", "clear", CursorPos{})
 }
 
@@ -91,7 +91,7 @@ func NewCursorClearEvent() CursorEvent {
 // An ActiveCursor can be for a Button or a Patch area.
 func NewActiveCursor(ce CursorEvent) *ActiveCursor {
 
-	patch, button := TheQuad.PatchForCursorEvent(ce)
+	patch, button := theQuad.PatchForCursorEvent(ce)
 	if patch == nil && button == "" {
 		LogWarn("No Patch or Button for CursorEvent", "ce", ce)
 		return nil
@@ -123,14 +123,14 @@ func NewActiveCursor(ce CursorEvent) *ActiveCursor {
 
 	// LogInfo("NewactiveCursor", "ac", ac)
 
-	ac.pitchOffset = TheEngine.currentPitchOffset.Load()
+	ac.pitchOffset = theEngine.currentPitchOffset.Load()
 
 	/*
 		// Hardcoded, channel 10 is usually drums, doesn't get transposed
 		// Should probably be an attribute of the Synth.
 		const drumChannel = 10
-		if TheEngine.autoTransposeOn && synth.portchannel.channel != drumChannel {
-			pitchOffset += TheEngine.autoTransposeValues[TheEngine.autoTransposeIndex]
+		if theEngine.autoTransposeOn && synth.portchannel.channel != drumChannel {
+			pitchOffset += theEngine.autoTransposeValues[theEngine.autoTransposeIndex]
 		}
 		newpitch := int(pitch) + pitchOffset
 		if newpitch < 0 {
@@ -190,9 +190,9 @@ func (cm *CursorManager) clearActiveCursors(tag string, checkDelay Clicks) {
 			continue
 		}
 
-		TheCursorManager.ClickMutex.Lock()
+		theCursorManager.ClickMutex.Lock()
 		acCurrentCe := ac.Current
-		TheCursorManager.ClickMutex.Unlock()
+		theCursorManager.ClickMutex.Unlock()
 
 		currClick := acCurrentCe.GetClick()
 
@@ -276,7 +276,7 @@ func (cm *CursorManager) GenerateRandomGesture(tag string, numsteps int, dur tim
 		Y: cm.cursorRand.Float64(),
 	}
 	pos1 := CursorPos{}
-	am := TheAttractManager
+	am := theAttractManager
 	for pos1.X == 0.0 {
 		pos1.X = cm.cursorRand.Float64()
 		pos1.Y = cm.cursorRand.Float64()
@@ -348,15 +348,15 @@ func (ce *CursorEvent) Source() string {
 }
 
 func (ce *CursorEvent) SetClick(click Clicks) {
-	TheCursorManager.ClickMutex.Lock()
+	theCursorManager.ClickMutex.Lock()
 	ce.CClick = click
-	TheCursorManager.ClickMutex.Unlock()
+	theCursorManager.ClickMutex.Unlock()
 }
 
 func (ce CursorEvent) GetClick() Clicks {
-	TheCursorManager.ClickMutex.RLock()
+	theCursorManager.ClickMutex.RLock()
 	clk := ce.CClick
-	TheCursorManager.ClickMutex.RUnlock()
+	theCursorManager.ClickMutex.RUnlock()
 	return clk
 }
 
@@ -398,14 +398,14 @@ var BugFixWarningCount = 0
 
 func (cm *CursorManager) ExecuteCursorEvent(ce CursorEvent) {
 
-	TheEngine.RecordCursorEvent(ce)
+	theEngine.RecordCursorEvent(ce)
 
 	fadeThreshold, err := GetParamFloat("global.looping_fadethreshold")
 	if err != nil {
 		LogIfError(err)
 	} else {
 		cm.executeMutex.Lock()
-		TheCursorManager.LoopThreshold = fadeThreshold
+		theCursorManager.LoopThreshold = fadeThreshold
 		cm.executeMutex.Unlock()
 	}
 
@@ -431,7 +431,7 @@ func (cm *CursorManager) ExecuteCursorEvent(ce CursorEvent) {
 		if ce.Tag == "" {
 			LogWarn("CursorManager.ExecuteCursorEvent: clear with empty tag?")
 		}
-		TheCursorManager.ClearAllActiveCursors(ce.Tag)
+		theCursorManager.ClearAllActiveCursors(ce.Tag)
 		return
 	}
 
@@ -506,11 +506,11 @@ func (cm *CursorManager) ExecuteCursorEvent(ce CursorEvent) {
 			if ac.Current.Ddu == "up" {
 				LogOfType("cursor", "UP cursor", "maxZ", ac.maxZ)
 			}
-			TheScheduler.insertScheduleElement(se)
+			theScheduler.insertScheduleElement(se)
 		}
 	}
 
-	TheEngine.sendToOscClients(CursorToOscMsg(ce))
+	theEngine.sendToOscClients(CursorToOscMsg(ce))
 
 	// LogOfType("cursor", "CursorManager.handleDownDragUp before doing handlers", "ce", ce)
 	for _, handler := range cm.handlers {
@@ -533,7 +533,7 @@ func (cm *CursorManager) LoopCursorEvent(ac *ActiveCursor) *SchedElement {
 	loopce.SetClick(CurrentClick() + OneBeat*Clicks(ac.loopBeats))
 
 	// The looped CursorEvents should have unique gid val,ues.
-	loopce.GID = TheCursorManager.LoopedGIDFor(ac.Current, true /*warn*/)
+	loopce.GID = theCursorManager.LoopedGIDFor(ac.Current, true /*warn*/)
 	if loopce.GID == 0 {
 		LogWarn("HEY!!! loopIt LoopedGidFor returns 0?")
 		return nil
@@ -594,7 +594,7 @@ func (cm *CursorManager) DeleteActiveCursor(gid int) {
 // DeleteActiveCursorIfZLessThan deletes the ActiveCursor if its Z value is less than threshold.
 func (cm *CursorManager) DeleteActiveCursorIfZLessThan(gid int, threshold float64) {
 
-	// LogInfo("BEGIN DeleteActiveCursorIfZ 1", "gid", gid,"sched", TheScheduler.ToString())
+	// LogInfo("BEGIN DeleteActiveCursorIfZ 1", "gid", gid,"sched", theScheduler.ToString())
 
 	cm.activeMutex.Lock()
 	ac, ok := cm.activeCursors[gid]
@@ -630,8 +630,8 @@ func (cm *CursorManager) DeleteActiveCursorIfZLessThan(gid int, threshold float6
 	cm.GIDToLoopedGIDMutex.Unlock()
 
 	if loopGID != 0 {
-		TheScheduler.DeleteCursorEventsWhoseGIDIs(loopGID)
-		TheScheduler.DeleteCursorEventsWhoseGIDIs(gid)
+		theScheduler.DeleteCursorEventsWhoseGIDIs(loopGID)
+		theScheduler.DeleteCursorEventsWhoseGIDIs(gid)
 	}
 }
 

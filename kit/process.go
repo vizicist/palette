@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-var TheProcessManager *ProcessManager
+var theProcessManager *ProcessManager
 
 type ProcessInfo struct {
 	Exe       string // just the last part
@@ -46,7 +46,7 @@ func EmptyProcessInfo() *ProcessInfo {
 }
 
 func StartRunning(process string) error {
-	err := TheProcessManager.StartRunning(process)
+	err := theProcessManager.StartRunning(process)
 	if err != nil {
 		LogIfError(err)
 		return (err)
@@ -55,7 +55,7 @@ func StartRunning(process string) error {
 }
 
 func CheckAutorestartProcesses() {
-	TheProcessManager.CheckAutorestartProcesses()
+	theProcessManager.CheckAutorestartProcesses()
 }
 
 // These should come from the process list
@@ -87,7 +87,7 @@ func IsRunning(process string) (bool, error) {
 	if process == "engine" {
 		return IsRunningExecutable(EngineExe)
 	}
-	return TheProcessManager.IsRunning(process)
+	return theProcessManager.IsRunning(process)
 }
 
 func MonitorIsRunning() (bool, error) {

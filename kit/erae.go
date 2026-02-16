@@ -9,7 +9,7 @@ import (
 	"gitlab.com/gomidi/midi/v2/drivers"
 )
 
-var TheErae *Erae
+var theErae *Erae
 
 func NewErae() *Erae {
 	return &Erae{
@@ -37,7 +37,7 @@ func (erae *Erae) Start() {
 	if erae.apienabled {
 		erae.EraeZoneClearDisplay(erae.zone)
 	}
-	// erae.output = TheMidiIO.OpenMIDIOutput("erae")
+	// erae.output = theMidiIO.OpenMIDIOutput("erae")
 }
 
 func (erae *Erae) onMidiEvent(me MidiEvent) {
