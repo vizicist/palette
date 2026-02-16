@@ -125,7 +125,7 @@ func EngineNatsAPI(host string, cmd string, timeout time.Duration) (result strin
 		return "", fmt.Errorf("EngineNatsAPI: NATS is not connected")
 	}
 	if natsConn == nil {
-		return "", fmt.Errorf("NatsAPI: NatsConn is nil?")
+		return "", fmt.Errorf("EngineNatsAPI: NatsConn is nil?")
 	}
 	subject := fmt.Sprintf("to_palette.%s.api", host)
 	retdata, err := NatsRequest(subject, cmd, timeout)
