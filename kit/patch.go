@@ -325,7 +325,7 @@ func (patch *Patch) API(api string, apiargs map[string]string) (string, error) {
 }
 
 func (patch *Patch) SaveQuadAndAlert() error {
-	return TheQuad.saveQuad("_Current")
+	return theQuad.saveQuad("_Current")
 }
 
 func (patch *Patch) SetParam(paramName string, paramValue string) error {
@@ -491,7 +491,7 @@ func (patch *Patch) Status() string {
 	if patch == nil {
 		return ""
 	}
-	nevents := TheScheduler.CountEventsWithTag(patch.name)
+	nevents := theScheduler.CountEventsWithTag(patch.name)
 	if nevents == 0 {
 		return ""
 	}
@@ -501,14 +501,14 @@ func (patch *Patch) Status() string {
 func (patch *Patch) loopFade() {
 	tag := patch.name
 
-	// TheCursorManager.DeleteActiveCursorsForTag(tag)
+	// theCursorManager.DeleteActiveCursorsForTag(tag)
 	// LogInfo("loopClear before DeleteEvents")
-	TheScheduler.FadeEventsWithTag(tag)
+	theScheduler.FadeEventsWithTag(tag)
 	// LogInfo("loopClear after DeleteEvents")
 
-	TheScheduler.pendingMutex.Lock()
+	theScheduler.pendingMutex.Lock()
 	clearPending := false
-	for _, se := range TheScheduler.pendingScheduled {
+	for _, se := range theScheduler.pendingScheduled {
 		if se.Tag == tag {
 			LogInfo("HEY!, saw pendingSchedule with tag prefix!", "prefix", tag, "se", se)
 			clearPending = true
@@ -516,22 +516,22 @@ func (patch *Patch) loopFade() {
 	}
 	if clearPending {
 		// LogInfo("loopClear is clearing pendingScheduled")
-		TheScheduler.pendingScheduled = nil
+		theScheduler.pendingScheduled = nil
 	}
-	TheScheduler.pendingMutex.Unlock()
+	theScheduler.pendingMutex.Unlock()
 }
 
 func (patch *Patch) loopFilter() {
 	tag := patch.name
 
-	// TheCursorManager.DeleteActiveCursorsForTag(tag)
+	// theCursorManager.DeleteActiveCursorsForTag(tag)
 	// LogInfo("loopClear before DeleteEvents")
-	TheScheduler.FilterEventsWithTag(tag)
+	theScheduler.FilterEventsWithTag(tag)
 	// LogInfo("loopClear after DeleteEvents")
 
-	TheScheduler.pendingMutex.Lock()
+	theScheduler.pendingMutex.Lock()
 	clearPending := false
-	for _, se := range TheScheduler.pendingScheduled {
+	for _, se := range theScheduler.pendingScheduled {
 		if se.Tag == tag {
 			LogInfo("HEY!, saw pendingSchedule with tag prefix!", "prefix", tag, "se", se)
 			clearPending = true
@@ -539,22 +539,22 @@ func (patch *Patch) loopFilter() {
 	}
 	if clearPending {
 		// LogInfo("loopClear is clearing pendingScheduled")
-		TheScheduler.pendingScheduled = nil
+		theScheduler.pendingScheduled = nil
 	}
-	TheScheduler.pendingMutex.Unlock()
+	theScheduler.pendingMutex.Unlock()
 }
 
 func (patch *Patch) loopClear() {
 	tag := patch.name
 
-	// TheCursorManager.DeleteActiveCursorsForTag(tag)
+	// theCursorManager.DeleteActiveCursorsForTag(tag)
 	// LogInfo("loopClear before DeleteEvents")
-	TheScheduler.DeleteEventsWithTag(tag)
+	theScheduler.DeleteEventsWithTag(tag)
 	// LogInfo("loopClear after DeleteEvents")
 
-	TheScheduler.pendingMutex.Lock()
+	theScheduler.pendingMutex.Lock()
 	clearPending := false
-	for _, se := range TheScheduler.pendingScheduled {
+	for _, se := range theScheduler.pendingScheduled {
 		if se.Tag == tag {
 			LogInfo("HEY!, saw pendingSchedule with tag prefix!", "prefix", tag, "se", se)
 			clearPending = true
@@ -562,15 +562,15 @@ func (patch *Patch) loopClear() {
 	}
 	if clearPending {
 		// LogInfo("loopClear is clearing pendingScheduled")
-		TheScheduler.pendingScheduled = nil
+		theScheduler.pendingScheduled = nil
 	}
-	TheScheduler.pendingMutex.Unlock()
+	theScheduler.pendingMutex.Unlock()
 
 	/*
 		// XXX - SHOULD BE USING DeleteEventsWhoseGidIs(cidToDelete string)
-		TheScheduler.mutex.Lock()
+		theScheduler.mutex.Lock()
 		var nexti *list.Element
-		for i := TheScheduler.schedList.Front(); i != nil; i = nexti {
+		for i := theScheduler.schedList.Front(); i != nil; i = nexti {
 			nexti = i.Next()
 			se := i.Value.(*SchedElement)
 			if se.Tag != tag {
@@ -594,12 +594,12 @@ func (patch *Patch) loopClear() {
 			case MidiEvent:
 				// LogInfo("loopClear Saw MidiEvent", "v", v)
 			}
-			TheScheduler.schedList.Remove(i)
+			theScheduler.schedList.Remove(i)
 		}
-		// LogInfo("At end of loopClear", "schedList.Len", TheScheduler.schedList.Len())
-		TheScheduler.mutex.Unlock()
+		// LogInfo("At end of loopClear", "schedList.Len", theScheduler.schedList.Len())
+		theScheduler.mutex.Unlock()
 
-		// LogOfType("loop", "Patch.loopClear end", "schdule", TheScheduler.ToString())
+		// LogOfType("loop", "Patch.loopClear end", "schdule", theScheduler.ToString())
 		// LogInfo("LOOP LOOPCLEAR END", "prefix", tag)
 	*/
 }

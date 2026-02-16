@@ -12,11 +12,12 @@ import (
 	"github.com/hypebeast/go-osc/osc"
 )
 
-var ResolumePort = 7000
+var resolumePort = 7000
 
 type Resolume struct {
 	resolumeClient   *osc.Client
 	freeframeClients map[string]*osc.Client
+	effectsJSON      map[string]any // unmarshalled resolume.json
 }
 
 var theResolume *Resolume
@@ -24,7 +25,7 @@ var theResolume *Resolume
 func TheResolume() *Resolume {
 	if theResolume == nil {
 		theResolume = &Resolume{
-			resolumeClient:   osc.NewClient(LocalAddress, ResolumePort),
+			resolumeClient:   osc.NewClient(LocalAddress, resolumePort),
 			freeframeClients: map[string]*osc.Client{},
 		}
 
@@ -38,10 +39,6 @@ func TheResolume() *Resolume {
 	return theResolume
 }
 
-// ResolumeJSON is an unmarshalled version of the resolume.json file
-var ResolumeJSON map[string]any
-
-// LoadResolumeJSON returns an unmarshalled version of the resolume.json file
 func (r *Resolume) loadResolumeJSON() error {
 	path := ConfigFilePath("resolume.json")
 	bytes, err := os.ReadFile(path)
@@ -53,7 +50,7 @@ func (r *Resolume) loadResolumeJSON() error {
 	if err != nil {
 		return fmt.Errorf("unable to Unmarshal %s", path)
 	}
-	ResolumeJSON = j
+	r.effectsJSON = j
 	return nil
 }
 
@@ -94,7 +91,7 @@ func (r *Resolume) ToFreeFramePlugin(patchName string, msg *osc.Message) {
 		return
 	}
 	LogOfType("ffgl", "toFreeFramePlugin", "patch", patchName, "msg", msg)
-	TheEngine.SendOsc(ff, msg)
+	theEngine.SendOsc(ff, msg)
 }
 
 func (r *Resolume) SendEffectParam(patchName string, name string, value string) {
@@ -194,7 +191,7 @@ func (r *Resolume) sendPadOneEffectParam(layerNum int, effectName string, paramN
 }
 
 func (r *Resolume) toResolume(msg *osc.Message) {
-	TheEngine.SendOsc(r.resolumeClient, msg)
+	theEngine.SendOsc(r.resolumeClient, msg)
 }
 
 func (r *Resolume) sendPadOneEffectOnOff(layerNum int, effectName string, onoff bool) {
@@ -256,7 +253,7 @@ func (r *Resolume) showText(text string) {
 	msg := osc.NewMessage(addr)
 	text = strings.Replace(text, "_", "\n", 1)
 	msg.Append(text)
-	TheEngine.SendOsc(r.resolumeClient, msg)
+	theEngine.SendOsc(r.resolumeClient, msg)
 
 	// give it time to "sink in", otherwise the previous text displays briefly
 	time.Sleep(150 * time.Millisecond)
@@ -333,7 +330,7 @@ func (r *Resolume) connectClip(layerNum int, clip int) {
 	// Note: sending 0 doesn't seem to disable a clip; you need to
 	// bypass the layer to turn it off
 	msg.Append(int32(1))
-	TheEngine.SendOsc(r.resolumeClient, msg)
+	theEngine.SendOsc(r.resolumeClient, msg)
 }
 
 func (r *Resolume) bypassLayer(layerNum int, onoff bool) {
@@ -344,7 +341,7 @@ func (r *Resolume) bypassLayer(layerNum int, onoff bool) {
 		v = 1
 	}
 	msg.Append(int32(v))
-	TheEngine.SendOsc(r.resolumeClient, msg)
+	theEngine.SendOsc(r.resolumeClient, msg)
 }
 
 // getEffectMap returns the resolume.json map for a given effect
@@ -354,7 +351,7 @@ func (r *Resolume) getEffectMap(effectName string, mapType string) (map[string]a
 		err := fmt.Errorf("no dash in effect, name=%s", effectName)
 		return nil, "", 0, err
 	}
-	effects, ok := ResolumeJSON["effects"]
+	effects, ok := r.effectsJSON["effects"]
 	if !ok {
 		err := fmt.Errorf("no effects value in resolume.json?")
 		return nil, "", 0, err

@@ -17,21 +17,21 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-var TheLog *zap.SugaredLogger
-var Time0 = time.Time{}
-var FirstTime = true
-var LogMutex sync.Mutex
+var theLog *zap.SugaredLogger
+var time0 = time.Time{}
+var firstTime = true
+var logMutex sync.Mutex
 
 var PaletteTimeLayout = "2006-01-02T15:04:05Z07:00" // RFC3339 Format
 
 // Uptime returns the number of seconds since the program started.
 func Uptime() float64 {
 	now := time.Now()
-	if FirstTime {
-		FirstTime = false
-		Time0 = now
+	if firstTime {
+		firstTime = false
+		time0 = now
 	}
-	return now.Sub(Time0).Seconds()
+	return now.Sub(time0).Seconds()
 }
 
 func zapEncoderConfig() zapcore.EncoderConfig {
@@ -116,13 +116,13 @@ func InitLog(logname string) {
 	} else {
 		logger = fileLogger(LogFilePath(logname + ".log"))
 	}
-	TheLog = logger.Sugar()
+	theLog = logger.Sugar()
 	defer LogIfError(logger.Sync()) // flushes buffer, if any
 	LogInfo("InitLog ==============================", "logname", logname)
 }
 
 func LogFatal(err error) {
-	TheLog.Fatal(err)
+	theLog.Fatal(err)
 }
 
 func StartPlusUptime(startdate string, uptime float64) string {
@@ -150,8 +150,8 @@ func LogFilePath(nm string) string {
 
 func IsLogging(logtype string) bool {
 
-	LogMutex.Lock()
-	defer LogMutex.Unlock()
+	logMutex.Lock()
+	defer logMutex.Unlock()
 
 	b, ok := LogEnabled[logtype]
 	if !ok {
@@ -163,7 +163,7 @@ func IsLogging(logtype string) bool {
 }
 
 func LogIfError(err error, keysAndValues ...any) {
-	if err == nil || TheLog == nil {
+	if err == nil || theLog == nil {
 		return
 	}
 	LogError(err, keysAndValues...)
@@ -208,7 +208,7 @@ func LogOfType(logtypes string, msg string, keysAndValues ...any) {
 		keysAndValues = append(keysAndValues, logtype)
 		if isEnabled {
 			keysAndValues = appendExtraValues(keysAndValues)
-			TheLog.Infow(msg, keysAndValues...)
+			theLog.Infow(msg, keysAndValues...)
 		}
 	}
 }
@@ -224,7 +224,7 @@ func LogRaw(loglevel string, msg string, keysAndValues ...any) {
 		keysAndValues = appendExtraValues(keysAndValues)
 		keysAndValues = append(keysAndValues, "loglevel")
 		keysAndValues = append(keysAndValues, loglevel)
-		TheLog.Warnw(msg, keysAndValues...)
+		theLog.Warnw(msg, keysAndValues...)
 	}
 }
 
@@ -235,7 +235,7 @@ func LogInfo(msg string, keysAndValues ...any) {
 	keysAndValues = appendExtraValues(keysAndValues)
 	keysAndValues = append(keysAndValues, "loglevel")
 	keysAndValues = append(keysAndValues, "info")
-	TheLog.Infow(msg, keysAndValues...)
+	theLog.Infow(msg, keysAndValues...)
 }
 
 var LogEnabled = map[string]bool{
@@ -320,11 +320,11 @@ func InitLogTypes() {
 
 func SetLogTypes(logtypes string) {
 
-	LogMutex.Lock()
+	logMutex.Lock()
 	for logtype := range LogEnabled {
 		LogEnabled[logtype] = false
 	}
-	LogMutex.Unlock()
+	logMutex.Unlock()
 
 	if logtypes != "" {
 		darr := strings.Split(logtypes, ",")
@@ -332,14 +332,14 @@ func SetLogTypes(logtypes string) {
 			if d != "" {
 				d := strings.ToLower(d)
 				LogInfo("Turning logging ON for", "logtype", d)
-				LogMutex.Lock()
+				logMutex.Lock()
 				_, ok := LogEnabled[d]
 				if !ok {
 					LogIfError(fmt.Errorf("ResetLogTypes: logtype not recognized"), "logtype", d)
 				} else {
 					LogEnabled[d] = true
 				}
-				LogMutex.Unlock()
+				logMutex.Unlock()
 			}
 		}
 	}

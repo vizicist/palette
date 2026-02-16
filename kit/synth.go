@@ -301,14 +301,12 @@ func GetSynth(synthName string) *Synth {
 	return synth
 }
 
-var FakeIndex int
-
 func OpenNewSynth(name string, port string, channel int, bank int, program int) *Synth {
 
 	// XXX - If there's already a Synth for this PortChannel, should error
 	portchannel := PortChannel{port: port, channel: channel}
 
-	state := TheMidiIO.NewPortChannelState(portchannel)
+	state := theMidiIO.NewPortChannelState(portchannel)
 	return NewSynth(name, portchannel, bank, program, state)
 }
 
@@ -344,10 +342,10 @@ func NewSynth(name string, portchannel PortChannel, bank int, program int, state
 }
 
 func (synth *Synth) updatePortChannelState() (*MidiPortChannelState, error) {
-	if TheMidiIO == nil {
-		return nil, fmt.Errorf("updatePortChannelState: TheMidiIO is nil?")
+	if theMidiIO == nil {
+		return nil, fmt.Errorf("updatePortChannelState: theMidiIO is nil?")
 	}
-	state, err := TheMidiIO.GetPortChannelState(synth.portchannel)
+	state, err := theMidiIO.GetPortChannelState(synth.portchannel)
 	if err != nil {
 		return nil, err
 	}

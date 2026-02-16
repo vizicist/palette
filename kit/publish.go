@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-var time0 = time.Now()
+var publishStartTime = time.Now()
 
 // PublishCursorEvent xxx
 func PublishCursorEvent(ce CursorEvent) {
@@ -14,7 +14,7 @@ func PublishCursorEvent(ce CursorEvent) {
 	data := map[string]any{
 		"cid":       ce.GID,
 		"ddu":       ce.Ddu,
-		"millisecs": time.Since(time0).Milliseconds(),
+		"millisecs": time.Since(publishStartTime).Milliseconds(),
 		"x":         ce.Pos.X,
 		"y":         ce.Pos.Y,
 		"z":         ce.Pos.Z,
@@ -38,7 +38,7 @@ func PublishMIDIDeviceEvent(me MidiEvent) {
 	data := map[string]any{
 		"host":      Hostname(),
 		"event":     "midi",
-		"millisecs": time.Since(time0).Milliseconds(),
+		"millisecs": time.Since(publishStartTime).Milliseconds(),
 		"bytes":     me.Msg.Bytes(),
 	}
 

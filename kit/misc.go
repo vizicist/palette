@@ -23,13 +23,13 @@ import (
 	"gopkg.in/gomail.v2"
 )
 
-var MmttHTTPPort = 4444
-var EngineHTTPPort = 3330
-var OscPort = 3333
-var EventClientPort = 6666
-var GuiPort = 3943
+var oscPort = 3333
+var guiPort = 3943
+var mmttHTTPPort = 4444
+var engineHTTPPort = 3330
+var eventClientPort = 6666
 var LocalAddress = "127.0.0.1"
-var TheRand *rand.Rand
+var theRand *rand.Rand
 
 func InitKit() {
 
@@ -54,12 +54,12 @@ func InitKit() {
 		LogIfError(err)
 	}
 
-	TheProcessManager = NewProcessManager()
-	TheProcessManager.AddBuiltins()
+	theProcessManager = NewProcessManager()
+	theProcessManager.AddBuiltins()
 
 	// Fixed rand sequence, better for testing
 	// TheRand = rand.New(rand.NewSource(1))
-	TheRand = rand.New(rand.NewSource(time.Now().UnixNano()))
+	theRand = rand.New(rand.NewSource(time.Now().UnixNano()))
 }
 
 // fileExists checks if a file exists
@@ -330,8 +330,6 @@ type FileWriter struct {
 	Exe string
 }
 
-var NoWriterInstance io.Writer
-
 func NewExecutableLogWriter(exe string) io.Writer {
 	return &FileWriter{Exe: exe}
 }
@@ -403,8 +401,6 @@ func needStringArg(nm string, api string, args map[string]string) (string, error
 	}
 	return val, nil
 }
-
-var _ = needStringArg
 
 /*
 func needIntArg(nm string, api string, args map[string]string) (int, error) {
@@ -507,7 +503,7 @@ func MmttRemoteAPI(api string) (map[string]string, error) {
 
 	id := "56789"
 	apijson := "{ \"jsonrpc\": \"2.0\", \"method\": \"" + api + "\", \"id\":\"" + id + "\"}"
-	url := fmt.Sprintf("http://%s:%d/api", LocalAddress, MmttHTTPPort)
+	url := fmt.Sprintf("http://%s:%d/api", LocalAddress, mmttHTTPPort)
 	return HTTPAPIRaw(url, apijson)
 }
 

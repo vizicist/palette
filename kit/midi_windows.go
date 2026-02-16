@@ -56,7 +56,7 @@ type MidiPortChannelState struct {
 	mutex   sync.Mutex
 }
 
-var TheMidiIO *MidiIO
+var theMidiIO *MidiIO
 
 func NewMidiIO() *MidiIO {
 	return &MidiIO{
@@ -79,9 +79,9 @@ func NewMidiIO() *MidiIO {
 func InitMIDIIO() {
 
 	LogOfType("midi", "Initializing MIDI I/O",
-		"inports", TheMidiIO.inports, "outports", TheMidiIO.outports)
+		"inports", theMidiIO.inports, "outports", theMidiIO.outports)
 
-	for _, outp := range TheMidiIO.outports {
+	for _, outp := range theMidiIO.outports {
 		name := outp.String()
 		// NOTE: name is the port name followed by an index
 		LogOfType("midiports", "MIDI output", "port", outp.String())
@@ -99,14 +99,14 @@ func InitMIDIIO() {
 
 		//
 		if strings.HasPrefix(name, "Erae 2") {
-			TheErae.output = outp
+			theErae.output = outp
 		}
-		TheMidiIO.midiOutputs[name] = outp
+		theMidiIO.midiOutputs[name] = outp
 	}
 
 	LogInfo("Initialized MIDI",
-		"numoutports", len(TheMidiIO.outports),
-		"numinports", len(TheMidiIO.inports))
+		"numoutports", len(theMidiIO.outports),
+		"numinports", len(theMidiIO.inports))
 
 	// if erae {
 	// 	Info("Erae Touch input is being enabled")
@@ -116,10 +116,10 @@ func InitMIDIIO() {
 
 func (m *MidiIO) SetMidiInput(midiInputName string) {
 
-	if TheMidiIO.midiInput != nil {
-		err := TheMidiIO.midiInput.Close()
+	if theMidiIO.midiInput != nil {
+		err := theMidiIO.midiInput.Close()
 		LogIfError(err)
-		TheMidiIO.midiInput = nil
+		theMidiIO.midiInput = nil
 	}
 
 	if midiInputName == "" {
@@ -135,7 +135,7 @@ func (m *MidiIO) SetMidiInput(midiInputName string) {
 		if strings.Contains(name, midiInputName) {
 			// We only open a single input, though midiInputs is an array
 			LogInfo("Opening MIDI input", "name", name)
-			TheMidiIO.midiInput = inp
+			theMidiIO.midiInput = inp
 			break // only pick the first one that matches
 		}
 	}
@@ -175,7 +175,7 @@ func (m *MidiIO) Start() {
 
 func (m *MidiIO) handleMidiInput(msg midi.Message, timestamp int32) {
 	LogOfType("midi", "handleMidiInput", "msg", msg)
-	TheRouter.midiInputChan <- NewMidiEvent(CurrentClick(), "handleMidiInput", msg)
+	theRouter.midiInputChan <- NewMidiEvent(CurrentClick(), "handleMidiInput", msg)
 
 	/*
 		var bt []byte

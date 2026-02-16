@@ -87,7 +87,7 @@ func (logic *PatchLogic) cursorToPitch(ce CursorEvent) (uint8, error) {
 			scale := GetScale(scaleName)
 			closest := scale.ClosestTo(p)
 			// MIDIOctaveShift might be negative
-			i := int(closest) + 12*TheRouter.midiOctaveShift
+			i := int(closest) + 12*theRouter.midiOctaveShift
 			for i < 0 {
 				i += 12
 			}
@@ -96,7 +96,7 @@ func (logic *PatchLogic) cursorToPitch(ce CursorEvent) (uint8, error) {
 			}
 			p = uint8(i)
 		}
-		currentOffset := int(TheEngine.currentPitchOffset.Load())
+		currentOffset := int(theEngine.currentPitchOffset.Load())
 		if currentOffset != 0 {
 			newpitch := int(p) + currentOffset
 			if newpitch < 0 {
@@ -210,7 +210,7 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
 	defer logic.mutex.Unlock()
 
 	patch := logic.patch
-	ac, ok := TheCursorManager.getActiveCursorFor(ce.GID)
+	ac, ok := theCursorManager.getActiveCursorFor(ce.GID)
 	if !ok {
 		LogWarn("generateSoundFromCursor: no active cursor", "gid", ce.GID)
 		return

@@ -421,14 +421,14 @@ func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float64) 
 			gid, ok := m.contactIDToGID[contactid]
 			if !ok {
 				// If we've never seen this contact before, create a new cid...
-				gid = TheCursorManager.UniqueGID()
+				gid = theCursorManager.UniqueGID()
 				m.contactIDToGID[contactid] = gid
 			} else if m.currentTag != m.previousTag {
 				// If we're switching to a new source, clear existing cursors...
 				ce := NewCursorClearEvent()
 				callback(ce)
 				// and create a new cid...
-				gid = TheCursorManager.UniqueGID()
+				gid = theCursorManager.UniqueGID()
 			}
 
 			m.previousTag = m.currentTag
