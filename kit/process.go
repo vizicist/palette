@@ -58,6 +58,10 @@ func CheckAutorestartProcesses() {
 	theProcessManager.CheckAutorestartProcesses()
 }
 
+func ActivateProcess(process string) error {
+	return theProcessManager.ActivateProcess(process)
+}
+
 // These should come from the process list
 
 var MonitorExe = "palette_monitor.exe"
@@ -77,7 +81,13 @@ func KillAllExceptMonitor() {
 	KillExecutable(MmttExe)
 	KillExecutable(BiduleExe)
 	KillExecutable(ResolumeExe)
-	KillExecutable(GuiExe)
+	// For GUI, close only the Palette Control window, not all Chrome windows
+	// If the window doesn't exist, that's fine - don't kill other Chrome windows
+	if CloseWindowByTitle("Palette Control") {
+		LogInfo("KillAllExceptMonitor: closed Palette Control window")
+	} else {
+		LogInfo("KillAllExceptMonitor: no Palette Control window to close")
+	}
 	KillExecutable(EngineExe)
 	KillExecutable(ObsExe)
 	KillExecutable(ChatExe)
@@ -248,20 +258,34 @@ func (pm *ProcessManager) AddProcessBuiltIn(process string) {
 
 func (pm *ProcessManager) StartRunning(process string) error {
 
-	// For GUI (Chrome), always kill any existing instances first
-	// This ensures we start fresh and avoids issues with multiple Chrome instances
+	// For GUI (Chrome), close existing Palette Control window if present
+	// This ensures we start fresh without killing other Chrome instances
 	if process == "gui" {
-		LogInfo("StartRunning: killing any existing Chrome instances before starting GUI")
-		KillExecutable("chrome.exe")
-	}
-
-	running, err := pm.IsRunning(process)
-	if err != nil {
-		return err
-	}
-	if running {
-		LogInfo("StartRunning: already running", "process", process)
-		return nil
+		if CloseWindowByTitle("Palette Control") {
+			LogInfo("StartRunning: closed existing Palette Control window")
+			// Give Chrome time to fully close before starting new instance
+			time.Sleep(500 * time.Millisecond)
+		}
+		// Don't check IsRunning for GUI because we only care about the specific
+		// "Palette Control" window, not whether any Chrome process is running.
+		// If the window existed, we closed it above. Now we'll start a fresh one.
+	} else {
+		// For non-GUI processes, check if already running
+		running, err := pm.IsRunning(process)
+		if err != nil {
+			return err
+		}
+		if running {
+			LogInfo("StartRunning: already running", "process", process)
+			// If process has an Activate function, call it even though it's already running
+			pi, err := pm.GetProcessInfo(process)
+			if err == nil && pi.Activate != nil {
+				LogOfType("process", "Activate", "process", process, "note", "already running")
+				go pi.Activate()
+				pi.Activated = true
+			}
+			return nil
+		}
 	}
 	pi, err := pm.GetProcessInfo(process)
 	if err != nil {
@@ -303,6 +327,32 @@ func (pm *ProcessManager) StartRunning(process string) error {
 	return nil
 }
 
+func (pm *ProcessManager) ActivateProcess(process string) error {
+	pi, err := pm.GetProcessInfo(process)
+	if err != nil {
+		return err
+	}
+
+	if pi.Activate == nil {
+		return fmt.Errorf("ActivateProcess: no activate function for %s", process)
+	}
+
+	// Check if process is running first
+	running, err := pm.IsRunning(process)
+	if err != nil {
+		return err
+	}
+	if !running {
+		return fmt.Errorf("ActivateProcess: process %s is not running", process)
+	}
+
+	LogOfType("process", "ActivateProcess", "process", process)
+	go pi.Activate()
+	pi.Activated = true
+
+	return nil
+}
+
 func (pm *ProcessManager) StopRunning(process string) (err error) {
 
 	LogOfType("process", "KillProcess", "process", process)
@@ -312,13 +362,29 @@ func (pm *ProcessManager) StopRunning(process string) (err error) {
 		return err
 	}
 
-	// Use PID-based killing if we have the PID (avoids killing other instances)
-	if pid, ok := pm.runningPids[process]; ok && pid > 0 {
-		KillByPid(pid)
-		delete(pm.runningPids, process)
+	// Special handling for GUI - close by window title to avoid killing other Chrome instances
+	if process == "gui" {
+		if CloseWindowByTitle("Palette Control") {
+			LogInfo("StopRunning: closed GUI window by title")
+		} else {
+			LogWarn("StopRunning: failed to close GUI window by title, falling back to PID-based kill")
+			// Fall back to PID-based killing if window close failed
+			if pid, ok := pm.runningPids[process]; ok && pid > 0 {
+				KillByPid(pid)
+				delete(pm.runningPids, process)
+			} else {
+				KillExecutable(pi.Exe)
+			}
+		}
 	} else {
-		// Fall back to killing by executable name
-		KillExecutable(pi.Exe)
+		// Use PID-based killing if we have the PID (avoids killing other instances)
+		if pid, ok := pm.runningPids[process]; ok && pid > 0 {
+			KillByPid(pid)
+			delete(pm.runningPids, process)
+		} else {
+			// Fall back to killing by executable name
+			KillExecutable(pi.Exe)
+		}
 	}
 
 	pi.Activated = false

@@ -1,7 +1,8 @@
 @echo off
 
 taskkill /f /im palette_engine.exe
-taskkill /f /im chrome.exe
+REM Close only the Palette Control Chrome window, not all Chrome windows
+powershell -Command "Get-Process chrome -ErrorAction SilentlyContinue | Where-Object {$_.MainWindowTitle -eq 'Palette Control'} | ForEach-Object { $_.CloseMainWindow() | Out-Null }"
 taskkill /f /im palette_monitor.exe
 taskkill /f /im palette_splash.exe
 taskkill /f /im key.exe

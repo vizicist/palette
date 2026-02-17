@@ -214,6 +214,7 @@
 "global.process.obs": {"valuetype":"bool", "min":"false", "max":"true", "init":"false", "comment":"#" },
 "global.resolumepath": {"valuetype":"string", "min":"resolumepath", "max":"resolumepath", "init":"C:/Program Files/Resolume Avenue/Avenue.exe", "comment":"# Resolume executable path" },
 "global.resolumetextlayer": {"valuetype":"int", "min":"1", "max":"10", "init":"5", "comment":"# text layer num" },
+"global.resolumeactivate": {"valuetype":"int", "min":"1", "max":"60", "init":"12", "comment":"# number of activation attempts" },
 "global.scale": {"valuetype":"string", "min":"enginescale", "max":"enginescale", "init":"", "comment":"# " },
 "global.tempdir": {"valuetype":"string", "min":"", "max":"", "init":"C:/windows/temp", "comment":"# " },
 "global.timefret_high": {"valuetype": "float", "min": "0.0", "max": "1.0",  "init": "0.85",	"comment": "#" },
