@@ -28,7 +28,7 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    background: linear-gradient(to bottom, #0a5a5a 0%, #0d6868 50%, #0a5a5a 100%);
+    background: #000;
     z-index: 200;
     display: flex;
     align-items: center;
@@ -38,68 +38,10 @@ body {
     -webkit-user-select: none;
 }
 
-.attract-content {
-    text-align: center;
-    color: #00ffff;
-    padding: 2vh 20px;
+.attract-image {
     width: 100%;
     height: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-evenly;
-    overflow: hidden;
-}
-
-.attract-title {
-    font-size: 7vh;
-    font-weight: bold;
-    color: #00ffff;
-    margin-bottom: 0;
-}
-
-.attract-subtitle {
-    font-size: 4.5vh;
-    color: #00ffff;
-}
-
-.attract-body {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-}
-
-.attract-body p {
-    font-size: 2.8vh;
-    color: #00dddd;
-    line-height: 1.25;
-    margin-bottom: 1.5vh;
-}
-
-.attract-cta {
-    font-size: 5vh;
-    font-weight: bold;
-    color: #00ffff;
-}
-
-.attract-cta-line {
-    margin-bottom: 0;
-}
-
-.attract-cta-amp {
-    font-size: 5.5vh;
-    margin: 0.5vh 0;
-}
-
-.attract-arrow {
-    font-size: 5.5vh;
-    margin: 0 2vw;
-    vertical-align: middle;
-}
-
-.attract-arrows-down {
-    font-size: 5.5vh;
-    margin-top: 1vh;
+    object-fit: contain;
 }
 
 /* Restart message overlay */
