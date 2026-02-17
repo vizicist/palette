@@ -313,7 +313,7 @@ func (r *Resolume) Activate() {
 	numAttempts, err := GetParamInt("global.resolumeactivate")
 	if err != nil {
 		LogIfError(err)
-		numAttempts = 12 // fallback to default
+		numAttempts = 24 // fallback to default
 	}
 
 	// do it a few times, in case Resolume hasn't started up
