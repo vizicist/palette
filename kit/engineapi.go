@@ -89,6 +89,7 @@ var globalAPIHandlers = map[string]globalAPIHandler{
 	"debugpending":       globalDebugPending,
 	"status":             globalStatus,
 	"attract":            globalAttract,
+	"activate":           globalActivate,
 	"load":               globalLoad,
 	"getboot":            globalGetBoot,
 	"getbootwithprefix":  globalGetBoot,
@@ -169,6 +170,14 @@ func globalAttract(api string, apiargs map[string]string) (string, error) {
 	}
 	theAttractManager.SetAttractMode(IsTrueValue(v))
 	return "", nil
+}
+
+func globalActivate(api string, apiargs map[string]string) (string, error) {
+	process, err := needStringArg("process", api, apiargs)
+	if err != nil {
+		return "", err
+	}
+	return "", ActivateProcess(process)
 }
 
 func globalLoad(api string, apiargs map[string]string) (string, error) {

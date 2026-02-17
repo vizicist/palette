@@ -309,13 +309,20 @@ func (r *Resolume) Activate() {
 	textLayer := r.TextLayerNum()
 	clipnum := 1
 
+	// Get number of activation attempts from parameter
+	numAttempts, err := GetParamInt("global.resolumeactivate")
+	if err != nil {
+		LogIfError(err)
+		numAttempts = 12 // fallback to default
+	}
+
 	// do it a few times, in case Resolume hasn't started up
-	for i := 0; i < 12; i++ {
-		time.Sleep(2 * time.Second)
+	for i := 0; i < numAttempts; i++ {
+		time.Sleep(5 * time.Second)
 
 		for _, patch := range PatchNames() {
 			_, layerNum := r.PortAndLayerNumForPatch(string(patch))
-			LogOfType("resolume", "Activating Resolume", "patch", layerNum, "clipnum", clipnum)
+			LogOfType("resolume", "Activating Resolume", "patch", layerNum, "clipnum", clipnum, "attempt", i+1, "of", numAttempts)
 			r.connectClip(layerNum, 1) // clip 1 in layer is the palette ffgl
 		}
 		r.showClip(2) // show the "starting up" splash clip in the text layer

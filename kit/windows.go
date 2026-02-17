@@ -202,19 +202,25 @@ const (
 	TH32CS_SNAPPROCESS = 0x00000002
 	PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
 	INVALID_HANDLE_VALUE = ^uintptr(0)
+	WM_CLOSE = 0x0010
 )
 
 var (
-	user32              = syscall.NewLazyDLL("user32.dll")
-	enumDisplayMonitors = user32.NewProc("EnumDisplayMonitors")
-	getMonitorInfoW     = user32.NewProc("GetMonitorInfoW")
+	user32                   = syscall.NewLazyDLL("user32.dll")
+	enumDisplayMonitors      = user32.NewProc("EnumDisplayMonitors")
+	getMonitorInfoW          = user32.NewProc("GetMonitorInfoW")
+	postMessageW             = user32.NewProc("PostMessageW")
+	getWindowThreadProcessId = user32.NewProc("GetWindowThreadProcessId")
+	getWindowTextW           = user32.NewProc("GetWindowTextW")
+	isWindowVisible          = user32.NewProc("IsWindowVisible")
+	enumWindows              = user32.NewProc("EnumWindows")
 
-	kernel32                  = syscall.NewLazyDLL("kernel32.dll")
-	createToolhelp32Snapshot  = kernel32.NewProc("CreateToolhelp32Snapshot")
-	process32FirstW           = kernel32.NewProc("Process32FirstW")
-	process32NextW            = kernel32.NewProc("Process32NextW")
-	openProcess               = kernel32.NewProc("OpenProcess")
-	closeHandle               = kernel32.NewProc("CloseHandle")
+	kernel32                 = syscall.NewLazyDLL("kernel32.dll")
+	createToolhelp32Snapshot = kernel32.NewProc("CreateToolhelp32Snapshot")
+	process32FirstW          = kernel32.NewProc("Process32FirstW")
+	process32NextW           = kernel32.NewProc("Process32NextW")
+	openProcess              = kernel32.NewProc("OpenProcess")
+	closeHandle              = kernel32.NewProc("CloseHandle")
 )
 
 // monitorBounds collects monitor positions during enumeration
@@ -289,4 +295,116 @@ func IsPidRunning(pid int) bool {
 	// Process exists, close the handle
 	closeHandle.Call(handle)
 	return true
+}
+
+// CloseWindowByTitle finds Chrome windows with the specified title and closes them.
+// Returns true if at least one matching window was found and closed.
+// This approach matches what PowerShell does: enumerate Chrome processes and check their window titles.
+func CloseWindowByTitle(title string) bool {
+	// Create a snapshot of all processes
+	snapshot, _, err := createToolhelp32Snapshot.Call(TH32CS_SNAPPROCESS, 0)
+	if snapshot == INVALID_HANDLE_VALUE {
+		LogWarn("CloseWindowByTitle: CreateToolhelp32Snapshot failed", "err", err)
+		return false
+	}
+	defer closeHandle.Call(snapshot)
+
+	var entry processEntry32W
+	entry.Size = uint32(unsafe.Sizeof(entry))
+
+	// Get the first process
+	ret, _, _ := process32FirstW.Call(snapshot, uintptr(unsafe.Pointer(&entry)))
+	if ret == 0 {
+		return false
+	}
+
+	foundAndClosed := false
+
+	for {
+		// Convert the exe name from UTF-16 to string
+		processName := syscall.UTF16ToString(entry.ExeFile[:])
+
+		// Only check Chrome processes
+		if strings.ToLower(processName) == "chrome.exe" {
+			// Open the process to get its main window
+			handle, _, _ := openProcess.Call(PROCESS_QUERY_LIMITED_INFORMATION, 0, uintptr(entry.ProcessID))
+			if handle != 0 {
+				// Get the main window for this process by enumerating windows
+				// We'll check each window to see if it belongs to this process and has the right title
+				if hwnd := getMainWindowForProcess(entry.ProcessID, title); hwnd != 0 {
+					LogInfo("CloseWindowByTitle: found matching window", "title", title, "hwnd", hwnd, "pid", entry.ProcessID)
+					postMessageW.Call(hwnd, WM_CLOSE, 0, 0)
+					foundAndClosed = true
+				}
+				closeHandle.Call(handle)
+			}
+		}
+
+		// Get the next process
+		ret, _, _ = process32NextW.Call(snapshot, uintptr(unsafe.Pointer(&entry)))
+		if ret == 0 {
+			break
+		}
+	}
+
+	if !foundAndClosed {
+		LogInfo("CloseWindowByTitle: no matching window found", "title", title)
+	}
+
+	return foundAndClosed
+}
+
+// windowEnumData is used to pass data to the EnumWindows callback
+type windowEnumData struct {
+	targetPID      uint32
+	expectedTitle  string
+	foundHwnd      uintptr
+}
+
+// getMainWindowForProcess finds the main window for a process with matching title
+func getMainWindowForProcess(pid uint32, expectedTitle string) uintptr {
+	data := &windowEnumData{
+		targetPID:     pid,
+		expectedTitle: expectedTitle,
+		foundHwnd:     0,
+	}
+
+	// EnumWindows enumerates all top-level windows
+	callback := syscall.NewCallback(enumWindowsCallback)
+	enumWindows.Call(callback, uintptr(unsafe.Pointer(data)))
+
+	return data.foundHwnd
+}
+
+// enumWindowsCallback is called for each window by EnumWindows
+func enumWindowsCallback(hwnd uintptr, lParam uintptr) uintptr {
+	data := (*windowEnumData)(unsafe.Pointer(lParam))
+
+	// Check if window is visible
+	visible, _, _ := isWindowVisible.Call(hwnd)
+	if visible == 0 {
+		return 1 // Continue enumeration
+	}
+
+	// Get the process ID of this window
+	var windowPID uint32
+	getWindowThreadProcessId.Call(hwnd, uintptr(unsafe.Pointer(&windowPID)))
+
+	// Check if this window belongs to our target process
+	if windowPID != data.targetPID {
+		return 1 // Continue enumeration
+	}
+
+	// Get the window title
+	var titleBuf [256]uint16
+	getWindowTextW.Call(hwnd, uintptr(unsafe.Pointer(&titleBuf[0])), 256)
+	actualTitle := syscall.UTF16ToString(titleBuf[:])
+
+	// Check if title matches exactly
+	if actualTitle == data.expectedTitle {
+		data.foundHwnd = hwnd
+		return 0 // Stop enumeration, we found it
+	}
+
+	return 1 // Continue enumeration
 }
