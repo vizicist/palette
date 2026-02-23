@@ -442,11 +442,11 @@ def generate_html(data, time_of_day_data, session_duration_data, all_sessions, p
                 width: 100%;
                 min-width: unset;
                 order: 1;
+                flex-shrink: 0;
             }}
             .chart-container #chart {{
                 order: 0;
-            }}
-            #chart {{
+                flex: none;
                 height: 400px;
             }}
         }}
