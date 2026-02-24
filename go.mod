@@ -17,6 +17,7 @@ require (
 	github.com/reugn/go-quartz v0.9.0
 	gitlab.com/gomidi/midi/v2 v2.3.14
 	go.uber.org/zap v1.27.0
+	golang.org/x/crypto v0.45.0
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
 )
 
@@ -55,7 +56,6 @@ require (
 	github.com/tevino/abool v1.2.0 // indirect
 	github.com/yuin/goldmark v1.5.5 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/crypto v0.45.0 // indirect
 	golang.org/x/image v0.20.0 // indirect
 	golang.org/x/mobile v0.0.0-20231127183840-76ac6878050a // indirect
 	golang.org/x/net v0.47.0 // indirect

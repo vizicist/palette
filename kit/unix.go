@@ -63,6 +63,14 @@ func FindWindowByTitleContains(substring string) bool {
 	return false
 }
 
+func CloseWindowByTitle(title string) bool {
+	return false
+}
+
+func GetLeftMonitorPosition() (x int, y int, found bool) {
+	return 0, 0, false
+}
+
 func IsRunningExecutable(exe string) (bool, error) {
 	err := fmt.Errorf("unix.go: IsRunningExecutable needs work")
 	return false, err

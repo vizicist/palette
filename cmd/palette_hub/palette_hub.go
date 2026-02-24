@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"os/exec"
 	"os/signal"
 	"path/filepath"
 	"sort"
@@ -16,6 +17,7 @@ import (
 	json "github.com/goccy/go-json"
 	"github.com/nats-io/nats.go"
 	"github.com/vizicist/palette/kit"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func main() {
@@ -60,6 +62,8 @@ func usage() string {
 	  Reads engine.log from stdin and merges events into days/*.json files
 	  Deduplicates against existing events in the days files
 	  Example: cat engine.log | ssh hub_machine "cd palette_hub && ./palette_hub import_log spacepalette37"
+	palette_hub addpalette {name} {password}
+	  Add a new palette user to the NATS server configuration
 	`
 }
 
@@ -83,13 +87,37 @@ func HubCommand(args []string) (map[string]string, error) {
 		return map[string]string{"result": result}, nil
 	}
 
-	// Connect to the remote NATS server for other commands
-	err := kit.NatsConnectRemote()
+	if cmd == "addpalette" {
+		if len(args) < 3 {
+			return nil, fmt.Errorf("addpalette requires a name and password\n%s", usage())
+		}
+		name := args[1]
+		password := args[2]
+		result, err := addPalette(name, password)
+		if err != nil {
+			return map[string]string{"error": err.Error()}, nil
+		}
+		return map[string]string{"result": result}, nil
+	}
+
+	// Connect to local NATS server using /usr/local/palette/.env credentials
+	err := kit.NatsConnectLocal()
 	if err != nil {
 		return map[string]string{"error": err.Error()}, nil
 	}
 
 	switch cmd {
+
+	case "status":
+		streams, err := kit.NatsStreams()
+		if err != nil {
+			return map[string]string{"error": err.Error()}, nil
+		}
+		s := fmt.Sprintf("NATS server: connected\nStreams: %d\n", len(streams))
+		for _, stream := range streams {
+			s += fmt.Sprintf("  %s\n", stream)
+		}
+		return map[string]string{"result": s}, nil
 
 	case "streams":
 		streams, err := kit.NatsStreams()
@@ -759,6 +787,67 @@ func formatDayEvent(event DayEvent) string {
 	}
 	jsonData, _ := json.Marshal(dd)
 	return string(jsonData)
+}
+
+const natsConfigPath = "/etc/nats/server.conf"
+
+// addPalette adds a new palette user with scoped permissions to the NATS server config
+func addPalette(name, password string) (string, error) {
+	// Read the current config
+	configData, err := os.ReadFile(natsConfigPath)
+	if err != nil {
+		return "", fmt.Errorf("failed to read %s: %v", natsConfigPath, err)
+	}
+	config := string(configData)
+
+	// Check if user already exists
+	if strings.Contains(config, fmt.Sprintf(`user: "%s"`, name)) {
+		return "", fmt.Errorf("user %q already exists in %s", name, natsConfigPath)
+	}
+
+	// Hash the password with bcrypt (cost 10, matching existing hashes)
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), 10)
+	if err != nil {
+		return "", fmt.Errorf("failed to hash password: %v", err)
+	}
+
+	// Build the new user entry
+	newEntry := fmt.Sprintf(
+		`        {user: "%s", password: "%s", permissions: {subscribe: "to_palette.%s.>", publish: "from_palette.%s.>"}}`,
+		name, string(hash), name, name,
+	)
+
+	// Find the closing ] of the users array and insert before it
+	closingBracket := "    ]"
+	idx := strings.Index(config, closingBracket)
+	if idx == -1 {
+		return "", fmt.Errorf("could not find users array closing bracket in %s", natsConfigPath)
+	}
+
+	newConfig := config[:idx] + newEntry + ",\n" + config[idx:]
+
+	// Write the modified config
+	if err := os.WriteFile(natsConfigPath, []byte(newConfig), 0644); err != nil {
+		return "", fmt.Errorf("failed to write %s: %v", natsConfigPath, err)
+	}
+
+	// Validate with nats-server -t
+	validateCmd := exec.Command("nats-server", "-t", "-c", natsConfigPath)
+	validateOutput, err := validateCmd.CombinedOutput()
+	if err != nil {
+		// Restore original config on validation failure
+		os.WriteFile(natsConfigPath, configData, 0644)
+		return "", fmt.Errorf("config validation failed, restored original: %s", string(validateOutput))
+	}
+
+	// Reload the running NATS server
+	reloadCmd := exec.Command("nats-server", "--signal", "reload")
+	reloadOutput, err := reloadCmd.CombinedOutput()
+	if err != nil {
+		return "", fmt.Errorf("config is valid but reload failed: %s", string(reloadOutput))
+	}
+
+	return fmt.Sprintf("Added palette user %q and reloaded NATS server\n", name), nil
 }
 
 // parseDayEvent parses a JSON line from a day file
