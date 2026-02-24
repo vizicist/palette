@@ -36,28 +36,25 @@ pushd "$PALETTE_SOURCE/cmd/palette_engine" > /dev/null
 go build -o "$BIN/palette_engine" .
 popd > /dev/null
 
-echo "================ Copying data_default"
-DATA_DEFAULT="$SHIP/data_default"
-cp -r "$PALETTE_SOURCE/data_default" "$SHIP/"
-# Create logs directory
-mkdir -p "$DATA_DEFAULT/logs"
-# Remove user-specific files that shouldn't be distributed
-rm -f "$DATA_DEFAULT/saved/global/_Current.json"
-rm -f "$DATA_DEFAULT/saved/global/_Boot.json"
-rm -f "$DATA_DEFAULT/logs/"*.log 2>/dev/null || true
-
 # Create release directory if it doesn't exist
 RELEASE_DIR="$PALETTE_SOURCE/release"
 mkdir -p "$RELEASE_DIR"
 
-# Create zip file
-ZIP_NAME="palette_${VERSION}_linux_amd64.zip"
-echo "================ Creating $ZIP_NAME"
+# Create self-extracting installer
+INSTALLER_NAME="palette_${VERSION}_linux_amd64.sh"
+ZIP_TMP="/tmp/palette_build_$$.zip"
+rm -f "$ZIP_TMP"
+echo "================ Creating $INSTALLER_NAME"
 pushd "$SHIP" > /dev/null
-zip -rq "$RELEASE_DIR/$ZIP_NAME" .
+zip -rq "$ZIP_TMP" .
 popd > /dev/null
+cat "$SCRIPT_DIR/install.sh" > "$RELEASE_DIR/$INSTALLER_NAME"
+echo "__ARCHIVE_BELOW__" >> "$RELEASE_DIR/$INSTALLER_NAME"
+cat "$ZIP_TMP" >> "$RELEASE_DIR/$INSTALLER_NAME"
+chmod +x "$RELEASE_DIR/$INSTALLER_NAME"
+rm -f "$ZIP_TMP"
 
 echo "================ Done"
-echo "Installer created: $RELEASE_DIR/$ZIP_NAME"
+echo "Installer created: $RELEASE_DIR/$INSTALLER_NAME"
 
 rm -rf "$SHIP"
