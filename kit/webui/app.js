@@ -511,14 +511,7 @@ function setupControls() {
             setAdvancedMode(false);
             return;
         }
-        // Restart the engine (monitor will relaunch it)
-        await silenceAll();
-        document.getElementById('restart-overlay').classList.remove('hidden');
-        try {
-            await API.call('global.done');
-        } catch (e) {
-            // Expected - engine exits so connection drops
-        }
+        showRestartModal();
     });
 
     document.getElementById('btn-soft-reset').addEventListener('click', async () => {
@@ -703,4 +696,72 @@ async function pollStatus() {
         // Ignore polling errors
     }
 }
+
+// Restart modal
+function showRestartModal() {
+    const overlay = document.getElementById('restart-overlay');
+    const modal = document.getElementById('restart-modal');
+    const message = document.getElementById('restart-message');
+    modal.classList.remove('hidden');
+    message.classList.add('hidden');
+    overlay.classList.remove('hidden');
+}
+
+function hideRestartModal() {
+    document.getElementById('restart-overlay').classList.add('hidden');
+}
+
+function showRestartMessage() {
+    document.getElementById('restart-modal').classList.add('hidden');
+    document.getElementById('restart-message').classList.remove('hidden');
+}
+
+document.addEventListener('click', async (e) => {
+    const btn = e.target.closest('.restart-btn');
+    if (!btn) return;
+    const action = btn.dataset.action;
+
+    if (action === 'cancel') {
+        hideRestartModal();
+        return;
+    }
+
+    if (action === 'complete') {
+        await silenceAll();
+        showRestartMessage();
+        try {
+            await API.call('global.done');
+        } catch (e) {
+            // Expected - engine exits so connection drops
+        }
+        return;
+    }
+
+    if (action === 'audio') {
+        await silenceAll();
+        // Stop and restart Bidule
+        try {
+            await API.setGlobalParam('global.process.bidule', 'false');
+            await new Promise(r => setTimeout(r, 1000));
+            await API.setGlobalParam('global.process.bidule', 'true');
+        } catch (e) {
+            console.error('Failed to restart audio:', e);
+        }
+        hideRestartModal();
+        return;
+    }
+
+    if (action === 'visuals') {
+        // Stop and restart Resolume
+        try {
+            await API.setGlobalParam('global.process.resolume', 'false');
+            await new Promise(r => setTimeout(r, 1000));
+            await API.setGlobalParam('global.process.resolume', 'true');
+        } catch (e) {
+            console.error('Failed to restart visuals:', e);
+        }
+        hideRestartModal();
+        return;
+    }
+});
 
