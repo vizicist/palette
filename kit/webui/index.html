@@ -11,9 +11,19 @@
         <img src="sppro_attractscreen.png" alt="Space Palette Pro" class="attract-image">
     </div>
 
-    <!-- Restart message overlay -->
+    <!-- Restart modal overlay -->
     <div id="restart-overlay" class="hidden">
-        <div class="restart-message">The Space Palette will be<br>restarted in a few seconds.</div>
+        <div id="restart-modal">
+            <div id="restart-buttons">
+                <button class="restart-btn" data-action="complete">Restart<br>Completely</button>
+                <button class="restart-btn" data-action="audio">Restart<br>Audio</button>
+                <button class="restart-btn" data-action="visuals">Restart<br>Visuals</button>
+                <button class="restart-btn restart-cancel" data-action="cancel">Cancel</button>
+            </div>
+        </div>
+        <div id="restart-message" class="hidden">
+            <div class="restart-message-text">The Space Palette will be<br>restarted in a few seconds.</div>
+        </div>
     </div>
 
     <!-- Help overlay -->

@@ -210,7 +210,7 @@ var (
 	enumDisplayMonitors      = user32.NewProc("EnumDisplayMonitors")
 	getMonitorInfoW          = user32.NewProc("GetMonitorInfoW")
 	postMessageW             = user32.NewProc("PostMessageW")
-	getWindowThreadProcessId = user32.NewProc("GetWindowThreadProcessId")
+	getWindowThreadProcessID = user32.NewProc("GetWindowThreadProcessId")
 	getWindowTextW           = user32.NewProc("GetWindowTextW")
 	isWindowVisible          = user32.NewProc("IsWindowVisible")
 	enumWindows              = user32.NewProc("EnumWindows")
@@ -354,6 +354,41 @@ func CloseWindowByTitle(title string) bool {
 	return foundAndClosed
 }
 
+// FindWindowByTitleContains returns true if any visible window's title contains the given substring.
+func FindWindowByTitleContains(substring string) bool {
+	data := &windowSearchData{
+		substring: strings.ToLower(substring),
+		found:     false,
+	}
+	callback := syscall.NewCallback(searchWindowCallback)
+	enumWindows.Call(callback, uintptr(unsafe.Pointer(data)))
+	return data.found
+}
+
+type windowSearchData struct {
+	substring string
+	found     bool
+}
+
+func searchWindowCallback(hwnd uintptr, lParam uintptr) uintptr {
+	data := (*windowSearchData)(unsafe.Pointer(lParam))
+
+	visible, _, _ := isWindowVisible.Call(hwnd)
+	if visible == 0 {
+		return 1
+	}
+
+	var titleBuf [256]uint16
+	getWindowTextW.Call(hwnd, uintptr(unsafe.Pointer(&titleBuf[0])), 256)
+	title := strings.ToLower(syscall.UTF16ToString(titleBuf[:]))
+
+	if title != "" && strings.Contains(title, data.substring) {
+		data.found = true
+		return 0 // Stop enumeration
+	}
+	return 1
+}
+
 // windowEnumData is used to pass data to the EnumWindows callback
 type windowEnumData struct {
 	targetPID      uint32
@@ -388,7 +423,7 @@ func enumWindowsCallback(hwnd uintptr, lParam uintptr) uintptr {
 
 	// Get the process ID of this window
 	var windowPID uint32
-	getWindowThreadProcessId.Call(hwnd, uintptr(unsafe.Pointer(&windowPID)))
+	getWindowThreadProcessID.Call(hwnd, uintptr(unsafe.Pointer(&windowPID)))
 
 	// Check if this window belongs to our target process
 	if windowPID != data.targetPID {

@@ -339,15 +339,6 @@ func (quad *Quad) Load(category string, filename string) error {
 	}
 
 	LogInfo("Quad.Load", "category", category, "filename", filename)
-	isOn := theAttractManager.attractModeIsOn.Load()
-
-	// Don't publish a load message if we're in attract mode
-	if !isOn {
-		NatsPublishFromEngine("load", map[string]any{
-			"category": category,
-			"filename": filename,
-		})
-	}
 
 	var lasterr error
 

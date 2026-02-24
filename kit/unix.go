@@ -59,6 +59,10 @@ func KillByPid(pid int) {
 	Spawn("kill", false, noWriter, noWriter, "-9", fmt.Sprintf("%d", pid))
 }
 
+func FindWindowByTitleContains(substring string) bool {
+	return false
+}
+
 func IsRunningExecutable(exe string) (bool, error) {
 	err := fmt.Errorf("unix.go: IsRunningExecutable needs work")
 	return false, err
