@@ -305,30 +305,45 @@ func (r *Resolume) ProcessInfo() *ProcessInfo {
 }
 
 func (r *Resolume) Activate() {
-	// handle_activate sends OSC messages to start the layers in Resolume,
 	textLayer := r.TextLayerNum()
-	clipnum := 1
 
-	// Get number of activation attempts from parameter
-	numAttempts, err := GetParamInt("global.resolumeactivate")
+	// Get max wait time from parameter (reuse resolumeactivate as max attempts)
+	maxAttempts, err := GetParamInt("global.resolumeactivate")
 	if err != nil {
 		LogIfError(err)
-		numAttempts = 24 // fallback to default
+		maxAttempts = 24 // fallback to default
 	}
 
-	// do it a few times, in case Resolume hasn't started up
-	for i := 0; i < numAttempts; i++ {
+	// Wait for Resolume window to appear before sending activation OSC
+	windowFound := false
+	for i := 0; i < maxAttempts; i++ {
 		time.Sleep(5 * time.Second)
+		r.showClip(2) // show the "starting up" splash clip while waiting
+		if FindWindowByTitleContains("resolume") {
+			LogInfo("Resolume window detected", "attempt", i+1)
+			windowFound = true
+			break
+		}
+		LogOfType("resolume", "Waiting for Resolume window", "attempt", i+1, "of", maxAttempts)
+	}
 
+	if !windowFound {
+		LogWarn("Resolume window not detected after max attempts, activating anyway")
+	}
+
+	// Activate all layers a few times to make sure it takes
+	for i := 0; i < 3; i++ {
 		for _, patch := range PatchNames() {
 			_, layerNum := r.PortAndLayerNumForPatch(string(patch))
-			LogOfType("resolume", "Activating Resolume", "patch", layerNum, "clipnum", clipnum, "attempt", i+1, "of", numAttempts)
-			r.connectClip(layerNum, 1) // clip 1 in layer is the palette ffgl
+			LogOfType("resolume", "Activating Resolume", "patch", layerNum, "attempt", i+1)
+			r.connectClip(layerNum, 1)
 		}
-		r.showClip(2) // show the "starting up" splash clip in the text layer
+		r.showClip(2)
+		time.Sleep(2 * time.Second)
 	}
-	// show the animated text generator for preset names
-	r.connectClip(textLayer, clipnum)
+
+	// Show the animated text generator for preset names
+	r.connectClip(textLayer, 1)
 }
 
 func (r *Resolume) connectClip(layerNum int, clip int) {

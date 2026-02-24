@@ -58,7 +58,53 @@ body {
     justify-content: center;
 }
 
-.restart-message {
+#restart-modal {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+}
+
+#restart-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    padding: 30px;
+    border: 3px solid var(--button-border);
+    background: var(--bg);
+}
+
+.restart-btn {
+    color: #0ff;
+    background: var(--button-bg);
+    border: 2px solid var(--button-border);
+    font-size: 4vh;
+    font-weight: bold;
+    padding: 3vh 4vw;
+    cursor: pointer;
+    text-align: center;
+    min-width: 30vw;
+}
+
+.restart-btn:hover {
+    background: var(--highlight);
+}
+
+.restart-cancel {
+    color: #fff;
+    border-color: #666;
+}
+
+#restart-message {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+}
+
+.restart-message-text {
     color: #0ff;
     font-size: 5vh;
     font-weight: bold;

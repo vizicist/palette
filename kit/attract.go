@@ -122,10 +122,6 @@ func (am *AttractManager) setAttractMode(onoff bool) {
 	// am.attractMutex.Lock()
 	am.attractModeIsOn.Store(onoff)
 
-	NatsPublishFromEngine("attract", map[string]any{
-		"onoff": onoff,
-	})
-
 	if theQuad != nil {
 		for _, patch := range Patchs {
 			patch.clearGraphics()
