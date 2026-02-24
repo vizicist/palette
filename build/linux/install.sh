@@ -1,24 +1,54 @@
 #!/bin/bash
 
-# Install script for palette Linux binaries
+# Self-extracting installer for Palette Linux binaries
 # Installs to /usr/local/palette and creates symlinks in /usr/local/bin
+#
+# Usage:
+#   sudo ./palette_8.20_linux_amd64.sh
+#
+# Can also be used standalone with a zip file:
+#   sudo ./install.sh palette_8.20_linux_amd64.zip
 
 set -e  # Exit on error
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PALETTE_SOURCE="$(cd "$SCRIPT_DIR/../.." && pwd)"
 INSTALL_DIR="/usr/local/palette"
 BIN_DIR="/usr/local/bin"
 
-# Read version
-VERSION=$(cat "$PALETTE_SOURCE/VERSION")
-ZIP_FILE="$PALETTE_SOURCE/release/palette_${VERSION}_linux_amd64.zip"
+# Check if this script has a zip payload appended (self-extracting mode)
+ARCHIVE_MARKER="__ARCHIVE_BELOW__"
+ARCHIVE_LINE=$(grep -an "$ARCHIVE_MARKER" "$0" | tail -1 | cut -d: -f1)
 
-# Check if zip file exists
-if [ ! -f "$ZIP_FILE" ]; then
-    echo "Error: $ZIP_FILE not found"
-    echo "Run ./build.sh first to create the installer"
-    exit 1
+if [ -n "$ARCHIVE_LINE" ]; then
+    # Self-extracting mode: extract payload from this script
+    ZIP_FILE=$(mktemp /tmp/palette_install_XXXXXX.zip)
+    trap "rm -f '$ZIP_FILE'" EXIT
+    tail -n +$((ARCHIVE_LINE + 1)) "$0" > "$ZIP_FILE"
+    VERSION=$(unzip -p "$ZIP_FILE" VERSION 2>/dev/null || echo "unknown")
+else
+    # Standalone mode: find zip file from argument or auto-detect
+    ZIP_FILE="${1:-}"
+    if [ -z "$ZIP_FILE" ]; then
+        SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+        for dir in "." "$SCRIPT_DIR"; do
+            match=$(ls "$dir"/palette_*_linux_amd64.zip 2>/dev/null | head -1)
+            if [ -n "$match" ]; then
+                ZIP_FILE="$match"
+                break
+            fi
+        done
+    fi
+
+    # Convert to absolute path
+    if [ -n "$ZIP_FILE" ] && [ "${ZIP_FILE:0:1}" != "/" ]; then
+        ZIP_FILE="$(pwd)/$ZIP_FILE"
+    fi
+
+    if [ -z "$ZIP_FILE" ] || [ ! -f "$ZIP_FILE" ]; then
+        echo "Error: No palette zip file found"
+        echo "Usage: $0 [palette_VERSION_linux_amd64.zip]"
+        exit 1
+    fi
+    VERSION=$(basename "$ZIP_FILE" | sed 's/palette_\(.*\)_linux_amd64.zip/\1/')
 fi
 
 # Check for root/sudo
@@ -39,9 +69,7 @@ fi
 mkdir -p "$INSTALL_DIR"
 
 # Extract zip file, only updating files that are newer than existing ones
-# -u = update (only extract newer files or new files)
-# -o = overwrite without prompting
-echo "Extracting to $INSTALL_DIR (preserving newer existing files)..."
+echo "Extracting to $INSTALL_DIR..."
 unzip -uoq "$ZIP_FILE" -d "$INSTALL_DIR"
 
 # Make binaries executable
@@ -66,3 +94,4 @@ echo "  Owner: palette"
 echo "  Binaries linked to: $BIN_DIR"
 echo ""
 echo "You can now run: palette, palette_hub, palette_engine"
+exit 0

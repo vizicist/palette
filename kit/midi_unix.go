@@ -67,8 +67,8 @@ func NewMidiIO() *MidiIO {
 	}
 }
 
-// InitMIDI initializes stuff
-func InitMidiIO() {
+// InitMIDIIO initializes stuff
+func InitMIDIIO() {
 
 	for _, outp := range theMidiIO.outports {
 		name := outp.String()

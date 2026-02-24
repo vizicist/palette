@@ -74,34 +74,47 @@ func NatsConnectToHubAndSubscribe() {
 
 }
 
-func NatsConnectRemote() error {
+const localEnvPath = "/usr/local/palette/.env"
 
-	if natsIsConnected {
-		// Already connected
-		return fmt.Errorf("NatsConnectRemote: Already connected")
+func NatsConnectLocal() error {
+	myenv, err := godotenv.Read(localEnvPath)
+	if err != nil {
+		return fmt.Errorf("error reading %s: %w", localEnvPath, err)
 	}
+	url, ok := myenv["NATS_HUB_CLIENT_URL"]
+	if !ok || url == "" {
+		return fmt.Errorf("no NATS_HUB_CLIENT_URL in %s", localEnvPath)
+	}
+	return natsConnect(url)
+}
 
+func NatsConnectRemote() error {
 	url, err := NatsEnvValue("NATS_HUB_CLIENT_URL")
 	if err != nil {
 		return err
 	}
+	return natsConnect(url)
+}
 
-	// Connect Options.
+func natsConnect(url string) error {
+	if natsIsConnected {
+		return fmt.Errorf("natsConnect: Already connected")
+	}
+
 	opts := []nats.Option{nats.Name("Palette NATS Subscriber")}
 	opts = setupConnOptions(opts)
 
-	LogInfo("Calling nats.Connect B", "url", url)
+	LogInfo("Connecting to NATS", "url", maskURLPassword(url))
 
-	// Connect to NATS
 	nc, err := nats.Connect(url, opts...)
 	if err != nil {
 		natsIsConnected = false
-		return fmt.Errorf("nats.Connect failed, url=%s err=%w", url, err)
+		return fmt.Errorf("nats.Connect failed, url=%s err=%w", maskURLPassword(url), err)
 	}
 	natsIsConnected = true
 	natsConn = nc
 
-	LogInfo("Successful connect to remote NATS", "url", url)
+	LogInfo("Connected to NATS", "url", maskURLPassword(url))
 	return nil
 }
 
