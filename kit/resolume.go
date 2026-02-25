@@ -333,16 +333,16 @@ func (r *Resolume) Activate() {
 		LogInfo("Resolume window not detected after max attempts, activating anyway")
 	}
 
+	time.Sleep(5 * time.Second)
 	LogInfo("Sending showClip 2 OSC to Resolume")
 	r.showClip(2) // show the "starting up" splash clip while waiting
 	// Activate all layers a few times to make sure it takes
-	for i := 0; i < 3; i++ {
+	for i := 0; i < 24; i++ {
 		for _, patch := range PatchNames() {
 			_, layerNum := r.PortAndLayerNumForPatch(string(patch))
 			LogOfType("resolume", "Activating Resolume", "patch", layerNum, "attempt", i+1)
 			r.connectClip(layerNum, 1)
 		}
-		r.showClip(2)
 		time.Sleep(5 * time.Second)
 	}
 
