@@ -1,13 +1,14 @@
 package kit
 
 import (
-	json "github.com/goccy/go-json"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
+
+	json "github.com/goccy/go-json"
 
 	"github.com/hypebeast/go-osc/osc"
 )
@@ -264,7 +265,7 @@ func (r *Resolume) showText(text string) {
 
 // In text layer, clip 1 is the animated text generator for the preset names,
 // and clips 2,3,... are images for startup and reboot.
-func (r *Resolume) showClip(clipNum int) {
+func (r *Resolume) showTextLayerClip(clipNum int) {
 
 	textLayerNum := r.TextLayerNum()
 	r.connectClip(textLayerNum, clipNum) // activate that clip
@@ -289,7 +290,7 @@ func (r *Resolume) ProcessInfo() *ProcessInfo {
 			"C:/Program Files/Resolume Arena/Arena.exe",
 		}
 		fullpath = ""
-		for _,path := range(hardcoded) {
+		for _, path := range hardcoded {
 			if FileExists(path) {
 				fullpath = path
 				break
@@ -307,7 +308,6 @@ func (r *Resolume) ProcessInfo() *ProcessInfo {
 func (r *Resolume) Activate() {
 
 	LogInfo("Activating Resolume")
-	textLayer := r.TextLayerNum()
 
 	// Get max wait time from parameter (reuse resolumeactivate as max attempts)
 	maxAttempts, err := GetParamInt("global.resolumeactivate")
@@ -318,7 +318,7 @@ func (r *Resolume) Activate() {
 
 	// Wait for Resolume window to appear before sending activation OSC
 	windowFound := false
-	for i := 0; i < maxAttempts; i++ {
+	for i := 0; !windowFound && i < maxAttempts; i++ {
 		time.Sleep(5 * time.Second)
 		LogInfo("Checking for Resolume window", "attempt", i+1)
 		if FindWindowByTitleContains("resolume") {
@@ -335,19 +335,21 @@ func (r *Resolume) Activate() {
 
 	time.Sleep(5 * time.Second)
 	LogInfo("Sending showClip 2 OSC to Resolume")
-	r.showClip(2) // show the "starting up" splash clip while waiting
+	r.showTextLayerClip(2) // show the "starting up" splash clip while waiting
+
 	// Activate all layers a few times to make sure it takes
-	for i := 0; i < 24; i++ {
+	for i := 0; i < 12; i++ {
 		for _, patch := range PatchNames() {
 			_, layerNum := r.PortAndLayerNumForPatch(string(patch))
 			LogOfType("resolume", "Activating Resolume", "patch", layerNum, "attempt", i+1)
 			r.connectClip(layerNum, 1)
 		}
-		time.Sleep(5 * time.Second)
+		time.Sleep(10 * time.Second)
+		r.showTextLayerClip(1) // gets rid of the "starting up" clip
 	}
 
 	// Show the animated text generator for preset names
-	r.connectClip(textLayer, 1)
+	r.showTextLayerClip(1)
 }
 
 func (r *Resolume) connectClip(layerNum int, clip int) {

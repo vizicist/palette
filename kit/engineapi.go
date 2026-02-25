@@ -280,7 +280,7 @@ func globalShowClip(api string, apiargs map[string]string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("global.showclip: bad clipnum value: %w", err)
 	}
-	TheResolume().showClip(clipNum)
+	TheResolume().showTextLayerClip(clipNum)
 	return "", nil
 }
 
