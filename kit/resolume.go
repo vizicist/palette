@@ -305,6 +305,8 @@ func (r *Resolume) ProcessInfo() *ProcessInfo {
 }
 
 func (r *Resolume) Activate() {
+
+	LogInfo("Activating Resolume")
 	textLayer := r.TextLayerNum()
 
 	// Get max wait time from parameter (reuse resolumeactivate as max attempts)
@@ -318,7 +320,7 @@ func (r *Resolume) Activate() {
 	windowFound := false
 	for i := 0; i < maxAttempts; i++ {
 		time.Sleep(5 * time.Second)
-		r.showClip(2) // show the "starting up" splash clip while waiting
+		LogInfo("Checking for Resolume window", "attempt", i+1)
 		if FindWindowByTitleContains("resolume") {
 			LogInfo("Resolume window detected", "attempt", i+1)
 			windowFound = true
@@ -328,9 +330,11 @@ func (r *Resolume) Activate() {
 	}
 
 	if !windowFound {
-		LogWarn("Resolume window not detected after max attempts, activating anyway")
+		LogInfo("Resolume window not detected after max attempts, activating anyway")
 	}
 
+	LogInfo("Sending showClip 2 OSC to Resolume")
+	r.showClip(2) // show the "starting up" splash clip while waiting
 	// Activate all layers a few times to make sure it takes
 	for i := 0; i < 3; i++ {
 		for _, patch := range PatchNames() {
@@ -339,7 +343,7 @@ func (r *Resolume) Activate() {
 			r.connectClip(layerNum, 1)
 		}
 		r.showClip(2)
-		time.Sleep(2 * time.Second)
+		time.Sleep(5 * time.Second)
 	}
 
 	// Show the animated text generator for preset names
