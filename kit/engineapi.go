@@ -113,6 +113,10 @@ var globalAPIHandlers = map[string]globalAPIHandler{
 	"debug":              globalRemoved,
 	"set_tempo_factor":   globalSetTempoFactor,
 	"playcursor":         globalPlayCursor,
+	"obsrecord":          globalObsRecord,
+	"obsrecordstop":      globalObsRecordStop,
+	"obsrecordstatus":    globalObsRecordStatus,
+	"obssetup":           globalObsSetup,
 }
 
 func ExecuteGlobalAPI(api string, apiargs map[string]string) (string, error) {
@@ -290,6 +294,26 @@ func globalStartRecording(api string, apiargs map[string]string) (string, error)
 
 func globalStopRecording(api string, apiargs map[string]string) (string, error) {
 	return theEngine.StopRecording()
+}
+
+func globalObsRecord(api string, apiargs map[string]string) (string, error) {
+	return ObsRecordClip()
+}
+
+func globalObsRecordStop(api string, apiargs map[string]string) (string, error) {
+	return ObsRecordStop()
+}
+
+func globalObsRecordStatus(api string, apiargs map[string]string) (string, error) {
+	return ObsRecordStatus()
+}
+
+func globalObsSetup(api string, apiargs map[string]string) (string, error) {
+	err := ObsAutoSetup()
+	if err != nil {
+		return "", err
+	}
+	return `{"status":"ok"}`, nil
 }
 
 func globalStartPlayback(api string, apiargs map[string]string) (string, error) {
