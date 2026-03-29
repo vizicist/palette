@@ -7,7 +7,7 @@ toolchain go1.24.5
 require (
 	fyne.io/fyne/v2 v2.4.3
 	github.com/0xcafed00d/joystick v1.0.1
-	github.com/andreykaipov/goobs v1.5.4
+	github.com/andreykaipov/goobs v1.8.2
 	github.com/gempir/go-twitch-irc/v3 v3.3.0
 	github.com/goccy/go-json v0.10.5
 	github.com/hypebeast/go-osc v0.0.0-20220308234300-cec5a8a1e5f5
@@ -52,7 +52,7 @@ require (
 	github.com/rogpeppe/go-internal v1.13.1 // indirect
 	github.com/srwiley/oksvg v0.0.0-20221011165216-be6e8873101c // indirect
 	github.com/srwiley/rasterx v0.0.0-20220730225603-2ab79fcdd4ef // indirect
-	github.com/stretchr/testify v1.10.0 // indirect
+	github.com/stretchr/testify v1.11.1 // indirect
 	github.com/tevino/abool v1.2.0 // indirect
 	github.com/yuin/goldmark v1.5.5 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
