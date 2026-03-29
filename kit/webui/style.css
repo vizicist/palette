@@ -552,3 +552,15 @@ body {
     border-color: #0aa;
     background: #333;
 }
+
+/* Recording button */
+#btn-record.recording {
+    background: #c00;
+    color: #fff;
+    animation: record-pulse 1s ease-in-out infinite;
+}
+
+@keyframes record-pulse {
+    0%, 100% { background: #c00; }
+    50% { background: #800; }
+}

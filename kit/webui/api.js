@@ -60,5 +60,10 @@ const API = {
     },
     setGlobalParam(name, value) {
         return this.call('global.set', { name, value });
-    }
+    },
+
+    // OBS recording
+    obsRecord() { return this.call('global.obsrecord'); },
+    obsRecordStop() { return this.call('global.obsrecordstop'); },
+    obsRecordStatus() { return this.call('global.obsrecordstatus'); }
 };

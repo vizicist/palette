@@ -525,6 +525,30 @@ function setupControls() {
     document.getElementById('btn-help').addEventListener('click', () => {
         showHelp();
     });
+
+    document.getElementById('btn-record').addEventListener('click', async () => {
+        const btn = document.getElementById('btn-record');
+        if (btn.classList.contains('recording')) {
+            // Stop recording early
+            try {
+                await API.obsRecordStop();
+            } catch (e) {
+                console.error('Failed to stop recording:', e);
+            }
+            stopRecordUI();
+        } else {
+            // Start recording
+            try {
+                const result = await API.obsRecord();
+                if (result && result.recording) {
+                    startRecordUI(result.remaining);
+                }
+            } catch (e) {
+                console.error('Failed to start recording:', e);
+                btn.textContent = 'RECORD';
+            }
+        }
+    });
 }
 
 // Help overlay functionality
@@ -714,6 +738,43 @@ function hideRestartModal() {
 function showRestartMessage() {
     document.getElementById('restart-modal').classList.add('hidden');
     document.getElementById('restart-message').classList.remove('hidden');
+}
+
+// Recording UI
+let recordInterval = null;
+
+function startRecordUI(remaining) {
+    const btn = document.getElementById('btn-record');
+    btn.classList.add('recording');
+    updateRecordButton(remaining);
+
+    recordInterval = setInterval(async () => {
+        try {
+            const status = await API.obsRecordStatus();
+            if (status && status.recording) {
+                updateRecordButton(status.remaining);
+            } else {
+                stopRecordUI();
+            }
+        } catch (e) {
+            stopRecordUI();
+        }
+    }, 1000);
+}
+
+function updateRecordButton(remaining) {
+    const btn = document.getElementById('btn-record');
+    btn.innerHTML = `REC<br>${Math.round(remaining)}s`;
+}
+
+function stopRecordUI() {
+    const btn = document.getElementById('btn-record');
+    btn.classList.remove('recording');
+    btn.textContent = 'RECORD';
+    if (recordInterval) {
+        clearInterval(recordInterval);
+        recordInterval = null;
+    }
 }
 
 document.addEventListener('click', async (e) => {
