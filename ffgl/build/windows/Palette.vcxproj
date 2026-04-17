@@ -69,6 +69,7 @@
     <ClCompile Include="..\..\source\lib\palette\Layer.cpp" />
     <ClCompile Include="..\..\source\lib\palette\Scheduler.cpp" />
     <ClCompile Include="..\..\source\lib\palette\Sprite.cpp" />
+    <ClCompile Include="..\..\source\lib\palette\SvgSprite.cpp" />
     <ClCompile Include="..\..\source\lib\palette\TrackedCursor.cpp" />
     <ClCompile Include="..\..\source\plugins\Palette\FFGLPalette.cpp" />
   </ItemGroup>
@@ -124,6 +125,7 @@
     <ClInclude Include="..\..\source\lib\palette\Layer.h" />
     <ClInclude Include="..\..\source\lib\palette\Scheduler.h" />
     <ClInclude Include="..\..\source\lib\palette\Sprite.h" />
+    <ClInclude Include="..\..\source\lib\palette\SvgSprite.h" />
     <ClInclude Include="..\..\source\lib\palette\TrackedCursor.h" />
     <ClInclude Include="..\..\source\lib\pthreads\pthread.h" />
     <ClInclude Include="..\..\source\plugins\Palette\FFGLPalette.h" />
