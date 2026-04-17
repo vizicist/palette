@@ -37,9 +37,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupPatchSelector();
     setAdvancedMode(advancedMode);
 
+    // Hide the Record button until we confirm OBS is reachable.
+    updateRecordButtonVisibility();
+    setInterval(updateRecordButtonVisibility, 10000);
+
     // Start polling engine status every 2 seconds
     setInterval(pollStatus, 2000);
 });
+
+async function updateRecordButtonVisibility() {
+    const btn = document.getElementById('btn-record');
+    if (!btn) return;
+    let running = false;
+    try {
+        const result = await API.obsPing();
+        running = !!(result && result.running);
+    } catch (e) { /* treat errors as "not running" */ }
+    btn.style.display = running ? '' : 'none';
+}
 
 async function loadPresets() {
     const grid = document.getElementById('preset-grid');
@@ -228,12 +243,19 @@ async function loadParams() {
                     } else {
                         html += `<span class="param-value">${p.value}</span>`;
                         html += '<span class="param-controls">';
+                        const paramDef = cachedParamDefs ? cachedParamDefs[p.name] : null;
                         if (sliderCategory && isFloat) {
                             const val = parseFloat(p.value);
-                            html += `<input type="range" class="param-slider" min="0" max="1" step="0.01" value="${val}">`;
+                            const sMin = paramDef && paramDef.min !== undefined ? parseFloat(paramDef.min) : 0;
+                            const sMax = paramDef && paramDef.max !== undefined ? parseFloat(paramDef.max) : 1;
+                            const range = sMax - sMin;
+                            const step = range > 0 ? Math.max(range / 1000, 0.001) : 0.01;
+                            html += `<input type="range" class="param-slider" min="${sMin}" max="${sMax}" step="${step}" value="${val}">`;
                         } else if (sliderCategory && isInt) {
                             const val = parseInt(p.value);
-                            html += `<input type="range" class="param-slider param-slider-int" min="0" max="127" step="1" value="${val}">`;
+                            const sMin = paramDef && paramDef.min !== undefined ? parseInt(paramDef.min) : 0;
+                            const sMax = paramDef && paramDef.max !== undefined ? parseInt(paramDef.max) : 127;
+                            html += `<input type="range" class="param-slider param-slider-int" min="${sMin}" max="${sMax}" step="1" value="${val}">`;
                         } else if (isNumeric) {
                             html += `<button class="param-ctrl" data-action="dec2">--</button>`;
                             html += `<button class="param-ctrl" data-action="dec">-</button>`;
