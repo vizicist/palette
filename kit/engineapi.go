@@ -117,6 +117,7 @@ var globalAPIHandlers = map[string]globalAPIHandler{
 	"obsrecordstop":      globalObsRecordStop,
 	"obsrecordstatus":    globalObsRecordStatus,
 	"obssetup":           globalObsSetup,
+	"obsping":            globalObsPing,
 }
 
 func ExecuteGlobalAPI(api string, apiargs map[string]string) (string, error) {
@@ -314,6 +315,13 @@ func globalObsSetup(api string, apiargs map[string]string) (string, error) {
 		return "", err
 	}
 	return `{"status":"ok"}`, nil
+}
+
+func globalObsPing(api string, apiargs map[string]string) (string, error) {
+	if ObsIsRunning() {
+		return `{"running":true}`, nil
+	}
+	return `{"running":false}`, nil
 }
 
 func globalStartPlayback(api string, apiargs map[string]string) (string, error) {

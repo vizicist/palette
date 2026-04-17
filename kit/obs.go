@@ -2,6 +2,7 @@ package kit
 
 import (
 	"fmt"
+	"net"
 	"os"
 	"path/filepath"
 	"sync"
@@ -221,6 +222,19 @@ func ObsAutoSetup() error {
 
 	LogOfType("obs", "OBS auto-setup complete", "scene", obsSceneName, "recordDir", recordDir)
 	return nil
+}
+
+// ObsIsRunning probes the OBS WebSocket port with a short TCP dial.
+// Returns true iff something is accepting connections on localhost:4455 —
+// a quick, goobs-free check used by the web UI to decide whether to show
+// the Record button.
+func ObsIsRunning() bool {
+	conn, err := net.DialTimeout("tcp", "localhost:4455", 300*time.Millisecond)
+	if err != nil {
+		return false
+	}
+	_ = conn.Close()
+	return true
 }
 
 func ObsCommand(cmd string) error {
