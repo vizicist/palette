@@ -50,6 +50,7 @@ public:
 	void drawTriangle(SpriteParams& params, SpriteState& state, float x0, float y0, float x1, float y1, float x2, float y2);
 	void drawQuad(SpriteParams& params, SpriteState& state, float x0, float y0, float x1, float y1, float x2, float y2, float x3, float y3);
 	void drawEllipse(SpriteParams& params, SpriteState& state, float x0, float y0, float radius, float fromang=0.0f, float toang=360.0f);
+	void drawPolyline(SpriteParams& params, SpriteState& state, const glm::vec2* pts, int count);
 	void drawPolygon(PointMem* p, int npoints);
 
 	float finalAspect( float aspect );

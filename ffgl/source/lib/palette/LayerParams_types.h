@@ -89,6 +89,10 @@ LayerParams_InitializeTypes() {
 	LayerParams_shapeTypes.push_back("triangle");
 	LayerParams_shapeTypes.push_back("square");
 	LayerParams_shapeTypes.push_back("circle");
+	LayerParams_shapeTypes.push_back("sacred");
+	LayerParams_shapeTypes.push_back("chaos");
+	LayerParams_shapeTypes.push_back("oracle");
+	LayerParams_shapeTypes.push_back("directive");
 
 	LayerParams_morphtypeTypes.push_back("quadrants");
 	LayerParams_morphtypeTypes.push_back("corners");
