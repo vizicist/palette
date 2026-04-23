@@ -65,5 +65,6 @@ const API = {
     // OBS recording
     obsRecord() { return this.call('global.obsrecord'); },
     obsRecordStop() { return this.call('global.obsrecordstop'); },
-    obsRecordStatus() { return this.call('global.obsrecordstatus'); }
+    obsRecordStatus() { return this.call('global.obsrecordstatus'); },
+    obsPing() { return this.call('global.obsping'); }
 };
