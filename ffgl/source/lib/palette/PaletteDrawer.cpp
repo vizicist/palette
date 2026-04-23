@@ -319,6 +319,37 @@ void PaletteDrawer::drawLine( SpriteParams& params, SpriteState& state, float x0
 	glDrawArrays( GL_LINES, 0, 2 );
 }
 
+void PaletteDrawer::drawPolyline( SpriteParams& params, SpriteState& state, const glm::vec2* pts, int count )
+{
+	if( count < 2 )
+		return;
+	if( !prepareToDraw( params, state ) )
+		return;
+
+	ffglex::ScopedVAOBinding vaoBinding( vaoID );
+	ffglex::ScopedVBOBinding vboBinding( vboID );
+
+	// Chunk into runs that fit in the existing vertex buffer. Successive
+	// chunks repeat the last point of the previous chunk as their first,
+	// so the GL_LINE_STRIP segments connect seamlessly.
+	int idx = 0;
+	while( idx < count - 1 )
+	{
+		int remaining = count - idx;
+		int n         = remaining < MAX_VERTICES ? remaining : MAX_VERTICES;
+		for( int k = 0; k < n; ++k )
+		{
+			float s       = float( k ) / float( n > 1 ? n - 1 : 1 );
+			vertices[ k ] = { s, 1.0f, pts[ idx + k ].x, pts[ idx + k ].y, 0.0f };
+		}
+		glBufferSubData( GL_ARRAY_BUFFER, 0, n * sizeof( vertices[ 0 ] ), vertices );
+		glDrawArrays( GL_LINE_STRIP, 0, n );
+		if( n == remaining )
+			break;
+		idx += n - 1;
+	}
+}
+
 static float degree2radian( float deg )
 {
 	return 2.0f * (float)M_PI * deg / 360.0f;

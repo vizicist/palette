@@ -128,6 +128,9 @@
     <ClCompile Include="..\..\source\lib\palette\Sprite.cpp">
       <Filter>lib\palette</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\source\lib\palette\SvgSprite.cpp">
+      <Filter>lib\palette</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\source\lib\palette\Scheduler.cpp">
       <Filter>lib\palette</Filter>
     </ClCompile>
@@ -318,6 +321,9 @@
       <Filter>lib\palette</Filter>
     </ClInclude>
     <ClInclude Include="..\..\source\lib\palette\Sprite.h">
+      <Filter>lib\palette</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\lib\palette\SvgSprite.h">
       <Filter>lib\palette</Filter>
     </ClInclude>
     <ClInclude Include="..\..\source\lib\palette\PaletteAll.h">

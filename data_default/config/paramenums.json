@@ -10,7 +10,7 @@
 	"logic_visual": [ "default", "maze", "maze4", "maze33" ],
 	"quantstyle": [ "none", "frets", "fixed", "pressure" ],
 	"volstyle": [ "fixed", "pressure" ],
-  "shape": [ "line", "triangle", "square", "circle" ],
+  "shape": [ "line", "triangle", "square", "circle", "sacred", "chaos", "oracle", "directive" ],
   "morphtype": [ "quadrants", "corners", "A", "B", "C", "D" ],
   "midiinput": [ "microKEY", "microKEY2 Air", "" ],
   "movedir": [ "cursor", "left", "right", "up", "down", "random", "random90", "updown", "leftright" ],
