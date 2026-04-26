@@ -7,9 +7,12 @@ if not "%PALETTE_SOURCE%" == "" goto keepgoing1
 :keepgoing1
 
 if not "%VSINSTALLDIR%" == "" goto keepgoing2
-	echo Calling msdev22 to set build environment.
-	call ..\..\scripts\msdev22.bat
+	call :set_msdev_env
+	if errorlevel 1 goto getout
 :keepgoing2
+
+call :check_mingw64
+if errorlevel 1 goto getout
 
 set ship=%PALETTE_SOURCE%\build\windows\ship
 set bin=%ship%\bin
@@ -81,10 +84,20 @@ type %buildcmdsout%
 echo ================ Compiling FFGL plugin
 pushd %PALETTE_SOURCE%\ffgl\build\windows
 set PALETTE_DATA=default
-msbuild /t:Build /p:Configuration=Release /p:Platform="x64" Palette.vcxproj > nul
+msbuild /t:Build /p:Configuration=Release /p:Platform="x64" Palette.vcxproj >> %buildcmdsout% 2>&1
+if errorlevel 1 (
+	type %buildcmdsout%
+	popd
+	goto getout
+)
 popd
 
 echo ================ Copying FFGL plugin
+if not exist "%PALETTE_SOURCE%\ffgl\binaries\x64\Release\Palette*.dll" (
+	echo The FFGL plugin build did not create Palette*.dll under:
+	echo     %PALETTE_SOURCE%\ffgl\binaries\x64\Release
+	goto getout
+)
 pushd %PALETTE_SOURCE%\ffgl\binaries\x64\Release
 copy Palette*.dll %ship%\ffgl > nul
 copy Palette*.pdb %ship%\ffgl > nul
@@ -134,15 +147,18 @@ copy vc15\bin\depthai-core.dll %bin% >nul
 copy vc15\bin\opencv_world454.dll %bin% >nul
 copy "%USERPROFILE%\mingw64\bin\libwinpthread-1.dll" %bin% >nul
 copy "%USERPROFILE%\mingw64\bin\libgcc_s_seh-1.dll" %bin% >nul
-copy "%USERPROFILE%\mingw64\bin\libgcc_s_sjlj-1.dll" %bin% >nul
+if exist "%USERPROFILE%\mingw64\bin\libgcc_s_sjlj-1.dll" copy "%USERPROFILE%\mingw64\bin\libgcc_s_sjlj-1.dll" %bin% >nul
 copy "%USERPROFILE%\mingw64\bin\libstdc++-6.dll" %bin% >nul
 
 echo ================ Removing unused things
-rm -fr %bin%\pyinstalled\tcl\tzdata
+if exist %bin%\pyinstalled\tcl\tzdata rm -fr %bin%\pyinstalled\tcl\tzdata
 
 echo ================ Creating installer for VERSION %version%
 
-"c:\Program Files (x86)\Inno Setup 6\ISCC.exe" /Q palette_win_setup.iss
+call :find_inno_setup
+if errorlevel 1 goto getout
+
+"%ISCC_EXE%" /Q palette_win_setup.iss
 
 if not "%PALETTE_MMTT%" == "kinect" goto no_kinect
 move Output\palette_%version%_win_setup.exe %PALETTE_SOURCE%\release\palette_%version%_win_setup_with_kinect.exe >nul
@@ -157,3 +173,65 @@ rmdir Output
 
 :getout
 set PALETTE_VERSION=
+goto :eof
+
+:set_msdev_env
+set "vswhere=%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe"
+set "vcvars64="
+
+if not exist "%vswhere%" goto try_msdev_scripts
+
+for /f "usebackq delims=" %%i in (`"%vswhere%" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath`) do set "vcvars64=%%i\VC\Auxiliary\Build\vcvars64.bat"
+
+if "%vcvars64%" == "" goto try_msdev_scripts
+if not exist "%vcvars64%" goto try_msdev_scripts
+
+echo Calling "%vcvars64%" to set build environment.
+call "%vcvars64%"
+exit /b %ERRORLEVEL%
+
+:try_msdev_scripts
+for /f "delims=" %%i in ('dir /b /o-n "%~dp0..\..\scripts\msdev*.bat" 2^>nul') do call :try_msdev_script "%%i" && exit /b 0
+
+echo Unable to find a Visual Studio build environment.
+echo Install Visual Studio with C++ build tools, or add an msdev*.bat script under %PALETTE_SOURCE%\scripts.
+exit /b 1
+
+:try_msdev_script
+echo Calling %~1 to set build environment.
+call "%~dp0..\..\scripts\%~1"
+if not "%VSINSTALLDIR%" == "" exit /b 0
+exit /b 1
+
+:check_mingw64
+set "MINGW64_BIN=%USERPROFILE%\mingw64\bin"
+
+if not exist "%MINGW64_BIN%" goto missing_mingw64
+if not exist "%MINGW64_BIN%\gcc.exe" goto missing_mingw64
+if not exist "%MINGW64_BIN%\g++.exe" goto missing_mingw64
+
+set "PATH=%MINGW64_BIN%;%PATH%"
+set CGO_ENABLED=1
+exit /b 0
+
+:missing_mingw64
+echo MinGW-w64 is required for the Windows build, but it was not found.
+echo Expected gcc.exe and g++.exe under:
+echo     %MINGW64_BIN%
+echo Install MinGW-w64 there, or update build\windows\build_bin.bat if your install lives somewhere else.
+exit /b 1
+
+:find_inno_setup
+set "ISCC_EXE="
+
+for %%i in (ISCC.exe) do if not "%%~$PATH:i" == "" set "ISCC_EXE=%%~$PATH:i"
+
+if not "%ISCC_EXE%" == "" exit /b 0
+if exist "%ProgramFiles(x86)%\Inno Setup 6\ISCC.exe" set "ISCC_EXE=%ProgramFiles(x86)%\Inno Setup 6\ISCC.exe"
+if exist "%ProgramFiles%\Inno Setup 6\ISCC.exe" set "ISCC_EXE=%ProgramFiles%\Inno Setup 6\ISCC.exe"
+
+if not "%ISCC_EXE%" == "" exit /b 0
+
+echo Inno Setup 6 is required to create the Windows installer, but ISCC.exe was not found.
+echo Install Inno Setup 6, or add ISCC.exe to PATH.
+exit /b 1
