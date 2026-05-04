@@ -34,12 +34,13 @@ cp "$PALETTE_SOURCE/VERSION" "$SHIP/"
 
 build_cmd() {
     local name="$1"
+    shift
     local package_dir="$PALETTE_SOURCE/cmd/$name"
 
     echo "================ Building $name"
     (
         cd "$package_dir"
-        "$GO_BIN" build -o "$BIN/$name" .
+        "$GO_BIN" build "$@" -o "$BIN/$name" .
     )
 }
 
@@ -48,7 +49,7 @@ build_cmd palette_engine
 build_cmd palette_monitor
 build_cmd palette_chat
 build_cmd palette_hub
-build_cmd palette_remote
+build_cmd palette_remote -ldflags "-extldflags=-Wl,-no_warn_duplicate_libraries"
 build_cmd palette_natsmon
 
 copy_data_dir() {
@@ -59,6 +60,7 @@ copy_data_dir() {
         echo "================ Copying $name"
         /usr/bin/ditto "$source_dir" "$SHIP/$name"
         rm -rf "$SHIP/$name/config/chrome"
+        rm -rf "$SHIP/$name/logs"
         rm -f "$SHIP/$name/saved/global/_Boot.json"
     fi
 }
