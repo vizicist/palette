@@ -1,10 +1,12 @@
 #include "winsock.h"
+#include "mmsystem.h"
 #include "NosuchUtil.h"
 #include "NosuchOscInput.h"
 #include "NosuchOscUdpInput.h"
+#include <stdexcept>
 
 int
-OscSocketError(char *s)
+OscSocketError(const char *s)
 {
     int e = WSAGetLastError();
     NosuchDebug("OscSocketError: %s e=%d",s,e);
@@ -30,7 +32,11 @@ NosuchOscUdpInput::Listen() {
 
     struct sockaddr_in sin;
     struct sockaddr_in sin2;
+#ifdef _WIN32
     int sin2_len = sizeof(sin2);
+#else
+    socklen_t sin2_len = sizeof(sin2);
+#endif
 
     DWORD nbio = 1;
     PHOSTENT phe;
@@ -54,7 +60,7 @@ NosuchOscUdpInput::Listen() {
 	} else {
 		// Listen on all ip addresses
 	    sin.sin_port = htons(_myport);
-		sin.sin_addr.S_un.S_addr = INADDR_ANY;
+		sin.sin_addr.s_addr = INADDR_ANY;
 	}
 
     if (  ioctlsocket(s,FIONBIO,&nbio) < 0 ) {
@@ -66,7 +72,7 @@ NosuchOscUdpInput::Listen() {
 		if( e == WSAEADDRINUSE )
 		{
 			NosuchDebug("Palette: host=%s port=%d is already in use.",_myhost,_myport);
-            throw std::exception("Palette: host ");
+            throw std::runtime_error("Palette: host ");
 		}
 		else
 		{
@@ -91,7 +97,11 @@ NosuchOscUdpInput::Check()
 		return;
 
     struct sockaddr_in sin;
+#ifdef _WIN32
     int sin_len = sizeof(sin);
+#else
+    socklen_t sin_len = sizeof(sin);
+#endif
     char buf[8096];
 
     // NosuchDebug("OscCheck!");
@@ -135,4 +145,3 @@ NosuchOscUdpInput::UnListen()
     closesocket(_s);
     _s = INVALID_SOCKET;
 }
-

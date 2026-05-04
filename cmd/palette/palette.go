@@ -6,7 +6,6 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"syscall"
@@ -36,7 +35,9 @@ func main() {
 		kit.InitLog("palette")
 	}
 
-	kit.InitKit()
+	if !(len(args) > 0 && args[0] == "status") {
+		kit.InitKit()
+	}
 
 	// Connect to NATS if requested
 	if natsTarget != "" {
@@ -427,26 +428,30 @@ func ListenAndPrint(host string, port int) {
 func StatusOutput() (statusOut string, numRunning int) {
 	s := ""
 	nrunning := 0
-	running, err := kit.MonitorIsRunning()
+	running, err := kit.IsRunningExecutable(kit.MonitorExe)
 	if err == nil && running {
 		s += "Monitor is running.\n"
 		nrunning++
 	}
 
 	type Runnable struct {
-		processName string
-		userName    string
+		exe      string
+		userName string
 	}
 	var Runnables = []Runnable{
-		{"engine", "Engine"},
-		{"gui", "GUI"},
-		{"bidule", "Bidule"},
-		{"obs", "OBS"},
-		{"chat", "Chat monitor"},
-		{"resolume", "Resolume"},
+		{kit.EngineExe, "Engine"},
+		{kit.GuiExe, "GUI"},
+		{kit.BiduleExe, "Bidule"},
+		{kit.ObsExe, "OBS"},
+		{kit.ChatExe, "Chat monitor"},
+		{kit.ResolumeExe, "Resolume"},
 	}
 	for _, r := range Runnables {
-		running, err = kit.IsRunning(r.processName)
+		if r.userName == "GUI" {
+			running, err = kit.IsMacPaletteChromeRunning()
+		} else {
+			running, err = kit.IsRunningExecutable(r.exe)
+		}
 		if err == nil && running {
 			s += (r.userName + " is running.\n")
 			nrunning++
@@ -465,7 +470,7 @@ func StatusOutput() (statusOut string, numRunning int) {
 
 	mmtt := os.Getenv("PALETTE_MMTT")
 	if mmtt != "" && mmtt != "none" {
-		running, err := kit.IsRunning("mmtt")
+		running, err := kit.IsRunningExecutable(kit.MmttExe)
 		if err == nil && running {
 			s += "MMTT is running.\n"
 			nrunning++
@@ -480,7 +485,7 @@ func doStartEngine(arg string) error {
 	if err == nil && running {
 		return fmt.Errorf("engine is already running")
 	}
-	fullexe := filepath.Join(kit.PaletteDir(), "bin", kit.EngineExe)
+	fullexe := kit.PaletteBinaryPath(kit.EngineExe)
 	kit.LogInfo("palette: starting engine", "EngineExe", kit.EngineExe, "arg", arg)
 	_, err = kit.StartExecutableLogOutput("engine", fullexe, arg)
 	return err
@@ -494,7 +499,7 @@ func doStartMonitor() error {
 	// palette_monitor.exe will restart the engine,
 	// which then starts whatever global.process.* specifies.
 	kit.LogInfo("palette: starting monitor", "MonitorExe", kit.MonitorExe)
-	fullexe := filepath.Join(kit.PaletteDir(), "bin", kit.MonitorExe)
+	fullexe := kit.PaletteBinaryPath(kit.MonitorExe)
 	_, err = kit.StartExecutableLogOutput("monitor", fullexe)
 	return err
 }

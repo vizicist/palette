@@ -28,6 +28,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <float.h>
+#include <limits.h>
 #include <ctype.h>
 #include "cJSON.h"
 
@@ -120,15 +121,15 @@ static char *print_number(cJSON *item)
 	{
 		int nchars = 21;	// 2^64+1 can be represented in 21 chars.
 		str=(char*)cJSON_malloc(nchars);
-		sprintf_s(str,nchars,"%d",item->valueint);
+		snprintf(str,nchars,"%d",item->valueint);
 	}
 	else
 	{
 		int nchars = 64;	// This is a nice tradeoff.
 		str=(char*)cJSON_malloc(nchars);	// This is a nice tradeoff.
-		if (fabs(floor(d)-d)<=DBL_EPSILON)			sprintf_s(str,nchars,"%.0f",d);
-		else if (fabs(d)<1.0e-6 || fabs(d)>1.0e9)	sprintf_s(str,nchars,"%e",d);
-		else										sprintf_s(str,nchars,"%f",d);
+		if (fabs(floor(d)-d)<=DBL_EPSILON)			snprintf(str,nchars,"%.0f",d);
+		else if (fabs(d)<1.0e-6 || fabs(d)>1.0e9)	snprintf(str,nchars,"%e",d);
+		else										snprintf(str,nchars,"%f",d);
 	}
 	return str;
 }
@@ -491,4 +492,3 @@ cJSON *cJSON_CreateIntArray(int *numbers,int count)				{int i;cJSON *n=0,*p=0,*a
 cJSON *cJSON_CreateFloatArray(float *numbers,int count)			{int i;cJSON *n=0,*p=0,*a=cJSON_CreateArray();for(i=0;i<count;i++){n=cJSON_CreateNumber(numbers[i]);if(!i)a->child=n;else suffix_object(p,n);p=n;}return a;}
 cJSON *cJSON_CreateDoubleArray(double *numbers,int count)		{int i;cJSON *n=0,*p=0,*a=cJSON_CreateArray();for(i=0;i<count;i++){n=cJSON_CreateNumber(numbers[i]);if(!i)a->child=n;else suffix_object(p,n);p=n;}return a;}
 cJSON *cJSON_CreateStringArray(const char **strings,int count)	{int i;cJSON *n=0,*p=0,*a=cJSON_CreateArray();for(i=0;i<count;i++){n=cJSON_CreateString(strings[i]);if(!i)a->child=n;else suffix_object(p,n);p=n;}return a;}
-

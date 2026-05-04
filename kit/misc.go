@@ -79,20 +79,58 @@ func fileExists(filename string) bool {
 
 var paletteRoot string
 
-// PaletteDir is the value of environment variable PALETTE,
-// or /usr/local/palette on Linux if not set.
+// PaletteDir is the value of environment variable PALETTE, a detected source
+// checkout on macOS, or /usr/local/palette on Linux if not set.
 func PaletteDir() string {
 	if paletteRoot == "" {
 		paletteRoot = os.Getenv("PALETTE")
 		if paletteRoot == "" {
 			if runtime.GOOS == "linux" {
 				paletteRoot = "/usr/local/palette"
+			} else if runtime.GOOS == "darwin" {
+				paletteRoot = localSourceRoot()
 			} else {
+				LogWarn("PALETTE environment variable needs to be set.")
+			}
+			if paletteRoot == "" {
 				LogWarn("PALETTE environment variable needs to be set.")
 			}
 		}
 	}
 	return paletteRoot
+}
+
+func localSourceRoot() string {
+	dirs := []string{}
+	if cwd, err := os.Getwd(); err == nil {
+		dirs = append(dirs, cwd)
+	}
+	if currentExe, err := os.Executable(); err == nil {
+		dirs = append(dirs, filepath.Dir(currentExe))
+	}
+	for _, dir := range dirs {
+		if root := findSourceRoot(dir); root != "" {
+			return root
+		}
+	}
+	return ""
+}
+
+func findSourceRoot(start string) string {
+	dir, err := filepath.Abs(start)
+	if err != nil {
+		return ""
+	}
+	for {
+		if FileExists(filepath.Join(dir, "go.mod")) && fileExists(filepath.Join(dir, "data_default")) {
+			return dir
+		}
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			return ""
+		}
+		dir = parent
+	}
 }
 
 func GetPaletteVersion() string {
@@ -115,6 +153,8 @@ func PaletteDataPath() (datapath string) {
 	var basePath string
 	if runtime.GOOS == "windows" {
 		basePath = "C:\\Program Files\\Common Files\\Palette"
+	} else if paletteDir := PaletteDir(); paletteDir != "" {
+		basePath = paletteDir
 	} else {
 		basePath = "/usr/local/palette"
 	}

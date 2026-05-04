@@ -2,6 +2,9 @@
 
 #include <stdint.h>
 #include "NosuchUtil.h"
+#ifndef _WIN32
+#include <arpa/inet.h>
+#endif
 #include <iostream>
 #include <fstream>
 #include <algorithm>
@@ -70,6 +73,7 @@ int
 NosuchNetworkInit()
 {
   if ( ! NosuchNetworkInitialized ) {
+#ifdef _WIN32
 	int err;
 	WSADATA wsaData;
 	err = WSAStartup(MAKEWORD(1,1),&wsaData);
@@ -82,6 +86,7 @@ NosuchNetworkInit()
 		return 1;
 
 	}
+#endif
 	NosuchNetworkInitialized = 1;
   }
   return 0;
@@ -411,16 +416,21 @@ std::string ToNarrow( const wchar_t *s, char dfault, const std::locale& loc ) {
 
 std::wstring s2ws(const std::string& s)
 {
+#ifdef _WIN32
     int len;
     int slength = (int)s.length() + 1;
     len = MultiByteToWideChar(CP_ACP, 0, s.c_str(), slength, 0, 0); 
     std::wstring r(len, L'\0');
     MultiByteToWideChar(CP_ACP, 0, s.c_str(), slength, &r[0], len);
     return r;
+#else
+    return std::wstring(s.begin(), s.end());
+#endif
 }
 
 std::string ws2s(const std::wstring& s)
 {
+#ifdef _WIN32
     int len;
     int slength = (int)s.length() + 1;
 	// First figure out the length of the result, to allocate enough space
@@ -428,6 +438,9 @@ std::string ws2s(const std::wstring& s)
 	char* r = new char[len];  // includes the null character
     WideCharToMultiByte(CP_ACP, 0, s.c_str(), slength, r, len, 0, 0); 
 	std::string rs = std::string(r);
-	delete r;
+	delete[] r;
     return rs;
+#else
+    return std::string(s.begin(), s.end());
+#endif
 }

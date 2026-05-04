@@ -1,6 +1,8 @@
 #include <string>
 #include <sstream>
+#ifdef _WIN32
 #include <intrin.h>
+#endif
 #include <float.h>
 
 #include "PaletteAll.h"

@@ -22,7 +22,7 @@ class LayerParams : public Params {
 public:
 	LayerParams() {
 #undef INIT_PARAM
-#define INIT_PARAM( name, def ) ; name = ##def ;
+#define INIT_PARAM( name, def ) ; name = def ;
 #include "LayerParams_init.h"
 	}
 

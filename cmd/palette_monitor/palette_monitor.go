@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"os/exec"
-	"path/filepath"
 	"time"
 
 	"github.com/0xcafed00d/joystick"
@@ -90,7 +89,7 @@ func checkEngine() {
 			kit.LogInfo("checkEngine: engine is not running, killing everything, monitor should restart engine.")
 			kit.KillAllExceptMonitor()
 			kit.LogInfo("checkEngine: restarting engine")
-			fullexe := filepath.Join(kit.PaletteDir(), "bin", kit.EngineExe)
+			fullexe := kit.PaletteBinaryPath(kit.EngineExe)
 			_, err := kit.StartExecutableLogOutput(kit.EngineExe, fullexe)
 			kit.LogIfError(err)
 		}

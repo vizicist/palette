@@ -18,7 +18,7 @@ public:
 		LayerParams& rp = r->params;
 
 #undef INIT_PARAM
-#define INIT_PARAM(name,def) name = rp.##name;
+#define INIT_PARAM(name,def) name = rp.name;
 #include "LayerParams_init.h"
 	}
 

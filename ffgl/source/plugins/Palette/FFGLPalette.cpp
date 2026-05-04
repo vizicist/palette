@@ -4,6 +4,15 @@
 #include <math.h>//floor
 using namespace ffglex;
 
+static void* paletteThreadId()
+{
+#ifdef _WIN32
+	return pthread_self().p;
+#else
+	return (void*)pthread_self();
+#endif
+}
+
 enum ParamType : FFUInt32
 {
 	PT_OSC_PORT,
@@ -25,6 +34,7 @@ static CFFGLPluginInfo PluginInfo(
 //////////////////////////////////////////////////////////////////
 // Plugin dll entry point
 //////////////////////////////////////////////////////////////////
+#ifdef _WIN32
 BOOL APIENTRY DllMain( HANDLE hModule, DWORD ul_reason_for_call, LPVOID lpReserved )
 {
 	char dllpath[ MAX_PATH ];
@@ -32,7 +42,7 @@ BOOL APIENTRY DllMain( HANDLE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 
 	if( ul_reason_for_call == DLL_PROCESS_ATTACH )
 	{
-		NosuchDebugSetThreadName( pthread_self().p, "PALETTE_DLL" );
+		NosuchDebugSetThreadName( paletteThreadId(), "PALETTE_DLL" );
 		NosuchDebug( 1, "DllMain: DLLPROCESS_ATTACH dll=%s", dllpath );
 	}
 	if( ul_reason_for_call == DLL_PROCESS_DETACH )
@@ -49,6 +59,7 @@ BOOL APIENTRY DllMain( HANDLE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 	}
 	return TRUE;
 }
+#endif
 
 FFGLPalette::FFGLPalette() : CFFGLPlugin()
 {
@@ -83,7 +94,7 @@ FFResult FFGLPalette::ProcessOpenGL( ProcessOpenGLStruct* pGL )
 
 	if( !PaletteFFThreadNameSet )
 	{
-		NosuchDebugSetThreadName( pthread_self().p, "ProcessOpenGL" );
+		NosuchDebugSetThreadName( paletteThreadId(), "ProcessOpenGL" );
 		PaletteFFThreadNameSet = true;
 	}
 
