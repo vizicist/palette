@@ -1,0 +1,173 @@
+:root {
+    --bg: #050607;
+    --shell: #0b0d0f;
+    --line: #16c7c9;
+    --line-soft: rgba(22, 199, 201, 0.42);
+    --screen: #020303;
+    --pad: #212529;
+    --pad-active: #0b696d;
+    --text: #f5f7f7;
+    --muted: #91a1a4;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+}
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, sans-serif;
+    overflow: hidden;
+    touch-action: none;
+    user-select: none;
+}
+
+body.show-pad-labels .pad {
+    color: var(--text);
+}
+
+#remote-shell {
+    min-height: 100%;
+    display: grid;
+    grid-template-rows: 1fr auto;
+    gap: 10px;
+    padding: clamp(10px, 2.2vw, 22px);
+}
+
+#palette-controller {
+    position: relative;
+    width: min(96vw, 150vh);
+    aspect-ratio: 1.62;
+    align-self: center;
+    justify-self: center;
+    border: clamp(4px, 0.8vw, 10px) solid var(--line);
+    border-radius: 50%;
+    background:
+        radial-gradient(ellipse at center, #11171a 0%, var(--shell) 62%, #050607 100%);
+    box-shadow: 0 0 26px rgba(22, 199, 201, 0.24), inset 0 0 36px rgba(0, 0, 0, 0.84);
+    overflow: hidden;
+    touch-action: none;
+}
+
+.pad {
+    position: absolute;
+    width: 26%;
+    height: 25%;
+    display: grid;
+    place-items: center;
+    padding-top: 12%;
+    background: linear-gradient(180deg, #303438 0%, #25292c 18%, var(--pad) 100%);
+    border: 2px solid rgba(22, 199, 201, 0.38);
+    color: transparent;
+    font-size: clamp(28px, 7vw, 76px);
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+    touch-action: none;
+    overflow: hidden;
+    box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.55);
+}
+
+.pad::before {
+    content: "";
+    position: absolute;
+    left: 7%;
+    right: 7%;
+    top: 7%;
+    height: 13%;
+    background: linear-gradient(180deg, #f5f6ef, #cfd3c9);
+    border-radius: 2px;
+    box-shadow: 0 1px 0 rgba(22, 199, 201, 0.85);
+}
+
+.pad.active {
+    background: var(--pad-active);
+    border-color: var(--line);
+}
+
+.pad-a {
+    left: 9%;
+    top: 25%;
+    border-radius: 6px;
+}
+
+.pad-d {
+    right: 9%;
+    top: 25%;
+    border-radius: 6px;
+}
+
+.pad-b {
+    left: 24%;
+    bottom: 10%;
+    border-radius: 6px;
+}
+
+.pad-c {
+    right: 24%;
+    bottom: 10%;
+    border-radius: 6px;
+}
+
+#touchscreen {
+    position: absolute;
+    left: 39%;
+    top: 5%;
+    width: 22%;
+    height: 58%;
+    background: var(--screen);
+    border: 3px solid #b58d24;
+    box-shadow: 0 0 0 2px #080909, inset 0 0 20px rgba(0, 0, 0, 0.85);
+    overflow: hidden;
+}
+
+#gui-frame {
+    width: 300%;
+    height: 300%;
+    border: 0;
+    background: #000;
+    transform: scale(0.33333);
+    transform-origin: 0 0;
+}
+
+#touch-layer {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+#touch-layer.active {
+    background: rgba(22, 199, 201, 0.08);
+}
+
+#status {
+    display: flex;
+    justify-content: center;
+    gap: 14px;
+    color: var(--muted);
+    font-size: clamp(12px, 2vw, 16px);
+    min-height: 22px;
+}
+
+#transport-state.ready {
+    color: #67d79b;
+}
+
+#transport-state.error {
+    color: #ff8f8f;
+}
+
+@media (orientation: portrait) {
+    #palette-controller {
+        width: 96vw;
+        max-height: 86vh;
+    }
+}

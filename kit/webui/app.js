@@ -15,6 +15,11 @@ let attractAllowGui = false;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('touchscreen') === '1') {
+        document.body.classList.add('touchscreen-embed');
+    }
+
     // Check guidefaultlevel to determine initial mode
     try {
         const level = await API.call('global.get', { name: 'global.guidefaultlevel' });
