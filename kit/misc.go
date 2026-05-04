@@ -27,6 +27,7 @@ var oscPort = 3333
 var guiPort = 3943
 var mmttHTTPPort = 4444
 var engineHTTPPort = 3330
+var engineHTTPBindAddress = "0.0.0.0"
 var eventClientPort = 6666
 var LocalAddress = "127.0.0.1"
 var theRand *rand.Rand

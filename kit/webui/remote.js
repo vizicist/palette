@@ -109,7 +109,7 @@
         const rect = el.getBoundingClientRect();
         return {
             x: clamp((event.clientX - rect.left) / rect.width),
-            y: clamp((event.clientY - rect.top) / rect.height)
+            y: 1 - clamp((event.clientY - rect.top) / rect.height)
         };
     }
 

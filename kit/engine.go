@@ -408,7 +408,7 @@ func (e *Engine) StartHTTP(port int) {
 		}
 	})
 
-	source := fmt.Sprintf("%s:%d", LocalAddress, port)
+	source := fmt.Sprintf("%s:%d", engineHTTPBindAddress, port)
 	err := http.ListenAndServe(source, nil)
 	if err != nil {
 		LogIfError(err)
