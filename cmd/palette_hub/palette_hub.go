@@ -100,7 +100,8 @@ func HubCommand(args []string) (map[string]string, error) {
 		return map[string]string{"result": result}, nil
 	}
 
-	// Connect to local NATS server using /usr/local/palette/.env credentials
+	// Connect to the configured NATS server using NATS_URL from the environment
+	// or the Palette env file.
 	err := kit.NatsConnectLocal()
 	if err != nil {
 		return map[string]string{"error": err.Error()}, nil

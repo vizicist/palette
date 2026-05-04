@@ -22,6 +22,11 @@ COMMON_FLAGS=(
     -DNDEBUG=1
     -D_NDEBUG=1
     -DTARGET_OS_MAC=1
+    -DGL_SILENCE_DEPRECATION=1
+    -Wno-deprecated-declarations
+    -Wno-deprecated
+    -Wno-writable-strings
+    -Wno-implicit-const-int-float-conversion
     -I"$FFGL_DIR/source/lib/macos_compat"
     -I"$FFGL_DIR/source/lib"
     -I"$FFGL_DIR/source/lib/ffgl"

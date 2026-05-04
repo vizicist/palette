@@ -5,9 +5,14 @@ cmd/palette_hub/palettes
 build/windows/vcvars64.err
 data/recordings/*
 binaries/tcltk90/*
+release/*.exe
+release/*.zip
 data/logs
 data_default/logs
 data_default/logs/*
+data_default/config/chrome/
+data_default/saved/archive/*.zip
+data_default/saved/global/_Boot.json
 data_cloud/logs
 data_cloud/logs/*
 default.bidule.previous
@@ -49,6 +54,8 @@ badffgl
 binaries_save_good
 gui/build
 *.ipch
+*.sdf
+*.pdb
 __debug_bin
 config_orig
 snap_save_all
@@ -97,6 +104,8 @@ cmd/palette/palette
 cmd/palette_natsmon/palette_natsmon
 cmd/palette_monitor/palette_monitor
 .claude/settings.local.json
+.claude/worktrees/
+mmtt_kinect/src/opencv/build/
 cmd/palette_hub/palette_hub.exe
 cmd/palette_hub/palette_hub.exe
 cmd/palette_hub/palette_hub.exe
