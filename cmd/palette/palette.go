@@ -64,6 +64,7 @@ func usage() string {
 	return `Usage:
 	palette [-nats {hostname}] start [ {processname} ]
 	palette [-nats {hostname}] stop [ {processname}]
+	palette [-nats {hostname}] activate [ {processname} ]
 	palette status
 	palette version
 	palette env [ set {name} {value} | get {name} ]
@@ -307,6 +308,16 @@ func CliCommand(args []string) (map[string]string, error) {
 			param := "global.process." + arg1
 			return EngineAPI("global.set", "name", param, "value", "false")
 		}
+
+	case "activate":
+		if len(args) > 2 {
+			return nil, fmt.Errorf("bad activate command, expected usage:\n%s", usage())
+		}
+		process := arg1
+		if process == "" {
+			process = "resolume"
+		}
+		return EngineAPI("global.activate", "process", process)
 
 	case "version":
 		s := kit.GetPaletteVersion()

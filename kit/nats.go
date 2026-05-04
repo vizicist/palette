@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"os"
 	"strings"
 	"time"
 
@@ -40,7 +41,7 @@ func NatsConnectToHubAndSubscribe() {
 		return
 	}
 
-	url, err := NatsEnvValue("NATS_HUB_CLIENT_URL")
+	url, err := NatsEnvValue("NATS_URL")
 	if err != nil {
 		LogError(err)
 		return
@@ -74,22 +75,16 @@ func NatsConnectToHubAndSubscribe() {
 
 }
 
-const localEnvPath = "/usr/local/palette/.env"
-
 func NatsConnectLocal() error {
-	myenv, err := godotenv.Read(localEnvPath)
+	url, err := NatsEnvValue("NATS_URL")
 	if err != nil {
-		return fmt.Errorf("error reading %s: %w", localEnvPath, err)
-	}
-	url, ok := myenv["NATS_HUB_CLIENT_URL"]
-	if !ok || url == "" {
-		return fmt.Errorf("no NATS_HUB_CLIENT_URL in %s", localEnvPath)
+		return err
 	}
 	return natsConnect(url)
 }
 
 func NatsConnectRemote() error {
-	url, err := NatsEnvValue("NATS_HUB_CLIENT_URL")
+	url, err := NatsEnvValue("NATS_URL")
 	if err != nil {
 		return err
 	}
@@ -351,13 +346,24 @@ func NatsDisconnect() {
 }
 
 func NatsEnvValue(key string) (string, error) {
+	if s := os.Getenv(key); s != "" {
+		return s, nil
+	}
+	if key == "NATS_URL" {
+		if s := os.Getenv("NATS_HUB_CLIENT_URL"); s != "" {
+			return s, nil
+		}
+	}
 	path := EnvFilePath()
 	myenv, err := godotenv.Read(path)
 	if err != nil {
-		return "", fmt.Errorf("error reading env file (%s) for NATS_*_URL values", path)
+		return "", fmt.Errorf("no %s environment variable and error reading env file (%s) for NATS_*_URL values", key, path)
 	}
 	s, ok := myenv[key]
-	if !ok {
+	if (!ok || s == "") && key == "NATS_URL" {
+		s, ok = myenv["NATS_HUB_CLIENT_URL"]
+	}
+	if !ok || s == "" {
 		return "", fmt.Errorf("no %s value, use 'palette env set' to set", key)
 	}
 	return s, nil
