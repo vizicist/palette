@@ -29,7 +29,7 @@ func main() {
 	args := flag.Args()
 
 	// If we're doing any log commands, use stdout
-	doingLogs := (len(args) > 0 && args[0] == "logs")
+	doingLogs := (len(args) > 0 && (args[0] == "log" || args[0] == "logs"))
 	if doingLogs {
 		kit.InitLog("")
 	} else {
@@ -66,7 +66,7 @@ func usage() string {
 	palette status
 	palette version
 	palette env [ set {name} {value} | get {name} ]
-	palette logs [ archive, clear ]
+	palette log [ archive | clear | types ]
 	palette summarize {logfile}
 	palette osc listen {port@host}
 	palette osc send {port@host} {addr} ...
@@ -319,7 +319,7 @@ func CliCommand(args []string) (map[string]string, error) {
 			return nil, fmt.Errorf("unknown mmtt command - %s", arg1)
 		}
 
-	case "logs":
+	case "log", "logs":
 		switch arg1 {
 		case "archive":
 			// Make sure nothing is running.
@@ -332,8 +332,10 @@ func CliCommand(args []string) (map[string]string, error) {
 			return nil, kit.ClearLogs()
 			// case "tail":
 			// 	return nil, kit.TailLogs()
+		case "types":
+			return map[string]string{"result": strings.Join(kit.LogTypeNames(), "\n")}, nil
 		}
-		return nil, fmt.Errorf("invalid logs command: %s", arg1)
+		return nil, fmt.Errorf("invalid log command: %s", arg1)
 
 	case "test":
 		switch arg1 {

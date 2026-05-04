@@ -50,6 +50,8 @@ func ExecuteAPI(api string, apiargs map[string]string) (result string, err error
 			return "", fmt.Errorf("no such patch: %s", patchName)
 		}
 		return patch.API(apisuffix, apiargs)
+	case "cursor":
+		return ExecuteCursorAPI(apisuffix, apiargs)
 	default:
 		return "", fmt.Errorf("unknown apitype: %s", apitype)
 	}
@@ -155,12 +157,14 @@ func globalStatus(api string, apiargs map[string]string) (string, error) {
 		return JSONObject(
 			"uptime", uptime,
 			"attractmode", attractmode,
+			"hostname", Hostname(),
 		), nil
 	}
 	return JSONObject(
 		"uptime", uptime,
 		"attractmode", attractmode,
 		"natsconnected", natsConnected,
+		"hostname", Hostname(),
 		"A", Patchs["A"].Status(),
 		"B", Patchs["B"].Status(),
 		"C", Patchs["C"].Status(),

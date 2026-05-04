@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -40,17 +41,17 @@ func zapEncoderConfig() zapcore.EncoderConfig {
 	// stacktraceKey = "stacktrace" // use this if you want to get stack traces
 
 	config := zapcore.EncoderConfig{
-		MessageKey:    "msg",
-		LevelKey:      "",
-		NameKey:       "name",
-		TimeKey:       "", // uptime removed - absolute "time" field added via appendExtraValues
-		CallerKey:     "", // "caller",
-		FunctionKey:   "", // "function",
-		StacktraceKey: stacktraceKey,
-		LineEnding:    "\n",
-		EncodeLevel:   zapcore.LowercaseLevelEncoder,
+		MessageKey:     "msg",
+		LevelKey:       "",
+		NameKey:        "name",
+		TimeKey:        "", // uptime removed - absolute "time" field added via appendExtraValues
+		CallerKey:      "", // "caller",
+		FunctionKey:    "", // "function",
+		StacktraceKey:  stacktraceKey,
+		LineEnding:     "\n",
+		EncodeLevel:    zapcore.LowercaseLevelEncoder,
 		EncodeDuration: zapcore.SecondsDurationEncoder,
-		EncodeCaller:  zapcore.ShortCallerEncoder,
+		EncodeCaller:   zapcore.ShortCallerEncoder,
 	}
 	return config
 }
@@ -289,6 +290,15 @@ var LogEnabled = map[string]bool{
 	"task":           false,
 	"transpose":      false,
 	"value":          false,
+}
+
+func LogTypeNames() []string {
+	names := make([]string, 0, len(LogEnabled))
+	for name := range LogEnabled {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	return names
 }
 
 /*

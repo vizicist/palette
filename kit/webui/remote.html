@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Palette Remote</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <link rel="stylesheet" href="remote.css?v=16">
+</head>
+<body>
+    <main id="remote-shell">
+        <section id="palette-controller" aria-label="Palette remote controller">
+            <div class="pad pad-a" data-source="A" aria-label="Pad A">A</div>
+            <div class="pad pad-d" data-source="D" aria-label="Pad D">D</div>
+            <div class="pad pad-b" data-source="B" aria-label="Pad B">B</div>
+            <div class="pad pad-c" data-source="C" aria-label="Pad C">C</div>
+
+            <section id="touchscreen" aria-label="Palette touchscreen mirror">
+                <iframe id="gui-frame" src="/?touchscreen=1"></iframe>
+                <div id="touch-layer"></div>
+            </section>
+        </section>
+        <div id="status">
+            <span id="transport-state">NATS connecting</span>
+            <span id="target-host"></span>
+        </div>
+    </main>
+
+    <script src="remote.js?v=16"></script>
+</body>
+</html>
