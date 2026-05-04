@@ -342,18 +342,39 @@ func (w *FileWriter) Write(p []byte) (n int, err error) {
 	} else {
 		s = string(p)
 	}
-	// Hack to avoid logging things that resolume always logs
-	if w.Exe == "resolume" && (strings.Contains(s, "Logging input channels") ||
-		strings.Contains(s, "Logging output channels") ||
-		strings.Contains(s, "Logging midi input devices") ||
-		strings.Contains(s, "Internal MIDI") ||
-		strings.Contains(s, "Sensel MIDI") ||
-		strings.Contains(s, "Could not find preset")) {
-		// don't log it
-	} else {
+	if !IgnoreExecutableOutput(w.Exe, s) {
 		LogInfo("ExecutableOutput", "exe", w.Exe, "output", s)
 	}
 	return len(p), nil
+}
+
+func IgnoreExecutableOutput(exe string, output string) bool {
+	switch exe {
+	case "resolume":
+		return strings.Contains(output, "Logging input channels") ||
+			strings.Contains(output, "Logging output channels") ||
+			strings.Contains(output, "Logging midi input devices") ||
+			strings.Contains(output, "Internal MIDI") ||
+			strings.Contains(output, "Sensel MIDI") ||
+			strings.Contains(output, "Could not find preset")
+	case "gui":
+		return isIgnoredChromeOutput(output)
+	default:
+		return false
+	}
+}
+
+func isIgnoredChromeOutput(output string) bool {
+	ignored := []string{
+		"DEPRECATED_ENDPOINT",
+		"google_apis\\gcm\\engine\\registration_request.cc",
+	}
+	for _, pattern := range ignored {
+		if strings.Contains(output, pattern) {
+			return true
+		}
+	}
+	return false
 }
 
 func (w *NoWriter) Write(p []byte) (n int, err error) {

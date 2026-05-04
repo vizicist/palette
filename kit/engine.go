@@ -362,6 +362,52 @@ func (e *Engine) StartHTTP(port int) {
 		}
 	})
 
+	http.HandleFunc("/nats/api", func(responseWriter http.ResponseWriter, req *http.Request) {
+
+		responseWriter.Header().Set("Content-Type", "application/json")
+		responseWriter.WriteHeader(http.StatusOK)
+
+		response := ""
+		defer func() {
+			_, err := responseWriter.Write([]byte(response))
+			if err != nil {
+				LogIfError(err)
+			}
+		}()
+
+		if req.Method != "POST" {
+			response = ErrorResponse(fmt.Errorf("NATS API proxy unable to handle method=%s", req.Method))
+			return
+		}
+
+		body, err := io.ReadAll(req.Body)
+		if err != nil {
+			response = ErrorResponse(err)
+			return
+		}
+
+		args, err := StringMap(string(body))
+		if err != nil {
+			response = ErrorResponse(fmt.Errorf("NATS API proxy: bad JSON format"))
+			return
+		}
+		host := ExtractAndRemoveValueOf("host", args)
+		if host == "" {
+			host = Hostname()
+		}
+
+		bytes, err := json.Marshal(args)
+		if err != nil {
+			response = ErrorResponse(err)
+			return
+		}
+
+		response, err = EngineNatsAPI(host, string(bytes), time.Second)
+		if err != nil {
+			response = ErrorResponse(err)
+		}
+	})
+
 	source := fmt.Sprintf("%s:%d", LocalAddress, port)
 	err := http.ListenAndServe(source, nil)
 	if err != nil {
