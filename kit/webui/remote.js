@@ -10,6 +10,7 @@
     const pressureRisePerSecond = 0.55;
     const lingerMoveTolerance = 0.018;
     let targetHost = params.get('host') || '';
+    let localHost = '';
     let nextGid = Math.floor(Date.now() % 1000000);
     let lastSentAt = 0;
     let natsConnected = false;
@@ -21,7 +22,7 @@
             document.body.classList.add('show-pad-labels');
         }
         await loadTargetHost();
-        setTransportState(natsConnected ? 'ready' : 'error', natsConnected ? 'NATS proxy ready' : 'NATS disconnected');
+        updateTransportState();
         document.querySelectorAll('.pad').forEach(bindSurface);
     }
 
@@ -39,13 +40,19 @@
             const data = await resp.json();
             let status = data.result;
             if (typeof status === 'string') status = JSON.parse(status);
-            targetHost = status.hostname || '';
+            localHost = status.hostname || '';
+            targetHost = localHost;
             natsConnected = status.natsconnected === true || status.natsconnected === 'true';
         } catch (err) {
             targetHost = '';
+            localHost = '';
             natsConnected = false;
         }
         targetHostEl.textContent = targetHost || 'local Palette';
+    }
+
+    function shouldUseLocalApi(payload) {
+        return !natsConnected && (!payload.host || payload.host === localHost || payload.host === targetHost);
     }
 
     function bindSurface(el) {
@@ -158,7 +165,7 @@
             z: active.pressure.toFixed(5),
             area: '0.00100'
         };
-        postNats(payload);
+        postPaletteApi(payload);
     }
 
     async function sendPointerEvent(ddu, event, active, immediate) {
@@ -177,9 +184,33 @@
         };
 
         if (immediate) {
-            await postNats(payload);
+            await postPaletteApi(payload);
         } else {
-            postNats(payload);
+            postPaletteApi(payload);
+        }
+    }
+
+    async function postPaletteApi(payload) {
+        if (shouldUseLocalApi(payload)) {
+            return postLocal(payload);
+        }
+        return postNats(payload);
+    }
+
+    async function postLocal(payload) {
+        try {
+            const localPayload = Object.assign({}, payload);
+            delete localPayload.host;
+            const resp = await fetch('/api', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(localPayload)
+            });
+            const data = await resp.json();
+            if (!resp.ok || data.error) throw new Error(data.error || resp.statusText);
+            setTransportState('ready', 'Local API ready');
+        } catch (err) {
+            setTransportState('error', err.message || 'Local API error');
         }
     }
 
@@ -195,6 +226,16 @@
             setTransportState('ready', 'NATS proxy ready');
         } catch (err) {
             setTransportState('error', err.message || 'NATS proxy error');
+        }
+    }
+
+    function updateTransportState() {
+        if (natsConnected) {
+            setTransportState('ready', 'NATS proxy ready');
+        } else if (!targetHost || targetHost === localHost) {
+            setTransportState('ready', 'Local API ready');
+        } else {
+            setTransportState('error', 'NATS disconnected');
         }
     }
 

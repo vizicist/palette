@@ -79,8 +79,8 @@ func fileExists(filename string) bool {
 
 var paletteRoot string
 
-// PaletteDir is the value of environment variable PALETTE, a detected source
-// checkout on macOS, or /usr/local/palette on Linux if not set.
+// PaletteDir is the value of environment variable PALETTE, a detected macOS
+// install/source root, or /usr/local/palette on Linux if not set.
 func PaletteDir() string {
 	if paletteRoot == "" {
 		paletteRoot = os.Getenv("PALETTE")
@@ -88,7 +88,7 @@ func PaletteDir() string {
 			if runtime.GOOS == "linux" {
 				paletteRoot = "/usr/local/palette"
 			} else if runtime.GOOS == "darwin" {
-				paletteRoot = localSourceRoot()
+				paletteRoot = localMacPaletteRoot()
 			} else {
 				LogWarn("PALETTE environment variable needs to be set.")
 			}
@@ -100,29 +100,39 @@ func PaletteDir() string {
 	return paletteRoot
 }
 
-func localSourceRoot() string {
-	dirs := []string{}
-	if cwd, err := os.Getwd(); err == nil {
-		dirs = append(dirs, cwd)
-	}
+func localMacPaletteRoot() string {
+	// Prefer the executable location over cwd so an installed binary launched
+	// from a source checkout still uses the installed macOS app data.
 	if currentExe, err := os.Executable(); err == nil {
-		dirs = append(dirs, filepath.Dir(currentExe))
-	}
-	for _, dir := range dirs {
-		if root := findSourceRoot(dir); root != "" {
+		if root := findPaletteRoot(filepath.Dir(currentExe)); root != "" {
 			return root
 		}
 	}
+
+	if cwd, err := os.Getwd(); err == nil {
+		if root := findPaletteRoot(cwd); root != "" {
+			return root
+		}
+	}
+
+	home := os.Getenv("HOME")
+	if home != "" {
+		root := filepath.Join(home, "Library", "Application Support", "Palette")
+		if isPaletteRoot(root) {
+			return root
+		}
+	}
+
 	return ""
 }
 
-func findSourceRoot(start string) string {
+func findPaletteRoot(start string) string {
 	dir, err := filepath.Abs(start)
 	if err != nil {
 		return ""
 	}
 	for {
-		if FileExists(filepath.Join(dir, "go.mod")) && fileExists(filepath.Join(dir, "data_default")) {
+		if isPaletteRoot(dir) {
 			return dir
 		}
 		parent := filepath.Dir(dir)
@@ -131,6 +141,10 @@ func findSourceRoot(start string) string {
 		}
 		dir = parent
 	}
+}
+
+func isPaletteRoot(dir string) bool {
+	return FileExists(filepath.Join(dir, "VERSION")) && fileExists(filepath.Join(dir, "data_default"))
 }
 
 func GetPaletteVersion() string {

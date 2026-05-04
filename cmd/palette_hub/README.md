@@ -133,7 +133,7 @@ The palette name is extracted from the hostname portion of the subject:
 Make sure your `.env` file contains:
 
 ```bash
-NATS_HUB_CLIENT_URL=nats://username:password@hostname:4222
+NATS_URL=nats://username:password@hostname:4222
 ```
 
-Use `palette env set NATS_HUB_CLIENT_URL "nats://..."` to configure.
+Use `palette env set NATS_URL "nats://..."` to configure, or set `NATS_URL` in the process environment.
