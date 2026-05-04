@@ -202,7 +202,11 @@ PaletteDaemon::~PaletteDaemon()
 
 void *PaletteDaemon::run(void *arg)
 {
+#ifdef _WIN32
 	NosuchDebugSetThreadName(pthread_self().p, "PaletteDaemon");
+#else
+	NosuchDebugSetThreadName((void*)pthread_self(), "PaletteDaemon");
+#endif
 	int textcount = 0;
 	daemon_stopped = false;
 	while (daemon_shutting_down == false ) {

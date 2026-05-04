@@ -2,7 +2,9 @@
 #include <string>
 #include <map>
 #include <vector>
+#ifdef _WIN32
 #include  <io.h>
+#endif
 #include <iostream>
 #include <fstream>
 #include "Sound.h"

@@ -2,6 +2,12 @@
 #include <stdarg.h>
 #include <iostream>
 #include <fstream>
+#ifndef _WIN32
+#include <libgen.h>
+#include <limits.h>
+#include <stdio.h>
+#include <string.h>
+#endif
 
 #include "NosuchUtil.h"
 
@@ -66,9 +72,13 @@ NosuchSnprintf(const char *fmt, ...)
 
 	while (1) {
 		va_start(args, fmt);
+#ifdef _WIN32
 		int written = vsnprintf_s(msg,msglen,_TRUNCATE,fmt,args);
+#else
+		int written = vsnprintf(msg,msglen,fmt,args);
+#endif
 		va_end(args);
-		if ( written < msglen ) {
+		if ( written >= 0 && written < msglen ) {
 			return std::string(msg);
 		}
 		free(msg);
@@ -117,6 +127,7 @@ std::string
 PaletteDataPath()
 {
 
+#ifdef _WIN32
 	errno_t err;
 	char* palette = NULL;
 	char* palette_data_path = NULL;
@@ -145,6 +156,20 @@ PaletteDataPath()
 
 	NosuchDebug( "NosuchDebugInit: Level=%d Cursor=%d Param=%d API=%d\n", NosuchDebugLevel, NosuchDebugCursor , NosuchDebugParam, NosuchDebugAPI);
 	return datapath;
+#else
+	const char* palette = getenv("PALETTE");
+	const char* dataval = getenv("PALETTE_DATA");
+	if (palette == NULL || palette[0] == '\0') {
+		palette = getenv("HOME");
+	}
+	if (dataval == NULL || dataval[0] == '\0') {
+		dataval = "default";
+	}
+	if (palette == NULL || palette[0] == '\0') {
+		return "/tmp";
+	}
+	return std::string(palette) + "/data_" + std::string(dataval);
+#endif
 }
 
 void
@@ -155,6 +180,7 @@ RealNosuchDebugInit() {
 
 	NosuchDebugLogPath = "c:\\windows\\temp\\ffgl.log";// last resort
 
+#ifdef _WIN32
 	errno_t err;
 	char* palette = NULL;
 	char *value = NULL;
@@ -181,6 +207,12 @@ RealNosuchDebugInit() {
 	if (palette != NULL) {
 			free( palette );
 	}
+#else
+	std::string datapath = PaletteDataPath();
+	NosuchDebugLogPath = datapath + "/logs/ffgl.log";
+	dMutex = CreateMutex(NULL, FALSE, NULL);
+	DebugInitialized = TRUE;
+#endif
 }
 
 void
@@ -200,7 +232,7 @@ RealNosuchDebug(int level, char const *fmt, va_list args)
 	int msgsize = sizeof(msg)-2;
 
 	if ( NosuchDebugPrefix != "" ) {
-		int nchars = _snprintf_s(pmsg,msgsize,_TRUNCATE,"%s",NosuchDebugPrefix.c_str());
+		int nchars = snprintf(pmsg,msgsize,"%s",NosuchDebugPrefix.c_str());
 		pmsg += nchars;
 		msgsize -= nchars;
 	}
@@ -208,17 +240,17 @@ RealNosuchDebug(int level, char const *fmt, va_list args)
 		int nchars;
 		long tm;
 		tm = MillisecondsSoFar();
-		nchars = _snprintf_s(pmsg, msgsize, _TRUNCATE, "[%.3f,%d] ", tm / 1000.0f, NosuchDebugTag);
+		nchars = snprintf(pmsg, msgsize, "[%.3f,%d] ", tm / 1000.0f, NosuchDebugTag);
 		pmsg += nchars;
 		msgsize -= nchars;
 	}
 
     // va_start(args, fmt);
-    vsprintf_s(pmsg,msgsize,fmt,args);
+    vsnprintf(pmsg,msgsize,fmt,args);
 
 	char *p = strchr(msg,'\0');
 	if ( p != NULL && p != msg && *(p-1) != '\n' ) {
-		strcat_s(msg,msgsize,"\n");
+		strncat(msg,"\n",msgsize - strlen(msg) - 1);
 	}
 
 	if ( NosuchDebugToLog ) {
@@ -280,15 +312,19 @@ NosuchErrorOutput(const char *fmt, ...)
     va_start(args, fmt);
 
     char msg[10000];
-    vsprintf_s(msg,sizeof(msg)-2,fmt,args);
+    vsnprintf(msg,sizeof(msg)-2,fmt,args);
     va_end(args);
 
 	char *p = strchr(msg,'\0');
 	if ( p != NULL && p != msg && *(p-1) != '\n' ) {
-		strcat_s(msg,sizeof(msg),"\n");
+		strncat(msg,"\n",sizeof(msg) - strlen(msg) - 1);
 	}
 
+#ifdef _WIN32
 	OutputDebugStringA(msg);
+#else
+	fputs(msg, stderr);
+#endif
 
 #ifdef THIS_DOES_NOT_WORK
 	// Why doesn't this work?
@@ -308,4 +344,3 @@ NosuchForwardSlash(std::string filepath) {
 	}
 	return filepath;
 }
-

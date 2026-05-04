@@ -91,9 +91,11 @@ webui-screenshot.png
 package-lock.json
 package.json
 cmd/palette_engine/palette_engine.exe
+cmd/palette_engine/palette_engine
 cmd/palette_hub/palette_hub.exe
 cmd/palette/palette
 cmd/palette_natsmon/palette_natsmon
+cmd/palette_monitor/palette_monitor
 .claude/settings.local.json
 cmd/palette_hub/palette_hub.exe
 cmd/palette_hub/palette_hub.exe

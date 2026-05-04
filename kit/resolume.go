@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -288,6 +289,12 @@ func (r *Resolume) ProcessInfo() *ProcessInfo {
 		hardcoded := []string{
 			"C:/Program Files/Resolume Avenue/Avenue.exe",
 			"C:/Program Files/Resolume Arena/Arena.exe",
+		}
+		if runtime.GOOS == "darwin" {
+			hardcoded = []string{
+				"/Applications/Resolume Avenue/Avenue.app/Contents/MacOS/Avenue",
+				"/Applications/Resolume Arena/Arena.app/Contents/MacOS/Arena",
+			}
 		}
 		fullpath = ""
 		for _, path := range hardcoded {

@@ -83,11 +83,11 @@ std::string OscMessage::getArgAsString( int index, bool typeConvert ) const{
 		const size_t bufsize = 1024;
         char buf[bufsize];
 	    if (typeConvert && (getArgType(index) == TYPE_FLOAT) ){
-            sprintf_s(buf,bufsize,"%f",((ArgFloat*)args[index])->get() );
+            snprintf(buf,bufsize,"%f",((ArgFloat*)args[index])->get() );
             return std::string( buf );
         }
 	    else if (typeConvert && (getArgType(index) == TYPE_INT32)){
-            sprintf_s(buf,bufsize,"%i",((ArgInt32*)args[index])->get() );
+            snprintf(buf,bufsize,"%i",((ArgInt32*)args[index])->get() );
             return std::string( buf );
         }
         else

@@ -526,9 +526,6 @@ func ApplyGlobalParam(name string, value string) (err error) {
 	// LogOfType("params", "Engine.ApplyParam", "name", name, "value", value)
 
 	if strings.HasPrefix(name, "global.process.") {
-		if NoProcess {
-			return nil
-		}
 		process := strings.TrimPrefix(name, "global.process.")
 		if theProcessManager.IsAvailable(process) {
 			if IsTrueValue(value) {
@@ -541,6 +538,9 @@ func ApplyGlobalParam(name string, value string) (err error) {
 				return err
 			}
 		}
+	}
+	if name == "global.resolumepath" && theProcessManager != nil {
+		theProcessManager.AddProcessBuiltIn("resolume")
 	}
 
 	switch name {

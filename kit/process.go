@@ -3,7 +3,9 @@ package kit
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -64,15 +66,15 @@ func ActivateProcess(process string) error {
 
 // These should come from the process list
 
-var MonitorExe = "palette_monitor.exe"
-var EngineExe = "palette_engine.exe"
-var GuiExe = "chrome.exe"
-var ChatExe = "palette_chat.exe"
-var BiduleExe = "bidule.exe"
-var ResolumeExe = "avenue.exe"
+var MonitorExe = executableName("palette_monitor")
+var EngineExe = executableName("palette_engine")
+var GuiExe = executableName("chrome")
+var ChatExe = executableName("palette_chat")
+var BiduleExe = executableName("bidule")
+var ResolumeExe = executableName("Avenue")
 
-var MmttExe = "mmtt_kinect.exe"
-var ObsExe = "obs64.exe"
+var MmttExe = executableName("mmtt_kinect")
+var ObsExe = executableName("obs64")
 
 func KillAllExceptMonitor() {
 	LogInfo("KillAll")
@@ -429,6 +431,12 @@ func (pm *ProcessManager) IsAvailable(process string) bool {
 }
 
 func (pm *ProcessManager) IsRunning(process string) (bool, error) {
+	if process == "gui" && runtime.GOOS == "darwin" {
+		return IsMacPaletteChromeRunning()
+	}
+	if !pm.IsAvailable(process) {
+		return false, nil
+	}
 	pi, err := pm.GetProcessInfo(process)
 	if err != nil {
 		return false, err
@@ -436,11 +444,62 @@ func (pm *ProcessManager) IsRunning(process string) (bool, error) {
 	return IsRunningExecutable(pi.Exe)
 }
 
+func IsMacPaletteChromeRunning() (bool, error) {
+	if runtime.GOOS != "darwin" {
+		return false, nil
+	}
+	chromeDataDir := filepath.Join(ConfigDir(), "chrome")
+	err := exec.Command("pgrep", "-f", chromeDataDir).Run()
+	if err == nil {
+		return true, nil
+	}
+	if exitErr, ok := err.(*exec.ExitError); ok && exitErr.ExitCode() == 1 {
+		return false, nil
+	}
+	return false, err
+}
+
 // Below here are functions that return ProcessInfo for various programs
+
+func PaletteBinaryPath(exe string) string {
+	candidates := []string{}
+	if paletteDir := os.Getenv("PALETTE"); paletteDir != "" {
+		candidates = append(candidates, filepath.Join(paletteDir, "bin", exe))
+	}
+	if currentExe, err := os.Executable(); err == nil {
+		exeDir := filepath.Dir(currentExe)
+		candidates = append(candidates,
+			filepath.Join(exeDir, exe),
+			filepath.Clean(filepath.Join(exeDir, "..", "palette_engine", exe)),
+			filepath.Clean(filepath.Join(exeDir, "..", "palette_monitor", exe)),
+		)
+	}
+	if cwd, err := os.Getwd(); err == nil {
+		candidates = append(candidates,
+			filepath.Join(cwd, exe),
+			filepath.Clean(filepath.Join(cwd, "..", "palette_engine", exe)),
+			filepath.Clean(filepath.Join(cwd, "..", "palette_monitor", exe)),
+			filepath.Join(cwd, "cmd", "palette_engine", exe),
+			filepath.Join(cwd, "cmd", "palette_monitor", exe),
+		)
+	}
+	for _, candidate := range candidates {
+		if FileExists(candidate) {
+			return candidate
+		}
+	}
+	if paletteDir := os.Getenv("PALETTE"); paletteDir != "" {
+		return filepath.Join(paletteDir, "bin", exe)
+	}
+	return exe
+}
 
 func GuiProcessInfo() *ProcessInfo {
 	// Use Chrome to display the webui
 	chromePath := `C:\Program Files\Google\Chrome\Application\chrome.exe`
+	if runtime.GOOS == "darwin" {
+		chromePath = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+	}
 	if !FileExists(chromePath) {
 		LogWarn("Chrome not found", "path", chromePath)
 		return EmptyProcessInfo()
@@ -508,7 +567,7 @@ func GuiProcessInfo() *ProcessInfo {
 
 	LogInfo("GuiProcessInfo", "chromePath", chromePath, "windowSize", windowSize, "args", args)
 
-	return NewProcessInfo("chrome.exe", chromePath, args, nil)
+	return NewProcessInfo(filepath.Base(chromePath), chromePath, args, nil)
 }
 
 // clearChromeWindowPlacement removes cached window placement from Chrome's profile
@@ -530,7 +589,7 @@ func clearChromeWindowPlacement(chromeDataDir string) {
 }
 
 func ChatProcessInfo() *ProcessInfo {
-	fullpath := filepath.Join(paletteRoot, "bin", "palette_chat.exe")
+	fullpath := filepath.Join(PaletteDir(), "bin", ChatExe)
 	if fullpath != "" && !FileExists(fullpath) {
 		LogWarn("No chat executable found, looking for", "path", fullpath)
 		return EmptyProcessInfo()
@@ -599,10 +658,11 @@ func MmttProcessInfo() *ProcessInfo {
 	if mmtt == "" || mmtt == "none" {
 		return EmptyProcessInfo()
 	}
-	fullpath := filepath.Join(PaletteDir(), "bin", "mmtt_"+mmtt, "mmtt_"+mmtt+".exe")
+	mmttExe := executableName("mmtt_" + mmtt)
+	fullpath := filepath.Join(PaletteDir(), "bin", "mmtt_"+mmtt, mmttExe)
 	if !FileExists(fullpath) {
 		LogWarn("mmtt executable not found, looking for", "fullpath", fullpath)
 		return EmptyProcessInfo()
 	}
-	return NewProcessInfo("mmtt_"+mmtt+".exe", fullpath, "", nil)
+	return NewProcessInfo(mmttExe, fullpath, "", nil)
 }

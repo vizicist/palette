@@ -1,7 +1,9 @@
 #include <iostream>
 #include <fstream>
 
+#ifdef _WIN32
 #include  <io.h>
+#endif
 #include  <stdlib.h>
 
 #include <time.h>
