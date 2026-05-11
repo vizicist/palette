@@ -83,6 +83,8 @@ echo "================ Creating $ZIP_NAME"
     /usr/bin/zip -qry "$ZIP_PATH" .
 )
 
+echo "================ Cleaning build artifacts"
+rm -rf "$SHIP" "$SCRIPT_DIR/ffgl-build"
+
 echo "================ Done"
-echo "Ship directory: $SHIP"
 echo "Release zip: $ZIP_PATH"
