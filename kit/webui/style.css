@@ -22,6 +22,237 @@ body {
 
 .hidden { display: none !important; }
 
+#adventure-screen,
+#sigil-screen {
+    width: 100%;
+    height: 100vh;
+    background: #000;
+}
+
+#adventure-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8vh;
+    padding: 5vh 5vw;
+}
+
+#adventure-screen h1,
+.sigil-header h1 {
+    color: #fff;
+    font-size: clamp(34px, 6vw, 58px);
+    font-weight: 700;
+    line-height: 1;
+    text-align: center;
+}
+
+.adventure-options {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 3vw;
+    width: min(1180px, 100%);
+}
+
+.adventure-btn {
+    min-height: 34vh;
+    background: #202020;
+    color: #fff;
+    border: 4px solid var(--button-border);
+    cursor: pointer;
+    font-size: clamp(30px, 5vw, 72px);
+    font-weight: 800;
+    line-height: 1.04;
+    padding: 4vh 3vw;
+    text-align: center;
+}
+
+.adventure-btn:hover,
+.adventure-btn:focus {
+    background: var(--highlight);
+    outline: none;
+}
+
+.sigil-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 22px;
+    border-bottom: 4px solid var(--button-border);
+}
+
+.sigil-header h1 {
+    text-align: center;
+}
+
+.start-over-btn {
+    background: #333;
+    color: #fff;
+    border: 2px solid var(--button-border);
+    cursor: pointer;
+    font-size: clamp(18px, 2.4vw, 30px);
+    font-weight: 700;
+    min-height: 72px;
+    padding: 12px 22px;
+    white-space: nowrap;
+}
+
+.start-over-btn:hover,
+.start-over-btn:focus {
+    background: var(--highlight);
+    outline: none;
+}
+
+.sigil-sequencer {
+    height: calc(100vh - 168px);
+    display: grid;
+    grid-template-rows: 18px repeat(4, minmax(0, 1fr));
+    gap: 10px;
+    padding: 14px;
+}
+
+.stepper-position {
+    display: grid;
+    grid-template-columns: minmax(132px, 15vw) repeat(16, minmax(0, 1fr));
+    gap: 6px;
+    min-width: 0;
+}
+
+.stepper-position::before {
+    content: "";
+}
+
+.stepper-position-cell {
+    background: #171717;
+    border: 1px solid #333;
+    min-width: 0;
+}
+
+.stepper-position-cell.active {
+    background: #0ff;
+    border-color: #9fffff;
+}
+
+.sigil-footer {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, min(320px, 50%)));
+    justify-content: center;
+    gap: 12px;
+    padding: 8px 14px 10px;
+    border-top: 4px solid var(--button-border);
+}
+
+.sigil-footer .start-over-btn {
+    width: 100%;
+}
+
+.stepper-play-btn.active {
+    background: #006666;
+    border-color: #0ff;
+}
+
+.sigil-row {
+    display: grid;
+    grid-template-columns: minmax(132px, 15vw) 1fr;
+    gap: 10px;
+    min-height: 0;
+}
+
+.sigil-row-controls {
+    display: grid;
+    grid-template-rows: repeat(4, minmax(0, 1fr));
+    gap: 4px;
+    min-height: 0;
+}
+
+.sigil-row-label,
+.sigil-control,
+.sigil-step {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    border: none;
+    color: #fff;
+    font-weight: 700;
+}
+
+.sigil-row-label {
+    color: #0ff;
+    border: 2px solid #175b5b;
+    font-size: clamp(16px, 1.8vw, 22px);
+    line-height: 1;
+    overflow: hidden;
+}
+
+.sigil-control {
+    background: #2a2a2a;
+    border: 2px solid #555;
+    cursor: pointer;
+    font-size: clamp(14px, 1.55vw, 19px);
+    line-height: 1;
+    overflow: hidden;
+}
+
+.sigil-control:hover,
+.sigil-control:focus {
+    background: #3a3a3a;
+    outline: none;
+}
+
+.sigil-control.active {
+    background: #006666;
+    border-color: #0ff;
+}
+
+.sigil-route {
+    background: #202020;
+    color: #fff;
+    border: 2px solid #555;
+    cursor: pointer;
+    font-size: clamp(12px, 1.3vw, 16px);
+    font-weight: 700;
+    min-width: 0;
+    text-align: center;
+}
+
+.sigil-route:focus {
+    border-color: #0aa;
+    outline: none;
+}
+
+.sigil-steps {
+    display: grid;
+    grid-template-columns: repeat(16, minmax(0, 1fr));
+    gap: 6px;
+    min-width: 0;
+}
+
+.sigil-step {
+    background: #171717;
+    border: 2px solid #3d3d3d;
+    cursor: pointer;
+    font-size: clamp(12px, 1.5vw, 22px);
+}
+
+.sigil-step:hover,
+.sigil-step:focus {
+    border-color: #0aa;
+    outline: none;
+}
+
+.sigil-step.active {
+    background: #c90;
+    border-color: #ffd56a;
+    color: #000;
+}
+
+.sigil-step.active::after {
+    content: attr(data-count);
+    font-size: 0.72em;
+    margin-left: 2px;
+}
+
 /* Attract mode overlay */
 #attract-overlay {
     position: fixed;
@@ -45,7 +276,7 @@ body {
     object-fit: contain;
 }
 
-/* Restart message overlay */
+/* Reset message overlay */
 #restart-overlay {
     position: fixed;
     top: 0;
@@ -324,6 +555,51 @@ body {
 }
 
 @media (max-width: 680px) {
+    .adventure-options {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .adventure-btn {
+        min-height: 24vh;
+    }
+
+    .sigil-header {
+        padding: 12px;
+    }
+
+    .start-over-btn {
+        min-height: 52px;
+    }
+
+    .sigil-sequencer {
+        height: calc(100vh - 216px);
+        gap: 8px;
+        padding: 8px;
+    }
+
+    .sigil-row {
+        grid-template-columns: minmax(86px, 22vw) 1fr;
+        gap: 6px;
+    }
+
+    .stepper-position {
+        grid-template-columns: minmax(86px, 22vw) repeat(16, minmax(0, 1fr));
+        gap: 3px;
+    }
+
+    .sigil-row-controls {
+        gap: 5px;
+    }
+
+    .sigil-steps {
+        gap: 3px;
+    }
+
+    .sigil-step {
+        font-size: 11px;
+    }
+
     #title-bar {
         padding: 8px 12px;
     }
@@ -611,8 +887,7 @@ body.touchscreen-embed {
 
 body.touchscreen-embed #title-bar,
 body.touchscreen-embed #category-tabs,
-body.touchscreen-embed #patch-selector,
-body.touchscreen-embed #controls {
+body.touchscreen-embed #patch-selector {
     display: none !important;
 }
 

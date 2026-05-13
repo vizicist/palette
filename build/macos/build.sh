@@ -68,6 +68,15 @@ copy_data_dir() {
 copy_data_dir data_default
 copy_data_dir data_dexed
 
+if [ -f "$PALETTE_SOURCE/samplesplitter/samplesplitter.py" ]; then
+    echo "================ Copying samplesplitter"
+    /usr/bin/ditto "$PALETTE_SOURCE/samplesplitter" "$SHIP/samplesplitter"
+    rm -rf "$SHIP/samplesplitter/.git" "$SHIP/samplesplitter/__pycache__"
+else
+    echo "Error: samplesplitter submodule is missing. Run: git submodule update --init --recursive" >&2
+    exit 1
+fi
+
 echo "================ Building FFGL bundle"
 PALETTE_FFGL_INSTALL=0 "$SCRIPT_DIR/build_ffgl.sh"
 mkdir -p "$SHIP/ffgl"

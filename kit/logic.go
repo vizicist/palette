@@ -191,9 +191,15 @@ func (logic *PatchLogic) generateSoundFromCursorDownOnly(ce CursorEvent) {
 		atClick := logic.nextQuant(CurrentClick(), logic.patch.CursorToQuant(ce))
 		// LogInfo("logic.down", "current", CurrentClick(), "atClick", atClick, "noteOn", noteOn)
 		ScheduleAt(atClick, ce.Tag, noteOn)
+		if theStepper != nil {
+			theStepper.RecordNoteOn(ce.Tag, noteOn, ce.Pos.Z, atClick)
+		}
 		noteOff := NewNoteOffFromNoteOn(noteOn)
 		atClick += QuarterNote
 		ScheduleAt(atClick, ce.Tag, noteOff)
+		if theStepper != nil {
+			theStepper.RecordNoteOff(ce.Tag, noteOff, atClick)
+		}
 
 	case "drag":
 		// do nothing
@@ -225,6 +231,9 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
 			// LogWarn("generateSoundFromCursor: oldNote already exists", "gid", ce.Gid)
 			noteOff := NewNoteOffFromNoteOn(oldNoteOn)
 			ScheduleAt(CurrentClick(), ce.Tag, noteOff)
+			if theStepper != nil {
+				theStepper.RecordNoteOff(ce.Tag, noteOff, CurrentClick())
+			}
 		}
 		atClick := logic.nextQuant(CurrentClick(), patch.CursorToQuant(ce))
 		noteOn := logic.cursorToNoteOn(ce)
@@ -233,6 +242,9 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
 			return // do nothing, assumes any errors are logged in cursorToNoteOn
 		}
 		ScheduleAt(atClick, ce.Tag, noteOn)
+		if theStepper != nil {
+			theStepper.RecordNoteOn(ce.Tag, noteOn, ce.Pos.Z, atClick)
+		}
 		ac.NoteOn = noteOn
 		ac.NoteOnClick = atClick
 	case "drag":
@@ -289,6 +301,9 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
 			noteOff := NewNoteOffFromNoteOn(oldNoteOn)
 			offClick := ac.NoteOnClick + 1
 			ScheduleAt(offClick, ce.Tag, noteOff)
+			if theStepper != nil {
+				theStepper.RecordNoteOff(ce.Tag, noteOff, offClick)
+			}
 
 			thisClick := logic.nextQuant(cc, c2q)
 			if thisClick < offClick {
@@ -296,6 +311,9 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
 			}
 
 			ScheduleAt(thisClick, ce.Tag, newNoteOn)
+			if theStepper != nil {
+				theStepper.RecordNoteOn(ce.Tag, newNoteOn, ce.Pos.Z, thisClick)
+			}
 			ac.NoteOn = newNoteOn
 			ac.NoteOnClick = thisClick
 		}
@@ -310,6 +328,9 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
 			noteOff := NewNoteOffFromNoteOn(oldNoteOn)
 			offClick := ac.NoteOnClick + 1
 			ScheduleAt(offClick+1, ce.Tag, noteOff)
+			if theStepper != nil {
+				theStepper.RecordNoteOff(ce.Tag, noteOff, offClick+1)
+			}
 			// delete(logic.cursorNote, ce.Gid)
 		}
 	}

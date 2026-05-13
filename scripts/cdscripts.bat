@@ -1,1 +1,3 @@
-pushd %PALETTE_SOURCE%\scripts
+@echo off
+
+pushd "%PALETTE_SOURCE%\scripts"

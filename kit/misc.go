@@ -79,16 +79,20 @@ func fileExists(filename string) bool {
 
 var paletteRoot string
 
-// PaletteDir is the value of environment variable PALETTE, a detected macOS
-// install/source root, or /usr/local/palette on Linux if not set.
+// PaletteDir is the installed/source Palette root.
 func PaletteDir() string {
 	if paletteRoot == "" {
-		paletteRoot = os.Getenv("PALETTE")
+		if runtime.GOOS == "windows" || runtime.GOOS == "darwin" {
+			paletteRoot = localPaletteRoot()
+		}
+		if paletteRoot == "" {
+			paletteRoot = os.Getenv("PALETTE")
+		}
 		if paletteRoot == "" {
 			if runtime.GOOS == "linux" {
 				paletteRoot = "/usr/local/palette"
 			} else if runtime.GOOS == "darwin" {
-				paletteRoot = localMacPaletteRoot()
+				paletteRoot = localPaletteRoot()
 			} else {
 				LogWarn("PALETTE environment variable needs to be set.")
 			}
@@ -100,9 +104,9 @@ func PaletteDir() string {
 	return paletteRoot
 }
 
-func localMacPaletteRoot() string {
+func localPaletteRoot() string {
 	// Prefer the executable location over cwd so an installed binary launched
-	// from a source checkout still uses the installed macOS app data.
+	// from a source checkout still uses the installed app data.
 	if currentExe, err := os.Executable(); err == nil {
 		if root := findPaletteRoot(filepath.Dir(currentExe)); root != "" {
 			return root
@@ -144,7 +148,8 @@ func findPaletteRoot(start string) string {
 }
 
 func isPaletteRoot(dir string) bool {
-	return FileExists(filepath.Join(dir, "VERSION")) && fileExists(filepath.Join(dir, "data_default"))
+	return FileExists(filepath.Join(dir, "VERSION")) &&
+		(fileExists(filepath.Join(dir, "data_default")) || fileExists(filepath.Join(dir, "bin")))
 }
 
 func GetPaletteVersion() string {
@@ -165,7 +170,9 @@ func PaletteDataPath() (datapath string) {
 	datadir := "data_" + paletteData
 
 	var basePath string
-	if runtime.GOOS == "windows" {
+	if dataRoot := os.Getenv("PALETTE_DATAROOT"); dataRoot != "" {
+		basePath = dataRoot
+	} else if runtime.GOOS == "windows" {
 		basePath = "C:\\Program Files\\Common Files\\Palette"
 	} else if paletteDir := PaletteDir(); paletteDir != "" {
 		basePath = paletteDir

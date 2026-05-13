@@ -55,6 +55,7 @@
         "global.process.gui":"true",
         "global.process.mmtt":"false",
         "global.process.obs":"true",
+        "global.process.samplesplitter":"false",
         "global.process.resolume":"true",
         "global.resolumepath":"C:/Program Files/Resolume Avenue/Avenue.exe",
         "global.resolumetextlayer":"5",

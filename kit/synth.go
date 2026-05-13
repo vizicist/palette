@@ -1,8 +1,8 @@
 package kit
 
 import (
-	json "github.com/goccy/go-json"
 	"fmt"
+	json "github.com/goccy/go-json"
 	"os"
 	"sync"
 )
@@ -131,6 +131,38 @@ func (synth *Synth) SendController(cnum uint8, cval uint8) {
 	data2 := byte(cval)
 
 	LogOfType("midicontroller", "Raw MIDI Output, controller",
+		"synth", synth.name,
+		"status", "0x"+hexString(status),
+		"data1", "0x"+hexString(data1),
+		"data2", "0x"+hexString(data2))
+
+	LogIfError(state.output.Send([]byte{status, data1, data2}))
+}
+
+func (synth *Synth) SendPitchBend(value int) {
+
+	if !synth.midiOutputEnabled() {
+		return
+	}
+
+	state, err := synth.updatePortChannelState()
+	if err != nil {
+		LogIfError(err)
+		return
+	}
+
+	if value < 0 {
+		value = 0
+	}
+	if value > 16383 {
+		value = 16383
+	}
+
+	status := PitchbendStatus | byte(synth.portchannel.channel-1)
+	data1 := byte(value & 0x7f)
+	data2 := byte((value >> 7) & 0x7f)
+
+	LogOfType("midi", "Raw MIDI Output, pitchbend",
 		"synth", synth.name,
 		"status", "0x"+hexString(status),
 		"data1", "0x"+hexString(data1),

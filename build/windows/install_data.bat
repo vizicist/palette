@@ -11,6 +11,6 @@ set datadir=data_%data%
 set /p version=<../../VERSION
 echo =============== Installing %datadir%_%version%
 
-..\..\release\palette_%version%_%datadir%.exe /SILENT
+..\..\release\palette_%version%_%datadir%.exe /CURRENTUSER /VERYSILENT /SUPPRESSMSGBOXES
 
 :getout

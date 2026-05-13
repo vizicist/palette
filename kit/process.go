@@ -75,6 +75,7 @@ var ResolumeExe = executableName("Avenue")
 
 var MmttExe = executableName("mmtt_kinect")
 var ObsExe = executableName("obs64")
+var SamplesplitterExe = executableName("samplesplitter")
 
 func KillAllExceptMonitor() {
 	LogInfo("KillAll")
@@ -92,6 +93,7 @@ func KillAllExceptMonitor() {
 	}
 	KillExecutable(EngineExe)
 	KillExecutable(ObsExe)
+	KillSamplesplitter()
 	KillExecutable(ChatExe)
 }
 
@@ -199,6 +201,7 @@ func ProcessList() []string {
 	arr = append(arr, "bidule")
 	arr = append(arr, "resolume")
 	arr = append(arr, "obs")
+	arr = append(arr, "samplesplitter")
 	arr = append(arr, "chat")
 	arr = append(arr, "mmtt")
 	/*
@@ -248,6 +251,8 @@ func (pm *ProcessManager) AddProcessBuiltIn(process string) {
 		p = MmttProcessInfo()
 	case "obs":
 		p = ObsProcessInfo()
+	case "samplesplitter":
+		p = SamplesplitterProcessInfo()
 	case "chat":
 		p = ChatProcessInfo()
 	}
@@ -271,6 +276,9 @@ func (pm *ProcessManager) StartRunning(process string) error {
 		// Don't check IsRunning for GUI because we only care about the specific
 		// "Palette Control" window, not whether any Chrome process is running.
 		// If the window existed, we closed it above. Now we'll start a fresh one.
+	} else if process == "samplesplitter" {
+		KillSamplesplitter()
+		delete(pm.runningPids, process)
 	} else {
 		// For non-GUI processes, check if already running
 		running, err := pm.IsRunning(process)
@@ -434,6 +442,9 @@ func (pm *ProcessManager) IsRunning(process string) (bool, error) {
 	if process == "gui" && runtime.GOOS == "darwin" {
 		return IsMacPaletteChromeRunning()
 	}
+	if process == "samplesplitter" {
+		return IsSamplesplitterRunning()
+	}
 	if !pm.IsAvailable(process) {
 		return false, nil
 	}
@@ -463,9 +474,6 @@ func IsMacPaletteChromeRunning() (bool, error) {
 
 func PaletteBinaryPath(exe string) string {
 	candidates := []string{}
-	if paletteDir := os.Getenv("PALETTE"); paletteDir != "" {
-		candidates = append(candidates, filepath.Join(paletteDir, "bin", exe))
-	}
 	if currentExe, err := os.Executable(); err == nil {
 		exeDir := filepath.Dir(currentExe)
 		candidates = append(candidates,
@@ -473,6 +481,9 @@ func PaletteBinaryPath(exe string) string {
 			filepath.Clean(filepath.Join(exeDir, "..", "palette_engine", exe)),
 			filepath.Clean(filepath.Join(exeDir, "..", "palette_monitor", exe)),
 		)
+	}
+	if paletteDir := os.Getenv("PALETTE"); paletteDir != "" {
+		candidates = append(candidates, filepath.Join(paletteDir, "bin", exe))
 	}
 	if cwd, err := os.Getwd(); err == nil {
 		candidates = append(candidates,

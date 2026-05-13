@@ -6,23 +6,42 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <section id="adventure-screen">
+        <h1>Choose Your Adventure</h1>
+        <div class="adventure-options">
+            <button class="adventure-btn" id="btn-adventure-space">Space Palette Pro</button>
+            <button class="adventure-btn" id="btn-adventure-sigil">Sigil Sequencer</button>
+        </div>
+    </section>
+
+    <section id="sigil-screen" class="hidden">
+        <header class="sigil-header">
+            <h1>Sigil Sequencer</h1>
+        </header>
+        <main class="sigil-sequencer" id="sigil-sequencer"></main>
+        <footer class="sigil-footer">
+            <button class="start-over-btn stepper-play-btn" id="btn-stepper-play">PLAY</button>
+            <button class="start-over-btn" id="btn-sigil-start-over-bottom">HOME</button>
+        </footer>
+    </section>
+
     <!-- Attract mode overlay -->
     <div id="attract-overlay" class="hidden">
         <img src="sppro_attractscreen.png" alt="Space Palette Pro" class="attract-image">
     </div>
 
-    <!-- Restart modal overlay -->
+    <!-- Reset modal overlay -->
     <div id="restart-overlay" class="hidden">
         <div id="restart-modal">
             <div id="restart-buttons">
-                <button class="restart-btn" data-action="complete">Restart<br>Completely</button>
-                <button class="restart-btn" data-action="audio">Restart<br>Audio</button>
-                <button class="restart-btn" data-action="visuals">Restart<br>Visuals</button>
+                <button class="restart-btn" data-action="complete">Reset<br>Completely</button>
+                <button class="restart-btn" data-action="audio">Reset<br>Audio</button>
+                <button class="restart-btn" data-action="visuals">Reset<br>Visuals</button>
                 <button class="restart-btn restart-cancel" data-action="cancel">Cancel</button>
             </div>
         </div>
         <div id="restart-message" class="hidden">
-            <div class="restart-message-text">The Space Palette will be<br>restarted in a few seconds.</div>
+            <div class="restart-message-text">The Space Palette will be<br>reset in a few seconds.</div>
         </div>
     </div>
 
@@ -52,7 +71,7 @@
         <button class="tab" data-category="effect">Effect</button>
     </nav>
 
-    <div id="main-container">
+    <div id="main-container" class="hidden">
         <main id="preset-grid"></main>
 
         <!-- Advanced mode: patch selector -->
@@ -71,8 +90,8 @@
         </div>
 
         <footer id="controls">
-            <button id="btn-complete-reset">COMPLETE<br>RESET</button>
-            <button id="btn-soft-reset">SOFT<br>RESET</button>
+            <button id="btn-start-over">HOME</button>
+            <button id="btn-complete-reset">RESET</button>
             <button id="btn-record" style="display:none">RECORD</button>
             <button id="btn-help">HELP</button>
         </footer>

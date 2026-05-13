@@ -1,0 +1,3 @@
+[submodule "samplesplitter"]
+	path = samplesplitter
+	url = https://github.com/vizicist/samplesplitter.git

@@ -71,6 +71,7 @@ func InitEngine() {
 	theRouter = NewRouter()
 	theScheduler = NewScheduler()
 	theAttractManager = NewAttractManager()
+	theStepper = NewStepper()
 	theQuad = NewQuad()
 	theMidiIO = NewMidiIO()
 	theErae = NewErae()

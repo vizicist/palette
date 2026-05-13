@@ -4,6 +4,7 @@ let currentCategory = 'quad';
 let advancedMode = false;
 let lastSinglePatch = 'A'; // Track last single selection for toggle
 let showingParams = false; // Toggle between presets and parameters view
+let activeAdventure = null;
 
 // Cached parameter definitions and enums for string param dropdowns
 let cachedParamDefs = null;
@@ -34,13 +35,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         attractAllowGui = val === 'true' || val === true;
     } catch (e) { /* default to false */ }
 
-    await loadPresets();
+    setupAdventureScreen();
     setupControls();
     setupHelpOverlay();
     setupAttractOverlay();
     setupCategoryTabs();
     setupPatchSelector();
-    setAdvancedMode(advancedMode);
+    setupSigilSequencer();
+    showAdventureScreen();
 
     // Hide the Record button until we confirm OBS is reachable.
     updateRecordButtonVisibility();
@@ -48,7 +50,49 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Start polling engine status every 2 seconds
     setInterval(pollStatus, 2000);
+    setInterval(refreshStepperStatus, 250);
 });
+
+function setupAdventureScreen() {
+    document.getElementById('btn-adventure-space').addEventListener('click', startSpacePalette);
+    document.getElementById('btn-adventure-sigil').addEventListener('click', showSigilSequencer);
+    document.getElementById('btn-sigil-start-over-bottom').addEventListener('click', showAdventureScreen);
+}
+
+async function startSpacePalette() {
+    activeAdventure = 'space';
+    document.getElementById('adventure-screen').classList.add('hidden');
+    document.getElementById('sigil-screen').classList.add('hidden');
+    document.getElementById('main-container').classList.remove('hidden');
+    setAdvancedMode(advancedMode, false);
+    await loadPresets();
+    await pollStatus();
+}
+
+async function showAdventureScreen() {
+    activeAdventure = null;
+    hideAttract();
+    hideHelp();
+    document.getElementById('adventure-screen').classList.remove('hidden');
+    document.getElementById('sigil-screen').classList.add('hidden');
+    document.getElementById('main-container').classList.add('hidden');
+    document.getElementById('title-bar').classList.add('hidden');
+    document.getElementById('category-tabs').classList.add('hidden');
+    document.getElementById('patch-selector').classList.add('hidden');
+}
+
+async function showSigilSequencer() {
+    activeAdventure = 'sigil';
+    hideAttract();
+    hideHelp();
+    document.getElementById('adventure-screen').classList.add('hidden');
+    document.getElementById('main-container').classList.add('hidden');
+    document.getElementById('title-bar').classList.add('hidden');
+    document.getElementById('category-tabs').classList.add('hidden');
+    document.getElementById('patch-selector').classList.add('hidden');
+    document.getElementById('sigil-screen').classList.remove('hidden');
+    await refreshStepperStatus();
+}
 
 async function updateRecordButtonVisibility() {
     const btn = document.getElementById('btn-record');
@@ -92,16 +136,157 @@ async function loadPresets() {
             return;
         }
 
-        grid.innerHTML = presets.map(name => {
+        const html = presets.map(name => {
             const display = name.replace(/_/g, '<br>').replace(/^(<br>)+/, '').replace(/(<br>)+$/, '');
             return `<button class="preset-btn" data-name="${name}">${display}</button>`;
         }).join('');
+
+        grid.innerHTML = html;
 
         grid.querySelectorAll('.preset-btn').forEach(btn => {
             btn.addEventListener('click', () => loadPreset(btn.dataset.name));
         });
     } catch (e) {
         grid.innerHTML = `<div class="error">${e.message}</div>`;
+    }
+}
+
+function setupSigilSequencer() {
+    const sequencer = document.getElementById('sigil-sequencer');
+    let html = '<div class="stepper-position" id="stepper-position">';
+    for (let step = 0; step < 16; step++) {
+        html += `<div class="stepper-position-cell" data-step="${step}"></div>`;
+    }
+    html += '</div>';
+    for (let row = 0; row < 4; row++) {
+        const label = String.fromCharCode(65 + row);
+        html += `<section class="sigil-row" data-row="${row}">`;
+        html += '<div class="sigil-row-controls">';
+        html += `<div class="sigil-row-label">${label}</div>`;
+        html += '<button class="sigil-control sigil-record" data-action="record">Record</button>';
+        html += '<button class="sigil-control sigil-clear" data-action="clear">Clear</button>';
+        html += '<select class="sigil-route" aria-label="MIDI route">';
+        html += '<option value="off">Off</option>';
+        html += '<option value="bidule">Bidule</option>';
+        html += '<option value="samplesplitter">Samples</option>';
+        html += '<option value="both">Both</option>';
+        html += '</select>';
+        html += '</div>';
+        html += '<div class="sigil-steps">';
+        for (let step = 0; step < 16; step++) {
+            html += `<button class="sigil-step" data-step="${step}" aria-label="Row ${label} step ${step + 1}">${step + 1}</button>`;
+        }
+        html += '</div>';
+        html += '</section>';
+    }
+    sequencer.innerHTML = html;
+
+    sequencer.addEventListener('click', async (e) => {
+        const step = e.target.closest('.sigil-step');
+        if (step) {
+            const row = step.closest('.sigil-row');
+            const patch = row.dataset.patch;
+            try {
+                await API.stepperToggle(patch, Number(step.dataset.step));
+                await refreshStepperStatus();
+            } catch (err) {
+                console.error('Failed to toggle step:', err);
+            }
+            return;
+        }
+
+        const control = e.target.closest('.sigil-control');
+        if (!control) return;
+
+        const row = control.closest('.sigil-row');
+        const patch = row.dataset.patch;
+        if (control.dataset.action === 'record') {
+            const recording = !control.classList.contains('active');
+            try {
+                await API.stepperSetRecord(patch, recording);
+                await refreshStepperStatus();
+            } catch (err) {
+                console.error('Failed to set stepper record:', err);
+            }
+        } else if (control.dataset.action === 'clear') {
+            try {
+                await API.stepperClear(patch);
+                await refreshStepperStatus();
+            } catch (err) {
+                console.error('Failed to clear stepper track:', err);
+            }
+        }
+    });
+
+    sequencer.querySelectorAll('.sigil-row').forEach(row => {
+        const label = String.fromCharCode(65 + Number(row.dataset.row));
+        row.dataset.patch = label;
+    });
+
+    sequencer.querySelectorAll('.sigil-route').forEach(select => {
+        select.addEventListener('change', async () => {
+            const row = select.closest('.sigil-row');
+            try {
+                await API.stepperSetRoute(row.dataset.patch, select.value);
+                await refreshStepperStatus();
+            } catch (err) {
+                console.error('Failed to set stepper route:', err);
+            }
+        });
+    });
+
+    document.getElementById('btn-stepper-play').addEventListener('click', async () => {
+        const btn = document.getElementById('btn-stepper-play');
+        try {
+            if (btn.classList.contains('active')) {
+                await API.stepperStop();
+            } else {
+                await API.stepperPlay();
+            }
+            await refreshStepperStatus();
+        } catch (err) {
+            console.error('Failed to change stepper playback:', err);
+        }
+    });
+}
+
+async function refreshStepperStatus() {
+    if (activeAdventure !== 'sigil') return;
+    let status;
+    try {
+        status = await API.stepperStatus();
+    } catch (err) {
+        return;
+    }
+    if (!status || !status.tracks) return;
+
+    const playBtn = document.getElementById('btn-stepper-play');
+    if (playBtn) {
+        playBtn.classList.toggle('active', !!status.playing);
+        playBtn.textContent = status.playing ? 'STOP' : 'PLAY';
+    }
+
+    document.querySelectorAll('.stepper-position-cell').forEach(cell => {
+        cell.classList.toggle('active', Number(cell.dataset.step) === Number(status.step));
+    });
+
+    for (const patch of ['A', 'B', 'C', 'D']) {
+        const track = status.tracks[patch];
+        const row = document.querySelector(`.sigil-row[data-patch="${patch}"]`);
+        if (!track || !row) continue;
+        const recordBtn = row.querySelector('.sigil-record');
+        recordBtn.classList.toggle('active', !!track.recording);
+        recordBtn.textContent = track.recording ? 'Recording' : 'Record';
+        const route = row.querySelector('.sigil-route');
+        if (route && route.value !== track.route) {
+            route.value = track.route || 'bidule';
+        }
+        row.querySelectorAll('.sigil-step').forEach(btn => {
+            const step = Number(btn.dataset.step);
+            const events = track.steps && track.steps[step] ? track.steps[step] : [];
+            btn.classList.toggle('active', events.length > 0);
+            btn.dataset.count = String(events.length);
+        });
     }
 }
 
@@ -532,21 +717,15 @@ async function loadPreset(name) {
 }
 
 function setupControls() {
+    document.getElementById('btn-start-over').addEventListener('click', showAdventureScreen);
+
     document.getElementById('btn-complete-reset').addEventListener('click', async () => {
         // In advanced mode, COMPLETE RESET returns to normal mode
         if (advancedMode) {
             setAdvancedMode(false);
             return;
         }
-        showRestartModal();
-    });
-
-    document.getElementById('btn-soft-reset').addEventListener('click', async () => {
-        try {
-            await API.softReset();
-        } catch (e) {
-            alert('Reset failed: ' + e.message);
-        }
+        showResetModal();
     });
 
     document.getElementById('btn-help').addEventListener('click', () => {
@@ -605,7 +784,7 @@ function hideHelp() {
     document.getElementById('help-overlay').classList.add('hidden');
 }
 
-function setAdvancedMode(enabled) {
+function setAdvancedMode(enabled, shouldLoadPresets = true) {
     advancedMode = enabled;
     const categoryTabs = document.getElementById('category-tabs');
     const patchSelector = document.getElementById('patch-selector');
@@ -623,7 +802,9 @@ function setAdvancedMode(enabled) {
         // Reset to quad category in normal mode
         currentCategory = 'quad';
         currentPatch = '*';
-        loadPresets();
+        if (shouldLoadPresets) {
+            loadPresets();
+        }
     }
 }
 
@@ -736,6 +917,11 @@ function hideAttract() {
 }
 
 async function pollStatus() {
+    if (activeAdventure !== 'space') {
+        hideAttract();
+        return;
+    }
+
     try {
         const status = await API.getStatus();
         if (status && status.attractmode === 'true' && attractAllowGui && !helpVisible) {
@@ -748,8 +934,8 @@ async function pollStatus() {
     }
 }
 
-// Restart modal
-function showRestartModal() {
+// Reset modal
+function showResetModal() {
     const overlay = document.getElementById('restart-overlay');
     const modal = document.getElementById('restart-modal');
     const message = document.getElementById('restart-message');
@@ -758,11 +944,11 @@ function showRestartModal() {
     overlay.classList.remove('hidden');
 }
 
-function hideRestartModal() {
+function hideResetModal() {
     document.getElementById('restart-overlay').classList.add('hidden');
 }
 
-function showRestartMessage() {
+function showResetMessage() {
     document.getElementById('restart-modal').classList.add('hidden');
     document.getElementById('restart-message').classList.remove('hidden');
 }
@@ -810,13 +996,13 @@ document.addEventListener('click', async (e) => {
     const action = btn.dataset.action;
 
     if (action === 'cancel') {
-        hideRestartModal();
+        hideResetModal();
         return;
     }
 
     if (action === 'complete') {
         await silenceAll();
-        showRestartMessage();
+        showResetMessage();
         try {
             await API.call('global.done');
         } catch (e) {
@@ -835,7 +1021,7 @@ document.addEventListener('click', async (e) => {
         } catch (e) {
             console.error('Failed to restart audio:', e);
         }
-        hideRestartModal();
+        hideResetModal();
         return;
     }
 
@@ -848,7 +1034,7 @@ document.addEventListener('click', async (e) => {
         } catch (e) {
             console.error('Failed to restart visuals:', e);
         }
-        hideRestartModal();
+        hideResetModal();
         return;
     }
 });

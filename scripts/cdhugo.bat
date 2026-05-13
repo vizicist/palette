@@ -1,1 +1,3 @@
-pushd c:\%PALETTE_SOURCE%\..\hugo
+@echo off
+
+pushd "%PALETTE_SOURCE%\..\hugo"
