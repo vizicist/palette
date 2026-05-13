@@ -13,6 +13,7 @@
   "shape": [ "line", "triangle", "square", "circle", "sacred", "chaos", "oracle", "directive" ],
   "morphtype": [ "quadrants", "corners", "A", "B", "C", "D" ],
   "midiinput": [ "microKEY", "microKEY2 Air", "" ],
+  "stepperroute": [ "off", "bidule", "samplesplitter", "both" ],
   "movedir": [ "cursor", "left", "right", "up", "down", "random", "random90", "updown", "leftright" ],
   "rotangdir": [ "right", "left", "random" ],
   "mirror": [ "none", "vertical", "horizontal", "four" ],

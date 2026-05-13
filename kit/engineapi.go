@@ -52,6 +52,8 @@ func ExecuteAPI(api string, apiargs map[string]string) (result string, err error
 		return patch.API(apisuffix, apiargs)
 	case "cursor":
 		return ExecuteCursorAPI(apisuffix, apiargs)
+	case "stepper":
+		return ExecuteStepperAPI(apisuffix, apiargs)
 	default:
 		return "", fmt.Errorf("unknown apitype: %s", apitype)
 	}

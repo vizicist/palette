@@ -27,6 +27,25 @@ func KillExecutable(executable string) {
 	_ = cmd.Run()
 }
 
+func IsSamplesplitterRunning() (bool, error) {
+	cmd := exec.Command("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command",
+		`$p = Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -and $_.CommandLine -match 'samplesplitter\.py' }; if ($p) { exit 0 } else { exit 1 }`)
+	err := cmd.Run()
+	if err == nil {
+		return true, nil
+	}
+	if exitErr, ok := err.(*exec.ExitError); ok && exitErr.ExitCode() == 1 {
+		return false, nil
+	}
+	return false, err
+}
+
+func KillSamplesplitter() {
+	cmd := exec.Command("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command",
+		`Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -and $_.CommandLine -match 'samplesplitter\.py' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }`)
+	_ = cmd.Run()
+}
+
 // KillByPid kills a process by its PID, including child processes
 func KillByPid(pid int) {
 	if pid <= 0 {
@@ -185,24 +204,24 @@ type monitorInfo struct {
 // Windows API types for process enumeration
 // PROCESSENTRY32W structure for Process32FirstW/Process32NextW
 type processEntry32W struct {
-	Size              uint32
-	CntUsage          uint32
-	ProcessID         uint32
-	DefaultHeapID     uintptr
-	ModuleID          uint32
-	CntThreads        uint32
-	ParentProcessID   uint32
-	PriClassBase      int32
-	Flags             uint32
-	ExeFile           [260]uint16 // MAX_PATH = 260
+	Size            uint32
+	CntUsage        uint32
+	ProcessID       uint32
+	DefaultHeapID   uintptr
+	ModuleID        uint32
+	CntThreads      uint32
+	ParentProcessID uint32
+	PriClassBase    int32
+	Flags           uint32
+	ExeFile         [260]uint16 // MAX_PATH = 260
 }
 
 // Windows API constants for process functions
 const (
-	TH32CS_SNAPPROCESS = 0x00000002
+	TH32CS_SNAPPROCESS                = 0x00000002
 	PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
-	INVALID_HANDLE_VALUE = ^uintptr(0)
-	WM_CLOSE = 0x0010
+	INVALID_HANDLE_VALUE              = ^uintptr(0)
+	WM_CLOSE                          = 0x0010
 )
 
 var (
@@ -391,9 +410,9 @@ func searchWindowCallback(hwnd uintptr, lParam uintptr) uintptr {
 
 // windowEnumData is used to pass data to the EnumWindows callback
 type windowEnumData struct {
-	targetPID      uint32
-	expectedTitle  string
-	foundHwnd      uintptr
+	targetPID     uint32
+	expectedTitle string
+	foundHwnd     uintptr
 }
 
 // getMainWindowForProcess finds the main window for a process with matching title

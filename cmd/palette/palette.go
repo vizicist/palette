@@ -468,6 +468,11 @@ func StatusOutput() (statusOut string, numRunning int) {
 			nrunning++
 		}
 	}
+	running, err = kit.IsSamplesplitterRunning()
+	if err == nil && running {
+		s += "Sample Splitter is running.\n"
+		nrunning++
+	}
 
 	/*
 		b, _ := kit.GetParamBool("global.keykitrun")

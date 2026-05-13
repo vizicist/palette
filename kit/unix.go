@@ -60,6 +60,21 @@ func KillExecutable(exe string) {
 	}
 }
 
+func IsSamplesplitterRunning() (bool, error) {
+	err := exec.Command("pgrep", "-f", "samplesplitter.py").Run()
+	if err == nil {
+		return true, nil
+	}
+	if exitErr, ok := err.(*exec.ExitError); ok && exitErr.ExitCode() == 1 {
+		return false, nil
+	}
+	return false, err
+}
+
+func KillSamplesplitter() {
+	_ = exec.Command("pkill", "-f", "samplesplitter.py").Run()
+}
+
 // KillByPid kills a process by its PID
 func KillByPid(pid int) {
 	if pid <= 0 {

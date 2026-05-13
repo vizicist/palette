@@ -1,1 +1,3 @@
-pushd %PALETTE_SOURCE%\python
+@echo off
+
+pushd "%PALETTE_SOURCE%\python"

@@ -19,10 +19,9 @@ AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
-DefaultDirName={commonpf64}\{#MyAppName}
+DefaultDirName={autopf}\{#MyAppName}
 DefaultGroupName={#MyAppName}
-; Uncomment the following line to run in non administrative install mode (install for current user only.)
-;PrivilegesRequired=lowest
+PrivilegesRequired=lowest
 OutputBaseFilename=palette_{#MyAppVersion}_win_setup
 ; Compression=none
 Compression=lzma
@@ -36,9 +35,10 @@ ChangesEnvironment=yes
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
-; Things in %CommonProgramFiles%\Palette are made writable by anyone, for local changes and config
+; Things in Common Files/Local AppData are made writable for local changes and config
 [Dirs]
-Name: "{commoncf64}\{#MyAppName}"; Permissions: users-modify
+Name: "{code:PaletteDataBase}"; Permissions: users-modify
+Name: "{code:PaletteDataBase}\logs"; Permissions: users-modify
 
 [Files]
 Source: "ship\VERSION"; DestDir: "{app}"; Flags: ignoreversion
@@ -49,6 +49,7 @@ Source: "ship\bin\*.exe"; DestDir: "{app}\bin"; Flags: comparetimestamp ignoreve
 Source: "ship\bin\mmtt_kinect\*"; DestDir: "{app}\bin\mmtt_kinect"; Flags: ignoreversion recursesubdirs createallsubdirs
 #endif
 Source: "ship\ffgl\*"; DestDir: "{app}\ffgl"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "ship\samplesplitter\*"; DestDir: "{app}\samplesplitter"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; Source: "ship\keykit\*"; DestDir: "{app}\keykit"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 ; This specifies the Visual C++ Windows Runtime Redistributable to install, it's put in {app}\bin to help debug things.
@@ -56,9 +57,10 @@ Source: "ship\ffgl\*"; DestDir: "{app}\ffgl"; Flags: ignoreversion recursesubdir
 Source: "vc15\bin\VC_redist.x64.exe"; DestDir: {app}\bin
 
 [Run]
-Filename: {app}\bin\VC_redist.x64.exe; Parameters: "/install /quiet /norestart"; StatusMsg: "Installing 64-bit Windows Universal runtime..."; Flags: waituntilterminated
-Filename: taskkill.exe; Parameters: "/F /IM palette_engine.exe"; StatusMsg: "Making sure palette_engine is not running..."; Flags: waituntilterminated
-Filename: taskkill.exe; Parameters: "/F /IM palette_monitor.exe"; StatusMsg: "Making sure palette_monitor is not running..."; Flags: waituntilterminated
+Filename: cmd.exe; Parameters: "/C taskkill /F /IM palette_engine.exe >NUL 2>NUL || exit /B 0"; StatusMsg: "Making sure palette_engine is not running..."; Flags: waituntilterminated
+Filename: cmd.exe; Parameters: "/C taskkill /F /IM palette_monitor.exe >NUL 2>NUL || exit /B 0"; StatusMsg: "Making sure palette_monitor is not running..."; Flags: waituntilterminated
+Filename: powershell.exe; Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""Get-CimInstance Win32_Process | Where-Object {{ $_.CommandLine -and $_.CommandLine -match 'samplesplitter\.py' } | ForEach-Object {{ Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }"""; StatusMsg: "Making sure Sample Splitter is not running..."; Flags: waituntilterminated
+Filename: cmd.exe; Parameters: "/C call ""{app}\samplesplitter\install_windows.bat"" --quiet > ""{code:PaletteDataBase}\logs\samplesplitter_install.log"" 2>&1"; WorkingDir: "{app}\samplesplitter"; StatusMsg: "Installing Sample Splitter Python dependencies..."; Flags: waituntilterminated runhidden
 
 [Icons]
 Name: "{group}\{cm:ProgramOnTheWeb,{#MyAppName}}"; Filename: "{#MyAppURL}"
@@ -66,10 +68,37 @@ Name: "{group}\Start Palette"; Filename: "{app}\bin\palette.exe"; Parameters: "s
 Name: "{group}\Stop Palette"; Filename: "{app}\bin\palette.exe"; Parameters: "stop"; Flags: runminimized
 
 [Registry]
-Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; \
+Root: HKA; Subkey: "{code:EnvKey}"; \
     ValueType: expandsz; ValueName: "PALETTE"; ValueData: "{app}"; Flags: preservestringtype
+Root: HKA; Subkey: "{code:EnvKey}"; \
+    ValueType: expandsz; ValueName: "PALETTE_DATAROOT"; ValueData: "{code:PaletteDataBase}"; Flags: preservestringtype
 
 [Code]
+function HasSystemWidePaletteInstall(): Boolean;
+var
+  Dummy: string;
+begin
+  Result :=
+    DirExists(ExpandConstant('{commonpf64}\Palette')) or
+    DirExists(ExpandConstant('{commoncf64}\Palette')) or
+    RegQueryStringValue(HKEY_LOCAL_MACHINE, 'SYSTEM\CurrentControlSet\Control\Session Manager\Environment', 'PALETTE', Dummy) or
+    RegQueryStringValue(HKEY_LOCAL_MACHINE, 'SYSTEM\CurrentControlSet\Control\Session Manager\Environment', 'PALETTE_DATA', Dummy) or
+    RegQueryStringValue(HKEY_LOCAL_MACHINE, 'SYSTEM\CurrentControlSet\Control\Session Manager\Environment', 'PALETTE_DATAROOT', Dummy);
+end;
+
+function InitializeSetup(): Boolean;
+begin
+  Result := True;
+  if HasSystemWidePaletteInstall() then begin
+    MsgBox(
+      'A previous all-users Palette install was detected.' + #13#10 + #13#10 +
+      'This per-user installer will exit without installing anything so the two install styles are not mixed.' + #13#10 + #13#10 +
+      'Run scripts\cleanup_system_palette_install.bat as Administrator to remove old Program Files, Common Files, and HKLM environment settings, then run this installer again.',
+      mbCriticalError, MB_OK);
+    Result := False;
+  end;
+end;
+
 procedure CurStepChanged(CurStep: TSetupStep);
 begin
     if CurStep = ssPostInstall 
@@ -88,9 +117,11 @@ var
 begin
 
   // Kill running palette things so we can install over them
-  Exec('>', 'taskkill.exe /IM palette_engine.exe /T /F', '', SW_HIDE,
+  Exec('>', 'cmd.exe /C taskkill /IM palette_engine.exe /T /F >NUL 2>NUL', '', SW_HIDE,
      ewWaitUntilTerminated, ResultCode);
-  Exec('>', 'taskkill.exe /IM palette_nmonitor.exe /T /F', '', SW_HIDE,
+  Exec('>', 'cmd.exe /C taskkill /IM palette_monitor.exe /T /F >NUL 2>NUL', '', SW_HIDE,
+     ewWaitUntilTerminated, ResultCode);
+  Exec('>', 'powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -and $_.CommandLine -match ''samplesplitter\.py'' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }"', '', SW_HIDE,
      ewWaitUntilTerminated, ResultCode);
 
   // Proceed Setup

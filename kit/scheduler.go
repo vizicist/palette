@@ -177,6 +177,9 @@ func (sched *Scheduler) advanceClickTo(toClick Clicks) {
 		if doAutoCursorUp {
 			theCursorManager.CheckAutoCursorUp()
 		}
+		if theStepper != nil {
+			theStepper.AdvanceTo(clk)
+		}
 	}
 	sched.lastClick = toClick
 }

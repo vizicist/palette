@@ -1,2 +1,6 @@
 @echo off
-pushd c:\Program Files\Common Files\Palette
+
+set PALETTE_COMMON=%LOCALAPPDATA%\Palette
+if not "%PALETTE_DATAROOT%" == "" set PALETTE_COMMON=%PALETTE_DATAROOT%
+
+pushd "%PALETTE_COMMON%"

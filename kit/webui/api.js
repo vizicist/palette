@@ -66,5 +66,14 @@ const API = {
     obsRecord() { return this.call('global.obsrecord'); },
     obsRecordStop() { return this.call('global.obsrecordstop'); },
     obsRecordStatus() { return this.call('global.obsrecordstatus'); },
-    obsPing() { return this.call('global.obsping'); }
+    obsPing() { return this.call('global.obsping'); },
+
+    // Stepper APIs
+    stepperStatus() { return this.call('stepper.status'); },
+    stepperPlay() { return this.call('stepper.play'); },
+    stepperStop() { return this.call('stepper.stop'); },
+    stepperSetRecord(patch, onoff) { return this.call('stepper.setrecord', { patch, onoff: String(onoff) }); },
+    stepperClear(patch) { return this.call('stepper.clear', { patch }); },
+    stepperToggle(patch, step) { return this.call('stepper.toggle', { patch, step: String(step) }); },
+    stepperSetRoute(patch, route) { return this.call('stepper.setroute', { patch, route }); }
 };

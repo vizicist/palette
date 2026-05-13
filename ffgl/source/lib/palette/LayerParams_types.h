@@ -12,6 +12,7 @@ DEFINE_TYPES(volstyle);
 DEFINE_TYPES(shape);
 DEFINE_TYPES(morphtype);
 DEFINE_TYPES(midiinput);
+DEFINE_TYPES(stepperroute);
 DEFINE_TYPES(movedir);
 DEFINE_TYPES(rotangdir);
 DEFINE_TYPES(mirror);
@@ -33,6 +34,8 @@ LayerParams_InitializeTypes() {
 
 	LayerParams_resolumepathTypes.push_back("C:/Program Files/Resolume Avenue/Avenue.exe");
 	LayerParams_resolumepathTypes.push_back("C:/Program Files/Resolume Arena/Arena.exe");
+	LayerParams_resolumepathTypes.push_back("/Applications/Resolume Avenue/Avenue.app/Contents/MacOS/Avenue");
+	LayerParams_resolumepathTypes.push_back("/Applications/Resolume Arena/Arena.app/Contents/MacOS/Arena");
 
 	LayerParams_pluginsTypes.push_back("");
 	LayerParams_pluginsTypes.push_back("quad");
@@ -104,6 +107,11 @@ LayerParams_InitializeTypes() {
 	LayerParams_midiinputTypes.push_back("microKEY");
 	LayerParams_midiinputTypes.push_back("microKEY2 Air");
 	LayerParams_midiinputTypes.push_back("");
+
+	LayerParams_stepperrouteTypes.push_back("off");
+	LayerParams_stepperrouteTypes.push_back("bidule");
+	LayerParams_stepperrouteTypes.push_back("samplesplitter");
+	LayerParams_stepperrouteTypes.push_back("both");
 
 	LayerParams_movedirTypes.push_back("cursor");
 	LayerParams_movedirTypes.push_back("left");

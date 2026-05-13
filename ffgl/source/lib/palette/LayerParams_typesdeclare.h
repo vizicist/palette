@@ -12,6 +12,7 @@ DECLARE_TYPES(volstyle);
 DECLARE_TYPES(shape);
 DECLARE_TYPES(morphtype);
 DECLARE_TYPES(midiinput);
+DECLARE_TYPES(stepperroute);
 DECLARE_TYPES(movedir);
 DECLARE_TYPES(rotangdir);
 DECLARE_TYPES(mirror);

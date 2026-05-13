@@ -9,7 +9,6 @@
 #define MyAppURL "https://github.com/vizicist/palette"
 #define Data GetEnv('PALETTE_DATA')
 #define DataDir "data_"+GetEnv('PALETTE_DATA')
-#define DataPath "{commoncf64}/Palette/data_"+GetEnv('PALETTE_DATA')
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
@@ -21,9 +20,8 @@ AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
-DefaultDirName={#DataPath}
-; Uncomment the following line to run in non administrative install mode (install for current user only.)
-;PrivilegesRequired=lowest
+DefaultDirName={code:PaletteDataBase}\{#DataDir}
+PrivilegesRequired=lowest
 OutputBaseFilename={#DataDir}_{#MyAppVersion}
 ; Compression=none
 Compression=lzma
@@ -37,16 +35,43 @@ ChangesEnvironment=yes
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
-; Things in %CommonProgramFiles%\Palette are made writable by anyone, for local changes and config
+; Things in the per-user data root are made writable for local changes and config
 [Dirs]
-Name: "{commoncf64}\{#MyAppName}"; Permissions: users-modify
+Name: "{code:PaletteDataBase}"; Permissions: users-modify
 
 [Files]
-Source: "ship\{#DataDir}\*"; DestDir: "{#DataPath}"; Flags: comparetimestamp ignoreversion recursesubdirs createallsubdirs
+Source: "ship\{#DataDir}\*"; DestDir: "{code:PaletteDataBase}\{#DataDir}"; Flags: comparetimestamp ignoreversion recursesubdirs createallsubdirs
 
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Registry]
-Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; \
+Root: HKA; Subkey: "{code:EnvKey}"; \
     ValueType: expandsz; ValueName: "PALETTE_DATA"; ValueData: "{#Data}"; Flags: preservestringtype
+Root: HKA; Subkey: "{code:EnvKey}"; \
+    ValueType: expandsz; ValueName: "PALETTE_DATAROOT"; ValueData: "{code:PaletteDataBase}"; Flags: preservestringtype
 
+[Code]
+function HasSystemWidePaletteInstall(): Boolean;
+var
+  Dummy: string;
+begin
+  Result :=
+    DirExists(ExpandConstant('{commonpf64}\Palette')) or
+    DirExists(ExpandConstant('{commoncf64}\Palette')) or
+    RegQueryStringValue(HKEY_LOCAL_MACHINE, 'SYSTEM\CurrentControlSet\Control\Session Manager\Environment', 'PALETTE', Dummy) or
+    RegQueryStringValue(HKEY_LOCAL_MACHINE, 'SYSTEM\CurrentControlSet\Control\Session Manager\Environment', 'PALETTE_DATA', Dummy) or
+    RegQueryStringValue(HKEY_LOCAL_MACHINE, 'SYSTEM\CurrentControlSet\Control\Session Manager\Environment', 'PALETTE_DATAROOT', Dummy);
+end;
+
+function InitializeSetup(): Boolean;
+begin
+  Result := True;
+  if HasSystemWidePaletteInstall() then begin
+    MsgBox(
+      'A previous all-users Palette install was detected.' + #13#10 + #13#10 +
+      'This per-user data installer will exit without installing anything so the two install styles are not mixed.' + #13#10 + #13#10 +
+      'Run scripts\cleanup_system_palette_install.bat as Administrator to remove old Program Files, Common Files, and HKLM environment settings, then run this installer again.',
+      mbCriticalError, MB_OK);
+    Result := False;
+  end;
+end;

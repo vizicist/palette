@@ -20,6 +20,7 @@ rm -fr %ship% > nul 2>&1
 mkdir %ship%
 mkdir %ship%\bin
 mkdir %ship%\ffgl
+mkdir %ship%\samplesplitter
 rem mkdir %ship%\keykit
 rem mkdir %ship%\keykit\bin
 rem mkdir %ship%\keykit\lib
@@ -112,6 +113,18 @@ rem if "%PALETTE_MMTT%" == "kinect" call build_mmtt.bat
 echo ================ Copying misc binaries
 copy %PALETTE_SOURCE%\binaries\nircmdc.exe %bin% >nul
 copy %PALETTE_SOURCE%\binaries\nats\nats.exe %bin% >nul
+
+echo ================ Copying samplesplitter
+if not exist "%PALETTE_SOURCE%\samplesplitter\samplesplitter.py" (
+	echo The samplesplitter submodule is missing. Run:
+	echo     git submodule update --init --recursive
+	goto getout
+)
+robocopy "%PALETTE_SOURCE%\samplesplitter" "%ship%\samplesplitter" /E /XD .git __pycache__ /XF *.pyc >nul
+if errorlevel 8 (
+	echo Failed to copy samplesplitter.
+	goto getout
+)
 
 rem echo ================ Copying keykit things
 rem copy %PALETTE_SOURCE%\keykit\bin\key.exe %ship%\keykit\bin >nul
