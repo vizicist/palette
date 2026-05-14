@@ -63,7 +63,7 @@ func KillExecutable(exe string) {
 func IsSamplesplitterRunning() (bool, error) {
 	err := exec.Command("pgrep", "-f", "samplesplitter.py").Run()
 	if err == nil {
-		return true, nil
+		return samplesplitterWebIsListening(), nil
 	}
 	if exitErr, ok := err.(*exec.ExitError); ok && exitErr.ExitCode() == 1 {
 		return false, nil

@@ -321,6 +321,12 @@ func (sched *Scheduler) triggerItemsScheduledAtOrBefore(thisClick Clicks) {
 			LogOfType("scheduler", "triggerItemsScheduledAtOrBefore: NoteOff", "note", v.String())
 			v.Synth.SendNoteToMidiOutput(v)
 
+		case *PitchBend:
+			LogOfType("scheduler", "triggerItemsScheduledAtOrBefore: PitchBend", "pitchbend", v.String())
+			if v.Synth != nil {
+				v.Synth.SendPitchBend(v.Value)
+			}
+
 		case midi.Message:
 			synthName, err := GetParam("global.midithrusynth")
 			if err != nil {
@@ -457,6 +463,7 @@ func (sched *Scheduler) insertScheduleElement(se *SchedElement) {
 	switch v := (se.Value).(type) {
 	case *NoteOn:
 	case *NoteOff:
+	case *PitchBend:
 	case CursorEvent:
 		if v.Ddu != "clear" && v.GID == 0 {
 			LogWarn("insertScheduleElement CursorEvent Gid is empty", "v", v)

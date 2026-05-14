@@ -535,6 +535,11 @@ body {
     background: var(--highlight);
 }
 
+.preset-btn.active {
+    background: var(--highlight);
+    box-shadow: inset 0 0 0 4px var(--text);
+}
+
 #controls {
     display: flex;
     gap: 8px;

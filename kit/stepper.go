@@ -10,6 +10,8 @@ import (
 )
 
 const StepperNumSteps = 16
+const StepperDefaultSamplesplitterSynth = "P_16_C_01"
+const StepperSamplesplitterVelocity = 110
 
 var theStepper *Stepper
 
@@ -127,10 +129,13 @@ func ExecuteStepperAPI(api string, apiargs map[string]string) (string, error) {
 
 func (s *Stepper) SetPlaying(playing bool) {
 	s.mutex.Lock()
-	defer s.mutex.Unlock()
 	s.playing = playing
 	s.lastStep = -1
 	s.lastPlayCycle = -1
+	s.mutex.Unlock()
+	if !playing {
+		s.ResetPitchBends()
+	}
 }
 
 func (s *Stepper) SetRecording(patch string, recording bool) (string, error) {
@@ -142,6 +147,11 @@ func (s *Stepper) SetRecording(patch string, recording bool) (string, error) {
 	track.Recording = recording
 	track.lastRecordStep = -1
 	track.lastRecordCycle = -1
+	if recording {
+		s.playing = true
+		s.lastStep = -1
+		s.lastPlayCycle = -1
+	}
 	s.mutex.Unlock()
 	return s.Status()
 }
@@ -205,6 +215,7 @@ func (s *Stepper) SetRoute(patch string, route string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	s.ResetPitchBends()
 	return s.Status()
 }
 
@@ -258,6 +269,11 @@ func (s *Stepper) RecordNoteOn(patch string, note *NoteOn, pressure float64, atC
 	defer s.mutex.Unlock()
 	if !track.Recording {
 		return
+	}
+	if !s.playing {
+		s.playing = true
+		s.lastStep = -1
+		s.lastPlayCycle = -1
 	}
 	if track.lastRecordStep != step || track.lastRecordCycle != cycle {
 		track.Steps[step] = nil
@@ -328,40 +344,99 @@ func (s *Stepper) AdvanceTo(click Clicks) {
 }
 
 func (s *Stepper) playEvent(patch string, event StepperEvent, atClick Clicks) {
-	for _, synth := range s.synthsForPatch(patch, event) {
-		if synth == nil {
-			continue
-		}
-		synth.SendPitchBend(s.pitchBendValue(event.Pressure))
-		noteOn := NewNoteOn(synth, event.Pitch, event.Velocity)
-		noteOff := NewNoteOff(synth, event.Pitch, event.Velocity)
-		ScheduleAt(atClick, patch, noteOn)
-		duration := event.Duration
-		if duration < 1 {
-			duration = s.stepLength()
-		}
-		ScheduleAt(atClick+duration, patch, noteOff)
-	}
-}
-
-func (s *Stepper) synthsForPatch(patch string, event StepperEvent) []*Synth {
 	route := s.routeForPatch(patch)
-	var synths []*Synth
 	if route == "bidule" || route == "both" {
-		p := GetPatch(patch)
-		if p != nil {
-			synths = append(synths, p.Synth())
-		} else if event.SynthName != "" {
-			synths = append(synths, GetSynth(event.SynthName))
+		synth := s.biduleSynthForPatch(patch, event)
+		if synth != nil {
+			s.playTimedEvent(synth, patch, event, atClick)
 		}
 	}
 	if route == "samplesplitter" || route == "both" {
-		p := GetPatch(patch)
-		if p != nil {
-			synths = append(synths, GetSynth(p.Get("stepper.samplesplitter_synth")))
+		synth := s.samplesplitterSynthForPatch(patch)
+		if synth != nil {
+			s.playSamplesplitterEvent(synth, patch, event, atClick)
 		}
 	}
-	return synths
+}
+
+func (s *Stepper) playTimedEvent(synth *Synth, patch string, event StepperEvent, atClick Clicks) {
+	if synth == nil {
+		return
+	}
+	noteOn := NewNoteOn(synth, event.Pitch, event.Velocity)
+	noteOff := NewNoteOff(synth, event.Pitch, event.Velocity)
+	ScheduleAt(atClick, patch, NewPitchBend(synth, s.pitchBendValue(event.Pressure)))
+	ScheduleAt(atClick, patch, noteOn)
+	duration := event.Duration
+	if duration < 1 {
+		duration = s.stepLength()
+	}
+	ScheduleAt(atClick+duration, patch, noteOff)
+	ScheduleAt(atClick+duration+1, patch, NewPitchBend(synth, MidiPitchBendCenter))
+}
+
+func (s *Stepper) playSamplesplitterEvent(synth *Synth, patch string, event StepperEvent, atClick Clicks) {
+	if synth == nil {
+		return
+	}
+	velocity := event.Velocity
+	if velocity < StepperSamplesplitterVelocity {
+		velocity = StepperSamplesplitterVelocity
+	}
+	noteOn := NewNoteOn(synth, event.Pitch, velocity)
+	noteOff := NewNoteOff(synth, event.Pitch, velocity)
+	ScheduleAt(atClick, patch, NewPitchBend(synth, s.pitchBendValue(event.Pressure)))
+	ScheduleAt(atClick, patch, noteOn)
+	ScheduleAt(atClick+1, patch, NewPitchBend(synth, MidiPitchBendCenter))
+	duration := event.Duration
+	if duration < 1 {
+		duration = s.stepLength()
+	}
+	ScheduleAt(atClick+duration, patch, noteOff)
+}
+
+func (s *Stepper) ResetPitchBends() {
+	synths := map[*Synth]bool{}
+	for _, patch := range []string{"A", "B", "C", "D"} {
+		p := GetPatch(patch)
+		if p != nil {
+			if synth := p.Synth(); synth != nil {
+				synths[synth] = true
+			}
+		}
+		if synth := s.samplesplitterSynthForPatch(patch); synth != nil {
+			synths[synth] = true
+		}
+	}
+	if synth := GetSynth(StepperDefaultSamplesplitterSynth); synth != nil {
+		synths[synth] = true
+	}
+	for synth := range synths {
+		synth.SendPitchBend(MidiPitchBendCenter)
+	}
+}
+
+func (s *Stepper) biduleSynthForPatch(patch string, event StepperEvent) *Synth {
+	p := GetPatch(patch)
+	if p != nil {
+		return p.Synth()
+	}
+	if event.SynthName != "" {
+		return GetSynth(event.SynthName)
+	}
+	return nil
+}
+
+func (s *Stepper) samplesplitterSynthForPatch(patch string) *Synth {
+	p := GetPatch(patch)
+	if p == nil {
+		return nil
+	}
+	synthName := p.Get("stepper.samplesplitter_synth")
+	if synthName == "" {
+		synthName = StepperDefaultSamplesplitterSynth
+	}
+	return GetSynth(synthName)
 }
 
 func (s *Stepper) routeForPatch(patch string) string {

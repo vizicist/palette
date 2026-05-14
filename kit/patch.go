@@ -247,7 +247,11 @@ func (patch *Patch) API(api string, apiargs map[string]string) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		return "", patch.SaveQuadAndAlert()
+		err = patch.SaveQuadAndAlert()
+		if err == nil {
+			rememberPresetSelection(category, patch.Name(), filename)
+		}
+		return "", err
 
 	case "save":
 		// This is a save of a single patch (in saved/patch/*)

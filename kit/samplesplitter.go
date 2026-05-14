@@ -2,13 +2,16 @@ package kit
 
 import (
 	"fmt"
+	"net"
 	"os"
 	"path/filepath"
 	"runtime"
+	"time"
 )
 
 const samplesplitterPort = 9876
 const samplesplitterMidiPort = "16. Internal MIDI"
+const samplesplitterStatusTimeout = 500 * time.Millisecond
 
 func SamplesplitterProcessInfo() *ProcessInfo {
 	script := SamplesplitterScriptPath()
@@ -57,4 +60,13 @@ func SamplesplitterScriptPath() string {
 		}
 	}
 	return ""
+}
+
+func samplesplitterWebIsListening() bool {
+	conn, err := net.DialTimeout("tcp", fmt.Sprintf("127.0.0.1:%d", samplesplitterPort), samplesplitterStatusTimeout)
+	if err != nil {
+		return false
+	}
+	_ = conn.Close()
+	return true
 }

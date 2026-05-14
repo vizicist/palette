@@ -161,6 +161,55 @@ func (logic *PatchLogic) generateVisualsFromCursor(ce CursorEvent) {
 	TheResolume().ToFreeFramePlugin(logic.patch.Name(), msg)
 }
 
+func (logic *PatchLogic) liveStepperRoute() string {
+	if theStepper == nil {
+		return "bidule"
+	}
+	return theStepper.routeForPatch(logic.patch.Name())
+}
+
+func (logic *PatchLogic) liveRouteIncludesBidule() bool {
+	route := logic.liveStepperRoute()
+	return route == "bidule" || route == "both"
+}
+
+func (logic *PatchLogic) liveRouteIncludesSamples() bool {
+	route := logic.liveStepperRoute()
+	return route == "samplesplitter" || route == "both"
+}
+
+func (logic *PatchLogic) scheduleLiveNoteOn(ce CursorEvent, noteOn *NoteOn, atClick Clicks) {
+	if logic.liveRouteIncludesBidule() {
+		ScheduleAt(atClick, ce.Tag, noteOn)
+	}
+	if logic.liveRouteIncludesSamples() && theStepper != nil {
+		synth := theStepper.samplesplitterSynthForPatch(logic.patch.Name())
+		if synth == nil {
+			return
+		}
+		velocity := noteOn.Velocity
+		if velocity < StepperSamplesplitterVelocity {
+			velocity = StepperSamplesplitterVelocity
+		}
+		ScheduleAt(atClick, ce.Tag, NewPitchBend(synth, theStepper.pitchBendValue(ce.Pos.Z)))
+		ScheduleAt(atClick, ce.Tag, NewNoteOn(synth, noteOn.Pitch, velocity))
+		ScheduleAt(atClick+1, ce.Tag, NewPitchBend(synth, MidiPitchBendCenter))
+	}
+}
+
+func (logic *PatchLogic) scheduleLiveNoteOff(ce CursorEvent, noteOff *NoteOff, atClick Clicks) {
+	if logic.liveRouteIncludesBidule() {
+		ScheduleAt(atClick, ce.Tag, noteOff)
+	}
+	if logic.liveRouteIncludesSamples() && theStepper != nil {
+		synth := theStepper.samplesplitterSynthForPatch(logic.patch.Name())
+		if synth == nil {
+			return
+		}
+		ScheduleAt(atClick, ce.Tag, NewNoteOff(synth, noteOff.Pitch, noteOff.Velocity))
+	}
+}
+
 func (logic *PatchLogic) generateSoundFromCursor(ce CursorEvent, cursorStyle string) {
 
 	LogOfType("gensound", "generateSoundFromCursor", "cursor", ce.GID, "ce", ce)
@@ -190,13 +239,13 @@ func (logic *PatchLogic) generateSoundFromCursorDownOnly(ce CursorEvent) {
 		}
 		atClick := logic.nextQuant(CurrentClick(), logic.patch.CursorToQuant(ce))
 		// LogInfo("logic.down", "current", CurrentClick(), "atClick", atClick, "noteOn", noteOn)
-		ScheduleAt(atClick, ce.Tag, noteOn)
+		logic.scheduleLiveNoteOn(ce, noteOn, atClick)
 		if theStepper != nil {
 			theStepper.RecordNoteOn(ce.Tag, noteOn, ce.Pos.Z, atClick)
 		}
 		noteOff := NewNoteOffFromNoteOn(noteOn)
 		atClick += QuarterNote
-		ScheduleAt(atClick, ce.Tag, noteOff)
+		logic.scheduleLiveNoteOff(ce, noteOff, atClick)
 		if theStepper != nil {
 			theStepper.RecordNoteOff(ce.Tag, noteOff, atClick)
 		}
@@ -230,7 +279,7 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
 			// but it does happen pretty regularly, I think.
 			// LogWarn("generateSoundFromCursor: oldNote already exists", "gid", ce.Gid)
 			noteOff := NewNoteOffFromNoteOn(oldNoteOn)
-			ScheduleAt(CurrentClick(), ce.Tag, noteOff)
+			logic.scheduleLiveNoteOff(ce, noteOff, CurrentClick())
 			if theStepper != nil {
 				theStepper.RecordNoteOff(ce.Tag, noteOff, CurrentClick())
 			}
@@ -241,7 +290,7 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
 			LogWarn("Hmmm, retrigger, noteOn for down is nil?")
 			return // do nothing, assumes any errors are logged in cursorToNoteOn
 		}
-		ScheduleAt(atClick, ce.Tag, noteOn)
+		logic.scheduleLiveNoteOn(ce, noteOn, atClick)
 		if theStepper != nil {
 			theStepper.RecordNoteOn(ce.Tag, noteOn, ce.Pos.Z, atClick)
 		}
@@ -300,7 +349,7 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
 			// Turn off existing note, one Click after noteOn
 			noteOff := NewNoteOffFromNoteOn(oldNoteOn)
 			offClick := ac.NoteOnClick + 1
-			ScheduleAt(offClick, ce.Tag, noteOff)
+			logic.scheduleLiveNoteOff(ce, noteOff, offClick)
 			if theStepper != nil {
 				theStepper.RecordNoteOff(ce.Tag, noteOff, offClick)
 			}
@@ -310,7 +359,7 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
 				thisClick = offClick
 			}
 
-			ScheduleAt(thisClick, ce.Tag, newNoteOn)
+			logic.scheduleLiveNoteOn(ce, newNoteOn, thisClick)
 			if theStepper != nil {
 				theStepper.RecordNoteOn(ce.Tag, newNoteOn, ce.Pos.Z, thisClick)
 			}
@@ -327,7 +376,7 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
 		} else {
 			noteOff := NewNoteOffFromNoteOn(oldNoteOn)
 			offClick := ac.NoteOnClick + 1
-			ScheduleAt(offClick+1, ce.Tag, noteOff)
+			logic.scheduleLiveNoteOff(ce, noteOff, offClick+1)
 			if theStepper != nil {
 				theStepper.RecordNoteOff(ce.Tag, noteOff, offClick+1)
 			}

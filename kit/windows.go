@@ -32,7 +32,7 @@ func IsSamplesplitterRunning() (bool, error) {
 		`$p = Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -and $_.CommandLine -match 'samplesplitter\.py' }; if ($p) { exit 0 } else { exit 1 }`)
 	err := cmd.Run()
 	if err == nil {
-		return true, nil
+		return samplesplitterWebIsListening(), nil
 	}
 	if exitErr, ok := err.(*exec.ExitError); ok && exitErr.ExitCode() == 1 {
 		return false, nil

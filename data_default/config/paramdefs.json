@@ -155,7 +155,7 @@
 "misc.volstyle": {"valuetype":"string", "min":"volstyle", "max":"volstyle", "init":"pressure", "comment":"# Velocity style" },
 
 "stepper.route": {"valuetype":"string", "min":"stepperroute", "max":"stepperroute", "init":"bidule", "comment":"# Stepper MIDI route" },
-"stepper.samplesplitter_synth": {"valuetype":"string", "min":"synth", "max":"synth", "init":"", "comment":"# Stepper samplesplitter MIDI destination" },
+"stepper.samplesplitter_synth": {"valuetype":"string", "min":"synth", "max":"synth", "init":"P_16_C_01", "comment":"# Stepper samplesplitter MIDI destination" },
 
 "global.attractenabled": {"valuetype":"bool", "min":"false", "max":"true", "init":"false", "comment":"# enable attract mode" },
 "global.attractidlesecs": {"valuetype":"int", "min":"20", "max":"3600", "init":"40", "comment":"# Attract timeout" },
