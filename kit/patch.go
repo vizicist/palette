@@ -111,6 +111,9 @@ func (patch *Patch) noticeValueChange(paramName string, paramValue string) {
 
 	if strings.HasPrefix(paramName, "visual.") {
 		name := strings.TrimPrefix(paramName, "visual.")
+		if paramName == "visual.shape" {
+			paramValue = patch.effectiveVisualShape(paramValue)
+		}
 		msg := osc.NewMessage("/api")
 		msg.Append("set_params")
 		args := fmt.Sprintf("{\"%s\":\"%s\"}", name, paramValue)
@@ -130,6 +133,35 @@ func (patch *Patch) noticeValueChange(paramName string, paramValue string) {
 		patch.synth = synth
 		// LogInfo("Patch.noticeValueChange: changed synth", "patch", patch.name, "synth.name", synth.name)
 		patch.mutex.Unlock()
+	}
+}
+
+func (patch *Patch) effectiveVisualShape(paramValue string) string {
+	if patch == nil || theStepper == nil {
+		return paramValue
+	}
+	route := theStepper.routeForPatch(patch.Name())
+	if route != "samplesplitter" && route != "both" {
+		return paramValue
+	}
+	if shape := SigilShapeForPatch(patch.Name()); shape != "" {
+		return shape
+	}
+	return paramValue
+}
+
+func SigilShapeForPatch(patch string) string {
+	switch patch {
+	case "A":
+		return "chaos"
+	case "B":
+		return "oracle"
+	case "C":
+		return "sacred"
+	case "D":
+		return "directive"
+	default:
+		return ""
 	}
 }
 

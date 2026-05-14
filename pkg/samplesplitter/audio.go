@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"runtime"
 	"sort"
+	"strings"
 	"sync"
 	"unsafe"
 
@@ -29,6 +30,8 @@ type AudioManager struct {
 	cache         map[string]*audioBuffer
 	voices        map[string]*audioVoice
 	channelVoices map[int]string
+	channelOrder  map[int][]string
+	channelActive map[int]string
 	noteVoices    map[[2]int]string
 	outputID      *int
 	outputName    *string
@@ -49,6 +52,9 @@ type audioVoice struct {
 	pcm      []int16
 	position int
 	loop     bool
+	channel  int
+	note     int
+	active   bool
 }
 
 func NewAudioManager(ffmpegPath string, state *State) (*AudioManager, error) {
@@ -66,6 +72,8 @@ func NewAudioManager(ffmpegPath string, state *State) (*AudioManager, error) {
 		cache:         make(map[string]*audioBuffer),
 		voices:        make(map[string]*audioVoice),
 		channelVoices: make(map[int]string),
+		channelOrder:  make(map[int][]string),
+		channelActive: make(map[int]string),
 		noteVoices:    make(map[[2]int]string),
 	}
 	if err := a.openDevice(nil); err != nil {
@@ -155,14 +163,23 @@ func (a *AudioManager) Play(req *PlaybackRequest) error {
 	if voiceKey == "" {
 		voiceKey = "preview"
 	}
-	if req.Channel >= 0 {
-		a.stopChannelLocked(req.Channel)
-		a.channelVoices[req.Channel] = voiceKey
-		a.noteVoices[[2]int{req.Channel, req.Note}] = voiceKey
-	}
+	a.ensureVoiceMapsLocked()
 	a.stopVoiceLocked(voiceKey)
+	voice := &audioVoice{pcm: pcm, loop: req.Loop, channel: req.Channel, note: req.Note, active: true}
+	if req.Channel >= 0 {
+		if activeKey, ok := a.channelActive[req.Channel]; ok {
+			if activeVoice := a.voices[activeKey]; activeVoice != nil {
+				activeVoice.active = false
+				activeVoice.position = 0
+			}
+		}
+		a.channelVoices[req.Channel] = voiceKey
+		a.channelActive[req.Channel] = voiceKey
+		a.noteVoices[[2]int{req.Channel, req.Note}] = voiceKey
+		a.channelOrder[req.Channel] = appendVoiceKey(a.channelOrder[req.Channel], voiceKey)
+	}
 
-	a.voices[voiceKey] = &audioVoice{pcm: pcm, loop: req.Loop}
+	a.voices[voiceKey] = voice
 	a.syncActiveVoicesLocked()
 	a.err = nil
 	return nil
@@ -183,13 +200,23 @@ func (a *AudioManager) StopNote(channel, note int) {
 	}
 	a.mu.Lock()
 	defer a.mu.Unlock()
+	before := len(a.voices)
+	if note < 0 {
+		a.stopChannelLocked(channel)
+		if before != len(a.voices) && a.state != nil {
+			a.state.SetAudioStatus(true, nil)
+		}
+		return
+	}
 	key := [2]int{channel, note}
 	if voiceKey, ok := a.noteVoices[key]; ok {
 		a.stopVoiceLocked(voiceKey)
 		delete(a.noteVoices, key)
+		if a.state != nil {
+			a.state.SetAudioStatus(true, nil)
+		}
 		return
 	}
-	a.stopChannelLocked(channel)
 }
 
 func (a *AudioManager) StopAll() {
@@ -202,6 +229,8 @@ func (a *AudioManager) StopAll() {
 		a.stopVoiceLocked(voiceKey)
 	}
 	a.channelVoices = make(map[int]string)
+	a.channelOrder = make(map[int][]string)
+	a.channelActive = make(map[int]string)
 	a.noteVoices = make(map[[2]int]string)
 	a.syncActiveVoicesLocked()
 }
@@ -289,14 +318,25 @@ func (a *AudioManager) mixIntoLocked(output []byte) []string {
 	completed := make([]string, 0)
 	for frame := 0; frame < frameCount; frame++ {
 		mixed := 0
+		mixedVoiceKeys := make(map[string]bool)
 		for voiceKey, voice := range a.voices {
+			if mixedVoiceKeys[voiceKey] || (voice.loop && voice.channel >= 0 && !voice.active) {
+				continue
+			}
 			if len(voice.pcm) == 0 {
 				completed = append(completed, voiceKey)
 				continue
 			}
 			if voice.position >= len(voice.pcm) {
 				if voice.loop {
-					voice.position = 0
+					voiceKey, voice = a.advanceChannelVoiceLocked(voice.channel, voiceKey)
+					if voice == nil {
+						completed = append(completed, voiceKey)
+						continue
+					}
+					if mixedVoiceKeys[voiceKey] {
+						continue
+					}
 				} else {
 					completed = append(completed, voiceKey)
 					continue
@@ -304,6 +344,7 @@ func (a *AudioManager) mixIntoLocked(output []byte) []string {
 			}
 			mixed += int(voice.pcm[voice.position])
 			voice.position++
+			mixedVoiceKeys[voiceKey] = true
 		}
 		if mixed > 32767 {
 			mixed = 32767
@@ -321,32 +362,129 @@ func (a *AudioManager) setErr(err error) {
 	a.err = err
 }
 
-func (a *AudioManager) stopChannelLocked(channel int) {
-	if voiceKey, ok := a.channelVoices[channel]; ok {
-		a.stopVoiceLocked(voiceKey)
-		delete(a.channelVoices, channel)
+func (a *AudioManager) ensureVoiceMapsLocked() {
+	if a.voices == nil {
+		a.voices = make(map[string]*audioVoice)
 	}
-	for key, voiceKey := range a.noteVoices {
-		if key[0] == channel {
-			a.stopVoiceLocked(voiceKey)
-			delete(a.noteVoices, key)
-		}
+	if a.channelVoices == nil {
+		a.channelVoices = make(map[int]string)
+	}
+	if a.channelOrder == nil {
+		a.channelOrder = make(map[int][]string)
+	}
+	if a.channelActive == nil {
+		a.channelActive = make(map[int]string)
+	}
+	if a.noteVoices == nil {
+		a.noteVoices = make(map[[2]int]string)
 	}
 }
 
-func (a *AudioManager) stopVoiceLocked(voiceKey string) {
-	delete(a.voices, voiceKey)
-	for channel, activeVoice := range a.channelVoices {
-		if activeVoice == voiceKey {
-			delete(a.channelVoices, channel)
+func (a *AudioManager) stopChannelLocked(channel int) {
+	a.ensureVoiceMapsLocked()
+	for key, voiceKey := range a.noteVoices {
+		if key[0] == channel {
+			delete(a.voices, voiceKey)
+			delete(a.noteVoices, key)
 		}
 	}
+	delete(a.channelVoices, channel)
+	delete(a.channelOrder, channel)
+	delete(a.channelActive, channel)
+	prefix := fmt.Sprintf("midi-%d-", channel)
+	for voiceKey := range a.voices {
+		if strings.HasPrefix(voiceKey, prefix) {
+			delete(a.voices, voiceKey)
+		}
+	}
+	a.syncActiveVoicesLocked()
+}
+
+func (a *AudioManager) stopVoiceLocked(voiceKey string) {
+	a.ensureVoiceMapsLocked()
+	voice, hadVoice := a.voices[voiceKey]
+	delete(a.voices, voiceKey)
 	for key, activeVoice := range a.noteVoices {
 		if activeVoice == voiceKey {
 			delete(a.noteVoices, key)
 		}
 	}
+	if hadVoice && voice.channel >= 0 {
+		a.removeChannelVoiceLocked(voice.channel, voiceKey)
+	} else {
+		for channel, activeVoice := range a.channelActive {
+			if activeVoice == voiceKey {
+				a.removeChannelVoiceLocked(channel, voiceKey)
+			}
+		}
+	}
 	a.syncActiveVoicesLocked()
+}
+
+func (a *AudioManager) removeChannelVoiceLocked(channel int, voiceKey string) {
+	order := removeVoiceKey(a.channelOrder[channel], voiceKey)
+	if len(order) == 0 {
+		delete(a.channelOrder, channel)
+		delete(a.channelActive, channel)
+		delete(a.channelVoices, channel)
+		return
+	}
+	a.channelOrder[channel] = order
+	if a.channelActive[channel] != voiceKey {
+		return
+	}
+	nextKey := order[0]
+	a.channelActive[channel] = nextKey
+	a.channelVoices[channel] = nextKey
+	if nextVoice := a.voices[nextKey]; nextVoice != nil {
+		nextVoice.active = true
+		nextVoice.position = 0
+	}
+}
+
+func (a *AudioManager) advanceChannelVoiceLocked(channel int, currentKey string) (string, *audioVoice) {
+	if channel < 0 {
+		if voice := a.voices[currentKey]; voice != nil {
+			voice.position = 0
+			return currentKey, voice
+		}
+		return currentKey, nil
+	}
+	order := a.channelOrder[channel]
+	if len(order) == 0 {
+		if voice := a.voices[currentKey]; voice != nil {
+			voice.position = 0
+			return currentKey, voice
+		}
+		return currentKey, nil
+	}
+	currentIdx := -1
+	for i, key := range order {
+		if key == currentKey {
+			currentIdx = i
+			break
+		}
+	}
+	if currentIdx < 0 {
+		currentIdx = 0
+	}
+	for offset := 1; offset <= len(order); offset++ {
+		nextKey := order[(currentIdx+offset)%len(order)]
+		nextVoice := a.voices[nextKey]
+		if nextVoice == nil || len(nextVoice.pcm) == 0 {
+			continue
+		}
+		if currentVoice := a.voices[currentKey]; currentVoice != nil {
+			currentVoice.active = false
+			currentVoice.position = 0
+		}
+		nextVoice.active = true
+		nextVoice.position = 0
+		a.channelActive[channel] = nextKey
+		a.channelVoices[channel] = nextKey
+		return nextKey, nextVoice
+	}
+	return currentKey, nil
 }
 
 func (a *AudioManager) syncActiveVoicesLocked() {
@@ -440,6 +578,25 @@ func uniqueStrings(values []string) []string {
 		if i == 0 || value != last {
 			out = append(out, value)
 			last = value
+		}
+	}
+	return out
+}
+
+func appendVoiceKey(values []string, voiceKey string) []string {
+	for _, value := range values {
+		if value == voiceKey {
+			return values
+		}
+	}
+	return append(values, voiceKey)
+}
+
+func removeVoiceKey(values []string, voiceKey string) []string {
+	out := values[:0]
+	for _, value := range values {
+		if value != voiceKey {
+			out = append(out, value)
 		}
 	}
 	return out

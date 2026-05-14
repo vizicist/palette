@@ -240,6 +240,7 @@ func (s *Stepper) SetRoute(patch string, route string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	p.noticeValueChange("visual.shape", p.Get("visual.shape"))
 	s.ResetPitchBends()
 	return s.Status()
 }

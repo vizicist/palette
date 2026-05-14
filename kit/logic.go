@@ -201,21 +201,20 @@ func (logic *PatchLogic) scheduleLiveNoteOn(ce CursorEvent, noteOn *NoteOn, atCl
 	}
 }
 
-func (logic *PatchLogic) bss2SampleNoteOn(ce CursorEvent) *NoteOn {
-	if theStepper == nil {
-		return nil
-	}
-	synth := theStepper.samplesplitterSynthForPatch(logic.patch.Name())
-	if synth == nil {
-		return nil
-	}
+func (logic *PatchLogic) bss2SampleNoteOn(ce CursorEvent) *SamplesplitterNoteOn {
 	x := boundValueZeroToOne(ce.Pos.X)
-	pitch := uint8(math.Min(47, math.Floor(x*48.0)))
+	note := int(math.Min(47, math.Floor(x*48.0)))
 	velocity := logic.cursorToVelocity(ce)
 	if velocity < StepperSamplesplitterVelocity {
 		velocity = StepperSamplesplitterVelocity
 	}
-	return NewNoteOn(synth, pitch, velocity)
+	return &SamplesplitterNoteOn{
+		Patch:     logic.patch.Name(),
+		Channel:   SamplesplitterChannelForPatch(logic.patch.Name()),
+		Note:      note,
+		Velocity:  int(velocity),
+		PitchBend: logic.bss2SamplePitchBendValue(ce),
+	}
 }
 
 func (logic *PatchLogic) bss2SamplePitchBendValue(ce CursorEvent) int {
@@ -235,24 +234,22 @@ func (logic *PatchLogic) nextBSS2SampleQuant(t Clicks) Clicks {
 	return logic.nextQuant(t, logic.bss2SampleQuant())
 }
 
-func (logic *PatchLogic) scheduleBSS2SampleNoteOn(ac *ActiveCursor, ce CursorEvent, noteOn *NoteOn, atClick Clicks) {
-	if theStepper == nil || noteOn == nil {
+func (logic *PatchLogic) scheduleBSS2SampleNoteOn(ac *ActiveCursor, ce CursorEvent, noteOn *SamplesplitterNoteOn, atClick Clicks) {
+	if noteOn == nil {
 		return
 	}
-	previous, current := theStepper.setActiveSamplesplitterVoice(logic.patch.Name(), noteOn.Synth, noteOn.Pitch, noteOn.Velocity)
-	if previous != nil {
-		ScheduleAt(atClick, ce.Tag, NewNoteOff(previous.Synth, previous.Pitch, previous.Velocity))
+	if ac.SampleNote != nil {
+		ScheduleAt(atClick, ce.Tag, &SamplesplitterNoteOff{Patch: ac.SampleNote.Patch, Channel: ac.SampleNote.Channel, Note: ac.SampleNote.Note})
 	}
-	ScheduleAt(atClick, ce.Tag, NewPitchBend(noteOn.Synth, logic.bss2SamplePitchBendValue(ce)))
 	ScheduleAt(atClick, ce.Tag, noteOn)
-	ac.SampleVoice = &current
+	ac.SampleNote = noteOn
 }
 
 func (logic *PatchLogic) scheduleBSS2SampleNoteOff(ac *ActiveCursor, ce CursorEvent, atClick Clicks) {
-	if ac.SampleVoice != nil {
-		ScheduleAt(atClick, ce.Tag, NewNoteOff(ac.SampleVoice.Synth, ac.SampleVoice.Pitch, ac.SampleVoice.Velocity))
-		ScheduleAt(atClick+1, ce.Tag, NewPitchBend(ac.SampleVoice.Synth, MidiPitchBendCenter))
-		ac.SampleVoice = nil
+	if ac.SampleNote != nil {
+		ScheduleAt(atClick, ce.Tag, &SamplesplitterNoteOff{Patch: ac.SampleNote.Patch, Channel: ac.SampleNote.Channel, Note: ac.SampleNote.Note})
+		ScheduleAt(atClick+1, ce.Tag, &SamplesplitterPitchBend{Patch: ac.SampleNote.Patch, Channel: ac.SampleNote.Channel, Value: MidiPitchBendCenter})
+		ac.SampleNote = nil
 	}
 }
 
@@ -307,11 +304,10 @@ func (logic *PatchLogic) generateBSS2SampleFromCursor(ce CursorEvent) {
 		}
 		atClick := logic.nextBSS2SampleQuant(CurrentClick())
 		logic.scheduleBSS2SampleNoteOn(ac, ce, noteOn, atClick)
-		ac.NoteOn = noteOn
 		ac.NoteOnClick = atClick
 
 	case "drag":
-		oldNoteOn := ac.NoteOn
+		oldNoteOn := ac.SampleNote
 		if oldNoteOn == nil {
 			noteOn := logic.bss2SampleNoteOn(ce)
 			if noteOn == nil {
@@ -319,7 +315,6 @@ func (logic *PatchLogic) generateBSS2SampleFromCursor(ce CursorEvent) {
 			}
 			atClick := logic.nextBSS2SampleQuant(CurrentClick())
 			logic.scheduleBSS2SampleNoteOn(ac, ce, noteOn, atClick)
-			ac.NoteOn = noteOn
 			ac.NoteOnClick = atClick
 			return
 		}
@@ -327,32 +322,30 @@ func (logic *PatchLogic) generateBSS2SampleFromCursor(ce CursorEvent) {
 		if newNoteOn == nil {
 			return
 		}
-		if newNoteOn.Pitch != oldNoteOn.Pitch {
-			offClick := ac.NoteOnClick + 1
+		if newNoteOn.Note != oldNoteOn.Note {
 			now := CurrentClick()
-			if offClick < now {
-				offClick = now
-			}
-			logic.scheduleBSS2SampleNoteOff(ac, ce, offClick)
 			onClick := logic.nextBSS2SampleQuant(now)
-			if onClick <= offClick {
-				onClick = offClick + 1
-			}
+			theScheduler.DeleteSamplesplitterNoteOns(ce.Tag, oldNoteOn.Channel)
 			logic.scheduleBSS2SampleNoteOn(ac, ce, newNoteOn, onClick)
-			ac.NoteOn = newNoteOn
 			ac.NoteOnClick = onClick
 		} else {
-			ScheduleAt(CurrentClick(), ce.Tag, NewPitchBend(oldNoteOn.Synth, logic.bss2SamplePitchBendValue(ce)))
+			ScheduleAt(CurrentClick(), ce.Tag, &SamplesplitterPitchBend{Patch: oldNoteOn.Patch, Channel: oldNoteOn.Channel, Value: logic.bss2SamplePitchBendValue(ce)})
 		}
 
 	case "up":
-		offClick := ac.NoteOnClick + 1
-		now := CurrentClick()
-		if offClick < now {
-			offClick = now
+		if ac.SampleNote != nil {
+			LogInfo("BSS2 sample cursor up", "patch", ac.SampleNote.Patch, "channel", ac.SampleNote.Channel, "note", ac.SampleNote.Note, "click", CurrentClick())
+			theScheduler.DeleteSamplesplitterNoteOns(ce.Tag, ac.SampleNote.Channel)
+			ScheduleAt(CurrentClick(), ce.Tag, &SamplesplitterNoteOff{Patch: ac.SampleNote.Patch, Channel: ac.SampleNote.Channel, Note: ac.SampleNote.Note})
+			ScheduleAt(CurrentClick()+1, ce.Tag, &SamplesplitterPitchBend{Patch: ac.SampleNote.Patch, Channel: ac.SampleNote.Channel, Value: MidiPitchBendCenter})
+			ac.SampleNote = nil
+		} else {
+			channel := SamplesplitterChannelForPatch(logic.patch.Name())
+			LogInfo("BSS2 sample cursor up without active sample note", "patch", logic.patch.Name(), "channel", channel, "click", CurrentClick())
+			theScheduler.DeleteSamplesplitterNoteOns(ce.Tag, channel)
+			ScheduleAt(CurrentClick(), ce.Tag, &SamplesplitterNoteOff{Patch: logic.patch.Name(), Channel: channel, Note: -1})
+			ScheduleAt(CurrentClick()+1, ce.Tag, &SamplesplitterPitchBend{Patch: logic.patch.Name(), Channel: channel, Value: MidiPitchBendCenter})
 		}
-		logic.scheduleBSS2SampleNoteOff(ac, ce, offClick)
-		ac.NoteOn = nil
 	}
 }
 

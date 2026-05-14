@@ -20,6 +20,7 @@ std::map< std::string, ParsedSvg > SpriteSVG::_cache;
 // 0.125-radius ellipse (Sprite.cpp:546) and SpriteSquare uses 0.125 half-
 // width; match that so sigils render at the same nominal size.
 static const float SIGIL_HALF_EXTENT = 0.125f;
+static const float SIGIL_BOUNDS_PADDING = 0.10f;
 
 static const int BEZIER_STEPS = 16;
 
@@ -414,6 +415,16 @@ bool SpriteSVG::parseFile( const std::string& path, ParsedSvg& out ) {
 	float bh = maxY - minY;
 	if( bw <= 0 || bh <= 0 )
 		return false;
+
+	float padX = bw * SIGIL_BOUNDS_PADDING;
+	float padY = bh * SIGIL_BOUNDS_PADDING;
+	minX -= padX;
+	maxX += padX;
+	minY -= padY;
+	maxY += padY;
+	bw = maxX - minX;
+	bh = maxY - minY;
+
 	float scale   = ( 2.0f * SIGIL_HALF_EXTENT ) / std::max( bw, bh );
 	float offsetX = ( minX + maxX ) * 0.5f;
 	float offsetY = ( minY + maxY ) * 0.5f;
