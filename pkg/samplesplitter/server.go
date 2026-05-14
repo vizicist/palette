@@ -16,6 +16,22 @@ type Server struct {
 	Audio     *AudioManager
 }
 
+func ServerFromService(service *Service, staticDir string) Server {
+	if service == nil {
+		return Server{StaticDir: staticDir}
+	}
+	if staticDir == "" {
+		staticDir = ResolveStaticDir("")
+	}
+	return Server{
+		State:     service.state,
+		Analyzer:  service.analyzer,
+		StaticDir: staticDir,
+		MIDI:      service.midi,
+		Audio:     service.audio,
+	}
+}
+
 func (s Server) Handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", s.handleIndex)

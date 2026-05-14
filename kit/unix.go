@@ -61,6 +61,9 @@ func KillExecutable(exe string) {
 }
 
 func IsSamplesplitterRunning() (bool, error) {
+	if InEngineSamplesplitterRunning() {
+		return true, nil
+	}
 	processRunning, err := IsSamplesplitterProcessRunning()
 	if err != nil || !processRunning {
 		return processRunning, err
@@ -69,6 +72,9 @@ func IsSamplesplitterRunning() (bool, error) {
 }
 
 func IsSamplesplitterProcessRunning() (bool, error) {
+	if InEngineSamplesplitterRunning() {
+		return true, nil
+	}
 	err := exec.Command("pgrep", "-f", "samplesplitter($| )|samplesplitter.py").Run()
 	if err == nil {
 		return true, nil
@@ -80,6 +86,7 @@ func IsSamplesplitterProcessRunning() (bool, error) {
 }
 
 func KillSamplesplitter() {
+	StopInEngineSamplesplitter()
 	_ = exec.Command("pkill", "-f", "samplesplitter($| )|samplesplitter.py").Run()
 }
 

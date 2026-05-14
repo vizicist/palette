@@ -6,45 +6,34 @@ import (
 	"strings"
 	"sync"
 
-	oldmidi "gitlab.com/gomidi/midi"
-	"gitlab.com/gomidi/midi/reader"
-	"gitlab.com/gomidi/rtmididrv"
+	midi "gitlab.com/gomidi/midi/v2"
+	"gitlab.com/gomidi/midi/v2/drivers"
 )
 
 type MIDIManager struct {
-	mu     sync.Mutex
-	state  *State
-	audio  *AudioManager
-	driver *rtmididrv.Driver
-	in     oldmidi.In
+	mu    sync.Mutex
+	state *State
+	audio *AudioManager
+	in    drivers.In
+	stop  func()
 }
 
 func NewMIDIManager(state *State, audio *AudioManager) (*MIDIManager, error) {
-	driver, err := rtmididrv.New()
-	if err != nil {
-		return nil, err
-	}
-	return &MIDIManager{state: state, audio: audio, driver: driver}, nil
+	return &MIDIManager{state: state, audio: audio}, nil
 }
 
 func (m *MIDIManager) Close() error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.stopLocked()
-	if m.driver == nil {
-		return nil
-	}
-	return m.driver.Close()
+	return nil
 }
 
 func (m *MIDIManager) Ports() ([]string, error) {
-	if m == nil || m.driver == nil {
+	if m == nil {
 		return nil, errors.New("MIDI backend is not initialized")
 	}
-	ins, err := m.driver.Ins()
-	if err != nil {
-		return nil, err
-	}
+	ins := midi.GetInPorts()
 	ports := make([]string, len(ins))
 	for i, in := range ins {
 		ports[i] = in.String()
@@ -53,7 +42,7 @@ func (m *MIDIManager) Ports() ([]string, error) {
 }
 
 func (m *MIDIManager) Start(portName string) (string, error) {
-	if m == nil || m.driver == nil {
+	if m == nil {
 		return "", errors.New("MIDI backend is not initialized")
 	}
 	if portName == "" {
@@ -78,19 +67,12 @@ func (m *MIDIManager) Start(portName string) (string, error) {
 		}
 		return "", err
 	}
-	midiReader := reader.New(
-		reader.NoLogger(),
-		reader.NoteOn(func(_ *reader.Position, channel, key, velocity uint8) {
-			m.handleNoteOn(int(channel), int(key), int(velocity))
-		}),
-		reader.NoteOff(func(_ *reader.Position, channel, key, velocity uint8) {
-			m.handleNoteOff(int(channel), int(key), int(velocity))
-		}),
-		reader.Pitchbend(func(_ *reader.Position, channel uint8, value int16) {
-			m.handlePitchBend(int(channel), int(value))
-		}),
-	)
-	if err := midiReader.ListenTo(in); err != nil {
+	stop, err := midi.ListenTo(in, m.handleMessage, midi.HandleError(func(err error) {
+		if m.state != nil {
+			m.state.SetMIDIStatus("", err)
+		}
+	}))
+	if err != nil {
 		_ = in.Close()
 		if m.state != nil {
 			m.state.SetMIDIStatus("", err)
@@ -98,6 +80,7 @@ func (m *MIDIManager) Start(portName string) (string, error) {
 		return "", err
 	}
 	m.in = in
+	m.stop = stop
 	if m.state != nil {
 		m.state.SetMIDIStatus(resolved, nil)
 	}
@@ -111,20 +94,20 @@ func (m *MIDIManager) Stop() {
 }
 
 func (m *MIDIManager) stopLocked() {
+	if m.stop != nil {
+		m.stop()
+		m.stop = nil
+	}
 	if m.in != nil {
-		_ = m.in.StopListening()
 		_ = m.in.Close()
 		m.in = nil
 	}
 }
 
-func (m *MIDIManager) resolveInput(portName string) (string, oldmidi.In, error) {
-	ins, err := m.driver.Ins()
-	if err != nil {
-		return "", nil, err
-	}
-	var exact oldmidi.In
-	var matches []oldmidi.In
+func (m *MIDIManager) resolveInput(portName string) (string, drivers.In, error) {
+	ins := midi.GetInPorts()
+	var exact drivers.In
+	var matches []drivers.In
 	for _, in := range ins {
 		name := in.String()
 		if name == portName {
@@ -149,6 +132,19 @@ func (m *MIDIManager) resolveInput(portName string) (string, oldmidi.In, error) 
 		return "", nil, fmt.Errorf("ambiguous port %q: %s", portName, strings.Join(names, ", "))
 	}
 	return "", nil, fmt.Errorf("unknown port %q", portName)
+}
+
+func (m *MIDIManager) handleMessage(msg midi.Message, _ int32) {
+	var channel, key, velocity uint8
+	switch {
+	case msg.GetNoteOn(&channel, &key, &velocity):
+		m.handleNoteOn(int(channel), int(key), int(velocity))
+	case msg.GetNoteOff(&channel, &key, &velocity):
+		m.handleNoteOff(int(channel), int(key), int(velocity))
+	case len(msg) >= 3 && msg[0]&0xf0 == 0xe0:
+		value := int(msg[1]) | (int(msg[2]) << 7)
+		m.handlePitchBend(int(msg[0]&0x0f), value-8192)
+	}
 }
 
 func (m *MIDIManager) handleNoteOn(channel, key, velocity int) {

@@ -202,6 +202,48 @@ func (sched *Scheduler) DeleteCursorEventsWhoseGIDIs(gid int) {
 	}
 }
 
+func (sched *Scheduler) DeleteSamplesplitterNoteOns(tag string, channel int) {
+	deleted := 0
+	sched.pendingMutex.Lock()
+	keptPending := sched.pendingScheduled[:0]
+	for _, se := range sched.pendingScheduled {
+		if se.Tag == tag && samplesplitterEventChannel(se.Value) == channel {
+			deleted++
+			continue
+		}
+		keptPending = append(keptPending, se)
+	}
+	sched.pendingScheduled = keptPending
+	sched.pendingMutex.Unlock()
+
+	sched.mutex.Lock()
+	defer sched.mutex.Unlock()
+
+	var nexti *list.Element
+	for i := sched.schedList.Front(); i != nil; i = nexti {
+		nexti = i.Next()
+		se := i.Value.(*SchedElement)
+		if se.Tag == tag && samplesplitterEventChannel(se.Value) == channel {
+			sched.schedList.Remove(i)
+			deleted++
+		}
+	}
+	if deleted > 0 {
+		LogInfo("DeleteSamplesplitterNoteOns", "tag", tag, "channel", channel, "deleted", deleted)
+	}
+}
+
+func samplesplitterEventChannel(value any) int {
+	switch v := value.(type) {
+	case *SamplesplitterNoteOn:
+		return v.Channel
+	case *SamplesplitterPitchBend:
+		return v.Channel
+	default:
+		return -1
+	}
+}
+
 // XXX - Fade, Filter, and Delete should be combined into one function
 
 func (sched *Scheduler) FadeEventsWithTag(tag string) {
@@ -335,6 +377,18 @@ func (sched *Scheduler) triggerItemsScheduledAtOrBefore(thisClick Clicks) {
 					noteOff.Synth.SendNoteToMidiOutput(noteOff)
 				}
 			}
+
+		case *SamplesplitterNoteOn:
+			LogOfType("scheduler", "triggerItemsScheduledAtOrBefore: SamplesplitterNoteOn", "patch", v.Patch, "channel", v.Channel, "note", v.Note)
+			v.Trigger()
+
+		case *SamplesplitterNoteOff:
+			LogOfType("scheduler", "triggerItemsScheduledAtOrBefore: SamplesplitterNoteOff", "patch", v.Patch, "channel", v.Channel, "note", v.Note)
+			v.Trigger()
+
+		case *SamplesplitterPitchBend:
+			LogOfType("scheduler", "triggerItemsScheduledAtOrBefore: SamplesplitterPitchBend", "patch", v.Patch, "channel", v.Channel, "value", v.Value)
+			v.Trigger()
 
 		case midi.Message:
 			synthName, err := GetParam("global.midithrusynth")

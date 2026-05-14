@@ -367,8 +367,7 @@ function updatePalettePadRoute(patch, route) {
     if (!pad) return;
     const normalized = route === 'samplesplitter' || route === 'both' ? 'samplesplitter' : 'bidule';
     pad.dataset.route = normalized;
-    pad.classList.toggle('sample', normalized === 'samplesplitter');
-    pad.classList.toggle('synth', normalized !== 'samplesplitter');
+    pad.classList.remove('sample', 'synth');
     const label = pad.querySelector('.palette-pad-route');
     if (label) label.textContent = normalized === 'samplesplitter' ? 'TRANSMISSION' : 'SYNTH';
 }
@@ -838,9 +837,10 @@ async function refreshCursorActivity() {
     }
     for (const patch of ['A', 'B', 'C', 'D']) {
         const count = Number(activity && activity[patch]) || 0;
-        if (count > cursorActivityCounts[patch]) {
+        if (activeAdventure === 'sigil' && count > cursorActivityCounts[patch]) {
             flashSigilForPatch(patch);
         }
+        setPalettePadActivity(patch, count > 0);
         cursorActivityCounts[patch] = count;
     }
 }
@@ -854,11 +854,12 @@ function flashSigilForPatch(patch) {
         void img.offsetWidth;
         img.classList.add('flash');
     }
+}
+
+function setPalettePadActivity(patch, active) {
     const pad = document.querySelector(`.palette-pad[data-pad="${patch}"]`);
     if (pad) {
-        pad.classList.remove('morph-active');
-        void pad.offsetWidth;
-        pad.classList.add('morph-active');
+        pad.classList.toggle('morph-active', active);
     }
 }
 
@@ -955,6 +956,7 @@ function hideHelp() {
 
 function setAdvancedMode(enabled, shouldLoadPresets = true) {
     advancedMode = enabled;
+    document.body.classList.toggle('advanced-mode', enabled);
     const categoryTabs = document.getElementById('category-tabs');
     const patchSelector = document.getElementById('patch-selector');
     const titleBar = document.getElementById('title-bar');

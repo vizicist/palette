@@ -496,6 +496,7 @@ body.initial-bss2 #ritual-nav {
     padding: 10px;
     border-top: 6px solid var(--button-border);
     align-items: stretch;
+    min-width: 0;
 }
 
 .patch-grid {
@@ -504,33 +505,39 @@ body.initial-bss2 #ritual-nav {
     flex-direction: column;
     gap: 8px;
     align-items: center;
+    min-width: 0;
 }
 
 .patch-row {
     display: flex;
     gap: 8px;
     justify-content: center;
+    width: 100%;
+    min-width: 0;
 }
 
 .patch-btn {
     background: var(--button-bg);
     color: var(--text);
     border: none;
-    padding: 18px 40px;
+    padding: 18px clamp(12px, 4vw, 40px);
     cursor: pointer;
     font-size: 24px;
-    min-width: 100px;
+    flex: 1 1 0;
+    max-width: 180px;
+    min-width: 0;
     text-align: center;
 }
 
 .patch-row-bottom {
-    gap: 40px;
+    gap: clamp(16px, 5vw, 40px);
 }
 
 .patch-btn[data-patch="*"] {
     padding: 6px 12px;
-    min-width: 40px;
-    margin: 12px 30px;
+    flex: 0 1 88px;
+    min-width: 0;
+    margin: 12px clamp(10px, 4vw, 30px);
     font-size: 48px;
 }
 
@@ -575,22 +582,37 @@ body.initial-bss2 #palette-pad-stage {
     border-bottom: 4px solid #1a6767;
 }
 
+body.initial-bss2.advanced-mode #main-container {
+    grid-template-rows: minmax(0, 1fr) auto auto;
+}
+
+body.initial-bss2.advanced-mode #palette-pad-stage {
+    display: none;
+}
+
+body.initial-bss2.advanced-mode #preset-selector-panel {
+    width: min(calc(100% - 32px), 1200px);
+    height: calc(100% - 20px);
+}
+
 .palette-pad-layout {
-    --lower-pad-inset: clamp(24px, 3.8vw, 52px);
+    --lower-pad-nudge: clamp(14px, 2.2vw, 30px);
     --upper-pad-spread: clamp(18px, 3vw, 44px);
-    width: min(615px, 86%);
-    height: min(232px, 100%);
+    width: min(690px, 91%);
+    height: min(284px, 100%);
     display: grid;
-    grid-template-columns: minmax(90px, 1fr) minmax(90px, 1fr);
-    grid-template-rows: repeat(2, minmax(69px, 1fr));
-    column-gap: clamp(54px, 10.5vw, 126px);
-    row-gap: clamp(14px, 3vh, 32px);
+    grid-template-columns: minmax(112px, 1fr) minmax(112px, 1fr);
+    grid-template-rows: repeat(2, minmax(96px, 1fr));
+    column-gap: clamp(48px, 9vw, 116px);
+    row-gap: clamp(16px, 3.2vh, 34px);
 }
 
 .palette-pad {
+    --pad-sigil-scale: 1;
+    --pad-sigil-active-scale: 1.42;
     position: relative;
     display: grid;
-    grid-template-rows: minmax(0, 1fr) auto;
+    grid-template-rows: auto minmax(0, 1fr) auto;
     align-items: center;
     justify-items: center;
     justify-content: center;
@@ -600,7 +622,7 @@ body.initial-bss2 #palette-pad-stage {
     background: radial-gradient(circle at 50% 42%, #404040, #151515 68%);
     color: #fff;
     cursor: pointer;
-    padding: 8px 10px 7px;
+    padding: 9px 12px 8px;
     box-shadow: inset 0 0 22px rgba(0, 255, 255, 0.18);
     overflow: hidden;
 }
@@ -611,21 +633,24 @@ body.initial-bss2 #palette-pad-stage {
     outline: none;
 }
 
-.palette-pad.sample {
-    border-color: #0aa;
-}
-
-.palette-pad.synth {
-    border-color: #c90;
+.palette-pad-title {
+    display: block;
+    width: 100%;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: clamp(10px, 1.55vh, 15px);
+    font-weight: 900;
+    line-height: 1;
+    text-align: center;
+    letter-spacing: 0;
 }
 
 .palette-pad-sigil {
-    max-width: 76%;
-    max-height: 66px;
+    width: min(78%, 116px);
+    height: 78px;
     min-height: 0;
     object-fit: contain;
     filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.18));
-    transform: scale(1);
+    transform: scale(var(--pad-sigil-scale));
     transition: transform 140ms ease-out, filter 140ms ease-out, opacity 140ms ease-out;
 }
 
@@ -641,28 +666,19 @@ body.initial-bss2 #palette-pad-stage {
 }
 
 .palette-pad.morph-active .palette-pad-sigil {
-    animation: palette-pad-morph 420ms ease-out;
-}
-
-@keyframes palette-pad-morph {
-    0% {
-        transform: scale(1.42) rotate(-2deg);
-        filter: drop-shadow(0 0 18px rgba(255, 255, 255, 0.85)) drop-shadow(0 0 28px rgba(0, 255, 255, 0.45));
-        opacity: 1;
-    }
-    100% {
-        transform: scale(1);
-        filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.18));
-        opacity: 1;
-    }
+    transform: scale(var(--pad-sigil-active-scale)) rotate(-2deg);
+    filter: drop-shadow(0 0 18px rgba(255, 255, 255, 0.85)) drop-shadow(0 0 28px rgba(0, 255, 255, 0.45));
+    opacity: 1;
 }
 
 .palette-pad-b {
-    transform: translateX(var(--lower-pad-inset));
+    transform: translateX(var(--lower-pad-nudge));
 }
 
 .palette-pad-c {
-    transform: translateX(calc(-1 * var(--lower-pad-inset)));
+    --pad-sigil-scale: 1.18;
+    --pad-sigil-active-scale: 1.68;
+    transform: translateX(calc(-1 * var(--lower-pad-nudge)));
 }
 
 .palette-pad-a {
@@ -780,7 +796,6 @@ body.initial-bss2 #preset-grid .preset-btn {
 
 .preset-btn.active {
     background: var(--highlight);
-    box-shadow: inset 0 0 0 4px var(--text);
 }
 
 #controls {
@@ -922,6 +937,7 @@ body.initial-bss2 #preset-grid .preset-btn {
     gap: 12px;
     padding: 12px 15px;
     border-bottom: 1px solid #444;
+    min-width: 0;
 }
 
 .param-header-btn {
@@ -941,7 +957,9 @@ body.initial-bss2 #preset-grid .preset-btn {
     display: flex;
     flex-direction: column;
     overflow-y: auto;
+    overflow-x: hidden;
     flex: 1;
+    min-width: 0;
 }
 
 .param-list::-webkit-scrollbar {
@@ -964,9 +982,11 @@ body.initial-bss2 #preset-grid .preset-btn {
 .param-row {
     display: flex;
     align-items: center;
+    gap: 10px;
     padding: 8px 15px;
     border-bottom: 1px solid #222;
     font-size: 23px;
+    min-width: 0;
 }
 
 .param-row:hover {
@@ -975,19 +995,27 @@ body.initial-bss2 #preset-grid .preset-btn {
 
 .param-name {
     flex: 1;
+    min-width: 0;
     color: #0cc;
+    overflow-wrap: anywhere;
 }
 
 .param-value {
-    width: 120px;
+    flex: 0 1 120px;
+    min-width: 64px;
     text-align: right;
-    margin-right: 15px;
     font-family: monospace;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .param-controls {
     display: flex;
+    flex: 0 1 auto;
     gap: 4px;
+    min-width: 0;
+    flex-wrap: wrap;
+    justify-content: flex-end;
 }
 
 .param-ctrl {
@@ -1063,7 +1091,7 @@ body.initial-bss2 #preset-grid .preset-btn {
 }
 
 .param-slider {
-    width: 180px;
+    width: clamp(120px, 24vw, 180px);
     height: 30px;
     cursor: pointer;
     accent-color: #0aa;
@@ -1097,7 +1125,8 @@ body.initial-bss2 #preset-grid .preset-btn {
     border: 1px solid #444;
     padding: 6px 12px;
     font-size: 21px;
-    min-width: 180px;
+    width: clamp(132px, 26vw, 180px);
+    min-width: 0;
     cursor: pointer;
     border-radius: 3px;
 }
@@ -1123,7 +1152,8 @@ body.initial-bss2 #preset-grid .preset-btn {
     border: 1px solid #444;
     padding: 6px 12px;
     font-size: 21px;
-    min-width: 220px;
+    width: clamp(140px, 30vw, 220px);
+    min-width: 0;
     border-radius: 3px;
     font-family: monospace;
 }

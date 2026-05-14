@@ -141,6 +141,10 @@ func (synth *Synth) SendController(cnum uint8, cval uint8) {
 
 func (synth *Synth) SendPitchBend(value int) {
 
+	if SendSamplesplitterPitchBend(synth, value) {
+		return
+	}
+
 	if !synth.midiOutputEnabled() {
 		return
 	}
@@ -172,6 +176,10 @@ func (synth *Synth) SendPitchBend(value int) {
 }
 
 func (synth *Synth) SendNoteToMidiOutput(value any) {
+
+	if SendSamplesplitterNote(synth, value) {
+		return
+	}
 
 	if !synth.midiOutputEnabled() {
 		return

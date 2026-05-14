@@ -35,6 +35,7 @@ type ActiveCursor struct {
 	NoteOnClick Clicks
 	Patch       *Patch
 	SampleVoice *StepperSampleVoice
+	SampleNote  *SamplesplitterNoteOn
 	Button      string
 	loopIt      bool
 	loopBeats   int
@@ -223,19 +224,8 @@ func (cm *CursorManager) clearActiveCursors(tag string, checkDelay Clicks) {
 		acCurrentCe := ac.Current
 		theCursorManager.ClickMutex.Unlock()
 
-		currClick := acCurrentCe.GetClick()
-
-		acPreviousCe := ac.Previous
-
-		prevClick := acPreviousCe.GetClick()
-
-		dclick := currClick - prevClick
-		// Not sure the reason why dclick is sometimes -1 or -2, I should look at it later.
-		// if dclick < 0 {
-		// 	LogWarn("clearActiveCursors: Unexpected negative dclick?", "currClick", currClick, "prevClick", prevClick)
-		// }
-
-		if dclick < checkDelay {
+		elapsed := currentClick - acCurrentCe.GetClick()
+		if elapsed < checkDelay {
 			continue
 		}
 

@@ -277,7 +277,7 @@ func (pm *ProcessManager) StartRunning(process string) error {
 		// "Palette Control" window, not whether any Chrome process is running.
 		// If the window existed, we closed it above. Now we'll start a fresh one.
 	} else if process == "samplesplitter" {
-		running, err := IsSamplesplitterProcessRunning()
+		running, err := IsSamplesplitterRunning()
 		if err != nil {
 			return err
 		}
@@ -285,6 +285,11 @@ func (pm *ProcessManager) StartRunning(process string) error {
 			LogInfo("StartRunning: already running", "process", process)
 			return nil
 		}
+		if err := StartInEngineSamplesplitter(); err != nil {
+			return fmt.Errorf("StartRunning: process=%s err=%w", process, err)
+		}
+		pm.wasStarted[process].Store(true)
+		return nil
 	} else {
 		// For non-GUI processes, check if already running
 		running, err := pm.IsRunning(process)
@@ -392,6 +397,9 @@ func (pm *ProcessManager) StopRunning(process string) (err error) {
 				KillExecutable(pi.Exe)
 			}
 		}
+	} else if process == "samplesplitter" {
+		StopInEngineSamplesplitter()
+		KillSamplesplitter()
 	} else {
 		// Use PID-based killing if we have the PID (avoids killing other instances)
 		if pid, ok := pm.runningPids[process]; ok && pid > 0 {
