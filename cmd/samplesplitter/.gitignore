@@ -1,0 +1,10 @@
+__pycache__/
+.venv/
+*.py[cod]
+*.exe
+*.cues.json
+*.mp3
+*.wav
+*.aiff
+.DS_Store
+ffmpeg/doc/

@@ -22,10 +22,10 @@ The instructions below assume that you have:
 - Install the redistributable support for X64 (the filename is vc_redist_x64.exe) from this page:
 https://learn.microsoft.com/en-US/cpp/windows/latest-supported-vc-redist?view=msvc-170
 
-- All VST plugins should be put in `%CommonProgramFiles%\VST2` (for VST 2 plugins) and `%CommonProgramFiles%\VST3` (for VST 3 plugins).
+- All VST plugins should be put in `C:\VST2` (for VST 2 plugins) and `C:\VST3` (for VST 3 plugins).
 
 - After installing and starting Bidule, use Edit->Preferences->Plugins to set the VST plugin directory to
-`%CommonProgramFiles%\VST2`.
+`C:\VST2`.
 
 - Install LoopBe30 from https://www.nerds.de/en/order.html
   - After installing, use the LoopBe30 tray item to expand "ports after reboot" to 16
@@ -50,7 +50,7 @@ https://learn.microsoft.com/en-US/cpp/windows/latest-supported-vc-redist?view=ms
 <p>
 
 - Quit and restart Resolume.
-  - Use Resolume's <i>Composition->Open</i> to open: `%CommonProgramFiles%\Palette\data\config\PaletteDefault.avc`<br>
+  - Use Resolume's <i>Composition->Open</i> to open: `%LOCALAPPDATA%\Palette\data_default\config\PaletteDefault.avc`<br>
   That composition contains four layers, each with a <b>Palette</b> FFGL plugin followed by several dozen other FFGL effect plugins.
   If there's a big yellow X in the layer, Resolume hasn't been able to find or load the Palette plugin.  Verify that the Palette plugin is seen in Effects under Generators.
 <p>
@@ -60,5 +60,5 @@ https://learn.microsoft.com/en-US/cpp/windows/latest-supported-vc-redist?view=ms
 - You're now ready to start using the Palette, as described
 <a href="https://github.com/vizicist/palette/blob/main/doc/starting_and_using.md">here</a>
 
-- If there are any issues, log files can be found in `%CommonProgramFiles%\Palette\data\logs`,
+- If there are any issues, log files can be found in `%LOCALAPPDATA%\Palette\data_default\logs`,
 with `engine.log` being the most important one.  Feel free to email me@timthompson with questions or suggestions for improving this documentation.

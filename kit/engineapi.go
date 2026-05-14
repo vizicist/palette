@@ -17,7 +17,7 @@ var NoProcess bool
 // ExecuteAPI xxx
 func ExecuteAPI(api string, apiargs map[string]string) (result string, err error) {
 
-	if api != "global.status" { // global.status happens every few seconds
+	if api != "global.status" && api != "cursor.activity" { // high-frequency polling APIs
 		LogOfType("api", "ExecuteAPI", "api", api, "apiargs", apiargs)
 	}
 

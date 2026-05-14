@@ -36,7 +36,8 @@ taskkill /F /T /IM palette_monitor.exe >nul 2>nul
 powershell -NoProfile -ExecutionPolicy Bypass -Command "Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -and $_.CommandLine -match 'samplesplitter\.py' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }" >nul 2>nul
 
 set "PROGRAM_INSTALL=%ProgramFiles%\Palette"
-set "SYSTEM_DATA=%CommonProgramFiles%\Palette"
+set "SYSTEM_DATA=%ProgramFiles%\Common"
+set "SYSTEM_DATA=%SYSTEM_DATA% Files\Palette"
 set "USER_DATA=%LOCALAPPDATA%\Palette"
 
 if exist "%SYSTEM_DATA%" (

@@ -327,6 +327,15 @@ func (sched *Scheduler) triggerItemsScheduledAtOrBefore(thisClick Clicks) {
 				v.Synth.SendPitchBend(v.Value)
 			}
 
+		case *StepperSampleNoteOff:
+			if theStepper != nil {
+				noteOff := theStepper.SamplesplitterNoteOffIfCurrent(v)
+				if noteOff != nil {
+					LogOfType("scheduler", "triggerItemsScheduledAtOrBefore: StepperSampleNoteOff", "note", noteOff.String())
+					noteOff.Synth.SendNoteToMidiOutput(noteOff)
+				}
+			}
+
 		case midi.Message:
 			synthName, err := GetParam("global.midithrusynth")
 			if err != nil {

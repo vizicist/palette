@@ -34,6 +34,7 @@ type ActiveCursor struct {
 	NoteOn      *NoteOn
 	NoteOnClick Clicks
 	Patch       *Patch
+	SampleVoice *StepperSampleVoice
 	Button      string
 	loopIt      bool
 	loopBeats   int
@@ -49,6 +50,7 @@ type CursorManager struct {
 	// activeMutex   sync.RWMutex
 	activeMutex   sync.Mutex
 	activeCursors map[int]*ActiveCursor // map of Gid to ActiveCursor
+	activity      map[string]int64
 
 	GIDToLoopedGIDMutex sync.RWMutex
 	GIDToLoopedGID      map[int]int
@@ -120,6 +122,10 @@ func NewActiveCursor(ce CursorEvent) *ActiveCursor {
 		ac.loopBeats = forcebeats
 		ac.loopFade = forcefade
 	}
+	if IsBSS2InitialPage() && ac.Patch != nil && theStepper != nil && theStepper.routeForPatch(ac.Patch.Name()) == "samplesplitter" {
+		ac.loopIt = false
+		ac.loopFade = 0.0
+	}
 
 	// LogInfo("NewactiveCursor", "ac", ac)
 
@@ -146,6 +152,7 @@ func NewActiveCursor(ce CursorEvent) *ActiveCursor {
 func NewCursorManager() *CursorManager {
 	cm := &CursorManager{
 		activeCursors:  map[int]*ActiveCursor{},
+		activity:       map[string]int64{},
 		GIDToLoopedGID: map[int]int{},
 		activeMutex:    sync.Mutex{},
 		handlers:       map[string]CursorHandler{},
@@ -154,6 +161,28 @@ func NewCursorManager() *CursorManager {
 		cursorRand:     rand.New(rand.NewSource(time.Now().UnixNano())),
 	}
 	return cm
+}
+
+func (cm *CursorManager) recordActivity(ce CursorEvent) {
+	if ce.Ddu != "down" && ce.Ddu != "drag" {
+		return
+	}
+	if ce.Tag != "A" && ce.Tag != "B" && ce.Tag != "C" && ce.Tag != "D" {
+		return
+	}
+	cm.activeMutex.Lock()
+	cm.activity[ce.Tag]++
+	cm.activeMutex.Unlock()
+}
+
+func (cm *CursorManager) ActivitySnapshot() map[string]int64 {
+	snapshot := map[string]int64{"A": 0, "B": 0, "C": 0, "D": 0}
+	cm.activeMutex.Lock()
+	defer cm.activeMutex.Unlock()
+	for patch := range snapshot {
+		snapshot[patch] = cm.activity[patch]
+	}
+	return snapshot
 }
 
 func (cm *CursorManager) UniqueGID() int {
@@ -399,6 +428,7 @@ var BugFixWarningCount = 0
 func (cm *CursorManager) ExecuteCursorEvent(ce CursorEvent) {
 
 	theEngine.RecordCursorEvent(ce)
+	cm.recordActivity(ce)
 
 	fadeThreshold, err := GetParamFloat("global.looping_fadethreshold")
 	if err != nil {

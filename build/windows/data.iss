@@ -70,7 +70,7 @@ begin
     MsgBox(
       'A previous all-users Palette install was detected.' + #13#10 + #13#10 +
       'This per-user data installer will exit without installing anything so the two install styles are not mixed.' + #13#10 + #13#10 +
-      'Run scripts\cleanup_system_palette_install.bat as Administrator to remove old Program Files, Common Files, and HKLM environment settings, then run this installer again.',
+      'Run scripts\cleanup_system_palette_install.bat as Administrator to remove old all-users install files and HKLM environment settings, then run this installer again.',
       mbCriticalError, MB_OK);
     Result := False;
   end;
